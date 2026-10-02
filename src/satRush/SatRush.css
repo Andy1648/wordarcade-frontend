@@ -2541,3 +2541,19 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   color: var(--paper);
   background: var(--ink);
 }
+
+/* PHONE LINEUP (fine-tune oct2, pass 2): three columns at 390 left ~100px a chip, and an 8–9
+   letter suspect in display type was clipped at both edges ("OVETOU", "ULPABL") — the player was
+   choosing between words they could not read. Two columns, and the word never clips. */
+@media (max-width: 480px) {
+  .sr-lineup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sr-suspect {
+    padding: 6px 4px;
+  }
+  .sr-suspect-word {
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+}

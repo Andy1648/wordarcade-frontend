@@ -323,6 +323,11 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // hidden it from every beginner — which is the same mistake the old one-flag teach made.
   const overCard = (
     <>
+      {firstRun ? <FuseFirstRunCard /> : (
+      <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
+      )}
+      {/* The RESULT leads, the hint follows (fine-tune oct2: "you could have played" sat above
+          the card's own title and outshouted it). */}
       <MissedWordHold
         key={glossTick}
         word={missedWord}
@@ -330,9 +335,6 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         prompt={s.fragment}
         promptLabel="A WORD CONTAINING"
       />
-      {firstRun ? <FuseFirstRunCard /> : (
-      <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
-      )}
     </>
   );
 

@@ -773,9 +773,20 @@
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   line-height: 0.98;
-  font-size: var(--fs-panel);
+  /* THE ONE BIG THING on the card (fine-tune oct2 / Andy N3): the result. It was --fs-panel, the
+     same size as the hint word under it. */
+  font-size: var(--fs-h1);
   color: var(--solo-accent);
   margin: 0;
+}
+@media (max-height: 560px) {
+  .solo-deathcard h2 {
+    font-size: var(--fs-h2);
+  }
+}
+/* ...and the "you could have played" hint steps down under it. */
+.solo-deathcard .missed-hold-word {
+  font-size: var(--fs-panel);
 }
 .solo-death-killed {
   font-size: var(--fs-label);

@@ -78,7 +78,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  letter-spacing: 0.08em; font-size: var(--fs-body) /* floor: tappable text is never below 16px */; line-height: 1.05; color: #7f9dc9; overflow: hidden; overflow-wrap: break-word; }
+  letter-spacing: 0.02em; font-size: var(--fs-body) /* floor: tappable text is never below 16px */; line-height: 1.05; color: #7f9dc9; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; /* one line, never MOVIE/S (fine-tune oct2) */ }
 .ppp-pill.is-on .ppp-pill-label { color: #000; }
 
 /* Per-tile category count — small mono chip on the right. Black-on-blue when ON,

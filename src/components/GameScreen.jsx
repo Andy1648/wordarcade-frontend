@@ -5001,6 +5001,9 @@ function CategoryBlitzScreen({
                 targetSelector=".game-input"
                 caption="NAME SOMETHING IN THE CATEGORY"
                 sub="START TYPING"
+                // Same text-aware placement as Word Bomb (fine-tune oct2): the caption printed over
+                // the CATEGORY card — the one thing the player must read.
+                avoidTextIn=".game-wrap"
                 onDismiss={dismissGameSpot}
                 dim={false} // as above — /category-blitz/play lands straight on this board
               />

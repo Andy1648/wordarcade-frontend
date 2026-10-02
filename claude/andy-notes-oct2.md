@@ -9,8 +9,8 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## Andy's newest notes (Oct 2, later)
 - [x] N1 Buying a cosmetic AUTO-EQUIPS it — PR #76 (shop.js `buy` equips; unit test + e2e/shop.spec.js 'auto-equips')
-- [ ] N2 "Bigger text" includes ANIMATED text — reward pops, level-ups
-- [ ] N3 Every screen picks ONE thing to make big and shrinks the rest
+- [ ] N2 IN PROGRESS — rarity pop --fs-hero, receipt WINS --fs-h2 (PR #82); level-up plate 1.2× hold (PR #78); in-game "+N WINS" landing pop --fs-panel → --fs-h2 (phone body → panel) and menu letter pops --fs-panel → --fs-h2 (fine-tune pass 2, finetune/oct2)
+- [ ] N3 IN PROGRESS — applied per screen in the fine-tune loop: CASE CLOSED = CAPTURED (#85); death card = the result title (--fs-h1), hint steps down; WB game over: REMATCH the one filled button, LEAVE outline, upsell mono ghost; WB dialog: PLAY SOLO leads, PLAY/JOIN a mono row; round receipt top 3 + n MORE (#82)
 - [x] N4 WHERE YOUR WINS CAME FROM = top 3 rows + one "+ n MORE" row (sums still match) — PR #82
 
 ## PR #75 — Economy v9 (re-check against the Oct 2 notes)
@@ -33,7 +33,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] O9 Wins only from playing — non-game rewards no longer credit on their own; e2e menu-no-free-wins asserts no write before a claim — PR #76
 - [x] O10 Achievements, collection milestones, welcome-back, rank-ups (+ marks, new systems) are CLAIMED via popup or REWARDS button with a count badge — PR #76, claude/econ-oct2/shots/claims-popup-390.png, claims-panel-1280.png
 - [x] O11 XP / WORD removed from cards, dialog, SAT cover; in-game chip trimmed to rate / COMBO / FRENZY — PR #76
-- [ ] O12 PARTIAL — cards: WINS / WORD (base word) + POWER ×N / FRENZY ×5 + LONGER = MORE; the (×N) tag is only what the player built (PR #76). OPEN: the game has no end-of-round WINNER bonus to advertise yet — building one (Tier 1, game-over path) is queued after STEP 54.
+- [x] O12 Cards: WINS / WORD (base) + POWER ×N / FRENZY ×5 / WIN +50% + LONGER = MORE (PR #76). End-of-round bonus BUILT: winning a Word Bomb game pays +50% of its word wins — own WINNER BONUS row on the receipt + named WINS EARNED line, paid once per game; card says WIN +50%, dialog WIN THE GAME +50% OF ITS WINS — PR #86 (3a27b06), payout.test.js, e2e/winner-bonus.spec.js; live ("WINNER BONUS" in the prod index bundle). An animated example was judged not worth the card's space.
 - [x] O13 Cards, dialog, SAT cover, phone solo band, receipt rows (FRENZY, FORGE), shop, rebirth; no stale MOMENTUM / XP-per-word copy left (grep) — PR #76
 - [x] O14 econ-sim extended (forge, frenzy, claims, stars/perks/automation, bad-time rebirths) — claude/econ-oct2/report.md: median gap 1.0–2.6 m, p90 ≤ 13 m, max 24 m
 - [x] O15 CI green, merged — PR #76 (b3a50c3)
@@ -96,20 +96,20 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] F2 Bonus = 3 words at the FUSE rate, credited as a named "CLUTCH!" wins line on the run receipt (no-hidden-wins invariant holds) — PR #84, e2e/fuse-clutch.spec.js
 
 ## STEP 57 — SAT Rush rework
-- [ ] S1 "CASE CLOSED" screen clear, satisfying, consistent with the other modes
+- [x] S1 CASE CLOSED leads with CAPTURED (hero) + "n got away", then +WINS earned; score / avg ante / best streak / mastered on ONE ruled line; readable buttons — PR #85 (4c36453), claude/sat-oct2/before|after/. Fine-tune pass 1: exits no longer wait for the count-up (sat-results 3.5 → 5.5).
 
-## STEP 58 — Menu layout
+## STEP 58 — Menu layout (merged PR #86, 3a27b06; live — data-nav in the prod bundle)
 - [x] N1 3 layouts built behind ?nav= (stack = current, top, rail), 7 viewports each (1024x500 … 1920x1080, 390x844, 320x640) — claude/menu-layout/{stack,top,rail}/
-- [x] N2 Picked TOP. Why: SHOP/REBIRTH only sat "at the bottom" in two places — the phone strip under CHAIN | FUSE, and the short-laptop arrangement (1280x551: the nav dropped into the bottom row beside JOIN ROOM). TOP puts the nav under the title on a phone and on the wordmark's row on a short laptop — the HUD corner where games keep the shop — with the card row unchanged. RAIL cost the card row 170 px and overlapped WORD BOMB at 1366x768. The tall-screen column was already top-right and stays. The claim popup moved to the bottom so it never covers the nav. Compare claude/menu-layout/stack/menu-1280x551.png ↔ top/menu-1280x551.png, stack/menu-390x844.png ↔ top/menu-390x844.png
+- [x] N2 Picked TOP. Why: SHOP/REBIRTH only sat "at the bottom" in two places — the phone strip under CHAIN | FUSE, and the short-laptop arrangement (1280x551: the nav dropped into the bottom row beside JOIN ROOM). TOP puts the nav under the title on a phone and on the wordmark's row on a short laptop — the HUD corner where games keep the shop — with the card row unchanged. RAIL cost the card row 170 px and overlapped WORD BOMB at 1366x768. The tall-screen column was already top-right and stays. The claim popup is pointer-transparent and never covers the nav (desktop bottom-centre, phone one compact row in the title band, short layout top-left, tucks itself away after 8 s). Compare claude/menu-layout/stack/menu-1280x551.png ↔ top/menu-1280x551.png, stack/menu-390x844.png ↔ top/menu-390x844.png
 
 ## STEP 59 — Animation headroom
-- [x] H1 Measured (rAF while typing, 4× throttle, 1280x720 + 390x844) on menu, WB, Blitz, CHAIN, FUSE, SAT, WB game over — claude/perf-oct2/report.md, frames-before.txt / frames.txt
+- [x] H1 (PR #86) Measured (rAF while typing, 4× throttle, 1280x720 + 390x844) on menu, WB, Blitz, CHAIN, FUSE, SAT, WB game over — claude/perf-oct2/report.md, frames-before.txt / frames.txt
 - [x] H2 Simplified where there was no headroom: beat sync no longer re-renders App or restyles <html> per beat (desktop menu typing 116 → 148 frames / 4 s); CHAIN/FUSE run-over hitch 700 → 200 ms / 683 → 67 ms. Headroom: phone + in-game multiplayer ≤1% long frames — this cycle's new one-shots (CLUTCH, FRENZY, WINNER row, world swish) live there; no new menu animation (it is the one screen over budget)
 
 ## STEP 60 — Fine-tune loop
-- [ ] T1 STEP 30 method over every screen touched since Oct 1, until scores stop improving (score table)
+- [ ] T1 IN PROGRESS — claude/finetune/scores.md "Oct 2 loop": O0 4.87 → O1 5.61 (pass 1); pass 2 shooting
 
-## STEP 61 — Redeem codes
+## STEP 61 — Redeem codes (merged PR #87, 1d26db6)
 - [x] R1 CODES entry at the end of the shop: one field + REDEEM + one answer line; a good code lands in REWARDS to claim (never pays on its own) — e2e/redeem-codes.spec.js, claude/codes/shop-codes-390.png, shop-codes-1280.png
 - [x] R2 Server-side: supabase/migrations/007_redeem_codes.sql — public.redeem_codes (RLS on, no policies: the anon key cannot list codes), lb_redeem checks active / expiry / max_uses / one per player (claimed profile, else device secret), 12 tries per player per hour. BLOCKED for prod until Andy runs 007 in the SQL editor — until then the shop answers "CODES AREN'T SWITCHED ON YET" (tested).
 - [x] R3 Instructions for Andy at the top of 007_redeem_codes.sql: Table Editor → redeem_codes → Insert row (code, wins, label, expires_at, max_uses, active)

@@ -474,3 +474,19 @@
   min-height: 48px;
   padding: 10px 12px;
 }
+
+/* EVERY DIALOG (fine-tune oct2, pass 2): JOIN WITH CODE is the secondary action and reads as one —
+   a one-line mono label, not a three-line Bungee slab that set the CTA row's height to ~115px and
+   squeezed the Blitz pack picker down to a single visible row. */
+.mode-dialog-btn-join {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+}
+/* The Blitz title on ONE line ("CATEGORY BLITZ" wrapped to two at 1920 and ate the picker's room). */
+.mode-dialog-content:has(.mode-dialog-lower--blitz) .mode-dialog-title {
+  white-space: nowrap;
+  font-size: max(var(--fs-panel), min(var(--fs-h1), 4.4vw));
+}

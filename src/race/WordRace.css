@@ -479,3 +479,12 @@
     animation: none;
   }
 }
+
+/* RESULTS ON A SHORT SCREEN (fine-tune oct2, pass 2): once the race is over the standings card says
+   who finished where, so the lanes above it are a repeat — and at 1280x551 they pushed the banked
+   line and RACE AGAIN / MENU off the bottom. Over + short: the lanes go. */
+@media (max-height: 700px) {
+  .wr-root[data-race-status='over'] .wr-lanes {
+    display: none;
+  }
+}
