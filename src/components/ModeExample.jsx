@@ -6,6 +6,9 @@ import './ModeExample.css';
 import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
 import { perWordRateNow } from '../progress/wins';
 import { formatRate, formatMultExact } from '../format';
+import { modePower } from '../progress/xp';
+import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
+import { useFrenzyClock } from '../frenzy/useFrenzyClock';
 
 // Highlight the first occurrence of `sub` within `word` in `color`.
 function hiSub(word, sub, color) {
@@ -33,6 +36,8 @@ function hiEnds(word, color) {
 }
 
 export default function ModeExample({ mode, accent = '#2EFFE0' }) {
+  const frenzy = useFrenzyClock();
+  const power = modePower(mode);
   const ex = MODE_EXAMPLES[mode];
   if (!ex) return null;
   const rateNow = perWordRateNow({ mode });
@@ -98,12 +103,30 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
           {/* The RESOLVED rate, like the mode card — not the base with a rebirth chip bolted on
               for the player to multiply out (and momentum/level/mark missing from both). */}
           <b style={{ color: accent }}>{formatRate(rateNow.rate)}</b> WINS / WORD
-          {rateNow.mult !== 1 && (
-            <span className="mode-ex-mult"> (×{formatMultExact(rateNow.mult)})</span>
+          {Math.abs(rateNow.mult / (rateNow.factors.mode || 1) - 1) > 1e-9 && (
+            <span className="mode-ex-mult"> (×{formatMultExact(rateNow.mult / (rateNow.factors.mode || 1))})</span>
           )}
         </span>
         <span className="mode-ex-round">{round}</span>
       </div>
+      {/* WHAT MAKES A WORD WORTH MORE (Andy oct2). The rate above is the BASE — a 5-letter word. */}
+      <div className="mode-ex-perks">
+        {power > 1 && (
+          <span className="mode-ex-power" style={{ color: accent }}>
+            POWER ×{formatMultExact(power)} <span className="mode-ex-power-vs">VS WORD BOMB</span>
+          </span>
+        )}
+        <span className="mode-ex-longer">LONGER WORDS = MORE</span>
+      </div>
+      {mode === 'fuse' && (
+        <div className={`mode-ex-frenzy${frenzy.active ? ' is-live' : ''}`}>
+          {frenzy.active ? (
+            <>FRENZY LIVE — ×{FRENZY_MULT} WINS FOR {formatFrenzy(frenzy.ms)}</>
+          ) : (
+            <>LIGHT ALL 26 LETTERS → <b>FRENZY</b>: ×{FRENZY_MULT} WINS FOR 5 MIN, EVEN BETWEEN RUNS</>
+          )}
+        </div>
+      )}
     </div>
   );
 }

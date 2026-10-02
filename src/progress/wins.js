@@ -23,6 +23,7 @@ import { momentumMult, getMomentum } from './momentum.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS, MASTERY_MILESTONE_EVERY } from './mastery.js';
 import { getStreakMult } from './streak.js';
+import { frenzyMult } from './frenzy.js';
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
@@ -238,6 +239,9 @@ export function perWordFactors({ mode, difficulty, rebirthCount, momentumCount, 
     rebirth: rebirthMult(rc),
     streak: stm,
     bonus: momentumMult(mm) * markWins * markXpMult(markId) * mastery,
+    // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
+    // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
+    frenzy: frenzyMult(id),
   };
 }
 
@@ -252,7 +256,7 @@ export function perWordXp(opts = {}) {
     weight: opts.weight,
     streakMult: f.streak,
     difficultyMult: f.difficulty,
-    bonusMult: f.bonus,
+    bonusMult: f.bonus * f.frenzy,
   });
 }
 

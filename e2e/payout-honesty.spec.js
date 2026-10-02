@@ -63,12 +63,15 @@ for (const s of SETUPS) {
 
     // THE CARD'S QUOTE (menu, no difficulty → the CHILL quote at this momentum).
     const card = page.locator('.game-card-magnet[data-game="word-bomb"]');
-    const xpEl = card.locator('.game-card-xp').filter({ visible: true }).first();
+    // Andy oct2: the card no longer quotes XP / WORD — it quotes WINS / WORD (the base word) and
+    // says LONGER WORDS = MORE. A word's XP is still exactly its wins × 10, which is what the rest
+    // of this spec checks the ledger against.
+    const perkEl = card.locator('.game-card-xp').filter({ visible: true }).first();
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
-    await expect(xpEl).toContainText('XP');
-    const cardXp = num((await xpEl.innerText()).split('XP')[0]);
+    await expect(perkEl).toContainText('LONGER');
+    await expect(perkEl).not.toContainText('XP');
     const cardWins = num((await winsEl.innerText()).split('WINS')[0]);
-    expect(cardWins * 10, 'card WINS / WORD is its XP / WORD ÷ 10').toBeCloseTo(cardXp, 6);
+    const cardXp = cardWins * 10;
 
     const readLedger = () => page.evaluate(() => {
       const xp = JSON.parse(localStorage.getItem('taw.xp') || '{"lv":1,"into":0}');

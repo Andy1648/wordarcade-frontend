@@ -86,7 +86,7 @@ test.describe('menu', () => {
       return {
         hint: read(document.querySelector('.menu-xp-hint-text')),
         cardName: read(card && card.querySelector('.game-card-name')),
-        cardXp: read(card && card.querySelector('.game-card-xp')),
+        cardWins: read(card && card.querySelector('.game-card-payout')),
         cost: read(document.querySelector('.menu-xp-readout-need')),
       };
     });
@@ -94,11 +94,12 @@ test.describe('menu', () => {
     expect(await page.locator('.game-card-ribbon.is-featured').count()).toBe(1);
     expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split('\n').join(' '));
 
-    // LETTERS, not words (Andy A9): the card quotes XP for a 5-letter word, so a letter is 1/5.
+    // LETTERS, not words (Andy A9): the card quotes a 5-letter word, so a letter is 1/5. Andy oct2
+    // took XP / WORD off the card; a word's XP is exactly its WINS × 10.
     const letters = Number((m.hint.match(/(\d[\d,]*)\s+LETTERS?/) || [])[1].replace(/,/g, ''));
-    const perWord = Number(m.cardXp.replace(/,/g, '').match(/(\d+)\s*XP/)[1]);
+    const perWord = 10 * Number(m.cardWins.replace(/,/g, '').match(/([\d.]+)\s*WINS/)[1]);
     const cost = Number(m.cost.replace(/[^0-9]/g, ''));
-    expect(letters, `hint "${m.hint}" vs card "${m.cardXp}" over ${cost}`).toBe(Math.ceil((cost * 5) / perWord));
+    expect(letters, `hint "${m.hint}" vs card "${m.cardWins}" over ${cost}`).toBe(Math.ceil((cost * 5) / perWord));
     expect(m.hint).not.toMatch(/WORDS? TO/);
     // And it is NOT the menu's own rate, which is the featured mode's divided by its multiplier.
     expect(letters).toBeLessThan(Math.ceil((cost * 5) / (perWord / 2)));

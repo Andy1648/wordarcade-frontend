@@ -1,0 +1,50 @@
+{
+  "weak": {
+    "before": {
+      "frenzyRunPct": 0,
+      "stripsPerRun": 0,
+      "meanMaxLit": 19.1,
+      "wordsPerRun": 10.1,
+      "minutesPerFrenzy": null
+    },
+    "after": {
+      "frenzyRunPct": 0,
+      "stripsPerRun": 0,
+      "meanMaxLit": 19,
+      "wordsPerRun": 10,
+      "minutesPerFrenzy": null
+    }
+  },
+  "median": {
+    "before": {
+      "frenzyRunPct": 2.3,
+      "stripsPerRun": 0.023,
+      "meanMaxLit": 23.2,
+      "wordsPerRun": 18.2,
+      "minutesPerFrenzy": 84.3
+    },
+    "after": {
+      "frenzyRunPct": 4.8,
+      "stripsPerRun": 0.048,
+      "meanMaxLit": 23.3,
+      "wordsPerRun": 18.2,
+      "minutesPerFrenzy": 41.1
+    }
+  },
+  "strong": {
+    "before": {
+      "frenzyRunPct": 71.5,
+      "stripsPerRun": 0.829,
+      "meanMaxLit": 25.7,
+      "wordsPerRun": 38.1,
+      "minutesPerFrenzy": 3.6
+    },
+    "after": {
+      "frenzyRunPct": 85.5,
+      "stripsPerRun": 1.055,
+      "meanMaxLit": 25.8,
+      "wordsPerRun": 38.8,
+      "minutesPerFrenzy": 2.9
+    }
+  }
+}

@@ -32,6 +32,9 @@ export const PAYOUT_FACTORS = [
   // MOMENTUM × the equipped MARK × this mode's MASTERY, as one row. Three separate near-×1 lines
   // taught nothing and crowded out the rows that move; each is still individually earnable.
   { key: 'bonus', label: 'BONUS', kind: 'permanent' },
+  // FUSE FRENZY — ×5 for five real minutes after a full strip (frenzy.js). Timed, so it reads with
+  // the per-word rows rather than the permanent ones.
+  { key: 'frenzy', label: 'FRENZY', kind: 'word' },
   { key: 'rarity', label: 'RARITY', kind: 'word' },
   { key: 'length', label: 'LENGTH', kind: 'word' },
   { key: 'combo', label: 'COMBO', kind: 'word' },

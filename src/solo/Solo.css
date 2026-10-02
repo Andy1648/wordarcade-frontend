@@ -1148,6 +1148,25 @@
   border: 4px solid #000;
   box-shadow: 4px 4px 0 #000;
 }
+.solo-frenzy-goal {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffe94a;
+  margin-bottom: -12px; /* hugs the strip it describes (the deck gap is 22px) */
+}
+.solo-frenzy-goal.is-live {
+  margin-bottom: 0; /* the plaque's own box + shadow need the full gap, or it sits on the tiles */
+  padding: 4px 12px;
+  background: #ff6b3d;
+  color: #0d0618;
+  border: 3px solid #a8381a;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-size: var(--fs-body);
+}
 .solo-strip-big span.is-lit {
   background: #ffe94a;
   color: #0d0618;

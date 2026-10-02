@@ -233,3 +233,43 @@ Order, following Andy's priority override (his points outrank everything):
 9. STEP 16 multiplier prominence.
 10. Then everything else as already queued (35, 32, 33, 34, 8, 13, 10, 36, Batch A, Batch B, fine-tune loops, then a11y/bundle/housekeeping/cosmetic last).
 </pasted_content id="3c94">
+
+## Oct 2 (Andy) — outrank everything else; checklist in claude/andy-notes-oct2.md
+
+FIRST: PR #75 (economy v9) has e2e shard 2/4 failing. Find the cause, fix, get CI green, then re-check it against Andy's new notes below before merging (key power price/XP-per-letter curve should be LESS exponential; pop styles/sound packs cost MORE and get visually smaller in the shop; nothing caps at a dead end).
+
+Then write claude/andy-notes-oct2.md: every point below as a checklist, checked off only with evidence (PR #, measured number, screenshot path). These outrank everything else queued. Andy's emphasis: things must be OBVIOUS and MAKE SENSE (mechanics AND visuals), never overcrowded with useless info, and updated EVERYWHERE when something changes (cards, receipts, dialogs, tutorials, leaderboard).
+
+STEP 48 — Economy rules (on top of #75):
+- NO CAPS that turn into dead ends. Replace the shop "marks" (Momentum, caps at 200, no gameplay) with an uncapped boost that has a visible effect.
+- Mode power must show in payouts: SAT Rush earns much more per word than Word Bomb (that's what its ×5-style card power means). CHAIN: higher wins per word. FUSE: SAME wins per word as Word Bomb, but its FRENZY (5 min, ×5 wins, persists across runs) is the reason its bar is higher, and that must be OBVIOUS on the card, the dialog and in-game.
+- Higher progression gets new mechanics so it never becomes purely exponential grinding (see Sell Lemons: each prestige layer unlocks a new system; its rebirth panel shows "rebirth to get: N" and warns when it's a bad time). Design 1–2 new layers/systems for late game with that logic.
+- Wins only come from playing games. Anything else (achievements, titles, badges, rank-ups) must be CLAIMED by the player via a popup or by clicking it, with a notification icon until claimed.
+- Remove "XP per word" from game-mode screens. Cards: the numbers are the BASE; advertise "LONGER WORDS = MORE" and end-of-round bonuses (e.g. an animated example of what the winner's multiplier gets). Keep the example on cards only if it earns its space.
+Simulate (extend claude/progression/econ-sim.mjs), report before/after, CI green, merge.
+
+STEP 49 — MARKS rework (Andy calls the badges "marks"; the name is addicting, keep it). Two "marks" systems exist; merge into ONE: marks are collectibles. The player equips one as their MAIN / title, which gives a real bonus (≥100%, not 10–25%), with tiers so rarer marks give more. Andy likes the current mark design; keep the art direction. Marks unlock at a level/rebirth gate with a mechanic-reveal moment (like the tutorial reveals). Add MORE reveal moments across progression. Claiming a new mark is a click with a notification icon.
+
+STEP 50 — Worlds instead of themes. Remove themes from the shop. Border tiers get many more steps (satisfaction must not run out; plan tiers to L1000+ and rebirth tiers), and each border tier change swaps the background to a new "world" in the same art style with a swish-upward transition (keep it cheap: one transform, no lag on Chromebooks; test with 4× CPU throttle). Level-up star animation and every other level-up moment: check and polish.
+
+STEP 51 — Leaderboard upgrades (friends' favorite feature). Main stat = LIFETIME LETTERS TYPED (every accepted letter, +1 per press, the Keyboard Escape hook); also show level and current WINS/WORD. Remove the rebirth stars; show rebirth tier as the name's color/frame instead. Add MORE RANKS. Allow Chinese usernames (CJK), with a Chinese profanity list in the same DB-enforced filter. Use free Supabase Realtime for live features: a live ticker ("NAME just hit LV 50", "NAME took #3") on the menu, live online count. Keep it uncrowded.
+
+STEP 52 — Cloud save. A friend's progress reset (likely Safari's 7-day storage wipe or cleared site data; investigate other causes too, including any economy migration). Back up progress to Supabase tied to the claimed username's device secret; restore automatically when local data is missing and on a new device via a one-time recovery code shown at claim time. Never let a restore lower progress.
+
+STEP 53 — Word Bomb board: spread it out (the middle feels weird); fix proportions per the step-8 rules. Bigger reward text so the player clearly sees what they earned; bigger fonts generally while playing. Bigger tutorial prompts in every mode.
+
+STEP 54 — Join mid-game with a code: show the room code on screen during the game; a player joining by code mid-round enters as a spectator and is dealt in at the next turn/round (backend change: additive, keep WB rules intact, unit-test it). Verify against production with two browsers after deploy; revert via PR if the WB smoke test fails.
+
+STEP 55 — Word lists. Expand accept lists for every mode, especially FUSE ("missing a ton"): add proper nouns that are common words (months like october, days, countries, major cities) and mild insults (idiot, loser, moron). NO slurs or hate terms. Measure: % of fragments where common real words are rejected, before → after.
+
+STEP 56 — FUSE clutch: a word accepted with ≤2s left triggers a CLUTCH moment (big, satisfying, spread-out animation + payout bonus, shown on the receipt).
+
+STEP 57 — SAT Rush rework, starting with the "case closed" screen: make it clear, satisfying and consistent with the other modes.
+
+STEP 58 — Menu layout: SHOP/REBIRTH sit at the bottom and feel odd for a gamer (pushed down by the marks). Build 3 layouts (top corner, side rail, current), pick one, say why.
+
+STEP 59 — Animation headroom: the only limit is Chromebooks choking. Measure frame time with 4× CPU throttle on menu and every mode; where there's headroom, add more and higher-quality animation; where there isn't, simplify.
+
+STEP 60 — Fine-tune loop (STEP 30 method) over every screen touched since Oct 1, until scores stop improving.
+
+STEP 61 (last, small) — Redeem codes: a CODES entry in the shop; codes stored server-side in Supabase (expiry, one use per player); Andy creates codes by adding rows in the Table Editor.

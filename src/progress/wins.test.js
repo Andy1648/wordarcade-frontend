@@ -84,9 +84,9 @@ test('perWordWins: key-tier letters × mode × difficulty, on the reference word
   // the constants under test is a test that passes whatever the tables say.
   assert.equal(perWordWins({ ...o, mode: 'wordBomb' }), 10);
   assert.equal(perWordWins({ ...o, mode: 'blitz' }), 10);
-  assert.equal(perWordWins({ ...o, mode: 'satRush' }), 15);
+  assert.equal(perWordWins({ ...o, mode: 'satRush' }), 50); // oct2: POWER ×5
   assert.equal(perWordWins({ ...o, mode: 'chain' }), 20);
-  assert.equal(perWordWins({ ...o, mode: 'fuse' }), 25);
+  assert.equal(perWordWins({ ...o, mode: 'fuse' }), 10); // oct2: same as Word Bomb (FRENZY is its edge)
   // No mode → the menu rate (×1).
   assert.equal(perWordWins(o), 5);
   // KEY POWER now raises WINS too, because the base IS the key tier. This is the point of the
@@ -153,24 +153,12 @@ test('awardWins: the SOLO modes now out-pay the multiplayer ones per word (R0)',
   assert.equal(awardWins({ wordsAccepted: 3, mode: 'fuse', rebirthCount: 0, level: 1 }), 3 * per('fuse'));
   assert.equal(awardWins({ wordsAccepted: 2, mode: 'fuse', rebirthCount: 0, level: 1 }), 0); // gated on <3
   assert.equal(awardWins({ wordsAccepted: 3, mode: 'wordBomb', rebirthCount: 0, level: 1 }), 3 * per('wordBomb'));
-  // THE ORDERING IS THE BALANCE CLAIM. It used to assert wordBomb > chain > blitz > satRush;
-  // both solo modes sitting UNDER Word Bomb is exactly what Andy called wrong ("CHAIN and FUSE
-  // are solo, score-attack — they should be MUCH higher").
-  // ANDY'S ORDERING, and it is only reachable because SAT reached PARITY. With SAT banking
-  // rarity alone there was NO card assignment satisfying all three of these at once (searched
-  // exhaustively in claude/econ-visible-sim.mjs); giving SAT the combo+lucky every other mode
-  // already had is what made the target satisfiable rather than the target being wrong.
-  const soloLow = Math.min(per('chain'), per('fuse'));
-  const mpHigh = Math.max(per('wordBomb'), per('blitz'));
-  assert.ok(soloLow > mpHigh, `solo floor ${soloLow} must beat multiplayer ceiling ${mpHigh}`);
-  assert.ok(soloLow / mpHigh >= 1.25, `the solo lead must be real, got ${(soloLow / mpHigh).toFixed(2)}x`);
-  // SAT SITS ABOVE BLITZ NOW, NOT LEVEL WITH IT — and that is a v8 consequence worth stating
-  // rather than papering over. The "within 20% of Blitz" target belonged to WINS_MULT, the second
-  // per-mode table the merge deleted; with XP_MULTIPLIERS as the only table SAT is ×3 against
-  // Blitz's ×2. It is the vocabulary mode and it is between Blitz and the solo modes, which is
-  // the ordering the modes are for.
-  assert.ok(per('satRush') > per('blitz'), 'SAT must out-pay Blitz per word');
-  assert.ok(per('satRush') < soloLow, 'SAT must still sit under the solo modes');
+  // ANDY OCT2 — MODE POWER IS THE PAYOUT. Read against Word Bomb: SAT ×5, CHAIN ×2, FUSE ×1 (its
+  // edge is FRENZY, a timed ×5, not a higher base), Blitz ×1.
+  assert.equal(per('satRush'), 5 * per('wordBomb'), 'SAT pays POWER ×5 of Word Bomb per word');
+  assert.equal(per('chain'), 2 * per('wordBomb'), 'CHAIN pays POWER ×2');
+  assert.equal(per('fuse'), per('wordBomb'), 'FUSE pays the SAME per word as Word Bomb');
+  assert.equal(per('blitz'), per('wordBomb'));
 });
 
 test('awardWins: difficulty scales the per-word rate (chill 1.0 / easy 1.25 / medium 1.5 / hard 2.0)', () => {
@@ -198,9 +186,9 @@ test('round/word estimates: card previews are the R0 BASE rate (v8: key-tier let
   // 10 XP/letter × 5 letters ÷ 10 = 5, times the mode.
   assert.equal(wordWinsEstimate({ mode: 'word-bomb', keyTier: 0 }), 10);
   assert.equal(wordWinsEstimate({ mode: 'category-blitz', keyTier: 0 }), 10);
-  assert.equal(wordWinsEstimate({ mode: 'sat-rush', keyTier: 0 }), 15);
+  assert.equal(wordWinsEstimate({ mode: 'sat-rush', keyTier: 0 }), 50);
   assert.equal(wordWinsEstimate({ mode: 'chain', keyTier: 0 }), 20);
-  assert.equal(wordWinsEstimate({ mode: 'fuse', keyTier: 0 }), 25);
+  assert.equal(wordWinsEstimate({ mode: 'fuse', keyTier: 0 }), 10);
   assert.equal(wordWinsEstimate({ mode: 'word-bomb', difficulty: 'hard', keyTier: 0 }), 20);
   // BOTH SPELLINGS OF A MODE NOW RESOLVE. 'word-bomb' used not to be a payout key, so the
   // estimate quietly fell through to ×1; gameKey() normalises it.

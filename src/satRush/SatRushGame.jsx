@@ -21,8 +21,8 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { bankWordWins, awardWins, awardWordXp, wordWinsEstimate, currentRebirthMult } from '../progress/wins';
-import { cappedWordMult } from '../progress/xp';
+import { bankWordWins, awardWins, awardWordXp, perWordRateNow } from '../progress/wins';
+import { cappedWordMult, modePower } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
@@ -31,7 +31,7 @@ import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
-import { formatMult } from '../format';
+import { formatRate } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
 // deliberately NOT the neon house `WinsEarnedTotal` component (SAT Rush visual
@@ -294,8 +294,10 @@ function StartScreen({ onPlay, onExit }) {
   // ×2 rate, with the live rebirth boost annotated like the cards), the run framing, and
   // a worked example of the mechanic — kept in SAT RUSH's own retro-print manga language
   // (paper + ink + red accent), NOT the neon house dialog look.
-  const wins = wordWinsEstimate({ mode: 'sat-rush' });
-  const mult = currentRebirthMult();
+  // The RESOLVED rate (same perWordRateNow the cards use), and SAT's POWER vs Word Bomb (Andy oct2:
+  // the card's ×5 is real money per word here).
+  const rate = perWordRateNow({ mode: 'sat-rush' }).rate;
+  const power = modePower('sat-rush');
   return (
     <div className="sr-screen">
       <div className="sr-cover">
@@ -317,8 +319,8 @@ function StartScreen({ onPlay, onExit }) {
         {/* Per-word wins + run framing — the SAT equivalent of the dialogs' meta row. */}
         <div className="sr-cover-meta">
           <span className="sr-cover-pay">
-            <b>{wins}</b> WINS / WORD
-            {mult > 1 && <span className="sr-cover-mult"> (×{formatMult(mult)})</span>}
+            <b>{formatRate(rate)}</b> WINS / WORD
+            <span className="sr-cover-mult"> · POWER ×{power} · LONGER WORDS = MORE</span>
           </span>
           <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>
         </div>

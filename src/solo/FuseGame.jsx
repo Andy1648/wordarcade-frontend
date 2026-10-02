@@ -8,7 +8,10 @@ import { exampleContaining } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins, awardWordXp, subscribeWins } from '../progress/wins.js';
+import { bankWordWins, awardWins, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
+import { startFrenzy, formatFrenzy, FRENZY_MULT, FRENZY_TRIGGER_WORDS } from '../progress/frenzy.js';
+import { useFrenzyClock } from '../frenzy/useFrenzyClock.js';
+import FrenzyBurst from '../frenzy/FrenzyBurst.jsx';
 import { cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
@@ -97,6 +100,26 @@ export default function FuseGame({ onExit, offerMenu = false }) {
     };
   }, [loadKey]);
 
+  // STEERING WARM-UP: each letter's "leads to" set is a one-off ~50ms scan (cached for the session
+  // in fuse.js). Build all 26 in idle slices while the player reads the screen, so the late-run
+  // steering never stalls a keystroke on a slow Chromebook.
+  useEffect(() => {
+    if (!data) return undefined;
+    const e = createFuseEngine({ accept: data.accept, pools: POOLS });
+    const letters = 'jqxzvkwybgpfmhcudlrsntoiae'.split(''); // rarest first: the ones steering needs
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(() => cb({ timeRemaining: () => 0 }), 120));
+    const cancel = window.cancelIdleCallback || clearTimeout;
+    let id = null;
+    const step = () => {
+      const ch = letters.shift();
+      if (!ch) return;
+      e.fragmentsLeadingTo(ch);
+      id = idle(step);
+    };
+    id = idle(step);
+    return () => cancel(id);
+  }, [data]);
+
   const createEngine = useCallback(() => {
     const e = createFuseEngine({ accept: data.accept, pools: POOLS });
     e.start(); // serve the first fragment so the shell has something to show
@@ -164,6 +187,12 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
     if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
   }), []);
 
+  // FUSE FRENZY (frenzy.js): a full a–z strip starts 5 real minutes of ×5 wins. The engine counts
+  // strips; a new one here starts/extends the clock, pays the trigger bonus through the labelled
+  // door (so it is itemised on the receipt) and fires the burst.
+  const frenzy = useFrenzyClock();
+  const stripsRef = useRef(0);
+  const [burst, setBurst] = useState(null); // { key, bonus } while the trigger moment plays
   const fuseBankedRef = useRef(0);
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
@@ -176,6 +205,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
     if (solved < fuseBankedRef.current) {
       fuseBankedRef.current = 0;
       fuseWeightRef.current = 0;
+      stripsRef.current = 0;
       wpmStart('fuse'); // fresh run → fresh WPM session
       setWinsEarned(0);
       setWinsBonusLines([]); // fresh run → the card itemises THIS run only
@@ -205,6 +235,16 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       });
       fuseBankedRef.current = solved;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
+      if ((s.stripsCleared || 0) > stripsRef.current) {
+        stripsRef.current = s.stripsCleared;
+        const fz = startFrenzy();
+        frenzy.bump();
+        // Priced AFTER the clock starts, so the bonus is quoted at the frenzy rate it advertises.
+        // A clear during a running FRENZY doesn't extend it, but still pays this bonus.
+        const bonus = Math.round(FRENZY_TRIGGER_WORDS * perWordWins({ mode: 'fuse' }));
+        if (bonus > 0) grantWins(bonus, fz.started ? 'FRENZY!' : 'FULL STRIP', { mode: 'fuse', detail: 'frenzy' });
+        setBurst({ key: Date.now(), bonus, started: fz.started });
+      }
     }
   }, [s.wordsSolved]);
   // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
@@ -239,6 +279,11 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         {[0, 1, 2].map((i) => (
           <FuseCord key={i} lit={i < s.lives} />
         ))}
+      </div>
+      {/* THE GOAL, SAID ONCE (Andy oct2: FRENZY must be OBVIOUS in-game). Dark: what the strip is
+          for. Live: the countdown, in the mode's flame orange. */}
+      <div className={`solo-frenzy-goal${frenzy.active ? ' is-live' : ''}`}>
+        {frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL 26 → FRENZY ×${FRENZY_MULT} WINS`}
       </div>
       <div className="solo-strip-big">
         {ALPHABET.map((ch) => (
@@ -285,6 +330,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   return (
     <>
     <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
+    {burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={() => setBurst(null)} />}
     <SoloShell
       mode="fuse"
       accent={ACCENT}
