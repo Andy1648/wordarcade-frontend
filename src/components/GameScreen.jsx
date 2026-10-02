@@ -177,33 +177,37 @@ const HYPE_COLORS = ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
 
 // End-of-game roast/hype blurbs shown on the Word Bomb game-over card (one
 // picked at random per result). ('WORDS WERE SAID. PEOPLE WERE HURT.' excluded.)
-const END_GAME_BLURBS = [
+// Split by outcome (fine-tune oct2: a won card read "YOU WIN!" over "NO WORDS? NO WIN."). Every
+// line here only makes sense for ONE of the two results.
+const END_GAME_BLURBS_WIN = [
   'GG. TOUCH GRASS.',
-  'THE DICTIONARY WINS AGAIN.',
   'SCREENSHOT THIS AND HUMBLE THEM.',
-  'VOCABULARY: 1. YOU: 0.',
   'NO SURVIVORS.',
+  'SCREENSHOT IT BEFORE THEY DENY IT.',
+  'THE GROUP CHAT WILL HEAR ABOUT THIS.',
+  'CERTIFIED YAPPER OF THE LOBBY.',
+  'ANOTHER ONE FOR THE HIGHLIGHT REEL.',
+  'W IN THE CHAT.',
+  'GG. NOW TOUCH SOME GRASS.',
+  'BRAGGING RIGHTS: UNLOCKED.',
+  'SAVE A FEW WORDS FOR THE REST OF US.',
+  'CHAMPION OF TYPING THINGS.',
+];
+const END_GAME_BLURBS_LOSS = [
+  'THE DICTIONARY WINS AGAIN.',
+  'VOCABULARY: 1. YOU: 0.',
   'THE BOMB IS UNDEFEATED.',
   'RUN IT BACK?',
   'STATISTICALLY, SOMEONE HAD TO LOSE.',
   'WORDS: HARD. YOU: ALSO HARD.',
-  'SCREENSHOT IT BEFORE THEY DENY IT.',
-  'THE GROUP CHAT WILL HEAR ABOUT THIS.',
-  'CERTIFIED YAPPER OF THE LOBBY.',
   'RESPECTFULLY, GET COOKED.',
   'YOU VS THE ALPHABET: ALPHABET WINS.',
-  'ANOTHER ONE FOR THE HIGHLIGHT REEL.',
   'TYPE FASTER NEXT TIME, CHAMP.',
   'THE BOMB SENDS ITS REGARDS.',
   'L + RAN OUT OF WORDS.',
-  'W IN THE CHAT.',
-  'GG. NOW TOUCH SOME GRASS.',
   'HUMBLED BY A KEYBOARD.',
   'NO WORDS? NO WIN.',
-  'BRAGGING RIGHTS: UNLOCKED.',
   'CLUTCH OR CHOKE. YOU PICKED ONE.',
-  'SAVE A FEW WORDS FOR THE REST OF US.',
-  'CHAMPION OF TYPING THINGS.',
   'YOUR FINGERS DID NOT FINGER.',
   'BETTER LUCK NEXT ALPHABET.',
   'OUTSPELLED AND OUTCLASSED.',
@@ -2700,8 +2704,11 @@ export default function GameScreen({
   // extra hook, tripping React's "rendered more hooks than last time" (#310)
   // and white-screening the whole app the instant a Word Bomb game starts.
   const endBlurb = useMemo(
-    () => END_GAME_BLURBS[Math.floor(Math.random() * END_GAME_BLURBS.length)],
-    [gameOver]
+    () => {
+      const pool = gameOver && gameOver.winnerId === myId ? END_GAME_BLURBS_WIN : END_GAME_BLURBS_LOSS;
+      return pool[Math.floor(Math.random() * pool.length)];
+    },
+    [gameOver, myId]
   );
 
   // PAUSE TO LEARN — the word that WOULD have worked.
