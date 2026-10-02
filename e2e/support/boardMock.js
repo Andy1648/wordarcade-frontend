@@ -6,9 +6,12 @@ import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
 // carries letters, the board ranks by lifetime_letters. Without it the mock is the v1 DB (lb_caps 404s).
-export async function mockBoard(page, seed = [], { caps = false } = {}) {
-  const rows = seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r }));
-  const secrets = new Map();
+export async function mockBoard(page, seed = [], { caps = false, shared = null } = {}) {
+  // `shared` lets two pages / contexts (a "new device") see the same DB.
+  const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
+  const rows = db.rows;
+  const secrets = db.secrets;
+  const saves = db.saves; // 006_cloud_save.sql: secret's profile id → { blob, score }
   const calls = { claim: 0, submit: 0 };
   const ranked = () => rows
     .slice()
@@ -27,7 +30,22 @@ export async function mockBoard(page, seed = [], { caps = false } = {}) {
     let body = null;
     try { body = req.postDataJSON(); } catch { body = null; }
     if (url.pathname.endsWith('/rpc/lb_caps')) {
-      return caps ? json(200, { letters: true, cjk: true }) : json(404, { message: 'Could not find the function public.lb_caps' });
+      return caps ? json(200, { letters: true, cjk: true, cloud: true }) : json(404, { message: 'Could not find the function public.lb_caps' });
+    }
+    if (caps && url.pathname.endsWith('/rpc/lb_save')) {
+      const pid = secrets.get(body.p_secret);
+      if (!pid) return json(400, { message: 'no_profile' });
+      const old = saves.get(pid);
+      if (old && BigInt(body.p_score) < BigInt(old.score)) return json(200, { saved: false, reason: 'lower' });
+      saves.set(pid, { blob: body.p_blob, score: String(body.p_score) });
+      return json(200, { saved: true });
+    }
+    if (caps && url.pathname.endsWith('/rpc/lb_load')) {
+      const pid = secrets.get(body.p_secret);
+      if (!pid) return json(400, { message: 'no_profile' });
+      const row = rows.find((r) => r.id === pid);
+      const sv = saves.get(pid);
+      return json(200, { id: pid, username: row && row.username, blob: sv ? sv.blob : null, score: sv ? sv.score : 0 });
     }
     if (caps && url.pathname.endsWith('/rpc/lb_submit2')) {
       calls.submit += 1;
@@ -82,5 +100,5 @@ export async function mockBoard(page, seed = [], { caps = false } = {}) {
     }
     return json(404, { message: 'not mocked' });
   });
-  return { rows, calls, secrets };
+  return { rows, calls, secrets, saves, db };
 }

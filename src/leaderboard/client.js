@@ -13,6 +13,7 @@ import { getRebirths } from '../progress/xp.js';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
+import { backupNow, restoreIfAhead, parseRecoveryCode } from '../save/cloudSave.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -47,9 +48,45 @@ async function rpc(fn, body) {
 }
 
 // ---- local identity --------------------------------------------------------------------------
+// STEP 52: the secret is mirrored in a long-lived first-party cookie, so a wipe of localStorage alone
+// does not lose the identity the cloud save is tied to.
+const SECRET_COOKIE = 'taw_lb';
+function readSecretCookie() {
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)taw_lb=([0-9a-f]{32,64})/);
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+function writeSecretCookie(s) {
+  try {
+    document.cookie = `${SECRET_COOKIE}=${s}; max-age=${400 * 24 * 3600}; path=/; samesite=lax; secure`;
+  } catch {
+    /* no cookies */
+  }
+}
+/** The secret if this browser has one (localStorage, else the cookie) — never mints a new one. */
+export function peekSecret() {
+  try {
+    const s = localStorage.getItem(SECRET_KEY);
+    if (s && s.length >= 32) return s;
+  } catch {
+    /* blocked */
+  }
+  const c = readSecretCookie();
+  if (c) {
+    try {
+      localStorage.setItem(SECRET_KEY, c);
+    } catch {
+      /* blocked */
+    }
+  }
+  return c;
+}
 export function getSecret() {
   try {
-    let s = localStorage.getItem(SECRET_KEY);
+    let s = peekSecret();
     if (!s || s.length < 32) {
       const bytes = new Uint8Array(24);
       crypto.getRandomValues(bytes);
@@ -59,6 +96,7 @@ export function getSecret() {
       // re-read rather than trusting the value this tab generated.
       s = localStorage.getItem(SECRET_KEY) || s;
     }
+    writeSecretCookie(s);
     return s;
   } catch {
     return null; // storage blocked: the player can still READ the board, just not claim
@@ -107,8 +145,8 @@ export function boardCaps() {
   if (!LEADERBOARD_ENABLED) return Promise.resolve({ letters: false, cjk: false });
   if (!capsPromise) {
     capsPromise = rpc('lb_caps', {})
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk) }))
-      .catch(() => ({ letters: false, cjk: false }));
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud) }))
+      .catch(() => ({ letters: false, cjk: false, cloud: false }));
   }
   return capsPromise;
 }
@@ -167,10 +205,50 @@ export async function submitStats(force = false) {
         p_wins_per_word: s.winsPerWord,
       });
     }
+    // STEP 52: the cloud save rides the same push (throttled to once a minute; never lowers).
+    if (caps.cloud) backupNow({ rpc, secret: getSecret() });
     return true;
   } catch {
     return false;
   }
+}
+
+// ---- STEP 52: cloud save ----------------------------------------------------------------------
+/**
+ * On the menu: if this browser has a secret and the cloud save is AHEAD of local progress, import it
+ * and report { restored: true } (the caller reloads). Also re-learns the profile after a wipe.
+ */
+export async function restoreFromCloud() {
+  if (!LEADERBOARD_ENABLED) return { restored: false };
+  const secret = peekSecret();
+  if (!secret) return { restored: false };
+  const caps = await boardCaps();
+  if (!caps.cloud) return { restored: false };
+  const r = await restoreIfAhead({ rpc, secret });
+  if (r.id && r.username && !getMyProfile()) saveMyProfile({ id: r.id, username: r.username });
+  return r;
+}
+/** A recovery code typed on a new device: adopt that identity, then restore. */
+export async function adoptRecoveryCode(code) {
+  const secret = parseRecoveryCode(code);
+  if (!secret) return { ok: false, error: 'bad_code' };
+  const caps = await boardCaps();
+  if (!caps.cloud) return { ok: false, error: 'unavailable' };
+  let loaded;
+  try {
+    loaded = await rpc('lb_load', { p_secret: secret });
+  } catch {
+    return { ok: false, error: 'unknown_code' };
+  }
+  try {
+    localStorage.setItem(SECRET_KEY, secret);
+  } catch {
+    /* blocked */
+  }
+  writeSecretCookie(secret);
+  if (loaded && loaded.id) saveMyProfile({ id: loaded.id, username: loaded.username });
+  const r = await restoreIfAhead({ rpc, secret });
+  return { ok: true, restored: r.restored, username: loaded && loaded.username };
 }
 
 /** The top of the board + (if I have a name and I'm below it) my own row. */
