@@ -120,7 +120,24 @@ const AS_PLAYER = {
   room: async (page) => { await bootRoom(page, 'word-bomb', wbP); await page.locator('.room-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); },
   'ingame-word-bomb': async (page) => { await wbGame(page); await page.waitForTimeout(300); },
   'ingame-category-blitz': async (page) => { await cbGame(page); await page.waitForTimeout(300); },
-  'gameover-word-bomb': async (page) => { const m = await wbGame(page); await page.waitForTimeout(80); m.pushToClient({ type: 'game_over', payload: { winnerId: ME } }); await page.locator('.game-over-overlay').waitFor({ state: 'visible' }); await page.waitForTimeout(500); },
+  // A REAL won game (fine-tune oct2): five accepted words, then game_over — the zero-word shot made
+  // every reviewer read "the results screen shows no reward", which no real winner ever sees.
+  'gameover-word-bomb': async (page) => {
+    const m = await wbGame(page);
+    await page.waitForTimeout(4800); // the 3-2-1-GO overlay
+    const used = [];
+    for (const w of ['CAT', 'BATH', 'LATER', 'MATCH', 'STATION']) {
+      m.pushToClient({ type: 'word_result', payload: { accepted: true, word: w, playerId: ME } });
+      await page.waitForTimeout(140);
+      used.push(w);
+      m.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: wbP, combo: 'at', usedWords: used, timerSeconds: 30 } });
+      await page.waitForTimeout(140);
+    }
+    await page.waitForTimeout(400);
+    m.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
+    await page.locator('.game-over-overlay').waitFor({ state: 'visible' });
+    await page.waitForTimeout(900);
+  },
   'gameover-category-blitz': async (page) => { const m = await cbGame(page); await page.waitForTimeout(60); m.pushToClient({ type: 'game_over', payload: { winnerId: ME, finalScores: [{ id: ME, name: 'ZEKE', score: 30 }, { id: 'p2', name: 'RIVAL', score: 10 }] } }); await page.locator('.game-over-overlay').waitFor({ state: 'visible' }); await page.waitForTimeout(500); },
 };
 

@@ -116,3 +116,12 @@
   color: #2effe0;
   white-space: nowrap;
 }
+
+/* Andy N2/N3 (fine-tune oct2): on a screen with the height for it, what the run EARNED is set as
+   large as the result title beside it. Short screens keep --fs-h2 — the K.O. card's fit gates
+   (e2e/ko-screen) hold it there. */
+@media (min-height: 700px) {
+  .wins-earned-num {
+    font-size: var(--fs-h1);
+  }
+}
