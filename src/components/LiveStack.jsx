@@ -17,6 +17,7 @@
 // on THIS word" case with its own inactive list.
 import { memo } from 'react';
 import BoostPill from '../frenzy/BoostPill';
+import '../frenzy/MechanicScale.css';
 import { perWordRateNow } from '../progress/wins';
 import { roundWordXp } from '../progress/xp';
 import { formatRate, formatMultExact } from '../format';

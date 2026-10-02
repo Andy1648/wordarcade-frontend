@@ -2,6 +2,7 @@
 // builds the pure engine, and drives it through the shared clock hook + shell. Rules
 // live in fuse.js; this file is glue + presentation.
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import '../frenzy/MechanicScale.css';
 import { createFuseEngine } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { exampleContaining } from '../progress/teachExample.js';

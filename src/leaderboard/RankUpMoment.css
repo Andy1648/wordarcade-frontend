@@ -30,7 +30,7 @@
   font-size: var(--fs-panel);
   line-height: 1;
 }
-.lb-rankup-sub { font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; }
+.lb-rankup-sub { font-size: var(--fs-body); font-weight: 700; letter-spacing: 0.08em; } /* E5: was --fs-label */
 .lb-rankup-sr {
   position: absolute;
   width: 1px;
