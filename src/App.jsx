@@ -317,6 +317,12 @@ function drawLucky(oracle) {
   return oracle.next();
 }
 
+// BA1 (oct2): a returning player's PLAY SOLO vs the MEDIUM bot uses 'easy' (labelled HARD: 15 s start,
+// 6 s floor), not 'medium' (CRAZY: 4 s floor) — on CRAZY a median player won 16% (n=400) and 82% of
+// games ended inside 60 s; on HARD it is 44%. Multiplayer rooms are unchanged.
+// claude/batch-a/ba1/section-wb-race.md
+const SOLO_RETURNING_PRESET = 'easy';
+
 /**
  * Top-level view state manager + the single shared WebSocket connection
  * for the whole app.
@@ -1917,9 +1923,8 @@ function App() {
     setLobbyMode('word-bomb');
     send('create_room', { name, isPublic: false });
     send('set_game_type', { gameType: 'word-bomb' });
-    // Difficulty = the current menu default (first-timers get the gentler CHILL,
-    // returning players CRAZY... i.e. medium).
-    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    // Difficulty: first-timers get the gentler CHILL, returning players SOLO_RETURNING_PRESET.
+    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? SOLO_RETURNING_PRESET : 'chill' });
     send('add_bot', { difficulty: 'medium' });
     // setPlayerName is stable-enough; this effect fires once (guarded by the ref).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1979,7 +1984,7 @@ function App() {
     send('set_game_type', { gameType: VS_BOT_LAUNCH });
     if (VS_BOT_LAUNCH === 'word-bomb') {
       // A stranger's first game gets the gentler CHILL tier, exactly as the menu's create path does.
-      send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+      send('set_difficulty', { difficultyKey: hasPlayedBefore() ? SOLO_RETURNING_PRESET : 'chill' });
     } else {
       // Blitz: the host's pack selection, ordered after set_game_type on the same socket.
       send('set_packs', { packs: blitzPacks });
@@ -2181,7 +2186,7 @@ function App() {
     setLobbyMode('word-bomb');
     send('create_room', { name, isPublic: false });
     send('set_game_type', { gameType: 'word-bomb' });
-    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? 'medium' : 'chill' });
+    send('set_difficulty', { difficultyKey: hasPlayedBefore() ? SOLO_RETURNING_PRESET : 'chill' });
     send('add_bot', { difficulty: 'medium' });
     soloStartPendingRef.current = true;
     track('solo_started', { mode: 'word-bomb' });
