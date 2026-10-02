@@ -47,7 +47,7 @@ export const FUSE_MAX_LIVES = 3;
 // any pool, so the second rule is the only way it is ever reachable — and with it, it always is.
 // The tier (and so the fuse timing) is still picked by selectTier: steering changes WHICH fragment
 // of that tier, never how long you get.
-export const STEER_FROM = 19;
+export const STEER_FROM = 21;
 export const STEER_P = 0.75;
 export const STEER_MIN_WORDS = 3;
 export const STEER_LIFT = 3;
@@ -103,6 +103,7 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
     score: 0, // FUSE scores in words solved
     lives: FUSE_START_LIVES,
     used: new Set(),
+    servedFrags: new Set(), // BA1: fragments served this run (steering's no-repeat test — `used` holds WORDS)
     lettersUsed: new Set(), // the alphabet strip (a-z lit this cycle)
     stripsCleared: 0, // full a–z strips this run — each one triggers FUSE FRENZY (frenzy.js)
     fragment: null,
@@ -167,8 +168,17 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
     const lead = fragmentsLeadingTo(ch);
     // Same tier first; else the nearest tier that has one (easier first).
     const order = [tier, ...FUSE_TIERS.filter((t) => t !== tier)];
+    // BA1 (oct2): a fragment that CONTAINS the dark letter first — the 3x-lift "leads" for z/j/x/q
+    // come from obscure -ization / -ject words a median player never types (FRENZY died at 23-25
+    // lit in 62% of runs). Then the lift leads. Neither repeats a fragment this run (the old test
+    // checked fragments against the set of used WORDS, so it never excluded anything).
+    const fresh = (f) => f !== state.fragment && !state.servedFrags.has(f);
     for (const t of order) {
-      const cands = lead[t].filter((f) => f !== state.fragment && !state.used.has(f));
+      const direct = lead[t].filter((f) => f.includes(ch) && fresh(f));
+      if (direct.length) return direct[Math.floor(rng() * direct.length)];
+    }
+    for (const t of order) {
+      const cands = lead[t].filter(fresh);
       if (cands.length) return cands[Math.floor(rng() * cands.length)];
     }
     return null;
@@ -180,6 +190,7 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
     const tier = selectTier(state.wordsSolved, rng);
     state.tier = tier;
     state.fragment = steerFragment(tier) || bags[tier].draw();
+    state.servedFrags.add(state.fragment);
     state.shortPenalty = lenFactorNext < 1.0;
     state.shortFactor = lenFactorNext; // the exact factor applied (for a truthful UI readout)
     state.fuseMs = fuseBase(state.wordsSolved) * FUSE_TIER_MULT[tier] * lenFactorNext;
