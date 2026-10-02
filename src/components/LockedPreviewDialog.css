@@ -40,14 +40,21 @@
   right: 12px;
   width: 44px;
   height: 44px;
-  background: none;
-  border: none;
-  color: #f0ead9;
+  /* The app's canonical boxed close ✕ (same as the mode dialog / shop / stats) — it was a bare
+     glyph, the one close control in the game without its box (fine-tune oct2). */
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   font-size: var(--fs-body);
   line-height: 1;
   cursor: pointer;
 }
 .lp-close:hover { color: #ff4fa3; }
+.lp-close:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 
 .lp-lock {
   display: inline-flex;
