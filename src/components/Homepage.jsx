@@ -21,14 +21,13 @@ import { isModeLocked } from '../progress/modeAccess';
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import MenuFrame from './MenuFrame';
-import WorldBackdrop, { worldFor } from './WorldBackdrop';
 import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
 
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 import MarksPicker from './MarksPicker';
-import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt } from '../progress/marks';
+import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -552,7 +551,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // pop length, level-up burst). Crossing into a tier this browser has not seen yet slams the
   // new frame in once and names it; every level-up punches the corners once.
   // STEP 50: the shown tier is the BEST this player has reached — a rebirth resets the level, and
-  // the menu (frame + WORLD) must never move back a world for it.
+  // the menu (frame + the wall's scene) must never move back a tier for it.
   const [worldFrom] = useState(() => getSeenTier());
   const tier = Math.max(menuTier(xpProgress.level, rebirths), worldFrom);
   const [frameFresh, setFrameFresh] = useState(false);
@@ -563,7 +562,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (tier > Math.max(0, seen)) {
       setSeenTier(tier);
       setFrameFresh(true);
-      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier], (worldFor(tier) || {}).name || '');
+      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]);
     } else if (seen < tier) {
       setSeenTier(tier);
     }
@@ -879,7 +878,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         data-menu-tier={tier}
         data-nav={NAV_LAYOUT}
       >
-        <WorldBackdrop tier={tier} from={worldFrom} />
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
             menu's one piece of ambient motion now that the idle loops are gone.
@@ -934,36 +932,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
         <nav className="homepage-corner-nav" aria-label="Menu">
-          {/* REWARDS (Andy oct2): leads the stack while something is waiting to be claimed — the
-              count badge is the notification, and it goes away with the last claim. */}
-          {claims.length > 0 && (
-            <button
-              type="button"
-              className={`homepage-nav-btn is-rewards${navigating ? ' disabled' : ''}`}
-              onClick={() => setShowClaims(true)}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label={`Open rewards — ${claims.length} to claim`}
-            >
-              {/* The word on a tall screen; the phone strip's ★ where the nav shares the
-                  wordmark's row (STEP 58 short arrangement) and every pixel of it counts. */}
-              <span className="homepage-nav-word">REWARDS</span>
-              <span className="homepage-nav-glyph" aria-hidden="true">★</span>
-              <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>
-            </button>
-          )}
+          {/* NO SEPARATE REWARDS BUTTON (Andy oct2 A4): claims happen through STATS. While anything is
+              waiting, STATS wears the count badge and opens the claims; with nothing waiting it opens
+              Stats as always. */}
           {/* SHOP and STATS SWAPPED (Andy A4): STATS leads, SHOP sits last in the word stack —
               nearest the trophy + audio, where the eye lands after the cards. */}
           <button
             ref={statsLinkRef}
             type="button"
             className={`homepage-nav-btn is-stats${navigating ? ' disabled' : ''}`}
-            onClick={handleStats}
+            onClick={claims.length > 0 ? () => setShowClaims(true) : handleStats}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
-            aria-label="Open stats"
+            aria-label={claims.length > 0 ? `Open stats — ${claims.length} to claim` : 'Open stats'}
           >
             STATS
+            {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>}
           </button>
           {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
           {showRebirth && (
@@ -1083,7 +1067,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             freezes={streakFreezes}
             /* The slot is only drawn once there is something to put in it — an empty badge on a
                brand-new account is a question with no answer yet. */
-            markSlot={markUnlocked.length > 0}
+            /* Andy oct2 A3: once MARKS is revealed (LV10 / R1) the slot is always there. */
+            markSlot={markUnlocked.length > 0 || marksRevealed()}
             mark={markById(equippedMark)}
             markNew={marksNew}
             onMarkClick={() => {
@@ -1214,7 +1199,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
-          <ClaimsPanel onClose={() => setShowClaims(false)} onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }} />
+          <ClaimsPanel
+            onClose={() => setShowClaims(false)}
+            onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }}
+            onStats={() => { setShowClaims(false); handleStats(); }}
+          />
         </ScreenBoundary>
       )}
       {claimReveal && <ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} />}

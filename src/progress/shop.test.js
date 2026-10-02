@@ -162,9 +162,22 @@ test('canAffordAny is false only when literally nothing is affordable', () => {
   });
 });
 
-test('canAffordAny is true for a new player who can afford a cheap cosmetic', () => {
+test('Andy oct2 A5: a fresh LV1 profile with 0 wins has no shop dot', () => {
   withStorage({}, () => {
-    assert.equal(canAffordAny(150, getOwned()), true, '150 wins affords CHROME');
+    assert.equal(canAffordAny(0, getOwned()), false);
+  });
+});
+
+test('Andy oct2 A5: retired themes never light the dot (60 wins used to show one for MIDNIGHT)', () => {
+  withStorage({}, () => {
+    // 150 wins: above MIDNIGHT's old 60-win theme price, below KEY POWER I (200) and every cosmetic.
+    assert.equal(canAffordAny(150, getOwned()), false, 'nothing on the shelf is affordable → no dot');
+  });
+});
+
+test('canAffordAny is true for a new player who can afford KEY POWER I', () => {
+  withStorage({}, () => {
+    assert.equal(canAffordAny(10 ** 6, getOwned()), true);
   });
 });
 

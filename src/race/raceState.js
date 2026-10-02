@@ -16,6 +16,7 @@ export const RACE_REASON_COPY = {
   not_a_word: 'NOT IN THE DICTIONARY',
   race_not_live: 'RACE IS NOT LIVE',
   not_a_racer: "YOU'RE NOT IN THIS RACE",
+  wrong_word: 'TYPE THE WORD SHOWN',
 };
 
 export const EMPTY_RACE = null;
@@ -54,7 +55,9 @@ export function raceReducer(state, action) {
       return {
         status: 'countdown',
         seed: p.seed,
-        fragments: Array.isArray(p.fragments) ? p.fragments : [],
+        // 'words' = ENTIRE-WORD racing (Andy oct2 A6): fragments[i] IS the word to type.
+        variant: p.variant === 'words' ? 'words' : 'fragments',
+        fragments: Array.isArray(p.words) ? p.words : Array.isArray(p.fragments) ? p.fragments : [],
         tiers: Array.isArray(p.tiers) ? p.tiers : [],
         target: p.target || 12,
         capMs: p.capMs || 90000,
@@ -153,9 +156,11 @@ export function myFragment(state, myId) {
  * same order. Returns a reason or null. `used` is MY used words only — a rival's words never
  * block me. The dictionary is the server's call.
  */
-export function precheck(word, fragment, used) {
+export function precheck(word, fragment, used, variant = 'fragments') {
   const w = String(word || '').trim().toLowerCase();
   if (!fragment) return 'race_not_live';
+  // ENTIRE WORDS: the only legal word is the one shown, exactly (wordRace.js checkWord, variant words).
+  if (variant === 'words') return w === fragment ? null : 'wrong_word';
   if (w.length < 3) return 'too_short';
   if (!w.includes(fragment)) return 'missing_combo';
   if (used && used.has(w)) return 'already_used';

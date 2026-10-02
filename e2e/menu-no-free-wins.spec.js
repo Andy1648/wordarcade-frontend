@@ -96,7 +96,7 @@ test('a real reward on the menu (a level achievement) is CLAIMED — nothing pay
   const queued = r.claims.find((c) => c.id === 'ach-lv-15');
   expect(queued, `the ASCENDANT claim is pending (claims: ${JSON.stringify(r.claims)})`).toBeTruthy();
   // The REWARDS control carries the count, and claiming pays exactly the claim, with its toast.
-  const rewards = page.locator('.homepage-nav-btn.is-rewards, .hp-m-navbtn.is-rewards').first();
+  const rewards = page.locator('.homepage-nav-btn.is-stats, .hp-m-navbtn.is-stats').first(); // claims ride STATS (A4)
   await expect(rewards).toBeVisible();
   await rewards.click();
   await page.locator('.claims-panel').waitFor({ state: 'visible' });

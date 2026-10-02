@@ -18,7 +18,7 @@ export const KIND_COLOUR = {
   code: '#FFE94A',
 };
 
-export default function ClaimsPanel({ onClose, onReveal }) {
+export default function ClaimsPanel({ onClose, onReveal, onStats }) {
   const list = useClaims();
   const [paid, setPaid] = useState(null); // { key, wins } for the stamp after a claim
   const closeRef = useRef(null);
@@ -88,6 +88,12 @@ export default function ClaimsPanel({ onClose, onReveal }) {
               </button>
             )}
           </>
+        )}
+        {/* Claims ride the STATS button (Andy oct2 A4), so Stats itself is one tap on from here. */}
+        {onStats && (
+          <button type="button" className="claims-to-stats" onClick={onStats}>
+            OPEN STATS →
+          </button>
         )}
         {paid && (
           <div key={paid.key} className="claims-stamp" aria-live="polite">

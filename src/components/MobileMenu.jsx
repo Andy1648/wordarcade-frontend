@@ -296,29 +296,19 @@ export default function MobileMenu({
              zone. REBIRTH obeys the desktop gate exactly (Homepage passes null until it means
              something), and the strip re-flows to two slabs without it. */}
       <nav className="hp-m-nav" aria-label="Menu">
-        {/* REWARDS (Andy oct2) — only while a claim is waiting; the count is the notification. */}
-        {rewardsCount > 0 && onRewards && (
-          <button
-            type="button"
-            className={`hp-m-navbtn is-rewards${navigating ? ' is-disabled' : ''}`}
-            onClick={onRewards}
-            disabled={navigating}
-            aria-label={`Open rewards — ${rewardsCount} to claim`}
-          >
-            <span className="hp-m-gift" aria-hidden="true">★</span>
-            <span className="hp-m-count" aria-hidden="true">{rewardsCount}</span>
-          </button>
-        )}
+        {/* No separate REWARDS slab (Andy oct2 A4): STATS carries the claim count and opens the
+            claims while anything is waiting. */}
         {/* STATS before SHOP (Andy A4: swap their places) — same order as the desktop stack. */}
         <button
           ref={statsRef}
           type="button"
           className={`hp-m-navbtn is-stats${navigating ? ' is-disabled' : ''}`}
-          onClick={onStats}
+          onClick={rewardsCount > 0 && onRewards ? onRewards : onStats}
           disabled={navigating}
-          aria-label="Open stats"
+          aria-label={rewardsCount > 0 ? `Open stats — ${rewardsCount} to claim` : 'Open stats'}
         >
           STATS
+          {rewardsCount > 0 && <span className="hp-m-count" aria-hidden="true">{rewardsCount}</span>}
         </button>
         <button
           ref={shopRef}

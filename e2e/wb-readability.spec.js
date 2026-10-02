@@ -26,6 +26,7 @@
 // turn_update path e2e/wb-ring.spec.js and e2e/game-fill.spec.js drive.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { openStats } from './support/menu.js';
 
 const ME = 'e2e-player';
 const PLAYERS = [
@@ -379,7 +380,7 @@ test('every .selected / .active control clears 4.5:1', async ({ page }) => {
   // THE STATS SCREEN — .stats-tab.is-active.
   await page.goto('/?portal=1');
   await page.getByRole('img', { name: 'Type a Word' }).waitFor({ state: 'visible' });
-  await page.locator('.homepage-nav-btn.is-stats').click();
+  await openStats(page); // claims ride STATS (Andy oct2 A4)
   await page.locator('.stats-tab.is-active').first().waitFor({ state: 'visible', timeout: 15000 });
   all.push(...(await audit('stats')));
 

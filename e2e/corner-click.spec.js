@@ -14,7 +14,8 @@ import { gotoMenu } from './support/backendMock.js';
 // name -> { button selector, overlay that must open }
 const CONTROLS = [
   { name: 'SHOP', btn: '.homepage-nav-btn.is-shop', opens: '.shop-overlay' },
-  { name: 'STATS', btn: '.homepage-nav-btn.is-stats', opens: '.stats-overlay' },
+  // STATS opens the claims first while any wait (Andy oct2 A4), else Stats — either proves the click landed.
+  { name: 'STATS', btn: '.homepage-nav-btn.is-stats', opens: '.stats-overlay, .claims-panel' },
   { name: 'REBIRTH', btn: '.homepage-nav-btn.is-rebirth', opens: '.shop-overlay' },
   { name: 'audio', btn: '.homepage-corner-nav .audio-btn', opens: '.audio-panel' },
 ];

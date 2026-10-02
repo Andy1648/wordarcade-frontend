@@ -257,12 +257,18 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           </span>
         )
       )}
-      {/* NEW MARK (STEP 21): nothing worn but a mark just unlocked → the slot appears as a call to
-          action instead of staying hidden until the player finds the picker in Stats. */}
-      {variant !== 'mini' && markSlot && !mark && markNew && onMarkClick && (
-        <button type="button" className="menu-mark is-new" onClick={onMarkClick} aria-label="New mark unlocked. Choose a mark to wear">
-          <span className="menu-mark-name">NEW MARK</span>
-          <span className="homepage-shop-dot" aria-hidden="true" />
+      {/* NOTHING WORN → a MARKS button, ALWAYS (Andy oct2 A3). It used to render only while a new
+          mark was unseen, so opening the picker without wearing one made the button vanish until
+          the next unlock — "sometimes it shows, sometimes it doesn't". The dot says a mark is new. */}
+      {variant !== 'mini' && markSlot && !mark && onMarkClick && (
+        <button
+          type="button"
+          className={`menu-mark is-empty${markNew ? ' is-new' : ''}`}
+          onClick={onMarkClick}
+          aria-label={markNew ? 'New mark unlocked. Choose a mark to wear' : 'Marks. Choose a mark to wear'}
+        >
+          <span className="menu-mark-name">{markNew ? 'NEW MARK' : 'MARKS'}</span>
+          {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
         </button>
       )}
       <BarRow loud={variant !== 'mini'} level={level}>
@@ -799,15 +805,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     },
     // STEP 22: crossing into a new MENU TIER names the frame the player just earned. Reuses
     // the level-up element + starburst (one finite play each).
-    tierUp(name, worldName = '') {
+    tierUp(name) {
       const a = levelupAnimRef.current;
       if (!a) return;
       popCapRef.current = false;
       // The tier NAME is the headline (≤6 letters, like "LEVEL 9" it fits a 320px menu); "NEW
       // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
       if (levelTitleRef.current) levelTitleRef.current.textContent = name;
-      // STEP 50: a new tier is a new WORLD — name it.
-      if (levelSubRef.current) levelSubRef.current.textContent = worldName ? `NEW WORLD: ${worldName}` : 'NEW FRAME UNLOCKED';
+      if (levelSubRef.current) levelSubRef.current.textContent = 'NEW FRAME UNLOCKED';
       if (levelDetailRef.current) levelDetailRef.current.textContent = 'YOUR MENU LEVELED UP';
       a.cancel();
       a.play();

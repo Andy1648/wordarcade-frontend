@@ -2146,7 +2146,8 @@ function App() {
     setServerError('');
     setLobbyMode(WORD_RACE_ID);
     dispatchRace({ type: 'reset' });
-    send('race_quick_match', { name, pace: recentPace() || undefined });
+    // variant 'words' (Andy oct2 A6): ENTIRE-WORD racing — every racer types the same whole words.
+    send('race_quick_match', { name, pace: recentPace() || undefined, variant: 'words' });
     track('race_quick_match', {});
   }
 

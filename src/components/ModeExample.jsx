@@ -69,6 +69,17 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
         ))}
       </div>
     );
+  } else if (ex.kind === 'words') {
+    body = (
+      <div className="mode-ex-line">
+        {ex.words.map((w, i) => (
+          <span key={i} className="mode-ex-tok">
+            {i > 0 && <span className="mode-ex-sep" aria-hidden="true">·</span>}
+            <span className="mode-ex-word" style={i === 0 ? { color: accent } : undefined}>{w}</span>
+          </span>
+        ))}
+      </div>
+    );
   } else if (ex.kind === 'combo') {
     body = (
       <div className="mode-ex-line">

@@ -6,6 +6,9 @@
 // keeps it across reloads; ?race=0 turns it back off. With neither, the menu is byte-identical.
 
 export const WORD_RACE_ID = 'word-race';
+// ENTIRE-WORD racing (Andy oct2 A6) — mirrors the backend's wordRace.js WORDS_TARGET / WORDS_CAP_MS.
+export const RACE_WORDS = 25;
+export const RACE_CAP_MS = 60 * 1000;
 export const RACE_FLAG_KEY = 'taw.raceFlag';
 
 function readFlag() {

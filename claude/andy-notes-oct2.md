@@ -9,20 +9,25 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## Oct 2 DAY RUN goal (11:41 ET → 08:00 ET Oct 3). Order: P0 migration checks → P1 Andy's six → the rest
 ### P0 — migrations 005/006/007 (Andy ran them; verify on PRODUCTION)
-- [ ] P0.1 letters sort the board (lb_caps reports letters; board order = taw.letters)
-- [ ] P0.2 a Chinese name can be claimed; a Chinese slur is rejected (DB side, not just client)
-- [ ] P0.3 cloud save restores after clearing localStorage (recovery code / auto-restore)
-- [ ] P0.4 a test redeem code works once then refuses; test row deleted after
+- [x] P0.1 letters sort the board — prod lb_caps = {letters, cjk, cloud: true}; live board #1 is elol LV3 with 2,742 letters ahead of LV179 with 0 (view orders by lifetime_letters desc). 12:00 ET
+- [ ] P0.2 HALF (PR #105 merged — 008 still needs Andy to RUN it): Chinese slur rejected by the DB (lb_name_status('傻逼王') = blocked) ✔. Chinese CLAIM FAILS ON PROD: lb_name_status says ok but lb_claim raises username_shape — 005 widened the constraint + name check but never replaced lb_claim (004 still has the ASCII-only regex). FIX = supabase/migrations/008_claim_cjk.sql (PR #105) + migrationShape.test.js. **ANDY: paste 008 into the SQL editor and Run** — I re-test the claim on prod once it's applied.
+- [x] P0.3 cloud save on PROD (Playwright, typeaword.com): claimed zzcloud7b1486, menu backed up a 616-byte blob, secret cookie set; localStorage.clear() + reload → restored LV4 save + profile, taw.cloud.restored=1. 11:55 ET
+- [ ] P0.4 BLOCKED (needs Andy): lb_redeem is live (an unknown code answers bad_code) and the anon key cannot read or insert redeem_codes (401 — correct). I hold no admin credential, so I can't add the test row. **ANDY: Table Editor → redeem_codes → Insert: code ZZTEST-ONCE, wins 1, max_uses 1, active true.** I poll for it during the run, redeem it twice from a fresh device (expect ok, then already_used), and then you delete the row (anon can't delete either).
 
 ### P1 — Andy's six (outrank everything except P0; every word matters)
 - [ ] A1 WORLDS: revert the new world backdrops. SAME floating-word background as before, shifted to different positions per tier ("as if the scene moved"), same smooth ONE-transform swish. Keep the 24 border tiers. New art only if genuinely high quality (it isn't).
-- [ ] A2 Remove the "N online" count from the menu.
-- [ ] A3 MARKS button sometimes missing on Andy's laptop (1280x551, real LV27 profile). Find why (fit-math? load race?) and make it ALWAYS present.
-- [ ] A4 Remove the separate star/claim icon; claims happen via the STATS icon whenever it has a notification. Notification dots clearly larger (measure before/after).
-- [ ] A5 BUG: SHOP dot with nothing affordable. Dot only when something can actually be bought/claimed; test: fresh LV1 profile, 0 wins → no shop dot.
+- [x] A2 Remove the "N online" count from the menu — PR #106 (merged): LiveTicker empty at rest, only other players' moments.
+- [x] A3 MARKS button — CAUSE: not fit-math/race; the chip rendered only while a mark was WORN or a NEW mark unseen, so opening the picker without wearing one hid it until the next unlock (and an old save with no taw.marksOwned showed nothing). Now always present once MARKS is revealed (LV10/R1): worn → title chip, else MARKS (NEW MARK + dot when unseen). PR #108 (merged), marks.spec 6/6, claude/day-oct2/a3-marks-1280x551.png
+- [x] A4 ★ REWARDS button removed (desktop + phone); STATS wears the claim count and opens the claims while any wait. Measured: dots 10×10 → 20×20, count 22×22 → 30×30 (1280x551 / 1280x800 / 390x844) — claude/day-oct2/a4-before|after-*.png, e2e/claims-via-stats.spec.js. PR #110
+- [x] A5 SHOP dot — CAUSE: canAffordAny still counted the retired menu THEMES (gone from the shop since STEP 50), so 60+ wins lit the dot with nothing buyable (KEY POWER I is 200). Fixed + unit tests (fails on old code) + e2e/shop-dot.spec.js (fresh LV1 0 wins → no dot; 150 → no dot; 5,000 → dot). PR #107 (merged)
 - [ ] A6 RACE = ENTIRE-WORD racing (monkeytype/TypeRacer): same sequence of whole words for every racer, type each in full, advance; first to finish or most at the cap wins. Keep the game CARD exactly. Backend additive (new race variant; WB/Blitz untouched), unit-tested, prod WB smoke after deploy, revert via PR if it fails. Live 2-tab race on PROD: same words, same winner, progress <=250 ms apart. Payout via the existing pipeline, matches the card.
 
 - [x] A7 (Andy, added 12:40 ET) BOARD RANKS BY LIFETIME WORDS, not letters (letters began at #79, no backfill → everyone else showed 0). Andy re-sorted public.leaderboard by lifetime_words in Supabase (NOT reverted; recorded as 009_board_by_words.sql). PROD verified: 15 rows strictly descending by lifetime_words (#1 Daan 1,061 … elol 321 at #6 despite 2,742 letters). WORDS is the main stat on the board column + "YOU'D SHOW AS", the rank-up moment ("N WORDS · ON THE LEADERBOARD"), the claim prompt ("N WORDS · NO SIGN-IN…"); the ticker only names LV / rank moves (no stat). ranksAhead = words → level → rebirths (rank.test.js); boardMock + leaderboard / leaderboard-pull e2e updated (11/11). PR #109
+
+### Andy, added 13:05 ET (authorized)
+- RULE — BACKEND: test BEFORE merging: run the backend locally, drive 2 Playwright contexts (+ a bot) through the changed flow, then merge; after Render deploys, prod WB smoke; revert via PR if it fails. Applies to Blitz list-only and RACE.
+- [ ] B9.0 BLITZ: list-only ONLY for enumerable categories (BLITZ-ENUMERABILITY.tsv) whose lists can be made complete; REMOVE the ~270 open-ended ones entirely (list-only on an open category rejects correct answers — dinosaurs 8/8 rejected). Fewer categories is fine. No empty packs.
+- [ ] D1 Rewrite PROJECT-design-and-conventions.md to be true today: .wall-surface is homepage-only, Blitz list-only + AI BUILT ribbon, no Imposter, add RACE, sweep the rest vs main.
 
 ### P2 — STEP 9 Blitz list-only
 - [ ] B9.1 backend: only complete enumerable categories; judge removed from scoring; reason "NOT ON THE LIST"; 8 good + 8 junk unit tests per category
