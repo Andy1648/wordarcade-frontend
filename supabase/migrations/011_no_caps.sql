@@ -17,7 +17,8 @@
 -- submit) and "progress never goes down" — those are not caps on a value, they stop a forged jump.
 
 -- ---- profiles -------------------------------------------------------------------------------------
--- The view depends on the column type; drop and recreate it around the change (same definition as 009).
+-- The view depends on the column type; drop and recreate it around the change — with the LEVEL order
+-- Andy runs on prod (rebirths, level, words, created_at), the same as 009, so re-running never reverts it.
 drop view if exists public.leaderboard;
 
 alter table public.profiles drop constraint if exists profiles_wins_per_word_check;
@@ -47,7 +48,7 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 create view public.leaderboard with (security_invoker = true) as
-  select row_number() over (order by lifetime_words desc, level desc, rebirths desc, created_at asc) as rank,
+  select row_number() over (order by rebirths desc, level desc, lifetime_words desc, created_at asc) as rank,
          id, username, level, rebirths, lifetime_words, lifetime_letters, wins_per_word
     from public.profiles;
 grant select on public.leaderboard to anon, authenticated;

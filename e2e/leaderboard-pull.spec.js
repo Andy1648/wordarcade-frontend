@@ -98,20 +98,16 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await expect(page.locator('.lb-row')).toHaveCount(4);
   await page.locator('.lb-close').click();
 
-  // 4. I type past LexiLoop's 5,300 WORDS (the board ranks by lifetime words — Andy oct2) — the next
+  // 4. I level past LexiLoop's LV40 (the board ranks by rebirths, then LEVEL — Andy oct2) — the next
   //    menu visit pushes it and shows the rank-up.
-  await page.evaluate(() => {
-    const m = JSON.parse(localStorage.getItem('taw.mastery') || '{}');
-    m.chain = (m.chain || 0) + 6000;
-    localStorage.setItem('taw.mastery', JSON.stringify(m));
-  });
+  await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 41, into: 0 })));
   await page.goto('/?portal=1');
   await menuReady(page);
   const moment = page.locator('.lb-rankup');
   await expect(moment).toBeVisible({ timeout: 10000 });
   await expect(moment.locator('.lb-rankup-from')).toHaveText('#4');
   await expect(moment.locator('.lb-rankup-to')).toHaveText('#3');
-  await expect(moment.locator('.lb-rankup-sub')).toContainText('WORDS');
+  await expect(moment.locator('.lb-rankup-sub')).toContainText('LV 41');
   const trophy = page.getByRole('button', { name: /Open leaderboard/ });
   await expect(trophy).toHaveAttribute('aria-label', /rank went up/);
   await expect(moment).toBeHidden({ timeout: 5000 }); // finite: gone after its 2.2s

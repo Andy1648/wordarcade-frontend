@@ -88,11 +88,11 @@ test('cannot buy an unaffordable item; wins unchanged', () => {
 });
 
 test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', () => {
-  // v9: KEY POWER is priced in WORDS (keyTierCostAt) — T1 200, T2 510, T3 830 at R0.
+  // v8 restored (Andy oct2 KP2): T1 10, T2 60, T3 360 wins.
   const t1 = keyTierCostAt(1, 0);
   const t2 = keyTierCostAt(2, 0);
   const t3 = keyTierCostAt(3, 0);
-  assert.deepEqual([t1, t2, t3], [200, 510, 830]);
+  assert.deepEqual([t1, t2, t3], [10, 60, 360]);
   withStorage({ 'taw.wins': String(t1 + t2 + 100), 'taw.keytier': '0' }, (map) => {
     const r = buyKeyPower();
     assert.equal(r.ok, true);
@@ -116,17 +116,17 @@ test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', (
   });
 });
 
-test('buyKeyPower charges the REBIRTH-scaled price (rebirth never makes KEY POWER cheaper)', () => {
-  const r1Price = keyTierCostAt(1, 1); // ×2 at R1
-  assert.equal(r1Price, 2 * keyTierCostAt(1, 0));
-  withStorage({ 'taw.wins': String(r1Price - 10), 'taw.keytier': '0', 'taw.rebirths': '1' }, (map) => {
-    assert.equal(buyKeyPower().ok, false, 'the R0 price is not enough at R1');
+test('buyKeyPower charges the v8 flat wins price at any rebirth (Andy oct2 KP2)', () => {
+  const price = keyTierCostAt(1, 0);
+  assert.equal(keyTierCostAt(1, 1), price, 'v8 prices are flat across rebirths');
+  withStorage({ 'taw.wins': String(price - 10), 'taw.keytier': '0', 'taw.rebirths': '1' }, (map) => {
+    assert.equal(buyKeyPower().ok, false, 'one short');
     assert.equal(map.get('taw.keytier'), '0');
   });
-  withStorage({ 'taw.wins': String(r1Price), 'taw.keytier': '0', 'taw.rebirths': '1' }, (map) => {
+  withStorage({ 'taw.wins': String(price), 'taw.keytier': '0', 'taw.rebirths': '1' }, (map) => {
     const r = buyKeyPower();
     assert.equal(r.ok, true);
-    assert.equal(r.spent, r1Price);
+    assert.equal(r.spent, price);
     assert.equal(map.get('taw.wins'), '0');
   });
 });
@@ -170,12 +170,14 @@ test('Andy oct2 A5: a fresh LV1 profile with 0 wins has no shop dot', () => {
 
 test('Andy oct2 A5: retired themes never light the dot (60 wins used to show one for MIDNIGHT)', () => {
   withStorage({}, () => {
-    // 150 wins: above MIDNIGHT's old 60-win theme price, below KEY POWER I (200) and every cosmetic.
+    // 150 wins: above MIDNIGHT's old 60-win theme price; at KEY POWER T5 the next tier costs 77,760
+    // (v8), and every cosmetic is 6,000+ — nothing on the shelf is affordable → no dot.
+    localStorage.setItem('taw.keytier', '5');
     assert.equal(canAffordAny(150, getOwned()), false, 'nothing on the shelf is affordable → no dot');
   });
 });
 
-test('canAffordAny is true for a new player who can afford KEY POWER I', () => {
+test('canAffordAny is true for a new player who can afford KEY POWER I (10 wins, v8)', () => {
   withStorage({}, () => {
     assert.equal(canAffordAny(10 ** 6, getOwned()), true);
   });
