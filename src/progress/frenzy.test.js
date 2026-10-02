@@ -51,3 +51,12 @@ test('formatFrenzy is m:ss', () => {
   assert.equal(formatFrenzy(61_001), '1:02');
   assert.equal(formatFrenzy(0), '0:00');
 });
+
+import { isClutch, CLUTCH_MS } from './frenzy.js';
+test('CLUTCH: a word with 2.0 s or less left', () => {
+  assert.equal(CLUTCH_MS, 2000);
+  assert.equal(isClutch(1999), true);
+  assert.equal(isClutch(2000), true);
+  assert.equal(isClutch(2001), false);
+  assert.equal(isClutch(null), false);
+});

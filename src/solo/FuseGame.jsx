@@ -9,7 +9,8 @@ import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, bankWeight, awardWins, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
-import { startFrenzy, formatFrenzy, FRENZY_MULT, FRENZY_TRIGGER_WORDS } from '../progress/frenzy.js';
+import { startFrenzy, formatFrenzy, FRENZY_MULT, FRENZY_TRIGGER_WORDS, isClutch, CLUTCH_WORDS } from '../progress/frenzy.js';
+import ClutchBurst from '../frenzy/ClutchBurst.jsx';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock.js';
 import FrenzyBurst from '../frenzy/FrenzyBurst.jsx';
 import { cappedWordMult } from '../progress/xp.js';
@@ -193,6 +194,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   const frenzy = useFrenzyClock();
   const stripsRef = useRef(0);
   const [burst, setBurst] = useState(null); // { key, bonus } while the trigger moment plays
+  const [clutch, setClutch] = useState(null); // { key, leftMs, bonus } — STEP 56 CLUTCH moment
   const fuseBankedRef = useRef(0);
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
@@ -235,6 +237,13 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       });
       fuseBankedRef.current = solved;
       if (banked > 0) setWinsEarned((prev) => prev + banked);
+      // STEP 56 — CLUTCH: this word landed with ≤2 s on the fuse.
+      const leftMs = g.lastLeftMsRef ? g.lastLeftMsRef.current : null;
+      if (isClutch(leftMs)) {
+        const cb = Math.round(CLUTCH_WORDS * perWordWins({ mode: 'fuse' }));
+        if (cb > 0) grantWins(cb, 'CLUTCH!', { mode: 'fuse', detail: 'clutch' });
+        setClutch({ key: Date.now(), leftMs, bonus: cb });
+      }
       if ((s.stripsCleared || 0) > stripsRef.current) {
         stripsRef.current = s.stripsCleared;
         const fz = startFrenzy();
@@ -331,6 +340,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
     <>
     <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
     {burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={() => setBurst(null)} />}
+    {clutch && !burst && <ClutchBurst key={clutch.key} leftMs={clutch.leftMs} bonus={clutch.bonus} onDone={() => setClutch(null)} />}
     <SoloShell
       mode="fuse"
       accent={ACCENT}

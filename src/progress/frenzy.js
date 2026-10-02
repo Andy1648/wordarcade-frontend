@@ -82,3 +82,13 @@ export function formatFrenzy(ms) {
 export function frenzyMinutes() {
   return Math.round((FRENZY_MS + frenzyBonusMs()) / 60000);
 }
+
+// ---- FUSE CLUTCH (STEP 56) ----------------------------------------------------------------------
+// A word accepted with CLUTCH_MS or less on the fuse is a CLUTCH: a bonus of CLUTCH_WORDS words at
+// the current FUSE rate (so it is ×5 inside a FRENZY), paid through the labelled door — itemised on
+// the run's receipt as "CLUTCH!".
+export const CLUTCH_MS = 2000;
+export const CLUTCH_WORDS = 3;
+export function isClutch(leftMs) {
+  return Number.isFinite(leftMs) && leftMs >= 0 && leftMs <= CLUTCH_MS;
+}

@@ -94,6 +94,8 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   const [reason, setReason] = useState('');
   const [restartArmed, setRestartArmed] = useState(false);
   const [best, setBest] = useState(() => getPB(pbKey));
+  // STEP 56: ms left on the clock when the last accepted word landed (FUSE's CLUTCH reads it).
+  const lastLeftMsRef = useRef(null);
 
   const engine = engineRef.current;
   const tMax = turnBudgetRef.current || adapter.budgetMs(engine);
@@ -184,7 +186,9 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     if (r.ok) {
       // Record how much of the clock was left when this word landed (share-card glyph).
       const budget = turnBudgetRef.current || 1;
-      const left = (budget - (now() - turnStartRef.current)) / budget;
+      const leftMs = budget - (now() - turnStartRef.current);
+      const left = leftMs / budget;
+      lastLeftMsRef.current = armedRef.current ? Math.max(0, leftMs) : null;
       tierLogRef.current.push(tierForClockLeft(left));
       comboRef.current = comboAccept(comboRef.current); // grow the wins combo
       sndWordAccepted(comboRef.current.streak); // Job 11: accept chime, pitch climbs with the combo
@@ -266,6 +270,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     onInput,
     onSubmit,
     remaining,
+    lastLeftMsRef,
     tMax,
     redZone,
     sillKey,
