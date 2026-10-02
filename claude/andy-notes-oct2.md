@@ -9,10 +9,10 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## Oct 2 DAY RUN goal (11:41 ET → 08:00 ET Oct 3). Order: P0 migration checks → P1 Andy's six → the rest
 ### P0 — migrations 005/006/007 (Andy ran them; verify on PRODUCTION)
-- [ ] P0.1 letters sort the board (lb_caps reports letters; board order = taw.letters)
-- [ ] P0.2 a Chinese name can be claimed; a Chinese slur is rejected (DB side, not just client)
-- [ ] P0.3 cloud save restores after clearing localStorage (recovery code / auto-restore)
-- [ ] P0.4 a test redeem code works once then refuses; test row deleted after
+- [x] P0.1 letters sort the board — prod lb_caps = {letters, cjk, cloud: true}; live board #1 is elol LV3 with 2,742 letters ahead of LV179 with 0 (view orders by lifetime_letters desc). 12:00 ET
+- [ ] P0.2 HALF: Chinese slur rejected by the DB (lb_name_status('傻逼王') = blocked) ✔. Chinese CLAIM FAILS ON PROD: lb_name_status says ok but lb_claim raises username_shape — 005 widened the constraint + name check but never replaced lb_claim (004 still has the ASCII-only regex). FIX = supabase/migrations/008_claim_cjk.sql (PR #105) + migrationShape.test.js. **ANDY: paste 008 into the SQL editor and Run** — I re-test the claim on prod once it's applied.
+- [x] P0.3 cloud save on PROD (Playwright, typeaword.com): claimed zzcloud7b1486, menu backed up a 616-byte blob, secret cookie set; localStorage.clear() + reload → restored LV4 save + profile, taw.cloud.restored=1. 11:55 ET
+- [ ] P0.4 BLOCKED (needs Andy): lb_redeem is live (an unknown code answers bad_code) and the anon key cannot read or insert redeem_codes (401 — correct). I hold no admin credential, so I can't add the test row. **ANDY: Table Editor → redeem_codes → Insert: code ZZTEST-ONCE, wins 1, max_uses 1, active true.** I poll for it during the run, redeem it twice from a fresh device (expect ok, then already_used), and then you delete the row (anon can't delete either).
 
 ### P1 — Andy's six (outrank everything except P0; every word matters)
 - [ ] A1 WORLDS: revert the new world backdrops. SAME floating-word background as before, shifted to different positions per tier ("as if the scene moved"), same smooth ONE-transform swish. Keep the 24 border tiers. New art only if genuinely high quality (it isn't).
