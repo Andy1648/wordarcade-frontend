@@ -46,6 +46,15 @@ export function isStaleChunkError(err) {
  * synchronous — a write that lands after navigation begins would never persist.
  */
 export function reloadOnceForStaleChunk() {
+  // OFFLINE IS NOT A STALE BUILD (Batch A failure states, Andy oct2). With the network off, App's idle
+  // prefetch of a route chunk fails exactly like a stale chunk, and the reload it triggered landed the
+  // player on the browser's offline error page mid-run. Offline: don't reload, and don't spend the
+  // tab's one retry — the next failed import after the network returns can still use it.
+  try {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
+  } catch {
+    /* no navigator: fall through */
+  }
   try {
     if (sessionStorage.getItem(RELOAD_FLAG_KEY)) return false; // already spent this tab's one retry
     sessionStorage.setItem(RELOAD_FLAG_KEY, '1');
@@ -73,8 +82,10 @@ export function reloadOnceForStaleChunk() {
 export function installChunkReloadGuard() {
   if (typeof window === 'undefined') return;
   window.addEventListener('vite:preloadError', (e) => {
-    if (e && typeof e.preventDefault === 'function') e.preventDefault();
-    reloadOnceForStaleChunk();
+    // preventDefault() makes Vite's helper RESOLVE the import to undefined instead of rejecting — only
+    // do that when a reload is really happening. Otherwise (offline, or the retry already spent) let it
+    // reject, so the caller's own error handling runs instead of destructuring `undefined`.
+    if (reloadOnceForStaleChunk() && e && typeof e.preventDefault === 'function') e.preventDefault();
   });
   window.addEventListener('unhandledrejection', (e) => {
     if (isStaleChunkError(e && e.reason)) reloadOnceForStaleChunk();

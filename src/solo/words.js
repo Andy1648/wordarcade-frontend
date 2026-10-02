@@ -66,7 +66,19 @@ export function loadSoloAcceptExt() {
   extState = 'loading';
   extPromise = (async () => {
     if (!cache) await loadSoloWords(); // base must exist to merge into
-    const { acceptExtRaw } = await import('./wordsAcceptExt.js');
+    let mod = null;
+    try {
+      mod = await import('./wordsAcceptExt.js');
+    } catch {
+      mod = null;
+    }
+    if (!mod || typeof mod.acceptExtRaw !== 'string') {
+      // Offline / failed fetch: keep the base set, and let the NEXT run-end try again.
+      extState = 'idle';
+      extPromise = null;
+      return cache;
+    }
+    const { acceptExtRaw } = mod;
     // IN SLICES (STEP 59): 182k words added in one loop was a single ~150 ms task (620 ms at 4x CPU
     // throttle) that froze the run-over card's entrance on every CHAIN / FUSE death. Each slice is
     // a few ms; the set only ever grows, so a lookup mid-merge is at worst the old (smaller) answer.
