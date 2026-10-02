@@ -402,14 +402,22 @@
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  /* STEP 50: a flat PLATE behind the card so LEVEL N never sits on the mode-card art unreadably. */
+  /* STEP 50: a flat PLATE behind the card so LEVEL N never sits on the mode-card art unreadably.
+     Never wider than the fx layer it lives in (it would be clipped at 360px): it wraps instead. */
   padding: 10px 22px 12px;
+  /* the card is held at ×1.2 (MenuXp levelup keyframes), so its LAID-OUT width is capped at the
+     fx layer ÷ 1.2 — the scaled card then still fits inside the layer that clips it */
+  max-width: calc((100% - 24px) / 1.2);
+  box-sizing: border-box;
   background: #1a0b2e;
   border: 4px solid #a8950f;
   border-radius: 8px;
   box-shadow: 6px 6px 0 #000;
 }
 .menu-xp-levelup-title {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   font-size: var(--fs-hero);
