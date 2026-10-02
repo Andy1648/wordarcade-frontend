@@ -18,15 +18,14 @@
   place-items: center;
 }
 
-/* Dim + light blur behind the dialog so the menu reads as "pushed back". Fades in
-   via the .is-in class (added a frame after mount). Clicking it closes. */
+/* A FLAT dim behind the dialog so the menu reads as "pushed back" — no blur (CLAUDE.md: flat
+   colours only, no blur; the fine-tune reviewer flagged it, and a full-viewport backdrop blur is
+   also the most expensive thing a fade can paint). Fades in via .is-in. Clicking it closes. */
 .mode-dialog-scrim {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: rgba(13, 6, 24, 0.62);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(13, 6, 24, 0.8);
   opacity: 0;
   transition: opacity 0.3s ease;
   cursor: pointer;

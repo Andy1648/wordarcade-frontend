@@ -1545,3 +1545,12 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   top: 10px;
   left: 10px;
 }
+
+/* SHORT LAPTOP (fine-tune oct2, loop B): at 1280x551 the second letter row (n–z) was cut by the
+   bottom edge. The FRENZY goal line steps out (the HUD's FRENZY chip and the dialog carry it) and
+   the strip packs tighter, so all 26 letters fit. */
+@media (min-width: 701px) and (max-height: 600px) {
+  .solo-frenzy-goal { display: none; }
+  .solo-strip-big { max-width: 440px; gap: 4px; }
+  .solo-strip-big span { width: calc((100% - 13 * 4px) / 13); border-width: 3px; box-shadow: 3px 3px 0 #000; }
+}

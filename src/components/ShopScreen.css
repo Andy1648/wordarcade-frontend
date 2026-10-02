@@ -820,3 +820,16 @@
 .shop-codes-msg.is-bad {
   color: #ff6b3d;
 }
+
+/* REBIRTH ON A SHORT LAPTOP (fine-tune oct2, loop B): at 1280x551 the REBIRTH button was sliced by
+   the panel's bottom edge under the hero and the LOSE / KEEP / GAIN list. The button rides the
+   bottom of the scrolling body (always reachable), and the hero steps down a size. */
+.shop-rebirth {
+  position: sticky;
+  bottom: 8px;
+  z-index: 2;
+}
+@media (max-height: 700px) {
+  .shop-rb-hero { padding: 8px 12px; }
+  .shop-rb-hero-val { font-size: var(--fs-h1); }
+}

@@ -43,7 +43,7 @@
    columns and lets the ellipsized labels shrink. */
 /* auto-fill + minmax(128px,1fr): 3 columns on wide dialogs, 2 on a phone — so pill
    labels always have room instead of collapsing to 0 and clipping (fix/qa-sweep §7). */
-.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr)); /* 168 (was 128): a 6-letter pack name fits on ONE line beside its emoji + count — at 128 MOVIES broke as MO/VI/ES (fine-tune oct2) */ gap: 10px; width: 100%; }
+.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); /* 230 (was 128): the longest pack name (LITERATURE) fits on ONE line beside its emoji + count — at 128 MOVIES broke as MO/VI/ES; nowrap below means a narrower column would CLIP (viewport-integrity). Two columns on a laptop dialog, one on a phone. */ gap: 10px; width: 100%; }
 
 /* ============================ MOTION KEYFRAMES ============================ */
 /* ONE select-pop — a ~180ms overshoot on toggle. */
