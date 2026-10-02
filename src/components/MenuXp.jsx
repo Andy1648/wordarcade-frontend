@@ -574,7 +574,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           { transform: `${CENTER}rotate(-3deg) scale(1.26)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
           { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
           { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
-          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 0, offset: 1 }, // 1500ms — fade out
+          // ends back at ×1: `fill: both` HOLDS this frame, and a held ×1.2 box (invisible, but still
+          // laid out) overhung the fx layer at 360px (viewport-integrity).
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 }, // 1500ms — fade out
         ],
         { duration: LEVELUP_MS, easing: 'linear', fill: 'both' } // ease per-keyframe (below), NOT per-effect
       );
