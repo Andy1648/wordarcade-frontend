@@ -189,7 +189,10 @@ test.describe('Word Bomb scoring (item 2)', () => {
     // The point of THIS test is attribution under the turn_update race — all 3 must still score.
     // Poll for the payout (see the happy-path test): the fixed-wait read of the async game_over
     // payout was the intermittent-flake source, not the race logic itself.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(25);
+    // ...plus the WINNER BONUS (O12), exactly as the happy path: game_over names ME the winner, so it
+    // adds +50% of the game's 25 = 13. Expecting a bare 25 only ever passed when the poll happened to
+    // read the balance in the instant BEFORE the bonus landed (CI flake on #129/#132/#133: received 38).
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(25 + 13);
   });
 
   test('a server already_used rejection shows a visible, specific message', async ({ page }) => {

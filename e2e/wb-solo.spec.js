@@ -89,7 +89,7 @@ for (const vp of VIEWPORTS) {
         .toEqual(['create_room', 'set_game_type', 'set_difficulty', 'add_bot']);
       const frames = mock.sentFrames();
       expect(frames.find((f) => f.type === 'set_game_type').payload.gameType).toBe('word-bomb');
-      expect(frames.find((f) => f.type === 'set_difficulty').payload.difficultyKey).toBe(played ? 'medium' : 'chill');
+      expect(frames.find((f) => f.type === 'set_difficulty').payload.difficultyKey).toBe(played ? 'easy' : 'chill');
       expect(frames.find((f) => f.type === 'add_bot').payload.difficulty).toBe('medium');
       expect(mock.sentTypes(), 'no start_game before the bot is seated').not.toContain('start_game');
 
@@ -98,17 +98,17 @@ for (const vp of VIEWPORTS) {
       const human = { id: 'e2e-player', name: create.payload.name, lives: 3, isHost: true };
       const bot = { id: 'bot-1', name: 'BOTTY', lives: 3, isBot: true };
       mock.pushToClient({ type: 'room_created', payload: { code } });
-      mock.pushToClient({ type: 'room_update', payload: { code, gameType: 'word-bomb', hostId: human.id, difficultyKey: played ? 'medium' : 'chill', players: [human] } });
+      mock.pushToClient({ type: 'room_update', payload: { code, gameType: 'word-bomb', hostId: human.id, difficultyKey: played ? 'easy' : 'chill', players: [human] } });
       await page.waitForTimeout(150);
       expect(mock.sentTypes(), 'still no start_game with only the human seated').not.toContain('start_game');
-      mock.pushToClient({ type: 'room_update', payload: { code, gameType: 'word-bomb', hostId: human.id, difficultyKey: played ? 'medium' : 'chill', players: [human, bot] } });
+      mock.pushToClient({ type: 'room_update', payload: { code, gameType: 'word-bomb', hostId: human.id, difficultyKey: played ? 'easy' : 'chill', players: [human, bot] } });
       await mock.waitForSent('start_game', 10000);
       expect(mock.sentTypes().filter((t) => t === 'start_game'), 'start_game exactly once').toHaveLength(1);
 
       mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
       mock.pushToClient({
         type: 'turn_update',
-        payload: { currentPlayerId: human.id, players: [human, bot], combo: 'ing', timerSeconds: 20, maxLives: 3, round: 1, difficultyKey: played ? 'medium' : 'chill', usedWords: [], usedAnswers: [] },
+        payload: { currentPlayerId: human.id, players: [human, bot], combo: 'ing', timerSeconds: 20, maxLives: 3, round: 1, difficultyKey: played ? 'easy' : 'chill', usedWords: [], usedAnswers: [] },
       });
       await expect(page.locator('.game-stage--wb')).toBeVisible({ timeout: 10000 });
       await expect(page.locator('.game-input')).toBeVisible();

@@ -1251,3 +1251,9 @@ html[data-beat='true'] .homepage-beat-glow {
 
 /* MENU SECRET sticker (Job 9) lives in SecretSticker.css (the old .secret-stamp was
    pointer-events:none, so its dismiss click fell through and opened the card beneath). */
+
+/* The trophy's rank-news dot is CYAN — the pink dot already means "something in the shop is
+   affordable", and one colour must not mean two things. (Moved here from RankUpMoment.css when the
+   moment became a lazy chunk: the dot is always on the menu, the moment almost never.) */
+.homepage-shop-dot.is-board-news,
+.hp-m-dot.is-board-news { background: #2EFFE0; }
