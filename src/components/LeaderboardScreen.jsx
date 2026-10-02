@@ -372,9 +372,12 @@ export default function LeaderboardScreen({ onBack }) {
           )}
           {LEADERBOARD_ENABLED && view === 'all' && (
             <>
-              <div className="lb-cols" aria-hidden="true">
-                <span>#</span><span>PLAYER</span><span className="lb-num">LEVEL</span><span className="lb-num">WINS/WORD</span>
-              </div>
+              {/* fine-tune (oct2 evening): no column headers over an error with nothing under them */}
+              {!(loadError && board.rows.length === 0) && (
+                <div className="lb-cols" aria-hidden="true">
+                  <span>#</span><span>PLAYER</span><span className="lb-num">LEVEL</span><span className="lb-num">WINS/WORD</span>
+                </div>
+              )}
               {loading && board.rows.length === 0 && <p className="lb-note">LOADING THE BOARD…</p>}
               {loadError && <p className="lb-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb-link-btn" onClick={load}>RETRY</button></p>}
               <ol className="lb-list">
