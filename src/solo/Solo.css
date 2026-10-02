@@ -1555,3 +1555,14 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   .solo-strip-big { max-width: 440px; gap: 4px; }
   .solo-strip-big span { width: calc((100% - 13 * 4px) / 13); border-width: 3px; box-shadow: 3px 3px 0 #000; }
 }
+
+/* B3 — BIGGER TEXT WHILE PLAYING (Andy oct2). The in-run HUD and the line under the hero (what the
+   current fragment / letter IS) step up from --fs-label to --fs-body; the death card's killed-by and
+   recent-links lines too. */
+.solo-hud,
+.solo-hud .solo-stat span,
+.solo-hero-cap,
+.solo-death-killed,
+.solo-death-links {
+  font-size: var(--fs-body);
+}

@@ -6547,3 +6547,24 @@ html[data-beat='true'] .wb-belly {
     gap: 10px;
   }
 }
+
+/* B3 — BIGGER TEXT WHILE PLAYING (Andy oct2: "bigger fonts generally while playing"). Everything a
+   player READS mid-round steps up from --fs-label (13px) to --fs-body (16–18px): the fragment's
+   label, the used-word strip, the kill feed and the MATCH facts. Seat names stay at the label size:
+   the ring's name caps are measured for it (a bigger RIVAL clipped at 1163x501). Labels that only
+   name a section keep the label size. One block, last in the file, so it is the one place to look. */
+.game-combo-label,
+.game-used-chip,
+.game-stage--wb .game-used-chip,
+.game-used-empty,
+.kill-feed-text,
+.kill-feed-empty,
+.wb-status-k,
+.wb-status-v,
+.player-status {
+  font-size: var(--fs-body);
+}
+/* ...and the bigger fragment label keeps clear of the fragment under it (wb-text-overlap). */
+.game-combo-label {
+  margin-bottom: 3px;
+}
