@@ -107,7 +107,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] H2 Simplified where there was no headroom: beat sync no longer re-renders App or restyles <html> per beat (desktop menu typing 116 → 148 frames / 4 s); CHAIN/FUSE run-over hitch 700 → 200 ms / 683 → 67 ms. Headroom: phone + in-game multiplayer ≤1% long frames — this cycle's new one-shots (CLUTCH, FRENZY, WINNER row, world swish) live there; no new menu animation (it is the one screen over budget)
 
 ## STEP 60 — Fine-tune loop
-- [ ] T1 IN PROGRESS — claude/finetune/scores.md "Oct 2 loop": O0 4.87 → O1 5.61 → O2 5.89; loop A closed by its stop rule (+0.28 < 0.3); loop B running (Andy /goal: keep going until 08:00 ET)
+- [ ] T1 IN PROGRESS — claude/finetune/scores.md: loop A O0 4.87 → O1 5.61 → O2 5.89 (PR #88); loop B O3 6.11 → O4 6.41 → O5 6.48 (PRs #88, #89); both closed by the < 0.3 stop rule; loop C running from C0 6.35 (Andy /goal: keep going until 08:00 ET)
 
 ## STEP 61 — Redeem codes (merged PR #87, 1d26db6)
 - [x] R1 CODES entry at the end of the shop: one field + REDEEM + one answer line; a good code lands in REWARDS to claim (never pays on its own) — e2e/redeem-codes.spec.js, claude/codes/shop-codes-390.png, shop-codes-1280.png

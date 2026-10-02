@@ -182,7 +182,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
         <div
           className="mode-dialog-bg"
           aria-hidden="true"
-          style={{ background: `linear-gradient(160deg, ${mode.bg[0]}, ${mode.bg[1]})` }}
+          // FLAT FACETS, not a fade (fine-tune oct2, loop C: the colour-to-black fade broke the flat-colour
+          // rule): the mode colour, then a hard-edged darker band — two flat fills, one hard edge.
+          style={{ background: `linear-gradient(160deg, ${mode.bg[0]} 0 56%, ${mode.bg[1]} 56% 100%)` }}
         >
           <ModeDialogBackground mode={modeKey} />
           <div className="mode-dialog-legibility" />

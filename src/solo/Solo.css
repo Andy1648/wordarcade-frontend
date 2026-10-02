@@ -626,7 +626,7 @@
   text-overflow: ellipsis;
 }
 .solo-input::placeholder {
-  color: #6b5a86;
+  color: #a99bc8; /* fine-tune oct2: #6b5a86 was ~2.4:1 and read as a DISABLED field; ~6:1 now */
   text-transform: none;
   letter-spacing: normal;
   /* smaller than the typed text so the (longer) hint always fits inside the padded box */

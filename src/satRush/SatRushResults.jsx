@@ -112,7 +112,7 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
 
         {/* WINS EARNED — the same second number every mode's run-over card has. */}
         <div className="sr-winsline" aria-label={`${finalAnte} wins earned`}>
-          <b>+{fmt(ante)}</b> wins earned
+          {finalAnte > 0 ? <><b>+{fmt(ante)}</b> wins earned</> : <>no wins earned — capture 3 to start the bounty</>}
         </div>
 
         {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
