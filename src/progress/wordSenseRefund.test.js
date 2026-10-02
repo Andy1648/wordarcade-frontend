@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import {
   refundWordSense, wordSenseRefundAmount, WORDSENSE_KEY, WORDSENSE_REFUND_KEY, WORDSENSE_MAX_TIER,
 } from './wordSenseRefund.js';
-import { keyTierCostAt } from './xp.js';
 
 function withStorage(seed, fn, { throwOnSet = false } = {}) {
   const map = new Map(Object.entries(seed || {}));
@@ -45,10 +44,11 @@ test('the refund is the sum of the frozen v8 prices actually paid', () => {
   assert.equal(wordSenseRefundAmount(undefined), 0);
 });
 
-test('the refund is decoupled from the live (v9) KEY POWER price', () => {
-  // If this ever matches the v9 ladder again, the refund has silently drifted off what was paid.
-  assert.notEqual(wordSenseRefundAmount(1), keyTierCostAt(1, 0));
-  assert.notEqual(wordSenseRefundAmount(3), keyTierCostAt(1, 0) + keyTierCostAt(2, 0) + keyTierCostAt(3, 0));
+test('the refund is the v8 prices actually PAID — its own table, whatever the live KEY POWER price is', () => {
+  // KEY POWER is back on v8 prices (Andy oct2 KP2), so live and paid coincide again; the refund still
+  // reads its own fixed table (10 / 60 / 360 …), so a future price change can never move it.
+  assert.equal(wordSenseRefundAmount(1), 10);
+  assert.equal(wordSenseRefundAmount(3), 430);
 });
 
 test('a player who bought tiers gets every win back, and the tier key is cleared', () => {

@@ -7,14 +7,14 @@ import { menuReady } from './support/menu.js';
 import { mockBoard } from './support/boardMock.js';
 
 const seed = (n) => Array.from({ length: n }, (_, i) => ({
-  id: `seed-${i + 1}`, username: `Player${i + 1}`, level: 50, rebirths: 0, lifetime_words: 10000 - i * 100, wins_per_word: 10,
+  id: `seed-${i + 1}`, username: `Player${i + 1}`, level: 60 - i, rebirths: 0, lifetime_words: 10000 - i * 100, wins_per_word: 10,
 }));
 
 test('the board shows 10 rows; a claimed player at #12 gets a pinned row with that rank', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await installBackendMock(page);
   const rows = [...seed(15)];
-  rows.splice(11, 0, { id: 'me-1', username: 'Typer_47', level: 30, rebirths: 0, lifetime_words: 8950, wins_per_word: 5 });
+  rows.splice(11, 0, { id: 'me-1', username: 'Typer_47', level: 49, rebirths: 0, lifetime_words: 8950, wins_per_word: 5 });
   await mockBoard(page, rows);
   await page.addInitScript(() => {
     localStorage.setItem('taw.seenMenuSpotlight', '1');

@@ -18,6 +18,9 @@ import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth a
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
 import RedeemCodes from './RedeemCodes';
+import RebirthCeremony from './RebirthCeremony';
+import { ownedMarkIds } from '../progress/marks';
+import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { LEADERBOARD_ENABLED } from '../leaderboard/client';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
@@ -74,6 +77,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     .sort((a, b) => a.price - b.price)[0] || null;
 
   const [reveal, setReveal] = useState(null);
+  const [ceremony, setCeremony] = useState(null); // BB1: the kept-vs-reset rebirth ceremony
   const refresh = () => {
     setWins(getWins());
     setOwned(new Set(getOwned()));
@@ -178,21 +182,26 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   };
   const confirmRebirth = () => {
     const gained = nextMult;
+    const fromLevel = level;
     // Zeroes xp (HEAD START may lift the new climb), pays the stars for how far past the gate the
     // player went, queues the REBIRTH N celebration + any layer-unlock claim (stars.js).
-    const { stars: starsGot } = rebirthWithStars();
+    const { rc, stars: starsGot } = rebirthWithStars();
     sndRebirth(); // Job 11: rebirth swell
     { const n = getRebirths(); evRebirth(n); refreshSessionProps({ rebirths: n }); } // analytics
     setConfirming(false);
-    // §2 rebirth reveal (700ms) with the new multiplier stamped large, THEN close.
-    setReveal({
-      kind: 'rebirth',
-      name: `×${formatMult(gained)}`,
-      blurb: `Everything you earn from here is multiplied by ${formatMult(gained)}.${starsGot ? ` +${starsGot} ★ for STAR PERKS.` : ''}`,
-      coin: null, // a rebirth spends LEVELS, not wins — no price pill
-      colour: '#9A1AFF',
-      onClose: onBack,
-    });
+    // BB1 (Andy oct2): a ceremony that SHOWS kept vs reset with the player's real numbers — read
+    // AFTER the rebirth, so every KEPT value is provably what survived it.
+    let words = 0;
+    for (const m of MASTERY_MODES) words += masteryWords(m) || 0;
+    const kept = [
+      { label: 'WINS', value: formatNum(getWins()) },
+      { label: 'KEY POWER', value: `T${formatNum(getKeyTier())}` },
+      { label: 'LETTER FORGE', value: `${formatNum(forgeBuys(forgeLevels()))} BUYS` },
+      { label: 'COSMETICS', value: formatNum(getOwned().length) },
+      { label: 'MARKS', value: formatNum(ownedMarkIds().length) },
+      { label: 'WORDS TYPED', value: formatNum(words) },
+    ];
+    setCeremony({ rc, mult: gained, stars: starsGot, fromLevel, toLevel: loadProgress().level, kept });
   };
 
 
@@ -463,6 +472,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         )}
       </div>
       {reveal && <ShopReveal reveal={reveal} onDone={() => setReveal(null)} />}
+      {ceremony && <RebirthCeremony c={ceremony} onContinue={onBack} />}
     </div>
   );
 }
