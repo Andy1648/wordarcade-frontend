@@ -21,7 +21,6 @@ import { isModeLocked } from '../progress/modeAccess';
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import ModeDialog from './ModeDialog';
 import MenuFrame from './MenuFrame';
-import WorldBackdrop, { worldFor } from './WorldBackdrop';
 import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
 
 import ScreenBoundary from './ScreenBoundary';
@@ -552,7 +551,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // pop length, level-up burst). Crossing into a tier this browser has not seen yet slams the
   // new frame in once and names it; every level-up punches the corners once.
   // STEP 50: the shown tier is the BEST this player has reached — a rebirth resets the level, and
-  // the menu (frame + WORLD) must never move back a world for it.
+  // the menu (frame + the wall's scene) must never move back a tier for it.
   const [worldFrom] = useState(() => getSeenTier());
   const tier = Math.max(menuTier(xpProgress.level, rebirths), worldFrom);
   const [frameFresh, setFrameFresh] = useState(false);
@@ -563,7 +562,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (tier > Math.max(0, seen)) {
       setSeenTier(tier);
       setFrameFresh(true);
-      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier], (worldFor(tier) || {}).name || '');
+      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]);
     } else if (seen < tier) {
       setSeenTier(tier);
     }
@@ -879,7 +878,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         data-menu-tier={tier}
         data-nav={NAV_LAYOUT}
       >
-        <WorldBackdrop tier={tier} from={worldFrom} />
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
             menu's one piece of ambient motion now that the idle loops are gone.

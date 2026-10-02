@@ -805,15 +805,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     },
     // STEP 22: crossing into a new MENU TIER names the frame the player just earned. Reuses
     // the level-up element + starburst (one finite play each).
-    tierUp(name, worldName = '') {
+    tierUp(name) {
       const a = levelupAnimRef.current;
       if (!a) return;
       popCapRef.current = false;
       // The tier NAME is the headline (≤6 letters, like "LEVEL 9" it fits a 320px menu); "NEW
       // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
       if (levelTitleRef.current) levelTitleRef.current.textContent = name;
-      // STEP 50: a new tier is a new WORLD — name it.
-      if (levelSubRef.current) levelSubRef.current.textContent = worldName ? `NEW WORLD: ${worldName}` : 'NEW FRAME UNLOCKED';
+      if (levelSubRef.current) levelSubRef.current.textContent = 'NEW FRAME UNLOCKED';
       if (levelDetailRef.current) levelDetailRef.current.textContent = 'YOUR MENU LEVELED UP';
       a.cancel();
       a.play();
