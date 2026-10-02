@@ -269,7 +269,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               <div className="shop-keypower shop-forge is-locked">
                 <div className="shop-kp-info">
                   <div className="shop-kp-next">
-                    <b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}
+                    {/* Past the level but not yet claimed: say where it is, never "opens at LV 8" to an
+                        LV 152 player (fine-tune oct2 reviewer caught the contradiction). */}
+                    {level >= FORGE_UNLOCK_LEVEL
+                      ? <><b>UNLOCKED</b> — CLAIM IT IN REWARDS TO OPEN IT</>
+                      : <><b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}</>}
                   </div>
                   <div className="shop-kp-rate">FORGE LETTERS: EVERY FORGED LETTER IN A WORD PAYS MORE. NO CAP.</div>
                 </div>
