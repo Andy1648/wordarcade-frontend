@@ -15,6 +15,7 @@
 // Factors at exactly x1 are omitted: a list where half the rows say "x1" teaches nothing and
 // crowds out the rows that matter. `WordPayout` already handles the "an upgrade is doing nothing
 // on THIS word" case with its own inactive list.
+import { memo } from 'react';
 import BoostPill from '../frenzy/BoostPill';
 import { perWordRateNow } from '../progress/wins';
 import { roundWordXp } from '../progress/xp';
@@ -28,7 +29,7 @@ import './LiveStack.css';
 // formatMultExact — the RECEIPT's formatter (×1.05, not the one-decimal ×1.1 the game does not apply).
 const mult = (m) => `×${formatMultExact(m)}`;
 
-export default function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
+function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
   const now = perWordRateNow({ mode, difficulty });
   const frenzy = Number.isFinite(now.factors.frenzy) && now.factors.frenzy > 1 ? now.factors.frenzy : 0;
   const boost = Number.isFinite(now.factors.boost) && now.factors.boost > 1 ? now.factors.boost : 0;
@@ -70,3 +71,8 @@ export default function LiveStack({ mode, difficulty, combo = 1, compact = false
     </div>
   );
 }
+
+// Batch A (input latency): the HUD rate chip re-reads the whole payout stack (localStorage + JSON for
+// marks, mastery, streak, stars, forge, frenzy, boost) on every render. Its parent re-renders on EVERY
+// keystroke (the input's draft lives there), so memo it: same mode / difficulty / combo → no re-read.
+export default memo(LiveStack);
