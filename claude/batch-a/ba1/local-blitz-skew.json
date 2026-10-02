@@ -1,0 +1,103 @@
+[
+  {
+    "label": "A",
+    "categories": [
+      "Among Us tasks (The Skeld)",
+      "US presidents",
+      "League of Legends Champions"
+    ],
+    "botFirstAnswerS": [
+      6.9,
+      7.9,
+      7.2
+    ],
+    "typed": 36,
+    "acceptedMine": 36,
+    "gameOver": true,
+    "frameTypes": [
+      "connected",
+      "room_created",
+      "room_update",
+      "game_started",
+      "round_start",
+      "answer_result",
+      "player_progress",
+      "timer_tick",
+      "round_end",
+      "game_over"
+    ],
+    "errors": [],
+    "botAnswers": [
+      [
+        "fix wiring",
+        "download data",
+        "empty garbage",
+        "align engine output"
+      ],
+      [
+        "dwight eisenhower",
+        "abraham lincoln",
+        "john f kennedy",
+        "andrew jackson",
+        "franklin d roosevelt"
+      ],
+      [
+        "twisted fate",
+        "lux",
+        "malphite",
+        "kennen"
+      ]
+    ]
+  },
+  {
+    "label": "B",
+    "categories": [
+      "Summer Olympic sports",
+      "Latin American countries",
+      "English & British monarchs"
+    ],
+    "botFirstAnswerS": [
+      7.4,
+      7.7,
+      6.8
+    ],
+    "typed": 36,
+    "acceptedMine": 32,
+    "gameOver": true,
+    "frameTypes": [
+      "connected",
+      "room_created",
+      "room_update",
+      "game_started",
+      "round_start",
+      "answer_result",
+      "player_progress",
+      "timer_tick",
+      "round_end",
+      "game_over"
+    ],
+    "errors": [],
+    "botAnswers": [
+      [
+        "judo",
+        "diving",
+        "swimming",
+        "volleyball",
+        "rowing"
+      ],
+      [
+        "brazil",
+        "venezuela",
+        "chile",
+        "colombia"
+      ],
+      [
+        "henry viii",
+        "henry vii",
+        "elizabeth i",
+        "henry v",
+        "elizabeth ii"
+      ]
+    ]
+  }
+]
