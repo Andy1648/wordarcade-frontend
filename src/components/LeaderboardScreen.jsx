@@ -18,7 +18,10 @@ import {
   setLastRank,
   setRankNews,
   boardCaps,
+  getSecret,
+  adoptRecoveryCode,
 } from '../leaderboard/client.js';
+import { formatRecoveryCode } from '../save/cloudSave.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
 
@@ -108,7 +111,12 @@ export default function LeaderboardScreen({ onBack }) {
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState(null);
   const [flash, setFlash] = useState(false);
-  const [caps, setCaps] = useState({ letters: false, cjk: false });
+  const [caps, setCaps] = useState({ letters: false, cjk: false, cloud: false });
+  // STEP 52: the recovery code is shown ONCE, right after a claim (and on demand after that).
+  const [showCode, setShowCode] = useState(false);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [restoreDraft, setRestoreDraft] = useState('');
+  const [restoreMsg, setRestoreMsg] = useState(null);
   const overlayRef = useRef(null);
   useEffect(() => {
     let live = true;
@@ -172,6 +180,7 @@ export default function LeaderboardScreen({ onBack }) {
       setDraft('');
       setFlash(true);
       setTimeout(() => setFlash(false), 900);
+      if (caps.cloud) setShowCode(true);
       setBoard(await fetchBoard());
     } catch (err) {
       setClaimError(ERROR_COPY[err.code] || 'COULDN’T SAVE THAT. TRY AGAIN.');
@@ -233,10 +242,74 @@ export default function LeaderboardScreen({ onBack }) {
           ) : (
             <div className="lb-you">
               <span className="lb-you-name">{profile.username}</span>
+              {caps.cloud && (
+                <button type="button" className="lb-link-btn" onClick={() => setShowCode((v) => !v)}>
+                  {showCode ? 'HIDE CODE' : 'RECOVERY CODE'}
+                </button>
+              )}
               <span className="lb-you-rank">{meRow ? `#${meRow.rank}` : '—'}</span>
               <button type="button" className="lb-link-btn" onClick={() => setEditing(true)}>CHANGE NAME</button>
             </div>
           ))}
+
+          {/* STEP 52 — CLOUD SAVE. The code restores this progress on any device / after a wipe. */}
+          {LEADERBOARD_ENABLED && caps.cloud && profile && showCode && (
+            <div className="lb-code">
+              <div className="lb-code-title">YOUR RECOVERY CODE</div>
+              <code className="lb-code-value">{formatRecoveryCode(getSecret())}</code>
+              <div className="lb-code-note">YOUR PROGRESS IS BACKED UP. ON A NEW PHONE OR AFTER SAFARI WIPES IT, ENTER THIS CODE HERE TO GET IT BACK. KEEP IT PRIVATE.</div>
+              <button
+                type="button"
+                className="lb-claim-btn"
+                onClick={() => {
+                  try {
+                    navigator.clipboard.writeText(formatRecoveryCode(getSecret()));
+                  } catch {
+                    /* clipboard blocked */
+                  }
+                }}
+              >
+                COPY
+              </button>
+            </div>
+          )}
+          {LEADERBOARD_ENABLED && caps.cloud && !profile && (
+            restoreOpen ? (
+              <form
+                className="lb-claim lb-restore"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setRestoreMsg('RESTORING…');
+                  const r = await adoptRecoveryCode(restoreDraft);
+                  if (!r.ok) {
+                    setRestoreMsg(r.error === 'bad_code' ? 'THAT CODE IS 12 GROUPS OF 4.' : 'NO SAVE FOR THAT CODE.');
+                    return;
+                  }
+                  setRestoreMsg(r.restored ? 'RESTORED — RELOADING…' : `WELCOME BACK, ${r.username || ''}`);
+                  setTimeout(() => window.location.reload(), 900);
+                }}
+              >
+                <label className="lb-claim-label" htmlFor="lb-restore-input">RECOVERY CODE</label>
+                <div className="lb-claim-row">
+                  <input
+                    id="lb-restore-input"
+                    className="lb-claim-input"
+                    value={restoreDraft}
+                    onChange={(e) => setRestoreDraft(e.target.value.slice(0, 80))}
+                    autoComplete="off"
+                    spellCheck="false"
+                    placeholder="XXXX-XXXX-…"
+                  />
+                  <button type="submit" className="lb-claim-btn">RESTORE</button>
+                </div>
+                {restoreMsg && <p className="lb-verdict" aria-live="polite">{restoreMsg}</p>}
+              </form>
+            ) : (
+              <button type="button" className="lb-link-btn lb-restore-open" onClick={() => setRestoreOpen(true)}>
+                HAVE A RECOVERY CODE?
+              </button>
+            )
+          )}
 
           {LEADERBOARD_ENABLED && (
             <>

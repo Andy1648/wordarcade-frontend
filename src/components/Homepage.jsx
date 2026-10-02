@@ -45,7 +45,7 @@ import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim } from '../progress/claims.js';
 import TrophyIcon from './TrophyIcon';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, restoreFromCloud } from '../leaderboard/client.js';
 import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
@@ -778,6 +778,30 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // the "#12 → #7" moment once and badges the trophy until the board is opened.
   const [boardNews, setBoardNews] = useState(() => LEADERBOARD_ENABLED && hasRankNews());
   const [rankUp, setRankUp] = useState(null);
+  // STEP 52 — CLOUD SAVE: if the cloud copy of this player's progress is AHEAD of this browser (a
+  // wiped Safari, a new device after a recovery code), bring it back and reload into it. Once per
+  // session at most, and never when local progress is equal or ahead (cloudSave.js).
+  useEffect(() => {
+    if (!LEADERBOARD_ENABLED) return undefined;
+    let live = true;
+    try {
+      if (sessionStorage.getItem('taw.cloud.restored') === '1') return undefined;
+    } catch {
+      return undefined;
+    }
+    restoreFromCloud()
+      .then((r) => {
+        if (!live || !r || !r.restored) return;
+        try {
+          sessionStorage.setItem('taw.cloud.restored', '1');
+        } catch {
+          return;
+        }
+        window.location.reload();
+      })
+      .catch(() => {});
+    return () => { live = false; };
+  }, []);
   useEffect(() => {
     let live = true;
     submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)

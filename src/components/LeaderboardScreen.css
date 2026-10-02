@@ -422,3 +422,34 @@
   border-radius: 6px;
   box-shadow: 2px 2px 0 #000;
 }
+
+/* STEP 52: the recovery code card. */
+.lb-code {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: #0d0618;
+  border: 3px solid #2effe0;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.lb-code-title {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #2effe0;
+}
+.lb-code-value {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #ffe94a;
+  word-break: break-all;
+}
+.lb-code-note {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  color: #d8c9f0;
+}
