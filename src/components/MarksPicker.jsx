@@ -57,7 +57,7 @@ export default function MarksPicker({ unlockedIds = [], equippedId = null, achie
                     {have && <span className={`mark-rank r${p.rank}`}>RANK {MARK_RANK_NAMES[p.rank - 1]}</span>}
                   </span>
                   <span className="mark-main">+{mainPct}% WINS · EVERY MODE</span>
-                  <span className="mark-blurb">+ {markBlurbAt(m, p.rank)}</span>
+                  <span className="mark-blurb">{markBlurbAt(m, p.rank)}</span>
                   {have && !p.maxed && (
                     <>
                       <span className="mark-next">
