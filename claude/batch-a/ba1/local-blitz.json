@@ -1,0 +1,101 @@
+[
+  {
+    "label": "A",
+    "categories": [
+      "Human body systems",
+      "US states",
+      "Middle Eastern countries"
+    ],
+    "botFirstAnswerS": [
+      7.9,
+      8.4,
+      8
+    ],
+    "typed": 36,
+    "acceptedMine": 36,
+    "gameOver": true,
+    "frameTypes": [
+      "connected",
+      "room_created",
+      "room_update",
+      "game_started",
+      "round_start",
+      "answer_result",
+      "player_progress",
+      "timer_tick",
+      "round_end",
+      "game_over"
+    ],
+    "errors": [],
+    "botAnswers": [
+      [
+        "nervous system",
+        "respiratory system",
+        "skeletal system",
+        "circulatory system"
+      ],
+      [
+        "minnesota",
+        "georgia",
+        "hawaii",
+        "massachusetts"
+      ],
+      [
+        "israel",
+        "jordan",
+        "turkey",
+        "syria"
+      ]
+    ]
+  },
+  {
+    "label": "B",
+    "categories": [
+      "Tennis Slams & Masters 1000s",
+      "French kings & emperors",
+      "Apex Legends legends"
+    ],
+    "botFirstAnswerS": [
+      7.3,
+      7.3,
+      8.3
+    ],
+    "typed": 36,
+    "acceptedMine": 31,
+    "gameOver": true,
+    "frameTypes": [
+      "connected",
+      "room_created",
+      "room_update",
+      "game_started",
+      "round_start",
+      "answer_result",
+      "player_progress",
+      "timer_tick",
+      "round_end",
+      "game_over"
+    ],
+    "errors": [],
+    "botAnswers": [
+      [
+        "french open",
+        "australian open",
+        "us open",
+        "italian open"
+      ],
+      [
+        "napoleon",
+        "louis xv",
+        "henry iv",
+        "francis i",
+        "philip iv"
+      ],
+      [
+        "valkyrie",
+        "wattson",
+        "loba",
+        "caustic"
+      ]
+    ]
+  }
+]

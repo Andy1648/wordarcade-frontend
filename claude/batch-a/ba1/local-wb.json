@@ -1,0 +1,43 @@
+[
+  {
+    "label": "A returning",
+    "difficultyKey": "easy",
+    "openingFuseS": 15,
+    "maxTick": 14,
+    "wordsTypedByHarness": 6,
+    "wordsAccepted": 10,
+    "botTurns": 5,
+    "botTimeouts": [
+      6
+    ],
+    "distinctTurnHolders": 2,
+    "gameOver": true,
+    "winner": "HUMAN",
+    "botFumbleTyping": 12,
+    "consoleErrors": [
+      "404 http://localhost:4300/_vercel/insights/script.js",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "label": "B first-timer",
+    "difficultyKey": "chill",
+    "openingFuseS": 15,
+    "maxTick": 14,
+    "wordsTypedByHarness": 25,
+    "wordsAccepted": 47,
+    "botTurns": 24,
+    "botTimeouts": [
+      6,
+      5.9
+    ],
+    "distinctTurnHolders": 2,
+    "gameOver": true,
+    "winner": "HUMAN",
+    "botFumbleTyping": 24,
+    "consoleErrors": [
+      "404 http://localhost:4300/_vercel/insights/script.js",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  }
+]

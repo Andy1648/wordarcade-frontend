@@ -1,0 +1,25 @@
+[
+  {
+    "label": "solo",
+    "wpm": 40,
+    "racers": 3,
+    "place": 2,
+    "myWords": 24,
+    "standings": [
+      {
+        "id": "BOT",
+        "words": 25
+      },
+      {
+        "id": "ME",
+        "words": 24
+      },
+      {
+        "id": "BOT",
+        "words": 20
+      }
+    ],
+    "accepted": 24,
+    "errors": []
+  }
+]

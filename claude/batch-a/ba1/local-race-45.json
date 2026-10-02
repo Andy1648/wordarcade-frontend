@@ -1,0 +1,40 @@
+[
+  {
+    "label": "A",
+    "wpm": 45,
+    "racers": 2,
+    "place": 2,
+    "myWords": 24,
+    "standings": [
+      {
+        "id": "CHAOSVIPER26",
+        "words": 25
+      },
+      {
+        "id": "ME",
+        "words": 24
+      }
+    ],
+    "accepted": 24,
+    "errors": []
+  },
+  {
+    "label": "B",
+    "wpm": 45,
+    "racers": 2,
+    "place": 1,
+    "myWords": 25,
+    "standings": [
+      {
+        "id": "ME",
+        "words": 25
+      },
+      {
+        "id": "TOXICGOBLIN13",
+        "words": 24
+      }
+    ],
+    "accepted": 25,
+    "errors": []
+  }
+]
