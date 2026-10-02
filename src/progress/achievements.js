@@ -6,7 +6,9 @@
 // Pure catalog + guarded store. `checkAchievements()` snapshots the live progress once, grants any
 // newly-satisfied achievement, and returns the newly-earned list for a toast. Never throws.
 import { readWordCount } from '../wordCount.js';
-import { getWinsLifetime, getRounds, grantWins, winLevelMult } from './wins.js';
+import { getWinsLifetime, getRounds, winLevelMult, perWordWins } from './wins.js';
+import { queueClaim } from './claims.js';
+import { rankFor, RANKS } from './rank.js';
 import { loadProgress, getRebirths, getKeyTier, rebirthMult } from './xp.js';
 import { collectionSummary } from './collection.js';
 import { masteryState, MASTERY_MODES } from './mastery.js';
@@ -184,16 +186,63 @@ export function checkAchievements() {
       if (ok) {
         earned.add(a.id);
         const wins = achievementPayout(a, snap);
-        // LABELLED. This used to be a bare grantWins(wins): the money landed, a chime played, and
-        // nothing on screen said which achievement paid it or how much. The label is what the
-        // player reads in the ledger line.
-        grantWins(wins, `ACHIEVEMENT — ${a.name}`, { detail: a.id });
+        // CLAIMED, not credited (Andy oct2 — claims.js). The label is what the player reads on
+        // the claim and, once claimed, in the ledger line.
+        queueClaim({ id: `ach-${a.id}`, kind: 'achievement', label: `ACHIEVEMENT — ${a.name}`, amount: wins, detail: a.id });
         newly.push({ ...a, wins });
       }
     }
   }
   if (newly.length) saveEarned([...earned]);
+  checkRankClaims();
   return newly;
+}
+
+// RANK-UPS ARE CLAIMED TOO (Andy oct2). Each rank band reached for the first time on THIS rebirth
+// climb queues a claim worth RANK_UP_WORDS Word Bomb words at the player's current rate. The
+// first time this runs on an existing save it records where the player already is WITHOUT queuing
+// (no flood of back-pay claims).
+export const RANK_CLAIM_KEY = 'taw.rankClaimed';
+export const RANK_UP_WORDS = 25;
+export function checkRankClaims() {
+  let lv = 1;
+  let rc = 0;
+  try {
+    lv = loadProgress().level;
+    rc = getRebirths();
+  } catch {
+    return [];
+  }
+  const band = rankFor(lv);
+  let rec = null;
+  try {
+    rec = JSON.parse(localStorage.getItem(RANK_CLAIM_KEY) || 'null');
+  } catch {
+    rec = null;
+  }
+  const save = (r) => {
+    try {
+      localStorage.setItem(RANK_CLAIM_KEY, JSON.stringify(r));
+    } catch {
+      /* blocked */
+    }
+  };
+  if (!rec || typeof rec.min !== 'number') {
+    save({ r: rc, min: band.min });
+    return [];
+  }
+  // A new rebirth climb starts the ladder again from ROOKIE.
+  const floor = rec.r === rc ? rec.min : 1;
+  const queued = [];
+  for (const r of RANKS) {
+    if (r.min > floor && r.min <= band.min) {
+      const amount = Math.round(RANK_UP_WORDS * perWordWins({ mode: 'wordBomb' }));
+      const c = queueClaim({ id: `rank-${r.name}-r${rc}`, kind: 'rank', label: `RANK UP — ${r.name}`, amount, detail: r.name });
+      if (c) queued.push(c);
+    }
+  }
+  if (rec.r !== rc || band.min > rec.min) save({ r: rc, min: band.min });
+  return queued;
 }
 
 // For the grid screen: every achievement with its earned flag + display fields (secrets masked).

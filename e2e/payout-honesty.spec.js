@@ -34,7 +34,7 @@ const SETUPS = [
   { diff: 'hard', label: 'HELL', momentum: 10 },
 ];
 const PERMANENT = new Set(['MODE', 'DIFFICULTY', 'REBIRTH', 'STREAK', 'BONUS']);
-const PER_WORD = new Set(['COMBO', 'LUCKY']); // what the card legitimately cannot know
+const PER_WORD = new Set(['COMBO', 'LUCKY', 'FORGE']); // what the card legitimately cannot know (FORGE depends on the word's letters)
 
 const num = (s) => Number(String(s).replace(/[^0-9.]/g, ''));
 
@@ -56,6 +56,8 @@ for (const s of SETUPS) {
       localStorage.setItem('taw.seenMenu', '1');
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.seenGameSpotlight', '1');
+      // Andy oct2: MOMENTUM became the LETTER FORGE; an old momentum count migrates buy-for-buy, so
+      // this seed now means "N forged letters" and the receipt carries a per-word FORGE row.
       localStorage.setItem('taw.momentum', String(momentum));
     }, s.momentum);
     await page.goto('/?portal=1');
@@ -63,12 +65,15 @@ for (const s of SETUPS) {
 
     // THE CARD'S QUOTE (menu, no difficulty → the CHILL quote at this momentum).
     const card = page.locator('.game-card-magnet[data-game="word-bomb"]');
-    const xpEl = card.locator('.game-card-xp').filter({ visible: true }).first();
+    // Andy oct2: the card no longer quotes XP / WORD — it quotes WINS / WORD (the base word) and
+    // says LONGER WORDS = MORE. A word's XP is still exactly its wins × 10, which is what the rest
+    // of this spec checks the ledger against.
+    const perkEl = card.locator('.game-card-xp').filter({ visible: true }).first();
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
-    await expect(xpEl).toContainText('XP');
-    const cardXp = num((await xpEl.innerText()).split('XP')[0]);
+    await expect(perkEl).toContainText('LONGER');
+    await expect(perkEl).not.toContainText('XP');
     const cardWins = num((await winsEl.innerText()).split('WINS')[0]);
-    expect(cardWins * 10, 'card WINS / WORD is its XP / WORD ÷ 10').toBeCloseTo(cardXp, 6);
+    const cardXp = cardWins * 10;
 
     const readLedger = () => page.evaluate(() => {
       const xp = JSON.parse(localStorage.getItem('taw.xp') || '{"lv":1,"into":0}');

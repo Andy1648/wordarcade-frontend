@@ -20,9 +20,12 @@ import { installChunkReloadGuard } from './lib/chunkReload'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths } from './progress/xp'
 import { migrateEconomyV9 } from './progress/econMigrate'
+import { forgeMigrateMomentum } from './progress/forge'
 
 // ECONOMY v9 (STEP 19): rescale a v8 save ONCE, before anything reads the wallet.
 migrateEconomyV9()
+// Andy oct2: MOMENTUM (capped at 200) became the uncapped LETTER FORGE — carry every buy over, once.
+forgeMigrateMomentum()
 import { getStreak } from './progress/streak'
 
 // STALE CHUNK SELF-HEAL: installed FIRST, before anything can request a lazy route chunk.

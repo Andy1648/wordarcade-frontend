@@ -202,3 +202,54 @@ test('serve exposes the real shortFactor (0.92 for a 4-letter word, not a flat 0
   assert.equal(eng.state.shortFactor, 1);
   assert.equal(eng.state.shortPenalty, false);
 });
+
+// ---- LAST-LETTERS STEERING (STEP 20 / Andy oct2) ----------------------------------------------
+import { readFileSync as _rf } from 'node:fs';
+import { STEER_FROM, STEER_P } from './fuse.js';
+const _real = (() => {
+  const u = (p) => new URL(p, import.meta.url);
+  const recall = _rf(u('./words.recall.txt'), 'utf8').split(' ');
+  const accept = new Set(recall);
+  for (const w of _rf(u('./words.accept.txt'), 'utf8').split(' ')) accept.add(w);
+  const raw = JSON.parse(_rf(u('./fragmentPools.json'), 'utf8'));
+  return { accept, pools: { e: raw.e.split(' '), m: raw.m.split(' '), h: raw.h.split(' '), b: raw.b.split(' ') } };
+})();
+
+test('steering: from 19 lit letters, most fragments lead to a still-dark letter', () => {
+  let x = 7;
+  const rng = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const eng = createFuseEngine({ ..._real, rng });
+  eng.start();
+  const dark = ['j', 'q', 'x', 'z', 'v', 'k', 'w'];
+  for (const c of 'abcdefghilmnoprstuy') eng.state.lettersUsed.add(c);
+  assert.equal(eng.state.lettersUsed.size, STEER_FROM);
+  let leading = 0;
+  const N = 300;
+  for (let i = 0; i < N; i++) {
+    const { fragment } = eng.serve();
+    if (dark.some((c) => Object.values(eng.fragmentsLeadingTo(c)).some((arr) => arr.includes(fragment)))) leading += 1;
+  }
+  assert.ok(leading / N >= STEER_P - 0.1, `only ${leading}/${N} fragments led to a dark letter`);
+});
+
+test('steering: every letter, including j (no fragment contains it), has fragments that lead to it', () => {
+  const eng = createFuseEngine(_real);
+  for (const c of 'abcdefghijklmnopqrstuvwxyz') {
+    const total = Object.values(eng.fragmentsLeadingTo(c)).reduce((a, arr) => a + arr.length, 0);
+    assert.ok(total > 0, `letter ${c} is unreachable`);
+  }
+});
+
+test('steering off below 19 lit letters (the early run is untouched)', () => {
+  const eng = createFuseEngine({ ..._real, steerP: 1 });
+  eng.start();
+  for (const c of 'abcdefghilmnopr') eng.state.lettersUsed.add(c); // 15
+  // With steerP=1 any steering would be on every serve; below the threshold it never engages, so
+  // fragments are plain bag draws (most won't lead to j/q/x/z).
+  let jq = 0;
+  for (let i = 0; i < 100; i++) {
+    const { fragment } = eng.serve();
+    if (['j', 'q', 'x', 'z'].some((c) => fragment.includes(c))) jq += 1;
+  }
+  assert.ok(jq < 30, `steering leaked below the threshold (${jq}/100)`);
+});

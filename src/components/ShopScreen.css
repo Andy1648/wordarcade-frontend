@@ -646,3 +646,103 @@
   color: #000;
 }
 .shop-buy-main { display: inline-flex; align-items: center; gap: 6px; }
+
+/* REBIRTH hero (Andy oct2: ONE big thing per screen) — what a rebirth gets you, right now. */
+.shop-rb-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 12px;
+  margin-bottom: 8px;
+  background: #2a0f4a;
+  border: 4px solid #9a1aff;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  text-align: center;
+}
+.shop-rb-hero.is-bad {
+  border-color: #ff6b3d;
+}
+.shop-rb-hero-label,
+.shop-rb-now {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #d8c9f0;
+}
+.shop-rb-hero-val {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-hero);
+  line-height: 1;
+  color: #ffe94a;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+.shop-rb-hero-unit {
+  font-size: var(--fs-unit);
+}
+.shop-rb-advice {
+  padding: 4px 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #2effe0;
+}
+.shop-rb-hero.is-bad .shop-rb-advice {
+  background: #ff6b3d;
+  color: #0d0618;
+  border: 3px solid #a8381a;
+  border-radius: 8px;
+}
+/* STAR PERKS */
+.shop-perks {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .shop-perks {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.shop-perk {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'name btn'
+    'blurb btn';
+  align-items: center;
+  gap: 2px 10px;
+  padding: 10px 12px;
+  background: #0d0618;
+  border: 3px solid #b8a400;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.shop-perk.is-locked {
+  border-color: #3b2a5c;
+  opacity: 0.8;
+}
+.shop-perk-name {
+  grid-area: name;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #ffe94a;
+}
+.shop-perk-lv {
+  color: #2effe0;
+}
+.shop-perk-blurb {
+  grid-area: blurb;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #d8c9f0;
+}
+.shop-perk .shop-card-btn {
+  grid-area: btn;
+}

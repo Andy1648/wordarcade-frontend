@@ -8,7 +8,7 @@ import { exampleStartingWith } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, awardWins, awardWordXp, subscribeWins } from '../progress/wins.js';
+import { bankWordWins, bankWeight, awardWins, awardWordXp, subscribeWins } from '../progress/wins.js';
 import { cappedWordMult } from '../progress/xp.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
@@ -167,8 +167,8 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
         // ×40 (Job 1). The SAME weight now also grants XP, so every link levels you (unified loop).
         const rw = rarityOf(w);
         const wWeight = cappedWordMult(rw.mult, g.combo.mult, g.luckyMult);
-        chainWeightRef.current += wWeight;
-        awardWordXp({ mode: 'chain', wordLength: (w || '').length, weight: wWeight });
+        chainWeightRef.current += bankWeight(wWeight, w || ''); // + LETTER FORGE (per word)
+        awardWordXp({ mode: 'chain', wordLength: (w || '').length, weight: wWeight, word: w || '' });
         recordAcceptedWord(w, { mode: 'chain', band: rw.band }); // Collection (Job 3)
         wpmAddWord(w); // WPM: count each new link's chars
         noteWord(w, rw); // permanent record: distinct / obscure / rarest-ever (guarded)

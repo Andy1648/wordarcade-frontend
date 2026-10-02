@@ -22,6 +22,18 @@ import AudioControls from './AudioControls';
 import LayeredWord from './LayeredWord';
 import TrophyIcon from './TrophyIcon';
 import WordHook from './WordHook';
+import { modePower } from '../progress/xp';
+import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
+import { useFrenzyClock } from '../frenzy/useFrenzyClock';
+
+// The one thing that sets each solo mode apart, in the half-band's sub line (Andy oct2: FUSE's
+// FRENZY must be obvious on the card; CHAIN's POWER is real money per word).
+function SoloPerk({ id }) {
+  const frenzy = useFrenzyClock();
+  if (id === 'fuse') return frenzy.active ? `FRENZY ${formatFrenzy(frenzy.ms)}` : `FRENZY ×${FRENZY_MULT}`;
+  const p = modePower(id);
+  return p > 1 ? `POWER ×${p}` : 'SOLO';
+}
 
 // The three BIG modes, in menu order. CHAIN and FUSE (level-gated) share the split solo band
 // below it — smaller, because a newcomer meets them locked.
@@ -154,6 +166,8 @@ export default function MobileMenu({
   onLeaderboard = null,
   boardDot = false,
   boardRef,
+  rewardsCount = 0,
+  onRewards = null,
 }) {
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
@@ -237,7 +251,7 @@ export default function MobileMenu({
               <LayeredWord className="hp-m-solo-name" text={game.name} accent={s.accent} />
               <span className="hp-m-solo-sub">
                 {locked && <LockGlyph />}
-                {locked ? `LV ${game.unlockLevel}` : 'SOLO'}
+                {locked ? `LV ${game.unlockLevel}` : <SoloPerk id={game.id} />}
               </span>
             </>
           );
@@ -280,6 +294,19 @@ export default function MobileMenu({
              zone. REBIRTH obeys the desktop gate exactly (Homepage passes null until it means
              something), and the strip re-flows to two slabs without it. */}
       <nav className="hp-m-nav" aria-label="Menu">
+        {/* REWARDS (Andy oct2) — only while a claim is waiting; the count is the notification. */}
+        {rewardsCount > 0 && onRewards && (
+          <button
+            type="button"
+            className={`hp-m-navbtn is-rewards${navigating ? ' is-disabled' : ''}`}
+            onClick={onRewards}
+            disabled={navigating}
+            aria-label={`Open rewards — ${rewardsCount} to claim`}
+          >
+            <span className="hp-m-gift" aria-hidden="true">★</span>
+            <span className="hp-m-count" aria-hidden="true">{rewardsCount}</span>
+          </button>
+        )}
         {/* STATS before SHOP (Andy A4: swap their places) — same order as the desktop stack. */}
         <button
           ref={statsRef}

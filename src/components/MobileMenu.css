@@ -303,6 +303,29 @@
   }
 
   /* The desktop SHOP dot (something is affordable), same size and colour. A circle. */
+  /* REWARDS (Andy oct2): a narrow yellow slab with the waiting count. */
+  .hp-m-navbtn.is-rewards {
+    flex: 0 0 52px;
+    background: #ffe94a;
+    color: #0d0618;
+  }
+  .hp-m-count {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: #ff4fa3;
+    color: #0d0618;
+    border: 2px solid #000;
+    font-size: var(--fs-label);
+    line-height: 1;
+  }
   .hp-m-dot {
     position: absolute;
     top: -5px;

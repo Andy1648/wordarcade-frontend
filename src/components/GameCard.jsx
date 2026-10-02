@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
 import { perWordRateNow } from '../progress/wins';
-import { formatNum, formatRate, formatMultExact } from '../format';
+import { modePower } from '../progress/xp';
+import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
+import { useFrenzyClock } from '../frenzy/useFrenzyClock';
+import { formatRate, formatMultExact } from '../format';
 import './GameCard.css';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -257,21 +260,40 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // to connect them. Both lines come out of the SAME perWordRateNow() call — wins are the word's
   // XP ÷ 10, so the two numbers are one number read twice and cannot disagree. The multiplier is
   // the same product for both, which is the point: one stack, two readouts.
+  const frenzy = useFrenzyClock();
   const rateNow = game.enabled && !locked ? perWordRateNow({ mode: game.id, difficulty }) : null;
   // The combined multiplier, printed ONCE per line and never on its own — a factor without the
   // value it produced is the defect this pattern exists to prevent.
   // formatMultExact — the RECEIPT's formatter. The one-decimal formatMult printed ×2.02 as ×2 and
   // ×1.05 as ×1.1: a multiplier the game does not apply (fix/payout-honesty).
-  const multTag = rateNow && rateNow.mult !== 1 && (
-    <span className="game-card-payout-mult"> (×{formatMultExact(rateNow.mult)})</span>
+  // Andy oct2: the MODE factor is now said by the perk line (POWER ×N), so the tag is what the
+  // PLAYER has built — rebirth, streak, marks, mastery — and a fresh player sees no tag at all.
+  const built = rateNow ? rateNow.mult / (rateNow.factors.mode || 1) : 1;
+  const multTag = rateNow && Math.abs(built - 1) > 1e-9 && (
+    <span className="game-card-payout-mult"> (×{formatMultExact(built)})</span>
   );
+  // THE PERK LINE replaced the XP / WORD line (Andy oct2: "remove XP per word from game-mode
+  // screens"; the card's number is the BASE, and it should say what makes a word worth MORE).
+  // It names the ONE thing that sets this mode apart, then the universal rule:
+  //   SAT RUSH / CHAIN  POWER ×N  — the mode's multiplier against Word Bomb, really paid per word
+  //   FUSE              FRENZY ×5 — the timed ×5 its full strip unlocks (a live clock while it runs)
+  //   every mode        LONGER WORDS = MORE
+  // It keeps the .game-card-xp slot (and its fit-to-slot sizing); the " · LONGER…" tail is its own
+  // span that drops WHOLE on a narrow card (GameCard.css), so a narrow card keeps the perk head.
+  const power = modePower(game.id);
+  const isFuse = game.id === 'fuse';
+  const perkHead = isFuse
+    ? (frenzy.active ? `FRENZY ${formatFrenzy(frenzy.ms)}` : `FRENZY ×${FRENZY_MULT}`)
+    : power > 1 ? `POWER ×${formatMultExact(power)}` : null;
   const xpLine = rateNow && (
-    <>
-      {formatNum(rateNow.xp)}
-      <span className="game-card-payout-unit"> XP</span>
-      <span className="game-card-payout-per"> / WORD</span>
-      {multTag}
-    </>
+    perkHead ? (
+      <>
+        <span className={`game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}>{perkHead}</span>
+        <span className="game-card-perk-tail"> · LONGER = MORE</span>
+      </>
+    ) : (
+      <>LONGER = MORE</>
+    )
   );
   const payout = rateNow && (
     <>

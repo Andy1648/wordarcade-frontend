@@ -45,6 +45,8 @@
 
 .lstack-row--base .lstack-label { color: #7a6a9b; }
 .lstack-row--base .lstack-val { color: #fff; }
+.lstack-row--frenzy .lstack-label,
+.lstack-row--frenzy .lstack-val { color: #ff6b3d; }
 
 /* The live row (COMBO) is the one that moves while you type — separated so the permanent stack
    above it reads as "what you have built" and this reads as "what you are doing". */

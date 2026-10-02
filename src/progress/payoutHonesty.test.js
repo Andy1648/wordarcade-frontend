@@ -5,8 +5,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { perWordRateNow, awardWordXp, bankWordWins, getWins } from './wins.js';
-import { MOMENTUM_KEY, momentumMult } from './momentum.js';
+import { perWordRateNow, awardWordXp, bankWordWins, bankWeight, getWins } from './wins.js';
+import { FORGE_KEY, forgeMultForWord } from './forge.js';
 import { formatMultExact } from '../format.js';
 
 const src = (rel) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
@@ -95,57 +95,56 @@ test('BUG 2: mode cards + live panel print multipliers with the RECEIPT formatte
   assert.equal(formatMultExact(2.02), '2.02');
 });
 
-// ---- BUG 3 -------------------------------------------------------------------------------------
-// xpPerWord snapped to the nearest 10 XP, so a 100-XP / 10-win word stayed 100 XP / 10 wins from
-// 0 through 9 momentum marks while the shop said "+1%" a mark. Every mark must change the award.
-test('BUG 3: every momentum mark 0→10 changes what a 10-win Word Bomb word awards (XP and wins)', () => {
+// ---- BUG 3 (now the LETTER FORGE) -------------------------------------------------------------
+// xpPerWord once snapped to the nearest 10 XP, so small multipliers paid nothing. MOMENTUM is gone
+// (Andy oct2); its successor, the LETTER FORGE, must hold the same line: every forged level of a
+// letter in the word changes what the word awards, XP and wins, and the bank equals the receipt.
+test('BUG 3: every forge level of a letter in the word changes what a Word Bomb word awards', () => {
   let prev = null;
   for (let m = 0; m <= 10; m++) {
     withStorage(
       () => {
-        const card = perWordRateNow({ mode: 'word-bomb', difficulty: 'chill', keyTier: 0, rebirthCount: 0 });
-        const xp = awardWordXp({ mode: 'word-bomb', difficulty: 'chill', wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0 }).gain;
-        // Bank ten post-gate words: exactly the card's rate × 10, to the win (tenths carried).
+        const word = 'tease'; // two e's: each forge level on E is +10% on this word
+        const mult = forgeMultForWord(word);
+        assert.equal(mult, 1 + 0.1 * m);
+        const xp = awardWordXp({ mode: 'word-bomb', difficulty: 'chill', wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0, word }).gain;
         let banked = 0;
         for (let w = 3; w < 13; w++) {
-          banked += bankWordWins({ mode: 'wordBomb', difficulty: 'chill', prevWords: w, nowWords: w + 1, wordLength: 5, rebirthCount: 0 });
+          banked += bankWordWins({ mode: 'wordBomb', difficulty: 'chill', prevWords: w, nowWords: w + 1, prevWeight: w * bankWeight(1, word), nowWeight: (w + 1) * bankWeight(1, word), wordLength: 5, rebirthCount: 0 });
         }
-        assert.equal(xp, Math.round(100 * momentumMult(m)), `mark ${m}: XP is 100 × (1 + ${m}%)`);
-        assert.equal(xp, card.xp, `mark ${m}: awarded XP === card XP`);
-        assert.equal(banked, Math.round(card.rate * 10), `mark ${m}: 10 words bank 10 × the card's ${card.rate}`);
+        assert.equal(xp, Math.round(100 * mult), `E lv ${m}: XP is 100 × ${mult}`);
+        assert.equal(banked, Math.round(10 * mult * 10), `E lv ${m}: 10 words bank 10 × ${10 * mult}`);
         assert.equal(getWins(), banked);
         if (prev) {
-          assert.ok(xp > prev.xp, `mark ${m} must award more XP than mark ${m - 1} (${xp} vs ${prev.xp})`);
-          assert.ok(banked > prev.banked, `mark ${m} must bank more wins than mark ${m - 1} (${banked} vs ${prev.banked})`);
+          assert.ok(xp > prev.xp, `E lv ${m} must award more XP than lv ${m - 1}`);
+          assert.ok(banked > prev.banked, `E lv ${m} must bank more wins than lv ${m - 1}`);
         }
         prev = { xp, banked };
       },
-      { [MOMENTUM_KEY]: m },
+      { [FORGE_KEY]: JSON.stringify({ e: m }) },
     );
   }
 });
 
 // ---- THE ACCEPTANCE GRID -----------------------------------------------------------------------
-test('card === awarded for Word Bomb × CHILL/HELL × 0/1/5/10 marks (XP per word, wins per word)', () => {
-  const expected = {
-    chill: { 0: [100, 10], 1: [101, 10.1], 5: [105, 10.5], 10: [110, 11] },
-    hard: { 0: [200, 20], 1: [202, 20.2], 5: [210, 21], 10: [220, 22] },
-  };
+test('card quotes the BASE word; the awarded word = card × its FORGE, for CHILL/HELL × E lv 0/1/5/10', () => {
   for (const difficulty of ['chill', 'hard']) {
+    const base = { chill: [100, 10], hard: [200, 20] }[difficulty];
     for (const m of [0, 1, 5, 10]) {
       withStorage(
         () => {
           const card = perWordRateNow({ mode: 'word-bomb', difficulty, keyTier: 0, rebirthCount: 0 });
-          const xp = awardWordXp({ mode: 'word-bomb', difficulty, wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0 }).gain;
+          assert.deepEqual([card.xp, card.rate], base, `${difficulty}/${m} card is the base (the forge is per word)`);
+          const word = 'tease';
+          const f = forgeMultForWord(word);
+          const xp = awardWordXp({ mode: 'word-bomb', difficulty, wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0, word }).gain;
           let banked = 0;
           for (let w = 3; w < 13; w++) {
-            banked += bankWordWins({ mode: 'wordBomb', difficulty, prevWords: w, nowWords: w + 1, wordLength: 5, rebirthCount: 0 });
+            banked += bankWordWins({ mode: 'wordBomb', difficulty, prevWords: w, nowWords: w + 1, prevWeight: w * bankWeight(1, word), nowWeight: (w + 1) * bankWeight(1, word), wordLength: 5, rebirthCount: 0 });
           }
-          const [xpWant, winsWant] = expected[difficulty][m];
-          assert.deepEqual([card.xp, card.rate], [xpWant, winsWant], `${difficulty}/${m} card`);
-          assert.deepEqual([xp, banked / 10], [xpWant, winsWant], `${difficulty}/${m} awarded`);
+          assert.deepEqual([xp, banked / 10], [Math.round(base[0] * f), Math.round(base[0] * f) / 10], `${difficulty}/${m} awarded`);
         },
-        { [MOMENTUM_KEY]: m },
+        { [FORGE_KEY]: JSON.stringify({ e: m }) },
       );
     }
   }

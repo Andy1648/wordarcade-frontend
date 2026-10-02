@@ -1,5 +1,6 @@
 // achievements.test.js (Job 7) — the catalog shape (count + 5 secrets), snapshot-driven granting,
 // idempotency (no double-grant), × rebirth scaling, secret masking, and the completionist meta.
+import { claimAll } from './claims.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -41,7 +42,10 @@ test('checkAchievements grants matching achievements once (idempotent), R0', () 
     const ids = checkAchievements().map((a) => a.id);
     assert.ok(ids.includes('vol-1') && ids.includes('vol-100'));
     assert.ok(!ids.includes('vol-1k')); // 100 words is short of 1,000
-    // R0 → ×1: wins = 100 + 500 = 600.
+    // Andy oct2: earning QUEUES a claim — the balance does not move until the player claims.
+    assert.equal(getWins(), 0);
+    // R0 → ×1: claiming pays 100 + 500 = 600.
+    assert.equal(claimAll().wins, 600);
     assert.equal(getWins(), 600);
     // Second pass grants nothing new (idempotent).
     assert.equal(checkAchievements().length, 0);

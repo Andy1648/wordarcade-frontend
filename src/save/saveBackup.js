@@ -10,7 +10,7 @@
 // half-wipe progress; and it writes through a strict allowlist (PROGRESS_KEYS), so an import can never
 // touch a device key or any key not on the list — even if the blob claims to contain one.
 
-// The 23 progression keys a backup carries. (The 5 excluded device/UX keys: taw.seenWinsHint,
+// The 28 progression keys a backup carries. (The 5 excluded device/UX keys: taw.seenWinsHint,
 // taw.sfxEvents, taw.clack, taw.audioVolume, taw.musicMuted — never exported, never imported.)
 export const PROGRESS_KEYS = [
   'taw.wins',
@@ -20,6 +20,11 @@ export const PROGRESS_KEYS = [
   'taw.keytier',
   'taw.wordsense',
   'taw.momentum',
+  'taw.forge',
+  'taw.forgeFromMomentum',
+  'taw.claims',
+  'taw.rankClaimed',
+  'taw.frenzyUntil',
   'taw.mastery',
   'taw.collection',
   'taw.achievements',

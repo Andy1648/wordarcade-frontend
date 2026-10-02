@@ -8,13 +8,12 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
-import { MomentumRail } from './MomentumRail';
-import { getMomentum } from '../progress/momentum';
 import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
-import { canAffordAny } from '../progress/shop';
+import { canAffordAny, buyKeyPower, buyForge } from '../progress/shop';
+import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 import { syncThemeUnlocks } from '../theme/themes';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
@@ -40,6 +39,9 @@ import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../pr
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
+import ClaimsPanel from '../claims/ClaimsPanel.jsx';
+import ClaimPopup from '../claims/ClaimPopup.jsx';
+import { useClaims } from '../claims/useClaims.js';
 import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews } from '../leaderboard/client.js';
 import RankUpMoment from '../leaderboard/RankUpMoment.jsx';
@@ -164,6 +166,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // and after an equip — the earned-achievement set only changes on a grant, which re-renders the
   // menu anyway.
   const [showMarks, setShowMarks] = useState(false);
+  // REWARDS (Andy oct2): non-game rewards wait here until claimed; the button + its count only
+  // exist while something is pending (the badge IS the notification).
+  const claims = useClaims();
+  const [showClaims, setShowClaims] = useState(false);
   const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
@@ -243,8 +249,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         const all = textEm(el);
         const per = textEm(el.querySelector('.game-card-payout-per'));
         const mult = textEm(el.querySelector('.game-card-payout-mult'));
+        // The perk line's " · LONGER = MORE" tail drops whole on a narrow card, so it never sets
+        // the minimum card width (Andy oct2 perk line).
+        const tail = textEm(el.querySelector('.game-card-perk-tail'));
         whole = Math.max(whole, all);
-        chunk = Math.max(chunk, all - per - mult, per, mult);
+        chunk = Math.max(chunk, all - per - mult - tail, per, mult);
       }
       return { whole, chunk };
     };
@@ -468,9 +477,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [streak] = useState(() => getStreak().count);
   // Freeze tokens (earned 1 per 7 days) shown on the menu BEFORE they're needed (Job 10).
   const [streakFreezes] = useState(() => getStreak().freezes || 0);
-  // MOMENTUM buys — snapshotted on mount (bought only in the shop, which remounts this screen on
-  // return). Drives the MomentumRail trophy under the XP bar (each buy = one permanent mark).
-  const [momentum] = useState(() => getMomentum());
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
@@ -563,6 +569,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     else if (restoreFocus === 'rebirth' && rebirthLinkRef.current) rebirthLinkRef.current.focus();
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // AUTOMATION (stars.js layer 2): AUTO-KEY / AUTO-FORGE spend on every menu return, and the menu
+  // says what they bought, once.
+  useEffect(() => {
+    const r = runAutomation({ buyKey: buyKeyPower, buyForge });
+    if (!r.keys && !r.forges) return undefined;
+    const parts = [];
+    if (r.keys) parts.push(`+${r.keys} KEY POWER`);
+    if (r.forges) parts.push(`+${r.forges} FORGE`);
+    const t = setTimeout(() => {
+      if (xpFxRef.current && xpFxRef.current.announce) xpFxRef.current.announce('AUTOMATION', parts.join(' · '), 'BOUGHT WHILE YOU PLAYED');
+    }, 800);
+    return () => clearTimeout(t);
   }, []);
   // STEP 21: the worn mark ranked up during the last games → name it once, on the menu, after any
   // mount-time level/tier card has had its 1.5 s.
@@ -841,6 +860,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             shopRef={shopLinkRef}
             statsRef={statsLinkRef}
             rebirthRef={rebirthLinkRef}
+            rewardsCount={claims.length}
+            onRewards={() => setShowClaims(true)}
           />
         ) : (
         <>
@@ -848,6 +869,21 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
         <nav className="homepage-corner-nav" aria-label="Menu">
+          {/* REWARDS (Andy oct2): leads the stack while something is waiting to be claimed — the
+              count badge is the notification, and it goes away with the last claim. */}
+          {claims.length > 0 && (
+            <button
+              type="button"
+              className={`homepage-nav-btn is-rewards${navigating ? ' disabled' : ''}`}
+              onClick={() => setShowClaims(true)}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              aria-label={`Open rewards — ${claims.length} to claim`}
+            >
+              REWARDS
+              <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>
+            </button>
+          )}
           {/* SHOP and STATS SWAPPED (Andy A4): STATS leads, SHOP sits last in the word stack —
               nearest the trophy + audio, where the eye lands after the cards. */}
           <button
@@ -994,10 +1030,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               the one screen in the app with no vertical room to spare. The hint carries both on a
               first run ("TYPE ANYWHERE · 12 WORDS TO LEVEL 2") and drops the lead-in afterwards.
               Its 20px + the cluster's 5px gap are what pay for the hint line at 320x640. */}
-          {/* MOMENTUM trophy: one permanent mark per repeatable-sink buy (see MomentumRail). Renders
-              nothing until the first buy, so a fresh menu is unchanged. Joins the XP cluster (no orphan
-              fixed UI). */}
-          <MomentumRail count={momentum} />
+          {/* (The MOMENTUM rail is gone with MOMENTUM — Andy oct2: the LETTER FORGE replaced it, and
+              its 22px row was part of what pushed SHOP / REBIRTH down the screen.) */}
           {/* THE NEXT-UNLOCK TEASER IS GONE (Andy's cut). Three spans promising a cosmetic FRAME,
               which at R1 rendered as "NEXT REBIRTH 1 FRAME REBIRTH 1" — a line that says the same
               word three times and names a reward the player cannot see. No affordance, nothing
@@ -1100,6 +1134,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             level={xpProgress.level}
             onClose={() => setLockedPreview(null)}
           />
+        </ScreenBoundary>
+      )}
+
+      {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
+      {!showClaims && <ClaimPopup onOpenPanel={() => setShowClaims(true)} />}
+      {showClaims && (
+        <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
+          <ClaimsPanel onClose={() => setShowClaims(false)} />
         </ScreenBoundary>
       )}
 

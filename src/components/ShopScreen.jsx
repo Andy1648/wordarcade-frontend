@@ -6,8 +6,9 @@
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
 import { useEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyMomentum } from '../progress/shop';
-import { getMomentum, momentumCost, momentumMult, momentumMaxed, MOMENTUM_MAX } from '../progress/momentum';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyForge } from '../progress/shop';
+import { forgeLevels, forgeBuys, forgeCost, nextForgeLetter, FORGE_PCT } from '../progress/forge';
+import ForgeStrip from './ForgeStrip';
 import {
   THEMES,
   themeById,
@@ -19,7 +20,8 @@ import {
   setEquippedTheme,
 } from '../theme/themes';
 import { getWins, saveWins, perWordWins } from '../progress/wins';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, doRebirth, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { rebirthAdvice, rebirthWithStars, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
@@ -37,7 +39,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
-  const [momentum, setMomentum] = useState(() => getMomentum());
+  const [forge, setForge] = useState(() => forgeLevels());
   // THEMES: grant any level-unlocked themes on open, then read owned + equipped.
   const [ownedThemes, setOwnedThemes] = useState(() => {
     syncThemeUnlocks(loadProgress().level);
@@ -64,6 +66,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const rebirths = getRebirths();
   const threshold = rebirthThreshold(rebirths);
   const nextMult = rebirthMult(rebirths + 1);
+  const advice = rebirthAdvice(level, rebirths);
+  const [stars, setStars] = useState(() => starsState());
   const rebirthReady = level >= threshold;
 
   // §3 — the shop always shows a visible NEXT GOAL with a progress bar. KEY POWER's
@@ -71,9 +75,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
-  const mMaxed = momentumMaxed(momentum);
-  const mCost = momentumCost(momentum); // Infinity when maxed
-  const mProgress = mMaxed ? 1 : mCost > 0 ? Math.min(1, wins / mCost) : 1;
+  const fBuys = forgeBuys(forge);
+  const fCost = forgeCost(fBuys);
+  const fNext = nextForgeLetter(forge);
+  const fNextLv = (forge[fNext] || 0) + 1;
+  const fProgress = fCost > 0 ? Math.min(1, wins / fCost) : 1;
   const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
@@ -85,7 +91,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
     setKeyTier(getKeyTier());
-    setMomentum(getMomentum());
+    setForge(forgeLevels());
   };
   const onBuy = (id) => {
     if (buy(id).ok) {
@@ -142,40 +148,42 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     while (guard < 500 && onBuyKeyPower({ batch: true })) guard += 1;
     endKeyPowerRun();
   };
-  // The permanent mark lands on the menu rail (see MomentumRail); the sticker names the total.
-  const revealMomentum = (count, n, spent) => {
+  // LETTER FORGE (replaced MOMENTUM): the sticker names the letter(s) just forged and what a
+  // letter level pays, in plain words.
+  const revealForge = (letter, level, n, spent) => {
     setReveal({
-      kind: 'momentum',
-      name: `MOMENTUM ${count}${n > 1 ? ` (+${n})` : ''}`,
-      blurb: `${count} mark${count === 1 ? '' : 's'} — every win now pays +${count}%.`,
+      kind: 'forge',
+      name: n > 1 ? `FORGED ×${n}` : `${letter.toUpperCase()} FORGED — LV ${level}`,
+      blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word now pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: '#FF6B3D',
-      tier: count,
+      tier: level,
+      letter: letter.toUpperCase(),
     });
   };
-  const mRun = useRef({ n: 0, spent: 0, count: 0 });
-  const onBuyMomentum = ({ batch = false } = {}) => {
-    const r = buyMomentum();
+  const fRun = useRef({ n: 0, spent: 0, letter: 'e', level: 1 });
+  const onBuyForge = ({ batch = false } = {}) => {
+    const r = buyForge();
     if (!r.ok) return false;
     sndPurchase();
-    evItemPurchased('momentum', r.count);
+    evItemPurchased('forge', r.count);
     if (batch) {
-      mRun.current = { n: mRun.current.n + 1, spent: mRun.current.spent + r.spent, count: r.count };
+      fRun.current = { n: fRun.current.n + 1, spent: fRun.current.spent + r.spent, letter: r.letter, level: r.level };
     } else {
-      revealMomentum(r.count, 1, r.spent);
+      revealForge(r.letter, r.level, 1, r.spent);
     }
     refresh();
     return true;
   };
-  const endMomentumRun = () => {
-    const run = mRun.current;
-    mRun.current = { n: 0, spent: 0, count: 0 };
-    if (run.n > 0) revealMomentum(run.count, run.n, run.spent);
+  const endForgeRun = () => {
+    const run = fRun.current;
+    fRun.current = { n: 0, spent: 0, letter: 'e', level: 1 };
+    if (run.n > 0) revealForge(run.letter, run.level, run.n, run.spent);
   };
-  const buyMaxMomentum = () => {
+  const buyMaxForge = () => {
     let guard = 0;
-    while (guard < 500 && onBuyMomentum({ batch: true })) guard += 1;
-    endMomentumRun();
+    while (guard < 500 && onBuyForge({ batch: true })) guard += 1;
+    endForgeRun();
   };
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
@@ -208,7 +216,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   };
   const confirmRebirth = () => {
     const gained = nextMult;
-    doRebirth(); // zeroes xp; queues the REBIRTH N celebration for the menu
+    // Zeroes xp (HEAD START may lift the new climb), pays the stars for how far past the gate the
+    // player went, queues the REBIRTH N celebration + any layer-unlock claim (stars.js).
+    const { stars: starsGot } = rebirthWithStars();
     sndRebirth(); // Job 11: rebirth swell
     { const n = getRebirths(); evRebirth(n); refreshSessionProps({ rebirths: n }); } // analytics
     setConfirming(false);
@@ -216,7 +226,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setReveal({
       kind: 'rebirth',
       name: `×${formatMult(gained)}`,
-      blurb: `Everything you earn from here is multiplied by ${formatMult(gained)}.`,
+      blurb: `Everything you earn from here is multiplied by ${formatMult(gained)}.${starsGot ? ` +${starsGot} ★ for STAR PERKS.` : ''}`,
       coin: null, // a rebirth spends LEVELS, not wins — no price pill
       colour: '#9A1AFF',
       onClose: onBack,
@@ -304,50 +314,38 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 />
               ))}
             </div>
-            {/* MOMENTUM (repeatable sink): the ONE upgrade you buy forever — cheap, gently-rising
-                cost, +1% wins each, and every buy drops a permanent MARK on the menu rail. Fixes the
-                end-game "nothing to buy" dead stretch (claude/dead-stretch-report.md). */}
-            <h3 className="shop-subtitle">MOMENTUM — {momentum} / {MOMENTUM_MAX} MARKS</h3>
-            <div className="shop-keypower">
+            {/* LETTER FORGE (Andy oct2 — replaced MOMENTUM, which capped at 200 and did nothing you
+                could see). Uncapped: each buy forges the next letter one level; a word pays +5% per
+                forged level of every letter in it. The strip IS the state — 26 letters at their levels. */}
+            <h3 className="shop-subtitle">LETTER FORGE — {fBuys} FORGED</h3>
+            <div className="shop-keypower shop-forge">
               <div className="shop-kp-info">
-                <div className="shop-kp-current">
-                  <b>×{momentumMult(momentum).toFixed(2)}</b> WINS · <b>{momentum}</b> MARKS ON YOUR MENU
+                <ForgeStrip levels={forge} next={fNext} />
+                <div className="shop-kp-next">
+                  NEXT: <b>{fNext.toUpperCase()} → LV {fNextLv}</b>
+                  {'  ·  '}
+                  <b><span className="shop-coin" aria-hidden="true" /> {formatNum(fCost)} WINS</b>
                 </div>
-                {mMaxed ? (
-                  <div className="shop-kp-next">ALL {MOMENTUM_MAX} MARKS EARNED — MAXED</div>
-                ) : (
-                  <div className="shop-kp-next">
-                    NEXT: <b>+1% (×{momentumMult(momentum + 1).toFixed(2)})</b>
-                    {'  ·  '}
-                    <b><span className="shop-coin" aria-hidden="true" /> {formatNum(mCost)} WINS</b>
-                  </div>
-                )}
-                <div className="shop-kp-rate">BUY AGAIN, FOREVER — EACH BUY LEAVES A MARK</div>
+                <div className="shop-kp-rate">
+                  +{Math.round(FORGE_PCT * 100)}% PER LEVEL, PER LETTER IN THE WORD — LONGER WORDS FORGE MORE. NO CAP.
+                </div>
                 <div className="shop-goal">
-                  {mMaxed
-                    ? 'MOMENTUM MAXED'
-                    : wins >= mCost
-                    ? 'READY TO UNLOCK'
-                    : `UNLOCKS AT ${formatNum(mCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                  {wins >= fCost ? 'READY TO FORGE' : `FORGE AT ${formatNum(fCost)} WINS — YOU HAVE ${formatNum(wins)}`}
                 </div>
-                <ProgressBar value={mProgress} />
+                <ProgressBar value={fProgress} />
               </div>
               <div className="shop-kp-actions">
-                {mMaxed ? (
-                  <button type="button" className="shop-card-btn" disabled>
-                    MAXED
-                  </button>
-                ) : wins >= mCost ? (
+                {wins >= fCost ? (
                   <>
-                    <HoldBuy label={formatNum(mCost)} onCommit={onBuyMomentum} onBatchEnd={endMomentumRun} />
-                    {!momentumMaxed(momentum + 1) && wins >= mCost + momentumCost(momentum + 1) && (
-                      <button type="button" className="shop-card-btn shop-buymax" onClick={buyMaxMomentum}>BUY MAX</button>
+                    <HoldBuy label={formatNum(fCost)} onCommit={onBuyForge} onBatchEnd={endForgeRun} />
+                    {wins >= fCost + forgeCost(fBuys + 1) && (
+                      <button type="button" className="shop-card-btn shop-buymax" onClick={buyMaxForge}>BUY MAX</button>
                     )}
                   </>
                 ) : (
                   <button type="button" className="shop-card-btn" disabled>
                     <span className="shop-coin" aria-hidden="true" />
-                    {formatNum(mCost)}
+                    {formatNum(fCost)}
                   </button>
                 )}
               </div>
@@ -390,23 +388,28 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
           </div>
         ) : (
           <div className="shop-body">
-            <div className="shop-rebirth-stats">
-              <div className="shop-rb-stat">
-                <span>REBIRTHS</span>
-                <b>{rebirths}</b>
+            {/* ONE BIG THING (Andy oct2): what a rebirth gets you, right now — the new multiplier
+                and the stars — with the Sell-Lemons-style warning when waiting a level or two pays more. */}
+            <div className={`shop-rb-hero${advice.badTime ? ' is-bad' : ''}`}>
+              <div className="shop-rb-hero-label">REBIRTH {rebirths + 1} TO GET</div>
+              <div className="shop-rb-hero-val">
+                ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS</span>
+                {rebirthReady && (
+                  <>
+                    {' · +'}
+                    {advice.stars} <span className="shop-rb-star">★</span>
+                  </>
+                )}
               </div>
-              <div className="shop-rb-stat">
-                <span>CURRENT MULTIPLIER</span>
-                <b>×{formatMult(rebirthMult(rebirths))}</b>
-              </div>
-              {/* The NEXT rebirth's level + multiplier, shown at all times (Economy v4). */}
-              <div className="shop-rb-stat">
-                <span>NEXT REBIRTH AT</span>
-                <b>LEVEL {threshold}</b>
-              </div>
-              <div className="shop-rb-stat">
-                <span>NEXT MULTIPLIER</span>
-                <b>×{formatMult(nextMult)}</b>
+              {rebirthReady && (
+                <div className="shop-rb-advice">
+                  {advice.badTime
+                    ? `BAD TIME — WAIT ${advice.nextIn} LV = +1 ★`
+                    : `NEXT ★ IN ${advice.nextIn} LEVELS · NOW IS FINE`}
+                </div>
+              )}
+              <div className="shop-rb-now">
+                NOW ×{formatMult(rebirthMult(rebirths))} · {rebirths} REBIRTH{rebirths === 1 ? '' : 'S'}
               </div>
             </div>
 
@@ -424,7 +427,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <b>KEEP:</b> wins, all purchases, lifetime stats — everything else.
               </li>
               <li>
-                <b>GAIN:</b> a permanent ×{formatMult(nextMult)} XP multiplier.
+                <b>GAIN:</b> a permanent ×{formatMult(nextMult)} on wins and XP, and ★ for STAR PERKS.
               </li>
             </ul>
 
@@ -440,13 +443,51 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 </div>
               ) : (
                 <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)}>
-                  REBIRTH {rebirths + 1} — GAIN ×{formatMult(nextMult)} XP
+                  REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {advice.stars} ★
                 </button>
               )
             ) : (
               <button type="button" className="shop-rebirth" disabled aria-disabled="true">
                 REACH LEVEL {threshold} TO REBIRTH — YOU'RE LV {level}
               </button>
+            )}
+
+            {/* LAYER 1/2 — STAR PERKS and AUTOMATION (stars.js). Hidden until the first rebirth
+                unlocks them (the claimable reveal names it); AUTOMATION shows its gate until R3. */}
+            {rebirths >= 1 && (
+              <>
+                <h3 className="shop-subtitle">STAR PERKS — {stars.balance} ★</h3>
+                <div className="shop-perks">
+                  {PERKS.map((p) => {
+                    const lv = stars.perks[p.id] || 0;
+                    const open = layerUnlocked(p.layer, rebirths);
+                    const maxed = lv >= p.max;
+                    const cost = perkCost(p.id, lv);
+                    return (
+                      <div key={p.id} className={`shop-perk${open ? '' : ' is-locked'}`}>
+                        <div className="shop-perk-name">
+                          {p.name}
+                          {p.max > 1 && lv > 0 && <span className="shop-perk-lv"> LV {lv}</span>}
+                        </div>
+                        <div className="shop-perk-blurb">{open ? p.blurb : `UNLOCKS AT REBIRTH ${LAYER_AUTO_AT}`}</div>
+                        <button
+                          type="button"
+                          className="shop-card-btn"
+                          disabled={!open || maxed || stars.balance < cost}
+                          onClick={() => {
+                            if (buyPerk(p.id, rebirths).ok) {
+                              sndPurchase();
+                              setStars(starsState());
+                            }
+                          }}
+                        >
+                          {maxed ? (p.max === 1 ? 'ON' : 'MAXED') : `${cost} ★`}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         )}

@@ -14,17 +14,28 @@ import { getStreakMult } from './streak.js';
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
+// MODE POWER (Andy oct2: "mode power must show in payouts"). Read against Word Bomb (×2 = POWER ×1):
+//   SAT RUSH ×10 = POWER ×5 — its card power is real money per word, not a label
+//   CHAIN    ×4  = POWER ×2 — higher wins per word
+//   FUSE     ×2  = POWER ×1 — the SAME per word as Word Bomb; its higher bar is FRENZY (frenzy.js,
+//                             ×5 wins for 5 real minutes after a full a–z strip)
 export const XP_MULTIPLIERS = {
   menu: 1,
   'word-bomb': 2,
   'category-blitz': 2,
-  'sat-rush': 3,
+  'sat-rush': 10,
   chain: 4,
-  fuse: 5,
+  fuse: 2,
   // WORD RACE: a 12-word fragment sprint vs people — no lives, no per-word clock, so it pays
-  // below FUSE (×5, a survival run) and above the turn-based rooms (×2).
+  // a little above the turn-based rooms (×2).
   'word-race': 3,
 };
+// The POWER a card shows: the mode's multiplier relative to Word Bomb (WB = ×1).
+export const POWER_BASE_MODE = 'word-bomb';
+export function modePower(mode) {
+  const m = XP_MULTIPLIERS[mode];
+  return Number.isFinite(m) ? m / XP_MULTIPLIERS[POWER_BASE_MODE] : 1;
+}
 
 // round10 — snap to the nearest multiple of 10, HALF-TO-EVEN. Half-to-even (not JS's
 // default half-up Math.round) is deliberate: it is what reproduces the Economy v6 published
@@ -287,13 +298,26 @@ export function keyTierXp(tier) {
 // T8 it extends ×6 per tier from T8's 2,799,360, each step round10.
 // Price to BUY tier `tier` (tier >= 1): KEY_PRICE_WORDS × growth^(tier-1) reference words, each worth
 // the wins a 5-letter word pays at the tier being LEFT, at the player's rebirth multiplier.
+// THE RATE BOOST the shop prices against (Andy oct2). KEY POWER and the LETTER FORGE are priced
+// "in words at your rate"; once the forge and STAR POWER multiply that rate, a price in base words
+// would get relatively cheaper with every buy (econ-sim: KEY tiers fell to ~9 s of income). wins.js
+// installs the real boost (forge average × STAR POWER) at load — injected, because those modules
+// import this one.
+let rateBoost = () => 1;
+export function setRateBoost(fn) {
+  if (typeof fn === 'function') rateBoost = fn;
+}
+export function priceRateBoost() {
+  const b = rateBoost();
+  return Number.isFinite(b) && b > 0 ? b : 1;
+}
 export function keyTierCostAt(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
   if (t === 0) return 0;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const words = KEY_PRICE_WORDS * (1 + (t - 1) / KEY_PRICE_SOFT);
   const refWins = (keyTierXp(t - 1) * KEY_REF_LETTERS) / 10;
-  return round10(words * refWins * rebirthMult(rc));
+  return round10(words * refWins * rebirthMult(rc) * priceRateBoost());
 }
 // The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
 export function keyTierCost(tier, rebirthCount) {

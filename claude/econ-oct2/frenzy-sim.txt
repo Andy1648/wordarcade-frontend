@@ -1,0 +1,6 @@
+weak    BEFORE {"frenzyRunPct":0,"stripsPerRun":0,"meanMaxLit":19.1,"wordsPerRun":10.1,"minutesPerFrenzy":null}
+        AFTER  {"frenzyRunPct":0.1,"stripsPerRun":0.001,"meanMaxLit":19.3,"wordsPerRun":9.9,"minutesPerFrenzy":2213.2}
+median  BEFORE {"frenzyRunPct":2.3,"stripsPerRun":0.023,"meanMaxLit":23.2,"wordsPerRun":18.2,"minutesPerFrenzy":84.3}
+        AFTER  {"frenzyRunPct":19.2,"stripsPerRun":0.192,"meanMaxLit":24.1,"wordsPerRun":18.2,"minutesPerFrenzy":10.3}
+strong  BEFORE {"frenzyRunPct":71.5,"stripsPerRun":0.829,"meanMaxLit":25.7,"wordsPerRun":38.1,"minutesPerFrenzy":3.6}
+        AFTER  {"frenzyRunPct":98.9,"stripsPerRun":1.677,"meanMaxLit":26,"wordsPerRun":39.8,"minutesPerFrenzy":1.9}

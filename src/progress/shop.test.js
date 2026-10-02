@@ -167,3 +167,18 @@ test('canAffordAny is true for a new player who can afford a cheap cosmetic', ()
     assert.equal(canAffordAny(150, getOwned()), true, '150 wins affords CHROME');
   });
 });
+
+test('Andy oct2: buying a cosmetic auto-equips it', () => {
+  const m = new Map([['taw.wins', String(10 ** 9)]]);
+  const prev = globalThis.localStorage;
+  globalThis.localStorage = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  try {
+    assert.equal(buy('inferno').equipped, true);
+    assert.equal(getEquipped().popStyle, 'inferno');
+    buy('marble');
+    assert.equal(getEquipped().soundPack, 'marble');
+    assert.equal(getEquipped().popStyle, 'inferno', 'a sound pack never unequips the pop');
+  } finally {
+    globalThis.localStorage = prev;
+  }
+});

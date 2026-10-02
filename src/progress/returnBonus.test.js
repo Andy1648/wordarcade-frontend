@@ -1,5 +1,6 @@
 // returnBonus.test.js (Job 6) — the >=6h gate, the 12h cap, once-per-calendar-day, the × rebirth
 // scaling, and that a fresh visitor (no last-seen) never triggers it.
+import { claimAll } from './claims.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -65,6 +66,8 @@ test('claimReturnBonus grants once, then is blocked the same calendar day', () =
     const first = claimReturnBonus(now - 10 * HOUR, now);
     assert.ok(first);
     assert.equal(first.wins, 10 * PER_HOUR_WINS); // 1000
+    assert.equal(getWins() - before, 0, 'queued, not credited (Andy oct2)');
+    assert.equal(claimAll().wins, 1000);
     assert.equal(getWins() - before, 1000);
     // Same day, another eligible-looking return → blocked (already claimed today).
     const second = claimReturnBonus(now - 9 * HOUR, now + HOUR);

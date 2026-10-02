@@ -1,5 +1,6 @@
 // collection.test.js (Job 3) — distinct-word recording, tier/mode/date capture, milestone payouts
 // (× rebirth), the 5,000 LRU cap, the byte MEASURE at cap, and never-throw storage fallback.
+import { claimAll } from './claims.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -67,6 +68,8 @@ test('milestones pay wins (× rebirth) once each as the count crosses them', () 
     for (let i = 0; i < 100; i++) last = recordAcceptedWord(`word${i}`, { mode: 'fuse', band: 'COMMON' });
     // The 100th distinct word crosses the 100 milestone → +5000 wins (rebirth ×1).
     assert.deepEqual(last.milestone, { n: 100, wins: 5000 });
+    assert.equal(getWins() - before, 0, 'queued for the player to claim (Andy oct2)');
+    assert.equal(claimAll().wins, 5000);
     assert.equal(getWins() - before, 5000);
     // Crossing again does not re-pay (already claimed).
     const again = recordAcceptedWord('word50', { mode: 'fuse', band: 'COMMON' }); // dup

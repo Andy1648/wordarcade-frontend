@@ -501,6 +501,15 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    and a line too long for its card at the floor size wraps instead of being clipped or hidden. */
 .game-card-payout-per,
 .game-card-payout-mult { white-space: normal; }
+/* The perk head (POWER ×5 / FRENZY ×5) is the reward colour; a LIVE frenzy is its flame orange. */
+.game-card-perk { color: #ffe94a; }
+.game-card-perk.is-live { color: #ff6b3d; }
+.game-card-foot .game-card-perk { color: #c8321e; }
+/* The tail is one phrase: it wraps or drops WHOLE, never as "LONGER =" / "MORE". */
+.game-card-perk-tail { white-space: nowrap; }
+@container (max-width: 230px) {
+  .game-card-perk-tail { display: none; }
+}
 
 /* THE UNIT GOES BEFORE THE NUMBERS DO. At 360x640 the five cards are ~65px wide and
    "610 / WORD (x6)" overflows its own card even with the type pinned at its 7px floor — the

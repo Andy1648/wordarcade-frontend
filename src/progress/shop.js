@@ -5,7 +5,7 @@
 // only (never winsLifetime); purchases are permanent and survive rebirth.
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
-import { getMomentum, saveMomentum, momentumCost, markMomentumPop, MOMENTUM_MAX } from './momentum.js';
+import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
 import { THEMES, isThemeOwned } from '../theme/themes.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
@@ -146,7 +146,9 @@ export function buy(id) {
   const next = wins - item.price;
   saveWins(next); // spendable balance only — never winsLifetime
   saveOwned([...getOwned(), id]);
-  return { ok: true, wins: next };
+  // Andy oct2: buying a cosmetic EQUIPS it — you bought it to see/hear it.
+  equip(id);
+  return { ok: true, wins: next, equipped: true };
 }
 
 // Buy the NEXT Key Power TIER: deducts the next tier's cost from wins, bumps taw.keytier by 1.
@@ -163,19 +165,19 @@ export function buyKeyPower() {
   return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
 }
 
-// MOMENTUM (repeatable sink): buy ONE more unit — deduct the (rising) cost, bump the count. Refuses
-// when unaffordable or already at the cap. `count` in the result is the new total buys.
-export function buyMomentum() {
-  const count = getMomentum();
-  if (count >= MOMENTUM_MAX) return { ok: false, wins: getWins(), count, spent: 0, maxed: true };
-  const cost = momentumCost(count); // cost to buy the next unit
+// LETTER FORGE (forge.js — replaced MOMENTUM, Andy oct2): buy ONE forge — deduct the (rising)
+// price, forge the next letter. Uncapped: there is always a next letter level. `count` in the
+// result is the new total buys; `letter`/`level` say what was forged.
+export function buyForge() {
+  const count = forgeBuys();
+  const cost = forgeCost(count);
   const wins = getWins();
   if (wins < cost) return { ok: false, wins, count, spent: 0 };
   const nextWins = wins - cost;
   saveWins(nextWins);
-  saveMomentum(count + 1);
-  markMomentumPop(); // queue the newest-stud pop for the menu rail
-  return { ok: true, wins: nextWins, count: count + 1, spent: cost };
+  const f = forgeOne();
+  markForgePop(f.letter); // the menu rail pops the newly forged letter once
+  return { ok: true, wins: nextWins, count: count + 1, spent: cost, letter: f.letter, level: f.level };
 }
 
 // True when the player can afford at least one thing they don't already own — drives the
@@ -191,9 +193,8 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
-  // Momentum — a repeatable sink until MOMENTUM_MAX (momentumCost returns Infinity when maxed).
-  const mCost = momentumCost(getMomentum());
-  if (Number.isFinite(mCost) && bal >= mCost) return true;
+  // LETTER FORGE — uncapped, so there is always a next forge to buy.
+  if (bal >= forgeCost(forgeBuys())) return true;
   // Buyable menu themes (priced, not yet owned or level-granted).
   if (THEMES.some((t) => t.price > 0 && !isThemeOwned(t.id) && bal >= t.price)) return true;
   return false;

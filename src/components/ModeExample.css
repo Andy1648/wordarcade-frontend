@@ -102,3 +102,48 @@
   letter-spacing: 0.06em;
   color: #f3ecff;
 }
+
+/* Andy oct2 — the perks under the base rate: mode POWER (vs Word Bomb) + the universal length rule. */
+.mode-ex-perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f3ecff;
+}
+.mode-ex-power {
+  font-size: var(--fs-body);
+}
+.mode-ex-power-vs {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  color: #d8c9f0;
+}
+/* FUSE: the FRENZY rule, its own flame-orange plaque so it can't be skimmed past. */
+.mode-ex-frenzy {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #2a1206;
+  border: 3px solid #ff6b3d;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffe9c9;
+}
+.mode-ex-frenzy b {
+  color: #ff6b3d;
+}
+.mode-ex-frenzy.is-live {
+  background: #ff6b3d;
+  border-color: #a8381a;
+  color: #0d0618;
+}

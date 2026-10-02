@@ -36,6 +36,13 @@
 //  * MARK: after each achievement check, wear the unlocked mark with the best expected multiplier
 //    for the mode mix (LINGUIST / METRONOME chance effects are valued at a nominal +5% / +3%; their
 //    in-game effect is NOT simulated).
+//  * OCT 2 ECONOMY (STEP 48): MOMENTUM is the LETTER FORGE (bought like any sink; words are drawn
+//    as letter strings by English letter frequency so the forge sees real letters); FUSE FRENZY is
+//    triggered in CFG.frenzyRunP of FUSE rounds (frenzy-sim.mjs median: 19%) at a random word, and
+//    the sim clock drives Date.now so the 5-minute window is play time; claims (achievements,
+//    milestones, rank-ups, layer reveals) are claimed at the next round end; rebirth waits out a
+//    BAD TIME (a star 1-2 levels away) and spends stars greedily (AUTO-KEY/FORGE, FRENZY+, HEAD
+//    START, then STAR POWER).
 //  * NOT MODELLED: returnBonus (daily players never return from absence), Word Race, menu typing
 //    XP, the LINGUIST rarity bump, any server-side difficulty change.
 //
@@ -76,6 +83,7 @@ const CFG = {
   satLengthDist: [[6, 0.15], [7, 0.25], [8, 0.25], [9, 0.2], [10, 0.15]],
   // SAT deck raw band mix (mean raw rarity ~3.4 incl. length bonus, matching SAT_DECK_MEAN_RARITY)
   satBandMix: [['UNCOMMON', 0.12], ['RARE', 0.5], ['OBSCURE', 0.38]],
+  frenzyRunP: 0.19, // share of FUSE rounds that light all 26 letters (claude/econ-oct2/frenzy-sim.mjs, median bot)
   achievementEveryRounds: 5,
   incomeWindowMin: 10, // trailing window for "wins per minute" income
   levelMarks: [10, 25, 50, 75, 100, 125, 150, 200, 250, 300],
@@ -130,7 +138,15 @@ const imp = (rel) => import(pathToFileURL(path.join(SRC, rel)).href);
 const XP = await imp('progress/xp.js');
 const WINS = await imp('progress/wins.js');
 const SHOP = await imp('progress/shop.js');
-const MOM = await imp('progress/momentum.js');
+const FORGE = await imp('progress/forge.js');
+const FRENZY = await imp('progress/frenzy.js');
+const CLAIMS = await imp('progress/claims.js');
+const STARS = await imp('progress/stars.js');
+// The sim clock drives Date.now so FRENZY's wall-clock window is measured in PLAY time.
+let SIM_NOW = Date.UTC(2026, 0, 1, 12);
+Date.now = () => SIM_NOW;
+// Letters by English frequency, so the LETTER FORGE sees words made of real letters.
+const LETTER_FREQ = [['e',12.7],['t',9.1],['a',8.2],['o',7.5],['i',7],['n',6.7],['s',6.3],['h',6.1],['r',6],['d',4.3],['l',4],['c',2.8],['u',2.8],['m',2.4],['w',2.4],['f',2.2],['g',2],['y',2],['p',1.9],['b',1.5],['v',1],['k',0.8],['j',0.15],['x',0.15],['q',0.1],['z',0.07]];
 const MAST = await imp('progress/mastery.js');
 const MARKS = await imp('progress/marks.js');
 const ACH = await imp('progress/achievements.js');
@@ -197,6 +213,7 @@ const rarityMult = (band, len) => Math.min(RAR.RARITY_MAX_MULT, BAND_MULT[band] 
 // ----------------------------------------------------------------------------- ONE PLAYER
 function simulate(arch) {
   globalThis.localStorage = makeStore();
+  SIM_NOW = Date.UTC(2026, 0, 1, 12);
   WINS.resetWinsLedger();
   WINS.consumePendingWinsStamp();
   const rng = LUCK.mulberry32((CFG.seed ^ arch.minPerDay * 7919) >>> 0);
@@ -267,8 +284,7 @@ function simulate(arch) {
   function shopCandidates() {
     const c = [];
     c.push({ kind: 'key', id: `T${XP.getKeyTier() + 1}`, price: XP.keyTierCost(XP.getKeyTier()) });
-    const mc = MOM.momentumCost(MOM.getMomentum());
-    if (Number.isFinite(mc)) c.push({ kind: 'momentum', id: `M${MOM.getMomentum() + 1}`, price: mc });
+    c.push({ kind: 'forge', id: `F${FORGE.forgeBuys() + 1}`, price: FORGE.forgeCost(FORGE.forgeBuys()) });
     const owned = new Set(SHOP.getOwned());
     for (const it of [...SHOP.POP_STYLES, ...SHOP.SOUND_PACKS]) if (it.price > 0 && !owned.has(it.id)) c.push({ kind: 'cosmetic', id: it.id, price: it.price });
     for (const t of THEMES.THEMES) if (t.price > 0 && !THEMES.isThemeOwned(t.id)) c.push({ kind: 'theme', id: t.id, price: t.price });
@@ -287,7 +303,7 @@ function simulate(arch) {
       const inc = incomePerMin();
       let ok = false;
       if (it.kind === 'key') ok = SHOP.buyKeyPower().ok;
-      else if (it.kind === 'momentum') ok = SHOP.buyMomentum().ok;
+      else if (it.kind === 'forge') ok = SHOP.buyForge().ok;
       else if (it.kind === 'cosmetic') {
         ok = SHOP.buy(it.id).ok;
         if (ok) SHOP.equip(it.id);
@@ -334,7 +350,8 @@ function simulate(arch) {
       minute,
       rebirths: XP.getRebirths(),
       keyTier: XP.getKeyTier(),
-      momentum: MOM.getMomentum(),
+      forge: FORGE.forgeBuys(),
+      stars: STARS.starsState().earned,
       xpToNextLevel: needL,
       xpPerWordChain: rate.xp,
       winsPerWordChain: rate.rate,
@@ -365,7 +382,7 @@ function simulate(arch) {
       rebirths: XP.getRebirths(),
       incomePerMin: inc,
       keyPower: { tier: XP.getKeyTier() + 1, ...mk(XP.keyTierCost(XP.getKeyTier())) },
-      momentum: { count: MOM.getMomentum() + 1, ...mk(MOM.momentumCost(MOM.getMomentum())) },
+      momentum: { count: FORGE.forgeBuys() + 1, ...mk(FORGE.forgeCost(FORGE.forgeBuys())) },
       cosmetic: cc ? { id: cc.id, ...mk(cc.price) } : { id: null, ...mk(null), ownedAllAtMin: allCosmeticsOwnedAt.minute },
       nextRebirthAt: rbNext,
     };
@@ -394,6 +411,9 @@ function simulate(arch) {
   function checkAch() {
     const newly = ACH.checkAchievements();
     for (const a of newly) addEvent('achievement', `ACH ${a.name}`, { wins: a.wins });
+    // Oct 2: rewards are CLAIMED — the sim's player claims everything pending right away.
+    for (const c of CLAIMS.listClaims()) if (c.kind === 'rank') addEvent('rank-claim', c.label, { wins: c.amount });
+    CLAIMS.claimAll();
     bestMark();
   }
 
@@ -413,6 +433,8 @@ function simulate(arch) {
     let weightSum = 0;
     const diff = CFG.difficulty[mode];
     const pkey = PAYOUT_KEY[mode];
+    // FUSE FRENZY: this round lights the whole strip at a random word (or not).
+    const frenzyAt = mode === 'fuse' && rng() < CFG.frenzyRunP ? 1 + Math.floor(rng() * n) : -1;
     for (let i = 1; i <= n && minute < totalMin; i++) {
       if (rng() < CFG.missRate) combo = COMBO.comboBreak(combo);
       // ---- the word
@@ -437,10 +459,12 @@ function simulate(arch) {
       combo = COMBO.comboAccept(combo);
       const lucky = LUCK.luckyReward(luckRng.next());
       const weight = XP.cappedWordMult(rm, combo.mult, lucky.winsWeight);
+      let letters = '';
+      for (let k = 0; k < len; k++) letters += pickWeighted(rng, LETTER_FREQ);
       const prevW = weightSum;
-      weightSum += weight;
+      weightSum += WINS.bankWeight(weight, letters);
       const before = XP.loadProgress().level;
-      const res = WINS.awardWordXp({ mode, difficulty: diff, wordLength: len, weight });
+      const res = WINS.awardWordXp({ mode, difficulty: diff, wordLength: len, weight, word: letters });
       WINS.bankWordWins({ mode: pkey, difficulty: diff, wordLength: len, prevWords: i - 1, nowWords: i, prevWeight: prevW, nowWeight: weightSum });
       if (res.mastery && res.mastery.leveledUp) addEvent('mastery', `MASTERY ${mode} M${res.mastery.level}`, { mode, mlevel: res.mastery.level });
       if (res.mark && res.mark.rankedUp) addEvent('mark-rank', `MARK ${res.mark.id} rank ${res.mark.rank}`);
@@ -463,8 +487,15 @@ function simulate(arch) {
         if (rbTrack.minToPrevGate == null && lv >= rbTrack.levelAt) rbTrack.minToPrevGate = minute + dt - rbTrack.minute;
         if (rbTrack.levelAfter1Min != null && rbTrack.minToPrevGate != null) rbTrack = null;
       }
+      if (i === frenzyAt) {
+        const fz = FRENZY.startFrenzy();
+        const bonus = Math.round(FRENZY.FRENZY_TRIGGER_WORDS * WINS.perWordWins({ mode: 'fuse' }));
+        if (bonus > 0) WINS.grantWins(bonus, fz.started ? 'FRENZY!' : 'FULL STRIP', { mode: 'fuse' });
+        if (fz.started) addEvent('frenzy', 'FRENZY');
+      }
       wordCountTotal++;
       minute += dt;
+      SIM_NOW += dt * 60000;
       dayMinLeft -= dt;
       if (snap30 == null && minute >= min30) snap30 = snapshotState();
     }
@@ -481,9 +512,10 @@ function simulate(arch) {
       checkAch();
     }
     // rebirth
-    while (XP.loadProgress().level >= XP.rebirthThreshold(XP.getRebirths())) {
+    while (XP.loadProgress().level >= XP.rebirthThreshold(XP.getRebirths()) && !STARS.rebirthAdvice(XP.loadProgress().level, XP.getRebirths()).badTime) {
       const lvAt = XP.loadProgress().level;
-      const rc = XP.doRebirth();
+      const { rc, stars } = STARS.rebirthWithStars();
+      if (stars) addEvent('stars', `+${stars} STARS`);
       LADDER.grantRebirthUnlock(rc);
       rbTrack = { n: rc, minute, hours: minute / 60, levelAt: lvAt, mult: XP.rebirthMult(rc), keyTier: XP.getKeyTier(), day, levelAfter1Word: null, levelAfter1Min: null, minToPrevGate: null };
       rebirths.push(rbTrack);
@@ -494,6 +526,13 @@ function simulate(arch) {
         addEvent('menu-tier', `MENU TIER ${TIER.TIER_NAMES[mt]}`);
       }
       checkAch();
+      // Spend stars: automation first, then the capped perks, then the uncapped STAR POWER.
+      for (const id of ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
+        while (STARS.buyPerk(id, XP.getRebirths()).ok) {
+          addEvent('perk', `PERK ${id}`);
+          if (id === 'power') break;
+        }
+      }
     }
     shop();
     if (!series.length || series[series.length - 1][1] !== level() || minute - series[series.length - 1][0] > 30) series.push([+minute.toFixed(2), level(), maxLevel]);
@@ -519,7 +558,9 @@ function simulate(arch) {
       totalLevelUps,
       rebirths: XP.getRebirths(),
       keyTier: XP.getKeyTier(),
-      momentum: MOM.getMomentum(),
+      momentum: FORGE.forgeBuys(),
+      stars: STARS.starsState().earned,
+      starPerks: STARS.starsState().perks,
       wins: WINS.getWins(),
       winsLifetime: WINS.getWinsLifetime(),
       words,
@@ -551,7 +592,7 @@ function gapStats(events, endMinute, filter) {
   return { count: ev.length, median: pct(lens, 0.5), p90: pct(lens, 0.9), max: lens.reduce((a, b) => (b > a ? b : a), -Infinity), over10: gaps.filter((g) => g.len > 10).length, top, gaps };
 }
 const isMeaningful = () => true;
-const isStrict = (e) => e.kind !== 'buy-momentum' && !e.trivial;
+const isStrict = (e) => e.kind !== 'buy-forge' && !e.trivial;
 
 function analyse(res) {
   const endAll = res.final.minute;
@@ -564,7 +605,7 @@ function analyse(res) {
     rebirths: res.rebirths,
     maxLevelsInOneWord: res.maxLevelsOneWord,
     allCosmeticsOwnedAtMin: res.allCosmeticsOwnedAt,
-    momentumMaxedAtMin: (res.purchases.filter((x) => x.kind === 'momentum')[MOM.MOMENTUM_MAX - 1] || {}).minute ?? null,
+    momentumMaxedAtMin: (res.purchases.filter((x) => x.kind === 'momentum')[200 - 1] || {}).minute ?? null,
     gaps: {
       days30: { all: gapStats(ev30, res.min30, isMeaningful), strict: gapStats(ev30, res.min30, isStrict) },
       tail: { all: gapStats(res.events, endAll, isMeaningful), strict: gapStats(res.events, endAll, isStrict) },
@@ -662,7 +703,7 @@ if (!QUIET) for (const r of results) console.error(`  simulated ${r.archetype.id
 // ---- static curve facts (straight from the modules)
 const curve = {
   needAt: Object.fromEntries([1, 10, 30, 50, 75, 100, 125, 150, 200, 250, 300].map((L) => [L, XP.need(L)])),
-  constants: { CURVE_BASE: XP.CURVE_BASE, CURVE_BREAK: XP.CURVE_BREAK, EARLY_CURVE_EXP: XP.EARLY_CURVE_EXP, TOP_CURVE_EXP: XP.TOP_CURVE_EXP, REBIRTH_MULT_BASE: XP.REBIRTH_MULT_BASE, MOMENTUM_BASE: MOM.MOMENTUM_BASE, MOMENTUM_RATIO: MOM.MOMENTUM_RATIO, MOMENTUM_MAX: MOM.MOMENTUM_MAX, MASTERY_MAX: MAST.MASTERY_MAX, MASTERY_BASE: MAST.MASTERY_BASE, MASTERY_GROWTH: MAST.MASTERY_GROWTH },
+  constants: { CURVE_BASE: XP.CURVE_BASE, CURVE_BREAK: XP.CURVE_BREAK, EARLY_CURVE_EXP: XP.EARLY_CURVE_EXP, TOP_CURVE_EXP: XP.TOP_CURVE_EXP, REBIRTH_MULT_BASE: XP.REBIRTH_MULT_BASE, MOMENTUM_BASE: FORGE.MOMENTUM_BASE, MOMENTUM_RATIO: FORGE.MOMENTUM_RATIO, MOMENTUM_MAX: 200, MASTERY_MAX: MAST.MASTERY_MAX, MASTERY_BASE: MAST.MASTERY_BASE, MASTERY_GROWTH: MAST.MASTERY_GROWTH },
   rebirthThresholds: Array.from({ length: 14 }, (_, i) => XP.rebirthThreshold(i)),
   // XP cost of the levels a rebirth asks you to re-climb vs the multiplier it pays
   rebirthEconomics: Array.from({ length: 13 }, (_, i) => {
@@ -713,7 +754,7 @@ for (const r of results) for (const L of CFG.affordLevels) {
   const cell = (x, name) => `${name} ${x.price == null ? '(none left' + (x.ownedAllAtMin != null ? ' since ' + fmtMin(x.ownedAllAtMin) : '') + ')' : fmt(x.price) + ' = ' + fmtMin(x.minutes) + ' ' + x.flag}`;
   p(`   ${r.archetype.id.padEnd(8)} L${L} R${a.rebirths} income ${fmt(a.incomePerMin)}/min | ${cell(a.keyPower, 'KEY T' + a.keyPower.tier)} | ${cell(a.momentum, 'MOM#' + a.momentum.count)} | ${cell(a.cosmetic, 'COSMETIC')}`);
 }
-p('   sinks exhausted: ' + results.map((r) => `${r.archetype.id}: all cosmetics+themes owned at ${fmtMin(r.allCosmeticsOwnedAtMin)}, MOMENTUM ${MOM.MOMENTUM_MAX}/${MOM.MOMENTUM_MAX} at ${fmtMin(r.momentumMaxedAtMin)}`).join(' | '));
+p('   sinks exhausted: ' + results.map((r) => `${r.archetype.id}: all cosmetics+themes owned at ${fmtMin(r.allCosmeticsOwnedAtMin)}, MOMENTUM ${200}/${200} at ${fmtMin(r.momentumMaxedAtMin)}`).join(' | '));
 p();
 p(`4) MAGNITUDES at first reach (flag > ${CFG.absurd.toExponential(0)}; '!!' = above MAX_SAFE_INTEGER)`);
 for (const r of results) for (const L of CFG.snapshotLevels) {

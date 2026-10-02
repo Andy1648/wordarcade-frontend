@@ -8,7 +8,7 @@
 // [bandIdx, modeIdx, dayEpoch, recency] so 5,000 entries stay small (see collection.test.js MEASURE).
 // The set is capped at 5,000 with LRU eviction (least-recently-SEEN word drops when a new word
 // arrives at the cap). NEVER stores or shows a word the player hasn't personally typed.
-import { grantWins } from './wins.js';
+import { queueClaim } from './claims.js';
 import { rebirthScaledWins } from './xp.js';
 
 export const COLLECTION_KEY = 'taw.collection';
@@ -138,7 +138,8 @@ export function recordAcceptedWord(word, { mode, band } = {}) {
       // while the card said +15,010, and this milestone was the difference. It is returned to the
       // caller as `milestone` — and every single call site discarded it — so it now also goes into
       // the ledger, where the UI reads it rather than having to be told.
-      grantWins(granted, `COLLECTION — ${m.n} WORDS`, { detail: `ms-${m.n}` });
+      // Andy oct2: a milestone is CLAIMED from the menu, not credited mid-run (claims.js).
+      queueClaim({ id: `col-${m.n}`, kind: 'collection', label: `COLLECTION — ${m.n} WORDS`, amount: granted, detail: `ms-${m.n}` });
       milestone = { n: m.n, wins: granted };
       break; // one milestone per word (count rose by 1)
     }

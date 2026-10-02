@@ -110,14 +110,14 @@ test('awardWordXp persists the grant to the level state', () => {
     const before = loadProgress();
     assert.equal(before.level, 1);
     const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, masteryMult: 1, wordLength: 5, weight: 1 });
-    assert.equal(res.gain, 250); // fuse ×5, 5 letters
+    assert.equal(res.gain, 100); // fuse ×2 (oct2), 5 letters
     const after = loadProgress();
     // ECONOMY v8: need(1) is 600. A level is FOUR five-letter Word Bomb words on CRAZY, not the
     // fourteen v7's 2,000 base asked for — the first twenty minutes are where a progression
     // system has to prove it exists. One 5-letter FUSE word is still not a whole level.
     assert.equal(need(1), 600);
     assert.equal(after.level, 1);
-    assert.equal(after.intoLevel, 250);
+    assert.equal(after.intoLevel, 100);
   });
 });
 
@@ -214,9 +214,9 @@ test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
   assert.equal(XP_MULTIPLIERS.menu, 1);
   assert.equal(XP_MULTIPLIERS['word-bomb'], 2);
   assert.equal(XP_MULTIPLIERS['category-blitz'], 2);
-  assert.equal(XP_MULTIPLIERS['sat-rush'], 3);
+  assert.equal(XP_MULTIPLIERS['sat-rush'], 10); // oct2 POWER ×5
   assert.equal(XP_MULTIPLIERS.chain, 4);
-  assert.equal(XP_MULTIPLIERS.fuse, 5);
+  assert.equal(XP_MULTIPLIERS.fuse, 2); // oct2: = Word Bomb; FRENZY is its edge
 });
 
 // ---- Key Power — Economy v9 (STEP 19): linear effect, price in WORDS ----
@@ -327,8 +327,8 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
 test('the XP stack (single source): key tier × mode × rebirth', () => {
   // tier 0 (10 XP/letter) + menu (×1) + R0 (×1) = 10.
   assert.equal(xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0 }), 10);
-  // tier 2 (40 XP/letter) + sat-rush (×3) + R1 (×2, v9 additive) → 40·3·2 = 240.
-  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 240);
+  // tier 2 (40 XP/letter) + sat-rush (×10, oct2) + R1 (×2, v9 additive) → 40·10·2 = 800.
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 800);
   assert.equal(
     xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }),
     round10(keyTierXp(2) * XP_MULTIPLIERS['sat-rush'] * rebirthMult(1)),

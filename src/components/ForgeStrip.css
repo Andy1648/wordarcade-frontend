@@ -1,0 +1,50 @@
+.forge-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 520px;
+}
+.forge-tile {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc((100% - 12 * 4px) / 13);
+  min-width: 0;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #8e7fb0;
+  background: #0d0618;
+  border: 2px solid #3b2a5c;
+  border-radius: 6px;
+}
+.forge-tile.is-forged {
+  color: #0d0618;
+  box-shadow: 2px 2px 0 #000;
+}
+.forge-tile.is-next {
+  outline: 3px solid #ffe94a;
+  outline-offset: 1px;
+}
+.forge-lv {
+  position: absolute;
+  right: 1px;
+  bottom: -1px;
+  font-style: normal;
+  font-size: var(--fs-micro);
+  line-height: 1;
+  color: #0d0618;
+}
+@media (max-width: 480px) {
+  .forge-tile {
+    width: calc((100% - 6 * 4px) / 7);
+    font-size: var(--fs-body);
+  }
+  .forge-lv {
+    font-size: var(--fs-label);
+    right: 3px;
+  }
+}

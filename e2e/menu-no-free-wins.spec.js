@@ -72,6 +72,7 @@ async function session(page, seed) {
     wins: Number(localStorage.getItem('taw.wins')) || 0,
     xp: JSON.parse(localStorage.getItem('taw.xp') || 'null'),
     achievements: JSON.parse(localStorage.getItem('taw.achievements') || '[]'),
+    claims: JSON.parse(localStorage.getItem('taw.claims') || '[]'),
   }));
 }
 
@@ -85,13 +86,27 @@ test('a fresh player who only sits, types, tabs away and opens the SHOP earns ze
   expect(r.xp && r.xp.lv, 'TYPE ANYWHERE still levels you up (it is the menu XP mechanic)').toBeGreaterThan(1);
 });
 
-test('a real reward on the menu (a level achievement) pays only WITH its toast, to the win', async ({ page }) => {
+test('a real reward on the menu (a level achievement) is CLAIMED — nothing pays until the player clicks', async ({ page }) => {
   test.setTimeout(120_000);
   const r = await session(page, { 'taw.xp': JSON.stringify({ lv: 14, into: 0 }) });
   test.info().annotations.push({ type: 'session', description: JSON.stringify(r) });
   expect(r.achievements).toEqual(['lv-15']); // reached by menu XP — and NOT the menu-typing WPM one
-  expect(r.writes.length).toBe(1);
-  const shown = r.toasts.find((t) => /ASCENDANT/.test(t));
-  expect(shown, `a visible ASCENDANT toast (seen: ${JSON.stringify(r.toasts)})`).toBeTruthy();
-  expect(Number(shown.replace(/[^0-9]/g, '')), 'the toast names exactly what was paid').toBe(r.writes[0].delta);
+  // Andy oct2: earning it QUEUES a claim; the balance has not moved.
+  expect(r.writes, 'no wins write before the claim').toEqual([]);
+  const queued = r.claims.find((c) => c.id === 'ach-lv-15');
+  expect(queued, `the ASCENDANT claim is pending (claims: ${JSON.stringify(r.claims)})`).toBeTruthy();
+  // The REWARDS control carries the count, and claiming pays exactly the claim, with its toast.
+  const rewards = page.locator('.homepage-nav-btn.is-rewards, .hp-m-navbtn.is-rewards').first();
+  await expect(rewards).toBeVisible();
+  await rewards.click();
+  await page.locator('.claims-panel').waitFor({ state: 'visible' });
+  const row = page.locator('.claims-row', { hasText: 'ASCENDANT' });
+  await row.locator('.claims-btn').click();
+  await page.clock.fastForward(100);
+  const after = await page.evaluate(() => ({ writes: window.__WLOG, toasts: [...window.__TOASTS] }));
+  expect(after.writes.length).toBe(1);
+  expect(after.writes[0].delta).toBe(queued.amount);
+  const shown = after.toasts.find((t) => /ASCENDANT/.test(t));
+  expect(shown, `a visible ASCENDANT toast (seen: ${JSON.stringify(after.toasts)})`).toBeTruthy();
+  expect(Number(shown.replace(/[^0-9]/g, '')), 'the toast names exactly what was paid').toBe(after.writes[0].delta);
 });
