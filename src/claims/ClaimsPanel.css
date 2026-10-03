@@ -195,7 +195,7 @@
 }
 /* ONE SLOT on every desktop size (fine-tune oct2, loop C: it sat top-left on a short laptop and
    bottom-centre elsewhere — three places across four viewports). Bottom-centre, over the CREDITS
-   line only, pointer-transparent. Phones sit just above the foot row (below). */
+   line only, pointer-transparent. Phones keep their compact top row (below). */
 @keyframes claim-pop-in {
   from {
     opacity: 0;
@@ -245,12 +245,9 @@
 /* PHONE: ONE compact row (STEP 58). The nav strip now sits right under the title, so the popup
    must stay inside the title's band (~72px) — two wrapped rows reached down over STATS / SHOP. */
 @media (max-width: 480px) {
-  /* A (Andy's recurring notes: one big thing, no crowding): at the TOP it covered the title row — the
-     wordmark and the leaderboard icon (N3). It now rides just above the CREDITS / JOIN ROOM foot row,
-     still pointer-transparent except its own two buttons. */
   .claim-pop {
-    top: auto;
-    bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+    top: 8px;
+    bottom: auto;
     width: calc(100vw - 24px);
     max-width: calc(100vw - 24px);
     gap: 6px;

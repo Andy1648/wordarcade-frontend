@@ -17,9 +17,9 @@ does not exist yet). Mentions counted by keyword family (case-insensitive lines)
 ## Pass 1 (Oct 3 01:40 ET) — worst offender vs the top 5
 - **Phone menu: the claim popup covered the title row** (the wordmark and the new #rank board icon) whenever
   a reward was pending — crowding + "one big thing" (the menu's identity row) + obviousness (the icon Andy
-  just asked for was hidden). FIX (PR #151): on phones the popup rides just above the CREDITS / JOIN ROOM
-  foot row instead of the top; still pointer-transparent except its own buttons. Shot:
-  claude/finetune/n3/claimpop-390x844.png.
+  just asked for was hidden). Tried: on phones the popup rode just above the CREDITS / JOIN ROOM foot row —
+  but its CLAIM / LATER buttons then sat on the CHAIN|FUSE band and stole the taps (CI red on #151), so it
+  is REVERTED. Next pass: an inline banner in the phone menu's flow (no fixed overlay), above the modes.
 - Also tonight against these themes: U parts 1–2 (#151: marks as one tag, shop/breakdown/ladder/backup
   copy trimmed), N4 wall moment (#150: theme 1 — the world visibly changes), N3 hero board icon (#150:
   theme 3), G1 (#150: no broken screen after a deploy — theme 2).
