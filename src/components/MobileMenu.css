@@ -394,6 +394,13 @@
   html[data-view='home'] .wall-paint-drip {
     display: none;
   }
+  /* N4: …except during a wall-tier re-form (html[data-wallfx], ~1.6s): the ornaments ARE the moment, so
+     they show while they fly to the new layout, then step out again with the dim. */
+  html[data-view='home'][data-wallfx] .wall-graffiti-tag,
+  html[data-view='home'][data-wallfx] .wall-splatter,
+  html[data-view='home'][data-wallfx] .wall-sticker {
+    display: block;
+  }
 
   /* The streetlight pool is sized for the desktop card grid; at this width it just washes
      the top third. The beat glow STAYS — it is the menu's one sanctioned beat moment. */

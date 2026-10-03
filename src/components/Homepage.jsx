@@ -23,6 +23,7 @@ import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } fro
 import ModeDialog from './ModeDialog';
 import MenuFrame from './MenuFrame';
 import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
+import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
@@ -576,15 +577,30 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [frameFresh, setFrameFresh] = useState(false);
   const [framePunch, setFramePunch] = useState(0);
   const lastLevelRef = useRef(xpProgress.level);
+  // N4: every 100 levels the WALL re-forms (wallTier.js → WallScene). On the menu only — never mid-game —
+  // so a 100 crossed inside a game plays when the player comes back here.
+  useEffect(() => {
+    const t = setTimeout(() => noteWallLevel(xpProgress.level), wallWait());
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xpProgress.level]);
+  // N4: ONE moment at a time. The wall's re-form waits for the menu to settle (the arrival wipe), and a
+  // menu tier-up that lands on the same level (LV100 is both) waits until the wall's moment is over.
+  const mountedAtRef = useRef(Date.now());
+  const wallWait = () => Math.max(0, 1800 - (Date.now() - mountedAtRef.current));
   useEffect(() => {
     const seen = getSeenTier();
     if (tier > Math.max(0, seen)) {
       setSeenTier(tier);
       setFrameFresh(true);
-      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]);
+      const wallFirst = wallTierFor(xpProgress.level) > getWallTier();
+      const fire = () => { if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]); };
+      if (wallFirst) setTimeout(fire, wallWait() + 1850);
+      else fire();
     } else if (seen < tier) {
       setSeenTier(tier);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tier]);
   useEffect(() => {
     if (xpProgress.level > lastLevelRef.current) {

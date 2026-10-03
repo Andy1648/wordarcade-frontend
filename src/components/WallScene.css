@@ -274,47 +274,94 @@ html[data-view='game'] .wall-beat-bright {
   }
 }
 
-/* ---- THE SCENE MOVES WITH THE TIER (Andy oct2 A1) ----
-   The decor sits in one pane per layout. At rest: one pane. On a tier climb: the old layout's pane
-   on top, the new one a wall-height below it, and the STACK alone translates up one height — ONE
-   finite transform; will-change lives only on .is-swish (CLAUDE.md animation budget). */
+/* ---- THE WALL RE-FORMS EVERY 100 LEVELS (Andy oct2 A1 → N4) ----
+   The decor sits in ONE pane laid out for the wall tier. Crossing a tier re-lays it and every piece's
+   wrapper flies in from its old spot (WallScene runWallFx: finite WAAPI, transform/opacity only,
+   will-change set per piece only while it runs). */
 .wall-decor-stack,
 .wall-decor-pane {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
-/* Paint containment: the moving box is its own paint boundary, so the swish never re-paints the
-   wall around it (4x CPU: swish p50 33 → 16.8 ms). Safe because nothing overflows the box — at rest
-   the stack is the wall; mid-swish it is two walls tall (below). */
+/* Paint containment: the decor is its own paint boundary, so a wall-tier re-form never re-paints the
+   wall around it. */
 .wall-decor-stack {
   contain: layout paint;
 }
-/* During the swish the stack is TWO walls tall and each pane one wall: nothing overflows the moving
-   box — which is what lets the stack carry paint containment above. */
-.wall-decor-stack.is-swish {
-  bottom: auto;
-  height: 200%;
-  will-change: transform;
-  animation: wall-scene-swish 820ms cubic-bezier(0.7, 0, 0.2, 1) forwards;
+/* N4: each decor piece sits in a zero-size wrapper that carries its position (the piece keeps its own
+   rotation); the wall-tier re-form moves the WRAPPER with a pure transform (WallScene runWallFx). */
+.wall-piece {
+  position: absolute;
+  width: 0;
+  height: 0;
 }
-.wall-decor-stack.is-swish .wall-decor-pane {
-  bottom: auto;
-  height: 50%;
+/* a tag's letters are inline-blocks: in a zero-width wrapper they would wrap one per line */
+.wall-piece > .wall-graffiti-tag {
+  width: max-content;
+  white-space: nowrap;
 }
-.wall-decor-stack.is-swish .wall-decor-pane.is-new {
-  top: 50%;
+
+
+/* N4: while the wall re-forms (html[data-wallfx], set by WallScene runWallFx for ~1.6s) the menu steps back
+   so the moving wall is the one big thing; opacity only, finite (the attribute is removed after the fx). */
+#root .homepage-wrap {
+  transition: opacity 260ms ease-out;
 }
-@keyframes wall-scene-swish {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-50%);
-  }
+html[data-wallfx] #root .homepage-wrap {
+  opacity: 0.12;
+  /* the dim is ONE composited layer only while it runs (4x CPU: 33 → ~17ms median frame) */
+  will-change: opacity;
+}
+
+/* The level stamp that names the moment: a big LV N slam over the stepped-back menu (portalled to body).
+   Flat fill, coloured outline, hard black shadow; one finite slam + fade, transform/opacity only. */
+.wall-stamp {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  z-index: 400;
+  pointer-events: none;
+  text-align: center;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  animation: wall-stamp 1650ms cubic-bezier(.2, 1.3, .35, 1) both;
+}
+.wall-stamp-lv {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-hero);
+  line-height: 0.9;
+  color: #FFE94A;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  text-shadow: 6px 6px 0 #000;
+}
+.wall-stamp-sub {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 14px;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  color: #000;
+  background: #2EFFE0;
+  border: 3px solid #0f8f7e;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+@keyframes wall-stamp {
+  0%, 48% { opacity: 0; transform: translate(-50%, -50%) rotate(-4deg) scale(1.6); }
+  58% { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg) scale(0.94); }
+  66% { transform: translate(-50%, -50%) rotate(-4deg) scale(1); }
+  86% { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(-4deg) scale(1.04); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .wall-decor-stack.is-swish {
-    animation: none;
-  }
+  /* no slam — the stamp simply shows and fades (opacity only); the menu still steps back */
+  .wall-stamp { animation-name: wall-stamp-still; }
+}
+@keyframes wall-stamp-still {
+  0%, 30% { opacity: 0; }
+  40%, 86% { opacity: 1; }
+  100% { opacity: 0; }
 }

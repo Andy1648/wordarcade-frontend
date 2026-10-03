@@ -36,6 +36,7 @@ export const PROGRESS_KEYS = [
   'taw.econ',
   'taw.themesRetired',
   'taw.menuTierSeen',
+  'taw.wallTierSeen',
   'taw.layer.forge',
   'taw.layer.marks',
   'taw.layer.stars',
