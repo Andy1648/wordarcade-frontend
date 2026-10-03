@@ -139,7 +139,7 @@ Commits: 4a341d50 solo/SAT wins pill + CHAIN HUD · 0ead2b67 mode copy · 826f5a
 - **Fix:** print the receipt row as `MODE` = power ×N with base ×2 folded into BASE, or rename the card line "×5 WORD BOMB".
 
 ### M2. The unnamed "(×69.06)" on every card differs per card with no reason given
-- **STATUS:** **SKIPPED.** Adding " BONUS" widens `.game-card-payout-mult`, which e2e/card-fit.spec.js asserts is never clipped or hidden, and Playwright is off-limits here. payoutHonesty.test also pins formatMultExact on GameCard (so formatMult is not allowed). Needs a card-fit run.
+- **STATUS:** **FIXED** 6e1d8710: "(×69.06 BONUS)" with a tooltip naming the stack (formatMultExact kept, so payoutHonesty still holds; card-fit to confirm). Was: SKIPPED — adding " BONUS" widens `.game-card-payout-mult`, which e2e/card-fit.spec.js asserts is never clipped or hidden, and Playwright is off-limits here. payoutHonesty.test also pins formatMultExact on GameCard (so formatMult is not allowed). Needs a card-fit run.
 - `GameCard.jsx:274`. The LV300 cards show ×69.06 / ×53.12 / ×82.4 / ×87.41 / ×55.57 / ×40.86 (`menu-lv300-desk.png`). It's rebirth × streak × mark × per-mode mastery × stars, but nothing says so, and two decimals on a ×69 is noise.
 - **Fix:** "(×69 BONUS)" with a tooltip, formatted via `formatMult`.
 
@@ -164,7 +164,7 @@ Commits: 4a341d50 solo/SAT wins pill + CHAIN HUD · 0ead2b67 mode copy · 826f5a
 - **Fix:** COMBO "fewer than 2 in a row"; records "BEST COMBO".
 
 ### M7. "RANK" names three ladders
-- **STATUS:** **SKIPPED.** The "RANK IV · SMITH MARK" announce is built in Homepage.jsx:674 (leaderboard job's file, and not a HIGH copy fix). Renaming only MarksIndex would make the two disagree.
+- **STATUS:** **FIXED** 6e1d8710: mark levels read "MARK II" in the index and "SMITH IV · MARK UPGRADED" in the announce; RANK now names only the level titles. Was: SKIPPED — the "RANK IV · SMITH MARK" announce is built in Homepage.jsx:674 (leaderboard job's file, and not a HIGH copy fix). Renaming only MarksIndex would make the two disagree.
 - Level rank (ROOKIE…BEYOND), mark rank (I–V), and leaderboard #rank. The "RANK UP" claim (`claims.js:52`) and the "RANK IV" mark announce both read as the same thing.
 - **Fix:** call mark ranks "MARK LV II" or "★II". Keep RANK for level titles.
 
@@ -224,7 +224,7 @@ Commits: 4a341d50 solo/SAT wins pill + CHAIN HUD · 0ead2b67 mode copy · 826f5a
 - **Fix:** merge them or caption them ("SECRETS = things you do · HIDDEN = goals you cross").
 
 ### M19. The phone menu shows no level, no XP bar and no wins balance
-- **STATUS:** **SKIPPED.** This is a new phone-menu row. e2e/menu-hook + mobile-cards assert every mode row fits with no scroll at phone sizes, and Playwright is off-limits for this job.
+- **STATUS:** **FIXED** fde3d118 (feat/audit-leftovers): a compact LV · XP bar · WINS row under the phone title (flows, so the mode rows flex shorter). Was: SKIPPED — this is a new phone-menu row. e2e/menu-hook + mobile-cards assert every mode row fits with no scroll at phone sizes, and Playwright is off-limits for this job.
 - `MobileMenu.jsx` (`menu-lv300-phone.png`). The desktop leads with LEVEL / XP / WINS. On a phone you have to open STATS or SHOP to learn your balance, and the rate is nowhere on the mode rows.
 - **Fix:** add a one-row "LV 300 · 48.2B WINS" strip to `.hp-m-top` (a cluster member, not a fixed orphan).
 
@@ -243,14 +243,14 @@ Commits: 4a341d50 solo/SAT wins pill + CHAIN HUD · 0ead2b67 mode copy · 826f5a
 ## LOW — polish
 
 - **L1.** Number grouping prints a thin space, not the comma `format.js`'s own header says replaced it: "6 000", "2 000 WORDS" (`format.js:24`). Set `THIN = ','` as the comment describes. — **STATUS:** **FIXED** 05bc51bc. `THIN = ','`. format.test and shop-reveal-sticker comment updated.
-- **L2.** LiveStack shows "70.1M / WORD" with no unit (`LiveStack.jsx:48`), next to a pill that says WINS. Use "70.1M WINS / WORD". — **STATUS:** **SKIPPED.** "WINS" widens the compact LiveStack chip in the solo HUD row, which is gated by e2e fit checks that cannot run here.
+- **L2.** LiveStack shows "70.1M / WORD" with no unit (`LiveStack.jsx:48`), next to a pill that says WINS. Use "70.1M WINS / WORD". — **STATUS:** **FIXED** 6e1d8710: "WINS / WORD". Was: SKIPPED — "WINS" widens the compact LiveStack chip in the solo HUD row, which is gated by e2e fit checks that cannot run here.
 - **L3.** CHAIN multiplier uses a lowercase "x" and two decimals: "X1.00" (`ChainGame.jsx:308`). Use `×{formatMult}`. — **STATUS:** **FIXED** 4a341d50. Now ×formatMultExact.
-- **L4.** Rebirths appear as "R8" (stats), "★★★★★ ×8" (frame) and "8 REBIRTHS" (rebirth screen). Pick one ("REBIRTH 8"). — **STATUS:** **SKIPPED.** "REBIRTH 8" in the player card's Bungee hero row risks overflow at 360px. The frame glyph is M9.
+- **L4.** Rebirths appear as "R8" (stats), "★★★★★ ×8" (frame) and "8 REBIRTHS" (rebirth screen). Pick one ("REBIRTH 8"). — **STATUS:** **KEPT (reason)**: the stats chip stays "R8" (the Bungee hero row overflows at 360px with longer copy) and the frame's ★ are SVG art; the rebirth screen's "8 REBIRTHS" is the explained form. Was: SKIPPED — "REBIRTH 8" in the player card's Bungee hero row risks overflow at 360px. The frame glyph is M9.
 - **L5.** Marks tutorial: "EARN THEM FROM HARD ACHIEVEMENTS" (`registry.js:23`), yet STUDENT comes from "Reach level 15" and PHOENIX from your first rebirth. Use "EARN THEM FROM ACHIEVEMENTS". — **STATUS:** **FIXED** 05bc51bc.
 - **L6.** Weekly tutorial: "EVERY WORD YOU TYPE COUNTS" (`registry.js:41`), but menu typing doesn't count (`wins.js:618`). Use "EVERY WORD YOU PLAY IN A GAME COUNTS". — **STATUS:** **FIXED** 05bc51bc. Verified: the board's words are mastery words, game modes only.
 - **L7.** Mastery progress "0/31 TO M2" (`ModeDialog.jsx:29`) and marks "2 000 WORDS → RANK V" have no unit or "more". Use "31 WORDS TO M2" / "2,000 MORE WORDS → RANK V". — **STATUS:** **FIXED** 826f5ab1/05bc51bc. Mastery reads "31 WORDS TO M2"; marks read "2,000 MORE WORDS → RANK V".
 - **L8.** Collection milestones are flat 5,000 × rebirth (`collection.js:35`), while achievements and rank-ups are priced in words at your live rate. At LV1 the 100-word milestone is ~500 words' worth (the biggest early payout); at LV300 it's 0.001 of one word. Price them in words like `achievementWords`. — **STATUS:** **SKIPPED.** This is an economy-number change (milestone pricing), which is out of scope.
-- **L9.** At 2560x1440 the XP cluster (level, wins, streak, mark) renders ~600px wide over a ~1900px card row, with the lower half of the frame empty (`menu-lv300-huge.png`). The main progress readout is the smallest thing on screen. Scale `.menu-xp-cluster` with `--solo-k`-style hero sizing. — **STATUS:** **SKIPPED.** Owned by the big-monitor layout job.
+- **L9.** At 2560x1440 the XP cluster (level, wins, streak, mark) renders ~600px wide over a ~1900px card row, with the lower half of the frame empty (`menu-lv300-huge.png`). The main progress readout is the smallest thing on screen. Scale `.menu-xp-cluster` with `--solo-k`-style hero sizing. — **STATUS:** **FIXED** 37cbcf47: at ≥2200×1250 the cluster's type steps up (body 26 / label 19) and the bar widens to 1100px. Was: SKIPPED — owned by the big-monitor layout job.
 
 Font-size check: an automated pass at 1280x551, 390x844 and 2560x1440 (menu, shop, rebirth) found **no** rendered text under 12px (`small.mjs`), so the min-text sweep holds. The H7 problems are wording and placement (above), not raw size.
 

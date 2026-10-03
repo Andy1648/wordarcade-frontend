@@ -223,3 +223,16 @@
     --wb-k: 1.45;
   }
 }
+
+/* HUGE SCREENS - THE MENU'S PROGRESS READOUT (H6 audit L9: at 2560x1440 the XP cluster - level, bar, wins,
+   streak, mark - was a ~600px strip over a ~1900px card row, the smallest thing on the screen while being
+   the main progress readout). Scoped to the cluster only: the wordmark stays locked and the cards keep
+   their own fit-math. Same descending order as the game tiers (body 26 > label 19 > micro 16). */
+@media (min-width: 2200px) and (min-height: 1250px) {
+  .menu-xp-cluster {
+    --fs-body: 26px;
+    --fs-label: 19px;
+    --fs-micro: 16px;
+  }
+  :root .menu-xp-bar { max-width: 1100px; }
+}
