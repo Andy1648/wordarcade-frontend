@@ -1504,6 +1504,7 @@ function App() {
                 band: r.band,
                 wins: banked,
                 secret: secret ? { stamp: secret.stamp, wins: secret.wins } : null,
+                lucky: wbLucky.lucky ? wbLucky.winsWeight : 0, // feel ladder: the LUCKY ×N moment (the multiplier the payout applied)
               });
               // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
               // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
@@ -1685,6 +1686,7 @@ function App() {
             band: r.band,
             wins: banked,
             secret: bSecret ? { stamp: bSecret.stamp, wins: bSecret.wins } : null,
+            lucky: blitzLucky.lucky ? blitzLucky.winsWeight : 0, // feel ladder: the LUCKY ×N moment
           });
             // NOT added to winsEarnedTotal any more (Batch G): a secret payout now goes through
             // credit() like every other bonus (useWordSecrets.js), so it arrives on the card as
