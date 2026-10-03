@@ -266,7 +266,14 @@ export default function MobileMenu({
                     it, which is what lets the type run at the band's full width instead of
                     shrinking to fit one long line. */}
                 <LayeredWord className="hp-m-name" text={game.name} accent={s.accent} />
-                <span className="hp-m-desc">{game.description}</span>
+                {/* Old-notes audit: SAT RUSH pays the most per word (POWER ×5 vs Word Bomb) — the
+                    desktop card says so, the phone row did not. */}
+                <span className="hp-m-desc">
+                  {game.description}
+                  {game.id === 'sat-rush' && modePower(game.id) > 1 && (
+                    <span className="hp-m-perk">{` POWER ×${modePower(game.id)}`}</span>
+                  )}
+                </span>
               </span>
               <Chevron />
             </a>
