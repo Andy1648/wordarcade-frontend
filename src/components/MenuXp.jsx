@@ -338,12 +338,13 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <span className="menu-streak-count">{formatNum(streak)}</span>
           <span className="menu-streak-day" aria-hidden="true">DAY{Number(streak) === 1 ? '' : 'S'}</span>
           {streakMultiplier(streak) > 1 && (
-            /* H6/M3: no "XP" suffix — the streak multiplies wins AND XP (one stack). */
+            /* H6/M3: no "XP" suffix — the streak multiplies wins AND XP (one stack). formatMult carries the "×". */
             <span className="menu-streak-mult" aria-hidden="true" title="On every word's wins and XP">{formatMult(streakMultiplier(streak))}</span>
           )}
           {freezes > 0 && (
             <span className="menu-streak-freeze" aria-hidden="true" title={`${freezes} freeze token${freezes === 1 ? '' : 's'} — a missed day is forgiven`}>
-              ❄{freezes > 1 ? `×${freezes}` : ''}
+              {/* H2d: a COUNT of tokens, not a multiplier — "❄2", never "❄×2". */}
+              ❄{freezes > 1 ? freezes : ''}
             </span>
           )}
         </span>
@@ -382,7 +383,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
-            {/* H6/M12: the same formatter the marks index and the receipt use (×3.18, not ×3.2). */}
+            {/* H6/M12: the same formatter the marks index and the receipt use (×3.18, not ×3.2); it carries the "×". */}
             <span className="menu-mark-mult" aria-hidden="true">{formatMult(markMainMult(mark, markRank(mark.id)))}</span>
             {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
