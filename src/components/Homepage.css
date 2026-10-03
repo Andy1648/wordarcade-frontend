@@ -1284,7 +1284,8 @@ html[data-beat='true'] .homepage-beat-glow {
   z-index: 6;
 }
 /* THE GOLDEN BUTTON (Andy: "LEADERBOARD golden button"): a flat gold fill, a darker-gold outline, the
-   hard black offset shadow, an INK trophy and an ink #rank badge. */
+   hard black offset shadow, and (Andy oct3 11:42) the PODIUM glyph wearing your #rank on its top step —
+   the old separate .homepage-board-rank badge is gone; the rank IS part of the icon now. */
 .homepage-nav-btn.homepage-board-hero {
   width: var(--hb);
   height: var(--hb);
@@ -1299,28 +1300,17 @@ html[data-beat='true'] .homepage-beat-glow {
   box-shadow: max(5px, calc(var(--hb) * 0.07)) max(5px, calc(var(--hb) * 0.07)) 0 #000;
 }
 .homepage-nav-btn.homepage-board-hero:active { box-shadow: none; }
-.homepage-board-hero svg { width: 62%; height: 62%; }
-.homepage-board-hero:hover svg { transform: rotate(-8deg) scale(1.08); transition: transform 160ms ease-out; }
-.homepage-board-rank {
-  position: absolute;
-  right: calc(var(--hb) * -0.17);
-  bottom: calc(var(--hb) * -0.14);
-  padding: 2px max(6px, calc(var(--hb) * 0.07));
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: max(var(--fs-body), calc(var(--hb) * 0.21));
-  line-height: 1;
-  color: #FFE94A;
-  background: #1a0b2e;
-  border: max(2px, calc(var(--hb) * 0.025)) solid #000;
-  border-radius: 6px;
-  box-shadow: max(2px, calc(var(--hb) * 0.03)) max(2px, calc(var(--hb) * 0.03)) 0 #000;
-  transform: rotate(-4deg);
+.homepage-board-hero .pi {
+  /* the podium fills the button: 84% of it, nudged down so the #rank on the top step has headroom */
+  width: 84%;
+  height: 84%;
+  margin-top: 4%;
 }
+.homepage-board-hero:hover .pi { transform: rotate(-5deg) scale(1.06); transition: transform 160ms ease-out; }
 .homepage-board-hero .homepage-shop-dot.is-board-news {
   width: max(20px, calc(var(--hb) * 0.2));
   height: max(20px, calc(var(--hb) * 0.2));
 }
 @media (prefers-reduced-motion: reduce) {
-  .homepage-board-hero:hover svg { transform: none; }
+  .homepage-board-hero:hover .pi { transform: none; }
 }

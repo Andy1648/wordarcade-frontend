@@ -470,32 +470,17 @@
   .hp-m-top .hp-m-board-hero {
     order: -1;
     flex: 0 0 auto;
-    width: 60px;
-    min-height: 60px;
-    height: 60px;
+    width: 64px;
+    min-height: 64px;
+    height: 64px;
     padding: 0;
-    /* H2a: the golden button — flat gold, darker-gold outline, ink trophy */
+    /* H2a: the golden button — flat gold, darker-gold outline; oct3: the podium glyph wears your #rank */
     color: #1a0b2e;
     background: #FFE94A;
     border-color: #b8a020;
   }
-  .hp-m-board-hero svg { width: 36px; height: 36px; }
-  .hp-m-board-rank {
-    position: absolute;
-    right: -10px;
-    bottom: -9px;
-    padding: 1px 5px;
-    font-family: 'Space Mono', monospace;
-  font-weight: 700;
-    font-size: var(--fs-label);
-    line-height: 1;
-    color: #FFE94A;
-    background: #1a0b2e;
-    border: 2px solid #000;
-    border-radius: 6px;
-    box-shadow: 2px 2px 0 #000;
-    transform: rotate(-4deg);
-  }
+  /* 54px podium in the 64px button: "#9" stands ~22px tall on the top step, "#800" ~15px */
+  .hp-m-board-hero .pi { width: 54px; height: 54px; margin-top: 3px; }
   .hp-m-top .hp-m-title { flex: 1 1 auto; }
 }
 

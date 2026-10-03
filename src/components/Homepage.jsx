@@ -44,8 +44,8 @@ import ClaimPopup from '../claims/ClaimPopup.jsx';
 import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
-import { formatNum } from '../format';
-import TrophyIcon from './TrophyIcon';
+import PodiumIcon from './PodiumIcon';
+import { moments, PRIORITY } from '../lib/moments';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
@@ -841,6 +841,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // N3: the board icon wears your last known rank (#N) — re-read whenever rank news changes
   const boardRank = LEADERBOARD_ENABLED ? getLastRank() : null;
   const [rankUp, setRankUp] = useState(null);
+  // Andy oct3 11:42 (podium): the icon shows the OLD rank until the rank-up card's "#to" pops, then bounces
+  // and ticks down to the new one. boardHold = the rank to show meanwhile; boardBump = the one-shot trigger.
+  const [boardHold, setBoardHold] = useState(null);
+  const [boardBump, setBoardBump] = useState(null);
+  const rankDoneRef = useRef(null);
+  const rankCancelRef = useRef(null);
+  const boardShown = boardHold != null ? boardHold : boardRank;
+  // ONE finite glint on the podium once the menu has settled (after the arrival wipe) — never a loop
+  // (MENU MOTION LAW). A rank-up bump replaces it: that is the icon's moment on such a visit.
+  const [boardGlint, setBoardGlint] = useState(false);
+  useEffect(() => {
+    if (!LEADERBOARD_ENABLED) return undefined;
+    const t = setTimeout(() => setBoardGlint(true), Math.max(0, 2200 - (Date.now() - mountedAtRef.current)));
+    return () => clearTimeout(t);
+  }, []);
+  // ONE value for both menu trees: no glint once a rank-up is pending (the bump is the icon's moment then)
+  const boardGlintOn = boardGlint && boardHold == null && !rankUp && !boardBump;
   // 012_admin_reset: the one-shot "reset by the dev" line, left by obeyDevReset before its reload
   const [devReset, setDevReset] = useState(() => LEADERBOARD_ENABLED && hasDevResetNotice());
   useEffect(() => { if (devReset) clearDevResetNotice(); }, [devReset]);
@@ -889,14 +906,41 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       .then(() => checkRankUp(epoch))
       .then((r) => {
         if (live && r) {
-          setRankUp(r);
           setBoardNews(true);
+          setBoardHold(r.from);
+          // the rank-up goes through the ONE moments queue, so it never plays over another heavy moment
+          rankCancelRef.current = moments.announce({
+            id: 'rank-up',
+            priority: PRIORITY.REWARD,
+            // the card's own clock (3.8 s) starts only once its lazy chunk mounts: leave room for the fetch
+            maxMs: 6000,
+            start: (done) => {
+              rankDoneRef.current = done;
+              setRankUp(r);
+              // never strand the OLD rank on the icon if the card's chunk never arrives
+              setTimeout(() => { if (live) setBoardHold(null); }, 6000);
+            },
+          });
           if (r.to <= 10) announceTick('rank', r.to); // STEP 51 ticker: "NAME took #3"
         }
       })
       .catch(() => {});
-    return () => { live = false; };
+    return () => {
+      live = false;
+      if (rankCancelRef.current) rankCancelRef.current();
+    };
   }, []);
+  const rankPop = () => {
+    if (rankUp) setBoardBump({ from: rankUp.from, to: rankUp.to, key: Date.now() });
+    setBoardHold(null);
+  };
+  const rankDone = () => {
+    setRankUp(null);
+    setBoardHold(null);
+    const d = rankDoneRef.current;
+    rankDoneRef.current = null;
+    if (d) d();
+  };
 
   function handleShop() {
     if (navigating) return;
@@ -952,7 +996,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
-        {rankUp && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onDone={() => setRankUp(null)} /></Suspense>}
+        {rankUp && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
@@ -984,6 +1028,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
             boardDot={boardNews}
             boardRank={boardRank}
+            boardShown={boardShown}
+            boardGlint={boardGlintOn}
+            boardBump={boardBump}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
             onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
@@ -1021,8 +1068,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardNews ? ' — your rank went up' : ''}`}
               title="Leaderboard"
             >
-              <TrophyIcon size={40} />
-              {boardRank && <span className="homepage-board-rank" aria-hidden="true">#{formatNum(boardRank)}</span>}
+              {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
+              <PodiumIcon rank={boardShown} glint={boardGlintOn} bump={boardBump} plate />
               {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
             </button>
           </div>

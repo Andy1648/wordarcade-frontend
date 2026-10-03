@@ -22,7 +22,7 @@ import AudioControls from './AudioControls';
 import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
 import { formatNum } from '../format';
-import TrophyIcon from './TrophyIcon';
+import PodiumIcon from './PodiumIcon';
 import WordHook from './WordHook';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
@@ -171,6 +171,9 @@ export default function MobileMenu({
   onLeaderboard = null,
   boardDot = false,
   boardRank = null,
+  boardShown,
+  boardGlint = false,
+  boardBump = null,
   boardRef,
   navLayout = 'top',
   rewardsCount = 0,
@@ -202,8 +205,8 @@ export default function MobileMenu({
             disabled={navigating}
             aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardDot ? ' — your rank went up' : ''}`}
           >
-            <TrophyIcon size={34} />
-            {boardRank && <span className="hp-m-board-rank" aria-hidden="true">#{formatNum(boardRank)}</span>}
+            {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
+            <PodiumIcon rank={boardShown !== undefined ? boardShown : boardRank} glint={boardGlint} bump={boardBump} plate />
             {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
           </button>
         )}

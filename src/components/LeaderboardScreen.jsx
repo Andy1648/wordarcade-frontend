@@ -31,6 +31,7 @@ import { targetLine } from '../leaderboard/boardTarget.js';
 import { formatRecoveryCode } from '../save/cloudSave.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
+import PodiumIcon from './PodiumIcon';
 import { formatNum, formatRate } from '../format';
 
 const VERDICT_COPY = {
@@ -348,7 +349,11 @@ export default function LeaderboardScreen({ onBack }) {
     <div className="lb-overlay" role="dialog" aria-modal="true" aria-label="Leaderboard" tabIndex={-1} ref={overlayRef}>
       <div className="lb-panel">
         <div className="lb-header">
-          <h2 className="lb-title">LEADERBOARD</h2>
+          {/* the menu's podium glyph, wearing your rank on this board — one symbol for the leaderboard */}
+          <span className="lb-title-wrap">
+            <PodiumIcon rank={meRow ? Number(meRow.rank) : null} className="lb-head-podium" />
+            <h2 className="lb-title">LEADERBOARD</h2>
+          </span>
           <button type="button" className="lb-close" onClick={onBack} aria-label="Back to menu">✕</button>
         </div>
 

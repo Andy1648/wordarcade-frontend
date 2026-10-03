@@ -24,6 +24,8 @@
   rotate: -2deg;
   animation: lb-rankup-card 2200ms linear both;
 }
+/* the menu's podium glyph heads the card (one symbol); flex child, centred above the kicker */
+.lb-rankup-podium { margin-bottom: 4px; }
 .lb-rankup-kicker {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
