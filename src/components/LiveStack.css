@@ -43,8 +43,6 @@
 .lstack-label { color: #9a8ab8; letter-spacing: 0.04em; }
 .lstack-val { color: #2effe0; font-weight: 700; }
 
-.lstack-row--base .lstack-label { color: #7a6a9b; }
-.lstack-row--base .lstack-val { color: #fff; }
 .lstack-row--frenzy .lstack-label,
 .lstack-row--frenzy .lstack-val { color: #ff6b3d; }
 

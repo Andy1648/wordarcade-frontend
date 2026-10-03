@@ -216,37 +216,6 @@
   gap: clamp(9px, 1.7vh, 14px);
 }
 
-/* "AI BUILT" badge above the CATEGORY / BLITZ title in the blitz dialog: "AI"
-   prominent with a small spaced "BUILT" beneath, in the blitz accent, tilted
-   like a sticker. Left-aligned with the rest of the lower block. */
-.mode-dialog-ai-badge {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 0.9;
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  color: #04201c;
-  background: #2EFFE0;
-  border: 3px solid #000;
-  border-radius: 10px;
-  padding: 6px 12px;
-  box-shadow: 4px 4px 0 #000;
-  /* translateY (not margin): the blitz lower block bottom-packs (justify-content:flex-end) and
-     slightly overflows upward, so the badge's top-left corner tucked ~2px under the SOLO/MULTI
-     chip above it — a visible sticker collision. A transform nudge clears it WITHOUT changing the
-     layout box, so the hard-won pack-picker height fit (see the --blitz notes below) is untouched.
-     Margin would have grown the flex column and risked squeezing the picker. (fix/dialog-cards) */
-  transform: skewX(-7deg) translateY(7px);
-}
-.mode-dialog-ai-badge-ai {
-  font-size: var(--fs-panel);
-}
-.mode-dialog-ai-badge-judged {
-  font-size: var(--fs-body);
-  letter-spacing: 2px;
-}
-
 .mode-dialog-title {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
