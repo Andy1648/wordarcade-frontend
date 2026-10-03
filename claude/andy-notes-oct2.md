@@ -1,5 +1,17 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
+## SUMMARY (Oct 3, 10:30 ET — the 10:15 summary, written 15 min late: the session was paused 04:05–10:29 by low memory)
+1. MERGED overnight: #150 (stale-chunk auto-reload + SW update, R1 race default ON, CHAIN 50 / FUSE 100, reset→board, big trophy, wall tiers) and #151 (unlock tutorials, fewer words, shop copy). Both verified LIVE by bundle grep (StaleChunkError, taw.wallTierSeen, TutorialHost chunk); prod 2-tab race 0 errors.
+2. BUILT + PUSHED, not merged yet: H4 winner pays (feat/h4-winner-pays: WB ×7 / Blitz ×5 / RACE ×2 of your game, anti-farm gated, WINNER popup); H2a board C + GOLD trophy, H2c big-monitor WB/Blitz/solo, H5 moment-queue core, H3 redeem/BOOST animations, H6 36/46 confusion fixes — all batched on feat/h2a-board. PRs + CI now (CI-only gates, per the memory rules).
+3. SIM — H4: a won match pays a median player 2.3–3.2× solo CHAIN per minute; AFK-tab / bot-room / 2-word farms get only 0.46–0.74×.
+4. SIM — PV10 median: K10 r1.025 → LV100 9.6 h, LV225 41 h, LV379 at 200 h (target 10 / 50 / LV400). One growth rate can't hit both 225 and 400; a two-segment tail probe is next.
+5. SIM — marks rolls (feat/marks-rolls-engine): median 15.6 rolls/h, first epic 33 min, first legendary ~11 h; rule P HOLD (9 windows worse) — decisions in ANDY TODO.
+6. H6 audit: 46 findings (16 HIGH); worst was the live +N WINS pill showing an estimate (+120) instead of what was banked (+305).
+7. SENTRY: no new issues since JAVASCRIPT-REACT-K (the stale chunk, emailed 22:07 ET Oct 2, before #150's fix went live).
+8. ANDY TODO: 2-device play-test of H4 after merge; marks-rolls decisions (6 questions); PV10 K-vs-H rescale (recommend K + capped wins); top-8 saves SQL.
+9. ANDY TODO: the anti-cheat level-rate migration (015, written today, not run) once it lands.
+10. Next: H4 PR → CI → merge; feat/h2a-board PR → CI → merge; PV10 probe; mark rolls; verify 014 reset on prod; anti-cheat migration.
+
 ## SUMMARY (Oct 2, 22:00 ET)
 1. MERGED: frontend #80–#148 (this evening: E0–E6 = #137–#142; fine-tune loops = #144, #146, #147, #148), backend be#10–#17. Every merge was verified live by grepping the prod bundle; prod smoke shows 0 errors.
 2. SIM, before → after (3 skill levels × 10 m / 1 h / 5 h / 20 h, real modules): runaway reward lumps 3/3/2 → 0/0/0. WALKING DICTIONARY paid 4.8e19 wins (≈633,000 min of play); every achievement is now 6–25 words.
@@ -13,7 +25,6 @@
 10. Last PR (finetune/summary): these notes + the LUCKY stamp bound to its constant. It merges after CI. Full log: claude/econ-oct2/loop-3-8.md.
 
 ## ANDY TODO (top of the list — everything I can't do myself)
-- 04:05 PAUSED BY LOW MEMORY: Claude Code stopped the H4 full gate (mid-e2e) and the PV10 two-segment probe (K10, r1.028→LV225 then r1.018) because the machine ran critically low on memory. I cleaned up the orphaned Playwright + preview processes (5.7 GB free now) but will NOT restart them without your OK. Say 'rerun' to restart both (one at a time).
 - H4 WINNER PAYS (Tier 1): 2-device play-test once merged — WB match between two real devices, winner sees the WINNER popup count up and a ×7 receipt; a WB match vs bots only shows the old +50%.
 - MARKS ROLLS (feat/marks-rolls-engine, HOLD on rule P — 9/12 windows worse): decide (1) keep MAX-LEVEL-300 / 10-REBIRTH as "hard" only if PV10 ships, else LV1000 / 25 rebirths? (2) roll price 100 words (casual 4/h) or 60 (casual 7/h, strong 150/h)? (3) gold/rainbow 10/10 flat or tiered for legendaries? (4) legendary jackpot: cap auto-equip at ≤×1.5 MAIN jump, compress the MAIN ladder, or accept? (5) clear rule P by bigger perks, smaller spend, or counting new marks as good events in the gap metric? (6) permanent MAIN ×4 or ×5? My recommendation: price 60, tiered gold for legendary (2/3), cap the auto-equip jump at ×1.5, count a new mark as a good event (it IS one) — then re-run rule P.
 - **SQL to run: `supabase/migrations/014_self_reset.sql`** (N2, PR #150) — paste the whole file into the SQL Editor and Run. It adds `lb_self_reset` (a player can reset ONLY themselves, secret-checked: it raises their own reset_all flag and runs your 012 lb_reset_ack) and redefines lb_reset_ack to also zero the weekly counter. Until it runs, RESET ALL PROGRESS falls back to the old local-only reset. Earlier SQL: 008, 010, 011, 012, 013 are live on prod (verified 17:55 ET: lb_caps has weekly; ZZTEST redeem works once; CJK claim works; board is level-only).
@@ -78,6 +89,16 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] 0 — DONE 22:20 ET: re-checked P0.2 / P0.4 / L5 / L9 / C6 on prod and ticked all five; KP marked superseded; the "until 08:00 Oct 3" lines closed. Andy has already deleted the test rows. New flag: NoBuffCookies at LV5222 (ANDY TODO).
 - [ ] K1 BLOCKED (needs Andy) — v8 kept through T8; past T8 a tier costs 40 × 1.2^(t−9) reference words at your rate (the LETTER FORGE rate: tier you're leaving × rebirth × forge/STAR POWER; FRENZY/BOOST never raise it); XP ×2.5 forever. Shop card: "NEXT TIER = N WORDS"; receipt: "Next tier: N words at your rate." **The ≤15 min target is NOT met and can't be with ×1.2:** next-tier ETA at 1 h / 5 h / 20 h went v8 casual 15/35/33 → 24/32/22, median 23/29/40 → 15/34/27, strong 17/107/31 → 35/20/27; tiers reached at 20 h T16/T19/T22 → T24/T32/T40. A geometric price leaves the next tier ≈ elapsed × (step−1)/step away (~200 min at 20 h for ×1.2); probes at ×1.1, ×1.05 and base 10 all still miss. A pure KEY-saver bot confirms it (gaps grow ×1.2 a tier). Also found: AUTO-FORGE starves KEY (it buys a forge whenever affordable). What would pass: a LINEAR word price (50 × (1 + k/50)) + AUTO-FORGE spending only the surplus. **ANDY: pick one.** Full write-up: claude/econ-oct2/k1.md. **Not merged:** under rule P (22:25, no window may get worse) ×1.2 makes casual 1 h (15 → 24 min), median 5 h and strong 1 h worse. The code is parked on branch `feat/k1-key-words` (sim-ready); PR #150 carries only its docs.
 - [ ] K2 BLOCKED by rule P (needs Andy) — built and tested (codes pay N words at the live rate; copy "+N WINS (30 WORDS AT YOUR RATE) — ADDED"; 010 docs; claims.test + redeem-codes 7/7), parked on branch `feat/k2-code-words`, NOT merged. The 5-seed before/after (claude/econ-oct2/compare.sh → k2-compare.txt) has **11 windows worse** (largest: casual 5 h next-KEY 24.9 → 29.7 min; median windows +0.03–0.4 min). A bigger code payout makes the bot buy sooner, which leaves the next price relatively higher at the sampled moment. Rule P can't tell that from a real slowdown. **ANDY: either K2 merges as a deliberate exception, or rule P should measure realised time-to-next-buy instead of a sampled ETA. Say which.**
+
+## NEW GOAL (Andy oct3 10:29): every step done or blocked-with-reason AND `date` ≥ Sat Oct 3 **11:00 PM** ET; then the fine-tune loop. Never stop because steps are done; never sleep/wait loops; NEVER ask permission to rerun — just rerun. Andy authorized merging while away.
+MEMORY RULES (crashed 04:05): full lint/unit/e2e ONLY on GitHub Actions (push → PR → CI); locally only the touched specs. One heavy job at a time (never sim + tests together, no stacked background jobs). Kill every preview server + Playwright process when a run ends (helpers too). Check free memory before each heavy job; under 4 GB → clean up first.
+- [ ] R1 feat/h4-winner-pays: PR → CI → merge if green.
+- [ ] R2 feat/h2a-board: PR → CI → merge if green.
+- [ ] R3 PV10 probe (alone), then continue v10.
+- [ ] R4 feat/marks-rolls-engine → finish mark rolls.
+- [ ] R5 Andy ran 014_self_reset.sql: verify Stats → RESET clears the board row on prod.
+- [ ] R6 ANTI-CHEAT: lb_submit2 never rate-checks LEVEL (how LV5222 reached the board). Server-side level-rate check as a new migration (write, don't run; ANDY TODO).
+- [ ] R7 then: big leaderboard icon (test 2560x1440) → confusion audit → fine-tune loop.
 
 ## NEW GOAL (Andy oct3 02:24): every step done or blocked-with-reason AND `date` ≥ Sat Oct 3 10:30 AM ET; then the fine-tune loop. Never sleep/wait loops to pass time. 10-line summary at 10:15 AM (merged PR #s, verified live, sim numbers, new Sentry issues, ANDY TODO).
 ### Andy, oct3 02:24 (authorized, incl. merging) — keep every earlier note active
