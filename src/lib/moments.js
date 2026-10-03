@@ -10,6 +10,9 @@
 // priority); the same id is never queued twice; a moment that never calls done() is released after its
 // maxMs (a lost callback can never jam the queue); while the page is BUSY (a panel open, a game running —
 // setBusy) nothing new starts. No timers run while the queue is empty.
+// A LINGERING moment (the claim popup: up to 8 s, tucked by a key/tap) is announced `interruptible`: when a
+// HIGHER-priority moment is announced while it plays, the queue releases it at once and calls its
+// onInterrupt() (hide, and re-announce to come back after) — a waiting reward never delays a level/wall/rank.
 
 // ≥250ms between two heavy moments (next-passes-spec PASS 2: "one at a time, ≥250ms gap").
 export const GAP_MS = 250;
@@ -59,7 +62,7 @@ export function createMoments({ setTimer = setTimeout, clearTimer = clearTimeout
       emit();
       if (queue.length) schedule(GAP_MS);
     };
-    current = { id: item.id, priority: item.priority, startedAt: now(), release, timer: null };
+    current = { id: item.id, priority: item.priority, startedAt: now(), release, timer: null, item };
     current.timer = setTimer(release, item.maxMs);
     emit();
     try {
@@ -69,23 +72,34 @@ export function createMoments({ setTimer = setTimeout, clearTimer = clearTimeout
     }
   }
 
+  function cancelFor(item, key) {
+    return () => {
+      const i = queue.indexOf(item);
+      if (i >= 0) { queue.splice(i, 1); emit(); return; }
+      if (current && current.id === key && current.item === item) current.release();
+    };
+  }
+
   return {
     /** Queue a moment. start(done) runs when it is its turn; call done() when it has finished playing.
      *  Returns a cancel() that drops it if it has not started (or ends it if it has). */
-    announce({ id, start, priority = PRIORITY.INFO, maxMs = DEFAULT_MAX_MS, expireMs = 0, onExpire = null }) {
+    announce({ id, start, priority = PRIORITY.INFO, maxMs = DEFAULT_MAX_MS, expireMs = 0, onExpire = null, interruptible = false, onInterrupt = null }) {
       const key = id || `m${++seq}`;
       if ((current && current.id === key) || queue.some((q) => q.id === key)) return () => {};
-      const item = { id: key, start, priority, maxMs, expireMs, onExpire, queuedAt: now(), n: ++seq };
+      const item = { id: key, start, priority, maxMs, expireMs, onExpire, interruptible, onInterrupt, queuedAt: now(), n: ++seq };
       let at = queue.findIndex((q) => q.priority < priority);
       if (at < 0) at = queue.length;
       queue.splice(at, 0, item);
       emit();
+      // a lingering (interruptible) moment steps aside for a higher-priority one
+      if (current && current.item.interruptible && priority > current.priority) {
+        const was = current.item;
+        current.release();
+        try { if (was.onInterrupt) was.onInterrupt(); } catch { /* listener */ }
+        return cancelFor(item, key);
+      }
       pump();
-      return () => {
-        const i = queue.indexOf(item);
-        if (i >= 0) { queue.splice(i, 1); emit(); return; }
-        if (current && current.id === key) current.release();
-      };
+      return cancelFor(item, key);
     },
     /** A panel / game holds the queue while it is up. Counted, so nested holds are safe. Returns unhold(). */
     hold() {

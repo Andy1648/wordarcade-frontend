@@ -17,6 +17,7 @@ import { markRank, markMainMult, markTier } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
 import { FEATURED_GAME } from '../gameData';
+import { CARD_MS } from '../lib/menuMoments';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
 const FEATURED_NAME = (FEATURED_GAME.cardName || FEATURED_GAME.name || '').split('\n').join(' ');
@@ -542,7 +543,7 @@ const prefersReducedMotion = () =>
 
 // Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
-const LEVELUP_MS = 1500;
+const LEVELUP_MS = CARD_MS; // 1500 — lib/menuMoments.js (the moments queue releases on it)
 // The punch-in curve, applied PER KEYFRAME. It used to sit on the whole effect, which eases the
 // entire 1500ms timeline — so the "900ms hold" was actually crossing its fade keyframe ~500ms in
 // and the level-up flashed by. Linear effect timing + an eased entry keeps the hold a hold.

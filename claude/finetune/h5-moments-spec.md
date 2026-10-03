@@ -39,4 +39,7 @@ Gated on feat/h2a-board landing (it edits Homepage.jsx too).
 ## Status
 - `src/lib/moments.js` + 9 unit tests: DONE (order, gap, priority, dedupe, lost-callback release, throw
   release, counted hold, cancel, no idle timers).
-- Wiring: pending (steps 1–5).
+- Wiring steps 1–4 + panel holds: DONE on feat/h5-wiring (lib/menuMoments.js = kinds/priorities/real
+  lengths; lib/useMomentSlot.js = render-while-it's-your-turn + useMomentHold; queue gained `interruptible`
+  so the lingering claim popup steps aside for a LEVEL moment and comes back). Also queued: rebirth card
+  (LEVEL), mark-upgraded + automation cards (INFO). Step 5 (new H3 moments): pending.

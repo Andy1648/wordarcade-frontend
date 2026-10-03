@@ -19,7 +19,8 @@ import {
   PaintSplatter5,
 } from './decor/PaintSplatters';
 import { scenePositions } from '../progress/sceneLayout';
-import { getWallTier, WALL_EVENT } from '../progress/wallTier';
+import { getWallTier, WALL_EVENT, WALL_FX_DONE_EVENT } from '../progress/wallTier';
+import { WALL_FX_MS } from '../lib/menuMoments';
 import './WallScene.css';
 
 // ---- Self-writing graffiti: words that spray-paint themselves onto the wall
@@ -210,7 +211,8 @@ const DecorPane = memo(function DecorPane({ tier, className = '', paneRef = null
 // ---- N4 (Andy oct2): THE WALL RE-FORMS every 100 levels -----------------------------------------------
 // The choreography + the level stamp live in ./wallFx.jsx, loaded only when a wall tier is crossed (once
 // per 100 levels) — it stays out of every page's initial payload (payload-budget ratchet).
-export const WALL_FX_MS = 1650;
+// (WALL_FX_MS lives in lib/menuMoments.js — the moments queue's single source of real lengths)
+export { WALL_FX_MS };
 function flatPositions(tier) {
   const { splatters, tags, stickers } = placed(tier);
   return [...splatters, ...tags, ...stickers].map((x) => ({ top: x.top, left: x.left }));
@@ -258,6 +260,11 @@ function WallScene({ intensity = 'calm', resetKey }) {
     // choreography arrive a moment later (a lazy chunk) — the pieces start from where they were
     let live = true;
     const timers = [];
+    // H5: the menu holds the moments queue for the wall; tell it when the moment is over (even if the
+    // chunk never came — the new wall is laid out, the moment is simply shorter)
+    const over = () => {
+      try { window.dispatchEvent(new CustomEvent(WALL_FX_DONE_EVENT, { detail: { tier: fx.to } })); } catch { /* old browser */ }
+    };
     import('./wallFx.jsx')
       .then((m) => {
         if (!live) return;
@@ -265,9 +272,9 @@ function WallScene({ intensity = 'calm', resetKey }) {
         setStamp({ to: fx.to, key: Date.now(), Stamp: m.WallStamp });
         if (!fx.reduce) timers.push(setTimeout(() => m.liftSound(), 150));
         timers.push(setTimeout(() => m.landSound(), 900));
-        timers.push(setTimeout(() => live && setStamp(null), WALL_FX_MS));
+        timers.push(setTimeout(() => { if (live) setStamp(null); over(); }, WALL_FX_MS));
       })
-      .catch(() => { /* offline / stale chunk: the new wall is already laid out — just no flight */ });
+      .catch(() => { over(); /* offline / stale chunk: the new wall is already laid out — just no flight */ });
     return () => { live = false; timers.forEach(clearTimeout); };
   }, [scene]);
 

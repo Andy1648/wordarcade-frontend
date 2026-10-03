@@ -33,6 +33,7 @@ import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { getMyProfile, selfReset } from '../leaderboard/client';
+import { useMomentHold } from '../lib/useMomentSlot';
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -112,6 +113,7 @@ async function resetAllProgress() {
 }
 
 export default function StatsScreen({ onBack }) {
+  useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;

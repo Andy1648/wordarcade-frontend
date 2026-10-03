@@ -24,7 +24,7 @@ import { isModeLocked } from '../progress/modeAccess';
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import MenuFrame from './MenuFrame';
 import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
-import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
+import { noteWallLevel, wallTierFor, getWallTier, WALL_FX_DONE_EVENT } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
@@ -49,7 +49,9 @@ import ClaimPopup from '../claims/ClaimPopup.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import PodiumIcon from './PodiumIcon';
-import { moments, PRIORITY } from '../lib/moments';
+import { moments } from '../lib/moments';
+import { momentOpts, MENU_MOMENTS, CARD_MS, WALL_SETTLE_MS } from '../lib/menuMoments';
+import { useMomentHold } from '../lib/useMomentSlot';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
@@ -236,7 +238,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
-  // T: unlock tutorials wait for the menu to settle (arrival wipe, a wall moment) before they may show
+  // T: unlock tutorials mount once the menu has settled (the arrival wipe) and the mount-time moments — a
+  // rank-up waits on the network — have announced themselves; from there the queue orders them (H5)
   const [tutReady, setTutReady] = useState(false);
   useEffect(() => { const t = setTimeout(() => setTutReady(true), 4500); return () => clearTimeout(t); }, []);
   const dismissMenuSpot = () => { markMenuSpotlightSeen(); setShowMenuSpot(false); };
@@ -606,28 +609,69 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [frameFresh, setFrameFresh] = useState(false);
   const [framePunch, setFramePunch] = useState(0);
   const lastLevelRef = useRef(xpProgress.level);
+  // H5 (Andy oct3 02:24 "important = announced … never stacking"): the menu's big moments take turns on the
+  // ONE moments queue (lib/moments.js; kinds, priorities and safety lengths in lib/menuMoments.js). Each
+  // keeps its own art and clock; only its START is queued, and it releases the queue when it ends. Every
+  // moment this mount announced is dropped (queued) or released (playing) when the menu unmounts.
+  const mountedAtRef = useRef(Date.now());
+  const aliveRef = useRef(true);
+  const momentCancelsRef = useRef(new Set());
+  const levelRef = useRef(xpProgress.level);
+  levelRef.current = xpProgress.level;
+  const tierRef = useRef(tier);
+  tierRef.current = tier;
+  const announceMenu = (kind, start) => {
+    const cancel = moments.announce({ ...momentOpts(kind), start: (done) => (aliveRef.current ? start(done) : done()) });
+    momentCancelsRef.current.add(cancel);
+    return cancel;
+  };
+  useEffect(() => {
+    aliveRef.current = true;
+    const cancels = momentCancelsRef.current;
+    return () => {
+      aliveRef.current = false;
+      cancels.forEach((c) => { try { c(); } catch { /* already released */ } });
+      cancels.clear();
+    };
+  }, []);
   // N4: every 100 levels the WALL re-forms (wallTier.js → WallScene). On the menu only — never mid-game —
-  // so a 100 crossed inside a game plays when the player comes back here.
+  // so a 100 crossed inside a game plays when the player comes back here. It is a LEVEL moment, announced
+  // BEFORE the tier-up (effect order = FIFO within a priority), so on LV100 (both) the wall goes first and
+  // the new frame is named after it. Its own timing is unchanged: it re-forms once the menu has settled
+  // (the arrival wipe, WALL_SETTLE_MS after mount), and holds the queue until WallScene says it is over.
+  const wallWait = () => Math.max(0, WALL_SETTLE_MS - (Date.now() - mountedAtRef.current));
   useEffect(() => {
     // within 10 levels of the next wall: warm its (lazy) choreography so the moment never waits on a fetch
     if (wallTierFor(xpProgress.level + 10) > getWallTier()) import('./wallFx.jsx').catch(() => {});
-    const t = setTimeout(() => noteWallLevel(xpProgress.level), wallWait());
-    return () => clearTimeout(t);
+    if (wallTierFor(xpProgress.level) <= getWallTier()) return;
+    announceMenu('wall', (done) => {
+      let t = 0;
+      const end = () => {
+        clearTimeout(t);
+        window.removeEventListener(WALL_FX_DONE_EVENT, end);
+        done();
+      };
+      t = setTimeout(() => {
+        if (!aliveRef.current) { end(); return; } // left the menu during the settle: replay next visit
+        window.addEventListener(WALL_FX_DONE_EVENT, end);
+        if (!noteWallLevel(levelRef.current)) end();
+      }, wallWait());
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xpProgress.level]);
-  // N4: ONE moment at a time. The wall's re-form waits for the menu to settle (the arrival wipe), and a
-  // menu tier-up that lands on the same level (LV100 is both) waits until the wall's moment is over.
-  const mountedAtRef = useRef(Date.now());
-  const wallWait = () => Math.max(0, 1800 - (Date.now() - mountedAtRef.current));
+  // STEP 22: the tier-up card (MenuXp tierUp, 1.5 s) — a LEVEL moment after the wall. The tier is marked
+  // seen when the card actually plays, so leaving the menu before its turn replays it next visit.
   useEffect(() => {
     const seen = getSeenTier();
     if (tier > Math.max(0, seen)) {
-      setSeenTier(tier);
       setFrameFresh(true);
-      const wallFirst = wallTierFor(xpProgress.level) > getWallTier();
-      const fire = () => { if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]); };
-      if (wallFirst) setTimeout(fire, wallWait() + 1850);
-      else fire();
+      announceMenu('tier-up', (done) => {
+        const t = tierRef.current;
+        setSeenTier(t);
+        if (!xpFxRef.current || !xpFxRef.current.tierUp) { done(); return; }
+        xpFxRef.current.tierUp(TIER_NAMES[t]);
+        setTimeout(done, CARD_MS);
+      });
     } else if (seen < tier) {
       setSeenTier(tier);
     }
@@ -679,31 +723,41 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const parts = [];
     if (r.keys) parts.push(`+${r.keys} KEY POWER`);
     if (r.forges) parts.push(`+${r.forges} FORGE`);
-    const t = setTimeout(() => {
-      if (xpFxRef.current && xpFxRef.current.announce) xpFxRef.current.announce('AUTOMATION', parts.join(' · '), 'BOUGHT WHILE YOU PLAYED');
-    }, 800);
-    return () => clearTimeout(t);
+    // H5: an INFO moment on the queue (was an 800 ms guess at clearing the level-up card)
+    announceMenu('automation', (done) => {
+      if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }
+      xpFxRef.current.announce('AUTOMATION', parts.join(' · '), 'BOUGHT WHILE YOU PLAYED');
+      setTimeout(done, CARD_MS);
+    });
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // STEP 21: the worn mark ranked up during the last games → name it once, on the menu, after any
-  // mount-time level/tier card has had its 1.5 s.
+  // STEP 21: the worn mark ranked up during the last games → name it once, on the menu. H5: an INFO moment
+  // on the queue, after any level/tier card (was a 1600 ms guess at that card's length).
   useEffect(() => {
     const id = getEquippedMark();
     const r = takeMarkRankUp(id);
     if (!r) return undefined;
     const m = markById(id);
-    const t = setTimeout(() => {
-      if (xpFxRef.current && xpFxRef.current.announce) {
-        // H6 audit M7: RANK names the level titles only — a mark levels up as "SMITH IV · MARK UPGRADED"
-        xpFxRef.current.announce(`${m.name} ${MARK_RANK_NAMES[r - 1]}`, 'MARK UPGRADED', markBlurbAt(m, r).toUpperCase());
-      }
-    }, 1600);
-    return () => clearTimeout(t);
+    announceMenu('mark-up', (done) => {
+      if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }
+      // H6 audit M7: RANK names the level titles only — a mark levels up as "SMITH IV · MARK UPGRADED"
+      xpFxRef.current.announce(`${m.name} ${MARK_RANK_NAMES[r - 1]}`, 'MARK UPGRADED', markBlurbAt(m, r).toUpperCase());
+      setTimeout(done, CARD_MS);
+    });
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     const rb = consumePendingRebirth();
     if (rb > 0) announceTick('rb', rb); // STEP 51 ticker: "NAME reached REBIRTH 5"
     if (rb > 0 && xpFxRef.current) {
-      xpFxRef.current.rebirthCelebration(rb);
+      // H5: a LEVEL moment on the queue (the rank-up used to wait 1.6 s blind for this card)
+      announceMenu('rebirth', (done) => {
+        if (!xpFxRef.current) { done(); return; }
+        xpFxRef.current.rebirthCelebration(rb);
+        setTimeout(done, CARD_MS);
+      });
     } else {
       const stamp = consumePendingWinsStamp();
       if (stamp > 0 && xpFxRef.current) {
@@ -929,16 +983,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           setBoardNews(true);
           setBoardHold(r.from);
           // the rank-up goes through the ONE moments queue, so it never plays over another heavy moment
+          // H5: a LEVEL moment (was REWARD + a 1.6 s RANKUP_DELAY_MS inside the card): it plays the moment
+          // its turn comes, after a wall / tier-up / rebirth card, and the claim popup steps aside for it.
           rankCancelRef.current = moments.announce({
-            id: 'rank-up',
-            priority: PRIORITY.REWARD,
-            // the card's own clock (3.8 s) starts only once its lazy chunk mounts: leave room for the fetch
-            maxMs: 6000,
+            ...momentOpts('rank-up'),
             start: (done) => {
+              if (!live) { done(); return; }
               rankDoneRef.current = done;
               setRankUp(r);
               // never strand the OLD rank on the icon if the card's chunk never arrives
-              setTimeout(() => { if (live) setBoardHold(null); }, 6000);
+              setTimeout(() => { if (live) setBoardHold(null); }, MENU_MOMENTS['rank-up'].maxMs);
             },
           });
           if (r.to <= 10) announceTick('rank', r.to); // STEP 51 ticker: "NAME took #3"
@@ -1000,6 +1054,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const showRebirth = rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths);
   // STEP 21: REBIRTH badges itself the moment it's available — it IS an upgrade, the biggest one.
   const rebirthReady = xpProgress.level >= rebirthThreshold(rebirths);
+
+  // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
+  // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
+  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || showRanks || claimReveal));
 
   return (
     <div className="homepage-wrap" onPointerOver={warmModeDialog} onFocusCapture={warmModeDialog} onTouchStart={warmModeDialog}>

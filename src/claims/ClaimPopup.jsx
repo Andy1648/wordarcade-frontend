@@ -5,7 +5,15 @@
 // type-to-earn) tucks it away; the REWARDS button keeps the notification badge until it is claimed.
 //
 // It took the welcome-back card's slot (top-centre, same look family), and replaces that card.
+//
+// H5: it waits its turn on the ONE moments queue (PRIORITY.REWARD) — never over the wall, a tier-up or a
+// rank-up. It lingers (up to CLAIM_TUCK_MS), so it is announced `interruptible`: a higher-priority moment
+// that arrives while it shows tucks it away UNSEEN, and it comes back once that moment is over. The
+// key/tap "not now" listeners run only while it is actually showing — before its turn, typing on the menu
+// is untouched.
 import { useEffect, useMemo, useState } from 'react';
+import { useMomentSlot } from '../lib/useMomentSlot.js';
+import { momentOpts, CLAIM_TUCK_MS } from '../lib/menuMoments.js';
 import { claim, claimAll, claimAmount, CLAIM_KINDS } from '../progress/claims.js';
 import { useClaims } from './useClaims.js';
 import { KIND_COLOUR } from './kindColour.js';
@@ -28,6 +36,8 @@ function saveSeen(set) {
   }
 }
 
+const SLOT = momentOpts('claim-pop');
+
 export default function ClaimPopup({ onOpenPanel, onReveal }) {
   const list = useClaims();
   const [seen, setSeen] = useState(loadSeen);
@@ -38,8 +48,10 @@ export default function ClaimPopup({ onOpenPanel, onReveal }) {
     saveSeen(next);
     setSeen(next);
   };
+  // nothing fresh any more (claimed, LATER, tucked) → `want` drops and the slot releases the queue
+  const [on] = useMomentSlot(fresh.length > 0, SLOT);
   useEffect(() => {
-    if (!fresh.length) return undefined;
+    if (!on || !fresh.length) return undefined;
     // Typing on the menu is type-to-earn: a keystroke means "not now", never a lost keystroke.
     const onKey = (e) => {
       if (e.key === 'Tab' || e.key === 'Enter' || e.key === ' ') return; // keyboard users reach the buttons
@@ -55,15 +67,15 @@ export default function ClaimPopup({ onOpenPanel, onReveal }) {
     window.addEventListener('pointerdown', onDown, { capture: true });
     // It tucks itself away after a while too: the REWARDS badge keeps the reminder, so the popup
     // never has to sit over the menu for good (fine-tune oct2).
-    const tuck = setTimeout(later, 8000);
+    const tuck = setTimeout(later, CLAIM_TUCK_MS);
     return () => {
       clearTimeout(tuck);
       window.removeEventListener('keydown', onKey, { capture: true });
       window.removeEventListener('pointerdown', onDown, { capture: true });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fresh.length]);
-  if (!fresh.length) return null;
+  }, [on, fresh.length]);
+  if (!on || !fresh.length) return null;
   const one = fresh.length === 1 && list.length === 1 ? fresh[0] : null;
   const total = list.reduce((a, c) => a + claimAmount(c), 0);
   const k = one ? KIND_COLOUR[one.kind] : '#FFE94A';
