@@ -25,7 +25,8 @@ async function seed(page, extra = {}) {
   }, { ...SEED, ...extra });
 }
 async function openMarks(page) {
-  await page.locator('.menu-mark').click();
+  // desktop: the menu's mark chip; phone (≤480px): the MARKS nav button
+  await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
   await page.locator('.mx-panel').waitFor();
 }
 const collected = (page) => page.locator('[data-testid="marks-collected"]').getAttribute('data-pct').then(Number);
