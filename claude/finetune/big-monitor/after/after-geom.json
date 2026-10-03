@@ -1,0 +1,2860 @@
+{
+ "sat-cover@2560x1440": {
+  "boxes": {
+   ".sr-cover": [
+    {
+     "x": 866,
+     "y": 372,
+     "w": 829,
+     "h": 695,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-cover-example": [
+    {
+     "x": 1046,
+     "y": 614,
+     "w": 468,
+     "h": 180,
+     "fs": "16px",
+     "maxW": "464px"
+    }
+   ],
+   ".sr-title": [
+    {
+     "x": 982,
+     "y": 419,
+     "w": 608,
+     "h": 98,
+     "fs": "92px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-cover-tag": [
+    {
+     "x": 1050,
+     "y": 517,
+     "w": 467,
+     "h": 94,
+     "fs": "19px",
+     "maxW": "465.12px"
+    }
+   ],
+   ".sr-btn": [
+    {
+     "x": 1182,
+     "y": 878,
+     "w": 185,
+     "h": 76,
+     "fs": "26px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-modeselect@2560x1440": {
+  "boxes": {
+   ".sr-modeselect": [
+    {
+     "x": 898,
+     "y": 469,
+     "w": 764,
+     "h": 503,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-briefing@2560x1440": {
+  "boxes": {
+   ".sr-brief-page": [
+    {
+     "x": 823,
+     "y": 28,
+     "w": 914,
+     "h": 1682,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-brief-card": [
+    {
+     "x": 862,
+     "y": 235,
+     "w": 828,
+     "h": 257,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 866,
+     "y": 494,
+     "w": 824,
+     "h": 273,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 866,
+     "y": 769,
+     "w": 829,
+     "h": 315,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-brief-sentence": [
+    {
+     "x": 882,
+     "y": 353,
+     "w": 788,
+     "h": 77,
+     "fs": "19px",
+     "maxW": "none"
+    },
+    {
+     "x": 884,
+     "y": 612,
+     "w": 787,
+     "h": 94,
+     "fs": "19px",
+     "maxW": "none"
+    },
+    {
+     "x": 886,
+     "y": 886,
+     "w": 789,
+     "h": 108,
+     "fs": "19px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-play-briefing@2560x1440": {
+  "boxes": {
+   ".sr-stage": [
+    {
+     "x": 604,
+     "y": 208,
+     "w": 1353,
+     "h": 1024,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-hud": [
+    {
+     "x": 605,
+     "y": 212,
+     "w": 1332,
+     "h": 104,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slots": [
+    {
+     "x": 669,
+     "y": 859,
+     "w": 1229,
+     "h": 105,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slot": [
+    {
+     "x": 964,
+     "y": 875,
+     "w": 71,
+     "h": 83,
+     "fs": "34.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 1045,
+     "y": 874,
+     "w": 71,
+     "h": 83,
+     "fs": "34.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 1126,
+     "y": 872,
+     "w": 71,
+     "h": 83,
+     "fs": "34.8px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-wanted-wrap": [
+    {
+     "x": 659,
+     "y": 334,
+     "w": 1230,
+     "h": 117,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-mult": [
+    {
+     "x": 672,
+     "y": 1025,
+     "w": 183,
+     "h": 108,
+     "fs": "128px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-root": [
+    {
+     "x": 668,
+     "y": 831,
+     "w": 1228,
+     "h": 24,
+     "fs": "19px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-play-lineup@2560x1440": {
+  "boxes": {
+   ".sr-stage": [
+    {
+     "x": 603,
+     "y": 181,
+     "w": 1354,
+     "h": 1077,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slots": [
+    {
+     "x": 666,
+     "y": 717,
+     "w": 1229,
+     "h": 105,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slot": [
+    {
+     "x": 1083,
+     "y": 731,
+     "w": 71,
+     "h": 83,
+     "fs": "34.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 1164,
+     "y": 730,
+     "w": 71,
+     "h": 83,
+     "fs": "34.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 1245,
+     "y": 728,
+     "w": 71,
+     "h": 83,
+     "fs": "34.8px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-lineup": [
+    {
+     "x": 668,
+     "y": 810,
+     "w": 1231,
+     "h": 180,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-mult": [
+    {
+     "x": 672,
+     "y": 1051,
+     "w": 183,
+     "h": 108,
+     "fs": "128px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "menu@2560x1440": {
+  "boxes": {
+   ".homepage-cards-grid": [
+    {
+     "x": 113,
+     "y": 338,
+     "w": 2334,
+     "h": 496,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card": [
+    {
+     "x": 113,
+     "y": 338,
+     "w": 372,
+     "h": 496,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 505,
+     "y": 338,
+     "w": 372,
+     "h": 496,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 898,
+     "y": 338,
+     "w": 372,
+     "h": 496,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-name": [
+    {
+     "x": 134,
+     "y": 580,
+     "w": 329,
+     "h": 104,
+     "fs": "58px",
+     "maxW": "none"
+    },
+    {
+     "x": 527,
+     "y": 632,
+     "w": 329,
+     "h": 52,
+     "fs": "58px",
+     "maxW": "none"
+    },
+    {
+     "x": 915,
+     "y": 359,
+     "w": 337,
+     "h": 42,
+     "fs": "49.3px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-xp": [
+    {
+     "x": 134,
+     "y": 703,
+     "w": 329,
+     "h": 74,
+     "fs": "24.616px",
+     "maxW": "none"
+    },
+    {
+     "x": 527,
+     "y": 703,
+     "w": 329,
+     "h": 74,
+     "fs": "24.616px",
+     "maxW": "none"
+    },
+    {
+     "x": 915,
+     "y": 747,
+     "w": 337,
+     "h": 48,
+     "fs": "15.928px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-payout": [
+    {
+     "x": 134,
+     "y": 783,
+     "w": 329,
+     "h": 32,
+     "fs": "21.72px",
+     "maxW": "none"
+    },
+    {
+     "x": 527,
+     "y": 783,
+     "w": 329,
+     "h": 32,
+     "fs": "21.72px",
+     "maxW": "none"
+    },
+    {
+     "x": 915,
+     "y": 794,
+     "w": 337,
+     "h": 24,
+     "fs": "15.928px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-badge": [
+    {
+     "x": 134,
+     "y": 544,
+     "w": 107,
+     "h": 30,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 527,
+     "y": 596,
+     "w": 107,
+     "h": 30,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 915,
+     "y": 418,
+     "w": 55,
+     "h": 30,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-foot": [
+    {
+     "x": 903,
+     "y": 733,
+     "w": 362,
+     "h": 96,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-ribbon": [
+    {
+     "x": 89,
+     "y": 237,
+     "w": 288,
+     "h": 288,
+     "fs": "15.928px",
+     "maxW": "none"
+    },
+    {
+     "x": 481,
+     "y": 237,
+     "w": 288,
+     "h": 288,
+     "fs": "15.928px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "shop@2560x1440": {
+  "boxes": {
+   ".shop-panel": [
+    {
+     "x": 500,
+     "y": 86,
+     "w": 1560,
+     "h": 1267,
+     "fs": "16px",
+     "maxW": "100%"
+    }
+   ],
+   ".shop-grid": [
+    {
+     "x": 522,
+     "y": 866,
+     "w": 1516,
+     "h": 405,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 522,
+     "y": 1333,
+     "w": 1516,
+     "h": 272,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".shop-card": [
+    {
+     "x": 522,
+     "y": 866,
+     "w": 246,
+     "h": 140,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 776,
+     "y": 866,
+     "w": 246,
+     "h": 140,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 1030,
+     "y": 866,
+     "w": 246,
+     "h": 140,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "stats@2560x1440": {
+  "boxes": {
+   ".stats-panel": [
+    {
+     "x": 940,
+     "y": 20,
+     "w": 680,
+     "h": 1400,
+     "fs": "16px",
+     "maxW": "680px"
+    }
+   ],
+   ".stats-secrets": [
+    {
+     "x": 962,
+     "y": 1868,
+     "w": 636,
+     "h": 208,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 962,
+     "y": 2202,
+     "w": 636,
+     "h": 208,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "dialog-word-bomb@2560x1440": {
+  "boxes": {
+   ".mode-dialog-shell": [
+    {
+     "x": 750,
+     "y": 311,
+     "w": 1060,
+     "h": 818,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "dialog-category-blitz@2560x1440": {
+  "boxes": {
+   ".mode-dialog-shell": [
+    {
+     "x": 750,
+     "y": 190,
+     "w": 1060,
+     "h": 1060,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".ppp-picker": [
+    {
+     "x": 802,
+     "y": 604,
+     "w": 956,
+     "h": 483,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "locked-chain@2560x1440": {
+  "boxes": {
+   ".lp-panel": [
+    {
+     "x": 890,
+     "y": 406,
+     "w": 780,
+     "h": 629,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "claims@2560x1440": {
+  "boxes": {
+   ".claims-panel": [
+    {
+     "x": 874,
+     "y": 586,
+     "w": 812,
+     "h": 269,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-row": [
+    {
+     "x": 894,
+     "y": 671,
+     "w": 772,
+     "h": 94,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-title": [
+    {
+     "x": 894,
+     "y": 606,
+     "w": 204,
+     "h": 53,
+     "fs": "40px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-label": [
+    {
+     "x": 909,
+     "y": 714,
+     "w": 553,
+     "h": 38,
+     "fs": "26px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  },
+  "after": {
+   ".wct": [
+    {
+     "x": 2184,
+     "y": 92,
+     "w": 360,
+     "h": 46,
+     "fs": "16px",
+     "maxW": "464px"
+    }
+   ],
+   ".wct-row": [
+    {
+     "x": 2184,
+     "y": 92,
+     "w": 360,
+     "h": 46,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".wct-label": [
+    {
+     "x": 2199,
+     "y": 101,
+     "w": 285,
+     "h": 28,
+     "fs": "19px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "rank-ladder@2560x1440": {
+  "boxes": {
+   ".rank-panel": [
+    {
+     "x": 976,
+     "y": 20,
+     "w": 609,
+     "h": 1400,
+     "fs": "16px",
+     "maxW": "609px"
+    }
+   ],
+   ".rank-row": [
+    {
+     "x": 998,
+     "y": 126,
+     "w": 565,
+     "h": 64,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 998,
+     "y": 197,
+     "w": 565,
+     "h": 64,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 998,
+     "y": 269,
+     "w": 565,
+     "h": 64,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-num": [
+    {
+     "x": 1013,
+     "y": 139,
+     "w": 38,
+     "h": 38,
+     "fs": "40px",
+     "maxW": "none"
+    },
+    {
+     "x": 1013,
+     "y": 210,
+     "w": 38,
+     "h": 38,
+     "fs": "40px",
+     "maxW": "none"
+    },
+    {
+     "x": 1013,
+     "y": 282,
+     "w": 38,
+     "h": 38,
+     "fs": "40px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-title": [
+    {
+     "x": 998,
+     "y": 40,
+     "w": 229,
+     "h": 59,
+     "fs": "60px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-name": [
+    {
+     "x": 1062,
+     "y": 144,
+     "w": 399,
+     "h": 27,
+     "fs": "26px",
+     "maxW": "none"
+    },
+    {
+     "x": 1062,
+     "y": 216,
+     "w": 399,
+     "h": 27,
+     "fs": "26px",
+     "maxW": "none"
+    },
+    {
+     "x": 1062,
+     "y": 287,
+     "w": 374,
+     "h": 27,
+     "fs": "26px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "rebirth-ceremony@2560x1440": {
+  "boxes": {
+   ".rbc-card": [
+    {
+     "x": 816,
+     "y": 379,
+     "w": 928,
+     "h": 682,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-hero": [
+    {
+     "x": 1125,
+     "y": 447,
+     "w": 310,
+     "h": 125,
+     "fs": "128px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-cols": [
+    {
+     "x": 838,
+     "y": 630,
+     "w": 884,
+     "h": 320,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-continue": [
+    {
+     "x": 1135,
+     "y": 964,
+     "w": 290,
+     "h": 75,
+     "fs": "40px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "wb-win@2560x1440": {
+  "pre": {
+   ".winner-pop": [
+    {
+     "x": 1087,
+     "y": 594,
+     "w": 386,
+     "h": 251,
+     "fs": "16px",
+     "maxW": "667px"
+    }
+   ],
+   ".winner-pop-title": [
+    {
+     "x": 1114,
+     "y": 614,
+     "w": 325,
+     "h": 85,
+     "fs": "68px",
+     "maxW": "none"
+    }
+   ],
+   ".ko-burst": [],
+   ".ko-text": [],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  },
+  "boxes": {
+   ".winner-pop": [
+    {
+     "x": 1087,
+     "y": 594,
+     "w": 386,
+     "h": 251,
+     "fs": "16px",
+     "maxW": "667px"
+    }
+   ],
+   ".winner-pop-title": [
+    {
+     "x": 1114,
+     "y": 614,
+     "w": 325,
+     "h": 85,
+     "fs": "68px",
+     "maxW": "none"
+    }
+   ],
+   ".ko-burst": [],
+   ".ko-text": [],
+   ".game-over-card": [
+    {
+     "x": 426,
+     "y": 172,
+     "w": 1709,
+     "h": 1096,
+     "fs": "16px",
+     "maxW": "1682px"
+    }
+   ],
+   ".payout": [
+    {
+     "x": 978,
+     "y": 426,
+     "w": 451,
+     "h": 369,
+     "fs": "19px",
+     "maxW": "609px"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "gameover-word-bomb@2560x1440": {
+  "boxes": {
+   ".game-over-card": [
+    {
+     "x": 431,
+     "y": 388,
+     "w": 1698,
+     "h": 663,
+     "fs": "16px",
+     "maxW": "1682px"
+    }
+   ],
+   ".payout": [],
+   ".payout-row": [],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-cover@1920x1080": {
+  "boxes": {
+   ".sr-cover": [
+    {
+     "x": 616,
+     "y": 214,
+     "w": 688,
+     "h": 652,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-cover-example": [
+    {
+     "x": 766,
+     "y": 428,
+     "w": 388,
+     "h": 183,
+     "fs": "16px",
+     "maxW": "384px"
+    }
+   ],
+   ".sr-title": [
+    {
+     "x": 715,
+     "y": 260,
+     "w": 502,
+     "h": 81,
+     "fs": "76px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-cover-tag": [
+    {
+     "x": 767,
+     "y": 344,
+     "w": 393,
+     "h": 79,
+     "fs": "16px",
+     "maxW": "391.68px"
+    }
+   ],
+   ".sr-btn": [
+    {
+     "x": 872,
+     "y": 685,
+     "w": 166,
+     "h": 68,
+     "fs": "21px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-modeselect@1920x1080": {
+  "boxes": {
+   ".sr-modeselect": [
+    {
+     "x": 643,
+     "y": 308,
+     "w": 633,
+     "h": 465,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-briefing@1920x1080": {
+  "boxes": {
+   ".sr-brief-page": [
+    {
+     "x": 581,
+     "y": 24,
+     "w": 758,
+     "h": 1560,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-brief-card": [
+    {
+     "x": 619,
+     "y": 216,
+     "w": 674,
+     "h": 284,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 624,
+     "y": 503,
+     "w": 669,
+     "h": 213,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 624,
+     "y": 720,
+     "w": 673,
+     "h": 274,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-brief-sentence": [
+    {
+     "x": 640,
+     "y": 352,
+     "w": 633,
+     "h": 90,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 642,
+     "y": 606,
+     "w": 632,
+     "h": 53,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 644,
+     "y": 823,
+     "w": 633,
+     "h": 90,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-play-briefing@1920x1080": {
+  "boxes": {
+   ".sr-stage": [
+    {
+     "x": 400,
+     "y": 86,
+     "w": 1121,
+     "h": 908,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-hud": [
+    {
+     "x": 401,
+     "y": 90,
+     "w": 1102,
+     "h": 90,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slots": [
+    {
+     "x": 464,
+     "y": 669,
+     "w": 999,
+     "h": 86,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slot": [
+    {
+     "x": 632,
+     "y": 684,
+     "w": 59,
+     "h": 68,
+     "fs": "28.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 699,
+     "y": 683,
+     "w": 59,
+     "h": 68,
+     "fs": "28.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 766,
+     "y": 681,
+     "w": 59,
+     "h": 68,
+     "fs": "28.8px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-wanted-wrap": [
+    {
+     "x": 455,
+     "y": 203,
+     "w": 999,
+     "h": 99,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-mult": [
+    {
+     "x": 466,
+     "y": 814,
+     "w": 137,
+     "h": 81,
+     "fs": "96px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-root": [
+    {
+     "x": 463,
+     "y": 641,
+     "w": 998,
+     "h": 19,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-play-lineup@1920x1080": {
+  "boxes": {
+   ".sr-stage": [
+    {
+     "x": 399,
+     "y": 62,
+     "w": 1122,
+     "h": 957,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slots": [
+    {
+     "x": 461,
+     "y": 543,
+     "w": 999,
+     "h": 86,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slot": [
+    {
+     "x": 797,
+     "y": 555,
+     "w": 59,
+     "h": 68,
+     "fs": "28.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 864,
+     "y": 554,
+     "w": 59,
+     "h": 68,
+     "fs": "28.8px",
+     "maxW": "none"
+    },
+    {
+     "x": 931,
+     "y": 552,
+     "w": 59,
+     "h": 68,
+     "fs": "28.8px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-lineup": [
+    {
+     "x": 463,
+     "y": 623,
+     "w": 1000,
+     "h": 157,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-mult": [
+    {
+     "x": 467,
+     "y": 838,
+     "w": 137,
+     "h": 81,
+     "fs": "96px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "menu@1920x1080": {
+  "boxes": {
+   ".homepage-cards-grid": [
+    {
+     "x": 86,
+     "y": 292,
+     "w": 1747,
+     "h": 369,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card": [
+    {
+     "x": 87,
+     "y": 292,
+     "w": 276,
+     "h": 369,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 381,
+     "y": 292,
+     "w": 276,
+     "h": 369,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 675,
+     "y": 292,
+     "w": 276,
+     "h": 369,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-name": [
+    {
+     "x": 104,
+     "y": 462,
+     "w": 242,
+     "h": 86,
+     "fs": "48px",
+     "maxW": "none"
+    },
+    {
+     "x": 398,
+     "y": 505,
+     "w": 242,
+     "h": 43,
+     "fs": "48px",
+     "maxW": "none"
+    },
+    {
+     "x": 689,
+     "y": 309,
+     "w": 247,
+     "h": 35,
+     "fs": "40.8px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-xp": [
+    {
+     "x": 104,
+     "y": 563,
+     "w": 242,
+     "h": 54,
+     "fs": "18.088px",
+     "maxW": "none"
+    },
+    {
+     "x": 398,
+     "y": 563,
+     "w": 242,
+     "h": 54,
+     "fs": "18.088px",
+     "maxW": "none"
+    },
+    {
+     "x": 689,
+     "y": 589,
+     "w": 247,
+     "h": 39,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-payout": [
+    {
+     "x": 104,
+     "y": 621,
+     "w": 242,
+     "h": 24,
+     "fs": "15.96px",
+     "maxW": "none"
+    },
+    {
+     "x": 398,
+     "y": 621,
+     "w": 242,
+     "h": 24,
+     "fs": "15.96px",
+     "maxW": "none"
+    },
+    {
+     "x": 689,
+     "y": 628,
+     "w": 247,
+     "h": 20,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-badge": [
+    {
+     "x": 104,
+     "y": 427,
+     "w": 107,
+     "h": 30,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 398,
+     "y": 471,
+     "w": 107,
+     "h": 30,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 689,
+     "y": 357,
+     "w": 55,
+     "h": 30,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-foot": [
+    {
+     "x": 680,
+     "y": 578,
+     "w": 266,
+     "h": 77,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-ribbon": [
+    {
+     "x": 62,
+     "y": 222,
+     "w": 215,
+     "h": 215,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 356,
+     "y": 222,
+     "w": 215,
+     "h": 215,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "shop@1920x1080": {
+  "boxes": {
+   ".shop-panel": [
+    {
+     "x": 400,
+     "y": 65,
+     "w": 1120,
+     "h": 950,
+     "fs": "16px",
+     "maxW": "100%"
+    }
+   ],
+   ".shop-grid": [
+    {
+     "x": 422,
+     "y": 778,
+     "w": 1076,
+     "h": 370,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 422,
+     "y": 1205,
+     "w": 1076,
+     "h": 249,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".shop-card": [
+    {
+     "x": 422,
+     "y": 778,
+     "w": 173,
+     "h": 127,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 603,
+     "y": 778,
+     "w": 173,
+     "h": 127,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 783,
+     "y": 778,
+     "w": 173,
+     "h": 127,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "stats@1920x1080": {
+  "boxes": {
+   ".stats-panel": [
+    {
+     "x": 670,
+     "y": 20,
+     "w": 580,
+     "h": 1040,
+     "fs": "16px",
+     "maxW": "580px"
+    }
+   ],
+   ".stats-secrets": [
+    {
+     "x": 692,
+     "y": 1680,
+     "w": 536,
+     "h": 184,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 692,
+     "y": 1976,
+     "w": 536,
+     "h": 184,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "dialog-word-bomb@1920x1080": {
+  "boxes": {
+   ".mode-dialog-shell": [
+    {
+     "x": 580,
+     "y": 165,
+     "w": 760,
+     "h": 751,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "dialog-category-blitz@1920x1080": {
+  "boxes": {
+   ".mode-dialog-shell": [
+    {
+     "x": 630,
+     "y": 160,
+     "w": 660,
+     "h": 760,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".ppp-picker": [
+    {
+     "x": 682,
+     "y": 536,
+     "w": 556,
+     "h": 215,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "locked-chain@1920x1080": {
+  "boxes": {
+   ".lp-panel": [
+    {
+     "x": 680,
+     "y": 241,
+     "w": 560,
+     "h": 598,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "claims@1920x1080": {
+  "boxes": {
+   ".claims-panel": [
+    {
+     "x": 624,
+     "y": 415,
+     "w": 672,
+     "h": 251,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-row": [
+    {
+     "x": 644,
+     "y": 492,
+     "w": 632,
+     "h": 84,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-title": [
+    {
+     "x": 644,
+     "y": 435,
+     "w": 173,
+     "h": 45,
+     "fs": "34px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-label": [
+    {
+     "x": 659,
+     "y": 531,
+     "w": 440,
+     "h": 32,
+     "fs": "21px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  },
+  "after": {
+   ".wct": [],
+   ".wct-row": [],
+   ".wct-label": [],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "rank-ladder@1920x1080": {
+  "boxes": {
+   ".rank-panel": [
+    {
+     "x": 708,
+     "y": 20,
+     "w": 504,
+     "h": 1040,
+     "fs": "16px",
+     "maxW": "504px"
+    }
+   ],
+   ".rank-row": [
+    {
+     "x": 730,
+     "y": 116,
+     "w": 460,
+     "h": 57,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 730,
+     "y": 181,
+     "w": 460,
+     "h": 57,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 730,
+     "y": 246,
+     "w": 460,
+     "h": 57,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-num": [
+    {
+     "x": 745,
+     "y": 129,
+     "w": 31,
+     "h": 31,
+     "fs": "34px",
+     "maxW": "none"
+    },
+    {
+     "x": 745,
+     "y": 194,
+     "w": 31,
+     "h": 31,
+     "fs": "34px",
+     "maxW": "none"
+    },
+    {
+     "x": 745,
+     "y": 259,
+     "w": 31,
+     "h": 31,
+     "fs": "34px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-title": [
+    {
+     "x": 730,
+     "y": 40,
+     "w": 191,
+     "h": 49,
+     "fs": "50px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-name": [
+    {
+     "x": 788,
+     "y": 134,
+     "w": 312,
+     "h": 22,
+     "fs": "21px",
+     "maxW": "none"
+    },
+    {
+     "x": 788,
+     "y": 199,
+     "w": 312,
+     "h": 22,
+     "fs": "21px",
+     "maxW": "none"
+    },
+    {
+     "x": 788,
+     "y": 264,
+     "w": 291,
+     "h": 22,
+     "fs": "21px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "rebirth-ceremony@1920x1080": {
+  "boxes": {
+   ".rbc-card": [
+    {
+     "x": 576,
+     "y": 245,
+     "w": 768,
+     "h": 589,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-hero": [
+    {
+     "x": 838,
+     "y": 307,
+     "w": 244,
+     "h": 94,
+     "fs": "96px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-cols": [
+    {
+     "x": 598,
+     "y": 454,
+     "w": 724,
+     "h": 278,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-continue": [
+    {
+     "x": 840,
+     "y": 746,
+     "w": 240,
+     "h": 67,
+     "fs": "34px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "wb-win@1920x1080": {
+  "pre": {
+   ".winner-pop": [
+    {
+     "x": 793,
+     "y": 429,
+     "w": 334,
+     "h": 222,
+     "fs": "16px",
+     "maxW": "552px"
+    }
+   ],
+   ".winner-pop-title": [
+    {
+     "x": 820,
+     "y": 448,
+     "w": 274,
+     "h": 72,
+     "fs": "57.8px",
+     "maxW": "none"
+    }
+   ],
+   ".ko-burst": [],
+   ".ko-text": [],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  },
+  "boxes": {
+   ".winner-pop": [
+    {
+     "x": 793,
+     "y": 429,
+     "w": 334,
+     "h": 222,
+     "fs": "16px",
+     "maxW": "552px"
+    }
+   ],
+   ".winner-pop-title": [
+    {
+     "x": 820,
+     "y": 448,
+     "w": 274,
+     "h": 72,
+     "fs": "57.8px",
+     "maxW": "none"
+    }
+   ],
+   ".ko-burst": [],
+   ".ko-text": [],
+   ".game-over-card": [
+    {
+     "x": 369,
+     "y": 103,
+     "w": 1182,
+     "h": 874,
+     "fs": "16px",
+     "maxW": "1160px"
+    }
+   ],
+   ".payout": [
+    {
+     "x": 757,
+     "y": 297,
+     "w": 302,
+     "h": 290,
+     "fs": "13px",
+     "maxW": "420px"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "gameover-word-bomb@1920x1080": {
+  "boxes": {
+   ".game-over-card": [
+    {
+     "x": 373,
+     "y": 260,
+     "w": 1173,
+     "h": 559,
+     "fs": "16px",
+     "maxW": "1160px"
+    }
+   ],
+   ".payout": [],
+   ".payout-row": [],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-cover@1366x625": {
+  "boxes": {
+   ".sr-cover": [
+    {
+     "x": 396,
+     "y": 40,
+     "w": 573,
+     "h": 544,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-cover-example": [
+    {
+     "x": 522,
+     "y": 218,
+     "w": 323,
+     "h": 136,
+     "fs": "16px",
+     "maxW": "320px"
+    }
+   ],
+   ".sr-title": [
+    {
+     "x": 477,
+     "y": 74,
+     "w": 423,
+     "h": 68,
+     "fs": "64px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-cover-tag": [
+    {
+     "x": 527,
+     "y": 147,
+     "w": 320,
+     "h": 64,
+     "fs": "13px",
+     "maxW": "318.24px"
+    }
+   ],
+   ".sr-btn": [
+    {
+     "x": 602,
+     "y": 422,
+     "w": 155,
+     "h": 64,
+     "fs": "18px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-modeselect@1366x625": {
+  "boxes": {
+   ".sr-modeselect": [
+    {
+     "x": 419,
+     "y": 110,
+     "w": 528,
+     "h": 405,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-briefing@1366x625": {
+  "boxes": {
+   ".sr-brief-page": [
+    {
+     "x": 367,
+     "y": 13,
+     "w": 632,
+     "h": 1365,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-brief-card": [
+    {
+     "x": 405,
+     "y": 177,
+     "w": 548,
+     "h": 227,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 409,
+     "y": 409,
+     "w": 545,
+     "h": 217,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 409,
+     "y": 631,
+     "w": 549,
+     "h": 247,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-brief-sentence": [
+    {
+     "x": 426,
+     "y": 298,
+     "w": 509,
+     "h": 52,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 427,
+     "y": 529,
+     "w": 508,
+     "h": 43,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 430,
+     "y": 752,
+     "w": 509,
+     "h": 73,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-play-briefing@1366x625": {
+  "boxes": {
+   ".sr-stage": [
+    {
+     "x": 217,
+     "y": 9,
+     "w": 931,
+     "h": 608,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-hud": [
+    {
+     "x": 219,
+     "y": 13,
+     "w": 917,
+     "h": 80,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slots": [
+    {
+     "x": 278,
+     "y": 430,
+     "w": 451,
+     "h": 65,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slot": [
+    {
+     "x": 340,
+     "y": 436,
+     "w": 49,
+     "h": 57,
+     "fs": "24px",
+     "maxW": "none"
+    },
+    {
+     "x": 396,
+     "y": 435,
+     "w": 49,
+     "h": 57,
+     "fs": "24px",
+     "maxW": "none"
+    },
+    {
+     "x": 451,
+     "y": 434,
+     "w": 49,
+     "h": 57,
+     "fs": "24px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-wanted-wrap": [
+    {
+     "x": 272,
+     "y": 105,
+     "w": 815,
+     "h": 64,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-mult": [
+    {
+     "x": 760,
+     "y": 477,
+     "w": 137,
+     "h": 81,
+     "fs": "96px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-root": [
+    {
+     "x": 278,
+     "y": 424,
+     "w": 450,
+     "h": 9,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "sat-play-lineup@1366x625": {
+  "boxes": {
+   ".sr-stage": [
+    {
+     "x": 218,
+     "y": 28,
+     "w": 930,
+     "h": 568,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slots": [
+    {
+     "x": 278,
+     "y": 410,
+     "w": 451,
+     "h": 65,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-slot": [
+    {
+     "x": 367,
+     "y": 416,
+     "w": 49,
+     "h": 57,
+     "fs": "24px",
+     "maxW": "none"
+    },
+    {
+     "x": 423,
+     "y": 415,
+     "w": 49,
+     "h": 57,
+     "fs": "24px",
+     "maxW": "none"
+    },
+    {
+     "x": 479,
+     "y": 414,
+     "w": 49,
+     "h": 57,
+     "fs": "24px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-lineup": [
+    {
+     "x": 754,
+     "y": 181,
+     "w": 337,
+     "h": 182,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".sr-mult": [
+    {
+     "x": 759,
+     "y": 457,
+     "w": 137,
+     "h": 81,
+     "fs": "96px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "menu@1366x625": {
+  "boxes": {
+   ".homepage-cards-grid": [
+    {
+     "x": 73,
+     "y": 236,
+     "w": 1220,
+     "h": 229,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card": [
+    {
+     "x": 84,
+     "y": 236,
+     "w": 171,
+     "h": 229,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 289,
+     "y": 236,
+     "w": 171,
+     "h": 229,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 495,
+     "y": 236,
+     "w": 171,
+     "h": 229,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-name": [
+    {
+     "x": 97,
+     "y": 285,
+     "w": 145,
+     "h": 54,
+     "fs": "30px",
+     "maxW": "none"
+    },
+    {
+     "x": 302,
+     "y": 312,
+     "w": 145,
+     "h": 27,
+     "fs": "30px",
+     "maxW": "none"
+    },
+    {
+     "x": 506,
+     "y": 251,
+     "w": 148,
+     "h": 24,
+     "fs": "28px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-xp": [
+    {
+     "x": 97,
+     "y": 349,
+     "w": 145,
+     "h": 44,
+     "fs": "15px",
+     "maxW": "none"
+    },
+    {
+     "x": 302,
+     "y": 349,
+     "w": 145,
+     "h": 44,
+     "fs": "15px",
+     "maxW": "none"
+    },
+    {
+     "x": 505,
+     "y": 411,
+     "w": 151,
+     "h": 23,
+     "fs": "15px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-payout": [
+    {
+     "x": 97,
+     "y": 396,
+     "w": 145,
+     "h": 58,
+     "fs": "20px",
+     "maxW": "none"
+    },
+    {
+     "x": 302,
+     "y": 396,
+     "w": 145,
+     "h": 58,
+     "fs": "20px",
+     "maxW": "none"
+    },
+    {
+     "x": 505,
+     "y": 434,
+     "w": 151,
+     "h": 23,
+     "fs": "15px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-badge": [],
+   ".game-card-foot": [
+    {
+     "x": 500,
+     "y": 404,
+     "w": 161,
+     "h": 56,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   ".game-card-ribbon": [
+    {
+     "x": 56,
+     "y": 203,
+     "w": 136,
+     "h": 136,
+     "fs": "13px",
+     "maxW": "none"
+    },
+    {
+     "x": 261,
+     "y": 203,
+     "w": 136,
+     "h": 136,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "shop@1366x625": {
+  "boxes": {
+   ".shop-panel": [
+    {
+     "x": 233,
+     "y": 38,
+     "w": 900,
+     "h": 550,
+     "fs": "16px",
+     "maxW": "100%"
+    }
+   ],
+   ".shop-grid": [
+    {
+     "x": 255,
+     "y": 689,
+     "w": 856,
+     "h": 336,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 255,
+     "y": 1075,
+     "w": 856,
+     "h": 225,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".shop-card": [
+    {
+     "x": 255,
+     "y": 689,
+     "w": 136,
+     "h": 114,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 399,
+     "y": 689,
+     "w": 136,
+     "h": 114,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 543,
+     "y": 689,
+     "w": 136,
+     "h": 114,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "stats@1366x625": {
+  "boxes": {
+   ".stats-panel": [
+    {
+     "x": 453,
+     "y": 20,
+     "w": 460,
+     "h": 585,
+     "fs": "16px",
+     "maxW": "460px"
+    }
+   ],
+   ".stats-secrets": [
+    {
+     "x": 475,
+     "y": 1566,
+     "w": 416,
+     "h": 249,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 475,
+     "y": 1913,
+     "w": 416,
+     "h": 249,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "dialog-word-bomb@1366x625": {
+  "boxes": {
+   ".mode-dialog-shell": [
+    {
+     "x": 383,
+     "y": 60,
+     "w": 600,
+     "h": 504,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "dialog-category-blitz@1366x625": {
+  "boxes": {
+   ".mode-dialog-shell": [
+    {
+     "x": 353,
+     "y": 19,
+     "w": 660,
+     "h": 588,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".ppp-picker": [
+    {
+     "x": 390,
+     "y": 272,
+     "w": 586,
+     "h": 217,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "locked-chain@1366x625": {
+  "boxes": {
+   ".lp-panel": [
+    {
+     "x": 463,
+     "y": 76,
+     "w": 440,
+     "h": 473,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "claims@1366x625": {
+  "boxes": {
+   ".claims-panel": [
+    {
+     "x": 403,
+     "y": 193,
+     "w": 560,
+     "h": 240,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-row": [
+    {
+     "x": 423,
+     "y": 269,
+     "w": 520,
+     "h": 74,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-title": [
+    {
+     "x": 423,
+     "y": 216,
+     "w": 143,
+     "h": 37,
+     "fs": "28px",
+     "maxW": "none"
+    }
+   ],
+   ".claims-label": [
+    {
+     "x": 438,
+     "y": 304,
+     "w": 345,
+     "h": 26,
+     "fs": "18px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  },
+  "after": {
+   ".wct": [
+    {
+     "x": 1091,
+     "y": 92,
+     "w": 259,
+     "h": 38,
+     "fs": "16px",
+     "maxW": "320px"
+    }
+   ],
+   ".wct-row": [
+    {
+     "x": 1091,
+     "y": 92,
+     "w": 259,
+     "h": 38,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".wct-label": [
+    {
+     "x": 1106,
+     "y": 101,
+     "w": 195,
+     "h": 20,
+     "fs": "13px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "rank-ladder@1366x625": {
+  "boxes": {
+   ".rank-panel": [
+    {
+     "x": 473,
+     "y": 20,
+     "w": 420,
+     "h": 585,
+     "fs": "16px",
+     "maxW": "420px"
+    }
+   ],
+   ".rank-row": [
+    {
+     "x": 495,
+     "y": 111,
+     "w": 376,
+     "h": 52,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 495,
+     "y": 171,
+     "w": 376,
+     "h": 52,
+     "fs": "16px",
+     "maxW": "none"
+    },
+    {
+     "x": 495,
+     "y": 231,
+     "w": 376,
+     "h": 52,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-num": [
+    {
+     "x": 510,
+     "y": 124,
+     "w": 26,
+     "h": 26,
+     "fs": "28px",
+     "maxW": "none"
+    },
+    {
+     "x": 510,
+     "y": 184,
+     "w": 26,
+     "h": 26,
+     "fs": "28px",
+     "maxW": "none"
+    },
+    {
+     "x": 510,
+     "y": 244,
+     "w": 26,
+     "h": 26,
+     "fs": "28px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-title": [
+    {
+     "x": 495,
+     "y": 41,
+     "w": 161,
+     "h": 41,
+     "fs": "42px",
+     "maxW": "none"
+    }
+   ],
+   ".rank-name": [
+    {
+     "x": 548,
+     "y": 128,
+     "w": 245,
+     "h": 19,
+     "fs": "18px",
+     "maxW": "none"
+    },
+    {
+     "x": 548,
+     "y": 188,
+     "w": 245,
+     "h": 19,
+     "fs": "18px",
+     "maxW": "none"
+    },
+    {
+     "x": 548,
+     "y": 248,
+     "w": 228,
+     "h": 19,
+     "fs": "18px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "rebirth-ceremony@1366x625": {
+  "boxes": {
+   ".rbc-card": [
+    {
+     "x": 363,
+     "y": 49,
+     "w": 640,
+     "h": 527,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-hero": [
+    {
+     "x": 569,
+     "y": 105,
+     "w": 227,
+     "h": 94,
+     "fs": "96px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-cols": [
+    {
+     "x": 385,
+     "y": 245,
+     "w": 596,
+     "h": 236,
+     "fs": "16px",
+     "maxW": "none"
+    }
+   ],
+   ".rbc-continue": [
+    {
+     "x": 581,
+     "y": 495,
+     "w": 205,
+     "h": 59,
+     "fs": "28px",
+     "maxW": "none"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "wb-win@1366x625": {
+  "pre": {
+   ".winner-pop": [
+    {
+     "x": 542,
+     "y": 216,
+     "w": 281,
+     "h": 193,
+     "fs": "16px",
+     "maxW": "460px"
+    }
+   ],
+   ".winner-pop-title": [
+    {
+     "x": 569,
+     "y": 235,
+     "w": 223,
+     "h": 59,
+     "fs": "47.6px",
+     "maxW": "none"
+    }
+   ],
+   ".ko-burst": [],
+   ".ko-text": [],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  },
+  "boxes": {
+   ".winner-pop": [
+    {
+     "x": 542,
+     "y": 216,
+     "w": 281,
+     "h": 193,
+     "fs": "16px",
+     "maxW": "460px"
+    }
+   ],
+   ".winner-pop-title": [
+    {
+     "x": 569,
+     "y": 235,
+     "w": 223,
+     "h": 59,
+     "fs": "47.6px",
+     "maxW": "none"
+    }
+   ],
+   ".ko-burst": [],
+   ".ko-text": [],
+   ".game-over-card": [
+    {
+     "x": 96,
+     "y": 33,
+     "w": 1173,
+     "h": 560,
+     "fs": "16px",
+     "maxW": "1160px"
+    }
+   ],
+   ".payout": [
+    {
+     "x": 483,
+     "y": 195,
+     "w": 303,
+     "h": 290,
+     "fs": "13px",
+     "maxW": "420px"
+    }
+   ],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ },
+ "gameover-word-bomb@1366x625": {
+  "boxes": {
+   ".game-over-card": [
+    {
+     "x": 97,
+     "y": 59,
+     "w": 1172,
+     "h": 507,
+     "fs": "16px",
+     "maxW": "1160px"
+    }
+   ],
+   ".payout": [],
+   ".payout-row": [],
+   "_clipped": [],
+   "_docOverflow": false,
+   "_smallText": 0
+  }
+ }
+}
