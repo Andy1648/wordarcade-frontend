@@ -45,7 +45,7 @@ function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
     <div className={`lstack${compact ? ' lstack--compact' : ''}`} aria-hidden="true">
       <div className="lstack-head">
         <span className="lstack-rate">{formatRate(shown)}</span>
-        <span className="lstack-per">/ WORD</span>
+        <span className="lstack-per">WINS / WORD</span>
       </div>
       <div className="lstack-rows">
         <div className="lstack-row lstack-row--base">

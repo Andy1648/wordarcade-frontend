@@ -100,12 +100,12 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   const hero = page.locator('.mx-hero');
   await expect(hero.locator('svg.mark-badge')).toBeVisible();
   await expect(hero.locator('.mx-hero-name')).toHaveText('BOMBER');
-  await expect(hero.locator('.mx-hero-kicker')).toHaveText('YOUR MAIN · RANK II');
+  await expect(hero.locator('.mx-hero-kicker')).toHaveText('YOUR MAIN · MARK II');
   // U (Andy oct2 22:25): ONE short tag — MAIN ×N (COMMON ×2 at rank I; the bonus part ×1.15 at II → ×2.15) —
   // and no sentence explaining it (the "PLUS ITS PERK" / "WEARING IT" lines are gone)
   await expect(hero.locator('.mx-hero-pct')).toHaveText('MAIN ×2.15');
   await expect(hero.locator('.mx-hero-perk')).toHaveCount(0);
-  await expect(hero.locator('.mx-hero-rank')).toContainText('180 MORE WORDS → RANK III · ×2.3');
+  await expect(hero.locator('.mx-hero-rank')).toContainText('180 MORE WORDS → MARK III · ×2.3');
   // no emoji left in the index
   const text = await page.locator('.mx-panel').innerText();
   expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);

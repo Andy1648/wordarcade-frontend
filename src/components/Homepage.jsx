@@ -672,7 +672,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const m = markById(id);
     const t = setTimeout(() => {
       if (xpFxRef.current && xpFxRef.current.announce) {
-        xpFxRef.current.announce(`RANK ${MARK_RANK_NAMES[r - 1]}`, `${m.name} MARK`, markBlurbAt(m, r).toUpperCase());
+        // H6 audit M7: RANK names the level titles only — a mark levels up as "SMITH IV · MARK UPGRADED"
+        xpFxRef.current.announce(`${m.name} ${MARK_RANK_NAMES[r - 1]}`, 'MARK UPGRADED', markBlurbAt(m, r).toUpperCase());
       }
     }, 1600);
     return () => clearTimeout(t);

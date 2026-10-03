@@ -32,7 +32,7 @@ function Detail({ m, have, on, howTo, onSet }) {
       <MarkBadge mark={m} rank={rank} locked={!have} size={84} className="mx-detail-art" />
       <div className="mx-detail-body">
         <div className="mx-detail-name">{m.name}</div>
-        <div className="mx-detail-tier">{tier.name}{have ? ` · RANK ${MARK_RANK_NAMES[rank - 1]}` : ''}</div>
+        <div className="mx-detail-tier">{tier.name}{have ? ` · MARK ${MARK_RANK_NAMES[rank - 1]}` : ''}</div>
         <div className="mx-detail-pct">{tag(m, rank)}</div>
         {/* H6/M11: the perk that makes this mark differ from the others of its tier. */}
         <div className="mx-detail-blurb">+ {markBlurbAt(m, rank).toUpperCase()}</div>
@@ -101,15 +101,15 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               <>
                 <MarkBadge mark={main} rank={mp.rank} size={128} className="mx-hero-art" />
                 <div className="mx-hero-body">
-                  <div className="mx-hero-kicker">YOUR MAIN · <span className="mx-nowrap">RANK {MARK_RANK_NAMES[mp.rank - 1]}</span></div>
+                  <div className="mx-hero-kicker">YOUR MAIN · <span className="mx-nowrap">MARK {MARK_RANK_NAMES[mp.rank - 1]}</span></div>
                   <div className="mx-hero-name">{main.name}</div>
                   <div className="mx-hero-pct">{tag(main, mp.rank)}</div>
                   {!mp.maxed ? (
                     <div className="mx-hero-rank">
                       <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, mp.frac))})` }} /></span>
-                      <span>{formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → RANK {MARK_RANK_NAMES[mp.rank]} · ×{formatMult(markMainMult(main, mp.rank + 1))}</span>
+                      <span>{formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → MARK {MARK_RANK_NAMES[mp.rank]} · ×{formatMult(markMainMult(main, mp.rank + 1))}</span>
                     </div>
-                  ) : <div className="mx-hero-rank">MAX RANK</div>}
+                  ) : <div className="mx-hero-rank">MAXED</div>}
                 </div>
               </>
             ) : (
