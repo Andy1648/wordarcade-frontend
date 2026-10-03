@@ -2,7 +2,7 @@
 // clicked. Same panel styling as the mode dialog (thick colored border, hard offset shadow,
 // #1a0b2e panel) but read-only: mode name, one line of rules, what it pays per word, and the
 // unlock gate against the player's current level. No PLAY button — it's a teaser, not an entry.
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import './LockedPreviewDialog.css';
 import ModeExample from './ModeExample';
@@ -15,7 +15,9 @@ export default function LockedPreviewDialog({ game, level = 0, onClose }) {
   const handleClose = useCallback(() => onCloseRef.current && onCloseRef.current(), []);
 
   // Focus the panel on open; Escape closes.
-  useEffect(() => {
+  // LAYOUT effect: the listener exists from the commit that shows the dialog — a plain effect runs after paint, so
+  // an Escape pressed the instant the dialog appears (CI's mode-dialog flake; a quick player) was lost.
+  useLayoutEffect(() => {
     panelRef.current?.focus();
     const onKey = (e) => {
       if (e.key === 'Escape') handleClose();
