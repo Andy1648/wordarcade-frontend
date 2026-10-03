@@ -474,7 +474,8 @@
     right: -10px;
     bottom: -9px;
     padding: 1px 5px;
-    font-family: 'Bungee', cursive;
+    font-family: 'Space Mono', monospace;
+  font-weight: 700;
     font-size: var(--fs-label);
     line-height: 1;
     color: #000;

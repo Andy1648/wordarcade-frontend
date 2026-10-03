@@ -309,8 +309,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       };
       // 182 keeps the card's content box over 170px, where GameCard.css's small-card container
       // queries start dropping the badge / lock sub-line — this gate forbids hiding text to fit.
+      // R1 (six cards — WORD RACE on for everyone): six 182px cards cannot share a 1163px row, and the
+      // squat 3x2 fallback cut the names. At ≤170px GameCard.css only restyles (padding, name size) and
+      // drops the perk tail — the badge, lock line and payout all stay — so six cards may go to 160.
+      // card-fit's "no hidden text, ≥13px" gate is what holds this floor honest.
+      const floor = grid.querySelectorAll('.game-card-magnet').length >= 6 ? 160 : 182;
       return Math.max(
-        182,
+        floor,
         need(Math.max(xp.chunk, pay.chunk), 15, 10, 0.045, 18),
         need(foot.chunk, 13, 9, 0.035, 14),
       );
@@ -354,6 +359,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       const scroll = stage.querySelector('.homepage-cards-scroll');
       if (!region || !grid || !scroll) return;
       const minW = measureMinW(grid);
+      grid.setAttribute('data-minw', String(minW)); // the narrowest card that shows all its text (gates read it)
       const narrow = window.innerWidth < 360;
 
       // One arrangement pass: lay the stage out in `mode`, shrink the wordmark if `deficit` px of
@@ -450,6 +456,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
         grid.setAttribute('data-cols', String(best.cols));
         if (narrow) return { wide: 0, tall: 0, rows: best.rows };
+        // the row scrolls sideways, so width is never owed — but a full 3:4 height still is (the short
+        // arrangement + the wordmark shrink below pay it as far as they can)
         return { ...cardShortfall(grid), rows: best.rows };
       };
 
@@ -1130,7 +1138,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         <div className="homepage-cards-region">
-          <div className="homepage-cards-scroll">
+          <div className="homepage-cards-scroll" data-count={GAMES.length}>
             <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
               {GAMES.map((game) => (
                 <GameCard

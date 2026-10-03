@@ -118,7 +118,8 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await trophy.click();
   await expect(page.locator('.lb-row.is-me')).toHaveAttribute('data-rank', '3');
   await page.locator('.lb-close').click();
-  await expect(page.getByRole('button', { name: /Open leaderboard/ })).toHaveAttribute('aria-label', 'Open leaderboard');
+  // N3: the board icon wears your rank (#N); once seen, the 'rank went up' news is gone
+  await expect(page.getByRole('button', { name: /Open leaderboard/ })).toHaveAttribute('aria-label', /^Open leaderboard — you're #\d+$/);
 });
 
 test('the claim prompt is once per session and never for a claimed player', async ({ page }) => {
