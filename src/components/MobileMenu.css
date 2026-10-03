@@ -489,6 +489,11 @@
   .hp-m-board-hero .pi { width: 100%; height: 100%; }
   .hp-m-top .hp-m-title { flex: 1 1 auto; }
 }
+/* SHORT PHONES (320x568 menu-hook gate: every mode row must stay in view): the title row gives back height —
+   the gold button steps down to 60px, still the biggest control in its row (the nav chips are 44px tall). */
+@media (max-width: 899px) and (max-height: 600px) {
+  .hp-m-top .hp-m-board-hero { width: 60px; min-height: 60px; height: 60px; }
+}
 
 /* H6 audit M19: the phone's one progress row — LV · bar · WINS, right under the title (before the nav
    strip in the 'top' layout). Flat house style: panel fill, coloured outline, hard black offset. The bar
