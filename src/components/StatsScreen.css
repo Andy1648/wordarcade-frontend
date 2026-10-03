@@ -277,6 +277,40 @@
   color: #ffe94a;
 }
 
+/* REBIRTH LADDER (dormant, ?ladder=1) — BASE / NOW / NEXT chips in the REBIRTH row's slot. Static:
+   not buttons, so no hover and nothing animates. Flat fills, darker-shade outlines, NOW alone gets
+   the hard black offset shadow. */
+.stats-ladder-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+.stats-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 3px solid #12a892;
+  border-radius: 8px;
+  background: #2effe0;
+  color: #0d0618;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.stats-chip.is-now {
+  background: #ff4fa3;
+  border-color: #b3236c;
+  box-shadow: 3px 3px 0 #000;
+}
+.stats-chip.is-next {
+  background: #ffe94a;
+  border-color: #b8a316;
+}
+
 /* Next rebirth target — always shown (visible-but-locked from day one). */
 
 /* ── DANGER ZONE (RESET ALL PROGRESS) ──────────────────────────────────────
