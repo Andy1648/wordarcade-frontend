@@ -582,14 +582,13 @@ html[data-beat='true'] .homepage-logo {
   overflow: visible;
 }
 
-/* R1 (Andy oct2): SIX cards (WORD RACE on for everyone). Six 182px cards (the floor that keeps every card's
-   text — GameCard.css container queries) only fit ONE row at 1280 if the row gives up most of its outer
-   gutter and runs an 8px gap; otherwise the fit-math falls back to a squat 3x2 grid that clips the names
-   at 1280x551. The stage's own padding still keeps the cards off the frame. */
+/* R1 (Andy oct2): SIX cards (WORD RACE on for everyone). The row runs the narrowest gutter menu-frame
+   allows (16px) and a 10px gap so six cards keep their 160px text floor down to 1163 wide; otherwise the
+   fit-math falls back to a squat 3x2 grid that clips the names. */
 .homepage-cards-scroll[data-count='6'],
 .homepage-stage[data-fit='short'] .homepage-cards-scroll[data-count='6'] {
   --gap: clamp(8px, 0.9vw, 20px);
-  padding: 0 clamp(2px, 0.4vw, 30px);
+  padding: 0 16px;
 }
 
 /* (fix/logic-and-onboarding) the "N MORE" pager + its `.homepage-cards-more` styles were

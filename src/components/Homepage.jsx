@@ -312,9 +312,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       // queries start dropping the badge / lock sub-line — this gate forbids hiding text to fit.
       // R1 (six cards — WORD RACE on for everyone): six 182px cards cannot share a 1163px row, and the
       // squat 3x2 fallback cut the names. At ≤170px GameCard.css only restyles (padding, name size) and
-      // drops the perk tail — the badge, lock line and payout all stay — so six cards may go to 160.
-      // card-fit's "no hidden text, ≥13px" gate is what holds this floor honest.
-      const floor = grid.querySelectorAll('.game-card-magnet').length >= 6 ? 160 : 182;
+      // drops the perk tail — the badge, lock line and payout all stay — so six cards may go to 162 (a
+      // 152px content box: at ≤150 the payout's unit drops). card-fit's "no hidden text, ≥13px" gate
+      // is what holds this floor honest.
+      const floor = grid.querySelectorAll('.game-card-magnet').length >= 6 ? 162 : 182;
       return Math.max(
         floor,
         need(Math.max(xp.chunk, pay.chunk), 15, 10, 0.045, 18),

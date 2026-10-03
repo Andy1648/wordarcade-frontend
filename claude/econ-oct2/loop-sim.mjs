@@ -211,6 +211,10 @@ function simulate(skill) {
   const incomeTrail = [[0, 0, 0]]; // [t, winsAll, winsWord]
   const seenRanks = new Set([RANK.rankTitle(1)]);
   const extremes = { balance: 0, lifetime: 0, keyPrice: 0, forgePrice: 0, cosmeticPrice: 0, rate: 0, xpPerWord: 0, need: 0, lump: 0 };
+  // PV10: the first minute the CURRENT level reaches each milestone (rebirth resets count against it)
+  const REACH = [50, 100, 150, 225, 300, 400, 600, 1000];
+  const firstReach = {};
+  let maxLevel = 1;
   const windowState = {};
   let codesDone = { perLevel: false, boost: false };
   let lastLumpCtx = null;
@@ -353,6 +357,7 @@ function simulate(skill) {
       etaSamples.push({ t: minute, key, forge, cosmetic, shop: Number.isFinite(shopEta) ? shopEta : null, level: lv(), tier: XP.getKeyTier() });
     }
     // extremes for the formatter check
+    { const cl = lv(); if (cl > maxLevel) maxLevel = cl; for (const L of REACH) if (cl >= L && firstReach[L] == null) firstReach[L] = +minute.toFixed(1); }
     extremes.balance = Math.max(extremes.balance, WINS.getWins());
     extremes.lifetime = Math.max(extremes.lifetime, WINS.getWinsLifetime());
     extremes.keyPrice = Math.max(extremes.keyPrice, XP.keyTierCost(XP.getKeyTier()));
@@ -574,6 +579,7 @@ function simulate(skill) {
     counts: Object.fromEntries([...new Set(good.map((g) => g.kind))].map((k) => [k, good.filter((g) => g.kind === k).length])),
     rebirthTimes: good.filter((g) => g.kind === 'rebirth').map((g) => [+g.t.toFixed(1), g.label]),
     keyTimes: keyBuys.map((b) => [+b.t.toFixed(1), b.id, b.level]),
+    firstReach, maxLevel,
   };
 }
 
@@ -608,6 +614,7 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
       console.log(`  ${id.padEnd(4)} gap max ${w.maxGapMin}m (limit ${w.gapLimitMin}) ${w.gapPass ? 'PASS' : 'FAIL'} @${JSON.stringify(w.maxGapAt)} p90 ${w.p90GapMin}m strict max ${w.strictMaxGapMin}m p90 ${w.strictP90GapMin}m lv+${w.levelsGained} | KEY realised ${w.keyRealisedMin}m ${JSON.stringify(w.keyRealisedAt)} eta ${w.worstKeyEtaMin}m shop eta ${w.worstShopEtaMin}m ${w.wallPass ? 'PASS' : 'FAIL'} | LV${w.state && w.state.level} R${w.state && w.state.rebirths} T${w.state && w.state.keyTier} F${w.state && w.state.forge} ${JSON.stringify(w.events)}`);
     }
     console.log('  wall', JSON.stringify(r.wall));
+    console.log('  reach (min)', JSON.stringify(r.firstReach), 'maxLevel', r.maxLevel);
     console.log('  runaway FAIL lumps', r.runaway.failCount, 'of', r.runaway.lumpCount);
     console.log('  codes', JSON.stringify(r.runaway.codes));
     console.log('  runaway top lumps by minutes', JSON.stringify(r.runaway.worstByMinutes.slice(0, 6)));
