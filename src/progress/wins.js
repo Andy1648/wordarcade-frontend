@@ -11,16 +11,12 @@ import {
   getRebirths,
   round10,
   loadProgress,
-  saveProgress,
-  creditXp,
   xpPerWord,
   roundWordXp,
   keyTierXp,
   getKeyTier,
   XP_MULTIPLIERS,
-  levelXpPerWord,
 } from './xp.js';
-import { applyBarFloor, setBarFloorStamp, setLevelXpStamp } from './barFloor.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
 import { rollBonusMult } from './markRollsCore.js'; // the payout hook only — the roll system loads with MARKS
@@ -31,7 +27,6 @@ import { boostMult } from './boost.js';
 import { starPowerMult } from './stars.js';
 import { setRateBoost } from './xp.js';
 import { addLetters } from './letters.js';
-import { emitMidGameLevelUp } from './levelUpSignal.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn mark's MAIN bonus (STEP 49 — a ×2-×4 mark priced against base words made KEY trivial).
@@ -398,7 +393,6 @@ export function wordWinsEstimate({ mode, difficulty, keyTier, wordLength } = {})
  *   rate   — WINS for one COMMON word at x1 rarity/combo/lucky, all permanent multipliers applied
  *            (exact to a tenth: 10.1 — print it with formatRate, never formatNum)
  *   xp     — the same word's WINS product in XP units, i.e. rate × 10
- *   levelXp — the LEVEL XP that word credits the bar (v11: modest, KEY +25%/tier, rebirth ×(1+R))
  *   base   — the reference word's letters at the player's key tier, the floor everything scales from
  *   xpBase — that same base in XP
  *   mult   — rate / base, i.e. everything the player has built, as one number
@@ -410,17 +404,7 @@ export function perWordRateNow({ mode, difficulty, rebirthCount, markId, keyTier
   const xp = perWordXp(opts);
   const rate = xp / 10; // exact to the tenth — the same division bankWordWins pays out
   const base = wordWinsBase({ keyTier, wordLength });
-  // PROGRESSION v11: the LEVEL XP the same reference word credits the bar (awardWordXp's levelXp).
-  const levelXp = levelXpPerWord({
-    mode: gameKey(key || mode),
-    keyTier,
-    rebirthCount,
-    wordLength: Number.isFinite(wordLength) ? wordLength : WORD_LEN_REF,
-    weight: 1,
-    streakMult: factors.streak,
-    difficultyMult: factors.difficulty,
-  });
-  return { rate, xp, levelXp, base, xpBase: base * 10, mult: base > 0 ? rate / base : 1, factors };
+  return { rate, xp, base, xpBase: base * 10, mult: base > 0 ? rate / base : 1, factors };
 }
 
 // The player's live rebirth WINS multiplier (same ladder as XP), 1 at R0. Exposed so the menu
@@ -603,46 +587,17 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
 }
 
 // ---- THE AWARD ------------------------------------------------------------------------------
-// Credit one accepted word to the persisted level state; returns creditXp's result plus
-// { gain, levelXp, credited, floor, mastery, mark }.
-//   gain     — the word's WINS product in XP units (perWordXp; wins = gain ÷ 10) — UNCHANGED by v11.
-//   levelXp  — PROGRESSION v11: the LEVEL XP this word is worth (xp.js levelXpPerWord: 10/letter × KEY
-//              +25%/tier × rebirth ×(1+R) × mode × difficulty × weight × streak). This is what the BAR
-//              gets — wins keep their big exponential stack, the bar reads a modest readable number.
-//   credited — what the bar was actually credited (= levelXp; ≥ it only if Option F is switched back on).
-//   floor    — null unless the Option F floor raised it (off in v11 — barFloor.js BAR_FLOOR_ON).
-// Persistence happens here so returning to the menu reflects the levels earned in play; the caller may
-// use `leveledUp` to fire a celebration. Mastery is read BEFORE the word is credited to the mastery
-// track, so a word never retroactively boosts itself.
+// One accepted word's bookkeeping. PROGRESSION v11 (amended oct3 18:15) — ANDY: "GAME WORDS GIVE WINS ONLY.
+// No XP/bar progress from accepted game words." So this credits NOTHING to the level bar (the bar fills from
+// LETTERS typed — letterXp.js, wired into every game input). It still returns { state, level, leveledUp:
+// false, gain, mastery, mark } so its callers are unchanged: `gain` is the word's WINS product in XP units
+// (perWordXp; wins = gain ÷ 10 — bankWordWins pays them), and the mastery / mark / letters bookkeeping and
+// the mastery wins milestone happen here exactly as before. Mastery is read BEFORE the word is credited to
+// the mastery track, so a word never retroactively boosts itself.
 export function awardWordXp(opts = {}) {
   const mode = opts.mode || 'menu';
   const gain = perWordXp({ ...opts, mode });
-  const f = perWordFactors({ ...opts, mode });
-  const levelXp = levelXpPerWord({
-    mode: gameKey(mode),
-    keyTier: opts.keyTier,
-    rebirthCount: opts.rebirthCount,
-    wordLength: Number.isFinite(opts.wordLength) ? opts.wordLength : WORD_LEN_REF,
-    weight: opts.weight,
-    streakMult: f.streak,
-    difficultyMult: f.difficulty,
-  });
-  // OPTION F (barFloor.js) — the game-word bar floor. OFF under v11 (the bar is credited level XP on one
-  // fixed curve, so no word is a sliver of the level); kept as a one-constant fallback. Menu never floors.
-  const before = loadProgress();
-  let credited = levelXp;
-  let floor = null;
-  if (gameKey(mode) !== 'menu') {
-    const fl = applyBarFloor({ gain: levelXp, level: before.level });
-    if (fl.floored) {
-      credited = fl.credited;
-      floor = { level: before.level, pct: fl.pct, rawPct: fl.rawPct, xp: fl.credited, gain: levelXp };
-    }
-  }
-  setBarFloorStamp(floor);
-  setLevelXpStamp(credited); // the receipt's "+N XP" headline is what the bar was credited
-  const res = creditXp(before, credited);
-  saveProgress(res.state);
+  const state = loadProgress();
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
   // MASTERY MILESTONE (STEP 19): every 5th mastery level pays MASTERY_MILESTONE_WORDS words' worth of
   // THIS mode's wins (flat since fine-tune loop 1 — the per-word rate already grows), through the
@@ -660,11 +615,8 @@ export function awardWordXp(opts = {}) {
   const mark = mode !== 'menu' ? addMarkWord() : null;
   // LIFETIME LETTERS (leaderboard main stat): every accepted letter in a game.
   if (mode !== 'menu' && Number.isFinite(opts.wordLength) && opts.wordLength > 0) addLetters(opts.wordLength);
-  // MID-GAME LEVEL-UP (feel ladder): a game word that crossed a level says so in-game (a small LV
-  // chip punch). Read-only signal, emitted after everything is credited; menu typing keeps its own
-  // celebration path (useXpCapture).
-  if (mode !== 'menu' && res.leveledUp) emitMidGameLevelUp(res.level, mode);
-  return { ...res, gain, levelXp, credited, floor, mastery, mark };
+  // (The MID-GAME LEVEL-UP chip now fires from letterXp.js, where in-game letters cross a level.)
+  return { state, level: state.level, leveledUp: false, gain, mastery, mark };
 }
 
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round

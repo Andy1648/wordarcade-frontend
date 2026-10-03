@@ -274,6 +274,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   const multTag = rateNow && Math.abs(built - 1) > 1e-9 && (
     <span className="game-card-payout-mult" title="YOUR BONUS: rebirths × streak × marks × mastery × stars"> (×{formatMultExact(built)}<span className="game-card-bonus-word"> BONUS</span>)</span>
   );
+  // PROGRESSION v11: the card's number is WINS / WORD (words pay WINS only); the tail says what fills the
+  // level bar — "BASE 10 XP / LETTER" (every letter typed, × KEY / rebirth / mark in Stats and the shop).
   // THE PERK LINE replaced the XP / WORD line (Andy oct2: "remove XP per word from game-mode
   // screens"; the card's number is the BASE, and it should say what makes a word worth MORE).
   // It names the ONE thing that sets this mode apart, then the universal rule:
@@ -305,12 +307,12 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         {/* R10: a live BOOST multiplies FRENZY — the FUSE card says how they stack */}
         {/* E3 (Andy oct2 evening): TWO rules, TWO lines — "FRENZY ×5 · LONGER = MORE" read as one rule.
             The second line is its own block and still drops whole on a narrow card. */}
-        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? `× BOOST ×${formatMultExact(rateNow.factors.boost)}` : 'LONGER WORDS PAY MORE'}</span>
+        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? `× BOOST ×${formatMultExact(rateNow.factors.boost)}` : 'BASE 10 XP / LETTER'}</span>
       </>
     ) : (
       // the same allowed break as "/ WORD": the line may wrap before PAY MORE, so its length never
       // sets the minimum card width (Homepage measureMinW reads .game-card-payout-per as breakable)
-      <>LONGER WORDS<span className="game-card-payout-per"> PAY MORE</span></>
+      <>BASE 10 XP<span className="game-card-payout-per"> / LETTER</span></>
     )
   );
   const payout = rateNow && (

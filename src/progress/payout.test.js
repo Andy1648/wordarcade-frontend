@@ -157,13 +157,11 @@ test('a round with no multipliers at all reports zero above base and no rows', (
 });
 
 // ---- THE RECEIPT CARRIES BOTH CURRENCIES AND NAMES ITS BASE ---------------------------------
-test('buildPayout reports the award in XP as well as WINS (they are one number)', () => {
+test('buildPayout reports WINS only — a game word pays no XP (v11 amended)', () => {
   const r = buildPayout({ base: 5, factors: { mode: 2, difficulty: 1.5 } });
   assert.equal(r.paid, 15);
-  // Wins are the word's XP / 10 (Economy v8), so the XP is the same award times ten. Asserted
-  // against the WINS figure rather than recomputed, which is the invariant that matters.
-  assert.equal(r.xp, r.paid * 10);
-  assert.equal(r.xp, 150);
+  assert.equal(r.xp, undefined, 'no XP line on a game receipt');
+  assert.equal('levelFloor' in r, false, 'Option F is gone');
 });
 
 test('buildPayout carries the base TERMS so the panel can name them', () => {

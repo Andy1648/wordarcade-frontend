@@ -15,7 +15,6 @@ import {
   getKeyTier,
   keyXpMult,
   LEVEL_XP_PER_LETTER,
-  KEY_XP_STEP,
   xpPerInput,
   need,
 } from '../progress/xp';
@@ -29,7 +28,8 @@ import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
 import * as satLexicon from '../satRush/lexicon';
-import { formatNum, formatMult, formatRate } from '../format';
+import { formatNum, formatMult, formatMultExact, formatRate } from '../format';
+import { markXpBoost, letterXpNow } from '../progress/letterXp';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
@@ -176,14 +176,12 @@ export default function StatsScreen({ onBack }) {
 
   const rbMult = rebirthMult(rebirths);
   const keyTier = getKeyTier();
-  // PROGRESSION v11: LEVEL XP per letter from KEY alone — 10 × (1 + 25% a tier). (Wins per letter are a
-  // separate, bigger number: KEY ×2.5 a tier, on the shop card.)
-  const baseXp = LEVEL_XP_PER_LETTER * keyXpMult(keyTier);
-  // MENU XP / LETTER must MATCH the "+N" that pops on every menu keystroke — so compute it the
-  // SAME way the live credit does (useXpCapture → xpPerInput), applying the equipped cosmetic
-  // pop/sound multipliers and the daily-streak multiplier, not just base × rebirth. (The old
-  // base×rebirth understated it whenever a cosmetic was equipped or a streak was active.)
-  const menuXp = xpPerInput({ mode: 'menu', popMult: equippedPopMult(), soundMult: equippedSoundMult() });
+  // PROGRESSION v11 (amended): the bar fills from LETTERS — BASE 10 XP / LETTER × KEY (×1.2 a tier) ×
+  // rebirth ×(1+R) × the worn mark. Words pay WINS only. GAME XP / LETTER is the price of any letter typed
+  // in a game; MENU XP / LETTER adds the menu-only cosmetic mults (matches the live keystroke pop).
+  const markMult = markXpBoost();
+  const gameXp = letterXpNow();
+  const menuXp = xpPerInput({ mode: 'menu', popMult: equippedPopMult(), soundMult: equippedSoundMult(), markMult });
 
   // TWO different hidden sets, and they are NOT the same thing — so they do not share a heading.
   // `hidden` is the five SECRET-category achievements (thresholds you cross). `secrets` is the five
@@ -199,12 +197,13 @@ export default function StatsScreen({ onBack }) {
     ['XP INTO LEVEL', `${fmt(intoLevel)} / ${fmt(need(level))}`],
     ['WINS BALANCE', getWins()],
   ];
-  // XP stack: Key Power (base) × rebirth × equipped cosmetics × streak — MENU XP / LETTER below
-  // is the full product (matches the live keystroke pop), BASE XP / LETTER is just the Key Power tier.
+  // The XP stack, term by term, then the products. Words pay WINS — no XP row is per word.
   const multipliers = [
-    ['KEY POWER', `TIER ${keyTier} · +${Math.round(keyTier * KEY_XP_STEP * 100)}% XP`], // H6/M14: one spelling of the tier everywhere
-    ['BASE XP / LETTER', formatRate(baseXp)],
+    ['BASE XP / LETTER', fmt(LEVEL_XP_PER_LETTER)],
+    ['KEY POWER', `TIER ${keyTier} · ×${formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
     ['REBIRTH', x(rbMult)],
+    ['MARK', markMult > 1 ? `+${Math.round((markMult - 1) * 100)}% XP` : 'NONE WORN'],
+    ['GAME XP / LETTER', formatRate(gameXp)],
     ['MENU XP / LETTER', fmt(menuXp)],
   ];
   const roundsPlayed = [

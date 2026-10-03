@@ -135,7 +135,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
             WIN A MATCH: YOUR GAME ×{formatMultExact(winMult)} <span className="mode-ex-power-vs">VS A HUMAN RIVAL</span>
           </span>
         )}
-        <span className="mode-ex-longer">LONGER WORDS PAY MORE</span>
+        <span className="mode-ex-longer">WORDS PAY WINS · BASE 10 XP / LETTER</span>
       </div>
       {mode === 'fuse' && (
         <div className={`mode-ex-frenzy${frenzy.active ? ' is-live' : ''}`}>

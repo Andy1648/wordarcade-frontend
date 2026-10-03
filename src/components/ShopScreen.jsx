@@ -236,13 +236,13 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 {/* H2d ONE BIG NUMBER: what the tier buys, in the unit it is bought with — the WINS / WORD
                     rate now → at the next tier. It used to lead with XP PER LETTER (a second unit) and
                     print the price three times (NEXT TIER line, goal line, button); the price now lives
-                    on the button, the gap in the goal line. PROGRESSION v11: level XP is a SEPARATE, modest
-                    step — one short line, +25% XP a tier (of the base), with the XP multiplier now → next. */}
+                    on the button, the gap in the goal line. PROGRESSION v11: words pay WINS; LETTERS fill the
+                    bar — the line says the XP rule plainly: BASE 10 XP / LETTER × this tier's KEY (+20% a tier). */}
                 <div className="shop-kp-current">
                   <b>{formatRate(kpRateNow)}</b> → <b>{formatRate(kpRateNext)}</b> WINS / WORD
                 </div>
                 <div className="shop-kp-rate">
-                  <span title={`XP ×${formatMultExact(keyXpMult(keyTier))} → ×${formatMultExact(keyXpMult(keyTier + 1))}`}>WORD BOMB · KEY T{keyTier} → T{keyTier + 1}: +{Math.round(KEY_XP_STEP * 100)}% XP</span>
+                  WORD BOMB · BASE 10 XP / LETTER × KEY T{keyTier + 1} ×{formatMultExact(keyXpMult(keyTier + 1))} (+{Math.round((KEY_XP_STEP - 1) * 100)}%)
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
@@ -404,7 +404,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 {/* H6/H10: what THIS rebirth adds — ×9 → ×10 is +11%, not "a ×10". */}
                 {/* PROGRESSION v11: one rule, one line — each rebirth is +100% XP (of the base) and the same
                     ×(1 + R) on wins. The level curve itself never changes with rebirths. */}
-                <b>GAIN:</b> +{Math.round(REBIRTH_XP_STEP * 100)}% XP &amp; WINS — ×{formatMult(rebirthXpMult(rebirths))} → ×{formatMult(rebirthXpMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
+                <b>GAIN:</b> +{Math.round(REBIRTH_XP_STEP * 100)}% XP / LETTER &amp; WINS — ×{formatMult(rebirthXpMult(rebirths))} → ×{formatMult(rebirthXpMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
               </li>
             </ul>
 

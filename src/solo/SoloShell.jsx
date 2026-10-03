@@ -25,6 +25,7 @@ import { MORE_MODES } from '../gameData';
 import { heatTier } from '../juice/ladder';
 import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
+import { noteTypedLetters } from '../progress/letterXp.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
 // tile elsewhere on the card. Progress is driven by React state every frame (not a CSS
@@ -293,6 +294,7 @@ export default function SoloShell({
             style={{ '--len': Math.max(input.length, 1) }}
             onChange={(e) => {
               wpmKeyStroke(); // WPM (§2): typing activity opens this word's active-typing span
+              noteTypedLetters(input, e.target.value, mode); // v11: LETTERS fill the bar (batched)
               onInput(e.target.value);
             }}
             placeholder={placeholder}

@@ -16,6 +16,7 @@ import {
   getKeyTier,
 } from './xp';
 import { equippedPopMult, equippedSoundMult } from './shop';
+import { markXpBoost } from './letterXp';
 import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
@@ -59,10 +60,13 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
     // and rebirth happen on another screen, which remounts this hook and re-reads them.
+    // v11: one key = one LETTER — BASE 10 × KEY × rebirth × the worn mark (the same price as an in-game
+    // letter, letterXp.js) × the menu-only cosmetic mults.
     const menuGain = xpPerInput({
       mode: 'menu',
       popMult: equippedPopMult(),
       soundMult: equippedSoundMult(),
+      markMult: markXpBoost(),
     });
     // KEY POWER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
     // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).

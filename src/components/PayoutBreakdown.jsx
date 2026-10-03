@@ -12,7 +12,6 @@
 // neither can ever quote a multiplier the player did not actually get.
 import Num from './Num';
 import { formatNum, formatRate, formatMultExact } from '../format';
-import { formatFloorPct } from '../progress/barFloor';
 import './PayoutBreakdown.css';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -49,12 +48,10 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
     : `BASE ${formatRate(payout.base)}`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
-      {/* BOTH CURRENCIES, one above the math that produced them. PROGRESSION v11: the XP is what
-          the LEVEL BAR was credited (modest — KEY +25% a tier, rebirth ×(1+R)); the math line
-          below multiplies out to the WINS (big — KEY ×2.5 a tier). Two numbers, on purpose. */}
+      {/* WINS ONLY (PROGRESSION v11, amended): a game word pays wins; the level bar fills from LETTERS
+          typed (BASE 10 XP / LETTER), so the receipt has no XP line. The headline is the wins the
+          math below multiplies out to. */}
       <div className="payout-headline">
-        <span className="payout-headline-xp">+{formatNum(payout.xp)}<span className="payout-headline-unit"> XP</span></span>
-        <span className="payout-headline-sep" aria-hidden="true">·</span>
         <span className="payout-headline-wins">+{formatRate(payout.paid)}<span className="payout-headline-unit"> WINS</span></span>
       </div>
       {/* EVERY TERM, IN ORDER, ON ONE LINE. A vertical list of label/value pairs read as a table
@@ -74,15 +71,6 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
           </span>
         )}
       </div>
-      {/* LEVEL FLOOR (Option F): this word's XP was under the floor, so the BAR was credited the
-          floor instead. Not a multiplier — the wins above are unchanged — so it is its own line,
-          not a term in the product. Same number the bar moved (payout.js levelFloor). */}
-      {payout.levelFloor && (
-        <div className="payout-floor">
-          <span className="payout-k">{payout.levelFloor.label}</span>
-          <span className="payout-v">{formatFloorPct(payout.levelFloor.pct)} LEVEL</span>
-        </div>
-      )}
       {payout.held && (
         <div className="payout-held">HELD — BANKS AT 3 WORDS</div>
       )}

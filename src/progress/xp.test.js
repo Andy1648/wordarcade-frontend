@@ -105,19 +105,16 @@ test('xpPerWord: menu-value of the letters × mode mult × weight (playing is �
   assert.equal(rare, round10(common * 2.5));
 });
 
-test('awardWordXp persists the grant to the level state', () => {
+test('awardWordXp credits NO level XP: game words pay WINS only (v11 amended)', () => {
   withStorage({}, () => {
     const before = loadProgress();
     assert.equal(before.level, 1);
     const res = awardWordXp({ mode: 'fuse', keyTier: 0, rebirthCount: 0, streakMult: 1, masteryMult: 1, wordLength: 5, weight: 1 });
-    assert.equal(res.gain, 100); // fuse ×2 (oct2), 5 letters
+    assert.equal(res.gain, 100); // the WINS product (fuse ×2, 5 letters) — wins = 10
+    assert.equal(res.leveledUp, false);
     const after = loadProgress();
-    // ECONOMY v8: need(1) is 600. A level is FOUR five-letter Word Bomb words on CRAZY, not the
-    // fourteen v7's 2,000 base asked for — the first twenty minutes are where a progression
-    // system has to prove it exists. One 5-letter FUSE word is still not a whole level.
-    assert.equal(need(1), 600);
     assert.equal(after.level, 1);
-    assert.equal(after.intoLevel, 100);
+    assert.equal(after.intoLevel, 0, 'the bar did not move');
   });
 });
 
@@ -137,21 +134,21 @@ test('round10 snaps to the nearest 10, half-to-even', () => {
 // exponent indexes off n-1 so CURVE_BASE is need(1) exactly instead of a number nobody pays.
 test('need() matches the published PROGRESSION v11 curve (one curve for everyone)', () => {
   // Literals, not derived from the constants under test — a test that restates the
-  // implementation passes whatever the implementation says.
-  assert.equal(need(1), 600); // two Word Bomb words at a fresh profile
-  assert.equal(need(2), 640);
-  assert.equal(need(3), 670);
+  // implementation passes whatever the implementation says. need = round10(100 + 15·n²·1.004^(n−1)).
+  assert.equal(need(1), 120); // twelve menu letters at a fresh profile
+  assert.equal(need(2), 160);
   assert.equal(need(7), 850);
-  assert.equal(need(10), 1010);
-  assert.equal(need(30), 3250);
-  assert.equal(need(100), 192060); // the break: ×1.06 a level up to here
-  assert.equal(need(101), 194940); // ×1.015 a level above it
-  assert.equal(need(225), 1235060);
-  assert.equal(need(400), 16720320);
-  // need(1) is the base itself.
-  assert.equal(need(1), CURVE_V11_BASE);
-  // Every level costs MORE than the one before it by a visible step.
+  assert.equal(need(10), 1650);
+  assert.equal(need(30), 15260);
+  assert.equal(need(50), 45700);
+  assert.equal(need(100), 222800);
+  assert.equal(need(200), 1327980);
+  assert.equal(need(400), 11802290);
+  assert.equal(CURVE_V11_BASE, 100);
+  // Every level costs MORE than the one before it — and only a BIT more (Andy: "each level only a BIT
+  // harder than the last"): under +5% a level from LV50 on.
   for (let n = 1; n < 2000; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
+  for (let n = 50; n < 2000; n++) assert.ok(need(n + 1) / need(n) < 1.05, `step at LV${n}`);
 });
 
 test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the FROZEN v9 shape (needV9)', () => {
@@ -197,21 +194,10 @@ test('every level requirement is divisible by 10 (through the exact-integer rang
   assert.ok(needV9(870) > Number.MAX_SAFE_INTEGER, 'the exact-integer range is checked to its edge');
 });
 
-// THE HEADLINE NUMBER OF THE v8 RETUNE, pinned on its own so a retune has to come here first.
-test('need(1) is 600 — a level is four words at a fresh profile', () => {
-  assert.equal(need(1), 600);
-  // The word that makes it four: 5 letters, Word Bomb (×2), CRAZY (medium ×1.5), T0, R0.
-  const word = xpPerWord({
-    mode: 'word-bomb',
-    keyTier: 0,
-    rebirthCount: 0,
-    streakMult: 1,
-    wordLength: 5,
-    weight: 1,
-    difficultyMult: 1.5,
-  });
-  assert.equal(word, 150);
-  assert.equal(Math.ceil(need(1) / word), 4);
+// THE HEADLINE NUMBER, pinned on its own so a retune has to come here first.
+test('need(1) is 120 — twelve letters at a fresh profile (BASE 10 XP / LETTER)', () => {
+  assert.equal(need(1), 120);
+  assert.equal(Math.ceil(need(1) / xpPerInput({ keyTier: 0, rebirthCount: 0 })), 12);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -309,31 +295,24 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   assert.equal(r.toNext, needV9(7) - 100);
 });
 
-test('the MENU XP stack (v11 level XP): 10/letter × KEY +25%/tier × mode × rebirth ×(1+R)', () => {
-  // tier 0 (×1) + menu (×1) + R0 (×1) = 10.
-  assert.equal(xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 }), 10);
-  // tier 2 (×1.5) + sat-rush (×10) + R1 (×2) → 10·1.5·10·2 = 300.
-  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1, streakMult: 1 }), 300);
-  // tier 4 (×2) at menu R0 → 20. (v10 read keyTierXp(4) = 375 here — the bar no longer gets it.)
-  assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0, streakMult: 1 }), 20);
-  // whole XP, not round10: T1 is +12.5 → 13 a key (round10 would have swallowed the +25%).
-  assert.equal(xpPerInput({ mode: 'menu', keyTier: 1, rebirthCount: 0, streakMult: 1 }), 13);
+test('the LETTER XP stack (v11): BASE 10 × KEY ×1.2/tier × rebirth ×(1+R) × mark — no mode term', () => {
+  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0 }), 10);
+  assert.equal(xpPerInput({ keyTier: 1, rebirthCount: 0 }), 12); // +20%
+  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0 }), 14); // 14.4 → whole XP
+  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 29); // 28.8 (R1 ×2)
+  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0, markMult: 1.5 }), 15); // a LEGENDARY worn mark
+  // a game mode no longer multiplies a letter (words pay WINS; a letter is a letter)
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), xpPerInput({ keyTier: 2, rebirthCount: 1 }));
 });
 
-test('xpPerInput applies pop/sound/streak multipliers (Stats MENU XP / LETTER must match the pop)', () => {
-  // The Stats readout now calls xpPerInput with the equipped cosmetic mults, so cosmetics and
-  // streak MUST feed the number — the old base×rebirth omitted them and under-reported.
-  const base = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, streakMult: 1 });
-  assert.equal(base, 15); // 10 × 1.5 (v11)
-  // A PRISM pop (×1.25) must lift it above base, on the whole-XP grid.
-  const prism = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.25, streakMult: 1 });
-  assert.equal(prism, Math.round(15 * 1.25));
+test('xpPerInput applies the MENU-only pop/sound multipliers (Stats MENU XP / LETTER must match the pop)', () => {
+  const base = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0 });
+  const prism = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.25 });
+  assert.equal(prism, Math.round(14.4 * 1.25));
   assert.ok(prism > base);
-  // pop × sound × streak all stack.
-  assert.equal(
-    xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.1, soundMult: 1.1, streakMult: 1.2 }),
-    Math.round(15 * 1.1 * 1.1 * 1.2),
-  );
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.1, soundMult: 1.1 }), Math.round(14.4 * 1.1 * 1.1));
+  // the streak is not in letter XP (it multiplies WINS)
+  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0, streakMult: 1.25 }), base);
 });
 
 test('rebirth gate table: R1 LV15 … R20 LV600, then +50 levels per rebirth', () => {

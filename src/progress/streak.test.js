@@ -76,14 +76,12 @@ test('streakMultiplier follows the capped ladder', () => {
   assert.equal(streakMultiplier(999), 1.25); // capped
 });
 
-// ---- the multiplier is applied in xpPerInput ---------------------------------------------
-test('xpPerInput folds the streak multiplier into the stack', () => {
-  // Base menu input at tier 0 is 10 XP/letter. A ×2 streak factor doubles it (before round10,
-  // which leaves a clean multiple of 10 untouched).
+// ---- PROGRESSION v11: the streak multiplies WINS, not letter XP --------------------------------------
+test('xpPerInput ignores the streak multiplier (letter XP = BASE 10 × KEY × rebirth × mark)', () => {
   const base = xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 });
   const boosted = xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 2 });
   assert.equal(base, 10);
-  assert.equal(boosted, 20);
+  assert.equal(boosted, 10);
 });
 
 // ---- housekeeping ------------------------------------------------------------------------
