@@ -32,6 +32,8 @@ import { heatTier, ladderFor, particleCount, PUNCH_MS } from '../juice/ladder';
 import { pickEffect, tagLabel } from '../juice/effectSlot';
 import { TierSlam, LuckyBurst, SlotTags } from './FeelLadder';
 import { LUCKY_WINS_MULT } from '../progress/luck';
+import { useQueuedMoment } from '../lib/useQueuedMoment';
+import { GAME_PRIORITY } from '../lib/moments';
 import { applyRingSize } from './wbRingSize';
 import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -496,11 +498,29 @@ const REVEAL_HOLD_MS = 450;
  * lands with <=2s left. Big pink Bungee with a unique slam-in animation; removes
  * itself on animation end. pointer-events:none.
  */
-function ClutchPopup() {
+function ClutchPopup({ onDone }) {
   const [done, setDone] = useState(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  // Releases the moments queue when the slam ends — or after 900ms regardless (an animation that
+  // never ends, e.g. under reduced motion, must not hold the queue until its backstop).
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDone(true);
+      if (onDoneRef.current) onDoneRef.current();
+    }, 900);
+    return () => clearTimeout(t);
+  }, []);
   if (done) return null;
   return (
-    <div className="clutch-popup" onAnimationEnd={() => setDone(true)} aria-hidden="true">
+    <div
+      className="clutch-popup"
+      onAnimationEnd={() => {
+        setDone(true);
+        if (onDoneRef.current) onDoneRef.current();
+      }}
+      aria-hidden="true"
+    >
       CLUTCH!
     </div>
   );
@@ -2123,6 +2143,9 @@ export default function GameScreen({
   // accepted word gives the prompt box a quick scale-punch (comboPunch re-keys
   // it so the pop replays).
   const [clutchSlow, setClutchSlow] = useState(false);
+  // The centre CLUTCH! slam, played through the moments queue (payload while it holds the queue).
+  const [clutchMoment, playClutchMoment, endClutchMoment] = useQueuedMoment();
+  const clutchMomentSeqRef = useRef(0);
   const clutchSlowTimerRef = useRef(null);
   const [comboPunch, setComboPunch] = useState(0);
   // INSTANT-ACK CHIP (Word Bomb's answer to Category Blitz's cb-checking): on
@@ -2234,6 +2257,13 @@ export default function GameScreen({
           setClutchSlow(false);
           clutchSlowTimerRef.current = null;
         }, 700);
+        // The centre CLUTCH! slam is a HEAVY moment: it asks the ONE moments queue for its turn
+        // (lib/moments.js) so it never paints over a FRENZY/BOOST OVER moment. Stale after 1.5s.
+        clutchMomentSeqRef.current += 1;
+        playClutchMoment(
+          { key: clutchMomentSeqRef.current },
+          { id: `wb-clutch-${clutchMomentSeqRef.current}`, priority: GAME_PRIORITY.CLUTCH, maxMs: 1200, expireMs: 1500 }
+        );
       }
       // Near-miss callout: surface how close it was (our own late accepts only).
       if (mine) {
@@ -3304,7 +3334,7 @@ export default function GameScreen({
             added: a bare keyed child among the stage's conditional siblings re-mounted on nearly
             every render and re-rolled its random word ("AWESOME! spam while typing"). */}
         <div style={{ display: 'contents' }}>
-          {hypeKey > 0 && !hitlag && clutchFlag && <ClutchPopup key={hypeKey} />}
+          {clutchMoment && !hitlag && <ClutchPopup key={clutchMoment.key} onDone={endClutchMoment} />}
         </div>
         {/* ===== THE HEADER IS ITS OWN GRID ROW, above the prompt. =====
             It used to be `position:absolute; inset:0` over the prompt bar at >=900px

@@ -11,6 +11,8 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import { boostRemaining, boostMult, TIMERS_EVENT } from '../progress/boost.js';
 import { frenzyRemaining, FRENZY_MULT } from '../progress/frenzy.js';
+import { useQueuedMoment } from '../lib/useQueuedMoment';
+import { GAME_PRIORITY } from '../lib/moments';
 // the moment (and its CSS) is a lazy chunk — it only loads when a FRENZY / BOOST clock actually ends
 const OverMoment = lazyWithReload(() => import('./TimerOverMoment.jsx'), 'TimerOverMoment');
 
@@ -43,7 +45,12 @@ function useExpiry(remainingFn, onExpire) {
 }
 
 export default function TimerOver() {
-  const [show, setShow] = useState(null); // { kind, mult, key }
+  // FEEL LADDER (PASS 2): the OVER moment no longer mounts on its own over whatever is playing — it
+  // asks the ONE moments queue for a turn (lib/moments.js), behind a running FRENZY / CLUTCH burst,
+  // with the queue's gap between. A turn that cannot come within 5s is dropped (stale), not late.
+  const [show, play, finish] = useQueuedMoment(); // { kind, mult, key } while it holds the queue
+  const setShow = (m) =>
+    play(m, { id: `timer-over-${m.kind}-${m.key}`, priority: GAME_PRIORITY.TIMER_OVER, maxMs: 1800, expireMs: 5000 });
   const lastBoost = useRef(boostMult());
   useEffect(() => {
     const re = () => {
@@ -58,7 +65,7 @@ export default function TimerOver() {
   if (!show) return null;
   return (
     <Suspense fallback={null}>
-      <OverMoment key={show.key} kind={show.kind} mult={show.mult} onDone={() => setShow(null)} />
+      <OverMoment key={show.key} kind={show.kind} mult={show.mult} onDone={finish} />
     </Suspense>
   );
 }

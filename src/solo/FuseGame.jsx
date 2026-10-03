@@ -21,6 +21,8 @@ import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
 import { pickEffect, tagLabel } from '../juice/effectSlot.js';
+import { useQueuedMoment } from '../lib/useQueuedMoment.js';
+import { GAME_PRIORITY } from '../lib/moments.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpFuseRuns } from './shared.js';
 import SoloShell from './SoloShell.jsx';
@@ -194,8 +196,10 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // door (so it is itemised on the receipt) and fires the burst.
   const frenzy = useFrenzyClock();
   const stripsRef = useRef(0);
-  const [burst, setBurst] = useState(null); // { key, bonus } while the trigger moment plays
-  const [clutch, setClutch] = useState(null); // { key, leftMs, bonus } — STEP 56 CLUTCH moment
+  // Both are HEAVY moments played through the shared moments queue (useQueuedMoment): the payload
+  // while it holds the queue, else null.
+  const [burst, playBurst, endBurst] = useQueuedMoment(); // { key, bonus, started } — FRENZY trigger
+  const [clutch, playClutch, endClutch] = useQueuedMoment(); // { key, leftMs, bonus } — STEP 56 CLUTCH
   const fuseBankedRef = useRef(0);
   const fuseWeightRef = useRef(0); // RARITY: running sum of solved words' rarity multipliers
   useEffect(() => {
@@ -240,10 +244,11 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       if (banked > 0) setWinsEarned((prev) => prev + banked);
       // STEP 56 — CLUTCH: this word landed with ≤2 s on the fuse.
       const leftMs = g.lastLeftMsRef ? g.lastLeftMsRef.current : null;
+      let clutchMoment = null;
       if (isClutch(leftMs)) {
         const cb = Math.round(CLUTCH_WORDS * perWordWins({ mode: 'fuse' }));
         if (cb > 0) grantWins(cb, 'CLUTCH!', { mode: 'fuse', detail: 'clutch' });
-        setClutch({ key: Date.now(), leftMs, bonus: cb });
+        clutchMoment = { key: Date.now(), leftMs, bonus: cb };
       }
       if ((s.stripsCleared || 0) > stripsRef.current) {
         stripsRef.current = s.stripsCleared;
@@ -253,7 +258,22 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         // A clear during a running FRENZY doesn't extend it, but still pays this bonus.
         const bonus = Math.round(FRENZY_TRIGGER_WORDS * perWordWins({ mode: 'fuse' }));
         if (bonus > 0) grantWins(bonus, fz.started ? 'FRENZY!' : 'FULL STRIP', { mode: 'fuse', detail: 'frenzy' });
-        setBurst({ key: Date.now(), bonus, started: fz.started });
+        // HEAVY moments go through the ONE moments queue (lib/moments.js): never two at once,
+        // a gap between, FRENZY start outranks CLUTCH. Announced first so it plays first.
+        playBurst(
+          { key: Date.now(), bonus, started: fz.started },
+          { id: `fuse-frenzy-${s.stripsCleared}-${solved}`, priority: GAME_PRIORITY.FRENZY_START, maxMs: 2400 }
+        );
+      }
+      if (clutchMoment) {
+        // Queued behind a FRENZY burst on the same word (as before, it waited for the burst); a
+        // CLUTCH that cannot get its turn within 3s is dropped rather than celebrated late.
+        playClutch(clutchMoment, {
+          id: `fuse-clutch-${solved}`,
+          priority: GAME_PRIORITY.CLUTCH,
+          maxMs: 1800,
+          expireMs: 3000,
+        });
       }
     }
   }, [s.wordsSolved]);
@@ -352,8 +372,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   return (
     <>
     {fuseSlot.main === 'rare' && <RarityFlash key={s.wordsSolved} rarity={fuseRarity} />}
-    {burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={() => setBurst(null)} />}
-    {clutch && !burst && <ClutchBurst key={clutch.key} leftMs={clutch.leftMs} bonus={clutch.bonus} onDone={() => setClutch(null)} />}
+    {burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={endBurst} />}
+    {clutch && <ClutchBurst key={clutch.key} leftMs={clutch.leftMs} bonus={clutch.bonus} onDone={endClutch} />}
     <SoloShell
       mode="fuse"
       accent={ACCENT}
