@@ -209,13 +209,13 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       {variant !== 'mini' && <BoostPill className="menu-boost-pill" />}
       {variant !== 'mini' && wins != null && (
         onWinsClick ? (
-          <button type="button" className="menu-wins-chip" data-wins={wins} onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
+          <button type="button" className="menu-wins-chip" data-wins={wins} onClick={onWinsClick} aria-label={`${formatNum(wins)} wins. Open shop`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(Math.round(winsShown))}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
           </button>
         ) : (
-          <span className="menu-wins-chip" data-wins={wins} aria-label={`${wins} wins`}>
+          <span className="menu-wins-chip" data-wins={wins} aria-label={`${formatNum(wins)} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(Math.round(winsShown))}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
@@ -257,7 +257,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       {/* THE LEVEL IS THE HEADLINE. The kicker and the numeral are one stacked chip now, so the
           numeral can take display type (--fs-h2, ~3.8x the --fs-micro kicker) without the old
           inline row forcing both to data-strip size. Mini keeps the flat inline form. */}
-      {variant === 'mini' && <span className="menu-xp-lv" aria-hidden="true">LV {level}</span>}
+      {variant === 'mini' && <span className="menu-xp-lv" aria-hidden="true">LV {formatNum(level)}</span>}
       {/* THE EQUIPPED MARK, beside the level - the one place a permanent, chosen bonus is worth
           carrying on the menu, because it is the only progression object the player picked rather
           than accumulated.
@@ -390,7 +390,7 @@ function BarRow({ loud, level, children }) {
     <span className="menu-xp-barrow">
       <span className="menu-xp-lvblock" aria-hidden="true">
         <span className="menu-xp-label">LEVEL</span>
-        <span className="menu-xp-lv">{level}</span>
+        <span className="menu-xp-lv">{formatNum(level)}</span>
       </span>
       {children}
     </span>

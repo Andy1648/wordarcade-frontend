@@ -19,7 +19,7 @@ export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
   return (
     <>
       {earning ? (
-        <div className="wins-hud" aria-live="polite" aria-label={`${amount} wins so far`}>
+        <div className="wins-hud" aria-live="polite" aria-label={`${formatNum(amount)} wins so far`}>
           <span className="wins-hud-plus">+{formatNum(amount)}</span>
           <span className="wins-hud-label">WINS</span>
         </div>

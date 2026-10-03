@@ -104,18 +104,18 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         {/* THE ONE BIG THING: how many you captured (and how many got away). */}
         <div className="sr-panel sr-hero">
           <div className="sr-hero-row">
-            <div className="sr-capt-value sr-print" data-v={String(score)} aria-label={`${finalScore} captured`}>
-              {score}
+            <div className="sr-capt-value sr-print" data-v={fmt(score)} aria-label={`${fmt(finalScore)} captured`}>
+              {fmt(score)}
             </div>
             <div className="sr-capt-side">
               <span className="sr-capt-label">captured</span>
-              <span className="sr-capt-away">{results.missed || 0} got away</span>
+              <span className="sr-capt-away">{fmt(results.missed || 0)} got away</span>
             </div>
           </div>
         </div>
 
         {/* WINS EARNED — the same second number every mode's run-over card has. */}
-        <div className="sr-winsline" aria-label={`${finalAnte} wins earned`}>
+        <div className="sr-winsline" aria-label={`${fmt(finalAnte)} wins earned`}>
           {finalAnte > 0 ? <><b>+{fmt(ante)}</b> wins earned</> : <>no wins earned — capture 3 to start the bounty</>}
         </div>
         {bonusLines.map((l) => (

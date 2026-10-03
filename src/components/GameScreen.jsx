@@ -34,7 +34,7 @@ import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
-import { plural } from '../format';
+import { plural, formatNum } from '../format';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 
@@ -791,7 +791,7 @@ export function CountUp({ to, duration = 1000 }) {
     return () => clearInterval(intervalId);
   }, [to, duration]);
 
-  return <>{value}</>;
+  return <>{formatNum(value)}</>;
 }
 
 /**
@@ -4299,7 +4299,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               freeze at a stale 0 while this same number was 4 elsewhere. The
               celebration is kept purely for the pop/confetti/stage visuals. */}
           <div className={`solo-score-value${celeb.popping ? ' celeb-pop' : ''}`}>
-            {effectiveScore}
+            {formatNum(effectiveScore)}
           </div>
 
           <div className="solo-category">
@@ -4315,7 +4315,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               ? pb.hadRecord
                 ? 'YOU BEAT YOUR PERSONAL BEST!'
                 : 'YOUR FIRST RECORD!'
-              : `PERSONAL BEST: ${pb.best}`}
+              : `PERSONAL BEST: ${formatNum(pb.best)}`}
           </div>
           {!pb.isNewRecord && pb.hadRecord && (
             <div className="solo-away celeb-statline" style={{ '--celeb-i': 1 }}>
@@ -4329,7 +4329,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               rather than letting the shown score read as "recorded". */}
           {daily && daily.isReplay && !pb.isNewRecord && (
             <div className="solo-away celeb-statline" style={{ '--celeb-i': 2 }}>
-              PRACTICE REPLAY — YOUR BEST ({pb.best}) STILL COUNTS
+              PRACTICE REPLAY — YOUR BEST ({formatNum(pb.best)}) STILL COUNTS
             </div>
           )}
 
@@ -4346,7 +4346,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
                   style={{ '--celeb-i': i + 2 }}
                 >
                   <span className="solo-round-cat">{(r.category || '').toUpperCase()}</span>
-                  <span className="solo-round-score">+{r.roundScore}</span>
+                  <span className="solo-round-score">+{formatNum(r.roundScore)}</span>
                 </div>
               ))
             )}
@@ -4916,7 +4916,7 @@ function CategoryBlitzScreen({
           {/* Solo: the overall best total to beat, an immediate target. */}
           {isSolo && (
             <div className="solo-best-banner">
-              {soloBest != null ? `YOUR BEST: ${soloBest}` : 'NO RECORD YET'}
+              {soloBest != null ? `YOUR BEST: ${formatNum(soloBest)}` : 'NO RECORD YET'}
             </div>
           )}
 
@@ -5197,9 +5197,9 @@ function CategoryBlitzScreen({
                     {pr.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-result-scores">
-                    <span className="cb-result-round">+{pr.roundScore}</span>
+                    <span className="cb-result-round">+{formatNum(pr.roundScore)}</span>
                     <span className="cb-result-total">
-                      {categoryTotals[pr.id] != null ? categoryTotals[pr.id] : pr.roundScore} TOTAL
+                      {formatNum(categoryTotals[pr.id] != null ? categoryTotals[pr.id] : pr.roundScore)} TOTAL
                     </span>
                   </span>
                 </div>

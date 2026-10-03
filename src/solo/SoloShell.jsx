@@ -12,6 +12,7 @@ import '../components/wall-system.css'; // .solo-root adopts .wall-surface (toke
 import './Solo.css';
 import { LUCKY_WINS_MULT } from '../progress/luck';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
+import { formatNum } from '../format';
 // The standing multiplier readout — "every win and multiplier visible, no hidden credits".
 import LiveStack from '../components/LiveStack';
 import Mascot from '../components/Mascot';
@@ -344,8 +345,8 @@ export default function SoloShell({
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
-                <span>SCORE {over.score}</span>
-                <span>BEST {over.best}</span>
+                <span>SCORE {formatNum(over.score)}</span>
+                <span>BEST {formatNum(over.best)}</span>
               </div>
             )}
             <button

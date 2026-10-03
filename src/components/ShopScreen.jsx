@@ -211,7 +211,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       <div className="shop-panel">
         <div className="shop-header">
           <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'SHOP'}</h2>
-          <div className="shop-wins" aria-label={`${wins} wins`}>
+          <div className="shop-wins" aria-label={`${formatNum(wins)} wins`}>
             <span className="shop-coin" aria-hidden="true" />
             {formatNum(wins)}
             <span className="shop-wins-label" aria-hidden="true">WINS</span>
@@ -372,7 +372,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 {rebirthReady && (
                   <>
                     {' · +'}
-                    {advice.stars} <span className="shop-rb-star">★</span>
+                    {formatNum(advice.stars)} <span className="shop-rb-star">★</span>
                   </>
                 )}
               </div>
@@ -420,7 +420,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 </div>
               ) : (
                 <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)}>
-                  REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {advice.stars} ★
+                  REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {formatNum(advice.stars)} ★
                 </button>
               )
             ) : (
@@ -433,7 +433,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 unlocks them (the claimable reveal names it); AUTOMATION shows its gate until R3. */}
             {rebirths >= 1 && (
               <>
-                <h3 className="shop-subtitle">STAR PERKS — {stars.balance} ★</h3>
+                <h3 className="shop-subtitle">STAR PERKS — {formatNum(stars.balance)} ★</h3>
                 <div className="shop-perks">
                   {PERKS.map((p) => {
                     const lv = stars.perks[p.id] || 0;
@@ -458,7 +458,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                             }
                           }}
                         >
-                          {maxed ? (p.max === 1 ? 'ON' : 'MAXED') : `${cost} ★`}
+                          {maxed ? (p.max === 1 ? 'ON' : 'MAXED') : `${formatNum(cost)} ★`}
                         </button>
                       </div>
                     );

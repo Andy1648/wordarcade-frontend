@@ -22,6 +22,7 @@ import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
 import { equippedPopColors } from '../theme/themes';
 import { sndLevelUp } from '../audio/gameSounds';
+import { formatNum } from '../format.js';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -98,8 +99,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const fx = fxRef && fxRef.current;
       if (fx) {
         if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
-        if (isTap) fx.tapPop(`+${menuGain}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
-        else fx.letterPop(opts.letter, `+${menuGain}`, TIER_SCALES[tier], popColors[tier], feelTier);
+        if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
+        else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
         // T4's per-accepted-word edge glow lives in-game). Gold at KEY POWER T5+.
         if (crossed && tier > 0) fx.edgePulse(feelTier >= 5 ? '#FFD54A' : popColors[tier]);
