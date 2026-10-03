@@ -922,16 +922,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rankDoneRef = useRef(null);
   const rankCancelRef = useRef(null);
   const boardShown = boardHold != null ? boardHold : boardRank;
-  // ONE finite glint on the podium once the menu has settled (after the arrival wipe) — never a loop
-  // (MENU MOTION LAW). A rank-up bump replaces it: that is the icon's moment on such a visit.
-  const [boardGlint, setBoardGlint] = useState(false);
-  useEffect(() => {
-    if (!LEADERBOARD_ENABLED) return undefined;
-    const t = setTimeout(() => setBoardGlint(true), Math.max(0, 2200 - (Date.now() - mountedAtRef.current)));
-    return () => clearTimeout(t);
-  }, []);
-  // ONE value for both menu trees: no glint once a rank-up is pending (the bump is the icon's moment then)
-  const boardGlintOn = boardGlint && boardHold == null && !rankUp && !boardBump;
   // 012_admin_reset: the one-shot "reset by the dev" line, left by obeyDevReset before its reload
   const [devReset, setDevReset] = useState(() => LEADERBOARD_ENABLED && hasDevResetNotice());
   useEffect(() => { if (devReset) clearDevResetNotice(); }, [devReset]);
@@ -1107,7 +1097,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             boardDot={boardNews}
             boardRank={boardRank}
             boardShown={boardShown}
-            boardGlint={boardGlintOn}
             boardBump={boardBump}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
@@ -1150,7 +1139,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               title="Leaderboard"
             >
               {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
-              <PodiumIcon rank={boardShown} glint={boardGlintOn} bump={boardBump} />
+              <PodiumIcon rank={boardShown} bump={boardBump} />
               {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
             </button>
           </div>

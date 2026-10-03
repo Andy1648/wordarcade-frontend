@@ -209,12 +209,6 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
           </div>
 
           <div className={`mode-dialog-lower${modeKey === 'blitz' ? ' mode-dialog-lower--blitz' : ''}`}>
-            {modeKey === 'blitz' && (
-              <div className="mode-dialog-ai-badge">
-                <span className="mode-dialog-ai-badge-ai">AI</span>
-                <span className="mode-dialog-ai-badge-judged">BUILT</span>
-              </div>
-            )}
             <div className="mode-dialog-title">
               {isSolo ? (
                 <span className="mode-dialog-title-w2" style={{ color: accent }}>
