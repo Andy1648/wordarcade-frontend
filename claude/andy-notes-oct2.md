@@ -132,6 +132,18 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 5. AUTO-VERIFY after every merge: grep the live bundle + lazy chunks for a unique string within 5 min and log it here.
 6. Batch small fixes into fewer PRs (Vercel 100/day; each CI run ~10 min).
 
+## OLD-NOTES AUDIT (Andy oct3 11:52: "anything left out?") — verify each on prod, fix what isn't true, ONE batched PR; log evidence (PR #, live string or screenshot)
+- [ ] 1. Blitz list-only: only the ENUMERABLE categories (BLITZ-ENUMERABILITY.tsv) remain, "AI BUILT" ribbon, never claims AI judging. Backend → local 2-context test before merge.
+- [ ] 2. Buying a cosmetic auto-equips it; pop styles / sound packs priced higher and drawn smaller.
+- [ ] 3. End-game "where your wins came from" breakdown cut down (Andy: "really extra").
+- [ ] 4. Notification dots bigger, and a dot only when actionable (shop dot only when something is affordable).
+- [ ] 5. Mode power obvious on cards: SAT pays most per word, CHAIN higher wins/word, FUSE = WB per word + FRENZY.
+- [ ] 6. Old backend branches fix/blitz-data-rebased + fix/wb-combo-support-rebased: rebase, test locally, merge or close with a reason.
+
+## SPEC-AHEAD (throughput rule 4)
+- [x] Rebirth/ascension research (11:55): claude/finetune/ascension-research.md. Recommendation C: ONE prestige whose gain grows with the climb since the last reset — points = floor(sqrt((C(L) − C(start)) / C(15))), multiplier 1 + cbrt(points), a ★ each whole-number crossing; early pace ≈ today (5th rebirth casual/median/strong 14.1 / 5.3 / 2.1 h); existing saves convert to R³ points (every multiplier, rebirth count and ★ kept; removes the rebirth wall). Version B (an ASCENSION layer, glyphs from lifetime words) on top later. Why: under v10 a rebirth barely speeds levels (+3.5% at R1, +0.5% at R10). ANDY DECIDES: (1) C's cube-root multiplier or keep A's shape? (2) OK to drop the LV15→600 gate table? (3) OK to write migration 017 (relax 015's +1 rebirth/submit)? (4) ascension currency from words or levels? Needs a C-policy bot sim before building (CI).
+- [ ] Big-monitor + in-game feel pass spec (agent running).
+
 ## NEW GOAL (Andy oct3 10:29): every step done or blocked-with-reason AND `date` ≥ Sat Oct 3 **11:00 PM** ET; then the fine-tune loop. Never stop because steps are done; never sleep/wait loops; NEVER ask permission to rerun — just rerun. Andy authorized merging while away.
 MEMORY RULES (crashed 04:05): full lint/unit/e2e ONLY on GitHub Actions (push → PR → CI); locally only the touched specs. One heavy job at a time (never sim + tests together, no stacked background jobs). Kill every preview server + Playwright process when a run ends (helpers too). Check free memory before each heavy job; under 4 GB → clean up first.
 - [x] R1 feat/h4-winner-pays: PR → CI → merge if green. **MERGED #152 (main 2c58ce8, 11:08)** after CI green on main HEAD f1c07a3 (run 3: a websocket-boundary flake in run 2 passed on re-run; main's last 9 E2E runs green). LIVE on typeaword.com 11:11 (markers taw.seats + "VS A HUMAN RIVAL" in index--8Q8ckth.js). Tier 1 → 2-device play-test in ANDY TODO.
