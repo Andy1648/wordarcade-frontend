@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import '../components/wall-system.css'; // .solo-root adopts .wall-surface (token overrides in Solo.css)
 import './Solo.css';
+import { LUCKY_WINS_MULT } from '../progress/luck';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 // The standing multiplier readout — "every win and multiplier visible, no hidden credits".
 import LiveStack from '../components/LiveStack';
@@ -381,7 +382,7 @@ export default function SoloShell({
       {phase === 'playing' && luckyKey > 0 && (
         <div className="solo-lucky" key={luckyKey} aria-hidden="true">
           <span className="solo-lucky-ring" />
-          <span className="solo-lucky-label">LUCKY ×5</span>
+          <span className="solo-lucky-label">LUCKY ×{LUCKY_WINS_MULT}</span>
         </div>
       )}
 
