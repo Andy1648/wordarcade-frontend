@@ -17,7 +17,7 @@ test('below 10,000 reads in full, grouped with a COMMA', () => {
   assert.equal(formatNum(999), '999');
   assert.equal(formatNum(9999), `9${THIN}999`);
   assert.equal(formatNum(1234), `1${THIN}234`);
-  assert.equal(THIN, ' ');
+  assert.equal(THIN, ','); // H6/L1: a comma, as the format.js header has always said
 });
 
 test('10,000 and up abbreviate to THREE SIGNIFICANT FIGURES, trailing zeros trimmed', () => {

@@ -107,7 +107,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                   {!mp.maxed ? (
                     <div className="mx-hero-rank">
                       <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, mp.frac))})` }} /></span>
-                      <span>{formatNum(Math.max(0, mp.need - mp.into))} WORDS → RANK {MARK_RANK_NAMES[mp.rank]} · ×{formatMult(markMainMult(main, mp.rank + 1))}</span>
+                      <span>{formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → RANK {MARK_RANK_NAMES[mp.rank]} · ×{formatMult(markMainMult(main, mp.rank + 1))}</span>
                     </div>
                   ) : <div className="mx-hero-rank">MAX RANK</div>}
                 </div>
