@@ -9,6 +9,8 @@
 export const WALL_LEVELS_PER_TIER = 100;
 export const WALL_SEEN_KEY = 'taw.wallTierSeen';
 export const WALL_EVENT = 'taw:wall-tier';
+// H5: WallScene says the re-form (+ its stamp) has finished, so the menu can release the moments queue.
+export const WALL_FX_DONE_EVENT = 'taw:wall-fx-done';
 
 export function wallTierFor(level) {
   const lv = Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
