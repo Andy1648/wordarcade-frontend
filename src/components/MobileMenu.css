@@ -474,6 +474,10 @@
     min-height: 60px;
     height: 60px;
     padding: 0;
+    /* H2a: the golden button — flat gold, darker-gold outline, ink trophy */
+    color: #1a0b2e;
+    background: #FFE94A;
+    border-color: #b8a020;
   }
   .hp-m-board-hero svg { width: 36px; height: 36px; }
   .hp-m-board-rank {
@@ -485,9 +489,9 @@
   font-weight: 700;
     font-size: var(--fs-label);
     line-height: 1;
-    color: #000;
-    background: #FFE94A;
-    border: 2px solid #a8800f;
+    color: #FFE94A;
+    background: #1a0b2e;
+    border: 2px solid #000;
     border-radius: 6px;
     box-shadow: 2px 2px 0 #000;
     transform: rotate(-4deg);

@@ -1271,37 +1271,55 @@ html[data-beat='true'] .homepage-beat-glow {
    nav's top-right offsets inside the same stage (a layout relationship with the frame, not an orphan), and
    is absolutely placed, so it sits outside the short-fit grid too. */
 .homepage-board-corner {
+  /* H2a (Andy: "the golden button for most players — make it much bigger"): ONE size dial, scaled to
+     the viewport so a 2560x1440 monitor gets a big button, not a 3% chip. 6.4vw tracks the width the
+     wordmark leaves free; 17vh keeps it clear of the cards on a short window. 68px floor (the old size
+     at 1280x551) → 82 at 1280x551, 123 at 1920x1080, 164 at 2560x1440, capped at 168. */
+  --hb: clamp(68px, min(6.4vw, 17vh), 168px);
   position: absolute;
-  top: clamp(10px, 1.6vh, 20px);
-  left: clamp(12px, 2vw, 24px);
+  /* inset by a share of its own size as well, so the big button clears the frame's top-left corner
+     ornament at 1920 / 2560 instead of sitting on it */
+  top: max(clamp(10px, 1.6vh, 20px), calc(var(--hb) * 0.3));
+  left: max(clamp(12px, 2vw, 24px), calc(var(--hb) * 0.48));
   z-index: 6;
 }
+/* THE GOLDEN BUTTON (Andy: "LEADERBOARD golden button"): a flat gold fill, a darker-gold outline, the
+   hard black offset shadow, an INK trophy and an ink #rank badge. */
 .homepage-nav-btn.homepage-board-hero {
-  width: 68px;
-  height: 68px;
+  width: var(--hb);
+  height: var(--hb);
   padding: 0;
+  color: #1a0b2e;
+  background: #FFE94A;
+  border-color: #b8a020;
+  border-width: max(3px, calc(var(--hb) * 0.04));
+  box-shadow: max(4px, calc(var(--hb) * 0.06)) max(4px, calc(var(--hb) * 0.06)) 0 #000;
 }
-.homepage-board-hero svg { width: 42px; height: 42px; }
+.homepage-nav-btn.homepage-board-hero:hover {
+  box-shadow: max(5px, calc(var(--hb) * 0.07)) max(5px, calc(var(--hb) * 0.07)) 0 #000;
+}
+.homepage-nav-btn.homepage-board-hero:active { box-shadow: none; }
+.homepage-board-hero svg { width: 62%; height: 62%; }
 .homepage-board-hero:hover svg { transform: rotate(-8deg) scale(1.08); transition: transform 160ms ease-out; }
 .homepage-board-rank {
   position: absolute;
-  right: -12px;
-  bottom: -10px;
-  padding: 2px 6px;
+  right: calc(var(--hb) * -0.17);
+  bottom: calc(var(--hb) * -0.14);
+  padding: 2px max(6px, calc(var(--hb) * 0.07));
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-body);
+  font-size: max(var(--fs-body), calc(var(--hb) * 0.21));
   line-height: 1;
-  color: #000;
-  background: #FFE94A;
-  border: 2px solid #a8800f;
+  color: #FFE94A;
+  background: #1a0b2e;
+  border: max(2px, calc(var(--hb) * 0.025)) solid #000;
   border-radius: 6px;
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: max(2px, calc(var(--hb) * 0.03)) max(2px, calc(var(--hb) * 0.03)) 0 #000;
   transform: rotate(-4deg);
 }
-@media (min-width: 1800px) and (min-height: 1000px) {
-  .homepage-nav-btn.homepage-board-hero { width: 84px; height: 84px; }
-  .homepage-board-hero svg { width: 54px; height: 54px; }
+.homepage-board-hero .homepage-shop-dot.is-board-news {
+  width: max(20px, calc(var(--hb) * 0.2));
+  height: max(20px, calc(var(--hb) * 0.2));
 }
 @media (prefers-reduced-motion: reduce) {
   .homepage-board-hero:hover svg { transform: none; }

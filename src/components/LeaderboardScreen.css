@@ -478,3 +478,289 @@
   .lb-cols--week,
   .lb-row--week { grid-template-columns: 34px minmax(0, 1fr) 96px; }
 }
+
+/* =====================================================================================================
+   H2a — THE BOARD SCALES UP, SPLIT LAYOUT: your card (the hero) beside the list from 900px up.
+   ONE dial, --lb-u: 1px everywhere up to a ~1430x910 window, then it grows with the SMALLER of width
+   and height (1.19 at 1920x1080, 1.58 at 2560x1440). Every size on the board is N * --lb-u, and every
+   font-size is max(<its --fs-* token>, N * --lb-t) — the token is the floor, so phones and laptops are
+   unchanged and a big monitor gets a big board instead of a 560px panel in empty space.
+   The top three wear FLAT medal tiles on the rank (gold / silver / bronze, outlined a darker shade).
+   ===================================================================================================== */
+.lb-overlay {
+  --lb-u: max(1px, min(0.07vw, 0.11vh));
+  /* TYPE dial: the same curve with NO 1px floor, so under ~1430px the --fs-* token always wins */
+  --lb-t: min(0.07vw, 0.11vh);
+  --lb-gold: #FFE94A;
+  --lb-gold-d: #B8A21C;
+  --lb-silver: #D5DBE6;
+  --lb-silver-d: #7C8496;
+  --lb-bronze: #E58A45;
+  --lb-bronze-d: #8A4A16;
+  --lb-ink: #1a0b2e;
+}
+.lb-overlay .lb-panel {
+  max-width: min(calc(100vw - 32px), max(560px, calc(1300 * var(--lb-u))));
+  border-width: max(4px, calc(4 * var(--lb-u)));
+  box-shadow: calc(8 * var(--lb-u)) calc(8 * var(--lb-u)) 0 #000;
+}
+
+.lb-side,
+.lb-main { display: contents; }
+
+.lb-overlay .lb-header { padding: calc(12 * var(--lb-u)) calc(18 * var(--lb-u)) calc(8 * var(--lb-u)); }
+.lb-overlay .lb-title { font-size: max(var(--fs-h2), calc(44 * var(--lb-t))); }
+.lb-overlay .lb-close {
+  width: max(44px, calc(48 * var(--lb-u)));
+  height: max(44px, calc(48 * var(--lb-u)));
+  font-size: max(var(--fs-body), calc(20 * var(--lb-t)));
+}
+.lb-overlay .lb-body {
+  /* the offset parent of every row, so the rank-change slide measures rows against the scroll box */
+  position: relative;
+  padding: calc(14 * var(--lb-u)) calc(16 * var(--lb-u)) calc(18 * var(--lb-u));
+  gap: calc(10 * var(--lb-u));
+}
+.lb-overlay .lb-note,
+.lb-overlay .lb-link-btn,
+.lb-overlay .lb-tab,
+.lb-overlay .lb-you-name,
+.lb-overlay .lb-name,
+.lb-overlay .lb-slot-text,
+.lb-overlay .lb-slot-btn,
+.lb-overlay .lb-num.lb-level,
+.lb-overlay .lb-num.lb-rate {
+  font-size: max(var(--fs-body), calc(19 * var(--lb-t)));
+}
+.lb-overlay .lb-tab { min-height: max(44px, calc(52 * var(--lb-u))); }
+.lb-overlay .lb-rank,
+.lb-overlay .lb-you-rank,
+.lb-overlay .lb-claim-label { font-size: max(var(--fs-panel), calc(30 * var(--lb-t))); }
+.lb-overlay .lb-cols,
+.lb-overlay .lb-lv,
+.lb-overlay .lb-you-badge,
+.lb-overlay .lb-verdict { font-size: max(var(--fs-label), calc(14 * var(--lb-t))); }
+.lb-overlay .lb-list { gap: calc(6 * var(--lb-u)); }
+.lb-overlay .lb-row .lb-name,
+.lb-overlay .lb-row .lb-lv { line-height: 1.25; }
+.lb-overlay .lb-row,
+.lb-overlay .lb-slot {
+  min-height: calc(46 * var(--lb-u));
+  padding: calc(4 * var(--lb-u)) calc(10 * var(--lb-u));
+  border-width: max(3px, calc(3 * var(--lb-u)));
+}
+@media (min-width: 481px) {
+  .lb-overlay .lb-cols,
+  .lb-overlay .lb-row {
+    grid-template-columns: calc(52 * var(--lb-u)) minmax(0, 1fr) calc(96 * var(--lb-u)) calc(104 * var(--lb-u));
+    gap: calc(10 * var(--lb-u));
+  }
+  .lb-overlay .lb-slot { grid-template-columns: calc(52 * var(--lb-u)) minmax(0, 1fr); gap: calc(10 * var(--lb-u)); }
+  .lb-overlay .lb-cols--week,
+  .lb-overlay .lb-row--week { grid-template-columns: calc(52 * var(--lb-u)) minmax(0, 1fr) calc(170 * var(--lb-u)); }
+}
+/* Wide windows: the words line sits BESIDE the name, not under it — half the row height, so all ten
+   places fit a 1080p / 1440p screen without scrolling. (Phones keep the stacked line.) */
+@media (min-width: 900px) {
+  .lb-overlay .lb-list .lb-who {
+    flex-direction: row;
+    align-items: baseline;
+    gap: calc(14 * var(--lb-u));
+  }
+  .lb-overlay .lb-list .lb-who .lb-name-line { min-width: 0; flex: 0 1 auto; }
+  .lb-overlay .lb-list .lb-who .lb-words-sub { flex: none; white-space: nowrap; }
+}
+/* Phones: your YOU + ▲N chips wrap under the name instead of squeezing it to "Y…". */
+@media (max-width: 480px) {
+  .lb-overlay .lb-row.is-me .lb-name-line { flex-wrap: wrap; row-gap: 2px; }
+}
+
+/* YOUR ROW — highlighted. It is NOT sticky (a stuck row covers the rows it floats over); when it is
+   scrolled out of view the .lb-pin-btn strip under the scroll box stands in for it. position:relative
+   only so the rising row draws over the rows it passes. */
+.lb-overlay .lb-list .lb-row.is-me {
+  position: relative;
+  z-index: 2;
+  border-width: max(4px, calc(4 * var(--lb-u)));
+  box-shadow: calc(5 * var(--lb-u)) calc(5 * var(--lb-u)) 0 #000;
+}
+.lb-overlay .lb-row.is-me .lb-rank { color: #FF4FA3; }
+
+/* The ▲N chip — your climb since you last opened the board. Static at rest; JS pops it in once. */
+.lb-move {
+  flex: none;
+  display: inline-block;
+  padding: 1px calc(6 * var(--lb-u));
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-label), calc(15 * var(--lb-t)));
+  line-height: 1.2;
+  color: var(--lb-ink);
+  background: #2EFFE0;
+  border: 2px solid #13A894;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* THE PIN — a strip at the panel foot, OUTSIDE the scroll box (it takes its own height, never covers
+   a row), shown only while your row is out of view. Tapping it scrolls your row into view. */
+.lb-pin-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--lb-u));
+  min-height: max(var(--tap-min), calc(52 * var(--lb-u)));
+  margin: 0 calc(16 * var(--lb-u)) calc(14 * var(--lb-u));
+  padding: calc(4 * var(--lb-u)) calc(12 * var(--lb-u));
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-body), calc(19 * var(--lb-t)));
+  color: #fff;
+  text-align: left;
+  background: #2a1040;
+  border: max(4px, calc(4 * var(--lb-u))) solid #FF4FA3;
+  border-radius: 8px;
+  box-shadow: calc(4 * var(--lb-u)) calc(4 * var(--lb-u)) 0 #000;
+  cursor: pointer;
+}
+.lb-pin-rank {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: max(var(--fs-panel), calc(30 * var(--lb-t)));
+  color: #FF4FA3;
+}
+.lb-pin-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #2EFFE0; }
+.lb-pin-move {
+  flex: none;
+  padding: 0 calc(6 * var(--lb-u));
+  color: var(--lb-ink);
+  background: #2EFFE0;
+  border: 2px solid #13A894;
+  border-radius: 6px;
+}
+.lb-pin-go { flex: none; margin-left: auto; color: #FFE94A; }
+
+/* ---- THE HERO: your card ---------------------------------------------------------------------------
+   Pink fill, INK text (white on #FF4FA3 is 2.9:1; ink is ~7:1). Big #rank, ▲N, the next target, LV. */
+@media (min-width: 900px) {
+  .lb-overlay .lb-body {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+    align-items: start;
+    column-gap: calc(22 * var(--lb-u));
+  }
+  .lb-side,
+  .lb-main {
+    display: flex;
+    flex-direction: column;
+    gap: calc(12 * var(--lb-u));
+    min-width: 0;
+  }
+  .lb-side { position: sticky; top: 0; }
+}
+.lb-you.lb-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(8 * var(--lb-u));
+  padding: calc(16 * var(--lb-u)) calc(18 * var(--lb-u));
+  color: var(--lb-ink);
+  background: #FF4FA3;
+  border: max(4px, calc(4 * var(--lb-u))) solid #a3175e;
+  box-shadow: calc(6 * var(--lb-u)) calc(6 * var(--lb-u)) 0 #000;
+}
+.lb-hero-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-label), calc(15 * var(--lb-t)));
+  letter-spacing: 0.08em;
+}
+.lb-hero-line {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(8 * var(--lb-u));
+}
+.lb-overlay .lb-hero .lb-you-rank {
+  font-size: max(var(--fs-hero), calc(150 * var(--lb-t)));
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: var(--lb-ink);
+}
+.lb-hero .lb-you-rank-sub { display: block; letter-spacing: 0.04em; }
+.lb-you-rank-sub {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-body), calc(19 * var(--lb-t)));
+}
+.lb-hero-move,
+.lb-hero-target,
+.lb-hero-lv {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-body), calc(22 * var(--lb-t)));
+  line-height: 1.2;
+  color: var(--lb-ink);
+}
+.lb-hero-move {
+  display: inline-block;
+  padding: calc(2 * var(--lb-u)) calc(10 * var(--lb-u));
+  background: #2EFFE0;
+  border: max(3px, calc(3 * var(--lb-u))) solid #13A894;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.lb-hero-target { font-size: max(var(--fs-body), calc(26 * var(--lb-t))); }
+.lb-hero .lb-short { display: none; }
+.lb-hero-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 calc(14 * var(--lb-u));
+}
+.lb-overlay .lb-hero .lb-you-name { color: var(--lb-ink); }
+.lb-overlay .lb-hero .lb-link-btn { margin-left: 0; color: var(--lb-ink); }
+
+/* Under 900px the hero COLLAPSES to a strip: "#9 ▲3 · 58 LV TO #8" on one line, the two name links
+   under it (your name is already on your row) — the list keeps its rows on a phone. */
+@media (max-width: 899px) {
+  .lb-you.lb-hero { gap: 2px; padding: 8px 12px; }
+  .lb-hero-label,
+  .lb-hero .lb-you-name,
+  .lb-hero-lv,
+  .lb-hero .lb-long { display: none; }
+  .lb-hero .lb-short { display: inline; }
+  .lb-hero-line {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+  }
+  .lb-overlay .lb-hero .lb-you-rank { font-size: var(--fs-h2); letter-spacing: 0; }
+  .lb-hero .lb-you-rank-sub { display: inline; }
+  .lb-hero-move { padding: 0 6px; box-shadow: 2px 2px 0 #000; }
+  .lb-hero-move,
+  .lb-hero-target { font-size: var(--fs-body); }
+}
+
+/* the top three in the list: a flat MEDAL tile on the rank, the row outlined in the medal's dark shade */
+.lb-row.is-top1 .lb-rank,
+.lb-row.is-top2 .lb-rank,
+.lb-row.is-top3 .lb-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  border-radius: 6px;
+  color: var(--lb-ink);
+}
+.lb-overlay .lb-row.is-top1 { border-color: var(--lb-gold-d); }
+.lb-overlay .lb-row.is-top2 { border-color: var(--lb-silver-d); }
+.lb-overlay .lb-row.is-top3 { border-color: var(--lb-bronze-d); }
+.lb-overlay .lb-row.is-top1 .lb-rank { background: var(--lb-gold); color: var(--lb-ink); }
+.lb-overlay .lb-row.is-top2 .lb-rank { background: var(--lb-silver); color: var(--lb-ink); }
+.lb-overlay .lb-row.is-top3 .lb-rank { background: var(--lb-bronze); color: var(--lb-ink); }
+.lb-overlay .lb-row.is-me.is-top1,
+.lb-overlay .lb-row.is-me.is-top2,
+.lb-overlay .lb-row.is-me.is-top3 { border-color: #FF4FA3; }
