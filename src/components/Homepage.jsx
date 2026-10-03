@@ -1,6 +1,7 @@
 // Homepage.jsx
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
+import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -27,8 +28,12 @@ import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
-const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
-import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
+// MARK ROLLS ship dormant behind rollsFlag (rule P held them, PR #156): the legacy panel until Andy turns rolls on.
+const ROLLS = rollsEnabled();
+const MarksIndex = ROLLS
+  ? lazyWithReload(() => import('./MarksIndex'), 'MarksIndex')
+  : lazyWithReload(() => import('./MarksIndexLegacy'), 'MarksIndexLegacy');
+import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark } from '../progress/marks';
 import { wornMarkId, markEntry } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
@@ -1371,7 +1376,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               achievementNames={ACH_NAME}
               level={xpProgress.level}
               earned={earnedAch}
-              onEquip={(id) => setEquippedMark(id)}
+              onEquip={(id) => setEquippedMark(ROLLS ? id : equipMark(id, earnedAch))}
               onClose={() => setShowMarks(false)}
             />
           </Suspense>

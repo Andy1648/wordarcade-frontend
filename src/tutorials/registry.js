@@ -9,6 +9,7 @@
 // has ALREADY reached is marked seen — a LV300 player must not sit through five cards on their next visit —
 // except the ones for things that are new to everyone (the LV100 wall change), which they have never seen.
 import { FRENZY_MULT, frenzyMinutes } from '../progress/frenzy.js';
+import { rollsEnabled } from '../progress/rollsFlag.js';
 
 export const TUT_KEY_PREFIX = 'taw.tut.';
 export const TUT_INIT_KEY = 'taw.tut.init';
@@ -39,7 +40,7 @@ export const TUTORIALS = [
     id: 'markRolls',
     host: 'marks',
     isNew: true,
-    when: (s) => s.marksRevealed,
+    when: (s) => s.marksRevealed && rollsEnabled(),
     // ONE step (oct3 review): the button's own HOLD tag already says "hold"; a second card repeating it was noise
     steps: [
       { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.mr-roll' },

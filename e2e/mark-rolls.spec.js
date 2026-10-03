@@ -7,6 +7,7 @@ import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
 const SEED = {
+  'taw.rollsOn': '1', // MARK ROLLS ship dormant (rollsFlag.js); this spec turns them on
   'taw.seenMenu': '1',
   'taw.seenMenuSpotlight': '1',
   'taw.xp': JSON.stringify({ lv: 12, into: 0 }),
