@@ -5,7 +5,7 @@
 2. SIM, before → after (3 skill levels × 10 m / 1 h / 5 h / 20 h, real modules): runaway reward lumps 3/3/2 → 0/0/0. WALKING DICTIONARY paid 4.8e19 wins (≈633,000 min of play); every achievement is now 6–25 words.
 3. SIM: the median player's worst wait for the next KEY tier at 20 h went 1,833 → 40 min. Gaps between good events PASS in every window (worst 5.8 m against the 12 m limit at 20 h). formatNum PASS to 1e300. No text under 13 px at 1280x551, 1366x625, 390x844 or 1920x1080.
 4. STILL FAILING: the KEY wall. From 1 h of play, the next KEY tier is 15–107 min away (the limit is 15). The v8 ladder causes it, and changing it is your call (item 7).
-5. ANDY TODO — delete the test rows: `redeem_codes` ZZTEST-ONCE; `profiles` 测试七号 and zzcloud7b1486.
+5. ANDY TODO — ~~delete the test rows~~ (done). NEW: check NoBuffCookies — LV102 → LV5222 in an hour with no new words (see ANDY TODO).
 6. ANDY TODO — 2-device play-test #130 (PLAY SOLO Word Bomb → HARD for returning players) and be#13 (a choking bot concedes after about 6 s).
 7. ANDY TODO — DECIDE the KEY wall: keep v8, or price KEY in words past T8 (about ×1.2 a tier)? Details in claude/econ-oct2/loop-2.md.
 8. ANDY TODO — DECIDE whether per-level redeem codes should be priced in words, like achievements now are (late in a run they're invisible today).
@@ -14,7 +14,8 @@
 
 ## ANDY TODO (top of the list — everything I can't do myself)
 - **SQL to run: none pending.** 008, 010, 011, 012, 013 are live on prod (verified 17:55 ET: lb_caps has weekly; ZZTEST redeem works once; CJK claim works; board is level-only).
-- **Delete test rows** (anon can't delete): `redeem_codes` → `ZZTEST-ONCE`; `profiles` → `测试七号` (the CJK claim test, #17 on the board) and `zzcloud7b1486` (the P0.3 cloud-save test).
+- ~~Delete test rows~~ DONE by Andy (22:20 check: ZZTEST-ONCE → bad_code; 测试七号 and zzcloud7b1486 are free names again).
+- **CHECK NoBuffCookies:** between 21:22 and 22:20 ET they went LV102 → **LV5222** (now #1) while lifetime words stayed at 51 (3,121 letters). lb_submit2 rate-checks words and letters but never LEVEL, so a level can be submitted with no typing behind it. It may be legit menu typing at a high KEY tier, but it looks off. If it's a cheat, the fix is a level-rate check in lb_submit2 (I write it, you run it). Tell me.
 - **2-device play-test** (Tier-1 rule): PR #130 (PLAY SOLO Word Bomb preset → HARD for returning players) and backend be#13 (a choking bot concedes after ~6 s). Prod smokes passed for both.
 - **Weekly board — order matters if you re-run SQL:** 011 also defines `lb_submit2`, *without* the weekly counter. If you ever re-run 011 (for example, for the level-only view), run 013 after it, or THIS WEEK silently stops counting while lb_caps still says weekly. At 21:22 ET THIS WEEK was empty only because no claimed player had typed since 013 (all 15 rows' lifetime words were unchanged since 17:48).
 - **imbetterthanandy** reset: fires on that player's next menu load (012 is live); nothing to do.
@@ -28,12 +29,12 @@ receipts, dialogs, tutorials, leaderboard).
 
 Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
-## Oct 2 DAY RUN goal (11:41 ET → 08:00 ET Oct 3). Order: P0 migration checks → P1 Andy's six → the rest
+## Oct 2 DAY RUN goal (11:41 ET → 08:00 ET Oct 3) — DONE (Andy back 22:00 ET; the summary is at the top).
 ### P0 — migrations 005/006/007 (Andy ran them; verify on PRODUCTION)
 - [x] P0.1 letters sort the board — prod lb_caps = {letters, cjk, cloud: true}; live board #1 is elol LV3 with 2,742 letters ahead of LV179 with 0 (view orders by lifetime_letters desc). 12:00 ET
-- [ ] P0.2 HALF (PR #105 merged — 008 still needs Andy to RUN it): Chinese slur rejected by the DB (lb_name_status('傻逼王') = blocked) ✔. Chinese CLAIM FAILS ON PROD: lb_name_status says ok but lb_claim raises username_shape — 005 widened the constraint + name check but never replaced lb_claim (004 still has the ASCII-only regex). FIX = supabase/migrations/008_claim_cjk.sql (PR #105) + migrationShape.test.js. **ANDY: paste 008 into the SQL editor and Run** — I re-test the claim on prod once it's applied.
+- [x] P0.2 DONE (re-checked on prod 22:20 ET after Andy ran 005–013): lb_name_status('傻逼王') = blocked, '测试八号' = ok; the CJK claim succeeded on prod at 17:55 (测试七号, 008). Was: CJK claim failed (lb_claim never replaced) — fixed by 008 (PR #105).
 - [x] P0.3 cloud save on PROD (Playwright, typeaword.com): claimed zzcloud7b1486, menu backed up a 616-byte blob, secret cookie set; localStorage.clear() + reload → restored LV4 save + profile, taw.cloud.restored=1. 11:55 ET
-- [ ] P0.4 BLOCKED (needs Andy): lb_redeem is live (an unknown code answers bad_code) and the anon key cannot read or insert redeem_codes (401 — correct). I hold no admin credential, so I can't add the test row. **ANDY: Table Editor → redeem_codes → Insert: code ZZTEST-ONCE, wins 1, max_uses 1, active true.** I poll for it during the run, redeem it twice from a fresh device (expect ok, then already_used), and then you delete the row (anon can't delete either).
+- [x] P0.4 DONE: ZZTEST-ONCE redeemed once, then `used_up` (E0, 17:55). re-checked on prod 22:20 ET after Andy ran 005–013: the row is now deleted (lb_redeem answers bad_code), so the test is cleaned up.
 
 ### P1 — Andy's six (outrank everything except P0; every word matters)
 - [x] A1 WORLDS — PR #112 (merged): the 24 world SVGs + WorldBackdrop removed; the SAME floating-word wall (WallScene's 12 sprayed words, 6 stickers, 4 splatters) re-laid-out per tier by sceneLayout.js (seeded 5x5 jittered grid, tier 0 = the hand layout); a tier climb stacks old+new in ONE element that translates up once (820 ms, will-change only during, two-walls-tall + paint-contained so nothing re-paints). 24 border tiers unchanged. 4x CPU: settled 16.7 / swish 33.3 ms p50 (the old world swish measured the same on CI). Shots claude/day-oct2/a1-*.png. Was: A1 WORLDS: revert the new world backdrops. SAME floating-word background as before, shifted to different positions per tier ("as if the scene moved"), same smooth ONE-transform swish. Keep the 24 border tiers. New art only if genuinely high quality (it isn't).
@@ -53,7 +54,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ### Andy, added ~13:40 ET (authorized) — queued after the current steps, in this order
 - [x] R10 PR #117 (MERGED; **ANDY: run 010_redeem_kinds.sql** — SQL in the PR body; client degrades without it) SCALING + BOOST REDEEM CODES + FRENZY/BOOST END moment. Migration is **010_redeem_kinds.sql** (Andy said 008 — taken by 008_claim_cjk.sql, merged #105; 009 records the words-board view). Columns kind ('wins'|'boost'), per_level, boost_mult (3), boost_min (10), returned by lb_redeem; re-runnable; Andy runs it. Client: per_level × level on claim; 'boost' = wall-clock BOOST timer, a named perWordFactors factor stacking with FRENZY, persists across reloads; gold BOOST pill + countdown; receipt ×3 BOOST line; degrades to today's behaviour without 010. FRENZY OVER / BOOST OVER finite moment (letters implode, slab cracks, ~1.2 s, transform/opacity, reduced-motion readable); pill pulses red at 10 s. Update shop redeem UI, receipts, FUSE card copy, e2e redeem spec. SQL in the PR body. Test 1280x551 + fresh LV1; nothing under 13px.
 - [x] NC — PR #119 (MERGED; **ANDY: run 011_no_caps.sql**, SQL in the PR body). Was: NO CAPS ON NUMBERS. Migration **011_no_caps.sql** (same numbering reason): wins_per_word plain numeric (drop the 1e9 check), latest submit fn without least(...,1e9), redeem_codes.wins numeric check >= 0 (idempotent). format.js SUFFIXES named tiers to 1e308 (never raw digits; 3 sig figs; tests 1e15/1e30/1e300/Infinity). Sweep src/ for every cap on wins/rewards/multipliers/prices/levels — list each (file:line, old cap, removed/kept why). Bank, redeem and cloud save handle > 9e15 without NaN/Infinity. SQL in the PR body.
-- [ ] KP (SUPERSEDED by KP2 below) KEY POWER curve: keyTierXp(t) = round(25 × 1.4^(t-1)) for t >= 1, 10 at T0; KEY price in words at your rate growing ×1.15/tier; econ-oct2 sims before/after with minutes-of-play per tier at T5/T20/T50/T100 (target: every tier +40%, next tier 2–15 min, never a wall); nobody's XP/letter drops at their current tier (floor at today's); update shop card, receipts, anything showing "+15"; no caps.
+- [x] KP — SUPERSEDED by KP2 (#122), and now by K1 below (v8 to T8, words past it).
 
 - [x] KP2 PR #122 (MERGED): v8 table restored (×2.5 XP / ×6 price per tier, flat in rebirth), keyTierXp floored at the v9 value so nobody drops; minutes report claude/batch-a/kp-minutes.md — v8 walls at T10 (~5.7 h) and T20 (~36,000 h) at a median rate, flagged in the PR. Was: RESTORE KEY POWER v8 (Andy, ~13:55 — replaces KP): XP/letter ×2.5 per tier, price ×6 per tier in wins (the T1–T8 table extended forever), T1 = 25; needs NC first (suffix ladder, test at T60+); nobody's XP/letter drops at their current tier; shop card / receipts / "+15" text updated; report minutes of play to buy T5/T10/T20 at a median rate, before vs after.
 
@@ -67,6 +68,11 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] E4 — PR #140 (MERGED): inbox = achievements + rank-ups; codes/BOOST/marks/systems/collection apply at once; welcome back cut; trimClaimInbox migrates old saves; keep/cut table in the PR. Also fixed the OFFLINE preload flake (idle warm-ups swallow their rejections). Was: TOO MANY REWARDS: only ACHIEVEMENTS + STATS milestones (level-ups / rank-ups) go through the claim inbox; everything else pays silently or is cut. PR lists every claim source keep/cut + reason.
 - [x] E5 — PR #142 (MERGED): quality protocol A/B/C → reviewer picked A (scaled); BOOST + FRENZY are hero-size pills that pop in; FUSE plaque grows where the strip keeps its height; before/after px in the PR. Follow-up: no BOOST pill on the phone menu yet. Was: PROPORTIONS TOO SMALL, esp. new mechanics (FRENZY, BOOST, weekly board, marks, rank-ups): one big thing per screen, scaled up hard; new mechanics get hero type + an animation; before/after px. QUALITY PROTOCOL (3 versions → adversarial reviewer → pick).
 - [x] E6 — PR #141 (MERGED): quality protocol case/split/expand → reviewer picked split; inventory 4x4, MAIN hero, SET AS MAIN, GET: <achievement> on locked tiles; phone MARKS button added to the nav strip; lazy chunk (payload ratchet). Was: MARKS INDEX page: inventory grid of every mark (owned; unowned locked + how to get); tap → SET AS MAIN (title + BIG bonus as today); current main big at top; reached from the MARKS button. QUALITY PROTOCOL.
+
+### Andy, ~22:15 ET (authorized) — one PR if possible
+- [x] 0 — DONE 22:20 ET: re-checked P0.2 / P0.4 / L5 / L9 / C6 on prod and ticked all five; KP marked superseded; the "until 08:00 Oct 3" lines closed. Andy has already deleted the test rows. New flag: NoBuffCookies at LV5222 (ANDY TODO).
+- [ ] K1 KEY POWER: keep v8 (XP ×2.5, price ×6) through T8. Past T8, price each tier in WORDS at your rate, growing ×1.2/tier; XP/letter keeps ×2.5 forever. Re-run the loop-2 sim: next KEY tier ≤15 min away at 1 h / 5 h / 20 h for all 3 skill levels. Update shop copy + receipts.
+- [ ] K2 Per-level redeem codes priced in WORDS at the player's rate, like achievements (the wins column = number of words). Update the RedeemCodes copy + the 010 docs.
 
 ### Fine-tune loop (until 22:15 ET)
 - [x] LOOP 1 — PR #144 (MERGED): the progression sim (`claude/econ-oct2/loop-sim.mjs`, real modules, 3 skills × 10 m / 1 h / 5 h / 20 h) found RUNAWAY rewards. WALKING DICTIONARY paid 4.8e19 wins at LV850 (≈633,000 min of play), PAPER CHASE 8 min of play at LV57. Achievements are now priced in WORDS at the live rate (6–25 words), and the mastery milestone is a flat 30 words. Before → after: runaway lumps 3/3/2 → 0/0/0; median worst KEY wait at 20 h 1,833 → 40 min. Gaps PASS everywhere (max 0.67 m at 10 m, 5.8 m at 20 h). `claude/econ-oct2/loop-1.md`.
@@ -114,7 +120,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ### P5 — the rest
 - [x] WB phone ring — PR #134 (MERGED, CI full e2e green incl. wb-* / word-landing / viewport-integrity): the phone ring is sized to the ROW it actually has (between prompt and input stacks) and up to 0.92 of the board width, instead of the old centred-layout reserve + 0.72-of-width guess: 247 → 283 px @390x844, 263 → 303 @412x915, 276 → 320 @430x932 (360x640 height-bound 163 → 168). claude/wb-phone/before|after-*.png. Local gate run was killed by the OS for low memory (1,430 worker crashes) — CI is the gate.
 - [x] Andy's notes re-check (17:00 ET): N1 shop.spec 'auto-equips', N2 word-landing / menu-xp sizes, N4 receipt top 3 + MORE (payout-honesty, solo-endgame, winner-bonus) — all in CI's full e2e on every PR tonight; main's only reds were the two #133 fixed. Evening sweep, fresh LV1 @1280x551: menu, WB dialog, shop, stats, board, CHAIN, FUSE, SAT — 0 visible text < 13 px (claude/finetune/evening/).
-- [ ] Until 08:00 ET Oct 3: keep running fine-tune passes over every screen
+- [x] Until 08:00 ET Oct 3: fine-tune passes — DONE. Ran loops 1–9 (#144, #146–#149) until Andy returned at 22:00 ET.
 
 ### Day-run log
 
@@ -171,11 +177,11 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] L2 Board shows LV and WINS/WORD columns — PR #79, claude/leaderboard-oct2/shots/board-1280.png
 - [x] L3 Rebirth stars gone; rebirth tier = name colour, frame from R5 — PR #79, board-1920.png
 - [x] L4 18 ranks (to BEYOND at L1000) — PR #79, claude/leaderboard-oct2/shots/ranks-1280.png
-- [ ] L5 BLOCKED on migration 005 (needs Andy to paste it into the Supabase SQL editor and Run): client CJK names + Chinese blocklist ship in PR #79 (nameFilter.test), the DB-side filter lands with 005
+- [x] L5 DONE (re-checked on prod 22:20 ET after Andy ran 005–013): the DB-side filter is live — lb_name_status('傻逼王') = blocked; the client filter shipped in PR #79.
 - [x] L6 Realtime ticker (Phoenix broadcast, no migration needed) in the menu footer — PR #79 (live.js, LiveTicker)
 - [x] L7 Online count via Realtime presence — PR #79
 - [x] L8 Uncrowded: one ticker line in the footer, board = 4 columns — claude/leaderboard-oct2/shots/board-390.png
-- [ ] L9 PARTIAL — live in prod (marker taw.letters / lb_caps in index-B69R3VEq.js); the letters + CJK half waits on migration 005
+- [x] L9 DONE (re-checked on prod 22:20 ET after Andy ran 005–013): lb_caps = letters/cjk/cloud/weekly; board rows carry lifetime_letters (Daan 6,244, NoBuffCookies 3,121); CJK names allowed (测试八号 = ok).
 
 ## STEP 52 — Cloud save
 - [x] C1 Investigated — most likely Safari ITP's 7-day script-storage purge / an in-app browser (separate storage); not an economy migration (migrations only raise) — claude/cloud-save/investigation.md
@@ -183,7 +189,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] C3 Auto-restore when the cloud is strictly ahead / local missing — PR #81, e2e/cloud-save.spec.js
 - [x] C4 One-time recovery code on the leaderboard name card + restore form — PR #81
 - [x] C5 Restore never lowers progress: shouldRestore requires strictly-ahead (rebirths, level, letters) — src/save/cloudSave.test.js
-- [ ] C6 PARTIAL — client live in prod (marker taw.cloud.restored); server half waits on migration 006
+- [x] C6 DONE (re-checked on prod 22:20 ET after Andy ran 005–013): lb_caps.cloud = true; lb_load / lb_save are live (they answer no_profile for an unknown secret, not 404). Full restore was proven on prod in P0.3.
 
 ## STEP 53 — Word Bomb board + font sizes
 - [x] B1 Ring cap 520 → 720 px; on the wide board the ring takes all the slack between prompt and input rows (0.78 of the board, was 0.72 + a double reservation): 1920x1080 ring 520 → 552 px — PR #82 (38d7581), wbRingSize.test.js, claude/wb-oct2/before|after/ingame-word-bomb-6p-1920x1080.png
