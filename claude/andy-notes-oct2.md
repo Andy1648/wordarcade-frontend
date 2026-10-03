@@ -174,6 +174,14 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] 4. (13:35 DONE on feat/numbers-feel: one helper src/juice/countUp.js — 1.2 s → 2 s on a log scale of the jump, a new gain retargets the running count (never stacks), reduced motion/drops instant; used by the menu wins chip with a big '+N', level numeral, XP fill, WinnerPopup, the in-game wins pill, claim stamps (now 1.7 s), WordLanding, SAT results) COUNT-UP ANIMATIONS last longer ("so the user can see how much it's increasing by"): wins/XP/level gains count up over ~1.2–2 s scaled to the jump, with the "+amount" shown big. Finite, no stacking, reduced motion = instant.
 - [ ] 5. (13:35: visible half DONE on feat/numbers-feel a1c31c8 — '43.7%' with one decimal, a pooled '+X.X%' pop per credit, a flash + soft note at every 10%, the bar counts up from where it was when you left for a game; the movement check FAILED badly → Option F proposal at the top of ANDY TODO) HIGH-LEVEL BAR FEELS STAGNANT (Andy LV175: "bar just isn't moving"): show % to next level with a decimal, a "+X%" pop per word, a small milestone tick every 10% with a little reward feel. Sim: at LV150–250 the bar moves ≥0.5% per average word. If the existing-player numbers say the wait is too long, PROPOSE (don't apply) a fair one-time rescale with before/after per top player.
 
+## v11 AMENDMENT (Andy oct3 18:15) — overrides earlier v11 notes where they conflict
+- [ ] 1. GAME WORDS GIVE WINS ONLY. No XP/bar progress from accepted game words. Revert Option F (bar floor) and remove the "LEVEL FLOOR" receipt row.
+- [ ] 2. THE BAR fills from typing LETTERS (menu + in-game) × KEY tier XP/letter × rebirth/mark XP boosts. The loop: play → wins → buy KEY → more XP per letter → level faster. Every card, receipt, shop line and tutorial says this plainly with BASE (e.g. "BASE 10 XP / LETTER").
+- [ ] 3. CURVE: smoother and QUICKER than live v10, each level only a BIT harder than the last — between v9 (L^4, too soft) and v10 (too steep). ONE fixed curve, no power scaling. A few hundred levels total is fine.
+- [ ] 4. SIM (CI, 3 skills): wins buy a KEY tier every few minutes early; each KEY tier visibly speeds levels; no dead bar; no runaway; a rebirth re-climb that starts fast. Report minutes per level at LV10/50/100/200 for a median player, before vs after.
+- [ ] 5. Existing players: keep {lv, into-fraction}; nobody loses levels.
+- 18:16: PR #169 (v11 as first built — game words still gave level XP) is HELD; reworking on feat/pv11 per this amendment.
+
 ## ANDY'S STANDING DIRECTIONS (oct3 17:48) — choose work by these when the checklist is empty; re-read before every fine-tune pass
 PATTERNS (most → least repeated):
 1. ADDICTIVE FEEL comes first: constant visible progress, escalation, gambling-feel moments (he LOVES marks/multipliers). Hook first, depth later.
