@@ -156,36 +156,37 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
           <div className="mx-collect" data-testid="marks-collected" data-pct={Math.round(col.pct)}>
             <span className="mx-collect-pct">{Math.round(col.pct)}% COLLECTED</span>
             <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${Math.min(1, col.pct / 100)})` }} /></span>
-            {next && <span className="mx-collect-next">NEXT {next.pct}%{next.track !== 'base' ? ` ${next.track.toUpperCase()}` : ''} → {luckText(L + next.luck)}</span>}
+            {/* always drawn (a blank line once every milestone is paid) so the head never changes height */}
+            <span className="mx-collect-next">{next ? `NEXT ${next.pct}%${next.track !== 'base' ? ` ${next.track.toUpperCase()}` : ''} → ${luckText(L + next.luck)}` : ' '}</span>
           </div>
           <button type="button" className="mx-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
         </div>
         <div className="mx-main-col">
           {/* THE ONE BIG THING: your MAIN — title + bonus, hero-size. A roll that lands a higher MAIN equips it
               and this updates on the landing, never before. */}
+          {/* FIXED SHAPE (PR #156 e2e: the ROLL button below moved 15px when the first roll filled this): every
+              state draws the SAME slots — art (a locked coin when empty), kicker, name, tag and the rank row
+              (hidden when there is no rank) — each pinned to one line / a reserved two-line box in CSS, so a new
+              MAIN never changes this section's height. */}
           <section className={`mx-hero${main ? '' : ' is-empty'}`} key={`p${punch}`} style={main ? { '--tier': mainTier.colour } : undefined} aria-label="Your main mark">
-            {main ? (
-              <>
-                <MarkBadge mark={markEntry(main.id)} rank={mp ? mp.rank : 1} size={128} finish={finishOf(main)} permanent={main.kind === 'perm'} className="mx-hero-art" />
-                <div className="mx-hero-body">
-                  <div className="mx-hero-kicker">YOUR MAIN{mp ? <> · <span className="mx-nowrap">RANK {MARK_RANK_NAMES[mp.rank - 1]}</span></> : null}</div>
-                  <div className="mx-hero-name">{main.name}</div>
-                  <div className="mx-hero-pct" data-testid="marks-main-tag">{mainTagFor(main.id)}</div>
-                  {mp && !mp.maxed ? (
-                    <div className="mx-hero-rank">
-                      <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, mp.frac))})` }} /></span>
-                      <span>{formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → RANK {MARK_RANK_NAMES[mp.rank]} · ×{formatMult(markMainMult(legacyMain, mp.rank + 1))}</span>
-                    </div>
-                  ) : mp ? <div className="mx-hero-rank">MAX RANK</div> : null}
-                </div>
-              </>
-            ) : (
-              <div className="mx-hero-body">
-                <div className="mx-hero-kicker">NO MAIN YET</div>
-                <div className="mx-hero-name">ROLL ONE</div>
-                <div className="mx-hero-pct">UP TO ×{formatMult(MAX_MULT)}</div>
+            <MarkBadge mark={main ? markEntry(main.id) : null} locked={!main} rank={mp ? mp.rank : 1} size={128} finish={main ? finishOf(main) : 'base'} permanent={!!main && main.kind === 'perm'} className="mx-hero-art" />
+            <div className="mx-hero-body">
+              <div className="mx-hero-kicker">
+                {main ? <>YOUR MAIN{mp ? <> · <span className="mx-nowrap">RANK {MARK_RANK_NAMES[mp.rank - 1]}</span></> : null}</> : 'NO MAIN YET'}
               </div>
-            )}
+              <div className="mx-hero-name" title={main ? main.name : undefined}>{main ? main.name : 'ROLL ONE'}</div>
+              {main
+                ? <div className="mx-hero-pct" data-testid="marks-main-tag">{mainTagFor(main.id)}</div>
+                : <div className="mx-hero-pct">UP TO ×{formatMult(MAX_MULT)}</div>}
+              <div className={`mx-hero-rank${mp ? '' : ' is-placeholder'}`} aria-hidden={mp ? undefined : 'true'}>
+                <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${mp ? Math.max(0, Math.min(1, mp.maxed ? 1 : mp.frac)) : 0})` }} /></span>
+                <span className="mx-hero-rank-text">
+                  {mp && !mp.maxed
+                    ? `${formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → RANK ${MARK_RANK_NAMES[mp.rank]} · ×${formatMult(markMainMult(legacyMain, mp.rank + 1))}`
+                    : mp ? 'MAX RANK' : ' '}
+                </span>
+              </div>
+            </div>
           </section>
           <RollPanel
             level={level}
