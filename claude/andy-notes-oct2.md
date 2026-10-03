@@ -1,5 +1,17 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
+## SUMMARY (Oct 2, 22:00 ET)
+1. MERGED: frontend #80–#148 (this evening: E0–E6 = #137–#142; fine-tune loops = #144, #146, #147, #148), backend be#10–#17. Every merge was verified live by grepping the prod bundle; prod smoke shows 0 errors.
+2. SIM, before → after (3 skill levels × 10 m / 1 h / 5 h / 20 h, real modules): runaway reward lumps 3/3/2 → 0/0/0. WALKING DICTIONARY paid 4.8e19 wins (≈633,000 min of play); every achievement is now 6–25 words.
+3. SIM: the median player's worst wait for the next KEY tier at 20 h went 1,833 → 40 min. Gaps between good events PASS in every window (worst 5.8 m against the 12 m limit at 20 h). formatNum PASS to 1e300. No text under 13 px at 1280x551, 1366x625, 390x844 or 1920x1080.
+4. STILL FAILING: the KEY wall. From 1 h of play, the next KEY tier is 15–107 min away (the limit is 15). The v8 ladder causes it, and changing it is your call (item 7).
+5. ANDY TODO — delete the test rows: `redeem_codes` ZZTEST-ONCE; `profiles` 测试七号 and zzcloud7b1486.
+6. ANDY TODO — 2-device play-test #130 (PLAY SOLO Word Bomb → HARD for returning players) and be#13 (a choking bot concedes after about 6 s).
+7. ANDY TODO — DECIDE the KEY wall: keep v8, or price KEY in words past T8 (about ×1.2 a tier)? Details in claude/econ-oct2/loop-2.md.
+8. ANDY TODO — DECIDE whether per-level redeem codes should be priced in words, like achievements now are (late in a run they're invisible today).
+9. No SQL is pending. If you ever re-run 011, run 013 after it, or THIS WEEK silently stops counting. It's empty right now only because nobody has typed since 013 went live.
+10. Last PR (finetune/summary): these notes + the LUCKY stamp bound to its constant. It merges after CI. Full log: claude/econ-oct2/loop-3-8.md.
+
 ## ANDY TODO (top of the list — everything I can't do myself)
 - **SQL to run: none pending.** 008, 010, 011, 012, 013 are live on prod (verified 17:55 ET: lb_caps has weekly; ZZTEST redeem works once; CJK claim works; board is level-only).
 - **Delete test rows** (anon can't delete): `redeem_codes` → `ZZTEST-ONCE`; `profiles` → `测试七号` (the CJK claim test, #17 on the board) and `zzcloud7b1486` (the P0.3 cloud-save test).
