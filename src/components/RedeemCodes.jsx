@@ -1,20 +1,29 @@
 // RedeemCodes.jsx — STEP 61: the shop's CODES entry. One field + REDEEM; the answer is one line.
 // A good code does not pay here — it lands in REWARDS to claim (leaderboard/client.js redeemCode),
 // and the line says so.
-import { useState } from 'react';
+// H3/H5 (Andy oct3): a redeem is announced, never a quiet line — a good code STAMPS its prize with the
+// purchase chime, a bad one shakes. Both finite transform/opacity, keyed per attempt so each one replays.
+import { useRef, useState } from 'react';
+import { sndPurchase, sndWordRejected } from '../audio/gameSounds';
 import { redeemCode, normaliseCode, REDEEM_REASONS } from '../leaderboard/client';
 import { formatNum } from '../format';
 
 export default function RedeemCodes() {
   const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState(null); // { ok, text }
+  const [msg, setMsg] = useState(null); // { ok, text, n }
+  const nRef = useRef(0);
+  const say = (ok, text) => {
+    nRef.current += 1;
+    setMsg({ ok, text, n: nRef.current });
+    try { (ok ? sndPurchase : sndWordRejected)(); } catch { /* audio blocked */ }
+  };
   const submit = async (e) => {
     e.preventDefault();
     if (busy) return;
     const code = normaliseCode(value);
     if (code.length < 3) {
-      setMsg({ ok: false, text: REDEEM_REASONS.bad_code });
+      say(false, REDEEM_REASONS.bad_code);
       return;
     }
     setBusy(true);
@@ -30,9 +39,9 @@ export default function RedeemCodes() {
           : r.wins > 0
             ? `+${formatNum(r.wins)} WINS — ADDED`
             : 'REDEEMED';
-      setMsg({ ok: true, text });
+      say(true, text);
     } else {
-      setMsg({ ok: false, text: REDEEM_REASONS[r.reason] || REDEEM_REASONS.bad_code });
+      say(false, REDEEM_REASONS[r.reason] || REDEEM_REASONS.bad_code);
     }
   };
   return (
@@ -56,7 +65,7 @@ export default function RedeemCodes() {
         </button>
       </div>
       {msg && (
-        <div className={`shop-codes-msg${msg.ok ? ' is-ok' : ' is-bad'}`} role="status">
+        <div key={msg.n} className={`shop-codes-msg${msg.ok ? ' is-ok' : ' is-bad'}`} role="status">
           {msg.text}
         </div>
       )}
