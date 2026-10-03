@@ -172,6 +172,11 @@
     letter-spacing: 0.3px;
     color: var(--row-sub);
   }
+  .hp-m-perk {
+    font-weight: 700;
+    color: var(--row-accent);
+    white-space: nowrap;
+  }
 
   /* A SHORT ROW DROPS ITS DESCRIPTION rather than shrinking the name to a whisper. The same
      sentence is the first line of the mode dialog the row opens, so nothing is lost; the row's
