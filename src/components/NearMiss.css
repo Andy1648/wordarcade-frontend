@@ -9,7 +9,7 @@
   margin: 12px auto 0;
   padding: 10px 16px;
   font-family: 'Bungee', sans-serif;
-  font-size: var(--fs-panel, 20px);
+  font-size: var(--fs-panel);
   line-height: 1.15;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -36,6 +36,8 @@
 /* SAT RUSH's retro-print page: ink on paper, not the neon sticker. */
 .nm-line.is-print {
   font-family: var(--font-head, 'Bungee', sans-serif);
+  font-size: var(--fs-panel);
+  text-transform: uppercase;
   color: var(--ink, #000);
   background: var(--tile, #fff);
   border: 3px solid var(--ink, #000);
