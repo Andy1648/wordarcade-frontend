@@ -15,7 +15,7 @@ import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
-import { queueClaim } from '../progress/claims.js';
+import { queueClaim, codeWordsPayout } from '../progress/claims.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -530,7 +530,7 @@ export async function redeemCode(raw) {
   }
   if (!res || res.error) return { ok: false, reason: (res && REDEEM_REASONS[res.error] && res.error) || 'bad_code' };
   // R10 (migration 010): a code may be a BOOST (×boost_mult on every mode for boost_min minutes) and a
-  // wins code may be PER-LEVEL (wins × the player's level at claim). Before 010 runs the response has
+  // wins code may be PER-LEVEL — since K2 its wins column is a NUMBER OF WORDS at the player's rate. Before 010 runs the response has
   // none of these fields and this is exactly the old wins code. Floats are fine (no-caps).
   const wins = Math.max(0, Number(res.wins) || 0);
   const label = String(res.label || res.code).toUpperCase();
@@ -542,5 +542,5 @@ export async function redeemCode(raw) {
   }
   const perLevel = res.per_level === true;
   queueClaim({ id: `code:${res.code}`, kind: 'code', label: `CODE — ${label}`, amount: wins, meta: perLevel ? { perLevel: true } : undefined });
-  return { ok: true, code: res.code, wins, perLevel, label: res.label || res.code };
+  return { ok: true, code: res.code, wins, perLevel, paid: perLevel ? codeWordsPayout(wins) : wins, label: res.label || res.code };
 }

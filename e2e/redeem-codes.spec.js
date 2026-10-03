@@ -17,7 +17,7 @@ async function boot(page, { live = true, level = 20 } = {}) {
     const json = (b) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
     const CODES = {
       'GIFT-2026': { code: 'GIFT-2026', wins: 25000, label: 'Launch gift' }, // a pre-010 response: no kind fields
-      LEVELUP: { code: 'LEVELUP', wins: 1000, label: 'Level up', kind: 'wins', per_level: true, boost_mult: 3, boost_min: 10 },
+      LEVELUP: { code: 'LEVELUP', wins: 30, label: 'Level up', kind: 'wins', per_level: true, boost_mult: 3, boost_min: 10 },
       TRIPLE: { code: 'TRIPLE', wins: 0, label: 'Triple', kind: 'boost', per_level: false, boost_mult: 3, boost_min: 10 },
     };
     if (!CODES[code]) return json({ error: 'bad_code' });
@@ -72,13 +72,16 @@ test('a DB without migration 007 says codes are not switched on', async ({ page 
 });
 
 // ---- R10 (migration 010): SCALING + BOOST codes — applied at redeem since E4 ----
-test('a PER-LEVEL code pays wins × the level at redeem (LV20 → 1,000 × 20)', async ({ page }) => {
+test('K2: a PER-LEVEL code pays its wins column in WORDS at your rate (30 words), not × level', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   await boot(page);
   await navControl(page, 'shop').click();
   const before = await wins(page);
-  await expect(await redeem(page, 'levelup')).toHaveText(/^\+1.000 WINS × YOUR LEVEL — ADDED$/);
-  await expect.poll(() => wins(page)).toBe(before + 20000);
+  const msg = await redeem(page, 'levelup');
+  await expect(msg).toHaveText(/^\+\S+ WINS \(30 WORDS AT YOUR RATE\) — ADDED$/);
+  await expect.poll(() => wins(page)).toBeGreaterThan(before);
+  const paid = (await wins(page)) - before;
+  expect(paid, 'not the old 30 × LV20').not.toBe(600);
 });
 
 test('a BOOST code starts ×3 on everything at once; a gold pill counts down on the menu, nothing under 13px', async ({ page }) => {

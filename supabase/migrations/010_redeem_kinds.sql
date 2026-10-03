@@ -4,15 +4,17 @@
 --
 -- New columns on public.redeem_codes:
 --   kind        'wins' (default — today's code) | 'boost' (a timed ×boost_mult on EVERY mode)
---   per_level   wins codes only: the payout is wins × the player's level at claim, so a code scales
---               with the player and never goes dead
+--   per_level   wins codes only. K2 (Andy oct2 ~22:15, client-side — no SQL change): the `wins` column
+--               is then a NUMBER OF WORDS, paid at the player's live rate when redeemed (like
+--               achievements), so a code is always worth the same few minutes of play and never goes
+--               dead. (R10 paid wins × level, which went invisible late in a run.)
 --   boost_mult  boost codes: the multiplier (default 3)
 --   boost_min   boost codes: minutes (default 10)
 -- lb_redeem returns them. A client from before this migration ignores them; a client from after it
 -- treats a response WITHOUT them as a plain wins code — so either order of deploy is safe.
 --
 -- HOW ANDY MAKES ONE (Table Editor → redeem_codes → Insert row):
---   scaling:  code LEVELUP, wins 1000, per_level true            → pays 1000 × your level
+--   scaling:  code LEVELUP, wins 30, per_level true              → pays 30 words at your rate
 --   boost:    code TRIPLE,  kind boost, boost_mult 3, boost_min 10 → ×3 on everything for 10 min
 
 alter table public.redeem_codes add column if not exists kind text not null default 'wins';

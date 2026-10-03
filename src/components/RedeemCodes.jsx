@@ -26,7 +26,7 @@ export default function RedeemCodes() {
       const text = r.kind === 'boost'
         ? `BOOST ×${r.mult} · ${r.min} MIN — STARTED`
         : r.perLevel
-          ? `+${formatNum(r.wins)} WINS × YOUR LEVEL — ADDED`
+          ? `+${formatNum(r.paid)} WINS (${formatNum(r.wins)} WORDS AT YOUR RATE) — ADDED`
           : r.wins > 0
             ? `+${formatNum(r.wins)} WINS — ADDED`
             : 'REDEEMED';
