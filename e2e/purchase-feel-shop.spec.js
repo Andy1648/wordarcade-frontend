@@ -79,3 +79,14 @@ test('§2/§3 add zero new infinite animations in the shop', async ({ page }) =>
   // The shop overlay itself runs no infinite loops.
   expect(infinite, 'infinite animations while the shop is open').toBe(0);
 });
+
+// K1 (Andy oct2): past T8 a KEY tier is priced in WORDS at your rate — the card says how many.
+test('K1: past T8 the KEY card names the next tier in words; inside the v8 table it does not', async ({ page }) => {
+  await openShop(page, { wins: 5, keytier: 9 }); // standing at T9 → T10 = 40 × 1.2 = 48 words
+  await expect(page.locator('.shop-keypower:not(.shop-forge) .shop-kp-rate')).toContainText('NEXT TIER = 48 WORDS');
+});
+test('K1: inside the v8 table the KEY card has no words line', async ({ page }) => {
+  await openShop(page, { wins: 5, keytier: 3 });
+  await expect(page.locator('.shop-keypower:not(.shop-forge) .shop-kp-rate')).toContainText('WINS / WORD');
+  await expect(page.locator('.shop-keypower:not(.shop-forge) .shop-kp-rate')).not.toContainText('NEXT TIER =');
+});

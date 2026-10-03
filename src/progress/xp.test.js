@@ -13,6 +13,9 @@ import {
   REBIRTH_MULT_STEP,
   TIER_XP_STEP,
   TIER_COST_STEP,
+  KEY_PRICE_WORDS,
+  KEY_PRICE_WORD_STEP,
+  keyTierWords,
   round10,
   levelFromXp,
   creditXp,
@@ -231,14 +234,26 @@ test('keyTierXp: the v8 table, then ×2.5 a tier forever (T1 = 25)', () => {
   assert.equal(keyTierXp(undefined), 10);
 });
 
-test('keyTierCostAt: the v8 prices — 10 · 6^(t-1) wins, flat (no rebirth scaling)', () => {
+test('keyTierCostAt: the v8 prices through T8 — 10 · 6^(t-1) wins, flat (no rebirth scaling)', () => {
   const costs = [0, 10, 60, 360, 2160, 12960, 77760, 466560, 2799360];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t, 0), c, `T${t} cost`));
   assert.equal(TIER_COST_STEP, 6);
-  assert.equal(keyTierCostAt(9, 0), round10(2799360 * 6));
-  for (let t = 1; t <= 300; t++) assert.ok(keyTierCostAt(t, 0) > keyTierCostAt(t - 1, 0), `T${t} rising`);
+  for (let t = 1; t <= 8; t++) assert.ok(keyTierCostAt(t, 0) > keyTierCostAt(t - 1, 0), `T${t} rising`);
   assert.equal(keyTierCostAt(5, 7), keyTierCostAt(5, 0), 'flat across rebirths');
   assert.equal(keyTierCost(4), keyTierCostAt(5));
+});
+
+test('K1: past T8 a tier costs WORDS at your rate — T9 = KEY_PRICE_WORDS, ×1.2 words a tier', () => {
+  assert.equal(keyTierWords(8), 0, 'the v8 table is priced in wins');
+  assert.equal(keyTierWords(9), KEY_PRICE_WORDS);
+  assert.equal(KEY_PRICE_WORD_STEP, 1.2);
+  for (let t = 10; t <= 60; t++) assert.ok(Math.abs(keyTierWords(t) / keyTierWords(t - 1) - 1.2) < 1e-9, `T${t} ×1.2 words`);
+  // the price is those words × the reference word (5 letters) at the tier being LEFT, × rebirth
+  assert.equal(keyTierCostAt(9, 0), round10(KEY_PRICE_WORDS * ((keyTierXp(8) * 5) / 10)));
+  assert.equal(keyTierCostAt(12, 3), round10(keyTierWords(12) * ((keyTierXp(11) * 5) / 10) * rebirthMult(3)));
+  // so in WINS each tier still rises (×2.5 effect × ×1.2 words), and XP keeps ×2.5 forever
+  for (let t = 10; t <= 300; t++) assert.ok(keyTierCostAt(t, 0) > keyTierCostAt(t - 1, 0), `T${t} rising`);
+  assert.equal(keyTierXp(40) / keyTierXp(39) > 2.4, true);
 });
 
 test('NO CAPS: T60+ prices and effects are finite and display through the named-suffix ladder', async () => {
@@ -265,8 +280,8 @@ test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () 
 });
 
 test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {
-  // v8 ×6 a tier: exact integers until ~T20 (6^20 ≈ 3.7e15 < 2^53); past that floats, which is fine.
-  for (let t = 0; t <= 18; t += 1) assert.equal(keyTierCostAt(t, 0) % 10, 0, `keyTierCostAt(${t})`);
+  // round10 everywhere: exact integers well past T8; past ~T20 floats, which is fine.
+  for (let t = 0; t <= 14; t += 1) assert.equal(keyTierCostAt(t, 0) % 10, 0, `keyTierCostAt(${t})`);
   assert.equal(KEY_TIERS.length, 9); // T0..T8 tabled for the shop
 });
 
