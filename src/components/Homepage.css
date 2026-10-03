@@ -1277,14 +1277,21 @@ html[data-beat='true'] .homepage-beat-glow {
      at 1280x551) → 82 at 1280x551, 123 at 1920x1080, 164 at 2560x1440, capped at 168. */
   --hb: clamp(68px, min(6.4vw, 17vh), 168px);
   position: absolute;
-  top: clamp(10px, 1.6vh, 20px);
-  left: clamp(12px, 2vw, 24px);
+  /* inset by a share of its own size as well, so the big button clears the frame's top-left corner
+     ornament at 1920 / 2560 instead of sitting on it */
+  top: max(clamp(10px, 1.6vh, 20px), calc(var(--hb) * 0.3));
+  left: max(clamp(12px, 2vw, 24px), calc(var(--hb) * 0.48));
   z-index: 6;
 }
+/* THE GOLDEN BUTTON (Andy: "LEADERBOARD golden button"): a flat gold fill, a darker-gold outline, the
+   hard black offset shadow, an INK trophy and an ink #rank badge. */
 .homepage-nav-btn.homepage-board-hero {
   width: var(--hb);
   height: var(--hb);
   padding: 0;
+  color: #1a0b2e;
+  background: #FFE94A;
+  border-color: #b8a020;
   border-width: max(3px, calc(var(--hb) * 0.04));
   box-shadow: max(4px, calc(var(--hb) * 0.06)) max(4px, calc(var(--hb) * 0.06)) 0 #000;
 }
@@ -1303,9 +1310,9 @@ html[data-beat='true'] .homepage-beat-glow {
   font-weight: 700;
   font-size: max(var(--fs-body), calc(var(--hb) * 0.21));
   line-height: 1;
-  color: #000;
-  background: #FFE94A;
-  border: max(2px, calc(var(--hb) * 0.025)) solid #a8800f;
+  color: #FFE94A;
+  background: #1a0b2e;
+  border: max(2px, calc(var(--hb) * 0.025)) solid #000;
   border-radius: 6px;
   box-shadow: max(2px, calc(var(--hb) * 0.03)) max(2px, calc(var(--hb) * 0.03)) 0 #000;
   transform: rotate(-4deg);

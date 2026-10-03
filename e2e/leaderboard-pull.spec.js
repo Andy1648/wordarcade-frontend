@@ -117,6 +117,8 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   // 5. Opening the board reads the news.
   await trophy.click();
   await expect(page.locator('.lb-row.is-me')).toHaveAttribute('data-rank', '3');
+  // H2a: the board shows the climb the menu announced (#4 → #3), through the real menu path
+  await expect(page.locator('.lb-row.is-me .lb-move')).toHaveText('▲1');
   await page.locator('.lb-close').click();
   // N3: the board icon wears your rank (#N); once seen, the 'rank went up' news is gone
   await expect(page.getByRole('button', { name: /Open leaderboard/ })).toHaveAttribute('aria-label', /^Open leaderboard — you're #\d+$/);

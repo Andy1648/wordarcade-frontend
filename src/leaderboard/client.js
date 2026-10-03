@@ -497,8 +497,16 @@ const LAST_RANK_KEY = 'taw.lb.lastRank';
 const RANK_NEWS_KEY = 'taw.lb.rankNews';
 // H2a: where an UNSEEN rise started. The menu's checkRankUp moves lastRank to the new rank, so by the
 // time the board opens lastRank already equals it — this keeps the "from" for the board's ▲N slide.
-// Held until the board is opened (the oldest unseen rank wins, so two rises read as one bigger one).
+// Held until the board has LOADED (the oldest unseen rank wins, so two rises read as one bigger one).
+// It is independent of the trophy's news flag: the menu clears that flag the moment the trophy is
+// tapped, before the board has read anything, so the board must not depend on it.
 const RANK_FROM_KEY = 'taw.lb.rankFrom';
+// Bumped every time the board is opened. A checkRankUp that STARTED before an open must not write
+// when it lands after it — or a stale result would re-raise the news / rankFrom the board just
+// consumed, and the next open would replay the same ▲N.
+let boardSeenEpoch = 0;
+export function markBoardSeen() { boardSeenEpoch += 1; }
+export function getBoardSeenEpoch() { return boardSeenEpoch; }
 export function getRankFrom() {
   try { const n = Number(localStorage.getItem(RANK_FROM_KEY)); return Number.isFinite(n) && n > 0 ? n : null; } catch { return null; }
 }
@@ -512,7 +520,7 @@ export function clearRankFrom() {
 export function rankMoveSinceSeen(now) {
   const to = Number(now);
   if (!Number.isFinite(to) || to <= 0) return null;
-  const from = (hasRankNews() && getRankFrom()) || getLastRank();
+  const from = getRankFrom() || getLastRank();
   return from && to < from ? { from, to } : null;
 }
 export function getLastRank() {
@@ -533,13 +541,20 @@ export function setRankNews(on) {
  * { from, to } when it IMPROVED (and raises the trophy-badge flag), else null. Stores the new rank
  * either way, so a drop never shows a moment and the next rise is measured from the truth.
  */
-export async function checkRankUp() {
+export async function checkRankUp(epoch = boardSeenEpoch) {
   const now = await fetchMyRank();
   if (!now) return null;
+  // the board was opened since this check began: it already took the baseline; this result is stale
+  if (epoch !== boardSeenEpoch) return null;
+  return applyRankCheck(now);
+}
+
+/** The storage half of checkRankUp, given the live rank (exported for the unit test). */
+export function applyRankCheck(now) {
   const before = getLastRank();
   setLastRank(now);
   if (before && now < before) {
-    try { if (!(hasRankNews() && getRankFrom())) localStorage.setItem(RANK_FROM_KEY, String(before)); } catch { /* ignore */ }
+    try { if (!getRankFrom()) localStorage.setItem(RANK_FROM_KEY, String(before)); } catch { /* ignore */ }
     setRankNews(true);
     return { from: before, to: now };
   }

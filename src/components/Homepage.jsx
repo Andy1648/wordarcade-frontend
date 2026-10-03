@@ -49,7 +49,7 @@ import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { formatNum } from '../format';
 import TrophyIcon from './TrophyIcon';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
@@ -827,7 +827,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   function handleLeaderboard() {
     if (navigating) return;
     sound.click();
-    setRankNews(false); // opening the board is reading the news
+    setRankNews(false); // opening the board is reading the news (the board reads rankFrom, not this flag)
+    markBoardSeen(); // an in-flight menu rank check must not re-raise the news after this open
     setBoardNews(false);
     if (onLeaderboard) onLeaderboard();
   }
@@ -878,8 +879,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   useEffect(() => {
     let live = true;
+    // H2a: the epoch is taken NOW, before the push — if the board is opened while this chain is in
+    // flight, the late result is dropped instead of re-raising news the board already consumed.
+    const epoch = getBoardSeenEpoch();
     submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
-      .then(() => checkRankUp())
+      .then(() => checkRankUp(epoch))
       .then((r) => {
         if (live && r) {
           setRankUp(r);
