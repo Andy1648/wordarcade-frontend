@@ -105,9 +105,26 @@ const DRIPS = [
 // Same pieces, same art, a new place per menu tier (sceneLayout.js; tier 0 = the layout above).
 // The 22 pieces are numbered splatters → tags → stickers so one shuffled grid spreads all of them.
 const N_PIECES = WALL_SPLATTERS.length + TAGS.length + STICKERS.length;
+// H2b (Andy oct3): a new wall also SHIFTS ITS COLOURS — the same five house colours rotate across the same
+// pieces per wall tier (tier 0 = the hand-picked colours), so even dim, at rest, the new world reads as new.
+// Static (costs nothing), no new art.
+const PALETTE = [PINK, CYAN, YELLOW, ORANGE, PURPLE];
+const HEX = PALETTE.map((c) => c.fill.toLowerCase());
+function shiftC(c, tier) {
+  const i = PALETTE.indexOf(c);
+  return i < 0 || !tier ? c : PALETTE[(i + tier) % PALETTE.length];
+}
+function shiftHex(hex, tier) {
+  const i = HEX.indexOf(String(hex).toLowerCase());
+  return i < 0 || !tier ? hex : PALETTE[(i + tier) % PALETTE.length].fill;
+}
 function placed(tier) {
   const p = scenePositions(N_PIECES, tier);
-  const at = (item, i) => (p ? { ...item, top: p[i].top, left: p[i].left, rot: p[i].rot } : item);
+  const at = (item, i) => {
+    const moved = p ? { ...item, top: p[i].top, left: p[i].left, rot: p[i].rot } : item;
+    if (!tier) return moved;
+    return moved.c ? { ...moved, c: shiftC(moved.c, tier) } : moved.color ? { ...moved, color: shiftHex(moved.color, tier) } : moved;
+  };
   const s0 = WALL_SPLATTERS.length;
   const t0 = s0 + TAGS.length;
   return {
@@ -246,6 +263,7 @@ function WallScene({ intensity = 'calm', resetKey }) {
         if (!live) return;
         m.runWallFx(paneRef.current, flatPositions(fx.from), flatPositions(fx.to), { reduce: fx.reduce });
         setStamp({ to: fx.to, key: Date.now(), Stamp: m.WallStamp });
+        if (!fx.reduce) timers.push(setTimeout(() => m.liftSound(), 150));
         timers.push(setTimeout(() => m.landSound(), 900));
         timers.push(setTimeout(() => live && setStamp(null), WALL_FX_MS));
       })
