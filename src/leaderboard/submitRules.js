@@ -1,0 +1,81 @@
+// submitRules.js — the board-row write rule of supabase/migrations/017_board_reality.sql, as a pure
+// JS function (no DOM, no fetch), so node:test can pin every branch and the e2e board mock can apply it.
+//
+// KEEP IN SYNC WITH private.lb_board_write in 017_board_reality.sql: the same branches in the same
+// order, the same constants. A change to one is a change to both.
+//
+//   1. first submit (no submitted_at)      → BASELINE as submitted, no weekly words
+//   2. < 5 s since the last accepted submit → THROTTLED (nothing written)
+//   3. any number LOWER than stored         → RESET: a new baseline (017). Lowering numbers can never
+//      (rebirths, words, letters, or level      help a cheater climb. Values lower than stored are written
+//       at the same rebirth count)              as submitted; anything that went UP in the same submit is
+//                                               still bounded (the mixed case below). No weekly words.
+//   4. otherwise                            → INCREASE: rate-checked exactly as 011/013/015 —
+//                                               words > 20/s or letters > 150/s → REJECTED;
+//                                               rebirths rise ≤ 1 per submit; level rise ≤ 0.5/s since the
+//                                               last accepted submit (banking ≤ 20 min = 600 levels), counted
+//                                               from 1 after a rebirth; weekly words += the words delta.
+//
+// MIXED CASE (a reset that also went UP somewhere — e.g. rebirths 7 → 0 but level 12 → 175): the level is
+// capped at max(stored level, 1 + allowance) — the 015 clamp COUNTED FROM 1, because a reset restarts the
+// climb at 1, but never forced below what the row already showed (that level was already on the board, so
+// keeping it is not a climb; the lowered rebirths/words already drop the row). Rebirths rise ≤ 1; words and
+// letters that went up are capped at the rate limit (20/s, 150/s) instead of rejecting the submit.
+
+export const THROTTLE_MS = 5000;
+export const WORDS_PER_SEC = 20;
+export const LETTERS_PER_SEC = 150;
+export const LEVELS_PER_SEC = 0.5;
+export const LEVEL_BANK_SECS = 1200;
+
+const int = (v, min, dflt) => {
+  const n = Number(v);
+  return Math.max(min, Number.isFinite(n) ? Math.floor(n) : dflt);
+};
+
+/**
+ * @param {{level:number, rebirths:number, lifetime_words:number, lifetime_letters:number, submitted_at:number|null}} old
+ *   the stored row (submitted_at in ms since epoch, null = never submitted)
+ * @param {{level:number, rebirths:number, words:number, letters:number}} sub  the submitted values
+ * @param {number} now  ms since epoch
+ * @returns {{action:'first'|'throttled'|'reset'|'increase'|'rejected', row?:object, weekDelta?:number}}
+ *   `row` is what gets written (level, rebirths, lifetime_words, lifetime_letters, submitted_at)
+ */
+export function decideSubmit(old, sub, now) {
+  const lv = int(sub.level, 1, 1);
+  const rb = int(sub.rebirths, 0, 0);
+  const w = int(sub.words, 0, 0);
+  const l = int(sub.letters, 0, 0);
+  const write = (level, rebirths, words, letters) => ({ level, rebirths, lifetime_words: words, lifetime_letters: letters, submitted_at: now });
+
+  if (old.submitted_at == null) return { action: 'first', row: write(lv, rb, w, l), weekDelta: 0 };
+  // SQL: submitted_at >= now() - interval '5 seconds' → throttled
+  if (old.submitted_at >= now - THROTTLE_MS) return { action: 'throttled' };
+
+  const oLv = int(old.level, 1, 1);
+  const oRb = int(old.rebirths, 0, 0);
+  const oW = int(old.lifetime_words, 0, 0);
+  const oL = int(old.lifetime_letters, 0, 0);
+  const secs = Math.max(1, (now - old.submitted_at) / 1000);
+  const maxRise = Math.max(1, Math.floor(Math.min(secs, LEVEL_BANK_SECS) * LEVELS_PER_SEC));
+
+  if (rb < oRb || w < oW || l < oL || (lv < oLv && rb === oRb)) {
+    // 017 RESET → new baseline
+    return {
+      action: 'reset',
+      row: write(
+        Math.min(lv, Math.max(oLv, 1 + maxRise)),
+        Math.min(rb, oRb + 1),
+        Math.min(w, oW + Math.floor(WORDS_PER_SEC * secs)),
+        Math.min(l, oL + Math.floor(LETTERS_PER_SEC * secs)),
+      ),
+      weekDelta: 0,
+    };
+  }
+
+  if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected' };
+  if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected' };
+  const rb2 = Math.min(rb, oRb + 1);
+  const base = rb2 > oRb ? 1 : oLv;
+  return { action: 'increase', row: write(Math.min(lv, base + maxRise), rb2, w, l), weekDelta: Math.max(0, w - oW) };
+}

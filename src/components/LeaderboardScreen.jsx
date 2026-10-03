@@ -21,6 +21,7 @@ import {
   setLastRank,
   setRankNews,
   boardCaps,
+  rowEconCurrent,
   getSecret,
   adoptRecoveryCode,
   rankMoveSinceSeen,
@@ -74,7 +75,7 @@ function NameTag({ name, rebirths }) {
     <span
       className={`lb-name${t.frame ? ' is-framed' : ''}`}
       style={{ color: t.colour, '--rb': t.colour }}
-      title={rebirths > 0 ? `${rebirths} rebirth${rebirths === 1 ? '' : 's'} — ${t.name}` : undefined}
+      title={rebirths > 0 ? `${fmt(rebirths)} rebirth${rebirths === 1 ? '' : 's'} — ${t.name}` : undefined}
     >
       {name}
     </span>
@@ -92,14 +93,14 @@ const fmtRate = (n) => formatRate(Number(n) || 0);
 function MoveChip({ move }) {
   if (!move || !(move.from > move.to)) return null;
   const n = move.from - move.to;
-  return <span className="lb-move" aria-label={`up ${n} place${n === 1 ? '' : 's'} since you last looked`}>▲{n}</span>;
+  return <span className="lb-move" aria-label={`up ${fmt(n)} place${n === 1 ? '' : 's'} since you last looked`}>▲{fmt(n)}</span>;
 }
 
 function Row({ row, mine, flash, move }) {
   const top = row.rank <= 3 ? ` is-top${row.rank}` : '';
   return (
     <li className={`lb-row${top}${mine ? ' is-me' : ''}${mine && flash ? ' is-flash' : ''}`} data-rank={row.rank}>
-      <span className="lb-rank">{row.rank}</span>
+      <span className="lb-rank">{fmt(row.rank)}</span>
       <span className="lb-who">
         <span className="lb-name-line">
           <NameTag name={row.username} rebirths={row.rebirths} />
@@ -111,7 +112,9 @@ function Row({ row, mine, flash, move }) {
       </span>
       {/* LV is the headline — the board ranks by LEVEL only (rebirth is just the name's colour). */}
       <span className="lb-num lb-level">LV {fmt(row.level)}</span>
-      <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 ? fmtRate(row.wins_per_word) : '—'}</span>
+      {/* 017: "—" for a row with no words, or one that hasn't submitted on the current economy (econ < 10) —
+          never a stale number from an old curve; it recomputes on that player's next v10 submit */}
+      <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 && rowEconCurrent(row) ? fmtRate(row.wins_per_word) : '—'}</span>
     </li>
   );
 }
@@ -121,7 +124,7 @@ function WeekRow({ row, mine }) {
   const top = row.rank <= 3 ? ` is-top${row.rank}` : '';
   return (
     <li className={`lb-row lb-row--week${top}${mine ? ' is-me' : ''}`} data-rank={row.rank}>
-      <span className="lb-rank">{row.rank}</span>
+      <span className="lb-rank">{fmt(row.rank)}</span>
       <span className="lb-who">
         <span className="lb-name-line">
           <NameTag name={row.username} rebirths={row.rebirths} />
@@ -401,11 +404,11 @@ export default function LeaderboardScreen({ onBack }) {
                 <span className="lb-you-rank">
                   {/* no place yet: a line, not a giant dash in the hero's numeral slot */}
                   {view === 'week'
-                    ? (weekMe ? <>#{weekMe.rank}<span className="lb-you-rank-sub"> THIS WEEK</span></> : <span className="lb-you-rank-sub">NOT ON THIS WEEK’S BOARD YET</span>)
-                    : (meRow ? `#${meRow.rank}` : <span className="lb-you-rank-sub">NOT RANKED YET</span>)}
+                    ? (weekMe ? <>#{fmt(weekMe.rank)}<span className="lb-you-rank-sub"> THIS WEEK</span></> : <span className="lb-you-rank-sub">NOT ON THIS WEEK’S BOARD YET</span>)
+                    : (meRow ? `#${fmt(meRow.rank)}` : <span className="lb-you-rank-sub">NOT RANKED YET</span>)}
                 </span>
                 {view === 'all' && heroMove > 0 && (
-                  <span className="lb-hero-move">▲{heroMove}<span className="lb-long"> SINCE LAST LOOK</span></span>
+                  <span className="lb-hero-move">▲{fmt(heroMove)}<span className="lb-long"> SINCE LAST LOOK</span></span>
                 )}
                 {longTarget && (
                   <span className="lb-hero-target">
@@ -532,7 +535,7 @@ export default function LeaderboardScreen({ onBack }) {
                   const first = !profile; // every open place is a way in for an unclaimed viewer
                   return (
                     <li key={`slot-${n}`} className={`lb-slot${first && i === 0 ? ' is-open' : ''}`} data-rank={n}>
-                      <span className="lb-rank">{n}</span>
+                      <span className="lb-rank">{fmt(n)}</span>
                       {first ? (
                         <button type="button" className="lb-slot-btn" onClick={() => { setEditing(true); const el = document.getElementById('lb-name-input'); if (el) el.focus(); }}>
                           YOUR NAME HERE?
@@ -559,10 +562,10 @@ export default function LeaderboardScreen({ onBack }) {
           </div>
         </div>
         {LEADERBOARD_ENABLED && profile && pinRow && meHidden && (
-          <button type="button" className="lb-pin-btn" onClick={showMe} aria-label={`You are #${pinRow.rank}. Show my row`}>
-            <span className="lb-pin-rank">#{pinRow.rank}</span>
+          <button type="button" className="lb-pin-btn" onClick={showMe} aria-label={`You are #${fmt(pinRow.rank)}. Show my row`}>
+            <span className="lb-pin-rank">#{fmt(pinRow.rank)}</span>
             <span className="lb-pin-name">{profile.username}</span>
-            {view === 'all' && heroMove > 0 && <span className="lb-pin-move">▲{heroMove}</span>}
+            {view === 'all' && heroMove > 0 && <span className="lb-pin-move">▲{fmt(heroMove)}</span>}
             <span className="lb-pin-go">SHOW ME ▼</span>
           </button>
         )}
