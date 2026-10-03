@@ -272,7 +272,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // H6 audit M2: the tag says what it is — "(×69.06 BONUS)", with the stack it multiplies in the tooltip.
   const built = rateNow ? rateNow.mult / (rateNow.factors.mode || 1) : 1;
   const multTag = rateNow && Math.abs(built - 1) > 1e-9 && (
-    <span className="game-card-payout-mult" title="YOUR BONUS: rebirths × streak × marks × mastery × stars"> (×{formatMultExact(built)} BONUS)</span>
+    <span className="game-card-payout-mult" title="YOUR BONUS: rebirths × streak × marks × mastery × stars"> (×{formatMultExact(built)}<span className="game-card-bonus-word"> BONUS</span>)</span>
   );
   // THE PERK LINE replaced the XP / WORD line (Andy oct2: "remove XP per word from game-mode
   // screens"; the card's number is the BASE, and it should say what makes a word worth MORE).

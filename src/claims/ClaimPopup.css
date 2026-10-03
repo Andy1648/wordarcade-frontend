@@ -122,3 +122,25 @@
   }
 }
 
+
+/* oct3: the PHONE popup sits IN FLOW in the menu (MobileMenu's claim slot) instead of fixed over the title row. */
+.claim-pop.claim-pop--inline {
+  position: static;
+  inset: auto;
+  transform: none;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  flex: 0 0 auto;
+  animation: claim-pop-inline-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes claim-pop-inline-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .claim-pop.claim-pop--inline { animation: none; }
+}
+@media (max-width: 480px) {
+  .hp-m[data-nav='top'] > .claim-pop--inline { order: -1; }
+}

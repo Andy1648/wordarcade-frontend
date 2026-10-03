@@ -181,6 +181,7 @@ export default function MobileMenu({
   level = null,
   levelFrac = 0,
   wins = 0,
+  claimSlot = null,
 }) {
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
@@ -239,6 +240,10 @@ export default function MobileMenu({
           <span className="hp-m-stats-wins" data-wins={wins || 0}>{formatNum(wins || 0)}<span className="hp-m-stats-k">WINS</span></span>
         </div>
       )}
+
+      {/* 1a'. REWARDS WAITING, IN FLOW (oct3 live check): the fixed top popup covered the title row — the gold
+             podium button included. On the phone it sits here under the LV strip; the mode rows flex shorter. */}
+      {claimSlot}
 
       {/* 1b. FIRST VISIT ONLY: "TYPE A WORD 👇" + an input. The search visitors who land here
              from the "type a word" trend get exactly that, then one tap into solo Word Bomb.
