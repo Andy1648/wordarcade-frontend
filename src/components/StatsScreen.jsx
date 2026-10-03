@@ -194,7 +194,7 @@ export default function StatsScreen({ onBack }) {
   // XP stack: Key Power (base) × rebirth × equipped cosmetics × streak — MENU XP / LETTER below
   // is the full product (matches the live keystroke pop), BASE XP / LETTER is just the Key Power tier.
   const multipliers = [
-    ['KEY POWER', `T${keyTier}`],
+    ['KEY POWER', `TIER ${keyTier}`], // H6/M14: one spelling of the tier everywhere
     ['BASE XP / LETTER', fmt(baseXp)],
     ['REBIRTH', x(rbMult)],
     ['MENU XP / LETTER', fmt(menuXp)],
