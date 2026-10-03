@@ -77,7 +77,8 @@ test('a PER-LEVEL code pays wins × the level at redeem (LV20 → 1,000 × 20)',
   await boot(page);
   await navControl(page, 'shop').click();
   const before = await wins(page);
-  await expect(await redeem(page, 'levelup')).toHaveText(/^\+1.000 WINS × YOUR LEVEL — ADDED$/);
+  // H2d: the line says what was ADDED (1,000 × LV20), not the formula.
+  await expect(await redeem(page, 'levelup')).toHaveText(/^\+20K WINS — ADDED$/);
   await expect.poll(() => wins(page)).toBe(before + 20000);
 });
 

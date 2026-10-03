@@ -7,6 +7,7 @@ import { useRef, useState } from 'react';
 import { sndPurchase, sndWordRejected } from '../audio/gameSounds';
 import { redeemCode, normaliseCode, REDEEM_REASONS } from '../leaderboard/client';
 import { formatNum } from '../format';
+import { claimAmount } from '../progress/claims';
 
 export default function RedeemCodes() {
   const [value, setValue] = useState('');
@@ -35,7 +36,9 @@ export default function RedeemCodes() {
       const text = r.kind === 'boost'
         ? `BOOST ×${r.mult} · ${r.min} MIN — STARTED`
         : r.perLevel
-          ? `+${formatNum(r.wins)} WINS × YOUR LEVEL — ADDED`
+          // H2d: say what was ADDED (base × your level, the same claimAmount the credit used), not a
+          // formula — "+1,000 WINS × YOUR LEVEL" left the player to do the multiplication.
+          ? `+${formatNum(claimAmount({ amount: r.wins, meta: { perLevel: true } }))} WINS — ADDED`
           : r.wins > 0
             ? `+${formatNum(r.wins)} WINS — ADDED`
             : 'REDEEMED';

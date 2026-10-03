@@ -66,6 +66,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
+  const kpRateNow = perWordWins({ mode: 'wordBomb' });
+  const kpRateNext = perWordWins({ mode: 'wordBomb', keyTier: keyTier + 1 });
+  const kpXpStep = keyTierXp(keyTier) > 0 ? keyTierXp(keyTier + 1) / keyTierXp(keyTier) : 1;
   const fBuys = forgeBuys(forge);
   // E4: systems open the moment they unlock (no claim step), so reaching the level IS open
   const forgeOpen = layerOpen('forge') || fBuys > 0 || level >= FORGE_UNLOCK_LEVEL;
@@ -113,7 +116,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       kind: 'keypower',
       // H6/M14: "TIER n" everywhere (the shop heading, stats and the ceremony say the same).
       name: `KEY POWER TIER ${t}${n > 1 ? ` (+${n})` : ''}`,
-      blurb: `Every letter now pays ${formatNum(keyTierXp(t))} XP.`,
+      // H2d: say it in the unit the tier is bought with (WINS), for the mode the shop quotes.
+      blurb: `Now ${formatRate(perWordWins({ mode: 'wordBomb', keyTier: t }))} WINS / WORD in WORD BOMB.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: t >= 5 ? '#FFD54A' : '#2EFFE0',
       tier: t,
@@ -148,7 +152,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const revealForge = (letter, level, n, spent) => {
     setReveal({
       kind: 'forge',
-      name: n > 1 ? `FORGED ×${n}` : `${letter.toUpperCase()} FORGED — LV ${level}`,
+      // H2d: "×N" is for multipliers only; a run of N buys is "+N" (as KEY POWER's sticker says).
+      name: n > 1 ? `FORGED +${n}` : `${letter.toUpperCase()} FORGED — LV ${level}`,
       blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word now pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: '#FF6B3D',
@@ -229,22 +234,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
-                {/* Current XP per letter at this tier. */}
+                {/* H2d ONE BIG NUMBER: what the tier buys, in the unit it is bought with — the WINS / WORD
+                    rate now → at the next tier. It used to lead with XP PER LETTER (a second unit) and
+                    print the price three times (NEXT TIER line, goal line, button); the price now lives
+                    on the button, the gap in the goal line. XP rises by the same factor (one stack). */}
                 <div className="shop-kp-current">
-                  <b>{formatNum(keyTierXp(keyTier))}</b> XP PER LETTER
+                  <b>{formatRate(kpRateNow)}</b> → <b>{formatRate(kpRateNext)}</b> WINS / WORD
                 </div>
-                {/* What the NEXT tier gives + what it costs. HOLD the buy button to keep buying, or BUY MAX. */}
-                <div className="shop-kp-next">
-                  NEXT TIER: <b>{formatNum(keyTierXp(keyTier + 1))} XP</b>
-                  {'  ·  '}
-                  <b>
-                    <span className="shop-coin" aria-hidden="true" /> {formatNum(keyTierCost(keyTier))} WINS
-                  </b>
-                </div>
-                {/* Your current per-word win rate — context for how far the tier cost is. */}
-                {/* H6/M13: the tier is priced in WINS, so say what it does to the WINS rate. */}
                 <div className="shop-kp-rate">
-                  YOUR RATE: <b>{formatRate(perWordWins({ mode: 'wordBomb' }))}</b> → <b>{formatRate(perWordWins({ mode: 'wordBomb', keyTier: keyTier + 1 }))} WINS / WORD</b> AT TIER {keyTier + 1}
+                  AT TIER {keyTier + 1} · WORD BOMB · XP ×{formatMult(kpXpStep)} TOO
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
@@ -288,10 +286,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             <div className="shop-keypower shop-forge">
               <div className="shop-kp-info">
                 <ForgeStrip levels={forge} next={fNext} />
+                {/* H2d: the price is on the button (the gap in the goal line) — not a third time here. */}
                 <div className="shop-kp-next">
                   NEXT: <b>{fNext.toUpperCase()} → LV {fNextLv}</b>
-                  {'  ·  '}
-                  <b><span className="shop-coin" aria-hidden="true" /> {formatNum(fCost)} WINS</b>
                 </div>
                 <div className="shop-kp-rate">
                   +{Math.round(FORGE_PCT * 100)}% PER FORGE LEVEL OF EACH LETTER IN THE WORD · NO CAP
@@ -385,9 +382,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                     : `NEXT ★ IN ${advice.nextIn} LEVELS · NOW IS FINE`}
                 </div>
               )}
-              <div className="shop-rb-now">
-                NOW ×{formatMult(rebirthMult(rebirths))} · {rebirths} REBIRTH{rebirths === 1 ? '' : 'S'}
-              </div>
+              {/* H2d: the "NOW ×9 · 8 REBIRTHS" line went — GAIN below says ×9 → ×10, and the label's
+                  REBIRTH n already says how many came before. */}
             </div>
 
             {/* §3 — rebirth always shows how far to the next rebirth + progress. */}
@@ -427,7 +423,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               )
             ) : (
               <button type="button" className="shop-rebirth" disabled aria-disabled="true">
-                REACH LEVEL {threshold} TO REBIRTH — YOU'RE LV {level}
+                {/* H2d: the goal line above already says how many levels to go and LV n / gate. */}
+                REBIRTH AT LV {threshold}
               </button>
             )}
 
