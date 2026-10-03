@@ -29,7 +29,7 @@ fs.mkdirSync(OUT, { recursive: true });
 // Until then this is a RATCHET, not a rubber stamp: it pins the number this branch
 // achieved so the payload cannot silently grow back. Lower it whenever it improves.
 const TOTAL_BUDGET = 400_000; // the goal, documented above
-const TOTAL_RATCHET = 1_260_000; // what is actually achievable today; must only go DOWN
+const TOTAL_RATCHET = 960_000; // what is actually achievable today; must only go DOWN (oct3: route chunks warm on the first gesture, not idle → 927,791)
 const MASCOT_BUDGET = 150_000;
 
 function classify(url) {

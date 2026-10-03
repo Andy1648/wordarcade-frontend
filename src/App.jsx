@@ -2456,12 +2456,20 @@ function App() {
       quiet(import('./components/StatsScreen'));
       quiet(import('./components/ShopScreen'));
     };
-    const ric = typeof window !== 'undefined' && window.requestIdleCallback;
-    const id = ric ? ric(warm, { timeout: 2500 }) : setTimeout(warm, 1200);
-    return () => {
-      if (ric && window.cancelIdleCallback) window.cancelIdleCallback(id);
-      else clearTimeout(id);
+    // FIRST GESTURE, not idle (oct3, payload ratchet): a cold, gesture-free load no longer pulls the ~6 route
+    // chunks it may never use. Any pointer move / key / touch / focus warms them — a visitor always moves the
+    // pointer or presses a key before they can click into a screen, so navigation stays instant.
+    if (typeof window === 'undefined') return undefined;
+    const EVENTS = ['pointermove', 'pointerdown', 'keydown', 'touchstart', 'focusin'];
+    let fired = false;
+    const onGesture = () => {
+      if (fired) return;
+      fired = true;
+      EVENTS.forEach((ev) => window.removeEventListener(ev, onGesture, true));
+      warm();
     };
+    EVENTS.forEach((ev) => window.addEventListener(ev, onGesture, { capture: true, passive: true }));
+    return () => EVENTS.forEach((ev) => window.removeEventListener(ev, onGesture, true));
   }, []);
 
   // Pick the screen for the current view. It's wrapped in a single keyed
