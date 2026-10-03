@@ -8,7 +8,7 @@ import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 // carries letters; the board ranks by LEVEL, then words — rebirths not ranked (Andy oct2 evening). Without it the mock is the v1 DB (lb_caps 404s).
 // `weekly` emulates 013_weekly_board.sql (BB3): lb_caps.weekly, a per-submit week_words counter (the
 // first submit is a baseline), and the leaderboard_weekly view (week_words > 0, most first).
-export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false } = {}) {
+export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
   const rows = db.rows;
@@ -56,7 +56,18 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       calls.resetAck = (calls.resetAck || 0) + 1;
       if (!row || !row.reset_all) return json(200, { reset: false, reason: 'not_flagged' });
       saves.set(pid, { blob: body.p_blob, score: String(body.p_score) });
-      Object.assign(row, { level: 1, rebirths: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, reset_all: false });
+      Object.assign(row, { level: 1, rebirths: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, week_words: 0, reset_all: false });
+      return json(200, { reset: true });
+    }
+    // 014_self_reset.sql: flag yourself, then the 012 path above (selfReset:false = 014 not run → 404)
+    if (caps && url.pathname.endsWith('/rpc/lb_self_reset')) {
+      if (!selfReset) return json(404, { code: 'PGRST202', message: 'Could not find the function public.lb_self_reset' });
+      const pid = secrets.get(body.p_secret);
+      if (!pid) return json(400, { message: 'no_profile' });
+      const row = rows.find((r) => r.id === pid);
+      calls.selfReset = (calls.selfReset || 0) + 1;
+      saves.set(pid, { blob: body.p_blob, score: String(body.p_score) });
+      Object.assign(row, { level: 1, rebirths: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, week_words: 0, reset_all: false });
       return json(200, { reset: true });
     }
     if (caps && url.pathname.endsWith('/rpc/lb_submit2')) {

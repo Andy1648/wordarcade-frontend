@@ -255,6 +255,38 @@ export async function obeyDevReset(secret = peekSecret()) {
   }
   return { restored: false, reset: true, acked };
 }
+/**
+ * N2 (Andy oct2): Stats → RESET ALL PROGRESS. Wipes every taw.* progress key but KEEPS the claimed
+ * name + device secret, then asks the server (014 lb_self_reset — the admin reset path from 012) to
+ * overwrite the cloud save with the fresh one and zero the board row. If the server half can't happen
+ * (no name, offline, 014 not run yet) it falls back to the old local reset and drops the name + secret
+ * too — keeping them without a server reset would let the next boot RESTORE the old cloud save (it is
+ * strictly ahead) and silently undo the reset. Returns { server }.
+ */
+export async function selfReset() {
+  const secret = peekSecret();
+  wipeProgressKeys(localStorage, [SECRET_KEY, PROFILE_KEY]);
+  let server = false;
+  if (secret && LEADERBOARD_ENABLED && getMyProfile()) {
+    try {
+      const r = await rpc('lb_self_reset', { p_secret: secret, p_blob: exportSave(), p_score: localScore().toString() });
+      server = !!(r && r.reset);
+    } catch {
+      server = false;
+    }
+  }
+  if (!server) {
+    // the old local-only reset — and the secret's cookie mirror too, or the next boot re-adopts the
+    // secret from it and restores the old cloud save (the same undo, one layer down)
+    wipeProgressKeys(localStorage, []);
+    try {
+      document.cookie = `${SECRET_COOKIE}=; max-age=0; path=/; samesite=lax; secure`;
+    } catch {
+      /* no cookies */
+    }
+  }
+  return { server };
+}
 /** The one-shot "reset by the dev" notice (set by obeyDevReset before the reload): peek, then clear. */
 export function hasDevResetNotice() {
   try {
