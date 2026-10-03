@@ -185,15 +185,13 @@ export default function StatsScreen({ onBack }) {
   // sticker over the menu and now live here and at the word they fire on.
   const hidden = secretsProgress();
   const secrets = secretsCollection();
+  // H7 (oct3): LEVEL, RANK, REBIRTHS and WINS EARNED (ALL-TIME) were printed here a second time —
+  // the PLAYER CARD above already shows all four (LV hero, rank, R-n, WINS EARNED). PROGRESSION now
+  // holds only what the card does not: the XP into this level, and the spendable balance.
   const progression = [
-    ['LEVEL', level],
-    ['RANK', rankTitle(level)], // Job 5 — the level band's name (a string; see the render below)
     // H6/M16: progress with its cost, not a bare number.
     ['XP INTO LEVEL', `${fmt(intoLevel)} / ${fmt(need(level))}`],
-    // ('XP TO NEXT LEVEL' row removed by request — the level + XP-into read is enough.)
-    ['REBIRTHS', rebirths],
     ['WINS BALANCE', getWins()],
-    ['WINS EARNED (ALL-TIME)', getWinsLifetime()],
   ];
   // XP stack: Key Power (base) × rebirth × equipped cosmetics × streak — MENU XP / LETTER below
   // is the full product (matches the live keystroke pop), BASE XP / LETTER is just the Key Power tier.
@@ -313,7 +311,7 @@ export default function StatsScreen({ onBack }) {
             {progression.map(([k, v]) => (
               <div className="stats-row" key={k}>
                 <dt>{k}</dt>
-                {/* progression rows are numeric except RANK (a string) — pass strings through raw. */}
+                {/* numeric rows go through fmt; preformatted strings (XP INTO LEVEL) pass through raw. */}
                 <dd>{typeof v === 'number' ? fmt(v) : v}</dd>
               </div>
             ))}
@@ -409,7 +407,7 @@ export default function StatsScreen({ onBack }) {
                 {satMissing.map((m) => (
                   <div className="stats-row" key={m.w}>
                     <dt>{m.w.toUpperCase()}</dt>
-                    <dd>missed {m.missed}× / {m.seen} seen</dd>
+                    <dd>{/* H2d: a count, not a multiplier — no "×" */}MISSED {fmt(m.missed)} OF {fmt(m.seen)}</dd>
                   </div>
                 ))}
               </dl>

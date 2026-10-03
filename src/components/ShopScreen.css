@@ -655,8 +655,7 @@
 .shop-rb-hero.is-bad {
   border-color: #ff6b3d;
 }
-.shop-rb-hero-label,
-.shop-rb-now {
+.shop-rb-hero-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-label);
@@ -852,4 +851,23 @@
 .shop-grid--compact .shop-card-next {
   top: auto;
   bottom: -10px;
+}
+
+/* H2d/H7 SIZE PASS (oct3): important text sat on the 13px --fs-label token. The goal line ("NEED N
+   MORE WINS", "N LEVELS TO GO") is the one sentence that says what to do next, and a perk's blurb is
+   the only thing that says what ★ buys — both step up to --fs-body. The WINS balance is the shop's
+   spendable number; past phone width (where the header has room) it takes --fs-panel, so it is no
+   longer smaller than the prices it pays. At 360px the REBIRTH title + balance + ✕ leave no room. */
+.shop-goal,
+.shop-perk-blurb {
+  font-size: var(--fs-body);
+}
+@media (min-width: 600px) {
+  .shop-wins {
+    font-size: var(--fs-panel);
+  }
+}
+/* The KEY POWER rate ("39.6M → 99M WINS / WORD") is the card's one big number; it may wrap at 360. */
+.shop-kp-current {
+  flex-wrap: wrap;
 }

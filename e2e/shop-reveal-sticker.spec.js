@@ -101,7 +101,8 @@ test('a key power buy shows the tier and what it pays, and adds no infinite anim
   await page.locator('.shop-keypower').first().locator('.shop-buy').click();
   const sticker = page.locator('.sticker');
   await expect(sticker).toContainText('KEY POWER TIER 1');
-  await expect(sticker).toContainText('XP');
+  // H2d: the tier is bought with WINS, so the sticker says what it does to the WINS rate.
+  await expect(sticker).toContainText('WINS / WORD');
   await expect(sticker.locator('.sticker-coin.is-debit')).toBeVisible();
   // The shell's punch-in is a single finite animation; nothing here may loop.
   const infinite = await page.evaluate(() =>
