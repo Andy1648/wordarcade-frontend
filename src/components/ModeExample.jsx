@@ -118,7 +118,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
               for the player to multiply out (and momentum/level/mark missing from both). */}
           <b style={{ color: accent }}>{formatRate(rateNow.rate)}</b> WINS / WORD
           {Math.abs(rateNow.mult / (rateNow.factors.mode || 1) - 1) > 1e-9 && (
-            <span className="mode-ex-mult"> (×{formatMultExact(rateNow.mult / (rateNow.factors.mode || 1))})</span>
+            <span className="mode-ex-mult" title="YOUR BONUS: rebirths × streak × marks × mastery × stars"> (×{formatMultExact(rateNow.mult / (rateNow.factors.mode || 1))} BONUS)</span>
           )}
         </span>
         <span className="mode-ex-round">{round}</span>
