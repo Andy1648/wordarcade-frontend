@@ -6,12 +6,14 @@
 // Motion: one finite PUNCH on the hero when a new MAIN is set (transform/opacity only); static at rest;
 // reduced motion shows the same states with no movement.
 import { useEffect, useRef, useState } from 'react';
-import { MARKS, MARK_RANK_NAMES, markProgress, markBlurbAt, markMainMult, markTier } from '../progress/marks';
+import { MARKS, MARK_RANK_NAMES, MAX_MARK_RANK, markProgress, markBlurbAt, markMainMult, markTier } from '../progress/marks';
 import MarkBadge from './MarkBadge';
 import { formatNum } from '../format';
 import './MarksIndex.css';
 
 const pct = (m, rank) => Math.round((markMainMult(m, rank) - 1) * 100);
+// the true ceiling — the best mark at MAX rank (the old hard-coded +300% was rank I only)
+const MAX_PCT = Math.max(...MARKS.map((m) => pct(m, MAX_MARK_RANK)));
 
 function Detail({ m, have, on, howTo, onSet }) {
   const p = markProgress(m.id);
@@ -106,7 +108,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               <div className="mx-hero-body">
                 <div className="mx-hero-kicker">NO MAIN YET</div>
                 <div className="mx-hero-name">PICK ONE BELOW</div>
-                <div className="mx-hero-pct">UP TO +300% <span>WINS · EVERY MODE</span></div>
+                <div className="mx-hero-pct">UP TO +{MAX_PCT}% <span>WINS · EVERY MODE</span></div>
               </div>
             )}
           </section>
