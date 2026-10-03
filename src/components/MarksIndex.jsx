@@ -6,7 +6,8 @@
 // Motion: one finite PUNCH on the hero when a new MAIN is set (transform/opacity only); static at rest;
 // reduced motion shows the same states with no movement.
 import { useEffect, useRef, useState } from 'react';
-import { MARKS, MARK_RANK_NAMES, MAX_MARK_RANK, markProgress, markMainMult, markTier } from '../progress/marks';
+import { MARKS, MARK_RANK_NAMES, MAX_MARK_RANK, markProgress, markMainMult, markTier, markBlurbAt } from '../progress/marks';
+import { ACHIEVEMENTS } from '../progress/achievements';
 import MarkBadge from './MarkBadge';
 import { formatNum, formatMultExact as formatMult } from '../format';
 import './MarksIndex.css';
@@ -16,6 +17,11 @@ const pct = (m, rank) => Math.round((markMainMult(m, rank) - 1) * 100);
 const tag = (m, rank) => `MAIN ×${formatMult(markMainMult(m, rank))}`;
 // the true ceiling — the best mark at MAX rank (the old hard-coded +300% was rank I only)
 const MAX_PCT = Math.max(...MARKS.map((m) => pct(m, MAX_MARK_RANK)));
+// H6/M10: "HOW TO GET IT" names the TASK (the achievement's hint), not just the achievement's name,
+// which only meant something in another tab. Secrets stay masked until earned.
+const ACH_HINT = Object.fromEntries(
+  ACHIEVEMENTS.map((a) => [a.id, a.secret ? null : String(a.hint || '').replace(/\.$/, '').toUpperCase()]),
+);
 
 function Detail({ m, have, on, howTo, onSet }) {
   const p = markProgress(m.id);
@@ -28,6 +34,8 @@ function Detail({ m, have, on, howTo, onSet }) {
         <div className="mx-detail-name">{m.name}</div>
         <div className="mx-detail-tier">{tier.name}{have ? ` · RANK ${MARK_RANK_NAMES[rank - 1]}` : ''}</div>
         <div className="mx-detail-pct">{tag(m, rank)}</div>
+        {/* H6/M11: the perk that makes this mark differ from the others of its tier. */}
+        <div className="mx-detail-blurb">+ {markBlurbAt(m, rank).toUpperCase()}</div>
         {have ? (
           <button type="button" className={`mx-set${on ? ' is-on' : ''}`} onClick={() => onSet(on ? null : m.id)}>
             {on ? 'YOUR MAIN — TAKE OFF' : 'SET AS MAIN'}
@@ -74,7 +82,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
       m={selM}
       have={unlocked.has(selM.id)}
       on={equippedId === selM.id}
-      howTo={achievementNames[selM.from] || selM.from}
+      howTo={ACH_HINT[selM.from] ? `${ACH_HINT[selM.from]} (${achievementNames[selM.from] || selM.from})` : (achievementNames[selM.from] || selM.from)}
       onSet={set}
     />
   );

@@ -70,7 +70,7 @@ export const ACHIEVEMENTS = [
   { id: 'reb-1', cat: 'PROGRESSION', name: 'REBIRTH', hint: 'Rebirth for the first time.', base: 5000, test: (s) => s.rebirths >= 1 },
   { id: 'lv-50', cat: 'PROGRESSION', name: 'VETERAN', hint: 'Reach level 50.', base: 20000, test: (s) => s.level >= 50 },
   { id: 'reb-5', cat: 'PROGRESSION', name: 'REBIRTH ×5', hint: 'Rebirth 5 times.', base: 50000, test: (s) => s.rebirths >= 5 },
-  { id: 'lv-300', cat: 'PROGRESSION', name: 'MYTHIC', hint: 'Reach level 300.', base: 500000, test: (s) => s.level >= 300 },
+  { id: 'lv-300', cat: 'PROGRESSION', name: 'ORACLE', hint: 'Reach level 300.', base: 500000, test: (s) => s.level >= 300 },
   // ---- STREAKS ----
   { id: 'streak-3', cat: 'STREAKS', name: 'HABIT', hint: 'Play 3 days in a row.', base: 1000, test: (s) => s.streak >= 3 },
   { id: 'streak-7', cat: 'STREAKS', name: 'DEDICATED', hint: 'Play 7 days in a row.', base: 5000, test: (s) => s.streak >= 7 },
