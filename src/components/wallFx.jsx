@@ -3,6 +3,7 @@
 // initial payload. `a` / `b` are the pieces' old / new positions ({ top, left } in % of the wall).
 import { createPortal } from 'react-dom';
 import { sfx } from '../juice/audio';
+import { formatNum } from '../format';
 import { WALL_LEVELS_PER_TIER } from '../progress/wallTier';
 import { WALL_FX_MS } from './WallScene';
 import './wallFx.css';
@@ -118,7 +119,7 @@ export function WallStamp({ fx }) {
   if (!fx) return null;
   return createPortal(
     <div className="wall-stamp" key={fx.key} aria-live="polite">
-      <div className="wall-stamp-lv">LV {(fx.to * WALL_LEVELS_PER_TIER).toLocaleString('en-US')}</div>
+      <div className="wall-stamp-lv">LV {formatNum(fx.to * WALL_LEVELS_PER_TIER)}</div>
       <div className="wall-stamp-sub">NEW WALL</div>
     </div>,
     document.body,

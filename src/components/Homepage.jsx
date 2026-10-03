@@ -79,6 +79,7 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
+import { formatNum } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import './wall-system.css';
 import './Homepage.css';
@@ -721,8 +722,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const r = runAutomation({ buyKey: buyKeyPower, buyForge });
     if (!r.keys && !r.forges) return undefined;
     const parts = [];
-    if (r.keys) parts.push(`+${r.keys} KEY POWER`);
-    if (r.forges) parts.push(`+${r.forges} FORGE`);
+    if (r.keys) parts.push(`+${formatNum(r.keys)} KEY POWER`);
+    if (r.forges) parts.push(`+${formatNum(r.forges)} FORGE`);
     // H5: an INFO moment on the queue (was an 800 ms guess at clearing the level-up card)
     announceMenu('automation', (done) => {
       if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }
@@ -1135,7 +1136,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               onClick={handleLeaderboard}
               onMouseEnter={() => sfx('hover')}
               disabled={navigating}
-              aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardNews ? ' — your rank went up' : ''}`}
+              aria-label={`Open leaderboard${boardRank ? ` — you're #${formatNum(boardRank)}` : ''}${boardNews ? ' — your rank went up' : ''}`}
               title="Leaderboard"
             >
               {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
@@ -1157,7 +1158,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onClick={claims.length > 0 ? () => setShowClaims(true) : handleStats}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
-            aria-label={claims.length > 0 ? `Open stats — ${claims.length} to claim` : 'Open stats'}
+            aria-label={claims.length > 0 ? `Open stats — ${formatNum(claims.length)} to claim` : 'Open stats'}
           >
             STATS
             {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>}
