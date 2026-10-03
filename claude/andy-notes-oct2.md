@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- 19:50 ✅ prod = latest merge (#174 "3 ROUNDS · 30s EACH" in ModeExample-DM1JMtXc.js) · main CI green on 1f40b4f, 9e3e781 E2E running · board API sane (18 rows, no test rows; NoBuffCookies LV15→17 on econ 10; Xavi's 1e9 still shows "—") · fresh LV1 WB solo on prod played to game-over (6 turns, claude/finetune/prod-checkup-wb.mjs) · 0 console errors
 - 17:55 ✅ prod = latest merge (#166 'LEVEL FLOOR' in index-CT9LmTZ2.js) · main CI green on 0c2cac7, 15ece21 E2E running · board API sane (16 rows, no ZZ test rows; Xavi's stored 1e9 shows '—' in the UI; NoBuffCookies submitted on econ 10 → LV15 R7, matches Andy's v11 note 'R8 LV16') · fresh profile WB solo on prod: 10 turns, all words accepted, won, 0 console errors.
 
 ## UNLOCK TIMES on PV10 (Andy oct3 11:25 asked; Andy 11:26: **FUSE STAYS LV100**) — hours of play to first reach the level
@@ -220,6 +221,7 @@ CHECKUPS (every ~2 h while the goal runs): prod bundle has the latest merge; mai
 - 18:28 ULTRACODE workflow running (5 no-browser jobs: useless-words, number sweep 2, extension specs, confusion audit 2, v11 adversarial review).
 - 18:55 ANDY (chat checkup, live menu 1568x675): every card repeated "LONGER WORDS PAY MORE" + "11.5M WINS / WORD (×27.98 BONUS)" → ONE short line per card ("BASE n / WORD · POWER ×N"), "LONGER WORDS PAY MORE" ONCE on the menu, no ×27.98 decimals (round ≥×10) — DONE in #172 (useless-words), 559/559 local.
 - 19:00 MERGED: #171 extension specs (docs) · #175 the mode-dialog flake fix for real (Escape listener in a layout effect + dialog-quality waits for the lazy dialog; 52/52 ×4 repeats). #172/#173/#174 never got CI (missed webhook) → re-pushed with main merged; on CI.
+- 19:40 MERGED: #174 fix/confusion-2 (live: "3 ROUNDS · 30s EACH"). #170/#172/#173 refreshed onto the new main, back on CI.
 - 19:10 v11 CI (round 2, 08af3404): dead bar PASS ×3 skills · re-climb fast (median first 10 levels 5.5 m → 1.3 m after R1) · KEY first hour median buys @1/1/1.9/1.9/3/8.7/11.9/12.9/24.6/54.9 min · pace min/level LV10/50/100/200: median 0.9/2.2/3.2/4.7 (v10 est. 0.7/5.0/3.6/7.3), casual 1.8/3.8/6.3/10.5, strong 0.6/1.1/1.4/1.8 · median LV100 6.7 h, LV400 111 h. **MASHER FAIL ×2.46 at 10 min (limit ×1.5)** → round 3: menu letter 0.3 of a game letter. Rule P vs v10: 17 windows worse (curve moves by design; list for Andy when v11 is final).
 - Merge v11 only after the CI sim passes. ROLLS TUNING PAUSED until v11 merges (rolls price off the same economy).
 - 17:46 Option F (#166) MERGED (main 15ece21) per Andy's 'apply F'. FLAG: rule P on CI said HOLD — 8 windows worse, all small (casual 20 h shop wait 5.18 → 5.48 min, KEY waits +0.0–0.5 min, median 1 h gap 1.54 → 1.56) — merged on Andy's explicit call, same as N1. v11 decides whether F stays.
