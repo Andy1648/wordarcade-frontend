@@ -1,5 +1,5 @@
 // Homepage.jsx
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
@@ -29,8 +29,7 @@ import ScreenBoundary from './ScreenBoundary';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
 const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
 import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
-import { wornMarkId, markEntry } from '../progress/markRolls';
-import { wearMark } from '../progress/markRollShop';
+import { wornMarkId, markEntry } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -222,6 +221,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // E4: a new mark is owned the moment it unlocks (no inbox), so re-check on every claims event —
   // the MARKS button then says NEW MARK without waiting for the next menu mount.
   const markIdsKey = markUnlocked.map((m) => m.id).join(',');
+  // a STABLE list for MARKS (keyed on its content, not a fresh array per render — the roll review's
+  // must-fix 1: a new array every render made the index re-read storage mid-reveal)
+  const markIdList = useMemo(() => (markIdsKey ? markIdsKey.split(',') : []), [markIdsKey]);
   useEffect(() => {
     if (hasUnseenMarks(markIdsKey ? markIdsKey.split(',') : [])) setMarksNew(true);
   }, [markIdsKey, claims]);
@@ -1313,12 +1315,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>
             <MarksIndex
-              unlockedIds={markUnlocked.map((m) => m.id)}
+              unlockedIds={markIdList}
               equippedId={equippedMark}
               achievementNames={ACH_NAME}
               level={xpProgress.level}
               earned={earnedAch}
-              onEquip={(id) => setEquippedMark(wearMark(id, earnedAch))}
+              onEquip={(id) => setEquippedMark(id)}
               onClose={() => setShowMarks(false)}
             />
           </Suspense>

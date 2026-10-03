@@ -323,8 +323,8 @@ function simulate(skill) {
       }
       lastLumpCtx = null;
     }
-    // Andy M6 (DECIDED oct3): a roll auto-equips only when its MAIN is HIGHER and at most ×1.5 the worn
-    // MAIN; a bigger jump is an "EQUIP?" question (the bot's bestMark() below then keeps the best by value)
+    // Andy M6 (REVISED, PR #156 review): any roll whose MAIN is HIGHER than the worn MAIN auto-equips
+    // (always when nothing is worn); a sidegrade does nothing. The bot's bestMark() below keeps the best by value
     let worn = null;
     try { worn = localStorage.getItem('taw.mark'); } catch { worn = null; }
     if (MR.shouldAutoEquip(res.markId, worn)) {

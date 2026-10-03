@@ -1,8 +1,8 @@
 // markRollShop.test.js — paying for a MARK ROLL: the free starter, the 60-word price charged through the one
-// wins channel, a short balance refused, and the ×1.5 auto-equip / EQUIP? split applied for real.
+// wins channel, a short balance refused, and the equip decision (any higher MAIN) applied only when the reveal lands.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buyMarkRoll, nextRollCost } from './markRollShop.js';
+import { buyMarkRoll, nextRollCost, applyRollEquip } from './markRollShop.js';
 import { ROLL_STATE_KEY, rollPriceNow, loadRollState } from './markRolls.js';
 import { MARKS_EQUIPPED_KEY } from './marks.js';
 
@@ -50,12 +50,23 @@ test('a paid roll charges exactly the price through the balance', () => {
   });
 });
 
-test('nothing worn → the first mark ASKS (×1 → ×2 is over ×1.5) and is not equipped by itself', () => {
+test('nothing worn → the first mark is AUTO, but nothing is equipped until the reveal lands', () => {
   withStorage({ 'taw.wins': '0' }, (m) => {
     const r = buyMarkRoll({ level: 1, rng: at(0) });
-    assert.equal(r.decision, 'ask');
+    assert.equal(r.decision, 'auto');
     assert.equal(r.fromMain, 1);
     assert.equal(r.toMain, 2);
-    assert.equal(m.get(MARKS_EQUIPPED_KEY), undefined);
+    assert.equal(m.get(MARKS_EQUIPPED_KEY), undefined, 'the tap writes no MAIN (no spoiler)');
+    assert.equal(applyRollEquip(r), r.markId, 'the landing equips it');
+    assert.equal(m.get(MARKS_EQUIPPED_KEY), r.markId);
+  });
+});
+
+test('the landing re-checks: a MAIN the player equipped meanwhile is never replaced by a lower one', () => {
+  withStorage({ 'taw.wins': '0', [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: false, marks: { 'mk-kraken': { n: 1 } } }) }, (m) => {
+    const r = buyMarkRoll({ level: 1, rng: at(0) }); // a common
+    m.set(MARKS_EQUIPPED_KEY, 'mk-kraken'); // ×3 worn before the reveal lands
+    assert.equal(applyRollEquip(r), null);
+    assert.equal(m.get(MARKS_EQUIPPED_KEY), 'mk-kraken');
   });
 });

@@ -42,7 +42,8 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
   // a locked rollable mark says its odds
   await page.locator('.mx-tile.is-locked').first().click();
-  await expect(page.locator('.mx-howto')).toContainText('ROLL · 1 IN');
+  await expect(page.locator('.mx-detail-tier')).toContainText('1 IN'); // said once — on the tier line, no repeat
+  await expect(page.locator('.mx-howto')).toHaveCount(0);
   await page.locator('.mx-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×2');
 });

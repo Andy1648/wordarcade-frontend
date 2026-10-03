@@ -8,7 +8,7 @@ import {
   freshState, normalize, rollTable, roll, oneInX, yourOneInX, tierForX, markLevel, perkOf, perkMult,
   mainMultOf, mainTag, perkTag, luck, pityLeft, collection, migrate, rollPriceWords, rollPrice,
   shouldAutoEquip, rollBonusMult, rollAndSave, ensureRollState, equipRolled, loadRollState,
-  ROLL_BASE_WORDS, AUTO_EQUIP_MAX_STEP, equipDecision, wornMainOf,
+  ROLL_BASE_WORDS, equipDecision, wornMainOf,
 } from './markRolls.js';
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY } from './marks.js';
 import { ACHIEVEMENTS } from './achievements.js';
@@ -223,21 +223,21 @@ test('tags: ONE short tag — MAIN ×N or PERK +X%', () => {
   assert.equal(mainMultOf('mk-kraken'), 3);
 });
 
-test('auto-equip (Andy oct3): only a HIGHER MAIN, and only up to ×1.5 of the worn one; bigger jumps ASK', () => {
-  assert.equal(AUTO_EQUIP_MAX_STEP, 1.5);
-  // ×2 → ×2.5 (1.25×) and ×2 → ×3 (exactly 1.5×) are automatic
+test('auto-equip (oct3 review): ANY higher MAIN equips, always when nothing is worn; never asks', () => {
+  // every upgrade is automatic, however big
   assert.equal(equipDecision('mk-detonator', 'mk-sparky'), 'auto');
-  assert.equal(equipDecision('mk-kraken', 'mk-sparky'), 'auto', '×3 is exactly ×1.5 of ×2 — inclusive');
-  assert.equal(shouldAutoEquip('mk-kraken', 'mk-sparky'), true);
-  // ×2 → ×4 (2×) and ×2.5 → ×4 (1.6×) are never automatic — the UI asks EQUIP? ×N → ×M
-  assert.equal(equipDecision('mk-leviathan', 'mk-sparky'), 'ask');
-  assert.equal(equipDecision('mk-origin', 'mk-phoenix'), 'ask');
-  assert.equal(shouldAutoEquip('mk-leviathan', 'mk-sparky'), false);
-  // ×3 → ×4 (1.33×) is automatic
+  assert.equal(equipDecision('mk-kraken', 'mk-sparky'), 'auto');
+  assert.equal(equipDecision('mk-leviathan', 'mk-sparky'), 'auto', '×2 → ×4');
+  assert.equal(equipDecision('mk-origin', 'mk-phoenix'), 'auto', '×2.5 → ×4');
   assert.equal(equipDecision('mk-singularity', 'mk-eclipse'), 'auto');
-  // nothing worn = ×1, so even the first common (×2) is asked, never forced on
-  assert.equal(equipDecision('mk-sparky', null), 'ask');
-  assert.equal(shouldAutoEquip('mk-sparky', null), false);
+  assert.equal(shouldAutoEquip('mk-leviathan', 'mk-sparky'), true);
+  // nothing worn (×1): the first mark always goes on — a hold never stalls on a question
+  assert.equal(equipDecision('mk-sparky', null), 'auto');
+  assert.equal(shouldAutoEquip('mk-sparky', null), true);
+  // the decision is only ever auto / none
+  for (const m of ROLL_MARKS) for (const w of [null, 'mk-sparky', 'mk-kraken', 'mk-eternal']) {
+    assert.ok(['auto', 'none'].includes(equipDecision(m.id, w)), `${m.id} over ${w}`);
+  }
   // HIGHER, not merely rarer: an equal or lower MAIN never replaces the worn one
   assert.equal(equipDecision('mk-dasher', 'mk-sparky'), 'none', 'same tier, same ×2');
   assert.equal(equipDecision('mk-sparky', 'mk-kraken'), 'none');
@@ -245,7 +245,7 @@ test('auto-equip (Andy oct3): only a HIGHER MAIN, and only up to ×1.5 of the wo
   assert.equal(equipDecision('mk-sparky', 'mk-sparky'), 'none');
   // a legacy mark at rank V pays ×2.6: a rare (×2.5) is rarer but LOWER → none
   assert.equal(equipDecision('mk-detonator', 'mk-bomber', 2.6), 'none');
-  assert.equal(equipDecision('mk-kraken', 'mk-bomber', 2.6), 'auto', '×3 ≤ 2.6 × 1.5');
+  assert.equal(equipDecision('mk-kraken', 'mk-bomber', 2.6), 'auto', '×3 > ×2.6');
   assert.equal(equipDecision('mk-nova', 'mk-student'), 'auto', 'a retired common (×2) → an epic (×3)');
   assert.equal(equipDecision('mk-nope', 'mk-sparky'), 'none');
   assert.equal(wornMainOf(null), 1);

@@ -40,9 +40,9 @@ export const TUTORIALS = [
     host: 'marks',
     isNew: true,
     when: (s) => s.marksRevealed,
+    // ONE step (oct3 review): the button's own HOLD tag already says "hold"; a second card repeating it was noise
     steps: [
-      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE.', target: '.mr-roll' },
-      { title: 'HOLD TO KEEP ROLLING', line: 'RARER MARKS PAY MORE. 10 DUPES MAKE A GOLD.', target: '.mr-roll' },
+      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.mr-roll' },
     ],
   },
   {

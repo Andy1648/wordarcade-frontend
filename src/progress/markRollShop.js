@@ -37,10 +37,11 @@ export function wearMark(id, earned = []) {
 
 /**
  * ONE paid (or free starter) roll. Returns null when the balance is short, else
- * { ...result, spent, free, decision: 'auto'|'ask'|'none', fromMain, toMain, lump }.
- * 'auto' is ALREADY equipped when this returns; 'ask' waits for the player.
+ * { ...result, spent, free, decision: 'auto'|'none', fromMain, toMain, lump }.
+ * It does NOT equip: the UI applies an 'auto' decision (applyRollEquip) when the reveal LANDS, so the
+ * hero and the menu chip never change before the player has seen the result.
  */
-export function buyMarkRoll({ level = 1, rng = Math.random, earned = [] } = {}) {
+export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   const st = ensureRollState();
   const cost = nextRollCost(level, st);
   const bal = getWins();
@@ -61,6 +62,14 @@ export function buyMarkRoll({ level = 1, rng = Math.random, earned = [] } = {}) 
   const decision = equipDecision(res.markId, worn.id, worn.main);
   const fromMain = worn.id ? worn.main : wornMainOf(null);
   const toMain = mainMultOf(res.markId);
-  if (decision === 'auto') wearMark(res.markId, earned);
   return { ...res, spent: cost.wins, free: cost.free, decision, fromMain, toMain, lump };
+}
+
+/** Land a roll's equip decision (called when its reveal lands). Re-checks against the MAIN worn NOW, so
+ *  an equip the player made meanwhile is never overwritten by a lower mark. Returns the worn id or null. */
+export function applyRollEquip(res, earned = []) {
+  if (!res) return null;
+  const worn = currentMain();
+  if (equipDecision(res.markId, worn.id, worn.main) !== 'auto') return null;
+  return wearMark(res.markId, earned);
 }

@@ -12,8 +12,9 @@ recommendation in `claude/finetune/mark-rolls-ui.md`). This file is the contract
 ### DECISIONS (Andy, oct3) — applied in the engine and below
 1. **Roll price 60 words** at your rate (was 100). Same level scaling, same reference word (§3).
 2. **GOLD / RAINBOW stay a flat 10 dupes → GOLD, 10 golds → RAINBOW** for every tier. No caps (§6).
-3. **Auto-equip only when the new MAIN is HIGHER and ≤ ×1.5 the worn MAIN.** A bigger jump shows
-   `EQUIP? ×N → ×M` and asks; it is never automatic. Rarer-but-not-higher never equips (§8).
+3. ~~Auto-equip only when the new MAIN is HIGHER and ≤ ×1.5 the worn MAIN; a bigger jump asks.~~
+   **REVISED by the PR #156 review:** auto-equip ANY higher MAIN (always when nothing is worn), no
+   prompt; a sidegrade/downgrade does nothing. Rarer-but-not-higher never equips (§8).
 4. **Permanent MAIN ×4** (the ×5 question is closed) (§2).
 5. **Rule-P gap metric:** a NEW mark (first copy), a GOLD step-up and a RAINBOW step-up each count as
    a "good event" (`loop-sim.mjs oneRoll`). Not re-run yet.
@@ -253,30 +254,38 @@ A roll can change income in one of two ways:
 This is why the MAIN is set by tier only and GOLD/RAINBOW grow the PERK, not the MAIN. A ×1.25 MAIN
 step from going GOLD would be 7.5 levels on the 1.03 tail. Results are in `marks.md`. Every paid
 roll is ≤ 1.7 levels in all 15 runs. **The exception was:** with the §9 cuts, a casual player wearing
-a ×2 common who rolls a legendary auto-equipped a ×4 MAIN, up to 19 levels (`marks.md` §2). The oct3
-auto-equip rule (§8) removes the silent version: a ×2 → ×4 jump is now an `EQUIP?` question, and the
-largest automatic MAIN step is ×1.5.
+a ×2 common who rolls a legendary auto-equips a ×4 MAIN, up to 19 levels (`marks.md` §2). The first
+oct3 rule made that jump an `EQUIP?` question; the PR #156 review reverted it (any higher MAIN
+auto-equips, §8), so this exception stands and rule P should re-check it.
 
 ---
 
 ## 8. Roll behaviour (M6) — for the UI branch
 
-- **Auto-equip — DECIDED (Andy oct3):** a new roll auto-equips **only when its MAIN is HIGHER than
-  the worn MAIN and at most ×1.5 of it** (`equipDecision()` → `'auto'`). A bigger jump returns
-  `'ask'`: the result card shows `EQUIP? ×N → ×M` with EQUIP / KEEP, and nothing changes until the
-  player taps. Equal or lower MAIN → `'none'` (so "rarer but lower", e.g. a rare ×2.5 over a rank-V
-  common ×2.6, never equips — open question 5 is closed). Nothing worn counts as ×1, so the very
-  first mark is asked too. A PERMANENT (×4) is never displaced. Examples: ×2 → ×2.5 auto, ×2 → ×3
-  auto (exactly 1.5), ×2 → ×4 ask, ×2.5 → ×4 ask, ×3 → ×4 auto.
+- **Auto-equip — REVISED (oct3 review of PR #156; supersedes decision 3's ×1.5 / EQUIP? rule):** a
+  new roll auto-equips **whenever its MAIN is HIGHER than the worn MAIN — always when nothing is worn**
+  (`equipDecision()` → `'auto'`). Equal or lower → `'none'`: it never equips and never asks (SET AS
+  MAIN stays available by hand). There is **no prompt**, so a hold never stalls on a question. The
+  ×1.5 rule was backwards: it asked on exactly the rolls that are upgrades and stalled a hold on a save
+  with nothing worn. "Rarer but lower" (a rare ×2.5 over a rank-V common ×2.6) still never equips. A
+  PERMANENT (×4) is never displaced. The equip is applied when the reveal LANDS
+  (`markRollShop.applyRollEquip`, re-checked against the MAIN worn at that moment), never on the tap.
+  Trade-off, stated: the silent ×2 → ×4 step (up to 19 levels for a casual, §7) is back. The review
+  chose it over a prompt that interrupts the upgrade moment.
 - **Hold-to-roll:** repeats while held, **never faster than one roll per finished reveal** (the next
   held roll is due 120 ms after the previous reveal ends — `revealPlan.js createPacer`). **Stop on
-  EPIC+, on any NEW mark, on GOLD/RAINBOW up, on an EQUIP? question, and when the balance runs
-  short.** A tap mid-reveal skips to the result; it never queues a second roll.
-- **Reveal by rarity (Andy H3, supersedes the old 3.5 s legendary):** COMMON ~300 ms card flip, RARE
-  a short build-up (650–900 ms), EPIC / LEGENDARY a cutscene of **≤ 2.5 s** with a "1 IN X" stamp.
-  Three versions on one build (`?mrv=a|b|c`). PERMANENT is not rolled. Everything is finite,
-  transform/opacity only, pooled nodes, no layout reads; reduced motion holds a static result card
-  for the same time (CLAUDE.md animation budget).
+  EPIC+, on any NEW mark, on GOLD/RAINBOW up, and when the balance runs short** (the press then says
+  `NEED X MORE WINS` and buzzes). A tap mid-reveal skips to the result; it never queues a second roll.
+- **Reveal (oct3 review verdict — one hybrid ships, versions B and C and `?mrv=` are deleted):**
+  COMMON a ~300 ms card flip; RARE a ~700 ms wobble build-up + flash, then the flip; EPIC (2.2 s) /
+  LEGENDARY (2.5 s) the cutscene: the tier ladder climbs, the **final tier lands at --fs-hero in its
+  colour**, then the **mark's art + NAME big**, then **"1 IN X" at --fs-hero**, then back to the
+  panel. PERMANENT is not rolled. Everything is finite, transform/opacity only, pooled nodes, no
+  layout reads; every node that flips to zero width also fades to 0. **Reduced motion keeps the
+  rarity scaling:** a common/rare shows the static card; an epic/legendary shows its plate (tier,
+  art, name, "1 IN X") as one static frame for the same hold.
+- **No spoilers:** the index, % COLLECTED, the pity counters and the MAIN change only when the
+  reveal lands (or is skipped), never on the tap.
 - **Free starter roll:** the first roll on a save is free (`state.starter`), wired in
   `markRollShop.js buyMarkRoll`.
 - **Index:** % collected, GOLD %, RAINBOW %, and the next milestone. A locked tile shows

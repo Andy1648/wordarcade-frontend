@@ -45,10 +45,10 @@ test('an EXISTING player is not walked through features they already reached —
   assert.ok(!alreadyReached(vet).includes('wall'));
 });
 
-test('mark rolls: 1–2 steps pointing at ROLL, hosted by the MARKS panel (never the menu), new to everyone', () => {
+test('mark rolls: ONE step pointing at ROLL, hosted by the MARKS panel (never the menu), new to everyone', () => {
   const t = TUTORIALS.find((x) => x.id === 'markRolls');
   assert.ok(t, 'markRolls tutorial exists');
-  assert.ok(t.steps.length >= 1 && t.steps.length <= 2);
+  assert.equal(t.steps.length, 1, 'one step — the HOLD tag on the button says the rest');
   for (const s of t.steps) assert.match(s.target || '', /\.mr-roll/);
   assert.equal(t.host, 'marks');
   const vet = { ...fresh, level: 300, marksRevealed: true, hasProfile: true };

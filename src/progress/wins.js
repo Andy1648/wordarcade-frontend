@@ -21,7 +21,7 @@ import {
 } from './xp.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
-import { rollBonusMult } from './markRolls.js';
+import { rollBonusMult } from './markRollsCore.js'; // the payout hook only — the roll system loads with MARKS
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
