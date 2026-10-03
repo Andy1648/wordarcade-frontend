@@ -17,6 +17,7 @@ import { initTheme } from './theme/themes'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'
 import { installChunkReloadGuard } from './lib/chunkReload'
+import { installSwUpdateReload } from './lib/swUpdate'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths } from './progress/xp'
 import { migrateEconomyV9 } from './progress/econMigrate'
@@ -33,6 +34,9 @@ import { getStreak } from './progress/streak'
 // lazy screen it opens rejects with "Failed to fetch dynamically imported module". One reload
 // picks up the new index and fixes it; the guard inside caps that at one reload per tab.
 try { installChunkReloadGuard() } catch { /* never block startup */ }
+// A service worker that just updated is still showing the previous deploy — reload onto the new one (on
+// the menu only). See lib/swUpdate.js.
+try { installSwUpdateReload() } catch { /* never block startup */ }
 
 // Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
 // player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.
