@@ -185,3 +185,21 @@
   :root .wr-root { width: min(1220px, 94vw); }
   :root .wr-roster { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } /* five seats on one row */
 }
+
+/* HUGE SCREENS (Andy oct3 H2c: "it must look big on Andy's huge monitor — test 2560x1440"). At 2560x1440 the
+   1.2x tier above still left the solo game a 1270px panel in an empty screen. Above ~2200x1250 the game
+   screens step up ~1.45x: the type tokens, and --solo-k, the one multiplier Solo.css applies to its width,
+   its hero dial and every fixed max-width (no CSS zoom — game-fill forbids ancestor zoom). Order stays
+   strictly descending (h1 84 > h2 66 > panel 46 > body 28 > label 21 > micro 17). */
+@media (min-width: 2200px) and (min-height: 1250px) {
+  .solo-root,
+  .wr-root {
+    --fs-h1: 84px;
+    --fs-h2: 66px;
+    --fs-panel: 46px;
+    --fs-body: 28px;
+    --fs-label: 21px;
+    --fs-micro: 17px;
+    --solo-k: 1.45;
+  }
+}

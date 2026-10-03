@@ -10,7 +10,7 @@
   /* The HERO's size — ONE dial for the ring, the letter, the seconds chip and the heat bar,
      because they are ONE object and take ONE measurement. 322px at desk sizes, shrinking on
      the smaller axis so a phone never has to overflow to fit it. */
-  --solo-hero: clamp(232px, 46vmin, 322px);
+  --solo-hero: clamp(232px, 46vmin, calc(322px * var(--solo-k, 1)));
   /* Hero letter size as a FRACTION of the hero: 186/322 for CHAIN's single letter,
      104/322 for FUSE's 2-3 char fragment. Overridden per mode below. */
   --solo-hero-letter: 0.578;
@@ -44,7 +44,7 @@
      .solo-body: a viewport-sized box with card-sized content in it. It is now auto-height and
      centred, and the persistent WallScene (already mounted, unconditional, 30 nodes) shows
      AROUND it at no extra frame cost. */
-  width: min(1270px, 94vw);
+  width: min(calc(1270px * var(--solo-k, 1)), 94vw);
   max-width: 100%;
   height: auto;
   /* max-height STAYS (only min-height was the dead-space culprit — a max only ever clamps).
@@ -329,7 +329,7 @@
 /* Alphabet strip (FUSE) */
 .solo-strip {
   width: 100%;
-  max-width: 560px;
+  max-width: calc(560px * var(--solo-k, 1));
   display: grid;
   grid-template-columns: repeat(13, 1fr);
   gap: 4px;
@@ -577,7 +577,7 @@
 .solo-inputwrap {
   position: relative;
   width: 100%;
-  max-width: min(680px, 100%);
+  max-width: min(calc(680px * var(--solo-k, 1)), 100%);
   /* A size container so .solo-input can fit long words to its own width in pure CSS
      (cqw) — no layout read in the keystroke path. */
   container-type: inline-size;
@@ -715,7 +715,7 @@
   font-size: var(--fs-body);
   color: #b9a7d6;
   text-align: center;
-  max-width: 320px;
+  max-width: calc(320px * var(--solo-k, 1));
 }
 
 /* Death card */
@@ -742,7 +742,7 @@
 .solo-deathcard {
   margin: auto; /* centres while short, scrolls cleanly once taller than the screen */
   width: 100%;
-  max-width: 420px;
+  max-width: calc(420px * var(--solo-k, 1));
   background: #1a0b2e;
   border: 4px solid #000;
   border-radius: 8px;
@@ -986,10 +986,10 @@
   /* Bound each column so the pair reads as a centred landscape composition on ultra-wide
      frames (rather than the two halves splaying to the far edges with a void between). */
   .solo-primary {
-    max-width: 620px;
+    max-width: calc(620px * var(--solo-k, 1));
   }
   .solo-secondary {
-    max-width: 860px;
+    max-width: calc(860px * var(--solo-k, 1));
     /* the mascot stands in this gutter, at the root's right edge — never over the deck */
     padding-right: calc(var(--solo-mascot) + 14px);
   }
@@ -1005,7 +1005,7 @@
   min-height: 0;
   overflow: hidden;
   width: 100%;
-  max-width: 560px;
+  max-width: calc(560px * var(--solo-k, 1));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1109,12 +1109,12 @@
   justify-content: center;
   gap: 16px;
   width: 100%;
-  max-width: 560px;
+  max-width: calc(560px * var(--solo-k, 1));
 }
 .solo-cord {
   flex: 1 1 0;
   min-width: 0;
-  max-width: 200px;
+  max-width: calc(200px * var(--solo-k, 1));
   height: auto;
 }
 .solo-cord .cord-line {
@@ -1136,7 +1136,7 @@
 }
 .solo-strip-big {
   width: 100%;
-  max-width: 520px;
+  max-width: calc(520px * var(--solo-k, 1));
   /* FLEX-WRAP, not grid: a grid keeps its 13 columns even when subpixel rounding pushes them
      a hair past the box, and the last one gets clipped (m / z vanished at some zooms). Flex-wrap
      with tiles sized to (100% − 13·gap)/13 fits 13 per row with a full gap of slack, and if a
@@ -1552,7 +1552,7 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
    the strip packs tighter, so all 26 letters fit. */
 @media (min-width: 701px) and (max-height: 600px) {
   .solo-frenzy-goal { display: none; }
-  .solo-strip-big { max-width: 440px; gap: 4px; }
+  .solo-strip-big { max-width: calc(440px * var(--solo-k, 1)); gap: 4px; }
   .solo-strip-big span { width: calc((100% - 13 * 4px) / 13); border-width: 3px; box-shadow: 3px 3px 0 #000; }
 }
 
