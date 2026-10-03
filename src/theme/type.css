@@ -236,3 +236,91 @@
   }
   :root .menu-xp-bar { max-width: 1100px; }
 }
+
+/* ============================================================================
+   BIG-MONITOR PASS (next-passes-spec PASS 1, V2 "per-screen k"). Andy plays at 2560x1440, and these
+   screens still rendered at their 1366 size there: SAT RUSH (no tier at all - a 920px poster with 48px
+   letter slots), the REWARDS inbox, the rank ladder, the rebirth card, the WINNER popup and the wins
+   toast; shop / stats / mode dialog / locked preview stopped at the 1920 tier.
+   SAME PATTERN AS --solo-k / --wb-k: each screen gets ONE multiplier, set here on its root next to its
+   type tokens, and its own CSS multiplies every fixed px box by it inside the same two media queries,
+   so the boxes grow WITH the type and nothing wraps out of its box. Both tiers sit at or above
+   1800x1000, so every smaller viewport renders byte-identical (the 1280x551 / 1366x625 / 390x844 gates).
+     --sr-k    SAT RUSH (.sr-app)                                   1.2 BIG / 1.45 HUGE
+     --ov-k    menu overlays + popups (REWARDS, ranks, rebirth card,
+               WINNER popup, wins toast)                            1.2 BIG / 1.45 HUGE
+     --card-k  the menu cards' px text caps (set in GameCard.css)   1.2 BIG / 1.45 HUGE
+   The HUGE token set is the game-wrap set (h1 92 / h2 60 / panel 40 / body 26 / label 19 / micro 16):
+   every step is ~1.45x its base, the same ratio as the boxes. Order stays strictly descending.
+   MARKS (.mx-overlay) is NOT here: MarksIndex is being rewritten on PR #156 (feat/mark-rolls-ui). Its
+   targets (.mx-panel 980 -> 1180 at 1920 / 1420 at 2560, plus both token sets) land after that merge.
+   ============================================================================ */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  /* SAT RUSH joins the BIG token tier only now that its widths scale with --sr-k (the D1 review left
+     it out because PICK YOUR BEAT clipped when the type grew and the columns did not). h1 steps up
+     too (64 -> 76): the SAT RUSH masthead and CASE CLOSED are h1, and the page under them is 1.2x. */
+  .sr-app {
+    --fs-h1: 76px;
+    --fs-h2: 50px;
+    --fs-panel: 34px;
+    --fs-body: 21px;
+    --fs-label: 16px;
+    --fs-micro: 13px;
+    --sr-k: 1.2;
+  }
+  .claims-overlay,
+  .rank-overlay,
+  .winner-pop-layer,
+  .wct {
+    --fs-h2: 50px;
+    --fs-panel: 34px;
+    --fs-body: 21px;
+    --fs-label: 16px;
+    --fs-micro: 13px;
+  }
+  /* the rebirth card sits inside .shop-overlay, which already carries the BIG tokens (above) */
+  .claims-overlay,
+  .rank-overlay,
+  .shop-overlay,
+  .winner-pop-layer,
+  .wct {
+    --ov-k: 1.2;
+  }
+}
+
+@media (min-width: 2200px) and (min-height: 1250px) {
+  .sr-app,
+  .claims-overlay,
+  .rank-overlay,
+  .winner-pop-layer,
+  .wct,
+  .shop-overlay,
+  .stats-overlay,
+  .mode-dialog-overlay,
+  .lp-overlay {
+    --fs-h1: 92px;
+    --fs-h2: 60px;
+    --fs-panel: 40px;
+    --fs-body: 26px;
+    --fs-label: 19px;
+    --fs-micro: 16px;
+  }
+  .sr-app { --sr-k: 1.45; }
+  .claims-overlay,
+  .rank-overlay,
+  .shop-overlay,
+  .winner-pop-layer,
+  .wct {
+    --ov-k: 1.45;
+  }
+  /* The panels the BIG tier widened stopped at their 1920 size; they grow again here, ~1.4x the BIG
+     width (the spec targets). The shop grid is a fixed 3 columns at >=900px, so 1560 does not re-flow
+     it to 4. Stats stays a narrow column (680): it is a list, not a board; its secrets grid widens its
+     min column so the 19px labels do not squeeze four across. */
+  :root .shop-panel { width: min(92vw, 1560px); }
+  :root .stats-panel { max-width: 680px; }
+  :root .stats-secrets { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  :root .mode-dialog-shell { width: min(90vw, 1060px); max-height: min(94vh, 1060px); }
+  :root .mode-dialog-shell.is-blitz { width: min(94vw, 1060px); height: min(94vh, 1060px); }
+  :root .lp-panel { width: min(780px, 92vw); }
+}

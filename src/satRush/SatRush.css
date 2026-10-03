@@ -2666,3 +2666,27 @@ body:has(.sr-app) .wpm-hud {
     padding-top: 2px;
   }
 }
+
+/* BIG / HUGE MONITORS (big-monitor pass; next-passes-spec PASS 1). At 2560x1440 the poster was a 920px
+   page (36% of the width) with 48px mugshot slots. theme/type.css sets --sr-k (1.2 at >=1800x1000,
+   1.45 at >=2200x1250) and the matching type tokens on .sr-app; every fixed px box on the pages
+   multiplies by it here, so the boxes grow WITH the type (the D1 lesson: bigger type in fixed columns
+   clipped PICK YOUR BEAT). The vw caps are unchanged. The letter glyph is 0.5 x the slot, so it follows
+   --slot-max (24 -> 29 / 35). Identical rules in both tiers: only --sr-k differs. Below 1800x1000
+   nothing here applies (the short-laptop fit block, max-height 820, can never overlap it). */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .sr-stage { width: min(calc(920px * var(--sr-k, 1)), 94vw); }
+  .sr-cover { width: min(calc(560px * var(--sr-k, 1)), 92vw); }
+  .sr-cover-example { max-width: calc(320px * var(--sr-k, 1)); }
+  .sr-respage { width: min(calc(560px * var(--sr-k, 1)), 94vw); }
+  .sr-brief-page { width: min(calc(620px * var(--sr-k, 1)), 94vw); }
+  .sr-modeselect { width: min(calc(520px * var(--sr-k, 1)), 92vw); }
+  .sr-slots {
+    --gap: calc(8px * var(--sr-k, 1));
+    --slot-max: calc(48px * var(--sr-k, 1));
+  }
+  .sr-wanted-wrap::before {
+    width: calc(340px * var(--sr-k, 1));
+    height: calc(340px * var(--sr-k, 1));
+  }
+}

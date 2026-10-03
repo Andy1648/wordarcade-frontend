@@ -6713,4 +6713,11 @@ html[data-beat='true'] .wb-belly {
   /* THE GAME-OVER CARD lives inside .game-wrap, so it inherits the bigger tokens; its 1160px
      three-column cap grows with them (the PLAYERS table's AVG LEN header wrapped without it). */
   .game-over-card { max-width: calc(1160px * var(--wb-k, 1)); }
+
+  /* THE K.O. BURST (big-monitor pass) is the star behind the K.O. word, which already grows with
+     --fs-hero; its 360px box grows with --wb-k so the word stays inside its star (360 -> 522). */
+  .ko-burst {
+    width: calc(360px * var(--wb-k, 1));
+    height: calc(360px * var(--wb-k, 1));
+  }
 }

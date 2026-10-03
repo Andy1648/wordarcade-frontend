@@ -301,3 +301,18 @@
   color: #FF6B3D;
   text-align: right;
 }
+
+/* HUGE MONITORS (big-monitor pass): the receipt has no k of its own, it takes its HOST's. It only
+   renders inside the multiplayer game screen, whose .game-wrap carries --wb-k (1.45 at >=2200x1250,
+   theme/type.css) and the bigger type tokens; its fixed px caps grow by the same factor so the
+   bigger type does not wrap inside the 1366-sized box. 420 -> 609, compact 200 -> 290, key column
+   86 -> 125 (compact 70 -> 102). */
+@media (min-width: 2200px) and (min-height: 1250px) {
+  .game-wrap .payout { max-width: calc(420px * var(--wb-k, 1)); }
+  .game-wrap .payout--compact { max-width: calc(200px * var(--wb-k, 1)); }
+  .game-wrap .payout-row .payout-k,
+  .game-wrap .payout-off-row .payout-k {
+    min-width: calc(86px * var(--wb-k, 1));
+  }
+  .game-wrap .payout--compact .payout-row .payout-k { min-width: calc(70px * var(--wb-k, 1)); }
+}

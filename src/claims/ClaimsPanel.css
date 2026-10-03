@@ -186,3 +186,9 @@
 .claims-to-stats:hover {
   color: #fff;
 }
+
+/* BIG / HUGE MONITORS (big-monitor pass): --ov-k (theme/type.css: 1.2 at >=1800x1000, 1.45 at
+   >=2200x1250) widens the panel with its type tokens. 560 -> 672 / 812. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .claims-panel { width: min(calc(560px * var(--ov-k, 1)), 100%); }
+}

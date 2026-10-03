@@ -71,3 +71,10 @@
   .wct { top: 12px; right: 16px; z-index: 61; max-width: calc(100vw - 32px); }
   .wct-label { white-space: normal; }
 }
+
+/* BIG / HUGE MONITORS (big-monitor pass): --ov-k + the type tokens are set on .wct (theme/type.css:
+   1.2 at >=1800x1000, 1.45 at >=2200x1250). Column cap 320 -> 384 / 464. top:92 stays: the wins pill
+   and WPM chip above it in this column keep their own coordinates. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .wct { max-width: min(64vw, calc(320px * var(--ov-k, 1))); }
+}

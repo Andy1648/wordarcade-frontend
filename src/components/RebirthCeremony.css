@@ -161,3 +161,11 @@
   .rbc-kept-row,
   .rbc-from::after { animation: none; }
 }
+
+/* BIG / HUGE MONITORS (big-monitor pass): --ov-k is set on .shop-overlay (theme/type.css: 1.2 at
+   >=1800x1000, 1.45 at >=2200x1250), which already carries the bigger type tokens this card inherits.
+   Card 640 -> 768 / 928; CONTINUE's min width follows. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .rbc-card { width: min(calc(640px * var(--ov-k, 1)), 100%); }
+  .rbc-continue { min-width: calc(200px * var(--ov-k, 1)); }
+}
