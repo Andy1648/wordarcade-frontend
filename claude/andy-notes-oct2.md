@@ -120,6 +120,9 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
   - Quality protocol: 3 versions (pure-CSS bars / SVG with shadow layer / sticker-style) → adversarial reviewer → pick; screenshots in claude/finetune/board-icon/. Batch into the next frontend PR.
   - CONFLICT FLAGGED (11:45): a glint "every ~8 s" is a repeating idle motion, which CLAUDE.md's MENU MOTION LAW ("NO idle/ambient loops" on the menu) and the ZERO-new-infinite-animations rule forbid. Doing instead: ONE glint when the menu settles + the bounce/tick on a rank-up. Andy: say "8 s glint ok" to override the law for this one icon.
 
+## ANDY oct3 11:45 (added)
+- [ ] Merge the night's work sooner: open PRs NOW for feat/mark-rolls-ui and feat/audit-leftovers so CI runs on GitHub in parallel (no laptop memory). Local heavy jobs stay one at a time. Merge each as soon as its CI is green AND its local checks are done, in order PV10 (#154) → audit-leftovers → mark-rolls. Tell Andy the moment 016 needs running.
+
 ## NEW GOAL (Andy oct3 10:29): every step done or blocked-with-reason AND `date` ≥ Sat Oct 3 **11:00 PM** ET; then the fine-tune loop. Never stop because steps are done; never sleep/wait loops; NEVER ask permission to rerun — just rerun. Andy authorized merging while away.
 MEMORY RULES (crashed 04:05): full lint/unit/e2e ONLY on GitHub Actions (push → PR → CI); locally only the touched specs. One heavy job at a time (never sim + tests together, no stacked background jobs). Kill every preview server + Playwright process when a run ends (helpers too). Check free memory before each heavy job; under 4 GB → clean up first.
 - [x] R1 feat/h4-winner-pays: PR → CI → merge if green. **MERGED #152 (main 2c58ce8, 11:08)** after CI green on main HEAD f1c07a3 (run 3: a websocket-boundary flake in run 2 passed on re-run; main's last 9 E2E runs green). LIVE on typeaword.com 11:11 (markers taw.seats + "VS A HUMAN RIVAL" in index--8Q8ckth.js). Tier 1 → 2-device play-test in ANDY TODO.
