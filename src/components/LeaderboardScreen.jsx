@@ -23,7 +23,11 @@ import {
   boardCaps,
   getSecret,
   adoptRecoveryCode,
+  rankMoveSinceSeen,
+  clearRankFrom,
+  markBoardSeen,
 } from '../leaderboard/client.js';
+import { targetLine } from '../leaderboard/boardTarget.js';
 import { formatRecoveryCode } from '../save/cloudSave.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
@@ -83,7 +87,15 @@ const fmt = (n) => formatNum(Number(n) || 0);
 const fmtRate = (n) => formatRate(Number(n) || 0);
 
 
-function Row({ row, mine, flash }) {
+// H2a: the ▲N chip on your own row when you climbed since you last opened the board. It pops in
+// (finite, transform/opacity) as the row lands; reduced motion = the static chip.
+function MoveChip({ move }) {
+  if (!move || !(move.from > move.to)) return null;
+  const n = move.from - move.to;
+  return <span className="lb-move" aria-label={`up ${n} place${n === 1 ? '' : 's'} since you last looked`}>▲{n}</span>;
+}
+
+function Row({ row, mine, flash, move }) {
   const top = row.rank <= 3 ? ` is-top${row.rank}` : '';
   return (
     <li className={`lb-row${top}${mine ? ' is-me' : ''}${mine && flash ? ' is-flash' : ''}`} data-rank={row.rank}>
@@ -92,6 +104,7 @@ function Row({ row, mine, flash }) {
         <span className="lb-name-line">
           <NameTag name={row.username} rebirths={row.rebirths} />
           {mine && <span className="lb-you-badge">YOU</span>}
+          {mine && <MoveChip move={move} />}
         </span>
         {/* words are SECONDARY now (Andy oct2, later: the board ranks by LEVEL) */}
         <span className="lb-lv lb-words-sub">{fmt(row.lifetime_words)} WORDS</span>
@@ -139,6 +152,15 @@ export default function LeaderboardScreen({ onBack }) {
   const [restoreDraft, setRestoreDraft] = useState('');
   const [restoreMsg, setRestoreMsg] = useState(null);
   const overlayRef = useRef(null);
+  const bodyRef = useRef(null);
+  // H2a: the rank move since the board was last opened (read once per visit) and whether the slide has
+  // already played this visit (a tab switch back to ALL-TIME must not replay it).
+  const [move, setMove] = useState(null);
+  const movedRef = useRef(false);
+  const slidRef = useRef(false);
+  // H2a: your row scrolled out of the board's view → a pin strip at the panel foot (outside the
+  // scroller, so it takes its own space and never covers a row).
+  const [meHidden, setMeHidden] = useState(false);
   // BB3: ALL-TIME (level) or THIS WEEK (words typed this ET week; resets Monday 00:00 ET
   // in the DB). The switch exists only once 013_weekly_board.sql is applied (lb_caps.weekly).
   const [view, setView] = useState('all');
@@ -168,9 +190,15 @@ export default function LeaderboardScreen({ onBack }) {
       setLoadError(false);
       // Reading the board is reading the news: clear the trophy badge and remember this rank as
       // the baseline the next rank-up is measured from.
-      setRankNews(false);
       const mine = getMyProfile();
       const meNow = mine && (b.rows.find((r) => r.id === mine.id) || b.me);
+      // H2a: read the move BEFORE the baseline is overwritten (only the first load of this visit).
+      if (meNow && !movedRef.current) {
+        movedRef.current = true;
+        setMove(rankMoveSinceSeen(Number(meNow.rank)));
+      }
+      setRankNews(false);
+      clearRankFrom();
       if (meNow) setLastRank(Number(meNow.rank));
     } catch {
       setLoadError(true);
@@ -180,6 +208,7 @@ export default function LeaderboardScreen({ onBack }) {
   }
 
   useEffect(() => {
+    markBoardSeen(); // any entry route: a menu rank check still in flight must not write after this
     load();
     if (overlayRef.current) overlayRef.current.focus();
     const onKey = (e) => { if (e.key === 'Escape') onBack && onBack(); };
@@ -187,6 +216,88 @@ export default function LeaderboardScreen({ onBack }) {
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // H2a RANK-CHANGE ANIMATION — once per visit. Your row is first brought into the board's view with
+  // room under it (one scrollTop write), then rises from where you were — capped to the VISIBLE room
+  // below it, so the whole slide happens on screen — and the ▲N chip pops as it lands. Translate only
+  // (no scale on a full-width row), WAAPI, will-change set for the run and cleared on finish. Measured
+  // ONCE here (offsetTop/offsetHeight/clientHeight), never per frame. Reduced motion: no slide, no
+  // pop — the static ▲N chip says it.
+  useEffect(() => {
+    if (!move || view !== 'all' || slidRef.current) return undefined;
+    const root = overlayRef.current;
+    const body = bodyRef.current;
+    const el = root && root.querySelector('.lb-row.is-me');
+    if (!el || !body || typeof el.animate !== 'function') return undefined;
+    slidRef.current = true;
+    let reduced = false;
+    try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { /* old browser */ }
+    if (reduced) return undefined;
+    const h = el.offsetHeight;
+    const sib = el.previousElementSibling || el.nextElementSibling;
+    const pitch = (sib && Math.abs(sib.offsetTop - el.offsetTop)) || h + 6;
+    const top = el.offsetTop; // .lb-body is the offset parent (position: relative)
+    const viewH = body.clientHeight;
+    if (top + h > body.scrollTop + viewH) body.scrollTop = Math.max(0, top - viewH * 0.45);
+    const room = body.scrollTop + viewH - (top + h) - 4;
+    const d = Math.max(0, Math.min((move.from - move.to) * pitch, room));
+    const delay = 280; // after the panel's 260 ms entrance
+    const rows = Math.max(1, Math.round(d / pitch));
+    const dur = 460 + Math.min(rows, 6) * 50;
+    let run = null;
+    if (d >= 8) {
+      el.style.willChange = 'transform';
+      run = el.animate(
+        [
+          { transform: `translateY(${Math.round(d)}px)` },
+          { transform: 'translateY(-4px)', offset: 0.8 },
+          { transform: 'none' },
+        ],
+        { duration: dur, delay, easing: 'cubic-bezier(0.22, 0.9, 0.3, 1)', fill: 'backwards' },
+      );
+      run.onfinish = () => { el.style.willChange = ''; };
+    }
+    const chips = [el.querySelector('.lb-move'), root.querySelector('.lb-hero-move')].filter(Boolean);
+    const pops = chips.map((c) => {
+      c.style.willChange = 'transform, opacity';
+      const a = c.animate(
+        [
+          { transform: 'scale(0.2) rotate(-12deg)', opacity: 0 },
+          { transform: 'scale(1.35) rotate(4deg)', opacity: 1, offset: 0.6 },
+          { transform: 'none', opacity: 1 },
+        ],
+        { duration: 340, delay: run ? delay + dur - 140 : delay, easing: 'cubic-bezier(0.34, 1.5, 0.64, 1)', fill: 'backwards' },
+      );
+      a.onfinish = () => { c.style.willChange = ''; };
+      return a;
+    });
+    return () => {
+      if (run) run.cancel();
+      pops.forEach((a) => a.cancel());
+      el.style.willChange = '';
+      chips.forEach((c) => { c.style.willChange = ''; });
+    };
+  }, [move, view]);
+
+  // H2a PIN: watch your row against the board's scroll box. IntersectionObserver, so nothing is
+  // measured on scroll; the pin only exists while your row is (mostly) out of view.
+  useEffect(() => {
+    const root = overlayRef.current;
+    const body = bodyRef.current;
+    const el = root && root.querySelector('.lb-row.is-me');
+    if (!el || !body || typeof IntersectionObserver !== 'function') { setMeHidden(false); return undefined; }
+    const io = new IntersectionObserver(([e]) => setMeHidden(e.intersectionRatio < 0.6), { root: body, threshold: [0, 0.6, 1] });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [board, week, view, profile, editing]);
+
+  function showMe() {
+    const el = overlayRef.current && overlayRef.current.querySelector('.lb-row.is-me');
+    if (!el) return;
+    let reduced = false;
+    try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { /* old browser */ }
+    el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+  }
 
   // Instant client verdict; the server's "taken" after a short pause.
   useEffect(() => {
@@ -228,6 +339,10 @@ export default function LeaderboardScreen({ onBack }) {
   const stats = myStats();
   const meRow = profile && (board.rows.find((r) => r.id === profile.id) || board.me);
   const weekMe = profile && (week.rows.find((r) => r.id === profile.id) || week.me);
+  const heroMove = move && move.from > move.to ? move.from - move.to : 0;
+  const pinRow = view === 'week' ? weekMe : meRow;
+  const longTarget = view === 'all' && meRow ? targetLine(board.rows, meRow) : '';
+  const shortTarget = view === 'all' && meRow ? targetLine(board.rows, meRow, { short: true }) : '';
 
   return (
     <div className="lb-overlay" role="dialog" aria-modal="true" aria-label="Leaderboard" tabIndex={-1} ref={overlayRef}>
@@ -237,8 +352,11 @@ export default function LeaderboardScreen({ onBack }) {
           <button type="button" className="lb-close" onClick={onBack} aria-label="Back to menu">✕</button>
         </div>
 
-        <div className="lb-body">
+        <div className="lb-body" ref={bodyRef}>
           {!LEADERBOARD_ENABLED && <p className="lb-note">THE BOARD IS OFFLINE RIGHT NOW.</p>}
+          {/* H2a SPLIT: your card (the hero) in a side column beside the list from 900px up; below that
+              the hero collapses to a one-line strip above the list. */}
+          <div className="lb-side">
 
           {LEADERBOARD_ENABLED && (editing ? (
             <form className="lb-claim" onSubmit={claim} noValidate>
@@ -275,16 +393,37 @@ export default function LeaderboardScreen({ onBack }) {
               )}
             </form>
           ) : (
-            <div className="lb-you">
-              <span className="lb-you-name">{profile.username}</span>
-              {caps.cloud && (
-                <button type="button" className="lb-link-btn" onClick={() => setShowCode((v) => !v)}>
-                  {showCode ? 'HIDE CODE' : 'RECOVERY CODE'}
-                </button>
-              )}
-              {/* the rank of the board you are LOOKING at — THIS WEEK shows your weekly place */}
-              <span className="lb-you-rank">{view === 'week' ? (weekMe ? `#${weekMe.rank} THIS WEEK` : '—') : (meRow ? `#${meRow.rank}` : '—')}</span>
-              <button type="button" className="lb-link-btn" onClick={() => setEditing(true)}>CHANGE NAME</button>
+            <div className="lb-you lb-hero">
+              <span className="lb-hero-label">YOUR RANK</span>
+              {/* the rank line: on a phone this IS the strip — "#9 ▲3 · 58 LV TO #8" */}
+              <span className="lb-hero-line">
+                {/* the rank of the board you are LOOKING at — THIS WEEK shows your weekly place */}
+                <span className="lb-you-rank">
+                  {/* no place yet: a line, not a giant dash in the hero's numeral slot */}
+                  {view === 'week'
+                    ? (weekMe ? <>#{weekMe.rank}<span className="lb-you-rank-sub"> THIS WEEK</span></> : <span className="lb-you-rank-sub">NOT ON THIS WEEK’S BOARD YET</span>)
+                    : (meRow ? `#${meRow.rank}` : <span className="lb-you-rank-sub">NOT RANKED YET</span>)}
+                </span>
+                {view === 'all' && heroMove > 0 && (
+                  <span className="lb-hero-move">▲{heroMove}<span className="lb-long"> SINCE LAST LOOK</span></span>
+                )}
+                {longTarget && (
+                  <span className="lb-hero-target">
+                    <span className="lb-long">{longTarget}</span>
+                    <span className="lb-short">· {shortTarget}</span>
+                  </span>
+                )}
+              </span>
+              {view === 'all' && meRow && <span className="lb-hero-lv">LV {fmt(meRow.level)}</span>}
+              <span className="lb-hero-who">
+                <span className="lb-you-name">{profile.username}</span>
+                {caps.cloud && (
+                  <button type="button" className="lb-link-btn" onClick={() => setShowCode((v) => !v)}>
+                    {showCode ? 'HIDE CODE' : 'RECOVERY CODE'}
+                  </button>
+                )}
+                <button type="button" className="lb-link-btn" onClick={() => setEditing(true)}>CHANGE NAME</button>
+              </span>
             </div>
           ))}
 
@@ -347,6 +486,8 @@ export default function LeaderboardScreen({ onBack }) {
             )
           )}
 
+          </div>
+          <div className="lb-main">
           {LEADERBOARD_ENABLED && caps.weekly && (
             <div className="lb-tabs" role="tablist" aria-label="Board">
               <button type="button" role="tab" aria-selected={view === 'all'} className={`lb-tab${view === 'all' ? ' is-on' : ''}`} onClick={() => setView('all')}>ALL-TIME</button>
@@ -383,7 +524,7 @@ export default function LeaderboardScreen({ onBack }) {
               {loading && board.rows.length === 0 && <p className="lb-note">LOADING THE BOARD…</p>}
               {loadError && <p className="lb-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb-link-btn" onClick={load}>RETRY</button></p>}
               <ol className="lb-list">
-                {board.rows.map((r) => <Row key={r.id} row={r} mine={!!profile && r.id === profile.id} flash={flash} />)}
+                {board.rows.map((r) => <Row key={r.id} row={r} mine={!!profile && r.id === profile.id} flash={flash} move={move} />)}
                 {/* NEVER A DEAD BOARD: open places are invitations, numbered, never invented people.
                     For an unclaimed viewer the first one is a button into the claim field. */}
                 {!loading && !loadError && Array.from({ length: Math.max(0, MIN_ROWS - board.rows.length) }, (_, i) => {
@@ -405,7 +546,7 @@ export default function LeaderboardScreen({ onBack }) {
               </ol>
               {board.me && (
                 <ol className="lb-list lb-list--me" aria-label="Your rank">
-                  <Row row={board.me} mine flash={flash} />
+                  <Row row={board.me} mine flash={flash} move={move} />
                 </ol>
               )}
               {!profile && (
@@ -415,7 +556,16 @@ export default function LeaderboardScreen({ onBack }) {
               )}
             </>
           )}
+          </div>
         </div>
+        {LEADERBOARD_ENABLED && profile && pinRow && meHidden && (
+          <button type="button" className="lb-pin-btn" onClick={showMe} aria-label={`You are #${pinRow.rank}. Show my row`}>
+            <span className="lb-pin-rank">#{pinRow.rank}</span>
+            <span className="lb-pin-name">{profile.username}</span>
+            {view === 'all' && heroMove > 0 && <span className="lb-pin-move">▲{heroMove}</span>}
+            <span className="lb-pin-go">SHOW ME ▼</span>
+          </button>
+        )}
       </div>
     </div>
   );

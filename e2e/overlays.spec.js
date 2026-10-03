@@ -49,7 +49,7 @@ test.describe('overlays render without console errors', () => {
     const panel = page.locator('.stats-panel');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('KEY POWER'); // the row that used to crash
-    await expect(panel).toContainText('T3'); // shows the TIER, not "LV undefined"
+    await expect(panel).toContainText('TIER 3'); // shows the TIER, not "LV undefined"
     await page.waitForTimeout(150);
     expect(errors, `console/page errors: ${errors.join(' | ')}`).toHaveLength(0);
   });

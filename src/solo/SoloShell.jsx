@@ -338,7 +338,9 @@ export default function SoloShell({
             {/* The lines prop (Batch G): bonus credits earned during THIS run — a collection milestone
                 is the reachable one — so the card names them instead of the total quietly
                 disagreeing with the balance. Defaults to [] for any caller that passes none. */}
-            {over.bare ? null : <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />}
+            {/* Rendered on the tutorial card too (H6): WinsEarnedTotal returns null when the run
+                banked nothing, so a run that DID bank (a mid-run bonus) always names it. */}
+            <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">

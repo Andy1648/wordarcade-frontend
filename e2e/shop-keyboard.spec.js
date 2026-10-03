@@ -44,7 +44,7 @@ test('Enter buys KEY POWER and reveals the unlock sticker', async ({ page }) => 
   await btn.focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER TIER 1');
   await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
   await expect(keyPowerHeading(page)).toContainText('TIER 1');
 });
@@ -56,6 +56,6 @@ test('Space also buys via the keyboard', async ({ page }) => {
   await btn.focus();
   await page.keyboard.press('Space');
   await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY POWER II');
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER TIER 2');
   await expect(keyPowerHeading(page)).toContainText('TIER 2');
 });

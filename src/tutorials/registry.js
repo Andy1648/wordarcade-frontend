@@ -20,7 +20,7 @@ export const TUTORIALS = [
     id: 'marks',
     when: (s) => s.marksRevealed,
     steps: [
-      { title: 'MARKS', line: 'EARN THEM FROM HARD ACHIEVEMENTS.' },
+      { title: 'MARKS', line: 'EARN THEM FROM ACHIEVEMENTS.' },
       { title: 'WEAR ONE AS YOUR MAIN', line: 'YOUR MAIN MULTIPLIES EVERY WORD.', target: '.menu-mark, .hp-m-navbtn.is-marks' },
     ],
   },
@@ -51,7 +51,7 @@ export const TUTORIALS = [
     id: 'weekly',
     when: (s) => s.hasProfile,
     steps: [
-      { title: 'THIS WEEK', line: 'A FRESH BOARD EVERY MONDAY. EVERY WORD YOU TYPE COUNTS.' },
+      { title: 'THIS WEEK', line: 'A FRESH BOARD EVERY MONDAY. EVERY WORD YOU PLAY IN A GAME COUNTS.' },
       { title: 'YOUR RANK', line: 'TAP THE TROPHY TO SEE IT.', target: '.homepage-board-hero, .hp-m-board-hero' },
     ],
   },

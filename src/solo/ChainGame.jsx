@@ -8,8 +8,9 @@ import { exampleStartingWith } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, bankWeight, awardWins, awardWordXp, subscribeWins } from '../progress/wins.js';
+import { bankWordWins, bankWeight, awardWordXp, subscribeWins } from '../progress/wins.js';
 import { cappedWordMult } from '../progress/xp.js';
+import { formatMultExact } from '../format.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
@@ -104,16 +105,14 @@ export default function ChainGame({ onExit, offerMenu = false }) {
 }
 
 function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
-  // Persisted all-time CHAIN run count. onRunStart fires from the hook on the FIRST run
-  // (mount) and on every restart — button OR Enter — so both restart paths are counted
-  // (the Enter path lives inside the hook, which is why the bump must live there too).
-  const [runs, setRuns] = useState(0);
+  // Persisted all-time run count (modeAccess / nextMode read it). onRunStart fires from the hook
+  // on the FIRST run (mount) and on every restart — button OR Enter — so both paths count.
   const g = useSoloGame({
     createEngine,
     adapter,
     pbKey: PB_KEYS.CHAIN,
     mode: 'chain', // lucky-word XP uses the mode's per-word XP multiplier
-    onRunStart: () => setRuns(bumpChainRuns()),
+    onRunStart: () => { bumpChainRuns(); },
     // Each accepted CHAIN word counts toward the daily streak (this mode never calls addWords).
     onAccept: touchStreak,
   });
@@ -191,9 +190,10 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
     if (g.phase === 'over') loadSoloAcceptExt();
   }, [g.phase]);
 
-  // Live wins tally (item 2): what the run will pay so far, ticking up as links land (0 until
-  // the 3-word payout gate). Pure recompute each render from the link count.
-  const winsTally = awardWins({ mode: 'chain', wordsAccepted: s.k });
+  // Live wins tally (item 2): what the run HAS BANKED so far — the same running total the end
+  // card shows (H6/H1: the old `awardWins(wordCount)` estimate priced every link as a 5-letter
+  // common word and disagreed with the bank by 2-3×). 0 until the 3-word payout gate.
+  const winsTally = winsEarned;
 
   // ---- OUT → IN travel FX (presentational) -------------------------------------
   // Pooled: one traveler + one fader, reused for every accept (never a node per accept).
@@ -301,21 +301,25 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
 
   const hud = (
     <>
+      {/* H6: BEST is the SCORE personal best (getScore = state.score), so it sits under SCORE —
+          beside LINKS it read as "a best of 1,840 links". */}
       <div className="solo-stat">
         <b>{s.score}</b>
-        <span>SCORE</span>
+        <span>SCORE · BEST {g.best}</span>
       </div>
-      <div className="solo-mult">x{g.engine.state.multiplier.toFixed(2)}</div>
+      {/* H6: this multiplier feeds SCORE only (ending on a fresh letter); wins use the combo. */}
+      <div className="solo-mult">SCORE ×{formatMultExact(g.engine.state.multiplier)}</div>
       <div className="solo-stat" style={{ textAlign: 'right' }}>
         <b>{s.k}</b>
-        <span>LINKS · BEST {g.best}</span>
+        <span>LINKS</span>
       </div>
     </>
   );
 
-  // First-run tutorial card: the player's very first CHAIN run (runs === 1), OR any run
-  // that ended under 3 words — the runs where a how-to-play card beats a score card.
-  const firstRun = runs === 1 || s.k < 3;
+  // Tutorial card: any run that ended under 3 words (nothing banked yet), where a how-to-play
+  // card beats a score card. H6: it used to fire on run #1 too, so a first run of 6 links (wins
+  // banked) got "FIRST TRY. GET 3 WORDS." and no WINS EARNED line.
+  const firstRun = s.k < 3;
   // PAUSE TO LEARN. CHAIN does not end on a word the player got wrong — it ends on a LETTER it
   // could not continue. So the word held here is one they COULD have played: derived from that
   // final letter against the same frequency-ordered list the mode judges with, skipping every

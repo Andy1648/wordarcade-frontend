@@ -56,7 +56,7 @@ export const MARKS = [
     name: 'BOMBER',
     icon: '💣',
     from: 'm-wb-5',
-    blurb: '+25% wins in WORD BOMB.',
+    blurb: '+25% wins & XP in WORD BOMB.',
     effect: { winsMult: 1.25, mode: 'wordBomb' },
   },
   {
@@ -65,7 +65,7 @@ export const MARKS = [
     name: 'SPRINTER',
     icon: '⚡',
     from: 'm-blitz-5',
-    blurb: '+25% wins in CATEGORY BLITZ.',
+    blurb: '+25% wins & XP in CATEGORY BLITZ.',
     effect: { winsMult: 1.25, mode: 'blitz' },
   },
   {
@@ -76,7 +76,7 @@ export const MARKS = [
     name: 'SAVANT',
     icon: '🎓',
     from: 'm-sat-5',
-    blurb: '+40% wins in SAT RUSH.',
+    blurb: '+40% wins & XP in SAT RUSH.',
     effect: { winsMult: 1.4, mode: 'satRush' },
   },
   {
@@ -105,7 +105,7 @@ export const MARKS = [
     name: 'STUDENT',
     icon: '📈',
     from: 'lv-15',
-    blurb: '+20% XP in every mode.',
+    blurb: '+20% wins & XP in every mode.',
     effect: { xpMult: 1.2 },
   },
   {
@@ -114,7 +114,7 @@ export const MARKS = [
     name: 'MAGPIE',
     icon: '🪙',
     from: 'dist-500',
-    blurb: '+15% wins in every mode.',
+    blurb: '+15% wins & XP in every mode.',
     effect: { winsMult: 1.15 },
   },
   {
@@ -127,15 +127,17 @@ export const MARKS = [
     effect: { winsMult: 1.5 },
   },
   // ---- STEP 49: eight more, so the collection has a long tail and every tier has a few ----
-  { id: 'mk-linker', tier: 'common', name: 'LINKER', icon: '🔗', from: 'm-chain-5', blurb: '+25% wins in CHAIN.', effect: { winsMult: 1.25, mode: 'chain' } },
-  { id: 'mk-veteran', tier: 'common', name: 'VETERAN', icon: '🎖', from: 'lv-50', blurb: '+20% XP in every mode.', effect: { xpMult: 1.2 } },
-  { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins in every mode.', effect: { winsMult: 1.2 } },
-  { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
-  // CURATOR: PERMANENT (dist-2500) → MAIN ×4, the LEGENDARY bonus (Andy oct3, decision 4). Was EPIC ×3.
-  { id: 'mk-curator', tier: 'legendary', name: 'CURATOR', icon: '🗂', from: 'dist-2500', blurb: '15% chance a word counts one RARITY TIER higher.', effect: { rarityStep: 0.15 } },
-  { id: 'mk-pyro', tier: 'epic', name: 'PYRO', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
-  { id: 'mk-nova', tier: 'epic', name: 'NOVA', icon: '✴', from: 'reb-5', blurb: '+25% wins in every mode.', effect: { winsMult: 1.25 } },
-  { id: 'mk-legend', tier: 'legendary', name: 'LEGEND', icon: '👑', from: 'lv-300', blurb: '+40% XP in every mode.', effect: { xpMult: 1.4 } },
+  { id: 'mk-linker', tier: 'common', name: 'LINKER', icon: '🔗', from: 'm-chain-5', blurb: '+25% wins & XP in CHAIN.', effect: { winsMult: 1.25, mode: 'chain' } },
+  { id: 'mk-veteran', tier: 'common', name: 'OLD HAND', // H6/M8: not VETERAN — that is the achievement that unlocks it
+    icon: '🎖', from: 'lv-50', blurb: '+20% wins & XP in every mode.', effect: { xpMult: 1.2 } },
+  { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins & XP in every mode.', effect: { winsMult: 1.2 } },
+  { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins & XP in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
+  // PERMANENT (dist-2500) → MAIN ×4, the LEGENDARY bonus (Andy oct3, decision 4). Was EPIC ×3.
+  { id: 'mk-curator', tier: 'legendary', name: 'ARCHIVIST', // H6/M8: not CURATOR — that is the achievement that unlocks it
+    icon: '🗂', from: 'dist-2500', blurb: '15% chance a word counts one RARITY TIER higher.', effect: { rarityStep: 0.15 } },
+  { id: 'mk-pyro', tier: 'epic', name: 'PYRO', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins & XP in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
+  { id: 'mk-nova', tier: 'epic', name: 'NOVA', icon: '✴', from: 'reb-5', blurb: '+25% wins & XP in every mode.', effect: { winsMult: 1.25 } },
+  { id: 'mk-legend', tier: 'legendary', name: 'LEGEND', icon: '👑', from: 'lv-300', blurb: '+40% wins & XP in every mode.', effect: { xpMult: 1.4 } },
 ];
 
 const BY_ID = new Map(MARKS.map((m) => [m.id, m]));
@@ -206,15 +208,21 @@ export function effectAtRank(effect = {}, rank = 1) {
   if (effect.comboKeep) out.comboKeep = effect.comboKeep * k;
   return out;
 }
-const MODE_LABEL = { wordBomb: 'WORD BOMB', blitz: 'CATEGORY BLITZ', satRush: 'SAT RUSH' };
+const MODE_LABEL = { wordBomb: 'WORD BOMB', blitz: 'CATEGORY BLITZ', satRush: 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE' };
 const pct = (x) => `${Math.round(x * 100)}%`;
 /** The promise, with THIS rank's numbers — what the picker prints and the payout pays. */
 export function markBlurbAt(m, rank = 1) {
   if (!m) return '';
   const e = effectAtRank(m.effect, rank);
-  const where = e.mode ? `in ${MODE_LABEL[e.mode] || e.mode}` : 'in every mode';
-  if (e.winsMult) return `+${pct(e.winsMult - 1)} wins ${where}.`;
-  if (e.xpMult) return `+${pct(e.xpMult - 1)} XP ${where}.`;
+  // H6: honour `modes` (SMITH) — it read e.mode only, so SMITH promised "in every mode".
+  const label = (k) => MODE_LABEL[k] || k;
+  const where = e.modes && e.modes.length
+    ? `in ${e.modes.map(label).join(' and ')}`
+    : e.mode ? `in ${label(e.mode)}` : 'in every mode';
+  // H6/M3: winsMult and xpMult are the SAME lever since the stacks merged (perWordFactors folds both
+  // into BONUS, and a word's wins are its XP ÷ 10), so both say what they pay: wins AND XP.
+  if (e.winsMult) return `+${pct(e.winsMult - 1)} wins & XP ${where}.`;
+  if (e.xpMult) return `+${pct(e.xpMult - 1)} wins & XP ${where}.`;
   if (e.rarityStep) return `${pct(e.rarityStep)} chance a word counts one RARITY TIER higher.`;
   if (e.comboKeep) return `${pct(e.comboKeep)} chance a broken COMBO survives.`;
   return m.blurb;
@@ -286,7 +294,7 @@ export function checkMarkClaims({ level = 1, rebirths = 0, earned = [] } = {}) {
       kind: 'layer',
       label: 'NEW SYSTEM — MARKS',
       detail: 'marks',
-      meta: { blurb: 'Earn MARKS from achievements. WEAR ONE: it is your title and pays +100% to +300% on every word.' },
+      meta: { blurb: 'Earn MARKS from achievements. WEAR ONE: it is your title and pays +100% to +300% on every word, growing with its rank (up to ×5.8).' },
     });
   }
   const queued = [];

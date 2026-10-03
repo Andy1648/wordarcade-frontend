@@ -34,8 +34,10 @@ export const MODES = {
   race: {
     accent: '#FF4FA3', bg: ['#3a0620', '#16030c'], anim: 'streaks',
     chip: 'MULTI', t1: 'WORD', t2: 'RACE',
-    liner: 'SAME LETTERS. FIRST TO 12 WINS.',
-    sub: 'RACE · 2–5 RACERS · TYPE A WORD WITH YOUR FRAGMENT TO MOVE UP A LANE.',
+    // H6: race/config.js RACE_WORDS = 25 whole words, the same for everyone. (It said "SAME LETTERS.
+    // FIRST TO 12 WINS." — wrong number, wrong unit, and "WINS" read as the currency.)
+    liner: 'SAME WORDS. FIRST TO 25.',
+    sub: 'RACE · 2–5 RACERS · TYPE THE SAME 25 WORDS FASTEST.',
     create: 'PRIVATE ROOM',
     lead: 'QUICK MATCH',
   },

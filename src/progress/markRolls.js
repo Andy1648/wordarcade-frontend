@@ -137,7 +137,7 @@ export const PERMANENT_MARKS = [
   { id: 'mk-ironhand', name: 'IRONHAND', from: 'vol-10k' },
   { id: 'mk-marathon', name: 'MARATHON', from: 'vol-50k' },
   { id: 'mk-blaze', name: 'BLAZE', from: 'wpm-100' },
-  { id: 'mk-curator', name: 'CURATOR', from: 'dist-2500', legacy: true },
+  { id: 'mk-curator', name: 'ARCHIVIST', from: 'dist-2500', legacy: true }, // H6/M8: the achievement is CURATOR
   { id: 'mk-legend', name: 'LEGEND', from: 'lv-300', legacy: true },
   { id: 'mk-ritual', name: 'RITUALIST', from: 'streak-30' },
   { id: 'mk-linguist', name: 'LINGUIST', from: 'sec-dict', legacy: true },

@@ -31,6 +31,7 @@ const VIEWPORTS = [
   { name: '390x844', width: 390, height: 844 },
   { name: '1366x768', width: 1366, height: 768 },
   { name: '1920x1080', width: 1920, height: 1080 },
+  { name: '2560x1440', width: 2560, height: 1440 }, // H2c: the huge-screen --wb-k tier
 ];
 
 const mkPlayers = (n) =>

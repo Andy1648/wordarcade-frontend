@@ -191,10 +191,37 @@ test('only the WORN mark grows, one word at a time, and its payout factor follow
 
 test('the blurb prints the numbers the rank actually pays', () => {
   const bomber = MARKS.find((m) => m.id === 'mk-bomber');
-  assert.equal(markBlurbAt(bomber, 1), '+25% wins in WORD BOMB.');
-  assert.equal(markBlurbAt(bomber, 5), '+40% wins in WORD BOMB.');
+  assert.equal(markBlurbAt(bomber, 1), '+25% wins & XP in WORD BOMB.');
+  assert.equal(markBlurbAt(bomber, 5), '+40% wins & XP in WORD BOMB.');
   const metro = MARKS.find((m) => m.id === 'mk-metronome');
   assert.equal(markBlurbAt(metro, 5), '48% chance a broken COMBO survives.');
+});
+
+test('H6: the blurb names a multi-mode mark modes (SMITH), and CHAIN / FUSE by their labels', () => {
+  const smith = MARKS.find((m) => m.id === 'mk-smith');
+  assert.equal(markBlurbAt(smith, 1), '+25% wins & XP in SAT RUSH and CHAIN.');
+  assert.doesNotMatch(markBlurbAt(smith, 4), /every mode/);
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-linker'), 1), '+25% wins & XP in CHAIN.');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), '+40% wins & XP in FUSE.');
+  // an every-mode XP mark says it pays wins too (one stack since Economy v8)
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-student'), 1), '+20% wins & XP in every mode.');
+});
+
+test('H6: every static blurb agrees with markBlurbAt at rank I', () => {
+  for (const m of MARKS) {
+    const e = m.effect || {};
+    if (e.winsMult || e.xpMult) {
+      if (m.id === 'mk-eternal') continue; // flavour copy, no mode clause
+      assert.equal(m.blurb, markBlurbAt(m, 1), m.id);
+    }
+  }
+});
+
+test('H6: no mark shares its display name with the achievement that unlocks it', () => {
+  const achName = new Map(ACHIEVEMENTS.map((a) => [a.id, a.name]));
+  // ETERNAL is the one deliberate exception: its source is a SECRET achievement (sec-eternal) whose
+  // name is masked until earned, so a locked mark never reads "ETERNAL — GET: ETERNAL".
+  for (const m of MARKS) if (m.id !== 'mk-eternal') assert.notEqual(m.name, achName.get(m.from), m.id);
 });
 
 test('nothing equipped → addMarkWord is a no-op', () => {

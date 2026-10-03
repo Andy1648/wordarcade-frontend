@@ -25,7 +25,7 @@ export default function AnteMeter({
   return (
     <div className="sr-reward">
       <div className="sr-reward-label">Reward</div>
-      <div className="sr-mult sr-print" data-v={mult} aria-label={`reward ${multiplier} times`}>
+      <div className="sr-mult sr-print" data-v={mult} aria-label={`score reward ${multiplier} times`}>
         {mult}
       </div>
       <div className="sr-anteright">
@@ -38,7 +38,9 @@ export default function AnteMeter({
             </>
           ) : (
             <>
-              <span className="sr-accent">ANTE</span> — CAPTURE NOW FOR MORE
+              {/* H6/M5: the ante multiplies SCORE only — wins are rarity × combo × lucky — so the
+                  note names what it pays. The REWARD footer itself is the sanctioned poster copy. */}
+              <span className="sr-accent">SCORE</span> — CAPTURE NOW FOR MORE
             </>
           )}
         </div>

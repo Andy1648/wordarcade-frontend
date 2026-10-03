@@ -806,9 +806,28 @@
 }
 .shop-codes-msg.is-ok {
   color: #2effe0;
+  transform-origin: left center;
+  animation: shop-codes-stamp 340ms cubic-bezier(.2, 1.4, .35, 1) both;
 }
 .shop-codes-msg.is-bad {
   color: #ff6b3d;
+  animation: shop-codes-shake 300ms linear both;
+}
+/* H3: a redeem is a moment — the prize line slams in like a stamp; a bad code shakes no */
+@keyframes shop-codes-stamp {
+  0% { opacity: 0; transform: scale(1.9) rotate(-4deg); }
+  60% { opacity: 1; transform: scale(0.94) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes shop-codes-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shop-codes-msg.is-ok, .shop-codes-msg.is-bad { animation: none; }
 }
 
 /* REBIRTH ON A SHORT LAPTOP (fine-tune oct2, loop B): at 1280x551 the REBIRTH button was sliced by

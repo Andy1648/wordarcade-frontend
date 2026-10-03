@@ -9,7 +9,7 @@ import { exampleContaining } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
-import { bankWordWins, bankWeight, awardWins, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
+import { bankWordWins, bankWeight, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
 import { startFrenzy, formatFrenzy, frenzyMinutes, FRENZY_MULT, FRENZY_TRIGGER_WORDS, isClutch, CLUTCH_WORDS } from '../progress/frenzy.js';
 import ClutchBurst from '../frenzy/ClutchBurst.jsx';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock.js';
@@ -156,16 +156,15 @@ export default function FuseGame({ onExit, offerMenu = false }) {
 }
 
 function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
-  // Persisted all-time FUSE run count (Job 14) — drives the first-run tutorial card, exactly like
-  // CHAIN. onRunStart fires from the hook on the first run + every restart (button OR Enter).
-  const [runs, setRuns] = useState(0);
+  // Persisted all-time run count (modeAccess / nextMode read it). onRunStart fires from the hook
+  // on the FIRST run (mount) and on every restart — button OR Enter — so both paths count.
   // Each accepted FUSE word counts toward the daily streak (this mode never calls addWords).
   const g = useSoloGame({
     createEngine,
     adapter,
     pbKey: PB_KEYS.FUSE,
     mode: 'fuse',
-    onRunStart: () => setRuns(bumpFuseRuns()),
+    onRunStart: () => { bumpFuseRuns(); },
     onAccept: touchStreak,
   });
   const s = g.engine.state;
@@ -262,9 +261,10 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
     if (g.phase === 'over') loadSoloAcceptExt();
   }, [g.phase]);
 
-  // Live wins tally (item 2): what the run will pay so far, ticking up as words solve (0 until
-  // the 3-word payout gate).
-  const winsTally = awardWins({ mode: 'fuse', wordsAccepted: s.wordsSolved });
+  // Live wins tally (item 2): what the run HAS BANKED so far — the same running total the end
+  // card shows (H6/H1: the old `awardWins(wordCount)` estimate ignored length/rarity/combo/forge
+  // and disagreed with the bank). 0 until the 3-word payout gate.
+  const winsTally = winsEarned;
 
   const hud = (
     <>
@@ -305,9 +305,9 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
     </div>
   );
 
-  // First-run tutorial card (Job 14): the player's very first FUSE run (runs === 1), OR any run
-  // that ended under 3 words — the runs where a how-to-play card beats a score card. Matches CHAIN.
-  const firstRun = runs === 1 || s.wordsSolved < 3;
+  // Tutorial card (Job 14): any run that ended under 3 words (nothing banked yet). Matches CHAIN.
+  // H6: no longer fires on run #1 regardless — that hid a real first run's WINS EARNED.
+  const firstRun = s.wordsSolved < 3;
   // PAUSE TO LEARN — same shape as CHAIN. FUSE ends on a FRAGMENT it could not place, so the
   // word held is one that would have satisfied it, skipping everything already solved.
   const missedWord = g.phase === 'over' && data

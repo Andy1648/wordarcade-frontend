@@ -9,7 +9,7 @@ import PlayerDot from './PlayerDot';
 import { resolvePlayerColor } from '../playerColors';
 import { inviteLink } from '../share/links.js';
 import { track } from '../lib/analytics';
-import { DIFFICULTIES, difficultyDesc, difficultyReadout } from '../difficulty';
+import { DIFFICULTIES, difficultyDesc, difficultyReadout, difficultyPay } from '../difficulty';
 import './RoomScreen.css';
 
 // The two playable game modes. `key` is the value the server expects in
@@ -386,6 +386,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   >
                     <span className="room-difficulty-name">{diff.label}</span>
                     <span className="room-difficulty-desc">{difficultyDesc(diff.key)}</span>
+                    {/* H6/M21: harder pays more — say it on the button you pick it with. */}
+                    <span className="room-difficulty-desc">{difficultyPay(diff.key)}</span>
                   </button>
                 ))}
               </div>

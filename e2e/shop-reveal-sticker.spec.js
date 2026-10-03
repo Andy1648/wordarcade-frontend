@@ -51,9 +51,8 @@ test('buying INFERNO reveals a sticker naming the item and its price', async ({ 
   await expect(sticker).toBeVisible();
   await expect(sticker).toContainText('UNLOCKED');
   await expect(sticker).toContainText('INFERNO');
-  // The price is formatted by src/format.js, which groups with a THIN SPACE (U+2009) rather than
-  // a comma as of feat/progression-clarity — a comma at four digits reads as a decimal point to
-  // half the world. Asserted through the same formatter so the test cannot drift from the UI.
+  // The price is formatted by src/format.js (grouped with a comma since H6/L1). Asserted through
+  // the same formatter so the test cannot drift from the UI.
   await expect(sticker).toContainText(formatNum(INFERNO_PRICE));
   // It is the SHOP skin of the shared shell, and the price reads as a debit (spent, not earned).
   await expect(page.locator('.shop-sticker')).toHaveCount(1);
@@ -101,7 +100,7 @@ test('a key power buy shows the tier and what it pays, and adds no infinite anim
   await openShop(page);
   await page.locator('.shop-keypower').first().locator('.shop-buy').click();
   const sticker = page.locator('.sticker');
-  await expect(sticker).toContainText('KEY POWER I');
+  await expect(sticker).toContainText('KEY POWER TIER 1');
   await expect(sticker).toContainText('XP');
   await expect(sticker.locator('.sticker-coin.is-debit')).toBeVisible();
   // The shell's punch-in is a single finite animation; nothing here may loop.

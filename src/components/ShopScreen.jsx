@@ -14,7 +14,7 @@ import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
 import { getWins, perWordWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
-import { rebirthAdvice, rebirthWithStars, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
+import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
@@ -26,8 +26,6 @@ import { LEADERBOARD_ENABLED } from '../leaderboard/client';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 
-const ROMAN = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-const toRoman = (n) => ROMAN[n] || String(n);
 
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
@@ -111,7 +109,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const revealKeyPower = (t, n, spent) => {
     setReveal({
       kind: 'keypower',
-      name: `KEY POWER ${toRoman(t)}${n > 1 ? ` (+${n})` : ''}`,
+      // H6/M14: "TIER n" everywhere (the shop heading, stats and the ceremony say the same).
+      name: `KEY POWER TIER ${t}${n > 1 ? ` (+${n})` : ''}`,
       blurb: `Every letter now pays ${formatNum(keyTierXp(t))} XP.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: t >= 5 ? '#FFD54A' : '#2EFFE0',
@@ -197,7 +196,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     for (const m of MASTERY_MODES) words += masteryWords(m) || 0;
     const kept = [
       { label: 'WINS', value: formatNum(getWins()) },
-      { label: 'KEY POWER', value: `T${formatNum(getKeyTier())}` },
+      { label: 'KEY POWER', value: `TIER ${formatNum(getKeyTier())}` },
       { label: 'LETTER FORGE', value: `${formatNum(forgeBuys(forgeLevels()))} BUYS` },
       { label: 'COSMETICS', value: formatNum(getOwned().length) },
       { label: 'MARKS', value: formatNum(ownedMarkIds().length) },
@@ -241,8 +240,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   </b>
                 </div>
                 {/* Your current per-word win rate — context for how far the tier cost is. */}
+                {/* H6/M13: the tier is priced in WINS, so say what it does to the WINS rate. */}
                 <div className="shop-kp-rate">
-                  YOUR RATE: <b>{formatRate(perWordWins({ mode: 'wordBomb' }))} WINS / WORD</b>
+                  YOUR RATE: <b>{formatRate(perWordWins({ mode: 'wordBomb' }))}</b> → <b>{formatRate(perWordWins({ mode: 'wordBomb', keyTier: keyTier + 1 }))} WINS / WORD</b> AT TIER {keyTier + 1}
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
@@ -279,7 +279,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <div className="shop-kp-next">
                     <b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}
                   </div>
-                  <div className="shop-kp-rate">+{Math.round(FORGE_PCT * 100)}% PER FORGED LETTER · NO CAP</div>
+                  <div className="shop-kp-rate">+{Math.round(FORGE_PCT * 100)}% PER FORGE LEVEL OF EACH LETTER IN THE WORD · NO CAP</div>
                 </div>
               </div>
             ) : (
@@ -292,7 +292,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <b><span className="shop-coin" aria-hidden="true" /> {formatNum(fCost)} WINS</b>
                 </div>
                 <div className="shop-kp-rate">
-                  +{Math.round(FORGE_PCT * 100)}% PER FORGED LETTER · NO CAP
+                  +{Math.round(FORGE_PCT * 100)}% PER FORGE LEVEL OF EACH LETTER IN THE WORD · NO CAP
                 </div>
                 <div className="shop-goal">
                   {wins >= fCost ? 'READY TO FORGE' : `NEED ${formatNum(fCost - wins)} MORE WINS`}
@@ -365,7 +365,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             {/* ONE BIG THING (Andy oct2): what a rebirth gets you, right now — the new multiplier
                 and the stars — with the Sell-Lemons-style warning when waiting a level or two pays more. */}
             <div className={`shop-rb-hero${advice.badTime ? ' is-bad' : ''}`}>
-              <div className="shop-rb-hero-label">REBIRTH {rebirths + 1} TO GET</div>
+              {/* H6/H10: ×N is the new TOTAL (NOW ×… sits right under it), so the label says "REACH". */}
+              <div className="shop-rb-hero-label">REBIRTH {rebirths + 1} TO REACH</div>
               <div className="shop-rb-hero-val">
                 ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS</span>
                 {rebirthReady && (
@@ -395,13 +396,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
 
             <ul className="shop-confirm-detail">
               <li>
-                <b>LOSE:</b> all XP — back to LEVEL 1.
+                {/* H6/H11: HEAD START lifts the new climb (stars.js headStartLevel). */}
+                <b>LOSE:</b> all XP — back to LEVEL {headStartLevel(rebirths + 1)}.
               </li>
               <li>
                 <b>KEEP:</b> wins, all purchases, lifetime stats — everything else.
               </li>
               <li>
-                <b>GAIN:</b> a permanent ×{formatMult(nextMult)} on wins and XP, and ★ for STAR PERKS.
+                {/* H6/H10: what THIS rebirth adds — ×9 → ×10 is +11%, not "a ×10". */}
+                <b>GAIN:</b> ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(nextMult)} (+{Math.round((nextMult / rebirthMult(rebirths) - 1) * 100)}%) on wins and XP, for good, and ★ for STAR PERKS.
               </li>
             </ul>
 
@@ -497,7 +500,8 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
       {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
       <div className="shop-card-name">{item.name}</div>
       {item.xpMult > 1 && (
-        <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% XP</div>
+        /* H6/H9: this multiplier only feeds menu-typing XP (xpPerInput) — never a game word or wins. */
+        <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% MENU XP</div>
       )}
       {isEquipped ? (
         <div className="shop-card-tag">EQUIPPED</div>
