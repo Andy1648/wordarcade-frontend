@@ -14,6 +14,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import Mascot from '../components/Mascot';
 import LayeredWord from '../components/LayeredWord';
+import MatchWinBanner, { hasHumanRival } from '../components/MatchWinBanner';
 import { RACE_REASON_COPY, precheck, myFragment } from './raceState';
 import { formatNum, plural } from '../format';
 import './WordRace.css';
@@ -227,9 +228,14 @@ export default function WordRaceScreen({
         <section className="wr-play">
           <div className="wr-hero" aria-live="polite">
             {counting ? (
-              <span className="wr-count" key={Math.ceil(goIn / 1000)}>
-                {Math.ceil(goIn / 1000)}
-              </span>
+              <>
+                <span className="wr-count" key={Math.ceil(goIn / 1000)}>
+                  {Math.ceil(goIn / 1000)}
+                </span>
+                {/* less-is-more: the one pre-race statement of the match-win multiplier, only with a
+                    human rival; keyed on the race seed so a rematch announces it again. */}
+                {hasHumanRival(racers, myId) && <MatchWinBanner key={seed || 'race'} mode="word-race" />}
+              </>
             ) : finished ? (
               <span className="wr-hero-done">FINISHED — WAITING ON THE FIELD</span>
             ) : fragment && wordsMode ? (

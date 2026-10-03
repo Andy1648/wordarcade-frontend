@@ -836,11 +836,6 @@
   color: #c8321e;
   font-weight: 700;
 }
-/* E3: the universal rule on its own line, never run into the mode's POWER */
-.sr-cover-longer {
-  display: block;
-  font-weight: 700;
-}
 .sr-cover-round {
   opacity: 0.75;
 }
