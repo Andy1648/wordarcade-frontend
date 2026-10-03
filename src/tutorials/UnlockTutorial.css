@@ -8,8 +8,12 @@
   align-items: flex-end;
   justify-content: center;
   padding: 16px 16px max(24px, env(safe-area-inset-bottom, 0px));
-  background: rgba(13, 6, 24, 0.72);
+  background: rgba(13, 6, 24, 0.6);
+  /* NON-BLOCKING: the dim is visual only — a tap anywhere else still reaches the menu (a player mid-typing
+     or heading for STATS is never stopped); only the card's own buttons take the pointer */
+  pointer-events: none;
 }
+.ut-card { pointer-events: auto; }
 @media (min-width: 900px) {
   .ut-overlay { align-items: center; }
 }

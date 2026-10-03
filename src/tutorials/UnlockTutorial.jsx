@@ -23,7 +23,7 @@ export default function UnlockTutorial({ tutorial, snapshot, onDone }) {
   }, [i, step.target]);
 
   useEffect(() => {
-    try { btnRef.current && btnRef.current.focus({ preventScroll: true }); } catch { /* */ }
+    // no focus steal: the menu's type-anywhere keeps working while the card is up
     const onKey = (e) => { if (e.key === 'Escape') onDone(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -31,7 +31,7 @@ export default function UnlockTutorial({ tutorial, snapshot, onDone }) {
 
   const sub = typeof step.sub === 'function' ? step.sub(snapshot || {}) : step.sub;
   return createPortal(
-    <div className="ut-overlay" role="dialog" aria-modal="true" aria-label={`${step.title} — tutorial`} data-tut={tutorial.id}>
+    <div className="ut-overlay" role="dialog" aria-modal="false" aria-label={`${step.title} — tutorial`} data-tut={tutorial.id}>
       {ring && <div className="ut-ring" style={ring} aria-hidden="true" />}
       <div className="ut-card" key={i}>
         {tutorial.steps.length > 1 && (
