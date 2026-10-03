@@ -182,7 +182,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${mp ? Math.max(0, Math.min(1, mp.maxed ? 1 : mp.frac)) : 0})` }} /></span>
                 <span className="mx-hero-rank-text">
                   {mp && !mp.maxed
-                    ? `${formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → RANK ${MARK_RANK_NAMES[mp.rank]} · ×${formatMult(markMainMult(legacyMain, mp.rank + 1))}`
+                    ? `${formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → MARK ${MARK_RANK_NAMES[mp.rank]} · ×${formatMult(markMainMult(legacyMain, mp.rank + 1))}`
                     : mp ? 'MAXED' : ' '}
                 </span>
               </div>
