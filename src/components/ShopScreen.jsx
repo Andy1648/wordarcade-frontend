@@ -12,7 +12,7 @@ import ForgeStrip from './ForgeStrip';
 import { layerOpen } from '../progress/claims';
 import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
 import { getWins, perWordWins } from '../progress/wins';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp, keyTierWords } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatRate } from '../format';
@@ -111,7 +111,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setReveal({
       kind: 'keypower',
       name: `KEY POWER ${toRoman(t)}${n > 1 ? ` (+${n})` : ''}`,
-      blurb: `Every letter now pays ${formatNum(keyTierXp(t))} XP.${keyTierWords(t + 1) > 0 ? ` Next tier: ${formatNum(Math.round(keyTierWords(t + 1)))} words at your rate.` : ''}`,
+      blurb: `Every letter now pays ${formatNum(keyTierXp(t))} XP.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: t >= 5 ? '#FFD54A' : '#2EFFE0',
       tier: t,
@@ -245,8 +245,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 {/* Your current per-word win rate — context for how far the tier cost is. */}
                 <div className="shop-kp-rate">
                   YOUR RATE: <b>{formatRate(perWordWins({ mode: 'wordBomb' }))} WINS / WORD</b>
-                  {/* K1 (Andy oct2): past T8 a tier is priced in WORDS at your rate — say how many */}
-                  {keyTierWords(keyTier + 1) > 0 && <> · NEXT TIER = <b>{formatNum(Math.round(keyTierWords(keyTier + 1)))} WORDS</b></>}
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">

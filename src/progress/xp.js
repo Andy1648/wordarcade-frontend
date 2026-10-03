@@ -260,8 +260,8 @@ export function doRebirth() {
 export const KEYTIER_KEY = 'taw.keytier';
 // KEY POWER — RESTORED TO v8 (Andy oct2 KP2: "keep it very close to the old one"). v9 made it +15 XP
 // per letter a tier, priced in words — late tiers added ~10% and felt like nothing. Back to the v8
-// ladder: XP per letter ×2.5 a tier forever, price ×6 a tier IN WINS through T8 (the table above) — and
-// past T8 the price is in WORDS (K1, below). T1 = 25. NO CAPS: past a double's range the numbers display through the named-suffix
+// ladder: XP per letter ×2.5 a tier, price ×6 a tier IN WINS (the T1–T8 table above, extended by those
+// steps forever). T1 = 25. NO CAPS: past a double's range the numbers display through the named-suffix
 // ladder (format.js) — tested at T60+. A save's tier NUMBER is kept, and v8 pays at least what v9 did
 // at every tier (v9 = 10 + 15t; floored at it anyway — nobody's XP/letter drops).
 export const KEY_TIERS = [
@@ -275,16 +275,8 @@ export const KEY_TIERS = [
   { xp: 5875, cost: 466560 }, //   T7
   { xp: 14690, cost: 2799360 }, // T8
 ];
-export const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8 — forever
-export const TIER_COST_STEP = 6; // cost multiplier per tier THROUGH T8 (the table above is 10 · 6^(t-1))
-// K1 (Andy oct2 22:15): past T8 a tier is priced in WORDS AT YOUR RATE, like LETTER FORGE — v8's ×6 a
-// tier against ×2.5 income made each tier ~×2.4 longer than the last (the KEY wall, loop 2). T9 costs
-// KEY_PRICE_WORDS reference words, each later tier ×KEY_PRICE_WORD_STEP more words. "Your rate" = the
-// reference word at the tier you are LEAVING × rebirth × the forge / STAR POWER boost (priceRateBoost) —
-// the same rate the forge prices against; a live FRENZY / BOOST never makes a tier dearer.
-export const KEY_PRICE_WORDS = 40;
-export const KEY_PRICE_WORD_STEP = 1.2;
-const KEY_REF_LETTERS = 5; // = wins.js WORD_LEN_REF
+export const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
+export const TIER_COST_STEP = 6; // cost multiplier per tier past T8
 const V9_XP = (t) => 10 + 15 * t; // the floor: what v9 paid at a tier
 
 export function getKeyTier() {
@@ -317,22 +309,16 @@ export function keyTierXp(tier) {
   }
   return Math.max(xp, V9_XP(t));
 }
-// The WORDS a tier costs past T8 (T9 = KEY_PRICE_WORDS, ×KEY_PRICE_WORD_STEP a tier); 0 inside the
-// v8 table, whose tiers are priced in flat wins.
-export function keyTierWords(tier) {
-  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  if (t < KEY_TIERS.length) return 0;
-  return KEY_PRICE_WORDS * KEY_PRICE_WORD_STEP ** (t - KEY_TIERS.length);
-}
-// The wins cost to REACH a given tier (T0 = 0). Through T8 it's the published v8 price (flat across
-// rebirths). Past T8 it's keyTierWords(t) reference words at the rate of tier t-1 (see K1 above);
-// rebirthCount defaults to the live count.
+// The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past T8
+// it extends ×6 per tier from T8's 2,799,360, each step round10. (rebirthCount accepted and ignored —
+// v8 prices were flat wins; the signature stays so callers don't change.)
+// eslint-disable-next-line no-unused-vars
 export function keyTierCostAt(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
   if (t < KEY_TIERS.length) return KEY_TIERS[t].cost;
-  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  const refWins = (keyTierXp(t - 1) * KEY_REF_LETTERS) / 10;
-  return Math.max(10, round10(keyTierWords(t) * refWins * rebirthMult(rc) * priceRateBoost()));
+  let cost = KEY_TIERS[KEY_TIERS.length - 1].cost;
+  for (let i = KEY_TIERS.length; i <= t && Number.isFinite(cost); i++) cost = round10(cost * TIER_COST_STEP);
+  return cost;
 }
 // The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
 export function keyTierCost(tier, rebirthCount) {
