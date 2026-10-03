@@ -323,7 +323,7 @@ function StartScreen({ onPlay, onExit }) {
           SAT&nbsp;RUSH
         </div>
         <p className="sr-cover-tag">
-          SAT vocab at arcade speed. Read the clue and type the word before it spells itself.
+          Read the clue. Type the word before it spells itself.
         </p>
 
         {/* Worked example — the mechanic, in one clue → answer beat. */}

@@ -347,7 +347,7 @@ export default function StatsScreen({ onBack }) {
             HIDDEN ACHIEVEMENTS{' '}
             <span className="stats-secret-count">{fmt(hidden.found)} / {fmt(hidden.total)} FOUND</span>
           </h3>
-          <p className="stats-caption">ACHIEVEMENTS WITH THEIR GOAL HIDDEN UNTIL YOU CROSS IT</p>
+          <p className="stats-caption">GOALS HIDDEN UNTIL YOU HIT THEM</p>
           <div className="stats-secrets">
             {hidden.items.map((sec) => (
               <div
@@ -387,7 +387,7 @@ export default function StatsScreen({ onBack }) {
           <h3 className="stats-subtitle">TYPING SPEED</h3>
           {/* The label names the contributing modes so it's clear these count only where typing
               speed is meaningful — the continuous modes + menu, never the turn-based games (§2d). */}
-          <p className="stats-caption">SAT RUSH · CHAIN · FUSE · MENU — active typing only</p>
+          <p className="stats-caption">SAT RUSH · CHAIN · FUSE · MENU</p>
           <dl className="stats-list">
             <div className="stats-row">
               <dt>BEST WPM</dt>
@@ -404,7 +404,7 @@ export default function StatsScreen({ onBack }) {
           {satMissing.length > 0 && (
             <>
               <h3 className="stats-subtitle">WORDS YOU KEEP MISSING</h3>
-              <p className="stats-caption">SAT RUSH — THE WORDS THAT KEEP ESCAPING. STUDY THESE.</p>
+              <p className="stats-caption">SAT RUSH · STUDY THESE</p>
               <dl className="stats-list">
                 {satMissing.map((m) => (
                   <div className="stats-row" key={m.w}>
@@ -419,7 +419,7 @@ export default function StatsScreen({ onBack }) {
           {/* BACKUP — copy your whole save as a code, or restore from one. Progress only (no device
               settings). The recovery path ships before any versioned-save migration. */}
           <h3 className="stats-subtitle">BACKUP</h3>
-          <p className="stats-caption">BACK UP · MOVE TO A NEW DEVICE</p>
+          <p className="stats-caption">MOVE TO A NEW DEVICE</p>
           <div className="stats-backup">
             <button type="button" className="stats-backup-copy" onClick={handleCopySave}>
               COPY SAVE

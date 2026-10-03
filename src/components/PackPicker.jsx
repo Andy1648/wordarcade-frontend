@@ -122,8 +122,8 @@ export default function PackPicker({ packs, selected, onToggle, onSetAll }) {
       <div className="ppp-count">
         <span className="ppp-count-num" key={`${count}-${cats}`}>
           {count === 0
-            ? 'NO PACKS — PICK AT LEAST ONE'
-            : `${count} PACK${count === 1 ? '' : 'S'} · ${cats} ${cats === 1 ? 'CATEGORY' : 'CATEGORIES'} LOADED`}
+            ? 'PICK AT LEAST ONE PACK'
+            : `${count} PACK${count === 1 ? '' : 'S'} · ${cats} ${cats === 1 ? 'CATEGORY' : 'CATEGORIES'}`}
         </span>
       </div>
     </div>

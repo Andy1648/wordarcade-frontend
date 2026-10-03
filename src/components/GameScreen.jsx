@@ -95,18 +95,18 @@ function Heart({ filled, shatter }) {
 // and Category Blitz share most reasons; the too-short floor differs (3 vs
 // 2) and each mode has one reason the other never emits.
 const REJECTION_MESSAGES = {
-  too_short: 'TOO SHORT — NEED 3+ LETTERS',
-  too_short_category: 'TOO SHORT — NEED 2+ LETTERS',
+  too_short: 'TOO SHORT — 3+ LETTERS',
+  too_short_category: 'TOO SHORT — 2+ LETTERS',
   missing_combo: 'MUST CONTAIN [combo]',
-  already_used: 'ALREADY USED — TRY AGAIN',
-  already_said: 'ALREADY SAID — TRY ANOTHER',
+  already_used: 'ALREADY USED',
+  already_said: 'ALREADY SAID',
   // used_by_other: an optimistic accept the SERVER overruled because another player took the word in
   // the round-trip window (a race). Distinct from local already_used ("you used it"). (JOB C Path B.)
   used_by_other: 'SOMEONE ELSE JUST USED THAT',
   // not_a_word is emitted ONLY by the server's dictionary check — i.e. the rollback of an optimistic
   // accept (the client can't know the dictionary). Phrased as the server overruling. (JOB C Path B.)
   not_a_word: 'NOT IN OUR WORD LIST',
-  not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
+  not_in_category: "DOESN'T FIT THE CATEGORY",
   // STEP 9 (list-only Blitz): the server's only reject for a well-formed answer.
   not_on_list: 'NOT ON THE LIST',
 };
