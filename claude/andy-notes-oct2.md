@@ -25,6 +25,7 @@
 10. Last PR (finetune/summary): these notes + the LUCKY stamp bound to its constant. It merges after CI. Full log: claude/econ-oct2/loop-3-8.md.
 
 ## ANDY TODO (top of the list — everything I can't do myself)
+- **SQL to run: `supabase/migrations/015_level_rate.sql`** (R6 anti-cheat). Paste the whole file into the SQL Editor and Run. lb_submit2 now CLAMPS a level rise to 0.5 level/s since the last accepted submit (banking ≤ 20 min = 600 levels; ≤ 1,800 levels/hour), rebirths rise ≤ 1 per submit, and the OLD lb_submit (still anon-callable, no level check at all — a second bypass) now forwards to the clamped lb_submit2. Existing rows are untouched. If you ever re-run 011 or 013, re-run 015 after them.
 - H4 WINNER PAYS (Tier 1): 2-device play-test once merged — WB match between two real devices, winner sees the WINNER popup count up and a ×7 receipt; a WB match vs bots only shows the old +50%.
 - MARKS ROLLS (feat/marks-rolls-engine, HOLD on rule P — 9/12 windows worse): decide (1) keep MAX-LEVEL-300 / 10-REBIRTH as "hard" only if PV10 ships, else LV1000 / 25 rebirths? (2) roll price 100 words (casual 4/h) or 60 (casual 7/h, strong 150/h)? (3) gold/rainbow 10/10 flat or tiered for legendaries? (4) legendary jackpot: cap auto-equip at ≤×1.5 MAIN jump, compress the MAIN ladder, or accept? (5) clear rule P by bigger perks, smaller spend, or counting new marks as good events in the gap metric? (6) permanent MAIN ×4 or ×5? My recommendation: price 60, tiered gold for legendary (2/3), cap the auto-equip jump at ×1.5, count a new mark as a good event (it IS one) — then re-run rule P.
 - **SQL to run: `supabase/migrations/014_self_reset.sql`** (N2, PR #150) — paste the whole file into the SQL Editor and Run. It adds `lb_self_reset` (a player can reset ONLY themselves, secret-checked: it raises their own reset_all flag and runs your 012 lb_reset_ack) and redefines lb_reset_ack to also zero the weekly counter. Until it runs, RESET ALL PROGRESS falls back to the old local-only reset. Earlier SQL: 008, 010, 011, 012, 013 are live on prod (verified 17:55 ET: lb_caps has weekly; ZZTEST redeem works once; CJK claim works; board is level-only).
@@ -97,7 +98,8 @@ MEMORY RULES (crashed 04:05): full lint/unit/e2e ONLY on GitHub Actions (push �
 - [ ] R3 PV10 probe (alone), then continue v10.
 - [ ] R4 feat/marks-rolls-engine → finish mark rolls.
 - [ ] R5 Andy ran 014_self_reset.sql: verify Stats → RESET clears the board row on prod.
-- [ ] R6 ANTI-CHEAT: lb_submit2 never rate-checks LEVEL (how LV5222 reached the board). Server-side level-rate check as a new migration (write, don't run; ANDY TODO).
+- [x] R6 ANTI-CHEAT: lb_submit2 never rate-checks LEVEL (how LV5222 reached the board). Server-side level-rate check as a new migration (write, don't run; ANDY TODO).
+  - 10:55 DONE (written, not run): supabase/migrations/015_level_rate.sql — time-based clamp (0.5 lv/s, 600-level bank; a letters rule was rejected because menu typing earns levels without letters and the client submits only on menu load / board open); rebirths +1/submit; ALSO closed a 2nd bypass: the legacy lb_submit (anon-callable, no level check) now forwards to lb_submit2. SQL in ANDY TODO. Ships with PR #153.
 - [ ] R7 then: big leaderboard icon (test 2560x1440) → confusion audit → fine-tune loop.
 
 ## NEW GOAL (Andy oct3 02:24): every step done or blocked-with-reason AND `date` ≥ Sat Oct 3 10:30 AM ET; then the fine-tune loop. Never sleep/wait loops to pass time. 10-line summary at 10:15 AM (merged PR #s, verified live, sim numbers, new Sentry issues, ANDY TODO).
