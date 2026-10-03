@@ -108,6 +108,7 @@ test('no src/**/*.jsx renders a big economy value raw (wrap it in formatNum / fo
       const code = line.replace(/\/\/.*$/, '');
       if (/^\s*(\*|\/\*|\{\/\*)/.test(code)) return; // comment lines
       if (/^\s*(import|export)\b.*\bfrom\b/.test(code)) return; // `import { wins } from` is not a render
+      if (/\bfunction\b[^(]*\(\s*\{|\(\s*\{[^}]*\}\s*\)\s*=>/.test(code)) return; // `({ wins }) =>` props, not a render
       const base = file.split(/[\\/]/).pop();
       for (const m of code.matchAll(TEXT_CHILD)) {
         if (ALLOW.has(`${base}:${m[1]}`)) continue;

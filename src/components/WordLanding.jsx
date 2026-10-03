@@ -22,42 +22,20 @@
 //   - one-shot. It mounts, it plays, it unmounts. Nothing here loops.
 //   - reduced motion is honoured: the count-up resolves instantly and the entrance is an opacity
 //     fade (see WordLanding.css).
-import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../format';
+import { useCountUp } from '../hooks/useCountUp';
 import './WordLanding.css';
 
 // The bands that get a treatment, in escalation order. COMMON is deliberately absent.
 export const LANDING_BANDS = ['UNCOMMON', 'RARE', 'OBSCURE'];
 const STAMPED = new Set(['RARE', 'OBSCURE']);
-const COUNT_MS = 420;
+// The landing lives 1.5 s (wl-land), so its count takes the one count-up's FLOOR (1.2 s) and is
+// capped there — long enough to see it climb, and it lands before the chip fades.
+const COUNT_MAX_MS = 1200;
 
 /** Should a landing be shown at all for this word? COMMON with no secret is silent. */
 export function hasLanding(band, secret) {
   return !!secret || LANDING_BANDS.includes(band);
-}
-
-// The payout counting up. A number ticking to its value is not a CSS animation (it is a text
-// change), so it is driven by rAF and bounded by COUNT_MS — one short pass per landing, never a
-// loop, and it resolves to the final value immediately under reduced motion.
-function useCountUp(target, enabled) {
-  const [n, setN] = useState(enabled ? 0 : target);
-  const rafRef = useRef(0);
-  useEffect(() => {
-    if (!enabled) {
-      setN(target);
-      return undefined;
-    }
-    const start = performance.now();
-    const tick = (t) => {
-      const p = Math.min(1, (t - start) / COUNT_MS);
-      // ease-out: the number sprints and settles, which reads as "landing" rather than "loading"
-      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [target, enabled]);
-  return n;
 }
 
 /**
@@ -71,7 +49,8 @@ function useCountUp(target, enabled) {
 export default function WordLanding({ word, band = 'COMMON', wins = 0, secret = null, reduced = false }) {
   const showCount = band === 'OBSCURE' || !!secret;
   const total = (secret ? secret.wins : 0) + (showCount ? wins : 0);
-  const shown = useCountUp(total, showCount && !reduced);
+  // THE one count-up (hooks/useCountUp → juice/countUp.js), from 0; instant under reduced motion.
+  const shown = Math.round(useCountUp(total, { from: 0, maxMs: COUNT_MAX_MS, enabled: showCount && !reduced }).shown);
   if (!hasLanding(band, secret)) return null;
 
   const tier = secret ? 'SECRET' : band;

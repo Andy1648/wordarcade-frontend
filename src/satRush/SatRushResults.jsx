@@ -6,6 +6,7 @@
 // working untouched; only its container is styled to sit on the page.
 import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../format';
+import { createCountUp } from '../juice/countUp';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -39,7 +40,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
   const [score, setScore] = useState(0);
   const [ante, setAnte] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const raf = useRef(0);
+  const raf = useRef(null); // the count-up controller
   const timers = useRef([]);
 
   useEffect(() => {
@@ -56,33 +57,42 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
     const add = (fn, ms) => timers.current.push(setTimeout(fn, ms));
 
     add(() => juice.resultsStamp(), C.stampDelay); // DEAD slam
+    const finish = () => {
+      setScore(finalScore);
+      setAnte(finalAnte);
+      setRevealed(true);
+      if (results.bestStreak >= 5) juice.resultsBest(); // a hot run earns a sparkle
+    };
     add(() => {
       juice.resultsSting(); // descending defeat tone
-      const t0 = performance.now();
+      // THE one count-up (juice/countUp.js, Andy oct3 #4): it counts the WINS (the gain this page
+      // exists to show — 2 s from nothing), and CAPTURED rides the same eased progress. A run that
+      // paid nothing counts its captures instead.
+      const target = finalAnte > 0 ? finalAnte : finalScore;
+      if (!(target > 0)) {
+        finish();
+        return;
+      }
       let lastTick = 0;
-      const step = (now) => {
-        const p = Math.min(1, (now - t0) / C.countMs);
-        const eased = 1 - Math.pow(1 - p, 3);
-        const s = Math.round(finalScore * eased);
-        setScore(s);
-        setAnte(Math.round(finalAnte * eased));
-        if (s - lastTick >= C.score.tickEvery) {
-          lastTick = s;
-          juice.scoreTick(p);
-        }
-        if (p < 1) raf.current = requestAnimationFrame(step);
-        else {
-          setScore(finalScore);
-          setAnte(finalAnte);
-          setRevealed(true);
-          if (results.bestStreak >= 5) juice.resultsBest(); // a hot run earns a sparkle
-        }
-      };
-      raf.current = requestAnimationFrame(step);
+      raf.current = createCountUp({
+        initial: 0,
+        onFrame: (v) => {
+          const p = Math.min(1, v / target);
+          const s = Math.round(finalScore * p);
+          setScore(s);
+          setAnte(Math.round(finalAnte * p));
+          if (s - lastTick >= C.score.tickEvery) {
+            lastTick = s;
+            juice.scoreTick(p);
+          }
+        },
+        onDone: finish,
+      });
+      raf.current.to(target);
     }, C.scoreDelay);
 
     return () => {
-      cancelAnimationFrame(raf.current);
+      if (raf.current) raf.current.cancel();
       timers.current.forEach(clearTimeout);
       timers.current = [];
     };
