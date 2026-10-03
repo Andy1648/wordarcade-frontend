@@ -45,7 +45,7 @@ function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
     <div className={`lstack${compact ? ' lstack--compact' : ''}`} aria-hidden="true">
       <div className="lstack-head">
         <span className="lstack-rate">{formatRate(shown)}</span>
-        <span className="lstack-per">WINS / WORD</span>
+        <span className="lstack-per">{compact ? '/ WORD' : 'WINS / WORD'}</span>{/* compact = the WB/Blitz receipt rail, beside the WINS pill: the longer unit widened the 1024px band into SKIP */}
       </div>
       <div className="lstack-rows">
         <div className="lstack-row lstack-row--base">
