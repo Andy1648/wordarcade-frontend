@@ -196,6 +196,27 @@
 @media (min-width: 900px) and (min-height: 900px) {
   .mx-hero-art { width: 160px; height: auto; }
 }
+/* SHORT desktop (1280x551, 1366x625): the split column has ~400px, and a worn hero + the detail need ~600 —
+   SET AS MAIN sat 108–222px below the column's fold (loop 8). The phone's compact rules apply here too:
+   the perk lines step out (the tile and the effect still say it), the art shrinks, the button is body-size. */
+@media (min-width: 900px) and (max-height: 760px) {
+  .mx-panel { padding-top: 10px; gap: 10px; }
+  .mx-main-col { gap: 10px; }
+  .mx-hero { padding: 10px 14px; gap: 12px; }
+  .mx-hero-art { width: 84px; height: auto; }
+  .mx-hero-perk, .mx-detail-blurb { display: none; }
+  .mx-hero-pct { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+  .mx-hero-pct span { margin: 0; white-space: nowrap; }
+  .mx-detail { padding: 8px 10px; gap: 10px; align-items: center; }
+  .mx-detail-art { width: 56px; height: auto; }
+  .mx-set { min-height: 44px; padding: 6px 14px; font-size: var(--fs-body); }
+}
+@media (min-width: 900px) and (max-height: 600px) {
+  .mx-hero-name { font-size: var(--fs-panel); }
+  .mx-hero-art { width: 72px; }
+  .mx-hero-rank { gap: 2px; }
+}
+.mx-nowrap { white-space: nowrap; }
 @keyframes mx-punch {
   0% { opacity: 0.4; transform: scale(0.92); }
   55% { opacity: 1; transform: scale(1.04); }

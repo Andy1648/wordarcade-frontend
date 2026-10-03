@@ -29,7 +29,7 @@ bought within ~2 min in every run (the realised waits), so it is not a wall.
 | 5 | #146 | LETTER FORGE opens at its level (stale "CLAIM IT IN REWARDS" copy removed) |
 | 6 | #146 | a live BOOST pill on the phone menu |
 | 7 | #147 | BOOST/FRENZY pills fit Word Bomb's docked stack at 1366x625; the FUSE HUD stays on one row |
-| 8 | loop8 | MARKS "UP TO +300%" → the computed ceiling (+480%, LEGENDARY rank V) |
+| 8 | loop8 | MARKS "UP TO +300%" → the computed ceiling (+480%, LEGENDARY rank V); SET AS MAIN back on screen at 1280x551 / 1366x625 with a MAIN worn (was 176 / 108 px below the fold) |
 
 Text sweep (`claude/finetune/text-sweep.mjs`, fresh LV1, prod, 1280x551 / 1366x625 / 390x844 / 1920x1080,
 menu + stats + shop + board): **0 visible text elements under 13 px.** Prod smoke

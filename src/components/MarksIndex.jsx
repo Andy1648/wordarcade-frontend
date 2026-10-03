@@ -92,7 +92,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               <>
                 <MarkBadge mark={main} rank={mp.rank} size={128} className="mx-hero-art" />
                 <div className="mx-hero-body">
-                  <div className="mx-hero-kicker">YOUR MAIN · RANK {MARK_RANK_NAMES[mp.rank - 1]}</div>
+                  <div className="mx-hero-kicker">YOUR MAIN · <span className="mx-nowrap">RANK {MARK_RANK_NAMES[mp.rank - 1]}</span></div>
                   <div className="mx-hero-name">{main.name}</div>
                   <div className="mx-hero-pct">+{pct(main, mp.rank)}% <span>WINS · EVERY MODE</span></div>
                   <div className="mx-hero-perk">PLUS ITS PERK: {markBlurbAt(main, mp.rank)}</div>
