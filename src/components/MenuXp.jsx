@@ -5,9 +5,12 @@
 // mount/resize and cached (never per keystroke); each pop then picks a continuous random
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
 import BoostPill from '../frenzy/BoostPill';
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
-import { formatNum, formatMultExact } from '../format';
+import { formatNum, formatMultExact, formatPct, formatGainPct } from '../format';
+import { createCountUp } from '../juice/countUp';
+import { useCountUp } from '../hooks/useCountUp';
+import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank, markMainMult, markTier } from '../progress/marks';
@@ -45,59 +48,81 @@ function streakTier(count) {
 // formatter) would print ×1.05 as "×1.1" — a bonus the game does not pay.
 const formatMult = (m) => `×${formatMultExact(m)}`;
 
-// The progress bar: a "LV n" chip overlapping the left cap · a track holding the fill,
-// a leading-edge marker, and a centred "1,240 / 3,162" readout (XP into the level / cost).
-// The fill is scaleX (never width) and glides via a rAF exponential ease that is
-// framerate-independent (k = 1 − exp(−dt/90), dt clamped to 50ms), not a CSS transition —
-// the loop only runs while it has ground to cover and stops at rest (nothing scheduled
-// between keystrokes). The readout's left number counts up off the same `displayed` value.
-// On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
-// flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
-// `variant="mini"` (splash) drops the readout and shrinks the track.
-// W (Andy oct2 22:28): the wins chip COUNTS UP to a new balance (finite, ~450 ms, text only — no
-// layout read), and jumps straight there under reduced motion or on a drop (a purchase).
-function useCountTo(value) {
-  const [shown, setShown] = useState(value);
-  const fromRef = useRef(value);
-  useEffect(() => {
-    const from = fromRef.current;
-    fromRef.current = value;
-    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (value == null || from == null || value <= from || reduce) { setShown(value); return undefined; }
-    let raf = 0;
-    const t0 = performance.now();
-    const step = (t) => {
-      const k = Math.min(1, (t - t0) / 450);
-      const e = 1 - (1 - k) ** 3;
-      setShown(k >= 1 ? value : from + (value - from) * e);
-      if (k < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [value]);
-  return shown;
+// The progress bar: a LEVEL block welded to a track holding the fill, a leading-edge marker,
+// and a readout spanning the track — XP into the level (left), the % of the level ONE decimal
+// (centre, Andy oct3 #5), and the level's cost (right). The fill is scaleX (never width).
+//
+// EVERY NUMBER HERE COUNTS THROUGH THE ONE COUNT-UP (src/juice/countUp.js, Andy oct3 #4): the fill
+// + its readout, the wins chip and the level numeral. 1.2–2 s scaled to the jump, a new gain
+// mid-count RETARGETS the running count (no stacking), reduced motion lands instantly, and the
+// loop schedules nothing at rest. The fill's frame writes one transform + three text nodes and
+// reads no layout (the track width is cached on mount/resize).
+// On a level-up the fill SNAPS to 0 (no backwards glide) and counts forward, flashing yellow for
+// 180ms. Fill colour keys off the rebirth count (class/attr swap only).
+//
+// THE BAR MOVES ON EVERY WORD (Andy oct3 #5, LV175: "bar just isn't moving"). Under PROGRESSION v10
+// a high level is hundreds of words long, so three things make each gain visible:
+//   - the % readout to one decimal ("43.7%");
+//   - a "+X.X%" pop over the fill's leading edge per credit — ONE pooled node, retargeted while a
+//     burst of credits lands (the number grows, the node never multiplies), finite, and never
+//     smaller than "+0.1%" for a real gain;
+//   - a MILESTONE TICK every 10%: one pooled flash node on the crossed segment line + a soft
+//     rising note (sndBarMilestone), fired as the COUNTED value crosses it. Nothing loops.
+// SESSION MEMORY: what the bar last showed survives a remount (module scope, not storage), so the
+// menu you return to from a game counts up FROM where you left it — the whole game's gain, with its
+// "+X.X%" — instead of gliding up from zero as if nothing had happened.
+// `variant="mini"` (splash) drops the readout, the pops and the ticks, and shrinks the track.
+const seen = { level: null, frac: 0, wins: null };
+/** Test hook: forget the session memory (a fresh tab). */
+export function resetMenuXpSession() {
+  seen.level = null;
+  seen.frac = 0;
+  seen.wins = null;
 }
 
+const GAINPOP_MS = 1400; // pop in · hold · rise-and-fade — the "+X.X%" over the fill
+const GAINPOP_HOLD_END = 0.72; // a new credit before this point keeps the pop up (no re-punch)
+const GAIN_CHAIN_MS = 1500; // credits closer than this add into one "+X.X%"
+const TICK_MS = 420; // the 10% milestone flash
+
 export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, hintRight = null }) {
-  const winsShown = useCountTo(wins);
+  const mini = variant === 'mini';
+  const winsNum = Number.isFinite(wins) ? wins : 0;
+  // The wins chip and the level numeral count from what this session last SHOWED.
+  const winsCount = useCountUp(winsNum, { from: Number.isFinite(seen.wins) ? seen.wins : winsNum, holdMs: 900 });
+  const lvCount = useCountUp(level, { from: Number.isFinite(seen.level) && seen.level <= level ? seen.level : level, maxMs: 1600 });
+  const winsShown = winsCount.shown;
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
   const readoutNumRef = useRef(null);
-  const displayedRef = useRef(0);
-  const targetRef = useRef(0);
-  const rafRef = useRef(0);
-  const lastFrameRef = useRef(null);
+  const readoutPctRef = useRef(null);
+  const gainPopRef = useRef(null);
+  const gainAnimRef = useRef(null);
+  const tickRef = useRef(null);
+  const tickAnimRef = useRef(null);
   const trackWRef = useRef(0);
   const costRef = useRef(cost);
-  const prevLevelRef = useRef(level);
+  const prevRef = useRef(null); // the last {level, frac} this instance was handed
+  const chainRef = useRef({ t: -Infinity, gain: 0, level: null }); // the running "+X.X%" burst
+  const tenthRef = useRef(null); // the 10% segment the COUNTED value is in (milestone ticks)
+  const ticksArmedRef = useRef(false); // no ticks for the landing on mount
+  const frameRef = useRef(() => {});
+  const ctlRef = useRef(null);
+  if (ctlRef.current === null) {
+    ctlRef.current = createCountUp({ initial: 0, onFrame: (v) => frameRef.current(v) });
+  }
 
-  // Mirror `cost` so the rAF frame can read it without a stale closure (the loop
-  // outlives any single render). Assigned during render — a plain mirror ref.
+  // Mirror `cost` so a frame can read it without a stale closure (the count outlives any single
+  // render). Assigned during render — a plain mirror ref.
   costRef.current = cost;
 
-  // Cache the track's pixel width so the leading-edge marker can ride the fill via a
-  // TRANSFORM (translateX), not a layout property. Measured on mount + resize only.
+  useEffect(() => {
+    if (Number.isFinite(wins)) seen.wins = wins;
+  }, [wins]);
+
+  // Cache the track's pixel width so the leading-edge marker, the "+X.X%" pop and the milestone
+  // tick ride the fill via a TRANSFORM (translateX), not a layout property. Mount + resize only.
   useLayoutEffect(() => {
     const track = trackRef.current;
     if (!track) return undefined;
@@ -115,18 +140,81 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  // One rAF writing one transform (plus the marker, riding the same displayed value). Reads
-  // and writes only refs, so a stale instance left over from a re-render behaves identically.
-  function writeFrame(v) {
-    let w = trackWRef.current;
-    if (!w && trackRef.current) {
-      w = trackRef.current.clientWidth;
-      trackWRef.current = w;
+  // The pooled one-shots: ONE gain pop + ONE tick flash, created idle (WAAPI), replayed per event.
+  // A LAYOUT effect declared before the retarget below, so a remount's first gain (the whole game,
+  // on the way back to the menu) already has its pop to play.
+  useLayoutEffect(() => {
+    if (mini) return undefined;
+    const mk = (el, ms) => {
+      if (!el || typeof el.animate !== 'function') return null;
+      const a = el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: ms, fill: 'both' });
+      a.cancel();
+      // will-change lives only while the node is in flight — never on the idle pooled node.
+      a.onfinish = () => {
+        el.style.willChange = '';
+      };
+      return a;
+    };
+    gainAnimRef.current = mk(gainPopRef.current, GAINPOP_MS);
+    tickAnimRef.current = mk(tickRef.current, TICK_MS);
+    return () => {
+      if (gainAnimRef.current) gainAnimRef.current.cancel();
+      if (tickAnimRef.current) tickAnimRef.current.cancel();
+    };
+  }, [mini]);
+
+  // x (px) of a 0..1 position on the track, from the CACHED width.
+  const xAt = (v) => {
+    const w = trackWRef.current;
+    return Math.max(0, Math.min(1, v)) * w;
+  };
+
+  // "+X.X%" beside the % readout. A credit while the pop is still holding RETARGETS it (new text,
+  // hold restarted, no re-punch); otherwise it plays from the top. Pure writes.
+  function popGain(text) {
+    const el = gainPopRef.current;
+    const a = gainAnimRef.current;
+    if (!el || !text) return;
+    el.textContent = text;
+    if (!a || prefersReducedMotion()) return; // reduced motion: the readout says it; no flight
+    a.effect.setKeyframes([
+      { transform: 'translateY(-50%) scale(1.45)', opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.8,.2,1)' },
+      { transform: 'translateY(-50%) scale(1)', opacity: 1, offset: 0.12 },
+      { transform: 'translateY(-50%) scale(1)', opacity: 1, offset: GAINPOP_HOLD_END },
+      { transform: 'translateY(-85%) scale(0.92)', opacity: 0, offset: 1 },
+    ]);
+    const t = Number(a.currentTime) || 0;
+    if (a.playState === 'running' && t < GAINPOP_MS * GAINPOP_HOLD_END) {
+      a.currentTime = GAINPOP_MS * 0.12; // keep it up: back to the start of the hold
+      return;
     }
+    el.style.willChange = 'transform, opacity';
+    a.cancel();
+    a.play();
+  }
+
+  // The 10% milestone: flash the crossed segment line + a soft rising note.
+  function milestone(tenth) {
+    sndBarMilestone(tenth);
+    const el = tickRef.current;
+    const a = tickAnimRef.current;
+    if (!el || !a || prefersReducedMotion()) return;
+    const x = xAt(tenth / 10);
+    a.effect.setKeyframes([
+      { transform: `translateX(${x}px) translateX(-50%) scaleY(1.6)`, opacity: 0, offset: 0 },
+      { transform: `translateX(${x}px) translateX(-50%) scaleY(1)`, opacity: 1, offset: 0.2 },
+      { transform: `translateX(${x}px) translateX(-50%) scaleY(1)`, opacity: 0, offset: 1 },
+    ]);
+    el.style.willChange = 'transform, opacity';
+    a.cancel();
+    a.play();
+  }
+
+  // One count frame: the fill transform, the marker, the XP number and the %. Refs only, no reads.
+  frameRef.current = (v) => {
+    const w = trackWRef.current;
     // fix/visual-real item 5: floor the VISUAL fill (and its leading marker) to ~4px so ANY
-    // nonzero progress is visible — at 143/6,940 a bare scaleX(0.02) rounded to under a pixel and
-    // the bar read as empty for most of a level. The readout number below still counts off the
-    // TRUE value, so only the pixel WIDTH is floored, never the reported XP.
+    // nonzero progress is visible. The readouts still count off the TRUE value.
     const minFrac = w > 0 ? 4 / w : 0;
     const vis = v > 0 ? Math.max(v, minFrac) : 0;
     const fill = fillRef.current;
@@ -136,64 +224,73 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       marker.style.transform = `translateX(${vis * w - 2}px)`;
       marker.style.opacity = v > 0 ? '1' : '0';
     }
-    // Count the readout's left number up smoothly off `displayed` (not the stepped
-    // prop). Absent on the mini variant → guarded.
     const num = readoutNumRef.current;
     if (num) num.textContent = formatNum(Math.max(0, Math.round(v * costRef.current)));
-  }
-  // Framerate-independent exponential smoothing: with the rAF timestamp as `now`,
-  // the same wall-clock ease plays whether the display runs at 60/120/30Hz.
-  function tick(now) {
-    const last = lastFrameRef.current;
-    lastFrameRef.current = now;
-    const target = targetRef.current;
-    const dt = Math.min((last == null ? 16 : now - last), 50);
-    const k = 1 - Math.exp(-dt / 90);
-    let d = displayedRef.current + (target - displayedRef.current) * k;
-    if (Math.abs(target - d) < 0.0005) {
-      displayedRef.current = target; // snap
-      writeFrame(target);
-      rafRef.current = 0; // converged — schedule nothing at rest
-      lastFrameRef.current = null;
-      return;
-    }
-    displayedRef.current = d;
-    writeFrame(d);
-    rafRef.current = requestAnimationFrame(tick);
-  }
-  function startLoop() {
-    if (rafRef.current) return; // already gliding
-    lastFrameRef.current = null; // seed the first frame's dt from a nominal 16ms
-    rafRef.current = requestAnimationFrame(tick);
-  }
+    const pct = readoutPctRef.current;
+    if (pct) pct.textContent = formatPct(v);
+    // MILESTONE: the counted value crossed a 10% line (10…90%; 100% is the level-up's moment).
+    const tenth = Math.floor(Number((v * 10).toPrecision(12)));
+    const prevTenth = tenthRef.current;
+    tenthRef.current = tenth;
+    if (!mini && ticksArmedRef.current && prevTenth != null && tenth > prevTenth && tenth >= 1 && tenth <= 9) milestone(tenth);
+  };
 
-  // Retarget on level/frac change; kick the loop only when the target actually moves.
+  // Retarget on level/frac change. Gains count; drops (rebirth) land instantly.
   useLayoutEffect(() => {
     const fill = fillRef.current;
-    if (!fill) return undefined;
-    const clamped = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
-    if (level > prevLevelRef.current) {
-      // Level-up: snap the fill to empty instantly, then glide forward into the new level.
-      displayedRef.current = 0;
-      writeFrame(0);
+    const c = ctlRef.current;
+    if (!fill || !c) return undefined;
+    const f = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
+    const prev = prevRef.current || (Number.isFinite(seen.level) ? { level: seen.level, frac: seen.frac } : null);
+    prevRef.current = { level, frac: f };
+    seen.level = level;
+    seen.frac = f;
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+    if (!prev || level < prev.level || (level === prev.level && f < prev.frac)) {
+      // first sight this session, a rebirth, or a reset: land — nothing was gained
+      c.set(f);
+      tenthRef.current = Math.floor(f * 10);
+      ticksArmedRef.current = true;
+      chainRef.current = { t: -Infinity, gain: 0, level };
+      return undefined;
+    }
+    if (level === prev.level && f === prev.frac) {
+      if (!c.running && c.value !== f) c.set(f); // a remount at rest: show it, no gain
+      ticksArmedRef.current = true;
+      return undefined;
+    }
+    ticksArmedRef.current = true;
+    if (level > prev.level) {
+      // Level-up: snap the fill to empty, then count forward into the new level.
+      c.set(0);
+      tenthRef.current = 0;
       fill.classList.add('is-levelflash');
       const flash = setTimeout(() => fill.classList.remove('is-levelflash'), 180);
-      prevLevelRef.current = level;
-      targetRef.current = clamped;
-      startLoop();
+      c.to(f);
+      if (!mini) {
+        const n = level - prev.level;
+        chainRef.current = { t: now, gain: f, level };
+        popGain(`+${formatNum(n)} LV`);
+      }
       return () => clearTimeout(flash);
     }
-    prevLevelRef.current = level;
-    targetRef.current = clamped;
-    startLoop();
+    // Same level, a gain. On a remount (prev from the session memory) start from what was shown.
+    if (!c.running && c.value !== prev.frac) c.set(prev.frac);
+    c.to(f);
+    if (!mini) {
+      const ch = chainRef.current;
+      const g = f - prev.frac;
+      const gain = ch.level === level && now - ch.t < GAIN_CHAIN_MS ? ch.gain + g : g;
+      chainRef.current = { t: now, gain, level };
+      popGain(formatGainPct(gain));
+    }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, frac]);
 
-  // Cancel any in-flight glide on unmount.
-  useEffect(() => () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-  }, []);
+  // Cancel any in-flight count on unmount.
+  useEffect(() => () => ctlRef.current && ctlRef.current.cancel(), []);
 
   const reb = Math.min(3, Math.max(0, Math.floor(rebirths) || 0));
 
@@ -213,12 +310,16 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(Math.round(winsShown))}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
+            {/* THE GAIN, BIG, beside the counting number (Andy oct3 #4) — only while it counts + a beat. */}
+            {winsCount.showGain && winsCount.gain > 0 && <span key={winsCount.chain} className="menu-wins-gain" aria-hidden="true">+{formatNum(Math.round(winsCount.gain))}</span>}
           </button>
         ) : (
           <span className="menu-wins-chip" data-wins={wins} aria-label={`${formatNum(wins)} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(Math.round(winsShown))}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
+            {/* THE GAIN, BIG, beside the counting number (Andy oct3 #4) — only while it counts + a beat. */}
+            {winsCount.showGain && winsCount.gain > 0 && <span key={winsCount.chain} className="menu-wins-gain" aria-hidden="true">+{formatNum(Math.round(winsCount.gain))}</span>}
           </span>
         )
       )}
@@ -305,13 +406,16 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
         </button>
       )}
-      <BarRow loud={variant !== 'mini'} level={level}>
+      <BarRow loud={variant !== 'mini'} level={Math.round(lvCount.shown)}>
       <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
         {/* The CLIP wraps only the fill + marker. The track itself must NOT clip: the
             readout sits centred over the track and is wider than the track whenever the
             row is tight (a 360px menu leaves the flexible track ~32px), so a clipping
             track cropped the numbers. Clipping the fill is the only thing overflow was
             ever for - the scaleX fill and the marker - so it moves in here. */}
+        {/* The pooled 10% milestone flash (full bar only): ONE node, idle at rest (opacity 0, no
+            will-change), replayed per crossing. Before the readout so the numbers paint over it. */}
+        {variant !== 'mini' && <span className="menu-xp-tickflash" ref={tickRef} />}
         <span className="menu-xp-clip">
           <span className="menu-xp-fill" ref={fillRef} data-reb={reb} />
           <span className="menu-xp-marker" ref={markerRef} />
@@ -322,6 +426,12 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         {variant !== 'mini' && (
           <span className="menu-xp-readout">
             <span className="menu-xp-readout-now" ref={readoutNumRef}>{formatNum(Math.max(0, Math.round(intoLevel)))}</span>
+            {/* the % of the level, one decimal — and the "+X.X%" gain pop beside it (one pooled node,
+                absolutely placed so an idle pop takes no width from the row) */}
+            <span className="menu-xp-readout-mid">
+              <span className="menu-xp-readout-pct" ref={readoutPctRef}>{formatPct(frac)}</span>
+              <span className="menu-xp-gainpop" ref={gainPopRef} />
+            </span>
             <span className="menu-xp-readout-need">/ {formatNum(Math.max(0, Math.round(cost)))}</span>
           </span>
         )}

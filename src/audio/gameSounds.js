@@ -113,6 +113,16 @@ export function sndStreakExtended() {
   tone(ctx.currentTime, { freq: pentFreq(NOTE.F4), type: 'triangle', dur: 0.12, gain: 0.16, attack: 0.008 });
 }
 
+// bar milestone — every 10% of a level (Andy oct3 #5). ONE soft high sine, ~90ms, quieter than a
+// word accept: a little reward on a long level, never louder than the thing that earned it. The
+// pitch climbs with the tenth reached (10% … 90%), so a level reads as a rising scale.
+export function sndBarMilestone(tenth = 1) {
+  const ctx = ready();
+  if (!ctx) return;
+  const deg = Math.min(NOTE.C6, NOTE.C5 + Math.max(0, Math.min(9, Math.floor(tenth)) - 1));
+  tone(ctx.currentTime, { freq: pentFreq(deg), type: 'sine', dur: 0.09, gain: 0.08, attack: 0.004 });
+}
+
 // achievement — root + fifth + octave struck together, 200ms decay.
 export function sndAchievement() {
   const ctx = ready();

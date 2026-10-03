@@ -21,7 +21,7 @@
 import AudioControls from './AudioControls';
 import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
-import { formatNum } from '../format';
+import { formatNum, formatPct } from '../format';
 import TrophyIcon from './TrophyIcon';
 import WordHook from './WordHook';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
@@ -231,6 +231,8 @@ export default function MobileMenu({
           <span className="hp-m-stats-track" aria-hidden="true">
             <span className="hp-m-stats-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, Number(levelFrac) || 0))})` }} />
           </span>
+          {/* Andy oct3 #5: the % of the level to one decimal, so a long level visibly moves */}
+          <span className="hp-m-stats-pct" aria-hidden="true">{formatPct(levelFrac)}</span>
           <span className="hp-m-stats-wins" data-wins={wins || 0}>{formatNum(wins || 0)}<span className="hp-m-stats-k">WINS</span></span>
         </div>
       )}
