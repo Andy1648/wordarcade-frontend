@@ -1,0 +1,103 @@
+
+=== CASUAL — 7201 words, 7026 level-ups, 4.3s
+  10m  gap max 0.67m (limit 0.75) PASS @[0,0.67] p90 0.33m strict max 0.67m p90 0.33m lv+51 | KEY realised 6.5m {"from":10,"to":16.5,"tier":"T12","open":false} eta 203.91m shop eta 12.43m PASS | LV152 R6 T11 F31 {"level":51,"achievement":8,"buy":34,"rank":59,"rebirth":6}
+  1h   gap max 0.83m (limit 3) PASS @[69.83,70.67] p90 0.5m strict max 1m p90 0.5m lv+70 | KEY realised 145m {"from":20,"to":165,"tier":"T14","open":false} eta 14.71m shop eta 1.48m FAIL | LV469 R17 T13 F157 {"level":70,"rank":8,"buy":11,"achievement":2}
+  5h   gap max 3.83m (limit 8) PASS @[323.83,327.67] p90 1.67m strict max 4.5m p90 1.83m lv+64 | KEY realised 835.33m {"from":189.5,"to":1024.8,"tier":"T16","open":false} eta 35.15m shop eta 3.68m FAIL | LV627 R20 T15 F313 {"level":64,"buy":25}
+  20h  gap max 5.83m (limit 12) PASS @[1125,1130.83] p90 3.33m strict max 7.67m p90 7m lv+17 | KEY realised 175.17m {"from":1024.8,"to":1200,"tier":"T17","open":true} eta 32.93m shop eta 5.98m FAIL | LV723 R22 T16 F624 {"buy":26,"level":17}
+  wall {"worstKeyEta":{"min":203.91,"t":5.2,"tier":7,"level":1},"worstShopEta":{"min":22.83,"t":2.7,"level":9},"keyRealised":{"min":835.33,"tier":"T16","at":1024.8}}
+  runaway FAIL lumps 0 of 413
+  codes [{"t":60.5,"label":"CODE — SIM PER LEVEL","amount":446000,"level":446,"wordsWorth":0.00106,"fail":false,"minutesOfPlay":0.0000364,"levelsWorth":0}]
+  runaway top lumps by minutes [{"t":58.5,"label":"MASTERY — CHAIN M5","amount":33708528492,"level":437,"wordsWorth":80,"fail":false,"minutesOfPlay":2.78,"levelsWorth":43.02},{"t":2.67,"label":"RANK UP — TYPIST","amount":1500,"level":9,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.72,"levelsWorth":131.7},{"t":5.17,"label":"RANK UP — TYPIST","amount":141000,"level":31,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.51,"levelsWorth":194.96},{"t":5.17,"label":"RANK UP — SPELLER","amount":141000,"level":31,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.51,"levelsWorth":194.96},{"t":5.17,"label":"RANK UP — SCRAPPER","amount":141000,"level":31,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.51,"levelsWorth":194.96},{"t":5.17,"label":"RANK UP — BRAWLER","amount":141000,"level":31,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.51,"levelsWorth":194.96}]
+  runaway top lumps [{"t":6.83,"label":"RANK UP — TYPIST","amount":4847700,"level":69,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.11,"levelsWorth":206.03},{"t":6.83,"label":"RANK UP — SPELLER","amount":4847700,"level":69,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.11,"levelsWorth":206.03},{"t":6.83,"label":"RANK UP — SCRAPPER","amount":4847700,"level":69,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.11,"levelsWorth":206.03},{"t":6.83,"label":"RANK UP — BRAWLER","amount":4847700,"level":69,"wordsWorth":17.5,"fail":false,"minutesOfPlay":2.11,"levelsWorth":206.03}]
+  runaway top buys [{"t":165,"kind":"KEY","id":"T14","price":130606940160,"level":527,"rateStep":2.5,"auto":true,"curveLevels":31},{"t":1024.83,"kind":"KEY","id":"T16","price":4701849845760,"level":670,"rateStep":2.5,"auto":true,"curveLevels":31},{"t":10,"kind":"KEY","id":"T11","price":604661760,"level":120,"rateStep":2.5,"auto":true,"curveLevels":27.6}]
+  mechanics {"weeklyBoard":{"t":0,"level":1,"rebirths":0,"note":"first accepted word → on the weekly board"},"markEquipped":{"t":4.33,"level":26,"rebirths":0,"mark":"mk-student"},"rebirth":{"t":4.33,"level":1,"rebirths":1,"fromLevel":26},"perLevelCode":{"t":60.5,"level":446,"pays":446000},"boostLive":{"t":303.33,"level":605}}
+  rebirths [[4.3,"REBIRTH 1 (from LV26, +4★)"],[5.2,"REBIRTH 2 (from LV31, +3★)"],[6,"REBIRTH 3 (from LV57, +5★)"],[6.8,"REBIRTH 4 (from LV69, +2★)"],[8,"REBIRTH 5 (from LV99, +4★)"],[9.2,"REBIRTH 6 (from LV133, +4★)"],[11.7,"REBIRTH 7 (from LV203, +7★)"],[13.7,"REBIRTH 8 (from LV203, +4★)"],[14.7,"REBIRTH 9 (from LV182, +1★)"],[16.5,"REBIRTH 10 (from LV201, +1★)"],[17.8,"REBIRTH 11 (from LV305, +4★)"],[18.8,"REBIRTH 12 (from LV311, +2★)"]]
+  keys [[1.2,"T1",3],[1.2,"T2",3],[2.7,"T3",9],[2.7,"T4",9],[4.3,"T5",1],[5.2,"T6",1],[5.2,"T7",1],[6,"T8",1],[6.8,"T9",1],[8,"T10",1],[10,"T11",120],[16.5,"T12",31],[20,"T13",31],[165,"T14",527],[189.5,"T15",31],[1024.8,"T16",670]]
+  final {"t":1200.2,"level":723,"rebirths":22,"keyTier":16,"forge":624,"mark":"mk-eternal","stars":51,"balance":3203572805341,"lifetime":670518405284851,"winsPerMin":1951468124292.749,"fuseWordWins":15602385351.6,"words":7201}
+
+=== MEDIAN — 12000 words, 10764 level-ups, 15.7s
+  10m  gap max 0.4m (limit 0.75) PASS @[0,0.4] p90 0.2m strict max 0.4m p90 0.2m lv+87 | KEY realised 3.2m {"from":6.6,"to":9.8,"tier":"T12","open":false} eta 97m shop eta 2.89m PASS | LV218 R9 T12 F56 {"level":87,"achievement":8,"buy":32,"rank":72,"rebirth":9}
+  1h   gap max 1.1m (limit 3) PASS @[58.6,59.7] p90 0.4m strict max 1.1m p90 0.5m lv+92 | KEY realised 115.9m {"from":49.7,"to":165.6,"tier":"T16","open":false} eta 22.87m shop eta 1.13m FAIL | LV448 R20 T15 F241 {"level":92,"rebirth":2,"buy":16,"rank":9,"achievement":1,"mark":1}
+  5h   gap max 2.9m (limit 8) PASS @[297,299.9] p90 1m strict max 4.2m p90 1.5m lv+111 | KEY realised 108.2m {"from":244.6,"to":352.8,"tier":"T18","open":false} eta 29.14m shop eta 1.47m FAIL | LV723 R23 T17 F580 {"buy":36,"level":111,"rebirth":1,"rank":10}
+  20h  gap max 4.8m (limit 12) PASS @[1158.5,1163.3] p90 1.9m strict max 11.2m p90 3m lv+92 | KEY realised 96.7m {"from":1103.3,"to":1200,"tier":"T20","open":true} eta 40.22m shop eta 2.68m FAIL | LV821 R26 T19 F1313 {"buy":42,"level":92,"rebirth":1,"rank":11}
+  wall {"worstKeyEta":{"min":162.5,"t":4,"tier":8,"level":1},"worstShopEta":{"min":3.08,"t":994.9,"level":873},"keyRealised":{"min":750.5,"tier":"T19","at":1103.3}}
+  runaway FAIL lumps 0 of 681
+  codes [{"t":60.3,"label":"CODE — SIM PER LEVEL","amount":584000,"level":584,"wordsWorth":0.000161,"fail":false,"minutesOfPlay":8.3e-7,"levelsWorth":0}]
+  runaway top lumps by minutes [{"t":4,"label":"RANK UP — TYPIST","amount":581625,"level":54,"wordsWorth":17.5,"fail":false,"minutesOfPlay":0.865,"levelsWorth":101.68},{"t":4,"label":"RANK UP — SPELLER","amount":581625,"level":54,"wordsWorth":17.5,"fail":false,"minutesOfPlay":0.865,"levelsWorth":101.68},{"t":4,"label":"RANK UP — SCRAPPER","amount":581625,"level":54,"wordsWorth":17.5,"fail":false,"minutesOfPlay":0.865,"levelsWorth":101.68},{"t":4,"label":"RANK UP — BRAWLER","amount":581625,"level":54,"wordsWorth":17.5,"fail":false,"minutesOfPlay":0.865,"levelsWorth":101.68},{"t":4,"label":"RANK UP — SHARK","amount":581625,"level":54,"wordsWorth":17.5,"fail":false,"minutesOfPlay":0.865,"levelsWorth":101.68},{"t":4,"label":"RANK UP — MENACE","amount":581625,"level":54,"wordsWorth":17.5,"fail":false,"minutesOfPlay":0.865,"levelsWorth":101.68}]
+  runaway top lumps [{"t":8.4,"label":"RANK UP — SHARK","amount":218943000,"level":182,"wordsWorth":18.3,"fail":false,"minutesOfPlay":0.693,"levelsWorth":103.1},{"t":8.4,"label":"RANK UP — MENACE","amount":218943000,"level":182,"wordsWorth":18.3,"fail":false,"minutesOfPlay":0.693,"levelsWorth":103.1},{"t":8.4,"label":"RANK UP — WARLORD","amount":218943000,"level":182,"wordsWorth":18.3,"fail":false,"minutesOfPlay":0.693,"levelsWorth":103.1},{"t":8.4,"label":"RANK UP — DEMON","amount":218943000,"level":182,"wordsWorth":18.3,"fail":false,"minutesOfPlay":0.693,"levelsWorth":103.1}]
+  runaway top buys [{"t":33,"kind":"KEY","id":"T14","price":130606940160,"level":467,"rateStep":2.5,"auto":true,"curveLevels":31},{"t":49.7,"kind":"KEY","id":"T15","price":783641640960,"level":548,"rateStep":2.5,"auto":true,"curveLevels":31},{"t":165.6,"kind":"KEY","id":"T16","price":4701849845760,"level":627,"rateStep":2.5,"auto":true,"curveLevels":31}]
+  mechanics {"weeklyBoard":{"t":0,"level":1,"rebirths":0,"note":"first accepted word → on the weekly board"},"markEquipped":{"t":2.4,"level":16,"rebirths":0,"mark":"mk-student"},"rebirth":{"t":2.4,"level":1,"rebirths":1,"fromLevel":16},"frenzy":{"t":47.4,"level":523,"rebirths":18},"perLevelCode":{"t":60.3,"level":584,"pays":584000},"boostLive":{"t":302.2,"level":749}}
+  rebirths [[2.4,"REBIRTH 1 (from LV16, +1★)"],[3.2,"REBIRTH 2 (from LV36, +4★)"],[4,"REBIRTH 3 (from LV54, +4★)"],[5.1,"REBIRTH 4 (from LV107, +8★)"],[5.9,"REBIRTH 5 (from LV114, +5★)"],[6.6,"REBIRTH 6 (from LV147, +5★)"],[7.7,"REBIRTH 7 (from LV189, +5★)"],[8.4,"REBIRTH 8 (from LV182, +3★)"],[9.8,"REBIRTH 9 (from LV282, +6★)"],[11.6,"REBIRTH 10 (from LV325, +7★)"],[12.8,"REBIRTH 11 (from LV320, +5★)"],[15.1,"REBIRTH 12 (from LV376, +5★)"]]
+  keys [[1,"T1",3],[1,"T2",3],[2.4,"T3",1],[2.4,"T4",1],[3.2,"T5",1],[3.2,"T6",1],[4,"T7",1],[4,"T8",1],[5.1,"T9",1],[5.9,"T10",1],[6.6,"T11",11],[9.8,"T12",31],[12.8,"T13",31],[33,"T14",467],[49.7,"T15",548],[165.6,"T16",627],[244.6,"T17",690],[352.8,"T18",754],[1103.3,"T19",884]]
+  final {"t":1200,"level":821,"rebirths":26,"keyTier":19,"forge":1314,"mark":"mk-eternal","stars":76,"balance":29531542074245,"lifetime":104176788869799520,"winsPerMin":229115848988502.78,"fuseWordWins":366852280677,"words":12000}
+
+=== STRONG — 19200 words, 17795 level-ups, 40.0s
+  10m  gap max 0.31m (limit 0.75) PASS @[2.81,3.13] p90 0.13m strict max 0.31m p90 0.13m lv+123 | KEY realised 2.5m {"from":0.6,"to":3.1,"tier":"T3","open":false} eta 191.66m shop eta 1.49m PASS | LV245 R6 T12 F36 {"level":123,"achievement":10,"buy":31,"rank":50,"rebirth":6}
+  1h   gap max 0.81m (limit 3) PASS @[60.5,61.31] p90 0.31m strict max 1m p90 0.31m lv+131 | KEY realised 33.06m {"from":37.7,"to":70.8,"tier":"T19","open":false} eta 16.87m shop eta 0.27m FAIL | LV784 R23 T18 F471 {"level":131,"buy":11,"rebirth":1,"rank":10,"achievement":1}
+  5h   gap max 2m (limit 8) PASS @[282.25,284.25] p90 0.88m strict max 3.19m p90 1.13m lv+135 | KEY realised 889.56m {"from":310.4,"to":1200,"tier":"T23","open":true} eta 106.72m shop eta 1.72m FAIL | LV972 R28 T22 F1483 {"level":135,"buy":32,"achievement":1,"rank":13,"rebirth":1}
+  20h  gap max 3.94m (limit 12) PASS @[1151.81,1155.75] p90 2.63m strict max 12.13m p90 12m lv+9 | KEY realised 889.56m {"from":310.4,"to":1200,"tier":"T23","open":true} eta 31.33m shop eta 1.07m FAIL | LV1116 R30 T22 F3238 {"buy":44,"level":9}
+  wall {"worstKeyEta":{"min":418.11,"t":3.1,"tier":5,"level":1},"worstShopEta":{"min":18.64,"t":4.1,"level":1},"keyRealised":{"min":889.56,"tier":"T23","note":"still unbought at end"}}
+  runaway FAIL lumps 0 of 1396
+  codes [{"t":60.38,"label":"CODE — SIM PER LEVEL","amount":754000,"level":754,"wordsWorth":0.00000581,"fail":false,"minutesOfPlay":4.75e-9,"levelsWorth":0}]
+  runaway top lumps by minutes [{"t":21.13,"label":"MASTERY — FUSE M5","amount":3679341665130,"level":575,"wordsWorth":1420,"fail":false,"minutesOfPlay":2.59,"levelsWorth":672.51},{"t":1.5,"label":"FRENZY!","amount":3000,"level":16,"wordsWorth":35.1,"fail":false,"minutesOfPlay":0.881,"levelsWorth":76.38},{"t":69.69,"label":"MASTERY — FUSE M10","amount":75679679988900,"level":782,"wordsWorth":568,"fail":false,"minutesOfPlay":0.483,"levelsWorth":15.53},{"t":4.94,"label":"RANK UP — TYPIST","amount":1361533,"level":80,"wordsWorth":16.2,"fail":false,"minutesOfPlay":0.305,"levelsWorth":40.79},{"t":4.94,"label":"RANK UP — SPELLER","amount":1361533,"level":80,"wordsWorth":16.2,"fail":false,"minutesOfPlay":0.305,"levelsWorth":40.79},{"t":4.94,"label":"RANK UP — SCRAPPER","amount":1361533,"level":80,"wordsWorth":16.2,"fail":false,"minutesOfPlay":0.305,"levelsWorth":40.79}]
+  runaway top lumps [{"t":21.13,"label":"MASTERY — FUSE M5","amount":3679341665130,"level":575,"wordsWorth":1420,"fail":false,"minutesOfPlay":2.59,"levelsWorth":672.51},{"t":1.5,"label":"FRENZY!","amount":3000,"level":16,"wordsWorth":35.1,"fail":false,"minutesOfPlay":0.881,"levelsWorth":76.38},{"t":30.63,"label":"MASTERY — CHAIN M5","amount":1591792511037,"level":586,"wordsWorth":134,"fail":false,"minutesOfPlay":0.292,"levelsWorth":69.16},{"t":15,"label":"FRENZY!","amount":25543439040,"level":418,"wordsWorth":35.4,"fail":false,"minutesOfPlay":0.218,"levelsWorth":45.12}]
+  runaway top buys [{"t":70.75,"kind":"KEY","id":"T19","price":1015599566684160,"level":790,"rateStep":2.5,"auto":true,"curveLevels":31},{"t":132.63,"kind":"KEY","id":"T20","price":6093597400104960,"level":879,"rateStep":2.5,"auto":true,"curveLevels":31},{"t":293.88,"kind":"KEY","id":"T21","price":36561584400629760,"level":948,"rateStep":2.5,"auto":true,"curveLevels":31}]
+  mechanics {"weeklyBoard":{"t":0,"level":1,"rebirths":0,"note":"first accepted word → on the weekly board"},"frenzy":{"t":1.5,"level":16,"rebirths":0},"markEquipped":{"t":3.13,"level":32,"rebirths":0,"mark":"mk-pyro"},"rebirth":{"t":3.13,"level":1,"rebirths":1,"fromLevel":32},"perLevelCode":{"t":60.38,"level":754,"pays":754000},"boostLive":{"t":302.63,"level":968}}
+  rebirths [[3.1,"REBIRTH 1 (from LV32, +6★)"],[4.1,"REBIRTH 2 (from LV54, +10★)"],[4.9,"REBIRTH 3 (from LV80, +11★)"],[7.1,"REBIRTH 4 (from LV182, +21★)"],[9,"REBIRTH 5 (from LV251, +23★)"],[9.8,"REBIRTH 6 (from LV281, +19★)"],[11.3,"REBIRTH 7 (from LV381, +20★)"],[12.8,"REBIRTH 8 (from LV434, +19★)"],[14.4,"REBIRTH 9 (from LV456, +16★)"],[16.9,"REBIRTH 10 (from LV525, +17★)"],[18.6,"REBIRTH 11 (from LV528, +14★)"],[21.3,"REBIRTH 12 (from LV576, +13★)"]]
+  keys [[0.6,"T1",4],[0.6,"T2",4],[3.1,"T3",1],[3.1,"T4",1],[3.1,"T5",1],[4.1,"T6",1],[4.1,"T7",1],[4.9,"T8",16],[7.1,"T9",26],[7.1,"T10",26],[9,"T11",31],[9.8,"T12",31],[11.3,"T13",31],[12.8,"T14",31],[16.9,"T15",31],[21.3,"T16",31],[32.6,"T17",31],[37.7,"T18",31],[70.8,"T19",790],[132.6,"T20",879],[293.9,"T21",948],[310.4,"T22",992]]
+  final {"t":1200,"level":1116,"rebirths":30,"keyTier":22,"forge":3238,"mark":"mk-eternal","stars":237,"balance":46202361151623550,"lifetime":81511014393015800000,"winsPerMin":108272192857070060,"fuseWordWins":11154357187800,"words":19200}
+
+=== FORMAT
+  ok   formatNum(casual balance = 5728137771957) -> "5.73T"
+  ok   formatNum(casual lifetime = 670518405284851) -> "671T"
+  ok   formatNum(casual keyPrice = 28211099074560) -> "28.2T"
+  ok   formatNum(casual forgePrice = 6003301913440) -> "6T"
+  ok   formatNum(casual cosmeticPrice = 292968750000) -> "293B"
+  ok   formatNum(casual rate = 15602385351.6) -> "15.6B"
+  ok   formatRate(casual rate (formatRate) = 15602385351.6) -> "15.6B"
+  ok   formatNum(casual xpPerWord = 156023853516) -> "156B"
+  ok   formatNum(casual need = 119571264886970) -> "120T"
+  ok   formatNum(casual lump = 321508157745) -> "322B"
+  ok   formatNum(median balance = 480579039096485) -> "481T"
+  ok   formatNum(median lifetime = 104176788869799520) -> "104Qa"
+  ok   formatNum(median keyPrice = 6093597400104960) -> "6.09Qa"
+  ok   formatNum(median forgePrice = 519368000114950) -> "519T"
+  ok   formatNum(median cosmeticPrice = 292968750000) -> "293B"
+  ok   formatNum(median rate = 1834261403380) -> "1.83T"
+  ok   formatRate(median rate (formatRate) = 1834261403380) -> "1.83T"
+  ok   formatNum(median xpPerWord = 18342614033800) -> "18.3T"
+  ok   formatNum(median need = 21725929782228940) -> "21.7Qa"
+  ok   formatNum(median lump = 32498661291000) -> "32.5T"
+  ok   formatNum(strong balance = 75657889762006770) -> "75.7Qa"
+  ok   formatNum(strong lifetime = 81511014393015800000) -> "81.5Qi"
+  ok   formatNum(strong keyPrice = 1316217038422671400) -> "1.32Qi"
+  ok   formatNum(strong forgePrice = 81144304294573570) -> "81.1Qa"
+  ok   formatNum(strong cosmeticPrice = 292968750000) -> "293B"
+  ok   formatNum(strong rate = 55771785938900) -> "55.8T"
+  ok   formatRate(strong rate (formatRate) = 55771785938900) -> "55.8T"
+  ok   formatNum(strong xpPerWord = 557717859389000) -> "558T"
+  ok   formatNum(strong need = 13263438640626248000) -> "13.3Qi"
+  ok   formatNum(strong lump = 6377475791490000) -> "6.38Qa"
+  ok   formatNum(synthetic 9999 = 9999) -> "9 999"
+  ok   formatNum(synthetic 9999.6 = 9999.6) -> "10 000"
+  ok   formatNum(synthetic 10000 = 10000) -> "10K"
+  ok   formatNum(synthetic 999950 = 999950) -> "1M"
+  ok   formatNum(synthetic 999999 = 999999) -> "1M"
+  ok   formatNum(synthetic 1000000000000000 = 1000000000000000) -> "1Qa"
+  ok   formatNum(synthetic 1e+30 = 1e+30) -> "1No"
+  ok   formatNum(synthetic 1e+100 = 1e+100) -> "10Dtg"
+  ok   formatNum(synthetic 1e+300 = 1e+300) -> "1Nong"
+  ok   formatNum(synthetic 9.99e+299 = 9.99e+299) -> "999Ocng"
+  ok   formatNum(synthetic 1.2345e+300 = 1.2345e+300) -> "1.23Nong"
+  ok   formatNum(synthetic 1e+303 = 1e+303) -> "1Ce"
+  ok   formatMult(mult 1.05 = 1.05) -> "1.1"
+  ok   formatMult(mult 2.5 = 2.5) -> "2.5"
+  ok   formatMult(mult 11 = 11) -> "11"
+  ok   formatMult(mult 1000000000000000 = 1000000000000000) -> "1Qa"
+  ok   formatMult(mult 1e+300 = 1e+300) -> "1Nong"
+  ok   formatRate(rate 10.1 = 10.1) -> "10.1"
+  ok   formatRate(rate 1234.5 = 1234.5) -> "1 234.5"
+  ok   formatRate(rate 1000000000000000 = 1000000000000000) -> "1Qa"
+  ok   formatRate(rate 1e+300 = 1e+300) -> "1Nong"
+
+wrote C:\Users\andyw_tnc0kix\Downloads\wordarcade-frontend_1\wordarcade-frontend\claude\econ-oct2\loop-sim-final.json
