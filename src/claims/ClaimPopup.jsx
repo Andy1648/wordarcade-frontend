@@ -8,7 +8,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { claim, claimAll, claimAmount, CLAIM_KINDS } from '../progress/claims.js';
 import { useClaims } from './useClaims.js';
-import { KIND_COLOUR } from './ClaimsPanel.jsx';
+import { KIND_COLOUR } from './kindColour.js';
+import './ClaimPopup.css';
 import { formatNum } from '../format.js';
 
 const SEEN_KEY = 'taw.claimPopSeen';
