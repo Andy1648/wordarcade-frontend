@@ -17,7 +17,7 @@ import './RoomScreen.css';
 // display text.
 const GAME_TYPES = [
   { key: 'word-bomb', label: 'WORD BOMB' },
-  { key: 'category-blitz', label: 'AI CATEGORY BLITZ' },
+  { key: 'category-blitz', label: 'CATEGORY BLITZ' },
 ];
 
 function gameTypeLabel(gameType) {
@@ -44,7 +44,9 @@ function minPlayersFor(gameType) {
 const BOT_DIFFICULTIES = [
   { key: 'easy', label: 'EASY', desc: 'slow · beatable' },
   { key: 'medium', label: 'MEDIUM', desc: 'quick · solid' },
-  { key: 'hard', label: 'HARD', desc: 'fast · brutal' },
+  // C2: not "HARD" — the Word Bomb timer tier picker on this same screen has its own HARD (the
+  // 2nd-easiest tier, key 'easy'), so one word named the hardest bot and an easy timer.
+  { key: 'hard', label: 'TOUGH', desc: 'fast · brutal' },
 ];
 
 // Modes with a server-side bot opponent (roomManager's BOT_FACTORY_BY_GAME_TYPE).

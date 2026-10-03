@@ -39,7 +39,9 @@ export default function ClaimReveal({ claim, onDone }) {
         ribbon={`★ NEW ${t.name} MARK ★`}
         glyph={<MarkBadge mark={m} rank={1} size={110} />}
         name={m.name}
-        blurb={`WEAR IT AS YOUR MAIN: +${pct}% WINS ON EVERY WORD, + ${markBlurbAt(m, 1)}`}
+        /* C2: the MAIN bonus is in the one stack (wins AND XP), and the perk line already starts with its
+           own sign — this read "+100% WINS ON EVERY WORD, + +20% wins & XP in every mode." */
+        blurb={`WEAR IT AS YOUR MAIN: +${pct}% ON EVERY WORD. PLUS ${markBlurbAt(m, 1).toUpperCase()}`}
         onDismiss={onDone}
       />
     );
