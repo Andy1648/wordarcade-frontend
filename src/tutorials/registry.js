@@ -25,6 +25,19 @@ export const TUTORIALS = [
     ],
   },
   {
+    // MARK ROLLS (Andy M): unlocks with MARKS. It points at the ROLL button, which lives INSIDE the MARKS
+    // panel — so it is hosted there (`host: 'marks'`, MarksIndex.jsx shows it the first time the panel
+    // opens), never by the menu's TutorialHost (dueTutorial skips hosted entries). New to everyone.
+    id: 'markRolls',
+    host: 'marks',
+    isNew: true,
+    when: (s) => s.marksRevealed,
+    steps: [
+      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE.', target: '.mr-roll' },
+      { title: 'HOLD TO KEEP ROLLING', line: 'RARER MARKS PAY MORE. 10 DUPES MAKE A GOLD.', target: '.mr-roll' },
+    ],
+  },
+  {
     id: 'frenzy',
     when: (s) => s.frenzyActive,
     steps: [{ title: `FRENZY ×${FRENZY_MULT}`, line: `EVERY FUSE WORD PAYS ×${FRENZY_MULT} FOR ${frenzyMinutes()} MIN.` }],
@@ -71,6 +84,7 @@ export const TUTORIALS = [
 /** The first tutorial that is due and not yet seen, or null. `seen(id)` reads the stored flag. */
 export function dueTutorial(snapshot, seen) {
   for (const t of TUTORIALS) {
+    if (t.host) continue; // shown by its own screen (e.g. markRolls inside the MARKS panel), not the menu
     if (seen(t.id)) continue;
     let due = false;
     try { due = !!t.when(snapshot); } catch { due = false; }
@@ -81,7 +95,7 @@ export function dueTutorial(snapshot, seen) {
 
 /** First run on a save: the ids to mark seen right away (already reached, and not new to everyone). */
 export function alreadyReached(snapshot) {
-  return TUTORIALS.filter((t) => !t.isNew && (() => { try { return !!t.when(snapshot); } catch { return false; } })()).map((t) => t.id);
+  return TUTORIALS.filter((t) => !t.isNew && !t.host && (() => { try { return !!t.when(snapshot); } catch { return false; } })()).map((t) => t.id);
 }
 
 // ---- the stored flags (guarded, like every other store) ----------------------------------------------

@@ -8,6 +8,7 @@ import {
   freshState, normalize, rollTable, roll, oneInX, yourOneInX, tierForX, markLevel, perkOf, perkMult,
   mainMultOf, mainTag, perkTag, luck, pityLeft, collection, migrate, rollPriceWords, rollPrice,
   shouldAutoEquip, rollBonusMult, rollAndSave, ensureRollState, equipRolled, loadRollState,
+  ROLL_BASE_WORDS, AUTO_EQUIP_MAX_STEP, equipDecision, wornMainOf,
 } from './markRolls.js';
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY } from './marks.js';
 import { ACHIEVEMENTS } from './achievements.js';
@@ -203,11 +204,14 @@ test('distribution: 60k seeded rolls land on the published tier odds (pity off b
   assert.ok(Math.abs(counts.legendary / N - 0.0036) < 0.0008);
 });
 
-test('price: words at your rate, growing with level, never 0', () => {
+test('price: 60 words at your rate (Andy oct3), growing with level, never 0', () => {
+  assert.equal(ROLL_BASE_WORDS, 60);
   assert.ok(rollPriceWords(500) > rollPriceWords(1));
-  assert.equal(rollPriceWords(1000), 200);
-  assert.equal(rollPriceWords(1), 100.1);
-  assert.equal(rollPrice({ level: 1, rate: 10 }), 1001);
+  assert.equal(rollPriceWords(1000), 120);
+  assert.equal(rollPriceWords(500), 90);
+  assert.ok(Math.abs(rollPriceWords(1) - 60.06) < 1e-9);
+  assert.equal(rollPrice({ level: 1, rate: 10 }), 601);
+  assert.equal(rollPrice({ level: 1000, rate: 10 }), 1200);
   assert.equal(rollPrice({ level: 1, rate: 0 }), 1);
 });
 
@@ -219,12 +223,33 @@ test('tags: ONE short tag — MAIN ×N or PERK +X%', () => {
   assert.equal(mainMultOf('mk-kraken'), 3);
 });
 
-test('auto-equip: only a RARER roll replaces the MAIN; a permanent is never displaced', () => {
-  assert.equal(shouldAutoEquip('mk-sparky', null), true);
+test('auto-equip (Andy oct3): only a HIGHER MAIN, and only up to ×1.5 of the worn one; bigger jumps ASK', () => {
+  assert.equal(AUTO_EQUIP_MAX_STEP, 1.5);
+  // ×2 → ×2.5 (1.25×) and ×2 → ×3 (exactly 1.5×) are automatic
+  assert.equal(equipDecision('mk-detonator', 'mk-sparky'), 'auto');
+  assert.equal(equipDecision('mk-kraken', 'mk-sparky'), 'auto', '×3 is exactly ×1.5 of ×2 — inclusive');
   assert.equal(shouldAutoEquip('mk-kraken', 'mk-sparky'), true);
-  assert.equal(shouldAutoEquip('mk-sparky', 'mk-kraken'), false);
-  assert.equal(shouldAutoEquip('mk-leviathan', 'mk-eternal'), false);
-  assert.equal(shouldAutoEquip('mk-nova', 'mk-student'), true, 'a retired common is outranked by an epic');
+  // ×2 → ×4 (2×) and ×2.5 → ×4 (1.6×) are never automatic — the UI asks EQUIP? ×N → ×M
+  assert.equal(equipDecision('mk-leviathan', 'mk-sparky'), 'ask');
+  assert.equal(equipDecision('mk-origin', 'mk-phoenix'), 'ask');
+  assert.equal(shouldAutoEquip('mk-leviathan', 'mk-sparky'), false);
+  // ×3 → ×4 (1.33×) is automatic
+  assert.equal(equipDecision('mk-singularity', 'mk-eclipse'), 'auto');
+  // nothing worn = ×1, so even the first common (×2) is asked, never forced on
+  assert.equal(equipDecision('mk-sparky', null), 'ask');
+  assert.equal(shouldAutoEquip('mk-sparky', null), false);
+  // HIGHER, not merely rarer: an equal or lower MAIN never replaces the worn one
+  assert.equal(equipDecision('mk-dasher', 'mk-sparky'), 'none', 'same tier, same ×2');
+  assert.equal(equipDecision('mk-sparky', 'mk-kraken'), 'none');
+  assert.equal(equipDecision('mk-leviathan', 'mk-eternal'), 'none', 'a permanent (×4) is never displaced');
+  assert.equal(equipDecision('mk-sparky', 'mk-sparky'), 'none');
+  // a legacy mark at rank V pays ×2.6: a rare (×2.5) is rarer but LOWER → none
+  assert.equal(equipDecision('mk-detonator', 'mk-bomber', 2.6), 'none');
+  assert.equal(equipDecision('mk-kraken', 'mk-bomber', 2.6), 'auto', '×3 ≤ 2.6 × 1.5');
+  assert.equal(equipDecision('mk-nova', 'mk-student'), 'auto', 'a retired common (×2) → an epic (×3)');
+  assert.equal(equipDecision('mk-nope', 'mk-sparky'), 'none');
+  assert.equal(wornMainOf(null), 1);
+  assert.equal(wornMainOf('mk-curator'), 4, 'permanent MAIN ×4 (Andy oct3)');
 });
 
 test('achievements: the keep/cut plan covers EVERY catalog achievement; each keep awards one permanent mark', () => {

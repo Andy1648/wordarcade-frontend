@@ -43,7 +43,7 @@ export function tierRank(tier) {
 }
 // MAIN bonus (the part above ×1) when worn. COMMON..LEGENDARY are marks.js MARK_TIERS unchanged;
 // PERMANENT matches LEGENDARY (×4) — it is the rarest by how you get it, not a bigger number
-// (spec §2: a ×5 permanent is an open question for Andy).
+// (DECIDED, Andy oct3: permanent MAIN ×4 — the ×5 question is closed).
 // Read at call time, not import time: marks.js → claims.js → wins.js → this module is a cycle.
 export function mainBonus(tier) {
   const t = tier === 'permanent' ? 'legendary' : tier;
@@ -195,7 +195,8 @@ export const ROLL_UNLOCK_LEVEL = 10; // with MARKS (marks.js MARKS_UNLOCK_LEVEL)
 // (key tier × rebirth × priceRateBoost: forge, STAR POWER, the worn MAIN and the roll PERKS), so
 // every roll is the same few seconds-to-minutes of play at LV1 and at LV1000. It also scales with
 // LEVEL: ROLL_BASE_WORDS × (1 + level / ROLL_LEVEL_SPAN).
-export const ROLL_BASE_WORDS = 100;
+// DECIDED (Andy oct3): 60 words (was 100) — the same level scaling and the same reference word.
+export const ROLL_BASE_WORDS = 60;
 export const ROLL_LEVEL_SPAN = 1000;
 // The INDEX: % of the rollable marks owned (base), and of their GOLD and RAINBOW versions.
 export const COLLECTION_MILESTONES = [
@@ -460,14 +461,33 @@ export function milestoneWins(id, rate = 0) {
   const m = COLLECTION_MILESTONES.find((x) => x.id === id);
   return m && rate > 0 ? Math.round(m.words * rate) : 0;
 }
-/** Andy M6: a new roll RARER than the worn MAIN auto-equips. Permanent is never displaced. */
-export function shouldAutoEquip(newId, wornId) {
+// AUTO-EQUIP (Andy M6, DECIDED oct3). A roll auto-equips ONLY when its MAIN is HIGHER than the worn
+// MAIN (not merely rarer) AND at most ×1.5 of it. A bigger jump is never automatic: the UI asks
+// "EQUIP? ×N → ×M". That caps any silent income step from one roll at ×1.5 (marks.md §2, open
+// question 5: a casual ×2 → ×4 auto-equip was worth up to 19 levels). Nothing worn counts as ×1, so
+// the first mark (×2) is always ASKED. A PERMANENT (×4, the top) is never displaced.
+export const AUTO_EQUIP_MAX_STEP = 1.5;
+/** The MAIN a worn id pays at rank I: rolled/permanent by tier, legacy/retired by its marks.js tier.
+ *  No id → ×1. Callers that know a legacy mark's real rank pass `wornMain` to equipDecision. */
+export function wornMainOf(wornId) {
+  if (!wornId) return 1;
+  const r = ROLL_BY_ID.get(wornId) || PERM_BY_ID.get(wornId) || legacyTierOf(wornId);
+  return r ? 1 + mainBonus(r.tier) : 1;
+}
+/**
+ * 'auto' (equip silently), 'ask' (show EQUIP? ×N → ×M) or 'none' (the new MAIN is not higher).
+ * `wornMain` overrides the worn id's rank-I MAIN (a legacy mark at rank V pays more than rank I).
+ */
+export function equipDecision(newId, wornId, wornMain) {
   const n = ROLL_BY_ID.get(newId);
-  if (!n) return false;
-  if (!wornId) return true;
-  const w = ROLL_BY_ID.get(wornId) || PERM_BY_ID.get(wornId) || legacyTierOf(wornId);
-  if (!w) return true;
-  return tierRank(n.tier) > tierRank(w.tier);
+  if (!n || wornId === newId) return 'none';
+  const cur = Number.isFinite(wornMain) && wornMain > 0 ? wornMain : wornMainOf(wornId);
+  const next = mainMultOf(newId);
+  if (!(next > cur + 1e-9)) return 'none';
+  return next <= cur * AUTO_EQUIP_MAX_STEP + 1e-9 ? 'auto' : 'ask';
+}
+export function shouldAutoEquip(newId, wornId, wornMain) {
+  return equipDecision(newId, wornId, wornMain) === 'auto';
 }
 function legacyTierOf(id) {
   const m = MARKS.find((x) => x.id === id);
@@ -586,6 +606,55 @@ export function equipRolled(id) {
     return false;
   }
   return true;
+}
+
+// ------------------------------------------------------------------------------- UI read helpers
+/**
+ * The worn MAIN as stored (taw.mark), accepting a ROLLED id the save owns. marks.js getEquippedMark()
+ * only knows the legacy ids, so a worn rolled mark would read as "nothing worn" on the menu.
+ */
+export function wornMarkId() {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(MARKS_EQUIPPED_KEY);
+  } catch {
+    return null;
+  }
+  if (!raw) return null;
+  if (MARKS.some((m) => m.id === raw)) return raw;
+  const s = loadRollState();
+  return s && s.marks[raw] && ROLL_BY_ID.has(raw) ? raw : null;
+}
+/**
+ * A display entry for ANY mark id ({ id, name, tier, blurb }) — the marks.js entry for a legacy id,
+ * else the rolled/permanent one. `blurb` is the ONE tag (rule U), so the menu chip's title stays short.
+ */
+export function markEntry(id) {
+  const l = MARKS.find((m) => m.id === id);
+  if (l) return l;
+  const r = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id);
+  return r ? { id: r.id, name: r.name, tier: r.tier === 'permanent' ? 'legendary' : r.tier, blurb: mainTag(r.id) } : null;
+}
+/** The read-only view the INDEX draws: the stored state with the legacy-owned marks migrated in
+ *  (pure — nothing is written until the first roll, so opening MARKS never changes a payout). */
+export function viewState(ownedIds = legacyOwnedIds()) {
+  return migrate(loadRollState() || freshState(), { ownedIds });
+}
+/** The next unpaid INDEX milestone on the base track (then gold, then rainbow), or null. */
+export function nextMilestone(state) {
+  const had = new Set((state && state.milestones) || []);
+  return COLLECTION_MILESTONES.find((m) => !had.has(m.id)) || null;
+}
+/** The free starter roll is still waiting (the MARKS unlock gives one). */
+export function starterRollReady(state) {
+  return !(state && state.starter);
+}
+/** PERMANENT ids this save owns (legacy owned set + taw.permanentMarks). */
+export function permanentOwnedIds() {
+  const owned = new Set(legacyOwnedIds());
+  const extra = readJson('taw.permanentMarks');
+  if (Array.isArray(extra)) for (const id of extra) owned.add(id);
+  return PERMANENT_MARKS.filter((m) => owned.has(m.id)).map((m) => m.id);
 }
 
 /**

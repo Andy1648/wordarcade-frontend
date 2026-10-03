@@ -16,6 +16,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 12, into: 0 }));
     localStorage.setItem('taw.achievements', JSON.stringify(['m-wb-5']));
     localStorage.setItem('taw.marksOwned', '[]');
+    localStorage.setItem('taw.tut.markRolls', '1'); // the in-panel ROLL tutorial is covered by mark-rolls.spec
   });
   await page.goto('/?portal=1');
   await menuReady(page);
@@ -33,13 +34,15 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await tile.click();
   const detail = page.locator('.mx-detail');
   await expect(detail.locator('.mx-detail-tier')).toContainText('COMMON');
-  await expect(detail.locator('.mx-detail-pct')).toHaveText('MAIN ×2'); // U: one short tag
+  // U: one short tag — PERK while not worn, MAIN once worn (MARK ROLLS)
+  await expect(detail.locator('.mx-detail-pct')).toHaveText('PERK +2%');
   await detail.getByRole('button', { name: 'SET AS MAIN' }).click();
   await expect(page.locator('.mx-hero .mx-hero-name')).toHaveText('BOMBER');
+  await expect(page.locator('.mx-hero .mx-hero-pct')).toHaveText('MAIN ×2');
   await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
-  // a locked mark says exactly how to get it
+  // a locked rollable mark says its odds
   await page.locator('.mx-tile.is-locked').first().click();
-  await expect(page.locator('.mx-howto')).toContainText('HOW TO GET IT:');
+  await expect(page.locator('.mx-howto')).toContainText('ROLL · 1 IN');
   await page.locator('.mx-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×2');
 });

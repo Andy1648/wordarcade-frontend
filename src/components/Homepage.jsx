@@ -31,7 +31,9 @@ import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
 const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
-import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
+import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
+import { wornMarkId, markEntry } from '../progress/markRolls';
+import { wearMark } from '../progress/markRollShop';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -201,7 +203,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const claims = useClaims();
   const [showClaims, setShowClaims] = useState(false);
   const [claimReveal, setClaimReveal] = useState(null); // the NEW SYSTEM / NEW MARK reveal sticker
-  const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
+  // MARK ROLLS: the worn MAIN may be a ROLLED id (marks.js getEquippedMark only knows the legacy ones)
+  const [equippedMark, setEquippedMark] = useState(() => wornMarkId());
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
   const [marksNew, setMarksNew] = useState(() => hasUnseenMarks(markUnlocked.map((m) => m.id)));
@@ -1140,7 +1143,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                brand-new account is a question with no answer yet. */
             /* Andy oct2 A3: once MARKS is revealed (LV10 / R1) the slot is always there. */
             markSlot={markUnlocked.length > 0 || marksRevealed()}
-            mark={markById(equippedMark)}
+            mark={markEntry(equippedMark)}
             markNew={marksNew}
             onMarkClick={() => {
               markMarksSeen(markUnlocked.map((m) => m.id));
@@ -1292,7 +1295,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               unlockedIds={markUnlocked.map((m) => m.id)}
               equippedId={equippedMark}
               achievementNames={ACH_NAME}
-              onEquip={(id) => setEquippedMark(equipMark(id, earnedAch))}
+              level={xpProgress.level}
+              earned={earnedAch}
+              onEquip={(id) => setEquippedMark(wearMark(id, earnedAch))}
               onClose={() => setShowMarks(false)}
             />
           </Suspense>

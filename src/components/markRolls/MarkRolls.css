@@ -1,0 +1,276 @@
+/* MarkRolls.css — MARK ROLLS (Andy M + H3). Flat house style: coloured outlines, hard black shadows, 8px radius.
+   Every moving node here is moved by RollReveal.jsx (WAAPI, transform/opacity, finite). This file only sets
+   the REST state — which is also the reduced-motion state — so nothing here animates or loops, and there is
+   no will-change (JS turns it on for the length of a reveal and off at the end). */
+
+/* ---- the ROLL panel ----------------------------------------------------------------------------- */
+.mr-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #12071f;
+  border: 3px solid #5c0fa3;
+  border-radius: 8px;
+  min-width: 0;
+}
+.mr-roll {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 64px 8px 16px;
+  color: #000;
+  background: #FFE94A;
+  border: 3px solid #a8800f;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 90ms ease-out;
+}
+.mr-roll:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
+.mr-roll.is-free { background: #2EFFE0; border-color: #0F8F7E; }
+.mr-roll.is-short { color: #c9b8e8; background: #2a1648; border-color: #3a2160; cursor: not-allowed; }
+.mr-roll.is-short:active { transform: none; box-shadow: 5px 5px 0 #000; }
+.mr-roll-main { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; column-gap: 6px; min-width: 0; text-align: center; }
+.mr-roll-word {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+}
+.mr-roll-price { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); }
+.mr-roll-hint {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(4deg);
+  padding: 1px 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #FFE94A;
+  background: #000;
+  border-radius: 6px;
+}
+.mr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  color: #c9b8e8;
+}
+.mr-luck { color: #2EFFE0; }
+.mr-bonus { color: #000; background: #2EFFE0; border: 2px solid #0F8F7E; border-radius: 6px; padding: 0 6px; }
+
+/* ---- the stage (the pool: back, card, flash, reel) ------------------------------------------------ */
+.mr-stage {
+  --mr-tier: #2EFFE0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 132px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0d0618;
+}
+.mr-flash {
+  position: absolute;
+  inset: 0;
+  background: var(--mr-tier);
+  opacity: 0;
+  pointer-events: none;
+}
+.mr-v-c .mr-flash { left: 32%; right: 32%; transform: skewX(-12deg); }
+.mr-back {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform-origin: center;
+  pointer-events: none;
+}
+.mr-stage.is-empty .mr-back { opacity: 1; }
+.mr-reel-win {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 56px;
+  margin-top: -28px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: #1a0b2e;
+  border-top: 3px solid #3a2160;
+  border-bottom: 3px solid #3a2160;
+}
+.mr-reel { display: block; }
+.mr-reel-item {
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+.mr-card-slot { position: relative; width: 100%; display: grid; place-items: center; padding: 8px; transform-origin: center; }
+
+/* ---- the result card (rule U: name, rarity, 1 IN X, ONE tag) ------------------------------------- */
+.mr-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 420px);
+  padding: 10px 12px;
+  color: #fff;
+  background: #1a0b2e;
+  border: 4px solid var(--mr-tier);
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  font-family: 'Space Mono', monospace;
+}
+.mr-card-art { flex: none; }
+.mr-card-body { display: grid; gap: 3px; min-width: 0; }
+.mr-card-name {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+.mr-card-tier { font-weight: 700; font-size: var(--fs-label); letter-spacing: 0.08em; color: var(--mr-tier); }
+.mr-card-tag { font-weight: 700; font-size: var(--fs-body); color: #FFE94A; }
+.mr-card-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mr-chip {
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #fff;
+  background: #2a1648;
+  border: 2px solid #3a2160;
+  border-radius: 6px;
+}
+.mr-chip.is-new { color: #000; background: #FF4FA3; border-color: #A3175E; }
+.mr-chip.is-gold { color: #000; background: #FFD54A; border-color: #A8800F; }
+/* RAINBOW: flat palette colours stacked as hard offset edges (no gradient) */
+.mr-chip.is-rainbow,
+.mx-tile-finish.is-rainbow {
+  color: #000;
+  background: #fff;
+  border-color: #9A1AFF;
+  box-shadow: -3px 0 0 #FF4FA3, 3px 0 0 #2EFFE0, 0 3px 0 #FFE94A, 0 -3px 0 #FF6B3D;
+}
+.mr-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.mr-ask-q { flex: 1 1 100%; font-weight: 700; font-size: var(--fs-body); color: #fff; }
+.mr-ask-yes,
+.mr-ask-no {
+  min-height: 44px;
+  padding: 6px 16px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.mr-ask-yes { color: #000; background: #FFE94A; border: 3px solid #a8800f; box-shadow: 4px 4px 0 #000; }
+.mr-ask-no { color: #c9b8e8; background: transparent; border: 3px solid #3a2160; }
+.mr-ask-yes:active { transform: translate(2px, 2px); }
+
+/* ---- the cutscene layer (EPIC / LEGENDARY), inside the MARKS overlay ------------------------------ */
+.mr-cover {
+  --mr-tier: #FF4FA3;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: center;
+}
+.mr-cover-plate { position: absolute; inset: 0; background: #0d0618; }
+.mr-cover-bars { position: relative; display: grid; gap: 10px; width: min(100%, 420px); }
+.mr-bar {
+  --mr-bar: #2EFFE0;
+  padding: 8px 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.12em;
+  color: #000;
+  background: var(--mr-bar);
+  border: 3px solid rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  transform-origin: left center;
+  opacity: 0;
+}
+.mr-cover-word,
+.mr-cover-stamp {
+  position: relative;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 1;
+  text-align: center;
+  paint-order: stroke fill;
+  opacity: 0;
+}
+.mr-cover-word { font-size: var(--fs-h2); color: var(--mr-tier); -webkit-text-stroke: 3px #000; text-shadow: 4px 4px 0 #000; }
+.mr-cover-stamp {
+  padding: 6px 18px;
+  font-size: var(--fs-h1);
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  text-shadow: 6px 6px 0 #000;
+  border: 5px solid #FFE94A;
+  border-radius: 8px;
+}
+/* version A climbs the ladder, so the tier word is the bars; B and C stamp the word instead */
+.mr-cover.mr-v-a .mr-cover-word { display: none; }
+.mr-cover.mr-v-b .mr-cover-bars,
+.mr-cover.mr-v-c .mr-cover-bars { display: none; }
+
+/* ---- index additions: % COLLECTED, GOLD / RAINBOW tile chips, permanent tiles --------------------- */
+.mx-collect { display: grid; gap: 4px; flex: 1 1 auto; min-width: 0; max-width: 360px; }
+.mx-collect .mx-bar-fill { background: #2EFFE0; }
+.mx-collect-pct { font-weight: 700; font-size: var(--fs-body); letter-spacing: 0.06em; color: #fff; }
+.mx-collect-next { font-weight: 700; font-size: var(--fs-label); letter-spacing: 0.06em; color: #c9b8e8; }
+.mx-tile-finish {
+  position: absolute;
+  top: -10px;
+  left: -6px;
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #000;
+  background: #FFD54A;
+  border: 2px solid #A8800F;
+  border-radius: 6px;
+  transform: rotate(-5deg);
+}
+.mx-tile.is-perm { border-style: double; border-width: 5px; }
+@media (max-width: 899px) {
+  .mx-head { flex-wrap: wrap; }
+  .mx-collect { order: 3; flex-basis: 100%; max-width: none; }
+  .mr-roll { padding-right: 58px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-roll { transition: none; }
+  .mr-roll:active { transform: none; }
+}

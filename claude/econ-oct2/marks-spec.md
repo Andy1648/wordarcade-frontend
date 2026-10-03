@@ -6,8 +6,18 @@ Sim: `claude/econ-oct2/loop-sim.mjs` (rolls when the tree ships `markRolls.js`) 
 Genshin pity, Clash Royale / Brawl Stars). Where Andy's notes and the research disagree, Andy's numbers
 are used (10 dupes → GOLD, 10 golds → RAINBOW, flat for every tier).
 
-No UI is in this branch. The roll button, cutscenes, index grid and tags come later with the
-3-version quality protocol. This file is the contract that UI builds against.
+The UI is on `feat/mark-rolls-ui` (`src/components/markRolls/`, `MarksIndex.jsx`; versions and the
+recommendation in `claude/finetune/mark-rolls-ui.md`). This file is the contract that UI builds against.
+
+### DECISIONS (Andy, oct3) — applied in the engine and below
+1. **Roll price 60 words** at your rate (was 100). Same level scaling, same reference word (§3).
+2. **GOLD / RAINBOW stay a flat 10 dupes → GOLD, 10 golds → RAINBOW** for every tier. No caps (§6).
+3. **Auto-equip only when the new MAIN is HIGHER and ≤ ×1.5 the worn MAIN.** A bigger jump shows
+   `EQUIP? ×N → ×M` and asks; it is never automatic. Rarer-but-not-higher never equips (§8).
+4. **Permanent MAIN ×4** (the ×5 question is closed) (§2).
+5. **Rule-P gap metric:** a NEW mark (first copy), a GOLD step-up and a RAINBOW step-up each count as
+   a "good event" (`loop-sim.mjs oneRoll`). Not re-run yet.
+6. **LV300 (`lv-300`) and 10-REBIRTH (`sec-eternal`) stay KEEP ("hard")** — they ship together with PV10 (§9).
 
 ---
 
@@ -81,7 +91,8 @@ A card shows **name, rarity, "1 IN X", and ONE tag**. Nothing else.
 
 The tier is **PERMANENT**, the rarest. They get a special frame, are **not rollable**, and show
 `EARNED` in place of "1 IN X". They are outside the index %, so 100% of the index stays reachable
-by rolling. Each one owned gives **+0.10 LUCK**. MAIN when worn is **×4** (the LEGENDARY bonus).
+by rolling. Each one owned gives **+0.10 LUCK**. MAIN when worn is **×4** (the LEGENDARY bonus) —
+**DECIDED (Andy oct3): ×4, not ×5.**
 They keep the **words-worn rank I–V** (marks.js), so they can reach ×5.8 at rank V.
 
 | Mark | id | Awarded by | |
@@ -100,9 +111,9 @@ They keep the **words-worn rank I–V** (marks.js), so they can reach ×5.8 at r
 Each kept achievement card shows the mark it awards (M1). This branch adds only the data
 (`PERMANENT_MARKS[].from`).
 
-**Not wired yet:** CURATOR and LINGUIST rising to ×4 is a live payout increase for their owners.
-marks.js `MARK_TIERS` / `MARKS[].tier` are untouched here. The UI branch makes that change and
-re-runs rule P.
+**Wired on `feat/mark-rolls-ui` (decision 4):** CURATOR (was EPIC ×3) and LINGUIST (was RARE ×2.5)
+are `tier: 'legendary'` in marks.js, so both pay MAIN ×4 at rank I. This is a live payout increase
+for their owners (both achievements are hard, so few saves). Rule P has not been re-run for it.
 
 ---
 
@@ -110,7 +121,7 @@ re-runs rule P.
 
 ```
 price(level) = ROLL_BASE_WORDS × (1 + level / ROLL_LEVEL_SPAN) reference words
-             = 100 × (1 + level/1000) words      LV1 ≈ 100 · LV500 = 150 · LV1000 = 200
+             = 60 × (1 + level/1000) words       LV1 ≈ 60 · LV500 = 90 · LV1000 = 120   (DECIDED oct3; was 100)
 wins price   = words × refWordWins()
 refWordWins  = keyTierXp(tier) × 5 / 10 × rebirthMult × priceRateBoost()
 ```
@@ -119,7 +130,13 @@ This is the **same reference word LETTER FORGE is priced in** (`forge.js forgeCo
 the roll PERKs (`wins.js setRateBoost`, ×1 until you roll). BOOST and FRENZY are not in it, so a
 roll does not cost 3× during a BOOST, and a BOOST is the best time to roll (+1 luck, §4).
 
-Why 100: in the sim, income is ~40 (casual) / ~180 (median) / ~1,000 (strong) reference words per
+**60, not 100 (Andy oct3).** Rolls per hour scale with 1/price, so the same 20% wins share buys
+about **~7 / ~27 / ~140 paid rolls per hour** (casual / median / strong) — the 100-word numbers below
+× 100/60. This is arithmetic, not a sim run: the median is now above the research's 10–20 per active
+day, and luck / GOLD arrive ~1.7× sooner. The 5-seed sim and rule-P compare have NOT been re-run at
+60 (memory rules on this run) — that is the next check.
+
+Why 100 was the first pick: in the sim, income is ~40 (casual) / ~180 (median) / ~1,000 (strong) reference words per
 minute of play, and it is flat over 20 h (`refWordsPerMinByHour`). A player who puts **20% of their
 wins** into rolls gets **~4 / ~16 / ~85 paid rolls per hour** (5-seed means). That puts the median inside the
 research's 10–20 per active day. One roll costs about 3 minutes of the median's roll budget (36 s
@@ -207,8 +224,8 @@ copies count too. A common's first RAINBOW takes 101 copies (≈ 1,580 rolls, ~1
 bot has ~6 rainbows by 20 h.
 
 Research note: the research suggested tiered thresholds (legendary gold at 2 dupes). Andy said a
-flat 10/10, so a GOLD legendary is a deep-end flex: 11 copies of a 1-in-280 tier. This is open
-question 4.
+flat 10/10, so a GOLD legendary is a deep-end flex: 11 copies of a 1-in-280 tier. **DECIDED (Andy
+oct3): flat 10 / 10 stays, for every tier, no caps.** Open question 4 is closed.
 
 **The INDEX** (`collection()`): % of the 29 rollable marks owned, plus GOLD % and RAINBOW %
 tracks. Permanents are outside it. Each milestone pays once, adds luck forever, and pays a wins
@@ -235,25 +252,33 @@ A roll can change income in one of two ways:
 
 This is why the MAIN is set by tier only and GOLD/RAINBOW grow the PERK, not the MAIN. A ×1.25 MAIN
 step from going GOLD would be 7.5 levels on the 1.03 tail. Results are in `marks.md`. Every paid
-roll is ≤ 1.7 levels in all 15 runs. **The exception:** with the §9 cuts, a casual player wearing a
-×2 common who rolls a legendary auto-equips a ×4 MAIN, up to 19 levels (`marks.md` §2, open
-question 5).
+roll is ≤ 1.7 levels in all 15 runs. **The exception was:** with the §9 cuts, a casual player wearing
+a ×2 common who rolls a legendary auto-equipped a ×4 MAIN, up to 19 levels (`marks.md` §2). The oct3
+auto-equip rule (§8) removes the silent version: a ×2 → ×4 jump is now an `EQUIP?` question, and the
+largest automatic MAIN step is ×1.5.
 
 ---
 
 ## 8. Roll behaviour (M6) — for the UI branch
 
-- **Auto-equip:** a new roll **rarer than the worn MAIN** auto-equips (`shouldAutoEquip`). A
-  PERMANENT is never displaced. Rarity only: a rare at rank I replacing a common at rank V can
-  lower the MAIN (2.6 → 2.5). That is open question 5.
-- **Hold-to-roll:** repeat about every 350 ms while held. **Stop on EPIC+, on any NEW mark, on
-  GOLD/RAINBOW up, and when the balance runs short.**
-- **Cutscene by rarity:** a COMMON pops instantly (~200 ms card). A RARE gets a ~400 ms flash and
-  stamp. An EPIC climbs ~1.4 s (Starr-Drop style: it starts common-coloured and steps up). A
-  LEGENDARY gets a ~3.5 s full-screen moment (the full sequence the first time, ~1.5 s after that).
-  PERMANENT is not rolled; its claim gets the legendary moment with the special frame. GOLD/RAINBOW
-  step-ups get their own stamp. Everything is finite, transform/opacity only, reduced-motion safe
-  (CLAUDE.md animation budget).
+- **Auto-equip — DECIDED (Andy oct3):** a new roll auto-equips **only when its MAIN is HIGHER than
+  the worn MAIN and at most ×1.5 of it** (`equipDecision()` → `'auto'`). A bigger jump returns
+  `'ask'`: the result card shows `EQUIP? ×N → ×M` with EQUIP / KEEP, and nothing changes until the
+  player taps. Equal or lower MAIN → `'none'` (so "rarer but lower", e.g. a rare ×2.5 over a rank-V
+  common ×2.6, never equips — open question 5 is closed). Nothing worn counts as ×1, so the very
+  first mark is asked too. A PERMANENT (×4) is never displaced. Examples: ×2 → ×2.5 auto, ×2 → ×3
+  auto (exactly 1.5), ×2 → ×4 ask, ×2.5 → ×4 ask, ×3 → ×4 auto.
+- **Hold-to-roll:** repeats while held, **never faster than one roll per finished reveal** (the next
+  held roll is due 120 ms after the previous reveal ends — `revealPlan.js createPacer`). **Stop on
+  EPIC+, on any NEW mark, on GOLD/RAINBOW up, on an EQUIP? question, and when the balance runs
+  short.** A tap mid-reveal skips to the result; it never queues a second roll.
+- **Reveal by rarity (Andy H3, supersedes the old 3.5 s legendary):** COMMON ~300 ms card flip, RARE
+  a short build-up (650–900 ms), EPIC / LEGENDARY a cutscene of **≤ 2.5 s** with a "1 IN X" stamp.
+  Three versions on one build (`?mrv=a|b|c`). PERMANENT is not rolled. Everything is finite,
+  transform/opacity only, pooled nodes, no layout reads; reduced motion holds a static result card
+  for the same time (CLAUDE.md animation budget).
+- **Free starter roll:** the first roll on a save is free (`state.starter`), wired in
+  `markRollShop.js buyMarkRoll`.
 - **Index:** % collected, GOLD %, RAINBOW %, and the next milestone. A locked tile shows
   "1 IN X" (rolled) or the achievement name (permanent).
 
@@ -307,6 +332,7 @@ reached in 20 h. Rebirth times come from the rebirth log (R1 ≈ 2–4 min, R5 �
 | sec-completionist | COMPLETIONIST | not reached | **KEEP** | every other KEPT achievement (it now means the hard nine) | OMEGA (new permanent) |
 
 35 achievements: **10 KEEP, 25 CUT** (`ACHIEVEMENT_PLAN`, unit-tested to cover the whole catalog).
+**DECIDED (Andy oct3): `lv-300` and `sec-eternal` stay KEEP ("hard"); they ship together with PV10.**
 \* = kept on the assumption that PV10 makes levels and rebirths slow. If PV10 does not ship, the
 alternative is two new ids (e.g. "Reach LV1000", "Rebirth 25 times"), so a published id never
 changes what it means. Cutting achievements also removes their wins lumps (6–25 words each) and,
@@ -344,7 +370,10 @@ worse are listed there, not hidden.
 
 ## 12. New glyphs needed (MarkBadge.jsx, UI branch)
 
-There are 26 new ids with no art yet. MarkBadge renders no glyph for an unknown id, so nothing
+**Done on `feat/mark-rolls-ui`:** all 26 have inline SVG glyphs in `MarkBadge.jsx` (the same hand as
+the existing 16), permanents draw a ten-point PERMANENT burst frame, and GOLD / RAINBOW replace the
+rank rim (gold teeth / flat palette teeth). The original note:
+There were 26 new ids with no art. MarkBadge renders no glyph for an unknown id, so nothing
 crashes. Each glyph needs real vector art with personality: drips, overspray, asymmetry.
 - **Rolled (20):** SPARKY (a lit fuse spark), DASHER (a skidding shoe), CRAMMER (a stuffed book),
   INKWELL (a spilled pot), SHACKLE (an open cuff), WICK (a candle wick), MATCHSTICK, PACER

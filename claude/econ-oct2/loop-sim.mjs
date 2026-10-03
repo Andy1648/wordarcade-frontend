@@ -323,7 +323,8 @@ function simulate(skill) {
       }
       lastLumpCtx = null;
     }
-    // Andy M6: a roll RARER than the worn MAIN auto-equips (the bot then keeps the best by value)
+    // Andy M6 (DECIDED oct3): a roll auto-equips only when its MAIN is HIGHER and at most ×1.5 the worn
+    // MAIN; a bigger jump is an "EQUIP?" question (the bot's bestMark() below then keeps the best by value)
     let worn = null;
     try { worn = localStorage.getItem('taw.mark'); } catch { worn = null; }
     if (MR.shouldAutoEquip(res.markId, worn)) {
@@ -334,7 +335,12 @@ function simulate(skill) {
     const step = refMix() / r0;
     const g = XP.need(L + 1) / XP.need(L);
     rollLog.push({ t: +minute.toFixed(2), level: L, rebirths: XP.getRebirths(), markId: res.markId, tier: res.tier, pity: res.pityHit, bonus: res.bonusRoll, luck: +res.luck.toFixed(3), step: +step.toFixed(4), curveLevels: +(Math.log(step) / Math.log(g)).toFixed(2), starter: !!starter, newMark: res.newMark, goldUp: res.goldUp, rainbowUp: res.rainbowUp, copies: res.copies });
+    // RULE-P GAP METRIC (Andy oct3, decision 5): a roll is a "good event" when it is a NEW mark (first
+    // copy), a GOLD step-up, or a RAINBOW step-up — each is a visible moment the player gets. A plain dupe
+    // (perk +10% of base, no new badge) is not. Recorded under kind 'mark' so GOOD_KINDS counts them.
     if (res.newMark) addGood('mark', `ROLL ${res.tier} ${res.markId}`);
+    if (res.goldUp) addGood('mark', `ROLL GOLD ${res.markId} (G${res.gold})`);
+    if (res.rainbowUp) addGood('mark', `ROLL RAINBOW ${res.markId} (R${res.rainbow})`);
   }
   function doRolls() {
     if (!rollsOpen()) return;
