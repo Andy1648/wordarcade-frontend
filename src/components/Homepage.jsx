@@ -46,7 +46,6 @@ import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
-import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import PodiumIcon from './PodiumIcon';
@@ -72,6 +71,8 @@ const warmModeDialog = () => {
   modeDialogWarm = true;
   loadModeDialog().catch(() => { modeDialogWarm = false; });
 };
+// The NEW SYSTEM / NEW MARK reveal sticker loads when a claim reveals (payload ratchet).
+const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'ClaimReveal');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
@@ -1364,7 +1365,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           <TutorialHost level={xpProgress.level} rebirths={rebirths} />
         </Suspense>
       )}
-      {claimReveal && <ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} />}
+      {claimReveal && <Suspense fallback={null}><ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} /></Suspense>}
 
       {/* MARKS overlay — one slot, tap to wear, tap again to take it off. */}
       {showMarks && (
