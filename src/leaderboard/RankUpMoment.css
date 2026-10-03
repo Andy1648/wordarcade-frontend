@@ -81,6 +81,20 @@
   40% { opacity: 1; transform: scale(1.25); }
   48%, 100% { opacity: 1; transform: scale(1); }
 }
+/* kind="passed" (rival ping): the same card in orange — a loss, named. The ONE tappable variant (opens
+   the board), so the card alone takes pointer events; the layer around it still never eats a tap. */
+.lb-rankup.is-passed {
+  pointer-events: auto;
+  cursor: pointer;
+  min-height: 44px;
+  max-width: calc(100vw - 32px);
+  background: #FF6B3D;
+  border-color: #a8401f;
+  text-align: center;
+}
+.lb-rankup.is-passed .lb-rankup-kicker { overflow-wrap: anywhere; }
+.lb-rankup.is-passed .lb-rankup-from { color: #4a1d0c; }
+.lb-rankup.is-passed .lb-rankup-to { color: #FFE94A; }
 @media (prefers-reduced-motion: reduce) {
   .lb-rankup,
   .lb-rankup-from::after,
