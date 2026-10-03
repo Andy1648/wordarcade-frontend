@@ -1,7 +1,7 @@
-/* PodiumIcon.css — the leaderboard podium (see PodiumIcon.jsx). Everything inside is sized off the ICON'S OWN
-   BOX (container units), so one glyph serves the 22px claim-prompt inline icon and the 168px golden button
-   alike: the steps, outlines, shadows and the #rank all scale together. That is the fit-to-slot exception in
-   typeScale.test.js (cqw) — text sized to a BOX, not to the document scale.
+/* PodiumIcon.css — the leaderboard podium (see PodiumIcon.jsx). The art is ONE inline SVG in a 100x100 viewBox,
+   so the steps, die-cut, shadow and the #rank scale together from the 26px claim-prompt glyph to the 176px
+   golden button. The number's size is a viewBox unit (an SVG attribute), checked against the 13px floor on
+   the RENDERED size in JS.
    No infinite animation and no will-change here: the glint and the rank-up bump are finite WAAPI one-shots
    that toggle will-change themselves (PodiumIcon.jsx play()). */
 .pi {
@@ -10,163 +10,29 @@
   flex: 0 0 auto;
   width: 24px;
   height: 24px;
-  container-type: inline-size;
   vertical-align: middle;
-  transform-origin: 50% 90%;
+  /* the rank-up punch grows DOWN from the top edge (never up into the rebirth stars) */
+  transform-origin: 50% 6%;
   pointer-events: none;
 }
-.pi-stage {
-  position: absolute;
-  inset: 0;
-}
-
-/* ---- a / c: the steps are divs (rectangles), geometry from the component as % of the stage ---- */
-.pi-step,
-.pi-cut {
-  position: absolute;
-  box-sizing: border-box;
-  left: calc(var(--x) * 1%);
-  top: calc(var(--y) * 1%);
-  width: calc(var(--w) * 1%);
-  height: calc(var(--h) * 1%);
-}
-.pi-step {
-  background: var(--fill);
-  border: 4cqw solid var(--line);
-  border-radius: 2cqw;
-  /* a: every step casts its OWN hard shadow, so the gold step throws one onto the bronze beside it */
-  box-shadow: 4cqw 4cqw 0 #000;
-}
-
-/* ---- b: one inline SVG; the shadow layer is its own group under the silhouette ---- */
 .pi-svg {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
 }
-.pi-svg-num {
+/* the number is Bungee (display type; digits, but the rule holds) */
+.pi-num-font {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
+}
+/* the tick pop scales the face about its own foot */
+.pi-num {
   transform-box: fill-box;
   transform-origin: 50% 100%;
 }
-
-/* ---- c: the sticker — the whole podium die-cut out of cream with a black keyline, tilted ---- */
-.pi-c { --pi-k: 0.82; }
-.pi-c .pi-stage {
-  inset: 9%;
-  transform: rotate(-6deg);
-}
-
-/* ---- the plate (a/b on GOLD hosts): a dark rounded rectangle behind the steps, so the gold top step reads
-   against panel-dark instead of vanishing into the gold button / card ---- */
-.pi.has-plate { --pi-k: 0.84; }
-.pi.has-plate .pi-stage { inset: 8%; }
-.pi-plate {
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  background: #1a0b2e;
-  border: 3cqw solid #0d0618;
-  border-radius: 12cqw;
-}
-.pi-cut {
-  left: calc(var(--x) * 1% - 6cqw);
-  top: calc(var(--y) * 1% - 6cqw);
-  width: calc(var(--w) * 1% + 12cqw);
-  height: calc(var(--h) * 1% + 12cqw);
-  background: #F0EAD9;
-  border-radius: 4cqw;
-}
-.pi-cut-key {
-  left: calc(var(--x) * 1% - 9cqw);
-  top: calc(var(--y) * 1% - 9cqw);
-  width: calc(var(--w) * 1% + 18cqw);
-  height: calc(var(--h) * 1% + 18cqw);
-  background: #000;
-  border-radius: 6cqw;
-  box-shadow: 4cqw 4cqw 0 #000;
-}
-/* printed ON the sticker: the steps lie flat, only the sticker casts the shadow */
-.pi-c .pi-step { box-shadow: none; border-width: 3cqw; }
-
-/* ---- the #rank, standing on the top step (y = 34 → its foot at 66% from the bottom) ---- */
-.pi-num {
-  position: absolute;
-  left: -12%;
-  right: -12%;
-  bottom: 64%;
-  display: grid;
-  justify-items: center;
-  align-items: end;
-  font-family: 'Bungee', sans-serif;
-  text-transform: uppercase;
-  line-height: 0.82;
-  white-space: nowrap;
-  transform-origin: 50% 100%;
-}
-.pi-num > span { grid-area: 1 / 1; }
-/* --pi-k: the stage's share of the box (c's sticker and a plated icon draw the podium in an inset stage, but
-   cqw is measured on the whole box) — so the number keeps the same size relative to the steps */
-.pi-num[data-len='1'],
-.pi-num[data-len='2'] { font-size: calc(40cqw * var(--pi-k, 1)); }
-.pi-num[data-len='3'] { font-size: calc(34cqw * var(--pi-k, 1)); }
-.pi-num[data-len='4'] { font-size: calc(28cqw * var(--pi-k, 1)); }
-.pi-num[data-len='5'] { font-size: calc(23cqw * var(--pi-k, 1)); }
-.pi-num[data-len='6'] { font-size: calc(19cqw * var(--pi-k, 1)); }
-/* the hard offset shadow is a black COPY, not a text-shadow (the LayeredWord rule: depth is a layer) */
-.pi-num-shadow {
-  color: #000;
-  -webkit-text-stroke: 4cqw #000;
-  transform: translate(3cqw, 3cqw);
-}
-/* the wordmark's ink: pink fill, black stroke outside the fill */
-.pi-num-face {
-  color: #FF4FA3;
-  -webkit-text-stroke: 4cqw #000;
-  paint-order: stroke fill;
-}
-/* c: the number is die-cut too — black keyline, cream margin, then the face */
-.pi-c .pi-num-cut {
-  color: #000;
-  -webkit-text-stroke: 15cqw #000;
-  transform: translate(3cqw, 3cqw);
-}
-.pi-c .pi-num-shadow {
-  color: #F0EAD9;
-  -webkit-text-stroke: 10cqw #F0EAD9;
-  transform: none;
-}
-.pi-num.is-star {
-  /* 38% wide → ~34% tall: the star fills the headroom above the top step */
-  left: 31%;
-  right: 31%;
-  bottom: 65%;
-  display: block;
-}
-.pi-star {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
-/* ---- the one-shot glint: a white bar swept across the podium silhouette (clipped to it) ---- */
-.pi-glint-clip {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  clip-path: polygon(5% 50%, 34% 50%, 34% 34%, 66% 34%, 66% 62%, 95% 62%, 95% 84%, 96% 84%, 96% 93%, 2% 93%, 2% 84%, 5% 84%);
-}
 .pi-glint {
-  position: absolute;
-  top: -30%;
-  left: 0;
-  width: 22%;
-  height: 160%;
-  background: #fff;
-  opacity: 0;
-  transform: translateX(-160%) rotate(20deg);
+  /* swept in user units (translateX px = viewBox units), tilted about its own centre */
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
 }

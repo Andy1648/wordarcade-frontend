@@ -206,7 +206,7 @@ export default function MobileMenu({
             aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardDot ? ' — your rank went up' : ''}`}
           >
             {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
-            <PodiumIcon rank={boardShown !== undefined ? boardShown : boardRank} glint={boardGlint} bump={boardBump} plate />
+            <PodiumIcon rank={boardShown !== undefined ? boardShown : boardRank} glint={boardGlint} bump={boardBump} />
             {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
           </button>
         )}

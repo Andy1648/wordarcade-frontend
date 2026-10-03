@@ -2,86 +2,85 @@
 
 Branch `feat/board-icon` (off `feat/audit-leftovers`). One component, `src/components/PodiumIcon.jsx` (+ `.css`),
 replaces `TrophyIcon` everywhere: desktop golden button (`.homepage-board-hero`), phone golden button
-(`.hp-m-board-hero`), LeaderboardScreen header (`.lb-head-podium`, NEW), the RANK UP card (`.lb-rankup-podium`,
-NEW), the claim prompt's "find it under ▢ on the menu" (bare, 26px). `TrophyIcon.jsx` is deleted.
+(`.hp-m-board-hero`), LeaderboardScreen header (`.lb-head-podium`), the RANK UP card (`.lb-rankup-podium`), the
+claim prompt's "find it under ▢ on the menu" (bare, 26px). `TrophyIcon.jsx` is deleted.
 
-## The glyph (shared by all three versions)
+## Round 1 (3 versions, `?biv=a|b|c`) → verdict
 
-- Three FILLED steps in podium order **2-1-3**: cyan (silver) / **gold centre, tallest** / orange (bronze), on a
-  dark plinth. Each fill has a darker-shade outline (`#14a594`, `#a8800f`, `#b8431f`, `#0d0618`) and the hard
-  black offset — no gradients, no glow.
-- **Your #rank stands ON the top step**, as part of the icon: Bungee, the wordmark's ink (pink `#FF4FA3`, black
-  stroke outside the fill) with a black offset COPY for depth (the LayeredWord rule — depth is a layer, not a
-  text-shadow). The separate `.homepage-board-rank` / `.hp-m-board-rank` badges are gone.
-- **Unranked → a pink star** on the top step (not a "1": a 1 would read as "you're #1").
-- Ranks ≥ 1,000 print compact without the "#" (`1.2K`, `12K`), so the widest label is 4 characters; a FIXED small
-  size that would print the number under 13px shows the star instead.
-- Everything is sized off the icon's own box (`container-type: inline-size` + `cqw`), so the steps, outlines,
-  shadows and number scale together from 26px to 168px. The number shrinks with its length (`#9` 40cqw →
-  `#800` 28cqw → `#1,234` 23cqw). Below 32px the icon goes **bare** (no number/star) so nothing renders under 13px.
-- Sizes: desktop podium = 84% of the `--hb` button (≈69px at 1280x551, ≈103 at 1920x1080, ≈138 at 2560x1440);
-  phone button 60 → **64px**, podium 54px (`#9` ≈ 22px tall). LB header 52–64px. Rank-up card 64px.
+Round 1 shot a = CSS bars, b = SVG + one shadow layer, c = cream die-cut sticker (−6°), with a dark "plate" for
+a/b on gold hosts. NOTE: every round-1 frame was in the FALLBACK font — `installBackendMock` aborts Google Fonts
+unless `SHOT_FONTS` is set; the shot script now sets it.
 
-## The three versions (`?biv=a|b|c`, default a)
+**Verdict: a HYBRID — b's SVG with c's die-cut drawn inside it, no plate.** On gold the black shadows/strokes
+read; on the dark plate they vanished and the plate shrank the golden button to a thin rim. Versions a and c, the
+plate and the `?biv=` switch are deleted.
 
-| | a — pure-CSS bars | b — SVG + shadow layer | c — sticker |
-|---|---|---|---|
-| Build | 4 `<span>` rects, each its own border + box-shadow | one `<svg>`: a black silhouette group offset (4,4), then the outlined rects, number as `<text>` | cream die-cut (union of expanded rects) with a black keyline + one shadow, steps printed flat on it, tilted −6° |
-| Depth | each step casts its OWN shadow — the gold step throws a black slab onto the bronze one: the most "stacked" | ONE union shadow under the whole silhouette — reads as one object, the LayeredWord look | the sticker casts the shadow; the steps lie flat on cream |
-| On the gold button | `plate`: a dark rounded plate behind the steps (gold step on panel-dark) | same `plate` | its own cream die-cut separates the gold step; no plate |
-| Small sizes | crisp; outlines ≥ 1px down to 26px | crispest (vector, number is SVG text) | the die-cut margin eats ~18% → smallest steps |
-| Personality | chunky, a bit blocky | clean, graphic | tilt + die-cut = the menu-sticker voice (asymmetry rule) |
+## The glyph now (one inline SVG, 100×100 viewBox)
+
+- Three FILLED steps in podium order **2-1-3** — cyan / **gold centre, tallest** / orange — on a dark plinth; flat
+  fills, darker-shade outlines (`#14a594`, `#a8800f`, `#b8431f`, `#0d0618`).
+- The sticker: a cream (`#F0EAD9`) die-cut around every shape (4 units), a black keyline (3 units), ONE hard black
+  shadow (4,4) under the whole silhouette. Tilted **−2°** (the wordmark's pose), not −6°.
+- **Your #rank stands on the gold step**, drawn in the SVG in Bungee: pink fill, 3-unit black stroke outside the
+  fill, a **4-unit cream keyline** + 2-unit black edge, and a black offset copy. The number's keyline/shadow layers
+  are drawn WITH the sticker's (under the steps), so its die-cut fuses with the step's instead of a black blob.
+- Unranked → a pink star in the same layers. The RANK UP card's podium wears the star too (its `#to` is the line
+  right under it — no second "#9").
+- Labels: `#9` … `#999`, then compact without "#" (`1.2K`, `12K`) — max 4 characters. Size in viewBox units:
+  `min(46, 92 / (len × 0.74))` → 2 chars 46, 3 chars 41.4, 4 chars 31.1.
+- **13px floor on the RENDERED size**: the icon measures its own box with a ResizeObserver (mount + resize only,
+  never per frame) when no numeric `size` is passed; a number that would render under 13px shows the star; under
+  32px the glyph goes bare. The rendered px is exposed as `data-num-px` (the shot script reads it).
+
+## Sizes (computed from the CSS — the shots confirm)
+
+The podium now FILLS the button's content box (its viewBox carries the die-cut + shadow margin; no headroom).
+
+| viewport | button | vs STATS (area) | podium | `#9` | `#42` | `#800` / `1.2K` | --fs-panel |
+|---|---|---|---|---|---|---|---|
+| 390x844 (phone) | 72px (was 64) | 1.09× (5,184 vs ~4,752) | 66 | 30.4px | 27.3 | 20.5 | 20 |
+| 360x740 (phone) | 72px | ~1.20× | 66 | 30.4 | 27.3 | 20.5 | 20 |
+| 1280x551 | 93.7px (was 82) | ~1.45× (was 1.11) | 86 | 39.7 | 35.7 | 26.8 | 28 |
+| 1366x625 | 101px | — | 93 | 42.8 | 38.5 | 28.9 | 28 |
+| 1920x1080 | 142px | — | 131 | 60.1 | 54.1 | 40.6 | 34 |
+| 2560x1440 | 176px (cap, was 168) | — | 162 | 74.5 | 67.0 | 50.4 | 40 |
+| LB header ≤420px | 44px | — | 44 | 20.2 | 18.2 | 13.7 | 20 |
+
+Desktop dial: `--hb: clamp(68px, min(7.4vw, 17vh), 176px)` (was 6.4vw / 168). The 17vh short-window guard is
+unchanged and is what binds at 1280x551. Every 2–3 char label clears --fs-panel on the golden buttons; the 4-char
+labels clear it except at 1280x551 (26.8 vs 28) — the widest label that fits the box there.
 
 ## Motion (finite only — MENU MOTION LAW holds)
 
-- Andy's "gentle glint every ~8 s" was **not** looped (it would be a new idle loop on the menu). Instead ONE glint:
-  a white bar swept across the podium silhouette (clipped to it), 640ms, ~2.2s after mount (after the arrival
-  wipe, same settle clock as `wallWait`). Skipped on a rank-up visit and under reduced motion.
-- **Rank up (boardNews):** the menu's rank check now announces the rank-up through `src/lib/moments.js`
-  (`id: 'rank-up'`, `PRIORITY.REWARD`), so it never paints over another queued heavy moment. The podium keeps
-  showing the OLD rank until the RANK UP card's `#to` pops (`RankUpMoment` `onPop`, 1600 + 36% of 2200 ms), then
-  it bounces (680ms: jump + tilt, squash, settle) and the number ticks down `#12 → #11 → #10 → #9` (≤ 8 steps,
-  75ms apart, each a 140ms pop on the one number node). transform/opacity only; `will-change` set by JS for the
-  life of each animation and cleared on finish; no animation under reduced motion (the final rank just shows).
-- No infinite animations added; no CSS `will-change` added.
+- **Glint:** ONE white sweep across the steps (clipped to them), 640ms, ~2.2s after mount (after the arrival
+  wipe). Rising edge only; a falling prop never cuts it; skipped on a rank-up visit. Not looped (Andy's "every
+  ~8 s" would be an idle loop on the menu).
+- **Rank up (boardNews):** announced through `src/lib/moments.js` (`id: 'rank-up'`, `PRIORITY.REWARD`, maxMs
+  6000 + a safety clear of the held old rank). The icon shows the OLD rank until the RANK UP card's `#to` pops
+  (`RankUpMoment` `onPop`), then **punches** and the number ticks `#12 → #11 → #10 → #9` (≤ 8 steps, 75ms apart).
+  - 680ms, LINEAR overall with per-keyframe easing: swell to `scale(1.18) rotate(5°)` at **30% = 204ms**
+    (`BUMP_PEAK_MS`, also `data-bump-peak-ms` on the icon), squash `scale(1.06, .92)` at 55%, settle.
+  - It grows from the icon's TOP edge and never travels up: at 1280x551 the button's top (28px) already sits on
+    the rebirth stars' baseline (stars y 10–28 from x 70), so an upward jump would hit them. The +5° tilt lifts
+    only the left corner (~4px), over the frame ornament the button already overlaps at rest. The shot script
+    freezes on the peak and lists any frame element it crosses (`crosses`).
+  - will-change is per element and ref-counted: cleared only when the LAST overlapping tick pop on the number ends.
+- transform/opacity only; no CSS will-change; no infinite animation; nothing plays under reduced motion.
 
 ## e2e hooks
 
-Unchanged: `.homepage-nav-btn.is-board`, `.hp-m-navbtn.is-board`, the aria-label
-(`Open leaderboard — you're #N` / `— your rank went up`; it reads the real rank, not the ticking display),
-`.lb-rankup` / `-from` / `-to` / `-sub` and its timings (the queue is empty on menu load, so the card starts
-exactly as before). No e2e selector referenced `board-rank`, `TrophyIcon` or the trophy svg, so no spec changed.
+Unchanged: `.homepage-nav-btn.is-board`, `.hp-m-navbtn.is-board`, the aria-label (`Open leaderboard — you're #N`
+/ `— your rank went up`; it reads the real rank, not the ticking display), `.lb-rankup*` and its timings.
 
 ## Screenshots
 
-`node claude/finetune/board-icon-shots.mjs` (build with the e2e Supabase env first — see the script header).
-Writes `claude/finetune/board-icon/`: menu + corner crops at the 5 sizes × {#9, unranked} × {a,b,c}, the 360px
-phone, the LB header, the rank-up bounce frozen mid-flight, and `measure.json` (button / podium / number px,
-area ratio vs STATS and SHOP, overlaps, infinite-animation count).
+`node claude/finetune/board-icon-shots.mjs [url] [sizes]` (build with the e2e Supabase env first — see the
+header). Writes `claude/finetune/board-icon/`: menu + corner crops at 6 sizes × {#9, unranked}; corner crops for
+#42 / #800 / 1.2K at 390, 360, 1280x551; the LB header at 1920 / 390 / 360; the rank-up punch frozen at its peak
+at 1280x551 / 1920 / 390; `measure.json`.
 
-## Recommendation
+## Still open
 
-**b — the SVG podium with one shadow layer, plated on gold hosts.** Pending Andy's screenshots, but on the code:
-
-- One union shadow under the whole silhouette is the same idea as the wordmark's layered depth (a layer, not
-  per-piece noise). a's per-step cast shadows read busier at 54px.
-- The number has an explicit SVG baseline (`y=31`), so it stands on the top step regardless of font metrics or a
-  late font load. In a/c the HTML numeral's foot depends on Bungee's ascent/descent under `line-height: .82` and
-  can sit off the step until Bungee loads; check that in the shots.
-- It's one node instead of 8–12 positioned spans.
-
-c is the runner-up: the cream die-cut solves gold-on-gold by itself and has the most personality. But its −6° tilt
-competes with the wordmark's own −2° pose, and the 15cqw keyline fills the numeral counters below ~60px.
-
-### Adversarial review (code-level; screenshots not yet run)
-
-Fixed before commit:
-1. **4-digit ranks under 13px.** Compact label (`1.2K`), plus a star fallback at fixed small sizes.
-2. **Gold step vanishing on the gold button and card.** Added the `plate` for a/b on gold hosts.
-3. **LB header overflow at 360px.** The podium drops to 44px at ≤420px.
-4. **Glint.** It now uses one shared flag for both menu trees, starts only on the rising edge, and only unmount cancels it.
-5. **Queue `maxMs` vs the lazy card chunk.** Raised to 6s, and a safety timer clears the held old rank.
-6. **c numeral oversized against its inset stage.** `--pi-k` scales it (the plated stage uses the same fix).
-7. **Claim-prompt `vertical-align` lost on CSS order.** The selector is more specific now.
-
-Still open: the a/c numeral's dependence on font metrics (above).
+- Everything above is computed from the CSS; the round-2 shots (with Bungee loaded) confirm or correct it.
+- The phone title row now carries a 72px button. Check that "TYPE A / WORD" and the audio controls still fit at
+  360.

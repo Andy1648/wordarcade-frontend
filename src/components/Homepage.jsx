@@ -1069,7 +1069,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               title="Leaderboard"
             >
               {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
-              <PodiumIcon rank={boardShown} glint={boardGlintOn} bump={boardBump} plate />
+              <PodiumIcon rank={boardShown} glint={boardGlintOn} bump={boardBump} />
               {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
             </button>
           </div>

@@ -1275,7 +1275,10 @@ html[data-beat='true'] .homepage-beat-glow {
      the viewport so a 2560x1440 monitor gets a big button, not a 3% chip. 6.4vw tracks the width the
      wordmark leaves free; 17vh keeps it clear of the cards on a short window. 68px floor (the old size
      at 1280x551) → 82 at 1280x551, 123 at 1920x1080, 164 at 2560x1440, capped at 168. */
-  --hb: clamp(68px, min(6.4vw, 17vh), 168px);
+  /* Board-icon verdict (oct3): ~1.5x the STATS chip's area at 1280x551 — 6.4vw → 7.4vw (the 17vh short-window
+     guard is unchanged and is what binds there: 94px at 1280x551, 101 at 1366x625, 142 at 1920x1080), cap 168 →
+     176 (2560x1440). */
+  --hb: clamp(68px, min(7.4vw, 17vh), 176px);
   position: absolute;
   /* inset by a share of its own size as well, so the big button clears the frame's top-left corner
      ornament at 1920 / 2560 instead of sitting on it */
@@ -1301,10 +1304,9 @@ html[data-beat='true'] .homepage-beat-glow {
 }
 .homepage-nav-btn.homepage-board-hero:active { box-shadow: none; }
 .homepage-board-hero .pi {
-  /* the podium fills the button: 84% of it, nudged down so the #rank on the top step has headroom */
-  width: 84%;
-  height: 84%;
-  margin-top: 4%;
+  /* the podium FILLS the button's content box (its own viewBox already leaves the die-cut + shadow margin) */
+  width: 100%;
+  height: 100%;
 }
 .homepage-board-hero:hover .pi { transform: rotate(-5deg) scale(1.06); transition: transform 160ms ease-out; }
 .homepage-board-hero .homepage-shop-dot.is-board-news {

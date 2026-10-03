@@ -36,8 +36,9 @@ export default function RankUpMoment({ from, to, onDone, onPop }) {
       <p className="lb-rankup-sr" role="status">{on ? `Leaderboard rank up: from number ${from} to number ${to}.` : ''}</p>
       {on && (
         <div className="lb-rankup" aria-hidden="true">
-          {/* the same podium glyph as the menu's golden button — one symbol for the leaderboard */}
-          <PodiumIcon rank={to} size={64} plate className="lb-rankup-podium" />
+          {/* the same podium glyph as the menu's golden button — one symbol for the leaderboard. It wears the
+              STAR here, not the rank: "#to" is already the line right under it */}
+          <PodiumIcon size={64} className="lb-rankup-podium" />
           <span className="lb-rankup-kicker">RANK UP</span>
           <span className="lb-rankup-line">
             <span className="lb-rankup-from">#{from}</span>
