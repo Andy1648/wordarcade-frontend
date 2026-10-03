@@ -142,7 +142,7 @@ test.describe('the run-over offer', () => {
     test.setTimeout(30000);
     await page.setViewportSize({ width: 900, height: 844 });
     await page.addInitScript(() => {
-      try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, into: 0 })); } catch { /* ignore */ }
+      try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 60, into: 0 })); } catch { /* ignore */ }
     });
     await installBackendMock(page);
     await page.goto('/?portal=1&soloms=350');

@@ -19,7 +19,7 @@ const ME = 'me';
 async function soloDeath(page, mode) {
   await installBackendMock(page);
   await page.addInitScript(() => {
-    try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* blocked */ }
+    try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 })); } catch { /* blocked */ }
     // Past the first-run card: a tutorial card replaces the score card under 3 words, and the
     // hold lives on the score card.
     try { localStorage.setItem('taw.runs.chain', '9'); localStorage.setItem('taw.runs.fuse', '9'); } catch { /* blocked */ }

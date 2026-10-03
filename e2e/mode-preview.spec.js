@@ -31,7 +31,7 @@ test.describe('item 2 — worked examples', () => {
   });
 
   test('CHAIN dialog shows the E → EAGLE → ELEPHANT → TIGER chain', async ({ page }) => {
-    await menu(page, 20); // well past the LV2 gate → unlocked
+    await menu(page, 60); // past the LV50 gate → unlocked
     await card(page, 'chain').click();
     const ex = page.locator('.mode-dialog-shell .mode-ex');
     await expect(ex).toBeVisible();
@@ -40,7 +40,7 @@ test.describe('item 2 — worked examples', () => {
   });
 
   test('FUSE locked preview shows AIN → RAIN / AGAIN / MOUNTAIN', async ({ page }) => {
-    await menu(page, 2); // below LV3 → FUSE locked → preview dialog
+    await menu(page, 60); // below LV100 → FUSE locked → preview dialog
     await card(page, 'fuse').click({ force: true }); // locked card is aria-disabled but clickable
     const lp = page.locator('.lp-panel');
     await expect(lp).toBeVisible();
@@ -51,39 +51,36 @@ test.describe('item 2 — worked examples', () => {
 });
 
 test.describe('item 4 — the CHAIN / FUSE gates', () => {
-  // Gates were LOWERED (CHAIN 20 -> 2, FUSE 25 -> 3): the raised values were pacing set by
-  // feel with no players to pace against, and a gate measured in thousands of typed letters
-  // is a wall in front of a first session. Source of truth is gameData.js — update these to
-  // match it, not the reverse.
-  test('CHAIN gate is LV2: locked at 1', async ({ page }) => {
-    await menu(page, 1);
+  // N1 (Andy oct2): CHAIN unlocks at EXACTLY LV50, FUSE at EXACTLY LV100 — Andy's numbers. Source of
+  // truth is gameData.js; a played mode is never locked (the bypass block below).
+  test('CHAIN gate is LV50: locked at 49', async ({ page }) => {
+    await menu(page, 49);
     await expect(card(page, 'chain')).toHaveClass(/locked/);
-    await expect(card(page, 'chain')).toContainText('UNLOCKS AT LV 2');
-    await expect(card(page, 'chain')).toContainText('1 TO GO'); // reachable, not "20 TO GO"
+    await expect(card(page, 'chain')).toContainText('UNLOCKS AT LV 50');
+    await expect(card(page, 'chain')).toContainText('1 TO GO');
   });
 
-  test('CHAIN unlocked at LV2', async ({ page }) => {
-    await menu(page, 2);
+  test('CHAIN unlocked at LV50', async ({ page }) => {
+    await menu(page, 50);
     await expect(card(page, 'chain')).not.toHaveClass(/locked/);
   });
 
-  test('FUSE gate is LV3: locked at 2', async ({ page }) => {
-    await menu(page, 2);
+  test('FUSE gate is LV100: locked at 99', async ({ page }) => {
+    await menu(page, 99);
     await expect(card(page, 'fuse')).toHaveClass(/locked/);
-    await expect(card(page, 'fuse')).toContainText('UNLOCKS AT LV 3');
+    await expect(card(page, 'fuse')).toContainText('UNLOCKS AT LV 100');
   });
 
-  test('FUSE unlocked at LV3', async ({ page }) => {
-    await menu(page, 3);
+  test('FUSE unlocked at LV100', async ({ page }) => {
+    await menu(page, 100);
     await expect(card(page, 'fuse')).not.toHaveClass(/locked/);
   });
 
-  // LV1 is the floor, not 0 (progress/xp.js clamps with Math.max(1, ...)), so this is literally
-  // what a fresh player sees on their first look at the menu.
-  test('a brand-new player sees a one-and-two-level path, not a wall', async ({ page }) => {
+  // LV1 is the floor, not 0 (progress/xp.js clamps with Math.max(1, ...)).
+  test('a brand-new player sees how far each gate is', async ({ page }) => {
     await menu(page, 0); // clamped to LV1 by the store
-    await expect(card(page, 'chain')).toContainText("YOU'RE LV 1 · 1 TO GO");
-    await expect(card(page, 'fuse')).toContainText("YOU'RE LV 1 · 2 TO GO");
+    await expect(card(page, 'chain')).toContainText("YOU'RE LV 1 · 49 TO GO");
+    await expect(card(page, 'fuse')).toContainText("YOU'RE LV 1 · 99 TO GO");
   });
 });
 

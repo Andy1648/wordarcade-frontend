@@ -68,7 +68,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
 
   test('CHAIN mode dialog (unlocked)', async ({ page }) => {
     const errors = [];
-    await menu(page, errors, 30);
+    await menu(page, errors, 100);
     await card(page, 'chain').click();
     await expect(page.locator('.mode-dialog-shell')).toBeVisible();
     await page.waitForTimeout(300);
@@ -77,7 +77,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
 
   test('FUSE mode dialog (unlocked)', async ({ page }) => {
     const errors = [];
-    await menu(page, errors, 30);
+    await menu(page, errors, 100);
     await card(page, 'fuse').click();
     await expect(page.locator('.mode-dialog-shell')).toBeVisible();
     await page.waitForTimeout(300);
@@ -86,7 +86,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
 
   test('CHAIN locked preview', async ({ page }) => {
     const errors = [];
-    await menu(page, errors, 1); // below the LV2 gate, unplayed → locked
+    await menu(page, errors, 1); // below the LV50 gate, unplayed → locked
     await card(page, 'chain').click({ force: true });
     await expect(page.locator('.lp-panel')).toBeVisible();
     await page.waitForTimeout(300);
@@ -95,7 +95,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
 
   test('FUSE locked preview', async ({ page }) => {
     const errors = [];
-    await menu(page, errors, 2); // below the LV3 gate, unplayed → locked
+    await menu(page, errors, 2); // below the LV100 gate, unplayed → locked
     await card(page, 'fuse').click({ force: true });
     await expect(page.locator('.lp-panel')).toBeVisible();
     await page.waitForTimeout(300);

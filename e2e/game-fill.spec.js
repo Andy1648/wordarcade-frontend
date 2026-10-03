@@ -46,7 +46,7 @@ async function enterMpGame(page, gameType) {
   await page.waitForTimeout(4600); // let the 3-2-1-GO! countdown clear
 }
 async function enterSat(page) {
-  await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
+  await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 })); } catch { /* ignore */ } });
   await installBackendMock(page);
   await page.goto('/?satRush=1&portal=1');
   await menuReady(page);
@@ -87,7 +87,7 @@ const card = (page, id) => modeEntry(page, id);
 
 async function enterSolo(page, id) {
   await page.addInitScript(() => {
-    try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ }
+    try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 })); } catch { /* ignore */ }
   });
   await installBackendMock(page);
   // Either width: the desktop card or the phone's CHAIN | FUSE half (support/menu.js).

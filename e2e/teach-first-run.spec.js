@@ -27,7 +27,7 @@ async function seedFresh(page) {
       localStorage.clear();
       // Skip the MENU spotlight only — the thing under test is the in-GAME teach.
       localStorage.setItem('taw.seenMenuSpotlight', '1');
-      localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 }));
+      localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 }));
     } catch { /* storage blocked */ }
   });
 }
