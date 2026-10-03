@@ -17,10 +17,18 @@ export const TUT_INIT_KEY = 'taw.tut.init';
  *  tutorials existed), and 1–3 steps of { title, line, target? } (target = a CSS selector to point at). */
 export const TUTORIALS = [
   {
+    // PROGRESSION v10: the ONE-TIME notice after the level-curve migration (econMigrate.js sets the flag
+    // only for a save that had progress). New to everyone, so never pre-marked as seen; first in line.
+    id: 'pv10',
+    isNew: true,
+    when: (s) => !!s.pv10Notice,
+    steps: [{ title: 'LEVELS NOW TAKE LONGER', line: 'YOU KEPT EVERY LEVEL.' }],
+  },
+  {
     id: 'marks',
     when: (s) => s.marksRevealed,
     steps: [
-      { title: 'MARKS', line: 'EARN THEM FROM HARD ACHIEVEMENTS.' },
+      { title: 'MARKS', line: 'EARN THEM FROM ACHIEVEMENTS.' },
       { title: 'WEAR ONE AS YOUR MAIN', line: 'YOUR MAIN MULTIPLIES EVERY WORD.', target: '.menu-mark, .hp-m-navbtn.is-marks' },
     ],
   },
@@ -38,7 +46,7 @@ export const TUTORIALS = [
     id: 'weekly',
     when: (s) => s.hasProfile,
     steps: [
-      { title: 'THIS WEEK', line: 'A FRESH BOARD EVERY MONDAY. EVERY WORD YOU TYPE COUNTS.' },
+      { title: 'THIS WEEK', line: 'A FRESH BOARD EVERY MONDAY. EVERY WORD YOU PLAY IN A GAME COUNTS.' },
       { title: 'YOUR RANK', line: 'TAP THE TROPHY TO SEE IT.', target: '.homepage-board-hero, .hp-m-board-hero' },
     ],
   },

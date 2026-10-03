@@ -10,6 +10,10 @@ import './wallFx.css';
 export function landSound() {
   sfx('win');
 }
+/** H2b: the whoosh as the pieces lift (Web Audio synth, honours mute). */
+export function liftSound() {
+  sfx('slash');
+}
 // The SAME pieces fly from where they were to where the new tier puts them, through a choreography
 // (QUALITY PROTOCOL: three versions, an adversarial reviewer picks). transform/opacity only, finite,
 // will-change only while it runs; the pane size is read ONCE at the start, never per frame.

@@ -11,6 +11,7 @@ import { isFrenzyActive } from '../progress/frenzy.js';
 import { isBoostActive } from '../progress/boost.js';
 import { getMyProfile } from '../leaderboard/client.js';
 import { rebirthThreshold } from '../progress/xp.js';
+import { pv10NoticePending } from '../progress/econMigrate.js';
 import { GAMES } from '../gameData.js';
 
 const BUSY = '.stats-panel, .shop-panel, .lb-body, .claims-panel, .claim-pop, .mode-dialog-shell, .mx-panel, .lp-panel, .rank-ladder, .sticker-overlay, .wall-stamp';
@@ -30,6 +31,7 @@ function snapshotFor(level, rebirths) {
     rebirthReady: level >= rebirthThreshold(rebirths),
     chainLevel: lvOf('chain'),
     fuseLevel: lvOf('fuse'),
+    pv10Notice: pv10NoticePending(),
   };
 }
 

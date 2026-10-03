@@ -9,11 +9,11 @@
 // stores only its SHA-256 and every write goes through a SECURITY DEFINER function that checks it
 // (supabase/migrations/001_leaderboard.sql). Lose the secret (clear storage) and the name stays on
 // the board, owned by nobody — exactly what a guest handle should do.
-import { getRebirths } from '../progress/xp.js';
+import { getRebirths, storedLevel } from '../progress/xp.js';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
-import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY } from '../save/cloudSave.js';
+import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
 import { queueClaim } from '../progress/claims.js';
 
@@ -119,10 +119,11 @@ function saveMyProfile(p) {
 }
 
 // ---- what the board shows about me -----------------------------------------------------------
+// PV10: the AUTHORITATIVE level (xp.js resolves the v10 shape, converts a legacy one, and ignores a
+// stale old-bundle write) — never a raw read of taw.xp.lv.
 function readLevel() {
   try {
-    const raw = JSON.parse(localStorage.getItem('taw.xp') || '{}');
-    return Math.max(1, Math.floor(Number(raw.lv) || 1));
+    return Math.max(1, Math.floor(storedLevel() || 1));
   } catch {
     return 1;
   }
@@ -147,8 +148,9 @@ export function boardCaps() {
   if (!LEADERBOARD_ENABLED) return Promise.resolve({ letters: false, cjk: false });
   if (!capsPromise) {
     capsPromise = rpc('lb_caps', {})
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud), weekly: !!(c && c.weekly) }))
-      .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false }));
+      // econ: 016_econ_v10.sql — the version-gated lb_submit3 / lb_save2 / lb_load2 exist (PV10)
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud), weekly: !!(c && c.weekly), econ: Number(c && c.econ) >= ECON_RPC_VERSION }))
+      .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: false }));
   }
   return capsPromise;
 }
@@ -189,7 +191,18 @@ export async function submitStats(force = false) {
   const s = myStats();
   try {
     const caps = await boardCaps();
-    if (caps.letters) {
+    if (caps.econ) {
+      // PV10 (016): the version-gated submit — the old lb_submit2 / lb_submit are no-ops once 016 runs.
+      await rpc('lb_submit3', {
+        p_secret: getSecret(),
+        p_level: s.level,
+        p_rebirths: s.rebirths,
+        p_lifetime_words: s.lifetimeWords,
+        p_lifetime_letters: s.lifetimeLetters,
+        p_wins_per_word: s.winsPerWord,
+        p_econ: ECON_RPC_VERSION,
+      });
+    } else if (caps.letters) {
       await rpc('lb_submit2', {
         p_secret: getSecret(),
         p_level: s.level,
@@ -208,7 +221,7 @@ export async function submitStats(force = false) {
       });
     }
     // STEP 52: the cloud save rides the same push (throttled to once a minute; never lowers).
-    if (caps.cloud) backupNow({ rpc, secret: getSecret() });
+    if (caps.cloud) backupNow({ rpc, secret: getSecret(), econ: caps.econ });
     return true;
   } catch {
     return false;
@@ -226,7 +239,7 @@ export async function restoreFromCloud({ restore = true } = {}) {
   if (!secret) return { restored: false };
   const caps = await boardCaps();
   if (!caps.cloud) return { restored: false };
-  const r = await restoreIfAhead({ rpc, secret, restore });
+  const r = await restoreIfAhead({ rpc, secret, restore, econ: caps.econ });
   if (r.id && r.username && !getMyProfile()) saveMyProfile({ id: r.id, username: r.username });
   if (r.resetAll) return obeyDevReset(secret);
   return r;
@@ -310,7 +323,7 @@ export async function adoptRecoveryCode(code) {
   if (!caps.cloud) return { ok: false, error: 'unavailable' };
   let loaded;
   try {
-    loaded = await rpc('lb_load', { p_secret: secret });
+    loaded = caps.econ ? await rpc('lb_load2', { p_secret: secret, p_econ: ECON_RPC_VERSION }) : await rpc('lb_load', { p_secret: secret });
   } catch {
     return { ok: false, error: 'unknown_code' };
   }
@@ -321,7 +334,7 @@ export async function adoptRecoveryCode(code) {
   }
   writeSecretCookie(secret);
   if (loaded && loaded.id) saveMyProfile({ id: loaded.id, username: loaded.username });
-  const r = await restoreIfAhead({ rpc, secret });
+  const r = await restoreIfAhead({ rpc, secret, econ: caps.econ });
   return { ok: true, restored: r.restored, username: loaded && loaded.username };
 }
 
@@ -495,6 +508,34 @@ export async function fetchMyRank() {
 
 const LAST_RANK_KEY = 'taw.lb.lastRank';
 const RANK_NEWS_KEY = 'taw.lb.rankNews';
+// H2a: where an UNSEEN rise started. The menu's checkRankUp moves lastRank to the new rank, so by the
+// time the board opens lastRank already equals it — this keeps the "from" for the board's ▲N slide.
+// Held until the board has LOADED (the oldest unseen rank wins, so two rises read as one bigger one).
+// It is independent of the trophy's news flag: the menu clears that flag the moment the trophy is
+// tapped, before the board has read anything, so the board must not depend on it.
+const RANK_FROM_KEY = 'taw.lb.rankFrom';
+// Bumped every time the board is opened. A checkRankUp that STARTED before an open must not write
+// when it lands after it — or a stale result would re-raise the news / rankFrom the board just
+// consumed, and the next open would replay the same ▲N.
+let boardSeenEpoch = 0;
+export function markBoardSeen() { boardSeenEpoch += 1; }
+export function getBoardSeenEpoch() { return boardSeenEpoch; }
+export function getRankFrom() {
+  try { const n = Number(localStorage.getItem(RANK_FROM_KEY)); return Number.isFinite(n) && n > 0 ? n : null; } catch { return null; }
+}
+export function clearRankFrom() {
+  try { localStorage.removeItem(RANK_FROM_KEY); } catch { /* ignore */ }
+}
+/**
+ * The board's rank move since it was last opened: { from, to } when `now` is better than the rank the
+ * player last SAW (the pending rankFrom, else lastRank), else null. Pure read — the caller stores.
+ */
+export function rankMoveSinceSeen(now) {
+  const to = Number(now);
+  if (!Number.isFinite(to) || to <= 0) return null;
+  const from = getRankFrom() || getLastRank();
+  return from && to < from ? { from, to } : null;
+}
 export function getLastRank() {
   try { const n = Number(localStorage.getItem(LAST_RANK_KEY)); return Number.isFinite(n) && n > 0 ? n : null; } catch { return null; }
 }
@@ -513,12 +554,20 @@ export function setRankNews(on) {
  * { from, to } when it IMPROVED (and raises the trophy-badge flag), else null. Stores the new rank
  * either way, so a drop never shows a moment and the next rise is measured from the truth.
  */
-export async function checkRankUp() {
+export async function checkRankUp(epoch = boardSeenEpoch) {
   const now = await fetchMyRank();
   if (!now) return null;
+  // the board was opened since this check began: it already took the baseline; this result is stale
+  if (epoch !== boardSeenEpoch) return null;
+  return applyRankCheck(now);
+}
+
+/** The storage half of checkRankUp, given the live rank (exported for the unit test). */
+export function applyRankCheck(now) {
   const before = getLastRank();
   setLastRank(now);
   if (before && now < before) {
+    try { if (!getRankFrom()) localStorage.setItem(RANK_FROM_KEY, String(before)); } catch { /* ignore */ }
     setRankNews(true);
     return { from: before, to: now };
   }

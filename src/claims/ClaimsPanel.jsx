@@ -6,18 +6,11 @@ import { useEffect, useRef, useState } from 'react';
 import { claim, claimAll, claimAmount, CLAIM_KINDS } from '../progress/claims.js';
 import { useClaims } from './useClaims.js';
 import { formatNum } from '../format.js';
+import { KIND_COLOUR } from './kindColour.js';
 import './ClaimsPanel.css';
 
-export const KIND_COLOUR = {
-  achievement: '#FFE94A',
-  collection: '#2EFFE0',
-  welcome: '#2EFFE0',
-  rank: '#FF4FA3',
-  mark: '#C58BFF',
-  layer: '#FF6B3D',
-  code: '#FFE94A',
-  boost: '#FFE94A',
-};
+export { KIND_COLOUR };
+
 
 export default function ClaimsPanel({ onClose, onReveal, onStats }) {
   const list = useClaims();

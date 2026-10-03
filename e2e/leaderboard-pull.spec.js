@@ -100,7 +100,7 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
 
   // 4. I level past LexiLoop's LV40 (the board ranks by LEVEL only — Andy oct2 evening) — the next
   //    menu visit pushes it and shows the rank-up.
-  await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 41, into: 0 })));
+  await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 41, f: 0, rc: Number(localStorage.getItem('taw.rebirths')) || 0, v: 10 })));
   await page.goto('/?portal=1');
   await menuReady(page);
   const moment = page.locator('.lb-rankup');
@@ -117,6 +117,8 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   // 5. Opening the board reads the news.
   await trophy.click();
   await expect(page.locator('.lb-row.is-me')).toHaveAttribute('data-rank', '3');
+  // H2a: the board shows the climb the menu announced (#4 → #3), through the real menu path
+  await expect(page.locator('.lb-row.is-me .lb-move')).toHaveText('▲1');
   await page.locator('.lb-close').click();
   // N3: the board icon wears your rank (#N); once seen, the 'rank went up' news is gone
   await expect(page.getByRole('button', { name: /Open leaderboard/ })).toHaveAttribute('aria-label', /^Open leaderboard — you're #\d+$/);

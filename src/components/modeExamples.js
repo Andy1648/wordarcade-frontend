@@ -21,7 +21,8 @@ export const MODE_ROUND_LENGTH = {
   'word-bomb': 'TURN-BASED',
   'category-blitz': '~60 SECONDS',
   chain: 'SURVIVAL · 1 LIFE',
-  fuse: 'SURVIVAL · 3 LIVES',
+  // H6: FUSE starts on 2 lives (fuse.js FUSE_START_LIVES) and can earn back up to 3 (FUSE_MAX_LIVES).
+  fuse: 'SURVIVAL · 2 LIVES (UP TO 3)',
   'word-race': 'FIRST TO 25 · 1:00 CAP',
   'sat-rush': 'SURVIVAL',
 };
