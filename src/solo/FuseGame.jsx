@@ -20,7 +20,9 @@ import { noteWord } from '../progress/records.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
-import { pickEffect, tagLabel } from '../juice/effectSlot.js';
+import { soloWordSlot } from '../juice/effectSlot.js';
+import { tierCrossed } from '../juice/ladder.js';
+import { useLatched } from '../components/FeelLadder.jsx';
 import { useQueuedMoment } from '../lib/useQueuedMoment.js';
 import { GAME_PRIORITY } from '../lib/moments.js';
 import { touchStreak } from '../progress/streak.js';
@@ -362,16 +364,23 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
 
   // THE LIGHT SLOT for the word just solved (juice/effectSlot.js): CLUTCH > LUCKY > RARE > TIER-UP.
   // One plays; the rest are said as a small tag. Everything here is THIS word's (the clock left at
-  // its accept, its lucky factor, its rarity), and every effect below is keyed by the word count.
+  // its accept, its lucky factor, its rarity, whether it crossed a combo tier), LATCHED per word so a
+  // later change (a reject, a timeout) can never mount a word's effect late.
   const fuseRarity = s.wordsSolved > 0 ? rarityOf(s.lastWord) : null;
-  const fuseClutch = s.wordsSolved > 0 && isClutch(g.lastLeftMsRef ? g.lastLeftMsRef.current : null);
-  const fuseLucky = s.wordsSolved > 0 && g.luckyMult > 1;
-  const fuseSlot = pickEffect({ clutch: fuseClutch, lucky: fuseLucky, rare: !!(fuseRarity && fuseRarity.announce) });
-  const fuseTags = fuseSlot.tags.map((k) => tagLabel(k, { luckyMult: g.luckyMult, band: fuseRarity && fuseRarity.band }));
+  const fuseSlot = useLatched(s.wordsSolved, () =>
+    s.wordsSolved > 0
+      ? soloWordSlot({
+          clutch: isClutch(g.lastLeftMsRef ? g.lastLeftMsRef.current : null),
+          luckyMult: g.luckyMult,
+          rarity: fuseRarity,
+          tierUp: tierCrossed(g.combo.streak - 1, g.combo.streak),
+        })
+      : { main: 'hype', tags: [], showRarity: false, labels: [] }
+  );
 
   return (
     <>
-    {fuseSlot.main === 'rare' && <RarityFlash key={s.wordsSolved} rarity={fuseRarity} />}
+    {fuseSlot.showRarity && <RarityFlash key={s.wordsSolved} rarity={fuseRarity} />}
     {burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={endBurst} />}
     {clutch && <ClutchBurst key={clutch.key} leftMs={clutch.leftMs} bonus={clutch.bonus} onDone={endClutch} />}
     <SoloShell
@@ -405,7 +414,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       comboStreak={g.combo.streak}
       luckyKey={g.luckyKey}
       slotMain={fuseSlot.main}
-      slotTags={fuseTags}
+      slotTags={fuseSlot.labels}
       slotKey={s.wordsSolved}
       over={{
         score: s.wordsSolved,

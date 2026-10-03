@@ -29,7 +29,8 @@
 
 /* While the slam owns the slot, the slot's per-word hype word steps aside (one thing at a time).
    A static toggle, not an animation. */
-[data-slam] > .hype-popup { opacity: 0; }
+[data-slam] > .hype-popup,
+[data-slam] > .wl { opacity: 0; }
 
 /* ---- HYPE SIZE BY TIER. T0–T1 keep the slot's --fs-panel (GameScreen.css); T2–T3 step to
    --fs-h2 and T4 to --fs-h1. JUDGMENT CALL vs the spec table (h2/h2/h1/h1/hero): one step down at

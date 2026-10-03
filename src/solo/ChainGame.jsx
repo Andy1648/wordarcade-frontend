@@ -22,7 +22,9 @@ import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
-import { pickEffect, tagLabel } from '../juice/effectSlot.js';
+import { soloWordSlot } from '../juice/effectSlot.js';
+import { tierCrossed } from '../juice/ladder.js';
+import { useLatched } from '../components/FeelLadder.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 
@@ -361,13 +363,21 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // warning survives, and only when it applies (see `supply` below).
   const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
   // THE LIGHT SLOT for the word just linked (juice/effectSlot.js): LUCKY > RARE > TIER-UP (CHAIN has
-  // no clutch). One plays; the rest are said as a small tag. Keyed by the link count.
+  // no clutch). One plays; the rest are said as a small tag. LATCHED per link count so a later
+  // change (a reject, a timeout) can never mount a word's effect late.
   const chainRarity = chainLastWord ? rarityOf(chainLastWord) : null;
-  const chainSlot = pickEffect({ lucky: s.k > 0 && g.luckyMult > 1, rare: !!(chainRarity && chainRarity.announce) });
-  const chainTags = chainSlot.tags.map((k) => tagLabel(k, { luckyMult: g.luckyMult, band: chainRarity && chainRarity.band }));
+  const chainSlot = useLatched(s.k, () =>
+    s.k > 0
+      ? soloWordSlot({
+          luckyMult: g.luckyMult,
+          rarity: chainRarity,
+          tierUp: tierCrossed(g.combo.streak - 1, g.combo.streak),
+        })
+      : { main: 'hype', tags: [], showRarity: false, labels: [] }
+  );
   return (
     <>
-    {chainSlot.main === 'rare' && <RarityFlash key={s.k} rarity={chainRarity} />}
+    {chainSlot.showRarity && <RarityFlash key={s.k} rarity={chainRarity} />}
     <SoloShell
       mode="chain"
       accent={ACCENT}
@@ -410,7 +420,7 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
       comboStreak={g.combo.streak}
       luckyKey={g.luckyKey}
       slotMain={chainSlot.main}
-      slotTags={chainTags}
+      slotTags={chainSlot.labels}
       slotKey={s.k}
       over={{
         score: s.score,

@@ -30,7 +30,7 @@ import { useCachedCenter } from '../juice/useCachedCenter';
 import { reduced as reducedMotion } from '../juice/settings';
 import { heatTier, ladderFor, particleCount, PUNCH_MS } from '../juice/ladder';
 import { pickEffect, tagLabel } from '../juice/effectSlot';
-import { TierSlam, LuckyBurst, SlotTags } from './FeelLadder';
+import { TierSlam, LuckyBurst, SlotTags, useLatched } from './FeelLadder';
 import { LUCKY_WINS_MULT } from '../progress/luck';
 import { useQueuedMoment } from '../lib/useQueuedMoment';
 import { GAME_PRIORITY } from '../lib/moments';
@@ -272,12 +272,22 @@ function HypePopup({ tier = 0 }) {
  */
 function wordSlot(landing, clutch) {
   const L = landing;
-  const rare = !!(L && hasLanding(L.band, L.secret));
+  // RARE slot = RARE / OBSCURE / a secret. An UNCOMMON landing is the quiet rung: it stands in for
+  // the hype word (as it always has) but does not outrank a tier slam.
+  const rare = !!(L && (L.secret || L.band === 'RARE' || L.band === 'OBSCURE'));
+  const landingShown = !!(L && hasLanding(L.band, L.secret));
   const raw = L ? L.lucky : 0;
   const luckyMult = raw === true ? LUCKY_WINS_MULT : Number(raw) > 1 ? Number(raw) : 0;
   const slot = pickEffect({ clutch: !!clutch, lucky: luckyMult > 0, rare });
   const band = L ? (L.secret && L.secret.stamp) || L.band : '';
-  return { ...slot, luckyMult, labels: slot.tags.map((k) => tagLabel(k, { luckyMult, band })) };
+  return {
+    ...slot,
+    luckyMult,
+    // the word's own landing chip: the RARE slot's effect, or the UNCOMMON stand-in for the hype
+    showLanding: landingShown && (slot.main === 'rare' || slot.main === 'hype'),
+    showHype: slot.main === 'hype' && !landingShown,
+    labels: slot.tags.map((k) => tagLabel(k, { luckyMult, band })),
+  };
 }
 
 /**
@@ -2131,13 +2141,14 @@ export default function GameScreen({
   // flyKey/flyText drive the word thrown toward the bomb on each submit;
   // shatterKey/shatterText drive the rejected word bouncing back and shattering;
   // bombReaction is the one-shot 'recoil' (accepted) / 'reject' class on the bomb;
-  // clutchFlag swaps the hype popup for CLUTCH! when the accept beat the buzzer.
+  // The clutch flag is still SET by the result effect (unchanged), but the hype/CLUTCH! choice now
+  // reads the latched light slot (wbSlot) and the queued clutch moment instead of this value.
   const [flyKey, setFlyKey] = useState(0);
   const [flyText, setFlyText] = useState('');
   const [shatterKey, setShatterKey] = useState(0);
   const [shatterText, setShatterText] = useState('');
   const [bombReaction, setBombReaction] = useState(null);
-  const [clutchFlag, setClutchFlag] = useState(false);
+  const [, setClutchFlag] = useState(false);
   // A buzzer-beater accept also fires a triumphant slow-mo beat + colour-pop
   // (clutchSlow drives both, auto-cleared after the ~700ms beat), and every
   // accepted word gives the prompt box a quick scale-punch (comboPunch re-keys
@@ -2203,8 +2214,16 @@ export default function GameScreen({
   comboRef.current = streak.count; // keep the accept-time combo read fresh
   // The light-slot decision for the word that just landed (clutch / lucky / rare). The landing is
   // App's per-word record of MY accepted word; it arrives in the same render as its word_result.
+  // The decision is LATCHED per landing (useLatched) so a later state change (a reject clearing the
+  // clutch flag) can never mount a word's effect late. Clutch is read the same way the result effect
+  // reads it (the clock snapshot taken at OUR submit), because that effect runs after this render.
   const wbLanding = lastLanding && !gameOver ? lastLanding : null;
-  const wbSlot = wordSlot(wbLanding, clutchFlag && hypeKey > 0);
+  const wbSlot = useLatched(wbLanding ? wbLanding.key : null, () =>
+    wordSlot(
+      wbLanding,
+      !!(lastWordResult && lastWordResult.accepted) && submitTimerRef.current > 0 && submitTimerRef.current <= 1
+    )
+  );
   const comboAwaitRef = useRef(false);
   // Near-miss / clutch callout (presentational): set from the EXISTING remaining
   // time captured at submit when our own accept lands late. { key, seconds, tier }.
@@ -3829,12 +3848,12 @@ export default function GameScreen({
                   1280x720 board has, and the hype ended up painted through the used-word strip.
                   THE LIGHT SLOT (juice/effectSlot.js): CLUTCH > LUCKY > RARE > TIER-UP > HYPE —
                   the winner plays, every loser is said as a small tag under the word. */}
-              {hypeKey > 0 && !hitlag && !gameOver && wbSlot.main === 'hype'
+              {hypeKey > 0 && !hitlag && !gameOver && wbSlot.showHype
                 && <HypePopup key={hypeKey} tier={heatTier(streak.count + 1)} />}
               {wbLanding && wbSlot.main === 'lucky' && (
                 <LuckyBurst key={`lucky-${wbLanding.key}`} mult={wbSlot.luckyMult} />
               )}
-              {wbLanding && wbSlot.main === 'rare' && (
+              {wbLanding && wbSlot.showLanding && (
                 <WordLanding
                   key={wbLanding.key}
                   word={wbLanding.word}
@@ -4658,7 +4677,7 @@ function CategoryBlitzScreen({
   // The light slot for the answer that just landed (no clutch slot in Blitz: its near-miss stays
   // the ClutchCallout by the field).
   const cbLanding = lastLanding && !gameOver ? lastLanding : null;
-  const cbSlot = wordSlot(cbLanding, false);
+  const cbSlot = useLatched(cbLanding ? cbLanding.key : null, () => wordSlot(cbLanding, false));
 
   function submit() {
     const answer = draft.trim();
@@ -5101,12 +5120,12 @@ function CategoryBlitzScreen({
             {/* ONE REACTION SLOT — see the Word Bomb note. */}
             <div className="wb-react" ref={cbReactRef} aria-hidden="true">
               {/* ONE reaction per word — see the Word Bomb note (and its LIGHT SLOT). */}
-              {hypeKey > 0 && !gameOver && cbSlot.main === 'hype'
+              {hypeKey > 0 && !gameOver && cbSlot.showHype
                 && <HypePopup key={hypeKey} tier={heatTier(streak.count)} />}
               {cbLanding && cbSlot.main === 'lucky' && (
                 <LuckyBurst key={`lucky-${cbLanding.key}`} mult={cbSlot.luckyMult} />
               )}
-              {cbLanding && cbSlot.main === 'rare' && (
+              {cbLanding && cbSlot.showLanding && (
                 <WordLanding
                   key={cbLanding.key}
                   word={cbLanding.word}

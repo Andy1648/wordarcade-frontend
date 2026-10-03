@@ -418,7 +418,7 @@ export default function SoloShell({
           LV chip. pointer-events:none, finite, over the hero — never over the input. */}
       {phase === 'playing' && (
         <div className="solo-feel" aria-hidden="true">
-          <TierSlam count={comboStreak} outranked={slotMain !== 'hype'} />
+          <TierSlam count={comboStreak} outranked={slotMain === 'clutch' || slotMain === 'lucky' || slotMain === 'rare'} />
           {slotTags && slotTags.length > 0 && <SlotTags key={`tags-${slotKey}`} labels={slotTags} />}
           {shatter && (
             <div className="solo-shatter">

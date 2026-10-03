@@ -2,7 +2,37 @@
 // and a losing effect degrades to a tag instead of vanishing (juice/effectSlot.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SLOT_PRIORITY, pickEffect, isOutranked, tagLabel } from './effectSlot.js';
+import { SLOT_PRIORITY, pickEffect, isOutranked, tagLabel, soloWordSlot } from './effectSlot.js';
+
+test('solo: an UNCOMMON word stands in for the hype word but never outranks a tier-up', () => {
+  const unc = { band: 'UNCOMMON', announce: true };
+  assert.deepEqual(
+    { main: soloWordSlot({ rarity: unc }).main, show: soloWordSlot({ rarity: unc }).showRarity },
+    { main: 'hype', show: true }
+  );
+  const withTier = soloWordSlot({ rarity: unc, tierUp: 2 });
+  assert.equal(withTier.main, 'tier');
+  assert.equal(withTier.showRarity, false, 'the slam owns the word; the UNCOMMON pop steps aside');
+});
+
+test('solo: RARE outranks the tier slam; the tier says itself (not repeated in labels)', () => {
+  const r = soloWordSlot({ rarity: { band: 'RARE', announce: true }, tierUp: 3 });
+  assert.equal(r.main, 'rare');
+  assert.equal(r.showRarity, true);
+  assert.deepEqual(r.labels, []);
+});
+
+test('solo: clutch + lucky + obscure: clutch plays, LUCKY ×5 and OBSCURE are tags, no rarity pop', () => {
+  const r = soloWordSlot({ clutch: true, luckyMult: 5, rarity: { band: 'OBSCURE', announce: true } });
+  assert.equal(r.main, 'clutch');
+  assert.equal(r.showRarity, false);
+  assert.deepEqual(r.labels, ['LUCKY ×5', 'OBSCURE']);
+});
+
+test('solo: a COMMON, unlucky, no-tier word is plain hype with nothing extra', () => {
+  const r = soloWordSlot({ rarity: { band: 'COMMON', announce: false } });
+  assert.deepEqual({ main: r.main, showRarity: r.showRarity, labels: r.labels }, { main: 'hype', showRarity: false, labels: [] });
+});
 
 test('priority order is clutch > lucky > rare > tier > hype', () => {
   assert.deepEqual([...SLOT_PRIORITY], ['clutch', 'lucky', 'rare', 'tier', 'hype']);

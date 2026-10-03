@@ -23,6 +23,18 @@ import './FeelLadder.css';
 
 const TAG_MS = 1200;
 
+/**
+ * Compute a value ONCE per `key` and hold it until the key changes. The light-slot decision is made
+ * for a word when it lands and must not be re-made by later, unrelated state changes (a reject
+ * clearing a flag, a combo break) — that would mount a word's effect late. Pure ref bookkeeping, no
+ * effects, no layout.
+ */
+export function useLatched(key, compute) {
+  const ref = useRef(null);
+  if (!ref.current || ref.current.key !== key) ref.current = { key, value: compute() };
+  return ref.current.value;
+}
+
 function playOn(node, frames, duration, onEnd) {
   if (!node || typeof node.animate !== 'function') return null;
   if (typeof node.getAnimations === 'function') node.getAnimations().forEach((a) => a.cancel());
