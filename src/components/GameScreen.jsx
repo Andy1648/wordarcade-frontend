@@ -1,5 +1,6 @@
 // GameScreen.jsx
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { lazyWithReload } from '../lib/chunkReload';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
 import KoHero from './KoHero';
@@ -36,6 +37,9 @@ import { difficultyLabel } from '../difficulty';
 import { plural } from '../format';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
+
+// H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
+const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
 
 // Haptic feedback on phones (no-op / absent on desktop). Always guarded so a
 // missing Vibration API can never throw.
@@ -1704,6 +1708,7 @@ export default function GameScreen({
   winsBonusLines = [],
   lastPayout = null,
   payoutLedger = null,
+  winnerPay = null,
   lastLanding = null,
 }) {
   const draftStoreRef = useRef(null);
@@ -2853,6 +2858,7 @@ export default function GameScreen({
         winsBonusLines={winsBonusLines}
         lastPayout={lastPayout}
         payoutLedger={payoutLedger}
+        winnerPay={winnerPay}
         lastLanding={lastLanding}
       />
     );
@@ -3958,6 +3964,12 @@ export default function GameScreen({
           {iWon && <WinBurst />}
           {!iWon && <div className="go-slam-flash" />}
           {!iWon && <LossImpact />}
+          {/* H4: the WINNER popup — a pointer-events:none layer this overlay owns (no new fixed UI). */}
+          {iWon && winnerPay && (
+            <Suspense fallback={null}>
+              <WinnerPopup key={gameNonce} pay={winnerPay} />
+            </Suspense>
+          )}
           <div ref={goCardRef} className={`game-over-card ${iWon ? 'go-card-win' : 'go-card-loss'}`}>
             {/* ===== COLUMNS ON A LAPTOP, ONE STACK ON A PHONE =========================
                 Measured on a live round: this card was scrollHeight 1388 inside
@@ -4418,6 +4430,7 @@ function CategoryBlitzScreen({
   winsBonusLines = [],
   lastPayout = null,
   payoutLedger = null,
+  winnerPay = null,
   lastLanding = null,
 }) {
   // PAUSE TO LEARN (Blitz). This screen is its OWN component — the main GameScreen's missed-word
@@ -4708,6 +4721,11 @@ function CategoryBlitzScreen({
         {audioSlot ? <div className="game-audio-dock">{audioSlot}</div> : null}
         <div className="game-over-overlay">
           {iWon && <ConfettiEffect />}
+          {iWon && winnerPay && (
+            <Suspense fallback={null}>
+              <WinnerPopup pay={winnerPay} />
+            </Suspense>
+          )}
           <div className="game-over-card">
             {/* The mascot's emotional reaction, large and centred above the title. */}
             <Mascot

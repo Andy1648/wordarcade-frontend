@@ -1,6 +1,8 @@
 // winner-bonus.spec.js — O12 (Andy oct2: cards show the end-of-round bonuses): WINNING a Word Bomb
 // game pays +50% of what the game's words earned, as its own WINNER BONUS row on the round
-// receipt AND a named line on WINS EARNED; losing pays none. The card advertises it (WIN +50%).
+// receipt AND a named line on WINS EARNED; losing pays none.
+// H4 (oct3): +50% is now Word Bomb's FALLBACK — the rival here never plays a word, so the big match
+// bonus (payout.js winnerPayout, card "WIN → YOUR GAME ×7") is gated off and today's +50% still pays.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';

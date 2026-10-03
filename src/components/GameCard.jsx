@@ -6,7 +6,7 @@ import { perWordRateNow } from '../progress/wins';
 import { modePower } from '../progress/xp';
 import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
-import { WINNER_BONUS } from '../progress/payout';
+import { winnerMatchMult } from '../progress/payout';
 import { formatRate, formatMultExact } from '../format';
 import './GameCard.css';
 
@@ -284,17 +284,23 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // span that drops WHOLE on a narrow card (GameCard.css), so a narrow card keeps the perk head.
   const power = modePower(game.id);
   const isFuse = game.id === 'fuse';
+  // H4 (Andy oct3): the MULTIPLAYER modes' perk is the match win — a won game pays ×N of itself
+  // (payout.js WINNER_MATCH, the one source). It outranks RACE's POWER ×1.5 on the card; the mode
+  // dialog (ModeExample) still names both.
+  const winMult = winnerMatchMult(game.id);
   const perkHead = isFuse
     ? (frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `ALL LETTERS → FRENZY ×${FRENZY_MULT}`)
+    : winMult > 1 ? `WIN → YOUR GAME ×${formatMultExact(winMult)}`
     : power > 1 ? `POWER ×${formatMultExact(power)}`
-    : game.id === 'word-bomb' ? `WIN +${Math.round(WINNER_BONUS * 100)}%` // O12: the end-of-game bonus
     : null;
   const xpLine = rateNow && (
     perkHead ? (
       <>
         <span className={`game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}>
           {/* FUSE's head may wrap before "FRENZY ×5" (the breakable span the fit-math discounts) */}
-          {isFuse && !frenzy.active ? <>ALL LETTERS →<span className="game-card-payout-per"> FRENZY ×{FRENZY_MULT}</span></> : perkHead}
+          {isFuse && !frenzy.active ? <>ALL LETTERS →<span className="game-card-payout-per"> FRENZY ×{FRENZY_MULT}</span></>
+            : winMult > 1 ? <>WIN →<span className="game-card-payout-per"> YOUR GAME ×{formatMultExact(winMult)}</span></>
+            : perkHead}
         </span>
         {/* R10: a live BOOST multiplies FRENZY — the FUSE card says how they stack */}
         {/* E3 (Andy oct2 evening): TWO rules, TWO lines — "FRENZY ×5 · LONGER = MORE" read as one rule.
