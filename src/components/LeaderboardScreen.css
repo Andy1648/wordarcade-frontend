@@ -764,3 +764,12 @@
 .lb-overlay .lb-row.is-me.is-top1,
 .lb-overlay .lb-row.is-me.is-top2,
 .lb-overlay .lb-row.is-me.is-top3 { border-color: #FF4FA3; }
+
+/* PHONES: the one corner sound button (AudioControls, fixed bottom-right) sat on the board's last row and
+   the pin strip. The panel stops above it instead (it is centred, so the margin lifts it clear). */
+@media (max-width: 600px) {
+  .lb-panel {
+    max-height: calc(100dvh - 100px);
+    margin-bottom: 60px;
+  }
+}
