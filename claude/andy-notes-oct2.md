@@ -113,6 +113,9 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] Report PV10 hours to CHAIN LV50 / FUSE LV100 per skill at the top of this file — DONE (table at the top). Andy 11:26: FUSE stays LV100.
 - [ ] PRIORITY (Andy 11:26: "sees nothing new on typeaword.com yet"): get #153, then feat/pv10, then feat/mark-rolls-ui through review/CI and MERGED, one at a time, and post each one's live verification (bundle marker grep) here.
   - #153 MERGED 11:32, LIVE 11:35 (gold trophy + split board, big-monitor games, 36 confusion fixes, redeem/BOOST animations, 015 SQL file).
+  - #157 (WB/Blitz live pill, Tier 1) MERGED 13:10 (main addfe9f) after CI green on main HEAD.
+  - #156 (mark rolls DORMANT + podium icon) MERGED 14:10 (main ef4b430). PROCESS SLIP: merged on a base one commit behind main (#157) — main's own CI + E2E on the merge commit then came back GREEN. **LIVE 14:11** (taw.rollsOn + data-bump-peak-ms in index-CO5E3tgt.js).
+  - #159 + #160 batched into #158 (one CI run, no merge cascade); #158 on CI.
   - feat/pv10 → PR #154 opened 11:36; CI red once on the payload ratchet (+1.5 KB) → mode dialog now loads on demand, warmed on first pointer/focus (−20 KB); CI 6/6 green → **MERGED 12:08 (main f5c2510)**. **LIVE 12:09** (taw.xpv10 in index-OrbVPr3l.js; 'LEVELS NOW TAKE LONGER' in TutorialHost-CAvL4aUA.js). 016 → top of ANDY TODO as RUN NOW.
 
 ## ANDY oct3 11:42 — LEADERBOARD ICON REDESIGN (added)
