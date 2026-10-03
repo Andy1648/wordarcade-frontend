@@ -111,6 +111,17 @@ const WPM = await imp('progress/wpm.js');
 const WC = await imp('wordCount.js');
 const FMT = await imp('format.js');
 const GAMEDATA = await imp('gameData.js');
+// MARK ROLLS (claude/econ-oct2/marks-spec.md). Present only in trees that ship progress/markRolls.js,
+// so compare.sh BEFORE (no engine) vs AFTER (engine) measures the rolls as a player would use them.
+//   SIM_ROLLS=0        never roll (engine present but unused - the payout hook is then exactly x1)
+//   SIM_ROLL_SHARE=0.2 share of every wins credit the bot earmarks for rolls (the rest: the normal shop)
+//   SIM_SPEC_CUT=1     also apply the spec's achievement CUTS (keep only ACHIEVEMENT_PLAN 'keep')
+const MR = fs.existsSync(path.join(SRC, 'progress', 'markRolls.js')) && process.env.SIM_ROLLS !== '0' ? await imp('progress/markRolls.js') : null;
+const ROLL_SHARE = Number(process.env.SIM_ROLL_SHARE ?? 0.2);
+if (MR && process.env.SIM_SPEC_CUT === '1') {
+  const keep = new Set(MR.KEPT_ACHIEVEMENTS);
+  for (let i = ACH.ACHIEVEMENTS.length - 1; i >= 0; i--) if (!keep.has(ACH.ACHIEVEMENTS[i].id)) ACH.ACHIEVEMENTS.splice(i, 1);
+}
 
 // ----------------------------------------------------------------------------- WORDS
 const recall = fs.readFileSync(path.join(SRC, 'solo', 'words.recall.txt'), 'utf8').split(' ').filter(Boolean);
@@ -229,8 +240,15 @@ function simulate(skill) {
     return s + sh * r.rate / ((f.frenzy || 1) * (f.boost || 1));
   }, 0);
   let refSum = 0;
+  // ---- MARK ROLLS state (only when MR)
+  const rollRng = LUCK.mulberry32(77 + skill.wpm * 131 + (Number(process.env.SIM_SEED) || 0) * 7717);
+  let purse = 0;
+  const rollLog = [];
+  const refWordsTrail = []; // [t, trailing income per minute in reference words at the CURRENT rate]
+  const achTimes = {};
   const sub = WINS.subscribeWins((e) => {
     winsAll += e.amount;
+    if (MR && e.amount > 0 && rollsOpen()) purse += e.amount * ROLL_SHARE;
     if (e.kind === 'word') winsWord += e.amount;
     else {
       const ref = refMix();
@@ -265,7 +283,7 @@ function simulate(skill) {
   function refRate() { return WINS.perWordRateNow({ mode: 'fuse' }); }
   function shop() {
     for (let guard = 0; guard < 5000; guard++) {
-      const bal = WINS.getWins();
+      const bal = WINS.getWins() - (MR ? Math.min(purse, WINS.getWins()) : 0);
       const kCost = XP.keyTierCost(XP.getKeyTier());
       const before = refRate().xp;
       if (bal >= kCost) {
@@ -289,6 +307,54 @@ function simulate(skill) {
       addGood('buy', `${it.kind} ${it.id}`);
     }
   }
+  function rollsOpen() {
+    return MR && (lv() >= MR.ROLL_UNLOCK_LEVEL || XP.getRebirths() > 0);
+  }
+  function oneRoll(starter) {
+    const L = lv();
+    const r0 = refMix();
+    const res = MR.rollAndSave(rollRng, { boost: BOOST.isBoostActive() });
+    // INDEX milestone lumps, priced in words at the live rate
+    if (res.milestones.length) {
+      lastLumpCtx = 'index';
+      for (const id of res.milestones) {
+        const w = MR.milestoneWins(id, MR.refWordWins());
+        if (w > 0) WINS.grantWins(w, `INDEX ${id}`, { detail: 'index' });
+      }
+      lastLumpCtx = null;
+    }
+    // Andy M6: a roll RARER than the worn MAIN auto-equips (the bot then keeps the best by value)
+    let worn = null;
+    try { worn = localStorage.getItem('taw.mark'); } catch { worn = null; }
+    if (MR.shouldAutoEquip(res.markId, worn)) {
+      const m = MR.rollMarkById(res.markId);
+      if (m.legacy) MARKS.equipMark(res.markId, ACH.loadEarned()); else MR.equipRolled(res.markId);
+    }
+    bestMark();
+    const step = refMix() / r0;
+    const g = XP.need(L + 1) / XP.need(L);
+    rollLog.push({ t: +minute.toFixed(2), level: L, rebirths: XP.getRebirths(), markId: res.markId, tier: res.tier, pity: res.pityHit, bonus: res.bonusRoll, luck: +res.luck.toFixed(3), step: +step.toFixed(4), curveLevels: +(Math.log(step) / Math.log(g)).toFixed(2), starter: !!starter, newMark: res.newMark, goldUp: res.goldUp, rainbowUp: res.rainbowUp, copies: res.copies });
+    if (res.newMark) addGood('mark', `ROLL ${res.tier} ${res.markId}`);
+  }
+  function doRolls() {
+    if (!rollsOpen()) return;
+    const st = MR.ensureRollState();
+    if (!st.starter) {
+      // the MARKS unlock gives ONE free roll (spec section 3) - the system's own x2 moment
+      firstAt('rollsOpen', {});
+      oneRoll(true);
+      const s2 = MR.loadRollState();
+      MR.saveRollState({ ...s2, starter: true });
+    }
+    for (let guard = 0; guard < 10000; guard++) {
+      const price = MR.rollPriceNow(lv());
+      const bal = WINS.getWins();
+      if (purse < price || bal < price) return;
+      WINS.saveWins(bal - price);
+      purse -= price;
+      oneRoll(false);
+    }
+  }
   function bestMark() {
     const earned = ACH.loadEarned();
     const un = MARKS.unlockedMarks(earned);
@@ -299,15 +365,28 @@ function simulate(skill) {
       for (const [gm, share] of MODE_MIX) v += share * ((MARKS.markWinsFactors({ markId: m.id, mode: PAYOUT_KEY[gm] }).mark || 1) * MARKS.markXpMult(m.id));
       if (v > bestV) { bestV = v; best = m.id; }
     }
-    if (best && MARKS.getEquippedMark() !== best) {
-      MARKS.equipMark(best, earned);
+    // MARK ROLLS: a worn NEW rolled id pays its tier MAIN (no marks.js perk); compare like for like.
+    let rolledBest = null;
+    if (MR) {
+      const st = MR.loadRollState();
+      if (st) for (const id of Object.keys(st.marks)) {
+        const m = MR.rollMarkById(id);
+        if (!m || m.legacy) continue;
+        const v = MR.mainMultOf(id);
+        if (v > bestV) { bestV = v; best = id; rolledBest = id; }
+      }
+    }
+    let worn = null;
+    try { worn = localStorage.getItem('taw.mark'); } catch { worn = null; }
+    if (best && worn !== best) {
+      if (rolledBest === best) MR.equipRolled(best); else MARKS.equipMark(best, earned);
       firstAt('markEquipped', { mark: best });
     }
   }
   function menuReturn() {
     lastLumpCtx = 'claim';
     const newly = ACH.checkAchievements();
-    for (const a of newly) addGood('achievement', `ACH ${a.name}`);
+    for (const a of newly) { addGood('achievement', `ACH ${a.name}`); if (achTimes[a.id] == null) achTimes[a.id] = +minute.toFixed(1); }
     for (const c of CLAIMS.listClaims()) {
       if (c.kind === 'rank') addGood('rank', c.label);
       if (c.kind === 'mark') { addGood('mark', c.label); firstAt('mark', { mark: c.detail }); }
@@ -338,11 +417,16 @@ function simulate(skill) {
       const kt0 = XP.getKeyTier();
       const fb0 = FORGE.forgeBuys();
       const r0 = refRate().xp;
+      // the roll purse is not the automation's to spend: set it aside while AUTO-KEY / AUTO-FORGE run
+      const held = MR ? Math.min(purse, WINS.getWins()) : 0;
+      if (held > 0) WINS.saveWins(WINS.getWins() - held);
       const res = STARS.runAutomation({ buyKey: SHOP.buyKeyPower, buyForge: SHOP.buyForge });
+      if (held > 0) WINS.saveWins(WINS.getWins() + held);
       const step = refRate().xp / r0;
       for (let t = kt0 + 1; t <= XP.getKeyTier(); t++) { buys.push({ t: minute, kind: 'KEY', id: `T${t}`, price: XP.keyTierCostAt(t), level: lv(), rateStep: step, auto: true }); addGood('buy', `AUTO-KEY T${t}`); }
       if (FORGE.forgeBuys() > fb0) { buys.push({ t: minute, kind: 'FORGE', id: `F${fb0 + 1}..F${FORGE.forgeBuys()}`, price: 0, level: lv(), rateStep: XP.getKeyTier() > kt0 ? 1 : step, auto: true }); addGood('buy', `AUTO-FORGE ×${res.forges}`); }
     }
+    if (MR) { doRolls(); const inc0 = incomeAll(); if (inc0 != null) refWordsTrail.push([minute, inc0 / MR.refWordWins()]); }
     shop();
     // ETA sample: minutes of play to afford the next KEY / next shop item at the trailing income
     const inc = incomeAll();
@@ -579,7 +663,32 @@ function simulate(skill) {
     counts: Object.fromEntries([...new Set(good.map((g) => g.kind))].map((k) => [k, good.filter((g) => g.kind === k).length])),
     rebirthTimes: good.filter((g) => g.kind === 'rebirth').map((g) => [+g.t.toFixed(1), g.label]),
     keyTimes: keyBuys.map((b) => [+b.t.toFixed(1), b.id, b.level]),
-    firstReach, maxLevel,
+    firstReach, maxLevel, achTimes,
+    rolls: MR ? summariseRolls(rollLog, totalMin, refWordsTrail) : null,
+  };
+}
+
+// ----------------------------------------------------------------------------- ROLL SUMMARY
+function summariseRolls(log, totalMin, refTrail = []) {
+  const paid = log.filter((r) => !r.starter);
+  const perHour = [];
+  for (let h = 0; h < totalMin / 60; h++) perHour.push(paid.filter((r) => r.t >= h * 60 && r.t < (h + 1) * 60).length);
+  const first = (pred) => { const r = paid.find(pred); return r ? { t: r.t, roll: paid.indexOf(r) + 1, level: r.level, mark: r.markId, pity: r.pity } : null; };
+  const tiers = {};
+  for (const r of paid) tiers[r.tier] = (tiers[r.tier] || 0) + 1;
+  const worst = [...log].sort((a, b) => b.curveLevels - a.curveLevels);
+  const worstPaid = [...paid].sort((a, b) => b.curveLevels - a.curveLevels);
+  return {
+    refWordsPerMinByHour: perHour.map((_, h) => { const a = refTrail.filter((x) => x[0] >= h * 60 && x[0] < (h + 1) * 60).map((x) => x[1]); const s = [...a].sort((x, y) => x - y); return s.length ? +s[Math.floor(s.length / 2)].toFixed(1) : null; }),
+    paidRolls: paid.length, perHour, meanPerHour: +(paid.length / (totalMin / 60)).toFixed(1),
+    firstHour: perHour[0], tiers,
+    firstEpic: first((r) => r.tier === 'epic' || r.tier === 'legendary'), firstLegendary: first((r) => r.tier === 'legendary'),
+    pityEpic: paid.filter((r) => r.pity === 'epic').length, pityLegendary: paid.filter((r) => r.pity === 'legendary').length,
+    golds: paid.filter((r) => r.goldUp).length, rainbows: paid.filter((r) => r.rainbowUp).length,
+    starter: log.find((r) => r.starter) || null,
+    maxStepPaid: worstPaid[0] || null, overThreeLevels: paid.filter((r) => r.curveLevels > 3).length,
+    log,
+    worst: worst.slice(0, 8),
   };
 }
 
@@ -615,6 +724,8 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
     }
     console.log('  wall', JSON.stringify(r.wall));
     console.log('  reach (min)', JSON.stringify(r.firstReach), 'maxLevel', r.maxLevel);
+    console.log('  achievements (min)', JSON.stringify(r.achTimes));
+    if (r.rolls) console.log('  ROLLS', JSON.stringify({ ...r.rolls, log: undefined, worst: r.rolls.worst.slice(0, 5) }));
     console.log('  runaway FAIL lumps', r.runaway.failCount, 'of', r.runaway.lumpCount);
     console.log('  codes', JSON.stringify(r.runaway.codes));
     console.log('  runaway top lumps by minutes', JSON.stringify(r.runaway.worstByMinutes.slice(0, 6)));
