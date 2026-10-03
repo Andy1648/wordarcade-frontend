@@ -27,8 +27,6 @@ import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menu
 import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
-import LockedPreviewDialog from './LockedPreviewDialog';
-import RankLadder from './RankLadder';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
 const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
 import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
@@ -55,6 +53,9 @@ import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, mark
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
+// Overlays that only render when opened load on first open (payload ratchet; H2 batch offset).
+const LockedPreviewDialog = lazyWithReload(() => import('./LockedPreviewDialog'), 'LockedPreviewDialog');
+const RankLadder = lazyWithReload(() => import('./RankLadder'), 'RankLadder');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
@@ -1259,11 +1260,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* Locked-mode preview (level-gated CHAIN/FUSE). Read-only teaser — no play button. */}
       {lockedPreview && (
         <ScreenBoundary name="locked-preview" onBack={() => setLockedPreview(null)}>
-          <LockedPreviewDialog
-            game={lockedPreview.game}
-            level={xpProgress.level}
-            onClose={() => setLockedPreview(null)}
-          />
+          <Suspense fallback={null}>
+            <LockedPreviewDialog
+              game={lockedPreview.game}
+              level={xpProgress.level}
+              onClose={() => setLockedPreview(null)}
+            />
+          </Suspense>
         </ScreenBoundary>
       )}
 
@@ -1306,7 +1309,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* RANK LADDER overlay — all ten ranks, which you hold, which is next (fix/card-polish). */}
       {showRanks && (
         <ScreenBoundary name="rank-ladder" onBack={() => setShowRanks(false)}>
-          <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
+          <Suspense fallback={null}>
+            <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
+          </Suspense>
         </ScreenBoundary>
       )}
 
