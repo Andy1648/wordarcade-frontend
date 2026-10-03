@@ -66,5 +66,7 @@ test('THIS WEEK: only this week’s typers, most words first; my first submit is
   const me = page.locator('.lb-row--week.is-me');
   await expect(me).toHaveAttribute('data-rank', '2');
   await expect(me.locator('.lb-week-words')).toHaveText('140');
+  // loop 3: the name card shows the rank of the board being viewed
+  await expect(page.locator('.lb-you-rank')).toHaveText('#2 THIS WEEK');
   await page.screenshot({ path: 'claude/batch-b/bb3-weekly-1280x720.png' });
 });

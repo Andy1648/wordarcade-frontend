@@ -30,7 +30,8 @@ export function AchievementsBody() {
                   <div key={a.id} className={`ach-card${a.earned ? ' is-earned' : ''}${a.secret ? ' is-secret' : ''}`}>
                     <div className="ach-card-name">{a.name}</div>
                     <div className="ach-card-hint">{a.hint}</div>
-                    <div className="ach-card-wins">{a.earned ? '✓ ' : ''}+{formatNum(achievementPayout(a))} WINS</div>
+                    {/* an earned card says it is done — the live-rate figure would not be what it paid back then */}
+                    <div className="ach-card-wins">{a.earned ? '✓ EARNED' : `+${formatNum(achievementPayout(a))} WINS`}</div>
                   </div>
                 ))}
               </div>
