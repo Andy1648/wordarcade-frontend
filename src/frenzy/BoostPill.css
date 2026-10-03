@@ -15,6 +15,13 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
+  /* H3 BOOST START: the pill slams in once when the boost begins (finite, transform/opacity) */
+  animation: boost-pill-in 380ms cubic-bezier(.2, 1.5, .35, 1) both;
+}
+@keyframes boost-pill-in {
+  0% { opacity: 0; transform: scale(2.2) rotate(-6deg); }
+  65% { opacity: 1; transform: scale(0.92) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 .boost-pill-name {
   font-family: 'Bungee', cursive;
@@ -33,5 +40,5 @@
   100% { transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .boost-pill.is-ending { animation: none; }
+  .boost-pill, .boost-pill.is-ending { animation: none; }
 }
