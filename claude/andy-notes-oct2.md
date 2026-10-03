@@ -1,5 +1,8 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
+## CHECKUPS (every ~2 h)
+- 17:55 ✅ prod = latest merge (#166 'LEVEL FLOOR' in index-CT9LmTZ2.js) · main CI green on 0c2cac7, 15ece21 E2E running · board API sane (16 rows, no ZZ test rows; Xavi's stored 1e9 shows '—' in the UI; NoBuffCookies submitted on econ 10 → LV15 R7, matches Andy's v11 note 'R8 LV16') · fresh profile WB solo on prod: 10 turns, all words accepted, won, 0 console errors.
+
 ## UNLOCK TIMES on PV10 (Andy oct3 11:25 asked; Andy 11:26: **FUSE STAYS LV100**) — hours of play to first reach the level
 | skill | CHAIN LV50 | FUSE LV100 |
 |---|---|---|
