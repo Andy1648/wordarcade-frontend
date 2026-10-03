@@ -1,0 +1,43 @@
+skill   window metric               before     after
+casual  10m    maxGapMin              0.75      0.75
+casual  10m    worstKeyEtaMin        96.97     96.97
+casual  10m    worstShopEtaMin        6.00      6.00
+casual  1h     maxGapMin              0.83      0.83
+casual  1h     worstKeyEtaMin        33.64     33.64
+casual  1h     worstShopEtaMin        2.10      2.10
+casual  20h    maxGapMin              4.33      4.33
+casual  20h    worstKeyEtaMin        26.05     26.05
+casual  20h    worstShopEtaMin        5.74      5.74
+casual  5h     maxGapMin              3.00      3.00
+casual  5h     worstKeyEtaMin        57.53     57.53
+casual  5h     worstShopEtaMin        5.49      5.49
+casual  all    runawayFails           2.50      2.50
+median  10m    maxGapMin              0.35      0.35
+median  10m    worstKeyEtaMin        97.03     97.03
+median  10m    worstShopEtaMin        1.00      1.00
+median  1h     maxGapMin              1.05      1.05
+median  1h     worstKeyEtaMin        53.87     53.87
+median  1h     worstShopEtaMin        0.99      0.99
+median  20h    maxGapMin              4.20      4.20
+median  20h    worstKeyEtaMin        42.72     42.72
+median  20h    worstShopEtaMin        2.50      2.50
+median  5h     maxGapMin              2.10      2.10
+median  5h     worstKeyEtaMin        40.29     40.29
+median  5h     worstShopEtaMin        1.67      1.67
+median  all    runawayFails           0.00      0.00
+strong  10m    maxGapMin              0.22      0.22
+strong  10m    worstKeyEtaMin       128.13    128.13
+strong  10m    worstShopEtaMin        1.61      1.61
+strong  1h     maxGapMin              0.84      0.84
+strong  1h     worstKeyEtaMin        59.48     59.48
+strong  1h     worstShopEtaMin        0.62      0.62
+strong  20h    maxGapMin              3.19      3.19
+strong  20h    worstKeyEtaMin        52.75     52.75
+strong  20h    worstShopEtaMin        1.17      1.17
+strong  5h     maxGapMin              1.97      1.97
+strong  5h     worstKeyEtaMin        50.10     50.10
+strong  5h     worstShopEtaMin        0.95      0.95
+strong  all    runawayFails           0.50      0.50
+
+WORSE windows: 0
+VERDICT: MERGE

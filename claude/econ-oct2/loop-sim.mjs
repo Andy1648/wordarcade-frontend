@@ -431,7 +431,8 @@ function simulate(skill) {
     // ETA sample: minutes of play to afford the next KEY / next shop item at the trailing income
     const inc = incomeAll();
     if (inc && inc > 0 && minute >= 1) {
-      const bal = WINS.getWins();
+      // the roll purse is not KEY money: an ETA counts only what the shop may spend (marks.md caveat)
+      const bal = WINS.getWins() - (MR ? Math.min(purse, WINS.getWins()) : 0);
       const eta = (p) => Math.max(0, p - bal) / inc;
       const key = eta(XP.keyTierCost(XP.getKeyTier()));
       const forge = forgeOpen() ? eta(FORGE.forgeCost(FORGE.forgeBuys())) : null;

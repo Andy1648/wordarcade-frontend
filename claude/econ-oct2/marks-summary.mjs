@@ -43,6 +43,10 @@ for (let s = 0; s < N; s++) {
     o.maxLvAt.push(R.maxStepPaid ? `${R.maxStepPaid.markId}@LV${R.maxStepPaid.level} ×${R.maxStepPaid.step}` : '-');
     o.over3.push(R.overThreeLevels);
     o.runaway.push(r.runaway.failCount);
+    const lumps = [...r.runaway.worstByMinutes, ...r.runaway.worstLumps];
+    (o.failLabels ||= new Set());
+    for (const l of lumps) if (l.fail) o.failLabels.add(`${l.label} (${l.minutesOfPlay} min)`);
+    (o.indexWorst ||= []).push(Math.max(0, ...lumps.filter((l) => /^INDEX/.test(l.label)).map((l) => l.minutesOfPlay)));
     o.rollsTotal.push(R.paidRolls);
     const last = R.log && R.log.length ? R.log[R.log.length - 1] : null;
     o.luckEnd.push(last ? last.luck / (last.bonus ? 2 : 1) : null);
@@ -59,6 +63,8 @@ for (const [k, o] of Object.entries(bySkill)) {
 }
 console.log('\nLargest single paid roll per seed:');
 for (const [k, o] of Object.entries(bySkill)) console.log(`- ${k}: ${o.maxLvAt.join(' · ')}`);
+console.log('\nRunaway lump fails (any lump, any seed) and the largest INDEX-milestone lump among the top lumps (minutes of play; 0 = not in the top 27):');
+for (const [k, o] of Object.entries(bySkill)) console.log(`- ${k}: fails ${o.failLabels.size ? [...o.failLabels].join(', ') : 'none'} · INDEX max ${Math.max(...o.indexWorst)} min`);
 if (Object.keys(achBefore).length) {
   console.log('\n## Achievement earn times, BEFORE tree (median minute over seeds; "—" = not in 20 h)\n');
   const skills = Object.keys(achBefore);
