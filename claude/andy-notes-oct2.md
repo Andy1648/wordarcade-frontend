@@ -191,6 +191,8 @@ PATTERNS (most → least repeated):
 5. LEADERBOARD = the golden button: friends competing is the core loop.
 6. FAIRNESS to existing players: never wipe or punish progress.
 
+- WORKFLOWS (Andy oct3): use dynamic workflows ("ultracode") for big NO-BROWSER sweeps only — the confusion/useless-words audit, the number-format sweep across src/, research before a new system, adversarial reviews. Each agent may read and edit code but must NOT run Playwright, e2e, vite preview or long sims (those stay in the main session, one at a time, or on CI). At most ONE workflow at a time. Use `small` for single-feature reviews (size guideline set to medium).
+
 EXTENSIONS — each built DORMANT behind a flag (?name=1, like rollsFlag); try-it link logged in ANDY TODO; research 2–3 real games each first (cite links); sim anything economic on CI:
 - 18:20 RESEARCH + SPECS DONE: claude/finetune/extensions-spec.md (2–3 cited games each). BUILD ORDER b → a → c → d → f → e:
   b near-miss line (small, no economy) · a rival pings as a rank-up-card variant, never after your own rebirth (small–med) · c milestones are ~80% live already — only scale the existing level-up card at 10/25/50/100 · d rebirth ladder chips on Stats (shows the shrinking % honestly) · f challenge link is LARGE (no share button exists, no race deep-link, bots ignore pace → ghost lane, launch path is Tier 1) · e daily quests are LARGE + economic (CI sim + rule P before the flag flips). One shared flag helper for all six.
