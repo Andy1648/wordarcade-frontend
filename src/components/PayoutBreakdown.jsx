@@ -112,7 +112,7 @@ export function RoundPayout({ ledger }) {
     <div className="payout payout--round" aria-label="Where your wins came from">
       <div className="payout-title">WHERE YOUR WINS CAME FROM</div>
       <div className="payout-head">
-        <span className="payout-head-label">{ledger.words} WORDS × BASE</span>
+        <span className="payout-head-label">{formatNum(ledger.words)} WORDS × BASE</span>
         <span className="payout-head-val"><Num value={ledger.base} /></span>
       </div>
       {ledger.rows.length === 0 ? (

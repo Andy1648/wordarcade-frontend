@@ -305,7 +305,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         {/* R10: a live BOOST multiplies FRENZY — the FUSE card says how they stack */}
         {/* E3 (Andy oct2 evening): TWO rules, TWO lines — "FRENZY ×5 · LONGER = MORE" read as one rule.
             The second line is its own block and still drops whole on a narrow card. */}
-        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? `× BOOST ×${rateNow.factors.boost}` : 'LONGER WORDS PAY MORE'}</span>
+        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? `× BOOST ×${formatMultExact(rateNow.factors.boost)}` : 'LONGER WORDS PAY MORE'}</span>
       </>
     ) : (
       // the same allowed break as "/ WORD": the line may wrap before PAY MORE, so its length never

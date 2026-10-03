@@ -26,6 +26,7 @@ import {
   SAT_RUSH_LOCK,
 } from './config';
 import * as juice from './juice';
+import { formatNum, formatMultExact } from '../format';
 
 const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
 const CLEAR_PAUSE_MS = 850;
@@ -278,7 +279,7 @@ export function useSatRushGame() {
       } else {
         const bonus = r.breakdown.deepCutBonus ? ' · DEEP CUT BONUS' : '';
         msgRef.current = {
-          text: `+${r.gained} · ${r.breakdown.stageMultiplier}× ante${bonus}`,
+          text: `+${formatNum(r.gained)} · ${formatMultExact(r.breakdown.stageMultiplier)}× ante${bonus}`,
           kind: 'good',
         };
       }

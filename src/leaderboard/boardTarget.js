@@ -1,5 +1,6 @@
 // boardTarget.js — H2a: the maths behind the board's "you" card — the next place to aim for.
 // Pure — no DOM, so node:test covers it.
+import { formatNum } from '../format.js';
 
 /**
  * The next place to aim for: the row directly above `me` on the loaded board. For an off-board
@@ -28,7 +29,10 @@ export function targetLine(rows, me, { short = false } = {}) {
   if (Number(me.rank) === 1) return short ? 'HOLD #1' : 'YOU’RE #1. HOLD IT.';
   const t = nextTarget(rows, me);
   if (!t) return '';
-  if (t.levels === 0) return short ? `TIED WITH #${t.rank}` : `LEVEL-TIED WITH #${t.rank} · MORE WORDS TAKE IT`;
-  if (short) return `${t.levels} LV TO #${t.rank}`;
-  return `${t.levels} LEVEL${t.levels === 1 ? '' : 'S'} TO #${t.rank}`;
+  // every number through formatNum (no raw long digits on the board)
+  const rank = formatNum(t.rank);
+  const levels = formatNum(t.levels);
+  if (t.levels === 0) return short ? `TIED WITH #${rank}` : `LEVEL-TIED WITH #${rank} · MORE WORDS TAKE IT`;
+  if (short) return `${levels} LV TO #${rank}`;
+  return `${levels} LEVEL${t.levels === 1 ? '' : 'S'} TO #${rank}`;
 }

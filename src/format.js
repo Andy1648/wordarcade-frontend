@@ -150,3 +150,30 @@ export function formatMult(n) {
     : r1;
   return String(r);
 }
+
+/**
+ * THE LEVEL BAR AS A PERCENT, ONE DECIMAL (Andy oct3 #5: "bar just isn't moving"). Under
+ * PROGRESSION v10 a high level is hundreds of words long, so a whole-number percent sat still for
+ * a dozen words; one decimal moves on (almost) every word. FLOORED, never rounded: 99.96% must not
+ * print "100.0%" while the level has not happened yet. `frac` is 0..1; out-of-range / NaN clamps.
+ */
+export function formatPct(frac) {
+  const f = Number.isFinite(frac) ? Math.min(1, Math.max(0, frac)) : 0;
+  const tenths = Math.floor(Number((f * 1000).toPrecision(12)));
+  const shown = f < 1 ? Math.min(tenths, 999) : 1000;
+  return `${(shown / 10).toFixed(1)}%`;
+}
+
+/**
+ * A BAR GAIN as "+X.X%" — `gainFrac` is the gain as a fraction of the level (0.006 → "+0.6%").
+ * ANY REAL GAIN SHOWS: a gain > 0 that rounds below a tenth prints "+0.1%", never "+0.0%" (Andy:
+ * "a tiny gain still shows at least +0.1%"). A gain of a whole level or more (a multi-level jump)
+ * stays a percent of the level it started in, through formatNum past 10,000%. 0 / negative / NaN → ''.
+ */
+export function formatGainPct(gainFrac) {
+  if (!(gainFrac > 0)) return '';
+  const pct = gainFrac * 100;
+  if (pct >= 10000) return `+${formatNum(pct)}%`;
+  const r = Math.round(Number((pct * 10).toPrecision(12))) / 10;
+  return `+${Math.max(0.1, r).toFixed(1)}%`;
+}

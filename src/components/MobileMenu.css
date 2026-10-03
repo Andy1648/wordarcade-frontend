@@ -541,5 +541,9 @@
     background: #2EFFE0;
     transform-origin: left center;
   }
+  .hp-m-stats-pct {
+    font-size: var(--fs-label);
+    color: #2EFFE0;
+  }
   .hp-m-stats-wins { color: #FFE94A; }
 }

@@ -7,6 +7,7 @@
 // running "+N WINS" once the gate is crossed, so a player is never left staring at nothing.
 import './WinsHud.css';
 import { formatNum } from '../format';
+import { useCountUp } from '../hooks/useCountUp';
 import { MIN_WORDS } from '../progress/wins';
 import LiveWpm from './LiveWpm';
 
@@ -16,11 +17,15 @@ import LiveWpm from './LiveWpm';
 // they pass showWpm={false} and get the wins pill without it (§2).
 export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
   const earning = words >= MIN_WORDS && amount > 0;
+  // THE one count-up (Andy oct3 #4): each word's wins climb into the tally over 1.2–2 s, a word
+  // landing mid-count retargets it, reduced motion is instant. The count is aria-hidden so the live
+  // region announces the label (the real total), never every frame.
+  const { shown } = useCountUp(earning ? amount : 0);
   return (
     <>
       {earning ? (
-        <div className="wins-hud" aria-live="polite" aria-label={`${amount} wins so far`}>
-          <span className="wins-hud-plus">+{formatNum(amount)}</span>
+        <div className="wins-hud" aria-live="polite" aria-label={`${formatNum(amount)} wins so far`}>
+          <span className="wins-hud-plus" aria-hidden="true">+{formatNum(Math.round(shown))}</span>
           <span className="wins-hud-label">WINS</span>
         </div>
       ) : (

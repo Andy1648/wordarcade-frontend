@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { claim, claimAll, claimAmount, CLAIM_KINDS } from '../progress/claims.js';
 import { useClaims } from './useClaims.js';
 import { formatNum } from '../format.js';
+import { useCountUp } from '../hooks/useCountUp.js';
 import { KIND_COLOUR } from './kindColour.js';
 import './ClaimsPanel.css';
 
@@ -90,11 +91,21 @@ export default function ClaimsPanel({ onClose, onReveal, onStats }) {
           </button>
         )}
         {paid && (
-          <div key={paid.key} className="claims-stamp" aria-live="polite">
-            +{formatNum(paid.wins)} WINS
-          </div>
+          <ClaimStamp key={paid.key} wins={paid.wins} />
         )}
       </div>
+    </div>
+  );
+}
+
+// THE PAY STAMP COUNTS (Andy oct3 #4): +0 → +N through THE one count-up, inside the stamp's own
+// 1.7 s slam/hold/fade, so the player sees how much the claim was worth. Screen readers get the
+// final amount once (role=status + label), not every frame of the count.
+function ClaimStamp({ wins }) {
+  const { shown } = useCountUp(wins, { from: 0, maxMs: 1300 });
+  return (
+    <div className="claims-stamp" role="status" aria-label={`+${formatNum(wins)} WINS`}>
+      <span aria-hidden="true">+{formatNum(Math.round(shown))} WINS</span>
     </div>
   );
 }

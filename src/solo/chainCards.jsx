@@ -7,6 +7,8 @@
 //                        NO score / BEST / share (SoloShell drops the score line via
 //                        over.bare).
 
+import { formatNum } from '../format.js';
+
 export function ChainNormalCard({ killedLetter, lastLinks, deadEnd = false }) {
   // Branch on WHY the run ended (fix/logic-pass #7). The reroute keeps the required letter off
   // genuine dead ends, so a death is almost always the clock — say so ("RAN OUT OF TIME ON X")
@@ -24,7 +26,7 @@ export function ChainNormalCard({ killedLetter, lastLinks, deadEnd = false }) {
       <div className="solo-death-links">
         {lastLinks.map((l, i) => (
           <span key={i}>
-            {l.word.toUpperCase()} · +{l.score}
+            {l.word.toUpperCase()} · +{formatNum(l.score)}
           </span>
         ))}
       </div>
