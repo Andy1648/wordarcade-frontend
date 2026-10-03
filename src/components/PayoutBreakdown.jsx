@@ -12,6 +12,7 @@
 // neither can ever quote a multiplier the player did not actually get.
 import Num from './Num';
 import { formatNum, formatRate, formatMultExact } from '../format';
+import { formatFloorPct } from '../progress/barFloor';
 import './PayoutBreakdown.css';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -73,6 +74,15 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
           </span>
         )}
       </div>
+      {/* LEVEL FLOOR (Option F): this word's XP was under the floor, so the BAR was credited the
+          floor instead. Not a multiplier — the wins above are unchanged — so it is its own line,
+          not a term in the product. Same number the bar moved (payout.js levelFloor). */}
+      {payout.levelFloor && (
+        <div className="payout-floor">
+          <span className="payout-k">{payout.levelFloor.label}</span>
+          <span className="payout-v">{formatFloorPct(payout.levelFloor.pct)} LEVEL</span>
+        </div>
+      )}
       {payout.held && (
         <div className="payout-held">HELD — BANKS AT 3 WORDS</div>
       )}

@@ -41,6 +41,8 @@
 // (claims.queueClaim exactly as leaderboard/client.js redeemCode does), claimed at the next menu.
 // WORDS are real words from words.recall.txt (rarity via rarity.wordRarity over the real rank index;
 // LETTER FORGE sees their real letters; Collection sees distinct real words).
+// BAR FLOOR (Option F, src/progress/barFloor.js): applied inside wins.awardWordXp, so the sim measures
+// it with no sim-side code; `barFloor` in the output counts the words it raised.
 // NOT MODELLED: menu typing XP, Category Blitz / SAT Rush / Word Race, returnBonus, theme worlds.
 // -----------------------------------------------------------------------------------------------
 import fs from 'node:fs';
@@ -217,6 +219,7 @@ function simulate(skill) {
   const mech = {};
   const levelTrail = []; // [t, cumulativeLevelUps]
   let levelUps = 0;
+  let floorWords = 0; // OPTION F: game words whose bar credit was raised to the level floor (barFloor.js)
   let winsAll = 0;
   let winsWord = 0;
   const incomeTrail = [[0, 0, 0]]; // [t, winsAll, winsWord]
@@ -519,6 +522,7 @@ function simulate(skill) {
       lastLumpCtx = 'mastery';
       const res = WINS.awardWordXp({ mode, difficulty: diff, wordLength: word.length, weight: w, word });
       lastLumpCtx = null;
+      if (res.floor) floorWords += 1;
       WINS.bankWordWins({ mode: pkey, difficulty: diff, wordLength: word.length, prevWords: i - 1, nowWords: i, prevWeight: prevW, nowWeight: weightSum });
       if (mode === 'word-bomb') WC.addWords('word-bomb');
       COLL.recordAcceptedWord(word, { mode, band: rw.band });
@@ -663,6 +667,7 @@ function simulate(skill) {
 
   return {
     skill: skill.id, words, levelUps, perWindow,
+    barFloor: { words: floorWords, share: words ? +(floorWords / words).toFixed(4) : 0 },
     wall: { worstKeyEta: allKey && { min: +allKey.key.toFixed(2), t: +allKey.t.toFixed(1), tier: allKey.tier, level: allKey.level }, worstShopEta: allShop && { min: +allShop.shop.toFixed(2), t: +allShop.t.toFixed(1), level: allShop.level }, keyRealised },
     runaway: { failCount: lumpEval.filter((l) => l.fail).length, codes: lumpEval.filter((l) => /^CODE|^BOOST/.test(l.label)), worstByMinutes: [...lumpEval].filter((l) => l.minutesOfPlay != null).sort((a, b) => b.minutesOfPlay - a.minutesOfPlay).slice(0, 15), worstLumps: runawayList.slice(0, 12), worstBuys: buyStep.slice(0, 8), lumpCount: lumps.length },
     early: { lumps: lumpEval.filter((l) => l.t < 15), buys: buys.filter((b) => b.t < 15).map((b) => ({ ...b, t: +b.t.toFixed(2) })), good: good.filter((g) => g.t < 15).map((g) => [+g.t.toFixed(2), g.kind, g.label]) },
@@ -725,7 +730,7 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
   const r = simulate(s);
   results.push(r);
   if (!QUIET) {
-    console.log(`\n=== ${s.id.toUpperCase()} — ${r.words} words, ${r.levelUps} level-ups, ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
+    console.log(`\n=== ${s.id.toUpperCase()} — ${r.words} words, ${r.levelUps} level-ups, bar floor ${r.barFloor.words} words (${(r.barFloor.share * 100).toFixed(1)}%), ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
     for (const [id, w] of Object.entries(r.perWindow)) {
       console.log(`  ${id.padEnd(4)} gap max ${w.maxGapMin}m (limit ${w.gapLimitMin}) ${w.gapPass ? 'PASS' : 'FAIL'} @${JSON.stringify(w.maxGapAt)} p90 ${w.p90GapMin}m strict max ${w.strictMaxGapMin}m p90 ${w.strictP90GapMin}m lv+${w.levelsGained} | KEY realised ${w.keyRealisedMin}m ${JSON.stringify(w.keyRealisedAt)} eta ${w.worstKeyEtaMin}m shop eta ${w.worstShopEtaMin}m ${w.wallPass ? 'PASS' : 'FAIL'} | LV${w.state && w.state.level} R${w.state && w.state.rebirths} T${w.state && w.state.keyTier} F${w.state && w.state.forge} ${JSON.stringify(w.events)}`);
     }

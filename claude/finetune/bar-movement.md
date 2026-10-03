@@ -131,3 +131,35 @@ spec already rejected as unfair.
   pop per credit, retargeted across a burst, never below "+0.1%" for a real gain (`formatGainPct`); a
   10% milestone flash + soft rising note (`sndBarMilestone`); the phone stats row shows the % too.
 - Returning to the menu counts the whole game's gain up from where the bar was (session memory).
+
+## IMPLEMENTATION (branch feat/bar-floor) — Option F, NOT merged (awaiting Andy)
+
+- **`src/progress/barFloor.js`** (new) — the one constant block: `BAR_FLOOR_ON = true`,
+  `BAR_FLOOR_FRAC = 0.005`, `BAR_FLOOR_TAPER_FROM = 250`, `BAR_FLOOR_TAPER = 1.028`.
+  `floorFrac(L)` = 0.005 for L ≤ 250, `0.005 × 1.028^−(L−250)` above (LV300 ≈ 0.126%, LV1000 ≈ 5e-12).
+  `barFloorXp(L, P) = floorFrac(L) × needAt(L, P)`; `applyBarFloor({gain, level, power})` →
+  `{credited = max(gain, floorXp), floored, pct, rawPct}`. Set `BAR_FLOOR_ON = false` to turn it off.
+- **`src/progress/wins.js awardWordXp`** — the single place every game word credits XP (WB + Blitz via
+  App.jsx, SAT, CHAIN, FUSE, WORD RACE). For any mode whose `gameKey` is not `'menu'` it credits
+  `creditXp(state, max(gain, floorXp), P)` at the same P the level's need uses, so a crossing carries
+  through the normal `{lv, f, rc, v:10}` fraction storage. Returns `gain` (the word's real XP, unchanged:
+  wins are still `gain ÷ 10`), plus `credited` (what the bar got) and `floor` (null unless it fired).
+  Menu typing never reaches the floor (`mode: 'menu'` / no mode is excluded; useXpCapture uses creditXp
+  directly). App.jsx is untouched.
+- **Receipt** — awardWordXp leaves a one-shot stamp (`setBarFloorStamp`); `payout.js buildPayout`
+  consumes it as `payout.levelFloor = { label: 'LEVEL FLOOR', pct, rawPct, xp }` (always consumed, so it
+  cannot leak onto a later word). It is NOT a factor: `product`, `paid`, `xp` and the round ledger are
+  unchanged. `PayoutBreakdown.jsx <WordPayout>` prints it as its own line under the product
+  ("LEVEL FLOOR  +0.5% LEVEL"), the same number the bar moved. Only Word Bomb has a per-word receipt
+  today; the solo modes have none, so there is nothing else to label (their bar pop already reads the
+  real frac delta).
+- **Tests** — `src/progress/barFloor.test.js` (11): floorFrac at LV1/150/250/300/1000 (+251, off-switch);
+  barFloorXp = floorFrac × needAt; LV175 R4 T7 ×1-stack save moves ≥ 0.5% per word (5 words); every game
+  mode floored; a crossing at f=0.998 carries 0.003·need(175)/need(176) into LV176 in the v10 shape;
+  a strong/early save above the floor is unchanged (credited = gain); menu typing not floored; wins
+  balance/lifetime untouched and `perWordWins = gain ÷ 10`; receipt row = the bar's frac delta,
+  headline unchanged, stamp one-shot. Full unit suite 920/920 green; `vite build` clean.
+- **Sim** — `claude/econ-oct2/loop-sim.mjs` already credits every word through `WINS.awardWordXp`, so
+  the CI econ-sims job measures F with no sim-side logic; it now also reports
+  `barFloor: { words, share }` per skill (how many words the floor raised). Not run here (rule): run
+  `loop-sim.mjs --skills=casual,median,strong` / the econ-sims workflow on this branch before merging.
