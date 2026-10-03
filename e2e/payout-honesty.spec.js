@@ -115,10 +115,13 @@ for (const s of SETUPS) {
     let released = 0; // receipt XP of words the 3-word gate is still holding
     for (let i = 0; i < WORDS.length; i += 1) {
       const before = await readLedger();
+      const prevReceipt = await page.evaluate(() => { const r = document.querySelector('.wb-receipt'); return r ? r.getAttribute('data-k') || r.textContent : ''; });
       myTurn();
       await page.waitForTimeout(40);
       mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: WORDS[i] } });
-      await expect.poll(async () => cumXp(await readLedger()), { timeout: 8000 }).toBeGreaterThan(cumXp(before));
+      // v11: a game word moves the bar by 0 XP (asserted below), so wait on the word's RECEIPT — it renders for
+      // every accepted word, the 3-word-gate-held ones included — not on the XP ledger.
+      await expect.poll(async () => page.evaluate(() => { const r = document.querySelector('.wb-receipt'); return r ? r.getAttribute('data-k') || r.textContent : ''; }), { timeout: 8000 }).not.toBe(prevReceipt);
       await expect(page.locator('.wb-receipt')).toBeVisible();
       await page.waitForTimeout(60);
       const after = await readLedger();
