@@ -15,6 +15,7 @@
 // Pure and DOM-free (one module-level round ledger, the same pattern wins.js uses for its pending
 // stamp), so the whole thing is unit-testable under node.
 import { roundWordXp } from './xp.js';
+import { takeBarFloorStamp } from './barFloor.js';
 
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
@@ -75,7 +76,7 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * no receipt. So the bottom line is now what the rows say this word is WORTH, and `held` carries
  * the other fact — that the gate has not released it yet — as a caption instead of as a zero.
  */
-export function buildPayout({ base = 0, factors = {}, total, band, letters, perLetter } = {}) {
+export function buildPayout({ base = 0, factors = {}, total, band, letters, perLetter, levelFloor } = {}) {
   const b = Number.isFinite(base) && base > 0 ? base : 0;
   let product = 1;
   const rows = [];
@@ -109,7 +110,18 @@ export function buildPayout({ base = 0, factors = {}, total, band, letters, perL
     held: banked <= 0 && computed > 0,
     rows,
     band: band || null,
+    // LEVEL FLOOR (Option F, barFloor.js). NOT a factor: it never enters `product`, `paid` or `xp`
+    // (wins are untouched). It says the BAR was credited more than this word's XP — the floor —
+    // and by how much, so the receipt matches the bar. Taken from the stamp awardWordXp left for
+    // this word unless the caller passes one (null = the floor did not fire). Always consumed, so
+    // a stale stamp can never land on a later word's receipt.
+    levelFloor: floorRow(levelFloor === undefined ? takeBarFloorStamp() : (takeBarFloorStamp(), levelFloor)),
   };
+}
+
+function floorRow(s) {
+  if (!s || !(s.pct > 0)) return null;
+  return { label: 'LEVEL FLOOR', pct: s.pct, rawPct: Number.isFinite(s.rawPct) ? s.rawPct : 0, xp: Number.isFinite(s.xp) ? s.xp : null };
 }
 
 /**

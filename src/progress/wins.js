@@ -18,7 +18,9 @@ import {
   keyTierXp,
   getKeyTier,
   XP_MULTIPLIERS,
+  currentPower,
 } from './xp.js';
+import { applyBarFloor, setBarFloorStamp } from './barFloor.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
 import { rollBonusMult } from './markRollsCore.js'; // the payout hook only — the roll system loads with MARKS
@@ -591,7 +593,9 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
 
 // ---- THE AWARD ------------------------------------------------------------------------------
 // Credit one accepted word's XP to the persisted level state; returns creditXp's result plus the
-// gain ({ state, leveledUp, level, gain, mastery }). Persistence happens here so returning to the
+// gain ({ state, leveledUp, level, gain, credited, floor, mastery }). `gain` is the word's real XP (wins
+// = gain ÷ 10); `credited` is what the BAR got (≥ gain — the Option F floor); `floor` is null unless
+// the floor raised it. Persistence happens here so returning to the
 // menu reflects the levels earned in play; the caller may use `leveledUp` to fire a celebration.
 //
 // MOVED FROM xp.js (Economy v8). It computes the SAME product perWordWins() divides by ten —
@@ -602,7 +606,22 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
 export function awardWordXp(opts = {}) {
   const mode = opts.mode || 'menu';
   const gain = perWordXp({ ...opts, mode });
-  const res = creditXp(loadProgress(), gain);
+  // OPTION F — THE GAME-WORD BAR FLOOR (barFloor.js). A GAME word moves the bar at least
+  // floorFrac(L) of the current level; `gain` (and so every win) is untouched. Menu typing never
+  // floors. The credit goes through creditXp at the same P, so a level crossing carries normally.
+  const before = loadProgress();
+  const P = currentPower();
+  let credited = gain;
+  let floor = null;
+  if (gameKey(mode) !== 'menu') {
+    const f = applyBarFloor({ gain, level: before.level, power: P });
+    if (f.floored) {
+      credited = f.credited;
+      floor = { level: before.level, pct: f.pct, rawPct: f.rawPct, xp: f.credited, gain };
+    }
+  }
+  setBarFloorStamp(floor);
+  const res = creditXp(before, credited, P);
   saveProgress(res.state);
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
   // MASTERY MILESTONE (STEP 19): every 5th mastery level pays MASTERY_MILESTONE_WORDS words' worth of
@@ -625,7 +644,7 @@ export function awardWordXp(opts = {}) {
   // chip punch). Read-only signal, emitted after everything is credited; menu typing keeps its own
   // celebration path (useXpCapture).
   if (mode !== 'menu' && res.leveledUp) emitMidGameLevelUp(res.level, mode);
-  return { ...res, gain, mastery, mark };
+  return { ...res, gain, credited, floor, mastery, mark };
 }
 
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round
