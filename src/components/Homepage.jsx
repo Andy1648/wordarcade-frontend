@@ -45,8 +45,9 @@ import ClaimPopup from '../claims/ClaimPopup.jsx';
 import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
+import { formatNum } from '../format';
 import TrophyIcon from './TrophyIcon';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 const RankUpMoment = lazy(() => import('../leaderboard/RankUpMoment.jsx'));
@@ -800,6 +801,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // STEP 47: after the push, compare my live rank with the last one this browser saw. A RISE shows
   // the "#12 → #7" moment once and badges the trophy until the board is opened.
   const [boardNews, setBoardNews] = useState(() => LEADERBOARD_ENABLED && hasRankNews());
+  // N3: the board icon wears your last known rank (#N) — re-read whenever rank news changes
+  const boardRank = LEADERBOARD_ENABLED ? getLastRank() : null;
   const [rankUp, setRankUp] = useState(null);
   // 012_admin_reset: the one-shot "reset by the dev" line, left by obeyDevReset before its reload
   const [devReset, setDevReset] = useState(() => LEADERBOARD_ENABLED && hasDevResetNotice());
@@ -940,6 +943,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onStats={handleStats}
             onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
             boardDot={boardNews}
+            boardRank={boardRank}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
             onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
@@ -959,6 +963,27 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* Corner nav — three WORD buttons (not glyphs), stacked in the top-right corner. Each
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
+        {/* N3 (Andy oct2): the LEADERBOARD on its OWN, top-left — hero-size, with your rank — so it reads as
+            its own thing, not one more nav chip. It mirrors the corner nav's top-right offsets (a layout
+            relationship with the frame, not an orphan) and keeps .homepage-nav-btn.is-board for the gates. */}
+        {LEADERBOARD_ENABLED && onLeaderboard && (
+          <div className="homepage-board-corner">
+            <button
+              ref={boardLinkRef}
+              type="button"
+              className={`homepage-nav-btn is-board homepage-board-hero${navigating ? ' disabled' : ''}`}
+              onClick={handleLeaderboard}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardNews ? ' — your rank went up' : ''}`}
+              title="Leaderboard"
+            >
+              <TrophyIcon size={40} />
+              {boardRank && <span className="homepage-board-rank" aria-hidden="true">#{formatNum(boardRank)}</span>}
+              {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
+            </button>
+          </div>
+        )}
         <nav className="homepage-corner-nav" aria-label="Menu">
           {/* NO SEPARATE REWARDS BUTTON (Andy oct2 A4): claims happen through STATS. While anything is
               waiting, STATS wears the count badge and opens the claims; with nothing waiting it opens
@@ -1004,21 +1029,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             SHOP
             {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
-          {LEADERBOARD_ENABLED && onLeaderboard && (
-            <button
-              ref={boardLinkRef}
-              type="button"
-              className={`homepage-nav-btn is-board${navigating ? ' disabled' : ''}`}
-              onClick={handleLeaderboard}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label={`Open leaderboard${boardNews ? ' — your rank went up' : ''}`}
-              title="Leaderboard"
-            >
-              <TrophyIcon size={22} />
-              {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
-            </button>
-          )}
           {/* fix/visual-real item 4: the sound control JOINS the corner-nav cluster (SHOP / REBIRTH /
               STATS / audio) on the menu instead of floating as an orphan fixed button bottom-right —
               exactly the grouping CLAUDE.md's NO ORPHAN FIXED UI rule prescribes. The global fixed

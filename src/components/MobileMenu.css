@@ -457,3 +457,32 @@
     transform: none;
   }
 }
+
+/* N3 (Andy oct2): the LEADERBOARD on its own at the top-left of the title row — hero-size, with your rank */
+@media (max-width: 899px) {
+  .hp-m-top .hp-m-board-hero {
+    order: -1;
+    flex: 0 0 auto;
+    width: 60px;
+    min-height: 60px;
+    height: 60px;
+    padding: 0;
+  }
+  .hp-m-board-hero svg { width: 36px; height: 36px; }
+  .hp-m-board-rank {
+    position: absolute;
+    right: -10px;
+    bottom: -9px;
+    padding: 1px 5px;
+    font-family: 'Bungee', cursive;
+    font-size: var(--fs-label);
+    line-height: 1;
+    color: #000;
+    background: #FFE94A;
+    border: 2px solid #a8800f;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 #000;
+    transform: rotate(-4deg);
+  }
+  .hp-m-top .hp-m-title { flex: 1 1 auto; }
+}

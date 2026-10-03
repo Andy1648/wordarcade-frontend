@@ -75,7 +75,7 @@ export async function bootRoom(page, gameType, players) {
   return mock;
 }
 export async function enterSolo(page, id) {
-  await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
+  await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 })); } catch { /* ignore */ } });
   await installBackendMock(page);
   // Either width: the desktop card or the phone's CHAIN | FUSE half — both open the same solo
   // mode dialog, whose PLAY button enters the mode (support/menu.js modeEntry).
