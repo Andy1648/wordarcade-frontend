@@ -8,6 +8,7 @@
 // + renders the fallback regardless of Sentry; the report goes through captureException, which
 // queues until Sentry is lazily initialised (the DSN only decides whether it is actually SENT).
 import ErrorBoundary from './ErrorBoundary.js';
+import { isStaleChunkError } from '../lib/chunkReload';
 import './ScreenBoundary.css';
 
 // TEST SEAM (same family as ?soloms= / ?coldstart= / window.__TAW_*): `?boom=<name>` makes the
@@ -31,22 +32,30 @@ export default function ScreenBoundary({ name = 'screen', onBack = null, childre
     <ErrorBoundary
       // Tag the report with which screen broke, so Sentry groups per-screen.
       captureContext={{ tags: { screen: name } }}
-      fallback={({ resetError }) => (
-        <div className="screen-boundary" role="alert" aria-live="assertive">
-          <div className="sb-panel">
-            <div className="sb-emoji" aria-hidden="true">🧨</div>
-            <div className="sb-title">THIS SCREEN BROKE</div>
-            <div className="sb-sub">A quick step back usually fixes it. Your progress is safe.</div>
-            <button
-              type="button"
-              className="sb-back"
-              onClick={() => { try { resetError && resetError(); } catch { /* noop */ } if (onBack) onBack(); else { try { window.location.reload(); } catch { /* noop */ } } }}
-            >
-              ← GO BACK
-            </button>
+      fallback={({ error, resetError }) => {
+        // G1 (Andy oct3): a screen whose chunk is gone after a deploy is not broken — a new version is out.
+        const stale = !!error && (error.name === 'StaleChunkError' || isStaleChunkError(error));
+        return (
+          <div className="screen-boundary" role="alert" aria-live="assertive">
+            <div className="sb-panel">
+              <div className="sb-emoji" aria-hidden="true">{stale ? '✨' : '🧨'}</div>
+              <div className="sb-title">{stale ? 'NEW VERSION READY' : 'THIS SCREEN BROKE'}</div>
+              <div className="sb-sub">{stale ? 'TYPE A WORD just updated. Reload to get it — your progress is saved.' : 'A quick step back usually fixes it. Your progress is safe.'}</div>
+              <button
+                type="button"
+                className="sb-back"
+                onClick={() => {
+                  if (stale) { try { window.location.reload(); } catch { /* noop */ } return; }
+                  try { resetError && resetError(); } catch { /* noop */ }
+                  if (onBack) onBack(); else { try { window.location.reload(); } catch { /* noop */ } }
+                }}
+              >
+                {stale ? 'RELOAD NOW' : '← GO BACK'}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      }}
     >
       {boomActive(name) ? <Boom name={name} /> : null}
       {children}

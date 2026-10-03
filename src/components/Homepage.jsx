@@ -1,5 +1,6 @@
 // Homepage.jsx
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazyWithReload } from '../lib/chunkReload';
 import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -29,7 +30,7 @@ import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
-const MarksIndex = lazy(() => import('./MarksIndex'));
+const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
 import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
@@ -51,8 +52,8 @@ import TrophyIcon from './TrophyIcon';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
-const RankUpMoment = lazy(() => import('../leaderboard/RankUpMoment.jsx'));
-const DevResetNotice = lazy(() => import('../leaderboard/DevResetNotice.jsx'));
+const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
+const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -581,6 +582,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // N4: every 100 levels the WALL re-forms (wallTier.js → WallScene). On the menu only — never mid-game —
   // so a 100 crossed inside a game plays when the player comes back here.
   useEffect(() => {
+    // within 10 levels of the next wall: warm its (lazy) choreography so the moment never waits on a fetch
+    if (wallTierFor(xpProgress.level + 10) > getWallTier()) import('./wallFx.jsx').catch(() => {});
     const t = setTimeout(() => noteWallLevel(xpProgress.level), wallWait());
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

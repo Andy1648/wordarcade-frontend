@@ -88,7 +88,8 @@ test('the re-form costs no more than double the menu at rest, at 4x CPU throttle
   test.setTimeout(60000);
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await boot(page, { 'taw.xp': JSON.stringify({ lv: 1, into: 0 }), 'taw.wallTierSeen': '1' });
+  // LV95: within 10 of the next wall, so the menu has already warmed the re-form's lazy chunk (as in play)
+  await boot(page, { 'taw.xp': JSON.stringify({ lv: 95, into: 0 }), 'taw.wallTierSeen': '1' });
   await page.waitForTimeout(2500); // let arrival settle
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
