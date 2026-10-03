@@ -133,3 +133,21 @@ test('storage failure → no throw, no earns', () => {
     globalThis.localStorage = saved;
   }
 });
+
+test('H6/H13: VOLUME counts CHAIN / FUSE words too (the mastery sum the player card shows)', () => {
+  // 0 in the WB/Blitz/SAT word counter, 1,200 words across CHAIN + FUSE mastery.
+  const wc = JSON.stringify({ v: 1, total: 0, byMode: {} });
+  const mastery = JSON.stringify({ chain: 700, fuse: 500 });
+  withStorage({ 'wa_words': wc, 'taw.mastery': mastery, 'taw.rebirths': '0', 'taw.wins': '0' }, () => {
+    const ids = checkAchievements().map((a) => a.id);
+    assert.ok(ids.includes('vol-1k'), 'WORDSMITH unlocks from solo-mode words');
+    assert.ok(!ids.includes('vol-10k'));
+  });
+});
+
+test('H6/H13: an older save whose word counter is ahead of mastery keeps its count', () => {
+  const wc = JSON.stringify({ v: 1, total: 1500, byMode: {} });
+  withStorage({ 'wa_words': wc, 'taw.mastery': JSON.stringify({ chain: 10 }), 'taw.rebirths': '0', 'taw.wins': '0' }, () => {
+    assert.ok(checkAchievements().map((a) => a.id).includes('vol-1k'));
+  });
+});

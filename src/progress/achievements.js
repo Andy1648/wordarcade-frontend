@@ -15,7 +15,7 @@ import { queueClaim, layerOpen, openLayer } from './claims.js';
 import { FORGE_UNLOCK_LEVEL } from './forge.js';
 import { loadProgress, getRebirths, getKeyTier } from './xp.js';
 import { collectionSummary } from './collection.js';
-import { masteryState, MASTERY_MODES } from './mastery.js';
+import { masteryState, masteryWords, MASTERY_MODES } from './mastery.js';
 import { getStreak } from './streak.js';
 import { bestWpmPlayed } from './wpm.js';
 
@@ -23,7 +23,14 @@ export const ACHIEVEMENTS_KEY = 'taw.achievements';
 
 // Build a single snapshot of everything the checks read (one pass over storage).
 export function achievementSnapshot() {
-  const words = (() => { try { return readWordCount().total || 0; } catch { return 0; } })();
+  // H6/H13: VOLUME counts every mode's accepted words. wordCount.addWords only runs for Word Bomb /
+  // Blitz / SAT, so a CHAIN / FUSE player stayed locked out of WORDSMITH while the player card (the
+  // mastery sum over all five modes) said "WORDS TYPED 14.6K". Take the larger of the two, so no
+  // existing save loses progress (the wordCount store predates per-mode mastery).
+  const counted = (() => { try { return readWordCount().total || 0; } catch { return 0; } })();
+  let masterySum = 0;
+  for (const m of MASTERY_MODES) masterySum += masteryWords(m) || 0;
+  const words = Math.max(counted, masterySum);
   const prog = loadProgress();
   const coll = collectionSummary(0);
   const mastery = {};
