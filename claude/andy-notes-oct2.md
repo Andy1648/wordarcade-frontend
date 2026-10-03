@@ -171,6 +171,25 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] 4. (13:35 DONE on feat/numbers-feel: one helper src/juice/countUp.js — 1.2 s → 2 s on a log scale of the jump, a new gain retargets the running count (never stacks), reduced motion/drops instant; used by the menu wins chip with a big '+N', level numeral, XP fill, WinnerPopup, the in-game wins pill, claim stamps (now 1.7 s), WordLanding, SAT results) COUNT-UP ANIMATIONS last longer ("so the user can see how much it's increasing by"): wins/XP/level gains count up over ~1.2–2 s scaled to the jump, with the "+amount" shown big. Finite, no stacking, reduced motion = instant.
 - [ ] 5. (13:35: visible half DONE on feat/numbers-feel a1c31c8 — '43.7%' with one decimal, a pooled '+X.X%' pop per credit, a flash + soft note at every 10%, the bar counts up from where it was when you left for a game; the movement check FAILED badly → Option F proposal at the top of ANDY TODO) HIGH-LEVEL BAR FEELS STAGNANT (Andy LV175: "bar just isn't moving"): show % to next level with a decimal, a "+X%" pop per word, a small milestone tick every 10% with a little reward feel. Sim: at LV150–250 the bar moves ≥0.5% per average word. If the existing-player numbers say the wait is too long, PROPOSE (don't apply) a fair one-time rescale with before/after per top player.
 
+## ANDY'S STANDING DIRECTIONS (oct3 17:48) — choose work by these when the checklist is empty; re-read before every fine-tune pass
+PATTERNS (most → least repeated):
+1. ADDICTIVE FEEL comes first: constant visible progress, escalation, gambling-feel moments (he LOVES marks/multipliers). Hook first, depth later.
+2. DON'T OVERDO IT (newest, said with frustration): "too extreme", "doing too much". Simple beats busy. Match the art style and palette. Cut before you add.
+3. NUMBERS MUST MAKE SENSE: base × named multipliers, the word "BASE", no caps, formatNum, every number the same everywhere.
+4. BIG + OBVIOUS + NO USELESS INFO: one big thing per screen, bigger type, no explanation of what a label already says.
+5. LEADERBOARD = the golden button: friends competing is the core loop.
+6. FAIRNESS to existing players: never wipe or punish progress.
+
+EXTENSIONS — each built DORMANT behind a flag (?name=1, like rollsFlag); try-it link logged in ANDY TODO; research 2–3 real games each first (cite links); sim anything economic on CI:
+- [ ] a. RIVAL PINGS: "XAVI PASSED YOU — 2 LEVELS BEHIND" on the menu when someone passes you on the board (board data already fetched).
+- [ ] b. NEAR-MISS HOOKS on the end screen: "3 WORDS TO LV 41", "NEXT KEY TIER IN 12 WORDS". One line, big, one tap to play again.
+- [ ] c. MILESTONE MOMENTS every 10 / 25 / 50 / 100 levels, escalating in size (moments queue; no new art).
+- [ ] d. REBIRTH LADDER on Stats: BASE → each rebirth's multiplier → next jump highlighted (Keyboard Escape style).
+- [ ] e. DAILY QUESTS (3/day, play-based, e.g. "WIN 1 WB ROUND") with a streak counter.
+- [ ] f. CHALLENGE LINK: share your score; the link drops a friend into a RACE against your run.
+
+CHECKUPS (every ~2 h while the goal runs): prod bundle has the latest merge; main CI green; board API sane (no 1e9, no test rows, real levels); a fresh LV1 profile plays a WB round end to end; no new console errors. One line per checkup at the top of this file.
+
 ## PROGRESSION v11 (Andy oct3 17:45) — OVERRIDES v10's power scaling
 - [ ] 1. THE XP NEEDED PER LEVEL NEVER SCALES WITH THE PLAYER. Remove P^0.95 from needAt (it made R8 LV16 cost 233M and LV1 start huge after a rebirth). need(n) = ONE fixed curve for everyone: exponential, every level a bit harder than the last, sized so a median player reaches a few hundred levels over weeks. Andy: "addicted first, room later".
 - [ ] 2. THE 4 KNOBS MUST MAKE SENSE TOGETHER: wins/word, XP/letter from the shop (KEY), rebirths, XP per level. Keep big exponential numbers in WINS (the fun). Keep XP gains modest and readable so upgrades visibly speed levels without blowing past the curve: KEY = clear % jumps, rebirth = a clear % XP boost + the level reset. Sim on CI (3 skills): no dead bar, no runaway, LV100 hours for a new player similar to a week ago, a rebirth re-climb that's fast at first (feels like a reward).
