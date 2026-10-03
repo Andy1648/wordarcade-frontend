@@ -66,7 +66,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
   const fBuys = forgeBuys(forge);
-  const forgeOpen = layerOpen('forge') || fBuys > 0;
+  // E4: systems open the moment they unlock (no claim step), so reaching the level IS open
+  const forgeOpen = layerOpen('forge') || fBuys > 0 || level >= FORGE_UNLOCK_LEVEL;
   const fCost = forgeCost(fBuys);
   const fNext = nextForgeLetter(forge);
   const fNextLv = (forge[fNext] || 0) + 1;
@@ -278,11 +279,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               <div className="shop-keypower shop-forge is-locked">
                 <div className="shop-kp-info">
                   <div className="shop-kp-next">
-                    {/* Past the level but not yet claimed: say where it is, never "opens at LV 8" to an
-                        LV 152 player (fine-tune oct2 reviewer caught the contradiction). */}
-                    {level >= FORGE_UNLOCK_LEVEL
-                      ? <><b>UNLOCKED</b> — CLAIM IT IN REWARDS TO OPEN IT</>
-                      : <><b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}</>}
+                    <b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}
                   </div>
                   <div className="shop-kp-rate">FORGE LETTERS: EVERY FORGED LETTER IN A WORD PAYS MORE. NO CAP.</div>
                 </div>
