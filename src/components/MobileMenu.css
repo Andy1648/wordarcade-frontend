@@ -394,6 +394,13 @@
   html[data-view='home'] .wall-paint-drip {
     display: none;
   }
+  /* N4: …except during a wall-tier re-form (html[data-wallfx], ~1.6s): the ornaments ARE the moment, so
+     they show while they fly to the new layout, then step out again with the dim. */
+  html[data-view='home'][data-wallfx] .wall-graffiti-tag,
+  html[data-view='home'][data-wallfx] .wall-splatter,
+  html[data-view='home'][data-wallfx] .wall-sticker {
+    display: block;
+  }
 
   /* The streetlight pool is sized for the desktop card grid; at this width it just washes
      the top third. The beat glow STAYS — it is the menu's one sanctioned beat moment. */
@@ -456,4 +463,34 @@
   .hp-m-navbtn:active {
     transform: none;
   }
+}
+
+/* N3 (Andy oct2): the LEADERBOARD on its own at the top-left of the title row — hero-size, with your rank */
+@media (max-width: 899px) {
+  .hp-m-top .hp-m-board-hero {
+    order: -1;
+    flex: 0 0 auto;
+    width: 60px;
+    min-height: 60px;
+    height: 60px;
+    padding: 0;
+  }
+  .hp-m-board-hero svg { width: 36px; height: 36px; }
+  .hp-m-board-rank {
+    position: absolute;
+    right: -10px;
+    bottom: -9px;
+    padding: 1px 5px;
+    font-family: 'Space Mono', monospace;
+  font-weight: 700;
+    font-size: var(--fs-label);
+    line-height: 1;
+    color: #000;
+    background: #FFE94A;
+    border: 2px solid #a8800f;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 #000;
+    transform: rotate(-4deg);
+  }
+  .hp-m-top .hp-m-title { flex: 1 1 auto; }
 }

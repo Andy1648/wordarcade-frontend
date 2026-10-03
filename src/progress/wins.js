@@ -76,8 +76,23 @@ function saveWinsCarry(n) {
 export function getWins() {
   return readInt(WINS_KEY);
 }
+// THE ONE WINS-BALANCE CHANNEL (W, Andy oct2 22:28): every write of the spendable balance — a credit,
+// a claim, a code, a purchase, a refund, a migration — goes through saveWins, and saveWins tells every
+// subscriber the new balance. The menu chip used to snapshot getWins() on mount and refresh only on a
+// menu keystroke, so a claim from STATS (an overlay over the still-mounted menu) never reached it.
+const balanceSubs = new Set();
 export function saveWins(n) {
   writeInt(WINS_KEY, n);
+  const v = getWins();
+  for (const fn of balanceSubs) {
+    try { fn(v); } catch { /* a bad subscriber must never break a write */ }
+  }
+}
+/** Subscribe to the spendable balance: fn(newBalance) after every change. Returns an unsubscribe. */
+export function subscribeBalance(fn) {
+  if (typeof fn !== 'function') return () => {};
+  balanceSubs.add(fn);
+  return () => balanceSubs.delete(fn);
 }
 export function getWinsLifetime() {
   return readInt(WINS_LIFETIME_KEY);

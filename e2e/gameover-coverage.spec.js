@@ -67,7 +67,7 @@ test.describe('game-over screens render without console errors (JOB 4)', () => {
   // shorten it — the run-over screen then appears deterministically in well under a second, with
   // no flaky 18s rAF wait.
   async function enterSolo(page, id) {
-    await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, into: 0 })); } catch { /* ignore */ } });
+    await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 })); } catch { /* ignore */ } });
     await page.goto('/?portal=1&soloms=350'); // dev clock cap → fast, deterministic run-over
     await menuReady(page);
     await page.waitForTimeout(400);

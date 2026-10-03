@@ -1,5 +1,6 @@
 // Homepage.jsx
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazyWithReload } from '../lib/chunkReload';
 import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -8,7 +9,8 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
-import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
+import { useWinsBalance } from '../progress/useWinsBalance';
+import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -22,12 +24,13 @@ import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } fro
 import ModeDialog from './ModeDialog';
 import MenuFrame from './MenuFrame';
 import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
+import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
 import LockedPreviewDialog from './LockedPreviewDialog';
 import RankLadder from './RankLadder';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
-const MarksIndex = lazy(() => import('./MarksIndex'));
+const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
 import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
@@ -44,12 +47,13 @@ import ClaimPopup from '../claims/ClaimPopup.jsx';
 import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
+import { formatNum } from '../format';
 import TrophyIcon from './TrophyIcon';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
-const RankUpMoment = lazy(() => import('../leaderboard/RankUpMoment.jsx'));
-const DevResetNotice = lazy(() => import('../leaderboard/DevResetNotice.jsx'));
+const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
+const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -307,8 +311,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       };
       // 182 keeps the card's content box over 170px, where GameCard.css's small-card container
       // queries start dropping the badge / lock sub-line — this gate forbids hiding text to fit.
+      // R1 (six cards — WORD RACE on for everyone): six 182px cards cannot share a 1163px row, and the
+      // squat 3x2 fallback cut the names. At ≤170px GameCard.css only restyles (padding, name size) and
+      // drops the perk tail — the badge, lock line and payout all stay — so six cards may go to 162 (a
+      // 152px content box: at ≤150 the payout's unit drops). card-fit's "no hidden text, ≥13px" gate
+      // is what holds this floor honest.
+      const floor = grid.querySelectorAll('.game-card-magnet').length >= 6 ? 162 : 182;
       return Math.max(
-        182,
+        floor,
         need(Math.max(xp.chunk, pay.chunk), 15, 10, 0.045, 18),
         need(foot.chunk, 13, 9, 0.035, 14),
       );
@@ -352,6 +362,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       const scroll = stage.querySelector('.homepage-cards-scroll');
       if (!region || !grid || !scroll) return;
       const minW = measureMinW(grid);
+      grid.setAttribute('data-minw', String(minW)); // the narrowest card that shows all its text (gates read it)
       const narrow = window.innerWidth < 360;
 
       // One arrangement pass: lay the stage out in `mode`, shrink the wordmark if `deficit` px of
@@ -448,6 +459,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         // data-cols lets the CSS centre a lone last card (a 2-col grid of five ends 2+2+1).
         grid.setAttribute('data-cols', String(best.cols));
         if (narrow) return { wide: 0, tall: 0, rows: best.rows };
+        // the row scrolls sideways, so width is never owed — but a full 3:4 height still is (the short
+        // arrangement + the wordmark shrink below pay it as far as they can)
         return { ...cardShortfall(grid), rows: best.rows };
       };
 
@@ -494,10 +507,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     dialogOpenRef.current = !!dialog;
   }, [dialog]);
-  // Wins balance shown in the chip. Seeded on mount, then kept LIVE: level-ups now pay wins
-  // while the player is still on the menu (see useXpCapture), so a mount-only snapshot would
-  // sit stale until a remount. onCredit below refreshes it (and the affordability dot).
-  const [wins, setWins] = useState(() => getWins());
+  // Wins balance shown in the chip — LIVE off the one balance channel (W, Andy oct2 22:28): a claim
+  // from STATS, a code, a purchase or a level-up payout all land here at once, no remount needed.
+  const wins = useWinsBalance();
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
@@ -512,16 +524,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
+  useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
   const { progress: xpProgress } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
-    // Fires on every credited keystroke/tap. getWins() only moves on a level-up payout, so
-    // the balance setState is a no-op (same value) until then — cheap to check each credit.
-    onCredit: () => {
-      const w = getWins();
-      setWins((prev) => (prev !== w ? w : prev));
-      setWinsAffordable(canAffordAny(w));
-    },
+    // (the wins chip no longer polls here — useWinsBalance above hears every balance change)
+    onCredit: () => {},
   });
   // THE FIVE SECRETS ARE NOT A MENU FEATURE ANY MORE (feat/cut-secrets-rarity). They used to
   // fire here and announce themselves as a centre-screen sticker over a modal backdrop — a
@@ -571,15 +579,32 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [frameFresh, setFrameFresh] = useState(false);
   const [framePunch, setFramePunch] = useState(0);
   const lastLevelRef = useRef(xpProgress.level);
+  // N4: every 100 levels the WALL re-forms (wallTier.js → WallScene). On the menu only — never mid-game —
+  // so a 100 crossed inside a game plays when the player comes back here.
+  useEffect(() => {
+    // within 10 levels of the next wall: warm its (lazy) choreography so the moment never waits on a fetch
+    if (wallTierFor(xpProgress.level + 10) > getWallTier()) import('./wallFx.jsx').catch(() => {});
+    const t = setTimeout(() => noteWallLevel(xpProgress.level), wallWait());
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xpProgress.level]);
+  // N4: ONE moment at a time. The wall's re-form waits for the menu to settle (the arrival wipe), and a
+  // menu tier-up that lands on the same level (LV100 is both) waits until the wall's moment is over.
+  const mountedAtRef = useRef(Date.now());
+  const wallWait = () => Math.max(0, 1800 - (Date.now() - mountedAtRef.current));
   useEffect(() => {
     const seen = getSeenTier();
     if (tier > Math.max(0, seen)) {
       setSeenTier(tier);
       setFrameFresh(true);
-      if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]);
+      const wallFirst = wallTierFor(xpProgress.level) > getWallTier();
+      const fire = () => { if (xpFxRef.current && xpFxRef.current.tierUp) xpFxRef.current.tierUp(TIER_NAMES[tier]); };
+      if (wallFirst) setTimeout(fire, wallWait() + 1850);
+      else fire();
     } else if (seen < tier) {
       setSeenTier(tier);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tier]);
   useEffect(() => {
     if (xpProgress.level > lastLevelRef.current) {
@@ -804,6 +829,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // STEP 47: after the push, compare my live rank with the last one this browser saw. A RISE shows
   // the "#12 → #7" moment once and badges the trophy until the board is opened.
   const [boardNews, setBoardNews] = useState(() => LEADERBOARD_ENABLED && hasRankNews());
+  // N3: the board icon wears your last known rank (#N) — re-read whenever rank news changes
+  const boardRank = LEADERBOARD_ENABLED ? getLastRank() : null;
   const [rankUp, setRankUp] = useState(null);
   // 012_admin_reset: the one-shot "reset by the dev" line, left by obeyDevReset before its reload
   const [devReset, setDevReset] = useState(() => LEADERBOARD_ENABLED && hasDevResetNotice());
@@ -944,6 +971,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onStats={handleStats}
             onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
             boardDot={boardNews}
+            boardRank={boardRank}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
             onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
@@ -963,6 +991,27 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* Corner nav — three WORD buttons (not glyphs), stacked in the top-right corner. Each
             is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
             auto (item 3). SHOP keeps its affordable-item dot. */}
+        {/* N3 (Andy oct2): the LEADERBOARD on its OWN, top-left — hero-size, with your rank — so it reads as
+            its own thing, not one more nav chip. It mirrors the corner nav's top-right offsets (a layout
+            relationship with the frame, not an orphan) and keeps .homepage-nav-btn.is-board for the gates. */}
+        {LEADERBOARD_ENABLED && onLeaderboard && (
+          <div className="homepage-board-corner">
+            <button
+              ref={boardLinkRef}
+              type="button"
+              className={`homepage-nav-btn is-board homepage-board-hero${navigating ? ' disabled' : ''}`}
+              onClick={handleLeaderboard}
+              onMouseEnter={() => sfx('hover')}
+              disabled={navigating}
+              aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardNews ? ' — your rank went up' : ''}`}
+              title="Leaderboard"
+            >
+              <TrophyIcon size={40} />
+              {boardRank && <span className="homepage-board-rank" aria-hidden="true">#{formatNum(boardRank)}</span>}
+              {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
+            </button>
+          </div>
+        )}
         <nav className="homepage-corner-nav" aria-label="Menu">
           {/* NO SEPARATE REWARDS BUTTON (Andy oct2 A4): claims happen through STATS. While anything is
               waiting, STATS wears the count badge and opens the claims; with nothing waiting it opens
@@ -1008,21 +1057,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             SHOP
             {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
-          {LEADERBOARD_ENABLED && onLeaderboard && (
-            <button
-              ref={boardLinkRef}
-              type="button"
-              className={`homepage-nav-btn is-board${navigating ? ' disabled' : ''}`}
-              onClick={handleLeaderboard}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label={`Open leaderboard${boardNews ? ' — your rank went up' : ''}`}
-              title="Leaderboard"
-            >
-              <TrophyIcon size={22} />
-              {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
-            </button>
-          )}
           {/* fix/visual-real item 4: the sound control JOINS the corner-nav cluster (SHOP / REBIRTH /
               STATS / audio) on the menu instead of floating as an orphan fixed button bottom-right —
               exactly the grouping CLAUDE.md's NO ORPHAN FIXED UI rule prescribes. The global fixed
@@ -1124,7 +1158,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         <div className="homepage-cards-region">
-          <div className="homepage-cards-scroll">
+          <div className="homepage-cards-scroll" data-count={GAMES.length}>
             <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
               {GAMES.map((game) => (
                 <GameCard

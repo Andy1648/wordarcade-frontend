@@ -1,6 +1,6 @@
 // fuseCards.jsx — FUSE death-card content (Job 14). Mirrors chainCards.jsx: a NORMAL card (the
 // last fragment + count) and a FIRST-RUN tutorial card (the rule, a worked example, and the goal)
-// so a player meeting FUSE for the first time (it unlocks at LV25) is taught, not just scored.
+// so a player meeting FUSE for the first time (it unlocks at LV100) is taught, not just scored.
 import './Solo.css';
 
 // One word of the worked example with its FRAGMENT highlighted in the accent yellow.

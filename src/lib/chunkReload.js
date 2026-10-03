@@ -19,6 +19,8 @@
 // resets it, and a blocked/absent store means we never reload at all (we cannot prove
 // we haven't already tried, and an unguarded reload is worse than the error).
 
+import { lazy } from 'react';
+
 // Bumping this key would re-arm the reload for every open tab — treat it as permanent.
 const RELOAD_FLAG_KEY = 'taw.chunkReload';
 
@@ -61,12 +63,68 @@ export function reloadOnceForStaleChunk() {
   } catch {
     return false; // storage blocked → we can't guard the loop, so we don't reload
   }
+  reloading = true;
+  // G1 (Andy oct3): a reload alone can land on the SAME stale build — the service worker answers the
+  // navigation from its precache. Ask it to fetch the new deploy first (bounded: never wait > 1.5s).
+  const go = () => {
+    try { window.location.reload(); } catch { /* nothing more we can do */ }
+  };
   try {
-    window.location.reload();
+    const sw = typeof navigator !== 'undefined' && navigator.serviceWorker;
+    if (sw && typeof sw.getRegistration === 'function') {
+      const timer = setTimeout(go, 1500);
+      sw.getRegistration()
+        .then((r) => (r && typeof r.update === 'function' ? r.update() : null))
+        .catch(() => null)
+        .then(() => { clearTimeout(timer); go(); });
+      return true;
+    }
   } catch {
-    return false;
+    /* fall through to a plain reload */
   }
+  go();
   return true;
+}
+
+let reloading = false;
+/** True once the one stale-chunk reload has started in this page (it is on its way). */
+export function isReloadingForStaleChunk() {
+  return reloading;
+}
+
+/** The error a lazy screen throws when its chunk is stale and no reload is left — the crash fallback
+ *  reads `name` to say "NEW VERSION" instead of "SOMETHING BROKE". */
+export class StaleChunkError extends Error {
+  constructor(what) {
+    super(`Failed to fetch dynamically imported module: ${what} (stale build)`);
+    this.name = 'StaleChunkError';
+  }
+}
+
+/**
+ * React.lazy for a route/overlay chunk, hardened for deploys (G1, Andy oct3 — Sentry JAVASCRIPT-REACT
+ * H/J/K: "Failed to fetch dynamically imported module", "reading 'default'", "destructure …").
+ * React.lazy hands a rejected import to the ERROR BOUNDARY, not to `unhandledrejection`, so the guard
+ * below never saw it; and when vite:preloadError DID start a reload it resolved the import to
+ * undefined, so React crashed reading `.default` before the reload landed. Here a failed OR empty
+ * chunk is treated as stale: while the one guarded reload runs the screen stays SUSPENDED (its loading
+ * fallback, never a broken screen); with the retry spent it throws StaleChunkError, which the root
+ * fallback shows as "NEW VERSION — RELOAD".
+ */
+export function lazyWithReload(factory, what = 'screen') {
+  return lazy(() =>
+    Promise.resolve()
+      .then(factory)
+      .then((m) => {
+        if (!m || m.default === undefined) throw new StaleChunkError(what);
+        return m;
+      })
+      .catch((err) => {
+        const stale = err instanceof StaleChunkError || isStaleChunkError(err);
+        if (stale && (isReloadingForStaleChunk() || reloadOnceForStaleChunk())) return new Promise(() => {});
+        throw stale && !(err instanceof StaleChunkError) ? new StaleChunkError(what) : err;
+      }),
+  );
 }
 
 /**

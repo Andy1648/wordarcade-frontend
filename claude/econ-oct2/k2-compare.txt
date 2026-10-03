@@ -1,0 +1,43 @@
+skill   window metric               before     after
+casual  10m    maxGapMin              0.73      0.73
+casual  10m    worstKeyEtaMin       285.52    285.52
+casual  10m    worstShopEtaMin       11.86     11.86
+casual  1h     maxGapMin              0.80      0.83  WORSE
+casual  1h     worstKeyEtaMin        19.77     19.53
+casual  1h     worstShopEtaMin        2.21      1.99
+casual  20h    maxGapMin              5.00      4.93
+casual  20h    worstKeyEtaMin        39.28     40.01  WORSE
+casual  20h    worstShopEtaMin        6.29      5.93
+casual  5h     maxGapMin              2.97      2.54
+casual  5h     worstKeyEtaMin        24.88     29.71  WORSE
+casual  5h     worstShopEtaMin        3.24      3.69  WORSE
+casual  all    runawayFails           4.00      3.80
+median  10m    maxGapMin              0.38      0.38
+median  10m    worstKeyEtaMin       122.11    122.11
+median  10m    worstShopEtaMin        2.50      2.50
+median  1h     maxGapMin              0.78      0.78
+median  1h     worstKeyEtaMin        23.50     23.53  WORSE
+median  1h     worstShopEtaMin        1.01      1.11  WORSE
+median  20h    maxGapMin              4.62      4.48
+median  20h    worstKeyEtaMin        42.56     42.86  WORSE
+median  20h    worstShopEtaMin        2.91      2.92  WORSE
+median  5h     maxGapMin              2.70      2.74  WORSE
+median  5h     worstKeyEtaMin        27.39     27.77  WORSE
+median  5h     worstShopEtaMin        1.75      1.83  WORSE
+median  all    runawayFails           0.40      0.40
+strong  10m    maxGapMin              0.27      0.27
+strong  10m    worstKeyEtaMin       250.53    250.53
+strong  10m    worstShopEtaMin        1.42      1.42
+strong  1h     maxGapMin              0.78      0.78
+strong  1h     worstKeyEtaMin        34.68     34.63
+strong  1h     worstShopEtaMin        0.35      0.32
+strong  20h    maxGapMin              3.14      3.14
+strong  20h    worstKeyEtaMin        43.91     43.91
+strong  20h    worstShopEtaMin        1.54      1.54
+strong  5h     maxGapMin              1.93      1.93
+strong  5h     worstKeyEtaMin        77.41     77.41
+strong  5h     worstShopEtaMin        1.01      1.00
+strong  all    runawayFails           0.40      0.40
+
+WORSE windows: 11
+VERDICT: HOLD (rule P)

@@ -5,10 +5,10 @@ import { test, expect } from '@playwright/test';
 import { gotoMenu } from './support/backendMock.js';
 import { modeEntry } from './support/menu.js';
 
-// Seed a high level before first paint so CHAIN (LV2) and FUSE (LV3) are unlocked.
+// Seed a high level before first paint so CHAIN (LV50) and FUSE (LV100) are unlocked.
 async function gotoUnlockedMenu(page) {
   await page.addInitScript(() => {
-    try { localStorage.setItem('taw.xp', '5000000'); } catch { /* ignore */ }
+    try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 })); } catch { /* ignore */ }
   });
   await gotoMenu(page);
 }

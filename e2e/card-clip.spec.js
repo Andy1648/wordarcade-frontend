@@ -51,7 +51,7 @@ for (const { w, h } of VIEWPORTS) {
     await menuReady(page);
     await page.waitForTimeout(300);
     const cards = await perCardMargins(page);
-    expect(cards.length).toBe(5);
+    expect(cards.length).toBe(6); // R1: WORD RACE is on for everyone
     for (const c of cards) {
       // eslint-disable-next-line no-console
       console.log(`[card-clip ${w}x${h}] ${c.name}: worst=${c.worst}px @${c.worstAnc}`);

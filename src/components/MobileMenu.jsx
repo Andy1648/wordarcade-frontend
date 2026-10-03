@@ -21,6 +21,7 @@
 import AudioControls from './AudioControls';
 import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
+import { formatNum } from '../format';
 import TrophyIcon from './TrophyIcon';
 import WordHook from './WordHook';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
@@ -169,6 +170,7 @@ export default function MobileMenu({
   hookPlayLabel = null,
   onLeaderboard = null,
   boardDot = false,
+  boardRank = null,
   boardRef,
   navLayout = 'top',
   rewardsCount = 0,
@@ -186,6 +188,22 @@ export default function MobileMenu({
       {/* 1. TITLE + the sound toggle, sharing one row. The toggle JOINS this cluster rather
              than floating as its own fixed control (CLAUDE.md: NO ORPHAN FIXED UI). */}
       <div className="hp-m-top">
+        {/* N3 (Andy oct2): the LEADERBOARD on its own, top-left, hero-size with your rank — first in the
+            title row (a cluster member, not an orphan); keeps .hp-m-navbtn.is-board for the gates */}
+        {onLeaderboard && (
+          <button
+            ref={boardRef}
+            type="button"
+            className={`hp-m-navbtn is-board hp-m-board-hero${navigating ? ' is-disabled' : ''}`}
+            onClick={onLeaderboard}
+            disabled={navigating}
+            aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardDot ? ' — your rank went up' : ''}`}
+          >
+            <TrophyIcon size={34} />
+            {boardRank && <span className="hp-m-board-rank" aria-hidden="true">#{formatNum(boardRank)}</span>}
+            {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
+          </button>
+        )}
         <h1 className="hp-m-title">
           TYPE A
           <br />
@@ -326,19 +344,6 @@ export default function MobileMenu({
           SHOP
           {shopDot && <span className="hp-m-dot" aria-hidden="true" />}
         </button>
-        {onLeaderboard && (
-          <button
-            ref={boardRef}
-            type="button"
-            className={`hp-m-navbtn is-board${navigating ? ' is-disabled' : ''}`}
-            onClick={onLeaderboard}
-            disabled={navigating}
-            aria-label={`Open leaderboard${boardDot ? ' — your rank went up' : ''}`}
-          >
-            <TrophyIcon size={24} />
-            {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
-          </button>
-        )}
         {onRebirth && (
           <button
             ref={rebirthRef}

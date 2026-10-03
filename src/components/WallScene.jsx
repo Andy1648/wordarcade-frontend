@@ -9,7 +9,7 @@
 // frequent parent re-render - e.g. the Word Bomb tension class flipping every
 // second - never reshuffles a fresh random layout. React just swaps the
 // `intensity` class on the container; the DOM nodes are stable.
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { StickerInner } from './decor/Stickers';
 import GraffitiTag from './decor/GraffitiTag';
 import {
@@ -19,7 +19,7 @@ import {
   PaintSplatter5,
 } from './decor/PaintSplatters';
 import { scenePositions } from '../progress/sceneLayout';
-import { getSeenTier, SCENE_EVENT } from '../progress/menuTier';
+import { getWallTier, WALL_EVENT } from '../progress/wallTier';
 import './WallScene.css';
 
 // ---- Self-writing graffiti: words that spray-paint themselves onto the wall
@@ -116,30 +116,34 @@ function placed(tier) {
     stickers: STICKERS.map((x, i) => at(x, t0 + i)),
   };
 }
-const SWISH_MS = 820;
 
-/** One full-wall pane of the static decor, laid out for `tier`. Memoised: it only changes with its tier. */
-const DecorPane = memo(function DecorPane({ tier, className = '' }) {
+/** One full-wall pane of the static decor, laid out for `tier`. Memoised: it only changes with its tier.
+ *  N4: every piece sits in a zero-size `.wall-piece` wrapper that carries its POSITION, so the piece keeps
+ *  its own rotation and the wall-tier transition can move the wrapper with a pure transform. */
+const DecorPane = memo(function DecorPane({ tier, className = '', paneRef = null }) {
   const { splatters, tags, stickers } = placed(tier);
+  let n = 0;
+  const at = (x) => ({ top: `${x.top}%`, left: `${x.left}%` });
   return (
-    <div className={`wall-decor-pane ${className}`}>
+    <div ref={paneRef} className={`wall-decor-pane ${className}`}>
       {/* Detailed spray-paint splatters (organic blob + droplets + drips). */}
       {splatters.map((sp, i) => {
         const Splat = sp.comp;
         return (
-          <div
-            key={`splat${i}`}
-            className="wall-splatter"
-            style={{
-              top: `${sp.top}%`,
-              left: `${sp.left}%`,
-              width: `${sp.size}px`,
-              height: `${sp.size}px`,
-              opacity: sp.op,
-              transform: `rotate(${sp.rot}deg)`,
-            }}
-          >
-            <Splat color={sp.color} className="wall-splatter-svg" />
+          <div key={`splat${i}`} className="wall-piece" data-i={n++} style={at(sp)}>
+            <div
+              className="wall-splatter"
+              style={{
+                top: 0,
+                left: 0,
+                width: `${sp.size}px`,
+                height: `${sp.size}px`,
+                opacity: sp.op,
+                transform: `rotate(${sp.rot}deg)`,
+              }}
+            >
+              <Splat color={sp.color} className="wall-splatter-svg" />
+            </div>
           </div>
         );
       })}
@@ -147,42 +151,53 @@ const DecorPane = memo(function DecorPane({ tier, className = '' }) {
       {/* Spray-painted graffiti tags - each enhanced with per-letter rotation,
           paint drips and an overspray haze so it reads as hand-sprayed, not typed. */}
       {tags.map((t, i) => (
-        <GraffitiTag
-          key={`tag${i}`}
-          word={t.word}
-          fill={t.c.fill}
-          line={t.c.line}
-          size={t.size}
-          top={t.top}
-          left={t.left}
-          rotation={t.rot}
-          opacity={t.op}
-          drip={t.drip}
-        />
+        <div key={`tag${i}`} className="wall-piece" data-i={n++} style={at(t)}>
+          <GraffitiTag
+            word={t.word}
+            fill={t.c.fill}
+            line={t.c.line}
+            size={t.size}
+            top={0}
+            left={0}
+            rotation={t.rot}
+            opacity={t.op}
+            drip={t.drip}
+          />
+        </div>
       ))}
 
       {/* Stickers - each a static inline SVG at its resting tilt. */}
       {stickers.map((st, i) => (
-        <svg
-          key={`stk${i}`}
-          className="wall-sticker"
-          viewBox="-50 -50 100 100"
-          aria-hidden="true"
-          style={{
-            top: `${st.top}%`,
-            left: `${st.left}%`,
-            width: `${st.size}px`,
-            height: `${st.size}px`,
-            opacity: st.op,
-            '--rot': `${st.rot}deg`,
-          }}
-        >
-          <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
-        </svg>
+        <div key={`stk${i}`} className="wall-piece" data-i={n++} style={at(st)}>
+          <svg
+            className="wall-sticker"
+            viewBox="-50 -50 100 100"
+            aria-hidden="true"
+            style={{
+              top: 0,
+              left: 0,
+              width: `${st.size}px`,
+              height: `${st.size}px`,
+              opacity: st.op,
+              '--rot': `${st.rot}deg`,
+            }}
+          >
+            <StickerInner kind={st.kind} fill={st.c.fill} line={st.c.line} />
+          </svg>
+        </div>
       ))}
     </div>
   );
 });
+
+// ---- N4 (Andy oct2): THE WALL RE-FORMS every 100 levels -----------------------------------------------
+// The choreography + the level stamp live in ./wallFx.jsx, loaded only when a wall tier is crossed (once
+// per 100 levels) — it stays out of every page's initial payload (payload-budget ratchet).
+export const WALL_FX_MS = 1650;
+function flatPositions(tier) {
+  const { splatters, tags, stickers } = placed(tier);
+  return [...splatters, ...tags, ...stickers].map((x) => ({ top: x.top, left: x.left }));
+}
 
 /**
  * @param {object} props
@@ -196,33 +211,47 @@ function WallScene({ intensity = 'calm', resetKey }) {
   const [tags, setTags] = useState([]);
   const tagIdRef = useRef(0);
 
-  // The scene's tier = the best menu tier this player has SEEN (menuTier.js). When the menu sees a
-  // new one, the old layout and the new one sit stacked in ONE element that translates up one wall
-  // height — a single finite transform, will-change only while it runs (.is-swish). Reduced motion:
-  // the new layout simply appears.
-  const [scene, setScene] = useState(() => Math.max(0, getSeenTier()));
-  const [swish, setSwish] = useState(null); // { from, key } while the swish runs
+  // The scene = the WALL TIER this browser has reached (wallTier.js: one per 100 levels, never back).
+  // Crossing into a new one re-renders the pane in the new layout and plays the re-form (runWallFx)
+  // from the old positions. Reduced motion: no flight — the wall lights up in its new layout, the stamp
+  // names it, and it settles (opacity only).
+  const [scene, setScene] = useState(() => getWallTier());
   const sceneRef = useRef(scene);
+  const paneRef = useRef(null);
+  const fxRef = useRef(null); // { from, to } waiting for the new layout to render
   useEffect(() => {
-    let t = null;
     const onTier = (e) => {
       const next = Math.max(0, Math.floor(Number(e && e.detail && e.detail.tier) || 0));
       const prev = sceneRef.current;
       if (next <= prev) return;
       sceneRef.current = next;
-      setScene(next);
       const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduce) return;
-      setSwish({ from: prev, key: Date.now() });
-      clearTimeout(t);
-      t = setTimeout(() => setSwish(null), SWISH_MS + 60);
+      fxRef.current = { from: prev, to: next, reduce };
+      setScene(next);
     };
-    window.addEventListener(SCENE_EVENT, onTier);
-    return () => {
-      window.removeEventListener(SCENE_EVENT, onTier);
-      clearTimeout(t);
-    };
+    window.addEventListener(WALL_EVENT, onTier);
+    return () => window.removeEventListener(WALL_EVENT, onTier);
   }, []);
+  const [stamp, setStamp] = useState(null); // { to, key, Stamp } while the level stamp shows
+  useLayoutEffect(() => {
+    const fx = fxRef.current;
+    if (!fx || fx.to !== scene) return undefined;
+    fxRef.current = null;
+    // the OLD layout's positions are data (flatPositions), so the new pane can render now and the
+    // choreography arrive a moment later (a lazy chunk) — the pieces start from where they were
+    let live = true;
+    const timers = [];
+    import('./wallFx.jsx')
+      .then((m) => {
+        if (!live) return;
+        m.runWallFx(paneRef.current, flatPositions(fx.from), flatPositions(fx.to), { reduce: fx.reduce });
+        setStamp({ to: fx.to, key: Date.now(), Stamp: m.WallStamp });
+        timers.push(setTimeout(() => m.landSound(), 900));
+        timers.push(setTimeout(() => live && setStamp(null), WALL_FX_MS));
+      })
+      .catch(() => { /* offline / stale chunk: the new wall is already laid out — just no flight */ });
+    return () => { live = false; timers.forEach(clearTimeout); };
+  }, [scene]);
 
   // WallScene is mounted ONCE and persists across every screen (it never
   // unmounts), so without this the self-written tags accumulate for the whole
@@ -356,14 +385,12 @@ function WallScene({ intensity = 'calm', resetKey }) {
       {/* ===== MID layer: tags, splatters, stickers. Moderate travel, WITH the
           cursor. ===== */}
       <div className="wall-parallax-layer wall-layer-mid">
-        {/* The static decor, laid out for the scene's tier. During a tier climb the OLD layout
-            sits on top and the NEW one a wall-height below it, and the stack moves up once. */}
-        {/* Panes are keyed by TIER, so the layout already on screen is kept (not re-mounted) as the
-            old pane — only the new layout mounts when a swish starts. */}
-        <div className={`wall-decor-stack${swish ? ' is-swish' : ''}`} data-scene={scene}>
-          {swish && <DecorPane key={`t${swish.from}`} tier={swish.from} className="is-old" />}
-          <DecorPane key={`t${scene}`} tier={scene} className="is-new" />
+        {/* The static decor, laid out for the WALL TIER (one per 100 levels). ONE pane, never re-mounted:
+            a new tier re-renders it in the new layout and runWallFx flies every piece in from where it was. */}
+        <div className="wall-decor-stack" data-scene={scene}>
+          <DecorPane key="pane" tier={scene} className="is-new" paneRef={paneRef} />
         </div>
+        {stamp && stamp.Stamp ? <stamp.Stamp fx={stamp} /> : null}
 
         {/* Self-writing graffiti: each tag draws its outline stroke-by-stroke,
             then the fill spray-fills in (see graffiti-draw in the CSS). */}

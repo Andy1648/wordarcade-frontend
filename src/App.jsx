@@ -1,18 +1,19 @@
 // App.jsx
-import { useState, useEffect, useRef, useMemo, useCallback, useReducer, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useReducer, Suspense } from 'react';
+import { lazyWithReload } from './lib/chunkReload';
 import Homepage from './components/Homepage';
 // Deferred screens: none are on the first-paint path (splash -> menu). Lazy-loading
 // them (esp. the 4k-line GameScreen, which drags the whole share/result-card render
 // subtree with it) carves the majority of the app out of the initial JS chunk. They
 // are warmed on idle right after paint (see the prefetch effect) so navigation into a
 // room/game shows no Suspense flash.
-const LobbyScreen = lazy(() => import('./components/LobbyScreen'));
-const PublicRoomsScreen = lazy(() => import('./components/PublicRoomsScreen'));
-const RoomScreen = lazy(() => import('./components/RoomScreen'));
-const GameScreen = lazy(() => import('./components/GameScreen'));
+const LobbyScreen = lazyWithReload(() => import('./components/LobbyScreen'), 'LobbyScreen');
+const PublicRoomsScreen = lazyWithReload(() => import('./components/PublicRoomsScreen'), 'PublicRoomsScreen');
+const RoomScreen = lazyWithReload(() => import('./components/RoomScreen'), 'RoomScreen');
+const GameScreen = lazyWithReload(() => import('./components/GameScreen'), 'GameScreen');
 // WORD RACE (dark-launched, ?race=1): its board + lobby are only reachable once a race room exists.
-const WordRaceScreen = lazy(() => import('./race/WordRaceScreen'));
-const WordRaceLobby = lazy(() => import('./race/WordRaceLobby'));
+const WordRaceScreen = lazyWithReload(() => import('./race/WordRaceScreen'), 'WordRaceScreen');
+const WordRaceLobby = lazyWithReload(() => import('./race/WordRaceLobby'), 'WordRaceLobby');
 import { raceReducer } from './race/raceState';
 import { WORD_RACE_ID } from './race/config';
 import { bankRaceWord } from './race/racePayout';
@@ -24,24 +25,24 @@ import LoadingScreen from './components/LoadingScreen';
 import { markAppReady } from './lib/bootReady.js';
 import AudioControls from './components/AudioControls';
 import { sndWordAccepted, sndWordRejected, sndRunOver, sndAchievement } from './audio/gameSounds';
-const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
+const CreditsScreen = lazyWithReload(() => import('./components/CreditsScreen'), 'CreditsScreen');
 // StatsScreen now hosts COLLECTION and ACHIEVEMENTS as tabs (consolidated from their old standalone
 // views/footer links), so their bodies are imported by StatsScreen, not lazily as top-level views.
-const StatsScreen = lazy(() => import('./components/StatsScreen'));
-const LeaderboardScreen = lazy(() => import('./components/LeaderboardScreen'));
-const ShopScreen = lazy(() => import('./components/ShopScreen'));
+const StatsScreen = lazyWithReload(() => import('./components/StatsScreen'), 'StatsScreen');
+const LeaderboardScreen = lazyWithReload(() => import('./components/LeaderboardScreen'), 'LeaderboardScreen');
+const ShopScreen = lazyWithReload(() => import('./components/ShopScreen'), 'ShopScreen');
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
-const SatRushGame = lazy(() => import('./satRush/SatRushGame'));
+const SatRushGame = lazyWithReload(() => import('./satRush/SatRushGame'), 'SatRushGame');
 // CHAIN / FUSE (solo word modes, flag-gated). Lazy — the 357KB word chunk they pull
 // must never touch the menu's first paint.
-const ChainGame = lazy(() => import('./solo/ChainGame'));
-const FuseGame = lazy(() => import('./solo/FuseGame'));
+const ChainGame = lazyWithReload(() => import('./solo/ChainGame'), 'ChainGame');
+const FuseGame = lazyWithReload(() => import('./solo/FuseGame'), 'FuseGame');
 // CrazyGames zero-click direct entry (?cg=1). Lazy so the default (no-flag)
 // bundle is unchanged — the arm screen only ever loads on a cg session.
-const CgArmScreen = lazy(() => import('./components/CgArmScreen'));
+const CgArmScreen = lazyWithReload(() => import('./components/CgArmScreen'), 'CgArmScreen');
 // The room-mode deep-link boot screen (/word-bomb/play, /category-blitz/play). Lazy like CgArmScreen:
 // it is off the default first-paint path (splash -> menu) and only a deep link ever mounts it.
-const DeepLandScreen = lazy(() => import('./components/DeepLandScreen'));
+const DeepLandScreen = lazyWithReload(() => import('./components/DeepLandScreen'), 'DeepLandScreen');
 import SplashScreen from './components/SplashScreen';
 import TransitionIntro from './components/TransitionIntro';
 // Eager (not lazy): KnifeSplit must cover the menu on the FIRST frame after the

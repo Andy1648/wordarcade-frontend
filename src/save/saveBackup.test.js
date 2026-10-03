@@ -117,5 +117,5 @@ test('PROGRESS_KEYS excludes the five device/UX keys', () => {
   for (const dev of ['taw.seenWinsHint', 'taw.sfxEvents', 'taw.clack', 'taw.audioVolume', 'taw.musicMuted']) {
     assert.ok(!PROGRESS_KEYS.includes(dev), `${dev} must not be a progress key`);
   }
-  assert.equal(PROGRESS_KEYS.length, 43); // +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2)
+  assert.equal(PROGRESS_KEYS.length, 44); // +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2); +wallTierSeen (N4)
 });

@@ -30,7 +30,7 @@ import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
-import { getMyProfile } from '../leaderboard/client';
+import { getMyProfile, selfReset } from '../leaderboard/client';
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -82,19 +82,24 @@ function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
   ];
 }
 
-// RESET ALL PROGRESS: wipe every taw.* key (xp, level, wins, purchases, rebirths, lifetime
-// stats — all live under the taw. namespace) and hard-reload so every screen re-reads zeros.
-// Wrapped so a blocked/absent store can't throw; the reload still fires.
-function resetAllProgress() {
+// RESET ALL PROGRESS: wipe every taw.* key (xp, level, wins, purchases, rebirths, lifetime stats — all
+// live under the taw. namespace) and hard-reload so every screen re-reads zeros. N2 (Andy oct2): with a
+// claimed name it also resets the BOARD ROW and the CLOUD SAVE (client.selfReset → 014 lb_self_reset,
+// the admin reset path) and keeps the name. Never throws; the reload always fires.
+async function resetAllProgress() {
   try {
-    const doomed = [];
-    for (let i = 0; i < localStorage.length; i += 1) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('taw.')) doomed.push(k);
-    }
-    doomed.forEach((k) => localStorage.removeItem(k));
+    await selfReset();
   } catch {
-    /* storage blocked — nothing to clear */
+    try {
+      const doomed = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('taw.')) doomed.push(k);
+      }
+      doomed.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* storage blocked — nothing to clear */
+    }
   }
   try {
     window.location.reload();
@@ -459,6 +464,7 @@ export default function StatsScreen({ onBack }) {
                 <p className="stats-danger-warn">
                   THIS <b>NUKES EVERYTHING</b> — XP, LEVEL, WINS, EVERY PURCHASE,
                   EVERY REBIRTH, EVERY LIFETIME STAT. GONE FOR GOOD. NO TAKEBACKS.
+                  {getMyProfile() && <> YOUR BOARD ROW GOES BACK TO LV 1 TOO — YOUR NAME STAYS.</>}
                 </p>
                 <div className="stats-danger-actions">
                   <button type="button" className="stats-reset-confirm" onClick={resetAllProgress}>

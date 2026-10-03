@@ -16,7 +16,8 @@ import './theme/arcane.css'
 import { initTheme } from './theme/themes'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'
-import { installChunkReloadGuard } from './lib/chunkReload'
+import { installChunkReloadGuard, isStaleChunkError } from './lib/chunkReload'
+import { installSwUpdateReload } from './lib/swUpdate'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths } from './progress/xp'
 import { migrateEconomyV9 } from './progress/econMigrate'
@@ -33,6 +34,9 @@ import { getStreak } from './progress/streak'
 // lazy screen it opens rejects with "Failed to fetch dynamically imported module". One reload
 // picks up the new index and fixes it; the guard inside caps that at one reload per tab.
 try { installChunkReloadGuard() } catch { /* never block startup */ }
+// A service worker that just updated is still showing the previous deploy — reload onto the new one (on
+// the menu only). See lib/swUpdate.js.
+try { installSwUpdateReload() } catch { /* never block startup */ }
 
 // Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
 // player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.
@@ -85,7 +89,9 @@ afterLoad(() => idle(() => {
 
 // On-brand crash screen shown by the root ErrorBoundary if a render throws, so a crash
 // reports to Sentry (once it is up) AND shows this instead of a blank white page.
-function CrashFallback() {
+function CrashFallback({ error }) {
+  // G1: a stale build is not a crash — say what it is (a new version is out) and offer the reload
+  const stale = !!error && (error.name === 'StaleChunkError' || isStaleChunkError(error))
   return (
     <div
       style={{
@@ -95,9 +101,9 @@ function CrashFallback() {
         textAlign: 'center', padding: '24px',
       }}
     >
-      <div style={{ fontSize: '40px' }}>SOMETHING BROKE.</div>
+      <div style={{ fontSize: '40px' }}>{stale ? 'NEW VERSION READY.' : 'SOMETHING BROKE.'}</div>
       <div style={{ color: '#2EFFE0', fontFamily: "'Space Mono', monospace", fontSize: '16px' }}>
-        The page hit a snag. A quick reload usually fixes it.
+        {stale ? 'TYPE A WORD just updated. Reload to get it — your progress is saved.' : 'The page hit a snag. A quick reload usually fixes it.'}
       </div>
       <button
         onClick={() => window.location.reload()}
@@ -108,7 +114,7 @@ function CrashFallback() {
           minHeight: '44px',
         }}
       >
-        RELOAD
+        {stale ? 'RELOAD NOW' : 'RELOAD'}
       </button>
     </div>
   )
@@ -151,7 +157,7 @@ window.addEventListener('resize', applyAppScale);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ErrorBoundary fallback={<CrashFallback />}>
+    <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>
       <App />
     </ErrorBoundary>
   </React.StrictMode>,

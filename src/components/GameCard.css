@@ -580,6 +580,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   left: 0;
   right: 0;
   padding: clamp(9px, 3.5cqw, 14px);
+  /* +3px on top: "SAT RUSH" runs at line-height 0.86, so its glyphs sit ~7px above the line box — on
+     the narrower six-card row (R1) they reached 1.5px into the card border */
+  padding-top: calc(clamp(9px, 3.5cqw, 14px) + 3px);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -652,7 +655,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    width (container-type: inline-size), so it fires on real card size, not viewport. */
 @container (max-width: 170px) {
   .game-card-titlebar { padding: clamp(12px, 9cqw, 20px) clamp(6px, 5cqw, 12px) clamp(6px, 4cqw, 10px); }
-  .game-card-masthead { padding: clamp(5px, 4cqw, 10px); }
+  .game-card-masthead { padding: clamp(5px, 4cqw, 10px); padding-top: calc(clamp(5px, 4cqw, 10px) + 3px); }
   /* cqw is a share of the card's CONTENT box (~92px at 390x844), not its border box — 20cqw
      landed at 18.4px there. 26cqw puts the name at 24px on that card and still floors at 12
      on the 58px card a 320px screen gives. */

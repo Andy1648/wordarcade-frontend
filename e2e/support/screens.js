@@ -75,7 +75,7 @@ export async function bootRoom(page, gameType, players) {
   return mock;
 }
 export async function enterSolo(page, id) {
-  await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, into: 0 })); } catch { /* ignore */ } });
+  await page.addInitScript(() => { try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 100, into: 0 })); } catch { /* ignore */ } });
   await installBackendMock(page);
   // Either width: the desktop card or the phone's CHAIN | FUSE half — both open the same solo
   // mode dialog, whose PLAY button enters the mode (support/menu.js modeEntry).
@@ -106,8 +106,8 @@ export const SCREENS = [
   { name: 'menu', root: '.homepage-wrap', overlay: false, nav: async (page) => bootMenu(page, 40) },
   { name: 'dialog-word-bomb', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'word-bomb').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'dialog-category-blitz', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'category-blitz').click(); await page.locator('.ppp-picker').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-chain', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'chain').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-fuse', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'fuse').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'dialog-chain', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 100); await card(page, 'chain').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'dialog-fuse', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 100); await card(page, 'fuse').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'locked-chain', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('chain')); await card(page, 'chain').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'locked-fuse', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('fuse')); await card(page, 'fuse').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'credits', root: '.credits-wrap', overlay: true, nav: async (page) => { await bootMenu(page, 40); await navControl(page, 'credits').click(); await page.locator('.credits-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },

@@ -582,6 +582,15 @@ html[data-beat='true'] .homepage-logo {
   overflow: visible;
 }
 
+/* R1 (Andy oct2): SIX cards (WORD RACE on for everyone). The row runs the narrowest gutter menu-frame
+   allows (16px) and a 10px gap so six cards keep their 160px text floor down to 1163 wide; otherwise the
+   fit-math falls back to a squat 3x2 grid that clips the names. */
+.homepage-cards-scroll[data-count='6'],
+.homepage-stage[data-fit='short'] .homepage-cards-scroll[data-count='6'] {
+  --gap: clamp(8px, 0.9vw, 20px);
+  padding: 0 16px;
+}
+
 /* (fix/logic-and-onboarding) the "N MORE" pager + its `.homepage-cards-more` styles were
    removed — all five cards are sized to fit one screen, so the pager is vestigial. */
 
@@ -1257,3 +1266,43 @@ html[data-beat='true'] .homepage-beat-glow {
    moment became a lazy chunk: the dot is always on the menu, the moment almost never.) */
 .homepage-shop-dot.is-board-news,
 .hp-m-dot.is-board-news { background: #2EFFE0; }
+
+/* N3 (Andy oct2): the LEADERBOARD on its own, TOP-LEFT, hero-size, wearing your rank. It mirrors the corner
+   nav's top-right offsets inside the same stage (a layout relationship with the frame, not an orphan), and
+   is absolutely placed, so it sits outside the short-fit grid too. */
+.homepage-board-corner {
+  position: absolute;
+  top: clamp(10px, 1.6vh, 20px);
+  left: clamp(12px, 2vw, 24px);
+  z-index: 6;
+}
+.homepage-nav-btn.homepage-board-hero {
+  width: 68px;
+  height: 68px;
+  padding: 0;
+}
+.homepage-board-hero svg { width: 42px; height: 42px; }
+.homepage-board-hero:hover svg { transform: rotate(-8deg) scale(1.08); transition: transform 160ms ease-out; }
+.homepage-board-rank {
+  position: absolute;
+  right: -12px;
+  bottom: -10px;
+  padding: 2px 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1;
+  color: #000;
+  background: #FFE94A;
+  border: 2px solid #a8800f;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+  transform: rotate(-4deg);
+}
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .homepage-nav-btn.homepage-board-hero { width: 84px; height: 84px; }
+  .homepage-board-hero svg { width: 54px; height: 54px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .homepage-board-hero:hover svg { transform: none; }
+}

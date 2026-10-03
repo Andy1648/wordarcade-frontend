@@ -200,7 +200,7 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
         covered: m.cards.flatMap((c) => c.covered.map((x) => `${c.game} ${x}`)),
       };
       if (OUT) fs.appendFileSync(OUT, `${JSON.stringify(row)}\n`);
-      expect(m.cards.length, 'five mode cards (exact .game-card class)').toBe(5);
+      expect(m.cards.length, 'six mode cards (exact .game-card class) — R1 put WORD RACE on for everyone').toBe(6);
       for (const c of m.cards) {
         expect(c.clip, `${c.game}: text "${c.clipText}" clipped by ${c.clipBy}`).toBeLessThanOrEqual(TOL);
         expect(c.escape, `${c.game}: text "${c.escText}" escapes its card`).toBeLessThanOrEqual(TOL);
