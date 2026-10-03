@@ -122,6 +122,15 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## ANDY oct3 11:45 (added)
 - [ ] Merge the night's work sooner: open PRs NOW for feat/mark-rolls-ui and feat/audit-leftovers so CI runs on GitHub in parallel (no laptop memory). Local heavy jobs stay one at a time. Merge each as soon as its CI is green AND its local checks are done, in order PV10 (#154) → audit-leftovers → mark-rolls. Tell Andy the moment 016 needs running.
+  - 11:46 PRs opened: audit-leftovers #155, mark-rolls #156 (CI in parallel). Merge order: #154 PV10 → #155 → #156.
+
+## THROUGHPUT RULES (Andy oct3 11:46: "increase the work power") — standing
+1. SIMS ON CI: a GitHub Actions workflow (workflow_dispatch + on PR when claude/econ-oct2 or src/progress changes) runs the econ sims (3 skills × all windows) and uploads the report as an artifact. Heavy sims run there from now on; the laptop does code + touched specs only.
+2. NEVER IDLE ON CI: while a PR's CI runs, start the NEXT item (spec, code, unit tests) on its own branch/worktree.
+3. SUBAGENTS IN PARALLEL for no-browser work only (research, adversarial reviews, spec drafts, copy audits, confusion read-through). Max 2–3 at once, never with Playwright. The main session keeps browser/test work.
+4. SPEC AHEAD: keep the next 2 features specced (numbers + 3 versions) before the current one merges: board-icon podium → big-monitor pass → rebirth/ascension design (research only, Andy decides) → in-game feel pass.
+5. AUTO-VERIFY after every merge: grep the live bundle + lazy chunks for a unique string within 5 min and log it here.
+6. Batch small fixes into fewer PRs (Vercel 100/day; each CI run ~10 min).
 
 ## NEW GOAL (Andy oct3 10:29): every step done or blocked-with-reason AND `date` ≥ Sat Oct 3 **11:00 PM** ET; then the fine-tune loop. Never stop because steps are done; never sleep/wait loops; NEVER ask permission to rerun — just rerun. Andy authorized merging while away.
 MEMORY RULES (crashed 04:05): full lint/unit/e2e ONLY on GitHub Actions (push → PR → CI); locally only the touched specs. One heavy job at a time (never sim + tests together, no stacked background jobs). Kill every preview server + Playwright process when a run ends (helpers too). Check free memory before each heavy job; under 4 GB → clean up first.
