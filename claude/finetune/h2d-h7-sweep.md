@@ -1,5 +1,7 @@
 # H2d + H7 sweep: SHOP / NUMBERS / REBIRTH, plus wording, location and font size
 
+> CORRECTION (oct3, local e2e): finding #1 was WRONG — `formatMult` already prints the "×", so the menu mark/streak chips were fine; adding one rendered "××2". Reverted; only the freeze-token change ("❄2", a count) stays.
+
 Branch `feat/h2d-h7-sweep` (from origin/main 93a0a5a3). This is a code read only, judged against Andy's 11:25 rules:
 **one big thing per screen, bigger type, no useless words, a growing satisfying feel, animations that don't stack.**
 Things already fixed in `confusion-audit.md` (H6) and `old-notes-audit.md` were not redone. One exception: one H6 fix
