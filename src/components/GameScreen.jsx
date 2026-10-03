@@ -20,6 +20,7 @@ import { WordPayout, RoundPayout } from './PayoutBreakdown';
 // THE STANDING STACK. The per-word receipt only exists after a word lands, so the rail was empty
 // for the first words of every round and said nothing about the multipliers the player had built.
 import LiveStack from './LiveStack';
+import MatchWinBanner, { hasHumanRival } from './MatchWinBanner';
 import WordLanding, { hasLanding } from './WordLanding';
 import {
   burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE, punch,
@@ -666,7 +667,7 @@ const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
  * input. Each step gets a random tilt for graffiti energy, and is re-keyed so
  * the countdown-pop animation replays per number.
  */
-export function CountdownOverlay({ onComplete, onStep }) {
+export function CountdownOverlay({ onComplete, onStep, banner = null }) {
   const [index, setIndex] = useState(0);
   const doneRef = useRef(false);
   // One random tilt (-5deg..5deg) per step, picked once on mount.
@@ -702,6 +703,9 @@ export function CountdownOverlay({ onComplete, onStep }) {
 
   return (
     <div className="countdown-overlay">
+      {/* less-is-more: the ONE pre-game statement of the match-win multiplier (MatchWinBanner) —
+          an absolute child of this existing overlay, gone after 1.5 s. */}
+      {banner}
       <div
         key={index}
         className={`countdown-text${step === 'GO!' ? ' go' : ''}`}
@@ -3257,6 +3261,7 @@ export default function GameScreen({
           on the results, worst under reduced-motion where nothing else moves). */}
       {showCountdown && !gameOver && (
         <CountdownOverlay
+          banner={hasHumanRival(roomPlayers, myId) ? <MatchWinBanner mode={gameType} /> : null}
           onComplete={() => setShowCountdown(false)}
           onStep={(step) => {
             sound.countdown(step === 'GO!');
@@ -4981,6 +4986,10 @@ function CategoryBlitzScreen({
             co-renders over the Category Blitz results (see the Word Bomb site above). */}
         {showCountdown && !gameOver && (
           <CountdownOverlay
+            /* the match-win banner once per GAME (round 1's countdown), only with a human rival */
+            banner={(!categoryRound || (categoryRound.round || 1) <= 1) && hasHumanRival(roomPlayers, myId)
+              ? <MatchWinBanner mode="category-blitz" />
+              : null}
             onComplete={() => setShowCountdown(false)}
             onStep={(step) => {
               // FIGHT beat on each Category Blitz round-start GO (cosmetic; fires at

@@ -27,6 +27,8 @@ import './LiveStack.css';
 // REBIRTH / STREAK / BONUS rows went: they never change during a run, and the end-of-round
 // receipt (WHERE YOUR WINS CAME FROM) names every one of them with what it actually paid. While
 // playing, the chip says the three things that MOVE: the rate, a live COMBO, and FUSE FRENZY.
+// less-is-more (Andy oct3): the standing "LONGER WORDS PAY MORE" row went too — the mode card, the
+// mode dialog and the teach strip already say it; mid-game it was a fourth copy of a rule.
 // formatMultExact — the RECEIPT's formatter (×1.05, not the one-decimal ×1.1 the game does not apply).
 const mult = (m) => `×${formatMultExact(m)}`;
 
@@ -47,10 +49,7 @@ function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
         <span className="lstack-rate">{formatRate(shown)}</span>
         <span className="lstack-per">{compact ? '/ WORD' : 'WINS / WORD'}</span>{/* compact = the WB/Blitz receipt rail, beside the WINS pill: the longer unit widened the 1024px band into SKIP */}
       </div>
-      <div className="lstack-rows">
-        <div className="lstack-row lstack-row--base">
-          <span className="lstack-label">LONGER WORDS PAY MORE</span>
-        </div>
+      {(frenzy > 0 || boost > 0 || live) && <div className="lstack-rows">
         {frenzy > 0 && (
           <div className="lstack-row lstack-row--frenzy">
             <span className="lstack-label">FRENZY</span>
@@ -68,7 +67,7 @@ function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
             <span className="lstack-val">{mult(live.value)}</span>
           </div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

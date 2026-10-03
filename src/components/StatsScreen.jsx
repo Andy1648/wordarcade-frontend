@@ -347,7 +347,6 @@ export default function StatsScreen({ onBack }) {
             HIDDEN ACHIEVEMENTS{' '}
             <span className="stats-secret-count">{fmt(hidden.found)} / {fmt(hidden.total)} FOUND</span>
           </h3>
-          <p className="stats-caption">ACHIEVEMENTS WITH THEIR GOAL HIDDEN UNTIL YOU CROSS IT</p>
           <div className="stats-secrets">
             {hidden.items.map((sec) => (
               <div
@@ -404,7 +403,7 @@ export default function StatsScreen({ onBack }) {
           {satMissing.length > 0 && (
             <>
               <h3 className="stats-subtitle">WORDS YOU KEEP MISSING</h3>
-              <p className="stats-caption">SAT RUSH — THE WORDS THAT KEEP ESCAPING. STUDY THESE.</p>
+              <p className="stats-caption">SAT RUSH</p>
               <dl className="stats-list">
                 {satMissing.map((m) => (
                   <div className="stats-row" key={m.w}>

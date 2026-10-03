@@ -208,12 +208,13 @@ async function frameCheck(page) {
         xp: xpEl ? xpEl.textContent.replace(/[^0-9.KMB]/g, '') : null,
         baseText: baseEl ? baseEl.textContent.trim() : null,
         // THE BASE, PARSED OUT OF WHAT THE PLAYER IS SHOWN. It used to be a bare "BASE 5" the
-        // panel printed and this probe read back; it is now "5 LETTERS × 10", so the number is
+        // panel printed and this probe read back; it is now "BASE 10 / LETTER × 5 LETTERS", so the number is
         // recovered from its own terms. That makes the PAID check below stronger, not weaker: it
         // now proves the printed sentence multiplies out to the printed total.
         base: (() => {
           const t = baseEl ? baseEl.textContent.trim() : '';
-          const mm = t.match(/([\d,]+)\s+LETTERS?\s+.\s+([\d,]+)/i);
+          // "BASE 10 / LETTER × 5 LETTERS" (less-is-more: the word BASE leads)
+          const mm = t.match(/BASE\s+([\d,]+)\s*\/\s*LETTER\s+.\s+([\d,]+)\s+LETTERS?/i);
           if (!mm) return null;
           return (Number(mm[1].replace(/,/g, '')) * Number(mm[2].replace(/,/g, ''))) / 10;
         })(),
@@ -286,7 +287,7 @@ for (const vp of FRAME_VIEWPORTS) {
 
     // (2) PAID FOLLOWS FROM THE ROWS. It printed 0 under five live multipliers.
     // Wins are the word's XP ÷ 10 now (Economy v8), so the snap is on the XP grid: multiply up,
-    // round to a ten, divide back. The base itself comes from the "N LETTERS × M" the panel
+    // round to a ten, divide back. The base itself comes from the "BASE M / LETTER × N LETTERS" the panel
     // prints, so this checks the sentence the player reads, term by term.
     const product = m.rows.reduce((a, r) => a * r.m, 1);
     expect(m.base, 'the receipt must name its base as letters × per-letter').toBeGreaterThan(0);
