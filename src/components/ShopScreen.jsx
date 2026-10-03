@@ -12,6 +12,7 @@ import ForgeStrip from './ForgeStrip';
 import { layerOpen } from '../progress/claims';
 import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
 import { getWins, perWordWins } from '../progress/wins';
+import { useWinsBalance } from '../progress/useWinsBalance';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
@@ -30,7 +31,7 @@ const toRoman = (n) => ROMAN[n] || String(n);
 
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
-  const [wins, setWins] = useState(() => getWins());
+  const wins = useWinsBalance(); // W: the one balance channel
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
@@ -80,7 +81,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [reveal, setReveal] = useState(null);
   const [ceremony, setCeremony] = useState(null); // BB1: the kept-vs-reset rebirth ceremony
   const refresh = () => {
-    setWins(getWins());
+    // wins: live off useWinsBalance — every buy already told it
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
     setKeyTier(getKeyTier());

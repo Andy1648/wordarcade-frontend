@@ -5,7 +5,7 @@
 // mount/resize and cached (never per keystroke); each pop then picks a continuous random
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
 import BoostPill from '../frenzy/BoostPill';
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import './MenuXp.css';
 import { formatNum, formatMultExact } from '../format';
 import { rankTitle } from '../progress/rank';
@@ -50,7 +50,32 @@ const formatMult = (m) => `×${formatMultExact(m)}`;
 // On a level-up the displayed value SNAPS to 0 (no backwards glide) and fills forward,
 // flashing yellow for 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 // `variant="mini"` (splash) drops the readout and shrinks the track.
+// W (Andy oct2 22:28): the wins chip COUNTS UP to a new balance (finite, ~450 ms, text only — no
+// layout read), and jumps straight there under reduced motion or on a drop (a purchase).
+function useCountTo(value) {
+  const [shown, setShown] = useState(value);
+  const fromRef = useRef(value);
+  useEffect(() => {
+    const from = fromRef.current;
+    fromRef.current = value;
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (value == null || from == null || value <= from || reduce) { setShown(value); return undefined; }
+    let raf = 0;
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / 450);
+      const e = 1 - (1 - k) ** 3;
+      setShown(k >= 1 ? value : from + (value - from) * e);
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return shown;
+}
+
 export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, firstRun = false, hintRight = null }) {
+  const winsShown = useCountTo(wins);
   const fillRef = useRef(null);
   const markerRef = useRef(null);
   const trackRef = useRef(null);
@@ -180,15 +205,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       {variant !== 'mini' && <BoostPill className="menu-boost-pill" />}
       {variant !== 'mini' && wins != null && (
         onWinsClick ? (
-          <button type="button" className="menu-wins-chip" onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
+          <button type="button" className="menu-wins-chip" data-wins={wins} onClick={onWinsClick} aria-label={`${wins} wins. Open shop`}>
             <span className="menu-wins-coin" aria-hidden="true" />
-            {formatNum(wins)}
+            {formatNum(Math.round(winsShown))}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
           </button>
         ) : (
-          <span className="menu-wins-chip" aria-label={`${wins} wins`}>
+          <span className="menu-wins-chip" data-wins={wins} aria-label={`${wins} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
-            {formatNum(wins)}
+            {formatNum(Math.round(winsShown))}
             <span className="menu-wins-label" aria-hidden="true">WINS</span>
           </span>
         )

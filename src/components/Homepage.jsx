@@ -8,7 +8,8 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
-import { getWins, getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
+import { useWinsBalance } from '../progress/useWinsBalance';
+import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -494,10 +495,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     dialogOpenRef.current = !!dialog;
   }, [dialog]);
-  // Wins balance shown in the chip. Seeded on mount, then kept LIVE: level-ups now pay wins
-  // while the player is still on the menu (see useXpCapture), so a mount-only snapshot would
-  // sit stale until a remount. onCredit below refreshes it (and the affordability dot).
-  const [wins, setWins] = useState(() => getWins());
+  // Wins balance shown in the chip — LIVE off the one balance channel (W, Andy oct2 22:28): a claim
+  // from STATS, a code, a purchase or a level-up payout all land here at once, no remount needed.
+  const wins = useWinsBalance();
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
@@ -512,16 +512,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
+  useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
   const { progress: xpProgress } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
-    // Fires on every credited keystroke/tap. getWins() only moves on a level-up payout, so
-    // the balance setState is a no-op (same value) until then — cheap to check each credit.
-    onCredit: () => {
-      const w = getWins();
-      setWins((prev) => (prev !== w ? w : prev));
-      setWinsAffordable(canAffordAny(w));
-    },
+    // (the wins chip no longer polls here — useWinsBalance above hears every balance change)
+    onCredit: () => {},
   });
   // THE FIVE SECRETS ARE NOT A MENU FEATURE ANY MORE (feat/cut-secrets-rarity). They used to
   // fire here and announce themselves as a centre-screen sticker over a modal backdrop — a
