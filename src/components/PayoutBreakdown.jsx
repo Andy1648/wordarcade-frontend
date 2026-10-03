@@ -142,11 +142,16 @@ export function RoundPayout({ ledger }) {
       {/* END-OF-ROUND BONUSES (O12): never folded into "+ n MORE" — a WINNER bonus is the round's
           headline, not a long-tail factor. */}
       {(ledger.bonuses || []).map((b) => (
-        <div key={b.key} className="payout-row payout-row--bonus">
-          <span className="payout-k">{b.label}</span>
-          <span className="payout-bar" style={{ '--w': '0%' }} />
-          <span className="payout-avg">{mult(b.mult)}</span>
-          <Num value={b.wins} prefix="+" className="payout-v" />
+        <div key={b.key}>
+          <div className="payout-row payout-row--bonus">
+            <span className="payout-k">{b.label}</span>
+            <span className="payout-bar" style={{ '--w': '0%' }} />
+            <span className="payout-avg">{mult(b.mult)}</span>
+            <Num value={b.wins} prefix="+" className="payout-v" />
+          </div>
+          {/* H4: WHY the winner bonus is this size — a gate fell back to the old +50%, or a cap
+              trimmed it. A smaller-than-advertised bonus must say so on the receipt. */}
+          {b.note && <div className="payout-bonus-note">{b.note}</div>}
         </div>
       ))}
       <div className="payout-total">

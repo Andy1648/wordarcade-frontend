@@ -157,11 +157,114 @@ export function winnerBonusFor(roundTotal) {
   const t = Number.isFinite(roundTotal) ? roundTotal : 0;
   return t > 0 ? Math.max(1, Math.round(t * WINNER_BONUS)) : 0;
 }
-export function noteRoundBonus({ key, label, mult = 1, wins = 0 } = {}) {
+// `note` (H4) is a short caption for the receipt row: why the bonus is the size it is (e.g. the
+// match bonus was held back to today's +50% because the only rival was a bot).
+export function noteRoundBonus({ key, label, mult = 1, wins = 0, note = null } = {}) {
   if (!ledger || !key || !(wins > 0)) return false;
   if (ledger.bonuses.some((b) => b.key === key)) return false;
-  ledger.bonuses.push({ key, label: label || key.toUpperCase(), mult, wins: Math.round(wins) });
+  ledger.bonuses.push({ key, label: label || key.toUpperCase(), mult, wins: Math.round(wins), note: note || null });
   return true;
+}
+
+// ---- H4: MULTIPLAYER WINNER PAYS A TON (Andy oct3) --------------------------------------------
+// Spec + sim: claude/finetune/h4-winner-spec.md, claude/finetune/h4-sim.mjs. Version (c) HYBRID.
+//
+// Beating a PERSON pays a multiple of your own game — all of it, every rarity/combo/rebirth factor
+// included, because it is a multiple of what the game's words actually banked:
+//   bonus = mult × gameTotal × counted / myWords
+//   counted = min(myWords, CONTEST × best human rival's words, pace × minutes)
+// The two caps are the anti-farm: CONTEST means a dummy tab has to really play (a rival who typed
+// 3 words lets only 6 of yours count), and PACE means words typed faster than a strong honest
+// player — the signature of playing both sides of a self-made room — stop growing the bonus.
+//
+// `mult` is per mode because a minute of each mode pays very differently (WB is turn-based, ~6
+// words a minute; a RACE is ~16, at ×3 a word). Each is tuned so a median honest WINNER earns
+// ~2.5× a minute of median solo CHAIN; see the sim table. The cards quote 1 + mult ("YOUR GAME ×7").
+export const WINNER_MATCH = {
+  wordBomb: { mult: 6, pace: 8 },
+  blitz: { mult: 4, pace: 16 },
+  wordRace: { mult: 1, pace: 32 },
+};
+// Today's rule for each mode, paid when a gate fails (a bot room, a dummy tab, a 4-word game).
+// Keeping it EXACTLY today's means no gate can ever pay less than the game did before H4.
+export const WINNER_FALLBACK = { wordBomb: WINNER_BONUS, blitz: 0, wordRace: 0 };
+export const WINNER_GATES = {
+  minWinnerWords: 5, // a game you won with fewer valid words is not a match
+  minRivalWords: 3, // a rival who typed fewer is an AFK seat, not an opponent
+  contest: 2, // at most this many of your words count per word your best rival played
+};
+const WINNER_MODE = { 'word-bomb': 'wordBomb', 'category-blitz': 'blitz', 'word-race': 'wordRace' };
+const winnerModeKey = (m) => (WINNER_MATCH[m] ? m : WINNER_MODE[m] || null);
+/** The TOTAL multiplier a won match pays on your game (1 + the bonus), for the copy. */
+export function winnerMatchMult(mode) {
+  const k = winnerModeKey(mode);
+  return k ? 1 + WINNER_MATCH[k].mult : 1;
+}
+// Receipt captions: why a winner got the fallback (or a capped bonus) instead of the full match pay.
+export const WINNER_NOTES = {
+  bots: 'MATCH BONUS NEEDS A HUMAN RIVAL',
+  self: 'YOUR OTHER TAB IS NOT A RIVAL',
+  'rival-words': `RIVAL PLAYED UNDER ${WINNER_GATES.minRivalWords} WORDS`,
+  'my-words': `MATCH BONUS NEEDS ${WINNER_GATES.minWinnerWords}+ WORDS`,
+  rival: `CAPPED: ${WINNER_GATES.contest} OF YOURS PER RIVAL WORD`,
+  pace: 'CAPPED: FASTER THAN A REAL MATCH',
+};
+
+const cnt = (x) => (Number.isFinite(x) && x > 0 ? Math.floor(x) : 0);
+
+/**
+ * The winner's end-of-game bonus. PURE: every input is a fact the client observed.
+ * @param {object} a
+ * @param {string}  a.mode       'wordBomb'|'blitz'|'wordRace' (or the kebab gameType)
+ * @param {boolean} a.iWon       the server named me the winner
+ * @param {number}  a.gameTotal  the wins THIS game's words banked for me
+ * @param {number}  a.myWords    my valid words this game
+ * @param {number}  [a.minutes]  game length; null/unknown = no pace cap
+ * @param {Array}   a.rivals     [{ id, words, isBot }] everyone else who was in the game
+ * @param {Array}   [a.selfIds]  player ids other tabs of THIS browser hold (seats.js)
+ * @returns {{ wins, mult, tier: 'match'|'fallback'|'none', reason, capped, note }}
+ */
+export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, selfIds } = {}) {
+  const none = { wins: 0, mult: 1, tier: 'none', reason: null, capped: null, note: null };
+  const k = winnerModeKey(mode);
+  const total = Number.isFinite(gameTotal) && gameTotal > 0 ? gameTotal : 0;
+  if (!k || !iWon || total <= 0) return none;
+  const fb = WINNER_FALLBACK[k] || 0;
+  const fallback = (reason) => ({
+    wins: fb > 0 ? Math.max(1, Math.round(total * fb)) : 0,
+    mult: 1 + fb,
+    tier: 'fallback',
+    reason,
+    capped: null,
+    note: WINNER_NOTES[reason] || null,
+  });
+  const mine = cnt(myWords);
+  const list = Array.isArray(rivals) ? rivals.filter((r) => r && r.id != null) : [];
+  const self = new Set(Array.isArray(selfIds) ? selfIds : []);
+  const humans = list.filter((r) => !r.isBot);
+  const others = humans.filter((r) => !self.has(r.id));
+  const qualified = others.filter((r) => cnt(r.words) >= WINNER_GATES.minRivalWords);
+  if (mine < WINNER_GATES.minWinnerWords) return fallback('my-words');
+  if (!qualified.length) {
+    if (!humans.length) return fallback('bots');
+    if (!others.length || humans.some((r) => self.has(r.id) && cnt(r.words) >= WINNER_GATES.minRivalWords)) return fallback('self');
+    return fallback('rival-words');
+  }
+  const best = Math.max(...qualified.map((r) => cnt(r.words)));
+  const { mult, pace } = WINNER_MATCH[k];
+  const byRival = WINNER_GATES.contest * best;
+  const byPace = Number.isFinite(minutes) && minutes > 0 ? pace * minutes : Infinity;
+  const counted = Math.min(mine, byRival, byPace);
+  const capped = counted >= mine ? null : byRival <= byPace ? 'rival' : 'pace';
+  const bonusMult = Math.max(fb, mult * (counted / mine));
+  return {
+    wins: Math.max(1, Math.round(total * bonusMult)),
+    mult: 1 + bonusMult,
+    tier: 'match',
+    reason: null,
+    capped,
+    note: capped ? WINNER_NOTES[capped] : null,
+  };
 }
 
 /** Fold one word's payout into the round ledger. Silently ignored if no round is open. */
