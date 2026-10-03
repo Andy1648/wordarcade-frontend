@@ -189,7 +189,7 @@ function simulate(skill) {
   SIM_NOW = T0;
   WINS.resetWinsLedger();
   WINS.consumePendingWinsStamp();
-  const rng = LUCK.mulberry32(1648 + skill.wpm * 7919);
+  const rng = LUCK.mulberry32(1648 + skill.wpm * 7919 + (Number(process.env.SIM_SEED) || 0) * 104729);
   const V = makeVocab(skill);
   const totalMin = HOURS * 60;
   const dt = 1 / skill.wpm;
@@ -382,8 +382,10 @@ function simulate(skill) {
     // codes (redeemed in the shop → claimed at the next menu return)
     if (!codesDone.perLevel && minute >= CODE_PERLEVEL_AT) {
       codesDone.perLevel = true;
-      CLAIMS.queueClaim({ id: 'code:SIMLEVEL', kind: 'code', label: 'CODE — SIM PER LEVEL', amount: 1000, meta: { perLevel: true } });
-      mech.perLevelCode = { t: +minute.toFixed(2), level: lv(), pays: 1000 * lv() };
+      // the 010 docs' example per_level code: wins 30 (R10: × level; K2: 30 words at your rate)
+      const code = { id: 'code:SIMLEVEL', kind: 'code', label: 'CODE — SIM PER LEVEL', amount: 30, meta: { perLevel: true } };
+      mech.perLevelCode = { t: +minute.toFixed(2), level: lv(), pays: CLAIMS.claimAmount(code) };
+      CLAIMS.queueClaim(code);
     }
     if (!codesDone.boost && minute >= CODE_BOOST_AT) {
       codesDone.boost = true;
