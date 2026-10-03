@@ -3,12 +3,20 @@
 // the DB's name rules via the CLIENT filter (DB/client parity is pinned by claude/step24/db-parity.mjs).
 // Ranking matches the view: rebirths, level, lifetime words, then first-come (stable sort).
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
+import { decideSubmit } from '../../src/leaderboard/submitRules.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
 // carries letters; the board ranks by LEVEL, then words — rebirths not ranked (Andy oct2 evening). Without it the mock is the v1 DB (lb_caps 404s).
 // `weekly` emulates 013_weekly_board.sql (BB3): lb_caps.weekly, a per-submit week_words counter (the
 // first submit is a baseline), and the leaderboard_weekly view (week_words > 0, most first).
-export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true } = {}) {
+// `rules` applies the REAL write rule (017_board_reality.sql via src/leaderboard/submitRules.js — throttle,
+// reset-baseline on a lower submit, rate checks, level clamp) to lb_submit2/3, on the Node clock; a row's
+// `submitted_at` (ms) seeds when it last submitted (absent = never → the first submit is a baseline).
+// Off by default: the older specs submit faster than the 5 s throttle and expect every push to land.
+// `econ` emulates 016_econ_v10.sql (lb_caps.econ = 10; lb_submit3 / lb_save2 / lb_load2); lb_submit3 marks
+// the row econ = 10. `boardEcon` emulates 017's board_econ cap + the views' `econ` column (default 0); without
+// it, a select naming `econ` answers 400 like PostgREST does for an unknown column.
+export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true, rules = false, econ = false, boardEcon = false } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
   const rows = db.rows;
@@ -20,8 +28,10 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
     // the production view (001 / 005 / 009 / 011): LEVEL, then lifetime words; rebirths not ranked
     .sort((a, b) => b.level - a.level || b.lifetime_words - a.lifetime_words)
     .map((r, i) => {
-      const out = { ...r, rank: i + 1 };
+      const out = { ...r, rank: i + 1, econ: r.econ || 0 };
       if (!caps) delete out.lifetime_letters;
+      if (!boardEcon) delete out.econ;
+      delete out.submitted_at;
       return out;
     });
   await page.route('https://lb.e2e.invalid/**', async (route) => {
@@ -31,9 +41,11 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
     let body = null;
     try { body = req.postDataJSON(); } catch { body = null; }
     if (url.pathname.endsWith('/rpc/lb_caps')) {
-      return caps ? json(200, { letters: true, cjk: true, cloud: true, ...(weekly ? { weekly: true } : {}) }) : json(404, { message: 'Could not find the function public.lb_caps' });
+      return caps
+        ? json(200, { letters: true, cjk: true, cloud: true, ...(weekly ? { weekly: true } : {}), ...(econ ? { econ: 10 } : {}), ...(boardEcon ? { board_econ: true } : {}) })
+        : json(404, { message: 'Could not find the function public.lb_caps' });
     }
-    if (caps && url.pathname.endsWith('/rpc/lb_save')) {
+    if (caps && (url.pathname.endsWith('/rpc/lb_save') || (econ && url.pathname.endsWith('/rpc/lb_save2')))) {
       const pid = secrets.get(body.p_secret);
       if (!pid) return json(400, { message: 'no_profile' });
       const old = saves.get(pid);
@@ -41,7 +53,7 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       saves.set(pid, { blob: body.p_blob, score: String(body.p_score) });
       return json(200, { saved: true });
     }
-    if (caps && url.pathname.endsWith('/rpc/lb_load')) {
+    if (caps && (url.pathname.endsWith('/rpc/lb_load') || (econ && url.pathname.endsWith('/rpc/lb_load2')))) {
       const pid = secrets.get(body.p_secret);
       if (!pid) return json(400, { message: 'no_profile' });
       const row = rows.find((r) => r.id === pid);
@@ -70,10 +82,34 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       Object.assign(row, { level: 1, rebirths: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, week_words: 0, reset_all: false });
       return json(200, { reset: true });
     }
-    if (caps && url.pathname.endsWith('/rpc/lb_submit2')) {
+    const v3 = caps && econ && url.pathname.endsWith('/rpc/lb_submit3');
+    if (v3 && body.p_econ !== 10) return json(400, { message: 'old_client' });
+    if (caps && rules && (v3 || url.pathname.endsWith('/rpc/lb_submit2'))) {
+      // 017's rule, exactly (src/leaderboard/submitRules.js). With `econ`, lb_submit2 is 016's no-op.
       calls.submit += 1;
       const row = rows.find((r) => r.id === secrets.get(body.p_secret));
       if (!row) return json(404, { message: 'no_profile' });
+      if (!v3 && econ) return route.fulfill({ status: 204, body: '' });
+      const now = Date.now();
+      const d = decideSubmit(
+        { level: row.level, rebirths: row.rebirths, lifetime_words: row.lifetime_words || 0, lifetime_letters: row.lifetime_letters || 0, submitted_at: row.submitted_at ?? null },
+        { level: body.p_level, rebirths: body.p_rebirths, words: body.p_lifetime_words, letters: body.p_lifetime_letters },
+        now,
+      );
+      calls.lastDecision = d.action;
+      if (d.row) {
+        Object.assign(row, d.row, { wins_per_word: Math.max(0, Math.round((Number(body.p_wins_per_word) || 0) * 10) / 10) });
+        if (weekly) row.week_words = (row.week_words || 0) + d.weekDelta;
+        if (v3) row.econ = 10;
+        row.submitted = true;
+      }
+      return route.fulfill({ status: 204, body: '' });
+    }
+    if (caps && (v3 || url.pathname.endsWith('/rpc/lb_submit2'))) {
+      calls.submit += 1;
+      const row = rows.find((r) => r.id === secrets.get(body.p_secret));
+      if (!row) return json(404, { message: 'no_profile' });
+      if (v3) row.econ = 10;
       if (weekly) {
         const delta = row.submitted ? Math.max(0, body.p_lifetime_words - (row.lifetime_words || 0)) : 0;
         row.week_words = (row.week_words || 0) + delta;
@@ -129,6 +165,10 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
     }
     if (url.pathname.endsWith('/leaderboard')) {
+      // PostgREST answers 400 for a column the view doesn't have (pre-017 `econ`)
+      if (!boardEcon && /(^|,)econ(,|$)/.test(url.searchParams.get('select') || '')) {
+        return json(400, { code: '42703', message: 'column leaderboard.econ does not exist' });
+      }
       // LB10: the server-side rank count (HEAD + Prefer: count=exact with the view's order as an or=).
       const or = url.searchParams.get('or');
       if (or) {

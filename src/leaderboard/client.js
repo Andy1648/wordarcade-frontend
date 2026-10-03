@@ -149,8 +149,9 @@ export function boardCaps() {
   if (!capsPromise) {
     capsPromise = rpc('lb_caps', {})
       // econ: 016_econ_v10.sql — the version-gated lb_submit3 / lb_save2 / lb_load2 exist (PV10)
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud), weekly: !!(c && c.weekly), econ: Number(c && c.econ) >= ECON_RPC_VERSION }))
-      .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: false }));
+      // boardEcon: 017_board_reality.sql — the board views carry `econ` (which economy a row last submitted on)
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud), weekly: !!(c && c.weekly), econ: Number(c && c.econ) >= ECON_RPC_VERSION, boardEcon: !!(c && c.board_econ) }))
+      .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: false, boardEcon: false }));
   }
   return capsPromise;
 }
@@ -339,11 +340,25 @@ export async function adoptRecoveryCode(code) {
 }
 
 /** The top of the board + (if I have a name and I'm below it) my own row. */
+// 017: `econ` is selected only once lb_caps says the view has it — and a PostgREST 400 (unknown column, e.g.
+// the view was rebuilt by an older migration after 017) falls back to the select without it, for the session.
+let econColBroken = false;
+/** True when a board row's wins/word is from the CURRENT economy (or the DB can't say yet — pre-017). */
+export function rowEconCurrent(row) {
+  if (!row || row.econ === undefined || row.econ === null) return true; // pre-017: no econ column to judge by
+  return Number(row.econ) >= ECON_RPC_VERSION;
+}
 export async function fetchBoard(limit = BOARD_SIZE) {
   if (!LEADERBOARD_ENABLED) return { rows: [], me: null };
   const caps = await boardCaps();
-  const cols = `rank,id,username,level,rebirths,lifetime_words,${caps.letters ? 'lifetime_letters,' : ''}wins_per_word`;
-  const r = await fetch(`${BASE}/rest/v1/leaderboard?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  const base = `rank,id,username,level,rebirths,lifetime_words,${caps.letters ? 'lifetime_letters,' : ''}wins_per_word`;
+  let cols = caps.boardEcon && !econColBroken ? `${base},econ` : base;
+  let r = await fetch(`${BASE}/rest/v1/leaderboard?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  if (!r.ok && r.status === 400 && cols !== base) {
+    econColBroken = true;
+    cols = base;
+    r = await fetch(`${BASE}/rest/v1/leaderboard?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  }
   if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { code: `http_${r.status}` });
   const rows = await r.json();
   const mine = getMyProfile();
