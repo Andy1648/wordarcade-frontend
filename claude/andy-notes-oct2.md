@@ -184,6 +184,8 @@ PATTERNS (most → least repeated):
 6. FAIRNESS to existing players: never wipe or punish progress.
 
 EXTENSIONS — each built DORMANT behind a flag (?name=1, like rollsFlag); try-it link logged in ANDY TODO; research 2–3 real games each first (cite links); sim anything economic on CI:
+- 18:20 RESEARCH + SPECS DONE: claude/finetune/extensions-spec.md (2–3 cited games each). BUILD ORDER b → a → c → d → f → e:
+  b near-miss line (small, no economy) · a rival pings as a rank-up-card variant, never after your own rebirth (small–med) · c milestones are ~80% live already — only scale the existing level-up card at 10/25/50/100 · d rebirth ladder chips on Stats (shows the shrinking % honestly) · f challenge link is LARGE (no share button exists, no race deep-link, bots ignore pace → ghost lane, launch path is Tier 1) · e daily quests are LARGE + economic (CI sim + rule P before the flag flips). One shared flag helper for all six.
 - [ ] a. RIVAL PINGS: "XAVI PASSED YOU — 2 LEVELS BEHIND" on the menu when someone passes you on the board (board data already fetched).
 - [ ] b. NEAR-MISS HOOKS on the end screen: "3 WORDS TO LV 41", "NEXT KEY TIER IN 12 WORDS". One line, big, one tap to play again.
 - [ ] c. MILESTONE MOMENTS every 10 / 25 / 50 / 100 levels, escalating in size (moments queue; no new art).
