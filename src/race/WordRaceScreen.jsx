@@ -10,12 +10,16 @@
 // reject nudges the input. NO infinite animation: the mascot's idle breathe is switched off inside
 // .wr-root (WordRace.css). Under reduced motion nothing moves and every fact is still on screen as
 // text: the lane counts (7/12), the countdown number, the reject reason, the placings.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazyWithReload } from '../lib/chunkReload';
 import Mascot from '../components/Mascot';
 import LayeredWord from '../components/LayeredWord';
 import { RACE_REASON_COPY, precheck, myFragment } from './raceState';
 import { formatNum, plural } from '../format';
 import './WordRace.css';
+
+// H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
+const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
 
 const ACCENT = '#FFE94A';
 
@@ -46,6 +50,7 @@ export default function WordRaceScreen({
   isHost,
   audioSlot,
   earned,
+  winnerPay = null,
   rematchPending,
   onSubmit,
   onLocalReject,
@@ -285,6 +290,12 @@ export default function WordRaceScreen({
 
       {over && (
         <section className="wr-over" aria-live="polite">
+          {/* H4: WINNER popup — a pointer-events:none layer inside this results panel. */}
+          {iWon && winnerPay && (
+            <Suspense fallback={null}>
+              <WinnerPopup pay={winnerPay} />
+            </Suspense>
+          )}
           <div className="wr-over-hero">
             <Mascot pose={iWon ? 'celebrate' : 'panic'} emote={iWon ? 'celebrate' : 'slump'} size={96} />
             <div>

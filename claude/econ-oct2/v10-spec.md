@@ -243,3 +243,13 @@ saveBackup.test.js (+2: stamp removal / kept, 47 keys). cloudSave.test.js (+1: l
   into 0, and the v9 floor returns 10 + 15t (T1000 = 15,010 XP/letter). P therefore DROPS there (the bar is
   safe — fraction storage), but income collapses; worth a separate fix (cap instead of floor).
 
+
+## 3-skill verification of the CHOSEN curve (200 h each, oct3 11:15) — first reach of each level
+| skill | LV50 | LV100 | LV150 | LV225 | LV300 | LV400 | peak |
+|---|---|---|---|---|---|---|---|
+| casual | 7.1 h | 27 h | 66 h | 167 h | — | — | 259 |
+| median | 2.9 h | 10.1 h | 21 h | 49 h | 96 h | — | 379 |
+| strong | 1.1 h | 4.0 h | 6.9 h | 14 h | 24 h | 51 h | 559 |
+Median hits the targets (LV100 ≈ 10 h, LV225 ≈ 50 h). Spread casual:strong ≈ 6.8× at LV100 — skill still matters a lot,
+nobody walls (casual keeps levelling to 259 by 200 h). Not yet re-run: the K ramp over LV30–40 (review fix 9) and the 8 real
+board rows; both come with the implementation branch (feat/pv10).

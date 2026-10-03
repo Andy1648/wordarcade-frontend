@@ -374,6 +374,7 @@
 
 /* ---------------------------------------------------------------- results */
 .wr-over {
+  position: relative; /* H4: anchors the WINNER popup layer */
   display: flex;
   flex-direction: column;
   gap: 10px;
