@@ -116,7 +116,7 @@ export function RoundPayout({ ledger }) {
         <span className="payout-head-val"><Num value={ledger.base} /></span>
       </div>
       {ledger.rows.length === 0 ? (
-        <div className="payout-none">NO MULTIPLIERS THIS ROUND — every word paid the flat base.</div>
+        <div className="payout-none">NO MULTIPLIERS THIS ROUND</div>
       ) : (
         <div className="payout-rows">
           {shown.map((r) => (

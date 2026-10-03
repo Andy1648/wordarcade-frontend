@@ -407,7 +407,7 @@ export default function StatsScreen({ onBack }) {
           {/* BACKUP — copy your whole save as a code, or restore from one. Progress only (no device
               settings). The recovery path ships before any versioned-save migration. */}
           <h3 className="stats-subtitle">BACKUP</h3>
-          <p className="stats-caption">COPY YOUR SAVE SOMEWHERE SAFE — OR RESTORE IT ON A NEW DEVICE. PROGRESS ONLY.</p>
+          <p className="stats-caption">BACK UP · MOVE TO A NEW DEVICE</p>
           <div className="stats-backup">
             <button type="button" className="stats-backup-copy" onClick={handleCopySave}>
               COPY SAVE
