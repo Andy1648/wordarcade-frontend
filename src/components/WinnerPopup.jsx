@@ -62,8 +62,10 @@ export default function WinnerPopup({ pay }) {
 
   if (!pay || phase === 'gone') return null;
 
-  // The bonus is a multiple of the game's own wins, so the caption names the TOTAL multiplier.
-  const caption = wins > 0 ? `YOUR GAME ×${formatMult(pay.mult)}` : 'NO MATCH BONUS';
+  // less-is-more (Andy oct3): no "YOUR GAME ×N" caption — the receipt's WINNER row states the paid
+  // multiplier, and the round-start banner announced it. The popup is the amount; it only speaks
+  // up when there is NO bonus.
+  const caption = wins > 0 ? null : 'NO MATCH BONUS';
 
   return (
     <div className="winner-pop-layer" aria-hidden={phase === 'out' ? 'true' : undefined}>
@@ -82,7 +84,7 @@ export default function WinnerPopup({ pay }) {
             <span ref={numRef}>+{formatNum(wins)}</span> WINS
           </div>
         )}
-        <div className="winner-pop-caption">{caption}</div>
+        {caption && <div className="winner-pop-caption">{caption}</div>}
         {pay.note && <div className="winner-pop-note">{pay.note}</div>}
       </div>
     </div>
