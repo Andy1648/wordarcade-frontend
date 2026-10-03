@@ -32,6 +32,7 @@ import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
+import NearMiss from '../components/NearMiss.jsx';
 import poolsRaw from './fragmentPools.json';
 import { formatNum } from '../format.js';
 
@@ -433,6 +434,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         tryRow: (
           <>
             <ClaimPrompt />
+            <NearMiss mode="fuse" onPlay={g.restart} />
             <TryModeRow current="fuse" />
           </>
         ),

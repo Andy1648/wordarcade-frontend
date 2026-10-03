@@ -14,6 +14,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import Mascot from '../components/Mascot';
 import LayeredWord from '../components/LayeredWord';
+import NearMiss from '../components/NearMiss';
 import { RACE_REASON_COPY, precheck, myFragment } from './raceState';
 import { formatNum, plural } from '../format';
 import './WordRace.css';
@@ -335,6 +336,9 @@ export default function WordRaceScreen({
               MENU
             </button>
           </div>
+          {/* NEAR-MISS (dormant, ?nearmiss=1): race has no claim prompt, so it takes the same slot
+              under the exits; tapping it is RACE AGAIN. */}
+          <NearMiss mode="word-race" onPlay={onRematch} disabled={rematchPending} />
         </section>
       )}
     </div>
