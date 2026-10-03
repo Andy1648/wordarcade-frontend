@@ -99,8 +99,9 @@ import { addWords } from './wordCount';
 import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins, grantWins } from './progress/wins';
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
-  noteRoundBonus, winnerBonusFor, WINNER_BONUS,
+  noteRoundBonus, winnerPayout,
 } from './progress/payout';
+import { noteSeat, otherSeatIds } from './progress/seats';
 import { rarityCue } from './juice/audio';
 import { useWordSecrets } from './secrets/useWordSecrets';
 import { refundWordSense } from './progress/wordSenseRefund';
@@ -1022,6 +1023,17 @@ function App() {
   const [race, dispatchRace] = useReducer(raceReducer, null);
   const [raceEarned, setRaceEarned] = useState({ wins: 0, xp: 0 });
   const raceMyWordsRef = useRef(0); // my accepted words this race (the payout gate's count)
+  // H4 WINNER PAYS: the inputs winnerPayout() needs at game over, as refs so the drain reads them
+  // live. Per-game wins banked (Blitz / RACE — WB reads its round ledger), WB valid words per player
+  // id (the same attribution the feed uses), the RACE start time, every bot id the roster has shown,
+  // and the winner's payout for the game-over popup.
+  const raceGameWinsRef = useRef(0);
+  const raceStartMsRef = useRef(null);
+  const blitzGameWinsRef = useRef(0);
+  const wbWordsByIdRef = useRef({});
+  const rosterIdsRef = useRef([]);
+  const botIdsRef = useRef(new Set());
+  const [winnerPay, setWinnerPay] = useState(null);
 
   // The WS drain effect below is keyed only on [messages], so reading `room` /
   // `gameStats` STATE directly inside it would be STALE. We mirror the few values
@@ -1037,7 +1049,12 @@ function App() {
   useEffect(() => {
     playerCountRef.current = room?.players?.length || 0;
     gameDifficultyRef.current = room?.difficultyKey || null;
+    rosterIdsRef.current = (room?.players || []).map((p) => p.id);
+    (room?.players || []).forEach((p) => { if (p.isBot) botIdsRef.current.add(p.id); });
   }, [room]);
+  // H4 anti-farm: register this tab's live player id, so another tab of this browser in the same
+  // room is recognised as the player themself (progress/seats.js), never as a rival.
+  useEffect(() => { if (myId) noteSeat(myId); }, [myId]);
 
   // ---- Shared game-feel ("juice") wiring (Tier 2; never blocks input) ----
   // Keep the juice layer's sound flag synced to the app-wide SFX mute on EVERY
@@ -1092,14 +1109,42 @@ function App() {
       if (lastMessage.type === 'race_start') {
         raceMyWordsRef.current = 0;
         setRaceEarned({ wins: 0, xp: 0 });
+        // H4: a fresh race → a fresh ledger (so noteRoundBonus dedupes a re-delivered race_over),
+        // a zeroed per-race total, and the start stamp the pace cap reads.
+        raceGameWinsRef.current = 0;
+        raceStartMsRef.current = recvAt;
+        beginPayoutLedger('word-race');
+        setWinnerPay(null);
       } else if (lastMessage.type === 'race_word_result' && rp.accepted) {
         const prevWords = raceMyWordsRef.current;
         raceMyWordsRef.current = prevWords + 1;
         const paid = bankRaceWord({ word: rp.word, prevWords });
+        raceGameWinsRef.current += paid.wins || 0;
         setRaceEarned((e) => ({ wins: e.wins + paid.wins, xp: e.xp + paid.xp }));
       } else if (lastMessage.type === 'race_over') {
-        const mine = (rp.standings || []).find((st) => st.id === myIdRef.current);
+        const standings = rp.standings || [];
+        const mine = standings.find((st) => st.id === myIdRef.current);
         if (mine) recordPace(mine.words, mine.reachedAt);
+        // H4 WINNER PAYS — once per race (noteRoundBonus refuses a second note).
+        if (rp.winnerId && rp.winnerId === myIdRef.current) {
+          const wp = winnerPayout({
+            mode: 'wordRace',
+            iWon: true,
+            gameTotal: raceGameWinsRef.current,
+            myWords: mine ? mine.words : raceMyWordsRef.current,
+            minutes: raceStartMsRef.current ? (recvAt - raceStartMsRef.current) / 60000 : null,
+            rivals: standings.filter((st) => st.id !== myIdRef.current).map((st) => ({ id: st.id, words: st.words, isBot: !!st.isBot })),
+            selfIds: otherSeatIds(),
+          });
+          if (noteRoundBonus({ key: 'winner', label: 'WINNER BONUS', mult: wp.mult, wins: wp.wins, note: wp.note })) {
+            if (wp.wins > 0) {
+              grantWins(wp.wins, 'WINNER BONUS', { mode: 'word-race' });
+              setRaceEarned((e) => ({ ...e, wins: e.wins + wp.wins }));
+            }
+          }
+          // Shown even at 0 (a gate held it back) so the winner learns why; once per race.
+          setWinnerPay((prev) => prev || wp);
+        }
       }
     }
 
@@ -1200,6 +1245,9 @@ function App() {
       setPayoutLedger(null);
       setLastLanding(null);
       beginPayoutLedger(lastMessage.payload.gameType || 'word-bomb');
+      blitzGameWinsRef.current = 0; // H4: this game's Blitz banked total + WB words per player
+      wbWordsByIdRef.current = {};
+      setWinnerPay(null);
       setView('game');
       // Daily Challenge: a fresh game clears any previous daily result; the
       // game_over handler below re-fills it if THIS game is a daily.
@@ -1485,6 +1533,8 @@ function App() {
             rarity: wbRarity && wbRarity.announce ? { label: wbRarity.label, color: wbRarity.color, band: wbRarity.band } : null,
           },
         ]);
+        // H4: valid words per player id (the winner-bonus rival gate reads this at game_over).
+        wbWordsByIdRef.current[attributedId] = (wbWordsByIdRef.current[attributedId] || 0) + 1;
         // Tally the accepted word for the end-game stats.
         setGameStats((prev) => ({
           ...prev,
@@ -1618,6 +1668,7 @@ function App() {
             prevWeight: prevBlitzWeight,
             nowWeight: myBlitzWeightRef.current,
           });
+          if (banked > 0) blitzGameWinsRef.current += banked; // H4: this game's Blitz total
           if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
           // THE ANSWER REACTS, same rule as Word Bomb: rarity is an EVENT at the moment the word
           // lands, not a multiplier discovered later on a pill. Blitz's field is the same shape,
@@ -1678,22 +1729,51 @@ function App() {
       sndRunOver(); // Job 11: game-over fall (feat/sound)
       // (No wpmEnd() — fix/three-again §2 removed WPM tracking from the turn-based modes.)
       // Category Blitz carries finalScores; Word Bomb carries just winnerId.
+      // H4 WINNER PAYS (Andy oct3; was O12's WB-only +50%): the winner of a Word Bomb or Blitz
+      // match is paid through winnerPayout() — a multiple of this game's own wins, gated on a
+      // human rival who really played (claude/finetune/h4-winner-spec.md). A game result, so it
+      // credits directly. noteRoundBonus refuses a second note for the same game, so a
+      // re-delivered game_over can never pay twice.
+      const payWinner = (wpArgs, mode) => {
+        const wp = winnerPayout({ ...wpArgs, mode, iWon: true, selfIds: otherSeatIds(),
+          minutes: gameStartMsRef.current ? (Date.now() - gameStartMsRef.current) / 60000 : null });
+        if (noteRoundBonus({ key: 'winner', label: 'WINNER BONUS', mult: wp.mult, wins: wp.wins, note: wp.note })) {
+          if (wp.wins > 0) grantWins(wp.wins, 'WINNER BONUS', { mode });
+        }
+        // Shown even at 0 (a gate held it back) so the winner learns why — but not for a solo game
+        // with nobody else in it (solo / daily Blitz), where "winner" means nothing. Once per game.
+        if (wp.wins > 0 || (wpArgs.rivals || []).length > 0) setWinnerPay((prev) => prev || wp);
+      };
+      const iWonThis = !!payload.winnerId && payload.winnerId === myIdRef.current;
       if (payload.finalScores) {
         setCategoryScores(payload.finalScores);
         setCategoryRound(null);
         setRoundResults(null);
+        if (iWonThis) {
+          // Blitz score IS the valid-answer count. The server drops a leaver from finalScores, so
+          // the round_end tallies (categoryTotalsRef) keep a rival who played and then quit.
+          const words = { ...categoryTotalsRef.current };
+          payload.finalScores.forEach((s) => { words[s.id] = Math.max(words[s.id] || 0, s.score || 0); });
+          payWinner({
+            gameTotal: blitzGameWinsRef.current,
+            myWords: words[myIdRef.current] || 0,
+            rivals: Object.keys(words).filter((id) => id !== myIdRef.current)
+              .map((id) => ({ id, words: words[id], isBot: botIdsRef.current.has(id) })),
+          }, 'category-blitz');
+        }
       } else {
         // WINS: already banked per-word during play (bankWordWins in word_result) — NO
         // end-of-game payout here (that would double-pay). winsEarnedTotal already accumulated.
-        // WINNER BONUS (Andy oct2 O12): winning the game pays +50% of what this game's words
-        // earned — a game result, so it credits directly (not a claim). noteRoundBonus refuses a
-        // second note for the same game, so a re-delivered game_over can never pay twice.
-        if (payload.winnerId && payload.winnerId === myIdRef.current) {
+        if (iWonThis) {
           const led = readPayoutLedger();
-          const bonus = winnerBonusFor(led ? led.total : 0);
-          if (noteRoundBonus({ key: 'winner', label: 'WINNER BONUS', mult: 1 + WINNER_BONUS, wins: bonus })) {
-            grantWins(bonus, 'WINNER BONUS', { mode: 'word-bomb' });
-          }
+          const counts = wbWordsByIdRef.current;
+          const ids = new Set([...rosterIdsRef.current, ...Object.keys(counts)]);
+          ids.delete(myIdRef.current);
+          payWinner({
+            gameTotal: led ? led.total : 0,
+            myWords: myWbAcceptedRef.current,
+            rivals: [...ids].map((id) => ({ id, words: counts[id] || 0, isBot: botIdsRef.current.has(id) })),
+          }, 'word-bomb');
         }
         // The receipt for the whole game, read once and frozen for the end screen.
         setPayoutLedger(readPayoutLedger());
@@ -2406,6 +2486,7 @@ function App() {
           />
         )}
         earned={raceEarned}
+        winnerPay={winnerPay}
         rematchPending={rematchPending}
         onSubmit={(word) => send('submit_word', { word })}
         onLocalReject={(result) => dispatchRace({ type: 'local', result })}
@@ -2487,6 +2568,7 @@ function App() {
         winsBonusLines={winsBonusLines}
         lastPayout={lastPayout}
         payoutLedger={payoutLedger}
+        winnerPay={winnerPay}
         lastLanding={lastLanding}
       />
     );

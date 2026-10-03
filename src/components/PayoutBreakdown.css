@@ -173,6 +173,14 @@
 .payout-row--bonus .payout-v {
   color: #FFE94A;
 }
+/* H4: the winner bonus's reason line (fallback to +50%, or a cap). Body face, never under 13px. */
+.payout-bonus-note {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #b9aecd;
+  text-align: right;
+}
 .payout-row .payout-k {
   flex: none;
   min-width: 86px;
