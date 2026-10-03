@@ -197,10 +197,10 @@ test('every level requirement is divisible by 10 (through the exact-integer rang
 });
 
 // THE HEADLINE NUMBER, pinned on its own so a retune has to come here first.
-test('need(1) is 120 — twelve game letters at a fresh profile (BASE 10 XP / LETTER; 24 menu keys at 5)', () => {
+test('need(1) is 120 — twelve game letters at a fresh profile (BASE 10 XP / LETTER; 60 menu keys at 2)', () => {
   assert.equal(need(1), 120);
   assert.equal(Math.ceil(need(1) / levelXpPerLetter(0, 0)), 12);
-  assert.equal(Math.ceil(need(1) / xpPerInput({ keyTier: 0, rebirthCount: 0 })), 24);
+  assert.equal(Math.ceil(need(1) / xpPerInput({ keyTier: 0, rebirthCount: 0 })), 60);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -298,12 +298,12 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   assert.equal(r.toNext, needV9(7) - 100);
 });
 
-test('the MENU letter (v11 round 2): HALF a game letter — 5 × KEY ×1.2/tier × rebirth ×(1+R) × mark, no mode term', () => {
-  assert.equal(MENU_LETTER_SHARE, 0.5);
-  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0 }), 5);
-  assert.equal(xpPerInput({ keyTier: 1, rebirthCount: 0 }), 6); // +20%
-  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 14); // 14.4 (T2 ×1.44, R1 ×2, ×½)
-  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0, markMult: 1.5 }), 8); // 7.5 — a LEGENDARY worn mark
+test('the MENU letter (v11 round 3): a FIFTH of a game letter — 2 × KEY ×1.2/tier × rebirth ×(1+R) × mark, no mode term', () => {
+  assert.equal(MENU_LETTER_SHARE, 0.2);
+  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0 }), 2);
+  assert.equal(xpPerInput({ keyTier: 5, rebirthCount: 0 }), 5); // 4.98 (T5 ×2.49)
+  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 6); // 5.76 (T2 ×1.44, R1 ×2, ×⅕)
+  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0, markMult: 1.5 }), 3); // a LEGENDARY worn mark
   assert.equal(levelXpPerLetter(0, 0), 10, 'a GAME letter is BASE 10');
   // a game mode does not multiply a letter (words pay WINS; a letter is a letter)
   assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), xpPerInput({ keyTier: 2, rebirthCount: 1 }));

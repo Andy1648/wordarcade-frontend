@@ -232,10 +232,10 @@ test('LETTERS: ONE anti-mash cap for menu + games — 12 credited letters a roll
   });
 });
 
-test('LETTERS: a menu letter is half a game letter (MENU 5 / GAME 10 × KEY × rebirth × mark)', () => {
+test('LETTERS: a menu letter is a fifth of a game letter (MENU 2 / GAME 10 × KEY × rebirth × mark)', () => {
   withStorage({ 'taw.keytier': '5', 'taw.rebirths': '3' }, () => {
     assert.ok(close(letterXpNow(), levelXpPerLetter(5, 3)));
-    assert.equal(xpPerInput({}), Math.round(letterXpNow() / 2));
+    assert.equal(xpPerInput({}), Math.round(letterXpNow() / 5));
   });
 });
 

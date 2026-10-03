@@ -129,7 +129,7 @@ level per word's letters (median, LV1–400).
      second (≈ 140 WPM — above any honest burst). `useXpCapture` and `noteLetters` share it (wall clock).
    - COSMETICS ARE LOOKS ONLY: pop styles / sound packs no longer multiply XP (`xpPerInput` ignores
      popMult/soundMult; the "+N% MENU XP" card line is gone; `xpMult` stays in the data as a legacy field).
-   - MENU letters are HALF a game letter: `MENU_LETTER_SHARE = 0.5` → MENU 5 XP / LETTER × KEY × rebirth ×
+   - (superseded in ROUND 3 → 0.2) MENU letters were HALF a game letter: `MENU_LETTER_SHARE = 0.5` → MENU 5 XP / LETTER × KEY × rebirth ×
      mark (game letters BASE 10). Estimate (`v11-estimate.mjs --masher`: a masher at 12/s, no wins → no KEY,
      rebirthing at every gate, vs the median bot), cumulative level-ups masher ÷ median:
      | menu price | 10 min | 30 min | 1 h | 5 h | 20 h |
@@ -161,8 +161,24 @@ level per word's letters (median, LV1–400).
    - Shop: rebirth hero "×N WINS & XP" = GAIN "+100% WINS & XP / LETTER — ×a → ×b"; KEY "BASE 10 XP /
      LETTER × KEY Tn ×m (+20%)"; cosmetics: no XP line. Numbers through formatNum (TIER, KEY tier, %).
    - Stats: section "XP — LETTERS FILL THE BAR": BASE XP / LETTER 10 · KEY POWER TIER n ×m XP · REBIRTH ·
-     MARK +n% XP · WORDS PAY WINS · GAME XP / LETTER · MENU XP / LETTER (half).
+     MARK +n% XP · WORDS PAY WINS · GAME XP / LETTER · MENU XP / LETTER (a fifth — round 3).
    - Receipt: "BASE n WINS / LETTER × formatNum(letters) LETTERS" + wins headline; no XP.
+
+## ROUND 3 (CI on 08af3404): MASHER FAIL ×2.46 at 10 min → MENU 2 XP / LETTER
+CI: masher vs median cumulative level-ups 10m ×2.46 · 30m ×1.1 · 60m ×1.03 · 300m ×0.83 (FAIL at 10 min);
+everything else PASS (dead bar, re-climb 5.5 m → 1.3 m after R1, KEY buys at 1–12.9 min, median pace 0.9 /
+2.2 / 3.2 / 4.7 min per level at LV10/50/100/200, LV100 at 6.7 h).
+- Why my ×1.10 estimate was wrong: it borrowed a pre-v10 KEY timeline (T13 by 13 min); the real median buys
+  T6 at ~9 min and T10 only at ~55 min, so its first 10 minutes earn far less than estimated (~13 level-ups).
+- Is the median bot unfair in that window? No: it plays from minute 0 (no dialogs / tutorials modelled) at
+  10 accepted words a minute including round overhead (~66 letters / min with fumbles) — what a real median
+  player types. The gap is real: the masher types 720 letters a minute. So the PRICE moves, not the model.
+- **MENU_LETTER_SHARE = 0.2 ("MENU 2 XP / LETTER").** Arithmetic check on the real need() curve (12/s, T0,
+  rebirth ×(1+R) at the gates, HEAD START ignored): masher level-ups at 10 min = 32 at ×0.5 (→ median ≈ 13,
+  matching CI's ×2.46), 24 at ×0.3 AND ×0.25 (menu XP rounds to WHOLE XP — both are 3 XP a key — and at 3 XP
+  the masher clears the LV15 gate and rebirths to ×2 inside 10 minutes: ×1.85, FAIL), 13 at ×0.2 (still
+  climbing LV1→15 at minute 10). **Expected CI: 10m ≈ ×1.0, and ≤ ×0.8 from 30 min on** (it scaled down from
+  ×1.1 at half price). A fresh player's LV1 takes 60 menu keys or 12 game letters.
 
 ## Risks
 - In-game inputs credit any letters typed into the field during a live round (SAT: accepted letters only),

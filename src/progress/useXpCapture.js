@@ -58,7 +58,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
     // and rebirth happen on another screen, which remounts this hook and re-reads them.
-    // v11: one key = one LETTER at the MENU price — 5 × KEY × rebirth × the worn mark (half a game letter).
+    // v11: one key = one LETTER at the MENU price — 2 × KEY × rebirth × the worn mark (a fifth of a game letter).
     // Cosmetics (pop style / sound pack) are looks only — they never multiply XP (review round 2).
     const menuGain = xpPerInput({ mode: 'menu', markMult: markXpBoost() });
     // KEY POWER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped

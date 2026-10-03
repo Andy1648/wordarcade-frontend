@@ -448,14 +448,18 @@ export function priceRateBoost() {
 // levelUpWins() payout was removed with Economy v3.)
 
 // ---- MENU typing XP (v11: letters fill the bar) ----------------------------------------
-// One menu keystroke is one letter at HALF a game letter's price: MENU 5 XP / LETTER × KEY × rebirth × mark
-// (game letters: BASE 10). Review round 2: a masher typing gibberish at the letter cap (12/s, menu + games
-// share one limiter — letterXp.js) out-levelled a real median player ~2× in the first 10 minutes at the full
-// price; at half price the masher's first 10 minutes are ~1.1× a player's and it falls behind as soon as the
-// player's wins buy KEY tiers (claude/econ-oct2/v11-estimate.mjs --masher; loop-sim's masher bot on CI).
+// One menu keystroke is one letter at a FIFTH of a game letter's price: MENU 2 XP / LETTER × KEY × rebirth ×
+// mark (game letters: BASE 10). Review round 3 (CI, 08af3404): at half price the loop-sim MASHER bot (12/s
+// menu gibberish, no wins) reached ×2.46 the median's level-ups at 10 min. Why not 0.3 / 0.25: menu XP is
+// rounded to WHOLE XP, so both give 3 XP a key at T0 R0, and at 3 XP the masher still clears the LV15 gate
+// (R1, ×2 XP) inside 10 minutes — the arithmetic check puts it at ~24 level-ups vs the median's ~13 (×1.85).
+// At 2 XP a key it is still climbing LV1→15 at minute 10 (~13 ups, ×1.0), and it only falls further behind
+// as the player's wins buy KEY tiers. The median BOT is not the unfair side: it plays from minute 0 (no
+// dialogs or tutorials are modelled), at 10 words / min including round overhead — what a real median player
+// types in games — while the masher types 720 letters a minute.
 // COSMETICS NEVER MULTIPLY LEVEL XP (round 2): pop styles / sound packs are looks only. `popMult`,
 // `soundMult`, `mode` and `streakMult` are accepted for old callers and ignored. Whole XP.
-export const MENU_LETTER_SHARE = 0.5; // a menu letter = half a game letter ("MENU 5 XP / LETTER")
+export const MENU_LETTER_SHARE = 0.2; // a menu letter = a fifth of a game letter ("MENU 2 XP / LETTER")
 // eslint-disable-next-line no-unused-vars
 export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1, streakMult, markMult = 1 } = {}) {
   return Math.max(1, roundWordXp(levelXpPerLetter(keyTier, rebirthCount, markMult) * MENU_LETTER_SHARE));

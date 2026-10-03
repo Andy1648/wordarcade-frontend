@@ -177,7 +177,7 @@ export default function StatsScreen({ onBack }) {
   const keyTier = getKeyTier();
   // PROGRESSION v11 (amended): the bar fills from LETTERS — BASE 10 XP / LETTER × KEY (×1.2 a tier) ×
   // rebirth ×(1+R) × the worn mark. Words pay WINS only. GAME XP / LETTER is the price of any letter typed
-  // in a game; MENU XP / LETTER is half that (menu letters are the slow lane — matches the live keystroke
+  // in a game; MENU XP / LETTER is a fifth of that (menu letters are the slow lane — matches the live keystroke
   // pop). Cosmetics are looks only: they never multiply XP.
   const markMult = markXpBoost();
   const gameXp = letterXpNow();
@@ -366,7 +366,7 @@ export default function StatsScreen({ onBack }) {
           </div>
 
           {/* PROGRESSION v11: the whole XP rule — LETTERS fill the bar (BASE 10 XP / LETTER × KEY × rebirth ×
-              mark; half that in the menu). Words pay WINS (see a game's receipt). */}
+              mark; a fifth of that in the menu). Words pay WINS (see a game's receipt). */}
           <h3 className="stats-subtitle">XP — LETTERS FILL THE BAR</h3>
           <dl className="stats-list">
             {multipliers.map(([k, v]) => (
