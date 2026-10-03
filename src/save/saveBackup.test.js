@@ -117,5 +117,27 @@ test('PROGRESS_KEYS excludes the five device/UX keys', () => {
   for (const dev of ['taw.seenWinsHint', 'taw.sfxEvents', 'taw.clack', 'taw.audioVolume', 'taw.musicMuted']) {
     assert.ok(!PROGRESS_KEYS.includes(dev), `${dev} must not be a progress key`);
   }
-  assert.equal(PROGRESS_KEYS.length, 44); // +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2); +wallTierSeen (N4)
+  assert.equal(PROGRESS_KEYS.length, 47); // +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2); +wallTierSeen (N4); +xpv10, rbgate, pv10notice (PV10)
+  for (const k of ['taw.xpv10', 'taw.rbgate', 'taw.pv10notice', 'taw.econ']) assert.ok(PROGRESS_KEYS.includes(k), k);
+});
+
+// PV10 must-fix 4: a restored blob's econ stamp is written; with none, the LOCAL stamp/shadow/gate go, so
+// the v10 migration re-runs on the restored (older) save after the reload.
+test('PV10: import removes the local econ stamp, shadow and gate when the blob has none', () => {
+  const code = exportSave(makeStore({ 'taw.xp': JSON.stringify({ lv: 40, into: 10 }), 'taw.rebirths': '1' }));
+  const m = new Map(Object.entries({ 'taw.econ': '10', 'taw.xpv10': '{"lv":90,"f":0.5,"rc":1,"v":10}', 'taw.rbgate': '{"rc":1,"lv":50}' }));
+  const store = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  assert.equal(importSave(code, store).ok, true);
+  assert.equal(m.has('taw.econ'), false);
+  assert.equal(m.has('taw.xpv10'), false);
+  assert.equal(m.has('taw.rbgate'), false);
+  assert.equal(m.get('taw.xp'), JSON.stringify({ lv: 40, into: 10 }));
+});
+test('PV10: import keeps the blob\'s own econ stamp', () => {
+  const code = exportSave(makeStore({ 'taw.xp': '{"lv":40,"f":0.25,"rc":0,"v":10}', 'taw.xpv10': '{"lv":40,"f":0.25,"rc":0,"v":10}', 'taw.econ': '10' }));
+  const m = new Map([['taw.econ', '9']]);
+  const store = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  importSave(code, store);
+  assert.equal(m.get('taw.econ'), '10');
+  assert.equal(m.get('taw.xpv10'), '{"lv":40,"f":0.25,"rc":0,"v":10}');
 });

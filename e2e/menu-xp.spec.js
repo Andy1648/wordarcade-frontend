@@ -120,9 +120,9 @@ test.describe('menu XP', () => {
           }
         }
       }
-      // Economy v5: taw.xp is the compact { lv, into } shape, not a cumulative number.
-      const prog = (() => { try { return JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { return {}; } })();
-      return { idleBaseline, peak, peakNames, lv: Number(prog.lv) || 1, into: Number(prog.into) || 0 };
+      // PV10: taw.xp stores the FRACTION into the level; the XP number comes from the app's probe.
+      const prog = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 };
+      return { idleBaseline, peak, peakNames, lv: Number(prog.level) || 1, into: Math.round(Number(prog.intoLevel) || 0) };
     });
 
     // Concurrent FINITE-animation count is now ADVISORY (CLAUDE.md → ANIMATION BUDGET;
@@ -176,8 +176,8 @@ test.describe('splash XP', () => {
       pips: document.querySelectorAll('.splash-pip').length,
       pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
       poppedA: [...document.querySelectorAll('.menu-xp-pop-letter')].some((n) => n.textContent === 'A'),
-      // Economy v5: taw.xp is the compact { lv, into } shape, not a cumulative number.
-      prog: (() => { try { return JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { return {}; } })(),
+      // PV10: the XP number comes from the app's probe (taw.xp stores the fraction into the level).
+      prog: (() => { const p = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 }; return { lv: p.level, into: Math.round(p.intoLevel) }; })(),
       audioContexts: window.__ac,
     }));
     expect(after1.leaving).toBe(false); // one key is not enough — the gate holds
@@ -272,11 +272,11 @@ test.describe('tap XP (coarse pointer)', () => {
     // Economy v5: taw.xp is the compact { lv, into } shape — read xp-into-level, not a total.
     const read = () =>
       page.evaluate(() => {
-        let prog = {};
-        try { prog = JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { prog = {}; }
+        // PV10: the XP number comes from the app's probe (taw.xp stores the fraction into the level).
+        const prog = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 };
         return {
-          lv: Number(prog.lv) || 1,
-          into: Number(prog.into) || 0,
+          lv: Number(prog.level) || 1,
+          into: Math.round(Number(prog.intoLevel) || 0),
         };
       });
 
@@ -330,11 +330,11 @@ test.describe('desktop clicks count (fine pointer)', () => {
     // Economy v5: taw.xp is the compact { lv, into } shape — read xp-into-level, not a total.
     const read = () =>
       page.evaluate(() => {
-        let prog = {};
-        try { prog = JSON.parse(localStorage.getItem('taw.xp') || '{}') || {}; } catch { prog = {}; }
+        // PV10: the XP number comes from the app's probe (taw.xp stores the fraction into the level).
+        const prog = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 };
         return {
-          lv: Number(prog.lv) || 1,
-          into: Number(prog.into) || 0,
+          lv: Number(prog.level) || 1,
+          into: Math.round(Number(prog.intoLevel) || 0),
         };
       });
 

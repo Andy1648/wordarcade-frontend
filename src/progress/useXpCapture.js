@@ -14,6 +14,7 @@ import {
   progressOf,
   xpPerInput,
   getKeyTier,
+  currentPower,
 } from './xp';
 import { equippedPopMult, equippedSoundMult } from './shop';
 import { playClack } from './clack';
@@ -67,6 +68,9 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).
     // Stable for this menu session (buying remounts this hook via the shop round-trip).
     const feelTier = Math.min(5, getKeyTier());
+    // PV10: the level curve's power P (KEY tier × rebirth), read ONCE per menu session like menuGain —
+    // no storage read per keystroke. The bar is a stored FRACTION, so P changing later never moves it.
+    const power = currentPower();
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; both credit the same
     // XP. A tap's only difference is its pop — the "+N" alone at the tap coordinates.
@@ -84,10 +88,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
-      const res = creditXp(xpRef.current, menuGain);
+      const res = creditXp(xpRef.current, menuGain, power);
       xpRef.current = res.state;
       saveProgress(res.state);
-      setProgress(progressOf(res.state));
+      setProgress(progressOf(res.state, power));
 
       // Level-ups no longer pay wins (Economy v3): wins come only from finishing rounds.
       // A level-up is still celebrated — it just no longer shows a "+N WINS" line.

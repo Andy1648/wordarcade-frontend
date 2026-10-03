@@ -80,7 +80,7 @@ test('a restore never lowers progress: a browser ahead of the cloud keeps its ow
   await claim(page, 'Ahead_1');
   await expect.poll(() => board.saves.size).toBe(1);
   // play on: this browser is now well past the backup
-  await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 60, into: 0 })));
+  await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 60, f: 0, rc: Number(localStorage.getItem('taw.rebirths')) || 0, v: 10 })));
   await page.evaluate(() => sessionStorage.removeItem('taw.cloud.restored'));
   await page.reload();
   await menuReady(page);
