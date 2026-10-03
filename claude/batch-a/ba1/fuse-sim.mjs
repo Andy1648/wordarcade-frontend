@@ -47,9 +47,12 @@ const tierOf = {};
 for (const t of ['e', 'm', 'h', 'b']) for (const f of pools[t]) (tierOf[f] = tierOf[f] || []).push(t);
 const crossTier = Object.entries(tierOf).filter(([, v]) => v.length > 1);
 
+// CARRY=1 (loop 2): each run starts with the previous run's lit letters (fuseStrip.js carry-over).
+const CARRY = process.env.CARRY === '1';
+let carried = [];
 function play(seed) {
   const rng = mulberry32(seed);
-  const eng = createFuseEngine({ accept, pools, rng, ...(STEERP != null ? { steerP: STEERP } : {}) });
+  const eng = createFuseEngine({ accept, pools, rng, ...(STEERP != null ? { steerP: STEERP } : {}), ...(CARRY ? { initialLit: carried } : {}) });
   let served = eng.start();
   const g = { words: 0, expires: 0, clockMs: 0, wallMs: 0, frenzyAtMs: null, frenzyAtWord: null, served: [], deadTurns: 0, thinTurns: 0,
     expireStreakMax: 0, longestNoWordMs: 0, budgets: [], margins: [], litAtDeath: 0, darkAtDeath: '', litPeak: 0, tiers: { e: 0, m: 0, h: 0, b: 0 },
@@ -100,6 +103,7 @@ function play(seed) {
   for (const f of g.served) { if (seen.has(f)) { rep++; repFr.push(f); } seen.set(f, 1); }
   g.repeats = rep; g.repeatFrags = repFr;
   g.strips = eng.state.stripsCleared;
+  if (CARRY) carried = [...eng.state.lettersUsed];
   return g;
 }
 
