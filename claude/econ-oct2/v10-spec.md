@@ -109,3 +109,35 @@ One r can't hit both LV225≈50 h and LV400≈200 h (late levels speed up as reb
 **CHOSEN: K10, r1.028 to LV225, r1.018 above** — LV100 10.1 h and LV225 49.2 h hit the targets. The peak stays LV379
 in every run because the sim's bots REBIRTH around LV225–260 (R12 from LV260): "LV400 ≈ 200 h" is reached only
 by a player who stops rebirthing, so it is a rebirth-policy number, not a curve number. Next: all 3 skills at 200 h.
+
+## ADVERSARIAL REVIEW (oct3 10:55, only job: break existing players) — verdict: SAFE TO IMPLEMENT WITH FIXES
+Ranked breakages of the plan as written, and the MUST-FIX list the implementation now follows:
+1. CRITICAL — reading an old save against the new curve collapses or bursts the bar (LV195 R4: need ×1,700 → a 99% bar
+   becomes 0.06%; a high-level T0 R0 save: the new tail is CHEAPER above ~LV75 → into ≥ need → zeroed, or free levels via
+   creditXp's carry loop). FIX: freeze today's curve as needV9(); convert ONCE as f = clamp(into / needV9(lv), 0, 1−1e-9);
+   levelFromXp uses needV9; legacy is detected by SHAPE (no v:10), never by the taw.econ stamp; clamp, never zero.
+2. CRITICAL — P rises (KEY buy ×2.39/tier, AUTO-KEY, a higher-tier restore) or FALLS (cloud restore by score, old backup
+   import, admin reset) mid-level → the bar moves backwards / zeroes / bursts. {lv, into, p} + rescale only works if every
+   writer stamps p and a missing p never defaults to 1 (×26,800 burst at T10 R4). FIX: store a FRACTION {lv, f, rc, v:10};
+   into = f × need for display only.
+3. HIGH — need() can be Infinity → round10 → 0 → creditXp's while-loop never ends (keyTierXp is Infinity from ~T772; the
+   tail overflows ~LV36k). FIX: need always finite and > 0 (P capped 1e300, result ≤ MAX_VALUE); creditXp breaks out on a
+   non-finite need; tests at T1000 and LV1e6.
+4. HIGH — a stale tab / old bundle on the same localStorage keeps farming the OLD curve (LV400 in 18 min) and spreads it:
+   lb_save accepts equal-or-higher scores, restore copies the blob to other devices, lb_submit2 accepts it at 0.5 lv/s; an
+   econ_version argument does nothing because old clients don't send it. FIX: version-gate by SIGNATURE (lb_submit3,
+   lb_save2, lb_load2 with p_econ; revoke/no-op the old ones); locally a legacy-shaped taw.xp written after the stamp never
+   raises the level; rc honours a rebirth done elsewhere.
+5. HIGH — cloud restore + backup import skip the migration (pre-STEP-52 blobs have no taw.econ; progressScoreFromKeys still
+   reads taw.xp.lv). FIX: importSave writes the blob's taw.econ (or removes it); the score reads the authoritative level;
+   new keys join PROGRESS_KEYS.
+6. HIGH — the rebirth WALL for existing high-R players (Tangie R10 LV126 → R11 needs LV225: ~36 h stuck; Daan ~24 h;
+   maSON ~18 h). FIX: sim the 8 real rows on the CHOSEN curve; retune the gates above R8 or grandfather a one-time gate.
+7. MEDIUM — the wins cap is a LOSS and misses its target (T10's cap ≈ 7.3e15, so a 1e15 balance isn't capped; a T5 player is
+   cut to ~9.4e11). Under P^0.95 a big balance no longer runs away anyway. FIX: drop the cap and the "—" wins/word blanking.
+8. MEDIUM (Option H only) — 015's lv<old.level return would freeze the whole submit. → choose K.
+9. LOW-MED — K=10 is a ×10.3 cliff at LV31. FIX: ramp K in over LV30–40 (K^((n−30)/10)), re-sim.
+10. LOW — the LV5222 row stays #1 forever and its bar is permanently frozen (need ≈ 5e46). FIX: admin-reset it (012).
+11. LOW — after the first KEY buy a tier is ×1.05 level speed instead of ×2.5: early levels slower than today. Tell Andy.
+NOTE: v10-existing-players.md was computed on K8 r1.025; the chosen curve needs ~2× more at LV195–225 → REDO it from a sim
+of the 8 real rows (heavy; next free slot).
