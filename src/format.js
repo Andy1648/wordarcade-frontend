@@ -18,10 +18,10 @@
 // 3.49e9) and the late-game XP totals stay compact. Above 1e21 it stops abbreviating, which the
 // game never reaches; nothing throws.
 
-// U+2009 THIN SPACE. A non-breaking thin space would be better typography but breaks `toBe()`
-// comparisons in a way that is invisible in a diff; this one at least renders identically
-// everywhere and copies as a space.
-export const THIN = ' ';
+// The grouping character. H6/L1: the header above has said COMMA since a34bf4fc, but this constant
+// was still U+2009 THIN SPACE, so the UI kept printing "6 000" / "2 000 WORDS" — the exact "reads as
+// two numbers" defect the header describes. (The name is kept so every importer stays valid.)
+export const THIN = ',';
 
 // Pluralize a count-noun: `plural(1, 'answer')` → "1 answer", `plural(3, 'answer')` → "3 answers".
 // Pass an explicit plural form for irregulars: `plural(2, 'life', 'lives')`. The count is formatted

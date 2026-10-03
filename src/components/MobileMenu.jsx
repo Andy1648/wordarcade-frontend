@@ -330,7 +330,9 @@ export default function MobileMenu({
           disabled={navigating}
           aria-label={rewardsCount > 0 ? `Open stats — ${rewardsCount} to claim` : 'Open stats'}
         >
-          STATS
+          {/* H6/M20: while claims wait this slab OPENS THE CLAIMS, so it says so (same 5 letters,
+              same slab, same count bubble) — "STATS" opening a rewards panel was a surprise. */}
+          {rewardsCount > 0 && onRewards ? 'CLAIM' : 'STATS'}
           {rewardsCount > 0 && <span className="hp-m-count" aria-hidden="true">{rewardsCount}</span>}
         </button>
         <button

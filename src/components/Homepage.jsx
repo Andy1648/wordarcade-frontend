@@ -27,8 +27,6 @@ import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menu
 import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
-import LockedPreviewDialog from './LockedPreviewDialog';
-import RankLadder from './RankLadder';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
 const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
 import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
@@ -48,12 +46,15 @@ import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { formatNum } from '../format';
 import TrophyIcon from './TrophyIcon';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
+// Overlays that only render when opened load on first open (payload ratchet; H2 batch offset).
+const LockedPreviewDialog = lazyWithReload(() => import('./LockedPreviewDialog'), 'LockedPreviewDialog');
+const RankLadder = lazyWithReload(() => import('./RankLadder'), 'RankLadder');
 // The REWARDS panel loads on first open (H4 payload offset): only the small ClaimPopup is on the menu at rest.
 const ClaimsPanel = lazyWithReload(() => import('../claims/ClaimsPanel.jsx'), 'ClaimsPanel');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
@@ -828,7 +829,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   function handleLeaderboard() {
     if (navigating) return;
     sound.click();
-    setRankNews(false); // opening the board is reading the news
+    setRankNews(false); // opening the board is reading the news (the board reads rankFrom, not this flag)
+    markBoardSeen(); // an in-flight menu rank check must not re-raise the news after this open
     setBoardNews(false);
     if (onLeaderboard) onLeaderboard();
   }
@@ -879,8 +881,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   useEffect(() => {
     let live = true;
+    // H2a: the epoch is taken NOW, before the push — if the board is opened while this chain is in
+    // flight, the late result is dropped instead of re-raising news the board already consumed.
+    const epoch = getBoardSeenEpoch();
     submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
-      .then(() => checkRankUp())
+      .then(() => checkRankUp(epoch))
       .then((r) => {
         if (live && r) {
           setRankUp(r);
@@ -1256,11 +1261,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* Locked-mode preview (level-gated CHAIN/FUSE). Read-only teaser — no play button. */}
       {lockedPreview && (
         <ScreenBoundary name="locked-preview" onBack={() => setLockedPreview(null)}>
-          <LockedPreviewDialog
-            game={lockedPreview.game}
-            level={xpProgress.level}
-            onClose={() => setLockedPreview(null)}
-          />
+          <Suspense fallback={null}>
+            <LockedPreviewDialog
+              game={lockedPreview.game}
+              level={xpProgress.level}
+              onClose={() => setLockedPreview(null)}
+            />
+          </Suspense>
         </ScreenBoundary>
       )}
 
@@ -1305,7 +1312,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* RANK LADDER overlay — all ten ranks, which you hold, which is next (fix/card-polish). */}
       {showRanks && (
         <ScreenBoundary name="rank-ladder" onBack={() => setShowRanks(false)}>
-          <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
+          <Suspense fallback={null}>
+            <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
+          </Suspense>
         </ScreenBoundary>
       )}
 
