@@ -25,9 +25,11 @@ import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { LEADERBOARD_ENABLED } from '../leaderboard/client';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
+import { useMomentHold } from '../lib/useMomentSlot';
 
 
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
+  useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
   const wins = useWinsBalance(); // W: the one balance channel
   const [owned, setOwned] = useState(() => new Set(getOwned()));

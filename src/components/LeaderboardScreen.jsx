@@ -34,6 +34,7 @@ import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
 import PodiumIcon from './PodiumIcon';
 import { formatNum, formatRate } from '../format';
+import { useMomentHold } from '../lib/useMomentSlot';
 
 const VERDICT_COPY = {
   shape: '3–16 LETTERS, NUMBERS OR _',
@@ -139,6 +140,7 @@ function WeekRow({ row, mine }) {
 }
 
 export default function LeaderboardScreen({ onBack }) {
+  useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const [board, setBoard] = useState({ rows: [], me: null });
   const [loading, setLoading] = useState(LEADERBOARD_ENABLED);
   const [loadError, setLoadError] = useState(false);

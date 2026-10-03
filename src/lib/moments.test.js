@@ -200,3 +200,59 @@ test('a moment within its expireMs still plays', () => {
   c.advance(GAP_MS);
   assert.deepEqual(log, ['a', 'b']);
 });
+
+test('an interruptible (lingering) moment steps aside for a HIGHER priority one, and can queue itself again', () => {
+  const c = clock();
+  const m = createMoments(c);
+  const log = [];
+  let interrupted = 0;
+  const claim = () => m.announce({
+    id: 'claim', priority: PRIORITY.REWARD, maxMs: 9000, interruptible: true,
+    start: () => log.push(`claim@${c.now()}`),
+    onInterrupt: () => { interrupted += 1; claim(); },
+  });
+  claim();
+  assert.deepEqual(log, ['claim@0']);
+  c.advance(500);
+  let wallDone;
+  m.announce({ id: 'wall', priority: PRIORITY.LEVEL, start: (d) => { log.push(`wall@${c.now()}`); wallDone = d; } });
+  assert.equal(interrupted, 1, 'the claim popup was told to step aside');
+  assert.equal(m.snapshot().current, null, 'released at once');
+  c.advance(GAP_MS);
+  assert.deepEqual(log, ['claim@0', `wall@${500 + GAP_MS}`], 'the wall waits only the gap, never the popup');
+  wallDone();
+  c.advance(GAP_MS);
+  assert.deepEqual(log.slice(-1), [`claim@${500 + 2 * GAP_MS}`], 'the popup comes back after');
+});
+
+test('an interruptible moment is NOT interrupted by an equal or lower priority one', () => {
+  const c = clock();
+  const m = createMoments(c);
+  let interrupted = 0;
+  m.announce({ id: 'claim', priority: PRIORITY.REWARD, interruptible: true, start: () => {}, onInterrupt: () => { interrupted += 1; } });
+  m.announce({ id: 'other', priority: PRIORITY.REWARD, start: () => {} });
+  m.announce({ id: 'tut', priority: PRIORITY.TUTORIAL, start: () => {} });
+  assert.equal(interrupted, 0);
+  assert.equal(m.snapshot().current, 'claim');
+});
+
+test('a non-interruptible moment is never interrupted, whatever arrives', () => {
+  const c = clock();
+  const m = createMoments(c);
+  m.announce({ id: 'tier', priority: PRIORITY.INFO, start: () => {} });
+  m.announce({ id: 'win', priority: PRIORITY.WIN, start: () => {} });
+  assert.equal(m.snapshot().current, 'tier');
+});
+
+test('a stale cancel never releases a LATER moment with the same id', () => {
+  const c = clock();
+  const m = createMoments(c);
+  let done;
+  const cancel1 = m.announce({ id: 'x', start: (d) => { done = d; } });
+  done();
+  c.advance(GAP_MS);
+  m.announce({ id: 'x', start: () => {} });
+  assert.equal(m.snapshot().current, 'x');
+  cancel1();
+  assert.equal(m.snapshot().current, 'x', 'the second x keeps playing');
+});
