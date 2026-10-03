@@ -22,10 +22,11 @@ import { WordPayout, RoundPayout } from './PayoutBreakdown';
 import LiveStack from './LiveStack';
 import WordLanding, { hasLanding } from './WordLanding';
 import {
-  burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
+  burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
+import { useCachedCenter } from '../juice/useCachedCenter';
 import { applyRingSize } from './wbRingSize';
 import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -1492,7 +1493,7 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
   // optimisticWordRef (Word Bomb, JOB C Path B): the lowercased word painted
   // accepted OPTIMISTICALLY at submit; a later server accept for the same word is
   // a CONFIRM whose juice already fired, so we suppress the re-fire.
-  const { wordBomb = false, comboRef = null, optimisticWordRef = null } = opts;
+  const { wordBomb = false, comboRef = null, optimisticWordRef = null, getCenter = null } = opts;
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
@@ -1511,13 +1512,15 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
   const fireAccept = useCallback(() => {
     setHypeKey((k) => k + 1);
     setShake(true); // the existing scoped .game-shake stays (one screen shake)
-    const el = inputRef && inputRef.current;
-    const r = el && el.getBoundingClientRect();
+    // The input's centre comes from a cache measured on mount / resize (useCachedCenter) — this
+    // path makes ZERO layout reads. The input itself is never animated (DESIGN.md): the old
+    // squash + filter/box-shadow flash on it are gone; the burst + ring carry the hit.
+    const r = getCenter ? getCenter() : null;
     if (wordBomb) {
       const combo = (comboRef && comboRef.current) || 0;
       if (r) {
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
+        const cx = r.x;
+        const cy = r.y;
         burst(cx, cy, {
           count: JUICE.VALID.particleBase + combo * JUICE.VALID.particlePerCombo,
           speed: JUICE.VALID.particleSpeed,
@@ -1530,14 +1533,12 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
           width: JUICE.VALID.ringWidth,
           life: JUICE.VALID.ringLife,
         });
-        squash(el);
-        flash(el, JUICE.VALID.inputFlash);
       }
       screenFlash({ alpha: JUICE.VALID.flash, color: JUICE.VALID.flashColor });
     } else {
       // Category Blitz: EXACT existing behavior — light spark at the input + a confirm flash.
       if (r) {
-        burst(r.left + r.width / 2, r.top + r.height / 2, {
+        burst(r.x, r.y, {
           count: 10,
           speed: 200,
           life: 0.45,
@@ -1548,7 +1549,7 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
     }
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
     shakeTimerRef.current = setTimeout(() => setShake(false), 200);
-  }, [wordBomb, inputRef, promptRef, comboRef]);
+  }, [wordBomb, getCenter, promptRef, comboRef]);
 
   // The REJECT feedback (input shake + WB red screen flash). This IS the visible rollback of an
   // optimistic accept when the server disagrees.
@@ -1721,6 +1722,9 @@ export default function GameScreen({
   // below (keyed on the live currentPlayerId), so it re-arms next time we're up.
   const [skipPending, setSkipPending] = useState(false);
   const inputRef = useRef(null);
+  // The input's centre, measured on mount / resize and cached — the accept + keystroke FX read
+  // this, never getBoundingClientRect (ANIMATION BUDGET: no layout reads on the accept path).
+  const inputCenter = useCachedCenter(inputRef);
   // Intro countdown plays once when the screen mounts; the input stays
   // disabled until it finishes. On the CrazyGames path (cgMode) it's SKIPPED so
   // the server's ~3s pre-timer grace becomes free combo-reading time — the real
@@ -1966,6 +1970,7 @@ export default function GameScreen({
   // Word Bomb opts into the prototype-tuned values; Category Blitz (gameType !==
   // 'word-bomb') passes wordBomb=false and keeps its exact existing feel.
   const { hypeKey, shake, inputShake, fireAccept } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef, {
+    getCenter: inputCenter,
     wordBomb: gameType === 'word-bomb',
     comboRef,
     optimisticWordRef,
@@ -3809,11 +3814,11 @@ export default function GameScreen({
                   sound.keystroke();
                   // Optional floating-letter flourish (Word Bomb only, default
                   // OFF via JUICE.FLOATERS — noisy at speed). Purely cosmetic.
-                  if (JUICE.FLOATERS && gameType === 'word-bomb' && inputRef.current) {
-                    const r = inputRef.current.getBoundingClientRect();
+                  const r = JUICE.FLOATERS && gameType === 'word-bomb' ? inputCenter() : null; // cached: no layout read per key
+                  if (r) {
                     floater(
-                      r.left + r.width / 2,
-                      r.top + r.height / 2,
+                      r.x,
+                      r.y,
                       value[value.length - 1],
                       {
                         vy: JUICE.KEY.floaterRise,

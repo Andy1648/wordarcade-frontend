@@ -40,12 +40,14 @@ export default function ComboMeter({ count, brk }) {
         // idle shake; the inner .combo-pop is re-keyed by `count` so the grow-pop
         // replays on every increment without restarting the idle shake.
         <div className={`combo-badge combo-${tier}`}>
+          {/* Sparks are a FINITE burst on tier ENTRY (3 iterations, then still) — never a loop at
+              rest (ANIMATION BUDGET). Keyed by tier so crossing fire -> max replays them. */}
           {(tier === 'fire' || tier === 'max') && (
-            <>
+            <span key={tier} className="combo-sparks">
               <span className="combo-spark s0" />
               <span className="combo-spark s1" />
               <span className="combo-spark s2" />
-            </>
+            </span>
           )}
           <div key={count} className="combo-pop">
             <span className="combo-flame">{count >= 7 ? '🔥' : '✦'}</span>
