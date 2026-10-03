@@ -21,7 +21,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
-import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordRateNow } from '../progress/wins';
+import { bankWordWins, bankWeight, awardWordXp, perWordRateNow, subscribeWins } from '../progress/wins';
 import { cappedWordMult, modePower } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
@@ -99,6 +99,18 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
   const luckyOracleRef = useRef(makeLuckyOracle(randomSeed()));
   const satMissesRef = useRef(0);
   const [winsEarned, setWinsEarned] = useState(0);
+  // BONUS CREDITS THIS RUN (H6/H15) — the same per-run ledger lines CHAIN/FUSE collect. A mastery
+  // or collection milestone credited mid-run showed as a toast and then vanished from the results,
+  // so the balance moved by more than "+N wins earned" claimed. Reset when a run starts playing.
+  const [winsBonusLines, setWinsBonusLines] = useState([]);
+  useEffect(() => subscribeWins((e) => {
+    if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
+  }), []);
+  const satPrevPhaseRef = useRef(view.phase);
+  useEffect(() => {
+    if (view.phase === 'playing' && satPrevPhaseRef.current !== 'playing') setWinsBonusLines([]);
+    satPrevPhaseRef.current = view.phase;
+  }, [view.phase]);
   // Preload the rarity rank index + begin a WPM session; flush it on unmount (leave/exit).
   useEffect(() => {
     loadRarityIndex();
@@ -167,9 +179,10 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
     satMissesRef.current = misses;
   }, [view.missCount]);
 
-  // Live wins tally (item 2): what the run will pay so far, from the running cleared count
-  // (0 until the 3-word payout gate). Recomputed each render — pure.
-  const winsTally = awardWins({ mode: 'satRush', wordsAccepted: view.cleared || 0 });
+  // Live wins tally (item 2): what the run HAS BANKED so far — the same total the results show
+  // (H6/H1: the old `awardWins(cleared)` estimate ignored rarity/combo/lucky/forge). 0 until the
+  // 3-word payout gate.
+  const winsTally = winsEarned;
 
   // HUD ✕ mid-run: clean abandon (stops the clock, fires run_abandoned, no results)
   // then go home. The hook's phase drop + unmount restore the music duck (see the
@@ -254,6 +267,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
         <SatRushResults
           results={view.results}
           winsEarned={winsEarned}
+          winsBonusLines={winsBonusLines}
           onAgain={game.startGame}
           onExit={onExit}
           offerMenu={offerMenu}
