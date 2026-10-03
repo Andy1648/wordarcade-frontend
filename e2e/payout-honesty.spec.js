@@ -76,10 +76,11 @@ for (const s of SETUPS) {
     const cardXp = cardWins * 10;
 
     const readLedger = () => page.evaluate(() => {
-      const xp = JSON.parse(localStorage.getItem('taw.xp') || '{"lv":1,"into":0}');
+      // PV10: the XP number comes from the app's probe (taw.xp stores the fraction into the level).
+      const xp = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 };
       return {
-        lv: xp.lv,
-        into: xp.into,
+        lv: xp.level,
+        into: Math.round(xp.intoLevel),
         wins: Number(localStorage.getItem('taw.wins') || 0),
         carry: Number(localStorage.getItem('taw.winsCarry') || 0),
       };

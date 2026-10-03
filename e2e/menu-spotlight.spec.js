@@ -13,10 +13,9 @@ import { installBackendMock } from './support/backendMock.js';
 async function intoLevel(page) {
   return page.evaluate(() => {
     try {
-      const raw = localStorage.getItem('taw.xp');
-      if (!raw) return 0;
-      const v = JSON.parse(raw);
-      return typeof v.into === 'number' ? v.into : 0;
+      // PV10: taw.xp stores the fraction into the level; the XP number comes from the app's probe.
+      if (!localStorage.getItem('taw.xp') || !window.__tawXp) return 0;
+      return Math.round(window.__tawXp().intoLevel) || 0;
     } catch {
       return 0;
     }

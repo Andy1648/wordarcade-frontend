@@ -21,6 +21,12 @@
 // Feature-detected: until supabase/migrations/006_cloud_save.sql is applied, lb_caps() reports no
 // `cloud` and every call here is a no-op.
 import { exportSave, importSave, parseSave } from './saveBackup.js';
+import { resolveXpState } from '../progress/xp.js';
+
+// PROGRESSION v10 (016_econ_v10.sql): when lb_caps reports econ: 10 the save goes through the
+// version-gated lb_save2 / lb_load2 (p_econ = 10); the old lb_save becomes a no-op there so an old
+// bundle can't write. Before 016 is run, the old functions are used unchanged.
+export const ECON_RPC_VERSION = 10;
 
 const LAST_BACKUP_KEY = 'taw.cloud.lastBackup';
 const BACKUP_EVERY_MS = 60 * 1000;
@@ -33,9 +39,11 @@ function num(v) {
 }
 export function progressScoreFromKeys(keys) {
   const get = (k) => (keys && Object.prototype.hasOwnProperty.call(keys, k) ? keys[k] : null);
+  // PV10: the AUTHORITATIVE level — the v10 shape, a converted legacy one, or (after a stale
+  // old-bundle write) the v10 shadow. The migration keeps every level, so the score is unchanged by it.
   let lv = 1;
   try {
-    lv = Math.max(1, Math.floor(num(JSON.parse(get('taw.xp') || '{}').lv) || 1));
+    lv = Math.max(1, Math.floor(num(resolveXpState(get).level) || 1));
   } catch {
     lv = 1;
   }
@@ -53,7 +61,7 @@ export function localScore(storage) {
   const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
   if (!s) return 0n;
   const keys = {};
-  for (const k of ['taw.xp', 'taw.rebirths', 'taw.letters']) {
+  for (const k of ['taw.xp', 'taw.xpv10', 'taw.econ', 'taw.rebirths', 'taw.letters']) {
     try {
       const v = s.getItem(k);
       if (v != null) keys[k] = v;
@@ -113,14 +121,15 @@ export const DEV_RESET_NOTICE_KEY = 'taw.devResetNotice';
 /**
  * Back up now if due. `rpc` = client.js rpc; `secret` = the device secret. Never throws.
  */
-export async function backupNow({ rpc, secret, force = false, storage } = {}) {
+export async function backupNow({ rpc, secret, force = false, storage, econ = false } = {}) {
   if (!rpc || !secret) return false;
   const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
   try {
     const last = Number(s && s.getItem(LAST_BACKUP_KEY)) || 0;
     if (!force && Date.now() - last < BACKUP_EVERY_MS) return false;
     const blob = exportSave();
-    const r = await rpc('lb_save', { p_secret: secret, p_blob: blob, p_score: localScore(s).toString() });
+    const body = { p_secret: secret, p_blob: blob, p_score: localScore(s).toString() };
+    const r = econ ? await rpc('lb_save2', { ...body, p_econ: ECON_RPC_VERSION }) : await rpc('lb_save', body);
     if (s) s.setItem(LAST_BACKUP_KEY, String(Date.now()));
     return !!(r && r.saved);
   } catch {
@@ -132,10 +141,10 @@ export async function backupNow({ rpc, secret, force = false, storage } = {}) {
  * Restore from the cloud if it is ahead. Returns { restored, username } — the caller reloads the
  * page when restored (every module re-reads its keys). Never lowers progress, never throws.
  */
-export async function restoreIfAhead({ rpc, secret, storage, restore = true } = {}) {
+export async function restoreIfAhead({ rpc, secret, storage, restore = true, econ = false } = {}) {
   if (!rpc || !secret) return { restored: false };
   try {
-    const r = await rpc('lb_load', { p_secret: secret });
+    const r = econ ? await rpc('lb_load2', { p_secret: secret, p_econ: ECON_RPC_VERSION }) : await rpc('lb_load', { p_secret: secret });
     // 012_admin_reset: the dev flagged this profile for a FULL RESET — that outranks any restore (the
     // cloud copy is the progress being reset). The caller obeys via obeyDevReset in client.js.
     if (r && r.reset_all === true) return { restored: false, resetAll: true, username: r.username, id: r.id };

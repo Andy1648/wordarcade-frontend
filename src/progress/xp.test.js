@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   need,
+  needV9,
   CURVE_BASE,
   CURVE_BREAK,
   EARLY_CURVE_EXP,
@@ -60,10 +61,10 @@ function withStorage(seed, fn) {
     else globalThis.localStorage = saved;
   }
 }
-// cumulative XP to REACH a level (sum need(1..L-1)).
+// cumulative XP to REACH a level (sum needV9(1..L-1)) — a LEGACY cumulative total (levelFromXp walks v9).
 function cumCost(level) {
   let acc = 0;
-  for (let k = 1; k < level; k++) acc += need(k);
+  for (let k = 1; k < level; k++) acc += needV9(k);
   return acc;
 }
 
@@ -148,47 +149,47 @@ test('need() matches the published Economy v8 early levels', () => {
   for (let n = 1; n < 60; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
 });
 
-test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the v9 shape', () => {
+test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the FROZEN v9 shape (needV9)', () => {
   // v6 eased 1.25 -> 1.08 at LV60, so a level could cost LESS than the one before it while Key Power /
   // rebirth / momentum kept compounding income. v9 (STEP 19) deliberately trades v8's geometric ×1.22
   // tail for a polynomial (level^CURVE_POW) above CURVE_BREAK and a gentle geometric tail past
   // CURVE_TAIL — the RELATIVE growth per level now falls on purpose. What must still hold: every
-  // level costs more than the last (need(n+1)/need(n) > 1), and the per-level STEP never shrinks
-  // (need(n+1) - need(n) >= need(n) - need(n-1)) — the curve may flatten in ratio, never in cost.
+  // level costs more than the last (needV9(n+1)/needV9(n) > 1), and the per-level STEP never shrinks
+  // (needV9(n+1) - needV9(n) >= needV9(n) - needV9(n-1)) — the curve may flatten in ratio, never in cost.
   assert.equal(CURVE_POW, 4);
   assert.equal(CURVE_TAIL, 300);
-  const early = need(30) / need(29);
+  const early = needV9(30) / needV9(29);
   assert.ok(early > 1.155 && early < 1.165, `early ratio ${early}`); // 1.16
-  assert.equal(need(CURVE_BREAK), round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK - 1)));
-  // Polynomial section: need(n) = need(30) × (n/30)^4.
-  const base = need(CURVE_BREAK);
+  assert.equal(needV9(CURVE_BREAK), round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK - 1)));
+  // Polynomial section: needV9(n) = needV9(30) × (n/30)^4.
+  const base = needV9(CURVE_BREAK);
   for (const n of [31, 60, 100, 200, 300]) {
-    assert.equal(need(n), round10(base * Math.pow(n / CURVE_BREAK, CURVE_POW)), `poly need(${n})`);
+    assert.equal(needV9(n), round10(base * Math.pow(n / CURVE_BREAK, CURVE_POW)), `poly needV9(${n})`);
   }
-  assert.equal(need(60), 710560); // 16 × need(30), round10
-  assert.equal(need(300), 444100000); // 10^4 × need(30)
+  assert.equal(needV9(60), 710560); // 16 × needV9(30), round10
+  assert.equal(needV9(300), 444100000); // 10^4 × needV9(30)
   // Geometric tail past CURVE_TAIL: exactly ×CURVE_TAIL_EXP a level, and it HARDENS the curve again
   // (the tail ratio is steeper than the last polynomial step).
-  const tail = need(400) / need(399);
+  const tail = needV9(400) / needV9(399);
   assert.ok(Math.abs(tail - CURVE_TAIL_EXP) < 1e-6, `tail ratio ${tail}`);
-  assert.ok(CURVE_TAIL_EXP > need(CURVE_TAIL) / need(CURVE_TAIL - 1), 'the tail must not be gentler than the polynomial it follows');
+  assert.ok(CURVE_TAIL_EXP > needV9(CURVE_TAIL) / needV9(CURVE_TAIL - 1), 'the tail must not be gentler than the polynomial it follows');
   // Every level costs strictly more than the one before, across the whole playable range.
-  for (let n = 2; n <= 1500; n++) assert.ok(need(n) / need(n - 1) > 1, `need(${n}) must exceed need(${n - 1})`);
+  for (let n = 2; n <= 1500; n++) assert.ok(needV9(n) / needV9(n - 1) > 1, `needV9(${n}) must exceed needV9(${n - 1})`);
   // ...and the step between levels never shrinks, through the exact-integer range (beyond it the
   // values are floats and "difference" is a statement about binary rounding).
   for (let n = 3; n < 870; n++) {
-    assert.ok(need(n) - need(n - 1) >= need(n - 1) - need(n - 2), `the step to LV${n} shrank`);
+    assert.ok(needV9(n) - needV9(n - 1) >= needV9(n - 1) - needV9(n - 2), `the step to LV${n} shrank`);
   }
-  assert.ok(Number.isFinite(need(600)) && need(600) > need(300));
+  assert.ok(Number.isFinite(needV9(600)) && needV9(600) > needV9(300));
 });
 
 test('every level requirement is divisible by 10 (through the exact-integer range)', () => {
-  // round10 forces %10===0 by construction; verified where need(n) stays below 2^53. The v9 curve
+  // round10 forces %10===0 by construction; verified where needV9(n) stays below 2^53. The v9 curve
   // is polynomial to LV300 and ×1.03 after, so it reaches 2^53 at LV870 (v8's ×1.22 tail did at
   // LV161) — past that the value is a float and "%10" is about binary rounding, not the economy.
-  for (let n = 1; n < 870; n++) assert.equal(need(n) % 10, 0, `need(${n})=${need(n)}`);
-  assert.ok(need(869) <= Number.MAX_SAFE_INTEGER, 'LV869 is still an exact integer');
-  assert.ok(need(870) > Number.MAX_SAFE_INTEGER, 'the exact-integer range is checked to its edge');
+  for (let n = 1; n < 870; n++) assert.equal(needV9(n) % 10, 0, `needV9(${n})=${needV9(n)}`);
+  assert.ok(needV9(869) <= Number.MAX_SAFE_INTEGER, 'LV869 is still an exact integer');
+  assert.ok(needV9(870) > Number.MAX_SAFE_INTEGER, 'the exact-integer range is checked to its edge');
 });
 
 // THE HEADLINE NUMBER OF THE v8 RETUNE, pinned on its own so a retune has to come here first.
@@ -277,7 +278,7 @@ test('level derived from cumulative xp is correct across a 0..100000 sweep', () 
   let acc = 0;
   let L = 1;
   while (acc <= 100000) {
-    acc += need(L);
+    acc += needV9(L);
     L += 1;
     cum[L] = acc;
   }
@@ -288,7 +289,7 @@ test('level derived from cumulative xp is correct across a 0..100000 sweep', () 
     assert.ok(xp < cum[r.level + 1], `xp=${xp}: ${xp} !< cum[${r.level + 1}]=${cum[r.level + 1]}`);
     // progress fields stay internally consistent
     assert.equal(r.intoLevel, xp - cum[r.level]);
-    assert.equal(r.cost, need(r.level));
+    assert.equal(r.cost, needV9(r.level));
     assert.equal(r.toNext, r.cost - r.intoLevel);
     assert.ok(r.intoLevel >= 0 && r.intoLevel < r.cost);
     assert.ok(r.frac >= 0 && r.frac < 1);
@@ -298,9 +299,9 @@ test('level derived from cumulative xp is correct across a 0..100000 sweep', () 
 test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   const r = levelFromXp(cumCost(7) + 100); // 100 xp into level 7
   assert.equal(r.level, 7);
-  assert.equal(r.cost, need(7));
+  assert.equal(r.cost, needV9(7));
   assert.equal(r.intoLevel, 100);
-  assert.equal(r.toNext, need(7) - 100);
+  assert.equal(r.toNext, needV9(7) - 100);
 });
 
 test('the XP stack (single source): key tier × mode × rebirth', () => {
@@ -423,8 +424,9 @@ test('creditXp reports a level-up exactly when the boundary is crossed', () => {
 test('storage round-trips the {level, intoLevel} shape', () => {
   withStorage({}, (map) => {
     saveProgress({ level: 7, intoLevel: 100 });
-    // Persisted as the compact bounded shape, never a cumulative total.
-    assert.equal(map.get(XP_KEY), JSON.stringify({ lv: 7, into: 100 }));
+    // PV10: persisted as {lv, f, rc, v:10} — the FRACTION into the level, never the XP number.
+    assert.equal(map.get(XP_KEY), JSON.stringify({ lv: 7, f: 100 / need(7), rc: 0, v: 10 }));
+    assert.equal(map.get('taw.xpv10'), map.get(XP_KEY), 'the shadow mirrors every write');
     const p = loadProgress();
     assert.equal(p.level, 7);
     assert.equal(p.intoLevel, 100);
@@ -437,8 +439,8 @@ test('a legacy cumulative taw.xp is migrated to {level, intoLevel} on first read
     const p = loadProgress();
     assert.equal(p.level, 7);
     assert.equal(p.intoLevel, 100); // already a round 10 here, so floor-to-10 is a no-op
-    // The migration rewrote storage in the new compact shape (no longer the huge number).
-    assert.equal(map.get('taw.xp'), JSON.stringify({ lv: 7, into: 100 }));
+    // The migration rewrote storage in the v10 shape (no longer the huge number).
+    assert.equal(map.get('taw.xp'), JSON.stringify({ lv: 7, f: 100 / needV9(7), rc: 0, v: 10 }));
   });
 });
 
@@ -451,7 +453,8 @@ test('stored xp-into-level never exceeds one level cost, even after a huge legac
     assert.ok(p.intoLevel < need(120));
     const stored = JSON.parse(map.get('taw.xp'));
     assert.equal(stored.lv, 120);
-    assert.ok(stored.into < need(120));
+    assert.ok(stored.f >= 0 && stored.f < 1);
+    assert.equal(stored.into, undefined, 'the XP number is never stored');
   });
 });
 
@@ -522,7 +525,7 @@ test('localStorage failure does not throw and defaults to 0', () => {
   };
   try {
     const p = loadProgress();
-    assert.deepEqual(p, { level: 1, intoLevel: 0 });
+    assert.deepEqual(p, { level: 1, intoLevel: 0, frac: 0 });
   } finally {
     if (saved === undefined) delete globalThis.localStorage;
     else globalThis.localStorage = saved;
