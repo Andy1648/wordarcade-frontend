@@ -63,16 +63,16 @@ Top-8 board rows today (anon read; private cloud saves are not readable — the 
 - **Option H (HOURS-equivalent):** convert each save to the level a v10 player reaches in the same play
   time. Monotone in level, so board ORDER is preserved — but the shift is huge (LV195 → roughly LV50–60,
   −70%), which the amendment says "needs a fix, not a shrug".
-- Recommendation: **K for levels + rebirths + marks + tiers**, and **H only for the spendable WINS
-  balance** (failure mode 1: a 1e15 balance must not buy 40 KEY tiers on day one) — capped like the v9
-  migration at N KEY-tier prices. ANDY DECIDES.
+- Recommendation: **K for levels + rebirths + marks + tiers**. ~~H only for the spendable WINS balance —
+  capped like the v9 migration at N KEY-tier prices~~ **DROPPED (review #7 / must-fix 6): NO wins cap,
+  nobody loses wins** — under P^0.95 a big balance no longer runs levels away.
 
 ## The 11 failure modes → how V1 handles each (implementation plan)
 1. RUNAWAY (LV5222): P^α makes levels cost scale with power, so dozens of KEY tiers can't buy hundreds
-   of levels; the wins balance is capped on migration; sim adds a "1 QA balance" player (must not reach
+   of levels; ~~the wins balance is capped on migration~~ (dropped — no wins cap); sim adds a "1 QA balance" player (must not reach
    LV1000 in a session).
-2. STALE BOARD ROWS (Xavi): migration 015 adds profiles.econ_version; rows below 10 show "—" for
-   wins/word until their client re-submits (server can't recompute a client-side rate exactly).
+2. STALE BOARD ROWS (Xavi): ~~migration 015 adds profiles.econ_version; rows below 10 show "—" for
+   wins/word~~ (dropped — no wins/word blanking; see IMPLEMENTATION).
 3. OLD CACHED CLIENT: the save + every submit carry econ_version=10; lb_submit2/lb_save refuse < 10 →
    the client reloads (G1 + SW fixes already make a stale tab reload onto the new build).
 4. OLD SAVES RESURFACING: migrateEconomyV10 runs on load by taw.econ version, idempotent (stamped);
@@ -109,6 +109,140 @@ One r can't hit both LV225≈50 h and LV400≈200 h (late levels speed up as reb
 **CHOSEN: K10, r1.028 to LV225, r1.018 above** — LV100 10.1 h and LV225 49.2 h hit the targets. The peak stays LV379
 in every run because the sim's bots REBIRTH around LV225–260 (R12 from LV260): "LV400 ≈ 200 h" is reached only
 by a player who stops rebirthing, so it is a rebirth-policy number, not a curve number. Next: all 3 skills at 200 h.
+
+## ADVERSARIAL REVIEW (oct3 10:55, only job: break existing players) — verdict: SAFE TO IMPLEMENT WITH FIXES
+Ranked breakages of the plan as written, and the MUST-FIX list the implementation now follows:
+1. CRITICAL — reading an old save against the new curve collapses or bursts the bar (LV195 R4: need ×1,700 → a 99% bar
+   becomes 0.06%; a high-level T0 R0 save: the new tail is CHEAPER above ~LV75 → into ≥ need → zeroed, or free levels via
+   creditXp's carry loop). FIX: freeze today's curve as needV9(); convert ONCE as f = clamp(into / needV9(lv), 0, 1−1e-9);
+   levelFromXp uses needV9; legacy is detected by SHAPE (no v:10), never by the taw.econ stamp; clamp, never zero.
+2. CRITICAL — P rises (KEY buy ×2.39/tier, AUTO-KEY, a higher-tier restore) or FALLS (cloud restore by score, old backup
+   import, admin reset) mid-level → the bar moves backwards / zeroes / bursts. {lv, into, p} + rescale only works if every
+   writer stamps p and a missing p never defaults to 1 (×26,800 burst at T10 R4). FIX: store a FRACTION {lv, f, rc, v:10};
+   into = f × need for display only.
+3. HIGH — need() can be Infinity → round10 → 0 → creditXp's while-loop never ends (keyTierXp is Infinity from ~T772; the
+   tail overflows ~LV36k). FIX: need always finite and > 0 (P capped 1e300, result ≤ MAX_VALUE); creditXp breaks out on a
+   non-finite need; tests at T1000 and LV1e6.
+4. HIGH — a stale tab / old bundle on the same localStorage keeps farming the OLD curve (LV400 in 18 min) and spreads it:
+   lb_save accepts equal-or-higher scores, restore copies the blob to other devices, lb_submit2 accepts it at 0.5 lv/s; an
+   econ_version argument does nothing because old clients don't send it. FIX: version-gate by SIGNATURE (lb_submit3,
+   lb_save2, lb_load2 with p_econ; revoke/no-op the old ones); locally a legacy-shaped taw.xp written after the stamp never
+   raises the level; rc honours a rebirth done elsewhere.
+5. HIGH — cloud restore + backup import skip the migration (pre-STEP-52 blobs have no taw.econ; progressScoreFromKeys still
+   reads taw.xp.lv). FIX: importSave writes the blob's taw.econ (or removes it); the score reads the authoritative level;
+   new keys join PROGRESS_KEYS.
+6. HIGH — the rebirth WALL for existing high-R players (Tangie R10 LV126 → R11 needs LV225: ~36 h stuck; Daan ~24 h;
+   maSON ~18 h). FIX: sim the 8 real rows on the CHOSEN curve; retune the gates above R8 or grandfather a one-time gate.
+7. MEDIUM — the wins cap is a LOSS and misses its target (T10's cap ≈ 7.3e15, so a 1e15 balance isn't capped; a T5 player is
+   cut to ~9.4e11). Under P^0.95 a big balance no longer runs away anyway. FIX: drop the cap and the "—" wins/word blanking.
+8. MEDIUM (Option H only) — 015's lv<old.level return would freeze the whole submit. → choose K.
+9. LOW-MED — K=10 is a ×10.3 cliff at LV31. FIX: ramp K in over LV30–40 (K^((n−30)/10)), re-sim.
+10. LOW — the LV5222 row stays #1 forever and its bar is permanently frozen (need ≈ 5e46). FIX: admin-reset it (012).
+11. LOW — after the first KEY buy a tier is ×1.05 level speed instead of ×2.5: early levels slower than today. Tell Andy.
+NOTE: v10-existing-players.md was computed on K8 r1.025; the chosen curve needs ~2× more at LV195–225 → REDO it from a sim
+of the 8 real rows (heavy; next free slot).
+
+## IMPLEMENTATION (oct3, branch feat/pv10 off feat/h2a-board) — Option K, the chosen curve, all must-fixes
+CURVE (src/progress/xp.js): `need(n) = needAt(n, currentPower())`. `needAt(n, P)` is pure: P = max(1,
+keyTierXp(T)/10 × rebirthMult(R)) capped at 1e300; n ≤ 30 → 600·1.16^(n−1)·P^0.95 (exactly v9 at P = 1);
+n > 30 → b30 · 10^min(1,(n−30)/10) · seg(n) · P^0.95 with seg = 1.028^(n−30) to LV225, 1.028^195·1.018^(n−225)
+above (= v10-probe-2seg.sh K10 r1.028→1.018, plus the K ramp). Pinned against the probe formula in a test.
+Sample at P = 1: LV31 57,470 (×1.29 over LV30, no cliff) · LV40 585,350 · LV100 3.07e6 · LV225 9.69e7 · LV1000 9.8e13.
+
+### Must-fixes
+1. STORAGE — taw.xp = `{lv, f, rc, v:10}` (f = fraction into the level, rc = rebirths at write time); the XP
+   number is `f × need(lv)`, display only, never stored. Today's curve is frozen verbatim as `needV9()`;
+   `levelFromXp` walks it. A legacy save (detected by SHAPE — no `v:10` — never by the stamp alone) converts
+   ONCE: f = clamp(into / needV9(lv), 0, 1−1e-9); a bare cumulative number goes through levelFromXp. Nothing
+   zeroes a bar any more (an over-full legacy bar clamps just under full). `creditXp`/`progressOf`/
+   `saveProgress` prefer `frac` when a state carries it, so a KEY buy, AUTO-KEY, a rebirth, a restore or a
+   P drop never moves the bar.
+2. FINITE NEED + LOOP GUARD — needAt always returns a finite value in [10, MAX_VALUE] (Infinity/NaN level or
+   power → the cap; P capped 1e300). creditXp's carry stops on a non-finite/non-positive need, a non-finite
+   total, or after 1e6 levels. Tests at KEY tier 1000, LV 1e6, Infinity/NaN inputs, MAX_VALUE gains.
+3. STALE TABS — every v10 write also goes to a shadow key `taw.xpv10`. Once stamped (taw.econ ≥ 10), a
+   legacy-shaped taw.xp is a stale old-bundle write: the shadow is kept (never raises the level) and rewritten;
+   if taw.rebirths > shadow.rc the rebirth done there is honoured (its level, never above the shadow's).
+   SERVER: supabase/migrations/016_econ_v10.sql (WRITE ONLY) adds lb_submit3 (015's clamp + 013's weekly
+   counter + p_econ = 10), lb_save2, lb_load2 (012's reset_all), makes lb_submit2 / lb_submit / lb_save
+   no-ops, and adds `econ: 10` to lb_caps. The client uses the new RPCs only when lb_caps reports econ ≥ 10,
+   else the old ones — it works before 016 runs. ORDER: deploy the client, THEN run 016.
+4. IMPORT / CLOUD RESTORE — importSave writes the blob's taw.econ, or REMOVES the local stamp (and the local
+   shadow + gate, `REMOVE_IF_ABSENT`) when the blob has none, so the migration re-runs on the restored save
+   after the reload. The cloud progress score (`progressScoreFromKeys`) and the board / per-level-claim level
+   read the AUTHORITATIVE level via `resolveXpState` / `storedLevel`. New keys taw.xpv10, taw.rbgate,
+   taw.pv10notice joined PROGRESS_KEYS (44 → 47; the saveBackup test counts them).
+5. REBIRTH GATES — the table lives in xp.js (REBIRTH_TABLE). A save that existed at migration time gets ONE
+   grandfathered gate for its NEXT rebirth: `taw.rbgate = {rc, lv: min(table gate, level + 25)}` (stored only
+   when lower than the table). `rebirthThreshold(rc)` returns it while the rebirth count still equals rc;
+   `doRebirth` deletes it — used once. E.g. Tangie R10 LV126: R11 at LV151 instead of LV225; Daan R9 LV144:
+   LV169 (table 200); maSON R8 LV119: LV144 (table 175). Saves within 25 levels of their gate are unchanged.
+   (Stars for that one rebirth count from the grandfathered gate.)
+6. NO WINS CAP, NO WINS/WORD BLANKING — the v9 balance cap (migrateEconomyV9) is gone for every save, v8 saves
+   included; the plan's cap and "—" blanking are struck above. Nobody loses wins.
+Also: the econ stamp is now 10 (`migrateEconomyV10`, run at module boot in main.jsx before any UI reads XP);
+`doRebirth` writes the rebirth count BEFORE the fresh level state (so rc is right). A one-time notice —
+tutorial `pv10` in src/tutorials/registry.js (`isNew`, gated on taw.pv10notice, set by the migration only for
+a save with progress): "LEVELS NOW TAKE LONGER — YOU KEPT EVERY LEVEL."
+
+### The 11 failure modes
+1. RUNAWAY — P^0.95 on every level; KEY/rebirth speed levels only by P^0.05. No wins cap (must-fix 6). The
+   "1 QA balance" sim player is Andy's run (no sims run here).
+2. STALE BOARD ROWS — no blanking; a row moves only through lb_submit3 (version-gated, 015 clamp kept).
+   Admin-reset the LV5222 row (012) — review #10, Andy.
+3. OLD CACHED CLIENT — signature gate (016) + local stale-write protection (must-fix 3).
+4. OLD SAVES RESURFACING — shape detection + importSave stamp handling (must-fix 1, 4); idempotent.
+5. REBIRTH WALL — grandfathered one-time gate (must-fix 5). The full 8-real-rows sim on the chosen curve is
+   still TODO (Andy runs sims).
+6. DEAD-BAR SHOCK — fraction storage keeps every bar where it was; the one-time notice.
+7. UNLOCK GATES — unchanged gates (CHAIN 50 / FUSE 100); hours from the sim (Andy).
+8. CLOUD-SAVE SCORE — the level is kept, so the score is unchanged by the migration; no lb_reset_ack path needed.
+9. OVERFLOW — must-fix 2.
+10. PRICES — codes / achievements / mark rolls are priced in words or wins, not by need(); untouched.
+11. COPY — the bar, Stats ("XP INTO LEVEL"), the board and claims read need()/frac through xp.js. A read-only
+    probe `window.__tawXp()` (main.jsx) gives e2e the XP number now that it isn't stored.
+
+### Public API (src/progress/xp.js) — changed / added
+- CHANGED: `need(n)` is now the v10 power-scaled curve (reads KEY tier + rebirths from storage).
+- CHANGED: `levelFromXp` walks `needV9` (legacy-only, as before).
+- CHANGED: `creditXp(state, gain, power?)` — optional 3rd arg pins P; the returned state also carries `frac`.
+- CHANGED: `loadProgress()` returns `{ level, intoLevel, frac }` (intoLevel = frac × need, display).
+- CHANGED: `saveProgress(state)` stores `{lv, f, rc, v:10}` (+ shadow); `frac` wins over intoLevel.
+- CHANGED: `progressOf(state, power?)` — optional power; `frac` wins when present; frac clamped < 1.
+- CHANGED: `rebirthThreshold(rc)` honours the one-time grandfathered gate; `doRebirth` order + clears it.
+- ADDED: needV9, needAt, powerOf, currentPower, PV10_* constants, tableRebirthThreshold, REBIRTH_GATE_KEY,
+  grandfatheredGate, clearGrandfatheredGate, CREDIT_LOOP_MAX, XP_SHADOW_KEY, XP_SHAPE_VERSION, ECON_STAMP_KEY,
+  FRAC_MAX, clampFrac, isV10Shape, convertLegacyXp, resolveXpState, storedLevel.
+- econMigrate.js: `migrateEconomyV9` REMOVED → `migrateEconomyV10`; ECON_VERSION 9 → 10; MIGRATE_WINS_TIERS
+  removed; added PV10_GATE_GRACE_LEVELS, PV10_NOTICE_KEY, pv10NoticePending.
+- cloudSave.js: `backupNow` / `restoreIfAhead` take `econ`; ECON_RPC_VERSION. saveBackup.js: REMOVE_IF_ABSENT.
+
+### Files
+src/progress/xp.js, econMigrate.js, useXpCapture.js (P read once per menu session), claims.js; src/save/
+cloudSave.js, saveBackup.js; src/leaderboard/client.js; src/tutorials/registry.js, TutorialHost.jsx;
+src/main.jsx; supabase/migrations/016_econ_v10.sql; e2e/support/backendMock.js (marks the pv10 notice seen
+unless `pv10Notice: true`), e2e menu-xp / payout-honesty / shop / menu-spotlight (read the XP number via
+`__tawXp`), cloud-save / leaderboard-pull (mid-test level writes use the v10 shape — a legacy write after the
+stamp is, by design, a stale write).
+
+### Tests (node --test; all 91 unit test files pass, 798 tests)
+src/progress/pv10.test.js (16): curve = probe formula at 4 powers; K ramp / monotone to LV3000; P cap;
+finite need at T1000 / LV1e6 / Infinity / NaN; creditXp terminates at extremes; boundary carry exact (1 and 2
+levels); LV195 R4 99% stays 99%; high-level T0 R0 neither zeroes nor bursts; KEY buy keeps f; P drop keeps
+f; stale legacy write → no level gain (+ boot migration, + cloud score); stale rebirth honoured, clamped to
+the shadow; shape detection; doRebirth rc; grandfathered gate used once. econMigrate.test.js (4, rewritten:
+no wins cap, conversion, notice once). xp.test.js (v9 shape tests now pin needV9; storage shape).
+saveBackup.test.js (+2: stamp removal / kept, 47 keys). cloudSave.test.js (+1: lb_save2 / lb_load2 + p_econ).
+
+### Not done here (Andy)
+- Sims (loop-sim, the 8 real rows on the CHOSEN curve → v10-existing-players.md redo) and e2e — not run on this
+  machine by rule. NOTE: the v10-probe*.sh patches match the OLD need() text and no longer apply; the real
+  modules ARE v10 now, so plain loop-sim runs measure it directly (with the K ramp).
+- Run 016_econ_v10.sql AFTER the client deploy. Admin-reset the LV5222 row (012).
+- Found, not fixed: `keyTierXp(t)` collapses past ~T772 — the ×2.5 loop overflows to Infinity, round10 turns it
+  into 0, and the v9 floor returns 10 + 15t (T1000 = 15,010 XP/letter). P therefore DROPS there (the bar is
+  safe — fraction storage), but income collapses; worth a separate fix (cap instead of floor).
+
 
 ## 3-skill verification of the CHOSEN curve (200 h each, oct3 11:15) — first reach of each level
 | skill | LV50 | LV100 | LV150 | LV225 | LV300 | LV400 | peak |

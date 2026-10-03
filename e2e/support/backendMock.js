@@ -41,7 +41,20 @@ const BACKEND_WS_RE = /onrender\.com/;
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true, openDelayMs = 0 } = opts;
+  const { autoConnect = true, openDelayMs = 0, pv10Notice = false } = opts;
+
+  // PROGRESSION v10: every spec that seeds a legacy {lv, into} save past LV1 is a "migrated existing
+  // player" and would get the one-time "LEVELS NOW TAKE LONGER" tutorial card over the menu. Mark it seen
+  // unless a spec asks for it (opts.pv10Notice) — it is covered by src/progress/econMigrate.test.js.
+  if (!pv10Notice) {
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('taw.tut.pv10', '1');
+      } catch {
+        /* storage blocked */
+      }
+    });
+  }
 
   const state = {
     attempts: 0,

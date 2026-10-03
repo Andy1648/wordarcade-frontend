@@ -63,6 +63,25 @@ test('backup sends the export + score, throttled', async () => {
   }
 });
 
+// PV10 (016_econ_v10.sql): with lb_caps econ: 10 the save + load go through the version-gated RPCs.
+test('PV10: econ caps route the backup to lb_save2 and the restore to lb_load2, with p_econ = 10', async () => {
+  const cloud = withStorage({ 'taw.xp': xp(70), 'taw.rebirths': '1' }, () => exportSave());
+  await withStorage({ 'taw.xp': xp(2) }, async (m) => {
+    const calls = [];
+    const rpc = async (fn, body) => {
+      calls.push({ fn, body });
+      return fn === 'lb_load2' ? { id: 'p1', username: 'Zed', blob: cloud, score: 1 } : { saved: true };
+    };
+    assert.equal(await backupNow({ rpc, secret: 's'.repeat(48), econ: true }), true);
+    const r = await restoreIfAhead({ rpc, secret: 's'.repeat(48), econ: true });
+    assert.equal(r.restored, true);
+    assert.deepEqual(calls.map((c) => c.fn), ['lb_save2', 'lb_load2']);
+    assert.equal(calls[0].body.p_econ, 10);
+    assert.equal(calls[1].body.p_econ, 10);
+    assert.equal(m.has('taw.econ'), false, 'the blob had no stamp → the local one is removed so the migration re-runs');
+  });
+});
+
 test('recovery code round-trips the secret', () => {
   const secret = '0123456789abcdef0123456789abcdef0123456789abcdef';
   const code = formatRecoveryCode(secret);
