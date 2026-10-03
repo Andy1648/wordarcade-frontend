@@ -9,6 +9,7 @@
 // has ALREADY reached is marked seen — a LV300 player must not sit through five cards on their next visit —
 // except the ones for things that are new to everyone (the LV100 wall change), which they have never seen.
 import { FRENZY_MULT, frenzyMinutes } from '../progress/frenzy.js';
+import { rollsEnabled } from '../progress/rollsFlag.js';
 
 export const TUT_KEY_PREFIX = 'taw.tut.';
 export const TUT_INIT_KEY = 'taw.tut.init';
@@ -30,6 +31,19 @@ export const TUTORIALS = [
     steps: [
       { title: 'MARKS', line: 'EARN THEM FROM ACHIEVEMENTS.' },
       { title: 'WEAR ONE AS YOUR MAIN', line: 'YOUR MAIN MULTIPLIES EVERY WORD.', target: '.menu-mark, .hp-m-navbtn.is-marks' },
+    ],
+  },
+  {
+    // MARK ROLLS (Andy M): unlocks with MARKS. It points at the ROLL button, which lives INSIDE the MARKS
+    // panel — so it is hosted there (`host: 'marks'`, MarksIndex.jsx shows it the first time the panel
+    // opens), never by the menu's TutorialHost (dueTutorial skips hosted entries). New to everyone.
+    id: 'markRolls',
+    host: 'marks',
+    isNew: true,
+    when: (s) => s.marksRevealed && rollsEnabled(),
+    // ONE step (oct3 review): the button's own HOLD tag already says "hold"; a second card repeating it was noise
+    steps: [
+      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.mr-roll' },
     ],
   },
   {
@@ -79,6 +93,7 @@ export const TUTORIALS = [
 /** The first tutorial that is due and not yet seen, or null. `seen(id)` reads the stored flag. */
 export function dueTutorial(snapshot, seen) {
   for (const t of TUTORIALS) {
+    if (t.host) continue; // shown by its own screen (e.g. markRolls inside the MARKS panel), not the menu
     if (seen(t.id)) continue;
     let due = false;
     try { due = !!t.when(snapshot); } catch { due = false; }
@@ -89,7 +104,7 @@ export function dueTutorial(snapshot, seen) {
 
 /** First run on a save: the ids to mark seen right away (already reached, and not new to everyone). */
 export function alreadyReached(snapshot) {
-  return TUTORIALS.filter((t) => !t.isNew && (() => { try { return !!t.when(snapshot); } catch { return false; } })()).map((t) => t.id);
+  return TUTORIALS.filter((t) => !t.isNew && !t.host && (() => { try { return !!t.when(snapshot); } catch { return false; } })()).map((t) => t.id);
 }
 
 // ---- the stored flags (guarded, like every other store) ----------------------------------------------

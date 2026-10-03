@@ -1,0 +1,45 @@
+# MARK ROLLS — m3A, 5 seeds (mean (min–max))
+
+| skill | paid rolls / h (20 h mean) | hour 1 | hour 20 | 1st EPIC+ (min / roll #) | 1st LEGENDARY (min / roll #) | epic pity hits | leg pity hits | golds | rainbows | luck at 20 h | max single roll (levels) | rolls > 3 levels | runaway lump fails |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| casual | 4 (4–4.1) | 7 (7–7) | 4.6 (4–5) | 66.7 (12.8–84.2) / 7.6 (2–9) | 561 (12.8–1123) [2 never] / 38.7 (2–77) [2 never] | 0.8 (0–1) | 0 (0–0) | 0 (0–0) | 0 (0–0) | 1.4 (1.4–1.4) | 1.3 (1.1–1.7) | 0 (0–0) | 3 (0–7) |
+| median | 15.6 (15.2–16.1) | 13.4 (12–15) | 19.2 (15–22) | 32.8 (16.1–42.8) / 8.4 (6–9) | 642 (243–962) / 157 (56–236) | 0.8 (0–1) | 0 (0–0) | 17.4 (15–19) | 0 (0–0) | 2.4 (2.4–2.4) | 1.4 (1.3–1.6) | 0 (0–0) | 0.2 (0–1) |
+| strong | 85.1 (83–89) | 44 (35–57) | 94.6 (88–101) | 16.1 (11.5–18.3) / 8 (4–9) | 98.3 (55.1–198) / 88.8 (37–210) | 0.8 (0–1) | 0 (0–0) | 156 (151–162) | 5.8 (5–6) | 3.1 (3–3.3) | 1.5 (1.4–1.6) | 0 (0–0) | 0.2 (0–1) |
+
+Largest single paid roll per seed:
+- casual: mk-eclipse@LV639 ×1.0341 · mk-leviathan@LV669 ×1.0462 · mk-ouroboros@LV284 ×1.0169 · mk-leviathan@LV610 ×1.0504 · mk-eclipse@LV439 ×1.0359
+- median: mk-origin@LV865 ×1.0412 · mk-leviathan@LV739 ×1.0491 · mk-leviathan@LV885 ×1.0396 · mk-leviathan@LV883 ×1.0408 · mk-singularity@LV747 ×1.0451
+- strong: mk-leviathan@LV711 ×1.048 · mk-singularity@LV795 ×1.0447 · mk-leviathan@LV790 ×1.0473 · mk-leviathan@LV734 ×1.0471 · mk-leviathan@LV919 ×1.0407
+
+Runaway lump fails (any lump, any seed) and the largest INDEX-milestone lump among the top lumps (minutes of play; 0 = not in the top 27):
+- casual: fails MASTERY — CHAIN M5 (3.56 min), MASTERY — FUSE M10 (3.36 min), RANK UP — TYPIST (3.06 min), RANK UP — SPELLER (3.06 min), RANK UP — SCRAPPER (3.06 min), RANK UP — BRAWLER (3.06 min), RANK UP — SHARK (3.06 min), MASTERY — FUSE M10 (4.26 min), RANK UP — TYPIST (3.26 min), RANK UP — SPELLER (3.26 min), RANK UP — SCRAPPER (3.26 min), RANK UP — BRAWLER (3.26 min), RANK UP — SHARK (3.26 min), RANK UP — MENACE (3.26 min), RANK UP — TYPIST (3.17 min) · INDEX max 0 min
+- median: fails MASTERY — FUSE M10 (3.58 min) · INDEX max 0 min
+- strong: fails MASTERY — WORD BOMB M5 (4.18 min) · INDEX max 0 min
+
+## Achievement earn times, BEFORE tree (median minute over seeds; "—" = not in 20 h)
+
+| id | casual | median | strong |
+|---|---|---|---|
+| vol-1 | 1 | 1 | 0.8 |
+| lv-15 | 3.5 | 3 | 1.6 |
+| kp-5 | 4.5 | 3.8 | 2.7 |
+| lv-50 | 5.3 | 4.9 | 2.7 |
+| sec-millionaire | 5.3 | 4.9 (1/5) | 3.2 (2/5) |
+| kp-8 | 6.2 | 5.9 | 4.3 |
+| forge-26 | 9 | 9.7 | 6.5 |
+| lv-300 | 20.2 | 12.9 | 8 |
+| vol-100 | 23.2 | 10.3 | 6.5 |
+| obs-1 | 22.2 | 3.3 | 2.5 |
+| m-wb-5 | 56.7 | 16.1 | 9.9 |
+| m-chain-5 | 84.2 | 64.4 | 57.8 |
+| m-fuse-5 | 87.7 | 55.9 | 38 |
+| streak-3 | 122.3 | 122.3 | 122.1 |
+| dist-500 | 136.7 | 69.8 | 40.4 |
+| streak-7 | 362.7 | 362.2 | 363.4 |
+| vol-1k | 740.2 | 406.3 | 290.6 |
+| wpm-40 | — | 19.1 | 18.3 |
+| frenzy-1 | — | 38.9 | 21.9 |
+| obs-50 | — | 347.1 | 77.1 |
+| dist-2500 | — | 562.6 | 270.8 |
+| sec-dict | — | 700.1 | 163.9 |
+| wpm-70 | — | — | 18.3 |

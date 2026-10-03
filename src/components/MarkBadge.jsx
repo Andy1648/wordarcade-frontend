@@ -5,7 +5,7 @@
 // STEP 21 compared three frames (claude/step21/marks-{coin,pin,patch}-*.png): the COIN shipped — a
 // notched medallion reads as a thing you EARNED and shows the rank colour on the most surface; the
 // shield pin and stitched patch read as UI chrome. The other two frames are kept as variants.
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 // Rank rims: flat fill + darker outline shade (house rule: coloured outlines, not black).
 export const RANK_RIMS = [
@@ -146,6 +146,30 @@ const GLYPHS = {
     </g>
   ),
 };
+// The 26 MARK ROLLS glyphs live in markGlyphsRolled.jsx (lazy — payload ratchet). A screen that needs them
+// registers them (MarksIndex); a badge asked to draw one before that loads the module once and re-draws.
+const EXTRA = {};
+let extraLoad = null;
+export function registerMarkGlyphs(map) {
+  Object.assign(EXTRA, map);
+}
+function loadExtraGlyphs() {
+  if (!extraLoad) {
+    extraLoad = import('./markGlyphsRolled.jsx').then((m) => registerMarkGlyphs(m.ROLLED_GLYPHS), () => { extraLoad = null; });
+  }
+  return extraLoad;
+}
+// A rolled mark's FINISH replaces the rank rim: GOLD (10 dupes) and RAINBOW (10 golds). Flat fills only —
+// the rainbow is the house palette in hard-edged teeth, never a gradient.
+const GOLD_RIM = { fill: '#FFD54A', line: '#A8800F' };
+const RAINBOW_TEETH = [
+  { fill: '#FF4FA3', line: '#A3175E' },
+  { fill: '#FF6B3D', line: '#A63A12' },
+  { fill: '#FFE94A', line: '#A8800F' },
+  { fill: '#2EFFE0', line: '#0F8F7E' },
+  { fill: '#9A1AFF', line: '#5c0fa3' },
+];
+const PERM_RIM = { fill: '#9A1AFF', line: '#5c0fa3' };
 const LOCK = (
   <g stroke="#6b5a86" strokeWidth="4" strokeLinejoin="round" fill="none">
     <path d="M38 48 L38 40 C38 30 62 30 62 40 L62 48" />
@@ -154,9 +178,26 @@ const LOCK = (
   </g>
 );
 
-function Frame({ variant, rim, locked }) {
+function Frame({ variant, rim, locked, finish, permanent }) {
   const fill = locked ? '#1a0b2e' : '#2a1648';
   const ring = locked ? { fill: '#3d3150', line: '#241a33' } : rim;
+  if (permanent) {
+    // PERMANENT frame (spec §2): a ten-point burst, not the coin — earned, never rolled. Uneven points.
+    const pts = [];
+    for (let i = 0; i < 20; i += 1) {
+      const a = (i / 20) * Math.PI * 2 - Math.PI / 2;
+      const r = i % 2 === 0 ? (i % 4 === 0 ? 49 : 46) : 37;
+      pts.push(`${(50 + Math.cos(a) * r).toFixed(1)},${(50 + Math.sin(a) * r).toFixed(1)}`);
+    }
+    const p = locked ? ring : PERM_RIM;
+    return (
+      <g>
+        <polygon points={pts.join(' ')} transform="translate(4,4)" fill="#000" />
+        <polygon points={pts.join(' ')} fill={p.fill} stroke={p.line} strokeWidth="4" strokeLinejoin="round" />
+        <circle cx="50" cy="50" r="32" fill={fill} stroke={p.line} strokeWidth="2.5" />
+      </g>
+    );
+  }
   if (variant === 'pin') {
     // enamel PIN: a shield, metal rim, enamel field
     return (
@@ -179,18 +220,20 @@ function Frame({ variant, rim, locked }) {
     );
   }
   // COIN (default): a medallion with a notched rim
+  const body = !locked && finish === 'gold' ? GOLD_RIM : !locked && finish === 'rainbow' ? RAINBOW_TEETH[2] : ring;
   const teeth = [];
   for (let i = 0; i < 16; i += 1) {
     const a = (i / 16) * Math.PI * 2;
     const x = 50 + Math.cos(a) * 46;
     const y = 50 + Math.sin(a) * 46;
-    teeth.push(<circle key={i} cx={x.toFixed(1)} cy={y.toFixed(1)} r="5" fill={ring.fill} stroke={ring.line} strokeWidth="2.5" />);
+    const t = !locked && finish === 'rainbow' ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : body;
+    teeth.push(<circle key={i} cx={x.toFixed(1)} cy={y.toFixed(1)} r={finish === 'rainbow' && !locked ? '6' : '5'} fill={t.fill} stroke={t.line} strokeWidth="2.5" />);
   }
   return (
     <g>
       <circle cx="54" cy="54" r="46" fill="#000" />
       {teeth}
-      <circle cx="50" cy="50" r="43" fill={ring.fill} stroke={ring.line} strokeWidth="4" />
+      <circle cx="50" cy="50" r="43" fill={body.fill} stroke={body.line} strokeWidth="4" />
       <circle cx="50" cy="50" r="33" fill={fill} stroke={ring.line} strokeWidth="2.5" />
     </g>
   );
@@ -206,21 +249,31 @@ function Crown() {
  * @param locked   draws the lock in a dead frame
  * @param size     px
  * @param variant  'coin' | 'pin' | 'patch'
+ * @param finish   'base' | 'gold' | 'rainbow' — a rolled mark's dupe finish (replaces the rank rim)
+ * @param permanent  draws the PERMANENT burst frame (hard-achievement marks)
  */
-function MarkBadge({ mark, rank = 1, locked = false, size = 56, variant = 'coin', className = '' }) {
+function MarkBadge({ mark, rank = 1, locked = false, size = 56, variant = 'coin', className = '', finish = 'base', permanent = false }) {
   const r = Math.max(1, Math.min(5, rank || 1));
   const rim = RANK_RIMS[r - 1];
-  const glyph = !mark || locked ? LOCK : GLYPHS[mark.id] || null;
+  const [, redraw] = useState(0);
+  const missing = !!mark && !locked && !GLYPHS[mark.id] && !EXTRA[mark.id];
+  useEffect(() => {
+    if (!missing) return undefined;
+    let live = true;
+    loadExtraGlyphs().then(() => { if (live) redraw((n) => n + 1); });
+    return () => { live = false; };
+  }, [missing]);
+  const glyph = !mark || locked ? LOCK : GLYPHS[mark.id] || EXTRA[mark.id] || null;
   return (
     <svg
-      className={`mark-badge v-${variant}${locked ? ' is-locked' : ''} ${className}`}
+      className={`mark-badge v-${variant}${locked ? ' is-locked' : ''}${finish !== 'base' ? ` is-${finish}` : ''}${permanent ? ' is-permanent' : ''} ${className}`}
       viewBox="-6 -14 112 120"
       width={size}
       height={size}
       aria-hidden="true"
       style={{ overflow: 'visible' }}
     >
-      <Frame variant={variant} rim={rim} locked={locked || !mark} />
+      <Frame variant={variant} rim={rim} locked={locked || !mark} finish={finish} permanent={permanent} />
       <g transform="translate(50 50) scale(1.18) translate(-50 -50)">{glyph}</g>
       {!locked && mark && r >= 5 && <Crown />}
     </svg>
