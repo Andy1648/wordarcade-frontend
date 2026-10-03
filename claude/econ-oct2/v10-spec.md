@@ -103,3 +103,5 @@ LV400 ≈ 200 h targets; then the adversarial review; then implementation on a b
 Target: 10 h / 50 h / 200 h. K8 r1.025 is the closest so far: early pacing right, LV225 a bit early.
 | 8 | 1.028 | 8.9 h | 44.4 h | 100 h | — (LV366) | 366 |
 r1.028 fixes LV225 but LV400 drops out of 200 h → a steeper tail is wrong; next: K10 r1.025 (uniformly later).
+| 10 | 1.025 | 9.6 h | 41 h | 83 h | — (LV379) | 379 |
+One r can't hit both LV225≈50 h and LV400≈200 h (late levels speed up as rebirth power compounds). Next: a two-segment tail (v10-probe-2seg.sh) — K10, r1.028 to LV225, then r1.018.
