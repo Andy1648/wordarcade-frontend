@@ -67,6 +67,8 @@ export function ringDiameter({
   rowGap = 0,
   colGap = 0,
   layout = 'stack',
+  // H2c: the cap scales with the board's --wb-k (1 everywhere below the 2200x1250 huge tier).
+  ringMax = WB_RING_MAX,
 }) {
   // THE HEADER ROW is chrome: it is taken off the TOP of the content box once, and
   // the ring is then centred in what is left (the PLAY AREA). It is the one band
@@ -82,7 +84,7 @@ export function ringDiameter({
   if (layout === 'phone') {
     // the ring row's real height: what the header, prompt and input stacks leave, minus the flag
     const rowH = playH - topH - botH - 2 * rowGap - WB_FLAG_ROOM;
-    const d = Math.min(contentW * WB_RING_OF_WIDTH_PHONE, rowH, WB_RING_MAX);
+    const d = Math.min(contentW * WB_RING_OF_WIDTH_PHONE, rowH, ringMax);
     return Math.max(0, Math.floor(d));
   }
   // Rails: whichever leaves MORE — when the two stacks are near-equal the old symmetric reserve is
@@ -95,7 +97,7 @@ export function ringDiameter({
   const shorterSide = Math.min(stageW, stageH);
   const design = shorterSide * (layout === 'rails' ? WB_RING_OF_STAGE_RAILS : WB_RING_OF_STAGE);
   const d = Math.min(design, freeHeight, freeWidth);
-  const floored = Math.max(WB_RING_MIN, Math.min(WB_RING_MAX, Math.floor(d)));
+  const floored = Math.max(WB_RING_MIN, Math.min(ringMax, Math.floor(d)));
   // THE FLOOR IS A PREFERENCE; THE SPACE IS A CONSTRAINT. `floored` can raise the ring
   // back up to 220px on a small board, and on a 320x640 phone that put a ring 27px
   // TALLER than the rows actually left - the 6-o'clock seat and its floated name landed
@@ -128,6 +130,9 @@ export function applyRingSize(stage, { head, top, bottomBar, bottom } = {}) {
   const railW = stack ? 0 : px(cs.getPropertyValue('--wb-rail'));
   const rowGap = px(cs.rowGap);
   const colGap = stack ? 0 : px(cs.columnGap);
+  // HUGE SCREENS (H2c): GameScreen.css sets --wb-k (~1.45) at >=2200x1250 so the ring may grow
+  // past the 720px desk cap with the rest of the board. Unset (every smaller screen) -> 1.
+  const k = px(cs.getPropertyValue('--wb-k')) || 1;
   const d = ringDiameter({
     stageW: box.width,
     stageH: box.height,
@@ -140,6 +145,7 @@ export function applyRingSize(stage, { head, top, bottomBar, bottom } = {}) {
     rowGap,
     colGap,
     layout: stack ? 'phone' : 'rails',
+    ringMax: WB_RING_MAX * k,
   });
   stage.style.setProperty('--wb-size', `${d}px`);
   return d;
