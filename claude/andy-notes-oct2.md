@@ -99,6 +99,7 @@ MEMORY RULES (crashed 04:05): full lint/unit/e2e ONLY on GitHub Actions (push �
 - [ ] R2 feat/h2a-board: PR → CI → merge if green.
 - [ ] R3 PV10 probe (alone), then continue v10.
 - [ ] R4 feat/marks-rolls-engine → finish mark rolls.
+  - 10:37 DECIDED (Andy authorized all; my recommendations, reasons logged): roll price 60 words at your rate (casual ~7/h, was 4); GOLD/RAINBOW stay Andy's flat 10/10 (his explicit Sol's RNG rule, no caps); auto-equip only when the new MAIN ≤ ×1.5 the current one — a bigger jump asks first (kills the 19-level casual jackpot); rule P counts a NEW mark / GOLD / RAINBOW step-up as a good event (each one is a cutscene reward moment, exactly what the gap metric measures); permanent MAIN ×4; MAX-LEVEL-300 / 10-REBIRTH stay "hard" only together with PV10. Next: re-run rule P with these, then the roll UI (3 versions + adversarial reviewer), after the PV10 probe finishes (one heavy job at a time).
 - [ ] R5 Andy ran 014_self_reset.sql: verify Stats → RESET clears the board row on prod.
   - 10:34 BLOCKED (needs Andy): prod has no lb_self_reset (PGRST202 in the schema cache) → the real reset on typeaword.com fell back to local-only; the row stayed LV77 (script claude/finetune/prod-reset-014.mjs, test row ZZRESETHTDPM). Steps for Andy in ANDY TODO (check pg_proc → reload schema or re-run 014). Re-verify when he says so.
 - [x] R6 ANTI-CHEAT: lb_submit2 never rate-checks LEVEL (how LV5222 reached the board). Server-side level-rate check as a new migration (write, don't run; ANDY TODO).
