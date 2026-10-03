@@ -58,7 +58,16 @@ export const PROGRESS_KEYS = [
   'taw.rounds',
   'taw.returnClaim',
   'taw.wpm',
+  // PROGRESSION v10: the level-state shadow (a stale old-bundle write can't raise the level), the one-time
+  // grandfathered rebirth gate, and the one-time "LEVELS NOW TAKE LONGER" notice flag
+  'taw.xpv10',
+  'taw.rbgate',
+  'taw.pv10notice',
 ];
+// PV10 must-fix 4: migration keys that must NOT survive from THIS browser when a restored blob lacks them.
+// Without the blob's own econ stamp the v10 migration has to re-run on the restored (older) save after the
+// reload; a local shadow or grandfathered gate belongs to the save being replaced.
+export const REMOVE_IF_ABSENT = ['taw.econ', 'taw.xpv10', 'taw.rbgate'];
 
 const FORMAT = 'taw-save';
 
@@ -85,6 +94,13 @@ function defaultStorage() {
         if (typeof localStorage !== 'undefined') localStorage.setItem(k, v);
       } catch {
         /* quota / blocked — ignore, never throw */
+      }
+    },
+    removeItem(k) {
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(k);
+      } catch {
+        /* blocked — ignore, never throw */
       }
     },
   };
@@ -146,6 +162,17 @@ export function importSave(text, storage = defaultStorage()) {
   if (!parsed.ok) return parsed;
   for (const [k, v] of Object.entries(parsed.keys)) {
     storage.setItem(k, v);
+  }
+  // PV10: the blob's econ stamp is written above when it has one; when it has none (a pre-STEP-52 or
+  // pre-v10 blob) the LOCAL stamp, shadow and gate are removed so the migration re-runs on reload.
+  for (const k of REMOVE_IF_ABSENT) {
+    if (!Object.prototype.hasOwnProperty.call(parsed.keys, k) && typeof storage.removeItem === 'function') {
+      try {
+        storage.removeItem(k);
+      } catch {
+        /* never throw */
+      }
+    }
   }
   return { ok: true, imported: Object.keys(parsed.keys).length };
 }

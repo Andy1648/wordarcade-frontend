@@ -19,12 +19,15 @@ import ErrorBoundary from './components/ErrorBoundary.js'
 import { installChunkReloadGuard, isStaleChunkError } from './lib/chunkReload'
 import { installSwUpdateReload } from './lib/swUpdate'
 import { firstVisit, refreshSessionProps } from './lib/events'
-import { loadProgress, getRebirths } from './progress/xp'
-import { migrateEconomyV9 } from './progress/econMigrate'
+import { loadProgress, getRebirths, progressOf } from './progress/xp'
+import { migrateEconomyV10 } from './progress/econMigrate'
 import { forgeMigrateMomentum } from './progress/forge'
 
-// ECONOMY v9 (STEP 19): rescale a v8 save ONCE, before anything reads the wallet.
-migrateEconomyV9()
+// PROGRESSION v10: convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps every level.
+migrateEconomyV10()
+// Read-only progress probe (e2e + support): PV10 stores the FRACTION into the level, so the XP number on
+// the bar (intoLevel = frac × need) can no longer be read off taw.xp. Returns { level, intoLevel, cost, frac }.
+try { window.__tawXp = () => progressOf(loadProgress()) } catch { /* no window */ }
 // Andy oct2: MOMENTUM (capped at 200) became the uncapped LETTER FORGE — carry every buy over, once.
 forgeMigrateMomentum()
 import { getStreak } from './progress/streak'

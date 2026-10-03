@@ -19,6 +19,7 @@
 // PURE + guarded store, like every progress module: blocked storage → claims are granted on the
 // spot instead (never lost, never throws).
 import { grantWins } from './wins.js';
+import { storedLevel } from './xp.js';
 import { startBoost } from './boost.js';
 
 export const CLAIMS_KEY = 'taw.claims';
@@ -159,9 +160,11 @@ export function queueClaim({ id, kind, label, amount = 0, detail, meta } = {}) {
 
 // R10 (Andy oct2): a PER-LEVEL redeem code pays its wins × the player's level AT CLAIM TIME, so a code
 // scales with the player and never goes dead. Every display of a claim's value reads this too.
+// PV10: the authoritative level (xp.js), never a raw taw.xp read — a stale old-bundle write must not
+// raise what a per-level code pays.
 function currentLevel() {
   try {
-    const lv = Number(JSON.parse(localStorage.getItem('taw.xp') || '{}').lv);
+    const lv = storedLevel();
     return Number.isFinite(lv) && lv >= 1 ? Math.floor(lv) : 1;
   } catch {
     return 1;

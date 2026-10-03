@@ -100,7 +100,7 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
 
   // 4. I level past LexiLoop's LV40 (the board ranks by LEVEL only — Andy oct2 evening) — the next
   //    menu visit pushes it and shows the rank-up.
-  await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 41, into: 0 })));
+  await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 41, f: 0, rc: Number(localStorage.getItem('taw.rebirths')) || 0, v: 10 })));
   await page.goto('/?portal=1');
   await menuReady(page);
   const moment = page.locator('.lb-rankup');

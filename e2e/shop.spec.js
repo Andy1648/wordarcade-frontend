@@ -112,15 +112,11 @@ test.describe('shop', () => {
     expect(infinite, 'the ceremony adds no infinite animation').toBeLessThanOrEqual(1);
 
     const after = await page.evaluate(() => {
-      let xp = {};
-      try {
-        xp = JSON.parse(localStorage.getItem('taw.xp') || '{}') || {};
-      } catch {
-        xp = {};
-      }
+      // PV10: the XP number comes from the app's probe (taw.xp stores the fraction into the level).
+      const p = window.__tawXp ? window.__tawXp() : {};
       return {
-        lv: xp.lv,
-        into: xp.into,
+        lv: p.level,
+        into: p.intoLevel,
         rebirths: Number(localStorage.getItem('taw.rebirths')),
         wins: Number(localStorage.getItem('taw.wins')),
         keepsInferno: JSON.parse(localStorage.getItem('taw.owned') || '[]').includes('inferno'),

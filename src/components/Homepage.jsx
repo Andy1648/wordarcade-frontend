@@ -21,7 +21,6 @@ import { isModeLocked } from '../progress/modeAccess';
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
-import ModeDialog from './ModeDialog';
 import MenuFrame from './MenuFrame';
 import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
 import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
@@ -59,6 +58,16 @@ const LockedPreviewDialog = lazyWithReload(() => import('./LockedPreviewDialog')
 const RankLadder = lazyWithReload(() => import('./RankLadder'), 'RankLadder');
 // The REWARDS panel loads on first open (H4 payload offset): only the small ClaimPopup is on the menu at rest.
 const ClaimsPanel = lazyWithReload(() => import('../claims/ClaimsPanel.jsx'), 'ClaimsPanel');
+// The mode dialog loads on demand (payload ratchet, PV10 offset): fetched the moment a pointer or focus first
+// enters the menu (long before a card can be clicked), so the first open never waits on the network.
+const loadModeDialog = () => import('./ModeDialog');
+const ModeDialog = lazyWithReload(loadModeDialog, 'ModeDialog');
+let modeDialogWarm = false;
+const warmModeDialog = () => {
+  if (modeDialogWarm) return;
+  modeDialogWarm = true;
+  loadModeDialog().catch(() => { modeDialogWarm = false; });
+};
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
@@ -940,7 +949,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rebirthReady = xpProgress.level >= rebirthThreshold(rebirths);
 
   return (
-    <div className="homepage-wrap">
+    <div className="homepage-wrap" onPointerOver={warmModeDialog} onFocusCapture={warmModeDialog} onTouchStart={warmModeDialog}>
       <div
         ref={stageRef}
         className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}${isPhoneMenu ? ' is-phone-menu' : ''}`}
@@ -1238,6 +1247,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           shows the inline panel + closes cleanly (GO BACK), never blanking the live menu behind it. */}
       {dialog && (
         <ScreenBoundary name="mode-dialog" onBack={() => setDialog(null)}>
+          <Suspense fallback={null}>
           <ModeDialog
             game={dialog.game}
             sourceEl={dialog.el}
@@ -1258,6 +1268,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onToggleBlitzPack={onToggleBlitzPack}
             onSetAllBlitzPacks={onSetAllBlitzPacks}
           />
+          </Suspense>
         </ScreenBoundary>
       )}
 
