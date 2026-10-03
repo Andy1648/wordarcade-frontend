@@ -85,7 +85,7 @@ function Detail({ e, have, on, finish, tagText, howTo, onSet }) {
         <div className="mx-detail-tier">
           {t.name}
           {e.kind === 'roll' ? <> · <span className="mx-nowrap">1 IN {formatNum(oneInX(e.id))}</span></> : null}
-          {have && legacy ? <> · <span className="mx-nowrap">RANK {MARK_RANK_NAMES[rank - 1]}</span></> : null}
+          {have && legacy ? <> · <span className="mx-nowrap">MARK {MARK_RANK_NAMES[rank - 1]}</span></> : null}
         </div>
         {have ? <div className="mx-detail-pct">{tagText}</div> : howTo ? <div className="mx-howto">{howTo}</div> : null}
         {have && (
@@ -172,7 +172,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
             <MarkBadge mark={main ? markEntry(main.id) : null} locked={!main} rank={mp ? mp.rank : 1} size={128} finish={main ? finishOf(main) : 'base'} permanent={!!main && main.kind === 'perm'} className="mx-hero-art" />
             <div className="mx-hero-body">
               <div className="mx-hero-kicker">
-                {main ? <>YOUR MAIN{mp ? <> · <span className="mx-nowrap">RANK {MARK_RANK_NAMES[mp.rank - 1]}</span></> : null}</> : 'NO MAIN YET'}
+                {main ? <>YOUR MAIN{mp ? <> · <span className="mx-nowrap">MARK {MARK_RANK_NAMES[mp.rank - 1]}</span></> : null}</> : 'NO MAIN YET'}
               </div>
               <div className="mx-hero-name" title={main ? main.name : undefined}>{main ? main.name : 'ROLL ONE'}</div>
               {main
@@ -183,7 +183,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 <span className="mx-hero-rank-text">
                   {mp && !mp.maxed
                     ? `${formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → RANK ${MARK_RANK_NAMES[mp.rank]} · ×${formatMult(markMainMult(legacyMain, mp.rank + 1))}`
-                    : mp ? 'MAX RANK' : ' '}
+                    : mp ? 'MAXED' : ' '}
                 </span>
               </div>
             </div>

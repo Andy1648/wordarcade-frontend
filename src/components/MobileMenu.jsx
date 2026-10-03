@@ -175,6 +175,9 @@ export default function MobileMenu({
   navLayout = 'top',
   rewardsCount = 0,
   onRewards = null,
+  level = null,
+  levelFrac = 0,
+  wins = 0,
 }) {
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
@@ -219,6 +222,19 @@ export default function MobileMenu({
         <BoostPill className="hp-m-boost" />
       </div>
 
+      {/* 1a. H6 audit M19: the phone menu showed no level, no XP bar and no wins at all — the main
+             progress readout of the game was desktop-only. One compact row: LV · bar · WINS. In flow,
+             so the mode rows below flex a little shorter (still one screen, no scroll). */}
+      {level != null && (
+        <div className="hp-m-stats" role="group" aria-label={`Level ${level}, ${formatNum(wins || 0)} wins`}>
+          <span className="hp-m-stats-lv"><span className="hp-m-stats-k">LV</span>{formatNum(level)}</span>
+          <span className="hp-m-stats-track" aria-hidden="true">
+            <span className="hp-m-stats-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, Number(levelFrac) || 0))})` }} />
+          </span>
+          <span className="hp-m-stats-wins" data-wins={wins || 0}>{formatNum(wins || 0)}<span className="hp-m-stats-k">WINS</span></span>
+        </div>
+      )}
+
       {/* 1b. FIRST VISIT ONLY: "TYPE A WORD 👇" + an input. The search visitors who land here
              from the "type a word" trend get exactly that, then one tap into solo Word Bomb.
              In flow (not fixed), so the mode rows below simply flex a little shorter. */}
@@ -250,7 +266,14 @@ export default function MobileMenu({
                     it, which is what lets the type run at the band's full width instead of
                     shrinking to fit one long line. */}
                 <LayeredWord className="hp-m-name" text={game.name} accent={s.accent} />
-                <span className="hp-m-desc">{game.description}</span>
+                {/* Old-notes audit: SAT RUSH pays the most per word (POWER ×5 vs Word Bomb) — the
+                    desktop card says so, the phone row did not. */}
+                <span className="hp-m-desc">
+                  {game.description}
+                  {game.id === 'sat-rush' && modePower(game.id) > 1 && (
+                    <span className="hp-m-perk">{` POWER ×${modePower(game.id)}`}</span>
+                  )}
+                </span>
               </span>
               <Chevron />
             </a>

@@ -172,6 +172,11 @@
     letter-spacing: 0.3px;
     color: var(--row-sub);
   }
+  .hp-m-perk {
+    font-weight: 700;
+    color: var(--row-accent);
+    white-space: nowrap;
+  }
 
   /* A SHORT ROW DROPS ITS DESCRIPTION rather than shrinking the name to a whisper. The same
      sentence is the first line of the mode dialog the row opens, so nothing is lost; the row's
@@ -497,4 +502,53 @@
     transform: rotate(-4deg);
   }
   .hp-m-top .hp-m-title { flex: 1 1 auto; }
+}
+
+/* H6 audit M19: the phone's one progress row — LV · bar · WINS, right under the title (before the nav
+   strip in the 'top' layout). Flat house style: panel fill, coloured outline, hard black offset. The bar
+   fill is a plain rectangle scaled with transform (no animation at rest). */
+@media (max-width: 480px) {
+  .hp-m-stats {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 6px 10px;
+    background: #1a0b2e;
+    border: 3px solid #2a8f86;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0 #000;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: var(--fs-body);
+    color: #fff;
+    white-space: nowrap;
+  }
+  .hp-m[data-nav='top'] > .hp-m-stats { order: -1; }
+  /* the 'rail' layout is a ?nav= comparison grid with named areas; the strip stays out of it */
+  .hp-m[data-nav='rail'] > .hp-m-stats { display: none; }
+  .hp-m-stats-k {
+    font-size: var(--fs-label);
+    color: #2EFFE0;
+    margin: 0 4px;
+  }
+  .hp-m-stats-lv .hp-m-stats-k { margin-left: 0; }
+  .hp-m-stats-track {
+    flex: 1 1 auto;
+    min-width: 40px;
+    height: 12px;
+    background: #0d0618;
+    border: 2px solid #3a2160;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .hp-m-stats-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #2EFFE0;
+    transform-origin: left center;
+  }
+  .hp-m-stats-wins { color: #FFE94A; }
 }
