@@ -105,6 +105,27 @@ export function flash(el, color) {
   a.oncancel = clear;
 }
 
+// --- punch -----------------------------------------------------------------
+// The ESCALATION LADDER's per-accept PUNCH: a one-shot scale pop on a SLOT (the reaction / hype
+// slot — never the input). It animates the individual `scale` property, which composes with the
+// slot's own `transform` (e.g. its translateX(-50%) centring) instead of overwriting it, and is
+// still a compositor-only transform. will-change is set for the life of the animation and cleared
+// on finish. No-op under reduced motion / motion off (state stays legible without it).
+export function punch(el, scale = 1.06, dur = 280) {
+  if (!el || typeof el.animate !== 'function') return;
+  if (!motionAllowed()) return;
+  el.style.willChange = 'transform';
+  const a = el.animate(
+    [{ scale: '1' }, { scale: String(scale), offset: 0.35 }, { scale: '1' }],
+    { duration: dur, easing: 'cubic-bezier(.34, 1.56, .64, 1)' }
+  );
+  const clear = () => {
+    el.style.willChange = '';
+  };
+  a.onfinish = clear;
+  a.oncancel = clear;
+}
+
 // --- shake -----------------------------------------------------------------
 // Screenshake: translate the root container by a decaying random offset each
 // frame. Transform only. No-op under reduced-motion or a disabled motion flag.
