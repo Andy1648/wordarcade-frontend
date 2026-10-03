@@ -112,6 +112,8 @@ test.describe('Word Bomb scoring (item 2)', () => {
     await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(51);
     expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsCarry')) || 0)).toBe(3);
     expect((await readWins(page)).wb - before.wb).toBe(1);
+    // H6 audit H1: the live HUD pill shows what was BANKED (51), not the plain-word estimate.
+    await expect(page.locator('.wins-hud-plus')).toHaveText('+51');
     // Now the game ends for real — the words are NOT re-paid (no double-pay); the only addition is
     // the WINNER BONUS (O12), +50% of the 51 the game's words earned = 26.
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });

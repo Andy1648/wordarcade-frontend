@@ -96,7 +96,7 @@ import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
 import { addWords } from './wordCount';
-import { bankWordWins, bankWeight, awardWins, awardWordXp, perWordFactors, wordWinsBase, subscribeWins, grantWins } from './progress/wins';
+import { bankWordWins, bankWeight, awardWordXp, perWordFactors, wordWinsBase, subscribeWins, grantWins } from './progress/wins';
 import {
   buildPayout, inactivePayoutFactors, beginPayoutLedger, notePayout, readPayoutLedger,
   noteRoundBonus, winnerPayout,
@@ -1454,7 +1454,12 @@ function App() {
               prevWeight: prevWbWeight,
               nowWeight: myWbWeightRef.current,
             });
-            if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+            if (banked > 0) {
+              setWinsEarnedTotal((prev) => prev + banked);
+              // H6 audit H1: the live HUD pill shows what was BANKED (rarity, combo, lucky and all),
+              // never the old plain-5-letter estimate (+120 shown vs +305 banked).
+              setWinsTally((prev) => prev + banked);
+            }
             // THE RECEIPT. Same factor values the payout just used - perWordFactors() is the one
             // place the permanent half is defined, and the per-word half is the very multipliers
             // fed to cappedWordMult above. `cap` is included when the ×40 ceiling actually bit, so
@@ -1509,9 +1514,6 @@ function App() {
               // the whole audio story for an ordinary word.
               rarityCue(secret ? 'SECRET' : r.band);
             }
-            setWinsTally(
-              awardWins({ wordsAccepted: myWbAcceptedRef.current, mode: 'wordBomb', difficulty: gameDifficultyRef.current })
-            );
             return r;
           };
           if (isRarityIndexLoaded()) {
@@ -1669,7 +1671,10 @@ function App() {
             nowWeight: myBlitzWeightRef.current,
           });
           if (banked > 0) blitzGameWinsRef.current += banked; // H4: this game's Blitz total
-          if (banked > 0) setWinsEarnedTotal((prev) => prev + banked);
+          if (banked > 0) {
+            setWinsEarnedTotal((prev) => prev + banked);
+            setWinsTally((prev) => prev + banked); // H6 audit H1: the pill shows what was BANKED this round
+          }
           // THE ANSWER REACTS, same rule as Word Bomb: rarity is an EVENT at the moment the word
           // lands, not a multiplier discovered later on a pill. Blitz's field is the same shape,
           // so the landing goes to the same place.
@@ -1686,9 +1691,6 @@ function App() {
             // its own named "SECRET FIND" line via winsBonusLines. Adding it here as well would
             // count the same money twice and make the card claim more than the balance moved.
           rarityCue(bSecret ? 'SECRET' : r.band);
-          setWinsTally(
-            awardWins({ wordsAccepted: myBlitzAcceptedRef.current, mode: 'blitz', difficulty: gameDifficultyRef.current })
-          );
         };
         if (isRarityIndexLoaded()) scoreBlitzWord();
         else whenRarityReady(scoreBlitzWord);
