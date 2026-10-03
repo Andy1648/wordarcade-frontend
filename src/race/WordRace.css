@@ -225,6 +225,7 @@
   gap: 8px;
 }
 .wr-hero {
+  position: relative; /* hosts the absolute MatchWinBanner slot during the countdown */
   min-height: clamp(96px, 16vh, 150px);
   display: flex;
   flex-direction: column;

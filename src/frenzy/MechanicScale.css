@@ -70,9 +70,6 @@
 .solo-hud .lstack .lstack-row--boost,
 .solo-hud .lstack .lstack-row.lstack-row--frenzy { align-self: center; }
 
-/* with a live pill in the solo HUD chip, the standing "LONGER WORDS PAY MORE" label steps out (the card,
-   dialog and goal line still say it) so the chip never runs under the prompt panel at 1280x551 */
-.solo-hud .lstack-rows:has(.lstack-row--boost, .lstack-row--frenzy) .lstack-row--base { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .boost-pill,
