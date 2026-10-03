@@ -257,7 +257,20 @@ export function burst(x, y, opts = {}) {
     p.vr = (Math.random() - 0.5) * 12;
     spawned++;
   }
+  fxLog('burst', spawned);
   kick();
+}
+
+// TEST SEAM (e2e/feel-ladder.spec.js): when a test installs `window.__TAW_FX_LOG = []`, every burst
+// and screen flash records itself, so the spec can assert the per-word particle cap and that the
+// full-screen flash fires on tier-ups only. Undefined in production → one property read, nothing else.
+function fxLog(kind, n) {
+  try {
+    const log = typeof window !== 'undefined' ? window.__TAW_FX_LOG : undefined;
+    if (log && typeof log.push === 'function') log.push({ kind, n, t: performance.now() });
+  } catch {
+    /* never let a seam break the loop */
+  }
 }
 
 // ring(x, y, opts): a single expanding shockwave ring on the shared fx canvas.
@@ -288,6 +301,7 @@ export function screenFlash(opts = {}) {
   const peak = reduced() ? Math.min(0.15, requested) : requested;
   const life = opts.life ?? 0.18;
   flash = { life, maxLife: life, color: opts.color || '#ffffff', peak };
+  fxLog('flash', peak);
   kick();
 }
 

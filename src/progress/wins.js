@@ -29,6 +29,7 @@ import { boostMult } from './boost.js';
 import { starPowerMult } from './stars.js';
 import { setRateBoost } from './xp.js';
 import { addLetters } from './letters.js';
+import { emitMidGameLevelUp } from './levelUpSignal.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn mark's MAIN bonus (STEP 49 — a ×2-×4 mark priced against base words made KEY trivial).
@@ -620,6 +621,10 @@ export function awardWordXp(opts = {}) {
   const mark = mode !== 'menu' ? addMarkWord() : null;
   // LIFETIME LETTERS (leaderboard main stat): every accepted letter in a game.
   if (mode !== 'menu' && Number.isFinite(opts.wordLength) && opts.wordLength > 0) addLetters(opts.wordLength);
+  // MID-GAME LEVEL-UP (feel ladder): a game word that crossed a level says so in-game (a small LV
+  // chip punch). Read-only signal, emitted after everything is credited; menu typing keeps its own
+  // celebration path (useXpCapture).
+  if (mode !== 'menu' && res.leveledUp) emitMidGameLevelUp(res.level, mode);
   return { ...res, gain, mastery, mark };
 }
 

@@ -10,6 +10,10 @@
   right: 4px;
   z-index: 16;
   pointer-events: none;
+  /* The LV chip (mid-game level-up) sits to the LEFT of the badge on the same baseline. */
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 .combo-badge {
@@ -79,14 +83,22 @@
 .combo-max .combo-count { color: #ff4fa3; }
 .combo-max .combo-label { color: #ff4fa3; }
 
-/* Idle shake from the "on fire" tier up - tighter (faster) at max. The base
-   skew+scale is baked into every frame so it isn't lost while shaking. */
-.combo-badge.combo-fire,
-.combo-badge.combo-max {
-  animation: combo-shake 200ms ease-in-out infinite;
+/* Tier-ENTRY shake from "on fire" up - tighter (faster) at max. FINITE: 3 iterations when the tier
+   is entered, then the badge rests (ANIMATION BUDGET: zero infinite animations; this used to loop
+   forever at rest). Two keyframe names so crossing fire -> max restarts it (a changed
+   animation-name replays; a changed duration alone would not). The base skew+scale is baked into
+   every frame so it isn't lost while shaking. */
+.combo-badge.combo-fire {
+  animation: combo-shake 200ms ease-in-out 3;
 }
 .combo-badge.combo-max {
-  animation-duration: 150ms;
+  animation: combo-shake-max 150ms ease-in-out 3;
+}
+@keyframes combo-shake-max {
+  0%, 100% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(0, 0) rotate(0deg); }
+  25% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(-1.5px, 1px) rotate(-1deg); }
+  50% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(1.5px, -1px) rotate(1deg); }
+  75% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(-1px, 0) rotate(-0.5deg); }
 }
 @keyframes combo-shake {
   0%, 100% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(0, 0) rotate(0deg); }
@@ -95,7 +107,14 @@
   75% { transform: skewX(-4deg) scale(var(--combo-scale)) translate(-1px, 0) rotate(-0.5deg); }
 }
 
-/* Flat particle sparks at the top tiers - cel squares that fling out + fade. */
+/* Flat particle sparks at the top tiers - cel squares that fling out + fade. A FINITE burst on
+   tier entry (3 iterations); the wrapper is re-keyed by tier in ComboMeter.jsx so fire -> max
+   replays it. Never loops at rest. */
+.combo-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
 .combo-spark {
   position: absolute;
   width: 7px;
@@ -104,7 +123,7 @@
   border-radius: 2px;
   background: #FFE94A;
   opacity: 0;
-  animation: combo-spark 720ms ease-out infinite;
+  animation: combo-spark 720ms ease-out 3 both;
 }
 .combo-spark.s0 { top: -7px; left: 14%; --sx: -11px; --sy: -10px; animation-delay: 0ms; background: #FFE94A; }
 .combo-spark.s1 { top: -5px; right: 22%; --sx: 11px; --sy: -13px; animation-delay: 230ms; background: #ff4fa3; }

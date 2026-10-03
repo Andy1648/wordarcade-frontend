@@ -11,10 +11,14 @@
 // maxMs (a lost callback can never jam the queue); while the page is BUSY (a panel open, a game running —
 // setBusy) nothing new starts. No timers run while the queue is empty.
 
-export const GAP_MS = 220;
+// ≥250ms between two heavy moments (next-passes-spec PASS 2: "one at a time, ≥250ms gap").
+export const GAP_MS = 250;
 export const DEFAULT_MAX_MS = 6000;
 
 export const PRIORITY = { TUTORIAL: 0, INFO: 1, REWARD: 2, LEVEL: 3, WIN: 4 };
+// IN-GAME heavy moments (feel ladder, PASS 2 §2.3): FRENZY start > CLUTCH burst > FRENZY/BOOST OVER >
+// BOOST start, on the same numeric scale so a game moment and a menu moment can never paint together.
+export const GAME_PRIORITY = { BOOST_START: 1, TIMER_OVER: 2, CLUTCH: 3, FRENZY_START: 4 };
 
 export function createMoments({ setTimer = setTimeout, clearTimer = clearTimeout, now = () => Date.now() } = {}) {
   const queue = [];
@@ -37,7 +41,14 @@ export function createMoments({ setTimer = setTimeout, clearTimer = clearTimeout
     if (current || busy > 0 || !queue.length) return;
     const wait = gapUntil - now();
     if (wait > 0) { schedule(wait); return; }
-    const item = queue.shift();
+    // A moment that waited past its expireMs is STALE (an in-game CLUTCH that only gets its turn
+    // seconds later would celebrate a word nobody remembers): drop it unplayed, never late.
+    let item = queue.shift();
+    while (item && item.expireMs > 0 && now() - item.queuedAt > item.expireMs) {
+      try { if (item.onExpire) item.onExpire(); } catch { /* listener */ }
+      item = queue.shift();
+    }
+    if (!item) { emit(); return; }
     let finished = false;
     const release = () => {
       if (finished) return;
@@ -61,10 +72,10 @@ export function createMoments({ setTimer = setTimeout, clearTimer = clearTimeout
   return {
     /** Queue a moment. start(done) runs when it is its turn; call done() when it has finished playing.
      *  Returns a cancel() that drops it if it has not started (or ends it if it has). */
-    announce({ id, start, priority = PRIORITY.INFO, maxMs = DEFAULT_MAX_MS }) {
+    announce({ id, start, priority = PRIORITY.INFO, maxMs = DEFAULT_MAX_MS, expireMs = 0, onExpire = null }) {
       const key = id || `m${++seq}`;
       if ((current && current.id === key) || queue.some((q) => q.id === key)) return () => {};
-      const item = { id: key, start, priority, maxMs, n: ++seq };
+      const item = { id: key, start, priority, maxMs, expireMs, onExpire, queuedAt: now(), n: ++seq };
       let at = queue.findIndex((q) => q.priority < priority);
       if (at < 0) at = queue.length;
       queue.splice(at, 0, item);

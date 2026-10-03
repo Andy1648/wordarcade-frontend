@@ -22,6 +22,9 @@ import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
+import { soloWordSlot } from '../juice/effectSlot.js';
+import { tierCrossed } from '../juice/ladder.js';
+import { useLatched } from '../components/FeelLadder.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 
@@ -359,9 +362,22 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // that only mattered in its two WARNING states, and those now read off the hero rim. Only the
   // warning survives, and only when it applies (see `supply` below).
   const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
+  // THE LIGHT SLOT for the word just linked (juice/effectSlot.js): LUCKY > RARE > TIER-UP (CHAIN has
+  // no clutch). One plays; the rest are said as a small tag. LATCHED per link count so a later
+  // change (a reject, a timeout) can never mount a word's effect late.
+  const chainRarity = chainLastWord ? rarityOf(chainLastWord) : null;
+  const chainSlot = useLatched(s.k, () =>
+    s.k > 0
+      ? soloWordSlot({
+          luckyMult: g.luckyMult,
+          rarity: chainRarity,
+          tierUp: tierCrossed(g.combo.streak - 1, g.combo.streak),
+        })
+      : { main: 'hype', tags: [], showRarity: false, labels: [] }
+  );
   return (
     <>
-    <RarityFlash key={s.k} rarity={rarityOf(chainLastWord)} />
+    {chainSlot.showRarity && <RarityFlash key={s.k} rarity={chainRarity} />}
     <SoloShell
       mode="chain"
       accent={ACCENT}
@@ -401,7 +417,11 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
       winsWords={s.k}
       comboMult={g.combo.mult}
       comboBreaks={g.combo.breaks}
+      comboStreak={g.combo.streak}
       luckyKey={g.luckyKey}
+      slotMain={chainSlot.main}
+      slotTags={chainSlot.labels}
+      slotKey={s.k}
       over={{
         score: s.score,
         best: g.best,

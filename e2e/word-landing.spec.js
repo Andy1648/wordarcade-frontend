@@ -34,6 +34,9 @@ async function enterGame(page, playerCount = 2) {
       localStorage.setItem('taw.rebirths', '1');
     } catch { /* blocked */ }
     window.__TAW_NO_ACHIEVEMENT_GRANT = true;
+    // feel ladder: a LUCKY word owns the light slot (LUCKY > RARE) and turns the landing into a
+    // tag — pin the 1/40 roll off so these band assertions stay deterministic.
+    window.__TAW_LUCKY = 'off';
   });
   await page.goto('/?portal=1');
   await menuReady(page);
@@ -431,6 +434,9 @@ test('the menu has no secret popup left on it', async ({ page }) => {
       localStorage.setItem('taw.seenMenuSpotlight', '1');
     } catch { /* ignore */ }
     window.__TAW_NO_ACHIEVEMENT_GRANT = true;
+    // feel ladder: a LUCKY word owns the light slot (LUCKY > RARE) and turns the landing into a
+    // tag — pin the 1/40 roll off so these band assertions stay deterministic.
+    window.__TAW_LUCKY = 'off';
   });
   await page.goto('/?portal=1');
   await menuReady(page);

@@ -1,6 +1,6 @@
 // src/juice/motion.js
 // DOM-element and whole-screen motion primitives. Everything here is
-// transform/filter only (GPU-friendly, no layout thrash) and reads the global
+// transform/opacity only (compositor-friendly, no layout thrash) and reads the global
 // settings so reduced-motion / a disabled motion flag soften or skip the effect
 // without the caller checking.
 
@@ -37,34 +37,93 @@ export function squash(el) {
 }
 
 // --- flash -----------------------------------------------------------------
-// Quick brightness/color pop. Filter is GPU-friendly and never reflows. This is
-// functional feedback, so it always fires (even with motion off) but softens
-// under reduced-motion / motion-off. `color`, when given, adds a brief tinted
-// ring on the full-strength version only.
+// Quick colour pop, OPACITY ONLY (CLAUDE.md ANIMATION BUDGET). It used to animate `filter` and
+// `box-shadow` on the element itself — both paint-bound — and on the Word Bomb accept path it did
+// so ON THE INPUT (DESIGN.md: never animate the input). Now ONE overlay <span> per element is
+// created the first time that element flashes and cached; every later flash is a WAAPI opacity
+// pulse on that same node (pooled, never a node per event). will-change rides only the playing
+// animation and is cleared on finish.
+//
+// Functional feedback, so it always fires (softened under reduced-motion / motion-off). Elements
+// that cannot hold a child (input, textarea, img, …) are skipped outright: an input is never
+// animated, and the caller's other feedback carries the beat.
+const NO_CHILD_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT', 'IMG', 'BR', 'HR', 'VIDEO', 'CANVAS', 'IFRAME', 'SVG']);
+const flashNodes = new WeakMap(); // element -> { node, positioned }
+
+function flashNodeFor(el) {
+  const have = flashNodes.get(el);
+  // React may replace a text-only element's children wholesale; re-attach if our node was dropped.
+  if (have && (!have.node || have.node.parentNode === el)) return have;
+  let positioned = have ? have.positioned : null;
+  if (positioned === null) {
+    // ONE style read per element, ever (cached in the WeakMap) — never per flash.
+    try {
+      positioned = getComputedStyle(el).position !== 'static';
+    } catch {
+      positioned = false;
+    }
+  }
+  let node = null;
+  if (positioned) {
+    node = document.createElement('span');
+    node.className = 'juice-flash';
+    node.setAttribute('aria-hidden', 'true');
+    Object.assign(node.style, {
+      position: 'absolute',
+      inset: '0',
+      borderRadius: 'inherit',
+      pointerEvents: 'none',
+      opacity: '0',
+      zIndex: '1',
+    });
+    el.appendChild(node);
+  }
+  const rec = { node, positioned };
+  flashNodes.set(el, rec);
+  return rec;
+}
+
 export function flash(el, color) {
   if (!el || typeof el.animate !== 'function') return;
+  if (NO_CHILD_TAGS.has(String(el.tagName || '').toUpperCase())) return;
   const soft = reduced() || !motionFlag();
-  const peak = soft ? 1.3 : 1.9;
-  const sat = soft ? 1.15 : 1.6;
   const dur = soft ? 150 : 220;
-  el.animate(
-    [
-      { filter: 'brightness(1) saturate(1)' },
-      { filter: `brightness(${peak}) saturate(${sat})`, offset: 0.18 },
-      { filter: 'brightness(1) saturate(1)' },
-    ],
-    { duration: dur, easing: 'ease-out' }
+  const rec = flashNodeFor(el);
+  // A static host cannot anchor an overlay without us changing its layout, so it gets a brief
+  // opacity dip on itself instead — still opacity-only, still one animation.
+  const target = rec.node || el;
+  const frames = rec.node
+    ? [{ opacity: 0 }, { opacity: soft ? 0.25 : 0.45, offset: 0.18 }, { opacity: 0 }]
+    : [{ opacity: 1 }, { opacity: soft ? 0.85 : 0.7, offset: 0.18 }, { opacity: 1 }];
+  if (rec.node) rec.node.style.background = color || '#FFFFFF';
+  target.style.willChange = 'opacity';
+  const a = target.animate(frames, { duration: dur, easing: 'ease-out' });
+  const clear = () => {
+    target.style.willChange = '';
+  };
+  a.onfinish = clear;
+  a.oncancel = clear;
+}
+
+// --- punch -----------------------------------------------------------------
+// The ESCALATION LADDER's per-accept PUNCH: a one-shot scale pop on a SLOT (the reaction / hype
+// slot — never the input). It animates the individual `scale` property, which composes with the
+// slot's own `transform` (e.g. its translateX(-50%) centring) instead of overwriting it, and is
+// still a compositor-only transform. will-change is set for the life of the animation and cleared
+// on finish. No-op under reduced motion / motion off (state stays legible without it).
+export function punch(el, scale = 1.06, dur = 280) {
+  if (!el || typeof el.animate !== 'function') return;
+  if (!motionAllowed()) return;
+  el.style.willChange = 'transform';
+  const a = el.animate(
+    [{ scale: '1' }, { scale: String(scale), offset: 0.35 }, { scale: '1' }],
+    { duration: dur, easing: 'cubic-bezier(.34, 1.56, .64, 1)' }
   );
-  if (color && !soft) {
-    el.animate(
-      [
-        { boxShadow: `0 0 0 0 ${color}00` },
-        { boxShadow: `0 0 12px 3px ${color}`, offset: 0.2 },
-        { boxShadow: `0 0 0 0 ${color}00` },
-      ],
-      { duration: dur, easing: 'ease-out' }
-    );
-  }
+  const clear = () => {
+    el.style.willChange = '';
+  };
+  a.onfinish = clear;
+  a.oncancel = clear;
 }
 
 // --- shake -----------------------------------------------------------------

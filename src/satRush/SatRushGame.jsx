@@ -49,6 +49,7 @@ import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
 import SatKeyInput from './SatKeyInput';
+import { LevelUpChip } from '../components/FeelLadder';
 
 export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false }) {
   const game = useSatRushGame();
@@ -231,6 +232,9 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
       {view.hasWord && view.phase === 'playing' && (
         <div className="sr-stack-dock">
           <LiveStack mode="sat-rush" compact />
+          {/* Mid-game LEVEL-UP: a small finite "LV n" punch, in ink. Renders nothing until a
+              cleared word crosses a level; zero React state per key (input-latency budget). */}
+          <LevelUpChip variant="ink" />
         </div>
       )}
       <div className="sr-stage">
