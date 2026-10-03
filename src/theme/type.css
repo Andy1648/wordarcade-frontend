@@ -185,3 +185,23 @@
   :root .wr-root { width: min(1220px, 94vw); }
   :root .wr-roster { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } /* five seats on one row */
 }
+
+/* HUGE SCREENS - THE MULTIPLAYER GAME SCREEN (Andy oct3 H2c: "IN-GAME: hero type ... it must look big
+   on Andy's huge monitor too: test 2560x1440"). Word Bomb and Category Blitz stayed desk-sized inside
+   a full-screen board. Above ~2200x1250 the game screen steps up ~1.45x: these type tokens, and
+   --wb-k, the one multiplier GameScreen.css applies to every fixed px box on the board (and
+   wbRingSize.js to the ring's cap) so the boxes grow WITH the type - bumping the type alone wrapped
+   THEIR TURN out of its 150px box. No CSS zoom (game-fill forbids ancestor zoom). --fs-hero keeps
+   its own max(96px, 5vw) cap (128px here). Order stays strictly descending
+   (hero 128 > h1 92 > h2 60 > panel 40 > body 26 > label 19 > micro 16). */
+@media (min-width: 2200px) and (min-height: 1250px) {
+  .game-wrap {
+    --fs-h1: 92px;
+    --fs-h2: 60px;
+    --fs-panel: 40px;
+    --fs-body: 26px;
+    --fs-label: 19px;
+    --fs-micro: 16px;
+    --wb-k: 1.45;
+  }
+}
