@@ -43,7 +43,14 @@ function Detail({ m, have, on, howTo, onSet }) {
 export default function MarksIndex({ unlockedIds = [], equippedId = null, achievementNames = {}, onEquip, onClose }) {
   const unlocked = new Set(unlockedIds);
   const main = MARKS.find((m) => m.id === equippedId) || null;
-  const [sel, setSel] = useState(() => (main ? main.id : (MARKS.find((m) => unlocked.has(m.id)) || MARKS[0]).id));
+  // the default selection is the useful NEXT tap — another mark you own (or, with nothing else owned, the
+  // first one to chase); selecting the MAIN by default repeated the hero right under it (loop 4)
+  const [sel, setSel] = useState(() => (
+    MARKS.find((m) => unlocked.has(m.id) && m.id !== equippedId)
+    || MARKS.find((m) => !unlocked.has(m.id))
+    || main
+    || MARKS[0]
+  ).id);
   const [punch, setPunch] = useState(0);
   const closeRef = useRef(null);
   useEffect(() => {
