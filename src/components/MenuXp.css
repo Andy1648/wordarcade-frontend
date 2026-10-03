@@ -1073,3 +1073,76 @@ button.menu-mark:active {
      without — the difference between the sentence and "12 WORDS · L…". */
   .menu-xp-hint { letter-spacing: 0; }
 }
+
+/* ==== NUMBERS-FEEL (Andy oct3 #4/#5) ==========================================================
+   The % readout, the "+X.X%" gain pop, the 10% milestone flash and the wins chip's "+gain".
+   Motion is WAAPI (MenuXpBar) or a one-shot keyframe here: transform/opacity only, finite, and
+   will-change is set by JS only while a node flies — never on these idle pooled nodes. */
+.menu-xp-readout-mid {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.menu-xp-readout-pct { color: #2effe0; }
+.menu-xp-gainpop {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 8px;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #ffe94a;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%);
+}
+.menu-xp-tickflash {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+  z-index: 2;
+  background: #ffe94a;
+  pointer-events: none;
+  opacity: 0;
+}
+/* The phone track is ~70–150px: the % is what fits, so the XP-into number steps aside (the cost
+   stays — it is the level's size, and Stats carries the exact XP). */
+@media (max-width: 560px) {
+  .menu-xp-bar.is-loud .menu-xp-readout-now { display: none; }
+}
+
+/* THE WINS GAIN, BIG, beside the counting balance. Absolutely placed (no row reflow), Bungee at the
+   display floor, one finite pop-in per chain (re-keyed per chain in JSX); it unmounts after the
+   count + a short hold, so nothing sits on screen at rest. */
+.menu-wins-gain {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 10px;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #ffe94a;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+  transform: translateY(-50%);
+  animation: menu-wins-gain-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes menu-wins-gain-in {
+  from { opacity: 0; transform: translateY(-50%) scale(1.5); }
+  to { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-wins-gain { animation: none; }
+}

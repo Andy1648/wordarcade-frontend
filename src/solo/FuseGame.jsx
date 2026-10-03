@@ -28,6 +28,7 @@ import SoloLoadState from './SoloLoadState.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import poolsRaw from './fragmentPools.json';
+import { formatNum } from '../format.js';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
 
@@ -269,8 +270,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   const hud = (
     <>
       <div className="solo-stat">
-        <b>{s.wordsSolved}</b>
-        <span>WORDS · BEST {g.best}</span>
+        <b>{formatNum(s.wordsSolved)}</b>
+        <span>WORDS · BEST {formatNum(g.best)}</span>
       </div>
       <div className="solo-lives" aria-label={`${s.lives} lives`}>
         {'♥'.repeat(s.lives)}

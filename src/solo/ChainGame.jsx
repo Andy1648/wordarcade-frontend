@@ -10,7 +10,7 @@ import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, bankWeight, awardWordXp, subscribeWins } from '../progress/wins.js';
 import { cappedWordMult } from '../progress/xp.js';
-import { formatMultExact } from '../format.js';
+import { formatMultExact, formatNum } from '../format.js';
 import { recordAcceptedWord } from '../progress/collection.js';
 import { noteWord } from '../progress/records.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
@@ -304,8 +304,8 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
       {/* H6: BEST is the SCORE personal best (getScore = state.score), so it sits under SCORE —
           beside LINKS it read as "a best of 1,840 links". */}
       <div className="solo-stat">
-        <b>{s.score}</b>
-        <span>SCORE · BEST {g.best}</span>
+        <b>{formatNum(s.score)}</b>
+        <span>SCORE · BEST {formatNum(g.best)}</span>
       </div>
       {/* H6: this multiplier feeds SCORE only (ending on a fresh letter); wins use the combo. */}
       <div className="solo-mult">SCORE ×{formatMultExact(g.engine.state.multiplier)}</div>

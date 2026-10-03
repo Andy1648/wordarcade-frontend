@@ -34,7 +34,9 @@ import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
-import { plural } from '../format';
+import { plural, formatNum } from '../format';
+import { useCountUp } from '../hooks/useCountUp';
+import { createCountUp } from '../juice/countUp';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 
@@ -767,31 +769,13 @@ function LossImpact() {
 /**
  * Counts a number up from 0 to `to` over `duration` ms, used on the winner's
  * final score so it tallies up dramatically instead of just appearing.
+ * Through THE one count-up (hooks/useCountUp → juice/countUp.js): same ease, a retarget instead of a
+ * restart, instant under reduced motion. A SCORE (not a wins/XP gain) keeps its caller's fixed beat.
  */
 export function CountUp({ to, duration = 1000 }) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    const target = Number(to) || 0;
-    if (target <= 0) {
-      setValue(target);
-      return;
-    }
-    const steps = 30;
-    let frame = 0;
-    const intervalId = setInterval(() => {
-      frame += 1;
-      if (frame >= steps) {
-        setValue(target);
-        clearInterval(intervalId);
-      } else {
-        setValue(Math.round((target * frame) / steps));
-      }
-    }, duration / steps);
-    return () => clearInterval(intervalId);
-  }, [to, duration]);
-
-  return <>{value}</>;
+  const target = Number(to) || 0;
+  const { shown } = useCountUp(target, { from: 0, fixedMs: duration });
+  return <>{formatNum(Math.round(shown))}</>;
 }
 
 /**
@@ -4120,7 +4104,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   const [displayScore, setDisplayScore] = useState(reduce ? Number(score) || 0 : 0);
   const [popping, setPopping] = useState(false);
   const timersRef = useRef([]);
-  const rafRef = useRef(0);
+  const rafRef = useRef(null); // the count-up controller (juice/countUp.js)
   const firedRef = useRef({ stamp: false, reveal: false });
   const doneRef = useRef(false);
 
@@ -4173,30 +4157,31 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   const runCount = () => {
     const target = Number(score) || 0;
     if (target <= 0) { setDisplayScore(target); fireReveal(); setStage(3); return; }
-    const start = performance.now();
+    // THE one count-up (juice/countUp.js) on this screen's own fixed beat (C.countMs) — a SCORE,
+    // not a wins/XP gain, so it keeps the staged sequence's timing; same ease, finite, no stacking.
     let lastTick = 0;
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / C.countMs);
-      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
-      const v = Math.round(target * eased);
-      setDisplayScore(v);
-      if (v - lastTick >= C.score.tickEvery) { lastTick = v; scoreTick(t); }
-      if (t < 1) {
-        rafRef.current = requestAnimationFrame(step);
-      } else {
+    rafRef.current = createCountUp({
+      initial: 0,
+      fixedMs: C.countMs,
+      onFrame: (raw) => {
+        const v = Math.round(raw);
+        setDisplayScore(v);
+        if (v - lastTick >= C.score.tickEvery) { lastTick = v; scoreTick(Math.min(1, v / target)); }
+      },
+      onDone: () => {
         setDisplayScore(target);
         fireReveal();
         setStage(3);
-      }
-    };
-    rafRef.current = requestAnimationFrame(step);
+      },
+    });
+    rafRef.current.to(target);
   };
 
   const fastForward = () => {
     if (doneRef.current || reduce) return;
     doneRef.current = true;
     timersRef.current.forEach(clearTimeout);
-    cancelAnimationFrame(rafRef.current);
+    if (rafRef.current) rafRef.current.cancel();
     fireStamp();
     setDisplayScore(Number(score) || 0);
     fireReveal();
@@ -4214,7 +4199,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
     timers.push(setTimeout(() => { setStage(2); runCount(); }, C.scoreDelay));
     return () => {
       timers.forEach(clearTimeout);
-      cancelAnimationFrame(rafRef.current);
+      if (rafRef.current) rafRef.current.cancel();
       setShakeRoot(null); // restore the default shake target on unmount
     };
     // Run the sequence exactly once on mount (score/isRecord are frozen by then).
@@ -4299,7 +4284,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               freeze at a stale 0 while this same number was 4 elsewhere. The
               celebration is kept purely for the pop/confetti/stage visuals. */}
           <div className={`solo-score-value${celeb.popping ? ' celeb-pop' : ''}`}>
-            {effectiveScore}
+            {formatNum(effectiveScore)}
           </div>
 
           <div className="solo-category">
@@ -4315,7 +4300,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               ? pb.hadRecord
                 ? 'YOU BEAT YOUR PERSONAL BEST!'
                 : 'YOUR FIRST RECORD!'
-              : `PERSONAL BEST: ${pb.best}`}
+              : `PERSONAL BEST: ${formatNum(pb.best)}`}
           </div>
           {!pb.isNewRecord && pb.hadRecord && (
             <div className="solo-away celeb-statline" style={{ '--celeb-i': 1 }}>
@@ -4329,7 +4314,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
               rather than letting the shown score read as "recorded". */}
           {daily && daily.isReplay && !pb.isNewRecord && (
             <div className="solo-away celeb-statline" style={{ '--celeb-i': 2 }}>
-              PRACTICE REPLAY — YOUR BEST ({pb.best}) STILL COUNTS
+              PRACTICE REPLAY — YOUR BEST ({formatNum(pb.best)}) STILL COUNTS
             </div>
           )}
 
@@ -4346,7 +4331,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
                   style={{ '--celeb-i': i + 2 }}
                 >
                   <span className="solo-round-cat">{(r.category || '').toUpperCase()}</span>
-                  <span className="solo-round-score">+{r.roundScore}</span>
+                  <span className="solo-round-score">+{formatNum(r.roundScore)}</span>
                 </div>
               ))
             )}
@@ -4916,7 +4901,7 @@ function CategoryBlitzScreen({
           {/* Solo: the overall best total to beat, an immediate target. */}
           {isSolo && (
             <div className="solo-best-banner">
-              {soloBest != null ? `YOUR BEST: ${soloBest}` : 'NO RECORD YET'}
+              {soloBest != null ? `YOUR BEST: ${formatNum(soloBest)}` : 'NO RECORD YET'}
             </div>
           )}
 
@@ -5197,9 +5182,9 @@ function CategoryBlitzScreen({
                     {pr.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-result-scores">
-                    <span className="cb-result-round">+{pr.roundScore}</span>
+                    <span className="cb-result-round">+{formatNum(pr.roundScore)}</span>
                     <span className="cb-result-total">
-                      {categoryTotals[pr.id] != null ? categoryTotals[pr.id] : pr.roundScore} TOTAL
+                      {formatNum(categoryTotals[pr.id] != null ? categoryTotals[pr.id] : pr.roundScore)} TOTAL
                     </span>
                   </span>
                 </div>

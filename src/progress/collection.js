@@ -10,6 +10,7 @@
 // arrives at the cap). NEVER stores or shows a word the player hasn't personally typed.
 import { queueClaim } from './claims.js';
 import { rebirthScaledWins } from './xp.js';
+import { formatNum } from '../format.js';
 
 export const COLLECTION_KEY = 'taw.collection';
 export const COLLECTION_CAP = 5000;
@@ -170,7 +171,7 @@ export function recordAcceptedWord(word, { mode, band } = {}) {
       // caller as `milestone` — and every single call site discarded it — so it now also goes into
       // the ledger, where the UI reads it rather than having to be told.
       // Andy oct2: a milestone is CLAIMED from the menu, not credited mid-run (claims.js).
-      queueClaim({ id: `col-${m.n}`, kind: 'collection', label: `COLLECTION — ${m.n} WORDS`, amount: granted, detail: `ms-${m.n}` });
+      queueClaim({ id: `col-${m.n}`, kind: 'collection', label: `COLLECTION — ${formatNum(m.n)} WORDS`, amount: granted, detail: `ms-${m.n}` });
       milestone = { n: m.n, wins: granted };
       break; // one milestone per word (count rose by 1)
     }

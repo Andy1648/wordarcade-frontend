@@ -325,7 +325,7 @@ export default function StatsScreen({ onBack }) {
               silhouettes with a found count they read as a set to complete. The unfound ones stay
               masked — a silhouette board, not a spoiler. */}
           <h3 className="stats-subtitle">
-            SECRETS <span className="stats-secret-count">{secrets.found} / {secrets.total} FOUND</span>
+            SECRETS <span className="stats-secret-count">{fmt(secrets.found)} / {fmt(secrets.total)} FOUND</span>
           </h3>
           {/* H6/M18: two masked grids that look the same, so each says what it holds. */}
           <p className="stats-caption">THINGS YOU DO — FIND THEM BY PLAYING</p>
@@ -345,7 +345,7 @@ export default function StatsScreen({ onBack }) {
 
           <h3 className="stats-subtitle">
             HIDDEN ACHIEVEMENTS{' '}
-            <span className="stats-secret-count">{hidden.found} / {hidden.total} FOUND</span>
+            <span className="stats-secret-count">{fmt(hidden.found)} / {fmt(hidden.total)} FOUND</span>
           </h3>
           <p className="stats-caption">ACHIEVEMENTS WITH THEIR GOAL HIDDEN UNTIL YOU CROSS IT</p>
           <div className="stats-secrets">
