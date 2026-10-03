@@ -1,0 +1,235 @@
+/* FeelLadder.css — the escalation ladder's visible parts (see FeelLadder.jsx).
+   House style: flat fills, thick black text stroke, hard black offset, Bungee for display and
+   Space Mono for anything small. EVERY animation is finite and transform/opacity only; nothing
+   here loops (src/perf/infiniteAnimations.test.js asserts it). */
+
+/* ---- TIER SLAM: one pooled node per screen, replayed by WAAPI on each tier crossing. It lives
+   INSIDE the reaction slot (never over the prompt or the bomb) and is invisible at rest. ---- */
+.tier-slam {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 8;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 1;
+  font-size: var(--fs-h2);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #000;
+  color: #2EFFE0;
+}
+.tier-slam[data-tier='2'] { color: #FFE94A; }
+.tier-slam[data-tier='3'] { color: #FF6B3D; }
+.tier-slam[data-tier='4'] { color: #FF4FA3; font-size: var(--fs-h1); }
+
+/* While the slam owns the slot, the slot's per-word hype word steps aside (one thing at a time).
+   A static toggle, not an animation. */
+[data-slam] > .hype-popup { opacity: 0; }
+
+/* ---- HYPE SIZE BY TIER. T0–T1 keep the slot's --fs-panel (GameScreen.css); T2–T3 step to
+   --fs-h2 and T4 to --fs-h1. JUDGMENT CALL vs the spec table (h2/h2/h1/h1/hero): one step down at
+   every tier, because the slot above the field is ~60px tall at 1280x720 and a --fs-hero hype is
+   exactly the 904x371 banner-over-the-title bug the slot was built to stop. ---- */
+.hype-popup.hype-t2,
+.hype-popup.hype-t3 { font-size: var(--fs-h2); }
+.hype-popup.hype-t4 { font-size: var(--fs-h1); }
+
+/* On the ring board the slot is a fixed COLUMN left of the ring (container-type: inline-size in
+   GameScreen.css): the big tiers and the slam are capped to that column (fit-to-slot cqw, the type
+   scale's sanctioned exception) so they never reach the 6 o'clock seat. */
+@media (min-width: 900px) {
+  .game-stage--wb .wb-react .hype-popup.hype-t2,
+  .game-stage--wb .wb-react .hype-popup.hype-t3,
+  .game-stage--wb .wb-react .tier-slam { font-size: min(var(--fs-h2), 9cqw); }
+  .game-stage--wb .wb-react .hype-popup.hype-t4,
+  .game-stage--wb .wb-react .tier-slam[data-tier='4'] { font-size: min(var(--fs-h1), 9cqw); }
+}
+
+/* The outranked-tier TAG sits ABOVE the slot (the word's own tags take the line under it). */
+.tier-slam-tag { top: auto; bottom: 100%; color: #2EFFE0; }
+
+/* ---- TAGS: an outranked effect, said small. One line, >= 13px, under the word. ---- */
+.fx-tags {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 8;
+  opacity: 0;
+  pointer-events: none;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.fx-tags--word {
+  animation: fx-tag 1200ms ease-out 1 forwards;
+}
+@keyframes fx-tag {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (min-width: 900px) {
+  .game-stage--wb .wb-react .fx-tags { text-align: left; }
+}
+
+/* ---- LUCKY ×N (Word Bomb / Blitz): the solo gold ring + stamp, in the reaction slot. In flow,
+   like the hype word, so the slot sizes to it. ---- */
+.fx-lucky {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.fx-lucky-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  border-radius: 50%;
+  border: 8px solid #FFD429;
+  box-shadow: 0 0 0 4px #000;
+  opacity: 0;
+  animation: fx-lucky-ring 400ms ease-out 1;
+}
+.fx-lucky-label {
+  position: relative;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  font-size: var(--fs-panel);
+  color: #FFD429;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  opacity: 0;
+  animation: fx-lucky-label 900ms cubic-bezier(0.2, 1.4, 0.4, 1) 1 forwards;
+}
+@keyframes fx-lucky-ring {
+  0% { transform: scale(0.3); opacity: 0.95; }
+  70% { opacity: 0.6; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes fx-lucky-label {
+  0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  20% { transform: scale(1.15) rotate(2deg); opacity: 1; }
+  40% { transform: scale(1) rotate(0); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1) translateY(-10px); opacity: 0; }
+}
+
+/* ---- LV CHIP: a mid-game level crossed. Punch in (240ms), hold, fade (finite). ---- */
+.fx-lvchip {
+  display: inline-block;
+  align-self: flex-end;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: #1a0b2e;
+  border: 3px solid #6B10B8;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: #FFE94A;
+  pointer-events: none;
+  animation:
+    fx-lvchip-in 240ms cubic-bezier(0.34, 1.56, 0.64, 1) 1,
+    fx-lvchip-out 300ms ease-in 1600ms 1 forwards;
+}
+@keyframes fx-lvchip-in {
+  0% { transform: scale(0.5); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+@keyframes fx-lvchip-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+/* SAT RUSH: drawn in ink on its paper page (retro-print sub-style). */
+.fx-lvchip--ink {
+  background: #f0ead9;
+  border-color: #111111;
+  color: #111111;
+}
+
+/* ---- EDGE FRAME: the board edge takes the tier colour. A STATIC class toggle (data-heat), never
+   animated — it is state, so it stays under reduced motion too. Colour only, no width change. ---- */
+.game-stage[data-heat='1'] { border-color: #2EFFE0; }
+.game-stage[data-heat='2'] { border-color: #FFE94A; }
+.game-stage[data-heat='3'] { border-color: #FF6B3D; }
+.game-stage[data-heat='4'] { border-color: #FF4FA3; }
+
+.solo-root[data-heat='1'] { border-color: #2EFFE0; }
+.solo-root[data-heat='2'] { border-color: #FFE94A; }
+.solo-root[data-heat='3'] { border-color: #FF6B3D; }
+.solo-root[data-heat='4'] { border-color: #FF4FA3; }
+
+/* ---- SOLO FEEL LAYER (CHAIN / FUSE): a zero-size anchor high over the hero; the slam centres on
+   it, the tags / LV chip / shatter hang under it, each centred by a flex row (no transform, so the
+   one-shots keep their own transform). Same height as the solo LUCKY stamp. ---- */
+.solo-feel {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: 0;
+  height: 0;
+  z-index: 31;
+  pointer-events: none;
+}
+.solo-feel .fx-tags {
+  display: flex;
+  justify-content: center;
+  top: calc(100% + 40px);
+}
+.solo-feel .tier-slam-tag { top: auto; bottom: calc(100% + 40px); }
+.solo-lv,
+.solo-shatter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+.solo-lv { top: 64px; }
+.solo-shatter { top: 92px; }
+.solo-shatter .combo-shatter {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  align-items: center;
+  transform-origin: center bottom;
+}
+
+/* ---- Reduced motion: NO MOTION here. Each one-shot becomes a STATIC label: shown at full opacity
+   for its normal life, then gone in one discrete step (steps(1, end) — no tween, no transform).
+   The ring is dropped entirely. The slam itself is shown static by FeelLadder.jsx (no WAAPI). ---- */
+@media (prefers-reduced-motion: reduce) {
+  .fx-tags--word { animation: fx-hold 1200ms steps(1, end) 1 forwards; }
+  .fx-lucky-label { animation: fx-hold 900ms steps(1, end) 1 forwards; transform: none; }
+  .fx-lvchip { animation: fx-hold 1900ms steps(1, end) 1 forwards; transform: none; }
+  .fx-lucky-ring { display: none; }
+}
+@keyframes fx-hold {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}

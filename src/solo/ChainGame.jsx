@@ -22,6 +22,7 @@ import { createTravelFx } from './chainTravelFx.js';
 import SoloShell from './SoloShell.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import RarityFlash from '../components/RarityFlash.jsx';
+import { pickEffect, tagLabel } from '../juice/effectSlot.js';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 
@@ -359,9 +360,14 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // that only mattered in its two WARNING states, and those now read off the hero rim. Only the
   // warning survives, and only when it applies (see `supply` below).
   const chainLastWord = s.lastLinks && s.lastLinks.length ? s.lastLinks[s.lastLinks.length - 1].word : '';
+  // THE LIGHT SLOT for the word just linked (juice/effectSlot.js): LUCKY > RARE > TIER-UP (CHAIN has
+  // no clutch). One plays; the rest are said as a small tag. Keyed by the link count.
+  const chainRarity = chainLastWord ? rarityOf(chainLastWord) : null;
+  const chainSlot = pickEffect({ lucky: s.k > 0 && g.luckyMult > 1, rare: !!(chainRarity && chainRarity.announce) });
+  const chainTags = chainSlot.tags.map((k) => tagLabel(k, { luckyMult: g.luckyMult, band: chainRarity && chainRarity.band }));
   return (
     <>
-    <RarityFlash key={s.k} rarity={rarityOf(chainLastWord)} />
+    {chainSlot.main === 'rare' && <RarityFlash key={s.k} rarity={chainRarity} />}
     <SoloShell
       mode="chain"
       accent={ACCENT}
@@ -401,7 +407,11 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
       winsWords={s.k}
       comboMult={g.combo.mult}
       comboBreaks={g.combo.breaks}
+      comboStreak={g.combo.streak}
       luckyKey={g.luckyKey}
+      slotMain={chainSlot.main}
+      slotTags={chainTags}
+      slotKey={s.k}
       over={{
         score: s.score,
         best: g.best,

@@ -20,6 +20,7 @@ import { noteWord } from '../progress/records.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex.js';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive.js';
 import RarityFlash from '../components/RarityFlash.jsx';
+import { pickEffect, tagLabel } from '../juice/effectSlot.js';
 import { touchStreak } from '../progress/streak.js';
 import { PB_KEYS, bumpFuseRuns } from './shared.js';
 import SoloShell from './SoloShell.jsx';
@@ -339,9 +340,18 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
     </>
   );
 
+  // THE LIGHT SLOT for the word just solved (juice/effectSlot.js): CLUTCH > LUCKY > RARE > TIER-UP.
+  // One plays; the rest are said as a small tag. Everything here is THIS word's (the clock left at
+  // its accept, its lucky factor, its rarity), and every effect below is keyed by the word count.
+  const fuseRarity = s.wordsSolved > 0 ? rarityOf(s.lastWord) : null;
+  const fuseClutch = s.wordsSolved > 0 && isClutch(g.lastLeftMsRef ? g.lastLeftMsRef.current : null);
+  const fuseLucky = s.wordsSolved > 0 && g.luckyMult > 1;
+  const fuseSlot = pickEffect({ clutch: fuseClutch, lucky: fuseLucky, rare: !!(fuseRarity && fuseRarity.announce) });
+  const fuseTags = fuseSlot.tags.map((k) => tagLabel(k, { luckyMult: g.luckyMult, band: fuseRarity && fuseRarity.band }));
+
   return (
     <>
-    <RarityFlash key={s.wordsSolved} rarity={rarityOf(s.lastWord)} />
+    {fuseSlot.main === 'rare' && <RarityFlash key={s.wordsSolved} rarity={fuseRarity} />}
     {burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={() => setBurst(null)} />}
     {clutch && !burst && <ClutchBurst key={clutch.key} leftMs={clutch.leftMs} bonus={clutch.bonus} onDone={() => setClutch(null)} />}
     <SoloShell
@@ -372,7 +382,11 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       winsWords={s.wordsSolved}
       comboMult={g.combo.mult}
       comboBreaks={g.combo.breaks}
+      comboStreak={g.combo.streak}
       luckyKey={g.luckyKey}
+      slotMain={fuseSlot.main}
+      slotTags={fuseTags}
+      slotKey={s.wordsSolved}
       over={{
         score: s.wordsSolved,
         best: g.best,

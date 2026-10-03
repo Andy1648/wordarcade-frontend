@@ -21,6 +21,9 @@ import { hasSeenTeach, markTeachSeen } from '../progress/onboarding';
 import TeachStrip from '../components/TeachStrip.jsx';
 import SoloExit from './SoloExit.jsx';
 import { MORE_MODES } from '../gameData';
+import { heatTier } from '../juice/ladder';
+import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
+import { ComboShatter } from '../components/ComboMeter';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
 // tile elsewhere on the card. Progress is driven by React state every frame (not a CSS
@@ -97,6 +100,15 @@ export default function SoloShell({
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
+  // ESCALATION LADDER (juice/ladder.js) — the live combo streak drives the tier slam + edge frame;
+  // the per-word LIGHT SLOT decision (juice/effectSlot.js) is made by the mode, which knows what a
+  // clutch / lucky / rare word is: `slotMain` is the winning effect, `slotTags` the outranked ones
+  // (said small), `slotKey` the word they belong to.
+  comboStreak = 0,
+  comboBreaks = 0,
+  slotMain = 'hype',
+  slotTags = null,
+  slotKey = 0,
   over, // { score, best, restartArmed, restart, card, bare?, restartLabel?, winsEarned?, winsBonusLines?, tryRow? }
   onExit,
   // True only for a visitor who LANDED here from a shared link and has never seen the menu
@@ -166,11 +178,31 @@ export default function SoloShell({
 
   const secs = Math.max(0, (clock.remaining || 0) / 1000);
 
+  // COMBO BREAK at T2+ (4+ in a row): the same shatter Word Bomb's meter plays, so a lost streak is
+  // never silent here either. `comboBreaks` bumps on every break; the streak it ended is the one we
+  // saw on the render before.
+  const lastStreakRef = useRef(comboStreak);
+  const lastBreaksRef = useRef(comboBreaks);
+  const [shatter, setShatter] = useState(null); // { key, count }
+  useEffect(() => {
+    const had = lastStreakRef.current;
+    const broke = comboBreaks > lastBreaksRef.current; // a restart resets breaks to 0: not a break
+    lastBreaksRef.current = comboBreaks;
+    lastStreakRef.current = comboStreak;
+    if (broke && had >= 4 && phase === 'playing') setShatter({ key: comboBreaks, count: had });
+  }, [comboStreak, comboBreaks, phase]);
+  // A run that ends (or restarts) never carries a stale shatter into the next one.
+  useEffect(() => {
+    if (phase !== 'playing') setShatter(null);
+  }, [phase]);
+
   return (
     <div
       className="solo-root wall-surface"
       style={{ '--solo-accent': accent }}
       data-mode={mode}
+      /* EDGE FRAME: the card's border takes the combo tier colour — a static toggle, never animated. */
+      data-heat={phase === 'playing' ? heatTier(comboStreak) : 0}
       ref={rootRef}
     >
       {/* STATIC STRUCTURE LAYER — the poster's geometry: an off-axis band cutting across the
@@ -381,7 +413,26 @@ export default function SoloShell({
       {/* LUCKY WORD (Job 4): a finite 400ms gold burst + "LUCKY ×5" stamp, re-keyed per lucky
           hit so it replays. Absolutely positioned, pointer-events:none, transform/opacity only —
           no idle/infinite animation. */}
-      {phase === 'playing' && luckyKey > 0 && (
+      {/* THE FEEL LAYER (escalation ladder): the tier slam (one pooled node), this word's
+          outranked effects as a small tag line, a broken T2+ streak's shatter, and the mid-game
+          LV chip. pointer-events:none, finite, over the hero — never over the input. */}
+      {phase === 'playing' && (
+        <div className="solo-feel" aria-hidden="true">
+          <TierSlam count={comboStreak} outranked={slotMain !== 'hype'} />
+          {slotTags && slotTags.length > 0 && <SlotTags key={`tags-${slotKey}`} labels={slotTags} />}
+          {shatter && (
+            <div className="solo-shatter">
+              <ComboShatter key={shatter.key} count={shatter.count} />
+            </div>
+          )}
+          <div className="solo-lv">
+            <LevelUpChip />
+          </div>
+        </div>
+      )}
+
+      {/* LUCKY is the word's light slot unless a CLUTCH outranks it (then it is a tag above). */}
+      {phase === 'playing' && luckyKey > 0 && slotMain === 'lucky' && (
         <div className="solo-lucky" key={luckyKey} aria-hidden="true">
           <span className="solo-lucky-ring" />
           <span className="solo-lucky-label">LUCKY ×{LUCKY_WINS_MULT}</span>

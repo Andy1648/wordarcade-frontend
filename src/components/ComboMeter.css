@@ -10,6 +10,10 @@
   right: 4px;
   z-index: 16;
   pointer-events: none;
+  /* The LV chip (mid-game level-up) sits to the LEFT of the badge on the same baseline. */
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 .combo-badge {

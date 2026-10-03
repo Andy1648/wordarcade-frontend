@@ -7,23 +7,19 @@ export const JUICE = {
   // noisy. Flip to true to A/B it on preview (one-line, Word Bomb only).
   FLOATERS: false,
 
-  // VALID word (Word Bomb accept). combo = the player's current streak count.
+  // VALID word (Word Bomb / Blitz accept). The per-tier numbers — particle count (capped at 40),
+  // ring radius, PUNCH scale, hype size, cue pitch and the tier-up flash — live in the ESCALATION
+  // LADDER (src/juice/ladder.js), keyed off the combo meter's own 2/4/7/10 thresholds. What stays
+  // here is the look that does not escalate. There is NO per-word full-screen flash any more: the
+  // flash fires once per TIER-UP (ladder.js LADDER[t].flash).
   VALID: {
-    particleBase: 24, // burst count at combo 0
-    particlePerCombo: 6, // + per combo step
     particleSpeed: 300,
     particleLife: 0.8,
-    ringBase: 120, // shockwave radius at combo 0
-    ringPerCombo: 10,
     ringWidth: 4,
     ringLife: 0.5,
     ringColor: '#2EFFE0', // teal
-    flash: 0.18, // full-screen white flash alpha
-    flashColor: '#FFFFFF',
-    cuePitchBase: 480, // valid cue base pitch (Hz)
-    cuePitchPerCombo: 45,
+    cuePitchBase: 480, // valid cue base pitch (Hz); the ladder adds +0/+2/+4/+7/+12 semitones
     colors: ['#2EFFE0', '#FFE94A', '#FFFFFF', '#3DA8FF'], // teal/yellow/white/blue
-    inputFlash: '#2EFFE0', // teal border flash on the input
   },
 
   // INVALID word (Word Bomb reject). Layered ON TOP of the existing input-shake
