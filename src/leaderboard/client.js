@@ -495,6 +495,26 @@ export async function fetchMyRank() {
 
 const LAST_RANK_KEY = 'taw.lb.lastRank';
 const RANK_NEWS_KEY = 'taw.lb.rankNews';
+// H2a: where an UNSEEN rise started. The menu's checkRankUp moves lastRank to the new rank, so by the
+// time the board opens lastRank already equals it — this keeps the "from" for the board's ▲N slide.
+// Held until the board is opened (the oldest unseen rank wins, so two rises read as one bigger one).
+const RANK_FROM_KEY = 'taw.lb.rankFrom';
+export function getRankFrom() {
+  try { const n = Number(localStorage.getItem(RANK_FROM_KEY)); return Number.isFinite(n) && n > 0 ? n : null; } catch { return null; }
+}
+export function clearRankFrom() {
+  try { localStorage.removeItem(RANK_FROM_KEY); } catch { /* ignore */ }
+}
+/**
+ * The board's rank move since it was last opened: { from, to } when `now` is better than the rank the
+ * player last SAW (the pending rankFrom, else lastRank), else null. Pure read — the caller stores.
+ */
+export function rankMoveSinceSeen(now) {
+  const to = Number(now);
+  if (!Number.isFinite(to) || to <= 0) return null;
+  const from = (hasRankNews() && getRankFrom()) || getLastRank();
+  return from && to < from ? { from, to } : null;
+}
 export function getLastRank() {
   try { const n = Number(localStorage.getItem(LAST_RANK_KEY)); return Number.isFinite(n) && n > 0 ? n : null; } catch { return null; }
 }
@@ -519,6 +539,7 @@ export async function checkRankUp() {
   const before = getLastRank();
   setLastRank(now);
   if (before && now < before) {
+    try { if (!(hasRankNews() && getRankFrom())) localStorage.setItem(RANK_FROM_KEY, String(before)); } catch { /* ignore */ }
     setRankNews(true);
     return { from: before, to: now };
   }

@@ -478,3 +478,346 @@
   .lb-cols--week,
   .lb-row--week { grid-template-columns: 34px minmax(0, 1fr) 96px; }
 }
+
+/* =====================================================================================================
+   H2a — THE BOARD SCALES UP, IN THREE VERSIONS (?lbv=a PODIUM · b BIG TABLE · c SPLIT; default a).
+   ONE dial, --lb-u: 1px everywhere up to a ~1430x910 window, then it grows with the SMALLER of width
+   and height (1.19 at 1920x1080, 1.58 at 2560x1440). Every size on the board is N * --lb-u, and every
+   font-size is max(<its --fs-* token>, N * --lb-t) — the token is the floor, so phones and laptops are
+   unchanged and a big monitor gets a big board instead of a 560px panel in empty space.
+   Medal fills are FLAT: gold / silver / bronze, each outlined in its own darker shade.
+   ===================================================================================================== */
+.lb-overlay {
+  --lb-u: max(1px, min(0.07vw, 0.11vh));
+  /* TYPE dial: the same curve with NO 1px floor, so under ~1366px the --fs-* token always wins */
+  --lb-t: min(0.07vw, 0.11vh);
+  --lb-gold: #FFE94A;
+  --lb-gold-d: #B8A21C;
+  --lb-silver: #D5DBE6;
+  --lb-silver-d: #7C8496;
+  --lb-bronze: #E58A45;
+  --lb-bronze-d: #8A4A16;
+  --lb-ink: #0d0618;
+}
+.lb-overlay .lb-panel {
+  max-width: min(calc(100vw - 32px), max(560px, calc(860 * var(--lb-u))));
+  border-width: max(4px, calc(4 * var(--lb-u)));
+  box-shadow: calc(8 * var(--lb-u)) calc(8 * var(--lb-u)) 0 #000;
+}
+.lb-v-a .lb-panel { max-width: min(calc(100vw - 32px), max(600px, calc(900 * var(--lb-u)))); }
+.lb-v-c .lb-panel { max-width: min(calc(100vw - 32px), max(560px, calc(1300 * var(--lb-u)))); }
+
+.lb-side,
+.lb-main { display: contents; }
+
+.lb-overlay .lb-header { padding: calc(12 * var(--lb-u)) calc(18 * var(--lb-u)) calc(8 * var(--lb-u)); }
+.lb-overlay .lb-title { font-size: max(var(--fs-h2), calc(44 * var(--lb-t))); }
+.lb-overlay .lb-close {
+  width: max(44px, calc(48 * var(--lb-u)));
+  height: max(44px, calc(48 * var(--lb-u)));
+  font-size: max(var(--fs-body), calc(20 * var(--lb-t)));
+}
+.lb-overlay .lb-body {
+  padding: calc(14 * var(--lb-u)) calc(16 * var(--lb-u)) calc(18 * var(--lb-u));
+  gap: calc(10 * var(--lb-u));
+}
+.lb-overlay .lb-note,
+.lb-overlay .lb-link-btn,
+.lb-overlay .lb-tab,
+.lb-overlay .lb-you-name,
+.lb-overlay .lb-name,
+.lb-overlay .lb-slot-text,
+.lb-overlay .lb-slot-btn,
+.lb-overlay .lb-num.lb-level,
+.lb-overlay .lb-num.lb-rate {
+  font-size: max(var(--fs-body), calc(19 * var(--lb-t)));
+}
+.lb-overlay .lb-tab { min-height: max(44px, calc(52 * var(--lb-u))); }
+.lb-overlay .lb-rank,
+.lb-overlay .lb-you-rank,
+.lb-overlay .lb-claim-label { font-size: max(var(--fs-panel), calc(30 * var(--lb-t))); }
+.lb-overlay .lb-cols,
+.lb-overlay .lb-lv,
+.lb-overlay .lb-you-badge,
+.lb-overlay .lb-verdict { font-size: max(var(--fs-label), calc(14 * var(--lb-t))); }
+.lb-overlay .lb-list { gap: calc(6 * var(--lb-u)); }
+.lb-overlay .lb-row .lb-name,
+.lb-overlay .lb-row .lb-lv { line-height: 1.25; }
+.lb-overlay .lb-row,
+.lb-overlay .lb-slot {
+  min-height: calc(46 * var(--lb-u));
+  padding: calc(4 * var(--lb-u)) calc(10 * var(--lb-u));
+  border-width: max(3px, calc(3 * var(--lb-u)));
+}
+@media (min-width: 481px) {
+  .lb-overlay .lb-cols,
+  .lb-overlay .lb-row {
+    grid-template-columns: calc(52 * var(--lb-u)) minmax(0, 1fr) calc(96 * var(--lb-u)) calc(104 * var(--lb-u));
+    gap: calc(10 * var(--lb-u));
+  }
+  .lb-overlay .lb-slot { grid-template-columns: calc(52 * var(--lb-u)) minmax(0, 1fr); gap: calc(10 * var(--lb-u)); }
+  .lb-overlay .lb-cols--week,
+  .lb-overlay .lb-row--week { grid-template-columns: calc(52 * var(--lb-u)) minmax(0, 1fr) calc(170 * var(--lb-u)); }
+}
+/* Wide windows: the words line sits BESIDE the name, not under it — half the row height, so all ten
+   places fit a 1080p / 1440p screen without scrolling. (Phones keep the stacked line.) */
+@media (min-width: 900px) {
+  .lb-overlay .lb-list .lb-who {
+    flex-direction: row;
+    align-items: baseline;
+    gap: calc(14 * var(--lb-u));
+  }
+  .lb-overlay .lb-list .lb-who .lb-name-line { min-width: 0; flex: 0 1 auto; }
+  .lb-overlay .lb-list .lb-who .lb-words-sub { flex: none; white-space: nowrap; }
+  .lb-overlay .lb-podium .lb-who { flex-direction: column; align-items: center; gap: 2px; }
+}
+/* Phones: your YOU + ▲N chips wrap under the name instead of squeezing it to "Y…". */
+@media (max-width: 480px) {
+  .lb-overlay .lb-row.is-me .lb-name-line { flex-wrap: wrap; row-gap: 2px; }
+}
+.lb-you-rank-sub {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-body), calc(19 * var(--lb-t)));
+}
+
+/* YOUR ROW — highlighted in every version and PINNED: it sticks to the scroller's edge while its list
+   is on screen, so a short window never scrolls you out of sight. (sticky, not fixed — it stays inside
+   the board's own scroll box.) */
+.lb-overlay .lb-list .lb-row.is-me {
+  position: sticky;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  border-width: max(4px, calc(4 * var(--lb-u)));
+  box-shadow: calc(5 * var(--lb-u)) calc(5 * var(--lb-u)) 0 #000;
+}
+.lb-overlay .lb-row.is-me .lb-rank { color: #FF4FA3; }
+
+/* The ▲N chip — your climb since you last opened the board. Static at rest; JS pops it in once. */
+.lb-move {
+  flex: none;
+  display: inline-block;
+  padding: 1px calc(6 * var(--lb-u));
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-label), calc(15 * var(--lb-t)));
+  line-height: 1.2;
+  color: var(--lb-ink);
+  background: #2EFFE0;
+  border: 2px solid #13A894;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* ---- A · PODIUM ------------------------------------------------------------------------------------
+   Silver left, gold centre (tallest), bronze right. DOM stays rank order; CSS `order` builds the podium.
+   Each place: name + LV on the panel, then a flat medal PEDESTAL carrying the big numeral. */
+/* the column header belongs to rows 4-10, so in A it sits UNDER the podium (aria-hidden, order only) */
+.lb-v-a .lb-main { display: flex; flex-direction: column; gap: calc(10 * var(--lb-u)); }
+.lb-v-a .lb-main > .lb-tabs { order: -2; }
+.lb-v-a .lb-main > .lb-podium { order: -1; }
+.lb-podium {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr) minmax(0, 1fr);
+  align-items: end;
+  gap: calc(12 * var(--lb-u));
+  padding-top: calc(6 * var(--lb-u));
+  margin-bottom: calc(6 * var(--lb-u));
+}
+.lb-overlay .lb-podium .lb-row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(4 * var(--lb-u));
+  min-height: 0;
+  padding: 0;
+  text-align: center;
+  overflow: hidden;
+  border-width: max(4px, calc(4 * var(--lb-u)));
+  box-shadow: calc(5 * var(--lb-u)) calc(5 * var(--lb-u)) 0 #000;
+}
+.lb-podium .lb-row.is-top1 { order: 2; border-color: var(--lb-gold-d); }
+.lb-podium .lb-row.is-top2 { order: 1; border-color: var(--lb-silver-d); }
+.lb-podium .lb-row.is-top3 { order: 3; border-color: var(--lb-bronze-d); }
+.lb-overlay .lb-podium .lb-row.is-me { position: relative; background: #3a1250; }
+.lb-podium .lb-who {
+  order: 1;
+  align-items: center;
+  padding: calc(12 * var(--lb-u)) calc(8 * var(--lb-u)) 0;
+}
+.lb-podium .lb-name-line { justify-content: center; flex-wrap: wrap; max-width: 100%; }
+.lb-overlay .lb-podium .lb-name { max-width: 100%; font-size: max(var(--fs-body), calc(24 * var(--lb-t))); }
+.lb-overlay .lb-podium .lb-num.lb-level {
+  order: 2;
+  text-align: center;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 0.98;
+  font-size: max(var(--fs-panel), calc(32 * var(--lb-t)));
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+}
+.lb-overlay .lb-podium .is-top1 .lb-num.lb-level { font-size: max(var(--fs-panel), calc(44 * var(--lb-t))); color: var(--lb-gold); }
+.lb-overlay .lb-podium .lb-num.lb-rate { display: none; } /* podium = name, words, LV; the rate lives in the rows */
+.lb-overlay .lb-podium .lb-rank {
+  order: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: calc(8 * var(--lb-u));
+  height: calc(48 * var(--lb-u));
+  font-size: max(var(--fs-h2), calc(48 * var(--lb-t)));
+  color: var(--lb-ink);
+  background: var(--lb-silver);
+  border-top: max(4px, calc(4 * var(--lb-u))) solid var(--lb-silver-d);
+}
+.lb-overlay .lb-podium .is-top1 .lb-rank { height: calc(76 * var(--lb-t)); font-size: max(var(--fs-h1), calc(66 * var(--lb-t))); background: var(--lb-gold); border-top-color: var(--lb-gold-d); }
+.lb-overlay .lb-podium .is-top3 .lb-rank { height: calc(34 * var(--lb-u)); background: var(--lb-bronze); border-top-color: var(--lb-bronze-d); }
+.lb-overlay .lb-podium .lb-row--week .lb-week-words { order: 2; text-align: center; }
+@media (max-width: 480px) {
+  .lb-podium { gap: 6px; }
+  .lb-overlay .lb-podium .lb-name { font-size: var(--fs-body); }
+  .lb-overlay .lb-podium .lb-num.lb-level,
+  .lb-overlay .lb-podium .is-top1 .lb-num.lb-level { font-size: var(--fs-panel); }
+  .lb-overlay .lb-podium .lb-you-badge { display: none; }
+}
+
+/* ---- B · BIG TABLE ---------------------------------------------------------------------------------
+   One list, scaled up hard: huge rank numerals; the top three are taller rows on flat medal fills; your
+   row is a full cyan fill. On a fill the name takes the ink colour (the rebirth tier keeps its frame). */
+.lb-v-b .lb-row { min-height: calc(45 * var(--lb-u)); }
+.lb-overlay.lb-v-b .lb-rank { font-size: max(var(--fs-h2), calc(40 * var(--lb-t))); }
+@media (min-width: 481px) {
+  .lb-overlay.lb-v-b .lb-cols,
+  .lb-overlay.lb-v-b .lb-row { grid-template-columns: calc(84 * var(--lb-u)) minmax(0, 1fr) calc(112 * var(--lb-u)) calc(112 * var(--lb-u)); }
+  .lb-overlay.lb-v-b .lb-slot { grid-template-columns: calc(84 * var(--lb-u)) minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .lb-v-b .lb-cols,
+  .lb-v-b .lb-row { grid-template-columns: 46px minmax(0, 1fr) 64px 64px; }
+  .lb-v-b .lb-slot { grid-template-columns: 46px minmax(0, 1fr); }
+}
+.lb-v-b .lb-row.is-top1,
+.lb-v-b .lb-row.is-top2,
+.lb-v-b .lb-row.is-top3 {
+  min-height: calc(54 * var(--lb-u));
+  box-shadow: calc(5 * var(--lb-u)) calc(5 * var(--lb-u)) 0 #000;
+}
+.lb-v-b .lb-row.is-top1 { background: var(--lb-gold); border-color: var(--lb-gold-d); min-height: calc(60 * var(--lb-u)); }
+.lb-v-b .lb-row.is-top2 { background: var(--lb-silver); border-color: var(--lb-silver-d); }
+.lb-v-b .lb-row.is-top3 { background: var(--lb-bronze); border-color: var(--lb-bronze-d); }
+.lb-overlay.lb-v-b .lb-row.is-top1 .lb-rank { font-size: max(var(--fs-h1), calc(54 * var(--lb-t))); }
+.lb-overlay.lb-v-b .is-top1 .lb-name,
+.lb-overlay.lb-v-b .is-top2 .lb-name,
+.lb-overlay.lb-v-b .is-top3 .lb-name { font-size: max(var(--fs-body), calc(26 * var(--lb-t))); }
+.lb-v-b .lb-row.is-me { background: #2EFFE0; border-color: #13A894; }
+.lb-v-b .lb-row.is-top1 .lb-rank,
+.lb-v-b .lb-row.is-top2 .lb-rank,
+.lb-v-b .lb-row.is-top3 .lb-rank,
+.lb-v-b .lb-row.is-me .lb-rank,
+.lb-v-b .is-top1 .lb-lv.lb-words-sub,
+.lb-v-b .is-top2 .lb-lv.lb-words-sub,
+.lb-v-b .is-top3 .lb-lv.lb-words-sub,
+.lb-v-b .is-me .lb-lv.lb-words-sub,
+.lb-v-b .lb-row.is-top1 .lb-num.lb-level,
+.lb-v-b .lb-row.is-top2 .lb-num.lb-level,
+.lb-v-b .lb-row.is-top3 .lb-num.lb-level,
+.lb-v-b .lb-row.is-me .lb-num.lb-level,
+.lb-v-b .lb-row.is-top1 .lb-num.lb-rate,
+.lb-v-b .lb-row.is-top2 .lb-num.lb-rate,
+.lb-v-b .lb-row.is-top3 .lb-num.lb-rate,
+.lb-v-b .lb-row.is-me .lb-num.lb-rate { color: var(--lb-ink); }
+.lb-v-b .lb-row.is-top1 .lb-name,
+.lb-v-b .lb-row.is-top2 .lb-name,
+.lb-v-b .lb-row.is-top3 .lb-name,
+.lb-v-b .lb-row.is-me .lb-name { color: var(--lb-ink) !important; }
+.lb-v-b .lb-row.is-me .lb-move { background: #fff; border-color: #13A894; }
+
+/* ---- C · SPLIT -------------------------------------------------------------------------------------
+   Your card is the HERO (big #rank, ▲N, the next target) beside the list; the list's top three wear a
+   flat medal block on the rank. Under 900px wide the two columns stack (hero first). */
+@media (min-width: 900px) {
+  .lb-v-c .lb-body {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+    align-items: start;
+    column-gap: calc(22 * var(--lb-u));
+  }
+  .lb-v-c .lb-side,
+  .lb-v-c .lb-main {
+    display: flex;
+    flex-direction: column;
+    gap: calc(12 * var(--lb-u));
+    min-width: 0;
+  }
+  .lb-v-c .lb-side { position: sticky; top: 0; }
+}
+.lb-v-c .lb-you.lb-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: calc(6 * var(--lb-u)) calc(12 * var(--lb-u));
+  padding: calc(16 * var(--lb-u)) calc(18 * var(--lb-u));
+  background: #FF4FA3;
+  border: max(4px, calc(4 * var(--lb-u))) solid #a3175e;
+  box-shadow: calc(6 * var(--lb-u)) calc(6 * var(--lb-u)) 0 #000;
+  color: var(--lb-ink);
+}
+.lb-hero > .lb-hero-label,
+.lb-hero > .lb-you-name,
+.lb-hero > .lb-you-rank,
+.lb-hero > .lb-hero-facts { grid-column: 1 / -1; }
+.lb-hero-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-label), calc(15 * var(--lb-t)));
+  letter-spacing: 0.08em;
+  color: var(--lb-ink);
+}
+.lb-overlay .lb-hero .lb-you-name { color: var(--lb-ink); font-size: max(var(--fs-body), calc(24 * var(--lb-t))); }
+.lb-overlay .lb-hero .lb-you-rank {
+  font-size: max(var(--fs-hero), calc(150 * var(--lb-t)));
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: calc(5 * var(--lb-u)) calc(5 * var(--lb-u)) 0 #000;
+}
+.lb-hero-facts { display: flex; flex-direction: column; align-items: flex-start; gap: calc(8 * var(--lb-u)); }
+.lb-hero-move,
+.lb-hero-target,
+.lb-hero-lv {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(var(--fs-body), calc(22 * var(--lb-t)));
+  line-height: 1.2;
+}
+.lb-hero-move {
+  display: inline-block;
+  padding: calc(2 * var(--lb-u)) calc(10 * var(--lb-u));
+  color: var(--lb-ink);
+  background: #2EFFE0;
+  border: max(3px, calc(3 * var(--lb-u))) solid #13A894;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.lb-hero-target { color: #fff; text-shadow: 2px 2px 0 #000; font-size: max(var(--fs-body), calc(26 * var(--lb-t))); }
+.lb-hero-lv { color: var(--lb-ink); }
+.lb-overlay .lb-hero .lb-link-btn { margin-left: 0; justify-self: start; color: var(--lb-ink); }
+.lb-v-c .lb-row.is-top1 .lb-rank,
+.lb-v-c .lb-row.is-top2 .lb-rank,
+.lb-v-c .lb-row.is-top3 .lb-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  border-radius: 6px;
+  color: var(--lb-ink);
+}
+.lb-v-c .lb-row.is-top1 { border-color: var(--lb-gold-d); }
+.lb-v-c .lb-row.is-top2 { border-color: var(--lb-silver-d); }
+.lb-v-c .lb-row.is-top3 { border-color: var(--lb-bronze-d); }
+.lb-v-c .lb-row.is-top1 .lb-rank { background: var(--lb-gold); }
+.lb-v-c .lb-row.is-top2 .lb-rank { background: var(--lb-silver); }
+.lb-v-c .lb-row.is-top3 .lb-rank { background: var(--lb-bronze); }
