@@ -9,7 +9,9 @@ export const MODES = {
     // Primary CTA reads PLAY, not CREATE: it opens a room you can play solo immediately (and
     // share the code to add friends). A newcomer shouldn't have to decode CREATE-vs-JOIN just to
     // start (audit #4). JOIN (with a code) stays as the secondary action in ModeDialog.
-    create: 'PLAY',
+    // C2: PLAY SOLO now leads this dialog, so a second button called just "PLAY" read as the same
+    // thing twice. It opens a room you share — say so.
+    create: 'WITH FRIENDS',
   },
   blitz: {
     accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',

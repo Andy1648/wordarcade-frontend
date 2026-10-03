@@ -19,7 +19,8 @@ export const MODE_EXAMPLES = {
 // Typical round length, one short phrase per mode.
 export const MODE_ROUND_LENGTH = {
   'word-bomb': 'TURN-BASED',
-  'category-blitz': '~60 SECONDS',
+  // C2: 3 rounds of a flat 30s (backend categoryBlitzLogic TOTAL_ROUNDS / ROUND_TIME_SECONDS) — it said ~60 SECONDS.
+  'category-blitz': '3 ROUNDS · 30s EACH',
   chain: 'SURVIVAL · 1 LIFE',
   // H6: FUSE starts on 2 lives (fuse.js FUSE_START_LIVES) and can earn back up to 3 (FUSE_MAX_LIVES).
   fuse: 'SURVIVAL · 2 LIVES (UP TO 3)',
