@@ -1,9 +1,8 @@
-/* PodiumIcon.css — the leaderboard podium (see PodiumIcon.jsx). The art is ONE inline SVG in a 100x100 viewBox,
-   so the steps, die-cut, shadow and the #rank scale together from the 26px claim-prompt glyph to the 176px
-   golden button. The number's size is a viewBox unit (an SVG attribute), checked against the 13px floor on
-   the RENDERED size in JS.
-   No infinite animation and no will-change here: the glint and the rank-up bump are finite WAAPI one-shots
-   that toggle will-change themselves (PodiumIcon.jsx play()). */
+/* PodiumIcon.css — the leaderboard podium (see PodiumIcon.jsx). ONE inline SVG in a 100x100 viewBox, ONE ink:
+   the steps and the #rank are `currentColor` with a black outline and one hard black shadow, so the glyph wears
+   the ink of whatever hosts it — the same treatment as the menu's word buttons.
+   No infinite animation and no will-change here: the rank-up bump is a finite WAAPI one-shot that toggles
+   will-change itself (PodiumIcon.jsx play()). */
 .pi {
   position: relative;
   display: inline-block;
@@ -11,9 +10,16 @@
   width: 24px;
   height: 24px;
   vertical-align: middle;
+  /* the leaderboard's ink everywhere it stands alone (header, rank-up card, claim prompt) */
+  color: #FFE94A;
   /* the rank-up punch grows DOWN from the top edge (never up into the rebirth stars) */
   transform-origin: 50% 6%;
   pointer-events: none;
+}
+/* on a menu button it takes the BUTTON's ink: dark on the golden desktop button, yellow on the phone slab */
+.homepage-nav-btn .pi,
+.hp-m-navbtn .pi {
+  color: inherit;
 }
 .pi-svg {
   display: block;
@@ -21,7 +27,7 @@
   height: 100%;
   overflow: visible;
 }
-/* the number is Bungee (display type; digits, but the rule holds) */
+/* the number is Bungee (display type) */
 .pi-num-font {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
@@ -30,9 +36,4 @@
 .pi-num {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-}
-.pi-glint {
-  /* swept in user units (translateX px = viewBox units), tilted about its own centre */
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
 }
