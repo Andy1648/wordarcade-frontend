@@ -70,9 +70,10 @@ for (const s of SETUPS) {
     // of this spec checks the ledger against.
     const perkEl = card.locator('.game-card-xp').filter({ visible: true }).first();
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
-    await expect(perkEl).toContainText('LONGER');
-    await expect(perkEl).not.toContainText('XP');
-    const cardWins = num((await winsEl.innerText()).split('WINS')[0]);
+    void perkEl; // Andy oct3 18:55: one line per card — "BASE n / WORD · POWER ×N"; the live rate rides data-rate
+    await expect(winsEl).toContainText('BASE');
+    await expect(winsEl).not.toContainText('XP');
+    const cardWins = Number(await winsEl.getAttribute('data-rate'));
     const cardXp = cardWins * 10;
 
     const readLedger = () => page.evaluate(() => {
