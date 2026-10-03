@@ -995,6 +995,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             navLayout={NAV_LAYOUT}
             rewardsCount={claims.length}
             onRewards={() => setShowClaims(true)}
+            level={xpProgress.level}
+            levelFrac={xpProgress.frac}
+            wins={wins}
           />
         ) : (
         <>
