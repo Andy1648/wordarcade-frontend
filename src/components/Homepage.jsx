@@ -1122,6 +1122,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             navLayout={NAV_LAYOUT}
             rewardsCount={claims.length}
             onRewards={() => setShowClaims(true)}
+            claimSlot={!showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview
+              ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
+              : null}
             level={xpProgress.level}
             levelFrac={xpProgress.frac}
             wins={wins}
@@ -1404,7 +1407,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
       {/* The popup never floats over another overlay (rank ladder, marks, a mode dialog). */}
-      {!showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview && (
+      {!isPhoneMenu && !showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview && (
         <ClaimPopup onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
       )}
       {showClaims && (

@@ -38,7 +38,7 @@ function saveSeen(set) {
 
 const SLOT = momentOpts('claim-pop');
 
-export default function ClaimPopup({ onOpenPanel, onReveal }) {
+export default function ClaimPopup({ onOpenPanel, onReveal, inline = false }) {
   const list = useClaims();
   const [seen, setSeen] = useState(loadSeen);
   const fresh = useMemo(() => list.filter((c) => !seen.has(c.id)), [list, seen]);
@@ -80,7 +80,7 @@ export default function ClaimPopup({ onOpenPanel, onReveal }) {
   const total = list.reduce((a, c) => a + claimAmount(c), 0);
   const k = one ? KIND_COLOUR[one.kind] : '#FFE94A';
   return (
-    <div className="claim-pop" role="status" aria-live="polite" style={{ '--k': k }}>
+    <div className={`claim-pop${inline ? ' claim-pop--inline' : ''}`} role="status" aria-live="polite" style={{ '--k': k }}>
       <div className="claim-pop-text">
         <span className="claim-pop-kind">{one ? CLAIM_KINDS[one.kind] || 'REWARD' : 'REWARDS WAITING'}</span>
         <span className="claim-pop-label">

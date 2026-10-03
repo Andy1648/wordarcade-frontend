@@ -1083,7 +1083,15 @@ button.menu-mark:active {
   display: inline-flex;
   align-items: center;
 }
-.menu-xp-readout-pct { color: #2effe0; }
+.menu-xp-readout-pct {
+  color: #2effe0;
+  /* oct3 live check: cyan on the pink fill was unreadable where the fill passes under it — a dark pill keeps it
+     legible over fill and empty track alike */
+  background: #1a0b2e;
+  border: 2px solid #0d0618;
+  border-radius: 6px;
+  padding: 0 6px;
+}
 .menu-xp-gainpop {
   position: absolute;
   left: 100%;

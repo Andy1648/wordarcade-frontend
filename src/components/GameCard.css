@@ -908,3 +908,11 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
     .game-card-limited-tag { font-size: clamp(13px, 3cqw, calc(14px * var(--card-k, 1))); }
   }
 }
+
+/* oct3 live check: "(×5 BONUS)" broke across lines ("(×5" / "BONUS)") and at 1280x551 pushed the wins line to three
+   rows over the art. The tag never breaks inside; the word BONUS shows only where a card has the room (the tooltip
+   names the stack everywhere). */
+.game-card-payout-mult { white-space: nowrap; }
+@media (max-width: 1699px) {
+  .game-card-bonus-word { display: none; }
+}
