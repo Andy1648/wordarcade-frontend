@@ -1,0 +1,90 @@
+/* WinnerPopup.css — H4 winner popup. Flat yellow sticker, darker-yellow outline, hard black
+   offset shadow. A non-blocking layer inside the game-over overlay/panel that owns it
+   (position:absolute, pointer-events:none) — never a new position:fixed element.
+   Motion: one finite pop-in, one finite fade-out (transform/opacity only). Nothing loops. */
+.winner-pop-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.winner-pop {
+  max-width: min(92vw, 460px);
+  padding: 14px 22px 16px;
+  background: #FFE94A;
+  border: 4px solid #B8A010;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  text-align: center;
+  color: #0d0618;
+  transform: rotate(-3deg);
+  animation: winner-pop-in 320ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.winner-pop.is-out {
+  animation: winner-pop-out 280ms ease-in both;
+}
+
+.winner-pop-title {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: calc(var(--fs-panel) * 1.7);
+  line-height: 1;
+  color: #FF4FA3;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  letter-spacing: 0.02em;
+}
+
+.winner-pop-amount {
+  margin-top: 8px;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1.05;
+  color: #0d0618;
+  font-variant-numeric: tabular-nums;
+}
+
+.winner-pop-caption {
+  margin-top: 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--fs-body);
+  color: #9A1AFF;
+}
+.winner-pop-note {
+  margin-top: 4px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.04em;
+  color: #0d0618;
+}
+
+@keyframes winner-pop-in {
+  0% { opacity: 0; transform: rotate(-3deg) scale(0.55); }
+  70% { opacity: 1; transform: rotate(-3deg) scale(1.08); }
+  100% { opacity: 1; transform: rotate(-3deg) scale(1); }
+}
+@keyframes winner-pop-out {
+  0% { opacity: 1; transform: rotate(-3deg) scale(1); }
+  100% { opacity: 0; transform: rotate(-3deg) scale(0.9) translateY(-12px); }
+}
+
+/* Reduced motion: a static card with the final amount (removed after the hold by JS, no fade). */
+.winner-pop.is-static {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .winner-pop,
+  .winner-pop.is-out {
+    animation: none;
+  }
+}

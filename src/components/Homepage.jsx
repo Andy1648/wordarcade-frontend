@@ -42,7 +42,6 @@ import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../pr
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
-import ClaimsPanel from '../claims/ClaimsPanel.jsx';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
@@ -55,6 +54,8 @@ import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasR
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
+// The REWARDS panel loads on first open (H4 payload offset): only the small ClaimPopup is on the menu at rest.
+const ClaimsPanel = lazyWithReload(() => import('../claims/ClaimsPanel.jsx'), 'ClaimsPanel');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
@@ -1270,11 +1271,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
-          <ClaimsPanel
-            onClose={() => setShowClaims(false)}
-            onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }}
-            onStats={() => { setShowClaims(false); handleStats(); }}
-          />
+          <Suspense fallback={null}>
+            <ClaimsPanel
+              onClose={() => setShowClaims(false)}
+              onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }}
+              onStats={() => { setShowClaims(false); handleStats(); }}
+            />
+          </Suspense>
         </ScreenBoundary>
       )}
       {tutReady && !dialog && !showMarks && !showClaims && !showRanks && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
