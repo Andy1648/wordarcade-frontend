@@ -130,7 +130,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   }, [onClose]);
 
   // Escape closes (matches the scrim click).
-  useEffect(() => {
+  // LAYOUT effect: the listener exists from the commit that shows the dialog — a plain effect runs after paint, so
+  // an Escape pressed the instant the dialog appears (CI's mode-dialog flake; a quick player) was lost.
+  useLayoutEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') handleClose();
     }
