@@ -11,7 +11,9 @@
 // order they need them:
 //   1. WHAT THE ACT IS      — "TYPE A REAL WORD" — the thing players were not getting.
 //   2. WHAT THIS MODE WANTS — the one rule, in this mode's own words.
-//   3. WHAT IT IS WORTH     — that answering sooner pays more.
+//   3. WHAT IT IS WORTH     — that longer words pay more (H6: it said "answer sooner", but no mode
+//      that mounts this pays for speed — CHAIN pays length × rarity × combo, and FUSE's one timed
+//      bonus, CLUTCH, pays MORE for answering late).
 // plus a WORKED EXAMPLE the player can literally copy.
 //
 // THE EXAMPLE IS DERIVED FROM THE LIVE PROMPT, not canned. A canned example ("TRAIN contains
@@ -26,7 +28,7 @@
 // exactly the player who still needs it.
 import './TeachStrip.css';
 
-export default function TeachStrip({ rule, example, onDismiss, payLine = 'ANSWER SOONER, EARN MORE' }) {
+export default function TeachStrip({ rule, example, onDismiss, payLine = 'LONGER WORDS PAY MORE' }) {
   return (
     <div className="teach-strip" role="note" aria-label="How to play this mode">
       <div className="teach-strip-main">

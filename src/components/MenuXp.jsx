@@ -13,6 +13,10 @@ import MarkBadge from './MarkBadge';
 import { markRank, markMainMult, markTier } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
+import { FEATURED_GAME } from '../gameData';
+
+// The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
+const FEATURED_NAME = (FEATURED_GAME.cardName || FEATURED_GAME.name || '').split('\n').join(' ');
 
 // THE BAR IS THE DENSE ONE, and it is the only one. Two layouts were built and screenshotted so
 // the choice could be made from frames; the FILL variant lost on its own preview — at 92px with
@@ -74,7 +78,7 @@ function useCountTo(value) {
   return shown;
 }
 
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, firstRun = false, hintRight = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, hintRight = null }) {
   const winsShown = useCountTo(wins);
   const fillRef = useRef(null);
   const markerRef = useRef(null);
@@ -352,13 +356,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         <span className="menu-xp-hint">
           {Number.isFinite(lettersToNext) && lettersToNext > 0 && (
             <span className="menu-xp-hint-text" aria-hidden="true">
-              {firstRun && <span className="menu-xp-hint-lead">TYPE ANYWHERE · </span>}
+              {/* H6: the number is priced at the FEATURED card's rate (Homepage), so the line names
+                  that mode. It used to lead with "TYPE ANYWHERE ·" — menu typing pays the menu's
+                  ×1 rate, so "30 LETTERS" was off by the featured multiplier (60 at the menu). */}
               {formatNum(lettersToNext)} {lettersToNext === 1 ? 'LETTER' : 'LETTERS'}
               {/* "TO LEVEL" spelled out wherever it fits, abbreviated where it does not. At 320
                   the corner-nav gutter leaves the bar 131px and the full sentence is ~148px, so
                   it ellipsised to "12 WORDS TO …" — a line that costs its own height and then
                   withholds the number it exists to show. */}
-              <span className="menu-xp-hint-to"> TO LEVEL </span>
+              <span className="menu-xp-hint-to"> IN {FEATURED_NAME} TO LEVEL </span>
               <span className="menu-xp-hint-to-short"> · LV </span>
               {formatNum(level + 1)}
             </span>
