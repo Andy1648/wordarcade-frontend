@@ -105,65 +105,95 @@ export function needV9(n) {
   return round10(poly(CURVE_TAIL) * Math.pow(CURVE_TAIL_EXP, n - CURVE_TAIL));
 }
 
-// ---- PROGRESSION v10 — the POWER-SCALED curve (claude/econ-oct2/v10-spec.md) -----------------------
-// need(n) = curve(n) × P^α, where P = the player's own XP strength (KEY tier XP per letter ÷ 10 × the
-// rebirth multiplier; ≥ 1, capped at 1e300). KEY and rebirth still speed levels — by P^(1−α) — and keep
-// their FULL effect on wins, but the curve outruns income by construction, so a rebirth's re-climb is
-// never a free burst of levels. At P = 1 (a new player) LV1–30 are exactly the v9 numbers.
-//   n ≤ 30 : 600 · 1.16^(n−1) · P^0.95
-//   n > 30 : b30 · Kramp(n) · seg(n) · P^0.95
-//     b30      = round10(600 · 1.16^29)            (= need(30) at P = 1)
-//     Kramp(n) = 10^min(1, (n−30)/10)              (K = 10 ramped in over LV30–40 — no ×10 cliff at LV31)
-//     seg(n)   = 1.028^(n−30) to LV225, then 1.028^195 · 1.018^(n−225)
-// Calibrated with claude/econ-oct2/v10-probe-2seg.sh: median LV100 ≈ 10 h, LV225 ≈ 49 h.
-// ALWAYS finite and > 0 (must-fix 2): the result is capped at Number.MAX_VALUE, never Infinity/NaN/0.
-export const PV10_ALPHA = 0.95;
-export const PV10_TAIL_K = 10;
-export const PV10_K_RAMP_LEVELS = 10;
-export const PV10_R1 = 1.028;
-export const PV10_SEG_BREAK = 225;
-export const PV10_R2 = 1.018;
-export const PV10_POWER_CAP = 1e300;
+// ---- PROGRESSION v11 — ONE FIXED CURVE FOR EVERYONE (claude/econ-oct2/v11-spec.md) ------------------
+// ANDY (oct3 17:45): "THE XP NEEDED PER LEVEL NEVER SCALES WITH THE PLAYER." v10 multiplied need() by
+// P^0.95 (P = KEY tier XP × rebirth), which made R8 LV16 cost 233M and LV1 start huge after a rebirth.
+// v11 deletes the power term: need(n) depends on n ONLY — the same numbers for a fresh profile and an
+// R20 T30 save. Exponential, every level a bit harder than the last, two segments:
+//   n ≤ 100 : 600 · 1.06^(n−1)                    — the hook: LV1 = 600 (two words), LV100 ≈ 192k
+//   n > 100 : need(100) · 1.015^(n−100)            — gentler, so a word still moves the bar ≥ 0.2% at LV400
+// Every value round10 (half-to-even). Always finite and > 0: past the double range it is capped at
+// Number.MAX_VALUE (≈ LV47,000), never Infinity/NaN/0, so creditXp's carry loop can never spin.
+// The player side is SEPARATE and modest (levelXpPerWord below): KEY +25% base XP a tier, rebirth +100%.
+// WINS keep their big exponential stack (xpPerWord — unchanged); only the BAR reads level XP.
+export const CURVE_V11_BASE = 600; // need(1)
+export const CURVE_V11_G1 = 1.06; // per-level growth to the break
+export const CURVE_V11_BREAK = 100;
+export const CURVE_V11_G2 = 1.015; // per-level growth above the break
 
-/** The XP strength P for a KEY tier + rebirth count: in [1, 1e300], never NaN. */
-export function powerOf(keyTier, rebirthCount) {
-  const p = (keyTierXp(keyTier) / 10) * rebirthMult(rebirthCount);
-  if (!(p >= 1)) return 1; // NaN / below 1 → 1
-  return Math.min(PV10_POWER_CAP, p);
-}
-/** P for the live save (KEY tier + rebirths from storage). */
-export function currentPower() {
-  return powerOf(getKeyTier(), getRebirths());
-}
-
-/** need(n) at an explicit power P — PURE. Always a finite number in [10, Number.MAX_VALUE]. */
-export function needAt(n, power = 1) {
+/** need(n) — PURE, the ONE curve. Any extra argument (v10's power) is ignored. Finite, in [600, MAX_VALUE]. */
+export function needAt(n) {
   let lv;
   if (Number.isFinite(n)) lv = Math.max(1, Math.floor(n));
   else if (n === Infinity) return Number.MAX_VALUE;
   else lv = 1; // NaN / -Infinity / garbage → LV1
-  const P = !(power >= 1) ? 1 : Math.min(PV10_POWER_CAP, power);
-  const pw = Math.pow(P, PV10_ALPHA);
   let raw;
-  if (lv <= CURVE_BREAK) raw = CURVE_BASE * Math.pow(EARLY_CURVE_EXP, lv - 1) * pw;
-  else {
-    const b30 = round10(CURVE_BASE * Math.pow(EARLY_CURVE_EXP, CURVE_BREAK - 1));
-    const k = Math.pow(PV10_TAIL_K, Math.min(1, (lv - CURVE_BREAK) / PV10_K_RAMP_LEVELS));
-    const seg =
-      lv <= PV10_SEG_BREAK
-        ? Math.pow(PV10_R1, lv - CURVE_BREAK)
-        : Math.pow(PV10_R1, PV10_SEG_BREAK - CURVE_BREAK) * Math.pow(PV10_R2, lv - PV10_SEG_BREAK);
-    raw = b30 * k * seg * pw;
-  }
+  if (lv <= CURVE_V11_BREAK) raw = CURVE_V11_BASE * Math.pow(CURVE_V11_G1, lv - 1);
+  else raw = CURVE_V11_BASE * Math.pow(CURVE_V11_G1, CURVE_V11_BREAK - 1) * Math.pow(CURVE_V11_G2, lv - CURVE_V11_BREAK);
   if (!(raw < Number.MAX_VALUE)) return Number.MAX_VALUE; // Infinity / NaN → the cap, never 0
   const r = round10(raw);
   if (!(r > 0)) return 10;
   return Math.min(r, Number.MAX_VALUE);
 }
 
-// Cost to advance FROM level n to n+1 for THIS save (live KEY tier + rebirths). Signature unchanged.
+// Cost to advance FROM level n to n+1. The same for every save (no KEY tier, no rebirth, no storage read).
 export function need(n) {
-  return needAt(n, currentPower());
+  return needAt(n);
+}
+
+// ---- PROGRESSION v11 — the LEVEL XP side (what the BAR is credited) -----------------------------------
+// The four knobs (Andy): WINS per word (big exponential — xpPerWord ÷ 10, unchanged), XP per letter
+// (KEY), rebirths, XP per level (the curve above). Level XP is kept modest and readable:
+//   XP per letter = LEVEL_XP_PER_LETTER × keyXpMult(T) × rebirthXpMult(R)
+//   keyXpMult(T)     = 1 + 0.25·T   — each KEY tier: +25% XP (of the base 10/letter). T8 = ×3, T20 = ×6.
+//   rebirthXpMult(R) = 1 + R        — each rebirth: +100% XP (R1 ×2, R10 ×11) — the SAME ×(1+R) wins get,
+//                                     so "×4 → ×5 on wins and XP" stays one true sentence.
+// Additive on purpose: a KEY tier past T8 is bought with wins that grow ×2.5 a tier, and a compounding XP
+// step would compound with that; additive steps keep a huge balance (T100) at ×26, never a runaway.
+// Per word: × letters × the mode (WB ×2 … SAT ×10) × difficulty × the word's weight (rarity × combo ×
+// lucky, capped — cappedWordMult) × the daily streak. NOT in level XP (they pay WINS only): marks, mastery,
+// STAR POWER, mark rolls, LETTER FORGE, FUSE FRENZY, BOOST — those are the unbounded wins engines that
+// made v10's bar depend on which multipliers a save happened to own.
+export const LEVEL_XP_PER_LETTER = 10;
+export const KEY_XP_STEP = 0.25;
+export const REBIRTH_XP_STEP = 1;
+
+/** KEY tier → level-XP multiplier: 1 + 0.25·T (T0 ×1, T1 ×1.25, T8 ×3). */
+export function keyXpMult(tier) {
+  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
+  return 1 + KEY_XP_STEP * t;
+}
+/** Rebirth count → level-XP multiplier: 1 + R (R0 ×1, R1 ×2, R10 ×11). */
+export function rebirthXpMult(rebirthCount) {
+  const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
+  return 1 + REBIRTH_XP_STEP * rc;
+}
+/** Level XP per letter for a KEY tier + rebirth count (the menu-typing base; Stats shows it). */
+export function levelXpPerLetter(keyTier, rebirthCount) {
+  const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  return LEVEL_XP_PER_LETTER * keyXpMult(kt) * rebirthXpMult(rc);
+}
+
+/**
+ * LEVEL XP for one accepted game word — what the BAR is credited (wins.js awardWordXp). PURE given its
+ * factors (keyTier / rebirth / streak default to live). Whole XP (roundWordXp), never below 1.
+ */
+export function levelXpPerWord({
+  mode = 'menu',
+  keyTier,
+  rebirthCount,
+  wordLength = 1,
+  weight = 1,
+  streakMult,
+  difficultyMult = 1,
+} = {}) {
+  const modeMult = XP_MULTIPLIERS[mode] ?? 1;
+  const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
+  const wt = Number.isFinite(weight) && weight > 0 ? Math.min(PER_WORD_MULT_CAP, weight) : 1;
+  const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
+  const dm = Number.isFinite(difficultyMult) && difficultyMult > 0 ? difficultyMult : 1;
+  return Math.max(1, roundWordXp(levelXpPerLetter(keyTier, rebirthCount) * len * modeMult * dm * wt * stm));
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
@@ -443,24 +473,21 @@ export function priceRateBoost() {
 // (Level-ups no longer pay wins — wins come ONLY from finishing rounds. The old
 // levelUpWins() payout was removed with Economy v3.)
 
-// ---- The XP stack — SINGLE source of truth --------------------------------------------
-// xpPerInput = keyTierXp(keyTier) · modeMult · rebirthMult · popMult · soundMult. The base is
-// the Key Power TIER's XP-per-letter (Economy v6); the two cosmetic multipliers (equipped pop
-// style + sound pack) are passed IN by the caller — xp.js stays free of the shop import (shop.js
-// already imports xp.js; keeping the dependency one-way avoids a cycle). Factors default to the
-// live key-tier + rebirth counts (cosmetic mults default to ×1).
+// ---- MENU typing XP (level XP — v11) ----------------------------------------------------
+// xpPerInput = levelXpPerLetter(keyTier, rebirth) · modeMult · popMult · soundMult · streak. v11: the base
+// is the LEVEL XP per letter (10 × KEY +25%/tier × rebirth ×(1+R)), no longer keyTierXp — the bar's need
+// no longer scales with the player, so the per-key gain must not either. The two cosmetic multipliers
+// (equipped pop style + sound pack) are passed IN by the caller — xp.js stays free of the shop import
+// (shop.js already imports xp.js; keeping the dependency one-way avoids a cycle). Factors default to the
+// live key-tier + rebirth counts (cosmetic mults default to ×1). Whole XP (T1 = +13 a key, not round10's 10).
 export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1, streakMult } = {}) {
-  const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const modeMult = XP_MULTIPLIERS[mode] ?? 1;
-  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const pm = Number.isFinite(popMult) && popMult > 0 ? popMult : 1;
   const sm = Number.isFinite(soundMult) && soundMult > 0 ? soundMult : 1;
   // Daily-streak reward multiplier folds into the SAME stack (defaults to the live streak, 1 at
   // <3 days). Passed explicitly by tests; live-read otherwise, exactly like keyTier/rebirth.
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
-  // Snapped to a round multiple of 10 so every credited/displayed "+N" ends in a zero, and
-  // so the accumulated xpIntoLevel stays a clean multiple of 10.
-  return round10(keyTierXp(kt) * modeMult * rebirthMult(rc) * pm * sm * stm);
+  return Math.max(1, roundWordXp(levelXpPerLetter(keyTier, rebirthCount) * modeMult * pm * sm * stm));
 }
 
 // Apply a credited award. Pure: takes and returns the {level, intoLevel} shape (Economy v5 — level
@@ -469,16 +496,15 @@ export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, 
 // forward via need(); reports whether a boundary was crossed so the caller can fire the one-shot
 // celebration. (The old rawKeys arg only fed the removed lifetimeLetters counter — it is gone.)
 //
-// PROGRESSION v10: a state may carry `frac` (the fraction into the level — what is STORED). When it
-// does, the XP into the level is frac × need(level) at the CURRENT power, so a KEY buy / rebirth / P
-// drop between two credits never moves the bar. `power` (optional) pins P for the whole carry; it
-// defaults to the live save. The carry is guarded: it stops on a non-finite/non-positive need or a
-// non-finite total, and after CREDIT_LOOP_MAX levels, so it can never spin.
+// A state may carry `frac` (the fraction into the level — what is STORED, v10+). When it does, the XP
+// into the level is frac × need(level). v11: need() is one fixed curve, so `frac` and `into` agree for
+// every save; the third argument (v10's power P) is accepted and ignored. The carry is guarded: it stops
+// on a non-finite/non-positive need or a non-finite total, and after CREDIT_LOOP_MAX levels.
 export const CREDIT_LOOP_MAX = 1e6;
-export function creditXp(state, xpGain, power) {
-  const P = Number.isFinite(power) && power >= 1 ? power : currentPower();
+// eslint-disable-next-line no-unused-vars
+export function creditXp(state, xpGain, _ignoredPower) {
   let level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
-  let cost = needAt(level, P);
+  let cost = needAt(level);
   let intoLevel;
   if (state && typeof state.frac === 'number' && !Number.isNaN(state.frac)) intoLevel = clampFrac(state.frac) * cost;
   else intoLevel = Number.isFinite(state && state.intoLevel) && state.intoLevel > 0 ? state.intoLevel : 0;
@@ -490,7 +516,7 @@ export function creditXp(state, xpGain, power) {
   while (Number.isFinite(cost) && cost > 0 && Number.isFinite(intoLevel) && intoLevel >= cost && guard < CREDIT_LOOP_MAX) {
     intoLevel -= cost;
     level += 1;
-    cost = needAt(level, P);
+    cost = needAt(level);
     guard += 1;
   }
   const frac = clampFrac(cost > 0 ? intoLevel / cost : 0);
@@ -527,6 +553,10 @@ export function cappedWordMult(rarityMult = 1, comboMult = 1, luckyMult = 1) {
 // aggregate BONUS (momentum × mark × mastery — momentum.js imports this file, so importing it back
 // would be a cycle). They arrive as resolved numbers from perWordFactors(), which is the single
 // definition of both. Default ×1, so every pure caller and unit test is unchanged.
+//
+// PROGRESSION v11: this is the WINS product (in tenths of a win: wins = this ÷ 10) and it is UNCHANGED —
+// KEY ×2.5 a tier, rebirth ×(1+R), every bonus. It no longer moves the level bar; the bar is credited
+// levelXpPerWord() above (modest, readable). The two used to be one number; they are two on purpose now.
 export function xpPerWord({
   mode = 'menu',
   keyTier,
@@ -607,6 +637,9 @@ export function isCreditableKey(e) {
 // rebirth count when it was written, and the shape version. The XP number the bar shows is
 // f × need(lv) and is NEVER stored — so a change of power P (a KEY buy, AUTO-KEY, a rebirth, a restore
 // of a higher- or lower-tier save) can never move the bar: need() moves, the fraction stays.
+// PROGRESSION v11 keeps this shape EXACTLY ({lv, f, rc, v:10}, same shadow): only need() changed, and
+// because f is a fraction a v10 save keeps its level AND its bar position under the new curve. A stale
+// v10 tab still writes this same shape (its level gains are SLOWER than v11's, so it can never farm).
 //
 // Every write also goes to a SHADOW key (taw.xpv10). A stale tab or an old cached bundle on the same
 // localStorage still writes the legacy {lv, into} shape to taw.xp on the OLD curve (LV400 in 18 min);
@@ -769,10 +802,11 @@ export function saveProgress(state) {
 // The display-progress object for a model state: the level, XP into it, that level's cost, the
 // remainder, and the 0..1 fill fraction for the bar. `frac` wins when present (v10), so the bar never
 // moves when P changes; a bare {level, intoLevel} is read against need() now.
-// `power` (optional) pins P so a per-keystroke caller skips the storage read inside need().
-export function progressOf(state, power) {
+// v11: need() reads no storage; the second argument (v10's power) is accepted and ignored.
+// eslint-disable-next-line no-unused-vars
+export function progressOf(state, _ignoredPower) {
   const level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
-  const cost = Number.isFinite(power) && power >= 1 ? needAt(level, power) : need(level);
+  const cost = need(level);
   let frac;
   if (state && typeof state.frac === 'number' && !Number.isNaN(state.frac)) frac = clampFrac(state.frac);
   else {

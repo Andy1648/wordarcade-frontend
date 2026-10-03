@@ -15,7 +15,7 @@
 // Pure and DOM-free (one module-level round ledger, the same pattern wins.js uses for its pending
 // stamp), so the whole thing is unit-testable under node.
 import { roundWordXp } from './xp.js';
-import { takeBarFloorStamp } from './barFloor.js';
+import { takeBarFloorStamp, takeLevelXpStamp } from './barFloor.js';
 
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
@@ -76,7 +76,7 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * no receipt. So the bottom line is now what the rows say this word is WORTH, and `held` carries
  * the other fact — that the gate has not released it yet — as a caption instead of as a zero.
  */
-export function buildPayout({ base = 0, factors = {}, total, band, letters, perLetter, levelFloor } = {}) {
+export function buildPayout({ base = 0, factors = {}, total, band, letters, perLetter, levelFloor, levelXp } = {}) {
   const b = Number.isFinite(base) && base > 0 ? base : 0;
   let product = 1;
   const rows = [];
@@ -99,9 +99,11 @@ export function buildPayout({ base = 0, factors = {}, total, band, letters, perL
     product,
     computed,
     paid: computed, // what the rows add up to — the number the panel prints
-    // THE SAME AWARD IN XP. Wins are the word's XP ÷ 10 (Economy v8), so the receipt can print
-    // both readings off one product instead of the panel multiplying by ten on its own.
-    xp: Math.round(computed * 10),
+    // THE XP HEADLINE = WHAT THE LEVEL BAR WAS CREDITED (PROGRESSION v11). Wins and level XP are two
+    // numbers now (wins keep KEY's ×2.5 a tier; level XP is KEY +25% a tier), so the headline reads the
+    // award's own stamp (awardWordXp → setLevelXpStamp), or `levelXp` when the caller passes it. With
+    // neither (a bare pure call) it falls back to the old one-product reading, computed × 10.
+    xp: pickLevelXp(levelXp, computed),
     // The BASE, named rather than asserted: "5 letters × 10" instead of a bare "BASE 5". Absent
     // when the caller does not know them, and the panel falls back to the bare base.
     letters: Number.isFinite(letters) && letters > 0 ? Math.floor(letters) : null,
@@ -117,6 +119,13 @@ export function buildPayout({ base = 0, factors = {}, total, band, letters, perL
     // a stale stamp can never land on a later word's receipt.
     levelFloor: floorRow(levelFloor === undefined ? takeBarFloorStamp() : (takeBarFloorStamp(), levelFloor)),
   };
+}
+
+function pickLevelXp(levelXp, computed) {
+  const stamped = takeLevelXpStamp(); // always consumed, so a stale stamp never lands on a later receipt
+  if (Number.isFinite(levelXp) && levelXp >= 0) return Math.round(levelXp);
+  if (Number.isFinite(stamped)) return Math.round(stamped);
+  return Math.round(computed * 10);
 }
 
 function floorRow(s) {

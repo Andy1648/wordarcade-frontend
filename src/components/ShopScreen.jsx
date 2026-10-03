@@ -13,10 +13,10 @@ import { layerOpen } from '../progress/claims';
 import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
 import { getWins, perWordWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, rebirthXpMult, KEY_XP_STEP, REBIRTH_XP_STEP } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
-import { formatNum, formatMult, formatRate } from '../format';
+import { formatNum, formatMult, formatMultExact, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
 import RedeemCodes from './RedeemCodes';
 import RebirthCeremony from './RebirthCeremony';
@@ -68,7 +68,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
   const kpRateNow = perWordWins({ mode: 'wordBomb' });
   const kpRateNext = perWordWins({ mode: 'wordBomb', keyTier: keyTier + 1 });
-  const kpXpStep = keyTierXp(keyTier) > 0 ? keyTierXp(keyTier + 1) / keyTierXp(keyTier) : 1;
   const fBuys = forgeBuys(forge);
   // E4: systems open the moment they unlock (no claim step), so reaching the level IS open
   const forgeOpen = layerOpen('forge') || fBuys > 0 || level >= FORGE_UNLOCK_LEVEL;
@@ -237,12 +236,13 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 {/* H2d ONE BIG NUMBER: what the tier buys, in the unit it is bought with — the WINS / WORD
                     rate now → at the next tier. It used to lead with XP PER LETTER (a second unit) and
                     print the price three times (NEXT TIER line, goal line, button); the price now lives
-                    on the button, the gap in the goal line. XP rises by the same factor (one stack). */}
+                    on the button, the gap in the goal line. PROGRESSION v11: level XP is a SEPARATE, modest
+                    step — one short line, +25% XP a tier (of the base), with the XP multiplier now → next. */}
                 <div className="shop-kp-current">
                   <b>{formatRate(kpRateNow)}</b> → <b>{formatRate(kpRateNext)}</b> WINS / WORD
                 </div>
                 <div className="shop-kp-rate">
-                  AT TIER {keyTier + 1} · WORD BOMB · XP ×{formatMult(kpXpStep)} TOO
+                  <span title={`XP ×${formatMultExact(keyXpMult(keyTier))} → ×${formatMultExact(keyXpMult(keyTier + 1))}`}>WORD BOMB · KEY T{keyTier} → T{keyTier + 1}: +{Math.round(KEY_XP_STEP * 100)}% XP</span>
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
@@ -402,7 +402,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </li>
               <li>
                 {/* H6/H10: what THIS rebirth adds — ×9 → ×10 is +11%, not "a ×10". */}
-                <b>GAIN:</b> ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(nextMult)} (+{Math.round((nextMult / rebirthMult(rebirths) - 1) * 100)}%) on wins and XP, for good, and ★ for STAR PERKS.
+                {/* PROGRESSION v11: one rule, one line — each rebirth is +100% XP (of the base) and the same
+                    ×(1 + R) on wins. The level curve itself never changes with rebirths. */}
+                <b>GAIN:</b> +{Math.round(REBIRTH_XP_STEP * 100)}% XP &amp; WINS — ×{formatMult(rebirthXpMult(rebirths))} → ×{formatMult(rebirthXpMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
               </li>
             </ul>
 

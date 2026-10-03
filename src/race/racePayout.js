@@ -23,5 +23,6 @@ export function bankRaceWord({ word, prevWords }) {
     prevWords: prev,
     nowWords: prev + 1,
   });
-  return { xp: xp.gain, wins, leveledUp: !!xp.leveledUp, level: xp.level };
+  // `xp` is the LEVEL XP the bar was credited (PROGRESSION v11) — what the race screen's "+N XP" means.
+  return { xp: xp.credited, wins, leveledUp: !!xp.leveledUp, level: xp.level };
 }

@@ -20,11 +20,12 @@ import { installChunkReloadGuard, isStaleChunkError } from './lib/chunkReload'
 import { installSwUpdateReload } from './lib/swUpdate'
 import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths, progressOf } from './progress/xp'
-import { migrateEconomyV10 } from './progress/econMigrate'
+import { migrateEconomyV11 } from './progress/econMigrate'
 import { forgeMigrateMomentum } from './progress/forge'
 
-// PROGRESSION v10: convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps every level.
-migrateEconomyV10()
+// PROGRESSION v11 (stamp 11): convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps
+// every level; a v10 save keeps its {lv, f} untouched (one fixed curve now — f keeps the bar position).
+migrateEconomyV11()
 // Read-only progress probe (e2e + support): PV10 stores the FRACTION into the level, so the XP number on
 // the bar (intoLevel = frac × need) can no longer be read off taw.xp. Returns { level, intoLevel, cost, frac }.
 try { window.__tawXp = () => progressOf(loadProgress()) } catch { /* no window */ }

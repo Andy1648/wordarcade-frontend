@@ -13,7 +13,9 @@ import {
   getRebirths,
   rebirthMult,
   getKeyTier,
-  keyTierXp,
+  keyXpMult,
+  LEVEL_XP_PER_LETTER,
+  KEY_XP_STEP,
   xpPerInput,
   need,
 } from '../progress/xp';
@@ -27,7 +29,7 @@ import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
 import * as satLexicon from '../satRush/lexicon';
-import { formatNum, formatMult } from '../format';
+import { formatNum, formatMult, formatRate } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
@@ -174,7 +176,9 @@ export default function StatsScreen({ onBack }) {
 
   const rbMult = rebirthMult(rebirths);
   const keyTier = getKeyTier();
-  const baseXp = keyTierXp(keyTier); // Key Power TIER's XP per letter
+  // PROGRESSION v11: LEVEL XP per letter from KEY alone — 10 × (1 + 25% a tier). (Wins per letter are a
+  // separate, bigger number: KEY ×2.5 a tier, on the shop card.)
+  const baseXp = LEVEL_XP_PER_LETTER * keyXpMult(keyTier);
   // MENU XP / LETTER must MATCH the "+N" that pops on every menu keystroke — so compute it the
   // SAME way the live credit does (useXpCapture → xpPerInput), applying the equipped cosmetic
   // pop/sound multipliers and the daily-streak multiplier, not just base × rebirth. (The old
@@ -198,8 +202,8 @@ export default function StatsScreen({ onBack }) {
   // XP stack: Key Power (base) × rebirth × equipped cosmetics × streak — MENU XP / LETTER below
   // is the full product (matches the live keystroke pop), BASE XP / LETTER is just the Key Power tier.
   const multipliers = [
-    ['KEY POWER', `TIER ${keyTier}`], // H6/M14: one spelling of the tier everywhere
-    ['BASE XP / LETTER', fmt(baseXp)],
+    ['KEY POWER', `TIER ${keyTier} · +${Math.round(keyTier * KEY_XP_STEP * 100)}% XP`], // H6/M14: one spelling of the tier everywhere
+    ['BASE XP / LETTER', formatRate(baseXp)],
     ['REBIRTH', x(rbMult)],
     ['MENU XP / LETTER', fmt(menuXp)],
   ];

@@ -43,6 +43,11 @@
 // LETTER FORGE sees their real letters; Collection sees distinct real words).
 // BAR FLOOR (Option F, src/progress/barFloor.js): applied inside wins.awardWordXp, so the sim measures
 // it with no sim-side code; `barFloor` in the output counts the words it raised.
+// PROGRESSION v11 METRICS (claude/econ-oct2/v11-spec.md): `v11.barPct` = the share of the CURRENT level
+// each accepted game word moved the bar (credited ÷ need(level before)), by level band (≤50, 51–100 …
+// 351–400): min / p10 / median. DEAD BAR = p10 < 0.2% in any band up to LV400. `v11.reclimb` = minutes
+// to gain the first 10 levels of each climb (fresh start, then after every rebirth) — a re-climb must
+// be FASTER than the first climb (the rebirth XP boost is a reward).
 // NOT MODELLED: menu typing XP, Category Blitz / SAT Rush / Word Race, returnBonus, theme worlds.
 // -----------------------------------------------------------------------------------------------
 import fs from 'node:fs';
@@ -219,6 +224,8 @@ function simulate(skill) {
   const mech = {};
   const levelTrail = []; // [t, cumulativeLevelUps]
   let levelUps = 0;
+  const barPct = new Map(); // v11: band → [% of the level per word]
+  const climbs = [{ rc: 0, t0: 0, startLevel: 1, to10: null }]; // v11: per climb, minutes to gain 10 levels
   let floorWords = 0; // OPTION F: game words whose bar credit was raised to the level floor (barFloor.js)
   let winsAll = 0;
   let winsWord = 0;
@@ -409,6 +416,7 @@ function simulate(skill) {
     while (lv() >= XP.rebirthThreshold(XP.getRebirths())) {
       const at = lv();
       const { rc, stars } = STARS.rebirthWithStars();
+      climbs.push({ rc, t0: minute, startLevel: lv(), to10: null }); // v11 re-climb clock
       addGood('rebirth', `REBIRTH ${rc} (from LV${at}, +${stars}★)`);
       firstAt('rebirth', { fromLevel: at });
       for (const id of ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
@@ -523,6 +531,18 @@ function simulate(skill) {
       const res = WINS.awardWordXp({ mode, difficulty: diff, wordLength: word.length, weight: w, word });
       lastLumpCtx = null;
       if (res.floor) floorWords += 1;
+      {
+        // v11: the bar movement of this word as a share of the level it landed on
+        const credited = Number.isFinite(res.credited) ? res.credited : res.gain;
+        const pctW = (credited / XP.need(before)) * 100;
+        if (before <= 400 && Number.isFinite(pctW)) {
+          const band = Math.max(50, Math.ceil(before / 50) * 50);
+          if (!barPct.has(band)) barPct.set(band, []);
+          barPct.get(band).push(pctW);
+        }
+        const c = climbs[climbs.length - 1];
+        if (c.to10 == null && res.level >= c.startLevel + 10) c.to10 = +(minute - c.t0).toFixed(3);
+      }
       WINS.bankWordWins({ mode: pkey, difficulty: diff, wordLength: word.length, prevWords: i - 1, nowWords: i, prevWeight: prevW, nowWeight: weightSum });
       if (mode === 'word-bomb') WC.addWords('word-bomb');
       COLL.recordAcceptedWord(word, { mode, band: rw.band });
@@ -665,8 +685,21 @@ function simulate(skill) {
     return { ...b, t: +b.t.toFixed(2), rateStep: +b.rateStep.toFixed(3), curveLevels: +(Math.log(b.rateStep) / Math.log(g)).toFixed(2) };
   }).sort((a, b) => b.curveLevels - a.curveLevels);
 
+  // v11 summary: bar movement per band + re-climb speed
+  const bands = {};
+  let deadBar = false;
+  for (const [b, arr] of [...barPct.entries()].sort((x, y) => x[0] - y[0])) {
+    const srt = [...arr].sort((x, y) => x - y);
+    const q = (p) => srt[Math.min(srt.length - 1, Math.floor(p * srt.length))];
+    bands[b] = { n: srt.length, min: +srt[0].toPrecision(3), p10: +q(0.1).toPrecision(3), p50: +q(0.5).toPrecision(3) };
+    if (q(0.1) < 0.2) deadBar = true;
+  }
+  const first10 = climbs[0].to10;
+  const reclimb = climbs.map((c) => ({ rc: c.rc, start: +c.t0.toFixed(1), startLevel: c.startLevel, minTo10: c.to10, vsFirst: first10 && c.to10 != null ? +(c.to10 / first10).toFixed(3) : null }));
+  const v11 = { barPct: bands, deadBar, firstClimbTo10: first10, reclimb, reclimbFasterShare: reclimb.length > 1 ? +(reclimb.slice(1).filter((c) => c.vsFirst != null && c.vsFirst < 1).length / Math.max(1, reclimb.slice(1).filter((c) => c.vsFirst != null).length)).toFixed(3) : null };
+
   return {
-    skill: skill.id, words, levelUps, perWindow,
+    skill: skill.id, words, levelUps, perWindow, v11,
     barFloor: { words: floorWords, share: words ? +(floorWords / words).toFixed(4) : 0 },
     wall: { worstKeyEta: allKey && { min: +allKey.key.toFixed(2), t: +allKey.t.toFixed(1), tier: allKey.tier, level: allKey.level }, worstShopEta: allShop && { min: +allShop.shop.toFixed(2), t: +allShop.t.toFixed(1), level: allShop.level }, keyRealised },
     runaway: { failCount: lumpEval.filter((l) => l.fail).length, codes: lumpEval.filter((l) => /^CODE|^BOOST/.test(l.label)), worstByMinutes: [...lumpEval].filter((l) => l.minutesOfPlay != null).sort((a, b) => b.minutesOfPlay - a.minutesOfPlay).slice(0, 15), worstLumps: runawayList.slice(0, 12), worstBuys: buyStep.slice(0, 8), lumpCount: lumps.length },
@@ -736,6 +769,8 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
     }
     console.log('  wall', JSON.stringify(r.wall));
     console.log('  reach (min)', JSON.stringify(r.firstReach), 'maxLevel', r.maxLevel);
+    console.log(`  v11 bar %/word by band (p10) ${Object.entries(r.v11.barPct).map(([b, x]) => `${b}:${x.p10}`).join(' ')} | dead bar (p10 < 0.2% to LV400): ${r.v11.deadBar ? 'FAIL' : 'PASS'}`);
+    console.log(`  v11 re-climb: first 10 levels ${r.v11.firstClimbTo10}m; after rebirths (min, ×first) ${r.v11.reclimb.slice(1, 13).map((c) => `R${c.rc}:${c.minTo10}m×${c.vsFirst}`).join(' ')} | faster than first: ${r.v11.reclimbFasterShare}`);
     console.log('  achievements (min)', JSON.stringify(r.achTimes));
     if (r.rolls) console.log('  ROLLS', JSON.stringify({ ...r.rolls, log: undefined, worst: r.rolls.worst.slice(0, 5) }));
     console.log('  runaway FAIL lumps', r.runaway.failCount, 'of', r.runaway.lumpCount);

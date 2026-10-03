@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {
   need,
   needV9,
+  CURVE_V11_BASE,
   CURVE_BASE,
   CURVE_BREAK,
   EARLY_CURVE_EXP,
@@ -134,19 +135,23 @@ test('round10 snaps to the nearest 10, half-to-even', () => {
 // The v6 defect is still pinned below (a tail that got CHEAPER per level). What changed in v8 is
 // the scale: base 2,000 -> 600, exponents 1.085/1.135 -> 1.16/1.22, break LV100 -> LV30, and the
 // exponent indexes off n-1 so CURVE_BASE is need(1) exactly instead of a number nobody pays.
-test('need() matches the published Economy v8 early levels', () => {
+test('need() matches the published PROGRESSION v11 curve (one curve for everyone)', () => {
   // Literals, not derived from the constants under test — a test that restates the
   // implementation passes whatever the implementation says.
-  assert.equal(need(1), 600); // FOUR words at a fresh profile
-  assert.equal(need(2), 700);
-  assert.equal(need(3), 810);
-  assert.equal(need(7), 1460);
-  assert.equal(need(10), 2280);
-  assert.equal(need(30), 44410); // the last level before the break
-  // CURVE_BASE IS need(1) ITSELF. v7 indexed off n, so its "base" was never a cost anyone paid.
-  assert.equal(need(1), CURVE_BASE);
-  // Every early level costs MORE than the one before it by a visible step.
-  for (let n = 1; n < 60; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
+  assert.equal(need(1), 600); // two Word Bomb words at a fresh profile
+  assert.equal(need(2), 640);
+  assert.equal(need(3), 670);
+  assert.equal(need(7), 850);
+  assert.equal(need(10), 1010);
+  assert.equal(need(30), 3250);
+  assert.equal(need(100), 192060); // the break: ×1.06 a level up to here
+  assert.equal(need(101), 194940); // ×1.015 a level above it
+  assert.equal(need(225), 1235060);
+  assert.equal(need(400), 16720320);
+  // need(1) is the base itself.
+  assert.equal(need(1), CURVE_V11_BASE);
+  // Every level costs MORE than the one before it by a visible step.
+  for (let n = 1; n < 2000; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
 });
 
 test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the FROZEN v9 shape (needV9)', () => {
@@ -304,32 +309,30 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   assert.equal(r.toNext, needV9(7) - 100);
 });
 
-test('the XP stack (single source): key tier × mode × rebirth', () => {
-  // tier 0 (10 XP/letter) + menu (×1) + R0 (×1) = 10.
-  assert.equal(xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0 }), 10);
-  // tier 2 (60 XP/letter, v8) + sat-rush (×10, oct2) + R1 (×2, additive) → 60·10·2 = 1200.
-  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), 1200);
-  assert.equal(
-    xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }),
-    round10(keyTierXp(2) * XP_MULTIPLIERS['sat-rush'] * rebirthMult(1)),
-  );
-  // tier 4 (375 XP/letter, v8) at menu R0 → round10.
-  assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0 }), round10(375));
+test('the MENU XP stack (v11 level XP): 10/letter × KEY +25%/tier × mode × rebirth ×(1+R)', () => {
+  // tier 0 (×1) + menu (×1) + R0 (×1) = 10.
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 }), 10);
+  // tier 2 (×1.5) + sat-rush (×10) + R1 (×2) → 10·1.5·10·2 = 300.
+  assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1, streakMult: 1 }), 300);
+  // tier 4 (×2) at menu R0 → 20. (v10 read keyTierXp(4) = 375 here — the bar no longer gets it.)
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 4, rebirthCount: 0, streakMult: 1 }), 20);
+  // whole XP, not round10: T1 is +12.5 → 13 a key (round10 would have swallowed the +25%).
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 1, rebirthCount: 0, streakMult: 1 }), 13);
 });
 
 test('xpPerInput applies pop/sound/streak multipliers (Stats MENU XP / LETTER must match the pop)', () => {
   // The Stats readout now calls xpPerInput with the equipped cosmetic mults, so cosmetics and
   // streak MUST feed the number — the old base×rebirth omitted them and under-reported.
   const base = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, streakMult: 1 });
-  assert.equal(base, keyTierXp(2)); // 60 (v8)
-  // A PRISM pop (×1.25) must lift it above base, snapped ×10.
+  assert.equal(base, 15); // 10 × 1.5 (v11)
+  // A PRISM pop (×1.25) must lift it above base, on the whole-XP grid.
   const prism = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.25, streakMult: 1 });
-  assert.equal(prism, round10(base * 1.25));
+  assert.equal(prism, Math.round(15 * 1.25));
   assert.ok(prism > base);
   // pop × sound × streak all stack.
   assert.equal(
     xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.1, soundMult: 1.1, streakMult: 1.2 }),
-    round10(base * 1.1 * 1.1 * 1.2),
+    Math.round(15 * 1.1 * 1.1 * 1.2),
   );
 });
 
@@ -438,7 +441,9 @@ test('a legacy cumulative taw.xp is migrated to {level, intoLevel} on first read
   withStorage({ 'taw.xp': String(cumulative) }, (map) => {
     const p = loadProgress();
     assert.equal(p.level, 7);
-    assert.equal(p.intoLevel, 100); // already a round 10 here, so floor-to-10 is a no-op
+    // The FRACTION is what converts (100 of the frozen v9 need(7)); v11 shows it against its own need(7).
+    assert.ok(Math.abs(p.frac - 100 / needV9(7)) < 1e-12);
+    assert.ok(Math.abs(p.intoLevel - (100 / needV9(7)) * need(7)) < 1e-6);
     // The migration rewrote storage in the v10 shape (no longer the huge number).
     assert.equal(map.get('taw.xp'), JSON.stringify({ lv: 7, f: 100 / needV9(7), rc: 0, v: 10 }));
   });

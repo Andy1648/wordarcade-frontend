@@ -23,7 +23,7 @@ export const TUTORIALS = [
     id: 'pv10',
     isNew: true,
     when: (s) => !!s.pv10Notice,
-    steps: [{ title: 'LEVELS NOW TAKE LONGER', line: 'YOU KEPT EVERY LEVEL.' }],
+    steps: [{ title: 'ONE LEVEL CURVE FOR EVERYONE', line: 'YOU KEPT EVERY LEVEL.' }], // v11: the curve no longer scales with KEY / rebirths
   },
   {
     id: 'marks',

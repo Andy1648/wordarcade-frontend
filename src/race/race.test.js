@@ -138,10 +138,10 @@ test('PAYOUT HONESTY: the 3-word gate is the pipeline gate — words 1-2 hold, w
   });
 });
 
-test('PAYOUT HONESTY: XP per word equals the card XP line', () => {
+test('PAYOUT HONESTY: XP per word equals the card LEVEL XP (v11: the bar credit, not the wins product)', () => {
   withStorage(() => {
     const card = perWordRateNow({ mode: 'word-race' });
-    assert.equal(bankRaceWord({ word: 'sting', prevWords: 5 }).xp, card.xp);
+    assert.equal(bankRaceWord({ word: 'sting', prevWords: 5 }).xp, card.levelXp);
   });
 });
 

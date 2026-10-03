@@ -49,9 +49,9 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
     : `BASE ${formatRate(payout.base)}`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
-      {/* BOTH CURRENCIES, one above the math that produced them. Wins are the word's XP ÷ 10, so
-          the two headline numbers are one number read twice — printing only the wins half was
-          hiding the half the level bar is counting. */}
+      {/* BOTH CURRENCIES, one above the math that produced them. PROGRESSION v11: the XP is what
+          the LEVEL BAR was credited (modest — KEY +25% a tier, rebirth ×(1+R)); the math line
+          below multiplies out to the WINS (big — KEY ×2.5 a tier). Two numbers, on purpose. */}
       <div className="payout-headline">
         <span className="payout-headline-xp">+{formatNum(payout.xp)}<span className="payout-headline-unit"> XP</span></span>
         <span className="payout-headline-sep" aria-hidden="true">·</span>

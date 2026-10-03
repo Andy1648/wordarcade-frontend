@@ -1260,7 +1260,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                Menu typing is still real and still says so; it is just not the headline number. */
             /* LETTERS, NOT WORDS (Andy A9). The card's rate is quoted for a WORD_LEN_REF-letter
                word and XP is linear in length, so one letter is that rate ÷ WORD_LEN_REF. */
-            lettersToNext={Math.max(1, Math.ceil((xpProgress.toNext * WORD_LEN_REF) / Math.max(1, perWordRateNow({ mode: FEATURED_GAME.id }).xp)))}
+            lettersToNext={Math.max(1, Math.ceil((xpProgress.toNext * WORD_LEN_REF) / Math.max(1, perWordRateNow({ mode: FEATURED_GAME.id }).levelXp)))}
             /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
                caption line that used to sit under the bar — see below. */
             firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}

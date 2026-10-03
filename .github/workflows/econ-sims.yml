@@ -78,7 +78,7 @@ jobs:
           {
             echo '## Long run — first reach of each level (minutes)'
             echo '```'
-            grep -E '^=== |reach \(min\)' long-run.txt || true
+            grep -E '^=== |reach \(min\)|v11 ' long-run.txt || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4

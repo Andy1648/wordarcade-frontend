@@ -24,8 +24,8 @@ function MasteryLine({ mode, accent, inPicker = false }) {
         M{st.level}
       </span>
       <span className="mode-dialog-mastery-txt">
-        {/* H6/M3: mastery sits in the one stack (wins AND XP), so it is not labelled "XP" alone. */}
-        {pct > 0 ? `+${pct}% THIS MODE` : 'MASTERY — PLAY TO LEVEL UP'}
+        {/* PROGRESSION v11: mastery is a WINS bonus (the bar is credited level XP), so it says WINS. */}
+        {pct > 0 ? `+${pct}% WINS THIS MODE` : 'MASTERY — PLAY TO LEVEL UP'}
         {/* H6/L7: a count with its unit, not a bare "0/31". */}
         {!st.maxed && (
           <span className="mode-dialog-mastery-next"> · {Math.max(0, st.need - st.intoLevel)} WORDS TO M{st.level + 1}</span>
