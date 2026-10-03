@@ -214,6 +214,10 @@ CHECKUPS (every ~2 h while the goal runs): prod bundle has the latest merge; mai
   - LEADERBOARD ICON: the podium's colours don't match the theme → SIMPLE, in the game's art style and palette (same ink/outline/shadow as the other menu icons), not multicolour.
   - Remove "WIN = YOUR GAME ×7"-style lines from cards/dialogs. MULTIPLAYER only: show the winner multiplier ONCE at the START of the round (a short banner), nowhere else.
   - Sweep for other over-explained / over-decorated bits and cut them.
+- 18:30 #168 LESS IS MORE **MERGED (main 8bce58b), LIVE 18:31** (MatchWinBanner chunk): BASE wording on receipts, a one-ink podium, the win multiplier only once at a multiplayer round's start, cuts listed in claude/finetune/less-is-more.md.
+- 18:16 #169 v11 (first build) HELD for the 18:15 amendment; rework in progress on feat/pv11.
+- #170 near-miss (dormant ?nearmiss=1) on CI; feat/ext-rival (dormant ?rival=1) built on top of it, PR after #170.
+- 18:28 ULTRACODE workflow running (5 no-browser jobs: useless-words, number sweep 2, extension specs, confusion audit 2, v11 adversarial review).
 - Merge v11 only after the CI sim passes. ROLLS TUNING PAUSED until v11 merges (rolls price off the same economy).
 - 17:46 Option F (#166) MERGED (main 15ece21) per Andy's 'apply F'. FLAG: rule P on CI said HOLD — 8 windows worse, all small (casual 20 h shop wait 5.18 → 5.48 min, KEY waits +0.0–0.5 min, median 1 h gap 1.54 → 1.56) — merged on Andy's explicit call, same as N1. v11 decides whether F stays.
 
