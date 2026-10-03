@@ -101,4 +101,5 @@ LV400 ≈ 200 h targets; then the adversarial review; then implementation on a b
 | 4 | 1.025 | 6.0 h | 25 h | 51 h | — | — |
 | 8 | 1.025 | 8.5 h | 35.9 h | 73.6 h | — (LV393) | 393 |
 Target: 10 h / 50 h / 200 h. K8 r1.025 is the closest so far: early pacing right, LV225 a bit early.
-Next probe: K8 r1.028 (steeper tail) — logged below when done.
+| 8 | 1.028 | 8.9 h | 44.4 h | 100 h | — (LV366) | 366 |
+r1.028 fixes LV225 but LV400 drops out of 200 h → a steeper tail is wrong; next: K10 r1.025 (uniformly later).
