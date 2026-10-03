@@ -30,7 +30,7 @@ import {
   rankIfClaimed,
 } from './client.js';
 import { nameVerdict } from './nameFilter.js';
-import TrophyIcon from '../components/TrophyIcon';
+import PodiumIcon from '../components/PodiumIcon';
 import './ClaimPrompt.css';
 
 const VERDICT_COPY = {
@@ -170,7 +170,7 @@ export default function ClaimPrompt() {
           {claimedRank ? <span className="lb-cp-rank" aria-hidden="true">#{claimedRank}</span> : null}
           <p className="lb-cp-done">
             {claimedRank ? `YOU’RE #${claimedRank}. ` : 'YOU’RE ON THE BOARD. '}
-            FIND IT UNDER <TrophyIcon size={18} className="lb-cp-trophy" /> ON THE MENU.
+            FIND IT UNDER <PodiumIcon size={26} className="lb-cp-trophy" /> ON THE MENU.
           </p>
           <button type="button" className="lb-cp-x" onClick={() => setPhase('dismissed')} aria-label="Close">✕</button>
         </>

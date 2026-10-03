@@ -1,0 +1,38 @@
+/* PodiumIcon.css — the leaderboard podium (see PodiumIcon.jsx). The art is ONE inline SVG in a 100x100 viewBox,
+   so the steps, die-cut, shadow and the #rank scale together from the 26px claim-prompt glyph to the 176px
+   golden button. The number's size is a viewBox unit (an SVG attribute), checked against the 13px floor on
+   the RENDERED size in JS.
+   No infinite animation and no will-change here: the glint and the rank-up bump are finite WAAPI one-shots
+   that toggle will-change themselves (PodiumIcon.jsx play()). */
+.pi {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  /* the rank-up punch grows DOWN from the top edge (never up into the rebirth stars) */
+  transform-origin: 50% 6%;
+  pointer-events: none;
+}
+.pi-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* the number is Bungee (display type; digits, but the rule holds) */
+.pi-num-font {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+}
+/* the tick pop scales the face about its own foot */
+.pi-num {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.pi-glint {
+  /* swept in user units (translateX px = viewBox units), tilted about its own centre */
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
