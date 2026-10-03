@@ -1,0 +1,10 @@
+stats 390: {"small":[],"hScroll":false}
+weekly 390: {"small":[],"hScroll":false}
+marks 390: {"small":[],"hScroll":false}
+rebirth 390: {"small":[],"hScroll":false}
+shop 390: {"small":[],"hScroll":false}
+stats 1920: {"small":[],"hScroll":false}
+weekly 1920: {"small":[],"hScroll":false}
+marks 1920: {"small":[],"hScroll":false}
+rebirth 1920: {"small":[],"hScroll":false}
+shop 1920: {"small":[],"hScroll":false}

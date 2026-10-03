@@ -227,6 +227,7 @@ export default function LeaderboardScreen({ onBack }) {
 
   const stats = myStats();
   const meRow = profile && (board.rows.find((r) => r.id === profile.id) || board.me);
+  const weekMe = profile && (week.rows.find((r) => r.id === profile.id) || week.me);
 
   return (
     <div className="lb-overlay" role="dialog" aria-modal="true" aria-label="Leaderboard" tabIndex={-1} ref={overlayRef}>
@@ -281,7 +282,8 @@ export default function LeaderboardScreen({ onBack }) {
                   {showCode ? 'HIDE CODE' : 'RECOVERY CODE'}
                 </button>
               )}
-              <span className="lb-you-rank">{meRow ? `#${meRow.rank}` : '—'}</span>
+              {/* the rank of the board you are LOOKING at — THIS WEEK shows your weekly place */}
+              <span className="lb-you-rank">{view === 'week' ? (weekMe ? `#${weekMe.rank} THIS WEEK` : '—') : (meRow ? `#${meRow.rank}` : '—')}</span>
               <button type="button" className="lb-link-btn" onClick={() => setEditing(true)}>CHANGE NAME</button>
             </div>
           ))}

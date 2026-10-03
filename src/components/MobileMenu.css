@@ -51,11 +51,13 @@
   /* ---- 1. TITLE ROW ---- */
   .hp-m-top {
     display: flex;
+    flex-wrap: wrap; /* a live BOOST pill takes its own line under the title */
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
     flex: 0 0 auto;
   }
+  .hp-m-top .hp-m-boost { order: 3; flex: 0 0 auto; }
 
   .hp-m-title {
     margin: 0;

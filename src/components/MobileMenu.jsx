@@ -19,6 +19,7 @@
 // SVG. There is no CSS-drawn art and no character illustration — the <Mascot> PNG component is
 // untouched and simply has no place on this screen.
 import AudioControls from './AudioControls';
+import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
 import TrophyIcon from './TrophyIcon';
 import WordHook from './WordHook';
@@ -196,6 +197,8 @@ export default function MobileMenu({
           musicMuted={musicMuted}
           onToggleMusic={onToggleMusic}
         />
+        {/* E5 follow-up: a live BOOST shows on the phone too, joining this row (renders nothing at rest) */}
+        <BoostPill className="hp-m-boost" />
       </div>
 
       {/* 1b. FIRST VISIT ONLY: "TYPE A WORD 👇" + an input. The search visitors who land here
