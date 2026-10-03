@@ -1,6 +1,6 @@
 // src/share/resultCard.js
 // The SHAREABLE RESULT CARD text — the Wordle-style one-tap-copyable receipt built
-// after any run (Job 1). PURE module (no DOM, no imports) so it runs under
+// after any run (Job 1). PURE module (no DOM; its one import is the pure format.js) so it runs under
 // `node --test`. TWO shapes, four lines each:
 //
 //   WORD BOMB / BLITZ / SAT RUSH        CHAIN / FUSE (the chain-fuse spec form)
@@ -19,6 +19,7 @@
 //
 // Spoiler-safe by construction: never contains a category name or a secret word.
 
+import { formatNum } from '../format.js';
 // Per-word speed glyphs. `dead` is the word that ended the run.
 export const GLYPH = { fast: '🟩', mid: '🟨', slow: '🟥', dead: '⬛' };
 
@@ -62,11 +63,16 @@ export function tierForClockLeft(frac) {
   return 'slow';
 }
 
-// Full comma grouping ("1860" -> "1,860"). NOT the abbreviating formatNum — the receipt
-// shows the real number. Pure, integer-only.
+// Full comma grouping ("1860" -> "1,860"). Pure, integer-only.
 export function groupThousands(n) {
   const v = Math.max(0, Math.floor(Number.isFinite(n) ? n : 0));
   return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+// What the card PRINTS (Andy oct3 #3: never raw long digits): exact and grouped below 10,000,
+// the shared formatNum abbreviation from there ("1.34B PTS", not "1,343,513,423 PTS").
+export function shareNum(n) {
+  const v = Math.max(0, Math.floor(Number.isFinite(n) ? n : 0));
+  return v < 10000 ? groupThousands(v) : formatNum(v);
 }
 
 /**
@@ -105,13 +111,13 @@ export function buildResultCard({ mode, words, points, level, tiers = [], killed
 
   if (spec) {
     // CHAIN / FUSE: "17 LINKS · 2,140 PTS" — uppercase units, '·' separator, no LV.
-    const stat = [`${w} ${UNIT_LABEL[mode] || DEFAULT_UNIT}`];
-    if (points != null && Number.isFinite(points)) stat.push(`${groupThousands(points)} PTS`);
+    const stat = [`${shareNum(w)} ${UNIT_LABEL[mode] || DEFAULT_UNIT}`];
+    if (points != null && Number.isFinite(points)) stat.push(`${shareNum(points)} PTS`);
     lines.push(stat.join(' · '));
   } else {
-    const stat = [`${w} words`];
-    if (points != null && Number.isFinite(points)) stat.push(`${groupThousands(points)} pts`);
-    if (level != null && Number.isFinite(level)) stat.push(`LV ${Math.max(1, Math.floor(level))}`);
+    const stat = [`${shareNum(w)} words`];
+    if (points != null && Number.isFinite(points)) stat.push(`${shareNum(points)} pts`);
+    if (level != null && Number.isFinite(level)) stat.push(`LV ${shareNum(Math.max(1, Math.floor(level)))}`);
     lines.push(stat.join(' - '));
   }
 

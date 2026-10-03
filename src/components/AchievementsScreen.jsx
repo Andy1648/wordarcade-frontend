@@ -21,7 +21,7 @@ export function AchievementsBody() {
 
   return (
     <>
-          <div className="ach-progress">{counts.earned} / {counts.total} EARNED</div>
+          <div className="ach-progress">{formatNum(counts.earned)} / {formatNum(counts.total)} EARNED</div>
           {CAT_ORDER.filter((c) => byCat[c]).map((cat) => (
             <div key={cat} className="ach-cat">
               <h3 className="ach-cat-title">{cat === 'SECRET' ? 'SECRET' : cat}</h3>

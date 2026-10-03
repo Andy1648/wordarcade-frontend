@@ -88,3 +88,9 @@
     animation: none;
   }
 }
+
+/* BIG / HUGE MONITORS (big-monitor pass): --ov-k + the type tokens are set on .winner-pop-layer
+   (theme/type.css: 1.2 at >=1800x1000, 1.45 at >=2200x1250). Cap 460 -> 552 / 667. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .winner-pop { max-width: min(92vw, calc(460px * var(--ov-k, 1))); }
+}

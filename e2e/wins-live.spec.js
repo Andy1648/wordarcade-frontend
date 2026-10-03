@@ -29,7 +29,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 625 }]) {
     await page.goto('/?portal=1');
     await menuReady(page);
     const chip = page.locator('.menu-wins-chip:visible').first();
-    await expect(chip).toHaveAttribute('aria-label', /^5000 wins/);
+    await expect(chip).toHaveAttribute('data-wins', '5000'); // exact (the label is formatNum'd: "5,000 wins")
     await navControl(page, 'stats').click();
     await page.locator('.claims-panel').waitFor({ state: 'visible' });
     const before = await page.evaluate(() => Number(localStorage.getItem('taw.wins')));
@@ -39,6 +39,6 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 625 }]) {
     await page.locator('.claims-close').click();
     await expect(page.locator('.claims-panel')).toHaveCount(0);
     // no shop round-trip, no reload: the chip already says the new total
-    await expect(chip).toHaveAttribute('aria-label', new RegExp(`^${after} wins`));
+    await expect(chip).toHaveAttribute('data-wins', String(after));
   });
 }

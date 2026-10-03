@@ -181,3 +181,14 @@
   .rank-name { font-size: var(--fs-label); }
   .rank-range { font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */; }
 }
+
+/* BIG / HUGE MONITORS (big-monitor pass): --ov-k (theme/type.css: 1.2 at >=1800x1000, 1.45 at
+   >=2200x1250) grows the panel and its fixed px bits with the type tokens. Panel 420 -> 504 / 609. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .rank-panel { max-width: calc(420px * var(--ov-k, 1)); }
+  .rank-num {
+    width: calc(26px * var(--ov-k, 1));
+    height: calc(26px * var(--ov-k, 1));
+  }
+  .rank-silhouette { height: calc(16px * var(--ov-k, 1)); }
+}

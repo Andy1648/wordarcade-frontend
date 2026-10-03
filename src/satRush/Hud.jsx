@@ -10,12 +10,21 @@
 // who arrived on a /sat-rush/play link has never seen the menu, and this control is
 // the only door to the other five modes. It is now labelled with its destination at
 // >=44x44, in SAT RUSH's own paper-and-ink language — NOT the neon house chip.
+import { formatNum } from '../format';
+
+// The odometer pad is a style for SMALL scores only; from 10,000 the shared formatter takes over
+// (Andy oct3 #3: never raw long digits — a 1,343,513 score must not print "1343513").
+const scoreText = (s) => {
+  const n = Math.max(0, Math.floor(Number(s) || 0));
+  return n < 10000 ? String(n).padStart(6, '0') : formatNum(n);
+};
+
 export default function Hud({ score, streak, wordNumber, lives, maxLives, heat, heatCap, onExit }) {
   return (
     <div className="sr-hud">
       <div className="sr-hcell">
         <span className="sr-hlabel">score</span>
-        <b className="sr-hval">{String(score).padStart(6, '0')}</b>
+        <b className="sr-hval">{scoreText(score)}</b>
       </div>
       <div className="sr-hcell">
         <span className="sr-hlabel">streak</span>

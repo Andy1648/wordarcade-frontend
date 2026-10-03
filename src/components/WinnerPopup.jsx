@@ -5,7 +5,7 @@
 // inside that screen's own overlay/panel, never a new position:fixed element, so it can never
 // block REMATCH / LEAVE or collide with the corner nav.
 //
-// MOTION: ONE finite pop-in (transform/opacity), the number counted up by a short rAF that only
+// MOTION: ONE finite pop-in (transform/opacity), the number counted up by THE one count-up (juice/countUp.js) that only
 // WRITES text (no layout reads), a hold, ONE finite fade-out, then it unmounts. Nothing loops.
 // REDUCED MOTION: no animation at all — a static card with the final amount, removed after the
 // same hold.
@@ -13,10 +13,10 @@
 // Lazy-loaded (lazyWithReload) by GameScreen + WordRaceScreen, so it costs nothing until a win.
 import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../format';
+import { createCountUp } from '../juice/countUp';
 import './WinnerPopup.css';
 
-const COUNT_MS = 900;
-const HOLD_MS = 3600; // pop-in + count + a beat to read it; the fade-out starts here
+const HOLD_MS = 3800; // pop-in + the (up to 2 s) count + a beat to read it; the fade-out starts here
 
 function reducedMotion() {
   try {
@@ -33,24 +33,22 @@ export default function WinnerPopup({ pay }) {
   const numRef = useRef(null);
   const wins = pay && pay.wins > 0 ? Math.round(pay.wins) : 0;
 
-  // Count up 0 → wins (ease-out). Writes textContent only; the final value is also what React
-  // renders, so a skipped/aborted rAF still leaves the right number on screen.
+  // Count up 0 → wins through THE one count-up (juice/countUp.js: 2 s from nothing, ease-out).
+  // Writes textContent only; the final value is also what React renders, so an aborted count still
+  // leaves the right number on screen.
   useEffect(() => {
-    if (reduce || !wins || typeof requestAnimationFrame !== 'function') return undefined;
+    if (reduce || !wins) return undefined;
     const el = numRef.current;
-    let raf = 0;
-    let t0 = 0;
-    const step = (t) => {
-      if (!t0) t0 = t;
-      const k = Math.min(1, (t - t0) / COUNT_MS);
-      const eased = 1 - Math.pow(1 - k, 3);
-      if (el) el.textContent = `+${formatNum(Math.round(wins * eased))}`;
-      if (k < 1) raf = requestAnimationFrame(step);
-    };
+    const c = createCountUp({
+      initial: 0,
+      onFrame: (v) => {
+        if (el) el.textContent = `+${formatNum(Math.round(v))}`;
+      },
+    });
     if (el) el.textContent = '+0';
-    raf = requestAnimationFrame(step);
+    c.to(wins);
     return () => {
-      cancelAnimationFrame(raf);
+      c.cancel();
       if (el) el.textContent = `+${formatNum(wins)}`;
     };
   }, [wins, reduce]);

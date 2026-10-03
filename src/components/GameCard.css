@@ -867,3 +867,44 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
      locked; the level it names is back at 390px, with the payout. */
   .game-card-lock-label { display: none; }
 }
+
+/* ===== BIG / HUGE MONITORS — THE TEXT CAPS GROW WITH THE CARD (big-monitor pass) ==============
+   At 2560x1440 the five cards are ~465px wide and the cqw middle terms already want a ~100px name,
+   but the px CAPS held every line at its 1366 size (name 40, pay 20/22, badge 14, foot 16). --card-k
+   (1.2 at >=1800x1000, 1.45 at >=2200x1250 — the same two tiers and ratios as --solo-k / --wb-k)
+   multiplies ONLY the caps; the floors, the cqw terms and the fit-to-slot pay-line term
+   (--line-room / --pay-em) are untouched, so a line that does not fit still shrinks or wraps exactly
+   as before. The ribbon scales as a whole (font, padding, offset) so its corner crop keeps its shape.
+   Wrapped in @container (min-width: 171px) so the tiny-card overrides above keep winning on a
+   small card. The wordmark and the menu's own fit-math are not touched. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .game-card { --card-k: 1.2; }
+}
+@media (min-width: 2200px) and (min-height: 1250px) {
+  .game-card { --card-k: 1.45; }
+}
+@media (min-width: 1800px) and (min-height: 1000px) {
+  @container (min-width: 171px) {
+    .game-card-name { font-size: clamp(22px, min(22cqw, 20cqh), calc(40px * var(--card-k, 1))); }
+    [data-game='sat-rush'] .game-card-name { font-size: clamp(22px, 18cqw, calc(34px * var(--card-k, 1))); }
+    .game-card-ribbon {
+      top: clamp(14px, 4.4cqw, calc(22px * var(--card-k, 1)));
+      left: calc(-46px * var(--card-k, 1));
+      padding: calc(8px * var(--card-k, 1)) calc(52px * var(--card-k, 1));
+      font-size: clamp(13px, 4.4cqw, calc(17px * var(--card-k, 1)));
+    }
+    .game-card-badge { font-size: clamp(13px, 3.4cqw, calc(14px * var(--card-k, 1))); }
+    .game-card-payout {
+      font-size: clamp(15px, min(6cqw, calc(var(--line-room) / var(--pay-em, 11))), calc(20px * var(--card-k, 1)));
+    }
+    .game-card-xp {
+      font-size: clamp(15px, min(6.8cqw, calc(var(--line-room) / var(--xp-em, 11))), calc(22px * var(--card-k, 1)));
+    }
+    .game-card-foot { font-size: clamp(13px, 3.4cqw, calc(14px * var(--card-k, 1))); }
+    .game-card-foot .game-card-xp,
+    .game-card-foot .game-card-payout {
+      font-size: clamp(13px, min(4.4cqw, calc(var(--foot-room) / var(--foot-em, 14))), calc(16px * var(--card-k, 1)));
+    }
+    .game-card-limited-tag { font-size: clamp(13px, 3cqw, calc(14px * var(--card-k, 1))); }
+  }
+}
