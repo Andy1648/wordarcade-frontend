@@ -12,7 +12,7 @@
 //
 // Lazy-loaded (lazyWithReload) by GameScreen + WordRaceScreen, so it costs nothing until a win.
 import { useEffect, useRef, useState } from 'react';
-import { formatNum } from '../format';
+import { formatNum, formatMult } from '../format';
 import { createCountUp } from '../juice/countUp';
 import './WinnerPopup.css';
 
@@ -87,10 +87,4 @@ export default function WinnerPopup({ pay }) {
       </div>
     </div>
   );
-}
-
-function formatMult(m) {
-  if (!Number.isFinite(m)) return '1';
-  const r = Math.round(m * 10) / 10;
-  return Number.isInteger(r) ? String(r) : r.toFixed(1);
 }
