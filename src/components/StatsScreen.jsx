@@ -15,7 +15,9 @@ import {
   getKeyTier,
   keyTierXp,
   xpPerInput,
+  need,
 } from '../progress/xp';
+import { getChainRuns, getFuseRuns } from '../solo/shared.js';
 import { equippedPopMult, equippedSoundMult } from '../progress/shop';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
@@ -67,7 +69,8 @@ function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
       sub: rec.rarest ? `${rec.rarest.band} ${x(rec.rarest.mult)}` : '',
       req: 'ACCEPT A WORD',
     },
-    { label: 'BEST STREAK', locked: rec.longestCombo <= 0, value: fmt(rec.longestCombo), req: 'CHAIN 2 WORDS' },
+    // H6/M6: the in-run combo is a COMBO; STREAK means the daily streak (the row below).
+    { label: 'BEST COMBO', locked: rec.longestCombo <= 0, value: fmt(rec.longestCombo), req: '2 WORDS IN A ROW' },
     { label: 'LONGEST DAILY STREAK', locked: rec.longestStreak <= 0, value: fmt(rec.longestStreak), req: 'PLAY 2 DAYS' },
     { label: 'CURRENT DAILY STREAK', locked: streakNow <= 0, value: fmt(streakNow), req: 'PLAY TODAY' },
     { label: 'DISTINCT WORDS', locked: rec.distinct <= 0, value: fmt(rec.distinct), req: 'ACCEPT A WORD' },
@@ -185,7 +188,8 @@ export default function StatsScreen({ onBack }) {
   const progression = [
     ['LEVEL', level],
     ['RANK', rankTitle(level)], // Job 5 — the level band's name (a string; see the render below)
-    ['XP INTO LEVEL', intoLevel],
+    // H6/M16: progress with its cost, not a bare number.
+    ['XP INTO LEVEL', `${fmt(intoLevel)} / ${fmt(need(level))}`],
     // ('XP TO NEXT LEVEL' row removed by request — the level + XP-into read is enough.)
     ['REBIRTHS', rebirths],
     ['WINS BALANCE', getWins()],
@@ -194,7 +198,7 @@ export default function StatsScreen({ onBack }) {
   // XP stack: Key Power (base) × rebirth × equipped cosmetics × streak — MENU XP / LETTER below
   // is the full product (matches the live keystroke pop), BASE XP / LETTER is just the Key Power tier.
   const multipliers = [
-    ['KEY POWER', `T${keyTier}`],
+    ['KEY POWER', `TIER ${keyTier}`], // H6/M14: one spelling of the tier everywhere
     ['BASE XP / LETTER', fmt(baseXp)],
     ['REBIRTH', x(rbMult)],
     ['MENU XP / LETTER', fmt(menuXp)],
@@ -203,6 +207,9 @@ export default function StatsScreen({ onBack }) {
     ['WORD BOMB', rounds.wordBomb],
     ['CATEGORY BLITZ', rounds.blitz],
     ['SAT RUSH', rounds.satRush],
+    // H6/M17: the solo modes' own persisted run counters (bumped on every run start).
+    ['CHAIN', getChainRuns()],
+    ['FUSE', getFuseRuns()],
   ];
   // TYPING SPEED (§2d): best + recent average, measured as ACTIVE typing time only and ONLY in the
   // continuous-typing modes (turn-based Word Bomb / Blitz are excluded — the label names the
@@ -320,6 +327,8 @@ export default function StatsScreen({ onBack }) {
           <h3 className="stats-subtitle">
             SECRETS <span className="stats-secret-count">{secrets.found} / {secrets.total} FOUND</span>
           </h3>
+          {/* H6/M18: two masked grids that look the same, so each says what it holds. */}
+          <p className="stats-caption">THINGS YOU DO — FIND THEM BY PLAYING</p>
           <div className="stats-secrets">
             {secrets.items.map((sec) => (
               <div
@@ -338,6 +347,7 @@ export default function StatsScreen({ onBack }) {
             HIDDEN ACHIEVEMENTS{' '}
             <span className="stats-secret-count">{hidden.found} / {hidden.total} FOUND</span>
           </h3>
+          <p className="stats-caption">ACHIEVEMENTS WITH THEIR GOAL HIDDEN UNTIL YOU CROSS IT</p>
           <div className="stats-secrets">
             {hidden.items.map((sec) => (
               <div
@@ -352,7 +362,9 @@ export default function StatsScreen({ onBack }) {
             ))}
           </div>
 
-          <h3 className="stats-subtitle">WHERE YOUR XP COMES FROM</h3>
+          {/* H6/M16: these rows are the MENU keystroke stack only; a game word adds mode, forge,
+              mark, mastery, streak and stars on top (see a game's receipt). */}
+          <h3 className="stats-subtitle">MENU TYPING XP</h3>
           <dl className="stats-list">
             {multipliers.map(([k, v]) => (
               <div className="stats-row" key={k}>

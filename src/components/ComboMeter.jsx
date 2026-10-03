@@ -25,8 +25,8 @@ function ComboShatter({ count }) {
       onAnimationEnd={() => setDone(true)}
       aria-hidden="true"
     >
-      <span className="combo-shatter-count">×{count}</span>
-      <span className="combo-shatter-label">COMBO LOST</span>
+      <span className="combo-shatter-count">{count} IN A ROW</span>
+      <span className="combo-shatter-label">LOST</span>
     </div>
   );
 }
@@ -49,8 +49,10 @@ export default function ComboMeter({ count, brk }) {
           )}
           <div key={count} className="combo-pop">
             <span className="combo-flame">{count >= 7 ? '🔥' : '✦'}</span>
-            <span className="combo-label">COMBO</span>
-            <span className="combo-count">×{count}</span>
+            {/* H6/H12: a COUNT, said as one. "COMBO ×5" sat beside the receipt's real COMBO ×1.5
+                multiplier on the same screen; "×" is reserved for multipliers. */}
+            <span className="combo-count">{count}</span>
+            <span className="combo-label">IN A ROW</span>
           </div>
         </div>
       )}

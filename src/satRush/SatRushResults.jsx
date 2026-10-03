@@ -26,13 +26,16 @@ function frameOf(e) {
   return { glyph, kind, label: parts.join(', ') };
 }
 
-export default function SatRushResults({ results, winsEarned = 0, onAgain, onExit, offerMenu = false }) {
+export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onExit, offerMenu = false }) {
   // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
   // the page leads with what every other mode's run-over card leads with — how many you got (here:
   // CAPTURED) and the WINS it paid — and the mode's own numbers (score, avg ante, streak, mastered)
   // move to one ruled line under them. These two are what count up.
   const finalScore = results.cleared || 0;
   const finalAnte = winsEarned || 0;
+  // H6/H15: bonuses credited during the run (mastery / collection milestones), itemised under the
+  // wins line so the card adds up to what the balance moved by.
+  const bonusLines = (winsBonusLines || []).filter((l) => l && l.kind === 'bonus' && l.amount > 0);
   const [score, setScore] = useState(0);
   const [ante, setAnte] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -115,6 +118,11 @@ export default function SatRushResults({ results, winsEarned = 0, onAgain, onExi
         <div className="sr-winsline" aria-label={`${finalAnte} wins earned`}>
           {finalAnte > 0 ? <><b>+{fmt(ante)}</b> wins earned</> : <>no wins earned — capture 3 to start the bounty</>}
         </div>
+        {bonusLines.map((l) => (
+          <div className="sr-winsline" key={l.id} data-wins-line={l.label} data-wins-amount={l.amount}>
+            <b>+{formatNum(l.amount)}</b> {l.label}
+          </div>
+        ))}
 
         {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
             at 1280x551 / 1366x625 they were below the fold under the study panels). */}

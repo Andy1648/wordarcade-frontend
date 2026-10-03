@@ -105,7 +105,7 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   // and no sentence explaining it (the "PLUS ITS PERK" / "WEARING IT" lines are gone)
   await expect(hero.locator('.mx-hero-pct')).toHaveText('MAIN ×2.15');
   await expect(hero.locator('.mx-hero-perk')).toHaveCount(0);
-  await expect(hero.locator('.mx-hero-rank')).toContainText('180 WORDS → RANK III · ×2.3');
+  await expect(hero.locator('.mx-hero-rank')).toContainText('180 MORE WORDS → RANK III · ×2.3');
   // no emoji left in the index
   const text = await page.locator('.mx-panel').innerText();
   expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);

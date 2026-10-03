@@ -63,7 +63,7 @@ test('§2 buy is a plain click that commits and reveals the sticker', async ({ p
   // One click → commit → the sticker appears and the tier advances.
   await buyBtn.click();
   await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY POWER I');
+  await expect(page.locator('.sticker-name')).toContainText('KEY POWER TIER 1');
   await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
   await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 1');
 });
