@@ -50,7 +50,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
   // LETTERS ×2 MODE" multiplies out to the +10 WINS headline, and never reads like the bar's
   // "BASE 10 XP / LETTER".
   const baseTerm = payout.letters && payout.perLetter
-    ? `BASE ${formatRate(payout.perLetter / 10)} WINS / LETTER × ${payout.letters} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
+    ? `BASE ${formatRate(payout.perLetter / 10)} WINS / LETTER × ${formatNum(payout.letters)} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
     : `BASE ${formatRate(payout.base)} / WORD`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">

@@ -52,6 +52,8 @@ import {
   markXpBoost,
   letterXpNow,
   MARK_XP_BOOST,
+  LETTER_RATE_CAP,
+  tryLetterCredit,
 } from './letterXp.js';
 
 function withStorage(seed, fn) {
@@ -213,21 +215,27 @@ test('LETTERS fill the bar: noteTypedLetters counts a–z added, skips deletions
   });
 });
 
-test('LETTERS: the same anti-mash cap as the menu — at most 30 credited letters a rolling second', () => {
+test('LETTERS: ONE anti-mash cap for menu + games — 12 credited letters a rolling second (round 2)', () => {
   withStorage({}, () => {
     resetLetterXp();
+    assert.equal(LETTER_RATE_CAP, 12);
     let ok = 0;
     for (let i = 0; i < 60; i++) ok += noteLetters(1, 'chain', 1000);
-    assert.equal(ok, 30);
+    assert.equal(ok, 12);
     assert.equal(noteLetters(1, 'chain', 2001), 1, 'the window slides');
-    assert.equal(flushLetterXp().xp, 31 * 10);
+    assert.equal(flushLetterXp().xp, 13 * 10);
+    // the menu draws on the SAME limiter: a menu key at the same moment is refused once games used the cap
+    resetLetterXp();
+    for (let i = 0; i < 12; i++) noteLetters(1, 'fuse', 5000);
+    assert.equal(tryLetterCredit(5000), false, 'menu + game share one cap');
+    assert.equal(tryLetterCredit(6001), true);
   });
 });
 
-test('LETTERS: menu and game price a letter the same (BASE 10 × KEY × rebirth × mark)', () => {
+test('LETTERS: a menu letter is half a game letter (MENU 5 / GAME 10 × KEY × rebirth × mark)', () => {
   withStorage({ 'taw.keytier': '5', 'taw.rebirths': '3' }, () => {
     assert.ok(close(letterXpNow(), levelXpPerLetter(5, 3)));
-    assert.equal(xpPerInput({}), Math.round(letterXpNow()));
+    assert.equal(xpPerInput({}), Math.round(letterXpNow() / 2));
   });
 });
 

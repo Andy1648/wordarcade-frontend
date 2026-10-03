@@ -123,9 +123,49 @@ level per word's letters (median, LV1–400).
 - The sim does NOT model menu typing or mark XP, so live players level somewhat faster than it shows.
 - If too slow: lower `CURVE_V11_A` (15 → 12). If a dead bar shows late: lower `CURVE_V11_LEAN` (1.004 → 1.002).
 
+## ROUND 2 (adversarial review + coordinator, oct3)
+1. **MENU MASHING.**
+   - ONE limiter for menu + every game input: `letterXp.LETTER_RATE_CAP = 12` credited letters per rolling
+     second (≈ 140 WPM — above any honest burst). `useXpCapture` and `noteLetters` share it (wall clock).
+   - COSMETICS ARE LOOKS ONLY: pop styles / sound packs no longer multiply XP (`xpPerInput` ignores
+     popMult/soundMult; the "+N% MENU XP" card line is gone; `xpMult` stays in the data as a legacy field).
+   - MENU letters are HALF a game letter: `MENU_LETTER_SHARE = 0.5` → MENU 5 XP / LETTER × KEY × rebirth ×
+     mark (game letters BASE 10). Estimate (`v11-estimate.mjs --masher`: a masher at 12/s, no wins → no KEY,
+     rebirthing at every gate, vs the median bot), cumulative level-ups masher ÷ median:
+     | menu price | 10 min | 30 min | 1 h | 5 h | 20 h |
+     |---|---|---|---|---|---|
+     | ×1 (BASE 10) | **×1.97** | ×1.43 | ×1.01 | ×0.84 | ×0.74 |
+     | **×0.5 (shipped)** | **×1.10** | ×0.89 | ×0.82 | ×0.61 | ×0.52 |
+     | ×0.25 | ×0.66 | ×0.49 | ×0.51 | ×0.42 | ×0.36 |
+     At full price a masher out-levels a player ~2× in the first 10 minutes (before wins buy KEY); at half
+     price it never beats ×1.5 and falls behind as KEY compounds. `loop-sim.mjs` now runs a MASHER bot on the
+     real modules (`v11 MASHER … PASS/FAIL (limit ×1.5)`; 20 h max). If CI shows FAIL: lower
+     `MENU_LETTER_SHARE` (0.5 → 0.35).
+   - Residual: a masher typing into a GAME input gets the full game price (inside the same 12/s cap). Game
+     inputs only exist during a live round (WB/Blitz turns, CHAIN/FUSE/RACE clocks; SAT credits ACCEPTED
+     letters only), so it is bounded by playing; not in the sim.
+2. **ECON RPC 11.** `cloudSave.ECON_RPC_VERSION = 11`; the client sends the p_econ the server reports
+   (`econRpcArg`): 018 run → 11; only 016 → 10 (as before, so the client works until Andy runs 018);
+   neither → the old RPCs. `supabase/migrations/018_econ_v11.sql` (WRITE ONLY): lb_submit3 / lb_save2 /
+   lb_load2 accept **p_econ = 11 ONLY**, lb_caps reports econ 11 (+ board_econ). 10 is NOT accepted: a stale
+   v10 tab's board writes are clamped and monotone, but its cloud SAVE would still be stored on an equal or
+   higher score and copied to other devices by a restore. A v11 tab opened before 018 runs sends 10 until
+   its next reload (refused 'old_client', nothing lost). Board rows from econ 10 keep their wins/word (v11
+   did not change wins). ORDER: deploy the client, then run 018, then `notify pgrst, 'reload schema';`.
+3. **COPY** — rule: "words pay WINS; letters fill the bar: BASE 10 XP / LETTER × KEY × rebirth × mark".
+   - MenuXp streak chip / aria: "wins" only. Menu hint: "N LETTERS IN A GAME TO LEVEL X" (toNext ÷ the
+     game letter price). WORD RACE: WINS only (`racePayout` xp 0).
+   - Tutorials: MARKS "EARN THEM AS YOU PLAY." (true with rolls on or off); MAIN "MORE WINS A WORD, MORE XP
+     A LETTER."; FRENZY / BOOST "PAYS … WINS"; REBIRTH "BACK TO 1 — FOR +100% WINS & XP, FOR GOOD."; the
+     one-time notice "LETTERS FILL THE BAR — BASE 10 XP / LETTER · WORDS PAY WINS".
+   - Shop: rebirth hero "×N WINS & XP" = GAIN "+100% WINS & XP / LETTER — ×a → ×b"; KEY "BASE 10 XP /
+     LETTER × KEY Tn ×m (+20%)"; cosmetics: no XP line. Numbers through formatNum (TIER, KEY tier, %).
+   - Stats: section "XP — LETTERS FILL THE BAR": BASE XP / LETTER 10 · KEY POWER TIER n ×m XP · REBIRTH ·
+     MARK +n% XP · WORDS PAY WINS · GAME XP / LETTER · MENU XP / LETTER (half).
+   - Receipt: "BASE n WINS / LETTER × formatNum(letters) LETTERS" + wins headline; no XP.
+
 ## Risks
-- Menu mashing: gibberish typing in the menu levels you at the same per-letter price (30/s cap), and
-  in-game inputs now do too (any letters typed into the field, accepted word or not; SAT counts accepted
-  letters only).
+- In-game inputs credit any letters typed into the field during a live round (SAT: accepted letters only),
+  at the game price, inside the shared 12/s cap.
 - Server 015 level clamp (0.5 level/s, 600-level bank) can lag a very fast late re-climb; it catches up.
 - KEY tier pace is borrowed from a pre-v10 run (sensitivity above).

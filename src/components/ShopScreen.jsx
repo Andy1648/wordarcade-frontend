@@ -230,7 +230,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         {view === 'shop' ? (
           <div className="shop-body">
             {/* KEY POWER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
-            <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
+            <h3 className="shop-subtitle">KEY POWER — TIER {formatNum(keyTier)}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
                 {/* H2d ONE BIG NUMBER: what the tier buys, in the unit it is bought with — the WINS / WORD
@@ -242,7 +242,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <b>{formatRate(kpRateNow)}</b> → <b>{formatRate(kpRateNext)}</b> WINS / WORD
                 </div>
                 <div className="shop-kp-rate">
-                  WORD BOMB · BASE 10 XP / LETTER × KEY T{keyTier + 1} ×{formatMultExact(keyXpMult(keyTier + 1))} (+{Math.round((KEY_XP_STEP - 1) * 100)}%)
+                  WORD BOMB · BASE 10 XP / LETTER × KEY T{formatNum(keyTier + 1)} ×{formatMultExact(keyXpMult(keyTier + 1))} (+{formatNum((KEY_XP_STEP - 1) * 100)}%)
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
@@ -367,7 +367,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               {/* H6/H10: ×N is the new TOTAL (NOW ×… sits right under it), so the label says "REACH". */}
               <div className="shop-rb-hero-label">REBIRTH {rebirths + 1} TO REACH</div>
               <div className="shop-rb-hero-val">
-                ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS</span>
+                ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS &amp; XP</span>
                 {rebirthReady && (
                   <>
                     {' · +'}
@@ -404,7 +404,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 {/* H6/H10: what THIS rebirth adds — ×9 → ×10 is +11%, not "a ×10". */}
                 {/* PROGRESSION v11: one rule, one line — each rebirth is +100% XP (of the base) and the same
                     ×(1 + R) on wins. The level curve itself never changes with rebirths. */}
-                <b>GAIN:</b> +{Math.round(REBIRTH_XP_STEP * 100)}% XP / LETTER &amp; WINS — ×{formatMult(rebirthXpMult(rebirths))} → ×{formatMult(rebirthXpMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
+                <b>GAIN:</b> +{formatNum(REBIRTH_XP_STEP * 100)}% WINS &amp; XP / LETTER — ×{formatMult(rebirthXpMult(rebirths))} → ×{formatMult(rebirthXpMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
               </li>
             </ul>
 
@@ -500,10 +500,8 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
     <div className={`shop-card shop-card--compact is-${cls}${isNextGoal ? ' is-next' : ''}`} title={item.blurb}>
       {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
       <div className="shop-card-name">{item.name}</div>
-      {item.xpMult > 1 && (
-        /* H6/H9: this multiplier only feeds menu-typing XP (xpPerInput) — never a game word or wins. */
-        <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% MENU XP</div>
-      )}
+      {/* PROGRESSION v11 (review round 2): cosmetics are LOOKS ONLY — the old "+N% MENU XP" multiplied
+          level XP up to ×6.9 for a masher. No XP line; the card sells the look. */}
       {isEquipped ? (
         <div className="shop-card-tag">EQUIPPED</div>
       ) : isOwnedItem ? (

@@ -459,7 +459,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           progress expressed in the only unit the player controls. LETTERS, not words (Andy A9):
           XP is linear in word length, so "283 WORDS" was a 5-letter-word fiction — a player
           typing long words got there in fewer. Letters is the unit XP is actually paid in.
-          Derived from the live per-word XP rate (see Homepage), so it moves with KEY POWER, rebirth, mastery and the streak
+          PROGRESSION v11: priced at a GAME letter (BASE 10 XP / LETTER × KEY × rebirth × mark — see Homepage); words pay wins,
           rather than being a constant dressed up as a measurement.
           On a first run it also carries where XP comes from, which used to be a SEPARATE caption
           line below the bar — two stacked lines of small type saying related things, on the one
@@ -476,7 +476,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
                   the corner-nav gutter leaves the bar 131px and the full sentence is ~148px, so
                   it ellipsised to "12 WORDS TO …" — a line that costs its own height and then
                   withholds the number it exists to show. */}
-              <span className="menu-xp-hint-to"> TO LEVEL </span>
+              <span className="menu-xp-hint-to"> IN A GAME TO LEVEL </span>
               <span className="menu-xp-hint-to-short"> · LV </span>
               {formatNum(level + 1)}
             </span>

@@ -80,8 +80,8 @@ test('streakMultiplier follows the capped ladder', () => {
 test('xpPerInput ignores the streak multiplier (letter XP = BASE 10 × KEY × rebirth × mark)', () => {
   const base = xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 });
   const boosted = xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 2 });
-  assert.equal(base, 10);
-  assert.equal(boosted, 10);
+  assert.equal(base, 5); // a MENU letter: half of BASE 10
+  assert.equal(boosted, 5);
 });
 
 // ---- housekeeping ------------------------------------------------------------------------

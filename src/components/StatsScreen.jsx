@@ -19,7 +19,6 @@ import {
   need,
 } from '../progress/xp';
 import { getChainRuns, getFuseRuns } from '../solo/shared.js';
-import { equippedPopMult, equippedSoundMult } from '../progress/shop';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
 import { secretsProgress } from '../progress/achievements';
@@ -178,10 +177,11 @@ export default function StatsScreen({ onBack }) {
   const keyTier = getKeyTier();
   // PROGRESSION v11 (amended): the bar fills from LETTERS — BASE 10 XP / LETTER × KEY (×1.2 a tier) ×
   // rebirth ×(1+R) × the worn mark. Words pay WINS only. GAME XP / LETTER is the price of any letter typed
-  // in a game; MENU XP / LETTER adds the menu-only cosmetic mults (matches the live keystroke pop).
+  // in a game; MENU XP / LETTER is half that (menu letters are the slow lane — matches the live keystroke
+  // pop). Cosmetics are looks only: they never multiply XP.
   const markMult = markXpBoost();
   const gameXp = letterXpNow();
-  const menuXp = xpPerInput({ mode: 'menu', popMult: equippedPopMult(), soundMult: equippedSoundMult(), markMult });
+  const menuXp = xpPerInput({ mode: 'menu', markMult });
 
   // TWO different hidden sets, and they are NOT the same thing — so they do not share a heading.
   // `hidden` is the five SECRET-category achievements (thresholds you cross). `secrets` is the five
@@ -200,9 +200,10 @@ export default function StatsScreen({ onBack }) {
   // The XP stack, term by term, then the products. Words pay WINS — no XP row is per word.
   const multipliers = [
     ['BASE XP / LETTER', fmt(LEVEL_XP_PER_LETTER)],
-    ['KEY POWER', `TIER ${keyTier} · ×${formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
+    ['KEY POWER', `TIER ${fmt(keyTier)} · ×${formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
     ['REBIRTH', x(rbMult)],
-    ['MARK', markMult > 1 ? `+${Math.round((markMult - 1) * 100)}% XP` : 'NONE WORN'],
+    ['MARK', markMult > 1 ? `+${fmt((markMult - 1) * 100)}% XP` : 'NONE WORN'],
+    ['WORDS', 'PAY WINS'],
     ['GAME XP / LETTER', formatRate(gameXp)],
     ['MENU XP / LETTER', fmt(menuXp)],
   ];
@@ -364,9 +365,9 @@ export default function StatsScreen({ onBack }) {
             ))}
           </div>
 
-          {/* H6/M16: these rows are the MENU keystroke stack only; a game word adds mode, forge,
-              mark, mastery, streak and stars on top (see a game's receipt). */}
-          <h3 className="stats-subtitle">MENU TYPING XP</h3>
+          {/* PROGRESSION v11: the whole XP rule — LETTERS fill the bar (BASE 10 XP / LETTER × KEY × rebirth ×
+              mark; half that in the menu). Words pay WINS (see a game's receipt). */}
+          <h3 className="stats-subtitle">XP — LETTERS FILL THE BAR</h3>
           <dl className="stats-list">
             {multipliers.map(([k, v]) => (
               <div className="stats-row" key={k}>

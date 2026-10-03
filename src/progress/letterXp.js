@@ -8,7 +8,8 @@
 //
 // THE RULES (the menu's, applied in-game):
 //   * one letter = one credit, a–z only; a jump of 3+ letters in one change (paste, autocomplete) is 0;
-//   * the same anti-mash cap as the menu: at most 30 credited letters per rolling second;
+//   * ONE anti-mash cap SHARED by the menu and every game input: at most LETTER_RATE_CAP (12) credited
+//     letters per rolling second (≈ 140 WPM — above any honest burst, far below a held-down mash);
 //   * BATCHED: noteTypedLetters / noteLetters only count (O(1), no storage, no layout, no React state)
 //     and schedule ONE flush per animation frame; the flush reads the level state once, credits
 //     letters × XP-per-letter through creditXp, writes once, and fires the mid-game LV chip on a
@@ -63,8 +64,19 @@ export function creditLetterXp(letters, { mode, perLetter } = {}) {
   return { ...res, xp };
 }
 
+// ---- the ONE letter limiter (menu + games) ---------------------------------------------------------------
+export const LETTER_RATE_CAP = 12; // credited letters per rolling second, menu and games together
+let limiter = createRateLimiter({ capacity: LETTER_RATE_CAP, windowMs: 1000 });
+/** Consume one letter credit from the shared cap (useXpCapture calls this for menu keys / taps). */
+export function tryLetterCredit(now = Date.now()) {
+  try {
+    return limiter.tryConsume(now);
+  } catch {
+    return false;
+  }
+}
+
 // ---- the batched in-game path -------------------------------------------------------------------------
-let limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
 let pending = 0;
 let pendingMode = null;
 let scheduled = false;
@@ -114,7 +126,7 @@ export function flushLetterXp() {
 
 /** Tests: a fresh limiter and an empty buffer. */
 export function resetLetterXp() {
-  limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
+  limiter = createRateLimiter({ capacity: LETTER_RATE_CAP, windowMs: 1000 });
   pending = 0;
   pendingMode = null;
   scheduled = false;

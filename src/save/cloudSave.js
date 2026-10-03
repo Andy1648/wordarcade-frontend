@@ -26,7 +26,21 @@ import { resolveXpState } from '../progress/xp.js';
 // PROGRESSION v10 (016_econ_v10.sql): when lb_caps reports econ: 10 the save goes through the
 // version-gated lb_save2 / lb_load2 (p_econ = 10); the old lb_save becomes a no-op there so an old
 // bundle can't write. Before 016 is run, the old functions are used unchanged.
-export const ECON_RPC_VERSION = 10;
+export const ECON_RPC_VERSION = 11;
+// PROGRESSION v11 (018_econ_v11.sql): the client speaks econ 11. Until Andy runs 018, a server with only
+// 016 reports econ: 10 and its lb_submit3 / lb_save2 / lb_load2 accept p_econ = 10 ONLY — so the client
+// sends what the server reports (never more than 11): 018 in → 11 (and v10 tabs are refused), 016 only →
+// 10 (as before), neither → the old RPCs. A stale v10 bundle always sends 10, so once 018 runs it is out.
+export const ECON_RPC_VERSION_V10 = 10;
+/** The p_econ to send for the server's lb_caps.econ: 11, 10, or 0 (= use the old RPCs). */
+export function econRpcArg(serverEcon) {
+  const e = Number(serverEcon);
+  if (e >= ECON_RPC_VERSION) return ECON_RPC_VERSION;
+  if (e >= ECON_RPC_VERSION_V10) return ECON_RPC_VERSION_V10;
+  return 0;
+}
+// `econ` (backupNow / restoreIfAhead): true = ECON_RPC_VERSION, a number = that p_econ, falsy = old RPCs.
+const econArg = (econ) => (econ === true ? ECON_RPC_VERSION : Number(econ) > 0 ? Number(econ) : 0);
 
 const LAST_BACKUP_KEY = 'taw.cloud.lastBackup';
 const BACKUP_EVERY_MS = 60 * 1000;
@@ -129,7 +143,8 @@ export async function backupNow({ rpc, secret, force = false, storage, econ = fa
     if (!force && Date.now() - last < BACKUP_EVERY_MS) return false;
     const blob = exportSave();
     const body = { p_secret: secret, p_blob: blob, p_score: localScore(s).toString() };
-    const r = econ ? await rpc('lb_save2', { ...body, p_econ: ECON_RPC_VERSION }) : await rpc('lb_save', body);
+    const pe = econArg(econ);
+    const r = pe ? await rpc('lb_save2', { ...body, p_econ: pe }) : await rpc('lb_save', body);
     if (s) s.setItem(LAST_BACKUP_KEY, String(Date.now()));
     return !!(r && r.saved);
   } catch {
@@ -144,7 +159,8 @@ export async function backupNow({ rpc, secret, force = false, storage, econ = fa
 export async function restoreIfAhead({ rpc, secret, storage, restore = true, econ = false } = {}) {
   if (!rpc || !secret) return { restored: false };
   try {
-    const r = econ ? await rpc('lb_load2', { p_secret: secret, p_econ: ECON_RPC_VERSION }) : await rpc('lb_load', { p_secret: secret });
+    const pe = econArg(econ);
+    const r = pe ? await rpc('lb_load2', { p_secret: secret, p_econ: pe }) : await rpc('lb_load', { p_secret: secret });
     // 012_admin_reset: the dev flagged this profile for a FULL RESET — that outranks any restore (the
     // cloud copy is the progress being reset). The caller obeys via obeyDevReset in client.js.
     if (r && r.reset_all === true) return { restored: false, resetAll: true, username: r.username, id: r.id };

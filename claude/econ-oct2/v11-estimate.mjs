@@ -24,6 +24,9 @@ export const SKILLS = {
   casual: { wpm: 6, len: 5, miss: 0.15 },
   median: { wpm: 10, len: 6, miss: 0.08 },
   strong: { wpm: 16, len: 7, miss: 0.04 },
+  // MENU MASHER (round 2): types gibberish in the MENU at the shared letter cap, wins nothing (so no KEY),
+  // rebirths at every gate. 12 letters/s = 720 letters/min, modelled as 120 "words" of 6 letters a minute.
+  masher: { wpm: 120, len: 6, miss: 0, masher: true },
 };
 let KEYT = {};
 try {
@@ -73,9 +76,12 @@ export function run(v, skillId, hours = 200, opts = {}) {
   const paceStart = {};
   let climbStart = 0;
   let to15 = null;
+  let ups = 0;
+  const upsAt = []; // cumulative level-ups at each whole minute
   while (t < hours * 60) {
-    const T = tierAt(skillId, t, opts.stretch || 1);
-    const xp = s.len * (1 + s.miss) * 10 * v.key(T) * v.rb(rc);
+    if (upsAt.length <= Math.floor(t)) upsAt.push(ups);
+    const T = s.masher ? 0 : tierAt(skillId, t, opts.stretch || 1);
+    const xp = s.len * (1 + s.miss) * 10 * (s.masher ? (opts.menuShare ?? 1) : 1) * v.key(T) * v.rb(rc);
     const need = needOf(v, lv);
     const pctW = (xp / need) * 100;
     const band = Math.min(400, Math.ceil(lv / 50) * 50);
@@ -83,6 +89,7 @@ export function run(v, skillId, hours = 200, opts = {}) {
     frac += xp / need;
     while (frac >= 1) {
       frac = (frac - 1) * (needOf(v, lv) / needOf(v, lv + 1));
+      ups += 1;
       if (paceStart[lv] != null && pace[lv] == null) pace[lv] = t - paceStart[lv];
       lv += 1;
       if (PACE_LEVELS.includes(lv) && paceStart[lv] == null) paceStart[lv] = t;
@@ -100,7 +107,7 @@ export function run(v, skillId, hours = 200, opts = {}) {
     }
     t += dt;
   }
-  return { reach, pctBands, rc, lv, climbs, pace };
+  return { reach, pctBands, rc, lv, climbs, pace, upsAt };
 }
 
 const isMain = process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('v11-estimate.mjs');
@@ -112,7 +119,7 @@ if (isMain) {
   console.log(`v11 (amended) estimate — ${hours} h per bot, KEY timeline stretch ×${stretch}, letters-only XP`);
   for (const [id, v] of Object.entries(VERSIONS)) {
     console.log(`\n${id} ${v.name}\n   need(10)=${needOf(v, 10).toPrecision(3)} need(50)=${needOf(v, 50).toPrecision(3)} need(100)=${needOf(v, 100).toPrecision(3)} need(200)=${needOf(v, 200).toPrecision(3)} need(400)=${needOf(v, 400).toPrecision(3)}`);
-    for (const sk of Object.keys(SKILLS)) {
+    for (const sk of Object.keys(SKILLS).filter((k) => !SKILLS[k].masher)) {
       const r = run(v, sk, hours, { stretch });
       const bands = Object.entries(r.pctBands).map(([b, p]) => `${b}:${p.toPrecision(2)}`).join(' ');
       const c = r.climbs;
@@ -122,5 +129,22 @@ if (isMain) {
       console.log(`           min % of a level per word, by band (LV≤N): ${bands}`);
       console.log(`           LV1→15 per climb: first ${climb(0)} · after R1 ${climb(1)} · R3 ${climb(3)} · R6 ${climb(6)} · R10 ${climb(10)}`);
     }
+  }
+}
+
+// ---- round 2: the MENU MASHER vs the median player — level-ups per minute in loop-sim's windows ------
+export const MASHER_WINDOWS = [[0, 10], [50, 70], [270, 330], [1110, 1200]];
+export function masherRatio(v, menuShare, hours = 20) {
+  const m = run(v, 'masher', hours, { menuShare });
+  const p = run(v, 'median', hours, {});
+  return MASHER_WINDOWS.map(([a, b]) => {
+    const rate = (r) => ((r.upsAt[Math.min(b, r.upsAt.length - 1)] - r.upsAt[a]) / (b - a));
+    const pm = rate(p);
+    return { window: `${a}-${b}m`, masher: +rate(m).toFixed(2), median: +pm.toFixed(2), ratio: pm > 0 ? +(rate(m) / pm).toFixed(2) : null };
+  });
+}
+if (isMain && process.argv.includes('--masher')) {
+  for (const share of [1, 0.5, 0.25, 0.15]) {
+    console.log(`MASHER (12 letters/s, menu share ×${share}) vs median, level-ups/min:`, JSON.stringify(masherRatio(VERSIONS.V1, share)));
   }
 }

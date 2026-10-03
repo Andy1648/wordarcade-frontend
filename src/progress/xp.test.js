@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import {
   need,
   needV9,
+  MENU_LETTER_SHARE,
+  levelXpPerLetter,
   CURVE_V11_BASE,
   CURVE_BASE,
   CURVE_BREAK,
@@ -195,9 +197,10 @@ test('every level requirement is divisible by 10 (through the exact-integer rang
 });
 
 // THE HEADLINE NUMBER, pinned on its own so a retune has to come here first.
-test('need(1) is 120 — twelve letters at a fresh profile (BASE 10 XP / LETTER)', () => {
+test('need(1) is 120 — twelve game letters at a fresh profile (BASE 10 XP / LETTER; 24 menu keys at 5)', () => {
   assert.equal(need(1), 120);
-  assert.equal(Math.ceil(need(1) / xpPerInput({ keyTier: 0, rebirthCount: 0 })), 12);
+  assert.equal(Math.ceil(need(1) / levelXpPerLetter(0, 0)), 12);
+  assert.equal(Math.ceil(need(1) / xpPerInput({ keyTier: 0, rebirthCount: 0 })), 24);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -295,23 +298,20 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   assert.equal(r.toNext, needV9(7) - 100);
 });
 
-test('the LETTER XP stack (v11): BASE 10 × KEY ×1.2/tier × rebirth ×(1+R) × mark — no mode term', () => {
-  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0 }), 10);
-  assert.equal(xpPerInput({ keyTier: 1, rebirthCount: 0 }), 12); // +20%
-  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0 }), 14); // 14.4 → whole XP
-  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 29); // 28.8 (R1 ×2)
-  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0, markMult: 1.5 }), 15); // a LEGENDARY worn mark
-  // a game mode no longer multiplies a letter (words pay WINS; a letter is a letter)
+test('the MENU letter (v11 round 2): HALF a game letter — 5 × KEY ×1.2/tier × rebirth ×(1+R) × mark, no mode term', () => {
+  assert.equal(MENU_LETTER_SHARE, 0.5);
+  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0 }), 5);
+  assert.equal(xpPerInput({ keyTier: 1, rebirthCount: 0 }), 6); // +20%
+  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 14); // 14.4 (T2 ×1.44, R1 ×2, ×½)
+  assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0, markMult: 1.5 }), 8); // 7.5 — a LEGENDARY worn mark
+  assert.equal(levelXpPerLetter(0, 0), 10, 'a GAME letter is BASE 10');
+  // a game mode does not multiply a letter (words pay WINS; a letter is a letter)
   assert.equal(xpPerInput({ mode: 'sat-rush', keyTier: 2, rebirthCount: 1 }), xpPerInput({ keyTier: 2, rebirthCount: 1 }));
 });
 
-test('xpPerInput applies the MENU-only pop/sound multipliers (Stats MENU XP / LETTER must match the pop)', () => {
+test('cosmetics are LOOKS ONLY: pop / sound multipliers and the streak never touch XP (v11 round 2)', () => {
   const base = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0 });
-  const prism = xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.25 });
-  assert.equal(prism, Math.round(14.4 * 1.25));
-  assert.ok(prism > base);
-  assert.equal(xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 1.1, soundMult: 1.1 }), Math.round(14.4 * 1.1 * 1.1));
-  // the streak is not in letter XP (it multiplies WINS)
+  assert.equal(xpPerInput({ mode: 'menu', keyTier: 2, rebirthCount: 0, popMult: 3, soundMult: 2.3 }), base);
   assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0, streakMult: 1.25 }), base);
 });
 

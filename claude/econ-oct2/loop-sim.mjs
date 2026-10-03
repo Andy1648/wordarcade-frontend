@@ -55,7 +55,12 @@
 // LV10 / 50 / 100 / 200 (the first time the level is reached: minutes from reaching L to reaching L+1 in
 // the same climb). `v11.key` = KEY tier purchase times in the first hour (count, max gap) and the median
 // XP-per-letter step a KEY buy gave (×1.2 = "+20% XP / LETTER").
-// NOT MODELLED: menu typing XP, Category Blitz / SAT Rush / Word Race, returnBonus, theme worlds.
+// MENU MASHER (v11 round 2): a 4th bot that only types gibberish in the MENU at the shared letter cap
+// (letterXp.LETTER_RATE_CAP letters every second; 30 on a tree without letterXp.js), earns no wins (so no KEY),
+// rebirths at every gate and buys star perks like the others. Its cumulative level-ups are compared with the
+// MEDIAN bot's at 10 / 30 / 60 / 300 / 1200 min (`masher` in the JSON, a `v11 MASHER` line in the console):
+// PASS when it never beats the median by more than ×1.5. Menu letters use the shipped XP.xpPerInput.
+// NOT MODELLED: menu typing XP for the three players, Category Blitz / SAT Rush / Word Race, returnBonus, theme worlds.
 // -----------------------------------------------------------------------------------------------
 import fs from 'node:fs';
 import os from 'node:os';
@@ -728,7 +733,13 @@ function simulate(skill) {
   for (let i = 0, prev = 0; i < firstHour.length; i++) { maxGap = Math.max(maxGap, firstHour[i] - prev); prev = firstHour[i]; }
   const steps = [...keyXpSteps].sort((a, b) => a - b);
   const key = { firstHourBuys: firstHour.length, firstHourMaxGapMin: +maxGap.toFixed(2), firstHourTimes: firstHour.map((t) => +t.toFixed(1)), medianXpStep: steps.length ? +steps[Math.floor(steps.length / 2)].toFixed(3) : null };
-  const v11 = { pace, key, barPct: bands, deadBar, firstClimbTo10: first10, reclimb, reclimbFasterShare: reclimb.length > 1 ? +(reclimb.slice(1).filter((c) => c.vsFirst != null && c.vsFirst < 1).length / Math.max(1, reclimb.slice(1).filter((c) => c.vsFirst != null).length)).toFixed(3) : null };
+  const upsAt = {};
+  for (const T of MASHER_CHECKS) {
+    let u = 0;
+    for (const [tm, c] of levelTrail) { if (tm <= T) u = c; else break; }
+    upsAt[T] = u;
+  }
+  const v11 = { pace, key, upsAt, barPct: bands, deadBar, firstClimbTo10: first10, reclimb, reclimbFasterShare: reclimb.length > 1 ? +(reclimb.slice(1).filter((c) => c.vsFirst != null && c.vsFirst < 1).length / Math.max(1, reclimb.slice(1).filter((c) => c.vsFirst != null).length)).toFixed(3) : null };
 
   return {
     skill: skill.id, words, levelUps, perWindow, v11,
@@ -786,6 +797,39 @@ function formatCheck(results) {
   return rows;
 }
 
+// ----------------------------------------------------------------------------- MENU MASHER (v11 round 2)
+const MASHER_CHECKS = [10, 30, 60, 300, 1200];
+const MASHER_LIMIT = 1.5;
+function simulateMasher(hours) {
+  globalThis.localStorage = makeStore();
+  SIM_NOW = T0;
+  WINS.resetWinsLedger();
+  const cap = LX && Number.isFinite(LX.LETTER_RATE_CAP) ? LX.LETTER_RATE_CAP : 30;
+  const totalSec = Math.min(hours, 20) * 3600;
+  let ups = 0;
+  const upsAt = {};
+  let gain = null; // XP for one menu letter, re-read after every rebirth (the only thing that changes it)
+  const lvl = () => XP.loadProgress().level;
+  for (let sec = 0; sec < totalSec; sec++) {
+    const minute = sec / 60;
+    for (const T of MASHER_CHECKS) if (upsAt[T] == null && minute >= T) upsAt[T] = ups;
+    if (gain == null) gain = XP.xpPerInput({ mode: 'menu', markMult: LX ? LX.markXpBoost() : 1 });
+    const before = XP.loadProgress();
+    const res = XP.creditXp(before, cap * gain);
+    XP.saveProgress(res.state);
+    if (res.level > before.level) ups += res.level - before.level;
+    while (lvl() >= XP.rebirthThreshold(XP.getRebirths())) {
+      STARS.rebirthWithStars();
+      for (const id of ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
+        while (STARS.buyPerk(id, XP.getRebirths()).ok) { if (id === 'power') break; }
+      }
+      gain = null;
+    }
+    SIM_NOW += 1000;
+  }
+  return { cap, upsAt, rebirths: XP.getRebirths(), level: lvl(), menuLetterXp: gain };
+}
+
 // ----------------------------------------------------------------------------- RUN
 const want = typeof args.skills === 'string' ? args.skills.split(',') : SKILLS.map((s) => s.id);
 const results = [];
@@ -817,11 +861,23 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
     console.log('  final', JSON.stringify(r.final));
   }
 }
+let masher = null;
+const medianRes = results.find((r) => r.skill === 'median');
+if (medianRes && !args['no-masher']) {
+  const m = simulateMasher(HOURS);
+  const vs = MASHER_CHECKS.filter((T) => T <= HOURS * 60 && m.upsAt[T] != null).map((T) => {
+    const med = medianRes.v11.upsAt[T];
+    return { min: T, masher: m.upsAt[T], median: med, ratio: med > 0 ? +(m.upsAt[T] / med).toFixed(2) : null };
+  });
+  const worst = Math.max(...vs.map((v) => v.ratio ?? 0));
+  masher = { ...m, vs, worstRatio: worst, pass: worst <= MASHER_LIMIT };
+  if (!QUIET) console.log(`\n=== MASHER\n  v11 MASHER (${m.cap} letters/s menu gibberish, no wins) vs median, cumulative level-ups: ${vs.map((v) => `${v.min}m ×${v.ratio}`).join(' · ')} | worst ×${worst} ${masher.pass ? 'PASS' : 'FAIL'} (limit ×${MASHER_LIMIT}) | R${m.rebirths} LV${m.level}`);
+}
 const fmtRows = formatCheck(results);
 if (!QUIET) {
   console.log('\n=== FORMAT');
   for (const f of fmtRows) console.log(`  ${f.ok ? 'ok  ' : 'FAIL'} ${f.fn}(${f.label} = ${f.value}) -> "${f.out}"`);
 }
 const outFile = path.join(HERE, `loop-sim${TAG === 'base' ? '' : '-' + TAG}.json`);
-fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, format: fmtRows }, null, 1));
+fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, masher, format: fmtRows }, null, 1));
 if (!QUIET) console.log(`\nwrote ${outFile}`);

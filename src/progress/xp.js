@@ -448,16 +448,17 @@ export function priceRateBoost() {
 // levelUpWins() payout was removed with Economy v3.)
 
 // ---- MENU typing XP (v11: letters fill the bar) ----------------------------------------
-// xpPerInput = levelXpPerLetter(keyTier, rebirth, mark) · popMult · soundMult — one menu keystroke is one
-// letter. The two cosmetic multipliers (equipped pop style + sound pack, "+X% MENU XP") are passed IN by
-// the caller and stay MENU-only — xp.js stays free of the shop import (shop.js already imports xp.js).
-// Factors default to the live key-tier + rebirth counts (mark / cosmetic mults default to ×1). Whole XP.
-// (`mode` and `streakMult` are accepted for old callers and ignored: letter XP has no mode or streak term.)
+// One menu keystroke is one letter at HALF a game letter's price: MENU 5 XP / LETTER × KEY × rebirth × mark
+// (game letters: BASE 10). Review round 2: a masher typing gibberish at the letter cap (12/s, menu + games
+// share one limiter — letterXp.js) out-levelled a real median player ~2× in the first 10 minutes at the full
+// price; at half price the masher's first 10 minutes are ~1.1× a player's and it falls behind as soon as the
+// player's wins buy KEY tiers (claude/econ-oct2/v11-estimate.mjs --masher; loop-sim's masher bot on CI).
+// COSMETICS NEVER MULTIPLY LEVEL XP (round 2): pop styles / sound packs are looks only. `popMult`,
+// `soundMult`, `mode` and `streakMult` are accepted for old callers and ignored. Whole XP.
+export const MENU_LETTER_SHARE = 0.5; // a menu letter = half a game letter ("MENU 5 XP / LETTER")
 // eslint-disable-next-line no-unused-vars
 export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1, streakMult, markMult = 1 } = {}) {
-  const pm = Number.isFinite(popMult) && popMult > 0 ? popMult : 1;
-  const sm = Number.isFinite(soundMult) && soundMult > 0 ? soundMult : 1;
-  return Math.max(1, roundWordXp(levelXpPerLetter(keyTier, rebirthCount, markMult) * pm * sm));
+  return Math.max(1, roundWordXp(levelXpPerLetter(keyTier, rebirthCount, markMult) * MENU_LETTER_SHARE));
 }
 
 // Apply a credited award. Pure: takes and returns the {level, intoLevel} shape (Economy v5 — level
