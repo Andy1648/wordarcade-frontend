@@ -1454,7 +1454,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
         <li style={summaryStyle(1)}><b>{longestWord ? <CountUp to={longestWord.length} duration={500} /> : '—'}</b> LONGEST</li>
         <li style={summaryStyle(2)}><b>{fastestMs ? `${(fastestMs / 1000).toFixed(1)}s` : '—'}</b> FASTEST</li>
         <li style={summaryStyle(3)}><b>{formatDuration(durationMs)}</b> SURVIVED</li>
-        <li style={summaryStyle(4)}><b><CountUp to={bestCombo} duration={500} /></b> BEST STREAK</li>
+        <li style={summaryStyle(4)}><b><CountUp to={bestCombo} duration={500} /></b> BEST COMBO</li>
         <li style={summaryStyle(5)}><b><CountUp to={timeouts.length} duration={500} /></b> TIMEOUTS</li>
         <li style={summaryStyle(6)}><b><CountUp to={skips.length} duration={500} /></b> SKIPS</li>
       </ul>
@@ -2975,7 +2975,7 @@ export default function GameScreen({
   const categoryRaw = gameState.category || '';
   const usedItems = (isCategory ? gameState.usedAnswers : gameState.usedWords) || [];
 
-  const title = isCategory ? 'AI CATEGORY BLITZ' : 'WORD BOMB';
+  const title = isCategory ? 'CATEGORY BLITZ' : 'WORD BOMB';
   const promptLabel = isCategory
     ? 'NAME SOMETHING IN THIS CATEGORY'
     : 'TYPE A WORD CONTAINING';
@@ -3749,9 +3749,11 @@ export default function GameScreen({
                   </span>
                 </div>
                 <div className="wb-status-row">
-                  <span className="wb-status-k">STREAK</span>
+                  {/* C2: a COUNT, named like the ComboMeter beside it ("5 HITS") — "STREAK ×5" dressed it as a
+                      multiplier (H6/H12) and gave the one number a third name. */}
+                  <span className="wb-status-k">HITS</span>
                   <span className={`wb-status-v${streak.count >= 2 ? ' is-hot' : ''}`}>
-                    ×{streak.count}
+                    {streak.count}
                   </span>
                 </div>
                 <div className="wb-status-row">
@@ -4400,7 +4402,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           </div>
 
           <div className="solo-category">
-            {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'AI CATEGORY BLITZ · 3 ROUNDS'}
+            {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'CATEGORY BLITZ · 3 ROUNDS'}
           </div>
 
           {/* (Daily STREAK line removed — the daily-streak feature is gone; the day #
@@ -5011,7 +5013,7 @@ function CategoryBlitzScreen({
               same event told twice, further from the thing it is about. */}
           <div className="game-header">
             <div className="game-title">
-              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
+              <SprayReveal>CATEGORY BLITZ</SprayReveal>
             </div>
             <div className="game-header-right">
               <div className="game-meta">
@@ -5283,7 +5285,7 @@ function CategoryBlitzScreen({
         <div className="game-stage">
           <div className="game-header">
             <div className="game-title">
-              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
+              <SprayReveal>CATEGORY BLITZ</SprayReveal>
             </div>
             <div className="game-header-actions">
               {audioSlot}
