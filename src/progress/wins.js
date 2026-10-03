@@ -21,7 +21,7 @@ import {
 } from './xp.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
-import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS, MASTERY_MILESTONE_EVERY } from './mastery.js';
+import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
 import { boostMult } from './boost.js';
@@ -585,10 +585,11 @@ export function awardWordXp(opts = {}) {
   const res = creditXp(loadProgress(), gain);
   saveProgress(res.state);
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
-  // MASTERY MILESTONE (STEP 19): every 5th mastery level pays MASTERY_MILESTONE_WORDS × (level ÷ 5)
-  // words' worth of THIS mode's wins, through the labelled door so it is drawn wherever bonuses are.
+  // MASTERY MILESTONE (STEP 19): every 5th mastery level pays MASTERY_MILESTONE_WORDS words' worth of
+  // THIS mode's wins (flat since fine-tune loop 1 — the per-word rate already grows), through the
+  // labelled door so it is drawn wherever bonuses are.
   if (mastery && mastery.leveledUp && isMasteryMilestone(mastery.level)) {
-    const words = MASTERY_MILESTONE_WORDS * (mastery.level / MASTERY_MILESTONE_EVERY);
+    const words = MASTERY_MILESTONE_WORDS;
     const amount = Math.round(words * perWordWins({ ...opts, mode, word: undefined })); // the BASE word, not this one
     if (amount > 0) {
       grantWins(amount, `MASTERY — ${modeLabel(mode)} M${mastery.level}`, { detail: `mastery-${mode}-${mastery.level}`, mode });

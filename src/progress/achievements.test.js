@@ -9,8 +9,10 @@ import {
   achievementList,
   achievementCounts,
   loadEarned,
+  achievementPayout,
+  achievementWords,
 } from './achievements.js';
-import { getWins } from './wins.js';
+import { getWins, perWordWins } from './wins.js';
 import { rebirthMult } from './xp.js';
 
 function withStorage(seed, fn) {
@@ -44,9 +46,11 @@ test('checkAchievements grants matching achievements once (idempotent), R0', () 
     assert.ok(!ids.includes('vol-1k')); // 100 words is short of 1,000
     // Andy oct2: earning QUEUES a claim — the balance does not move until the player claims.
     assert.equal(getWins(), 0);
-    // R0 → ×1: claiming pays 100 + 500 = 600.
-    assert.equal(claimAll().wins, 600);
-    assert.equal(getWins(), 600);
+    // Loop 1: a reward is N WORDS at the live per-word rate (FIRST BLOOD + WARMING UP = 6 + 6 words).
+    const rate = perWordWins({ mode: 'wordBomb' });
+    const expect = Math.round(6 * rate) + Math.round(6 * rate);
+    assert.equal(claimAll().wins, expect);
+    assert.equal(getWins(), expect);
     // Second pass grants nothing new (idempotent).
     assert.equal(checkAchievements().length, 0);
     assert.ok(loadEarned().includes('vol-1'));
@@ -58,11 +62,17 @@ test('rebirth scaling: the same achievement pays more at higher rebirth', () => 
   withStorage({ 'wa_words': wc, 'taw.rebirths': '2', 'taw.wins': '0' }, () => {
     const newly = checkAchievements();
     const vol1 = newly.find((a) => a.id === 'vol-1');
-    // v9: the rebirth multiplier is ADDITIVE (1 + rc), so R2 is ×3 (v7/v8 paid 3^rc = ×9). Written
-    // through rebirthMult so the claim is "the same achievement pays more at higher rebirth".
-    assert.equal(vol1.wins, Math.round(100 * rebirthMult(2)));
-    assert.equal(vol1.wins, 300);
-    assert.ok(vol1.wins > 100, 'a rebirth pays more than R0');
+    // Loop 1: priced in words at the live rate — which carries the rebirth multiplier (R2 = ×3).
+    assert.equal(vol1.wins, Math.round(achievementWords(vol1) * perWordWins({ mode: 'wordBomb' })));
+    const r0 = withStorage({ 'taw.rebirths': '0' }, () => achievementPayout(vol1));
+    assert.ok(vol1.wins > r0, 'a rebirth pays more than R0');
+  });
+});
+
+test('loop 1: no achievement is ever worth more than ~25 words of play, at any level', () => {
+  withStorage({ 'taw.rebirths': '20', 'taw.xp': JSON.stringify({ lv: 850, into: 0 }) }, () => {
+    const rate = perWordWins({ mode: 'wordBomb' });
+    for (const a of ACHIEVEMENTS) assert.ok(achievementPayout(a) <= 25 * rate + 1, `${a.name} pays ${achievementPayout(a)} > 25 words (${rate}/word)`);
   });
 });
 
