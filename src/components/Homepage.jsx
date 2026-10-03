@@ -54,6 +54,8 @@ import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, hasR
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
+// T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
+const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -212,6 +214,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
+  // T: unlock tutorials wait for the menu to settle (arrival wipe, a wall moment) before they may show
+  const [tutReady, setTutReady] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setTutReady(true), 4500); return () => clearTimeout(t); }, []);
   const dismissMenuSpot = () => { markMenuSpotlightSeen(); setShowMenuSpot(false); };
   // "This browser has seen the menu" — recorded on MOUNT (not on any interaction), because the
   // only reader is the solo run-over offer, which exists to pitch the rest of the game to a
@@ -1271,6 +1276,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onStats={() => { setShowClaims(false); handleStats(); }}
           />
         </ScreenBoundary>
+      )}
+      {tutReady && !dialog && !showMarks && !showClaims && !showRanks && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
+        <Suspense fallback={null}>
+          <TutorialHost level={xpProgress.level} rebirths={rebirths} />
+        </Suspense>
       )}
       {claimReveal && <ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} />}
 

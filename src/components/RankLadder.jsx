@@ -47,7 +47,6 @@ export default function RankLadder({ level = 1, onClose }) {
             ✕
           </button>
         </div>
-        <p className="rank-caption">YOUR RANK CLIMBS WITH YOUR LEVEL</p>
         <ol className="rank-list">
           {RANKS.map((r, i) => {
             const earned = level >= r.min;

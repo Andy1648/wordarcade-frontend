@@ -39,8 +39,8 @@ test('§3 the shop always shows a next goal + progress bar', async ({ page }) =>
   const kp = page.locator('.shop-keypower').first();
   await expect(kp.locator('.shop-goal')).toBeVisible();
   await expect(kp.locator('.shop-progress')).toBeVisible();
-  await expect(kp.locator('.shop-goal')).toContainText('UNLOCKS AT');
-  await expect(kp.locator('.shop-goal')).toContainText('YOU HAVE 5');
+  // U: the goal says how far, not the price again (the button already shows it)
+  await expect(kp.locator('.shop-goal')).toContainText('NEED 5 MORE WINS');
   // The cheapest unowned cosmetic is flagged NEXT with its gap.
   await expect(page.locator('.shop-card-next').first()).toBeVisible();
   await expect(page.locator('.shop-card-gap').first()).toBeVisible();

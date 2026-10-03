@@ -221,9 +221,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             ✕
           </button>
         </div>
-        {/* Names the currency + says what it's for, so a newcomer reads the balance above as
-            spendable. Shop view only (rebirth isn't a wins purchase). */}
-        {view === 'shop' && <div className="shop-explainer">WINS BUY UPGRADES</div>}
 
         {view === 'shop' ? (
           <div className="shop-body">
@@ -249,7 +246,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
-                  {wins >= kpCost ? 'READY TO UNLOCK' : `UNLOCKS AT ${formatNum(kpCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                  {wins >= kpCost ? 'READY TO UNLOCK' : `NEED ${formatNum(kpCost - wins)} MORE WINS`}
                 </div>
                 <ProgressBar value={kpProgress} />
               </div>
@@ -282,7 +279,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <div className="shop-kp-next">
                     <b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}
                   </div>
-                  <div className="shop-kp-rate">FORGE LETTERS: EVERY FORGED LETTER IN A WORD PAYS MORE. NO CAP.</div>
+                  <div className="shop-kp-rate">+{Math.round(FORGE_PCT * 100)}% PER FORGED LETTER · NO CAP</div>
                 </div>
               </div>
             ) : (
@@ -295,10 +292,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   <b><span className="shop-coin" aria-hidden="true" /> {formatNum(fCost)} WINS</b>
                 </div>
                 <div className="shop-kp-rate">
-                  +{Math.round(FORGE_PCT * 100)}% PER LEVEL, PER LETTER IN THE WORD — LONGER WORDS FORGE MORE. NO CAP.
+                  +{Math.round(FORGE_PCT * 100)}% PER FORGED LETTER · NO CAP
                 </div>
                 <div className="shop-goal">
-                  {wins >= fCost ? 'READY TO FORGE' : `FORGE AT ${formatNum(fCost)} WINS — YOU HAVE ${formatNum(wins)}`}
+                  {wins >= fCost ? 'READY TO FORGE' : `NEED ${formatNum(fCost - wins)} MORE WINS`}
                 </div>
                 <ProgressBar value={fProgress} />
               </div>
