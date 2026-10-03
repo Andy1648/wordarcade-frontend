@@ -23,7 +23,8 @@ import { isModeLocked } from '../progress/modeAccess';
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import MenuFrame from './MenuFrame';
-import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
+import { menuTier, getSeenTier, setSeenTier, TIER_NAMES, MILESTONE_MAX_HOLD_MS } from '../progress/menuTier';
+import { flagOn } from '../lib/featureFlags';
 import { noteWallLevel, wallTierFor, getWallTier, WALL_FX_DONE_EVENT } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
@@ -620,8 +621,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   levelRef.current = xpProgress.level;
   const tierRef = useRef(tier);
   tierRef.current = tier;
-  const announceMenu = (kind, start) => {
-    const cancel = moments.announce({ ...momentOpts(kind), start: (done) => (aliveRef.current ? start(done) : done()) });
+  const announceMenu = (kind, start, over) => {
+    const cancel = moments.announce({ ...momentOpts(kind), ...over, start: (done) => (aliveRef.current ? start(done) : done()) });
     momentCancelsRef.current.add(cancel);
     return cancel;
   };
@@ -665,7 +666,26 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const seen = getSeenTier();
     if (tier > Math.max(0, seen)) {
       setFrameFresh(true);
-      announceMenu('tier-up', (done) => {
+      if (flagOn('milestones')) {
+        // MILESTONE MOMENTS: every milestone is also a tier start, and the tier-up shares the level-up
+        // card's element — played at once it would overwrite the bigger LEVEL N the same frame. So the
+        // tier-up waits out a milestone card still on screen (0 ms otherwise), and its safety release
+        // grows by the longest such card.
+        announceMenu('tier-up', (done) => {
+          const t = tierRef.current;
+          setSeenTier(t);
+          const fx = xpFxRef.current;
+          if (!fx || !fx.tierUp) { done(); return; }
+          const play = () => {
+            if (!aliveRef.current || !xpFxRef.current) { done(); return; }
+            xpFxRef.current.tierUp(TIER_NAMES[t]);
+            setTimeout(done, CARD_MS);
+          };
+          const wait = fx.milestoneBusyMs ? fx.milestoneBusyMs() : 0;
+          if (wait > 0) setTimeout(play, wait);
+          else play();
+        }, { maxMs: MENU_MOMENTS['tier-up'].maxMs + CARD_MS + MILESTONE_MAX_HOLD_MS });
+      } else announceMenu('tier-up', (done) => {
         const t = tierRef.current;
         setSeenTier(t);
         if (!xpFxRef.current || !xpFxRef.current.tierUp) { done(); return; }

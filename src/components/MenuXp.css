@@ -439,6 +439,12 @@
   paint-order: stroke fill;
   letter-spacing: 0.12em;
 }
+/* MILESTONE MOMENTS (dormant, ?milestones=1): LV 10/25/50/100 set data-milestone="S|M|L|XL" on the
+   card. The size's escalation is in the WAAPI slam + hold (MenuXp.jsx); the only static change is the
+   MILESTONE kicker reading cyan, so it never reads as one of the rotating phrases. */
+.menu-xp-levelup[data-milestone] .menu-xp-levelup-sub {
+  color: #2effe0;
+}
 /* "+N WINS" reward line under the LEVEL text — cyan (the accept/positive colour) so the
    payout reads distinct from the gold title. Hidden when the level-up granted nothing. */
 .menu-xp-levelup-wins {
