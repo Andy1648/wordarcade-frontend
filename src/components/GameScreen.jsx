@@ -22,10 +22,18 @@ import { WordPayout, RoundPayout } from './PayoutBreakdown';
 import LiveStack from './LiveStack';
 import WordLanding, { hasLanding } from './WordLanding';
 import {
-  burst, flash, hitStop, squash, ring, screenFlash, floater, validCue, JUICE,
+  burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE, punch,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
   shake as juiceShake, setShakeRoot, stampThud, scoreTick, fanfare, defeatTone, sparkle,
 } from '../juice';
+import { useCachedCenter } from '../juice/useCachedCenter';
+import { reduced as reducedMotion } from '../juice/settings';
+import { heatTier, ladderFor, particleCount, PUNCH_MS } from '../juice/ladder';
+import { pickEffect, tagLabel } from '../juice/effectSlot';
+import { TierSlam, LuckyBurst, SlotTags, useLatched } from './FeelLadder';
+import { LUCKY_WINS_MULT } from '../progress/luck';
+import { useQueuedMoment } from '../lib/useQueuedMoment';
+import { GAME_PRIORITY } from '../lib/moments';
 import { applyRingSize } from './wbRingSize';
 import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import TryModeRow from '../share/TryModeRow.jsx';
@@ -229,8 +237,11 @@ const END_GAME_BLURBS_LOSS = [
  * removes itself when the animation ends. pointer-events:none (in CSS) keeps
  * the input clickable underneath.
  */
-function HypePopup() {
+function HypePopup({ tier = 0 }) {
   const [done, setDone] = useState(false);
+  // The ladder's hype SIZE is fixed at mount (the tier this word landed in) so a later combo step
+  // never resizes a word that is already playing.
+  const [sizeTier] = useState(tier);
   const [look] = useState(() => ({
     word: HYPE_WORDS[Math.floor(Math.random() * HYPE_WORDS.length)],
     color: HYPE_COLORS[Math.floor(Math.random() * HYPE_COLORS.length)],
@@ -243,7 +254,7 @@ function HypePopup() {
 
   return (
     <div
-      className="hype-popup"
+      className={`hype-popup hype-t${sizeTier}`}
       style={{ color: look.color, '--hype-rot': `${look.rotation}deg` }}
       onAnimationEnd={() => setDone(true)}
       aria-hidden="true"
@@ -253,6 +264,33 @@ function HypePopup() {
   );
 }
 
+
+/**
+ * THE LIGHT SLOT for the word that just landed (juice/effectSlot.js): CLUTCH > LUCKY > RARE (the
+ * tier slam asks separately whether it is outranked). `landing` is App's per-word record of MY
+ * accepted word ({ key, word, band, wins, secret, lucky }); `lucky` is the ×N factor the payout
+ * actually applied (0 / absent = not lucky) — so the "LUCKY ×5" label can never claim more than
+ * bankWordWins credited. Returns { main, tags, labels, luckyMult }.
+ */
+function wordSlot(landing, clutch) {
+  const L = landing;
+  // RARE slot = RARE / OBSCURE / a secret. An UNCOMMON landing is the quiet rung: it stands in for
+  // the hype word (as it always has) but does not outrank a tier slam.
+  const rare = !!(L && (L.secret || L.band === 'RARE' || L.band === 'OBSCURE'));
+  const landingShown = !!(L && hasLanding(L.band, L.secret));
+  const raw = L ? L.lucky : 0;
+  const luckyMult = raw === true ? LUCKY_WINS_MULT : Number(raw) > 1 ? Number(raw) : 0;
+  const slot = pickEffect({ clutch: !!clutch, lucky: luckyMult > 0, rare });
+  const band = L ? (L.secret && L.secret.stamp) || L.band : '';
+  return {
+    ...slot,
+    luckyMult,
+    // the word's own landing chip: the RARE slot's effect, or the UNCOMMON stand-in for the hype
+    showLanding: landingShown && (slot.main === 'rare' || slot.main === 'hype'),
+    showHype: slot.main === 'hype' && !landingShown,
+    labels: slot.tags.map((k) => tagLabel(k, { luckyMult, band })),
+  };
+}
 
 /**
  * A throwaway "+1" that floats up and fades near the input on each accepted
@@ -472,11 +510,29 @@ const REVEAL_HOLD_MS = 450;
  * lands with <=2s left. Big pink Bungee with a unique slam-in animation; removes
  * itself on animation end. pointer-events:none.
  */
-function ClutchPopup() {
+function ClutchPopup({ onDone }) {
   const [done, setDone] = useState(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  // Releases the moments queue when the slam ends — or after 900ms regardless (an animation that
+  // never ends, e.g. under reduced motion, must not hold the queue until its backstop).
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDone(true);
+      if (onDoneRef.current) onDoneRef.current();
+    }, 900);
+    return () => clearTimeout(t);
+  }, []);
   if (done) return null;
   return (
-    <div className="clutch-popup" onAnimationEnd={() => setDone(true)} aria-hidden="true">
+    <div
+      className="clutch-popup"
+      onAnimationEnd={() => {
+        setDone(true);
+        if (onDoneRef.current) onDoneRef.current();
+      }}
+      aria-hidden="true"
+    >
       CLUTCH!
     </div>
   );
@@ -1476,7 +1532,11 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
   // optimisticWordRef (Word Bomb, JOB C Path B): the lowercased word painted
   // accepted OPTIMISTICALLY at submit; a later server accept for the same word is
   // a CONFIRM whose juice already fired, so we suppress the re-fire.
-  const { wordBomb = false, comboRef = null, optimisticWordRef = null } = opts;
+  // ladder: Category Blitz opts into the same escalation ladder as Word Bomb (punch/particles/ring
+  // by combo tier) without Word Bomb's optimistic path. punchRef = the reaction slot to PUNCH.
+  const {
+    wordBomb = false, ladder = false, comboRef = null, optimisticWordRef = null, getCenter = null, punchRef = null,
+  } = opts;
   const [hypeKey, setHypeKey] = useState(0);
   const [shake, setShake] = useState(false);
   const [inputShake, setInputShake] = useState(false);
@@ -1495,33 +1555,38 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
   const fireAccept = useCallback(() => {
     setHypeKey((k) => k + 1);
     setShake(true); // the existing scoped .game-shake stays (one screen shake)
-    const el = inputRef && inputRef.current;
-    const r = el && el.getBoundingClientRect();
-    if (wordBomb) {
-      const combo = (comboRef && comboRef.current) || 0;
-      if (r) {
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
-        burst(cx, cy, {
-          count: JUICE.VALID.particleBase + combo * JUICE.VALID.particlePerCombo,
+    // The input's centre comes from a cache measured on mount / resize (useCachedCenter) — this
+    // path makes ZERO layout reads. The input itself is never animated (DESIGN.md): the old
+    // squash + filter/box-shadow flash on it are gone; the burst + ring carry the hit.
+    const r = getCenter ? getCenter() : null;
+    if (wordBomb || ladder) {
+      // THE ESCALATION LADDER (juice/ladder.js): this word makes the combo count+1, so it gets
+      // that tier's particles (hard-capped at PARTICLE_CAP), ring and PUNCH. comboRef holds the
+      // pre-hit count on both paths (WB's optimistic submit; Blitz's effect runs before the
+      // re-render that carries the hit). NO per-word screen flash any more — the flash fires once
+      // per TIER-UP (FeelLadder TierSlam). Reduced motion: no particles, no ring, no punch.
+      const next = ((comboRef && comboRef.current) || 0) + 1;
+      const rung = ladderFor(next);
+      if (r && !reducedMotion()) {
+        burst(r.x, r.y, {
+          count: particleCount(next),
           speed: JUICE.VALID.particleSpeed,
           life: JUICE.VALID.particleLife,
           colors: JUICE.VALID.colors,
         });
-        ring(cx, cy, {
-          radius: JUICE.VALID.ringBase + combo * JUICE.VALID.ringPerCombo,
+        ring(r.x, r.y, {
+          radius: rung.ring,
           color: JUICE.VALID.ringColor,
           width: JUICE.VALID.ringWidth,
           life: JUICE.VALID.ringLife,
         });
-        squash(el);
-        flash(el, JUICE.VALID.inputFlash);
       }
-      screenFlash({ alpha: JUICE.VALID.flash, color: JUICE.VALID.flashColor });
+      // The PUNCH lands on the reaction slot — the accepted word's place — never the input.
+      if (punchRef && punchRef.current) punch(punchRef.current, rung.punch, PUNCH_MS);
     } else {
       // Category Blitz: EXACT existing behavior — light spark at the input + a confirm flash.
       if (r) {
-        burst(r.left + r.width / 2, r.top + r.height / 2, {
+        burst(r.x, r.y, {
           count: 10,
           speed: 200,
           life: 0.45,
@@ -1532,7 +1597,7 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
     }
     if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
     shakeTimerRef.current = setTimeout(() => setShake(false), 200);
-  }, [wordBomb, inputRef, promptRef, comboRef]);
+  }, [wordBomb, ladder, getCenter, promptRef, comboRef, punchRef]);
 
   // The REJECT feedback (input shake + WB red screen flash). This IS the visible rollback of an
   // optimistic accept when the server disagrees.
@@ -1705,6 +1770,9 @@ export default function GameScreen({
   // below (keyed on the live currentPlayerId), so it re-arms next time we're up.
   const [skipPending, setSkipPending] = useState(false);
   const inputRef = useRef(null);
+  // The input's centre, measured on mount / resize and cached — the accept + keystroke FX read
+  // this, never getBoundingClientRect (ANIMATION BUDGET: no layout reads on the accept path).
+  const inputCenter = useCachedCenter(inputRef);
   // Intro countdown plays once when the screen mounts; the input stays
   // disabled until it finishes. On the CrazyGames path (cgMode) it's SKIPPED so
   // the server's ~3s pre-timer grace becomes free combo-reading time — the real
@@ -1949,7 +2017,11 @@ export default function GameScreen({
   // before the category early-return so the hooks always run in the same order.
   // Word Bomb opts into the prototype-tuned values; Category Blitz (gameType !==
   // 'word-bomb') passes wordBomb=false and keeps its exact existing feel.
+  // The reaction slot (.wb-react): the PUNCH target, and the host of the tier slam.
+  const reactRef = useRef(null);
   const { hypeKey, shake, inputShake, fireAccept } = useHypeFeedback(lastWordResult, inputRef, comboBoxRef, {
+    getCenter: inputCenter,
+    punchRef: reactRef,
     wordBomb: gameType === 'word-bomb',
     comboRef,
     optimisticWordRef,
@@ -2053,18 +2125,22 @@ export default function GameScreen({
   // flyKey/flyText drive the word thrown toward the bomb on each submit;
   // shatterKey/shatterText drive the rejected word bouncing back and shattering;
   // bombReaction is the one-shot 'recoil' (accepted) / 'reject' class on the bomb;
-  // clutchFlag swaps the hype popup for CLUTCH! when the accept beat the buzzer.
+  // The clutch flag is still SET by the result effect (unchanged), but the hype/CLUTCH! choice now
+  // reads the latched light slot (wbSlot) and the queued clutch moment instead of this value.
   const [flyKey, setFlyKey] = useState(0);
   const [flyText, setFlyText] = useState('');
   const [shatterKey, setShatterKey] = useState(0);
   const [shatterText, setShatterText] = useState('');
   const [bombReaction, setBombReaction] = useState(null);
-  const [clutchFlag, setClutchFlag] = useState(false);
+  const [, setClutchFlag] = useState(false);
   // A buzzer-beater accept also fires a triumphant slow-mo beat + colour-pop
   // (clutchSlow drives both, auto-cleared after the ~700ms beat), and every
   // accepted word gives the prompt box a quick scale-punch (comboPunch re-keys
   // it so the pop replays).
   const [clutchSlow, setClutchSlow] = useState(false);
+  // The centre CLUTCH! slam, played through the moments queue (payload while it holds the queue).
+  const [clutchMoment, playClutchMoment, endClutchMoment] = useQueuedMoment();
+  const clutchMomentSeqRef = useRef(0);
   const clutchSlowTimerRef = useRef(null);
   const [comboPunch, setComboPunch] = useState(0);
   // INSTANT-ACK CHIP (Word Bomb's answer to Category Blitz's cb-checking): on
@@ -2120,6 +2196,18 @@ export default function GameScreen({
   // existing accept/reject + life-loss events; no scoring/server/WS involvement.
   const streak = useCombo();
   comboRef.current = streak.count; // keep the accept-time combo read fresh
+  // The light-slot decision for the word that just landed (clutch / lucky / rare). The landing is
+  // App's per-word record of MY accepted word; it arrives in the same render as its word_result.
+  // The decision is LATCHED per landing (useLatched) so a later state change (a reject clearing the
+  // clutch flag) can never mount a word's effect late. Clutch is read the same way the result effect
+  // reads it (the clock snapshot taken at OUR submit), because that effect runs after this render.
+  const wbLanding = lastLanding && !gameOver ? lastLanding : null;
+  const wbSlot = useLatched(wbLanding ? wbLanding.key : null, () =>
+    wordSlot(
+      wbLanding,
+      !!(lastWordResult && lastWordResult.accepted) && submitTimerRef.current > 0 && submitTimerRef.current <= 1
+    )
+  );
   const comboAwaitRef = useRef(false);
   // Near-miss / clutch callout (presentational): set from the EXISTING remaining
   // time captured at submit when our own accept lands late. { key, seconds, tier }.
@@ -2172,6 +2260,13 @@ export default function GameScreen({
           setClutchSlow(false);
           clutchSlowTimerRef.current = null;
         }, 700);
+        // The centre CLUTCH! slam is a HEAVY moment: it asks the ONE moments queue for its turn
+        // (lib/moments.js) so it never paints over a FRENZY/BOOST OVER moment. Stale after 1.5s.
+        clutchMomentSeqRef.current += 1;
+        playClutchMoment(
+          { key: clutchMomentSeqRef.current },
+          { id: `wb-clutch-${clutchMomentSeqRef.current}`, priority: GAME_PRIORITY.CLUTCH, maxMs: 1200, expireMs: 1500 }
+        );
       }
       // Near-miss callout: surface how close it was (our own late accepts only).
       if (mine) {
@@ -3205,6 +3300,9 @@ export default function GameScreen({
         }${isSpectating ? ' spectating' : ''}${critical ? ' heartbeat' : ''}${
           hitlag ? ' hitlag' : ''
         }${draining ? ' draining' : ''}${clutchSlow ? ' clutch-slowmo' : ''}`}
+        /* EDGE FRAME (escalation ladder): the board edge takes the combo tier's colour — a static
+           attribute toggle (FeelLadder.css), never animated, kept under reduced motion. */
+        data-heat={heatTier(streak.count)}
         style={
           railFitted
             ? { '--drain-sat': drainSat, '--wb-railh': `${railFitted.height}px` }
@@ -3239,7 +3337,7 @@ export default function GameScreen({
             added: a bare keyed child among the stage's conditional siblings re-mounted on nearly
             every render and re-rolled its random word ("AWESOME! spam while typing"). */}
         <div style={{ display: 'contents' }}>
-          {hypeKey > 0 && !hitlag && clutchFlag && <ClutchPopup key={hypeKey} />}
+          {clutchMoment && !hitlag && <ClutchPopup key={clutchMoment.key} onDone={endClutchMoment} />}
         </div>
         {/* ===== THE HEADER IS ITS OWN GRID ROW, above the prompt. =====
             It used to be `position:absolute; inset:0` over the prompt bar at >=900px
@@ -3726,25 +3824,34 @@ export default function GameScreen({
                 event told in two registers, so they share one anchored column rather than each
                 picking their own coordinates — which is how the hype ended up a 904x371 banner
                 across the title. Fixed geometry, one box to gate, pointer-events:none. */}
-            <div className="wb-react" aria-hidden="true">
+            <div className="wb-react" ref={reactRef} aria-hidden="true">
               {/* ONE reaction per word. The hype word and the landing say the same thing — "that
                   was good" — and the landing says it better, with the band and the payout on the
                   word itself. So the hype is the COMMON-word reaction and the landing takes over
                   from UNCOMMON up. Side by side they needed more room above the field than a
-                  1280x720 board has, and the hype ended up painted through the used-word strip. */}
-              {hypeKey > 0 && !hitlag && !clutchFlag && !gameOver
-                && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
-                && <HypePopup key={hypeKey} />}
-              {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+                  1280x720 board has, and the hype ended up painted through the used-word strip.
+                  THE LIGHT SLOT (juice/effectSlot.js): CLUTCH > LUCKY > RARE > TIER-UP > HYPE —
+                  the winner plays, every loser is said as a small tag under the word. */}
+              {hypeKey > 0 && !hitlag && !gameOver && wbSlot.showHype
+                && <HypePopup key={hypeKey} tier={heatTier(streak.count + 1)} />}
+              {wbLanding && wbSlot.main === 'lucky' && (
+                <LuckyBurst key={`lucky-${wbLanding.key}`} mult={wbSlot.luckyMult} />
+              )}
+              {wbLanding && wbSlot.showLanding && (
                 <WordLanding
-                  key={lastLanding.key}
-                  word={lastLanding.word}
-                  band={lastLanding.band}
-                  wins={lastLanding.wins}
-                  secret={lastLanding.secret}
+                  key={wbLanding.key}
+                  word={wbLanding.word}
+                  band={wbLanding.band}
+                  wins={wbLanding.wins}
+                  secret={wbLanding.secret}
                   reduced={goReduce}
                 />
               )}
+              {wbLanding && wbSlot.labels.length > 0 && (
+                <SlotTags key={`tags-${wbLanding.key}`} labels={wbSlot.labels} />
+              )}
+              {/* The tier slam: ONE pooled node, replayed on each 2/4/7/10 crossing. */}
+              <TierSlam count={streak.count} outranked={wbSlot.main !== 'hype'} />
             </div>
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
@@ -3793,11 +3900,11 @@ export default function GameScreen({
                   sound.keystroke();
                   // Optional floating-letter flourish (Word Bomb only, default
                   // OFF via JUICE.FLOATERS — noisy at speed). Purely cosmetic.
-                  if (JUICE.FLOATERS && gameType === 'word-bomb' && inputRef.current) {
-                    const r = inputRef.current.getBoundingClientRect();
+                  const r = JUICE.FLOATERS && gameType === 'word-bomb' ? inputCenter() : null; // cached: no layout read per key
+                  if (r) {
                     floater(
-                      r.left + r.width / 2,
-                      r.top + r.height / 2,
+                      r.x,
+                      r.y,
                       value[value.length - 1],
                       {
                         vy: JUICE.KEY.floaterRise,
@@ -4539,7 +4646,23 @@ function CategoryBlitzScreen({
   // Hype popup + screen shake on an accepted answer. (The rejected-answer
   // input-shake from this hook is intentionally unused in CB now - the per-letter
   // SubmitLetters 'reject' scatter IS the miss reaction, so there's only one.)
-  const { hypeKey, shake } = useHypeFeedback(lastWordResult);
+  // THE ESCALATION LADDER for Blitz (same as Word Bomb): the accept's particles/ring/punch scale
+  // with the personal combo tier. The input centre is cached (no layout read on accept); the
+  // reaction slot is the PUNCH target. cbComboRef holds the pre-hit count when the accept fires.
+  const cbInputCenter = useCachedCenter(inputRef);
+  const cbReactRef = useRef(null);
+  const cbComboRef = useRef(0);
+  cbComboRef.current = streak.count;
+  const { hypeKey, shake } = useHypeFeedback(lastWordResult, inputRef, null, {
+    ladder: true,
+    comboRef: cbComboRef,
+    getCenter: cbInputCenter,
+    punchRef: cbReactRef,
+  });
+  // The light slot for the answer that just landed (no clutch slot in Blitz: its near-miss stays
+  // the ClutchCallout by the field).
+  const cbLanding = lastLanding && !gameOver ? lastLanding : null;
+  const cbSlot = useLatched(cbLanding ? cbLanding.key : null, () => wordSlot(cbLanding, false));
 
   function submit() {
     const answer = draft.trim();
@@ -4868,7 +4991,7 @@ function CategoryBlitzScreen({
             }}
           />
         )}
-        <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`}>
+        <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`} data-heat={heatTier(streak.count)}>
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
               on every re-render amid the conditional siblings (see the Word Bomb
               note above). */}
@@ -4980,21 +5103,27 @@ function CategoryBlitzScreen({
                 relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
                 feature. */}
             {/* ONE REACTION SLOT — see the Word Bomb note. */}
-            <div className="wb-react" aria-hidden="true">
-              {/* ONE reaction per word — see the Word Bomb note. */}
-              {hypeKey > 0 && !gameOver
-                && !(lastLanding && hasLanding(lastLanding.band, lastLanding.secret))
-                && <HypePopup key={hypeKey} />}
-              {lastLanding && !gameOver && hasLanding(lastLanding.band, lastLanding.secret) && (
+            <div className="wb-react" ref={cbReactRef} aria-hidden="true">
+              {/* ONE reaction per word — see the Word Bomb note (and its LIGHT SLOT). */}
+              {hypeKey > 0 && !gameOver && cbSlot.showHype
+                && <HypePopup key={hypeKey} tier={heatTier(streak.count)} />}
+              {cbLanding && cbSlot.main === 'lucky' && (
+                <LuckyBurst key={`lucky-${cbLanding.key}`} mult={cbSlot.luckyMult} />
+              )}
+              {cbLanding && cbSlot.showLanding && (
                 <WordLanding
-                  key={lastLanding.key}
-                  word={lastLanding.word}
-                  band={lastLanding.band}
-                  wins={lastLanding.wins}
-                  secret={lastLanding.secret}
+                  key={cbLanding.key}
+                  word={cbLanding.word}
+                  band={cbLanding.band}
+                  wins={cbLanding.wins}
+                  secret={cbLanding.secret}
                   reduced={goReduce}
                 />
               )}
+              {cbLanding && cbSlot.labels.length > 0 && (
+                <SlotTags key={`tags-${cbLanding.key}`} labels={cbSlot.labels} />
+              )}
+              <TierSlam count={streak.count} outranked={cbSlot.main !== 'hype'} />
             </div>
             {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
             {clutchCall && (

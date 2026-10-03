@@ -36,11 +36,28 @@ const INK = '#111111';
 const PAPER = '#f0ead9';
 
 const el = (sel) => (typeof document !== 'undefined' ? document.querySelector(sel) : null);
+// Centres are MEASURED ONCE per node and cached (ANIMATION BUDGET: no layout read per event). The
+// cache is keyed by selector AND node identity (a remounted card is re-measured once) and is
+// dropped on resize / rotation, the only things that move the card.
+const centres = new Map(); // sel -> { node, x, y }
+let centresBound = false;
+function bindCentreReset() {
+  if (centresBound || typeof window === 'undefined') return;
+  centresBound = true;
+  const reset = () => centres.clear();
+  window.addEventListener('resize', reset, { passive: true });
+  window.addEventListener('orientationchange', reset, { passive: true });
+}
 function centerOf(sel, fallback) {
   const node = el(sel);
   if (!node) return fallback || { x: 0, y: 0 };
+  bindCentreReset();
+  const hit = centres.get(sel);
+  if (hit && hit.node === node) return hit;
   const r = node.getBoundingClientRect();
-  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  const c = { node, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  centres.set(sel, c);
+  return c;
 }
 
 // Call inside a real user gesture (Play click / first keydown) so later cues can

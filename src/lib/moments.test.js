@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMoments, GAP_MS, PRIORITY } from './moments.js';
+import { createMoments, GAP_MS, PRIORITY, GAME_PRIORITY } from './moments.js';
 
 // a fake clock: timers fire only when advanced
 function clock() {
@@ -147,4 +147,56 @@ test('subscribers see the queue change', () => {
   m.announce({ id: 'a', start: (d) => d() });
   assert.ok(seen.includes('a'));
   assert.equal(seen.at(-1), null);
+});
+
+// ---- feel ladder (PASS 2): in-game heavy moments share the queue ----
+
+test('gap between heavy moments is >= 250ms', () => {
+  assert.ok(GAP_MS >= 250);
+});
+
+test('in-game priority: FRENZY start > CLUTCH > TIMER OVER > BOOST start', () => {
+  assert.ok(GAME_PRIORITY.FRENZY_START > GAME_PRIORITY.CLUTCH);
+  assert.ok(GAME_PRIORITY.CLUTCH > GAME_PRIORITY.TIMER_OVER);
+  assert.ok(GAME_PRIORITY.TIMER_OVER > GAME_PRIORITY.BOOST_START);
+  const c = clock();
+  const m = createMoments(c);
+  const log = [];
+  let doneFirst;
+  m.announce({ id: 'over', priority: GAME_PRIORITY.TIMER_OVER, start: (d) => { log.push('over'); doneFirst = d; } });
+  m.announce({ id: 'boost', priority: GAME_PRIORITY.BOOST_START, start: () => log.push('boost') });
+  m.announce({ id: 'clutch', priority: GAME_PRIORITY.CLUTCH, start: () => log.push('clutch') });
+  m.announce({ id: 'frenzy', priority: GAME_PRIORITY.FRENZY_START, start: () => log.push('frenzy') });
+  doneFirst();
+  c.advance(GAP_MS);
+  assert.deepEqual(log, ['over', 'frenzy'], 'never two at once; the highest waiting goes next');
+});
+
+test('a moment that waited past expireMs is dropped, never played late', () => {
+  const c = clock();
+  const m = createMoments(c);
+  const log = [];
+  let doneA;
+  let expired = 0;
+  m.announce({ id: 'a', start: (d) => { log.push('a'); doneA = d; } });
+  m.announce({ id: 'stale', expireMs: 500, onExpire: () => { expired += 1; }, start: () => log.push('stale') });
+  m.announce({ id: 'fresh', start: () => log.push('fresh') });
+  c.advance(1300);
+  doneA();
+  c.advance(GAP_MS);
+  assert.deepEqual(log, ['a', 'fresh']);
+  assert.equal(expired, 1);
+});
+
+test('a moment within its expireMs still plays', () => {
+  const c = clock();
+  const m = createMoments(c);
+  const log = [];
+  let doneA;
+  m.announce({ id: 'a', start: (d) => { log.push('a'); doneA = d; } });
+  m.announce({ id: 'b', expireMs: 3000, start: () => log.push('b') });
+  c.advance(1000);
+  doneA();
+  c.advance(GAP_MS);
+  assert.deepEqual(log, ['a', 'b']);
 });

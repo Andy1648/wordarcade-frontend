@@ -15,9 +15,10 @@
 //     sfx('tap');
 //   }
 
-export { squash, flash, shake, hitStop, isHitStopped, setShakeRoot } from './motion';
+export { squash, flash, punch, shake, hitStop, isHitStopped, setShakeRoot } from './motion';
 export { burst, mark, clearMarks, ring, screenFlash, floater, setOverlay } from './particles';
-export { sfx, validCue, unlockAudio, stampThud, scoreTick, fanfare, defeatTone, sparkle } from './audio';
+export { sfx, validCue, unlockAudio, stampThud, scoreTick, fanfare, defeatTone, sparkle, tierStinger, levelChime } from './audio';
+export { heatTier, ladderFor, tierCrossed, particleCount, LADDER, PARTICLE_CAP } from './ladder';
 export { tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio } from './tension';
 export { JUICE } from './config';
 export {

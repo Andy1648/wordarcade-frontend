@@ -7,6 +7,7 @@
 
 import { soundAllowed } from './settings';
 import { JUICE } from './config';
+import { pitchRatio } from './ladder';
 
 let ctx = null;
 
@@ -203,15 +204,15 @@ export function sfx(name) {
 // base pitch climbs with the combo so longer streaks read as higher-stakes.
 // Pitch jittered a touch so repeats don't fatigue. Replaces the flat accept
 // ding for Word Bomb (single sound per accept; honors the global mute).
+// The climb follows the ESCALATION LADDER (ladder.js): +0 / +2 / +4 / +7 / +12 semitones by tier,
+// capped at one octave — it used to add 45Hz per combo step with no ceiling.
 export function validCue(combo = 0) {
   if (!soundAllowed()) return;
   const c = getCtx();
   if (!c) return;
   try {
     const now = c.currentTime;
-    const base =
-      (JUICE.VALID.cuePitchBase + combo * JUICE.VALID.cuePitchPerCombo) *
-      (0.98 + Math.random() * 0.04);
+    const base = JUICE.VALID.cuePitchBase * pitchRatio(combo) * (0.98 + Math.random() * 0.04);
     const o = c.createOscillator();
     const g = c.createGain();
     o.type = 'triangle';
@@ -308,6 +309,34 @@ export function sparkle() {
     const now = c.currentTime;
     tone(c, { freq: 1568, type: 'triangle', start: now, dur: 0.08, peak: JUICE.MIX.sparkle });
     tone(c, { freq: 2093, type: 'triangle', start: now + 0.08, dur: 0.1, peak: JUICE.MIX.sparkle });
+  } catch { /* never throw */ }
+}
+
+// TIER-UP stinger (ESCALATION LADDER): a 3-note triangle arpeggio, the whole figure +2 semitones
+// per tier so each step up the ladder sounds a notch hotter. Once per tier crossing, never per word.
+export function tierStinger(tier = 1) {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    const root = 523.25 * Math.pow(2, (2 * Math.max(0, tier - 1)) / 12); // C5, +2 st per tier
+    [1, 1.25, 1.5].forEach((r, i) => {
+      tone(c, { freq: root * r, type: 'triangle', start: now + i * 0.06, dur: 0.12, peak: JUICE.MIX.combo });
+    });
+  } catch { /* never throw */ }
+}
+
+// Mid-game LEVEL-UP chime: two bright rising notes under the accept — LIGHT, the full celebration
+// waits for the menu / receipt.
+export function levelChime() {
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    tone(c, { freq: 1046.5, type: 'triangle', start: now, dur: 0.1, peak: JUICE.MIX.sparkle });
+    tone(c, { freq: 1568, type: 'triangle', start: now + 0.08, dur: 0.16, peak: JUICE.MIX.sparkle });
   } catch { /* never throw */ }
 }
 

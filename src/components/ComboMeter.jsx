@@ -4,19 +4,20 @@
 // score, points or who's winning. Absolutely positioned + pointer-events:none so
 // it floats over the input area without blocking it or reflowing on every key.
 import { useState } from 'react';
+import { heatTier } from '../juice/ladder';
+import { LevelUpChip } from './FeelLadder';
 import './ComboMeter.css';
 
-// Streak length -> intensity tier. Below 2 there's no combo to show.
+// Streak length -> intensity tier. Below 2 there's no combo to show. The thresholds (2/4/7/10) ARE
+// the escalation ladder's (juice/ladder.js) — one table, so the meter and the feel always agree.
+const TIER_NAMES = [null, 'warm', 'hot', 'fire', 'max'];
 function tierOf(n) {
-  if (n >= 10) return 'max';
-  if (n >= 7) return 'fire';
-  if (n >= 4) return 'hot';
-  if (n >= 2) return 'warm';
-  return null;
+  return TIER_NAMES[heatTier(n)];
 }
 
-// The shatter shown when a streak breaks - self-removes after its drop animation.
-function ComboShatter({ count }) {
+// The shatter shown when a streak breaks - self-removes after its drop animation. Exported so the
+// solo modes (SoloShell) say a broken T2+ streak the same way.
+export function ComboShatter({ count }) {
   const [done, setDone] = useState(false);
   if (done) return null;
   return (
@@ -35,17 +36,22 @@ export default function ComboMeter({ count, brk }) {
   const tier = tierOf(count);
   return (
     <div className="combo-meter" aria-hidden="true">
+      {/* Mid-game LEVEL-UP: a small finite "LV n" punch beside the streak (renders nothing until a
+          game word crosses a level). It joins this cluster — never its own fixed UI. */}
+      <LevelUpChip />
       {tier && (
         // The tier class (on the persistent badge) owns the per-tier colour +
         // idle shake; the inner .combo-pop is re-keyed by `count` so the grow-pop
         // replays on every increment without restarting the idle shake.
         <div className={`combo-badge combo-${tier}`}>
+          {/* Sparks are a FINITE burst on tier ENTRY (3 iterations, then still) — never a loop at
+              rest (ANIMATION BUDGET). Keyed by tier so crossing fire -> max replays them. */}
           {(tier === 'fire' || tier === 'max') && (
-            <>
+            <span key={tier} className="combo-sparks">
               <span className="combo-spark s0" />
               <span className="combo-spark s1" />
               <span className="combo-spark s2" />
-            </>
+            </span>
           )}
           <div key={count} className="combo-pop">
             <span className="combo-flame">{count >= 7 ? '🔥' : '✦'}</span>
