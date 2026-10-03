@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { queueClaim, listClaims, claim, claimAll, pendingCount, subscribeClaims, claimPolicy, trimClaimInbox, CLAIMS_KEY, claimAmount, codeWordsPayout } from './claims.js';
-import { getWins, subscribeWins, perWordWins } from './wins.js';
+import { queueClaim, listClaims, claim, claimAll, pendingCount, subscribeClaims, claimPolicy, trimClaimInbox, CLAIMS_KEY } from './claims.js';
+import { getWins, subscribeWins } from './wins.js';
 import { checkRankClaims, RANK_CLAIM_KEY } from './achievements.js';
 
 function withStorage(seed, fn) {
@@ -84,17 +84,5 @@ test('E4: trimClaimInbox applies or drops the claims of a pre-trim save, keeping
     assert.deepEqual(trimClaimInbox(), { applied: 2, dropped: 1 });
     assert.equal(getWins(), 12, 'the code + the collection milestone paid; welcome back dropped');
     assert.deepEqual(listClaims().map((c) => c.id), ['ach-1', 'rank-X']);
-  });
-});
-
-test('K2: a per-level code pays its amount in WORDS at the live rate — not × level', () => {
-  withStorage({ 'taw.xp': JSON.stringify({ lv: 50, into: 0 }) }, () => {
-    const rate = perWordWins({ mode: 'wordBomb' });
-    assert.ok(rate > 0);
-    assert.equal(codeWordsPayout(30), Math.round(30 * rate));
-    assert.equal(claimAmount({ amount: 30, meta: { perLevel: true } }), Math.round(30 * rate));
-    assert.notEqual(claimAmount({ amount: 30, meta: { perLevel: true } }), 30 * 50);
-    assert.equal(claimAmount({ amount: 30 }), 30, 'a plain wins code is unchanged');
-    assert.equal(codeWordsPayout(-5), 0);
   });
 });

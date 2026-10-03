@@ -18,7 +18,7 @@
 //
 // PURE + guarded store, like every progress module: blocked storage → claims are granted on the
 // spot instead (never lost, never throws).
-import { grantWins, perWordWins } from './wins.js';
+import { grantWins } from './wins.js';
 import { startBoost } from './boost.js';
 
 export const CLAIMS_KEY = 'taw.claims';
@@ -157,19 +157,21 @@ export function queueClaim({ id, kind, label, amount = 0, detail, meta } = {}) {
   return claim;
 }
 
-// K2 (Andy oct2 ~22:15): a PER-LEVEL redeem code (DB column per_level) is priced in WORDS, like
-// achievements: its wins column is a NUMBER OF WORDS, paid at the player's live rate when redeemed — so a
-// code is always worth the same few minutes of play (R10's wins × level went invisible late in a run).
-// The claim meta keeps its old name, perLevel. Every display of a claim's value reads this too.
-export function codeWordsPayout(words) {
-  const w = Number.isFinite(words) && words > 0 ? words : 0;
-  return Math.round(w * perWordWins({ mode: 'wordBomb' }));
+// R10 (Andy oct2): a PER-LEVEL redeem code pays its wins × the player's level AT CLAIM TIME, so a code
+// scales with the player and never goes dead. Every display of a claim's value reads this too.
+function currentLevel() {
+  try {
+    const lv = Number(JSON.parse(localStorage.getItem('taw.xp') || '{}').lv);
+    return Number.isFinite(lv) && lv >= 1 ? Math.floor(lv) : 1;
+  } catch {
+    return 1;
+  }
 }
 /** What a claim pays if claimed now. */
 export function claimAmount(c) {
   if (!c) return 0;
   const base = Number.isFinite(c.amount) && c.amount > 0 ? c.amount : 0;
-  return c.meta && c.meta.perLevel ? codeWordsPayout(base) : base;
+  return c.meta && c.meta.perLevel ? base * currentLevel() : base;
 }
 
 /** Claim one: pays it (if it pays) through the labelled door and removes it. Returns it or null. */
