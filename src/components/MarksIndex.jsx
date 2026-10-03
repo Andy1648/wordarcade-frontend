@@ -6,12 +6,14 @@
 // Motion: one finite PUNCH on the hero when a new MAIN is set (transform/opacity only); static at rest;
 // reduced motion shows the same states with no movement.
 import { useEffect, useRef, useState } from 'react';
-import { MARKS, MARK_RANK_NAMES, MAX_MARK_RANK, markProgress, markBlurbAt, markMainMult, markTier } from '../progress/marks';
+import { MARKS, MARK_RANK_NAMES, MAX_MARK_RANK, markProgress, markMainMult, markTier } from '../progress/marks';
 import MarkBadge from './MarkBadge';
-import { formatNum } from '../format';
+import { formatNum, formatMultExact as formatMult } from '../format';
 import './MarksIndex.css';
 
 const pct = (m, rank) => Math.round((markMainMult(m, rank) - 1) * 100);
+// U (Andy oct2 22:25): a mark reads as ONE short tag — MAIN ×N — never a sentence explaining it
+const tag = (m, rank) => `MAIN ×${formatMult(markMainMult(m, rank))}`;
 // the true ceiling — the best mark at MAX rank (the old hard-coded +300% was rank I only)
 const MAX_PCT = Math.max(...MARKS.map((m) => pct(m, MAX_MARK_RANK)));
 
@@ -25,8 +27,7 @@ function Detail({ m, have, on, howTo, onSet }) {
       <div className="mx-detail-body">
         <div className="mx-detail-name">{m.name}</div>
         <div className="mx-detail-tier">{tier.name}{have ? ` · RANK ${MARK_RANK_NAMES[rank - 1]}` : ''}</div>
-        <div className="mx-detail-pct">AS MAIN: +{pct(m, rank)}% WINS · EVERY MODE</div>
-        <div className="mx-detail-blurb">PLUS ITS PERK: {markBlurbAt(m, rank)}</div>
+        <div className="mx-detail-pct">{tag(m, rank)}</div>
         {have ? (
           <button type="button" className={`mx-set${on ? ' is-on' : ''}`} onClick={() => onSet(on ? null : m.id)}>
             {on ? 'YOUR MAIN — TAKE OFF' : 'SET AS MAIN'}
@@ -94,12 +95,11 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 <div className="mx-hero-body">
                   <div className="mx-hero-kicker">YOUR MAIN · <span className="mx-nowrap">RANK {MARK_RANK_NAMES[mp.rank - 1]}</span></div>
                   <div className="mx-hero-name">{main.name}</div>
-                  <div className="mx-hero-pct">+{pct(main, mp.rank)}% <span>WINS · EVERY MODE</span></div>
-                  <div className="mx-hero-perk">PLUS ITS PERK: {markBlurbAt(main, mp.rank)}</div>
+                  <div className="mx-hero-pct">{tag(main, mp.rank)}</div>
                   {!mp.maxed ? (
                     <div className="mx-hero-rank">
                       <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, mp.frac))})` }} /></span>
-                      <span>TYPE {formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS WEARING IT → RANK {MARK_RANK_NAMES[mp.rank]}: +{pct(main, mp.rank + 1)}%</span>
+                      <span>{formatNum(Math.max(0, mp.need - mp.into))} WORDS → RANK {MARK_RANK_NAMES[mp.rank]} · ×{formatMult(markMainMult(main, mp.rank + 1))}</span>
                     </div>
                   ) : <div className="mx-hero-rank">MAX RANK</div>}
                 </div>
@@ -108,7 +108,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               <div className="mx-hero-body">
                 <div className="mx-hero-kicker">NO MAIN YET</div>
                 <div className="mx-hero-name">PICK ONE BELOW</div>
-                <div className="mx-hero-pct">UP TO +{MAX_PCT}% <span>WINS · EVERY MODE</span></div>
+                <div className="mx-hero-pct">UP TO ×{formatMult(1 + MAX_PCT / 100)}</div>
               </div>
             )}
           </section>
@@ -134,7 +134,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               >
                 <MarkBadge mark={m} rank={have ? p.rank : 1} locked={!have} size={60} className="mx-tile-art" />
                 <span className="mx-tile-name">{m.name}</span>
-                <span className="mx-tile-sub">{have ? `+${pct(m, p.rank)}%` : `GET: ${achievementNames[m.from] || m.from}`}</span>
+                <span className="mx-tile-sub">{have ? tag(m, p.rank) : `GET: ${achievementNames[m.from] || m.from}`}</span>
                 {on && <span className="mx-tile-main">MAIN</span>}
               </button>
             );

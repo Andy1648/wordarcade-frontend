@@ -101,10 +101,11 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   await expect(hero.locator('svg.mark-badge')).toBeVisible();
   await expect(hero.locator('.mx-hero-name')).toHaveText('BOMBER');
   await expect(hero.locator('.mx-hero-kicker')).toHaveText('YOUR MAIN · RANK II');
-  // STEP 49: the MAIN bonus (COMMON: +100% at rank I, ×1.15 / ×1.3 at II / III) leads; the perk follows.
-  await expect(hero.locator('.mx-hero-pct')).toContainText('+115%');
-  await expect(hero.locator('.mx-hero-perk')).toHaveText('PLUS ITS PERK: +29% wins in WORD BOMB.');
-  await expect(hero.locator('.mx-hero-rank')).toContainText('TYPE 180 MORE WORDS WEARING IT → RANK III: +130%');
+  // U (Andy oct2 22:25): ONE short tag — MAIN ×N (COMMON ×2 at rank I; the bonus part ×1.15 at II → ×2.15) —
+  // and no sentence explaining it (the "PLUS ITS PERK" / "WEARING IT" lines are gone)
+  await expect(hero.locator('.mx-hero-pct')).toHaveText('MAIN ×2.15');
+  await expect(hero.locator('.mx-hero-perk')).toHaveCount(0);
+  await expect(hero.locator('.mx-hero-rank')).toContainText('180 WORDS → RANK III · ×2.3');
   // no emoji left in the index
   const text = await page.locator('.mx-panel').innerText();
   expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);

@@ -71,16 +71,6 @@
   letter-spacing: 0.06em;
   opacity: 0.82;
 }
-/* Slim explainer caption under the header: names the currency + its purpose. */
-.shop-explainer {
-  padding: 8px 18px 0;
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: var(--fs-label);
-  letter-spacing: 0.14em;
-  color: #2effe0;
-}
 .shop-close {
   width: 44px;
   height: 44px;
