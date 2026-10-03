@@ -49,10 +49,30 @@
 .solo-hud .lstack-row.lstack-row--frenzy .lstack-val { font-size: var(--fs-body); }
 .solo-hud .boost-pill { padding: 2px 10px; }
 
+
+/* the DOCKED rate stack (Word Bomb / Blitz, beside the board) is a narrow column: there the pills fill
+   its width at body size and may wrap their clock, never overflow off the board (loop 7: at 1366x625
+   the panel-size BOOST pill ran past the board's right edge) */
+.lstack .lstack-row--boost,
+.lstack .lstack-row.lstack-row--frenzy { align-self: stretch; max-width: 100%; }
+.lstack .boost-pill { display: flex; flex-wrap: wrap; justify-content: space-between; width: 100%; box-sizing: border-box; padding: 3px 8px; }
+.lstack .boost-pill-name,
+.lstack .lstack-row.lstack-row--frenzy .lstack-label,
+.lstack .lstack-row.lstack-row--frenzy .lstack-val { font-size: var(--fs-body); }
+
 /* FUSE's live plaque grows only where the 26-letter strip keeps its full height */
 @media (min-width: 701px) and (min-height: 760px) {
   .solo-frenzy-goal.is-live { font-size: var(--fs-panel); padding: 6px 16px; }
 }
+
+/* …and in the solo HUD's horizontal chip the pills stay inline (overrides the docked-column rules above) */
+.solo-hud .lstack .boost-pill { display: inline-flex; width: auto; }
+.solo-hud .lstack .lstack-row--boost,
+.solo-hud .lstack .lstack-row.lstack-row--frenzy { align-self: center; }
+
+/* with a live pill in the solo HUD chip, the standing "LONGER WORDS PAY MORE" label steps out (the card,
+   dialog and goal line still say it) so the chip never runs under the prompt panel at 1280x551 */
+.solo-hud .lstack-rows:has(.lstack-row--boost, .lstack-row--frenzy) .lstack-row--base { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .boost-pill,
