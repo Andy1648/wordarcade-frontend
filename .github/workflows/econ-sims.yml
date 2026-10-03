@@ -1,0 +1,90 @@
+# ECON SIMS on CI (Andy oct3 11:46, throughput rule 1): the economy sims are too heavy for the laptop, so they
+# run here. Two jobs:
+#   rule-p   — RULE P (Andy oct2 22:25): claude/econ-oct2/compare.sh runs loop-sim (3 skills × every window,
+#              20 h) on main and on this branch for N seeds and compares the MEAN of every window metric.
+#              It REPORTS the verdict (MERGE / HOLD) in the job summary + artifact; it does not fail the
+#              check, because a HOLD is a decision for Andy, not a broken build.
+#   long-run — one long loop-sim run of this branch (default 200 h) for reach times (LV50/100/225/300/400).
+# Triggers: on a PR that touches the economy (src/progress, claude/econ-oct2) and by hand (workflow_dispatch,
+# with hours / seeds inputs). Reports land as the `econ-sims` artifact and in the run's summary.
+name: Econ sims
+
+on:
+  pull_request:
+    paths:
+      - 'src/progress/**'
+      - 'claude/econ-oct2/**'
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: 'Hours for the long run'
+        default: '200'
+      seeds:
+        description: 'Seeds for the rule-P compare'
+        default: '5'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rule-p:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Rule P compare (main → this branch)
+        run: |
+          bash claude/econ-oct2/compare.sh "$PWD/base/src" "$PWD/src" ci "${{ github.event.inputs.seeds || '5' }}" | tee rule-p.txt
+          {
+            echo '## Rule P (main → this branch, mean of seeds)'
+            echo '```'
+            grep -E 'WORSE|VERDICT' rule-p.txt || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: econ-sims-rule-p
+          path: |
+            rule-p.txt
+            claude/econ-oct2/loop-sim-ci-*.json
+          retention-days: 14
+
+  long-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Long run (3 skills)
+        run: |
+          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '200' }}" | tee long-run.txt
+          {
+            echo '## Long run — first reach of each level (minutes)'
+            echo '```'
+            grep -E '^=== |reach \(min\)' long-run.txt || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: econ-sims-long-run
+          path: |
+            long-run.txt
+            claude/econ-oct2/loop-sim-ci-long.json
+          retention-days: 14
