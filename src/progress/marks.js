@@ -81,7 +81,9 @@ export const MARKS = [
   },
   {
     id: 'mk-linguist',
-    tier: 'rare',
+    // MARK ROLLS (Andy oct3, decision 4): LINGUIST is a PERMANENT mark (sec-dict) and permanents pay MAIN ×4
+    // — the LEGENDARY bonus. Was RARE ×2.5. Its flavour perk is unchanged.
+    tier: 'legendary',
     name: 'LINGUIST',
     icon: '📖',
     from: 'sec-dict',
@@ -130,7 +132,8 @@ export const MARKS = [
     icon: '🎖', from: 'lv-50', blurb: '+20% wins & XP in every mode.', effect: { xpMult: 1.2 } },
   { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins & XP in every mode.', effect: { winsMult: 1.2 } },
   { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins & XP in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
-  { id: 'mk-curator', tier: 'epic', name: 'ARCHIVIST', // H6/M8: not CURATOR — that is the achievement that unlocks it
+  // PERMANENT (dist-2500) → MAIN ×4, the LEGENDARY bonus (Andy oct3, decision 4). Was EPIC ×3.
+  { id: 'mk-curator', tier: 'legendary', name: 'ARCHIVIST', // H6/M8: not CURATOR — that is the achievement that unlocks it
     icon: '🗂', from: 'dist-2500', blurb: '15% chance a word counts one RARITY TIER higher.', effect: { rarityStep: 0.15 } },
   { id: 'mk-pyro', tier: 'epic', name: 'PYRO', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins & XP in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
   { id: 'mk-nova', tier: 'epic', name: 'NOVA', icon: '✴', from: 'reb-5', blurb: '+25% wins & XP in every mode.', effect: { winsMult: 1.25 } },

@@ -1,6 +1,7 @@
 // Homepage.jsx
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
+import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES, FEATURED_GAME } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
@@ -27,8 +28,13 @@ import { noteWallLevel, wallTierFor, getWallTier } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
 // E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
-const MarksIndex = lazyWithReload(() => import('./MarksIndex'), 'MarksIndex');
-import { markById, unlockedMarks, getEquippedMark, equipMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed } from '../progress/marks';
+// MARK ROLLS ship dormant behind rollsFlag (rule P held them, PR #156): the legacy panel until Andy turns rolls on.
+const ROLLS = rollsEnabled();
+const MarksIndex = ROLLS
+  ? lazyWithReload(() => import('./MarksIndex'), 'MarksIndex')
+  : lazyWithReload(() => import('./MarksIndexLegacy'), 'MarksIndexLegacy');
+import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark } from '../progress/marks';
+import { wornMarkId, markEntry } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -43,8 +49,8 @@ import ClaimPopup from '../claims/ClaimPopup.jsx';
 import ClaimReveal from '../claims/ClaimReveal.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
-import { formatNum } from '../format';
-import TrophyIcon from './TrophyIcon';
+import PodiumIcon from './PodiumIcon';
+import { moments, PRIORITY } from '../lib/moments';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
@@ -212,13 +218,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const claims = useClaims();
   const [showClaims, setShowClaims] = useState(false);
   const [claimReveal, setClaimReveal] = useState(null); // the NEW SYSTEM / NEW MARK reveal sticker
-  const [equippedMark, setEquippedMark] = useState(() => getEquippedMark());
+  // MARK ROLLS: the worn MAIN may be a ROLLED id (marks.js getEquippedMark only knows the legacy ones)
+  const [equippedMark, setEquippedMark] = useState(() => wornMarkId());
   const earnedAch = loadEarned();
   const markUnlocked = unlockedMarks(earnedAch);
   const [marksNew, setMarksNew] = useState(() => hasUnseenMarks(markUnlocked.map((m) => m.id)));
   // E4: a new mark is owned the moment it unlocks (no inbox), so re-check on every claims event —
   // the MARKS button then says NEW MARK without waiting for the next menu mount.
   const markIdsKey = markUnlocked.map((m) => m.id).join(',');
+  // a STABLE list for MARKS (keyed on its content, not a fresh array per render — the roll review's
+  // must-fix 1: a new array every render made the index re-read storage mid-reveal)
+  const markIdList = useMemo(() => (markIdsKey ? markIdsKey.split(',') : []), [markIdsKey]);
   useEffect(() => {
     if (hasUnseenMarks(markIdsKey ? markIdsKey.split(',') : [])) setMarksNew(true);
   }, [markIdsKey, claims]);
@@ -850,6 +860,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // N3: the board icon wears your last known rank (#N) — re-read whenever rank news changes
   const boardRank = LEADERBOARD_ENABLED ? getLastRank() : null;
   const [rankUp, setRankUp] = useState(null);
+  // Andy oct3 11:42 (podium): the icon shows the OLD rank until the rank-up card's "#to" pops, then bounces
+  // and ticks down to the new one. boardHold = the rank to show meanwhile; boardBump = the one-shot trigger.
+  const [boardHold, setBoardHold] = useState(null);
+  const [boardBump, setBoardBump] = useState(null);
+  const rankDoneRef = useRef(null);
+  const rankCancelRef = useRef(null);
+  const boardShown = boardHold != null ? boardHold : boardRank;
+  // ONE finite glint on the podium once the menu has settled (after the arrival wipe) — never a loop
+  // (MENU MOTION LAW). A rank-up bump replaces it: that is the icon's moment on such a visit.
+  const [boardGlint, setBoardGlint] = useState(false);
+  useEffect(() => {
+    if (!LEADERBOARD_ENABLED) return undefined;
+    const t = setTimeout(() => setBoardGlint(true), Math.max(0, 2200 - (Date.now() - mountedAtRef.current)));
+    return () => clearTimeout(t);
+  }, []);
+  // ONE value for both menu trees: no glint once a rank-up is pending (the bump is the icon's moment then)
+  const boardGlintOn = boardGlint && boardHold == null && !rankUp && !boardBump;
   // 012_admin_reset: the one-shot "reset by the dev" line, left by obeyDevReset before its reload
   const [devReset, setDevReset] = useState(() => LEADERBOARD_ENABLED && hasDevResetNotice());
   useEffect(() => { if (devReset) clearDevResetNotice(); }, [devReset]);
@@ -898,14 +925,41 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       .then(() => checkRankUp(epoch))
       .then((r) => {
         if (live && r) {
-          setRankUp(r);
           setBoardNews(true);
+          setBoardHold(r.from);
+          // the rank-up goes through the ONE moments queue, so it never plays over another heavy moment
+          rankCancelRef.current = moments.announce({
+            id: 'rank-up',
+            priority: PRIORITY.REWARD,
+            // the card's own clock (3.8 s) starts only once its lazy chunk mounts: leave room for the fetch
+            maxMs: 6000,
+            start: (done) => {
+              rankDoneRef.current = done;
+              setRankUp(r);
+              // never strand the OLD rank on the icon if the card's chunk never arrives
+              setTimeout(() => { if (live) setBoardHold(null); }, 6000);
+            },
+          });
           if (r.to <= 10) announceTick('rank', r.to); // STEP 51 ticker: "NAME took #3"
         }
       })
       .catch(() => {});
-    return () => { live = false; };
+    return () => {
+      live = false;
+      if (rankCancelRef.current) rankCancelRef.current();
+    };
   }, []);
+  const rankPop = () => {
+    if (rankUp) setBoardBump({ from: rankUp.from, to: rankUp.to, key: Date.now() });
+    setBoardHold(null);
+  };
+  const rankDone = () => {
+    setRankUp(null);
+    setBoardHold(null);
+    const d = rankDoneRef.current;
+    rankDoneRef.current = null;
+    if (d) d();
+  };
 
   function handleShop() {
     if (navigating) return;
@@ -961,7 +1015,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
-        {rankUp && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onDone={() => setRankUp(null)} /></Suspense>}
+        {rankUp && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
@@ -993,6 +1047,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
             boardDot={boardNews}
             boardRank={boardRank}
+            boardShown={boardShown}
+            boardGlint={boardGlintOn}
+            boardBump={boardBump}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
             onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
@@ -1030,8 +1087,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardNews ? ' — your rank went up' : ''}`}
               title="Leaderboard"
             >
-              <TrophyIcon size={40} />
-              {boardRank && <span className="homepage-board-rank" aria-hidden="true">#{formatNum(boardRank)}</span>}
+              {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
+              <PodiumIcon rank={boardShown} glint={boardGlintOn} bump={boardBump} />
               {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
             </button>
           </div>
@@ -1159,7 +1216,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                brand-new account is a question with no answer yet. */
             /* Andy oct2 A3: once MARKS is revealed (LV10 / R1) the slot is always there. */
             markSlot={markUnlocked.length > 0 || marksRevealed()}
-            mark={markById(equippedMark)}
+            mark={markEntry(equippedMark)}
             markNew={marksNew}
             onMarkClick={() => {
               markMarksSeen(markUnlocked.map((m) => m.id));
@@ -1314,10 +1371,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>
             <MarksIndex
-              unlockedIds={markUnlocked.map((m) => m.id)}
+              unlockedIds={markIdList}
               equippedId={equippedMark}
               achievementNames={ACH_NAME}
-              onEquip={(id) => setEquippedMark(equipMark(id, earnedAch))}
+              level={xpProgress.level}
+              earned={earnedAch}
+              onEquip={(id) => setEquippedMark(ROLLS ? id : equipMark(id, earnedAch))}
               onClose={() => setShowMarks(false)}
             />
           </Suspense>

@@ -4953,6 +4953,13 @@ html[data-beat='true'] .cb-answer-chip {
     min-width: 0;
   }
 }
+/* The rail is a fixed --wb-receipt-w column docked right: content wider than it spilled LEFT onto SKIP
+   (word-landing @1024px — the CI fallback font runs wider than a dev box). Its contents never exceed it. */
+.game-stage--wb .wb-receipt-rail > * {
+  max-width: var(--wb-receipt-w);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .wb-receipt {
   pointer-events: none;
   will-change: transform, opacity;

@@ -49,6 +49,27 @@
   text-shadow: 3px 3px 0 #000;
 }
 
+/* oct3 podium: the menu's leaderboard glyph leads the title, wearing your rank on this board */
+.lb-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.lb-head-podium.pi {
+  width: 56px;
+  height: 56px;
+}
+.lb-overlay .lb-head-podium.pi {
+  width: max(52px, calc(64 * var(--lb-u)));
+  height: max(52px, calc(64 * var(--lb-u)));
+}
+/* a 360-420px phone: LEADERBOARD + the close button already fill the row — the podium steps down to 44px */
+@media (max-width: 420px) {
+  .lb-overlay .lb-head-podium.pi { width: 44px; height: 44px; }
+  .lb-title-wrap { gap: 8px; }
+}
+
 .lb-close {
   width: 44px;
   height: 44px;

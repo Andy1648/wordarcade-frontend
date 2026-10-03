@@ -1,0 +1,287 @@
+/* MarkRolls.css — MARK ROLLS (Andy M + H3; oct3 review hybrid). Flat house style: coloured outlines, hard black
+   shadows, 8px radius. Every moving node here is moved by RollReveal.jsx (WAAPI, transform/opacity, finite).
+   This file only sets the REST state — also the reduced-motion state — so nothing here animates or loops,
+   and there is no will-change (JS turns it on for the length of a reveal and off at the end). */
+
+/* ---- the ROLL panel ----------------------------------------------------------------------------- */
+.mr-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #12071f;
+  border: 3px solid #5c0fa3;
+  border-radius: 8px;
+  min-width: 0;
+}
+.mr-roll {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 8px 64px;
+  color: #000;
+  background: #FFE94A;
+  border: 3px solid #a8800f;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 90ms ease-out;
+}
+.mr-roll:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
+.mr-roll.is-free { background: #2EFFE0; border-color: #0F8F7E; }
+/* short of wins: still pressable — a press says how much more and buzzes (RollPanel) */
+.mr-roll.is-short { color: #c9b8e8; background: #2a1648; border-color: #3a2160; }
+/* ONE unit, never wraps (a wrapped price used to start its second line with "·") */
+.mr-roll-main {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  white-space: nowrap;
+}
+.mr-roll-hint {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(4deg);
+  padding: 1px 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #FFE94A;
+  background: #000;
+  border-radius: 6px;
+}
+/* the short-balance line: a fixed one-line slot BELOW the button, so it never moves the button */
+.mr-msg {
+  min-height: 1.3em;
+  margin-top: -4px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1.3;
+  color: #FF6B3D;
+  text-align: center;
+}
+.mr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  color: #c9b8e8;
+}
+.mr-luck { color: #2EFFE0; }
+.mr-bonus { color: #000; background: #2EFFE0; border: 2px solid #0F8F7E; border-radius: 6px; padding: 0 6px; }
+
+/* ---- the stage: a FIXED height, so nothing under it (the ROLL button) ever moves ----------------- */
+.mr-stage {
+  --mr-tier: #2EFFE0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 128px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0d0618;
+}
+.mr-flash {
+  position: absolute;
+  inset: 0;
+  background: var(--mr-tier);
+  opacity: 0;
+  pointer-events: none;
+}
+.mr-back {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform-origin: center;
+  pointer-events: none;
+}
+.mr-stage.is-empty .mr-back { opacity: 1; }
+.mr-card-slot { position: relative; width: 100%; height: 100%; display: grid; place-items: center; padding: 8px; transform-origin: center; }
+
+/* ---- the result card (rule U: name, rarity, 1 IN X, ONE tag) ------------------------------------- */
+.mr-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 440px);
+  max-height: 100%;
+  padding: 8px 12px;
+  color: #fff;
+  background: #1a0b2e;
+  border: 4px solid var(--mr-tier);
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  font-family: 'Space Mono', monospace;
+}
+.mr-card-art { flex: none; }
+.mr-card-body { display: grid; gap: 2px; min-width: 0; }
+.mr-card-name {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mr-card-tier { font-weight: 700; font-size: var(--fs-body); letter-spacing: 0.04em; color: var(--mr-tier); white-space: nowrap; }
+.mr-card-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.mr-card-tag { font-weight: 700; font-size: var(--fs-body); color: #FFE94A; white-space: nowrap; }
+.mr-chip {
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #fff;
+  background: #2a1648;
+  border: 2px solid #3a2160;
+  border-radius: 6px;
+}
+.mr-chip.is-new { color: #000; background: #FF4FA3; border-color: #A3175E; }
+.mr-chip.is-gold { color: #000; background: #FFD54A; border-color: #A8800F; }
+/* RAINBOW: four flat palette edges + the house's black hard shadow (no gradient, no coloured shadow) */
+.mr-chip.is-rainbow,
+.mx-tile-finish.is-rainbow {
+  color: #000;
+  background: #fff;
+  border-style: solid;
+  border-width: 3px;
+  border-color: #FF4FA3 #2EFFE0 #FFE94A #9A1AFF;
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* ---- the cutscene layer (EPIC / LEGENDARY), inside the MARKS overlay ------------------------------
+   Two "pages" share one grid cell: the LADDER (tier bars + the final tier, huge) and the SHOW (the mark's
+   art + name, then "1 IN X"). Everything is sized off --fs-hero. */
+.mr-cover {
+  --mr-tier: #FF4FA3;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.mr-cover-plate { position: absolute; inset: 0; background: #0d0618; }
+.mr-cover-page { grid-area: 1 / 1; position: relative; display: grid; justify-items: center; gap: 12px; width: min(100%, 560px); }
+.mr-cover-ladder { align-self: center; }
+.mr-bar {
+  --mr-bar: #2EFFE0;
+  width: min(100%, 420px);
+  padding: 8px 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.12em;
+  color: #000;
+  background: var(--mr-bar);
+  border: 3px solid rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  transform-origin: left center;
+  opacity: 0;
+}
+.mr-bar.is-off { display: none; }
+.mr-cover-final,
+.mr-show-name,
+.mr-show-tier,
+.mr-cover-stamp {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 1;
+  text-align: center;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 3px #000;
+}
+/* the FINAL tier: --fs-hero, in its tier colour */
+.mr-cover-final { font-size: var(--fs-hero); color: var(--mr-tier); text-shadow: 6px 6px 0 #000; opacity: 0; white-space: nowrap; }
+.mr-show { display: grid; justify-items: center; gap: 8px; opacity: 0; }
+.mr-show-art { width: clamp(96px, 22vw, 160px); height: auto; }
+.mr-show-name { font-size: var(--fs-h1); color: #fff; text-shadow: 5px 5px 0 #000; overflow-wrap: anywhere; }
+.mr-show-tier { display: none; font-size: var(--fs-panel); color: var(--mr-tier); }
+.mr-cover-stamp {
+  padding: 4px 12px;
+  font-size: min(var(--fs-hero), 10vw);
+  white-space: nowrap;
+  color: #FFE94A;
+  text-shadow: 6px 6px 0 #000;
+  border: 5px solid #FFE94A;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  opacity: 0;
+}
+/* REDUCED MOTION, EPIC+: the plate + tier + art + name + stamp as ONE static frame for the same hold */
+.mr-cover.is-static { opacity: 1; }
+.mr-cover.is-static .mr-cover-ladder,
+.mr-cover.is-static .mr-cover-final { display: none; }
+.mr-cover.is-static .mr-show,
+.mr-cover.is-static .mr-cover-stamp { opacity: 1; }
+.mr-cover.is-static .mr-show-tier { display: block; }
+.mr-cover.is-static .mr-cover-stamp { transform: rotate(-6deg); }
+
+/* ---- NOTHING ABOVE THE ROLL BUTTON CHANGES HEIGHT (PR #156 e2e: it moved 14.8px on the first roll) -----
+   The culprit was the MAIN hero: "NO MAIN YET" had no art and no rank row, so the first auto-equipped mark
+   grew it (128px coin + a rank row) and pushed the ROLL panel down. MarksIndex now draws the same slots in
+   every state; here each text slot is pinned to ONE line and the rank row to a reserved two-line box, so
+   no name, tag or rank text can add a line either. The head's % / milestone lines get the same treatment. */
+.mx-hero-kicker,
+.mx-hero-name,
+.mx-hero-pct,
+.mx-collect-pct,
+.mx-collect-next {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mx-hero-rank-text { display: block; line-height: 1.3; min-height: 2.6em; }
+.mx-hero-rank.is-placeholder { visibility: hidden; }
+.mx-hero.is-empty .mx-hero-art { opacity: 0.6; }
+.mr-msg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- index additions: % COLLECTED, GOLD / RAINBOW tile chips, permanent tiles --------------------- */
+.mx-collect { display: grid; gap: 4px; flex: 1 1 auto; min-width: 0; max-width: 360px; }
+.mx-collect .mx-bar-fill { background: #2EFFE0; }
+.mx-collect-pct { font-weight: 700; font-size: var(--fs-body); letter-spacing: 0.06em; color: #fff; }
+.mx-collect-next { font-weight: 700; font-size: var(--fs-label); letter-spacing: 0.06em; color: #c9b8e8; }
+/* inside the tile (the grid clips anything past its left edge) */
+.mx-tile-finish {
+  position: absolute;
+  top: -10px;
+  left: 4px;
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #000;
+  background: #FFD54A;
+  border: 2px solid #A8800F;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 #000;
+  transform: rotate(-5deg);
+}
+.mx-tile.is-perm { border-style: double; border-width: 5px; }
+@media (max-width: 899px) {
+  .mx-head { flex-wrap: wrap; }
+  .mx-collect { order: 3; flex-basis: 100%; max-width: none; }
+}
+@media (max-width: 480px) {
+  .mr-roll { padding: 8px 52px 8px 12px; }
+  .mr-card-art { width: 52px; height: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-roll { transition: none; }
+  .mr-roll:active { transform: none; }
+}

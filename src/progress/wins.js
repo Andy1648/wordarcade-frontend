@@ -21,6 +21,7 @@ import {
 } from './xp.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
+import { rollBonusMult } from './markRollsCore.js'; // the payout hook only — the roll system loads with MARKS
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
@@ -31,7 +32,8 @@ import { addLetters } from './letters.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn mark's MAIN bonus (STEP 49 — a ×2-×4 mark priced against base words made KEY trivial).
-setRateBoost(() => forgeAvgMult(forgeBuys()) * starPowerMult() * ((markWinsFactors({ mode: 'wordBomb' }).mark) || 1));
+// + MARK ROLLS: the roll PERKS (and a worn rolled MAIN) are part of your rate too — ×1 until you roll.
+setRateBoost(() => forgeAvgMult(forgeBuys()) * starPowerMult() * ((markWinsFactors({ mode: 'wordBomb' }).mark) || 1) * rollBonusMult({ mode: 'wordBomb' }));
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
@@ -260,7 +262,9 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     rebirth: rebirthMult(rc),
     streak: stm,
     // + STAR POWER (stars.js, the late-game layer): +10% a level, folded into BONUS like the mark.
-    bonus: markWins * markXpMult(markId) * mastery * starPowerMult(),
+    // + MARK ROLLS (markRolls.js): the summed PERK of every rolled mark for this mode, × a rolled
+    // MAIN when one is worn. Exactly ×1 on a save that has never rolled.
+    bonus: markWins * markXpMult(markId) * mastery * starPowerMult() * rollBonusMult({ mode: key }),
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),

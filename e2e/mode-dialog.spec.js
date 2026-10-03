@@ -7,6 +7,10 @@ import { test, expect } from '@playwright/test';
 import { GAMES } from '../src/gameData.js';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
 
+// THE mode dialog, never an unlock tutorial card: tutorials are role=dialog too (data-tut) and may appear the
+// moment the mode dialog closes (TutorialHost waits for !dialog), which made the count checks race on CI.
+const modeDialog = (page) => page.locator('[role="dialog"]:not([data-tut])');
+
 test.describe('mode dialog', () => {
   test.beforeEach(async ({ page }) => {
     await installBackendMock(page);
@@ -15,7 +19,7 @@ test.describe('mode dialog', () => {
 
   async function openDialog(page, cardName) {
     await page.getByRole('button', { name: new RegExp(cardName, 'i') }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = modeDialog(page);
     await expect(dialog).toBeVisible();
     return dialog;
   }
@@ -35,7 +39,7 @@ test.describe('mode dialog', () => {
     await page.getByRole('button', { name: 'Close' }).click();
 
     // The morph-out is animated; the overlay must fully leave the DOM afterwards.
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(modeDialog(page)).toHaveCount(0);
     await expect(page.locator('.mode-dialog-overlay')).toHaveCount(0);
     // …and the menu underneath is interactive again.
     await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
@@ -44,7 +48,7 @@ test.describe('mode dialog', () => {
   test('closes cleanly via the Escape key', async ({ page }) => {
     await openDialog(page, 'WORD BOMB');
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(modeDialog(page)).toHaveCount(0);
     await expect(page.locator('.mode-dialog-overlay')).toHaveCount(0);
   });
 
@@ -52,14 +56,14 @@ test.describe('mode dialog', () => {
     await openDialog(page, 'CATEGORY BLITZ');
     // The scrim is the dimmed backdrop outside the dialog shell.
     await page.locator('.mode-dialog-scrim').click({ position: { x: 5, y: 5 } });
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(modeDialog(page)).toHaveCount(0);
     await expect(page.locator('.mode-dialog-overlay')).toHaveCount(0);
   });
 
   test('can reopen after closing (open -> close -> open again)', async ({ page }) => {
     await openDialog(page, 'WORD BOMB');
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(modeDialog(page)).toHaveCount(0);
 
     // Reopening a different card must work — no stale overlay blocks the click.
     const dialog = await openDialog(page, 'CATEGORY BLITZ');

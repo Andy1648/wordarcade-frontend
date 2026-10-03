@@ -94,7 +94,7 @@
 /* Only the OFFER is a tilted sticker; the form straightens so the input text and caret render crisp. */
 .lb-cp.is-offer { rotate: -1.5deg; }
 .lb-cp-hint { display: block; margin-top: 2px; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.04em; color: #3d3150; }
-.lb-cp-trophy { vertical-align: -3px; }
+.lb-cp-done .lb-cp-trophy { vertical-align: -7px; margin: 0 2px; } /* the 26px podium, bare (no number below 32px) */
 
 @media (prefers-reduced-motion: reduce) {
   .lb-cp { animation: none; }

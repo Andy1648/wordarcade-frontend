@@ -108,7 +108,10 @@ test('STEP 49: the WORN mark pays its tier bonus everywhere, its flavour perk on
   assert.deepEqual(markWinsFactors({ markId: null, mode: 'fuse' }), {});
   // Rarer pays more: COMMON ×2, RARE ×2.5, EPIC ×3, LEGENDARY ×4 (rank I, before flavour).
   assert.equal(markMainMult(markById('mk-bomber'), 1), 2);
-  assert.equal(markMainMult(markById('mk-linguist'), 1), 2.5);
+  assert.equal(markMainMult(markById('mk-scholar'), 1), 2.5);
+  // permanent marks (LINGUIST, CURATOR) pay ×4 — Andy oct3, decision 4
+  assert.equal(markMainMult(markById('mk-linguist'), 1), 4);
+  assert.equal(markMainMult(markById('mk-curator'), 1), 4);
   assert.equal(markMainMult(markById('mk-nova'), 1), 3);
   assert.equal(markMainMult(markById('mk-legend'), 1), 4);
 });

@@ -9,27 +9,36 @@
 import { useEffect, useRef, useState } from 'react';
 import { myStats } from './client.js';
 import { formatNum } from '../format';
+import PodiumIcon from '../components/PodiumIcon';
 import './RankUpMoment.css';
 
 export const RANKUP_DELAY_MS = 1600; // after the 1.5 s level-up / tier-up card (MenuXpFx)
 export const RANKUP_MS = 2200;
+// the "#to" pops at 30-40% of the card (lb-rankup-pop): the menu's podium bounces + ticks on the same beat
+export const RANKUP_POP_MS = RANKUP_DELAY_MS + Math.round(RANKUP_MS * 0.36);
 
-export default function RankUpMoment({ from, to, onDone }) {
+export default function RankUpMoment({ from, to, onDone, onPop }) {
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
+  const popRef = useRef(onPop);
+  popRef.current = onPop;
   const [on, setOn] = useState(false);
   // Andy oct2 (later): the board ranks by LEVEL (after rebirths), so the moment names the level.
   const [level] = useState(() => myStats().level);
   useEffect(() => {
     const a = setTimeout(() => setOn(true), RANKUP_DELAY_MS);
     const b = setTimeout(() => doneRef.current && doneRef.current(), RANKUP_DELAY_MS + RANKUP_MS);
-    return () => { clearTimeout(a); clearTimeout(b); };
+    const c = setTimeout(() => popRef.current && popRef.current(), RANKUP_POP_MS);
+    return () => { clearTimeout(a); clearTimeout(b); clearTimeout(c); };
   }, []);
   return (
     <div className="lb-rankup-layer">
       <p className="lb-rankup-sr" role="status">{on ? `Leaderboard rank up: from number ${from} to number ${to}.` : ''}</p>
       {on && (
         <div className="lb-rankup" aria-hidden="true">
+          {/* the same podium glyph as the menu's golden button — one symbol for the leaderboard. It wears the
+              STAR here, not the rank: "#to" is already the line right under it */}
+          <PodiumIcon size={64} className="lb-rankup-podium" />
           <span className="lb-rankup-kicker">RANK UP</span>
           <span className="lb-rankup-line">
             <span className="lb-rankup-from">#{from}</span>
