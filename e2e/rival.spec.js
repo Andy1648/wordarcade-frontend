@@ -42,7 +42,7 @@ test('?rival=1: someone passed you → the card names them and the gap; tap open
   await page.goto('/?portal=1&rival=1');
   await menuReady(page);
   const card = page.locator('.lb-rankup.is-passed');
-  await expect(card).toBeVisible({ timeout: 10000 });
+  await expect(card).toBeVisible({ timeout: 20000 }); // INFO priority: it waits behind the menu's arrival moments (~13 s on a LV146 save)
   await expect(card.locator('.lb-rankup-kicker')).toHaveText('XAVI PASSED YOU');
   await expect(card.locator('.lb-rankup-from')).toHaveText('#4');
   await expect(card.locator('.lb-rankup-to')).toHaveText('#5');
@@ -59,7 +59,7 @@ test('?rival=1: one ping per visit — a reload with no new pass shows nothing',
   await setup(page);
   await page.goto('/?portal=1&rival=1');
   await menuReady(page);
-  await expect(page.locator('.lb-rankup.is-passed')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.lb-rankup.is-passed')).toBeVisible({ timeout: 20000 });
   await expect(page.locator('.lb-rankup.is-passed')).toBeHidden({ timeout: 6000 });
   await page.reload();
   await menuReady(page);
