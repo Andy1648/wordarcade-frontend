@@ -17,6 +17,8 @@
 import { createRateLimiter, creditXp, loadProgress, saveProgress, levelXpPerLetter, getKeyTier, getRebirths, roundWordXp } from './xp.js';
 import { wornMarkId, markEntry } from './markRollsCore.js';
 import { emitMidGameLevelUp } from './levelUpSignal.js';
+import { boostMult } from './boost.js';
+import { notePlay } from './overdrive.js';
 
 // The worn MAIN mark's XP boost — modest and readable, by tier (a rolled PERMANENT reads as LEGENDARY).
 export const MARK_XP_BOOST = { common: 0.1, rare: 0.2, epic: 0.3, legendary: 0.5 };
@@ -34,9 +36,9 @@ export function markXpBoost(markId) {
   }
 }
 
-/** XP per letter for the live save: BASE 10 × KEY × rebirth × worn mark. */
+/** XP per letter for the live save: BASE 10 × KEY × REBIRTH 5^R × MARK × BOOST (code boost × OVERDRIVE). */
 export function letterXpNow() {
-  return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost());
+  return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost()) * boostMult();
 }
 
 const LETTER = /[a-z]/gi;
@@ -53,9 +55,14 @@ export function lettersAdded(prev, next) {
  * Credit `letters` typed letters NOW (synchronous): letters × XP-per-letter through creditXp, persisted.
  * The flush below and the loop sim both call this. Returns creditXp's result plus { xp }.
  */
+let lastCreditAt = 0;
 export function creditLetterXp(letters, { mode, perLetter } = {}) {
   const n = Number.isFinite(letters) && letters > 0 ? Math.floor(letters) : 0;
   if (!n) return null;
+  // OVERDRIVE's clock: the time since the previous credit is PLAY (capped per gap in overdrive.js)
+  const now = Date.now();
+  if (lastCreditAt) notePlay(now - lastCreditAt, now);
+  lastCreditAt = now;
   const per = Number.isFinite(perLetter) && perLetter > 0 ? perLetter : letterXpNow();
   const xp = roundWordXp(n * per);
   const res = creditXp(loadProgress(), xp);
@@ -130,4 +137,5 @@ export function resetLetterXp() {
   pending = 0;
   pendingMode = null;
   scheduled = false;
+  lastCreditAt = 0;
 }

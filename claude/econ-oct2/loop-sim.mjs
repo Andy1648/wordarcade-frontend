@@ -216,8 +216,13 @@ function sampleWord(rng, skill, V) {
 }
 
 // ----------------------------------------------------------------------------- ONE BOT
+// REBIRTH RUSH (PROGRESSION-FINAL.md) — detected by xp.js REBIRTH_POWER. The LETTER FORGE is out of the payout
+// formula there, so the bot never buys it (a dead purchase would only distort the targets).
+const RR = Number.isFinite(XP.REBIRTH_POWER);
 function simulate(skill, start = null) {
   globalThis.localStorage = makeStore();
+  // OVERDRIVE (overdrive.js) and anything else that rolls through Math.random: seeded per bot, so a run repeats.
+  Math.random = LUCK.mulberry32(4242 + skill.wpm * 31 + (Number(process.env.SIM_SEED) || 0) * 977);
   // --board: start from a REAL save (level, rebirths, KEY tier; the bar empty, no wins banked)
   if (start) {
     localStorage.setItem('taw.econ', '11');
@@ -255,6 +260,7 @@ function simulate(skill, start = null) {
   let lastLevelT = 0;
   let lastLevelMin = null;
   const inRunPct = [];
+  let passOldWallAt = null; // minutes into the CURRENT run when the level passed the previous run's peak
   const PACE_LEVELS = [10, 50, 100, 200]; // v11: minutes per level here, first time reached
   const pace = {};
   let paceStart = {};
@@ -340,7 +346,7 @@ function simulate(skill, start = null) {
         continue;
       }
       const cands = [];
-      if (forgeOpen()) cands.push({ kind: 'FORGE', id: `F${FORGE.forgeBuys() + 1}`, price: FORGE.forgeCost(FORGE.forgeBuys()) });
+      if (!RR && forgeOpen()) cands.push({ kind: 'FORGE', id: `F${FORGE.forgeBuys() + 1}`, price: FORGE.forgeCost(FORGE.forgeBuys()) });
       for (const it of cosmetics()) cands.push({ kind: 'COSMETIC', id: it.id, price: it.price });
       const ok = cands.filter((c) => c.price <= bal && c.price <= OTHER_BUY_FRACTION * kCost);
       if (!ok.length) return;
@@ -450,7 +456,9 @@ function simulate(skill, start = null) {
     // rebirth at the gate
     while (lv() >= XP.rebirthThreshold(XP.getRebirths())) {
       const at = lv();
-      runs.push({ rc: XP.getRebirths(), min: +(minute - runT0).toFixed(1), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier() });
+      const runMin = minute - runT0;
+      runs.push({ rc: XP.getRebirths(), min: +runMin.toFixed(2), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier(), passOldWallShare: passOldWallAt == null || runMin <= 0 ? null : +(passOldWallAt / runMin).toFixed(3) });
+      passOldWallAt = null;
       runT0 = minute;
       lastLevelT = minute;
       lastLevelMin = null;
@@ -459,7 +467,7 @@ function simulate(skill, start = null) {
       paceStart = {}; // a rebirth cuts any level-in-progress timing short
       addGood('rebirth', `REBIRTH ${rc} (from LV${at}, +${stars}★)`);
       firstAt('rebirth', { fromLevel: at });
-      for (const id of ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
+      for (const id of RR ? ['autoKey', 'frenzy', 'head'] : ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
         while (STARS.buyPerk(id, XP.getRebirths()).ok) { if (id === 'power') break; }
       }
       lastLumpCtx = 'claim';
@@ -582,6 +590,7 @@ function simulate(skill, start = null) {
         const pctW = (((lx && lx.xp) || 0) + wordBar) / XP.need(before) * 100;
         if (Number.isFinite(pctW) && before < XP.rebirthThreshold(XP.getRebirths())) inRunPct.push(pctW);
         if (after > before) { lastLevelMin = minute - lastLevelT; lastLevelT = minute; }
+        if (passOldWallAt == null && runs.length && after > runs[runs.length - 1].peak) passOldWallAt = minute - runT0;
         if (before <= 400 && Number.isFinite(pctW)) {
           const band = Math.max(50, Math.ceil(before / 50) * 50);
           if (!barPct.has(band)) barPct.set(band, []);
@@ -768,6 +777,17 @@ function simulate(skill, start = null) {
     inRunBar: { n: srtIn.length, p1: qIn(0.01), p10: qIn(0.1), p50: qIn(0.5), pass: srtIn.length > 0 && qIn(0.1) >= 0.4 },
     earlyRebirthMin: early,
     earlyPass: early.length >= 1 && early.every((m) => m >= 15 && m <= 90),
+    // PROGRESSION-FINAL TARGETS (median: first rebirth ~2 min, run 5 ~3, run 10 ~4, run 20 ~12 min, ~36 rebirths
+    // in 10 h; casual ~31, strong ~41; the old wall passed ~17% into a run; no R > 80 in 10 h)
+    target: {
+      run1: runs[0] ? runs[0].min : null,
+      run5: runs[4] ? runs[4].min : null,
+      run10: runs[9] ? runs[9].min : null,
+      run20: runs[19] ? runs[19].min : null,
+      rebirthsBy10h: runs.filter((r, i) => runs.slice(0, i + 1).reduce((a, x) => a + x.min, 0) <= 600).length,
+      passOldWallMedian: (() => { const v = runs.map((r) => r.passOldWallShare).filter((x) => x != null).sort((a, b) => a - b); return v.length ? v[Math.floor(v.length / 2)] : null; })(),
+      maxR: XP.getRebirths(),
+    },
     furtherShare: runs.length > 1 ? +(runs.slice(1).filter((r, i) => r.peak > runs[i].peak).length / (runs.length - 1)).toFixed(3) : null,
   };
   const v11 = { ke, pace, key, upsAt, barPct: bands, deadBar, firstClimbTo10: first10, reclimb, reclimbFasterShare: reclimb.length > 1 ? +(reclimb.slice(1).filter((c) => c.vsFirst != null && c.vsFirst < 1).length / Math.max(1, reclimb.slice(1).filter((c) => c.vsFirst != null).length)).toFixed(3) : null };
@@ -851,7 +871,7 @@ function simulateMasher(hours) {
     if (res.level > before.level) ups += res.level - before.level;
     while (lvl() >= XP.rebirthThreshold(XP.getRebirths())) {
       STARS.rebirthWithStars();
-      for (const id of ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
+      for (const id of RR ? ['autoKey', 'frenzy', 'head'] : ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
         while (STARS.buyPerk(id, XP.getRebirths()).ok) { if (id === 'power') break; }
       }
       gain = null;
@@ -875,13 +895,19 @@ if (args.board) {
   const med = SKILLS.find((x) => x.id === 'median');
   console.log(`=== BOARD SAVES (median bot, ${HOURS} h each; KEY stand-in T = 8 + R)`);
   let allOk = true;
-  for (const [name, lv, rc] of BOARD) {
-    const kt = 8 + rc;
+  const EM = RR ? await imp('progress/econMigrate.js') : null;
+  for (const [name, lv0, rc0] of BOARD) {
+    const kt = 8 + rc0;
+    // Rebirth Rush: the one-time conversion first (levels past the gate → rebirths, LV1)
+    const conv = EM && EM.rebirthRushConvert ? EM.rebirthRushConvert(lv0, rc0) : { level: lv0, rebirths: rc0, added: 0 };
+    const lv = conv.level;
+    const rc = conv.rebirths;
+    if (conv.added) console.log(`  ${name.padEnd(15)} CONVERTED LV${lv0} R${rc0} → LV${lv} R${rc} (+${conv.added} rebirths)`);
     const gate = XP.rebirthThreshold(rc);
     const r = simulate(med, { lv, rc, kt });
     const firstRun = r.v11.ke.runs[0];
     const levelsFirstHour = r.v11.upsAt[60];
-    const todayPerHour = 60 / todayMinPerLevel(lv);
+    const todayPerHour = 60 / todayMinPerLevel(lv0);
     const canNow = lv >= gate;
     const faster = levelsFirstHour > todayPerHour;
     const ok = faster && r.v11.ke.inRunBar.pass !== false;
@@ -912,6 +938,8 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
     {
       const k = r.v11.ke;
       console.log(`  KE runs (R → peak LV, run min, last level min, KEY T): ${k.runs.slice(0, 16).map((x) => `R${x.rc}→LV${x.peak} ${x.min}m last ${x.lastLevelMin}m T${x.keyTier}`).join(' | ')}`);
+      const tg = k.target;
+      console.log(`  RR TARGETS run1 ${tg.run1}m (~2) · run5 ${tg.run5}m (~3) · run10 ${tg.run10}m (~4) · run20 ${tg.run20}m (~12) · rebirths in 10 h ${tg.rebirthsBy10h} (median ~36 / casual ~31 / strong ~41) · old wall passed at ${tg.passOldWallMedian} of a run (~0.17) · R at end ${tg.maxR} (runaway if > 80 in 10 h)`);
       console.log(`  KE first rebirths ${JSON.stringify(k.earlyRebirthMin)} min apart (15–90): ${k.earlyPass ? 'PASS' : 'FAIL'} | runs reaching further than the last: ${k.furtherShare} | in-run bar %/word below the gate p1 ${k.inRunBar.p1} p10 ${k.inRunBar.p10} p50 ${k.inRunBar.p50} (p10 ≥ 0.4): ${k.inRunBar.pass ? 'PASS' : 'FAIL'}`);
     }
     console.log(`  v11 re-climb: first 10 levels ${r.v11.firstClimbTo10}m; after rebirths (min, ×first) ${r.v11.reclimb.slice(1, 13).map((c) => `R${c.rc}:${c.minTo10}m×${c.vsFirst}`).join(' ')} | faster than first: ${r.v11.reclimbFasterShare}`);

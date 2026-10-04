@@ -254,15 +254,20 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
   const markWins = markWinsFactors({ markId, mode: key }).mark || 1;
   const mastery = Number.isFinite(masteryMult) && masteryMult > 0 ? masteryMult : masteryXpMult(id);
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
+  // REBIRTH RUSH (FROZEN): WINS / word = BASE 10 × length/5 × MODE POWER × REBIRTH 5^R × MARK × BOOST (× FRENZY on
+  // FUSE). Difficulty, streak, mastery, STAR POWER and the LETTER FORGE are no longer in the payout: they read ×1
+  // here so every receipt row that names them shows ×1 (and is hidden as inactive). `mode` stays the ×2-based table
+  // (WB 2 = POWER ×1); xpPerWord divides it back to POWER.
+  void difficulty; void stm; void mastery;
   return {
     mode: XP_MULTIPLIERS[id] ?? 1,
-    difficulty: DIFFICULTY_MULT[difficulty] ?? 1,
+    difficulty: 1,
     rebirth: rebirthMult(rc),
-    streak: stm,
+    streak: 1,
     // + STAR POWER (stars.js, the late-game layer): +10% a level, folded into BONUS like the mark.
     // + MARK ROLLS (markRolls.js): the summed PERK of every rolled mark for this mode, × a rolled
     // MAIN when one is worn. Exactly ×1 on a save that has never rolled.
-    bonus: markWins * markXpMult(markId) * mastery * starPowerMult() * rollBonusMult({ mode: key }),
+    bonus: markWins * markXpMult(markId) * rollBonusMult({ mode: key }), // MARK (the worn mark + rolled marks)
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),
@@ -271,7 +276,7 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     // LETTER FORGE (forge.js, replaced MOMENTUM): +5% per forged level of each letter in THIS word.
     // Word-specific (×1 when no word is given — the card's reference rate is the base, and the
     // forge is one of the things that makes a real word worth MORE than it).
-    forge: forgeMultForWord(word),
+    forge: 1, // not in the Rebirth Rush formula (was LETTER FORGE +5% a forged letter)
   };
 }
 
@@ -282,8 +287,9 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
  * the forge to XP itself, from `word`; pass it the UN-forged weight.)
  */
 export function bankWeight(weight, word) {
+  void word; // REBIRTH RUSH: the forge is out of the formula; bankWordWins pays by word count
   const w = Number.isFinite(weight) && weight > 0 ? weight : 1;
-  return w * forgeMultForWord(word);
+  return w;
 }
 
 /** One word's XP, with the whole stack resolved. The number wins are derived from. */
@@ -551,11 +557,12 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
   const prevN = iCount(prevWords);
   const nowN = iCount(nowWords);
-  const prevW = Number.isFinite(prevWeight) ? prevWeight : prevN;
-  const nowW = Number.isFinite(nowWeight) ? nowWeight : nowN;
-  // Paid weight is the cumulative weight, but ZERO until the count clears the gate.
-  const paidPrev = prevN >= MIN_WORDS ? prevW : 0;
-  const paidNow = nowN >= MIN_WORDS ? nowW : 0;
+  // REBIRTH RUSH: the FROZEN formula pays every word at BASE 10 × length/5 × MODE × 5^R × MARK × BOOST — no
+  // per-word weight (rarity × combo × lucky). The callers still pass their weights; they are ignored and the
+  // banked unit is the word COUNT. (Paid count is ZERO until the count clears the gate.)
+  void prevWeight; void nowWeight;
+  const paidPrev = prevN >= MIN_WORDS ? prevN : 0;
+  const paidNow = nowN >= MIN_WORDS ? nowN : 0;
   const deltaWeight = paidNow - paidPrev;
   if (deltaWeight <= 0) return 0;
   // `wordLength` is THIS word's letters — the same count the XP award used, so the two readouts

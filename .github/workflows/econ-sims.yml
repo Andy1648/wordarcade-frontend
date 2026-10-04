@@ -18,7 +18,7 @@ on:
     inputs:
       hours:
         description: 'Hours for the long run'
-        default: '200'
+        default: '10'
       seeds:
         description: 'Seeds for the rule-P compare'
         default: '5'
@@ -74,7 +74,9 @@ jobs:
       - run: npm ci
       - name: Long run (3 skills)
         run: |
-          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '200' }}" | tee long-run.txt
+          # PROGRESSION FINAL targets are for 10 h with NO marks (SIM_ROLLS=0); then the same 10 h WITH rolls (runaway check)
+          SIM_ROLLS=0 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '10' }}" | tee long-run.txt
+          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-rolls --hours="${{ github.event.inputs.hours || '10' }}" --no-masher | grep -E '^=== |RR TARGETS|ROLLS' | tee -a long-run.txt
           {
             echo '## Long run — first reach of each level (minutes)'
             echo '```'

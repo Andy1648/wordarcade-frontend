@@ -113,14 +113,14 @@ export function needV9(n) {
 // LV400 ~11.8M. The step to the next level is +21% at LV10, +4% at LV50, +2.4% at LV100, +1.4% at LV200 —
 // always harder, never a wall. The same numbers for a fresh profile and an R20 T30 save.
 // Always finite and > 0: capped at Number.MAX_VALUE (far past any reachable level), never Infinity/NaN/0.
-// v11 CURVE CHANGE (Andy oct3 19:54) — KEYBOARD ESCAPE style. "+2.4%/level at LV100 is far too flat":
-//   need(n) = round10(100 · 1.13^(n−1))
-// Every level costs 13% more than the last — the SAME step at every level, no sudden jumps. LV1 100, LV10 ~300,
-// LV35 ~6.4k, LV65 ~250k, LV100 ~18M. Inside one run the bar slows into a WALL; the way past it is a REBIRTH
-// (rebirthXpMult below grows gently, then explodes), so the next run climbs back fast and goes further.
-// The kept v11 constants (CURVE_V11_*) are the record of the quadratic this replaced; nothing reads them.
-export const CURVE_KE_BASE = 100; // need(1)
-export const CURVE_KE_GROWTH = 1.13; // +13% a level, every level
+// PROGRESSION FINAL — "REBIRTH RUSH" v2 (Andy oct3 20:08, claude/econ-oct2/PROGRESSION-FINAL.md; FROZEN structure,
+// later only constants ±20% after a CI sim):   need(n) = round10(100 · 1.15^(n−1)), the same for everyone.
+// Every level 15% more than the last. A run hits a WALL; REBIRTH (×5 XP & wins, forever) blows past it.
+export const CURVE_BASE_XP = 100; // need(1)
+export const CURVE_GROWTH = 1.15; // +15% a level, every level
+// (kept for the record: the 19:54 KE curve 100·1.13^n and the v11 quadratic. Nothing reads them.)
+export const CURVE_KE_BASE = 100;
+export const CURVE_KE_GROWTH = 1.13;
 export const CURVE_V11_BASE = 100;
 export const CURVE_V11_A = 15;
 export const CURVE_V11_POW = 2;
@@ -132,7 +132,7 @@ export function needAt(n) {
   if (Number.isFinite(n)) lv = Math.max(1, Math.floor(n));
   else if (n === Infinity) return Number.MAX_VALUE;
   else lv = 1; // NaN / -Infinity / garbage → LV1
-  const raw = CURVE_KE_BASE * Math.pow(CURVE_KE_GROWTH, lv - 1);
+  const raw = CURVE_BASE_XP * Math.pow(CURVE_GROWTH, lv - 1);
   if (!(raw < Number.MAX_VALUE)) return Number.MAX_VALUE; // Infinity / NaN → the cap, never 0
   const r = round10(raw);
   if (!(r > 0)) return 10;
@@ -159,24 +159,30 @@ export const KEY_XP_STEP = 1.2; // ×1.2 a KEY tier — "+20% XP / LETTER"
 export const REBIRTH_XP_STEP = 1; // +100% a rebirth
 const KEY_XP_CAP = 1e300; // finite at absurd tiers (1.2^3800 would overflow)
 
-/** KEY tier → XP-per-letter multiplier: 1.2^T (T0 ×1, T1 ×1.2, T5 ×2.49). Finite at any tier. */
+// KEY (Rebirth Rush, Keyboard Escape style): ×1, ×2, ×5, ×10, ×25, ×50, ×100, ×250, ×500, ×1000 (T0–T9),
+// then ×2.15 a tier forever. RESETS on rebirth (doRebirth); wins are KEPT, so a new run opens with a
+// rebuy spree.
+export const KEY_LADDER = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000];
+export const KEY_PAST_LADDER_STEP = 2.15;
+/** KEY tier → XP-per-letter multiplier (the ladder above). Finite at any tier. */
 export function keyXpMult(tier) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  const v = Math.pow(KEY_XP_STEP, t);
+  if (t < KEY_LADDER.length) return KEY_LADDER[t];
+  const v = KEY_LADDER[KEY_LADDER.length - 1] * Math.pow(KEY_PAST_LADDER_STEP, t - (KEY_LADDER.length - 1));
   return Number.isFinite(v) ? Math.min(v, KEY_XP_CAP) : KEY_XP_CAP;
 }
-// REBIRTH XP (Andy oct3 19:54, Keyboard Escape: "×1.5 at R1 … ×10 at R10 … huge at R20" — gentle, then it
-// explodes): (1 + R/2) · 1.1^(R²/10). R1 ×1.5, R2 ×2.1, R5 ×4.4, R10 ×16, R15 ×72, R20 ×500, R30 ×85k.
-// Each rebirth is a bigger jump than the last (R1→R2 ×1.4 … R10→R11 ×1.3 … R19→R20 ×1.5 … R29→R30 ×1.9),
-// so a new run always outruns the old wall. WINS keep their own ×(1+R) (rebirthMult) — only the bar explodes.
-export const REBIRTH_XP_LINEAR = 0.5;
-export const REBIRTH_XP_EXPLODE = 1.1;
-const REBIRTH_XP_CAP = 1e300;
-/** Rebirth count → XP-per-letter multiplier. R0 ×1, R1 ×1.5, R10 ×16, R20 ×500. Finite at any count. */
-export function rebirthXpMult(rebirthCount) {
+// REBIRTH (Rebirth Rush): ×5 XP AND wins per rebirth, forever — 5^R (R1 ×5, R2 ×25, R10 ×9.77M). The SAME
+// number on the bar and on wins (rebirthMult below). Finite at any count (capped far past a double's reach).
+export const REBIRTH_POWER = 5;
+const REBIRTH_CAP = 1e300;
+export function rebirthPow(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  const v = (1 + REBIRTH_XP_LINEAR * rc) * Math.pow(REBIRTH_XP_EXPLODE, (rc * rc) / 10);
-  return Number.isFinite(v) ? Math.min(v, REBIRTH_XP_CAP) : REBIRTH_XP_CAP;
+  const v = Math.pow(REBIRTH_POWER, rc);
+  return Number.isFinite(v) ? Math.min(v, REBIRTH_CAP) : REBIRTH_CAP;
+}
+/** Rebirth count → XP-per-letter multiplier: 5^R. */
+export function rebirthXpMult(rebirthCount) {
+  return rebirthPow(rebirthCount);
 }
 /** XP per LETTER typed (menu or in-game) for a KEY tier, rebirth count and worn-mark boost. PURE. */
 export function levelXpPerLetter(keyTier, rebirthCount, markMult = 1) {
@@ -281,15 +287,13 @@ export function saveRebirths(n) {
 // The LEVEL required to perform the NEXT rebirth, given how many are already done. rc=0 gates
 // R1 at LV15; rc=19 gates R20 at LV600; past that, +50 levels each (R21→650, R22→700 …).
 // The published TABLE gate (pure; no grandfathering).
-// v11 CURVE CHANGE: the gate sits where a run meets its WALL (a level starts taking minutes at a median
-// pace), so a run ends naturally in a rebirth: LV 35 + 3R + R²/50 — R0→R1 at LV35, R10 at LV65,
-// R20 at LV103, R30 at LV143. (REBIRTH_TABLE above is the v6–v11 table, kept for the record.)
-export const REBIRTH_GATE_BASE = 35;
-export const REBIRTH_GATE_STEP = 3;
-export const REBIRTH_GATE_CURVE = 50;
+// REBIRTH GATE (Rebirth Rush): LV 15 + 18·R — R1 at LV15, R2 at LV33, R10 at LV195, R20 at LV375.
+// (REBIRTH_TABLE above is the v6–v11 table, kept for the record.)
+export const REBIRTH_GATE_BASE = 15;
+export const REBIRTH_GATE_STEP = 18;
 export function tableRebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  return Math.round(REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * rc + (rc * rc) / REBIRTH_GATE_CURVE);
+  return REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * rc;
 }
 
 // PROGRESSION v10 must-fix 5 — the GRANDFATHERED rebirth gate. A save that existed when v10 landed may
@@ -326,8 +330,7 @@ export function rebirthThreshold(rebirthCount) {
 // The permanent XP+WINS multiplier AFTER `rebirthCount` rebirths: REBIRTH_MULT_BASE^rc, with
 // rc=0 → ×1. v9: 1 + rc (R1 ×2, R10 ×11, R20 ×21) — see REBIRTH_MULT_STEP above. (v8 was 3^rc.)
 export function rebirthMult(rebirthCount) {
-  const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  return 1 + REBIRTH_MULT_STEP * rc;
+  return rebirthPow(rebirthCount); // Rebirth Rush: ×5 wins per rebirth, the same 5^R as XP
 }
 // A flat wins reward scaled by the player's CURRENT rebirth multiplier — the ONE place both the
 // grant and its on-screen quote go through, so Collection/Achievement payouts show exactly what
@@ -367,6 +370,7 @@ export function doRebirth() {
   const rc = getRebirths() + 1;
   saveRebirths(rc);
   clearGrandfatheredGate();
+  saveKeyTier(0); // Rebirth Rush: KEY → T0 every rebirth (wins kept — the rebuy spree)
   saveProgress({ level: 1, intoLevel: 0 });
   pendingRebirth = rc;
   return rc;
@@ -414,7 +418,6 @@ export const KEY_TIERS = [
 ];
 export const TIER_XP_STEP = 2.5; // effect multiplier per tier past T8
 export const TIER_COST_STEP = 6; // cost multiplier per tier past T8
-const V9_XP = (t) => 10 + 15 * t; // the floor: what v9 paid at a tier
 
 export function getKeyTier() {
   try {
@@ -436,26 +439,29 @@ export function saveKeyTier(n) {
 
 // XP PER LETTER at a given tier. Within the table it's the published value; past T8 it extends
 // ×2.5 per tier from T8's 14,690, each step round10. Never below the v9 value at the same tier.
+// Rebirth Rush: WINS no longer scale with KEY (KEY is the bar's booster). This is now the WINS BASIS of one
+// letter in the old "XP" units the receipt multiplies (÷10 → wins): BASE 10 wins × length/5 = 2 wins a
+// letter = 20. The argument is ignored; the name stays so the receipt / forge / roll-price callers don't change.
+export const WINS_BASIS_PER_LETTER = 20;
+// eslint-disable-next-line no-unused-vars
 export function keyTierXp(tier) {
-  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  let xp;
-  if (t < KEY_TIERS.length) xp = KEY_TIERS[t].xp;
-  else {
-    xp = KEY_TIERS[KEY_TIERS.length - 1].xp;
-    for (let i = KEY_TIERS.length; i <= t && Number.isFinite(xp); i++) xp = round10(xp * TIER_XP_STEP);
-  }
-  return Math.max(xp, V9_XP(t));
+  return WINS_BASIS_PER_LETTER;
 }
 // The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past T8
 // it extends ×6 per tier from T8's 2,799,360, each step round10. (rebirthCount accepted and ignored —
 // v8 prices were flat wins; the signature stays so callers don't change.)
 // eslint-disable-next-line no-unused-vars
+// Rebirth Rush: T→T+1 costs KEY_COST_C0 × 5^T wins (C0 ≈ 30 s of BASE play: a median 10 words a minute ×
+// BASE 10 × 6/5 letters ≈ 60 wins). NOT scaled by rebirth: wins are ×5 a rebirth and these prices are not,
+// so every new run rebuys the early tiers in a burst. Cost to REACH tier t = C0 × 5^(t−1).
+export const KEY_COST_C0 = 60;
+export const KEY_COST_STEP = 5;
+const KEY_COST_CAP = 1e300;
 export function keyTierCostAt(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  if (t < KEY_TIERS.length) return KEY_TIERS[t].cost;
-  let cost = KEY_TIERS[KEY_TIERS.length - 1].cost;
-  for (let i = KEY_TIERS.length; i <= t && Number.isFinite(cost); i++) cost = round10(cost * TIER_COST_STEP);
-  return cost;
+  if (t === 0) return 0;
+  const v = KEY_COST_C0 * Math.pow(KEY_COST_STEP, t - 1);
+  return Number.isFinite(v) ? Math.min(v, KEY_COST_CAP) : KEY_COST_CAP;
 }
 // The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
 export function keyTierCost(tier, rebirthCount) {
@@ -573,15 +579,14 @@ export function xpPerWord({
   difficultyMult = 1,
   bonusMult = 1,
 } = {}) {
-  const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
-  const modeMult = XP_MULTIPLIERS[mode] ?? 1;
+  // REBIRTH RUSH (FROZEN formula): WINS / word = BASE 10 × length/5 × MODE POWER × REBIRTH 5^R × MARK × BOOST
+  // (× FRENZY on FUSE) — in the ×10 "XP" units the receipt divides back to wins. KEY no longer touches wins;
+  // weight (rarity × combo × lucky), streak and difficulty are accepted and IGNORED (not in the formula).
+  void keyTier; void weight; void streakMult; void difficultyMult;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
-  const wt = Number.isFinite(weight) && weight > 0 ? weight : 1;
-  const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
-  const dm = Number.isFinite(difficultyMult) && difficultyMult > 0 ? difficultyMult : 1;
   const bm = Number.isFinite(bonusMult) && bonusMult > 0 ? bonusMult : 1;
-  return roundWordXp(keyTierXp(kt) * len * modeMult * dm * rebirthMult(rc) * wt * stm * bm);
+  return roundWordXp(keyTierXp() * len * modePower(mode) * rebirthMult(rc) * bm);
 }
 
 // THE PER-WORD GRID: WHOLE XP, not round10. ANDY: "nothing hidden." round10 was the grid here
