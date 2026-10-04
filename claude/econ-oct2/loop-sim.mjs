@@ -45,7 +45,8 @@
 // typed. In a tree that ships progress/letterXp.js, every accepted word credits the letters the bot typed
 // for it — the word's length, plus the word's length again when the bot fumbled an attempt first (the
 // SKILLS miss rate) — through letterXp.creditLetterXp at the live XP-per-letter (BASE 10 × KEY × rebirth ×
-// the worn mark). The 30-letters/s cap never binds at bot speed. A tree WITHOUT letterXp.js (main / v10)
+// the worn mark). RR anti-gibberish (trees with letterXp.creditAcceptedWordLetters): typed letters pay the
+// menu ×0.2 share and awardWordXp tops the accepted word's own letters up to ×1 — a fumble stays at ×0.2. The 30-letters/s cap never binds at bot speed. A tree WITHOUT letterXp.js (main / v10)
 // keeps its own word-XP path inside awardWordXp, so rule P compares the two models as shipped.
 // PROGRESSION v11 METRICS (claude/econ-oct2/v11-spec.md): `v11.barPct` = the share of the CURRENT level
 // each accepted game word moved the bar (credited ÷ need(level before)), by level band (≤50, 51–100 …
@@ -138,6 +139,9 @@ const GAMEDATA = await imp('gameData.js');
 // LETTER XP (v11 amended) — present only in trees that ship progress/letterXp.js.
 const LX = fs.existsSync(path.join(SRC, 'progress', 'letterXp.js')) ? await imp('progress/letterXp.js') : null;
 const MR = fs.existsSync(path.join(SRC, 'progress', 'markRolls.js')) && process.env.SIM_ROLLS !== '0' ? await imp('progress/markRolls.js') : null;
+// THE MARK (rolls rework): ONE function, markRollsCore.markMult({ markId }) — the number wins AND XP per letter
+// pay. Loaded on its own (not via MR) so SIM_ROLLS=0 still scores marks; absent in older trees.
+const MRC = fs.existsSync(path.join(SRC, 'progress', 'markRollsCore.js')) ? await imp('progress/markRollsCore.js') : null;
 const ROLL_SHARE = Number(process.env.SIM_ROLL_SHARE ?? 0.2);
 if (MR && process.env.SIM_SPEC_CUT === '1') {
   const keep = new Set(MR.KEPT_ACHIEVEMENTS);
@@ -417,9 +421,19 @@ function simulate(skill, start = null) {
     const un = MARKS.unlockedMarks(earned);
     if (!un.length) return;
     let best = null, bestV = 0;
-    for (const m of un) {
+    // A mark's value: markRollsCore.markMult (one MARK on wins AND XP) when the tree has it; else the old
+    // per-mode wins factor × markXpMult (guarded — the rolls rework removed markXpMult).
+    const markValue = (id) => {
+      if (MRC && typeof MRC.markMult === 'function') return MRC.markMult({ markId: id });
       let v = 0;
-      for (const [gm, share] of MODE_MIX) v += share * ((MARKS.markWinsFactors({ markId: m.id, mode: PAYOUT_KEY[gm] }).mark || 1) * MARKS.markXpMult(m.id));
+      for (const [gm, share] of MODE_MIX) {
+        const xpM = typeof MARKS.markXpMult === 'function' ? MARKS.markXpMult(id) : 1;
+        v += share * ((MARKS.markWinsFactors({ markId: id, mode: PAYOUT_KEY[gm] }).mark || 1) * xpM);
+      }
+      return v;
+    };
+    for (const m of un) {
+      const v = markValue(m.id);
       if (v > bestV) { bestV = v; best = m.id; }
     }
     // MARK ROLLS: a worn NEW rolled id pays its tier MAIN (no marks.js perk); compare like for like.
@@ -429,7 +443,7 @@ function simulate(skill, start = null) {
       if (st) for (const id of Object.keys(st.marks)) {
         const m = MR.rollMarkById(id);
         if (!m || m.legacy) continue;
-        const v = MR.mainMultOf(id);
+        const v = MRC && typeof MRC.markMult === 'function' ? markValue(id) : MR.mainMultOf(id);
         if (v > bestV) { bestV = v; best = id; rolledBest = id; }
       }
     }
@@ -578,15 +592,22 @@ function simulate(skill, start = null) {
       const prevW = weightSum;
       weightSum += WINS.bankWeight(w, word);
       const before = lv();
+      // v11 (amended): the LETTERS typed for this word fill the bar (a fumbled attempt is letters too).
+      // RR anti-gibberish: in a tree with creditAcceptedWordLetters, TYPED letters (the word + a fumble) pay the
+      // menu share (×0.2) and awardWordXp tops the ACCEPTED word's letters up to full — so a fumble pays ×0.2,
+      // the word's own letters ×1. An older tree credits every typed letter at full, as it shipped.
+      const topUpTree = !!(LX && typeof LX.creditAcceptedWordLetters === 'function');
+      const share = topUpTree && Number.isFinite(XP.MENU_LETTER_SHARE) ? XP.MENU_LETTER_SHARE : 1;
+      const typed = word.length + (missed ? word.length : 0);
+      const lx = LX ? LX.creditLetterXp(typed, { mode, perLetter: share < 1 ? LX.letterXpNow() * share : undefined }) : null;
+      const topUpXp = topUpTree ? XP.roundWordXp(word.length * LX.letterXpNow() * (1 - share)) : 0;
       lastLumpCtx = 'mastery';
       const res = WINS.awardWordXp({ mode, difficulty: diff, wordLength: word.length, weight: w, word });
       lastLumpCtx = null;
-      // v11 (amended): the LETTERS typed for this word fill the bar (a fumbled attempt is letters too)
-      const lx = LX ? LX.creditLetterXp(word.length + (missed ? word.length : 0), { mode }) : null;
       const after = lv();
       {
         // the bar movement of this word as a share of the level it landed on (letters, or main's word XP)
-        const wordBar = Number.isFinite(res.credited) ? res.credited : LX ? 0 : res.gain;
+        const wordBar = Number.isFinite(res.credited) ? res.credited : LX ? topUpXp : res.gain;
         const pctW = (((lx && lx.xp) || 0) + wordBar) / XP.need(before) * 100;
         if (Number.isFinite(pctW) && before < XP.rebirthThreshold(XP.getRebirths())) inRunPct.push(pctW);
         if (after > before) { lastLevelMin = minute - lastLevelT; lastLevelT = minute; }

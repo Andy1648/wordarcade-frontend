@@ -28,6 +28,7 @@ import { starPowerMult } from './stars.js';
 import { setRateBoost, setRebirthKeyKeep } from './xp.js';
 import { addLetters } from './letters.js';
 import { rebirthKeyKeep } from './markPerks.js';
+import { creditAcceptedWordLetters } from './letterXp.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn MARK (markMult — the same number the payout reads).
@@ -595,8 +596,10 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
 
 // ---- THE AWARD ------------------------------------------------------------------------------
 // One accepted word's bookkeeping. PROGRESSION v11 (amended oct3 18:15) — ANDY: "GAME WORDS GIVE WINS ONLY.
-// No XP/bar progress from accepted game words." So this credits NOTHING to the level bar (the bar fills from
-// LETTERS typed — letterXp.js, wired into every game input). It still returns { state, level, leveledUp:
+// No XP/bar progress from accepted game words." The bar fills from LETTERS (letterXp.js, wired into every game
+// input) — typed letters at the menu's ×0.2 share, so the ONLY bar credit here is the accepted word's LETTER
+// TOP-UP to the full rate (creditAcceptedWordLetters: (1 − 0.2) × length × XP per letter). No per-word XP. It
+// still returns { state, level, leveledUp:
 // false, gain, mastery, mark } so its callers are unchanged: `gain` is the word's WINS product in XP units
 // (perWordXp; wins = gain ÷ 10 — bankWordWins pays them), and the mastery / mark / letters bookkeeping and
 // the mastery wins milestone happen here exactly as before. Mastery is read BEFORE the word is credited to
@@ -622,7 +625,9 @@ export function awardWordXp(opts = {}) {
   const mark = mode !== 'menu' ? addMarkWord() : null;
   // LIFETIME LETTERS (leaderboard main stat): every accepted letter in a game.
   if (mode !== 'menu' && Number.isFinite(opts.wordLength) && opts.wordLength > 0) addLetters(opts.wordLength);
-  // (The MID-GAME LEVEL-UP chip now fires from letterXp.js, where in-game letters cross a level.)
+  // The accepted word's letters top up from the typed ×0.2 to the full rate (the anti-gibberish rule). The
+  // MID-GAME LEVEL-UP chip fires from letterXp.js when this (or typed letters) crosses a level.
+  creditAcceptedWordLetters(opts.wordLength, mode);
   return { state, level: state.level, leveledUp: false, gain, mastery, mark };
 }
 

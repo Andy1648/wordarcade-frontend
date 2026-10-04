@@ -31,6 +31,8 @@ import {
   XP_KEY,
   XP_SHADOW_KEY,
   REBIRTH_GATE_KEY,
+  MENU_LETTER_SHARE,
+  roundWordXp,
 } from './xp.js';
 import { migrateEconomyV11 } from './econMigrate.js';
 import { awardWordXp, perWordXp } from './wins.js';
@@ -47,6 +49,7 @@ import {
   MARK_XP_BOOST,
   LETTER_RATE_CAP,
   tryLetterCredit,
+  creditAcceptedWordLetters,
 } from './letterXp.js';
 
 function withStorage(seed, fn) {
@@ -172,17 +175,33 @@ test('rebirth (Rebirth Rush): ×5 XP AND wins a rebirth — R1 ×5, R2 ×25, R10
   withStorage({ 'taw.mark': 'mk-bomber' }, () => assert.ok(markXpBoost() > 1, 'a worn legacy mark boosts letter XP'));
 });
 
-test('awardWordXp credits NOTHING to the bar; it still returns the wins product', () => {
+test('awardWordXp credits ONLY the accepted word letter top-up to the bar; it still returns the wins product', () => {
   withStorage({ 'taw.keytier': '9', 'taw.rebirths': '4', [XP_KEY]: v10(120, 0.3), [XP_SHADOW_KEY]: v10(120, 0.3), 'taw.econ': '11' }, () => {
+    resetLetterXp();
     const opts = { mode: 'word-bomb', difficulty: 'easy', wordLength: 6, weight: 1, word: 'qqqqqq', streakMult: 1 };
+    const topUp = roundWordXp(6 * letterXpNow() * (1 - MENU_LETTER_SHARE));
     const res = awardWordXp(opts);
     assert.equal(res.gain, perWordXp(opts), 'the wins basis is unchanged');
     assert.equal(res.leveledUp, false);
     assert.equal(res.levelXp, undefined);
     assert.equal(res.floor, undefined, 'Option F is gone');
     const p = loadProgress();
+    assert.ok(topUp > 0);
     assert.equal(p.level, 120);
-    assert.ok(close(p.frac, 0.3, 1e-12), 'the bar did not move');
+    assert.ok(close(p.frac - 0.3, topUp / need(120), 1e-9), 'the bar moved by exactly (1 − 0.2) × 6 letters × XP a letter');
+  });
+});
+
+test('in-game GIBBERISH pays the menu ×0.2; an ACCEPTED word tops its letters up to the full rate', () => {
+  withStorage({ 'taw.keytier': '2', 'taw.rebirths': '1', [XP_KEY]: v10(50, 0, 1), [XP_SHADOW_KEY]: v10(50, 0, 1), 'taw.econ': '11' }, () => {
+    resetLetterXp();
+    const full = letterXpNow(); // 250 a letter at T2 R1
+    noteLetters(5, 'chain', 1000); // typed 'water' (or 'qzxkv')
+    assert.equal(flushLetterXp().xp, roundWordXp(5 * full * MENU_LETTER_SHARE), 'typed letters: ×0.2 — no more than the menu');
+    const r = creditAcceptedWordLetters(5, 'chain');
+    assert.equal(r.xp, roundWordXp(5 * full * (1 - MENU_LETTER_SHARE)), 'accepted: the other ×0.8');
+    assert.equal(creditAcceptedWordLetters(5, 'menu'), null, 'menu words never top up');
+    assert.equal(creditAcceptedWordLetters(0, 'chain'), null);
   });
 });
 
@@ -202,7 +221,7 @@ test('LETTERS fill the bar: noteTypedLetters counts a–z added, skips deletions
     }
     assert.equal(loadProgress().intoLevel, 0, 'nothing is written per keystroke');
     const r = flushLetterXp();
-    assert.equal(r.xp, 1250, '5 letters × BASE 10 × KEY T2 ×5 × R1 ×5');
+    assert.equal(r.xp, 250, '5 letters × BASE 10 × KEY T2 ×5 × R1 ×5 × the typed share 0.2 (the word tops up the rest)');
     assert.ok(close(loadProgress().intoLevel, r.xp, 1e-6));
     assert.equal(flushLetterXp(), null, 'an empty flush is a no-op');
   });
@@ -216,7 +235,7 @@ test('LETTERS: ONE anti-mash cap for menu + games — 12 credited letters a roll
     for (let i = 0; i < 60; i++) ok += noteLetters(1, 'chain', 1000);
     assert.equal(ok, 12);
     assert.equal(noteLetters(1, 'chain', 2001), 1, 'the window slides');
-    assert.equal(flushLetterXp().xp, 13 * 10);
+    assert.equal(flushLetterXp().xp, 13 * 10 * MENU_LETTER_SHARE, 'typed letters pay the ×0.2 share');
     // the menu draws on the SAME limiter: a menu key at the same moment is refused once games used the cap
     resetLetterXp();
     for (let i = 0; i < 12; i++) noteLetters(1, 'fuse', 5000);

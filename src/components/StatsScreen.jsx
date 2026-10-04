@@ -34,6 +34,7 @@ import { readRecords, noteLevel } from '../progress/records';
 import * as satLexicon from '../satRush/lexicon';
 import { formatNum, formatMult, formatMultExact, formatRate } from '../format';
 import { markXpBoost, letterXpNow } from '../progress/letterXp';
+import { letterPerkMult } from '../progress/markPerks';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
@@ -183,12 +184,13 @@ export default function StatsScreen({ onBack }) {
   const keyTier = getKeyTier();
   // REBIRTH RUSH: the bar fills from LETTERS — BASE 10 XP / LETTER × KEY × REBIRTH 5^R × MARK × BOOST.
   // Words pay WINS — BASE 10 WINS / WORD (a 5-letter word) × length/5 × MODE × REBIRTH × MARK × BOOST.
-  // GAME XP / LETTER is the price of any letter typed in a game; MENU XP / LETTER is a fifth of that (the
-  // same call the live menu credit makes, BOOST included). Cosmetics are looks only.
+  // XP / LETTER OF YOUR WORDS is the full price — a letter of a word the game ACCEPTED (typed letters pay a fifth
+  // as they're typed; the accepted word tops them up). MENU XP / LETTER is a fifth of that: the SAME expression
+  // the live menu credit runs (useXpCapture — MARK × the DOUBLE LETTERS perk × BOOST). Cosmetics are looks only.
   const markMult = markXpBoost();
   const boostNow = boostMult();
   const gameXp = letterXpNow();
-  const menuXp = xpPerInput({ mode: 'menu', markMult: markMult * boostNow });
+  const menuXp = xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
 
   // TWO different hidden sets, and they are NOT the same thing — so they do not share a heading.
   // `hidden` is the five SECRET-category achievements (thresholds you cross). `secrets` is the five
@@ -211,9 +213,9 @@ export default function StatsScreen({ onBack }) {
     ['BASE WINS / WORD', fmt(BASE_WINS_PER_WORD)],
     ['KEY', `TIER ${fmt(keyTier)} · ×${keyXpMult(keyTier) >= 1000 ? fmt(keyXpMult(keyTier)) : formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
     ['REBIRTH', `${x(rbXp)} XP & WINS`],
-    ['MARK', markMult > 1 ? `+${fmt((markMult - 1) * 100)}% XP` : 'NONE WORN'],
+    ['MARK', markMult > 1 ? `+${fmt((markMult - 1) * 100)}% XP & WINS` : 'NONE WORN'],
     ['BOOST', boostNow > 1 ? `${x(boostNow)} XP & WINS` : 'NONE'],
-    ['GAME XP / LETTER', formatRate(gameXp)],
+    ['XP / LETTER OF YOUR WORDS', formatRate(gameXp)],
     ['MENU XP / LETTER', fmt(menuXp)],
   ];
   const roundsPlayed = [

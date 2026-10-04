@@ -115,7 +115,7 @@ test('THE FROZEN WINS FORMULA: 10 × len/5 × MODE POWER × 5^R × BONUS (in ×1
   assert.ok(Number.isFinite(xpPerWord({ mode: 'sat-rush', rebirthCount: 2000, wordLength: 12, bonusMult: 50 })));
 });
 
-test('awardWordXp credits NO level XP: game words pay WINS only (v11 amended)', () => {
+test('awardWordXp credits NO per-word XP — only the accepted letters top-up (v11 amended, RR anti-gibberish)', () => {
   withStorage({}, () => {
     const before = loadProgress();
     assert.equal(before.level, 1);
@@ -124,7 +124,7 @@ test('awardWordXp credits NO level XP: game words pay WINS only (v11 amended)', 
     assert.equal(res.leveledUp, false);
     const after = loadProgress();
     assert.equal(after.level, 1);
-    assert.equal(after.intoLevel, 0, 'the bar did not move');
+    assert.equal(after.intoLevel, 40, 'the bar moved only by 5 letters × 10 × 0.8 (the typed 0.2 came from the input)');
   });
 });
 

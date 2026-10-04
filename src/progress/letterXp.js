@@ -14,7 +14,11 @@
 //     and schedule ONE flush per animation frame; the flush reads the level state once, credits
 //     letters × XP-per-letter through creditXp, writes once, and fires the mid-game LV chip on a
 //     level-up. So a keystroke costs a counter bump — input latency is untouched.
-import { createRateLimiter, creditXp, loadProgress, saveProgress, levelXpPerLetter, getKeyTier, getRebirths, roundWordXp } from './xp.js';
+//   * TYPED in-game letters credit at MENU_LETTER_SHARE (×0.2, the menu's anti-mash share) — gibberish in a game
+//     input pays no more than gibberish on the menu. When a word is ACCEPTED, its letters top up to the full rate
+//     (creditAcceptedWordLetters, called from wins.js awardWordXp — the one per-accepted-word path every mode
+//     takes): BASE 10 XP / LETTER is what the LETTERS OF YOUR WORDS pay.
+import { createRateLimiter, creditXp, loadProgress, saveProgress, levelXpPerLetter, getKeyTier, getRebirths, roundWordXp, MENU_LETTER_SHARE } from './xp.js';
 import { markMult } from './markRollsCore.js';
 import { MARK_TIERS } from './marks.js';
 import { letterPerkMult } from './markPerks.js';
@@ -23,7 +27,12 @@ import { boostMult } from './boost.js';
 import { notePlay } from './overdrive.js';
 
 // The worn MAIN mark's XP boost by tier (base finish) — the SAME bonus wins get (MARKS via ROLLS: one MARK).
-export const MARK_XP_BOOST = Object.fromEntries(Object.entries(MARK_TIERS).map(([t, v]) => [t, v.bonus]));
+// Read LAZILY (enumerable getters): wins.js imports this module, and marks.js → claims.js → wins.js → here is a
+// cycle, so MARK_TIERS may not be initialised yet while this module evaluates (marks.js loaded first).
+const MARK_TIER_IDS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+export const MARK_XP_BOOST = Object.freeze(
+  Object.defineProperties({}, Object.fromEntries(MARK_TIER_IDS.map((t) => [t, { enumerable: true, get: () => MARK_TIERS[t].bonus }]))),
+);
 
 /** The MARK on XP per letter: markRollsCore.markMult — the one function wins.js reads too. ×1 with nothing
  *  worn on a save that has never rolled. `markId` undefined = the worn mark. Guarded: a failure is ×1. */
@@ -113,7 +122,8 @@ export function noteTypedLetters(prev, next, mode) {
   return n ? noteLetters(n, mode) : 0;
 }
 
-/** Credit everything pending (one storage read + one write). Safe to call any time; returns the result. */
+/** Credit everything pending (one storage read + one write) at the TYPED share (×MENU_LETTER_SHARE — an
+ *  accepted word tops its own letters up to full, creditAcceptedWordLetters). Safe to call any time. */
 export function flushLetterXp() {
   scheduled = false;
   const n = pending;
@@ -121,7 +131,20 @@ export function flushLetterXp() {
   pending = 0;
   if (!n) return null;
   try {
-    return creditLetterXp(n, { mode });
+    return creditLetterXp(n, { mode, perLetter: letterXpNow() * MENU_LETTER_SHARE });
+  } catch {
+    return null;
+  }
+}
+
+/** An ACCEPTED word's letter top-up: its `length` letters already paid the typed share (×MENU_LETTER_SHARE) as
+ *  they were typed, so the word adds the rest — (1 − share) × length × XP per letter — through creditLetterXp.
+ *  Not rate-capped (the word was accepted by the game, not mashed). Menu words never top up. Never throws. */
+export function creditAcceptedWordLetters(length, mode) {
+  try {
+    const n = Number.isFinite(length) && length > 0 ? Math.floor(length) : 0;
+    if (!n || !mode || mode === 'menu') return null;
+    return creditLetterXp(n, { mode, perLetter: letterXpNow() * (1 - MENU_LETTER_SHARE) });
   } catch {
     return null;
   }

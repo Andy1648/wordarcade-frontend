@@ -1254,8 +1254,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             toNext={xpProgress.toNext}
             frac={xpProgress.frac}
             /* LETTERS TO THE NEXT LEVEL (PROGRESSION v11, amended): the bar fills from LETTERS typed — in the
-               menu or in any game — at ONE price, BASE 10 XP / LETTER × KEY × rebirth × the worn mark
-               (letterXp.js letterXpNow). Words pay wins, never XP, so there is no per-mode rate to quote. */
+               menu or in any game — counted at the LETTERS-OF-YOUR-WORDS price, BASE 10 XP / LETTER × KEY × rebirth ×
+               the worn mark (letterXp.js letterXpNow; typed letters pay a fifth until their word is accepted). Words
+               pay wins, never per-word XP, so there is no per-mode rate to quote. */
             lettersToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, letterXpNow())))}
             /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
                caption line that used to sit under the bar — see below. */
