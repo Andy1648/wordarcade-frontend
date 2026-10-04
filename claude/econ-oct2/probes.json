@@ -1,0 +1,96 @@
+[
+ {
+  "name": "base",
+  "patch": []
+ },
+ {
+  "name": "ladder172",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_PAST_LADDER_STEP = 2.15;",
+    "export const KEY_PAST_LADDER_STEP = 1.72;"
+   ]
+  ]
+ },
+ {
+  "name": "cost6",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ]
+  ]
+ },
+ {
+  "name": "ladder172-cost6",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_PAST_LADDER_STEP = 2.15;",
+    "export const KEY_PAST_LADDER_STEP = 1.72;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ]
+  ]
+ },
+ {
+  "name": "gate21",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 21;"
+   ]
+  ]
+ },
+ {
+  "name": "curve117",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const CURVE_GROWTH = 1.15;",
+    "export const CURVE_GROWTH = 1.17;"
+   ]
+  ]
+ },
+ {
+  "name": "ladder172-gate21",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_PAST_LADDER_STEP = 2.15;",
+    "export const KEY_PAST_LADDER_STEP = 1.72;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 21;"
+   ]
+  ]
+ },
+ {
+  "name": "ladder172-cost6-c040",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_PAST_LADDER_STEP = 2.15;",
+    "export const KEY_PAST_LADDER_STEP = 1.72;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 40;"
+   ]
+  ]
+ }
+]
