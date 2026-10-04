@@ -20,6 +20,9 @@ async function openStats(page, query) {
   await page.goto(`/?portal=1${query}`);
   await menuReady(page);
   await navControl(page, 'stats').click();
+  // a save with claims pending (LV10 R2 queues reveals) opens CLAIMS first — Stats is one tap on
+  await page.locator('.stats-panel, .claims-to-stats').first().waitFor({ state: 'visible' });
+  if (await page.locator('.claims-to-stats').isVisible()) await page.locator('.claims-to-stats').click();
   await page.locator('.stats-panel').waitFor({ state: 'visible' });
 }
 
