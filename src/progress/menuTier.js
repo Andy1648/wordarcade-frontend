@@ -117,3 +117,40 @@ export function setSeenTier(t) {
     window.dispatchEvent(new CustomEvent(SCENE_EVENT, { detail: { tier: t } }));
   }
 }
+
+// MILESTONE MOMENTS (claude/specs/milestones.md, dormant behind flagOn('milestones')). LV 10 / 25 /
+// 50 / 100 and every 100 after it ESCALATE the level-up card that already plays — no new card. The
+// size is the only input the card needs: how hard it slams, how long it holds, how many shards it
+// throws (from the existing pool) and how far the level-up chime is pitched up. PURE.
+export const MILESTONE_FX = {
+  S: { peak: 1.12, holdMs: 150, shards: 4, semis: 2 },
+  M: { peak: 1.25, holdMs: 300, shards: 8, semis: 4 },
+  L: { peak: 1.35, holdMs: 450, shards: 12, semis: 5 },
+  XL: { peak: 1.45, holdMs: 600, shards: Infinity, semis: 7 }, // Infinity → the whole shard pool
+};
+/** The longest milestone card's extra time over CARD_MS (XL). */
+export const MILESTONE_MAX_HOLD_MS = 600;
+const MILESTONE_RANK = { S: 1, M: 2, L: 3, XL: 4 };
+
+/** 'S' | 'M' | 'L' | 'XL' for a milestone level, else null. Only these four steps: 150/250 already
+ *  get a tier-up card, and more sizes would flatten the escalation. */
+export function milestoneSize(lv) {
+  const n = Number.isFinite(lv) ? Math.floor(lv) : 0;
+  if (n >= 100 && n % 100 === 0) return 'XL';
+  if (n === 50) return 'L';
+  if (n === 25) return 'M';
+  if (n === 10) return 'S';
+  return null;
+}
+
+/** The BIGGEST milestone crossed going from level `from` (exclusive) to `to` (inclusive), so a
+ *  multi-level jump (48 → 51) still lands the LV50 card. O(1): a jump can span many levels. */
+export function milestoneCrossed(from, to) {
+  const a = Number.isFinite(from) ? Math.floor(from) : 0;
+  const b = Number.isFinite(to) ? Math.floor(to) : 0;
+  if (b <= a) return null;
+  if (b >= 100 && Math.floor(b / 100) > Math.floor(Math.max(a, 99) / 100)) return 'XL'; // a multiple of 100 in (a, b]
+  let best = null;
+  for (const lv of [10, 25, 50]) if (lv > a && lv <= b) best = milestoneSize(lv); // ascending → last wins
+  return best && MILESTONE_RANK[best] ? best : null;
+}
