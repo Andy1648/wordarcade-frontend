@@ -53,6 +53,10 @@ const PATH_TO_QUERY = {
   // The two room-based modes: one param naming the mode, read by LAUNCH_INTENT.play.
   '/word-bomb/play': 'play=word-bomb',
   '/category-blitz/play': 'play=category-blitz',
+  // WORD RACE challenge link (/race/play?vs=&t=&n=, race/challenge.js): `race=1` is the existing
+  // race on-switch (race/config.js), `play=race` the launch intent App reads to send the EXISTING
+  // quick match once the socket opens. No landing page: /race/play falls through to the SPA.
+  '/race/play': 'race=1&play=race',
   // Fallback only (shadowed by the landing pages in production — see the note above).
   '/sat-rush': 'satRush=1&satrush=1',
   '/chain': 'chain=1',

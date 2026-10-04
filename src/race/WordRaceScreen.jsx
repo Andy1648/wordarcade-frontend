@@ -18,6 +18,21 @@ import NearMiss from '../components/NearMiss';
 import MatchWinBanner, { hasHumanRival } from '../components/MatchWinBanner';
 import { RACE_REASON_COPY, precheck, myFragment } from './raceState';
 import { formatNum, plural } from '../format';
+import { flagOn } from '../lib/featureFlags';
+import { track } from '../lib/analytics';
+import { getMyProfile } from '../leaderboard/client';
+import {
+  readChallenge,
+  saveChallenge,
+  clearChallenge,
+  chipText,
+  challengeVerdict,
+  senderResult,
+  buildChallengeUrl,
+  shareText,
+  cleanName,
+  FALLBACK_NAME,
+} from './challenge';
 import './WordRace.css';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
@@ -78,6 +93,15 @@ export default function WordRaceScreen({
   const nextFragment = me && race ? race.fragments[myIndex + 1] || null : null;
   const upcoming = wordsMode && race ? race.fragments.slice(myIndex + 1, myIndex + 5) : [];
   const used = useMemo(() => new Set(race?.myWords || []), [race?.myWords]);
+
+  // CHALLENGE LINK (race/challenge.js, spec challenge-link.md v1). A RECEIVED challenge always works
+  // (no flag): read once from the boot stash. It lives for ONE race — the race it was opened for —
+  // and is display only: never a racer, never in standings, never a rival for the winner bonus.
+  const [challenge, setChallenge] = useState(() => readChallenge());
+  const challengeSeedRef = useRef(null);
+  const [shareLabel, setShareLabel] = useState(null);
+  const shareTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(shareTimerRef.current), []);
 
   const goIn = race?.goAt ? race.goAt - now : 0;
   const counting = status === 'countdown' && goIn > 0;
@@ -168,6 +192,58 @@ export default function WordRaceScreen({
   const myPlace = standings.find((s) => s.id === myId)?.place || null;
   const iWon = !!over && over.winnerId === myId;
 
+  // Challenge lifetime: bind it to the first race seen; on that race's end clear the stash (the
+  // verdict stays on screen); a later race (rematch) drops it.
+  useEffect(() => {
+    if (!challenge || !seed) return;
+    if (challengeSeedRef.current == null) {
+      challengeSeedRef.current = seed;
+      if (!challenge.opened) {
+        saveChallenge({ ...challenge, opened: true });
+        track('challenge_open', { n: challenge.n, sameTarget: challenge.n === target });
+      }
+    } else if (challengeSeedRef.current !== seed) {
+      setChallenge(null);
+    }
+  }, [challenge, seed, target]);
+  useEffect(() => {
+    if (challenge && status === 'over') clearChallenge();
+  }, [challenge, status]);
+
+  const myStanding = over ? standings.find((s) => s.id === myId) || null : null;
+  const sent = senderResult(myStanding);
+  const verdict = over && challenge
+    ? challengeVerdict(challenge, { words: myStanding?.words || 0, ms: myStanding?.reachedAt || 0 }, target)
+    : null;
+  // The sender button is the only flag-gated piece; SEND IT BACK (a received link) always shows.
+  const canChallenge = !!sent && (!!verdict || flagOn('challenge'));
+
+  async function shareChallenge(source) {
+    if (!sent) return;
+    const profile = getMyProfile();
+    const vs = cleanName(profile?.username) || FALLBACK_NAME;
+    const url = buildChallengeUrl({ vs, t: sent.t, n: sent.n });
+    if (!url) return;
+    const text = shareText(sent, formatNum);
+    track('challenge_share', { source, n: sent.n });
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ text, url });
+        return;
+      }
+    } catch {
+      /* cancelled / unsupported — fall through to the clipboard */
+    }
+    try {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      setShareLabel('COPIED');
+      clearTimeout(shareTimerRef.current);
+      shareTimerRef.current = setTimeout(() => setShareLabel(null), 1600);
+    } catch {
+      /* clipboard blocked — nothing else to offer */
+    }
+  }
+
   const rejectCopy = result && !result.accepted
     ? result.reason === 'missing_combo' && result.fragment
       ? `NEEDS "${result.fragment.toUpperCase()}"`
@@ -178,6 +254,11 @@ export default function WordRaceScreen({
     <div className="wr-root wall-surface" data-race-status={status}>
       <header className="wr-head">
         <span className="wr-chip">WORD RACE</span>
+        {challenge && (
+          <span className="wr-chip wr-chip-challenge" data-testid="challenge-chip">
+            {chipText(challenge, target, formatNum)}
+          </span>
+        )}
         <span className="wr-clock" aria-label="Time left">
           {status === 'over' ? 'FINISHED' : clockText(timeLeft)}
         </span>
@@ -309,11 +390,17 @@ export default function WordRaceScreen({
               <h2 className="wr-over-title">
                 {iWon ? 'YOU WIN!' : over.winnerId ? `${ordinal(myPlace || standings.length)} PLACE` : 'NO FINISHERS'}
               </h2>
-              <p className="wr-over-why">
-                {over.reason === 'finish' && 'FIRST TO ' + target + ' WORDS'}
-                {over.reason === 'cap' && 'TIME — MOST WORDS WINS'}
-                {over.reason === 'forfeit' && 'THE FIELD LEFT'}
-              </p>
+              {verdict ? (
+                <p className={`wr-over-why wr-verdict${verdict.win ? ' is-win' : ''}`} data-testid="challenge-verdict">
+                  {verdict.text}
+                </p>
+              ) : (
+                <p className="wr-over-why">
+                  {over.reason === 'finish' && 'FIRST TO ' + target + ' WORDS'}
+                  {over.reason === 'cap' && 'TIME — MOST WORDS WINS'}
+                  {over.reason === 'forfeit' && 'THE FIELD LEFT'}
+                </p>
+              )}
             </div>
           </div>
           <ol className="wr-standings">
@@ -341,6 +428,16 @@ export default function WordRaceScreen({
             <button type="button" className="wr-btn wr-btn-ghost" onClick={onLeave}>
               MENU
             </button>
+            {canChallenge && (
+              <button
+                type="button"
+                className="wr-btn wr-btn-go wr-btn-challenge"
+                data-testid="challenge-send"
+                onClick={() => shareChallenge(verdict ? 'send_back' : 'results')}
+              >
+                {shareLabel || (verdict ? 'SEND IT BACK' : 'CHALLENGE A FRIEND')}
+              </button>
+            )}
           </div>
           {/* NEAR-MISS (dormant, ?nearmiss=1): race has no claim prompt, so it takes the same slot
               under the exits; tapping it is RACE AGAIN. */}
