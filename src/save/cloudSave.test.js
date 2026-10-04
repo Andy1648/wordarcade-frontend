@@ -63,8 +63,8 @@ test('backup sends the export + score, throttled', async () => {
   }
 });
 
-// v11 (018_econ_v11.sql): econ: true = the client's own version (11); a number = the p_econ the server takes.
-test('v11: econ caps route the backup to lb_save2 and the restore to lb_load2, with p_econ = 11', async () => {
+// Rebirth Rush (018_rebirth_rush.sql): econ: true = the client's own version (12); a number = the p_econ the server takes.
+test('RR: econ caps route the backup to lb_save2 and the restore to lb_load2, with p_econ = 12', async () => {
   const cloud = withStorage({ 'taw.xp': xp(70), 'taw.rebirths': '1' }, () => exportSave());
   await withStorage({ 'taw.xp': xp(2) }, async (m) => {
     const calls = [];
@@ -76,16 +76,17 @@ test('v11: econ caps route the backup to lb_save2 and the restore to lb_load2, w
     const r = await restoreIfAhead({ rpc, secret: 's'.repeat(48), econ: true });
     assert.equal(r.restored, true);
     assert.deepEqual(calls.map((c) => c.fn), ['lb_save2', 'lb_load2']);
-    assert.equal(calls[0].body.p_econ, 11);
-    assert.equal(calls[1].body.p_econ, 11);
+    assert.equal(calls[0].body.p_econ, 12);
+    assert.equal(calls[1].body.p_econ, 12);
     assert.equal(m.has('taw.econ'), false, 'the blob had no stamp → the local one is removed so the migration re-runs');
   });
 });
 
-test('v11: the client sends what the server takes — 018 → 11, only 016 → 10, neither → the old RPCs', async () => {
-  assert.equal(ECON_RPC_VERSION, 11);
-  assert.equal(econRpcArg(11), 11);
-  assert.equal(econRpcArg(12), 11, 'never more than the client speaks');
+test('RR: the client sends what the server takes — 018 → 12, only 016/017 → 10, neither → the old RPCs', async () => {
+  assert.equal(ECON_RPC_VERSION, 12);
+  assert.equal(econRpcArg(12), 12);
+  assert.equal(econRpcArg(13), 12, 'never more than the client speaks');
+  assert.equal(econRpcArg(11), 10, 'no server reports 11 (v11 018 never ran) — falls back like any 016-era value');
   assert.equal(econRpcArg(10), 10, 'before Andy runs 018: 016 accepts 10 only');
   assert.equal(econRpcArg(undefined), 0);
   assert.equal(econRpcArg(null), 0);

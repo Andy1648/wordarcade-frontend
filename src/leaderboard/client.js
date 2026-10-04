@@ -148,7 +148,7 @@ export function boardCaps() {
   if (!LEADERBOARD_ENABLED) return Promise.resolve({ letters: false, cjk: false });
   if (!capsPromise) {
     capsPromise = rpc('lb_caps', {})
-      // econ: the p_econ to send (cloudSave econRpcArg) — 11 once 018_econ_v11.sql runs, 10 with only 016
+      // econ: the p_econ to send (cloudSave econRpcArg) — 12 once 018_rebirth_rush.sql runs, 10 with only 016/017
       // (the version-gated lb_submit3 / lb_save2 / lb_load2 exist), 0 = neither (old RPCs)
       // boardEcon: 017_board_reality.sql — the board views carry `econ` (which economy a row last submitted on)
       .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud), weekly: !!(c && c.weekly), econ: econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ) }))
@@ -347,7 +347,10 @@ let econColBroken = false;
 /** True when a board row's wins/word is from the CURRENT economy (or the DB can't say yet — pre-017). */
 export function rowEconCurrent(row) {
   if (!row || row.econ === undefined || row.econ === null) return true; // pre-017: no econ column to judge by
-  // v11 left WINS untouched, so a row last submitted on v10 still has a current wins/word.
+  // v11 left WINS untouched, so a row last submitted on v10 still has a current wins/word. Rebirth Rush (econ 12)
+  // deliberately keeps this at >= 10: RR wins only go UP (×5^R), so a 10/11 row shows a LOWER, never an inflated,
+  // number until its next submit (the "—" exists for stale-high values like XAVI's 1e9); and an RR client on a
+  // server without 018 writes RR numbers stamped econ 10, which gating on 12 would hide.
   return Number(row.econ) >= ECON_RPC_VERSION_V10;
 }
 export async function fetchBoard(limit = BOARD_SIZE) {

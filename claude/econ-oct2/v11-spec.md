@@ -146,7 +146,7 @@ level per word's letters (median, LV1–400).
      letters only), so it is bounded by playing; not in the sim.
 2. **ECON RPC 11.** `cloudSave.ECON_RPC_VERSION = 11`; the client sends the p_econ the server reports
    (`econRpcArg`): 018 run → 11; only 016 → 10 (as before, so the client works until Andy runs 018);
-   neither → the old RPCs. `supabase/migrations/018_econ_v11.sql` (WRITE ONLY): lb_submit3 / lb_save2 /
+   neither → the old RPCs. `supabase/migrations/018_econ_v11.sql` (WRITE ONLY; never run — superseded by `018_rebirth_rush.sql`, which gates on econ 12): lb_submit3 / lb_save2 /
    lb_load2 accept **p_econ = 11 ONLY**, lb_caps reports econ 11 (+ board_econ). 10 is NOT accepted: a stale
    v10 tab's board writes are clamped and monotone, but its cloud SAVE would still be stored on an equal or
    higher score and copied to other devices by a restore. A v11 tab opened before 018 runs sends 10 until
