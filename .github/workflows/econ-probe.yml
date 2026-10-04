@@ -40,7 +40,8 @@ jobs:
       - name: Probe ${{ matrix.name }}
         run: |
           export SIM_PATCH="$(node -e "const p=require('./claude/econ-oct2/probes.json').find((x) => x.name === process.argv[1]); console.log(JSON.stringify(p.patch))" '${{ matrix.name }}')"
-          SIM_ROLLS=0 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=probe --hours=10 --no-masher | tee probe.txt
+          ROLLS=0; case '${{ matrix.name }}' in *-rolls) ROLLS=1;; esac
+          SIM_ROLLS=$ROLLS SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=probe --hours=10 --no-masher | tee probe.txt
           {
             echo '## ${{ matrix.name }}'
             echo '```'
