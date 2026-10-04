@@ -17,7 +17,12 @@ import {
   LEVEL_XP_PER_LETTER,
   xpPerInput,
   need,
+  WINS_BASIS_PER_LETTER,
 } from '../progress/xp';
+import { boostMult } from '../progress/boost';
+
+// BASE 10 WINS / WORD: the wins basis of a 5-letter word (WINS_BASIS_PER_LETTER is in XP units, ÷10 = wins).
+const BASE_WINS_PER_WORD = (WINS_BASIS_PER_LETTER * 5) / 10;
 import { getChainRuns, getFuseRuns } from '../solo/shared.js';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
@@ -68,7 +73,7 @@ function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
       wide: true,
       locked: !rec.rarest,
       value: rec.rarest ? rec.rarest.word.toUpperCase() : '',
-      sub: rec.rarest ? `${rec.rarest.band} ${x(rec.rarest.mult)}` : '',
+      sub: rec.rarest ? rec.rarest.band : '', // the band only — rarity pays no ×N (Rebirth Rush)
       req: 'ACCEPT A WORD',
     },
     // H6/M6: the in-run combo is a COMBO; STREAK means the daily streak (the row below).
@@ -176,13 +181,14 @@ export default function StatsScreen({ onBack }) {
 
   const rbXp = rebirthXpMult(rebirths);
   const keyTier = getKeyTier();
-  // PROGRESSION v11 (amended): the bar fills from LETTERS — BASE 10 XP / LETTER × KEY (×1.2 a tier) ×
-  // rebirth ×(1+R) × the worn mark. Words pay WINS only. GAME XP / LETTER is the price of any letter typed
-  // in a game; MENU XP / LETTER is a fifth of that (menu letters are the slow lane — matches the live keystroke
-  // pop). Cosmetics are looks only: they never multiply XP.
+  // REBIRTH RUSH: the bar fills from LETTERS — BASE 10 XP / LETTER × KEY × REBIRTH 5^R × MARK × BOOST.
+  // Words pay WINS — BASE 10 WINS / WORD (a 5-letter word) × length/5 × MODE × REBIRTH × MARK × BOOST.
+  // GAME XP / LETTER is the price of any letter typed in a game; MENU XP / LETTER is a fifth of that (the
+  // same call the live menu credit makes, BOOST included). Cosmetics are looks only.
   const markMult = markXpBoost();
+  const boostNow = boostMult();
   const gameXp = letterXpNow();
-  const menuXp = xpPerInput({ mode: 'menu', markMult });
+  const menuXp = xpPerInput({ mode: 'menu', markMult: markMult * boostNow });
 
   // TWO different hidden sets, and they are NOT the same thing — so they do not share a heading.
   // `hidden` is the five SECRET-category achievements (thresholds you cross). `secrets` is the five
@@ -198,14 +204,15 @@ export default function StatsScreen({ onBack }) {
     ['XP INTO LEVEL', `${fmt(intoLevel)} / ${fmt(need(level))}`],
     ['WINS BALANCE', getWins()],
   ];
-  // The XP stack, term by term, then the products. Words pay WINS — no XP row is per word.
+  // Exactly the named terms (Rebirth Rush), then the products. KEY is XP only; REBIRTH / MARK / BOOST
+  // multiply XP and WINS alike.
   const multipliers = [
     ['BASE XP / LETTER', fmt(LEVEL_XP_PER_LETTER)],
-    ['KEY POWER', `TIER ${fmt(keyTier)} · ×${formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
-    // v11 CURVE CHANGE: the REBIRTH term of the XP stack is the exploding rebirth XP boost (wins keep ×(1+R))
-    ['REBIRTH', `${x(rbXp >= 10 ? Math.round(rbXp) : rbXp)} XP`],
+    ['BASE WINS / WORD', fmt(BASE_WINS_PER_WORD)],
+    ['KEY', `TIER ${fmt(keyTier)} · ×${keyXpMult(keyTier) >= 1000 ? fmt(keyXpMult(keyTier)) : formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
+    ['REBIRTH', `${x(rbXp)} XP & WINS`],
     ['MARK', markMult > 1 ? `+${fmt((markMult - 1) * 100)}% XP` : 'NONE WORN'],
-    ['WORDS', 'PAY WINS'],
+    ['BOOST', boostNow > 1 ? `${x(boostNow)} XP & WINS` : 'NONE'],
     ['GAME XP / LETTER', formatRate(gameXp)],
     ['MENU XP / LETTER', fmt(menuXp)],
   ];

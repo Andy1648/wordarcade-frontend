@@ -208,16 +208,15 @@ async function frameCheck(page) {
         xp: xpEl ? xpEl.textContent.replace(/[^0-9.KMB]/g, '') : null,
         baseText: baseEl ? baseEl.textContent.trim() : null,
         // THE BASE, PARSED OUT OF WHAT THE PLAYER IS SHOWN. It used to be a bare "BASE 5" the
-        // panel printed and this probe read back; it is now "BASE 10 / LETTER × 5 LETTERS", so the number is
+        // panel printed and this probe read back; it is now "BASE 10 WINS × 5/5 LETTERS", so the number is
         // recovered from its own terms. That makes the PAID check below stronger, not weaker: it
         // now proves the printed sentence multiplies out to the printed total.
         base: (() => {
           const t = baseEl ? baseEl.textContent.trim() : '';
-          // "BASE 10 / LETTER × 5 LETTERS" (less-is-more: the word BASE leads)
-          // v11 (amended): the base is in WINS — "BASE 1 WINS / LETTER × 5 LETTERS"
-          const mm = t.match(/BASE\s+([\d,.]+)\s*(?:WINS?\s*)?\/\s*LETTER\s+.\s+([\d,]+)\s+LETTERS?/i);
+          // REBIRTH RUSH: "BASE 10 WINS × 7/5 LETTERS" — BASE 10 WINS a 5-letter word, scaled by length/5.
+          const mm = t.match(/BASE\s+([\d,.]+)\s*WINS?\s+.\s+([\d,]+)\s*\/\s*5\s+LETTERS?/i);
           if (!mm) return null;
-          return Number(mm[1].replace(/,/g, '')) * Number(mm[2].replace(/,/g, ''));
+          return (Number(mm[1].replace(/,/g, '')) * Number(mm[2].replace(/,/g, ''))) / 5;
         })(),
         rows,
         title: (document.querySelector('.game-title') || {}).textContent,
@@ -291,7 +290,7 @@ for (const vp of FRAME_VIEWPORTS) {
     // round to a ten, divide back. The base itself comes from the "BASE M / LETTER × N LETTERS" the panel
     // prints, so this checks the sentence the player reads, term by term.
     const product = m.rows.reduce((a, r) => a * r.m, 1);
-    expect(m.base, 'the receipt must name its base as letters × per-letter').toBeGreaterThan(0);
+    expect(m.base, 'the receipt must name its base as BASE 10 WINS × length/5').toBeGreaterThan(0);
     const want = Math.round((m.base * product * 10) / 10) / 10 * 10;
     expect(Math.abs(Number(m.paid.replace(/[^0-9.]/g, '')) - want), `PAID ${m.paid} vs base x rows ${want}`).toBeLessThanOrEqual(10);
     // (2b) NO XP ON A GAME RECEIPT (PROGRESSION v11, amended): a word pays WINS only; letters fill the bar.

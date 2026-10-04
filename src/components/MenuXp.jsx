@@ -14,7 +14,6 @@ import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank, markMainMult, markTier } from '../progress/marks';
-import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
 
@@ -323,22 +322,19 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         )
       )}
       {/* DAILY STREAK — a real treatment from 2 days (Job 10), not a bare chip: a flame
-          banner carrying the day count, the XP multiplier it's worth, and any earned
+          banner carrying the day count (a count only — no multiplier in Rebirth Rush) and any earned
           FREEZE tokens (❄) shown BEFORE they're needed. The milestone tier (2/3/7/14/30)
           escalates the styling via data-tier so 30 days looks nothing like 2. */}
       {variant !== 'mini' && Number(streak) >= 2 && (
         <span
           className="menu-streak"
           data-tier={streakTier(streak)}
-          aria-label={`${streak} day streak, ${formatMult(streakMultiplier(streak))} wins${freezes > 0 ? `, ${freezes} freeze token${freezes === 1 ? '' : 's'}` : ''}`}
+          aria-label={`${streak} day streak${freezes > 0 ? `, ${freezes} freeze token${freezes === 1 ? '' : 's'}` : ''}`}
         >
           <span className="menu-streak-flame" aria-hidden="true">🔥</span>
           <span className="menu-streak-count">{formatNum(streak)}</span>
           <span className="menu-streak-day" aria-hidden="true">DAY{Number(streak) === 1 ? '' : 'S'}</span>
-          {streakMultiplier(streak) > 1 && (
-            /* v11: the streak multiplies WINS (letters fill the bar; the streak is not in letter XP). formatMult carries the "×". */
-            <span className="menu-streak-mult" aria-hidden="true" title="On every word's wins">{formatMult(streakMultiplier(streak))}</span>
-          )}
+          {/* Rebirth Rush: the streak is a COUNT only — it multiplies neither XP nor wins, so no "×" chip. */}
           {freezes > 0 && (
             <span className="menu-streak-freeze" aria-hidden="true" title={`${freezes} freeze token${freezes === 1 ? '' : 's'} — a missed day is forgiven`}>
               {/* H2d: a COUNT of tokens, not a multiplier — "❄2", never "❄×2". */}

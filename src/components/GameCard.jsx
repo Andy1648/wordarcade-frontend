@@ -267,11 +267,11 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // formatMultExact — the RECEIPT's formatter. The one-decimal formatMult printed ×2.02 as ×2 and
   // ×1.05 as ×1.1: a multiplier the game does not apply (fix/payout-honesty).
   // Andy oct2: the MODE factor is now said by the perk line (POWER ×N), so the tag is what the
-  // PLAYER has built — rebirth, streak, marks, mastery — and a fresh player sees no tag at all.
+  // PLAYER has built — REBIRTH × MARK × BOOST (Rebirth Rush) — and a fresh player sees no tag at all.
   // H6 audit M2: the tag says what it is — "(×69.06 BONUS)", with the stack it multiplies in the tooltip.
   const built = rateNow ? rateNow.mult / (rateNow.factors.mode || 1) : 1;
   const multTag = rateNow && Math.abs(built - 1) > 1e-9 && (
-    <span className="game-card-payout-mult" title="YOUR BONUS: rebirths × streak × marks × mastery × stars"> (×{formatMultExact(built)}<span className="game-card-bonus-word"> BONUS</span>)</span>
+    <span className="game-card-payout-mult" title="YOUR BONUS: REBIRTH × MARK × BOOST"> (×{formatMultExact(built)}<span className="game-card-bonus-word"> BONUS</span>)</span>
   );
   // PROGRESSION v11: the card's number is WINS / WORD (words pay WINS only); the tail says what fills the
   // level bar — "BASE 10 XP / LETTER" (every letter typed, × KEY / rebirth / mark in Stats and the shop).

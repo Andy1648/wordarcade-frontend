@@ -6,7 +6,6 @@
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
-import { layerOpen } from './claims.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` is a LEGACY field: PROGRESSION v11 (review
 // round 2) made cosmetics LOOKS ONLY — xpPerInput ignores it and no copy quotes it (it was "+N% MENU XP",
@@ -193,8 +192,8 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
-  // LETTER FORGE — uncapped, so there is always a next forge to buy (once it has been revealed).
-  if ((layerOpen('forge') || forgeBuys() > 0) && bal >= forgeCost(forgeBuys())) return true;
+  // LETTER FORGE is NOT counted: Rebirth Rush took it off the shelf (not in the wins formula), so it
+  // must not light the dot for something the shop no longer sells.
   // Themes are NOT counted: they left the shop in STEP 50 (worlds), so a "buyable" theme lit the dot
   // with nothing on the shelf (Andy oct2 A5 — a 60-win balance showed a dot for MIDNIGHT).
   return false;

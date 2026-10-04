@@ -8,33 +8,32 @@
 //   WINS  taw.wins (+ taw.winsCarry tenths) delta  ==  the receipt's "+N WINS"  ==  the card's
 //         WINS / WORD quote × what the card cannot know
 //
-// WHICH QUOTE THE CARD IS MAKING. The menu card (GameCard) calls perWordRateNow() with NO
-// difficulty — it quotes a 5-letter COMMON word on CHILL, with the player's permanent stack
-// (mode, rebirth, streak, momentum/mark/mastery as BONUS). So:
-//   - DIFFICULTY is not on the menu card. It is picked later, in the room. The in-game LiveStack
-//     (the receipt slot before the first word) IS difficulty-aware, and is checked against
-//     card × DIFFICULTY_MULT here, so HELL's ×2 is quoted somewhere before the player pays it.
-//   - COMBO (+0.1 per consecutive accept, so the FIRST word is already ×1.1), RARITY, LENGTH and
-//     LUCKY are per-word: no card can know them. The receipt names each one; the spec multiplies
-//     the card quote by exactly the per-word rows the receipt names, and fails on anything else.
+// REBIRTH RUSH (PROGRESSION FINAL): WINS / word = BASE 10 × length/5 × MODE × REBIRTH × MARK × BOOST.
+// The menu card (GameCard) calls perWordRateNow() — a 5-letter word with the player's whole stack. So:
+//   - DIFFICULTY no longer pays: HELL is quoted and paid exactly what CHILL is (DIFF_MULT is ×1 for
+//     both, and the in-game LiveStack must equal the card on every tier).
+//   - The LETTER FORGE (the old MOMENTUM seed migrates into it) no longer pays: a forged save is
+//     quoted and paid exactly what a fresh one is.
+//   - COMBO / RARITY / LENGTH-bonus / LUCKY are not in the formula, so the receipt names NONE of them;
+//     every receipt row must be one of the named terms, and the receipt must equal the card quote.
 //   - The 3-word GATE: words 1-2 bank no wins (receipt says HELD); word 3 releases all three.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { need } from '../src/progress/xp.js';
 
 const ME = 'e2e-player';
-// 5 letters (the card's reference length) and COMMON (rarity ×1), so the only per-word factor the
-// receipt should name is COMBO (and LUCKY, on the 1-in-40 word that draws it).
+// 5 letters (the card's reference length), so length/5 = 1 and every word is worth exactly the quote.
 const WORDS = ['water', 'house', 'money', 'world', 'paper'];
-const DIFF_MULT = { chill: 1, hard: 2 };
+const DIFF_MULT = { chill: 1, hard: 1 }; // Rebirth Rush: difficulty pays nothing
 const SETUPS = [
   { diff: 'chill', label: 'CHILL', momentum: 0 },
   { diff: 'chill', label: 'CHILL', momentum: 10 },
   { diff: 'hard', label: 'HELL', momentum: 0 },
   { diff: 'hard', label: 'HELL', momentum: 10 },
 ];
-const PERMANENT = new Set(['MODE', 'DIFFICULTY', 'REBIRTH', 'STREAK', 'BONUS']);
-const PER_WORD = new Set(['COMBO', 'LUCKY', 'FORGE']); // what the card legitimately cannot know (FORGE depends on the word's letters)
+// The ONLY rows a receipt may name — the formula's named terms.
+const PERMANENT = new Set(['MODE', 'REBIRTH', 'MARK', 'BOOST', 'FRENZY']);
+const PER_WORD = new Set([]); // nothing per-word pays any more (no COMBO / LUCKY / RARITY / FORGE)
 
 const num = (s) => Number(String(s).replace(/[^0-9.]/g, ''));
 
@@ -56,8 +55,8 @@ for (const s of SETUPS) {
       localStorage.setItem('taw.seenMenu', '1');
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.seenGameSpotlight', '1');
-      // Andy oct2: MOMENTUM became the LETTER FORGE; an old momentum count migrates buy-for-buy, so
-      // this seed now means "N forged letters" and the receipt carries a per-word FORGE row.
+      // An old MOMENTUM count migrates buy-for-buy into the LETTER FORGE — which Rebirth Rush no longer
+      // pays, so this seed must change NOTHING on the card or the receipt.
       localStorage.setItem('taw.momentum', String(momentum));
     }, s.momentum);
     await page.goto('/?portal=1');
@@ -72,6 +71,9 @@ for (const s of SETUPS) {
     // v11 (amended): the card says what fills the bar — "BASE 10 XP / LETTER" — beside its WINS / WORD.
     await expect(perkEl).toContainText('BASE 10 XP / LETTER');
     const cardWins = num((await winsEl.innerText()).split('WINS')[0]);
+    // A fresh save (R0, no mark, no boost) at Word Bomb (MODE ×1): exactly BASE 10 WINS / WORD — the forge
+    // seed adds nothing.
+    expect(cardWins, 'BASE 10 WINS / WORD on a fresh Word Bomb card').toBe(10);
     const cardXp = cardWins * 10;
 
     const readLedger = () => page.evaluate(() => {
@@ -105,7 +107,8 @@ for (const s of SETUPS) {
     });
     myTurn();
 
-    // THE DIFFICULTY-AWARE QUOTE: the LiveStack in the receipt slot before the first word.
+    // THE IN-GAME QUOTE: the LiveStack in the receipt slot before the first word — the same as the card on
+    // every difficulty (Rebirth Rush: difficulty pays nothing).
     const lstack = page.locator('.wb-receipt-rail .lstack-rate');
     await expect(lstack).toBeVisible();
     const stackWins = num(await lstack.innerText());
@@ -134,16 +137,21 @@ for (const s of SETUPS) {
           xp: r.querySelector('.payout-headline-xp'),
           wins: r.querySelector('.payout-headline-wins').textContent,
           held: !!r.querySelector('.payout-held'),
-          base: r.querySelector('.payout-term--base').textContent, // "BASE 1 WINS / LETTER × 5 LETTERS"
+          base: r.querySelector('.payout-term--base').textContent, // "BASE 10 WINS × 5/5 LETTERS"
 
           terms,
         };
       });
       const receiptWins = num(receipt.wins.split('WINS')[0]);
-      const [perLetter, letters] = receipt.base.split('×').map(num);
+      // "BASE 10 WINS × 5/5 LETTERS" → BASE 10 wins scaled by letters/5
+      const [basePart, lenPart] = receipt.base.split('×');
+      const baseWins = num(basePart);
+      const letters = num(String(lenPart).split('/')[0]);
+      expect(baseWins, 'the receipt names BASE 10 WINS').toBe(10);
+      const wordBaseWins = (baseWins * letters) / 5;
 
       const unknown = receipt.terms.filter((t) => !PERMANENT.has(t.k) && !PER_WORD.has(t.k));
-      expect(unknown, `word "${WORDS[i]}": receipt names a factor this spec did not plan for (rarity / length / cap?)`).toEqual([]);
+      expect(unknown, `word "${WORDS[i]}": receipt names a factor that does not pay (combo / rarity / lucky / streak / difficulty / forge?)`).toEqual([]);
       const perm = receipt.terms.filter((t) => PERMANENT.has(t.k)).reduce((a, t) => a * t.v, 1);
       const perWord = receipt.terms.filter((t) => PER_WORD.has(t.k));
       const perWordMult = perWord.reduce((a, t) => a * t.v, 1);
@@ -173,7 +181,7 @@ for (const s of SETUPS) {
       expect(awardedXp, `word "${WORDS[i]}": a game WORD moves the bar by 0 XP`).toBe(0);
       expect(receipt.xp, `word "${WORDS[i]}": no XP line on a game receipt`).toBeNull();
       expect(receiptWinsXp, `word "${WORDS[i]}": receipt WINS × 10 == card quote ${quote} × ${perWord.map((t) => `${t.k} ×${t.v}`).join(' ')}`).toBe(expected);
-      expect(perm, `word "${WORDS[i]}": receipt's permanent stack == the setup's quoted multiplier`).toBeCloseTo(quote / (letters * perLetter * 10), 6); // the base is in WINS (× 10 = XP units)
+      expect(perm, `word "${WORDS[i]}": receipt's permanent stack == the setup's quoted multiplier`).toBeCloseTo(quote / (wordBaseWins * 10), 6); // the base is in WINS (× 10 = XP units)
       expect(receipt.held, `word ${n}: HELD caption iff the 3-word gate holds it`).toBe(n < 3);
       expect(bankedTenths / 10, `word ${n} "${WORDS[i]}": wins banked (incl. carried tenths)`).toBeCloseTo(expectTenths / 10, 6);
     }

@@ -22,11 +22,11 @@ test('solo: RARE outranks the tier slam; the tier says itself (not repeated in l
   assert.deepEqual(r.labels, []);
 });
 
-test('solo: clutch + lucky + obscure: clutch plays, LUCKY ×5 and OBSCURE are tags, no rarity pop', () => {
+test('solo: clutch + lucky + obscure: clutch plays, LUCKY and OBSCURE are tags, no rarity pop', () => {
   const r = soloWordSlot({ clutch: true, luckyMult: 5, rarity: { band: 'OBSCURE', announce: true } });
   assert.equal(r.main, 'clutch');
   assert.equal(r.showRarity, false);
-  assert.deepEqual(r.labels, ['LUCKY ×5', 'OBSCURE']);
+  assert.deepEqual(r.labels, ['LUCKY', 'OBSCURE']);
 });
 
 test('solo: a COMMON, unlucky, no-tier word is plain hype with nothing extra', () => {
@@ -83,8 +83,8 @@ test('isOutranked: the tier slam steps aside for clutch / lucky / rare only', ()
 
 test('tag labels are short caps and name the real factor', () => {
   assert.equal(tagLabel('clutch'), 'CLUTCH');
-  assert.equal(tagLabel('lucky', { luckyMult: 5 }), 'LUCKY ×5');
-  assert.equal(tagLabel('lucky'), 'LUCKY ×5');
+  assert.equal(tagLabel('lucky', { luckyMult: 5 }), 'LUCKY'); // Rebirth Rush: no ×N — lucky pays no multiplier
+  assert.equal(tagLabel('lucky'), 'LUCKY');
   assert.equal(tagLabel('rare', { band: 'obscure' }), 'OBSCURE');
   assert.equal(tagLabel('tier', { tierLabel: 'on fire' }), 'ON FIRE');
   assert.equal(tagLabel('hype'), '');

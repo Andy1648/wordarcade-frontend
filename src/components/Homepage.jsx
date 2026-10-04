@@ -16,7 +16,7 @@ import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHint
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
-import { canAffordAny, buyKeyPower, buyForge } from '../progress/shop';
+import { canAffordAny, buyKeyPower } from '../progress/shop';
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
@@ -717,14 +717,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // AUTOMATION (stars.js layer 2): AUTO-KEY / AUTO-FORGE spend on every menu return, and the menu
-  // says what they bought, once.
+  // AUTOMATION (stars.js layer 2): AUTO-KEY spends on every menu return, and the menu says what it
+  // bought, once. AUTO-FORGE is NOT run: Rebirth Rush took the LETTER FORGE off the shelf (it no longer
+  // pays), so an owned AUTO-FORGE must not keep spending wins on it.
   useEffect(() => {
-    const r = runAutomation({ buyKey: buyKeyPower, buyForge });
-    if (!r.keys && !r.forges) return undefined;
-    const parts = [];
-    if (r.keys) parts.push(`+${formatNum(r.keys)} KEY POWER`);
-    if (r.forges) parts.push(`+${formatNum(r.forges)} FORGE`);
+    const r = runAutomation({ buyKey: buyKeyPower });
+    if (!r.keys) return undefined;
+    const parts = [`+${formatNum(r.keys)} KEY POWER`];
     // H5: an INFO moment on the queue (was an 800 ms guess at clearing the level-up card)
     announceMenu('automation', (done) => {
       if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }

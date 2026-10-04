@@ -73,7 +73,7 @@ export function tagLabel(kind, ctx = {}) {
     case 'clutch':
       return 'CLUTCH';
     case 'lucky':
-      return `LUCKY ×${ctx.luckyMult || 5}`;
+      return 'LUCKY'; // Rebirth Rush: lucky pays no multiplier, so the tag claims none
     case 'rare':
       return String(ctx.band || 'RARE').toUpperCase();
     case 'tier':
