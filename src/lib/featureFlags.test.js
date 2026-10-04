@@ -47,16 +47,10 @@ test('flagOn: blocked storage / no window read as OFF, never throw', () => {
   }
 });
 
-test('rollsEnabled: ON under Rebirth Rush; the ?rolls=1 / taw.rollsOn / shared-key overrides still read through flagOn', () => {
-  // PROGRESSION FINAL turned MARK ROLLS on (ROLLS_ON = true) — every environment, blocked storage included.
-  for (const env of [{}, { search: '?rolls=1' }, { store: { [ROLLS_KEY]: '1' } }, { throwing: true }]) {
+test('rollsEnabled: DORMANT until the rolls-live PR; ?rolls=1 / taw.rollsOn / the shared key turn it on', () => {
+  withEnv({}, () => assert.equal(rollsEnabled(), false));
+  withEnv({ throwing: true }, () => assert.equal(rollsEnabled(), false));
+  for (const env of [{ search: '?rolls=1' }, { store: { [ROLLS_KEY]: '1' } }, { store: { 'taw.flag.rolls': '1' } }]) {
     withEnv(env, () => assert.equal(rollsEnabled(), true));
   }
-  // The override path rollsEnabled() falls back to if ROLLS_ON is ever flipped off again.
-  const rollsFlag = () => flagOn('rolls', { legacyKey: ROLLS_KEY });
-  withEnv({}, () => assert.equal(rollsFlag(), false));
-  withEnv({ search: '?rolls=1' }, () => assert.equal(rollsFlag(), true));
-  withEnv({ store: { [ROLLS_KEY]: '1' } }, () => assert.equal(rollsFlag(), true));
-  withEnv({ store: { 'taw.flag.rolls': '1' } }, () => assert.equal(rollsFlag(), true));
-  withEnv({ throwing: true }, () => assert.equal(rollsFlag(), false));
 });

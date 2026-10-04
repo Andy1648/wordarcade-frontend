@@ -4,7 +4,9 @@
 // the shared helper's key — still force it on if ROLLS_ON is ever flipped back off).
 import { flagOn } from '../lib/featureFlags.js';
 
-export const ROLLS_ON = true;
+// Andy oct3 ~23:30: rolls go LIVE only through the "mark rolls live" PR (Tier 1 — he play-tests first). Until
+// then Rebirth Rush ships with them dormant behind ?rolls=1 (the reworked six-tier engine is in, just not shown).
+export const ROLLS_ON = false;
 export const ROLLS_KEY = 'taw.rollsOn';
 
 export function rollsEnabled() {
