@@ -7,7 +7,7 @@ import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
 const SEED = {
-  'taw.rollsOn': '1', // MARK ROLLS ship dormant (rollsFlag.js); this spec turns them on
+  'taw.rollsOn': '1', // MARK ROLLS are ON (rollsFlag.js); kept so the spec is independent of the flag
   'taw.seenMenu': '1',
   'taw.seenMenuSpotlight': '1',
   'taw.xp': JSON.stringify({ lv: 12, into: 0 }),
@@ -69,7 +69,7 @@ test('roll once: tutorial, result card, nothing updates before the reveal lands,
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
   // price in ONE unit
   await expect(roll).toHaveText(/^ROLL · [\d\s,.KMB]+ WINS/);
-  await expect(page.locator('.mr-pity')).toContainText(/EPIC IN ≤\d+ · LEGENDARY IN ≤\d+/);
+  await expect(page.locator('.mr-pity')).toContainText(/EPIC\+ IN ≤\d+/);
   await expect(page.locator('.mr-luck')).toHaveText(/^LUCK ×[\d.]+$/);
   // nothing worn → the first mark AUTO-equips (no question, a hold never stalls) and the hero shows it
   await expect(page.locator('[data-testid="marks-main-tag"]')).toHaveText(/^MAIN ×\d/);
@@ -86,21 +86,25 @@ test('roll once: tutorial, result card, nothing updates before the reveal lands,
   expect(wc).toBe(0);
 });
 
-test('a forced EPIC plays the cutscene: final tier, then the mark, then 1 IN X', async ({ page }) => {
+test('a forced EPIC+ (pity): LEGENDARY+ plays the full-screen cutscene, an EPIC reveals in the panel', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seed(page, {
     'taw.tut.markRolls': '1',
-    'taw.markRolls': JSON.stringify({ v: 1, rolls: 50, sinceEpic: 39, sinceLegendary: 50, everEpic: true, starter: true, marks: {}, milestones: [] }),
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 50, sinceEpic: 49, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await page.goto('/?portal=1');
   await menuReady(page);
   await openMarks(page);
   await page.locator('.mr-roll').click();
-  await page.waitForTimeout(1900); // past the stamp beat, before the plate leaves
-  await expect(page.locator('.mr-cover-stamp')).toHaveText(/^1 IN [\d\s,]+$/);
-  const size = await page.locator('.mr-cover-stamp').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-  expect(size).toBeGreaterThanOrEqual(36); // sized from --fs-hero (was 30px at 390)
-  await expect.poll(() => rollUiAnims(page), { timeout: 3000 }).toBe(0);
+  const tier = await page.locator('.mr-stage').getAttribute('data-tier');
+  expect(['epic', 'legendary', 'mythic', 'secret']).toContain(tier);
+  if (tier !== 'epic') {
+    await page.waitForTimeout(2100); // past the stamp beat, before the plate leaves
+    await expect(page.locator('.mr-cover-stamp')).toHaveText(/^1 IN [\d\s,]+$/);
+    const size = await page.locator('.mr-cover-stamp').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    expect(size).toBeGreaterThanOrEqual(36); // sized from --fs-hero (was 30px at 390)
+  }
+  await expect.poll(() => rollUiAnims(page), { timeout: 3500 }).toBe(0);
 });
 
 test('short balance: the press says NEED X MORE (never a silent grey button)', async ({ page }) => {
@@ -118,12 +122,12 @@ test('short balance: the press says NEED X MORE (never a silent grey button)', a
   await expect(page.locator('[data-testid="mark-roll-result"]')).toHaveCount(0);
 });
 
-test('reduced motion: a static result card, no reveal animation; an epic keeps its static plate', async ({ page }) => {
+test('reduced motion: a static result card, no reveal animation; a legendary+ keeps its static plate', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await seed(page, {
     'taw.tut.markRolls': '1',
-    'taw.markRolls': JSON.stringify({ v: 1, rolls: 50, sinceEpic: 39, sinceLegendary: 50, everEpic: true, starter: true, marks: {}, milestones: [] }),
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 50, sinceEpic: 49, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await page.goto('/?portal=1');
   await menuReady(page);
@@ -132,15 +136,18 @@ test('reduced motion: a static result card, no reveal animation; an epic keeps i
   const card = page.locator('[data-testid="mark-roll-result"]');
   await expect(card).toBeVisible();
   expect(await rollUiAnims(page)).toBe(0);
-  // rarity still reads: the EPIC plate + stamp are up, static, for the hold
-  await expect(page.locator('.mr-cover.is-static')).toHaveCount(1);
-  await expect(page.locator('.mr-cover.is-static .mr-cover-stamp')).toBeVisible();
+  // rarity still reads: a LEGENDARY+ plate + stamp are up, static, for the hold (an EPIC reveals in the panel)
+  const tier = await page.locator('.mr-stage').getAttribute('data-tier');
+  if (tier !== 'epic') {
+    await expect(page.locator('.mr-cover.is-static')).toHaveCount(1);
+    await expect(page.locator('.mr-cover.is-static .mr-cover-stamp')).toBeVisible();
+  }
   await expect(page.locator('.mr-cover.is-static')).toHaveCount(0, { timeout: 4000 });
   const op = await card.evaluate((el) => getComputedStyle(el.closest('.mr-card-slot')).opacity);
   expect(Number(op)).toBe(1);
 });
 
-test('the worn mark shows MAIN ×N; every other owned mark shows PERK +X%', async ({ page }) => {
+test('the worn mark shows MAIN ×N; every other owned mark shows its perk or MAIN', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await page.goto('/?portal=1');
@@ -159,7 +166,8 @@ test('the worn mark shows MAIN ×N; every other owned mark shows PERK +X%', asyn
   }
   await page.waitForTimeout(2700);
   const other = page.locator('.mx-tile:not(.is-locked):not(.is-on) .mx-tile-sub').first();
-  await expect(other).toHaveText(/^PERK \+[\d.]+%$/);
+  // MARKS via ROLLS: a non-worn owned mark shows its PERK line (LEGENDARY+) or what wearing it pays
+  await expect(other).toHaveText(/^(MAIN ×[\d.]+|[A-Z][A-Z0-9 ×+]+)$/);
   await page.locator('.mx-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText(/^×\d/);
 });

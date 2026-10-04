@@ -7,17 +7,18 @@ import {
 } from './revealPlan.js';
 import { timeline, cutsceneBeats } from './revealTimelines.js';
 
-const TIERS = ['common', 'rare', 'epic', 'legendary'];
+const TIERS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
 const plain = { tier: 'common', newMark: false, goldUp: false, rainbowUp: false, decision: 'none' };
 
-test('rarity scales the reveal: common ≈300 ms, rare short, epic/legendary ≤ 2.5 s', () => {
+test('rarity scales the reveal: common ≈300 ms, rare/epic in the panel, LEGENDARY+ full-screen ≤ 3 s', () => {
   assert.ok(revealMs('common') >= 250 && revealMs('common') <= 350);
   assert.ok(revealMs('rare') > revealMs('common') && revealMs('rare') <= 1000);
   assert.ok(revealMs('epic') > revealMs('rare'));
-  assert.ok(revealMs('legendary') >= revealMs('epic'));
+  for (let i = 1; i < TIERS.length; i += 1) assert.ok(revealMs(TIERS[i]) >= revealMs(TIERS[i - 1]), TIERS[i]);
   for (const t of TIERS) assert.ok(revealMs(t) <= MAX_REVEAL_MS);
-  assert.equal(isHeavy('epic'), true);
-  assert.equal(isHeavy('legendary'), true);
+  assert.ok(MAX_REVEAL_MS <= 3000);
+  assert.equal(isHeavy('epic'), false, 'an EPIC reveals in the panel');
+  for (const t of ['legendary', 'mythic', 'secret']) assert.equal(isHeavy(t), true, t);
   assert.equal(isHeavy('rare'), false);
 });
 
@@ -56,6 +57,7 @@ test('hold-to-roll stops on EPIC+, a NEW mark, GOLD/RAINBOW, or a short balance 
   assert.equal(holdStopReason({ ...plain, decision: 'auto' }), null, 'an auto-equip never stalls a hold');
   assert.equal(holdStopReason({ ...plain, tier: 'epic' }), 'heavy');
   assert.equal(holdStopReason({ ...plain, tier: 'legendary' }), 'heavy');
+  assert.equal(holdStopReason({ ...plain, tier: 'secret' }), 'heavy');
   assert.equal(holdStopReason({ ...plain, newMark: true }), 'new');
   assert.equal(holdStopReason({ ...plain, goldUp: true }), 'variant');
   assert.equal(holdStopReason({ ...plain, rainbowUp: true }), 'variant');
@@ -94,10 +96,10 @@ test('timelines: finite, transform/opacity ONLY, every step inside the reveal wi
 });
 
 test('the cutscene order: ladder → FINAL tier → the mark (art + name) → "1 IN X" → back to the panel', () => {
-  for (const tier of ['epic', 'legendary']) {
+  for (const tier of ['legendary', 'mythic', 'secret']) {
     const b = cutsceneBeats(tier);
     assert.ok(b.finalAt < b.showAt && b.showAt < b.stampAt && b.stampAt + 300 <= b.outAt && b.outAt < b.D, `${tier} beats in order`);
-    assert.equal(b.below, tier === 'epic' ? 2 : 3, 'one ladder bar per tier below');
+    assert.equal(b.below, { legendary: 3, mythic: 4, secret: 5 }[tier], 'one ladder bar per tier below');
     const nodes = timeline(tier).map((s) => s.node);
     for (const n of ['cover', 'ladder', 'final', 'show', 'stamp', 'card']) assert.ok(nodes.includes(n), `${tier} plays ${n}`);
   }

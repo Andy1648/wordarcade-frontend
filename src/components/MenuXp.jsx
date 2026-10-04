@@ -13,7 +13,8 @@ import { useCountUp } from '../hooks/useCountUp';
 import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
-import { markRank, markMainMult, markTier } from '../progress/marks';
+import { markRank, markTier } from '../progress/marks';
+import { mainMultOf } from '../progress/markRollsCore';
 import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
@@ -382,7 +383,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
             {/* H6/M12: the same formatter the marks index and the receipt use (×3.18, not ×3.2); it carries the "×". */}
-            <span className="menu-mark-mult" aria-hidden="true">{formatMult(markMainMult(mark, markRank(mark.id)))}</span>
+            <span className="menu-mark-mult" aria-hidden="true">{formatMult(mainMultOf(mark.id))}</span>
             {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
         ) : (

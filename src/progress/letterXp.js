@@ -15,30 +15,26 @@
 //     letters × XP-per-letter through creditXp, writes once, and fires the mid-game LV chip on a
 //     level-up. So a keystroke costs a counter bump — input latency is untouched.
 import { createRateLimiter, creditXp, loadProgress, saveProgress, levelXpPerLetter, getKeyTier, getRebirths, roundWordXp } from './xp.js';
-import { wornMarkId, markEntry } from './markRollsCore.js';
+import { markMult } from './markRollsCore.js';
+import { MARK_TIERS } from './marks.js';
+import { letterPerkMult } from './markPerks.js';
 import { emitMidGameLevelUp } from './levelUpSignal.js';
 import { boostMult } from './boost.js';
 import { notePlay } from './overdrive.js';
 
-// The worn MAIN mark's XP boost — modest and readable, by tier (a rolled PERMANENT reads as LEGENDARY).
-export const MARK_XP_BOOST = { common: 0.1, rare: 0.2, epic: 0.3, legendary: 0.5 };
+// The worn MAIN mark's XP boost by tier (base finish) — the SAME bonus wins get (MARKS via ROLLS: one MARK).
+export const MARK_XP_BOOST = Object.fromEntries(Object.entries(MARK_TIERS).map(([t, v]) => [t, v.bonus]));
 
-/** ×(1 + boost) for the worn mark (×1 with nothing worn). Guarded: a storage failure is ×1. */
+/** The MARK on XP per letter: markRollsCore.markMult — the one function wins.js reads too. ×1 with nothing
+ *  worn on a save that has never rolled. `markId` undefined = the worn mark. Guarded: a failure is ×1. */
 export function markXpBoost(markId) {
-  try {
-    const id = markId === undefined ? wornMarkId() : markId;
-    if (!id) return 1;
-    const m = markEntry(id);
-    const b = m ? MARK_XP_BOOST[m.tier] : 0;
-    return 1 + (Number.isFinite(b) ? b : 0);
-  } catch {
-    return 1;
-  }
+  return markMult({ markId });
 }
 
-/** XP per letter for the live save: BASE 10 × KEY × REBIRTH 5^R × MARK × BOOST (code boost × OVERDRIVE). */
+/** XP per letter for the live save: BASE 10 × KEY × REBIRTH 5^R × MARK × BOOST (code boost × OVERDRIVE)
+ *  × the DOUBLE LETTERS perk (LEVIATHAN: letters count ×2). */
 export function letterXpNow() {
-  return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost()) * boostMult();
+  return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost()) * letterPerkMult() * boostMult();
 }
 
 const LETTER = /[a-z]/gi;

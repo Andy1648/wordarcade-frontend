@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MARKS, MARKS_EQUIPPED_KEY, markById, unlockedMarks, getEquippedMark, equipMark,
-  markWinsFactors, markXpMult, markRarityStep, markComboKeep,
+  markWinsFactors, markRarityStep, markComboKeep,
   MARK_RANK_WORDS, MARK_RANK_SCALE, MAX_MARK_RANK, rankForWords, markRank, markProgress, addMarkWord,
   effectAtRank, markBlurbAt, MARK_WORDS_KEY, MARK_TIERS, markMainMult, checkMarkClaims, MARKS_OWNED_KEY,
 } from './marks.js';
@@ -27,9 +27,10 @@ function withStorage(seed, fn) {
   }
 }
 
-test('STEP 49: a collection of 16 unique marks across all four tiers', () => {
+test('STEP 49: a collection of 16 unique marks across the four legacy tiers (MYTHIC / SECRET are roll-only)', () => {
   assert.equal(MARKS.length, 16);
-  for (const t of Object.keys(MARK_TIERS)) assert.ok(MARKS.some((m) => m.tier === t), `no ${t} mark`);
+  for (const t of ['common', 'rare', 'epic', 'legendary']) assert.ok(MARKS.some((m) => m.tier === t), `no ${t} mark`);
+  for (const m of MARKS) assert.ok(MARK_TIERS[m.tier], `${m.id} tier ${m.tier}`);
   assert.equal(new Set(MARKS.map((m) => m.id)).size, MARKS.length);
   assert.equal(new Set(MARKS.map((m) => m.name)).size, MARKS.length);
 });
@@ -98,28 +99,22 @@ test('unlockedMarks (a save never through the marks layer) lists only what the a
   assert.deepEqual(unlockedMarks(new Set(['m-wb-5', 'dist-500'])).map((m) => m.id), ['mk-bomber', 'mk-magpie']);
 });
 
-test('STEP 49: the WORN mark pays its tier bonus everywhere, its flavour perk only in its mode', () => {
-  // COMMON = ×2 main; BOMBER's +25% flavour applies in Word Bomb only.
-  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber', mode: 'wordBomb' }), { mark: 2 * 1.25 });
-  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber', mode: 'satRush' }), { mark: 2 }, 'main bonus still pays outside its mode');
-  assert.deepEqual(markWinsFactors({ markId: 'mk-magpie', mode: 'satRush' }), { mark: 2 * 1.15 });
-  // A mark whose flavour is XP still pays its MAIN bonus on wins.
-  assert.deepEqual(markWinsFactors({ markId: 'mk-student', mode: 'fuse' }), { mark: 2 });
-  assert.deepEqual(markWinsFactors({ markId: null, mode: 'fuse' }), {});
-  // Rarer pays more: COMMON ×2, RARE ×2.5, EPIC ×3, LEGENDARY ×4 (rank I, before flavour).
-  assert.equal(markMainMult(markById('mk-bomber'), 1), 2);
-  assert.equal(markMainMult(markById('mk-scholar'), 1), 2.5);
-  // permanent marks (LINGUIST, CURATOR) pay ×4 — Andy oct3, decision 4
-  assert.equal(markMainMult(markById('mk-linguist'), 1), 4);
-  assert.equal(markMainMult(markById('mk-curator'), 1), 4);
-  assert.equal(markMainMult(markById('mk-nova'), 1), 3);
-  assert.equal(markMainMult(markById('mk-legend'), 1), 4);
+test('MARKS via ROLLS: the WORN mark pays its tier MAIN in every mode (the flavour is folded into the tier)', () => {
+  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber' }), { mark: 1.1 });
+  assert.deepEqual(markWinsFactors({ markId: 'mk-student' }), { mark: 1.1 });
+  assert.deepEqual(markWinsFactors({ markId: null }), {});
+  // COMMON ×1.1, RARE ×1.25, EPIC ×1.5, LEGENDARY ×3 — and the rank no longer scales it
+  assert.equal(markMainMult(markById('mk-bomber'), 1), 1.1);
+  assert.equal(markMainMult(markById('mk-bomber'), 5), 1.1);
+  assert.equal(markMainMult(markById('mk-scholar'), 1), 1.25);
+  assert.equal(markMainMult(markById('mk-nova'), 1), 1.5);
+  // permanent marks (LINGUIST, CURATOR, ETERNAL, LEGEND) pay the LEGENDARY ×3
+  for (const id of ['mk-linguist', 'mk-curator', 'mk-eternal', 'mk-legend']) assert.equal(markMainMult(markById(id), 1), 3, id);
+  assert.equal(1 + MARK_TIERS.mythic.bonus, 10);
+  assert.equal(1 + MARK_TIERS.secret.bonus, 25);
 });
 
 test('the non-wins effects read as neutral when nothing relevant is equipped', () => {
-  assert.equal(markXpMult('mk-student'), 1.2);
-  assert.equal(markXpMult('mk-bomber'), 1);
-  assert.equal(markXpMult(null), 1);
   assert.equal(markRarityStep('mk-linguist'), 0.12);
   assert.equal(markRarityStep('mk-bomber'), 0);
   assert.equal(markComboKeep('mk-metronome'), 0.3);
@@ -172,16 +167,15 @@ test('a rank scales the flavour perk, bounded', () => {
   assert.equal(MARK_RANK_SCALE[0], 1);
 });
 
-test('only the WORN mark grows, one word at a time, and its payout factor follows its rank', () => {
+test('only the WORN mark grows, one word at a time (the rank is a counter; the MAIN stays the tier)', () => {
   withStorage({ [MARKS_EQUIPPED_KEY]: 'mk-bomber' }, (map) => {
     assert.equal(markRank('mk-bomber'), 1);
-    assert.equal(markWinsFactors({ mode: 'wordBomb' }).mark, 2 * 1.25);
+    assert.equal(markWinsFactors().mark, 1.1);
     map.set(MARK_WORDS_KEY, JSON.stringify({ 'mk-bomber': MARK_RANK_WORDS[1] - 1 }));
     const r = addMarkWord();
     assert.deepEqual(r, { id: 'mk-bomber', rank: 2, rankedUp: true });
     assert.equal(markRank('mk-sprinter'), 1, 'a mark you are not wearing does not grow');
-    const k = MARK_RANK_SCALE[1];
-    assert.ok(Math.abs(markWinsFactors({ mode: 'wordBomb' }).mark - (1 + 1 * k) * (1 + 0.25 * k)) < 1e-9);
+    assert.equal(markWinsFactors().mark, 1.1);
     const p = markProgress('mk-bomber');
     assert.equal(p.rank, 2);
     assert.equal(p.into, 0);
@@ -189,31 +183,20 @@ test('only the WORN mark grows, one word at a time, and its payout factor follow
   });
 });
 
-test('the blurb prints the numbers the rank actually pays', () => {
+test('the blurb prints the number the payout actually pays (the tier MAIN)', () => {
   const bomber = MARKS.find((m) => m.id === 'mk-bomber');
-  assert.equal(markBlurbAt(bomber, 1), '+25% wins in WORD BOMB.');
-  assert.equal(markBlurbAt(bomber, 5), '+40% wins in WORD BOMB.');
+  assert.equal(markBlurbAt(bomber, 1), 'MAIN ×1.1 on XP per letter and wins.');
+  assert.equal(markBlurbAt(bomber, 5), 'MAIN ×1.1 on XP per letter and wins.');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), 'MAIN ×1.5 on XP per letter and wins.');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-eternal'), 1), 'MAIN ×3 on XP per letter and wins.');
   const metro = MARKS.find((m) => m.id === 'mk-metronome');
   assert.equal(markBlurbAt(metro, 5), '48% chance a broken COMBO survives.');
-});
-
-test('H6: the blurb names a multi-mode mark modes (SMITH), and CHAIN / FUSE by their labels', () => {
-  const smith = MARKS.find((m) => m.id === 'mk-smith');
-  assert.equal(markBlurbAt(smith, 1), '+25% wins in SAT RUSH and CHAIN.');
-  assert.doesNotMatch(markBlurbAt(smith, 4), /every mode/);
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-linker'), 1), '+25% wins in CHAIN.');
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), '+40% wins in FUSE.');
-  // an every-mode XP mark says it pays wins too (one stack since Economy v8)
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-student'), 1), '+20% wins in every mode.');
 });
 
 test('H6: every static blurb agrees with markBlurbAt at rank I', () => {
   for (const m of MARKS) {
     const e = m.effect || {};
-    if (e.winsMult || e.xpMult) {
-      if (m.id === 'mk-eternal') continue; // flavour copy, no mode clause
-      assert.equal(m.blurb, markBlurbAt(m, 1), m.id);
-    }
+    if (e.winsMult || e.xpMult) assert.equal(m.blurb, markBlurbAt(m, 1), m.id);
   }
 });
 

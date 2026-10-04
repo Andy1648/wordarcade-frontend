@@ -16,6 +16,7 @@ import {
 } from './xp';
 import { markXpBoost, tryLetterCredit } from './letterXp';
 import { boostMult } from './boost';
+import { letterPerkMult } from './markPerks';
 import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
@@ -61,7 +62,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // and rebirth happen on another screen, which remounts this hook and re-reads them.
     // v11: one key = one LETTER at the MENU price — 2 × KEY × rebirth × the worn mark (a fifth of a game letter).
     // Cosmetics (pop style / sound pack) are looks only — they never multiply XP (review round 2).
-    const menuGain = xpPerInput({ mode: 'menu', markMult: markXpBoost() * boostMult() }); // × BOOST (code boost × OVERDRIVE)
+    // × BOOST (code boost × OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN)
+    const menuGain = xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
     // KEY POWER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
     // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).
     // Stable for this menu session (buying remounts this hook via the shop round-trip).

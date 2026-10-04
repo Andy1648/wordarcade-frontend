@@ -1,35 +1,31 @@
-// markRolls.js — MARK ROLLS (Andy oct2, M3 + M6): spend wins on a random mark, Sol's RNG /
-// Pet Simulator 99 style. Spec with every number and the reason for it:
-// claude/econ-oct2/marks-spec.md. Sim: claude/econ-oct2/marks.md.
+// markRolls.js — MARK ROLLS: spend wins on a random mark, Sol's RNG / Blox Fruits gacha style.
+// MARKS via ROLLS (Andy, PROGRESSION FINAL — turned on with the Rebirth Rush economy). Feel notes:
+// claude/econ-oct2/rolls-rr-notes.md.
 //
 // THE SHAPE
-//   - Every rollable mark has a fixed "1 IN X". Its TIER is read off X (COMMON < 25 ≤ RARE < 100 ≤
-//     EPIC < 400 ≤ LEGENDARY), so the tier and the odds can never disagree.
-//   - MODE marks (one mode) are the common pool; ALL-MODE marks are rarer.
+//   - Six tiers, Andy's odds: COMMON 1 IN 2, RARE 1 IN 10, EPIC 1 IN 100, LEGENDARY 1 IN 1,000,
+//     MYTHIC 1 IN 10,000, SECRET 1 IN 100,000 (the tier's chance; its marks split it evenly; COMMON is
+//     the remainder). The pool, the MAIN math and markMult() live in markRollsCore.js.
 //   - LUCK multiplies every non-common chance (Sol's shape). Commons take what is left, so luck
-//     removes trash rather than breaking the table. One legendary is LUCK-IMMUNE (true odds).
-//   - PITY: an EPIC+ is guaranteed by roll 40 (soft from 30), a LEGENDARY by roll 300 (soft from
-//     220), and the first EPIC+ by roll 10. Both counters are state, so the UI can show them.
-//   - DUPES ARE NEVER DEAD: every copy raises the mark's PERK (+10% of its base); every 10 dupes
-//     make a GOLD, every 10 golds a RAINBOW. GOLD and RAINBOW multiply the perk and add LUCK.
-//     Nothing is capped: copies, golds, rainbows, luck and the perk all keep counting.
-//   - The INDEX (collection %) pays LUCK + a small wins lump at milestones.
-//   - PERMANENT marks come only from the hard achievements. They are not rollable, they are the
-//     rarest tier and each adds LUCK.
+//     removes trash rather than breaking the table.
+//   - PITY: an EPIC-or-better is guaranteed at least every 50 rolls (soft from 40), and the first by roll 10.
+//     The counter is state, so the UI can show it.
+//   - DUPES: every 10 dupes make a GOLD (the MAIN's bonus ×2), every 10 golds a RAINBOW (×5).
+//   - The INDEX (% collected) pays a small permanent bonus (+0.5% per %) + LUCK and a wins lump at milestones.
+//   - PERKS (markPerks.js): LEGENDARY+ marks unlock a perk while owned.
+//   - PERMANENT marks come only from the hard achievements. They are not rollable and each adds LUCK.
 //
 // THE ENGINE IS PURE: roll(rng, state, ctx) returns a NEW state and a result; nothing here reads
-// the DOM or React. The guarded localStorage store below it is the only side-effecting part, and
-// rollBonusMult() is the one hook into the payout (wins.js): it is exactly ×1 for every save that
-// has never rolled, so wiring it changes no live payout until the roll UI ships.
+// the DOM or React. The guarded localStorage store below it is the only side-effecting part.
 //
-// SPLIT (PR #156 payload): the pool, the state, the PERK/MAIN math and the payout hook live in
-// markRollsCore.js (on boot, for wins.js and the menu chip). Everything else here loads with the MARKS
-// panel. This module re-exports the core, so `import … from './markRolls.js'` still sees everything.
+// SPLIT (PR #156 payload): the pool, the state, the MAIN math and the payout hook live in markRollsCore.js (on
+// boot, for wins.js / letterXp.js and the menu chip). Everything else here loads with the MARKS panel. This
+// module re-exports the core, so `import … from './markRolls.js'` still sees everything.
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY } from './marks.js';
-import { keyTierXp, getKeyTier, rebirthMult, getRebirths, priceRateBoost } from './xp.js';
+import { perWordRateNow } from './wins.js';
 import {
   ROLL_MARKS, rollMarkById, permanentMarkById, PERMANENT_MARKS, tierRank, mainBonus, oneInX, COLLECTION_MILESTONES,
-  freshState, normalize, markLevel, mainMultOf, loadRollState, saveRollState, num,
+  freshState, normalize, markLevel, mainMultOf, loadRollState, saveRollState, num, collection,
 } from './markRollsCore.js';
 
 export * from './markRollsCore.js';
@@ -37,13 +33,12 @@ const ROLL_BY_ID = { get: rollMarkById, has: (id) => !!rollMarkById(id) };
 const PERM_BY_ID = { get: permanentMarkById };
 
 // Old marks that are neither rollable nor permanent: their owners keep them (wearable, ranked,
-// same marks.js MAIN) but nobody new can get them. All three were ALL-MODE COMMONS, which the
-// overhaul does not have (all-mode marks are rare+).
+// their marks.js tier's MAIN) but nobody new can get them. All three were ALL-MODE COMMONS.
 export const RETIRED_MARK_IDS = ['mk-student', 'mk-magpie', 'mk-veteran'];
 
 // ---------------------------------------------------------------------- achievements keep / cut
-// Spec §6 has the reason for every row. KEEP = genuinely hard (≥10 h of median play, a skill bar
-// the median never reaches, or 30 real days); it awards the PERMANENT mark above.
+// KEEP = genuinely hard (≥10 h of median play, a skill bar the median never reaches, or 30 real days);
+// it awards the PERMANENT mark.
 export const ACHIEVEMENT_PLAN = {
   'vol-1': 'cut', 'vol-100': 'cut', 'vol-1k': 'cut', 'vol-10k': 'keep', 'vol-50k': 'keep',
   'wpm-40': 'cut', 'wpm-70': 'cut', 'wpm-100': 'keep',
@@ -58,8 +53,7 @@ export const KEPT_ACHIEVEMENTS = Object.keys(ACHIEVEMENT_PLAN).filter((k) => ACH
 
 // ------------------------------------------------------------------------------------- numbers
 export const PITY = {
-  epic: { hard: 40, softFrom: 30, softStep: 0.05 }, // epic+ guaranteed on roll 40 of a drought
-  legendary: { hard: 300, softFrom: 220, softStep: 0.015 },
+  epic: { hard: 50, softFrom: 40, softStep: 0.05 }, // EPIC-or-better guaranteed on roll 50 of a drought (Andy)
   firstEpicBy: 10, // the first EPIC+ ever lands by roll 10
 };
 export const LUCK_SOURCES = {
@@ -72,30 +66,11 @@ export const LUCK_SOURCES = {
 export const BONUS_ROLL_EVERY = 10; // every 10th roll ×2 luck ("×2 LUCK READY")
 export const BONUS_ROLL_MULT = 2;
 export const ROLL_UNLOCK_LEVEL = 10; // with MARKS (marks.js MARKS_UNLOCK_LEVEL), or any rebirth
-// PRICE: words at the player's FULL rate — the same reference word the LETTER FORGE is priced in
-// (key tier × rebirth × priceRateBoost: forge, STAR POWER, the worn MAIN and the roll PERKS), so
-// every roll is the same few seconds-to-minutes of play at LV1 and at LV1000. It also scales with
-// LEVEL: ROLL_BASE_WORDS × (1 + level / ROLL_LEVEL_SPAN).
-// DECIDED (Andy oct3): 60 words (was 100) — the same level scaling and the same reference word.
+// PRICE (Andy): "cost 60 words of wins at your rate" — 60 × the live per-word rate of the reference word
+// (wins.js perWordRateNow, Word Bomb), WITHOUT the timed multipliers (BOOST / OVERDRIVE / FRENZY): a roll
+// never costs ten times more because OVERDRIVE happens to be running.
 export const ROLL_BASE_WORDS = 60;
-export const ROLL_LEVEL_SPAN = 1000;
 
-
-/** The INDEX: base / gold / rainbow % over the rollable pool. */
-export function collection(state) {
-  const total = ROLL_MARKS.length;
-  let base = 0;
-  let gold = 0;
-  let rainbow = 0;
-  for (const m of ROLL_MARKS) {
-    const lv = markLevel(state, m.id);
-    if (lv.copies > 0) base++;
-    if (lv.gold > 0) gold++;
-    if (lv.rainbow > 0) rainbow++;
-  }
-  const pct = (k) => (k / total) * 100;
-  return { total, base, gold, rainbow, pct: pct(base), goldPct: pct(gold), rainbowPct: pct(rainbow) };
-}
 function milestonesReached(state) {
   const c = collection(state);
   const at = { base: c.pct, gold: c.goldPct, rainbow: c.rainbowPct };
@@ -126,43 +101,36 @@ export function luck(state, ctx = {}) {
 export function isBonusRoll(state) {
   return (num(state.rolls) + 1) % BONUS_ROLL_EVERY === 0;
 }
-/** The shown pity counters: rolls left until the guarantee (1 = the next roll is guaranteed). */
+/** The shown pity counter: rolls left until the EPIC+ guarantee (1 = the next roll is guaranteed). */
 export function pityLeft(state) {
   const epicHard = !state.everEpic ? Math.min(PITY.epic.hard, PITY.firstEpicBy - num(state.rolls)) : PITY.epic.hard - num(state.sinceEpic);
-  return { epic: Math.max(1, epicHard), legendary: Math.max(1, PITY.legendary.hard - num(state.sinceLegendary)) };
+  return { epic: Math.max(1, epicHard) };
 }
 
 /**
  * The exact chance of every mark on the NEXT roll, given state + ctx. Returns { probs: Map id→p,
- * forced: null|'epic'|'legendary', luck, bonus }. The probabilities sum to 1.
+ * forced: null|'epic', luck, bonus }. The probabilities sum to 1.
  */
 export function rollTable(state, ctx = {}) {
   const bonus = isBonusRoll(state);
   const L = luck(state, ctx) * (bonus ? BONUS_ROLL_MULT : 1);
   const w = new Map();
-  for (const m of ROLL_MARKS) if (m.tier !== 'common') w.set(m.id, (m.immune ? 1 : L) / m.x);
-  const group = (pred) => ROLL_MARKS.filter((m) => m.tier !== 'common' && pred(m));
-  const epicPlus = group((m) => tierRank(m.tier) >= tierRank('epic'));
-  const legs = group((m) => m.tier === 'legendary');
+  for (const m of ROLL_MARKS) if (m.tier !== 'common') w.set(m.id, L / m.x);
+  const epicPlus = ROLL_MARKS.filter((m) => tierRank(m.tier) >= tierRank('epic'));
   const sumOf = (arr) => arr.reduce((s, m) => s + w.get(m.id), 0);
-  // soft pity: add mass to a group, spread by its own weights
-  const lift = (arr, extra) => {
-    if (extra <= 0) return;
-    const s = sumOf(arr);
-    for (const m of arr) w.set(m.id, w.get(m.id) + (extra * w.get(m.id)) / s);
-  };
-  const nextLeg = num(state.sinceLegendary) + 1;
+  // soft pity: add mass to the EPIC+ group, spread by its own weights
   const nextEpic = num(state.sinceEpic) + 1;
-  lift(legs, PITY.legendary.softStep * Math.max(0, nextLeg - PITY.legendary.softFrom + 1));
-  lift(epicPlus, PITY.epic.softStep * Math.max(0, nextEpic - PITY.epic.softFrom + 1));
+  const extra = PITY.epic.softStep * Math.max(0, nextEpic - PITY.epic.softFrom + 1);
+  if (extra > 0) {
+    const s = sumOf(epicPlus);
+    for (const m of epicPlus) w.set(m.id, w.get(m.id) + (extra * w.get(m.id)) / s);
+  }
   let forced = null;
-  if (nextLeg >= PITY.legendary.hard) forced = 'legendary';
-  else if (nextEpic >= PITY.epic.hard || (!state.everEpic && num(state.rolls) + 1 >= PITY.firstEpicBy)) forced = 'epic';
+  if (nextEpic >= PITY.epic.hard || (!state.everEpic && num(state.rolls) + 1 >= PITY.firstEpicBy)) forced = 'epic';
   const probs = new Map();
   if (forced) {
-    const arr = forced === 'legendary' ? legs : epicPlus;
-    const s = sumOf(arr);
-    for (const m of ROLL_MARKS) probs.set(m.id, arr.includes(m) ? w.get(m.id) / s : 0);
+    const s = sumOf(epicPlus);
+    for (const m of ROLL_MARKS) probs.set(m.id, epicPlus.includes(m) ? w.get(m.id) / s : 0);
     return { probs, forced, luck: L, bonus };
   }
   let S = 0;
@@ -181,7 +149,7 @@ export function rollTable(state, ctx = {}) {
 /**
  * ONE ROLL. Pure: returns { state (new), result }. `rng` is () → [0,1). ctx: { permanentOwned,
  * boost }. result: { markId, tier, oneInX, dupe, newMark, copies, goldUp, rainbowUp, gold, rainbow,
- * pityHit ('epic'|'legendary'|null), bonusRoll, luck, milestones (newly reached ids) }.
+ * pityHit ('epic'|null), bonusRoll, luck, milestones (newly reached ids) }.
  */
 export function roll(rng, state, ctx = {}) {
   const s0 = normalize(state);
@@ -208,7 +176,6 @@ export function roll(rng, state, ctx = {}) {
   s.rolls = s0.rolls + 1;
   const tr = tierRank(pick.tier);
   s.sinceEpic = tr >= tierRank('epic') ? 0 : s0.sinceEpic + 1;
-  s.sinceLegendary = pick.tier === 'legendary' ? 0 : s0.sinceLegendary + 1;
   if (tr >= tierRank('epic')) s.everEpic = true;
   const had = new Set(s0.milestones);
   const reached = milestonesReached(s).filter((id) => !had.has(id));
@@ -235,18 +202,26 @@ export function roll(rng, state, ctx = {}) {
 }
 
 // ----------------------------------------------------------------------------------- price
+/** Words one roll costs (flat 60 — Andy). `level` is accepted for old callers and ignored. */
+// eslint-disable-next-line no-unused-vars
 export function rollPriceWords(level = 1) {
-  const lv = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
-  return ROLL_BASE_WORDS * (1 + lv / ROLL_LEVEL_SPAN);
+  return ROLL_BASE_WORDS;
 }
-/** Wins price of one roll: words(level) × the reference word's wins (`rate`). Never below 1. */
+/** Wins price of one roll: 60 × the reference word's wins (`rate`). Never below 1. */
 export function rollPrice({ level = 1, rate = 0 } = {}) {
   const r = Number.isFinite(rate) && rate > 0 ? rate : 0;
   return Math.max(1, Math.round(rollPriceWords(level) * r));
 }
-/** The reference word's wins at the player's full rate (forge.js forgeCost uses the same base). */
+/** The reference word's wins at the player's live rate (perWordRateNow, Word Bomb), minus the timed boosts. */
 export function refWordWins() {
-  return ((keyTierXp(getKeyTier()) * 5) / 10) * rebirthMult(getRebirths()) * priceRateBoost();
+  try {
+    const { rate, factors } = perWordRateNow({ mode: 'wordBomb' });
+    const timed = (Number(factors.boost) || 1) * (Number(factors.frenzy) || 1);
+    const v = rate / (timed > 0 ? timed : 1);
+    return Number.isFinite(v) && v > 0 ? v : 0;
+  } catch {
+    return 0;
+  }
 }
 export function rollPriceNow(level = 1) {
   return rollPrice({ level, rate: refWordWins() });
@@ -256,22 +231,18 @@ export function milestoneWins(id, rate = 0) {
   const m = COLLECTION_MILESTONES.find((x) => x.id === id);
   return m && rate > 0 ? Math.round(m.words * rate) : 0;
 }
-// AUTO-EQUIP (Andy M6; REVISED by the oct3 review of PR #156 — the ×1.5 "ask" rule was backwards: it
-// asked on exactly the rolls that are an upgrade, and stalled hold-to-roll on a save with nothing worn).
-// A roll auto-equips WHENEVER its MAIN is HIGHER than the worn MAIN — always when nothing is worn (×1).
-// A sidegrade or downgrade never equips and never asks (the player can SET AS MAIN by hand). There is no
-// prompt, so nothing ever stalls a hold. HIGHER, not merely rarer: a rare ×2.5 never displaces a rank-V
-// common ×2.6. A PERMANENT (×4, the top) is never displaced.
-/** The MAIN a worn id pays at rank I: rolled/permanent by tier, legacy/retired by its marks.js tier.
- *  No id → ×1. Callers that know a legacy mark's real rank pass `wornMain` to equipDecision. */
+// AUTO-EQUIP: a roll auto-equips WHENEVER its MAIN is HIGHER than the worn MAIN — always when nothing is worn
+// (×1). A sidegrade or downgrade never equips and never asks (the player can SET AS MAIN by hand). No prompt,
+// so nothing ever stalls a hold.
+/** The MAIN a worn id pays (rolled / permanent / legacy / retired, with its finish). No id → ×1. */
 export function wornMainOf(wornId) {
   if (!wornId) return 1;
   const r = ROLL_BY_ID.get(wornId) || PERM_BY_ID.get(wornId) || legacyTierOf(wornId);
-  return r ? 1 + mainBonus(r.tier) : 1;
+  return r ? mainMultOf(wornId) : 1;
 }
 /**
  * 'auto' (the new MAIN is higher: equip it) or 'none' (equal / lower: leave the worn one).
- * `wornMain` overrides the worn id's rank-I MAIN (a legacy mark at rank V pays more than rank I).
+ * `wornMain` overrides the worn id's MAIN.
  */
 export function equipDecision(newId, wornId, wornMain) {
   const n = ROLL_BY_ID.get(newId);
@@ -285,6 +256,10 @@ export function shouldAutoEquip(newId, wornId, wornMain) {
 function legacyTierOf(id) {
   const m = MARKS.find((x) => x.id === id);
   return m ? { tier: m.tier } : null;
+}
+/** Tier base MAIN (no finish) — for the "UP TO ×N" copy. */
+export function tierMain(tier) {
+  return 1 + mainBonus(tier);
 }
 
 // ---------------------------------------------------------------------------------- migration
@@ -333,15 +308,12 @@ export function ensureRollState() {
 }
 /** PERMANENT marks this save owns (via marks.js owned set + the new ids it gets on its claims). */
 export function permanentOwnedCount() {
-  const owned = new Set(legacyOwnedIds());
-  const extra = readJson('taw.permanentMarks');
-  if (Array.isArray(extra)) for (const id of extra) owned.add(id);
-  return PERMANENT_MARKS.filter((m) => owned.has(m.id)).length;
+  return permanentOwnedIds().length;
 }
 /**
  * Roll once and persist. Does NOT spend wins — the caller charges rollPrice() first (the shop owns
  * the balance). A legacy mark rolled for the first time also joins marks.js's owned set so it is
- * wearable with its old MAIN + rank. Returns the result (plus the new state).
+ * wearable through marks.js as before. Returns the result (plus the new state).
  */
 export function rollAndSave(rng, ctx = {}) {
   const s = ensureRollState();
@@ -393,4 +365,3 @@ export function permanentOwnedIds() {
   if (Array.isArray(extra)) for (const id of extra) owned.add(id);
   return PERMANENT_MARKS.filter((m) => owned.has(m.id)).map((m) => m.id);
 }
-
