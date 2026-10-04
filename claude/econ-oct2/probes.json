@@ -1,0 +1,67 @@
+[
+ {
+  "name": "cost6-c048",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 48;"
+   ]
+  ]
+ },
+ {
+  "name": "cost55",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 5.5;"
+   ]
+  ]
+ },
+ {
+  "name": "cost55-c048",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 5.5;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 48;"
+   ]
+  ]
+ },
+ {
+  "name": "cost58-c048",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 5.8;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 48;"
+   ]
+  ]
+ },
+ {
+  "name": "cost6-rolls",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ]
+  ]
+ }
+]
