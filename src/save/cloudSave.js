@@ -26,13 +26,15 @@ import { resolveXpState } from '../progress/xp.js';
 // PROGRESSION v10 (016_econ_v10.sql): when lb_caps reports econ: 10 the save goes through the
 // version-gated lb_save2 / lb_load2 (p_econ = 10); the old lb_save becomes a no-op there so an old
 // bundle can't write. Before 016 is run, the old functions are used unchanged.
-export const ECON_RPC_VERSION = 11;
-// PROGRESSION v11 (018_econ_v11.sql): the client speaks econ 11. Until Andy runs 018, a server with only
-// 016 reports econ: 10 and its lb_submit3 / lb_save2 / lb_load2 accept p_econ = 10 ONLY — so the client
-// sends what the server reports (never more than 11): 018 in → 11 (and v10 tabs are refused), 016 only →
-// 10 (as before), neither → the old RPCs. A stale v10 bundle always sends 10, so once 018 runs it is out.
+export const ECON_RPC_VERSION = 12;
+// REBIRTH RUSH (018_rebirth_rush.sql): the client speaks econ 12. Until Andy runs 018, a server with only
+// 016/017 reports econ: 10 and its lb_submit3 / lb_save2 / lb_load2 accept p_econ = 10 ONLY — so the client
+// sends what the server reports (never more than 12): 018 in → 12 (and v10 / v11 tabs are refused), 016 only
+// → 10 (as before), neither → the old RPCs. (No server ever reports 11: v11's 018 was never run — it became
+// 018_rebirth_rush.sql — so 11 falls to 10 like any 016-era value.) A stale v11 bundle sends at most 11 and a
+// stale v10 bundle 10, so once 018 runs both are out.
 export const ECON_RPC_VERSION_V10 = 10;
-/** The p_econ to send for the server's lb_caps.econ: 11, 10, or 0 (= use the old RPCs). */
+/** The p_econ to send for the server's lb_caps.econ: 12, 10, or 0 (= use the old RPCs). */
 export function econRpcArg(serverEcon) {
   const e = Number(serverEcon);
   if (e >= ECON_RPC_VERSION) return ECON_RPC_VERSION;
