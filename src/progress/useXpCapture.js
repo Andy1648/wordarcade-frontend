@@ -23,6 +23,8 @@ import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
 import { equippedPopColors } from '../theme/themes';
 import { sndLevelUp } from '../audio/gameSounds';
 import { formatNum } from '../format.js';
+import { flagOn } from '../lib/featureFlags.js';
+import { milestoneCrossed, MILESTONE_FX } from './menuTier.js';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -72,6 +74,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // PV10: the level curve's power P (KEY tier × rebirth), read ONCE per menu session like menuGain —
     // no storage read per keystroke. The bar is a stored FRACTION, so P changing later never moves it.
     const power = currentPower();
+    // MILESTONE MOMENTS (dormant: ?milestones=1). Read once per menu session, never per keystroke.
+    const milestonesOn = flagOn('milestones');
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; both credit the same
     // XP. A tap's only difference is its pop — the "+N" alone at the tap coordinates.
@@ -89,6 +93,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
+      const fromLevel = xpRef.current.level;
       const res = creditXp(xpRef.current, menuGain, power);
       xpRef.current = res.state;
       saveProgress(res.state);
@@ -98,7 +103,14 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       // A level-up is still celebrated — it just no longer shows a "+N WINS" line.
       const fx = fxRef && fxRef.current;
       if (fx) {
-        if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
+        if (res.leveledUp && milestonesOn) {
+          // Sized by the BIGGEST milestone crossed (a 48 → 51 jump still lands the LV50 card).
+          const size = milestoneCrossed(fromLevel, res.level);
+          fx.celebrate(res.level, size);
+          sndLevelUp(size ? MILESTONE_FX[size].semis : 0);
+          evLevelUp(res.level);
+          refreshSessionProps({ level: res.level });
+        } else if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
         if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
         else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —

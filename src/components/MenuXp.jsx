@@ -15,7 +15,7 @@ import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank, markMainMult, markTier } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
-import { tierFx } from '../progress/menuTier';
+import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { FEATURED_GAME } from '../gameData';
 import { CARD_MS } from '../lib/menuMoments';
 
@@ -551,6 +551,43 @@ const EASE_OUT = 'cubic-bezier(.2,.8,.2,1)';
 const WINSSTAMP_MS = 700; // wins stamp keeps its own shorter envelope
 const WINSHINT_MS = 3000; // one-time "WINS BUY UPGRADES IN THE SHOP" explainer — a full 3s read
 const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
+// The level-up card's timeline (shared by every card that reuses the element).
+const LEVELUP_FRAMES = [
+  // STEP 50 / Andy N2 ("bigger text includes animated text: level-ups"): the card now SETTLES
+  // at ×1.2 (was ×1) — bigger for the whole hold — and slams in from ×2.
+  { transform: `${CENTER}rotate(-3deg) scale(2)`, opacity: 0, offset: 0, easing: EASE_OUT }, // 0ms
+  { transform: `${CENTER}rotate(-3deg) scale(1.4)`, opacity: 1, offset: 0.1 }, // 150ms — in
+  { transform: `${CENTER}rotate(-3deg) scale(1.26)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
+  { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
+  { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
+  // ends back at ×1: `fill: both` HOLDS this frame, and a held ×1.2 box (invisible, but still
+  // laid out) overhung the fx layer at 360px (viewport-integrity).
+  { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 }, // 1500ms — fade out
+];
+// MILESTONE MOMENTS (dormant, ?milestones=1): the SAME card, slammed harder (peak × size) and held
+// longer, then settling to the everyday ×1.2 — so a peak never sits over the 360px fx layer for the
+// hold. Built once per size; transform/opacity only, finite.
+const MILESTONE_CARD = Object.fromEntries(
+  Object.entries(MILESTONE_FX).map(([size, m]) => {
+    const ms = LEVELUP_MS + m.holdMs;
+    const at = (t) => t / ms;
+    const k = m.peak;
+    return [
+      size,
+      {
+        ms,
+        frames: [
+          { transform: `${CENTER}rotate(-3deg) scale(${2 * k})`, opacity: 0, offset: 0, easing: EASE_OUT },
+          { transform: `${CENTER}rotate(-3deg) scale(${1.4 * k})`, opacity: 1, offset: at(150) }, // in
+          { transform: `${CENTER}rotate(-3deg) scale(${1.26 * k})`, opacity: 1, offset: at(200) }, // the bigger punch
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: at(420), easing: EASE_OUT }, // settle
+          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: at(1220 + m.holdMs) }, // longer hold
+          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 },
+        ],
+      },
+    ];
+  })
+);
 
 // Pick a CONTINUOUS random spawn position inside the fx layer (inset by POP_HALF),
 // rejecting a candidate that overlaps the XP bar box (expanded by POP_HALF) or lands
@@ -629,6 +666,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   const popAnimsRef = useRef([]);
   const edgeAnimsRef = useRef([]);
   const levelupAnimRef = useRef(null);
+  // MILESTONE MOMENTS: set only by a milestone celebrate() (flag on), so with the flag off the card's
+  // keyframes, attributes and timing are never touched.
+  const milestoneCardRef = useRef(false); // the card currently carries milestone keyframes / data-milestone
+  const milestoneEndsAtRef = useRef(0); // performance.now() when the milestone card finishes
   const winsStampAnimRef = useRef(null);
   const winsHintAnimRef = useRef(null);
   const layerSizeRef = useRef({ w: 0, h: 0 }); // fx-layer px size (mount/resize only)
@@ -720,18 +761,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
 
     if (levelupRef.current) {
       const a = levelupRef.current.animate(
-        [
-          // STEP 50 / Andy N2 ("bigger text includes animated text: level-ups"): the card now SETTLES
-          // at ×1.2 (was ×1) — bigger for the whole hold — and slams in from ×2.
-          { transform: `${CENTER}rotate(-3deg) scale(2)`, opacity: 0, offset: 0, easing: EASE_OUT }, // 0ms
-          { transform: `${CENTER}rotate(-3deg) scale(1.4)`, opacity: 1, offset: 0.1 }, // 150ms — in
-          { transform: `${CENTER}rotate(-3deg) scale(1.26)`, opacity: 1, offset: 0.1333 }, // 200ms — overshoot
-          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.2133 }, // 320ms — settle
-          { transform: `${CENTER}rotate(-3deg) scale(1.2)`, opacity: 1, offset: 0.8133 }, // 1220ms — hold end
-          // ends back at ×1: `fill: both` HOLDS this frame, and a held ×1.2 box (invisible, but still
-          // laid out) overhung the fx layer at 360px (viewport-integrity).
-          { transform: `${CENTER}rotate(-3deg) scale(1)`, opacity: 0, offset: 1 }, // 1500ms — fade out
-        ],
+        LEVELUP_FRAMES,
         { duration: LEVELUP_MS, easing: 'linear', fill: 'both' } // ease per-keyframe (below), NOT per-effect
       );
       a.cancel();
@@ -811,6 +841,19 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       ]);
       anim.cancel();
       anim.play();
+    }
+  }
+
+  // Put the shared card back to its everyday timeline after a milestone played on it. A no-op until a
+  // milestone has (so with the flag off nothing here ever runs).
+  function resetMilestoneCard() {
+    if (!milestoneCardRef.current) return;
+    milestoneCardRef.current = false;
+    if (levelupRef.current) delete levelupRef.current.dataset.milestone;
+    const a = levelupAnimRef.current;
+    if (a && a.effect && a.effect.setKeyframes) {
+      a.effect.setKeyframes(LEVELUP_FRAMES);
+      a.effect.updateTiming({ duration: LEVELUP_MS });
     }
   }
 
@@ -911,14 +954,30 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       anim.cancel();
       anim.play();
     },
-    celebrate(level) {
+    // `size` ('S' | 'M' | 'L' | 'XL', MILESTONE MOMENTS) is only ever passed with the flag on.
+    celebrate(level, size) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel(); // celebration owns the budget
       popCapRef.current = true;
+      const m = size ? MILESTONE_FX[size] : null;
+      if (m) {
+        // Same card, same copy (the title and LV line stay); the kicker reads MILESTONE. Reduced
+        // motion keeps the copy but not the bigger slam / longer hold.
+        const card = !prefersReducedMotion() && MILESTONE_CARD[size];
+        if (levelupRef.current) levelupRef.current.dataset.milestone = size;
+        if (a.effect && a.effect.setKeyframes) {
+          a.effect.setKeyframes(card ? card.frames : LEVELUP_FRAMES);
+          a.effect.updateTiming({ duration: card ? card.ms : LEVELUP_MS });
+        }
+        milestoneCardRef.current = true;
+        milestoneEndsAtRef.current = performance.now() + (card ? card.ms : LEVELUP_MS);
+      } else {
+        resetMilestoneCard();
+      }
       if (levelTitleRef.current) levelTitleRef.current.textContent = `LEVEL ${level}`;
       if (levelSubRef.current) {
-        levelSubRef.current.textContent = LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
+        levelSubRef.current.textContent = m ? 'MILESTONE' : LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
       }
       // Economy v3: level-ups no longer pay wins, so there is no "+N WINS" reward line here.
       if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
@@ -932,8 +991,13 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           burstAnimRef.current.play();
         }
         const { w, h } = layerSizeRef.current;
-        if (w && h) spawnShards(w / 2, h * 0.46, tf.tier >= 5 ? TIER_GOLD : TIER_TEAL, Math.min(SHARD_POOL, tf.levelUpShards), 3 + tf.tier * 0.6);
+        if (w && h) spawnShards(w / 2, h * 0.46, tf.tier >= 5 ? TIER_GOLD : TIER_TEAL, Math.min(SHARD_POOL, tf.levelUpShards + (m ? m.shards : 0)), 3 + tf.tier * 0.6);
       }
+    },
+    // MILESTONE MOMENTS: ms left on a milestone card (0 otherwise) — the tier-up card waits it out
+    // instead of overwriting the bigger LEVEL N on the shared element. A clock read, not a layout read.
+    milestoneBusyMs() {
+      return milestoneCardRef.current ? Math.max(0, milestoneEndsAtRef.current - performance.now()) : 0;
     },
     // STEP 21: a generic one-shot name card on the level-up element (mark rank-ups). Same finite
     // play + starburst as tierUp; never mutes typing.
@@ -941,6 +1005,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const a = levelupAnimRef.current;
       if (!a) return;
       popCapRef.current = false;
+      resetMilestoneCard();
       if (levelTitleRef.current) levelTitleRef.current.textContent = title;
       if (levelSubRef.current) levelSubRef.current.textContent = sub;
       if (levelDetailRef.current) levelDetailRef.current.textContent = detail;
@@ -957,6 +1022,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const a = levelupAnimRef.current;
       if (!a) return;
       popCapRef.current = false;
+      resetMilestoneCard();
       // The tier NAME is the headline (≤6 letters, like "LEVEL 9" it fits a 320px menu); "NEW
       // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
       if (levelTitleRef.current) levelTitleRef.current.textContent = name;
@@ -975,6 +1041,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel();
       popCapRef.current = true;
+      resetMilestoneCard();
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
       if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
       if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth

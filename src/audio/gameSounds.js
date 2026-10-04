@@ -61,12 +61,14 @@ export function sndWordRejected() {
 }
 
 // level up — 3-note ascending pentatonic run (G–Bb–C), ~90ms each, ~350ms total.
-export function sndLevelUp() {
+// `semis` transposes the run up (MILESTONE MOMENTS: LV10 +2 … LV100 +7); 0 = the everyday chime.
+export function sndLevelUp(semis = 0) {
   const ctx = ready();
   if (!ctx) return;
   const t = ctx.currentTime;
   const seq = [NOTE.G4, NOTE.Bb4, NOTE.C5];
-  seq.forEach((deg, i) => tone(t + i * 0.09, { freq: pentFreq(deg), type: 'triangle', dur: 0.14, gain: 0.2, attack: 0.005 }));
+  const k = semis ? 2 ** (semis / 12) : 1;
+  seq.forEach((deg, i) => tone(t + i * 0.09, { freq: pentFreq(deg) * k, type: 'triangle', dur: 0.14, gain: 0.2, attack: 0.005 }));
 }
 
 // rebirth — a 4–5 note run across an octave + a soft low-root swell, <=600ms.
