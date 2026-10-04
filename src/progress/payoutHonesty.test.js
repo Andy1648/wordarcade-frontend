@@ -69,12 +69,15 @@ test('BUG 1: the in-game XP award carries DIFFICULTY exactly as the wins bank an
       `awardWordXp({${a.body.trim().slice(0, 60)}…}) must pass the same difficulty as its bankWordWins`,
     );
   }
-  // And passing it makes the credited XP equal the card's XP line on HELL.
+  // The credited amount equals the card's line on every difficulty. Rebirth Rush: difficulty is OUT of the
+  // frozen formula, so CHILL and HELL both quote AND pay the base 100 (10 wins) on a 5-letter Word Bomb word.
   withStorage(() => {
-    const card = perWordRateNow({ mode: 'word-bomb', difficulty: 'hard', keyTier: 0, rebirthCount: 0 });
-    const res = awardWordXp({ mode: 'word-bomb', difficulty: 'hard', wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0 });
-    assert.equal(res.gain, card.xp);
-    assert.equal(card.xp, 200, 'HELL is ×2 on a 100-XP Word Bomb word');
+    for (const difficulty of ['chill', 'hard']) {
+      const card = perWordRateNow({ mode: 'word-bomb', difficulty, keyTier: 0, rebirthCount: 0 });
+      const res = awardWordXp({ mode: 'word-bomb', difficulty, wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0 });
+      assert.equal(res.gain, card.xp, difficulty);
+      assert.equal(card.xp, 100, `${difficulty}: a 100 (10-win) Word Bomb word`);
+    }
   });
 });
 
@@ -95,31 +98,25 @@ test('BUG 2: mode cards + live panel print multipliers with the RECEIPT formatte
   assert.equal(formatMultExact(2.02), '2.02');
 });
 
-// ---- BUG 3 (now the LETTER FORGE) -------------------------------------------------------------
-// xpPerWord once snapped to the nearest 10 XP, so small multipliers paid nothing. MOMENTUM is gone
-// (Andy oct2); its successor, the LETTER FORGE, must hold the same line: every forged level of a
-// letter in the word changes what the word awards, XP and wins, and the bank equals the receipt.
-test('BUG 3: every forge level of a letter in the word changes what a Word Bomb word awards', () => {
-  let prev = null;
-  for (let m = 0; m <= 10; m++) {
+// ---- BUG 3 (the LETTER FORGE, now OUT of the formula) ------------------------------------------
+// Rebirth Rush froze the wins formula (BASE 10 × len/5 × MODE × 5^R × MARK × BOOST): the LETTER FORGE no
+// longer multiplies a word. Honesty still holds — the card, the XP award and the wins bank agree — and a
+// forged letter must not secretly pay (or be shown to pay) anything.
+test('BUG 3: forge levels on a letter in the word change NOTHING the word awards (forge is out of the formula)', () => {
+  for (const m of [0, 1, 5, 10]) {
     withStorage(
       () => {
-        const word = 'tease'; // two e's: each forge level on E is +10% on this word
-        const mult = forgeMultForWord(word);
-        assert.equal(mult, 1 + 0.1 * m);
+        const word = 'tease';
+        assert.equal(forgeMultForWord(word), 1 + 0.1 * m, 'the forge store itself still reads');
         const xp = awardWordXp({ mode: 'word-bomb', difficulty: 'chill', wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0, word }).gain;
         let banked = 0;
         for (let w = 3; w < 13; w++) {
           banked += bankWordWins({ mode: 'wordBomb', difficulty: 'chill', prevWords: w, nowWords: w + 1, prevWeight: w * bankWeight(1, word), nowWeight: (w + 1) * bankWeight(1, word), wordLength: 5, rebirthCount: 0 });
         }
-        assert.equal(xp, Math.round(100 * mult), `E lv ${m}: XP is 100 × ${mult}`);
-        assert.equal(banked, Math.round(10 * mult * 10), `E lv ${m}: 10 words bank 10 × ${10 * mult}`);
+        assert.equal(bankWeight(1, word), 1, `E lv ${m}: the banking weight carries no forge`);
+        assert.equal(xp, 100, `E lv ${m}: XP is the base 100`);
+        assert.equal(banked, 100, `E lv ${m}: 10 words bank 10 × 10`);
         assert.equal(getWins(), banked);
-        if (prev) {
-          assert.ok(xp > prev.xp, `E lv ${m} must award more XP than lv ${m - 1}`);
-          assert.ok(banked > prev.banked, `E lv ${m} must bank more wins than lv ${m - 1}`);
-        }
-        prev = { xp, banked };
       },
       { [FORGE_KEY]: JSON.stringify({ e: m }) },
     );
@@ -127,22 +124,20 @@ test('BUG 3: every forge level of a letter in the word changes what a Word Bomb 
 });
 
 // ---- THE ACCEPTANCE GRID -----------------------------------------------------------------------
-test('card quotes the BASE word; the awarded word = card × its FORGE, for CHILL/HELL × E lv 0/1/5/10', () => {
+test('card quotes the word; the awarded word = the card, for CHILL/HELL × E lv 0/1/5/10', () => {
   for (const difficulty of ['chill', 'hard']) {
-    const base = { chill: [100, 10], hard: [200, 20] }[difficulty];
     for (const m of [0, 1, 5, 10]) {
       withStorage(
         () => {
           const card = perWordRateNow({ mode: 'word-bomb', difficulty, keyTier: 0, rebirthCount: 0 });
-          assert.deepEqual([card.xp, card.rate], base, `${difficulty}/${m} card is the base (the forge is per word)`);
+          assert.deepEqual([card.xp, card.rate], [100, 10], `${difficulty}/${m} card`);
           const word = 'tease';
-          const f = forgeMultForWord(word);
           const xp = awardWordXp({ mode: 'word-bomb', difficulty, wordLength: 5, weight: 1, keyTier: 0, rebirthCount: 0, word }).gain;
           let banked = 0;
           for (let w = 3; w < 13; w++) {
             banked += bankWordWins({ mode: 'wordBomb', difficulty, prevWords: w, nowWords: w + 1, prevWeight: w * bankWeight(1, word), nowWeight: (w + 1) * bankWeight(1, word), wordLength: 5, rebirthCount: 0 });
           }
-          assert.deepEqual([xp, banked / 10], [Math.round(base[0] * f), Math.round(base[0] * f) / 10], `${difficulty}/${m} awarded`);
+          assert.deepEqual([xp, banked / 10], [100, 10], `${difficulty}/${m} awarded`);
         },
         { [FORGE_KEY]: JSON.stringify({ e: m }) },
       );

@@ -13,9 +13,8 @@ import {
   CURVE_POW,
   CURVE_TAIL,
   CURVE_TAIL_EXP,
-  REBIRTH_MULT_STEP,
-  TIER_XP_STEP,
-  TIER_COST_STEP,
+  keyXpMult,
+  rebirthXpMult,
   round10,
   levelFromXp,
   creditXp,
@@ -79,31 +78,41 @@ test('cappedWordMult multiplies rarity×combo×lucky and clips at the ×40 cap',
   assert.equal(cappedWordMult(0, -1, NaN), 1); // garbage factors default to ×1 each
 });
 
-test('xpPerWord: difficulty and bonus are pass-through multipliers, ×1 by default', () => {
+test('xpPerWord (Rebirth Rush): BONUS (mark × boost) passes through; DIFFICULTY is ignored', () => {
   const o = { mode: 'word-bomb', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 };
-  const flat = xpPerWord(o);
-  assert.equal(xpPerWord({ ...o, difficultyMult: 1, bonusMult: 1 }), flat);
-  assert.equal(xpPerWord({ ...o, difficultyMult: 2 }), round10(flat * 2));
-  assert.equal(xpPerWord({ ...o, bonusMult: 1.5 }), round10(flat * 1.5));
-  assert.equal(xpPerWord({ ...o, difficultyMult: 2, bonusMult: 1.5 }), round10(flat * 3));
+  assert.equal(xpPerWord(o), 100); // 10 wins
+  assert.equal(xpPerWord({ ...o, difficultyMult: 1, bonusMult: 1 }), 100);
+  assert.equal(xpPerWord({ ...o, difficultyMult: 2 }), 100, 'difficulty is not in the frozen formula');
+  assert.equal(xpPerWord({ ...o, bonusMult: 1.5 }), 150);
+  assert.equal(xpPerWord({ ...o, difficultyMult: 2, bonusMult: 1.5 }), 150);
   // Garbage is guarded to ×1, never NaN.
-  assert.equal(xpPerWord({ ...o, difficultyMult: 0, bonusMult: -1 }), flat);
-  assert.equal(xpPerWord({ ...o, difficultyMult: undefined, bonusMult: NaN }), flat);
+  assert.equal(xpPerWord({ ...o, difficultyMult: 0, bonusMult: -1 }), 100);
+  assert.equal(xpPerWord({ ...o, difficultyMult: undefined, bonusMult: NaN }), 100);
 });
 
-test('xpPerWord: menu-value of the letters × mode mult × weight (playing is ≥2× the menu)', () => {
-  // R0/T0: keyTierXp(0)=10. A 5-letter COMMON word.
-  const menuWord = 5 * xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, streakMult: 1 }); // 5×10 = 50
-  for (const [mode, mult] of Object.entries(XP_MULTIPLIERS)) {
-    if (mode === 'menu') continue;
-    const xp = xpPerWord({ mode, keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
-    assert.equal(xp, round10(10 * 5 * mult)); // 100/100/150/200/250 for the five modes
-    assert.ok(xp >= 2 * menuWord, `${mode} should be ≥2× the menu value of the word`);
-  }
-  // The reward weight scales it linearly (a ×2.5 rare word is worth 2.5× the common grant).
-  const common = xpPerWord({ mode: 'chain', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1 });
-  const rare = xpPerWord({ mode: 'chain', keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 2.5 });
-  assert.equal(rare, round10(common * 2.5));
+test('THE FROZEN WINS FORMULA: 10 × len/5 × MODE POWER × 5^R × BONUS (in ×10 units: wins = this ÷ 10)', () => {
+  const w = (mode, extra = {}) => xpPerWord({ mode, keyTier: 0, rebirthCount: 0, streakMult: 1, wordLength: 5, weight: 1, ...extra }) / 10;
+  // A 5-letter word at R0: WB 10 wins, SAT ×5, CHAIN ×2, RACE ×1.5, BLITZ / FUSE = WB.
+  assert.equal(w('word-bomb'), 10);
+  assert.equal(w('category-blitz'), 10);
+  assert.equal(w('fuse'), 10);
+  assert.equal(w('sat-rush'), 50);
+  assert.equal(w('chain'), 20);
+  assert.equal(w('word-race'), 15);
+  // Length scales linearly: 10 letters = ×2, 3 letters = 6 wins.
+  assert.equal(w('word-bomb', { wordLength: 10 }), 20);
+  assert.equal(w('word-bomb', { wordLength: 3 }), 6);
+  // REBIRTH ×5 a rebirth: R1 ×5, R2 ×25.
+  assert.equal(w('word-bomb', { rebirthCount: 1 }), 50);
+  assert.equal(w('word-bomb', { rebirthCount: 2 }), 250);
+  assert.equal(w('sat-rush', { rebirthCount: 2 }), 1250);
+  // KEY tier, weight (rarity × combo × lucky), streak and difficulty do NOT touch wins.
+  assert.equal(w('word-bomb', { keyTier: 9 }), 10);
+  assert.equal(w('word-bomb', { weight: 4.5 }), 10);
+  assert.equal(w('word-bomb', { streakMult: 1.5 }), 10);
+  assert.equal(w('word-bomb', { difficultyMult: 2 }), 10);
+  // A huge rebirth count stays finite.
+  assert.ok(Number.isFinite(xpPerWord({ mode: 'sat-rush', rebirthCount: 2000, wordLength: 12, bonusMult: 50 })));
 });
 
 test('awardWordXp credits NO level XP: game words pay WINS only (v11 amended)', () => {
@@ -133,20 +142,21 @@ test('round10 snaps to the nearest 10, half-to-even', () => {
 // The v6 defect is still pinned below (a tail that got CHEAPER per level). What changed in v8 is
 // the scale: base 2,000 -> 600, exponents 1.085/1.135 -> 1.16/1.22, break LV100 -> LV30, and the
 // exponent indexes off n-1 so CURVE_BASE is need(1) exactly instead of a number nobody pays.
-test('need() matches the published PROGRESSION v11 curve (one curve for everyone)', () => {
+test('need() matches the PROGRESSION FINAL curve: round10(100 · 1.15^(n−1)) (one curve for everyone)', () => {
   // Literals, not derived from the constants under test — a test that restates the
-  // implementation passes whatever the implementation says. need = round10(100 · 1.13^(n−1)) (Andy 19:54,
-  // Keyboard Escape: every level ~13% more than the last).
+  // implementation passes whatever the implementation says.
   assert.equal(need(1), 100); // ten game letters at a fresh profile
   assert.equal(need(2), 110);
-  assert.equal(need(7), 210);
-  assert.equal(need(10), 300);
-  assert.equal(need(30), 3460);
-  assert.equal(need(50), 39890);
-  assert.equal(need(100), 17979020);
-  // Every level costs MORE than the one before it, by the same ~13% (no sudden jumps).
+  assert.equal(need(7), 230);
+  assert.equal(need(10), 350);
+  assert.equal(need(15), 710);
+  assert.equal(need(30), 5760);
+  assert.equal(need(33), 8760);
+  assert.equal(need(50), 94230);
+  assert.equal(need(100), 102114210);
+  // Every level costs MORE than the one before it, by the same ~15% (no sudden jumps).
   for (let n = 1; n < 2000; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
-  for (let n = 30; n < 2000; n++) assert.ok(need(n + 1) / need(n) > 1.125 && need(n + 1) / need(n) < 1.135, `step at LV${n}`);
+  for (let n = 30; n < 2000; n++) assert.ok(need(n + 1) / need(n) > 1.145 && need(n + 1) / need(n) < 1.155, `step at LV${n}`);
 });
 
 test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the FROZEN v9 shape (needV9)', () => {
@@ -209,33 +219,37 @@ test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
 });
 
 // ---- Key Power — RESTORED v8 (Andy oct2 KP2): XP ×2.5 a tier, price ×6 a tier in wins ----
-test('keyTierXp: the v8 table, then ×2.5 a tier forever (T1 = 25)', () => {
-  const table = [10, 25, 60, 150, 375, 940, 2350, 5875, 14690];
-  table.forEach((x, t) => assert.equal(keyTierXp(t), x, `T${t}`));
-  KEY_TIERS.forEach((row, t) => assert.equal(row.xp, keyTierXp(t), `KEY_TIERS[${t}]`));
-  assert.equal(TIER_XP_STEP, 2.5);
-  assert.equal(keyTierXp(9), round10(14690 * 2.5));
-  for (let t = 9; t <= 60; t++) assert.ok(Math.abs(keyTierXp(t) / keyTierXp(t - 1) - 2.5) < 0.01, `T${t} is ×2.5`);
-  // Nobody's XP/letter drops vs v9 (10 + 15t) at their tier.
-  for (let t = 0; t <= 1000; t++) assert.ok(keyTierXp(t) >= 10 + 15 * t, `T${t} >= v9`);
-  assert.equal(keyTierXp(-3), 10);
-  assert.equal(keyTierXp(undefined), 10);
+test('keyTierXp (Rebirth Rush): KEY no longer touches wins — the constant wins basis 20 at every tier', () => {
+  for (const t of [0, 1, 5, 9, 10, 30, 1000, -3, undefined, NaN]) assert.equal(keyTierXp(t), 20, `T${t}`);
 });
 
-test('keyTierCostAt: the v8 prices — 10 · 6^(t-1) wins, flat (no rebirth scaling)', () => {
-  const costs = [0, 10, 60, 360, 2160, 12960, 77760, 466560, 2799360];
+test('KEY ladder: ×1, ×2, ×5, ×10, ×25, ×50, ×100, ×250, ×500, ×1000 (T0–T9), then ×2.15 a tier', () => {
+  const ladder = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000];
+  ladder.forEach((m, t) => assert.equal(keyXpMult(t), m, `T${t}`));
+  assert.equal(keyXpMult(10), 2150);
+  assert.equal(keyXpMult(11), 4622.5);
+  assert.ok(Math.abs(keyXpMult(12) - 9938.375) < 1e-6);
+  for (let t = 10; t <= 200; t++) assert.ok(Math.abs(keyXpMult(t) / keyXpMult(t - 1) - 2.15) < 1e-9, `T${t} is ×2.15`);
+  // Guarded: garbage reads as T0, absurd tiers stay finite.
+  assert.equal(keyXpMult(-3), 1);
+  assert.equal(keyXpMult(undefined), 1);
+  assert.equal(keyXpMult(2.9), 5, 'floors the tier');
+  assert.ok(Number.isFinite(keyXpMult(5000)));
+});
+
+test('keyTierCostAt (Rebirth Rush): 60 · 5^(t−1) wins to REACH tier t, flat (no rebirth scaling)', () => {
+  const costs = [0, 60, 300, 1500, 7500, 37500, 187500, 937500, 4687500, 23437500, 117187500];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t, 0), c, `T${t} cost`));
-  assert.equal(TIER_COST_STEP, 6);
-  assert.equal(keyTierCostAt(9, 0), round10(2799360 * 6));
-  for (let t = 1; t <= 300; t++) assert.ok(keyTierCostAt(t, 0) > keyTierCostAt(t - 1, 0), `T${t} rising`);
-  assert.equal(keyTierCostAt(5, 7), keyTierCostAt(5, 0), 'flat across rebirths');
-  assert.equal(keyTierCost(4), keyTierCostAt(5));
+  for (let t = 2; t <= 300; t++) assert.ok(Math.abs(keyTierCostAt(t, 0) / keyTierCostAt(t - 1, 0) - 5) < 1e-9, `T${t} ×5`);
+  assert.equal(keyTierCostAt(5, 7), 37500, 'flat across rebirths');
+  assert.equal(keyTierCostAt(-1, 0), 0);
+  assert.ok(Number.isFinite(keyTierCostAt(5000, 0)));
 });
 
 test('NO CAPS: T60+ prices and effects are finite and display through the named-suffix ladder', async () => {
   const { formatNum } = await import('../format.js');
   for (const t of [60, 100, 200, 300]) {
-    const x = keyTierXp(t);
+    const x = keyXpMult(t);
     const c = keyTierCostAt(t, 0);
     assert.ok(Number.isFinite(x) && Number.isFinite(c), `T${t} finite`);
     for (const v of [x, c]) {
@@ -247,8 +261,8 @@ test('NO CAPS: T60+ prices and effects are finite and display through the named-
 
 
 test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
-  assert.equal(keyTierCost(0, 0), 10); // v8: standing at T0, buying T1 costs 10
-  assert.equal(keyTierCost(3, 0), 2160); // at T3, T4 costs 2,160
+  assert.equal(keyTierCost(0, 0), 60); // standing at T0, buying T1 costs 60
+  assert.equal(keyTierCost(3, 0), 7500); // at T3, T4 costs 7,500
   for (let t = 0; t < 40; t++) {
     assert.equal(keyTierCost(t, 0), keyTierCostAt(t + 1, 0));
     assert.equal(keyTierCost(t, 2), keyTierCostAt(t + 1, 2));
@@ -294,11 +308,11 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   assert.equal(r.toNext, needV9(7) - 100);
 });
 
-test('the MENU letter (v11 round 3): a FIFTH of a game letter — 2 × KEY ×1.2/tier × REBIRTH × mark, no mode term', () => {
+test('the MENU letter: a FIFTH of a game letter — 2 × KEY ladder × 5^R × mark, no mode term', () => {
   assert.equal(MENU_LETTER_SHARE, 0.2);
   assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0 }), 2);
-  assert.equal(xpPerInput({ keyTier: 5, rebirthCount: 0 }), 5); // 4.98 (T5 ×2.49)
-  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 4); // 4.36 (T2 ×1.44, R1 ×1.51, ×⅕)
+  assert.equal(xpPerInput({ keyTier: 5, rebirthCount: 0 }), 100); // 2 × 50
+  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 50); // 2 × 5 × 5
   assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0, markMult: 1.5 }), 3); // a LEGENDARY worn mark
   assert.equal(levelXpPerLetter(0, 0), 10, 'a GAME letter is BASE 10');
   // a game mode does not multiply a letter (words pay WINS; a letter is a letter)
@@ -311,49 +325,59 @@ test('cosmetics are LOOKS ONLY: pop / sound multipliers and the streak never tou
   assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0, streakMult: 1.25 }), base);
 });
 
-test('rebirth gate (Keyboard Escape): where a run meets its wall — LV 35 + 3R + R²/50', () => {
-  assert.equal(rebirthThreshold(0), 35); // gate for R1
-  assert.equal(rebirthThreshold(1), 38); // R2
-  assert.equal(rebirthThreshold(3), 44); // R4
-  assert.equal(rebirthThreshold(9), 64); // R10
-  assert.equal(rebirthThreshold(10), 67); // R11
-  assert.equal(rebirthThreshold(19), 99); // R20
-  assert.equal(rebirthThreshold(20), 103); // R21
-  assert.equal(rebirthThreshold(30), 143); // R31
-  for (let rc = 0; rc < 200; rc++) assert.ok(rebirthThreshold(rc + 1) > rebirthThreshold(rc), `gate R${rc}`);
+test('rebirth gate (Rebirth Rush): LV 15 + 18R', () => {
+  assert.equal(rebirthThreshold(0), 15); // gate for R1
+  assert.equal(rebirthThreshold(1), 33); // R2
+  assert.equal(rebirthThreshold(3), 69); // R4
+  assert.equal(rebirthThreshold(9), 177); // R10
+  assert.equal(rebirthThreshold(10), 195); // R11
+  assert.equal(rebirthThreshold(19), 357); // R20
+  assert.equal(rebirthThreshold(20), 375); // R21
+  assert.equal(rebirthThreshold(30), 555); // R31
+  assert.equal(rebirthThreshold(-2), 15);
+  assert.equal(rebirthThreshold(NaN), 15);
+  for (let rc = 0; rc < 200; rc++) assert.equal(rebirthThreshold(rc + 1) - rebirthThreshold(rc), 18, `gate R${rc}`);
 });
 
-// v6 tabled the multiplier (R1 ×1.5 … R10 ×10, then a cliff to ×100). v7/v8 made it 3^rc, which
-// compounded through every other income source (R10 ×59,049). v9 (STEP 19) is ADDITIVE:
-// 1 + REBIRTH_MULT_STEP·rc — every rebirth adds the same flat +1, no table, no cliff, no blow-up.
-test('rebirth multiplier: additive 1 + rebirths (v9), no table, no cliff, no compounding', () => {
-  assert.equal(REBIRTH_MULT_STEP, 1);
+// REBIRTH RUSH: ×5 XP AND wins per rebirth, forever — 5^R, the same number on the bar and on wins.
+test('rebirth multiplier: 5^R on wins and on XP (R1 ×5, R2 ×25, R10 ×9,765,625)', () => {
   assert.equal(rebirthMult(0), 1); // no rebirths yet
-  assert.equal(rebirthMult(1), 2); // R1 doubles income
-  assert.equal(rebirthMult(2), 3);
-  assert.equal(rebirthMult(5), 6);
-  assert.equal(rebirthMult(10), 11); // v8 paid ×59,049 here
-  assert.equal(rebirthMult(2.9), 3); // floors the count
-  // Every step ADDS the same amount — the property the table never had.
-  for (let rc = 0; rc < 100; rc++) {
-    assert.equal(rebirthMult(rc + 1) - rebirthMult(rc), REBIRTH_MULT_STEP, `step at R${rc}`);
-  }
-  // Negative / garbage counts read as R0, never NaN.
+  assert.equal(rebirthMult(1), 5);
+  assert.equal(rebirthMult(2), 25);
+  assert.equal(rebirthMult(5), 3125);
+  assert.equal(rebirthMult(10), 9765625);
+  assert.equal(rebirthMult(2.9), 25); // floors the count
+  for (let rc = 0; rc < 100; rc++) assert.equal(rebirthXpMult(rc), rebirthMult(rc), `XP = wins at R${rc}`);
+  // Negative / garbage counts read as R0, never NaN; absurd counts stay finite.
   assert.equal(rebirthMult(-3), 1);
   assert.equal(rebirthMult(undefined), 1);
   assert.equal(rebirthMult(NaN), 1);
+  assert.ok(Number.isFinite(rebirthMult(5000)));
 });
 
-test('rebirth is refused at LV34 and allowed at LV35', () => {
-  const xp34 = cumCost(34); // exactly at the start of level 34
-  const xp35 = cumCost(35); // exactly at the start of level 35
-  assert.equal(levelFromXp(xp34).level, 34);
-  assert.equal(levelFromXp(xp35).level, 35);
-  assert.equal(canRebirth(xp34, 0), false);
-  assert.equal(canRebirth(xp35, 0), true);
+test('XP per letter = 10 × KEY × 5^R × mark — finite at any R / tier', () => {
+  assert.equal(levelXpPerLetter(0, 0), 10);
+  assert.equal(levelXpPerLetter(1, 0), 20);
+  assert.equal(levelXpPerLetter(9, 0), 10000);
+  assert.equal(levelXpPerLetter(0, 1), 50);
+  assert.equal(levelXpPerLetter(3, 2), 2500); // 10 × 10 × 25
+  assert.equal(levelXpPerLetter(2, 1, 1.5), 375); // 10 × 5 × 5 × 1.5
+  for (const [t, r] of [[30, 430], [300, 1000], [5000, 5000]]) {
+    const v = levelXpPerLetter(t, r, 1.5);
+    assert.ok(Number.isFinite(v) && v > 0, `T${t} R${r}: ${v}`);
+  }
 });
 
-test('doRebirth zeroes xp and preserves wins/owned/equipped/rebirths+1', () => {
+test('rebirth is refused at LV14 and allowed at LV15', () => {
+  const xp14 = cumCost(14); // exactly at the start of level 14
+  const xp15 = cumCost(15); // exactly at the start of level 15
+  assert.equal(levelFromXp(xp14).level, 14);
+  assert.equal(levelFromXp(xp15).level, 15);
+  assert.equal(canRebirth(xp14, 0), false);
+  assert.equal(canRebirth(xp15, 0), true);
+});
+
+test('doRebirth zeroes xp, RESETS the KEY tier to T0, and preserves wins/owned/equipped/rebirths+1', () => {
   withStorage(
     {
       'taw.xp': String(cumCost(20)),
@@ -375,10 +399,17 @@ test('doRebirth zeroes xp and preserves wins/owned/equipped/rebirths+1', () => {
       assert.equal(map.get('taw.winsLifetime'), '900');
       assert.equal(map.get('taw.owned'), JSON.stringify(['classic', 'thock', 'prism']));
       assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
-      assert.equal(map.get('taw.keytier'), '3'); // Key Power tier SURVIVES rebirth
-      assert.equal(getKeyTier(), 3);
+      assert.equal(map.get('taw.keytier'), '0'); // Rebirth Rush: KEY resets every rebirth (wins kept)
+      assert.equal(getKeyTier(), 0);
+      assert.equal(keyTierCost(getKeyTier(), rc), 60, 'the rebuy starts at the T1 price');
     }
   );
+  // A second rebirth from a re-bought tier resets it again.
+  withStorage({ 'taw.rebirths': '4', 'taw.keytier': '9', 'taw.wins': '123' }, (map) => {
+    assert.equal(doRebirth(), 5);
+    assert.equal(getKeyTier(), 0);
+    assert.equal(map.get('taw.wins'), '123');
+  });
   // a from-scratch rebirth (empty storage) still works and doesn't throw.
   withStorage({}, () => {
     assert.doesNotThrow(() => saveProgress({ level: 1, intoLevel: 0 }));
@@ -553,9 +584,10 @@ test('rebirthScaledWins = the amount actually PAID (Collection/Achievement quote
   for (const rc of [1, 2, 5, 10]) {
     assert.equal(rebirthScaledWins(5000, rc), Math.round(5000 * rebirthMult(rc)), `R${rc}`);
   }
-  // v9 (additive): R1 is ×2 → 10,000; R10 is ×11 → 55,000 (v8 paid ×3 / ×59,049).
-  assert.equal(rebirthScaledWins(5000, 1), 10000);
-  assert.equal(rebirthScaledWins(5000, 10), 55000);
+  // Rebirth Rush (5^R): R1 ×5 → 25,000; R2 ×25 → 125,000; R10 → 48,828,125,000.
+  assert.equal(rebirthScaledWins(5000, 1), 25000);
+  assert.equal(rebirthScaledWins(5000, 2), 125000);
+  assert.equal(rebirthScaledWins(5000, 10), 48828125000);
   // Guarded input.
   assert.equal(rebirthScaledWins(undefined, 0), 0);
 });

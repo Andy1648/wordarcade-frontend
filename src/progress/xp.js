@@ -189,7 +189,15 @@ export function levelXpPerLetter(keyTier, rebirthCount, markMult = 1) {
   const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const mm = Number.isFinite(markMult) && markMult > 0 ? markMult : 1;
-  return LEVEL_XP_PER_LETTER * keyXpMult(kt) * rebirthXpMult(rc) * mm;
+  // KEY and REBIRTH are each capped at 1e300, but their PRODUCT is not: past ~R430 it overflowed to Infinity,
+  // and creditXp drops a non-finite gain to 0 — the bar would silently stop filling. Clamp the product.
+  return finiteCap(LEVEL_XP_PER_LETTER * keyXpMult(kt) * rebirthXpMult(rc) * mm);
+}
+// A product of capped factors can still overflow: clamp it to 1e300 (Infinity → the cap, NaN → 0).
+const PRODUCT_CAP = 1e300;
+export function finiteCap(v) {
+  if (Number.isNaN(v)) return 0;
+  return Math.min(v, PRODUCT_CAP);
 }
 
 // Level (and progress within it) derived from a cumulative XP total. Level 1 starts at
@@ -450,13 +458,13 @@ export function keyTierXp(tier) {
 // The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past T8
 // it extends ×6 per tier from T8's 2,799,360, each step round10. (rebirthCount accepted and ignored —
 // v8 prices were flat wins; the signature stays so callers don't change.)
-// eslint-disable-next-line no-unused-vars
 // Rebirth Rush: T→T+1 costs KEY_COST_C0 × 5^T wins (C0 ≈ 30 s of BASE play: a median 10 words a minute ×
 // BASE 10 × 6/5 letters ≈ 60 wins). NOT scaled by rebirth: wins are ×5 a rebirth and these prices are not,
 // so every new run rebuys the early tiers in a burst. Cost to REACH tier t = C0 × 5^(t−1).
 export const KEY_COST_C0 = 60;
 export const KEY_COST_STEP = 5;
 const KEY_COST_CAP = 1e300;
+// eslint-disable-next-line no-unused-vars
 export function keyTierCostAt(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
   if (t === 0) return 0;
@@ -586,7 +594,7 @@ export function xpPerWord({
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
   const bm = Number.isFinite(bonusMult) && bonusMult > 0 ? bonusMult : 1;
-  return roundWordXp(keyTierXp() * len * modePower(mode) * rebirthMult(rc) * bm);
+  return roundWordXp(finiteCap(keyTierXp() * len * modePower(mode) * rebirthMult(rc) * bm)); // never Infinity → 0
 }
 
 // THE PER-WORD GRID: WHOLE XP, not round10. ANDY: "nothing hidden." round10 was the grid here

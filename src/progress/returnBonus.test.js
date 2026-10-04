@@ -41,9 +41,9 @@ test('returnBonusWins: below 6h pays 0; scales 100/hr; caps at 12h; × rebirth',
     assert.equal(returnBonusWins(48), 12 * PER_HOUR_WINS); // capped at 12h → still 1200
   });
   withStorage({ 'taw.rebirths': '2' }, () => {
-    // v9: rebirthMult is additive (1 + rc) → R2 is ×3 (v7/v8 paid ×9).
+    // Rebirth Rush: rebirthMult is 5^R → R2 is ×25.
     assert.equal(returnBonusWins(12), 12 * PER_HOUR_WINS * rebirthMult(2));
-    assert.equal(returnBonusWins(12), 12 * PER_HOUR_WINS * 3);
+    assert.equal(returnBonusWins(12), 30000);
   });
 });
 
