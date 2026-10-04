@@ -71,12 +71,12 @@ test('automation is locked before R3, then buys for you', () => {
   });
 });
 
-test('HEAD START lifts the new climb, never past half the next gate', () => {
+test('REBIRTH RUSH: "Level → 1" — owned HEAD START no longer lifts the new climb', () => {
   withStorage({ 'taw.xp': JSON.stringify({ lv: rebirthThreshold(1), into: 0 }), 'taw.rebirths': '1' }, () => {
     addStars(20);
     for (let i = 0; i < 6; i++) buyPerk('head', 1);
-    assert.equal(headStartLevel(2), Math.min(31, Math.floor(rebirthThreshold(2) / 2)));
+    assert.equal(headStartLevel(2), 1);
     rebirthWithStars();
-    assert.equal(loadProgress().level, headStartLevel(2));
+    assert.equal(loadProgress().level, 1);
   });
 });
