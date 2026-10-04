@@ -2,7 +2,7 @@
 //
 // The Category Blitz pack picker (PackPicker), which only appears inside the
 // Category Blitz dialog: it lists every pack, and selection state (toggle,
-// SELECT ALL / CLEAR, the "N PACKS LOADED" count) behaves correctly. Selection
+// SELECT ALL / CLEAR, the "N PACKS" count) behaves correctly. Selection
 // is owned by App state and defaults to all packs on.
 import { test, expect } from '@playwright/test';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
@@ -13,9 +13,9 @@ const TOTAL_CATS = PACKS.reduce((s, p) => s + p.count, 0); // sum of every pack'
 const MOVIES = PACKS.find((p) => p.id === 'movies'); // toggled in the count test
 // CLEAR leaves exactly the first pack selected (App handleSetAllBlitzPacks → PACKS.slice(0, 1)).
 const CLEAR_PACK = PACKS[0];
-// The footer copy: "N PACKS · M CATEGORIES LOADED" (M = summed counts of the selected packs).
+// The footer copy: "N PACKS · M CATEGORIES" (M = summed counts of the selected packs).
 const loaded = (n, cats) =>
-  `${n} PACK${n === 1 ? '' : 'S'} · ${cats} ${cats === 1 ? 'CATEGORY' : 'CATEGORIES'} LOADED`;
+  `${n} PACK${n === 1 ? '' : 'S'} · ${cats} ${cats === 1 ? 'CATEGORY' : 'CATEGORIES'}`;
 
 test.describe('Category Blitz pack picker', () => {
   test.beforeEach(async ({ page }) => {

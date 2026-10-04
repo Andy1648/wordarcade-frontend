@@ -42,9 +42,9 @@ export default function RankUpMoment({ from, to, onDone, onPop }) {
         <PodiumIcon size={64} className="lb-rankup-podium" />
         <span className="lb-rankup-kicker">RANK UP</span>
         <span className="lb-rankup-line">
-          <span className="lb-rankup-from">#{from}</span>
+          <span className="lb-rankup-from">#{formatNum(from)}</span>
           <span className="lb-rankup-arrow">→</span>
-          <span className="lb-rankup-to">#{to}</span>
+          <span className="lb-rankup-to">#{formatNum(to)}</span>
         </span>
         <span className="lb-rankup-sub">LV {formatNum(Number(level) || 1)} · ON THE LEADERBOARD</span>
       </div>

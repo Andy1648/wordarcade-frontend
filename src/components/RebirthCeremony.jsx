@@ -43,7 +43,7 @@ export default function RebirthCeremony({ c, onContinue }) {
               </span>
             </div>
             {c.toLevel > 1 && <div className="rbc-note">HEAD START: YOU BEGIN AT LV {formatNum(c.toLevel)}</div>}
-            <p className="rbc-only">ONLY YOUR LEVEL RESETS. EVERYTHING IN KEPT STAYS.</p>
+            <p className="rbc-only">ONLY YOUR LEVEL RESETS.</p>
           </section>
           <section className="rbc-col rbc-kept" aria-label="Kept">
             <h3 className="rbc-col-h">KEPT</h3>

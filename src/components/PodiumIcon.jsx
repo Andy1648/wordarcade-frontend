@@ -42,7 +42,9 @@ export function podiumLabel(rank) {
   if (!(n > 0)) return null;
   if (n < 1000) return `#${n}`;
   const k = n / 1000;
-  return `${k < 10 ? (Math.floor(k * 10) / 10).toString() : formatNum(Math.floor(k))}K`;
+  // from 10K the shared formatter owns the unit — a floored thousand keeps it ≤ 4 chars ("12K", "999K",
+  // "1.23M") and never doubles the suffix (the old `formatNum(k) + 'K'` printed "12.3KK" past 10M)
+  return k < 10 ? `${Math.floor(k * 10) / 10}K` : formatNum(Math.floor(k) * 1000);
 }
 
 const reduced = () => {

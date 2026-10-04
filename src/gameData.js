@@ -133,7 +133,7 @@ const WORD_RACE_GAME = {
   artKey: 'WordRaceArt',
   name: 'WORD\nRACE',
   cardName: 'RACE',
-  description: 'SAME WORDS FOR EVERYONE. FIRST TO 25 WORDS.', // H6: not "25 WINS" (the currency)
+  description: 'SAME WORDS FOR EVERYONE. FIRST TO 25.', // H6: not "25 WINS" (the currency)
   baseColor: '#FF4FA3',
   iconBg: '#1a0b2e',
   badgeText: 'MULTI',

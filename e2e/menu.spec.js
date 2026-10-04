@@ -86,7 +86,7 @@ test.describe('menu', () => {
       return {
         hint: read(document.querySelector('.menu-xp-hint-text')),
         cardName: read(card && card.querySelector('.game-card-name')),
-        cardWins: read(card && card.querySelector('.game-card-payout')),
+        cardWins: card && card.querySelector('.game-card-payout') ? `${card.querySelector('.game-card-payout').getAttribute('data-rate')} WINS` : null, // the live rate (the card prints BASE)
         cost: read(document.querySelector('.menu-xp-readout-need')),
       };
     });

@@ -22,7 +22,7 @@ export default function ConnectingContent({ cold }) {
           {cold ? 'WAKING THE SERVER…' : 'CONNECTING…'}
         </span>
         {cold && (
-          <span className="connecting-sub">GIVE IT ~30s — IT DROPS YOU IN AUTOMATICALLY.</span>
+          <span className="connecting-sub">~30s — YOU DROP IN AUTOMATICALLY.</span>
         )}
       </span>
     </span>
