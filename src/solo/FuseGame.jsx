@@ -32,6 +32,7 @@ import { FuseNormalCard, FuseFirstRunCard } from './fuseCards.jsx';
 import SoloLoadState from './SoloLoadState.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
+import NearMiss from '../components/NearMiss.jsx';
 import poolsRaw from './fragmentPools.json';
 import { formatNum } from '../format.js';
 
@@ -405,7 +406,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       /* FIRST-RUN TEACH (per mode) — a real word containing the fragment that is on screen right
          now, skipping any already solved, so copying it always works. */
       teachMode="fuse"
-      teachRule="THE LETTERS SHOWN MUST APPEAR SOMEWHERE IN IT"
+      teachRule="USE THE LETTERS SHOWN, ANYWHERE IN THE WORD"
       teachExample={data ? exampleContaining(data.recall, s.fragment, (w) => s.used.has(w)) : null}
       phase={g.phase}
       winsTally={winsTally}
@@ -433,6 +434,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         tryRow: (
           <>
             <ClaimPrompt />
+            <NearMiss mode="fuse" onPlay={g.restart} />
             <TryModeRow current="fuse" />
           </>
         ),

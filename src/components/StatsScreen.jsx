@@ -41,6 +41,8 @@ import { exportSave, importSave } from '../save/saveBackup';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { getMyProfile, selfReset } from '../leaderboard/client';
 import { useMomentHold } from '../lib/useMomentSlot';
+import { flagOn } from '../lib/featureFlags';
+import { rebirthLadder } from '../progress/rebirthLadder';
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -181,6 +183,9 @@ export default function StatsScreen({ onBack }) {
 
 
   const rbXp = rebirthXpMult(rebirths);
+  // EXTENSION d (dormant, ?ladder=1): the REBIRTH row becomes BASE / NOW / NEXT chips in the same slot. The chips
+  // read the live Rebirth Rush rebirthMult (5^R) and rebirthThreshold (LV 15 + 18R) — never a copied table.
+  const ladder = flagOn('ladder') ? rebirthLadder(rebirths) : null;
   const keyTier = getKeyTier();
   // REBIRTH RUSH: the bar fills from LETTERS — BASE 10 XP / LETTER × KEY × REBIRTH 5^R × MARK × BOOST.
   // Words pay WINS — BASE 10 WINS / WORD (a 5-letter word) × length/5 × MODE × REBIRTH × MARK × BOOST.
@@ -241,7 +246,7 @@ export default function StatsScreen({ onBack }) {
   const recordCellsAll = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
   const recordCells = [...recordCellsAll.filter((c) => !c.locked), ...recordCellsAll.filter((c) => c.locked)];
   // BB2 (Andy oct2): the PLAYER CARD — the screen worth screenshotting. LEVEL is the hero (the board
-  // ranks by it); four big numbers under it; who / rank / rebirths / since on one strip.
+  // ranks rebirths, then level); four big numbers under it; who / rank / rebirths / since on one strip.
   let wordsTyped = 0;
   for (const m of MASTERY_MODES) wordsTyped += masteryWords(m) || 0;
   const me = getMyProfile();
@@ -380,12 +385,24 @@ export default function StatsScreen({ onBack }) {
               mark; a fifth of that in the menu). Words pay WINS (see a game's receipt). */}
           <h3 className="stats-subtitle">XP — LETTERS FILL THE BAR</h3>
           <dl className="stats-list">
-            {multipliers.map(([k, v]) => (
-              <div className="stats-row" key={k}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
+            {multipliers.map(([k, v]) =>
+              ladder && k === 'REBIRTH' ? (
+                <div className="stats-row stats-ladder" key={k}>
+                  <dd className="stats-ladder-chips" aria-label="Rebirth ladder">
+                    {ladder.map((c) => (
+                      <span className={`stats-chip is-${c.state}`} key={c.id}>
+                        {[`${c.name} ${c.mult}`, c.gate, c.gain].filter(Boolean).join(' · ')}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              ) : (
+                <div className="stats-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ),
+            )}
           </dl>
 
           <h3 className="stats-subtitle">ROUNDS PLAYED</h3>

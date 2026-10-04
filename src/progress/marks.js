@@ -301,7 +301,7 @@ export function checkMarkClaims({ level = 1, rebirths = 0, earned = [] } = {}) {
       kind: 'layer',
       label: 'NEW SYSTEM — MARKS',
       detail: 'marks',
-      meta: { blurb: 'Roll and earn MARKS. WEAR ONE: it is your title and multiplies XP per letter and wins, ×1.1 COMMON up to ×25 SECRET.' },
+      meta: { blurb: 'Roll and earn MARKS. WEAR ONE as your title: ×1.1 COMMON up to ×25 SECRET on XP per letter and wins.' },
     });
   }
   const queued = [];

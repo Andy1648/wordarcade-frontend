@@ -7,24 +7,30 @@
 // mode card), and the news doesn't depend on catching it — the trophy keeps a dot until the board is
 // opened, and the board shows the rank. Announced to screen readers via a status line. Static card
 // for the same duration under reduced motion.
+//
+// kind="passed" (extensions-spec a, dormant behind flagOn('rival')): the SAME card names who passed you —
+// "XAVI PASSED YOU" / "#5 → #6" / "2 LV BEHIND" (or "1 RB BEHIND": the board ranks rebirths first). It is the one tappable variant: tapping it opens the
+// board (the way to win the spot back), so only that card takes pointer events, never the layer.
 import { useEffect, useRef, useState } from 'react';
 import { myStats } from './client.js';
 import { formatNum } from '../format';
+import { standingText } from './boardTarget.js';
 import PodiumIcon from '../components/PodiumIcon';
 import { RANKUP_MS } from '../lib/menuMoments.js';
+import { rivalCopy, rivalGapLine, rivalGapSpoken } from './rival.js';
 import './RankUpMoment.css';
 
 export { RANKUP_MS };
 // the "#to" pops at 30-40% of the card (lb-rankup-pop): the menu's podium bounces + ticks on the same beat
 export const RANKUP_POP_MS = Math.round(RANKUP_MS * 0.36);
 
-export default function RankUpMoment({ from, to, onDone, onPop }) {
+export default function RankUpMoment({ from, to, onDone, onPop, kind = 'up', name = '', levels = 0, rebirths = 0, onTap }) {
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
   const popRef = useRef(onPop);
   popRef.current = onPop;
-  // Andy oct2 (later): the board ranks by LEVEL (after rebirths), so the moment names the level.
-  const [level] = useState(() => myStats().level);
+  // Andy oct3 19:55: the board ranks REBIRTHS, then LEVEL — the moment names both ("R8 · LV16").
+  const [standing] = useState(() => { const s = myStats(); return standingText(s.rebirths, s.level); });
   // a live region announces a CHANGE, so the status line fills a beat after the region mounts
   const [said, setSaid] = useState(false);
   useEffect(() => {
@@ -33,6 +39,25 @@ export default function RankUpMoment({ from, to, onDone, onPop }) {
     const c = setTimeout(() => popRef.current && popRef.current(), RANKUP_POP_MS);
     return () => { clearTimeout(a); clearTimeout(b); clearTimeout(c); };
   }, []);
+  if (kind === 'passed') {
+    const copy = rivalCopy({ name, from, to, levels, rebirths });
+    const gap = rivalGapLine(levels, rebirths);
+    return (
+      <div className="lb-rankup-layer">
+        <p className="lb-rankup-sr" role="status">{said ? `${copy.title}. Number ${formatNum(from)} to number ${formatNum(to)}. ${rivalGapSpoken(levels, rebirths)}.` : ''}</p>
+        <button type="button" className="lb-rankup is-passed" aria-label={`${copy.title} — open leaderboard`} onClick={() => onTap && onTap()}>
+          <PodiumIcon size={64} className="lb-rankup-podium" />
+          <span className="lb-rankup-kicker">{copy.title}</span>
+          <span className="lb-rankup-line" aria-hidden="true">
+            <span className="lb-rankup-from">#{formatNum(from)}</span>
+            <span className="lb-rankup-arrow">→</span>
+            <span className="lb-rankup-to">#{formatNum(to)}</span>
+          </span>
+          <span className="lb-rankup-sub">{gap}</span>
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="lb-rankup-layer">
       <p className="lb-rankup-sr" role="status">{said ? `Leaderboard rank up: from number ${from} to number ${to}.` : ''}</p>
@@ -46,7 +71,7 @@ export default function RankUpMoment({ from, to, onDone, onPop }) {
           <span className="lb-rankup-arrow">→</span>
           <span className="lb-rankup-to">#{formatNum(to)}</span>
         </span>
-        <span className="lb-rankup-sub">LV {formatNum(Number(level) || 1)} · ON THE LEADERBOARD</span>
+        <span className="lb-rankup-sub">{standing} · ON THE LEADERBOARD</span>
       </div>
     </div>
   );

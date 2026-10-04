@@ -224,7 +224,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
         <div className="room-code" translate="no" aria-label={`Room code ${room.code}`}>
           <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
         </div>
-        <div className="room-instruction">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
+        <div className="room-instruction">SHARE THIS CODE</div>
 
         {/* One-tap invite: copies (or natively shares, where supported) a
             ?join=CODE deep link that drops a friend STRAIGHT into this room —
@@ -412,7 +412,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             disabled={!canStart || startPending}
           >
             {!canStart
-              ? `NEED ${minPlayers}+ PLAYERS TO START`
+              ? `NEED ${minPlayers}+ PLAYERS`
               : startPending
               ? 'STARTING...'
               : isSoloCategoryBlitz
@@ -420,7 +420,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
               : 'START GAME'}
           </button>
         ) : (
-          <div className="room-waiting-msg">WAITING FOR HOST TO START THE GAME...</div>
+          <div className="room-waiting-msg">WAITING FOR HOST...</div>
         )}
         </div>
 

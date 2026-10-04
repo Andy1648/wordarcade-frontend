@@ -16,6 +16,8 @@ import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION_V10, econRpcArg } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
 import { queueClaim } from '../progress/claims.js';
+import { flagOn } from '../lib/featureFlags.js';
+import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -411,16 +413,20 @@ export function formatResetIn(ms) {
 }
 
 // ---- STEP 47: pulling players in -------------------------------------------------------------
-// The board's order, as a comparator: LEVEL desc, then lifetime words desc — rebirths are NOT ranked
-// (Andy oct2 evening; he ran this view on prod; 001 / 005 / 009 / 011 carry it). A HYPOTHETICAL
+// The board's order, as a comparator: REBIRTHS desc, then LEVEL desc, then lifetime words desc
+// (Andy oct3 19:55 — he ran this view on prod; 017_board_reality.sql carries it). A HYPOTHETICAL
 // row (someone not on the board yet) loses every exact tie — the existing row got there first, the
-// same rule the view's created_at tiebreak applies.
+// same rule the view's created_at tiebreak applies. KEEP IN SYNC WITH serverRankFor below.
 export function ranksAhead(row, me) {
-  // BOARD = LEVEL ONLY (Andy oct2 evening): level desc, then lifetime words; rebirths are not ranked.
+  const r = Number(row.rebirths) || 0;
   const l = Number(row.level) || 0;
   const w = Number(row.lifetime_words) || 0;
-  if (l !== me.level) return l > me.level;
-  return w >= me.lifetimeWords;
+  const mr = Number(me.rebirths) || 0;
+  const ml = Number(me.level) || 0;
+  const mw = Number(me.lifetimeWords) || 0;
+  if (r !== mr) return r > mr;
+  if (l !== ml) return l > ml;
+  return w >= mw;
 }
 
 /** The rank `stats` would take on a board whose top rows are `rows` (null if off the top-N). */
@@ -465,16 +471,22 @@ export function noteClaimPromptDismissed() {
   } catch { /* ignore */ }
 }
 
+/** The PostgREST `or=` filter for "rows ranked ahead of (rebirths, level, words)" — ranksAhead, server-side. */
+export function rankAheadFilter(rb, l, w) {
+  return `(rebirths.gt.${rb},and(rebirths.eq.${rb},level.gt.${l}),and(rebirths.eq.${rb},level.eq.${l},lifetime_words.gte.${w}))`;
+}
+
 /**
  * The TRUE rank `stats` would take on the live board — counted on the SERVER (how many rows rank
- * ahead under the view's order: level, then words (rebirths are not ranked); an exact tie goes to the existing
+ * ahead under the view's order: rebirths, then level, then words; an exact tie goes to the existing
  * row), so it is right past the visible top 10 (Andy oct2 LB10). null when offline.
  */
 export async function serverRankFor(stats) {
   if (!LEADERBOARD_ENABLED || !stats) return null;
   const w = Math.max(0, Math.floor(Number(stats.lifetimeWords) || 0));
   const l = Math.max(1, Math.floor(Number(stats.level) || 1));
-  const or = `(level.gt.${l},and(level.eq.${l},lifetime_words.gte.${w}))`;
+  const rb = Math.max(0, Math.floor(Number(stats.rebirths) || 0));
+  const or = rankAheadFilter(rb, l, w);
   try {
     const r = await fetch(`${BASE}/rest/v1/leaderboard?select=id&or=${encodeURIComponent(or)}`, {
       method: 'HEAD',
@@ -579,7 +591,68 @@ export async function checkRankUp(epoch = boardSeenEpoch) {
   if (!now) return null;
   // the board was opened since this check began: it already took the baseline; this result is stale
   if (epoch !== boardSeenEpoch) return null;
-  return applyRankCheck(now);
+  const before = getLastRank();
+  const prev = getRankBaseline();
+  const cur = { rb: getRebirths() || 0, lv: readLevel() };
+  const up = applyRankCheck(now);
+  setRankBaseline(cur); // every check re-baselines: a rebirth is measured against the visit before it
+  if (up) return up;
+  return rivalCheck({ before, now, prev, cur, epoch });
+}
+
+// ---- extensions-spec a: RIVAL PINGS (dormant, flagOn('rival')) ------------------------------------
+// A DROP names who passed you — one extra board read, only on a drop that could ping. Never across my own
+// rebirth / reset (the board ranks rebirths, then level: either moves me on its own, not a pass).
+const LAST_RB_KEY = 'taw.lb.lastRb';
+const LAST_LV_KEY = 'taw.lb.lastLv';
+const RIVAL_LOG_KEY = 'taw.lb.rival'; // { day, n, last } — 3 a day, never the same passer twice in a row
+export function getRankBaseline() {
+  try {
+    const rb = localStorage.getItem(LAST_RB_KEY);
+    const lv = localStorage.getItem(LAST_LV_KEY);
+    if (rb == null || lv == null) return null;
+    return { rb: Number(rb), lv: Number(lv) };
+  } catch {
+    return null;
+  }
+}
+export function setRankBaseline({ rb, lv }) {
+  try {
+    localStorage.setItem(LAST_RB_KEY, String(Number(rb) || 0));
+    localStorage.setItem(LAST_LV_KEY, String(Number(lv) || 1));
+  } catch { /* ignore */ }
+}
+function readRivalLog() {
+  try { return JSON.parse(localStorage.getItem(RIVAL_LOG_KEY) || 'null'); } catch { return null; }
+}
+function localDay(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+/** The row just above `rank` on the live board (not me), or null. One GET. */
+export async function fetchRowAbove(rank) {
+  if (!LEADERBOARD_ENABLED) return null;
+  const mine = getMyProfile();
+  try {
+    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank,id,username,level,rebirths&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
+    if (!r.ok) return null;
+    const rows = await r.json();
+    return (rows || []).find((x) => !mine || x.id !== mine.id) || null;
+  } catch {
+    return null;
+  }
+}
+/** { kind: 'passed', name, from, to, levels } when a rival ping should show, else null. Records it. */
+export async function rivalCheck({ before, now, prev, cur, epoch = boardSeenEpoch }) {
+  if (!flagOn('rival')) return null;
+  // cheap guards first: no board read unless this drop could ping
+  if (rankChange(before, now) !== 'drop' || ownDropSince(prev, cur) || now > RIVAL_MAX_RANK) return null;
+  const passer = await fetchRowAbove(now);
+  if (epoch !== boardSeenEpoch) return null;
+  const today = localDay();
+  const ping = rivalPing({ before, now, prev, cur, passer, log: readRivalLog(), today });
+  if (!ping) return null;
+  try { localStorage.setItem(RIVAL_LOG_KEY, JSON.stringify(nextRivalLog(readRivalLog(), ping.name, today))); } catch { /* ignore */ }
+  return { kind: 'passed', ...ping };
 }
 
 /** The storage half of checkRankUp, given the live rank (exported for the unit test). */

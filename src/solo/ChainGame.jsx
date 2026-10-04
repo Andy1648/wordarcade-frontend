@@ -27,6 +27,7 @@ import { tierCrossed } from '../juice/ladder.js';
 import { useLatched } from '../components/FeelLadder.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
+import NearMiss from '../components/NearMiss.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -408,7 +409,7 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
          player can copy it and be accepted, every time. A canned example would be a word for a
          DIFFERENT letter, i.e. a suggestion the teach itself rejects. */
       teachMode="chain"
-      teachRule="IT MUST START WITH THE LETTER SHOWN"
+      teachRule="START WITH THE LETTER SHOWN"
       teachExample={data ? exampleStartingWith(data.recall, required, (w) => s.used.has(w)) : null}
       rootRef={rootRef}
       fx={fxLayer}
@@ -435,6 +436,7 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
         tryRow: (
           <>
             <ClaimPrompt />
+            <NearMiss mode="chain" onPlay={g.restart} />
             <TryModeRow current="chain" />
           </>
         ),

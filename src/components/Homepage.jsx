@@ -25,7 +25,8 @@ import { isModeLocked } from '../progress/modeAccess';
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
 import { grantUnlocks, grantRebirthUnlock, getFreeUnlocks, currentCosmetic } from '../progress/unlockLadder';
 import MenuFrame from './MenuFrame';
-import { menuTier, getSeenTier, setSeenTier, TIER_NAMES } from '../progress/menuTier';
+import { menuTier, getSeenTier, setSeenTier, TIER_NAMES, MILESTONE_MAX_HOLD_MS } from '../progress/menuTier';
+import { flagOn } from '../lib/featureFlags';
 import { noteWallLevel, wallTierFor, getWallTier, WALL_FX_DONE_EVENT } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
@@ -315,14 +316,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       let chunk = 0;
       for (const el of lines) {
         const all = textEm(el);
-        const per = textEm(el.querySelector('.game-card-payout-per'));
+        // every breakable piece (" / WORD", and since oct3 the inline " · POWER ×N" perk) — summed out of the
+        // unbreakable head, and each one is its own candidate chunk
+        const pers = Array.from(el.querySelectorAll('.game-card-payout-per')).map(textEm);
+        const per = pers.reduce((a, b) => a + b, 0);
+        const perMax = pers.length ? Math.max(...pers) : 0;
         const mult = textEm(el.querySelector('.game-card-payout-mult'));
         // The perk's second line ("LONGER WORDS PAY MORE", its own block since E3) drops whole on a
         // narrow or short card (then it measures 0), so it never sets the minimum card width; the
         // slot is sized to the WIDER of the two lines, not their sum.
         const tail = textEm(el.querySelector('.game-card-perk-tail'));
         whole = Math.max(whole, all - tail, tail);
-        chunk = Math.max(chunk, all - per - mult - tail, per, mult);
+        chunk = Math.max(chunk, all - per - mult - tail, perMax, mult);
       }
       return { whole, chunk };
     };
@@ -623,8 +628,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   levelRef.current = xpProgress.level;
   const tierRef = useRef(tier);
   tierRef.current = tier;
-  const announceMenu = (kind, start) => {
-    const cancel = moments.announce({ ...momentOpts(kind), start: (done) => (aliveRef.current ? start(done) : done()) });
+  const announceMenu = (kind, start, over) => {
+    const cancel = moments.announce({ ...momentOpts(kind), ...over, start: (done) => (aliveRef.current ? start(done) : done()) });
     momentCancelsRef.current.add(cancel);
     return cancel;
   };
@@ -668,7 +673,26 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const seen = getSeenTier();
     if (tier > Math.max(0, seen)) {
       setFrameFresh(true);
-      announceMenu('tier-up', (done) => {
+      if (flagOn('milestones')) {
+        // MILESTONE MOMENTS: every milestone is also a tier start, and the tier-up shares the level-up
+        // card's element — played at once it would overwrite the bigger LEVEL N the same frame. So the
+        // tier-up waits out a milestone card still on screen (0 ms otherwise), and its safety release
+        // grows by the longest such card.
+        announceMenu('tier-up', (done) => {
+          const t = tierRef.current;
+          setSeenTier(t);
+          const fx = xpFxRef.current;
+          if (!fx || !fx.tierUp) { done(); return; }
+          const play = () => {
+            if (!aliveRef.current || !xpFxRef.current) { done(); return; }
+            xpFxRef.current.tierUp(TIER_NAMES[t]);
+            setTimeout(done, CARD_MS);
+          };
+          const wait = fx.milestoneBusyMs ? fx.milestoneBusyMs() : 0;
+          if (wait > 0) setTimeout(play, wait);
+          else play();
+        }, { maxMs: MENU_MOMENTS['tier-up'].maxMs + CARD_MS + MILESTONE_MAX_HOLD_MS });
+      } else announceMenu('tier-up', (done) => {
         const t = tierRef.current;
         setSeenTier(t);
         if (!xpFxRef.current || !xpFxRef.current.tierUp) { done(); return; }
@@ -986,6 +1010,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
       .then(() => checkRankUp(epoch))
       .then((r) => {
+        if (live && r && r.kind === 'passed') {
+          // extensions-spec a (dormant, flagOn('rival') inside checkRankUp): "XAVI PASSED YOU" — the rank-up
+          // card's passed variant, at INFO on the same queue. No news dot / icon hold: the trophy's
+          // "rank went up" wording would lie, and the icon already wears the live rank.
+          rankCancelRef.current = moments.announce({
+            ...momentOpts('rival'),
+            start: (done) => {
+              if (!live) { done(); return; }
+              rankDoneRef.current = done;
+              setRankUp(r);
+            },
+          });
+          return;
+        }
         if (live && r) {
           setBoardNews(true);
           setBoardHold(r.from);
@@ -1081,7 +1119,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
-        {rankUp && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind !== 'passed' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind === 'passed' && <Suspense fallback={null}><RankUpMoment kind="passed" from={rankUp.from} to={rankUp.to} name={rankUp.name} levels={rankUp.levels} rebirths={rankUp.rebirths} onDone={rankDone} onTap={() => { rankDone(); handleLeaderboard(); }} /></Suspense>}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
@@ -1262,7 +1301,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                caption line that used to sit under the bar — see below. */
             firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
             /* WPM joins the hint row (see .menu-xp-hint) instead of holding a row of its own. */
-            hintRight={<LiveWpm hideZero />}
+            hintRight={<><span className="menu-xp-hint-rule">LONGER WORDS PAY MORE</span><LiveWpm hideZero /></>}
             intoLevel={xpProgress.intoLevel}
             cost={xpProgress.cost}
             rebirths={rebirths}

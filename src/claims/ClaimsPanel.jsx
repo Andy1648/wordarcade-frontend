@@ -43,7 +43,7 @@ export default function ClaimsPanel({ onClose, onReveal, onStats }) {
           </button>
         </div>
         {list.length === 0 ? (
-          <div className="claims-empty">ALL CLAIMED — PLAY TO EARN MORE</div>
+          <div className="claims-empty">ALL CLAIMED</div>
         ) : (
           <>
             <ul className="claims-list">

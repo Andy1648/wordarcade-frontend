@@ -69,7 +69,7 @@ export function CollectionBody() {
           {/* Rarest finds — the actual words the player typed (RARE + OBSCURE), newest first. */}
           <h3 className="coll-subtitle">RAREST FINDS</h3>
           {sum.rarest.length === 0 ? (
-            <p className="coll-empty">No RARE or OBSCURE words yet. Play a mode and type something obscure — SAT RUSH is the fast track.</p>
+            <p className="coll-empty">NO RARE WORDS YET. SAT RUSH IS THE FAST TRACK.</p>
           ) : (
             <ul className="coll-finds">
               {sum.rarest.map((f) => (

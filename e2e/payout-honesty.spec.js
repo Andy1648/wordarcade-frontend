@@ -68,9 +68,10 @@ for (const s of SETUPS) {
     // says what fills the bar. PROGRESSION v11 (amended): words pay WINS only.
     const perkEl = card.locator('.game-card-xp').filter({ visible: true }).first();
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
-    // v11 (amended): the card says what fills the bar — "BASE 10 XP / LETTER" — beside its WINS / WORD.
-    await expect(perkEl).toContainText('BASE 10 XP / LETTER');
-    const cardWins = num((await winsEl.innerText()).split('WINS')[0]);
+    void perkEl; // Andy oct3 18:55: one line per card — "BASE n / WORD · POWER ×N"; the live rate rides data-rate
+    await expect(winsEl).toContainText('BASE');
+    await expect(winsEl).not.toContainText('XP');
+    const cardWins = Number(await winsEl.getAttribute('data-rate'));
     // A fresh save (R0, no mark, no boost) at Word Bomb (MODE ×1): exactly BASE 10 WINS / WORD — the forge
     // seed adds nothing.
     expect(cardWins, 'BASE 10 WINS / WORD on a fresh Word Bomb card').toBe(10);
