@@ -3,8 +3,8 @@
 //
 // Played through the mock-WS harness on CHILL and HELL, at 0 and 10 MOMENTUM marks. For every
 // accepted word:
-//   XP    taw.xp delta  ==  0 and the receipt has NO XP line (PROGRESSION v11, amended: a game WORD
-//         pays WINS ONLY — the bar fills from LETTERS typed, and this harness types none)
+//   XP    taw.xp delta  ==  only the word's LETTER top-up (letters × XP / LETTER × (1 − the typed share)) and
+//         the receipt has NO XP line (a game WORD pays WINS ONLY — the bar fills from LETTERS)
 //   WINS  taw.wins (+ taw.winsCarry tenths) delta  ==  the receipt's "+N WINS"  ==  the card's
 //         WINS / WORD quote × what the card cannot know
 //
@@ -19,7 +19,7 @@
 //   - The 3-word GATE: words 1-2 bank no wins (receipt says HELD); word 3 releases all three.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { need } from '../src/progress/xp.js';
+import { need, MENU_LETTER_SHARE } from '../src/progress/xp.js';
 
 const ME = 'e2e-player';
 // 5 letters (the card's reference length), so length/5 = 1 and every word is worth exactly the quote.
@@ -119,13 +119,13 @@ for (const s of SETUPS) {
     let released = 0; // receipt XP of words the 3-word gate is still holding
     for (let i = 0; i < WORDS.length; i += 1) {
       const before = await readLedger();
-      const prevReceipt = await page.evaluate(() => { const r = document.querySelector('.wb-receipt'); return r ? r.getAttribute('data-k') || r.textContent : ''; });
       myTurn();
       await page.waitForTimeout(40);
       mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: WORDS[i] } });
-      // v11: a game word moves the bar by 0 XP (asserted below), so wait on the word's RECEIPT — it renders for
-      // every accepted word, the 3-word-gate-held ones included — not on the XP ledger.
-      await expect.poll(async () => page.evaluate(() => { const r = document.querySelector('.wb-receipt'); return r ? r.getAttribute('data-k') || r.textContent : ''; }), { timeout: 8000 }).not.toBe(prevReceipt);
+      // The word moves the bar only by its LETTER top-up (asserted below). Two same-length words render the SAME
+      // receipt text, so wait on the XP ledger instead: bankWordWins credits the top-up synchronously, after the
+      // wins are banked, so once XP has moved the whole word has landed.
+      await expect.poll(async () => cumXp(await readLedger()) > cumXp(before), { timeout: 8000 }).toBe(true);
       await expect(page.locator('.wb-receipt')).toBeVisible();
       await page.waitForTimeout(60);
       const after = await readLedger();
@@ -179,7 +179,10 @@ for (const s of SETUPS) {
         permanentOnReceipt: perm,
       });
 
-      expect(awardedXp, `word "${WORDS[i]}": a game WORD moves the bar by 0 XP`).toBe(0);
+      // The word itself pays no XP; its LETTERS top up from the typed share to the full rate (7bd4a927). This run
+      // types nothing (the mock accepts the word), so the bar moves by exactly the top-up: letters × BASE 10 XP
+      // (fresh save: KEY ×1, R0, no mark, no boost) × (1 − MENU_LETTER_SHARE).
+      expect(awardedXp, `word "${WORDS[i]}": the accepted word's letter top-up, not a word payout`).toBeCloseTo(letters * 10 * (1 - MENU_LETTER_SHARE), 0);
       expect(receipt.xp, `word "${WORDS[i]}": no XP line on a game receipt`).toBeNull();
       expect(receiptWinsXp, `word "${WORDS[i]}": receipt WINS × 10 == card quote ${quote} × ${perWord.map((t) => `${t.k} ×${t.v}`).join(' ')}`).toBe(expected);
       expect(perm, `word "${WORDS[i]}": receipt's permanent stack == the setup's quoted multiplier`).toBeCloseTo(quote / (wordBaseWins * 10), 6); // the base is in WINS (× 10 = XP units)

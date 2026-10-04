@@ -38,8 +38,8 @@ test('flag on: BASE / NOW / NEXT chips replace the REBIRTH row', async ({ page }
   const chips = page.locator('.stats-ladder .stats-chip');
   await expect(chips).toHaveCount(3);
   await expect(chips.nth(0)).toHaveText('BASE ×1');
-  await expect(page.locator('.stats-chip.is-now')).toHaveText('R2 ×3');
-  await expect(page.locator('.stats-chip.is-next')).toHaveText(/^R3 ×4 · LV \d+ · \+33%$/);
+  await expect(page.locator('.stats-chip.is-now')).toHaveText('R2 ×25');
+  await expect(page.locator('.stats-chip.is-next')).toHaveText(/^R3 ×125 · LV \d+ · \+400%$/);
   await expect(page.locator('.stats-row dt', { hasText: /^REBIRTH$/ })).toHaveCount(0);
   const box = await page.locator('.stats-chip.is-next').boundingBox();
   expect(box.height).toBeGreaterThanOrEqual(44);
