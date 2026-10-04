@@ -34,6 +34,8 @@ import { exportSave, importSave } from '../save/saveBackup';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { getMyProfile, selfReset } from '../leaderboard/client';
 import { useMomentHold } from '../lib/useMomentSlot';
+import { flagOn } from '../lib/featureFlags';
+import { rebirthLadder } from '../progress/rebirthLadder';
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -173,6 +175,8 @@ export default function StatsScreen({ onBack }) {
   const rebirths = getRebirths();
 
   const rbMult = rebirthMult(rebirths);
+  // EXTENSION d (dormant, ?ladder=1): the REBIRTH row becomes BASE / NOW / NEXT chips in the same slot.
+  const ladder = flagOn('ladder') ? rebirthLadder(rebirths) : null;
   const keyTier = getKeyTier();
   const baseXp = keyTierXp(keyTier); // Key Power TIER's XP per letter
   // MENU XP / LETTER must MATCH the "+N" that pops on every menu keystroke — so compute it the
@@ -365,12 +369,24 @@ export default function StatsScreen({ onBack }) {
               mark, mastery, streak and stars on top (see a game's receipt). */}
           <h3 className="stats-subtitle">MENU TYPING XP</h3>
           <dl className="stats-list">
-            {multipliers.map(([k, v]) => (
-              <div className="stats-row" key={k}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
+            {multipliers.map(([k, v]) =>
+              ladder && k === 'REBIRTH' ? (
+                <div className="stats-row stats-ladder" key={k}>
+                  <dd className="stats-ladder-chips" aria-label="Rebirth ladder">
+                    {ladder.map((c) => (
+                      <span className={`stats-chip is-${c.state}`} key={c.id}>
+                        {[`${c.name} ${c.mult}`, c.gate, c.gain].filter(Boolean).join(' · ')}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              ) : (
+                <div className="stats-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ),
+            )}
           </dl>
 
           <h3 className="stats-subtitle">ROUNDS PLAYED</h3>
