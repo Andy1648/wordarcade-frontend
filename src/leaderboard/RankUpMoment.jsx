@@ -9,6 +9,7 @@
 // for the same duration under reduced motion.
 import { useEffect, useRef, useState } from 'react';
 import { myStats } from './client.js';
+import { formatNum } from '../format';
 import { standingText } from './boardTarget.js';
 import PodiumIcon from '../components/PodiumIcon';
 import { RANKUP_MS } from '../lib/menuMoments.js';
