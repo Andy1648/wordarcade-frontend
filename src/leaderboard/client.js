@@ -16,6 +16,8 @@ import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
 import { queueClaim } from '../progress/claims.js';
+import { flagOn } from '../lib/featureFlags.js';
+import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -584,7 +586,68 @@ export async function checkRankUp(epoch = boardSeenEpoch) {
   if (!now) return null;
   // the board was opened since this check began: it already took the baseline; this result is stale
   if (epoch !== boardSeenEpoch) return null;
-  return applyRankCheck(now);
+  const before = getLastRank();
+  const prev = getRankBaseline();
+  const cur = { rb: getRebirths() || 0, lv: readLevel() };
+  const up = applyRankCheck(now);
+  setRankBaseline(cur); // every check re-baselines: a rebirth is measured against the visit before it
+  if (up) return up;
+  return rivalCheck({ before, now, prev, cur, epoch });
+}
+
+// ---- extensions-spec a: RIVAL PINGS (dormant, flagOn('rival')) ------------------------------------
+// A DROP names who passed you — one extra board read, only on a drop that could ping. Never across my own
+// rebirth / reset (the board ranks rebirths, then level: either moves me on its own, not a pass).
+const LAST_RB_KEY = 'taw.lb.lastRb';
+const LAST_LV_KEY = 'taw.lb.lastLv';
+const RIVAL_LOG_KEY = 'taw.lb.rival'; // { day, n, last } — 3 a day, never the same passer twice in a row
+export function getRankBaseline() {
+  try {
+    const rb = localStorage.getItem(LAST_RB_KEY);
+    const lv = localStorage.getItem(LAST_LV_KEY);
+    if (rb == null || lv == null) return null;
+    return { rb: Number(rb), lv: Number(lv) };
+  } catch {
+    return null;
+  }
+}
+export function setRankBaseline({ rb, lv }) {
+  try {
+    localStorage.setItem(LAST_RB_KEY, String(Number(rb) || 0));
+    localStorage.setItem(LAST_LV_KEY, String(Number(lv) || 1));
+  } catch { /* ignore */ }
+}
+function readRivalLog() {
+  try { return JSON.parse(localStorage.getItem(RIVAL_LOG_KEY) || 'null'); } catch { return null; }
+}
+function localDay(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+/** The row just above `rank` on the live board (not me), or null. One GET. */
+export async function fetchRowAbove(rank) {
+  if (!LEADERBOARD_ENABLED) return null;
+  const mine = getMyProfile();
+  try {
+    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank,id,username,level,rebirths&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
+    if (!r.ok) return null;
+    const rows = await r.json();
+    return (rows || []).find((x) => !mine || x.id !== mine.id) || null;
+  } catch {
+    return null;
+  }
+}
+/** { kind: 'passed', name, from, to, levels } when a rival ping should show, else null. Records it. */
+export async function rivalCheck({ before, now, prev, cur, epoch = boardSeenEpoch }) {
+  if (!flagOn('rival')) return null;
+  // cheap guards first: no board read unless this drop could ping
+  if (rankChange(before, now) !== 'drop' || ownDropSince(prev, cur) || now > RIVAL_MAX_RANK) return null;
+  const passer = await fetchRowAbove(now);
+  if (epoch !== boardSeenEpoch) return null;
+  const today = localDay();
+  const ping = rivalPing({ before, now, prev, cur, passer, log: readRivalLog(), today });
+  if (!ping) return null;
+  try { localStorage.setItem(RIVAL_LOG_KEY, JSON.stringify(nextRivalLog(readRivalLog(), ping.name, today))); } catch { /* ignore */ }
+  return { kind: 'passed', ...ping };
 }
 
 /** The storage half of checkRankUp, given the live rank (exported for the unit test). */
