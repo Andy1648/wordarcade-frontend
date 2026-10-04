@@ -58,8 +58,7 @@ export default function WordRaceLobby({
       )}
 
       <p className="wr-rules">
-        SAME WORDS FOR EVERYONE. TYPE EACH ONE IN FULL TO MOVE UP. FIRST TO {RACE_WORDS} — OR MOST WORDS
-        AT 1:00 — WINS.
+        SAME WORDS FOR EVERYONE. FIRST TO {RACE_WORDS} — OR MOST WORDS AT 1:00 — WINS.
       </p>
 
       <ol className="wr-roster" aria-label="Racers">
@@ -95,10 +94,10 @@ export default function WordRaceLobby({
           <button type="button" className="wr-btn wr-btn-go" onClick={onStart} disabled={startPending}>
             START RACE
           </button>
-          {humans < 2 && <p className="wr-status">UNDER 2 RACERS? BOTS FILL THE GRID TO 3.</p>}
+          {humans < 2 && <p className="wr-status">BOTS FILL THE GRID TO 3.</p>}
         </div>
       ) : (
-        <p className="wr-status" role="status">WAITING FOR THE HOST TO START…</p>
+        <p className="wr-status" role="status">WAITING FOR HOST…</p>
       )}
       {serverError && <p className="wr-toast is-reject">{serverError}</p>}
     </div>

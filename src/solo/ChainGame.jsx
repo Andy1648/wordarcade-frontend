@@ -408,7 +408,7 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
          player can copy it and be accepted, every time. A canned example would be a word for a
          DIFFERENT letter, i.e. a suggestion the teach itself rejects. */
       teachMode="chain"
-      teachRule="IT MUST START WITH THE LETTER SHOWN"
+      teachRule="START WITH THE LETTER SHOWN"
       teachExample={data ? exampleStartingWith(data.recall, required, (w) => s.used.has(w)) : null}
       rootRef={rootRef}
       fx={fxLayer}

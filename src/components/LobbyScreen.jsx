@@ -161,8 +161,8 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
           </div>
           <div className="lobby-toggle-hint">
             {isPublic
-              ? 'ANYONE CAN FIND THIS ROOM AND JOIN.'
-              : 'CODE-ONLY. INVITE WHO YOU WANT.'}
+              ? 'ANYONE CAN JOIN.'
+              : 'CODE ONLY.'}
           </div>
         </div>
 

@@ -426,7 +426,7 @@ export default function LeaderboardScreen({ onBack }) {
                 <span className="lb-you-rank">
                   {/* no place yet: a line, not a giant dash in the hero's numeral slot */}
                   {view === 'week'
-                    ? (weekMe ? <>#{fmt(weekMe.rank)}<span className="lb-you-rank-sub"> THIS WEEK</span></> : <span className="lb-you-rank-sub">NOT ON THIS WEEK’S BOARD YET</span>)
+                    ? (weekMe ? <>#{fmt(weekMe.rank)}<span className="lb-you-rank-sub"> THIS WEEK</span></> : <span className="lb-you-rank-sub">NOT RANKED THIS WEEK</span>)
                     : (meRow ? `#${fmt(meRow.rank)}` : <span className="lb-you-rank-sub">NOT RANKED YET</span>)}
                 </span>
                 {view === 'all' && heroMove > 0 && (
@@ -457,7 +457,7 @@ export default function LeaderboardScreen({ onBack }) {
             <div className="lb-code">
               <div className="lb-code-title">YOUR RECOVERY CODE</div>
               <code className="lb-code-value">{formatRecoveryCode(getSecret())}</code>
-              <div className="lb-code-note">YOUR PROGRESS IS BACKED UP. ON A NEW PHONE OR AFTER SAFARI WIPES IT, ENTER THIS CODE HERE TO GET IT BACK. KEEP IT PRIVATE.</div>
+              <div className="lb-code-note">ON A NEW DEVICE OR AFTER A WIPE, ENTER IT HERE TO GET YOUR PROGRESS BACK. KEEP IT PRIVATE.</div>
               <button
                 type="button"
                 className="lb-claim-btn"

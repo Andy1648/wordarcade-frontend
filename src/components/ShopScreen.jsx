@@ -154,7 +154,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       kind: 'forge',
       // H2d: "×N" is for multipliers only; a run of N buys is "+N" (as KEY POWER's sticker says).
       name: n > 1 ? `FORGED +${n}` : `${letter.toUpperCase()} FORGED — LV ${level}`,
-      blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word now pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
+      blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: '#FF6B3D',
       tier: level,
