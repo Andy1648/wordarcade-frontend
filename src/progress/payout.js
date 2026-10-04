@@ -15,6 +15,7 @@
 // Pure and DOM-free (one module-level round ledger, the same pattern wins.js uses for its pending
 // stamp), so the whole thing is unit-testable under node.
 import { roundWordXp } from './xp.js';
+import { winnerPerkMult } from './markPerks.js';
 
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
@@ -221,14 +222,17 @@ const cnt = (x) => (Number.isFinite(x) && x > 0 ? Math.floor(x) : 0);
  * @param {number}  [a.minutes]  game length; null/unknown = no pace cap
  * @param {Array}   a.rivals     [{ id, words, isBot }] everyone else who was in the game
  * @param {Array}   [a.selfIds]  player ids other tabs of THIS browser hold (seats.js)
+ * @param {number}  [a.perkMult] the CHAMPION perk (ECLIPSE mark: winner bonus ×2) — omit to read the save
  * @returns {{ wins, mult, tier: 'match'|'fallback'|'none', reason, capped, note }}
  */
-export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, selfIds } = {}) {
+export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, selfIds, perkMult } = {}) {
   const none = { wins: 0, mult: 1, tier: 'none', reason: null, capped: null, note: null };
   const k = winnerModeKey(mode);
   const total = Number.isFinite(gameTotal) && gameTotal > 0 ? gameTotal : 0;
   if (!k || !iWon || total <= 0) return none;
-  const fb = WINNER_FALLBACK[k] || 0;
+  // CHAMPION doubles the BONUS part (what winning adds on top of the game), match and fallback alike
+  const pm = Number.isFinite(perkMult) && perkMult > 0 ? perkMult : winnerPerkMult();
+  const fb = (WINNER_FALLBACK[k] || 0) * pm;
   const fallback = (reason) => ({
     wins: fb > 0 ? Math.max(1, Math.round(total * fb)) : 0,
     mult: 1 + fb,
@@ -255,7 +259,7 @@ export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, 
   const byPace = Number.isFinite(minutes) && minutes > 0 ? pace * minutes : Infinity;
   const counted = Math.min(mine, byRival, byPace);
   const capped = counted >= mine ? null : byRival <= byPace ? 'rival' : 'pace';
-  const bonusMult = Math.max(fb, mult * (counted / mine));
+  const bonusMult = Math.max(fb, mult * pm * (counted / mine));
   return {
     wins: Math.max(1, Math.round(total * bonusMult)),
     mult: 1 + bonusMult,

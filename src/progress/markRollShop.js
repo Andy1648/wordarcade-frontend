@@ -1,13 +1,14 @@
 // markRollShop.js — the ONE place a MARK ROLL is paid for (the roll UI calls only this). markRolls.js
 // is pure + its own store and never touches the balance; this module charges the price through the
 // one wins channel (wins.js saveWins), rolls, pays any INDEX milestone lump, and returns the result
-// plus what the UI should do about equipping it. Spec: claude/econ-oct2/marks-spec.md §3, §6, §8.
+// plus what the UI should do about equipping it.
 import { getWins, saveWins, grantWins } from './wins.js';
-import { getEquippedMark, markById, markMainMult, markRank, equipMark } from './marks.js';
+import { getEquippedMark, equipMark } from './marks.js';
 import {
   ensureRollState, loadRollState, saveRollState, rollAndSave, rollPriceNow, rollPriceWords, refWordWins,
-  milestoneWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf,
+  milestoneWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
 } from './markRolls.js';
+import { rollsPerRoll } from './markPerks.js';
 import { isBoostActive } from './boost.js';
 
 /** What the next roll costs: { free, wins, words }. The first roll on a save is the free starter. */
@@ -16,15 +17,10 @@ export function nextRollCost(level = 1, state = loadRollState()) {
   return { free, wins: free ? 0 : rollPriceNow(level), words: Math.round(rollPriceWords(level)) };
 }
 
-/** The worn MAIN right now, at its real rank for a legacy mark. */
+/** The worn MAIN right now (tier × its GOLD / RAINBOW finish). */
 export function currentMain() {
-  const legacy = getEquippedMark();
-  if (legacy) {
-    const m = markById(legacy);
-    return { id: legacy, main: markMainMult(m, markRank(legacy)) };
-  }
-  const rolled = wornMarkId();
-  return { id: rolled, main: rolled ? mainMultOf(rolled) : 1 };
+  const id = getEquippedMark() || wornMarkId();
+  return { id, main: id ? mainMultOf(id) : 1 };
 }
 
 /** Wear a mark (legacy ids through marks.js, rolled ids through markRolls). Returns the worn id. */
@@ -37,7 +33,9 @@ export function wearMark(id, earned = []) {
 
 /**
  * ONE paid (or free starter) roll. Returns null when the balance is short, else
- * { ...result, spent, free, decision: 'auto'|'none', fromMain, toMain, lump }.
+ * { ...result, spent, free, decision: 'auto'|'none', fromMain, toMain, lump, extra }.
+ * DOUBLE ROLLS (SINGULARITY perk): one price, two results — the RAREST is the shown result (ties: the later),
+ * the other rides along in `extra` (both are saved; pity and the index count both).
  * It does NOT equip: the UI applies an 'auto' decision (applyRollEquip) when the reveal LANDS, so the
  * hero and the menu chip never change before the player has seen the result.
  */
@@ -47,13 +45,19 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   const bal = getWins();
   if (!cost.free && bal < cost.wins) return null;
   if (!cost.free) saveWins(bal - cost.wins);
-  const res = rollAndSave(rng, { boost: isBoostActive() });
+  const n = rollsPerRoll();
+  const all = [];
+  for (let i = 0; i < n; i += 1) all.push(rollAndSave(rng, { boost: isBoostActive() }));
   if (cost.free) saveRollState({ ...loadRollState(), starter: true });
-  // INDEX milestones pay a lump in words at your rate (≤ 20 words each, spec §6)
+  let res = all[0];
+  for (const r of all) if (tierRank(r.tier) >= tierRank(res.tier)) res = r;
+  const extra = all.filter((r) => r !== res);
+  // INDEX milestones pay a lump in words at your rate (≤ 20 words each)
   let lump = 0;
-  if (res.milestones.length) {
+  const ms = all.flatMap((r) => r.milestones);
+  if (ms.length) {
     const rate = refWordWins();
-    for (const id of res.milestones) {
+    for (const id of ms) {
       const w = milestoneWins(id, rate);
       if (w > 0) { grantWins(w, 'MARKS INDEX', { detail: 'index' }); lump += w; }
     }
@@ -62,7 +66,7 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   const decision = equipDecision(res.markId, worn.id, worn.main);
   const fromMain = worn.id ? worn.main : wornMainOf(null);
   const toMain = mainMultOf(res.markId);
-  return { ...res, spent: cost.wins, free: cost.free, decision, fromMain, toMain, lump };
+  return { ...res, state: all[all.length - 1].state, spent: cost.wins, free: cost.free, decision, fromMain, toMain, lump, extra };
 }
 
 /** Land a roll's equip decision (called when its reveal lands). Re-checks against the MAIN worn NOW, so

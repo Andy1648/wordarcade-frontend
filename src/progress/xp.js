@@ -358,6 +358,20 @@ export function consumePendingRebirth() {
   pendingRebirth = 0;
   return n;
 }
+// HEIRLOOM (MARKS via ROLLS — the SECRET ORIGIN perk): how many KEY tiers a rebirth KEEPS (0 = the Rebirth Rush
+// reset to T0). Injected by wins.js (markPerks.rebirthKeyKeep) — the marks modules sit above this one.
+let rebirthKeyKeep = () => 0;
+export function setRebirthKeyKeep(fn) {
+  if (typeof fn === 'function') rebirthKeyKeep = fn;
+}
+function keyTiersKept() {
+  try {
+    const k = Number(rebirthKeyKeep());
+    return Number.isFinite(k) && k > 0 ? Math.floor(k) : 0;
+  } catch {
+    return 0;
+  }
+}
 // Perform a rebirth: zero XP, bump the rebirth count. Returns the new count.
 // Wins/owned/equipped/rounds live under their own keys — untouched.
 export function doRebirth() {
@@ -378,7 +392,8 @@ export function doRebirth() {
   const rc = getRebirths() + 1;
   saveRebirths(rc);
   clearGrandfatheredGate();
-  saveKeyTier(0); // Rebirth Rush: KEY → T0 every rebirth (wins kept — the rebuy spree)
+  // Rebirth Rush: KEY → T0 every rebirth (wins kept — the rebuy spree); HEIRLOOM keeps up to 3 tiers
+  saveKeyTier(Math.min(getKeyTier(), keyTiersKept()));
   saveProgress({ level: 1, intoLevel: 0 });
   pendingRebirth = rc;
   return rc;

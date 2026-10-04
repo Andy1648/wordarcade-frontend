@@ -3,21 +3,24 @@
 // asks holdStep() whether a held button may roll again. Unit-tested in revealPlan.test.js.
 //
 // THE REVEAL (oct3 review verdict — the A/B/C protocol is over, one reveal ships):
-//   - COMMON: a ~300 ms card flip. RARE: a short wobble build-up, then the flip.
-//   - EPIC / LEGENDARY: the cutscene — the tier ladder climbs, the FINAL tier lands huge in its colour,
-//     then the mark's NAME and art big, then "1 IN X", then back to the panel. ≤ 2.5 s.
-//   - Reduced motion holds a STATIC frame for the SAME time — and keeps the rarity scaling: an epic or
-//     legendary still shows its plate + name + stamp, just without movement.
+//   - COMMON: a ~300 ms card flip. RARE: a short wobble build-up, then the flip. EPIC: a longer build-up +
+//     its tier plate flash, in the panel.
+//   - LEGENDARY / MYTHIC / SECRET (MARKS via ROLLS: "legendary+ full-screen"): the cutscene, a modal layer over
+//     the MARKS panel — the tier ladder climbs, the FINAL tier lands huge in its colour, then the mark's NAME and
+//     art big, then "1 IN X", then back to the panel. Longer the rarer (2.5 / 2.8 / 3 s).
+//   - Reduced motion holds a STATIC frame for the SAME time — and keeps the rarity scaling: a legendary+
+//     still shows its plate + name + stamp, just without movement.
 //
 // HOLD-TO-ROLL repeats while held, but NEVER faster than one roll per finished reveal: the next held roll
 // is due HOLD_GAP_MS after the previous reveal ENDS, never on a fixed clock. A hold STOPS on anything
 // worth looking at — EPIC+, a NEW mark, a GOLD or RAINBOW step-up — and when the balance can't pay.
-// Only EPIC+ is a HEAVY moment, and a heavy result always stops the hold, so two never overlap.
+// Only LEGENDARY+ is a HEAVY (full-screen) moment, and an EPIC+ result always stops the hold, so two never overlap.
 
-export const MAX_REVEAL_MS = 2500;
-export const REVEAL_MS = { common: 300, rare: 700, epic: 2200, legendary: 2500 };
+export const MAX_REVEAL_MS = 3000;
+export const REVEAL_MS = { common: 300, rare: 700, epic: 1100, legendary: 2500, mythic: 2800, secret: 3000 };
 export const HOLD_GAP_MS = 120; // the beat between a finished reveal and the next held roll
-export const HEAVY_TIERS = ['epic', 'legendary'];
+export const HEAVY_TIERS = ['legendary', 'mythic', 'secret'];
+const STOP_TIERS = ['epic', ...HEAVY_TIERS];
 
 export function isHeavy(tier) {
   return HEAVY_TIERS.includes(tier);
@@ -30,7 +33,7 @@ export function revealMs(tier) {
 /** Why a hold stops after this result (null = keep rolling). */
 export function holdStopReason(result, { canAfford = true } = {}) {
   if (!result) return null;
-  if (isHeavy(result.tier)) return 'heavy';
+  if (STOP_TIERS.includes(result.tier)) return 'heavy';
   if (result.newMark) return 'new';
   if (result.goldUp || result.rainbowUp) return 'variant';
   if (!canAfford) return 'broke';

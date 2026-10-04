@@ -1,97 +1,99 @@
 // markRollsCore.js — the part of MARK ROLLS the PAYOUT and the MENU need on boot: the pool, the stored
-// state, the PERK / MAIN math, rollBonusMult() (wins.js) and the worn-mark helpers (the menu chip). Split out
-// of markRolls.js so the rest of the roll system (odds, pity, luck, price, migration, rolling) loads only with
-// the MARKS panel (payload ratchet, PR #156). markRolls.js re-exports all of this, so its importers are
-// unchanged. Pure + a guarded read/write of one storage key.
+// state, the MAIN math, markMult() (THE one MARK number — wins.js AND letterXp.js read it) and the worn-mark
+// helpers (the menu chip). Split out of markRolls.js so the rest of the roll system (odds, pity, luck, price,
+// migration, rolling) loads only with the MARKS panel (payload ratchet, PR #156). markRolls.js re-exports all
+// of this, so its importers are unchanged. Pure + a guarded read/write of one storage key.
+//
+// MARKS via ROLLS (Andy, PROGRESSION FINAL): six tiers —
+//   COMMON 1 IN 2 ×1.1 · RARE 1 IN 10 ×1.25 · EPIC 1 IN 100 ×1.5 · LEGENDARY 1 IN 1,000 ×3 + perk ·
+//   MYTHIC 1 IN 10,000 ×10 + perk · SECRET 1 IN 100,000 ×25 + game-changing perk.
+// The "1 IN X" is the TIER's chance; each mark in a tier splits it evenly. COMMON takes whatever the five rarer
+// tiers leave (1 − 0.1111 = 88.9%) — the rarer tiers are EXACT, because they are the chase (1/2 + 1/10 + … can't
+// also sum to 1). The worn MAIN multiplies XP per letter AND wins; dupes go GOLD (bonus ×2) then RAINBOW (bonus ×5);
+// the INDEX (% collected) pays a small permanent bonus on top.
 import { MARKS, MARK_TIERS, MARKS_EQUIPPED_KEY } from './marks.js';
+import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY } from './markPerks.js';
 
-export const ROLL_STATE_KEY = 'taw.markRolls';
+export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
 export const ROLL_STATE_VERSION = 1;
 
 // ---------------------------------------------------------------------------------------- tiers
-export const ROLL_TIER_ORDER = ['common', 'rare', 'epic', 'legendary', 'permanent'];
-/** Lower bound of X for each tier. A mark's tier is DERIVED from its X with this table. */
-export const TIER_BANDS = { common: 1, rare: 25, epic: 100, legendary: 400 };
-export function tierForX(x) {
-  if (x >= TIER_BANDS.legendary) return 'legendary';
-  if (x >= TIER_BANDS.epic) return 'epic';
-  if (x >= TIER_BANDS.rare) return 'rare';
-  return 'common';
-}
+export const ROLL_TIER_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent'];
+/** The TIER's "1 IN X" (Andy's table). COMMON is the remainder — see the header. */
+export const TIER_ODDS = { common: 2, rare: 10, epic: 100, legendary: 1000, mythic: 10000, secret: 100000 };
+/** The MAIN multiplier a worn mark pays, by tier (base finish). Mirrors marks.js MARK_TIERS (1 + bonus). */
+export const TIER_MAIN = { common: 1.1, rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
 export function tierRank(tier) {
   const i = ROLL_TIER_ORDER.indexOf(tier);
   return i < 0 ? 0 : i;
 }
-// MAIN bonus (the part above ×1) when worn. COMMON..LEGENDARY are marks.js MARK_TIERS unchanged;
-// PERMANENT matches LEGENDARY (×4) — it is the rarest by how you get it, not a bigger number
-// (DECIDED, Andy oct3: permanent MAIN ×4 — the ×5 question is closed).
-// Read at call time, not import time: marks.js → claims.js → wins.js → this module is a cycle.
+// MAIN bonus (the part above ×1) when worn, at base finish. PERMANENT (the hard-achievement marks) pays the
+// LEGENDARY MAIN — rarest by how you get it, not a bigger number. Read at call time, not import time:
+// marks.js → claims.js → wins.js → this module is a cycle.
 export function mainBonus(tier) {
   const t = tier === 'permanent' ? 'legendary' : tier;
   return (MARK_TIERS[t] || MARK_TIERS.common).bonus;
 }
 
 // ---------------------------------------------------------------------------------------- pool
-// mode = payout key (wins.js PAYOUT_MODES) or null for ALL-MODE. `perk` = the PERK at 1 copy, a
-// fraction of wins (+0.02 = +2%) in that mode (or every mode). `legacy` = the id already exists in
-// marks.js (its owners keep it, its rank and its marks.js MAIN). `x` for COMMONS is derived below
-// so the table sums to exactly 1.
+// mode = payout key (wins.js PAYOUT_MODES) or null for ALL-MODE — flavour only now (the MAIN pays in every mode).
+// `legacy` = the id already exists in marks.js (its owners keep it and its marks.js entry). `perks` come from
+// markPerks.js (LEGENDARY+ only).
 const RAW_POOL = [
-  // ---- COMMON: two per mode (12) — the mode-specific pool ----
-  { id: 'mk-bomber', name: 'BOMBER', mode: 'wordBomb', legacy: true },
-  { id: 'mk-sparky', name: 'SPARKY', mode: 'wordBomb' },
-  { id: 'mk-sprinter', name: 'SPRINTER', mode: 'blitz', legacy: true },
-  { id: 'mk-dasher', name: 'DASHER', mode: 'blitz' },
-  { id: 'mk-crammer', name: 'CRAMMER', mode: 'satRush' },
-  { id: 'mk-inkwell', name: 'INKWELL', mode: 'satRush' },
-  { id: 'mk-linker', name: 'LINKER', mode: 'chain', legacy: true },
-  { id: 'mk-shackle', name: 'SHACKLE', mode: 'chain' },
-  { id: 'mk-wick', name: 'WICK', mode: 'fuse' },
-  { id: 'mk-matchstick', name: 'MATCHSTICK', mode: 'fuse' },
-  { id: 'mk-pacer', name: 'PACER', mode: 'wordRace' },
-  { id: 'mk-nitro', name: 'NITRO', mode: 'wordRace' },
-  // ---- RARE: one per mode (6) at 1 IN 40, then the ALL-MODE rares (3) at 1 IN 75 ----
-  { id: 'mk-detonator', name: 'DETONATOR', mode: 'wordBomb', x: 40, perk: 0.04 },
-  { id: 'mk-cyclone', name: 'CYCLONE', mode: 'blitz', x: 40, perk: 0.04 },
-  { id: 'mk-scholar', name: 'SAVANT', mode: 'satRush', x: 40, perk: 0.04, legacy: true },
-  { id: 'mk-ouroboros', name: 'OUROBOROS', mode: 'chain', x: 40, perk: 0.04 },
-  { id: 'mk-tinder', name: 'TINDER', mode: 'fuse', x: 40, perk: 0.04 },
-  { id: 'mk-slipstream', name: 'SLIPSTREAM', mode: 'wordRace', x: 40, perk: 0.04 },
-  { id: 'mk-smith', name: 'SMITH', modes: ['satRush', 'chain'], x: 60, perk: 0.03, legacy: true },
-  { id: 'mk-phoenix', name: 'PHOENIX', mode: null, x: 75, perk: 0.02, legacy: true },
-  { id: 'mk-metronome', name: 'METRONOME', mode: null, x: 75, perk: 0.02, legacy: true },
-  // ---- EPIC: ALL-MODE (+ PYRO, the one legacy FUSE epic) ----
-  { id: 'mk-pyro', name: 'PYRO', mode: 'fuse', x: 100, perk: 0.08, legacy: true },
-  { id: 'mk-nova', name: 'NOVA', mode: null, x: 120, perk: 0.04, legacy: true },
-  { id: 'mk-kraken', name: 'KRAKEN', mode: null, x: 150, perk: 0.04 },
-  { id: 'mk-golem', name: 'GOLEM', mode: null, x: 150, perk: 0.04 },
-  { id: 'mk-eclipse', name: 'ECLIPSE', mode: null, x: 200, perk: 0.04 },
-  // ---- LEGENDARY: ALL-MODE only. ORIGIN is luck-immune (true odds, the forever flex). ----
-  { id: 'mk-leviathan', name: 'LEVIATHAN', mode: null, x: 400, perk: 0.06 },
-  { id: 'mk-singularity', name: 'SINGULARITY', mode: null, x: 1000, perk: 0.06 },
-  { id: 'mk-origin', name: 'ORIGIN', mode: null, x: 10000, perk: 0.06, immune: true },
+  // ---- COMMON (12): two per mode ----
+  { id: 'mk-bomber', name: 'BOMBER', tier: 'common', mode: 'wordBomb', legacy: true },
+  { id: 'mk-sparky', name: 'SPARKY', tier: 'common', mode: 'wordBomb' },
+  { id: 'mk-sprinter', name: 'SPRINTER', tier: 'common', mode: 'blitz', legacy: true },
+  { id: 'mk-dasher', name: 'DASHER', tier: 'common', mode: 'blitz' },
+  { id: 'mk-crammer', name: 'CRAMMER', tier: 'common', mode: 'satRush' },
+  { id: 'mk-inkwell', name: 'INKWELL', tier: 'common', mode: 'satRush' },
+  { id: 'mk-linker', name: 'LINKER', tier: 'common', mode: 'chain', legacy: true },
+  { id: 'mk-shackle', name: 'SHACKLE', tier: 'common', mode: 'chain' },
+  { id: 'mk-wick', name: 'WICK', tier: 'common', mode: 'fuse' },
+  { id: 'mk-matchstick', name: 'MATCHSTICK', tier: 'common', mode: 'fuse' },
+  { id: 'mk-pacer', name: 'PACER', tier: 'common', mode: 'wordRace' },
+  { id: 'mk-nitro', name: 'NITRO', tier: 'common', mode: 'wordRace' },
+  // ---- RARE (9): one per mode + the three legacy rares ----
+  { id: 'mk-detonator', name: 'DETONATOR', tier: 'rare', mode: 'wordBomb' },
+  { id: 'mk-cyclone', name: 'CYCLONE', tier: 'rare', mode: 'blitz' },
+  { id: 'mk-scholar', name: 'SAVANT', tier: 'rare', mode: 'satRush', legacy: true },
+  { id: 'mk-ouroboros', name: 'OUROBOROS', tier: 'rare', mode: 'chain' },
+  { id: 'mk-tinder', name: 'TINDER', tier: 'rare', mode: 'fuse' },
+  { id: 'mk-slipstream', name: 'SLIPSTREAM', tier: 'rare', mode: 'wordRace' },
+  { id: 'mk-smith', name: 'SMITH', tier: 'rare', modes: ['satRush', 'chain'], legacy: true },
+  { id: 'mk-phoenix', name: 'PHOENIX', tier: 'rare', mode: null, legacy: true },
+  { id: 'mk-metronome', name: 'METRONOME', tier: 'rare', mode: null, legacy: true },
+  // ---- EPIC (3) ----
+  { id: 'mk-pyro', name: 'PYRO', tier: 'epic', mode: 'fuse', legacy: true },
+  { id: 'mk-nova', name: 'NOVA', tier: 'epic', mode: null, legacy: true },
+  { id: 'mk-golem', name: 'GOLEM', tier: 'epic', mode: null },
+  // ---- LEGENDARY (2) + perk ----
+  { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null },
+  { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null },
+  // ---- MYTHIC (2) + perk ----
+  { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null },
+  { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null },
+  // ---- SECRET (1) + game-changing perks ----
+  { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null },
 ];
-export const COMMON_PERK = 0.02;
 
 function buildPool() {
-  const fixed = RAW_POOL.filter((m) => m.x);
-  const commons = RAW_POOL.filter((m) => !m.x);
-  const rest = 1 - fixed.reduce((s, m) => s + 1 / m.x, 0);
-  const xCommon = commons.length / rest; // every common shares the remainder equally
-  return RAW_POOL.map((m) => {
-    const x = m.x || xCommon;
-    return {
-      id: m.id,
-      name: m.name,
-      x,
-      tier: tierForX(x),
-      mode: m.modes ? null : m.mode,
-      modes: m.modes || (m.mode ? [m.mode] : null), // null = every mode
-      perk: m.perk || COMMON_PERK,
-      legacy: !!m.legacy,
-      immune: !!m.immune,
-    };
-  });
+  const count = {};
+  for (const m of RAW_POOL) count[m.tier] = (count[m.tier] || 0) + 1;
+  // every rarer tier is exact: each of its k marks is 1 IN (k × X); commons share the rest evenly
+  const rarer = Object.keys(TIER_ODDS).filter((t) => t !== 'common' && count[t]);
+  const rest = 1 - rarer.reduce((s, t) => s + 1 / TIER_ODDS[t], 0);
+  const xCommon = (count.common || 1) / rest;
+  return RAW_POOL.map((m) => ({
+    id: m.id,
+    name: m.name,
+    tier: m.tier,
+    x: m.tier === 'common' ? xCommon : count[m.tier] * TIER_ODDS[m.tier],
+    mode: m.modes ? null : m.mode,
+    modes: m.modes || (m.mode ? [m.mode] : null), // null = every mode
+    legacy: !!m.legacy,
+    perks: MARK_PERKS[m.id] || [],
+  }));
 }
 export const ROLL_MARKS = buildPool();
 const ROLL_BY_ID = new Map(ROLL_MARKS.map((m) => [m.id, m]));
@@ -107,13 +109,13 @@ export function oneInX(id) {
 export function yourOneInX(id, luckValue = 1) {
   const m = ROLL_BY_ID.get(id);
   if (!m) return null;
-  if (m.tier === 'common' || m.immune) return oneInX(id);
+  if (m.tier === 'common') return oneInX(id);
   return Math.max(1, Math.round(m.x / Math.max(1, luckValue)));
 }
 
 // ---------------------------------------------------------------------------------- permanents
-// One PERMANENT mark per KEPT achievement (spec §5). The four that already exist keep their id,
-// art, rank and owners; six are new. `from` is the achievement id.
+// One PERMANENT mark per KEPT achievement. The four that already exist keep their id, art and owners; six are
+// new. `from` is the achievement id. MAIN = LEGENDARY (×3).
 export const PERMANENT_MARKS = [
   { id: 'mk-ironhand', name: 'IRONHAND', from: 'vol-10k' },
   { id: 'mk-marathon', name: 'MARATHON', from: 'vol-50k' },
@@ -132,11 +134,13 @@ export function permanentMarkById(id) {
 }
 export const DUPES_PER_GOLD = 10; // 10 dupes → a GOLD
 export const GOLDS_PER_RAINBOW = 10; // 10 golds → a RAINBOW
-export const PERK_PER_COPY = 0.1; // every copy past the first: +10% of the base perk
-export const GOLD_MULT = 1.25; // GOLD perk ×1.25
-export const RAINBOW_MULT = 1.6; // RAINBOW perk ×1.6
-export const RAINBOW_STEP = 0.1; // every rainbow past the first: +10% more (no cap)
-// The INDEX: % of the rollable marks owned (base), and of their GOLD and RAINBOW versions.
+// GOLD doubles the MAIN's BONUS part (COMMON ×1.1 → ×1.2, SECRET ×25 → ×49); RAINBOW ×5 it (×1.5 / ×121).
+// The bonus part, not the whole multiplier: a GOLD common at ×2.2 would out-pay a base LEGENDARY's tier ladder.
+export const GOLD_MULT = 2;
+export const RAINBOW_MULT = 5;
+// The INDEX: % of the rollable marks owned pays a small permanent bonus — +0.5% per % collected (+50% at 100%).
+export const INDEX_BONUS_PER_PCT = 0.005;
+// INDEX milestones: % of the rollable marks owned (base), and of their GOLD and RAINBOW versions → LUCK + a lump.
 export const COLLECTION_MILESTONES = [
   { id: 'base-25', track: 'base', pct: 25, luck: 0.05, words: 10 },
   { id: 'base-50', track: 'base', pct: 50, luck: 0.1, words: 15 },
@@ -154,7 +158,7 @@ export const COLLECTION_MILESTONES = [
 ];
 // --------------------------------------------------------------------------------------- state
 export function freshState() {
-  return { v: ROLL_STATE_VERSION, rolls: 0, sinceEpic: 0, sinceLegendary: 0, everEpic: false, marks: {}, milestones: [], starter: false };
+  return { v: ROLL_STATE_VERSION, rolls: 0, sinceEpic: 0, everEpic: false, marks: {}, milestones: [], starter: false };
 }
 export const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.floor(Number(v)) : 0);
 /** Repair any input into a valid state (unknown ids dropped, counters clamped ≥ 0). Pure. */
@@ -163,7 +167,6 @@ export function normalize(raw) {
   if (!raw || typeof raw !== 'object') return s;
   s.rolls = num(raw.rolls);
   s.sinceEpic = num(raw.sinceEpic);
-  s.sinceLegendary = num(raw.sinceLegendary);
   s.everEpic = !!raw.everEpic;
   s.starter = !!raw.starter;
   if (raw.marks && typeof raw.marks === 'object') {
@@ -185,43 +188,65 @@ export function markLevel(state, id) {
   const variant = rainbow > 0 ? 'rainbow' : gold > 0 ? 'gold' : n > 0 ? 'base' : null;
   return { copies: n, dupes, gold, rainbow, variant };
 }
+/** What a finish does to the MAIN's bonus part: base ×1, GOLD ×2, RAINBOW ×5. */
 export function variantMult(level) {
-  if (level.rainbow > 0) return RAINBOW_MULT * (1 + RAINBOW_STEP * (level.rainbow - 1));
-  if (level.gold > 0) return GOLD_MULT;
+  if (level && level.rainbow > 0) return RAINBOW_MULT;
+  if (level && level.gold > 0) return GOLD_MULT;
   return 1;
 }
-/** A mark's PERK (fraction of wins) at its copies + variant. 0 when not owned. */
-export function perkOf(state, id) {
-  const m = ROLL_BY_ID.get(id);
-  const lv = markLevel(state, id);
-  if (!m || lv.copies < 1) return 0;
-  return m.perk * (1 + PERK_PER_COPY * lv.dupes) * variantMult(lv);
+
+/** The INDEX: base / gold / rainbow % over the rollable pool. */
+export function collection(state) {
+  const total = ROLL_MARKS.length;
+  let base = 0;
+  let gold = 0;
+  let rainbow = 0;
+  for (const m of ROLL_MARKS) {
+    const lv = markLevel(state, m.id);
+    if (lv.copies > 0) base++;
+    if (lv.gold > 0) gold++;
+    if (lv.rainbow > 0) rainbow++;
+  }
+  const pct = (k) => (k / total) * 100;
+  return { total, base, gold, rainbow, pct: pct(base), goldPct: pct(gold), rainbowPct: pct(rainbow) };
 }
-/** The PERK tag ("PERK +4%"), whole percent, at least 1 decimal under 10%. */
-export function perkTag(state, id) {
-  const p = perkOf(state, id) || (ROLL_BY_ID.get(id) || {}).perk || 0;
-  const pc = p * 100;
-  return `PERK +${pc < 10 ? +pc.toFixed(1) : Math.round(pc)}%`;
+/** The INDEX's permanent bonus: 1 + 0.5% per % collected (×1 on a save that has never rolled). */
+export function indexMult(state) {
+  if (!state) return 1;
+  return 1 + INDEX_BONUS_PER_PCT * collection(state).pct;
 }
-/** The MAIN multiplier a mark pays when worn (tier only — copies grow the PERK, not the MAIN). */
-export function mainMultOf(id) {
-  const m = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id);
-  return m ? 1 + mainBonus(m.tier) : 1;
+
+function tierOfAny(id) {
+  const r = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id);
+  if (r) return r.tier;
+  const l = MARKS.find((m) => m.id === id);
+  return l ? l.tier : null;
 }
-export function mainTag(id) {
-  const v = mainMultOf(id);
+/**
+ * The MAIN multiplier a mark pays when worn: 1 + tier bonus × its finish (GOLD ×2, RAINBOW ×5 of the bonus).
+ * `state` = the roll state its finish is read from (omit → the stored one; null → base finish).
+ */
+export function mainMultOf(id, state) {
+  const tier = id ? tierOfAny(id) : null;
+  if (!tier) return 1;
+  const s = state === undefined ? loadRollState() : state;
+  const k = ROLL_BY_ID.has(id) && s ? variantMult(markLevel(s, id)) : 1;
+  return 1 + mainBonus(tier) * k;
+}
+export function mainTag(id, state) {
+  const v = mainMultOf(id, state);
   return `MAIN ×${+v.toFixed(2)}`;
 }
-/** The summed PERK for one payout mode: 1 + Σ perks of owned marks that cover it. Linear, uncapped. */
-export function perkMult(state, mode) {
-  let sum = 0;
-  for (const m of ROLL_MARKS) {
-    if (!state.marks[m.id]) continue;
-    if (m.modes && !m.modes.includes(mode)) continue;
-    sum += perkOf(state, m.id);
-  }
-  return 1 + sum;
+/** The perk line(s) of a mark ("LETTERS COUNT ×2"), or '' when it has none. */
+export function perkLine(id) {
+  const m = ROLL_BY_ID.get(id);
+  return m && m.perks.length ? m.perks.map((p) => (PERKS[p] ? PERKS[p].line : p)).join(' + ') : '';
 }
+/** A non-worn owned card's ONE tag (rule U): its PERK when it has one, else what wearing it pays. */
+export function perkTag(state, id) {
+  return perkLine(id) || mainTag(id, state);
+}
+
 let cacheRaw;
 let cacheState = null;
 /** The stored roll state (migrated on first read), or null on a save that has never rolled. */
@@ -278,22 +303,20 @@ export function markEntry(id) {
   const r = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id);
   return r ? { id: r.id, name: r.name, tier: r.tier === 'permanent' ? 'legendary' : r.tier, blurb: mainTag(r.id) } : null;
 }
+
 /**
- * THE PAYOUT HOOK (wins.js perWordFactors → bonus). ×(summed PERK for this mode) × (the rolled
- * MAIN, when the worn mark is a NEW rolled id — legacy ids keep paying their MAIN through marks.js).
- * Exactly 1 on a save that has never rolled.
+ * THE MARK — the ONE number the worn mark pays, on XP per letter (letterXp.js) AND on wins (wins.js
+ * perWordFactors → `bonus`): the worn MAIN (tier × GOLD/RAINBOW finish) × the INDEX bonus. Exactly ×1 with
+ * nothing worn on a save that has never rolled. `markId` undefined → the worn mark; null → nothing worn.
+ * Guarded: a storage failure is ×1.
  */
-export function rollBonusMult({ mode } = {}) {
-  const s = loadRollState();
-  if (!s) return 1;
-  let mult = perkMult(s, mode);
-  let worn = null;
+export function markMult({ markId, state } = {}) {
   try {
-    worn = localStorage.getItem(MARKS_EQUIPPED_KEY);
+    const s = state === undefined ? loadRollState() : state;
+    const id = markId === undefined ? wornMarkId() : markId;
+    const v = mainMultOf(id, s) * indexMult(s);
+    return Number.isFinite(v) && v > 0 ? v : 1;
   } catch {
-    worn = null;
+    return 1;
   }
-  const m = worn && ROLL_BY_ID.get(worn);
-  if (m && !m.legacy && s.marks[worn]) mult *= mainMultOf(worn);
-  return mult;
 }

@@ -9,6 +9,7 @@
 // next trigger is rolled from zero. Persisted at taw.overdrive { playMs, nextMs, until }. PURE + guarded store:
 // blocked storage → no OVERDRIVE, never throws.
 import { announceTimers } from './boost.js';
+import { overdrivePerkMinutes } from './markPerks.js';
 
 export const OVERDRIVE_KEY = 'taw.overdrive';
 export const OVERDRIVE_MULT = 10;
@@ -16,8 +17,14 @@ export const OVERDRIVE_MIN = 5;
 export const OVERDRIVE_EVERY_MIN = [30, 60]; // minutes of PLAY between OVERDRIVEs (uniform)
 export const PLAY_GAP_CAP_MS = 5000; // one flush gap never counts more than 5 s of play
 
+/** The live OVERDRIVE window in minutes of play: [30, 60], or [15, 15] with the OVERCLOCK perk (KRAKEN, MYTHIC). */
+export function overdriveEveryMin() {
+  const p = overdrivePerkMinutes();
+  return p ? [p, p] : OVERDRIVE_EVERY_MIN;
+}
+
 const rollNext = (rng) => {
-  const [a, b] = OVERDRIVE_EVERY_MIN;
+  const [a, b] = overdriveEveryMin();
   const r = typeof rng === 'function' ? rng() : Math.random();
   return (a + (b - a) * Math.min(1, Math.max(0, r))) * 60000;
 };
@@ -64,7 +71,8 @@ export function notePlay(ms, now = Date.now(), rng) {
   const add = Number.isFinite(ms) && ms > 0 ? Math.min(ms, PLAY_GAP_CAP_MS) : 0;
   if (!add) return false;
   const st = read() || { playMs: 0, nextMs: null, until: 0 };
-  if (st.nextMs == null) st.nextMs = rollNext(rng);
+  // a trigger rolled before OVERCLOCK was owned is pulled in to the perk's window
+  if (st.nextMs == null || st.nextMs > overdriveEveryMin()[1] * 60000) st.nextMs = rollNext(rng);
   if (st.until > now) return false;
   st.playMs += add;
   if (st.playMs < st.nextMs) {

@@ -5,8 +5,9 @@
 //
 // RULES (CLAUDE.md ANIMATION BUDGET): finite one-shots only, transform/opacity only, will-change ON while a
 // reveal plays and OFF when it ends, no layout reads anywhere. REDUCED MOTION: no animation — the result card
-// shows at once, and an EPIC / LEGENDARY still gets its plate (tier, art, name, "1 IN X") as a STATIC frame for
-// the same hold, so rarity still reads.
+// shows at once, and a LEGENDARY / MYTHIC / SECRET still gets its plate (tier, art, name, "1 IN X") as a STATIC
+// frame for the same hold, so rarity still reads. LEGENDARY+ is the FULL-SCREEN cutscene (MARKS via ROLLS): the
+// cover is portalled into the MARKS overlay (a modal layer of that panel, never its own fixed element).
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import MarkBadge from '../MarkBadge';
@@ -76,7 +77,7 @@ export default function RollReveal({ seq, skipSeq, result, card, reduced, coverH
     <div className={`mr-cover${staticCover ? ' is-static' : ''}`} ref={reg('cover')} aria-hidden="true" style={{ '--mr-tier': tierColour(tier) }}>
       <div className="mr-cover-plate" />
       <div className="mr-cover-page mr-cover-ladder" ref={reg('ladder')}>
-        {LADDER.slice(0, 3).map((t, i) => (
+        {LADDER.slice(0, LADDER.length - 1).map((t, i) => (
           <div key={t} className={`mr-bar${i < below ? '' : ' is-off'}`} ref={reg(`bar${i}`)} style={{ '--mr-bar': tierColour(t) }}>{tierName(t)}</div>
         ))}
       </div>

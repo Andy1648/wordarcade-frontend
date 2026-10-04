@@ -166,7 +166,8 @@ test('rebirth (Rebirth Rush): ×5 XP AND wins a rebirth — R1 ×5, R2 ×25, R10
   for (const [rc, lv] of [[0, 15], [1, 33], [4, 87], [10, 195], [20, 375], [30, 555]]) assert.equal(tableRebirthThreshold(rc), lv, `gate R${rc}`);
   assert.equal(levelXpPerLetter(4, 3), 31250); // 10 × 25 × 125
   assert.ok(close(levelXpPerLetter(0, 0, 1.3), 13));
-  assert.deepEqual(MARK_XP_BOOST, { common: 0.1, rare: 0.2, epic: 0.3, legendary: 0.5 });
+  // MARKS via ROLLS: the letter-XP boost IS the MAIN's bonus (one MARK number for XP and wins)
+  assert.deepEqual(MARK_XP_BOOST, { common: 0.1, rare: 0.25, epic: 0.5, legendary: 2, mythic: 9, secret: 24 });
   withStorage({}, () => assert.equal(markXpBoost(), 1, 'nothing worn → ×1'));
   withStorage({ 'taw.mark': 'mk-bomber' }, () => assert.ok(markXpBoost() > 1, 'a worn legacy mark boosts letter XP'));
 });

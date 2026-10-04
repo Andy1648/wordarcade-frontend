@@ -5,8 +5,8 @@
 // Tap a mark → SET AS MAIN. Reached from the MARKS button; LAZY (this whole roll system is off the menu's
 // first paint — payload ratchet).
 //
-// RULE U (Andy): a card says name, rarity, "1 IN X" and ONE tag — the worn mark "MAIN ×N", every other mark
-// "PERK +X%" (a mark with no perk — permanent / retired — shows what wearing it pays). No other prose.
+// RULE U (Andy): a card says name, rarity, "1 IN X" and ONE tag — the worn mark "MAIN ×N", every other mark its
+// PERK line (LEGENDARY+), or what wearing it pays when it has no perk. No other prose.
 //
 // NO SPOILERS (oct3 review): everything this screen reads from storage — the roll state, the owned set, the
 // worn MAIN — is snapshotted on mount and re-read ONLY when a roll's reveal LANDS (`landed`), never on a
@@ -15,7 +15,7 @@
 // Motion: the MAIN hero punches once when a new MAIN is set; the roll reveal lives in RollReveal.jsx. Both
 // finite, transform/opacity only; static at rest; reduced motion shows the same states with no movement.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MARK_RANK_NAMES, markProgress, markMainMult, markTier, markById } from '../progress/marks';
+import { MARK_RANK_NAMES, markProgress, markTier, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
 import {
   ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, viewState, markLevel, perkTag, mainTag, oneInX, collection,
@@ -35,7 +35,7 @@ registerMarkGlyphs(ROLLED_GLYPHS);
 
 const PERM_COLOUR = '#9A1AFF';
 const tierOf = (e) => (e.kind === 'perm' ? { name: 'PERMANENT', colour: PERM_COLOUR } : markTier({ tier: e.tier }));
-// "UP TO ×N" must be TRUE for what you can get: rolled + permanent marks top out at ×4
+// "UP TO ×N" must be TRUE for what you can get: the SECRET tier's base MAIN (×25)
 const MAX_MULT = Math.max(...[...ROLL_MARKS, ...PERMANENT_MARKS].map((m) => 1 + markTier({ tier: m.tier === 'permanent' ? 'legendary' : m.tier }).bonus));
 // a locked PERMANENT says the TASK (the achievement's hint), as main's H6/M10 did for the old index
 const ACH_HINT = Object.fromEntries(
@@ -53,10 +53,9 @@ function buildEntries(unlocked) {
   return out;
 }
 
-/** MAIN ×N for any id — a legacy mark at its real rank, a rolled / permanent mark by tier. */
-function mainTagFor(id) {
-  const m = markById(id);
-  return m ? `MAIN ×${formatMult(markMainMult(m, markProgress(id).rank))}` : mainTag(id);
+/** MAIN ×N for any id — tier × its GOLD / RAINBOW finish (MARKS via ROLLS: ranks no longer scale it). */
+function mainTagFor(id, view) {
+  return mainTag(id, view);
 }
 
 function useReducedMotion() {
@@ -113,7 +112,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
   const entries = useMemo(() => buildEntries(unlocked), [unlocked]);
   const owns = (e) => (e.kind === 'roll' ? markLevel(view, e.id).copies > 0 || unlocked.has(e.id) : e.kind === 'perm' ? permOwned.has(e.id) || unlocked.has(e.id) : unlocked.has(e.id));
   const finishOf = (e) => (e.kind === 'roll' ? markLevel(view, e.id).variant || 'base' : 'base');
-  const tagFor = (e) => (equippedId === e.id || e.kind !== 'roll' ? mainTagFor(e.id) : perkTag(view, e.id));
+  const tagFor = (e) => (equippedId === e.id || e.kind !== 'roll' ? mainTagFor(e.id, view) : perkTag(view, e.id));
   // a locked rollable already says "1 IN X" on its tier line — only a PERMANENT needs a how-to (its task)
   const howTo = (e) => (e.kind === 'perm' ? ACH_HINT[e.from] || achievementNames[e.from] || e.from : '');
 
@@ -176,13 +175,13 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               </div>
               <div className="mx-hero-name" title={main ? main.name : undefined}>{main ? main.name : 'ROLL ONE'}</div>
               {main
-                ? <div className="mx-hero-pct" data-testid="marks-main-tag">{mainTagFor(main.id)}</div>
+                ? <div className="mx-hero-pct" data-testid="marks-main-tag">{mainTagFor(main.id, view)}</div>
                 : <div className="mx-hero-pct">UP TO ×{formatMult(MAX_MULT)}</div>}
               <div className={`mx-hero-rank${mp ? '' : ' is-placeholder'}`} aria-hidden={mp ? undefined : 'true'}>
                 <span className="mx-bar"><span className="mx-bar-fill" style={{ transform: `scaleX(${mp ? Math.max(0, Math.min(1, mp.maxed ? 1 : mp.frac)) : 0})` }} /></span>
                 <span className="mx-hero-rank-text">
                   {mp && !mp.maxed
-                    ? `${formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → MARK ${MARK_RANK_NAMES[mp.rank]} · ×${formatMult(markMainMult(legacyMain, mp.rank + 1))}`
+                    ? `${formatNum(Math.max(0, mp.need - mp.into))} MORE WORDS → MARK ${MARK_RANK_NAMES[mp.rank]}`
                     : mp ? 'MAXED' : ' '}
                 </span>
               </div>
