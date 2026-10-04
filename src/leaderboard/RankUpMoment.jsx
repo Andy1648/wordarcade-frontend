@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { myStats } from './client.js';
 import { formatNum } from '../format';
+import { standingText } from './boardTarget.js';
 import PodiumIcon from '../components/PodiumIcon';
 import { RANKUP_MS } from '../lib/menuMoments.js';
 import './RankUpMoment.css';
@@ -23,8 +24,8 @@ export default function RankUpMoment({ from, to, onDone, onPop }) {
   doneRef.current = onDone;
   const popRef = useRef(onPop);
   popRef.current = onPop;
-  // Andy oct2 (later): the board ranks by LEVEL (after rebirths), so the moment names the level.
-  const [level] = useState(() => myStats().level);
+  // Andy oct3 19:55: the board ranks REBIRTHS, then LEVEL — the moment names both ("R8 · LV16").
+  const [standing] = useState(() => { const s = myStats(); return standingText(s.rebirths, s.level); });
   // a live region announces a CHANGE, so the status line fills a beat after the region mounts
   const [said, setSaid] = useState(false);
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function RankUpMoment({ from, to, onDone, onPop }) {
           <span className="lb-rankup-arrow">→</span>
           <span className="lb-rankup-to">#{formatNum(to)}</span>
         </span>
-        <span className="lb-rankup-sub">LV {formatNum(Number(level) || 1)} · ON THE LEADERBOARD</span>
+        <span className="lb-rankup-sub">{standing} · ON THE LEADERBOARD</span>
       </div>
     </div>
   );

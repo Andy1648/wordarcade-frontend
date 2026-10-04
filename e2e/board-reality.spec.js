@@ -50,7 +50,7 @@ test('a claimed player whose row is R7 LV12 but who is R0 LV175 locally: one men
 
   await page.locator('.homepage-nav-btn.is-board').click();
   const row = page.locator('.lb-row.is-me');
-  await expect(row.locator('.lb-level')).toHaveText('LV 175');
+  await expect(row.locator('.lb-level')).toHaveText('LV175');
   await expect(row).toHaveAttribute('data-rank', '2');
 });
 
