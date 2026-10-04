@@ -13,7 +13,10 @@ import { layerOpen } from '../progress/claims';
 import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
 import { getWins, perWordWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, rebirthXpMult, KEY_XP_STEP, REBIRTH_XP_STEP } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, rebirthXpMult, KEY_XP_STEP } from '../progress/xp';
+
+// A multiplier of ×10 or more prints whole (×16, not ×15.56); under ×10 it keeps formatMult's precision (×1.5).
+const roundMultBig = (m) => (m >= 10 ? Math.round(m) : m);
 import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatMultExact, formatRate } from '../format';
@@ -402,9 +405,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </li>
               <li>
                 {/* H6/H10: what THIS rebirth adds — ×9 → ×10 is +11%, not "a ×10". */}
-                {/* PROGRESSION v11: one rule, one line — each rebirth is +100% XP (of the base) and the same
-                    ×(1 + R) on wins. The level curve itself never changes with rebirths. */}
-                <b>GAIN:</b> +{formatNum(REBIRTH_XP_STEP * 100)}% WINS &amp; XP / LETTER — ×{formatMult(rebirthXpMult(rebirths))} → ×{formatMult(rebirthXpMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
+                {/* v11 CURVE CHANGE (Keyboard Escape): the rebirth XP boost grows gently, then explodes —
+                    show the jump on the bar (XP / LETTER) and on wins (×(1 + R)) side by side. ×10 and up are
+                    whole numbers (no ×15.56). */}
+                <b>GAIN:</b> XP / LETTER ×{formatMult(roundMultBig(rebirthXpMult(rebirths)))} → ×{formatMult(roundMultBig(rebirthXpMult(rebirths + 1)))} · WINS ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(rebirthMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
               </li>
             </ul>
 

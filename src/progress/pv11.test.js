@@ -28,12 +28,9 @@ import {
   xpPerWord,
   clampFrac,
   FRAC_MAX,
-  CURVE_V11_BASE,
-  CURVE_V11_A,
-  CURVE_V11_POW,
-  CURVE_V11_LEAN,
+  CURVE_KE_BASE,
+  CURVE_KE_GROWTH,
   KEY_XP_STEP,
-  REBIRTH_XP_STEP,
   LEVEL_XP_PER_LETTER,
   XP_KEY,
   XP_SHADOW_KEY,
@@ -76,12 +73,10 @@ const v10 = (lv, f, rc = 0) => JSON.stringify({ lv, f, rc, v: 10 });
 const close = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 
 // ---- the curve: ONE for everyone ------------------------------------------------------------------
-test('v11 curve: round10(100 + 15·n²·1.004^(n−1)) — the published formula', () => {
-  assert.equal(CURVE_V11_BASE, 100);
-  assert.equal(CURVE_V11_A, 15);
-  assert.equal(CURVE_V11_POW, 2);
-  assert.equal(CURVE_V11_LEAN, 1.004);
-  const formula = (n) => round10(100 + 15 * n * n * Math.pow(1.004, n - 1));
+test('v11 curve (Andy 19:54, Keyboard Escape): round10(100 · 1.13^(n−1)) — the published formula', () => {
+  assert.equal(CURVE_KE_BASE, 100);
+  assert.equal(CURVE_KE_GROWTH, 1.13);
+  const formula = (n) => round10(100 * Math.pow(1.13, n - 1));
   for (const n of [1, 2, 10, 15, 30, 50, 99, 100, 101, 150, 200, 225, 400, 600, 1000]) assert.equal(need(n), formula(n), `LV${n}`);
 });
 
@@ -98,21 +93,20 @@ test('need() is INDEPENDENT of KEY tier and rebirths (Andy: "never scales with t
   }
   // v10's complaint, pinned: R8 LV16 was 233M; LV1 after a rebirth was huge. Now both are the fresh numbers.
   withStorage({ 'taw.keytier': '17', 'taw.rebirths': '8' }, () => {
-    assert.equal(need(16), 4180);
-    assert.equal(need(1), 120);
+    assert.equal(need(16), 630);
+    assert.equal(need(1), 100);
   });
   // a v10 caller's second argument (P) is ignored
   assert.equal(needAt(100, 1e9), needAt(100));
 });
 
 test('need() is monotone increasing — every level a bit harder than the last', () => {
-  for (let n = 2; n <= 20000; n++) assert.ok(need(n) > need(n - 1), `need(${n}) > need(${n - 1})`);
-  // "each level only a BIT harder than the last": the step shrinks smoothly — +21% at LV10, +4.4% at LV50,
-  // +2.4% at LV100, +1.4% at LV200 — and never reaches zero (the 1.004 lean keeps it above +0.4%)
-  assert.ok(close(need(51) / need(50), 1.044, 2e-3));
-  assert.ok(close(need(101) / need(100), 1.024, 2e-3));
-  assert.ok(close(need(201) / need(200), 1.014, 2e-3));
-  for (let n = 50; n < 5000; n++) assert.ok(need(n + 1) / need(n) > 1.004 && need(n + 1) / need(n) < 1.05, `step at LV${n}`);
+  // strictly increasing until the double range saturates (1.13^n overflows near LV5800), then flat at MAX_VALUE
+  for (let n = 2; n <= 5700; n++) assert.ok(need(n) > need(n - 1), `need(${n}) > need(${n - 1})`);
+  for (let n = 5701; n <= 20000; n++) assert.ok(need(n) >= need(n - 1), `need(${n}) >= need(${n - 1})`);
+  // "each level ~12–15% more than the last, the same at every level, no sudden jumps": +13% everywhere
+  // (round10 wobbles the early levels; from LV30 it is 1.13 to 3 decimals)
+  for (let n = 30; n < 5000; n++) assert.ok(close(need(n + 1) / need(n), 1.13, 2e-3), `step at LV${n}`);
   // past the double range it saturates at MAX_VALUE: non-decreasing, never Infinity
   for (const n of [171087, 200000, 1e6]) assert.ok(need(n) >= need(170000));
 });
@@ -168,11 +162,22 @@ test('KEY tier: ×1.2 XP / LETTER a tier ("+20%"), compounding; WINS keep their 
   assert.ok(close(winsWord(10) / winsWord(9), 2.5, 1e-3));
 });
 
-test('rebirth: +100% XP / LETTER per rebirth (×(1+R), the same multiplier wins get); mark: +10–50%', () => {
-  assert.equal(REBIRTH_XP_STEP, 1);
-  for (const rc of [0, 1, 3, 4, 10, 20]) assert.equal(rebirthXpMult(rc), 1 + rc);
-  for (const rc of [0, 1, 7, 26]) assert.equal(rebirthXpMult(rc), rebirthMult(rc), 'one rebirth number for wins and XP');
-  assert.ok(close(levelXpPerLetter(4, 3), 10 * Math.pow(1.2, 4) * 4));
+test('rebirth XP (Keyboard Escape): gentle, then it explodes — R1 ×1.5, R10 ~×16, R20 ~×500; wins stay ×(1+R)', () => {
+  const rx = (rc) => (1 + 0.5 * rc) * Math.pow(1.1, (rc * rc) / 10);
+  for (const rc of [0, 1, 3, 4, 10, 20, 30]) assert.ok(close(rebirthXpMult(rc), rx(rc), 1e-9 * rx(rc)), `R${rc}`);
+  assert.ok(close(rebirthXpMult(1), 1.5, 0.02));
+  assert.ok(rebirthXpMult(10) > 10 && rebirthXpMult(10) < 20);
+  assert.ok(rebirthXpMult(20) > 300);
+  // every rebirth is a real jump (≥ ×1.25), and from R10 on each jump is bigger than the one before
+  for (let rc = 0; rc < 60; rc++) assert.ok(rebirthXpMult(rc + 1) / rebirthXpMult(rc) >= 1.25, `R${rc}→R${rc + 1}`);
+  for (let rc = 10; rc < 60; rc++) {
+    assert.ok(rebirthXpMult(rc + 2) / rebirthXpMult(rc + 1) > rebirthXpMult(rc + 1) / rebirthXpMult(rc), `jump grows at R${rc}`);
+  }
+  assert.ok(Number.isFinite(rebirthXpMult(1e6)), 'finite at absurd counts');
+  for (const rc of [0, 1, 7, 26]) assert.equal(rebirthMult(rc), 1 + rc, 'WINS keep ×(1+R)');
+  // the gate: a run ends where it meets the wall — LV 35 + 3R + R²/50
+  for (const [rc, lv] of [[0, 35], [1, 38], [10, 67], [20, 103], [30, 143]]) assert.equal(tableRebirthThreshold(rc), lv, `gate R${rc}`);
+  assert.ok(close(levelXpPerLetter(4, 3), 10 * Math.pow(1.2, 4) * rx(3)));
   assert.ok(close(levelXpPerLetter(0, 0, 1.3), 13));
   assert.deepEqual(MARK_XP_BOOST, { common: 0.1, rare: 0.2, epic: 0.3, legendary: 0.5 });
   withStorage({}, () => assert.equal(markXpBoost(), 1, 'nothing worn → ×1'));
@@ -209,7 +214,7 @@ test('LETTERS fill the bar: noteTypedLetters counts a–z added, skips deletions
     }
     assert.equal(loadProgress().intoLevel, 0, 'nothing is written per keystroke');
     const r = flushLetterXp();
-    assert.equal(r.xp, Math.round(5 * 10 * 1.44 * 2), '5 letters × BASE 10 × KEY T2 ×1.44 × R1 ×2');
+    assert.equal(r.xp, Math.round(5 * 10 * 1.44 * rebirthXpMult(1)), '5 letters × BASE 10 × KEY T2 ×1.44 × R1 ×1.5');
     assert.ok(close(loadProgress().intoLevel, r.xp, 1e-6));
     assert.equal(flushLetterXp(), null, 'an empty flush is a no-op');
   });
@@ -259,9 +264,9 @@ test('a rebirth re-climb is FASTER per level than the first climb (the boost is 
     assert.equal(loadProgress().level, 1);
     const second = climb();
     assert.ok(second < first, `R1 re-climb ${second} letters vs first climb ${first}`);
-    assert.ok(second <= Math.ceil(first / 2) + 15, 'R1 doubles XP a letter → about half the letters');
+    assert.ok(second <= Math.ceil(first / rebirthXpMult(1)) + 15, 'R1 ×1.5 XP a letter → about two thirds of the letters');
     map.set('taw.rebirths', '1');
-    assert.equal(need(1), 120, 'and the curve the re-climb pays for is the SAME curve');
+    assert.equal(need(1), 100, 'and the curve the re-climb pays for is the SAME curve');
   });
 });
 
@@ -294,15 +299,15 @@ test('legacy conversion: LV195 R4 at 99% stays LV195 at 99%', () => {
   });
 });
 
-test('legacy conversion: a high-level save (v11 is CHEAPER there) neither zeroes nor bursts', () => {
-  const into = Math.floor(needV9(400) * 0.9);
-  assert.ok(into > need(400), 'the case under test: old into exceeds the new cost');
-  withStorage({ [XP_KEY]: legacy(400, into) }, () => {
+test('legacy conversion: a save where v11 is CHEAPER neither zeroes nor bursts', () => {
+  const into = Math.floor(needV9(60) * 0.9);
+  assert.ok(into > need(60), 'the case under test: old into exceeds the new cost');
+  withStorage({ [XP_KEY]: legacy(60, into) }, () => {
     migrateEconomyV11();
     const p = loadProgress();
-    assert.equal(p.level, 400, 'no free levels');
+    assert.equal(p.level, 60, 'no free levels');
     assert.ok(close(p.frac, 0.9, 1e-6), `frac ${p.frac} — not zeroed`);
-    assert.equal(creditXp(p, 10).state.level, 400);
+    assert.equal(creditXp(p, 10).state.level, 60);
   });
   withStorage({ [XP_KEY]: legacy(50, 1e30) }, () => {
     const p = loadProgress();
@@ -415,29 +420,36 @@ test('doRebirth writes the v10 shape with the NEW rebirth count', () => {
 
 // ---- the grandfathered rebirth gate (v10, still honoured) ----------------------------------------------
 test('the grandfathered rebirth gate: min(table, LV + 25) for the NEXT rebirth, used once', () => {
-  withStorage({ [XP_KEY]: legacy(126, 0), 'taw.rebirths': '10' }, (map) => {
+  // R10 gate is LV67 on the Keyboard Escape table; a legacy LV40 save gets min(67, 40 + 25) = LV65
+  withStorage({ [XP_KEY]: legacy(40, 0), 'taw.rebirths': '10' }, (map) => {
     const r = migrateEconomyV11();
-    assert.deepEqual(r.gate, { rc: 10, lv: 151 });
-    assert.equal(tableRebirthThreshold(10), 225);
-    assert.equal(rebirthThreshold(10), 151);
+    assert.deepEqual(r.gate, { rc: 10, lv: 65 });
+    assert.equal(tableRebirthThreshold(10), 67);
+    assert.equal(rebirthThreshold(10), 65);
     assert.equal(rebirthThreshold(11), tableRebirthThreshold(11), 'only the NEXT rebirth');
     migrateEconomyV11();
-    assert.equal(rebirthThreshold(10), 151, 'a second boot does not move it');
+    assert.equal(rebirthThreshold(10), 65, 'a second boot does not move it');
     doRebirth();
     assert.equal(map.has(REBIRTH_GATE_KEY), false, 'spent');
-    assert.equal(rebirthThreshold(11), 260);
+    assert.equal(rebirthThreshold(11), 70);
     map.set('taw.rebirths', '10');
-    assert.equal(rebirthThreshold(10), 225);
+    assert.equal(rebirthThreshold(10), 67);
   });
-  // a v10 browser's existing gate survives the bump to 11 untouched
+  // a v10 browser's existing gate survives the bump to 11 untouched (and is only ever LOWER than the table)
+  withStorage({ [XP_KEY]: v10(30, 0.1, 10), [XP_SHADOW_KEY]: v10(30, 0.1, 10), 'taw.econ': '10', 'taw.rebirths': '10', [REBIRTH_GATE_KEY]: JSON.stringify({ rc: 10, lv: 55 }) }, () => {
+    migrateEconomyV11();
+    assert.equal(rebirthThreshold(10), 55);
+  });
+  // an OLD stored gate above the new table never raises it: the lower table wins (min)
   withStorage({ [XP_KEY]: v10(130, 0.1, 10), [XP_SHADOW_KEY]: v10(130, 0.1, 10), 'taw.econ': '10', 'taw.rebirths': '10', [REBIRTH_GATE_KEY]: JSON.stringify({ rc: 10, lv: 151 }) }, () => {
     migrateEconomyV11();
-    assert.equal(rebirthThreshold(10), 151);
+    assert.equal(rebirthThreshold(10), 67);
   });
+  // a save already past its gate needs no grandfathering: it can rebirth right away
   withStorage({ [XP_KEY]: legacy(50, 0), 'taw.rebirths': '3' }, (map) => {
     migrateEconomyV11();
     assert.equal(map.has(REBIRTH_GATE_KEY), false);
-    assert.equal(rebirthThreshold(3), 60);
+    assert.equal(rebirthThreshold(3), 44);
   });
   withStorage({}, (map) => {
     migrateEconomyV11();

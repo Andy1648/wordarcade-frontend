@@ -17,6 +17,7 @@
 //
 // A lock is therefore: gated by level AND not yet played.
 import { getChainRuns, getFuseRuns } from '../solo/shared.js';
+import { peakLevel } from './peakLevel.js';
 
 // Per-mode "runs started, all-time" readers. Only gated solo modes need an entry; a mode
 // with no reader simply has no play-based bypass (it falls back to the level gate alone).
@@ -37,9 +38,11 @@ export function hasPlayedMode(id) {
   }
 }
 
-// Is this game card locked for a player at `level`? Ungated modes are never locked.
+// Is this game card locked for a player at `level`? Ungated modes are never locked. v11 CURVE CHANGE: the
+// level resets every rebirth (the Keyboard Escape loop), so a mode opens at the HIGHEST level ever reached —
+// reaching LV50 once opens CHAIN for good, even after the rebirth that follows.
 export function isModeLocked(game, level) {
   if (!game || game.unlockLevel == null) return false;
-  if (Number(level) >= game.unlockLevel) return false;
+  if (Math.max(Number(level) || 0, peakLevel()) >= game.unlockLevel) return false;
   return !hasPlayedMode(game.id);
 }

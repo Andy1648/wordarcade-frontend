@@ -216,8 +216,16 @@ function sampleWord(rng, skill, V) {
 }
 
 // ----------------------------------------------------------------------------- ONE BOT
-function simulate(skill) {
+function simulate(skill, start = null) {
   globalThis.localStorage = makeStore();
+  // --board: start from a REAL save (level, rebirths, KEY tier; the bar empty, no wins banked)
+  if (start) {
+    localStorage.setItem('taw.econ', '11');
+    localStorage.setItem('taw.rebirths', String(start.rc));
+    localStorage.setItem('taw.keytier', String(start.kt));
+    localStorage.setItem('taw.records', JSON.stringify({ maxLevel: start.lv }));
+    XP.saveProgress({ level: start.lv, frac: 0 });
+  }
   SIM_NOW = T0;
   WINS.resetWinsLedger();
   WINS.consumePendingWinsStamp();
@@ -240,6 +248,13 @@ function simulate(skill) {
   let levelUps = 0;
   const barPct = new Map(); // v11: band → [% of the level per word]
   const climbs = [{ rc: 0, t0: 0, startLevel: 1, to10: null }]; // v11: per climb, minutes to gain 10 levels
+  // KEYBOARD ESCAPE (Andy oct3 19:54): one entry per RUN (a climb that ends in a rebirth) — its length, its
+  // peak, and the minutes the LAST level took (the wall it ended on); plus % of a level per word BELOW the gate.
+  const runs = [];
+  let runT0 = 0;
+  let lastLevelT = 0;
+  let lastLevelMin = null;
+  const inRunPct = [];
   const PACE_LEVELS = [10, 50, 100, 200]; // v11: minutes per level here, first time reached
   const pace = {};
   let paceStart = {};
@@ -435,6 +450,10 @@ function simulate(skill) {
     // rebirth at the gate
     while (lv() >= XP.rebirthThreshold(XP.getRebirths())) {
       const at = lv();
+      runs.push({ rc: XP.getRebirths(), min: +(minute - runT0).toFixed(1), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier() });
+      runT0 = minute;
+      lastLevelT = minute;
+      lastLevelMin = null;
       const { rc, stars } = STARS.rebirthWithStars();
       climbs.push({ rc, t0: minute, startLevel: lv(), to10: null }); // v11 re-climb clock
       paceStart = {}; // a rebirth cuts any level-in-progress timing short
@@ -561,6 +580,8 @@ function simulate(skill) {
         // the bar movement of this word as a share of the level it landed on (letters, or main's word XP)
         const wordBar = Number.isFinite(res.credited) ? res.credited : LX ? 0 : res.gain;
         const pctW = (((lx && lx.xp) || 0) + wordBar) / XP.need(before) * 100;
+        if (Number.isFinite(pctW) && before < XP.rebirthThreshold(XP.getRebirths())) inRunPct.push(pctW);
+        if (after > before) { lastLevelMin = minute - lastLevelT; lastLevelT = minute; }
         if (before <= 400 && Number.isFinite(pctW)) {
           const band = Math.max(50, Math.ceil(before / 50) * 50);
           if (!barPct.has(band)) barPct.set(band, []);
@@ -739,7 +760,17 @@ function simulate(skill) {
     for (const [tm, c] of levelTrail) { if (tm <= T) u = c; else break; }
     upsAt[T] = u;
   }
-  const v11 = { pace, key, upsAt, barPct: bands, deadBar, firstClimbTo10: first10, reclimb, reclimbFasterShare: reclimb.length > 1 ? +(reclimb.slice(1).filter((c) => c.vsFirst != null && c.vsFirst < 1).length / Math.max(1, reclimb.slice(1).filter((c) => c.vsFirst != null).length)).toFixed(3) : null };
+  const srtIn = [...inRunPct].sort((a, b) => a - b);
+  const qIn = (p) => (srtIn.length ? +srtIn[Math.min(srtIn.length - 1, Math.floor(p * srtIn.length))].toPrecision(3) : null);
+  const early = runs.map((r) => r.min).slice(0, 3);
+  const ke = {
+    runs,
+    inRunBar: { n: srtIn.length, p1: qIn(0.01), p10: qIn(0.1), p50: qIn(0.5), pass: srtIn.length > 0 && qIn(0.1) >= 0.4 },
+    earlyRebirthMin: early,
+    earlyPass: early.length >= 1 && early.every((m) => m >= 15 && m <= 90),
+    furtherShare: runs.length > 1 ? +(runs.slice(1).filter((r, i) => r.peak > runs[i].peak).length / (runs.length - 1)).toFixed(3) : null,
+  };
+  const v11 = { ke, pace, key, upsAt, barPct: bands, deadBar, firstClimbTo10: first10, reclimb, reclimbFasterShare: reclimb.length > 1 ? +(reclimb.slice(1).filter((c) => c.vsFirst != null && c.vsFirst < 1).length / Math.max(1, reclimb.slice(1).filter((c) => c.vsFirst != null).length)).toFixed(3) : null };
 
   return {
     skill: skill.id, words, levelUps, perWindow, v11,
@@ -830,6 +861,37 @@ function simulateMasher(hours) {
   return { cap, upsAt, rebirths: XP.getRebirths(), level: lvl(), menuLetterXp: gain };
 }
 
+// ----------------------------------------------------------------------------- BOARD (--board)
+// Every REAL board save (the live board, oct3 19:50: level + rebirths; KEY tier is not on the board, so a
+// stand-in T = 8 + R), played by the MEDIAN bot for --hours. TODAY = the minutes a level takes them on the
+// live v10 curve (claude/econ-oct2/v10-existing-players.md, median pace by level band).
+const BOARD = [
+  ['snapplemelon', 195, 4], ['Xavi', 168, 8], ['elol', 156, 7], ['Daan', 144, 9], ['Tangie', 126, 10],
+  ['maSON_im_cRYAN', 119, 8], ['creator', 118, 6], ['ford', 21, 0], ['NoBuffCookies', 17, 7], ['jamal', 16, 0],
+  ['twinkletoes', 15, 0], ['InnerCityBoy', 1, 5], ['Joseph', 1, 6],
+];
+const todayMinPerLevel = (lv) => (lv >= 225 ? 38 : lv >= 150 ? 22 : lv >= 100 ? 13 : lv >= 50 ? 7 : 2);
+if (args.board) {
+  const med = SKILLS.find((x) => x.id === 'median');
+  console.log(`=== BOARD SAVES (median bot, ${HOURS} h each; KEY stand-in T = 8 + R)`);
+  let allOk = true;
+  for (const [name, lv, rc] of BOARD) {
+    const kt = 8 + rc;
+    const gate = XP.rebirthThreshold(rc);
+    const r = simulate(med, { lv, rc, kt });
+    const firstRun = r.v11.ke.runs[0];
+    const levelsFirstHour = r.v11.upsAt[60];
+    const todayPerHour = 60 / todayMinPerLevel(lv);
+    const canNow = lv >= gate;
+    const faster = levelsFirstHour > todayPerHour;
+    const ok = faster && r.v11.ke.inRunBar.pass !== false;
+    if (!ok) allOk = false;
+    console.log(`  ${name.padEnd(15)} LV${lv} R${rc} T${kt} | gate LV${gate} ${canNow ? 'REBIRTH NOW' : `${gate - lv} levels away`} | level-ups in the first hour ${levelsFirstHour} vs today ~${todayPerHour.toFixed(1)} → ${faster ? 'FASTER' : 'SLOWER'} | R after ${HOURS} h: R${r.final.rebirths} LV${r.final.level} | first run ${firstRun ? `${firstRun.min}m to R${firstRun.rc + 1}` : '—'} | bar p10 ${r.v11.ke.inRunBar.p10}% ${ok ? 'OK' : 'CHECK'}`);
+  }
+  console.log(`  BOARD VERDICT: ${allOk ? 'PASS — every save levels faster than today and no dead bar' : 'CHECK — see rows'}`);
+  process.exit(0);
+}
+
 // ----------------------------------------------------------------------------- RUN
 const want = typeof args.skills === 'string' ? args.skills.split(',') : SKILLS.map((s) => s.id);
 const results = [];
@@ -847,6 +909,11 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
     console.log(`  v11 pace (min/level, first time) LV10 ${r.v11.pace[10] ?? '—'} · LV50 ${r.v11.pace[50] ?? '—'} · LV100 ${r.v11.pace[100] ?? '—'} · LV200 ${r.v11.pace[200] ?? '—'}`);
     console.log(`  v11 KEY first hour: ${r.v11.key.firstHourBuys} buys, max gap ${r.v11.key.firstHourMaxGapMin}m @ ${JSON.stringify(r.v11.key.firstHourTimes)} | XP/letter step per KEY tier ×${r.v11.key.medianXpStep ?? '—'}`);
     console.log(`  v11 bar %/word by band (p10) ${Object.entries(r.v11.barPct).map(([b, x]) => `${b}:${x.p10}`).join(' ')} | dead bar (p10 < 0.2% to LV400): ${r.v11.deadBar ? 'FAIL' : 'PASS'}`);
+    {
+      const k = r.v11.ke;
+      console.log(`  KE runs (R → peak LV, run min, last level min, KEY T): ${k.runs.slice(0, 16).map((x) => `R${x.rc}→LV${x.peak} ${x.min}m last ${x.lastLevelMin}m T${x.keyTier}`).join(' | ')}`);
+      console.log(`  KE first rebirths ${JSON.stringify(k.earlyRebirthMin)} min apart (15–90): ${k.earlyPass ? 'PASS' : 'FAIL'} | runs reaching further than the last: ${k.furtherShare} | in-run bar %/word below the gate p1 ${k.inRunBar.p1} p10 ${k.inRunBar.p10} p50 ${k.inRunBar.p50} (p10 ≥ 0.4): ${k.inRunBar.pass ? 'PASS' : 'FAIL'}`);
+    }
     console.log(`  v11 re-climb: first 10 levels ${r.v11.firstClimbTo10}m; after rebirths (min, ×first) ${r.v11.reclimb.slice(1, 13).map((c) => `R${c.rc}:${c.minTo10}m×${c.vsFirst}`).join(' ')} | faster than first: ${r.v11.reclimbFasterShare}`);
     console.log('  achievements (min)', JSON.stringify(r.achTimes));
     if (r.rolls) console.log('  ROLLS', JSON.stringify({ ...r.rolls, log: undefined, worst: r.rolls.worst.slice(0, 5) }));

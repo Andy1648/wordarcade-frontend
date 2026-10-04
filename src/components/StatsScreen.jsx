@@ -11,7 +11,7 @@ import './StatsScreen.css';
 import {
   loadProgress,
   getRebirths,
-  rebirthMult,
+  rebirthXpMult,
   getKeyTier,
   keyXpMult,
   LEVEL_XP_PER_LETTER,
@@ -173,7 +173,8 @@ export default function StatsScreen({ onBack }) {
   const rounds = getRounds();
   const rebirths = getRebirths();
 
-  const rbMult = rebirthMult(rebirths);
+
+  const rbXp = rebirthXpMult(rebirths);
   const keyTier = getKeyTier();
   // PROGRESSION v11 (amended): the bar fills from LETTERS — BASE 10 XP / LETTER × KEY (×1.2 a tier) ×
   // rebirth ×(1+R) × the worn mark. Words pay WINS only. GAME XP / LETTER is the price of any letter typed
@@ -201,7 +202,8 @@ export default function StatsScreen({ onBack }) {
   const multipliers = [
     ['BASE XP / LETTER', fmt(LEVEL_XP_PER_LETTER)],
     ['KEY POWER', `TIER ${fmt(keyTier)} · ×${formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
-    ['REBIRTH', x(rbMult)],
+    // v11 CURVE CHANGE: the REBIRTH term of the XP stack is the exploding rebirth XP boost (wins keep ×(1+R))
+    ['REBIRTH', `${x(rbXp >= 10 ? Math.round(rbXp) : rbXp)} XP`],
     ['MARK', markMult > 1 ? `+${fmt((markMult - 1) * 100)}% XP` : 'NONE WORN'],
     ['WORDS', 'PAY WINS'],
     ['GAME XP / LETTER', formatRate(gameXp)],

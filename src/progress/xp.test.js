@@ -7,7 +7,6 @@ import {
   needV9,
   MENU_LETTER_SHARE,
   levelXpPerLetter,
-  CURVE_V11_BASE,
   CURVE_BASE,
   CURVE_BREAK,
   EARLY_CURVE_EXP,
@@ -136,21 +135,18 @@ test('round10 snaps to the nearest 10, half-to-even', () => {
 // exponent indexes off n-1 so CURVE_BASE is need(1) exactly instead of a number nobody pays.
 test('need() matches the published PROGRESSION v11 curve (one curve for everyone)', () => {
   // Literals, not derived from the constants under test — a test that restates the
-  // implementation passes whatever the implementation says. need = round10(100 + 15·n²·1.004^(n−1)).
-  assert.equal(need(1), 120); // twelve menu letters at a fresh profile
-  assert.equal(need(2), 160);
-  assert.equal(need(7), 850);
-  assert.equal(need(10), 1650);
-  assert.equal(need(30), 15260);
-  assert.equal(need(50), 45700);
-  assert.equal(need(100), 222800);
-  assert.equal(need(200), 1327980);
-  assert.equal(need(400), 11802290);
-  assert.equal(CURVE_V11_BASE, 100);
-  // Every level costs MORE than the one before it — and only a BIT more (Andy: "each level only a BIT
-  // harder than the last"): under +5% a level from LV50 on.
+  // implementation passes whatever the implementation says. need = round10(100 · 1.13^(n−1)) (Andy 19:54,
+  // Keyboard Escape: every level ~13% more than the last).
+  assert.equal(need(1), 100); // ten game letters at a fresh profile
+  assert.equal(need(2), 110);
+  assert.equal(need(7), 210);
+  assert.equal(need(10), 300);
+  assert.equal(need(30), 3460);
+  assert.equal(need(50), 39890);
+  assert.equal(need(100), 17979020);
+  // Every level costs MORE than the one before it, by the same ~13% (no sudden jumps).
   for (let n = 1; n < 2000; n++) assert.ok(need(n + 1) > need(n), `need(${n + 1}) must exceed need(${n})`);
-  for (let n = 50; n < 2000; n++) assert.ok(need(n + 1) / need(n) < 1.05, `step at LV${n}`);
+  for (let n = 30; n < 2000; n++) assert.ok(need(n + 1) / need(n) > 1.125 && need(n + 1) / need(n) < 1.135, `step at LV${n}`);
 });
 
 test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the FROZEN v9 shape (needV9)', () => {
@@ -197,10 +193,10 @@ test('every level requirement is divisible by 10 (through the exact-integer rang
 });
 
 // THE HEADLINE NUMBER, pinned on its own so a retune has to come here first.
-test('need(1) is 120 — twelve game letters at a fresh profile (BASE 10 XP / LETTER; 60 menu keys at 2)', () => {
-  assert.equal(need(1), 120);
-  assert.equal(Math.ceil(need(1) / levelXpPerLetter(0, 0)), 12);
-  assert.equal(Math.ceil(need(1) / xpPerInput({ keyTier: 0, rebirthCount: 0 })), 60);
+test('need(1) is 100 — ten game letters at a fresh profile (BASE 10 XP / LETTER; 50 menu keys at 2)', () => {
+  assert.equal(need(1), 100);
+  assert.equal(Math.ceil(need(1) / levelXpPerLetter(0, 0)), 10);
+  assert.equal(Math.ceil(need(1) / xpPerInput({ keyTier: 0, rebirthCount: 0 })), 50);
 });
 
 test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
@@ -298,11 +294,11 @@ test('levelFromXp: worked example at level 7 (curve-independent)', () => {
   assert.equal(r.toNext, needV9(7) - 100);
 });
 
-test('the MENU letter (v11 round 3): a FIFTH of a game letter — 2 × KEY ×1.2/tier × rebirth ×(1+R) × mark, no mode term', () => {
+test('the MENU letter (v11 round 3): a FIFTH of a game letter — 2 × KEY ×1.2/tier × REBIRTH × mark, no mode term', () => {
   assert.equal(MENU_LETTER_SHARE, 0.2);
   assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0 }), 2);
   assert.equal(xpPerInput({ keyTier: 5, rebirthCount: 0 }), 5); // 4.98 (T5 ×2.49)
-  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 6); // 5.76 (T2 ×1.44, R1 ×2, ×⅕)
+  assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 1 }), 4); // 4.36 (T2 ×1.44, R1 ×1.51, ×⅕)
   assert.equal(xpPerInput({ keyTier: 0, rebirthCount: 0, markMult: 1.5 }), 3); // a LEGENDARY worn mark
   assert.equal(levelXpPerLetter(0, 0), 10, 'a GAME letter is BASE 10');
   // a game mode does not multiply a letter (words pay WINS; a letter is a letter)
@@ -315,15 +311,16 @@ test('cosmetics are LOOKS ONLY: pop / sound multipliers and the streak never tou
   assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0, streakMult: 1.25 }), base);
 });
 
-test('rebirth gate table: R1 LV15 … R20 LV600, then +50 levels per rebirth', () => {
-  assert.equal(rebirthThreshold(0), 15); // gate for R1
-  assert.equal(rebirthThreshold(1), 25); // R2
-  assert.equal(rebirthThreshold(3), 60); // R4
-  assert.equal(rebirthThreshold(9), 200); // R10
-  assert.equal(rebirthThreshold(10), 225); // R11
-  assert.equal(rebirthThreshold(19), 600); // R20
-  assert.equal(rebirthThreshold(20), 650); // R21 = +50
-  assert.equal(rebirthThreshold(21), 700); // R22
+test('rebirth gate (Keyboard Escape): where a run meets its wall — LV 35 + 3R + R²/50', () => {
+  assert.equal(rebirthThreshold(0), 35); // gate for R1
+  assert.equal(rebirthThreshold(1), 38); // R2
+  assert.equal(rebirthThreshold(3), 44); // R4
+  assert.equal(rebirthThreshold(9), 64); // R10
+  assert.equal(rebirthThreshold(10), 67); // R11
+  assert.equal(rebirthThreshold(19), 99); // R20
+  assert.equal(rebirthThreshold(20), 103); // R21
+  assert.equal(rebirthThreshold(30), 143); // R31
+  for (let rc = 0; rc < 200; rc++) assert.ok(rebirthThreshold(rc + 1) > rebirthThreshold(rc), `gate R${rc}`);
 });
 
 // v6 tabled the multiplier (R1 ×1.5 … R10 ×10, then a cliff to ×100). v7/v8 made it 3^rc, which
@@ -347,13 +344,13 @@ test('rebirth multiplier: additive 1 + rebirths (v9), no table, no cliff, no com
   assert.equal(rebirthMult(NaN), 1);
 });
 
-test('rebirth is refused at LV14 and allowed at LV15', () => {
-  const xp14 = cumCost(14); // exactly at the start of level 14
-  const xp15 = cumCost(15); // exactly at the start of level 15
-  assert.equal(levelFromXp(xp14).level, 14);
-  assert.equal(levelFromXp(xp15).level, 15);
-  assert.equal(canRebirth(xp14, 0), false);
-  assert.equal(canRebirth(xp15, 0), true);
+test('rebirth is refused at LV34 and allowed at LV35', () => {
+  const xp34 = cumCost(34); // exactly at the start of level 34
+  const xp35 = cumCost(35); // exactly at the start of level 35
+  assert.equal(levelFromXp(xp34).level, 34);
+  assert.equal(levelFromXp(xp35).level, 35);
+  assert.equal(canRebirth(xp34, 0), false);
+  assert.equal(canRebirth(xp35, 0), true);
 });
 
 test('doRebirth zeroes xp and preserves wins/owned/equipped/rebirths+1', () => {

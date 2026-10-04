@@ -18,6 +18,7 @@
 // never touched sits at 0 and therefore always wins the tie-break against one you have.
 
 import { MASTERY_MODES } from './mastery.js';
+import { peakLevel } from './peakLevel.js';
 
 // Clean route path per mode id. Navigating is a real page load (see TryModeRow) because the app's
 // entry-param readers resolve ONCE at import time — pushState alone would change the URL without
@@ -47,7 +48,7 @@ export function isModeUnlocked(game, level) {
   if (!game || game.enabled === false) return false;
   if (game.unlockLevel == null) return true;
   const lvl = Number.isFinite(level) ? level : 1;
-  return lvl >= game.unlockLevel;
+  return Math.max(lvl, peakLevel()) >= game.unlockLevel; // the highest level ever reached (survives a rebirth)
 }
 
 /**

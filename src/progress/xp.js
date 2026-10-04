@@ -113,18 +113,26 @@ export function needV9(n) {
 // LV400 ~11.8M. The step to the next level is +21% at LV10, +4% at LV50, +2.4% at LV100, +1.4% at LV200 —
 // always harder, never a wall. The same numbers for a fresh profile and an R20 T30 save.
 // Always finite and > 0: capped at Number.MAX_VALUE (far past any reachable level), never Infinity/NaN/0.
-export const CURVE_V11_BASE = 100; // the flat part (keeps LV1 a few letters, not one)
+// v11 CURVE CHANGE (Andy oct3 19:54) — KEYBOARD ESCAPE style. "+2.4%/level at LV100 is far too flat":
+//   need(n) = round10(100 · 1.13^(n−1))
+// Every level costs 13% more than the last — the SAME step at every level, no sudden jumps. LV1 100, LV10 ~300,
+// LV35 ~6.4k, LV65 ~250k, LV100 ~18M. Inside one run the bar slows into a WALL; the way past it is a REBIRTH
+// (rebirthXpMult below grows gently, then explodes), so the next run climbs back fast and goes further.
+// The kept v11 constants (CURVE_V11_*) are the record of the quadratic this replaced; nothing reads them.
+export const CURVE_KE_BASE = 100; // need(1)
+export const CURVE_KE_GROWTH = 1.13; // +13% a level, every level
+export const CURVE_V11_BASE = 100;
 export const CURVE_V11_A = 15;
 export const CURVE_V11_POW = 2;
-export const CURVE_V11_LEAN = 1.004; // per-level exponential lean on top of n²
+export const CURVE_V11_LEAN = 1.004;
 
-/** need(n) — PURE, the ONE curve. Any extra argument (v10's power) is ignored. Finite, ≥ 120. */
+/** need(n) — PURE, the ONE curve. Any extra argument (v10's power) is ignored. Finite, ≥ 100. */
 export function needAt(n) {
   let lv;
   if (Number.isFinite(n)) lv = Math.max(1, Math.floor(n));
   else if (n === Infinity) return Number.MAX_VALUE;
   else lv = 1; // NaN / -Infinity / garbage → LV1
-  const raw = CURVE_V11_BASE + CURVE_V11_A * Math.pow(lv, CURVE_V11_POW) * Math.pow(CURVE_V11_LEAN, lv - 1);
+  const raw = CURVE_KE_BASE * Math.pow(CURVE_KE_GROWTH, lv - 1);
   if (!(raw < Number.MAX_VALUE)) return Number.MAX_VALUE; // Infinity / NaN → the cap, never 0
   const r = round10(raw);
   if (!(r > 0)) return 10;
@@ -157,10 +165,18 @@ export function keyXpMult(tier) {
   const v = Math.pow(KEY_XP_STEP, t);
   return Number.isFinite(v) ? Math.min(v, KEY_XP_CAP) : KEY_XP_CAP;
 }
-/** Rebirth count → XP-per-letter multiplier: 1 + R (R0 ×1, R1 ×2, R10 ×11). */
+// REBIRTH XP (Andy oct3 19:54, Keyboard Escape: "×1.5 at R1 … ×10 at R10 … huge at R20" — gentle, then it
+// explodes): (1 + R/2) · 1.1^(R²/10). R1 ×1.5, R2 ×2.1, R5 ×4.4, R10 ×16, R15 ×72, R20 ×500, R30 ×85k.
+// Each rebirth is a bigger jump than the last (R1→R2 ×1.4 … R10→R11 ×1.3 … R19→R20 ×1.5 … R29→R30 ×1.9),
+// so a new run always outruns the old wall. WINS keep their own ×(1+R) (rebirthMult) — only the bar explodes.
+export const REBIRTH_XP_LINEAR = 0.5;
+export const REBIRTH_XP_EXPLODE = 1.1;
+const REBIRTH_XP_CAP = 1e300;
+/** Rebirth count → XP-per-letter multiplier. R0 ×1, R1 ×1.5, R10 ×16, R20 ×500. Finite at any count. */
 export function rebirthXpMult(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  return 1 + REBIRTH_XP_STEP * rc;
+  const v = (1 + REBIRTH_XP_LINEAR * rc) * Math.pow(REBIRTH_XP_EXPLODE, (rc * rc) / 10);
+  return Number.isFinite(v) ? Math.min(v, REBIRTH_XP_CAP) : REBIRTH_XP_CAP;
 }
 /** XP per LETTER typed (menu or in-game) for a KEY tier, rebirth count and worn-mark boost. PURE. */
 export function levelXpPerLetter(keyTier, rebirthCount, markMult = 1) {
@@ -244,7 +260,6 @@ export const REBIRTH_TABLE = [
   { level: 560, mult: 1e10 }, // R19
   { level: 600, mult: 1e11 }, // R20
 ];
-const REBIRTH_PAST_LEVEL_STEP = 50; // +50 levels per rebirth past R20 (R21→650, R22→700 …)
 
 export function getRebirths() {
   try {
@@ -266,11 +281,15 @@ export function saveRebirths(n) {
 // The LEVEL required to perform the NEXT rebirth, given how many are already done. rc=0 gates
 // R1 at LV15; rc=19 gates R20 at LV600; past that, +50 levels each (R21→650, R22→700 …).
 // The published TABLE gate (pure; no grandfathering).
+// v11 CURVE CHANGE: the gate sits where a run meets its WALL (a level starts taking minutes at a median
+// pace), so a run ends naturally in a rebirth: LV 35 + 3R + R²/50 — R0→R1 at LV35, R10 at LV65,
+// R20 at LV103, R30 at LV143. (REBIRTH_TABLE above is the v6–v11 table, kept for the record.)
+export const REBIRTH_GATE_BASE = 35;
+export const REBIRTH_GATE_STEP = 3;
+export const REBIRTH_GATE_CURVE = 50;
 export function tableRebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
-  if (rc < REBIRTH_TABLE.length) return REBIRTH_TABLE[rc].level;
-  const last = REBIRTH_TABLE.length - 1; // R20
-  return REBIRTH_TABLE[last].level + REBIRTH_PAST_LEVEL_STEP * (rc - last);
+  return Math.round(REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * rc + (rc * rc) / REBIRTH_GATE_CURVE);
 }
 
 // PROGRESSION v10 must-fix 5 — the GRANDFATHERED rebirth gate. A save that existed when v10 landed may
@@ -333,6 +352,18 @@ export function consumePendingRebirth() {
 export function doRebirth() {
   // v10: the count is written FIRST so the fresh level state is stamped with the new rc (a stale-tab
   // check compares taw.rebirths against it), and the one-time grandfathered gate is spent.
+  // The run's PEAK goes into taw.records.maxLevel BEFORE the level resets: mode unlocks (modeAccess.peakLevel)
+  // and the Stats record read it, and under the Keyboard Escape loop every run ends in a rebirth.
+  try {
+    const peak = loadProgress().level;
+    const rec = JSON.parse(localStorage.getItem('taw.records') || 'null') || {};
+    if (!(Number.isFinite(rec.maxLevel) && rec.maxLevel >= peak)) {
+      rec.maxLevel = peak;
+      localStorage.setItem('taw.records', JSON.stringify(rec));
+    }
+  } catch {
+    /* storage blocked / corrupt records — the rebirth still happens */
+  }
   const rc = getRebirths() + 1;
   saveRebirths(rc);
   clearGrandfatheredGate();
