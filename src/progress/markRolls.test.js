@@ -8,7 +8,7 @@ import {
   freshState, normalize, rollTable, roll, oneInX, yourOneInX, markLevel, indexMult, markMult,
   mainMultOf, mainTag, perkTag, luck, pityLeft, collection, migrate, rollPriceWords, rollPrice,
   shouldAutoEquip, rollAndSave, ensureRollState, equipRolled, loadRollState,
-  ROLL_BASE_WORDS, equipDecision, wornMainOf,
+  ROLL_BASE_WORDS, equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny,
 } from './markRolls.js';
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY, MARK_TIERS } from './marks.js';
 import { MARK_ROLLS_STORE_KEY, MARK_PERKS } from './markPerks.js';
@@ -309,4 +309,81 @@ test('index: % collected over the rollable pool; milestones pay once and add luc
   assert.ok(Math.abs(luck(s) - 1.15) < 1e-9);
   const out = roll(() => 0.5, { ...s, everEpic: true });
   assert.ok(!out.result.milestones.includes('base-25'), 'a milestone pays once');
+});
+
+// ---------------------------------------------------------------------------------------- SHINY
+test('shiny: a flat 1.5% per roll over 200k seeded rolls — and the same with big LUCK and under pity', () => {
+  assert.equal(SHINY_CHANCE, 0.015);
+  for (const [seed, ctx, base] of [[7, {}, {}], [8, { boost: true, permanentOwned: 10 }, {}], [9, {}, { sinceEpic: 49 }]]) {
+    const rng = mulberry32(seed);
+    const N = 200000;
+    let k = 0;
+    for (let i = 0; i < N; i++) if (roll(rng, { ...freshState(), everEpic: true, rolls: 1, ...base }, ctx).result.shiny) k++;
+    const p = k / N;
+    assert.ok(Math.abs(p - 0.015) < 0.0012, `seed ${seed}: ${p}`); // ~4.4σ
+  }
+});
+
+test('shiny: the result says so, the mark stays shiny forever (any copy), and a non-shiny roll never clears it', () => {
+  const seq = (...xs) => { let i = 0; return () => xs[i++ % xs.length]; };
+  // pick the last common (0.999999), then a shiny draw (0.001)
+  const a = roll(seq(0.999999, 0.001), { ...freshState(), everEpic: true, rolls: 1 });
+  assert.equal(a.result.shiny, true);
+  assert.equal(a.result.shinyNew, true);
+  assert.equal(isShiny(a.result.markId, a.state), true);
+  const b = roll(seq(0.999999, 0.5), a.state);
+  assert.equal(b.result.markId, a.result.markId);
+  assert.equal(b.result.shiny, false);
+  assert.equal(isShiny(b.result.markId, b.state), true, 'kept forever');
+  assert.equal(b.state.marks[a.result.markId].n, 2);
+  const c = roll(seq(0.999999, 0.0001), b.state);
+  assert.equal(c.result.shiny, true);
+  assert.equal(c.result.shinyNew, false, 'already shiny');
+  // the draw is exactly the 1.5% line: 0.015 is NOT shiny
+  assert.equal(roll(seq(0.999999, 0.015), { ...freshState(), everEpic: true, rolls: 1 }).result.shiny, false);
+  assert.equal(roll(seq(0.999999, 0.0149999), { ...freshState(), everEpic: true, rolls: 1 }).result.shiny, true);
+});
+
+test('shiny ×2 the MAIN bonus part, stacking with GOLD / RAINBOW — and markMult (wins + XP) agrees', () => {
+  assert.equal(SHINY_MULT, 2);
+  const common = ROLL_MARKS.find((m) => m.tier === 'common').id;
+  const leg = ROLL_MARKS.find((m) => m.tier === 'legendary').id;
+  const secret = ROLL_MARKS.find((m) => m.tier === 'secret').id;
+  const st = (id, n, shiny) => normalize({ marks: { [id]: shiny ? { n, shiny: true } : { n } } });
+  const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+  near(mainMultOf(common, st(common, 1, false)), 1.1);
+  near(mainMultOf(common, st(common, 1, true)), 1.2); // COMMON ×1.1 → ×1.2
+  near(mainMultOf(leg, st(leg, 1, true)), 5); // LEGENDARY ×3 → ×5
+  near(mainMultOf(common, st(common, 1 + DUPES_PER_GOLD, true)), 1.4); // GOLD common ×1.2 → ×1.4
+  near(mainMultOf(leg, st(leg, 1 + DUPES_PER_GOLD, true)), 9); // GOLD legendary ×5 → ×9
+  near(mainMultOf(secret, st(secret, 1 + DUPES_PER_GOLD * GOLDS_PER_RAINBOW, true)), 241); // RAINBOW secret ×121 → ×241
+  // markMult = MAIN × INDEX: shiny doubles the MAIN's bonus, the INDEX is unchanged
+  const s1 = st(leg, 1, true);
+  near(markMult({ markId: leg, state: s1 }), 5 * indexMult(s1));
+  near(markMult({ markId: leg, state: st(leg, 1, false) }), 3 * indexMult(s1));
+  assert.equal(mainTag(leg, s1), 'MAIN ×5');
+});
+
+test('shiny: persistence + migration — old states read not-shiny; the flag survives normalize, migrate and the store', () => {
+  const id = ROLL_MARKS[0].id;
+  const old = normalize({ v: 1, rolls: 3, marks: { [id]: { n: 2 } } });
+  assert.equal(isShiny(id, old), false);
+  assert.deepEqual(old.marks[id], { n: 2 });
+  const junk = normalize({ marks: { [id]: { n: 1, shiny: 'yes' } } });
+  assert.equal(isShiny(id, junk), false, 'only a literal true counts');
+  const sh = normalize({ marks: { [id]: { n: 1, shiny: true } } });
+  assert.equal(isShiny(id, sh), true);
+  const m = migrate(sh, { ownedIds: [id] });
+  assert.equal(isShiny(id, m), true, 'migrate keeps it');
+  assert.deepEqual(migrate(m, { ownedIds: [id] }), m, 'idempotent');
+  assert.equal(isShiny(id, null), false);
+  assert.equal(isShiny('nope', sh), false);
+  withStorage({}, (map) => {
+    const seq = [0.999999, 0.001];
+    let i = 0;
+    const res = rollAndSave(() => seq[i++ % 2]);
+    assert.equal(res.shiny, true);
+    assert.equal(JSON.parse(map.get(ROLL_STATE_KEY)).marks[res.markId].shiny, true);
+    assert.equal(isShiny(res.markId, loadRollState()), true);
+  });
 });

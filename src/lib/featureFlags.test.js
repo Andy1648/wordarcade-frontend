@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { flagOn, FLAG_PREFIX } from './featureFlags.js';
-import { rollsEnabled, ROLLS_KEY } from '../progress/rollsFlag.js';
+import { rollsEnabled, ROLLS_KEY, ROLLS_ON } from '../progress/rollsFlag.js';
 
 function withEnv({ search = '', store = {}, throwing = false } = {}, fn) {
   const savedWin = globalThis.window;
@@ -47,9 +47,10 @@ test('flagOn: blocked storage / no window read as OFF, never throw', () => {
   }
 });
 
-test('rollsEnabled: DORMANT until the rolls-live PR; ?rolls=1 / taw.rollsOn / the shared key turn it on', () => {
-  withEnv({}, () => assert.equal(rollsEnabled(), false));
-  withEnv({ throwing: true }, () => assert.equal(rollsEnabled(), false));
+test('rollsEnabled: LIVE by default (rolls-live PR) — no ?rolls=1 needed, blocked storage too; the old keys still read true', () => {
+  assert.equal(ROLLS_ON, true);
+  withEnv({}, () => assert.equal(rollsEnabled(), true));
+  withEnv({ throwing: true }, () => assert.equal(rollsEnabled(), true));
   for (const env of [{ search: '?rolls=1' }, { store: { [ROLLS_KEY]: '1' } }, { store: { 'taw.flag.rolls': '1' } }]) {
     withEnv(env, () => assert.equal(rollsEnabled(), true));
   }

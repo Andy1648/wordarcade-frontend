@@ -22,7 +22,7 @@ function withStorage(seed, fn) {
     else globalThis.localStorage = saved;
   }
 }
-const at = (u) => () => u; // a fixed rng
+const at = (u) => { let i = 0; return () => (i++ % 2 ? 0.5 : u); }; // a fixed pick draw; every 2nd draw (the SHINY draw) is never shiny
 
 test('the first roll is the FREE starter; the next costs 60 words at your rate', () => {
   withStorage({ 'taw.wins': '0' }, (m) => {
