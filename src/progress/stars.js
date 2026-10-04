@@ -153,7 +153,7 @@ export function rebirthWithStars() {
   const start = headStartLevel(rc);
   if (start > 1) saveProgress({ level: start, intoLevel: 0 });
   if (rc === LAYER_STARS_AT) {
-    queueClaim({ id: 'layer-stars', kind: 'layer', label: 'NEW SYSTEM — STAR PERKS', detail: 'stars', meta: { blurb: 'Rebirths now pay ★ — the further past the gate, the more. Spend them in REBIRTH → STAR PERKS.' } });
+    queueClaim({ id: 'layer-stars', kind: 'layer', label: 'NEW SYSTEM — STAR PERKS', detail: 'stars', meta: { blurb: 'Rebirths pay ★ — more the further past the gate. Spend in REBIRTH → STAR PERKS.' } });
   }
   if (rc === LAYER_AUTO_AT) {
     queueClaim({ id: 'layer-auto', kind: 'layer', label: 'NEW SYSTEM — AUTOMATION', detail: 'auto', meta: { blurb: 'AUTO-KEY and AUTO-FORGE buy for you. Unlock them with ★ in REBIRTH.' } });

@@ -313,14 +313,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       let chunk = 0;
       for (const el of lines) {
         const all = textEm(el);
-        const per = textEm(el.querySelector('.game-card-payout-per'));
+        // every breakable piece (" / WORD", and since oct3 the inline " · POWER ×N" perk) — summed out of the
+        // unbreakable head, and each one is its own candidate chunk
+        const pers = Array.from(el.querySelectorAll('.game-card-payout-per')).map(textEm);
+        const per = pers.reduce((a, b) => a + b, 0);
+        const perMax = pers.length ? Math.max(...pers) : 0;
         const mult = textEm(el.querySelector('.game-card-payout-mult'));
         // The perk's second line ("LONGER WORDS PAY MORE", its own block since E3) drops whole on a
         // narrow or short card (then it measures 0), so it never sets the minimum card width; the
         // slot is sized to the WIDER of the two lines, not their sum.
         const tail = textEm(el.querySelector('.game-card-perk-tail'));
         whole = Math.max(whole, all - tail, tail);
-        chunk = Math.max(chunk, all - per - mult - tail, per, mult);
+        chunk = Math.max(chunk, all - per - mult - tail, perMax, mult);
       }
       return { whole, chunk };
     };
@@ -1255,7 +1259,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                caption line that used to sit under the bar — see below. */
             firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
             /* WPM joins the hint row (see .menu-xp-hint) instead of holding a row of its own. */
-            hintRight={<LiveWpm hideZero />}
+            hintRight={<><span className="menu-xp-hint-rule">LONGER WORDS PAY MORE</span><LiveWpm hideZero /></>}
             intoLevel={xpProgress.intoLevel}
             cost={xpProgress.cost}
             rebirths={rebirths}

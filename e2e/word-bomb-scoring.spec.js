@@ -202,6 +202,6 @@ test.describe('Word Bomb scoring (item 2)', () => {
     await gotoMenu(page);
     await startMyTurn(mock, page, { combo: 'at' });
     mock.pushToClient({ type: 'word_result', payload: { accepted: false, reason: 'already_used', word: 'CAT' } });
-    await expect(page.getByText('ALREADY USED — TRY AGAIN')).toBeVisible();
+    await expect(page.getByText('ALREADY USED', { exact: true })).toBeVisible();
   });
 });

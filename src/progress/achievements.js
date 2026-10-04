@@ -231,7 +231,7 @@ export function checkAchievements() {
   if (!layerOpen('forge')) {
     if (snap.forge > 0) openLayer('forge');
     else if (snap.level >= FORGE_UNLOCK_LEVEL || snap.rebirths > 0) {
-      queueClaim({ id: 'layer-forge', kind: 'layer', label: 'NEW SYSTEM — LETTER FORGE', detail: 'forge', meta: { blurb: 'SHOP → LETTER FORGE: forge letters one level at a time. Every forged letter in a word pays +5% more. No cap.' } });
+      queueClaim({ id: 'layer-forge', kind: 'layer', label: 'NEW SYSTEM — LETTER FORGE', detail: 'forge', meta: { blurb: 'SHOP → LETTER FORGE. Every forged letter in a word pays +5% more. No cap.' } });
     }
   }
   try {
