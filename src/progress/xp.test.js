@@ -237,11 +237,11 @@ test('KEY ladder: ×1, ×2, ×5, ×10, ×25, ×50, ×100, ×250, ×500, ×1000 (
   assert.ok(Number.isFinite(keyXpMult(5000)));
 });
 
-test('keyTierCostAt (Rebirth Rush): 60 · 5^(t−1) wins to REACH tier t, flat (no rebirth scaling)', () => {
-  const costs = [0, 60, 300, 1500, 7500, 37500, 187500, 937500, 4687500, 23437500, 117187500];
+test('keyTierCostAt (Rebirth Rush, tuned): round10(48 · 6^(t−1)) wins to REACH tier t, flat (no rebirth scaling)', () => {
+  const costs = [0, 50, 290, 1730, 10370, 62210, 373250, 2239490, 13436930, 80621570, 483729410];
   costs.forEach((c, t) => assert.equal(keyTierCostAt(t, 0), c, `T${t} cost`));
-  for (let t = 2; t <= 300; t++) assert.ok(Math.abs(keyTierCostAt(t, 0) / keyTierCostAt(t - 1, 0) - 5) < 1e-9, `T${t} ×5`);
-  assert.equal(keyTierCostAt(5, 7), 37500, 'flat across rebirths');
+  for (let t = 4; t <= 300; t++) assert.ok(Math.abs(keyTierCostAt(t, 0) / keyTierCostAt(t - 1, 0) - 6) < 0.01, `T${t} ×6`);
+  assert.equal(keyTierCostAt(5, 7), 62210, 'flat across rebirths');
   assert.equal(keyTierCostAt(-1, 0), 0);
   assert.ok(Number.isFinite(keyTierCostAt(5000, 0)));
 });
@@ -261,8 +261,8 @@ test('NO CAPS: T60+ prices and effects are finite and display through the named-
 
 
 test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () => {
-  assert.equal(keyTierCost(0, 0), 60); // standing at T0, buying T1 costs 60
-  assert.equal(keyTierCost(3, 0), 7500); // at T3, T4 costs 7,500
+  assert.equal(keyTierCost(0, 0), 50); // standing at T0, buying T1 costs 50
+  assert.equal(keyTierCost(3, 0), 10370); // at T3, T4 costs 10,370
   for (let t = 0; t < 40; t++) {
     assert.equal(keyTierCost(t, 0), keyTierCostAt(t + 1, 0));
     assert.equal(keyTierCost(t, 2), keyTierCostAt(t + 1, 2));
@@ -270,7 +270,7 @@ test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () 
 });
 
 test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {
-  // v8 ×6 a tier: exact integers until ~T20 (6^20 ≈ 3.7e15 < 2^53); past that floats, which is fine.
+  // ×6 a tier, snapped to tens while exact: through T18 (48·6^17 ≈ 8e14 < 2^53).
   for (let t = 0; t <= 18; t += 1) assert.equal(keyTierCostAt(t, 0) % 10, 0, `keyTierCostAt(${t})`);
   assert.equal(KEY_TIERS.length, 9); // T0..T8 tabled for the shop
 });
@@ -401,7 +401,7 @@ test('doRebirth zeroes xp, RESETS the KEY tier to T0, and preserves wins/owned/e
       assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
       assert.equal(map.get('taw.keytier'), '0'); // Rebirth Rush: KEY resets every rebirth (wins kept)
       assert.equal(getKeyTier(), 0);
-      assert.equal(keyTierCost(getKeyTier(), rc), 60, 'the rebuy starts at the T1 price');
+      assert.equal(keyTierCost(getKeyTier(), rc), 50, 'the rebuy starts at the T1 price');
     }
   );
   // A second rebirth from a re-bought tier resets it again.

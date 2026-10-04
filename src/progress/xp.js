@@ -479,18 +479,20 @@ export function keyTierXp(tier) {
 // The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past T8
 // it extends ×6 per tier from T8's 2,799,360, each step round10. (rebirthCount accepted and ignored —
 // v8 prices were flat wins; the signature stays so callers don't change.)
-// Rebirth Rush: T→T+1 costs KEY_COST_C0 × 5^T wins (C0 ≈ 30 s of BASE play: a median 10 words a minute ×
+// Rebirth Rush: T→T+1 costs KEY_COST_C0 × 6^T wins (CI probe round 3: the spec's ×5 with C0 60 ran ~50% fast; constants ±20% → ×6, C0 48) (C0 ≈ 30 s of BASE play: a median 10 words a minute ×
 // BASE 10 × 6/5 letters ≈ 60 wins). NOT scaled by rebirth: wins are ×5 a rebirth and these prices are not,
 // so every new run rebuys the early tiers in a burst. Cost to REACH tier t = C0 × 5^(t−1).
-export const KEY_COST_C0 = 60;
-export const KEY_COST_STEP = 5;
+export const KEY_COST_C0 = 48;
+export const KEY_COST_STEP = 6;
 const KEY_COST_CAP = 1e300;
 // eslint-disable-next-line no-unused-vars
 export function keyTierCostAt(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
   if (t === 0) return 0;
   const v = KEY_COST_C0 * Math.pow(KEY_COST_STEP, t - 1);
-  return Number.isFinite(v) ? Math.min(v, KEY_COST_CAP) : KEY_COST_CAP;
+  if (!Number.isFinite(v)) return KEY_COST_CAP;
+  // every price a round multiple of 10 (48 · 6^(t−1) → 50, 290, 1,730 …) while that is still exact
+  return Math.min(v < Number.MAX_SAFE_INTEGER ? Math.max(10, round10(v)) : v, KEY_COST_CAP);
 }
 // The wins cost to BUY the NEXT tier, standing at `tier` — i.e. the cost to REACH tier+1.
 export function keyTierCost(tier, rebirthCount) {

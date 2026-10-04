@@ -88,11 +88,11 @@ test('cannot buy an unaffordable item; wins unchanged', () => {
 });
 
 test('buyKeyPower: one tier deducts the next tier cost and bumps taw.keytier', () => {
-  // Rebirth Rush: 60 · 5^(t−1) — T1 60, T2 300, T3 1,500 wins.
+  // Rebirth Rush (tuned): round10(48 · 6^(t−1)) — T1 50, T2 290, T3 1,730 wins.
   const t1 = keyTierCostAt(1, 0);
   const t2 = keyTierCostAt(2, 0);
   const t3 = keyTierCostAt(3, 0);
-  assert.deepEqual([t1, t2, t3], [60, 300, 1500]);
+  assert.deepEqual([t1, t2, t3], [50, 290, 1730]);
   withStorage({ 'taw.wins': String(t1 + t2 + 100), 'taw.keytier': '0' }, (map) => {
     const r = buyKeyPower();
     assert.equal(r.ok, true);
