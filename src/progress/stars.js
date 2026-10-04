@@ -133,9 +133,12 @@ export function frenzyBonusMs() {
   return perkLevel('frenzy') * 60 * 1000;
 }
 /** HEAD START: the level a climb begins at after rebirth number `rcAfter`, never past half its gate. */
+// REBIRTH RUSH (PROGRESSION-FINAL.md): "Level → 1" on every rebirth — HEAD START no longer skips levels (the
+// re-climb through the old wall IS the moment). Owned HEAD START levels are kept in storage, unused.
+export const HEAD_START_ON = false;
 export function headStartLevel(rcAfter) {
   const hs = perkLevel('head');
-  if (!hs) return 1;
+  if (!hs || !HEAD_START_ON) return 1;
   return Math.max(1, Math.min(1 + 5 * hs, Math.floor(rebirthThreshold(rcAfter) / 2)));
 }
 

@@ -1,0 +1,49 @@
+# ECON PROBE — tune constants in PARALLEL on CI (memory rule: sims never run on the laptop). Push a branch named
+# probe/<anything> whose claude/econ-oct2/probes.json is a list of { "name", "patch" } (patch = loop-sim SIM_PATCH
+# find→replace triples). Every probe runs the 10 h no-marks loop-sim on its own runner; the summary prints each
+# probe's RR TARGETS line. A probe branch never touches a PR's runs.
+name: Econ probe
+
+on:
+  push:
+    branches:
+      - 'probe/**'
+
+permissions:
+  contents: read
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      probes: ${{ steps.p.outputs.probes }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: echo "probes=$(node -e "console.log(JSON.stringify(require('./claude/econ-oct2/probes.json').map((x) => x.name)))")" >> "$GITHUB_OUTPUT"
+
+  probe:
+    needs: list
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        name: ${{ fromJson(needs.list.outputs.probes) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Probe ${{ matrix.name }}
+        run: |
+          export SIM_PATCH="$(node -e "const p=require('./claude/econ-oct2/probes.json').find((x) => x.name === process.argv[1]); console.log(JSON.stringify(p.patch))" '${{ matrix.name }}')"
+          SIM_ROLLS=0 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=probe --hours=10 --no-masher | tee probe.txt
+          {
+            echo '## ${{ matrix.name }}'
+            echo '```'
+            grep -E '^=== |RR TARGETS|KE runs' probe.txt | cut -c1-600
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
