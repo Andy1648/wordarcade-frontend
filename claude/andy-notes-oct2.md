@@ -183,6 +183,15 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] 4. (13:35 DONE on feat/numbers-feel: one helper src/juice/countUp.js — 1.2 s → 2 s on a log scale of the jump, a new gain retargets the running count (never stacks), reduced motion/drops instant; used by the menu wins chip with a big '+N', level numeral, XP fill, WinnerPopup, the in-game wins pill, claim stamps (now 1.7 s), WordLanding, SAT results) COUNT-UP ANIMATIONS last longer ("so the user can see how much it's increasing by"): wins/XP/level gains count up over ~1.2–2 s scaled to the jump, with the "+amount" shown big. Finite, no stacking, reduced motion = instant.
 - [ ] 5. (13:35: visible half DONE on feat/numbers-feel a1c31c8 — '43.7%' with one decimal, a pooled '+X.X%' pop per credit, a flash + soft note at every 10%, the bar counts up from where it was when you left for a game; the movement check FAILED badly → Option F proposal at the top of ANDY TODO) HIGH-LEVEL BAR FEELS STAGNANT (Andy LV175: "bar just isn't moving"): show % to next level with a decimal, a "+X%" pop per word, a small milestone tick every 10% with a little reward feel. Sim: at LV150–250 the bar moves ≥0.5% per average word. If the existing-player numbers say the wait is too long, PROPOSE (don't apply) a fair one-time rescale with before/after per top player.
 
+## MARK ROLLS LIVE (Andy oct3 ~23:30) — fresh branch off main; VISUALS FIRST, NO NEW WORDS; TIER 1 (rolls touch the economy) → 2-context local test, then STOP: Andy play-tests before merge
+- [ ] Remove the ?rolls=1 gate (rolls live). (#169 merges with ROLLS_ON=false so rolls only go live through this PR.)
+- [ ] 1. Reveal scales by rarity: COMMON small pop · RARE colour flash · EPIC screen dims + burst · LEGENDARY/MYTHIC/SECRET full-screen 1.5 s reveal (rarity colour, particle burst, "1 IN X" in huge type). Tap to skip.
+- [ ] 2. ×10 roll button: 10 cards flip in fast (80 ms stagger); the best card gets the full reveal last.
+- [ ] 3. SHINY: 1.5% chance on any roll, gold shimmer + ×2 that mark's bonus. Visual first, one small badge, no text.
+- [ ] 4. MYTHIC+ rolls post one line to the leaderboard ticker: "NAME ROLLED MYTHIC".
+- [ ] 5. CLUTTER PASS (whole app): REMOVE the % on the progression bar; delete any label / sublabel / helper sentence that repeats what a number or icon already shows. Don't add a single new word anywhere.
+- Rules: frozen Rebirth Rush numbers, no caps, formatNum + BASE wording, never hurt existing players. Build 3 versions of the reveal → adversarial review → pick one. Full e2e on GitHub Actions only; one heavy local job at a time; kill preview + Playwright after.
+
 ## REBIRTH READY — never miss it (Andy oct3 ~21:45)
 - [ ] The first rebirth can only happen after round 1, so the ROUND-END screen shows a big "REBIRTH READY → ×5 FOREVER" button the moment the wall (the rebirth gate) is reached. One tap goes straight into the rebirth moment.
 - [ ] Same on the MENU.
