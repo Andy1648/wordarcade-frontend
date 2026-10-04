@@ -9,7 +9,7 @@ import { MARKS_EQUIPPED_KEY } from './marks.js';
 import { frenzyMult, FRENZY_KEY, FRENZY_MULT } from './frenzy.js';
 import { overdriveEveryMin, OVERDRIVE_EVERY_MIN } from './overdrive.js';
 import { winnerPayout } from './payout.js';
-import { doRebirth, getKeyTier, KEYTIER_KEY } from './xp.js';
+import { doRebirth, getKeyTier, keyTierAfterRebirth, KEYTIER_KEY } from './xp.js';
 import './wins.js'; // installs the HEIRLOOM hook into xp.doRebirth
 
 function withStorage(seed, fn) {
@@ -110,4 +110,19 @@ test('HEIRLOOM: a rebirth keeps up to 3 KEY tiers with ORIGIN; otherwise KEY res
     doRebirth();
     assert.equal(getKeyTier(), 2, 'never raises a tier');
   });
+});
+
+test('the rebirth screens quote the real kept tier: keyTierAfterRebirth = T{min(T, kept)} = what doRebirth writes', () => {
+  withStorage({ [KEYTIER_KEY]: '7' }, () => {
+    assert.equal(keyTierAfterRebirth(), 0, 'no perk → plain T0');
+    doRebirth();
+    assert.equal(getKeyTier(), 0);
+  });
+  withStorage({ [KEYTIER_KEY]: '7', ...wear('mk-origin') }, () => {
+    assert.equal(keyTierAfterRebirth(), 3);
+    assert.equal(keyTierAfterRebirth(2), 2);
+    doRebirth();
+    assert.equal(getKeyTier(), 3, 'the quote matched the write');
+  });
+  withStorage({ [KEYTIER_KEY]: '7', ...own('mk-origin') }, () => assert.equal(keyTierAfterRebirth(), 0, 'owned, not worn → T0'));
 });

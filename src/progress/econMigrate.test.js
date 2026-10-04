@@ -197,3 +197,19 @@ test('a stale legacy write after the v10 stamp never raises the level (shadow ke
     assert.equal(getRebirths(), 2, 'the stale LV400 never feeds the conversion');
   });
 });
+
+// RR review 9: a converted save must not also get the old v10 "you kept every level" notice.
+test('Rebirth Rush conversion drops the stale PV10 notice; a save below its gate keeps it', () => {
+  withStorage({ 'taw.xp': JSON.stringify({ lv: 195, into: 0 }), 'taw.rebirths': '4' }, (map) => {
+    const r = migrateEconomyV11(); // legacy → v10 shape (queues the v10 notice) → Rebirth Rush (+7)
+    assert.ok(r.rebirthRush.added > 0);
+    assert.equal(map.has(PV10_NOTICE_KEY), false, 'the levels became rebirths — no "kept every level" notice');
+    assert.equal(pv10NoticePending(), false);
+    assert.ok(rebirthRushNotice() > 0);
+  });
+  withStorage({ 'taw.xp': JSON.stringify({ lv: 10, into: 0 }), 'taw.rebirths': '1' }, () => {
+    const r = migrateEconomyV11(); // gate 33: nothing converts
+    assert.equal(r.rebirthRush.added, 0);
+    assert.equal(pv10NoticePending(), true, 'kept its level — the v10 notice stays true');
+  });
+});

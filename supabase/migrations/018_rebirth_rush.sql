@@ -50,7 +50,9 @@
 --    L = the STORED level, gate = 15 + 18·(stored rebirths) — exactly econMigrate.rebirthRushConvert on the row
 --    the board already shows (snapplemelon R4 LV195 → +7). Bonus rebirths cost no tokens. The accepted write
 --    sets econ = 12, so the bonus can never be claimed twice. A row whose stored level lags its real level
---    (015's clamp) gets the rest from the full bucket.
+--    (015's clamp) gets the rest from the full bucket. CAPPED at 15 rebirths (CONV_CAP): the bonus trusts the
+--    STORED level, so a forged old level (LV5000) would otherwise mint hundreds of rebirths in one submit. The
+--    largest legit bonus on the board is +7; 15 leaves headroom for any honest row we have not seen.
 --  LEVEL — free within the run: level ≤ max(gate(R) + 36, base + 015's allowance), where R = the rebirths being
 --    written, gate(R) = 15 + 18·R (the NEXT rebirth's gate) and +36 = two rebirths of headroom (each 18 levels
 --    costs ~×12 XP, so nobody holds a level far past the gate for long). base = 1 after a rebirth or a reset,
@@ -85,6 +87,8 @@ declare pid uuid; old public.profiles; lv integer; rb integer; w bigint; l bigin
         RB_SECS constant integer := 60;     -- one rebirth token per 60 s of wall time
         RB_BURST constant integer := 60;    -- the bucket holds ≤ 60 tokens (one hour)
         LV_HEADROOM constant integer := 36; -- levels allowed past the next rebirth gate (two rebirths' worth)
+        CONV_CAP constant integer := 15;    -- the one-time conversion bonus never exceeds 15 rebirths (legit max +7):
+                                            -- a forged old level must not become hundreds of rebirths
 begin
   pid := private.profile_for_secret(p_secret);
   if pid is null then raise exception 'no_profile'; end if;
@@ -105,7 +109,7 @@ begin
     -- RR: the one-time conversion bonus (row still on an older economy), from the STORED row
     old_gate := 15 + 18 * old.rebirths::bigint;
     conv := case when coalesce(old.econ, 0) < 12 and old.level >= old_gate
-                 then floor((old.level - old_gate) / 18.0)::bigint + 1 else 0 end;
+                 then least(CONV_CAP, floor((old.level - old_gate) / 18.0)::bigint + 1) else 0 end;
     -- RR: rebirth tokens — 1 per RB_SECS since rb_clock, at most RB_BURST (null clock = full bucket)
     eff_clock := greatest(coalesce(old.rb_clock, '-infinity'::timestamptz), now() - make_interval(secs => RB_SECS * RB_BURST));
     tokens := least(RB_BURST, floor(extract(epoch from (now() - eff_clock)) / RB_SECS)::bigint);

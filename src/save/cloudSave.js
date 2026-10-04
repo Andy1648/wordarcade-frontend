@@ -22,6 +22,7 @@
 // `cloud` and every call here is a no-op.
 import { exportSave, importSave, parseSave } from './saveBackup.js';
 import { resolveXpState } from '../progress/xp.js';
+import { rebirthRushConvert, ECON_VERSION } from '../progress/econMigrate.js';
 
 // PROGRESSION v10 (016_econ_v10.sql): when lb_caps reports econ: 10 the save goes through the
 // version-gated lb_save2 / lb_load2 (p_econ = 10); the old lb_save becomes a no-op there so an old
@@ -53,7 +54,10 @@ function num(v) {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
-export function progressScoreFromKeys(keys) {
+// `asConverted`: score a save stamped BEFORE Rebirth Rush (taw.econ < 12) as the conversion will leave it on
+// load (econMigrate.rebirthRushConvert on its level + rebirths) — otherwise an unconverted LV300 R0 blob
+// out-scores nothing it should (its levels are about to become rebirths) and loses to a converted local save.
+export function progressScoreFromKeys(keys, { asConverted = false } = {}) {
   const get = (k) => (keys && Object.prototype.hasOwnProperty.call(keys, k) ? keys[k] : null);
   // PV10: the AUTHORITATIVE level — the v10 shape, a converted legacy one, or (after a stale
   // old-bundle write) the v10 shadow. The migration keeps every level, so the score is unchanged by it.
@@ -67,13 +71,18 @@ export function progressScoreFromKeys(keys) {
   // sub-keys, each bounded below 1e12 only so it can never spill into the key above (level 1e12 and
   // a trillion letters are not reachable). Every old score is <= the new score for the same save, so
   // a stored cloud save never blocks the next one. The DB column becomes plain numeric (011_no_caps).
-  const rb = Math.floor(num(get('taw.rebirths')));
+  let rb = Math.floor(num(get('taw.rebirths')));
+  if (asConverted && num(get('taw.econ')) < ECON_VERSION) {
+    const c = rebirthRushConvert(lv, rb);
+    rb = c.rebirths;
+    lv = c.level;
+  }
   const SUB = 10n ** 12n;
   const lvKey = BigInt(Math.min(Math.floor(lv), 1e12 - 1));
   const letters = BigInt(Math.min(Math.floor(num(get('taw.letters'))), 1e12 - 1));
   return BigInt(rb) * SUB * SUB + lvKey * SUB + letters;
 }
-export function localScore(storage) {
+export function localScore(storage, opts) {
   const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
   if (!s) return 0n;
   const keys = {};
@@ -85,7 +94,7 @@ export function localScore(storage) {
       /* blocked */
     }
   }
-  return progressScoreFromKeys(keys);
+  return progressScoreFromKeys(keys, opts);
 }
 
 // ---- recovery code ------------------------------------------------------------------------------
@@ -105,8 +114,10 @@ export function shouldRestore(cloudBlob, storage) {
   if (!cloudBlob) return { restore: false, reason: 'none' };
   const parsed = parseSave(cloudBlob);
   if (!parsed.ok) return { restore: false, reason: 'invalid' };
-  const cloud = progressScoreFromKeys(parsed.keys);
-  const local = localScore(storage);
+  // Both sides scored AS CONVERTED: an unconverted (pre-Rebirth Rush) blob is compared as the save it will
+  // become after the restore's reload, never its raw level against a converted local save.
+  const cloud = progressScoreFromKeys(parsed.keys, { asConverted: true });
+  const local = localScore(storage, { asConverted: true });
   if (cloud > local) return { restore: true, cloud, local };
   return { restore: false, reason: 'local-ahead', cloud, local };
 }

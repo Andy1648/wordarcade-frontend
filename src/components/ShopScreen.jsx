@@ -9,7 +9,7 @@ import './ShopScreen.css';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
 import { getWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, REBIRTH_POWER } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, keyTierAfterRebirth, REBIRTH_POWER } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatMultExact } from '../format';
@@ -159,14 +159,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     // AFTER the rebirth, so every KEPT value is provably what survived it.
     let words = 0;
     for (const m of MASTERY_MODES) words += masteryWords(m) || 0;
-    // Rebirth Rush: KEY is NOT kept (it resets to T0 — shown in RESET); the LETTER FORGE row went with the forge.
+    // Rebirth Rush: KEY is NOT kept (it resets to T0, or the HEIRLOOM tiers — shown in RESET, read AFTER the
+    // rebirth as toKey); the LETTER FORGE row went with the forge.
     const kept = [
       { label: 'WINS', value: formatNum(getWins()) },
       { label: 'COSMETICS', value: formatNum(getOwned().length) },
       { label: 'MARKS', value: formatNum(ownedMarkIds().length) },
       { label: 'WORDS TYPED', value: formatNum(words) },
     ];
-    setCeremony({ rc, mult: gained, stars: starsGot, fromLevel, toLevel: loadProgress().level, fromKey, kept });
+    setCeremony({ rc, mult: gained, stars: starsGot, fromLevel, toLevel: loadProgress().level, fromKey, toKey: getKeyTier(), kept });
   };
 
 
@@ -309,7 +310,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 above; this says the cost. HEAD START lifts the new climb (stars.js headStartLevel). */}
             <ul className="shop-confirm-detail">
               <li>
-                <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))} · KEY RESETS → T0.
+                <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))} · KEY RESETS → T{formatNum(keyTierAfterRebirth(keyTier))}.
               </li>
               <li>
                 <b>KEEP:</b> WINS KEPT · MARKS · PURCHASES · STATS.

@@ -139,3 +139,25 @@ test('check-only (restore: false) never imports even when the cloud is ahead', a
     assert.equal(JSON.parse(m.get('taw.xp')).lv, 2);
   });
 });
+
+// RR review 6: an UNCONVERTED (pre-Rebirth Rush, taw.econ < 12) cloud blob is scored as the save it becomes once
+// the restore reloads and rebirthRushConvert runs — never its raw level against a converted local save.
+test('shouldRestore scores an unconverted blob AS CONVERTED (rebirthRushConvert on its level + rebirths)', () => {
+  const v10 = (lv, rc) => JSON.stringify({ lv, f: 0, rc, v: 10 });
+  // LV300 R0 (econ 10) converts to R16 — ahead of a converted local R10 at LV5, though its raw R0 is not
+  const cloudOld = withStorage({ 'taw.xp': v10(300, 0), 'taw.xpv10': v10(300, 0), 'taw.econ': '10' }, () => exportSave());
+  withStorage({ 'taw.xp': JSON.stringify({ lv: 5, f: 0, rc: 10, v: 10 }), 'taw.rebirths': '10', 'taw.econ': '12' }, (m) => {
+    const r = shouldRestore(cloudOld, { getItem: (k) => m.get(k) ?? null });
+    assert.equal(r.restore, true, 'the old blob is 16 rebirths once converted');
+  });
+  // the same raw level stamped 12 (already converted rules) is NOT converted again: R0 LV300 < R10
+  const cloudNew = withStorage({ 'taw.xp': v10(300, 0), 'taw.xpv10': v10(300, 0), 'taw.econ': '12' }, () => exportSave());
+  withStorage({ 'taw.xp': JSON.stringify({ lv: 5, f: 0, rc: 10, v: 10 }), 'taw.rebirths': '10', 'taw.econ': '12' }, (m) => {
+    assert.equal(shouldRestore(cloudNew, { getItem: (k) => m.get(k) ?? null }).restore, false);
+  });
+  // the leaderboard / backup score itself is unchanged (no option → raw)
+  assert.equal(
+    progressScoreFromKeys({ 'taw.xp': v10(300, 0), 'taw.econ': '10' }),
+    progressScoreFromKeys({ 'taw.xp': v10(300, 0), 'taw.econ': '12' }),
+  );
+});

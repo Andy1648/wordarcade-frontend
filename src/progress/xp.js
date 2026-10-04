@@ -372,6 +372,12 @@ function keyTiersKept() {
     return 0;
   }
 }
+/** The KEY tier a rebirth leaves: T{min(T, kept)} — T0 unless the HEIRLOOM perk keeps tiers. What the rebirth
+ *  screens quote, and exactly what doRebirth writes. */
+export function keyTierAfterRebirth(tier = getKeyTier()) {
+  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
+  return Math.min(t, keyTiersKept());
+}
 // Perform a rebirth: zero XP, bump the rebirth count. Returns the new count.
 // Wins/owned/equipped/rounds live under their own keys — untouched.
 export function doRebirth() {
@@ -393,7 +399,7 @@ export function doRebirth() {
   saveRebirths(rc);
   clearGrandfatheredGate();
   // Rebirth Rush: KEY → T0 every rebirth (wins kept — the rebuy spree); HEIRLOOM keeps up to 3 tiers
-  saveKeyTier(Math.min(getKeyTier(), keyTiersKept()));
+  saveKeyTier(keyTierAfterRebirth());
   saveProgress({ level: 1, intoLevel: 0 });
   pendingRebirth = rc;
   return rc;

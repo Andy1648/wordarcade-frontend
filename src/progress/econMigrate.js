@@ -90,6 +90,9 @@ function applyRebirthRush() {
   saveProgress({ level: 1, intoLevel: 0 });
   try {
     localStorage.setItem(RR_NOTICE_KEY, String(c.added));
+    // The old v10 "you kept every level" notice is now untrue (the levels just became rebirths) — drop it so the
+    // RR notice is the only moment this save gets.
+    localStorage.removeItem(PV10_NOTICE_KEY);
   } catch {
     /* blocked */
   }

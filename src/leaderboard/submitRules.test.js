@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { decideSubmit, decideSubmitRR } from './submitRules.js';
+import { decideSubmit, decideSubmitRR, CONV_CAP } from './submitRules.js';
 
 const T0 = Date.UTC(2026, 9, 3, 17, 0, 0);
 const HOUR = 3600 * 1000;
@@ -135,6 +135,16 @@ test('RR conversion: the real board rows land at their converted rebirth count i
   assert.equal(decideSubmitRR(keep, { ...same(keep), rebirths: 12 }, T0).row.rebirths, 10);
 });
 
+test('RR conversion bonus is CAPPED at 15 rebirths: a forged old level cannot mint hundreds', () => {
+  assert.equal(CONV_CAP, 15);
+  // a forged LV5000 R0 on econ 11 would convert to +278; the board grants at most +15 (empty bucket)
+  const forged = rrRow({ level: 5000, rebirths: 0, econ: 11, rb_clock: T0 - 10, submitted_at: T0 - 5001 });
+  assert.equal(decideSubmitRR(forged, { ...same(forged), level: 1, rebirths: 278 }, T0).row.rebirths, 15);
+  // exactly at the cap: LV267 R0 → floor(252/18)+1 = 15, all granted
+  const edge = rrRow({ level: 267, rebirths: 0, econ: 11, rb_clock: T0 - 10, submitted_at: T0 - 5001 });
+  assert.equal(decideSubmitRR(edge, { ...same(edge), level: 1, rebirths: 15 }, T0).row.rebirths, 15);
+});
+
 test('RR rebirths: a token bucket — 1 per minute, 60 banked, no free +1 per submit', () => {
   // full bucket (null clock): an hour of play without a menu load lands up to 60 rebirths at once
   const full = rrRow({ rebirths: 5 });
@@ -194,7 +204,8 @@ test('018 SQL carries the same branches + constants as decideSubmitRR, gated on 
   assert.match(sql, /RB_BURST constant integer := 60;/);
   assert.match(sql, /LV_HEADROOM constant integer := 36;/);
   assert.match(sql, /coalesce\(old\.econ, 0\) < 12 and old\.level >= old_gate/);
-  assert.match(sql, /floor\(\(old\.level - old_gate\) \/ 18\.0\)::bigint \+ 1/);
+  assert.match(sql, /least\(CONV_CAP, floor\(\(old\.level - old_gate\) \/ 18\.0\)::bigint \+ 1\)/);
+  assert.match(sql, /CONV_CAP constant integer := 15;/);
   assert.match(sql, /least\(rb::bigint, old\.rebirths::bigint \+ conv \+ tokens\)/);
   assert.match(sql, /greatest\(15 \+ 18 \* rb::bigint \+ LV_HEADROOM, base_lv \+ max_rise\)/);
   assert.match(sql, /floor\(least\(secs, 1200\) \* 0\.5\)/);
