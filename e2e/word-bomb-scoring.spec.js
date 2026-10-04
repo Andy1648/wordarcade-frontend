@@ -1,3 +1,6 @@
+// REBIRTH RUSH RE-PIN (PROGRESSION-FINAL, FROZEN formula): wins/word = BASE 10 x len/5 x MODE POWER x 5^R
+// x MARK x BOOST. No combo, no rarity, no lucky, no difficulty. Word Bomb is POWER x1, so every 3-letter word
+// here pays 10 x 3/5 = 6 wins at R0 (60 XP-units, zero tenths carried). The notes below are history.
 // RE-PINNED for the round-4 re-fit. WORD BOMB is back to x2 (the x2.1 of the previous round was
 // only ever propping up the band FLOOR to reach SAT; SAT reaching parity removed the need). Every
 // figure here is recomputed from the live table and then CONFIRMED by running the spec — never
@@ -67,7 +70,7 @@ test.describe('Word Bomb scoring (item 2)', () => {
     });
   });
 
-  test('3 accepted words pay out at game_over (25 @ T0/R0, combo-boosted)', async ({ page }) => {
+  test('3 accepted words pay out at game_over (18 @ R0, flat per word)', async ({ page }) => {
     const mock = await installBackendMock(page);
     await gotoMenu(page);
     const before = await readWins(page);
@@ -82,10 +85,11 @@ test.describe('Word Bomb scoring (item 2)', () => {
     //   = 4.2 weight × 6 perWordWins (T0 10 XP/letter × 3 letters × WB ×2 ÷ 10) = round(25.2) = 25
     // Poll for the payout instead of a fixed wait: each accepted word banks via bankWordWins →
     // localStorage on the async React drain, so a fixed sleep occasionally reads a pre-bank value.
-    // ...plus the WINNER BONUS (O12): this player won, so game_over adds +50% of the game's 25 = 13.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(25 + 13);
+    // ...plus the WINNER BONUS (O12): this player won, so game_over adds +50% of the game's words.
+    // REBIRTH RUSH: 3 words x 6 (10 x 3/5 x WB POWER 1 at R0) = 18, + winner bonus round(18 x 0.5) = 9.
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(18 + 9);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(25 + 13);
+    expect(after.lifetime - before.lifetime).toBe(18 + 9);
     expect(after.wb - before.wb).toBe(1);
   });
 
@@ -109,18 +113,20 @@ test.describe('Word Bomb scoring (item 2)', () => {
     //     RAT   2.1 × 60 = 126 + 2 = 128 → +12, carry 8
     //     MAT  2.25 × 60 = 135 + 8 = 143 → +14, carry 3
     //   = 51 banked + 0.3 carried = 513 XP ÷ 10 exactly (the old per-grant rounding paid 52).
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(51);
-    expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsCarry')) || 0)).toBe(3);
+    // REBIRTH RUSH: the weights above are gone. 5 words x 60 XP (10 x 3/5 x WB POWER 1 = 6 wins) = 300 XP:
+    //   gate (words 1-3) 180 XP → +18, carry 0;  RAT 60 → +6;  MAT 60 → +6  = 30 banked, 0 tenths carried.
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(30);
+    expect(await page.evaluate(() => Number(localStorage.getItem('taw.winsCarry')) || 0)).toBe(0);
     expect((await readWins(page)).wb - before.wb).toBe(1);
-    // H6 audit H1: the live HUD pill shows what was BANKED (51), not the plain-word estimate.
-    await expect(page.locator('.wins-hud-plus')).toHaveText('+51');
+    // H6 audit H1: the live HUD pill shows what was BANKED (30), not the plain-word estimate.
+    await expect(page.locator('.wins-hud-plus')).toHaveText('+30');
     // Now the game ends for real — the words are NOT re-paid (no double-pay); the only addition is
-    // the WINNER BONUS (O12), +50% of the 51 the game's words earned = 26.
+    // the WINNER BONUS (O12), +50% of the 30 the game's words earned = 15.
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(51 + 26); // banked per word + the winner bonus, nothing re-paid
-    expect(after.lifetime - before.lifetime).toBe(51 + 26);
+    expect(after.wins - before.wins).toBe(30 + 15); // banked per word + the winner bonus, nothing re-paid
+    expect(after.lifetime - before.lifetime).toBe(30 + 15);
     expect(after.wb - before.wb).toBe(1); // still one round counted
   });
 
@@ -194,7 +200,8 @@ test.describe('Word Bomb scoring (item 2)', () => {
     // ...plus the WINNER BONUS (O12), exactly as the happy path: game_over names ME the winner, so it
     // adds +50% of the game's 25 = 13. Expecting a bare 25 only ever passed when the poll happened to
     // read the balance in the instant BEFORE the bonus landed (CI flake on #129/#132/#133: received 38).
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(25 + 13);
+    // REBIRTH RUSH: 3 x 6 = 18 + winner bonus 9 (see the happy path).
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(18 + 9);
   });
 
   test('a server already_used rejection shows a visible, specific message', async ({ page }) => {
