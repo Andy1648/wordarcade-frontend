@@ -357,6 +357,17 @@
   color: #FFE94A;
 }
 
+/* Andy oct3 19:55: "R8 · LV16" — REBIRTHS lead (the board's first sort key). Under 900px the R stacks
+   over the LV (the " · " hides; it stays in the text); 900px+ widens the column to keep one line. */
+.lb-num.lb-level.has-rb {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+.lb-level .lb-rb { color: #FF4FA3; }
+.lb-level.has-rb .lb-sep { display: none; }
+
 .lb-preview {
   font-size: var(--fs-label);
 }
@@ -793,4 +804,15 @@
     max-height: calc(100dvh - 100px);
     margin-bottom: 60px;
   }
+}
+
+/* "R8 · LV16" on one line at 900px+: the level column widens (week rows keep their own grid). Last in the
+   file so it wins over the 481px+ grid above. */
+@media (min-width: 900px) {
+  .lb-overlay .lb-cols:not(.lb-cols--week),
+  .lb-overlay .lb-row:not(.lb-row--week) {
+    grid-template-columns: calc(52 * var(--lb-u)) minmax(0, 1fr) calc(150 * var(--lb-u)) calc(104 * var(--lb-u));
+  }
+  .lb-overlay .lb-num.lb-level.has-rb { display: block; white-space: nowrap; }
+  .lb-overlay .lb-level.has-rb .lb-sep { display: inline; }
 }

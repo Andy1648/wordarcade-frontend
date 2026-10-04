@@ -78,7 +78,7 @@ for (const vp of VIEWPORTS) {
     const me = page.locator('.lb-row.is-me');
     await expect(me.locator('.lb-name')).toHaveText('Typer_99');
     await expect(me.locator('.lb-you-badge')).toHaveText('YOU');
-    await expect(me).toContainText('LV 12');
+    await expect(me.locator('.lb-level')).toHaveText('R2 · LV12'); // Andy oct3 19:55: rebirths lead
     await expect(me.locator('.lb-name')).toHaveCSS('color', 'rgb(46, 255, 224)'); // R2 = cyan
     expect(board.calls.submit).toBeGreaterThanOrEqual(1);
 
@@ -120,7 +120,7 @@ test('a claimed name survives a reload and pushes stats from the menu', async ({
 });
 
 // ---- STEP 51 against a DB with migration 005 (letters + Chinese names) ----------------------------
-test('after migration 005: LEVEL is the main stat (Andy oct2), Chinese names claim, Chinese slurs are refused', async ({ page }) => {
+test('after migration 005: REBIRTHS · LEVEL is the main stat (Andy oct3), Chinese names claim, Chinese slurs are refused', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openMenu(page, { level: 12, rebirths: 2 });
   const board = await mockBoard(page, SEED, { caps: true }); // after openMenu: its catch-all route must not win
@@ -128,7 +128,7 @@ test('after migration 005: LEVEL is the main stat (Andy oct2), Chinese names cla
   await page.goto('/?portal=1');
   await menuReady(page);
   await page.locator('.homepage-nav-btn.is-board').click();
-  await expect(page.locator('.lb-cols')).toContainText('LEVEL');
+  await expect(page.locator('.lb-cols')).toContainText('R · LV');
   await expect(page.locator('.lb-cols')).not.toContainText('LETTERS');
   const input = page.locator('.lb-claim-input');
   await input.fill('傻逼王');
@@ -138,8 +138,30 @@ test('after migration 005: LEVEL is the main stat (Andy oct2), Chinese names cla
   await page.locator('.lb-claim-btn').click();
   const me = page.locator('.lb-row.is-me');
   await expect(me.locator('.lb-name')).toHaveText('小明打字');
-  // the board ranks by LEVEL only; 123,456 typed letters must not show as the main stat
-  await expect(me.locator('.lb-level')).toHaveText('LV 12');
+  // the board ranks by REBIRTHS, then LEVEL; 123,456 typed letters must not show as the main stat
+  await expect(me.locator('.lb-level')).toHaveText('R2 · LV12');
   await expect(me.locator('.lb-words-sub')).toHaveText('0 WORDS');
   expect(board.calls.submit).toBeGreaterThanOrEqual(1);
+});
+
+// Andy oct3 19:55: the ALL-TIME board ranks REBIRTHS first, then level — an R8 at LV16 sits above an
+// R0 at LV900, and each row's headline says why: "R8 · LV16" (an R0 row reads just "LV900").
+test('rebirths first: R8 LV16 ranks above R0 LV900; rows read "R8 · LV16" / "LV900"', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openMenu(page, { level: 1, rebirths: 0 });
+  await mockBoard(page, [
+    { id: 'lv', username: 'LevelGrinder', level: 900, rebirths: 0, lifetime_words: 90000, wins_per_word: 10 },
+    { id: 'rb', username: 'Reborn8', level: 16, rebirths: 8, lifetime_words: 300, wins_per_word: 10 },
+  ]);
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await page.getByRole('button', { name: 'Open leaderboard' }).click();
+  const rows = page.locator('.lb-row');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0).locator('.lb-name')).toHaveText('Reborn8');
+  await expect(rows.nth(0).locator('.lb-level')).toHaveText('R8 · LV16');
+  await expect(rows.nth(1).locator('.lb-name')).toHaveText('LevelGrinder');
+  await expect(rows.nth(1).locator('.lb-level')).toHaveText('LV900');
+  // phone: the R stacks over the LV inside the column — no horizontal scroll
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)).toBe(false);
 });

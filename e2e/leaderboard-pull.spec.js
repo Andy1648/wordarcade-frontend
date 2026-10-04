@@ -98,7 +98,7 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await expect(page.locator('.lb-row')).toHaveCount(4);
   await page.locator('.lb-close').click();
 
-  // 4. I level past LexiLoop's LV40 (the board ranks by LEVEL only — Andy oct2 evening) — the next
+  // 4. I level past LexiLoop's LV40 (R0 vs R0: rebirths tie, so LEVEL decides — Andy oct3 19:55) — the next
   //    menu visit pushes it and shows the rank-up.
   await page.evaluate(() => localStorage.setItem('taw.xp', JSON.stringify({ lv: 41, f: 0, rc: Number(localStorage.getItem('taw.rebirths')) || 0, v: 10 })));
   await page.goto('/?portal=1');
@@ -107,7 +107,7 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await expect(moment).toBeVisible({ timeout: 10000 });
   await expect(moment.locator('.lb-rankup-from')).toHaveText('#4');
   await expect(moment.locator('.lb-rankup-to')).toHaveText('#3');
-  await expect(moment.locator('.lb-rankup-sub')).toContainText('LV 41');
+  await expect(moment.locator('.lb-rankup-sub')).toHaveText('LV41 · ON THE LEADERBOARD');
   const trophy = page.getByRole('button', { name: /Open leaderboard/ });
   await expect(trophy).toHaveAttribute('aria-label', /rank went up/);
   await expect(moment).toBeHidden({ timeout: 5000 }); // finite: gone after its 2.2s
