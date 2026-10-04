@@ -56,6 +56,7 @@ test('item 1: mode dialog opens with <= 3 animations and no canvas', async ({ pa
   await page.setViewportSize({ width: 1440, height: 900 });
   await menu(page, 30);
   await modeEntry(page, 'word-bomb').click();
+  await page.locator('.mode-dialog-shell').waitFor({ state: 'attached' }); // lazy chunk since #154; count from the mount
   await page.waitForTimeout(60);
   const info = await page.evaluate(() => {
     const inDialog = (a) => { const t = a.effect && a.effect.target; return t && t.closest && t.closest('.mode-dialog-overlay'); };
@@ -74,7 +75,12 @@ for (const { w, h } of VIEWPORTS) {
   test(`item 4: no cut-off elements in the mode dialog @ ${w}x${h}`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await menu(page, 30);
-    await modeEntry(page, 'word-bomb').click();
+    // the dialog is a lazy chunk since #154, and a phone menu row can still be settling (claim banner, H5 queue)
+    // when the first tap lands — retry the tap until the shell is up
+    await expect(async () => {
+      if (!(await page.locator('.mode-dialog-shell').count())) await modeEntry(page, 'word-bomb').click();
+      await expect(page.locator('.mode-dialog-shell')).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
     await page.waitForTimeout(250);
     const bad = await page.evaluate(scanFn(), '.mode-dialog-shell');
     expect(bad, `cut-off elements @ ${w}x${h}: ${bad.join(', ')}`).toEqual([]);

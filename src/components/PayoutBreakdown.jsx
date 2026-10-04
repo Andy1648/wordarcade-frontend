@@ -44,9 +44,11 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
   // cannot check, because nothing says where a 5 came from. "5 letters × 10" is the same fact
   // with its working shown — the word's length against what a letter is worth at the player's
   // key tier — so every term in the product is named and the line multiplies out by hand.
+  // less-is-more (Andy oct3): the base always reads "BASE …" first, then the named multipliers —
+  // "BASE 10 / LETTER × 5 LETTERS ×2 MODE …". Same two terms, same product, the word BASE on it.
   const baseTerm = payout.letters && payout.perLetter
-    ? `${payout.letters} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'} × ${formatNum(payout.perLetter)}`
-    : `BASE ${formatRate(payout.base)}`;
+    ? `BASE ${formatNum(payout.perLetter)} / LETTER × ${payout.letters} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
+    : `BASE ${formatRate(payout.base)} / WORD`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
       {/* BOTH CURRENCIES, one above the math that produced them. Wins are the word's XP ÷ 10, so
@@ -122,7 +124,7 @@ export function RoundPayout({ ledger }) {
     <div className="payout payout--round" aria-label="Where your wins came from">
       <div className="payout-title">WHERE YOUR WINS CAME FROM</div>
       <div className="payout-head">
-        <span className="payout-head-label">{formatNum(ledger.words)} WORDS × BASE</span>
+        <span className="payout-head-label">BASE · {formatNum(ledger.words)} {ledger.words === 1 ? 'WORD' : 'WORDS'}</span>
         <span className="payout-head-val"><Num value={ledger.base} /></span>
       </div>
       {ledger.rows.length === 0 ? (

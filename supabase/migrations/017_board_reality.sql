@@ -134,11 +134,13 @@ revoke all on function public.lb_submit2(text, integer, integer, bigint, bigint,
 grant execute on function public.lb_submit2(text, integer, integer, bigint, bigint, numeric) to anon, authenticated;
 
 -- ---- (b) the views: 011's leaderboard and 013's leaderboard_weekly, + econ (same columns, order, grants) ---
--- BOARD = LEVEL ONLY (Andy oct2 evening: "idc abt rebirth"; he ran this view on prod): level desc,
--- lifetime_words desc, created_at asc. Every migration that (re)builds public.leaderboard carries it.
+-- BOARD = REBIRTHS FIRST, THEN LEVEL (Andy ran this order on prod oct3 19:55; supersedes oct2's level-only):
+-- rebirths desc, level desc, lifetime_words desc, created_at asc. Every migration from 017 on that (re)builds
+-- public.leaderboard MUST carry this order, so a re-run never reverts it. KEEP IN SYNC WITH
+-- src/leaderboard/client.js (ranksAhead / serverRankFor) and e2e/support/boardMock.js.
 drop view if exists public.leaderboard;
 create view public.leaderboard with (security_invoker = true) as
-  select row_number() over (order by level desc, lifetime_words desc, created_at asc) as rank,
+  select row_number() over (order by rebirths desc, level desc, lifetime_words desc, created_at asc) as rank,
          id, username, level, rebirths, lifetime_words, lifetime_letters, wins_per_word, econ
     from public.profiles;
 grant select on public.leaderboard to anon, authenticated;

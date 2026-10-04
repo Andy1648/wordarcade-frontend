@@ -25,7 +25,7 @@ function MasteryLine({ mode, accent, inPicker = false }) {
       </span>
       <span className="mode-dialog-mastery-txt">
         {/* H6/M3: mastery sits in the one stack (wins AND XP), so it is not labelled "XP" alone. */}
-        {pct > 0 ? `+${pct}% THIS MODE` : 'MASTERY — PLAY TO LEVEL UP'}
+        {pct > 0 ? `+${pct}% THIS MODE` : 'MASTERY'}
         {/* H6/L7: a count with its unit, not a bare "0/31". */}
         {!st.maxed && (
           <span className="mode-dialog-mastery-next"> · {Math.max(0, st.need - st.intoLevel)} WORDS TO M{st.level + 1}</span>
@@ -130,7 +130,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   }, [onClose]);
 
   // Escape closes (matches the scrim click).
-  useEffect(() => {
+  // LAYOUT effect: the listener exists from the commit that shows the dialog — a plain effect runs after paint, so
+  // an Escape pressed the instant the dialog appears (CI's mode-dialog flake; a quick player) was lost.
+  useLayoutEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') handleClose();
     }
@@ -209,12 +211,6 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
           </div>
 
           <div className={`mode-dialog-lower${modeKey === 'blitz' ? ' mode-dialog-lower--blitz' : ''}`}>
-            {modeKey === 'blitz' && (
-              <div className="mode-dialog-ai-badge">
-                <span className="mode-dialog-ai-badge-ai">AI</span>
-                <span className="mode-dialog-ai-badge-judged">BUILT</span>
-              </div>
-            )}
             <div className="mode-dialog-title">
               {isSolo ? (
                 <span className="mode-dialog-title-w2" style={{ color: accent }}>

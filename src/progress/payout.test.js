@@ -170,7 +170,7 @@ test('buildPayout carries the base TERMS so the panel can name them', () => {
   const r = buildPayout({ base: 5, letters: 5, perLetter: 10, factors: { mode: 2 } });
   assert.equal(r.letters, 5);
   assert.equal(r.perLetter, 10);
-  // letters x perLetter IS the base, in XP — the panel prints "5 LETTERS x 10", not "BASE 5".
+  // letters x perLetter IS the base, in XP — the panel prints "BASE 10 / LETTER x 5 LETTERS", not a bare "BASE 5".
   assert.equal(r.letters * r.perLetter, r.base * 10);
   // Absent/garbage terms degrade to null so the panel falls back to the bare base.
   const bare = buildPayout({ base: 5, factors: {} });

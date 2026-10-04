@@ -2,7 +2,6 @@
 // LockedPreviewDialog (locked). Shows the actual mechanic (not a description), the per-word
 // wins rate, and the typical round length. Newgrounds treatment (thick black border, hard
 // offset shadow, flat fill) lives in ModeExample.css. STATIC — no animation.
-import { winnerMatchMult } from '../progress/payout';
 import './ModeExample.css';
 import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
 import { perWordRateNow } from '../progress/wins';
@@ -39,8 +38,6 @@ function hiEnds(word, color) {
 export default function ModeExample({ mode, accent = '#2EFFE0' }) {
   const frenzy = useFrenzyClock();
   const power = modePower(mode);
-  // H4: a multiplayer match WON against a human pays this × the game's own wins (1 = not multiplayer).
-  const winMult = winnerMatchMult(mode);
   const ex = MODE_EXAMPLES[mode];
   if (!ex) return null;
   const rateNow = perWordRateNow({ mode });
@@ -118,7 +115,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
               for the player to multiply out (and momentum/level/mark missing from both). */}
           <b style={{ color: accent }}>{formatRate(rateNow.rate)}</b> WINS / WORD
           {Math.abs(rateNow.mult / (rateNow.factors.mode || 1) - 1) > 1e-9 && (
-            <span className="mode-ex-mult"> (×{formatMultExact(rateNow.mult / (rateNow.factors.mode || 1))})</span>
+            <span className="mode-ex-mult" title="YOUR BONUS: rebirths × streak × marks × mastery × stars"> (×{formatMultExact(((b) => (b >= 10 ? Math.round(b) : b))(rateNow.mult / (rateNow.factors.mode || 1)))} BONUS)</span>
           )}
         </span>
         <span className="mode-ex-round">{round}</span>
@@ -128,11 +125,6 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
         {power > 1 && (
           <span className="mode-ex-power" style={{ color: accent }}>
             POWER ×{formatMultExact(power)} <span className="mode-ex-power-vs">VS WORD BOMB</span>
-          </span>
-        )}
-        {winMult > 1 && (
-          <span className="mode-ex-power" style={{ color: accent }}>
-            WIN A MATCH: YOUR GAME ×{formatMultExact(winMult)} <span className="mode-ex-power-vs">VS A HUMAN RIVAL</span>
           </span>
         )}
         <span className="mode-ex-longer">LONGER WORDS PAY MORE</span>

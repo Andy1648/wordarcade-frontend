@@ -172,7 +172,6 @@ export default function MobileMenu({
   boardDot = false,
   boardRank = null,
   boardShown,
-  boardGlint = false,
   boardBump = null,
   boardRef,
   navLayout = 'top',
@@ -204,10 +203,10 @@ export default function MobileMenu({
             className={`hp-m-navbtn is-board hp-m-board-hero${navigating ? ' is-disabled' : ''}`}
             onClick={onLeaderboard}
             disabled={navigating}
-            aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardDot ? ' — your rank went up' : ''}`}
+            aria-label={`Open leaderboard${boardRank ? ` — you're #${formatNum(boardRank)}` : ''}${boardDot ? ' — your rank went up' : ''}`}
           >
             {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
-            <PodiumIcon rank={boardShown !== undefined ? boardShown : boardRank} glint={boardGlint} bump={boardBump} />
+            <PodiumIcon rank={boardShown !== undefined ? boardShown : boardRank} bump={boardBump} />
             {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
           </button>
         )}
@@ -230,7 +229,7 @@ export default function MobileMenu({
              progress readout of the game was desktop-only. One compact row: LV · bar · WINS. In flow,
              so the mode rows below flex a little shorter (still one screen, no scroll). */}
       {level != null && (
-        <div className="hp-m-stats" role="group" aria-label={`Level ${level}, ${formatNum(wins || 0)} wins`}>
+        <div className="hp-m-stats" role="group" aria-label={`Level ${formatNum(level)}, ${formatNum(wins || 0)} wins`}>
           <span className="hp-m-stats-lv"><span className="hp-m-stats-k">LV</span>{formatNum(level)}</span>
           <span className="hp-m-stats-track" aria-hidden="true">
             <span className="hp-m-stats-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, Number(levelFrac) || 0))})` }} />

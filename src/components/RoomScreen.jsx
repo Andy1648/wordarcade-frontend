@@ -17,7 +17,7 @@ import './RoomScreen.css';
 // display text.
 const GAME_TYPES = [
   { key: 'word-bomb', label: 'WORD BOMB' },
-  { key: 'category-blitz', label: 'AI CATEGORY BLITZ' },
+  { key: 'category-blitz', label: 'CATEGORY BLITZ' },
 ];
 
 function gameTypeLabel(gameType) {
@@ -44,7 +44,9 @@ function minPlayersFor(gameType) {
 const BOT_DIFFICULTIES = [
   { key: 'easy', label: 'EASY', desc: 'slow · beatable' },
   { key: 'medium', label: 'MEDIUM', desc: 'quick · solid' },
-  { key: 'hard', label: 'HARD', desc: 'fast · brutal' },
+  // C2: not "HARD" — the Word Bomb timer tier picker on this same screen has its own HARD (the
+  // 2nd-easiest tier, key 'easy'), so one word named the hardest bot and an easy timer.
+  { key: 'hard', label: 'TOUGH', desc: 'fast · brutal' },
 ];
 
 // Modes with a server-side bot opponent (roomManager's BOT_FACTORY_BY_GAME_TYPE).
@@ -222,7 +224,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
         <div className="room-code" translate="no" aria-label={`Room code ${room.code}`}>
           <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
         </div>
-        <div className="room-instruction">SHARE THIS CODE WITH FRIENDS TO JOIN</div>
+        <div className="room-instruction">SHARE THIS CODE</div>
 
         {/* One-tap invite: copies (or natively shares, where supported) a
             ?join=CODE deep link that drops a friend STRAIGHT into this room —
@@ -412,7 +414,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             disabled={!canStart || startPending}
           >
             {!canStart
-              ? `NEED ${minPlayers}+ PLAYERS TO START`
+              ? `NEED ${minPlayers}+ PLAYERS`
               : startPending
               ? 'STARTING...'
               : isSoloCategoryBlitz
@@ -420,7 +422,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
               : 'START GAME'}
           </button>
         ) : (
-          <div className="room-waiting-msg">WAITING FOR HOST TO START THE GAME...</div>
+          <div className="room-waiting-msg">WAITING FOR HOST...</div>
         )}
         </div>
 

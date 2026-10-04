@@ -16,6 +16,7 @@
 // tilted yellow sticker whose big pink "#N" makes the place itself the hook, and which reads as a
 // reward rather than more end-screen chrome (the strip blended in; the purple ticket fought the card).
 import { useEffect, useRef, useState } from 'react';
+import { standingText } from './boardTarget.js';
 import { formatNum } from '../format';
 import {
   LEADERBOARD_ENABLED,
@@ -127,11 +128,11 @@ export default function ClaimPrompt() {
     <section ref={boxRef} className={`lb-cp is-${phase}`} aria-label="Claim your leaderboard name" role="status">
       {phase === 'offer' && (
         <>
-          <span className="lb-cp-rank" aria-hidden="true">#{rank}</span>
+          <span className="lb-cp-rank" aria-hidden="true">#{formatNum(rank)}</span>
           <span className="lb-cp-copy">
-            <span className="lb-cp-kicker">YOU’D BE #{rank} ON THE BOARD</span>
-            {/* the board ranks by LEVEL (after rebirths; Andy oct2) — say the number that earns the place */}
-            <span className="lb-cp-hint">LV {formatNum(Number(myStats().level) || 1)} · NO SIGN-IN. JUST A NAME.</span>
+            <span className="lb-cp-kicker">YOU’D BE #{formatNum(rank)} ON THE BOARD</span>
+            {/* the board ranks REBIRTHS, then LEVEL (Andy oct3 19:55) — say the numbers that earn the place */}
+            <span className="lb-cp-hint">{(({ rebirths, level }) => standingText(rebirths, level))(myStats())} · NO SIGN-IN. JUST A NAME.</span>
           </span>
           <button type="button" className="lb-cp-go" onClick={() => { markClaimPromptSeen(); setPhase('form'); }}>CLAIM YOUR NAME</button>
           <button type="button" className="lb-cp-x" onClick={dismiss} aria-label="Dismiss">✕</button>
@@ -139,7 +140,7 @@ export default function ClaimPrompt() {
       )}
       {phase === 'form' && (
         <form className="lb-cp-form" onSubmit={claim} noValidate>
-          <span className="lb-cp-rank" aria-hidden="true">#{rank}</span>
+          <span className="lb-cp-rank" aria-hidden="true">#{formatNum(rank)}</span>
           <label className="lb-cp-label" htmlFor="lb-cp-input">YOUR NAME ON THE BOARD</label>
           <div className="lb-cp-row">
             <input
@@ -167,9 +168,9 @@ export default function ClaimPrompt() {
       )}
       {phase === 'done' && (
         <>
-          {claimedRank ? <span className="lb-cp-rank" aria-hidden="true">#{claimedRank}</span> : null}
+          {claimedRank ? <span className="lb-cp-rank" aria-hidden="true">#{formatNum(claimedRank)}</span> : null}
           <p className="lb-cp-done">
-            {claimedRank ? `YOU’RE #${claimedRank}. ` : 'YOU’RE ON THE BOARD. '}
+            {claimedRank ? `YOU’RE #${formatNum(claimedRank)}. ` : 'YOU’RE ON THE BOARD. '}
             FIND IT UNDER <PodiumIcon size={26} className="lb-cp-trophy" /> ON THE MENU.
           </p>
           <button type="button" className="lb-cp-x" onClick={() => setPhase('dismissed')} aria-label="Close">✕</button>

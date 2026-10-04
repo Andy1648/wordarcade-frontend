@@ -154,7 +154,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       kind: 'forge',
       // H2d: "×N" is for multipliers only; a run of N buys is "+N" (as KEY POWER's sticker says).
       name: n > 1 ? `FORGED +${n}` : `${letter.toUpperCase()} FORGED — LV ${level}`,
-      blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word now pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
+      blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: '#FF6B3D',
       tier: level,
@@ -518,7 +518,8 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
           </div>
           {/* §3 — an unaffordable card always shows the GAP + a progress bar. */}
           {/* §3 — the NEXT goal keeps its gap line; the rest of the compact tiles show the bar only. */}
-          {isNextGoal && <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>}
+          {/* C2: the GAP, in the same words KEY POWER and the FORGE use — "YOU HAVE n" was the balance, not the gap. */}
+          {isNextGoal && <div className="shop-card-gap">NEED {formatNum(item.price - wins)} MORE</div>}
           <ProgressBar value={item.price > 0 ? wins / item.price : 1} />
         </>
       )}

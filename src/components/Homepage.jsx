@@ -79,6 +79,7 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
+import { formatNum } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import './wall-system.css';
 import './Homepage.css';
@@ -312,14 +313,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       let chunk = 0;
       for (const el of lines) {
         const all = textEm(el);
-        const per = textEm(el.querySelector('.game-card-payout-per'));
+        // every breakable piece (" / WORD", and since oct3 the inline " · POWER ×N" perk) — summed out of the
+        // unbreakable head, and each one is its own candidate chunk
+        const pers = Array.from(el.querySelectorAll('.game-card-payout-per')).map(textEm);
+        const per = pers.reduce((a, b) => a + b, 0);
+        const perMax = pers.length ? Math.max(...pers) : 0;
         const mult = textEm(el.querySelector('.game-card-payout-mult'));
         // The perk's second line ("LONGER WORDS PAY MORE", its own block since E3) drops whole on a
         // narrow or short card (then it measures 0), so it never sets the minimum card width; the
         // slot is sized to the WIDER of the two lines, not their sum.
         const tail = textEm(el.querySelector('.game-card-perk-tail'));
         whole = Math.max(whole, all - tail, tail);
-        chunk = Math.max(chunk, all - per - mult - tail, per, mult);
+        chunk = Math.max(chunk, all - per - mult - tail, perMax, mult);
       }
       return { whole, chunk };
     };
@@ -721,8 +726,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const r = runAutomation({ buyKey: buyKeyPower, buyForge });
     if (!r.keys && !r.forges) return undefined;
     const parts = [];
-    if (r.keys) parts.push(`+${r.keys} KEY POWER`);
-    if (r.forges) parts.push(`+${r.forges} FORGE`);
+    if (r.keys) parts.push(`+${formatNum(r.keys)} KEY POWER`);
+    if (r.forges) parts.push(`+${formatNum(r.forges)} FORGE`);
     // H5: an INFO moment on the queue (was an 800 ms guess at clearing the level-up card)
     announceMenu('automation', (done) => {
       if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }
@@ -922,16 +927,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rankDoneRef = useRef(null);
   const rankCancelRef = useRef(null);
   const boardShown = boardHold != null ? boardHold : boardRank;
-  // ONE finite glint on the podium once the menu has settled (after the arrival wipe) — never a loop
-  // (MENU MOTION LAW). A rank-up bump replaces it: that is the icon's moment on such a visit.
-  const [boardGlint, setBoardGlint] = useState(false);
-  useEffect(() => {
-    if (!LEADERBOARD_ENABLED) return undefined;
-    const t = setTimeout(() => setBoardGlint(true), Math.max(0, 2200 - (Date.now() - mountedAtRef.current)));
-    return () => clearTimeout(t);
-  }, []);
-  // ONE value for both menu trees: no glint once a rank-up is pending (the bump is the icon's moment then)
-  const boardGlintOn = boardGlint && boardHold == null && !rankUp && !boardBump;
   // 012_admin_reset: the one-shot "reset by the dev" line, left by obeyDevReset before its reload
   const [devReset, setDevReset] = useState(() => LEADERBOARD_ENABLED && hasDevResetNotice());
   useEffect(() => { if (devReset) clearDevResetNotice(); }, [devReset]);
@@ -1122,7 +1117,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             boardDot={boardNews}
             boardRank={boardRank}
             boardShown={boardShown}
-            boardGlint={boardGlintOn}
             boardBump={boardBump}
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
@@ -1161,11 +1155,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               onClick={handleLeaderboard}
               onMouseEnter={() => sfx('hover')}
               disabled={navigating}
-              aria-label={`Open leaderboard${boardRank ? ` — you're #${boardRank}` : ''}${boardNews ? ' — your rank went up' : ''}`}
+              aria-label={`Open leaderboard${boardRank ? ` — you're #${formatNum(boardRank)}` : ''}${boardNews ? ' — your rank went up' : ''}`}
               title="Leaderboard"
             >
               {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
-              <PodiumIcon rank={boardShown} glint={boardGlintOn} bump={boardBump} />
+              <PodiumIcon rank={boardShown} bump={boardBump} />
               {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
             </button>
           </div>
@@ -1183,7 +1177,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onClick={claims.length > 0 ? () => setShowClaims(true) : handleStats}
             onMouseEnter={() => sfx('hover')}
             disabled={navigating}
-            aria-label={claims.length > 0 ? `Open stats — ${claims.length} to claim` : 'Open stats'}
+            aria-label={claims.length > 0 ? `Open stats — ${formatNum(claims.length)} to claim` : 'Open stats'}
           >
             STATS
             {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>}
@@ -1280,7 +1274,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                caption line that used to sit under the bar — see below. */
             firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
             /* WPM joins the hint row (see .menu-xp-hint) instead of holding a row of its own. */
-            hintRight={<LiveWpm hideZero />}
+            hintRight={<><span className="menu-xp-hint-rule">LONGER WORDS PAY MORE</span><LiveWpm hideZero /></>}
             intoLevel={xpProgress.intoLevel}
             cost={xpProgress.cost}
             rebirths={rebirths}

@@ -20,6 +20,7 @@ import { WordPayout, RoundPayout } from './PayoutBreakdown';
 // THE STANDING STACK. The per-word receipt only exists after a word lands, so the rail was empty
 // for the first words of every round and said nothing about the multipliers the player had built.
 import LiveStack from './LiveStack';
+import MatchWinBanner, { hasHumanRival } from './MatchWinBanner';
 import WordLanding, { hasLanding } from './WordLanding';
 import {
   burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE, punch,
@@ -96,18 +97,18 @@ function Heart({ filled, shatter }) {
 // and Category Blitz share most reasons; the too-short floor differs (3 vs
 // 2) and each mode has one reason the other never emits.
 const REJECTION_MESSAGES = {
-  too_short: 'TOO SHORT — NEED 3+ LETTERS',
-  too_short_category: 'TOO SHORT — NEED 2+ LETTERS',
+  too_short: 'TOO SHORT — 3+ LETTERS',
+  too_short_category: 'TOO SHORT — 2+ LETTERS',
   missing_combo: 'MUST CONTAIN [combo]',
-  already_used: 'ALREADY USED — TRY AGAIN',
-  already_said: 'ALREADY SAID — TRY ANOTHER',
+  already_used: 'ALREADY USED',
+  already_said: 'ALREADY SAID',
   // used_by_other: an optimistic accept the SERVER overruled because another player took the word in
   // the round-trip window (a race). Distinct from local already_used ("you used it"). (JOB C Path B.)
   used_by_other: 'SOMEONE ELSE JUST USED THAT',
   // not_a_word is emitted ONLY by the server's dictionary check — i.e. the rollback of an optimistic
   // accept (the client can't know the dictionary). Phrased as the server overruling. (JOB C Path B.)
   not_a_word: 'NOT IN OUR WORD LIST',
-  not_in_category: "DOESN'T FIT THE CATEGORY — TRY AGAIN",
+  not_in_category: "DOESN'T FIT THE CATEGORY",
   // STEP 9 (list-only Blitz): the server's only reject for a well-formed answer.
   not_on_list: 'NOT ON THE LIST',
 };
@@ -667,7 +668,7 @@ const COUNTDOWN_STEPS = [3, 2, 1, 'GO!', null];
  * input. Each step gets a random tilt for graffiti energy, and is re-keyed so
  * the countdown-pop animation replays per number.
  */
-export function CountdownOverlay({ onComplete, onStep }) {
+export function CountdownOverlay({ onComplete, onStep, banner = null }) {
   const [index, setIndex] = useState(0);
   const doneRef = useRef(false);
   // One random tilt (-5deg..5deg) per step, picked once on mount.
@@ -703,6 +704,9 @@ export function CountdownOverlay({ onComplete, onStep }) {
 
   return (
     <div className="countdown-overlay">
+      {/* less-is-more: the ONE pre-game statement of the match-win multiplier (MatchWinBanner) —
+          an absolute child of this existing overlay, gone after 1.5 s. */}
+      {banner}
       <div
         key={index}
         className={`countdown-text${step === 'GO!' ? ' go' : ''}`}
@@ -1451,7 +1455,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
         <li style={summaryStyle(1)}><b>{longestWord ? <CountUp to={longestWord.length} duration={500} /> : '—'}</b> LONGEST</li>
         <li style={summaryStyle(2)}><b>{fastestMs ? `${(fastestMs / 1000).toFixed(1)}s` : '—'}</b> FASTEST</li>
         <li style={summaryStyle(3)}><b>{formatDuration(durationMs)}</b> SURVIVED</li>
-        <li style={summaryStyle(4)}><b><CountUp to={bestCombo} duration={500} /></b> BEST STREAK</li>
+        <li style={summaryStyle(4)}><b><CountUp to={bestCombo} duration={500} /></b> BEST COMBO</li>
         <li style={summaryStyle(5)}><b><CountUp to={timeouts.length} duration={500} /></b> TIMEOUTS</li>
         <li style={summaryStyle(6)}><b><CountUp to={skips.length} duration={500} /></b> SKIPS</li>
       </ul>
@@ -2972,7 +2976,7 @@ export default function GameScreen({
   const categoryRaw = gameState.category || '';
   const usedItems = (isCategory ? gameState.usedAnswers : gameState.usedWords) || [];
 
-  const title = isCategory ? 'AI CATEGORY BLITZ' : 'WORD BOMB';
+  const title = isCategory ? 'CATEGORY BLITZ' : 'WORD BOMB';
   const promptLabel = isCategory
     ? 'NAME SOMETHING IN THIS CATEGORY'
     : 'TYPE A WORD CONTAINING';
@@ -3258,6 +3262,7 @@ export default function GameScreen({
           on the results, worst under reduced-motion where nothing else moves). */}
       {showCountdown && !gameOver && (
         <CountdownOverlay
+          banner={hasHumanRival(roomPlayers, myId) ? <MatchWinBanner mode={gameType} /> : null}
           onComplete={() => setShowCountdown(false)}
           onStep={(step) => {
             sound.countdown(step === 'GO!');
@@ -3745,9 +3750,11 @@ export default function GameScreen({
                   </span>
                 </div>
                 <div className="wb-status-row">
-                  <span className="wb-status-k">STREAK</span>
+                  {/* C2: a COUNT, named like the ComboMeter beside it ("5 HITS") — "STREAK ×5" dressed it as a
+                      multiplier (H6/H12) and gave the one number a third name. */}
+                  <span className="wb-status-k">HITS</span>
                   <span className={`wb-status-v${streak.count >= 2 ? ' is-hot' : ''}`}>
-                    ×{streak.count}
+                    {streak.count}
                   </span>
                 </div>
                 <div className="wb-status-row">
@@ -4397,7 +4404,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           </div>
 
           <div className="solo-category">
-            {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'AI CATEGORY BLITZ · 3 ROUNDS'}
+            {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'CATEGORY BLITZ · 3 ROUNDS'}
           </div>
 
           {/* (Daily STREAK line removed — the daily-streak feature is gone; the day #
@@ -4983,6 +4990,10 @@ function CategoryBlitzScreen({
             co-renders over the Category Blitz results (see the Word Bomb site above). */}
         {showCountdown && !gameOver && (
           <CountdownOverlay
+            /* the match-win banner once per GAME (round 1's countdown), only with a human rival */
+            banner={(!categoryRound || (categoryRound.round || 1) <= 1) && hasHumanRival(roomPlayers, myId)
+              ? <MatchWinBanner mode="category-blitz" />
+              : null}
             onComplete={() => setShowCountdown(false)}
             onStep={(step) => {
               // FIGHT beat on each Category Blitz round-start GO (cosmetic; fires at
@@ -5006,7 +5017,7 @@ function CategoryBlitzScreen({
               same event told twice, further from the thing it is about. */}
           <div className="game-header">
             <div className="game-title">
-              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
+              <SprayReveal>CATEGORY BLITZ</SprayReveal>
             </div>
             <div className="game-header-right">
               <div className="game-meta">
@@ -5278,7 +5289,7 @@ function CategoryBlitzScreen({
         <div className="game-stage">
           <div className="game-header">
             <div className="game-title">
-              <SprayReveal>AI CATEGORY BLITZ</SprayReveal>
+              <SprayReveal>CATEGORY BLITZ</SprayReveal>
             </div>
             <div className="game-header-actions">
               {audioSlot}

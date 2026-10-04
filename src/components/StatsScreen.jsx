@@ -34,6 +34,8 @@ import { exportSave, importSave } from '../save/saveBackup';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { getMyProfile, selfReset } from '../leaderboard/client';
 import { useMomentHold } from '../lib/useMomentSlot';
+import { flagOn } from '../lib/featureFlags';
+import { rebirthLadder } from '../progress/rebirthLadder';
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -173,6 +175,8 @@ export default function StatsScreen({ onBack }) {
   const rebirths = getRebirths();
 
   const rbMult = rebirthMult(rebirths);
+  // EXTENSION d (dormant, ?ladder=1): the REBIRTH row becomes BASE / NOW / NEXT chips in the same slot.
+  const ladder = flagOn('ladder') ? rebirthLadder(rebirths) : null;
   const keyTier = getKeyTier();
   const baseXp = keyTierXp(keyTier); // Key Power TIER's XP per letter
   // MENU XP / LETTER must MATCH the "+N" that pops on every menu keystroke — so compute it the
@@ -226,7 +230,7 @@ export default function StatsScreen({ onBack }) {
   const recordCellsAll = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
   const recordCells = [...recordCellsAll.filter((c) => !c.locked), ...recordCellsAll.filter((c) => c.locked)];
   // BB2 (Andy oct2): the PLAYER CARD — the screen worth screenshotting. LEVEL is the hero (the board
-  // ranks by it); four big numbers under it; who / rank / rebirths / since on one strip.
+  // ranks rebirths, then level); four big numbers under it; who / rank / rebirths / since on one strip.
   let wordsTyped = 0;
   for (const m of MASTERY_MODES) wordsTyped += masteryWords(m) || 0;
   const me = getMyProfile();
@@ -347,7 +351,6 @@ export default function StatsScreen({ onBack }) {
             HIDDEN ACHIEVEMENTS{' '}
             <span className="stats-secret-count">{fmt(hidden.found)} / {fmt(hidden.total)} FOUND</span>
           </h3>
-          <p className="stats-caption">ACHIEVEMENTS WITH THEIR GOAL HIDDEN UNTIL YOU CROSS IT</p>
           <div className="stats-secrets">
             {hidden.items.map((sec) => (
               <div
@@ -366,12 +369,24 @@ export default function StatsScreen({ onBack }) {
               mark, mastery, streak and stars on top (see a game's receipt). */}
           <h3 className="stats-subtitle">MENU TYPING XP</h3>
           <dl className="stats-list">
-            {multipliers.map(([k, v]) => (
-              <div className="stats-row" key={k}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
+            {multipliers.map(([k, v]) =>
+              ladder && k === 'REBIRTH' ? (
+                <div className="stats-row stats-ladder" key={k}>
+                  <dd className="stats-ladder-chips" aria-label="Rebirth ladder">
+                    {ladder.map((c) => (
+                      <span className={`stats-chip is-${c.state}`} key={c.id}>
+                        {[`${c.name} ${c.mult}`, c.gate, c.gain].filter(Boolean).join(' · ')}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              ) : (
+                <div className="stats-row" key={k}>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ),
+            )}
           </dl>
 
           <h3 className="stats-subtitle">ROUNDS PLAYED</h3>
@@ -404,7 +419,7 @@ export default function StatsScreen({ onBack }) {
           {satMissing.length > 0 && (
             <>
               <h3 className="stats-subtitle">WORDS YOU KEEP MISSING</h3>
-              <p className="stats-caption">SAT RUSH — THE WORDS THAT KEEP ESCAPING. STUDY THESE.</p>
+              <p className="stats-caption">SAT RUSH</p>
               <dl className="stats-list">
                 {satMissing.map((m) => (
                   <div className="stats-row" key={m.w}>

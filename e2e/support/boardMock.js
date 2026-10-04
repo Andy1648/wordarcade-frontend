@@ -1,12 +1,12 @@
 // e2e/support/boardMock.js — the leaderboard's REST API, mocked (the e2e build points
 // VITE_SUPABASE_URL at lb.e2e.invalid — see playwright.config.js). A tiny in-memory board that applies
 // the DB's name rules via the CLIENT filter (DB/client parity is pinned by claude/step24/db-parity.mjs).
-// Ranking matches the view: rebirths, level, lifetime words, then first-come (stable sort).
+// Ranking matches the view (017, Andy oct3 19:55): rebirths, level, lifetime words, then first-come (stable sort).
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 import { decideSubmit } from '../../src/leaderboard/submitRules.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
-// carries letters; the board ranks by LEVEL, then words — rebirths not ranked (Andy oct2 evening). Without it the mock is the v1 DB (lb_caps 404s).
+// carries letters; the board ranks by REBIRTHS, then LEVEL, then words (017, Andy oct3 19:55). Without it the mock is the v1 DB (lb_caps 404s).
 // `weekly` emulates 013_weekly_board.sql (BB3): lb_caps.weekly, a per-submit week_words counter (the
 // first submit is a baseline), and the leaderboard_weekly view (week_words > 0, most first).
 // `rules` applies the REAL write rule (017_board_reality.sql via src/leaderboard/submitRules.js — throttle,
@@ -25,8 +25,8 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
   const calls = { claim: 0, submit: 0 };
   const ranked = () => rows
     .slice()
-    // the production view (001 / 005 / 009 / 011): LEVEL, then lifetime words; rebirths not ranked
-    .sort((a, b) => b.level - a.level || b.lifetime_words - a.lifetime_words)
+    // the production view (017, Andy oct3 19:55): REBIRTHS, then LEVEL, then lifetime words
+    .sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level || b.lifetime_words - a.lifetime_words)
     .map((r, i) => {
       const out = { ...r, rank: i + 1, econ: r.econ || 0 };
       if (!caps) delete out.lifetime_letters;
@@ -173,9 +173,14 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       const or = url.searchParams.get('or');
       if (or) {
         const n = (re) => Number((or.match(re) || [])[1]);
+        const rb = n(/rebirths\.gt\.(\d+)/) || 0;
         const l = n(/level\.gt\.(\d+)/);
         const w = n(/lifetime_words\.gte\.(\d+)/);
-        const ahead = ranked().filter((r) => r.level > l || (r.level === l && r.lifetime_words >= w)).length;
+        const ahead = ranked().filter((r) => {
+          const rr = r.rebirths || 0;
+          if (rr !== rb) return rr > rb;
+          return r.level > l || (r.level === l && r.lifetime_words >= w);
+        }).length;
         return route.fulfill({ status: 200, headers: { 'content-range': `*/${ahead}`, 'access-control-expose-headers': 'content-range' }, body: '' });
       }
       const id = url.searchParams.get('id');

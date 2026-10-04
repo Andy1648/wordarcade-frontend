@@ -70,9 +70,10 @@ for (const s of SETUPS) {
     // of this spec checks the ledger against.
     const perkEl = card.locator('.game-card-xp').filter({ visible: true }).first();
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
-    await expect(perkEl).toContainText('LONGER');
-    await expect(perkEl).not.toContainText('XP');
-    const cardWins = num((await winsEl.innerText()).split('WINS')[0]);
+    void perkEl; // Andy oct3 18:55: one line per card — "BASE n / WORD · POWER ×N"; the live rate rides data-rate
+    await expect(winsEl).toContainText('BASE');
+    await expect(winsEl).not.toContainText('XP');
+    const cardWins = Number(await winsEl.getAttribute('data-rate'));
     const cardXp = cardWins * 10;
 
     const readLedger = () => page.evaluate(() => {
@@ -132,14 +133,14 @@ for (const s of SETUPS) {
           xp: r.querySelector('.payout-headline-xp').textContent,
           wins: r.querySelector('.payout-headline-wins').textContent,
           held: !!r.querySelector('.payout-held'),
-          base: r.querySelector('.payout-term--base').textContent, // "5 LETTERS × 10"
+          base: r.querySelector('.payout-term--base').textContent, // "BASE 10 / LETTER × 5 LETTERS"
 
           terms,
         };
       });
       const receiptXp = num(receipt.xp.split('XP')[0]);
       const receiptWins = num(receipt.wins.split('WINS')[0]);
-      const [letters, perLetter] = receipt.base.split('×').map(num);
+      const [perLetter, letters] = receipt.base.split('×').map(num);
 
       const unknown = receipt.terms.filter((t) => !PERMANENT.has(t.k) && !PER_WORD.has(t.k));
       expect(unknown, `word "${WORDS[i]}": receipt names a factor this spec did not plan for (rarity / length / cap?)`).toEqual([]);

@@ -392,7 +392,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       hud={hud}
       center={(s.fragment || '').toUpperCase()}
       motif={FUSE_MOTIF}
-      supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — fuse ×{s.shortFactor}</span> : null}
+      supply={s.shortPenalty ? <span className="is-dead">SHORT WORD — FUSE {Math.round((1 - s.shortFactor) * 100)}% SHORTER</span> : null}
       clock={{ remaining: g.remaining, tMax: g.tMax, redZone: g.redZone, armed: g.armed }}
       deck={fuseDeck}
       input={g.input}
@@ -406,7 +406,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       /* FIRST-RUN TEACH (per mode) — a real word containing the fragment that is on screen right
          now, skipping any already solved, so copying it always works. */
       teachMode="fuse"
-      teachRule="THE LETTERS SHOWN MUST APPEAR SOMEWHERE IN IT"
+      teachRule="USE THE LETTERS SHOWN, ANYWHERE IN THE WORD"
       teachExample={data ? exampleContaining(data.recall, s.fragment, (w) => s.used.has(w)) : null}
       phase={g.phase}
       winsTally={winsTally}

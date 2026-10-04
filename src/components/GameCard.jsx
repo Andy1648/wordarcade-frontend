@@ -6,7 +6,6 @@ import { perWordRateNow } from '../progress/wins';
 import { modePower } from '../progress/xp';
 import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
-import { winnerMatchMult } from '../progress/payout';
 import { formatRate, formatMultExact } from '../format';
 import './GameCard.css';
 
@@ -284,43 +283,27 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // span that drops WHOLE on a narrow card (GameCard.css), so a narrow card keeps the perk head.
   const power = modePower(game.id);
   const isFuse = game.id === 'fuse';
-  // H4 (Andy oct3): the MULTIPLAYER modes' perk is the match win — a won game pays ×N of itself
-  // (payout.js WINNER_MATCH, the one source). It outranks RACE's POWER ×1.5 on the card; the mode
-  // dialog (ModeExample) still names both.
-  const winMult = winnerMatchMult(game.id);
+  // less-is-more (Andy oct3): the match-win multiplier ("WIN → YOUR GAME ×7") is NOT on the card.
+  // It is said ONCE, by the banner at the start of a multiplayer round with a human rival
+  // (MatchWinBanner), and paid/stated on the end-of-game receipt.
   const perkHead = isFuse
     ? (frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `ALL LETTERS → FRENZY ×${FRENZY_MULT}`)
-    : winMult > 1 ? `WIN → YOUR GAME ×${formatMultExact(winMult)}`
     : power > 1 ? `POWER ×${formatMultExact(power)}`
     : null;
-  const xpLine = rateNow && (
-    perkHead ? (
-      <>
-        <span className={`game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}>
-          {/* FUSE's head may wrap before "FRENZY ×5" (the breakable span the fit-math discounts) */}
-          {isFuse && !frenzy.active ? <>ALL LETTERS →<span className="game-card-payout-per"> FRENZY ×{FRENZY_MULT}</span></>
-            : winMult > 1 ? <>WIN →<span className="game-card-payout-per"> YOUR GAME ×{formatMultExact(winMult)}</span></>
-            : perkHead}
-        </span>
-        {/* R10: a live BOOST multiplies FRENZY — the FUSE card says how they stack */}
-        {/* E3 (Andy oct2 evening): TWO rules, TWO lines — "FRENZY ×5 · LONGER = MORE" read as one rule.
-            The second line is its own block and still drops whole on a narrow card. */}
-        <span className="game-card-perk-tail">{isFuse && rateNow.factors.boost > 1 ? `× BOOST ×${formatMultExact(rateNow.factors.boost)}` : 'LONGER WORDS PAY MORE'}</span>
-      </>
-    ) : (
-      // the same allowed break as "/ WORD": the line may wrap before PAY MORE, so its length never
-      // sets the minimum card width (Homepage measureMinW reads .game-card-payout-per as breakable)
-      <>LONGER WORDS<span className="game-card-payout-per"> PAY MORE</span></>
-    )
-  );
+  const xpLine = null; // one line per card (Andy oct3 18:55); the perk now sits on the payout line
+  // Andy oct3 18:55 (live 1568x675): ONE short line per card — "BASE n / WORD · POWER ×N". The six cards no
+  // longer each repeat "LONGER WORDS PAY MORE" (said ONCE, in the menu hint) or the player's built bonus with
+  // decimals ("×27.98 BONUS" — it lives on the receipt / Stats). The full live rate stays on data-rate (e2e).
+  const baseWins = rateNow ? rateNow.rate / (rateNow.mult || 1) : 0;
   const payout = rateNow && (
     <>
-      {formatRate(rateNow.rate)}
-      <span className="game-card-payout-unit"> WINS</span>
+      <span className="game-card-payout-unit">BASE </span>
+      {formatRate(baseWins)}
       <span className="game-card-payout-per"> / WORD</span>
-      {multTag}
+      {perkHead && <span className={`game-card-payout-per game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}> · {perkHead}</span>}
     </>
   );
+  void multTag; // the built-bonus tag is no longer printed on the card (kept for the receipt's wording)
   // The badge carries its data-driven fill (game.badgeBg / badgeColor) so themes and
   // gameData stay the source of truth; menu.spec asserts its text === game.badgeText.
   const badge = (
@@ -401,7 +384,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
                 {xpLine ? (
                   <>
                     <span className="game-card-xp">{xpLine}</span>
-                    <span className="game-card-payout">{payout}</span>
+                    <span className="game-card-payout" data-rate={rateNow ? rateNow.rate : undefined}>{payout}</span>
                   </>
                 ) : (
                   game.description
@@ -413,7 +396,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
               {badge}
               <div className="game-card-name">{game.cardName || game.name}</div>
               {xpLine && <div className="game-card-xp">{xpLine}</div>}
-              {payout && <div className="game-card-payout">{payout}</div>}
+              {payout && <div className="game-card-payout" data-rate={rateNow.rate}>{payout}</div>}
             </div>
           )}
         </div>
