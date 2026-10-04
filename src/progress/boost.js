@@ -7,6 +7,8 @@
 // is live EXTENDS it (adds its minutes) at the higher of the two multipliers — a code is never wasted.
 // PURE + guarded store, like every other progress module: blocked storage → no boost, never throws.
 
+import { overdriveMult } from './overdrive.js';
+
 export const BOOST_KEY = 'taw.boost';
 export const BOOST_DEFAULT_MULT = 3;
 export const BOOST_DEFAULT_MIN = 10;
@@ -44,10 +46,14 @@ export function isBoostActive(now = Date.now()) {
   return boostRemaining(now) > 0;
 }
 
-/** The boost multiplier right now, for every mode: ×N while active, else 1. */
-export function boostMult(now = Date.now()) {
+/** The redeem-code boost alone: ×N while active, else 1. */
+export function codeBoostMult(now = Date.now()) {
   const b = read();
   return b && b.until > now ? b.mult : 1;
+}
+/** The BOOST factor right now, for every mode: the redeem-code boost × OVERDRIVE (overdrive.js, ×10 for 5 min). */
+export function boostMult(now = Date.now()) {
+  return codeBoostMult(now) * overdriveMult(now);
 }
 
 /** Start (or extend) a BOOST. Returns { mult, remaining }. */

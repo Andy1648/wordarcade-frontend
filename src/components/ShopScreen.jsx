@@ -13,10 +13,13 @@ import { layerOpen } from '../progress/claims';
 import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
 import { getWins, perWordWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, rebirthXpMult, KEY_XP_STEP } from '../progress/xp';
+
+// A multiplier of ×10 or more prints whole (×16, not ×15.56); under ×10 it keeps formatMult's precision (×1.5).
+const roundMultBig = (m) => (m >= 10 ? Math.round(m) : m);
 import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
-import { formatNum, formatMult, formatRate } from '../format';
+import { formatNum, formatMult, formatMultExact, formatRate } from '../format';
 import ShopSticker from './ShopSticker';
 import RedeemCodes from './RedeemCodes';
 import RebirthCeremony from './RebirthCeremony';
@@ -68,7 +71,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
   const kpRateNow = perWordWins({ mode: 'wordBomb' });
   const kpRateNext = perWordWins({ mode: 'wordBomb', keyTier: keyTier + 1 });
-  const kpXpStep = keyTierXp(keyTier) > 0 ? keyTierXp(keyTier + 1) / keyTierXp(keyTier) : 1;
   const fBuys = forgeBuys(forge);
   // E4: systems open the moment they unlock (no claim step), so reaching the level IS open
   const forgeOpen = layerOpen('forge') || fBuys > 0 || level >= FORGE_UNLOCK_LEVEL;
@@ -231,18 +233,19 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         {view === 'shop' ? (
           <div className="shop-body">
             {/* KEY POWER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
-            <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
+            <h3 className="shop-subtitle">KEY POWER — TIER {formatNum(keyTier)}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
                 {/* H2d ONE BIG NUMBER: what the tier buys, in the unit it is bought with — the WINS / WORD
                     rate now → at the next tier. It used to lead with XP PER LETTER (a second unit) and
                     print the price three times (NEXT TIER line, goal line, button); the price now lives
-                    on the button, the gap in the goal line. XP rises by the same factor (one stack). */}
+                    on the button, the gap in the goal line. PROGRESSION v11: words pay WINS; LETTERS fill the
+                    bar — the line says the XP rule plainly: BASE 10 XP / LETTER × this tier's KEY (+20% a tier). */}
                 <div className="shop-kp-current">
                   <b>{formatRate(kpRateNow)}</b> → <b>{formatRate(kpRateNext)}</b> WINS / WORD
                 </div>
                 <div className="shop-kp-rate">
-                  AT TIER {keyTier + 1} · WORD BOMB · XP ×{formatMult(kpXpStep)} TOO
+                  WORD BOMB · BASE 10 XP / LETTER × KEY T{formatNum(keyTier + 1)} ×{formatMultExact(keyXpMult(keyTier + 1))} (+{formatNum((KEY_XP_STEP - 1) * 100)}%)
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
@@ -367,7 +370,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               {/* H6/H10: ×N is the new TOTAL (NOW ×… sits right under it), so the label says "REACH". */}
               <div className="shop-rb-hero-label">REBIRTH {rebirths + 1} TO REACH</div>
               <div className="shop-rb-hero-val">
-                ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS</span>
+                ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS &amp; XP</span>
                 {rebirthReady && (
                   <>
                     {' · +'}
@@ -402,7 +405,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </li>
               <li>
                 {/* H6/H10: what THIS rebirth adds — ×9 → ×10 is +11%, not "a ×10". */}
-                <b>GAIN:</b> ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(nextMult)} (+{Math.round((nextMult / rebirthMult(rebirths) - 1) * 100)}%) on wins and XP, for good, and ★ for STAR PERKS.
+                {/* v11 CURVE CHANGE (Keyboard Escape): the rebirth XP boost grows gently, then explodes —
+                    show the jump on the bar (XP / LETTER) and on wins (×(1 + R)) side by side. ×10 and up are
+                    whole numbers (no ×15.56). */}
+                <b>GAIN:</b> XP / LETTER ×{formatMult(roundMultBig(rebirthXpMult(rebirths)))} → ×{formatMult(roundMultBig(rebirthXpMult(rebirths + 1)))} · WINS ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(rebirthMult(rebirths + 1))}, for good, and ★ for STAR PERKS.
               </li>
             </ul>
 
@@ -498,10 +504,8 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
     <div className={`shop-card shop-card--compact is-${cls}${isNextGoal ? ' is-next' : ''}`} title={item.blurb}>
       {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
       <div className="shop-card-name">{item.name}</div>
-      {item.xpMult > 1 && (
-        /* H6/H9: this multiplier only feeds menu-typing XP (xpPerInput) — never a game word or wins. */
-        <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% MENU XP</div>
-      )}
+      {/* PROGRESSION v11 (review round 2): cosmetics are LOOKS ONLY — the old "+N% MENU XP" multiplied
+          level XP up to ×6.9 for a masher. No XP line; the card sells the look. */}
       {isEquipped ? (
         <div className="shop-card-tag">EQUIPPED</div>
       ) : isOwnedItem ? (

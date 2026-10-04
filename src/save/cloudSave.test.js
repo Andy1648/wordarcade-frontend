@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { progressScoreFromKeys, shouldRestore, formatRecoveryCode, parseRecoveryCode, restoreIfAhead, backupNow, wipeProgressKeys } from './cloudSave.js';
+import { progressScoreFromKeys, shouldRestore, formatRecoveryCode, parseRecoveryCode, restoreIfAhead, backupNow, wipeProgressKeys, econRpcArg, ECON_RPC_VERSION } from './cloudSave.js';
 import { exportSave } from './saveBackup.js';
 
 function withStorage(seed, fn) {
@@ -63,8 +63,8 @@ test('backup sends the export + score, throttled', async () => {
   }
 });
 
-// PV10 (016_econ_v10.sql): with lb_caps econ: 10 the save + load go through the version-gated RPCs.
-test('PV10: econ caps route the backup to lb_save2 and the restore to lb_load2, with p_econ = 10', async () => {
+// v11 (018_econ_v11.sql): econ: true = the client's own version (11); a number = the p_econ the server takes.
+test('v11: econ caps route the backup to lb_save2 and the restore to lb_load2, with p_econ = 11', async () => {
   const cloud = withStorage({ 'taw.xp': xp(70), 'taw.rebirths': '1' }, () => exportSave());
   await withStorage({ 'taw.xp': xp(2) }, async (m) => {
     const calls = [];
@@ -76,10 +76,29 @@ test('PV10: econ caps route the backup to lb_save2 and the restore to lb_load2, 
     const r = await restoreIfAhead({ rpc, secret: 's'.repeat(48), econ: true });
     assert.equal(r.restored, true);
     assert.deepEqual(calls.map((c) => c.fn), ['lb_save2', 'lb_load2']);
-    assert.equal(calls[0].body.p_econ, 10);
-    assert.equal(calls[1].body.p_econ, 10);
+    assert.equal(calls[0].body.p_econ, 11);
+    assert.equal(calls[1].body.p_econ, 11);
     assert.equal(m.has('taw.econ'), false, 'the blob had no stamp → the local one is removed so the migration re-runs');
   });
+});
+
+test('v11: the client sends what the server takes — 018 → 11, only 016 → 10, neither → the old RPCs', async () => {
+  assert.equal(ECON_RPC_VERSION, 11);
+  assert.equal(econRpcArg(11), 11);
+  assert.equal(econRpcArg(12), 11, 'never more than the client speaks');
+  assert.equal(econRpcArg(10), 10, 'before Andy runs 018: 016 accepts 10 only');
+  assert.equal(econRpcArg(undefined), 0);
+  assert.equal(econRpcArg(null), 0);
+  const calls = [];
+  const rpc = async (fn, body) => {
+    calls.push({ fn, body });
+    return { saved: true };
+  };
+  await withStorage({ 'taw.xp': xp(2) }, async () => {
+    await backupNow({ rpc, secret: 's'.repeat(48), force: true, econ: 10 });
+    await backupNow({ rpc, secret: 's'.repeat(48), force: true, econ: 0 });
+  });
+  assert.deepEqual(calls.map((c) => [c.fn, c.body.p_econ]), [['lb_save2', 10], ['lb_save', undefined]]);
 });
 
 test('recovery code round-trips the secret', () => {

@@ -48,6 +48,7 @@ import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
+import { noteTypedLetters } from '../progress/letterXp';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -3901,6 +3902,7 @@ export default function GameScreen({
               className={`game-input${inputShake ? ' input-shake' : ''}`}
               type="text"
               onDraftChange={(value) => {
+                noteTypedLetters(draftStore.get(), value, 'word-bomb'); // v11: LETTERS fill the bar (batched)
                 // Soft key tick on actual character entry (a char was added, not
                 // a deletion/select). onChange already ignores modifiers/arrows.
                 if (value.length > draftStore.get().length) {
@@ -5161,6 +5163,7 @@ function CategoryBlitzScreen({
               value={draft}
               onChange={(event) => {
                 const value = event.target.value;
+                noteTypedLetters(draft, value, 'category-blitz'); // v11: LETTERS fill the bar (batched)
                 // Soft key tick on actual character entry (parity with Word Bomb).
                 if (value.length > draft.length) sound.keystroke();
                 setDraft(value);

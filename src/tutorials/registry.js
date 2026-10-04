@@ -23,14 +23,14 @@ export const TUTORIALS = [
     id: 'pv10',
     isNew: true,
     when: (s) => !!s.pv10Notice,
-    steps: [{ title: 'LEVELS NOW TAKE LONGER', line: 'YOU KEPT EVERY LEVEL.' }],
+    steps: [{ title: 'LETTERS FILL THE BAR', line: 'BASE 10 XP / LETTER · WORDS PAY WINS. YOU KEPT EVERY LEVEL.' }], // v11
   },
   {
     id: 'marks',
     when: (s) => s.marksRevealed,
     steps: [
-      { title: 'MARKS', line: 'EARN THEM FROM ACHIEVEMENTS.' },
-      { title: 'WEAR ONE AS YOUR MAIN', line: 'YOUR MAIN MULTIPLIES EVERY WORD.', target: '.menu-mark, .hp-m-navbtn.is-marks' },
+      { title: 'MARKS', line: 'EARN THEM AS YOU PLAY.' },
+      { title: 'WEAR ONE AS YOUR MAIN', line: 'YOUR MAIN: MORE WINS A WORD, MORE XP A LETTER.', target: '.menu-mark, .hp-m-navbtn.is-marks' },
     ],
   },
   {
@@ -49,12 +49,12 @@ export const TUTORIALS = [
   {
     id: 'frenzy',
     when: (s) => s.frenzyActive,
-    steps: [{ title: `FRENZY ×${FRENZY_MULT}`, line: `EVERY FUSE WORD PAYS ×${FRENZY_MULT} FOR ${frenzyMinutes()} MIN.` }],
+    steps: [{ title: `FRENZY ×${FRENZY_MULT}`, line: `EVERY FUSE WORD PAYS ×${FRENZY_MULT} WINS FOR ${frenzyMinutes()} MIN.` }],
   },
   {
     id: 'boost',
     when: (s) => s.boostActive,
-    steps: [{ title: 'BOOST', line: 'EVERY WORD IN EVERY MODE PAYS MORE UNTIL THE CLOCK RUNS OUT.', target: '.boost-pill' }],
+    steps: [{ title: 'BOOST', line: 'EVERY WORD IN EVERY MODE PAYS MORE WINS UNTIL THE CLOCK RUNS OUT.', target: '.boost-pill' }],
   },
   {
     id: 'weekly',
@@ -68,7 +68,7 @@ export const TUTORIALS = [
     id: 'rebirth',
     when: (s) => s.rebirthReady && s.rebirths === 0,
     steps: [
-      { title: 'REBIRTH READY', line: 'YOUR LEVEL GOES BACK TO 1 — FOR A PERMANENT BONUS.' },
+      { title: 'REBIRTH READY', line: 'YOUR LEVEL GOES BACK TO 1 — FOR +100% WINS & XP, FOR GOOD.' },
       { title: 'YOU KEEP', line: 'KEY POWER, MARKS AND YOUR WINS.', target: '.homepage-nav-btn.is-rebirth, .hp-m-navbtn.is-rebirth' },
     ],
   },

@@ -8,9 +8,9 @@ import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
 import { layerOpen } from './claims.js';
 
-// `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
-// cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
-// xpPerInput stack (the free defaults are ×1). Pop style and sound pack stack multiplicatively.
+// `blurb` = what the cosmetic changes (its flair). `xpMult` is a LEGACY field: PROGRESSION v11 (review
+// round 2) made cosmetics LOOKS ONLY — xpPerInput ignores it and no copy quotes it (it was "+N% MENU XP",
+// up to ×6.9 level XP for a menu masher). Kept in the data so saves and the catalog tests are unchanged.
 // PRICES /10 (Economy v8): wins are the word's XP ÷ 10 now, so the whole currency was restated
 // an order of magnitude smaller and every price followed it down. The LADDER is untouched.
 // COSMETIC PRICES ARE AN EXPONENTIAL LADDER (Economy v7). v6 priced them 150 / 400 / 900 / 2000
@@ -121,8 +121,8 @@ export function getEquippedSoundPack() {
   return getEquipped().soundPack;
 }
 
-// The XP multiplier carried by an item id (1.0 if unknown / has none). Used to feed the
-// xpPerInput stack (Economy v3). Pure lookups over the catalog above.
+// The legacy XP multiplier carried by an item id (1.0 if unknown / has none). v11: NOT applied to any XP
+// (cosmetics are looks only). Pure lookups over the catalog above.
 export function xpMultOf(id) {
   const it = itemById(id);
   return it && Number.isFinite(it.xpMult) && it.xpMult > 0 ? it.xpMult : 1;

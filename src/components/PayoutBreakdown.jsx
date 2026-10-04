@@ -12,7 +12,6 @@
 // neither can ever quote a multiplier the player did not actually get.
 import Num from './Num';
 import { formatNum, formatRate, formatMultExact } from '../format';
-import { formatFloorPct } from '../progress/barFloor';
 import './PayoutBreakdown.css';
 
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -46,17 +45,19 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
   // key tier — so every term in the product is named and the line multiplies out by hand.
   // less-is-more (Andy oct3): the base always reads "BASE …" first, then the named multipliers —
   // "BASE 10 / LETTER × 5 LETTERS ×2 MODE …". Same two terms, same product, the word BASE on it.
+  // PROGRESSION v11 (amended): the receipt is a WINS receipt (words pay wins only), so the base is in
+  // WINS — `perLetter` arrives as KEY's XP-units per letter (wins = ÷ 10): "BASE 1 WINS / LETTER × 5
+  // LETTERS ×2 MODE" multiplies out to the +10 WINS headline, and never reads like the bar's
+  // "BASE 10 XP / LETTER".
   const baseTerm = payout.letters && payout.perLetter
-    ? `BASE ${formatNum(payout.perLetter)} / LETTER × ${payout.letters} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
+    ? `BASE ${formatRate(payout.perLetter / 10)} WINS / LETTER × ${formatNum(payout.letters)} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
     : `BASE ${formatRate(payout.base)} / WORD`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
-      {/* BOTH CURRENCIES, one above the math that produced them. Wins are the word's XP ÷ 10, so
-          the two headline numbers are one number read twice — printing only the wins half was
-          hiding the half the level bar is counting. */}
+      {/* WINS ONLY (PROGRESSION v11, amended): a game word pays wins; the level bar fills from LETTERS
+          typed (BASE 10 XP / LETTER), so the receipt has no XP line. The headline is the wins the
+          math below multiplies out to. */}
       <div className="payout-headline">
-        <span className="payout-headline-xp">+{formatNum(payout.xp)}<span className="payout-headline-unit"> XP</span></span>
-        <span className="payout-headline-sep" aria-hidden="true">·</span>
         <span className="payout-headline-wins">+{formatRate(payout.paid)}<span className="payout-headline-unit"> WINS</span></span>
       </div>
       {/* EVERY TERM, IN ORDER, ON ONE LINE. A vertical list of label/value pairs read as a table
@@ -76,15 +77,6 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
           </span>
         )}
       </div>
-      {/* LEVEL FLOOR (Option F): this word's XP was under the floor, so the BAR was credited the
-          floor instead. Not a multiplier — the wins above are unchanged — so it is its own line,
-          not a term in the product. Same number the bar moved (payout.js levelFloor). */}
-      {payout.levelFloor && (
-        <div className="payout-floor">
-          <span className="payout-k">{payout.levelFloor.label}</span>
-          <span className="payout-v">{formatFloorPct(payout.levelFloor.pct)} LEVEL</span>
-        </div>
-      )}
       {payout.held && (
         <div className="payout-held">HELD — BANKS AT 3 WORDS</div>
       )}

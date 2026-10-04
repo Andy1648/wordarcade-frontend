@@ -3,10 +3,10 @@
 //
 // Played through the mock-WS harness on CHILL and HELL, at 0 and 10 MOMENTUM marks. For every
 // accepted word:
-//   XP    taw.xp delta  ==  the receipt's "+N XP"  ==  the card's XP / WORD quote × what the card
-//         cannot know
-//   WINS  taw.wins (+ taw.winsCarry tenths) delta  ==  the receipt's "+N WINS" (XP ÷ 10)  ==  the
-//         card's WINS / WORD quote × the same
+//   XP    taw.xp delta  ==  0 and the receipt has NO XP line (PROGRESSION v11, amended: a game WORD
+//         pays WINS ONLY — the bar fills from LETTERS typed, and this harness types none)
+//   WINS  taw.wins (+ taw.winsCarry tenths) delta  ==  the receipt's "+N WINS"  ==  the card's
+//         WINS / WORD quote × what the card cannot know
 //
 // WHICH QUOTE THE CARD IS MAKING. The menu card (GameCard) calls perWordRateNow() with NO
 // difficulty — it quotes a 5-letter COMMON word on CHILL, with the player's permanent stack
@@ -66,12 +66,11 @@ for (const s of SETUPS) {
     // THE CARD'S QUOTE (menu, no difficulty → the CHILL quote at this momentum).
     const card = page.locator('.game-card-magnet[data-game="word-bomb"]');
     // Andy oct2: the card no longer quotes XP / WORD — it quotes WINS / WORD (the base word) and
-    // says LONGER WORDS = MORE. A word's XP is still exactly its wins × 10, which is what the rest
-    // of this spec checks the ledger against.
+    // says what fills the bar. PROGRESSION v11 (amended): words pay WINS only.
     const perkEl = card.locator('.game-card-xp').filter({ visible: true }).first();
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
-    await expect(perkEl).toContainText('LONGER');
-    await expect(perkEl).not.toContainText('XP');
+    // v11 (amended): the card says what fills the bar — "BASE 10 XP / LETTER" — beside its WINS / WORD.
+    await expect(perkEl).toContainText('BASE 10 XP / LETTER');
     const cardWins = num((await winsEl.innerText()).split('WINS')[0]);
     const cardXp = cardWins * 10;
 
@@ -116,10 +115,13 @@ for (const s of SETUPS) {
     let released = 0; // receipt XP of words the 3-word gate is still holding
     for (let i = 0; i < WORDS.length; i += 1) {
       const before = await readLedger();
+      const prevReceipt = await page.evaluate(() => { const r = document.querySelector('.wb-receipt'); return r ? r.getAttribute('data-k') || r.textContent : ''; });
       myTurn();
       await page.waitForTimeout(40);
       mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: WORDS[i] } });
-      await expect.poll(async () => cumXp(await readLedger()), { timeout: 8000 }).toBeGreaterThan(cumXp(before));
+      // v11: a game word moves the bar by 0 XP (asserted below), so wait on the word's RECEIPT — it renders for
+      // every accepted word, the 3-word-gate-held ones included — not on the XP ledger.
+      await expect.poll(async () => page.evaluate(() => { const r = document.querySelector('.wb-receipt'); return r ? r.getAttribute('data-k') || r.textContent : ''; }), { timeout: 8000 }).not.toBe(prevReceipt);
       await expect(page.locator('.wb-receipt')).toBeVisible();
       await page.waitForTimeout(60);
       const after = await readLedger();
@@ -129,15 +131,14 @@ for (const s of SETUPS) {
           .filter((t) => t.querySelector('.payout-k'))
           .map((t) => ({ k: t.querySelector('.payout-k').textContent.trim(), v: Number(t.querySelector('.payout-v').textContent.replace(/[^0-9.]/g, '')) }));
         return {
-          xp: r.querySelector('.payout-headline-xp').textContent,
+          xp: r.querySelector('.payout-headline-xp'),
           wins: r.querySelector('.payout-headline-wins').textContent,
           held: !!r.querySelector('.payout-held'),
-          base: r.querySelector('.payout-term--base').textContent, // "BASE 10 / LETTER × 5 LETTERS"
+          base: r.querySelector('.payout-term--base').textContent, // "BASE 1 WINS / LETTER × 5 LETTERS"
 
           terms,
         };
       });
-      const receiptXp = num(receipt.xp.split('XP')[0]);
       const receiptWins = num(receipt.wins.split('WINS')[0]);
       const [perLetter, letters] = receipt.base.split('×').map(num);
 
@@ -146,12 +147,13 @@ for (const s of SETUPS) {
       const perm = receipt.terms.filter((t) => PERMANENT.has(t.k)).reduce((a, t) => a * t.v, 1);
       const perWord = receipt.terms.filter((t) => PER_WORD.has(t.k));
       const perWordMult = perWord.reduce((a, t) => a * t.v, 1);
-      const quote = cardXp * DIFF_MULT[s.diff]; // the XP / WORD quote for THIS setup
-      const expected = Math.round(Number((quote * perWordMult).toPrecision(12)));
+      const quote = cardXp * DIFF_MULT[s.diff]; // the WINS / WORD quote for THIS setup, in XP units (× 10)
+      const expected = Math.round(Number((quote * perWordMult).toPrecision(12))); // the wins product
+      const receiptWinsXp = Math.round(receiptWins * 10);
 
       const awardedXp = cumXp(after) - cumXp(before);
       const bankedTenths = winTenths(after) - winTenths(before);
-      released += receiptXp;
+      released += receiptWinsXp;
       const n = i + 1;
       const expectTenths = n < 3 ? 0 : released;
       if (n >= 3) released = 0;
@@ -161,18 +163,17 @@ for (const s of SETUPS) {
         cardQuoteXp: cardXp,
         setupQuoteXp: quote,
         perWord: perWord.map((t) => `${t.k} ×${t.v}`).join(' ') || '—',
-        expectedXp: expected,
-        receiptXp,
+        expectedWinsXp: expected,
         awardedXp,
         receiptWins,
         bankedWins: bankedTenths / 10,
         permanentOnReceipt: perm,
       });
 
-      expect(awardedXp, `word "${WORDS[i]}": XP awarded == receipt "+${receiptXp} XP"`).toBe(receiptXp);
-      expect(receiptXp, `word "${WORDS[i]}": receipt XP == card quote ${quote} × ${perWord.map((t) => `${t.k} ×${t.v}`).join(' ')}`).toBe(expected);
-      expect(receiptWins * 10, `word "${WORDS[i]}": receipt WINS == its XP ÷ 10`).toBeCloseTo(receiptXp, 6);
-      expect(perm, `word "${WORDS[i]}": receipt's permanent stack == the setup's quoted multiplier`).toBeCloseTo(quote / (letters * perLetter), 6);
+      expect(awardedXp, `word "${WORDS[i]}": a game WORD moves the bar by 0 XP`).toBe(0);
+      expect(receipt.xp, `word "${WORDS[i]}": no XP line on a game receipt`).toBeNull();
+      expect(receiptWinsXp, `word "${WORDS[i]}": receipt WINS × 10 == card quote ${quote} × ${perWord.map((t) => `${t.k} ×${t.v}`).join(' ')}`).toBe(expected);
+      expect(perm, `word "${WORDS[i]}": receipt's permanent stack == the setup's quoted multiplier`).toBeCloseTo(quote / (letters * perLetter * 10), 6); // the base is in WINS (× 10 = XP units)
       expect(receipt.held, `word ${n}: HELD caption iff the 3-word gate holds it`).toBe(n < 3);
       expect(bankedTenths / 10, `word ${n} "${WORDS[i]}": wins banked (incl. carried tenths)`).toBeCloseTo(expectTenths / 10, 6);
     }

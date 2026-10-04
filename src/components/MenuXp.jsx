@@ -16,11 +16,9 @@ import MarkBadge from './MarkBadge';
 import { markRank, markMainMult, markTier } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
-import { FEATURED_GAME } from '../gameData';
 import { CARD_MS } from '../lib/menuMoments';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
-const FEATURED_NAME = (FEATURED_GAME.cardName || FEATURED_GAME.name || '').split('\n').join(' ');
 
 // THE BAR IS THE DENSE ONE, and it is the only one. Two layouts were built and screenshotted so
 // the choice could be made from frames; the FILL variant lost on its own preview — at 92px with
@@ -332,14 +330,14 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         <span
           className="menu-streak"
           data-tier={streakTier(streak)}
-          aria-label={`${streak} day streak, ${formatMult(streakMultiplier(streak))} wins and XP${freezes > 0 ? `, ${freezes} freeze token${freezes === 1 ? '' : 's'}` : ''}`}
+          aria-label={`${streak} day streak, ${formatMult(streakMultiplier(streak))} wins${freezes > 0 ? `, ${freezes} freeze token${freezes === 1 ? '' : 's'}` : ''}`}
         >
           <span className="menu-streak-flame" aria-hidden="true">🔥</span>
           <span className="menu-streak-count">{formatNum(streak)}</span>
           <span className="menu-streak-day" aria-hidden="true">DAY{Number(streak) === 1 ? '' : 'S'}</span>
           {streakMultiplier(streak) > 1 && (
-            /* H6/M3: no "XP" suffix — the streak multiplies wins AND XP (one stack). formatMult carries the "×". */
-            <span className="menu-streak-mult" aria-hidden="true" title="On every word's wins and XP">{formatMult(streakMultiplier(streak))}</span>
+            /* v11: the streak multiplies WINS (letters fill the bar; the streak is not in letter XP). formatMult carries the "×". */
+            <span className="menu-streak-mult" aria-hidden="true" title="On every word's wins">{formatMult(streakMultiplier(streak))}</span>
           )}
           {freezes > 0 && (
             <span className="menu-streak-freeze" aria-hidden="true" title={`${freezes} freeze token${freezes === 1 ? '' : 's'} — a missed day is forgiven`}>
@@ -461,7 +459,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           progress expressed in the only unit the player controls. LETTERS, not words (Andy A9):
           XP is linear in word length, so "283 WORDS" was a 5-letter-word fiction — a player
           typing long words got there in fewer. Letters is the unit XP is actually paid in.
-          Derived from the live per-word XP rate (see Homepage), so it moves with KEY POWER, rebirth, mastery and the streak
+          PROGRESSION v11: priced at a GAME letter (BASE 10 XP / LETTER × KEY × rebirth × mark — see Homepage); words pay wins,
           rather than being a constant dressed up as a measurement.
           On a first run it also carries where XP comes from, which used to be a SEPARATE caption
           line below the bar — two stacked lines of small type saying related things, on the one
@@ -478,7 +476,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
                   the corner-nav gutter leaves the bar 131px and the full sentence is ~148px, so
                   it ellipsised to "12 WORDS TO …" — a line that costs its own height and then
                   withholds the number it exists to show. */}
-              <span className="menu-xp-hint-to"> IN {FEATURED_NAME} TO LEVEL </span>
+              <span className="menu-xp-hint-to"> IN A GAME TO LEVEL </span>
               <span className="menu-xp-hint-to-short"> · LV </span>
               {formatNum(level + 1)}
             </span>

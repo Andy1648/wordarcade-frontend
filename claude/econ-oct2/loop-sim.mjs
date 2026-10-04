@@ -41,9 +41,26 @@
 // (claims.queueClaim exactly as leaderboard/client.js redeemCode does), claimed at the next menu.
 // WORDS are real words from words.recall.txt (rarity via rarity.wordRarity over the real rank index;
 // LETTER FORGE sees their real letters; Collection sees distinct real words).
-// BAR FLOOR (Option F, src/progress/barFloor.js): applied inside wins.awardWordXp, so the sim measures
-// it with no sim-side code; `barFloor` in the output counts the words it raised.
-// NOT MODELLED: menu typing XP, Category Blitz / SAT Rush / Word Race, returnBonus, theme worlds.
+// LETTER XP (PROGRESSION v11, amended oct3 18:15): GAME WORDS PAY WINS ONLY; the bar fills from LETTERS
+// typed. In a tree that ships progress/letterXp.js, every accepted word credits the letters the bot typed
+// for it — the word's length, plus the word's length again when the bot fumbled an attempt first (the
+// SKILLS miss rate) — through letterXp.creditLetterXp at the live XP-per-letter (BASE 10 × KEY × rebirth ×
+// the worn mark). The 30-letters/s cap never binds at bot speed. A tree WITHOUT letterXp.js (main / v10)
+// keeps its own word-XP path inside awardWordXp, so rule P compares the two models as shipped.
+// PROGRESSION v11 METRICS (claude/econ-oct2/v11-spec.md): `v11.barPct` = the share of the CURRENT level
+// each accepted game word moved the bar (credited ÷ need(level before)), by level band (≤50, 51–100 …
+// 351–400): min / p10 / median. DEAD BAR = p10 < 0.2% in any band up to LV400. `v11.reclimb` = minutes
+// to gain the first 10 levels of each climb (fresh start, then after every rebirth) — a re-climb must
+// be FASTER than the first climb (the rebirth XP boost is a reward). `v11.pace` = MINUTES PER LEVEL at
+// LV10 / 50 / 100 / 200 (the first time the level is reached: minutes from reaching L to reaching L+1 in
+// the same climb). `v11.key` = KEY tier purchase times in the first hour (count, max gap) and the median
+// XP-per-letter step a KEY buy gave (×1.2 = "+20% XP / LETTER").
+// MENU MASHER (v11 round 2): a 4th bot that only types gibberish in the MENU at the shared letter cap
+// (letterXp.LETTER_RATE_CAP letters every second; 30 on a tree without letterXp.js), earns no wins (so no KEY),
+// rebirths at every gate and buys star perks like the others. Its cumulative level-ups are compared with the
+// MEDIAN bot's at 10 / 30 / 60 / 300 / 1200 min (`masher` in the JSON, a `v11 MASHER` line in the console):
+// PASS when it never beats the median by more than ×1.5. Menu letters use the shipped XP.xpPerInput.
+// NOT MODELLED: menu typing XP for the three players, Category Blitz / SAT Rush / Word Race, returnBonus, theme worlds.
 // -----------------------------------------------------------------------------------------------
 import fs from 'node:fs';
 import os from 'node:os';
@@ -118,6 +135,8 @@ const GAMEDATA = await imp('gameData.js');
 //   SIM_ROLLS=0        never roll (engine present but unused - the payout hook is then exactly x1)
 //   SIM_ROLL_SHARE=0.2 share of every wins credit the bot earmarks for rolls (the rest: the normal shop)
 //   SIM_SPEC_CUT=1     also apply the spec's achievement CUTS (keep only ACHIEVEMENT_PLAN 'keep')
+// LETTER XP (v11 amended) — present only in trees that ship progress/letterXp.js.
+const LX = fs.existsSync(path.join(SRC, 'progress', 'letterXp.js')) ? await imp('progress/letterXp.js') : null;
 const MR = fs.existsSync(path.join(SRC, 'progress', 'markRolls.js')) && process.env.SIM_ROLLS !== '0' ? await imp('progress/markRolls.js') : null;
 const ROLL_SHARE = Number(process.env.SIM_ROLL_SHARE ?? 0.2);
 if (MR && process.env.SIM_SPEC_CUT === '1') {
@@ -197,8 +216,21 @@ function sampleWord(rng, skill, V) {
 }
 
 // ----------------------------------------------------------------------------- ONE BOT
-function simulate(skill) {
+// REBIRTH RUSH (PROGRESSION-FINAL.md) — detected by xp.js REBIRTH_POWER. The LETTER FORGE is out of the payout
+// formula there, so the bot never buys it (a dead purchase would only distort the targets).
+const RR = Number.isFinite(XP.REBIRTH_POWER);
+function simulate(skill, start = null) {
   globalThis.localStorage = makeStore();
+  // OVERDRIVE (overdrive.js) and anything else that rolls through Math.random: seeded per bot, so a run repeats.
+  Math.random = LUCK.mulberry32(4242 + skill.wpm * 31 + (Number(process.env.SIM_SEED) || 0) * 977);
+  // --board: start from a REAL save (level, rebirths, KEY tier; the bar empty, no wins banked)
+  if (start) {
+    localStorage.setItem('taw.econ', '11');
+    localStorage.setItem('taw.rebirths', String(start.rc));
+    localStorage.setItem('taw.keytier', String(start.kt));
+    localStorage.setItem('taw.records', JSON.stringify({ maxLevel: start.lv }));
+    XP.saveProgress({ level: start.lv, frac: 0 });
+  }
   SIM_NOW = T0;
   WINS.resetWinsLedger();
   WINS.consumePendingWinsStamp();
@@ -219,7 +251,21 @@ function simulate(skill) {
   const mech = {};
   const levelTrail = []; // [t, cumulativeLevelUps]
   let levelUps = 0;
-  let floorWords = 0; // OPTION F: game words whose bar credit was raised to the level floor (barFloor.js)
+  const barPct = new Map(); // v11: band → [% of the level per word]
+  const climbs = [{ rc: 0, t0: 0, startLevel: 1, to10: null }]; // v11: per climb, minutes to gain 10 levels
+  // KEYBOARD ESCAPE (Andy oct3 19:54): one entry per RUN (a climb that ends in a rebirth) — its length, its
+  // peak, and the minutes the LAST level took (the wall it ended on); plus % of a level per word BELOW the gate.
+  const runs = [];
+  let runT0 = 0;
+  let lastLevelT = 0;
+  let lastLevelMin = null;
+  const inRunPct = [];
+  let passOldWallAt = null; // minutes into the CURRENT run when the level passed the previous run's peak
+  const PACE_LEVELS = [10, 50, 100, 200]; // v11: minutes per level here, first time reached
+  const pace = {};
+  let paceStart = {};
+  const keyXpSteps = []; // v11: XP-per-letter after / before each KEY buy
+  const letterRate = () => (LX ? LX.letterXpNow() : null);
   let winsAll = 0;
   let winsWord = 0;
   const incomeTrail = [[0, 0, 0]]; // [t, winsAll, winsWord]
@@ -290,15 +336,17 @@ function simulate(skill) {
       const kCost = XP.keyTierCost(XP.getKeyTier());
       const before = refRate().xp;
       if (bal >= kCost) {
+        const lr0 = letterRate();
         const r = SHOP.buyKeyPower();
         if (!r.ok) return;
+        if (lr0) keyXpSteps.push(letterRate() / lr0);
         const after = refRate().xp;
         buys.push({ t: minute, kind: 'KEY', id: `T${r.tier}`, price: kCost, level: lv(), rateStep: after / before });
         addGood('buy', `KEY T${r.tier}`);
         continue;
       }
       const cands = [];
-      if (forgeOpen()) cands.push({ kind: 'FORGE', id: `F${FORGE.forgeBuys() + 1}`, price: FORGE.forgeCost(FORGE.forgeBuys()) });
+      if (!RR && forgeOpen()) cands.push({ kind: 'FORGE', id: `F${FORGE.forgeBuys() + 1}`, price: FORGE.forgeCost(FORGE.forgeBuys()) });
       for (const it of cosmetics()) cands.push({ kind: 'COSMETIC', id: it.id, price: it.price });
       const ok = cands.filter((c) => c.price <= bal && c.price <= OTHER_BUY_FRACTION * kCost);
       if (!ok.length) return;
@@ -408,10 +456,18 @@ function simulate(skill) {
     // rebirth at the gate
     while (lv() >= XP.rebirthThreshold(XP.getRebirths())) {
       const at = lv();
+      const runMin = minute - runT0;
+      runs.push({ rc: XP.getRebirths(), min: +runMin.toFixed(2), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier(), passOldWallShare: passOldWallAt == null || runMin <= 0 ? null : +(passOldWallAt / runMin).toFixed(3) });
+      passOldWallAt = null;
+      runT0 = minute;
+      lastLevelT = minute;
+      lastLevelMin = null;
       const { rc, stars } = STARS.rebirthWithStars();
+      climbs.push({ rc, t0: minute, startLevel: lv(), to10: null }); // v11 re-climb clock
+      paceStart = {}; // a rebirth cuts any level-in-progress timing short
       addGood('rebirth', `REBIRTH ${rc} (from LV${at}, +${stars}★)`);
       firstAt('rebirth', { fromLevel: at });
-      for (const id of ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
+      for (const id of RR ? ['autoKey', 'frenzy', 'head'] : ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
         while (STARS.buyPerk(id, XP.getRebirths()).ok) { if (id === 'power') break; }
       }
       lastLumpCtx = 'claim';
@@ -429,7 +485,9 @@ function simulate(skill) {
       // the roll purse is not the automation's to spend: set it aside while AUTO-KEY / AUTO-FORGE run
       const held = MR ? Math.min(purse, WINS.getWins()) : 0;
       if (held > 0) WINS.saveWins(WINS.getWins() - held);
+      const lrA = letterRate();
       const res = STARS.runAutomation({ buyKey: SHOP.buyKeyPower, buyForge: SHOP.buyForge });
+      if (lrA && XP.getKeyTier() > kt0) keyXpSteps.push(Math.pow(letterRate() / lrA, 1 / (XP.getKeyTier() - kt0)));
       if (held > 0) WINS.saveWins(WINS.getWins() + held);
       const step = refRate().xp / r0;
       for (let t = kt0 + 1; t <= XP.getKeyTier(); t++) { buys.push({ t: minute, kind: 'KEY', id: `T${t}`, price: XP.keyTierCostAt(t), level: lv(), rateStep: step, auto: true }); addGood('buy', `AUTO-KEY T${t}`); }
@@ -507,7 +565,8 @@ function simulate(skill) {
     }
     let chars = 0;
     for (let i = 1; i <= n && minute < totalMin; i++) {
-      if (rng() < skill.miss) {
+      const missed = rng() < skill.miss;
+      if (missed) {
         if (!(rng() < MARKS.markComboKeep())) combo = COMBO.comboBreak(combo);
       }
       const word = sampleWord(rng, skill, V);
@@ -522,16 +581,38 @@ function simulate(skill) {
       lastLumpCtx = 'mastery';
       const res = WINS.awardWordXp({ mode, difficulty: diff, wordLength: word.length, weight: w, word });
       lastLumpCtx = null;
-      if (res.floor) floorWords += 1;
+      // v11 (amended): the LETTERS typed for this word fill the bar (a fumbled attempt is letters too)
+      const lx = LX ? LX.creditLetterXp(word.length + (missed ? word.length : 0), { mode }) : null;
+      const after = lv();
+      {
+        // the bar movement of this word as a share of the level it landed on (letters, or main's word XP)
+        const wordBar = Number.isFinite(res.credited) ? res.credited : LX ? 0 : res.gain;
+        const pctW = (((lx && lx.xp) || 0) + wordBar) / XP.need(before) * 100;
+        if (Number.isFinite(pctW) && before < XP.rebirthThreshold(XP.getRebirths())) inRunPct.push(pctW);
+        if (after > before) { lastLevelMin = minute - lastLevelT; lastLevelT = minute; }
+        if (passOldWallAt == null && runs.length && after > runs[runs.length - 1].peak) passOldWallAt = minute - runT0;
+        if (before <= 400 && Number.isFinite(pctW)) {
+          const band = Math.max(50, Math.ceil(before / 50) * 50);
+          if (!barPct.has(band)) barPct.set(band, []);
+          barPct.get(band).push(pctW);
+        }
+        const c = climbs[climbs.length - 1];
+        if (c.to10 == null && after >= c.startLevel + 10) c.to10 = +(minute - c.t0).toFixed(3);
+        for (const L of PACE_LEVELS) {
+          if (pace[L] != null) continue;
+          if (paceStart[L] != null && after > L) pace[L] = +(minute - paceStart[L]).toFixed(3);
+          else if (paceStart[L] == null && before < L && after === L) paceStart[L] = minute;
+        }
+      }
       WINS.bankWordWins({ mode: pkey, difficulty: diff, wordLength: word.length, prevWords: i - 1, nowWords: i, prevWeight: prevW, nowWeight: weightSum });
       if (mode === 'word-bomb') WC.addWords('word-bomb');
       COLL.recordAcceptedWord(word, { mode, band: rw.band });
       if (res.mark && res.mark.rankedUp) addGood('mark', `MARK RANK ${res.mark.rank}`);
-      if (res.level > before) {
-        const k = res.level - before;
+      if (after > before) {
+        const k = after - before;
         levelUps += k;
-        addGood('level', `LV${res.level}`);
-        for (let L = before + 1; L <= res.level; L++) {
+        addGood('level', `LV${after}`);
+        for (let L = before + 1; L <= after; L++) {
           const r = RANK.rankTitle(L);
           if (!seenRanks.has(r)) { seenRanks.add(r); addGood('rank', `RANK ${r}`); }
         }
@@ -665,9 +746,54 @@ function simulate(skill) {
     return { ...b, t: +b.t.toFixed(2), rateStep: +b.rateStep.toFixed(3), curveLevels: +(Math.log(b.rateStep) / Math.log(g)).toFixed(2) };
   }).sort((a, b) => b.curveLevels - a.curveLevels);
 
+  // v11 summary: bar movement per band + re-climb speed
+  const bands = {};
+  let deadBar = false;
+  for (const [b, arr] of [...barPct.entries()].sort((x, y) => x[0] - y[0])) {
+    const srt = [...arr].sort((x, y) => x - y);
+    const q = (p) => srt[Math.min(srt.length - 1, Math.floor(p * srt.length))];
+    bands[b] = { n: srt.length, min: +srt[0].toPrecision(3), p10: +q(0.1).toPrecision(3), p50: +q(0.5).toPrecision(3) };
+    if (q(0.1) < 0.2) deadBar = true;
+  }
+  const first10 = climbs[0].to10;
+  const reclimb = climbs.map((c) => ({ rc: c.rc, start: +c.t0.toFixed(1), startLevel: c.startLevel, minTo10: c.to10, vsFirst: first10 && c.to10 != null ? +(c.to10 / first10).toFixed(3) : null }));
+  const kb = buys.filter((b) => b.kind === 'KEY');
+  const firstHour = kb.filter((b) => b.t <= 60).map((b) => b.t);
+  let maxGap = 0;
+  for (let i = 0, prev = 0; i < firstHour.length; i++) { maxGap = Math.max(maxGap, firstHour[i] - prev); prev = firstHour[i]; }
+  const steps = [...keyXpSteps].sort((a, b) => a - b);
+  const key = { firstHourBuys: firstHour.length, firstHourMaxGapMin: +maxGap.toFixed(2), firstHourTimes: firstHour.map((t) => +t.toFixed(1)), medianXpStep: steps.length ? +steps[Math.floor(steps.length / 2)].toFixed(3) : null };
+  const upsAt = {};
+  for (const T of MASHER_CHECKS) {
+    let u = 0;
+    for (const [tm, c] of levelTrail) { if (tm <= T) u = c; else break; }
+    upsAt[T] = u;
+  }
+  const srtIn = [...inRunPct].sort((a, b) => a - b);
+  const qIn = (p) => (srtIn.length ? +srtIn[Math.min(srtIn.length - 1, Math.floor(p * srtIn.length))].toPrecision(3) : null);
+  const early = runs.map((r) => r.min).slice(0, 3);
+  const ke = {
+    runs,
+    inRunBar: { n: srtIn.length, p1: qIn(0.01), p10: qIn(0.1), p50: qIn(0.5), pass: srtIn.length > 0 && qIn(0.1) >= 0.4 },
+    earlyRebirthMin: early,
+    earlyPass: early.length >= 1 && early.every((m) => m >= 15 && m <= 90),
+    // PROGRESSION-FINAL TARGETS (median: first rebirth ~2 min, run 5 ~3, run 10 ~4, run 20 ~12 min, ~36 rebirths
+    // in 10 h; casual ~31, strong ~41; the old wall passed ~17% into a run; no R > 80 in 10 h)
+    target: {
+      run1: runs[0] ? runs[0].min : null,
+      run5: runs[4] ? runs[4].min : null,
+      run10: runs[9] ? runs[9].min : null,
+      run20: runs[19] ? runs[19].min : null,
+      rebirthsBy10h: runs.filter((r, i) => runs.slice(0, i + 1).reduce((a, x) => a + x.min, 0) <= 600).length,
+      passOldWallMedian: (() => { const v = runs.map((r) => r.passOldWallShare).filter((x) => x != null).sort((a, b) => a - b); return v.length ? v[Math.floor(v.length / 2)] : null; })(),
+      maxR: XP.getRebirths(),
+    },
+    furtherShare: runs.length > 1 ? +(runs.slice(1).filter((r, i) => r.peak > runs[i].peak).length / (runs.length - 1)).toFixed(3) : null,
+  };
+  const v11 = { ke, pace, key, upsAt, barPct: bands, deadBar, firstClimbTo10: first10, reclimb, reclimbFasterShare: reclimb.length > 1 ? +(reclimb.slice(1).filter((c) => c.vsFirst != null && c.vsFirst < 1).length / Math.max(1, reclimb.slice(1).filter((c) => c.vsFirst != null).length)).toFixed(3) : null };
+
   return {
-    skill: skill.id, words, levelUps, perWindow,
-    barFloor: { words: floorWords, share: words ? +(floorWords / words).toFixed(4) : 0 },
+    skill: skill.id, words, levelUps, perWindow, v11,
     wall: { worstKeyEta: allKey && { min: +allKey.key.toFixed(2), t: +allKey.t.toFixed(1), tier: allKey.tier, level: allKey.level }, worstShopEta: allShop && { min: +allShop.shop.toFixed(2), t: +allShop.t.toFixed(1), level: allShop.level }, keyRealised },
     runaway: { failCount: lumpEval.filter((l) => l.fail).length, codes: lumpEval.filter((l) => /^CODE|^BOOST/.test(l.label)), worstByMinutes: [...lumpEval].filter((l) => l.minutesOfPlay != null).sort((a, b) => b.minutesOfPlay - a.minutesOfPlay).slice(0, 15), worstLumps: runawayList.slice(0, 12), worstBuys: buyStep.slice(0, 8), lumpCount: lumps.length },
     early: { lumps: lumpEval.filter((l) => l.t < 15), buys: buys.filter((b) => b.t < 15).map((b) => ({ ...b, t: +b.t.toFixed(2) })), good: good.filter((g) => g.t < 15).map((g) => [+g.t.toFixed(2), g.kind, g.label]) },
@@ -722,6 +848,76 @@ function formatCheck(results) {
   return rows;
 }
 
+// ----------------------------------------------------------------------------- MENU MASHER (v11 round 2)
+const MASHER_CHECKS = [10, 30, 60, 300, 1200];
+const MASHER_LIMIT = 1.5;
+function simulateMasher(hours) {
+  globalThis.localStorage = makeStore();
+  SIM_NOW = T0;
+  WINS.resetWinsLedger();
+  const cap = LX && Number.isFinite(LX.LETTER_RATE_CAP) ? LX.LETTER_RATE_CAP : 30;
+  const totalSec = Math.min(hours, 20) * 3600;
+  let ups = 0;
+  const upsAt = {};
+  let gain = null; // XP for one menu letter, re-read after every rebirth (the only thing that changes it)
+  const lvl = () => XP.loadProgress().level;
+  for (let sec = 0; sec < totalSec; sec++) {
+    const minute = sec / 60;
+    for (const T of MASHER_CHECKS) if (upsAt[T] == null && minute >= T) upsAt[T] = ups;
+    if (gain == null) gain = XP.xpPerInput({ mode: 'menu', markMult: LX ? LX.markXpBoost() : 1 });
+    const before = XP.loadProgress();
+    const res = XP.creditXp(before, cap * gain);
+    XP.saveProgress(res.state);
+    if (res.level > before.level) ups += res.level - before.level;
+    while (lvl() >= XP.rebirthThreshold(XP.getRebirths())) {
+      STARS.rebirthWithStars();
+      for (const id of RR ? ['autoKey', 'frenzy', 'head'] : ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
+        while (STARS.buyPerk(id, XP.getRebirths()).ok) { if (id === 'power') break; }
+      }
+      gain = null;
+    }
+    SIM_NOW += 1000;
+  }
+  return { cap, upsAt, rebirths: XP.getRebirths(), level: lvl(), menuLetterXp: gain };
+}
+
+// ----------------------------------------------------------------------------- BOARD (--board)
+// Every REAL board save (the live board, oct3 19:50: level + rebirths; KEY tier is not on the board, so a
+// stand-in T = 8 + R), played by the MEDIAN bot for --hours. TODAY = the minutes a level takes them on the
+// live v10 curve (claude/econ-oct2/v10-existing-players.md, median pace by level band).
+const BOARD = [
+  ['snapplemelon', 195, 4], ['Xavi', 168, 8], ['elol', 156, 7], ['Daan', 144, 9], ['Tangie', 126, 10],
+  ['maSON_im_cRYAN', 119, 8], ['creator', 118, 6], ['ford', 21, 0], ['NoBuffCookies', 17, 7], ['jamal', 16, 0],
+  ['twinkletoes', 15, 0], ['InnerCityBoy', 1, 5], ['Joseph', 1, 6],
+];
+const todayMinPerLevel = (lv) => (lv >= 225 ? 38 : lv >= 150 ? 22 : lv >= 100 ? 13 : lv >= 50 ? 7 : 2);
+if (args.board) {
+  const med = SKILLS.find((x) => x.id === 'median');
+  console.log(`=== BOARD SAVES (median bot, ${HOURS} h each; KEY stand-in T = 8 + R)`);
+  let allOk = true;
+  const EM = RR ? await imp('progress/econMigrate.js') : null;
+  for (const [name, lv0, rc0] of BOARD) {
+    const kt = 8 + rc0;
+    // Rebirth Rush: the one-time conversion first (levels past the gate → rebirths, LV1)
+    const conv = EM && EM.rebirthRushConvert ? EM.rebirthRushConvert(lv0, rc0) : { level: lv0, rebirths: rc0, added: 0 };
+    const lv = conv.level;
+    const rc = conv.rebirths;
+    if (conv.added) console.log(`  ${name.padEnd(15)} CONVERTED LV${lv0} R${rc0} → LV${lv} R${rc} (+${conv.added} rebirths)`);
+    const gate = XP.rebirthThreshold(rc);
+    const r = simulate(med, { lv, rc, kt });
+    const firstRun = r.v11.ke.runs[0];
+    const levelsFirstHour = r.v11.upsAt[60];
+    const todayPerHour = 60 / todayMinPerLevel(lv0);
+    const canNow = lv >= gate;
+    const faster = levelsFirstHour > todayPerHour;
+    const ok = faster && r.v11.ke.inRunBar.pass !== false;
+    if (!ok) allOk = false;
+    console.log(`  ${name.padEnd(15)} LV${lv} R${rc} T${kt} | gate LV${gate} ${canNow ? 'REBIRTH NOW' : `${gate - lv} levels away`} | level-ups in the first hour ${levelsFirstHour} vs today ~${todayPerHour.toFixed(1)} → ${faster ? 'FASTER' : 'SLOWER'} | R after ${HOURS} h: R${r.final.rebirths} LV${r.final.level} | first run ${firstRun ? `${firstRun.min}m to R${firstRun.rc + 1}` : '—'} | bar p10 ${r.v11.ke.inRunBar.p10}% ${ok ? 'OK' : 'CHECK'}`);
+  }
+  console.log(`  BOARD VERDICT: ${allOk ? 'PASS — every save levels faster than today and no dead bar' : 'CHECK — see rows'}`);
+  process.exit(0);
+}
+
 // ----------------------------------------------------------------------------- RUN
 const want = typeof args.skills === 'string' ? args.skills.split(',') : SKILLS.map((s) => s.id);
 const results = [];
@@ -730,12 +926,23 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
   const r = simulate(s);
   results.push(r);
   if (!QUIET) {
-    console.log(`\n=== ${s.id.toUpperCase()} — ${r.words} words, ${r.levelUps} level-ups, bar floor ${r.barFloor.words} words (${(r.barFloor.share * 100).toFixed(1)}%), ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
+    console.log(`\n=== ${s.id.toUpperCase()} — ${r.words} words, ${r.levelUps} level-ups, ${LX ? 'LETTER XP (v11)' : 'word XP'}, ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
     for (const [id, w] of Object.entries(r.perWindow)) {
       console.log(`  ${id.padEnd(4)} gap max ${w.maxGapMin}m (limit ${w.gapLimitMin}) ${w.gapPass ? 'PASS' : 'FAIL'} @${JSON.stringify(w.maxGapAt)} p90 ${w.p90GapMin}m strict max ${w.strictMaxGapMin}m p90 ${w.strictP90GapMin}m lv+${w.levelsGained} | KEY realised ${w.keyRealisedMin}m ${JSON.stringify(w.keyRealisedAt)} eta ${w.worstKeyEtaMin}m shop eta ${w.worstShopEtaMin}m ${w.wallPass ? 'PASS' : 'FAIL'} | LV${w.state && w.state.level} R${w.state && w.state.rebirths} T${w.state && w.state.keyTier} F${w.state && w.state.forge} ${JSON.stringify(w.events)}`);
     }
     console.log('  wall', JSON.stringify(r.wall));
     console.log('  reach (min)', JSON.stringify(r.firstReach), 'maxLevel', r.maxLevel);
+    console.log(`  v11 pace (min/level, first time) LV10 ${r.v11.pace[10] ?? '—'} · LV50 ${r.v11.pace[50] ?? '—'} · LV100 ${r.v11.pace[100] ?? '—'} · LV200 ${r.v11.pace[200] ?? '—'}`);
+    console.log(`  v11 KEY first hour: ${r.v11.key.firstHourBuys} buys, max gap ${r.v11.key.firstHourMaxGapMin}m @ ${JSON.stringify(r.v11.key.firstHourTimes)} | XP/letter step per KEY tier ×${r.v11.key.medianXpStep ?? '—'}`);
+    console.log(`  v11 bar %/word by band (p10) ${Object.entries(r.v11.barPct).map(([b, x]) => `${b}:${x.p10}`).join(' ')} | dead bar (p10 < 0.2% to LV400): ${r.v11.deadBar ? 'FAIL' : 'PASS'}`);
+    {
+      const k = r.v11.ke;
+      console.log(`  KE runs (R → peak LV, run min, last level min, KEY T): ${k.runs.slice(0, 16).map((x) => `R${x.rc}→LV${x.peak} ${x.min}m last ${x.lastLevelMin}m T${x.keyTier}`).join(' | ')}`);
+      const tg = k.target;
+      console.log(`  RR TARGETS run1 ${tg.run1}m (~2) · run5 ${tg.run5}m (~3) · run10 ${tg.run10}m (~4) · run20 ${tg.run20}m (~12) · rebirths in 10 h ${tg.rebirthsBy10h} (median ~36 / casual ~31 / strong ~41) · old wall passed at ${tg.passOldWallMedian} of a run (~0.17) · R at end ${tg.maxR} (runaway if > 80 in 10 h)`);
+      console.log(`  KE first rebirths ${JSON.stringify(k.earlyRebirthMin)} min apart (15–90): ${k.earlyPass ? 'PASS' : 'FAIL'} | runs reaching further than the last: ${k.furtherShare} | in-run bar %/word below the gate p1 ${k.inRunBar.p1} p10 ${k.inRunBar.p10} p50 ${k.inRunBar.p50} (p10 ≥ 0.4): ${k.inRunBar.pass ? 'PASS' : 'FAIL'}`);
+    }
+    console.log(`  v11 re-climb: first 10 levels ${r.v11.firstClimbTo10}m; after rebirths (min, ×first) ${r.v11.reclimb.slice(1, 13).map((c) => `R${c.rc}:${c.minTo10}m×${c.vsFirst}`).join(' ')} | faster than first: ${r.v11.reclimbFasterShare}`);
     console.log('  achievements (min)', JSON.stringify(r.achTimes));
     if (r.rolls) console.log('  ROLLS', JSON.stringify({ ...r.rolls, log: undefined, worst: r.rolls.worst.slice(0, 5) }));
     console.log('  runaway FAIL lumps', r.runaway.failCount, 'of', r.runaway.lumpCount);
@@ -749,11 +956,23 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
     console.log('  final', JSON.stringify(r.final));
   }
 }
+let masher = null;
+const medianRes = results.find((r) => r.skill === 'median');
+if (medianRes && !args['no-masher']) {
+  const m = simulateMasher(HOURS);
+  const vs = MASHER_CHECKS.filter((T) => T <= HOURS * 60 && m.upsAt[T] != null).map((T) => {
+    const med = medianRes.v11.upsAt[T];
+    return { min: T, masher: m.upsAt[T], median: med, ratio: med > 0 ? +(m.upsAt[T] / med).toFixed(2) : null };
+  });
+  const worst = Math.max(...vs.map((v) => v.ratio ?? 0));
+  masher = { ...m, vs, worstRatio: worst, pass: worst <= MASHER_LIMIT };
+  if (!QUIET) console.log(`\n=== MASHER\n  v11 MASHER (${m.cap} letters/s menu gibberish, no wins) vs median, cumulative level-ups: ${vs.map((v) => `${v.min}m ×${v.ratio}`).join(' · ')} | worst ×${worst} ${masher.pass ? 'PASS' : 'FAIL'} (limit ×${MASHER_LIMIT}) | R${m.rebirths} LV${m.level}`);
+}
 const fmtRows = formatCheck(results);
 if (!QUIET) {
   console.log('\n=== FORMAT');
   for (const f of fmtRows) console.log(`  ${f.ok ? 'ok  ' : 'FAIL'} ${f.fn}(${f.label} = ${f.value}) -> "${f.out}"`);
 }
 const outFile = path.join(HERE, `loop-sim${TAG === 'base' ? '' : '-' + TAG}.json`);
-fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, format: fmtRows }, null, 1));
+fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, masher, format: fmtRows }, null, 1));
 if (!QUIET) console.log(`\nwrote ${outFile}`);

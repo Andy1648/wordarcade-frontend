@@ -9,14 +9,13 @@ import {
   loadProgress,
   saveProgress,
   creditXp,
-  createRateLimiter,
   isCreditableKey,
   progressOf,
   xpPerInput,
   getKeyTier,
-  currentPower,
 } from './xp';
-import { equippedPopMult, equippedSoundMult } from './shop';
+import { markXpBoost, tryLetterCredit } from './letterXp';
+import { boostMult } from './boost';
 import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
@@ -56,22 +55,19 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // the menu session — equipping a theme remounts this hook via the shop round-trip, like
     // rebirth/key-power do), falling back to the built-in tiers if the catalog is unavailable.
     const popColors = equippedPopColors() || TIER_COLORS;
-    const limiter = createRateLimiter({ capacity: 30, windowMs: 1000 });
+    // ONE letter limiter for the menu AND every game input (letterXp.js — 12 letters a second, shared).
     // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
     // and rebirth happen on another screen, which remounts this hook and re-reads them.
-    const menuGain = xpPerInput({
-      mode: 'menu',
-      popMult: equippedPopMult(),
-      soundMult: equippedSoundMult(),
-    });
+    // v11: one key = one LETTER at the MENU price — 2 × KEY × rebirth × the worn mark (a fifth of a game letter).
+    // Cosmetics (pop style / sound pack) are looks only — they never multiply XP (review round 2).
+    const menuGain = xpPerInput({ mode: 'menu', markMult: markXpBoost() * boostMult() }); // × BOOST (code boost × OVERDRIVE)
     // KEY POWER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
     // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).
     // Stable for this menu session (buying remounts this hook via the shop round-trip).
     const feelTier = Math.min(5, getKeyTier());
-    // PV10: the level curve's power P (KEY tier × rebirth), read ONCE per menu session like menuGain —
-    // no storage read per keystroke. The bar is a stored FRACTION, so P changing later never moves it.
-    const power = currentPower();
+    // PROGRESSION v11: need() is one fixed curve (no KEY/rebirth power term), so nothing per-session to
+    // pin here and no storage read per keystroke inside need().
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; both credit the same
     // XP. A tap's only difference is its pop — the "+N" alone at the tap coordinates.
@@ -89,10 +85,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
-      const res = creditXp(xpRef.current, menuGain, power);
+      const res = creditXp(xpRef.current, menuGain);
       xpRef.current = res.state;
       saveProgress(res.state);
-      setProgress(progressOf(res.state, power));
+      setProgress(progressOf(res.state));
 
       // Level-ups no longer pay wins (Economy v3): wins come only from finishing rounds.
       // A level-up is still celebrated — it just no longer shows a "+N WINS" line.
@@ -136,7 +132,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       }
       if (!isCreditableKey(e)) return;
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (!limiter.tryConsume(now)) return; // over the anti-mash cap → silently dropped
+      if (!tryLetterCredit()) return; // over the shared anti-mash cap → silently dropped (wall clock: games share it)
       credit(now, { kind: 'key', letter: e.key.toUpperCase() });
     };
     window.addEventListener('keydown', onKey);
@@ -167,7 +163,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       if (!p || p.ignore || p.moved) return; // interactive target or a scroll → no credit
       if (blockedRef.current && blockedRef.current()) return;
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (!limiter.tryConsume(now)) return; // SAME limiter as keystrokes (multitouch shares it)
+      if (!tryLetterCredit()) return; // SAME limiter as keystrokes and game letters (multitouch shares it)
       credit(now, { kind: 'tap', x: p.x, y: p.y });
     };
     const onCancel = (e) => pending.delete(e.pointerId);

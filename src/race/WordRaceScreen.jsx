@@ -18,6 +18,7 @@ import MatchWinBanner, { hasHumanRival } from '../components/MatchWinBanner';
 import { RACE_REASON_COPY, precheck, myFragment } from './raceState';
 import { formatNum, plural } from '../format';
 import './WordRace.css';
+import { noteTypedLetters } from '../progress/letterXp.js';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -271,7 +272,10 @@ export default function WordRaceScreen({
               ref={inputRef}
               className="wr-input"
               value={text}
-              onChange={(e) => onType(e.target.value)}
+              onChange={(e) => {
+                noteTypedLetters(text, e.target.value, 'word-race'); // v11: LETTERS fill the bar (batched)
+                onType(e.target.value);
+              }}
               disabled={!live || finished}
               placeholder={counting ? 'GET READY…' : wordsMode ? 'TYPE THE WORD' : 'TYPE A WORD'}
               aria-label="Your word"
@@ -289,7 +293,7 @@ export default function WordRaceScreen({
             {rejectCopy || (result && result.accepted ? `✓ ${result.word.toUpperCase()}` : ' ')}
           </p>
           <p className="wr-earn" aria-label="Earned this race">
-            +{formatNum(earned?.wins || 0)} WINS · +{formatNum(earned?.xp || 0)} XP
+            +{formatNum(earned?.wins || 0)} WINS
           </p>
         </section>
       )}
@@ -329,8 +333,8 @@ export default function WordRaceScreen({
           </ol>
           {/* A zero run says what earns, not "+0" (fine-tune oct2: a literal +0 read as broken). */}
           <p className="wr-earn wr-earn-final">
-            {(earned?.wins || 0) > 0 || (earned?.xp || 0) > 0
-              ? <>YOU BANKED +{formatNum(earned?.wins || 0)} WINS · +{formatNum(earned?.xp || 0)} XP</>
+            {(earned?.wins || 0) > 0
+              ? <>YOU BANKED +{formatNum(earned?.wins || 0)} WINS</>
               : <>NO WINS THIS RACE — 3 WORDS START THE BANK</>}
           </p>
           <div className="wr-over-actions">

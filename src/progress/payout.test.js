@@ -157,20 +157,18 @@ test('a round with no multipliers at all reports zero above base and no rows', (
 });
 
 // ---- THE RECEIPT CARRIES BOTH CURRENCIES AND NAMES ITS BASE ---------------------------------
-test('buildPayout reports the award in XP as well as WINS (they are one number)', () => {
+test('buildPayout reports WINS only — a game word pays no XP (v11 amended)', () => {
   const r = buildPayout({ base: 5, factors: { mode: 2, difficulty: 1.5 } });
   assert.equal(r.paid, 15);
-  // Wins are the word's XP / 10 (Economy v8), so the XP is the same award times ten. Asserted
-  // against the WINS figure rather than recomputed, which is the invariant that matters.
-  assert.equal(r.xp, r.paid * 10);
-  assert.equal(r.xp, 150);
+  assert.equal(r.xp, undefined, 'no XP line on a game receipt');
+  assert.equal('levelFloor' in r, false, 'Option F is gone');
 });
 
 test('buildPayout carries the base TERMS so the panel can name them', () => {
   const r = buildPayout({ base: 5, letters: 5, perLetter: 10, factors: { mode: 2 } });
   assert.equal(r.letters, 5);
   assert.equal(r.perLetter, 10);
-  // letters x perLetter IS the base, in XP — the panel prints "BASE 10 / LETTER x 5 LETTERS", not a bare "BASE 5".
+  // letters x perLetter IS the base, in XP units — the panel prints it in WINS (v11): "BASE 1 WINS / LETTER x 5 LETTERS".
   assert.equal(r.letters * r.perLetter, r.base * 10);
   // Absent/garbage terms degrade to null so the panel falls back to the bare base.
   const bare = buildPayout({ base: 5, factors: {} });

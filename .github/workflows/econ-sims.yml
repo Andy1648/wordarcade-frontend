@@ -18,7 +18,7 @@ on:
     inputs:
       hours:
         description: 'Hours for the long run'
-        default: '200'
+        default: '10'
       seeds:
         description: 'Seeds for the rule-P compare'
         default: '5'
@@ -74,11 +74,22 @@ jobs:
       - run: npm ci
       - name: Long run (3 skills)
         run: |
-          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '200' }}" | tee long-run.txt
+          # PROGRESSION FINAL targets are for 10 h with NO marks (SIM_ROLLS=0); then the same 10 h WITH rolls (runaway check)
+          SIM_ROLLS=0 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '10' }}" | tee long-run.txt
+          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-rolls --hours="${{ github.event.inputs.hours || '10' }}" --no-masher | grep -E '^=== |RR TARGETS|ROLLS' | tee -a long-run.txt
           {
             echo '## Long run — first reach of each level (minutes)'
             echo '```'
-            grep -E '^=== |reach \(min\)' long-run.txt || true
+            grep -E '^=== |reach \(min\)|KE |v11 |MASHER' long-run.txt || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Board saves (every real board save, median bot, 3 h)
+        run: |
+          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --board --hours=3 --tag=ci-board | tee board.txt
+          {
+            echo '## Board saves'
+            echo '```'
+            cat board.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
@@ -86,5 +97,6 @@ jobs:
           name: econ-sims-long-run
           path: |
             long-run.txt
+            board.txt
             claude/econ-oct2/loop-sim-ci-long.json
           retention-days: 14

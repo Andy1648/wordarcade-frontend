@@ -191,20 +191,20 @@ test('only the WORN mark grows, one word at a time, and its payout factor follow
 
 test('the blurb prints the numbers the rank actually pays', () => {
   const bomber = MARKS.find((m) => m.id === 'mk-bomber');
-  assert.equal(markBlurbAt(bomber, 1), '+25% wins & XP in WORD BOMB.');
-  assert.equal(markBlurbAt(bomber, 5), '+40% wins & XP in WORD BOMB.');
+  assert.equal(markBlurbAt(bomber, 1), '+25% wins in WORD BOMB.');
+  assert.equal(markBlurbAt(bomber, 5), '+40% wins in WORD BOMB.');
   const metro = MARKS.find((m) => m.id === 'mk-metronome');
   assert.equal(markBlurbAt(metro, 5), '48% chance a broken COMBO survives.');
 });
 
 test('H6: the blurb names a multi-mode mark modes (SMITH), and CHAIN / FUSE by their labels', () => {
   const smith = MARKS.find((m) => m.id === 'mk-smith');
-  assert.equal(markBlurbAt(smith, 1), '+25% wins & XP in SAT RUSH and CHAIN.');
+  assert.equal(markBlurbAt(smith, 1), '+25% wins in SAT RUSH and CHAIN.');
   assert.doesNotMatch(markBlurbAt(smith, 4), /every mode/);
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-linker'), 1), '+25% wins & XP in CHAIN.');
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), '+40% wins & XP in FUSE.');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-linker'), 1), '+25% wins in CHAIN.');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), '+40% wins in FUSE.');
   // an every-mode XP mark says it pays wins too (one stack since Economy v8)
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-student'), 1), '+20% wins & XP in every mode.');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-student'), 1), '+20% wins in every mode.');
 });
 
 test('H6: every static blurb agrees with markBlurbAt at rank I', () => {

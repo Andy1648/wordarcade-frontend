@@ -214,9 +214,10 @@ async function frameCheck(page) {
         base: (() => {
           const t = baseEl ? baseEl.textContent.trim() : '';
           // "BASE 10 / LETTER × 5 LETTERS" (less-is-more: the word BASE leads)
-          const mm = t.match(/BASE\s+([\d,]+)\s*\/\s*LETTER\s+.\s+([\d,]+)\s+LETTERS?/i);
+          // v11 (amended): the base is in WINS — "BASE 1 WINS / LETTER × 5 LETTERS"
+          const mm = t.match(/BASE\s+([\d,.]+)\s*(?:WINS?\s*)?\/\s*LETTER\s+.\s+([\d,]+)\s+LETTERS?/i);
           if (!mm) return null;
-          return (Number(mm[1].replace(/,/g, '')) * Number(mm[2].replace(/,/g, ''))) / 10;
+          return Number(mm[1].replace(/,/g, '')) * Number(mm[2].replace(/,/g, ''));
         })(),
         rows,
         title: (document.querySelector('.game-title') || {}).textContent,
@@ -293,10 +294,8 @@ for (const vp of FRAME_VIEWPORTS) {
     expect(m.base, 'the receipt must name its base as letters × per-letter').toBeGreaterThan(0);
     const want = Math.round((m.base * product * 10) / 10) / 10 * 10;
     expect(Math.abs(Number(m.paid.replace(/[^0-9.]/g, '')) - want), `PAID ${m.paid} vs base x rows ${want}`).toBeLessThanOrEqual(10);
-    // (2b) AND BOTH CURRENCIES AGREE. The headline prints the same award twice; if they ever
-    // disagree the player is being shown a number the ledger did not move.
-    expect(Number(m.xp.replace(/[^0-9.]/g, '')), 'the XP headline must be the WINS headline x10')
-      .toBe(Number(m.paid.replace(/[^0-9.]/g, '')) * 10);
+    // (2b) NO XP ON A GAME RECEIPT (PROGRESSION v11, amended): a word pays WINS only; letters fill the bar.
+    expect(m.xp, 'a game receipt has no XP headline').toBeNull();
 
     // (5) NO DUPLICATE OF THE LANDED WORD. The accept toast said the same word again, bottom-left,
     // at the same moment the landing was showing it at the field with its band and its payout.

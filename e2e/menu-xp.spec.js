@@ -39,8 +39,8 @@ test.describe('menu XP', () => {
     }));
     expect(r.letters).toContain('Q');
     expect(r.letters).toContain('7');
-    // menu multiplier is 10 → the "+N" span reads +10
-    expect(r.plus).toContain('+10');
+    // v11 round 3: a MENU letter is a fifth of a game letter — 2 XP at a fresh profile → the "+N" span reads +2
+    expect(r.plus).toContain('+2');
 
     // The bar fill glides via a rAF LERP that MUST stop at rest — nothing scheduled once it
     // converges. The menu also runs a persistent beat-sync rAF, so we isolate the XP loop by
@@ -140,7 +140,9 @@ test.describe('menu XP', () => {
     // credited in clean multiples of 10 - is unchanged and is what it now asserts.
     expect(result.lv).toBeGreaterThanOrEqual(1);
     expect(result.into).toBeGreaterThan(0);
-    expect(result.into % 10).toBe(0);
+    // v11: credits are WHOLE XP (menu letters of 2 XP at a fresh profile); no divisibility assumption — the
+    // price is a tuning constant (MENU_LETTER_SHARE) and level carries leave any remainder.
+    expect(Number.isInteger(result.into)).toBe(true);
   });
 });
 
@@ -187,7 +189,7 @@ test.describe('splash XP', () => {
     // credited normally: one menu-rate keystroke on a fresh visitor puts +10 into level 1
     // (need(1)=110, so no boundary is crossed yet).
     expect(after1.prog.lv).toBe(1);
-    expect(after1.prog.into).toBe(10);
+    expect(after1.prog.into).toBe(2); // v11 round 3: a menu letter = 2 XP
     expect(after1.audioContexts).toBeGreaterThanOrEqual(1); // AudioContext created in the keydown gesture
 
     // Keys 2–4 fill more pips, still no dismiss.
@@ -255,7 +257,7 @@ test.describe('splash XP', () => {
 test.describe('tap XP (coarse pointer)', () => {
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 1024, height: 768 } });
 
-  test('tap on empty space credits +10; tap on a card credits 0', async ({ page }) => {
+  test('tap on empty space credits +2; tap on a card credits 0', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?portal=1');
     await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
@@ -294,7 +296,7 @@ test.describe('tap XP (coarse pointer)', () => {
     await tap(8, 8);
     await page.waitForTimeout(60);
     const afterEmpty = await read();
-    expect(afterEmpty.into - b2.into).toBe(10); // +10 into the level (no boundary crossed on a fresh menu)
+    expect(afterEmpty.into - b2.into).toBe(2); // +2 into the level (a menu letter, v11 round 3)
     expect(afterEmpty.lv).toBe(b2.lv);
     // (The taw.taps + taw.letters counter assertions were removed — STEP 5 deleted both vanity
     //  counters entirely. A tap still credits +10 XP, verified above; nothing else to assert.)
@@ -320,7 +322,7 @@ test.describe('tap XP (coarse pointer)', () => {
 });
 
 test.describe('desktop clicks count (fine pointer)', () => {
-  test('a click on empty menu space credits +10; a click on a game card credits 0', async ({ page }) => {
+  test('a click on empty menu space credits +2; a click on a game card credits 0', async ({ page }) => {
     await gotoMenuLive(page);
     expect(await page.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(true);
     // Let useXpCapture's effect attach its window pointer listeners before the first click
@@ -345,7 +347,7 @@ test.describe('desktop clicks count (fine pointer)', () => {
     await page.mouse.click(8, 8);
     await page.waitForTimeout(60);
     const a1 = await read();
-    expect(a1.into - b1.into).toBe(10); // desktop click credits +10 into the level
+    expect(a1.into - b1.into).toBe(2); // desktop click credits +2 into the level (a menu letter)
     expect(a1.lv).toBe(b1.lv); // (no boundary crossed on a fresh menu)
 
     // (b) click on a game card → credits nothing (interactive target is ignored)
