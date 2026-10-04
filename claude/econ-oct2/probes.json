@@ -1,0 +1,87 @@
+[
+ {
+  "name": "cost6-c048-base80",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 48;"
+   ],
+   [
+    "progress/xp.js",
+    "export const CURVE_BASE_XP = 100;",
+    "export const CURVE_BASE_XP = 80;"
+   ]
+  ]
+ },
+ {
+  "name": "cost6-c048-gate12",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 48;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 12;"
+   ]
+  ]
+ },
+ {
+  "name": "cost6-c048-base80-gate12",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 48;"
+   ],
+   [
+    "progress/xp.js",
+    "export const CURVE_BASE_XP = 100;",
+    "export const CURVE_BASE_XP = 80;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 12;"
+   ]
+  ]
+ },
+ {
+  "name": "cost6-c048-base80-rolls",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const KEY_COST_STEP = 5;",
+    "export const KEY_COST_STEP = 6;"
+   ],
+   [
+    "progress/xp.js",
+    "export const KEY_COST_C0 = 60;",
+    "export const KEY_COST_C0 = 48;"
+   ],
+   [
+    "progress/xp.js",
+    "export const CURVE_BASE_XP = 100;",
+    "export const CURVE_BASE_XP = 80;"
+   ]
+  ]
+ }
+]
