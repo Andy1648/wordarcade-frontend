@@ -23,6 +23,9 @@
   padding: 20px 8px;
   font-family: 'Space Mono', monospace;
 }
+/* REBIRTH READY → ×5 FOREVER (Andy oct3): opened by that one tap, the rebirth runs at once and the
+   ceremony is the whole moment — the REBIRTH panel under it stays hidden (no shop detour). */
+.shop-overlay.is-rr-auto .shop-panel { visibility: hidden; }
 .shop-panel {
   width: min(92vw, 900px);
   max-width: 100%;

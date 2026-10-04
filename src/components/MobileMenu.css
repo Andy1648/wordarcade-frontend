@@ -295,6 +295,16 @@
   .hp-m-navbtn:active {
     transform: translate(2px, 2px);
   }
+  /* REBIRTH READY (Andy oct3): the strip's REBIRTH lights up pink while the gate is reached. */
+  .hp-m-navbtn.is-rebirth.is-ready {
+    background: #FF4FA3;
+    color: #000;
+    border-color: #B8236F;
+  }
+  /* The REBIRTH READY → ×5 FOREVER CTA rides with the LV strip (same order slot in the 'top' layout). */
+  .hp-m > .hp-m-rr-ready { flex: 0 0 auto; }
+  .hp-m[data-nav='top'] > .hp-m-rr-ready { order: -1; }
+  .hp-m[data-nav='rail'] > .hp-m-rr-ready { grid-column: 1 / -1; }
 
   .hp-m-navbtn.is-disabled {
     opacity: 0.6;

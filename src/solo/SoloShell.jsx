@@ -20,6 +20,7 @@ import { wpmKeyStroke } from '../progress/wpmLive';
 import { hasSeenTeach, markTeachSeen } from '../progress/onboarding';
 import TeachStrip from '../components/TeachStrip.jsx';
 import SoloExit from './SoloExit.jsx';
+import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 import { heatTier } from '../juice/ladder';
 import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
@@ -382,6 +383,10 @@ export default function SoloShell({
                 <span>BEST {formatNum(over.best)}</span>
               </div>
             )}
+            {/* REBIRTH READY → ×5 FOREVER (Andy oct3): the gate reached mid-run makes THIS the first
+                action — above RESTART. One tap arms the rebirth and leaves through onExit; the menu
+                runs the rebirth + ceremony. Shown on the tutorial card too — never miss the gate. */}
+            <RebirthReadyButton onGo={onExit} className="solo-rr-ready" />
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}

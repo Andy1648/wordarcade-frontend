@@ -4,8 +4,9 @@
 // (OWNED / EQUIPPED state; unaffordable items visible-but-dimmed). REBIRTH: count, multiplier,
 // next threshold, what's lost/kept, and the action (disabled with the requirement shown when
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
+import { takeRebirthNow, peekRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
 import { getWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
@@ -36,6 +37,8 @@ import { useMomentHold } from '../lib/useMomentSlot';
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
   useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
+  // Opened by REBIRTH READY (see the layout effect below): the panel stays hidden under the ceremony.
+  const [autoMode] = useState(() => view === 'rebirth' && peekRebirthNow() && isRebirthReadyNow());
   const wins = useWinsBalance(); // W: the one balance channel
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
@@ -169,10 +172,22 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     ];
     setCeremony({ rc, mult: gained, stars: starsGot, fromLevel, toLevel: loadProgress().level, fromKey, toKey: getKeyTier(), kept });
   };
+  // REBIRTH READY → ×5 FOREVER (Andy oct3): opened from that button (menu CTA or a round-end card),
+  // the rebirth runs straight away — the ONE tap was the confirm — and the ceremony plays. Layout
+  // effect, so the panel is never painted first; the ref + the re-checked gate make a StrictMode
+  // double-run (or a stale intent below the gate) a no-op, which then shows the normal REBIRTH view.
+  const autoRebirthRef = useRef(false);
+  useLayoutEffect(() => {
+    if (autoRebirthRef.current || view !== 'rebirth') return;
+    if (!takeRebirthNow()) return;
+    autoRebirthRef.current = true;
+    if (isRebirthReadyNow()) confirmRebirth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   return (
-    <div className="shop-overlay" role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
+    <div className={`shop-overlay${autoMode ? ' is-rr-auto' : ''}`} role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
       <div className="shop-panel">
         <div className="shop-header">
           <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'SHOP'}</h2>

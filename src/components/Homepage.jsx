@@ -14,6 +14,8 @@ import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
+import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
+import RebirthReadyButton from './RebirthReadyButton';
 import { rebirthRushNotice, clearRebirthRushNotice } from '../progress/econMigrate';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -789,6 +791,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // REBIRTH READY → ×5 FOREVER from a round-end card: that screen armed the intent and left through
+  // its own exit (solo onExit / the room's leave path), landing here. Go straight on into the REBIRTH
+  // view (ShopScreen takes the intent and plays the ceremony). Layout effect: before the menu paints.
+  // Below the gate (a stale intent), it is simply dropped.
+  useLayoutEffect(() => {
+    if (!peekRebirthNow()) return;
+    if (isRebirthReadyNow() && onRebirth) onRebirth();
+    else takeRebirthNow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const rb = consumePendingRebirth();
     if (rb > 0) announceTick('rb', rb); // STEP 51 ticker: "NAME reached REBIRTH 5"
@@ -1072,6 +1084,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     sound.click();
     if (onRebirth) onRebirth();
   }
+  // REBIRTH READY → ×5 FOREVER (Andy oct3): the CTA has already armed the intent; open the REBIRTH
+  // view, which runs the rebirth + ceremony at once. A blocked tap disarms it so it can't fire later.
+  function handleRebirthNow() {
+    if (navigating || !onRebirth) {
+      takeRebirthNow();
+      return;
+    }
+    sound.click();
+    onRebirth();
+  }
 
   function handleCredits() {
     if (navigating) return;
@@ -1159,6 +1181,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
             marksDot={marksNew}
             rebirthDot={rebirthReady}
+            rebirthReadySlot={rebirthReady ? <RebirthReadyButton ready onGo={handleRebirthNow} className="is-compact hp-m-rr-ready" /> : null}
             onCredits={handleCredits}
             shopDot={winsAffordable}
             shopRef={shopLinkRef}
@@ -1223,7 +1246,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             <button
               ref={rebirthLinkRef}
               type="button"
-              className={`homepage-nav-btn is-rebirth${navigating ? ' disabled' : ''}`}
+              className={`homepage-nav-btn is-rebirth${rebirthReady ? ' is-ready' : ''}${navigating ? ' disabled' : ''}`}
               onClick={handleRebirth}
               onMouseEnter={() => sfx('hover')}
               disabled={navigating}
@@ -1322,6 +1345,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               setShowMarks(true);
             }}
           />
+          {/* REBIRTH READY → ×5 FOREVER (Andy oct3: "never let a player miss that they can rebirth"):
+              IN this cluster, right under the level bar it is about — in flow, never fixed. One tap
+              rebirths and plays the ceremony (no confirm, no shop detour). */}
+          <RebirthReadyButton ready={rebirthReady} onGo={handleRebirthNow} className="is-menu" />
           {/* THE FIRST-VISIT CAPTION IS GONE, folded into the bar's own hint line. It said "TYPE
               ANYWHERE TO EARN XP" on its own row directly under a row that now says "12 WORDS TO
               LEVEL 2" — two lines of the same small type, saying two halves of one sentence, on
