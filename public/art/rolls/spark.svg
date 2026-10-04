@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <!-- a four-point spark, one arm longer than the rest (asymmetry on purpose) -->
+  <path d="M19 1 L23 15 L38 19 L23 23 L20 39 L16 23 L3 20 L16 16 Z" transform="translate(2,2)" fill="#000"/>
+  <path d="M19 1 L23 15 L38 19 L23 23 L20 39 L16 23 L3 20 L16 16 Z" fill="#FFE94A" stroke="#A8800F" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="33" cy="7" r="2.5" fill="#FFE94A" stroke="#A8800F" stroke-width="1.5"/>
+</svg>

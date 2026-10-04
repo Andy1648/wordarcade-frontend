@@ -5,9 +5,8 @@
 // THE REVEAL (oct3 review verdict — the A/B/C protocol is over, one reveal ships):
 //   - COMMON: a ~300 ms card flip. RARE: a short wobble build-up, then the flip. EPIC: a longer build-up +
 //     its tier plate flash, in the panel.
-//   - LEGENDARY / MYTHIC / SECRET (MARKS via ROLLS: "legendary+ full-screen"): the cutscene, a modal layer over
-//     the MARKS panel — the tier ladder climbs, the FINAL tier lands huge in its colour, then the mark's NAME and
-//     art big, then "1 IN X", then back to the panel. Longer the rarer (2.5 / 2.8 / 3 s).
+//   - SUPERSEDED by Andy oct3 (below): EPIC dims the screen + bursts; LEGENDARY / MYTHIC / SECRET are a 1.5 s
+//     full-screen layer over the MARKS panel (rarity colour, particles, "1 IN X" huge), in three feels (?mrv=).
 //   - Reduced motion holds a STATIC frame for the SAME time — and keeps the rarity scaling: a legendary+
 //     still shows its plate + name + stamp, just without movement.
 //
@@ -16,8 +15,65 @@
 // worth looking at — EPIC+, a NEW mark, a GOLD or RAINBOW step-up — and when the balance can't pay.
 // Only LEGENDARY+ is a HEAVY (full-screen) moment, and an EPIC+ result always stops the hold, so two never overlap.
 
+// ROLLS REVEAL (Andy oct3, "visuals first"): COMMON = small pop; RARE = colour flash; EPIC = screen dims + burst;
+// LEGENDARY / MYTHIC / SECRET = a full-screen 1.5 s reveal (rarity colour, particle burst, "1 IN X" huge).
+// Three feels share these numbers (?mrv=a|b|c, revealTimelines.js); tap anywhere skips to the result.
 export const MAX_REVEAL_MS = 3000;
-export const REVEAL_MS = { common: 300, rare: 700, epic: 1100, legendary: 2500, mythic: 2800, secret: 3000 };
+export const HEAVY_MS = 1500;
+export const REVEAL_MS = { common: 300, rare: 700, epic: 1100, legendary: HEAVY_MS, mythic: HEAVY_MS, secret: HEAVY_MS };
+export const TIER_LADDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+/** Andy's per-tier spec, as data: which KIND of reveal a tier gets. */
+export const REVEAL_KIND = { common: 'pop', rare: 'flash', epic: 'burst', legendary: 'full', mythic: 'full', secret: 'full' };
+export function revealKind(tier) {
+  return REVEAL_KIND[tier] || 'pop';
+}
+const rankOf = (t) => Math.max(0, TIER_LADDER.indexOf(t));
+
+// ---- the reveal VERSION (?mrv=a|b|c) — a = SLAM, b = FLIP + RAYS, c = REEL (pack / case opening) ----
+export const REVEAL_VERSIONS = ['a', 'b', 'c'];
+export const DEFAULT_REVEAL_VERSION = 'a';
+export function revealVersion(search = typeof location !== 'undefined' ? location.search : '') {
+  let v = null;
+  try { v = new URLSearchParams(search || '').get('mrv'); } catch { v = null; }
+  v = String(v || '').toLowerCase();
+  return REVEAL_VERSIONS.includes(v) ? v : DEFAULT_REVEAL_VERSION;
+}
+
+// ---- ×10 ROLL (Andy: "10 cards flip in fast (80ms stagger); best card gets the full reveal last") ----
+export const MULTI_COUNT = 10;
+export const MULTI_STAGGER_MS = 80;
+export const MULTI_FLIP_MS = 220;
+/** ×10 costs exactly ten single rolls. */
+export function multiPrice(single) {
+  return Math.max(0, Math.round(Number(single) || 0)) * MULTI_COUNT;
+}
+/** The BEST of a ×10: the rarest tier; a SHINY breaks a tie; then a NEW mark; then the earliest. -1 if empty. */
+export function bestIndex(results) {
+  let best = -1;
+  const score = (r) => rankOf(r.tier) * 4 + (r.shiny ? 2 : 0) + (r.newMark ? 1 : 0);
+  (results || []).forEach((r, i) => {
+    if (!r) return;
+    if (best < 0 || score(r) > score(results[best])) best = i;
+  });
+  return best;
+}
+/**
+ * The ×10 plan: every other card flips in grid order, 80 ms apart; the BEST card stays face down and gets
+ * its tier's full reveal LAST, starting once the last flip has landed.
+ *   → { best, flips: [{ idx, at }], bestAt, D }  (D = the whole ×10 reveal, ms)
+ */
+export function multiPlan(results) {
+  const list = results || [];
+  const best = bestIndex(list);
+  const flips = [];
+  list.forEach((r, i) => {
+    if (i === best) return;
+    flips.push({ idx: i, at: flips.length * MULTI_STAGGER_MS });
+  });
+  const bestAt = flips.length ? flips[flips.length - 1].at + MULTI_FLIP_MS : 0;
+  const tier = best >= 0 ? list[best].tier : 'common';
+  return { best, flips, bestAt, D: bestAt + revealMs(tier) };
+}
 export const HOLD_GAP_MS = 120; // the beat between a finished reveal and the next held roll
 export const HEAVY_TIERS = ['legendary', 'mythic', 'secret'];
 const STOP_TIERS = ['epic', ...HEAVY_TIERS];
@@ -50,8 +106,9 @@ export function holdStopReason(result, { canAfford = true } = {}) {
 export function createPacer() {
   let busyUntil = -Infinity;
   return {
-    start(now, tier) {
-      busyUntil = now + revealMs(tier);
+    /** `ms` overrides the tier window (a ×10 runs multiPlan().D). */
+    start(now, tier, ms) {
+      busyUntil = now + (Number.isFinite(ms) ? ms : revealMs(tier));
       return busyUntil;
     },
     /** A tap mid-reveal SKIPS to the result instead of rolling (input still answers at once). */

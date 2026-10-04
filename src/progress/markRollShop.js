@@ -69,6 +69,26 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   return { ...res, state: all[all.length - 1].state, spent: cost.wins, free: cost.free, decision, fromMain, toMain, lump, extra };
 }
 
+/**
+ * ×N ROLL (Andy: "×10 roll button"). Priced at exactly N × the single paid roll; refused (null) when the
+ * balance can't pay all N, or while the free starter roll is still waiting (take that one first). Each of the
+ * N is a full buyMarkRoll — so pity, luck, the ×2 LUCK roll, DOUBLE ROLLS and INDEX lumps all apply PER ROLL,
+ * through the one rollAndSave. Returns the N results in roll order.
+ */
+export function buyMarkRolls(count = 10, { level = 1, rng = Math.random } = {}) {
+  const n = Math.max(1, Math.floor(count));
+  const c = nextRollCost(level);
+  if (c.free) return null;
+  if (getWins() < c.wins * n) return null;
+  const out = [];
+  for (let i = 0; i < n; i += 1) {
+    const r = buyMarkRoll({ level, rng });
+    if (!r) break;
+    out.push(r);
+  }
+  return out.length ? out : null;
+}
+
 /** Land a roll's equip decision (called when its reveal lands). Re-checks against the MAIN worn NOW, so
  *  an equip the player made meanwhile is never overwritten by a lower mark. Returns the worn id or null. */
 export function applyRollEquip(res, earned = []) {
