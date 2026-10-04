@@ -226,7 +226,7 @@ export default function StatsScreen({ onBack }) {
   const recordCellsAll = buildRecordCells(records, getStreak().count, rebirths, highestLevel);
   const recordCells = [...recordCellsAll.filter((c) => !c.locked), ...recordCellsAll.filter((c) => c.locked)];
   // BB2 (Andy oct2): the PLAYER CARD — the screen worth screenshotting. LEVEL is the hero (the board
-  // ranks by it); four big numbers under it; who / rank / rebirths / since on one strip.
+  // ranks rebirths, then level); four big numbers under it; who / rank / rebirths / since on one strip.
   let wordsTyped = 0;
   for (const m of MASTERY_MODES) wordsTyped += masteryWords(m) || 0;
   const me = getMyProfile();

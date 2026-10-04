@@ -16,7 +16,7 @@
 // tilted yellow sticker whose big pink "#N" makes the place itself the hook, and which reads as a
 // reward rather than more end-screen chrome (the strip blended in; the purple ticket fought the card).
 import { useEffect, useRef, useState } from 'react';
-import { formatNum } from '../format';
+import { standingText } from './boardTarget.js';
 import {
   LEADERBOARD_ENABLED,
   claimName,
@@ -130,8 +130,8 @@ export default function ClaimPrompt() {
           <span className="lb-cp-rank" aria-hidden="true">#{rank}</span>
           <span className="lb-cp-copy">
             <span className="lb-cp-kicker">YOU’D BE #{rank} ON THE BOARD</span>
-            {/* the board ranks by LEVEL (after rebirths; Andy oct2) — say the number that earns the place */}
-            <span className="lb-cp-hint">LV {formatNum(Number(myStats().level) || 1)} · NO SIGN-IN. JUST A NAME.</span>
+            {/* the board ranks REBIRTHS, then LEVEL (Andy oct3 19:55) — say the numbers that earn the place */}
+            <span className="lb-cp-hint">{(({ rebirths, level }) => standingText(rebirths, level))(myStats())} · NO SIGN-IN. JUST A NAME.</span>
           </span>
           <button type="button" className="lb-cp-go" onClick={() => { markClaimPromptSeen(); setPhase('form'); }}>CLAIM YOUR NAME</button>
           <button type="button" className="lb-cp-x" onClick={dismiss} aria-label="Dismiss">✕</button>

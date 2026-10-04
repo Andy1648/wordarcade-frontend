@@ -406,16 +406,20 @@ export function formatResetIn(ms) {
 }
 
 // ---- STEP 47: pulling players in -------------------------------------------------------------
-// The board's order, as a comparator: LEVEL desc, then lifetime words desc — rebirths are NOT ranked
-// (Andy oct2 evening; he ran this view on prod; 001 / 005 / 009 / 011 carry it). A HYPOTHETICAL
+// The board's order, as a comparator: REBIRTHS desc, then LEVEL desc, then lifetime words desc
+// (Andy oct3 19:55 — he ran this view on prod; 017_board_reality.sql carries it). A HYPOTHETICAL
 // row (someone not on the board yet) loses every exact tie — the existing row got there first, the
-// same rule the view's created_at tiebreak applies.
+// same rule the view's created_at tiebreak applies. KEEP IN SYNC WITH serverRankFor below.
 export function ranksAhead(row, me) {
-  // BOARD = LEVEL ONLY (Andy oct2 evening): level desc, then lifetime words; rebirths are not ranked.
+  const r = Number(row.rebirths) || 0;
   const l = Number(row.level) || 0;
   const w = Number(row.lifetime_words) || 0;
-  if (l !== me.level) return l > me.level;
-  return w >= me.lifetimeWords;
+  const mr = Number(me.rebirths) || 0;
+  const ml = Number(me.level) || 0;
+  const mw = Number(me.lifetimeWords) || 0;
+  if (r !== mr) return r > mr;
+  if (l !== ml) return l > ml;
+  return w >= mw;
 }
 
 /** The rank `stats` would take on a board whose top rows are `rows` (null if off the top-N). */
@@ -460,16 +464,22 @@ export function noteClaimPromptDismissed() {
   } catch { /* ignore */ }
 }
 
+/** The PostgREST `or=` filter for "rows ranked ahead of (rebirths, level, words)" — ranksAhead, server-side. */
+export function rankAheadFilter(rb, l, w) {
+  return `(rebirths.gt.${rb},and(rebirths.eq.${rb},level.gt.${l}),and(rebirths.eq.${rb},level.eq.${l},lifetime_words.gte.${w}))`;
+}
+
 /**
  * The TRUE rank `stats` would take on the live board — counted on the SERVER (how many rows rank
- * ahead under the view's order: level, then words (rebirths are not ranked); an exact tie goes to the existing
+ * ahead under the view's order: rebirths, then level, then words; an exact tie goes to the existing
  * row), so it is right past the visible top 10 (Andy oct2 LB10). null when offline.
  */
 export async function serverRankFor(stats) {
   if (!LEADERBOARD_ENABLED || !stats) return null;
   const w = Math.max(0, Math.floor(Number(stats.lifetimeWords) || 0));
   const l = Math.max(1, Math.floor(Number(stats.level) || 1));
-  const or = `(level.gt.${l},and(level.eq.${l},lifetime_words.gte.${w}))`;
+  const rb = Math.max(0, Math.floor(Number(stats.rebirths) || 0));
+  const or = rankAheadFilter(rb, l, w);
   try {
     const r = await fetch(`${BASE}/rest/v1/leaderboard?select=id&or=${encodeURIComponent(or)}`, {
       method: 'HEAD',

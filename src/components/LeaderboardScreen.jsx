@@ -2,7 +2,7 @@
 // block bad names).
 //
 // One overlay, two jobs: CLAIM a name (if this browser has none) and SHOW the board: rank, username,
-// level + rebirth stars, lifetime words, WINS/WORD. The claim form gives the client filter's verdict
+// rebirths + level ("R8 · LV16" — the board ranks REBIRTHS first), lifetime words, WINS/WORD. The claim form gives the client filter's verdict
 // instantly and asks the server (lb_name_status) for "taken" after a 350 ms pause; the server is
 // what actually refuses a name (DB trigger + lb_claim), so a bypassed client can't put one on the
 // board. Moderation beyond that is Andy editing rows in the Supabase Table Editor.
@@ -28,7 +28,7 @@ import {
   clearRankFrom,
   markBoardSeen,
 } from '../leaderboard/client.js';
-import { targetLine } from '../leaderboard/boardTarget.js';
+import { targetLine, standingText } from '../leaderboard/boardTarget.js';
 import { formatRecoveryCode } from '../save/cloudSave.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import './LeaderboardScreen.css';
@@ -89,6 +89,21 @@ function NameTag({ name, rebirths }) {
 const fmt = (n) => formatNum(Number(n) || 0);
 const fmtRate = (n) => formatRate(Number(n) || 0);
 
+// Andy oct3 19:55: the board ranks REBIRTHS first, then level — so the headline is "R8 · LV16" (an R0
+// player reads just "LV16"). Under 900px the two stack (R over LV; the " · " is hidden, still in the text).
+function Standing({ rebirths, level, className }) {
+  const text = standingText(rebirths, level);
+  const at = text.indexOf(' · ');
+  if (at < 0) return <span className={className}>{text}</span>;
+  return (
+    <span className={`${className} has-rb`}>
+      <span className="lb-rb">{text.slice(0, at)}</span>
+      <span className="lb-sep"> · </span>
+      <span className="lb-lvnum">{text.slice(at + 3)}</span>
+    </span>
+  );
+}
+
 
 // H2a: the ▲N chip on your own row when you climbed since you last opened the board. It pops in
 // (finite, transform/opacity) as the row lands; reduced motion = the static chip.
@@ -109,11 +124,11 @@ function Row({ row, mine, flash, move }) {
           {mine && <span className="lb-you-badge">YOU</span>}
           {mine && <MoveChip move={move} />}
         </span>
-        {/* words are SECONDARY now (Andy oct2, later: the board ranks by LEVEL) */}
+        {/* words are SECONDARY (the board ranks by rebirths, then level) */}
         <span className="lb-lv lb-words-sub">{fmt(row.lifetime_words)} WORDS</span>
       </span>
-      {/* LV is the headline — the board ranks by LEVEL only (rebirth is just the name's colour). */}
-      <span className="lb-num lb-level">LV {fmt(row.level)}</span>
+      {/* REBIRTHS + LV is the headline — the board's order (Andy oct3 19:55). */}
+      <Standing className="lb-num lb-level" rebirths={row.rebirths} level={row.level} />
       {/* 017: "—" for a row with no words, or one that hasn't submitted on the current economy (econ < 10) —
           never a stale number from an old curve; it recomputes on that player's next v10 submit */}
       <span className="lb-num lb-rate">{Number(row.lifetime_words) > 0 && rowEconCurrent(row) ? fmtRate(row.wins_per_word) : '—'}</span>
@@ -132,7 +147,7 @@ function WeekRow({ row, mine }) {
           <NameTag name={row.username} rebirths={row.rebirths} />
           {mine && <span className="lb-you-badge">YOU</span>}
         </span>
-        <span className="lb-lv lb-words-sub">LV {fmt(row.level)}</span>
+        <span className="lb-lv lb-words-sub">{standingText(row.rebirths, row.level)}</span>
       </span>
       <span className="lb-num lb-level lb-week-words">{fmt(row.week_words)}</span>
     </li>
@@ -167,7 +182,7 @@ export default function LeaderboardScreen({ onBack }) {
   // H2a: your row scrolled out of the board's view → a pin strip at the panel foot (outside the
   // scroller, so it takes its own space and never covers a row).
   const [meHidden, setMeHidden] = useState(false);
-  // BB3: ALL-TIME (level) or THIS WEEK (words typed this ET week; resets Monday 00:00 ET
+  // BB3: ALL-TIME (rebirths, then level) or THIS WEEK (words typed this ET week; resets Monday 00:00 ET
   // in the DB). The switch exists only once 013_weekly_board.sql is applied (lb_caps.weekly).
   const [view, setView] = useState('all');
   const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false });
@@ -424,7 +439,7 @@ export default function LeaderboardScreen({ onBack }) {
                   </span>
                 )}
               </span>
-              {view === 'all' && meRow && <span className="lb-hero-lv">LV {fmt(meRow.level)}</span>}
+              {view === 'all' && meRow && <span className="lb-hero-lv">{standingText(meRow.rebirths, meRow.level)}</span>}
               <span className="lb-hero-who">
                 <span className="lb-you-name">{profile.username}</span>
                 {caps.cloud && (
@@ -528,7 +543,7 @@ export default function LeaderboardScreen({ onBack }) {
               {/* fine-tune (oct2 evening): no column headers over an error with nothing under them */}
               {!(loadError && board.rows.length === 0) && (
                 <div className="lb-cols" aria-hidden="true">
-                  <span>#</span><span>PLAYER</span><span className="lb-num">LEVEL</span><span className="lb-num">WINS/WORD</span>
+                  <span>#</span><span>PLAYER</span><span className="lb-num">R · LV</span><span className="lb-num">WINS/WORD</span>
                 </div>
               )}
               {loading && board.rows.length === 0 && <p className="lb-note">LOADING THE BOARD…</p>}
@@ -561,7 +576,7 @@ export default function LeaderboardScreen({ onBack }) {
               )}
               {!profile && (
                 <p className="lb-note lb-preview">
-                  YOU'D SHOW AS LV {fmt(stats.level)} · {fmt(stats.lifetimeWords)} WORDS
+                  YOU'D SHOW AS {standingText(stats.rebirths, stats.level)} · {fmt(stats.lifetimeWords)} WORDS
                 </p>
               )}
             </>
