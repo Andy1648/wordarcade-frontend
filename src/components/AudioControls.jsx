@@ -64,7 +64,6 @@ export default function AudioControls({
         onClick={onClick}
         aria-pressed={on}
         aria-label={`${label} sound: ${on ? 'on' : 'off'}`}
-        title={`${label} sound: ${on ? 'on' : 'off'}`}
       >
         {glyph}
       </button>

@@ -118,7 +118,7 @@ export default function CgArmScreen({ wsStatus, coarse, onArm }) {
               onKeyDown={handleKeyDown}
               inputMode="text"
               aria-label="Type any letter to start"
-              placeholder={coarse ? 'TAP TO START…' : 'TYPE ANY LETTER TO START'}
+              placeholder={coarse ? undefined /* touch: the TAP TO START button says it (clutter pass) */ : 'TYPE ANY LETTER TO START'}
               maxLength={32}
               autoComplete="off"
               spellCheck="false"
@@ -133,7 +133,9 @@ export default function CgArmScreen({ wsStatus, coarse, onArm }) {
           )}
         </div>
 
-        {coarse ? (
+        {/* CLUTTER PASS: no desktop "FIRST LETTER FIRES IT OFF" hint — the input's placeholder
+            ("TYPE ANY LETTER TO START") already says it. */}
+        {coarse && (
           <button
             type="button"
             className="cg-arm-tap"
@@ -141,8 +143,6 @@ export default function CgArmScreen({ wsStatus, coarse, onArm }) {
           >
             TAP TO START
           </button>
-        ) : (
-          <div className="cg-arm-hint">FIRST LETTER FIRES IT OFF</div>
         )}
       </div>
     </div>

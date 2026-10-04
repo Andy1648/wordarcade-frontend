@@ -255,16 +255,18 @@ export default function WordRaceScreen({
                 <span className="wr-upcoming" aria-label="Next words">
                   {upcoming.map((w, i) => <span key={`${myIndex}-${i}`} className="wr-up">{w.toUpperCase()}</span>)}
                 </span>
-                <span className="wr-hero-sub">WORD {myIndex + 1} OF {target}</span>
+                {/* CLUTTER PASS: no "WORD n OF N" — your lane's n/N count above says it. */}
               </>
             ) : fragment ? (
               <>
                 <span className="wr-sr">Type a word containing {fragment}</span>
                 <LayeredWord className="wr-hero-word" text={fragment.toUpperCase()} accent={ACCENT} />
-                <span className="wr-hero-sub">
-                  WORD {myIndex + 1} OF {target}
-                  {nextFragment && <> · NEXT <b>{nextFragment.toUpperCase()}</b></>}
-                </span>
+                {/* CLUTTER PASS: the "WORD n OF N" half went — your lane's n/N count says it. */}
+                {nextFragment && (
+                  <span className="wr-hero-sub">
+                    NEXT <b>{nextFragment.toUpperCase()}</b>
+                  </span>
+                )}
               </>
             ) : null}
           </div>

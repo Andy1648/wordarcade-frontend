@@ -194,7 +194,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
           <div className="shop-wins" aria-label={`${formatNum(wins)} wins`}>
             <span className="shop-coin" aria-hidden="true" />
             {formatNum(wins)}
-            <span className="shop-wins-label" aria-hidden="true">WINS</span>
           </div>
           <button type="button" className="shop-close" onClick={onBack} aria-label="Back to menu">
             ✕
@@ -204,7 +203,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         {view === 'shop' ? (
           <div className="shop-body">
             {/* KEY POWER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
-            <h3 className="shop-subtitle">KEY POWER — TIER {formatNum(keyTier)}</h3>
+            {/* CLUTTER PASS: no "— TIER n" — the KEY Tn → Tn+1 line right under it carries the tier. */}
+            <h3 className="shop-subtitle">KEY POWER</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
                 {/* REBIRTH RUSH: KEY multiplies XP / LETTER only — it no longer touches wins, so the shelf
@@ -317,7 +317,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
 
             {/* §3 — rebirth always shows how far to the next rebirth + progress. */}
             <div className="shop-goal">
-              {rebirthReady ? 'READY TO REBIRTH' : `${threshold - level} LEVELS TO GO — LV ${level} / ${threshold}`}
+              {rebirthReady ? 'READY TO REBIRTH' : `${threshold - level} LEVELS TO GO` /* the bar is the ratio; the button says the gate LV */}
             </div>
             <ProgressBar value={rbProgress} />
 
@@ -328,7 +328,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))} · KEY RESETS → T{formatNum(keyTierAfterRebirth(keyTier))}.
               </li>
               <li>
-                <b>KEEP:</b> WINS KEPT · MARKS · PURCHASES · STATS.
+                <b>KEEP:</b> WINS · MARKS · PURCHASES · STATS.
               </li>
             </ul>
 

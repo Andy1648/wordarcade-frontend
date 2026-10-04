@@ -102,12 +102,6 @@
 }
 .menu-streak-flame { font-size: var(--fs-body); }
 .menu-streak-count { font-size: var(--fs-body); }
-.menu-streak-day {
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
-  letter-spacing: 1px;
-  opacity: 0.75;
-  align-self: center;
-}
 .menu-streak-mult {
   font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
   padding: 2px 5px;
@@ -505,14 +499,6 @@
 }
 /* The chip is a <button> on the menu (opens the shop) — reset UA chrome so it reads
    identically to the old span and adds no height. */
-/* "WINS" unit label after the number — names the currency at the counter (the earn-side cards
-   already say "WINS"; this closes the loop so a newcomer connects the coin to the word). Subordinate
-   to the value: smaller + slightly dimmed, so the number still reads first. */
-.menu-wins-label {
-  font-size: var(--fs-label);
-  letter-spacing: 0.04em;
-  opacity: 0.82;
-}
 button.menu-wins-chip {
   background: none;
   border: 0;
@@ -1087,22 +1073,13 @@ button.menu-mark:active {
 }
 
 /* ==== NUMBERS-FEEL (Andy oct3 #4/#5) ==========================================================
-   The % readout, the "+X.X%" gain pop, the 10% milestone flash and the wins chip's "+gain".
+   The "+N LV" pop (the % readout + "+X.X%" pop were cut in the clutter pass), the 10% milestone flash and the wins chip's "+gain".
    Motion is WAAPI (MenuXpBar) or a one-shot keyframe here: transform/opacity only, finite, and
    will-change is set by JS only while a node flies — never on these idle pooled nodes. */
 .menu-xp-readout-mid {
   position: relative;
   display: inline-flex;
   align-items: center;
-}
-.menu-xp-readout-pct {
-  color: #2effe0;
-  /* oct3 live check: cyan on the pink fill was unreadable where the fill passes under it — a dark pill keeps it
-     legible over fill and empty track alike */
-  background: #1a0b2e;
-  border: 2px solid #0d0618;
-  border-radius: 6px;
-  padding: 0 6px;
 }
 .menu-xp-gainpop {
   position: absolute;
@@ -1132,11 +1109,8 @@ button.menu-mark:active {
   pointer-events: none;
   opacity: 0;
 }
-/* The phone track is ~70–150px: the % is what fits, so the XP-into number steps aside (the cost
-   stays — it is the level's size, and Stats carries the exact XP). */
-@media (max-width: 560px) {
-  .menu-xp-bar.is-loud .menu-xp-readout-now { display: none; }
-}
+/* CLUTTER PASS: the phone used to hide the XP-into number to make room for the % readout. The %
+   is gone, so the into/cost pair is back on every width. */
 
 /* THE WINS GAIN, BIG, beside the counting balance. Absolutely placed (no row reflow), Bungee at the
    display floor, one finite pop-in per chain (re-keyed per chain in JSX); it unmounts after the
