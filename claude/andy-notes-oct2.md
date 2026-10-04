@@ -177,16 +177,16 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## BOARD = REBIRTHS FIRST, then level (Andy oct3 19:55)
 - [x] Andy ALREADY ran the view on prod: order = rebirths desc, level desc, lifetime_words desc, created_at asc.
-- [ ] Every migration that rebuilds public.leaderboard (017, 018_econ_v11 and later) uses this order, so re-running never reverts it.
-- [ ] Client: rebirths are the headline ("R8 · LV16"); hypotheticalRank / rival pings / rank badges use the same order; all board copy + e2e specs updated.
+- [x] (#178 — 017 rebuilt with the new order; 018 doesn't touch the view) Every migration that rebuilds public.leaderboard (017, 018_econ_v11 and later) uses this order, so re-running never reverts it.
+- [~] (#178 board/rank/claim/rank-up; rival pings follow on feat/ext-rival after #170) Client: rebirths are the headline ("R8 · LV16"); hypotheticalRank / rival pings / rank badges use the same order; all board copy + e2e specs updated.
 
 ## v11 CURVE CHANGE (Andy oct3 19:54) — overrides the v11 curve (need = 100+15n²·1.004^n); everything else in v11 stands
-- [ ] +2.4%/level at LV100 is far too flat. KEYBOARD ESCAPE style: each level ~12–15% more XP than the last, the same % at every level, no sudden jumps.
-- [ ] The KE loop: within a run the curve becomes a WALL → REBIRTH → the rebirth XP multiplier grows enough that the next run climbs back fast and goes further. Rebirth multipliers start gentle and explode later (KE: ×1.5 at R1 … ×10 at R10 … huge at R20). KEY ×1.2/tier stays as the in-run booster. Re-tune the rebirth thresholds so a run naturally ends at the wall.
-- [ ] EXISTING PLAYERS (careful, no blunt moves): nobody loses levels. Anyone already past where the new wall would be can REBIRTH right away, and their next run is faster than today. Sim every real board player's save; nobody is stuck with a dead bar.
-- [ ] CI sim (3 skills): reasonable min/level inside a run (no dead bar, ≥0.4% of a level per word until the wall); a rebirth every ~30–90 min of play early; each rebirth feels like a big jump. Underdo difficulty rather than overdo it.
-- [ ] Every card/shop/stats line says it simply with BASE: "BASE 10 XP / LETTER × KEY × REBIRTH".
-- [ ] The rebirth ladder (next jump highlighted) matters now: build it now (#176 is the dormant build; turn it on with the new curve).
+- [x] (#169 @ 4c89012: need = round10(100·1.13^(n−1)), +13% every level from LV30) +2.4%/level at LV100 is far too flat. KEYBOARD ESCAPE style: each level ~12–15% more XP than the last, the same % at every level, no sudden jumps.
+- [x] (#169: rebirth XP = (1+R/2)·1.1^(R²/10) → R1 ×1.5, R10 ×16, R20 ×500, each jump ≥ ×1.25 and growing; wins keep ×(1+R); gate LV 35+3R+R²/50 = R1@35, R10@67, R20@103; mode unlocks read the PEAK level so a rebirth never re-locks CHAIN/FUSE) The KE loop: within a run the curve becomes a WALL → REBIRTH → the rebirth XP multiplier grows enough that the next run climbs back fast and goes further. Rebirth multipliers start gentle and explode later (KE: ×1.5 at R1 … ×10 at R10 … huge at R20). KEY ×1.2/tier stays as the in-run booster. Re-tune the rebirth thresholds so a run naturally ends at the wall.
+- [ ] (#169: every top-8 save is past its new gate → REBIRTH NOW; no level lost; loop-sim --board sims all 13 real saves on CI — waiting) EXISTING PLAYERS (careful, no blunt moves): nobody loses levels. Anyone already past where the new wall would be can REBIRTH right away, and their next run is faster than today. Sim every real board player's save; nobody is stuck with a dead bar.
+- [ ] (#169: KE run table + 'in-run bar p10 ≥ 0.4% below the gate' + 'first rebirths 15–90 min' checks added to loop-sim; CI running) CI sim (3 skills): reasonable min/level inside a run (no dead bar, ≥0.4% of a level per word until the wall); a rebirth every ~30–90 min of play early; each rebirth feels like a big jump. Underdo difficulty rather than overdo it.
+- [x] (#169: card tail / ModeExample / TeachStrip "BASE 10 XP / LETTER × KEY × REBIRTH"; shop GAIN "XP / LETTER ×a → ×b · WINS ×c → ×d"; Stats REBIRTH row = the XP boost) Every card/shop/stats line says it simply with BASE: "BASE 10 XP / LETTER × KEY × REBIRTH".
+- [ ] The rebirth ladder (next jump highlighted) matters now: build it now (#176 built, dormant ?ladder=1 — turn ON once #169 merges).
 
 ## v11 AMENDMENT (Andy oct3 18:15) — overrides earlier v11 notes where they conflict
 - [ ] 1. GAME WORDS GIVE WINS ONLY. No XP/bar progress from accepted game words. Revert Option F (bar floor) and remove the "LEVEL FLOOR" receipt row.
@@ -234,6 +234,7 @@ CHECKUPS (every ~2 h while the goal runs): prod bundle has the latest merge; mai
 - 18:28 ULTRACODE workflow running (5 no-browser jobs: useless-words, number sweep 2, extension specs, confusion audit 2, v11 adversarial review).
 - 18:55 ANDY (chat checkup, live menu 1568x675): every card repeated "LONGER WORDS PAY MORE" + "11.5M WINS / WORD (×27.98 BONUS)" → ONE short line per card ("BASE n / WORD · POWER ×N"), "LONGER WORDS PAY MORE" ONCE on the menu, no ×27.98 decimals (round ≥×10) — DONE in #172 (useless-words), 559/559 local.
 - 19:00 MERGED: #171 extension specs (docs) · #175 the mode-dialog flake fix for real (Escape listener in a layout effect + dialog-quality waits for the lazy dialog; 52/52 ×4 repeats). #172/#173/#174 never got CI (missed webhook) → re-pushed with main merged; on CI.
+- 20:15 MERGED: #173 number-sweep-2 (live: merge SHA 6b15f37 in the bundle). OPENED: #176 rebirth ladder (?ladder=1), #177 milestones (?milestones=1), #178 board rebirths-first. #169 → Keyboard Escape curve.
 - 19:40 MERGED: #174 fix/confusion-2 (live: "3 ROUNDS · 30s EACH"). #170/#172/#173 refreshed onto the new main, back on CI.
 - 19:10 v11 CI (round 2, 08af3404): dead bar PASS ×3 skills · re-climb fast (median first 10 levels 5.5 m → 1.3 m after R1) · KEY first hour median buys @1/1/1.9/1.9/3/8.7/11.9/12.9/24.6/54.9 min · pace min/level LV10/50/100/200: median 0.9/2.2/3.2/4.7 (v10 est. 0.7/5.0/3.6/7.3), casual 1.8/3.8/6.3/10.5, strong 0.6/1.1/1.4/1.8 · median LV100 6.7 h, LV400 111 h. **MASHER FAIL ×2.46 at 10 min (limit ×1.5)** → round 3: menu letter 0.3 of a game letter. Rule P vs v10: 17 windows worse (curve moves by design; list for Andy when v11 is final).
 - Merge v11 only after the CI sim passes. ROLLS TUNING PAUSED until v11 merges (rolls price off the same economy).
