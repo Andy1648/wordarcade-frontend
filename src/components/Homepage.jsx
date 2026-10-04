@@ -1084,7 +1084,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
         {rankUp && rankUp.kind !== 'passed' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
-        {rankUp && rankUp.kind === 'passed' && <Suspense fallback={null}><RankUpMoment kind="passed" from={rankUp.from} to={rankUp.to} name={rankUp.name} levels={rankUp.levels} onDone={rankDone} onTap={() => { rankDone(); handleLeaderboard(); }} /></Suspense>}
+        {rankUp && rankUp.kind === 'passed' && <Suspense fallback={null}><RankUpMoment kind="passed" from={rankUp.from} to={rankUp.to} name={rankUp.name} levels={rankUp.levels} rebirths={rankUp.rebirths} onDone={rankDone} onTap={() => { rankDone(); handleLeaderboard(); }} /></Suspense>}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />

@@ -596,8 +596,8 @@ export async function checkRankUp(epoch = boardSeenEpoch) {
 }
 
 // ---- extensions-spec a: RIVAL PINGS (dormant, flagOn('rival')) ------------------------------------
-// A DROP names who passed you — one extra board read, only on a drop that could ping. Never after my own
-// rebirth / reset (the board ranks by level only, so those look exactly like being passed).
+// A DROP names who passed you — one extra board read, only on a drop that could ping. Never across my own
+// rebirth / reset (the board ranks rebirths, then level: either moves me on its own, not a pass).
 const LAST_RB_KEY = 'taw.lb.lastRb';
 const LAST_LV_KEY = 'taw.lb.lastLv';
 const RIVAL_LOG_KEY = 'taw.lb.rival'; // { day, n, last } — 3 a day, never the same passer twice in a row
@@ -628,7 +628,7 @@ export async function fetchRowAbove(rank) {
   if (!LEADERBOARD_ENABLED) return null;
   const mine = getMyProfile();
   try {
-    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank,id,username,level&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
+    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank,id,username,level,rebirths&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
     if (!r.ok) return null;
     const rows = await r.json();
     return (rows || []).find((x) => !mine || x.id !== mine.id) || null;

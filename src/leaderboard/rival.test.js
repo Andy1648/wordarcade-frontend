@@ -2,15 +2,16 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  rankChange, ownDropSince, levelGap, rivalPing, nextRivalLog, rivalCopy, rivalGapLine,
-  RIVAL_MAX_RANK, RIVAL_PER_DAY,
+  rankChange, ownDropSince, levelGap, rivalGap, rivalPing, nextRivalLog, rivalCopy, rivalGapLine, rivalGapSpoken,
+  RIVAL_MAX_RANK, RIVAL_PER_DAY, RIVAL_MAX_RB_GAP,
 } from './rival.js';
 import { rivalCheck, getRankBaseline, setRankBaseline } from './client.js';
 
+// The board ranks REBIRTHS first, then level, then words (PR #178): the passer row carries rebirths.
 const base = {
   before: 5, now: 6,
   prev: { rb: 2, lv: 40 }, cur: { rb: 2, lv: 41 },
-  passer: { username: 'Xavi', level: 43 },
+  passer: { username: 'Xavi', level: 43, rebirths: 2 },
   log: null, today: '2026-10-03',
 };
 
@@ -22,8 +23,30 @@ test('rankChange: drop vs rise vs nothing', () => {
   assert.equal(rankChange(5, 0), null);
 });
 
-test('a drop names the passer and the level gap', () => {
-  assert.deepEqual(rivalPing(base), { name: 'Xavi', from: 5, to: 6, levels: 2 });
+test('a drop names the passer and the gap (same rebirths → the level gap)', () => {
+  assert.deepEqual(rivalPing(base), { name: 'Xavi', from: 5, to: 6, rebirths: 0, levels: 2 });
+});
+
+test('rivalGap: rebirths first, like nextTarget — a rebirth lead zeroes the level gap', () => {
+  assert.deepEqual(rivalGap({ rebirths: 3, level: 2 }, { rb: 2, lv: 300 }), { rebirths: 1, levels: 0 });
+  assert.deepEqual(rivalGap({ rebirths: 2, level: 43 }, { rb: 2, lv: 41 }), { rebirths: 0, levels: 2 });
+  assert.deepEqual(rivalGap({ rebirths: 2, level: 41 }, { rb: 2, lv: 41 }), { rebirths: 0, levels: 0 });
+  assert.deepEqual(rivalGap({ level: 43 }, { rb: 0, lv: 41 }), { rebirths: 0, levels: 2 }, 'a row without rebirths reads as R0');
+  assert.deepEqual(rivalGap({ rebirths: 0, level: 50 }, { rb: 1, lv: 3 }), { rebirths: 0, levels: 47 }, 'never negative');
+});
+
+test('a passer one rebirth up pings with the rebirth gap, whatever the levels', () => {
+  // they rebirthed past me: LV 2 vs my LV 41, but R3 beats R2 on this board
+  const p = rivalPing({ ...base, passer: { username: 'Xavi', level: 2, rebirths: 3 } });
+  assert.deepEqual(p, { name: 'Xavi', from: 5, to: 6, rebirths: 1, levels: 0 });
+  // a level lead past RIVAL_MAX_GAP does not matter when the rebirths differ
+  assert.ok(rivalPing({ ...base, passer: { username: 'Xavi', level: 200, rebirths: 3 } }));
+});
+
+test('a passer more than one rebirth up is not catchable', () => {
+  assert.equal(RIVAL_MAX_RB_GAP, 1);
+  assert.equal(rivalPing({ ...base, passer: { username: 'Xavi', level: 1, rebirths: 4 } }), null, '2 RB is noise');
+  assert.equal(rivalPing({ ...base, passer: { username: 'Xavi', level: 41, rebirths: 9 } }), null);
 });
 
 test('a rise never pings (that is the rank-up card)', () => {
@@ -31,10 +54,10 @@ test('a rise never pings (that is the rank-up card)', () => {
   assert.equal(rivalPing({ ...base, before: 6, now: 6 }), null);
 });
 
-test('own rebirth is suppressed (the board ranks by level only)', () => {
-  // rebirth: count rose, level back to 1 — looks exactly like being passed
+test('own rebirth is suppressed (my rebirths changed: the move is mine, not a pass)', () => {
+  // rebirth: count rose, level back to 1 — rebirths lead the board, so my own standing moved under me
   assert.equal(ownDropSince({ rb: 2, lv: 300 }, { rb: 3, lv: 1 }), true);
-  assert.equal(rivalPing({ ...base, before: 5, now: 40, prev: { rb: 2, lv: 300 }, cur: { rb: 3, lv: 1 }, passer: { username: 'Xavi', level: 2 } }), null);
+  assert.equal(rivalPing({ ...base, before: 5, now: 40, prev: { rb: 2, lv: 300 }, cur: { rb: 3, lv: 1 }, passer: { username: 'Xavi', level: 2, rebirths: 3 } }), null);
 });
 
 test('own reset is suppressed (level fell, rebirths fell)', () => {
@@ -53,11 +76,11 @@ test('same rebirths, level held or rose = a real pass', () => {
   assert.equal(ownDropSince({ rb: 1, lv: 40 }, { rb: 1, lv: 44 }), false);
 });
 
-test('only catchable gaps: rank ≤ 50 and ≤ 5 levels', () => {
+test('only catchable gaps: rank ≤ 50 and, at equal rebirths, ≤ 5 levels', () => {
   assert.equal(rivalPing({ ...base, before: 50, now: RIVAL_MAX_RANK + 1 }), null);
   assert.ok(rivalPing({ ...base, before: 49, now: RIVAL_MAX_RANK }));
-  assert.equal(rivalPing({ ...base, passer: { username: 'Xavi', level: 47 } }), null, '6 LV is not catchable');
-  assert.equal(rivalPing({ ...base, passer: { username: 'Xavi', level: 46 } }).levels, 5);
+  assert.equal(rivalPing({ ...base, passer: { username: 'Xavi', level: 47, rebirths: 2 } }), null, '6 LV is not catchable');
+  assert.equal(rivalPing({ ...base, passer: { username: 'Xavi', level: 46, rebirths: 2 } }).levels, 5);
 });
 
 test('no passer row / blank name: nothing', () => {
@@ -86,6 +109,18 @@ test('copy: name upper-cased, ranks + gap through formatNum, level-tied wording'
   assert.equal(rivalCopy({ name: 'elol', from: 12345, to: 12346, levels: 1 }).sub, '#12.3K → #12.3K · 1 LV BEHIND');
   assert.equal(rivalGapLine(0), 'LEVEL-TIED · MORE WORDS TAKE IT');
   assert.equal(rivalCopy({ name: 'Daan', from: 3, to: 4, levels: 0 }).sub, '#3 → #4 · LEVEL-TIED · MORE WORDS TAKE IT');
+});
+
+test('copy: a rebirth gap reads "N RB BEHIND" first (formatNum), and the spoken line spells it out', () => {
+  assert.equal(rivalGapLine(0, 1), '1 RB BEHIND');
+  assert.equal(rivalGapLine(7, 1), '1 RB BEHIND', 'rebirths outrank levels');
+  assert.equal(rivalGapLine(0, 1234), '1,234 RB BEHIND');
+  assert.equal(rivalCopy({ name: 'Xavi', from: 5, to: 6, levels: 0, rebirths: 1 }).sub, '#5 → #6 · 1 RB BEHIND');
+  assert.equal(rivalGapSpoken(0, 1), '1 rebirth behind');
+  assert.equal(rivalGapSpoken(0, 2), '2 rebirths behind');
+  assert.equal(rivalGapSpoken(1, 0), '1 level behind');
+  assert.equal(rivalGapSpoken(1234, 0), '1,234 levels behind');
+  assert.equal(rivalGapSpoken(0, 0), 'level-tied, more words take it');
 });
 
 // ---- the client path: flag off = no board read, nothing stored ------------------------------------
