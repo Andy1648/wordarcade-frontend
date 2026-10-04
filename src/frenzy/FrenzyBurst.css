@@ -59,9 +59,16 @@
 .frenzy-slab-bonus {
   color: #2effe0;
 }
+/* Rebirth Rush OVERDRIVE start: the same slab in the OVERDRIVE pill's pink */
+.frenzy-burst.is-overdrive .frenzy-slab {
+  background: #ff4fa3;
+  border-color: #a8236a;
+}
 @media (max-width: 480px) {
   .frenzy-tile {
     width: 40px;
     height: 40px;
   }
+  /* "OVERDRIVE" is 9 letters: one step down so the slab never runs past a 360px screen */
+  .frenzy-burst.is-overdrive .frenzy-slab-title { font-size: var(--fs-h1); }
 }

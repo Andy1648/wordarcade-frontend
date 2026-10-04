@@ -17,6 +17,7 @@ import { markRank, markMainMult, markTier } from '../progress/marks';
 import { streakMultiplier } from '../progress/streak';
 import { tierFx } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
+import { rebirthMult } from '../progress/xp';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
 
@@ -812,6 +813,17 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     }
   }
 
+  // The level-up's finite starburst + a gold shard ring, for the rebirth cards (pooled nodes; no layout read).
+  function bigBurst() {
+    if (prefersReducedMotion()) return;
+    if (burstAnimRef.current) {
+      burstAnimRef.current.cancel();
+      burstAnimRef.current.play();
+    }
+    const { w, h } = layerSizeRef.current;
+    if (w && h) spawnShards(w / 2, h * 0.46, TIER_GOLD, SHARD_POOL, 4);
+  }
+
   useImperativeHandle(ref, () => ({
     letterPop(letter, plusText, scale = 1, colour = '#2EFFE0', feelTier = 0) {
       const { w, h } = layerSizeRef.current;
@@ -967,17 +979,36 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         burstAnimRef.current.play();
       }
     },
-    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (1500ms).
+    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (1500ms). Rebirth Rush (Andy:
+    // "Big moment"): it says the ×5 jump plainly with the new total (5^R), and its last line is the ONE
+    // rebuy-spree cue — the KEY went back to T0 and the wins were kept. Same finite starburst + gold shard
+    // ring the level-up throws (pooled; skipped under reduced motion).
     rebirthCelebration(n) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel();
       popCapRef.current = true;
-      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
-      if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
-      if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth
+      const total = rebirthMult(n);
+      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(n)}`;
+      if (levelSubRef.current) levelSubRef.current.textContent = n > 1 ? `×5 XP & WINS · NOW ×${formatNum(total)}` : '×5 XP & WINS';
+      if (levelDetailRef.current) levelDetailRef.current.textContent = 'KEY RESET · REBUY';
       a.cancel();
       a.play();
+      bigBurst();
+    },
+    // Rebirth Rush one-time conversion: "YOUR LEVELS BECAME +N REBIRTHS" (econMigrate rebirthRushNotice).
+    // The new rebirth count is the headline; Andy's line rides the sub (it wraps on a phone).
+    rebirthRush(added, rebirths) {
+      const a = levelupAnimRef.current;
+      if (!a) return;
+      for (const p of popAnimsRef.current) p.cancel();
+      popCapRef.current = true;
+      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(rebirths)}`;
+      if (levelSubRef.current) levelSubRef.current.textContent = `YOUR LEVELS BECAME +${formatNum(added)} REBIRTHS`;
+      if (levelDetailRef.current) levelDetailRef.current.textContent = `×${formatNum(rebirthMult(rebirths))} XP & WINS`;
+      a.cancel();
+      a.play();
+      bigBurst();
     },
     // One finite "+N WINS" stamp (menu return after a paying round). Same pooled pattern.
     winsStamp(amount) {

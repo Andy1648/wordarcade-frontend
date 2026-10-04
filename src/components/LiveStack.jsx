@@ -17,6 +17,8 @@
 // on THIS word" case with its own inactive list.
 import { memo } from 'react';
 import BoostPill from '../frenzy/BoostPill';
+import { useTimerClock } from '../frenzy/useTimerClock';
+import { overdriveRemaining } from '../progress/overdrive';
 import '../frenzy/MechanicScale.css';
 import { perWordRateNow } from '../progress/wins';
 import { roundWordXp } from '../progress/xp';
@@ -33,6 +35,10 @@ import './LiveStack.css';
 const mult = (m) => `×${formatMultExact(m)}`;
 
 function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
+  // Rebirth Rush OVERDRIVE can START mid-run (the letter flush rolls it) while this memoised chip's props
+  // stay the same — subscribe to its clock so the rate and the OVERDRIVE pill appear (and leave) on time.
+  // 1 Hz only while OVERDRIVE runs; nothing ticks at rest.
+  useTimerClock(overdriveRemaining);
   const now = perWordRateNow({ mode, difficulty });
   const frenzy = Number.isFinite(now.factors.frenzy) && now.factors.frenzy > 1 ? now.factors.frenzy : 0;
   const boost = Number.isFinite(now.factors.boost) && now.factors.boost > 1 ? now.factors.boost : 0;

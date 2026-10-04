@@ -438,6 +438,12 @@
   -webkit-text-stroke: 2px #000;
   paint-order: stroke fill;
   letter-spacing: 0.12em;
+  /* Rebirth Rush: the longer rebirth lines ("YOUR LEVELS BECAME +N REBIRTHS") wrap inside the plate on a
+     phone instead of running past it; the short level phrases still sit on one line */
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
 }
 /* "+N WINS" reward line under the LEVEL text — cyan (the accept/positive colour) so the
    payout reads distinct from the gold title. Hidden when the level-up granted nothing. */
