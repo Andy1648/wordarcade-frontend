@@ -294,7 +294,7 @@ export function checkMarkClaims({ level = 1, rebirths = 0, earned = [] } = {}) {
       kind: 'layer',
       label: 'NEW SYSTEM — MARKS',
       detail: 'marks',
-      meta: { blurb: 'Earn MARKS from achievements. WEAR ONE: it is your title and pays +100% to +300% on every word, growing with its rank (up to ×5.8).' },
+      meta: { blurb: 'Earn MARKS from achievements. WEAR ONE as your title: +100% to +300% on every word, growing with rank (up to ×5.8).' },
     });
   }
   const queued = [];

@@ -34,7 +34,7 @@ test.describe('server-waking cold-start copy', () => {
     // the tapped slab shifts to the yellow WAKING variant.
     await expect(page.locator('.connecting-main')).toHaveText('WAKING THE SERVER…');
     await expect(page.locator('.connecting-sub')).toHaveText(
-      'GIVE IT ~30s — IT DROPS YOU IN AUTOMATICALLY.',
+      '~30s — YOU DROP IN AUTOMATICALLY.',
     );
     await expect(join).toHaveClass(/is-waking/);
 

@@ -162,7 +162,6 @@ export default function PublicRoomsScreen({
             everywhere else, so the phone / tall-window screen is the single column it always was. */}
         <div className="browser-col browser-col--code">
         <div className="browser-title">JOIN ROOM</div>
-        <div className="browser-subtitle">ENTER A CODE OR PICK A PUBLIC GAME</div>
 
         <label className="browser-field-label" htmlFor="browser-name-input">
           YOUR NAME
