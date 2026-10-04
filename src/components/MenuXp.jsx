@@ -1027,7 +1027,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // FRAME" rides the sub line. "STEEL FRAME" as the title overflowed the fx layer at 360px.
       if (levelTitleRef.current) levelTitleRef.current.textContent = name;
       if (levelSubRef.current) levelSubRef.current.textContent = 'NEW FRAME UNLOCKED';
-      if (levelDetailRef.current) levelDetailRef.current.textContent = 'YOUR MENU LEVELED UP';
+      if (levelDetailRef.current) levelDetailRef.current.textContent = '';
       a.cancel();
       a.play();
       if (burstAnimRef.current && !prefersReducedMotion()) {

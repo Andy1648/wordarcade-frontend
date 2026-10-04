@@ -1160,3 +1160,6 @@ button.menu-mark:active {
 @media (prefers-reduced-motion: reduce) {
   .menu-wins-gain { animation: none; }
 }
+
+/* Andy oct3 18:55: the one place the menu says LONGER WORDS PAY MORE (the cards no longer repeat it) */
+.menu-xp-hint-rule { color: #FFE94A; margin-right: 10px; white-space: nowrap; }

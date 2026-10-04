@@ -31,7 +31,7 @@ import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
 import { makeLuckyOracle, luckyReward, randomSeed } from '../progress/luck';
 import { wpmStart, wpmAddWord, wpmEnd } from '../progress/wpmLive';
 import RarityFlash from '../components/RarityFlash.jsx';
-import { formatRate } from '../format';
+import { formatRate, formatMultExact } from '../format';
 // NOTE: the run's wins total IS shown on the results screen, but SatRushResults
 // renders it in SAT Rush's own manga style (`+{winsEarned}` in .sr-winspanel) —
 // deliberately NOT the neon house `WinsEarnedTotal` component (SAT Rush visual
@@ -323,7 +323,7 @@ function StartScreen({ onPlay, onExit }) {
           SAT&nbsp;RUSH
         </div>
         <p className="sr-cover-tag">
-          SAT vocab at arcade speed. Read the clue and type the word before it spells itself.
+          Read the clue. Type the word before it spells itself.
         </p>
 
         {/* Worked example — the mechanic, in one clue → answer beat. */}
@@ -338,7 +338,7 @@ function StartScreen({ onPlay, onExit }) {
         <div className="sr-cover-meta">
           <span className="sr-cover-pay">
             <b>{formatRate(rate)}</b> WINS / WORD
-            <span className="sr-cover-mult"> · POWER ×{power}</span>
+            <span className="sr-cover-mult"> · POWER ×{formatMultExact(power)}</span>
           </span>
           <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>
         </div>
