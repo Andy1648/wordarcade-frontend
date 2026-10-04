@@ -522,7 +522,8 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
           </div>
           {/* §3 — an unaffordable card always shows the GAP + a progress bar. */}
           {/* §3 — the NEXT goal keeps its gap line; the rest of the compact tiles show the bar only. */}
-          {isNextGoal && <div className="shop-card-gap">YOU HAVE {formatNum(wins)}</div>}
+          {/* C2: the GAP, in the same words KEY POWER and the FORGE use — "YOU HAVE n" was the balance, not the gap. */}
+          {isNextGoal && <div className="shop-card-gap">NEED {formatNum(item.price - wins)} MORE</div>}
           <ProgressBar value={item.price > 0 ? wins / item.price : 1} />
         </>
       )}
