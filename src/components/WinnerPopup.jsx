@@ -12,7 +12,7 @@
 //
 // Lazy-loaded (lazyWithReload) by GameScreen + WordRaceScreen, so it costs nothing until a win.
 import { useEffect, useRef, useState } from 'react';
-import { formatNum } from '../format';
+import { formatNum, formatMult } from '../format';
 import { createCountUp } from '../juice/countUp';
 import './WinnerPopup.css';
 
