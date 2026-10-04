@@ -184,7 +184,11 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
         return route.fulfill({ status: 200, headers: { 'content-range': `*/${ahead}`, 'access-control-expose-headers': 'content-range' }, body: '' });
       }
       const id = url.searchParams.get('id');
-      const all = ranked();
+      let all = ranked();
+      // rival pings (src/leaderboard/client.js fetchRowAbove): `rank=lt.N&order=rank.desc`
+      const lt = /^lt\.(\d+)$/.exec(url.searchParams.get('rank') || '');
+      if (lt) all = all.filter((r) => r.rank < Number(lt[1]));
+      if (url.searchParams.get('order') === 'rank.desc') all = all.slice().reverse();
       return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
     }
     return json(404, { message: 'not mocked' });

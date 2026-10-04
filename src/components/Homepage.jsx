@@ -974,6 +974,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
       .then(() => checkRankUp(epoch))
       .then((r) => {
+        if (live && r && r.kind === 'passed') {
+          // extensions-spec a (dormant, flagOn('rival') inside checkRankUp): "XAVI PASSED YOU" — the rank-up
+          // card's passed variant, at INFO on the same queue. No news dot / icon hold: the trophy's
+          // "rank went up" wording would lie, and the icon already wears the live rank.
+          rankCancelRef.current = moments.announce({
+            ...momentOpts('rival'),
+            start: (done) => {
+              if (!live) { done(); return; }
+              rankDoneRef.current = done;
+              setRankUp(r);
+            },
+          });
+          return;
+        }
         if (live && r) {
           setBoardNews(true);
           setBoardHold(r.from);
@@ -1069,7 +1083,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             Opacity-only, sits above the wall texture but below the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
-        {rankUp && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind !== 'passed' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind === 'passed' && <Suspense fallback={null}><RankUpMoment kind="passed" from={rankUp.from} to={rankUp.to} name={rankUp.name} levels={rankUp.levels} rebirths={rankUp.rebirths} onDone={rankDone} onTap={() => { rankDone(); handleLeaderboard(); }} /></Suspense>}
         {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
             point (title + cards), brightest at the top and falling off. */}
         <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />

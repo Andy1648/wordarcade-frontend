@@ -33,6 +33,9 @@ export const MENU_MOMENTS = {
   rebirth: { priority: PRIORITY.LEVEL, ms: CARD_MS, maxMs: CARD_MS + 1000 },
   'rank-up': { priority: PRIORITY.LEVEL, ms: RANKUP_MS, maxMs: RANKUP_MS + CHUNK_SLACK_MS + 800 },
   'claim-pop': { priority: PRIORITY.REWARD, ms: CLAIM_TUCK_MS, maxMs: CLAIM_TUCK_MS + 1000, interruptible: true },
+  // extensions-spec a (dormant, flagOn('rival')): "XAVI PASSED YOU" — the rank-up card's passed variant.
+  // INFO: it never plays over a rank-up, wall or tier-up.
+  rival: { priority: PRIORITY.INFO, ms: RANKUP_MS, maxMs: RANKUP_MS + CHUNK_SLACK_MS + 800 },
   'mark-up': { priority: PRIORITY.INFO, ms: CARD_MS, maxMs: CARD_MS + 1000 },
   automation: { priority: PRIORITY.INFO, ms: CARD_MS, maxMs: CARD_MS + 1000 },
   tutorial: { priority: PRIORITY.TUTORIAL, ms: TUTORIAL_MAX_MS, maxMs: TUTORIAL_MAX_MS },
