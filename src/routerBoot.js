@@ -2,5 +2,8 @@
 // entry-param reader (LAUNCH_INTENT / solo/config / cg/cgEntry / satRush/config) evaluates. main.jsx
 // imports this FIRST so a clean path like /sat-rush is translated to the query those readers expect.
 import { bridgePathToSearch } from './router';
+import { captureChallengeFromUrl } from './race/challenge';
 
 bridgePathToSearch();
+// The challenge link's vs/t/n, stashed in sessionStorage before the app tidies the address bar.
+captureChallengeFromUrl();
