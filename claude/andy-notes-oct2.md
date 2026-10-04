@@ -176,6 +176,11 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] 4. (13:35 DONE on feat/numbers-feel: one helper src/juice/countUp.js — 1.2 s → 2 s on a log scale of the jump, a new gain retargets the running count (never stacks), reduced motion/drops instant; used by the menu wins chip with a big '+N', level numeral, XP fill, WinnerPopup, the in-game wins pill, claim stamps (now 1.7 s), WordLanding, SAT results) COUNT-UP ANIMATIONS last longer ("so the user can see how much it's increasing by"): wins/XP/level gains count up over ~1.2–2 s scaled to the jump, with the "+amount" shown big. Finite, no stacking, reduced motion = instant.
 - [ ] 5. (13:35: visible half DONE on feat/numbers-feel a1c31c8 — '43.7%' with one decimal, a pooled '+X.X%' pop per credit, a flash + soft note at every 10%, the bar counts up from where it was when you left for a game; the movement check FAILED badly → Option F proposal at the top of ANDY TODO) HIGH-LEVEL BAR FEELS STAGNANT (Andy LV175: "bar just isn't moving"): show % to next level with a decimal, a "+X%" pop per word, a small milestone tick every 10% with a little reward feel. Sim: at LV150–250 the bar moves ≥0.5% per average word. If the existing-player numbers say the wait is too long, PROPOSE (don't apply) a fair one-time rescale with before/after per top player.
 
+## REBIRTH READY — never miss it (Andy oct3 ~21:45)
+- [ ] The first rebirth can only happen after round 1, so the ROUND-END screen shows a big "REBIRTH READY → ×5 FOREVER" button the moment the wall (the rebirth gate) is reached. One tap goes straight into the rebirth moment.
+- [ ] Same on the MENU.
+- [ ] Never let a player miss that they can rebirth.
+
 ## PROGRESSION FINAL — "REBIRTH RUSH" v2 (Andy oct3 20:08) — REPLACES the v10/v11 curves AND the 19:54 KE curve change; keep v11's letters-only XP plumbing. Verbatim spec: claude/econ-oct2/PROGRESSION-FINAL.md (FROZEN structure; later only constants ±20% after a CI sim)
 - [ ] need(n) = 100 × 1.15^(n−1), same for everyone.
 - [ ] XP/letter = BASE 10 × KEY × REBIRTH 5^R × MARK × BOOST; game letters ×1, menu ×0.2; game words 0 XP.
