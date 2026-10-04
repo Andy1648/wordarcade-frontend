@@ -117,8 +117,9 @@ test('PROGRESS_KEYS excludes the five device/UX keys', () => {
   for (const dev of ['taw.seenWinsHint', 'taw.sfxEvents', 'taw.clack', 'taw.audioVolume', 'taw.musicMuted']) {
     assert.ok(!PROGRESS_KEYS.includes(dev), `${dev} must not be a progress key`);
   }
-  assert.equal(PROGRESS_KEYS.length, 47); // +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2); +wallTierSeen (N4); +xpv10, rbgate, pv10notice (PV10)
+  assert.equal(PROGRESS_KEYS.length, 52); // +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2); +wallTierSeen (N4); +xpv10, rbgate, pv10notice (PV10); +markRolls, permanentMarks, winsCarry, overdrive, rrnotice (RR)
   for (const k of ['taw.xpv10', 'taw.rbgate', 'taw.pv10notice', 'taw.econ']) assert.ok(PROGRESS_KEYS.includes(k), k);
+  for (const k of ['taw.markRolls', 'taw.permanentMarks', 'taw.winsCarry', 'taw.overdrive', 'taw.rrnotice']) assert.ok(PROGRESS_KEYS.includes(k), k);
 });
 
 // PV10 must-fix 4: a restored blob's econ stamp is written; with none, the LOCAL stamp/shadow/gate go, so
@@ -140,4 +141,16 @@ test('PV10: import keeps the blob\'s own econ stamp', () => {
   importSave(code, store);
   assert.equal(m.get('taw.econ'), '10');
   assert.equal(m.get('taw.xpv10'), '{"lv":40,"f":0.25,"rc":0,"v":10}');
+});
+
+test('RR: rolled marks + wins carry round-trip; a local pending RR notice goes when the blob has none', () => {
+  const rolls = JSON.stringify({ rolls: 3 });
+  const code = exportSave(makeStore({ 'taw.markRolls': rolls, 'taw.permanentMarks': '["kraken"]', 'taw.winsCarry': '0.4', 'taw.econ': '12' }));
+  const m = new Map([['taw.rrnotice', '3']]);
+  const store = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  assert.equal(importSave(code, store).ok, true);
+  assert.equal(m.get('taw.markRolls'), rolls);
+  assert.equal(m.get('taw.permanentMarks'), '["kraken"]');
+  assert.equal(m.get('taw.winsCarry'), '0.4');
+  assert.equal(m.has('taw.rrnotice'), false);
 });

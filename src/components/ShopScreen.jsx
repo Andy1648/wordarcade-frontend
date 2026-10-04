@@ -17,9 +17,10 @@ import { formatNum, formatMult, formatMultExact } from '../format';
 // A KEY multiplier: ×2.15 precision under 1,000, a grouped whole number from there (×2,150, not ×2150).
 const keyMult = (m) => (m >= 1000 ? formatNum(m) : formatMultExact(m));
 // REBIRTH RUSH: the STAR PERKS that no longer do anything are not sold. STAR POWER (+10% wins) is out
-// of the wins formula and AUTO-FORGE buys the LETTER FORGE, which is no longer sold. Their stored
-// levels are untouched (stars.js) — only the shelf hides them.
-const RETIRED_PERKS = new Set(['power', 'autoForge']);
+// of the wins formula, AUTO-FORGE buys the LETTER FORGE, which is no longer sold, and HEAD START is
+// switched off (stars.js HEAD_START_ON = false). Their stored levels are untouched (stars.js) — only the
+// shelf hides them.
+const RETIRED_PERKS = new Set(['power', 'autoForge', 'head']);
 const LIVE_PERKS = PERKS.filter((p) => !RETIRED_PERKS.has(p.id));
 import ShopSticker from './ShopSticker';
 import RedeemCodes from './RedeemCodes';

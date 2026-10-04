@@ -12,7 +12,7 @@
 //     The counter is state, so the UI can show it.
 //   - DUPES: every 10 dupes make a GOLD (the MAIN's bonus ×2), every 10 golds a RAINBOW (×5).
 //   - The INDEX (% collected) pays a small permanent bonus (+0.5% per %) + LUCK and a wins lump at milestones.
-//   - PERKS (markPerks.js): LEGENDARY+ marks unlock a perk while owned.
+//   - PERKS (markPerks.js): LEGENDARY+ marks carry a perk that runs while that mark is the worn MAIN.
 //   - PERMANENT marks come only from the hard achievements. They are not rollable and each adds LUCK.
 //
 // THE ENGINE IS PURE: roll(rng, state, ctx) returns a NEW state and a result; nothing here reads
@@ -22,7 +22,8 @@
 // boot, for wins.js / letterXp.js and the menu chip). Everything else here loads with the MARKS panel. This
 // module re-exports the core, so `import … from './markRolls.js'` still sees everything.
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY } from './marks.js';
-import { perWordRateNow } from './wins.js';
+import { gameKey, WORD_LEN_REF } from './wins.js';
+import { xpPerWord } from './xp.js';
 import {
   ROLL_MARKS, rollMarkById, permanentMarkById, PERMANENT_MARKS, tierRank, mainBonus, oneInX, COLLECTION_MILESTONES,
   freshState, normalize, markLevel, mainMultOf, loadRollState, saveRollState, num, collection,
@@ -68,7 +69,7 @@ export const BONUS_ROLL_MULT = 2;
 export const ROLL_UNLOCK_LEVEL = 10; // with MARKS (marks.js MARKS_UNLOCK_LEVEL), or any rebirth
 // PRICE (Andy): "cost 60 words of wins at your rate" — 60 × the live per-word rate of the reference word
 // (wins.js perWordRateNow, Word Bomb), WITHOUT the timed multipliers (BOOST / OVERDRIVE / FRENZY): a roll
-// never costs ten times more because OVERDRIVE happens to be running.
+// never costs ten times more because OVERDRIVE happens to be running — and WITHOUT the MARK (see refWordWins).
 export const ROLL_BASE_WORDS = 60;
 
 function milestonesReached(state) {
@@ -212,12 +213,15 @@ export function rollPrice({ level = 1, rate = 0 } = {}) {
   const r = Number.isFinite(rate) && rate > 0 ? rate : 0;
   return Math.max(1, Math.round(rollPriceWords(level) * r));
 }
-/** The reference word's wins at the player's live rate (perWordRateNow, Word Bomb), minus the timed boosts. */
+/**
+ * The reference word's wins at the player's live rate (Word Bomb, 5 letters) WITHOUT the timed boosts AND WITHOUT
+ * the MARK (perWordFactors `bonus`: worn MAIN × INDEX). The mark is out of the price on purpose: with it in,
+ * taking a MYTHIC off before rolling made a roll up to ~121× cheaper. What's worn never changes the price.
+ * It is the same xpPerWord the live rate runs on, with the bonus stack at ×1 — exact, not a rounded rate ÷ mark.
+ */
 export function refWordWins() {
   try {
-    const { rate, factors } = perWordRateNow({ mode: 'wordBomb' });
-    const timed = (Number(factors.boost) || 1) * (Number(factors.frenzy) || 1);
-    const v = rate / (timed > 0 ? timed : 1);
+    const v = xpPerWord({ mode: gameKey('wordBomb'), wordLength: WORD_LEN_REF, bonusMult: 1 }) / 10;
     return Number.isFinite(v) && v > 0 ? v : 0;
   } catch {
     return 0;

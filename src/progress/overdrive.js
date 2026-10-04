@@ -71,7 +71,7 @@ export function notePlay(ms, now = Date.now(), rng) {
   const add = Number.isFinite(ms) && ms > 0 ? Math.min(ms, PLAY_GAP_CAP_MS) : 0;
   if (!add) return false;
   const st = read() || { playMs: 0, nextMs: null, until: 0 };
-  // a trigger rolled before OVERCLOCK was owned is pulled in to the perk's window
+  // a trigger rolled before OVERCLOCK was worn is pulled in to the perk's window
   if (st.nextMs == null || st.nextMs > overdriveEveryMin()[1] * 60000) st.nextMs = rollNext(rng);
   if (st.until > now) return false;
   st.playMs += add;

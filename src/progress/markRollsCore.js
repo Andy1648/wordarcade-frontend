@@ -242,9 +242,14 @@ export function perkLine(id) {
   const m = ROLL_BY_ID.get(id);
   return m && m.perks.length ? m.perks.map((p) => (PERKS[p] ? PERKS[p].line : p)).join(' + ') : '';
 }
-/** A non-worn owned card's ONE tag (rule U): its PERK when it has one, else what wearing it pays. */
+/**
+ * A non-worn owned card's ONE tag (rule U): its PERK when it has one, else what wearing it pays. A perk only
+ * runs while its mark is the worn MAIN (markPerks.js), so a non-worn card's perk reads "WEAR: …", never as
+ * already on.
+ */
 export function perkTag(state, id) {
-  return perkLine(id) || mainTag(id, state);
+  const p = perkLine(id);
+  return p ? `WEAR: ${p}` : mainTag(id, state);
 }
 
 let cacheRaw;

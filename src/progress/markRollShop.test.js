@@ -76,14 +76,24 @@ test('the price is 60 words at the live per-word rate (perWordRateNow), timed bo
   withStorage({}, () => {
     const rate = refWordWins();
     assert.ok(rate > 0);
-    assert.ok(Math.abs(rate - perWordRateNow({ mode: 'wordBomb' }).rate) < 1e-9, 'no BOOST running → the live rate');
+    assert.ok(Math.abs(rate - perWordRateNow({ mode: 'wordBomb' }).rate) < 1e-9, 'no BOOST, no mark → the live rate');
     assert.equal(rollPriceNow(1), Math.round(60 * rate));
   });
 });
 
-test('DOUBLE ROLLS (SINGULARITY owned): one price, two results; the rarer is shown', () => {
+test('the worn MARK never changes the price (no taking a MYTHIC off to roll cheap)', () => {
+  const st = JSON.stringify({ v: 1, starter: true, marks: { 'mk-kraken': { n: 1 } } });
+  const bare = withStorage({ [ROLL_STATE_KEY]: st }, () => rollPriceNow(1));
+  withStorage({ [ROLL_STATE_KEY]: st, [MARKS_EQUIPPED_KEY]: 'mk-kraken' }, () => {
+    const f = perWordRateNow({ mode: 'wordBomb' }).factors;
+    assert.ok(f.bonus > 1, 'the worn MYTHIC is in the live rate');
+    assert.equal(rollPriceNow(1), bare, 'but not in the roll price');
+  });
+});
+
+test('DOUBLE ROLLS (SINGULARITY worn): one price, two results; the rarer is shown', () => {
   const st = { v: 1, starter: true, marks: { 'mk-singularity': { n: 1 } } };
-  withStorage({ 'taw.wins': '1000000000', [ROLL_STATE_KEY]: JSON.stringify(st) }, (m) => {
+  withStorage({ 'taw.wins': '1000000000', [ROLL_STATE_KEY]: JSON.stringify(st), [MARKS_EQUIPPED_KEY]: 'mk-singularity' }, (m) => {
     const price = rollPriceNow(1);
     const r = buyMarkRoll({ level: 1, rng: at(0) });
     assert.equal(r.extra.length, 1, 'a second result rides along');

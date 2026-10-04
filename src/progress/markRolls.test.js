@@ -207,8 +207,8 @@ test('tags: ONE short tag — MAIN ×N, or the perk line for LEGENDARY+', () => 
   assert.equal(mainTag('mk-origin', null), 'MAIN ×25');
   assert.equal(mainTag('mk-eternal', null), 'MAIN ×3', 'a PERMANENT pays the LEGENDARY MAIN');
   assert.equal(perkTag(freshState(), 'mk-sparky'), 'MAIN ×1.1');
-  assert.equal(perkTag(freshState(), 'mk-leviathan'), 'LETTERS COUNT ×2');
-  assert.equal(perkTag(freshState(), 'mk-origin'), 'FRENZY IN EVERY MODE + REBIRTH KEEPS 3 KEY TIERS');
+  assert.equal(perkTag(freshState(), 'mk-leviathan'), 'WEAR: LETTERS COUNT ×2', 'a perk runs only while worn');
+  assert.equal(perkTag(freshState(), 'mk-origin'), 'WEAR: FRENZY IN EVERY MODE + REBIRTH KEEPS 3 KEY TIERS');
 });
 
 test('THE MARK: one number — worn MAIN × finish × the INDEX bonus (+0.5% per % collected)', () => {
