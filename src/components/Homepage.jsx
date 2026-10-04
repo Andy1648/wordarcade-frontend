@@ -22,6 +22,7 @@ import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, f
 import { canAffordAny, buyKeyPower } from '../progress/shop';
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
+import { peakLevel } from '../progress/peakLevel';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
@@ -650,10 +651,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // the new frame is named after it. Its own timing is unchanged: it re-forms once the menu has settled
   // (the arrival wipe, WALL_SETTLE_MS after mount), and holds the queue until WallScene says it is over.
   const wallWait = () => Math.max(0, WALL_SETTLE_MS - (Date.now() - mountedAtRef.current));
+  // The wall follows the BEST level this save reached (wallTier.js), not just the live one: the one-time
+  // REBIRTH RUSH conversion (econMigrate.js) turns a LV230 save into LV1 + rebirths at boot, before the menu
+  // ever notes its level — reading the live level alone, that player would lose their wall for good. The
+  // conversion writes the run's peak into taw.records.maxLevel first (peakLevel), so it is read here too.
+  const wallLevel = () => Math.max(levelRef.current, peakLevel());
   useEffect(() => {
+    const lv = wallLevel();
     // within 10 levels of the next wall: warm its (lazy) choreography so the moment never waits on a fetch
-    if (wallTierFor(xpProgress.level + 10) > getWallTier()) import('./wallFx.jsx').catch(() => {});
-    if (wallTierFor(xpProgress.level) <= getWallTier()) return;
+    if (wallTierFor(lv + 10) > getWallTier()) import('./wallFx.jsx').catch(() => {});
+    if (wallTierFor(lv) <= getWallTier()) return;
     announceMenu('wall', (done) => {
       let t = 0;
       const end = () => {
@@ -664,7 +671,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       t = setTimeout(() => {
         if (!aliveRef.current) { end(); return; } // left the menu during the settle: replay next visit
         window.addEventListener(WALL_FX_DONE_EVENT, end);
-        if (!noteWallLevel(levelRef.current)) end();
+        if (!noteWallLevel(wallLevel())) end();
       }, wallWait());
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
