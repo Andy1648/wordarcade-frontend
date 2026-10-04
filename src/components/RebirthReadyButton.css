@@ -1,0 +1,80 @@
+/* REBIRTH READY → ×5 FOREVER — the house primary button (REMATCH / PLAY AGAIN), in PINK and bigger.
+   Flat fill, darker-pink outline, hard black offset shadow, 8px radius. In flow — never fixed. */
+.rr-ready-btn {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 10px 12px;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  line-height: 1.05;
+  /* Bungee's floor is --fs-panel (typeScale.test): 20px on a phone, where it balances onto two lines */
+  font-size: var(--fs-panel);
+  letter-spacing: 0.5px;
+  text-wrap: balance;
+  color: #000;
+  background: #FF4FA3;
+  border: 5px solid #B8236F;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  /* ONE finite attention pop on appear (transform/opacity only — no loop) */
+  animation: rr-ready-pop 360ms cubic-bezier(0.2, 1.6, 0.4, 1) 1 both;
+}
+.rr-ready-btn:hover {
+  transform: scale(1.04) rotate(-1deg);
+  animation: none;
+}
+.rr-ready-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 #000;
+  animation: none;
+}
+.rr-ready-btn:focus-visible {
+  outline: 3px solid #FFE94A;
+  outline-offset: 3px;
+}
+@keyframes rr-ready-pop {
+  0% { opacity: 0; transform: scale(0.7) rotate(-3deg); }
+  70% { opacity: 1; transform: scale(1.06) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rr-ready-btn { animation: none; }
+}
+
+/* Compact (the Word Bomb KO card at 360x640 must not scroll; the phone menu strip). */
+.rr-ready-btn.is-compact {
+  min-height: 48px;
+  padding: 4px 8px;
+  border-width: 4px;
+  box-shadow: 4px 4px 0 #000;
+}
+
+/* ---- per-host placement ---- */
+/* WB / Blitz game-over: first in .game-over-actions. On the wide two-column card those actions are a
+   ROW (.go-foot), so the button claims a full line of its own above REMATCH / LEAVE. */
+.go-foot .game-over-actions { flex-wrap: wrap; }
+.go-foot .game-over-actions > .rr-ready-btn { flex: 1 1 100%; }
+
+/* WORD RACE results: the actions wrap-row, the button takes the whole first line. */
+.wr-over-actions > .rr-ready-btn { flex: 1 1 100%; }
+
+/* SAT RUSH (retro-print page): same pink slab, but in the page's ink — ink outline + ink shadow,
+   square corners like .sr-btn. */
+.rr-ready-btn.is-sat {
+  border-color: var(--ink, #000);
+  border-width: 3px;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--ink, #000);
+}
+
+/* MENU (desktop): inside the XP cluster, under the bar — capped so it reads as a button, not a banner. */
+.rr-ready-btn.is-menu {
+  width: auto;
+  max-width: min(560px, 92vw);
+  padding: 8px 22px;
+  margin-top: 4px;
+}

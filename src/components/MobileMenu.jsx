@@ -163,6 +163,7 @@ export default function MobileMenu({
   onCredits,
   shopDot = false,
   rebirthDot = false,
+  rebirthReadySlot = null, // REBIRTH READY → ×5 FOREVER (Andy oct3) — in flow under the LV strip
   shopRef,
   statsRef,
   rebirthRef,
@@ -239,6 +240,10 @@ export default function MobileMenu({
           <span className="hp-m-stats-wins" data-wins={wins || 0}>{formatNum(wins || 0)}<span className="hp-m-stats-k">WINS</span></span>
         </div>
       )}
+
+      {/* 1a''. REBIRTH READY → ×5 FOREVER (Andy oct3): joins the LV strip's cluster, in flow (never
+             fixed) — the mode rows flex a little shorter while it shows. */}
+      {rebirthReadySlot}
 
       {/* 1a'. REWARDS WAITING, IN FLOW (oct3 live check): the fixed top popup covered the title row — the gold
              podium button included. On the phone it sits here under the LV strip; the mode rows flex shorter. */}
@@ -382,10 +387,10 @@ export default function MobileMenu({
           <button
             ref={rebirthRef}
             type="button"
-            className={`hp-m-navbtn is-rebirth${navigating ? ' is-disabled' : ''}`}
+            className={`hp-m-navbtn is-rebirth${rebirthDot ? ' is-ready' : ''}${navigating ? ' is-disabled' : ''}`}
             onClick={onRebirth}
             disabled={navigating}
-            aria-label="Open rebirth"
+            aria-label={`Open rebirth${rebirthDot ? ' — ready' : ''}`}
           >
             REBIRTH
             {rebirthDot && <span className="hp-m-dot" aria-hidden="true" />}

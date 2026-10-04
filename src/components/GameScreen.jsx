@@ -39,6 +39,9 @@ import { applyRingSize } from './wbRingSize';
 import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
+// REBIRTH READY → ×5 FOREVER (Andy oct3): first on every game-over card when the gate is reached. It
+// arms the rebirth intent and leaves through the card's EXISTING onLeave (the room's leave path).
+import RebirthReadyButton from './RebirthReadyButton.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
@@ -4151,6 +4154,7 @@ export default function GameScreen({
                 card at every width and can never fall below the fold. ===== */}
             <div className="go-foot">
             <div className="game-over-actions">
+              <RebirthReadyButton onGo={onLeave} className="is-compact" />
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
                   rematch from any seat), so a non-host is never stranded at game-over with
@@ -4454,6 +4458,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           </div>
 
           <div className="game-over-actions">
+            <RebirthReadyButton onGo={onLeave} />
             <button className="solo-play-again-btn" onClick={onPlayAgain} disabled={actionPending}>
               {daily ? "REPLAY TODAY'S" : 'PLAY AGAIN'}
             </button>
@@ -4921,6 +4926,7 @@ function CategoryBlitzScreen({
               })}
             </div>
             <div className="game-over-actions">
+              <RebirthReadyButton onGo={onLeave} className="is-compact" />
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
                   rematch from any seat), so a non-host is never stranded at game-over with

@@ -19,6 +19,7 @@ import { RACE_REASON_COPY, precheck, myFragment } from './raceState';
 import { formatNum, plural } from '../format';
 import './WordRace.css';
 import { noteTypedLetters } from '../progress/letterXp.js';
+import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -338,6 +339,9 @@ export default function WordRaceScreen({
               : <>NO WINS THIS RACE — 3 WORDS START THE BANK</>}
           </p>
           <div className="wr-over-actions">
+            {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
+                the race's EXISTING onLeave (the room leave path); the menu runs the rebirth + ceremony. */}
+            <RebirthReadyButton onGo={onLeave} />
             <button type="button" className="wr-btn wr-btn-go" onClick={onRematch} disabled={rematchPending}>
               {isHost ? 'RACE AGAIN' : 'BACK TO LOBBY'}
             </button>
