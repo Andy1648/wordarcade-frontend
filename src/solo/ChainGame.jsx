@@ -27,6 +27,7 @@ import { tierCrossed } from '../juice/ladder.js';
 import { useLatched } from '../components/FeelLadder.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
+import NearMiss from '../components/NearMiss.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -435,6 +436,7 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
         tryRow: (
           <>
             <ClaimPrompt />
+            <NearMiss mode="chain" onPlay={g.restart} />
             <TryModeRow current="chain" />
           </>
         ),
