@@ -2,7 +2,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DIFFICULTIES, difficultyLabel, difficultyDesc, difficultyReadout, difficultyPay } from './difficulty.js';
-import { DIFFICULTY_MULT } from './progress/wins.js';
 
 test('the lobby label and the in-game label come from the same map (no CRAZY→MEDIUM drift)', () => {
   // The exact contradiction the bug produced: the server key must render as the edgy tier
@@ -30,13 +29,13 @@ test('unknown / blank keys fall back to the uppercased key, never throw', () => 
 });
 
 test('the readout pairs the label with the desc', () => {
-  assert.equal(difficultyReadout('medium'), 'CRAZY — 10s · 2 lives · ×1.5 WINS');
+  assert.equal(difficultyReadout('medium'), 'CRAZY — 10s · 2 lives');
 });
 
-test('H6/M21: the picker says harder pays more, from the payout table', () => {
-  assert.equal(difficultyPay('chill'), '×1 WINS');
-  assert.equal(difficultyPay('easy'), '×1.25 WINS');
-  assert.equal(difficultyPay('hard'), '×2 WINS');
-  for (const d of DIFFICULTIES) assert.equal(difficultyPay(d.key), `×${DIFFICULTY_MULT[d.key]} WINS`);
+test('Rebirth Rush: difficulty is not in the wins formula, so the picker quotes no "×N WINS"', () => {
+  for (const d of DIFFICULTIES) {
+    assert.equal(difficultyPay(d.key), '');
+    assert.ok(!difficultyReadout(d.key).includes('×'), `readout "${difficultyReadout(d.key)}" claims a multiplier`);
+  }
   assert.equal(difficultyPay('nope'), '');
 });

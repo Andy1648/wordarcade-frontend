@@ -3886,7 +3886,7 @@ export default function GameScreen({
                 )}
                 {pending.phase === 'accept' && (
                   <span className="wb-pending-tag">
-                    ✓{pending.combo > 1 ? ` ×${pending.combo}` : ''}
+                    ✓
                   </span>
                 )}
                 {pending.phase === 'reject' && (

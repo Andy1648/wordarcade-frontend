@@ -8,13 +8,12 @@ import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
-import { masteryState, masteryNeed, MASTERY_XP_STEP, MASTERY_MODES, MASTERY_MILESTONE_EVERY } from '../progress/mastery';
+import { masteryState, masteryNeed, MASTERY_MODES, MASTERY_MILESTONE_EVERY } from '../progress/mastery';
 
-// MASTERY (Job 2): a compact per-mode mastery readout — level, the current XP perk, and words to
-// the next level. Reads client state directly (cheap); shown in every mode dialog.
+// MASTERY (Job 2): a compact per-mode mastery readout — level, words to the next level, and the next
+// milestone bonus. Reads client state directly (cheap); shown in every mode dialog.
 function MasteryLine({ mode, accent, inPicker = false }) {
   const st = masteryState(mode);
-  const pct = Math.round(MASTERY_XP_STEP * (st.level - 1) * 100);
   return (
     // `--picker`: this is the pack-picker (blitz) dialog, the only one where the picker fights the
     // mastery row for space. It is hidden on short-and-narrow phones (see ModeDialog.css) so the
@@ -24,8 +23,8 @@ function MasteryLine({ mode, accent, inPicker = false }) {
         M{st.level}
       </span>
       <span className="mode-dialog-mastery-txt">
-        {/* PROGRESSION v11: mastery is a WINS bonus (the bar is credited level XP), so it says WINS. */}
-        {pct > 0 ? `+${pct}% WINS THIS MODE` : 'MASTERY — PLAY TO LEVEL UP'}
+        {/* Rebirth Rush: mastery no longer multiplies wins (no "+N% WINS") — its milestone grant still pays. */}
+        MASTERY
         {/* H6/L7: a count with its unit, not a bare "0/31". */}
         {!st.maxed && (
           <span className="mode-dialog-mastery-next"> · {Math.max(0, st.need - st.intoLevel)} WORDS TO M{st.level + 1}</span>

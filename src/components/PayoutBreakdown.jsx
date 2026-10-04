@@ -1,8 +1,8 @@
 // PayoutBreakdown.jsx — the receipt for a payout.
 //
-// "I got 40k and couldn't tell where it came from." A word's wins are a PRODUCT of up to nine
-// multipliers — mode, difficulty, level, rebirth, momentum, WORD SENSE, rarity, combo, lucky — and
-// before this nothing on screen named any of them. Two views on the same data (src/progress/payout.js):
+// "I got 40k and couldn't tell where it came from." A word's wins are a PRODUCT — Rebirth Rush:
+// BASE 10 × length/5 × MODE × REBIRTH × MARK × BOOST (× FRENZY on FUSE) — and once nothing on
+// screen named any of them. Two views on the same data (src/progress/payout.js):
 //
 //   <WordPayout>  one word, at accept time: base × each live multiplier = what you were paid.
 //   <RoundPayout> the whole round, on the end screen: each factor's SHARE of everything you earned
@@ -49,9 +49,12 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
   // WINS — `perLetter` arrives as KEY's XP-units per letter (wins = ÷ 10): "BASE 1 WINS / LETTER × 5
   // LETTERS ×2 MODE" multiplies out to the +10 WINS headline, and never reads like the bar's
   // "BASE 10 XP / LETTER".
+  // REBIRTH RUSH: the base is said the way the formula is — "BASE 10 WINS × 7/5 LETTERS" (BASE 10 WINS a
+  // 5-letter word, scaled by length). `perLetter` is the wins basis of one letter in XP units (÷10 = wins),
+  // so ×5 ÷ 10 is the BASE for 5 letters.
   const baseTerm = payout.letters && payout.perLetter
-    ? `BASE ${formatRate(payout.perLetter / 10)} WINS / LETTER × ${formatNum(payout.letters)} ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
-    : `BASE ${formatRate(payout.base)} / WORD`;
+    ? `BASE ${formatRate(payout.perLetter / 2)} WINS × ${formatNum(payout.letters)}/5 ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
+    : `BASE ${formatRate(payout.base)} WINS / WORD`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
       {/* WINS ONLY (PROGRESSION v11, amended): a game word pays wins; the level bar fills from LETTERS

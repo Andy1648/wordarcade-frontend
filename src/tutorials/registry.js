@@ -23,7 +23,7 @@ export const TUTORIALS = [
     id: 'pv10',
     isNew: true,
     when: (s) => !!s.pv10Notice,
-    steps: [{ title: 'LETTERS FILL THE BAR', line: 'BASE 10 XP / LETTER · WORDS PAY WINS. YOU KEPT EVERY LEVEL.' }], // v11
+    steps: [{ title: 'LETTERS FILL THE BAR', line: 'BASE 10 XP / LETTER · BASE 10 WINS / WORD. YOU KEPT EVERY LEVEL.' }], // v11
   },
   {
     id: 'marks',
@@ -68,8 +68,8 @@ export const TUTORIALS = [
     id: 'rebirth',
     when: (s) => s.rebirthReady && s.rebirths === 0,
     steps: [
-      { title: 'REBIRTH READY', line: 'YOUR LEVEL GOES BACK TO 1 — FOR +100% WINS & XP, FOR GOOD.' },
-      { title: 'YOU KEEP', line: 'KEY POWER, MARKS AND YOUR WINS.', target: '.homepage-nav-btn.is-rebirth, .hp-m-navbtn.is-rebirth' },
+      { title: 'REBIRTH READY', line: 'YOUR LEVEL GOES BACK TO 1 — FOR ×5 XP & WINS, FOR GOOD.' },
+      { title: 'KEY RESETS · WINS KEPT', line: 'KEEP YOUR WINS AND MARKS — REBUY KEY FAST.', target: '.homepage-nav-btn.is-rebirth, .hp-m-navbtn.is-rebirth' },
     ],
   },
   {

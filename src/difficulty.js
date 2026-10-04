@@ -10,8 +10,6 @@
 // in gameLogic.js (chill 20s/3, HARD 15s/2, CRAZY 10s/2, HELL 7s/2). Category Blitz has no
 // difficulty control (its timer is a fixed 20s and rerolls come from a separate prop), so
 // there is deliberately no CB variant here.
-import { DIFFICULTY_MULT } from './progress/wins.js';
-import { formatMultExact } from './format.js';
 
 export const DIFFICULTIES = [
   { key: 'chill', label: 'CHILL', desc: '20s · 3 lives' },
@@ -33,15 +31,16 @@ export function difficultyDesc(key) {
   return BY_KEY[key]?.desc ?? '';
 }
 
-// H6/M21: what the tier PAYS — read from the same DIFFICULTY_MULT the payout applies, so the
-// picker can never quote a multiplier the game does not pay. '' for an unknown key.
+// What the tier PAYS on top: nothing. REBIRTH RUSH took difficulty out of the wins formula (wins.js
+// perWordFactors reads it ×1), so the picker quotes no "×N WINS". Kept as an export ('' always) so
+// callers don't churn.
+// eslint-disable-next-line no-unused-vars
 export function difficultyPay(key) {
-  const m = DIFFICULTY_MULT[key];
-  return BY_KEY[key] && Number.isFinite(m) ? `×${formatMultExact(m)} WINS` : '';
+  return '';
 }
 
-// Read-only readout for non-hosts: "CRAZY — 10s · 2 lives · ×1.5 WINS" (falls back to the bare key).
+// Read-only readout for non-hosts: "CRAZY — 10s · 2 lives" (falls back to the bare key).
 export function difficultyReadout(key) {
   const m = BY_KEY[key];
-  return m ? `${m.label} — ${m.desc} · ${difficultyPay(key)}` : String(key || '').toUpperCase();
+  return m ? `${m.label} — ${m.desc}` : String(key || '').toUpperCase();
 }

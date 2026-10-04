@@ -82,9 +82,9 @@ test('COMMON stays silent (announce=false, empty label); UNCOMMON+ announce with
   assert.equal(wordRarity('aaaaa', idx).announce, false);
   assert.equal(wordRarity('aaaaa', idx).label, '');
   assert.equal(wordRarity('bbbbb', idx).announce, true);
-  assert.equal(wordRarity('bbbbb', idx).label, 'UNCOMMON ×1.5');
-  assert.equal(wordRarity('ccccc', idx).label, 'RARE ×2.5');
-  assert.equal(wordRarity('zzzzz', idx).label, 'OBSCURE ×4');
+  assert.equal(wordRarity('bbbbb', idx).label, 'UNCOMMON');
+  assert.equal(wordRarity('ccccc', idx).label, 'RARE');
+  assert.equal(wordRarity('zzzzz', idx).label, 'OBSCURE');
 });
 
 test('safe defaults: empty word / missing index → COMMON, silent, ×1 (never throws)', () => {

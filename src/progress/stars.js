@@ -14,6 +14,9 @@
 //   AUTO-KEY    buys KEY POWER whenever you can afford it (on every menu return)
 //   AUTO-FORGE  buys LETTER FORGE the same way
 // Each layer unlock is a claimable "NEW SYSTEM" reveal (claims.js kind 'layer').
+// REBIRTH RUSH: STAR POWER (+10% wins) is out of the wins formula and the LETTER FORGE is off the shelf,
+// so the shop no longer SELLS STAR POWER or AUTO-FORGE (ShopScreen hides them). Their entries stay in
+// PERKS so stored levels load untouched.
 //
 // PURE + guarded store (taw.stars). Blocked storage → no stars, every perk at 0, never throws.
 import { rebirthThreshold, loadProgress, saveProgress, getRebirths, doRebirth } from './xp.js';
@@ -159,7 +162,7 @@ export function rebirthWithStars() {
     queueClaim({ id: 'layer-stars', kind: 'layer', label: 'NEW SYSTEM — STAR PERKS', detail: 'stars', meta: { blurb: 'Rebirths now pay ★ — the further past the gate, the more. Spend them in REBIRTH → STAR PERKS.' } });
   }
   if (rc === LAYER_AUTO_AT) {
-    queueClaim({ id: 'layer-auto', kind: 'layer', label: 'NEW SYSTEM — AUTOMATION', detail: 'auto', meta: { blurb: 'AUTO-KEY and AUTO-FORGE buy for you. Unlock them with ★ in REBIRTH.' } });
+    queueClaim({ id: 'layer-auto', kind: 'layer', label: 'NEW SYSTEM — AUTOMATION', detail: 'auto', meta: { blurb: 'AUTO-KEY buys KEY POWER for you. Unlock it with ★ in REBIRTH.' } }); // AUTO-FORGE retired (Rebirth Rush)
   }
   return { rc, stars };
 }

@@ -15,7 +15,7 @@ import {
   roundWordXp,
   keyTierXp,
   getKeyTier,
-  XP_MULTIPLIERS,
+  modePower,
 } from './xp.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { addMarkWord } from './marks.js';
@@ -257,11 +257,13 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
   // REBIRTH RUSH (FROZEN): WINS / word = BASE 10 × length/5 × MODE POWER × REBIRTH 5^R × MARK × BOOST (× FRENZY on
   // FUSE). Difficulty, streak, mastery, STAR POWER and the LETTER FORGE are no longer in the payout: they read ×1
-  // here so every receipt row that names them shows ×1 (and is hidden as inactive). `mode` stays the ×2-based table
-  // (WB 2 = POWER ×1); xpPerWord divides it back to POWER.
+  // here so every receipt row that names them shows ×1 (and is hidden as inactive). `mode` is the MODE POWER the
+  // payout actually applies (WB ×1, RACE ×1.5, CHAIN ×2, SAT ×5) — the ×2-based XP_MULTIPLIERS table read ×2 for
+  // WB on the receipt and on the card's BONUS tag, a factor xpPerWord never paid. (Display only: perWordXp does
+  // not read f.mode; xpPerWord applies modePower itself.)
   void difficulty; void stm; void mastery;
   return {
-    mode: XP_MULTIPLIERS[id] ?? 1,
+    mode: modePower(id),
     difficulty: 1,
     rebirth: rebirthMult(rc),
     streak: 1,

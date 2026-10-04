@@ -10,7 +10,6 @@
 import { useEffect, useRef, useState } from 'react';
 import '../components/wall-system.css'; // .solo-root adopts .wall-surface (token overrides in Solo.css)
 import './Solo.css';
-import { LUCKY_WINS_MULT } from '../progress/luck';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import { formatNum } from '../format';
 // The standing multiplier readout — "every win and multiplier visible, no hidden credits".
@@ -413,7 +412,7 @@ export default function SoloShell({
         </div>
       ) : null}
 
-      {/* LUCKY WORD (Job 4): a finite 400ms gold burst + "LUCKY ×5" stamp, re-keyed per lucky
+      {/* LUCKY WORD (Job 4): a finite 400ms gold burst + "LUCKY!" stamp (no ×N: lucky pays no multiplier), re-keyed per lucky
           hit so it replays. Absolutely positioned, pointer-events:none, transform/opacity only —
           no idle/infinite animation. */}
       {/* THE FEEL LAYER (escalation ladder): the tier slam (one pooled node), this word's
@@ -438,7 +437,7 @@ export default function SoloShell({
       {phase === 'playing' && luckyKey > 0 && slotMain === 'lucky' && (
         <div className="solo-lucky" key={luckyKey} aria-hidden="true">
           <span className="solo-lucky-ring" />
-          <span className="solo-lucky-label">LUCKY ×{LUCKY_WINS_MULT}</span>
+          <span className="solo-lucky-label">LUCKY!</span>
         </div>
       )}
 

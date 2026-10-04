@@ -12,7 +12,7 @@ import { burst } from '../juice';
 import './RebirthCeremony.css';
 
 /**
- * @param c  { rc, mult, stars, fromLevel, toLevel, kept: [{ label, value }] }
+ * @param c  { rc, mult, stars, fromLevel, toLevel, fromKey, kept: [{ label, value }] }
  */
 export default function RebirthCeremony({ c, onContinue }) {
   const btnRef = useRef(null);
@@ -27,7 +27,7 @@ export default function RebirthCeremony({ c, onContinue }) {
       <div className="rbc-card">
         <div className="rbc-kicker">REBIRTH {c.rc}</div>
         <div className="rbc-hero">
-          ×{formatMult(c.mult)} <span className="rbc-hero-unit">WINS</span>
+          ×{formatMult(c.mult)} <span className="rbc-hero-unit">XP &amp; WINS</span>
         </div>
         {c.stars > 0 && <div className="rbc-stars">+{formatNum(c.stars)} ★ FOR STAR PERKS</div>}
 
@@ -43,7 +43,18 @@ export default function RebirthCeremony({ c, onContinue }) {
               </span>
             </div>
             {c.toLevel > 1 && <div className="rbc-note">HEAD START: YOU BEGIN AT LV {formatNum(c.toLevel)}</div>}
-            <p className="rbc-only">ONLY YOUR LEVEL RESETS. EVERYTHING IN KEPT STAYS.</p>
+            {/* Rebirth Rush: KEY resets to T0 every rebirth (wins kept → rebuy it). */}
+            {c.fromKey > 0 && (
+              <div className="rbc-row rbc-level rbc-key">
+                <span className="rbc-label">KEY</span>
+                <span className="rbc-level-val">
+                  <span className="rbc-from">T{formatNum(c.fromKey)}</span>
+                  <span className="rbc-arrow">→</span>
+                  <span className="rbc-to">T0</span>
+                </span>
+              </div>
+            )}
+            <p className="rbc-only">LEVEL AND KEY RESET. EVERYTHING IN KEPT STAYS.</p>
           </section>
           <section className="rbc-col rbc-kept" aria-label="Kept">
             <h3 className="rbc-col-h">KEPT</h3>
