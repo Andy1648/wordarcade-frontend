@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~11:20 MERGED #198 Chromebook pages (3 full-ratio cards a page at ≤700px tall; arrows/dots/keys/swipe; pager lazy; at 1163×501 the cards cap to the row, ~11% squat — the only size short of full ratio).
 - oct5 ~11:15 ✅ #199 MERGED + LIVE (588a330): KEY TIER kept across rebirths, gate LV 25×(R+1), conversion frozen at 15+18R. **ANDY: RUN 019 NOW** (supabase/migrations/019_round_rebirth_gate.sql, on your clipboard) then `notify pgrst`; until then the board's level cap (15+18R+36) is below the new gate.
 - oct5 ~11:05 MERGED + LIVE #197 multi-level bar (ratchet 963,000) · #200 live · #193 had main conflicts (no CI ran) — resolved: the ROLL tutorial is now a spotlight on the ROLL screen's ROLL · #198 Chromebook: CREDITS fix + pager lazy-loaded (+1.8 KB initial), main merged in · #199 shop confirm: KEEP lists KEY TIER.
 - oct5 ~10:35 MERGED #200 KEY POWER → KEY TIER · OPENED #201 named stats (×1.1 WINS / PERK: / ★N), #202 MARKS word cut + ROLL/INDEX split · #197: payload ratchet 960,000 → 963,000 — the multi-level bar player costs a measured +3.1 KB in the index chunk (ANDY: say if you'd rather trade it for something else) · FLAG: HEIRLOOM perk "REBIRTH KEEPS 3 KEY TIERS" is dead once #199 lands (KEY always kept) — needs a replacement perk.
@@ -194,7 +195,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 
 ## ANDY oct5 ~10:30 — PRIORITY (added to the goal; small PRs, merge when green)
 - [~] (#196 MERGED: spotlight tutorials, TAP ANYWHERE hint cut) 1. TUTORIALS = spotlight style: screen dims, the one target glows, tap anywhere to continue. No OK-button popups. Keep only the few that matter (roll, gems, rebirth, KEY TIER); cut minor ones like the wall moving.
-- [~] (#198 open, CI) 2. CHROMEBOOK LAYOUT (test 1366×657 and 1280×551): game cards are flattened and look horrendous → 3 cards per page at the full card ratio, flip page 1 ↔ 2 with arrows / swipe / arrow keys + a page indicator. No squashed cards, no cut-off cards. Check every screen at those sizes.
+- [x] (#198 MERGED b7e284e) 2. CHROMEBOOK LAYOUT (test 1366×657 and 1280×551): game cards are flattened and look horrendous → 3 cards per page at the full card ratio, flip page 1 ↔ 2 with arrows / swipe / arrow keys + a page indicator. No squashed cards, no cut-off cards. Check every screen at those sizes.
 - [~] (#202 open, stacked #201→#194→#193) 3. MARKS: cut words everywhere except the INDEX detail view.
 - [x] (#195 MERGED) 4. STAT BOARD: the TOTAL MULTIPLIER (×N, huge) comes FIRST, then BASE, then each multiplier line.
 - [x] (#197 MERGED + LIVE 4f35360) 5. PROGRESS BAR lags on multi-level climbs: each level passed = a fast full-fill flash (~100 ms each, capped ~1 s total), the level number ticks up, then fill to the real %. Never sit half-filled or behind the real value.
