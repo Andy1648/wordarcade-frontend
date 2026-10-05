@@ -68,8 +68,9 @@ for (const s of SETUPS) {
     // says what fills the bar. PROGRESSION v11 (amended): words pay WINS only.
     const perkEl = card.locator('.game-card-xp').filter({ visible: true }).first();
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
-    void perkEl; // Andy oct3 18:55: one line per card — "BASE n / WORD · POWER ×N"; the live rate rides data-rate
-    await expect(winsEl).toContainText('BASE');
+    void perkEl; // Andy oct5: the card shows the REAL pay per word ("781K / WORD"); the same live rate rides data-rate
+    await expect(winsEl).toContainText('10 / WORD');
+    await expect(winsEl).not.toContainText('BASE');
     await expect(winsEl).not.toContainText('XP');
     const cardWins = Number(await winsEl.getAttribute('data-rate'));
     // A fresh save (R0, no mark, no boost) at Word Bomb (MODE ×1): exactly BASE 10 WINS / WORD — the forge
