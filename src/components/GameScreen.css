@@ -1978,7 +1978,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-body); /* TYPE FLOOR: names what the fragment IS - not decoration */
+  font-size: var(--fs-label); /* TYPE FLOOR: names what the fragment IS - not decoration (stays label-size: --fs-body overlapped the fragment, wb-text-overlap) */
   letter-spacing: 1px;
   color: #FF6B3D;
   margin-bottom: 8px;
@@ -6664,7 +6664,7 @@ html[data-beat='true'] .wb-belly {
     border-width: 6px;
     box-shadow: 7px 7px 0 #000;
   }
-  .wb-timer-bar { height: calc(16px * var(--wb-k, 1)); }
+  .wb-timer-bar { height: calc(12px * var(--wb-k, 1)); } /* fine-tune oct5: 8 → 12 (16 squeezed the ring under 45% of the board) */
 
   /* THE RING: the bomb and seats are already fractions of --wb-size; the fixed px bands
      around a seat (its name, the YOUR TURN flag, the status line) scale here. */
