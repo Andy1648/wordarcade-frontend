@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~15:15 MERGED + LIVE #205 K.O. card scroll (cause: random lucky-word payout row / 2-line roast blurb / secret find overflowed an 11–40px margin; payout capped at 3 rows, blurb reserves 2 lines, tight cards drop blurb + filler). ANDY DECISION: a real 3+ word game shows the ~84px wins-earned block, so a 360×640 K.O. card likely still scrolls in prod — needs a compact wins-earned design.
 - oct5 ~14:30 MERGED + LIVE #204 WB ring fix (root cause: the ring was measured during the 1% accept hitlag scale → 318→325px, stuck; now offsetWidth/Height) · #201 named stats (×1.1 WINS / +5 BASE XP/LETTER / PERK: / ★N on result, MAIN chip, INDEX) · #202 MARKS word cut + ROLL/INDEX split (INDEX REPLAY removed). Prod smoke: roll → result "+1 BASE XP/LETTER", INDEX tile same, no REPLAY, 0 errors. ALL oct5 PRIORITY items merged. Open: K.O. card scroll flake being diagnosed.
 - oct5 ~13:50 MERGED + LIVE #194 GEMS (rolls cost 10 GEMS; gems from word drops / wins / streaks / level-ups / rebirths; menu gem chip; own line on results; menu chip code split so GEMS adds ~0 B initial). Still open: #201 named stats, #202 word cut + ROLL/INDEX split (CI re-running after a test-regex fix).
 - oct5 ~13:20 MERGED #203 payload trim (−7.8 KB initial: roll sounds lazy with the reel, dead menu/splash CSS deleted; INFINITE_BUDGET 51→49; ratchet unchanged) — main green on payload again. #194 / #201 / #202 refreshed onto it, CI running.
