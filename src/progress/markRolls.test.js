@@ -190,12 +190,12 @@ test('distribution: 60k seeded rolls land on the published tier odds (pity off)'
   assert.ok(Math.abs(counts.legendary / N - 0.001) < 0.0006);
 });
 
-test('price: 60 words at your live rate, never 0', () => {
-  assert.equal(ROLL_BASE_WORDS, 60);
-  assert.equal(rollPriceWords(1), 60);
-  assert.equal(rollPriceWords(1000), 60, 'no level scaling — the rate already grows');
-  assert.equal(rollPrice({ level: 1, rate: 10 }), 600);
-  assert.equal(rollPrice({ level: 1, rate: 12.5 }), 750);
+test('price: 72 words at your live rate, never 0', () => {
+  assert.equal(ROLL_BASE_WORDS, 72);
+  assert.equal(rollPriceWords(1), 72);
+  assert.equal(rollPriceWords(1000), 72, 'no level scaling — the rate already grows');
+  assert.equal(rollPrice({ level: 1, rate: 10 }), 720);
+  assert.equal(rollPrice({ level: 1, rate: 12.5 }), 900);
   assert.equal(rollPrice({ level: 1, rate: 0 }), 1);
 });
 
