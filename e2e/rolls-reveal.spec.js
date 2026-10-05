@@ -32,7 +32,7 @@ async function openMarks(page, query = '') {
   await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
   await page.locator('.mx-panel').waitFor();
   const tut = page.locator('.ut-overlay[data-tut="markRolls"]');
-  if (await tut.isVisible().catch(() => false)) await tut.getByRole('button', { name: 'GOT IT' }).click();
+  if (await tut.isVisible().catch(() => false)) await tut.click({ position: { x: 8, y: 8 } }); // spotlight: tap anywhere
 }
 const num = (s) => Number(String(s).replace(/[^0-9]/g, ''));
 const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {

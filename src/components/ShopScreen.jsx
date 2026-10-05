@@ -34,6 +34,8 @@ import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { rarityClass, keyRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
+import SpotlightTutorial from '../tutorials/SpotlightTutorial.jsx';
+import { dueHosted, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
 
 
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
@@ -76,6 +78,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
   const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
+  // KEY TIER spotlight (Andy oct5): the first time a KEY tier is affordable, light the KEY item once.
+  const [keyTutDone, setKeyTutDone] = useState(false);
+  const keyTut = view === 'shop' && !keyTutDone && !autoMode
+    ? dueHosted('shop', { keyAffordable: wins >= kpCost, keyTier, rebirths }, hasSeenTutorial)
+    : null;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
     .sort((a, b) => a.price - b.price)[0] || null;
@@ -402,6 +409,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       </div>
       {reveal && <ShopReveal reveal={reveal} onDone={() => setReveal(null)} />}
       {ceremony && <RebirthCeremony c={ceremony} onContinue={onBack} />}
+      {keyTut && !reveal && !ceremony && (
+        <SpotlightTutorial tutorial={keyTut} onDone={() => { markTutorialSeen(keyTut.id); setKeyTutDone(true); }} />
+      )}
     </div>
   );
 }

@@ -23,7 +23,7 @@ export const RANKUP_MS = 2200;
 export const CLAIM_TUCK_MS = 8000;
 /** Head-room for a lazy chunk (wallFx, RankUpMoment) to arrive before the moment's own clock starts. */
 export const CHUNK_SLACK_MS = 3000;
-/** A tutorial is player-paced (NEXT … GOT IT): the safety release is long, never a guess at reading time. */
+/** A tutorial is player-paced (tap anywhere to continue): the safety release is long, never a guess at reading time. */
 export const TUTORIAL_MAX_MS = 120000;
 
 /** Every menu moment: id → { priority, ms (real length), maxMs (safety), interruptible }. */
