@@ -255,9 +255,13 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-label); /* slack-wins: timer sub-label kept <16 so the 3–4-across button row never overflows at 320px */
+  /* SIZE PASS (oct5): the timer · lives line is real info, so it reads at body size. The row wraps
+     to 2-across under 420px; on a narrow 4-across button the line wraps under the name instead. */
+  font-size: var(--fs-body);
   color: #666;
-  line-height: 1;
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: balance;
 }
 
 .room-difficulty-readonly {
@@ -723,14 +727,8 @@ html[data-beat='true'] .room-leave-btn {
   line-height: 1;
 }
 .room-addbot-desc {
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  font-size: var(--fs-label); /* slack-wins: sub-label kept <16 so the 3-across bot-difficulty row never overflows at 320px */
-  color: #666;
-  line-height: 1.1;
-  text-align: center;
+  /* CLUTTER PASS (oct5): "slow · beatable" under EASY repeats the button's own name — cut. */
+  display: none;
 }
 
 /* ---- [T4] Invite link row (frictionless join) ---- */

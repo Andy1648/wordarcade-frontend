@@ -61,10 +61,10 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  letter-spacing: 0.08em; font-size: var(--fs-label); color: #fff; }
+  letter-spacing: 0.08em; font-size: var(--fs-body); color: #fff; }
 .ach-card.is-earned .ach-card-name { color: #2EFFE0; }
 .ach-card-hint { font-size: var(--fs-label); color: #b9a7d6; line-height: 1.35; }
-.ach-card-wins { margin-top: 2px; font-weight: 700; font-size: var(--fs-label); color: #ffe94a; letter-spacing: 0.04em; }
+.ach-card-wins { margin-top: 2px; font-weight: 700; font-size: var(--fs-panel); color: #ffe94a; letter-spacing: 0.04em; }
 
 .ach-back {
   flex: 0 0 auto; margin: 10px 18px 18px; padding: 12px;
