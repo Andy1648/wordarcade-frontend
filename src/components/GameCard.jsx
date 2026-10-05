@@ -293,16 +293,16 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     : power > 1 ? `POWER ×${formatMultExact(power)}`
     : null;
   const xpLine = null; // one line per card (Andy oct3 18:55); the perk now sits on the payout line
-  // Andy oct3 18:55 (live 1568x675): ONE short line per card — "BASE n / WORD · POWER ×N". The six cards no
-  // longer each repeat "LONGER WORDS PAY MORE" (said ONCE, in the menu hint) or the player's built bonus with
-  // decimals ("×27.98 BONUS" — it lives on the receipt / Stats). The full live rate stays on data-rate (e2e).
-  const baseWins = rateNow ? rateNow.rate / (rateNow.mult || 1) : 0;
+  // Andy oct5: the card shows the player's REAL pay per word — 10 × length/5 × MODE × 5^R × MARK × BOOST for the
+  // reference 5-letter word (perWordRateNow), formatNum — one big number, "781K / WORD", no "BASE", no extra words.
+  // MODE is inside the number (SAT's card reads 5× Word Bomb's), so the "POWER ×N" tag is gone; FUSE keeps its
+  // FRENZY line (a rule, not a number already in the rate). data-rate carries the same live rate (e2e).
+  const fusePerk = isFuse ? perkHead : null;
   const payout = rateNow && (
     <>
-      <span className="game-card-payout-unit">BASE </span>
-      {formatRate(baseWins)}
+      <span className="game-card-payout-num">{formatRate(rateNow.rate)}</span>
       <span className="game-card-payout-per"> / WORD</span>
-      {perkHead && <span className={`game-card-payout-per game-card-perk${isFuse && frenzy.active ? ' is-live' : ''}`}> · {perkHead}</span>}
+      {fusePerk && <span className={`game-card-payout-per game-card-perk${frenzy.active ? ' is-live' : ''}`}> · {fusePerk}</span>}
     </>
   );
   void multTag; // the built-bonus tag is no longer printed on the card (kept for the receipt's wording)
