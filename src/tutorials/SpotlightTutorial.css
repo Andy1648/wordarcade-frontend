@@ -1,0 +1,73 @@
+/* SpotlightTutorial.css — Andy oct5: dim the screen, light the one target, one line, tap anywhere.
+   Same wash + hole technique as components/Spotlight.css (a transparent box whose huge static box-shadow
+   SPREAD is the dim). Motion is finite and transform/opacity only: the layer fades in once, the ring
+   settles once. No loops. Static under reduced motion. */
+.ut-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300; /* the tutorial layer: above the menu and its panels (MARKS / SHOP) */
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  animation: ut-fade 240ms ease-out both;
+}
+.ut-dim {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 3, 12, 0.76);
+}
+.ut-hole {
+  position: fixed;
+  border-radius: 10px;
+  box-shadow: 0 0 0 100vmax rgba(6, 3, 12, 0.76);
+  pointer-events: none;
+}
+/* the glow: a yellow keyline with a black outline and a static yellow halo (never animated — the ring only
+   fades/settles in via opacity + transform) */
+.ut-ring {
+  position: fixed;
+  border-radius: 10px;
+  border: 4px solid #FFE94A;
+  box-shadow: 0 0 0 3px #000, 0 0 22px 6px rgba(255, 233, 74, 0.55);
+  pointer-events: none;
+  animation: ut-ring 320ms cubic-bezier(.2, 1.3, .35, 1) both;
+}
+.ut-line {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  margin: 0 auto;
+  max-width: 560px;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1.05;
+  text-align: center;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.ut-line.is-centered {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ut-tap {
+  display: block;
+  margin-top: 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #c9b8e8;
+  -webkit-text-stroke: 0;
+}
+@keyframes ut-fade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes ut-ring {
+  0% { opacity: 0; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ut-overlay, .ut-ring { animation: none; }
+}

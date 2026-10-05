@@ -44,12 +44,14 @@ test('roll once: tutorial, result card, nothing updates before the reveal lands,
   await menuReady(page);
   await openMarks(page);
 
-  // the one-time, ONE-step tutorial points at ROLL, inside the MARKS panel
+  // the one-time spotlight lights ROLL, inside the MARKS panel: no buttons, tap anywhere to continue
   const tut = page.locator('.ut-overlay[data-tut="markRolls"]');
   await expect(tut).toBeVisible();
   await expect(page.locator('.ut-ring')).toBeVisible();
-  await tut.getByRole('button', { name: 'GOT IT' }).click();
+  await expect(tut.locator('button')).toHaveCount(0);
+  await tut.click({ position: { x: 8, y: 8 } });
   await expect(tut).toHaveCount(0);
+  await expect(page.locator('.mx-panel')).toBeVisible(); // the tap closed the spotlight, not MARKS
 
   expect(await collected(page)).toBe(0);
   const pityBefore = await page.locator('.mr-pity').innerText();
