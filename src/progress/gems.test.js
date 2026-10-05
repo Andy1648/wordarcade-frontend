@@ -29,12 +29,12 @@ function withStorage(seed, fn) {
 const seq = (...xs) => { let i = 0; return () => xs[i++ % xs.length]; };
 const migrated = (o = {}) => JSON.stringify({ v: 1, bal: 0, peak: 1, streak: 0, mig: 1, ...o });
 
-test('the tuning constants Andy set', () => {
-  assert.equal(G.GEM_DROP_CHANCE, 1 / 15);
+test('the tuning constants (drop chance + win payouts tuned on the CI sim; the rest are Andy\'s)', () => {
+  assert.equal(G.GEM_DROP_CHANCE, 1 / 30);
   assert.equal(G.GEM_DROP_MIN, 1);
   assert.equal(G.GEM_DROP_MAX, 3);
-  assert.equal(G.BOT_WIN, 5);
-  assert.equal(G.PER_PLAYER_BEATEN, 5);
+  assert.equal(G.BOT_WIN, 3);
+  assert.equal(G.PER_PLAYER_BEATEN, 3);
   assert.equal(G.STREAK_PER_WIN, 1);
   assert.equal(G.LEVEL_UP, 2);
   assert.equal(G.REBIRTH, 20);
@@ -82,19 +82,20 @@ test('a blocked / corrupt store reads as 0 and never throws', () => {
   }
 });
 
-test('drops: 1 in 15, then 1–3 gems — injectable rng; the menu never drops', () => {
+test('drops: GEM_DROP_CHANCE, then 1–3 gems — injectable rng; the menu never drops', () => {
+  const P = G.GEM_DROP_CHANCE;
   assert.equal(G.rollGemDrop(seq(0.5)), 0);
-  assert.equal(G.rollGemDrop(seq(1 / 15)), 0, 'the chance is strict');
+  assert.equal(G.rollGemDrop(seq(P)), 0, 'the chance is strict');
   assert.equal(G.rollGemDrop(seq(0, 0)), 1);
   assert.equal(G.rollGemDrop(seq(0, 0.5)), 2);
   assert.equal(G.rollGemDrop(seq(0, 0.999)), 3);
-  // the long-run rate: 1/15 × mean 2 = 0.1333 gems per word
+  // the long-run rate: P × mean 2 gems per word
   let s = 0x9e3779b9;
   const rng = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; };
   let total = 0;
   const N = 150000;
   for (let i = 0; i < N; i++) total += G.rollGemDrop(rng);
-  assert.ok(Math.abs(total / N - 2 / 15) < 0.006, `per word ${total / N}`);
+  assert.ok(Math.abs(total / N - 2 * P) < 0.006, `per word ${total / N}`);
   withStorage({}, () => {
     G.setGemRng(seq(0, 0.999));
     assert.equal(G.dropGemsForWord({ mode: 'menu' }), 0);
@@ -116,41 +117,45 @@ test('HOOK: every accepted game word goes through awardWordXp, which rolls the d
   });
 });
 
-test('game results: bots only → BOT_WIN on a win; people → 5 per person beaten; a loss can still beat some', () => {
+test('game results: bots only → BOT_WIN on a win; people → PER_PLAYER_BEATEN per person beaten; a loss can still beat some', () => {
+  const B = G.BOT_WIN;
+  const PP = G.PER_PLAYER_BEATEN;
   const bot = (id) => ({ id, isBot: true });
   const human = (id, beaten = false) => ({ id, isBot: false, beaten });
-  assert.deepEqual(G.gameResultPayout({ iWon: true, rivals: [bot('a'), bot('b')] }).lines, [{ reason: 'bot', amount: 5 }]);
+  assert.deepEqual(G.gameResultPayout({ iWon: true, rivals: [bot('a'), bot('b')] }).lines, [{ reason: 'bot', amount: B }]);
   assert.equal(G.gameResultPayout({ iWon: false, rivals: [bot('a')] }).total, 0);
-  assert.equal(G.gameResultPayout({ iWon: true, rivals: [human('a'), human('b'), human('c')] }).total, 15, 'placement scales it');
-  assert.equal(G.gameResultPayout({ iWon: false, rivals: [human('a', true), human('b'), human('c', true)] }).total, 10, '2nd of 4 beat two');
-  assert.equal(G.gameResultPayout({ iWon: true, rivals: [human('a'), bot('b')] }).total, 5, 'a bot in a people game is not a person beaten');
+  assert.equal(G.gameResultPayout({ iWon: true, rivals: [human('a'), human('b'), human('c')] }).total, 3 * PP, 'placement scales it');
+  assert.equal(G.gameResultPayout({ iWon: false, rivals: [human('a', true), human('b'), human('c', true)] }).total, 2 * PP, '2nd of 4 beat two');
+  assert.equal(G.gameResultPayout({ iWon: true, rivals: [human('a'), bot('b')] }).total, PP, 'a bot in a people game is not a person beaten');
   assert.equal(G.gameResultPayout({ iWon: true, rivals: [human('tab2')], selfIds: ['tab2'] }).total, 0, 'another tab of this browser never pays');
   assert.equal(G.gameResultPayout({ iWon: true, rivals: [], streak: 0 }).total, 0, 'nobody there');
 });
 
 test('win streak: +1 per win in a row before this one; a loss ends it', () => {
+  const B = G.BOT_WIN;
   const bots = [{ id: 'b', isBot: true }];
   const a = G.gameResultPayout({ iWon: true, rivals: bots, streak: 0 });
-  assert.equal(a.total, 5);
+  assert.equal(a.total, B);
   assert.equal(a.streak, 1);
   const b = G.gameResultPayout({ iWon: true, rivals: bots, streak: 1 });
-  assert.deepEqual(b.lines, [{ reason: 'bot', amount: 5 }, { reason: 'streak', amount: 1 }]);
-  assert.equal(G.gameResultPayout({ iWon: true, rivals: bots, streak: 4 }).total, 9);
+  assert.deepEqual(b.lines, [{ reason: 'bot', amount: B }, { reason: 'streak', amount: 1 }]);
+  assert.equal(G.gameResultPayout({ iWon: true, rivals: bots, streak: 4 }).total, B + 4);
   assert.equal(G.gameResultPayout({ iWon: false, rivals: bots, streak: 4 }).streak, 0);
 });
 
 test('payGameResult pays once per game key and carries the streak in storage', () => {
   withStorage({}, () => {
+    const B = G.BOT_WIN;
     const bots = [{ id: 'b', isBot: true }];
-    assert.equal(G.payGameResult({ key: 'g1', iWon: true, rivals: bots }).total, 5);
+    assert.equal(G.payGameResult({ key: 'g1', iWon: true, rivals: bots }).total, B);
     assert.equal(G.payGameResult({ key: 'g1', iWon: true, rivals: bots }).total, 0, 'a re-delivered game over pays nothing');
-    assert.equal(G.payGameResult({ key: 'g2', iWon: true, rivals: bots }).total, 6);
+    assert.equal(G.payGameResult({ key: 'g2', iWon: true, rivals: bots }).total, B + 1);
     assert.equal(G.getWinStreak(), 2);
     assert.equal(G.payGameResult({ key: 'g3', iWon: false, rivals: bots }).total, 0);
     assert.equal(G.getWinStreak(), 0);
     assert.equal(G.payGameResult({ key: 'g4', iWon: true, rivals: [] }).total, 0, 'a game alone pays nothing');
-    assert.equal(G.getGems(), 11);
-    assert.deepEqual(G.sumGems(G.gemsLedger()).by, { bot: 10, streak: 1 });
+    assert.equal(G.getGems(), 2 * B + 1);
+    assert.deepEqual(G.sumGems(G.gemsLedger()).by, { bot: 2 * B, streak: 1 });
   });
 });
 

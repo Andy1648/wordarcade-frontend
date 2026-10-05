@@ -16,11 +16,14 @@
 // into it without joining an import cycle. Every storage access is guarded (a blocked store reads as 0, never throws).
 
 // ------------------------------------------------------------------------------------ tuning (exported)
-export const GEM_DROP_CHANCE = 1 / 15; // per accepted game word
+// TUNED ON THE CI SIM (PR #194, Andy: "tune only the drop chance and win payouts"): at Andy's 1/15 + 5 + 5 the
+// 10 h loop-sim read casual 0.445 / median 0.585 / strong 0.748 rolls per minute vs the 1-per-2–3-min target
+// (0.33–0.5). LEVEL UP + REBIRTH (fixed) are ~60% of it, so the two tunable knobs carry the whole correction.
+export const GEM_DROP_CHANCE = 1 / 30; // per accepted game word (Andy's start: 1/15)
 export const GEM_DROP_MIN = 1;
 export const GEM_DROP_MAX = 3;
-export const BOT_WIN = 5; // won a game whose every rival was a bot
-export const PER_PLAYER_BEATEN = 5; // a game with people in it: per person placed below you
+export const BOT_WIN = 3; // won a game whose every rival was a bot (Andy's start: 5)
+export const PER_PLAYER_BEATEN = 3; // a game with people in it: per person placed below you (Andy's start: 5)
 export const STREAK_PER_WIN = 1; // × the wins in a row BEFORE this one (2nd straight win +1, 3rd +2 …)
 export const LEVEL_UP = 2; // per level reached for the first time on this save
 export const REBIRTH = 20;
