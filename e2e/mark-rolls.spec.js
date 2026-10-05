@@ -1,9 +1,10 @@
 // e2e/mark-rolls.spec.js — THE ROLL SCREEN (Andy oct5; replaces the in-panel roll UI + rolls-reveal.spec.js). Written
 // WITHOUT being run (the authoring machine runs no Playwright); CI runs it. Covers: MARKS opens the full-screen
 // ROLL screen (one big ROLL, no ×10) → the tutorial → a roll spins the reel and the card + pity only change when it
-// LANDS, on the real result; tap anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with
-// "1 IN X" huge; AUTO ROLL stops on its tier; the skip setting is stored; a short balance says NEED X MORE; reduced
-// motion goes straight to the card; the reel fits 360x640 → 1366x657; INDEX opens the MARKS INDEX; nothing loops after.
+// LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (marks v2: "+10% WINS" …); tap
+// anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with "1 IN X" huge; AUTO ROLL stops on its
+// tier; the skip setting is stored; a short balance says NEED X MORE; reduced motion goes straight to the card; the
+// reel fits 360x640 → 1366x657; INDEX opens the MARKS INDEX, and its REPLAY replays a reveal for free; nothing loops after.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -38,6 +39,7 @@ const pity = (page) => page.getByTestId('roll-pity').innerText();
 const card = (page) => page.locator('[data-testid="mark-roll-result"]');
 const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
+  // RUNNING only: a finished one-shot (the rarity sweep's fill-mode both) stays in getAnimations() but moves nothing
   return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running';
 }).length);
 const SPUN = 4600; // past the slowest full spin (SECRET 4 s) + its land beat
@@ -73,6 +75,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   const boxAfter = await roll.boundingBox();
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
   await expect(roll).toHaveText(/^ROLL · [\d\s,.KMB]+ WINS$/);
+  // marks v2: the card says the mark's STAT ("+10% WINS", "+1 BASE WINS/WORD" …)
+  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^\+[\d.,]+/);
   // finite: once landed nothing animates, nothing loops, will-change is off
   await page.waitForTimeout(3600);
   expect(await rollUiAnims(page)).toBe(0);
@@ -162,7 +166,13 @@ test('reduced motion: straight to the result card, no reel animation', async ({ 
   await openRoll(page);
   await page.locator('.rs-roll').click();
   await expect(card(page)).toHaveCount(1, { timeout: 300 });
-  expect(await rollUiAnims(page)).toBe(0);
+  // the REEL never moves (the app-wide press squash on the ROLL button itself — shallow under reduced motion,
+  // juice/motion.js — is button feedback, not the reveal)
+  const reelAnims = await page.evaluate(() => document.getAnimations().filter((a) => {
+    const el = a.effect && a.effect.target;
+    return el && el.closest && el.closest('.rs-stage') && a.playState === 'running';
+  }).length);
+  expect(reelAnims).toBe(0);
 });
 
 for (const [w, h] of [[360, 640], [390, 844], [1366, 657]]) {
@@ -201,10 +211,37 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
+  // nothing worn → the first mark AUTO-equipped; INDEX v2: the worn card says its stat
+  await expect(page.locator('.mx-tile.is-on')).toHaveCount(1);
+  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/);
   await page.locator('.mx-close').click();
   await expect(page.locator('.rs-overlay')).toBeVisible();
   await page.locator('.rs-close').click();
   await expect(page.locator('.rs-overlay')).toHaveCount(0);
+});
+
+test('INDEX REPLAY replays that mark’s reveal on the reel — no roll, no charge', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  await page.waitForTimeout(4200);
+  const markId = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('taw.markRolls')).marks)[0]);
+  const before = await page.evaluate(() => ({ wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
+  await page.getByTestId('roll-index').click();
+  await page.locator(`.mx-tile[data-mark="${markId}"]`).click();
+  await page.locator('.mx-replay').click();
+  // back on the ROLL screen, the reel spins again (the card waits for the landing) and lands on that mark
+  await expect(page.locator('.mx-panel')).toHaveCount(0);
+  await expect(page.locator('.rs-overlay')).toBeVisible();
+  await expect(card(page)).toHaveCount(0);
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  expect(await page.locator('.rs-cell.is-land').getAttribute('data-mark')).toBe(markId);
+  const after = await page.evaluate(() => ({ wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
+  expect(after).toEqual(before);
 });

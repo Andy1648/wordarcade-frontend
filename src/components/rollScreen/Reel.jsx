@@ -281,6 +281,7 @@ export default function Reel({ spin, idle = null, coverHost, ctl, played, onLand
                     ref={reg(`c${i}`)}
                     className={`rs-cell ${rarityClass(t)}${id ? '' : ' is-blank'}${i === LAND_AT ? ' is-land' : ''}`}
                     data-tier={id ? t : undefined}
+                    data-mark={id || undefined}
                   >
                     <MarkBadge mark={m} locked={!m} size={64} className="rs-cell-art" />
                   </div>

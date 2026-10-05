@@ -147,11 +147,11 @@
        --band-k trims a name whose longest word runs past four characters). The middle term is
        the HEIGHT fit: two lines at line-height 0.84 are 1.68em (+ a hair for the Shade face),
        inside the row's CONTENT box (cqh already excludes the border and padding) less the
-       description block (--name-reserve: two 13px lines + the 6px gap). Floored at --fs-panel,
+       description block (--name-reserve: two 16px lines + the 6px gap). Floored at --fs-panel,
        the smallest Bungee is allowed to go. */
     font-size: clamp(
       var(--fs-panel),
-      calc((100cqh - var(--name-reserve, 40px)) / 1.72),
+      calc((100cqh - var(--name-reserve, 46px)) / 1.72),
       calc(var(--fs-band) * var(--band-k, 1))
     );
     line-height: 0.84;
@@ -166,10 +166,11 @@
 
   .hp-m-desc {
     font-family: 'Space Mono', monospace;
-    /* 13px, the label floor — this was --fs-micro (11px), under the floor for a real sentence. */
-    font-size: var(--fs-label);
-    line-height: 1.25;
-    letter-spacing: 0.3px;
+    /* visual-1: --fs-body (was the 13px label step). Andy #172 is one short line per card, so the
+       line now reads at body size and a row too short for it drops it (the container rule below). */
+    font-size: var(--fs-body);
+    line-height: 1.2;
+    letter-spacing: 0;
     color: var(--row-sub);
   }
   .hp-m-perk {
@@ -181,7 +182,7 @@
   /* A SHORT ROW DROPS ITS DESCRIPTION rather than shrinking the name to a whisper. The same
      sentence is the first line of the mode dialog the row opens, so nothing is lost; the row's
      accessible name still carries it (aria-label). */
-  @container (max-height: 150px) {
+  @container (max-height: 160px) {
     .hp-m-desc {
       display: none;
     }
@@ -249,9 +250,9 @@
     gap: 5px;
     font-family: 'Space Mono', monospace;
     font-weight: 700;
-    font-size: var(--fs-label);
+    font-size: var(--fs-body); /* visual-1: was --fs-label */
     line-height: 1.2;
-    letter-spacing: 0.4px;
+    letter-spacing: 0;
     color: var(--row-sub);
   }
 
@@ -335,7 +336,7 @@
     background: #ff4fa3;
     color: #0d0618;
     border: 3px solid #000;
-    font-size: var(--fs-label);
+    font-size: var(--fs-body); /* visual-1: was --fs-label — it is a count, and it is the news */
     line-height: 1;
   }
   .hp-m-dot {
@@ -453,7 +454,9 @@
   }
   .hp-m[data-nav='rail'] > .hp-m-nav .hp-m-navbtn {
     flex: 1 1 0;
-    font-size: var(--fs-label);
+    /* visual-1: --fs-body (was --fs-label) — these are tappable, and 16px is the control floor.
+       REBIRTH is 7 glyphs, ~67px, inside the 84px rail column (letter-spacing 0 below). */
+    font-size: var(--fs-body);
   }
 }
 
@@ -530,7 +533,7 @@
   /* the 'rail' layout is a ?nav= comparison grid with named areas; the strip stays out of it */
   .hp-m[data-nav='rail'] > .hp-m-stats { display: none; }
   .hp-m-stats-k {
-    font-size: var(--fs-label);
+    font-size: var(--fs-body); /* visual-1: was --fs-label */
     color: #2EFFE0;
     margin: 0 4px;
   }
@@ -538,7 +541,7 @@
   .hp-m-stats-track {
     flex: 1 1 auto;
     min-width: 40px;
-    height: 12px;
+    height: 16px; /* visual-1: was 12px — the bar has to read at a glance */
     background: #0d0618;
     border: 2px solid #3a2160;
     border-radius: 6px;

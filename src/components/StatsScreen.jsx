@@ -9,21 +9,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
 import './rarity/RarityFin.css';
-import {
-  loadProgress,
-  getRebirths,
-  rebirthXpMult,
-  getKeyTier,
-  keyXpMult,
-  LEVEL_XP_PER_LETTER,
-  xpPerInput,
-  need,
-  WINS_BASIS_PER_LETTER,
-} from '../progress/xp';
-import { boostMult } from '../progress/boost';
-
-// BASE 10 WINS / WORD: the wins basis of a 5-letter word (WINS_BASIS_PER_LETTER is in XP units, ÷10 = wins).
-const BASE_WINS_PER_WORD = (WINS_BASIS_PER_LETTER * 5) / 10;
+import { loadProgress, getRebirths, need } from '../progress/xp';
+import { statBoard, boardMult } from '../progress/statBoard';
 import { getChainRuns, getFuseRuns } from '../solo/shared.js';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
@@ -33,9 +20,7 @@ import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
 import * as satLexicon from '../satRush/lexicon';
-import { formatNum, formatMult, formatMultExact, formatRate } from '../format';
-import { markXpBoost, letterXpNow } from '../progress/letterXp';
-import { letterPerkMult } from '../progress/markPerks';
+import { formatNum, formatRate } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
@@ -60,7 +45,6 @@ const TABS = [
 ];
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
-const x = (n) => `×${formatMult(Number.isFinite(n) ? n : 0)}`; // formatMult: 1dp, and it hands ×1e11 to formatNum
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 // Compact, house-style date (e.g. "AUG 27 2026"). Guarded — a bad stamp reads as a dash.
@@ -191,20 +175,12 @@ export default function StatsScreen({ onBack }) {
   const rebirths = getRebirths();
 
 
-  const rbXp = rebirthXpMult(rebirths);
-  // EXTENSION d (dormant, ?ladder=1): the REBIRTH row becomes BASE / NOW / NEXT chips in the same slot. The chips
-  // read the live Rebirth Rush rebirthMult (5^R) and rebirthThreshold (LV 15 + 18R) — never a copied table.
+  // STAT BOARD (Andy oct5): WINS / WORD and XP / LETTER as BASE → one line per multiplier → TOTAL, read from the
+  // live save; TOTAL is the payout's own number (progress/statBoard.js, asserted in statBoard.test.js).
+  const board = statBoard();
+  // EXTENSION d (dormant, ?ladder=1): BASE / NOW / NEXT rebirth chips under the STAT BOARD. The chips read the live
+  // Rebirth Rush rebirthMult (5^R) and rebirthThreshold (LV 15 + 18R) — never a copied table.
   const ladder = flagOn('ladder') ? rebirthLadder(rebirths) : null;
-  const keyTier = getKeyTier();
-  // REBIRTH RUSH: the bar fills from LETTERS — BASE 10 XP / LETTER × KEY × REBIRTH 5^R × MARK × BOOST.
-  // Words pay WINS — BASE 10 WINS / WORD (a 5-letter word) × length/5 × MODE × REBIRTH × MARK × BOOST.
-  // XP / LETTER OF YOUR WORDS is the full price — a letter of a word the game ACCEPTED (typed letters pay a fifth
-  // as they're typed; the accepted word tops them up). MENU XP / LETTER is a fifth of that: the SAME expression
-  // the live menu credit runs (useXpCapture — MARK × the DOUBLE LETTERS perk × BOOST). Cosmetics are looks only.
-  const markMult = markXpBoost();
-  const boostNow = boostMult();
-  const gameXp = letterXpNow();
-  const menuXp = xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
 
   // TWO different hidden sets, and they are NOT the same thing — so they do not share a heading.
   // `hidden` is the five SECRET-category achievements (thresholds you cross). `secrets` is the five
@@ -219,18 +195,6 @@ export default function StatsScreen({ onBack }) {
     // H6/M16: progress with its cost, not a bare number.
     ['XP INTO LEVEL', `${fmt(intoLevel)} / ${fmt(need(level))}`],
     ['WINS BALANCE', getWins()],
-  ];
-  // Exactly the named terms (Rebirth Rush), then the products. KEY is XP only; REBIRTH / MARK / BOOST
-  // multiply XP and WINS alike.
-  const multipliers = [
-    ['BASE XP / LETTER', fmt(LEVEL_XP_PER_LETTER)],
-    ['BASE WINS / WORD', fmt(BASE_WINS_PER_WORD)],
-    ['KEY', `TIER ${fmt(keyTier)} · ×${keyXpMult(keyTier) >= 1000 ? fmt(keyXpMult(keyTier)) : formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
-    ['REBIRTH', `${x(rbXp)} XP & WINS`],
-    ['MARK', markMult > 1 ? `+${fmt((markMult - 1) * 100)}% XP & WINS` : 'NONE WORN'],
-    ['BOOST', boostNow > 1 ? `${x(boostNow)} XP & WINS` : 'NONE'],
-    ['XP / LETTER OF YOUR WORDS', formatRate(gameXp)],
-    ['MENU XP / LETTER', fmt(menuXp)],
   ];
   const roundsPlayed = [
     ['WORD BOMB', rounds.wordBomb],
@@ -356,8 +320,6 @@ export default function StatsScreen({ onBack }) {
           <h3 className="stats-subtitle">
             SECRETS <span className="stats-secret-count">{fmt(secrets.found)} / {fmt(secrets.total)} FOUND</span>
           </h3>
-          {/* H6/M18: two masked grids that look the same, so each says what it holds. */}
-          <p className="stats-caption">THINGS YOU DO — FIND THEM BY PLAYING</p>
           <div className="stats-secrets">
             {secrets.items.map((sec) => (
               <div
@@ -388,29 +350,19 @@ export default function StatsScreen({ onBack }) {
             ))}
           </div>
 
-          {/* PROGRESSION v11: the whole XP rule — LETTERS fill the bar (BASE 10 XP / LETTER × KEY × rebirth ×
-              mark; a fifth of that in the menu). Words pay WINS (see a game's receipt). */}
-          <h3 className="stats-subtitle">XP — LETTERS FILL THE BAR</h3>
-          <dl className="stats-list">
-            {multipliers.map(([k, v]) =>
-              ladder && k === 'REBIRTH' ? (
-                <div className="stats-row stats-ladder" key={k}>
-                  <dd className="stats-ladder-chips" aria-label="Rebirth ladder">
-                    {ladder.map((c) => (
-                      <span className={`stats-chip is-${c.state}${ladderLook(c.id, rebirths)}`} key={c.id}>
-                        {[`${c.name} ${c.mult}`, c.gate, c.gain].filter(Boolean).join(' · ')}
-                      </span>
-                    ))}
-                  </dd>
-                </div>
-              ) : (
-                <div className="stats-row" key={k}>
-                  <dt>{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ),
-            )}
-          </dl>
+          {/* STAT BOARD (Andy oct5, Keyboard Escape / Genshin): BASE big, each multiplier on its own line, TOTAL
+              huge — WINS / WORD, then XP / LETTER. The rebirth ladder chips (?ladder=1) sit under the two boards. */}
+          <StatBoard stack={board.wins} title="WINS / WORD" />
+          <StatBoard stack={board.xp} title="XP / LETTER" />
+          {ladder && (
+            <div className="stats-ladder stats-ladder-chips" role="group" aria-label="Rebirth ladder">
+              {ladder.map((c) => (
+                <span className={`stats-chip is-${c.state}${ladderLook(c.id, rebirths)}`} key={c.id}>
+                  {[`${c.name} ${c.mult}`, c.gate, c.gain].filter(Boolean).join(' · ')}
+                </span>
+              ))}
+            </div>
+          )}
 
           <h3 className="stats-subtitle">ROUNDS PLAYED</h3>
           <dl className="stats-list">
@@ -538,6 +490,38 @@ export default function StatsScreen({ onBack }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// STAT BOARD — one stack: BASE (big) → a line per multiplier (rarity/tier colour on KEY, REBIRTH, MARK) → TOTAL
+// (huge). Static like the rest of this screen. The big numerals size to their box by length (cqw), so a long
+// "1.25Qa" never overflows a phone. A ×1 line is dimmed, not hidden: every multiplier keeps its line.
+function StatBoard({ stack, title }) {
+  const baseText = formatRate(stack.base);
+  const totalText = formatRate(stack.total);
+  return (
+    <section className={`sb sb--${stack.id}`} aria-label={title}>
+      <h3 className="stats-subtitle sb-title">{title}</h3>
+      <div className="sb-base">
+        <span className="sb-k">BASE</span>
+        <span className="sb-base-v" style={{ '--sb-len': Math.max(4, baseText.length) }}>{baseText}</span>
+      </div>
+      <ul className="sb-lines">
+        {stack.lines.map((l) => (
+          <li className={`sb-line${l.mult === 1 ? ' is-one' : ''}`} key={l.id} data-line={l.id}>
+            <span className="sb-k">
+              {l.label}
+              {l.id === 'key' ? <span className="sb-sub">TIER {fmt(l.keyTier)}</span> : null}
+            </span>
+            <span className={`sb-x${l.tier ? ` rarity-chip ${rarityClass(l.tier)}` : ''}`}>×{boardMult(l.mult)}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="sb-total">
+        <span className="sb-k">TOTAL</span>
+        <span className="sb-total-v" style={{ '--sb-len': Math.max(4, totalText.length) }}>{totalText}</span>
+      </div>
+    </section>
   );
 }
 

@@ -31,24 +31,46 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await page.locator('.rs-overlay').waitFor();
   await expect(page.locator('.rs-roll')).toBeVisible();
   await page.locator('[data-testid="roll-index"]').click();
-  // E6: the MARKS INDEX — tap a mark, SET AS MAIN, and it becomes the hero at the top
+  // INDEX v2 (Andy oct5): card = name · rarity · 1 IN X · stat; tap → the detail sheet (flavour, owned, first roll)
   await page.locator('.mx-panel').waitFor();
-  await expect(page.locator('.mx-hero')).toContainText('NO MAIN YET');
   const tile = page.locator('.mx-tile', { hasText: 'BOMBER' });
+  await expect(tile.locator('.mx-tile-tier')).toHaveText('COMMON');
+  await expect(tile.locator('.mx-tile-odds')).toHaveText(/^1 IN [\d\s,]+$/);
+  await expect(tile.locator('.mx-tile-sub')).toHaveText('+10% WINS');
+  await expect(tile.locator('.mark-pips')).toHaveAttribute('data-pips', '0');
   await tile.click();
-  const detail = page.locator('.mx-detail');
-  await expect(detail.locator('.mx-detail-tier')).toContainText('COMMON');
-  await expect(detail.locator('.mx-detail-pct')).toHaveText('+10% WINS'); // U: one short tag (MARKS via ROLLS: COMMON ×1.1)
-  await detail.getByRole('button', { name: 'SET AS MAIN' }).click();
-  await expect(page.locator('.mx-hero .mx-hero-name')).toHaveText('BOMBER');
+  const sheet = page.locator('.mx-sheet');
+  await expect(sheet).toBeVisible();
+  await expect(sheet.locator('.mx-sheet-name')).toHaveText('BOMBER');
+  await expect(sheet.locator('.mx-sheet-tier')).toContainText('COMMON');
+  await expect(sheet.locator('.mx-sheet-stat')).toHaveText('+10% WINS');
+  const flavour = (await sheet.getByTestId('mark-flavour').innerText()).trim();
+  expect(flavour.length).toBeGreaterThan(0);
+  expect(flavour.length).toBeLessThanOrEqual(32);
+  await expect(sheet.getByTestId('mark-owned')).toHaveText(/^OWNED ×\d/);
+  await sheet.getByRole('button', { name: 'SET AS MAIN' }).click();
   await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
-  // a locked ROLLABLE mark says its odds ("1 IN X") on the tier line — no how-to prose
-  await page.locator('.mx-tile.is-locked:not(.is-perm)').first().click();
-  await expect(detail.locator('.mx-detail-tier')).toContainText('1 IN ');
+  await expect(sheet.getByRole('button', { name: 'YOUR MAIN — TAKE OFF' })).toBeVisible();
+  await sheet.locator('.mx-sheet-close').click();
+  await expect(sheet).toHaveCount(0);
+  // a locked ROLLABLE mark: no name, a tier-coloured silhouette + its rarity + "1 IN X"
+  const locked = page.locator('.mx-tile.is-locked:not(.is-perm)').first();
+  await expect(locked.locator('.mx-sil')).toHaveCount(1);
+  await expect(locked.locator('.mx-tile-name')).toHaveCount(0);
+  await expect(locked.locator('.mx-tile-odds')).toHaveText(/^1 IN /);
+  await locked.click();
+  await expect(sheet.locator('.mx-sheet-tier')).toContainText('1 IN ');
+  await expect(sheet.getByTestId('mark-flavour')).toHaveCount(0);
   await expect(page.locator('.mx-howto')).toHaveCount(0);
+  await page.keyboard.press('Escape'); // the sheet closes first, the INDEX stays
+  await expect(sheet).toHaveCount(0);
+  await expect(page.locator('.mx-panel')).toBeVisible();
   // a locked PERMANENT says the task that earns it
   await page.locator('.mx-tile.is-locked.is-perm').first().click();
   await expect(page.locator('.mx-howto')).not.toBeEmpty();
+  await page.locator('.mx-sheet-close').click();
+  // per-rarity completion is colour + numbers: six tier chips
+  await expect(page.locator('[data-testid="marks-collected"] .mx-tierchip')).toHaveCount(6);
   await page.locator('.mx-close').click(); // back to the ROLL screen
   await page.locator('.rs-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×1.1'); // the worn MAIN under Rebirth Rush (COMMON ×1.1)

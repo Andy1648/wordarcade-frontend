@@ -34,8 +34,8 @@ export const TUTORIALS = [
     ],
   },
   {
-    // MARK ROLLS (Andy M): unlocks with MARKS. It points at the ROLL button, which lives INSIDE the MARKS
-    // panel — so it is hosted there (`host: 'marks'`, MarksIndex.jsx shows it the first time the panel
+    // MARK ROLLS (Andy M): unlocks with MARKS. It points at the ROLL button, which lives on the ROLL
+    // screen — so it is hosted there (`host: 'marks'`, RollScreen.jsx shows it the first time the screen
     // opens), never by the menu's TutorialHost (dueTutorial skips hosted entries). New to everyone.
     id: 'markRolls',
     host: 'marks',

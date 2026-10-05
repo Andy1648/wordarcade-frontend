@@ -22,6 +22,7 @@ import {
   getWinsLifetime,
   saveWinsLifetime,
   getRounds,
+  getWinsCarry,
 } from './wins.js';
 import { POP_STYLES, SOUND_PACKS } from './shop.js';
 import { keyTierCostAt } from './xp.js';
@@ -399,23 +400,55 @@ test('bankWordWins: weight defaults to count → identical to pre-rarity payout 
   });
 });
 
-// REBIRTH RUSH: the frozen formula has no per-word weight. Callers still pass rarity × combo × lucky
-// weights; bankWordWins IGNORES them and pays by word COUNT.
-test('bankWordWins (Rebirth Rush): rarity / combo / lucky WEIGHTS are ignored — it pays by word count', () => {
+// REBIRTH RUSH + feat/wb-bonus-boost: the per-word weight (rarity × combo × lucky, capped) is a BOOST factor
+// in WORD BOMB and BLITZ only — bankWordWins banks the cumulative weight × the per-word unit there. Every
+// other mode IGNORES the weights its callers pass and pays by word COUNT.
+test('bankWordWins: Word Bomb + Blitz pay the rarity / combo / lucky WEIGHT (BOOST); the gate stays on the count', () => {
   withStorage(() => {
+    // A 5-letter WB word at R0 = 10 wins (100 in XP units).
     assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 0, nowWords: 1, prevWeight: 0, nowWeight: 1.0 }), 0); // pre-gate
     assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 1, nowWords: 2, prevWeight: 1.0, nowWeight: 3.5 }), 0);
-    // the gate crossing releases 3 words (not the 7.5 weight): 3 × 10
-    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 2, nowWords: 3, prevWeight: 3.5, nowWeight: 7.5 }), 30);
-    // an OBSCURE ×4 word 4 pays one word
-    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4, prevWeight: 7.5, nowWeight: 11.5 }), 10);
-    assert.equal(getWins(), 40);
+    // the gate crossing releases the whole 7.5 weight of words 1-3: 7.5 × 10
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 2, nowWords: 3, prevWeight: 3.5, nowWeight: 7.5 }), 75);
+    // an OBSCURE ×4 word 4 pays its own weight: 4 × 10
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4, prevWeight: 7.5, nowWeight: 11.5 }), 40);
+    assert.equal(getWins(), 115);
+    assert.deepEqual(getRounds(), { wordBomb: 1, blitz: 0, satRush: 0 });
   });
+  withStorage(() => {
+    // gameData spelling is accepted too ('category-blitz' → blitz): a LUCKY ×5 answer past the gate = 5 × 10
+    assert.equal(bankWordWins({ mode: 'category-blitz', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 8 }), 5 * perWordWins({ mode: 'blitz', rebirthCount: 0 }));
+    // payout-key spelling, R1 (×5): a COMBO ×1.2 word = 1.2 × 10 × 5
+    assert.equal(bankWordWins({ mode: 'blitz', prevWords: 4, nowWords: 5, prevWeight: 8, nowWeight: 9.2, rebirthCount: 1 }), 60);
+  });
+  withStorage(() => {
+    // THE CARRY: a 3-letter WB word = 6 wins (60 XP units); at COMBO ×1.1 it is 66 → 6 wins + 6 tenths carried.
+    assert.equal(bankWordWins({ mode: 'wordBomb', wordLength: 3, prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 4.1 }), 6);
+    assert.equal(getWinsCarry(), 6);
+    // the next ×1.2 word: 72 + 6 carried = 78 → 7 wins, 8 tenths carried. No tenth is lost or paid twice.
+    assert.equal(bankWordWins({ mode: 'wordBomb', wordLength: 3, prevWords: 4, nowWords: 5, prevWeight: 4.1, nowWeight: 5.3 }), 7);
+    assert.equal(getWinsCarry(), 8);
+    assert.equal(getWins(), 13);
+  });
+  withStorage(() => {
+    // NO DOUBLE PAY: a call that does not advance the count/weight (a re-delivered word) pays nothing.
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 4, nowWords: 4, prevWeight: 6, nowWeight: 6 }), 0);
+    // weights omitted → count-based (×1 a word), exactly the pre-rarity behaviour
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 3, nowWords: 4 }), 10);
+  });
+});
+
+test('bankWordWins: every OTHER mode ignores the weight and pays by word count', () => {
   withStorage(() => {
     // FUSE (POWER ×1) and an OBSCURE weight: one word
     assert.equal(bankWordWins({ mode: 'fuse', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 7 }), 10);
     // CHAIN (×2) at R3 (×125) with a RARE weight: one word = 10 × 2 × 125
     assert.equal(bankWordWins({ mode: 'chain', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 5.5, rebirthCount: 3, level: 1 }), 2500);
+    // SAT RUSH and WORD RACE: the gate crossing releases 3 words, not the weight
+    const sat = perWordWins({ mode: 'satRush', rebirthCount: 0 });
+    assert.equal(bankWordWins({ mode: 'satRush', prevWords: 2, nowWords: 3, prevWeight: 2, nowWeight: 9 }), 3 * sat);
+    const race = perWordXp({ mode: 'wordRace', rebirthCount: 0 });
+    assert.equal(bankWordWins({ mode: 'wordRace', prevWords: 3, nowWords: 4, prevWeight: 3, nowWeight: 13 }), Math.floor(race / 10));
   });
 });
 

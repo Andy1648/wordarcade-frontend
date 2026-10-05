@@ -11,6 +11,9 @@
 // INDEX and an auto-equipped MAIN update when the reel LANDS, never before. TAP ANYWHERE mid-reveal jumps to the
 // result. Closing mid-reveal still lands it (the roll is already paid and saved). A DOUBLE ROLL's extra shows on the
 // card ("+NAME"), and a first-time mark anywhere in the roll gets the full reveal.
+// REPLAY (INDEX v2): the INDEX detail's REPLAY plays that mark's reveal on this reel again — no roll, no charge, no
+// ticker line, no equip; it only lands the card. Coming back from the INDEX otherwise never replays the last roll
+// (the `played` ref outlives the Reel's remount).
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import MarkBadge, { registerMarkGlyphs } from '../MarkBadge';
 import { ROLLED_GLYPHS } from '../markGlyphsRolled.jsx';
@@ -23,7 +26,7 @@ import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/re
 import { MARK_TIERS } from '../../progress/marks';
 import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, statLine, getSkipBelow, setSkipBelow,
-  SKIP_TIERS, MAX_PIPS,
+  SKIP_TIERS, MAX_PIPS, indexEntry,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip, AUTO_ROLL_TIERS } from '../../progress/markRollShop';
 import { getWins, subscribeBalance } from '../../progress/wins';
@@ -203,7 +206,8 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
   live.current.doRoll = doRoll;
 
-  const onLand = (res) => commit(res);
+  // a REPLAY only shows its card — it was never paid for, so nothing commits
+  const onLand = (res) => { if (res && res.replay) { setShown(res); return; } commit(res); };
   const onDone = () => {
     const last = lastRes.current;
     if (!auto.current.on) return;
@@ -238,6 +242,25 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     stopAuto();
     if (ctl.current && ctl.current.busy()) ctl.current.finish(true);
     setShowIndex(true);
+  };
+  // the INDEX's REPLAY: back to the reel, which plays that mark's reveal again (cosmetic — nothing is bought)
+  const replay = (markId) => {
+    stopAuto();
+    if (pending.current) commit(pending.current);
+    const st = viewState(idsRef.current);
+    const e = indexEntry(markId, st);
+    if (!e || !e.owned) { setShowIndex(false); return; }
+    const res = {
+      markId, tier: e.tier, oneInX: e.oneInX, shiny: e.shiny, pips: e.pips, have: e.have, need: e.need, state: st,
+      newMark: false, extra: [], replay: true,
+    };
+    let strip = null;
+    try { strip = drawStrip(rollTable(st, { permanentOwned: permanentOwnedCount(), boost: isBoostActive() }).probs, Math.random, { resultId: markId }); } catch { strip = null; }
+    if (!strip) { setShowIndex(false); return; }
+    lastRes.current = null;
+    setShown(null);
+    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: res, strip, mode: reduced ? 'none' : 'full', rest: restOffset() }));
+    setShowIndex(false);
   };
 
   // TAP ANYWHERE mid-reveal jumps to the result (capture: the tap never also presses what is under it). The AUTO
@@ -292,9 +315,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           unlockedIds={unlockedIds}
           equippedId={equippedId}
           achievementNames={achievementNames}
-          level={level}
           earned={earned}
           onEquip={onEquip}
+          onReplay={replay}
           onClose={() => { setShowIndex(false); setLanded((n) => n + 1); }}
         />
       </Suspense>

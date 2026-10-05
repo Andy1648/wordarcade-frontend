@@ -26,21 +26,21 @@ async function openStats(page, query) {
   await page.locator('.stats-panel').waitFor({ state: 'visible' });
 }
 
-test('flag off: no ladder, the plain REBIRTH row', async ({ page }) => {
+test('flag off: no ladder, the STAT BOARD REBIRTH lines', async ({ page }) => {
   await openStats(page, '');
   await expect(page.locator('.stats-ladder')).toHaveCount(0);
   await expect(page.locator('.stats-chip')).toHaveCount(0);
-  await expect(page.locator('.stats-row dt', { hasText: /^REBIRTH$/ })).toHaveCount(1);
+  await expect(page.locator('.sb-line[data-line="rebirth"]')).toHaveCount(2); // WINS / WORD + XP / LETTER
 });
 
-test('flag on: BASE / NOW / NEXT chips replace the REBIRTH row', async ({ page }) => {
+test('flag on: BASE / NOW / NEXT chips under the STAT BOARD', async ({ page }) => {
   await openStats(page, '&ladder=1');
   const chips = page.locator('.stats-ladder .stats-chip');
   await expect(chips).toHaveCount(3);
   await expect(chips.nth(0)).toHaveText('BASE ×1');
   await expect(page.locator('.stats-chip.is-now')).toHaveText('R2 ×25');
   await expect(page.locator('.stats-chip.is-next')).toHaveText(/^R3 ×125 · LV \d+ · \+400%$/);
-  await expect(page.locator('.stats-row dt', { hasText: /^REBIRTH$/ })).toHaveCount(0);
+  await expect(page.locator('.sb-line[data-line="rebirth"]')).toHaveCount(2); // the board keeps its REBIRTH lines
   const box = await page.locator('.stats-chip.is-next').boundingBox();
   expect(box.height).toBeGreaterThanOrEqual(44);
 });

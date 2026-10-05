@@ -19,7 +19,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.14em;
   border: 2px solid;
   border-radius: 6px;
@@ -75,7 +75,7 @@
   border-top: 2px dashed #2a1b3f;
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: #b9a7d6;
 }
@@ -98,7 +98,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: #f3ecff;
 }
@@ -111,7 +111,7 @@
   margin-top: 6px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #f3ecff;

@@ -1,6 +1,10 @@
-// REBIRTH RUSH RE-PIN (PROGRESSION-FINAL, FROZEN formula): wins/word = BASE 10 x len/5 x MODE POWER x 5^R
-// x MARK x BOOST — no combo, no rarity, no lucky, no difficulty. Blitz is POWER x1: a 3-letter answer pays 6,
-// a 5-letter one 10, at R0. The notes below are history.
+// REBIRTH RUSH + feat/wb-bonus-boost (Andy oct5): wins/word = BASE 10 x len/5 x MODE POWER x 5^R x MARK x BOOST,
+// and in Word Bomb + Blitz the combo x lucky x rarity weight is a BOOST factor (bankWordWins WEIGHTED_MODES).
+// Blitz is POWER x1: at R0 a 3-letter answer is 6 wins (60 XP units), a 5-letter one 10 (100). The figures
+// below are recomputed from that base: CAT/DOG/FOX at combo 1.1/1.2/1.3 = 3.6 x 60 = 216 -> 21 wins, 6 tenths
+// carried; WATER..HOUSE at combo 1.1..1.5 = 360 + 140 + 150 -> 36 + 14 + 15 = 65, nothing carried. (The
+// pre-Rebirth-Rush base was 10 XP/letter x Blitz x2 — the same 60 / 100 — so the figures match it.)
+// The notes below are history.
 // RE-PINNED. These were 360/650 for a long time — round10(weight x 100), i.e. Blitz at the BASE
 // rate x1 — and had been RED across several merges because a viewport-only gate never ran them.
 // Blitz is x1.4 (per-word 140) after the round-4 re-fit, so the figures are 500 and 910.
@@ -53,24 +57,16 @@ test.describe('wins wiring', () => {
   // carries the 0-9 leftover in taw.winsCarry. 3-letter Blitz = 60 XP/word; the gate releases
   // CAT+DOG+FOX at combo 1.1+1.2+1.3 = 3.6 → 216 XP → +21 wins, 6 tenths carried (the old
   // per-grant round(21.6) = 22). Blitz does not underpay: the 0.6 is held, not lost.
-  // REBIRTH RUSH: a word is whole wins at R0 with no MARK/BOOST (3 letters = 60 XP = 6 wins), so a round
-  // can no longer PRODUCE tenths here. The carry intent is kept by starting with 6 tenths already carried
-  // (a previous MARK-boosted word's leftover): the gate releases 3 × 60 = 180 XP + 6 carried = 186 →
-  // +18 wins, and the 6 tenths are held, not lost or rounded into a win.
-  test('a Blitz round_end with 3 accepted answers pays 18 (6 carried tenths kept) and counts the round', async ({ page }) => {
+  test('a Blitz round_end with 3 accepted answers pays 21 (+6 tenths carried) and counts the round', async ({ page }) => {
     const mock = await installBackendMock(page);
-    await page.addInitScript(() => {
-      try { if (!sessionStorage.getItem('e2e.carrySeeded')) { localStorage.setItem('taw.winsCarry', '6'); sessionStorage.setItem('e2e.carrySeeded', '1'); } } catch { /* ignore */ }
-    });
     await gotoMenu(page);
     const before = await readWins(page);
-    expect(before.carry).toBe(6);
-    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 × 3-letter → 180 XP + 6 carried = 186 → 18 c6
+    await playBlitzRound(mock, page, ['CAT', 'DOG', 'FOX']); // 3 COMMON 3-letter, combo 1.1/1.2/1.3 → 3.6 × 60 XP units = 216 → 21 c6
     // Poll for the banked wins: bankWordWins writes to localStorage on the async React drain, so a
     // synchronous read here occasionally races the bank under full-suite load (an intermittent 0).
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(18);
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(21);
     const after = await readWins(page);
-    expect(after.lifetime - before.lifetime).toBe(18);
+    expect(after.lifetime - before.lifetime).toBe(21);
     expect(after.carry).toBe(6);
     expect(after.blitz - before.blitz).toBe(1);
   });
@@ -102,17 +98,16 @@ test.describe('wins wiring', () => {
       mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: a } });
       await page.waitForTimeout(40);
     }
-    // NO round_end — the player leaves. The 5 answers are already banked.
-    // REBIRTH RUSH: 5 × 5-letter × 10 (10 × 5/5 × Blitz POWER 1 at R0) = 50 — 30 at the gate, then 10 and 10.
-    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(50);
+    // NO round_end — the player leaves. The 5 answers (combo-weighted 6.5) are already banked.
+    await expect.poll(async () => (await readWins(page)).wins - before.wins, { timeout: 5000 }).toBe(65);
     expect((await readWins(page)).blitz - before.blitz).toBe(1);
     // The round ends for real — the removed end payout must add NOTHING (no double-pay).
     mock.pushToClient({ type: 'round_end', payload: { playerResults: [] } });
     await page.waitForTimeout(250);
     const after = await readWins(page);
-    expect(after.wins - before.wins).toBe(50); // banked per answer, not re-paid at round_end
-    expect(after.lifetime - before.lifetime).toBe(50);
-    expect(after.carry).toBe(0); // 300 + 100 + 100 XP — whole wins, nothing carried
+    expect(after.wins - before.wins).toBe(65); // banked per answer, not re-paid at round_end
+    expect(after.lifetime - before.lifetime).toBe(65);
+    expect(after.carry).toBe(0); // 360 + 140 + 150 XP — whole wins, nothing carried
     expect(after.blitz - before.blitz).toBe(1);
   });
 });

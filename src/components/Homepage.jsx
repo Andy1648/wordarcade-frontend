@@ -1247,7 +1247,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             aria-label={claims.length > 0 ? `Open stats — ${formatNum(claims.length)} to claim` : 'Open stats'}
           >
             STATS
-            {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{claims.length}</span>}
+            {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{formatNum(claims.length)}</span>}
           </button>
           {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
           {showRebirth && (
