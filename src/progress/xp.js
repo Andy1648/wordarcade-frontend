@@ -13,7 +13,7 @@
 import { getStreakMult } from './streak.js';
 import { noteLevelReached } from './gems.js'; // GEMS: LEVEL_UP (a leaf module — no cycle)
 
-// Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
+// Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Tier
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
 // MODE POWER (Andy oct2: "mode power must show in payouts"). Read against Word Bomb (×2 = POWER ×1):
 //   SAT RUSH ×10 = POWER ×5 — its card power is real money per word, not a label
@@ -314,10 +314,11 @@ export function saveRebirths(n) {
 // The LEVEL required to perform the NEXT rebirth, given how many are already done. rc=0 gates
 // R1 at LV15; rc=19 gates R20 at LV600; past that, +50 levels each (R21→650, R22→700 …).
 // The published TABLE gate (pure; no grandfathering).
-// REBIRTH GATE (Rebirth Rush): LV 15 + 18·R — R1 at LV15, R2 at LV33, R10 at LV195, R20 at LV375.
-// (REBIRTH_TABLE above is the v6–v11 table, kept for the record.)
-export const REBIRTH_GATE_BASE = 15;
-export const REBIRTH_GATE_STEP = 18;
+// REBIRTH GATE (Andy oct5): ROUND numbers, LV 25 × (R+1) — R1 at LV25, R2 at LV50, R10 at LV275 (never "141").
+// (Rebirth Rush shipped 15 + 18·R; the one-time conversion keeps using that, econMigrate CONV_GATE_*.)
+// CI sim (10 h, no marks, KEY kept): 25×(R+1) → casual 6 / median 7 / strong 8 rebirths (15+18R gave 30 / 36 / 41).
+export const REBIRTH_GATE_BASE = 25;
+export const REBIRTH_GATE_STEP = 25;
 export function tableRebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
   return REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * rc;
@@ -391,11 +392,11 @@ function keyTiersKept() {
     return 0;
   }
 }
-/** The KEY tier a rebirth leaves: T{min(T, kept)} — T0 unless the HEIRLOOM perk keeps tiers. What the rebirth
- *  screens quote, and exactly what doRebirth writes. */
+/** The KEY tier a rebirth leaves. Andy oct5: KEY TIER no longer resets on rebirth — it is KEPT (the rebirth gate
+ *  was raised instead, CI-sim tuned). Kept for its callers; HEIRLOOM's "keep 3 tiers" is moot now. */
 export function keyTierAfterRebirth(tier = getKeyTier()) {
-  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  return Math.min(t, keyTiersKept());
+  void keyTiersKept;
+  return Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
 }
 // Perform a rebirth: zero XP, bump the rebirth count. Returns the new count.
 // Wins/owned/equipped/rounds live under their own keys — untouched.
@@ -417,15 +418,14 @@ export function doRebirth() {
   const rc = getRebirths() + 1;
   saveRebirths(rc);
   clearGrandfatheredGate();
-  // Rebirth Rush: KEY → T0 every rebirth (wins kept — the rebuy spree); HEIRLOOM keeps up to 3 tiers
-  saveKeyTier(keyTierAfterRebirth());
+  // Andy oct5: KEY TIER is KEPT across rebirths (no more reset to T0)
   saveProgress({ level: 1, intoLevel: 0 });
   pendingRebirth = rc;
   return rc;
 }
 
-// ---- Key Power — DISCRETE TIERS (Economy v6) ------------------------------------------
-// Tier stored at taw.keytier (int, default 0). Key Power is no longer a per-level crawl with
+// ---- Key Tier — DISCRETE TIERS (Economy v6) ------------------------------------------
+// Tier stored at taw.keytier (int, default 0). Key Tier is no longer a per-level crawl with
 // a doubler — it is a hardcoded TABLE of tiers, each a real one-at-a-time decision. `xp` is the
 // XP PER LETTER granted at that tier; `cost` is the wins price to REACH that tier (T0 is the
 // free start, so its cost is 0). Every cost is a round multiple of 10; effect values are the
@@ -447,7 +447,7 @@ export function doRebirth() {
 //   T8   14,690          2,799,360    (25,194,240)
 // (v8 history: past T8 the effect went ×2.5 and the cost ×6 a tier. v9 replaced both — below.)
 export const KEYTIER_KEY = 'taw.keytier';
-// KEY POWER — RESTORED TO v8 (Andy oct2 KP2: "keep it very close to the old one"). v9 made it +15 XP
+// KEY TIER — RESTORED TO v8 (Andy oct2 KP2: "keep it very close to the old one"). v9 made it +15 XP
 // per letter a tier, priced in words — late tiers added ~10% and felt like nothing. Back to the v8
 // ladder: XP per letter ×2.5 a tier, price ×6 a tier IN WINS (the T1–T8 table above, extended by those
 // steps forever). T1 = 25. NO CAPS: past a double's range the numbers display through the named-suffix
@@ -520,7 +520,7 @@ export function keyTierCost(tier, rebirthCount) {
   return keyTierCostAt(t + 1, rebirthCount);
 }
 
-// THE RATE BOOST the shop prices the LETTER FORGE against (forge.js reads priceRateBoost). KEY POWER is
+// THE RATE BOOST the shop prices the LETTER FORGE against (forge.js reads priceRateBoost). KEY TIER is
 // back on fixed wins prices (v8), but the forge still prices "in words at your rate"; wins.js installs
 // the real boost (forge average × STAR POWER) at load — injected, because those modules import this one.
 let rateBoost = () => 1;

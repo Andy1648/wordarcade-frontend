@@ -185,7 +185,7 @@ export const TYPICAL_ROUND_WORDS = 10;
 //
 // WHAT MOVED, EXPLICITLY:
 //   - WORD_WINS_BASE (100) is gone. The base is the word's LETTERS at the player's key tier
-//     (keyTierXp × length ÷ 10 — see wordWinsBase), so KEY POWER now raises wins as well as XP.
+//     (keyTierXp × length ÷ 10 — see wordWinsBase), so KEY TIER now raises wins as well as XP.
 //     That is the intended consequence: it was the one upgrade that bought income in a currency
 //     it could not be spent on.
 //   - WINS_MULT is gone as a payout input. XP_MULTIPLIERS is the only per-mode table.
@@ -205,7 +205,7 @@ export const WORD_LEN_REF = 5; // the reference word a RATE is quoted for (cards
 // THE STRUCTURAL CAUSE, and it is one ratio. A level costs EARLY_CURVE_EXP more than the last
 // while a word pays WIN_LEVEL_STEP more, so every level takes curve/income longer than the one
 // before it, COMPOUNDING. Economy v8's answer is to take the level term out of the per-word award
-// entirely (above): income per word is now flat in level and grows through KEY POWER, rebirth,
+// entirely (above): income per word is now flat in level and grows through KEY TIER, rebirth,
 // mastery and momentum instead — levers the player buys, not ones that accrue for free and then
 // race the curve. WIN_LEVEL_STEP survives here because the FLAT grants still want it: a secret
 // found at LV80 should not pay what it paid at LV3.

@@ -11,7 +11,7 @@
 // The effect is VISIBLE: the receipt names it as its own row (FORGE ×1.35 on that word), the shop
 // and the menu rail draw the 26 letters at their levels.
 //
-// PRICE is denominated in WORDS, like KEY POWER (xp.js keyTierCostAt): FORGE_PRICE_WORDS reference
+// PRICE is denominated in WORDS, like KEY TIER (xp.js keyTierCostAt): FORGE_PRICE_WORDS reference
 // words at the player's current rate, growing linearly with the buys made — always "a few minutes of
 // play" away, never a wall, never pocket change. No cap anywhere.
 //

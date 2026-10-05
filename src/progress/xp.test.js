@@ -160,7 +160,7 @@ test('need() matches the PROGRESSION FINAL curve: round10(100 · 1.15^(n−1)) (
 });
 
 test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the FROZEN v9 shape (needV9)', () => {
-  // v6 eased 1.25 -> 1.08 at LV60, so a level could cost LESS than the one before it while Key Power /
+  // v6 eased 1.25 -> 1.08 at LV60, so a level could cost LESS than the one before it while Key Tier /
   // rebirth / momentum kept compounding income. v9 (STEP 19) deliberately trades v8's geometric ×1.22
   // tail for a polynomial (level^CURVE_POW) above CURVE_BREAK and a gentle geometric tail past
   // CURVE_TAIL — the RELATIVE growth per level now falls on purpose. What must still hold: every
@@ -218,7 +218,7 @@ test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
   assert.equal(XP_MULTIPLIERS.fuse, 2); // oct2: = Word Bomb; FRENZY is its edge
 });
 
-// ---- Key Power — RESTORED v8 (Andy oct2 KP2): XP ×2.5 a tier, price ×6 a tier in wins ----
+// ---- Key Tier — RESTORED v8 (Andy oct2 KP2): XP ×2.5 a tier, price ×6 a tier in wins ----
 test('keyTierXp (Rebirth Rush): KEY no longer touches wins — the constant wins basis 20 at every tier', () => {
   for (const t of [0, 1, 5, 9, 10, 30, 1000, -3, undefined, NaN]) assert.equal(keyTierXp(t), 20, `T${t}`);
 });
@@ -269,7 +269,7 @@ test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () 
   }
 });
 
-test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {
+test('every Key Tier cost is divisible by 10 (through the exact-integer range)', () => {
   // ×6 a tier, snapped to tens while exact: through T18 (48·6^17 ≈ 8e14 < 2^53).
   for (let t = 0; t <= 18; t += 1) assert.equal(keyTierCostAt(t, 0) % 10, 0, `keyTierCostAt(${t})`);
   assert.equal(KEY_TIERS.length, 9); // T0..T8 tabled for the shop
@@ -325,18 +325,20 @@ test('cosmetics are LOOKS ONLY: pop / sound multipliers and the streak never tou
   assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0, streakMult: 1.25 }), base);
 });
 
-test('rebirth gate (Rebirth Rush): LV 15 + 18R', () => {
-  assert.equal(rebirthThreshold(0), 15); // gate for R1
-  assert.equal(rebirthThreshold(1), 33); // R2
-  assert.equal(rebirthThreshold(3), 69); // R4
-  assert.equal(rebirthThreshold(9), 177); // R10
-  assert.equal(rebirthThreshold(10), 195); // R11
-  assert.equal(rebirthThreshold(19), 357); // R20
-  assert.equal(rebirthThreshold(20), 375); // R21
-  assert.equal(rebirthThreshold(30), 555); // R31
-  assert.equal(rebirthThreshold(-2), 15);
-  assert.equal(rebirthThreshold(NaN), 15);
-  for (let rc = 0; rc < 200; rc++) assert.equal(rebirthThreshold(rc + 1) - rebirthThreshold(rc), 18, `gate R${rc}`);
+test('rebirth gate (Andy oct5): round numbers, LV 25 × (R+1)', () => {
+  assert.equal(rebirthThreshold(0), 25); // gate for R1
+  assert.equal(rebirthThreshold(1), 50); // R2
+  assert.equal(rebirthThreshold(3), 100); // R4
+  assert.equal(rebirthThreshold(9), 250); // R10
+  assert.equal(rebirthThreshold(10), 275); // R11
+  assert.equal(rebirthThreshold(19), 500); // R20
+  assert.equal(rebirthThreshold(30), 775); // R31
+  assert.equal(rebirthThreshold(-2), 25);
+  assert.equal(rebirthThreshold(NaN), 25);
+  for (let rc = 0; rc < 200; rc++) {
+    assert.equal(rebirthThreshold(rc) % 25, 0, `round gate R${rc}`);
+    assert.equal(rebirthThreshold(rc + 1) - rebirthThreshold(rc), 25, `gate R${rc}`);
+  }
 });
 
 // REBIRTH RUSH: ×5 XP AND wins per rebirth, forever — 5^R, the same number on the bar and on wins.
@@ -368,16 +370,16 @@ test('XP per letter = 10 × KEY × 5^R × mark — finite at any R / tier', () =
   }
 });
 
-test('rebirth is refused at LV14 and allowed at LV15', () => {
-  const xp14 = cumCost(14); // exactly at the start of level 14
-  const xp15 = cumCost(15); // exactly at the start of level 15
-  assert.equal(levelFromXp(xp14).level, 14);
-  assert.equal(levelFromXp(xp15).level, 15);
-  assert.equal(canRebirth(xp14, 0), false);
-  assert.equal(canRebirth(xp15, 0), true);
+test('rebirth is refused at LV24 and allowed at LV25', () => {
+  const xp24 = cumCost(24); // exactly at the start of level 24
+  const xp25 = cumCost(25); // exactly at the start of level 25
+  assert.equal(levelFromXp(xp24).level, 24);
+  assert.equal(levelFromXp(xp25).level, 25);
+  assert.equal(canRebirth(xp24, 0), false);
+  assert.equal(canRebirth(xp25, 0), true);
 });
 
-test('doRebirth zeroes xp, RESETS the KEY tier to T0, and preserves wins/owned/equipped/rebirths+1', () => {
+test('doRebirth zeroes xp, KEEPS the KEY tier (Andy oct5), and preserves wins/owned/equipped/rebirths+1', () => {
   withStorage(
     {
       'taw.xp': String(cumCost(20)),
@@ -399,15 +401,15 @@ test('doRebirth zeroes xp, RESETS the KEY tier to T0, and preserves wins/owned/e
       assert.equal(map.get('taw.winsLifetime'), '900');
       assert.equal(map.get('taw.owned'), JSON.stringify(['classic', 'thock', 'prism']));
       assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
-      assert.equal(map.get('taw.keytier'), '0'); // Rebirth Rush: KEY resets every rebirth (wins kept)
-      assert.equal(getKeyTier(), 0);
-      assert.equal(keyTierCost(getKeyTier(), rc), 50, 'the rebuy starts at the T1 price');
+      assert.equal(map.get('taw.keytier'), '3'); // Andy oct5: KEY TIER is kept across rebirths
+      assert.equal(getKeyTier(), 3);
+      assert.equal(keyTierCost(getKeyTier(), rc), keyTierCost(3, 0), 'the next tier costs what it did — no rebuy');
     }
   );
-  // A second rebirth from a re-bought tier resets it again.
+  // A second rebirth keeps the tier again.
   withStorage({ 'taw.rebirths': '4', 'taw.keytier': '9', 'taw.wins': '123' }, (map) => {
     assert.equal(doRebirth(), 5);
-    assert.equal(getKeyTier(), 0);
+    assert.equal(getKeyTier(), 9);
     assert.equal(map.get('taw.wins'), '123');
   });
   // a from-scratch rebirth (empty storage) still works and doesn't throw.

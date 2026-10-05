@@ -29,7 +29,7 @@ async function openShop(page) {
 const keyTier = (page) => page.evaluate(() => Number(localStorage.getItem('taw.keytier') || 0));
 const wins = (page) => page.evaluate(() => Number(localStorage.getItem('taw.wins') || 0));
 
-test('KEY POWER: a tap buys exactly one', async ({ page }) => {
+test('KEY TIER: a tap buys exactly one', async ({ page }) => {
   await boot(page, { 'taw.wins': '999999999', 'taw.keytier': '0' });
   await openShop(page);
   await page.locator('.shop-keypower').first().locator('.shop-buy').click();
@@ -37,7 +37,7 @@ test('KEY POWER: a tap buys exactly one', async ({ page }) => {
   expect(await keyTier(page)).toBe(1);
 });
 
-test('KEY POWER: holding keeps buying, accelerating, and reveals ONCE for the run', async ({ page }) => {
+test('KEY TIER: holding keeps buying, accelerating, and reveals ONCE for the run', async ({ page }) => {
   await boot(page, { 'taw.wins': '999999999', 'taw.keytier': '0' });
   await openShop(page);
   const btn = page.locator('.shop-keypower').first().locator('.shop-buy');
@@ -54,7 +54,7 @@ test('KEY POWER: holding keeps buying, accelerating, and reveals ONCE for the ru
   await expect(page.locator('.sticker-name')).toContainText(`(+${t})`);
 });
 
-test('KEY POWER: BUY MAX spends down to below the next tier', async ({ page }) => {
+test('KEY TIER: BUY MAX spends down to below the next tier', async ({ page }) => {
   await boot(page, { 'taw.wins': '5000', 'taw.keytier': '0' });
   await openShop(page);
   const kp = page.locator('.shop-keypower').first();

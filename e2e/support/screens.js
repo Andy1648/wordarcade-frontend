@@ -9,7 +9,7 @@
 // Exports: VIEWPORTS, SHOT_VIEWPORTS, TOL, SCREENS, NOSCROLL, THEME_IDS + the nav primitives.
 import { installBackendMock } from './backendMock.js';
 import { GAMES } from '../../src/gameData.js';
-import { joinControl, menuReady, modeEntry, navControl, openStats } from './menu.js';
+import { joinControl, menuReady, modeEntry, navControl, openStats, revealMode } from './menu.js';
 
 // The level to seed so a gated mode is still LOCKED. Derived from the real gate, never a literal:
 // this map hardcoded 16 for FUSE, written when FUSE unlocked at LV25. fix/unlock-gates lowered it
@@ -82,7 +82,7 @@ export async function enterSolo(page, id) {
   await page.goto('/?portal=1&soloms=350');
   await menuReady(page);
   await page.waitForTimeout(400);
-  await card(page, id).click({ force: true });
+  await (await revealMode(page, id)).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
   await page.locator('.mode-dialog-btn-create').click();
   await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
@@ -106,10 +106,10 @@ export const SCREENS = [
   { name: 'menu', root: '.homepage-wrap', overlay: false, nav: async (page) => bootMenu(page, 40) },
   { name: 'dialog-word-bomb', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'word-bomb').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'dialog-category-blitz', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 40); await card(page, 'category-blitz').click(); await page.locator('.ppp-picker').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-chain', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 100); await card(page, 'chain').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'dialog-fuse', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 100); await card(page, 'fuse').click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-chain', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('chain')); await card(page, 'chain').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
-  { name: 'locked-fuse', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('fuse')); await card(page, 'fuse').click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'dialog-chain', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 100); await (await revealMode(page, 'chain')).click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'dialog-fuse', root: '.mode-dialog-shell', overlay: true, nav: async (page) => { await bootMenu(page, 100); await (await revealMode(page, 'fuse')).click(); await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'locked-chain', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('chain')); await (await revealMode(page, 'chain')).click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
+  { name: 'locked-fuse', root: '.lp-panel', overlay: true, nav: async (page) => { await bootMenu(page, lockedLevelFor('fuse')); await (await revealMode(page, 'fuse')).click({ force: true }); await page.locator('.lp-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'credits', root: '.credits-wrap', overlay: true, nav: async (page) => { await bootMenu(page, 40); await navControl(page, 'credits').click(); await page.locator('.credits-wrap').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'shop', root: '.shop-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await navControl(page, 'shop').click(); await page.locator('.shop-panel').waitFor({ state: 'visible' }); await page.waitForTimeout(300); } },
   { name: 'stats', root: '.stats-panel', overlay: true, nav: async (page) => { await bootMenu(page, 40); await openStats(page); await page.waitForTimeout(300); } },

@@ -1,6 +1,6 @@
-// shop.js — the cosmetic shop catalog + ownership + equipped loadout, plus the Key Power
+// shop.js — the cosmetic shop catalog + ownership + equipped loadout, plus the Key Tier
 // purchase helpers. IDS ARE STABLE SAVE KEYS — never rename them. Cosmetics are PURE FLAIR
-// now (they change pop colour / sound character, NOT XP); the only XP upgrade is Key Power
+// now (they change pop colour / sound character, NOT XP); the only XP upgrade is Key Tier
 // (see xp.js). localStorage-backed, wrapped, sensible defaults. Buying deducts from taw.wins
 // only (never winsLifetime); purchases are permanent and survive rebirth.
 import { getWins, saveWins } from './wins.js';
@@ -150,7 +150,7 @@ export function buy(id) {
   return { ok: true, wins: next, equipped: true };
 }
 
-// Buy the NEXT Key Power TIER: deducts the next tier's cost from wins, bumps taw.keytier by 1.
+// Buy the NEXT Key Tier: deducts the next tier's cost from wins, bumps taw.keytier by 1.
 // Tiers are one at a time — each is a real decision, so there is NO "buy max" (Economy v6).
 // Returns { ok, wins, tier, spent }.
 export function buyKeyPower() {
@@ -181,7 +181,7 @@ export function buyForge() {
 
 // True when the player can afford at least one thing they don't already own — drives the
 // menu wins-chip's "something to buy" dot. Counts EVERYTHING purchasable, not just cosmetics:
-// the dot used to go dark forever once a player owned all 11 cosmetics, even though Key Power,
+// the dot used to go dark forever once a player owned all 11 cosmetics, even though Key Tier,
 // Momentum and buyable themes were still affordable. `wins`/`owned` are injectable
 // for the cosmetic layer; the other sinks read their own live stores (guarded, sane defaults).
 export function canAffordAny(wins = getWins(), owned = getOwned()) {
@@ -189,7 +189,7 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   const bal = Number.isFinite(wins) ? wins : 0;
   // Cosmetics (pop styles + sound packs).
   if (ALL.some((it) => !ownedSet.has(it.id) && bal >= it.price)) return true;
-  // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
+  // Key Tier — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
   // LETTER FORGE is NOT counted: Rebirth Rush took it off the shelf (not in the wins formula), so it

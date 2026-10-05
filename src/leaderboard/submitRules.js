@@ -94,9 +94,13 @@ export function decideSubmit(old, sub, now) {
 export const RR_ECON = 12;
 export const RB_SECS = 60;
 export const RB_BURST = 60;
-export const LV_HEADROOM = 36;
-export const GATE_BASE = 15;
-export const GATE_STEP = 18;
+export const LV_HEADROOM = 50; // 019: two rebirths' worth at 25 a rebirth
+// the LIVE rebirth gate (019, Andy oct5): 25 × (R+1) — the level cap follows it
+export const GATE_BASE = 25;
+export const GATE_STEP = 25;
+// the one-time CONVERSION keeps the gate it shipped with (018 old_gate = 15 + 18·R), the same for every save
+export const CONV_GATE_BASE = 15;
+export const CONV_GATE_STEP = 18;
 // The one-time conversion bonus is CAPPED at 15 rebirths (018's CONV_CAP): it trusts the STORED level, so a forged
 // old level (LV5000) would otherwise mint hundreds of rebirths in one submit. Legit board max is +7.
 export const CONV_CAP = 15;
@@ -129,8 +133,8 @@ export function decideSubmitRR(old, sub, now) {
   const secs = Math.max(1, (now - old.submitted_at) / 1000);
   const maxRise = Math.max(1, Math.floor(Math.min(secs, LEVEL_BANK_SECS) * LEVELS_PER_SEC));
   // the one-time conversion bonus, from the STORED row
-  const oldGate = GATE_BASE + GATE_STEP * oRb;
-  const conv = (Number(old.econ) || 0) < RR_ECON && oLv >= oldGate ? Math.min(CONV_CAP, Math.floor((oLv - oldGate) / GATE_STEP) + 1) : 0;
+  const oldGate = CONV_GATE_BASE + CONV_GATE_STEP * oRb;
+  const conv = (Number(old.econ) || 0) < RR_ECON && oLv >= oldGate ? Math.min(CONV_CAP, Math.floor((oLv - oldGate) / CONV_GATE_STEP) + 1) : 0;
   // rebirth tokens: 1 per RB_SECS since rb_clock, at most RB_BURST (null clock = full bucket)
   const effClock = Math.max(oldClock == null ? -Infinity : oldClock, now - RB_SECS * RB_BURST * 1000);
   const tokens = Math.min(RB_BURST, Math.floor((now - effClock) / 1000 / RB_SECS));

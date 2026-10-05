@@ -23,7 +23,7 @@ import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
 import MarkPips from '../rarity/MarkPips';
 import RarityFx from '../rarity/RarityFx';
-import UnlockTutorial from '../../tutorials/UnlockTutorial.jsx';
+import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/registry.js';
 import { MARK_TIERS } from '../../progress/marks';
 import {
@@ -244,7 +244,8 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     setShowIndex(true);
   };
   // TAP ANYWHERE mid-reveal jumps to the result (capture: the tap never also presses what is under it). The AUTO
-  // ROLL button is let through so a running auto roll can always be stopped in one tap.
+  // ROLL button is let through so a running auto roll can always be stopped in one tap; INDEX and ✕ too — they
+  // land the reveal themselves, and a first tap that only skipped read as a dead button.
   useEffect(() => {
     const host = coverHost;
     if (!host || typeof host.addEventListener !== 'function') return undefined;
@@ -252,7 +253,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     const t = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
     const down = (e) => {
       if (!ctl.current || !ctl.current.busy()) return;
-      if (e.target && e.target.closest && e.target.closest('.rs-auto-btn')) return;
+      if (e.target && e.target.closest && e.target.closest('.rs-auto-btn, .rs-index-btn, .rs-close')) return;
       e.stopPropagation();
       e.preventDefault();
       swallowUntil = t() + 800;
@@ -381,7 +382,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
       </div>
 
       {tut && tutDef && (
-        <UnlockTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
+        <SpotlightTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
       )}
     </div>
   );

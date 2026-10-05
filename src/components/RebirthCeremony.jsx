@@ -17,7 +17,6 @@ import './RebirthCeremony.css';
  */
 export default function RebirthCeremony({ c, onContinue }) {
   const btnRef = useRef(null);
-  const toKey = Number.isFinite(c.toKey) && c.toKey > 0 ? Math.floor(c.toKey) : 0;
   useEffect(() => {
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight * 0.3;
@@ -44,20 +43,6 @@ export default function RebirthCeremony({ c, onContinue }) {
                 <span className="rbc-to">{formatNum(c.toLevel)}</span>
               </span>
             </div>
-            {/* Rebirth Rush: KEY resets to T0 every rebirth (wins kept → rebuy it) — T{min(T, kept)} with HEIRLOOM. */}
-            {c.fromKey > 0 && (
-              <div className="rbc-row rbc-level rbc-key">
-                <span className="rbc-label">KEY</span>
-                <span className="rbc-level-val">
-                  <span className="rbc-from">T{formatNum(c.fromKey)}</span>
-                  <span className="rbc-arrow">→</span>
-                  <span className="rbc-to">T{formatNum(toKey)}</span>
-                </span>
-              </div>
-            )}
-            {/* CLUTTER PASS: the LEVEL / KEY rows above show the resets and the KEPT column shows what
-                stays — only HEIRLOOM (the reason KEY is not T0) is said in words. */}
-            {toKey > 0 && <p className="rbc-only">HEIRLOOM KEPT KEY T{formatNum(toKey)}.</p>}
           </section>
           <section className="rbc-col rbc-kept" aria-label="Kept">
             <h3 className="rbc-col-h">KEPT</h3>

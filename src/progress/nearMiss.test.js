@@ -55,19 +55,19 @@ test('the bar floor makes a slow level reachable (and is what is quoted)', () =>
   assert.equal(r.text, '50 LETTERS TO LV 301');
 });
 
-test('KEY POWER: words = (cost − balance) / wins per word; picked when it is the closest', () => {
+test('KEY TIER: words = (cost − balance) / wins per word; picked when it is the closest', () => {
   const r = nearMiss({ level: 10, frac: 0, ...flat, avgWords: 15, key: { tier: 4, cost: 12960, balance: 12000, rate: 80 } });
   // level needs 10 words; key needs 960/80 = 12 words → level is closer
   assert.equal(r.kind, 'level');
   const k = nearMiss({ level: 10, frac: 0, ...flat, avgWords: 15, key: { tier: 4, cost: 12960, balance: 12500, rate: 80 } });
   // 460/80 = 5.75 words → KEY wins, rounded UP to whole words
   assert.equal(k.kind, 'key');
-  assert.equal(k.text, 'KEY POWER T5 IN 6 WORDS');
+  assert.equal(k.text, 'KEY TIER 5 IN 6 WORDS');
   const one = nearMiss({ level: 10, frac: 0, ...flat, avgWords: 15, key: { tier: 0, cost: 10, balance: 5, rate: 40 } });
-  assert.equal(one.text, 'KEY POWER T1 IN 1 WORD');
+  assert.equal(one.text, 'KEY TIER 1 IN 1 WORD');
 });
 
-test('KEY POWER already affordable is not a near miss', () => {
+test('KEY TIER already affordable is not a near miss', () => {
   const r = nearMiss({ level: 10, frac: 0, ...flat, avgWords: 5, key: { tier: 2, cost: 360, balance: 400, rate: 10 } });
   assert.equal(r, null);
 });

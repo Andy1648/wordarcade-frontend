@@ -1,6 +1,6 @@
 // ShopScreen.jsx — the SHOP / REBIRTH overlay. Which one it shows is set by `initialView`
 // (the menu now has TWO top-corner icons — SHOP and REBIRTH — each opening straight into its
-// own view; there are no in-panel tabs). SHOP: Key Power tier + pop-style / sound-pack cards
+// own view; there are no in-panel tabs). SHOP: Key Tier + pop-style / sound-pack cards
 // (OWNED / EQUIPPED state; unaffordable items visible-but-dimmed). REBIRTH: count, multiplier,
 // next threshold, what's lost/kept, and the action (disabled with the requirement shown when
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
@@ -10,7 +10,7 @@ import { takeRebirthNow, peekRebirthNow, isRebirthReadyNow } from '../progress/r
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
 import { getWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, keyTierAfterRebirth, REBIRTH_POWER } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, REBIRTH_POWER } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatMultExact } from '../format';
@@ -34,6 +34,8 @@ import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { rarityClass, keyRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
+import SpotlightTutorial from '../tutorials/SpotlightTutorial.jsx';
+import { dueHosted, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
 
 
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
@@ -70,12 +72,17 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [stars, setStars] = useState(() => starsState());
   const rebirthReady = level >= threshold;
 
-  // §3 — the shop always shows a visible NEXT GOAL with a progress bar. KEY POWER's
+  // §3 — the shop always shows a visible NEXT GOAL with a progress bar. KEY TIER's
   // next tier is always a goal (there's always a next tier); rebirth shows level
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
   const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
+  // KEY TIER spotlight (Andy oct5): the first time a KEY tier is affordable, light the KEY item once.
+  const [keyTutDone, setKeyTutDone] = useState(false);
+  const keyTut = view === 'shop' && !keyTutDone && !autoMode
+    ? dueHosted('shop', { keyAffordable: wins >= kpCost, keyTier, rebirths }, hasSeenTutorial)
+    : null;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
     .sort((a, b) => a.price - b.price)[0] || null;
@@ -113,7 +120,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setReveal({
       kind: 'keypower',
       // H6/M14: "TIER n" everywhere (the shop heading, stats and the ceremony say the same).
-      name: `KEY POWER TIER ${t}${n > 1 ? ` (+${n})` : ''}`,
+      name: `KEY TIER ${t}${n > 1 ? ` (+${n})` : ''}`,
       // Rebirth Rush: KEY multiplies XP / LETTER only (not wins) — say exactly that.
       blurb: `KEY T${formatNum(t)}: ×${keyMult(keyXpMult(t))} XP / LETTER.`,
       coin: `−${formatNum(spent)} WINS`,
@@ -204,9 +211,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
 
         {view === 'shop' ? (
           <div className="shop-body">
-            {/* KEY POWER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
+            {/* KEY TIER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
             {/* CLUTTER PASS: no "— TIER n" — the KEY Tn → Tn+1 line right under it carries the tier. */}
-            <h3 className="shop-subtitle">KEY POWER</h3>
+            <h3 className="shop-subtitle">KEY TIER</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
                 {/* REBIRTH RUSH: KEY multiplies XP / LETTER only — it no longer touches wins, so the shelf
@@ -219,7 +226,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   KEY <span key={`kt${keyTier}`} className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier))}`}>T{formatNum(keyTier)}<RarityFx tier={keyRarity(keyTier)} /></span> <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → <span className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier + 1))}`}>T{formatNum(keyTier + 1)}</span> <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
                 </div>
                 <div className="shop-kp-rate">
-                  BASE 10 XP / LETTER × KEY × REBIRTH · KEY RESETS ON REBIRTH
+                  BASE 10 XP / LETTER × KEY × REBIRTH
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier).
                     CLUTTER PASS: no "READY TO UNLOCK" — the full bar + the live HOLD price button say it. */}
@@ -250,7 +257,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             {/* LETTER FORGE: removed from the shelf (Rebirth Rush — not in the wins formula). Storage kept. */}
 
             <h3 className="shop-subtitle">POP STYLES</h3>
-            {/* Andy oct2: cosmetics are collectibles, not the headline — small tiles, KEY POWER stays big. */}
+            {/* Andy oct2: cosmetics are collectibles, not the headline — small tiles, KEY TIER stays big. */}
             <div className="shop-grid shop-grid--compact">
               {POP_STYLES.map((item) => (
                 <Card
@@ -331,10 +338,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 above; this says the cost. HEAD START lifts the new climb (stars.js headStartLevel). */}
             <ul className="shop-confirm-detail">
               <li>
-                <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))} · KEY RESETS → T{formatNum(keyTierAfterRebirth(keyTier))}.
+                <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))}.
               </li>
               <li>
-                <b>KEEP:</b> WINS · MARKS · PURCHASES · STATS.
+                <b>KEEP:</b> WINS · KEY TIER · MARKS · PURCHASES · STATS.
               </li>
             </ul>
 
@@ -402,6 +409,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       </div>
       {reveal && <ShopReveal reveal={reveal} onDone={() => setReveal(null)} />}
       {ceremony && <RebirthCeremony c={ceremony} onContinue={onBack} />}
+      {keyTut && !reveal && !ceremony && (
+        <SpotlightTutorial tutorial={keyTut} onDone={() => { markTutorialSeen(keyTut.id); setKeyTutDone(true); }} />
+      )}
     </div>
   );
 }
@@ -448,7 +458,7 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
           </div>
           {/* §3 — an unaffordable card always shows the GAP + a progress bar. */}
           {/* §3 — the NEXT goal keeps its gap line; the rest of the compact tiles show the bar only. */}
-          {/* C2: the GAP, in the same words KEY POWER and the FORGE use — "YOU HAVE n" was the balance, not the gap. */}
+          {/* C2: the GAP, in the same words KEY TIER and the FORGE use — "YOU HAVE n" was the balance, not the gap. */}
           {isNextGoal && <div className="shop-card-gap">NEED {formatNum(item.price - wins)} MORE</div>}
           <ProgressBar value={item.price > 0 ? wins / item.price : 1} />
         </>
