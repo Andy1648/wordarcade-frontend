@@ -134,13 +134,18 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
 // three contributors keep their rows; everything smaller folds into ONE "+ n MORE" row, so the
 // panel is three lines and a total, never a table. The folded row's wins are the exact sum of what
 // it folds, so the rows still add up to the total.
-const ROUND_ROWS_SHOWN = 3;
+// THREE LINES INCLUDING the "+ n MORE" row (fix/ko-card-scroll): it used to be three rows PLUS the
+// fold, so a round with a 4th factor (a LUCKY word, which is random) grew the panel by a line and the
+// game-over card's fit became a coin flip — 23px over at 360x640. With 4+ factors the top TWO keep
+// their rows and the rest fold, so the panel's height never depends on the dice.
+const ROUND_LINES = 3;
 export function RoundPayout({ ledger }) {
   if (!ledger || !ledger.words) return null;
   const top = ledger.rows.length ? ledger.rows[0].share : 1;
-  const shown = ledger.rows.slice(0, ROUND_ROWS_SHOWN);
+  const shownCount = ledger.rows.length > ROUND_LINES ? ROUND_LINES - 1 : ROUND_LINES;
+  const shown = ledger.rows.slice(0, shownCount);
   const look = shown.some((r) => r.key === 'bonus') ? wornMarkLook() : null;
-  const rest = ledger.rows.slice(ROUND_ROWS_SHOWN);
+  const rest = ledger.rows.slice(shownCount);
   return (
     <div className="payout payout--round" aria-label="Where your wins came from">
       <div className="payout-title">WHERE YOUR WINS CAME FROM</div>
