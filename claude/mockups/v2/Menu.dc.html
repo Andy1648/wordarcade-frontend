@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menu v2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Bungee+Inline&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes m2Pop{0%{transform:translate(-50%,0) scale(.5);opacity:0}15%{transform:translate(-50%,-12%) scale(1.15);opacity:1}100%{transform:translate(-50%,-160%) scale(1);opacity:0}}
+@keyframes m2Sheen{0%{transform:translateX(-120%) skewX(-20deg)}100%{transform:translateX(620%) skewX(-20deg)}}
+@keyframes m2Caret{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes m2Bump{0%{transform:scale(1)}35%{transform:scale(1.18)}100%{transform:scale(1)}}
+.m2-pop{position:absolute;left:50%;animation:m2Pop .9s ease-out forwards;pointer-events:none;white-space:nowrap}
+.m2-sheen{position:absolute;top:0;bottom:0;width:12%;background:rgba(255,255,255,.45);animation:m2Sheen 2.2s linear infinite}
+.m2-caret{animation:m2Caret 1s step-end infinite}
+.m2-bump{animation:m2Bump .3s cubic-bezier(.2,1.4,.4,1)}
+.m2-cards{scrollbar-width:thin;scrollbar-color:#5c0fa3 transparent;scroll-snap-type:x mandatory}
+.m2-card{scroll-snap-align:start}
+.m2-card:hover{transform:translate(-3px,-4px)}
+.m2-btn:hover{transform:translate(-2px,-2px)}
+.m2-btn:active{transform:translate(3px,3px)}
+.m2-type{position:absolute;inset:0;opacity:0;cursor:text;border:0;background:transparent;color:transparent;caret-color:transparent;font-size:16px}
+.m2-face{grid-area:1/1;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: {{W}}px; height: {{H}}px; position: relative; overflow: hidden; background: #0d0618; display: flex; flex-direction: column">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 {{u46}}px, rgba(92,15,163,.10) {{u46}}px {{u50}}px); pointer-events: none"></div>
+
+<div style="position: relative; flex: none; height: {{topH}}px; padding: 0 {{pad}}px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center">
+<div></div>
+
+<div style="display: grid; font-size: {{fWord}}px; line-height: 1; letter-spacing: 0.02em">
+<span class="m2-face" style="font-family: 'Bungee', sans-serif; color: #2EFFE0">TYPE A WORD</span>
+<span class="m2-face" style="font-family: 'Bungee Inline', 'Bungee', sans-serif; color: rgba(255,255,255,.55)">TYPE A WORD</span>
+<span class="m2-face" style="font-family: 'Bungee Shade', 'Bungee', sans-serif; color: #000; letter-spacing: -0.08em">TYPE A WORD</span>
+</div>
+
+<div style="display: flex; justify-content: flex-end; gap: {{u14}}px">
+<sc-for list="{{tr}}" as="t" hint-placeholder-count="3">
+<button class="m2-btn" aria-label="{{t.label}}" style="position: relative; width: {{trS}}px; height: {{trS}}px; padding: 0; background: #1a0b2e; border: {{b4}}px solid #000; box-shadow: {{b5}}px {{b5}}px 0 #000; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform .08s">
+<svg viewBox="0 0 40 40" width="{{trIco}}" height="{{trIco}}" aria-hidden="true" style="overflow: visible; filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{t.i.podium}}" hint-placeholder-val="{{ false }}"><rect x="14" y="8" width="12" height="28" fill="#fff"></rect><rect x="3" y="18" width="11" height="18" fill="#fff"></rect><rect x="26" y="23" width="11" height="13" fill="#fff"></rect><path d="M20 14 L20 24" stroke-width="3"></path></sc-if>
+<sc-if value="{{t.i.bars}}" hint-placeholder-val="{{ false }}"><rect x="4" y="22" width="8" height="14" fill="#fff"></rect><rect x="16" y="13" width="8" height="23" fill="#fff"></rect><rect x="28" y="5" width="8" height="31" fill="#2EFFE0"></rect></sc-if>
+<sc-if value="{{t.i.trophy}}" hint-placeholder-val="{{ false }}"><path d="M11 5 L29 5 L28 17 C27 23 23 26 20 26 C17 26 13 23 12 17 Z" fill="#FFE94A"></path><path d="M20 26 L20 31 M13 35 L27 35 L25 31 L15 31 Z" fill="#FFE94A"></path><path d="M11 8 C4 8 4 17 12 18 M29 8 C36 8 36 17 28 18" fill="none"></path><path d="M16 9 L16 16" stroke="#fff" stroke-width="2.5"></path></sc-if>
+</g></svg>
+<sc-if value="{{t.tag}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: -{{u10}}px; bottom: -{{u10}}px; padding: 0 {{u4}}px; background: #FFE94A; border: 3px solid #000; transform: rotate(-8deg); font-family: 'Bungee', sans-serif; font-size: {{f13}}px; color: #000">{{t.tag}}</span></sc-if>
+<sc-if value="{{t.dot}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: -{{u8}}px; right: -{{u8}}px; width: {{dotS}}px; height: {{dotS}}px; border-radius: 50%; background: #FF3D7F; border: {{b4}}px solid #000"></span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="position: relative; flex: 1; min-height: 0; display: flex; align-items: center; padding: 0 {{pad}}px; gap: {{u24}}px">
+<div style="position: relative; z-index: 2; flex: none; width: {{navW}}px; display: flex; flex-direction: column; gap: {{u10}}px; padding-left: {{coinPull}}px; box-sizing: border-box">
+<div style="position: relative; height: {{curH}}px; min-width: 0; box-sizing: border-box; padding: 0 {{u16}}px 0 {{pillPadL}}px; display: flex; align-items: center; justify-content: flex-end; background: #1a0b2e; border: {{b4}}px solid #000; box-shadow: {{b5}}px {{b5}}px 0 #000; border-bottom: {{b6}}px solid #FFC23D">
+<svg viewBox="0 0 40 40" width="{{coinS}}" height="{{coinS}}" style="position: absolute; left: -{{coinPull}}px; top: 50%; transform: translateY(-50%) rotate(-12deg); overflow: visible; filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true">
+<circle cx="20" cy="20" r="17" fill="#FFE94A" stroke="#000" stroke-width="4"></circle>
+<path d="M20 37 A17 17 0 0 0 37 20 L30 20 A10 10 0 0 1 20 30 Z" fill="#F2A900"></path>
+<circle cx="20" cy="20" r="11" fill="none" stroke="#000" stroke-width="2.5"></circle>
+<path d="M14 15 L26 15 M20 15 L20 27" stroke="#000" stroke-width="3.5" stroke-linecap="round"></path>
+<path d="M9 14 C10 10 13 7 17 6" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"></path>
+</svg>
+<span class="{{winsBump}}" style="font-family: 'Bungee', sans-serif; font-size: {{f24}}px; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill">{{winsText}}</span>
+</div>
+<div style="position: relative; height: {{curH}}px; min-width: 0; box-sizing: border-box; padding: 0 {{u16}}px 0 {{pillPadL}}px; display: flex; align-items: center; justify-content: flex-end; background: #1a0b2e; border: {{b4}}px solid #000; box-shadow: {{b5}}px {{b5}}px 0 #000; border-bottom: {{b6}}px solid #12A99A">
+<svg viewBox="0 0 40 40" width="{{coinS}}" height="{{coinS}}" style="position: absolute; left: -{{coinPull}}px; top: 50%; transform: translateY(-50%) rotate(10deg); overflow: visible; filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true">
+<path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path>
+<path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path>
+<path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15 M13 15 L16 4 M27 15 L24 4" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"></path>
+<path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path>
+</svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{f24}}px; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill">240</span>
+</div>
+
+<div style="height: {{u4}}px"></div>
+
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="4">
+<button class="m2-btn" style="position: relative; height: {{navH}}px; display: flex; align-items: center; gap: {{u10}}px; padding: 0 {{u12}}px; background: #1a0b2e; border: {{b5}}px solid #000; border-left: {{navEdge}}px solid {{n.bg}}; box-shadow: {{b5}}px {{b5}}px 0 #000; font-family: 'Bungee', sans-serif; font-size: {{f18}}px; color: #fff; cursor: pointer; transition: transform .08s">
+<svg viewBox="0 0 30 30" width="{{navIco}}" height="{{navIco}}" aria-hidden="true" style="flex: none; filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{n.i.bag}}" hint-placeholder-val="{{ false }}"><path d="M5 10 L25 10 L23 27 L7 27 Z" fill="#FFE94A"></path><path d="M15 10 L25 10 L23 27 L15 27 Z" fill="#F2A900" stroke="none"></path><path d="M5 10 L25 10 L23 27 L7 27 Z" fill="none"></path><path d="M10 10 C10 3 20 3 20 10" fill="none"></path></sc-if>
+<sc-if value="{{n.i.gem}}" hint-placeholder-val="{{ false }}"><path d="M8 4 L22 4 L28 11 L15 27 L2 11 Z" fill="#2EFFE0"></path><path d="M15 27 L28 11 L20 11 Z" fill="#12A99A" stroke="none"></path><path d="M2 11 L28 11 M15 27 L10 11 M15 27 L20 11" fill="none" stroke-width="2"></path></sc-if>
+<sc-if value="{{n.i.loop}}" hint-placeholder-val="{{ false }}"><path d="M24 12 A10 10 0 1 0 25 19" fill="none" stroke-width="7"></path><path d="M24 12 A10 10 0 1 0 25 19" fill="none" stroke="#B04BFF" stroke-width="3.5"></path><path d="M19 6 L27 11 L19 15 Z" fill="#B04BFF"></path></sc-if>
+<sc-if value="{{n.i.book}}" hint-placeholder-val="{{ false }}"><path d="M3 6 C8 4 12 5 15 8 C18 5 22 4 27 6 L27 26 C22 24 18 25 15 28 C12 25 8 24 3 26 Z" fill="#FF4FA3"></path><path d="M15 8 C18 5 22 4 27 6 L27 26 C22 24 18 25 15 28 Z" fill="#C2187A" stroke="none"></path><path d="M3 6 C8 4 12 5 15 8 C18 5 22 4 27 6 L27 26 C22 24 18 25 15 28 C12 25 8 24 3 26 Z M15 8 L15 28" fill="none"></path></sc-if>
+</g></svg>
+<span>{{n.label}}</span>
+<sc-if value="{{n.dot}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: -{{u8}}px; right: -{{u8}}px; width: {{dotS}}px; height: {{dotS}}px; border-radius: 50%; background: #FF3D7F; border: {{b4}}px solid #000"></span></sc-if>
+</button>
+</sc-for>
+</div>
+
+<div style="position: relative; flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: {{u14}}px; margin-right: {{navW}}px">
+<label style="position: absolute; inset: 0; display: block">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Type anywhere</span>
+<input class="m2-type" value="{{typed}}" onChange="{{onType}}" autocomplete="off" spellcheck="false">
+</label>
+<div style="position: relative; width: 100%; max-width: {{xpW}}px; display: flex; align-items: center; gap: {{u14}}px; pointer-events: none">
+<sc-for list="{{pops}}" as="p" hint-placeholder-count="0">
+<div class="m2-pop" style="top: -{{popUp}}px; font-family: 'Bungee', sans-serif; font-size: {{f30}}px; color: #2EFFE0; -webkit-text-stroke: {{b5}}px #000; paint-order: stroke fill">+{{p.text}}</div>
+</sc-for>
+<div style="flex: none; font-family: 'Bungee', sans-serif; line-height: 1; white-space: nowrap">
+<span style="font-size: {{f24}}px; color: #c9b8e8; -webkit-text-stroke: 3px #000; paint-order: stroke fill">LV </span><span class="{{lvBump}}" style="display: inline-block; font-size: {{fLv}}px; color: #FFE94A; -webkit-text-stroke: {{b6}}px #000; paint-order: stroke fill; text-shadow: {{b4}}px {{b4}}px 0 #000">{{levelsText}}</span>
+</div>
+<div style="position: relative; flex: 1; height: {{xpH}}px; background: #08030f; border: {{b5}}px solid #000; box-shadow: {{b6}}px {{b6}}px 0 #000; overflow: hidden">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{xpPct}}%; background: #FFE94A; transition: {{xpTrans}}; overflow: hidden">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 36%; background: #F2A900"></div>
+<div style="position: absolute; left: 0; right: 0; top: 12%; height: 14%; background: rgba(255,255,255,.55)"></div>
+</div>
+<div style="position: absolute; right: {{u12}}px; top: 50%; transform: translateY(-50%); font-family: 'Bungee', sans-serif; font-size: {{f18}}px; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; white-space: nowrap">{{xpText}}</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: {{u14}}px; pointer-events: none">
+<div style="font-family: 'Bungee', sans-serif; font-size: {{f24}}px; color: #fff; -webkit-text-stroke: {{b4}}px #000; paint-order: stroke fill">+{{perText}}<span style="font-family: 'Space Mono', monospace; font-size: {{f13}}px; -webkit-text-stroke: 0; color: #c9b8e8"> / LETTER</span></div>
+<div style="height: {{chipH}}px; display: flex; align-items: stretch; background: #2a0e4a; border: {{b4}}px solid #000; box-shadow: {{b4}}px {{b4}}px 0 #000; font-family: 'Bungee', sans-serif; font-size: {{f18}}px; color: #fff"><span style="width: {{u10}}px; background: #B04BFF; border-right: 3px solid #000"></span><span style="display: flex; align-items: center; padding: 0 {{u12}}px">CROWNLESS</span></div>
+</div>
+<div style="height: {{f30}}px; font-family: 'Bungee', sans-serif; font-size: {{f30}}px; letter-spacing: .08em; color: #fff; pointer-events: none">
+<sc-if value="{{hasTyped}}" hint-placeholder-val="{{ false }}"><span>{{shown}}</span><span class="m2-caret" style="color: #2EFFE0">_</span></sc-if>
+<sc-if value="{{noTyped}}" hint-placeholder-val="{{ true }}"><span style="color: #5d4a78">TYPE ANYTHING</span><span class="m2-caret" style="color: #2EFFE0">_</span></sc-if>
+</div>
+</div>
+</div>
+
+<div style="position: relative; flex: none; height: {{rowH}}px; padding: {{u8}}px 0 {{u16}}px 0; box-sizing: border-box">
+<div class="m2-cards" style="height: 100%; overflow-x: auto; overflow-y: hidden">
+<div style="display: flex; gap: {{u16}}px; height: 100%; padding: {{u4}}px {{pad}}px {{u10}}px {{pad}}px; box-sizing: border-box; width: max-content; margin: 0 auto">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="6">
+<div class="m2-card" style="width: {{cardW}}px; height: 100%; flex: none; box-sizing: border-box; border: {{b4}}px dashed #5c0fa3; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'Bungee', sans-serif; font-size: {{f18}}px; color: #5d4a78; white-space: pre-line">{{c.name}}</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"w":{"editor":null},"h":{"editor":null},"$preview":{"width":1366,"height":657}}'>
+function fmt(x) {
+  var S = [['Qi', 1e18], ['Qa', 1e15], ['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + S[i][0]; }
+  return String(Math.floor(x));
+}
+function stepOf(x) { var p = Math.pow(10, Math.floor(Math.log10(Math.max(10, x)))); return p / 10; }
+var MODES = ['WORD BOMB\n(existing card)', 'RACE\n(existing card)', 'CHAIN\n(existing card)', 'SAT RUSH\n(existing card)', 'FUSE\n(existing card)', 'BLITZ\n(existing card)'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { life: 1243100, xp: 0, typed: '', pops: [], n: 0, wrap: false, bump: false };
+    this.timers = [];
+  }
+  componentWillUnmount() { this.timers.forEach(clearTimeout); }
+  renderVals() {
+    var self = this, st = this.state;
+    var W = Number(this.props.w) || 1366, H = Number(this.props.h) || 657;
+    var s = Math.min(W / 1366, H / 657);
+    var u = function (n) { return Math.round(n * s); };
+    var t = function (n) { return Math.round(n * s * 1.22); };
+    var b = function (n) { return Math.max(3, Math.round(n * Math.max(s, 0.85))); };
+    var per = Math.pow(1.8, 6) * 60;
+    var need = 6.5e3 * Math.pow(st.life, 0.12);
+    var rowH = Math.round(H * 0.34), topH = Math.max(66, Math.round(H * 0.13));
+    var cardH = rowH - u(24);
+    var pillH = Math.round(topH * 0.66);
+    return {
+      W: W, H: H, pad: u(30), topH: topH, pillH: pillH,
+      lbW: Math.round(pillH * 1.4), coinS: Math.round(Math.max(34, u(44)) * 1.05), coinPull: Math.round(Math.max(34, u(44)) * 0.42), pillPadL: Math.round(Math.max(34, u(44)) * 0.75),
+      pillW: u(170), pillWs: u(120),
+      u4: u(4), u6: u(6), u8: u(8), u10: u(10), u12: u(12), u14: u(14), u16: u(16), u18: u(18), u46: u(46), u50: u(50),
+      b4: b(4), b5: b(5), b6: b(6),
+      f13: Math.max(14, t(13)), f18: Math.max(17, t(18)), f22: Math.max(19, t(22)), f24: Math.max(21, t(24)), f30: Math.max(26, t(30)),
+      fWord: Math.max(34, t(46)),
+      fHero: Math.round(Math.min(W * 0.085, H * 0.17)), heroStroke: b(9), heroSh: b(7),
+      xpW: Math.round(W * 0.6), xpH: Math.max(40, u(54)),
+      xpPct: st.wrap ? 100 : Math.min(100, st.xp / need * 100).toFixed(1), xpTrans: st.wrap ? 'width .08s linear' : st.snap ? 'none' : 'width .2s cubic-bezier(.2,.9,.3,1)',
+      xpText: fmt(st.xp) + ' / ' + fmt(need) + ' XP', lvBump: st.bump ? 'm2-bump' : '',
+      fLv: Math.max(40, t(58)), u24: u(24), popUp: u(54), navH: Math.max(42, u(54)), navEdge: b(10),
+      chipH: Math.max(34, u(42)), dotS: Math.max(18, u(22)),
+      rowH: rowH, navW: Math.max(176, u(214)), cardW: Math.round(cardH * 0.86),
+      levelsText: fmt(st.life), perText: fmt(per * 7) + ' XP', winsText: '84.2M', winsBump: '',
+      typed: st.typed, shown: st.typed.toUpperCase(), hasTyped: st.typed.length > 0, noTyped: st.typed.length === 0, pops: st.pops,
+      nav: [{ label: 'SHOP', bg: '#FFE94A', dot: true, i: { bag: true } }, { label: 'ROLL', bg: '#2EFFE0', dot: true, i: { gem: true } }, { label: 'INDEX', bg: '#FF4FA3', dot: false, i: { book: true } }, { label: 'REBIRTH', bg: '#B04BFF', dot: false, i: { loop: true } }],
+      navIco: Math.max(20, u(26)), curH: Math.max(34, u(44)), trS: Math.max(46, u(58)), trIco: Math.max(28, u(36)),
+      tr: [{ label: 'Leaderboard', tag: '#4', dot: false, i: { podium: true } }, { label: 'Stats', tag: '', dot: false, i: { bars: true } }, { label: 'Achievements', tag: '', dot: true, i: { trophy: true } }],
+      cards: MODES.map(function (m) { return { name: m }; }),
+      onType: function (e) {
+        var v = (e && e.target ? e.target.value : '') || '';
+        var added = Math.max(0, v.length - self.state.typed.length);
+        if (v.length > 16) v = v.slice(-1);
+        if (!added) { self.setState({ typed: v }); return; }
+        var gain = per * 7 * added, id = self.state.n + 1;
+        var xp = self.state.xp + gain, life = self.state.life;
+        var nd = 6.5e3 * Math.pow(life, 0.12);
+        while (xp >= nd) { xp -= nd; life += 1; nd = 6.5e3 * Math.pow(life, 0.12); }
+        var ups = life - self.state.life;
+        if (ups) { self.setState({ wrap: true, bump: false }); self.timers.push(setTimeout(function () { self.setState({ wrap: false, snap: true, bump: true }); self.timers.push(setTimeout(function () { self.setState({ snap: false }); }, 40)); }, 90)); }
+        self.setState({ typed: v, life: life, xp: xp, pops: self.state.pops.concat([{ id: id, text: ups ? ups + ' LEVEL' + (ups > 1 ? 'S' : '') : fmt(gain) + ' XP' }]).slice(-4), n: id });
+        self.timers.push(setTimeout(function () { self.setState({ pops: self.state.pops.filter(function (p) { return p.id !== id; }) }); }, 900));
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

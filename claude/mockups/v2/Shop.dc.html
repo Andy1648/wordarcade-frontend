@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes spBump{0%{transform:scale(1)}40%{transform:scale(1.14) rotate(-3deg)}100%{transform:scale(1)}}
+@keyframes spStamp{0%{transform:scale(2.4) rotate(-14deg);opacity:0}70%{transform:scale(.92) rotate(-14deg);opacity:1}100%{transform:scale(1) rotate(-14deg)}}
+@keyframes spFloat{0%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,-70px);opacity:0}}
+@keyframes spGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+@keyframes spShine{0%{transform:translateX(-160%) skewX(-20deg)}55%,100%{transform:translateX(460%) skewX(-20deg)}}
+.sp-bump{animation:spBump .35s cubic-bezier(.2,1.4,.4,1)}
+.sp-stamp{animation:spStamp .35s cubic-bezier(.2,1.3,.4,1) both}
+.sp-float{position:absolute;left:50%;top:30%;animation:spFloat .8s ease-out forwards;pointer-events:none}
+.sp-glow{animation:spGlow 1.4s ease-in-out infinite}
+.sp-shine{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.sp-shine::after{content:"";position:absolute;top:0;bottom:0;width:30%;background:rgba(255,255,255,.22);animation:spShine 2.8s ease-in-out infinite}
+.sp-item:hover{transform:translate(-3px,-4px)}
+.sp-out{-webkit-text-stroke:5px #000;paint-order:stroke fill}
+a.sp-link{color:#fff;text-decoration:none}
+a.sp-link:hover{color:#FFE94A}
+</style>
+</helmet>
+<div style="width: 1280px; height: 720px; position: relative; overflow: hidden; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.10) 46px 50px)"></div>
+
+<div style="position: absolute; left: 36px; right: 36px; top: 24px; height: 62px; display: flex; align-items: center; justify-content: space-between">
+<a class="sp-link" href="MenuV2.dc.html" style="height: 56px; padding: 0 20px; display: flex; align-items: center; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px">← MENU</a>
+<div style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 58px; line-height: 1; color: #FFE94A">SHOP</div>
+<div style="display: flex; gap: 14px">
+<div class="{{winsBump}}" style="height: 54px; padding: 0 16px; display: flex; align-items: center; gap: 8px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 7px solid #FFC23D"><svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="#FFE94A" stroke="#000" stroke-width="4"></circle><path d="M14 15 L26 15 M20 15 L20 27" stroke="#000" stroke-width="3.5"></path></svg><span class="sp-out" style="font-family: 'Bungee', sans-serif; font-size: 24px; -webkit-text-stroke: 3px #000">{{winsText}}</span></div>
+<div class="{{gemBump}}" style="height: 54px; padding: 0 16px; display: flex; align-items: center; gap: 8px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 7px solid #12A99A"><svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg><span class="sp-out" style="font-family: 'Bungee', sans-serif; font-size: 24px; -webkit-text-stroke: 3px #000">{{gems}}</span></div>
+</div>
+</div>
+
+<div style="position: absolute; left: 36px; top: 112px; width: 380px; height: 576px; box-sizing: border-box; background: #1a0b2e; border: 6px solid #000; box-shadow: 9px 9px 0 #000; border-top: 12px solid #FFC23D; display: flex; flex-direction: column; align-items: center; padding: 16px 20px 20px">
+<div style="align-self: flex-start; font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">FOREVER</div>
+<div class="{{keyBump}}" style="margin-top: 6px; width: 150px; height: 150px; position: relative">
+<div style="position: absolute; inset: 0; background: #FFC23D; border: 6px solid #000; transform: rotate(-6deg); box-shadow: 6px 6px 0 #000"></div>
+<div style="position: absolute; inset: 20px; background: #3d2a05; border: 5px solid #000; transform: rotate(-6deg)"></div>
+<svg viewBox="0 0 100 100" width="150" height="150" style="position: absolute; inset: 0; overflow: visible; filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><g transform="translate(14 14) scale(.72) rotate(-20 50 50)" stroke="#0d0618" stroke-width="6" stroke-linejoin="round">
+<rect x="42" y="43" width="52" height="14" fill="#FFC23D"></rect><rect x="42" y="50" width="52" height="7" fill="#E09A12" stroke="none"></rect>
+<rect x="72" y="57" width="9" height="15" fill="#FFC23D"></rect><rect x="85" y="57" width="9" height="22" fill="#FFC23D"></rect>
+<circle cx="27" cy="50" r="20" fill="#FFC23D"></circle><path d="M27 70 A20 20 0 0 0 47 50 L38 50 A11 11 0 0 1 27 61 Z" fill="#E09A12" stroke="none"></path><circle cx="27" cy="50" r="20" fill="none"></circle><circle cx="27" cy="50" r="8" fill="#3d2a05"></circle>
+<path d="M14 40 C16 35 20 32 25 31" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></svg>
+</div>
+<div style="margin-top: 14px; display: flex; align-items: baseline; gap: 10px; font-family: 'Bungee', sans-serif">
+<span style="font-size: 24px; color: #c9b8e8">POWER</span>
+<span class="sp-out" style="font-size: 50px; line-height: 1; color: #fff">{{tier}}</span>
+<span style="font-size: 30px; color: #FFE94A">→</span>
+<span class="sp-out" style="font-size: 50px; line-height: 1; color: #FFE94A">{{nextTier}}</span>
+</div>
+<div style="margin-top: 10px; display: flex; align-items: baseline; gap: 8px">
+<span class="sp-out" style="font-family: 'Bungee', sans-serif; font-size: 26px; color: #fff; -webkit-text-stroke: 4px #000">{{perNow}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; color: #FFE94A">→</span>
+<span class="sp-out" style="font-family: 'Bungee', sans-serif; font-size: 34px; color: #2EFFE0">{{perNext}}</span>
+</div>
+<div style="font-size: 14px; color: #c9b8e8">XP / LETTER</div>
+<button onMouseDown="{{holdStart}}" onMouseUp="{{holdEnd}}" onMouseLeave="{{holdEnd}}" onTouchStart="{{holdStart}}" onTouchEnd="{{holdEnd}}" style="position: relative; margin-top: auto; width: 100%; height: 96px; padding: 0; background: {{buyBg}}; border: 6px solid #000; box-shadow: 8px 8px 0 #000; overflow: hidden; cursor: pointer; font-family: 'Bungee', sans-serif; color: #000">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{holdPct}}%; background: rgba(255,255,255,.5); transition: {{holdTrans}}"></div>
+<div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05">
+<span style="font-size: 30px">{{buyLabel}}</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 20px"><svg width="20" height="20" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="#FFE94A" stroke="#000" stroke-width="4"></circle></svg>{{priceText}}</span>
+</div>
+</button>
+</div>
+
+<div style="position: absolute; left: 452px; right: 36px; top: 112px; height: 58px; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<span class="sp-out" style="font-family: 'Bungee', sans-serif; font-size: 34px; color: #2EFFE0">STOCK</span>
+<span style="font-size: 15px; color: #c9b8e8">CHANGES EVERY 5 MIN</span>
+</div>
+<div style="height: 52px; padding: 0 16px; display: flex; align-items: center; gap: 10px; background: #08030f; border: 4px solid #000; box-shadow: 5px 5px 0 #000">
+<svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#fff" stroke="#000" stroke-width="4"></circle><path d="M20 10 L20 20 L27 25" stroke="#000" stroke-width="4" stroke-linecap="round" fill="none"></path></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 26px; color: {{timerC}}">{{timer}}</span>
+</div>
+</div>
+
+<div style="position: absolute; left: 452px; right: 36px; top: 190px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="6">
+<button class="sp-item" onClick="{{it.buy}}" style="position: relative; height: 236px; padding: 0; background: #000; border: 0; cursor: pointer; text-align: left; filter: drop-shadow(7px 7px 0 #000); transition: transform .1s">
+<div style="position: absolute; inset: 5px; background: {{it.fill}}; overflow: hidden; display: flex; flex-direction: column; align-items: center">
+<div style="width: 100%; height: 30px; box-sizing: border-box; padding: 0 10px; background: {{it.line}}; border-bottom: 4px solid #000; display: flex; align-items: center; justify-content: space-between; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000"><span>{{it.rarity}}</span><span>×{{it.left}} LEFT</span></div>
+<svg viewBox="0 0 100 100" width="92" height="92" style="margin-top: 6px; overflow: visible; filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><g stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{it.g.potion}}" hint-placeholder-val="{{ false }}"><path d="M40 8 L60 8 L60 30 C76 36 86 50 86 64 C86 82 70 94 50 94 C30 94 14 82 14 64 C14 50 24 36 40 30 Z" fill="#fff"></path><path d="M18 62 C30 56 70 56 82 62 C84 80 70 90 50 90 C30 90 16 80 18 62 Z" fill="{{it.liquid}}" stroke="none"></path><path d="M40 8 L60 8 L60 30 C76 36 86 50 86 64 C86 82 70 94 50 94 C30 94 14 82 14 64 C14 50 24 36 40 30 Z" fill="none"></path><rect x="36" y="2" width="28" height="10" fill="#C98A4B"></rect><path d="M28 50 C28 44 32 40 36 38" stroke="#fff" stroke-width="5" fill="none"></path><circle cx="44" cy="72" r="4" fill="#fff" stroke="none"></circle><circle cx="58" cy="78" r="3" fill="#fff" stroke="none"></circle></sc-if>
+<sc-if value="{{it.g.bolt}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-8 50 50)"><path d="M60 6 L24 56 L46 56 L36 94 L78 38 L56 38 Z" fill="#FF3D7F" stroke="none"></path><path d="M56 38 L78 38 L36 94 L44 60 Z" fill="#C2185B" stroke="none"></path><path d="M60 6 L24 56 L46 56 L36 94 L78 38 L56 38 Z" fill="none"></path><path d="M53 17 L35 44" stroke="#fff" stroke-width="5" fill="none"></path><path d="M84 14 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 Z" fill="#FFE94A" stroke-width="3"></path></g></sc-if>
+<sc-if value="{{it.g.magnet}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-20 50 50)"><path d="M18 20 L18 56 C18 76 32 88 50 88 C68 88 82 76 82 56 L82 20 L64 20 L64 56 C64 66 58 72 50 72 C42 72 36 66 36 56 L36 20 Z" fill="#FF3D7F"></path><rect x="18" y="12" width="18" height="14" fill="#fff"></rect><rect x="64" y="12" width="18" height="14" fill="#fff"></rect><path d="M26 34 L26 56" stroke="#fff" stroke-width="4"></path><path d="M44 -2 L50 6 L56 -2" fill="#2EFFE0" stroke-width="4"></path></g></sc-if>
+<sc-if value="{{it.g.scroll}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-10 50 50)"><rect x="20" y="16" width="60" height="68" fill="#FFF4D6"></rect><path d="M50 16 L80 16 L80 84 L50 84 Z" fill="#EADFC0" stroke="none"></path><rect x="20" y="16" width="60" height="68" fill="none"></rect><rect x="12" y="8" width="76" height="14" rx="7" fill="#C98A4B"></rect><rect x="12" y="78" width="76" height="14" rx="7" fill="#C98A4B"></rect><path d="M32 38 L68 38 M32 50 L62 50 M32 62 L56 62" stroke-width="4"></path><text x="50" y="72" text-anchor="middle" font-family="Bungee" font-size="18" fill="#2EFFE0" stroke="#000" stroke-width="3" paint-order="stroke">XP</text></g></sc-if>
+<sc-if value="{{it.g.clock}}" hint-placeholder-val="{{ false }}"><g transform="rotate(8 50 50)"><circle cx="50" cy="54" r="36" fill="#fff"></circle><path d="M50 18 A36 36 0 0 1 86 54 L72 54 A22 22 0 0 0 50 32 Z" fill="#E8DFF7" stroke="none"></path><circle cx="50" cy="54" r="36" fill="none"></circle><path d="M50 32 L50 54 L66 64" stroke-width="7" fill="none"></path><rect x="40" y="6" width="20" height="10" fill="#B04BFF"></rect><path d="M18 22 L28 30 M82 22 L72 30" stroke-width="6"></path></g></sc-if>
+<sc-if value="{{it.g.box}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-6 50 50)"><path d="M14 36 L50 22 L86 36 L86 78 L50 92 L14 78 Z" fill="#B04BFF"></path><path d="M50 50 L86 36 L86 78 L50 92 Z" fill="#7A1FC4" stroke="none"></path><path d="M14 36 L50 22 L86 36 L86 78 L50 92 L14 78 Z M14 36 L50 50 L86 36 M50 50 L50 92" fill="none"></path><path d="M30 30 L66 44 L66 58" stroke="#FFE94A" stroke-width="8" fill="none"></path><text x="34" y="74" text-anchor="middle" font-family="Bungee" font-size="22" fill="#fff" stroke="#000" stroke-width="4" paint-order="stroke">?</text></g></sc-if>
+</g></svg>
+<div class="sp-out" style="margin-top: 2px; font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 1; color: #FFE94A">{{it.big}}</div>
+<div style="font-family: 'Bungee', sans-serif; font-size: 15px; color: #fff">{{it.what}}</div>
+<div style="position: absolute; left: 10px; right: 10px; bottom: 10px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; background: #2EFFE0; border: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000"><svg width="18" height="18" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#fff" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>{{it.price}}</div>
+<sc-if value="{{it.shine}}" hint-placeholder-val="{{ false }}"><div class="sp-shine"></div></sc-if>
+<sc-if value="{{it.sold}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; background: rgba(8,3,15,.72); display: flex; align-items: center; justify-content: center">
+<div class="sp-stamp" style="padding: 4px 14px; border: 5px solid #FF3D7F; color: #FF3D7F; font-family: 'Bungee', sans-serif; font-size: 28px; background: rgba(0,0,0,.4)">SOLD OUT</div>
+</div>
+</sc-if>
+</div>
+<sc-for list="{{it.floats}}" as="f" hint-placeholder-count="0"><div class="sp-float sp-out" style="font-family: 'Bungee', sans-serif; font-size: 26px; color: #2EFFE0">BOUGHT!</div></sc-for>
+</button>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+function fmt(x) {
+  var S = [['Qi', 1e18], ['Qa', 1e15], ['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + S[i][0]; }
+  return String(Math.floor(x));
+}
+function price(t) { return 100 * Math.pow(4, t); }
+var RAR = {
+  common: { name: 'COMMON', line: '#A9B4C8', fill: '#262b38' },
+  rare: { name: 'RARE', line: '#3D8BFF', fill: '#0f2350' },
+  epic: { name: 'EPIC', line: '#B04BFF', fill: '#2a0e4a' },
+  legendary: { name: 'LEGENDARY', line: '#FFC23D', fill: '#3d2a05' }
+};
+var STOCK = [
+  { r: 'common', g: 'scroll', big: '+25%', what: 'XP · 10 MIN', price: 45, left: 5 },
+  { r: 'rare', g: 'potion', liquid: '#2EFFE0', big: '×2', what: 'LUCK · 15 MIN', price: 120, left: 3 },
+  { r: 'common', g: 'magnet', big: '×2', what: 'GEM DROPS · 10 MIN', price: 65, left: 4 },
+  { r: 'epic', g: 'bolt', big: '×10', what: 'OVERDRIVE · NOW', price: 225, left: 2 },
+  { r: 'rare', g: 'clock', big: '+5 MIN', what: 'EVERY BOOST', price: 150, left: 2 },
+  { r: 'legendary', g: 'box', big: '1', what: 'FREE EPIC+ ROLL', price: 495, left: 1 }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tier: 6, wins: 2.6e6, gems: 640, hold: false, keyBump: false, left: STOCK.map(function (s) { return s.left; }), floats: STOCK.map(function () { return []; }), secs: 263, gemBump: false };
+    this.timer = null; this.t = [];
+  }
+  componentDidMount() {
+    var self = this;
+    this.iv = setInterval(function () {
+      var s = self.state.secs - 1;
+      if (s < 0) s = 300;
+      self.setState({ secs: s, left: s === 300 ? STOCK.map(function (x) { return x.left; }) : self.state.left });
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.iv); clearTimeout(this.timer); this.t.forEach(clearTimeout); }
+  buyLoop(delay) {
+    var self = this;
+    this.timer = setTimeout(function () {
+      var st = self.state;
+      if (!st.hold) return;
+      var p = price(st.tier);
+      if (st.wins < p) { self.setState({ hold: false }); return; }
+      self.setState({ tier: st.tier + 1, wins: st.wins - p, keyBump: false });
+      self.t.push(setTimeout(function () { self.setState({ keyBump: true }); }, 20));
+      self.buyLoop(Math.max(220, delay * 0.7));
+    }, delay);
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var per = function (t) { return 7 * Math.pow(1.8, t) * 60; };
+    var p = price(st.tier), can = st.wins >= p;
+    var mm = Math.floor(st.secs / 60), ss = st.secs % 60;
+    return {
+      winsText: fmt(st.wins), gems: fmt(st.gems), winsBump: '', gemBump: st.gemBump ? 'sp-bump' : '',
+      tier: st.tier, nextTier: st.tier + 1, perNow: fmt(per(st.tier)), perNext: fmt(per(st.tier + 1)),
+      priceText: fmt(p), buyBg: can ? '#FFE94A' : '#3a2160', buyLabel: can ? 'HOLD TO BUY' : 'NEED WINS',
+      holdPct: st.hold && can ? 100 : 0, holdTrans: st.hold ? 'width .6s linear' : 'width .1s',
+      keyBump: st.keyBump ? 'sp-bump' : '',
+      timer: mm + ':' + (ss < 10 ? '0' : '') + ss, timerC: st.secs < 30 ? '#FF3D7F' : '#fff',
+      items: STOCK.map(function (s, i) {
+        var R = RAR[s.r], left = st.left[i];
+        var g = {}; g[s.g] = true;
+        return {
+          rarity: R.name, line: R.line, fill: R.fill, g: g, liquid: s.liquid || '#2EFFE0',
+          big: s.big, what: s.what, price: s.price, left: left, sold: left <= 0,
+          shine: s.r === 'epic' || s.r === 'legendary', floats: st.floats[i],
+          buy: function () {
+            if (self.state.left[i] <= 0 || self.state.gems < s.price) return;
+            var l = self.state.left.slice(); l[i] -= 1;
+            var f = self.state.floats.slice(); f[i] = f[i].concat([1]);
+            self.setState({ left: l, gems: self.state.gems - s.price, floats: f, gemBump: false });
+            self.t.push(setTimeout(function () { self.setState({ gemBump: true }); }, 20));
+            self.t.push(setTimeout(function () { var f2 = self.state.floats.slice(); f2[i] = f2[i].slice(1); self.setState({ floats: f2 }); }, 800));
+          }
+        };
+      }),
+      holdStart: function () { if (!can) return; self.setState({ hold: true }); self.buyLoop(600); },
+      holdEnd: function () { clearTimeout(self.timer); self.setState({ hold: false }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

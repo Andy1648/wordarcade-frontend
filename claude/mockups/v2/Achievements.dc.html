@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Achievements</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes acRise{0%{transform:translateY(26px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes acBob{0%,100%{transform:translate(0,0)}50%{transform:translate(-2px,-4px)}}
+@keyframes acBlink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes acStamp{0%{transform:scale(2.6) rotate(-12deg);opacity:0}65%{transform:scale(.9) rotate(-12deg);opacity:1}100%{transform:scale(1) rotate(-12deg);opacity:1}}
+@keyframes acTierUp{0%{transform:scale(1)}30%{transform:scale(1.08) rotate(-1.5deg)}60%{transform:scale(.97) rotate(.5deg)}100%{transform:scale(1)}}
+@keyframes acPopA{0%{transform:scale(1)}40%{transform:scale(1.18) rotate(-3deg)}100%{transform:scale(1)}}
+@keyframes acPopB{0%{transform:scale(1)}40%{transform:scale(1.18) rotate(3deg)}100%{transform:scale(1)}}
+@keyframes acFloatA{0%{transform:translateY(14px);opacity:0}20%{transform:translateY(0);opacity:1}75%{opacity:1}100%{transform:translateY(-18px);opacity:0}}
+@keyframes acFloatB{0%{transform:translateY(14px);opacity:0}20%{transform:translateY(0);opacity:1}75%{opacity:1}100%{transform:translateY(-18px);opacity:0}}
+@keyframes acGemIn{0%{transform:scale(.2) rotate(-30deg)}35%{transform:scale(1.4) rotate(8deg)}100%{transform:scale(.85) rotate(0)}}
+@keyframes acSwapA{0%{transform:translateX(-34px);opacity:0}100%{transform:translateX(0);opacity:1}}
+@keyframes acSwapB{0%{transform:translateX(-34px);opacity:0}100%{transform:translateX(0);opacity:1}}
+@keyframes acSpin{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+.ac-rise{animation:acRise .42s cubic-bezier(.2,1.2,.4,1) both}
+.ac-bob{animation:acBob .9s ease-in-out infinite}
+.ac-blink{animation:acBlink 1s ease-in-out infinite}
+.ac-stamp{animation:acStamp .38s cubic-bezier(.2,1.3,.4,1) both}
+.ac-tierup{animation:acTierUp .55s cubic-bezier(.2,1.4,.4,1)}
+.ac-popA{animation:acPopA .28s cubic-bezier(.2,1.4,.4,1)}
+.ac-popB{animation:acPopB .28s cubic-bezier(.2,1.4,.4,1)}
+.ac-floatA{animation:acFloatA 1.2s ease-out both}
+.ac-floatB{animation:acFloatB 1.2s ease-out both}
+.ac-gemin{animation:acGemIn .35s cubic-bezier(.2,1.4,.4,1) both}
+.ac-swapA{animation:acSwapA .32s ease-out both}
+.ac-swapB{animation:acSwapB .32s ease-out both}
+.ac-wob{animation:acSpin 2.4s ease-in-out infinite}
+.ac-o3{-webkit-text-stroke:3px #000;paint-order:stroke fill}
+.ac-o5{-webkit-text-stroke:5px #000;paint-order:stroke fill}
+.ac-o7{-webkit-text-stroke:7px #000;paint-order:stroke fill}
+.ac-btn{transition:transform .08s,box-shadow .08s}
+.ac-btn:hover{transform:translate(-2px,-2px)}
+.ac-btn:active{transform:translate(4px,4px);box-shadow:1px 1px 0 #000 !important}
+a.ac-link{color:#fff;text-decoration:none}
+a.ac-link:hover{color:#FFE94A}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.10) 46px 50px)"></div>
+
+<div style="position: absolute; left: 30px; right: 30px; top: 22px; height: 64px; display: flex; align-items: center; gap: 20px">
+<a class="ac-link" href="MenuV2.dc.html" style="height: 54px; padding: 0 20px; display: flex; align-items: center; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px">← MENU</a>
+<div style="flex: 1; display: flex; justify-content: center"><div style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 50px; line-height: 1; color: #FFE94A">ACHIEVEMENTS</div></div>
+<div style="height: 54px; padding: 0 16px; display: flex; align-items: center; gap: 8px; background: #12071f; border: 4px solid #000; box-shadow: 5px 5px 0 #000">
+<span class="ac-o3" style="font-family: 'Bungee', sans-serif; font-size: 24px; color: #FFE94A">{{tiersDone}}</span><span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">/{{tiersAll}}</span><span style="font-size: 13px; color: #c9b8e8">TIERS</span>
+</div>
+<div class="{{gemPop}}" style="width: 190px; box-sizing: border-box; height: 54px; padding: 0 16px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 7px solid #12A99A">
+<svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true" style="flex: none; overflow: visible"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15" stroke="#000" stroke-width="2.5"></path><path d="M10 9 L16 9" stroke="#fff" stroke-width="3"></path><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="none" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+<span class="ac-o3" style="font-family: 'Bungee', sans-serif; font-size: 26px">{{gemsT}}</span>
+</div>
+</div>
+
+<div style="position: absolute; left: 30px; top: 108px; width: 400px; height: 522px; box-sizing: border-box; background: #1a0b2e; border: 6px solid #000; border-top: 12px solid {{hero.stripBg}}; box-shadow: 9px 9px 0 #000; padding: 12px 22px 20px; display: flex; flex-direction: column; overflow: hidden">
+<div style="height: 40px; display: flex; align-items: center; justify-content: space-between">
+<span class="{{hero.labelCls}}" style="font-family: 'Bungee', sans-serif; font-size: 26px; color: {{hero.labelC}}">{{hero.label}}</span>
+<div style="height: 40px; min-width: 40px; box-sizing: border-box; padding: 0 10px; display: flex; align-items: center; justify-content: center; background: {{readyBg}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 24px; color: #000">{{readyN}}</div>
+</div>
+<div class="{{heroSwap}}" style="flex: 1; display: flex; flex-direction: column; align-items: center; opacity: {{hero.op}}">
+<div style="position: relative; width: 150px; height: 150px; margin-top: 2px">
+<div style="position: absolute; inset: 12px; background: {{hero.tf}}; border: 6px solid #000; box-shadow: inset 0 0 0 6px {{hero.tc}}, 7px 7px 0 #000; transform: rotate(-6deg)"></div>
+<div class="ac-wob" style="position: absolute; inset: 0">
+<svg viewBox="0 0 100 100" width="116" height="116" style="position: absolute; left: 50%; top: 50%; margin-left: -58px; margin-top: -58px; overflow: visible" aria-hidden="true">
+<g style="filter: drop-shadow(3px 3px 0 #000)">
+<g stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{hero.g.key}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-6 50 50)">
+<path d="M8 86 L16 30 L84 30 L92 86 Z" fill="#B04BFF"></path>
+<path d="M22 70 L78 70 L92 86 L8 86 Z" fill="#7A1FC4" stroke="none"></path>
+<path d="M8 86 L16 30 L84 30 L92 86 Z" fill="none"></path>
+<rect x="22" y="12" width="56" height="54" rx="7" fill="#D88BFF"></rect>
+<path d="M66 16 L72 16 C75 16 76 18 76 21 L76 60 C76 63 74 64 72 64 L66 64 Z" fill="#B04BFF" stroke="none"></path>
+<rect x="22" y="12" width="56" height="54" rx="7" fill="none"></rect>
+<path d="M36 56 L49 24 L62 56 M41 45 L57 45" fill="none" stroke-width="7"></path>
+<path d="M28 20 L46 20" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.bot}}" hint-placeholder-val="{{ false }}"><g transform="rotate(5 50 50)">
+<path d="M50 24 L50 10" fill="none"></path>
+<circle cx="50" cy="9" r="7" fill="#FF3D7F"></circle>
+<rect x="2" y="42" width="12" height="22" fill="#5d6678"></rect>
+<rect x="86" y="42" width="12" height="22" fill="#5d6678"></rect>
+<rect x="12" y="24" width="76" height="62" rx="9" fill="#A9B4C8"></rect>
+<path d="M12 66 L88 66 L88 77 C88 82 84 86 79 86 L21 86 C16 86 12 82 12 77 Z" fill="#5d6678" stroke="none"></path>
+<rect x="12" y="24" width="76" height="62" rx="9" fill="none"></rect>
+<path d="M26 38 L40 52 M40 38 L26 52 M60 38 L74 52 M74 38 L60 52" fill="none" stroke-width="7"></path>
+<path d="M28 74 L36 68 L44 74 L52 68 L60 74 L68 68 L74 72" fill="none" stroke-width="5"></path>
+<path d="M76 24 L68 34 L76 40" fill="none" stroke-width="4"></path>
+<path d="M20 32 L34 32" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.loop}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M76 37 A30 30 0 1 0 78.2 62.3" fill="none" stroke-width="24" stroke-linecap="butt"></path>
+<path d="M76 37 A30 30 0 1 0 78.2 62.3" fill="none" stroke="#B04BFF" stroke-width="12" stroke-linecap="butt"></path>
+<path d="M50 82 A30 30 0 0 0 78.2 62.3" fill="none" stroke="#7A1FC4" stroke-width="12" stroke-linecap="butt"></path>
+<path d="M38 25 A30 30 0 0 0 25 36" fill="none" stroke="#fff" stroke-width="4"></path>
+<path d="M85 42 L96 70 L64 60 Z" fill="#D88BFF"></path>
+<path d="M90 56 L96 70 L64 60 Z" fill="#B04BFF" stroke="none"></path>
+<path d="M85 42 L96 70 L64 60 Z" fill="none"></path>
+<circle cx="50" cy="52" r="9" fill="#FFE94A" stroke-width="5"></circle>
+</g></sc-if>
+<sc-if value="{{hero.g.die}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-8 50 52)">
+<path d="M50 12 L86 31 L50 50 L14 31 Z" fill="#D88BFF"></path>
+<path d="M14 31 L50 50 L50 92 L14 73 Z" fill="#B04BFF"></path>
+<path d="M86 31 L86 73 L50 92 L50 50 Z" fill="#7A1FC4"></path>
+<ellipse cx="50" cy="31" rx="8" ry="5" fill="#fff" stroke-width="3"></ellipse>
+<circle cx="25" cy="49" r="5" fill="#fff" stroke-width="3"></circle>
+<circle cx="39" cy="73" r="5" fill="#fff" stroke-width="3"></circle>
+<circle cx="59" cy="58" r="4.5" fill="#fff" stroke-width="3"></circle>
+<circle cx="68" cy="71" r="4.5" fill="#fff" stroke-width="3"></circle>
+<circle cx="77" cy="49" r="4.5" fill="#fff" stroke-width="3"></circle>
+<path d="M22 31 L46 18" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.cup}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-5 50 50)">
+<path d="M28 22 C8 20 8 48 32 52 M72 22 C92 20 92 48 68 52" fill="none" stroke-width="16"></path>
+<path d="M28 22 C8 20 8 48 32 52 M72 22 C92 20 92 48 68 52" fill="none" stroke="#FFC23D" stroke-width="6"></path>
+<rect x="42" y="62" width="16" height="16" fill="#E09A12"></rect>
+<path d="M24 10 L76 10 L74 42 C72 58 62 66 50 66 C38 66 28 58 26 42 Z" fill="#FFC23D"></path>
+<path d="M60 10 L76 10 L74 42 C72 58 62 66 50 66 C60 58 63 44 60 10 Z" fill="#E09A12" stroke="none"></path>
+<path d="M24 10 L76 10 L74 42 C72 58 62 66 50 66 C38 66 28 58 26 42 Z" fill="none"></path>
+<rect x="24" y="76" width="52" height="16" fill="#FF3D7F"></rect>
+<path d="M44 30 L52 23 L52 48" fill="none" stroke-width="6"></path>
+<path d="M32 17 L34 40" stroke="#fff" stroke-width="4" fill="none"></path>
+<path d="M30 84 L44 84" stroke="#fff" stroke-width="3" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.chain}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-24 50 50)">
+<rect x="4" y="34" width="54" height="32" rx="16" fill="none" stroke-width="22"></rect>
+<rect x="4" y="34" width="54" height="32" rx="16" fill="none" stroke="#2EFFE0" stroke-width="10"></rect>
+<rect x="42" y="34" width="54" height="32" rx="16" fill="none" stroke-width="22"></rect>
+<rect x="42" y="34" width="54" height="32" rx="16" fill="none" stroke="#2EFFE0" stroke-width="10"></rect>
+<path d="M58 66 L80 66" fill="none" stroke="#12A99A" stroke-width="10" stroke-linecap="butt"></path>
+<path d="M42 34 A16 16 0 0 1 58 50" fill="none" stroke-width="22" stroke-linecap="butt"></path>
+<path d="M41 34 A16 16 0 0 1 58 50" fill="none" stroke="#2EFFE0" stroke-width="10" stroke-linecap="butt"></path>
+<path d="M20 66 L42 66" fill="none" stroke="#12A99A" stroke-width="10" stroke-linecap="butt"></path>
+<path d="M16 34 L32 34" stroke="#fff" stroke-width="4" fill="none"></path>
+<path d="M54 34 L66 34" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.cards}}" hint-placeholder-val="{{ false }}"><g>
+<rect x="10" y="22" width="42" height="60" rx="6" fill="#3D8BFF" transform="rotate(-18 31 52)"></rect>
+<rect x="29" y="14" width="42" height="60" rx="6" fill="#B04BFF"></rect>
+<g transform="rotate(16 69 54)">
+<rect x="48" y="24" width="42" height="60" rx="6" fill="#FFC23D"></rect>
+<path d="M78 28 L84 28 C86 28 86 30 86 32 L86 76 C86 78 85 80 82 80 L78 80 Z" fill="#E09A12" stroke="none"></path>
+<rect x="48" y="24" width="42" height="60" rx="6" fill="none"></rect>
+<rect x="56" y="34" width="26" height="30" rx="3" fill="#3d2a05" stroke-width="4"></rect>
+<path d="M63 44 C63 38 75 38 75 44 C75 49 69 49 69 54" fill="none" stroke="#FFE94A" stroke-width="4"></path>
+<circle cx="69" cy="59" r="2.5" fill="#FFE94A" stroke="none"></circle>
+<path d="M54 72 L70 72" stroke="#fff" stroke-width="4" fill="none"></path>
+</g>
+</g></sc-if>
+<sc-if value="{{hero.g.chev}}" hint-placeholder-val="{{ false }}"><g transform="rotate(4 50 50)">
+<path d="M14 82 L50 52 L86 82 L86 98 L50 68 L14 98 Z" fill="#E09A12"></path>
+<path d="M14 58 L50 28 L86 58 L86 74 L50 44 L14 74 Z" fill="#FFC23D"></path>
+<path d="M14 34 L50 4 L86 34 L86 50 L50 20 L14 50 Z" fill="#FFE94A"></path>
+<path d="M50 4 L86 34 L86 50 L50 20 Z" fill="#FFC23D" stroke="none"></path>
+<path d="M14 34 L50 4 L86 34 L86 50 L50 20 L14 50 Z" fill="none"></path>
+<path d="M22 36 L48 14" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+</g>
+</g>
+</svg>
+</div>
+<div style="position: absolute; right: -4px; bottom: 2px; padding: 2px 10px; background: #000; font-family: 'Bungee', sans-serif; font-size: 24px; color: {{hero.tc}}">{{hero.roman}}</div>
+</div>
+<div class="ac-o5" style="margin-top: 10px; font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 1.1; color: #fff; white-space: nowrap">{{hero.name}}</div>
+<div style="margin-top: 6px; width: 100%; display: flex; align-items: baseline; justify-content: space-between">
+<div style="display: flex; align-items: baseline; gap: 6px">
+<span class="ac-o7" style="font-family: 'Bungee', sans-serif; font-size: 44px; line-height: 1; color: {{hero.haveC}}">{{hero.haveT}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 24px; color: #c9b8e8">{{hero.needT}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 6px">
+<svg width="32" height="32" viewBox="0 0 40 40" aria-hidden="true" style="flex: none; overflow: visible"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15" stroke="#000" stroke-width="2.5"></path><path d="M10 9 L16 9" stroke="#fff" stroke-width="3"></path><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="none" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+<span class="ac-o5" style="font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 1; color: #2EFFE0">{{hero.rewardT}}</span>
+</div>
+</div>
+<div style="margin-top: 18px; width: 100%; display: flex; gap: 8px">
+<sc-for list="{{hero.ladder}}" as="l" hint-placeholder-count="5">
+<div style="flex: 1; height: 54px; box-sizing: border-box; background: {{l.bg}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; transform: translateY({{l.y}}px); display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; line-height: 1.05">
+<span style="font-size: 13px; color: {{l.rc}}">{{l.roman}}</span>
+<span style="font-size: 17px; color: {{l.nc}}">{{l.need}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top: auto; width: 100%">
+<sc-if value="{{hero.showClaim}}" hint-placeholder-val="{{ true }}">
+<button class="ac-btn" onClick="{{hero.claim}}" style="width: 100%; height: 84px; padding: 0; background: #2EFFE0; border: 6px solid #000; box-shadow: 8px 8px 0 #000; cursor: pointer; font-family: 'Bungee', sans-serif; color: #000; display: flex; align-items: center; justify-content: center; gap: 14px">
+<span class="ac-bob" style="display: flex; align-items: center; gap: 14px"><span style="font-size: 44px; line-height: 1">CLAIM</span><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true" style="flex: none; overflow: visible"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15" stroke="#000" stroke-width="2.5"></path><path d="M10 9 L16 9" stroke="#fff" stroke-width="3"></path><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="none" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg><span style="font-size: 34px; line-height: 1">{{hero.reward}}</span></span>
+</button>
+</sc-if>
+<sc-if value="{{hero.showBar}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; height: 70px; background: #08030f; border: 6px solid #000; box-shadow: 8px 8px 0 #000; overflow: hidden">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{hero.pct}}%; background: #FFE94A; border-right: 5px solid #000; transition: width .5s"></div>
+<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px">
+<span class="ac-o5" style="font-family: 'Bungee', sans-serif; font-size: 34px; color: #fff">{{hero.pctT}}</span>
+<span class="ac-o3" style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #fff">−{{hero.leftT}}</span>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+<sc-if value="{{hero.stamping}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none">
+<div class="ac-stamp" style="padding: 10px 22px; background: #FF3D7F; border: 6px solid #000; box-shadow: 8px 8px 0 #000; display: flex; flex-direction: column; align-items: center; font-family: 'Bungee', sans-serif">
+<span class="ac-o5" style="font-size: 44px; line-height: 1; color: #fff">CLAIMED</span>
+<span class="ac-o3" style="font-size: 22px; color: #FFE94A">NEXT {{hero.nextT}}</span>
+</div>
+</div>
+</sc-if>
+</div>
+
+<div style="position: absolute; left: 460px; top: 108px; width: 876px; display: grid; grid-template-columns: repeat(4, 205px); grid-auto-rows: 250px; gap: 22px 19px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<div class="ac-rise" style="animation-delay: {{r.delay}}">
+<div class="{{r.cls}}" style="position: relative; height: 250px; box-sizing: border-box; background: {{r.tileBg}}; border: 5px solid #000; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; overflow: hidden">
+<div style="height: 32px; flex: none; box-sizing: border-box; padding: 0 10px; background: {{r.stripBg}}; border-bottom: 4px solid #000; display: flex; align-items: center; justify-content: space-between; font-family: 'Bungee', sans-serif; color: #000">
+<span class="{{r.stripCls}}" style="font-size: 15px">{{r.stripLabel}}</span>
+<span style="display: flex; align-items: center; gap: 4px; font-size: 16px"><svg width="16" height="16" viewBox="0 0 40 40" aria-hidden="true" style="flex: none; overflow: visible"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15" stroke="#000" stroke-width="2.5"></path><path d="M10 9 L16 9" stroke="#fff" stroke-width="3"></path><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="none" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>{{r.reward}}</span>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; padding: 12px 12px 12px; opacity: {{r.op}}">
+<div style="display: flex; align-items: center; gap: 14px; height: 70px">
+<div style="position: relative; width: 66px; height: 66px; flex: none">
+<div style="position: absolute; inset: 3px; background: {{r.tf}}; border: 4px solid #000; box-shadow: inset 0 0 0 4px {{r.tc}}, 4px 4px 0 #000; transform: rotate(-6deg)"></div>
+<svg viewBox="0 0 100 100" width="54" height="54" style="position: absolute; left: 50%; top: 50%; margin-left: -27px; margin-top: -27px; overflow: visible" aria-hidden="true">
+<g style="filter: drop-shadow(3px 3px 0 #000)">
+<g stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{r.g.key}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-6 50 50)">
+<path d="M8 86 L16 30 L84 30 L92 86 Z" fill="#B04BFF"></path>
+<path d="M22 70 L78 70 L92 86 L8 86 Z" fill="#7A1FC4" stroke="none"></path>
+<path d="M8 86 L16 30 L84 30 L92 86 Z" fill="none"></path>
+<rect x="22" y="12" width="56" height="54" rx="7" fill="#D88BFF"></rect>
+<path d="M66 16 L72 16 C75 16 76 18 76 21 L76 60 C76 63 74 64 72 64 L66 64 Z" fill="#B04BFF" stroke="none"></path>
+<rect x="22" y="12" width="56" height="54" rx="7" fill="none"></rect>
+<path d="M36 56 L49 24 L62 56 M41 45 L57 45" fill="none" stroke-width="7"></path>
+<path d="M28 20 L46 20" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{r.g.bot}}" hint-placeholder-val="{{ false }}"><g transform="rotate(5 50 50)">
+<path d="M50 24 L50 10" fill="none"></path>
+<circle cx="50" cy="9" r="7" fill="#FF3D7F"></circle>
+<rect x="2" y="42" width="12" height="22" fill="#5d6678"></rect>
+<rect x="86" y="42" width="12" height="22" fill="#5d6678"></rect>
+<rect x="12" y="24" width="76" height="62" rx="9" fill="#A9B4C8"></rect>
+<path d="M12 66 L88 66 L88 77 C88 82 84 86 79 86 L21 86 C16 86 12 82 12 77 Z" fill="#5d6678" stroke="none"></path>
+<rect x="12" y="24" width="76" height="62" rx="9" fill="none"></rect>
+<path d="M26 38 L40 52 M40 38 L26 52 M60 38 L74 52 M74 38 L60 52" fill="none" stroke-width="7"></path>
+<path d="M28 74 L36 68 L44 74 L52 68 L60 74 L68 68 L74 72" fill="none" stroke-width="5"></path>
+<path d="M76 24 L68 34 L76 40" fill="none" stroke-width="4"></path>
+<path d="M20 32 L34 32" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{r.g.loop}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M76 37 A30 30 0 1 0 78.2 62.3" fill="none" stroke-width="24" stroke-linecap="butt"></path>
+<path d="M76 37 A30 30 0 1 0 78.2 62.3" fill="none" stroke="#B04BFF" stroke-width="12" stroke-linecap="butt"></path>
+<path d="M50 82 A30 30 0 0 0 78.2 62.3" fill="none" stroke="#7A1FC4" stroke-width="12" stroke-linecap="butt"></path>
+<path d="M38 25 A30 30 0 0 0 25 36" fill="none" stroke="#fff" stroke-width="4"></path>
+<path d="M85 42 L96 70 L64 60 Z" fill="#D88BFF"></path>
+<path d="M90 56 L96 70 L64 60 Z" fill="#B04BFF" stroke="none"></path>
+<path d="M85 42 L96 70 L64 60 Z" fill="none"></path>
+<circle cx="50" cy="52" r="9" fill="#FFE94A" stroke-width="5"></circle>
+</g></sc-if>
+<sc-if value="{{r.g.die}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-8 50 52)">
+<path d="M50 12 L86 31 L50 50 L14 31 Z" fill="#D88BFF"></path>
+<path d="M14 31 L50 50 L50 92 L14 73 Z" fill="#B04BFF"></path>
+<path d="M86 31 L86 73 L50 92 L50 50 Z" fill="#7A1FC4"></path>
+<ellipse cx="50" cy="31" rx="8" ry="5" fill="#fff" stroke-width="3"></ellipse>
+<circle cx="25" cy="49" r="5" fill="#fff" stroke-width="3"></circle>
+<circle cx="39" cy="73" r="5" fill="#fff" stroke-width="3"></circle>
+<circle cx="59" cy="58" r="4.5" fill="#fff" stroke-width="3"></circle>
+<circle cx="68" cy="71" r="4.5" fill="#fff" stroke-width="3"></circle>
+<circle cx="77" cy="49" r="4.5" fill="#fff" stroke-width="3"></circle>
+<path d="M22 31 L46 18" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{r.g.cup}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-5 50 50)">
+<path d="M28 22 C8 20 8 48 32 52 M72 22 C92 20 92 48 68 52" fill="none" stroke-width="16"></path>
+<path d="M28 22 C8 20 8 48 32 52 M72 22 C92 20 92 48 68 52" fill="none" stroke="#FFC23D" stroke-width="6"></path>
+<rect x="42" y="62" width="16" height="16" fill="#E09A12"></rect>
+<path d="M24 10 L76 10 L74 42 C72 58 62 66 50 66 C38 66 28 58 26 42 Z" fill="#FFC23D"></path>
+<path d="M60 10 L76 10 L74 42 C72 58 62 66 50 66 C60 58 63 44 60 10 Z" fill="#E09A12" stroke="none"></path>
+<path d="M24 10 L76 10 L74 42 C72 58 62 66 50 66 C38 66 28 58 26 42 Z" fill="none"></path>
+<rect x="24" y="76" width="52" height="16" fill="#FF3D7F"></rect>
+<path d="M44 30 L52 23 L52 48" fill="none" stroke-width="6"></path>
+<path d="M32 17 L34 40" stroke="#fff" stroke-width="4" fill="none"></path>
+<path d="M30 84 L44 84" stroke="#fff" stroke-width="3" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{r.g.chain}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-24 50 50)">
+<rect x="4" y="34" width="54" height="32" rx="16" fill="none" stroke-width="22"></rect>
+<rect x="4" y="34" width="54" height="32" rx="16" fill="none" stroke="#2EFFE0" stroke-width="10"></rect>
+<rect x="42" y="34" width="54" height="32" rx="16" fill="none" stroke-width="22"></rect>
+<rect x="42" y="34" width="54" height="32" rx="16" fill="none" stroke="#2EFFE0" stroke-width="10"></rect>
+<path d="M58 66 L80 66" fill="none" stroke="#12A99A" stroke-width="10" stroke-linecap="butt"></path>
+<path d="M42 34 A16 16 0 0 1 58 50" fill="none" stroke-width="22" stroke-linecap="butt"></path>
+<path d="M41 34 A16 16 0 0 1 58 50" fill="none" stroke="#2EFFE0" stroke-width="10" stroke-linecap="butt"></path>
+<path d="M20 66 L42 66" fill="none" stroke="#12A99A" stroke-width="10" stroke-linecap="butt"></path>
+<path d="M16 34 L32 34" stroke="#fff" stroke-width="4" fill="none"></path>
+<path d="M54 34 L66 34" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{r.g.cards}}" hint-placeholder-val="{{ false }}"><g>
+<rect x="10" y="22" width="42" height="60" rx="6" fill="#3D8BFF" transform="rotate(-18 31 52)"></rect>
+<rect x="29" y="14" width="42" height="60" rx="6" fill="#B04BFF"></rect>
+<g transform="rotate(16 69 54)">
+<rect x="48" y="24" width="42" height="60" rx="6" fill="#FFC23D"></rect>
+<path d="M78 28 L84 28 C86 28 86 30 86 32 L86 76 C86 78 85 80 82 80 L78 80 Z" fill="#E09A12" stroke="none"></path>
+<rect x="48" y="24" width="42" height="60" rx="6" fill="none"></rect>
+<rect x="56" y="34" width="26" height="30" rx="3" fill="#3d2a05" stroke-width="4"></rect>
+<path d="M63 44 C63 38 75 38 75 44 C75 49 69 49 69 54" fill="none" stroke="#FFE94A" stroke-width="4"></path>
+<circle cx="69" cy="59" r="2.5" fill="#FFE94A" stroke="none"></circle>
+<path d="M54 72 L70 72" stroke="#fff" stroke-width="4" fill="none"></path>
+</g>
+</g></sc-if>
+<sc-if value="{{r.g.chev}}" hint-placeholder-val="{{ false }}"><g transform="rotate(4 50 50)">
+<path d="M14 82 L50 52 L86 82 L86 98 L50 68 L14 98 Z" fill="#E09A12"></path>
+<path d="M14 58 L50 28 L86 58 L86 74 L50 44 L14 74 Z" fill="#FFC23D"></path>
+<path d="M14 34 L50 4 L86 34 L86 50 L50 20 L14 50 Z" fill="#FFE94A"></path>
+<path d="M50 4 L86 34 L86 50 L50 20 Z" fill="#FFC23D" stroke="none"></path>
+<path d="M14 34 L50 4 L86 34 L86 50 L50 20 L14 50 Z" fill="none"></path>
+<path d="M22 36 L48 14" stroke="#fff" stroke-width="4" fill="none"></path>
+</g></sc-if>
+</g>
+</g>
+</svg>
+<div style="position: absolute; right: -8px; bottom: -6px; padding: 0 5px; background: #000; font-family: 'Bungee', sans-serif; font-size: 14px; line-height: 20px; color: {{r.tc}}">{{r.roman}}</div>
+</div>
+<div style="min-width: 0; display: flex; flex-direction: column">
+<span class="ac-o5" style="font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 1; color: {{r.haveC}}">{{r.haveT}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 17px; color: #c9b8e8">{{r.needT}}</span>
+</div>
+</div>
+<div class="ac-o3" style="margin-top: 10px; font-family: 'Bungee', sans-serif; font-size: 14px; color: #fff; white-space: nowrap">{{r.name}}</div>
+<div style="position: relative; margin-top: 6px; height: 22px; box-sizing: border-box; background: #08030f; border: 4px solid #000; overflow: hidden">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{r.pct}}%; background: {{r.barC}}; transition: width .5s">
+<sc-if value="{{r.almost}}" hint-placeholder-val="{{ false }}"><div class="ac-blink" style="position: absolute; right: 0; top: 0; bottom: 0; width: 6px; background: #fff"></div></sc-if>
+</div>
+</div>
+<div style="margin-top: auto; height: 46px; display: flex; align-items: flex-end">
+<sc-if value="{{r.showClaim}}" hint-placeholder-val="{{ false }}">
+<button class="ac-btn" onClick="{{r.claim}}" style="width: 100%; height: 46px; padding: 0; background: #2EFFE0; border: 4px solid #000; box-shadow: 5px 5px 0 #000; cursor: pointer; font-family: 'Bungee', sans-serif; color: #000">
+<span class="ac-bob" style="display: flex; align-items: center; justify-content: center; gap: 8px"><span style="font-size: 21px">CLAIM</span><svg width="18" height="18" viewBox="0 0 40 40" aria-hidden="true" style="flex: none; overflow: visible"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15" stroke="#000" stroke-width="2.5"></path><path d="M10 9 L16 9" stroke="#fff" stroke-width="3"></path><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="none" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg><span style="font-size: 19px">{{r.reward}}</span></span>
+</button>
+</sc-if>
+<sc-if value="{{r.showPips}}" hint-placeholder-val="{{ true }}">
+<div style="width: 100%; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; gap: 4px; padding-left: 3px">
+<sc-for list="{{r.pips}}" as="p" hint-placeholder-count="5"><div style="width: 15px; height: 13px; background: {{p.bg}}; border: 3px solid #000; transform: skewX(-20deg)"></div></sc-for>
+</div>
+<span class="ac-o3" style="font-family: 'Bungee', sans-serif; font-size: 20px; color: {{r.pctC}}">{{r.pctT}}</span>
+</div>
+</sc-if>
+</div>
+</div>
+<sc-if value="{{r.stamping}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none">
+<div class="ac-stamp" style="padding: 6px 12px; background: #FF3D7F; border: 5px solid #000; box-shadow: 5px 5px 0 #000; display: flex; flex-direction: column; align-items: center; font-family: 'Bungee', sans-serif">
+<span class="ac-o5" style="font-size: 28px; line-height: 1; color: #fff">CLAIMED</span>
+<span class="ac-o3" style="font-size: 15px; color: #FFE94A">NEXT {{r.nextT}}</span>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{r.maxStamp}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; right: 10px; top: 86px; padding: 2px 10px; background: #FFC23D; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: rotate(-12deg); font-family: 'Bungee', sans-serif; font-size: 22px; color: #000">MAX</div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="position: absolute; inset: 0; pointer-events: none">
+<sc-for list="{{parts}}" as="p" hint-placeholder-count="0">
+<div style="position: absolute; left: {{p.x}}px; top: {{p.y}}px; width: 34px; height: 34px; transform: translateX({{p.tx}}px); transition: {{p.trX}}">
+<div style="width: 34px; height: 34px; transform: translateY({{p.ty}}px); opacity: {{p.op}}; transition: {{p.trY}}">
+<div class="ac-gemin" style="width: 34px; height: 34px; animation-delay: {{p.d}}; filter: drop-shadow(3px 3px 0 #000)"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true" style="flex: none; overflow: visible"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15" stroke="#000" stroke-width="2.5"></path><path d="M10 9 L16 9" stroke="#fff" stroke-width="3"></path><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="none" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg></div>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{floatOn}}" hint-placeholder-val="{{ false }}">
+<div class="{{floatCls}}" style="position: absolute; left: 1166px; top: 14px; width: 190px; display: flex; justify-content: center; align-items: center; gap: 6px">
+<span class="ac-o5" style="font-family: 'Bungee', sans-serif; font-size: 34px; color: #2EFFE0">{{floatT}}</span>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+var TC = ['#A9B4C8', '#3D8BFF', '#B04BFF', '#FFC23D', '#FF3D7F'];
+var TF = ['#262b38', '#0f2350', '#2a0e4a', '#3d2a05', '#4a0a22'];
+var RN = ['I', 'II', 'III', 'IV', 'V'];
+var DEF = [
+  { id: 'type',  name: 'TYPE WORDS',      g: 'key',   T: [100, 1000, 5000, 25000, 100000], R: [45, 75, 120, 225, 450] },
+  { id: 'bots',  name: 'BEAT BOTS',       g: 'bot',   T: [10, 50, 250, 1000, 5000],        R: [45, 75, 135, 255, 495] },
+  { id: 'reb',   name: 'REBIRTH',         g: 'loop',  T: [5, 25, 100, 500, 2500],          R: [75, 120, 225, 450, 875] },
+  { id: 'roll',  name: 'ROLL EPIC+',      g: 'die',   T: [3, 15, 75, 300, 1500],           R: [45, 95, 175, 315, 625] },
+  { id: 'win',   name: 'WIN MULTIPLAYER', g: 'cup',   T: [5, 25, 100, 500, 2000],          R: [55, 95, 165, 295, 555] },
+  { id: 'chain', name: 'CHAIN',           g: 'chain', T: [5, 10, 20, 35, 50],              R: [35, 65, 115, 225, 445], tagNum: true },
+  { id: 'index', name: 'FILL INDEX',      g: 'cards', T: [3, 6, 27],                       R: [75, 155, 475] },
+  { id: 'power', name: 'POWER LEVEL',     g: 'chev',  T: [3, 6, 10, 25, 50],               R: [45, 85, 145, 265, 525] }
+];
+var START = {
+  type: { t: 2, have: 4200 }, bots: { t: 1, have: 60 }, reb: { t: 2, have: 59 }, roll: { t: 0, have: 3 },
+  win: { t: 1, have: 12 }, chain: { t: 2, have: 14 }, index: { t: 2, have: 9 }, power: { t: 2, have: 6 }
+};
+var GRID_X = 460, GRID_Y = 108, TW = 205, TH = 250, GX = 19, GY = 22;
+var PILL_X = 1181, PILL_Y = 52;
+var JX = [-20, 14, -6, 22, -14, 8], JY = [4, -16, 14, -6, -12, 10];
+function fmt(x) {
+  x = Math.floor(x);
+  if (x < 1000) return String(x);
+  var S = [['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return parseFloat(v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)) + S[i][0]; }
+  return String(x);
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var a = {}; for (var k in START) a[k] = { t: START[k].t, have: START[k].have, maxed: false };
+    this.state = { a: a, gems: 845, stamp: {}, tierUp: {}, heroLock: null, swapN: 0, popN: 0, parts: null, floatN: 0, floatT: '' };
+    this.t = [];
+    this.heroId = null;
+  }
+  componentWillUnmount() { this.t.forEach(clearTimeout); }
+  later(fn, ms) { this.t.push(setTimeout(fn, ms)); }
+  claim(id, ox, oy) {
+    var self = this, st = this.state, a = st.a[id];
+    var d = DEF.filter(function (x) { return x.id === id; })[0];
+    if (st.stamp[id] || a.maxed || a.have < d.T[a.t]) return;
+    var reward = d.R[a.t];
+    var stamp = Object.assign({}, st.stamp); stamp[id] = true;
+    var lock = id === self.heroId ? id : st.heroLock;
+    var parts = JX.map(function (jx, i) { return { x: ox - 17 + jx, y: oy - 17 + JY[i], dx: PILL_X - ox - jx, dy: PILL_Y - oy - JY[i], delay: i * 60 }; });
+    self.setState({ stamp: stamp, heroLock: lock, parts: { list: parts, go: false } });
+    self.later(function () { self.setState({ parts: { list: parts, go: true } }); }, 30);
+    var share = Math.floor(reward / parts.length);
+    parts.forEach(function (p, i) {
+      self.later(function () {
+        var add = i === parts.length - 1 ? reward - share * (parts.length - 1) : share;
+        var s = { gems: self.state.gems + add, popN: self.state.popN + 1 };
+        if (i === 0) { s.floatN = self.state.floatN + 1; s.floatT = '+' + reward; }
+        self.setState(s);
+      }, 30 + 720 + p.delay);
+    });
+    self.later(function () {
+      var cur = self.state.a, na = Object.assign({}, cur), x = cur[id];
+      na[id] = x.t + 1 >= d.T.length ? { t: x.t, have: x.have, maxed: true } : { t: x.t + 1, have: x.have, maxed: false };
+      var s2 = Object.assign({}, self.state.stamp); delete s2[id];
+      var tu = Object.assign({}, self.state.tierUp); tu[id] = true;
+      var s = { a: na, stamp: s2, tierUp: tu, parts: null };
+      if (self.state.heroLock === id) { s.heroLock = null; s.swapN = self.state.swapN + 1; }
+      self.setState(s);
+    }, 1250);
+    self.later(function () {
+      var tu = Object.assign({}, self.state.tierUp); delete tu[id];
+      self.setState({ tierUp: tu });
+    }, 1900);
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var all = DEF.map(function (d) {
+      var a = st.a[d.id], t = a.t, need = d.T[t];
+      var stamping = !!st.stamp[d.id];
+      var ready = !a.maxed && a.have >= need;
+      var pct = a.maxed ? 100 : Math.min(100, a.have / need * 100);
+      var almost = !ready && !a.maxed && pct >= 55;
+      var nt = Math.min(t + 1, d.T.length - 1);
+      var pips = d.T.map(function (_, i) {
+        var done = i < t || a.maxed || (i === t && stamping);
+        return { bg: done ? TC[i] : '#3a2160' };
+      });
+      return {
+        id: d.id, ready: ready, stamping: stamping, maxed: a.maxed, pctRaw: pct,
+        name: d.tagNum ? d.name + ' ' + fmt(need) : d.name,
+        g: (function () { var o = {}; o[d.g] = true; return o; })(),
+        tc: TC[t], tf: TF[t], roman: RN[t],
+        nextRoman: t + 1 < d.T.length ? RN[t + 1] : 'MAX', nextT: t + 1 < d.T.length ? RN[t + 1] + ' · ' + fmt(d.T[t + 1]) : 'MAXED',
+        haveT: fmt(a.have), needT: '/ ' + fmt(need), haveC: ready ? '#2EFFE0' : '#fff',
+        pct: pct.toFixed(1), pctT: Math.floor(pct) + '%', leftT: fmt(Math.max(0, need - a.have)),
+        pctC: almost ? '#FFE94A' : '#c9b8e8', almost: almost,
+        barC: a.maxed ? '#FFC23D' : ready ? '#2EFFE0' : almost ? '#FFE94A' : '#c9b8e8',
+        reward: d.R[t], rewardT: '+' + d.R[t],
+        stripBg: a.maxed ? '#FFC23D' : (ready || stamping) ? '#2EFFE0' : TC[t],
+        stripLabel: a.maxed ? 'MAXED' : stamping ? 'CLAIMED' : ready ? 'READY!' : 'TIER ' + RN[t],
+        stripCls: ready && !stamping ? 'ac-blink' : '',
+        tileBg: ready ? '#0e2b29' : '#1a0b2e',
+        op: stamping ? 0.35 : a.maxed ? 0.55 : 1,
+        cls: st.tierUp[d.id] ? 'ac-tierup' : '',
+        showClaim: ready && !stamping, showPips: !(ready && !stamping),
+        pips: pips, maxStamp: a.maxed && !stamping,
+        ladder: d.T.map(function (n, i) {
+          var done = i < t || a.maxed || (i === t && stamping), cur = i === t && !a.maxed && !stamping;
+          return { roman: RN[i], need: fmt(n), bg: done ? TC[i] : cur ? TF[i] : '#12071f', rc: done ? '#000' : cur ? TC[i] : '#5d4a78', nc: done ? '#000' : cur ? '#fff' : '#5d4a78', y: cur ? -6 : 0 };
+        })
+      };
+    });
+    var rows = all.slice().sort(function (x, y) {
+      var kx = (x.ready || x.stamping) ? 0 : x.maxed ? 2 : 1, ky = (y.ready || y.stamping) ? 0 : y.maxed ? 2 : 1;
+      if (kx !== ky) return kx - ky;
+      return y.pctRaw - x.pctRaw;
+    });
+    rows.forEach(function (r, i) {
+      var cx = GRID_X + (i % 4) * (TW + GX) + TW / 2, cy = GRID_Y + Math.floor(i / 4) * (TH + GY) + TH - 30;
+      r.delay = (i * 45) + 'ms';
+      r.claim = function () { self.claim(r.id, cx, cy); };
+    });
+    var readyList = all.filter(function (r) { return r.ready && !r.stamping; });
+    var heroId = st.heroLock;
+    if (!heroId) heroId = readyList.length ? readyList[0].id : null;
+    if (!heroId) {
+      var open = all.filter(function (r) { return !r.maxed && !r.stamping; }).sort(function (x, y) { return y.pctRaw - x.pctRaw; });
+      heroId = open.length ? open[0].id : all[0].id;
+    }
+    this.heroId = heroId;
+    var h = all.filter(function (r) { return r.id === heroId; })[0];
+    var hReady = h.ready && !h.stamping;
+    var hero = Object.assign({}, h, {
+      label: h.stamping ? 'NICE' : hReady ? 'READY' : 'ALMOST',
+      labelC: (hReady || h.stamping) ? '#2EFFE0' : '#FFE94A',
+      labelCls: hReady ? 'ac-blink' : '',
+      stripBg: (hReady || h.stamping) ? '#2EFFE0' : h.tc,
+      showClaim: hReady, showBar: !hReady && !h.stamping,
+      op: h.stamping ? 0.3 : 1,
+      claim: function () { self.claim(h.id, 230, 562); }
+    });
+    var parts = [];
+    if (st.parts) parts = st.parts.list.map(function (p) {
+      var go = st.parts.go;
+      return {
+        x: p.x, y: p.y, d: p.delay + 'ms',
+        tx: go ? p.dx : 0, ty: go ? p.dy : 0, op: go ? 0 : 1,
+        trX: go ? 'transform .72s cubic-bezier(.25,.7,.45,1) ' + p.delay + 'ms' : 'none',
+        trY: go ? 'transform .72s cubic-bezier(.6,0,.85,.45) ' + p.delay + 'ms, opacity .12s linear ' + (p.delay + 660) + 'ms' : 'none'
+      };
+    });
+    var done = 0, tot = 0;
+    DEF.forEach(function (d) { var a = st.a[d.id]; tot += d.T.length; done += a.maxed ? d.T.length : a.t; });
+    var nReady = readyList.length;
+    return {
+      rows: rows, hero: hero, parts: parts,
+      gemsT: fmt(st.gems), gemPop: st.popN ? (st.popN % 2 ? 'ac-popA' : 'ac-popB') : '',
+      tiersDone: done, tiersAll: tot,
+      readyN: nReady, readyBg: nReady ? '#2EFFE0' : '#3a2160',
+      heroSwap: st.swapN % 2 ? 'ac-swapA' : 'ac-swapB',
+      floatOn: st.floatN > 0, floatT: st.floatT, floatCls: st.floatN % 2 ? 'ac-floatA' : 'ac-floatB'
+    };
+  }
+}
+</script>
+</body>
+</html>
