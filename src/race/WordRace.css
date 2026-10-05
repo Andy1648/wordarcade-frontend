@@ -55,6 +55,14 @@
   padding: 4px 10px;
   box-shadow: 3px 3px 0 #000;
 }
+/* CHALLENGE LINK (receiver): the friend's target, in the HUD row beside the mode chip. Cyan so it
+   reads as "theirs", not the race's own label. No text-transform: the copy is already upper-case
+   and the seconds unit stays a lower-case "s" (41.2s). Static — nothing loops. */
+.wr-chip-challenge {
+  text-transform: none;
+  background: var(--wr-cyan);
+  border-color: var(--wr-cyan-dark);
+}
 .wr-clock {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
@@ -399,6 +407,14 @@
   margin: 2px 0 0;
   font-size: var(--fs-label);
   color: #d8c9f0;
+}
+/* The challenge verdict replaces the why-line: same slot, louder colour. */
+.wr-verdict {
+  font-weight: 700;
+  color: var(--wr-pink);
+}
+.wr-verdict.is-win {
+  color: var(--wr-cyan);
 }
 .wr-standings {
   list-style: none;

@@ -119,6 +119,20 @@ test('bridge: the two room modes bridge to ?play=<mode> (room + bot, no clicks)'
   }
 });
 
+test('bridge: the race challenge link keeps vs/t/n and adds race=1 + play=race', () => {
+  const c = withWindow('/race/play', '?vs=XAVI&t=41200&n=25', bridgePathToSearch);
+  assert.ok(c.called, '/race/play must bridge');
+  const u = new URL('http://x' + c.url);
+  assert.equal(u.pathname, '/race/play');
+  assert.equal(u.searchParams.get('race'), '1');
+  assert.equal(u.searchParams.get('play'), 'race');
+  assert.equal(u.searchParams.get('vs'), 'XAVI');
+  assert.equal(u.searchParams.get('t'), '41200');
+  assert.equal(u.searchParams.get('n'), '25');
+  // Back never re-drives a live race from history.
+  assert.equal(viewIntentFromPath('/race/play'), null);
+});
+
 test('bridge: a PLAY path with a trailing slash still bridges', () => {
   const c = withWindow('/chain/play/', '', bridgePathToSearch);
   assert.ok(c.called);

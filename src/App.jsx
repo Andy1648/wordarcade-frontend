@@ -244,6 +244,7 @@ const LAUNCH_INTENT = (() => {
     daily: params.get('daily') === '1',
     satrush: params.get('satrush') === '1',
     play: PRESELECTABLE_GAMES.includes(play) ? play : null,
+    race: play === 'race', // /race/play (challenge link) -> the EXISTING race quick match, below
   };
 })();
 
@@ -259,6 +260,7 @@ const SKIP_INTRO =
   !!LAUNCH_INTENT.join ||
   LAUNCH_INTENT.daily ||
   LAUNCH_INTENT.satrush ||
+  LAUNCH_INTENT.race ||
   !!VS_BOT_LAUNCH || // /word-bomb/play, /category-blitz/play
   SOLO_LAUNCH.chain ||
   SOLO_LAUNCH.fuse ||
@@ -1950,13 +1952,15 @@ function App() {
       return;
     }
     if (wsStatus !== 'open') return;
-    if (!LAUNCH_INTENT.join && !LAUNCH_INTENT.daily) return;
+    if (!LAUNCH_INTENT.join && !LAUNCH_INTENT.daily && !LAUNCH_INTENT.race) return;
     launchFiredRef.current = true;
     if (LAUNCH_INTENT.join) {
       const name = resolvePlayerName();
       setPlayerNameState(name);
       send('join_room', { code: LAUNCH_INTENT.join, name });
       track('room_joined', { mode: 'invite_link' }); // enum only; no PII
+    } else if (LAUNCH_INTENT.race) {
+      handleRaceQuickMatch();
     } else {
       handleStartDaily();
     }
