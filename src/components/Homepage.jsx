@@ -651,16 +651,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [isPagedMenu]);
-  // A step of the unlock tutorial that points at a card on the other page asks for it (UnlockTutorial).
-  useEffect(() => {
-    if (!isPagedMenu) return undefined;
-    const onReveal = (e) => {
-      const idx = GAMES.findIndex((g) => g.id === (e.detail && e.detail.id));
-      if (idx >= 0) flipRef.current(Math.floor(idx / CARDS_PER_PAGE));
-    };
-    window.addEventListener('taw:reveal-card', onReveal);
-    return () => window.removeEventListener('taw:reveal-card', onReveal);
-  }, [isPagedMenu]);
   // Swipe (touch / pen only — a mouse drag would fight the cards' own press + magnetic pull).
   const swipeRef = useRef(null);
   const onPagerPointerDown = (e) => {
