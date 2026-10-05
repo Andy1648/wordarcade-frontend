@@ -19,7 +19,7 @@ import MarkBadge from '../MarkBadge';
 import { MARK_TIERS } from '../../progress/marks';
 import { markEntry, rollMarkById } from '../../progress/markRolls';
 import { rarityClass } from '../../lib/rarityStyle.js';
-import { sndReelTick, sndRollSting, sndRollSwell, sndCutStamp } from '../../audio/gameSounds';
+import { sndReelTick, sndRollSting, sndRollSwell, sndCutStamp } from '../../audio/rollSounds';
 import { formatNum } from '../../format';
 import {
   REEL_LEN, LAND_AT, BURST_POOL, CUTSCENE_MS, CUTSCENE_JUMP_MS, DIM_CELLS, spinMs, easePow, spinFrom, reelPos, timeAt,
