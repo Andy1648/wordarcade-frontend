@@ -56,9 +56,9 @@ export default function RebirthCeremony({ c, onContinue }) {
                 </span>
               </div>
             )}
-            <p className="rbc-only">
-              {toKey > 0 ? `LEVEL RESETS. HEIRLOOM KEPT KEY T${formatNum(toKey)}.` : 'LEVEL AND KEY RESET.'} EVERYTHING IN KEPT STAYS.
-            </p>
+            {/* CLUTTER PASS: the LEVEL / KEY rows above show the resets and the KEPT column shows what
+                stays — only HEIRLOOM (the reason KEY is not T0) is said in words. */}
+            {toKey > 0 && <p className="rbc-only">HEIRLOOM KEPT KEY T{formatNum(toKey)}.</p>}
           </section>
           <section className="rbc-col rbc-kept" aria-label="Kept">
             <h3 className="rbc-col-h">KEPT</h3>

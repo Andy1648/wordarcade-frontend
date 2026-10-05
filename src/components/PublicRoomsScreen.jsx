@@ -253,7 +253,7 @@ export default function PublicRoomsScreen({
           // two ways to start a game right now.
           <div className="browser-empty">
             <div className="browser-empty-title">NO PUBLIC GAMES RIGHT NOW</div>
-            <div className="browser-empty-sub">BE THE ONE WHO STARTS THE PARTY.</div>
+            {/* CLUTTER PASS: no "BE THE ONE WHO STARTS THE PARTY." — the CREATE button below says it. */}
             <div className="browser-empty-actions">
               <button
                 className="browser-btn browser-btn-create"
@@ -287,9 +287,13 @@ export default function PublicRoomsScreen({
                       <span className={`browser-row-count${full ? ' full' : ''}`}>
                         {room.playerCount}/{room.maxPlayers}
                       </span>
-                      <span className="browser-row-status">
-                        {full ? 'FULL' : joining ? 'JOINING…' : 'WAITING'}
-                      </span>
+                      {/* CLUTTER PASS: no "WAITING" on every open row — a listed room is a waiting room;
+                          only FULL / JOINING… say something. */}
+                      {(full || joining) && (
+                        <span className="browser-row-status">
+                          {full ? 'FULL' : 'JOINING…'}
+                        </span>
+                      )}
                     </span>
                   </button>
                 </li>

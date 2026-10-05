@@ -68,12 +68,6 @@
   font-size: var(--fs-body);
   color: #ffe94a;
 }
-/* "WINS" unit label after the balance number — subordinate to the value. */
-.shop-wins-label {
-  font-size: var(--fs-label);
-  letter-spacing: 0.06em;
-  opacity: 0.82;
-}
 .shop-close {
   width: 44px;
   height: 44px;

@@ -79,8 +79,8 @@ test.describe('item 4 — the CHAIN / FUSE gates', () => {
   // LV1 is the floor, not 0 (progress/xp.js clamps with Math.max(1, ...)).
   test('a brand-new player sees how far each gate is', async ({ page }) => {
     await menu(page, 0); // clamped to LV1 by the store
-    await expect(card(page, 'chain')).toContainText("YOU'RE LV 1 · 49 TO GO");
-    await expect(card(page, 'fuse')).toContainText("YOU'RE LV 1 · 99 TO GO");
+    await expect(card(page, 'chain')).toContainText('49 TO GO'); // clutter pass: no "YOU'RE LV 1 ·" — the menu bar shows the level
+    await expect(card(page, 'fuse')).toContainText('99 TO GO');
   });
 });
 

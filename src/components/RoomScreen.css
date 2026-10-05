@@ -66,15 +66,6 @@
   --lw-inline-alpha: 0.62;
 }
 
-.room-instruction {
-  font-family: 'Space Mono', monospace;
-  font-size: var(--fs-panel); /* >=17px at every width: 20px on a phone, 28px on desk */
-  color: #C9B8E8;
-  font-weight: 700;
-  margin-bottom: 28px;
-  letter-spacing: 0.3px;
-}
-
 .room-players-label {
   /* was Bungee, below the 28px display floor: small UI text is a mono label */
   font-family: 'Space Mono', monospace;
@@ -698,16 +689,6 @@ html[data-beat='true'] .room-leave-btn {
   box-shadow: 2px 2px 0 #000;
 }
 
-.room-addbot-label {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  color: #2EFFE0;
-  letter-spacing: 1px;
-  text-align: center;
-}
-
 .room-addbot-row {
   display: flex;
   gap: 8px;
@@ -891,7 +872,6 @@ html[data-beat='true'] .room-leave-btn {
 @media (min-width: 900px) and (orientation: landscape) and (max-height: 720px) {
   .room-box { padding: 18px 24px; }
   .room-code-face { font-size: var(--fs-h2); }
-  .room-instruction { font-size: var(--fs-body); margin-bottom: 14px; }
   .room-players-label { margin-bottom: 8px; }
   .room-code { margin-bottom: 4px; }
   .room-invite-row { margin: 4px 0 2px; }
