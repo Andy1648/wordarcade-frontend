@@ -4160,9 +4160,11 @@ export default function GameScreen({
             </div>
             {/* ===== THE MONEY COLUMN: what you earned and where it came from. ===== */}
             <div className="go-col go-col-mid">
-            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
-            {/* GEMS earned this game — always its own line, never hidden (Andy oct5) */}
-            <GemsEarnedLine since={gemsSince} />
+            {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
+            <div className="go-earned-row">
+              <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
+              <GemsEarnedLine since={gemsSince} />
+            </div>
             {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
                 from." Every multiplier that contributed, ranked by its share of the total. */}
             <RoundPayout ledger={payoutLedger} />
@@ -4926,9 +4928,11 @@ function CategoryBlitzScreen({
               prompt={(roundResults && roundResults.category) || ''}
               promptLabel="IN"
             />
-            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
-            {/* GEMS earned this game — always its own line (Andy oct5) */}
-            <GemsEarnedLine since={gemsSince} />
+            {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
+            <div className="go-earned-row">
+              <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
+              <GemsEarnedLine since={gemsSince} />
+            </div>
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (

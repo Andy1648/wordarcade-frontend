@@ -113,3 +113,24 @@
 .mr-roll-gem {
   margin: 0 2px;
 }
+
+/* ---- the game-over card: the gems line shares the WINS line's row (one row, a smaller gap — the fit gates in
+   e2e/ko-screen hold the card at zero scroll at 360x640 and 1163x450). A compact chip (thin rule, 16px gem): on a
+   round with no wins it is the whole row, so it may cost the card no more than ~20px. Never hidden. ---- */
+.go-earned-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 10px;
+  margin: 0;
+}
+.go-earned-row > .wins-earned { margin: 4px 0 6px; }
+.go-earned-row > .gems-earned {
+  margin: 0;
+  padding: 0 8px;
+  gap: 6px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #000;
+}
+.go-earned-row > .gems-earned .gem-icon { width: 16px; height: 16px; }
