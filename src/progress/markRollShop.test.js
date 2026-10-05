@@ -2,7 +2,7 @@
 // wins channel, a short balance refused, and the equip decision (any higher MAIN) applied only when the reveal lands.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buyMarkRoll, nextRollCost, applyRollEquip } from './markRollShop.js';
+import { buyMarkRoll, buyMarkRolls, nextRollCost, applyRollEquip } from './markRollShop.js';
 import { ROLL_STATE_KEY, rollPriceNow, loadRollState, refWordWins } from './markRolls.js';
 import { perWordRateNow } from './wins.js';
 import { MARKS_EQUIPPED_KEY } from './marks.js';
@@ -103,5 +103,22 @@ test('DOUBLE ROLLS (SINGULARITY worn): one price, two results; the rarer is show
   withStorage({ 'taw.wins': '1000000000', [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: true, marks: {} }) }, () => {
     const r = buyMarkRoll({ level: 1, rng: at(0) });
     assert.equal(r.extra.length, 0, 'no perk → one result');
+  });
+});
+
+test('×10: exactly 10 × the single price, ten rolls through rollAndSave, refused when short or on the free starter', () => {
+  withStorage({ 'taw.wins': '0' }, (m) => {
+    assert.equal(buyMarkRolls(10, { level: 1, rng: at(0) }), null, 'the free starter comes first');
+    buyMarkRoll({ level: 1, rng: at(0) }); // take the starter
+    const price = rollPriceNow(1);
+    m.set('taw.wins', String(price * 10 - 1));
+    assert.equal(buyMarkRolls(10, { level: 1, rng: at(0) }), null, 'one win short of ten rolls → nothing rolls');
+    assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 1);
+    m.set('taw.wins', String(price * 10 + 5));
+    const list = buyMarkRolls(10, { level: 1, rng: at(0) });
+    assert.equal(list.length, 10);
+    assert.equal(Number(m.get('taw.wins')), 5, 'charged exactly 10 × the single roll');
+    assert.ok(JSON.parse(m.get(ROLL_STATE_KEY)).rolls >= 11, 'every roll was saved (pity / luck counted per roll)');
+    for (const r of list) assert.equal(r.spent, price);
   });
 });

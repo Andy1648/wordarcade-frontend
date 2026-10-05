@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- a ray fan: 12 uneven wedges, a few with a drip at the tip. Used as a MASK and tinted with the tier colour. -->
+  <g fill="#000">
+    <path d="M100 100 L92 0 L110 1 Z"/>
+    <path d="M100 100 L141 6 L156 15 Z"/>
+    <path d="M100 100 L183 40 L192 58 Z"/>
+    <path d="M100 100 L200 94 L198 112 Z"/>
+    <path d="M100 100 L190 150 L178 166 Z"/>
+    <path d="M100 100 L150 190 L132 198 Z"/>
+    <path d="M100 100 L104 200 L86 199 Z"/>
+    <path d="M100 100 L58 192 L44 182 Z"/>
+    <path d="M100 100 L16 160 L8 143 Z"/>
+    <path d="M100 100 L0 106 L1 88 Z"/>
+    <path d="M100 100 L12 46 L23 31 Z"/>
+    <path d="M100 100 L52 9 L68 3 Z"/>
+    <path d="M150 12 C152 18 151 24 148 24 C145 24 146 18 150 12 Z"/>
+    <path d="M195 103 C199 108 198 114 195 114 C192 114 192 108 195 103 Z"/>
+    <path d="M51 188 C53 194 52 199 49 199 C46 199 47 194 51 188 Z"/>
+  </g>
+</svg>

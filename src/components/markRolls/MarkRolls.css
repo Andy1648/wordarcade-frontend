@@ -161,9 +161,141 @@
   box-shadow: 2px 2px 0 #000;
 }
 
-/* ---- the cutscene layer (EPIC / LEGENDARY), inside the MARKS overlay ------------------------------
-   Two "pages" share one grid cell: the LADDER (tier bars + the final tier, huge) and the SHOW (the mark's
-   art + name, then "1 IN X"). Everything is sized off --fs-hero. */
+/* ---- the reveal layers (Andy oct3: COMMON pop · RARE colour flash · EPIC dims + burst · LEGENDARY+ full-screen
+   1.5 s). The STAGE holds the in-panel layers + the ×10 grid; the COVER is portalled into the MARKS overlay (a
+   layer of that panel, never its own fixed element). Every node rests HIDDEN here; RollReveal plays it (WAAPI,
+   transform/opacity, finite). Every non-rectangle shape is an asset in /public/art/rolls. */
+.mr-shake { position: absolute; inset: 0; display: grid; place-items: center; }
+.mr-srays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 360px;
+  height: 360px;
+  margin: -180px 0 0 -180px;
+  opacity: 0;
+  pointer-events: none;
+}
+.mr-rays-ink {
+  width: 100%;
+  height: 100%;
+  background: var(--mr-tier);
+  -webkit-mask: url(/art/rolls/rays.svg) center / contain no-repeat;
+  mask: url(/art/rolls/rays.svg) center / contain no-repeat;
+  opacity: 0.55;
+}
+/* the reel (c): a window one row tall; the strip moves in % of its own height (no layout read) */
+.mr-sreel-win,
+.mr-reel-win {
+  --row: 40px;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(80%, 320px);
+  height: var(--row);
+  overflow: hidden;
+  pointer-events: none;
+}
+.mr-reel-win { --row: 72px; width: min(88%, 460px); z-index: 1; }
+.mr-sreel,
+.mr-reel { opacity: 0; }
+.mr-reel-row {
+  --mr-bar: #2EFFE0;
+  display: grid;
+  place-items: center;
+  height: var(--row);
+  box-sizing: border-box;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #fff;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 2px #000;
+  background: var(--mr-bar);
+  border: 3px solid rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+}
+
+/* ---- ×10: ten pooled tiles, 5 × 2, inside the fixed-height stage --------------------------------------- */
+.mr-grid {
+  position: absolute;
+  inset: 0;
+  display: none;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+}
+.mr-stage.is-multi .mr-grid { display: grid; }
+.mr-stage.is-multi .mr-card-slot,
+.mr-stage.is-multi .mr-back { display: none; }
+.mr-tile {
+  --mr-tier: #2EFFE0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  background: #1a0b2e;
+  border: 3px solid var(--mr-tier);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  transform-origin: center;
+}
+.mr-tile.is-best { border-width: 4px; background: #2a1648; }
+.mr-tile-art { width: min(36px, 80%); height: auto; }
+/* SHINY: the gold streak asset over the tile / card, plus ONE small badge (no text) */
+.mr-tile.is-shiny { background: #1a0b2e url(/art/rolls/shimmer.svg) center / 100% 100% no-repeat; }
+.mr-shiny {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+  transform: rotate(8deg);
+}
+.mr-shiny.is-big { width: 44px; height: 44px; top: -8px; right: -12px; }
+.mr-card.is-shiny { position: relative; overflow: hidden; }
+.mr-card-streak { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.45; pointer-events: none; }
+.mr-card-artwrap { position: relative; flex: none; display: inline-grid; }
+.mr-shine {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---- the ×10 button: next to ROLL, "×10" + the price ------------------------------------------------- */
+.mr-roll-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.mr-roll-row .mr-roll { flex: 3 1 220px; min-width: 0; }
+.mr-roll10 {
+  flex: 1 0 96px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 12px;
+  color: #000;
+  background: #FF4FA3;
+  border: 3px solid #A3175E;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 90ms ease-out;
+}
+.mr-roll10:active:not(:disabled) { transform: translate(3px, 3px); }
+.mr-roll10:disabled { color: #c9b8e8; background: #2a1648; border-color: #3a2160; cursor: not-allowed; }
+.mr-roll10-x { font-family: 'Bungee', cursive; text-transform: uppercase; font-size: var(--fs-panel); line-height: 1; }
+.mr-roll10-price { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); line-height: 1.1; white-space: nowrap; }
+
+/* ---- the COVER (EPIC / LEGENDARY+), inside the MARKS overlay ----------------------------------------- */
 .mr-cover {
   --mr-tier: #FF4FA3;
   position: absolute;
@@ -176,29 +308,28 @@
   pointer-events: none;
   overflow: hidden;
 }
-.mr-cover-plate { position: absolute; inset: 0; background: #0d0618; }
-.mr-cover-page { grid-area: 1 / 1; position: relative; display: grid; justify-items: center; gap: 12px; width: min(100%, 560px); }
-.mr-cover-ladder { align-self: center; }
-.mr-bar {
-  --mr-bar: #2EFFE0;
-  width: min(100%, 420px);
-  padding: 8px 14px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  letter-spacing: 0.12em;
-  color: #000;
-  background: var(--mr-bar);
-  border: 3px solid rgba(0, 0, 0, 0.45);
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  transform-origin: left center;
+.mr-cover-dim,
+.mr-cover-plate { position: absolute; inset: 0; opacity: 0; }
+.mr-cover-dim { background: #0d0618; }
+.mr-cover-plate { background: var(--mr-tier); }
+.mr-cover-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1200px;
+  height: 1200px;
+  margin: -600px 0 0 -600px;
   opacity: 0;
 }
-.mr-bar.is-off { display: none; }
+/* on the full rarity plate the fan is a paler ink (the plate IS the tier colour) */
+.mr-cover.is-full .mr-rays-ink { background: #fff; opacity: 0.35; }
+.mr-cover.is-full[data-tier="secret"] .mr-rays-ink { background: #9A1AFF; }
+.mr-pack { position: absolute; top: 0; width: 51%; height: 100%; opacity: 0; }
+.mr-pack.is-l { left: 0; }
+.mr-pack.is-r { right: 0; }
+.mr-cover-shake { position: relative; z-index: 1; display: grid; justify-items: center; gap: 10px; width: min(100%, 560px); }
 .mr-cover-final,
 .mr-show-name,
-.mr-show-tier,
 .mr-cover-stamp {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
@@ -207,30 +338,33 @@
   paint-order: stroke fill;
   -webkit-text-stroke: 3px #000;
 }
-/* the FINAL tier: --fs-hero, in its tier colour */
-.mr-cover-final { font-size: var(--fs-hero); color: var(--mr-tier); text-shadow: 6px 6px 0 #000; opacity: 0; white-space: nowrap; }
-.mr-show { display: grid; justify-items: center; gap: 8px; opacity: 0; }
-.mr-show-art { width: clamp(96px, 22vw, 160px); height: auto; }
-.mr-show-name { font-size: var(--fs-h1); color: #fff; text-shadow: 5px 5px 0 #000; overflow-wrap: anywhere; }
-.mr-show-tier { display: none; font-size: var(--fs-panel); color: var(--mr-tier); }
+.mr-cover-final { font-size: var(--fs-h1); color: var(--mr-tier); text-shadow: 5px 5px 0 #000; opacity: 0; white-space: nowrap; }
+.mr-cover.is-full .mr-cover-final { color: #fff; }
+.mr-show { display: grid; justify-items: center; gap: 6px; opacity: 0; }
+.mr-show-artwrap { position: relative; display: inline-grid; }
+.mr-show-art { width: clamp(88px, 20vw, 150px); height: auto; }
+.mr-show-name { font-size: var(--fs-panel); color: #fff; text-shadow: 4px 4px 0 #000; overflow-wrap: anywhere; }
+/* "1 IN X" in huge type */
 .mr-cover-stamp {
-  padding: 4px 12px;
-  font-size: min(var(--fs-hero), 10vw);
+  padding: 4px 14px;
+  font-size: min(var(--fs-hero), 11vw);
   white-space: nowrap;
   color: #FFE94A;
   text-shadow: 6px 6px 0 #000;
+  background: #0d0618;
   border: 5px solid #FFE94A;
   border-radius: 8px;
   box-shadow: 6px 6px 0 #000;
   opacity: 0;
 }
-/* REDUCED MOTION, EPIC+: the plate + tier + art + name + stamp as ONE static frame for the same hold */
+.mr-parts { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 2; }
+.mr-part { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; opacity: 0; }
+/* REDUCED MOTION, LEGENDARY+: the plate + tier + art + name + "1 IN X" as ONE static frame for the same hold */
 .mr-cover.is-static { opacity: 1; }
-.mr-cover.is-static .mr-cover-ladder,
-.mr-cover.is-static .mr-cover-final { display: none; }
+.mr-cover.is-static .mr-cover-plate,
+.mr-cover.is-static .mr-cover-final,
 .mr-cover.is-static .mr-show,
 .mr-cover.is-static .mr-cover-stamp { opacity: 1; }
-.mr-cover.is-static .mr-show-tier { display: block; }
 .mr-cover.is-static .mr-cover-stamp { transform: rotate(-6deg); }
 
 /* ---- NOTHING ABOVE THE ROLL BUTTON CHANGES HEIGHT (PR #156 e2e: it moved 14.8px on the first roll) -----
@@ -282,6 +416,8 @@
   .mr-card-art { width: 52px; height: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mr-roll { transition: none; }
-  .mr-roll:active { transform: none; }
+  .mr-roll,
+  .mr-roll10 { transition: none; }
+  .mr-roll:active,
+  .mr-roll10:active:not(:disabled) { transform: none; }
 }

@@ -11,11 +11,13 @@
 // NO SPOILERS: the index, % COLLECTED, pity and an auto-equipped MAIN update when the reveal LANDS.
 import { useEffect, useRef, useState } from 'react';
 import MarkBadge from '../MarkBadge';
-import RollReveal from './RollReveal';
-import { createPacer, revealMs, isHeavy, holdStopReason, needMoreText } from './revealPlan.js';
+import RollReveal, { ShinyBadge } from './RollReveal';
+import {
+  createPacer, revealMs, isHeavy, holdStopReason, needMoreText, multiPlan, multiPrice, revealVersion, MULTI_COUNT,
+} from './revealPlan.js';
 import { MARK_TIERS } from '../../progress/marks';
-import { markEntry, mainTag, perkTag, luck, pityLeft, isBonusRoll, permanentOwnedCount, BONUS_ROLL_MULT } from '../../progress/markRolls';
-import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
+import { markEntry, mainTag, perkTag, luck, pityLeft, isBonusRoll, permanentOwnedCount, BONUS_ROLL_MULT, rollPriceNow } from '../../progress/markRolls';
+import { buyMarkRoll, buyMarkRolls, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getWins, subscribeBalance } from '../../progress/wins';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndLucky, sndAchievement, sndWordRejected } from '../../audio/gameSounds';
@@ -33,8 +35,13 @@ function ResultCard({ result, worn }) {
   const isWorn = worn === result.markId;
   const finish = result.rainbow > 0 ? 'rainbow' : result.gold > 0 ? 'gold' : 'base';
   return (
-    <div className={`mr-card is-${result.tier}`} data-testid="mark-roll-result">
-      <MarkBadge mark={m} size={64} finish={finish} className="mr-card-art" />
+    <div className={`mr-card is-${result.tier}${result.shiny ? ' is-shiny' : ''}`} data-testid="mark-roll-result" data-shiny={result.shiny ? '1' : undefined}>
+      {/* SHINY: a gold streak over the card (RollReveal sweeps it once) + ONE small badge, no text */}
+      {result.shiny ? <img className="mr-card-streak" src="/art/rolls/shimmer.svg" alt="" aria-hidden="true" draggable="false" /> : null}
+      <span className="mr-card-artwrap">
+        <MarkBadge mark={m} size={64} finish={finish} className="mr-card-art" />
+        {result.shiny ? <ShinyBadge /> : null}
+      </span>
       <div className="mr-card-body">
         <div className="mr-card-name">{m ? m.name : ''}</div>
         <div className="mr-card-tier">{tierName(result.tier)} · 1 IN {formatNum(result.oneInX)}</div>
@@ -56,6 +63,8 @@ function ResultCard({ result, worn }) {
 
 export default function RollPanel({ level = 1, view, worn, earned = [], reduced = false, coverHost = null, onRolled }) {
   const [result, setResult] = useState(null);
+  const [results, setResults] = useState(null); // x10: the ten results (null = a single roll)
+  const [version] = useState(() => revealVersion());
   const [seq, setSeq] = useState(0);
   const [skipSeq, setSkipSeq] = useState(0);
   const [wins, setWins] = useState(() => getWins());
@@ -80,6 +89,9 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
 
   const cost = nextRollCost(level, view);
   const canAfford = cost.free || wins >= cost.wins;
+  // x10: exactly ten single (paid) rolls; disabled when the balance can't pay all ten or the free starter waits
+  const price10 = multiPrice(cost.free ? rollPriceNow(level) : cost.wins);
+  const canAfford10 = !cost.free && wins >= price10;
   const pity = pityLeft(view);
   const bonus = isBonusRoll(view);
   const L = luck(view, { permanentOwned: permanentOwnedCount(), boost: isBoostActive() });
@@ -110,26 +122,62 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
     sndPurchase();
     lastResult.current = res;
     pacer.current.start(t, res.tier);
+    setResults(null);
     setResult(res);
     setSeq((n) => n + 1);
-    pending.current = res;
+    pending.current = { best: res, list: [res] };
     if (commitTimer.current) clearTimeout(commitTimer.current);
     commitTimer.current = setTimeout(() => latest.current.commit(), revealMs(res.tier));
     scheduleHold();
     return res;
   };
+  // x10: ten rolls through the shop (each a full roll: pity, luck, double rolls), the best revealed LAST
+  const doRoll10 = () => {
+    const t = now();
+    if (!pacer.current.canRoll(t)) return null;
+    if (pending.current) latest.current.commit();
+    const list = buyMarkRolls(MULTI_COUNT, { level });
+    if (!list) return null; // the button is disabled when short; nothing rolls
+    setMsg('');
+    sndPurchase();
+    held.current = false;
+    const plan = multiPlan(list);
+    const best = list[plan.best];
+    lastResult.current = best;
+    pacer.current.start(t, best.tier, plan.D);
+    setResults(list);
+    setResult(best);
+    setSeq((n) => n + 1);
+    pending.current = { best, list };
+    if (commitTimer.current) clearTimeout(commitTimer.current);
+    commitTimer.current = setTimeout(() => latest.current.commit(), plan.D);
+    return list;
+  };
   // the reveal LANDED (or was skipped): now the index, pity and the MAIN may change
   const commit = () => {
     if (commitTimer.current) clearTimeout(commitTimer.current);
     commitTimer.current = null;
-    const res = pending.current;
-    if (!res) return;
+    const p = pending.current;
+    if (!p) return;
     pending.current = null;
+    const res = p.best;
     if (res.tier !== 'common') (isHeavy(res.tier) ? sndAchievement : sndLucky)(); // the payoff lands with the result
-    announceRolls([res, ...(res.extra || [])]); // MYTHIC+ → one ticker line each ("NAME ROLLED MYTHIC")
-    const wornNow = res.decision === 'auto' ? applyRollEquip(res, earned) : null;
+    // MYTHIC+ → one ticker line each ("NAME ROLLED MYTHIC"): every roll in the batch + its double-roll extras
+    announceRolls(p.list.flatMap((r) => [r, ...(r.extra || [])]));
+    // every roll's AUTO equip, in roll order (applyRollEquip re-checks against the MAIN worn now: only ever up)
+    let wornNow = null;
+    for (const r of p.list) if (r.decision === 'auto') wornNow = applyRollEquip(r, earned) || wornNow;
     onRolled && onRolled(res, wornNow);
   };
+  // TAP ANYWHERE skips: mid-reveal, the first press inside the MARKS layer (its own capture listener, so the
+  // tap never also lands on a tile, a button or ROLL) jumps to the result
+  const skip = () => {
+    const t = now();
+    pacer.current.finishNow(t);
+    setSkipSeq((n) => n + 1);
+    latest.current.commit();
+  };
+  latest.current.skip = skip;
   latest.current.doRoll = doRoll;
   latest.current.commit = commit;
 
@@ -156,14 +204,42 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
     const t = now();
     if (pacer.current.busy(t)) {
       // mid-reveal: SKIP to the result (never a second roll on top of a reveal)
-      pacer.current.finishNow(t);
-      setSkipSeq((n) => n + 1);
-      commit();
+      skip();
       if (held.current) scheduleHold();
       return;
     }
     doRoll();
   };
+  const press10 = () => {
+    if (pacer.current.busy(now())) { skip(); return; }
+    doRoll10();
+  };
+
+  useEffect(() => {
+    const host = coverHost;
+    if (!host || typeof host.addEventListener !== 'function') return undefined;
+    let swallowUntil = 0;
+    const down = (e) => {
+      if (!pacer.current.busy(now())) return;
+      e.stopPropagation();
+      e.preventDefault();
+      swallowUntil = now() + 800; // and the click this press would make
+      held.current = false;
+      latest.current.skip();
+    };
+    const click = (e) => {
+      if (now() >= swallowUntil) return;
+      swallowUntil = 0;
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    host.addEventListener('pointerdown', down, true);
+    host.addEventListener('click', click, true);
+    return () => {
+      host.removeEventListener('pointerdown', down, true);
+      host.removeEventListener('click', click, true);
+    };
+  }, [coverHost]);
 
   const stopHold = () => { held.current = false; };
   const label = cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.wins)} WINS`;
@@ -174,10 +250,13 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
         seq={seq}
         skipSeq={skipSeq}
         result={result}
+        results={results}
+        version={version}
         reduced={reduced}
         coverHost={coverHost}
         card={<ResultCard result={result} worn={worn} />}
       />
+      <div className="mr-roll-row">
       <button
         type="button"
         ref={btn}
@@ -201,6 +280,18 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
         <span className="mr-roll-main">{label}</span>
         <span className="mr-roll-hint" aria-hidden="true">HOLD</span>
       </button>
+      <button
+        type="button"
+        className="mr-roll10"
+        data-testid="mark-roll-10"
+        disabled={!canAfford10}
+        aria-label={`×${MULTI_COUNT} · ${formatNum(price10)} WINS`}
+        onClick={press10}
+      >
+        <span className="mr-roll10-x">×{MULTI_COUNT}</span>
+        <span className="mr-roll10-price">{formatNum(price10)}</span>
+      </button>
+      </div>
       <div className="mr-msg" role="status" aria-live="polite">{msg}</div>
       <div className="mr-meta">
         <span className="mr-pity">EPIC+ IN ≤{pity.epic}</span>

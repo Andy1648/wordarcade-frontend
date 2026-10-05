@@ -25,6 +25,7 @@ import { wearMark } from '../progress/markRollShop';
 import MarkBadge, { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS } from './markGlyphsRolled.jsx';
 import RollPanel, { luckText } from './markRolls/RollPanel';
+import { ShinyBadge } from './markRolls/RollReveal';
 import UnlockTutorial from '../tutorials/UnlockTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
 import { formatNum, formatMultExact as formatMult } from '../format';
@@ -238,6 +239,8 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 ) : lv && lv.gold > 0 ? (
                   <span className="mx-tile-finish is-gold">GOLD{lv.gold > 1 ? ` ×${lv.gold}` : ''}</span>
                 ) : null}
+                {/* SHINY (an owned mark's stored flag): ONE small badge, no text */}
+                {have && view && view.marks && view.marks[e.id] && view.marks[e.id].shiny ? <ShinyBadge className="mx-tile-shiny" /> : null}
               </button>
             );
           })}
