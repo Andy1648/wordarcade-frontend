@@ -14,15 +14,19 @@
 //     both, and the in-game LiveStack must equal the card on every tier).
 //   - The LETTER FORGE (the old MOMENTUM seed migrates into it) no longer pays: a forged save is
 //     quoted and paid exactly what a fresh one is.
-//   - COMBO / RARITY / LENGTH-bonus / LUCKY are not in the formula, so the receipt names NONE of them;
-//     every receipt row must be one of the named terms, and the receipt must equal the card quote.
+//   - COMBO / RARITY / LENGTH-bonus / LUCKY pay in Word Bomb + Blitz as the BOOST slot's word bonus
+//     (feat/wb-bonus-boost) — per-word, so no card can know them. The receipt names each one as a BOOST
+//     sub-row; the spec multiplies the card quote by exactly the per-word rows the receipt names (here only
+//     COMBO: the words are COMMON 5-letter and lucky is forced off — +0.1 a consecutive accept, so the FIRST
+//     word is already ×1.1), and fails on anything else.
 //   - The 3-word GATE: words 1-2 bank no wins (receipt says HELD); word 3 releases all three.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { need, MENU_LETTER_SHARE } from '../src/progress/xp.js';
 
 const ME = 'e2e-player';
-// 5 letters (the card's reference length), so length/5 = 1 and every word is worth exactly the quote.
+// 5 letters (the card's reference length), so length/5 = 1, and COMMON (rarity ×1): every word is worth the
+// quote × its COMBO.
 const WORDS = ['water', 'house', 'money', 'world', 'paper'];
 const DIFF_MULT = { chill: 1, hard: 1 }; // Rebirth Rush: difficulty pays nothing
 const SETUPS = [
@@ -33,7 +37,9 @@ const SETUPS = [
 ];
 // The ONLY rows a receipt may name — the formula's named terms.
 const PERMANENT = new Set(['MODE', 'REBIRTH', 'MARK', 'BOOST', 'FRENZY']);
-const PER_WORD = new Set([]); // nothing per-word pays any more (no COMBO / LUCKY / RARITY / FORGE)
+// What the card legitimately cannot know: the WB/Blitz word bonus (BOOST sub-rows). RARITY / LENGTH / MULT CAP
+// are left out on purpose — these words are COMMON 5-letter, so a receipt naming one is a bug.
+const PER_WORD = new Set(['COMBO', 'LUCKY']);
 
 const num = (s) => Number(String(s).replace(/[^0-9.]/g, ''));
 
@@ -152,7 +158,7 @@ for (const s of SETUPS) {
       const wordBaseWins = (baseWins * letters) / 5;
 
       const unknown = receipt.terms.filter((t) => !PERMANENT.has(t.k) && !PER_WORD.has(t.k));
-      expect(unknown, `word "${WORDS[i]}": receipt names a factor that does not pay (combo / rarity / lucky / streak / difficulty / forge?)`).toEqual([]);
+      expect(unknown, `word "${WORDS[i]}": receipt names a factor this spec did not plan for (streak / difficulty / forge / rarity / length / cap?)`).toEqual([]);
       const perm = receipt.terms.filter((t) => PERMANENT.has(t.k)).reduce((a, t) => a * t.v, 1);
       const perWord = receipt.terms.filter((t) => PER_WORD.has(t.k));
       const perWordMult = perWord.reduce((a, t) => a * t.v, 1);

@@ -30,11 +30,12 @@
 // assert, via the WINS payout: the combo BUILDS across accepts, RESETS on a reject and on a turn-loss
 // (life lost), and the payout INCLUDES the lucky ×5. The 1/40 lucky draw is pinned via the
 // window.__TAW_LUCKY test seam so payouts are deterministic.
-// REBIRTH RUSH (PROGRESSION-FINAL.md, FROZEN): wins / word = BASE 10 × length/5 × MODE × 5^R × MARK × BOOST — the
-// combo and the lucky roll no longer touch the payout (they stay as feel only). So the PARITY these tests exist for
-// is now FLAT parity: Word Bomb and Category Blitz pay identical whole wins for identical words, a streak changes
-// nothing, a reject or a lost life changes nothing, and a lucky word pays what any word of its length pays.
-// At R0 / T0 / no mark: a 5-letter word = 10 wins, a 3-letter word = 6 — no tenths, so nothing is carried.
+// REBIRTH RUSH (PROGRESSION-FINAL.md, FROZEN): wins / word = BASE 10 × length/5 × MODE × 5^R × MARK × BOOST.
+// feat/wb-bonus-boost (Andy oct5): in WORD BOMB and BLITZ the combo × lucky × rarity weight is a BOOST factor
+// again — the word's weight multiplies its base, with the carry. At R0 / T0 / no mark / no code: a 5-letter word
+// = 10 wins (100 in XP units), a 3-letter word = 6 (60). Every figure below is worked in XP units (wins × 10):
+// a word banks floor((weight × base XP + carry-in) / 10) and carries the 0-9 leftover tenths. Blitz is MODE ×1
+// like Word Bomb, so the two produce IDENTICAL numbers for identical input — the parity these tests exist for.
 import { test, expect } from '@playwright/test';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
 
@@ -79,7 +80,7 @@ async function bankSettle(page) {
 }
 
 test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
-  test('WB: a streak does not change the payout — flat per word, before and after a reject', async ({ page }) => {
+  test('WB: the payout combo BUILDS across accepts and RESETS on a reject', async ({ page }) => {
     await page.addInitScript(() => {
       window.__TAW_LUCKY = 'off';
       window.__TAW_RARE_POP = 'off';
@@ -95,25 +96,29 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     }
     await bankSettle(page);
     const after5 = await readWins(page);
-    // five 5-letter words × 10 = 50 (the gate releases the first three at the 3rd); all whole wins
+    // The five 5-letter words are 100 XP units/word: gate (1.1+1.2+1.3)×100 = 360, then 1.4×100 = 140,
+    // 1.5×100 = 150 — all whole wins (36 + 14 + 15 = 65), so nothing is carried into word 6.
     expect(await readCarry(page)).toBe(0);
 
-    // 6th accept at streak 6: CAT, three letters → 6. No combo on top.
+    // 6th accept: C[5] is CAT, three letters → 60 XP units/word. Streak 6 → combo 1.6 → 96 + carry 0
+    // → floor(9.6) = +9, carry 6. BUILDS past the ×1.1 base (66 → +6).
     acceptWb(mock, C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(6);
-    expect(await readCarry(page)).toBe(0);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(9);
+    expect(await readCarry(page)).toBe(6);
     const after6 = await readWins(page);
 
+    // A reject ends the combo.
     rejectWb(mock, 'ZZZQ');
     await page.waitForTimeout(80);
 
-    // after a reject: DOG, three letters → 6 again — the same as at streak 6
+    // Next accept: streak 1 again → combo 1.1 → 66 + carry 6 = 72 → +7, carry 2. RESET: a
+    // streak-7 combo would be 1.7 × 60 = 102 + 6 = 108 → +10.
     acceptWb(mock, 'DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(6);
-    expect(await readCarry(page)).toBe(0);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(7);
+    expect(await readCarry(page)).toBe(2);
   });
 
-  test('WB: losing a life does not change the payout — the next word pays the flat rate', async ({ page }) => {
+  test('WB: the combo RESETS when I lose a life (my turn times out)', async ({ page }) => {
     await page.addInitScript(() => {
       window.__TAW_LUCKY = 'off';
       window.__TAW_RARE_POP = 'off';
@@ -143,14 +148,15 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     });
     await page.waitForTimeout(80);
 
-    // next accept: DOG, three letters → 6, carry 0
+    // Next accept (carry 0 after the five 100-XP-unit words): combo reset to 1.1 → 66 → +6, carry 6.
+    // A continued streak-6 combo would be 1.6 × 60 = 96 → +9.
     expect(await readCarry(page)).toBe(0);
     acceptWb(mock, 'DOG');
     await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(6);
-    expect(await readCarry(page)).toBe(0);
+    expect(await readCarry(page)).toBe(6);
   });
 
-  test('WB: a lucky word pays the same as any word of its length (lucky is feel, not pay)', async ({ page }) => {
+  test('WB: the payout INCLUDES the lucky ×5 when a word is lucky', async ({ page }) => {
     await page.addInitScript(() => {
       window.__TAW_LUCKY = 'always'; // every accept is lucky → ×5 on the weight
       window.__TAW_RARE_POP = 'off';
@@ -160,16 +166,18 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     await startWbMyTurn(mock, page);
     const before = await readWins(page);
 
-    // 3 three-letter accepts, every one lucky: 3 × 6 = 18 — the same as unlucky words
+    // 3 COMMON three-letter accepts, each ×5 lucky, combo 1.1/1.2/1.3:
+    //   1×1.1×5 + 1×1.2×5 + 1×1.3×5 = 5.5 + 6 + 6.5 = 18 weight × 60 = 1080 → +108, carry 0.
+    //   (Flat, they would pay 3 × 6 = 18.)
     for (const w of ['CAT', 'DOG', 'FOX']) {
       acceptWb(mock, w);
       await page.waitForTimeout(40);
     }
-    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(18);
+    await expect.poll(async () => (await readWins(page)) - before, { timeout: 5000 }).toBe(108);
     expect(await readCarry(page)).toBe(0);
   });
 
-  test('Blitz: pays exactly what Word Bomb pays — flat per word, a reject changes nothing', async ({ page }) => {
+  test('Blitz: the payout combo BUILDS and RESETS on a rejected answer', async ({ page }) => {
     await page.addInitScript(() => {
       window.__TAW_LUCKY = 'off';
       window.__TAW_RARE_POP = 'off';
@@ -186,19 +194,23 @@ test.describe('combo + lucky parity (Word Bomb + Category Blitz)', () => {
     }
     await bankSettle(page);
     const after5 = await readWins(page);
-    expect(await readCarry(page)).toBe(0); // 5 × 10, as in WB: nothing carried
+    expect(await readCarry(page)).toBe(0); // 360 + 140 + 150, as in WB: nothing carried
 
-    // Blitz is POWER ×1 like Word Bomb: CAT → 6 (identical to the WB test)
+    // 6th accept: C[5] is CAT (3 letters) and Blitz is MODE ×1 like Word Bomb, so 60 XP units/word.
+    // Streak 6 → 1.6 × 60 = 96 → +9, carry 6 (identical to the WB test).
     accept(C[5]);
-    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(6);
-    expect(await readCarry(page)).toBe(0);
+    await expect.poll(async () => (await readWins(page)) - after5, { timeout: 5000 }).toBe(9);
+    expect(await readCarry(page)).toBe(6);
     const after6 = await readWins(page);
 
+    // A rejected answer breaks the combo.
     mock.pushToClient({ type: 'answer_result', payload: { accepted: false, answer: 'ZZZQ', reason: 'not_in_list' } });
     await page.waitForTimeout(80);
 
+    // Next accept: combo reset to 1.1 → 66 + carry 6 = 72 → +7, carry 2 (a streak-7 would be
+    // 102 + 6 = 108 → +10).
     accept('DOG');
-    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(6);
-    expect(await readCarry(page)).toBe(0);
+    await expect.poll(async () => (await readWins(page)) - after6, { timeout: 5000 }).toBe(7);
+    expect(await readCarry(page)).toBe(2);
   });
 });
