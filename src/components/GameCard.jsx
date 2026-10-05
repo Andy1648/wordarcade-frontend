@@ -421,7 +421,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
               <div className="game-card-lock-label">
                 UNLOCKS AT LV {game.unlockLevel}
                 <span className="game-card-lock-sub">
-                  YOU'RE LV {playerLevel} · {Math.max(0, game.unlockLevel - playerLevel)} TO GO
+                  {/* CLUTTER PASS: no "YOU'RE LV n ·" — the menu's level bar is right there. */}
+                  {Math.max(0, game.unlockLevel - playerLevel)} TO GO
                 </span>
               </div>
             </div>

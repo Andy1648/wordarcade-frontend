@@ -419,14 +419,14 @@ export default function LeaderboardScreen({ onBack }) {
             </form>
           ) : (
             <div className="lb-you lb-hero">
-              <span className="lb-hero-label">YOUR RANK</span>
+              {/* CLUTTER PASS: no "YOUR RANK" kicker — the #n with your name under it is your rank. */}
               {/* the rank line: on a phone this IS the strip — "#9 ▲3 · 58 LV TO #8" */}
               <span className="lb-hero-line">
                 {/* the rank of the board you are LOOKING at — THIS WEEK shows your weekly place */}
                 <span className="lb-you-rank">
                   {/* no place yet: a line, not a giant dash in the hero's numeral slot */}
                   {view === 'week'
-                    ? (weekMe ? <>#{fmt(weekMe.rank)}<span className="lb-you-rank-sub"> THIS WEEK</span></> : <span className="lb-you-rank-sub">NOT RANKED THIS WEEK</span>)
+                    ? (weekMe ? `#${fmt(weekMe.rank)}` /* the active THIS WEEK tab says which board (CLUTTER PASS: so the fallback drops it too) */ : <span className="lb-you-rank-sub">NOT RANKED</span>)
                     : (meRow ? `#${fmt(meRow.rank)}` : <span className="lb-you-rank-sub">NOT RANKED YET</span>)}
                 </span>
                 {view === 'all' && heroMove > 0 && (
@@ -522,7 +522,7 @@ export default function LeaderboardScreen({ onBack }) {
           {LEADERBOARD_ENABLED && view === 'week' && (
             <>
               <div className="lb-cols lb-cols--week" aria-hidden="true">
-                <span>#</span><span>PLAYER</span><span className="lb-num">WORDS THIS WEEK</span>
+                <span>#</span><span>PLAYER</span><span className="lb-num">WORDS</span>
               </div>
               {!week.loaded && <p className="lb-note">LOADING THIS WEEK…</p>}
               {week.error && <p className="lb-note">COULDN’T LOAD THIS WEEK. <button type="button" className="lb-link-btn" onClick={openWeek}>RETRY</button></p>}

@@ -40,12 +40,6 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
     }
   }, [serverError]);
 
-  // ONE LINE, and it is an instruction rather than a name. The mode the player picked is
-  // already what they just tapped; what they do not know is what this screen wants.
-  function getInstruction() {
-    return 'TYPE YOUR NAME TO OPEN THE ROOM';
-  }
-
   function handleNameChange(event) {
     const next = event.target.value;
     setName(next);
@@ -116,7 +110,8 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
             .lobby-title ("JOIN ROOM" / the mode name) and .lobby-subtitle were 20px and 16px of
             decoration above a 16px field, and on a phone the title was the biggest text here.
             One instruction line replaces both. */}
-        <div className="lobby-instruction">{getInstruction()}</div>
+        {/* CLUTTER PASS: the "TYPE YOUR NAME TO OPEN THE ROOM" line went too — the YOUR NAME label
+            on the focused field below says what this screen wants. */}
 
         <label className="lobby-field-label" htmlFor="player-name-input">
           YOUR NAME
@@ -134,7 +129,7 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
         />
 
         <div className="lobby-field-group">
-          <span className="lobby-field-label">ROOM VISIBILITY</span>
+          {/* CLUTTER PASS: no "ROOM VISIBILITY" label — 🔒 PRIVATE / 🌐 PUBLIC say it (the group keeps its aria-label). */}
           <div className="lobby-toggle" role="group" aria-label="Room visibility">
             <button
               type="button"

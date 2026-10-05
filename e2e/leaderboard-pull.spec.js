@@ -67,7 +67,8 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
 
   const prompt = page.locator('.lb-cp');
   await expect(prompt).toBeVisible({ timeout: 10000 });
-  await expect(prompt).toContainText('YOU’D BE #4 ON THE BOARD');
+  await expect(prompt.locator('.lb-cp-rank')).toHaveText('#4');
+  await expect(prompt).toContainText('YOU’D BE ON THE BOARD'); // clutter pass: the big #4 carries the rank
   // "Seen" is ON SCREEN, not rendered: the session's one shot is spent only once it scrolls into view.
   await prompt.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem('taw.lb.promptShown'))).toBe('1');
@@ -79,7 +80,8 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await input.fill('Typer_47');
   await expect(page.locator('.lb-cp-verdict')).toHaveText('FREE. CLAIM IT.');
   await prompt.getByRole('button', { name: 'CLAIM' }).click();
-  await expect(page.locator('.lb-cp-done')).toContainText('YOU’RE #4.');
+  await expect(page.locator('.lb-cp.is-done .lb-cp-rank')).toHaveText('#4'); // clutter pass: no "YOU’RE #4." echo
+  await expect(page.locator('.lb-cp-done')).not.toContainText('YOU’RE #4.');
   expect(board.calls.claim).toBe(1);
   expect(board.rows.some((r) => r.username === 'Typer_47')).toBe(true);
 
@@ -107,7 +109,7 @@ test('unclaimed player: end-screen claim → on the board → rank-up moment + t
   await expect(moment).toBeVisible({ timeout: 10000 });
   await expect(moment.locator('.lb-rankup-from')).toHaveText('#4');
   await expect(moment.locator('.lb-rankup-to')).toHaveText('#3');
-  await expect(moment.locator('.lb-rankup-sub')).toHaveText('LV41 · ON THE LEADERBOARD');
+  await expect(moment.locator('.lb-rankup-sub')).toHaveText('LV41'); // clutter pass: the podium glyph is the leaderboard
   const trophy = page.getByRole('button', { name: /Open leaderboard/ });
   await expect(trophy).toHaveAttribute('aria-label', /rank went up/);
   await expect(moment).toBeHidden({ timeout: 5000 }); // finite: gone after its 2.2s

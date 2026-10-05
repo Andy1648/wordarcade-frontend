@@ -82,7 +82,8 @@ export default function ClaimPopup({ onOpenPanel, onReveal, inline = false }) {
   return (
     <div className={`claim-pop${inline ? ' claim-pop--inline' : ''}`} role="status" aria-live="polite" style={{ '--k': k }}>
       <div className="claim-pop-text">
-        <span className="claim-pop-kind">{one ? CLAIM_KINDS[one.kind] || 'REWARD' : 'REWARDS WAITING'}</span>
+        {/* CLUTTER PASS: no "REWARDS WAITING" kicker over "N TO CLAIM" — one line says it. */}
+        {one && <span className="claim-pop-kind">{CLAIM_KINDS[one.kind] || 'REWARD'}</span>}
         <span className="claim-pop-label">
           {one ? one.label.replace(/^[A-Z ]+ — /, '') : `${list.length} TO CLAIM`}
         </span>

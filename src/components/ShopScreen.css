@@ -68,12 +68,6 @@
   font-size: var(--fs-body);
   color: #ffe94a;
 }
-/* "WINS" unit label after the balance number — subordinate to the value. */
-.shop-wins-label {
-  font-size: var(--fs-label);
-  letter-spacing: 0.06em;
-  opacity: 0.82;
-}
 .shop-close {
   width: 44px;
   height: 44px;
@@ -532,6 +526,10 @@
   color: #ffe94a;
   margin-top: 8px;
   text-transform: uppercase;
+}
+/* CLUTTER PASS: an empty goal (ready to unlock / rebirth) takes no row; the bar keeps its own gap. */
+.shop-goal:empty {
+  display: none;
 }
 /* Cosmetic card gap line (unaffordable card). */
 .shop-card-gap {

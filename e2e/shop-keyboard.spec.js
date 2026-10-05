@@ -25,7 +25,8 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
 
 // The KEY POWER buy button (first .shop-keypower — it renders above MOMENTUM).
 const keyPowerBuy = (page) => page.locator('.shop-keypower').first().locator('.shop-buy');
-const keyPowerHeading = (page) => page.locator('.shop-subtitle', { hasText: 'KEY POWER' });
+// Clutter pass: the tier lives on the KEY Tn line, not the KEY POWER heading.
+const keyPowerHeading = (page) => page.locator('.shop-keypower').first().locator('.shop-kp-current');
 
 test('an Enter tap buys KEY POWER once — keyboard only, no mouse', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 });
@@ -34,7 +35,7 @@ test('an Enter tap buys KEY POWER once — keyboard only, no mouse', async ({ pa
   await btn.focus();
   await page.keyboard.press('Enter');
   // The purchase landed exactly once: KEY POWER advanced to TIER 1 (not 2).
-  await expect(keyPowerHeading(page)).toContainText('TIER 1');
+  await expect(keyPowerHeading(page)).toContainText('KEY T1 ');
 });
 
 test('Enter buys KEY POWER and reveals the unlock sticker', async ({ page }) => {
@@ -46,7 +47,7 @@ test('Enter buys KEY POWER and reveals the unlock sticker', async ({ page }) => 
   await expect(page.locator('.sticker')).toBeVisible();
   await expect(page.locator('.sticker-name')).toContainText('KEY POWER TIER 1');
   await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
-  await expect(keyPowerHeading(page)).toContainText('TIER 1');
+  await expect(keyPowerHeading(page)).toContainText('KEY T1 ');
 });
 
 test('Space also buys via the keyboard', async ({ page }) => {
@@ -57,5 +58,5 @@ test('Space also buys via the keyboard', async ({ page }) => {
   await page.keyboard.press('Space');
   await expect(page.locator('.sticker')).toBeVisible();
   await expect(page.locator('.sticker-name')).toContainText('KEY POWER TIER 2');
-  await expect(keyPowerHeading(page)).toContainText('TIER 2');
+  await expect(keyPowerHeading(page)).toContainText('KEY T2 ');
 });

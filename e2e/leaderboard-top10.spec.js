@@ -56,5 +56,5 @@ test("an unclaimed player who would rank #13 is told #13 — the end-screen rank
     await expect(input).toHaveValue('', { timeout: 5000 });
   }
   await page.locator('.solo-over').waitFor({ state: 'visible', timeout: 45000 });
-  await expect(page.locator('.lb-cp')).toContainText('YOU’D BE #13 ON THE BOARD', { timeout: 10000 });
+  await expect(page.locator('.lb-cp .lb-cp-rank')).toHaveText('#13', { timeout: 10000 }); // clutter pass: the kicker no longer repeats it
 });

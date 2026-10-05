@@ -224,7 +224,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
         <div className="room-code" translate="no" aria-label={`Room code ${room.code}`}>
           <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
         </div>
-        <div className="room-instruction">SHARE THIS CODE</div>
+        {/* CLUTTER PASS: no "SHARE THIS CODE" — the COPY INVITE LINK / SHARE buttons under it say it. */}
 
         {/* One-tap invite: copies (or natively shares, where supported) a
             ?join=CODE deep link that drops a friend STRAIGHT into this room —
@@ -300,7 +300,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                 size={84}
               />
             </div>
-            {!canStart && !canAddBot && (
+            {/* CLUTTER PASS: host-side this repeated the START button's "NEED 2+ PLAYERS"; guests keep it. */}
+            {!canStart && !canAddBot && !isHost && (
               <div className="room-waiting-cue">WAITING FOR PLAYERS...</div>
             )}
           </div>
@@ -323,7 +324,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
               </button>
             ) : (
               <>
-                <div className="room-addbot-label">PICK BOT DIFFICULTY</div>
+                {/* CLUTTER PASS: no "PICK BOT DIFFICULTY" — the EASY / MEDIUM / TOUGH buttons say it. */}
                 <div className="room-addbot-row">
                   {BOT_DIFFICULTIES.map((d) => (
                     <button

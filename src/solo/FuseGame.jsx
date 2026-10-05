@@ -350,7 +350,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   const overCard = (
     <>
       {firstRun ? <FuseFirstRunCard /> : (
-      <FuseNormalCard fragment={s.fragment} wordsSolved={s.wordsSolved} />
+      <FuseNormalCard fragment={s.fragment} />
       )}
       {/* The RESULT leads, the hint follows (fine-tune oct2: "you could have played" sat above
           the card's own title and outshouted it). */}
@@ -402,7 +402,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       reason={g.reason}
       placeholder={`SNEAK "${(s.fragment || '').toUpperCase()}" INTO A WORD`}
       maxLength={data.maxAcceptLen}
-      armHint="SNEAK THOSE LETTERS INTO A WORD"
+      /* CLUTTER PASS: no armHint — the placeholder (SNEAK "ARM" INTO A WORD) already says it. */
       /* FIRST-RUN TEACH (per mode) — a real word containing the fragment that is on screen right
          now, skipping any already solved, so copying it always works. */
       teachMode="fuse"

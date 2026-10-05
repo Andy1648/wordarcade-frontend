@@ -409,17 +409,9 @@
   line-height: 1.2;
 }
 
-.browser-empty-sub {
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-label);
-  font-weight: 700;
-  color: #C9B8E8;
-  margin: 10px 0 22px;
-}
-
 .browser-empty-actions {
+  /* CLUTTER PASS: the sub line above is gone; this keeps its gap under the title. */
+  margin-top: 22px;
   display: flex;
   flex-direction: column;
   gap: 12px;

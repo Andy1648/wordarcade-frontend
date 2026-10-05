@@ -56,8 +56,8 @@ test('§2 buy is a plain click that commits and reveals the sticker', async ({ p
   // item's own name, in place of the old one-line banner.
   const buyBtn = page.locator('.shop-keypower').first().locator('.shop-buy');
   await expect(buyBtn).toBeVisible();
-  // THEMES and MOMENTUM also have .shop-subtitle headings, so scope to the KEY POWER one specifically.
-  await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 0');
+  // Clutter pass: the KEY POWER heading no longer repeats the tier — the KEY Tn line under it carries it.
+  await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('KEY T0 ');
   await expect(page.locator('.sticker')).toHaveCount(0);
 
   // One click → commit → the sticker appears and the tier advances.
@@ -65,7 +65,7 @@ test('§2 buy is a plain click that commits and reveals the sticker', async ({ p
   await expect(page.locator('.sticker')).toBeVisible();
   await expect(page.locator('.sticker-name')).toContainText('KEY POWER TIER 1');
   await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
-  await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toContainText('TIER 1');
+  await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('KEY T1 ');
 });
 
 test('§2/§3 add zero new infinite animations in the shop', async ({ page }) => {

@@ -1487,7 +1487,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
           (it is a word, not a number, and would widen a column). */}
       {showTable && (
       <>
-      <div className="go-section-label">PLAYERS</div>
+      {/* CLUTTER PASS: no "PLAYERS" label — the table's own PLAYER column header names it. */}
       <table className="go-ptable">
         <thead>
           <tr>
@@ -3989,7 +3989,6 @@ export default function GameScreen({
                   onSkipTurn();
                 }}
                 disabled={skipPending}
-                title="Skip your turn — costs you a life"
               >
                 SKIP
                 <span className="game-skip-cost">-1 LIFE</span>
@@ -4006,7 +4005,6 @@ export default function GameScreen({
               <Spotlight
                 targetSelector=".game-input"
                 caption={isCategory ? 'NAME SOMETHING IN THE CATEGORY' : 'TYPE A WORD WITH THESE LETTERS'}
-                sub="START TYPING"
                 // The board is dense: never print over its own text (LIVE FEED, seat names, the
                 // used-words strip) or across its rail CARDS. fix/wb-prompt-overlap — see
                 // Spotlight.jsx `avoidTextIn` / `avoidSelector`.
@@ -4416,14 +4414,13 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           {/* (Daily STREAK line removed — the daily-streak feature is gone; the day #
               above is enough. This reclaims the vertical space it used.) */}
 
-          {/* Personal-best line + how-close nudge. (Staggered in at stage 3.) */}
-          <div className="solo-pb-line celeb-statline" style={{ '--celeb-i': 0 }}>
-            {pb.isNewRecord
-              ? pb.hadRecord
-                ? 'YOU BEAT YOUR PERSONAL BEST!'
-                : 'YOUR FIRST RECORD!'
-              : `PERSONAL BEST: ${formatNum(pb.best)}`}
-          </div>
+          {/* Personal-best line + how-close nudge. (Staggered in at stage 3.) CLUTTER PASS: on a new
+              record the NEW RECORD! stamp says it — no "YOU BEAT YOUR PERSONAL BEST!" echo under it. */}
+          {!pb.isNewRecord && (
+            <div className="solo-pb-line celeb-statline" style={{ '--celeb-i': 0 }}>
+              {`PERSONAL BEST: ${formatNum(pb.best)}`}
+            </div>
+          )}
           {!pb.isNewRecord && pb.hadRecord && (
             <div className="solo-away celeb-statline" style={{ '--celeb-i': 1 }}>
               {pb.away <= 0
@@ -5099,7 +5096,7 @@ function CategoryBlitzScreen({
                     ? 'No rerolls left this game'
                     : !withinRerollWindow
                     ? 'Rerolls are only allowed at the start of a round'
-                    : 'Swap the current category for a different one'
+                    : undefined /* clutter pass: the enabled button's own NEW CATEGORY text says it */
                 }
               >
                 NEW CATEGORY ({rerollsLeft})
@@ -5198,7 +5195,6 @@ function CategoryBlitzScreen({
               <Spotlight
                 targetSelector=".game-input"
                 caption="NAME SOMETHING IN THE CATEGORY"
-                sub="START TYPING"
                 // Same text-aware placement as Word Bomb (fine-tune oct2): the caption printed over
                 // the CATEGORY card — the one thing the player must read.
                 avoidTextIn=".game-wrap"
