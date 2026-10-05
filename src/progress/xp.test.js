@@ -325,18 +325,20 @@ test('cosmetics are LOOKS ONLY: pop / sound multipliers and the streak never tou
   assert.equal(xpPerInput({ keyTier: 2, rebirthCount: 0, streakMult: 1.25 }), base);
 });
 
-test('rebirth gate (Rebirth Rush): LV 15 + 18R', () => {
-  assert.equal(rebirthThreshold(0), 15); // gate for R1
-  assert.equal(rebirthThreshold(1), 33); // R2
-  assert.equal(rebirthThreshold(3), 69); // R4
-  assert.equal(rebirthThreshold(9), 177); // R10
-  assert.equal(rebirthThreshold(10), 195); // R11
-  assert.equal(rebirthThreshold(19), 357); // R20
-  assert.equal(rebirthThreshold(20), 375); // R21
-  assert.equal(rebirthThreshold(30), 555); // R31
-  assert.equal(rebirthThreshold(-2), 15);
-  assert.equal(rebirthThreshold(NaN), 15);
-  for (let rc = 0; rc < 200; rc++) assert.equal(rebirthThreshold(rc + 1) - rebirthThreshold(rc), 18, `gate R${rc}`);
+test('rebirth gate (Andy oct5): round numbers, LV 25 × (R+1)', () => {
+  assert.equal(rebirthThreshold(0), 25); // gate for R1
+  assert.equal(rebirthThreshold(1), 50); // R2
+  assert.equal(rebirthThreshold(3), 100); // R4
+  assert.equal(rebirthThreshold(9), 250); // R10
+  assert.equal(rebirthThreshold(10), 275); // R11
+  assert.equal(rebirthThreshold(19), 500); // R20
+  assert.equal(rebirthThreshold(30), 775); // R31
+  assert.equal(rebirthThreshold(-2), 25);
+  assert.equal(rebirthThreshold(NaN), 25);
+  for (let rc = 0; rc < 200; rc++) {
+    assert.equal(rebirthThreshold(rc) % 25, 0, `round gate R${rc}`);
+    assert.equal(rebirthThreshold(rc + 1) - rebirthThreshold(rc), 25, `gate R${rc}`);
+  }
 });
 
 // REBIRTH RUSH: ×5 XP AND wins per rebirth, forever — 5^R, the same number on the bar and on wins.
@@ -368,13 +370,13 @@ test('XP per letter = 10 × KEY × 5^R × mark — finite at any R / tier', () =
   }
 });
 
-test('rebirth is refused at LV14 and allowed at LV15', () => {
-  const xp14 = cumCost(14); // exactly at the start of level 14
-  const xp15 = cumCost(15); // exactly at the start of level 15
-  assert.equal(levelFromXp(xp14).level, 14);
-  assert.equal(levelFromXp(xp15).level, 15);
-  assert.equal(canRebirth(xp14, 0), false);
-  assert.equal(canRebirth(xp15, 0), true);
+test('rebirth is refused at LV24 and allowed at LV25', () => {
+  const xp24 = cumCost(24); // exactly at the start of level 24
+  const xp25 = cumCost(25); // exactly at the start of level 25
+  assert.equal(levelFromXp(xp24).level, 24);
+  assert.equal(levelFromXp(xp25).level, 25);
+  assert.equal(canRebirth(xp24, 0), false);
+  assert.equal(canRebirth(xp25, 0), true);
 });
 
 test('doRebirth zeroes xp, KEEPS the KEY tier (Andy oct5), and preserves wins/owned/equipped/rebirths+1', () => {
