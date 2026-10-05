@@ -246,36 +246,6 @@
   }
 }
 
-/* ---- ALLEY DEPTH: the perspective lines + scale-graded receding tags. Sits at
-   z-index 0 (above the surface grain, below the z-index-1 content); clipped to
-   the stage by its overflow. The receding GraffitiTags and the converging lines
-   together read as a one-point-perspective alley the eye looks INTO. */
-.homepage-depth {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-/* One-point perspective guide lines (floor boards / ceiling / side walls) all
-   converging on the vanishing point behind the title. Drawn in the mortar shade,
-   low opacity - structure you feel more than read. preserveAspectRatio:none lets
-   the 0-100 viewBox stretch to the stage while the lines keep converging. */
-.homepage-perspective {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.55;
-}
-
-.homepage-perspective line {
-  stroke: #000;
-  stroke-width: 0.18;
-  opacity: 0.5;
-}
-
 /* Streetlight pool: a tall warm cast from above, centred over the title + cards.
    .wall-spotlight supplies the gradient + screen blend; this only places it. */
 .homepage-spotlight {
@@ -288,57 +258,8 @@
   --spot-h: 72%;
 }
 
-/* Decorative paint splatters scattered around the stage edges. Behind the
-   content (z-index 0), non-interactive, and clipped by the stage's
-   overflow so they bleed off the edges like real thrown paint. */
-.homepage-splatter {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  width: 150px;
-  height: 150px;
-  /* Let the splatter's drips/droplets spill past the SVG viewBox. */
-  overflow: visible;
-}
-
-.homepage-splatter-1 {
-  top: -34px;
-  left: -40px;
-  opacity: 0.2;
-  transform: rotate(18deg);
-}
-
-.homepage-splatter-2 {
-  top: 40px;
-  right: -46px;
-  width: 180px;
-  height: 180px;
-  opacity: 0.18;
-  transform: rotate(-26deg);
-}
-
-.homepage-splatter-3 {
-  bottom: 24px;
-  left: -50px;
-  width: 170px;
-  height: 170px;
-  opacity: 0.2;
-  transform: rotate(40deg);
-}
-
-.homepage-splatter-4 {
-  bottom: -36px;
-  right: -30px;
-  width: 160px;
-  height: 160px;
-  opacity: 0.18;
-  transform: rotate(-12deg);
-}
-
-/* Keep the real content above the brick texture and splatter layers. */
+/* Keep the real content above the brick texture. */
 .homepage-logo,
-.homepage-tagline,
-.homepage-section-label,
 .homepage-cards-grid {
   position: relative;
   z-index: 1;
@@ -429,65 +350,6 @@ html[data-beat='true'] .homepage-logo {
 /* (Removed the dead `.homepage-logo::before/::after { display:none }` block: those pseudo-
    elements have no `content` set anywhere, so they generate no boxes and the rule did nothing.
    The chromatic-split ghosts were already gone; the markup/data-text contract is unaffected.) */
-
-/* Tagline styled like a sticker slapped on at an angle - skewed, rotated
-   off-axis, and sitting on a hard offset shadow. */
-.homepage-tagline {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-body);
-  color: #0d0618;
-  background: #2EFFE0;
-  display: block;
-  width: fit-content;
-  margin: 12px auto 0;
-  padding: 6px 16px;
-  border: 4px solid #1A9985;
-  box-shadow: 3px 3px 0 #000;
-  transform: rotate(-3deg) skewX(-6deg);
-}
-
-.homepage-section-label {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-body);
-  color: #2EFFE0;
-  -webkit-text-stroke: 3px #000;
-  paint-order: stroke fill;
-  text-align: center;
-  margin: clamp(10px, 1.6vh, 22px) 0 clamp(8px, 1.2vh, 16px);
-  transform: skewX(-4deg);
-  /* Handstyle extrude in cyan darker-shades (see .wall-handstyle, added in JSX). */
-  --hs-dark: #1A9985;
-  --hs-darker: #0E5F52;
-}
-
-/* The mascot as a graffiti stencil sprayed on the brick wall: large, faint, and
-   tilted, sitting behind the cards (z-index 0, above only the wall texture) so
-   it reads as part of the wall, not a character standing in the scene. Tucked to
-   the upper-left so the cards/buttons never sit on top of its face awkwardly. */
-.homepage-graffiti {
-  position: absolute;
-  top: 6%;
-  left: -12px;
-  width: 150px;
-  height: auto;
-  z-index: 0;
-  opacity: 0.16;
-  pointer-events: none;
-  transform: rotate(-12deg);
-  /* Flatten it toward a one-colour stencil so it blends into the wall instead of
-     reading as the full-colour character art. */
-  filter: grayscale(0.4) contrast(1.1);
-}
-
-@media (max-width: 600px) {
-  .homepage-graffiti { width: 110px; top: 4%; left: -16px; }
-}
 
 /* fix/visual-real item 6: the XP bar + its small meta rows (wins caption, MOMENTUM rail, live WPM,
    and the NEXT-unlock teaser) are grouped in ONE cluster with a tight internal gap, so the NEXT
@@ -740,7 +602,6 @@ html[data-beat='true'] .homepage-logo {
   display: none;
 }
 
-.homepage-btn-create::before { background: #ff4fa3; }
 .homepage-btn-join::before { background: #2EFFE0; }
 
 .homepage-btn:active {
@@ -762,13 +623,6 @@ html[data-beat='true'] .homepage-logo {
 .homepage-btn.disabled:active {
   transform: skewX(-2deg);
   box-shadow: 4px 4px 0 #000;
-}
-
-.homepage-btn-create {
-  background: #ff4fa3;
-  border-color: #991A75;
-  color: #000;
-  flex: 1.2;
 }
 
 .homepage-btn-join {
@@ -972,7 +826,6 @@ html[data-beat='true'] .homepage-logo {
   .homepage-logo-wrap,
   .menu-xp-bar,
   .homepage-bottom-bar,
-  .homepage-daily-link,
   .homepage-footer-links {
     flex-shrink: 0;
   }
@@ -1091,9 +944,6 @@ html[data-beat='true'] .homepage-beat-glow {
    interaction. The old idle selectors are retained here as belt-and-braces in case
    a base loop is ever reintroduced. */
 @media (prefers-reduced-motion: reduce) {
-  .homepage-tagline,
-  .homepage-section-label,
-  .homepage-splatter,
   .homepage-btn,
   html[data-beat='true'] .homepage-logo,   /* title-beat-pop */
   html[data-beat='true'] .game-card::after, /* card-beat-glow (prototype) */
@@ -1104,11 +954,6 @@ html[data-beat='true'] .homepage-beat-glow {
   .homepage-beat-glow,
   .game-card::after {
     opacity: 0 !important;
-  }
-  /* The sway baked the sticker tilt into its keyframes, so restate it as a static
-     resting pose (otherwise animation:none would flatten the tagline). */
-  .homepage-tagline {
-    transform: rotate(-3deg) skewX(-6deg) !important;
   }
   /* Buttons respond via COLOUR, not motion: drop the hover zoom / press squash /
      POW starburst, flash the outline white on hover instead. Resting skew kept. */
@@ -1122,40 +967,6 @@ html[data-beat='true'] .homepage-beat-glow {
   .homepage-btn::before {
     display: none !important;
   }
-}
-
-/* ---- [T4] Daily Challenge entry link ---- */
-/* The daily used to be a big yellow hero banner up top; it's now a quiet text
-   link sitting just under JOIN ROOM. Dim gold at rest, full yellow on hover.
-   Same onDaily handler + day number — only the entry point moved and shrank. */
-.homepage-daily-link {
-  display: block;
-  margin: 2px auto 0;
-  padding: 3px 14px 4px;
-  background: none;
-  border: none;
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
-  letter-spacing: 0.12em;
-  color: #c9b64a;
-  cursor: pointer;
-  position: relative;
-  /* Sit above the drifting sparkle particles with a dark halo for legibility,
-     matching the CREDITS link treatment below. */
-  z-index: 3;
-  text-shadow: 0 1px 3px rgba(13, 6, 24, 0.95), 0 0 3px rgba(13, 6, 24, 0.95);
-  transition: color 0.15s ease;
-}
-
-.homepage-daily-link:hover {
-  color: #FFE94A;
-}
-
-.homepage-daily-link.disabled {
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 /* ---- Connect / cold-start feedback (rendered INSIDE a tapped CTA) ----
@@ -1217,26 +1028,6 @@ html[data-beat='true'] .homepage-beat-glow {
   background: #FFE94A;
   border-color: #B8A020;
   color: #000;
-}
-
-/* The daily entry is a small text LINK, not a slab, so its WAKING variant just
-   brightens the text to full yellow (its hover colour) rather than painting a
-   yellow background block, and the in-link spinner + sub-line are sized down to
-   the smaller type. Same phase-2 feedback, scaled to the link. */
-.homepage-daily-link.is-waking {
-  color: #FFE94A;
-}
-.homepage-daily-link .connecting-spinner,
-.homepage-daily-link .connecting-spinner-rm {
-  width: 11px;
-  height: 11px;
-  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
-}
-.homepage-daily-link .connecting-spinner {
-  border-width: 2px;
-}
-.homepage-daily-link .connecting-sub {
-  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
 }
 
 @media (prefers-reduced-motion: reduce) {

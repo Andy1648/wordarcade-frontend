@@ -62,24 +62,6 @@
   color: rgba(240, 234, 217, 0.6);
   white-space: nowrap;
 }
-/* Daily-streak chip — flame + count, inline with the LV/wins chrome (no added bar height). */
-.menu-streak-chip {
-  /* The XP cluster is a DATA STRIP, not display type. As Bungee at --fs-panel these
-     chips rendered 20px on a 390px menu and ate the row: lv 63px + wins 81px + rank
-     64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
-     spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
-     legible and gives the track its width back. */
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: var(--fs-body);
-  line-height: 1;
-  color: #ff6b3d; /* ember orange — reads as a streak/heat without a new asset */
-  white-space: nowrap;
-}
 .menu-streak-flame {
   font-size: var(--fs-body);
   line-height: 1;
@@ -105,13 +87,6 @@
 }
 .menu-streak-flame { font-size: var(--fs-body); }
 .menu-streak-count { font-size: var(--fs-body); }
-.menu-streak-mult {
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
-  padding: 2px 5px;
-  border-radius: 5px;
-  background: #0d0618;
-  color: #ffe94a;
-}
 .menu-streak-freeze {
   font-size: var(--fs-label);
   color: #2effe0;
@@ -122,7 +97,6 @@
 /* milestone tiers — escalating fill + shadow weight */
 .menu-streak[data-tier='3']  { background: #ff6b3d; }
 .menu-streak[data-tier='7']  { background: #ff4fa3; color: #0d0618 /* contrast: 3.04 -> 6.53 on #ff4fa3 */; box-shadow: 3px 3px 0 #000; }
-.menu-streak[data-tier='7'] .menu-streak-mult,
 .menu-streak[data-tier='7'] .menu-streak-freeze { color: #ffe94a; }
 .menu-streak[data-tier='14'] { background: #9a1aff; color: #fff; box-shadow: 4px 4px 0 #000; }
 .menu-streak[data-tier='14'] .menu-streak-freeze { color: #2effe0; }
@@ -290,7 +264,6 @@
   margin-left: auto;
   flex: none;
 }
-.menu-xp-hint-lead { color: #2effe0; }
 .menu-xp-hint-to-short { display: none; }
 
 /* The first-visit XP caption is GONE — its text now rides the bar's own hint line (see
@@ -456,23 +429,6 @@
 .menu-xp-levelup[data-milestone] .menu-xp-levelup-sub {
   color: #2effe0;
 }
-/* "+N WINS" reward line under the LEVEL text — cyan (the accept/positive colour) so the
-   payout reads distinct from the gold title. Hidden when the level-up granted nothing. */
-.menu-xp-levelup-wins {
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  font-size: var(--fs-h2);
-  line-height: 1;
-  color: #2effe0;
-  -webkit-text-stroke: 3px #000;
-  paint-order: stroke fill;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.menu-xp-levelup-wins:empty {
-  display: none;
-}
-
 /* Second line under the phrase — "LV n-1 → LV n" at ~0.3× the title size. */
 .menu-xp-levelup-detail {
   font-family: 'Bungee', cursive;
@@ -1073,12 +1029,6 @@ button.menu-mark.rarity-fin:active { --rar-off: 1px 1px 0 #000; }
    it repeats, in words, what the readout on the fill already says in numbers. It stays at 320
    (it is the only place the "N words" framing exists) but loses the first-run lead-in, which is
    what pushes it past a 262px stage. */
-/* The first-run lead-in goes wherever the corner-nav gutter is in force (<=560px). It costs 16
-   characters — 130px — and the bar has 186px of clear width at 390 and 131px at 320, so keeping it
-   would ellipsise the half of the line that carries the numbers. */
-@media (max-width: 560px) {
-  .menu-xp-hint-lead { display: none; }
-}
 /* THE SENTENCE OUTRANKS THE READOUT ON A PHONE. LiveWpm hides itself with `visibility`, which
    still RESERVES its width — at 320 that left the hint ellipsised to "12 WO…", a line that costs
    height and says nothing. The WPM readout goes instead: it is a nicety, and the hint is the only
