@@ -2491,7 +2491,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   letter-spacing: 0.06em;
   color: var(--redink, #c8321e);
 }
-.sr-winsline {
+/* .sr-gemsline: the GEMS line shares the wins line's ink voice but NOT its class (.sr-winsline stays unique) */
+.sr-winsline,
+.sr-gemsline {
   text-align: center;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -2500,7 +2502,8 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   letter-spacing: 0.08em;
   color: var(--ink);
 }
-.sr-winsline b {
+.sr-winsline b,
+.sr-gemsline b {
   font-family: var(--font-head);
   font-weight: 400;
   font-size: var(--fs-panel);
