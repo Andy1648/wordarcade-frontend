@@ -2,6 +2,7 @@
 // ~3KB of choreography + its CSS load only when a timer actually ends, not in every page's first payload.
 import { useEffect, useRef } from 'react';
 import './TimerOver.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 const LIFE_MS = 1200;
 const WORDS = { frenzy: 'FRENZYOVER'.split(''), boost: 'BOOSTOVER'.split('') };
@@ -14,7 +15,7 @@ export default function OverMoment({ kind, mult, onDone }) {
   const rootRef = useRef(null);
   useEffect(() => {
     const root = rootRef.current;
-    const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = reduceMotion();
     const anims = [];
     if (root && !reduce && typeof root.animate === 'function') {
       const tiles = root.querySelectorAll('.tover-tile');

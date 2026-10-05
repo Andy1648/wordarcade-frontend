@@ -37,6 +37,7 @@ import { formatNum, formatRate } from '../format';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { RARITY, rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
 import './rarity/RarityFin.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 const VERDICT_COPY = {
   shape: '3–16 LETTERS, NUMBERS OR _',
@@ -258,8 +259,7 @@ export default function LeaderboardScreen({ onBack }) {
     const el = root && root.querySelector('.lb-row.is-me');
     if (!el || !body || typeof el.animate !== 'function') return undefined;
     slidRef.current = true;
-    let reduced = false;
-    try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { /* old browser */ }
+    const reduced = reduceMotion();
     if (reduced) return undefined;
     const h = el.offsetHeight;
     const sib = el.previousElementSibling || el.nextElementSibling;
@@ -322,8 +322,7 @@ export default function LeaderboardScreen({ onBack }) {
   function showMe() {
     const el = overlayRef.current && overlayRef.current.querySelector('.lb-row.is-me');
     if (!el) return;
-    let reduced = false;
-    try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { /* old browser */ }
+    const reduced = reduceMotion();
     el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
   }
 

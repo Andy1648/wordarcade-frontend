@@ -22,10 +22,10 @@
 //   onSetAll  : (all: boolean) => void — SELECT ALL / CLEAR
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './PackPicker.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 function prefersReduced() {
-  return typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return reduceMotion();
 }
 
 export default function PackPicker({ packs, selected, onToggle, onSetAll }) {

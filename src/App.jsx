@@ -142,6 +142,7 @@ const RESOLVING_TYPES = new Set([
 ]);
 import { Analytics } from '@vercel/analytics/react';
 import './Transitions.css';
+import { reduceMotion } from './lib/reduceMotion';
 
 // Kill-feed flavor lines shown when a player is eliminated (their last life is
 // lost). `{player}` is replaced with the eliminated player's name. FNF/Newgrounds
@@ -895,7 +896,7 @@ function App() {
     if (view !== 'game') return;
     const el = appShakeRef.current;
     if (!el || typeof el.animate !== 'function') return;
-    if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (reduceMotion()) return;
     el.animate(
       [{ transform: 'translate(0, 0)' }, { transform: 'translate(-0.5px, 0.5px)' }, { transform: 'translate(0, 0)' }],
       { duration: 100, easing: 'ease-in-out' }
@@ -2157,11 +2158,7 @@ function App() {
     // Reveal the menu with the KNIFE-SPLIT (this transition's signature, in place
     // of the explosion + the generic bar wipe). Under reduced motion we skip the
     // slice entirely and just cut to the menu.
-    const reduced =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return;
+    if (reduceMotion()) return;
     // The blade-hit / halves-apart cues + the jolt are fired BY KnifeSplit from
     // its phase chain (onSlash/onOpen below), so each lands WITH its visual —
     // not here at handoff, which is ~920ms before the halves actually part.
@@ -2758,14 +2755,11 @@ function App() {
     bgIntensity = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   }
 
-  // The bar wipe is the only motion the transition adds; honour reduced-motion by
+  // The bar wipe is the only motion the transition adds; honour REDUCE MOTION by
   // skipping the overlay entirely (the screen has already swapped underneath, so
-  // nothing is lost but the animation). Read live - it's a cheap media query and
+  // nothing is lost but the animation). Read live - it's a cached boolean and
   // the overlay is purely cosmetic.
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion = reduceMotion();
 
   // The bomb-fuse loading screen is the very first thing shown. It's now a
   // FIXED-DURATION timed intro: it burns the fuse, explodes and hands off on its

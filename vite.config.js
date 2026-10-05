@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import reduceMotionScope from './scripts/postcss-reduce-motion.js'
 
 // VERCEL STATIC PARITY (dev + preview). THE DIVERGENCE THIS CLOSES: on Vercel the FILESYSTEM is
 // matched BEFORE `rewrites`, so `/chain` serves `public/chain/index.html` (the SEO landing page) and
@@ -170,6 +171,10 @@ export default defineConfig(({ mode }) => {
       ...(isPortal ? [] : [sitemapPlugin(outDir), pwaPlugin()]),
     ],
     base: isPortal ? './' : '/',
+    // REDUCE MOTION is an in-game toggle, not the OS setting (managed school Chromebooks force
+    // prefers-reduced-motion: reduce). Every @media (prefers-reduced-motion …) block is rewritten at
+    // build time onto :root[data-reduce-motion] — see scripts/postcss-reduce-motion.js.
+    css: { postcss: { plugins: [reduceMotionScope()] } },
     build: {
       outDir,
       rollupOptions: {

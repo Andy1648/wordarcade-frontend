@@ -21,6 +21,7 @@ import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult, needAt } from '../progress/xp';
 import { GemIcon } from './gems/GemChip';
+import { reduceMotion } from '../lib/reduceMotion';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
 
@@ -549,10 +550,7 @@ const SHARD_POOL = 32; // SHARD_PER_POP × ~8 concurrent pops
 // Feel-tier colours: T1-T4 teal, T5+ gold. (T0 keeps the streak colour it's given.)
 const TIER_TEAL = '#2EFFE0';
 const TIER_GOLD = '#FFD54A';
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, not the OS
 
 // Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.

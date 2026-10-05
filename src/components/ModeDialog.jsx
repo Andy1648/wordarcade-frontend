@@ -9,6 +9,7 @@ import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
 import { masteryState, masteryNeed, MASTERY_MODES, MASTERY_MILESTONE_EVERY } from '../progress/mastery';
+import { reduceMotion } from '../lib/reduceMotion';
 
 // MASTERY (Job 2): a compact per-mode mastery readout — level, words to the next level, and the next
 // milestone bonus. Reads client state directly (cheap); shown in every mode dialog.
@@ -56,10 +57,7 @@ const MODE_KEY = {
 };
 
 function prefersReduced() {
-  return (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  return reduceMotion();
 }
 
 // Darken a #rrggbb hex toward black by `f` (0..1) — used for the colored CTA

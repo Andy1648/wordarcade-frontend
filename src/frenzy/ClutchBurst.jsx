@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../format.js';
 import './ClutchBurst.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 const LETTERS = ['C', 'L', 'U', 'T', 'C', 'H'];
 // Where each letter flies in FROM (vw, vh offsets from its final place) — six different edges.
@@ -22,7 +23,7 @@ export default function ClutchBurst({ leftMs = 0, bonus = 0, onDone }) {
   const [gone, setGone] = useState(false);
   useEffect(() => {
     const root = rootRef.current;
-    const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = reduceMotion();
     const anims = [];
     if (root && !reduce && typeof root.animate === 'function') {
       root.querySelectorAll('.clutch-letter').forEach((el, i) => {

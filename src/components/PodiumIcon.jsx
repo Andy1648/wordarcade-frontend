@@ -14,6 +14,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { formatNum } from '../format';
 import './PodiumIcon.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 // Geometry in the 100x100 viewBox: the steps leave room for the outline + the shadow at the right/bottom.
 const LINE = 4; // the black outline (centred on each edge)
@@ -47,13 +48,7 @@ export function podiumLabel(rank) {
   return k < 10 ? `${Math.floor(k * 10) / 10}K` : formatNum(Math.floor(k) * 1000);
 }
 
-const reduced = () => {
-  try {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return true;
-  }
-};
+const reduced = reduceMotion; // the in-game REDUCE MOTION toggle, not the OS
 // will-change ON for the life of an element's animations, OFF when the LAST one on it ends (overlapping tick
 // pops on the one number node must not clear it under each other)
 const running = new WeakMap();

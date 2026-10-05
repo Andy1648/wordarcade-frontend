@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FRENZY_MULT, frenzyMinutes } from '../progress/frenzy.js';
 import { formatNum } from '../format.js';
 import './FrenzyBurst.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const COLOURS = ['#FFE94A', '#FF6B3D', '#FF4FA3', '#2EFFE0'];
@@ -22,7 +23,7 @@ export default function FrenzyBurst({ bonus = 0, started = true, onDone, title, 
   const [gone, setGone] = useState(false);
   useEffect(() => {
     const root = rootRef.current;
-    const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = reduceMotion();
     const anims = [];
     if (root && !reduce && typeof root.animate === 'function') {
       const tiles = root.querySelectorAll('.frenzy-tile');

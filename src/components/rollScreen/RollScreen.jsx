@@ -42,6 +42,7 @@ import { lazyWithReload } from '../../lib/chunkReload';
 import { drawStrip, revealMode, restOffset, autoShouldStop, needMoreText, AUTO_GAP_MS } from './reelPlan.js';
 import '../rarity/RarityFin.css';
 import './RollScreen.css';
+import { useReduceMotion } from '../../lib/useReduceMotion';
 
 registerMarkGlyphs(ROLLED_GLYPHS);
 
@@ -55,19 +56,8 @@ const readAuto = () => {
   } catch { return 'epic'; }
 };
 
-function useReducedMotion() {
-  const [r, setR] = useState(() => {
-    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
-  });
-  useEffect(() => {
-    let mq;
-    try { mq = window.matchMedia('(prefers-reduced-motion: reduce)'); } catch { return undefined; }
-    const on = () => setR(mq.matches);
-    if (mq.addEventListener) mq.addEventListener('change', on); else mq.addListener(on);
-    return () => (mq.removeEventListener ? mq.removeEventListener('change', on) : mq.removeListener(on));
-  }, []);
-  return r;
-}
+// The in-game REDUCE MOTION toggle (live), not the OS media query.
+const useReducedMotion = useReduceMotion;
 
 /** The result card — in the rarity system: tier fill, the ★ pip graphic (no "7/10 → ★3" text), the stat. */
 function ResultCard({ result, seq }) {

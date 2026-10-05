@@ -23,6 +23,8 @@
 //
 // Pure apart from the injected clock + rAF, so `node --test` drives it with a fake clock.
 
+import { reduceMotion } from '../lib/reduceMotion.js';
+
 export const COUNT_MIN_MS = 1200;
 export const COUNT_MAX_MS = 2000;
 
@@ -49,12 +51,9 @@ export function countUpDuration(from, to, { minMs = COUNT_MIN_MS, maxMs = COUNT_
   return Math.round(lo + (hi - lo) * k);
 }
 
+// The in-game REDUCE MOTION toggle — never the OS media query (src/lib/reduceMotion.js).
 export function prefersReducedMotion() {
-  try {
-    return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return false;
-  }
+  return reduceMotion();
 }
 
 const defaultNow = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -72,7 +71,7 @@ const defaultCaf = (id) => (typeof cancelAnimationFrame === 'function' ? cancelA
  * @param {number} [o.minMs] / [o.maxMs]  duration bounds (default 1.2 s / 2 s)
  * @param {number} [o.fixedMs]  a fixed duration instead of the log rule (end-screen scores)
  * @param {boolean} [o.countDown=false]  allow counting DOWN (default: a drop is instant)
- * @param {() => boolean} [o.reduced]  reduced-motion probe (default: the media query)
+ * @param {() => boolean} [o.reduced]  reduced-motion probe (default: the REDUCE MOTION toggle)
  * @param {() => number} [o.now] / [o.raf] / [o.caf]  clock + frame scheduler (tests inject fakes)
  */
 export function createCountUp({

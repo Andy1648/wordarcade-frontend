@@ -57,6 +57,7 @@ import { noteTypedLetters } from '../progress/letterXp';
 import { GemPop, GemsEarnedLine, useGemsRound } from './gems/Gems';
 import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
+import { reduceMotion } from '../lib/reduceMotion';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -476,9 +477,7 @@ function ThinkingDots() {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const reduce =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      reduceMotion();
     if (reduce) {
       setStep(2);
       return undefined;
@@ -2532,9 +2531,7 @@ export default function GameScreen({
       // under reduced motion (the turn just changes instantly) and if either card
       // can't be measured (e.g. the previous player was eliminated + removed).
       const reduce =
-        typeof window !== 'undefined' &&
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        reduceMotion();
       const fromEl = cardRefs.current.get(prev);
       const toEl = cardRefs.current.get(cur);
       if (!reduce && fromEl && toEl) {
@@ -2589,9 +2586,7 @@ export default function GameScreen({
       }, REVEAL_HOLD_MS);
     };
     const reduce =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      reduceMotion();
     if (reduce || len === 0) {
       setBotReveal({ playerId: prevPlayer.id, word, shown: len });
       finish();
@@ -2781,9 +2776,7 @@ export default function GameScreen({
       return undefined;
     }
     const reduce =
-      typeof window !== 'undefined' && window.matchMedia
-        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        : false;
+      reduceMotion();
     const won = gameOver.winnerId === myId;
     const C = JUICE.CELEBRATION;
     if (reduce) {
@@ -3070,9 +3063,7 @@ export default function GameScreen({
   // Reduced-motion gate for the game-over stamp/stagger entrance (mirrors the
   // JUICE 03 reduce branch): animations off, content shown immediately.
   const goReduce =
-    typeof window !== 'undefined' && window.matchMedia
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
+    reduceMotion();
   // Inline stamp-slam style for the outcome title, reusing JUICE 03's existing
   // global @keyframes (celeb-stamp-slam) so no CSS file changes are needed.
   const goTitleStyle = goReduce
@@ -4273,9 +4264,7 @@ export default function GameScreen({
 function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   const C = JUICE.CELEBRATION;
   const reduce =
-    typeof window !== 'undefined' && window.matchMedia
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
+    reduceMotion();
   const [stage, setStage] = useState(reduce ? 3 : 0); // 0 entrance,1 stamp,2 score,3 stats
   const [displayScore, setDisplayScore] = useState(reduce ? Number(score) || 0 : 0);
   const [popping, setPopping] = useState(false);
@@ -4630,9 +4619,7 @@ function CategoryBlitzScreen({
   const { sound } = useSound();
   // Reduced motion for the word landing below — read once, same test the Word Bomb screen uses.
   const goReduce =
-    typeof window !== 'undefined' && window.matchMedia
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false;
+    reduceMotion();
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
   // Countdown replays at the start of every NEW round (and the first one).
