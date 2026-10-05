@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <!-- a FILLED ★ dupe pip: a chunky five-point star, the top arm a touch taller and the right arm kicked out
+       (asymmetry on purpose), hard black offset shadow, one drip off the lower-left point -->
+  <path d="M19 2 L24 14.5 L37.5 15 L27 23.5 L30.5 37 L19 29.5 L7.5 37 L11 23.5 L1.5 15.5 L14.5 14.5 Z" transform="translate(2,2)" fill="#000"/>
+  <path d="M19 2 L24 14.5 L37.5 15 L27 23.5 L30.5 37 L19 29.5 L7.5 37 L11 23.5 L1.5 15.5 L14.5 14.5 Z" fill="#FFE94A" stroke="#A8800F" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M15 10 L18 6 L19 11 Z" fill="#FFF3B0"/>
+  <path d="M8 36 Q7 39.5 9 39.5 Q10.5 39 9.6 36 Z" fill="#A8800F"/>
+</svg>

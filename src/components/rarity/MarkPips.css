@@ -1,0 +1,26 @@
+/* MarkPips.css — the ★ dupe pip row (MarkPips.jsx). Tiny, inline, centred under a mark. The stars are assets;
+   only the newest lit pip pops, ONCE (transform/opacity, finite). No will-change, nothing loops. */
+.mark-pips {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--pip, 14px) * 0.14);
+  line-height: 0;
+  pointer-events: none;
+}
+.mark-pip {
+  display: block;
+  width: var(--pip, 14px);
+  height: var(--pip, 14px);
+  flex: none;
+}
+.mark-pip.is-newest { animation: mark-pip-pop 320ms cubic-bezier(.2, .9, .3, 1.5) 1 both; }
+
+@keyframes mark-pip-pop {
+  0% { transform: scale(0.2) rotate(-50deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark-pip.is-newest { animation: none; }
+}

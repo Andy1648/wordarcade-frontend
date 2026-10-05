@@ -31,6 +31,7 @@
 //
 // Pure + guarded store. No DOM, no React.
 import { queueClaim, registerClaimHandler } from './claims.js';
+import { RARITY } from '../lib/rarityStyle.js';
 
 export const MARKS_EQUIPPED_KEY = 'taw.mark';
 export const MARKS_OWNED_KEY = 'taw.marksOwned';
@@ -39,12 +40,14 @@ export const MARKS_UNLOCK_LEVEL = 10;
 // BOTH XP per letter and wins — COMMON ×1.1, RARE ×1.25, EPIC ×1.5, LEGENDARY ×3, MYTHIC ×10, SECRET ×25.
 // GOLD doubles the bonus part, RAINBOW ×5 it (markRollsCore.mainMultOf). Ranks no longer scale the MAIN.
 export const MARK_TIERS = {
-  common: { name: 'COMMON', bonus: 0.1, colour: '#2EFFE0' },
-  rare: { name: 'RARE', bonus: 0.25, colour: '#FFE94A' },
-  epic: { name: 'EPIC', bonus: 0.5, colour: '#FF4FA3' },
-  legendary: { name: 'LEGENDARY', bonus: 2, colour: '#FF6B3D' },
-  mythic: { name: 'MYTHIC', bonus: 9, colour: '#9A1AFF' },
-  secret: { name: 'SECRET', bonus: 24, colour: '#FFFFFF' },
+  // `colour` = the tier's ACCENT from the rarity identity (src/lib/rarityStyle.js, Andy oct5): COMMON grey, RARE
+  // blue, EPIC purple, LEGENDARY gold, MYTHIC red-pink, SECRET white-on-black + rainbow.
+  common: { name: 'COMMON', bonus: 0.1, colour: RARITY.common.text },
+  rare: { name: 'RARE', bonus: 0.25, colour: RARITY.rare.text },
+  epic: { name: 'EPIC', bonus: 0.5, colour: RARITY.epic.text },
+  legendary: { name: 'LEGENDARY', bonus: 2, colour: RARITY.legendary.text },
+  mythic: { name: 'MYTHIC', bonus: 9, colour: RARITY.mythic.text },
+  secret: { name: 'SECRET', bonus: 24, colour: RARITY.secret.text },
 };
 
 // `effect` is the machine-readable version of `blurb`, read by markPayoutFactors() below and by

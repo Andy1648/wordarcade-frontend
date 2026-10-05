@@ -13,6 +13,30 @@
 import Num from './Num';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import './PayoutBreakdown.css';
+import { wornMarkId, markEntry } from '../progress/markRollsCore';
+import { rarityClass } from '../lib/rarityStyle.js';
+import RarityFx from './rarity/RarityFx';
+
+// RARITY IDENTITY (Andy oct5): the receipt's MARK term wears the worn mark's tier (fill + glow; shimmer /
+// sparks on the end-screen receipt only — the mid-game compact receipt mounts per word, so it stays CSS-only).
+function wornMarkLook() {
+  try {
+    const id = wornMarkId();
+    const e = id ? markEntry(id) : null;
+    return e ? { tier: e.tier } : null;
+  } catch {
+    return null;
+  }
+}
+function MarkLabel({ label, look, fx }) {
+  if (!look) return <span className="payout-k">{label}</span>;
+  return (
+    <span className={`payout-k payout-mark rarity-chip ${rarityClass(look.tier)}`}>
+      {label}
+      {fx ? <RarityFx tier={look.tier} /> : null}
+    </span>
+  );
+}
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 // ×2 / ×1.5 / ×2.35 — the EXACT formatter, not the one-decimal `formatMult` the cards use. A
@@ -52,6 +76,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
   // REBIRTH RUSH: the base is said the way the formula is — "BASE 10 WINS × 7/5 LETTERS" (BASE 10 WINS a
   // 5-letter word, scaled by length). `perLetter` is the wins basis of one letter in XP units (÷10 = wins),
   // so ×5 ÷ 10 is the BASE for 5 letters.
+  const look = rows.some((r) => r.key === 'bonus') ? wornMarkLook() : null;
   const baseTerm = payout.letters && payout.perLetter
     ? `BASE ${formatRate(payout.perLetter / 2)} WINS × ${formatNum(payout.letters)}/5 ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
     : `BASE ${formatRate(payout.base)} WINS / WORD`;
@@ -69,7 +94,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
         <span className="payout-term payout-term--base">{baseTerm}</span>
         {rows.map((r) => (
           <span key={r.key} className={`payout-term payout-term--${r.kind}`}>
-            <span className="payout-k">{r.label}</span>
+            {r.key === 'bonus' ? <MarkLabel label={r.label} look={look} fx={!compact} /> : <span className="payout-k">{r.label}</span>}
             <span className="payout-v">{mult(r.mult)}</span>
           </span>
         ))}
@@ -114,6 +139,7 @@ export function RoundPayout({ ledger }) {
   if (!ledger || !ledger.words) return null;
   const top = ledger.rows.length ? ledger.rows[0].share : 1;
   const shown = ledger.rows.slice(0, ROUND_ROWS_SHOWN);
+  const look = shown.some((r) => r.key === 'bonus') ? wornMarkLook() : null;
   const rest = ledger.rows.slice(ROUND_ROWS_SHOWN);
   return (
     <div className="payout payout--round" aria-label="Where your wins came from">
@@ -128,7 +154,7 @@ export function RoundPayout({ ledger }) {
         <div className="payout-rows">
           {shown.map((r) => (
             <div key={r.key} className={`payout-row payout-row--${r.kind}`}>
-              <span className="payout-k">{r.label}</span>
+              {r.key === 'bonus' ? <MarkLabel label={r.label} look={look} fx /> : <span className="payout-k">{r.label}</span>}
               {/* Width is a share of the BIGGEST row, not of 100%, so the smallest contributor is
                   still a visible bar rather than a sliver that reads as zero. */}
               <span className="payout-bar" style={{ '--w': pct(top > 0 ? r.share / top : 0) }} />
