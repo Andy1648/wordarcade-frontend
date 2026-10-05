@@ -16,7 +16,7 @@
 //                   jumps in near-even chunks (⌈n/20⌉ or ⌊n/20⌋ a flash) that sum to n exactly.
 //   Then ONE fill from 0 to the real fraction over FINAL_FILL_MS (200 ms, ease-out). A landing on
 //   exactly 0 needs no fill. A SAME-LEVEL gain is a single fill to the real value on the house
-//   count-up clock (juice/countUp countUpDuration — Andy oct3 #4, unchanged).
+//   200 ms too (Andy oct5: never behind the real value).
 // Each flash sweeps the fill from where it is to FULL (linear), then the level numeral ticks up and
 // the fill restarts at 0. The plan never moves backwards; a target behind the shown state is a DROP
 // (rebirth / reset) and lands instantly.
@@ -24,7 +24,7 @@
 // createBarPlayer runs a plan on ONE rAF loop (injected clock, so node --test drives it): finite, no
 // layout reads, frames hand out numbers only (callers write transform: scaleX + text). A new target
 // mid-plan RE-PLANS from the state on screen — never a jump back. Reduced motion lands instantly.
-import { countUpDuration, easeOutCubic, prefersReducedMotion } from '../juice/countUp.js';
+import { easeOutCubic, prefersReducedMotion } from '../juice/countUp.js';
 
 export const FLASH_MS = 100;
 export const FLASH_MIN_MS = 30;
@@ -58,7 +58,7 @@ export function planBar(from, to, { sameLevelMs } = {}) {
   if (tl < fl || (tl === fl && tf < ff)) return { steps: [], totalMs: 0, drop: true };
   if (tl === fl) {
     if (tf === ff) return { steps: [], totalMs: 0, drop: false };
-    const ms = Number.isFinite(sameLevelMs) && sameLevelMs >= 0 ? sameLevelMs : countUpDuration(ff, tf);
+    const ms = Number.isFinite(sameLevelMs) && sameLevelMs >= 0 ? sameLevelMs : FINAL_FILL_MS; // Andy: never behind the real value — a same-level gain lands in 200 ms too
     return { steps: [{ kind: 'fill', level: fl, fromFrac: ff, toFrac: tf, ms }], totalMs: ms, drop: false };
   }
   const n = tl - fl;
