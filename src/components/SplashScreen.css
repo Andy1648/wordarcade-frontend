@@ -222,30 +222,6 @@
   opacity: 0.05;
 }
 
-/* ---- Mascot idle: a slow, cocky sway on a wrapper OUTSIDE the Mascot's own
-   transform layers (container=beat, bounce=breathe, img=enter), so it never
-   fights them - the bomb leans and rolls like it's confidently waiting. ---- */
-.splash-mascot-stage {
-  position: relative;
-  z-index: 2;
-  margin-top: clamp(6px, 1.4vh, 20px);
-  transform-origin: center bottom;
-  animation: splash-mascot-sway 4s ease-in-out infinite;
-}
-
-@keyframes splash-mascot-sway {
-  0%   { transform: rotate(-2.5deg) translateY(0); }
-  25%  { transform: rotate(1.5deg) translateY(-4px); }
-  50%  { transform: rotate(2.5deg) translateY(0); }
-  75%  { transform: rotate(-1.5deg) translateY(-3px); }
-  100% { transform: rotate(-2.5deg) translateY(0); }
-}
-
-/* The stage moved the top margin off the Mascot container itself. */
-.splash-mascot-stage .splash-hero-mascot {
-  margin-top: 0;
-}
-
 /* ---- Fuse sparks: small flat motes crackling off the bomb's lit fuse tip
    (top-right of the PNG). Pure EFFECT particles - flat fills, no blur/glow. ---- */
 .splash-fuse {
@@ -328,7 +304,6 @@
 }
 
 .splash-screen.leaving .splash-logo,
-.splash-screen.leaving .splash-mascot-stage,
 .splash-screen.leaving .splash-taglines,
 .splash-screen.leaving .splash-start,
 .splash-screen.leaving .splash-embers {
@@ -369,8 +344,7 @@
   .splash-logo,
   .splash-logo::before,
   .splash-logo::after,
-  .splash-start,
-  .splash-mascot-stage {
+  .splash-start {
     animation: none !important;
   }
   .splash-logo::before,

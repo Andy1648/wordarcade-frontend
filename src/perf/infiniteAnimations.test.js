@@ -8,7 +8,8 @@
 // raise it to land a new one.
 //
 // History: feat/feel-ladder converted ComboMeter's two loops (combo-shake, combo-spark) to finite
-// 3-iteration tier-entry bursts — 53 -> 51.
+// 3-iteration tier-entry bursts — 53 -> 51. feat/gems (payload pass) deleted the dead .splash-mascot-stage
+// sway (no element rendered it) — 51 -> 50.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -18,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..');
 const norm = (p) => p.split('\\').join('/');
 
-export const INFINITE_BUDGET = 51;
+export const INFINITE_BUDGET = 50;
 
 function files(dir, pred) {
   const out = [];

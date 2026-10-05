@@ -14,7 +14,7 @@
 // on the next boot (from ITS wins), and a blob with it keeps its stamp.
 import { xpPerWord, getRebirths, storedLevel } from './xp.js';
 import { getWins, gameKey, WORD_LEN_REF } from './wins.js';
-import { gemsMigrated, stampGemsMigrated, grantGems, ROLL_PRICE_GEMS } from './gems.js';
+import { gemsMigrated, stampGemsMigrated, grantGems, ROLL_PRICE_GEMS } from './gemsCore.js';
 import { peakLevel } from './peakLevel.js';
 
 export const LEGACY_ROLL_WORDS = 72; // the last wins price of a roll, in words at your rate (Andy oct5)

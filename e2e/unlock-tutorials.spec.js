@@ -1,7 +1,8 @@
 // e2e/unlock-tutorials.spec.js — SPOTLIGHT TUTORIALS (Andy oct5): "screen dims, the one target glows, tap
 // anywhere to continue. No OK-button popups. Keep only the few that matter (roll, gems, rebirth, KEY TIER); cut
 // minor ones like the wall moving." Written WITHOUT being run (authoring-machine rules); Andy / CI runs it.
-// Menu: REBIRTH (the only menu one on main without gems). SHOP: KEY TIER. MARKS: the ROLL one (mark-rolls.spec).
+// Menu: REBIRTH, GEMS (the gem count, once MARKS is there). SHOP: KEY TIER. MARKS: the ROLL one (mark-rolls.spec).
+// Every other spec gets the GEMS / KEY TIER flags pre-set by installBackendMock (opts.newTutorials turns that off).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -96,6 +97,27 @@ test('KEY TIER: the first affordable KEY tier lights the KEY item in the SHOP, o
   await expect(tut).toHaveCount(0);
   await expect(page.locator('.shop-overlay')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('taw.tut.keyTier'))).toBe('1');
+});
+
+test('GEMS: once MARKS is there, the gem count is lit once — tap anywhere, never again', async ({ page }) => {
+  test.setTimeout(45000);
+  await boot(page, { 'taw.xp': { lv: 12, into: 0 }, 'taw.marksRevealed': '1', 'taw.tut.rebirth': '1' }, { width: 1280, height: 720 }, { newTutorials: true });
+  const tut = page.locator('.ut-overlay[data-tut="gems"]');
+  await expect(tut).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('.ut-line')).toContainText('GEMS');
+  await expect(tut.locator('button')).toHaveCount(0);
+  // the ring sits on the visible gem count
+  const ring = await page.locator('.ut-ring').boundingBox();
+  const chip = await page.locator('.menu-gems-chip:visible, .hp-m-stats-gems:visible').first().boundingBox();
+  expect(ring && chip, 'ring + gem count').toBeTruthy();
+  expect(Math.abs((ring.x + ring.width / 2) - (chip.x + chip.width / 2))).toBeLessThan(4);
+  await page.mouse.click(8, 720 - 8);
+  await expect(tut).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('taw.tut.gems'))).toBe('1');
+  await page.reload();
+  await menuReady(page);
+  await page.waitForTimeout(4000);
+  await expect(page.locator('.ut-overlay')).toHaveCount(0);
 });
 
 test('an existing LV300 player is not walked through anything', async ({ page }) => {

@@ -20,7 +20,7 @@ import RarityFx from './rarity/RarityFx';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult, needAt } from '../progress/xp';
-import { GemIcon } from './gems/Gems';
+import { GemIcon } from './gems/GemChip';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
 
@@ -300,7 +300,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
     <div
-      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}`}
+      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}${variant !== 'mini' && gems != null ? ' has-gems' : ''}`}
       aria-hidden={variant === 'mini' ? 'true' : undefined}
     >
       {/* R10: a live BOOST code's gold pill rides the wins chip (it multiplies what the chip counts). */}
@@ -325,19 +325,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       )}
       {/* GEMS (Andy oct5): the roll currency, its own icon + count, in THIS cluster beside the wins chip (never a
           fixed element of its own). A tap opens MARKS — where gems are spent. */}
-      {variant !== 'mini' && gems != null && (
-        onMarkClick ? (
-          <button type="button" className="menu-gems-chip" data-gems={gems} onClick={onMarkClick} aria-label={`${formatNum(gems)} gems. Open marks`}>
+      {variant !== 'mini' && gems != null && (() => {
+        const Tag = onMarkClick ? 'button' : 'span'; // a button only when there is somewhere to go
+        return (
+          <Tag type={onMarkClick ? 'button' : undefined} className="menu-gems-chip" data-gems={gems} onClick={onMarkClick || undefined} aria-label={`${formatNum(gems)} gems${onMarkClick ? '. Open marks' : ''}`}>
             <GemIcon size={16} />
             {formatNum(gems)}
-          </button>
-        ) : (
-          <span className="menu-gems-chip" data-gems={gems} aria-label={`${formatNum(gems)} gems`}>
-            <GemIcon size={16} />
-            {formatNum(gems)}
-          </span>
-        )
-      )}
+          </Tag>
+        );
+      })()}
       {/* DAILY STREAK — a real treatment from 2 days (Job 10), not a bare chip: a flame
           banner carrying the day count (a count only — no multiplier in Rebirth Rush) and any earned
           FREEZE tokens (❄) shown BEFORE they're needed. The milestone tier (2/3/7/14/30)
