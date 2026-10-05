@@ -1,12 +1,13 @@
-// markRollShop.test.js — paying for a MARK ROLL: the free starter, the 72-word price charged through the one
-// wins channel, a short balance refused, and the equip decision (any higher MAIN) applied only when the reveal lands.
+// markRollShop.test.js — paying for a MARK ROLL: the free starter, the 10-GEMS price (GEMS, Andy oct5: wins never
+// buy rolls), a short balance refused, and the equip decision (any higher MAIN) applied only when the reveal lands.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buyMarkRoll, autoRoll, AUTO_ROLL_TIERS, nextRollCost, applyRollEquip } from './markRollShop.js';
 import * as SHOP from './markRollShop.js';
-import { ROLL_STATE_KEY, rollPriceNow, loadRollState, refWordWins, INDEX_NEW_WORDS, INDEX_COMPLETE_WORDS, ROLL_MARKS } from './markRolls.js';
+import { ROLL_STATE_KEY, loadRollState, refWordWins, INDEX_NEW_WORDS, INDEX_COMPLETE_WORDS, ROLL_MARKS } from './markRolls.js';
 import { perWordRateNow } from './wins.js';
 import { MARKS_EQUIPPED_KEY } from './marks.js';
+import { GEMS_KEY, ROLL_PRICE_GEMS, getGems } from './gems.js';
 
 function withStorage(seed, fn) {
   const map = new Map(Object.entries(seed || {}));
@@ -24,9 +25,11 @@ function withStorage(seed, fn) {
   }
 }
 const at = (u) => { let i = 0; return () => (i++ % 2 ? 0.5 : u); }; // a fixed pick draw; every 2nd draw (the SHINY draw) is never shiny
+const gems = (n) => JSON.stringify({ v: 1, bal: n, peak: 1, streak: 0, mig: 1 });
+const price = ROLL_PRICE_GEMS;
 
-test('the first roll is the FREE starter; the next costs 72 words at your rate', () => {
-  withStorage({ 'taw.wins': '0' }, (m) => {
+test('the first roll is the FREE starter; the next costs 10 GEMS, and wins never pay for it', () => {
+  withStorage({ 'taw.wins': '999999999' }, (m) => {
     assert.equal(nextRollCost(1, null).free, true);
     const r = buyMarkRoll({ level: 1, rng: at(0) });
     assert.ok(r, 'a free roll needs no balance');
@@ -35,20 +38,22 @@ test('the first roll is the FREE starter; the next costs 72 words at your rate',
     assert.equal(loadRollState().starter, true);
     const c = nextRollCost(1);
     assert.equal(c.free, false);
-    assert.equal(c.words, 72);
-    assert.equal(c.wins, rollPriceNow(1));
-    assert.equal(buyMarkRoll({ level: 1, rng: at(0) }), null, 'a short balance is refused, nothing rolls');
+    assert.equal(c.gems, 10);
+    assert.equal(c.wins, undefined, 'no wins price');
+    const winsBefore = Number(m.get('taw.wins'));
+    assert.equal(buyMarkRoll({ level: 1, rng: at(0) }), null, 'no gems → refused, nothing rolls (a huge wins balance never buys one)');
+    assert.equal(Number(m.get('taw.wins')), winsBefore, 'wins untouched');
     assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 1);
   });
 });
 
-test('a paid roll charges exactly the price through the balance', () => {
-  withStorage({ 'taw.wins': '1000000', [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: true, marks: {} }) }, (m) => {
-    const price = rollPriceNow(1);
+test('a paid roll charges exactly 10 GEMS; the wins balance only ever GAINS (the INDEX reward)', () => {
+  withStorage({ 'taw.wins': '1000000', [GEMS_KEY]: gems(25), [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: true, marks: {} }) }, (m) => {
     const r = buyMarkRoll({ level: 1, rng: at(0) });
     assert.equal(r.free, false);
     assert.equal(r.spent, price);
-    assert.equal(Number(m.get('taw.wins')), 1000000 - price + (r.lump || 0));
+    assert.equal(getGems(), 15);
+    assert.equal(Number(m.get('taw.wins')), 1000000 + (r.lump || 0));
   });
 });
 
@@ -73,40 +78,36 @@ test('the landing re-checks: a MAIN the player equipped meanwhile is never repla
   });
 });
 
-test('the price is 72 words at the live per-word rate (perWordRateNow), timed boosts excluded', () => {
+test('the INDEX reward rate is the live per-word rate (perWordRateNow), timed boosts excluded', () => {
   withStorage({}, () => {
     const rate = refWordWins();
     assert.ok(rate > 0);
     assert.ok(Math.abs(rate - perWordRateNow({ mode: 'wordBomb' }).rate) < 1e-9, 'no BOOST, no mark → the live rate');
-    assert.equal(rollPriceNow(1), Math.round(72 * rate));
   });
 });
 
-test('the worn MARK never changes the price (no taking a MYTHIC off to roll cheap)', () => {
-  const st = JSON.stringify({ v: 1, starter: true, marks: { 'mk-eclipse': { n: 1 } } }); // LEGENDARY +200% WINS
-  const bare = withStorage({ [ROLL_STATE_KEY]: st }, () => rollPriceNow(1));
+test('the price is a flat 10 GEMS whatever is worn, whatever the level', () => {
+  const st = JSON.stringify({ v: 1, starter: true, marks: { 'mk-eclipse': { n: 1 } } });
   withStorage({ [ROLL_STATE_KEY]: st, [MARKS_EQUIPPED_KEY]: 'mk-eclipse' }, () => {
-    const f = perWordRateNow({ mode: 'wordBomb' }).factors;
-    assert.ok(f.bonus > 3, 'the worn LEGENDARY is in the live rate');
-    assert.equal(rollPriceNow(1), bare, 'but not in the roll price');
+    assert.equal(nextRollCost(1).gems, 10);
+    assert.equal(nextRollCost(1e9).gems, 10);
   });
 });
 
 test('DOUBLE ROLLS (SINGULARITY worn): one price, two results; the rarer is shown', () => {
   const st = { v: 1, starter: true, marks: { 'mk-singularity': { n: 1 } } };
-  withStorage({ 'taw.wins': '1000000000', [ROLL_STATE_KEY]: JSON.stringify(st), [MARKS_EQUIPPED_KEY]: 'mk-singularity' }, (m) => {
-    const price = rollPriceNow(1);
+  withStorage({ [GEMS_KEY]: gems(1000), [ROLL_STATE_KEY]: JSON.stringify(st), [MARKS_EQUIPPED_KEY]: 'mk-singularity' }, (m) => {
     const r = buyMarkRoll({ level: 1, rng: at(0) });
     assert.equal(r.extra.length, 1, 'a second result rides along');
     assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 2, 'both rolls are saved');
     assert.equal(r.spent, price, 'one price');
+    assert.equal(getGems(), 1000 - price);
   });
-  withStorage({ 'taw.wins': '1000000000', [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: true, marks: {} }) }, () => {
+  withStorage({ [GEMS_KEY]: gems(1000), [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: true, marks: {} }) }, () => {
     const r = buyMarkRoll({ level: 1, rng: at(0) });
     assert.equal(r.extra.length, 0, 'no perk → one result');
   });
 });
-
 
 // ---------------------------------------------------------------------------------------- MARKS v2
 test('no ×10: the batch API is gone; AUTO ROLL stops on RARE / EPIC / LEGENDARY / MYTHIC / SECRET', () => {
@@ -116,7 +117,7 @@ test('no ×10: the batch API is gone; AUTO ROLL stops on RARE / EPIC / LEGENDARY
 
 test('AUTO ROLL until EPIC: one at a time, stops on the hit (the first-EPIC guarantee lands it by roll 10)', () => {
   const st = { v: 2, starter: true, marks: { 'mk-bomber': { n: 1 } } };
-  withStorage({ 'taw.wins': '1000000000', [ROLL_STATE_KEY]: JSON.stringify(st) }, (m) => {
+  withStorage({ [GEMS_KEY]: gems(1000), [ROLL_STATE_KEY]: JSON.stringify(st) }, (m) => {
     const seen = [];
     const list = autoRoll({ until: 'epic', level: 1, rng: at(0), onEach: (r, i) => seen.push(i) });
     assert.equal(list.length, 10);
@@ -125,19 +126,20 @@ test('AUTO ROLL until EPIC: one at a time, stops on the hit (the first-EPIC guar
     assert.equal(list[9].tier, 'epic');
     assert.equal(list[9].pityHit, 'epic');
     assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 10);
+    assert.equal(getGems(), 1000 - 10 * price);
   });
 });
 
-test('AUTO ROLL stops when the wins run out (or the budget is spent); nothing rolls when short', () => {
+test('AUTO ROLL stops when the GEMS run out (or the budget is spent); nothing rolls when short; wins never pay', () => {
   const st = JSON.stringify({ v: 2, starter: true, everEpic: true, marks: { 'mk-bomber': { n: 1 } } });
-  withStorage({ [ROLL_STATE_KEY]: st }, (m) => {
-    const price = rollPriceNow(1);
-    m.set('taw.wins', String(price * 3 + 5));
+  withStorage({ [ROLL_STATE_KEY]: st, 'taw.wins': '999999999' }, (m) => {
+    m.set(GEMS_KEY, gems(price * 3 + 5));
     const list = autoRoll({ until: 'secret', level: 1, rng: at(0) }); // BOMBER dupes: no reward, no pip yet
     assert.equal(list.length, 3);
-    assert.equal(Number(m.get('taw.wins')), 5);
+    assert.equal(getGems(), 5);
+    assert.equal(Number(m.get('taw.wins')), 999999999, 'the wins are never spent on a roll');
     assert.deepEqual(autoRoll({ until: 'secret', level: 1, rng: at(0) }), [], 'short → []');
-    m.set('taw.wins', String(price * 10));
+    m.set(GEMS_KEY, gems(price * 10));
     assert.equal(autoRoll({ until: 'secret', level: 1, rng: at(0), budget: price * 2 }).length, 2, 'budget');
     assert.equal(autoRoll({ until: 'secret', level: 1, rng: at(0), max: 1 }).length, 1, 'max');
   });
@@ -150,7 +152,7 @@ test('INDEX rewards: a NEW mark pays its words at your rate through the one gran
     assert.equal(r.newMark, true);
     assert.equal(r.lump, Math.round(INDEX_NEW_WORDS.common * rate));
     assert.equal(Number(m.get('taw.wins')), r.lump);
-    m.set('taw.wins', String(rollPriceNow(1)));
+    m.set(GEMS_KEY, gems(price));
     const d = buyMarkRoll({ level: 1, rng: at(0) });
     assert.equal(d.newMark, false);
     assert.equal(d.lump, 0);

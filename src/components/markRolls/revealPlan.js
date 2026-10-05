@@ -137,7 +137,7 @@ export function minHeldIntervalMs() {
   return revealMs('common') + HOLD_GAP_MS;
 }
 
-/** The short-balance line: "NEED 1,234 MORE WINS". */
-export function needMoreText(price, wins, fmt = (n) => String(n)) {
-  return `NEED ${fmt(Math.max(1, Math.ceil(price - wins)))} MORE WINS`;
+/** The short-balance line: "NEED 4 MORE GEMS" (GEMS buy rolls — Andy oct5). */
+export function needMoreText(price, have, fmt = (n) => String(n)) {
+  return `NEED ${fmt(Math.max(1, Math.ceil(price - have)))} MORE GEMS`;
 }

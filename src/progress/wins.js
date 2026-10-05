@@ -29,6 +29,7 @@ import { setRateBoost, setRebirthKeyKeep } from './xp.js';
 import { addLetters } from './letters.js';
 import { rebirthKeyKeep } from './markPerks.js';
 import { creditAcceptedWordLetters } from './letterXp.js';
+import { dropGemsForWord } from './gems.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn MARK (markMult — the same number the payout reads).
@@ -642,7 +643,10 @@ export function awardWordXp(opts = {}) {
   // The accepted word's letters top up from the typed ×0.2 to the full rate (the anti-gibberish rule). The
   // MID-GAME LEVEL-UP chip fires from letterXp.js when this (or typed letters) crosses a level.
   creditAcceptedWordLetters(opts.wordLength, mode);
-  return { state, level: state.level, leveledUp: false, gain, mastery, mark };
+  // GEMS: this is the one door every mode's accepted word passes, so the word DROP rolls here (game words only —
+  // menu typing never drops). `gems` is what dropped (0 most words); the GemPop on the word hears the grant.
+  const gems = dropGemsForWord({ mode });
+  return { state, level: state.level, leveledUp: false, gain, mastery, mark, gems };
 }
 
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round

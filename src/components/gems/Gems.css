@@ -1,0 +1,115 @@
+/* Gems.css — GEMS on screen. Flat colours only; the gem itself is the SVG asset (/art/gems/gem.svg).
+   Motion: GemPop's one finite WAAPI one-shot (Gems.jsx). Nothing here animates; nothing loops. */
+
+.gem-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gem-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: #2effe0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ---- the end-of-game line: its own row, never hidden ---- */
+.gems-earned {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px auto 0;
+  padding: 6px 12px;
+  width: fit-content;
+  max-width: 100%;
+  background: #1a0b2e;
+  border: 3px solid #0e8f80; /* darker shade of the gem cyan */
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: #2effe0;
+  font-size: var(--fs-body);
+  line-height: 1;
+}
+.gems-earned-label {
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+}
+/* SAT RUSH's printed page: the line rides .sr-winsline (ink on paper); the gem just sits in the text */
+.gems-earned-print .gem-icon {
+  vertical-align: -3px;
+}
+
+/* ---- the GEM POP on the word: one pooled node, absolute inside an existing positioned slot ---- */
+.gem-pop {
+  position: absolute;
+  top: -6px;
+  right: 6%;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #2effe0;
+  -webkit-text-stroke: 1px #000;
+}
+.gem-pop-num:empty {
+  display: none;
+}
+
+/* ---- the menu chip: rides the wins chip's row in the bar cluster (never its own fixed spot). Same data-strip
+   type as the wins chip (Space Mono, --fs-body, no added height); the 44px tap band is a ::after, like the wins chip. */
+.menu-gems-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1;
+  color: #2effe0;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.menu-gems-chip .gem-icon {
+  width: 1.05em;
+  height: 1.05em;
+}
+.menu-gems-chip::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.menu-gems-chip:focus-visible {
+  outline: 3px solid #2effe0;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- the roll screen: the gem in the ×10 price ---- */
+.mr-roll-gem {
+  margin: 0 2px;
+}

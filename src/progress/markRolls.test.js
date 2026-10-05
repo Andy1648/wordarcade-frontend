@@ -6,10 +6,10 @@ import {
   ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ACHIEVEMENT_PLAN, KEPT_ACHIEVEMENTS, TIER_ODDS, TIER_MAIN,
   PITY, DUPES_PER_PIP, MAX_PIPS, PIP_STEP, ROLL_STATE_KEY, INDEX_BONUS_PER_PCT,
   freshState, normalize, rollTable, roll, oneInX, yourOneInX, markLevel, indexMult, markMult,
-  mainMultOf, mainTag, perkTag, luck, pityLeft, collection, migrate, rollPriceWords, rollPrice,
+  mainMultOf, mainTag, perkTag, luck, pityLeft, collection, migrate,
   shouldAutoEquip, rollAndSave, ensureRollState, equipRolled, loadRollState, statOf, pipProgress, INDEX_PIP_WORDS,
   markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec, STAT_KINDS,
-  ROLL_BASE_WORDS, equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny,
+  equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny,
 } from './markRolls.js';
 const DUPES_PER_GOLD = 10; // the v1 finish, for the migration tests
 const GOLDS_PER_RAINBOW = 10;
@@ -194,7 +194,6 @@ test('no caps: absurd counts stay finite', () => {
   const t = rollTable(a);
   assert.ok(Math.abs(sumProbs(t) - 1) < 1e-9);
   assert.equal(roll(() => 0.5, a).state.rolls, 1e12 + 1);
-  assert.ok(Number.isFinite(rollPrice({ level: 1e9, rate: 1e290 })));
 });
 
 test('determinism: the same seed gives the same 500 rolls; the roll is pure', () => {
@@ -228,13 +227,9 @@ test('distribution: 60k seeded rolls land on the published tier odds (pity off)'
   assert.ok(Math.abs(counts.legendary / N - 0.001) < 0.0006);
 });
 
-test('price: 72 words at your live rate, never 0', () => {
-  assert.equal(ROLL_BASE_WORDS, 72);
-  assert.equal(rollPriceWords(1), 72);
-  assert.equal(rollPriceWords(1000), 72, 'no level scaling — the rate already grows');
-  assert.equal(rollPrice({ level: 1, rate: 10 }), 720);
-  assert.equal(rollPrice({ level: 1, rate: 12.5 }), 900);
-  assert.equal(rollPrice({ level: 1, rate: 0 }), 1);
+test('GEMS: the wins price is gone from the roll engine (a roll costs gems — markRollShop)', async () => {
+  const M = await import('./markRolls.js');
+  for (const k of ['ROLL_BASE_WORDS', 'rollPriceWords', 'rollPrice', 'rollPriceNow']) assert.equal(M[k], undefined, k);
 });
 
 test('tags: ONE short tag — the stat line, MAIN ×N for a PERMANENT, or the perk line for LEGENDARY+', () => {

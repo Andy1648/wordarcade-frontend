@@ -14,6 +14,7 @@ import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import NearMiss from '../components/NearMiss.jsx';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
+import { GemsEarnedLine } from '../components/gems/Gems';
 
 const C = JUICE.CELEBRATION;
 
@@ -29,7 +30,7 @@ function frameOf(e) {
   return { glyph, kind, label: parts.join(', ') };
 }
 
-export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onExit, offerMenu = false }) {
+export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onExit, offerMenu = false, gemsSince = 0 }) {
   // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
   // the page leads with what every other mode's run-over card leads with — how many you got (here:
   // CAPTURED) and the WINS it paid — and the mode's own numbers (score, avg ante, streak, mastered)
@@ -135,6 +136,8 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             <b>+{formatNum(l.amount)}</b> {l.label}
           </div>
         ))}
+        {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
+        <GemsEarnedLine since={gemsSince} print className="sr-winsline" />
 
         {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
             at 1280x551 / 1366x625 they were below the fold under the study panels). */}

@@ -67,8 +67,8 @@ test('hold-to-roll stops on EPIC+, a NEW mark, GOLD/RAINBOW, or a short balance 
   p.start(0, 'common');
   assert.equal(p.holdStep(5000, true, { ...plain, newMark: true }), 'stop');
   assert.equal(p.holdStep(5000, false, plain), 'stop', 'letting go stops');
-  assert.equal(needMoreText(300, 120.4, (n) => String(n)), 'NEED 180 MORE WINS');
-  assert.equal(needMoreText(300, 299.5), 'NEED 1 MORE WINS');
+  assert.equal(needMoreText(300, 120.4, (n) => String(n)), 'NEED 180 MORE GEMS');
+  assert.equal(needMoreText(300, 299.5), 'NEED 1 MORE GEMS');
 });
 
 /** The animation-budget rules every step list must keep (finite, transform/opacity only, inside `D`). */

@@ -72,10 +72,8 @@ export const LUCK_SOURCES = {
 export const BONUS_ROLL_EVERY = 10; // every 10th roll ×2 luck ("×2 LUCK READY")
 export const BONUS_ROLL_MULT = 2;
 export const ROLL_UNLOCK_LEVEL = 10; // with MARKS (marks.js MARKS_UNLOCK_LEVEL), or any rebirth
-// PRICE (Andy): "cost 60 words of wins at your rate", raised to 72 (Andy oct5, +20%) — 72 × the live per-word rate of the reference word
-// (wins.js perWordRateNow, Word Bomb), WITHOUT the timed multipliers (BOOST / OVERDRIVE / FRENZY): a roll
-// never costs ten times more because OVERDRIVE happens to be running — and WITHOUT the MARK (see refWordWins).
-export const ROLL_BASE_WORDS = 72; // Andy oct5: 60 → 72 (+20%, within the frozen ±20%)
+// PRICE (Andy oct5, GEMS): a roll costs gems.ROLL_PRICE_GEMS (10 GEMS). Wins never buy rolls. (The old wins price —
+// words at your rate — is gone from the roll path; gemsMigrate.js keeps it only to size the starting grant.)
 
 function milestonesReached(state) {
   const c = collection(state);
@@ -246,21 +244,10 @@ export function roll(rng, state, ctx = {}) {
   };
 }
 
-// ----------------------------------------------------------------------------------- price
-/** Words one roll costs (flat 60 — Andy). `level` is accepted for old callers and ignored. */
-// eslint-disable-next-line no-unused-vars
-export function rollPriceWords(level = 1) {
-  return ROLL_BASE_WORDS;
-}
-/** Wins price of one roll: 72 × the reference word's wins (`rate`). Never below 1. */
-export function rollPrice({ level = 1, rate = 0 } = {}) {
-  const r = Number.isFinite(rate) && rate > 0 ? rate : 0;
-  return Math.max(1, Math.round(rollPriceWords(level) * r));
-}
+// ----------------------------------------------------------------------------------- INDEX reward rate
 /**
  * The reference word's wins at the player's live rate (Word Bomb, 5 letters) WITHOUT the timed boosts AND WITHOUT
- * the MARK (perWordFactors `bonus`: worn MAIN × INDEX). The mark is out of the price on purpose: with it in,
- * taking a MYTHIC off before rolling made a roll up to ~121× cheaper. What's worn never changes the price.
+ * the MARK (perWordFactors `bonus`: worn MAIN × INDEX) — what the INDEX rewards (words at your rate) pay per word.
  * It is the same xpPerWord the live rate runs on, with the bonus stack at ×1 — exact, not a rounded rate ÷ mark.
  */
 export function refWordWins() {
@@ -270,9 +257,6 @@ export function refWordWins() {
   } catch {
     return 0;
   }
-}
-export function rollPriceNow(level = 1) {
-  return rollPrice({ level, rate: refWordWins() });
 }
 /** An INDEX milestone's wins lump. v2: milestones pay LUCK only (the wins moved to indexRewardWins) → 0. Kept for
  *  old callers. */
@@ -366,8 +350,8 @@ export function permanentOwnedCount() {
   return permanentOwnedIds().length;
 }
 /**
- * Roll once and persist. Does NOT spend wins — the caller charges rollPrice() first (the shop owns
- * the balance). A legacy mark rolled for the first time also joins marks.js's owned set so it is
+ * Roll once and persist. Does NOT spend — the caller charges ROLL_PRICE_GEMS first (markRollShop owns
+ * the gems). A legacy mark rolled for the first time also joins marks.js's owned set so it is
  * wearable through marks.js as before. Returns the result (plus the new state).
  */
 export function rollAndSave(rng, ctx = {}) {

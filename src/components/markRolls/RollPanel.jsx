@@ -16,9 +16,10 @@ import {
   createPacer, revealMs, isHeavy, holdStopReason, needMoreText, multiPlan, multiPrice, revealVersion, MULTI_COUNT,
 } from './revealPlan.js';
 import { MARK_TIERS } from '../../progress/marks';
-import { markEntry, mainTag, perkTag, luck, pityLeft, isBonusRoll, permanentOwnedCount, BONUS_ROLL_MULT, rollPriceNow } from '../../progress/markRolls';
+import { markEntry, mainTag, perkTag, luck, pityLeft, isBonusRoll, permanentOwnedCount, BONUS_ROLL_MULT } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
-import { getWins, subscribeBalance } from '../../progress/wins';
+import { getGems, subscribeGems, ROLL_PRICE_GEMS } from '../../progress/gems';
+import { GemIcon, GemCount } from '../gems/Gems';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndLucky, sndAchievement, sndWordRejected } from '../../audio/gameSounds';
 import { formatNum } from '../../format';
@@ -72,7 +73,7 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
   const [version] = useState(() => revealVersion());
   const [seq, setSeq] = useState(0);
   const [skipSeq, setSkipSeq] = useState(0);
-  const [wins, setWins] = useState(() => getWins());
+  const [gems, setGems] = useState(() => getGems()); // GEMS buy rolls (Andy oct5) — wins never do
   const [msg, setMsg] = useState('');
   const pacer = useRef(null);
   if (!pacer.current) pacer.current = createPacer();
@@ -85,7 +86,7 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
   const pending = useRef(null);
   const commitTimer = useRef(null);
 
-  useEffect(() => subscribeBalance(setWins), []);
+  useEffect(() => subscribeGems(setGems), []);
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
     // closing MARKS mid-reveal still lands the result (the roll is already paid + saved)
@@ -93,10 +94,10 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
   }, []);
 
   const cost = nextRollCost(level, view);
-  const canAfford = cost.free || wins >= cost.wins;
-  // x10: exactly ten single (paid) rolls; disabled when the balance can't pay all ten or the free starter waits
-  const price10 = multiPrice(cost.free ? rollPriceNow(level) : cost.wins);
-  const canAfford10 = !cost.free && wins >= price10;
+  const canAfford = cost.free || gems >= cost.gems;
+  // x10: exactly ten single (paid) rolls; disabled when the gems can't pay all ten or the free starter waits
+  const price10 = multiPrice(ROLL_PRICE_GEMS);
+  const canAfford10 = !cost.free && gems >= price10;
   const pity = pityLeft(view);
   const bonus = isBonusRoll(view);
   const L = luck(view, { permanentOwned: permanentOwnedCount(), boost: isBoostActive() });
@@ -104,7 +105,7 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
   // SHORT BALANCE: say how much more, and buzz — never a silent grey button
   const short = () => {
     const c = nextRollCost(level);
-    setMsg(needMoreText(c.wins, getWins(), formatNum));
+    setMsg(needMoreText(c.gems, getGems(), formatNum));
     sndWordRejected();
     const el = btn.current;
     if (el && typeof el.animate === 'function' && !reduced) {
@@ -199,12 +200,12 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
     timer.current = setTimeout(() => {
       timer.current = null;
       const c = nextRollCost(level);
-      const ok = c.free || getWins() >= c.wins;
+      const ok = c.free || getGems() >= c.gems;
       const step = pacer.current.holdStep(now(), held.current, lastResult.current, { canAfford: ok });
       if (step === 'roll') latest.current.doRoll();
       else if (step === 'wait') scheduleHold();
       else {
-        // a hold that ran out of wins stops WITH the message (not just a quiet stop)
+        // a hold that ran out of gems stops WITH the message (not just a quiet stop)
         if (held.current && holdStopReason(lastResult.current, { canAfford: ok }) === 'broke') short();
         held.current = false;
       }
@@ -253,7 +254,7 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
   }, [coverHost]);
 
   const stopHold = () => { held.current = false; };
-  const label = cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.wins)} WINS`;
+  const label = cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.gems)} GEMS`;
 
   return (
     <section className="mr-panel" aria-label="Roll for a mark">
@@ -296,15 +297,17 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
         className="mr-roll10"
         data-testid="mark-roll-10"
         disabled={!canAfford10}
-        aria-label={`×${MULTI_COUNT} · ${formatNum(price10)} WINS`}
+        aria-label={`×${MULTI_COUNT} · ${formatNum(price10)} GEMS`}
         onClick={press10}
       >
         <span className="mr-roll10-x">×{MULTI_COUNT}</span>
-        <span className="mr-roll10-price">{formatNum(price10)}</span>
+        <span className="mr-roll10-price"><GemIcon size={14} className="mr-roll-gem" />{formatNum(price10)}</span>
       </button>
       </div>
       <div className="mr-msg" role="status" aria-live="polite">{msg}</div>
       <div className="mr-meta">
+        {/* GEMS: the balance the price is paid from, its own icon + count (below the button — nothing above it moves) */}
+        <GemCount value={gems} size={16} className="mr-gems-bal" />
         <span className="mr-pity">EPIC+ IN ≤{pity.epic}</span>
         <span className="mr-luck">{luckText(L)}</span>
         {bonus && <span className="mr-bonus">×{BONUS_ROLL_MULT} LUCK READY</span>}

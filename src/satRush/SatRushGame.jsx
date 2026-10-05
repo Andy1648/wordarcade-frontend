@@ -50,6 +50,7 @@ import ModeSelect from './ModeSelect';
 import DevTuner from './DevTuner';
 import SatKeyInput from './SatKeyInput';
 import { LevelUpChip } from '../components/FeelLadder';
+import { GemPop, useGemsRunMark } from '../components/gems/Gems';
 
 export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false }) {
   const game = useSatRushGame();
@@ -107,6 +108,8 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
   useEffect(() => subscribeWins((e) => {
     if (e && e.kind === 'bonus' && e.amount > 0) setWinsBonusLines((prev) => [...prev, e]);
   }), []);
+  // GEMS: this run's ledger mark (taken as each run starts playing) — the results page's "+N gems" line
+  const gemsSince = useGemsRunMark(view.phase === 'playing');
   const satPrevPhaseRef = useRef(view.phase);
   useEffect(() => {
     if (view.phase === 'playing' && satPrevPhaseRef.current !== 'playing') setWinsBonusLines([]);
@@ -254,6 +257,8 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
               {/* The ante row + word panel are now ONE bounty poster (WordCard);
                   the multiplier lives in its REWARD footer. */}
               <WordCard view={view} />
+              {/* GEMS: the drop pop on the poster — one pooled node inside this positioned body */}
+              <GemPop />
               {/* The typing affordance. A phone has no physical keyboard, so without this the
                   board renders perfectly and cannot be played at all — see SatKeyInput. */}
               <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />
@@ -272,6 +277,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
           results={view.results}
           winsEarned={winsEarned}
           winsBonusLines={winsBonusLines}
+          gemsSince={gemsSince}
           onAgain={game.startGame}
           onExit={onExit}
           offerMenu={offerMenu}

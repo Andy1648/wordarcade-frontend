@@ -71,12 +71,16 @@ export const PROGRESS_KEYS = [
   'taw.winsCarry',
   'taw.overdrive',
   'taw.rrnotice',
+  // GEMS: the roll currency (balance, the LEVEL_UP high-water mark, the win streak, the starting-grant stamp)
+  'taw.gems',
 ];
 // PV10 must-fix 4: migration keys that must NOT survive from THIS browser when a restored blob lacks them.
 // Without the blob's own econ stamp the v10 migration has to re-run on the restored (older) save after the
 // reload; a local shadow or grandfathered gate belongs to the save being replaced.
 // A pending REBIRTH RUSH notice is the replaced save's moment too (the conversion re-queues its own if it re-runs).
-export const REMOVE_IF_ABSENT = ['taw.econ', 'taw.xpv10', 'taw.rbgate', 'taw.rrnotice'];
+// GEMS: a restored blob without taw.gems gets its OWN starting grant on the next boot (from its wins), never this
+// browser's balance.
+export const REMOVE_IF_ABSENT = ['taw.econ', 'taw.xpv10', 'taw.rbgate', 'taw.rrnotice', 'taw.gems'];
 
 const FORMAT = 'taw-save';
 

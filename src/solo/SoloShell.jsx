@@ -26,6 +26,7 @@ import { heatTier } from '../juice/ladder';
 import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
 import { noteTypedLetters } from '../progress/letterXp.js';
+import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
 // tile elsewhere on the card. Progress is driven by React state every frame (not a CSS
@@ -144,6 +145,8 @@ export default function SoloShell({
     return () => ro.disconnect();
   }, [phase]);
   const wrapLong = input.length > capacity;
+  // GEMS: the ledger mark for this run (taken each time a run starts playing) — the death card's "+N GEMS" line.
+  const gemsSince = useGemsRunMark(phase === 'playing');
 
   // Keep focus on the field while playing so typing always lands (the field is never
   // cleared on reject, so focus + caret position are the player's evidence).
@@ -316,6 +319,8 @@ export default function SoloShell({
           {/* The reject sill: an always-red bar whose OPACITY pulses on each reject
               (keyed remount re-fires the 140ms opacity animation). */}
           <div className="solo-sill" key={sillKey} data-fire={sillKey > 0 ? '1' : '0'} />
+          {/* GEMS: the drop pop on the word — one pooled node inside this (already positioned) field */}
+          <GemPop />
         </form>
       ) : null}
 
@@ -376,6 +381,8 @@ export default function SoloShell({
             {/* Rendered on the tutorial card too (H6): WinsEarnedTotal returns null when the run
                 banked nothing, so a run that DID bank (a mid-run bonus) always names it. */}
             <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />
+            {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
+            <GemsEarnedLine since={gemsSince} />
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
