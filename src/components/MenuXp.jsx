@@ -513,7 +513,7 @@ const POP_TRIES = 12; // random attempts before accepting the last candidate any
 const EDGE_MS = 260;
 const EDGE_POOL = 2;
 
-// KEY POWER tier feedback (feat/purchase-feel item 1). Per-keystroke escalation the
+// KEY TIER tier feedback (feat/purchase-feel item 1). Per-keystroke escalation the
 // player BUYS: T2+ throws pooled particle shards on each pop. transform/opacity only,
 // finite (<=400ms), pooled — zero new infinite animations.
 const SHARD_MS = 360; // 300-400ms per spec
@@ -662,7 +662,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   const recentPosRef = useRef([]); // ring buffer of the last few accepted {x,y} (anti-repeat)
   const popNextRef = useRef(0);
   const edgeNextRef = useRef(0);
-  // Pooled particle shards (KEY POWER tier T2+).
+  // Pooled particle shards (KEY TIER tier T2+).
   const shardElsRef = useRef([]);
   const shardAnimsRef = useRef([]);
   const shardNextRef = useRef(0);
@@ -802,7 +802,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     return undefined;
   }, []);
 
-  // Throw SHARD_PER_POP pooled shards from (x,y) — KEY POWER tier T2+ (item 1).
+  // Throw SHARD_PER_POP pooled shards from (x,y) — KEY TIER tier T2+ (item 1).
   function spawnShards(x, y, colour, count = SHARD_PER_POP, reach = 1) {
     const anims = shardAnimsRef.current;
     if (!anims.length) return;
@@ -866,7 +866,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       if (!el || !anim) return;
       const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
       el.classList.remove('is-tap'); // reset if this node was last used for a tap
-      // KEY POWER tier (item 1) drives the visible/audible escalation the player BOUGHT:
+      // KEY TIER tier (item 1) drives the visible/audible escalation the player BOUGHT:
       // T1-T4 teal, T5+ gold (overrides the streak colour); T3+ a hard offset shadow;
       // T2+ particle shards. All finite/pooled; particles skip under reduced motion.
       const tierColour = feelTier >= 5 ? TIER_GOLD : feelTier >= 1 ? TIER_TEAL : colour;
@@ -878,7 +878,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].style.color = ''; // back to CSS yellow
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
-      // Shards: KEY POWER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
+      // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
       // is richer wins, so neither purchase nor progress is ever invisible.
       const tfx = tierRef.current;
       const shardN = Math.max(feelTier >= 2 ? SHARD_PER_POP : 0, tfx.shards);

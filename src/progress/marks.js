@@ -11,7 +11,7 @@
 //      and eight slots is one build with eight bonuses bolted on.
 //   2. SMALL EFFECTS. Every mark is a modest multiplier or a small chance, in the 1.1-1.5 band.
 //      A mark must be worth equipping and must never be the reason a number is large — that is
-//      what Key Power, rebirth and the level curve are for.
+//      what Key Tier, rebirth and the level curve are for.
 //   3. VISIBLE IN THE PAYOUT. Every mark's effect appears as a named row in the payout breakdown
 //      (progress/payout.js) when it fires. A permanent bonus nobody can see is the exact defect
 //      this whole branch exists to fix; shipping a new invisible one would be absurd.
