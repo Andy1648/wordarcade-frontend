@@ -195,6 +195,9 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [ ] 4. STAT BOARD: the TOTAL MULTIPLIER (×N, huge) comes FIRST, then BASE, then each multiplier line.
 - [ ] 5. PROGRESS BAR lags on multi-level climbs: each level passed = a fast full-fill flash (~100 ms each, capped ~1 s total), the level number ticks up, then fill to the real %. Never sit half-filled or behind the real value.
 - [ ] 6. Rename KEY POWER → KEY TIER everywhere.
+- [ ] 7b (Andy update): rebirth gate = ROUND numbers, LV 25 × (R+1) (25, 50, 75, 100…); if the CI sim needs more, steps of 50. Never odd numbers like 141. Keep the conversion fair for existing players.
+- [ ] 8. ROLL vs INDEX are TWO separate screens, never mixed. ROLL: only the ROLL button, AUTO ROLL, gems, pity, the result. INDEX: the collection.
+- [ ] 9. The roll RESULT names the stat, short — never a bare "×1.5 MAIN": "×1.5 WINS" / "+5 BASE XP/LETTER"; "PERK: <short perk>" for LEGENDARY+; "★2" if it's a dupe. The same compact format on the MAIN slot and the INDEX cards.
 - [ ] 7. KEY TIER no longer resets on rebirth. Keep KEY costs; retune ONLY by raising the rebirth gate (more levels per rebirth than 15+18R, whatever the CI sim says) so rebirth pace stays in target. Bigger level numbers are fine. Existing players keep their current tier. Report the numbers.
 
 ## GEMS (Andy oct5 ~09:00) — REPLACES the roll currency (wins never buy rolls)
