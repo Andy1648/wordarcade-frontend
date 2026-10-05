@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   drawStrip, tableEntries, REEL_LEN, LAND_AT, spinMs, SPIN_MS, easePow, reelPos, tickTimes, spinFrom, revealMode,
-  hasCutscene, dimFor, hasLight, burstCount, BURST_POOL, shakePx, shakeFrames, autoShouldStop, needMoreText, pipLine,
+  hasCutscene, dimFor, hasLight, burstCount, BURST_POOL, shakePx, shakeFrames, autoShouldStop, needMoreText,
   burstVectors, TIER_LADDER, restOffset, REST_MAX, crossShare, timeAt, DIM_CELLS,
 } from './reelPlan.js';
 import { rollTable, freshState, ROLL_MARKS, rollMarkById } from '../../progress/markRolls.js';
@@ -135,10 +135,8 @@ test('auto roll stops on the goal tier or better (incl. a double roll extra)', (
   assert.equal(autoShouldStop({ tier: 'secret' }, 'secret'), true);
 });
 
-test('copy helpers', () => {
+test('copy helpers: the short-balance sentence (screen readers only — the screen shows −N + gem)', () => {
   assert.equal(needMoreText(100, 40), 'NEED 60 MORE GEMS');
-  assert.equal(pipLine(7, 10, 2), '7/10 → ★3');
-  assert.equal(pipLine(0, 0, 5), null);
 });
 
 test('tension: the result crosses the line at >= 85% of the spin, rests INSIDE its cell, every tier', () => {

@@ -384,7 +384,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             className={`menu-mark ${rarityClass(mark.tier)}`}
             onClick={onMarkClick}
             aria-label={`Mark equipped: ${mark.name}. ${mark.blurb}`}
-            title={`${mark.name} - ${mark.blurb}`}
+            title={mark.name}
           >
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
@@ -397,7 +397,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             <RarityFx tier={mark.tier} />
           </button>
         ) : (
-          <span className={`menu-mark ${rarityClass(mark.tier)}`} title={`${mark.name} - ${mark.blurb}`}>
+          <span className={`menu-mark ${rarityClass(mark.tier)}`} title={mark.name}>
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
             <RarityFx tier={mark.tier} />
