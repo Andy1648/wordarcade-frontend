@@ -171,6 +171,12 @@ export default defineConfig(({ mode }) => {
       ...(isPortal ? [] : [sitemapPlugin(outDir), pwaPlugin()]),
     ],
     base: isPortal ? './' : '/',
+    // The v2 kit gallery (src/main.jsx, /?kit=1) — a DEV-ONLY page. ON for the dev server and for a
+    // build made with VITE_KIT_GALLERY=1 (playwright.config.js sets it for the e2e build); OFF for every
+    // other build, where the constant lets the gallery branch and the kit's lazy chunk compile away.
+    define: {
+      __KIT_GALLERY__: JSON.stringify(!isPortal && (mode === 'development' || process.env.VITE_KIT_GALLERY === '1')),
+    },
     // REDUCE MOTION is an in-game toggle, not the OS setting (managed school Chromebooks force
     // prefers-reduced-motion: reduce). Every @media (prefers-reduced-motion …) block is rewritten at
     // build time onto :root[data-reduce-motion] — see scripts/postcss-reduce-motion.js.

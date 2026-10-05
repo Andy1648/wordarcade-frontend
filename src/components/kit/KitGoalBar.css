@@ -1,0 +1,121 @@
+/* KitGoalBar.css — v2 goal row. The fill is a scaleX transition; colours swap instantly. */
+.kgl {
+  --kgl-c: var(--k-cyan);
+  --kgl-c2: var(--k-cyan-d);
+  --kgl-mark: var(--k-rule);
+  position: relative;
+  min-height: 72px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  background: var(--k-panel-deep);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
+}
+.kgl.is-hot { --kgl-c: var(--k-yellow); --kgl-c2: var(--k-yellow-d); --kgl-mark: rgba(0, 0, 0, .45); }
+.kgl.is-ready { border-color: var(--k-yellow); }
+.kgl-ico {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--k-panel);
+  border: var(--k-ink-s) solid var(--k-ink);
+}
+.kgl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.kgl-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kgl-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; font-family: var(--k-display); text-transform: uppercase; white-space: nowrap; }
+.kgl-name { font-size: var(--fs-k17); color: var(--k-white); overflow: hidden; text-overflow: ellipsis; }
+.kgl-tier { font-size: var(--fs-k14); color: var(--k-gold); }
+.kgl-pips { display: flex; gap: 9px; padding-right: 4px; flex: none; }
+.kgl-pip { display: inline-block; width: 16px; height: 16px; }
+.kgl-pip-d {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: var(--k-well);
+  border: var(--k-ink-s) solid var(--k-ink);
+  transform: rotate(45deg);
+}
+.kgl-pip.is-done .kgl-pip-d { background: var(--k-gold); }
+.kgl-pip.is-next .kgl-pip-d { border-color: var(--k-yellow); }
+.kgl-row { display: flex; align-items: center; gap: 12px; }
+.kgl-bar {
+  position: relative;
+  flex: 1;
+  min-width: 60px;
+  height: 22px;
+  box-sizing: border-box;
+  background: var(--k-well);
+  border: var(--k-ink-m) solid var(--k-ink);
+  transform: skewX(var(--k-skew-bar));
+  overflow: hidden;
+}
+.kgl-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  background: var(--kgl-c);
+  transition: transform 450ms var(--k-e-goal);
+}
+.kgl-fill-lo { position: absolute; left: 0; right: 0; bottom: 0; height: 36%; background: var(--kgl-c2); }
+.kgl-mark { position: absolute; left: 90%; top: 0; bottom: 0; width: 3px; background: var(--kgl-mark); }
+.kgl-val { flex: none; min-width: 90px; text-align: right; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k15); color: var(--k-white); white-space: nowrap; }
+.kgl-act {
+  flex: none;
+  min-width: 112px;
+  height: 46px;
+  padding: 0 10px;
+  background: var(--k-panel);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k16);
+  color: var(--k-white);
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.kgl.is-ready .kgl-act { background: var(--k-yellow); color: var(--k-ink); }
+.kgl-act:disabled { cursor: default; color: var(--k-mute); }
+.kgl-act:focus-visible { outline: var(--k-ink-m) solid var(--k-cyan); outline-offset: 3px; }
+@media (hover: hover) {
+  .kgl-act:not(:disabled):hover { transform: translate(-2px, -2px); }
+}
+.kgl-act:not(:disabled):active { transform: translate(3px, 3px); }
+.kgl-left {
+  position: absolute;
+  right: 136px;
+  top: -14px;
+  padding: 1px 8px;
+  background: var(--k-yellow);
+  border: var(--k-ink-s) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  transform: rotate(-4deg);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k13);
+  color: var(--k-ink);
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .kgl { flex-wrap: wrap; }
+  .kgl-top { flex-wrap: wrap; }
+  .kgl-main { flex-basis: calc(100% - 60px); }
+  .kgl-act { width: 100%; }
+  .kgl-left { right: 12px; }
+  .kgl-pips { gap: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kgl-fill,
+  .kgl-act {
+    transition: none;
+  }
+}

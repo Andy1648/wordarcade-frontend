@@ -1,0 +1,15 @@
+/* KitFly.css — the pooled fly layer. Sits over its positioned parent; never takes a pointer. */
+.kfl {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: visible;
+  pointer-events: none;
+}
+.kfl-x,
+.kfl-y {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.kfl-s { opacity: 0; }

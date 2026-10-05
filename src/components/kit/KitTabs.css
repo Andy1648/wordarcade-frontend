@@ -1,0 +1,116 @@
+/* KitTabs.css — v2 tabs. The slab and the underline SLIDE by transform; colours swap instantly. */
+.kt-c-yellow { --kt-c: var(--k-yellow); }
+.kt-c-cyan { --kt-c: var(--k-cyan); }
+.kt-c-lilac { --kt-c: var(--k-lilac); }
+.kt-c-pink { --kt-c: var(--k-pink); }
+.kt-c-gold { --kt-c: var(--k-gold); }
+.kt-c-purple { --kt-c: var(--k-purple); }
+
+/* ---- 2-SEG slab ---- */
+.kt-slab {
+  position: relative;
+  width: 420px;
+  max-width: 100%;
+  height: 64px;
+  box-sizing: border-box;
+  background: var(--k-well);
+  border: var(--k-ink-l) solid var(--k-ink);
+  box-shadow: var(--k-sh-l) var(--k-sh-l) 0 var(--k-ink);
+  transform: skewX(var(--k-skew-tab));
+}
+.kt-slab-shade { position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--k-ink); opacity: .6; }
+.kt-slab-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px - (var(--kt-n) - 1) * 8px) / var(--kt-n));
+  display: block;
+  transform: translateX(calc(var(--kt-i) * (100% + 8px)));
+  transition: transform var(--k-t-tab) var(--k-e-tab);
+}
+.kt-slab-face {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  background: var(--k-yellow);
+  border: var(--k-ink-m) solid var(--k-ink);
+  overflow: hidden;
+}
+.kt-slab-shadeband { position: absolute; left: 0; right: 0; bottom: 0; height: 32%; background: var(--k-yellow-d); }
+.kt-slab-glint { position: absolute; left: 8px; right: 50%; top: 4px; height: 5px; background: var(--k-white); }
+.kt-slab-row { position: absolute; inset: 0; display: flex; }
+.kt-slab-opt {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.kt-slab-opt:focus-visible { outline: var(--k-ink-m) solid var(--k-cyan); outline-offset: -2px; }
+.kt-slab-lab {
+  position: relative;
+  display: inline-block;
+  transform: skewX(8deg);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k20);
+  color: var(--k-dim);
+  white-space: nowrap;
+}
+.kt-slab-opt.is-on .kt-slab-lab { color: var(--k-ink); }
+
+/* ---- 3-SEG plates ---- */
+.kt-plates { position: relative; height: 62px; max-width: 100%; }
+.kt-plate {
+  position: absolute;
+  top: 0;
+  height: 40px;
+  padding: 0;
+  background: var(--k-panel);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  transform: translateY(6px) skewX(var(--k-skew-plate)) rotate(0deg);
+  transition: transform var(--k-t-plate) var(--k-e-pop-hard);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* the visual plate is 40px (mockup); the hit area reaches the 44px floor */
+.kt-plate::after { content: ''; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
+.kt-plate:focus-visible { outline: var(--k-ink-m) solid var(--k-cyan); outline-offset: 3px; }
+.kt-plate.is-on {
+  background: var(--kt-c);
+  box-shadow: var(--k-sh-m) var(--k-sh-m) 0 var(--k-ink);
+  transform: translateY(0) skewX(var(--k-skew-plate)) rotate(-2deg);
+}
+.kt-plate-lab {
+  display: inline-block;
+  transform: skewX(10deg);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k16);
+  line-height: 1;
+  color: var(--k-dim);
+}
+.kt-plate.is-on .kt-plate-lab { font-size: var(--fs-k22); color: var(--k-ink); }
+.kt-under {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  height: 8px;
+  box-sizing: border-box;
+  background: var(--kt-c);
+  border: var(--k-ink-s) solid var(--k-ink);
+  transition: transform var(--k-t-tab) var(--k-e-tab);
+}
+.kt-under svg { position: absolute; left: 50%; top: -14px; margin-left: -9px; fill: var(--kt-c); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kt-slab-slider,
+  .kt-plate,
+  .kt-under {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,125 @@
+/* kit/tokens.css — THE V2 KIT'S DESIGN TOKENS (one file).
+   ============================================================================
+   Every colour, ink width, hard-shadow offset, radius, skew, timing and easing the kit
+   components use, lifted from the v2 mockups (claude/mockups/v2/Kit*.dc.html). Component
+   CSS reads ONLY these — a screen that re-skins the kit overrides a token, never a rule.
+
+   Loaded by every kit component (each imports it; Vite dedupes), so the kit carries its
+   own tokens into whatever lazy chunk uses it and adds nothing to a screen that does not.
+
+   TYPE: the mockups set the kit's labels at exact sizes (13–96px) that the house scale
+   (src/theme/type.css) does not have steps for. They are declared here as --fs-k* tokens so
+   every font-size still goes through a token (src/perf/typeScale.test.js); 13px is the
+   floor — nothing in the kit is smaller.
+   ============================================================================ */
+:root {
+  /* ---- palette (mockup hex, verbatim) ---- */
+  --k-ink: #000;
+  --k-ink-soft: #0d0618;      /* icon outline ink */
+  --k-bg: #0d0618;            /* page */
+  --k-panel: #1a0b2e;         /* card / button face (off) */
+  --k-panel-deep: #12071f;    /* section panel */
+  --k-well: #08030f;          /* bar track / slot */
+  --k-rule: #3a2160;
+  --k-plum: #2a0e4a;
+  --k-dim: #c9b8e8;           /* captions */
+  --k-mute: #8f7bb3;          /* disabled ink */
+  --k-faint: #5d4a78;
+  --k-white: #fff;
+
+  --k-yellow: #FFE94A;  --k-yellow-d: #F2A900;  --k-yellow-hi: #FFF9C9;  --k-yellow-ghost: #FFF6B8;  --k-yellow-ghost-d: #d9c86a;
+  --k-gold: #FFC23D;    --k-gold-d: #E09A12;    --k-gold-lip: #b07a10;
+  --k-cyan: #2EFFE0;    --k-cyan-d: #12A99A;    --k-cyan-lip: #0b6f66;
+  --k-pink: #FF4FA3;    --k-pink-d: #C2187A;
+  --k-hot: #FF3D7F;     --k-hot-d: #C2185B;     --k-hot-fill: #4a0a22;
+  --k-purple: #B04BFF;  --k-purple-d: #7A1FC4;  --k-purple-lip: #6a20b0;  --k-lilac: #D88BFF;
+  --k-blue: #3D8BFF;    --k-blue-lip: #1f4fa8;  --k-blue-fill: #0f2350;
+  --k-orange: #FF6B3D;  --k-orange-d: #D9381E;
+
+  /* ---- fonts ---- */
+  --k-display: 'Bungee', cursive;
+  --k-shade: 'Bungee Shade', 'Bungee', cursive;
+  --k-mono: 'Space Mono', monospace;
+
+  /* ---- type (exact mockup sizes; 13 is the floor) ---- */
+  --fs-k13: 13px;
+  --fs-k14: 14px;
+  --fs-k15: 15px;
+  --fs-k16: 16px;
+  --fs-k17: 17px;
+  --fs-k18: 18px;
+  --fs-k20: 20px;
+  --fs-k21: 21px;
+  --fs-k22: 22px;
+  --fs-k24: 24px;
+  --fs-k25: 25px;
+  --fs-k26: 26px;
+  --fs-k28: 28px;
+  --fs-k30: 30px;
+  --fs-k31: 31px;
+  --fs-k32: 32px;
+  --fs-k34: 34px;
+  --fs-k38: 38px;
+  --fs-k44: 44px;
+  --fs-k60: 60px;
+  --fs-k68: 68px;
+  --fs-k76: 76px;
+  --fs-k96: 96px;
+  --fs-k100: 100px;
+
+  /* ---- ink (outline) widths ---- */
+  --k-ink-xs: 2px;
+  --k-ink-s: 3px;
+  --k-ink-m: 4px;
+  --k-ink-l: 5px;
+  --k-ink-xl: 6px;
+  /* text-stroke weights (paint-order: stroke fill) */
+  --k-stroke-s: 3px;
+  --k-stroke-m: 4px;
+  --k-stroke-l: 5px;
+  --k-stroke-xl: 7px;
+
+  /* ---- hard offset shadows (always #000, never blurred) ---- */
+  --k-sh-xs: 3px;
+  --k-sh-s: 4px;
+  --k-sh-m: 5px;
+  --k-sh-l: 6px;
+  --k-sh-xl: 8px;
+
+  /* ---- shape ---- */
+  --k-radius: 0;           /* the v2 kit is square-cornered (mockups); dots/stamps are circles */
+  --k-skew: -7deg;         /* primary / ghost buttons */
+  --k-skew-tab: -8deg;
+  --k-skew-plate: -10deg;
+  --k-skew-bar: -12deg;
+  --k-lip: 14px;           /* primary button lip depth (face 90 on a 104 body) */
+  --k-tap: 44px;           /* touch-target floor */
+
+  /* ---- timings ---- */
+  --k-t-press: 34ms;       /* face down */
+  --k-t-release: 600ms;    /* face back up */
+  --k-t-hover: 250ms;
+  --k-t-small-release: 500ms;
+  --k-t-tab: 340ms;
+  --k-t-plate: 280ms;
+  --k-t-knob: 260ms;
+  --k-t-color: 150ms;
+  --k-t-hold: 1000ms;      /* hold-to-confirm fill */
+  --k-t-hold-cancel: 180ms;
+
+  /* ---- easings ---- */
+  --k-e-settle: cubic-bezier(.3, .7, .4, 1);
+  --k-e-pop: cubic-bezier(.3, .7, .4, 1.5);
+  --k-e-pop-hard: cubic-bezier(.3, .7, .4, 1.6);
+  --k-e-tab: cubic-bezier(.3, .7, .4, 1.35);
+  --k-e-bounce: cubic-bezier(.2, 1.4, .4, 1);
+  --k-e-slam: cubic-bezier(.2, 1.3, .4, 1);
+  --k-e-fill: cubic-bezier(.2, .9, .3, 1);
+  --k-e-goal: cubic-bezier(.2, 1.25, .4, 1);
+}
+
+/* REDUCE MOTION fallback for INFORMATIONAL one-shots (a "+75" pop, "NEED 41 MORE"): with motion off
+   the node is simply shown, still, for the effect's duration (motion.js kitShow). */
+.kit-static-on {
+  opacity: 1 !important;
+}
