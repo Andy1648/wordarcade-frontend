@@ -17,7 +17,7 @@ import {
 } from './revealPlan.js';
 import { MARK_TIERS } from '../../progress/marks';
 import { markEntry, mainTag, perkTag, luck, pityLeft, isBonusRoll, permanentOwnedCount, BONUS_ROLL_MULT, rollPriceNow } from '../../progress/markRolls';
-import { buyMarkRoll, buyMarkRolls, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
+import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getWins, subscribeBalance } from '../../progress/wins';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndLucky, sndAchievement, sndWordRejected } from '../../audio/gameSounds';
@@ -141,8 +141,14 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
     const t = now();
     if (!pacer.current.canRoll(t)) return null;
     if (pending.current) latest.current.commit();
-    const list = buyMarkRolls(MULTI_COUNT, { level });
-    if (!list) return null; // the button is disabled when short; nothing rolls
+    // the shop's ×10 batch API is gone (MARKS v2: AUTO ROLL replaces it); until the ROLL screen lands, ten singles
+    const list = [];
+    for (let i = 0; i < MULTI_COUNT; i += 1) {
+      const r = buyMarkRoll({ level });
+      if (!r) break;
+      list.push(r);
+    }
+    if (!list.length) return null; // the button is disabled when short; nothing rolls
     setMsg('');
     sndPurchase();
     held.current = false;

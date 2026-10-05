@@ -18,8 +18,8 @@
 //     input pays no more than gibberish on the menu. When a word is ACCEPTED, its letters top up to the full rate
 //     (creditAcceptedWordLetters, called from wins.js awardWordXp — the one per-accepted-word path every mode
 //     takes): BASE 10 XP / LETTER is what the LETTERS OF YOUR WORDS pay.
-import { createRateLimiter, creditXp, loadProgress, saveProgress, levelXpPerLetter, getKeyTier, getRebirths, roundWordXp, MENU_LETTER_SHARE } from './xp.js';
-import { markMult } from './markRollsCore.js';
+import { createRateLimiter, creditXp, loadProgress, saveProgress, levelXpPerLetter, getKeyTier, getRebirths, roundWordXp, MENU_LETTER_SHARE, setLetterBaseAdd } from './xp.js';
+import { markXpMult, markBaseXp } from './markRollsCore.js';
 import { MARK_TIERS } from './marks.js';
 import { letterPerkMult } from './markPerks.js';
 import { emitMidGameLevelUp } from './levelUpSignal.js';
@@ -34,14 +34,17 @@ export const MARK_XP_BOOST = Object.freeze(
   Object.defineProperties({}, Object.fromEntries(MARK_TIER_IDS.map((t) => [t, { enumerable: true, get: () => MARK_TIERS[t].bonus }]))),
 );
 
-/** The MARK on XP per letter: markRollsCore.markMult — the one function wins.js reads too. ×1 with nothing
- *  worn on a save that has never rolled. `markId` undefined = the worn mark. Guarded: a failure is ×1. */
+/** The MARK on XP per letter (MARKS v2): the worn +N% XP stat (or a PERMANENT's MAIN) × the INDEX bonus —
+ *  markRollsCore.markXpMult. ×1 with nothing worn on a save that has never rolled. `markId` undefined = the worn
+ *  mark. Guarded: a failure is ×1. */
 export function markXpBoost(markId) {
-  return markMult({ markId });
+  return markXpMult({ markId });
 }
+// The worn +N BASE XP/LETTER, read by levelXpPerLetter for every letter path (menu keys included).
+setLetterBaseAdd(() => markBaseXp());
 
-/** XP per letter for the live save: BASE 10 × KEY × REBIRTH 5^R × MARK × BOOST (code boost × OVERDRIVE)
- *  × the DOUBLE LETTERS perk (LEVIATHAN: letters count ×2). */
+/** XP per letter for the live save: (BASE 10 + MARK BASE XP) × KEY × REBIRTH 5^R × MARK × BOOST (code boost ×
+ *  OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN: letters count ×2). */
 export function letterXpNow() {
   return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost()) * letterPerkMult() * boostMult();
 }

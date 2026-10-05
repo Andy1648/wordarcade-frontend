@@ -79,7 +79,7 @@ test('×10 shows 10 cards and a reveal; a tap ANYWHERE skips to the result', asy
   // little back (measured: 100 of 6,000), so the net spend is at most 10 × the price and well over 9 ×
   const spent = Math.round(winsBefore - after.wins);
   expect(spent).toBeLessThanOrEqual(single * 10);
-  expect(spent).toBeGreaterThan(single * 9);
+  expect(spent).toBeGreaterThan(0); // marks v2: new-mark INDEX rewards (words at your rate) can repay a big share of a fresh collection's rolls
   expect(after.rolls).toBe(10);
   // nothing loops after the reveal
   await page.waitForTimeout(400);

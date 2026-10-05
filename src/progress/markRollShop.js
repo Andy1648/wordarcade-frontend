@@ -1,12 +1,13 @@
 // markRollShop.js — the ONE place a MARK ROLL is paid for (the roll UI calls only this). markRolls.js
 // is pure + its own store and never touches the balance; this module charges the price through the
-// one wins channel (wins.js saveWins), rolls, pays any INDEX milestone lump, and returns the result
-// plus what the UI should do about equipping it.
+// one wins channel (wins.js saveWins), rolls, pays the INDEX rewards (a new mark, a ★, a completed tier — words at
+// your rate), and returns the result plus what the UI should do about equipping it.
+// MARKS v2 (Andy oct5): no ×10 — AUTO ROLL "until [tier] or better" (autoRoll) rolls one at a time instead.
 import { getWins, saveWins, grantWins } from './wins.js';
 import { getEquippedMark, equipMark } from './marks.js';
 import {
   ensureRollState, loadRollState, saveRollState, rollAndSave, rollPriceNow, rollPriceWords, refWordWins,
-  milestoneWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
+  indexRewardWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
 } from './markRolls.js';
 import { rollsPerRoll } from './markPerks.js';
 import { isBoostActive } from './boost.js';
@@ -17,7 +18,7 @@ export function nextRollCost(level = 1, state = loadRollState()) {
   return { free, wins: free ? 0 : rollPriceNow(level), words: Math.round(rollPriceWords(level)) };
 }
 
-/** The worn MAIN right now (tier × its GOLD / RAINBOW finish). */
+/** The worn MAIN right now (its strength: tier × ★ pips × shiny). */
 export function currentMain() {
   const id = getEquippedMark() || wornMarkId();
   return { id, main: id ? mainMultOf(id) : 1 };
@@ -34,6 +35,7 @@ export function wearMark(id, earned = []) {
 /**
  * ONE paid (or free starter) roll. Returns null when the balance is short, else
  * { ...result, spent, free, decision: 'auto'|'none', fromMain, toMain, lump, extra }.
+ * `lump` = the INDEX rewards it paid in wins (new mark / ★ / completed tier, every result incl. `extra`).
  * DOUBLE ROLLS (SINGULARITY perk): one price, two results — the RAREST is the shown result (ties: the later),
  * the other rides along in `extra` (both are saved; pity and the index count both).
  * It does NOT equip: the UI applies an 'auto' decision (applyRollEquip) when the reveal LANDS, so the
@@ -52,14 +54,14 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   let res = all[0];
   for (const r of all) if (tierRank(r.tier) >= tierRank(res.tier)) res = r;
   const extra = all.filter((r) => r !== res);
-  // INDEX milestones pay a lump in words at your rate (≤ 20 words each)
+  // INDEX rewards: words at your rate (the price's reference word), one labelled grant per roll
   let lump = 0;
-  const ms = all.flatMap((r) => r.milestones);
-  if (ms.length) {
-    const rate = refWordWins();
-    for (const id of ms) {
-      const w = milestoneWins(id, rate);
-      if (w > 0) { grantWins(w, 'MARKS INDEX', { detail: 'index' }); lump += w; }
+  const rate = refWordWins();
+  for (const r of all) {
+    const w = indexRewardWins(r, rate);
+    if (w > 0) {
+      grantWins(w, 'MARKS INDEX', { detail: 'index' });
+      lump += w;
     }
   }
   const worn = currentMain();
@@ -69,24 +71,32 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   return { ...res, state: all[all.length - 1].state, spent: cost.wins, free: cost.free, decision, fromMain, toMain, lump, extra };
 }
 
+/** The tiers AUTO ROLL can stop on ("until [tier] or better"). */
+export const AUTO_ROLL_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
+const AUTO_ROLL_CAP = 100000; // a hard stop so no loop can run away (wins run out long before)
+
 /**
- * ×N ROLL (Andy: "×10 roll button"). Priced at exactly N × the single paid roll; refused (null) when the
- * balance can't pay all N, or while the free starter roll is still waiting (take that one first). Each of the
- * N is a full buyMarkRoll — so pity, luck, the ×2 LUCK roll, DOUBLE ROLLS and INDEX lumps all apply PER ROLL,
- * through the one rollAndSave. Returns the N results in roll order.
+ * AUTO ROLL (Andy oct5): roll ONE at a time through buyMarkRoll until a result (or its double-roll extra) is
+ * `until` or better, or the wins run out (or `budget` wins have been spent — the sim's purse). Each roll is a full
+ * buyMarkRoll: price, pity, luck, double rolls, INDEX rewards. `onEach(result, i)` after every roll. Returns the
+ * results in roll order ([] when the first can't be paid). Equips nothing (the UI lands each result).
  */
-export function buyMarkRolls(count = 10, { level = 1, rng = Math.random } = {}) {
-  const n = Math.max(1, Math.floor(count));
-  const c = nextRollCost(level);
-  if (c.free) return null;
-  if (getWins() < c.wins * n) return null;
+export function autoRoll({ until = 'epic', level = 1, rng = Math.random, onEach, budget = Infinity, max = AUTO_ROLL_CAP } = {}) {
+  const goal = tierRank(AUTO_ROLL_TIERS.includes(until) ? until : 'epic');
+  const cap = Math.min(AUTO_ROLL_CAP, Math.max(0, Math.floor(Number.isFinite(max) ? max : AUTO_ROLL_CAP)));
   const out = [];
-  for (let i = 0; i < n; i += 1) {
+  let spent = 0;
+  for (let i = 0; i < cap; i += 1) {
+    const c = nextRollCost(level);
+    if (!c.free && spent + c.wins > budget) break;
     const r = buyMarkRoll({ level, rng });
     if (!r) break;
+    spent += r.spent;
     out.push(r);
+    if (typeof onEach === 'function') onEach(r, out.length - 1);
+    if ([r, ...(r.extra || [])].some((x) => tierRank(x.tier) >= goal)) break;
   }
-  return out.length ? out : null;
+  return out;
 }
 
 /** Land a roll's equip decision (called when its reveal lands). Re-checks against the MAIN worn NOW, so

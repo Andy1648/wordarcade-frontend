@@ -10,6 +10,7 @@
 // blocked storage → no OVERDRIVE, never throws.
 import { announceTimers } from './boost.js';
 import { overdrivePerkMinutes } from './markPerks.js';
+import { markOverdriveSec } from './markRollsCore.js';
 
 export const OVERDRIVE_KEY = 'taw.overdrive';
 export const OVERDRIVE_MULT = 10;
@@ -55,6 +56,16 @@ export function overdriveRemaining(now = Date.now()) {
   const st = read();
   return st ? Math.max(0, st.until - now) : 0;
 }
+/** How long the next OVERDRIVE runs: 5 min + the worn mark's +N s OVERDRIVE (MARKS v2). */
+export function overdriveLengthMs() {
+  let add = 0;
+  try {
+    add = markOverdriveSec();
+  } catch {
+    add = 0;
+  }
+  return OVERDRIVE_MIN * 60000 + (Number.isFinite(add) && add > 0 ? add * 1000 : 0);
+}
 export function isOverdriveActive(now = Date.now()) {
   return overdriveRemaining(now) > 0;
 }
@@ -79,7 +90,7 @@ export function notePlay(ms, now = Date.now(), rng) {
     write(st);
     return false;
   }
-  st.until = now + OVERDRIVE_MIN * 60000;
+  st.until = now + overdriveLengthMs();
   st.playMs = 0;
   st.nextMs = rollNext(rng);
   write(st);

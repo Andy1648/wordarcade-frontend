@@ -369,7 +369,7 @@ function simulate(skill, start = null) {
     const L = lv();
     const r0 = refMix();
     const res = MR.rollAndSave(rollRng, { boost: BOOST.isBoostActive() });
-    // INDEX milestone lumps, priced in words at the live rate
+    // INDEX milestone lumps, priced in words at the live rate (MARKS v2: milestones are LUCK only → 0)
     if (res.milestones.length) {
       lastLumpCtx = 'index';
       for (const id of res.milestones) {
@@ -377,6 +377,16 @@ function simulate(skill, start = null) {
         if (w > 0) WINS.grantWins(w, `INDEX ${id}`, { detail: 'index' });
       }
       lastLumpCtx = null;
+    }
+    // MARKS v2 INDEX rewards: a NEW mark, a ★ level-up, a completed tier — words at your rate (markRollShop pays
+    // the same through buyMarkRoll; the bot rolls through rollAndSave, so it pays them here)
+    if (typeof MR.indexRewardWins === 'function') {
+      const w = MR.indexRewardWins(res, MR.refWordWins());
+      if (w > 0) {
+        lastLumpCtx = 'index';
+        WINS.grantWins(w, 'MARKS INDEX', { detail: 'index' });
+        lastLumpCtx = null;
+      }
     }
     // Andy M6 (REVISED, PR #156 review): any roll whose MAIN is HIGHER than the worn MAIN auto-equips
     // (always when nothing is worn); a sidegrade does nothing. The bot's bestMark() below keeps the best by value
@@ -389,13 +399,15 @@ function simulate(skill, start = null) {
     bestMark();
     const step = refMix() / r0;
     const g = XP.need(L + 1) / XP.need(L);
-    rollLog.push({ t: +minute.toFixed(2), level: L, rebirths: XP.getRebirths(), markId: res.markId, tier: res.tier, pity: res.pityHit, bonus: res.bonusRoll, luck: +res.luck.toFixed(3), step: +step.toFixed(4), curveLevels: +(Math.log(step) / Math.log(g)).toFixed(2), starter: !!starter, newMark: res.newMark, goldUp: res.goldUp, rainbowUp: res.rainbowUp, copies: res.copies });
+    rollLog.push({ t: +minute.toFixed(2), level: L, rebirths: XP.getRebirths(), markId: res.markId, tier: res.tier, pity: res.pityHit, bonus: res.bonusRoll, luck: +res.luck.toFixed(3), step: +step.toFixed(4), curveLevels: +(Math.log(step) / Math.log(g)).toFixed(2), starter: !!starter, newMark: res.newMark, goldUp: res.goldUp, rainbowUp: res.rainbowUp, pipUp: !!res.pipUp, pips: res.pips, copies: res.copies });
     // RULE-P GAP METRIC (Andy oct3, decision 5): a roll is a "good event" when it is a NEW mark (first
     // copy), a GOLD step-up, or a RAINBOW step-up — each is a visible moment the player gets. A plain dupe
     // (perk +10% of base, no new badge) is not. Recorded under kind 'mark' so GOOD_KINDS counts them.
     if (res.newMark) addGood('mark', `ROLL ${res.tier} ${res.markId}`);
     if (res.goldUp) addGood('mark', `ROLL GOLD ${res.markId} (G${res.gold})`);
     if (res.rainbowUp) addGood('mark', `ROLL RAINBOW ${res.markId} (R${res.rainbow})`);
+    if (res.pipUp) addGood('mark', `ROLL ★${res.pips} ${res.markId}`); // MARKS v2: a ★ pip replaces GOLD / RAINBOW
+    return res;
   }
   function doRolls() {
     if (!rollsOpen()) return;
@@ -407,13 +419,22 @@ function simulate(skill, start = null) {
       const s2 = MR.loadRollState();
       MR.saveRollState({ ...s2, starter: true });
     }
+    // MARKS v2 (no ×10): the AUTO ROLL habit — once the purse can pay ~AUTO_ROLL_AFFORD rolls, auto-roll until an
+    // EPIC-or-better (or the purse runs dry), one roll at a time — markRollShop.autoRoll({ until: 'epic' }) as a
+    // player taps it. Older trees (no v2 engine) keep the old roll-whenever-affordable loop.
+    const v2 = typeof MR.pityLadder === 'function';
+    const AUTO_ROLL_AFFORD = 10;
+    let streak = false;
     for (let guard = 0; guard < 10000; guard++) {
       const price = MR.rollPriceNow(lv());
       const bal = WINS.getWins();
       if (purse < price || bal < price) return;
+      if (v2 && !streak && (purse < AUTO_ROLL_AFFORD * price || bal < AUTO_ROLL_AFFORD * price)) return;
+      streak = true;
       WINS.saveWins(bal - price);
       purse -= price;
-      oneRoll(false);
+      const res = oneRoll(false);
+      if (v2 && res && ['epic', 'legendary', 'mythic', 'secret'].includes(res.tier)) streak = false; // the hit stops it
     }
   }
   function bestMark() {
@@ -421,9 +442,11 @@ function simulate(skill, start = null) {
     const un = MARKS.unlockedMarks(earned);
     if (!un.length) return;
     let best = null, bestV = 0;
-    // A mark's value: markRollsCore.markMult (one MARK on wins AND XP) when the tree has it; else the old
-    // per-mode wins factor × markXpMult (guarded — the rolls rework removed markXpMult).
+    // A mark's value: MARKS v2 — its STRENGTH (markRollsCore.mainMultOf: the stat's equivalent multiplier, what the
+    // game's auto-equip compares); else markRollsCore.markMult (one MARK on wins AND XP) when the tree has it; else
+    // the old per-mode wins factor × markXpMult (guarded — the rolls rework removed markXpMult).
     const markValue = (id) => {
+      if (MRC && typeof MRC.statOf === 'function') return MRC.mainMultOf(id);
       if (MRC && typeof MRC.markMult === 'function') return MRC.markMult({ markId: id });
       let v = 0;
       for (const [gm, share] of MODE_MIX) {
@@ -846,6 +869,7 @@ function summariseRolls(log, totalMin, refTrail = []) {
     firstEpic: first((r) => r.tier === 'epic' || r.tier === 'legendary'), firstLegendary: first((r) => r.tier === 'legendary'),
     pityEpic: paid.filter((r) => r.pity === 'epic').length, pityLegendary: paid.filter((r) => r.pity === 'legendary').length,
     golds: paid.filter((r) => r.goldUp).length, rainbows: paid.filter((r) => r.rainbowUp).length,
+    pipUps: paid.filter((r) => r.pipUp).length,
     starter: log.find((r) => r.starter) || null,
     maxStepPaid: worstPaid[0] || null, overThreeLevels: paid.filter((r) => r.curveLevels > 3).length,
     log,
