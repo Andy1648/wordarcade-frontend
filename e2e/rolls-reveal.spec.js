@@ -75,7 +75,11 @@ test('×10 shows 10 cards and a reveal; a tap ANYWHERE skips to the result', asy
   for (const t of await page.getByTestId('mark-roll-tile').all()) await expect(t).toHaveCSS('opacity', '1');
   // charged exactly ten rolls; ten rolls saved
   const after = await page.evaluate(() => ({ wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
-  expect(Math.round(winsBefore - after.wins)).toBeGreaterThanOrEqual(single * 10 - 10); // INDEX lumps may pay back
+  // charged ten single-roll prices; the collection INDEX milestones a fresh collection crosses on the way can pay a
+  // little back (measured: 100 of 6,000), so the net spend is at most 10 × the price and well over 9 ×
+  const spent = Math.round(winsBefore - after.wins);
+  expect(spent).toBeLessThanOrEqual(single * 10);
+  expect(spent).toBeGreaterThan(single * 9);
   expect(after.rolls).toBe(10);
   // nothing loops after the reveal
   await page.waitForTimeout(400);
