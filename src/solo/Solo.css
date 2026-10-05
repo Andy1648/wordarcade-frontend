@@ -260,7 +260,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px 20px;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
 }
 /* The mode stats take the middle of the row; the exit and the wins state bracket them. */
 .solo-hud-stats {
@@ -296,11 +296,12 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-body);
+  font-size: var(--fs-panel); /* fine-tune oct5: the number is the stat; its caption is the label */
+  line-height: 1;
   color: var(--solo-accent);
 }
 .solo-hud .solo-stat span {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   opacity: 0.7;
   letter-spacing: 0.08em;
 }
@@ -497,9 +498,10 @@
   position: absolute;
   left: 12%;
   right: 12%;
-  bottom: -14px;
-  height: 6px;
-  border-radius: 3px;
+  bottom: -22px;
+  height: 14px; /* fine-tune oct5: was 6px, a hairline nobody read */
+  border: 2px solid #000;
+  border-radius: 4px;
   background: #ff6b3d;
   transform-origin: left center;
   transform: scaleX(0);
@@ -513,8 +515,8 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 14px;
-  font-size: var(--fs-label);
+  margin-top: 30px; /* clears the 14px heat bar under the hero */
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.1em;
   white-space: nowrap;
@@ -1169,7 +1171,7 @@
 .solo-frenzy-goal {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #ffe94a;
@@ -1222,7 +1224,7 @@
   border: 8px solid #FFD429;
   box-shadow: 0 0 0 4px #000;
   opacity: 0;
-  animation: solo-lucky-ring 400ms ease-out 1;
+  animation: solo-lucky-ring 800ms ease-out 1; /* fine-tune oct5: was 400ms / 1.9x */
 }
 .solo-lucky-label {
   font-family: 'Bungee', system-ui, sans-serif;
@@ -1233,12 +1235,12 @@
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
   opacity: 0;
-  animation: solo-lucky-label 400ms cubic-bezier(0.2, 1.4, 0.4, 1) 1;
+  animation: solo-lucky-label 800ms cubic-bezier(0.2, 1.4, 0.4, 1) 1;
 }
 @keyframes solo-lucky-ring {
   0% { transform: scale(0.3); opacity: 0.95; }
   70% { opacity: 0.6; }
-  100% { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(2.8); opacity: 0; }
 }
 @keyframes solo-lucky-label {
   0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
@@ -1530,11 +1532,14 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
    modes, where their small print is --fs-micro (11px, decoration). On the solo screens that strip
    is what the run is paying, so it is a label and takes the 13px floor. Scoped here rather than
    raising the shared rules, so the room HUDs keep their fit. */
-.solo-root .wins-hud-label,
 .solo-root .lstack-per,
-.solo-root .lstack-row,
-.solo-root .wins-earned-line {
+.solo-root .lstack-row {
   font-size: var(--fs-label);
+}
+/* fine-tune oct5: the pill's caption and the earned line are read mid-run */
+.solo-root .wins-hud-label,
+.solo-root .wins-earned-line {
+  font-size: var(--fs-body);
 }
 
 /* The way out, inside the death card as its own first row (fine-tune oct2). In flow, not
@@ -1552,6 +1557,19 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
    the strip packs tighter, so all 26 letters fit. */
 @media (min-width: 701px) and (max-height: 600px) {
   .solo-frenzy-goal { display: none; }
+  /* CROWDING (fine-tune oct5, andy-themes #6): at 1280x551 with BOOST + FRENZY live the HUD row
+     stacked three 52px chips over the hero. The hero is the one big thing here; the row's chips
+     collapse to the touch floor and the stat numbers step back to the body size. Every chip and
+     every factor row is still shown — only their chrome shrinks. */
+  .solo-hud { gap: 6px 14px; }
+  .solo-hud .solo-stat b { font-size: var(--fs-body); }
+  .solo-hud .lstack {
+    min-height: 44px;
+    padding: 2px 10px;
+    gap: 8px;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .solo-hud .lstack-rows { gap: 8px; }
   .solo-strip-big { max-width: calc(440px * var(--solo-k, 1)); gap: 4px; }
   .solo-strip-big span { width: calc((100% - 13 * 4px) / 13); border-width: 3px; box-shadow: 3px 3px 0 #000; }
 }

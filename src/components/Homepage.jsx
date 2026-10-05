@@ -33,11 +33,12 @@ import { flagOn } from '../lib/featureFlags';
 import { noteWallLevel, wallTierFor, getWallTier, WALL_FX_DONE_EVENT } from '../progress/wallTier';
 
 import ScreenBoundary from './ScreenBoundary';
-// E6: the MARKS index opens on a tap — its own lazy chunk, out of the homepage's initial payload
+// E6: MARKS opens on a tap — its own lazy chunk, out of the homepage's initial payload
 // MARK ROLLS ship dormant behind rollsFlag (rule P held them, PR #156): the legacy panel until Andy turns rolls on.
+// With rolls ON, MARKS opens the full-screen ROLL screen (Andy oct5); its INDEX button opens the MARKS INDEX.
 const ROLLS = rollsEnabled();
 const MarksIndex = ROLLS
-  ? lazyWithReload(() => import('./MarksIndex'), 'MarksIndex')
+  ? lazyWithReload(() => import('./rollScreen/RollScreen'), 'RollScreen')
   : lazyWithReload(() => import('./MarksIndexLegacy'), 'MarksIndexLegacy');
 import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark } from '../progress/marks';
 import { wornMarkId, markEntry, loadRollState } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
@@ -1510,7 +1511,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {claimReveal && <Suspense fallback={null}><ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} /></Suspense>}
 
-      {/* MARKS overlay — one slot, tap to wear, tap again to take it off. */}
+      {/* MARKS overlay — one slot: the ROLL screen (its INDEX button opens the MARKS INDEX in the same slot). */}
       {showMarks && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>

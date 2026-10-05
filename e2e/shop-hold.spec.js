@@ -97,16 +97,14 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   const slot = page.locator('.menu-mark').first();
   await expect(slot.locator('svg.mark-badge')).toBeVisible();
   await slot.click();
-  // E6: the MARKS INDEX — the worn mark is the hero at the top
-  const hero = page.locator('.mx-hero');
-  await expect(hero.locator('svg.mark-badge')).toBeVisible();
-  await expect(hero.locator('.mx-hero-name')).toHaveText('BOMBER');
-  await expect(hero.locator('.mx-hero-kicker')).toHaveText('YOUR MAIN · MARK II');
-  // U (Andy oct2 22:25): ONE short tag — MAIN ×N (MARKS via ROLLS: COMMON ×1.1; ranks no longer scale the MAIN) —
-  // and no sentence explaining it (the "PLUS ITS PERK" / "WEARING IT" lines are gone)
-  await expect(hero.locator('.mx-hero-pct')).toHaveText('MAIN ×1.1');
-  await expect(hero.locator('.mx-hero-perk')).toHaveCount(0);
-  await expect(hero.locator('.mx-hero-rank')).toContainText('180 MORE WORDS → MARK III');
+  // Andy oct5: MARKS opens the ROLL screen; INDEX opens the MARKS INDEX
+  await page.locator('[data-testid="roll-index"]').click();
+  // INDEX v2: the worn mark's card — its art, MAIN tag and ONE stat line (no sentence explaining it)
+  const worn = page.locator('.mx-tile.is-on');
+  await expect(worn.locator('svg.mark-badge')).toBeVisible();
+  await expect(worn.locator('.mx-tile-name')).toHaveText('BOMBER');
+  await expect(worn.locator('.mx-tile-main')).toHaveText('MAIN');
+  await expect(worn.locator('.mx-tile-sub')).toHaveText('+10% WINS');
   // no emoji left in the index
   const text = await page.locator('.mx-panel').innerText();
   expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);

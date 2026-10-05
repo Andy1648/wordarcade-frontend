@@ -1,13 +1,17 @@
-// e2e/mark-rolls.spec.js — MARK ROLLS UI (Andy M + H3; the oct3 review hybrid). Written WITHOUT being run (memory
-// rules on the authoring machine); Andy runs it. Covers: open MARKS → the ROLL tutorial → roll once → a result
-// card, and % COLLECTED / pity only move when the reveal LANDS; the ROLL button never moves; a short balance says
-// NEED X MORE; reduced motion shows a static card; the worn mark reads its STAT (marks v2: "+10% WINS", "+1 BASE WINS/WORD" …); nothing loops after a reveal.
+// e2e/mark-rolls.spec.js — THE ROLL SCREEN (Andy oct5; replaces the in-panel roll UI + rolls-reveal.spec.js). Written
+// WITHOUT being run (the authoring machine runs no Playwright); CI runs it. Covers: MARKS opens the full-screen
+// ROLL screen (one big ROLL, no ×10) → the tutorial → a roll spins the reel and the card + pity only change when it
+// LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (marks v2: "+10% WINS" …); tap
+// anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with "1 IN X" huge; AUTO ROLL stops on its
+// tier; AUTO ROLL spends GEMS and stops when they run out; the skip setting is stored; a short balance says NEED X
+// MORE GEMS (rolls cost 10 GEMS — wins never buy one); reduced motion goes straight to the card; the
+// reel fits 360x640 → 1366x657; INDEX opens the MARKS INDEX, and its REPLAY replays a reveal for free; nothing loops after.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
 const SEED = {
-  'taw.rollsOn': '1', // MARK ROLLS are ON (rollsFlag.js); kept so the spec is independent of the flag
+  'taw.rollsOn': '1',
   'taw.seenMenu': '1',
   'taw.seenMenuSpotlight': '1',
   'taw.xp': JSON.stringify({ lv: 12, into: 0 }),
@@ -27,88 +31,156 @@ async function seed(page, extra = {}) {
     for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
   }, { ...SEED, ...extra });
 }
-async function openMarks(page) {
+async function openRoll(page, query = '') {
+  await page.goto(`/?portal=1${query}`);
+  await menuReady(page);
   // desktop: the menu's mark chip; phone (≤480px): the MARKS nav button
   await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
-  await page.locator('.mx-panel').waitFor();
+  await page.locator('.rs-overlay').waitFor();
 }
-const collected = (page) => page.locator('[data-testid="marks-collected"]').getAttribute('data-pct').then(Number);
+const pity = (page) => page.getByTestId('roll-pity').innerText();
+const card = (page) => page.locator('[data-testid="mark-roll-result"]');
 const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
   // RUNNING only: a finished one-shot (the rarity sweep's fill-mode both) stays in getAnimations() but moves nothing
-  return el && el.closest && el.closest('.mr-stage, .mr-cover') && a.playState === 'running';
+  return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running';
 }).length);
+const SPUN = 4600; // past the slowest full spin (SECRET 4 s) + its land beat
 
-test('roll once: tutorial, result card, nothing updates before the reveal lands, nothing loops after', async ({ page }) => {
+test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder, the reel lands on the real result', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page);
-  await page.goto('/?portal=1');
-  await menuReady(page);
-  await openMarks(page);
-
-  // the one-time, ONE-step tutorial points at ROLL, inside the MARKS panel
+  await openRoll(page);
   const tut = page.locator('.ut-overlay[data-tut="markRolls"]');
   await expect(tut).toBeVisible();
-  await expect(page.locator('.ut-ring')).toBeVisible();
   await tut.getByRole('button', { name: 'GOT IT' }).click();
   await expect(tut).toHaveCount(0);
 
-  expect(await collected(page)).toBe(0);
-  const pityBefore = await page.locator('.mr-pity').innerText();
-  const roll = page.locator('.mr-roll');
+  await expect(page.getByTestId('mark-roll-10')).toHaveCount(0);
+  await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN [\d,]+/);
+  await expect(page.getByTestId('roll-pity')).toContainText(/LEGENDARY\+ IN [\d,]+/);
+  const roll = page.locator('.rs-roll');
   await expect(roll).toHaveText(/FREE ROLL/);
+  const pityBefore = await pity(page);
   const boxBefore = await roll.boundingBox();
   await roll.click();
-  // NO SPOILERS: right after the tap, the index and pity have not moved yet
-  await page.waitForTimeout(120);
-  expect(await collected(page)).toBe(0);
-  expect(await page.locator('.mr-pity').innerText()).toBe(pityBefore);
-  const card = page.locator('[data-testid="mark-roll-result"]');
-  await expect(card).toHaveCount(1);
-  // ...and after the landing they have
-  await expect.poll(() => collected(page), { timeout: 4000 }).toBeGreaterThan(0);
-  // the ROLL button never moved (a shift under the cursor fires pointerleave and kills a hold)
+  // NO SPOILERS: mid-spin the card is not there and the pity ladder has not moved
+  await page.waitForTimeout(300);
+  await expect(card(page)).toHaveCount(0);
+  expect(await pity(page)).toBe(pityBefore);
+  // ...it lands (a first-time mark ALWAYS plays the full reveal: ≥ 2.5 s)
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  // the landing cell IS the result
+  const landTier = await page.locator('.rs-cell.is-land').getAttribute('data-tier');
+  expect(await card(page).getAttribute('data-tier')).toBe(landTier);
+  await expect(card(page).locator('.mark-pips')).toHaveCount(1);
+  // the ROLL button never moved, and is priced in ONE unit now that the starter is spent
   const boxAfter = await roll.boundingBox();
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
-  // price in ONE unit: GEMS (wins never buy rolls), and the balance it is paid from shows as icon + count
-  await expect(roll).toHaveText(/^ROLL · 10 GEMS/);
-  await expect(page.locator('.mr-meta .gem-count')).toHaveAttribute('data-gems', '1000');
-  await expect(page.locator('.mr-pity')).toContainText(/EPIC\+ IN ≤\d+/);
-  await expect(page.locator('.mr-luck')).toHaveText(/^LUCK ×[\d.]+$/);
-  // nothing worn → the first mark AUTO-equips (no question, a hold never stalls) and the hero shows it
-  await expect(page.locator('[data-testid="marks-main-tag"]')).toHaveText(/^\+[\d.,]+/);
-  await expect(page.locator('.mx-hero')).not.toContainText('NO MAIN YET');
-  // every reveal is finite: once landed, nothing in the roll UI animates, nothing loops, will-change is off
-  await page.waitForTimeout(2700);
+  // price in ONE unit: GEMS (wins never buy rolls) — the gem icon + 10 — and the balance it is paid from shows
+  // as icon + count right under it
+  await expect(roll).toHaveText(/^ROLL · 10$/);
+  await expect(roll).toHaveAttribute('aria-label', 'ROLL · 10 GEMS');
+  await expect(roll.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
+  await expect(roll).not.toContainText('WINS');
+  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
+  // marks v2: the card says the mark's STAT ("+10% WINS", "+1 BASE WINS/WORD" …)
+  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^\+[\d.,]+/);
+  // finite: once landed nothing animates, nothing loops, will-change is off
+  await page.waitForTimeout(3600);
   expect(await rollUiAnims(page)).toBe(0);
   const infinite = await page.evaluate(() => document.getAnimations().filter((a) => {
     const t = a.effect && a.effect.getTiming && a.effect.getTiming();
     return t && t.iterations === Infinity;
   }).length);
   expect(infinite).toBeLessThanOrEqual(1); // the menu's single pre-existing loop, nothing new
-  const wc = await page.evaluate(() => [...document.querySelectorAll('.mr-stage, .mr-stage *, .mr-cover, .mr-cover *')].filter((n) => n.style && n.style.willChange).length);
+  const wc = await page.evaluate(() => [...document.querySelectorAll('.rs-overlay, .rs-overlay *')].filter((n) => n.style && n.style.willChange).length);
   expect(wc).toBe(0);
 });
 
-test('a forced EPIC+ (pity): LEGENDARY+ plays the full-screen cutscene, an EPIC reveals in the panel', async ({ page }) => {
+test('tap anywhere mid-spin jumps straight to the result', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await page.waitForTimeout(250);
+  await page.locator('.rs-stage').click({ position: { x: 20, y: 20 } });
+  await expect(card(page)).toHaveCount(1, { timeout: 400 });
+});
+
+test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seed(page, {
     'taw.tut.markRolls': '1',
-    'taw.markRolls': JSON.stringify({ v: 1, rolls: 50, sinceEpic: 49, everEpic: true, starter: true, marks: {}, milestones: [] }),
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 600, sinceEpic: 3, sinceLegendary: 499, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
-  await page.goto('/?portal=1');
-  await menuReady(page);
-  await openMarks(page);
-  await page.locator('.mr-roll').click();
-  const tier = await page.locator('.mr-stage').getAttribute('data-tier');
-  expect(['epic', 'legendary', 'mythic', 'secret']).toContain(tier);
-  if (tier !== 'epic') {
-    await page.waitForTimeout(2100); // past the stamp beat, before the plate leaves
-    await expect(page.locator('.mr-cover-stamp')).toHaveText(/^1 IN [\d\s,]+$/);
-    const size = await page.locator('.mr-cover-stamp').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(size).toBeGreaterThanOrEqual(36); // sized from --fs-hero (was 30px at 390)
-  }
-  await expect.poll(() => rollUiAnims(page), { timeout: 3500 }).toBe(0);
+  await openRoll(page);
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 1');
+  await page.locator('.rs-roll').click();
+  const cut = page.getByTestId('roll-cutscene');
+  await expect(cut).toHaveClass(/is-on/, { timeout: SPUN });
+  expect(['legendary', 'mythic', 'secret']).toContain(await cut.getAttribute('data-tier'));
+  await page.waitForTimeout(900);
+  await expect(page.getByTestId('roll-cutscene-odds')).toHaveText(/^1 IN [\d,.K]+$/);
+  const size = await page.getByTestId('roll-cutscene-odds').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(size).toBeGreaterThanOrEqual(40);
+  // the cutscene ends by itself on the result card
+  await expect(cut).not.toHaveClass(/is-on/, { timeout: 4000 });
+  await expect(card(page)).toHaveCount(1);
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 500');
+});
+
+test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, {
+    'taw.tut.markRolls': '1',
+    // EPIC pity 3 rolls away: at most three spins (first-time marks still play the full reveal)
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 60, sinceEpic: 47, everEpic: true, starter: true, marks: {}, milestones: [] }),
+  });
+  await openRoll(page);
+  await page.getByTestId('roll-until').selectOption('epic');
+  await page.getByTestId('roll-auto').click();
+  await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
+  expect(['epic', 'legendary', 'mythic', 'secret']).toContain(await card(page).getAttribute('data-tier'));
+});
+
+test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, {
+    'taw.tut.markRolls': '1',
+    // 25 gems = two paid rolls; EPIC pity far away and "until SECRET" so only the gems can stop it
+    'taw.gems': JSON.stringify({ v: 1, bal: 25, peak: 12, streak: 0, mig: 1 }),
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, sinceEpic: 0, everEpic: true, starter: true, marks: {}, milestones: [] }),
+  });
+  await openRoll(page);
+  // reveals below SECRET skip, so the two rolls go fast
+  await page.getByTestId('roll-skip').selectOption('secret');
+  await page.getByTestId('roll-until').selectOption('secret');
+  await page.getByTestId('roll-auto').click();
+  await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
+  await expect(page.locator('.rs-msg')).toHaveText('NEED 5 MORE GEMS');
+  const after = await page.evaluate(() => ({
+    gems: JSON.parse(localStorage.getItem('taw.gems')).bal,
+    wins: localStorage.getItem('taw.wins'),
+    rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls,
+  }));
+  expect(after.gems).toBe(5);
+  // the wins only ever GAIN here (the INDEX rewards pay wins) — they never paid for a roll
+  expect(Number(after.wins)).toBeGreaterThanOrEqual(50000000);
+  // two paid rolls (a worn double-roll perk can add a free extra each)
+  expect(after.rolls).toBeGreaterThanOrEqual(3);
+  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '5');
+});
+
+test('skip reveals below [tier]: default EPIC, the pick is stored', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await expect(page.getByTestId('roll-skip')).toHaveValue('epic');
+  await page.getByTestId('roll-skip').selectOption('legendary');
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.markRolls') || '{}').skipBelow);
+  expect(stored).toBe('legendary');
 });
 
 test('short balance: the press says NEED X MORE GEMS (never a silent grey button) — a huge wins balance never buys a roll', async ({ page }) => {
@@ -123,10 +195,11 @@ test('short balance: the press says NEED X MORE GEMS (never a silent grey button
   await menuReady(page);
   // the MARKS dot means "a roll is affordable": 4 gems, the starter spent → no dot
   await expect(page.getByTestId('marks-roll-dot')).toHaveCount(0);
-  await openMarks(page);
-  await page.locator('.mr-roll').click();
-  await expect(page.locator('.mr-msg')).toHaveText('NEED 6 MORE GEMS');
-  await expect(page.locator('[data-testid="mark-roll-result"]')).toHaveCount(0);
+  await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
+  await page.locator('.rs-overlay').waitFor();
+  await page.locator('.rs-roll').click();
+  await expect(page.locator('.rs-msg')).toHaveText('NEED 6 MORE GEMS');
+  await expect(card(page)).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('taw.wins'))).toBe('50000000');
 });
 
@@ -147,52 +220,89 @@ test('GEMS on the menu: icon + count beside the wins chip; the MARKS dot only wh
   expect(await chip.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
 });
 
-test('reduced motion: a static result card, no reveal animation; a legendary+ keeps its static plate', async ({ page }) => {
+test('reduced motion: straight to the result card, no reel animation', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await seed(page, {
-    'taw.tut.markRolls': '1',
-    'taw.markRolls': JSON.stringify({ v: 1, rolls: 50, sinceEpic: 49, everEpic: true, starter: true, marks: {}, milestones: [] }),
-  });
-  await page.goto('/?portal=1');
-  await menuReady(page);
-  await openMarks(page);
-  await page.locator('.mr-roll').click();
-  const card = page.locator('[data-testid="mark-roll-result"]');
-  await expect(card).toBeVisible();
-  expect(await rollUiAnims(page)).toBe(0);
-  // rarity still reads: a LEGENDARY+ plate + stamp are up, static, for the hold (an EPIC reveals in the panel)
-  const tier = await page.locator('.mr-stage').getAttribute('data-tier');
-  if (tier !== 'epic') {
-    await expect(page.locator('.mr-cover.is-static')).toHaveCount(1);
-    await expect(page.locator('.mr-cover.is-static .mr-cover-stamp')).toBeVisible();
-  }
-  await expect(page.locator('.mr-cover.is-static')).toHaveCount(0, { timeout: 4000 });
-  const op = await card.evaluate((el) => getComputedStyle(el.closest('.mr-card-slot')).opacity);
-  expect(Number(op)).toBe(1);
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await expect(card(page)).toHaveCount(1, { timeout: 300 });
+  // the REEL never moves (the app-wide press squash on the ROLL button itself — shallow under reduced motion,
+  // juice/motion.js — is button feedback, not the reveal)
+  const reelAnims = await page.evaluate(() => document.getAnimations().filter((a) => {
+    const el = a.effect && a.effect.target;
+    return el && el.closest && el.closest('.rs-stage') && a.playState === 'running';
+  }).length);
+  expect(reelAnims).toBe(0);
 });
 
-test('the worn mark shows MAIN ×N; every other owned mark shows its perk or MAIN', async ({ page }) => {
+for (const [w, h] of [[360, 640], [390, 844], [1366, 657]]) {
+  test(`${w}x${h}: the reel plays and lands, nothing sticks out, the card never covers ROLL`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await seed(page, { 'taw.tut.markRolls': '1' });
+    await openRoll(page);
+    await page.locator('.rs-roll').click();
+    await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+    const sw = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(sw).toBeLessThanOrEqual(w);
+    const c = await card(page).boundingBox();
+    const r = await page.locator('.rs-roll').boundingBox();
+    expect(c.y + c.height).toBeLessThanOrEqual(r.y + 1);
+    expect(r.y + r.height).toBeLessThanOrEqual(h);
+  });
+}
+
+test('coming back from the INDEX never replays the last reveal', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  await page.waitForTimeout(4200);
+  await page.getByTestId('roll-index').click();
+  await page.locator('.mx-panel').waitFor();
+  await page.locator('.mx-close').click();
+  await expect(page.locator('.rs-overlay')).toBeVisible();
+  await page.waitForTimeout(200);
+  expect(await rollUiAnims(page)).toBe(0);
+  await expect(page.getByTestId('roll-cutscene')).not.toHaveClass(/is-on/);
+});
+
+test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
-  await page.goto('/?portal=1');
-  await menuReady(page);
-  await openMarks(page);
-  await page.locator('.mr-roll').click();
-  const card = page.locator('[data-testid="mark-roll-result"]');
-  await expect(card.locator('.mr-card-tag')).toHaveText(/^\+[\d.,]+/, { timeout: 4000 });
+  await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  await page.getByTestId('roll-index').click();
+  await page.locator('.mx-panel').waitFor();
+  // nothing worn → the first mark AUTO-equipped; INDEX v2: the worn card says its stat
+  await expect(page.locator('.mx-tile.is-on')).toHaveCount(1);
   await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/);
-  // roll until a SECOND distinct mark is owned; it reads PERK, not MAIN
-  for (let i = 0; i < 12; i += 1) {
-    const owned = await page.locator('.mx-tile:not(.is-locked):not(.is-on)').count();
-    if (owned > 0) break;
-    await page.waitForTimeout(2700); // past any reveal (≤ 2.5 s)
-    await page.locator('.mr-roll').click();
-  }
-  await page.waitForTimeout(2700);
-  const other = page.locator('.mx-tile:not(.is-locked):not(.is-on) .mx-tile-sub').first();
-  // MARKS via ROLLS: a non-worn owned mark shows its PERK line (LEGENDARY+) or what wearing it pays
-  await expect(other).toHaveText(/^(\+[\d.,]+.*|[A-Z][A-Z0-9 ×+:]+)$/);
   await page.locator('.mx-close').click();
-  await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText(/^×\d/);
+  await expect(page.locator('.rs-overlay')).toBeVisible();
+  await page.locator('.rs-close').click();
+  await expect(page.locator('.rs-overlay')).toHaveCount(0);
+});
+
+test('INDEX REPLAY replays that mark’s reveal on the reel — no roll, no charge', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  await page.waitForTimeout(4200);
+  const markId = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('taw.markRolls')).marks)[0]);
+  const before = await page.evaluate(() => ({ gems: JSON.parse(localStorage.getItem('taw.gems')).bal, wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
+  await page.getByTestId('roll-index').click();
+  await page.locator(`.mx-tile[data-mark="${markId}"]`).click();
+  await page.locator('.mx-replay').click();
+  // back on the ROLL screen, the reel spins again (the card waits for the landing) and lands on that mark
+  await expect(page.locator('.mx-panel')).toHaveCount(0);
+  await expect(page.locator('.rs-overlay')).toBeVisible();
+  await expect(card(page)).toHaveCount(0);
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  expect(await page.locator('.rs-cell.is-land').getAttribute('data-mark')).toBe(markId);
+  const after = await page.evaluate(() => ({ gems: JSON.parse(localStorage.getItem('taw.gems')).bal, wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
+  expect(after).toEqual(before);
 });

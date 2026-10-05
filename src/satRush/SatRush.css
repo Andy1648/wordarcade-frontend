@@ -195,7 +195,7 @@
   outline: none;
 }
 .sr-hlabel {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   opacity: 0.6;
@@ -228,8 +228,8 @@
   align-items: center;
 }
 .sr-heatblock {
-  width: 12px;
-  height: 12px;
+  width: 16px; /* fine-tune oct5: was 12px */
+  height: 16px;
   flex: 0 0 auto;
   border: 2px solid var(--ink);
   background: transparent;
@@ -273,7 +273,7 @@
   align-self: end;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   opacity: 0.65;
@@ -713,7 +713,7 @@
 .sr-msg {
   margin-top: 14px;
   min-height: 20px;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--ink);
@@ -970,7 +970,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.14em;
   color: var(--ink);
 }
@@ -986,7 +986,7 @@
   letter-spacing: 0.1em;
 }
 .sr-spell-bar {
-  height: 8px;
+  height: 16px; /* fine-tune oct5: was 8px; the endgame clock is read mid-word */
   border: 2px solid var(--ink);
   background: var(--paper);
   overflow: hidden;
@@ -1003,7 +1003,7 @@
 }
 /* each auto-printed letter lands with a small squash (PUNCH-family) */
 .sr-slot.revealed {
-  animation: sr-print-squash 0.26s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation: sr-print-squash 0.42s cubic-bezier(0.2, 0.9, 0.2, 1) both; /* fine-tune oct5: was 0.26s */
 }
 @keyframes sr-print-squash {
   0% {
@@ -1677,7 +1677,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   line-height: 1.6;
   opacity: 0.85; /* the example is now secondary to the definition above it */
 }
@@ -1701,7 +1701,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   border-top: 1px dashed var(--ink);
   padding-top: 8px;
 }
@@ -1779,7 +1779,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   line-height: 1.6;
 }
 .sr-reencode-def {
@@ -1787,7 +1787,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700; /* emphasis is BOLD, never italic */
   opacity: 0.8;
 }
@@ -1824,7 +1824,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 .sr-mastered {
   margin-top: 8px;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -2007,7 +2007,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.1em;
 }
 .sr-lineup-grid {
@@ -2227,15 +2227,16 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   paint-order: stroke fill; /* outline behind the fill so the paper reads clean */
   text-shadow: 6px 6px 0 var(--ink); /* the offset ink fill = depth */
   transform: rotate(var(--stamp-rot));
-  animation: sr-burst-punch 0.3s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation: sr-burst-punch 0.6s cubic-bezier(0.2, 0.9, 0.2, 1) both; /* fine-tune oct5: was 0.3s */
 }
 /* capture (clear) vs escape (miss): same lettering, mirrored lean so they don't
    read as the same beat; the label (CAPTURED!! / ESCAPED?!) carries the rest. */
 .sr-stamp.capture { --stamp-rot: -8deg; }
 .sr-stamp.escape { --stamp-rot: 7deg; }
 @keyframes sr-burst-punch {
-  0% { transform: rotate(var(--stamp-rot)) scale(0.4); opacity: 0; }
-  55% { transform: rotate(var(--stamp-rot)) scale(1.12); opacity: 1; }
+  0% { transform: rotate(var(--stamp-rot)) translateY(-18px) scale(2.4); opacity: 0; }
+  40% { transform: rotate(var(--stamp-rot)) scale(0.9); opacity: 1; }
+  65% { transform: rotate(var(--stamp-rot)) scale(1.1); opacity: 1; }
   100% { transform: rotate(var(--stamp-rot)) scale(1); opacity: 1; }
 }
 
@@ -2336,11 +2337,14 @@ html[data-beat='true'] .sr-mult.sr-print::before {
 
 /* THE EARN STRIP, SAT RUSH SCOPE — same reasoning as the .solo-root block in solo/Solo.css: the
    shared wins pill + multiplier stack are 11px decoration in the room modes, 13px labels here. */
-.sr-app .wins-hud-label,
 .sr-app .lstack-per,
-.sr-app .lstack-row,
-.sr-app .wins-earned-line {
+.sr-app .lstack-row {
   font-size: var(--fs-label);
+}
+/* fine-tune oct5: the pill's caption and the earned line are read mid-run */
+.sr-app .wins-hud-label,
+.sr-app .wins-earned-line {
+  font-size: var(--fs-body);
 }
 
 /* THE HUD ON A PHONE. Five stat cells + the exit need ~420px on one row and a phone gives the
@@ -2370,7 +2374,9 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   }
   .sr-hlabel { letter-spacing: 0.04em; }
   .sr-heat { gap: 2px; }
-  .sr-heatblock { width: 10px; height: 10px; }
+  .sr-heatblock { width: 14px; height: 14px; }
+  /* the five-cell strip has ~355px on a phone: the caption keeps the label step here */
+  .sr-hlabel { font-size: var(--fs-label); }
   .sr-hcell:nth-child(-n + 3) { border-bottom: 2px solid var(--ink); }
   .sr-hcell:nth-child(3),
   .sr-hcell:nth-child(5) { border-right: 0; }
@@ -2511,7 +2517,7 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   border-bottom: 2px solid var(--ink);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink);

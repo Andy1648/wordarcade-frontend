@@ -143,7 +143,7 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700;
 }
 .wr-lane-name-txt {
@@ -246,7 +246,7 @@
   --lw-ls: 0.04em;
 }
 .wr-hero-sub {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: #d8c9f0;
 }
@@ -302,14 +302,18 @@
   color: var(--wr-accent);
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
-  animation: wr-count-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: wr-count-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1); /* fine-tune oct5: was 300ms, 0.6 -> 1 */
 }
 @keyframes wr-count-pop {
-  from {
-    transform: scale(0.6);
+  0% {
+    transform: scale(2.2);
     opacity: 0;
   }
-  to {
+  45% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -377,7 +381,7 @@
 }
 .wr-earn {
   margin: 0;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   color: #d8c9f0;
 }
 
@@ -497,7 +501,7 @@
   border: 3px solid #3a1f63;
   border-radius: 8px;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
 }
 .wr-roster li.is-me {
   border-color: var(--wr-cyan-dark);

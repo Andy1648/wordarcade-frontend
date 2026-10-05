@@ -34,8 +34,8 @@ export const TUTORIALS = [
     ],
   },
   {
-    // MARK ROLLS (Andy M): unlocks with MARKS. It points at the ROLL button, which lives INSIDE the MARKS
-    // panel — so it is hosted there (`host: 'marks'`, MarksIndex.jsx shows it the first time the panel
+    // MARK ROLLS (Andy M): unlocks with MARKS. It points at the ROLL button, which lives on the ROLL
+    // screen — so it is hosted there (`host: 'marks'`, RollScreen.jsx shows it the first time the screen
     // opens), never by the menu's TutorialHost (dueTutorial skips hosted entries). New to everyone.
     id: 'markRolls',
     host: 'marks',
@@ -43,7 +43,7 @@ export const TUTORIALS = [
     when: (s) => s.marksRevealed && rollsEnabled(),
     // ONE step (oct3 review): the button's own HOLD tag already says "hold"; a second card repeating it was noise
     steps: [
-      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.mr-roll' },
+      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.rs-roll' },
     ],
   },
   {

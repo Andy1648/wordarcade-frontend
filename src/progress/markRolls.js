@@ -1,4 +1,4 @@
-// markRolls.js — MARK ROLLS: spend wins on a random mark, Sol's RNG / Blox Fruits gacha style.
+// markRolls.js — MARK ROLLS: spend GEMS on a random mark, Sol's RNG / Blox Fruits gacha style.
 // MARKS via ROLLS (Andy, PROGRESSION FINAL — turned on with the Rebirth Rush economy). Feel notes:
 // claude/econ-oct2/rolls-rr-notes.md.
 //
