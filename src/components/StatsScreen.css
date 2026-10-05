@@ -680,3 +680,10 @@
   color: #c9b8e8;
 }
 .pc-site { margin-left: auto; color: var(--pc-c); font-weight: 700; }
+
+/* TIER IDENTITY (Andy oct5): the R badge and the rebirth ladder chips wear their rung's rarity look; the level
+   numeral is inked in its level rung (src/components/rarity/RarityFin.css). The NOW chip keeps its hard shadow. */
+.pc-rb.rarity-chip { padding: 2px 8px; border-width: 3px; }
+.stats-chip.is-now.rarity-fin { --rar-off: 3px 3px 0 #000; }
+.stats-chip.is-next.rarity-fin,
+.stats-chip.is-past.rarity-fin { --rar-off: 0 0 #0000; }

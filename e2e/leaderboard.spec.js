@@ -79,7 +79,7 @@ for (const vp of VIEWPORTS) {
     await expect(me.locator('.lb-name')).toHaveText('Typer_99');
     await expect(me.locator('.lb-you-badge')).toHaveText('YOU');
     await expect(me.locator('.lb-level')).toHaveText('R2 · LV12'); // Andy oct3 19:55: rebirths lead
-    await expect(me.locator('.lb-name')).toHaveCSS('color', 'rgb(46, 255, 224)'); // R2 = cyan
+    await expect(me.locator('.lb-name')).toHaveCSS('color', 'rgb(94, 162, 255)'); // R2 = the rebirth tier ramp's blue (rarity identity, Andy oct5)
     expect(board.calls.submit).toBeGreaterThanOrEqual(1);
 
     const m = await page.evaluate(() => {

@@ -23,19 +23,21 @@ import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndLucky, sndAchievement, sndWordRejected } from '../../audio/gameSounds';
 import { formatNum } from '../../format';
 import { announceRolls } from '../../leaderboard/live';
+import { rarityClass } from '../../lib/rarityStyle.js';
+import RarityFx from '../rarity/RarityFx';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t).toUpperCase());
 /** LUCK is always written one way: a multiplier, ×1.05 (never "+0.05"). */
 export const luckText = (v) => `LUCK ×${+Number(v).toFixed(2)}`;
 
-function ResultCard({ result, worn }) {
+function ResultCard({ result, worn, seq = 0, fxDelay = null }) {
   if (!result) return null;
   const m = markEntry(result.markId);
   const isWorn = worn === result.markId;
   const finish = result.rainbow > 0 ? 'rainbow' : result.gold > 0 ? 'gold' : 'base';
   return (
-    <div className={`mr-card is-${result.tier}${result.shiny ? ' is-shiny' : ''}`} data-testid="mark-roll-result" data-shiny={result.shiny ? '1' : undefined}>
+    <div className={`mr-card is-${result.tier}${result.shiny ? ' is-shiny' : ''} ${rarityClass(result.tier, { tint: true })}`} data-testid="mark-roll-result" data-shiny={result.shiny ? '1' : undefined}>
       {/* SHINY: a gold streak over the card (RollReveal sweeps it once) + ONE small badge, no text */}
       {result.shiny ? <img className="mr-card-streak" src="/art/rolls/shimmer.svg" alt="" aria-hidden="true" draggable="false" /> : null}
       <span className="mr-card-artwrap">
@@ -57,6 +59,9 @@ function ResultCard({ result, worn }) {
           )}
         </div>
       </div>
+      {/* RARITY IDENTITY: shimmer (EPIC+), sparks (LEGENDARY+), the SECRET rainbow sweep — once per roll,
+          timed to land with the reveal (keyed on the roll, so each new result replays it once) */}
+      <RarityFx key={seq} tier={result.tier} delay={fxDelay} />
     </div>
   );
 }
@@ -254,7 +259,7 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
         version={version}
         reduced={reduced}
         coverHost={coverHost}
-        card={<ResultCard result={result} worn={worn} />}
+        card={<ResultCard result={result} worn={worn} seq={seq} fxDelay={result && !reduced ? revealMs(result.tier) : 0} />}
       />
       <div className="mr-roll-row">
       <button

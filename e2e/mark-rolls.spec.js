@@ -33,7 +33,8 @@ async function openMarks(page) {
 const collected = (page) => page.locator('[data-testid="marks-collected"]').getAttribute('data-pct').then(Number);
 const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
-  return el && el.closest && el.closest('.mr-stage, .mr-cover');
+  // RUNNING only: a finished one-shot (the rarity sweep's fill-mode both) stays in getAnimations() but moves nothing
+  return el && el.closest && el.closest('.mr-stage, .mr-cover') && a.playState === 'running';
 }).length);
 
 test('roll once: tutorial, result card, nothing updates before the reveal lands, nothing loops after', async ({ page }) => {

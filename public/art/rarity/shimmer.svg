@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" preserveAspectRatio="none">
+  <!-- the EPIC+ shimmer: a fat slanted white band, a thin chaser, a chipped corner and two flecks of
+       overspray (asymmetry on purpose). Swept ONCE across a rarity surface on appear / hover. -->
+  <path d="M44 0 L70 0 L41 100 L13 100 Z" fill="#FFFFFF" opacity="0.5"/>
+  <path d="M70 0 L64 9 L62 4 Z" fill="#FFFFFF" opacity="0.5"/>
+  <path d="M78 0 L87 0 L60 100 L52 100 Z" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="92" cy="18" r="2.2" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="35" cy="84" r="1.6" fill="#FFFFFF" opacity="0.55"/>
+  <path d="M41 100 L39 92 Q38 88 41 86 Z" fill="#FFFFFF" opacity="0.45"/>
+</svg>
