@@ -1,0 +1,62 @@
+[
+ {
+  "name": "gate-25x",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 25;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 25;"
+   ]
+  ]
+ },
+ {
+  "name": "gate-50x",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 50;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 50;"
+   ]
+  ]
+ },
+ {
+  "name": "gate-20x",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 20;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 20;"
+   ]
+  ]
+ },
+ {
+  "name": "gate-25x-rolls",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 25;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 25;"
+   ]
+  ]
+ }
+]
