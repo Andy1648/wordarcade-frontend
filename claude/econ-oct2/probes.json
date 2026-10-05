@@ -1,0 +1,86 @@
+[
+ {
+  "name": "keep-step18",
+  "patch": []
+ },
+ {
+  "name": "keep-step24",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 24;"
+   ]
+  ]
+ },
+ {
+  "name": "keep-step30",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 30;"
+   ]
+  ]
+ },
+ {
+  "name": "keep-step36",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 36;"
+   ]
+  ]
+ },
+ {
+  "name": "keep-step45",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 45;"
+   ]
+  ]
+ },
+ {
+  "name": "keep-step54",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 54;"
+   ]
+  ]
+ },
+ {
+  "name": "keep-base20-step36",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 20;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 36;"
+   ]
+  ]
+ },
+ {
+  "name": "keep-base20-step45",
+  "patch": [
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_BASE = 15;",
+    "export const REBIRTH_GATE_BASE = 20;"
+   ],
+   [
+    "progress/xp.js",
+    "export const REBIRTH_GATE_STEP = 18;",
+    "export const REBIRTH_GATE_STEP = 45;"
+   ]
+  ]
+ }
+]
