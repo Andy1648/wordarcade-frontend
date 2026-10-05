@@ -21,13 +21,14 @@
   padding-bottom: 5px;
   border-bottom: 2px solid #3d2a5c;
 }
+/* visual-1: rates and wins are numbers a player reads mid-game — --fs-body, not the 13px label step. */
 .lstack-rate {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700;
   color: #ffe94a;
 }
 .lstack-per {
-  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
+  font-size: var(--fs-body);
   color: #7a6a9b;
 }
 
@@ -38,7 +39,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  font-size: var(--fs-label); /* was --fs-micro: label/value words (fix/min-text-sweep) */
+  font-size: var(--fs-body); /* visual-1: was --fs-label */
 }
 .lstack-label { color: #9a8ab8; letter-spacing: 0.04em; }
 .lstack-val { color: #2effe0; font-weight: 700; }

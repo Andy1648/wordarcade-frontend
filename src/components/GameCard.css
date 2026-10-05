@@ -816,7 +816,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-lock-label {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  font-size: clamp(13px, 4.6cqw, 16px);
+  /* visual-1: floor 13 -> 16px (--fs-body's floor), cap 16 -> 18px. A narrow card drops back to
+     the label step only below 120px (see the container rules at the foot of the file). */
+  font-size: clamp(16px, 4.6cqw, 18px);
   letter-spacing: 0.02em;
   line-height: 1;
   color: #ffe94a;
@@ -860,9 +862,23 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    the label kept rendering at its 13px base (measured: display:flex, 13px, 4.1px past the card).
    These live at the foot of the file, after every base rule they override. */
 @container (max-width: 170px) {
+  /* visual-1: --fs-body (was --fs-label) — a 166px six-card row still has room for 16px; the
+     label wraps between words ("UNLOCKS AT / LV 25") instead of shrinking. */
+  .game-card-lock-label { font-size: var(--fs-body); letter-spacing: 0; }
+}
+@container (max-width: 120px) {
   /* --fs-label (13px), not a bare 12: every font-size in the app goes through the scale, and
-     typeScale.test.js is the gate that keeps it that way. */
-  .game-card-lock-label { font-size: var(--fs-label); letter-spacing: 0; }
+     typeScale.test.js is the gate that keeps it that way. "UNLOCKS" at 16px Bungee is ~88px, which
+     a sub-120px card's plaque cannot hold. */
+  .game-card-lock-label { font-size: var(--fs-label); }
+}
+
+/* visual-1 CROWDING (1163x501 six-card row): ONE BIG THING. On a short screen only the FEATURED
+   card keeps its mode badge; the others drop it, so the title bars carry the name + the pay line
+   and the eye has one card with the full set to land on. The badge is still in every card's
+   accessible name (aria-label) and comes back on any screen taller than 600px. */
+@media (max-height: 600px) {
+  .game-card:not(.featured) .game-card-badge { display: none; }
 }
 @container (max-width: 80px) {
   /* "UNLOCKS AT LV 2" is 15 characters and its longest WORD is wider than the plaque on a 58px

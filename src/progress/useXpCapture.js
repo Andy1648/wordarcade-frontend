@@ -130,7 +130,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const r = rarityOf(w);
       if (!r.announce) return; // COMMON / non-words stay silent (no pop)
       const fx = fxRef && fxRef.current;
-      if (fx && fx.letterPop) fx.letterPop(r.label, '', 1.2, r.color, 0);
+      if (fx && fx.letterPop) fx.letterPop(r.band, '', 1.2, r.color, 0); // the band only: menu words pay no rarity ×N
     };
 
     const onKey = (e) => {

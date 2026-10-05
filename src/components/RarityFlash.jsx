@@ -1,6 +1,7 @@
 // RarityFlash.jsx — shared RARITY (word-value) pop for the solo modes (SAT Rush, CHAIN, FUSE),
 // which don't share Word Bomb/Blitz's hype-popup. A rarer accepted word flashes its tier label
-// ("RARE ×2.5") in the tier colour, centred over the play area. COMMON stays silent.
+// ("RARE") in the tier colour, centred over the play area. COMMON stays silent. The BAND only, no ×N:
+// rarity pays only in Word Bomb + Blitz (whose feed shows `label`, "RARE ×2.5"), never in these modes.
 //
 // Re-key it at the callsite (`key={acceptCount}`) so a new accept REMOUNTS it and the one-shot
 // animation replays. Purely decorative: position:fixed, pointer-events:none, aria-hidden, and a
@@ -18,7 +19,7 @@ export default function RarityFlash({ rarity }) {
       onAnimationEnd={() => setDone(true)}
       aria-hidden="true"
     >
-      {rarity.label}
+      {rarity.band}
     </div>
   );
 }

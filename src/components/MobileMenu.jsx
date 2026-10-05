@@ -284,7 +284,7 @@ export default function MobileMenu({
                 <span className="hp-m-desc">
                   {game.description}
                   {game.id === 'sat-rush' && modePower(game.id) > 1 && (
-                    <span className="hp-m-perk">{` POWER ×${modePower(game.id)}`}</span>
+                    <span className="hp-m-perk">{` POWER ×${formatNum(modePower(game.id))}`}</span>
                   )}
                 </span>
               </span>
@@ -312,7 +312,7 @@ export default function MobileMenu({
               <LayeredWord className="hp-m-solo-name" text={game.name} accent={s.accent} />
               <span className="hp-m-solo-sub">
                 {locked && <LockGlyph />}
-                {locked ? `LV ${game.unlockLevel}` : <SoloPerk id={game.id} />}
+                {locked ? `LV ${formatNum(game.unlockLevel)}` : <SoloPerk id={game.id} />}
               </span>
             </>
           );
@@ -364,12 +364,12 @@ export default function MobileMenu({
           className={`hp-m-navbtn is-stats${navigating ? ' is-disabled' : ''}`}
           onClick={rewardsCount > 0 && onRewards ? onRewards : onStats}
           disabled={navigating}
-          aria-label={rewardsCount > 0 ? `Open stats — ${rewardsCount} to claim` : 'Open stats'}
+          aria-label={rewardsCount > 0 ? `Open stats — ${formatNum(rewardsCount)} to claim` : 'Open stats'}
         >
           {/* H6/M20: while claims wait this slab OPENS THE CLAIMS, so it says so (same 5 letters,
               same slab, same count bubble) — "STATS" opening a rewards panel was a surprise. */}
           {rewardsCount > 0 && onRewards ? 'CLAIM' : 'STATS'}
-          {rewardsCount > 0 && <span className="hp-m-count" aria-hidden="true">{rewardsCount}</span>}
+          {rewardsCount > 0 && <span className="hp-m-count" aria-hidden="true">{formatNum(rewardsCount)}</span>}
         </button>
         <button
           ref={shopRef}
