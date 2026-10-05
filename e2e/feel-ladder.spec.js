@@ -14,7 +14,7 @@
 //   4. nothing animates the input; the infinite-animation count does not grow; the document stays
 //      under 60 running animations at T4;
 //   5. reduced motion: no WAAPI slam, no particles, no flash — the slam label is shown static;
-//   6. LUCKY in Word Bomb renders a visible label (no ×N — lucky pays no multiplier) (NEEDS the one-line App.jsx change that passes
+//   6. LUCKY ×5 in Word Bomb renders a visible label (the ×N the payout applied) (NEEDS the one-line App.jsx change that passes
 //      `lucky` on lastLanding — red until it lands).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -184,11 +184,10 @@ test.describe('feel ladder — Word Bomb', () => {
   });
 
   // NEEDS the App.jsx line (lastLanding.lucky). Red until it lands — that is the point.
-  test('LUCKY in Word Bomb is visible, never silent — and claims no ×N (Rebirth Rush pays none)', async ({ page }) => {
+  test('LUCKY ×5 in Word Bomb is visible, never silent', async ({ page }) => {
     const mock = await enterWordBomb(page, { lucky: 'always' });
     await play(page, mock, WORDS[0]);
     await expect(page.locator('.fx-lucky-label')).toBeVisible({ timeout: 2000 });
-    await expect(page.locator('.fx-lucky-label')).toContainText('LUCKY');
-    await expect(page.locator('.fx-lucky-label')).not.toContainText('×');
+    await expect(page.locator('.fx-lucky-label')).toContainText('LUCKY ×5');
   });
 });

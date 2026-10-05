@@ -294,7 +294,7 @@ function wordSlot(landing, clutch) {
     // the word's own landing chip: the RARE slot's effect, or the UNCOMMON stand-in for the hype
     showLanding: landingShown && (slot.main === 'rare' || slot.main === 'hype'),
     showHype: slot.main === 'hype' && !landingShown,
-    labels: slot.tags.map((k) => tagLabel(k, { luckyMult, band })),
+    labels: slot.tags.map((k) => tagLabel(k, { luckyMult, band, paysMult: true })), // WB + Blitz pay lucky ×N
   };
 }
 
@@ -3890,7 +3890,7 @@ export default function GameScreen({
                 )}
                 {pending.phase === 'accept' && (
                   <span className="wb-pending-tag">
-                    ✓
+                    ✓{pending.combo > 1 ? ` ×${pending.combo}` : ''}
                   </span>
                 )}
                 {pending.phase === 'reject' && (
