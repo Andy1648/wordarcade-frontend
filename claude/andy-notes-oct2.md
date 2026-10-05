@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~11:15 ✅ #199 MERGED + LIVE (588a330): KEY TIER kept across rebirths, gate LV 25×(R+1), conversion frozen at 15+18R. **ANDY: RUN 019 NOW** (supabase/migrations/019_round_rebirth_gate.sql, on your clipboard) then `notify pgrst`; until then the board's level cap (15+18R+36) is below the new gate.
 - oct5 ~11:05 MERGED + LIVE #197 multi-level bar (ratchet 963,000) · #200 live · #193 had main conflicts (no CI ran) — resolved: the ROLL tutorial is now a spotlight on the ROLL screen's ROLL · #198 Chromebook: CREDITS fix + pager lazy-loaded (+1.8 KB initial), main merged in · #199 shop confirm: KEEP lists KEY TIER.
 - oct5 ~10:35 MERGED #200 KEY POWER → KEY TIER · OPENED #201 named stats (×1.1 WINS / PERK: / ★N), #202 MARKS word cut + ROLL/INDEX split · #197: payload ratchet 960,000 → 963,000 — the multi-level bar player costs a measured +3.1 KB in the index chunk (ANDY: say if you'd rather trade it for something else) · FLAG: HEIRLOOM perk "REBIRTH KEEPS 3 KEY TIERS" is dead once #199 lands (KEY always kept) — needs a replacement perk.
 - oct5 ~10:00 MERGED #195 STAT BOARD total-first · #196 spotlight tutorials · FIXED #193: INDEX/✕ tapped mid-reveal were swallowed by tap-to-skip (the card shows before the reel is done) — they now pass through and land the roll; mark-rolls 39/39 locally · OPENED #198 Chromebook pages, #199 KEY TIER kept + gate LV 25×(R+1). **PACE WARNING (#199): CI probe, rebirths in 10 h casual/median/strong — 15+18R 30/36/41 · 25×(R+1) 6/7/8 · 20×(R+1) 13/17/19 · 50×(R+1) 1/1/2** (levels cost ×1.15 each, so +25/rebirth is ~5× slower). Shipping 25×(R+1) as ordered; conversion frozen at 15+18R (fair). **ANDY TODO: run supabase/migrations/019_round_rebirth_gate.sql AFTER #199 deploys, then `notify pgrst`.**
@@ -198,10 +199,10 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] (#195 MERGED) 4. STAT BOARD: the TOTAL MULTIPLIER (×N, huge) comes FIRST, then BASE, then each multiplier line.
 - [x] (#197 MERGED + LIVE 4f35360) 5. PROGRESS BAR lags on multi-level climbs: each level passed = a fast full-fill flash (~100 ms each, capped ~1 s total), the level number ticks up, then fill to the real %. Never sit half-filled or behind the real value.
 - [x] (#200 MERGED) 6. Rename KEY POWER → KEY TIER everywhere.
-- [~] (#199 open, CI) 7b (Andy update): rebirth gate = ROUND numbers, LV 25 × (R+1) (25, 50, 75, 100…); if the CI sim needs more, steps of 50. Never odd numbers like 141. Keep the conversion fair for existing players.
+- [x] (#199 MERGED + LIVE 588a330) 7b (Andy update): rebirth gate = ROUND numbers, LV 25 × (R+1) (25, 50, 75, 100…); if the CI sim needs more, steps of 50. Never odd numbers like 141. Keep the conversion fair for existing players.
 - [~] (#202: REPLAY removed from INDEX) 8. ROLL vs INDEX are TWO separate screens, never mixed. ROLL: only the ROLL button, AUTO ROLL, gems, pity, the result. INDEX: the collection.
 - [~] (#201 open) 9. The roll RESULT names the stat, short — never a bare "×1.5 MAIN": "×1.5 WINS" / "+5 BASE XP/LETTER"; "PERK: <short perk>" for LEGENDARY+; "★2" if it's a dupe. The same compact format on the MAIN slot and the INDEX cards.
-- [~] (#199) 7. KEY TIER no longer resets on rebirth. Keep KEY costs; retune ONLY by raising the rebirth gate (more levels per rebirth than 15+18R, whatever the CI sim says) so rebirth pace stays in target. Bigger level numbers are fine. Existing players keep their current tier. Report the numbers.
+- [x] (#199 MERGED + LIVE) 7. KEY TIER no longer resets on rebirth. Keep KEY costs; retune ONLY by raising the rebirth gate (more levels per rebirth than 15+18R, whatever the CI sim says) so rebirth pace stays in target. Bigger level numbers are fine. Existing players keep their current tier. Report the numbers.
 
 ## GEMS (Andy oct5 ~09:00) — REPLACES the roll currency (wins never buy rolls)
 - [ ] Rolls cost 10 GEMS each.
