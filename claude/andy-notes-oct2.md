@@ -188,6 +188,15 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] 4. (13:35 DONE on feat/numbers-feel: one helper src/juice/countUp.js — 1.2 s → 2 s on a log scale of the jump, a new gain retargets the running count (never stacks), reduced motion/drops instant; used by the menu wins chip with a big '+N', level numeral, XP fill, WinnerPopup, the in-game wins pill, claim stamps (now 1.7 s), WordLanding, SAT results) COUNT-UP ANIMATIONS last longer ("so the user can see how much it's increasing by"): wins/XP/level gains count up over ~1.2–2 s scaled to the jump, with the "+amount" shown big. Finite, no stacking, reduced motion = instant.
 - [ ] 5. (13:35: visible half DONE on feat/numbers-feel a1c31c8 — '43.7%' with one decimal, a pooled '+X.X%' pop per credit, a flash + soft note at every 10%, the bar counts up from where it was when you left for a game; the movement check FAILED badly → Option F proposal at the top of ANDY TODO) HIGH-LEVEL BAR FEELS STAGNANT (Andy LV175: "bar just isn't moving"): show % to next level with a decimal, a "+X%" pop per word, a small milestone tick every 10% with a little reward feel. Sim: at LV150–250 the bar moves ≥0.5% per average word. If the existing-player numbers say the wait is too long, PROPOSE (don't apply) a fair one-time rescale with before/after per top player.
 
+## ANDY oct5 ~10:30 — PRIORITY (added to the goal; small PRs, merge when green)
+- [ ] 1. TUTORIALS = spotlight style: screen dims, the one target glows, tap anywhere to continue. No OK-button popups. Keep only the few that matter (roll, gems, rebirth, KEY TIER); cut minor ones like the wall moving.
+- [ ] 2. CHROMEBOOK LAYOUT (test 1366×657 and 1280×551): game cards are flattened and look horrendous → 3 cards per page at the full card ratio, flip page 1 ↔ 2 with arrows / swipe / arrow keys + a page indicator. No squashed cards, no cut-off cards. Check every screen at those sizes.
+- [ ] 3. MARKS: cut words everywhere except the INDEX detail view.
+- [ ] 4. STAT BOARD: the TOTAL MULTIPLIER (×N, huge) comes FIRST, then BASE, then each multiplier line.
+- [ ] 5. PROGRESS BAR lags on multi-level climbs: each level passed = a fast full-fill flash (~100 ms each, capped ~1 s total), the level number ticks up, then fill to the real %. Never sit half-filled or behind the real value.
+- [ ] 6. Rename KEY POWER → KEY TIER everywhere.
+- [ ] 7. KEY TIER no longer resets on rebirth. Keep KEY costs; retune ONLY by raising the rebirth gate (more levels per rebirth than 15+18R, whatever the CI sim says) so rebirth pace stays in target. Bigger level numbers are fine. Existing players keep their current tier. Report the numbers.
+
 ## GEMS (Andy oct5 ~09:00) — REPLACES the roll currency (wins never buy rolls)
 - [ ] Rolls cost 10 GEMS each.
 - [ ] Earn GEMS: random drops while typing in game modes — each accepted word has a 1 in 15 chance to drop 1–3 GEMS (random), with a gem pop on the word; beat a bot +5; multiplayer +5 per player you beat (placement scales it); win streak +1 per win in a row; level-up +2; rebirth +20.
