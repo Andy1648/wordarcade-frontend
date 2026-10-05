@@ -1,5 +1,5 @@
 // e2e/purchase-feel-perf.spec.js — feat/purchase-feel perf report (item 1).
-// Types at 30 keys/sec on the menu at 3 representative KEY POWER feel-tiers and measures median
+// Types at 30 keys/sec on the menu at 3 representative KEY TIER feel-tiers and measures median
 // frame time (2 runs each), peak concurrent animations, and the INFINITE-animation count
 // (must be unchanged — every tier effect is a finite, pooled one-shot).
 import { test, expect } from '@playwright/test';
@@ -68,7 +68,7 @@ async function measure(page, tier) {
   return res;
 }
 
-test('perf: frame time + animation counts per KEY POWER tier', async ({ page }) => {
+test('perf: frame time + animation counts per KEY TIER tier', async ({ page }) => {
   test.setTimeout(120000);
   // Sample 3 REPRESENTATIVE tiers (low/mid/high) × 2 runs — down from 6×3. The two can-fail gates
   // below (pool ceiling + infinite-count constancy) are tier-INDEPENDENT (pooling is per-effect; the

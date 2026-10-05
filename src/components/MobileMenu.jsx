@@ -22,6 +22,7 @@ import AudioControls from './AudioControls';
 import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
 import { formatNum } from '../format';
+import { useLevelBar } from '../hooks/useLevelBar';
 import PodiumIcon from './PodiumIcon';
 import WordHook from './WordHook';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
@@ -185,6 +186,7 @@ export default function MobileMenu({
   gems = null,
   claimSlot = null,
 }) {
+  const lvBar = useLevelBar(level == null ? 1 : level, Number(levelFrac) || 0);
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
     .filter(Boolean);
@@ -233,9 +235,11 @@ export default function MobileMenu({
              so the mode rows below flex a little shorter (still one screen, no scroll). */}
       {level != null && (
         <div className="hp-m-stats" role="group" aria-label={`Level ${formatNum(level)}, ${formatNum(wins || 0)} wins`}>
-          <span className="hp-m-stats-lv"><span className="hp-m-stats-k">LV</span>{formatNum(level)}</span>
+          {/* The numeral + fill run lib/barPlan (useLevelBar): a multi-level climb flashes the
+              fill once per level passed while the numeral ticks, then fills to the real %. */}
+          <span className="hp-m-stats-lv"><span className="hp-m-stats-k">LV</span>{formatNum(lvBar.shownLevel)}</span>
           <span className="hp-m-stats-track" aria-hidden="true">
-            <span className="hp-m-stats-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, Number(levelFrac) || 0))})` }} />
+            <span className="hp-m-stats-fill" ref={lvBar.fillRef} />
           </span>
           {/* CLUTTER PASS (Andy oct3): no % readout — the fill is the percent. */}
           <span className="hp-m-stats-wins" data-wins={wins || 0}>{formatNum(wins || 0)}<span className="hp-m-stats-k">WINS</span></span>

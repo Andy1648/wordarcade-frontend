@@ -116,7 +116,7 @@ test('perWordWins: REBIRTH ×5 a rebirth (5^R) — R2 = ×25', () => {
 
 // REVERSED IN v8, DELIBERATELY. v7 compounded the per-word base with the LEVEL — income
 // chasing the very curve it buys, which is the compounding that produced "stuck at LV40". The
-// per-word award is now FLAT in level; income grows through KEY POWER, rebirth, mastery and
+// per-word award is now FLAT in level; income grows through KEY TIER, rebirth, mastery and
 // momentum, which are levers the player buys rather than ones that accrue and then race the
 // curve. winLevelMult survives for the FLAT one-off grants (secret finds, secret achievements).
 test('perWordWins is FLAT in level (v8); winLevelMult survives for the flat grants', () => {
@@ -193,7 +193,7 @@ test('PRICES end in a zero; every XP grant is whole; wins are XP/10 to the tenth
   for (const item of [...POP_STYLES, ...SOUND_PACKS]) {
     assert.equal(item.price % 10, 0, `${item.id} price ${item.price}`);
   }
-  // Key Power TIER costs across the exact-integer range.
+  // Key Tier costs across the exact-integer range.
   for (let t = 0; t <= 15; t++) assert.equal(keyTierCostAt(t) % 10, 0, `keyTierCostAt(${t})`);
   const modes = [undefined, 'word-bomb', 'wordBomb', 'blitz', 'satRush', 'chain', 'fuse'];
   const diffs = [undefined, 'chill', 'easy', 'medium', 'hard', 'zzz'];

@@ -8,17 +8,21 @@
 // celebration still waits for the menu / receipt. Read-only: nothing here touches XP or wins.
 export const MIDGAME_LEVEL_UP = 'taw:midgame-level-up';
 
-/** Fire the signal. A no-op where there is no window (node unit tests). Never throws. */
-export function emitMidGameLevelUp(level, mode) {
+/**
+ * Fire the signal. `from` is the level BEFORE the credit, so the chip can tick through every level
+ * a multi-level climb crossed (lib/barPlan). A no-op where there is no window (node unit tests).
+ * Never throws.
+ */
+export function emitMidGameLevelUp(level, mode, from) {
   try {
     if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
-    window.dispatchEvent(new CustomEvent(MIDGAME_LEVEL_UP, { detail: { level, mode } }));
+    window.dispatchEvent(new CustomEvent(MIDGAME_LEVEL_UP, { detail: { level, mode, from } }));
   } catch {
     /* a feel signal must never break crediting */
   }
 }
 
-/** Subscribe; returns the unsubscribe. `fn` receives { level, mode }. */
+/** Subscribe; returns the unsubscribe. `fn` receives { level, mode, from }. */
 export function onMidGameLevelUp(fn) {
   if (typeof window === 'undefined') return () => {};
   const h = (e) => fn((e && e.detail) || {});

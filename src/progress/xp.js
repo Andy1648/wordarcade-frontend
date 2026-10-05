@@ -13,7 +13,7 @@
 import { getStreakMult } from './streak.js';
 import { noteLevelReached } from './gems.js'; // GEMS: LEVEL_UP (a leaf module — no cycle)
 
-// Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Power
+// Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Tier
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
 // MODE POWER (Andy oct2: "mode power must show in payouts"). Read against Word Bomb (×2 = POWER ×1):
 //   SAT RUSH ×10 = POWER ×5 — its card power is real money per word, not a label
@@ -424,8 +424,8 @@ export function doRebirth() {
   return rc;
 }
 
-// ---- Key Power — DISCRETE TIERS (Economy v6) ------------------------------------------
-// Tier stored at taw.keytier (int, default 0). Key Power is no longer a per-level crawl with
+// ---- Key Tier — DISCRETE TIERS (Economy v6) ------------------------------------------
+// Tier stored at taw.keytier (int, default 0). Key Tier is no longer a per-level crawl with
 // a doubler — it is a hardcoded TABLE of tiers, each a real one-at-a-time decision. `xp` is the
 // XP PER LETTER granted at that tier; `cost` is the wins price to REACH that tier (T0 is the
 // free start, so its cost is 0). Every cost is a round multiple of 10; effect values are the
@@ -447,7 +447,7 @@ export function doRebirth() {
 //   T8   14,690          2,799,360    (25,194,240)
 // (v8 history: past T8 the effect went ×2.5 and the cost ×6 a tier. v9 replaced both — below.)
 export const KEYTIER_KEY = 'taw.keytier';
-// KEY POWER — RESTORED TO v8 (Andy oct2 KP2: "keep it very close to the old one"). v9 made it +15 XP
+// KEY TIER — RESTORED TO v8 (Andy oct2 KP2: "keep it very close to the old one"). v9 made it +15 XP
 // per letter a tier, priced in words — late tiers added ~10% and felt like nothing. Back to the v8
 // ladder: XP per letter ×2.5 a tier, price ×6 a tier IN WINS (the T1–T8 table above, extended by those
 // steps forever). T1 = 25. NO CAPS: past a double's range the numbers display through the named-suffix
@@ -520,7 +520,7 @@ export function keyTierCost(tier, rebirthCount) {
   return keyTierCostAt(t + 1, rebirthCount);
 }
 
-// THE RATE BOOST the shop prices the LETTER FORGE against (forge.js reads priceRateBoost). KEY POWER is
+// THE RATE BOOST the shop prices the LETTER FORGE against (forge.js reads priceRateBoost). KEY TIER is
 // back on fixed wins prices (v8), but the forge still prices "in words at your rate"; wins.js installs
 // the real boost (forge average × STAR POWER) at load — injected, because those modules import this one.
 let rateBoost = () => 1;

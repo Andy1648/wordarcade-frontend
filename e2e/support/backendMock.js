@@ -41,15 +41,18 @@ const BACKEND_WS_RE = /onrender\.com/;
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true, openDelayMs = 0, pv10Notice = false } = opts;
+  const { autoConnect = true, openDelayMs = 0, newTutorials = false } = opts;
 
-  // PROGRESSION v10: every spec that seeds a legacy {lv, into} save past LV1 is a "migrated existing
-  // player" and would get the one-time "LEVELS NOW TAKE LONGER" tutorial card over the menu. Mark it seen
-  // unless a spec asks for it (opts.pv10Notice) — it is covered by src/progress/econMigrate.test.js.
-  if (!pv10Notice) {
+  // SPOTLIGHT TUTORIALS: the KEY TIER spotlight covers the SHOP the first time a KEY tier is affordable, and
+  // the GEMS one covers the menu the first time the gem count shows — every shop / menu spec that seeds wins
+  // would meet them. Mark both seen unless a spec asks for them (opts.newTutorials). (The old pv10 notice
+  // tutorial is gone; its flag is still set so an old save in a spec reads exactly as before.)
+  if (!newTutorials) {
     await page.addInitScript(() => {
       try {
         localStorage.setItem('taw.tut.pv10', '1');
+        localStorage.setItem('taw.tut.keyTier', '1');
+        localStorage.setItem('taw.tut.gems', '1');
       } catch {
         /* storage blocked */
       }

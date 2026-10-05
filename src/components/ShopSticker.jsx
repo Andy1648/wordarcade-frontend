@@ -5,7 +5,7 @@
 // wins. It now uses the shared Sticker shell and shows the ITEM'S OWN ART:
 //   theme      → its four-colour swatch strip
 //   pop style  → the pop letter in that style's colour
-//   key power  → the tier number on a key cap
+//   key tier  → the tier number on a key cap
 //   word sense → the tier number on a lens
 //   forge      → the forged letter + its level
 //   rebirth    → the multiplier arrow
@@ -76,7 +76,7 @@ function GlyphPop({ colour = '#2EFFE0', char = 'A' }) {
   );
 }
 
-// KEY POWER → the tier number stamped on a key cap.
+// KEY TIER → the tier number stamped on a key cap.
 function GlyphKeyTier({ tier = 1, colour = '#2EFFE0' }) {
   return (
     <svg viewBox="0 0 96 96" className="sticker-glyph" aria-hidden="true">

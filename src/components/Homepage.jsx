@@ -765,7 +765,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     const r = runAutomation({ buyKey: buyKeyPower });
     if (!r.keys) return undefined;
-    const parts = [`+${formatNum(r.keys)} KEY POWER`];
+    const parts = [`+${formatNum(r.keys)} KEY TIER`];
     // H5: an INFO moment on the queue (was an 800 ms guess at clearing the level-up card)
     announceMenu('automation', (done) => {
       if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }

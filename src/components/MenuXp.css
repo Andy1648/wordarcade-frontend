@@ -363,7 +363,7 @@
   opacity: 0;
 }
 
-/* KEY POWER tier T2+ particle shards (feat/purchase-feel item 1). Pooled squares,
+/* KEY TIER tier T2+ particle shards (feat/purchase-feel item 1). Pooled squares,
    idle at opacity 0; a spawn sets background + WAAPI transform/opacity (<=400ms). */
 .menu-xp-shard {
   position: absolute;

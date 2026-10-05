@@ -19,6 +19,8 @@ import { screenFlash, tierStinger, levelChime } from '../juice';
 import { reduced } from '../juice/settings';
 import { LADDER, SLAM_MS, SLAM_TOTAL_MS, tierCrossed, slamLabel } from '../juice/ladder';
 import { onMidGameLevelUp } from '../progress/levelUpSignal';
+import { createBarPlayer } from '../lib/barPlan';
+import { formatNum } from '../format';
 import './FeelLadder.css';
 
 const TAG_MS = 1200;
@@ -187,12 +189,27 @@ export function SlotTags({ labels }) {
  */
 export function LevelUpChip({ variant = '' }) {
   const [lv, setLv] = useState(null); // { level, key }
+  // The numeral TICKS through every level a multi-level word crossed (lib/barPlan: ~100 ms a level,
+  // compressed to ≤ ~1 s, chunked past 30) — not a jump to the final number. A word mid-tick re-plans
+  // from the number on screen (never backwards); reduced motion lands instantly.
+  const [shown, setShown] = useState(null);
+  const playerRef = useRef(null);
+  if (playerRef.current === null) playerRef.current = createBarPlayer({ onLevel: (l) => setShown(l) });
+  useEffect(() => () => playerRef.current.cancel(), []);
   useEffect(
     () =>
-      onMidGameLevelUp(({ level }) => {
+      onMidGameLevelUp(({ level, from }) => {
         if (!Number.isFinite(level)) return;
         levelChime();
-        setLv((p) => ({ level, key: (p ? p.key : 0) + 1 }));
+        const p = playerRef.current;
+        // Idle chip → start the tick at the level the word began on; mid-tick → continue from screen.
+        if (!p.running) {
+          const start = Number.isFinite(from) && from < level ? from : level - 1;
+          p.set(Math.max(1, start), 0);
+          setShown(Math.max(1, start));
+        }
+        p.to(level, 0);
+        setLv((q) => ({ level, key: (q ? q.key : 0) + 1 }));
       }),
     []
   );
@@ -206,7 +223,7 @@ export function LevelUpChip({ variant = '' }) {
       }}
       aria-hidden="true"
     >
-      LV {lv.level} ↑
+      LV {formatNum(Number.isFinite(shown) ? shown : lv.level)} ↑
     </span>
   );
 }

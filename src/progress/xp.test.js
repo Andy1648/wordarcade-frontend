@@ -160,7 +160,7 @@ test('need() matches the PROGRESSION FINAL curve: round10(100 · 1.15^(n−1)) (
 });
 
 test('THE CURVE NEVER GETS CHEAPER PER LEVEL — the v6 defect, pinned against the FROZEN v9 shape (needV9)', () => {
-  // v6 eased 1.25 -> 1.08 at LV60, so a level could cost LESS than the one before it while Key Power /
+  // v6 eased 1.25 -> 1.08 at LV60, so a level could cost LESS than the one before it while Key Tier /
   // rebirth / momentum kept compounding income. v9 (STEP 19) deliberately trades v8's geometric ×1.22
   // tail for a polynomial (level^CURVE_POW) above CURVE_BREAK and a gentle geometric tail past
   // CURVE_TAIL — the RELATIVE growth per level now falls on purpose. What must still hold: every
@@ -218,7 +218,7 @@ test('XP_MULTIPLIERS are the sanctioned per-mode values', () => {
   assert.equal(XP_MULTIPLIERS.fuse, 2); // oct2: = Word Bomb; FRENZY is its edge
 });
 
-// ---- Key Power — RESTORED v8 (Andy oct2 KP2): XP ×2.5 a tier, price ×6 a tier in wins ----
+// ---- Key Tier — RESTORED v8 (Andy oct2 KP2): XP ×2.5 a tier, price ×6 a tier in wins ----
 test('keyTierXp (Rebirth Rush): KEY no longer touches wins — the constant wins basis 20 at every tier', () => {
   for (const t of [0, 1, 5, 9, 10, 30, 1000, -3, undefined, NaN]) assert.equal(keyTierXp(t), 20, `T${t}`);
 });
@@ -269,7 +269,7 @@ test('keyTierCost is the price to buy the NEXT tier (cost to reach tier+1)', () 
   }
 });
 
-test('every Key Power tier cost is divisible by 10 (through the exact-integer range)', () => {
+test('every Key Tier cost is divisible by 10 (through the exact-integer range)', () => {
   // ×6 a tier, snapped to tens while exact: through T18 (48·6^17 ≈ 8e14 < 2^53).
   for (let t = 0; t <= 18; t += 1) assert.equal(keyTierCostAt(t, 0) % 10, 0, `keyTierCostAt(${t})`);
   assert.equal(KEY_TIERS.length, 9); // T0..T8 tabled for the shop

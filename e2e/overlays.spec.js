@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { openStats } from './support/menu.js';
 
-// Seed a realistic progressed state so every readout (KEY POWER tier, wins, rebirth mult, level)
+// Seed a realistic progressed state so every readout (KEY TIER tier, wins, rebirth mult, level)
 // renders with real values rather than the empty defaults.
 const SEED = {
   'taw.keytier': '3',
