@@ -6334,7 +6334,7 @@ html[data-beat='true'] .wb-belly {
   .go-ptable tbody td::before {
     content: attr(data-label);
     display: block;
-    font-size: var(--fs-body);
+    font-size: var(--fs-label); /* stays label-size: --fs-body ran the phone table past its box (ko-screen (h)) */
     letter-spacing: 0.06em;
     color: #9a8bbf;
   }
