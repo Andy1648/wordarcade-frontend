@@ -259,7 +259,7 @@ test('each KEY tier visibly speeds levels: +20% XP a letter = ~17% fewer letters
   for (const t of [0, 5, 12]) assert.ok(lettersFor(t + 1) / lettersFor(t) < 0.85, `T${t} → T${t + 1}`);
 });
 
-test('a rebirth re-climb is FASTER per level than the first climb once the KEY is re-bought (×5 a rebirth)', () => {
+test('a rebirth re-climb is FASTER per level than the first climb (×5 a rebirth, KEY kept)', () => {
   const climb = () => {
     let letters = 0;
     while (loadProgress().level < 15 && letters < 100000) {
@@ -270,10 +270,9 @@ test('a rebirth re-climb is FASTER per level than the first climb once the KEY i
   };
   withStorage({ 'taw.keytier': '3' }, (map) => {
     const first = climb(); // R0
-    doRebirth(); // R1, back to LV1 — and KEY back to T0
+    doRebirth(); // R1, back to LV1 — KEY TIER kept (Andy oct5)
     assert.equal(loadProgress().level, 1);
-    assert.equal(map.get('taw.keytier'), '0');
-    map.set('taw.keytier', '3'); // the rebuy spree (wins were kept)
+    assert.equal(map.get('taw.keytier'), '3');
     const second = climb();
     assert.ok(second < first, `R1 re-climb ${second} letters vs first climb ${first}`);
     assert.ok(second <= Math.ceil(first / 5) + 15, 'R1 ×5 XP a letter → about a fifth of the letters');

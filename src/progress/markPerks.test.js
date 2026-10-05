@@ -97,32 +97,13 @@ test('CHAMPION: the winner bonus part ×2', () => {
   withStorage(wear('mk-eclipse'), () => assert.equal(winnerPayout(base).wins, b.wins, 'read from the save when omitted'));
 });
 
-test('HEIRLOOM: a rebirth keeps up to 3 KEY tiers with ORIGIN; otherwise KEY resets to T0', () => {
-  withStorage({ [KEYTIER_KEY]: '7' }, () => {
-    doRebirth();
-    assert.equal(getKeyTier(), 0);
-  });
-  withStorage({ [KEYTIER_KEY]: '7', ...wear('mk-origin') }, () => {
-    doRebirth();
-    assert.equal(getKeyTier(), 3);
-  });
-  withStorage({ [KEYTIER_KEY]: '2', ...wear('mk-origin') }, () => {
-    doRebirth();
-    assert.equal(getKeyTier(), 2, 'never raises a tier');
-  });
-});
-
-test('the rebirth screens quote the real kept tier: keyTierAfterRebirth = T{min(T, kept)} = what doRebirth writes', () => {
-  withStorage({ [KEYTIER_KEY]: '7' }, () => {
-    assert.equal(keyTierAfterRebirth(), 0, 'no perk → plain T0');
-    doRebirth();
-    assert.equal(getKeyTier(), 0);
-  });
-  withStorage({ [KEYTIER_KEY]: '7', ...wear('mk-origin') }, () => {
-    assert.equal(keyTierAfterRebirth(), 3);
-    assert.equal(keyTierAfterRebirth(2), 2);
-    doRebirth();
-    assert.equal(getKeyTier(), 3, 'the quote matched the write');
-  });
-  withStorage({ [KEYTIER_KEY]: '7', ...own('mk-origin') }, () => assert.equal(keyTierAfterRebirth(), 0, 'owned, not worn → T0'));
+test('KEY TIER is KEPT across rebirths (Andy oct5) — with or without ORIGIN; the screens quote the same tier', () => {
+  for (const extra of [{}, wear('mk-origin')]) {
+    withStorage({ [KEYTIER_KEY]: '7', ...extra }, () => {
+      assert.equal(keyTierAfterRebirth(), 7);
+      doRebirth();
+      assert.equal(getKeyTier(), 7);
+    });
+  }
+  withStorage({ [KEYTIER_KEY]: '2', ...own('mk-origin') }, () => assert.equal(keyTierAfterRebirth(), 2));
 });

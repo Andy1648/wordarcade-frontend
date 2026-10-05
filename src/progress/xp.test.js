@@ -377,7 +377,7 @@ test('rebirth is refused at LV14 and allowed at LV15', () => {
   assert.equal(canRebirth(xp15, 0), true);
 });
 
-test('doRebirth zeroes xp, RESETS the KEY tier to T0, and preserves wins/owned/equipped/rebirths+1', () => {
+test('doRebirth zeroes xp, KEEPS the KEY tier (Andy oct5), and preserves wins/owned/equipped/rebirths+1', () => {
   withStorage(
     {
       'taw.xp': String(cumCost(20)),
@@ -399,15 +399,15 @@ test('doRebirth zeroes xp, RESETS the KEY tier to T0, and preserves wins/owned/e
       assert.equal(map.get('taw.winsLifetime'), '900');
       assert.equal(map.get('taw.owned'), JSON.stringify(['classic', 'thock', 'prism']));
       assert.equal(map.get('taw.equipped'), JSON.stringify({ popStyle: 'prism', soundPack: 'thock' }));
-      assert.equal(map.get('taw.keytier'), '0'); // Rebirth Rush: KEY resets every rebirth (wins kept)
-      assert.equal(getKeyTier(), 0);
-      assert.equal(keyTierCost(getKeyTier(), rc), 50, 'the rebuy starts at the T1 price');
+      assert.equal(map.get('taw.keytier'), '3'); // Andy oct5: KEY TIER is kept across rebirths
+      assert.equal(getKeyTier(), 3);
+      assert.equal(keyTierCost(getKeyTier(), rc), keyTierCost(3, 0), 'the next tier costs what it did — no rebuy');
     }
   );
-  // A second rebirth from a re-bought tier resets it again.
+  // A second rebirth keeps the tier again.
   withStorage({ 'taw.rebirths': '4', 'taw.keytier': '9', 'taw.wins': '123' }, (map) => {
     assert.equal(doRebirth(), 5);
-    assert.equal(getKeyTier(), 0);
+    assert.equal(getKeyTier(), 9);
     assert.equal(map.get('taw.wins'), '123');
   });
   // a from-scratch rebirth (empty storage) still works and doesn't throw.
