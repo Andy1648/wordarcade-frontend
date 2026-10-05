@@ -1,7 +1,7 @@
 // payout.test.js — the payout BREAKDOWN: the explanation has to match the money.
 //
-// The defect: "I got 40k and couldn't tell where it came from." A payout is a product of up to
-// nine multipliers and none of them were named on screen. These tests pin the two properties that
+// The defect: "I got 40k and couldn't tell where it came from." A payout is a product of named
+// multipliers (Rebirth Rush: MODE × REBIRTH × MARK × BOOST × FRENZY on the BASE) and once none were named. These tests pin the two properties that
 // make the explanation trustworthy — it never quotes a factor the payout did not use, and the
 // per-factor shares add up to exactly what was earned.
 import test from 'node:test';
@@ -12,17 +12,32 @@ import {
 } from './payout.js';
 import { roundWordXp } from './xp.js';
 
-test('buildPayout multiplies every factor and reports the same total wins.js would pay', () => {
+test('buildPayout multiplies every PAYING factor and reports the same total wins.js would pay', () => {
   const r = buildPayout({
     base: 100,
-    factors: { mode: 2, difficulty: 1.5, rarity: 2.5, combo: 1.6 },
+    factors: { mode: 2, rebirth: 5, bonus: 1.5, boost: 3 },
   });
-  assert.equal(r.product, 2 * 1.5 * 2.5 * 1.6);
+  assert.equal(r.product, 2 * 5 * 1.5 * 3);
   // Economy v8: wins are the word's XP ÷ 10, and it is the XP that is snapped (to whole XP) — so the
   // receipt snaps on the XP grid too (×10, snap, ÷10). Snapping the WINS total to a multiple of
   // ten would print 20 for a word that paid 15.
-  assert.equal(r.computed, roundWordXp(100 * 2 * 1.5 * 2.5 * 1.6 * 10) / 10);
+  assert.equal(r.computed, roundWordXp(100 * 2 * 5 * 1.5 * 3 * 10) / 10);
   assert.equal(r.total, r.computed, 'with no granted amount passed, total IS the computed figure');
+});
+
+// REBIRTH RUSH: the receipt is BASE 10 × length/5 × MODE × REBIRTH × MARK × BOOST (× FRENZY). A caller
+// that still passes a retired factor (difficulty, streak, forge, rarity, length, combo, lucky, cap) must
+// neither get a row for it nor have it multiplied into PAID — that would claim a bonus the bank never paid.
+test('retired factors are never named and never multiplied in', () => {
+  const r = buildPayout({
+    base: 10,
+    factors: { mode: 2, difficulty: 1.5, streak: 1.2, forge: 1.3, rarity: 2.5, length: 1.1, combo: 1.6, lucky: 5, cap: 0.5 },
+  });
+  assert.deepEqual(r.rows.map((x) => x.key), ['mode']);
+  assert.equal(r.product, 2);
+  assert.equal(r.paid, 20);
+  assert.deepEqual(PAYOUT_FACTORS.map((f) => f.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost']);
+  assert.equal(PAYOUT_FACTORS.find((f) => f.key === 'bonus').label, 'MARK');
 });
 
 // THE BOTTOM LINE FOLLOWS FROM THE ROWS. This replaces a test that asserted the opposite — that a
@@ -32,10 +47,10 @@ test('buildPayout multiplies every factor and reports the same total wins.js wou
 // total that contradicted every line above it.
 test('PAID is exactly the product of the listed rows, rounded — always', () => {
   const cases = [
-    { base: 100, factors: { mode: 2, rarity: 2.5, length: 1.16, combo: 1.1 } },
-    { base: 100, factors: { mode: 2, difficulty: 1.5, rarity: 4, length: 1.12, combo: 1.3, rebirth: 3 } },
+    { base: 100, factors: { mode: 2, bonus: 1.25, boost: 3 } },
+    { base: 100, factors: { mode: 1.5, rebirth: 25, bonus: 1.1, frenzy: 5 } },
     { base: 20, factors: {} },
-    { base: 100, factors: { mode: 2, cap: 0.4 } }, // a factor BELOW 1 still has to multiply out
+    { base: 100, factors: { mode: 2, rarity: 2.5, combo: 1.3 } }, // retired factors: ignored, still adds up
   ];
   for (const c of cases) {
     const r = buildPayout(c);
@@ -49,32 +64,31 @@ test('PAID is exactly the product of the listed rows, rounded — always', () =>
 test('the 3-WORD GATE shows as HELD, never as a PAID of zero', () => {
   // total 0 = banked nothing yet. The word is still worth what its rows say, and the panel says
   // so; `held` is what carries the other fact.
-  const r = buildPayout({ base: 100, factors: { mode: 2, rarity: 2.5 }, total: 0 });
-  assert.equal(r.paid, roundWordXp(100 * 2 * 2.5 * 10) / 10, 'the bottom line is what the word is worth');
+  const r = buildPayout({ base: 100, factors: { mode: 2, rebirth: 5 }, total: 0 });
+  assert.equal(r.paid, roundWordXp(100 * 2 * 5 * 10) / 10, 'the bottom line is what the word is worth');
   assert.equal(r.total, 0, 'what was BANKED is still reported, for the ledger');
   assert.equal(r.held, true);
   // Past the gate, nothing is held.
-  const paid = buildPayout({ base: 100, factors: { mode: 2, rarity: 2.5 }, total: 500 });
+  const paid = buildPayout({ base: 100, factors: { mode: 2, rebirth: 5 }, total: 500 });
   assert.equal(paid.held, false);
   // A word genuinely worth nothing is not "held" either — there is nothing to release.
   assert.equal(buildPayout({ base: 0, factors: {}, total: 0 }).held, false);
 });
 
 test('a ×1 factor is NOT drawn — the panel lists contributions, not the whole schema', () => {
-  const r = buildPayout({ base: 100, factors: { mode: 2, combo: 1, lucky: 1, rarity: 1.5 } });
-  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'rarity']);
+  const r = buildPayout({ base: 100, factors: { mode: 2, rebirth: 1, bonus: 1, boost: 3 } });
+  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'boost']);
 });
 
 test('rows come out in the fixed published order, never in object-key order', () => {
   const r = buildPayout({
     base: 100,
     // deliberately reversed on the way in
-    factors: { lucky: 5, combo: 2, rebirth: 3, mode: 2 },
+    factors: { boost: 3, frenzy: 5, bonus: 1.5, rebirth: 5, mode: 2 },
   });
-  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'rebirth', 'combo', 'lucky']);
+  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost']);
   // ...and that order is the module's published one.
-  const want = PAYOUT_FACTORS.map((f) => f.key).filter((k) => ['mode', 'rebirth', 'combo', 'lucky'].includes(k));
-  assert.deepEqual(r.rows.map((x) => x.key), want);
+  assert.deepEqual(r.rows.map((x) => x.key), PAYOUT_FACTORS.map((f) => f.key));
 });
 
 test('every factor is labelled and classed as permanent (built) or word (just did)', () => {
@@ -84,28 +98,25 @@ test('every factor is labelled and classed as permanent (built) or word (just di
   }
 });
 
-// UPDATED (feat/cut-secrets-rarity). This used to be about WORD SENSE — the upgrade that scaled a
-// word's rarity EXCESS and therefore did nothing at all on a COMMON word while the shop card never
-// said so. The upgrade is deleted (rarity is now something you SEE when the word lands, not a
-// hidden multiplier to buy a hidden multiplier on), so the case moves to the factors that are
-// still switchable: COMBO, RARITY and the LUCKY roll.
-test('inactive factors carry the REASON — the answer when the number looks small', () => {
-  const off = inactivePayoutFactors({ combo: 1, rarity: 1, lucky: 1 }, { band: 'COMMON' });
-  assert.ok(off.find((f) => f.key === 'combo' && /streak/.test(f.why)));
-  assert.ok(off.find((f) => f.key === 'rarity' && /COMMON/.test(f.why)));
-  assert.ok(off.find((f) => f.key === 'lucky'));
+// REBIRTH RUSH: only factors that still PAY can be "off" (REBIRTH, MARK). COMBO / RARITY / LUCKY /
+// STREAK are not in the formula, so naming them as switched-off would advertise a bonus that does not exist.
+test('inactive factors carry the REASON, and only for factors that still pay', () => {
+  const off = inactivePayoutFactors({ rebirth: 1, bonus: 1, combo: 1, rarity: 1, lucky: 1, streak: 1 });
+  assert.ok(off.find((f) => f.key === 'rebirth' && /rebirth/.test(f.why)));
+  assert.ok(off.find((f) => f.key === 'bonus' && f.label === 'MARK' && /mark/.test(f.why)));
+  for (const k of ['combo', 'rarity', 'lucky', 'streak', 'difficulty', 'forge', 'wordSense']) {
+    assert.equal(off.some((f) => f.key === k), false, `${k} does not pay — never listed`);
+  }
   // An ACTIVE factor is never listed as inactive.
-  assert.equal(inactivePayoutFactors({ combo: 2 }).some((f) => f.key === 'combo'), false);
-  // ...and WORD SENSE is not a factor at all any more.
-  assert.equal(inactivePayoutFactors({}).some((f) => f.key === 'wordSense'), false);
+  assert.equal(inactivePayoutFactors({ rebirth: 5, bonus: 1.2 }).length, 0);
 });
 
 // ---- the round ledger ------------------------------------------------------------------------
 test('the ledger shares add up to EXACTLY the wins earned above base', () => {
   clearPayoutLedger();
   beginPayoutLedger('wordBomb');
-  notePayout({ base: 100, total: 600, factors: { mode: 2, rarity: 3 } });
-  notePayout({ base: 100, total: 400, factors: { mode: 2, combo: 2 } });
+  notePayout({ base: 100, total: 600, factors: { mode: 2, bonus: 3 } });
+  notePayout({ base: 100, total: 400, factors: { mode: 2, boost: 2 } });
   notePayout({ base: 100, total: 200, factors: { mode: 2 } });
   const led = readPayoutLedger();
   assert.equal(led.words, 3);
@@ -133,11 +144,11 @@ test('the ledger ranks by share, so the biggest reason is the first thing read',
 test('two equal multipliers get equal credit, whatever order they arrived in', () => {
   clearPayoutLedger();
   beginPayoutLedger('chain');
-  notePayout({ base: 100, total: 400, factors: { combo: 2, rarity: 2 } });
+  notePayout({ base: 100, total: 400, factors: { boost: 2, bonus: 2 } });
   const led = readPayoutLedger();
-  const combo = led.rows.find((r) => r.key === 'combo');
-  const rarity = led.rows.find((r) => r.key === 'rarity');
-  assert.ok(Math.abs(combo.share - rarity.share) < 1e-12);
+  const boost = led.rows.find((r) => r.key === 'boost');
+  const mark = led.rows.find((r) => r.key === 'bonus');
+  assert.ok(Math.abs(boost.share - mark.share) < 1e-12);
 });
 
 test('a ledger that was never opened reads as null, and noting into none does not throw', () => {
@@ -157,20 +168,18 @@ test('a round with no multipliers at all reports zero above base and no rows', (
 });
 
 // ---- THE RECEIPT CARRIES BOTH CURRENCIES AND NAMES ITS BASE ---------------------------------
-test('buildPayout reports the award in XP as well as WINS (they are one number)', () => {
-  const r = buildPayout({ base: 5, factors: { mode: 2, difficulty: 1.5 } });
+test('buildPayout reports WINS only — a game word pays no XP (v11 amended)', () => {
+  const r = buildPayout({ base: 5, factors: { mode: 2, bonus: 1.5 } });
   assert.equal(r.paid, 15);
-  // Wins are the word's XP / 10 (Economy v8), so the XP is the same award times ten. Asserted
-  // against the WINS figure rather than recomputed, which is the invariant that matters.
-  assert.equal(r.xp, r.paid * 10);
-  assert.equal(r.xp, 150);
+  assert.equal(r.xp, undefined, 'no XP line on a game receipt');
+  assert.equal('levelFloor' in r, false, 'Option F is gone');
 });
 
 test('buildPayout carries the base TERMS so the panel can name them', () => {
   const r = buildPayout({ base: 5, letters: 5, perLetter: 10, factors: { mode: 2 } });
   assert.equal(r.letters, 5);
   assert.equal(r.perLetter, 10);
-  // letters x perLetter IS the base, in XP — the panel prints "BASE 10 / LETTER x 5 LETTERS", not a bare "BASE 5".
+  // letters x perLetter IS the base, in XP units — the panel prints it in WINS (v11): "BASE 1 WINS / LETTER x 5 LETTERS".
   assert.equal(r.letters * r.perLetter, r.base * 10);
   // Absent/garbage terms degrade to null so the panel falls back to the bare base.
   const bare = buildPayout({ base: 5, factors: {} });

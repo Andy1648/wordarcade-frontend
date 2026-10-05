@@ -15,7 +15,9 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const COLOURS = ['#FFE94A', '#FF6B3D', '#FF4FA3', '#2EFFE0'];
 const LIFE_MS = 1800;
 
-export default function FrenzyBurst({ bonus = 0, started = true, onDone }) {
+// `title` / `line` / `variant` (Rebirth Rush): the SAME blast announces OVERDRIVE starting (TimerOver.jsx),
+// with its own slab copy and a pink slab (`variant="overdrive"`). FUSE passes none of them.
+export default function FrenzyBurst({ bonus = 0, started = true, onDone, title, line, variant }) {
   const rootRef = useRef(null);
   const [gone, setGone] = useState(false);
   useEffect(() => {
@@ -71,15 +73,15 @@ export default function FrenzyBurst({ bonus = 0, started = true, onDone }) {
   }, []);
   if (gone) return null;
   return (
-    <div className="frenzy-burst" ref={rootRef} aria-hidden="true">
+    <div className={`frenzy-burst${variant ? ` is-${variant}` : ''}`} ref={rootRef} aria-hidden="true">
       {LETTERS.map((ch, i) => (
         <span key={ch} className="frenzy-tile" style={{ background: COLOURS[i % COLOURS.length] }}>
           {ch}
         </span>
       ))}
       <div className="frenzy-slab">
-        <div className="frenzy-slab-title">{started ? 'FRENZY' : 'FULL STRIP'}</div>
-        <div className="frenzy-slab-mult">{started ? `×${FRENZY_MULT} WINS · ${frenzyMinutes()} MIN` : `FRENZY STILL ×${FRENZY_MULT}`}</div>
+        <div className="frenzy-slab-title">{title || (started ? 'FRENZY' : 'FULL STRIP')}</div>
+        <div className="frenzy-slab-mult">{line || (started ? `×${FRENZY_MULT} WINS · ${frenzyMinutes()} MIN` : `FRENZY STILL ×${FRENZY_MULT}`)}</div>
         {bonus > 0 && <div className="frenzy-slab-bonus">+{formatNum(bonus)} WINS</div>}
       </div>
     </div>

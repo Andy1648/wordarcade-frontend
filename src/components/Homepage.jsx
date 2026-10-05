@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import { rollsEnabled } from '../progress/rollsFlag';
-import { GAMES, FEATURED_GAME } from '../gameData';
+import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
 import { useMagneticPull } from '../lib/magneticPull';
@@ -10,14 +10,19 @@ import GameCard from './GameCard';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import LiveWpm from './LiveWpm';
 import { useXpCapture } from '../progress/useXpCapture';
+import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen, perWordRateNow, WORD_LEN_REF } from '../progress/wins';
+import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
+import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
+import RebirthReadyButton from './RebirthReadyButton';
+import { rebirthRushNotice, clearRebirthRushNotice } from '../progress/econMigrate';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
-import { canAffordAny, buyKeyPower, buyForge } from '../progress/shop';
+import { canAffordAny, buyKeyPower } from '../progress/shop';
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
+import { peakLevel } from '../progress/peakLevel';
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
@@ -646,10 +651,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // the new frame is named after it. Its own timing is unchanged: it re-forms once the menu has settled
   // (the arrival wipe, WALL_SETTLE_MS after mount), and holds the queue until WallScene says it is over.
   const wallWait = () => Math.max(0, WALL_SETTLE_MS - (Date.now() - mountedAtRef.current));
+  // The wall follows the BEST level this save reached (wallTier.js), not just the live one: the one-time
+  // REBIRTH RUSH conversion (econMigrate.js) turns a LV230 save into LV1 + rebirths at boot, before the menu
+  // ever notes its level — reading the live level alone, that player would lose their wall for good. The
+  // conversion writes the run's peak into taw.records.maxLevel first (peakLevel), so it is read here too.
+  const wallLevel = () => Math.max(levelRef.current, peakLevel());
   useEffect(() => {
+    const lv = wallLevel();
     // within 10 levels of the next wall: warm its (lazy) choreography so the moment never waits on a fetch
-    if (wallTierFor(xpProgress.level + 10) > getWallTier()) import('./wallFx.jsx').catch(() => {});
-    if (wallTierFor(xpProgress.level) <= getWallTier()) return;
+    if (wallTierFor(lv + 10) > getWallTier()) import('./wallFx.jsx').catch(() => {});
+    if (wallTierFor(lv) <= getWallTier()) return;
     announceMenu('wall', (done) => {
       let t = 0;
       const end = () => {
@@ -660,7 +671,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       t = setTimeout(() => {
         if (!aliveRef.current) { end(); return; } // left the menu during the settle: replay next visit
         window.addEventListener(WALL_FX_DONE_EVENT, end);
-        if (!noteWallLevel(levelRef.current)) end();
+        if (!noteWallLevel(wallLevel())) end();
       }, wallWait());
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -740,14 +751,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // AUTOMATION (stars.js layer 2): AUTO-KEY / AUTO-FORGE spend on every menu return, and the menu
-  // says what they bought, once.
+  // AUTOMATION (stars.js layer 2): AUTO-KEY spends on every menu return, and the menu says what it
+  // bought, once. AUTO-FORGE is NOT run: Rebirth Rush took the LETTER FORGE off the shelf (it no longer
+  // pays), so an owned AUTO-FORGE must not keep spending wins on it.
   useEffect(() => {
-    const r = runAutomation({ buyKey: buyKeyPower, buyForge });
-    if (!r.keys && !r.forges) return undefined;
-    const parts = [];
-    if (r.keys) parts.push(`+${formatNum(r.keys)} KEY POWER`);
-    if (r.forges) parts.push(`+${formatNum(r.forges)} FORGE`);
+    const r = runAutomation({ buyKey: buyKeyPower });
+    if (!r.keys) return undefined;
+    const parts = [`+${formatNum(r.keys)} KEY POWER`];
     // H5: an INFO moment on the queue (was an 800 ms guess at clearing the level-up card)
     announceMenu('automation', (done) => {
       if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }
@@ -771,6 +781,31 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       setTimeout(done, CARD_MS);
     });
     return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Rebirth Rush one-time conversion (econMigrate): an old save whose levels passed the new gates was turned
+  // into rebirths — say so ONCE, as a LEVEL card on the queue. Cleared when it PLAYS (not when queued), so a
+  // menu left before its turn still shows it next visit.
+  useEffect(() => {
+    const added = rebirthRushNotice();
+    if (!added) return undefined;
+    announceMenu('rebirth-rush', (done) => {
+      if (!xpFxRef.current || !xpFxRef.current.rebirthRush) { done(); return; }
+      clearRebirthRushNotice();
+      xpFxRef.current.rebirthRush(added, getRebirths());
+      setTimeout(done, CARD_MS);
+    });
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // REBIRTH READY → ×5 FOREVER from a round-end card: that screen armed the intent and left through
+  // its own exit (solo onExit / the room's leave path), landing here. Go straight on into the REBIRTH
+  // view (ShopScreen takes the intent and plays the ceremony). Layout effect: before the menu paints.
+  // Below the gate (a stale intent), it is simply dropped.
+  useLayoutEffect(() => {
+    if (!peekRebirthNow()) return;
+    if (isRebirthReadyNow() && onRebirth) onRebirth();
+    else takeRebirthNow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -1056,6 +1091,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     sound.click();
     if (onRebirth) onRebirth();
   }
+  // REBIRTH READY → ×5 FOREVER (Andy oct3): the CTA has already armed the intent; open the REBIRTH
+  // view, which runs the rebirth + ceremony at once. A blocked tap disarms it so it can't fire later.
+  function handleRebirthNow() {
+    if (navigating || !onRebirth) {
+      takeRebirthNow();
+      return;
+    }
+    sound.click();
+    onRebirth();
+  }
 
   function handleCredits() {
     if (navigating) return;
@@ -1143,6 +1188,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
             marksDot={marksNew}
             rebirthDot={rebirthReady}
+            rebirthReadySlot={rebirthReady ? <RebirthReadyButton ready onGo={handleRebirthNow} className="is-compact hp-m-rr-ready" /> : null}
             onCredits={handleCredits}
             shopDot={winsAffordable}
             shopRef={shopLinkRef}
@@ -1207,7 +1253,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             <button
               ref={rebirthLinkRef}
               type="button"
-              className={`homepage-nav-btn is-rebirth${navigating ? ' disabled' : ''}`}
+              className={`homepage-nav-btn is-rebirth${rebirthReady ? ' is-ready' : ''}${navigating ? ' disabled' : ''}`}
               onClick={handleRebirth}
               onMouseEnter={() => sfx('hover')}
               disabled={navigating}
@@ -1276,20 +1322,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             level={xpProgress.level}
             toNext={xpProgress.toNext}
             frac={xpProgress.frac}
-            /* HOW MANY WORDS, AT THE RATE OF THE CARD THE MENU IS POINTING AT. This divided by
-               perWordRateNow({}) — the MENU's own rate — which is arithmetically right and
-               strategically wrong: menu XP is x1, the slowest rate in the game, so the first
-               progression number a new player ever read was the worst one available, printed
-               directly above a FEATURED card advertising twice it.
-               FEATURED_GAME is derived from the same `featured` flag GameCard reads to draw the
-               ribbon (gameData.js), so the hint cannot point at one card and quote another. The
-               call shape is IDENTICAL to the card's — perWordRateNow({ mode: game.id }) with no
-               difficulty, because the menu has none selected — which is what makes "the hint
-               matches the card" a property of the code rather than a coincidence to re-check.
-               Menu typing is still real and still says so; it is just not the headline number. */
-            /* LETTERS, NOT WORDS (Andy A9). The card's rate is quoted for a WORD_LEN_REF-letter
-               word and XP is linear in length, so one letter is that rate ÷ WORD_LEN_REF. */
-            lettersToNext={Math.max(1, Math.ceil((xpProgress.toNext * WORD_LEN_REF) / Math.max(1, perWordRateNow({ mode: FEATURED_GAME.id }).xp)))}
+            /* LETTERS TO THE NEXT LEVEL (PROGRESSION v11, amended): the bar fills from LETTERS typed — in the
+               menu or in any game — counted at the LETTERS-OF-YOUR-WORDS price, BASE 10 XP / LETTER × KEY × rebirth ×
+               the worn mark (letterXp.js letterXpNow; typed letters pay a fifth until their word is accepted). Words
+               pay wins, never per-word XP, so there is no per-mode rate to quote. */
+            lettersToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, letterXpNow())))}
             /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
                caption line that used to sit under the bar — see below. */
             firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
@@ -1315,6 +1352,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               setShowMarks(true);
             }}
           />
+          {/* REBIRTH READY → ×5 FOREVER (Andy oct3: "never let a player miss that they can rebirth"):
+              IN this cluster, right under the level bar it is about — in flow, never fixed. One tap
+              rebirths and plays the ceremony (no confirm, no shop detour). */}
+          <RebirthReadyButton ready={rebirthReady} onGo={handleRebirthNow} className="is-menu" />
           {/* THE FIRST-VISIT CAPTION IS GONE, folded into the bar's own hint line. It said "TYPE
               ANYWHERE TO EARN XP" on its own row directly under a row that now says "12 WORDS TO
               LEVEL 2" — two lines of the same small type, saying two halves of one sentence, on

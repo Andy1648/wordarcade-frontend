@@ -115,7 +115,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
               for the player to multiply out (and momentum/level/mark missing from both). */}
           <b style={{ color: accent }}>{formatRate(rateNow.rate)}</b> WINS / WORD
           {Math.abs(rateNow.mult / (rateNow.factors.mode || 1) - 1) > 1e-9 && (
-            <span className="mode-ex-mult" title="YOUR BONUS: rebirths × streak × marks × mastery × stars"> (×{formatMultExact(((b) => (b >= 10 ? Math.round(b) : b))(rateNow.mult / (rateNow.factors.mode || 1)))} BONUS)</span>
+            <span className="mode-ex-mult" title="YOUR BONUS: REBIRTH × MARK × BOOST"> (×{formatMultExact(((b) => (b >= 10 ? Math.round(b) : b))(rateNow.mult / (rateNow.factors.mode || 1)))} BONUS)</span>
           )}
         </span>
         <span className="mode-ex-round">{round}</span>
@@ -127,7 +127,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
             POWER ×{formatMultExact(power)} <span className="mode-ex-power-vs">VS WORD BOMB</span>
           </span>
         )}
-        <span className="mode-ex-longer">LONGER WORDS PAY MORE</span>
+        <span className="mode-ex-longer">BASE 10 WINS / WORD · BASE 10 XP / LETTER × KEY × REBIRTH</span>
       </div>
       {mode === 'fuse' && (
         <div className={`mode-ex-frenzy${frenzy.active ? ' is-live' : ''}`}>

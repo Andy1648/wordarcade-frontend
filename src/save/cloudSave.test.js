@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { progressScoreFromKeys, shouldRestore, formatRecoveryCode, parseRecoveryCode, restoreIfAhead, backupNow, wipeProgressKeys } from './cloudSave.js';
+import { progressScoreFromKeys, shouldRestore, formatRecoveryCode, parseRecoveryCode, restoreIfAhead, backupNow, wipeProgressKeys, econRpcArg, ECON_RPC_VERSION } from './cloudSave.js';
 import { exportSave } from './saveBackup.js';
 
 function withStorage(seed, fn) {
@@ -63,8 +63,8 @@ test('backup sends the export + score, throttled', async () => {
   }
 });
 
-// PV10 (016_econ_v10.sql): with lb_caps econ: 10 the save + load go through the version-gated RPCs.
-test('PV10: econ caps route the backup to lb_save2 and the restore to lb_load2, with p_econ = 10', async () => {
+// Rebirth Rush (018_rebirth_rush.sql): econ: true = the client's own version (12); a number = the p_econ the server takes.
+test('RR: econ caps route the backup to lb_save2 and the restore to lb_load2, with p_econ = 12', async () => {
   const cloud = withStorage({ 'taw.xp': xp(70), 'taw.rebirths': '1' }, () => exportSave());
   await withStorage({ 'taw.xp': xp(2) }, async (m) => {
     const calls = [];
@@ -76,10 +76,30 @@ test('PV10: econ caps route the backup to lb_save2 and the restore to lb_load2, 
     const r = await restoreIfAhead({ rpc, secret: 's'.repeat(48), econ: true });
     assert.equal(r.restored, true);
     assert.deepEqual(calls.map((c) => c.fn), ['lb_save2', 'lb_load2']);
-    assert.equal(calls[0].body.p_econ, 10);
-    assert.equal(calls[1].body.p_econ, 10);
+    assert.equal(calls[0].body.p_econ, 12);
+    assert.equal(calls[1].body.p_econ, 12);
     assert.equal(m.has('taw.econ'), false, 'the blob had no stamp → the local one is removed so the migration re-runs');
   });
+});
+
+test('RR: the client sends what the server takes — 018 → 12, only 016/017 → 10, neither → the old RPCs', async () => {
+  assert.equal(ECON_RPC_VERSION, 12);
+  assert.equal(econRpcArg(12), 12);
+  assert.equal(econRpcArg(13), 12, 'never more than the client speaks');
+  assert.equal(econRpcArg(11), 10, 'no server reports 11 (v11 018 never ran) — falls back like any 016-era value');
+  assert.equal(econRpcArg(10), 10, 'before Andy runs 018: 016 accepts 10 only');
+  assert.equal(econRpcArg(undefined), 0);
+  assert.equal(econRpcArg(null), 0);
+  const calls = [];
+  const rpc = async (fn, body) => {
+    calls.push({ fn, body });
+    return { saved: true };
+  };
+  await withStorage({ 'taw.xp': xp(2) }, async () => {
+    await backupNow({ rpc, secret: 's'.repeat(48), force: true, econ: 10 });
+    await backupNow({ rpc, secret: 's'.repeat(48), force: true, econ: 0 });
+  });
+  assert.deepEqual(calls.map((c) => [c.fn, c.body.p_econ]), [['lb_save2', 10], ['lb_save', undefined]]);
 });
 
 test('recovery code round-trips the secret', () => {
@@ -118,4 +138,26 @@ test('check-only (restore: false) never imports even when the cloud is ahead', a
     assert.equal(r.restored, false);
     assert.equal(JSON.parse(m.get('taw.xp')).lv, 2);
   });
+});
+
+// RR review 6: an UNCONVERTED (pre-Rebirth Rush, taw.econ < 12) cloud blob is scored as the save it becomes once
+// the restore reloads and rebirthRushConvert runs — never its raw level against a converted local save.
+test('shouldRestore scores an unconverted blob AS CONVERTED (rebirthRushConvert on its level + rebirths)', () => {
+  const v10 = (lv, rc) => JSON.stringify({ lv, f: 0, rc, v: 10 });
+  // LV300 R0 (econ 10) converts to R16 — ahead of a converted local R10 at LV5, though its raw R0 is not
+  const cloudOld = withStorage({ 'taw.xp': v10(300, 0), 'taw.xpv10': v10(300, 0), 'taw.econ': '10' }, () => exportSave());
+  withStorage({ 'taw.xp': JSON.stringify({ lv: 5, f: 0, rc: 10, v: 10 }), 'taw.rebirths': '10', 'taw.econ': '12' }, (m) => {
+    const r = shouldRestore(cloudOld, { getItem: (k) => m.get(k) ?? null });
+    assert.equal(r.restore, true, 'the old blob is 16 rebirths once converted');
+  });
+  // the same raw level stamped 12 (already converted rules) is NOT converted again: R0 LV300 < R10
+  const cloudNew = withStorage({ 'taw.xp': v10(300, 0), 'taw.xpv10': v10(300, 0), 'taw.econ': '12' }, () => exportSave());
+  withStorage({ 'taw.xp': JSON.stringify({ lv: 5, f: 0, rc: 10, v: 10 }), 'taw.rebirths': '10', 'taw.econ': '12' }, (m) => {
+    assert.equal(shouldRestore(cloudNew, { getItem: (k) => m.get(k) ?? null }).restore, false);
+  });
+  // the leaderboard / backup score itself is unchanged (no option → raw)
+  assert.equal(
+    progressScoreFromKeys({ 'taw.xp': v10(300, 0), 'taw.econ': '10' }),
+    progressScoreFromKeys({ 'taw.xp': v10(300, 0), 'taw.econ': '12' }),
+  );
 });

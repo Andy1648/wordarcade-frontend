@@ -8,7 +8,7 @@ async function menu(page, level) {
   await installBackendMock(page);
   if (level != null) {
     await page.addInitScript((lv) => {
-      try { localStorage.setItem('taw.xp', JSON.stringify({ lv, into: 0 })); } catch { /* ignore */ }
+      try { localStorage.setItem('taw.xp', JSON.stringify({ lv, into: 0 })); localStorage.setItem('taw.econ', '12'); } catch { /* ignore */ } // already on Rebirth Rush: econ 12 (this spec is not about the one-time conversion)
     }, level);
   }
   await page.goto('/?portal=1');

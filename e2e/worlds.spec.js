@@ -7,6 +7,9 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
+// Seeds are CURRENT saves (taw.econ 12): a stamp-less LV ≥ 15 save is a pre-Rebirth-Rush save, and the one-time
+// conversion (econMigrate.js) would turn its levels into rebirths at boot. Pass `'taw.econ': null` to seed an
+// OLD save and exercise that conversion.
 async function boot(page, seed) {
   await installBackendMock(page);
   await page.addInitScript((s) => {
@@ -14,8 +17,11 @@ async function boot(page, seed) {
     sessionStorage.setItem('w.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
-    for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
-  }, seed);
+    for (const [k, v] of Object.entries(s)) {
+      if (v == null) localStorage.removeItem(k);
+      else localStorage.setItem(k, v);
+    }
+  }, { 'taw.econ': '12', ...seed });
   await page.goto('/?portal=1');
   await menuReady(page);
 }
@@ -80,6 +86,16 @@ test('reduced motion: no flight — the wall lights up in its new layout and the
   expect(moving, 'no piece flies under reduced motion').toBe(0);
   await expect(page.locator('.wall-stamp')).toHaveCount(0, { timeout: 4000 });
   await expect(page.locator('html[data-wallfx]')).toHaveCount(0);
+});
+
+// A save from BEFORE Rebirth Rush at LV230 converts to LV1 + rebirths at boot. Its wall follows the BEST level it
+// reached (the conversion records it as the peak), so the player still gets the LV200 wall — never loses it.
+test('a pre-Rebirth-Rush LV230 save converted to LV1 still gets its LV200 wall', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await boot(page, { 'taw.econ': null, 'taw.xp': JSON.stringify({ lv: 230, into: 0 }), 'taw.wallTierSeen': '0' });
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.xp')).lv), 'the conversion ran').toBe(1);
+  await expect(page.locator('.wall-decor-stack')).toHaveAttribute('data-scene', '2');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('taw.wallTierSeen')), { timeout: 4000 }).toBe('2');
 });
 
 // THE COST OF THE RE-FORM. Measured on a SETTLED menu: a quiet window, then the same window with the wall

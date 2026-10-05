@@ -154,7 +154,9 @@ export function TierSlam({ count = 0, outranked = false, flash = true }) {
   );
 }
 
-/** Word Bomb / Blitz LUCKY ×N: a finite gold ring + stamp. Re-key per lucky word to replay. */
+/** Word Bomb / Blitz LUCKY: a finite gold ring + stamp. Re-key per lucky word to replay. Visual juice
+ *  only — Rebirth Rush pays no lucky multiplier, so the stamp names no "×N". (`mult` accepted, unused.) */
+// eslint-disable-next-line no-unused-vars
 export function LuckyBurst({ mult = 5 }) {
   const [done, setDone] = useState(false);
   if (done) return null;
@@ -162,7 +164,7 @@ export function LuckyBurst({ mult = 5 }) {
     <span className="fx-lucky" aria-hidden="true">
       <span className="fx-lucky-ring" />
       <span className="fx-lucky-label" onAnimationEnd={() => setDone(true)}>
-        LUCKY ×{mult}
+        LUCKY!
       </span>
     </span>
   );

@@ -12,7 +12,6 @@ import { forgeBuys } from './forge.js';
 import { frenzyCount } from './frenzy.js';
 import { checkMarkClaims } from './marks.js';
 import { queueClaim, layerOpen, openLayer } from './claims.js';
-import { FORGE_UNLOCK_LEVEL } from './forge.js';
 import { loadProgress, getRebirths, getKeyTier } from './xp.js';
 import { collectionSummary } from './collection.js';
 import { masteryState, masteryWords, MASTERY_MODES } from './mastery.js';
@@ -227,13 +226,10 @@ export function checkAchievements() {
   }
   if (newly.length) saveEarned([...earned]);
   checkRankClaims();
-  // LETTER FORGE reveal (LV 8). Already forging (or a migrated MOMENTUM save) → simply open.
-  if (!layerOpen('forge')) {
-    if (snap.forge > 0) openLayer('forge');
-    else if (snap.level >= FORGE_UNLOCK_LEVEL || snap.rebirths > 0) {
-      queueClaim({ id: 'layer-forge', kind: 'layer', label: 'NEW SYSTEM — LETTER FORGE', detail: 'forge', meta: { blurb: 'SHOP → LETTER FORGE. Every forged letter in a word pays +5% more. No cap.' } });
-    }
-  }
+  // LETTER FORGE: no "NEW SYSTEM" reveal any more — Rebirth Rush took it off the shelf (it is not in the
+  // wins formula), so a card announcing "+5% a forged letter" would sell a bonus the game does not pay.
+  // A save that already forged keeps its layer flag and its levels (storage untouched).
+  if (!layerOpen('forge') && snap.forge > 0) openLayer('forge');
   try {
     checkMarkClaims({ level: snap.level, rebirths: snap.rebirths, earned });
   } catch {

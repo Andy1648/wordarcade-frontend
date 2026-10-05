@@ -23,5 +23,7 @@ export function bankRaceWord({ word, prevWords }) {
     prevWords: prev,
     nowWords: prev + 1,
   });
-  return { xp: xp.gain, wins, leveledUp: !!xp.leveledUp, level: xp.level };
+  // PROGRESSION v11 (amended): a race WORD pays wins only — `xp` is 0 (the letters typed into the race
+  // input fill the bar through letterXp.js). Kept in the shape so App's accumulator is unchanged.
+  return { xp: 0, wins, leveledUp: !!xp.leveledUp, level: xp.level };
 }

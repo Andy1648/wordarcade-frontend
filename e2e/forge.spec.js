@@ -1,6 +1,6 @@
-// e2e/forge.spec.js — the LETTER FORGE (Andy oct2: MOMENTUM capped at 200 and did nothing you could
-// see; its replacement is uncapped and visible). The shop track draws the 26 letters at their
-// levels, a buy forges the next letter and charges the price, and an old MOMENTUM save carries over.
+// e2e/forge.spec.js — the LETTER FORGE is NO LONGER SOLD (Rebirth Rush, PROGRESSION FINAL: the forge is
+// out of the wins formula, so the shop must not sell it). Its storage is untouched — nobody's data is
+// lost: a forged save keeps taw.forge, and an old MOMENTUM save still migrates into it.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
@@ -21,23 +21,21 @@ async function openShop(page, kv) {
   await page.locator('.shop-panel').waitFor({ state: 'visible' });
 }
 
-test('the shop draws the forge; a buy forges E and charges the quoted price', async ({ page }) => {
-  await openShop(page, { 'taw.wins': '100000', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }), 'taw.layer.forge': '1' });
-  await expect(page.locator('.shop-subtitle', { hasText: 'LETTER FORGE' })).toBeVisible();
-  await expect(page.locator('.forge-tile')).toHaveCount(26);
-  await expect(page.locator('.forge-tile.is-forged')).toHaveCount(0);
-  await expect(page.locator('.forge-tile.is-next')).toHaveText('E');
-  const before = await page.evaluate(() => Number(localStorage.getItem('taw.wins')));
-  await page.locator('.shop-forge .shop-buy').click();
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('taw.forge') || '{}').e)).toBe(1);
-  const after = await page.evaluate(() => Number(localStorage.getItem('taw.wins')));
-  expect(before - after).toBeGreaterThan(0);
-  await expect(page.locator('.sticker')).toContainText('FORGED');
+test('the shop does not sell the LETTER FORGE, and a forged save keeps its data', async ({ page }) => {
+  const forged = JSON.stringify({ e: 3, t: 2 });
+  await openShop(page, { 'taw.wins': '100000', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }), 'taw.layer.forge': '1', 'taw.forge': forged });
+  await expect(page.locator('.shop-subtitle', { hasText: 'KEY POWER' })).toBeVisible();
+  await expect(page.locator('.shop-subtitle', { hasText: 'LETTER FORGE' })).toHaveCount(0);
+  await expect(page.locator('.shop-forge')).toHaveCount(0);
+  await expect(page.locator('.forge-tile')).toHaveCount(0);
+  await expect(page.locator('.shop-panel')).not.toContainText('FORGE');
+  expect(await page.evaluate(() => localStorage.getItem('taw.forge'))).toBe(forged);
 });
 
-test('an old MOMENTUM save carries over buy-for-buy (nothing lost, nothing capped)', async ({ page }) => {
+test('an old MOMENTUM save still migrates into the forge store (nothing lost), with no shelf for it', async ({ page }) => {
   await openShop(page, { 'taw.momentum': '30', 'taw.wins': '0' });
-  await expect(page.locator('.shop-subtitle', { hasText: 'LETTER FORGE — 30 FORGED' })).toBeVisible();
-  await expect(page.locator('.forge-tile.is-forged')).toHaveCount(26);
+  await expect(page.locator('.shop-subtitle', { hasText: 'LETTER FORGE' })).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('taw.momentum'))).toBeNull();
+  const forge = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.forge') || '{}'));
+  expect(Object.values(forge).reduce((a, n) => a + n, 0)).toBe(30);
 });

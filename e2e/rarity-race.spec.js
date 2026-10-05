@@ -16,18 +16,15 @@ async function startMyTurn(mock, page) {
   await page.waitForTimeout(40);
 }
 
-// Combo is captured at ACCEPT time, so it's unaffected by the rarity-index race (lucky forced off in
-// each test below). CAT 1×combo1.1 + BAT 1.5×1.2 + HAT 1×1.3 = 1.1+1.8+1.3 = 4.2 weight.
-// ECONOMY v8: the per-word rate is the word's LETTERS at the key tier, ÷10 — three-letter words at
-// T0 in Word Bomb are 10 × 3 × mode2 ÷ 10 = 6. So the correct payout is round(4.2 × 6) = 25, and a
-// BAT scored COMMON (the race) pays round(3.6 × 6) = 22 — a 3-win underpay, the same 14% gap the
-// 840/720 pair described. Both figures move with XP_MULTIPLIERS and the key tier; recompute from
-// the live table, never nudge.
+// REBIRTH RUSH (PROGRESSION-FINAL.md, FROZEN): wins / word = BASE 10 × length/5 × MODE × 5^R × MARK × BOOST — rarity,
+// combo and lucky no longer pay. So the race this file guards is now: words accepted BEFORE the rarity index loads
+// still BANK (the deferred scoring path must not drop them), and pay the same flat total as words after it.
+// Three 3-letter Word Bomb words at R0 = 3 × 6 = 18, raced or not.
 const WORDS = ['CAT', 'BAT', 'HAT'];
-const CORRECT = 25;
-const RACED_COMMON = 22;
+const CORRECT = 18;
+const RACED_COMMON = 18; // the same: rarity does not pay, so a race cannot underpay
 
-test('rarity race: a word accepted before the index loads still pays its true rarity', async ({ page }) => {
+test('rarity race: words accepted before the index loads still bank the full flat total', async ({ page }) => {
   await page.addInitScript(() => {
     window.__TAW_LUCKY = 'off'; // deterministic payout (combo on, lucky off)
     window.__TAW_RARE_POP = 'off'; // and no 1-in-750 MIDAS pop inside the total

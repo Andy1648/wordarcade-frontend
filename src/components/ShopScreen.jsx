@@ -4,19 +4,25 @@
 // (OWNED / EQUIPPED state; unaffordable items visible-but-dimmed). REBIRTH: count, multiplier,
 // next threshold, what's lost/kept, and the action (disabled with the requirement shown when
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, buyForge } from '../progress/shop';
-import { forgeLevels, forgeBuys, forgeCost, nextForgeLetter, FORGE_PCT } from '../progress/forge';
-import ForgeStrip from './ForgeStrip';
-import { layerOpen } from '../progress/claims';
-import { FORGE_UNLOCK_LEVEL } from '../progress/forge';
-import { getWins, perWordWins } from '../progress/wins';
+import { takeRebirthNow, peekRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
+import { getWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyTierXp } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, keyTierAfterRebirth, REBIRTH_POWER } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
-import { formatNum, formatMult, formatRate } from '../format';
+import { formatNum, formatMult, formatMultExact } from '../format';
+
+// A KEY multiplier: ×2.15 precision under 1,000, a grouped whole number from there (×2,150, not ×2150).
+const keyMult = (m) => (m >= 1000 ? formatNum(m) : formatMultExact(m));
+// REBIRTH RUSH: the STAR PERKS that no longer do anything are not sold. STAR POWER (+10% wins) is out
+// of the wins formula, AUTO-FORGE buys the LETTER FORGE, which is no longer sold, and HEAD START is
+// switched off (stars.js HEAD_START_ON = false). Their stored levels are untouched (stars.js) — only the
+// shelf hides them.
+const RETIRED_PERKS = new Set(['power', 'autoForge', 'head']);
+const LIVE_PERKS = PERKS.filter((p) => !RETIRED_PERKS.has(p.id));
 import ShopSticker from './ShopSticker';
 import RedeemCodes from './RedeemCodes';
 import RebirthCeremony from './RebirthCeremony';
@@ -31,12 +37,13 @@ import { useMomentHold } from '../lib/useMomentSlot';
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
   useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
+  // Opened by REBIRTH READY (see the layout effect below): the panel stays hidden under the ceremony.
+  const [autoMode] = useState(() => view === 'rebirth' && peekRebirthNow() && isRebirthReadyNow());
   const wins = useWinsBalance(); // W: the one balance channel
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
   const [keyTier, setKeyTier] = useState(() => getKeyTier());
-  const [forge, setForge] = useState(() => forgeLevels());
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -66,16 +73,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   // progress; and the cheapest unowned cosmetic is surfaced as the fallback goal.
   const kpCost = keyTierCost(keyTier);
   const kpProgress = kpCost > 0 ? Math.min(1, wins / kpCost) : 1;
-  const kpRateNow = perWordWins({ mode: 'wordBomb' });
-  const kpRateNext = perWordWins({ mode: 'wordBomb', keyTier: keyTier + 1 });
-  const kpXpStep = keyTierXp(keyTier) > 0 ? keyTierXp(keyTier + 1) / keyTierXp(keyTier) : 1;
-  const fBuys = forgeBuys(forge);
-  // E4: systems open the moment they unlock (no claim step), so reaching the level IS open
-  const forgeOpen = layerOpen('forge') || fBuys > 0 || level >= FORGE_UNLOCK_LEVEL;
-  const fCost = forgeCost(fBuys);
-  const fNext = nextForgeLetter(forge);
-  const fNextLv = (forge[fNext] || 0) + 1;
-  const fProgress = fCost > 0 ? Math.min(1, wins / fCost) : 1;
   const rbProgress = threshold > 0 ? Math.min(1, level / threshold) : 1;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
@@ -88,7 +85,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setOwned(new Set(getOwned()));
     setEquipped(getEquipped());
     setKeyTier(getKeyTier());
-    setForge(forgeLevels());
   };
   const onBuy = (id) => {
     if (buy(id).ok) {
@@ -116,8 +112,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       kind: 'keypower',
       // H6/M14: "TIER n" everywhere (the shop heading, stats and the ceremony say the same).
       name: `KEY POWER TIER ${t}${n > 1 ? ` (+${n})` : ''}`,
-      // H2d: say it in the unit the tier is bought with (WINS), for the mode the shop quotes.
-      blurb: `Now ${formatRate(perWordWins({ mode: 'wordBomb', keyTier: t }))} WINS / WORD in WORD BOMB.`,
+      // Rebirth Rush: KEY multiplies XP / LETTER only (not wins) — say exactly that.
+      blurb: `KEY T${formatNum(t)}: ×${keyMult(keyXpMult(t))} XP / LETTER.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: t >= 5 ? '#FFD54A' : '#2EFFE0',
       tier: t,
@@ -147,50 +143,15 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     while (guard < 500 && onBuyKeyPower({ batch: true })) guard += 1;
     endKeyPowerRun();
   };
-  // LETTER FORGE (replaced MOMENTUM): the sticker names the letter(s) just forged and what a
-  // letter level pays, in plain words.
-  const revealForge = (letter, level, n, spent) => {
-    setReveal({
-      kind: 'forge',
-      // H2d: "×N" is for multipliers only; a run of N buys is "+N" (as KEY POWER's sticker says).
-      name: n > 1 ? `FORGED +${n}` : `${letter.toUpperCase()} FORGED — LV ${level}`,
-      blurb: `Every ${n > 1 ? 'forged letter' : `"${letter.toUpperCase()}"`} in a word pays +${Math.round(FORGE_PCT * 100)}% more per level.`,
-      coin: `−${formatNum(spent)} WINS`,
-      colour: '#FF6B3D',
-      tier: level,
-      letter: letter.toUpperCase(),
-    });
-  };
-  const fRun = useRef({ n: 0, spent: 0, letter: 'e', level: 1 });
-  const onBuyForge = ({ batch = false } = {}) => {
-    const r = buyForge();
-    if (!r.ok) return false;
-    sndPurchase();
-    evItemPurchased('forge', r.count);
-    if (batch) {
-      fRun.current = { n: fRun.current.n + 1, spent: fRun.current.spent + r.spent, letter: r.letter, level: r.level };
-    } else {
-      revealForge(r.letter, r.level, 1, r.spent);
-    }
-    refresh();
-    return true;
-  };
-  const endForgeRun = () => {
-    const run = fRun.current;
-    fRun.current = { n: 0, spent: 0, letter: 'e', level: 1 };
-    if (run.n > 0) revealForge(run.letter, run.level, run.n, run.spent);
-  };
-  const buyMaxForge = () => {
-    let guard = 0;
-    while (guard < 500 && onBuyForge({ batch: true })) guard += 1;
-    endForgeRun();
-  };
+  // LETTER FORGE: no longer sold (Rebirth Rush — it is out of the wins formula). Its storage
+  // (taw.forge) is untouched; the shop simply has no shelf for it.
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
   };
   const confirmRebirth = () => {
     const gained = nextMult;
     const fromLevel = level;
+    const fromKey = getKeyTier(); // read BEFORE the rebirth zeroes it
     // Zeroes xp (HEAD START may lift the new climb), pays the stars for how far past the gate the
     // player went, queues the REBIRTH N celebration + any layer-unlock claim (stars.js).
     const { rc, stars: starsGot } = rebirthWithStars();
@@ -201,20 +162,32 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     // AFTER the rebirth, so every KEPT value is provably what survived it.
     let words = 0;
     for (const m of MASTERY_MODES) words += masteryWords(m) || 0;
+    // Rebirth Rush: KEY is NOT kept (it resets to T0, or the HEIRLOOM tiers — shown in RESET, read AFTER the
+    // rebirth as toKey); the LETTER FORGE row went with the forge.
     const kept = [
       { label: 'WINS', value: formatNum(getWins()) },
-      { label: 'KEY POWER', value: `TIER ${formatNum(getKeyTier())}` },
-      { label: 'LETTER FORGE', value: `${formatNum(forgeBuys(forgeLevels()))} BUYS` },
       { label: 'COSMETICS', value: formatNum(getOwned().length) },
       { label: 'MARKS', value: formatNum(ownedMarkIds().length) },
       { label: 'WORDS TYPED', value: formatNum(words) },
     ];
-    setCeremony({ rc, mult: gained, stars: starsGot, fromLevel, toLevel: loadProgress().level, kept });
+    setCeremony({ rc, mult: gained, stars: starsGot, fromLevel, toLevel: loadProgress().level, fromKey, toKey: getKeyTier(), kept });
   };
+  // REBIRTH READY → ×5 FOREVER (Andy oct3): opened from that button (menu CTA or a round-end card),
+  // the rebirth runs straight away — the ONE tap was the confirm — and the ceremony plays. Layout
+  // effect, so the panel is never painted first; the ref + the re-checked gate make a StrictMode
+  // double-run (or a stale intent below the gate) a no-op, which then shows the normal REBIRTH view.
+  const autoRebirthRef = useRef(false);
+  useLayoutEffect(() => {
+    if (autoRebirthRef.current || view !== 'rebirth') return;
+    if (!takeRebirthNow()) return;
+    autoRebirthRef.current = true;
+    if (isRebirthReadyNow()) confirmRebirth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   return (
-    <div className="shop-overlay" role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
+    <div className={`shop-overlay${autoMode ? ' is-rr-auto' : ''}`} role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
       <div className="shop-panel">
         <div className="shop-header">
           <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'SHOP'}</h2>
@@ -231,18 +204,18 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         {view === 'shop' ? (
           <div className="shop-body">
             {/* KEY POWER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
-            <h3 className="shop-subtitle">KEY POWER — TIER {keyTier}</h3>
+            <h3 className="shop-subtitle">KEY POWER — TIER {formatNum(keyTier)}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
-                {/* H2d ONE BIG NUMBER: what the tier buys, in the unit it is bought with — the WINS / WORD
-                    rate now → at the next tier. It used to lead with XP PER LETTER (a second unit) and
-                    print the price three times (NEXT TIER line, goal line, button); the price now lives
-                    on the button, the gap in the goal line. XP rises by the same factor (one stack). */}
+                {/* REBIRTH RUSH: KEY multiplies XP / LETTER only — it no longer touches wins, so the shelf
+                    quotes no WINS / WORD. ONE BIG LINE: this tier's KEY → the next one on the ladder
+                    (×1, ×2, ×5, ×10, ×25 … ×1,000, then ×2.15 a tier). The price lives on the button, the
+                    gap in the goal line. */}
                 <div className="shop-kp-current">
-                  <b>{formatRate(kpRateNow)}</b> → <b>{formatRate(kpRateNext)}</b> WINS / WORD
+                  KEY T{formatNum(keyTier)} <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → T{formatNum(keyTier + 1)} <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
                 </div>
                 <div className="shop-kp-rate">
-                  AT TIER {keyTier + 1} · WORD BOMB · XP ×{formatMult(kpXpStep)} TOO
+                  BASE 10 XP / LETTER × KEY × REBIRTH · KEY RESETS ON REBIRTH
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
                 <div className="shop-goal">
@@ -269,52 +242,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
 
             {/* THEMES are gone from the shop (STEP 50, Andy oct2): the menu's look is now the WORLD
                 your border tier has reached — earned by playing, not bought. */}
-            {/* LETTER FORGE (Andy oct2 — replaced MOMENTUM, which capped at 200 and did nothing you
-                could see). Uncapped: each buy forges the next letter one level; a word pays +5% per
-                forged level of every letter in it. The strip IS the state — 26 letters at their levels. */}
-            <h3 className="shop-subtitle">LETTER FORGE{forgeOpen ? ` — ${fBuys} FORGED` : ''}</h3>
-            {!forgeOpen ? (
-              <div className="shop-keypower shop-forge is-locked">
-                <div className="shop-kp-info">
-                  <div className="shop-kp-next">
-                    <b>OPENS AT LV {FORGE_UNLOCK_LEVEL}</b> — YOU&apos;RE LV {level}
-                  </div>
-                  <div className="shop-kp-rate">+{Math.round(FORGE_PCT * 100)}% PER FORGE LEVEL OF EACH LETTER IN THE WORD · NO CAP</div>
-                </div>
-              </div>
-            ) : (
-            <div className="shop-keypower shop-forge">
-              <div className="shop-kp-info">
-                <ForgeStrip levels={forge} next={fNext} />
-                {/* H2d: the price is on the button (the gap in the goal line) — not a third time here. */}
-                <div className="shop-kp-next">
-                  NEXT: <b>{fNext.toUpperCase()} → LV {fNextLv}</b>
-                </div>
-                <div className="shop-kp-rate">
-                  +{Math.round(FORGE_PCT * 100)}% PER FORGE LEVEL OF EACH LETTER IN THE WORD · NO CAP
-                </div>
-                <div className="shop-goal">
-                  {wins >= fCost ? 'READY TO FORGE' : `NEED ${formatNum(fCost - wins)} MORE WINS`}
-                </div>
-                <ProgressBar value={fProgress} />
-              </div>
-              <div className="shop-kp-actions">
-                {wins >= fCost ? (
-                  <>
-                    <HoldBuy label={formatNum(fCost)} onCommit={onBuyForge} onBatchEnd={endForgeRun} />
-                    {wins >= fCost + forgeCost(fBuys + 1) && (
-                      <button type="button" className="shop-card-btn shop-buymax" onClick={buyMaxForge}>BUY MAX</button>
-                    )}
-                  </>
-                ) : (
-                  <button type="button" className="shop-card-btn" disabled>
-                    <span className="shop-coin" aria-hidden="true" />
-                    {formatNum(fCost)}
-                  </button>
-                )}
-              </div>
-            </div>
-            )}
+            {/* LETTER FORGE: removed from the shelf (Rebirth Rush — not in the wins formula). Storage kept. */}
 
             <h3 className="shop-subtitle">POP STYLES</h3>
             {/* Andy oct2: cosmetics are collectibles, not the headline — small tiles, KEY POWER stays big. */}
@@ -364,10 +292,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             {/* ONE BIG THING (Andy oct2): what a rebirth gets you, right now — the new multiplier
                 and the stars — with the Sell-Lemons-style warning when waiting a level or two pays more. */}
             <div className={`shop-rb-hero${advice.badTime ? ' is-bad' : ''}`}>
-              {/* H6/H10: ×N is the new TOTAL (NOW ×… sits right under it), so the label says "REACH". */}
-              <div className="shop-rb-hero-label">REBIRTH {rebirths + 1} TO REACH</div>
+              {/* REBIRTH RUSH: every rebirth is ×5 XP & WINS, forever — the line names the step, then the
+                  total it moves (×5^R → ×5^(R+1)). */}
+              <div className="shop-rb-hero-label">REBIRTH: ×{formatNum(REBIRTH_POWER)} XP &amp; WINS</div>
               <div className="shop-rb-hero-val">
-                ×{formatMult(nextMult)} <span className="shop-rb-hero-unit">WINS</span>
+                ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(nextMult)}
                 {rebirthReady && (
                   <>
                     {' · +'}
@@ -392,17 +321,14 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             </div>
             <ProgressBar value={rbProgress} />
 
+            {/* KEY RESETS · WINS KEPT — the one rule that makes a rebirth a rebuy spree. The ×5 is the hero
+                above; this says the cost. HEAD START lifts the new climb (stars.js headStartLevel). */}
             <ul className="shop-confirm-detail">
               <li>
-                {/* H6/H11: HEAD START lifts the new climb (stars.js headStartLevel). */}
-                <b>LOSE:</b> all XP — back to LEVEL {headStartLevel(rebirths + 1)}.
+                <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))} · KEY RESETS → T{formatNum(keyTierAfterRebirth(keyTier))}.
               </li>
               <li>
-                <b>KEEP:</b> wins, all purchases, lifetime stats — everything else.
-              </li>
-              <li>
-                {/* H6/H10: what THIS rebirth adds — ×9 → ×10 is +11%, not "a ×10". */}
-                <b>GAIN:</b> ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(nextMult)} (+{Math.round((nextMult / rebirthMult(rebirths) - 1) * 100)}%) on wins and XP, for good, and ★ for STAR PERKS.
+                <b>KEEP:</b> WINS KEPT · MARKS · PURCHASES · STATS.
               </li>
             </ul>
 
@@ -434,7 +360,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               <>
                 <h3 className="shop-subtitle">STAR PERKS — {formatNum(stars.balance)} ★</h3>
                 <div className="shop-perks">
-                  {PERKS.map((p) => {
+                  {LIVE_PERKS.map((p) => {
                     const lv = stars.perks[p.id] || 0;
                     const open = layerUnlocked(p.layer, rebirths);
                     const maxed = lv >= p.max;
@@ -498,10 +424,8 @@ function Card({ item, type, owned, equipped, wins, cheapestUnowned, onBuy, onEqu
     <div className={`shop-card shop-card--compact is-${cls}${isNextGoal ? ' is-next' : ''}`} title={item.blurb}>
       {isNextGoal && <div className="shop-card-next" aria-hidden="true">NEXT</div>}
       <div className="shop-card-name">{item.name}</div>
-      {item.xpMult > 1 && (
-        /* H6/H9: this multiplier only feeds menu-typing XP (xpPerInput) — never a game word or wins. */
-        <div className="shop-card-xp">+{Math.round((item.xpMult - 1) * 100)}% MENU XP</div>
-      )}
+      {/* PROGRESSION v11 (review round 2): cosmetics are LOOKS ONLY — the old "+N% MENU XP" multiplied
+          level XP up to ×6.9 for a masher. No XP line; the card sells the look. */}
       {isEquipped ? (
         <div className="shop-card-tag">EQUIPPED</div>
       ) : isOwnedItem ? (

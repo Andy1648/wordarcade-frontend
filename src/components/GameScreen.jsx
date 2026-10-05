@@ -40,6 +40,9 @@ import { railFit, measureRailCard, measureStatusCard } from './wbRailFit';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import NearMiss from './NearMiss.jsx';
+// REBIRTH READY → ×5 FOREVER (Andy oct3): first on every game-over card when the gate is reached. It
+// arms the rebirth intent and leaves through the card's EXISTING onLeave (the room's leave path).
+import RebirthReadyButton from './RebirthReadyButton.jsx';
 import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
@@ -49,6 +52,7 @@ import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
+import { noteTypedLetters } from '../progress/letterXp';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -3886,7 +3890,7 @@ export default function GameScreen({
                 )}
                 {pending.phase === 'accept' && (
                   <span className="wb-pending-tag">
-                    ✓{pending.combo > 1 ? ` ×${pending.combo}` : ''}
+                    ✓
                   </span>
                 )}
                 {pending.phase === 'reject' && (
@@ -3902,6 +3906,7 @@ export default function GameScreen({
               className={`game-input${inputShake ? ' input-shake' : ''}`}
               type="text"
               onDraftChange={(value) => {
+                noteTypedLetters(draftStore.get(), value, 'word-bomb'); // v11: LETTERS fill the bar (batched)
                 // Soft key tick on actual character entry (a char was added, not
                 // a deletion/select). onChange already ignores modifiers/arrows.
                 if (value.length > draftStore.get().length) {
@@ -4150,6 +4155,7 @@ export default function GameScreen({
                 card at every width and can never fall below the fold. ===== */}
             <div className="go-foot">
             <div className="game-over-actions">
+              <RebirthReadyButton onGo={onLeave} className="is-compact" />
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
                   rematch from any seat), so a non-host is never stranded at game-over with
@@ -4454,6 +4460,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           </div>
 
           <div className="game-over-actions">
+            <RebirthReadyButton onGo={onLeave} />
             <button className="solo-play-again-btn" onClick={onPlayAgain} disabled={actionPending}>
               {daily ? "REPLAY TODAY'S" : 'PLAY AGAIN'}
             </button>
@@ -4922,6 +4929,7 @@ function CategoryBlitzScreen({
               })}
             </div>
             <div className="game-over-actions">
+              <RebirthReadyButton onGo={onLeave} className="is-compact" />
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
                   over ANY remaining player can restart it (the server accepts a post-game
                   rematch from any seat), so a non-host is never stranded at game-over with
@@ -5165,6 +5173,7 @@ function CategoryBlitzScreen({
               value={draft}
               onChange={(event) => {
                 const value = event.target.value;
+                noteTypedLetters(draft, value, 'category-blitz'); // v11: LETTERS fill the bar (batched)
                 // Soft key tick on actual character entry (parity with Word Bomb).
                 if (value.length > draft.length) sound.keystroke();
                 setDraft(value);

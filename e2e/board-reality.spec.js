@@ -24,6 +24,7 @@ async function boot(page, shared, { level = 1, rebirths = 0 } = {}) {
     localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'me-1', username: 'NoBuffCookies' }));
     localStorage.setItem('taw.lb.secret', secret);
     localStorage.setItem('taw.xp', JSON.stringify({ lv, f: 0, rc: rb, v: 10 }));
+    localStorage.setItem('taw.econ', '12'); // an already-converted Rebirth Rush save (this spec is about the board write, not the conversion)
     localStorage.setItem('taw.rebirths', String(rb));
   }, { secret: SECRET, level, rebirths });
   return board;

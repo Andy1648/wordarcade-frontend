@@ -11,32 +11,30 @@ import {
   getRebirths,
   round10,
   loadProgress,
-  saveProgress,
-  creditXp,
   xpPerWord,
   roundWordXp,
   keyTierXp,
   getKeyTier,
-  XP_MULTIPLIERS,
-  currentPower,
+  modePower,
 } from './xp.js';
-import { applyBarFloor, setBarFloorStamp } from './barFloor.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
-import { markWinsFactors, markXpMult, addMarkWord } from './marks.js';
-import { rollBonusMult } from './markRollsCore.js'; // the payout hook only — the roll system loads with MARKS
+import { addMarkWord } from './marks.js';
+import { markMult } from './markRollsCore.js'; // THE MARK (one function: wins here, XP per letter in letterXp.js)
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
 import { boostMult } from './boost.js';
 import { starPowerMult } from './stars.js';
-import { setRateBoost } from './xp.js';
+import { setRateBoost, setRebirthKeyKeep } from './xp.js';
 import { addLetters } from './letters.js';
-import { emitMidGameLevelUp } from './levelUpSignal.js';
+import { rebirthKeyKeep } from './markPerks.js';
+import { creditAcceptedWordLetters } from './letterXp.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
-// worn mark's MAIN bonus (STEP 49 — a ×2-×4 mark priced against base words made KEY trivial).
-// + MARK ROLLS: the roll PERKS (and a worn rolled MAIN) are part of your rate too — ×1 until you roll.
-setRateBoost(() => forgeAvgMult(forgeBuys()) * starPowerMult() * ((markWinsFactors({ mode: 'wordBomb' }).mark) || 1) * rollBonusMult({ mode: 'wordBomb' }));
+// worn MARK (markMult — the same number the payout reads).
+setRateBoost(() => forgeAvgMult(forgeBuys()) * starPowerMult() * markMult());
+// HEIRLOOM perk (ORIGIN, SECRET): a rebirth keeps 3 KEY tiers. Injected — xp.js sits under this module.
+setRebirthKeyKeep(rebirthKeyKeep);
 
 export const WINS_KEY = 'taw.wins';
 export const WINS_LIFETIME_KEY = 'taw.winsLifetime';
@@ -251,23 +249,26 @@ export function wordWinsBase({ keyTier, wordLength = WORD_LEN_REF } = {}) {
  * anyway. Each is still individually earnable and each still multiplies.
  */
 export function perWordFactors({ mode, difficulty, rebirthCount, markId, masteryMult, streakMult, word } = {}) {
-  const key = modeKey(mode);
   const id = gameKey(mode);
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  // The equipped MARK. Its xpMult and winsMult were two names for the same lever once the stacks
-  // merged, so BOTH apply — a mark cannot boost one readout and not the other any more.
-  const markWins = markWinsFactors({ markId, mode: key }).mark || 1;
+  // The equipped MARK. MARKS via ROLLS: ONE number — the worn MAIN (tier × GOLD/RAINBOW) × the INDEX bonus
+  // (markRollsCore.markMult), the same one XP per letter reads, in every mode. `markId` undefined = the worn mark.
+  const mark = markMult({ markId });
   const mastery = Number.isFinite(masteryMult) && masteryMult > 0 ? masteryMult : masteryXpMult(id);
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
+  // REBIRTH RUSH (FROZEN): WINS / word = BASE 10 × length/5 × MODE POWER × REBIRTH 5^R × MARK × BOOST (× FRENZY on
+  // FUSE). Difficulty, streak, mastery, STAR POWER and the LETTER FORGE are no longer in the payout: they read ×1
+  // here so every receipt row that names them shows ×1 (and is hidden as inactive). `mode` is the MODE POWER the
+  // payout actually applies (WB ×1, RACE ×1.5, CHAIN ×2, SAT ×5) — the ×2-based XP_MULTIPLIERS table read ×2 for
+  // WB on the receipt and on the card's BONUS tag, a factor xpPerWord never paid. (Display only: perWordXp does
+  // not read f.mode; xpPerWord applies modePower itself.)
+  void difficulty; void stm; void mastery;
   return {
-    mode: XP_MULTIPLIERS[id] ?? 1,
-    difficulty: DIFFICULTY_MULT[difficulty] ?? 1,
+    mode: modePower(id),
+    difficulty: 1,
     rebirth: rebirthMult(rc),
-    streak: stm,
-    // + STAR POWER (stars.js, the late-game layer): +10% a level, folded into BONUS like the mark.
-    // + MARK ROLLS (markRolls.js): the summed PERK of every rolled mark for this mode, × a rolled
-    // MAIN when one is worn. Exactly ×1 on a save that has never rolled.
-    bonus: markWins * markXpMult(markId) * mastery * starPowerMult() * rollBonusMult({ mode: key }),
+    streak: 1,
+    bonus: mark, // MARK (markRollsCore.markMult)
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),
@@ -276,7 +277,7 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     // LETTER FORGE (forge.js, replaced MOMENTUM): +5% per forged level of each letter in THIS word.
     // Word-specific (×1 when no word is given — the card's reference rate is the base, and the
     // forge is one of the things that makes a real word worth MORE than it).
-    forge: forgeMultForWord(word),
+    forge: 1, // not in the Rebirth Rush formula (was LETTER FORGE +5% a forged letter)
   };
 }
 
@@ -287,8 +288,9 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
  * the forge to XP itself, from `word`; pass it the UN-forged weight.)
  */
 export function bankWeight(weight, word) {
+  void word; // REBIRTH RUSH: the forge is out of the formula; bankWordWins pays by word count
   const w = Number.isFinite(weight) && weight > 0 ? weight : 1;
-  return w * forgeMultForWord(word);
+  return w;
 }
 
 /** One word's XP, with the whole stack resolved. The number wins are derived from. */
@@ -397,7 +399,7 @@ export function wordWinsEstimate({ mode, difficulty, keyTier, wordLength } = {})
  * @returns {{ rate:number, xp:number, base:number, xpBase:number, mult:number, factors:object }}
  *   rate   — WINS for one COMMON word at x1 rarity/combo/lucky, all permanent multipliers applied
  *            (exact to a tenth: 10.1 — print it with formatRate, never formatNum)
- *   xp     — the same word's XP, i.e. rate × 10
+ *   xp     — the same word's WINS product in XP units, i.e. rate × 10
  *   base   — the reference word's letters at the player's key tier, the floor everything scales from
  *   xpBase — that same base in XP
  *   mult   — rate / base, i.e. everything the player has built, as one number
@@ -556,11 +558,12 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
   const prevN = iCount(prevWords);
   const nowN = iCount(nowWords);
-  const prevW = Number.isFinite(prevWeight) ? prevWeight : prevN;
-  const nowW = Number.isFinite(nowWeight) ? nowWeight : nowN;
-  // Paid weight is the cumulative weight, but ZERO until the count clears the gate.
-  const paidPrev = prevN >= MIN_WORDS ? prevW : 0;
-  const paidNow = nowN >= MIN_WORDS ? nowW : 0;
+  // REBIRTH RUSH: the FROZEN formula pays every word at BASE 10 × length/5 × MODE × 5^R × MARK × BOOST — no
+  // per-word weight (rarity × combo × lucky). The callers still pass their weights; they are ignored and the
+  // banked unit is the word COUNT. (Paid count is ZERO until the count clears the gate.)
+  void prevWeight; void nowWeight;
+  const paidPrev = prevN >= MIN_WORDS ? prevN : 0;
+  const paidNow = nowN >= MIN_WORDS ? nowN : 0;
   const deltaWeight = paidNow - paidPrev;
   if (deltaWeight <= 0) return 0;
   // `wordLength` is THIS word's letters — the same count the XP award used, so the two readouts
@@ -592,37 +595,19 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
 }
 
 // ---- THE AWARD ------------------------------------------------------------------------------
-// Credit one accepted word's XP to the persisted level state; returns creditXp's result plus the
-// gain ({ state, leveledUp, level, gain, credited, floor, mastery }). `gain` is the word's real XP (wins
-// = gain ÷ 10); `credited` is what the BAR got (≥ gain — the Option F floor); `floor` is null unless
-// the floor raised it. Persistence happens here so returning to the
-// menu reflects the levels earned in play; the caller may use `leveledUp` to fire a celebration.
-//
-// MOVED FROM xp.js (Economy v8). It computes the SAME product perWordWins() divides by ten —
-// perWordXp() is the one definition — so the XP a word grants and the wins it banks are two
-// readings of one number rather than two calculations that happen to be near each other. Mastery
-// is read BEFORE the word is credited to the mastery track, so a word never retroactively boosts
-// itself.
+// One accepted word's bookkeeping. PROGRESSION v11 (amended oct3 18:15) — ANDY: "GAME WORDS GIVE WINS ONLY.
+// No XP/bar progress from accepted game words." The bar fills from LETTERS (letterXp.js, wired into every game
+// input) — typed letters at the menu's ×0.2 share, so the ONLY bar credit here is the accepted word's LETTER
+// TOP-UP to the full rate (creditAcceptedWordLetters: (1 − 0.2) × length × XP per letter). No per-word XP. It
+// still returns { state, level, leveledUp:
+// false, gain, mastery, mark } so its callers are unchanged: `gain` is the word's WINS product in XP units
+// (perWordXp; wins = gain ÷ 10 — bankWordWins pays them), and the mastery / mark / letters bookkeeping and
+// the mastery wins milestone happen here exactly as before. Mastery is read BEFORE the word is credited to
+// the mastery track, so a word never retroactively boosts itself.
 export function awardWordXp(opts = {}) {
   const mode = opts.mode || 'menu';
   const gain = perWordXp({ ...opts, mode });
-  // OPTION F — THE GAME-WORD BAR FLOOR (barFloor.js). A GAME word moves the bar at least
-  // floorFrac(L) of the current level; `gain` (and so every win) is untouched. Menu typing never
-  // floors. The credit goes through creditXp at the same P, so a level crossing carries normally.
-  const before = loadProgress();
-  const P = currentPower();
-  let credited = gain;
-  let floor = null;
-  if (gameKey(mode) !== 'menu') {
-    const f = applyBarFloor({ gain, level: before.level, power: P });
-    if (f.floored) {
-      credited = f.credited;
-      floor = { level: before.level, pct: f.pct, rawPct: f.rawPct, xp: f.credited, gain };
-    }
-  }
-  setBarFloorStamp(floor);
-  const res = creditXp(before, credited, P);
-  saveProgress(res.state);
+  const state = loadProgress();
   const mastery = addMasteryWord(mode); // credit this accepted word to the mode's mastery track
   // MASTERY MILESTONE (STEP 19): every 5th mastery level pays MASTERY_MILESTONE_WORDS words' worth of
   // THIS mode's wins (flat since fine-tune loop 1 — the per-word rate already grows), through the
@@ -640,11 +625,10 @@ export function awardWordXp(opts = {}) {
   const mark = mode !== 'menu' ? addMarkWord() : null;
   // LIFETIME LETTERS (leaderboard main stat): every accepted letter in a game.
   if (mode !== 'menu' && Number.isFinite(opts.wordLength) && opts.wordLength > 0) addLetters(opts.wordLength);
-  // MID-GAME LEVEL-UP (feel ladder): a game word that crossed a level says so in-game (a small LV
-  // chip punch). Read-only signal, emitted after everything is credited; menu typing keeps its own
-  // celebration path (useXpCapture).
-  if (mode !== 'menu' && res.leveledUp) emitMidGameLevelUp(res.level, mode);
-  return { ...res, gain, credited, floor, mastery, mark };
+  // The accepted word's letters top up from the typed ×0.2 to the full rate (the anti-gibberish rule). The
+  // MID-GAME LEVEL-UP chip fires from letterXp.js when this (or typed letters) crosses a level.
+  creditAcceptedWordLetters(opts.wordLength, mode);
+  return { state, level: state.level, leveledUp: false, gain, mastery, mark };
 }
 
 // Apply a completed round: grant wins (balance + lifetime) and bump the mode's round

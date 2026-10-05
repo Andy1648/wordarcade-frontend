@@ -122,7 +122,7 @@ export function masteryXpMult(mode) {
 // The perk description for a mode's current level, for the dialog copy.
 export function masteryPerkLabel(mode) {
   const pct = Math.round(MASTERY_XP_STEP * (masteryState(mode).level - 1) * 100);
-  return pct > 0 ? `+${pct}% ${modeShortName(mode)} XP` : `no bonus yet — reach M2`;
+  return pct > 0 ? `+${pct}% ${modeShortName(mode)} WINS` : `no bonus yet — reach M2`; // v11: mastery pays wins (BONUS), not level XP
 }
 
 function modeShortName(mode) {

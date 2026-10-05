@@ -10,7 +10,6 @@
 import { useEffect, useRef, useState } from 'react';
 import '../components/wall-system.css'; // .solo-root adopts .wall-surface (token overrides in Solo.css)
 import './Solo.css';
-import { LUCKY_WINS_MULT } from '../progress/luck';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
 import { formatNum } from '../format';
 // The standing multiplier readout — "every win and multiplier visible, no hidden credits".
@@ -21,10 +20,12 @@ import { wpmKeyStroke } from '../progress/wpmLive';
 import { hasSeenTeach, markTeachSeen } from '../progress/onboarding';
 import TeachStrip from '../components/TeachStrip.jsx';
 import SoloExit from './SoloExit.jsx';
+import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 import { heatTier } from '../juice/ladder';
 import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
+import { noteTypedLetters } from '../progress/letterXp.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
 // tile elsewhere on the card. Progress is driven by React state every frame (not a CSS
@@ -293,6 +294,7 @@ export default function SoloShell({
             style={{ '--len': Math.max(input.length, 1) }}
             onChange={(e) => {
               wpmKeyStroke(); // WPM (§2): typing activity opens this word's active-typing span
+              noteTypedLetters(input, e.target.value, mode); // v11: LETTERS fill the bar (batched)
               onInput(e.target.value);
             }}
             placeholder={placeholder}
@@ -381,6 +383,10 @@ export default function SoloShell({
                 <span>BEST {formatNum(over.best)}</span>
               </div>
             )}
+            {/* REBIRTH READY → ×5 FOREVER (Andy oct3): the gate reached mid-run makes THIS the first
+                action — above RESTART. One tap arms the rebirth and leaves through onExit; the menu
+                runs the rebirth + ceremony. Shown on the tutorial card too — never miss the gate. */}
+            <RebirthReadyButton onGo={onExit} className="solo-rr-ready" />
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
@@ -411,7 +417,7 @@ export default function SoloShell({
         </div>
       ) : null}
 
-      {/* LUCKY WORD (Job 4): a finite 400ms gold burst + "LUCKY ×5" stamp, re-keyed per lucky
+      {/* LUCKY WORD (Job 4): a finite 400ms gold burst + "LUCKY!" stamp (no ×N: lucky pays no multiplier), re-keyed per lucky
           hit so it replays. Absolutely positioned, pointer-events:none, transform/opacity only —
           no idle/infinite animation. */}
       {/* THE FEEL LAYER (escalation ladder): the tier slam (one pooled node), this word's
@@ -436,7 +442,7 @@ export default function SoloShell({
       {phase === 'playing' && luckyKey > 0 && slotMain === 'lucky' && (
         <div className="solo-lucky" key={luckyKey} aria-hidden="true">
           <span className="solo-lucky-ring" />
-          <span className="solo-lucky-label">LUCKY ×{LUCKY_WINS_MULT}</span>
+          <span className="solo-lucky-label">LUCKY!</span>
         </div>
       )}
 

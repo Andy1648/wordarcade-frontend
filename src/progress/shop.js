@@ -6,11 +6,10 @@
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
-import { layerOpen } from './claims.js';
 
-// `blurb` = what the cosmetic changes (its flair). `xpMult` = a permanent XP multiplier the
-// cosmetic carries once EQUIPPED — Economy v3 restores cosmetics as a multiplier layer in the
-// xpPerInput stack (the free defaults are ×1). Pop style and sound pack stack multiplicatively.
+// `blurb` = what the cosmetic changes (its flair). `xpMult` is a LEGACY field: PROGRESSION v11 (review
+// round 2) made cosmetics LOOKS ONLY — xpPerInput ignores it and no copy quotes it (it was "+N% MENU XP",
+// up to ×6.9 level XP for a menu masher). Kept in the data so saves and the catalog tests are unchanged.
 // PRICES /10 (Economy v8): wins are the word's XP ÷ 10 now, so the whole currency was restated
 // an order of magnitude smaller and every price followed it down. The LADDER is untouched.
 // COSMETIC PRICES ARE AN EXPONENTIAL LADDER (Economy v7). v6 priced them 150 / 400 / 900 / 2000
@@ -121,8 +120,8 @@ export function getEquippedSoundPack() {
   return getEquipped().soundPack;
 }
 
-// The XP multiplier carried by an item id (1.0 if unknown / has none). Used to feed the
-// xpPerInput stack (Economy v3). Pure lookups over the catalog above.
+// The legacy XP multiplier carried by an item id (1.0 if unknown / has none). v11: NOT applied to any XP
+// (cosmetics are looks only). Pure lookups over the catalog above.
 export function xpMultOf(id) {
   const it = itemById(id);
   return it && Number.isFinite(it.xpMult) && it.xpMult > 0 ? it.xpMult : 1;
@@ -193,8 +192,8 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   // Key Power — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
-  // LETTER FORGE — uncapped, so there is always a next forge to buy (once it has been revealed).
-  if ((layerOpen('forge') || forgeBuys() > 0) && bal >= forgeCost(forgeBuys())) return true;
+  // LETTER FORGE is NOT counted: Rebirth Rush took it off the shelf (not in the wins formula), so it
+  // must not light the dot for something the shop no longer sells.
   // Themes are NOT counted: they left the shop in STEP 50 (worlds), so a "buyable" theme lit the dot
   // with nothing on the shelf (Andy oct2 A5 — a 60-win balance showed a dot for MIDNIGHT).
   return false;

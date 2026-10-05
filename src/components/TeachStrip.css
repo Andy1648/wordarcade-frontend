@@ -81,7 +81,11 @@
 
 /* 3. WHAT IT IS WORTH. */
 .teach-strip-pay {
-  flex: 0 0 auto;
+  /* MAY SHRINK AND WRAP. It was 0 0 auto when the line was "LONGER WORDS PAY MORE"; the Rebirth Rush formula
+     line is ~700px of max-content, and a no-shrink item that wide overran the ~450px strip beside the
+     CHAIN/FUSE hero at 1920/2560/1163 (viewport-integrity: clipped by .solo-root). */
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: var(--fs-body); /* STEP 53: was --fs-label */
   /* tracked in from 0.12em when it grew 11 -> 13px, so the example + pay line + GOT IT still share
      one row in the 450px strip beside the FUSE/CHAIN hero instead of wrapping GOT IT to a 3rd row */

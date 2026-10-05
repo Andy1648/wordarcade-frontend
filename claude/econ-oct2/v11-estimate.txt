@@ -1,0 +1,46 @@
+v11 (amended) estimate — 200 h per bot, KEY timeline stretch ×1, letters-only XP
+
+V1 need = 100 + 15 n^2 1.004^(n-1); KEY x1.2/tier; rebirth x(1+R)
+   need(10)=1.65e+3 need(50)=4.57e+4 need(100)=2.23e+5 need(200)=1.33e+6 need(400)=1.18e+7
+   casual  LV50 1.7h | LV100 7.6h | LV200 47.7h | LV225 66.2h | LV300 131.9h | LV400 — | end R14 LV247
+           min/level @LV10 50s · @LV50 3.2m · @LV100 6.0m · @LV200 13.2m
+           min % of a level per word, by band (LV≤N): 50:5.4 100:2.4 150:1.6 200:1.2 250:0.87 300:0.54 350:0.46
+           LV1→15 per climb: first 12.2m · after R1 3.5m · R3 1.3m · R6 30s · R10 20s
+   median  LV50 52.4m | LV100 3.6h | LV200 20.5h | LV225 27.3h | LV300 52.9h | LV400 135.3h | end R17 LV283
+           min/level @LV10 36s · @LV50 1.2m · @LV100 2.2m · @LV200 4.8m
+           min % of a level per word, by band (LV≤N): 50:7.8 100:3.3 150:2.3 200:1.7 250:1.2 300:0.88 350:0.63 400:0.48
+           LV1→15 per climb: first 7.5m · after R1 1.8m · R3 42s · R6 18s · R10 6s
+   strong  LV50 27.6m | LV100 1.4h | LV200 7.2h | LV225 9.8h | LV300 20.6h | LV400 53.9h | end R20 LV407
+           min/level @LV10 38s · @LV50 30s · @LV100 53s · @LV200 1.9m
+           min % of a level per word, by band (LV≤N): 50:7.7 100:6.4 150:3.7 200:3.1 250:1.9 300:1.3 350:0.98 400:0.78
+           LV1→15 per climb: first 6.1m · after R1 1.5m · R3 15s · R6 8s · R10 4s
+
+V2 need = 300 x 1.04^(n-1); KEY x1.2/tier; rebirth x(1+R)
+   need(10)=427 need(50)=2.05e+3 need(100)=1.46e+4 need(200)=7.36e+5 need(400)=1.88e+9
+   casual  LV50 17.7m | LV100 43.0m | LV200 11.0h | LV225 23.1h | LV300 166.1h | LV400 — | end R13 LV276
+           min/level @LV10 20s · @LV50 10s · @LV100 40s · @LV200 12.7m
+           min % of a level per word, by band (LV≤N): 50:18 100:26 150:4.9 200:1.3 250:0.35 300:0.070
+           LV1→15 per climb: first 6.8m · after R1 1.5m · R3 40s · R6 20s · R10 10s
+   median  LV50 10.4m | LV100 24.1m | LV200 5.0h | LV225 9.4h | LV300 66.0h | LV400 — | end R13 LV338
+           min/level @LV10 18s · @LV50 6s · @LV100 18s · @LV200 3.9m
+           min % of a level per word, by band (LV≤N): 50:20 100:30 150:8.0 200:2.0 250:0.48 300:0.11 350:0.036
+           LV1→15 per climb: first 4.3m · after R1 60s · R3 18s · R6 12s · R10 6s
+   strong  LV50 8.4m | LV100 15.9m | LV200 1.9h | LV225 3.6h | LV300 25.6h | LV400 — | end R14 LV365
+           min/level @LV10 15s · @LV50 4s · @LV100 4s · @LV200 1.5m
+           min % of a level per word, by band (LV≤N): 50:22 100:40 150:13 200:3.3 250:0.92 300:0.18 350:0.039 400:0.026
+           LV1→15 per climb: first 3.3m · after R1 56s · R3 19s · R6 4s · R10 4s
+
+V3 need as V1; KEY +25%/tier (additive); rebirth x(1+R)
+   need(10)=1.65e+3 need(50)=4.57e+4 need(100)=2.23e+5 need(200)=1.33e+6 need(400)=1.18e+7
+   casual  LV50 4.0h | LV100 21.6h | LV200 171.9h | LV225 — | LV300 — | LV400 — | end R10 LV167
+           min/level @LV10 1.5m · @LV50 7.0m · @LV100 17.7m · @LV200 —
+           min % of a level per word, by band (LV≤N): 50:2.4 100:0.83 150:0.42 200:0.26
+           LV1→15 per climb: first 16.8m · after R1 6.2m · R3 3.0m · R6 1.5m · R10 —
+   median  LV50 2.0h | LV100 10.6h | LV200 84.5h | LV225 124.8h | LV300 — | LV400 — | end R12 LV172
+           min/level @LV10 54s · @LV50 3.7m · @LV100 8.9m · @LV200 28.7m
+           min % of a level per word, by band (LV≤N): 50:2.7 100:0.98 150:0.52 200:0.32 250:0.21 300:0.19
+           LV1→15 per climb: first 9.7m · after R1 3.4m · R3 1.5m · R6 42s · R10 24s
+   strong  LV50 1.1h | LV100 5.3h | LV200 42.9h | LV225 63.7h | LV300 147.1h | LV400 — | end R13 LV310
+           min/level @LV10 38s · @LV50 1.8m · @LV100 4.2m · @LV200 14.8m
+           min % of a level per word, by band (LV≤N): 50:3.5 100:1.3 150:0.63 200:0.39 250:0.25 300:0.16 350:0.15
+           LV1→15 per climb: first 6.9m · after R1 2.2m · R3 45s · R6 23s · R10 15s

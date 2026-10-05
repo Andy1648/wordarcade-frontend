@@ -12,6 +12,7 @@ import * as juice from './juice';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import NearMiss from '../components/NearMiss.jsx';
+import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 
 const C = JUICE.CELEBRATION;
@@ -138,6 +139,9 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
             at 1280x551 / 1366x625 they were below the fold under the study panels). */}
         <div className="sr-results-actions in">
+          {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
+              onExit; the menu runs the rebirth + ceremony. */}
+          <RebirthReadyButton onGo={onExit} className="is-sat" />
           <button type="button" className="sr-btn" onClick={onAgain}>
             Run it back
           </button>

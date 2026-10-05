@@ -47,7 +47,7 @@ test('rebirthWithStars banks the stars and queues the layer reveals at R1 and R3
   });
 });
 
-test('STAR POWER is uncapped, rising 1 star a level, and really pays', () => {
+test('STAR POWER is uncapped and rises 1 star a level — but is OUT of the Rebirth Rush wins formula', () => {
   withStorage({ 'taw.rebirths': '1' }, () => {
     addStars(100);
     const base = perWordWins({ mode: 'wordBomb', rebirthCount: 1, keyTier: 0, streakMult: 1, masteryMult: 1 });
@@ -55,7 +55,8 @@ test('STAR POWER is uncapped, rising 1 star a level, and really pays', () => {
     assert.equal(starPowerMult(), 1 + 0.1 * 12);
     assert.equal(perkCost('power', 12), 13);
     const now = perWordWins({ mode: 'wordBomb', rebirthCount: 1, keyTier: 0, streakMult: 1, masteryMult: 1 });
-    assert.ok(Math.abs(now - base * 2.2) < 0.11, `${now} vs ${base} × 2.2`);
+    assert.equal(base, 50); // 10 × R1 ×5
+    assert.equal(now, 50, 'the frozen formula has no STAR POWER term');
   });
 });
 
@@ -70,12 +71,12 @@ test('automation is locked before R3, then buys for you', () => {
   });
 });
 
-test('HEAD START lifts the new climb, never past half the next gate', () => {
+test('REBIRTH RUSH: "Level → 1" — owned HEAD START no longer lifts the new climb', () => {
   withStorage({ 'taw.xp': JSON.stringify({ lv: rebirthThreshold(1), into: 0 }), 'taw.rebirths': '1' }, () => {
     addStars(20);
     for (let i = 0; i < 6; i++) buyPerk('head', 1);
-    assert.equal(headStartLevel(2), Math.min(31, Math.floor(rebirthThreshold(2) / 2)));
+    assert.equal(headStartLevel(2), 1);
     rebirthWithStars();
-    assert.equal(loadProgress().level, headStartLevel(2));
+    assert.equal(loadProgress().level, 1);
   });
 });

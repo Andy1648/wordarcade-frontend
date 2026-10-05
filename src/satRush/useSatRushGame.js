@@ -27,6 +27,7 @@ import {
 } from './config';
 import * as juice from './juice';
 import { formatNum, formatMultExact } from '../format';
+import { noteLetters } from '../progress/letterXp.js';
 
 const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
 const CLEAR_PAUSE_MS = 850;
@@ -507,6 +508,7 @@ export function useSatRushGame() {
 
       const res = input.typeLetter(e.key);
       if (res.accepted) {
+        noteLetters(1, 'sat-rush'); // v11: an accepted LETTER fills the bar (batched, rate-capped)
         if (res.complete) resolveClear();
         else force();
       } else {

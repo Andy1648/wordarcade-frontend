@@ -15,6 +15,7 @@
 
 import { frenzyBonusMs } from './stars.js';
 import { announceTimers } from './boost.js';
+import { frenzyEveryMode } from './markPerks.js';
 
 export const FRENZY_KEY = 'taw.frenzyUntil';
 export const FRENZY_MODE = 'fuse';
@@ -41,10 +42,12 @@ export function isFrenzyActive(now = Date.now()) {
   return frenzyRemaining(now) > 0;
 }
 
-/** The frenzy multiplier for a mode right now: ×FRENZY_MULT for FUSE while active, else 1. */
+/** The frenzy multiplier for a mode right now: ×FRENZY_MULT for FUSE while active, else 1. The WILDFIRE perk
+ *  (ORIGIN, SECRET mark) pays a running FRENZY in EVERY mode. (It is still lit by clearing FUSE's strip.) */
 export function frenzyMult(mode, now = Date.now()) {
   const m = mode === 'fuse' || mode === FRENZY_MODE ? FRENZY_MODE : mode;
-  return m === FRENZY_MODE && isFrenzyActive(now) ? FRENZY_MULT : 1;
+  if (m !== FRENZY_MODE && !frenzyEveryMode()) return 1;
+  return isFrenzyActive(now) ? FRENZY_MULT : 1;
 }
 
 /** Start FRENZY (a no-op while one is already running). Returns { started, remaining }. */

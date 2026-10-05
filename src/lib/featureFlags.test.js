@@ -47,10 +47,10 @@ test('flagOn: blocked storage / no window read as OFF, never throw', () => {
   }
 });
 
-test('rollsEnabled keeps its behaviour: ?rolls=1 and taw.rollsOn=1 (plus the shared key)', () => {
+test('rollsEnabled: DORMANT until the rolls-live PR; ?rolls=1 / taw.rollsOn / the shared key turn it on', () => {
   withEnv({}, () => assert.equal(rollsEnabled(), false));
-  withEnv({ search: '?rolls=1' }, () => assert.equal(rollsEnabled(), true));
-  withEnv({ store: { [ROLLS_KEY]: '1' } }, () => assert.equal(rollsEnabled(), true));
-  withEnv({ store: { 'taw.flag.rolls': '1' } }, () => assert.equal(rollsEnabled(), true));
   withEnv({ throwing: true }, () => assert.equal(rollsEnabled(), false));
+  for (const env of [{ search: '?rolls=1' }, { store: { [ROLLS_KEY]: '1' } }, { store: { 'taw.flag.rolls': '1' } }]) {
+    withEnv(env, () => assert.equal(rollsEnabled(), true));
+  }
 });

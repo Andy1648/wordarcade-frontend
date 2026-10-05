@@ -78,7 +78,7 @@ test.describe('menu', () => {
   // rather than the code behind them — which is the only way the original defect was visible.
   // The hint divided by the MENU's x1 rate and printed "12 WORDS TO LEVEL 2" directly above a
   // FEATURED card printing "100 XP / WORD": both numbers correct, the pair incoherent.
-  test('the XP hint quotes the FEATURED card rate, not the menu rate', async ({ page }) => {
+  test('the XP hint counts LETTERS at BASE 10 XP / LETTER, and the featured card says the same', async ({ page }) => {
     const m = await page.evaluate(() => {
       const read = (e) => (e ? e.innerText.replace(/\s+/g, ' ').trim() : null);
       const ribbon = document.querySelector('.game-card-ribbon.is-featured');
@@ -88,21 +88,21 @@ test.describe('menu', () => {
         cardName: read(card && card.querySelector('.game-card-name')),
         cardWins: card && card.querySelector('.game-card-payout') ? `${card.querySelector('.game-card-payout').getAttribute('data-rate')} WINS` : null, // the live rate (the card prints BASE)
         cost: read(document.querySelector('.menu-xp-readout-need')),
+        cardXp: read(card && card.querySelector('.game-card-xp')),
       };
     });
     // Exactly one card carries the ribbon, and it is the one gameData marks.
     expect(await page.locator('.game-card-ribbon.is-featured').count()).toBe(1);
     expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split('\n').join(' '));
 
-    // LETTERS, not words (Andy A9): the card quotes a 5-letter word, so a letter is 1/5. Andy oct2
-    // took XP / WORD off the card; a word's XP is exactly its WINS × 10.
+    // PROGRESSION v11 (amended): LETTERS fill the bar at ONE price — BASE 10 XP / LETTER on a fresh
+    // profile (T0, R0, no mark), menu or game. Words pay WINS only.
     const letters = Number((m.hint.match(/(\d[\d,]*)\s+LETTERS?/) || [])[1].replace(/,/g, ''));
-    const perWord = 10 * Number(m.cardWins.replace(/,/g, '').match(/([\d.]+)\s*WINS/)[1]);
     const cost = Number(m.cost.replace(/[^0-9]/g, ''));
-    expect(letters, `hint "${m.hint}" vs card "${m.cardWins}" over ${cost}`).toBe(Math.ceil((cost * 5) / perWord));
+    expect(letters, `hint "${m.hint}" over ${cost}`).toBe(Math.ceil(cost / 10));
     expect(m.hint).not.toMatch(/WORDS? TO/);
-    // And it is NOT the menu's own rate, which is the featured mode's divided by its multiplier.
-    expect(letters).toBeLessThan(Math.ceil((cost * 5) / (perWord / 2)));
+    // the card is ONE line since #172 ("BASE n / WORD · POWER ×N") — the XP rule lives on the bar's hint, not the card
+    expect(m.cardXp).toBeNull();
   });
 
 });

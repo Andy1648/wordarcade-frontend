@@ -13,14 +13,13 @@ import { useCountUp } from '../hooks/useCountUp';
 import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
-import { markRank, markMainMult, markTier } from '../progress/marks';
-import { streakMultiplier } from '../progress/streak';
+import { markRank, markTier } from '../progress/marks';
+import { mainMultOf } from '../progress/markRollsCore';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
-import { FEATURED_GAME } from '../gameData';
 import { CARD_MS } from '../lib/menuMoments';
+import { rebirthMult } from '../progress/xp';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
-const FEATURED_NAME = (FEATURED_GAME.cardName || FEATURED_GAME.name || '').split('\n').join(' ');
 
 // THE BAR IS THE DENSE ONE, and it is the only one. Two layouts were built and screenshotted so
 // the choice could be made from frames; the FILL variant lost on its own preview — at 92px with
@@ -325,22 +324,19 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         )
       )}
       {/* DAILY STREAK — a real treatment from 2 days (Job 10), not a bare chip: a flame
-          banner carrying the day count, the XP multiplier it's worth, and any earned
+          banner carrying the day count (a count only — no multiplier in Rebirth Rush) and any earned
           FREEZE tokens (❄) shown BEFORE they're needed. The milestone tier (2/3/7/14/30)
           escalates the styling via data-tier so 30 days looks nothing like 2. */}
       {variant !== 'mini' && Number(streak) >= 2 && (
         <span
           className="menu-streak"
           data-tier={streakTier(streak)}
-          aria-label={`${streak} day streak, ${formatMult(streakMultiplier(streak))} wins and XP${freezes > 0 ? `, ${freezes} freeze token${freezes === 1 ? '' : 's'}` : ''}`}
+          aria-label={`${streak} day streak${freezes > 0 ? `, ${freezes} freeze token${freezes === 1 ? '' : 's'}` : ''}`}
         >
           <span className="menu-streak-flame" aria-hidden="true">🔥</span>
           <span className="menu-streak-count">{formatNum(streak)}</span>
           <span className="menu-streak-day" aria-hidden="true">DAY{Number(streak) === 1 ? '' : 'S'}</span>
-          {streakMultiplier(streak) > 1 && (
-            /* H6/M3: no "XP" suffix — the streak multiplies wins AND XP (one stack). formatMult carries the "×". */
-            <span className="menu-streak-mult" aria-hidden="true" title="On every word's wins and XP">{formatMult(streakMultiplier(streak))}</span>
-          )}
+          {/* Rebirth Rush: the streak is a COUNT only — it multiplies neither XP nor wins, so no "×" chip. */}
           {freezes > 0 && (
             <span className="menu-streak-freeze" aria-hidden="true" title={`${freezes} freeze token${freezes === 1 ? '' : 's'} — a missed day is forgiven`}>
               {/* H2d: a COUNT of tokens, not a multiplier — "❄2", never "❄×2". */}
@@ -384,7 +380,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
             {/* H6/M12: the same formatter the marks index and the receipt use (×3.18, not ×3.2); it carries the "×". */}
-            <span className="menu-mark-mult" aria-hidden="true">{formatMult(markMainMult(mark, markRank(mark.id)))}</span>
+            <span className="menu-mark-mult" aria-hidden="true">{formatMult(mainMultOf(mark.id))}</span>
             {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
           </button>
         ) : (
@@ -461,7 +457,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           progress expressed in the only unit the player controls. LETTERS, not words (Andy A9):
           XP is linear in word length, so "283 WORDS" was a 5-letter-word fiction — a player
           typing long words got there in fewer. Letters is the unit XP is actually paid in.
-          Derived from the live per-word XP rate (see Homepage), so it moves with KEY POWER, rebirth, mastery and the streak
+          PROGRESSION v11: priced at a GAME letter (BASE 10 XP / LETTER × KEY × rebirth × mark — see Homepage); words pay wins,
           rather than being a constant dressed up as a measurement.
           On a first run it also carries where XP comes from, which used to be a SEPARATE caption
           line below the bar — two stacked lines of small type saying related things, on the one
@@ -478,7 +474,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
                   the corner-nav gutter leaves the bar 131px and the full sentence is ~148px, so
                   it ellipsised to "12 WORDS TO …" — a line that costs its own height and then
                   withholds the number it exists to show. */}
-              <span className="menu-xp-hint-to"> IN {FEATURED_NAME} TO LEVEL </span>
+              <span className="menu-xp-hint-to"> IN A GAME TO LEVEL </span>
               <span className="menu-xp-hint-to-short"> · LV </span>
               {formatNum(level + 1)}
             </span>
@@ -844,6 +840,17 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     }
   }
 
+  // The level-up's finite starburst + a gold shard ring, for the rebirth cards (pooled nodes; no layout read).
+  function bigBurst() {
+    if (prefersReducedMotion()) return;
+    if (burstAnimRef.current) {
+      burstAnimRef.current.cancel();
+      burstAnimRef.current.play();
+    }
+    const { w, h } = layerSizeRef.current;
+    if (w && h) spawnShards(w / 2, h * 0.46, TIER_GOLD, SHARD_POOL, 4);
+  }
+
   // Put the shared card back to its everyday timeline after a milestone played on it. A no-op until a
   // milestone has (so with the flag off nothing here ever runs).
   function resetMilestoneCard() {
@@ -1035,18 +1042,38 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         burstAnimRef.current.play();
       }
     },
-    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (1500ms).
+    // One finite "REBIRTH N" celebration, reusing the level-up pooled element (1500ms). Rebirth Rush (Andy:
+    // "Big moment"): it says the ×5 jump plainly with the new total (5^R), and its last line is the ONE
+    // rebuy-spree cue — the KEY went back to T0 and the wins were kept. Same finite starburst + gold shard
+    // ring the level-up throws (pooled; skipped under reduced motion).
     rebirthCelebration(n) {
       const a = levelupAnimRef.current;
       if (!a) return;
       for (const p of popAnimsRef.current) p.cancel();
       popCapRef.current = true;
       resetMilestoneCard();
-      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${n}`;
-      if (levelSubRef.current) levelSubRef.current.textContent = 'PERMANENT MULTIPLIER';
-      if (levelDetailRef.current) levelDetailRef.current.textContent = ''; // no LV→LV line on a rebirth
+      const total = rebirthMult(n);
+      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(n)}`;
+      if (levelSubRef.current) levelSubRef.current.textContent = n > 1 ? `×5 XP & WINS · NOW ×${formatNum(total)}` : '×5 XP & WINS';
+      if (levelDetailRef.current) levelDetailRef.current.textContent = 'KEY RESET · REBUY';
       a.cancel();
       a.play();
+      bigBurst();
+    },
+    // Rebirth Rush one-time conversion: "YOUR LEVELS BECAME +N REBIRTHS" (econMigrate rebirthRushNotice).
+    // The new rebirth count is the headline; Andy's line rides the sub (it wraps on a phone).
+    rebirthRush(added, rebirths) {
+      const a = levelupAnimRef.current;
+      if (!a) return;
+      for (const p of popAnimsRef.current) p.cancel();
+      popCapRef.current = true;
+      resetMilestoneCard();
+      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(rebirths)}`;
+      if (levelSubRef.current) levelSubRef.current.textContent = `YOUR LEVELS BECAME +${formatNum(added)} REBIRTHS`;
+      if (levelDetailRef.current) levelDetailRef.current.textContent = `×${formatNum(rebirthMult(rebirths))} XP & WINS`;
+      a.cancel();
+      a.play();
+      bigBurst();
     },
     // One finite "+N WINS" stamp (menu return after a paying round). Same pooled pattern.
     winsStamp(amount) {

@@ -48,7 +48,7 @@ test.describe('overlays render without console errors', () => {
     await openStats(page); // claims ride STATS (Andy oct2 A4)
     const panel = page.locator('.stats-panel');
     await expect(panel).toBeVisible();
-    await expect(panel).toContainText('KEY POWER'); // the row that used to crash
+    await expect(panel).toContainText('BASE WINS / WORD'); // Rebirth Rush: the stack's named terms (BASE … KEY … REBIRTH … MARK … BOOST)
     await expect(panel).toContainText('TIER 3'); // shows the TIER, not "LV undefined"
     await page.waitForTimeout(150);
     expect(errors, `console/page errors: ${errors.join(' | ')}`).toHaveLength(0);

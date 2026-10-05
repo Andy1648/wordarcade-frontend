@@ -87,22 +87,24 @@ test.describe('shop', () => {
     // cumulative-XP seed lands well BELOW the LV15 rebirth gate it used to clear. Seeded through
     // the v5 {lv, into} shape instead of a cumulative total - it says what it means ("this player
     // is level 15") and cannot be invalidated by another curve retune.
-    await openRebirth(page, { 'taw.xp': JSON.stringify({ lv: 15, into: 0 }), 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
+    await openRebirth(page, { 'taw.econ': '12', 'taw.xp': JSON.stringify({ lv: 15, into: 0 }), 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
     const rebirth = page.locator('.shop-rebirth');
     await expect(rebirth).toBeEnabled(); // past the level gate → eligible
 
     const detail = page.locator('.shop-confirm-detail');
     await expect(detail).toContainText('LOSE');
     await expect(detail).toContainText('KEEP');
-    await expect(detail).toContainText('GAIN');
+    await expect(detail).toContainText('KEY RESETS'); // Rebirth Rush: KEY → T0, WINS KEPT (the ×5 GAIN is the hero line)
+    await expect(detail).toContainText('WINS KEPT');
+    await expect(page.locator('.shop-rb-hero-label')).toContainText('×5 XP & WINS');
 
     await rebirth.click(); // arm the confirmation
     await page.locator('.shop-confirm-actions .shop-card-btn.danger').click(); // CONFIRM
     // BB1: the ceremony shows what was RESET (LV 15 → 1) and what was KEPT, with the real numbers
     const cer = page.locator('.rbc-card');
     await expect(cer.locator('.rbc-kicker')).toHaveText('REBIRTH 1');
-    await expect(cer.locator('.rbc-from')).toHaveText('15');
-    await expect(cer.locator('.rbc-to')).toHaveText('1');
+    await expect(cer.locator('.rbc-level:not(.rbc-key) .rbc-from')).toHaveText('15'); // the KEY → T0 row (Rebirth Rush) is .rbc-key
+    await expect(cer.locator('.rbc-level:not(.rbc-key) .rbc-to')).toHaveText('1');
     const wins = cer.locator('.rbc-kept-row', { hasText: 'WINS' }).first();
     await expect(wins.locator('.rbc-val')).toHaveText('400');
     await expect(cer.locator('.rbc-kept-row', { hasText: 'COSMETICS' }).locator('.rbc-val')).toHaveText('5');

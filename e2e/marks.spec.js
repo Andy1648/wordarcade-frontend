@@ -33,7 +33,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await tile.click();
   const detail = page.locator('.mx-detail');
   await expect(detail.locator('.mx-detail-tier')).toContainText('COMMON');
-  await expect(detail.locator('.mx-detail-pct')).toHaveText('MAIN ×2'); // U: one short tag
+  await expect(detail.locator('.mx-detail-pct')).toHaveText('MAIN ×1.1'); // U: one short tag (MARKS via ROLLS: COMMON ×1.1)
   await detail.getByRole('button', { name: 'SET AS MAIN' }).click();
   await expect(page.locator('.mx-hero .mx-hero-name')).toHaveText('BOMBER');
   await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
@@ -41,7 +41,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await page.locator('.mx-tile.is-locked').first().click();
   await expect(page.locator('.mx-howto')).toContainText('HOW TO GET IT:');
   await page.locator('.mx-close').click();
-  await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×2');
+  await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×1.1'); // the worn MAIN under Rebirth Rush (COMMON ×1.1)
 });
 
 test('before LV 10 there is no marks layer at all', async ({ page }) => {

@@ -88,7 +88,9 @@ test('a fresh player who only sits, types, tabs away and opens the SHOP earns ze
 
 test('a real reward on the menu (a level achievement) is CLAIMED — nothing pays until the player clicks', async ({ page }) => {
   test.setTimeout(120_000);
-  const r = await session(page, { 'taw.xp': JSON.stringify({ lv: 14, into: 0 }) });
+  // v11: menu letters are half price under a shared 12/s cap, so seed the LV14 bar at its edge (a legacy {lv, into} past
+  // the old need converts to f ≈ 1): the first credited letters level it — what this spec tests is the CLAIM, not the rate.
+  const r = await session(page, { 'taw.xp': JSON.stringify({ lv: 14, into: 1e9 }) });
   test.info().annotations.push({ type: 'session', description: JSON.stringify(r) });
   expect(r.achievements).toEqual(['lv-15']); // reached by menu XP — and NOT the menu-typing WPM one
   // Andy oct2: earning it QUEUES a claim; the balance has not moved.

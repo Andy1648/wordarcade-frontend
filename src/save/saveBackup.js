@@ -63,11 +63,20 @@ export const PROGRESS_KEYS = [
   'taw.xpv10',
   'taw.rbgate',
   'taw.pv10notice',
+  // REBIRTH RUSH: the rolled marks (roll state + the PERMANENT marks they paid for), the fractional wins
+  // carry, OVERDRIVE's played-time toward the next trigger (and a live window), and the one-time
+  // "YOUR LEVELS BECAME +N REBIRTHS" notice — all progress, none of it device state
+  'taw.markRolls',
+  'taw.permanentMarks',
+  'taw.winsCarry',
+  'taw.overdrive',
+  'taw.rrnotice',
 ];
 // PV10 must-fix 4: migration keys that must NOT survive from THIS browser when a restored blob lacks them.
 // Without the blob's own econ stamp the v10 migration has to re-run on the restored (older) save after the
 // reload; a local shadow or grandfathered gate belongs to the save being replaced.
-export const REMOVE_IF_ABSENT = ['taw.econ', 'taw.xpv10', 'taw.rbgate'];
+// A pending REBIRTH RUSH notice is the replaced save's moment too (the conversion re-queues its own if it re-runs).
+export const REMOVE_IF_ABSENT = ['taw.econ', 'taw.xpv10', 'taw.rbgate', 'taw.rrnotice'];
 
 const FORMAT = 'taw-save';
 

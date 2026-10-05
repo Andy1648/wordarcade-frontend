@@ -1,6 +1,6 @@
 // nearMissData.js — gathers the live inputs for the pure nearMiss() (nearMiss.js) at an end screen.
-// Read-only against the economy: level/frac (loadProgress), need (xp.need at the live power), the
-// mode's per-word XP + wins (perWordRateNow), the bar floor, the next KEY tier vs the balance.
+// Read-only against the economy: level/frac (loadProgress), need (xp.need — one fixed curve), a reference
+// word's LETTER XP (letterXpNow × 5), the mode's wins / word (perWordRateNow), the next KEY tier vs the balance.
 //
 // THE RUN'S YIELD. Lifetime LETTERS (letters.js) only move on accepted GAME letters, so the letters
 // gained between two end screens are exactly one run's worth. Each end screen diffs against the
@@ -14,7 +14,7 @@
 import { loadProgress, need, getKeyTier, keyTierCost } from './xp.js';
 import { getWins, perWordRateNow, TYPICAL_ROUND_WORDS } from './wins.js';
 import { getLetters } from './letters.js';
-import { floorFrac } from './barFloor.js';
+import { letterXpNow } from './letterXp.js';
 import { nearMiss, nextAvg, LETTERS_PER_WORD } from './nearMiss.js';
 
 export const NM_START_KEY = 'taw.nm.start'; // sessionStorage: lifetime letters at the start of this run
@@ -58,8 +58,9 @@ export function nearMissNow(mode) {
       level,
       frac,
       need,
-      xpPerWord: rate.xp,
-      floorFrac,
+      // REBIRTH RUSH: words pay WINS only; the bar fills from LETTERS (no game-word bar floor any more), so
+      // a reference word moves the bar by its letters at the live in-game XP / LETTER.
+      xpPerWord: LETTERS_PER_WORD * letterXpNow(),
       avgWords,
       key: { tier, cost: keyTierCost(tier), balance: getWins(), rate: rate.rate },
     });

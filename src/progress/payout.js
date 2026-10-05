@@ -1,9 +1,8 @@
 // payout.js — WHERE THE WINS CAME FROM.
 //
 // THE BUG THIS EXISTS TO FIX, in Andy's words: "I got 40k and couldn't tell where it came from."
-// A word's payout is a product of up to nine factors — mode, difficulty, level, rebirth, momentum,
-// the equipped mark, rarity (which carries a length bonus), combo and the lucky roll — and NONE of
-// them were ever named on screen. The number arrived; the reasons did not. A multiplier the player
+// A word's payout is a product of named factors (Rebirth Rush: BASE 10 × length/5 × MODE × REBIRTH
+// × MARK × BOOST) — and once NONE of them were named on screen. The number arrived; the reasons did not. A multiplier the player
 // cannot see is not a reward, it is a rumour: it cannot be aimed at, it cannot be compared against
 // an upgrade's price, and a shop item that boosts it reads as a shot in the dark.
 //
@@ -15,40 +14,24 @@
 // Pure and DOM-free (one module-level round ledger, the same pattern wins.js uses for its pending
 // stamp), so the whole thing is unit-testable under node.
 import { roundWordXp } from './xp.js';
-import { takeBarFloorStamp } from './barFloor.js';
+import { winnerPerkMult } from './markPerks.js';
 
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
 // words is harder to read than no list at all.
-//   PERMANENT   what you have built: mode, difficulty, rebirth, streak, bonus
-//   THIS WORD   what you just did:   rarity, length, combo, lucky
+// REBIRTH RUSH (PROGRESSION FINAL, frozen): WINS / word = BASE 10 × length/5 × MODE × REBIRTH × MARK × BOOST
+// (× FRENZY on FUSE). These are the ONLY rows. Difficulty, streak, mastery, STAR POWER, the LETTER FORGE
+// and the per-word rarity / combo / lucky weight no longer pay — a caller that still passes them is
+// ignored here, so the receipt can never name (or multiply in) a bonus the bank did not pay.
 export const PAYOUT_FACTORS = [
   { key: 'mode', label: 'MODE', kind: 'permanent' },
-  { key: 'difficulty', label: 'DIFFICULTY', kind: 'permanent' },
   { key: 'rebirth', label: 'REBIRTH', kind: 'permanent' },
-  // The daily STREAK multiplier. It always rode the XP stack; since Economy v8 folded the two
-  // stacks into one it pays wins too, so it gets named here — a multiplier the player cannot see
-  // is the defect this module exists to fix, and a newly-invisible one would be absurd.
-  { key: 'streak', label: 'STREAK', kind: 'permanent' },
-  // MOMENTUM × the equipped MARK × this mode's MASTERY, as one row. Three separate near-×1 lines
-  // taught nothing and crowded out the rows that move; each is still individually earnable.
-  { key: 'bonus', label: 'BONUS', kind: 'permanent' },
-  // FUSE FRENZY — ×5 for five real minutes after a full strip (frenzy.js). Timed, so it reads with
-  // the per-word rows rather than the permanent ones.
+  // The worn MARK × every rolled mark's perk for this mode (wins.js perWordFactors → `bonus`).
+  { key: 'bonus', label: 'MARK', kind: 'permanent' },
+  // FUSE FRENZY — ×5 for five real minutes after a full strip (frenzy.js).
   { key: 'frenzy', label: 'FRENZY', kind: 'word' },
-  // BOOST — a redeem code's ×N on every mode for its minutes (boost.js); stacks with FRENZY.
+  // BOOST — a redeem code's ×N × OVERDRIVE (boost.js), every mode, for its minutes.
   { key: 'boost', label: 'BOOST', kind: 'word' },
-  // LETTER FORGE (forge.js): +5% per forged level of each letter in THIS word.
-  { key: 'forge', label: 'FORGE', kind: 'word' },
-  { key: 'rarity', label: 'RARITY', kind: 'word' },
-  { key: 'length', label: 'LENGTH', kind: 'word' },
-  { key: 'combo', label: 'COMBO', kind: 'word' },
-  { key: 'lucky', label: 'LUCKY', kind: 'word' },
-  // The ×40 ceiling on the combined rarity×combo×lucky product (PER_WORD_MULT_CAP). It is a
-  // factor BELOW 1 when it bites, and it is listed for exactly that reason: a player on a huge
-  // combo who hits a rare word and sees less than the multipliers promised deserves to be told
-  // why, rather than left to assume the numbers are lying.
-  { key: 'cap', label: 'MULT CAP', kind: 'word' },
 ];
 const FACTOR_BY_KEY = new Map(PAYOUT_FACTORS.map((f) => [f.key, f]));
 
@@ -61,8 +44,8 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * @param {number} arg.base    the flat per-word base before any multiplier (wordWinsBase())
  * @param {number} [arg.letters]  the word's letter count, so the receipt can NAME the base
  * @param {number} [arg.perLetter] XP per letter at the player's key tier, ditto
- * @param {object} arg.factors { mode, difficulty, rebirth, streak, bonus, rarity,
- *                               length, combo, lucky } — each a multiplier, missing/1 = inactive
+ * @param {object} arg.factors { mode, rebirth, bonus (MARK), frenzy, boost } — each a multiplier,
+ *                               missing/1 = inactive; any other key is ignored (it does not pay)
  * @param {number} [arg.total] the amount ACTUALLY banked this call, when the caller knows it.
  *                             NOTE: this is NOT what the receipt prints. See `paid` below.
  * @param {string} [arg.band]  the rarity band name (COMMON/UNCOMMON/RARE/OBSCURE), for the note
@@ -76,7 +59,7 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * no receipt. So the bottom line is now what the rows say this word is WORTH, and `held` carries
  * the other fact — that the gate has not released it yet — as a caption instead of as a zero.
  */
-export function buildPayout({ base = 0, factors = {}, total, band, letters, perLetter, levelFloor } = {}) {
+export function buildPayout({ base = 0, factors = {}, total, band, letters, perLetter } = {}) {
   const b = Number.isFinite(base) && base > 0 ? base : 0;
   let product = 1;
   const rows = [];
@@ -99,9 +82,8 @@ export function buildPayout({ base = 0, factors = {}, total, band, letters, perL
     product,
     computed,
     paid: computed, // what the rows add up to — the number the panel prints
-    // THE SAME AWARD IN XP. Wins are the word's XP ÷ 10 (Economy v8), so the receipt can print
-    // both readings off one product instead of the panel multiplying by ten on its own.
-    xp: Math.round(computed * 10),
+    // NO XP HERE (PROGRESSION v11, amended): a game word pays WINS ONLY — the bar fills from LETTERS
+    // typed (letterXp.js), so the receipt has no XP line to print.
     // The BASE, named rather than asserted: "5 letters × 10" instead of a bare "BASE 5". Absent
     // when the caller does not know them, and the panel falls back to the bare base.
     letters: Number.isFinite(letters) && letters > 0 ? Math.floor(letters) : null,
@@ -110,18 +92,7 @@ export function buildPayout({ base = 0, factors = {}, total, band, letters, perL
     held: banked <= 0 && computed > 0,
     rows,
     band: band || null,
-    // LEVEL FLOOR (Option F, barFloor.js). NOT a factor: it never enters `product`, `paid` or `xp`
-    // (wins are untouched). It says the BAR was credited more than this word's XP — the floor —
-    // and by how much, so the receipt matches the bar. Taken from the stamp awardWordXp left for
-    // this word unless the caller passes one (null = the floor did not fire). Always consumed, so
-    // a stale stamp can never land on a later word's receipt.
-    levelFloor: floorRow(levelFloor === undefined ? takeBarFloorStamp() : (takeBarFloorStamp(), levelFloor)),
   };
-}
-
-function floorRow(s) {
-  if (!s || !(s.pct > 0)) return null;
-  return { label: 'LEVEL FLOOR', pct: s.pct, rawPct: Number.isFinite(s.rawPct) ? s.rawPct : 0, xp: Number.isFinite(s.xp) ? s.xp : null };
 }
 
 /**
@@ -129,18 +100,16 @@ function floorRow(s) {
  * "COMBO ×1" is noise; "COMBO — streak under 2" is the answer to a question the player is
  * actually asking when the number looks small.
  */
-export function inactivePayoutFactors(factors = {}, { band } = {}) {
+// Only the factors that still pay (Rebirth Rush) can be "off" — combo / rarity / lucky / streak are
+// not in the formula, so naming them here would advertise a bonus that does not exist.
+export function inactivePayoutFactors(factors = {}) {
   const out = [];
   const off = (key, why) => {
     const f = FACTOR_BY_KEY.get(key);
     if (f) out.push({ ...f, why });
   };
-  if (num(factors.combo) === 1) off('combo', 'streak under 2');
-  if (num(factors.rarity) === 1) off('rarity', 'COMMON word');
-  if (num(factors.lucky) === 1) off('lucky', 'no lucky roll');
   if (num(factors.rebirth) === 1) off('rebirth', 'no rebirths yet');
-  if (num(factors.streak) === 1) off('streak', 'streak under 3 days');
-  if (num(factors.bonus) === 1) off('bonus', 'no mark or mastery yet');
+  if (num(factors.bonus) === 1) off('bonus', 'no mark worn yet');
   return out;
 }
 
@@ -234,14 +203,17 @@ const cnt = (x) => (Number.isFinite(x) && x > 0 ? Math.floor(x) : 0);
  * @param {number}  [a.minutes]  game length; null/unknown = no pace cap
  * @param {Array}   a.rivals     [{ id, words, isBot }] everyone else who was in the game
  * @param {Array}   [a.selfIds]  player ids other tabs of THIS browser hold (seats.js)
+ * @param {number}  [a.perkMult] the CHAMPION perk (ECLIPSE mark: winner bonus ×2) — omit to read the save
  * @returns {{ wins, mult, tier: 'match'|'fallback'|'none', reason, capped, note }}
  */
-export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, selfIds } = {}) {
+export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, selfIds, perkMult } = {}) {
   const none = { wins: 0, mult: 1, tier: 'none', reason: null, capped: null, note: null };
   const k = winnerModeKey(mode);
   const total = Number.isFinite(gameTotal) && gameTotal > 0 ? gameTotal : 0;
   if (!k || !iWon || total <= 0) return none;
-  const fb = WINNER_FALLBACK[k] || 0;
+  // CHAMPION doubles the BONUS part (what winning adds on top of the game), match and fallback alike
+  const pm = Number.isFinite(perkMult) && perkMult > 0 ? perkMult : winnerPerkMult();
+  const fb = (WINNER_FALLBACK[k] || 0) * pm;
   const fallback = (reason) => ({
     wins: fb > 0 ? Math.max(1, Math.round(total * fb)) : 0,
     mult: 1 + fb,
@@ -268,7 +240,7 @@ export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, 
   const byPace = Number.isFinite(minutes) && minutes > 0 ? pace * minutes : Infinity;
   const counted = Math.min(mine, byRival, byPace);
   const capped = counted >= mine ? null : byRival <= byPace ? 'rival' : 'pace';
-  const bonusMult = Math.max(fb, mult * (counted / mine));
+  const bonusMult = Math.max(fb, mult * pm * (counted / mine));
   return {
     wins: Math.max(1, Math.round(total * bonusMult)),
     mult: 1 + bonusMult,

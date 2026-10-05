@@ -39,10 +39,14 @@ function ResultCard({ result, worn }) {
         <div className="mr-card-tier">{tierName(result.tier)} · 1 IN {formatNum(result.oneInX)}</div>
         <div className="mr-card-line">
           {/* rule U: ONE tag — MAIN when worn, PERK otherwise */}
-          <span className="mr-card-tag">{isWorn ? mainTag(result.markId) : perkTag(result.state, result.markId)}</span>
+          <span className="mr-card-tag">{isWorn ? mainTag(result.markId, result.state) : perkTag(result.state, result.markId)}</span>
           {result.newMark && <span className="mr-chip is-new">NEW</span>}
           {result.rainbowUp ? <span className="mr-chip is-rainbow">RAINBOW</span> : result.goldUp ? <span className="mr-chip is-gold">GOLD</span> : null}
           {!result.newMark && !result.goldUp && !result.rainbowUp && <span className="mr-chip">×{formatNum(result.copies)}</span>}
+          {/* DOUBLE ROLLS (SINGULARITY): the second result of the same roll */}
+          {result.extra && result.extra.length > 0 && (
+            <span className="mr-chip">+{result.extra.map((x) => (markEntry(x.markId) || {}).name).join(', ')}</span>
+          )}
         </div>
       </div>
     </div>
@@ -197,7 +201,7 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
       </button>
       <div className="mr-msg" role="status" aria-live="polite">{msg}</div>
       <div className="mr-meta">
-        <span className="mr-pity">EPIC IN ≤{pity.epic} · LEGENDARY IN ≤{pity.legendary}</span>
+        <span className="mr-pity">EPIC+ IN ≤{pity.epic}</span>
         <span className="mr-luck">{luckText(L)}</span>
         {bonus && <span className="mr-bonus">×{BONUS_ROLL_MULT} LUCK READY</span>}
       </div>

@@ -1,9 +1,9 @@
-// The 017_board_reality.sql write rule, modelled in submitRules.js (kept in sync with the SQL).
+// The 017_board_reality.sql and 018_rebirth_rush.sql write rules, modelled in submitRules.js (kept in sync with the SQL).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { decideSubmit } from './submitRules.js';
+import { decideSubmit, decideSubmitRR, CONV_CAP } from './submitRules.js';
 
 const T0 = Date.UTC(2026, 9, 3, 17, 0, 0);
 const HOUR = 3600 * 1000;
@@ -109,4 +109,111 @@ test('017 SQL carries the same branches + constants as this model', () => {
   assert.match(sql, /150 \* secs/);
   assert.match(sql, /least\(rb, old\.rebirths \+ 1\)/);
   assert.match(sql, /econ = 10/);
+});
+
+// ---- REBIRTH RUSH: 018_rebirth_rush.sql's private.lb_board_write_rr, modelled by decideSubmitRR ----------------
+const MIN = 60 * 1000;
+const rrRow = (o) => ({ level: 1, rebirths: 0, lifetime_words: 1000, lifetime_letters: 5000, econ: 12, rb_clock: null, submitted_at: T0 - 10 * MIN, ...o });
+const same = (r) => ({ level: r.level, rebirths: r.rebirths, words: r.lifetime_words, letters: r.lifetime_letters });
+
+test('RR conversion: the real board rows land at their converted rebirth count in ONE submit, once', () => {
+  for (const [name, lv, r, want] of [['snapplemelon', 195, 4, 11], ['Xavi', 168, 8, 9], ['elol', 156, 7, 8]]) {
+    // last written on econ 11, just past the throttle, with an EMPTY token bucket — only the bonus can lift it
+    const row = rrRow({ level: lv, rebirths: r, econ: 11, rb_clock: T0 - 10, submitted_at: T0 - 5001 });
+    const d = decideSubmitRR(row, { ...same(row), level: 1, rebirths: want }, T0);
+    assert.equal(d.action, 'increase', name);
+    assert.equal(d.row.rebirths, want, name);
+    assert.equal(d.row.level, 1, name);
+    assert.equal(d.row.econ, 12, name);
+    assert.equal(d.row.rb_clock, row.rb_clock, `${name}: conversion rebirths spend no tokens`);
+    // the bonus is spent: the same jump again (row now econ 12) is held to the (empty) token bucket
+    const again = decideSubmitRR({ ...d.row, submitted_at: T0 - 5001, rb_clock: T0 - 10 }, { ...same(d.row), rebirths: want + 7 }, T0);
+    assert.equal(again.row.rebirths, want, `${name}: no second conversion`);
+  }
+  // a row below its gate (Daan / Tangie / maSON / creator / NoBuffCookies shape): no bonus
+  const keep = rrRow({ level: 120, rebirths: 10, econ: 11, rb_clock: T0 - 10, submitted_at: T0 - 5001 });
+  assert.equal(decideSubmitRR(keep, { ...same(keep), rebirths: 12 }, T0).row.rebirths, 10);
+});
+
+test('RR conversion bonus is CAPPED at 15 rebirths: a forged old level cannot mint hundreds', () => {
+  assert.equal(CONV_CAP, 15);
+  // a forged LV5000 R0 on econ 11 would convert to +278; the board grants at most +15 (empty bucket)
+  const forged = rrRow({ level: 5000, rebirths: 0, econ: 11, rb_clock: T0 - 10, submitted_at: T0 - 5001 });
+  assert.equal(decideSubmitRR(forged, { ...same(forged), level: 1, rebirths: 278 }, T0).row.rebirths, 15);
+  // exactly at the cap: LV267 R0 → floor(252/18)+1 = 15, all granted
+  const edge = rrRow({ level: 267, rebirths: 0, econ: 11, rb_clock: T0 - 10, submitted_at: T0 - 5001 });
+  assert.equal(decideSubmitRR(edge, { ...same(edge), level: 1, rebirths: 15 }, T0).row.rebirths, 15);
+});
+
+test('RR rebirths: a token bucket — 1 per minute, 60 banked, no free +1 per submit', () => {
+  // full bucket (null clock): an hour of play without a menu load lands up to 60 rebirths at once
+  const full = rrRow({ rebirths: 5 });
+  const a = decideSubmitRR(full, { ...same(full), rebirths: 40 }, T0);
+  assert.equal(a.row.rebirths, 40);
+  assert.equal(a.row.rb_clock, T0 - 60 * MIN + 35 * MIN, '35 tokens spent from a full bucket');
+  assert.equal(decideSubmitRR(full, { ...same(full), rebirths: 500 }, T0).row.rebirths, 65, 'capped at the 60-token burst');
+  // spamming submits every 5 s with an empty bucket mints nothing; a minute after the clock mints one
+  let row = rrRow({ rebirths: 5, rb_clock: T0, submitted_at: T0 });
+  for (let i = 1; i <= 11; i++) row = decideSubmitRR(row, { ...same(row), rebirths: 99 }, T0 + i * 5001).row;
+  assert.equal(row.rebirths, 5, '55 s of spam: still no token');
+  row = decideSubmitRR(row, { ...same(row), rebirths: 99 }, T0 + 61_000).row;
+  assert.equal(row.rebirths, 6, 'one minute → one rebirth');
+  // honest early pace from an EMPTY bucket: a rebirth every 2 min, submitting after each, never clamped
+  let h = rrRow({ rebirths: 0, rb_clock: T0, submitted_at: T0 });
+  for (let i = 1; i <= 30; i++) {
+    const d = decideSubmitRR(h, { ...same(h), level: 1, rebirths: i }, T0 + i * 2 * MIN);
+    assert.equal(d.row.rebirths, i);
+    h = d.row;
+  }
+});
+
+test("RR level: free within the next gate + 36 headroom; past that, 015's +0.5/s", () => {
+  // rebirthed to R20 and climbed to LV375 inside one submit window (gate(R20) = 375)
+  const row = rrRow({ level: 300, rebirths: 19, submitted_at: T0 - 6000 });
+  assert.equal(decideSubmitRR(row, { ...same(row), level: 375, rebirths: 20 }, T0).row.level, 375);
+  assert.equal(decideSubmitRR(row, { ...same(row), level: 900, rebirths: 20 }, T0).row.level, 15 + 18 * 20 + 36);
+  // same run, no rebirth, already past the headroom: 015's allowance from the stored level (100 s → +50)
+  const past = rrRow({ level: 420, rebirths: 20, submitted_at: T0 - 100_000 });
+  assert.equal(decideSubmitRR(past, { ...same(past), level: 999 }, T0).row.level, 470);
+  // a rebirth drops the level: an increase (rebirths went up), not a reset
+  const reb = decideSubmitRR(row, { ...same(row), level: 3, rebirths: 20 }, T0);
+  assert.equal(reb.action, 'increase');
+  assert.equal(reb.row.level, 3);
+});
+
+test('RR keeps 017: throttle, first baseline, reset as baseline, words/letters rate rejects', () => {
+  const row = rrRow({ level: 50, rebirths: 3 });
+  assert.equal(decideSubmitRR({ ...row, submitted_at: T0 - 5000 }, same(row), T0).action, 'throttled');
+  const first = decideSubmitRR({ ...row, submitted_at: null }, { level: 9000, rebirths: 400, words: 1, letters: 1 }, T0);
+  assert.equal(first.action, 'first');
+  assert.equal(first.row.rebirths, 400);
+  const wipe = decideSubmitRR(row, { level: 1, rebirths: 0, words: 0, letters: 0 }, T0);
+  assert.equal(wipe.action, 'reset');
+  assert.deepEqual([wipe.row.level, wipe.row.rebirths, wipe.row.lifetime_words], [1, 0, 0]);
+  assert.equal(decideSubmitRR(row, { ...same(row), words: 1000 + 20 * 600 + 1 }, T0).action, 'rejected');
+  assert.equal(decideSubmitRR(row, { ...same(row), letters: 5000 + 150 * 600 + 1 }, T0).action, 'rejected');
+  // NoBuffCookies-style mixed reset: rebirths lower, level higher → capped at gate(R0) + 36, counted from 1
+  const nb = rrRow({ level: 12, rebirths: 7, submitted_at: T0 - 10_000 });
+  assert.equal(decideSubmitRR(nb, { ...same(nb), level: 175, rebirths: 0 }, T0).row.level, 51);
+});
+
+test('018 SQL carries the same branches + constants as decideSubmitRR, gated on econ 12, board rebirths-first', () => {
+  const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '018_rebirth_rush.sql'), 'utf8');
+  assert.match(sql, /KEEP IN SYNC WITH src\/leaderboard\/submitRules\.js \(decideSubmitRR\)/);
+  assert.match(sql, /RB_SECS constant integer := 60;/);
+  assert.match(sql, /RB_BURST constant integer := 60;/);
+  assert.match(sql, /LV_HEADROOM constant integer := 36;/);
+  assert.match(sql, /coalesce\(old\.econ, 0\) < 12 and old\.level >= old_gate/);
+  assert.match(sql, /least\(CONV_CAP, floor\(\(old\.level - old_gate\) \/ 18\.0\)::bigint \+ 1\)/);
+  assert.match(sql, /CONV_CAP constant integer := 15;/);
+  assert.match(sql, /least\(rb::bigint, old\.rebirths::bigint \+ conv \+ tokens\)/);
+  assert.match(sql, /greatest\(15 \+ 18 \* rb::bigint \+ LV_HEADROOM, base_lv \+ max_rise\)/);
+  assert.match(sql, /floor\(least\(secs, 1200\) \* 0\.5\)/);
+  assert.match(sql, /interval '5 seconds'/);
+  assert.match(sql, /20 \* secs/);
+  assert.match(sql, /150 \* secs/);
+  assert.equal((sql.match(/p_econ is distinct from 12/g) || []).length, 3, 'lb_submit3 / lb_save2 / lb_load2');
+  assert.doesNotMatch(sql, /p_econ is distinct from 1[01]\b/);
+  assert.match(sql, /'econ', 12\)/);
+  assert.match(sql, /order by rebirths desc, level desc, lifetime_words desc, created_at asc/);
 });

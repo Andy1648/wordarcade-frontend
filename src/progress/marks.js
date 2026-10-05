@@ -35,12 +35,16 @@ import { queueClaim, registerClaimHandler } from './claims.js';
 export const MARKS_EQUIPPED_KEY = 'taw.mark';
 export const MARKS_OWNED_KEY = 'taw.marksOwned';
 export const MARKS_UNLOCK_LEVEL = 10;
-// The MAIN bonus by tier (the part above ×1, at rank I).
+// The MAIN bonus by tier (the part above ×1). MARKS via ROLLS (Andy, PROGRESSION FINAL): the worn MAIN multiplies
+// BOTH XP per letter and wins — COMMON ×1.1, RARE ×1.25, EPIC ×1.5, LEGENDARY ×3, MYTHIC ×10, SECRET ×25.
+// GOLD doubles the bonus part, RAINBOW ×5 it (markRollsCore.mainMultOf). Ranks no longer scale the MAIN.
 export const MARK_TIERS = {
-  common: { name: 'COMMON', bonus: 1.0, colour: '#2EFFE0' },
-  rare: { name: 'RARE', bonus: 1.5, colour: '#FFE94A' },
-  epic: { name: 'EPIC', bonus: 2.0, colour: '#FF4FA3' },
-  legendary: { name: 'LEGENDARY', bonus: 3.0, colour: '#FF6B3D' },
+  common: { name: 'COMMON', bonus: 0.1, colour: '#2EFFE0' },
+  rare: { name: 'RARE', bonus: 0.25, colour: '#FFE94A' },
+  epic: { name: 'EPIC', bonus: 0.5, colour: '#FF4FA3' },
+  legendary: { name: 'LEGENDARY', bonus: 2, colour: '#FF6B3D' },
+  mythic: { name: 'MYTHIC', bonus: 9, colour: '#9A1AFF' },
+  secret: { name: 'SECRET', bonus: 24, colour: '#FFFFFF' },
 };
 
 // `effect` is the machine-readable version of `blurb`, read by markPayoutFactors() below and by
@@ -56,7 +60,7 @@ export const MARKS = [
     name: 'BOMBER',
     icon: '💣',
     from: 'm-wb-5',
-    blurb: '+25% wins & XP in WORD BOMB.',
+    blurb: '+25% wins in WORD BOMB.',
     effect: { winsMult: 1.25, mode: 'wordBomb' },
   },
   {
@@ -65,7 +69,7 @@ export const MARKS = [
     name: 'SPRINTER',
     icon: '⚡',
     from: 'm-blitz-5',
-    blurb: '+25% wins & XP in CATEGORY BLITZ.',
+    blurb: '+25% wins in CATEGORY BLITZ.',
     effect: { winsMult: 1.25, mode: 'blitz' },
   },
   {
@@ -76,7 +80,7 @@ export const MARKS = [
     name: 'SAVANT',
     icon: '🎓',
     from: 'm-sat-5',
-    blurb: '+40% wins & XP in SAT RUSH.',
+    blurb: '+40% wins in SAT RUSH.',
     effect: { winsMult: 1.4, mode: 'satRush' },
   },
   {
@@ -105,7 +109,7 @@ export const MARKS = [
     name: 'STUDENT',
     icon: '📈',
     from: 'lv-15',
-    blurb: '+20% wins & XP in every mode.',
+    blurb: '+20% wins in every mode.',
     effect: { xpMult: 1.2 },
   },
   {
@@ -114,7 +118,7 @@ export const MARKS = [
     name: 'MAGPIE',
     icon: '🪙',
     from: 'dist-500',
-    blurb: '+15% wins & XP in every mode.',
+    blurb: '+15% wins in every mode.',
     effect: { winsMult: 1.15 },
   },
   {
@@ -127,17 +131,17 @@ export const MARKS = [
     effect: { winsMult: 1.5 },
   },
   // ---- STEP 49: eight more, so the collection has a long tail and every tier has a few ----
-  { id: 'mk-linker', tier: 'common', name: 'LINKER', icon: '🔗', from: 'm-chain-5', blurb: '+25% wins & XP in CHAIN.', effect: { winsMult: 1.25, mode: 'chain' } },
+  { id: 'mk-linker', tier: 'common', name: 'LINKER', icon: '🔗', from: 'm-chain-5', blurb: '+25% wins in CHAIN.', effect: { winsMult: 1.25, mode: 'chain' } },
   { id: 'mk-veteran', tier: 'common', name: 'OLD HAND', // H6/M8: not VETERAN — that is the achievement that unlocks it
-    icon: '🎖', from: 'lv-50', blurb: '+20% wins & XP in every mode.', effect: { xpMult: 1.2 } },
-  { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins & XP in every mode.', effect: { winsMult: 1.2 } },
-  { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins & XP in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
+    icon: '🎖', from: 'lv-50', blurb: '+20% wins in every mode.', effect: { xpMult: 1.2 } },
+  { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins in every mode.', effect: { winsMult: 1.2 } },
+  { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
   // PERMANENT (dist-2500) → MAIN ×4, the LEGENDARY bonus (Andy oct3, decision 4). Was EPIC ×3.
   { id: 'mk-curator', tier: 'legendary', name: 'ARCHIVIST', // H6/M8: not CURATOR — that is the achievement that unlocks it
     icon: '🗂', from: 'dist-2500', blurb: '15% chance a word counts one RARITY TIER higher.', effect: { rarityStep: 0.15 } },
-  { id: 'mk-pyro', tier: 'epic', name: 'PYRO', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins & XP in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
-  { id: 'mk-nova', tier: 'epic', name: 'NOVA', icon: '✴', from: 'reb-5', blurb: '+25% wins & XP in every mode.', effect: { winsMult: 1.25 } },
-  { id: 'mk-legend', tier: 'legendary', name: 'LEGEND', icon: '👑', from: 'lv-300', blurb: '+40% wins & XP in every mode.', effect: { xpMult: 1.4 } },
+  { id: 'mk-pyro', tier: 'epic', name: 'PYRO', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
+  { id: 'mk-nova', tier: 'epic', name: 'NOVA', icon: '✴', from: 'reb-5', blurb: '+25% wins in every mode.', effect: { winsMult: 1.25 } },
+  { id: 'mk-legend', tier: 'legendary', name: 'LEGEND', icon: '👑', from: 'lv-300', blurb: '+40% wins in every mode.', effect: { xpMult: 1.4 } },
 ];
 
 const BY_ID = new Map(MARKS.map((m) => [m.id, m]));
@@ -219,10 +223,12 @@ export function markBlurbAt(m, rank = 1) {
   const where = e.modes && e.modes.length
     ? `in ${e.modes.map(label).join(' and ')}`
     : e.mode ? `in ${label(e.mode)}` : 'in every mode';
-  // H6/M3: winsMult and xpMult are the SAME lever since the stacks merged (perWordFactors folds both
-  // into BONUS, and a word's wins are its XP ÷ 10), so both say what they pay: wins AND XP.
-  if (e.winsMult) return `+${pct(e.winsMult - 1)} wins & XP ${where}.`;
-  if (e.xpMult) return `+${pct(e.xpMult - 1)} wins & XP ${where}.`;
+  // H6/M3: winsMult and xpMult are the SAME lever (perWordFactors folds both into BONUS). PROGRESSION
+  // v11: BONUS pays WINS only — the level bar is credited level XP (KEY, rebirth, mode, word, streak) —
+  // so both say "wins".
+  // MARKS via ROLLS: the old per-mode wins / xp flavour is folded into the one MAIN (tier) — say what it pays.
+  void where;
+  if (e.winsMult || e.xpMult) return `MAIN ×${+markMainMult(m).toFixed(2)} on XP per letter and wins.`;
   if (e.rarityStep) return `${pct(e.rarityStep)} chance a word counts one RARITY TIER higher.`;
   if (e.comboKeep) return `${pct(e.comboKeep)} chance a broken COMBO survives.`;
   return m.blurb;
@@ -234,12 +240,13 @@ export function markById(id) {
   return BY_ID.get(id) || null;
 }
 
-/** The MAIN bonus a mark pays at a rank: 1 + tier bonus × the rank scale (COMMON I = ×2). */
+/** The MAIN a mark pays at base finish: 1 + its tier bonus. `rank` is accepted and IGNORED (MARKS via ROLLS: the
+ *  MAIN is the tier's number everywhere — markRollsCore.markMult is the one payout function). */
+// eslint-disable-next-line no-unused-vars
 export function markMainMult(m, rank = 1) {
   if (!m) return 1;
   const t = MARK_TIERS[m.tier] || MARK_TIERS.common;
-  const k = MARK_RANK_SCALE[Math.max(1, Math.min(MAX_MARK_RANK, rank)) - 1];
-  return 1 + t.bonus * k;
+  return 1 + t.bonus;
 }
 export function markTier(m) {
   return MARK_TIERS[(m && m.tier) || 'common'];
@@ -294,7 +301,7 @@ export function checkMarkClaims({ level = 1, rebirths = 0, earned = [] } = {}) {
       kind: 'layer',
       label: 'NEW SYSTEM — MARKS',
       detail: 'marks',
-      meta: { blurb: 'Earn MARKS from achievements. WEAR ONE as your title: +100% to +300% on every word, growing with rank (up to ×5.8).' },
+      meta: { blurb: 'Roll and earn MARKS. WEAR ONE as your title: ×1.1 COMMON up to ×25 SECRET on XP per letter and wins.' },
     });
   }
   const queued = [];
@@ -374,25 +381,16 @@ export function equipMark(id, earnedAchievementIds = []) {
  * straight into buildPayout()'s `factors` — which is how rule 3 is kept: a mark cannot change a
  * payout without appearing in the receipt, because the receipt is built from this same object.
  *
- * Returns {} when nothing is equipped or the mark does not affect wins in this mode.
+ * Returns {} when nothing is equipped.
+ *
+ * MARKS via ROLLS: the MAIN only (tier, base finish) in every mode — the old per-mode flavour multiplier is
+ * folded into the tier. The PAYOUT reads markRollsCore.markMult (MAIN × GOLD/RAINBOW × the INDEX bonus), the
+ * one function XP per letter reads too; this stays for callers that want a legacy mark's base MAIN.
  */
-export function markWinsFactors({ markId = getEquippedMark(), mode } = {}) {
+export function markWinsFactors({ markId = getEquippedMark() } = {}) {
   const m = markById(markId);
   if (!m) return {};
-  // The MAIN bonus (every mode) × the flavour perk (its mode / modes, when it has one).
-  let mult = markMainMult(m, markRank(m.id));
-  const e = m.effect || {};
-  if (e.winsMult) {
-    const inMode = e.modes ? e.modes.includes(mode) : !e.mode || e.mode === mode;
-    if (inMode) mult *= rankedEffect(m).winsMult;
-  }
-  return { mark: mult };
-}
-
-/** The equipped mark's XP multiplier (×1 when it has none). Applied in the same stack as mastery. */
-export function markXpMult(markId = getEquippedMark()) {
-  const m = markById(markId);
-  return m && m.effect && m.effect.xpMult ? rankedEffect(m).xpMult : 1;
+  return { mark: markMainMult(m) };
 }
 
 /** The equipped mark's per-word chance to bump a word one rarity tier (0 when it has none). */
@@ -444,4 +442,11 @@ export function takeMarkRankUp(id) {
   } catch {
     return 0;
   }
+}
+
+// MARKS via ROLLS: a wins / xp flavour mark's promise IS its MAIN now — keep every static blurb (the menu chip's
+// title, the claim card) saying the number the payout pays. Run last: markBlurbAt reads MODE_LABEL above.
+for (const m of MARKS) {
+  const e = m.effect || {};
+  if (e.winsMult || e.xpMult) m.blurb = markBlurbAt(m, 1);
 }

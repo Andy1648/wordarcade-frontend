@@ -11,14 +11,19 @@ import './StatsScreen.css';
 import {
   loadProgress,
   getRebirths,
-  rebirthMult,
+  rebirthXpMult,
   getKeyTier,
-  keyTierXp,
+  keyXpMult,
+  LEVEL_XP_PER_LETTER,
   xpPerInput,
   need,
+  WINS_BASIS_PER_LETTER,
 } from '../progress/xp';
+import { boostMult } from '../progress/boost';
+
+// BASE 10 WINS / WORD: the wins basis of a 5-letter word (WINS_BASIS_PER_LETTER is in XP units, ÷10 = wins).
+const BASE_WINS_PER_WORD = (WINS_BASIS_PER_LETTER * 5) / 10;
 import { getChainRuns, getFuseRuns } from '../solo/shared.js';
-import { equippedPopMult, equippedSoundMult } from '../progress/shop';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
 import { rankTitle } from '../progress/rank';
 import { secretsProgress } from '../progress/achievements';
@@ -27,7 +32,9 @@ import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
 import { getStreak } from '../progress/streak';
 import { readRecords, noteLevel } from '../progress/records';
 import * as satLexicon from '../satRush/lexicon';
-import { formatNum, formatMult } from '../format';
+import { formatNum, formatMult, formatMultExact, formatRate } from '../format';
+import { markXpBoost, letterXpNow } from '../progress/letterXp';
+import { letterPerkMult } from '../progress/markPerks';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { exportSave, importSave } from '../save/saveBackup';
@@ -69,7 +76,7 @@ function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
       wide: true,
       locked: !rec.rarest,
       value: rec.rarest ? rec.rarest.word.toUpperCase() : '',
-      sub: rec.rarest ? `${rec.rarest.band} ${x(rec.rarest.mult)}` : '',
+      sub: rec.rarest ? rec.rarest.band : '', // the band only — rarity pays no ×N (Rebirth Rush)
       req: 'ACCEPT A WORD',
     },
     // H6/M6: the in-run combo is a COMBO; STREAK means the daily streak (the row below).
@@ -174,16 +181,21 @@ export default function StatsScreen({ onBack }) {
   const rounds = getRounds();
   const rebirths = getRebirths();
 
-  const rbMult = rebirthMult(rebirths);
-  // EXTENSION d (dormant, ?ladder=1): the REBIRTH row becomes BASE / NOW / NEXT chips in the same slot.
+
+  const rbXp = rebirthXpMult(rebirths);
+  // EXTENSION d (dormant, ?ladder=1): the REBIRTH row becomes BASE / NOW / NEXT chips in the same slot. The chips
+  // read the live Rebirth Rush rebirthMult (5^R) and rebirthThreshold (LV 15 + 18R) — never a copied table.
   const ladder = flagOn('ladder') ? rebirthLadder(rebirths) : null;
   const keyTier = getKeyTier();
-  const baseXp = keyTierXp(keyTier); // Key Power TIER's XP per letter
-  // MENU XP / LETTER must MATCH the "+N" that pops on every menu keystroke — so compute it the
-  // SAME way the live credit does (useXpCapture → xpPerInput), applying the equipped cosmetic
-  // pop/sound multipliers and the daily-streak multiplier, not just base × rebirth. (The old
-  // base×rebirth understated it whenever a cosmetic was equipped or a streak was active.)
-  const menuXp = xpPerInput({ mode: 'menu', popMult: equippedPopMult(), soundMult: equippedSoundMult() });
+  // REBIRTH RUSH: the bar fills from LETTERS — BASE 10 XP / LETTER × KEY × REBIRTH 5^R × MARK × BOOST.
+  // Words pay WINS — BASE 10 WINS / WORD (a 5-letter word) × length/5 × MODE × REBIRTH × MARK × BOOST.
+  // XP / LETTER OF YOUR WORDS is the full price — a letter of a word the game ACCEPTED (typed letters pay a fifth
+  // as they're typed; the accepted word tops them up). MENU XP / LETTER is a fifth of that: the SAME expression
+  // the live menu credit runs (useXpCapture — MARK × the DOUBLE LETTERS perk × BOOST). Cosmetics are looks only.
+  const markMult = markXpBoost();
+  const boostNow = boostMult();
+  const gameXp = letterXpNow();
+  const menuXp = xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
 
   // TWO different hidden sets, and they are NOT the same thing — so they do not share a heading.
   // `hidden` is the five SECRET-category achievements (thresholds you cross). `secrets` is the five
@@ -199,12 +211,16 @@ export default function StatsScreen({ onBack }) {
     ['XP INTO LEVEL', `${fmt(intoLevel)} / ${fmt(need(level))}`],
     ['WINS BALANCE', getWins()],
   ];
-  // XP stack: Key Power (base) × rebirth × equipped cosmetics × streak — MENU XP / LETTER below
-  // is the full product (matches the live keystroke pop), BASE XP / LETTER is just the Key Power tier.
+  // Exactly the named terms (Rebirth Rush), then the products. KEY is XP only; REBIRTH / MARK / BOOST
+  // multiply XP and WINS alike.
   const multipliers = [
-    ['KEY POWER', `TIER ${keyTier}`], // H6/M14: one spelling of the tier everywhere
-    ['BASE XP / LETTER', fmt(baseXp)],
-    ['REBIRTH', x(rbMult)],
+    ['BASE XP / LETTER', fmt(LEVEL_XP_PER_LETTER)],
+    ['BASE WINS / WORD', fmt(BASE_WINS_PER_WORD)],
+    ['KEY', `TIER ${fmt(keyTier)} · ×${keyXpMult(keyTier) >= 1000 ? fmt(keyXpMult(keyTier)) : formatMultExact(keyXpMult(keyTier))} XP`], // H6/M14: one spelling of the tier everywhere
+    ['REBIRTH', `${x(rbXp)} XP & WINS`],
+    ['MARK', markMult > 1 ? `+${fmt((markMult - 1) * 100)}% XP & WINS` : 'NONE WORN'],
+    ['BOOST', boostNow > 1 ? `${x(boostNow)} XP & WINS` : 'NONE'],
+    ['XP / LETTER OF YOUR WORDS', formatRate(gameXp)],
     ['MENU XP / LETTER', fmt(menuXp)],
   ];
   const roundsPlayed = [
@@ -365,9 +381,9 @@ export default function StatsScreen({ onBack }) {
             ))}
           </div>
 
-          {/* H6/M16: these rows are the MENU keystroke stack only; a game word adds mode, forge,
-              mark, mastery, streak and stars on top (see a game's receipt). */}
-          <h3 className="stats-subtitle">MENU TYPING XP</h3>
+          {/* PROGRESSION v11: the whole XP rule — LETTERS fill the bar (BASE 10 XP / LETTER × KEY × rebirth ×
+              mark; a fifth of that in the menu). Words pay WINS (see a game's receipt). */}
+          <h3 className="stats-subtitle">XP — LETTERS FILL THE BAR</h3>
           <dl className="stats-list">
             {multipliers.map(([k, v]) =>
               ladder && k === 'REBIRTH' ? (

@@ -26,6 +26,7 @@ async function setup(page) {
       sessionStorage.setItem('rival.seeded', '1');
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.xp', JSON.stringify({ lv: 146, f: 0, rc: 0, v: 10 }));
+      localStorage.setItem('taw.econ', '12'); // already on Rebirth Rush: econ 12 (this spec is not about the one-time conversion)
       localStorage.setItem('taw.lb.secret', 's'.repeat(48));
       localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'me', username: 'Climber_1' }));
       // the last visit: #4, at the same level and rebirth count (so this drop is NOT my own rebirth)

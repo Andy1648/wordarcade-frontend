@@ -1,10 +1,11 @@
-// rollsFlag.js — MARK ROLLS ship DORMANT. Rule P (Andy oct2 22:25: an economy change merges only if no window
-// gets worse) HELD the rolls economy on PR #156 — 12 windows worse, e.g. casual 20 h KEY wait 24 → 64 min, and a
-// 20% runaway-level rate from the legendary jackpot. The code merges with everything else in #156; the roll
-// panel + its tutorial only appear when this flag is on. Andy flips ROLLS_ON (or tests with ?rolls=1 /
-// localStorage taw.rollsOn='1' — taw.flag.rolls='1', the shared helper's key, works too).
+// rollsFlag.js — MARK ROLLS on/off. They shipped DORMANT with PR #156 (Rule P held the old economy); Andy's
+// PROGRESSION FINAL ("MARKS via ROLLS — turn on with this economy") turns them ON with Rebirth Rush. The roll
+// panel + its tutorial appear when this is true (?rolls=1 / localStorage taw.rollsOn='1' — or taw.flag.rolls='1',
+// the shared helper's key — still force it on if ROLLS_ON is ever flipped back off).
 import { flagOn } from '../lib/featureFlags.js';
 
+// Andy oct3 ~23:30: rolls go LIVE only through the "mark rolls live" PR (Tier 1 — he play-tests first). Until
+// then Rebirth Rush ships with them dormant behind ?rolls=1 (the reworked six-tier engine is in, just not shown).
 export const ROLLS_ON = false;
 export const ROLLS_KEY = 'taw.rollsOn';
 

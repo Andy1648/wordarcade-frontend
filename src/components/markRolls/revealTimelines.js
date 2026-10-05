@@ -4,11 +4,11 @@
 // shrinks to nothing also FADES to 0 (a node at scaleX(0.05) is a visible sliver — that was the stray "dot").
 //
 // Pool: back (the face-down coin), card (the result card), flash (a tier plate, rares), and the cutscene layer:
-// cover, ladder (the tier bars' group), bar0..bar2 (the tiers below the result), final (the result's tier, huge),
-// show (the mark's art + name, big) and stamp ("1 IN X", huge).
+// cover, ladder (the tier bars' group), bar0..bar4 (the tiers below the result), final (the result's tier, huge),
+// show (the mark's art + name, big) and stamp ("1 IN X", huge). The cutscene plays for LEGENDARY+ only.
 import { revealMs, isHeavy } from './revealPlan.js';
 
-export const LADDER = ['common', 'rare', 'epic', 'legendary'];
+export const LADDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
 const OUT = 'cubic-bezier(.2, .8, .2, 1)';
 const IN = 'cubic-bezier(.6, 0, .9, .4)';
 
@@ -94,10 +94,12 @@ export function timeline(tier, reduced = false) {
   if (tier === 'common') {
     return [backFlip(0, 130), cardFlip(130, D - 130)];
   }
-  if (tier === 'rare') {
+  if (tier === 'rare' || tier === 'epic') {
+    // the same wobble build-up, stretched to the tier's window: EPIC holds the coin longer before the flip
+    const B = Math.round(D * 0.77); // the build-up (rare 540 of 700)
     return [
       {
-        node: 'back', delay: 0, duration: 540, easing: 'linear',
+        node: 'back', delay: 0, duration: B, easing: 'linear',
         frames: [
           { opacity: 1, transform: 'rotate(0deg) scale(1, 1)' },
           { opacity: 1, transform: 'rotate(-4deg) scale(1.04, 1.04)', offset: 0.18 },
@@ -108,10 +110,11 @@ export function timeline(tier, reduced = false) {
           { opacity: 0, transform: 'rotate(0deg) scale(0, 1.12)' },
         ],
       },
-      { node: 'flash', delay: 400, duration: 260, frames: [{ opacity: 0 }, { opacity: 0.85, offset: 0.3 }, { opacity: 0 }] },
-      cardFlip(540, D - 540),
+      { node: 'flash', delay: B - 140, duration: 260, frames: [{ opacity: 0 }, { opacity: 0.85, offset: 0.3 }, { opacity: 0 }] },
+      cardFlip(B, D - B),
     ];
   }
+  if (!isHeavy(tier)) return [backFlip(0, 130), cardFlip(130, D - 130)];
   return cutscene(tier);
 }
 export { isHeavy };
