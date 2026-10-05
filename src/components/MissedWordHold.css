@@ -47,7 +47,7 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: rgba(240, 234, 217, 0.82);
 }
@@ -56,7 +56,7 @@
 .missed-hold-gloss {
   margin: 2px 0 0;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   line-height: 1.25;
   color: #f0ead9;
 }
@@ -95,5 +95,5 @@
     -webkit-text-stroke: 2px #000;
   }
   .missed-hold-nogloss { display: none; }
-  .missed-hold-gloss { font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */; }
+  .missed-hold-gloss { font-size: var(--fs-label) /* short screens: the card must FIT (viewport-integrity 1163x501) */; }
 }
