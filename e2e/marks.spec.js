@@ -65,8 +65,10 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await page.keyboard.press('Escape'); // the sheet closes first, the INDEX stays
   await expect(sheet).toHaveCount(0);
   await expect(page.locator('.mx-panel')).toBeVisible();
-  // a locked PERMANENT says the task that earns it — in the detail sheet only; the grid tile has no prose (Andy oct5)
-  await expect(page.locator('.mx-tile.is-locked.is-perm').first().locator('.mx-tile-sub')).toHaveCount(0);
+  // a locked PERMANENT says the task that earns it — in the detail sheet only; the grid tile has no prose (Andy oct5).
+  // ROLL v1: like every locked card it still shows its stat (numbers, not prose)
+  await expect(page.locator('.mx-tile.is-locked.is-perm').first().locator('.mx-howto')).toHaveCount(0);
+  await expect(page.locator('.mx-tile.is-locked.is-perm').first().locator('.mx-tile-sub')).toHaveText(/^×[\d.]+ WINS \+ XP$/);
   await page.locator('.mx-tile.is-locked.is-perm').first().click();
   await expect(page.locator('.mx-howto')).not.toBeEmpty();
   await page.locator('.mx-sheet-close').click();

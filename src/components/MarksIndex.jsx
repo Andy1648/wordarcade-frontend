@@ -1,53 +1,50 @@
-// MarksIndex.jsx — INDEX v2 (Andy oct5, verbatim): "INDEX (separate button): unowned marks are locked silhouettes
-// with rarity colour + "1 IN X". Each new mark and each ★ level pays wins; there's a per-rarity completion reward.
-// Card face max 4 things (name, rarity, 1 IN X, stat). Tap shows the flavour line, owned count, first roll #."
+// MarksIndex.jsx — the INDEX, ROLL v1 (Andy oct5 mockup claude/mockups/roll-v1/Index.dc.html: "this is gold").
+// The COLLECTION only — ROLL vs INDEX are TWO screens, never mixed (Andy oct5): no roll buttons, no pity, no gems, no
+// REPLAY. Rolling lives on the ROLL screen (rollScreen/RollScreen.jsx), one "← ROLL" away.
 //
-// ROLL vs INDEX are TWO screens, never mixed (Andy oct5): this is the COLLECTION only — no roll buttons, no pity,
-// no gems, and no REPLAY (it jumped back to the reel, mixing the two). Rolling lives on the ROLL screen
-// (rollScreen/RollScreen.jsx). WORDS (Andy oct5: "cut words everywhere except the INDEX detail view"): the grid is
-// data only; the detail Sheet alone carries the flavour, how-to, perk and the "7/10 → ★3" line.
+//   head   ← ROLL · INDEX n/N · one chip per rarity (the tier's colour bar + owned/total; solid when complete)
+//   grid   every mark as its CARD (markCard/MarkCard.jsx): rollable common → secret, then PERMANENT, then a retired
+//          mark the save still owns. Under an owned rollable card: "7/10 → ★3" (dupes toward the next ★). The worn
+//          MAIN wears a MAIN sticker.
+//   LOCKED a black silhouette of the mark's own glyph in its tier-coloured cog, "???", and still its odds + its ★0
+//          stat (a PERMANENT: its stat; the task that earns it is in the detail sheet only).
+//   sheet  tap a card → the detail (the only place with words: the perk line, flavour, how-to, owned ×N, first roll #,
+//          SET AS MAIN). The engine pays the INDEX rewards (new mark / ★ / tier complete) — this screen never states
+//          an amount, so it can never claim more than it pays.
 //
 // PROPS (the ROLL screen opens this from its INDEX button):
-//   onClose()           close the INDEX
+//   onClose()           back to the ROLL screen
 //   unlockedIds, equippedId, earned, onEquip   optional — the owned set / worn MAIN; with onEquip the detail can
 //                       SET AS MAIN. achievementNames names a locked PERMANENT's task (detail only).
 //
-// THE CARD (rule: max 4 things) — name · rarity · 1 IN X · stat, on the tier's fill; the ★ pip graphic sits under
-// the art. LOCKED: no name — a silhouette (an asset, masked and painted in the tier colour) + rarity + 1 IN X.
-// PERMANENT: rarity only; its task is in the detail.
-// COMPLETION: one chip per rarity in the head, filled in the tier colour by owned/total (numbers only, no words);
-// a complete tier is a solid tier fill. The engine pays the INDEX rewards (new mark / ★ / tier complete) — this
-// screen never states an amount, so it can never claim more than it pays.
-//
 // NO SPOILERS: storage is snapshotted on mount (the ROLL screen remounts this layer each time it opens it).
-// Motion: the detail sheet pops in once (transform/opacity, finite); RarityFx sweeps once per card from EPIC up;
-// nothing loops; reduced motion shows the same states still.
+// Motion: the sheet pops in once and its card plays its reveal one-shots (cog spin, shine) once; cards spin their cog
+// on hover; nothing loops; reduced motion shows the same states still.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { markProgress, markTier, markById } from '../progress/marks';
+import { markProgress, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
 import {
-  ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ROLLABLE_TIERS, viewState, markLevel, mainTag, oneInX, collection,
-  permanentOwnedIds, markEntry, indexEntry, completedTiers, perkLine, markTag,
+  ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ROLLABLE_TIERS, viewState, markLevel, oneInX, collection,
+  permanentOwnedIds, indexEntry, completedTiers, perkLine,
 } from '../progress/markRolls';
 import { wearMark } from '../progress/markRollShop';
 import { flavourOf } from '../progress/markFlavour';
-import MarkBadge, { registerMarkGlyphs } from './MarkBadge';
-import { ROLLED_GLYPHS } from './markGlyphsRolled.jsx';
-import ShinyBadge from './rollScreen/ShinyBadge';
+import { registerMarkGlyphs } from './MarkBadge';
+import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
+import MarkCard from './markCard/MarkCard';
+import { CARD_RAR } from './markCard/palette.js';
+import { pipNext, tierLabel } from './markCard/cardModel.js';
 import { formatNum } from '../format';
-import { rarityClass } from '../lib/rarityStyle.js';
-import RarityFx from './rarity/RarityFx';
-import MarkPips from './rarity/MarkPips';
-import './rarity/RarityFin.css';
 import './MarksIndex.css';
 
-registerMarkGlyphs(ROLLED_GLYPHS);
+registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
 
-const tierName = (tier) => (tier === 'permanent' ? 'PERMANENT' : markTier({ tier }).name);
-// a locked PERMANENT says the TASK (the achievement's hint), as the old index did
+// a locked PERMANENT says the TASK (the achievement's hint), as the old index did — in the detail sheet only
 const ACH_HINT = Object.fromEntries(
   ACHIEVEMENTS.map((a) => [a.id, a.secret ? a.name : String(a.hint || a.name || '').replace(/\.$/, '').toUpperCase()]),
 );
+const TILE_PARTS = { tier: 'mx-tile-tier', odds: 'mx-tile-odds', name: 'mx-tile-name', stat: 'mx-tile-sub' };
+const SHEET_PARTS = { head: 'mx-sheet-tier', name: 'mx-sheet-name', stat: 'mx-sheet-stat' };
 
 /** Every mark the INDEX draws, in order: rollable (common → secret), permanent, retired-but-owned. */
 function buildEntries(unlocked) {
@@ -60,13 +57,6 @@ function buildEntries(unlocked) {
   return out;
 }
 
-/** "7/10 → ★3" (or "★5" when maxed) — numbers through formatNum. '' for a mark with no pips. */
-function pipText(p) {
-  if (!p) return '';
-  if (!p.need) return `★${formatNum(p.pips)}`;
-  return `${formatNum(p.have)}/${formatNum(p.need)} → ★${formatNum(p.pips + 1)}`;
-}
-
 /** Per-rarity completion: [{ tier, owned, total, complete }]. */
 function tierCompletion(view, owns) {
   const done = new Set(completedTiers(view));
@@ -76,63 +66,39 @@ function tierCompletion(view, owns) {
     return { tier, owned, total: ms.length, complete: done.has(tier) || (ms.length > 0 && owned === ms.length) };
   });
 }
-
-/** A locked mark: the silhouette asset, masked and painted in the tier colour (the host carries the tier vars). */
-function Silhouette({ className = '' }) {
-  return (
-    <span className={`mx-sil-wrap ${className}`} aria-hidden="true">
-      <span className="mx-sil" />
-    </span>
-  );
-}
-
-/** The art block: the mark (or its silhouette) with the ★ pip row under it (+ "7/10 → ★3" in the detail only). */
-function Art({ e, have, size, pips, view, pipWords = false }) {
-  const legacy = markById(e.id);
-  return (
-    <span className="mx-art">
-      {have
-        ? <MarkBadge mark={markEntry(e.id)} rank={legacy ? markProgress(e.id).rank : 1} size={size} permanent={e.kind === 'perm'} className="mx-art-badge" />
-        : <Silhouette className="mx-art-badge" />}
-      {have && pips ? (
-        <span className="mx-pips">
-          <MarkPips pips={pips.pips} />
-          {pipWords ? <span className="mx-pips-text">{pipText(pips)}</span> : null}
-        </span>
-      ) : null}
-      {have && view && view.marks && view.marks[e.id] && view.marks[e.id].shiny ? <ShinyBadge className="mx-tile-shiny" /> : null}
-    </span>
-  );
-}
+// a full-screen layer: the menu beneath never reacts to the pointer (see RollScreen stopMenuPointer)
+const stopPointer = (e) => e.stopPropagation();
+const rankOf = (id) => (markById(id) ? markProgress(id).rank : 1);
+const lineOf = (e) => (CARD_RAR[e.kind === 'perm' ? 'permanent' : e.tier] || CARD_RAR.common).line;
 
 function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
   const closeRef = useRef(null);
   useEffect(() => { closeRef.current?.focus(); }, [e.id]);
   const rolled = e.kind === 'roll';
   const info = rolled ? indexEntry(e.id, view) : null;
-  const pips = rolled && have ? { pips: info.pips, have: info.have, need: info.need } : null;
-  const tag = rolled ? (info.statLine || '') : have ? mainTag(e.id, view) : '';
+  const next = rolled && have ? pipNext(info) : '';
   const perk = perkLine(e.id);
   const flavour = have ? flavourOf(e.id) : '';
   return (
     <div className="mx-sheet-layer" onClick={onClose}>
       <div
-        className={`mx-sheet ${rarityClass(e.tier, { tint: true })}${have ? '' : ' is-locked'}`}
+        className={`mx-sheet${have ? '' : ' is-locked'}`}
         role="dialog"
         aria-modal="true"
-        aria-label={have ? e.name : tierName(e.tier)}
+        aria-label={have ? e.name : tierLabel(e.tier, e.kind)}
         data-mark={e.id}
+        style={{ '--mx-tier': lineOf(e) }}
         onClick={(ev) => ev.stopPropagation()}
       >
         <button type="button" className="mx-close mx-sheet-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
-        <Art e={e} have={have} size={132} pips={pips} view={view} pipWords />
+        <div className="mx-sheet-card">
+          <MarkCard
+            id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
+            shiny={!!(info && info.shiny)} fx={have} parts={SHEET_PARTS}
+          />
+        </div>
         <div className="mx-sheet-body">
-          {have ? <div className="mx-sheet-name">{e.name}</div> : null}
-          <div className="mx-sheet-tier">
-            <span className={`rarity-chip ${rarityClass(e.tier)}`}>{tierName(e.tier)}</span>
-            {rolled ? <span className="mx-nowrap">1 IN {formatNum(oneInX(e.id))}</span> : null}
-          </div>
-          {tag ? <div className="mx-sheet-stat">{tag}</div> : null}
+          {next ? <div className="mx-pips-text">{next}</div> : null}
           {perk ? <div className="mx-sheet-perk">{perk}</div> : null}
           {flavour ? <div className="mx-sheet-flavour" data-testid="mark-flavour">{flavour}</div> : null}
           {!have && howTo ? <div className="mx-howto">{howTo}</div> : null}
@@ -150,7 +116,6 @@ function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
             </div>
           ) : null}
         </div>
-        {have ? <RarityFx key={e.id} tier={e.tier} /> : null}
       </div>
     </div>
   );
@@ -176,16 +141,18 @@ export default function MarksIndex({
   const closeRef = useRef(null);
   const selRef = useRef(sel);
   selRef.current = sel;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
-    closeRef.current?.focus();
+    closeRef.current?.focus(); // once, on mount — never again on a parent re-render (a fresh onClose each time)
     const onKey = (ev) => {
       if (ev.key !== 'Escape') return;
       if (selRef.current) setSel(null); // the open sheet closes first
-      else if (onClose) onClose();
+      else if (onCloseRef.current) onCloseRef.current();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, []);
   const set = onEquip ? (id) => {
     const w = wearMark(id, earned);
     setWorn(w);
@@ -196,27 +163,30 @@ export default function MarksIndex({
   const selE = sel ? entries.find((e) => e.id === sel) : null;
 
   return (
-    <div className="marks-overlay mx-overlay" role="dialog" aria-modal="true" aria-label="Index">
+    <div className="marks-overlay mx-overlay" role="dialog" aria-modal="true" aria-label="Index" onPointerMove={stopPointer} onMouseMove={stopPointer}>
       <div className="mx-panel">
         <div className="mx-head">
-          <h2 className="mx-title">INDEX</h2>
-          {/* per-rarity completion, by COLOUR: each chip fills in its tier colour as you collect; complete = solid */}
+          <button type="button" className="mx-close marks-close mx-back" onClick={onClose} aria-label="Close" ref={closeRef}>← ROLL</button>
+          <div className="mx-titlewrap">
+            <h2 className="mx-title">INDEX</h2>
+            <span className="mx-count">{formatNum(col.base)}/{formatNum(col.total)}</span>
+          </div>
+          {/* per-rarity completion: the tier's colour bar + owned/total on its card colour; complete = solid */}
           <div className="mx-tiers" data-testid="marks-collected" data-pct={Math.round(col.pct)} role="list">
             {tiers.map((t) => (
               <span
                 key={t.tier}
                 role="listitem"
-                className={`mx-tierchip ${rarityClass(t.tier, { tint: !t.complete })}${t.complete ? ' is-complete' : ''}`}
+                className={`mx-tierchip${t.complete ? ' is-complete' : ''}`}
                 data-tier={t.tier}
-                aria-label={`${tierName(t.tier)} ${formatNum(t.owned)}/${formatNum(t.total)}`}
+                style={{ '--mx-line': CARD_RAR[t.tier].line, '--mx-fill': CARD_RAR[t.tier].fill }}
+                aria-label={`${tierLabel(t.tier)} ${formatNum(t.owned)}/${formatNum(t.total)}`}
               >
-                <span className="mx-tierchip-fill" style={{ transform: `scaleX(${t.total ? t.owned / t.total : 0})` }} aria-hidden="true" />
+                <span className="mx-tierchip-bar" aria-hidden="true" />
                 <span className="mx-tierchip-num">{formatNum(t.owned)}/{formatNum(t.total)}</span>
-                {t.complete ? <RarityFx tier={t.tier} particles={false} /> : null}
               </span>
             ))}
           </div>
-          <button type="button" className="mx-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
         </div>
         <div className="mx-grid" role="list">
           {entries.map((e) => {
@@ -224,31 +194,28 @@ export default function MarksIndex({
             const on = worn === e.id;
             const rolled = e.kind === 'roll';
             const lv = rolled && have ? markLevel(view, e.id) : null;
-            const pips = lv ? { pips: lv.pips, have: lv.have, need: lv.need } : null;
-            // the FOUR things: name · rarity · 1 IN X · stat (locked: rarity · 1 IN X). No prose on the grid — a
-            // locked PERMANENT's task is in the detail sheet only (Andy oct5).
+            const next = lv ? pipNext(lv) : '';
             const odds = rolled ? `1 IN ${formatNum(oneInX(e.id))}` : '';
-            const stat = have ? markTag(e.id, view) : ''; // the compact line — the detail sheet spells out the rest
+            const shiny = !!(have && view && view.marks && view.marks[e.id] && view.marks[e.id].shiny);
             return (
-              <button
-                key={e.id}
-                type="button"
-                role="listitem"
-                className={`mx-tile ${rarityClass(e.tier, { tint: true })}${have ? '' : ' is-locked'}${on ? ' is-on' : ''}${e.kind === 'perm' ? ' is-perm' : ''}`}
-                aria-label={`${have ? `${e.name}, ` : ''}${tierName(e.tier)}${odds ? `, ${odds}` : ''}${have ? '' : ', locked'}${on ? ', your main' : ''}`}
-                aria-haspopup="dialog"
-                data-mark={e.id}
-                data-tier={e.tier}
-                onClick={() => setSel(e.id)}
-              >
-                <Art e={e} have={have} size={64} pips={pips} view={view} />
-                {have ? <span className="mx-tile-name">{e.name}</span> : null}
-                <span className="mx-tile-tier">{tierName(e.tier)}</span>
-                {odds ? <span className="mx-tile-odds">{odds}</span> : null}
-                {stat ? <span className="mx-tile-sub">{stat}</span> : null}
-                {on && <span className="mx-tile-main">MAIN</span>}
-                {have ? <RarityFx tier={e.tier} /> : null}
-              </button>
+              <div key={e.id} className="mx-cell" role="listitem">
+                <button
+                  type="button"
+                  className={`mx-tile${have ? '' : ' is-locked'}${on ? ' is-on' : ''}${e.kind === 'perm' ? ' is-perm' : ''}`}
+                  aria-label={`${have ? `${e.name}, ` : ''}${tierLabel(e.tier, e.kind)}${odds ? `, ${odds}` : ''}${have ? '' : ', locked'}${on ? ', your main' : ''}`}
+                  aria-haspopup="dialog"
+                  data-mark={e.id}
+                  data-tier={e.kind === 'perm' ? 'permanent' : e.tier}
+                  onClick={() => setSel(e.id)}
+                >
+                  <MarkCard
+                    id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
+                    shiny={shiny} parts={TILE_PARTS}
+                  />
+                  {on && <span className="mx-tile-main">MAIN</span>}
+                </button>
+                {next ? <span className="mx-tile-next">{next}</span> : null}
+              </div>
             );
           })}
         </div>

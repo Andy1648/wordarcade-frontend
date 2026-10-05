@@ -53,6 +53,22 @@ function applyNeutral(root) {
 //      recalc (1.1 s -> 0.64 s). Both are now written ONCE when the music starts: --flash-color
 //      never changed, and --beat-intensity is a constant 1 (every pop at full strength) — the
 //      per-hit strength was not worth a document-wide restyle four times a second.
+// HOLD (ROLL v1): a full-screen opaque layer (the ROLL screen) covers every beat-popping element, yet each beat still
+// restyles the whole document (data-beat on <html>) — measured at 4x CPU that was most of the ROLL screen's frame time.
+// While any holder is up, onsets are still tracked but data-beat is not flipped. Counted, so nested holders compose.
+let beatHolds = 0;
+/** Pause the data-beat flips while a full-screen layer covers the page. Returns the release function (call once). */
+export function holdBeats() {
+  beatHolds += 1;
+  try { document.documentElement.removeAttribute('data-beat'); } catch { /* no DOM */ }
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    beatHolds = Math.max(0, beatHolds - 1);
+  };
+}
+
 export function useBeatSync(getFrequencyData, active, onBeatRef = null) {
   const [isAnalysing, setIsAnalysing] = useState(false);
 
@@ -93,7 +109,7 @@ export function useBeatSync(getFrequencyData, active, onBeatRef = null) {
 
       const now = performance.now();
       const isOnset = flux > MIN_FLUX && flux > avg * SENSITIVITY;
-      if (isOnset && now - lastBeatRef.current > COOLDOWN_MS) {
+      if (isOnset && beatHolds === 0 && now - lastBeatRef.current > COOLDOWN_MS) {
         lastBeatRef.current = now;
 
         // Flip data-beat on for BEAT_HOLD_MS so CSS one-shot pops fire. Removing
