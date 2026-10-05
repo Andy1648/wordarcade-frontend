@@ -29,7 +29,7 @@ import { installBackendMock, freezeAnimations } from './support/backendMock.js';
 // map is a map that quietly stops matching the app. The arcane-pass screenshot run and the
 // cold-stranger walk import the same list.
 import { VIEWPORTS, TOL, SCREENS, NOSCROLL, THEME_IDS } from './support/screens.js';
-import { PHONE_MENU_MAX, menuReady, modeEntry } from './support/menu.js';
+import { PHONE_MENU_MAX, menuReady, revealMode } from './support/menu.js';
 
 // ---- navigation primitives (reused from coverage / gameover specs) ----
 async function bootMenu(page, level = 40, query = '?portal=1') {
@@ -46,9 +46,8 @@ async function bootMenu(page, level = 40, query = '?portal=1') {
   await menuReady(page);
   await page.waitForTimeout(400);
 }
-// THE MODE ENTRY POINT, at either width — the desktop card or the phone row. Both call the
-// same Homepage handler, so only the object you press differs (support/menu.js).
-const card = (page, id) => modeEntry(page, id);
+// THE MODE ENTRY POINT, at either width — the desktop card or the phone row (support/menu.js
+// revealMode: on a paged short-wide menu it flips to the card's page first).
 
 async function bootRoom(page, gameType, players) {
   const mock = await installBackendMock(page);
@@ -64,7 +63,7 @@ async function enterSolo(page, id) {
   await page.goto('/?portal=1&soloms=350');
   await menuReady(page);
   await page.waitForTimeout(400);
-  await card(page, id).click({ force: true });
+  await (await revealMode(page, id)).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
   await page.locator('.mode-dialog-btn-create').click();
   await page.locator('.solo-root').waitFor({ state: 'visible' });

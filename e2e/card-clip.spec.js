@@ -5,7 +5,7 @@
 // the card and the viewport clips it tighter than the stage, which clears every card.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady } from './support/menu.js';
+import { menuReady, isPagedMenu } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -13,11 +13,15 @@ const VIEWPORTS = [
   { w: 1440, h: 900 },
   { w: 1366, h: 768 },
   { w: 1163, h: 501 },
+  // Chromebook sizes — the menu pages its cards here (3 a page); both pages are checked.
+  { w: 1366, h: 657 },
+  { w: 1280, h: 551 },
 ];
 
 async function perCardMargins(page) {
   return page.evaluate(() => {
-    const cards = [...document.querySelectorAll('.game-card-magnet')];
+    // Rendered cards only — a paged short-wide menu hides the other page (display:none).
+    const cards = [...document.querySelectorAll('.game-card-magnet')].filter((m) => m.getClientRects().length > 0);
     return cards.map((m) => {
       const c = m.querySelector('.game-card').getBoundingClientRect();
       const name = m.getAttribute('data-game') || '?';
@@ -50,7 +54,13 @@ for (const { w, h } of VIEWPORTS) {
     await page.goto('/?portal=1');
     await menuReady(page);
     await page.waitForTimeout(300);
-    const cards = await perCardMargins(page);
+    let cards = await perCardMargins(page);
+    if (isPagedMenu(page)) {
+      expect(cards.length, 'three cards a page').toBe(3);
+      await page.locator('.homepage-cards-arrow.is-next').click();
+      await page.waitForTimeout(400);
+      cards = [...cards, ...(await perCardMargins(page))];
+    }
     expect(cards.length).toBe(6); // R1: WORD RACE is on for everyone
     for (const c of cards) {
       // eslint-disable-next-line no-console

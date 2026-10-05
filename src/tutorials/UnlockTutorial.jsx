@@ -15,11 +15,23 @@ export default function UnlockTutorial({ tutorial, snapshot, onDone }) {
 
   useLayoutEffect(() => {
     setRing(null);
-    if (!step.target) return;
-    const el = [...document.querySelectorAll(step.target)].find((n) => n.getBoundingClientRect().width > 0);
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    setRing({ left: r.left - 8, top: r.top - 8, width: r.width + 16, height: r.height + 16 });
+    if (!step.target) return undefined;
+    const measure = () => {
+      const el = [...document.querySelectorAll(step.target)].find((n) => n.getBoundingClientRect().width > 0);
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      setRing({ left: r.left - 8, top: r.top - 8, width: r.width + 16, height: r.height + 16 });
+      return true;
+    };
+    if (measure()) return undefined;
+    // The target is a menu card on the OTHER card page (short-wide desktop pages its cards —
+    // Homepage.jsx CARD PAGES): ask the menu to flip there, then measure once the slide has landed.
+    const card = document.querySelector(step.target);
+    const id = card && card.closest('[data-game]') ? card.closest('[data-game]').getAttribute('data-game') : null;
+    if (!id) return undefined;
+    window.dispatchEvent(new CustomEvent('taw:reveal-card', { detail: { id } }));
+    const t = setTimeout(measure, 320);
+    return () => clearTimeout(t);
   }, [i, step.target]);
 
   useEffect(() => {

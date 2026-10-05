@@ -930,6 +930,103 @@ html[data-beat='true'] .homepage-logo {
   padding-left: 170px;
 }
 
+/* ---- CARD PAGES (feat/chromebook-card-pages) ---------------------------------------------------
+   Short-wide desktop only — Homepage.jsx PAGED_MENU_QUERY '(min-width: 761px) and (max-height: 700px)'
+   sets [data-paged] on the stage. Six cards could only be squat there; instead THREE sit at the full
+   3:4 ratio (sized by the fit-math, arrows + dots already paid for) and the row flips page 1 <-> 2.
+   Everywhere else the pagerow is display:contents, so the region's box tree is what it always was. */
+.homepage-cards-pagerow { display: contents; }
+.homepage-stage[data-paged] .homepage-cards-pagerow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: clamp(10px, 1.4vw, 20px);
+  width: 100%;
+  flex: 0 0 auto;
+  /* a horizontal swipe flips; a vertical one is still the browser's */
+  touch-action: pan-y;
+}
+.homepage-stage[data-paged] .homepage-cards-scroll,
+.homepage-stage[data-paged][data-fit='short'] .homepage-cards-scroll {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 0 8px;
+}
+.homepage-stage[data-paged] .homepage-cards-grid {
+  width: auto;
+  grid-template-columns: repeat(var(--cards-cols, 3), var(--card-w, 200px));
+}
+.homepage-stage[data-paged] .homepage-cards-grid .game-card-magnet { grid-column: auto; }
+/* The off-page cards. data-measuring (set for the length of one synchronous fit pass) shows them all,
+   so the minimum card width and each card's measured title-bar height cover every page. */
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='0']:not([data-measuring]) > .game-card-magnet:nth-child(n+4),
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='1']:not([data-measuring]) > .game-card-magnet:nth-child(-n+3) {
+  display: none;
+}
+
+.homepage-cards-arrow {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: var(--v-ink);
+  background: var(--v-panel-hi);
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s, opacity 0.2s;
+}
+.homepage-cards-arrow:hover:not([aria-disabled='true']),
+.homepage-cards-arrow:active:not([aria-disabled='true']) { will-change: transform; }
+.homepage-cards-arrow:hover:not([aria-disabled='true']) { transform: scale(1.08); }
+.homepage-cards-arrow:active:not([aria-disabled='true']) {
+  transform: scale(0.9);
+  box-shadow: 1px 1px 0 #000;
+}
+.homepage-cards-arrow:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 3px; }
+/* The end of the row: still in place (the cards never shift), just plainly spent. */
+.homepage-cards-arrow[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.homepage-cards-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+.homepage-cards-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--v-ink);
+  background: transparent;
+  opacity: 0.55;
+  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.5, 1);
+}
+.homepage-cards-dot.is-on {
+  background: #FF4FA3;
+  border-color: #991A75;
+  opacity: 1;
+  transform: scale(1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .homepage-cards-arrow,
+  .homepage-cards-dot { transition: none; }
+}
+
 /* ---- Responsive ---- */
 
 /* The column count and card size are computed in Homepage.jsx from the available height at ALL

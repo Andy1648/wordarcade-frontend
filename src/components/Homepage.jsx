@@ -96,6 +96,15 @@ import './MobileMenu.css';
 // RENDER branch, not a CSS one, because the win is the ~390 card nodes never mounting.
 const PHONE_MENU_QUERY = '(max-width: 480px)';
 
+// CHROMEBOOK PAGES (feat/chromebook-card-pages, Andy oct5: "game cards are flattened and look
+// horrendous" at 1366x657 / 1280x551). A short-wide desktop cannot give six cards a 3:4 box at a
+// readable width — the fit-math fell back to SQUAT cards. On these viewports the menu shows
+// CARDS_PER_PAGE cards at the full 3:4 ratio and flips between pages (arrows, swipe, ←/→ keys) with
+// a two-dot indicator. Tall screens (> 700px) and anything ≤ 760px wide keep their layout exactly.
+const PAGED_MENU_QUERY = '(min-width: 761px) and (max-height: 700px)';
+const CARDS_PER_PAGE = 3;
+const CARD_PAGES = Math.ceil(GAMES.length / CARDS_PER_PAGE);
+
 // How long a queued connect attempt shows the plain CONNECTING… state before we
 // assume a COLD START (the Render free tier sleeps when idle and takes ~30-60s to
 // wake) and switch to the reassuring WAKING THE SERVER… copy — a static spinner
@@ -145,6 +154,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [navigating, setNavigating] = useState(false);
   // True on phones (<=480px). Drives the whole first-screen swap below.
   const isPhoneMenu = useMediaQuery(PHONE_MENU_QUERY);
+  // Short-wide desktop (Chromebook / 125%-scaled laptop): the card row pages, 3 full-ratio cards a page.
+  const isPagedMenu = useMediaQuery(PAGED_MENU_QUERY) && !isPhoneMenu;
+  const [cardPage, setCardPage] = useState(0);
   // The phone menu's TYPE A WORD hook (WordHook.jsx) is for visitors who have never started a
   // game. Read once per mount: starting a round navigates away, so it is gone on the way back.
   const [firstTimer] = useState(() => !hasPlayedBefore());
@@ -372,6 +384,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       let tall = 0;
       const barText = [];
       for (const card of grid.getElementsByClassName('game-card')) {
+        if (!card.offsetParent) continue; // not rendered (never expected: compute shows every page)
         const inner = card.clientHeight;
         for (const el of card.querySelectorAll('.game-card-name, .game-card-xp, .game-card-payout, .game-card-badge')) {
           if (el.clientWidth) wide = Math.max(wide, el.scrollWidth - el.clientWidth);
@@ -402,6 +415,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       const grid = stage.querySelector('.homepage-cards-grid');
       const scroll = stage.querySelector('.homepage-cards-scroll');
       if (!region || !grid || !scroll) return;
+      // PAGED: every page is shown while measuring (data-measuring lifts the off-page hide), so the
+      // minimum width and each card's --bar-text-h come from ALL six cards — flipping never re-fits.
+      // The region's height is the stage's leftover either way (flex-grown, min-height 0), so the
+      // extra row this costs for the length of this synchronous pass changes nothing it reads.
+      if (isPagedMenu) grid.setAttribute('data-measuring', '');
+      try {
+        fit(region, grid, scroll);
+      } finally {
+        grid.removeAttribute('data-measuring');
+      }
+    };
+    const fit = (region, grid, scroll) => {
       const minW = measureMinW(grid);
       grid.setAttribute('data-minw', String(minW)); // the narrowest card that shows all its text (gates read it)
       const narrow = window.innerWidth < 360;
@@ -458,27 +483,48 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           const reserve = Math.max(0, Math.ceil(window.innerWidth - nr.left) + 12);
           stage.style.setProperty('--corner-nav-reserve', `${reserve}px`);
         }
-        const regionH = region.clientHeight;
+        let regionH = region.clientHeight;
         // Available WIDTH from the REGION (full, stable) minus the scroll's gutter — never from the
         // shrink-to-content grid, which would feed its own card width back in.
         const scs = getComputedStyle(scroll);
         const gutter = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
-        const availW = region.clientWidth - gutter;
+        let availW = region.clientWidth - gutter;
+        // PAGED: the two arrows (+ the row's gaps) sit beside the cards, and the dot indicator under
+        // them — both in flow, both paid for here so the 3:4 cards never overlap or clip them.
+        if (isPagedMenu) {
+          const row = region.querySelector('.homepage-cards-pagerow');
+          const rowGap2 = row ? parseFloat(getComputedStyle(row).columnGap) || 0 : 0;
+          for (const a of region.querySelectorAll('.homepage-cards-arrow')) availW -= a.offsetWidth + rowGap2;
+          const dots = region.querySelector('.homepage-cards-dots');
+          if (dots) regionH -= dots.offsetHeight + (parseFloat(getComputedStyle(dots).marginTop) || 0);
+        }
         if (regionH <= 0 || availW <= 0) return null;
         const gcs = getComputedStyle(grid);
         const colGap = parseFloat(gcs.columnGap) || 14;
         const rGap = parseFloat(gcs.rowGap) || colGap;
         const count = grid.querySelectorAll('.game-card-magnet').length || 5;
         // NEVER THREE ACROSS ON A <360px SCREEN (exactly two columns there; the region scrolls).
-        const LAYOUTS = narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
+        // PAGED: one row of CARDS_PER_PAGE, the other cards are a flip away.
+        const LAYOUTS = isPagedMenu
+          ? [[Math.min(CARDS_PER_PAGE, count), 1]]
+          : narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
         let best = null;
+        let owed = 0;
         for (const [cols, rows] of LAYOUTS) {
-          if (cols * rows < count) continue; // must hold all five
+          if (!isPagedMenu && cols * rows < count) continue; // must hold all five
           const colW = (availW - (cols - 1) * colGap) / cols;
           const rowH = (regionH - (rows - 1) * rGap) / rows;
           let f = null;
           if (narrow) {
             f = { w: colW, h: (colW * 4) / 3, cols, rows, aspect: true };
+          } else if (isPagedMenu) {
+            // ALWAYS 3:4 — the whole point of paging. Under the text minimum the card keeps the
+            // minimum (3:4 still) and the height it owes goes to the short arrangement + the
+            // wordmark shrink below, exactly like a six-up row's shortfall.
+            let w = Math.min(colW, (rowH * 3) / 4);
+            if (w < minW) w = Math.min(colW, minW);
+            f = { w, h: (w * 4) / 3, cols, rows, aspect: true };
+            owed = Math.max(0, f.h - rowH);
           } else {
             const w0 = Math.min(colW, (rowH * 3) / 4);
             if (w0 >= minW) f = { w: w0, h: (w0 * 4) / 3, cols, rows, aspect: true };
@@ -502,7 +548,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         if (narrow) return { wide: 0, tall: 0, rows: best.rows };
         // the row scrolls sideways, so width is never owed — but a full 3:4 height still is (the short
         // arrangement + the wordmark shrink below pay it as far as they can)
-        return { ...cardShortfall(grid), rows: best.rows };
+        const sf = cardShortfall(grid);
+        return { ...sf, tall: Math.max(sf.tall, owed), rows: best.rows };
       };
 
       // WHERE THE LEFTOVER GOES on a wide screen: the 3:4 cards are width-bound and the region
@@ -529,7 +576,97 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };
-  }, [isPhoneMenu]);
+  }, [isPhoneMenu, isPagedMenu]);
+
+  // ---- CARD PAGES (short-wide desktop only) -----------------------------------------------------
+  // The flip is a finite WAAPI slide (transform + opacity, ~260ms) on the grid, will-change on only
+  // for its life; reduced motion swaps instantly. A pager that stops matching resets to page 1.
+  const cardsGridRef = useRef(null);
+  const flipDirRef = useRef(0);
+  const flipFocusRef = useRef(false);
+  const pageCount = isPagedMenu ? CARD_PAGES : 1;
+  const shownPage = isPagedMenu ? Math.min(cardPage, pageCount - 1) : 0;
+  const flipCards = (to) => {
+    const next = Math.max(0, Math.min(pageCount - 1, to));
+    if (next === shownPage) return;
+    flipDirRef.current = next > shownPage ? 1 : -1;
+    // Keyboard focus on a card that is about to hide moves to the same slot on the new page, so
+    // ←/→ from a focused card never strands focus on <body>.
+    const grid = cardsGridRef.current;
+    const active = document.activeElement;
+    flipFocusRef.current = !!(grid && active && grid.contains(active));
+    setCardPage(next);
+  };
+  useLayoutEffect(() => {
+    const dir = flipDirRef.current;
+    flipDirRef.current = 0;
+    const grid = cardsGridRef.current;
+    if (!dir || !grid) return undefined;
+    if (flipFocusRef.current) {
+      flipFocusRef.current = false;
+      const first = grid.querySelector(`.game-card-magnet:nth-child(${shownPage * CARDS_PER_PAGE + 1}) .game-card`);
+      if (first) first.focus({ preventScroll: true });
+    }
+    let reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { reduce = false; }
+    if (reduce || typeof grid.animate !== 'function') return undefined;
+    grid.style.willChange = 'transform, opacity';
+    const anim = grid.animate(
+      [{ transform: `translateX(${dir * 48}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }],
+      { duration: 260, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
+    );
+    const done = () => { grid.style.willChange = ''; };
+    anim.onfinish = done;
+    anim.oncancel = done;
+    return () => anim.cancel();
+  }, [shownPage]);
+  // ←/→ flip the pages while the menu itself has the keys: never inside a text field, never under an
+  // open dialog / panel, never with a modifier. Letters are untouched — they still go to typing.
+  const pagerBlockedRef = useRef(false);
+  pagerBlockedRef.current = !!(dialog || lockedPreview || showClaims || showRanks || showMarks || claimReveal || navigating);
+  const flipRef = useRef(flipCards);
+  flipRef.current = flipCards;
+  const shownPageRef = useRef(shownPage);
+  shownPageRef.current = shownPage;
+  useEffect(() => {
+    if (!isPagedMenu) return undefined;
+    const onKey = (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      if (pagerBlockedRef.current) return;
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      e.preventDefault();
+      flipRef.current(shownPageRef.current + (e.key === 'ArrowRight' ? 1 : -1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isPagedMenu]);
+  // A step of the unlock tutorial that points at a card on the other page asks for it (UnlockTutorial).
+  useEffect(() => {
+    if (!isPagedMenu) return undefined;
+    const onReveal = (e) => {
+      const idx = GAMES.findIndex((g) => g.id === (e.detail && e.detail.id));
+      if (idx >= 0) flipRef.current(Math.floor(idx / CARDS_PER_PAGE));
+    };
+    window.addEventListener('taw:reveal-card', onReveal);
+    return () => window.removeEventListener('taw:reveal-card', onReveal);
+  }, [isPagedMenu]);
+  // Swipe (touch / pen only — a mouse drag would fight the cards' own press + magnetic pull).
+  const swipeRef = useRef(null);
+  const onPagerPointerDown = (e) => {
+    if (e.pointerType === 'mouse') return;
+    swipeRef.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  };
+  const onPagerPointerUp = (e) => {
+    const s = swipeRef.current;
+    swipeRef.current = null;
+    if (!s || s.id !== e.pointerId) return;
+    const dx = e.clientX - s.x;
+    const dy = e.clientY - s.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    flipCards(shownPage + (dx < 0 ? 1 : -1));
+  };
 
   // NOTE (fix/logic-and-onboarding): the old peek-scroll + "N MORE" pager machinery was
   // REMOVED here. The card-sizing effect above sizes all five cards to fit ONE screen and
@@ -1141,6 +1278,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         data-menu-frame={menuFrame || undefined}
         data-menu-tier={tier}
         data-nav={NAV_LAYOUT}
+        data-paged={isPagedMenu ? '' : undefined}
       >
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
         {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
@@ -1371,23 +1509,67 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         <div className="homepage-cards-region">
-          <div className="homepage-cards-scroll" data-count={GAMES.length}>
-            <div className="homepage-cards-grid" style={{ '--card-count': GAMES.length }}>
-              {GAMES.map((game) => (
-                <GameCard
-                  key={game.id}
-                  game={game}
-                  onSelect={handleOpenDialog}
-                  onLockedSelect={handleLockedSelect}
-                  onHover={handleHover}
-                  // Level gate OR an earlier play of the mode (deep links open a gated
-                  // mode with no level check) — see progress/modeAccess.js.
-                  locked={isModeLocked(game, xpProgress.level)}
-                  playerLevel={xpProgress.level}
-                />
+          {/* CARD PAGES: on a short-wide desktop (PAGED_MENU_QUERY) the row carries an arrow each
+              side and a two-dot indicator under it, all in flow inside the region (no fixed UI).
+              Elsewhere the row is display:contents and the region is exactly what it was. */}
+          <div
+            className="homepage-cards-pagerow"
+            onPointerDown={isPagedMenu ? onPagerPointerDown : undefined}
+            onPointerUp={isPagedMenu ? onPagerPointerUp : undefined}
+            onPointerCancel={isPagedMenu ? () => { swipeRef.current = null; } : undefined}
+          >
+            {isPagedMenu && (
+              <button
+                type="button"
+                className="homepage-cards-arrow is-prev"
+                aria-label="Previous games"
+                aria-disabled={shownPage === 0}
+                onClick={() => { sfx('tap'); flipCards(shownPage - 1); }}
+              >
+                <span aria-hidden="true">←</span>
+              </button>
+            )}
+            <div className="homepage-cards-scroll" data-count={GAMES.length}>
+              <div
+                ref={cardsGridRef}
+                className="homepage-cards-grid"
+                style={{ '--card-count': GAMES.length }}
+                data-page={isPagedMenu ? shownPage : undefined}
+              >
+                {GAMES.map((game) => (
+                  <GameCard
+                    key={game.id}
+                    game={game}
+                    onSelect={handleOpenDialog}
+                    onLockedSelect={handleLockedSelect}
+                    onHover={handleHover}
+                    // Level gate OR an earlier play of the mode (deep links open a gated
+                    // mode with no level check) — see progress/modeAccess.js.
+                    locked={isModeLocked(game, xpProgress.level)}
+                    playerLevel={xpProgress.level}
+                  />
+                ))}
+              </div>
+            </div>
+            {isPagedMenu && (
+              <button
+                type="button"
+                className="homepage-cards-arrow is-next"
+                aria-label="Next games"
+                aria-disabled={shownPage >= pageCount - 1}
+                onClick={() => { sfx('tap'); flipCards(shownPage + 1); }}
+              >
+                <span aria-hidden="true">→</span>
+              </button>
+            )}
+          </div>
+          {isPagedMenu && (
+            <div className="homepage-cards-dots" aria-hidden="true">
+              {Array.from({ length: pageCount }, (_, i) => (
+                <span key={i} className={`homepage-cards-dot${i === shownPage ? ' is-on' : ''}`} data-page={i} />
               ))}
             </div>
-          </div>
+          )}
         </div>
 
         <div className="homepage-bottom-bar">
