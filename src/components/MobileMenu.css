@@ -553,6 +553,9 @@
     height: 100%;
     background: #2EFFE0;
     transform-origin: left center;
+    transform: scaleX(0); /* written by useLevelBar (lib/barPlan) — scaleX only */
   }
+  /* a level being flashed through on a multi-level climb (class swap, colour only) */
+  .hp-m-stats-fill.is-levelflash { background: #FFE94A; }
   .hp-m-stats-wins { color: #FFE94A; }
 }
