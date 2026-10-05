@@ -1081,7 +1081,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const total = rebirthMult(n);
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(n)}`;
       if (levelSubRef.current) levelSubRef.current.textContent = n > 1 ? `×5 XP & WINS · NOW ×${formatNum(total)}` : '×5 XP & WINS';
-      if (levelDetailRef.current) levelDetailRef.current.textContent = 'KEY RESET · REBUY';
+      if (levelDetailRef.current) levelDetailRef.current.textContent = '';
       a.cancel();
       a.play();
       bigBurst();

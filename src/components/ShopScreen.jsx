@@ -10,7 +10,7 @@ import { takeRebirthNow, peekRebirthNow, isRebirthReadyNow } from '../progress/r
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
 import { getWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, keyTierAfterRebirth, REBIRTH_POWER } from '../progress/xp';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, REBIRTH_POWER } from '../progress/xp';
 import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatMultExact } from '../format';
@@ -226,7 +226,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   KEY <span key={`kt${keyTier}`} className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier))}`}>T{formatNum(keyTier)}<RarityFx tier={keyRarity(keyTier)} /></span> <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → <span className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier + 1))}`}>T{formatNum(keyTier + 1)}</span> <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
                 </div>
                 <div className="shop-kp-rate">
-                  BASE 10 XP / LETTER × KEY × REBIRTH · KEY RESETS ON REBIRTH
+                  BASE 10 XP / LETTER × KEY × REBIRTH
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier).
                     CLUTTER PASS: no "READY TO UNLOCK" — the full bar + the live HOLD price button say it. */}
@@ -338,10 +338,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 above; this says the cost. HEAD START lifts the new climb (stars.js headStartLevel). */}
             <ul className="shop-confirm-detail">
               <li>
-                <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))} · KEY RESETS → T{formatNum(keyTierAfterRebirth(keyTier))}.
+                <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))}.
               </li>
               <li>
-                <b>KEEP:</b> WINS · MARKS · PURCHASES · STATS.
+                <b>KEEP:</b> WINS · KEY TIER · MARKS · PURCHASES · STATS.
               </li>
             </ul>
 

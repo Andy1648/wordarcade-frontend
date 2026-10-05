@@ -29,7 +29,7 @@ test('big fractional multipliers print whole (no ×27.98)', () => {
   assert.ok(chips.every((c) => !/\d\.\d/.test(c.mult)));
 });
 
-test('defaults read the live xp.js functions (Rebirth Rush: 5^R, gate LV 15 + 18R)', () => {
+test('defaults read the live xp.js functions (Rebirth Rush: 5^R, gate LV 25 × (R+1))', () => {
   const chips = rebirthLadder(1);
-  assert.deepEqual(text(chips), ['BASE ×1', 'R1 ×5', 'R2 ×25 LV 33 +400%']);
+  assert.deepEqual(text(chips), ['BASE ×1', 'R1 ×5', 'R2 ×25 LV 50 +400%']);
 });

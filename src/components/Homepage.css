@@ -930,6 +930,22 @@ html[data-beat='true'] .homepage-logo {
   padding-left: 170px;
 }
 
+/* ---- CARD PAGES (feat/chromebook-card-pages) ---------------------------------------------------
+   Short-wide desktop only — Homepage.jsx PAGED_MENU_QUERY '(min-width: 761px) and (max-height: 700px)'
+   sets [data-paged] on the stage. Six cards could only be squat there; instead THREE sit at the full
+   3:4 ratio (sized by the fit-math, arrows + dots already paid for) and the row flips page 1 <-> 2.
+   Everywhere else the pagerow is display:contents, so the region's box tree is what it always was. */
+.homepage-cards-pagerow { display: contents; }
+/* The paged row's LAYOUT (arrows either side, a shrink-wrapped 3-card grid) ships with the lazy
+   CardPager.css; until it lands the 3 cards sit in the plain data-cols=3 grid, same size. */
+/* The off-page cards. data-measuring (set for the length of one synchronous fit pass) shows them all,
+   so the minimum card width and each card's measured title-bar height cover every page. */
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='0']:not([data-measuring]) > .game-card-magnet:nth-child(n+4),
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='1']:not([data-measuring]) > .game-card-magnet:nth-child(-n+3) {
+  display: none;
+}
+
+
 /* ---- Responsive ---- */
 
 /* The column count and card size are computed in Homepage.jsx from the available height at ALL

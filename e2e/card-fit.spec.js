@@ -24,9 +24,12 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
+import { isPagedMenu } from './support/menu.js';
 
 const VIEWPORTS = [
   [1366, 625], [1366, 768], [1280, 800], [1163, 501], [1440, 900],
+  // Chromebook / 125%-scaled laptop: the menu PAGES its cards here (3 a page) — both pages measured.
+  [1366, 657], [1280, 551],
   [1920, 1080], [2560, 1440], [3440, 1440], [1024, 768],
 ];
 
@@ -111,7 +114,9 @@ function measure(page) {
     };
     const effPx = (el) => parseFloat(getComputedStyle(el).fontSize) * (el.currentCSSZoom || 1);
 
-    const cards = [...document.getElementsByClassName('game-card')];
+    // Rendered cards only: on a paged short-wide menu the other page's three are display:none
+    // (the test flips and measures them too).
+    const cards = [...document.getElementsByClassName('game-card')].filter((c) => c.getClientRects().length > 0);
     const perCard = cards.map((card) => {
       const game = card.closest('[data-game]')?.getAttribute('data-game') || '?';
       const cr = card.getBoundingClientRect();
@@ -186,6 +191,19 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
     test(`${profile} ${w}x${h}: card text fits, >=13px, no scroll`, async ({ page }) => {
       await boot(page, w, h, seed);
       const m = await measure(page);
+      if (isPagedMenu(page)) {
+        // CARD PAGES: three showing; flip and measure the other three under the same rules.
+        expect(m.cards.length, 'a paged menu shows three cards a page').toBe(3);
+        // Flip by KEY, not a click: moving the pointer swings the cards' cursor-magnetic lean, which
+        // skews every rect this measures (a 3D lean read as "text clipped by its card").
+        await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
+        await page.keyboard.press('ArrowRight');
+        await page.waitForTimeout(400);
+        const m2 = await measure(page);
+        expect(m2.cards.length, 'page 2 shows the other three').toBe(3);
+        m.cards = [...m.cards, ...m2.cards];
+        if (m2.smallest.px < m.smallest.px) m.smallest = m2.smallest;
+      }
       const row = {
         profile, vp: `${w}x${h}`,
         payoutClip: Math.max(0, ...m.cards.map((c) => c.payoutClip)),
@@ -201,6 +219,7 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
       };
       if (OUT) fs.appendFileSync(OUT, `${JSON.stringify(row)}\n`);
       expect(m.cards.length, 'six mode cards (exact .game-card class) — R1 put WORD RACE on for everyone').toBe(6);
+      expect(new Set(m.cards.map((c) => c.game)).size, 'six DIFFERENT modes').toBe(6);
       for (const c of m.cards) {
         expect(c.clip, `${c.game}: text "${c.clipText}" clipped by ${c.clipBy}`).toBeLessThanOrEqual(TOL);
         expect(c.escape, `${c.game}: text "${c.escText}" escapes its card`).toBeLessThanOrEqual(TOL);
