@@ -316,3 +316,8 @@
   }
   .game-wrap .payout--compact .payout-row .payout-k { min-width: calc(70px * var(--wb-k, 1)); }
 }
+
+/* RARITY IDENTITY (Andy oct5): the MARK term is a chip in the worn mark's tier (src/components/rarity/RarityFin.css).
+   Its ink follows the tier (beats the row's key colour); in a row it keeps the label column width. */
+.payout-k.payout-mark.rarity-fin { color: var(--rar-ink); --rar-spark: 12px; }
+.payout-row .payout-k.payout-mark { text-align: center; }

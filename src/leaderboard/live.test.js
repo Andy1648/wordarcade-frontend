@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cleanTick, isLevelMilestone, announceRolls, rollTickCode } from './live.js';
-import { tickText } from './tickText.js';
+import { tickText, tickParts } from './tickText.js';
 
 test('the ticker renders only well-formed, clean {kind, name, number} messages', () => {
   assert.deepEqual(cleanTick({ k: 'lv', n: 'ZED', v: 50 }), { k: 'lv', n: 'ZED', v: 50 });
@@ -49,4 +49,11 @@ test('MARK ROLLS ticker: unclaimed posts nothing; claimed posts one per MYTHIC+ 
     if (saved === undefined) delete globalThis.localStorage;
     else globalThis.localStorage = saved;
   }
+});
+
+test('RARITY IDENTITY: a roll tick hands its TIER to the render as a rarity key; the text is unchanged', () => {
+  assert.deepEqual(tickParts({ k: 'roll', n: 'ZED', v: 4 }), { lead: 'ZED ROLLED ', tag: 'MYTHIC', rarity: 'mythic' });
+  assert.deepEqual(tickParts({ k: 'roll', n: 'ZED', v: 5 }), { lead: 'ZED ROLLED ', tag: 'SECRET', rarity: 'secret' });
+  assert.equal(tickParts({ k: 'roll', n: 'ZED', v: 3 }), null);
+  assert.equal(tickParts(null), null);
 });

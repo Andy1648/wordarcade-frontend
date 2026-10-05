@@ -17,6 +17,8 @@ import { markEntry } from '../../progress/markRolls';
 import { timeline, multiTimeline, LADDER, PARTICLES } from './revealTimelines.js';
 import { revealMs, isHeavy, revealKind, multiPlan, MULTI_COUNT } from './revealPlan.js';
 import { formatNum } from '../../format';
+import { rarityClass } from '../../lib/rarityStyle.js';
+import '../rarity/RarityFin.css';
 
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t || '').toUpperCase());
 const tierColour = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].colour : '#9A1AFF');
@@ -88,7 +90,8 @@ export default function RollReveal({ seq, skipSeq, result, results = null, card,
   const multi = !!(results && results.length);
   const best = multi ? multiPlan(results).best : -1;
   const reelRows = (cls) => REEL.map((t, i) => (
-    <div key={i} className={cls} style={{ '--mr-bar': tierColour(t) }}>{tierName(t)}</div>
+    // RARITY IDENTITY: every reel bar wears its tier's fill + glow (the pooled rows stay CSS-only — no fx nodes)
+    <div key={i} className={`${cls} ${rarityClass(t)}`} style={{ '--mr-bar': tierColour(t) }}>{tierName(t)}</div>
   ));
 
   const cover = (
@@ -151,7 +154,7 @@ export default function RollReveal({ seq, skipSeq, result, results = null, card,
               <div
                 key={i}
                 ref={reg(`m${i}`)}
-                className={`mr-tile is-${r ? r.tier : 'none'}${r && r.shiny ? ' is-shiny' : ''}${i === best ? ' is-best' : ''}`}
+                className={`mr-tile is-${r ? r.tier : 'none'}${r && r.shiny ? ' is-shiny' : ''}${i === best ? ' is-best' : ''}${r ? ` ${rarityClass(r.tier, { tint: true, finish: r.rainbow > 0 ? 'rainbow' : r.gold > 0 ? 'gold' : 'base' })}` : ''}`}
                 style={r ? { '--mr-tier': tierColour(r.tier) } : undefined}
                 role={r ? 'img' : undefined}
                 aria-label={r ? `${e ? e.name : ''}, ${tierName(r.tier)}` : undefined}

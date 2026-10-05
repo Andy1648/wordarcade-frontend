@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" preserveAspectRatio="none">
+  <!-- the GOLD dupe finish: a warm two-band glint, uneven widths, one drip off the lower edge -->
+  <path d="M40 0 L66 0 L38 100 L12 100 Z" fill="#FFD54A" opacity="0.6"/>
+  <path d="M73 0 L81 0 L55 100 L47 100 Z" fill="#FFF3B0" opacity="0.8"/>
+  <path d="M30 100 L31 92 Q34 89 35 94 L34 100 Z" fill="#FFD54A" opacity="0.6"/>
+  <circle cx="88" cy="12" r="2.4" fill="#FFF3B0" opacity="0.8"/>
+</svg>

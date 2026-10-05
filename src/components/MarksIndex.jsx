@@ -29,6 +29,8 @@ import { ShinyBadge } from './markRolls/RollReveal';
 import UnlockTutorial from '../tutorials/UnlockTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
 import { formatNum, formatMultExact as formatMult } from '../format';
+import { rarityClass } from '../lib/rarityStyle.js';
+import RarityFx from './rarity/RarityFx';
 import './MarksIndex.css';
 import './markRolls/MarkRolls.css';
 
@@ -78,7 +80,7 @@ function Detail({ e, have, on, finish, tagText, howTo, onSet }) {
   const legacy = markById(e.id);
   const rank = have && legacy ? markProgress(e.id).rank : 1;
   return (
-    <div className={`mx-detail${have ? '' : ' is-locked'}`} style={{ '--tier': t.colour }}>
+    <div className={`mx-detail${have ? ` ${rarityClass(e.tier, { tint: true, finish })}` : ' is-locked'}`} style={{ '--tier': t.colour }}>
       <MarkBadge mark={markEntry(e.id)} rank={rank} locked={!have} size={84} finish={finish} permanent={e.kind === 'perm'} className="mx-detail-art" />
       <div className="mx-detail-body">
         <div className="mx-detail-name">{e.name}</div>
@@ -94,6 +96,7 @@ function Detail({ e, have, on, finish, tagText, howTo, onSet }) {
           </button>
         )}
       </div>
+      {have ? <RarityFx key={e.id} tier={e.tier} finish={finish} /> : null}
     </div>
   );
 }
@@ -168,7 +171,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               state draws the SAME slots — art (a locked coin when empty), kicker, name, tag and the rank row
               (hidden when there is no rank) — each pinned to one line / a reserved two-line box in CSS, so a new
               MAIN never changes this section's height. */}
-          <section className={`mx-hero${main ? '' : ' is-empty'}`} key={`p${punch}`} style={main ? { '--tier': mainTier.colour } : undefined} aria-label="Your main mark">
+          <section className={`mx-hero${main ? ` ${rarityClass(main.tier, { tint: true, finish: finishOf(main) })}` : ' is-empty'}`} key={`p${punch}`} style={main ? { '--tier': mainTier.colour } : undefined} aria-label="Your main mark">
             <MarkBadge mark={main ? markEntry(main.id) : null} locked={!main} rank={mp ? mp.rank : 1} size={128} finish={main ? finishOf(main) : 'base'} permanent={!!main && main.kind === 'perm'} className="mx-hero-art" />
             <div className="mx-hero-body">
               <div className="mx-hero-kicker">
@@ -187,6 +190,9 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 </span>
               </div>
             </div>
+            {/* RARITY IDENTITY: the MAIN's tier fill + glow (CSS) and its shimmer / sparks / finish sweep — replays
+                once when a new MAIN lands (the section is keyed on the punch) */}
+            {main ? <RarityFx tier={main.tier} finish={finishOf(main)} /> : null}
           </section>
           <RollPanel
             level={level}
@@ -223,7 +229,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 key={e.id}
                 type="button"
                 role="listitem"
-                className={`mx-tile${have ? '' : ' is-locked'}${on ? ' is-on' : ''}${isSel ? ' is-sel' : ''}${e.kind === 'perm' ? ' is-perm' : ''}`}
+                className={`mx-tile${have ? ` ${rarityClass(e.tier, { tint: true, finish: finishOf(e) })}` : ' is-locked'}${on ? ' is-on' : ''}${isSel ? ' is-sel' : ''}${e.kind === 'perm' ? ' is-perm' : ''}`}
                 style={{ '--tier': t.colour }}
                 aria-pressed={isSel}
                 aria-label={`${e.name}, ${t.name}${have ? '' : ', locked'}${on ? ', your main' : ''}`}
@@ -241,6 +247,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 ) : null}
                 {/* SHINY (an owned mark's stored flag): ONE small badge, no text */}
                 {have && view && view.marks && view.marks[e.id] && view.marks[e.id].shiny ? <ShinyBadge className="mx-tile-shiny" /> : null}
+                {have ? <RarityFx tier={e.tier} finish={finishOf(e)} /> : null}
               </button>
             );
           })}
