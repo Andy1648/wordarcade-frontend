@@ -341,7 +341,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))}.
               </li>
               <li>
-                <b>KEEP:</b> WINS · MARKS · PURCHASES · STATS.
+                <b>KEEP:</b> WINS · KEY TIER · MARKS · PURCHASES · STATS.
               </li>
             </ul>
 
