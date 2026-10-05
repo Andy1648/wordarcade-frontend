@@ -151,7 +151,7 @@ test('equip requires ownership and sets the right slot', () => {
 // Power / Word Sense / Momentum / themes were still affordable).
 test('canAffordAny stays true when all cosmetics are owned but non-cosmetic sinks are affordable', () => {
   withStorage({ 'taw.owned': JSON.stringify(ALL_COSMETICS) }, () => {
-    // Fresh stores → Key Power / Word Sense at tier 0, Momentum at 0, no themes owned.
+    // Fresh stores → Key Tier / Word Sense at tier 0, Momentum at 0, no themes owned.
     assert.equal(canAffordAny(1e12, ALL_COSMETICS), true, 'huge balance, all cosmetics owned → still something to buy');
   });
 });
@@ -170,14 +170,14 @@ test('Andy oct2 A5: a fresh LV1 profile with 0 wins has no shop dot', () => {
 
 test('Andy oct2 A5: retired themes never light the dot (60 wins used to show one for MIDNIGHT)', () => {
   withStorage({}, () => {
-    // 150 wins: above MIDNIGHT's old 60-win theme price; at KEY POWER T5 the next tier costs 77,760
+    // 150 wins: above MIDNIGHT's old 60-win theme price; at KEY TIER T5 the next tier costs 77,760
     // (v8), and every cosmetic is 6,000+ — nothing on the shelf is affordable → no dot.
     localStorage.setItem('taw.keytier', '5');
     assert.equal(canAffordAny(150, getOwned()), false, 'nothing on the shelf is affordable → no dot');
   });
 });
 
-test('canAffordAny is true for a new player who can afford KEY POWER I (10 wins, v8)', () => {
+test('canAffordAny is true for a new player who can afford KEY TIER I (10 wins, v8)', () => {
   withStorage({}, () => {
     assert.equal(canAffordAny(10 ** 6, getOwned()), true);
   });

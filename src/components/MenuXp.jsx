@@ -5,10 +5,10 @@
 // mount/resize and cached (never per keystroke); each pop then picks a continuous random
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
 import BoostPill from '../frenzy/BoostPill';
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import './MenuXp.css';
 import { formatNum, formatMultExact } from '../format';
-import { createCountUp } from '../juice/countUp';
+import { createBarPlayer } from '../lib/barPlan';
 import { useCountUp } from '../hooks/useCountUp';
 import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
@@ -19,7 +19,7 @@ import { rarityClass, levelRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
-import { rebirthMult } from '../progress/xp';
+import { rebirthMult, needAt } from '../progress/xp';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
 
@@ -59,8 +59,11 @@ const formatMult = (m) => `×${formatMultExact(m)}`;
 // mid-count RETARGETS the running count (no stacking), reduced motion lands instantly, and the
 // loop schedules nothing at rest. The fill's frame writes one transform + three text nodes and
 // reads no layout (the track width is cached on mount/resize).
-// On a level-up the fill SNAPS to 0 (no backwards glide) and counts forward, flashing yellow for
-// 180ms. Fill colour keys off the rebirth count (class/attr swap only).
+// A MULTI-LEVEL CLIMB (Andy oct5) runs the lib/barPlan plan: every level passed is a fast full-fill
+// flash (yellow, ~100 ms, compressed so the whole climb is ≤ ~1 s), the level numeral ticks up with
+// each flash, then the fill goes 0 → the real fraction (200 ms). A gain mid-climb RE-PLANS from what
+// is on screen — never a snap back to 0, never left behind the real value. Same-level gains keep the
+// house count-up clock. Fill colour keys off the rebirth count (class/attr swap only).
 //
 // THE BAR MOVES ON EVERY WORD (Andy oct3 #5, LV175: "bar just isn't moving"). Under PROGRESSION v10
 // a high level is hundreds of words long, so each gain is made visible by the counting XP numeral
@@ -88,7 +91,6 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   const winsNum = Number.isFinite(wins) ? wins : 0;
   // The wins chip and the level numeral count from what this session last SHOWED.
   const winsCount = useCountUp(winsNum, { from: Number.isFinite(seen.wins) ? seen.wins : winsNum, holdMs: 900 });
-  const lvCount = useCountUp(level, { from: Number.isFinite(seen.level) && seen.level <= level ? seen.level : level, maxMs: 1600 });
   const winsShown = winsCount.shown;
   const fillRef = useRef(null);
   const markerRef = useRef(null);
@@ -104,14 +106,26 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   const tenthRef = useRef(null); // the 10% segment the COUNTED value is in (milestone ticks)
   const ticksArmedRef = useRef(false); // no ticks for the landing on mount
   const frameRef = useRef(() => {});
+  const levelRef = useRef(level); // the REAL level (its cost is the `cost` prop)
+  const climbRef = useRef(false); // a multi-level plan is running: no 10% milestones mid-climb
+  const flashOnRef = useRef(false);
   const ctlRef = useRef(null);
+  const [shownLevel, setShownLevel] = useState(() =>
+    Number.isFinite(seen.level) && seen.level <= level ? seen.level : level
+  );
   if (ctlRef.current === null) {
-    ctlRef.current = createCountUp({ initial: 0, onFrame: (v) => frameRef.current(v) });
+    ctlRef.current = createBarPlayer({
+      level: Number.isFinite(seen.level) && seen.level <= level ? seen.level : level,
+      frac: 0,
+      onFrame: (l, v, phase) => frameRef.current(l, v, phase),
+      onLevel: (l) => setShownLevel(l),
+    });
   }
 
   // Mirror `cost` so a frame can read it without a stale closure (the count outlives any single
   // render). Assigned during render — a plain mirror ref.
   costRef.current = cost;
+  levelRef.current = level;
 
   useEffect(() => {
     if (Number.isFinite(wins)) seen.wins = wins;
@@ -206,27 +220,37 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
     a.play();
   }
 
-  // One count frame: the fill transform, the marker, the XP number and the %. Refs only, no reads.
-  frameRef.current = (v) => {
+  // One plan frame: the fill transform, the marker, the XP number. Refs only, no reads.
+  frameRef.current = (l, v, phase) => {
     const w = trackWRef.current;
     // fix/visual-real item 5: floor the VISUAL fill (and its leading marker) to ~4px so ANY
     // nonzero progress is visible. The readouts still count off the TRUE value.
     const minFrac = w > 0 ? 4 / w : 0;
     const vis = v > 0 ? Math.max(v, minFrac) : 0;
     const fill = fillRef.current;
-    if (fill) fill.style.transform = `scaleX(${vis})`;
+    if (fill) {
+      fill.style.transform = `scaleX(${vis})`;
+      const on = phase === 'flash';
+      if (on !== flashOnRef.current) {
+        flashOnRef.current = on;
+        fill.classList.toggle('is-levelflash', on); // class swap only (background colour)
+      }
+    }
     const marker = markerRef.current;
     if (marker) {
       marker.style.transform = `translateX(${vis * w - 2}px)`;
       marker.style.opacity = v > 0 ? '1' : '0';
     }
     const num = readoutNumRef.current;
-    if (num) num.textContent = formatNum(Math.max(0, Math.round(v * costRef.current)));
+    // A level being flashed through is priced at ITS cost; the real level at the `cost` prop.
+    const c = l === levelRef.current ? costRef.current : needAt(l);
+    if (num) num.textContent = formatNum(Math.max(0, Math.round(v * c)));
     // MILESTONE: the counted value crossed a 10% line (10…90%; 100% is the level-up's moment).
     const tenth = Math.floor(Number((v * 10).toPrecision(12)));
     const prevTenth = tenthRef.current;
     tenthRef.current = tenth;
-    if (!mini && ticksArmedRef.current && prevTenth != null && tenth > prevTenth && tenth >= 1 && tenth <= 9) milestone(tenth);
+    if (!mini && ticksArmedRef.current && !climbRef.current && prevTenth != null && tenth > prevTenth && tenth >= 1 && tenth <= 9) milestone(tenth);
+    if (phase === 'rest') climbRef.current = false; // the climb has landed
   };
 
   // Retarget on level/frac change. Gains count; drops (rebirth) land instantly.
@@ -242,35 +266,29 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
 
     if (!prev || level < prev.level || (level === prev.level && f < prev.frac)) {
       // first sight this session, a rebirth, or a reset: land — nothing was gained
-      c.set(f);
+      climbRef.current = false;
+      c.set(level, f);
       tenthRef.current = Math.floor(f * 10);
       ticksArmedRef.current = true;
       return undefined;
     }
     if (level === prev.level && f === prev.frac) {
-      if (!c.running && c.value !== f) c.set(f); // a remount at rest: show it, no gain
+      if (!c.running && (c.level !== level || c.frac !== f)) c.set(level, f); // a remount at rest: show it, no gain
       ticksArmedRef.current = true;
       return undefined;
     }
     ticksArmedRef.current = true;
+    // On a remount (prev from the session memory) start from what was shown.
+    if (!c.running && (c.level !== prev.level || c.frac !== prev.frac)) c.set(prev.level, prev.frac);
     if (level > prev.level) {
-      // Level-up: snap the fill to empty, then count forward into the new level.
-      c.set(0);
-      tenthRef.current = 0;
-      fill.classList.add('is-levelflash');
-      const flash = setTimeout(() => fill.classList.remove('is-levelflash'), 180);
-      c.to(f);
-      if (!mini) {
-        const n = level - prev.level;
-        popGain(`+${formatNum(n)} LV`);
-      }
-      return () => clearTimeout(flash);
+      // A climb: flash through every level passed, ticking the numeral, then fill to the real %.
+      // Mid-climb this RE-PLANS from the state on screen (lib/barPlan) — never back to 0.
+      climbRef.current = true;
+      if (!mini) popGain(`+${formatNum(level - prev.level)} LV`);
     }
-    // Same level, a gain. On a remount (prev from the session memory) start from what was shown.
-    if (!c.running && c.value !== prev.frac) c.set(prev.frac);
-    c.to(f);
-    // CLUTTER PASS (Andy oct3): no "+X.X%" pop — the bar is never printed as a percent. The fill
-    // and the XP numeral count the gain; the pooled pop is kept for "+N LV" only.
+    // Same level, a gain: one fill on the house count-up clock. CLUTTER PASS (Andy oct3): no
+    // "+X.X%" pop — the pooled pop is kept for "+N LV" only.
+    c.to(level, f);
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, frac]);
@@ -341,7 +359,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       {/* THE LEVEL IS THE HEADLINE. The kicker and the numeral are one stacked chip now, so the
           numeral can take display type (--fs-h2, ~3.8x the --fs-micro kicker) without the old
           inline row forcing both to data-strip size. Mini keeps the flat inline form. */}
-      {variant === 'mini' && <span className="menu-xp-lv" aria-hidden="true">LV {formatNum(level)}</span>}
+      {variant === 'mini' && <span className="menu-xp-lv" aria-hidden="true">LV {formatNum(shownLevel)}</span>}
       {/* THE EQUIPPED MARK, beside the level - the one place a permanent, chosen bonus is worth
           carrying on the menu, because it is the only progression object the player picked rather
           than accumulated.
@@ -391,7 +409,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
         </button>
       )}
-      <BarRow loud={variant !== 'mini'} level={Math.round(lvCount.shown)}>
+      <BarRow loud={variant !== 'mini'} level={shownLevel}>
       <span className="menu-xp-track" ref={trackRef} aria-hidden="true">
         {/* The CLIP wraps only the fill + marker. The track itself must NOT clip: the
             readout sits centred over the track and is wider than the track whenever the
@@ -513,7 +531,7 @@ const POP_TRIES = 12; // random attempts before accepting the last candidate any
 const EDGE_MS = 260;
 const EDGE_POOL = 2;
 
-// KEY POWER tier feedback (feat/purchase-feel item 1). Per-keystroke escalation the
+// KEY TIER tier feedback (feat/purchase-feel item 1). Per-keystroke escalation the
 // player BUYS: T2+ throws pooled particle shards on each pop. transform/opacity only,
 // finite (<=400ms), pooled — zero new infinite animations.
 const SHARD_MS = 360; // 300-400ms per spec
@@ -662,7 +680,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   const recentPosRef = useRef([]); // ring buffer of the last few accepted {x,y} (anti-repeat)
   const popNextRef = useRef(0);
   const edgeNextRef = useRef(0);
-  // Pooled particle shards (KEY POWER tier T2+).
+  // Pooled particle shards (KEY TIER tier T2+).
   const shardElsRef = useRef([]);
   const shardAnimsRef = useRef([]);
   const shardNextRef = useRef(0);
@@ -802,7 +820,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     return undefined;
   }, []);
 
-  // Throw SHARD_PER_POP pooled shards from (x,y) — KEY POWER tier T2+ (item 1).
+  // Throw SHARD_PER_POP pooled shards from (x,y) — KEY TIER tier T2+ (item 1).
   function spawnShards(x, y, colour, count = SHARD_PER_POP, reach = 1) {
     const anims = shardAnimsRef.current;
     if (!anims.length) return;
@@ -866,7 +884,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       if (!el || !anim) return;
       const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
       el.classList.remove('is-tap'); // reset if this node was last used for a tap
-      // KEY POWER tier (item 1) drives the visible/audible escalation the player BOUGHT:
+      // KEY TIER tier (item 1) drives the visible/audible escalation the player BOUGHT:
       // T1-T4 teal, T5+ gold (overrides the streak colour); T3+ a hard offset shadow;
       // T2+ particle shards. All finite/pooled; particles skip under reduced motion.
       const tierColour = feelTier >= 5 ? TIER_GOLD : feelTier >= 1 ? TIER_TEAL : colour;
@@ -878,7 +896,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].style.color = ''; // back to CSS yellow
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
-      // Shards: KEY POWER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
+      // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
       // is richer wins, so neither purchase nor progress is ever invisible.
       const tfx = tierRef.current;
       const shardN = Math.max(feelTier >= 2 ? SHARD_PER_POP : 0, tfx.shards);

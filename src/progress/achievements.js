@@ -89,14 +89,14 @@ export const ACHIEVEMENTS = [
   { id: 'm-fuse-5', cat: 'MODES', name: 'DEFUSER', hint: 'Reach FUSE Mastery 5.', base: 2000, test: (s) => s.mastery['fuse'] >= 5 },
   { id: 'm-all-3', cat: 'MODES', name: 'JACK OF ALL', hint: 'Reach Mastery 3 in every mode.', base: 10000, test: (s) => s.minMastery >= 3 },
   // ---- ECONOMY ----
-  { id: 'kp-5', cat: 'ECONOMY', name: 'POWER USER', hint: 'Buy KEY POWER tier 5.', base: 10000, test: (s) => s.keyTier >= 5 },
+  { id: 'kp-5', cat: 'ECONOMY', name: 'POWER USER', hint: 'Buy KEY TIER tier 5.', base: 10000, test: (s) => s.keyTier >= 5 },
   { id: 'forge-26', cat: 'ECONOMY', name: 'FULL ALPHABET', hint: 'Forge all 26 letters.', base: 20000, test: (s) => s.forge >= 26 },
   { id: 'frenzy-1', cat: 'MODES', name: 'FRENZY!', hint: 'Light all 26 letters in FUSE.', base: 10000, test: (s) => s.frenzies >= 1 },
   // 'ws-3' (BUY WORD SENSE TIER 3) was retired with the upgrade itself. The id stays OUT of the
   // catalog rather than being repointed: anyone who already earned it keeps it in their earned set
   // harmlessly, and repointing a published id at a different requirement would silently change
   // what someone's badge means.
-  { id: 'kp-8', cat: 'ECONOMY', name: 'SIXTH SENSE', hint: 'Buy KEY POWER tier 8.', base: 10000, test: (s) => s.keyTier >= 8 },
+  { id: 'kp-8', cat: 'ECONOMY', name: 'SIXTH SENSE', hint: 'Buy KEY TIER tier 8.', base: 10000, test: (s) => s.keyTier >= 8 },
   // ---- SECRETS (hidden until earned) ----
   // SECRETS — RESCALED (feat/progression-clarity). These are the five rarest things in the game
   // and they were paying less than a minute of play by the time anyone could trigger them: a flat

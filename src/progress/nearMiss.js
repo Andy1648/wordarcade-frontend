@@ -1,11 +1,11 @@
 // nearMiss.js — EXTENSION b (claude/finetune/extensions-spec.md): the end-screen NEAR-MISS line.
 // PURE — no DOM, no storage — so node:test covers every branch. nearMissData.js gathers the inputs.
 //
-// ONE line, the closest REAL goal only ("38 LETTERS TO LV 41" · "1 LV TO #7" · "KEY POWER T5 IN 12
+// ONE line, the closest REAL goal only ("38 LETTERS TO LV 41" · "1 LV TO #7" · "KEY TIER 5 IN 12
 // WORDS"), and only when ONE MORE RUN plausibly gets it: each goal's distance is measured in words,
 // divided by the player's average words per run, and the smallest share wins if it is
 // ≤ NEAR_MISS_MAX_RUNS. Otherwise null — no line (Andy #4: no useless info). Ties break
-// board > level > key power. Every number goes through formatNum.
+// board > level > key tier. Every number goes through formatNum.
 //
 // NO REBIRTH CANDIDATE: the spec lists "REBIRTH IN 2 LV" but also orders level before rebirth on a
 // tie, and the rebirth gate is always at or past the next level — so under "closest goal wins" it
@@ -89,7 +89,7 @@ export function nearMiss(p = {}) {
     out.push({ kind: 'level', words: lvWords, text: `${formatNum(letters)} LETTER${letters === 1 ? '' : 'S'} TO LV ${formatNum(level + 1)}` });
   }
 
-  // KEY POWER — quoted in WORDS (wins are quoted per word). Already affordable isn't a near miss.
+  // KEY TIER — quoted in WORDS (wins are quoted per word). Already affordable isn't a near miss.
   const k = p.key;
   if (k) {
     const short = num(k.cost) - num(k.balance);
@@ -97,7 +97,7 @@ export function nearMiss(p = {}) {
     if (short > 0 && rate > 0) {
       const words = short / rate;
       const w = Math.max(1, Math.ceil(words - EPS));
-      out.push({ kind: 'key', words, text: `KEY POWER T${formatNum(Math.max(0, Math.floor(num(k.tier))) + 1)} IN ${formatNum(w)} WORD${w === 1 ? '' : 'S'}` });
+      out.push({ kind: 'key', words, text: `KEY TIER ${formatNum(Math.max(0, Math.floor(num(k.tier))) + 1)} IN ${formatNum(w)} WORD${w === 1 ? '' : 'S'}` });
     }
   }
 
