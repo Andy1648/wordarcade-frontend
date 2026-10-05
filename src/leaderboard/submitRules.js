@@ -92,8 +92,22 @@ export function decideSubmit(old, sub, now) {
 //   * LEVEL: ≤ max(15 + 18·R + LV_HEADROOM, base + 015's allowance); base = 1 after a rebirth or a reset, else
 //     the stored level. A reset keeps "never forced below the stored level".
 export const RR_ECON = 12;
-export const RB_SECS = 60;
-export const RB_BURST = 60;
+// 020 (Andy oct5, the R100-in-422-words row): rebirths are bounded by PLAY, not only by wall time. Measured on the
+// shipped economy (claude/econ-oct2 fast bot, every reward on): an honest FAST player needs ≥ 80 words for R1 and
+// more for every later one, and rebirths at most ~6 an hour early on. So the board allows ~2× that, no more:
+//   * TIME: 1 token per RB_SECS (300 s = 12 an hour), at most RB_BURST (12) banked;
+//   * PLAY: rebirths ≤ floor(lifetime words / WORDS_PER_RB) — a rise past that is clipped. Rows already above it KEEP
+//     their count (existing players keep what they have); they rise again once their words catch up.
+//   * FIRST submit (a new name): rebirths ≤ that same play cap + FIRST_CONV_ALLOW (the legit one-time conversion max).
+export const RB_SECS = 300;
+export const RB_BURST = 12;
+export const WORDS_PER_RB = 40;
+export const FIRST_CONV_ALLOW = 7;
+/** The rebirth count `words` of verified play can carry (020). */
+export function playRebirthCap(words) {
+  const w = Number.isFinite(words) && words > 0 ? Math.floor(words) : 0;
+  return Math.floor(w / WORDS_PER_RB);
+}
 export const LV_HEADROOM = 50; // 019: two rebirths' worth at 25 a rebirth
 // the LIVE rebirth gate (019, Andy oct5): 25 × (R+1) — the level cap follows it
 export const GATE_BASE = 25;
@@ -123,7 +137,11 @@ export function decideSubmitRR(old, sub, now) {
     level, rebirths, lifetime_words: words, lifetime_letters: letters, submitted_at: now, econ: RR_ECON, rb_clock: rbClock,
   });
 
-  if (old.submitted_at == null) return { action: 'first', row: write(lv, rb, w, l, oldClock), weekDelta: 0 };
+  if (old.submitted_at == null) {
+    // 020: a first submit is a baseline, but its rebirths are bounded by its own play (+ the conversion allowance)
+    const rbFirst = Math.min(rb, playRebirthCap(w) + FIRST_CONV_ALLOW);
+    return { action: 'first', row: write(Math.min(lv, GATE_BASE + GATE_STEP * rbFirst + LV_HEADROOM), rbFirst, w, l, oldClock), weekDelta: 0 };
+  }
   if (old.submitted_at >= now - THROTTLE_MS) return { action: 'throttled' };
 
   const oLv = int(old.level, 1, 1);
@@ -144,7 +162,8 @@ export function decideSubmitRR(old, sub, now) {
     if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected' };
     if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected' };
   }
-  const rb2 = Math.min(rb, oRb + conv + tokens);
+  // 020: the rise is bounded by tokens AND by play (rows already above the play cap keep what they have)
+  const rb2 = Math.min(rb, oRb + conv + tokens, Math.max(oRb + conv, playRebirthCap(w)));
   const spent = Math.max(0, rb2 - oRb - conv);
   const clock = spent > 0 ? effClock + RB_SECS * spent * 1000 : oldClock;
   const base = isReset || rb2 > oRb ? 1 : oLv;
