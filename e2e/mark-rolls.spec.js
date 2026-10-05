@@ -15,6 +15,8 @@ const SEED = {
   'taw.marksOwned': '[]',
   'taw.marksSeen': '[]',
   'taw.wins': '50000000',
+  // GEMS (Andy oct5): rolls cost 10 GEMS; a stamped balance so the one-time starting grant never runs here
+  'taw.gems': JSON.stringify({ v: 1, bal: 1000, peak: 12, streak: 0, mig: 1 }),
 };
 
 async function seed(page, extra = {}) {
@@ -68,8 +70,9 @@ test('roll once: tutorial, result card, nothing updates before the reveal lands,
   // the ROLL button never moved (a shift under the cursor fires pointerleave and kills a hold)
   const boxAfter = await roll.boundingBox();
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
-  // price in ONE unit
-  await expect(roll).toHaveText(/^ROLL · [\d\s,.KMB]+ WINS/);
+  // price in ONE unit: GEMS (wins never buy rolls), and the balance it is paid from shows as icon + count
+  await expect(roll).toHaveText(/^ROLL · 10 GEMS/);
+  await expect(page.locator('.mr-meta .gem-count')).toHaveAttribute('data-gems', '1000');
   await expect(page.locator('.mr-pity')).toContainText(/EPIC\+ IN ≤\d+/);
   await expect(page.locator('.mr-luck')).toHaveText(/^LUCK ×[\d.]+$/);
   // nothing worn → the first mark AUTO-equips (no question, a hold never stalls) and the hero shows it
@@ -108,19 +111,40 @@ test('a forced EPIC+ (pity): LEGENDARY+ plays the full-screen cutscene, an EPIC 
   await expect.poll(() => rollUiAnims(page), { timeout: 3500 }).toBe(0);
 });
 
-test('short balance: the press says NEED X MORE (never a silent grey button)', async ({ page }) => {
+test('short balance: the press says NEED X MORE GEMS (never a silent grey button) — a huge wins balance never buys a roll', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, {
     'taw.tut.markRolls': '1',
-    'taw.wins': '0',
+    'taw.wins': '50000000',
+    'taw.gems': JSON.stringify({ v: 1, bal: 4, peak: 12, streak: 0, mig: 1 }),
     'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, starter: true, marks: {}, milestones: [] }),
   });
   await page.goto('/?portal=1');
   await menuReady(page);
+  // the MARKS dot means "a roll is affordable": 4 gems, the starter spent → no dot
+  await expect(page.getByTestId('marks-roll-dot')).toHaveCount(0);
   await openMarks(page);
   await page.locator('.mr-roll').click();
-  await expect(page.locator('.mr-msg')).toHaveText(/^NEED [\d\s,.KMB]+ MORE WINS$/);
+  await expect(page.locator('.mr-msg')).toHaveText('NEED 6 MORE GEMS');
   await expect(page.locator('[data-testid="mark-roll-result"]')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('taw.wins'))).toBe('50000000');
+});
+
+test('GEMS on the menu: icon + count beside the wins chip; the MARKS dot only when a roll is affordable', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, {
+    'taw.tut.markRolls': '1',
+    'taw.gems': JSON.stringify({ v: 1, bal: 12, peak: 12, streak: 0, mig: 1 }),
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, starter: true, marks: {}, milestones: [] }),
+  });
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  const chip = page.locator('.menu-gems-chip:visible').first();
+  await expect(chip).toHaveAttribute('data-gems', '12');
+  await expect(chip.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
+  await expect(page.getByTestId('marks-roll-dot').first()).toBeAttached();
+  // it is in the bar cluster, not a fixed element of its own
+  expect(await chip.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
 });
 
 test('reduced motion: a static result card, no reveal animation; a legendary+ keeps its static plate', async ({ page }) => {

@@ -1,6 +1,6 @@
 // e2e/rolls-reveal.spec.js — the rarity-scaled ROLL REVEAL + ×10 (Andy oct3). Written WITHOUT being run (the
 // authoring machine runs no Playwright); Andy / CI runs it. Covers: ?rolls=1 + a seeded balance → the ×10 button
-// is priced at 10 × the single roll; ×10 shows 10 cards and a reveal; a tap ANYWHERE skips to the rest state;
+// is priced at 10 × the single roll (GEMS: 10 × 10); ×10 shows 10 cards and a reveal; a tap ANYWHERE skips to the rest state;
 // a short balance disables ×10; each ?mrv= version plays.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -16,6 +16,8 @@ const SEED = {
   'taw.marksSeen': '[]',
   'taw.markRolls': JSON.stringify({ v: 1, starter: true, marks: {} }), // the free starter is spent: ×10 is live
   'taw.wins': '500000000',
+  // GEMS (Andy oct5): rolls cost 10 GEMS — a stamped balance (enough for ×10), so the starting grant never runs here
+  'taw.gems': JSON.stringify({ v: 1, bal: 1000, peak: 12, streak: 0, mig: 1 }),
 };
 
 async function seed(page, extra = {}) {
@@ -59,7 +61,9 @@ test('×10 shows 10 cards and a reveal; a tap ANYWHERE skips to the result', asy
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page);
   await openMarks(page);
+  const gemsOf = () => page.evaluate(() => JSON.parse(localStorage.getItem('taw.gems')).bal);
   const winsBefore = await page.evaluate(() => Number(localStorage.getItem('taw.wins')));
+  const gemsBefore = await gemsOf();
   const single = num(await page.locator('.mr-roll-main').innerText());
   await page.getByTestId('mark-roll-10').click();
   await expect(page.getByTestId('mark-roll-tile')).toHaveCount(10);
@@ -75,20 +79,19 @@ test('×10 shows 10 cards and a reveal; a tap ANYWHERE skips to the result', asy
   for (const t of await page.getByTestId('mark-roll-tile').all()) await expect(t).toHaveCSS('opacity', '1');
   // charged exactly ten rolls; ten rolls saved
   const after = await page.evaluate(() => ({ wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
-  // charged ten single-roll prices; the collection INDEX milestones a fresh collection crosses on the way can pay a
-  // little back (measured: 100 of 6,000), so the net spend is at most 10 × the price and well over 9 ×
-  const spent = Math.round(winsBefore - after.wins);
-  expect(spent).toBeLessThanOrEqual(single * 10);
-  expect(spent).toBeGreaterThan(single * 9);
+  // GEMS: charged exactly ten single prices in GEMS (10 × 10); the wins only ever GAIN (the INDEX rewards pay wins)
+  expect(single).toBe(10);
+  expect(gemsBefore - (await gemsOf())).toBe(single * 10);
+  expect(after.wins).toBeGreaterThanOrEqual(winsBefore);
   expect(after.rolls).toBe(10);
   // nothing loops after the reveal
   await page.waitForTimeout(400);
   expect(await rollUiAnims(page)).toBe(0);
 });
 
-test('a balance short of ten rolls disables ×10 (ROLL still works)', async ({ page }) => {
+test('a GEMS balance short of ten rolls disables ×10 (ROLL still works)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await seed(page, { 'taw.wins': '1' });
+  await seed(page, { 'taw.gems': JSON.stringify({ v: 1, bal: 15, peak: 12, streak: 0, mig: 1 }) });
   await openMarks(page);
   await expect(page.getByTestId('mark-roll-10')).toBeDisabled();
   await expect(page.locator('.mr-roll')).toBeEnabled();
