@@ -34,7 +34,7 @@ import MarkBadge, { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS } from './markGlyphsRolled.jsx';
 import RollPanel from './markRolls/RollPanel';
 import { ShinyBadge } from './markRolls/RollReveal';
-import UnlockTutorial from '../tutorials/UnlockTutorial.jsx';
+import SpotlightTutorial from '../tutorials/SpotlightTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
 import { formatNum } from '../format';
 import { rarityClass } from '../lib/rarityStyle.js';
@@ -312,7 +312,7 @@ export default function MarksIndex({
         />
       ) : null}
       {tut && tutDef && (
-        <UnlockTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
+        <SpotlightTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
       )}
     </div>
   );
