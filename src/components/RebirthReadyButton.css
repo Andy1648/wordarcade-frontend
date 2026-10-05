@@ -20,8 +20,9 @@
   box-shadow: 6px 6px 0 #000;
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
-  /* ONE finite attention pop on appear (transform/opacity only — no loop) */
-  animation: rr-ready-pop 360ms cubic-bezier(0.2, 1.6, 0.4, 1) 1 both;
+  /* ONE finite attention pop on appear (transform/opacity only — no loop).
+     visual-1: 360ms from 0.7x -> 760ms from 0.4x, with a bigger overshoot and settle. */
+  animation: rr-ready-pop 760ms cubic-bezier(0.2, 1.4, 0.4, 1) 1 both;
 }
 .rr-ready-btn:hover {
   transform: scale(1.04) rotate(-1deg);
@@ -37,8 +38,9 @@
   outline-offset: 3px;
 }
 @keyframes rr-ready-pop {
-  0% { opacity: 0; transform: scale(0.7) rotate(-3deg); }
-  70% { opacity: 1; transform: scale(1.06) rotate(1deg); }
+  0% { opacity: 0; transform: scale(0.4) rotate(-6deg); }
+  45% { opacity: 1; transform: scale(1.14) rotate(2deg); }
+  70% { transform: scale(0.96) rotate(-1deg); }
   100% { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
