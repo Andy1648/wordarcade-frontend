@@ -26,7 +26,7 @@
   box-shadow: 8px 8px 0 #000;
   color: #fff;
   overflow: hidden;
-  animation: lb-enter 260ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation: lb-enter 520ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
 }
 
 .lb-header {
@@ -176,7 +176,7 @@
   margin: 0;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.4px;
   color: #C9B3E6;
 }
@@ -297,7 +297,11 @@
   background: #2a1040;
   border-color: #FF4FA3;
   box-shadow: 4px 4px 0 #000;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
+/* YOUR row is the board's one big line: the name and rank step up a size. */
+.lb-row.is-me .lb-name { font-size: var(--fs-panel); }
 
 .lb-row.is-flash {
   animation: lb-flash 700ms ease-out both;
@@ -323,7 +327,7 @@
 .lb-lv {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   /* the board ranks by rebirths then LEVEL — the headline column carries it; this line is the secondary words */
   color: #2EFFE0;
 }
@@ -334,7 +338,7 @@
   padding: 1px 6px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   color: #fff;
   background: #FF4FA3;
   border: 2px solid #a3175e;
@@ -373,7 +377,7 @@
 }
 
 @keyframes lb-enter {
-  0% { transform: scale(0.92) translateY(10px); opacity: 0; }
+  0% { transform: scale(0.86) translateY(18px); opacity: 0; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
@@ -483,7 +487,7 @@
 }
 .lb-code-note {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   color: #d8c9f0;
 }
 
@@ -568,10 +572,10 @@
 .lb-overlay .lb-rank,
 .lb-overlay .lb-you-rank,
 .lb-overlay .lb-claim-label { font-size: max(var(--fs-panel), calc(30 * var(--lb-t))); }
-.lb-overlay .lb-cols,
+.lb-overlay .lb-cols { font-size: max(var(--fs-label), calc(14 * var(--lb-t))); }
 .lb-overlay .lb-lv,
 .lb-overlay .lb-you-badge,
-.lb-overlay .lb-verdict { font-size: max(var(--fs-label), calc(14 * var(--lb-t))); }
+.lb-overlay .lb-verdict { font-size: max(var(--fs-body), calc(19 * var(--lb-t))); }
 .lb-overlay .lb-list { gap: calc(6 * var(--lb-u)); }
 .lb-overlay .lb-row .lb-name,
 .lb-overlay .lb-row .lb-lv { line-height: 1.25; }
@@ -617,6 +621,8 @@
   box-shadow: calc(5 * var(--lb-u)) calc(5 * var(--lb-u)) 0 #000;
 }
 .lb-overlay .lb-row.is-me .lb-rank { color: #FF4FA3; }
+.lb-overlay .lb-row.is-me .lb-name { font-size: max(var(--fs-panel), calc(26 * var(--lb-t))); }
+.lb-overlay .lb-list .lb-row.is-me { min-height: calc(60 * var(--lb-u)); }
 
 /* The ▲N chip — your climb since you last opened the board. Static at rest; JS pops it in once. */
 .lb-move {
@@ -625,7 +631,7 @@
   padding: 1px calc(6 * var(--lb-u));
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: max(var(--fs-label), calc(15 * var(--lb-t)));
+  font-size: max(var(--fs-body), calc(19 * var(--lb-t)));
   line-height: 1.2;
   color: var(--lb-ink);
   background: #2EFFE0;

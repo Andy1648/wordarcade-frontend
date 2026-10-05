@@ -457,7 +457,7 @@ export default function LeaderboardScreen({ onBack }) {
             <div className="lb-code">
               <div className="lb-code-title">YOUR RECOVERY CODE</div>
               <code className="lb-code-value">{formatRecoveryCode(getSecret())}</code>
-              <div className="lb-code-note">ON A NEW DEVICE OR AFTER A WIPE, ENTER IT HERE TO GET YOUR PROGRESS BACK. KEEP IT PRIVATE.</div>
+              <div className="lb-code-note">ON A NEW DEVICE ENTER IT HERE. KEEP IT PRIVATE.</div>
               <button
                 type="button"
                 className="lb-claim-btn"
