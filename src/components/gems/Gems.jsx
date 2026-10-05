@@ -1,5 +1,6 @@
-// Gems.jsx — GEMS on screen (Andy oct5): the icon + count (formatNum), the end-of-game "+N GEMS" line (always its
-// own line, never hidden), and the GEM POP on a word that dropped gems.
+// Gems.jsx — GEMS on screen (Andy oct5), the LAZY half: the end-of-game "+N GEMS" line (always its own line, never
+// hidden) and the GEM POP on a word that dropped gems. Only the game screens import this; the menu imports
+// GemChip.jsx (the icon + count), so none of this rides the index chunk (PR #194 payload split).
 //
 // ART VS MOTION: the gem is a real asset (/art/gems/gem.svg); CSS/WAAPI only moves it.
 // ANIMATION BUDGET: GemPop is ONE pooled node per mounted screen, replayed with a finite WAAPI one-shot
@@ -7,35 +8,12 @@
 // reads anywhere (the pop sits at a fixed spot inside an already-positioned slot). Nothing loops.
 import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../../format';
-import { getGems, subscribeGems, subscribeGemLedger, gemsLedgerMark, gemsLedgerSince, sumGems } from '../../progress/gems';
+import { subscribeGemLedger, gemsLedgerMark, gemsLedgerSince, sumGems } from '../../progress/gems';
+import { GemIcon } from './GemChip';
 import './Gems.css';
 
-export const GEM_SRC = '/art/gems/gem.svg';
-
-/** The gem asset, decorative. */
-export function GemIcon({ size = 18, className = '' }) {
-  return (
-    <img className={`gem-icon ${className}`.trim()} src={GEM_SRC} width={size} height={size} alt="" aria-hidden="true" draggable="false" />
-  );
-}
-
-/** The live gems balance (every grant / spend tells it). */
-export function useGems() {
-  const [gems, setGems] = useState(() => getGems());
-  useEffect(() => subscribeGems(setGems), []);
-  return gems;
-}
-
-/** Icon + count. `testid` for the gates. */
-export function GemCount({ value, size = 18, className = '', label = true }) {
-  const v = Number.isFinite(value) ? value : 0;
-  return (
-    <span className={`gem-count ${className}`.trim()} data-gems={v} aria-label={label ? `${formatNum(v)} gems` : undefined}>
-      <GemIcon size={size} />
-      <span className="gem-count-num" aria-hidden={label ? 'true' : undefined}>{formatNum(v)}</span>
-    </span>
-  );
-}
+// The chip half (eager, in the menu's index chunk) — re-exported so the game screens keep one import.
+export { GEM_SRC, GemIcon, useGems, GemCount } from './GemChip';
 
 /**
  * The ledger mark for THIS round: taken on mount and again whenever `resetKey` changes (a new game / a new run).
@@ -74,7 +52,7 @@ export function GemsEarnedLine({ since = 0, className = '', print = false }) {
     return subscribeGemLedger(() => setEntries(gemsLedgerSince(since)));
   }, [since]);
   const { total, by } = sumGems(entries);
-  // SAT RUSH's printed page: the line in the page's own ink voice (its .sr-winsline), not the neon panel
+  // SAT RUSH's printed page: the line in the page's own ink voice (.sr-gemsline — styled like .sr-winsline, never sharing its class), not the neon panel
   if (print) {
     return (
       <div className={`gems-earned-print ${className}`.trim()} data-testid="gems-earned" data-gems-total={total} data-gems-by={JSON.stringify(by)}>

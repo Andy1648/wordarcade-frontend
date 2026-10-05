@@ -11,7 +11,7 @@
 // so no import cycle). It only participates in xpPerInput/xpPerWord, and only via the live default;
 // every pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
-import { noteLevelReached } from './gems.js'; // GEMS: LEVEL_UP (a leaf module — no cycle)
+import { noteLevelReached } from './gemsCore.js'; // GEMS: LEVEL_UP (a leaf module — no cycle)
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Tier
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.

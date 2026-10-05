@@ -29,7 +29,7 @@ import { setRateBoost, setRebirthKeyKeep } from './xp.js';
 import { addLetters } from './letters.js';
 import { rebirthKeyKeep } from './markPerks.js';
 import { creditAcceptedWordLetters } from './letterXp.js';
-import { dropGemsForWord } from './gems.js';
+import { dropGemsForWord } from './gemsCore.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn MARK (markMult — the same number the payout reads).

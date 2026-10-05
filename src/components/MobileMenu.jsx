@@ -29,7 +29,7 @@ import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
 import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
-import { GemCount } from './gems/Gems';
+import { GemCount } from './gems/GemChip';
 
 // The one thing that sets each solo mode apart, in the half-band's sub line (Andy oct2: FUSE's
 // FRENZY must be obvious on the card; CHAIN's POWER is real money per word).
