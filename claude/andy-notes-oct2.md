@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~14:30 MERGED + LIVE #204 WB ring fix (root cause: the ring was measured during the 1% accept hitlag scale → 318→325px, stuck; now offsetWidth/Height) · #201 named stats (×1.1 WINS / +5 BASE XP/LETTER / PERK: / ★N on result, MAIN chip, INDEX) · #202 MARKS word cut + ROLL/INDEX split (INDEX REPLAY removed). Prod smoke: roll → result "+1 BASE XP/LETTER", INDEX tile same, no REPLAY, 0 errors. ALL oct5 PRIORITY items merged. Open: K.O. card scroll flake being diagnosed.
 - oct5 ~13:50 MERGED + LIVE #194 GEMS (rolls cost 10 GEMS; gems from word drops / wins / streaks / level-ups / rebirths; menu gem chip; own line on results; menu chip code split so GEMS adds ~0 B initial). Still open: #201 named stats, #202 word cut + ROLL/INDEX split (CI re-running after a test-regex fix).
 - oct5 ~13:20 MERGED #203 payload trim (−7.8 KB initial: roll sounds lazy with the reel, dead menu/splash CSS deleted; INFINITE_BUDGET 51→49; ratchet unchanged) — main green on payload again. #194 / #201 / #202 refreshed onto it, CI running.
 - oct5 ~12:30 ⚠ MAIN RED on payload-budget: 963,965 vs ratchet 963,000 — #193 and #198 each passed alone, together they cross it. Fix in flight (perf/initial-payload-trim, lazy/dead-code, ratchet NOT raised). #194 GEMS (−244 B vs main), #201, #202 wait behind it; their only CI failure is that same check.
@@ -200,13 +201,13 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ## ANDY oct5 ~10:30 — PRIORITY (added to the goal; small PRs, merge when green)
 - [~] (#196 MERGED: spotlight tutorials, TAP ANYWHERE hint cut) 1. TUTORIALS = spotlight style: screen dims, the one target glows, tap anywhere to continue. No OK-button popups. Keep only the few that matter (roll, gems, rebirth, KEY TIER); cut minor ones like the wall moving.
 - [x] (#198 MERGED b7e284e) 2. CHROMEBOOK LAYOUT (test 1366×657 and 1280×551): game cards are flattened and look horrendous → 3 cards per page at the full card ratio, flip page 1 ↔ 2 with arrows / swipe / arrow keys + a page indicator. No squashed cards, no cut-off cards. Check every screen at those sizes.
-- [~] (#202 open, stacked #201→#194→#193) 3. MARKS: cut words everywhere except the INDEX detail view.
+- [x] (#202 MERGED + LIVE) 3. MARKS: cut words everywhere except the INDEX detail view.
 - [x] (#195 MERGED) 4. STAT BOARD: the TOTAL MULTIPLIER (×N, huge) comes FIRST, then BASE, then each multiplier line.
 - [x] (#197 MERGED + LIVE 4f35360) 5. PROGRESS BAR lags on multi-level climbs: each level passed = a fast full-fill flash (~100 ms each, capped ~1 s total), the level number ticks up, then fill to the real %. Never sit half-filled or behind the real value.
 - [x] (#200 MERGED) 6. Rename KEY POWER → KEY TIER everywhere.
 - [x] (#199 MERGED + LIVE 588a330) 7b (Andy update): rebirth gate = ROUND numbers, LV 25 × (R+1) (25, 50, 75, 100…); if the CI sim needs more, steps of 50. Never odd numbers like 141. Keep the conversion fair for existing players.
-- [~] (#202: REPLAY removed from INDEX) 8. ROLL vs INDEX are TWO separate screens, never mixed. ROLL: only the ROLL button, AUTO ROLL, gems, pity, the result. INDEX: the collection.
-- [~] (#201 open) 9. The roll RESULT names the stat, short — never a bare "×1.5 MAIN": "×1.5 WINS" / "+5 BASE XP/LETTER"; "PERK: <short perk>" for LEGENDARY+; "★2" if it's a dupe. The same compact format on the MAIN slot and the INDEX cards.
+- [x] (#202 MERGED + LIVE: REPLAY removed from INDEX) 8. ROLL vs INDEX are TWO separate screens, never mixed. ROLL: only the ROLL button, AUTO ROLL, gems, pity, the result. INDEX: the collection.
+- [x] (#201 MERGED + LIVE) 9. The roll RESULT names the stat, short — never a bare "×1.5 MAIN": "×1.5 WINS" / "+5 BASE XP/LETTER"; "PERK: <short perk>" for LEGENDARY+; "★2" if it's a dupe. The same compact format on the MAIN slot and the INDEX cards.
 - [x] (#199 MERGED + LIVE) 7. KEY TIER no longer resets on rebirth. Keep KEY costs; retune ONLY by raising the rebirth gate (more levels per rebirth than 15+18R, whatever the CI sim says) so rebirth pace stays in target. Bigger level numbers are fine. Existing players keep their current tier. Report the numbers.
 
 ## GEMS (Andy oct5 ~09:00) — REPLACES the roll currency (wins never buy rolls)
