@@ -27,6 +27,10 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   const btn = page.locator('.menu-mark');
   await expect(btn).toContainText('NEW MARK');
   await btn.click();
+  // Andy oct5: MARKS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX
+  await page.locator('.rs-overlay').waitFor();
+  await expect(page.locator('.rs-roll')).toBeVisible();
+  await page.locator('[data-testid="roll-index"]').click();
   // E6: the MARKS INDEX — tap a mark, SET AS MAIN, and it becomes the hero at the top
   await page.locator('.mx-panel').waitFor();
   await expect(page.locator('.mx-hero')).toContainText('NO MAIN YET');
@@ -34,12 +38,10 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await tile.click();
   const detail = page.locator('.mx-detail');
   await expect(detail.locator('.mx-detail-tier')).toContainText('COMMON');
-  await expect(detail.locator('.mx-detail-pct')).toHaveText('MAIN ×1.1'); // U: one short tag (MARKS via ROLLS: COMMON ×1.1)
+  await expect(detail.locator('.mx-detail-pct')).toHaveText('+10% WINS'); // U: one short tag (MARKS via ROLLS: COMMON ×1.1)
   await detail.getByRole('button', { name: 'SET AS MAIN' }).click();
   await expect(page.locator('.mx-hero .mx-hero-name')).toHaveText('BOMBER');
   await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
-  // MARK ROLLS are LIVE: the ROLL button sits under the MAIN hero
-  await expect(page.locator('.mr-roll')).toBeVisible();
   // a locked ROLLABLE mark says its odds ("1 IN X") on the tier line — no how-to prose
   await page.locator('.mx-tile.is-locked:not(.is-perm)').first().click();
   await expect(detail.locator('.mx-detail-tier')).toContainText('1 IN ');
@@ -47,7 +49,8 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   // a locked PERMANENT says the task that earns it
   await page.locator('.mx-tile.is-locked.is-perm').first().click();
   await expect(page.locator('.mx-howto')).not.toBeEmpty();
-  await page.locator('.mx-close').click();
+  await page.locator('.mx-close').click(); // back to the ROLL screen
+  await page.locator('.rs-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×1.1'); // the worn MAIN under Rebirth Rush (COMMON ×1.1)
 });
 
@@ -91,10 +94,10 @@ for (const [label, seed] of [
     const btn = page.locator('.menu-mark');
     await expect(btn).toBeVisible();
     await btn.click();
-    await page.locator('.mx-panel').waitFor();
-    await page.locator('.mx-close').click();
-    // still there after the picker closes with nothing worn — the old disappearing act
-    await expect(page.locator('.mx-panel')).toHaveCount(0);
+    await page.locator('.rs-overlay').waitFor();
+    await page.locator('.rs-close').click();
+    // still there after MARKS closes with nothing worn — the old disappearing act
+    await expect(page.locator('.rs-overlay')).toHaveCount(0);
     await expect(btn).toBeVisible();
   });
 }

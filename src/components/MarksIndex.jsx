@@ -12,7 +12,7 @@
 // worn MAIN — is snapshotted on mount and re-read ONLY when a roll's reveal LANDS (`landed`), never on a
 // re-render. A roll's balance write re-renders the menu behind; that must not move a tile or a counter.
 //
-// Motion: the MAIN hero punches once when a new MAIN is set; the roll reveal lives in RollReveal.jsx. Both
+// Motion: the MAIN hero punches once when a new MAIN is set; the roll reveal lives on the ROLL screen (rollScreen/Reel.jsx). Both
 // finite, transform/opacity only; static at rest; reduced motion shows the same states with no movement.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { MARK_RANK_NAMES, markProgress, markTier, markById } from '../progress/marks';
@@ -24,15 +24,13 @@ import {
 import { wearMark } from '../progress/markRollShop';
 import MarkBadge, { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS } from './markGlyphsRolled.jsx';
-import RollPanel, { luckText } from './markRolls/RollPanel';
-import { ShinyBadge } from './markRolls/RollReveal';
+import ShinyBadge from './rollScreen/ShinyBadge';
 import UnlockTutorial from '../tutorials/UnlockTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
 import { formatNum, formatMultExact as formatMult } from '../format';
 import { rarityClass } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 import './MarksIndex.css';
-import './markRolls/MarkRolls.css';
 
 registerMarkGlyphs(ROLLED_GLYPHS);
 
@@ -61,19 +59,8 @@ function mainTagFor(id, view) {
   return mainTag(id, view);
 }
 
-function useReducedMotion() {
-  const [r, setR] = useState(() => {
-    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
-  });
-  useEffect(() => {
-    let mq;
-    try { mq = window.matchMedia('(prefers-reduced-motion: reduce)'); } catch { return undefined; }
-    const on = () => setR(mq.matches);
-    if (mq.addEventListener) mq.addEventListener('change', on); else mq.addListener(on);
-    return () => (mq.removeEventListener ? mq.removeEventListener('change', on) : mq.removeListener(on));
-  }, []);
-  return r;
-}
+/** LUCK is always written one way: a multiplier, ×1.05 (never "+0.05"). */
+const luckText = (v) => `LUCK ×${+Number(v).toFixed(2)}`;
 
 function Detail({ e, have, on, finish, tagText, howTo, onSet }) {
   const t = tierOf(e);
@@ -105,7 +92,7 @@ function Detail({ e, have, on, finish, tagText, howTo, onSet }) {
 // ROLL panel under the hero, and the % COLLECTED bar in the head.
 export default function MarksIndex({ unlockedIds = [], equippedId = null, achievementNames = {}, level = 1, earned = [], onEquip, onClose }) {
   // `landed` ticks when a roll's reveal lands — the ONLY time this screen re-reads storage
-  const [landed, setLanded] = useState(0);
+  const [landed] = useState(0); // (rolls land on the ROLL screen; this INDEX mounts fresh each time)
   const idsRef = useRef(unlockedIds);
   idsRef.current = unlockedIds;
   const snap = useMemo(() => {
@@ -127,9 +114,8 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
     entries.find((e) => owns(e) && e.id !== equippedId) || entries.find((e) => !owns(e)) || main || entries[0]
   ).id);
   const [punch, setPunch] = useState(0);
-  const [coverHost, setCoverHost] = useState(null);
+  const [, setCoverHost] = useState(null);
   const [tut, setTut] = useState(() => !hasSeenTutorial('markRolls'));
-  const reduced = useReducedMotion();
   const closeRef = useRef(null);
   useEffect(() => {
     closeRef.current?.focus();
@@ -194,18 +180,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 once when a new MAIN lands (the section is keyed on the punch) */}
             {main ? <RarityFx tier={main.tier} /> : null}
           </section>
-          <RollPanel
-            level={level}
-            view={view}
-            worn={equippedId}
-            earned={earned}
-            reduced={reduced}
-            coverHost={coverHost}
-            onRolled={(res, wornNow) => {
-              setLanded((n) => n + 1);
-              if (wornNow) { onEquip && onEquip(wornNow); setPunch((n) => n + 1); }
-            }}
-          />
+          {/* ROLL lives on its own screen now (rollScreen/RollScreen.jsx, Andy oct5) — this is the INDEX. */}
           <Detail
             e={selE}
             have={owns(selE)}

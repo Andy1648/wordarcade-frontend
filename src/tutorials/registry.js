@@ -43,7 +43,7 @@ export const TUTORIALS = [
     when: (s) => s.marksRevealed && rollsEnabled(),
     // ONE step (oct3 review): the button's own HOLD tag already says "hold"; a second card repeating it was noise
     steps: [
-      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.mr-roll' },
+      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.rs-roll' },
     ],
   },
   {

@@ -49,7 +49,7 @@ test('mark rolls: ONE step pointing at ROLL, hosted by the MARKS panel (never th
   const t = TUTORIALS.find((x) => x.id === 'markRolls');
   assert.ok(t, 'markRolls tutorial exists');
   assert.equal(t.steps.length, 1, 'one step — the HOLD tag on the button says the rest');
-  for (const s of t.steps) assert.match(s.target || '', /\.mr-roll/);
+  for (const s of t.steps) assert.match(s.target || '', /\.rs-roll/);
   assert.equal(t.host, 'marks');
   const vet = { ...fresh, level: 300, marksRevealed: true, hasProfile: true };
   withStorage({}, () => {

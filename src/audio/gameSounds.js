@@ -171,3 +171,47 @@ export function setDanger(intensity) {
 export function stopDanger() {
   setDanger(0);
 }
+
+// ---- ROLL SCREEN (Andy oct5) --------------------------------------------------------------
+// reel tick — one tiny click per mark passing the line. The reel slows, so the ticks slow with it.
+// `rank` is the passing mark's tier (0 COMMON … 5 SECRET): a rarer mark clicks a step higher, so the
+// sound tells the same truth the strip shows. Very short + quiet: it fires up to ~30×/s at full speed.
+export function sndReelTick(rank = 0) {
+  const ctx = ready();
+  if (!ctx) return;
+  const deg = Math.min(NOTE.C6, NOTE.G4 + Math.max(0, Math.min(5, Math.floor(rank))));
+  tone(ctx.currentTime, { freq: pentFreq(deg), type: 'triangle', dur: 0.035, gain: 0.07, attack: 0.002, lowpass: 2400 });
+}
+
+// rarity sting — plays as the reel lands; scales with the tier. COMMON one soft note; RARE a two-note lift;
+// EPIC a struck chord; LEGENDARY a run into a chord; MYTHIC adds a low swell under it; SECRET climbs two octaves.
+const STING = {
+  common: [[NOTE.C5]],
+  rare: [[NOTE.G4], [NOTE.C5]],
+  epic: [[NOTE.C4, NOTE.G4, NOTE.C5]],
+  legendary: [[NOTE.G4], [NOTE.Bb4], [NOTE.C5, NOTE.G5]],
+  mythic: [[NOTE.Eb4], [NOTE.G4], [NOTE.Bb4], [NOTE.C5, NOTE.G5, NOTE.C6]],
+  secret: [[NOTE.C4], [NOTE.Eb4], [NOTE.G4], [NOTE.C5], [NOTE.Eb5], [NOTE.G5], [NOTE.C5, NOTE.G5, NOTE.C6]],
+};
+export function sndRollSting(tier = 'common') {
+  const ctx = ready();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const steps = STING[tier] || STING.common;
+  const heavy = tier === 'legendary' || tier === 'mythic' || tier === 'secret';
+  const gap = heavy ? 0.085 : 0.07;
+  steps.forEach((chord, i) => {
+    const last = i === steps.length - 1;
+    chord.forEach((deg, j) => tone(t + i * gap, {
+      freq: pentFreq(deg),
+      type: j === 0 ? 'triangle' : 'sine',
+      dur: last ? (heavy ? 0.6 : 0.22) : 0.1,
+      gain: (last ? 0.16 : 0.13) / (j ? 1.4 : 1),
+      attack: 0.004,
+    }));
+  });
+  if (tier === 'mythic' || tier === 'secret') {
+    // a low root swell under the chord — the "something big just happened" floor
+    tone(t, { freq: pentFreq(NOTE.C3), type: 'sine', dur: 0.9, gain: 0.14, attack: 0.08, lowpass: 500 });
+  }
+}
