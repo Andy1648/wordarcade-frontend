@@ -167,10 +167,20 @@ function applyAppScale() {
 applyAppScale();
 window.addEventListener('resize', applyAppScale);
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-)
+// DEV-ONLY v2 KIT GALLERY (/?kit=1): every kit component in every state, for screenshot comparison
+// and e2e/kit.spec.js. __KIT_GALLERY__ is a build-time constant (vite.config.js define): true on the
+// dev server and in a VITE_KIT_GALLERY=1 build (the e2e build), FALSE in the production build — so
+// this branch, its lazy import and the whole kit chunk are compiled out of what ships. Not linked
+// anywhere in the app.
+/* global __KIT_GALLERY__ */
+if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
+  import('./components/kit/gallery/boot.jsx')
+} else {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>
+        <App />
+      </ErrorBoundary>
+    </React.StrictMode>,
+  )
+}

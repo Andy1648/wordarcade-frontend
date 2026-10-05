@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stats</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes stBumpA{0%{transform:scale(1)}35%{transform:scale(1.09) rotate(-1.5deg)}100%{transform:scale(1)}}
+@keyframes stBumpB{0%{transform:scale(1)}35%{transform:scale(1.09) rotate(1.5deg)}100%{transform:scale(1)}}
+@keyframes stSlam{0%{transform:scale(1.5)}55%{transform:scale(.94)}100%{transform:scale(1)}}
+@keyframes stHit{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-16px) scale(1.08) rotate(-2deg)}100%{transform:translateY(-6px) scale(1)}}
+@keyframes stTickA{0%{transform:translateY(14px) scale(.6) rotate(5deg);opacity:0}60%{transform:translateY(-3px) scale(1.1) rotate(5deg);opacity:1}100%{transform:translateY(0) scale(1) rotate(5deg);opacity:1}}
+@keyframes stTickB{0%{transform:translateY(14px) scale(.6) rotate(5deg);opacity:0}60%{transform:translateY(-3px) scale(1.1) rotate(5deg);opacity:1}100%{transform:translateY(0) scale(1) rotate(5deg);opacity:1}}
+@keyframes stShakeM{0%,100%{transform:translate(0,0)}25%{transform:translate(-4px,2px)}50%{transform:translate(4px,-3px)}75%{transform:translate(-2px,-2px)}}
+@keyframes stShakeL{0%,100%{transform:translate(0,0)}20%{transform:translate(-9px,5px) rotate(-.6deg)}40%{transform:translate(8px,-6px) rotate(.6deg)}60%{transform:translate(-5px,-4px)}80%{transform:translate(4px,5px)}}
+.st-bumpA{animation:stBumpA .28s cubic-bezier(.2,1.5,.4,1)}
+.st-bumpB{animation:stBumpB .28s cubic-bezier(.2,1.5,.4,1)}
+.st-slam{animation:stSlam .42s cubic-bezier(.2,1.3,.4,1) both}
+.st-hit{animation:stHit .4s cubic-bezier(.2,1.5,.4,1) both}
+.st-tickA{animation:stTickA .3s cubic-bezier(.2,1.4,.4,1) both}
+.st-tickB{animation:stTickB .3s cubic-bezier(.2,1.4,.4,1) both}
+.st-shakeM{animation:stShakeM .3s linear 1}
+.st-shakeL{animation:stShakeL .42s linear 1}
+.st-out{-webkit-text-stroke:5px #000;paint-order:stroke fill}
+.st-tab:hover{transform:translate(-2px,-2px)}
+.st-tab:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #000}
+.st-big:hover{transform:translate(-3px,-3px)}
+a.st-link{color:#fff;text-decoration:none}
+a.st-link:hover{color:#FFE94A}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.10) 46px 50px)"></div>
+
+<div style="position: absolute; left: 30px; right: 30px; top: 20px; height: 62px">
+<a class="st-link" href="MenuV2.dc.html" style="position: absolute; left: 0; top: 4px; height: 54px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px">← MENU</a>
+<div style="position: absolute; left: 0; right: 0; top: 4px; text-align: center; font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 54px; line-height: 1; color: #fff; pointer-events: none">STATS</div>
+<div style="position: absolute; right: 0; top: 4px; display: flex; gap: 12px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+<button class="st-tab" onClick="{{t.pick}}" style="height: 54px; padding: 0 16px; display: flex; align-items: center; gap: 10px; background: {{t.bg}}; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 8px solid {{t.edge}}; cursor: pointer; transition: transform .08s; font-family: 'Bungee', sans-serif; color: {{t.fg}}">
+<span style="font-size: 18px">{{t.name}}</span>
+<span style="font-size: 24px">{{t.total}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div class="{{shakeClass}}" style="position: absolute; left: 30px; right: 30px; top: 100px; height: 192px; display: flex; align-items: center; justify-content: center; gap: 34px">
+<div style="position: relative; transform: rotate(-2deg)">
+<div style="position: absolute; left: -6px; top: -30px; font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">TOTAL</div>
+<button class="st-big" onClick="{{replay}}" aria-label="Replay multiplier" style="display: block; padding: 0; background: none; border: 0; cursor: pointer; transition: transform .1s">
+<div class="{{boxClass}}" style="height: 168px; min-width: 320px; box-sizing: border-box; padding: 0 38px; display: flex; align-items: center; justify-content: center; background: {{color}}; border: 6px solid #000; box-shadow: 11px 11px 0 #000; position: relative">
+<div style="position: absolute; left: 10px; right: 10px; top: 10px; height: 6px; background: #000; opacity: .14"></div>
+<span style="font-family: 'Bungee', sans-serif; font-size: 148px; line-height: 1; color: #0d0618; letter-spacing: -0.02em">{{totalText}}</span>
+</div>
+</button>
+<sc-if value="{{showTick}}" hint-placeholder-val="{{ false }}">
+<div class="{{tickClass}}" style="position: absolute; right: -40px; top: -26px; height: 44px; padding: 0 14px; display: flex; align-items: center; gap: 8px; background: #0d0618; border: 4px solid #000; box-shadow: 4px 4px 0 #000; border-left: 10px solid {{tickColor}}; font-family: 'Bungee', sans-serif; white-space: nowrap">
+<span style="font-size: 16px; color: #fff">{{tickName}}</span>
+<span class="st-out" style="font-size: 24px; color: {{tickColor}}; -webkit-text-stroke: 4px #000">{{tickVal}}</span>
+</div>
+</sc-if>
+</div>
+
+<span class="st-out" style="font-family: 'Bungee', sans-serif; font-size: 76px; line-height: 1; color: #fff; -webkit-text-stroke: 7px #000">=</span>
+
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px">
+<span class="st-out" style="font-family: 'Bungee', sans-serif; font-size: 112px; line-height: 1; color: #fff; -webkit-text-stroke: 9px #000; text-shadow: 7px 7px 0 #000">{{resultText}}</span>
+<div style="display: flex; align-items: center; gap: 12px">
+<span class="st-out" style="font-family: 'Bungee', sans-serif; font-size: 24px; color: {{color}}; -webkit-text-stroke: 4px #000">{{unit}}</span>
+<span style="font-size: 15px; color: #c9b8e8">BASE {{base}} × {{totalPlain}}</span>
+</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 30px; right: 30px; top: 318px; height: 168px">
+<div style="position: absolute; left: 0; right: 0; top: 74px; height: 20px; box-sizing: border-box; background: #12071f; border: 4px solid #000">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{railPct}}%; background: {{color}}; transition: width .3s ease-out"></div>
+</div>
+<sc-for list="{{xs}}" as="x" hint-placeholder-count="4">
+<div style="position: absolute; left: {{x.left}}px; top: 64px; width: 40px; height: 40px; margin-left: -20px; background: #000; transform: rotate(45deg); display: flex; align-items: center; justify-content: center">
+<span style="transform: rotate(-45deg); font-family: 'Bungee', sans-serif; font-size: 26px; line-height: 1; color: {{x.c}}; transition: color .2s">×</span>
+</div>
+</sc-for>
+<div style="position: absolute; inset: 0; display: flex; gap: 49px">
+<sc-for list="{{chips}}" as="r" hint-placeholder-count="5">
+<div class="{{r.cls}}" style="width: 222px; height: 160px; flex: none; box-sizing: border-box; padding: 12px 14px; background: {{r.panel}}; border: 5px solid #000; border-top: 10px solid {{r.edge}}; box-shadow: 7px 7px 0 #000; opacity: {{r.op}}; transition: opacity .2s; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 12px; height: 52px">
+<div style="position: relative; width: 52px; height: 52px; flex: none">
+<div style="position: absolute; inset: 0; background: {{r.tile}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; transform: rotate(-6deg)"></div>
+<svg viewBox="0 0 40 40" width="44" height="44" style="position: absolute; left: 4px; top: 4px; overflow: visible; filter: drop-shadow(2px 2px 0 #000)" aria-hidden="true"><g stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{r.i.coin}}" hint-placeholder-val="{{ false }}"><circle cx="20" cy="20" r="16" fill="{{r.ic}}"></circle><circle cx="20" cy="20" r="10" fill="none" stroke-width="2.5"></circle><path d="M20 14 L20 26 M16 17 L24 17 M16 23 L24 23" stroke-width="2.5"></path><path d="M9 13 A13 13 0 0 1 15 7" stroke="#fff" stroke-width="2.5" fill="none"></path></sc-if>
+<sc-if value="{{r.i.keycap}}" hint-placeholder-val="{{ false }}"><rect x="4" y="5" width="32" height="31" rx="3" fill="{{r.ic}}"></rect><rect x="9" y="8" width="22" height="20" rx="2" fill="#fff" stroke-width="2.5"></rect><path d="M14 24 L20 12 L26 24 M16.5 20 L23.5 20" stroke-width="3" fill="none"></path></sc-if>
+<sc-if value="{{r.i.rebirth}}" hint-placeholder-val="{{ false }}"><path d="M28.4 12.9 A11 11 0 1 0 30.8 21.9" fill="none" stroke-width="10"></path><path d="M28.4 12.9 A11 11 0 1 0 30.8 21.9" fill="none" stroke="{{r.ic}}" stroke-width="4.5" stroke-linecap="butt"></path><path d="M32.5 13 L25.4 23.4 L37 24.6 Z" fill="{{r.ic}}"></path><circle cx="20" cy="20" r="3.5" fill="#fff" stroke-width="2.5"></circle></sc-if>
+<sc-if value="{{r.i.power}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-30 20 20)"><rect x="18" y="17" width="20" height="7" fill="{{r.ic}}"></rect><rect x="29" y="23" width="4" height="7" fill="{{r.ic}}"></rect><rect x="34" y="23" width="4" height="5" fill="{{r.ic}}"></rect><circle cx="11" cy="20" r="9" fill="{{r.ic}}"></circle><circle cx="11" cy="20" r="3.5" fill="#0d0618" stroke-width="2.5"></circle><path d="M5 16 A7 7 0 0 1 9 12.5" stroke="#fff" stroke-width="2.5" fill="none"></path></g></sc-if>
+<sc-if value="{{r.i.mark}}" hint-placeholder-val="{{ false }}"><path d="M20 2 L36 11 L36 29 L20 38 L4 29 L4 11 Z" fill="{{r.ic}}"></path><path d="M20 8 L31 14 L31 26 L20 32 L9 26 L9 14 Z" fill="#2a0e4a" stroke-width="2.5"></path><path d="M13.5 25 L13.5 15.5 L17 19.5 L20 13.5 L23 19.5 L26.5 15.5 L26.5 25 Z" fill="#FFE94A" stroke-width="2.5"></path></sc-if>
+<sc-if value="{{r.i.boost}}" hint-placeholder-val="{{ false }}"><rect x="15" y="8" width="10" height="9" fill="#3a2160"></rect><circle cx="20" cy="26" r="12" fill="#3a2160"></circle><path d="M8.6 28.5 A12 12 0 0 0 31.4 28.5 Z" fill="{{r.ic}}" stroke="none"></path><circle cx="20" cy="26" r="12" fill="none"></circle><rect x="13" y="3" width="14" height="6" rx="1" fill="#c9b8e8"></rect><circle cx="15.5" cy="22" r="2.2" fill="#fff" stroke="none"></circle><circle cx="23" cy="31" r="1.6" fill="#fff" stroke="none"></circle></sc-if>
+<sc-if value="{{r.i.ascend}}" hint-placeholder-val="{{ false }}"><path d="M20 3 L24.3 14.8 L36.6 15.4 L26.9 23.1 L30.3 35 L20 28.2 L9.7 35 L13.1 23.1 L3.4 15.4 L15.7 14.8 Z" fill="{{r.ic}}"></path><path d="M14.5 24 L20 18.5 L25.5 24" fill="none" stroke-width="3.5"></path></sc-if>
+</g></svg>
+</div>
+<div style="display: flex; flex-direction: column; min-width: 0">
+<span style="font-family: 'Bungee', sans-serif; font-size: 19px; line-height: 1.1; color: {{r.nameC}}">{{r.name}}</span>
+<span style="font-size: 14px; color: {{r.tagC}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.tag}}</span>
+</div>
+</div>
+<span class="st-out" style="margin-top: 14px; font-family: 'Bungee', sans-serif; font-size: 54px; line-height: 1; color: {{r.vc}}; -webkit-text-stroke: 6px #000">{{r.v}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="position: absolute; left: 30px; right: 36px; top: 520px; height: 98px; box-sizing: border-box; background: #12071f; border: 4px solid #000; box-shadow: 6px 6px 0 #000; display: flex">
+<div style="width: 112px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a0b2e; border-right: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 18px; line-height: 1.1; color: #c9b8e8"><span>ALL</span><span>TIME</span></div>
+<sc-for list="{{life}}" as="l" hint-placeholder-count="5">
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-left: {{l.sep}}">
+<span class="st-out" style="font-family: 'Bungee', sans-serif; font-size: 38px; line-height: 1; color: {{l.c}}">{{l.v}}</span>
+<span style="font-size: 14px; color: #c9b8e8">{{l.k}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+function fmt(x) {
+  var S = [['Qa', 1e15], ['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + S[i][0]; }
+  if (x < 10 && Math.abs(x - Math.round(x)) > 0.01) return x.toFixed(1);
+  return String(Math.round(x));
+}
+var BOARDS = {
+  wins: { name: 'WINS', unit: 'WINS / WORD', color: '#FFE94A', base: 10, baseIcon: 'coin',
+    mults: [
+      { k: 'rebirth', name: 'REBIRTH', tag: 'R59', v: 60, c: '#D88BFF' },
+      { k: 'mark', name: 'MARK', tag: 'CROWNLESS', v: 1.5, c: '#B04BFF' },
+      { k: 'boost', name: 'BOOST', tag: 'OFF', v: 1, c: '#FF3D7F' },
+      { k: 'ascend', name: 'ASCEND', tag: '0 STARS', v: 1, c: '#FFE94A' }
+    ] },
+  xp: { name: 'XP', unit: 'XP / LETTER', color: '#2EFFE0', base: 7, baseIcon: 'keycap',
+    mults: [
+      { k: 'power', name: 'POWER', tag: 'LV 6', v: 34, c: '#FFC23D' },
+      { k: 'rebirth', name: 'REBIRTH', tag: 'R59', v: 60, c: '#D88BFF' },
+      { k: 'mark', name: 'MARK', tag: 'CROWNLESS', v: 1, c: '#B04BFF' },
+      { k: 'ascend', name: 'ASCEND', tag: '0 STARS', v: 1, c: '#FFE94A' }
+    ] }
+};
+function totalOf(b) { return b.mults.reduce(function (p, m) { return p * m.v; }, 1); }
+var GREY = '#5d4a78';
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.t = [];
+    this.state = { tab: 'wins', idx: 0, cur: 1, done: false, bump: 0, shake: false };
+  }
+  componentDidMount() { this.run('wins'); }
+  componentWillUnmount() { this.clear(); }
+  clear() { this.t.forEach(clearTimeout); this.t = []; }
+  later(fn, ms) { this.t.push(setTimeout(fn, ms)); }
+  run(tab) {
+    var self = this, b = BOARDS[tab];
+    this.clear();
+    this.setState({ tab: tab, idx: 0, cur: 1, done: false, bump: 0, shake: false });
+    var at = 420, prod = 1;
+    b.mults.forEach(function (m, i) {
+      var from = prod, to = prod * m.v;
+      prod = to;
+      self.later(function () { self.setState({ idx: i + 1, bump: self.state.bump + 1 }); }, at);
+      if (m.v > 1) {
+        var F = 9;
+        for (var f = 1; f <= F; f++) (function (f) {
+          self.later(function () { self.setState({ cur: from * Math.pow(to / from, f / F) }); }, at + f * 38);
+        })(f);
+        at += 560;
+      } else {
+        at += 240;
+      }
+    });
+    var total = prod;
+    this.later(function () { self.setState({ done: true, cur: total, shake: true }); }, at + 60);
+    this.later(function () { self.setState({ shake: false }); }, at + 520);
+  }
+  renderVals() {
+    var self = this, st = this.state, b = BOARDS[st.tab], n = b.mults.length;
+    var total = totalOf(b);
+    var chips = [{
+      name: 'BASE', tag: b.name, v: String(b.base), vc: '#fff', edge: '#fff', tile: '#3a2160', ic: b.color,
+      i: (function () { var o = {}; o[b.baseIcon] = true; return o; })(),
+      panel: '#1a0b2e', nameC: '#fff', tagC: '#c9b8e8', op: 1, cls: ''
+    }];
+    b.mults.forEach(function (m, j) {
+      var on = m.v > 1, reached = st.idx > j, hit = st.idx === j + 1 && !st.done;
+      var i = {}; i[m.k] = true;
+      chips.push({
+        name: m.name, tag: m.tag, v: '×' + fmt(m.v), i: i,
+        vc: on ? m.c : GREY, edge: on ? m.c : '#2a1a40', tile: on ? '#2a0e4a' : '#1d1030', ic: on ? m.c : GREY,
+        panel: on ? '#1a0b2e' : '#12071f', nameC: on ? '#fff' : GREY, tagC: on ? '#c9b8e8' : GREY,
+        op: reached ? 1 : 0.35, cls: on && hit ? 'st-hit' : ''
+      });
+    });
+    var xs = [];
+    for (var k = 0; k < n; k++) xs.push({ left: k * 271 + 222 + 24, c: st.idx > k ? (b.mults[k].v > 1 ? b.color : GREY) : '#2a1a40' });
+    var last = st.idx > 0 ? b.mults[st.idx - 1] : null;
+    var lastOn = last && last.v > 1;
+    var tabs = ['wins', 'xp'].map(function (key) {
+      var B = BOARDS[key], on = key === st.tab;
+      return { name: B.name, total: '×' + fmt(totalOf(B)), bg: on ? B.color : '#1a0b2e', fg: on ? '#000' : '#fff', edge: B.color,
+        pick: function () { self.run(key); } };
+    });
+    return {
+      tabs: tabs, color: b.color, unit: b.unit, base: b.base,
+      totalText: '×' + fmt(st.cur), totalPlain: fmt(total),
+      resultText: fmt(b.base * st.cur),
+      boxClass: st.done ? 'st-slam' : st.bump ? (st.bump % 2 ? 'st-bumpA' : 'st-bumpB') : '',
+      shakeClass: st.shake ? (total >= 1000 ? 'st-shakeL' : 'st-shakeM') : '',
+      showTick: !!lastOn && !st.done,
+      tickClass: st.bump % 2 ? 'st-tickA' : 'st-tickB',
+      tickName: last ? last.name : '', tickVal: last ? '×' + fmt(last.v) : '', tickColor: last ? last.c : '#fff',
+      railPct: Math.round(st.idx / n * 100),
+      xs: xs, chips: chips,
+      replay: function () { self.run(st.tab); },
+      life: [
+        { v: '4.2K', k: 'WORDS', c: '#FFE94A', sep: '0' },
+        { v: '31.8K', k: 'LETTERS', c: '#2EFFE0', sep: '4px solid #000' },
+        { v: '312', k: 'ROLLS', c: '#B04BFF', sep: '4px solid #000' },
+        { v: '59', k: 'REBIRTHS', c: '#D88BFF', sep: '4px solid #000' },
+        { v: '27', k: 'BEST STREAK', c: '#FF3D7F', sep: '4px solid #000' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

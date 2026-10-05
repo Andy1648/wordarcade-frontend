@@ -1,0 +1,92 @@
+/* KitPops.css — v2 number pops. Every node is always mounted, at rest invisible (opacity 0). */
+.kps { position: relative; }
+.kps-stage {
+  position: relative;
+  width: 100%;
+  height: 176px;
+  box-sizing: border-box;
+  background: var(--k-well);
+  border: var(--k-ink-m) solid var(--k-ink);
+  overflow: hidden;
+}
+.kps-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 48px, rgba(255, 255, 255, .035) 48px 50px),
+    repeating-linear-gradient(0deg, transparent 0 48px, rgba(255, 255, 255, .035) 48px 50px);
+}
+.kps-idle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k16);
+  color: var(--k-faint);
+  transition: opacity 120ms;
+}
+.kps-s,
+.kps-m,
+.kps-l,
+.kps-x {
+  position: absolute;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.kps-s { left: 50%; top: 54%; display: flex; align-items: baseline; gap: 4px; }
+.kps-s-n { font-family: var(--k-display); font-size: var(--fs-k30); line-height: 1; color: var(--k-cyan); -webkit-text-stroke: var(--k-stroke-l) var(--k-ink); paint-order: stroke fill; }
+.kps-s-u { font-family: var(--k-display); font-size: var(--fs-k17); color: var(--k-white); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
+
+.kps-m { left: 50%; top: 52%; display: flex; align-items: center; gap: 8px; }
+.kps-m .kit-icon { transform: rotate(-10deg); }
+.kps-m-n { font-family: var(--k-display); font-size: var(--fs-k60); line-height: 1; color: var(--k-cyan); -webkit-text-stroke: var(--k-stroke-xl) var(--k-ink); paint-order: stroke fill; text-shadow: 5px 5px 0 var(--k-ink); }
+.kps-m-u { font-family: var(--k-display); font-size: var(--fs-k22); color: var(--k-white); -webkit-text-stroke: var(--k-stroke-m) var(--k-ink); paint-order: stroke fill; }
+
+.kps-chevs { position: absolute; top: 0; bottom: 0; width: 50px; pointer-events: none; }
+.kps-chevs--l { left: 70px; }
+.kps-chevs--r { right: 70px; }
+.kps-chev { position: absolute; left: 0; top: 110px; overflow: visible; opacity: 0; }
+.kps-chev--a { stroke: var(--k-yellow); }
+.kps-chev--b { stroke: var(--k-lilac); }
+.kps-chev path:first-child { stroke: var(--k-ink); }
+
+.kps-l { left: 50%; top: 50%; display: flex; align-items: center; gap: 12px; }
+.kps-l-n { font-family: var(--k-display); font-size: var(--fs-k96); line-height: .9; color: var(--k-yellow); -webkit-text-stroke: 8px var(--k-ink); paint-order: stroke fill; text-shadow: 6px 6px 0 var(--k-ink); }
+.kps-l-t {
+  padding: 2px 12px;
+  background: var(--k-purple);
+  border: var(--k-ink-l) solid var(--k-ink);
+  box-shadow: var(--k-sh-m) var(--k-sh-m) 0 var(--k-ink);
+  transform: rotate(-5deg);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k30);
+  color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-m) var(--k-ink);
+  paint-order: stroke fill;
+}
+
+.kps-xflash { position: absolute; inset: 0; box-shadow: inset 0 0 0 8px var(--k-hot); opacity: 0; }
+.kps-band { position: absolute; left: -10%; width: 120%; transform: translateX(-130%) skewX(-24deg); }
+.kps-band--a { top: 34px; height: 44px; box-sizing: border-box; background: var(--k-hot); border-top: var(--k-ink-l) solid var(--k-ink); border-bottom: var(--k-ink-l) solid var(--k-ink); }
+.kps-band--b { top: 92px; height: 30px; background: var(--k-ink) repeating-linear-gradient(-50deg, transparent 0 14px, var(--k-yellow) 14px 22px); }
+.kps-x { left: 50%; top: 50%; display: flex; flex-direction: column; align-items: center; }
+.kps-x-n { font-family: var(--k-shade); font-size: var(--fs-k100); line-height: .92; color: var(--k-hot); text-shadow: 6px 6px 0 var(--k-ink); }
+.kps-x-subwrap { display: block; margin-top: -4px; transform: skewX(-12deg); }
+.kps-x-sub {
+  display: block;
+  padding: 0 16px;
+  background: var(--k-yellow);
+  border: var(--k-ink-l) solid var(--k-ink);
+  box-shadow: var(--k-sh-m) var(--k-sh-m) 0 var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k28);
+  line-height: 1.25;
+  color: var(--k-ink);
+}

@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kit: buttons</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes kbDeny{0%,100%{transform:translateX(0)}15%{transform:translateX(-9px)}35%{transform:translateX(8px)}55%{transform:translateX(-6px)}75%{transform:translateX(4px)}}
+@keyframes kbSh1{0%,100%{transform:translate(0,0)}25%{transform:translate(-1px,1px)}50%{transform:translate(1px,-1px)}75%{transform:translate(-1px,-1px)}}
+@keyframes kbSh2{0%,100%{transform:translate(0,0)}25%{transform:translate(-3px,2px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-3px)}}
+@keyframes kbFloat{0%{transform:translateY(0) scale(.6);opacity:0}15%{transform:translateY(-6px) scale(1.15);opacity:1}100%{transform:translateY(-54px) scale(1);opacity:0}}
+@keyframes kbBump{0%{transform:scale(1)}35%{transform:scale(1.22) rotate(-4deg)}100%{transform:scale(1)}}
+@keyframes kbSlam{0%{transform:scale(1.9);opacity:0}65%{transform:scale(.94);opacity:1}100%{transform:scale(1)}}
+@keyframes kbFlash{0%{opacity:.95}100%{opacity:0}}
+@keyframes kbHatch{to{background-position:28px 0}}
+@keyframes kbDrain{from{width:100%}to{width:0%}}
+@keyframes kbDot{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes kbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes kbSquash{0%{transform:scaleX(1)}40%{transform:scaleX(1.12) scaleY(.88)}100%{transform:scaleX(1)}}
+.kb-deny{animation:kbDeny .38s linear}
+.kb-sh1{animation:kbSh1 .09s linear infinite}
+.kb-sh2{animation:kbSh2 .06s linear infinite}
+.kb-float{position:absolute;right:8px;top:-6px;animation:kbFloat .85s ease-out forwards;pointer-events:none;white-space:nowrap}
+.kb-bump{animation:kbBump .32s cubic-bezier(.2,1.4,.4,1)}
+.kb-slam{animation:kbSlam .3s cubic-bezier(.2,1.3,.4,1) both}
+.kb-flash{position:absolute;inset:0;background:#fff;animation:kbFlash .45s ease-out forwards;pointer-events:none}
+.kb-hatch{background-image:repeating-linear-gradient(-45deg,rgba(255,255,255,.0) 0 7px,rgba(255,255,255,.55) 7px 14px);background-size:28px 28px;animation:kbHatch .35s linear infinite}
+.kb-drain{animation:kbDrain 2.4s linear forwards}
+.kb-dot{animation:kbDot .3s cubic-bezier(.2,1.5,.4,1) both, kbPulse 1.4s ease-in-out .3s infinite}
+.kb-squash{animation:kbSquash .3s cubic-bezier(.2,1.4,.4,1)}
+
+.kb-p{-webkit-tap-highlight-color:transparent;user-select:none}
+.kb-p .kb-face{transition:transform .6s cubic-bezier(.3,.7,.4,1),filter .2s;will-change:transform}
+.kb-p:hover .kb-face{transform:translateY(-4px);filter:brightness(1.07);transition:transform .25s cubic-bezier(.3,.7,.4,1.5),filter .2s}
+.kb-p:active .kb-face{transform:translateY(11px);filter:brightness(.96);transition:transform 34ms}
+.kb-p.kb-off:hover .kb-face{transform:none;filter:none}
+.kb-p.kb-off:active .kb-face{transform:translateY(3px)}
+.kb-p.kb-held .kb-face{transform:translateY(7px)}
+.kb-fh{transform:translateY(-4px);filter:brightness(1.07)}
+.kb-fp{transform:translateY(11px);filter:brightness(.96)}
+
+.kb-s .kb-sface{transition:transform .5s cubic-bezier(.3,.7,.4,1)}
+.kb-s:hover .kb-sface{transform:translate(-2px,-2px);transition:transform .2s cubic-bezier(.3,.7,.4,1.5)}
+.kb-s:active .kb-sface{transform:translate(6px,6px);transition:transform 34ms}
+.kb-s:hover .kb-chev{fill:#FFE94A}
+
+.kb-g .kb-gface{transition:transform .5s cubic-bezier(.3,.7,.4,1),border-bottom-width .5s}
+.kb-g:hover .kb-gface{transform:translateY(-3px)}
+.kb-g:active .kb-gface{transform:translateY(4px);border-bottom-width:4px;transition:transform 34ms,border-bottom-width 34ms}
+
+.kb-i .kb-iface{transition:transform .5s cubic-bezier(.3,.7,.4,1)}
+.kb-i:hover .kb-iface{transform:translateY(-3px) rotate(-3deg);transition:transform .22s cubic-bezier(.3,.7,.4,1.6)}
+.kb-i:active .kb-iface{transform:translateY(7px);transition:transform 34ms}
+
+.kb-r .kb-rface{transition:transform .35s cubic-bezier(.3,.7,.4,1.5)}
+.kb-r:hover .kb-rface{transform:translateX(6px)}
+.kb-r:active .kb-rface{transform:translate(4px,4px);transition:transform 34ms}
+.kb-rwrap{transition:transform .3s cubic-bezier(.3,.7,.4,1.6)}
+
+.kb-tab{transition:left .34s cubic-bezier(.3,.7,.4,1.35),width .34s cubic-bezier(.3,.7,.4,1.35)}
+.kb-tlab{transition:color .15s}
+.kb-plate{transition:transform .28s cubic-bezier(.3,.7,.4,1.6),background-color .15s}
+.kb-knob{transition:left .26s cubic-bezier(.3,.7,.4,1.5),background-color .15s}
+.kb-track{transition:background-color .18s}
+.kb-tog:active .kb-knob{transform:scaleX(1.18)}
+.kb-cyc{transition:transform .5s cubic-bezier(.3,.7,.4,1)}
+.kb-cycb:hover .kb-cyc{transform:translateY(-3px)}
+.kb-cycb:active .kb-cyc{transform:translateY(7px);transition:transform 34ms}
+
+.kb-rm *,.kb-rm *::before,.kb-rm *::after{animation:none !important;transition:none !important}
+button{font:inherit}
+button:focus-visible{outline:4px solid #2EFFE0;outline-offset:4px}
+</style>
+</helmet>
+
+<div class="{{rmClass}}" style="width: 1366px; height: 900px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.12) 46px 50px); pointer-events: none"></div>
+
+<!-- HEADER -->
+<div style="position: absolute; left: 28px; right: 28px; top: 18px; height: 60px; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; align-items: center; gap: 18px">
+<div style="padding: 4px 12px; background: #FFE94A; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: rotate(-4deg); font-family: 'Bungee', sans-serif; font-size: 16px; color: #000">KIT 02</div>
+<div style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 44px; line-height: 1; color: #2EFFE0">BUTTONS</div>
+<div style="font-family: 'Bungee', sans-serif; font-size: 26px; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill">TABS + TOGGLES</div>
+</div>
+<div style="display: flex; align-items: center; gap: 16px">
+<div style="font-size: 13px; color: #c9b8e8">EVERYTHING HERE IS LIVE: HOVER, TAP, HOLD</div>
+<div style="position: relative; height: 52px; padding: 0 16px 0 52px; display: flex; align-items: center; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 8px solid #12A99A">
+<svg viewBox="0 0 40 40" width="46" height="46" style="position: absolute; left: -16px; top: 50%; transform: translateY(-50%) rotate(10deg); overflow: visible; filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15 M13 15 L16 4 M27 15 L24 4" stroke="#000" stroke-width="2.5" fill="none" stroke-linejoin="round"></path><path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="{{gemBump}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 26px; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{gems}}</span>
+<sc-for list="{{floats}}" as="f" hint-placeholder-count="0"><div class="kb-float" style="font-family: 'Bungee', sans-serif; font-size: 24px; color: {{f.c}}; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{f.t}}</div></sc-for>
+</div>
+</div>
+</div>
+
+<!-- 01 PRIMARY -->
+<div style="position: absolute; left: 28px; top: 100px; width: 1310px; height: 232px; box-sizing: border-box; background: #12071f; border: 4px solid #000; box-shadow: 8px 8px 0 #000">
+<div style="position: absolute; left: 18px; top: -20px; display: flex; height: 36px; transform: rotate(-2deg); filter: drop-shadow(4px 4px 0 #000)">
+<span style="display: flex; align-items: center; padding: 0 10px; background: #FFE94A; border: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000">01</span>
+<span style="display: flex; align-items: center; padding: 0 14px; background: #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">PRIMARY ACTION</span>
+</div>
+<div style="position: absolute; right: 18px; top: 12px; font-size: 13px; color: #c9b8e8">LIP 14 · INK 5 · SHADOW 6/6 · SKEW −7°</div>
+
+<div style="position: absolute; left: 22px; right: 22px; top: 40px; display: flex; gap: 18px; align-items: flex-start">
+
+<!-- idle live ROLL -->
+<div style="width: 172px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9b8e8"><span style="width: 9px; height: 9px; background: #FFE94A; border: 2px solid #000; transform: rotate(45deg)"></span>IDLE<span style="padding: 0 5px; background: #FF3D7F; border: 2px solid #000; transform: rotate(-4deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">LIVE</span></div>
+<div class="{{denyLive}}">
+<button class="{{rollCls}}" onClick="{{roll}}" aria-label="Roll for 75 gems" style="position: relative; display: block; width: 160px; height: 104px; margin-left: 6px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: {{rollLip}}; border: 5px solid #000"></span>
+<span class="kb-face" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: {{rollFace}}; border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: {{rollShade}}"></span>
+<span style="position: absolute; left: 10px; right: 46%; top: 6px; height: 6px; background: {{rollGlint}}"></span>
+<span style="position: absolute; right: 14px; top: 6px; width: 12px; height: 6px; background: {{rollGlint}}"></span>
+<span style="position: relative; transform: skewX(7deg); display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'Bungee', sans-serif; color: {{rollInk}}">
+<span style="font-size: {{rollFs}}px">{{rollLabel}}</span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 16px; margin-top: 3px"><svg width="16" height="16" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>75</span>
+</span>
+</span>
+</button>
+</div>
+<div style="font-size: 13px; line-height: 1.35; color: #c9b8e8">TAP: −75 GEMS<br>FACE ON TOP OF LIP</div>
+</div>
+
+<!-- frozen hover -->
+<div aria-hidden="true" style="width: 172px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9b8e8"><span style="width: 9px; height: 9px; background: #2EFFE0; border: 2px solid #000; transform: rotate(45deg)"></span>HOVER</div>
+<div style="position: relative; width: 160px; height: 104px; margin-left: 6px; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: #F2A900; border: 5px solid #000"></span>
+<span class="kb-fh" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: #FFE94A; border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: #F2A900"></span>
+<span style="position: absolute; left: 10px; right: 46%; top: 6px; height: 6px; background: #fff"></span>
+<span style="position: absolute; right: 14px; top: 6px; width: 12px; height: 6px; background: #fff"></span>
+<span style="position: relative; transform: skewX(7deg); display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'Bungee', sans-serif; color: #000">
+<span style="font-size: 38px">ROLL</span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 16px; margin-top: 3px"><svg width="16" height="16" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>75</span>
+</span>
+</span>
+</div>
+<div style="font-size: 13px; line-height: 1.35; color: #c9b8e8">LIFT −4 · LIP 18<br>250MS OVERSHOOT</div>
+</div>
+
+<!-- frozen pressed -->
+<div aria-hidden="true" style="width: 172px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9b8e8"><span style="width: 9px; height: 9px; background: #FF3D7F; border: 2px solid #000; transform: rotate(45deg)"></span>PRESSED</div>
+<div style="position: relative; width: 160px; height: 104px; margin-left: 6px; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: #F2A900; border: 5px solid #000"></span>
+<span class="kb-fp" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: #FFE94A; border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: #F2A900"></span>
+<span style="position: absolute; left: 10px; right: 46%; top: 6px; height: 6px; background: #fff"></span>
+<span style="position: relative; transform: skewX(7deg); display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'Bungee', sans-serif; color: #000">
+<span style="font-size: 38px">ROLL</span>
+<span style="display: flex; align-items: center; gap: 5px; font-size: 16px; margin-top: 3px"><svg width="16" height="16" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>75</span>
+</span>
+</span>
+</div>
+<div style="font-size: 13px; line-height: 1.35; color: #c9b8e8">LIP 14 → 3<br>34MS DOWN · 600MS UP</div>
+</div>
+
+<!-- disabled -->
+<div style="width: 172px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9b8e8"><span style="width: 9px; height: 9px; background: #5d4a78; border: 2px solid #000; transform: rotate(45deg)"></span>DISABLED<span style="padding: 0 5px; background: #FF3D7F; border: 2px solid #000; transform: rotate(-4deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">TAP</span></div>
+<div class="{{denySpec}}" style="position: relative">
+<button class="kb-p kb-off" onClick="{{denyTap}}" aria-disabled="true" aria-label="Roll, need 41 more gems" style="position: relative; display: block; width: 160px; height: 104px; margin-left: 6px; padding: 0; border: 0; background: transparent; cursor: not-allowed; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000"></span>
+<span class="kb-face" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: repeating-linear-gradient(-45deg, #2a1747 0 8px, #22113c 8px 14px); border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: relative; transform: skewX(7deg); display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'Bungee', sans-serif">
+<span style="font-size: 38px; color: #8f7bb3">ROLL</span>
+<span style="display: flex; align-items: center; gap: 5px; margin-top: 3px; padding: 1px 6px; background: #000; font-size: 14px; color: {{needColor}}"><svg width="12" height="14" viewBox="0 0 24 28" aria-hidden="true"><path d="M6 12 L6 8 C6 2 18 2 18 8 L18 12" fill="none" stroke="{{needColor}}" stroke-width="4"></path><rect x="2" y="12" width="20" height="14" fill="{{needColor}}"></rect></svg>NEED 75</span>
+</span>
+</span>
+</button>
+<div style="position: absolute; right: -6px; top: -14px; padding: 0 6px; background: #FF3D7F; border: 3px solid #000; transform: rotate(6deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; pointer-events: none">−41</div>
+</div>
+<div style="font-size: 13px; line-height: 1.35; color: #c9b8e8">HATCH + LOCK STAYS<br>DEAD 3PX PRESS + SHAKE</div>
+</div>
+
+<!-- claim -->
+<div style="width: 172px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9b8e8"><span style="width: 9px; height: 9px; background: #2EFFE0; border: 2px solid #000; transform: rotate(45deg)"></span>CLAIM<span style="padding: 0 5px; background: #FF3D7F; border: 2px solid #000; transform: rotate(-4deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">LIVE</span></div>
+<div style="position: relative">
+<button class="{{claimCls}}" onClick="{{claim}}" aria-label="Claim 45 gems" style="position: relative; display: block; width: 160px; height: 104px; margin-left: 6px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: {{claimLip}}; border: 5px solid #000"></span>
+<span class="kb-face" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: {{claimFace}}; border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: {{claimShade}}"></span>
+<span style="position: absolute; left: 10px; right: 46%; top: 6px; height: 6px; background: {{claimGlint}}"></span>
+<sc-if value="{{claimCd}}" hint-placeholder-val="{{ false }}"><span class="kb-drain" style="position: absolute; left: 0; bottom: 0; height: 8px; background: #2EFFE0; border-top: 3px solid #000"></span></sc-if>
+<span style="position: relative; transform: skewX(7deg); display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'Bungee', sans-serif; color: {{claimInk}}">
+<span style="font-size: {{claimFs}}px">{{claimLabel}}</span>
+<span style="font-size: 16px; margin-top: 4px">{{claimSub}}</span>
+</span>
+</span>
+</button>
+<sc-if value="{{claimReady}}" hint-placeholder-val="{{ true }}"><div style="position: absolute; left: -4px; top: -14px; padding: 0 6px; background: #FFE94A; border: 3px solid #000; transform: rotate(-6deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; pointer-events: none">READY</div></sc-if>
+</div>
+<div style="font-size: 13px; line-height: 1.35; color: #c9b8e8">+45 GEMS · 2.4S DRAIN<br>THEN BACK TO READY</div>
+</div>
+
+<!-- hold to buy -->
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9b8e8"><span style="width: 9px; height: 9px; background: #FFC23D; border: 2px solid #000; transform: rotate(45deg)"></span>HOLD 1.0S<span style="padding: 0 5px; background: #FF3D7F; border: 2px solid #000; transform: rotate(-4deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">HOLD</span></div>
+<div class="{{holdShake}}" style="position: relative">
+<button class="{{holdCls}}" onMouseDown="{{holdStart}}" onMouseUp="{{holdEnd}}" onMouseLeave="{{holdEnd}}" onTouchStart="{{holdStart}}" onTouchEnd="{{holdEnd}}" aria-label="Hold to buy power tier" style="position: relative; display: block; width: 300px; height: 104px; margin-left: 6px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: #b07a10; border: 5px solid #000"></span>
+<span class="kb-face" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: #FFC23D; border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: #E09A12"></span>
+<span class="kb-hatch" style="position: absolute; left: 0; top: 0; bottom: 0; width: {{holdPct}}%; background-color: #FFE94A; border-right: {{holdEdge}}px solid #000; transition: {{holdTrans}}"></span>
+<span style="position: absolute; left: 10px; right: 50%; top: 6px; height: 6px; background: #fff"></span>
+<span style="position: absolute; left: 25%; top: 0; width: 4px; height: 12px; background: #000"></span>
+<span style="position: absolute; left: 50%; top: 0; width: 4px; height: 16px; background: #000"></span>
+<span style="position: absolute; left: 75%; top: 0; width: 4px; height: 12px; background: #000"></span>
+<span style="position: relative; transform: skewX(7deg); display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'Bungee', sans-serif; color: #000">
+<span style="font-size: 30px">{{holdLabel}}</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 16px; margin-top: 4px">POWER {{tier}} → {{tierNext}} · <svg width="16" height="16" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#FFE94A" stroke="#000" stroke-width="5"></circle></svg>{{price}}</span>
+</span>
+<sc-if value="{{holdFlash}}" hint-placeholder-val="{{ false }}"><span class="kb-flash"></span></sc-if>
+</span>
+</button>
+<sc-if value="{{holdFlash}}" hint-placeholder-val="{{ false }}"><div class="kb-float" style="right: 30px; font-family: 'Bungee', sans-serif; font-size: 28px; color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill">+1 POWER</div></sc-if>
+</div>
+<div style="font-size: 13px; line-height: 1.35; color: #c9b8e8">1.0S FILL · SHAKE UP AT 0.55S<br>LET GO EARLY = CANCEL, 180MS</div>
+</div>
+
+</div>
+</div>
+
+<!-- 02 SECONDARY + ICON -->
+<div style="position: absolute; left: 28px; top: 358px; width: 640px; height: 268px; box-sizing: border-box; background: #12071f; border: 4px solid #000; box-shadow: 8px 8px 0 #000">
+<div style="position: absolute; left: 18px; top: -20px; display: flex; height: 36px; transform: rotate(1.5deg); filter: drop-shadow(4px 4px 0 #000)">
+<span style="display: flex; align-items: center; padding: 0 10px; background: #2EFFE0; border: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000">02</span>
+<span style="display: flex; align-items: center; padding: 0 14px; background: #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">SECONDARY + ICON</span>
+</div>
+
+<div style="position: absolute; left: 24px; top: 30px; display: flex; align-items: flex-start; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<button class="kb-s" aria-label="Back to menu" style="position: relative; display: block; width: 184px; height: 76px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 184 76" width="184" height="76" style="display: block; overflow: visible" aria-hidden="true">
+<polygon points="10,37 32,8 176,8 168,68 32,68" fill="#000" transform="translate(6 6)"></polygon>
+<g class="kb-sface">
+<polygon points="4,35 28,4 174,4 166,64 28,64" fill="#1a0b2e" stroke="#000" stroke-width="5" stroke-linejoin="miter"></polygon>
+<polygon points="152,4 174,4 166,64 144,64" fill="#FFE94A" stroke="#000" stroke-width="4"></polygon>
+<path class="kb-chev" d="M16 34 L34 12 L46 12 L28 34 L46 56 L34 56 Z" fill="#fff" stroke="#000" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M30 8 L150 8" stroke="#3a2160" stroke-width="4"></path>
+<text x="96" y="46" text-anchor="middle" font-family="Bungee" font-size="26" fill="#fff" stroke="#000" stroke-width="5" paint-order="stroke">MENU</text>
+</g>
+</svg>
+</button>
+<div style="font-size: 13px; color: #c9b8e8">BACK · ARROW HULL</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 6px">
+<button class="kb-g" aria-label="Open index" style="position: relative; display: block; height: 64px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-7deg)">
+<span style="position: absolute; left: 5px; right: -5px; top: 5px; bottom: -5px; background: #000"></span>
+<span class="kb-gface" style="position: relative; height: 64px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #1a0b2e; border: 4px solid #000; border-bottom: 10px solid #2EFFE0">
+<span style="transform: skewX(7deg); display: flex; align-items: baseline; gap: 10px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">INDEX</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill">9/27</span>
+</span>
+</span>
+</button>
+<div style="font-size: 13px; color: #c9b8e8">GHOST · LIP 10 → 4</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 6px">
+<button class="kb-g" aria-label="Rules" style="position: relative; display: block; height: 64px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-7deg)">
+<span style="position: absolute; left: 5px; right: -5px; top: 5px; bottom: -5px; background: #000"></span>
+<span class="kb-gface" style="position: relative; height: 64px; box-sizing: border-box; display: flex; align-items: center; padding: 0 16px; background: #1a0b2e; border: 4px solid #000; border-bottom: 10px solid #B04BFF">
+<span style="transform: skewX(7deg); font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">ODDS</span>
+</span>
+</button>
+<div style="font-size: 13px; color: #c9b8e8">LIP = DESTINATION</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 24px; top: 144px; display: flex; align-items: flex-start; gap: 22px">
+<sc-for list="{{icons}}" as="ic" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; width: 130px">
+<button class="kb-i" onClick="{{ic.tap}}" aria-label="{{ic.aria}}" style="position: relative; display: block; width: 72px; height: 80px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: rotate({{ic.rot}}deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 14px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 10px; bottom: 0; box-sizing: border-box; background: {{ic.lip}}; border: 4px solid #000"></span>
+<span class="kb-iface" style="position: absolute; left: 0; top: 0; width: 72px; height: 72px; box-sizing: border-box; background: #1a0b2e; border: 4px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden">
+<span style="position: absolute; left: 0; top: 0; width: 100%; height: 7px; background: {{ic.lip}}; border-bottom: 3px solid #000"></span>
+<svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true" style="position: relative; overflow: visible; filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{ic.g.podium}}" hint-placeholder-val="{{ false }}"><rect x="14" y="9" width="12" height="27" fill="#fff"></rect><rect x="3" y="18" width="11" height="18" fill="#fff"></rect><rect x="26" y="23" width="11" height="13" fill="#fff"></rect><path d="M18 15 L20 13 L20 22" stroke-width="2.5" fill="none"></path></sc-if>
+<sc-if value="{{ic.g.bars}}" hint-placeholder-val="{{ false }}"><rect x="4" y="22" width="8" height="14" fill="#fff"></rect><rect x="16" y="13" width="8" height="23" fill="#fff"></rect><rect x="28" y="5" width="8" height="31" fill="#2EFFE0"></rect><path d="M2 37 L38 37" stroke-width="3"></path></sc-if>
+<sc-if value="{{ic.g.trophy}}" hint-placeholder-val="{{ false }}"><path d="M11 5 L29 5 L28 17 C27 23 23 26 20 26 C17 26 13 23 12 17 Z" fill="#FFE94A"></path><path d="M20 26 L20 31 M13 35 L27 35 L25 31 L15 31 Z" fill="#FFE94A"></path><path d="M11 8 C4 8 4 17 12 18 M29 8 C36 8 36 17 28 18" fill="none"></path><path d="M16 9 L16 16" stroke="#fff" stroke-width="2.5"></path></sc-if>
+</g></svg>
+</span>
+<sc-if value="{{ic.hasTag}}" hint-placeholder-val="{{ false }}"><span class="{{ic.tagCls}}" style="position: absolute; left: -16px; bottom: -8px; padding: 0 6px; background: {{ic.tagBg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: rotate(-8deg); font-family: 'Bungee', sans-serif; font-size: 16px; color: #000">{{ic.tag}}</span></sc-if>
+<sc-if value="{{ic.hasDot}}" hint-placeholder-val="{{ false }}"><span class="kb-dot" style="position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #FF3D7F; border: 4px solid #000; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 14px; color: #fff">{{ic.dot}}</span></sc-if>
+</button>
+<div style="text-align: center; font-size: 13px; line-height: 1.35; color: #c9b8e8">{{ic.cap}}</div>
+</div>
+</sc-for>
+<div style="align-self: center; width: 130px; font-size: 13px; line-height: 1.4; color: #c9b8e8">TILT ±3° EACH<br>TAG = RANK<br>DOT = REAL TO-DO</div>
+</div>
+</div>
+
+<!-- 03 LEFT RAIL -->
+<div style="position: absolute; left: 698px; top: 358px; width: 640px; height: 268px; box-sizing: border-box; background: #12071f; border: 4px solid #000; box-shadow: 8px 8px 0 #000">
+<div style="position: absolute; left: 18px; top: -20px; display: flex; height: 36px; transform: rotate(-1.5deg); filter: drop-shadow(4px 4px 0 #000)">
+<span style="display: flex; align-items: center; padding: 0 10px; background: #FF4FA3; border: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000">03</span>
+<span style="display: flex; align-items: center; padding: 0 14px; background: #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">LEFT RAIL</span>
+</div>
+
+<div style="position: absolute; left: 24px; top: 34px; width: 236px; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{rail}}" as="n" hint-placeholder-count="4">
+<div class="kb-rwrap" style="position: relative; transform: translateX({{n.shift}}px)">
+<button class="kb-r" onClick="{{n.pick}}" aria-label="{{n.label}}" aria-pressed="{{n.pressed}}" style="position: relative; display: block; width: 210px; height: 46px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<span style="position: absolute; left: 5px; right: -5px; top: 5px; bottom: -5px; background: #000"></span>
+<span class="kb-rface" style="position: absolute; inset: 0; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding-left: 26px; background: {{n.face}}; border: 4px solid #000; overflow: hidden">
+<span style="position: absolute; left: -8px; top: -4px; bottom: -4px; width: 24px; background: {{n.edge}}; border-right: 4px solid #000; transform: skewX(-14deg)"></span>
+<svg viewBox="0 0 30 30" width="28" height="28" aria-hidden="true" style="position: relative; flex: none; filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{n.i.bag}}" hint-placeholder-val="{{ false }}"><path d="M5 10 L25 10 L23 27 L7 27 Z" fill="#FFE94A"></path><path d="M15 10 L25 10 L23 27 L15 27 Z" fill="#F2A900" stroke="none"></path><path d="M5 10 L25 10 L23 27 L7 27 Z" fill="none"></path><path d="M10 10 C10 3 20 3 20 10" fill="none"></path></sc-if>
+<sc-if value="{{n.i.gem}}" hint-placeholder-val="{{ false }}"><path d="M8 4 L22 4 L28 11 L15 27 L2 11 Z" fill="#2EFFE0"></path><path d="M15 27 L28 11 L20 11 Z" fill="#12A99A" stroke="none"></path><path d="M2 11 L28 11 M15 27 L10 11 M15 27 L20 11" fill="none" stroke-width="2"></path></sc-if>
+<sc-if value="{{n.i.book}}" hint-placeholder-val="{{ false }}"><path d="M3 6 C8 4 12 5 15 8 C18 5 22 4 27 6 L27 26 C22 24 18 25 15 28 C12 25 8 24 3 26 Z" fill="#FF4FA3"></path><path d="M15 8 C18 5 22 4 27 6 L27 26 C22 24 18 25 15 28 Z" fill="#C2187A" stroke="none"></path><path d="M3 6 C8 4 12 5 15 8 C18 5 22 4 27 6 L27 26 C22 24 18 25 15 28 C12 25 8 24 3 26 Z M15 8 L15 28" fill="none"></path></sc-if>
+<sc-if value="{{n.i.loop}}" hint-placeholder-val="{{ false }}"><path d="M24 12 A10 10 0 1 0 25 19" fill="none" stroke-width="7"></path><path d="M24 12 A10 10 0 1 0 25 19" fill="none" stroke="#B04BFF" stroke-width="3.5"></path><path d="M19 6 L27 11 L19 15 Z" fill="#B04BFF"></path></sc-if>
+</g></svg>
+<span style="position: relative; font-family: 'Bungee', sans-serif; font-size: 20px; color: {{n.ink}}">{{n.label}}</span>
+</span>
+</button>
+<sc-if value="{{n.active}}" hint-placeholder-val="{{ false }}"><svg class="kb-slam" width="22" height="30" viewBox="0 0 22 30" style="position: absolute; left: 214px; top: 8px" aria-hidden="true"><path d="M2 3 L19 15 L2 27 Z" fill="{{n.edge}}" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{n.dot}}" hint-placeholder-val="{{ false }}"><span class="kb-dot" style="position: absolute; top: -9px; left: 196px; width: 22px; height: 22px; box-sizing: border-box; border-radius: 50%; background: #FF3D7F; border: 4px solid #000; pointer-events: none"></span></sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="position: absolute; left: 300px; top: 34px; right: 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; gap: 10px; align-items: flex-start"><span style="flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: #FFE94A; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000; transform: rotate(-4deg)">1</span><span style="font-size: 13px; line-height: 1.4; color: #fff">EDGE WEDGE 24PX, −14°<br><span style="color: #c9b8e8">COLOUR = WHERE IT TAKES YOU</span></span></div>
+<div style="display: flex; gap: 10px; align-items: flex-start"><span style="flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: #2EFFE0; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000; transform: rotate(3deg)">2</span><span style="font-size: 13px; line-height: 1.4; color: #fff">INK ICON 28PX + 2PX DROP<br><span style="color: #c9b8e8">SAME ICONS AS MENU V2</span></span></div>
+<div style="display: flex; gap: 10px; align-items: flex-start"><span style="flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: #FF3D7F; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000; transform: rotate(-2deg)">3</span><span style="font-size: 13px; line-height: 1.4; color: #fff">DOT 22PX, PULSE 1.4S<br><span style="color: #c9b8e8">CLEARS WHEN YOU VISIT</span></span></div>
+<div style="display: flex; gap: 10px; align-items: flex-start"><span style="flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: #B04BFF; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000; transform: rotate(4deg)">4</span><span style="font-size: 13px; line-height: 1.4; color: #fff">ACTIVE: +14 SLIDE, FLOOD,<br>POINTER SLAMS IN <span style="color: #FFE94A">· {{railNow}}</span></span></div>
+</div>
+</div>
+
+<!-- 04 TABS -->
+<div style="position: absolute; left: 28px; top: 652px; width: 780px; height: 226px; box-sizing: border-box; background: #12071f; border: 4px solid #000; box-shadow: 8px 8px 0 #000">
+<div style="position: absolute; left: 18px; top: -20px; display: flex; height: 36px; transform: rotate(-2.5deg); filter: drop-shadow(4px 4px 0 #000)">
+<span style="display: flex; align-items: center; padding: 0 10px; background: #B04BFF; border: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000">04</span>
+<span style="display: flex; align-items: center; padding: 0 14px; background: #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">TABS</span>
+</div>
+
+<div style="position: absolute; left: 28px; top: 40px; display: flex; flex-direction: column; gap: 12px">
+<div role="tablist" aria-label="Time range" style="position: relative; width: 420px; height: 64px; box-sizing: border-box; background: #08030f; border: 5px solid #000; box-shadow: 6px 6px 0 #000; transform: skewX(-8deg)">
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 6px; background: #000; opacity: .6"></span>
+<span class="{{aSquash}}" style="position: absolute; top: 4px; bottom: 4px; left: {{aLeft}}px; width: 198px; display: block">
+<span style="position: absolute; inset: 0; box-sizing: border-box; background: #FFE94A; border: 4px solid #000; overflow: hidden">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 32%; background: #F2A900"></span>
+<span style="position: absolute; left: 8px; right: 50%; top: 4px; height: 5px; background: #fff"></span>
+</span>
+</span>
+<div style="position: absolute; inset: 0; display: flex">
+<sc-for list="{{tabsA}}" as="t" hint-placeholder-count="2">
+<button role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="flex: 1; padding: 0; border: 0; background: transparent; cursor: pointer">
+<span class="kb-tlab" style="display: inline-block; transform: skewX(8deg); font-family: 'Bungee', sans-serif; font-size: 20px; color: {{t.ink}}">{{t.label}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="font-size: 13px; color: #c9b8e8">2-SEG · SLOT + SLIDING SLAB · 340MS OVERSHOOT + SQUASH</div>
+</div>
+
+<div style="position: absolute; left: 490px; top: 40px; width: 256px; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 13px; color: #c9b8e8">PREVIEW · {{aName}}</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+<div style="height: 26px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: {{r.bg}}; border: 3px solid #000; transform: skewX(-8deg)">
+<span style="transform: skewX(8deg); font-family: 'Bungee', sans-serif; font-size: 15px; color: {{r.rc}}; width: 28px">{{r.rank}}</span>
+<span style="transform: skewX(8deg); flex: 1; font-size: 13px; color: #fff">{{r.name}}</span>
+<span class="{{r.cls}}" style="transform: skewX(8deg); font-family: 'Bungee', sans-serif; font-size: 16px; color: {{r.vc}}; -webkit-text-stroke: 3px #000; paint-order: stroke fill">{{r.val}}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="position: absolute; left: 28px; top: 146px">
+<div role="tablist" aria-label="Rank by" style="position: relative; height: 54px; width: 440px">
+<sc-for list="{{tabsB}}" as="t" hint-placeholder-count="3">
+<button role="tab" aria-selected="{{t.sel}}" class="kb-plate" onClick="{{t.pick}}" style="position: absolute; left: {{t.left}}px; top: {{t.top}}px; width: {{t.w}}px; height: 40px; padding: 0; background: {{t.bg}}; border: 4px solid #000; box-shadow: {{t.sh}}px {{t.sh}}px 0 #000; transform: skewX(-10deg) rotate({{t.rot}}deg); cursor: pointer">
+<span style="display: inline-block; transform: skewX(10deg); font-family: 'Bungee', sans-serif; font-size: {{t.fs}}px; line-height: 1; color: {{t.ink}}">{{t.label}}</span>
+</button>
+</sc-for>
+<div class="kb-tab" style="position: absolute; top: 50px; left: {{bLeft}}px; width: {{bW}}px; height: 8px; background: {{bColor}}; border: 3px solid #000">
+<svg width="18" height="12" viewBox="0 0 18 12" style="position: absolute; left: 50%; top: -14px; margin-left: -9px" aria-hidden="true"><path d="M2 11 L9 2 L16 11 Z" fill="{{bColor}}" stroke="#000" stroke-width="3" stroke-linejoin="round"></path></svg>
+</div>
+</div>
+</div>
+<div style="position: absolute; left: 490px; top: 168px; width: 256px; font-size: 13px; line-height: 1.4; color: #c9b8e8">3-SEG PLATES: PICKED ONE GROWS 16 → 22, LIFTS, TAKES ITS COLOUR</div>
+</div>
+
+<!-- 05 TOGGLES -->
+<div style="position: absolute; left: 836px; top: 652px; width: 502px; height: 226px; box-sizing: border-box; background: #12071f; border: 4px solid #000; box-shadow: 8px 8px 0 #000">
+<div style="position: absolute; left: 18px; top: -20px; display: flex; height: 36px; transform: rotate(2deg); filter: drop-shadow(4px 4px 0 #000)">
+<span style="display: flex; align-items: center; padding: 0 10px; background: #FFC23D; border: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000">05</span>
+<span style="display: flex; align-items: center; padding: 0 14px; background: #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">TOGGLES</span>
+</div>
+
+<div style="position: absolute; left: 26px; right: 26px; top: 38px; height: 66px; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">REDUCE MOTION</span>
+<span style="font-size: 13px; color: #c9b8e8">{{rmSub}}</span>
+</div>
+<button class="kb-tog" role="switch" aria-checked="{{rmAria}}" aria-label="Reduce motion" onClick="{{toggleRm}}" style="position: relative; width: 150px; height: 58px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-10deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 6px; bottom: -6px; background: #000"></span>
+<span class="kb-track" style="position: absolute; inset: 0; box-sizing: border-box; background: {{rmTrack}}; border: 5px solid #000; overflow: hidden">
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 6px; background: rgba(0,0,0,.35)"></span>
+<span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%) skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000; opacity: {{rmOnOp}}">ON</span>
+<span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%) skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #8f7bb3; opacity: {{rmOffOp}}">OFF</span>
+</span>
+<span class="kb-knob" style="position: absolute; top: 5px; bottom: 5px; left: {{rmKnob}}px; width: 56px; box-sizing: border-box; background: {{rmKnobBg}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: rgba(0,0,0,.18)"></span>
+<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" style="position: relative; transform: skewX(10deg)">
+<sc-if value="{{rmOn}}" hint-placeholder-val="{{ false }}"><path d="M3 11 L9 17 L19 4" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="miter" stroke-linecap="square"></path></sc-if>
+<sc-if value="{{rmOff}}" hint-placeholder-val="{{ true }}"><path d="M4 4 L18 18 M18 4 L4 18" fill="none" stroke="#000" stroke-width="5"></path></sc-if>
+</svg>
+</span>
+</button>
+</div>
+
+<div style="position: absolute; left: 26px; right: 26px; top: 122px; height: 84px; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">AUTO ROLL</span>
+<span style="font-size: 13px; color: #c9b8e8">TAP TO CYCLE · STOPS AT TARGET</span>
+</div>
+<button class="kb-cycb" onClick="{{cycle}}" aria-label="Auto roll target" style="position: relative; width: 236px; height: 78px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-8deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 18px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 12px; bottom: 0; box-sizing: border-box; background: {{autoLip}}; border: 5px solid #000"></span>
+<span class="kb-cyc" style="position: absolute; left: 0; right: 0; top: 0; height: 66px; box-sizing: border-box; background: {{autoBg}}; border: 5px solid #000; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px">
+<span class="{{autoSlam}}" style="transform: skewX(8deg); font-family: 'Bungee', sans-serif; font-size: {{autoFs}}px; line-height: 1; color: {{autoInk}}">{{autoLabel}}</span>
+<span style="display: flex; gap: 6px; transform: skewX(8deg)">
+<sc-for list="{{pips}}" as="p" hint-placeholder-count="3"><span style="width: 30px; height: 10px; background: {{p.bg}}; border: 3px solid #000; transform: skewX(-20deg)"></span></sc-for>
+</span>
+</span>
+</button>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":900}}'>
+function fmt(x) {
+  var S = [['Qa', 1e15], ['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + S[i][0]; }
+  return String(Math.floor(x));
+}
+var COST = 75, GIFT = 45;
+var RAIL = [
+  { label: 'SHOP', c: '#FFE94A', d: '#F2A900', i: { bag: true } },
+  { label: 'ROLL', c: '#2EFFE0', d: '#12A99A', i: { gem: true } },
+  { label: 'INDEX', c: '#FF4FA3', d: '#C2187A', i: { book: true } },
+  { label: 'REBIRTH', c: '#B04BFF', d: '#7A1FC4', i: { loop: true } }
+];
+var TB = [
+  { label: 'WINS', c: '#FFE94A', w: 120 },
+  { label: 'XP', c: '#2EFFE0', w: 96 },
+  { label: 'REBIRTHS', c: '#D88BFF', w: 186 }
+];
+var AUTO = [
+  { label: 'OFF', bg: '#1a0b2e', lip: '#08030f', ink: '#c9b8e8', fs: 28 },
+  { label: 'RARE+', bg: '#3D8BFF', lip: '#1f4fa8', ink: '#000', fs: 28 },
+  { label: 'EPIC+', bg: '#B04BFF', lip: '#6a20b0', ink: '#000', fs: 28 },
+  { label: 'LEGENDARY+', bg: '#FFC23D', lip: '#b07a10', ink: '#000', fs: 22 }
+];
+var NAMES = ['QWERTYQUEEN', 'KEYSMASH', 'LOWERCASE'];
+var BASE = [[4.2e9, 8.8e8, 1.9e8], [3.1e12, 9.4e11, 2.2e11], [61, 48, 33]];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      gems: 240, floats: [], fid: 0, gemBump: false,
+      denyLive: false, denySpec: false,
+      claimCd: false,
+      hold: false, phase: 0, tier: 7, flash: false,
+      rank: 4, rankBump: false, ach: 2,
+      rail: 1, dots: { SHOP: true, ROLL: false, INDEX: false, REBIRTH: true },
+      tabA: 0, tabB: 0, squash: false, valBump: false,
+      rm: false, autoIdx: 0, autoSlam: false
+    };
+    this.t = [];
+    this.h1 = null; this.h2 = null;
+  }
+  componentWillUnmount() { this.t.forEach(clearTimeout); clearTimeout(this.h1); clearTimeout(this.h2); }
+  later(fn, ms) { this.t.push(setTimeout(fn, ms)); }
+  pulse(key, ms) {
+    var self = this, o = {}; o[key] = false; this.setState(o);
+    this.later(function () { var p = {}; p[key] = true; self.setState(p); }, 20);
+    this.later(function () { var p = {}; p[key] = false; self.setState(p); }, ms || 420);
+  }
+  float(text, color) {
+    var self = this, id = this.state.fid + 1;
+    this.setState({ fid: id, floats: this.state.floats.concat([{ id: id, t: text, c: color }]).slice(-4) });
+    this.later(function () { self.setState({ floats: self.state.floats.filter(function (f) { return f.id !== id; }) }); }, 860);
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var can = st.gems >= COST;
+    var price = 100 * Math.pow(4, st.tier);
+    var a = AUTO[st.autoIdx];
+
+    var lefts = [], acc = 0;
+    TB.forEach(function (t) { lefts.push(acc); acc += t.w + 14; });
+
+    var rows = NAMES.map(function (n, i) {
+      var v = BASE[st.tabB][i] * (st.tabA === 1 ? 0.07 : 1);
+      if (st.tabB === 2) v = Math.max(1, Math.round(BASE[2][i] * (st.tabA === 1 ? 0.15 : 1)));
+      return {
+        rank: '#' + (i + 1), name: n, val: fmt(v),
+        bg: i === 0 ? '#2a0e4a' : '#1a0b2e',
+        rc: i === 0 ? '#FFC23D' : '#c9b8e8',
+        vc: TB[st.tabB].c,
+        cls: st.valBump ? 'kb-bump' : ''
+      };
+    });
+
+    return {
+      rmClass: st.rm ? 'kb-rm' : '',
+      gems: st.gems, floats: st.floats, gemBump: st.gemBump ? 'kb-bump' : '',
+
+      rollCls: can ? 'kb-p' : 'kb-p kb-off',
+      rollFace: can ? '#FFE94A' : 'repeating-linear-gradient(-45deg, #2a1747 0 8px, #22113c 8px 14px)',
+      rollLip: can ? '#F2A900' : '#1a0b2e',
+      rollShade: can ? '#F2A900' : 'transparent',
+      rollGlint: can ? '#fff' : 'transparent',
+      rollInk: can ? '#000' : '#8f7bb3',
+      rollLabel: can ? 'ROLL' : 'NO GEMS', rollFs: can ? 38 : 24,
+      denyLive: st.denyLive ? 'kb-deny' : '',
+      roll: function () {
+        if (self.state.gems < COST) { self.pulse('denyLive', 400); return; }
+        self.setState({ gems: self.state.gems - COST });
+        self.float('−' + COST, '#FF3D7F');
+        self.pulse('gemBump', 340);
+      },
+
+      denySpec: st.denySpec ? 'kb-deny' : '',
+      needColor: st.denySpec ? '#FFE94A' : '#FF3D7F',
+      denyTap: function () { self.pulse('denySpec', 400); },
+
+      claimCd: st.claimCd, claimReady: !st.claimCd,
+      claimCls: st.claimCd ? 'kb-p kb-off' : 'kb-p',
+      claimFace: st.claimCd ? '#1a0b2e' : '#2EFFE0',
+      claimLip: st.claimCd ? '#08030f' : '#0b6f66',
+      claimShade: st.claimCd ? 'transparent' : '#12A99A',
+      claimGlint: st.claimCd ? 'transparent' : '#fff',
+      claimInk: st.claimCd ? '#2EFFE0' : '#000',
+      claimLabel: st.claimCd ? 'CLAIMED' : 'CLAIM', claimFs: st.claimCd ? 24 : 34,
+      claimSub: st.claimCd ? 'NEXT IN 2S' : '+' + GIFT + ' GEMS',
+      claim: function () {
+        if (self.state.claimCd) return;
+        self.setState({ claimCd: true, gems: self.state.gems + GIFT });
+        self.float('+' + GIFT, '#2EFFE0');
+        self.pulse('gemBump', 340);
+        self.later(function () { self.setState({ claimCd: false }); }, 2400);
+      },
+
+      tier: st.tier, tierNext: st.tier + 1, price: fmt(price),
+      holdPct: st.hold ? 100 : 0,
+      holdEdge: st.hold ? 4 : 0,
+      holdTrans: st.hold ? 'width 1s linear' : (st.flash ? 'none' : 'width .18s ease-out'),
+      holdShake: st.phase === 2 ? 'kb-sh2' : st.phase === 1 ? 'kb-sh1' : '',
+      holdCls: st.hold ? 'kb-p kb-held' : 'kb-p',
+      holdLabel: st.hold ? 'HOLDING' : 'HOLD TO BUY',
+      holdFlash: st.flash,
+      holdStart: function () {
+        if (self.state.hold) return;
+        self.setState({ hold: true, phase: 1, flash: false });
+        self.h1 = setTimeout(function () { self.setState({ phase: 2 }); }, 550);
+        self.h2 = setTimeout(function () {
+          self.setState({ hold: false, phase: 0, tier: self.state.tier + 1, flash: true });
+          self.later(function () { self.setState({ flash: false }); }, 850);
+        }, 1000);
+      },
+      holdEnd: function () {
+        if (!self.state.hold) return;
+        clearTimeout(self.h1); clearTimeout(self.h2);
+        self.setState({ hold: false, phase: 0 });
+      },
+
+      icons: [
+        { aria: 'Leaderboard, rank ' + st.rank, g: { podium: true }, rot: -3, lip: '#FFE94A',
+          hasTag: true, tag: '#' + st.rank, tagBg: st.rank === 1 ? '#FFC23D' : '#FFE94A', tagCls: st.rankBump ? 'kb-bump' : '',
+          hasDot: false, dot: '', cap: 'RANK TAG · TAP',
+          tap: function () { self.setState({ rank: self.state.rank > 1 ? self.state.rank - 1 : 4 }); self.pulse('rankBump', 340); } },
+        { aria: 'Stats', g: { bars: true }, rot: 2, lip: '#2EFFE0',
+          hasTag: false, tag: '', tagBg: '', tagCls: '', hasDot: false, dot: '', cap: 'NOTHING TO DO',
+          tap: function () {} },
+        { aria: 'Achievements, ' + st.ach + ' to claim', g: { trophy: true }, rot: -2, lip: '#FF3D7F',
+          hasTag: false, tag: '', tagBg: '', tagCls: '', hasDot: st.ach > 0, dot: String(st.ach),
+          cap: st.ach > 0 ? 'DOT · TAP CLAIMS' : 'CLEAR · TAP REFILL',
+          tap: function () {
+            if (self.state.ach > 0) { self.setState({ ach: self.state.ach - 1, gems: self.state.gems + 15 }); self.float('+15', '#2EFFE0'); self.pulse('gemBump', 340); }
+            else self.setState({ ach: 2 });
+          } }
+      ],
+
+      rail: RAIL.map(function (r, i) {
+        var on = st.rail === i;
+        return {
+          label: r.label, i: r.i, active: on, pressed: on ? 'true' : 'false',
+          face: on ? r.c : '#1a0b2e', edge: on ? r.d : r.c, ink: on ? '#000' : '#fff',
+          shift: on ? 14 : 0, dot: !!st.dots[r.label] && !on,
+          pick: function () {
+            var d = {}; for (var k in self.state.dots) d[k] = self.state.dots[k];
+            d[r.label] = false;
+            self.setState({ rail: i, dots: d });
+          }
+        };
+      }),
+      railNow: RAIL[st.rail].label,
+
+      aLeft: 4 + st.tabA * 206,
+      aSquash: st.squash ? 'kb-tab kb-squash' : 'kb-tab',
+      aName: (st.tabA === 0 ? 'ALL TIME' : 'THIS WEEK') + ' · ' + TB[st.tabB].label,
+      tabsA: ['ALL TIME', 'THIS WEEK'].map(function (l, i) {
+        return {
+          label: l, sel: st.tabA === i ? 'true' : 'false', ink: st.tabA === i ? '#000' : '#c9b8e8',
+          pick: function () { if (self.state.tabA === i) return; self.setState({ tabA: i }); self.pulse('squash', 320); self.pulse('valBump', 320); }
+        };
+      }),
+      tabsB: TB.map(function (t, i) {
+        var on = st.tabB === i;
+        return {
+          label: t.label, sel: on ? 'true' : 'false', left: lefts[i], w: t.w,
+          top: on ? 0 : 6, rot: on ? -2 : 0, sh: on ? 5 : 3,
+          bg: on ? t.c : '#1a0b2e', ink: on ? '#000' : '#c9b8e8', fs: on ? 22 : 16,
+          pick: function () { if (self.state.tabB === i) return; self.setState({ tabB: i }); self.pulse('valBump', 320); }
+        };
+      }),
+      bLeft: lefts[st.tabB], bW: TB[st.tabB].w, bColor: TB[st.tabB].c,
+      rows: rows,
+
+      rmOn: st.rm, rmOff: !st.rm, rmAria: st.rm ? 'true' : 'false',
+      rmTrack: st.rm ? '#2EFFE0' : '#12071f',
+      rmKnob: st.rm ? 89 : 5, rmKnobBg: st.rm ? '#fff' : '#c9b8e8',
+      rmOnOp: st.rm ? 1 : 0, rmOffOp: st.rm ? 0 : 1,
+      rmSub: st.rm ? 'ON · THIS WHOLE SHEET IS STILL NOW' : 'OFF · SHAKES, SLIDES, POPS',
+      toggleRm: function () { self.setState({ rm: !self.state.rm }); },
+
+      autoBg: a.bg, autoLip: a.lip, autoInk: a.ink, autoFs: a.fs, autoLabel: a.label,
+      autoSlam: st.autoSlam ? 'kb-slam' : '',
+      pips: [1, 2, 3].map(function (k) { return { bg: k <= st.autoIdx ? (st.autoIdx === k ? '#fff' : '#000') : (st.autoIdx === 0 ? '#3a2160' : 'rgba(0,0,0,.25)') }; }),
+      cycle: function () { self.setState({ autoIdx: (self.state.autoIdx + 1) % AUTO.length }); self.pulse('autoSlam', 320); }
+    };
+  }
+}
+</script>
+</body>
+</html>
