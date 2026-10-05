@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~08:10 ✅ #181 MARK ROLLS LIVE + VISUAL PASS MERGED + LIVE (4cc344e in index-DmSL80VR.js; Andy authorized for today) · prod: no % on the level bar, ROLL + ×10 visible, a real roll landed (LINKER COMMON 1 IN 13 ×1.1 NEW), 0 errors · reveal default = version a (SLAM); b/c still switchable via ?mrv=b|c · #182 WB/Blitz bonuses as BOOST opened, merges when green
 - oct5 07:30 ✅ #169 REBIRTH RUSH MERGED + LIVE (merge 7d40765 in index-8LKFGQ1M.js) · prod fresh-profile WB round 18 turns, 0 errors · prod conversion check: an old R4 LV195 save → R11 LV1, peak 195 kept, "REBIRTH 11 / YOUR LEVELS BECAME +7 REBIRTHS" once, 0 errors · ANDY: run 018 now (SQL on your clipboard / supabase/migrations/018_rebirth_rush.sql), then say "ran it"
 - 21:37 ✅ prod = latest merge (#177 merge SHA 2489a71 in index-DqFizBW1.js; #178 in index-BTkW9DBE.js) · main CI green through 79d99c5, 2489a71 E2E running · board API sane AND rebirths-first live (1 Tangie R10 LV126 · 2 Daan R9 · 3 Xavi R8 LV168 … 10 snapplemelon R4 LV195; no test rows) · fresh LV1 WB solo on prod to game-over (10 turns) · 0 console errors
 - 19:50 ✅ prod = latest merge (#174 "3 ROUNDS · 30s EACH" in ModeExample-DM1JMtXc.js) · main CI green on 1f40b4f, 9e3e781 E2E running · board API sane (18 rows, no test rows; NoBuffCookies LV15→17 on econ 10; Xavi's 1e9 still shows "—") · fresh LV1 WB solo on prod played to game-over (6 turns, claude/finetune/prod-checkup-wb.mjs) · 0 console errors
@@ -185,7 +186,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [ ] 5. (13:35: visible half DONE on feat/numbers-feel a1c31c8 — '43.7%' with one decimal, a pooled '+X.X%' pop per credit, a flash + soft note at every 10%, the bar counts up from where it was when you left for a game; the movement check FAILED badly → Option F proposal at the top of ANDY TODO) HIGH-LEVEL BAR FEELS STAGNANT (Andy LV175: "bar just isn't moving"): show % to next level with a decimal, a "+X%" pop per word, a small milestone tick every 10% with a little reward feel. Sim: at LV150–250 the bar moves ≥0.5% per average word. If the existing-player numbers say the wait is too long, PROPOSE (don't apply) a fair one-time rescale with before/after per top player.
 
 ## WB + BLITZ WORD BONUSES BACK (Andy oct5) — after #169 and #181 merge
-- [ ] Restore the combo streak, lucky word and rare-word bonuses in Word Bomb + Category Blitz as BOOST multipliers (they fit the frozen formula's BOOST slot), with their old pop visuals. No new words. Merge when green.
+- [~] (#182, on CI) Restore the combo streak, lucky word and rare-word bonuses in Word Bomb + Category Blitz as BOOST multipliers (they fit the frozen formula's BOOST slot), with their old pop visuals. No new words. Merge when green.
 
 ## MARK ROLLS LIVE (Andy oct3 ~23:30) — fresh branch off main; VISUALS FIRST, NO NEW WORDS; TIER 1 (rolls touch the economy) → 2-context local test, then STOP: Andy play-tests before merge
 - [ ] Remove the ?rolls=1 gate (rolls live). (#169 merges with ROLLS_ON=false so rolls only go live through this PR.)
