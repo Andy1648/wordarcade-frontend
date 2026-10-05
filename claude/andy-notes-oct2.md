@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~12:30 ⚠ MAIN RED on payload-budget: 963,965 vs ratchet 963,000 — #193 and #198 each passed alone, together they cross it. Fix in flight (perf/initial-payload-trim, lazy/dead-code, ratchet NOT raised). #194 GEMS (−244 B vs main), #201, #202 wait behind it; their only CI failure is that same check.
 - oct5 ~11:40 MERGED #193 ROLL SCREEN (full-screen reel, version a; INDEX/✕ work mid-reveal; ROLL tutorial = spotlight on ROLL). Next in the stack: #194 GEMS → #201 named stats → #202 word cut + ROLL/INDEX split (all refreshed onto main, CI running).
 - oct5 ~11:20 MERGED #198 Chromebook pages (3 full-ratio cards a page at ≤700px tall; arrows/dots/keys/swipe; pager lazy; at 1163×501 the cards cap to the row, ~11% squat — the only size short of full ratio).
 - oct5 ~11:15 ✅ #199 MERGED + LIVE (588a330): KEY TIER kept across rebirths, gate LV 25×(R+1), conversion frozen at 15+18R. **ANDY: RUN 019 NOW** (supabase/migrations/019_round_rebirth_gate.sql, on your clipboard) then `notify pgrst`; until then the board's level cap (15+18R+36) is below the new gate.
