@@ -20,9 +20,13 @@ import { winnerPerkMult } from './markPerks.js';
 // key order so the breakdown reads the same way every time — a list that reorders itself between
 // words is harder to read than no list at all.
 // REBIRTH RUSH (PROGRESSION FINAL, frozen): WINS / word = BASE 10 × length/5 × MODE × REBIRTH × MARK × BOOST
-// (× FRENZY on FUSE). These are the ONLY rows. Difficulty, streak, mastery, STAR POWER, the LETTER FORGE
-// and the per-word rarity / combo / lucky weight no longer pay — a caller that still passes them is
-// ignored here, so the receipt can never name (or multiply in) a bonus the bank did not pay.
+// (× FRENZY on FUSE). These are the ONLY rows. Difficulty, streak, mastery, STAR POWER and the LETTER FORGE
+// no longer pay — a caller that still passes them is ignored here, so the receipt can never name (or
+// multiply in) a bonus the bank did not pay.
+// WORD BOMB + BLITZ: the per-word weight (rarity × combo × lucky, capped) sits in the formula's BOOST slot
+// (wins.js WEIGHTED_MODES), so BOOST = code boost × OVERDRIVE × RARITY × LENGTH × COMBO × LUCKY × MULT CAP.
+// Its parts are named as BOOST sub-rows (`sub: 'boost'`) right under the BOOST row, so the player reads
+// which of them moved this word. Only App's Word Bomb receipt passes them; any other mode leaves them ×1.
 export const PAYOUT_FACTORS = [
   { key: 'mode', label: 'MODE', kind: 'permanent' },
   { key: 'rebirth', label: 'REBIRTH', kind: 'permanent' },
@@ -32,6 +36,14 @@ export const PAYOUT_FACTORS = [
   { key: 'frenzy', label: 'FRENZY', kind: 'word' },
   // BOOST — a redeem code's ×N × OVERDRIVE (boost.js), every mode, for its minutes.
   { key: 'boost', label: 'BOOST', kind: 'word' },
+  // BOOST sub-rows (Word Bomb + Blitz only — the per-word weight bankWordWins pays for those modes).
+  { key: 'rarity', label: 'RARITY', kind: 'word', sub: 'boost' },
+  { key: 'length', label: 'LENGTH', kind: 'word', sub: 'boost' },
+  { key: 'combo', label: 'COMBO', kind: 'word', sub: 'boost' },
+  { key: 'lucky', label: 'LUCKY', kind: 'word', sub: 'boost' },
+  // The ×40 ceiling on the combined rarity×combo×lucky product (PER_WORD_MULT_CAP). A factor BELOW 1 when
+  // it bites, listed for exactly that reason: a word that paid less than its multipliers promised says why.
+  { key: 'cap', label: 'MULT CAP', kind: 'word', sub: 'boost' },
 ];
 const FACTOR_BY_KEY = new Map(PAYOUT_FACTORS.map((f) => [f.key, f]));
 
@@ -44,8 +56,9 @@ const num = (v, dflt = 1) => (Number.isFinite(v) && v > 0 ? v : dflt);
  * @param {number} arg.base    the flat per-word base before any multiplier (wordWinsBase())
  * @param {number} [arg.letters]  the word's letter count, so the receipt can NAME the base
  * @param {number} [arg.perLetter] XP per letter at the player's key tier, ditto
- * @param {object} arg.factors { mode, rebirth, bonus (MARK), frenzy, boost } — each a multiplier,
- *                               missing/1 = inactive; any other key is ignored (it does not pay)
+ * @param {object} arg.factors { mode, rebirth, bonus (MARK), frenzy, boost, + WB/Blitz BOOST sub-factors
+ *                               rarity, length, combo, lucky, cap } — each a multiplier, missing/1 =
+ *                               inactive; any other key is ignored (it does not pay)
  * @param {number} [arg.total] the amount ACTUALLY banked this call, when the caller knows it.
  *                             NOTE: this is NOT what the receipt prints. See `paid` below.
  * @param {string} [arg.band]  the rarity band name (COMMON/UNCOMMON/RARE/OBSCURE), for the note
@@ -100,14 +113,19 @@ export function buildPayout({ base = 0, factors = {}, total, band, letters, perL
  * "COMBO ×1" is noise; "COMBO — streak under 2" is the answer to a question the player is
  * actually asking when the number looks small.
  */
-// Only the factors that still pay (Rebirth Rush) can be "off" — combo / rarity / lucky / streak are
-// not in the formula, so naming them here would advertise a bonus that does not exist.
+// Only the factors that still pay (Rebirth Rush) can be "off". Combo / rarity / lucky pay only in Word Bomb
+// + Blitz (BOOST sub-factors), so they are named as off only when the caller's factors carry them — a mode
+// that does not pay them never advertises them. Streak is not in the formula.
 export function inactivePayoutFactors(factors = {}) {
   const out = [];
   const off = (key, why) => {
     const f = FACTOR_BY_KEY.get(key);
     if (f) out.push({ ...f, why });
   };
+  const has = (k) => factors && Object.prototype.hasOwnProperty.call(factors, k);
+  if (has('combo') && num(factors.combo) === 1) off('combo', 'streak under 2');
+  if (has('rarity') && num(factors.rarity) === 1) off('rarity', 'COMMON word');
+  if (has('lucky') && num(factors.lucky) === 1) off('lucky', 'no lucky roll');
   if (num(factors.rebirth) === 1) off('rebirth', 'no rebirths yet');
   if (num(factors.bonus) === 1) off('bonus', 'no mark worn yet');
   return out;

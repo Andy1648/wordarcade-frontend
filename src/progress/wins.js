@@ -288,7 +288,7 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
  * the forge to XP itself, from `word`; pass it the UN-forged weight.)
  */
 export function bankWeight(weight, word) {
-  void word; // REBIRTH RUSH: the forge is out of the formula; bankWordWins pays by word count
+  void word; // REBIRTH RUSH: the forge is out of the formula (bankWordWins pays this weight for WB + Blitz only)
   const w = Number.isFinite(weight) && weight > 0 ? weight : 1;
   return w;
 }
@@ -554,16 +554,23 @@ export function grantWins(n, label, meta = {}) {
 // and words 4+ each release exactly their own weight — full per-word fidelity, no caller-side
 // buffer. prevWeight/nowWeight DEFAULT to the counts (every word ×1) when omitted, so any caller
 // that doesn't pass a weight behaves byte-identically to the pre-rarity payout.
+// The modes whose per-word weight (rarity × combo × lucky) pays, as part of BOOST. Payout-key spelling.
+export const WEIGHTED_MODES = new Set(['wordBomb', 'blitz']);
 export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight, nowWeight, rebirthCount, wordLength } = {}) {
   const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
   const prevN = iCount(prevWords);
   const nowN = iCount(nowWords);
-  // REBIRTH RUSH: the FROZEN formula pays every word at BASE 10 × length/5 × MODE × 5^R × MARK × BOOST — no
-  // per-word weight (rarity × combo × lucky). The callers still pass their weights; they are ignored and the
-  // banked unit is the word COUNT. (Paid count is ZERO until the count clears the gate.)
-  void prevWeight; void nowWeight;
-  const paidPrev = prevN >= MIN_WORDS ? prevN : 0;
-  const paidNow = nowN >= MIN_WORDS ? nowN : 0;
+  // REBIRTH RUSH: the FROZEN formula pays every word at BASE 10 × length/5 × MODE × 5^R × MARK × BOOST.
+  // WORD BOMB + BLITZ (Andy oct5, feat/wb-bonus-boost): the per-word WEIGHT (rarity × combo × lucky, capped at
+  // PER_WORD_MULT_CAP — xp.cappedWordMult) is a BOOST factor again, so for those two modes the banked unit is
+  // the cumulative weight; every other mode stays count-based (its callers' weights are ignored). WINS ONLY:
+  // XP per LETTER stays BASE 10 × KEY × 5^R × MARK × code-boost × OVERDRIVE (letterXp.js) — these are per-WORD
+  // bonuses, so they never touch the bar. (Paid weight is ZERO until the COUNT clears the gate.)
+  const weighted = WEIGHTED_MODES.has(modeKey(mode));
+  const prevW = weighted && Number.isFinite(prevWeight) ? prevWeight : prevN;
+  const nowW = weighted && Number.isFinite(nowWeight) ? nowWeight : nowN;
+  const paidPrev = prevN >= MIN_WORDS ? prevW : 0;
+  const paidNow = nowN >= MIN_WORDS ? nowW : 0;
   const deltaWeight = paidNow - paidPrev;
   if (deltaWeight <= 0) return 0;
   // `wordLength` is THIS word's letters — the same count the XP award used, so the two readouts

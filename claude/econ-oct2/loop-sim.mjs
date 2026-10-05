@@ -625,6 +625,8 @@ function simulate(skill, start = null) {
           else if (paceStart[L] == null && before < L && after === L) paceStart[L] = minute;
         }
       }
+      // feat/wb-bonus-boost: pkey 'wordBomb' is a WEIGHTED mode (wins.js WEIGHTED_MODES), so a WB word banks its
+      // rarity x combo x lucky weight (the BOOST word bonus); CHAIN / FUSE ignore the weight and pay by count.
       WINS.bankWordWins({ mode: pkey, difficulty: diff, wordLength: word.length, prevWords: i - 1, nowWords: i, prevWeight: prevW, nowWeight: weightSum });
       if (mode === 'word-bomb') WC.addWords('word-bomb');
       COLL.recordAcceptedWord(word, { mode, band: rw.band });

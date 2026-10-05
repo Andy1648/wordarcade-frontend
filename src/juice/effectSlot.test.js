@@ -85,6 +85,9 @@ test('tag labels are short caps and name the real factor', () => {
   assert.equal(tagLabel('clutch'), 'CLUTCH');
   assert.equal(tagLabel('lucky', { luckyMult: 5 }), 'LUCKY'); // Rebirth Rush: no ×N — lucky pays no multiplier
   assert.equal(tagLabel('lucky'), 'LUCKY');
+  // Word Bomb + Blitz pay the lucky ×N (a BOOST sub-factor), so their tag names it
+  assert.equal(tagLabel('lucky', { luckyMult: 5, paysMult: true }), 'LUCKY ×5');
+  assert.equal(tagLabel('lucky', { paysMult: true }), 'LUCKY ×5');
   assert.equal(tagLabel('rare', { band: 'obscure' }), 'OBSCURE');
   assert.equal(tagLabel('tier', { tierLabel: 'on fire' }), 'ON FIRE');
   assert.equal(tagLabel('hype'), '');
