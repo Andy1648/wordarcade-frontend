@@ -35,7 +35,7 @@ function headers() {
   return { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 }
 
-async function rpc(fn, body) {
+export async function rpc(fn, body) {
   const r = await fetch(`${BASE}/rest/v1/rpc/${fn}`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
   const text = await r.text();
   let data = null;
@@ -186,9 +186,24 @@ export async function claimName(username) {
 }
 
 let lastSubmit = 0;
-/** Push my stats if I have a name. Throttled to once per 30 s unless forced; never throws. */
-export async function submitStats(force = false) {
+// 021: what the last push carried and whether the DB's 5 s throttle would have taken it — so the server-checked
+// rebirth pushes fresh stats only when they changed, and waits out the throttle instead of being silently dropped.
+// pushMeta.last = { at, level, rebirths, words, likely } — read (and marked stale) by the lazy serverRebirth.js
+export const pushMeta = { last: null };
+/** Push my stats if I have a name. Throttled to once per 30 s unless forced; never throws.
+ *  021: while a server rebirth is in flight (or one is still unanswered) the push waits for it — a push carrying
+ *  the old, lower rebirth count would be read as a RESET and undo the server's rebirth. `internal` = the rebirth
+ *  flow's own pre-rebirth push. */
+export async function submitStats(force = false, { internal = false } = {}) {
   if (!LEADERBOARD_ENABLED || !getMyProfile()) return false;
+  if (!internal) {
+    // a server rebirth in flight or unanswered (its request id is stored for that whole time — KEEP IN SYNC WITH
+    // rebirthFlow.js PENDING_REBIRTH_KEY): settle it first (same id; settle refuses while one is in flight). Loads
+    // the rebirth code only now.
+    let settled = true;
+    try { if (localStorage.getItem('taw.lb.rbreq')) settled = await (await import('./serverRebirth.js')).settlePendingRebirth(); } catch { settled = false; }
+    if (!settled) return false;
+  }
   const now = Date.now();
   if (!force && now - lastSubmit < SUBMIT_EVERY_MS) return false;
   lastSubmit = now;
@@ -224,6 +239,8 @@ export async function submitStats(force = false) {
         p_wins_per_word: s.winsPerWord,
       });
     }
+    const p = pushMeta.last;
+    pushMeta.last = { at: now, level: s.level, rebirths: s.rebirths, words: s.lifetimeWords, likely: !p || now - p.at > 5000 };
     // STEP 52: the cloud save rides the same push (throttled to once a minute; never lowers).
     if (caps.cloud) backupNow({ rpc, secret: getSecret(), econ: caps.econ });
     return true;
@@ -231,6 +248,9 @@ export async function submitStats(force = false) {
     return false;
   }
 }
+
+// ---- 021: SERVER-CHECKED REBIRTH lives in the LAZY ./serverRebirth.js (performRebirth / requestRebirth /
+// requestAscend) — only needed when the player rebirths, so it stays out of the menu's eager chunk.
 
 // ---- STEP 52: cloud save ----------------------------------------------------------------------
 /**
