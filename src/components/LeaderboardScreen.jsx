@@ -426,7 +426,7 @@ export default function LeaderboardScreen({ onBack }) {
                 <span className="lb-you-rank">
                   {/* no place yet: a line, not a giant dash in the hero's numeral slot */}
                   {view === 'week'
-                    ? (weekMe ? `#${fmt(weekMe.rank)}` /* the active THIS WEEK tab says which board */ : <span className="lb-you-rank-sub">NOT RANKED THIS WEEK</span>)
+                    ? (weekMe ? `#${fmt(weekMe.rank)}` /* the active THIS WEEK tab says which board (CLUTTER PASS: so the fallback drops it too) */ : <span className="lb-you-rank-sub">NOT RANKED</span>)
                     : (meRow ? `#${fmt(meRow.rank)}` : <span className="lb-you-rank-sub">NOT RANKED YET</span>)}
                 </span>
                 {view === 'all' && heroMove > 0 && (

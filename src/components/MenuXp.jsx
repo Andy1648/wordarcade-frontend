@@ -969,7 +969,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         levelSubRef.current.textContent = m ? 'MILESTONE' : LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
       }
       // Economy v3: level-ups no longer pay wins, so there is no "+N WINS" reward line here.
-      if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
+      // CLUTTER PASS (Andy oct3): no "LV n-1 → LV n" — the LEVEL n title right above it says it (:empty hides the row).
+      if (levelDetailRef.current) levelDetailRef.current.textContent = '';
       a.cancel();
       a.play();
       // BIGGER at higher tiers: the starburst from T1, and a ring of shards that grows per tier.

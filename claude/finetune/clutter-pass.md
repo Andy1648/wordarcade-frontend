@@ -3,7 +3,7 @@
 > "REMOVE the % on the progression bar. Delete any label, sublabel or helper sentence that repeats
 > what a number or icon already shows. Don't add a single new word anywhere."
 
-Branch `feat/clutter-pass` (off `feat/pv11`). Deletions and merges only. No new copy, no number or
+Branch `feat/visual-pass` (off `feat/pv11` 0d986f1 / PR #169, with `feat/clutter-pass` merged in; it was first cut from pv11 1d246c1). Deletions and merges only. No new copy, no number or
 economy changes. Every aria-label and alt is kept. Line numbers are post-change. Each site carries a
 `CLUTTER PASS` comment.
 
@@ -41,8 +41,8 @@ Follow-on: MenuXp.css no longer hides `.menu-xp-readout-now` at ≤560px. That r
 | src/components/GameScreen.jsx:5099 | reroll `title="Swap the current category for a different one"` | The button text `NEW CATEGORY (n)`. The two disabled-state titles stay. |
 | src/components/GameScreen.jsx (Word Bomb + Blitz Spotlight) | `sub="START TYPING"` (×2) | The caption `TYPE A WORD WITH THESE LETTERS` / `NAME SOMETHING IN THE CATEGORY`. |
 | src/components/GameScreen.jsx:1490 | the `PLAYERS` section label over the results table | The table's own `PLAYER` column header. The 16px gap moved to `.go-ptable`. |
-| src/race/WordRaceScreen.jsx:258 | `WORD n OF N` (words mode) | Your highlighted lane's `n/N`. |
-| src/race/WordRaceScreen.jsx:264 | `WORD n OF N ·` (fragment mode) | Same. `NEXT <frag>` stays. |
+| src/race/WordRaceScreen.jsx:339 | `WORD n OF N` (words mode) | Your highlighted lane's `n/N`. |
+| src/race/WordRaceScreen.jsx:345 | `WORD n OF N ·` (fragment mode) | Same. `NEXT <frag>` stays. |
 | src/components/CgArmScreen.jsx:136 | desktop hint `FIRST LETTER FIRES IT OFF` | The input placeholder `TYPE ANY LETTER TO START`. |
 | src/components/CgArmScreen.jsx:121 | touch placeholder `TAP TO START…` | The `TAP TO START` button under it. |
 | src/solo/FuseGame.jsx:405 | armHint `SNEAK THOSE LETTERS INTO A WORD` | The placeholder `SNEAK "ARM" INTO A WORD`. |
@@ -61,7 +61,34 @@ Follow-on: MenuXp.css no longer hides `.menu-xp-readout-now` at ≤560px. That r
 | src/components/RoomScreen.jsx:327 | `PICK BOT DIFFICULTY` | The EASY / MEDIUM / TOUGH buttons. |
 | src/components/AudioControls.jsx:~66 | toggle `title="MUSIC sound: on"` etc. | The row label beside each toggle, plus its on/off styling. The aria-label is kept. |
 
-Total: 43 removals (3 % + 40 labels and tooltips).
+Total for this section: 43 removals (3 % + 40 labels and tooltips). See section 2b for the re-audit on #169.
+
+## 2b. Re-audit on #169 (feat/visual-pass) — 4 more
+
+The merge was clean (pv11 1d246c1 → 0d986f1 only touched WordRaceScreen for the challenge link, TeachStrip's pay line
+and e2e seeds). A fresh % sweep found no % on any level bar: `formatPct` / `formatGainPct` have no JSX caller, the phone
+LV strip, `LevelUpChip` (`LV n ↑`), the wall `LV n`, and Stats (`XP INTO LEVEL a / b`, no %) are clean.
+
+| file:line | removed | what already said it |
+|---|---|---|
+| src/components/MenuXp.jsx:972 | level-up card detail `LV n-1 → LV n` | The `LEVEL n` title directly above it. The detail row is `:empty` → hidden (the rebirth / KEY-reset variants still fill it). |
+| src/components/ShopScreen.jsx:221 | KEY POWER goal `READY TO UNLOCK` | The full bar under it + the live HOLD price button. `NEED N MORE WINS` stays. |
+| src/components/ShopScreen.jsx:320 | REBIRTH goal `READY TO REBIRTH` | The full bar + the live `REBIRTH n — ×…` button. `N LEVELS TO GO` stays. |
+| src/components/LeaderboardScreen.jsx:429 | ` THIS WEEK` in `NOT RANKED THIS WEEK` | The active THIS WEEK tab (same reason the ` THIS WEEK` after `#n` went). Now `NOT RANKED`. |
+
+CSS: `.shop-goal:empty { display: none }` (ShopScreen.css:530) so an empty goal takes no row; the bar keeps its 6px gap.
+
+Grand total: 47 removals (3 % + 44 labels / tooltips).
+
+Re-audit candidates considered and KEPT:
+- MarksIndex `N% COLLECTED` over the collection bar: the marks milestones are priced in % (`NEXT 25% → …`), so this is the only current reading of that scale. Not the level bar.
+- MarksIndex hero `MAXED`: the full bar alone doesn't say there is no next rank.
+- TimerOverMoment `FRENZY OVER` / `BOOST OVER` title: the flying tiles spell it, but they're gone in ~1s; the title is the steady read.
+- Word Bomb `LAST LIFE` badge: a warning, not a label (the hearts show it too, but this is the alarm).
+- Word Bomb MATCH rail `TURN name`: the rail stays as it is (see section 3).
+- Blitz `GO! TYPE ANYTHING THAT FITS` empty state: it partly repeats the label and placeholder, but removing it collapses the answers list and moves the rail when the first answer lands. That's a layout change on a gated screen.
+- Word Race results `N WORDS` per racer: the results card is the only place that pairs the place with the count.
+- Word Race `FINISHED — WAITING ON THE FIELD`: the waiting half is new info.
 
 Dead CSS removed with them: `.menu-wins-label`, `.menu-streak-day`, `.menu-xp-readout-pct`, `.hp-m-stats-pct`, `.shop-wins-label`, `.lb-hero-label`, `.cg-arm-hint`, `.room-instruction`, `.room-addbot-label`, `.lobby-instruction`, `.browser-empty-sub`.
 
@@ -91,4 +118,4 @@ Dead CSS removed with them: `.menu-wins-label`, `.menu-streak-day`, `.menu-xp-re
 ## 4. Tests
 
 - Unit: none asserted removed text. `format.sweep.test.js` still covers `formatPct` / `formatGainPct`, which are unused but kept.
-- e2e edited (not run): shop.spec.js, purchase-feel-shop.spec.js, shop-keyboard.spec.js, leaderboard-pull.spec.js, leaderboard-top10.spec.js, leaderboard-weekly.spec.js, public-rooms-full.spec.js, mode-preview.spec.js.
+- e2e edited (not run): ext-milestones.spec.js (level-up detail now ''), shop.spec.js, purchase-feel-shop.spec.js, shop-keyboard.spec.js, leaderboard-pull.spec.js, leaderboard-top10.spec.js, leaderboard-weekly.spec.js, public-rooms-full.spec.js, mode-preview.spec.js.
