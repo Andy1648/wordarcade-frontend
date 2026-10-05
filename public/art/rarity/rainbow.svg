@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" preserveAspectRatio="none">
+  <!-- the SECRET / RAINBOW sweep: five slanted palette bands (pink, orange, yellow, cyan, purple), each a
+       different width, the yellow one dripping. Swept ONCE on appear / hover — never looped. -->
+  <path d="M30 0 L48 0 L22 100 L4 100 Z" fill="#FF4FA3" opacity="0.75"/>
+  <path d="M48 0 L62 0 L36 100 L22 100 Z" fill="#FF6B3D" opacity="0.75"/>
+  <path d="M62 0 L80 0 L54 100 L36 100 Z" fill="#FFE94A" opacity="0.75"/>
+  <path d="M80 0 L92 0 L66 100 L54 100 Z" fill="#2EFFE0" opacity="0.75"/>
+  <path d="M92 0 L110 0 L84 100 L66 100 Z" fill="#9A1AFF" opacity="0.75"/>
+  <path d="M44 100 L45 90 Q48 86 50 91 L49 100 Z" fill="#FFE94A" opacity="0.75"/>
+  <circle cx="118" cy="14" r="2.5" fill="#FF4FA3" opacity="0.8"/>
+  <circle cx="12" cy="88" r="1.8" fill="#2EFFE0" opacity="0.8"/>
+</svg>

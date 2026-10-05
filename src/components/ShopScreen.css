@@ -872,3 +872,6 @@
 .shop-kp-current {
   flex-wrap: wrap;
 }
+
+/* TIER IDENTITY (Andy oct5): the KEY tier chips (src/components/rarity/RarityFin.css, KEY_RAMP) */
+.shop-kp-tier { font-weight: 700; --rar-spark: 12px; }

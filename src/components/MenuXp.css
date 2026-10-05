@@ -669,6 +669,12 @@ button.menu-mark:active {
 .menu-mark-mult {
   color: #1a0b2e;
 }
+/* RARITY IDENTITY (Andy oct5): the worn mark's chip is filled in its tier (src/components/rarity/RarityFin.css) —
+   COMMON grey … SECRET black + rainbow — so its ink follows the tier, and the press keeps its hard shadow. */
+.menu-mark.rarity-fin { --rar-spark: 12px; }
+.menu-mark.rarity-fin .menu-mark-mult { color: inherit; }
+button.menu-mark.rarity-fin:hover { --rar-off: 4px 4px 0 #000; }
+button.menu-mark.rarity-fin:active { --rar-off: 1px 1px 0 #000; }
 @media (max-width: 560px) {
   .menu-mark-name,
   .menu-mark-mult {
@@ -1143,3 +1149,7 @@ button.menu-mark:active {
 
 /* Andy oct3 18:55: the one place the menu says LONGER WORDS PAY MORE (the cards no longer repeat it) */
 .menu-xp-hint-rule { color: #FFE94A; margin-right: 10px; white-space: nowrap; }
+
+/* TIER IDENTITY (Andy oct5): the welded level badge has no shadow of its own — re-apply the tier edge
+   (src/components/rarity/RarityFin.css); its sparks sit just inside (the barrow clips). */
+.menu-xp-bar.is-loud .menu-xp-lvblock.rarity-edge { box-shadow: var(--rar-edge); --rar-spark: 12px; --rar-spark-out: 2px; }

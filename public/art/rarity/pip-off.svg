@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <!-- an EMPTY ★ dupe pip: the same lopsided star, a dark panel fill and a grey outline (not earned yet) -->
+  <path d="M19 2 L24 14.5 L37.5 15 L27 23.5 L30.5 37 L19 29.5 L7.5 37 L11 23.5 L1.5 15.5 L14.5 14.5 Z" transform="translate(2,2)" fill="#000"/>
+  <path d="M19 2 L24 14.5 L37.5 15 L27 23.5 L30.5 37 L19 29.5 L7.5 37 L11 23.5 L1.5 15.5 L14.5 14.5 Z" fill="#1a0b2e" stroke="#5E5770" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M15 10 L18 6 L19 11 Z" fill="#2a1648"/>
+</svg>
