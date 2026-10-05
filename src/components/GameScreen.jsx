@@ -2933,6 +2933,27 @@ export default function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameOver]);
 
+  // THE K.O. CARD MAKES ROOM FOR WHAT THE DICE BRING (fix/ko-card-scroll). Part of the card is chance:
+  // a SECRET FIND (the 1-in-750 golden pop) or an achievement adds a named WINS line, and the wins block
+  // itself only exists once a word has banked. None of that can be reserved, and none of it may be hidden,
+  // so when the card would scroll it drops its FLAVOUR instead: the roast blurb and the no-definition
+  // filler (data-ko-tight), the same two things the short-phone card already drops. Measured when the card
+  // mounts, again once the fonts land, and when the earned lines change, never per frame; once tight it
+  // stays tight. Runs after GameOverBreakdown's own check (child layout effects first), so a laptop card
+  // folds its breakdown before it gives up its blurb. Hooks above the early returns (the #310 trap above).
+  useLayoutEffect(() => {
+    const card = goCardRef.current;
+    if (!gameOver || !card) return undefined;
+    let live = true;
+    const check = () => {
+      if (!live || !card.isConnected || card.dataset.koTight) return;
+      if (card.scrollHeight - card.clientHeight > 0) card.dataset.koTight = '1';
+    };
+    check();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(check);
+    return () => { live = false; };
+  }, [gameOver, missedWord, winsEarnedTotal, winsBonusLines, payoutLedger]);
+
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
   // than threading conditionals through the turn-based Word Bomb layout.

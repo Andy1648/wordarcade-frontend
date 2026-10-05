@@ -2512,6 +2512,11 @@
   letter-spacing: 0.5px;
   color: #FFE94A;
   margin: -2px 0 16px;
+  /* The roast is picked at random and runs one OR two lines (never three at any supported width,
+     measured across both pools). Reserve both lines so the pick can't change the card's height:
+     the K.O. card's fit was a coin flip on which roast it drew (fix/ko-card-scroll). */
+  line-height: 1.4;
+  min-height: 2.8em;
 }
 
 .game-over-leave {
@@ -6438,6 +6443,11 @@ html[data-beat='true'] .wb-belly {
 .game-over-card[data-ko-compact] .go-awards-slot--mid { display: none; }
 .game-over-card[data-ko-compact] .go-awards-slot--side { display: block; }
 .game-over-card[data-ko-compact] .go-more > .go-more-toggle { display: flex; }
+/* TIGHT CARD (fix/ko-card-scroll): set by GameScreen only when the card would still scroll — a SECRET FIND
+   or an achievement line landed. It drops the two flavour blocks the short phone already drops (see above);
+   nothing that carries a fact goes. */
+.game-over-card[data-ko-tight] .game-over-blurb,
+.game-over-card[data-ko-tight] .missed-hold-nogloss { display: none; }
 
 /* SHORT LAPTOP WINDOWS: rhythm only, so a full 4-player card fits 1366x625 without folding. */
 @media (min-width: 900px) and (max-height: 700px) {
