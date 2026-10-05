@@ -763,7 +763,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label); /* TYPE FLOOR: the turn flag: the one cue that it is on you */
+  font-size: var(--fs-body); /* TYPE FLOOR: the turn flag: the one cue that it is on you */
   color: #FFE94A;
   background: #000;
   border: 2.5px solid #FFE94A;
@@ -1015,7 +1015,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label); /* TYPE FLOOR: the opponent-is-typing field */
+  font-size: var(--fs-body); /* TYPE FLOOR: the opponent-is-typing field */
   color: #FFE94A;
   opacity: 0.4;
   letter-spacing: 2px;
@@ -1271,12 +1271,13 @@
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
   white-space: nowrap;
-  animation: word-fly 300ms ease-in forwards;
+  animation: word-fly 480ms cubic-bezier(0.3, 0, 0.6, 1) forwards; /* fine-tune oct5: was 300ms / 180px */
 }
 
 @keyframes word-fly {
   0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -180px) scale(0.55); opacity: 0; }
+  20% { transform: translate(-50%, 10px) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -240px) scale(0.55); opacity: 0; }
 }
 
 /* Each thrown letter also does a quick staggered pop on launch (the container
@@ -1354,16 +1355,16 @@
    constantly, so it's deliberately small + fast (NOT a celebration). Yellow. */
 .submit-accept { color: #FFE94A; }
 .submit-accept .submit-letter {
-  animation: submit-pop 340ms ease-out both;
-  animation-delay: calc(var(--i, 0) * 26ms);
+  animation: submit-pop 560ms ease-out both; /* fine-tune oct5: was 340ms, -9px, 1.14x */
+  animation-delay: calc(var(--i, 0) * 30ms);
 }
 
 @keyframes submit-pop {
-  0% { transform: translateY(0) scale(0.85); opacity: 0; }
-  35% { transform: translateY(-9px) scale(1.14); opacity: 1; }
-  60% { transform: translateY(0) scale(1); opacity: 1; }
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  30% { transform: translateY(-18px) scale(1.32); opacity: 1; }
+  55% { transform: translateY(0) scale(1); opacity: 1; }
   80% { opacity: 1; }
-  100% { transform: translateY(-3px) scale(1); opacity: 0; }
+  100% { transform: translateY(-8px) scale(1); opacity: 0; }
 }
 
 /* REJECT: a quick jitter, then each letter flings out with a downward DROP and
@@ -1977,7 +1978,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label); /* TYPE FLOOR: names what the fragment IS - not decoration */
+  font-size: var(--fs-body); /* TYPE FLOOR: names what the fragment IS - not decoration */
   letter-spacing: 1px;
   color: #FF6B3D;
   margin-bottom: 8px;
@@ -1990,12 +1991,13 @@
    resting rotate(-1deg) tilt stays on the outer box, so the punch is scale-only
    here (no rotate) to avoid fighting that tilt. */
 .game-combo-punch.punch {
-  animation: combo-box-punch 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: combo-box-punch 520ms cubic-bezier(0.22, 1, 0.36, 1); /* fine-tune oct5: was 280ms / 1.07x */
 }
 
 @keyframes combo-box-punch {
   0%   { transform: scale(1); }
-  35%  { transform: scale(1.07); }
+  25%  { transform: scale(1.16); }
+  55%  { transform: scale(0.97); }
   100% { transform: scale(1); }
 }
 
@@ -2058,7 +2060,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-label); /* TYPE FLOOR: a word you may not play again */
+  font-size: var(--fs-body); /* TYPE FLOOR: a word you may not play again */
   color: #1a0b2e;
   background: #E8B98A;
   border: 2.5px solid #B0824E;
@@ -2262,7 +2264,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   text-align: center;
   border: 3px solid #000;
   border-radius: 8px;
@@ -2734,11 +2736,11 @@
   color: #FF5C5C;
   font-size: var(--fs-h2);
   letter-spacing: 1px;
-  animation: go-eliminated-slam 380ms cubic-bezier(0.2, 1.5, 0.3, 1) both;
+  animation: go-eliminated-slam 700ms cubic-bezier(0.2, 1.5, 0.3, 1) both; /* fine-tune oct5: was 380ms / 2.4x */
 }
 
 @keyframes go-eliminated-slam {
-  0% { transform: scale(2.4) skewX(-3deg); opacity: 0; }
+  0% { transform: scale(3.2) skewX(-3deg); opacity: 0; }
   55% { transform: scale(0.9) skewX(-3deg); opacity: 1; }
   78% { transform: scale(1.1) skewX(-3deg); }
   100% { transform: scale(1) skewX(-3deg); }
@@ -2950,7 +2952,7 @@
 
 /* ---- Hero: the category is the dominant element, fluid up to large ---- */
 .cb-round .cb-category-label {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   margin-bottom: clamp(8px, 1vw, 14px);
 }
 
@@ -3010,7 +3012,7 @@
    (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
    screen's chips are unchanged. Padding grows a touch to match. */
 .cb-round .cb-answer-chip {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   padding: 4px 9px;
 }
 
@@ -3018,7 +3020,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
+  font-size: var(--fs-body) /* was --fs-micro: words (fix/min-text-sweep) */;
   letter-spacing: 1px;
   color: #C9B8E8;
   text-align: center;
@@ -3104,7 +3106,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
+  font-size: var(--fs-body) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #000;
   background: #2EFFE0;
   border: 2.5px solid #1A9985;
@@ -3147,7 +3149,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label); /* was --fs-micro: a player's name (fix/min-text-sweep) */
+  font-size: var(--fs-body); /* was --fs-micro: a player's name (fix/min-text-sweep) */
   color: #fff;
   display: flex;
   align-items: center;
@@ -3164,7 +3166,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
+  font-size: var(--fs-body) /* was --fs-micro: these are words (fix/min-text-sweep) */;
   color: #2EFFE0;
   flex-shrink: 0;
 }
@@ -3512,7 +3514,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   color: #FF6B3D;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -3600,7 +3602,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
+  font-size: var(--fs-body) /* was --fs-micro: words (fix/min-text-sweep) */;
   line-height: 1.35;
   color: #C9B8E8;
   word-break: break-word;
@@ -3708,6 +3710,22 @@
 /* CB reuses the summary grid as a hero stat strip above the scoreboard. */
 .cb-stats-summary {
   margin-bottom: 12px;
+  /* ONE BIG THING (fine-tune oct5): YOUR SCORE takes the whole top row; TOP SCORE and PLAYERS
+     sit demoted under it as a pair, not as three equal tiles. */
+  grid-template-columns: repeat(2, 1fr);
+}
+.go-summary-item--hero {
+  grid-column: 1 / -1;
+  padding: 12px 8px;
+  border-color: #1A9985;
+}
+.go-summary-item--hero .go-summary-value {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+}
+.cb-stats-summary .go-summary-item:not(.go-summary-item--hero) .go-summary-value {
+  color: #C9B8E8;
 }
 
 .go-summary-item {
@@ -3732,7 +3750,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label); /* slack-wins: 3-up stat-tile label kept <16 so the tiles never overflow at 320px */
+  font-size: var(--fs-body); /* fine-tune oct5: was --fs-label; the label may wrap to two lines in a 3-up row at 320px */
   color: #C9B8E8;
   margin-top: 5px;
 }
@@ -3767,7 +3785,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label); /* slack-wins: award-pill label kept <16 so the pill row wraps tidily at 320px */
+  font-size: var(--fs-body); /* fine-tune oct5: was --fs-label; the pill row wraps */
   color: #000;
 }
 
@@ -3784,7 +3802,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: var(--fs-label); /* slack-wins: award-pill sub-detail kept <16 to keep the pill compact at 320px */
+  font-size: var(--fs-body); /* fine-tune oct5: was --fs-label */
   color: #1a0b2e;
   opacity: 0.85;
 }
@@ -3858,7 +3876,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label); /* slack-wins: 4-up per-player stat label kept <16 so four columns fit at 320px */
+  font-size: var(--fs-body); /* fine-tune oct5: was --fs-label; the grid drops to 2 columns below 600px, so 320px still fits */
   color: #9a8bbf;
   letter-spacing: 0.3px;
 }
@@ -4840,11 +4858,12 @@ html[data-beat='true'] .cb-answer-chip {
 .solo-new-record.celeb-stamp { opacity: 0; }
 .solo-new-record.celeb-stamp.slam {
   opacity: 1;
-  animation: celeb-stamp-slam 280ms cubic-bezier(.34,1.7,.5,1) both;
+  animation: celeb-stamp-slam 640ms cubic-bezier(.34,1.7,.5,1) both; /* fine-tune oct5: was 280ms / 2.6x */
 }
 @keyframes celeb-stamp-slam {
-  0%   { transform: scale(2.6) skewX(-7deg); opacity: 0; }
-  55%  { transform: scale(0.92) skewX(-7deg); opacity: 1; }
+  0%   { transform: scale(3.4) skewX(-7deg); opacity: 0; }
+  45%  { transform: scale(0.88) skewX(-7deg); opacity: 1; }
+  70%  { transform: scale(1.08) skewX(-2deg); opacity: 1; }
   100% { transform: scale(1) skewX(0deg); opacity: 1; }
 }
 
@@ -4861,11 +4880,11 @@ html[data-beat='true'] .cb-answer-chip {
 /* 4) Stat lines stagger in once the card hits stage 3. */
 .celeb-statline { opacity: 0; }
 .solo-results-card.celeb-stage-3 .celeb-statline {
-  animation: celeb-statline-in 260ms ease-out both;
+  animation: celeb-statline-in 520ms cubic-bezier(0.2, 1.3, 0.4, 1) both; /* fine-tune oct5: was 260ms / 9px */
   animation-delay: calc(var(--celeb-i, 0) * 110ms);
 }
 @keyframes celeb-statline-in {
-  0%   { opacity: 0; transform: translateY(9px); }
+  0%   { opacity: 0; transform: translateY(24px) scale(0.9); }
   100% { opacity: 1; transform: none; }
 }
 
@@ -5378,7 +5397,7 @@ html[data-beat='true'] .cb-answer-chip {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.12em;
   color: var(--v-ink-dim);
   line-height: 1;
@@ -5404,8 +5423,8 @@ html[data-beat='true'] .cb-answer-chip {
    makes the number and the bar disagree. */
 .wb-timer-bar {
   width: 100%;
-  height: 8px;
-  margin-top: 2px;
+  height: 16px; /* fine-tune oct5: 8px was a hairline, and the timer is the most-read thing mid-round */
+  margin-top: 4px;
   background: #06201d;
   border: 2px solid #000;
   border-radius: 3px;
@@ -5438,7 +5457,7 @@ html[data-beat='true'] .cb-answer-chip {
     min-width: 0;
     padding: 6px 10px;
   }
-  .wb-timer-bar { width: 42px; margin-top: 0; }
+  .wb-timer-bar { width: 56px; margin-top: 0; }
 }
 
 /* THE FRAGMENT is the brightest text on the screen and the largest: the hero step,
@@ -5588,14 +5607,14 @@ html[data-beat='true'] .cb-answer-chip {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label); /* TYPE FLOOR: the key half of a live match fact */
+  font-size: var(--fs-body); /* TYPE FLOOR: the key half of a live match fact */
   color: var(--v-ink-dim);
   flex: none;
 }
 .wb-status-v {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label); /* TYPE FLOOR: the value half - round / turn / streak / mode */
+  font-size: var(--fs-body); /* TYPE FLOOR: the value half - round / turn / streak / mode */
   color: var(--v-ink);
   text-transform: uppercase;
   overflow: hidden;
@@ -5655,7 +5674,7 @@ html[data-beat='true'] .cb-answer-chip {
   /* TYPE FLOOR: a used word is the rule you are playing under - you may not repeat it.
      The rail demotes it by PLACEMENT (a narrow column off the centre line), not by
      shrinking it under the 13px label floor. */
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   padding: 2px 6px;
   text-align: center;
   /* The chips are small and stacked; the base +-1.5deg jitter reads as sloppy at
@@ -6207,7 +6226,7 @@ html[data-beat='true'] .wb-belly {
   gap: 4px 14px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #9a8bbf;
@@ -6237,7 +6256,7 @@ html[data-beat='true'] .wb-belly {
   white-space: nowrap;
 }
 .go-ptable thead th {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: #9a8bbf;
   vertical-align: bottom;
@@ -6315,7 +6334,7 @@ html[data-beat='true'] .wb-belly {
   .go-ptable tbody td::before {
     content: attr(data-label);
     display: block;
-    font-size: var(--fs-label);
+    font-size: var(--fs-body);
     letter-spacing: 0.06em;
     color: #9a8bbf;
   }
@@ -6645,7 +6664,7 @@ html[data-beat='true'] .wb-belly {
     border-width: 6px;
     box-shadow: 7px 7px 0 #000;
   }
-  .wb-timer-bar { height: calc(8px * var(--wb-k, 1)); }
+  .wb-timer-bar { height: calc(16px * var(--wb-k, 1)); }
 
   /* THE RING: the bomb and seats are already fractions of --wb-size; the fixed px bands
      around a seat (its name, the YOUR TURN flag, the status line) scale here. */

@@ -108,7 +108,7 @@
   border: 8px solid #FFD429;
   box-shadow: 0 0 0 4px #000;
   opacity: 0;
-  animation: fx-lucky-ring 400ms ease-out 1;
+  animation: fx-lucky-ring 800ms ease-out 1; /* fine-tune oct5: was 400ms / 1.9x */
 }
 .fx-lucky-label {
   position: relative;
@@ -126,7 +126,7 @@
 @keyframes fx-lucky-ring {
   0% { transform: scale(0.3); opacity: 0.95; }
   70% { opacity: 0.6; }
-  100% { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(2.8); opacity: 0; }
 }
 @keyframes fx-lucky-label {
   0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
