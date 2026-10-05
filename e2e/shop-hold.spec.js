@@ -104,7 +104,7 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   await expect(hero.locator('.mx-hero-kicker')).toHaveText('YOUR MAIN · MARK II');
   // U (Andy oct2 22:25): ONE short tag — MAIN ×N (MARKS via ROLLS: COMMON ×1.1; ranks no longer scale the MAIN) —
   // and no sentence explaining it (the "PLUS ITS PERK" / "WEARING IT" lines are gone)
-  await expect(hero.locator('.mx-hero-pct')).toHaveText('MAIN ×1.1');
+  await expect(hero.locator('.mx-hero-pct')).toHaveText('+10% WINS'); // marks v2: BOMBER's stat
   await expect(hero.locator('.mx-hero-perk')).toHaveCount(0);
   await expect(hero.locator('.mx-hero-rank')).toContainText('180 MORE WORDS → MARK III');
   // no emoji left in the index
