@@ -74,7 +74,9 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(page.locator('[data-testid="marks-collected"] .mx-tierchip')).toHaveCount(6);
   await page.locator('.mx-close').click(); // back to the ROLL screen
   await page.locator('.rs-close').click();
-  await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×1.1 WINS'); // the worn MAIN says its stat, named (Andy oct5)
+  // Andy oct5 (later): the menu chip shows ONLY the worn mark's name — no stat line
+  await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveCount(0);
+  await expect(page.locator('.menu-mark .menu-mark-name')).not.toBeEmpty();
 });
 
 test('before LV 10 there is no marks layer at all', async ({ page }) => {

@@ -14,7 +14,6 @@ import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank } from '../progress/marks';
-import { markTag } from '../progress/markRollsCore';
 import { rarityClass, levelRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
@@ -389,8 +388,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
-            {/* Andy oct5: the MAIN says its stat, named — "×1.1 WINS ★2" — never a bare strength "×1.1" */}
-            <span className="menu-mark-mult" aria-hidden="true">{markTag(mark.id, undefined, { perk: false })}</span>
+            {/* Andy oct5 (later): the chip shows ONLY the mark's name — the stat lives on the ROLL screen / INDEX */}
             {/* GEMS: the dot means ONE thing — you can afford a roll (gems ≥ 10, or the free roll waits) */}
             {rollDot && <span className="homepage-shop-dot" data-testid="marks-roll-dot" aria-hidden="true" />}
             {/* RARITY IDENTITY: the chip is filled in its tier (CSS); EPIC+ glow + shimmer, LEGENDARY+ sparks on top */}
@@ -515,7 +513,8 @@ function BarRow({ loud, level, children }) {
       <span className={`menu-xp-lvblock rarity-edge is-${lr}`} aria-hidden="true">
         <span className="menu-xp-label">LEVEL</span>
         <span className="menu-xp-lv">{formatNum(level)}</span>
-        <RarityFx key={lr} tier={lr} />
+        {/* Andy oct5: no stars behind the level — the rung keeps its fill + shimmer, never the sparks */}
+        <RarityFx key={lr} tier={lr} particles={false} />
       </span>
       {children}
     </span>
