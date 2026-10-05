@@ -26,18 +26,36 @@ test('buildPayout multiplies every PAYING factor and reports the same total wins
 });
 
 // REBIRTH RUSH: the receipt is BASE 10 × length/5 × MODE × REBIRTH × MARK × BOOST (× FRENZY). A caller
-// that still passes a retired factor (difficulty, streak, forge, rarity, length, combo, lucky, cap) must
-// neither get a row for it nor have it multiplied into PAID — that would claim a bonus the bank never paid.
+// that still passes a retired factor (difficulty, streak, forge) must neither get a row for it nor have it
+// multiplied into PAID — that would claim a bonus the bank never paid.
 test('retired factors are never named and never multiplied in', () => {
   const r = buildPayout({
     base: 10,
-    factors: { mode: 2, difficulty: 1.5, streak: 1.2, forge: 1.3, rarity: 2.5, length: 1.1, combo: 1.6, lucky: 5, cap: 0.5 },
+    factors: { mode: 2, difficulty: 1.5, streak: 1.2, forge: 1.3 },
   });
   assert.deepEqual(r.rows.map((x) => x.key), ['mode']);
   assert.equal(r.product, 2);
   assert.equal(r.paid, 20);
-  assert.deepEqual(PAYOUT_FACTORS.map((f) => f.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost']);
+  assert.deepEqual(PAYOUT_FACTORS.map((f) => f.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost', 'rarity', 'length', 'combo', 'lucky', 'cap']);
   assert.equal(PAYOUT_FACTORS.find((f) => f.key === 'bonus').label, 'MARK');
+});
+
+// WORD BOMB + BLITZ: the per-word weight (rarity × combo × lucky, capped) is paid as part of BOOST, so the
+// receipt names its parts as BOOST sub-rows right after BOOST, and they multiply into PAID.
+test('WB/Blitz word bonus: RARITY / LENGTH / COMBO / LUCKY / MULT CAP are BOOST sub-rows that pay', () => {
+  const subs = PAYOUT_FACTORS.filter((f) => f.sub === 'boost').map((f) => [f.key, f.label]);
+  assert.deepEqual(subs, [['rarity', 'RARITY'], ['length', 'LENGTH'], ['combo', 'COMBO'], ['lucky', 'LUCKY'], ['cap', 'MULT CAP']]);
+  // they come right after BOOST in the published order
+  const keys = PAYOUT_FACTORS.map((f) => f.key);
+  assert.equal(keys.indexOf('rarity'), keys.indexOf('boost') + 1);
+  // a 5-letter RARE word on a ×1.3 combo with a LUCKY ×5, code BOOST ×3: 10 × 3 × 2.5 × 1.3 × 5
+  const r = buildPayout({ base: 10, factors: { mode: 1, boost: 3, rarity: 2.5, combo: 1.3, lucky: 5 } });
+  assert.deepEqual(r.rows.map((x) => x.key), ['boost', 'rarity', 'combo', 'lucky']);
+  assert.equal(r.paid, roundWordXp(10 * 3 * 2.5 * 1.3 * 5 * 10) / 10);
+  // the ×40 ceiling (PER_WORD_MULT_CAP) bites below 1 and still multiplies out
+  const c = buildPayout({ base: 10, factors: { rarity: 4.5, combo: 3, lucky: 5, cap: 40 / 67.5 } });
+  assert.equal(c.paid, 400);
+  assert.ok(c.rows.find((x) => x.key === 'cap' && x.label === 'MULT CAP'));
 });
 
 // THE BOTTOM LINE FOLLOWS FROM THE ROWS. This replaces a test that asserted the opposite — that a
@@ -50,7 +68,9 @@ test('PAID is exactly the product of the listed rows, rounded — always', () =>
     { base: 100, factors: { mode: 2, bonus: 1.25, boost: 3 } },
     { base: 100, factors: { mode: 1.5, rebirth: 25, bonus: 1.1, frenzy: 5 } },
     { base: 20, factors: {} },
-    { base: 100, factors: { mode: 2, rarity: 2.5, combo: 1.3 } }, // retired factors: ignored, still adds up
+    { base: 100, factors: { mode: 2, rarity: 2.5, length: 1.16, combo: 1.3 } }, // WB/Blitz BOOST sub-rows
+    { base: 100, factors: { mode: 2, difficulty: 1.5, streak: 1.2 } }, // retired factors: ignored, still adds up
+    { base: 100, factors: { mode: 2, cap: 0.4 } }, // a factor BELOW 1 still has to multiply out
   ];
   for (const c of cases) {
     const r = buildPayout(c);
@@ -84,9 +104,9 @@ test('rows come out in the fixed published order, never in object-key order', ()
   const r = buildPayout({
     base: 100,
     // deliberately reversed on the way in
-    factors: { boost: 3, frenzy: 5, bonus: 1.5, rebirth: 5, mode: 2 },
+    factors: { cap: 0.8, lucky: 5, combo: 1.2, length: 1.1, rarity: 2.5, boost: 3, frenzy: 5, bonus: 1.5, rebirth: 5, mode: 2 },
   });
-  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost']);
+  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost', 'rarity', 'length', 'combo', 'lucky', 'cap']);
   // ...and that order is the module's published one.
   assert.deepEqual(r.rows.map((x) => x.key), PAYOUT_FACTORS.map((f) => f.key));
 });
@@ -98,17 +118,25 @@ test('every factor is labelled and classed as permanent (built) or word (just di
   }
 });
 
-// REBIRTH RUSH: only factors that still PAY can be "off" (REBIRTH, MARK). COMBO / RARITY / LUCKY /
-// STREAK are not in the formula, so naming them as switched-off would advertise a bonus that does not exist.
+// REBIRTH RUSH: only factors that still PAY can be "off" (REBIRTH, MARK, and — in Word Bomb + Blitz, whose
+// receipt carries them — COMBO / RARITY / LUCKY). STREAK is not in the formula; a mode whose factors do not
+// carry combo / rarity / lucky never names them, so it never advertises a bonus it does not pay.
 test('inactive factors carry the REASON, and only for factors that still pay', () => {
   const off = inactivePayoutFactors({ rebirth: 1, bonus: 1, combo: 1, rarity: 1, lucky: 1, streak: 1 });
   assert.ok(off.find((f) => f.key === 'rebirth' && /rebirth/.test(f.why)));
   assert.ok(off.find((f) => f.key === 'bonus' && f.label === 'MARK' && /mark/.test(f.why)));
-  for (const k of ['combo', 'rarity', 'lucky', 'streak', 'difficulty', 'forge', 'wordSense']) {
+  assert.ok(off.find((f) => f.key === 'combo' && /streak/.test(f.why)));
+  assert.ok(off.find((f) => f.key === 'rarity' && /COMMON/.test(f.why)));
+  assert.ok(off.find((f) => f.key === 'lucky'));
+  for (const k of ['streak', 'difficulty', 'forge', 'wordSense']) {
     assert.equal(off.some((f) => f.key === k), false, `${k} does not pay — never listed`);
   }
+  // factors without combo / rarity / lucky (every non-WB/Blitz mode) never name them
+  const plain = inactivePayoutFactors({ rebirth: 1, bonus: 1 });
+  for (const k of ['combo', 'rarity', 'lucky']) assert.equal(plain.some((f) => f.key === k), false, `${k} not carried — not listed`);
   // An ACTIVE factor is never listed as inactive.
   assert.equal(inactivePayoutFactors({ rebirth: 5, bonus: 1.2 }).length, 0);
+  assert.equal(inactivePayoutFactors({ combo: 2 }).some((f) => f.key === 'combo'), false);
 });
 
 // ---- the round ledger ------------------------------------------------------------------------

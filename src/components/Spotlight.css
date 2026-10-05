@@ -49,7 +49,8 @@
   align-items: center;
   gap: 8px;
   text-align: center;
-  animation: spotlight-pop 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* visual-1 (A1/V "longer, bigger"): 260ms from 0.9x -> 620ms from 0.5x with an overshoot. */
+  animation: spotlight-pop 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .spotlight-caption.is-centered {
   top: 50%;
@@ -124,13 +125,15 @@
   to { opacity: 1; }
 }
 @keyframes spotlight-pop {
-  0% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+  0% { opacity: 0; transform: translateX(-50%) scale(0.5) rotate(-3deg); }
+  55% { opacity: 1; transform: translateX(-50%) scale(1.1) rotate(1deg); }
   100% { opacity: 1; transform: translateX(-50%) scale(1); }
 }
 /* centred variant keeps its translate on both axes through the pop */
 .spotlight-caption.is-centered { animation-name: spotlight-pop-centered; }
 @keyframes spotlight-pop-centered {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-3deg); }
+  55% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(1deg); }
   100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 

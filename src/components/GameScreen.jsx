@@ -47,7 +47,8 @@ import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
-import { plural, formatNum } from '../format';
+import { plural, formatNum, formatMult } from '../format';
+import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
 import { setDanger, stopDanger } from '../audio/gameSounds';
@@ -294,7 +295,7 @@ function wordSlot(landing, clutch) {
     // the word's own landing chip: the RARE slot's effect, or the UNCOMMON stand-in for the hype
     showLanding: landingShown && (slot.main === 'rare' || slot.main === 'hype'),
     showHype: slot.main === 'hype' && !landingShown,
-    labels: slot.tags.map((k) => tagLabel(k, { luckyMult, band })),
+    labels: slot.tags.map((k) => tagLabel(k, { luckyMult, band, paysMult: true })), // WB + Blitz pay lucky ×N
   };
 }
 
@@ -3890,7 +3891,7 @@ export default function GameScreen({
                 )}
                 {pending.phase === 'accept' && (
                   <span className="wb-pending-tag">
-                    ✓
+                    ✓{pending.combo > 1 ? ` ×${formatMult(comboMultiplier(pending.combo))}` : ''}
                   </span>
                 )}
                 {pending.phase === 'reject' && (
