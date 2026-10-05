@@ -16,6 +16,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 12, into: 0 }));
     localStorage.setItem('taw.achievements', JSON.stringify(['m-wb-5']));
     localStorage.setItem('taw.marksOwned', '[]');
+    localStorage.setItem('taw.tut.markRolls', '1'); // MARK ROLLS are LIVE: their one-step tutorial would cover the panel
   });
   await page.goto('/?portal=1');
   await menuReady(page);
@@ -37,9 +38,15 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await detail.getByRole('button', { name: 'SET AS MAIN' }).click();
   await expect(page.locator('.mx-hero .mx-hero-name')).toHaveText('BOMBER');
   await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
-  // a locked mark says exactly how to get it
-  await page.locator('.mx-tile.is-locked').first().click();
-  await expect(page.locator('.mx-howto')).toContainText('HOW TO GET IT:');
+  // MARK ROLLS are LIVE: the ROLL button sits under the MAIN hero
+  await expect(page.locator('.mr-roll')).toBeVisible();
+  // a locked ROLLABLE mark says its odds ("1 IN X") on the tier line — no how-to prose
+  await page.locator('.mx-tile.is-locked:not(.is-perm)').first().click();
+  await expect(detail.locator('.mx-detail-tier')).toContainText('1 IN ');
+  await expect(page.locator('.mx-howto')).toHaveCount(0);
+  // a locked PERMANENT says the task that earns it
+  await page.locator('.mx-tile.is-locked.is-perm').first().click();
+  await expect(page.locator('.mx-howto')).not.toBeEmpty();
   await page.locator('.mx-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×1.1'); // the worn MAIN under Rebirth Rush (COMMON ×1.1)
 });
@@ -76,6 +83,7 @@ for (const [label, seed] of [
       localStorage.setItem('taw.seenMenu', '1');
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.xp', JSON.stringify({ lv: 27, into: 0 }));
+      localStorage.setItem('taw.tut.markRolls', '1'); // MARK ROLLS are LIVE: keep their tutorial off this spec
       for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
     }, seed);
     await page.goto('/?portal=1');

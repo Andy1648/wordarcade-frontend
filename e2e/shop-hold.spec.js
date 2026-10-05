@@ -92,6 +92,7 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
     'taw.achievements': JSON.stringify(['m-wb-5', 'm-blitz-5']),
     'taw.mark': 'mk-bomber',
     'taw.markWords': JSON.stringify({ 'mk-bomber': 320 }),
+    'taw.tut.markRolls': '1', // MARK ROLLS are LIVE: their tutorial would cover the panel
   });
   const slot = page.locator('.menu-mark').first();
   await expect(slot.locator('svg.mark-badge')).toBeVisible();
