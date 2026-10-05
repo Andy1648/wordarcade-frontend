@@ -84,8 +84,8 @@ test('MARK_TIERS accents ARE the rarity identity (one source of truth)', () => {
 test('RarityFin.css: every tier class carries the table colours, nothing loops, will-change never appears', () => {
   const css = readFileSync(join(ROOT, 'src', 'components', 'rarity', 'RarityFin.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   for (const t of RARITY_ORDER) {
-    const m = css.match(new RegExp(`\\.rarity-fin\\.is-${t}\\s*\\{([^}]*)\\}`));
-    assert.ok(m, `.rarity-fin.is-${t} exists`);
+    const m = css.match(new RegExp(`:is\\(\\.rarity-fin, \\.rarity-ink, \\.rarity-edge\\)\\.is-${t}\\s*\\{([^}]*)\\}`));
+    assert.ok(m, `the .is-${t} tier vars exist`);
     const v = (name) => (m[1].match(new RegExp(`--${name}:\\s*([^;]+);`)) || [])[1];
     assert.equal(v('rar').toUpperCase(), RARITY[t].fill.toUpperCase(), `${t} --rar`);
     assert.equal(v('rar-line').toUpperCase(), RARITY[t].line.toUpperCase(), `${t} --rar-line`);

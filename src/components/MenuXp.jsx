@@ -15,7 +15,7 @@ import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank } from '../progress/marks';
 import { mainMultOf, markLevel, loadRollState } from '../progress/markRollsCore';
-import { rarityClass } from '../lib/rarityStyle.js';
+import { rarityClass, levelRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 
 /** The worn mark's dupe finish ('base' | 'gold' | 'rainbow') — guarded, a storage failure is 'base'. */
@@ -490,11 +490,15 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
    instead of a chip that happens to be near a bar. The mini (splash) bar keeps the bare track. */
 function BarRow({ loud, level, children }) {
   if (!loud) return children;
+  // TIER IDENTITY (Andy oct5): the level badge keeps the theme's fill and wears its LEVEL rung (LEVEL_RAMP) as a
+  // stripe + inner glow; crossing into a new rung replays its shimmer once (RarityFx keyed on the rung).
+  const lr = levelRarity(level);
   return (
     <span className="menu-xp-barrow">
-      <span className="menu-xp-lvblock" aria-hidden="true">
+      <span className={`menu-xp-lvblock rarity-edge is-${lr}`} aria-hidden="true">
         <span className="menu-xp-label">LEVEL</span>
         <span className="menu-xp-lv">{formatNum(level)}</span>
+        <RarityFx key={lr} tier={lr} />
       </span>
       {children}
     </span>

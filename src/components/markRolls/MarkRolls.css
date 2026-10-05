@@ -457,6 +457,6 @@
 /* the INDEX: owned tiles, the detail and the MAIN hero are tinted in their tier (RarityFin.css). Locked tiles
    stay the dark "not yours yet" panel. Sparks sit just inside a tile (the grid clips past its edge). */
 .mx-tile.rarity-fin { --rar-off: 0 0 #0000; --rar-spark: 14px; --rar-spark-out: 2px; }
-.mx-tile.is-sel.rarity-fin { box-shadow: var(--rar-fin), 4px 4px 0 #000, 0 0 var(--rar-g) var(--rar-gc); }
+.mx-tile.is-sel.rarity-fin.rarity-fin { box-shadow: var(--rar-fin), 4px 4px 0 #000, 0 0 var(--rar-g) var(--rar-gc); }
 .mx-detail.rarity-fin { --rar-off: 3px 3px 0 #000; --rar-spark: 16px; }
 .mx-hero.rarity-fin { --rar-off: 6px 6px 0 #000; --rar-spark: 24px; }

@@ -1149,3 +1149,7 @@ button.menu-mark.rarity-fin:active { --rar-off: 1px 1px 0 #000; }
 
 /* Andy oct3 18:55: the one place the menu says LONGER WORDS PAY MORE (the cards no longer repeat it) */
 .menu-xp-hint-rule { color: #FFE94A; margin-right: 10px; white-space: nowrap; }
+
+/* TIER IDENTITY (Andy oct5): the welded level badge has no shadow of its own — re-apply the tier edge
+   (src/components/rarity/RarityFin.css); its sparks sit just inside (the barrow clips). */
+.menu-xp-bar.is-loud .menu-xp-lvblock.rarity-edge { box-shadow: var(--rar-edge); --rar-spark: 12px; --rar-spark-out: 2px; }

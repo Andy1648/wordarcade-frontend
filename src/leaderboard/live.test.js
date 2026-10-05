@@ -57,3 +57,9 @@ test('RARITY IDENTITY: a roll tick hands its TIER to the render as a rarity key;
   assert.equal(tickParts({ k: 'roll', n: 'ZED', v: 3 }), null);
   assert.equal(tickParts(null), null);
 });
+
+test('TIER IDENTITY: level and rebirth ticks carry their rung, the text is unchanged', () => {
+  assert.deepEqual(tickParts({ k: 'lv', n: 'ZED', v: 50 }), { lead: 'ZED just hit ', tag: 'LV 50', rarity: 'legendary' });
+  assert.deepEqual(tickParts({ k: 'rb', n: 'ZED', v: 5 }), { lead: 'ZED reached ', tag: 'REBIRTH 5', rarity: 'legendary' });
+  assert.deepEqual(tickParts({ k: 'rank', n: 'ZED', v: 3 }), { lead: 'ZED took #3', tag: '', rarity: null });
+});

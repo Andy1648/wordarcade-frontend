@@ -12,10 +12,13 @@
    DOCUMENTED EXCEPTION (Andy oct5): fills / gradients / glow are allowed for rarity + tier identity. The glow is
    a STATIC box-shadow; nothing here loops; only transform/opacity animate; no will-change at rest. The hard
    black offset shadow stays (host sets --rar-off). Every non-rectangle shape is an asset in /public/art/rarity.
-   SPECIFICITY: the fill rules are doubled (.rarity-fin.rarity-fin) so they beat a host's own one-class
-   background / border-colour / shadow whatever order the stylesheets load in; the tier vars are plain. */
+   SPECIFICITY: the fill rules are tripled (.rarity-fin ×3) so they beat a host's own one- or two-class
+   background / border-colour / shadow whatever order the stylesheets load in; the tier vars are plain.
 
-.rarity-fin {
+   Two lighter hosts share the same tier vars: .rarity-ink (the tier as TEXT colour + glow — a numeral, a name)
+   and .rarity-edge (keeps the host's own fill — e.g. a bought theme — and adds a tier stripe + inner glow). */
+
+:is(.rarity-fin, .rarity-ink, .rarity-edge) {
   --rar: #B9B3C6;
   --rar-hi: #E6E1EE;
   --rar-line: #5E5770;
@@ -25,29 +28,29 @@
   --rar-gc: #B9B3C6;
   --rar-fin: 0 0 #0000;
 }
-.rarity-fin.rarity-fin {
+.rarity-fin.rarity-fin.rarity-fin {
   position: relative;
   color: var(--rar-ink);
   background: linear-gradient(160deg, var(--rar-hi) 0%, var(--rar) 52%, var(--rar-line) 135%);
   border-color: var(--rar-line);
   box-shadow: var(--rar-fin), var(--rar-off, 3px 3px 0 #000), 0 0 var(--rar-g) var(--rar-gc);
 }
-.rarity-fin.is-common { --rar: #B9B3C6; --rar-hi: #E6E1EE; --rar-line: #5E5770; --rar-ink: #0d0618; --rar-text: #C9C2D6; --rar-g: 0px; --rar-gc: #B9B3C6; }
-.rarity-fin.is-rare { --rar: #3D8BFF; --rar-hi: #9CC6FF; --rar-line: #1B4A9E; --rar-ink: #0d0618; --rar-text: #5EA2FF; --rar-g: 6px; --rar-gc: #3D8BFF; }
-.rarity-fin.is-epic { --rar: #9A1AFF; --rar-hi: #C98BFF; --rar-line: #5c0fa3; --rar-ink: #ffffff; --rar-text: #B65CFF; --rar-g: 10px; --rar-gc: #9A1AFF; }
-.rarity-fin.is-legendary { --rar: #FFD54A; --rar-hi: #FFF3B0; --rar-line: #A8800F; --rar-ink: #0d0618; --rar-text: #FFD54A; --rar-g: 14px; --rar-gc: #FFC21A; }
-.rarity-fin.is-mythic { --rar: #FF3D6E; --rar-hi: #FF9DB6; --rar-line: #A3173A; --rar-ink: #ffffff; --rar-text: #FF5C84; --rar-g: 18px; --rar-gc: #FF3D6E; }
-.rarity-fin.is-secret { --rar: #0d0618; --rar-hi: #2a1648; --rar-line: #000000; --rar-ink: #ffffff; --rar-text: #FFFFFF; --rar-g: 22px; --rar-gc: #FF4FA3; }
+:is(.rarity-fin, .rarity-ink, .rarity-edge).is-common { --rar: #B9B3C6; --rar-hi: #E6E1EE; --rar-line: #5E5770; --rar-ink: #0d0618; --rar-text: #C9C2D6; --rar-g: 0px; --rar-gc: #B9B3C6; }
+:is(.rarity-fin, .rarity-ink, .rarity-edge).is-rare { --rar: #3D8BFF; --rar-hi: #9CC6FF; --rar-line: #1B4A9E; --rar-ink: #0d0618; --rar-text: #5EA2FF; --rar-g: 6px; --rar-gc: #3D8BFF; }
+:is(.rarity-fin, .rarity-ink, .rarity-edge).is-epic { --rar: #9A1AFF; --rar-hi: #C98BFF; --rar-line: #5c0fa3; --rar-ink: #ffffff; --rar-text: #B65CFF; --rar-g: 10px; --rar-gc: #9A1AFF; }
+:is(.rarity-fin, .rarity-ink, .rarity-edge).is-legendary { --rar: #FFD54A; --rar-hi: #FFF3B0; --rar-line: #A8800F; --rar-ink: #0d0618; --rar-text: #FFD54A; --rar-g: 14px; --rar-gc: #FFC21A; }
+:is(.rarity-fin, .rarity-ink, .rarity-edge).is-mythic { --rar: #FF3D6E; --rar-hi: #FF9DB6; --rar-line: #A3173A; --rar-ink: #ffffff; --rar-text: #FF5C84; --rar-g: 18px; --rar-gc: #FF3D6E; }
+:is(.rarity-fin, .rarity-ink, .rarity-edge).is-secret { --rar: #0d0618; --rar-hi: #2a1648; --rar-line: #000000; --rar-ink: #ffffff; --rar-text: #FFFFFF; --rar-g: 22px; --rar-gc: #FF4FA3; }
 
 /* TINT: the tier washes a dark panel from one corner; text stays light, the outline is the tier itself */
-.rarity-fin.rarity-fin.is-tint {
+.rarity-fin.rarity-fin.rarity-fin.is-tint {
   color: #fff;
   background: #1a0b2e;
   background: linear-gradient(160deg, color-mix(in srgb, var(--rar) 46%, #1a0b2e) 0%, #1a0b2e 64%);
   border-color: var(--rar);
 }
 /* SECRET: black, edged in the house rainbow (after .is-tint, so it wins on both) */
-.rarity-fin.rarity-fin.is-secret {
+.rarity-fin.rarity-fin.rarity-fin.is-secret {
   border-color: transparent;
   background:
     linear-gradient(160deg, #2a1648 0%, #0d0618 60%) padding-box,
@@ -57,6 +60,14 @@
 /* DUPE FINISHES, on top of the tier: GOLD = a gold inner rim; RAINBOW = a striped palette inner rim */
 .rarity-fin.is-gold { --rar-fin: inset 0 0 0 2px #FFD54A, inset 0 0 0 4px #A8800F; }
 .rarity-fin.is-rainbow { --rar-fin: inset 0 0 0 2px #FF4FA3, inset 0 0 0 4px #FFE94A, inset 0 0 0 6px #2EFFE0, inset 0 0 0 8px #9A1AFF; }
+
+/* INK: the tier as text colour + a glow that grows with it (SECRET reads white with a pink glow) */
+.rarity-ink.rarity-ink { color: var(--rar-text); text-shadow: 0 0 var(--rar-g) var(--rar-gc); }
+/* EDGE: the host keeps its fill; a tier stripe along the bottom + the tier glow inside. The shadow is a var, so a
+   host whose own rule zeroes box-shadow can re-apply it: `box-shadow: var(--rar-edge)`. */
+.rarity-edge { --rar-edge: inset 0 -6px 0 var(--rar), inset 0 -8px 0 var(--rar-line), inset 0 0 var(--rar-g) var(--rar-gc); }
+.rarity-edge.is-secret { --rar-edge: inset 0 -2px 0 #9A1AFF, inset 0 -4px 0 #2EFFE0, inset 0 -6px 0 #FFE94A, inset 0 -8px 0 #FF4FA3, inset 0 0 var(--rar-g) var(--rar-gc); }
+.rarity-edge.rarity-edge { position: relative; box-shadow: var(--rar-edge); }
 
 /* the small inline chip (ticker / receipt) */
 .rarity-chip {
@@ -68,7 +79,7 @@
   line-height: 1.3;
   white-space: nowrap;
 }
-.rarity-chip.rarity-fin.is-secret { border-color: transparent; }
+.rarity-chip.rarity-fin.rarity-fin.rarity-fin.is-secret { border-color: transparent; }
 
 /* ---- effects (RarityFx.jsx) ------------------------------------------------------------------------ */
 .rarity-fx {

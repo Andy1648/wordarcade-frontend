@@ -32,6 +32,8 @@ import { LEADERBOARD_ENABLED } from '../leaderboard/client';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
+import { rarityClass, keyRarity } from '../lib/rarityStyle.js';
+import RarityFx from './rarity/RarityFx';
 
 
 export default function ShopScreen({ onBack, initialView = 'shop' }) {
@@ -212,7 +214,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                     (×1, ×2, ×5, ×10, ×25 … ×1,000, then ×2.15 a tier). The price lives on the button, the
                     gap in the goal line. */}
                 <div className="shop-kp-current">
-                  KEY T{formatNum(keyTier)} <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → T{formatNum(keyTier + 1)} <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
+                  {/* TIER IDENTITY (Andy oct5): each KEY tier wears its rung's rarity look (KEY_RAMP) — colour + glow,
+                      shimmer / sparks as it climbs — so the tier reads at a glance, not from the number */}
+                  KEY <span key={`kt${keyTier}`} className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier))}`}>T{formatNum(keyTier)}<RarityFx tier={keyRarity(keyTier)} /></span> <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → <span className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier + 1))}`}>T{formatNum(keyTier + 1)}</span> <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
                 </div>
                 <div className="shop-kp-rate">
                   BASE 10 XP / LETTER × KEY × REBIRTH · KEY RESETS ON REBIRTH
