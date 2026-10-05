@@ -13,7 +13,7 @@ import { MARKS, MARK_RANK_NAMES, MAX_MARK_RANK, markProgress, markMainMult, mark
 import { ACHIEVEMENTS } from '../progress/achievements';
 import MarkBadge from './MarkBadge';
 import { formatNum, formatMultExact as formatMult } from '../format';
-import './MarksIndex.css';
+import './MarksIndexLegacy.css';
 
 const pct = (m, rank) => Math.round((markMainMult(m, rank) - 1) * 100);
 // U (Andy oct2 22:25): a mark reads as ONE short tag — MAIN ×N — never a sentence explaining it

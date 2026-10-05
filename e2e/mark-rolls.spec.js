@@ -73,8 +73,8 @@ test('roll once: tutorial, result card, nothing updates before the reveal lands,
   await expect(page.locator('.mr-pity')).toContainText(/EPIC\+ IN ≤\d+/);
   await expect(page.locator('.mr-luck')).toHaveText(/^LUCK ×[\d.]+$/);
   // nothing worn → the first mark AUTO-equips (no question, a hold never stalls) and the hero shows it
-  await expect(page.locator('[data-testid="marks-main-tag"]')).toHaveText(/^\+[\d.,]+/);
-  await expect(page.locator('.mx-hero')).not.toContainText('NO MAIN YET');
+  await expect(page.locator('.mx-tile.is-on')).toHaveCount(1);
+  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/); // INDEX v2: the worn card says its stat
   // every reveal is finite: once landed, nothing in the roll UI animates, nothing loops, will-change is off
   await page.waitForTimeout(2700);
   expect(await rollUiAnims(page)).toBe(0);
@@ -157,7 +157,7 @@ test('the worn mark shows MAIN ×N; every other owned mark shows its perk or MAI
   await page.locator('.mr-roll').click();
   const card = page.locator('[data-testid="mark-roll-result"]');
   await expect(card.locator('.mr-card-tag')).toHaveText(/^\+[\d.,]+/, { timeout: 4000 });
-  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/);
+  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/); // INDEX v2: the stat line
   // roll until a SECOND distinct mark is owned; it reads PERK, not MAIN
   for (let i = 0; i < 12; i += 1) {
     const owned = await page.locator('.mx-tile:not(.is-locked):not(.is-on)').count();
@@ -167,8 +167,8 @@ test('the worn mark shows MAIN ×N; every other owned mark shows its perk or MAI
   }
   await page.waitForTimeout(2700);
   const other = page.locator('.mx-tile:not(.is-locked):not(.is-on) .mx-tile-sub').first();
-  // MARKS via ROLLS: a non-worn owned mark shows its PERK line (LEGENDARY+) or what wearing it pays
-  await expect(other).toHaveText(/^(\+[\d.,]+.*|[A-Z][A-Z0-9 ×+:]+)$/);
+  // INDEX v2: every owned card shows its ONE stat ("+10% WINS", "+1 BASE WINS/WORD", "+30s OVERDRIVE")
+  await expect(other).toHaveText(/^\+[\d.,]+/);
   await page.locator('.mx-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText(/^×\d/);
 });
