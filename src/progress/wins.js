@@ -19,7 +19,7 @@ import {
 } from './xp.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { addMarkWord } from './marks.js';
-import { markMult } from './markRollsCore.js'; // THE MARK (one function: wins here, XP per letter in letterXp.js)
+import { markMult, markWinsMult, markBaseWins } from './markRollsCore.js'; // THE MARK STATS (wins here; XP in letterXp.js)
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
@@ -233,11 +233,15 @@ export function gameKey(mode) {
 
 // The flat per-word BASE, before any multiplier: what this word's LETTERS are worth at the
 // player's key tier, in wins. keyTierXp × length is the XP; ÷10 is the wins.
-export function wordWinsBase({ keyTier, wordLength = WORD_LEN_REF } = {}) {
+// MARKS v2: + the worn mark's +N BASE WINS/WORD (BASE 10 → 10 + N on a 5-letter word, scaled by length like the
+// rest of the base), so the receipt's BASE row is the base the payout really used. `markId` as perWordFactors.
+export function wordWinsBase({ keyTier, wordLength = WORD_LEN_REF, markId } = {}) {
   const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
-  return (keyTierXp(kt) * len) / 10;
+  const add = markBaseWins({ markId });
+  return ((keyTierXp(kt) * len) / 10) * ((BASE_WINS + add) / BASE_WINS);
 }
+const BASE_WINS = 10;
 
 /**
  * THE MULTIPLIER STACK, as named factors — the single definition, used by the XP award, by the
@@ -251,9 +255,10 @@ export function wordWinsBase({ keyTier, wordLength = WORD_LEN_REF } = {}) {
 export function perWordFactors({ mode, difficulty, rebirthCount, markId, masteryMult, streakMult, word } = {}) {
   const id = gameKey(mode);
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
-  // The equipped MARK. MARKS via ROLLS: ONE number — the worn MAIN (tier × GOLD/RAINBOW) × the INDEX bonus
-  // (markRollsCore.markMult), the same one XP per letter reads, in every mode. `markId` undefined = the worn mark.
-  const mark = markMult({ markId });
+  // The equipped MARK (MARKS v2): its +N% WINS stat (or a PERMANENT's MAIN) × the INDEX bonus (markWinsMult), and
+  // its +N BASE WINS/WORD (`baseWins`, added to BASE 10 before every multiplier). `markId` undefined = the worn mark.
+  const mark = markWinsMult({ markId });
+  const baseWins = markBaseWins({ markId });
   const mastery = Number.isFinite(masteryMult) && masteryMult > 0 ? masteryMult : masteryXpMult(id);
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();
   // REBIRTH RUSH (FROZEN): WINS / word = BASE 10 × length/5 × MODE POWER × REBIRTH 5^R × MARK × BOOST (× FRENZY on
@@ -268,7 +273,8 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     difficulty: 1,
     rebirth: rebirthMult(rc),
     streak: 1,
-    bonus: mark, // MARK (markRollsCore.markMult)
+    bonus: mark, // MARK (markRollsCore.markWinsMult)
+    baseWins, // MARK +N BASE WINS/WORD — an ADDEND to BASE 10, not a multiplier (the receipt's base carries it)
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),
@@ -305,6 +311,7 @@ export function perWordXp(opts = {}) {
     streakMult: f.streak,
     difficultyMult: f.difficulty,
     bonusMult: f.bonus * f.frenzy * f.boost * f.forge,
+    baseWinsAdd: f.baseWins,
   });
 }
 
@@ -410,7 +417,7 @@ export function perWordRateNow({ mode, difficulty, rebirthCount, markId, keyTier
   const factors = perWordFactors(opts);
   const xp = perWordXp(opts);
   const rate = xp / 10; // exact to the tenth — the same division bankWordWins pays out
-  const base = wordWinsBase({ keyTier, wordLength });
+  const base = wordWinsBase({ keyTier, wordLength, markId });
   return { rate, xp, base, xpBase: base * 10, mult: base > 0 ? rate / base : 1, factors };
 }
 

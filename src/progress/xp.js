@@ -184,14 +184,32 @@ export function rebirthPow(rebirthCount) {
 export function rebirthXpMult(rebirthCount) {
   return rebirthPow(rebirthCount);
 }
-/** XP per LETTER typed (menu or in-game) for a KEY tier, rebirth count and worn-mark boost. PURE. */
-export function levelXpPerLetter(keyTier, rebirthCount, markMult = 1) {
+// MARKS v2: a worn +N BASE XP/LETTER mark adds to BASE 10 before every multiplier. Injected (letterXp.js installs
+// markRollsCore.markBaseXp) — that module sits above this one. Default +0, so pure callers are unchanged.
+let letterBaseAdd = () => 0;
+export function setLetterBaseAdd(fn) {
+  if (typeof fn === 'function') letterBaseAdd = fn;
+}
+function liveLetterBaseAdd() {
+  try {
+    const v = letterBaseAdd();
+    return Number.isFinite(v) && v > 0 ? v : 0;
+  } catch {
+    return 0;
+  }
+}
+/**
+ * XP per LETTER typed (menu or in-game): (BASE 10 + the worn mark's BASE XP/LETTER) × KEY × REBIRTH × the worn-mark
+ * XP boost. `baseAdd` omitted → the worn mark's (+0 with nothing worn). PURE given its arguments.
+ */
+export function levelXpPerLetter(keyTier, rebirthCount, markMult = 1, baseAdd) {
   const kt = Number.isFinite(keyTier) ? keyTier : getKeyTier();
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const mm = Number.isFinite(markMult) && markMult > 0 ? markMult : 1;
+  const add = baseAdd === undefined ? liveLetterBaseAdd() : Number.isFinite(baseAdd) && baseAdd > 0 ? baseAdd : 0;
   // KEY and REBIRTH are each capped at 1e300, but their PRODUCT is not: past ~R430 it overflowed to Infinity,
   // and creditXp drops a non-finite gain to 0 — the bar would silently stop filling. Clamp the product.
-  return finiteCap(LEVEL_XP_PER_LETTER * keyXpMult(kt) * rebirthXpMult(rc) * mm);
+  return finiteCap((LEVEL_XP_PER_LETTER + add) * keyXpMult(kt) * rebirthXpMult(rc) * mm);
 }
 // A product of capped factors can still overflow: clamp it to 1e300 (Infinity → the cap, NaN → 0).
 const PRODUCT_CAP = 1e300;
@@ -472,6 +490,7 @@ export function saveKeyTier(n) {
 // letter in the old "XP" units the receipt multiplies (÷10 → wins): BASE 10 wins × length/5 = 2 wins a
 // letter = 20. The argument is ignored; the name stays so the receipt / forge / roll-price callers don't change.
 export const WINS_BASIS_PER_LETTER = 20;
+export const WINS_BASE_PER_WORD = 10; // "BASE 10" wins: WINS_BASIS_PER_LETTER × 5 letters ÷ 10
 // eslint-disable-next-line no-unused-vars
 export function keyTierXp(tier) {
   return WINS_BASIS_PER_LETTER;
@@ -529,8 +548,8 @@ export function priceRateBoost() {
 // `soundMult`, `mode` and `streakMult` are accepted for old callers and ignored. Whole XP.
 export const MENU_LETTER_SHARE = 0.2; // a menu letter = a fifth of a game letter ("MENU 2 XP / LETTER")
 // eslint-disable-next-line no-unused-vars
-export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1, streakMult, markMult = 1 } = {}) {
-  return Math.max(1, roundWordXp(levelXpPerLetter(keyTier, rebirthCount, markMult) * MENU_LETTER_SHARE));
+export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, soundMult = 1, streakMult, markMult = 1, baseAdd } = {}) {
+  return Math.max(1, roundWordXp(levelXpPerLetter(keyTier, rebirthCount, markMult, baseAdd) * MENU_LETTER_SHARE));
 }
 
 // Apply a credited award. Pure: takes and returns the {level, intoLevel} shape (Economy v5 — level
@@ -609,6 +628,7 @@ export function xpPerWord({
   streakMult,
   difficultyMult = 1,
   bonusMult = 1,
+  baseWinsAdd = 0,
 } = {}) {
   // REBIRTH RUSH (FROZEN formula): WINS / word = BASE 10 × length/5 × MODE POWER × REBIRTH 5^R × MARK × BOOST
   // (× FRENZY on FUSE) — in the ×10 "XP" units the receipt divides back to wins. KEY no longer touches wins;
@@ -617,7 +637,10 @@ export function xpPerWord({
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;
   const bm = Number.isFinite(bonusMult) && bonusMult > 0 ? bonusMult : 1;
-  return roundWordXp(finiteCap(keyTierXp() * len * modePower(mode) * rebirthMult(rc) * bm)); // never Infinity → 0
+  // MARKS v2: a worn +N BASE WINS/WORD mark makes BASE 10 → 10 + N (before every multiplier): × (10 + N) / 10
+  const ba = Number.isFinite(baseWinsAdd) && baseWinsAdd > 0 ? baseWinsAdd : 0;
+  const base = keyTierXp() * ((WINS_BASE_PER_WORD + ba) / WINS_BASE_PER_WORD);
+  return roundWordXp(finiteCap(base * len * modePower(mode) * rebirthMult(rc) * bm)); // never Infinity → 0
 }
 
 // THE PER-WORD GRID: WHOLE XP, not round10. ANDY: "nothing hidden." round10 was the grid here

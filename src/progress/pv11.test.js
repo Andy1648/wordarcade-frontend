@@ -172,7 +172,10 @@ test('rebirth (Rebirth Rush): ×5 XP AND wins a rebirth — R1 ×5, R2 ×25, R10
   // MARKS via ROLLS: the letter-XP boost IS the MAIN's bonus (one MARK number for XP and wins)
   assert.deepEqual(MARK_XP_BOOST, { common: 0.1, rare: 0.25, epic: 0.5, legendary: 2, mythic: 9, secret: 24 });
   withStorage({}, () => assert.equal(markXpBoost(), 1, 'nothing worn → ×1'));
-  withStorage({ 'taw.mark': 'mk-bomber' }, () => assert.ok(markXpBoost() > 1, 'a worn legacy mark boosts letter XP'));
+  // MARKS v2: only an XP stat (or a PERMANENT's MAIN) boosts letter XP — SPRINTER is +10% XP, BOMBER +10% WINS
+  withStorage({ 'taw.mark': 'mk-sprinter' }, () => assert.ok(markXpBoost() > 1, 'a worn +% XP mark boosts letter XP'));
+  withStorage({ 'taw.mark': 'mk-bomber' }, () => assert.equal(markXpBoost(), 1, 'a worn +% WINS mark leaves letter XP alone'));
+  withStorage({ 'taw.mark': 'mk-eternal' }, () => assert.equal(markXpBoost(), 3, 'a PERMANENT pays its MAIN on XP'));
 });
 
 test('awardWordXp credits ONLY the accepted word letter top-up to the bar; it still returns the wins product', () => {

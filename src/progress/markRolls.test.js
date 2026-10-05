@@ -1,15 +1,18 @@
 // markRolls.test.js — MARK ROLLS engine (MARKS via ROLLS, PROGRESSION FINAL): six tiers + odds, the one MARK
-// number, pity, dupes → GOLD → RAINBOW, the INDEX bonus, no caps, determinism, migration.
+// stats, pity (EPIC 50 + LEGENDARY 500), dupes → ★ pips, the INDEX bonus + rewards, no caps, determinism, migration.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ACHIEVEMENT_PLAN, KEPT_ACHIEVEMENTS, TIER_ODDS, TIER_MAIN,
-  PITY, DUPES_PER_GOLD, GOLDS_PER_RAINBOW, GOLD_MULT, RAINBOW_MULT, ROLL_STATE_KEY, INDEX_BONUS_PER_PCT,
+  PITY, DUPES_PER_PIP, MAX_PIPS, PIP_STEP, ROLL_STATE_KEY, INDEX_BONUS_PER_PCT,
   freshState, normalize, rollTable, roll, oneInX, yourOneInX, markLevel, indexMult, markMult,
   mainMultOf, mainTag, perkTag, luck, pityLeft, collection, migrate, rollPriceWords, rollPrice,
-  shouldAutoEquip, rollAndSave, ensureRollState, equipRolled, loadRollState,
+  shouldAutoEquip, rollAndSave, ensureRollState, equipRolled, loadRollState, statOf, pipProgress, INDEX_PIP_WORDS,
+  markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec, STAT_KINDS,
   ROLL_BASE_WORDS, equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny,
 } from './markRolls.js';
+const DUPES_PER_GOLD = 10; // the v1 finish, for the migration tests
+const GOLDS_PER_RAINBOW = 10;
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY, MARK_TIERS } from './marks.js';
 import { MARK_ROLLS_STORE_KEY, MARK_PERKS } from './markPerks.js';
 import { ACHIEVEMENTS } from './achievements.js';
@@ -123,36 +126,71 @@ test('pity: the shown counter counts down to 1 and a forced roll is flagged', ()
   assert.equal(pityLeft({ ...freshState(), rolls: 3 }).epic, 7, 'first-epic guarantee shows 10 − rolls');
 });
 
-test('dupes: 10 dupes → GOLD (MAIN bonus ×2), 10 golds → RAINBOW (×5)', () => {
-  const id = 'mk-bomber';
-  let firstGoldAt = 0;
-  let firstRainbowAt = 0;
-  for (let n = 1; n <= 101; n++) {
-    const lv = markLevel({ marks: { [id]: { n } } }, id);
-    if (lv.gold && !firstGoldAt) firstGoldAt = n;
-    if (lv.rainbow && !firstRainbowAt) firstRainbowAt = n;
+test('dupes → ★ pips: COMMON 10 / RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 a pip, ★5 max, +20% of the stat a pip', () => {
+  assert.deepEqual(DUPES_PER_PIP, { common: 10, rare: 5, epic: 3, legendary: 2, mythic: 1, secret: 1 });
+  assert.equal(MAX_PIPS, 5);
+  assert.equal(PIP_STEP, 0.2);
+  const v2 = (id, n) => ({ v: 2, marks: { [id]: { n } } });
+  for (const m of ROLL_MARKS) {
+    const per = DUPES_PER_PIP[m.tier];
+    assert.equal(markLevel(v2(m.id, per), m.id).pips, 0, `${m.id} one dupe short`);
+    assert.equal(markLevel(v2(m.id, 1 + per), m.id).pips, 1, m.id);
+    assert.equal(markLevel(v2(m.id, 1 + 5 * per), m.id).pips, 5, m.id);
+    assert.equal(markLevel(v2(m.id, 1e9), m.id).pips, 5, `${m.id} ★5 max`);
   }
-  assert.equal(firstGoldAt, 1 + DUPES_PER_GOLD);
-  assert.equal(firstRainbowAt, 1 + DUPES_PER_GOLD * GOLDS_PER_RAINBOW);
-  const at10 = { ...freshState(), marks: { [id]: { n: 10 } } };
-  const out = roll(() => 0, { ...at10, everEpic: true }); // u=0 → the first mark in the table = BOMBER
-  assert.equal(out.result.markId, id);
-  assert.equal(out.result.goldUp, true);
-  // GOLD doubles the bonus part, RAINBOW ×5 it
-  assert.equal(GOLD_MULT, 2);
-  assert.equal(RAINBOW_MULT, 5);
-  const close = (a, b) => Math.abs(a - b) < 1e-9;
-  assert.ok(close(mainMultOf(id, { marks: { [id]: { n: 1 } } }), 1.1));
-  assert.ok(close(mainMultOf(id, { marks: { [id]: { n: 11 } } }), 1.2));
-  assert.ok(close(mainMultOf(id, { marks: { [id]: { n: 101 } } }), 1.5));
-  assert.ok(close(mainMultOf('mk-origin', { marks: { 'mk-origin': { n: 11 } } }), 49));
-  assert.ok(close(mainMultOf('mk-origin', { marks: { 'mk-origin': { n: 101 } } }), 121));
+  const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+  close(mainMultOf('mk-bomber', v2('mk-bomber', 1)), 1.1);
+  close(mainMultOf('mk-bomber', v2('mk-bomber', 11)), 1.12); // ★1: +20% of +10%
+  close(mainMultOf('mk-bomber', v2('mk-bomber', 51)), 1.2); // ★5: ×2
+  close(mainMultOf('mk-origin', v2('mk-origin', 6)), 49); // SECRET ★5: +2,400% → +4,800%
+  close(statOf('mk-sparky', v2('mk-sparky', 51)).value, 2); // +1 BASE WINS → +2 at ★5
+});
+
+test('the card line "7/10 → ★3": pipProgress(id) — dupes toward the next pip, and the result says pipUp', () => {
+  const st = { v: 2, marks: { 'mk-bomber': { n: 1 + 20 + 7 } } };
+  assert.deepEqual(pipProgress('mk-bomber', st), { pips: 2, have: 7, need: 10 });
+  assert.deepEqual(pipProgress('mk-bomber', { v: 2, marks: {} }), { pips: 0, have: 0, need: 10 });
+  assert.deepEqual(pipProgress('mk-bomber', { v: 2, marks: { 'mk-bomber': { n: 99 } } }), { pips: 5, have: 0, need: 0 });
+  assert.equal(pipProgress('nope', st), null);
+  const at10 = { ...freshState(), everEpic: true, marks: { 'mk-bomber': { n: 10 } } };
+  const out = roll(() => 0, at10); // u=0 → the first mark in the table = BOMBER
+  assert.equal(out.result.markId, 'mk-bomber');
+  assert.equal(out.result.pipUp, true);
+  assert.equal(out.result.pips, 1);
+  assert.deepEqual(out.result.rewards.map((r) => r.kind), ['pip']);
+  assert.equal(out.result.rewardWords, INDEX_PIP_WORDS.common);
+});
+
+test('migration (never hurt): a v1 GOLD / RAINBOW keeps its ×2 / ×5 as a floor; a v1 save is not re-paid', () => {
+  const id = 'mk-bomber';
+  const gold = normalize({ v: 1, marks: { [id]: { n: 1 + DUPES_PER_GOLD } } });
+  const rainbow = normalize({ v: 1, marks: { [id]: { n: 1 + DUPES_PER_GOLD * GOLDS_PER_RAINBOW } } });
+  const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+  near(mainMultOf(id, gold), 1.2); // v1 GOLD was ×1.2; ★1 alone would be ×1.12
+  near(mainMultOf(id, rainbow), 1.5); // v1 RAINBOW was ×1.5; ★5 alone would be ×1.2
+  near(mainMultOf('mk-origin', normalize({ marks: { 'mk-origin': { n: 11 } } })), 49);
+  near(mainMultOf('mk-origin', normalize({ marks: { 'mk-origin': { n: 101 } } })), 121);
+  assert.equal(gold.marks[id].k, 2);
+  assert.equal(rainbow.marks[id].k, 5);
+  assert.equal(normalize(gold).marks[id].k, 2, 'the floor survives a v2 re-read');
+  assert.equal(normalize({ v: 1, marks: { [id]: { n: 3 } } }).marks[id].k, undefined);
+  // the old luck is a floor too
+  assert.ok(luck(rainbow) >= 1.05 - 1e-9);
+  // a tier already complete in v1 is marked paid; the legendary pity starts from the save's rolls (≤ 499)
+  const allCommons = Object.fromEntries(ROLL_MARKS.filter((m) => m.tier === 'common').map((m) => [m.id, { n: 1 }]));
+  const v1 = normalize({ v: 1, rolls: 900, marks: allCommons });
+  assert.deepEqual(v1.done, ['common']);
+  assert.equal(v1.sinceLegendary, 499);
+  assert.equal(normalize({ v: 1, rolls: 120, marks: { 'mk-eclipse': { n: 1 } } }).sinceLegendary, 0);
+  assert.equal(normalize({ v: 1, rolls: 120, marks: {} }).sinceLegendary, 120);
+  // copies never go down; nothing is removed
+  assert.equal(gold.marks[id].n, 1 + DUPES_PER_GOLD);
 });
 
 test('no caps: absurd counts stay finite', () => {
   const id = 'mk-leviathan';
   const a = { ...freshState(), rolls: 1e12, marks: { [id]: { n: 1e12 } } };
-  for (const v of [mainMultOf(id, a), indexMult(a), luck(a), markLevel(a, id).rainbow]) assert.ok(Number.isFinite(v));
+  for (const v of [mainMultOf(id, a), indexMult(a), luck(a), markLevel(a, id).pips]) assert.ok(Number.isFinite(v));
   const t = rollTable(a);
   assert.ok(Math.abs(sumProbs(t) - 1) < 1e-9);
   assert.equal(roll(() => 0.5, a).state.rolls, 1e12 + 1);
@@ -199,28 +237,63 @@ test('price: 72 words at your live rate, never 0', () => {
   assert.equal(rollPrice({ level: 1, rate: 0 }), 1);
 });
 
-test('tags: ONE short tag — MAIN ×N, or the perk line for LEGENDARY+', () => {
-  assert.equal(mainTag('mk-sparky', null), 'MAIN ×1.1');
-  assert.equal(mainTag('mk-detonator', null), 'MAIN ×1.25');
-  assert.equal(mainTag('mk-leviathan', null), 'MAIN ×3');
-  assert.equal(mainTag('mk-kraken', null), 'MAIN ×10');
-  assert.equal(mainTag('mk-origin', null), 'MAIN ×25');
+test('tags: ONE short tag — the stat line, MAIN ×N for a PERMANENT, or the perk line for LEGENDARY+', () => {
+  assert.equal(mainTag('mk-sparky', null), '+1 BASE WINS/WORD');
+  assert.equal(mainTag('mk-detonator', null), '+25% WINS');
+  assert.equal(mainTag('mk-cyclone', null), '+2.5 BASE WINS/WORD');
+  assert.equal(mainTag('mk-leviathan', null), '+200% XP');
+  assert.equal(mainTag('mk-kraken', null), '+90 BASE XP/LETTER');
+  assert.equal(mainTag('mk-origin', null), '+2,400% WINS');
+  assert.equal(mainTag('mk-inkwell', null), '+10% ROLL LUCK');
+  assert.equal(mainTag('mk-tinder', null), '+75s OVERDRIVE');
   assert.equal(mainTag('mk-eternal', null), 'MAIN ×3', 'a PERMANENT pays the LEGENDARY MAIN');
-  assert.equal(perkTag(freshState(), 'mk-sparky'), 'MAIN ×1.1');
+  assert.equal(perkTag(freshState(), 'mk-sparky'), '+1 BASE WINS/WORD');
   assert.equal(perkTag(freshState(), 'mk-leviathan'), 'WEAR: LETTERS COUNT ×2', 'a perk runs only while worn');
   assert.equal(perkTag(freshState(), 'mk-origin'), 'WEAR: FRENZY IN EVERY MODE + REBIRTH KEEPS 3 KEY TIERS');
 });
 
-test('THE MARK: one number — worn MAIN × finish × the INDEX bonus (+0.5% per % collected)', () => {
+test('THE MARK STATS: the worn stat pays only what it touches; the INDEX (+0.5% per %) rides on wins AND XP', () => {
   assert.equal(INDEX_BONUS_PER_PCT, 0.005);
   assert.equal(markMult({ markId: null, state: null }), 1, 'nothing worn, never rolled → ×1');
+  assert.equal(markWinsMult({ markId: null, state: null }), 1);
+  assert.equal(markXpMult({ markId: null, state: null }), 1);
   const all = { ...freshState(), marks: Object.fromEntries(ROLL_MARKS.map((m) => [m.id, { n: 1 }])) };
   assert.ok(Math.abs(indexMult(all) - 1.5) < 1e-9, '100% collected → +50%');
-  const one = { ...freshState(), marks: { 'mk-kraken': { n: 1 } } };
-  const pct = collection(one).pct;
-  assert.ok(Math.abs(markMult({ markId: 'mk-kraken', state: one }) - 10 * (1 + 0.005 * pct)) < 1e-9);
-  // a legacy mark worn: its marks.js tier's MAIN (BOMBER common ×1.1)
-  assert.ok(Math.abs(markMult({ markId: 'mk-bomber', state: null }) - 1.1) < 1e-9);
+  const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+  const one = (id) => ({ ...freshState(), marks: { [id]: { n: 1 } } });
+  const ix = (s) => indexMult(s);
+  // +200% WINS (ECLIPSE): ×3 wins, XP only the index
+  let s = one('mk-eclipse');
+  near(markWinsMult({ markId: 'mk-eclipse', state: s }), 3 * ix(s));
+  near(markXpMult({ markId: 'mk-eclipse', state: s }), ix(s));
+  assert.equal(markBaseWins({ markId: 'mk-eclipse', state: s }), 0);
+  // +90 BASE WINS/WORD (SINGULARITY) — a BASE addend; markMult reads it as × (10 + 90) / 10
+  s = one('mk-singularity');
+  near(markBaseWins({ markId: 'mk-singularity', state: s }), 90);
+  near(markWinsMult({ markId: 'mk-singularity', state: s }), ix(s));
+  near(markMult({ markId: 'mk-singularity', state: s }), 10 * ix(s));
+  // +90 BASE XP/LETTER (KRAKEN)
+  s = one('mk-kraken');
+  near(markBaseXp({ markId: 'mk-kraken', state: s }), 90);
+  assert.equal(markBaseWins({ markId: 'mk-kraken', state: s }), 0);
+  // ROLL LUCK / OVERDRIVE
+  near(markLuck({ markId: 'mk-slipstream', state: one('mk-slipstream') }), 0.25);
+  near(markOverdriveSec({ markId: 'mk-nitro', state: one('mk-nitro') }), 30);
+  near(luck(one('mk-slipstream'), { markLuck: 0.25 }), 1.25);
+  // a PERMANENT (no stat) pays its MAIN on wins AND XP, as before
+  near(markWinsMult({ markId: 'mk-eternal', state: null }), 3);
+  near(markXpMult({ markId: 'mk-eternal', state: null }), 3);
+  // every rollable mark's stat is sized to its tier
+  const TP = { common: 10, rare: 25, epic: 50, legendary: 200, mythic: 900, secret: 2400 };
+  for (const m of ROLL_MARKS) {
+    const per = { winsPct: 1, xpPct: 1, luckPct: 1, baseWins: 0.1, baseXp: 0.1, overdriveSec: 3 }[m.stat.kind];
+    near(m.stat.value, TP[m.tier] * per);
+  }
+  const kinds = new Set(ROLL_MARKS.map((m) => m.stat.kind));
+  assert.deepEqual([...kinds].sort(), [...STAT_KINDS].sort(), 'every stat kind is in the pool');
+  for (const t of ['legendary', 'mythic', 'secret']) {
+    assert.ok(ROLL_MARKS.filter((m) => m.tier === t).every((m) => m.perks.length > 0), `${t} keep their perks`);
+  }
 });
 
 test('auto-equip: ANY higher MAIN equips, always when nothing is worn; never asks', () => {
@@ -295,7 +368,7 @@ test('store: a save that never rolled with nothing worn pays ×1; the store migr
     st.marks['mk-kraken'] = { n: 1 };
     map.set(ROLL_STATE_KEY, JSON.stringify(st));
     assert.equal(equipRolled('mk-kraken'), true);
-    assert.ok(markMult() >= 10, 'the worn MYTHIC pays ×10 (× the index)');
+    assert.ok(markBaseXp() === 90, 'the worn MYTHIC pays its +90 BASE XP/LETTER');
     assert.equal(equipRolled('mk-leviathan'), false, 'cannot wear an unowned mark');
   });
 });
@@ -344,12 +417,12 @@ test('shiny: the result says so, the mark stays shiny forever (any copy), and a 
   assert.equal(roll(seq(0.999999, 0.0149999), { ...freshState(), everEpic: true, rolls: 1 }).result.shiny, true);
 });
 
-test('shiny ×2 the MAIN bonus part, stacking with GOLD / RAINBOW — and markMult (wins + XP) agrees', () => {
+test('shiny ×2 the stat, stacking with the ★ pips (and a v1 GOLD / RAINBOW floor) — and the wins stat agrees', () => {
   assert.equal(SHINY_MULT, 2);
   const common = ROLL_MARKS.find((m) => m.tier === 'common').id;
   const leg = ROLL_MARKS.find((m) => m.tier === 'legendary').id;
   const secret = ROLL_MARKS.find((m) => m.tier === 'secret').id;
-  const st = (id, n, shiny) => normalize({ marks: { [id]: shiny ? { n, shiny: true } : { n } } });
+  const st = (id, n, shiny) => normalize({ marks: { [id]: shiny ? { n, shiny: true } : { n } } }); // v1 → GOLD floor kept
   const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
   near(mainMultOf(common, st(common, 1, false)), 1.1);
   near(mainMultOf(common, st(common, 1, true)), 1.2); // COMMON ×1.1 → ×1.2
@@ -357,11 +430,14 @@ test('shiny ×2 the MAIN bonus part, stacking with GOLD / RAINBOW — and markMu
   near(mainMultOf(common, st(common, 1 + DUPES_PER_GOLD, true)), 1.4); // GOLD common ×1.2 → ×1.4
   near(mainMultOf(leg, st(leg, 1 + DUPES_PER_GOLD, true)), 9); // GOLD legendary ×5 → ×9
   near(mainMultOf(secret, st(secret, 1 + DUPES_PER_GOLD * GOLDS_PER_RAINBOW, true)), 241); // RAINBOW secret ×121 → ×241
-  // markMult = MAIN × INDEX: shiny doubles the MAIN's bonus, the INDEX is unchanged
-  const s1 = st(leg, 1, true);
-  near(markMult({ markId: leg, state: s1 }), 5 * indexMult(s1));
-  near(markMult({ markId: leg, state: st(leg, 1, false) }), 3 * indexMult(s1));
-  assert.equal(mainTag(leg, s1), 'MAIN ×5');
+  void ROLL_MARKS.find((m) => m.tier === 'common');
+  // v2 pips + shiny: LEGENDARY ★1 (+20%) shiny → +200% × 1.2 × 2 = +480%
+  near(mainMultOf(leg, { v: 2, marks: { [leg]: { n: 3, shiny: true } } }), 1 + 2 * 1.2 * 2);
+  // the wins stat: shiny doubles it, the INDEX is unchanged
+  const s1 = st('mk-eclipse', 1, true);
+  near(markWinsMult({ markId: 'mk-eclipse', state: s1 }), 5 * indexMult(s1));
+  near(markWinsMult({ markId: 'mk-eclipse', state: st('mk-eclipse', 1, false) }), 3 * indexMult(s1));
+  assert.equal(mainTag('mk-eclipse', s1), '+400% WINS');
 });
 
 test('shiny: persistence + migration — old states read not-shiny; the flag survives normalize, migrate and the store', () => {
