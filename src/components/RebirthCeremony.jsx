@@ -44,7 +44,6 @@ export default function RebirthCeremony({ c, onContinue }) {
                 <span className="rbc-to">{formatNum(c.toLevel)}</span>
               </span>
             </div>
-            {c.toLevel > 1 && <div className="rbc-note">HEAD START: YOU BEGIN AT LV {formatNum(c.toLevel)}</div>}
             {/* Rebirth Rush: KEY resets to T0 every rebirth (wins kept → rebuy it) — T{min(T, kept)} with HEIRLOOM. */}
             {c.fromKey > 0 && (
               <div className="rbc-row rbc-level rbc-key">

@@ -85,7 +85,7 @@
 .payout-title {
   font-weight: 700;
   letter-spacing: 0.1em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   color: #FFE94A;
   -webkit-text-stroke: 1.5px #000;
   paint-order: stroke fill;
@@ -175,7 +175,7 @@
 }
 /* H4: the winner bonus's reason line (fallback to +50%, or a cap). Body face, never under 13px. */
 .payout-bonus-note {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #b9aecd;
@@ -199,7 +199,8 @@
 .payout-bar {
   flex: 1 1 auto;
   min-width: 0;
-  height: 8px;
+  /* visual-4: 8px read as a hairline under the labels; 16px is a bar you compare at a glance. */
+  height: 16px;
   border: 2px solid #000;
   border-radius: 2px;
   background:
@@ -295,7 +296,7 @@
    a PAID of 0 under five multipliers, which is what it used to do. */
 .payout-held {
   margin-top: 4px;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #FF6B3D;
