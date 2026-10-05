@@ -136,7 +136,7 @@ test('auto roll stops on the goal tier or better (incl. a double roll extra)', (
 });
 
 test('copy helpers', () => {
-  assert.equal(needMoreText(100, 40), 'NEED 60 MORE WINS');
+  assert.equal(needMoreText(100, 40), 'NEED 60 MORE GEMS');
   assert.equal(pipLine(7, 10, 2), '7/10 → ★3');
   assert.equal(pipLine(0, 0, 5), null);
 });

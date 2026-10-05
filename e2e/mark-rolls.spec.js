@@ -3,7 +3,8 @@
 // ROLL screen (one big ROLL, no ×10) → the tutorial → a roll spins the reel and the card + pity only change when it
 // LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (marks v2: "+10% WINS" …); tap
 // anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with "1 IN X" huge; AUTO ROLL stops on its
-// tier; the skip setting is stored; a short balance says NEED X MORE; reduced motion goes straight to the card; the
+// tier; AUTO ROLL spends GEMS and stops when they run out; the skip setting is stored; a short balance says NEED X
+// MORE GEMS (rolls cost 10 GEMS — wins never buy one); reduced motion goes straight to the card; the
 // reel fits 360x640 → 1366x657; INDEX opens the MARKS INDEX, and its REPLAY replays a reveal for free; nothing loops after.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -18,6 +19,8 @@ const SEED = {
   'taw.marksOwned': '[]',
   'taw.marksSeen': '[]',
   'taw.wins': '50000000',
+  // GEMS (Andy oct5): rolls cost 10 GEMS; a stamped balance so the one-time starting grant never runs here
+  'taw.gems': JSON.stringify({ v: 1, bal: 1000, peak: 12, streak: 0, mig: 1 }),
 };
 
 async function seed(page, extra = {}) {
@@ -78,7 +81,13 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   // the ROLL button never moved, and is priced in ONE unit now that the starter is spent
   const boxAfter = await roll.boundingBox();
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
-  await expect(roll).toHaveText(/^ROLL · [\d\s,.KMB]+ WINS$/);
+  // price in ONE unit: GEMS (wins never buy rolls) — the gem icon + 10 — and the balance it is paid from shows
+  // as icon + count right under it
+  await expect(roll).toHaveText(/^ROLL · 10$/);
+  await expect(roll).toHaveAttribute('aria-label', 'ROLL · 10 GEMS');
+  await expect(roll.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
+  await expect(roll).not.toContainText('WINS');
+  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
   // marks v2: the card says the mark's STAT ("+10% WINS", "+1 BASE WINS/WORD" …)
   await expect(card(page).locator('.rs-card-stat')).toHaveText(/^\+[\d.,]+/);
   // finite: once landed nothing animates, nothing loops, will-change is off
@@ -140,6 +149,34 @@ test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
   expect(['epic', 'legendary', 'mythic', 'secret']).toContain(await card(page).getAttribute('data-tier'));
 });
 
+test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, {
+    'taw.tut.markRolls': '1',
+    // 25 gems = two paid rolls; EPIC pity far away and "until SECRET" so only the gems can stop it
+    'taw.gems': JSON.stringify({ v: 1, bal: 25, peak: 12, streak: 0, mig: 1 }),
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, sinceEpic: 0, everEpic: true, starter: true, marks: {}, milestones: [] }),
+  });
+  await openRoll(page);
+  // reveals below SECRET skip, so the two rolls go fast
+  await page.getByTestId('roll-skip').selectOption('secret');
+  await page.getByTestId('roll-until').selectOption('secret');
+  await page.getByTestId('roll-auto').click();
+  await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
+  await expect(page.locator('.rs-msg')).toHaveText('NEED 5 MORE GEMS');
+  const after = await page.evaluate(() => ({
+    gems: JSON.parse(localStorage.getItem('taw.gems')).bal,
+    wins: localStorage.getItem('taw.wins'),
+    rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls,
+  }));
+  expect(after.gems).toBe(5);
+  // the wins only ever GAIN here (the INDEX rewards pay wins) — they never paid for a roll
+  expect(Number(after.wins)).toBeGreaterThanOrEqual(50000000);
+  // two paid rolls (a worn double-roll perk can add a free extra each)
+  expect(after.rolls).toBeGreaterThanOrEqual(3);
+  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '5');
+});
+
 test('skip reveals below [tier]: default EPIC, the pick is stored', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
@@ -150,17 +187,41 @@ test('skip reveals below [tier]: default EPIC, the pick is stored', async ({ pag
   expect(stored).toBe('legendary');
 });
 
-test('short balance: the press says NEED X MORE WINS', async ({ page }) => {
+test('short balance: the press says NEED X MORE GEMS (never a silent grey button) — a huge wins balance never buys a roll', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, {
     'taw.tut.markRolls': '1',
-    'taw.wins': '0',
+    'taw.wins': '50000000',
+    'taw.gems': JSON.stringify({ v: 1, bal: 4, peak: 12, streak: 0, mig: 1 }),
     'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, starter: true, marks: {}, milestones: [] }),
   });
-  await openRoll(page);
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  // the MARKS dot means "a roll is affordable": 4 gems, the starter spent → no dot
+  await expect(page.getByTestId('marks-roll-dot')).toHaveCount(0);
+  await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
+  await page.locator('.rs-overlay').waitFor();
   await page.locator('.rs-roll').click();
-  await expect(page.locator('.rs-msg')).toHaveText(/^NEED [\d\s,.KMB]+ MORE WINS$/);
+  await expect(page.locator('.rs-msg')).toHaveText('NEED 6 MORE GEMS');
   await expect(card(page)).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('taw.wins'))).toBe('50000000');
+});
+
+test('GEMS on the menu: icon + count beside the wins chip; the MARKS dot only when a roll is affordable', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, {
+    'taw.tut.markRolls': '1',
+    'taw.gems': JSON.stringify({ v: 1, bal: 12, peak: 12, streak: 0, mig: 1 }),
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, starter: true, marks: {}, milestones: [] }),
+  });
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  const chip = page.locator('.menu-gems-chip:visible').first();
+  await expect(chip).toHaveAttribute('data-gems', '12');
+  await expect(chip.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
+  await expect(page.getByTestId('marks-roll-dot').first()).toBeAttached();
+  // it is in the bar cluster, not a fixed element of its own
+  expect(await chip.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
 });
 
 test('reduced motion: straight to the result card, no reel animation', async ({ page }) => {
@@ -236,7 +297,7 @@ test('INDEX REPLAY replays that mark’s reveal on the reel — no roll, no char
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
   await page.waitForTimeout(4200);
   const markId = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('taw.markRolls')).marks)[0]);
-  const before = await page.evaluate(() => ({ wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
+  const before = await page.evaluate(() => ({ gems: JSON.parse(localStorage.getItem('taw.gems')).bal, wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
   await page.getByTestId('roll-index').click();
   await page.locator(`.mx-tile[data-mark="${markId}"]`).click();
   await page.locator('.mx-replay').click();
@@ -246,6 +307,6 @@ test('INDEX REPLAY replays that mark’s reveal on the reel — no roll, no char
   await expect(card(page)).toHaveCount(0);
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
   expect(await page.locator('.rs-cell.is-land').getAttribute('data-mark')).toBe(markId);
-  const after = await page.evaluate(() => ({ wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
+  const after = await page.evaluate(() => ({ gems: JSON.parse(localStorage.getItem('taw.gems')).bal, wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
   expect(after).toEqual(before);
 });

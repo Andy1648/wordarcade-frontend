@@ -22,10 +22,14 @@ import { firstVisit, refreshSessionProps } from './lib/events'
 import { loadProgress, getRebirths, progressOf } from './progress/xp'
 import { migrateEconomyV11 } from './progress/econMigrate'
 import { forgeMigrateMomentum } from './progress/forge'
+import { migrateGems } from './progress/gemsMigrate'
 
 // PROGRESSION v11 (stamp 11): convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps
 // every level; a v10 save keeps its {lv, f} untouched (one fixed curve now — f keeps the bar position).
 migrateEconomyV11()
+// GEMS (Andy oct5): the one-time starting grant — wins held ÷ the old roll price, as rolls' worth of gems (capped);
+// stamped per save, so it runs once (and again for a restored save that has no taw.gems). Never blocks startup.
+try { migrateGems() } catch { /* never block startup */ }
 // Read-only progress probe (e2e + support): PV10 stores the FRACTION into the level, so the XP number on
 // the bar (intoLevel = frac × need) can no longer be read off taw.xp. Returns { level, intoLevel, cost, frac }.
 try { window.__tawXp = () => progressOf(loadProgress()) } catch { /* no window */ }

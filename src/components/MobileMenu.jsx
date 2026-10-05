@@ -29,6 +29,7 @@ import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
 import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
+import { GemCount } from './gems/GemChip';
 
 // The one thing that sets each solo mode apart, in the half-band's sub line (Andy oct2: FUSE's
 // FRENZY must be obvious on the card; CHAIN's POWER is real money per word).
@@ -182,6 +183,7 @@ export default function MobileMenu({
   level = null,
   levelFrac = 0,
   wins = 0,
+  gems = null,
   claimSlot = null,
 }) {
   const lvBar = useLevelBar(level == null ? 1 : level, Number(levelFrac) || 0);
@@ -241,6 +243,8 @@ export default function MobileMenu({
           </span>
           {/* CLUTTER PASS (Andy oct3): no % readout — the fill is the percent. */}
           <span className="hp-m-stats-wins" data-wins={wins || 0}>{formatNum(wins || 0)}<span className="hp-m-stats-k">WINS</span></span>
+          {/* GEMS (Andy oct5): the roll currency, icon + count, in this same strip (once MARKS is there) */}
+          {gems != null && <GemCount value={gems} size={16} className="hp-m-stats-gems" />}
         </div>
       )}
 
@@ -405,7 +409,7 @@ export default function MobileMenu({
             className={`hp-m-navbtn is-marks${navigating ? ' is-disabled' : ''}`}
             onClick={onMarks}
             disabled={navigating}
-            aria-label={`Open marks${marksDot ? ' — new mark' : ''}`}
+            aria-label={`Open marks${marksDot ? ' — a roll is ready' : ''}`}
           >
             MARKS
             {marksDot && <span className="hp-m-dot" aria-hidden="true" />}

@@ -41,7 +41,9 @@ const MarksIndex = ROLLS
   ? lazyWithReload(() => import('./rollScreen/RollScreen'), 'RollScreen')
   : lazyWithReload(() => import('./MarksIndexLegacy'), 'MarksIndexLegacy');
 import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark } from '../progress/marks';
-import { wornMarkId, markEntry } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
+import { wornMarkId, markEntry, loadRollState } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
+import { useGems } from './gems/GemChip';
+import { canAffordRoll } from '../progress/gemsCore';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -627,6 +629,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // Wins balance shown in the chip — LIVE off the one balance channel (W, Andy oct2 22:28): a claim
   // from STATS, a code, a purchase or a level-up payout all land here at once, no remount needed.
   const wins = useWinsBalance();
+  // GEMS (Andy oct5): the roll currency, live off its own channel. The MARKS dot means only "you can afford a roll":
+  // gems ≥ 10, or the free starter roll is still waiting. The roll store is read when the balance moves or MARKS
+  // opens/closes (where the starter roll is spent) — never per render: menu typing re-renders this every keystroke.
+  const gems = useGems();
+  const starterWaiting = useMemo(() => { const st = loadRollState(); return !(st && st.starter); }, [gems, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  const rollDot = canAffordRoll(gems) || starterWaiting;
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
@@ -1263,7 +1271,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             boardRef={boardLinkRef}
             onRebirth={showRebirth ? handleRebirth : null}
             onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
-            marksDot={marksNew}
+            marksDot={rollDot}
+            gems={marksRevealed() || markUnlocked.length ? gems : null}
             rebirthDot={rebirthReady}
             rebirthReadySlot={rebirthReady ? <RebirthReadyButton ready onGo={handleRebirthNow} className="is-compact hp-m-rr-ready" /> : null}
             onCredits={handleCredits}
@@ -1423,6 +1432,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             markSlot={markUnlocked.length > 0 || marksRevealed()}
             mark={markEntry(equippedMark)}
             markNew={marksNew}
+            /* GEMS: the count rides beside the wins chip once MARKS is there (where they are spent);
+               the MARKS dot = a roll is affordable */
+            gems={markUnlocked.length > 0 || marksRevealed() ? gems : null}
+            rollDot={rollDot}
             onMarkClick={() => {
               markMarksSeen(markUnlocked.map((m) => m.id));
               setMarksNew(false);

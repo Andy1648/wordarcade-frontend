@@ -11,6 +11,7 @@
 // so no import cycle). It only participates in xpPerInput/xpPerWord, and only via the live default;
 // every pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
+import { noteLevelReached } from './gemsCore.js'; // GEMS: LEVEL_UP (a leaf module — no cycle)
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Tier
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -864,6 +865,9 @@ export function saveProgress(state) {
     frac = clampFrac(cost > 0 ? intoLevel / cost : 0);
   }
   writeLevelState(level, frac);
+  // GEMS: every level write is where a level-up lands (menu typing, game letters, a rebirth's reset) — the level
+  // ACTUALLY stored (a stale-tab write may be refused) pays LEVEL_UP past the save's high-water mark (gems.js).
+  noteLevelReached(storedLevel());
 }
 
 // The display-progress object for a model state: the level, XP into it, that level's cost, the

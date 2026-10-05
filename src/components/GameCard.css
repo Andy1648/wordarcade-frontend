@@ -715,7 +715,6 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card--glitch::before { opacity: 0 !important; }
 }
 
-
 /* SAT Rush "LIMITED" scarcity stamp — red ink on cream, matching the card's retro-print
    manga palette. Sits INLINE in the masthead tag row (next to the SOLO badge). */
 .game-card-limited-tag {
@@ -826,7 +825,6 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @media (prefers-reduced-motion: reduce) {
   .game-card--shake { animation: none; }
 }
-
 
 /* ===== LOCK PLAQUE — SMALL-CARD OVERRIDES, AT THE END ON PURPOSE =====================
    .game-card-lock-label's base rule is declared BELOW the @container blocks above, and at equal

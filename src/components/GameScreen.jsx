@@ -54,6 +54,9 @@ import { createCountUp } from '../juice/countUp';
 import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 import { noteTypedLetters } from '../progress/letterXp';
+import { GemPop, GemsEarnedLine, useGemsRound } from './gems/Gems';
+import { payGameResult } from '../progress/gems';
+import { otherSeatIds } from '../progress/seats';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -2905,6 +2908,31 @@ export default function GameScreen({
     setGameSpot(false);
   };
 
+  // GEMS (Andy oct5) — Word Bomb's half (Blitz pays in CategoryBlitzScreen). READ-ONLY on the game state: the
+  // ledger mark for "gems earned this game" (reset per gameNonce), the elimination ORDER (who went out before me =
+  // who I beat), and ONE payout when the game is over (gems.payGameResult dedupes by game key). Nothing here feeds
+  // back into the game, the view or the socket. Hooks above the early returns (the React #310 trap noted above).
+  const gemsSince = useGemsRound(gameNonce);
+  const gemElimRef = useRef([]);
+  useEffect(() => { gemElimRef.current = []; }, [gameNonce]);
+  useEffect(() => {
+    for (const p of (gameState && gameState.players) || []) {
+      if ((p.eliminated || p.lives <= 0) && !gemElimRef.current.includes(p.id)) gemElimRef.current.push(p.id);
+    }
+  }, [gameState]);
+  useEffect(() => {
+    if (!gameOver || gameType === 'category-blitz' || !gameState) return;
+    const order = gemElimRef.current;
+    const mine = order.indexOf(myId);
+    const bots = new Set((roomPlayers || []).filter((p) => p.isBot).map((p) => p.id));
+    const rivals = (gameState.players || []).filter((p) => p.id !== myId).map((p) => {
+      const at = order.indexOf(p.id);
+      return { id: p.id, isBot: bots.has(p.id) || !!p.isBot, beaten: at >= 0 && (mine < 0 || at < mine) };
+    });
+    payGameResult({ key: `wb-${gameNonce}-${gameOver.winnerId || ''}`, iWon: gameOver.winnerId === myId, rivals, selfIds: otherSeatIds(), mode: 'word-bomb' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameOver]);
+
   // Category Blitz is a completely different (simultaneous, round-based)
   // experience, so it renders as its own component with its own state rather
   // than threading conditionals through the turn-based Word Bomb layout.
@@ -3865,6 +3893,8 @@ export default function GameScreen({
               )}
               {/* The tier slam: ONE pooled node, replayed on each 2/4/7/10 crossing. */}
               <TierSlam count={streak.count} outranked={wbSlot.main !== 'hype'} />
+              {/* GEMS: the drop pop — ONE pooled node, replayed when an accepted word drops gems. */}
+              <GemPop reduced={goReduce} />
             </div>
             {/* Near-miss callout for a late accept (also pointer-events:none). */}
             {clutchCall && (
@@ -4130,7 +4160,11 @@ export default function GameScreen({
             </div>
             {/* ===== THE MONEY COLUMN: what you earned and where it came from. ===== */}
             <div className="go-col go-col-mid">
-            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
+            {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
+            <div className="go-earned-row">
+              <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
+              <GemsEarnedLine since={gemsSince} />
+            </div>
             {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
                 from." Every multiplier that contributed, ranked by its share of the total. */}
             <RoundPayout ledger={payoutLedger} />
@@ -4330,7 +4364,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   return { stage, displayScore, popping, fastForward };
 }
 
-function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false }) {
+function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false, gemsSince = 0 }) {
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
@@ -4411,6 +4445,8 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           <div className="solo-category">
             {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'CATEGORY BLITZ · 3 ROUNDS'}
           </div>
+          {/* GEMS earned this run — always its own line (Andy oct5) */}
+          <GemsEarnedLine since={gemsSince} />
 
           {/* (Daily STREAK line removed — the daily-streak feature is gone; the day #
               above is enough. This reclaims the vertical space it used.) */}
@@ -4553,6 +4589,22 @@ function CategoryBlitzScreen({
     if (!cbMissedWord) return;
     loadGlossary().then(() => setCbGlossTick((n) => n + 1));
   }, [cbMissedWord]);
+
+  // GEMS (Andy oct5), Blitz's half: this screen remounts per game (key cb-<gameNonce>), so the ledger mark taken on
+  // mount is "this game". At game over the final scores rank everyone: a rival scoring below me is beaten. READ-ONLY;
+  // paid once (gems.payGameResult dedupes by key). A solo / daily run has no rivals and pays nothing here.
+  const gemsSince = useGemsRound();
+  const [gemGameKey] = useState(() => `cb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`); // one per mount = one per game
+  useEffect(() => {
+    if (!gameOver) return;
+    const scores = categoryScores || gameOver.finalScores || [];
+    const me = scores.find((s) => s.id === myId);
+    const myScore = me ? me.score || 0 : 0;
+    const bots = new Set((roomPlayers || []).filter((p) => p.isBot).map((p) => p.id));
+    const rivals = scores.filter((s) => s.id !== myId).map((s) => ({ id: s.id, isBot: bots.has(s.id), beaten: (s.score || 0) < myScore }));
+    payGameResult({ key: gemGameKey, iWon: gameOver.winnerId === myId, rivals, selfIds: otherSeatIds(), mode: 'category-blitz' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameOver]);
 
   const { sound } = useSound();
   // Reduced motion for the word landing below — read once, same test the Word Bomb screen uses.
@@ -4823,6 +4875,7 @@ function CategoryBlitzScreen({
         onNewGameMode={onRematch}
         onLeave={onLeave}
         actionPending={rematchPending}
+        gemsSince={gemsSince}
       />
     );
   }
@@ -4875,7 +4928,11 @@ function CategoryBlitzScreen({
               prompt={(roundResults && roundResults.category) || ''}
               promptLabel="IN"
             />
-            <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
+            {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
+            <div className="go-earned-row">
+              <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
+              <GemsEarnedLine since={gemsSince} />
+            </div>
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (
@@ -5145,6 +5202,7 @@ function CategoryBlitzScreen({
                 <SlotTags key={`tags-${cbLanding.key}`} labels={cbSlot.labels} />
               )}
               <TierSlam count={streak.count} outranked={cbSlot.main !== 'hype'} />
+              <GemPop reduced={goReduce} />
             </div>
             {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
             {clutchCall && (

@@ -36,6 +36,9 @@ import {
 import './WordRace.css';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
+import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
+import { payGameResult } from '../progress/gems';
+import { otherSeatIds } from '../progress/seats';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -194,6 +197,18 @@ export default function WordRaceScreen({
   const myPlace = standings.find((s) => s.id === myId)?.place || null;
   const iWon = !!over && over.winnerId === myId;
 
+  // GEMS (Andy oct5): this race's ledger mark (taken as each race goes live) and ONE payout at race over — the
+  // standings rank everyone, a racer placed below me is beaten. READ-ONLY on the race (gems.payGameResult dedupes).
+  const gemsSince = useGemsRunMark(live);
+  useEffect(() => {
+    if (!over) return;
+    const mine = standings.find((s) => s.id === myId);
+    const myPl = mine ? mine.place : Infinity;
+    const rivals = standings.filter((s) => s.id !== myId).map((s) => ({ id: s.id, isBot: !!s.isBot, beaten: Number.isFinite(s.place) && s.place > myPl }));
+    payGameResult({ key: `race-${seed || ''}-${over.winnerId || ''}`, iWon, rivals, selfIds: otherSeatIds(), mode: 'word-race' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [over]);
+
   // Challenge lifetime: bind it to the first race seen; on that race's end clear the stash (the
   // verdict stays on screen); a later race (rematch) drops it.
   useEffect(() => {
@@ -310,6 +325,8 @@ export default function WordRaceScreen({
       {!over && (
         <section className="wr-play">
           <div className="wr-hero" aria-live="polite">
+            {/* GEMS: the drop pop — one pooled node inside this positioned hero (aria-hidden itself) */}
+            <GemPop />
             {counting ? (
               <>
                 <span className="wr-count" key={Math.ceil(goIn / 1000)}>
@@ -428,6 +445,8 @@ export default function WordRaceScreen({
               ? <>YOU BANKED +{formatNum(earned?.wins || 0)} WINS</>
               : <>NO WINS THIS RACE — 3 WORDS START THE BANK</>}
           </p>
+          {/* GEMS earned this race — always its own line, never hidden (Andy oct5) */}
+          <GemsEarnedLine since={gemsSince} />
           <div className="wr-over-actions">
             {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
                 the race's EXISTING onLeave (the room leave path); the menu runs the rebirth + ceremony. */}

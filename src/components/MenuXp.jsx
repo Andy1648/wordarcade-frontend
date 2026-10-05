@@ -20,6 +20,7 @@ import RarityFx from './rarity/RarityFx';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult, needAt } from '../progress/xp';
+import { GemIcon } from './gems/GemChip';
 
 // The mode the XP-bar hint is priced in (Homepage divides by this card's rate), one line.
 
@@ -86,7 +87,7 @@ const GAINPOP_MS = 1400; // pop in · hold · rise-and-fade — the "+X.X%" over
 const GAINPOP_HOLD_END = 0.72; // a new credit before this point keeps the pop up (no re-punch)
 const TICK_MS = 420; // the 10% milestone flash
 
-export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, hintRight = null }) {
+export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, hintRight = null, gems = null, rollDot = false }) {
   const mini = variant === 'mini';
   const winsNum = Number.isFinite(wins) ? wins : 0;
   // The wins chip and the level numeral count from what this session last SHOWED.
@@ -303,7 +304,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   // aria-hidden so the deliberately-decorative progress chrome isn't announced.
   return (
     <div
-      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}`}
+      className={`menu-xp-bar${variant === 'mini' ? ' is-mini' : ' is-loud'}${variant !== 'mini' && gems != null ? ' has-gems' : ''}`}
       aria-hidden={variant === 'mini' ? 'true' : undefined}
     >
       {/* R10: a live BOOST code's gold pill rides the wins chip (it multiplies what the chip counts). */}
@@ -326,6 +327,17 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           </span>
         )
       )}
+      {/* GEMS (Andy oct5): the roll currency, its own icon + count, in THIS cluster beside the wins chip (never a
+          fixed element of its own). A tap opens MARKS — where gems are spent. */}
+      {variant !== 'mini' && gems != null && (() => {
+        const Tag = onMarkClick ? 'button' : 'span'; // a button only when there is somewhere to go
+        return (
+          <Tag type={onMarkClick ? 'button' : undefined} className="menu-gems-chip" data-gems={gems} onClick={onMarkClick || undefined} aria-label={`${formatNum(gems)} gems${onMarkClick ? '. Open marks' : ''}`}>
+            <GemIcon size={16} />
+            {formatNum(gems)}
+          </Tag>
+        );
+      })()}
       {/* DAILY STREAK — a real treatment from 2 days (Job 10), not a bare chip: a flame
           banner carrying the day count (a count only — no multiplier in Rebirth Rush) and any earned
           FREEZE tokens (❄) shown BEFORE they're needed. The milestone tier (2/3/7/14/30)
@@ -383,7 +395,8 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
             {/* H6/M12: the same formatter the marks index and the receipt use (×3.18, not ×3.2); it carries the "×". */}
             <span className="menu-mark-mult" aria-hidden="true">{formatMult(mainMultOf(mark.id))}</span>
-            {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
+            {/* GEMS: the dot means ONE thing — you can afford a roll (gems ≥ 10, or the free roll waits) */}
+            {rollDot && <span className="homepage-shop-dot" data-testid="marks-roll-dot" aria-hidden="true" />}
             {/* RARITY IDENTITY: the chip is filled in its tier (CSS); EPIC+ glow + shimmer, LEGENDARY+ sparks on top */}
             <RarityFx tier={mark.tier} />
           </button>
@@ -406,7 +419,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           aria-label={markNew ? 'New mark unlocked. Choose a mark to wear' : 'Marks. Choose a mark to wear'}
         >
           <span className="menu-mark-name">{markNew ? 'NEW MARK' : 'MARKS'}</span>
-          {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
+          {rollDot && <span className="homepage-shop-dot" data-testid="marks-roll-dot" aria-hidden="true" />}
         </button>
       )}
       <BarRow loud={variant !== 'mini'} level={shownLevel}>

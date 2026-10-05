@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- GEMS: a flat cut gem, cyan with a purple-shade outline (house rule: outline = a darker shade, not black).
+       Asymmetric crown, one chipped corner, a short drip off the point, and a flat overspray fleck. -->
+  <path d="M15 22 L22 10 L43 9 L52 21 L33 55 Z" fill="#2EFFE0" stroke="#0E8F80" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- facets (flat fills, no gradients) -->
+  <path d="M15 22 L52 21 L33 55 Z" fill="#14D8BE"/>
+  <path d="M22 10 L29 21 L36 9.5 Z" fill="#9BFFF2"/>
+  <path d="M29 21 L33 55 L41 21 Z" fill="#0FB8A2"/>
+  <path d="M15 22 L22 10 L29 21 Z" fill="#5CFFEA"/>
+  <!-- the chip on the right shoulder -->
+  <path d="M47 14 L52 21 L45.5 19 Z" fill="#0E8F80"/>
+  <!-- the shine: one off-centre flat glint -->
+  <path d="M23.5 15 L26.5 12.5 L27.5 17 Z" fill="#FFFFFF"/>
+  <!-- outline over the facets -->
+  <path d="M15 22 L22 10 L43 9 L52 21 L33 55 Z" fill="none" stroke="#0E8F80" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M15 22 L52 21" fill="none" stroke="#0E8F80" stroke-width="2"/>
+  <!-- a drip off the point + an overspray fleck -->
+  <path d="M32 54 C31 58 34.5 59 34 61.5 C33.6 63.4 31.2 63.2 31.3 61.2 C31.4 59.6 30.6 57.5 32 54 Z" fill="#14D8BE" stroke="#0E8F80" stroke-width="1.5"/>
+  <circle cx="54.5" cy="31" r="1.8" fill="#2EFFE0"/>
+  <circle cx="11" cy="30.5" r="1.1" fill="#2EFFE0"/>
+</svg>

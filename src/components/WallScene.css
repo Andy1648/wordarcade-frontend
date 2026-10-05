@@ -204,12 +204,6 @@ html[data-view='game'] .wall-beat-bright {
   opacity: 0;
 }
 
-@keyframes wall-red-pulse {
-  0% { opacity: 0.05; }
-  50% { opacity: 0.16; }
-  100% { opacity: 0.05; }
-}
-
 /* Honour reduced-motion: keep the static wall but stop the looping motion. */
 @media (prefers-reduced-motion: reduce) {
   .wall-red,

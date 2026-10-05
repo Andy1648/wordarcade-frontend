@@ -143,6 +143,17 @@ const MR = fs.existsSync(path.join(SRC, 'progress', 'markRolls.js')) && process.
 // pay. Loaded on its own (not via MR) so SIM_ROLLS=0 still scores marks; absent in older trees.
 const MRC = fs.existsSync(path.join(SRC, 'progress', 'markRollsCore.js')) ? await imp('progress/markRollsCore.js') : null;
 const ROLL_SHARE = Number(process.env.SIM_ROLL_SHARE ?? 0.2);
+// GEMS (Andy oct5) — present only in trees that ship progress/gems.js. Rolls cost GEMS there (wins never buy rolls),
+// so the roll purse below is NOT earmarked from wins; the bot spends GEMS on rolls instead. Every gem source goes
+// through the shipped functions: the word DROP (wins.awardWordXp), LEVEL UP (xp.saveProgress), REBIRTH
+// (stars.rebirthWithStars), and the WB game result (gems.payGameResult, modelled below). The starting grant
+// (gemsMigrate) runs once per bot so the LEVEL UP mark is stamped (a fresh save: 0 gems).
+const GEMS = fs.existsSync(path.join(SRC, 'progress', 'gems.js')) ? await imp('progress/gems.js') : null;
+const GEMS_MIG = GEMS && fs.existsSync(path.join(SRC, 'progress', 'gemsMigrate.js')) ? await imp('progress/gemsMigrate.js') : null;
+// WB game results (assumed, no measured rate): the share of WB games WON per skill, and the share played with PEOPLE
+// (3-player rooms: 2 rivals) rather than a bot. A people game won beats both; lost, it beats one half the time.
+const WB_WIN = { casual: 0.35, median: 0.5, strong: 0.7 };
+const WB_PEOPLE_SHARE = 0.25;
 if (MR && process.env.SIM_SPEC_CUT === '1') {
   const keep = new Set(MR.KEPT_ACHIEVEMENTS);
   for (let i = ACH.ACHIEVEMENTS.length - 1; i >= 0; i--) if (!keep.has(ACH.ACHIEVEMENTS[i].id)) ACH.ACHIEVEMENTS.splice(i, 1);
@@ -238,6 +249,22 @@ function simulate(skill, start = null) {
   SIM_NOW = T0;
   WINS.resetWinsLedger();
   WINS.consumePendingWinsStamp();
+  // GEMS: a seeded drop rng, the starting grant (stamps the LEVEL UP mark), and a by-source tally
+  const gemsBy = {};
+  let gemsEarned = 0;
+  let gemRolls = 0;
+  let gemsOff = null;
+  const gemTrail = [[0, 0]]; // [minute, cumulative gems earned (no starting grant)]
+  if (GEMS) {
+    GEMS.resetGemsLedger();
+    GEMS.setGemRng(LUCK.mulberry32(9001 + skill.wpm * 37 + (Number(process.env.SIM_SEED) || 0) * 3571));
+    if (GEMS_MIG) GEMS_MIG.migrateGems();
+    gemsOff = GEMS.subscribeGemLedger((e) => {
+      if (!e || e.reason === 'start') return;
+      gemsBy[e.reason] = (gemsBy[e.reason] || 0) + e.amount;
+      gemsEarned += e.amount;
+    });
+  }
   const rng = LUCK.mulberry32(1648 + skill.wpm * 7919 + (Number(process.env.SIM_SEED) || 0) * 104729);
   const V = makeVocab(skill);
   const totalMin = HOURS * 60;
@@ -301,7 +328,7 @@ function simulate(skill, start = null) {
   const achTimes = {};
   const sub = WINS.subscribeWins((e) => {
     winsAll += e.amount;
-    if (MR && e.amount > 0 && rollsOpen()) purse += e.amount * ROLL_SHARE;
+    if (MR && !GEMS && e.amount > 0 && rollsOpen()) purse += e.amount * ROLL_SHARE; // GEMS trees: wins never buy rolls
     if (e.kind === 'word') winsWord += e.amount;
     else {
       const ref = refMix();
@@ -422,6 +449,15 @@ function simulate(skill, start = null) {
     // MARKS v2 (no ×10): the AUTO ROLL habit — once the purse can pay ~AUTO_ROLL_AFFORD rolls, auto-roll until an
     // EPIC-or-better (or the purse runs dry), one roll at a time — markRollShop.autoRoll({ until: 'epic' }) as a
     // player taps it. Older trees (no v2 engine) keep the old roll-whenever-affordable loop.
+    // GEMS trees: the bot rolls whenever it can pay 10 GEMS, one roll at a time (gems.spendGems — the shop's door)
+    if (GEMS) {
+      for (let guard = 0; guard < 100000; guard++) {
+        if (!GEMS.spendGems(GEMS.ROLL_PRICE_GEMS)) return;
+        gemRolls++;
+        oneRoll(false);
+      }
+      return;
+    }
     const v2 = typeof MR.pityLadder === 'function';
     const AUTO_ROLL_AFFORD = 10;
     let streak = false;
@@ -688,6 +724,17 @@ function simulate(skill, start = null) {
       for (const w of wi) if (!w.done && minute >= w.b) { w.done = true; windowState[w.id] = snapshot(); }
     }
     if (mode !== 'word-bomb') WPM.recordSession({ mode, chars: skill.typing * 5, ms: 60000 });
+    // GEMS: the WB game's result (a bot game, or WB_PEOPLE_SHARE of the time a 3-player people game), paid through
+    // the shipped gems.payGameResult — BOT_WIN / PER_PLAYER_BEATEN and the win streak.
+    if (GEMS && mode === 'word-bomb') {
+      const iWon = rng() < (WB_WIN[skill.id] ?? 0.5);
+      const people = rng() < WB_PEOPLE_SHARE;
+      const rivals = people
+        ? [{ id: 'p1', isBot: false, beaten: iWon }, { id: 'p2', isBot: false, beaten: iWon || rng() < 0.5 }]
+        : [{ id: 'bot', isBot: true, beaten: iWon }];
+      GEMS.payGameResult({ key: `sim-wb-${wbGames}`, iWon, rivals, mode: 'word-bomb' });
+    }
+    if (GEMS) gemTrail.push([minute, gemsEarned]);
     menuReturn();
     if (BOOST.isBoostActive() && !mech.boostLive) mech.boostLive = { t: +minute.toFixed(2), level: lv() };
     if (sessionLeft <= 0 && minute < totalMin) {
@@ -699,6 +746,28 @@ function simulate(skill, start = null) {
   }
   for (const w of wi) if (!w.done) windowState[w.id] = snapshot();
   sub();
+  if (gemsOff) gemsOff();
+  if (GEMS) GEMS.setGemRng(null);
+  // GEMS summary: earned (no starting grant) per minute of play → rolls per minute at ROLL_PRICE_GEMS, by source,
+  // overall and per window (first 10 min, the first hour, the last hour)
+  let gems = null;
+  if (GEMS) {
+    const at = (t) => { let v = 0; for (const [m, g] of gemTrail) { if (m <= t) v = g; else break; } return v; };
+    const price = GEMS.ROLL_PRICE_GEMS;
+    const span = (a, b) => { const g = at(b) - at(a); return { gemsPerMin: +(g / (b - a)).toFixed(2), rollsPerMin: +(g / price / (b - a)).toFixed(3) }; };
+    gems = {
+      earned: gemsEarned,
+      gemsPerMin: +(gemsEarned / totalMin).toFixed(2),
+      rollsPerMin: +(gemsEarned / price / totalMin).toFixed(3),
+      minPerRoll: gemsEarned > 0 ? +(totalMin * price / gemsEarned).toFixed(2) : null,
+      bySourcePerMin: Object.fromEntries(Object.entries(gemsBy).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, +(v / totalMin).toFixed(2)])),
+      byShare: Object.fromEntries(Object.entries(gemsBy).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, +(v / Math.max(1, gemsEarned)).toFixed(3)])),
+      windows: { '0-10m': span(0, Math.min(10, totalMin)), '0-60m': span(0, Math.min(60, totalMin)), lastHour: span(Math.max(0, totalMin - 60), totalMin) },
+      rollsBought: gemRolls,
+      balanceEnd: GEMS.getGems(),
+      constants: { dropChance: GEMS.GEM_DROP_CHANCE, dropMin: GEMS.GEM_DROP_MIN, dropMax: GEMS.GEM_DROP_MAX, botWin: GEMS.BOT_WIN, perPlayerBeaten: GEMS.PER_PLAYER_BEATEN, streakPerWin: GEMS.STREAK_PER_WIN, levelUp: GEMS.LEVEL_UP, rebirth: GEMS.REBIRTH, price },
+    };
+  }
 
   // ---- MEASURES
   const GOOD_KINDS = new Set(['level', 'buy', 'mark', 'achievement', 'rank', 'rebirth']);
@@ -849,6 +918,7 @@ function simulate(skill, start = null) {
     keyTimes: keyBuys.map((b) => [+b.t.toFixed(1), b.id, b.level]),
     firstReach, maxLevel, achTimes,
     rolls: MR ? summariseRolls(rollLog, totalMin, refWordsTrail) : null,
+    gems,
   };
 }
 
@@ -992,6 +1062,11 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
     console.log(`  v11 re-climb: first 10 levels ${r.v11.firstClimbTo10}m; after rebirths (min, ×first) ${r.v11.reclimb.slice(1, 13).map((c) => `R${c.rc}:${c.minTo10}m×${c.vsFirst}`).join(' ')} | faster than first: ${r.v11.reclimbFasterShare}`);
     console.log('  achievements (min)', JSON.stringify(r.achTimes));
     if (r.rolls) console.log('  ROLLS', JSON.stringify({ ...r.rolls, log: undefined, worst: r.rolls.worst.slice(0, 5) }));
+    if (r.gems) {
+      const g = r.gems;
+      const w = g.windows;
+      console.log(`  GEMS: rolls per minute ${g.rollsPerMin} (1 per ${g.minPerRoll ?? '—'} min; target 1 per 2–3 min = 0.33–0.5), gems/min ${g.gemsPerMin}, by source ${Object.entries(g.bySourcePerMin).map(([k, v]) => `${k} ${v}/min (${Math.round(g.byShare[k] * 100)}%)`).join(' · ')} | windows: 0-10m ${w['0-10m'].rollsPerMin} rolls/min · 0-60m ${w['0-60m'].rollsPerMin} · last hour ${w.lastHour.rollsPerMin} | rolls bought ${g.rollsBought}`);
+    }
     console.log('  runaway FAIL lumps', r.runaway.failCount, 'of', r.runaway.lumpCount);
     console.log('  codes', JSON.stringify(r.runaway.codes));
     console.log('  runaway top lumps by minutes', JSON.stringify(r.runaway.worstByMinutes.slice(0, 6)));

@@ -532,7 +532,6 @@ html[data-beat='true'] .homepage-logo {
   pointer-events: none;
 }
 
-
 /* Subtle credit footer - centered, quiet, doesn't compete with the cards. */
 .homepage-btn {
   position: relative;
@@ -798,7 +797,6 @@ html[data-beat='true'] .homepage-logo {
 .homepage-stage[data-paged] .homepage-cards-grid[data-page='1']:not([data-measuring]) > .game-card-magnet:nth-child(-n+3) {
   display: none;
 }
-
 
 /* ---- Responsive ---- */
 

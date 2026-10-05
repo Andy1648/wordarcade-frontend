@@ -29,7 +29,8 @@ import {
   SKIP_TIERS, MAX_PIPS, indexEntry,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip, AUTO_ROLL_TIERS } from '../../progress/markRollShop';
-import { getWins, subscribeBalance } from '../../progress/wins';
+import { getGems, subscribeGems } from '../../progress/gems';
+import { GemIcon, GemCount } from '../gems/Gems';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndWordRejected } from '../../audio/gameSounds';
 import { announceRolls } from '../../leaderboard/live';
@@ -117,7 +118,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   // NO SPOILERS: storage is re-read ONLY when a reel lands
   const view = useMemo(() => viewState(idsRef.current), [landed]); // eslint-disable-line react-hooks/exhaustive-deps
   const reduced = useReducedMotion();
-  const [wins, setWins] = useState(() => getWins());
+  const [gems, setGems] = useState(() => getGems()); // GEMS buy rolls (Andy oct5) — wins never do
   const [spin, setSpin] = useState(null);
   // before the first roll the reel already shows REAL draws from your live odds (no result on it)
   const [idle] = useState(() => {
@@ -143,10 +144,10 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   auto.current.until = until;
   const live = useRef({});
 
-  useEffect(() => subscribeBalance(setWins), []);
+  useEffect(() => subscribeGems(setGems), []);
 
   const cost = nextRollCost(level, view);
-  const canAfford = cost.free || wins >= cost.wins;
+  const canAfford = cost.free || gems >= cost.gems;
   const ladder = pityLadder(view);
   const tutDef = TUTORIALS.find((t) => t.id === 'markRolls');
 
@@ -158,7 +159,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
   const short = () => {
     const c = nextRollCost(level);
-    setMsg(needMoreText(c.wins, getWins(), formatNum));
+    setMsg(needMoreText(c.gems, getGems(), formatNum));
     sndWordRejected();
     const el = btn.current;
     if (el && typeof el.animate === 'function' && !reduced) {
@@ -307,7 +308,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   }, []);
   live.current.commit = commit;
 
-  const label = cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.wins)} WINS`;
 
   if (showIndex) {
     return (
@@ -353,10 +353,18 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           ref={btn}
           className={`rs-roll${canAfford ? '' : ' is-short'}${cost.free ? ' is-free' : ''}`}
           onClick={pressRoll}
+          aria-label={cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.gems)} GEMS`}
         >
-          {label}
+          {cost.free ? 'FREE ROLL' : (
+            <>ROLL · <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{formatNum(cost.gems)}</span></>
+          )}
         </button>
-        <div className="rs-msg" role="status" aria-live="polite">{msg}</div>
+        {/* GEMS: the balance the price is paid from — its own icon + count, right under the price (same row as the
+            short-balance line, so the controls never grow) */}
+        <div className="rs-sub">
+          <GemCount value={gems} size={18} className="rs-gems-bal" />
+          <div className="rs-msg" role="status" aria-live="polite">{msg}</div>
+        </div>
         <div className="rs-opts">
           <div className="rs-auto">
             <button type="button" className={`rs-auto-btn${autoOn ? ' is-on' : ''}`} aria-pressed={autoOn} onClick={pressAuto} data-testid="roll-auto">

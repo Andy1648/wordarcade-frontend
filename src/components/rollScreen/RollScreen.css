@@ -255,6 +255,19 @@
 .rs-roll.is-free { background: #FFE94A; border-color: #b8a020; }
 .rs-roll.is-short { color: #C9C2D6; background: #3a2560; border-color: #5a3d8a; }
 .rs-roll:active { transform: translate(3px, 3px); box-shadow: 3px 3px 0 #000; }
+.rs-roll-price { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+.rs-roll-gem { flex: none; }
+/* the gem balance + the short-balance line share ONE row under ROLL */
+.rs-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 14px;
+  min-height: 1.4em;
+}
+.rs-gems-bal { font-size: var(--fs-body); }
+.rs-sub .rs-msg:empty { margin-left: -14px; } /* an empty status line never pushes the balance off-centre */
 .rs-msg {
   min-height: 1.4em;
   font-family: 'Space Mono', monospace;

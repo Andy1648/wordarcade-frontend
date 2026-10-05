@@ -1,21 +1,24 @@
 // markRollShop.js — the ONE place a MARK ROLL is paid for (the roll UI calls only this). markRolls.js
-// is pure + its own store and never touches the balance; this module charges the price through the
-// one wins channel (wins.js saveWins), rolls, pays the INDEX rewards (a new mark, a ★, a completed tier — words at
-// your rate), and returns the result plus what the UI should do about equipping it.
+// is pure + its own store and never touches a balance; this module charges the price in GEMS (gems.js spendGems —
+// Andy oct5: "Rolls cost 10 GEMS each. Wins never buy rolls."), rolls, pays the INDEX rewards (a new mark, a ★, a
+// completed tier — WINS, words at your rate), and returns the result plus what the UI should do about equipping it.
 // MARKS v2 (Andy oct5): no ×10 — AUTO ROLL "until [tier] or better" (autoRoll) rolls one at a time instead.
-import { getWins, saveWins, grantWins } from './wins.js';
+import { grantWins } from './wins.js';
+import { getGems, spendGems, ROLL_PRICE_GEMS } from './gems.js';
 import { getEquippedMark, equipMark } from './marks.js';
 import {
-  ensureRollState, loadRollState, saveRollState, rollAndSave, rollPriceNow, rollPriceWords, refWordWins,
+  ensureRollState, loadRollState, saveRollState, rollAndSave, refWordWins,
   indexRewardWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
 } from './markRolls.js';
 import { rollsPerRoll } from './markPerks.js';
 import { isBoostActive } from './boost.js';
 
-/** What the next roll costs: { free, wins, words }. The first roll on a save is the free starter. */
+/** What the next roll costs: { free, gems }. The first roll on a save is the free starter. `level` is accepted for
+ *  old callers and ignored (the price is flat). */
+// eslint-disable-next-line no-unused-vars
 export function nextRollCost(level = 1, state = loadRollState()) {
   const free = !(state && state.starter);
-  return { free, wins: free ? 0 : rollPriceNow(level), words: Math.round(rollPriceWords(level)) };
+  return { free, gems: free ? 0 : ROLL_PRICE_GEMS };
 }
 
 /** The worn MAIN right now (its strength: tier × ★ pips × shiny). */
@@ -44,9 +47,7 @@ export function wearMark(id, earned = []) {
 export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   const st = ensureRollState();
   const cost = nextRollCost(level, st);
-  const bal = getWins();
-  if (!cost.free && bal < cost.wins) return null;
-  if (!cost.free) saveWins(bal - cost.wins);
+  if (!cost.free && !spendGems(cost.gems)) return null; // short: nothing spent, nothing rolls
   const n = rollsPerRoll();
   const all = [];
   for (let i = 0; i < n; i += 1) all.push(rollAndSave(rng, { boost: isBoostActive() }));
@@ -68,16 +69,16 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   const decision = equipDecision(res.markId, worn.id, worn.main);
   const fromMain = worn.id ? worn.main : wornMainOf(null);
   const toMain = mainMultOf(res.markId);
-  return { ...res, state: all[all.length - 1].state, spent: cost.wins, free: cost.free, decision, fromMain, toMain, lump, extra };
+  return { ...res, state: all[all.length - 1].state, spent: cost.gems, free: cost.free, decision, fromMain, toMain, lump, extra };
 }
 
 /** The tiers AUTO ROLL can stop on ("until [tier] or better"). */
 export const AUTO_ROLL_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
-const AUTO_ROLL_CAP = 100000; // a hard stop so no loop can run away (wins run out long before)
+const AUTO_ROLL_CAP = 100000; // a hard stop so no loop can run away (the gems run out long before)
 
 /**
  * AUTO ROLL (Andy oct5): roll ONE at a time through buyMarkRoll until a result (or its double-roll extra) is
- * `until` or better, or the wins run out (or `budget` wins have been spent — the sim's purse). Each roll is a full
+ * `until` or better, or the GEMS run out (or `budget` gems have been spent). Each roll is a full
  * buyMarkRoll: price, pity, luck, double rolls, INDEX rewards. `onEach(result, i)` after every roll. Returns the
  * results in roll order ([] when the first can't be paid). Equips nothing (the UI lands each result).
  */
@@ -88,7 +89,7 @@ export function autoRoll({ until = 'epic', level = 1, rng = Math.random, onEach,
   let spent = 0;
   for (let i = 0; i < cap; i += 1) {
     const c = nextRollCost(level);
-    if (!c.free && spent + c.wins > budget) break;
+    if (!c.free && (spent + c.gems > budget || getGems() < c.gems)) break;
     const r = buyMarkRoll({ level, rng });
     if (!r) break;
     spent += r.spent;

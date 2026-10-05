@@ -184,8 +184,9 @@ export function autoShouldStop(result, until = 'epic') {
 export const AUTO_GAP_MS = 420;
 
 // ---- copy helpers (no new words) ----
-export function needMoreText(price, wins, fmt = (n) => String(n)) {
-  return `NEED ${fmt(Math.max(1, Math.ceil(price - wins)))} MORE WINS`;
+/** The short-balance line: "NEED 4 MORE GEMS" (GEMS buy rolls — Andy oct5; wins never do). */
+export function needMoreText(price, have, fmt = (n) => String(n)) {
+  return `NEED ${fmt(Math.max(1, Math.ceil(price - have)))} MORE GEMS`;
 }
 /** "7/10 → ★3" — the next pip's progress (null at ★5). */
 export function pipLine(have, need, pips, fmt = (n) => String(n)) {

@@ -104,12 +104,6 @@ html[data-beat='true'] .screen-flash {
   animation: none;
 }
 
-@keyframes screen-beat-flash {
-  0% { opacity: 0; }
-  20% { opacity: 0.021; } /* subtle pink wash (~35% of the old 0.06 peak), not a strobe */
-  100% { opacity: 0; }
-}
-
 /* IN-GAME: kill the whole-viewport beat flash. On the play screen it strobes a
    palette colour behind text players read fast — a readability + comfort issue and
    a photosensitivity flag. The flash stays ACTIVE on the menu/lobby (data-view set

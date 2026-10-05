@@ -1,0 +1,81 @@
+/* Gems.css — GEMS on screen, the LAZY half (with the game screens; the icon / count / menu chip are GemChip.css).
+   Flat colours only; the gem itself is the SVG asset (/art/gems/gem.svg).
+   Motion: GemPop's one finite WAAPI one-shot (Gems.jsx). Nothing here animates; nothing loops. */
+
+/* ---- the end-of-game line: its own row, never hidden ---- */
+.gems-earned {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px auto 0;
+  padding: 6px 12px;
+  width: fit-content;
+  max-width: 100%;
+  background: #1a0b2e;
+  border: 3px solid #0e8f80; /* darker shade of the gem cyan */
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: #2effe0;
+  font-size: var(--fs-body);
+  line-height: 1;
+}
+.gems-earned-label {
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+}
+/* SAT RUSH's printed page: the line is .sr-gemsline (SatRush.css — the wins line's ink voice); the gem just sits in the text */
+.gems-earned-print .gem-icon {
+  vertical-align: -3px;
+}
+
+/* ---- the GEM POP on the word: one pooled node, absolute inside an existing positioned slot ---- */
+.gem-pop {
+  position: absolute;
+  top: -6px;
+  right: 6%;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #2effe0;
+  -webkit-text-stroke: 1px #000;
+}
+.gem-pop-num:empty {
+  display: none;
+}
+
+
+/* ---- the roll screen: the gem in the ×10 price ---- */
+.mr-roll-gem {
+  margin: 0 2px;
+}
+
+/* ---- the game-over card: the gems line shares the WINS line's row (one row, a smaller gap — the fit gates in
+   e2e/ko-screen hold the card at zero scroll at 360x640 and 1163x450). A compact chip (thin rule, 16px gem): on a
+   round with no wins it is the whole row, so it may cost the card no more than ~20px. Never hidden. ---- */
+.go-earned-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 10px;
+  margin: 0;
+}
+.go-earned-row > .wins-earned { margin: 4px 0 6px; }
+.go-earned-row > .gems-earned {
+  margin: 0;
+  padding: 0 8px;
+  gap: 6px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #000;
+}
+.go-earned-row > .gems-earned .gem-icon { width: 16px; height: 16px; }
