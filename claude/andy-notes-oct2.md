@@ -186,6 +186,15 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 - [x] 4. (13:35 DONE on feat/numbers-feel: one helper src/juice/countUp.js — 1.2 s → 2 s on a log scale of the jump, a new gain retargets the running count (never stacks), reduced motion/drops instant; used by the menu wins chip with a big '+N', level numeral, XP fill, WinnerPopup, the in-game wins pill, claim stamps (now 1.7 s), WordLanding, SAT results) COUNT-UP ANIMATIONS last longer ("so the user can see how much it's increasing by"): wins/XP/level gains count up over ~1.2–2 s scaled to the jump, with the "+amount" shown big. Finite, no stacking, reduced motion = instant.
 - [ ] 5. (13:35: visible half DONE on feat/numbers-feel a1c31c8 — '43.7%' with one decimal, a pooled '+X.X%' pop per credit, a flash + soft note at every 10%, the bar counts up from where it was when you left for a game; the movement check FAILED badly → Option F proposal at the top of ANDY TODO) HIGH-LEVEL BAR FEELS STAGNANT (Andy LV175: "bar just isn't moving"): show % to next level with a decimal, a "+X%" pop per word, a small milestone tick every 10% with a little reward feel. Sim: at LV150–250 the bar moves ≥0.5% per average word. If the existing-player numbers say the wait is too long, PROPOSE (don't apply) a fair one-time rescale with before/after per top player.
 
+## GEMS (Andy oct5 ~09:00) — REPLACES the roll currency (wins never buy rolls)
+- [ ] Rolls cost 10 GEMS each.
+- [ ] Earn GEMS: random drops while typing in game modes — each accepted word has a 1 in 15 chance to drop 1–3 GEMS (random), with a gem pop on the word; beat a bot +5; multiplayer +5 per player you beat (placement scales it); win streak +1 per win in a row; level-up +2; rebirth +20.
+- [ ] Target ~1 roll per 2–3 min of normal play. Sim it on CI; tune ONLY the drop chance and win payouts to hit it; report the numbers.
+- [ ] GEMS show as their own icon + count (formatNum) on the menu and the ROLL screen. MARKS gets a notification dot only when you can afford a roll.
+- [ ] Existing players get a fair starting GEMS amount based on their current roll progress. No one loses.
+- [ ] Earned gems always show as their own line in end-of-game results (never hidden).
+- Plan: own PR stacked on the marks-engine-v2 PR (which still prices in wins), so the two don't fight over markRollShop.
+
 ## OCT5 GOAL (Andy ~08:30) — until 16:00 ET; MERGE EACH PR THE MOMENT CI IS GREEN (authorized), don't batch; log every merge with its PR #
 - [ ] 1. ROLL SCREEN (research Roblox RNG games, e.g. Sol's RNG): its own full screen from the MARKS button, one big ROLL button. Reel swings fast through other marks, decelerates onto the result (~2.5–4 s); rarer = longer slowdown, a near-miss tick past a rarer mark, screen dim, rarity-coloured light, burst; LEGENDARY+ full-screen cutscene with "1 IN X" huge. Sound + shake scale with rarity. Tap to skip after the first roll. ×10 = fast cascade, best gets the full reveal. 3 versions → adversarial reviewer → pick one.
 - [ ] 2. Separate INDEX button → the collection (all marks, owned/unowned, gold/rainbow); each mark one short flavour line + its bonus ("×3 WINS · PERK: …"), one line max.
