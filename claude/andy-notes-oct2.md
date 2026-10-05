@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 07:30 ✅ #169 REBIRTH RUSH MERGED + LIVE (merge 7d40765 in index-8LKFGQ1M.js) · prod fresh-profile WB round 18 turns, 0 errors · prod conversion check: an old R4 LV195 save → R11 LV1, peak 195 kept, "REBIRTH 11 / YOUR LEVELS BECAME +7 REBIRTHS" once, 0 errors · ANDY: run 018 now (SQL on your clipboard / supabase/migrations/018_rebirth_rush.sql), then say "ran it"
 - 21:37 ✅ prod = latest merge (#177 merge SHA 2489a71 in index-DqFizBW1.js; #178 in index-BTkW9DBE.js) · main CI green through 79d99c5, 2489a71 E2E running · board API sane AND rebirths-first live (1 Tangie R10 LV126 · 2 Daan R9 · 3 Xavi R8 LV168 … 10 snapplemelon R4 LV195; no test rows) · fresh LV1 WB solo on prod to game-over (10 turns) · 0 console errors
 - 19:50 ✅ prod = latest merge (#174 "3 ROUNDS · 30s EACH" in ModeExample-DM1JMtXc.js) · main CI green on 1f40b4f, 9e3e781 E2E running · board API sane (18 rows, no test rows; NoBuffCookies LV15→17 on econ 10; Xavi's 1e9 still shows "—") · fresh LV1 WB solo on prod played to game-over (6 turns, claude/finetune/prod-checkup-wb.mjs) · 0 console errors
 - 17:55 ✅ prod = latest merge (#166 'LEVEL FLOOR' in index-CT9LmTZ2.js) · main CI green on 0c2cac7, 15ece21 E2E running · board API sane (16 rows, no ZZ test rows; Xavi's stored 1e9 shows '—' in the UI; NoBuffCookies submitted on econ 10 → LV15 R7, matches Andy's v11 note 'R8 LV16') · fresh profile WB solo on prod: 10 turns, all words accepted, won, 0 console errors.
