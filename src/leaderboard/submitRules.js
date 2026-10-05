@@ -2,8 +2,8 @@
 // JS function (no DOM, no fetch), so node:test can pin every branch and the e2e board mock can apply it.
 //
 // KEEP IN SYNC WITH private.lb_board_write in 017_board_reality.sql (decideSubmit) and
-// private.lb_board_write_rr in 018_rebirth_rush.sql (decideSubmitRR, at the bottom — the live rule once 018
-// runs): the same branches in the same order, the same constants. A change to one is a change to both.
+// private.lb_board_write_rr in 021_server_rebirth.sql (decideSubmitRR, at the bottom — the live rule once 021
+// runs; it supersedes 018's, 019's and 020's versions): the same branches in the same order, the same constants. A change to one is a change to both.
 //
 //   1. first submit (no submitted_at)      → BASELINE as submitted, no weekly words
 //   2. < 5 s since the last accepted submit → THROTTLED (nothing written)
@@ -83,8 +83,9 @@ export function decideSubmit(old, sub, now) {
 
 // ---- REBIRTH RUSH (supabase/migrations/018_rebirth_rush.sql, private.lb_board_write_rr) --------------------
 // KEEP IN SYNC WITH private.lb_board_write_rr: same branches, order and constants. 017's rule above stays as
-// decideSubmit (the e2e board mock still applies it). Differences from 017:
-//   * REBIRTHS: a token bucket — 1 token per RB_SECS (60 s), at most RB_BURST (60) banked; rb_clock = the
+// decideSubmit (the e2e board mock still applies it). HISTORY (decideSubmitRR below is 021's version — the rebirth
+// part of 018/020 is replaced: a submit never raises rebirths). Differences from 017:
+//   * REBIRTHS (018–020 only; gone in 021): a token bucket — 1 token per RB_SECS (60 s), at most RB_BURST (60) banked; rb_clock = the
 //     moment the bucket was empty (null = full). Rise ≤ conversion bonus + tokens; spent tokens move rb_clock
 //     forward RB_SECS each. No free "+1 per submit".
 //   * THE CONVERSION: while the stored row's econ < 12, bonus = floor((L − gate) / 18) + 1 when L ≥ gate
@@ -99,6 +100,7 @@ export const RR_ECON = 12;
 //   * PLAY: rebirths ≤ floor(lifetime words / WORDS_PER_RB) — a rise past that is clipped. Rows already above it KEEP
 //     their count (existing players keep what they have); they rise again once their words catch up.
 //   * FIRST submit (a new name): rebirths ≤ that same play cap + FIRST_CONV_ALLOW (the legit one-time conversion max).
+// 021: the submit no longer spends tokens (rebirths rise only via lb_rebirth); kept for the record + 020's SQL test.
 export const RB_SECS = 300;
 export const RB_BURST = 12;
 export const WORDS_PER_RB = 40;
@@ -119,13 +121,20 @@ export const CONV_GATE_STEP = 18;
 // old level (LV5000) would otherwise mint hundreds of rebirths in one submit. Legit board max is +7.
 export const CONV_CAP = 15;
 
+// ---- 021 (supabase/migrations/021_server_rebirth.sql — SUPERSEDES 019 + 020): A SUBMIT NEVER RAISES REBIRTHS ----
+// Rebirths now rise ONLY through the server-checked public.lb_rebirth (src/leaderboard/rebirthRules.js). A submit
+// that carries more rebirths than the stored row is held at the stored count. The only exception is 018's ONE-TIME
+// CONVERSION (a row still on econ < 12). Lower rebirths are still a RESET (017). The token bucket no longer lifts
+// anything: its constants and profiles.rb_clock stay (the column is written back unchanged). Everything else is
+// 020's rule unchanged: the FIRST submit of a new name is bounded by its play (+ the conversion allowance), the level
+// is free up to the next gate + LV_HEADROOM (or 015's allowance), words/letters are rate-checked.
 /**
  * @param {{level:number, rebirths:number, lifetime_words:number, lifetime_letters:number, submitted_at:number|null,
  *          econ?:number, rb_clock?:number|null}} old  the stored row (times in ms since epoch)
  * @param {{level:number, rebirths:number, words:number, letters:number}} sub
  * @param {number} now  ms since epoch
- * @returns {{action:'first'|'throttled'|'reset'|'increase'|'rejected', row?:object, weekDelta?:number, conv?:number, tokens?:number}}
- *   `row` = level, rebirths, lifetime_words, lifetime_letters, submitted_at, econ (12), rb_clock
+ * @returns {{action:'first'|'throttled'|'reset'|'increase'|'rejected', row?:object, weekDelta?:number, conv?:number}}
+ *   `row` = level, rebirths, lifetime_words, lifetime_letters, submitted_at, econ (12), rb_clock (unchanged)
  */
 export function decideSubmitRR(old, sub, now) {
   const lv = int(sub.level, 1, 1);
@@ -133,14 +142,14 @@ export function decideSubmitRR(old, sub, now) {
   const w = int(sub.words, 0, 0);
   const l = int(sub.letters, 0, 0);
   const oldClock = old.rb_clock == null ? null : Number(old.rb_clock);
-  const write = (level, rebirths, words, letters, rbClock) => ({
-    level, rebirths, lifetime_words: words, lifetime_letters: letters, submitted_at: now, econ: RR_ECON, rb_clock: rbClock,
+  const write = (level, rebirths, words, letters) => ({
+    level, rebirths, lifetime_words: words, lifetime_letters: letters, submitted_at: now, econ: RR_ECON, rb_clock: oldClock,
   });
 
   if (old.submitted_at == null) {
     // 020: a first submit is a baseline, but its rebirths are bounded by its own play (+ the conversion allowance)
     const rbFirst = Math.min(rb, playRebirthCap(w) + FIRST_CONV_ALLOW);
-    return { action: 'first', row: write(Math.min(lv, GATE_BASE + GATE_STEP * rbFirst + LV_HEADROOM), rbFirst, w, l, oldClock), weekDelta: 0 };
+    return { action: 'first', row: write(Math.min(lv, GATE_BASE + GATE_STEP * rbFirst + LV_HEADROOM), rbFirst, w, l), weekDelta: 0 };
   }
   if (old.submitted_at >= now - THROTTLE_MS) return { action: 'throttled' };
 
@@ -153,19 +162,14 @@ export function decideSubmitRR(old, sub, now) {
   // the one-time conversion bonus, from the STORED row
   const oldGate = CONV_GATE_BASE + CONV_GATE_STEP * oRb;
   const conv = (Number(old.econ) || 0) < RR_ECON && oLv >= oldGate ? Math.min(CONV_CAP, Math.floor((oLv - oldGate) / CONV_GATE_STEP) + 1) : 0;
-  // rebirth tokens: 1 per RB_SECS since rb_clock, at most RB_BURST (null clock = full bucket)
-  const effClock = Math.max(oldClock == null ? -Infinity : oldClock, now - RB_SECS * RB_BURST * 1000);
-  const tokens = Math.min(RB_BURST, Math.floor((now - effClock) / 1000 / RB_SECS));
   const isReset = rb < oRb || w < oW || l < oL || (lv < oLv && rb === oRb);
 
   if (!isReset) {
     if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected' };
     if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected' };
   }
-  // 020: the rise is bounded by tokens AND by play (rows already above the play cap keep what they have)
-  const rb2 = Math.min(rb, oRb + conv + tokens, Math.max(oRb + conv, playRebirthCap(w)));
-  const spent = Math.max(0, rb2 - oRb - conv);
-  const clock = spent > 0 ? effClock + RB_SECS * spent * 1000 : oldClock;
+  // 021: a submit never raises rebirths past the stored count (+ the one-time conversion). Lower = a reset (017).
+  const rb2 = Math.min(rb, oRb + conv);
   const base = isReset || rb2 > oRb ? 1 : oLv;
   const lvCap = Math.max(GATE_BASE + GATE_STEP * rb2 + LV_HEADROOM, base + maxRise);
   if (isReset) {
@@ -176,12 +180,10 @@ export function decideSubmitRR(old, sub, now) {
         rb2,
         Math.min(w, oW + Math.floor(WORDS_PER_SEC * secs)),
         Math.min(l, oL + Math.floor(LETTERS_PER_SEC * secs)),
-        clock,
       ),
       weekDelta: 0,
       conv,
-      tokens,
     };
   }
-  return { action: 'increase', row: write(Math.min(lv, lvCap), rb2, w, l, clock), weekDelta: Math.max(0, w - oW), conv, tokens };
+  return { action: 'increase', row: write(Math.min(lv, lvCap), rb2, w, l), weekDelta: Math.max(0, w - oW), conv };
 }

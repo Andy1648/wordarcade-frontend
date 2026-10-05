@@ -5,6 +5,9 @@
 #              It REPORTS the verdict (MERGE / HOLD) in the job summary + artifact; it does not fail the
 #              check, because a HOLD is a decision for Andy, not a broken build.
 #   long-run — one long loop-sim run of this branch (default 200 h) for reach times (LV50/100/225/300/400).
+#              It FAILS the job on loop-sim's HARD CHECK (021 server-checked rebirth, Andy oct5 phase 1): any bot —
+#              incl. the SPAMMER (1,000 rebirth calls + replays every menu return) and FAST — beating 2x the median's
+#              rebirths at 60/300/600 min, or the server model granting a rebirth below the gate. loop-sim exits 1.
 # Triggers: on a PR that touches the economy (src/progress, claude/econ-oct2) and by hand (workflow_dispatch,
 # with hours / seeds inputs). Reports land as the `econ-sims` artifact and in the run's summary.
 name: Econ sims
@@ -14,6 +17,8 @@ on:
     paths:
       - 'src/progress/**'
       - 'claude/econ-oct2/**'
+      - 'src/leaderboard/**'
+      - 'supabase/migrations/**'
   workflow_dispatch:
     inputs:
       hours:
@@ -72,18 +77,34 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Long run (3 skills + FAST)
+      - name: Long run (3 skills + FAST + SPAMMER) — fails on the HARD CHECK
         run: |
           # PROGRESSION FINAL targets are for 10 h with NO marks (SIM_ROLLS=0); then the same 10 h WITH rolls (runaway check)
-          SIM_ROLLS=0 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '10' }}" | tee long-run.txt
-          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-rolls --hours="${{ github.event.inputs.hours || '10' }}" --no-masher | grep -E '^=== |RR TARGETS|ROLLS' | tee -a long-run.txt
+          # Both runs carry the HARD CHECK (exit 1); the summary is written first, then the job fails if either failed.
+          set +e
+          SIM_ROLLS=0 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '10' }}" > long-run.txt 2>&1
+          rc1=$?
+          SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-rolls --hours="${{ github.event.inputs.hours || '10' }}" --no-masher > rolls-run.txt 2>&1
+          rc2=$?
+          set -e
+          cat long-run.txt
+          grep -E '^=== |RR TARGETS|ROLLS|HARD|[0-9]+m: |server\[|SPAMMER' rolls-run.txt | sed 's/^/[rolls] /' >> long-run.txt || true
           {
             echo '## Long run — first reach of each level (minutes)'
             echo '```'
             grep -E '^=== |reach \(min\)|KE |v11 |MASHER|FAST' long-run.txt || true
             echo '```'
+            echo "## HARD CHECK (server-checked rebirth) — exit codes: long $rc1, rolls $rc2"
+            echo '```'
+            grep -E 'HARD|[0-9]+m: |server\[|SPAMMER' long-run.txt || true
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ]; then
+            echo "::error::loop-sim HARD CHECK failed (long $rc1, rolls $rc2) — a bot beat 2x the median's rebirths or the server granted a rebirth below the gate"
+            exit 1
+          fi
       - name: Board saves (every real board save, median bot, 3 h)
+        if: ${{ !cancelled() }}
         run: |
           SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --board --hours=3 --tag=ci-board | tee board.txt
           {
@@ -93,10 +114,12 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: econ-sims-long-run
           path: |
             long-run.txt
+            rolls-run.txt
             board.txt
             claude/econ-oct2/loop-sim-ci-long.json
           retention-days: 14

@@ -9,7 +9,10 @@
 // stores only its SHA-256 and every write goes through a SECURITY DEFINER function that checks it
 // (supabase/migrations/001_leaderboard.sql). Lose the secret (clear storage) and the name stays on
 // the board, owned by nobody — exactly what a guest handle should do.
-import { getRebirths, storedLevel } from '../progress/xp.js';
+import { getRebirths, saveRebirths, storedLevel } from '../progress/xp.js';
+import { rebirthWithStars } from '../progress/stars.js';
+import { isRebirthReadyNow } from '../progress/rebirthNow.js';
+import { makeRebirthFlow } from './rebirthFlow.js';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
@@ -186,9 +189,24 @@ export async function claimName(username) {
 }
 
 let lastSubmit = 0;
-/** Push my stats if I have a name. Throttled to once per 30 s unless forced; never throws. */
-export async function submitStats(force = false) {
+// 021: what the last push carried and whether the DB's 5 s throttle would have taken it — so the server-checked
+// rebirth pushes fresh stats only when they changed, and waits out the throttle instead of being silently dropped.
+const DB_THROTTLE_MS = 5000;
+let lastPush = null; // { at, level, rebirths, words, likely }
+/** Push my stats if I have a name. Throttled to once per 30 s unless forced; never throws.
+ *  021: while a server rebirth is in flight (or one is still unanswered) the push waits for it — a push carrying
+ *  the old, lower rebirth count would be read as a RESET and undo the server's rebirth. `internal` = the rebirth
+ *  flow's own pre-rebirth push. */
+export async function submitStats(force = false, { internal = false } = {}) {
   if (!LEADERBOARD_ENABLED || !getMyProfile()) return false;
+  if (!internal) {
+    if (rebirthFlow.isBusy()) return false;
+    if (rebirthFlow.hasPending()) {
+      let settled = false;
+      try { settled = await rebirthFlow.settlePending(); } catch { settled = false; }
+      if (!settled) return false;
+    }
+  }
   const now = Date.now();
   if (!force && now - lastSubmit < SUBMIT_EVERY_MS) return false;
   lastSubmit = now;
@@ -224,12 +242,80 @@ export async function submitStats(force = false) {
         p_wins_per_word: s.winsPerWord,
       });
     }
+    lastPush = { at: now, level: s.level, rebirths: s.rebirths, words: s.lifetimeWords, likely: !lastPush || now - lastPush.at > DB_THROTTLE_MS };
     // STEP 52: the cloud save rides the same push (throttled to once a minute; never lowers).
     if (caps.cloud) backupNow({ rpc, secret: getSecret(), econ: caps.econ });
     return true;
   } catch {
     return false;
   }
+}
+
+// ---- 021: SERVER-CHECKED REBIRTH (supabase/migrations/021_server_rebirth.sql; flow in rebirthFlow.js) ----------
+/** The rebirth flow needs the CURRENT level on the server: push unless the last push already carried it and the DB
+ *  will have taken it; if the last push is under 5 s old, wait it out first (the DB would drop it silently). */
+async function pushForRebirth() {
+  const s = myStats();
+  if (lastPush && lastPush.likely && lastPush.level === s.level && lastPush.rebirths === s.rebirths && lastPush.words === s.lifetimeWords) return true;
+  const wait = lastPush ? lastPush.at + DB_THROTTLE_MS + 250 - Date.now() : 0;
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  return submitStats(true, { internal: true });
+}
+/** Fresh (uncached) caps probe: a session that started before Andy ran 021 still finds lb_rebirth. */
+async function serverRebirthEnabled() {
+  if (!LEADERBOARD_ENABLED || !getMyProfile() || !peekSecret()) return false;
+  try {
+    const c = await rpc('lb_caps', {});
+    return !!(c && c.rebirth_rpc);
+  } catch {
+    return false;
+  }
+}
+/** Local half of a rebirth: `target` = the server's new count (local lands exactly on it), null = local +1. */
+function applyLocalRebirth(target) {
+  if (Number.isFinite(target) && target >= 1) saveRebirths(target - 1);
+  const { rc, stars } = rebirthWithStars();
+  return { rc, stars };
+}
+const rebirthFlow = makeRebirthFlow({
+  serverEnabled: serverRebirthEnabled,
+  pushStats: pushForRebirth,
+  call: rpc,
+  secret: () => getSecret(),
+  storage: {
+    get: (k) => localStorage.getItem(k),
+    set: (k, v) => localStorage.setItem(k, v),
+    remove: (k) => localStorage.removeItem(k),
+  },
+  localRebirths: () => getRebirths() || 0,
+  localReady: () => isRebirthReadyNow(),
+  applyLocal: applyLocalRebirth,
+});
+/**
+ * THE rebirth action (021). Today's CONFIRM REBIRTH button and the REBIRTH READY one-tap call it; the v2 kit's
+ * HOLD-TO-REBIRTH button calls it when its hold completes. Single-flight. Resolves to
+ *   { ok:true, mode:'server'|'local', rc, stars }  — applied locally (server mode: on the server's count)
+ *   { ok:false, reason:'pending'|'gate'|'wait'|'rate'|'offline'|'season'|'bad_request', gate?, level?, retry_in? }
+ * Never throws.
+ */
+export async function performRebirth() {
+  const res = await rebirthFlow.performRebirth();
+  // the server checked an older level than this browser has (another tab pushed, or the DB dropped our push):
+  // the next try pushes again instead of trusting the last push
+  if (res && res.reason === 'gate' && res.mode === 'server' && lastPush && Number(res.level) < readLevel()) lastPush = { ...lastPush, likely: false };
+  return res;
+}
+/** lb_rebirth with a persisted request id (no local apply) — performRebirth is the action; this is the raw call. */
+export function requestRebirth() {
+  return rebirthFlow.requestRebirth();
+}
+/** lb_ascend (season 2 only; phase 3 wires the UI). Persisted request id; applies nothing locally yet. */
+export function requestAscend() {
+  return rebirthFlow.requestAscend();
+}
+/** Is a server rebirth in flight? (the UI keeps the button disabled) */
+export function rebirthPending() {
+  return rebirthFlow.isBusy();
 }
 
 // ---- STEP 52: cloud save ----------------------------------------------------------------------

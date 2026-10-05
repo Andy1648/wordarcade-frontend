@@ -1,4 +1,4 @@
-// The 017_board_reality.sql and 018_rebirth_rush.sql write rules, modelled in submitRules.js (kept in sync with the SQL).
+// The 017_board_reality.sql and 018–021 write rules (decideSubmitRR = 021's), modelled in submitRules.js (kept in sync with the SQL).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -126,7 +126,7 @@ test('RR conversion: the real board rows land at their converted rebirth count i
     assert.equal(d.row.level, 1, name);
     assert.equal(d.row.econ, 12, name);
     assert.equal(d.row.rb_clock, row.rb_clock, `${name}: conversion rebirths spend no tokens`);
-    // the bonus is spent: the same jump again (row now econ 12) is held to the (empty) token bucket
+    // the bonus is spent: the same jump again (row now econ 12) is held at the stored count (021: no raise)
     const again = decideSubmitRR({ ...d.row, submitted_at: T0 - 5001, rb_clock: T0 - 10 }, { ...same(d.row), rebirths: want + 7 }, T0);
     assert.equal(again.row.rebirths, want, `${name}: no second conversion`);
   }
@@ -145,54 +145,56 @@ test('RR conversion bonus is CAPPED at 15 rebirths: a forged old level cannot mi
   assert.equal(decideSubmitRR(edge, { ...same(edge), level: 1, rebirths: 15 }, T0).row.rebirths, 15);
 });
 
-test('RR rebirths (020): a token bucket — 1 per 5 min, 12 banked, no free +1 per submit', () => {
-  // full bucket (null clock), plenty of play: an hour away lands up to 12 rebirths at once
+test('RR rebirths (021): a SUBMIT NEVER RAISES REBIRTHS — no tokens, no free +1, held at the stored count', () => {
+  // full bucket (null clock), plenty of play, an hour since the last submit: under 020 this landed +5; now nothing
   const full = rrRow({ rebirths: 5, lifetime_words: 5000 });
   const a = decideSubmitRR(full, { ...same(full), rebirths: 10 }, T0);
-  assert.equal(a.row.rebirths, 10);
-  assert.equal(a.row.rb_clock, T0 - 60 * MIN + 5 * 5 * MIN, '5 tokens spent from a full bucket');
-  assert.equal(decideSubmitRR(full, { ...same(full), rebirths: 500 }, T0).row.rebirths, 17, 'capped at the 12-token burst');
-  // spamming submits every 5 s with an empty bucket mints nothing; five minutes after the clock mints one
-  let row = rrRow({ rebirths: 5, lifetime_words: 5000, rb_clock: T0, submitted_at: T0 });
-  for (let i = 1; i <= 11; i++) row = decideSubmitRR(row, { ...same(row), rebirths: 99 }, T0 + i * 5001).row;
-  assert.equal(row.rebirths, 5, '55 s of spam: still no token');
-  row = decideSubmitRR(row, { ...same(row), rebirths: 99 }, T0 + 5 * MIN + 1000).row;
-  assert.equal(row.rebirths, 6, 'five minutes → one rebirth');
-  // the honest FAST player (fast bot: R1 at 80 words, R2 at 190, R3 at 480 …, ≥ 5 min apart) is never clamped
-  let h = rrRow({ rebirths: 0, lifetime_words: 0, rb_clock: T0, submitted_at: T0 });
-  const fast = [80, 190, 480, 1150, 2530];
-  fast.forEach((w, i) => {
-    const d = decideSubmitRR(h, { ...same(h), level: 1, rebirths: i + 1, words: w, letters: w * 7 }, T0 + (i + 1) * 6 * MIN);
-    assert.equal(d.row.rebirths, i + 1, `fast R${i + 1} at ${w} words`);
-    h = d.row;
-  });
+  assert.equal(a.action, 'increase');
+  assert.equal(a.row.rebirths, 5);
+  assert.equal(a.row.rb_clock, null, 'rb_clock is written back unchanged');
+  assert.equal(decideSubmitRR(full, { ...same(full), rebirths: 500 }, T0).row.rebirths, 5);
+  // hours of submits carrying a higher count never move it
+  let row = rrRow({ rebirths: 5, lifetime_words: 5000, rb_clock: T0 - 99 * HOUR, submitted_at: T0 });
+  for (let i = 1; i <= 50; i++) row = decideSubmitRR(row, { ...same(row), rebirths: 99 }, T0 + i * 10 * MIN).row;
+  assert.equal(row.rebirths, 5);
+  assert.equal(row.rb_clock, T0 - 99 * HOUR, 'the clock is kept, never spent');
+  // a LOWER count is still a reset (017) and lands as submitted
+  const down = decideSubmitRR(full, { ...same(full), rebirths: 2 }, T0);
+  assert.deepEqual([down.action, down.row.rebirths], ['reset', 2]);
+  // the server-checked rebirth moved the stored row (R5 LV1 → the client is R6 LV1): the next submit just agrees
+  const afterRpc = rrRow({ rebirths: 6, level: 1, lifetime_words: 5000, submitted_at: T0 - MIN });
+  const agree = decideSubmitRR(afterRpc, { ...same(afterRpc), level: 3 }, T0);
+  assert.deepEqual([agree.action, agree.row.rebirths, agree.row.level], ['increase', 6, 3]);
 });
 
-test('RR rebirths (020) are bounded by PLAY: ≤ words / 40 — the R100-in-422-words row cannot happen', () => {
+test('RR rebirths (021): the R100-in-422-words row cannot happen — the submit holds R0; the conversion still lands', () => {
   assert.equal(WORDS_PER_RB, 40);
   assert.equal(playRebirthCap(422), 10);
-  // the imbetterthanandy shape, from a full bucket: R0 → R100 with 422 words is clipped to the play cap (10)
   const row = rrRow({ rebirths: 0, lifetime_words: 400, lifetime_letters: 2800 });
-  assert.equal(decideSubmitRR(row, { ...same(row), rebirths: 100, words: 422, letters: 2890 }, T0).row.rebirths, 10);
-  // a row ALREADY above its play cap keeps what it has, and rises again only once its words catch up
+  assert.equal(decideSubmitRR(row, { ...same(row), rebirths: 100, words: 422, letters: 2890 }, T0).row.rebirths, 0);
+  // a row ALREADY above its play cap keeps what it has (and only lb_rebirth raises it)
   const ahead = rrRow({ rebirths: 29, lifetime_words: 1170, lifetime_letters: 11180 });
-  assert.equal(decideSubmitRR(ahead, { ...same(ahead), rebirths: 30 }, T0).row.rebirths, 29, 'held at 29 (cap 29)');
-  assert.equal(decideSubmitRR(ahead, { ...same(ahead), rebirths: 30, words: 1200, letters: 11400 }, T0).row.rebirths, 30);
+  assert.equal(decideSubmitRR(ahead, { ...same(ahead), rebirths: 30, words: 1200, letters: 11400 }, T0).row.rebirths, 29);
   // the one-time conversion still lands in full regardless of words (it converts levels already earned)
   const conv = rrRow({ level: 195, rebirths: 4, econ: 11, lifetime_words: 0, lifetime_letters: 0, rb_clock: T0 - 10, submitted_at: T0 - 5001 });
   assert.equal(decideSubmitRR(conv, { ...same(conv), level: 1, rebirths: 11 }, T0).row.rebirths, 11);
+  // …and never past what it converts (econ 11 row, +7 bonus, asks +20)
+  assert.equal(decideSubmitRR(conv, { ...same(conv), level: 1, rebirths: 24 }, T0).row.rebirths, 11);
 });
 
 test("RR level: free within the next gate + 50 headroom (019); past that, 015's +0.5/s", () => {
-  // rebirthed to R20 and climbed to LV525 inside one submit window (019 gate(R20) = 25 × 21 = 525)
-  const row = rrRow({ level: 480, rebirths: 19, submitted_at: T0 - 6000 });
-  assert.equal(decideSubmitRR(row, { ...same(row), level: 525, rebirths: 20 }, T0).row.level, 525);
-  assert.equal(decideSubmitRR(row, { ...same(row), level: 900, rebirths: 20 }, T0).row.level, 25 * (20 + 1) + 50);
+  // R20 (stored, after lb_rebirth) climbed to LV525 inside one submit window (019 gate(R20) = 25 × 21 = 525)
+  const row = rrRow({ level: 480, rebirths: 20, submitted_at: T0 - 6000 });
+  assert.equal(decideSubmitRR(row, { ...same(row), level: 525 }, T0).row.level, 525);
+  assert.equal(decideSubmitRR(row, { ...same(row), level: 900 }, T0).row.level, 25 * (20 + 1) + 50);
+  // a submit claiming R21 is held at R20 and its level at R20's cap (021: no raise)
+  const r19 = rrRow({ level: 480, rebirths: 19, submitted_at: T0 - 6000 });
+  assert.deepEqual([decideSubmitRR(r19, { ...same(r19), level: 900, rebirths: 20 }, T0).row.rebirths, decideSubmitRR(r19, { ...same(r19), level: 900, rebirths: 20 }, T0).row.level], [19, 25 * 20 + 50]);
   // same run, no rebirth, already past the headroom: 015's allowance from the stored level (100 s → +50)
   const past = rrRow({ level: 600, rebirths: 20, submitted_at: T0 - 100_000 });
   assert.equal(decideSubmitRR(past, { ...same(past), level: 999 }, T0).row.level, 650);
-  // a rebirth drops the level: an increase (rebirths went up), not a reset
-  const reb = decideSubmitRR(row, { ...same(row), level: 3, rebirths: 20 }, T0);
+  // a local rebirth drops the level: an increase (rebirths went up), not a reset — and the count stays at the store
+  const reb = decideSubmitRR(r19, { ...same(r19), level: 3, rebirths: 20 }, T0);
   assert.equal(reb.action, 'increase');
   assert.equal(reb.row.level, 3);
 });
@@ -256,4 +258,22 @@ test('020 SQL mirrors decideSubmitRR: rebirths bounded by play (words / 40), 5-m
   assert.match(sql, /lv_cap := greatest\(25 \* \(rb::bigint \+ 1\) \+ LV_HEADROOM, base_lv \+ max_rise\);/);
   assert.match(sql, /old_gate := 15 \+ 18 \* old\.rebirths/);
   assert.match(sql, /revoke all on function private\.lb_board_write_rr/);
+});
+
+test('021 SQL is the live decideSubmitRR: no raise past stored + conversion, no tokens, 020 first-submit guard kept', () => {
+  const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '021_server_rebirth.sql'), 'utf8');
+  assert.match(sql, /KEEP IN SYNC WITH src\/leaderboard\/rebirthRules\.js \(decideRebirth \/ decideAscend\) and src\/leaderboard\/submitRules\.js\s+-- \(decideSubmitRR\)/);
+  assert.match(sql, /rb := least\(rb::bigint, old\.rebirths::bigint \+ conv\)::integer;/);
+  assert.match(sql, /WORDS_PER_RB constant integer := 40;/);
+  assert.match(sql, /FIRST_CONV_ALLOW constant integer := 7;/);
+  assert.match(sql, /LV_HEADROOM constant integer := 50;/);
+  assert.match(sql, /CONV_CAP constant integer := 15;/);
+  assert.match(sql, /coalesce\(old\.econ, 0\) < 12 and old\.level >= old_gate/);
+  assert.match(sql, /old_gate := 15 \+ 18 \* old\.rebirths/);
+  assert.match(sql, /rb_clock = old\.rb_clock/);
+  assert.match(sql, /interval '5 seconds'/);
+  assert.match(sql, /20 \* secs/);
+  assert.match(sql, /150 \* secs/);
+  assert.match(sql, /floor\(least\(secs, 1200\) \* 0\.5\)/);
+  assert.match(sql, /SUPERSEDES 019 AND 020/);
 });

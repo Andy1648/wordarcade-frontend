@@ -61,6 +61,14 @@
 // rebirths at every gate and buys star perks like the others. Its cumulative level-ups are compared with the
 // MEDIAN bot's at 10 / 30 / 60 / 300 / 1200 min (`masher` in the JSON, a `v11 MASHER` line in the console):
 // PASS when it never beats the median by more than ×1.5. Menu letters use the shipped XP.xpPerInput.
+// SERVER-CHECKED REBIRTH (021, Andy oct5 phase 1): in a tree that ships src/leaderboard/rebirthRules.js +
+// rebirthFlow.js, EVERY bot's rebirth (incl. the masher's) goes through the app's client flow
+// (rebirthFlow.makeRebirthFlow -> performRebirth: push stats, lb_rebirth with a persisted request id, apply on ok)
+// against the JS model of the server (rebirthRules.decideRebirth + submitRules.decideSubmitRR on an in-memory row, on
+// the sim clock). A 5th bot, SPAMMER, plays exactly like the median and at every menu return also calls the rebirth
+// 1,000x through that flow (half fired at once, half in a row) and REPLAYS every old request id straight at the
+// server. HARD CHECK (exit code 1 -> CI fails): any bot's rebirths > 2x the median's at 60 / 300 / 600 min, or any
+// server-granted rebirth while the STORED level was below the gate (or more than one per call, or by a replay).
 // NOT MODELLED: menu typing XP for the three players, Category Blitz / SAT Rush / Word Race, returnBonus, theme worlds.
 // -----------------------------------------------------------------------------------------------
 import fs from 'node:fs';
@@ -152,7 +160,77 @@ const GEMS = fs.existsSync(path.join(SRC, 'progress', 'gems.js')) ? await imp('p
 const GEMS_MIG = GEMS && fs.existsSync(path.join(SRC, 'progress', 'gemsMigrate.js')) ? await imp('progress/gemsMigrate.js') : null;
 // WB game results (assumed, no measured rate): the share of WB games WON per skill, and the share played with PEOPLE
 // (3-player rooms: 2 rivals) rather than a bot. A people game won beats both; lost, it beats one half the time.
-const WB_WIN = { casual: 0.35, median: 0.5, strong: 0.7, fast: 0.8 };
+const WB_WIN = { casual: 0.35, median: 0.5, strong: 0.7, fast: 0.8, spammer: 0.5 };
+// SERVER-CHECKED REBIRTH (021) — present only in trees that ship the server model + the client flow.
+const HAS_SERVER = ['leaderboard/rebirthRules.js', 'leaderboard/rebirthFlow.js', 'leaderboard/submitRules.js'].every((f) => fs.existsSync(path.join(SRC, f)));
+const RBRULES = HAS_SERVER ? await imp('leaderboard/rebirthRules.js') : null;
+const RBFLOW = HAS_SERVER ? await imp('leaderboard/rebirthFlow.js') : null;
+const SUBRULES = HAS_SERVER ? await imp('leaderboard/submitRules.js') : null;
+const SPAM_CALLS = 1000;
+const PACE_LIMIT = 2; // HARD: no bot may beat the median's rebirths by more than this, at PACE_CHECKS minutes
+const PACE_CHECKS = [60, 300, 600];
+/**
+ * One bot's server: the board row + request log, the 021 RPC model behind it, and a tally the hard check reads.
+ * Every grant is checked against the CLIENT's table gate (xp.js), independently of the model's own gate.
+ */
+function makeSimServer() {
+  const S = {
+    row: { level: 1, rebirths: 0, stars: 0, lifetime_words: 0, lifetime_letters: 0, submitted_at: null, econ: 12, rb_clock: null },
+    recent: [], byId: new Map(), calls: 0, grants: 0, violations: [], refusals: {}, replays: 0, replayMoves: 0, submits: 0, ids: [],
+  };
+  S.submit = (sub) => {
+    S.submits += 1;
+    const rb0 = S.row.rebirths;
+    const d = SUBRULES.decideSubmitRR(S.row, sub, SIM_NOW);
+    if (d.row) S.row = { ...S.row, ...d.row };
+    // 021: a submit may lower rebirths (a reset) but never raise them (no econ < 12 rows in the sim)
+    if (S.row.rebirths > rb0) S.violations.push({ t: SIM_NOW, kind: 'submit-raised', from: rb0, to: S.row.rebirths });
+    return d;
+  };
+  S.rpc = (fn, body) => {
+    S.calls += 1;
+    while (S.recent.length && S.recent[0].created_at <= SIM_NOW - RBRULES.RB_WINDOW_SECS * 1000) S.recent.shift();
+    const prev = S.byId.get(body.p_request_id);
+    const log = prev && !S.recent.includes(prev) ? [prev, ...S.recent] : S.recent;
+    const rb0 = S.row.rebirths;
+    const lv0 = S.row.level;
+    const decide = fn === 'lb_ascend' ? RBRULES.decideAscend : RBRULES.decideRebirth;
+    const out = decide(S.row, { requestId: body.p_request_id, season: body.p_season }, log, SIM_NOW);
+    S.row = { ...S.row, ...out.row };
+    if (out.entry) { S.recent.push(out.entry); S.byId.set(out.entry.request_id, out.entry); S.ids.push(out.entry.request_id); }
+    const r = out.result;
+    if (r.replay) S.replays += 1;
+    if (!r.ok) S.refusals[r.reason] = (S.refusals[r.reason] || 0) + 1;
+    if (S.row.rebirths > rb0) {
+      S.grants += 1;
+      const gate = XP.tableRebirthThreshold(rb0);
+      if (lv0 < gate) S.violations.push({ t: SIM_NOW, kind: 'below-gate', rebirths: rb0, level: lv0, gate });
+      if (S.row.rebirths - rb0 !== 1) S.violations.push({ t: SIM_NOW, kind: 'more-than-one', from: rb0, to: S.row.rebirths });
+      if (r.replay) { S.replayMoves += 1; S.violations.push({ t: SIM_NOW, kind: 'replay-moved' }); }
+    }
+    return r;
+  };
+  return S;
+}
+/** The app's client flow (rebirthFlow.js), wired to the sim: localStorage shim, sim clock, the bot's server. */
+function makeSimFlow(S, statsNow) {
+  let k = 0;
+  return RBFLOW.makeRebirthFlow({
+    serverEnabled: async () => true,
+    pushStats: async () => { S.submit(statsNow()); return true; },
+    call: async (fn, body) => S.rpc(fn, body),
+    secret: () => 'sim',
+    storage: { get: (key) => localStorage.getItem(key), set: (key, v) => localStorage.setItem(key, v), remove: (key) => localStorage.removeItem(key) },
+    localRebirths: () => XP.getRebirths(),
+    localReady: () => XP.loadProgress().level >= XP.rebirthThreshold(XP.getRebirths()),
+    applyLocal: (target) => {
+      if (Number.isFinite(target) && target >= 1) XP.saveRebirths(target - 1);
+      const { rc, stars } = STARS.rebirthWithStars();
+      return { rc, stars };
+    },
+    newId: () => `00000000-0000-4000-8000-${(++k).toString(16).padStart(12, '0')}`,
+  });
+}
 const WB_PEOPLE_SHARE = 0.25;
 if (MR && process.env.SIM_SPEC_CUT === '1') {
   const keep = new Set(MR.KEPT_ACHIEVEMENTS);
@@ -173,6 +251,10 @@ const SKILLS = [
   // gate allows and spends every win on KEY (the shared policy). Must stay within FAST_LIMIT × the median's rebirths,
   // and the board (020) must never clip it: its words at every rebirth ≥ WORDS_PER_RB × that rebirth.
   { id: 'fast', wpm: 24, len: 7, vocab: 20000, obscure: 0.05, miss: 0.02, typing: 100, frenzyRunP: 0.99, strips: 1.68, runLen: { fuse: 40, chain: 25, 'word-bomb': 14 } },
+  // SPAMMER (021, Andy oct5 phase 1): plays EXACTLY like the median (same skill, same seeds) and at every menu return
+  // also fires the rebirth SPAM_CALLS times through the client flow and replays every old request id. Present only
+  // in trees with the server model; it must end with the median's rebirths, never more.
+  ...(HAS_SERVER ? [{ id: 'spammer', spam: true, wpm: 10, len: 6, vocab: 9000, obscure: 0.015, miss: 0.08, typing: 50, frenzyRunP: 0.192, strips: 1, runLen: { fuse: 18, chain: 16, 'word-bomb': 10 } }] : []),
 ];
 const MODE_MIX = [['fuse', 0.35], ['chain', 0.35], ['word-bomb', 0.3]];
 const PAYOUT_KEY = { 'word-bomb': 'wordBomb', chain: 'chain', fuse: 'fuse' };
@@ -238,7 +320,7 @@ function sampleWord(rng, skill, V) {
 // REBIRTH RUSH (PROGRESSION-FINAL.md) — detected by xp.js REBIRTH_POWER. The LETTER FORGE is out of the payout
 // formula there, so the bot never buys it (a dead purchase would only distort the targets).
 const RR = Number.isFinite(XP.REBIRTH_POWER);
-function simulate(skill, start = null) {
+async function simulate(skill, start = null) {
   globalThis.localStorage = makeStore();
   // OVERDRIVE (overdrive.js) and anything else that rolls through Math.random: seeded per bot, so a run repeats.
   Math.random = LUCK.mulberry32(4242 + skill.wpm * 31 + (Number(process.env.SIM_SEED) || 0) * 977);
@@ -343,6 +425,12 @@ function simulate(skill, start = null) {
     }
   });
   const lv = () => XP.loadProgress().level;
+  // 021: this bot's server row + the app's client flow (null in a tree without the server model)
+  let lettersAll = 0;
+  const srv = HAS_SERVER ? makeSimServer() : null;
+  if (srv && start) srv.row = { ...srv.row, level: start.lv, rebirths: start.rc, submitted_at: SIM_NOW - 3600e3 };
+  const flow = srv ? makeSimFlow(srv, () => ({ level: lv(), rebirths: XP.getRebirths(), words, letters: lettersAll })) : null;
+  const spam = { calls: 0, ok: 0, replaysSent: 0 };
   const addGood = (kind, label) => good.push({ t: minute, kind, label });
   const firstAt = (k, extra) => { if (!mech[k]) mech[k] = { t: +minute.toFixed(2), level: lv(), rebirths: XP.getRebirths(), ...extra }; };
 
@@ -517,7 +605,7 @@ function simulate(skill, start = null) {
       firstAt('markEquipped', { mark: best });
     }
   }
-  function menuReturn() {
+  async function menuReturn() {
     lastLumpCtx = 'claim';
     const newly = ACH.checkAchievements();
     for (const a of newly) { addGood('achievement', `ACH ${a.name}`); if (achTimes[a.id] == null) achTimes[a.id] = +minute.toFixed(1); }
@@ -530,16 +618,14 @@ function simulate(skill, start = null) {
     CLAIMS.claimAll();
     lastLumpCtx = null;
     bestMark();
-    // rebirth at the gate
-    while (lv() >= XP.rebirthThreshold(XP.getRebirths())) {
-      const at = lv();
+    // rebirth at the gate — 021: through the client flow against the server model (else the local rebirth as shipped)
+    const afterRebirth = (at, rc, stars) => {
       const runMin = minute - runT0;
-      runs.push({ rc: XP.getRebirths(), words, min: +runMin.toFixed(2), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier(), passOldWallShare: passOldWallAt == null || runMin <= 0 ? null : +(passOldWallAt / runMin).toFixed(3) });
+      runs.push({ rc: rc - 1, words, min: +runMin.toFixed(2), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier(), passOldWallShare: passOldWallAt == null || runMin <= 0 ? null : +(passOldWallAt / runMin).toFixed(3) });
       passOldWallAt = null;
       runT0 = minute;
       lastLevelT = minute;
       lastLevelMin = null;
-      const { rc, stars } = STARS.rebirthWithStars();
       climbs.push({ rc, t0: minute, startLevel: lv(), to10: null }); // v11 re-climb clock
       paceStart = {}; // a rebirth cuts any level-in-progress timing short
       addGood('rebirth', `REBIRTH ${rc} (from LV${at}, +${stars}★)`);
@@ -553,6 +639,33 @@ function simulate(skill, start = null) {
       CLAIMS.claimAll();
       lastLumpCtx = null;
       bestMark();
+    };
+    while (lv() >= XP.rebirthThreshold(XP.getRebirths())) {
+      const at = lv();
+      if (flow) {
+        const r = await flow.performRebirth();
+        if (!r.ok) break; // refused (tallied on the server): try again at the next menu return
+        afterRebirth(at, r.rc, r.stars);
+      } else {
+        const { rc, stars } = STARS.rebirthWithStars();
+        afterRebirth(at, rc, stars);
+      }
+    }
+    if (flow && skill.spam) {
+      // the SPAMMER: half the calls fired at once (single-flight), half in a row (server rate + gate), then a replay
+      // of every request id this bot ever sent, straight at the server
+      const half = Math.floor(SPAM_CALLS / 2);
+      const at0 = lv();
+      const burst = await Promise.all(Array.from({ length: half }, () => flow.performRebirth()));
+      for (const r of burst) if (r.ok) { spam.ok += 1; afterRebirth(at0, r.rc, r.stars); }
+      for (let i = 0; i < SPAM_CALLS - half; i++) {
+        const at = lv();
+        const r = await flow.performRebirth();
+        if (r.ok) { spam.ok += 1; afterRebirth(at, r.rc, r.stars); }
+      }
+      spam.calls += SPAM_CALLS;
+      for (const rid of srv.ids.slice()) srv.rpc('lb_rebirth', { p_secret: 'sim', p_request_id: rid, p_season: 0 });
+      spam.replaysSent += srv.ids.length;
     }
     {
       // AUTOMATION (Homepage runs it on every menu return) — its buys are buys too.
@@ -708,6 +821,7 @@ function simulate(skill, start = null) {
       if (words === 0) firstAt('weeklyBoard', { note: 'first accepted word → on the weekly board' });
       words++;
       chars += word.length;
+      lettersAll += word.length;
       if (mode === 'fuse') {
         lastLumpCtx = 'fuse-bonus';
         if (rng() < CLUTCH_P) {
@@ -739,7 +853,7 @@ function simulate(skill, start = null) {
       GEMS.payGameResult({ key: `sim-wb-${wbGames}`, iWon, rivals, mode: 'word-bomb' });
     }
     if (GEMS) gemTrail.push([minute, gemsEarned]);
-    menuReturn();
+    await menuReturn();
     if (BOOST.isBoostActive() && !mech.boostLive) mech.boostLive = { t: +minute.toFixed(2), level: lv() };
     if (sessionLeft <= 0 && minute < totalMin) {
       day++;
@@ -923,6 +1037,7 @@ function simulate(skill, start = null) {
     firstReach, maxLevel, achTimes,
     rolls: MR ? summariseRolls(rollLog, totalMin, refWordsTrail) : null,
     gems,
+    server: srv ? { calls: srv.calls, grants: srv.grants, storedRebirths: srv.row.rebirths, localRebirths: XP.getRebirths(), refusals: srv.refusals, replays: srv.replays, replayMoves: srv.replayMoves, violations: srv.violations.slice(0, 20), violationCount: srv.violations.length, submits: srv.submits, spam: skill.spam ? spam : null } : null,
   };
 }
 
@@ -972,9 +1087,12 @@ function formatCheck(results) {
 // ----------------------------------------------------------------------------- MENU MASHER (v11 round 2)
 const MASHER_CHECKS = [10, 30, 60, 300, 1200];
 const MASHER_LIMIT = 1.5;
-function simulateMasher(hours) {
+async function simulateMasher(hours) {
   globalThis.localStorage = makeStore();
   SIM_NOW = T0;
+  const srv = HAS_SERVER ? makeSimServer() : null;
+  const flow = srv ? makeSimFlow(srv, () => ({ level: XP.loadProgress().level, rebirths: XP.getRebirths(), words: 0, letters: 0 })) : null;
+  const rbAt = {};
   WINS.resetWinsLedger();
   const cap = LX && Number.isFinite(LX.LETTER_RATE_CAP) ? LX.LETTER_RATE_CAP : 30;
   const totalSec = Math.min(hours, 20) * 3600;
@@ -985,13 +1103,17 @@ function simulateMasher(hours) {
   for (let sec = 0; sec < totalSec; sec++) {
     const minute = sec / 60;
     for (const T of MASHER_CHECKS) if (upsAt[T] == null && minute >= T) upsAt[T] = ups;
+    for (const T of PACE_CHECKS) if (rbAt[T] == null && minute >= T) rbAt[T] = XP.getRebirths();
     if (gain == null) gain = XP.xpPerInput({ mode: 'menu', markMult: LX ? LX.markXpBoost() : 1 });
     const before = XP.loadProgress();
     const res = XP.creditXp(before, cap * gain);
     XP.saveProgress(res.state);
     if (res.level > before.level) ups += res.level - before.level;
     while (lvl() >= XP.rebirthThreshold(XP.getRebirths())) {
-      STARS.rebirthWithStars();
+      if (flow) {
+        const r = await flow.performRebirth();
+        if (!r.ok) break;
+      } else STARS.rebirthWithStars();
       for (const id of RR ? ['autoKey', 'frenzy', 'head'] : ['autoKey', 'autoForge', 'frenzy', 'head', 'power', 'power', 'power', 'power']) {
         while (STARS.buyPerk(id, XP.getRebirths()).ok) { if (id === 'power') break; }
       }
@@ -999,7 +1121,8 @@ function simulateMasher(hours) {
     }
     SIM_NOW += 1000;
   }
-  return { cap, upsAt, rebirths: XP.getRebirths(), level: lvl(), menuLetterXp: gain };
+  for (const T of PACE_CHECKS) if (rbAt[T] == null && totalSec / 60 >= T) rbAt[T] = XP.getRebirths();
+  return { cap, upsAt, rbAt, rebirths: XP.getRebirths(), level: lvl(), menuLetterXp: gain, server: srv ? { calls: srv.calls, grants: srv.grants, refusals: srv.refusals, violations: srv.violations.slice(0, 20), violationCount: srv.violations.length } : null };
 }
 
 // ----------------------------------------------------------------------------- BOARD (--board)
@@ -1025,7 +1148,7 @@ if (args.board) {
     const rc = conv.rebirths;
     if (conv.added) console.log(`  ${name.padEnd(15)} CONVERTED LV${lv0} R${rc0} → LV${lv} R${rc} (+${conv.added} rebirths)`);
     const gate = XP.rebirthThreshold(rc);
-    const r = simulate(med, { lv, rc, kt });
+    const r = await simulate(med, { lv, rc, kt });
     const firstRun = r.v11.ke.runs[0];
     const levelsFirstHour = r.v11.upsAt[60];
     const todayPerHour = 60 / todayMinPerLevel(lv0);
@@ -1044,7 +1167,7 @@ const want = typeof args.skills === 'string' ? args.skills.split(',') : SKILLS.m
 const results = [];
 for (const s of SKILLS.filter((x) => want.includes(x.id))) {
   const t = Date.now.call ? process.hrtime.bigint() : 0n;
-  const r = simulate(s);
+  const r = await simulate(s);
   results.push(r);
   if (!QUIET) {
     console.log(`\n=== ${s.id.toUpperCase()} — ${r.words} words, ${r.levelUps} level-ups, ${LX ? 'LETTER XP (v11)' : 'word XP'}, ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
@@ -1085,7 +1208,7 @@ for (const s of SKILLS.filter((x) => want.includes(x.id))) {
 let masher = null;
 const medianRes = results.find((r) => r.skill === 'median');
 if (medianRes && !args['no-masher']) {
-  const m = simulateMasher(HOURS);
+  const m = await simulateMasher(HOURS);
   const vs = MASHER_CHECKS.filter((T) => T <= HOURS * 60 && m.upsAt[T] != null).map((T) => {
     const med = medianRes.v11.upsAt[T];
     return { min: T, masher: m.upsAt[T], median: med, ratio: med > 0 ? +(m.upsAt[T] / med).toFixed(2) : null };
@@ -1115,11 +1238,54 @@ let fast = null;
   FAST (24 w/min, rebirth at the gate, all wins → KEY) vs median rebirths: ${vs.map((v) => `${v.min}m ${v.fast} vs ${v.median} ×${v.ratio}`).join(' · ')} | worst ×${worst} ${fast.pass ? 'PASS' : 'FAIL'} (limit ×${FAST_LIMIT}) | ${perHour} rebirths/h | board 020 (≥ ${wordsPerRb} words a rebirth) clips the honest fast bot: ${clipped.length ? 'FAIL ' + JSON.stringify(clipped.slice(0, 5)) : 'never — PASS'}`);
   }
 }
+// ---- HARD CHECK (021, Andy oct5 phase 1 — CI FAILS on it): nobody beats PACE_LIMIT × the median's rebirths at
+// PACE_CHECKS minutes (incl. the SPAMMER and the MASHER), and the server model never granted a rebirth below the gate,
+// more than one per call, or on a replay. A median at 0 vs one rebirth is not a pace (≤ 1 is allowed).
+let hard = null;
+{
+  const m = results.find((r) => r.skill === 'median');
+  if (m) {
+    const rbBy = (r, T) => { let t = 0; let n = 0; for (const x of r.v11.ke.runs) { t += x.min; if (t <= T) n += 1; } return n; };
+    const checks = PACE_CHECKS.filter((T) => T <= HOURS * 60);
+    const rows = [];
+    for (const r of results) {
+      for (const T of checks) {
+        const mine = rbBy(r, T);
+        const med = rbBy(m, T);
+        rows.push({ bot: r.skill, min: T, rebirths: mine, median: med, ratio: med > 0 ? +(mine / med).toFixed(2) : null, fail: med > 0 ? mine > PACE_LIMIT * med : mine > 1 });
+      }
+    }
+    if (masher && masher.rbAt) {
+      for (const T of checks) {
+        const mine = masher.rbAt[T];
+        if (mine == null) continue;
+        const med = rbBy(m, T);
+        rows.push({ bot: 'masher', min: T, rebirths: mine, median: med, ratio: med > 0 ? +(mine / med).toFixed(2) : null, fail: med > 0 ? mine > PACE_LIMIT * med : mine > 1 });
+      }
+    }
+    const servers = [...results.map((r) => [r.skill, r.server]), ['masher', masher && masher.server]].filter(([, x]) => x);
+    const violations = servers.flatMap(([bot, x]) => (x.violations || []).map((v) => ({ bot, ...v })));
+    const violationCount = servers.reduce((a, [, x]) => a + (x.violationCount || 0), 0);
+    // the spammer ends exactly where the honest median does (its play is identical; every extra call must be refused)
+    const sp = results.find((r) => r.skill === 'spammer');
+    const spammerEqual = !sp || (sp.server && sp.server.storedRebirths === m.final.rebirths && sp.final.rebirths === m.final.rebirths);
+    const paceFails = rows.filter((x) => x.fail);
+    hard = { limit: PACE_LIMIT, rows, paceFails, violationCount, violations: violations.slice(0, 20), serverModel: HAS_SERVER, spammerEqual, pass: paceFails.length === 0 && violationCount === 0 && spammerEqual };
+    if (!QUIET) {
+      console.log('\n=== HARD CHECK (CI fails on it)');
+      for (const T of checks) console.log(`  ${T}m: ${rows.filter((x) => x.min === T).map((x) => `${x.bot} ${x.rebirths}${x.ratio != null ? ` (×${x.ratio})` : ''}${x.fail ? ' FAIL' : ''}`).join(' · ')}`);
+      for (const [bot, x] of servers) console.log(`  server[${bot}]: ${x.calls} calls, ${x.grants} granted, refused ${JSON.stringify(x.refusals)}${x.replays != null ? `, ${x.replays} replays (${x.replayMoves} moved the row)` : ''}${x.spam ? `, spam ${x.spam.calls} calls → ${x.spam.ok} ok, ${x.spam.replaysSent} replays sent` : ''}, violations ${x.violationCount}`);
+      console.log(`  SPAMMER ends with the median's rebirths: ${sp ? `${sp.final.rebirths} vs ${m.final.rebirths} (server ${sp.server && sp.server.storedRebirths})` : '— (no server model in this tree)'}`);
+      console.log(`  HARD CHECK: ${hard.pass ? 'PASS' : 'FAIL'} (pace ≤ ×${PACE_LIMIT} median at ${checks.join('/')} min; no rebirth without the gate)`);
+    }
+  }
+}
 const fmtRows = formatCheck(results);
 if (!QUIET) {
   console.log('\n=== FORMAT');
   for (const f of fmtRows) console.log(`  ${f.ok ? 'ok  ' : 'FAIL'} ${f.fn}(${f.label} = ${f.value}) -> "${f.out}"`);
 }
 const outFile = path.join(HERE, `loop-sim${TAG === 'base' ? '' : '-' + TAG}.json`);
-fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, masher, fast, format: fmtRows }, null, 1));
+fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, masher, fast, hard, format: fmtRows }, null, 1));
 if (!QUIET) console.log(`\nwrote ${outFile}`);
+if (hard && !hard.pass) process.exitCode = 1; // CI: the econ-sims long-run job fails on this
