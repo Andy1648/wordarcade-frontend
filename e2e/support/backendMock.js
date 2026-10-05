@@ -47,14 +47,29 @@ export async function installBackendMock(page, opts = {}) {
   // the GEMS one covers the menu the first time the gem count shows — every shop / menu spec that seeds wins
   // would meet them. Mark both seen unless a spec asks for them (opts.newTutorials). (The old pv10 notice
   // tutorial is gone; its flag is still set so an old save in a spec reads exactly as before.)
+  // A spec that wipes storage in its OWN init script (`localStorage.clear()` before seeding — menu-no-free-wins,
+  // claims-via-stats, wins-live …) runs AFTER this one and used to wipe these flags too: the GEMS spotlight then
+  // covered the menu and swallowed the spec's first click. So the flags are re-applied after every clear().
   if (!newTutorials) {
     await page.addInitScript(() => {
+      const seen = () => {
+        try {
+          localStorage.setItem('taw.tut.pv10', '1');
+          localStorage.setItem('taw.tut.keyTier', '1');
+          localStorage.setItem('taw.tut.gems', '1');
+        } catch {
+          /* storage blocked */
+        }
+      };
+      seen();
       try {
-        localStorage.setItem('taw.tut.pv10', '1');
-        localStorage.setItem('taw.tut.keyTier', '1');
-        localStorage.setItem('taw.tut.gems', '1');
+        const clear = Storage.prototype.clear;
+        Storage.prototype.clear = function clearKeepTutorialsSeen() {
+          clear.call(this);
+          if (this === window.localStorage) seen();
+        };
       } catch {
-        /* storage blocked */
+        /* no Storage */
       }
     });
   }
