@@ -545,4 +545,13 @@
   .wr-root[data-race-status='over'] .wr-lanes {
     display: none;
   }
+  /* MID-RACE ON A SHORT SCREEN (feat/chromebook-card-pages audit): with five racers at 1280x551 the
+     lanes + a 96px hero pushed the INPUT under the fold (~600px of a ~535px panel). The word drops to
+     --fs-h1, the hero loses its 16vh floor, and the lanes tighten (track 44 -> 38: the 36px runner
+     still stands on it). Over-state is untouched (its lanes are gone above). */
+  .wr-root:not([data-race-status='over']) .wr-lanes { gap: 3px; }
+  .wr-root:not([data-race-status='over']) .wr-track { height: 38px; }
+  .wr-root:not([data-race-status='over']) .wr-hero { min-height: 0; }
+  .wr-root:not([data-race-status='over']) .wr-hero-word,
+  .wr-root:not([data-race-status='over']) .wr-typeword { font-size: var(--fs-h1); }
 }
