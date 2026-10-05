@@ -67,10 +67,10 @@ export const LUCK_SOURCES = {
 export const BONUS_ROLL_EVERY = 10; // every 10th roll ×2 luck ("×2 LUCK READY")
 export const BONUS_ROLL_MULT = 2;
 export const ROLL_UNLOCK_LEVEL = 10; // with MARKS (marks.js MARKS_UNLOCK_LEVEL), or any rebirth
-// PRICE (Andy): "cost 60 words of wins at your rate" — 60 × the live per-word rate of the reference word
+// PRICE (Andy): "cost 60 words of wins at your rate", raised to 72 (Andy oct5, +20%) — 72 × the live per-word rate of the reference word
 // (wins.js perWordRateNow, Word Bomb), WITHOUT the timed multipliers (BOOST / OVERDRIVE / FRENZY): a roll
 // never costs ten times more because OVERDRIVE happens to be running — and WITHOUT the MARK (see refWordWins).
-export const ROLL_BASE_WORDS = 60;
+export const ROLL_BASE_WORDS = 72; // Andy oct5: 60 → 72 (+20%, within the frozen ±20%)
 
 function milestonesReached(state) {
   const c = collection(state);
@@ -215,7 +215,7 @@ export function roll(rng, state, ctx = {}) {
 export function rollPriceWords(level = 1) {
   return ROLL_BASE_WORDS;
 }
-/** Wins price of one roll: 60 × the reference word's wins (`rate`). Never below 1. */
+/** Wins price of one roll: 72 × the reference word's wins (`rate`). Never below 1. */
 export function rollPrice({ level = 1, rate = 0 } = {}) {
   const r = Number.isFinite(rate) && rate > 0 ? rate : 0;
   return Math.max(1, Math.round(rollPriceWords(level) * r));

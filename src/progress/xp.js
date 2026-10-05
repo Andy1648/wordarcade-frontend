@@ -612,7 +612,9 @@ export function xpPerWord({
 } = {}) {
   // REBIRTH RUSH (FROZEN formula): WINS / word = BASE 10 × length/5 × MODE POWER × REBIRTH 5^R × MARK × BOOST
   // (× FRENZY on FUSE) — in the ×10 "XP" units the receipt divides back to wins. KEY no longer touches wins;
-  // weight (rarity × combo × lucky), streak and difficulty are accepted and IGNORED (not in the formula).
+  // streak and difficulty are accepted and IGNORED (not in the formula). `weight` (rarity × combo × lucky) is
+  // ignored HERE: this is the per-word UNIT; Word Bomb + Blitz pay the weight as a BOOST factor by banking the
+  // cumulative weight × this unit (wins.js bankWordWins / WEIGHTED_MODES). Never XP per letter.
   void keyTier; void weight; void streakMult; void difficultyMult;
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const len = Number.isFinite(wordLength) && wordLength > 0 ? Math.floor(wordLength) : 1;

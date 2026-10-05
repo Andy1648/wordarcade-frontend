@@ -73,7 +73,9 @@ export function tagLabel(kind, ctx = {}) {
     case 'clutch':
       return 'CLUTCH';
     case 'lucky':
-      return 'LUCKY'; // Rebirth Rush: lucky pays no multiplier, so the tag claims none
+      // Word Bomb + Blitz pay the lucky ×N (a BOOST sub-factor) and pass `paysMult`; the solo modes do not
+      // pay it, so their tag claims no ×N.
+      return ctx.paysMult ? `LUCKY ×${ctx.luckyMult || 5}` : 'LUCKY';
     case 'rare':
       return String(ctx.band || 'RARE').toUpperCase();
     case 'tier':

@@ -1,4 +1,4 @@
-// markRollShop.test.js — paying for a MARK ROLL: the free starter, the 60-word price charged through the one
+// markRollShop.test.js — paying for a MARK ROLL: the free starter, the 72-word price charged through the one
 // wins channel, a short balance refused, and the equip decision (any higher MAIN) applied only when the reveal lands.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,7 +24,7 @@ function withStorage(seed, fn) {
 }
 const at = (u) => { let i = 0; return () => (i++ % 2 ? 0.5 : u); }; // a fixed pick draw; every 2nd draw (the SHINY draw) is never shiny
 
-test('the first roll is the FREE starter; the next costs 60 words at your rate', () => {
+test('the first roll is the FREE starter; the next costs 72 words at your rate', () => {
   withStorage({ 'taw.wins': '0' }, (m) => {
     assert.equal(nextRollCost(1, null).free, true);
     const r = buyMarkRoll({ level: 1, rng: at(0) });
@@ -34,7 +34,7 @@ test('the first roll is the FREE starter; the next costs 60 words at your rate',
     assert.equal(loadRollState().starter, true);
     const c = nextRollCost(1);
     assert.equal(c.free, false);
-    assert.equal(c.words, 60);
+    assert.equal(c.words, 72);
     assert.equal(c.wins, rollPriceNow(1));
     assert.equal(buyMarkRoll({ level: 1, rng: at(0) }), null, 'a short balance is refused, nothing rolls');
     assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 1);
@@ -72,12 +72,12 @@ test('the landing re-checks: a MAIN the player equipped meanwhile is never repla
   });
 });
 
-test('the price is 60 words at the live per-word rate (perWordRateNow), timed boosts excluded', () => {
+test('the price is 72 words at the live per-word rate (perWordRateNow), timed boosts excluded', () => {
   withStorage({}, () => {
     const rate = refWordWins();
     assert.ok(rate > 0);
     assert.ok(Math.abs(rate - perWordRateNow({ mode: 'wordBomb' }).rate) < 1e-9, 'no BOOST, no mark → the live rate');
-    assert.equal(rollPriceNow(1), Math.round(60 * rate));
+    assert.equal(rollPriceNow(1), Math.round(72 * rate));
   });
 });
 

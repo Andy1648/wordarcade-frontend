@@ -94,7 +94,7 @@
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   color: #2EFFE0;
   margin-bottom: 8px;
   display: block;
@@ -301,7 +301,7 @@
 }
 
 .browser-row-code {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 1px;
   color: #8a7bb0;
@@ -329,7 +329,7 @@
 }
 
 .browser-row-status {
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   font-weight: 700;
   letter-spacing: 1px;
   color: #FFE94A;
