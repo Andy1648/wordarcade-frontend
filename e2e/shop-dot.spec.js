@@ -27,13 +27,13 @@ test('a fresh LV1 profile with 0 wins shows no shop dot', async ({ page }) => {
 });
 
 test('150 wins (a retired theme price) with nothing affordable on the shelf shows no shop dot', async ({ page }) => {
-  // KEY POWER v8 (Andy oct2 KP2): T1 is 10 wins, so stand at T5 (next tier 77,760) to keep the shelf out of reach.
+  // KEY TIER v8 (Andy oct2 KP2): T1 is 10 wins, so stand at T5 (next tier 77,760) to keep the shelf out of reach.
   await menuWith(page, { 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.wins': '150', 'taw.keytier': '5' });
   await expect(navControl(page, 'shop')).toBeVisible();
   await expect(shopDot(page)).toHaveCount(0);
 });
 
-test('enough for KEY POWER I lights the shop dot', async ({ page }) => {
+test('enough for KEY TIER I lights the shop dot', async ({ page }) => {
   await menuWith(page, { 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.wins': '5000' });
   await expect(shopDot(page)).toHaveCount(1);
 });

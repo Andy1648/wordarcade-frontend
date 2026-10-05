@@ -66,7 +66,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // Cosmetics (pop style / sound pack) are looks only — they never multiply XP (review round 2).
     // × BOOST (code boost × OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN)
     const menuGain = xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
-    // KEY POWER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
+    // KEY TIER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
     // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).
     // Stable for this menu session (buying remounts this hook via the shop round-trip).
     const feelTier = Math.min(5, getKeyTier());
@@ -112,7 +112,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
         if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
         else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
-        // T4's per-accepted-word edge glow lives in-game). Gold at KEY POWER T5+.
+        // T4's per-accepted-word edge glow lives in-game). Gold at KEY TIER T5+.
         if (crossed && tier > 0) fx.edgePulse(feelTier >= 5 ? '#FFD54A' : popColors[tier]);
       }
       if (creditRef.current) creditRef.current();
