@@ -3,7 +3,7 @@
 // ROLL screen (one big ROLL, no ×10) → the tutorial → a roll spins the reel and the card + pity only change when it
 // LANDS, on the real result; tap anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with
 // "1 IN X" huge; AUTO ROLL stops on its tier; the skip setting is stored; a short balance says NEED X MORE; reduced
-// motion goes straight to the card; ?rsv=a|b|c each play; INDEX opens the MARKS INDEX; nothing loops after.
+// motion goes straight to the card; the reel fits 360x640 → 1366x657; INDEX opens the MARKS INDEX; nothing loops after.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -165,19 +165,37 @@ test('reduced motion: straight to the result card, no reel animation', async ({ 
   expect(await rollUiAnims(page)).toBe(0);
 });
 
-for (const v of ['a', 'b', 'c']) {
-  test(`?rsv=${v}: the reel plays and lands`, async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+for (const [w, h] of [[360, 640], [390, 844], [1366, 657]]) {
+  test(`${w}x${h}: the reel plays and lands, nothing sticks out, the card never covers ROLL`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
     await seed(page, { 'taw.tut.markRolls': '1' });
-    await openRoll(page, `&rsv=${v}`);
-    await expect(page.getByTestId('roll-reel')).toHaveClass(new RegExp(`is-${v}`));
+    await openRoll(page);
     await page.locator('.rs-roll').click();
     await expect(card(page)).toHaveCount(1, { timeout: SPUN });
-    // nothing sticks out of the screen sideways
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
-    expect(sw).toBeLessThanOrEqual(390);
+    expect(sw).toBeLessThanOrEqual(w);
+    const c = await card(page).boundingBox();
+    const r = await page.locator('.rs-roll').boundingBox();
+    expect(c.y + c.height).toBeLessThanOrEqual(r.y + 1);
+    expect(r.y + r.height).toBeLessThanOrEqual(h);
   });
 }
+
+test('coming back from the INDEX never replays the last reveal', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await page.locator('.rs-roll').click();
+  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  await page.waitForTimeout(4200);
+  await page.getByTestId('roll-index').click();
+  await page.locator('.mx-panel').waitFor();
+  await page.locator('.mx-close').click();
+  await expect(page.locator('.rs-overlay')).toBeVisible();
+  await page.waitForTimeout(200);
+  expect(await rollUiAnims(page)).toBe(0);
+  await expect(page.getByTestId('roll-cutscene')).not.toHaveClass(/is-on/);
+});
 
 test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });

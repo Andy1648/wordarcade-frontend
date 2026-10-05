@@ -9,7 +9,8 @@
 // HONEST: the strip is drawn from the live roll table of the roll that was just paid for (reelPlan.drawStrip), the
 // landing cell is the real result, nothing is inserted next to it. NO SPOILERS: the card, the pity ladder, the
 // INDEX and an auto-equipped MAIN update when the reel LANDS, never before. TAP ANYWHERE mid-reveal jumps to the
-// result. Closing mid-reveal still lands it (the roll is already paid and saved).
+// result. Closing mid-reveal still lands it (the roll is already paid and saved). A DOUBLE ROLL's extra shows on the
+// card ("+NAME"), and a first-time mark anywhere in the roll gets the full reveal.
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import MarkBadge, { registerMarkGlyphs } from '../MarkBadge';
 import { ROLLED_GLYPHS } from '../markGlyphsRolled.jsx';
@@ -32,7 +33,7 @@ import { announceRolls } from '../../leaderboard/live';
 import { formatNum } from '../../format';
 import { rarityClass } from '../../lib/rarityStyle.js';
 import { lazyWithReload } from '../../lib/chunkReload';
-import { drawStrip, revealMode, reelVersion, autoShouldStop, needMoreText, pipLine, AUTO_GAP_MS } from './reelPlan.js';
+import { drawStrip, revealMode, restOffset, autoShouldStop, needMoreText, pipLine, AUTO_GAP_MS } from './reelPlan.js';
 import '../rarity/RarityFin.css';
 import './RollScreen.css';
 
@@ -68,6 +69,7 @@ function ResultCard({ result, seq }) {
   const m = markEntry(result.markId);
   const stat = statLine(result.markId, result.state);
   const pl = pipLine(result.have, result.need, result.pips, formatNum);
+  const extra = (result.extra || []).filter(Boolean);
   return (
     <div className={`rs-card ${rarityClass(result.tier, { tint: true })}`} data-testid="mark-roll-result" data-tier={result.tier} data-shiny={result.shiny ? '1' : undefined}>
       <span className="rs-card-artwrap">
@@ -76,15 +78,29 @@ function ResultCard({ result, seq }) {
       </span>
       <div className="rs-card-body">
         <div className="rs-card-name">
-          {m ? m.name : ''}
+          <span className="rs-card-nm">{m ? m.name : ''}</span>
           {result.newMark ? <span className="rs-chip is-new">NEW</span> : null}
         </div>
-        <div className={`rs-card-tier rarity-ink is-${result.tier}`}>{tierName(result.tier)} · 1 IN {formatNum(result.oneInX)}</div>
+        <div className={`rs-card-tier rarity-ink is-${result.tier}`}>
+          <span>{tierName(result.tier)}</span> <span>· 1 IN {formatNum(result.oneInX)}</span>
+        </div>
         {stat ? <div className="rs-card-stat">{stat}</div> : null}
         <div className="rs-card-pips">
           <MarkPips pips={result.pips} max={MAX_PIPS} />
           {pl ? <span className="rs-card-pipline">{pl}</span> : null}
         </div>
+        {extra.length ? (
+          <div className="rs-card-extra" data-testid="mark-roll-extra">
+            {extra.map((x, i) => {
+              const xm = markEntry(x.markId);
+              return (
+                <span key={i} className={`rs-chip is-extra rarity-fin is-${x.tier}`} data-tier={x.tier}>
+                  +{xm ? xm.name : ''}{x.newMark ? ' · NEW' : ''}
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
       <RarityFx key={seq} tier={result.tier} />
     </div>
@@ -97,7 +113,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   idsRef.current = unlockedIds;
   // NO SPOILERS: storage is re-read ONLY when a reel lands
   const view = useMemo(() => viewState(idsRef.current), [landed]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [version] = useState(() => reelVersion());
   const reduced = useReducedMotion();
   const [wins, setWins] = useState(() => getWins());
   const [spin, setSpin] = useState(null);
@@ -116,6 +131,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const [coverHost, setCoverHost] = useState(null);
   const [tut, setTut] = useState(() => !hasSeenTutorial('markRolls'));
   const ctl = useRef(null);
+  const played = useRef(0); // the last spin seq the reel played (a remount after the INDEX never replays it)
   const btn = useRef(null);
   const closeRef = useRef(null);
   const pending = useRef(null); // the paid roll whose reel has not landed yet
@@ -166,7 +182,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
 
   const doRoll = () => {
-    if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return null; }
+    if (ctl.current && ctl.current.busy()) { ctl.current.finish(true); return null; }
     if (pending.current) commit(pending.current);
     // the LIVE table of the roll about to be paid for — the strip is drawn from exactly these odds
     const before = ensureRollState();
@@ -175,12 +191,14 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (!res) { short(); stopAuto(); return null; }
     setMsg('');
     sndPurchase();
-    const mode = revealMode(res, { skipBelow, reduced });
+    // the hit that stops AUTO ROLL always gets the full reveal
+    const mode = revealMode(res, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
     const strip = drawStrip(table.probs, Math.random, { resultId: res.markId });
+    const rest = restOffset();
     pending.current = res;
     lastRes.current = res;
     setShown(null);
-    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: res, strip, mode }));
+    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: res, strip, mode, rest }));
     return res;
   };
   live.current.doRoll = doRoll;
@@ -203,10 +221,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const pressAuto = () => {
     if (auto.current.on) {
       stopAuto();
-      if (ctl.current && ctl.current.busy()) ctl.current.finish();
       return;
     }
-    if (ctl.current && ctl.current.busy()) ctl.current.finish();
+    if (ctl.current && ctl.current.busy()) ctl.current.finish(true);
     auto.current.on = true;
     setAutoOn(true);
     if (!doRoll()) stopAuto();
@@ -216,6 +233,12 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     try { localStorage.setItem(AUTO_KEY, t); } catch { /* blocked */ }
   };
   const pickSkip = (t) => setSkip(setSkipBelow(t));
+  // leaving for the INDEX: a running reveal lands at once (no effects) so nothing is left half-played
+  const openIndex = () => {
+    stopAuto();
+    if (ctl.current && ctl.current.busy()) ctl.current.finish(true);
+    setShowIndex(true);
+  };
 
   // TAP ANYWHERE mid-reveal jumps to the result (capture: the tap never also presses what is under it). The AUTO
   // ROLL button is let through so a running auto roll can always be stopped in one tap.
@@ -279,9 +302,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   }
 
   return (
-    <div className="marks-overlay rs-overlay" role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} data-v={version}>
+    <div className="marks-overlay rs-overlay" role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost}>
       <div className="rs-top">
-        <button type="button" className="rs-index-btn" onClick={() => { stopAuto(); setShowIndex(true); }} data-testid="roll-index">INDEX</button>
+        <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">INDEX</button>
         <div className="rs-pity" data-testid="roll-pity" aria-label="Pity">
           {ladder.map((p) => (
             <span key={p.tier} className={`rs-pity-step rarity-fin is-${p.tier}`} data-tier={p.tier}>
@@ -293,7 +316,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
       </div>
 
       <div className="rs-stage" data-tier={spin ? spin.result.tier : undefined} data-mode={spin ? spin.mode : undefined}>
-        <Reel version={version} spin={spin} idle={idle} coverHost={coverHost} ctl={ctl} onLand={onLand} onDone={onDone}>
+        <Reel spin={spin} idle={idle} coverHost={coverHost} ctl={ctl} played={played} onLand={onLand} onDone={onDone}>
           <div className="rs-card-slot">
             <ResultCard result={shown} seq={spin ? spin.seq : 0} />
           </div>
@@ -310,24 +333,26 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           {label}
         </button>
         <div className="rs-msg" role="status" aria-live="polite">{msg}</div>
-        <div className="rs-auto">
-          <button type="button" className={`rs-auto-btn${autoOn ? ' is-on' : ''}`} aria-pressed={autoOn} onClick={pressAuto} data-testid="roll-auto">
-            AUTO ROLL
-          </button>
-          <label className="rs-pick">
-            <span>UNTIL</span>
-            <select className={`rs-select rarity-fin is-${until}`} value={until} onChange={(e) => pickUntil(e.target.value)} data-testid="roll-until">
-              {AUTO_ROLL_TIERS.map((t) => <option key={t} value={t}>{tierName(t)}</option>)}
+        <div className="rs-opts">
+          <div className="rs-auto">
+            <button type="button" className={`rs-auto-btn${autoOn ? ' is-on' : ''}`} aria-pressed={autoOn} onClick={pressAuto} data-testid="roll-auto">
+              AUTO ROLL
+            </button>
+            <label className="rs-pick">
+              <span>UNTIL</span>
+              <select className={`rs-select rarity-fin is-${until}`} value={until} onChange={(e) => pickUntil(e.target.value)} data-testid="roll-until">
+                {AUTO_ROLL_TIERS.map((t) => <option key={t} value={t}>{tierName(t)}</option>)}
+              </select>
+              <span>OR BETTER</span>
+            </label>
+          </div>
+          <label className="rs-pick rs-skip">
+            <span>SKIP REVEALS BELOW</span>
+            <select className={`rs-select rarity-fin is-${skipBelow}`} value={skipBelow} onChange={(e) => pickSkip(e.target.value)} data-testid="roll-skip">
+              {SKIP_TIERS.map((t) => <option key={t} value={t}>{tierName(t)}</option>)}
             </select>
-            <span>OR BETTER</span>
           </label>
         </div>
-        <label className="rs-pick rs-skip">
-          <span>SKIP REVEALS BELOW</span>
-          <select className={`rs-select rarity-fin is-${skipBelow}`} value={skipBelow} onChange={(e) => pickSkip(e.target.value)} data-testid="roll-skip">
-            {SKIP_TIERS.map((t) => <option key={t} value={t}>{tierName(t)}</option>)}
-          </select>
-        </label>
       </div>
 
       {tut && tutDef && (

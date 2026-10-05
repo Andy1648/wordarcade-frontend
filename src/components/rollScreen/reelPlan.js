@@ -10,19 +10,11 @@
 //
 // FEEL: the reel position is land × (1 − (1 − t/D)^k). D grows with rarity (2.5 s COMMON → 4 s SECRET) and so does
 // k — a higher power spends a longer share of the spin crawling over the last few cells: rarer = longer slowdown.
+// k stays ≤ 2 so the result only crosses the line at ≥ 85% of the spin ("will it tip over" stays open), and the reel
+// rests at a random spot INSIDE the result cell (± REST_MAX of a cell), then settles to centre.
 
 export const TIER_LADDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
 export const tierIndex = (t) => Math.max(0, TIER_LADDER.indexOf(t));
-
-// ---- the reel VERSION (?rsv=a|b|c) — a = horizontal case strip, b = vertical slot reel, c = arc carousel ----
-export const REEL_VERSIONS = ['a', 'b', 'c'];
-export const DEFAULT_REEL_VERSION = 'a';
-export function reelVersion(search = typeof location !== 'undefined' ? location.search : '') {
-  let v = null;
-  try { v = new URLSearchParams(search || '').get('rsv'); } catch { v = null; }
-  v = String(v || '').toLowerCase();
-  return REEL_VERSIONS.includes(v) ? v : DEFAULT_REEL_VERSION;
-}
 
 // ---- the strip ----
 export const REEL_LEN = 44; // cells in the pool (fixed: the DOM pool never grows)
@@ -63,12 +55,21 @@ export function drawStrip(probs, rng = Math.random, { resultId, len = REEL_LEN, 
 /** Full spin length by tier: ~2.5 s COMMON → ~4 s SECRET (Andy). */
 export const SPIN_MS = { common: 2500, rare: 2800, epic: 3200, legendary: 3500, mythic: 3800, secret: 4000 };
 /** The deceleration power by tier: higher = a longer crawl over the last cells. */
-export const EASE_POW = { common: 3, rare: 3.4, epic: 3.9, legendary: 4.4, mythic: 4.8, secret: 5.2 };
+export const EASE_POW = { common: 1.7, rare: 1.76, epic: 1.82, legendary: 1.88, mythic: 1.94, secret: 2 };
+/** The rest offset: the reel stops anywhere inside the result cell (± this much of a cell) — still the result. */
+export const REST_MAX = 0.3;
+export function restOffset(rng = Math.random) {
+  let u = rng();
+  if (!(u >= 0 && u < 1)) u = 0.5;
+  return (u * 2 - 1) * REST_MAX;
+}
 /** A SHORT land (a reveal below the skip setting): a quick snap over the last SHORT_FROM cells. */
 export const SHORT_MS = 520;
 export const SHORT_POW = 2;
-/** LEGENDARY+ cutscene hold after the land (tap skips it). */
+/** LEGENDARY+ cutscene hold after the land (a tap skips it). */
 export const CUTSCENE_MS = { legendary: 2200, mythic: 2600, secret: 3200 };
+/** A tap mid-spin jumps to the land but still plays a SHORT cutscene ("1 IN X" huge); a second tap skips it. */
+export const CUTSCENE_JUMP_MS = 1500;
 
 export function spinMs(tier, mode = 'full') {
   if (mode === 'none') return 0;
@@ -84,6 +85,22 @@ export function reelPos(t, { dur, land = LAND_AT, from = 0, pow = 3 }) {
   if (!(dur > 0) || t >= dur) return land;
   return from + (land - from) * easeOut(t / dur, pow);
 }
+/** The time (ms) at which the reel reaches cell position `pos` (inverse of reelPos). */
+export function timeAt(pos, { dur, land = LAND_AT, from = 0, pow = 3 }) {
+  if (!(dur > 0)) return 0;
+  const f = (pos - from) / (land - from);
+  if (f <= 0) return 0;
+  if (f >= 1) return dur;
+  return dur * (1 - (1 - f) ** (1 / pow));
+}
+/** The share of the spin before the result cell's edge crosses the line (the answer is under the frame after it). */
+export function crossShare(tier, rest = 0, mode = 'full') {
+  const land = LAND_AT + rest;
+  const dur = spinMs(tier, mode);
+  return timeAt(LAND_AT - 0.5, { dur, land, from: spinFrom(mode), pow: easePow(tier, mode) }) / dur;
+}
+/** The dim starts as the reel enters the last DIM_CELLS cells — not before (it must not spoil EPIC+ early). */
+export const DIM_CELLS = 3.5;
 /** The start cell of a spin (a SHORT land starts close to the result). */
 export function spinFrom(mode, land = LAND_AT) {
   return mode === 'short' ? Math.max(0, land - SHORT_FROM) : 0;
@@ -106,10 +123,13 @@ export function tickTimes({ dur, land = LAND_AT, from = 0, pow = 3 }) {
  * 'none' (reduced motion: straight to the result card), 'short' (below the skip setting — a quick land), or 'full'.
  * A first-time mark ALWAYS plays the full reveal (Andy) — unless reduced motion asks for no motion at all.
  */
-export function revealMode(result, { skipBelow = 'epic', reduced = false } = {}) {
+export function revealMode(result, { skipBelow = 'epic', reduced = false, autoUntil = null } = {}) {
   if (reduced) return 'none';
   if (!result) return 'none';
-  if (result.newMark) return 'full';
+  // a first-time mark — the shown result OR a double roll's extra — always gets the full reveal
+  if ([result, ...(result.extra || [])].some((r) => r && r.newMark)) return 'full';
+  // the hit that stops AUTO ROLL always gets the full reveal
+  if (autoUntil && autoShouldStop(result, autoUntil)) return 'full';
   return tierIndex(result.tier) < tierIndex(skipBelow) ? 'short' : 'full';
 }
 /** LEGENDARY+ on a full reveal gets the full-screen cutscene ("1 IN X" huge). */

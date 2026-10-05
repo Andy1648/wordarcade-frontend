@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   drawStrip, tableEntries, REEL_LEN, LAND_AT, spinMs, SPIN_MS, easePow, reelPos, tickTimes, spinFrom, revealMode,
   hasCutscene, dimFor, hasLight, burstCount, BURST_POOL, shakePx, shakeFrames, autoShouldStop, needMoreText, pipLine,
-  reelVersion, burstVectors, TIER_LADDER,
+  burstVectors, TIER_LADDER, restOffset, REST_MAX, crossShare, timeAt, DIM_CELLS,
 } from './reelPlan.js';
 import { rollTable, freshState, ROLL_MARKS, rollMarkById } from '../../progress/markRolls.js';
 
@@ -135,12 +135,34 @@ test('auto roll stops on the goal tier or better (incl. a double roll extra)', (
   assert.equal(autoShouldStop({ tier: 'secret' }, 'secret'), true);
 });
 
-test('copy + version helpers', () => {
+test('copy helpers', () => {
   assert.equal(needMoreText(100, 40), 'NEED 60 MORE WINS');
   assert.equal(pipLine(7, 10, 2), '7/10 → ★3');
   assert.equal(pipLine(0, 0, 5), null);
-  assert.equal(reelVersion('?rsv=b'), 'b');
-  assert.equal(reelVersion('?rsv=C'), 'c');
-  assert.equal(reelVersion('?rsv=z'), 'a');
-  assert.equal(reelVersion(''), 'a');
+});
+
+test('tension: the result crosses the line at >= 85% of the spin, rests INSIDE its cell, every tier', () => {
+  for (const t of TIER_LADDER) {
+    for (const rest of [-REST_MAX, 0, REST_MAX]) {
+      assert.ok(crossShare(t, rest) >= 0.85, `${t} rest ${rest}: ${crossShare(t, rest).toFixed(3)}`);
+    }
+  }
+  const r = rng(11);
+  for (let i = 0; i < 500; i += 1) {
+    const o = restOffset(r);
+    assert.ok(o >= -REST_MAX && o <= REST_MAX && Math.abs(o) < 0.5);
+  }
+  // timeAt inverts reelPos
+  const dur = 3000;
+  const pow = 1.9;
+  const t = timeAt(LAND_AT - DIM_CELLS, { dur, pow });
+  assert.ok(Math.abs(reelPos(t, { dur, pow }) - (LAND_AT - DIM_CELLS)) < 1e-6);
+  assert.ok(t / dur > 0.6, 'the dim starts late, near the end of the spin');
+});
+
+test('full reveal: a first-time mark in a double roll extra, and the hit that stops AUTO ROLL', () => {
+  assert.equal(revealMode({ tier: 'common', extra: [{ tier: 'rare', newMark: true }] }, { skipBelow: 'epic' }), 'full');
+  assert.equal(revealMode({ tier: 'rare' }, { skipBelow: 'epic', autoUntil: 'rare' }), 'full');
+  assert.equal(revealMode({ tier: 'common' }, { skipBelow: 'epic', autoUntil: 'rare' }), 'short');
+  assert.equal(revealMode({ tier: 'rare' }, { skipBelow: 'epic', autoUntil: null }), 'short');
 });

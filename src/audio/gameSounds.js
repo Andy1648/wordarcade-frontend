@@ -183,6 +183,30 @@ export function sndReelTick(rank = 0) {
   tone(ctx.currentTime, { freq: pentFreq(deg), type: 'triangle', dur: 0.035, gain: 0.07, attack: 0.002, lowpass: 2400 });
 }
 
+// build-up swell — EPIC+ only, starts with the dim as the reel enters its last cells and rises until the land.
+// Finite (one oscillator pair, `durMs` long); rarer = a lower start, a higher climb, a little louder.
+const SWELL = { epic: [NOTE.G3, NOTE.G4, 0.06], legendary: [NOTE.Eb3, NOTE.C5, 0.075], mythic: [NOTE.C3, NOTE.Eb5, 0.085], secret: [NOTE.C3, NOTE.G5, 0.095] };
+export function sndRollSwell(tier = 'epic', durMs = 1000) {
+  const ctx = ready();
+  const sw = SWELL[tier];
+  if (!ctx || !sw) return;
+  const t = ctx.currentTime;
+  const dur = Math.max(0.2, durMs / 1000);
+  tone(t, { freq: pentFreq(sw[0]), glideTo: pentFreq(sw[1]), type: 'sawtooth', dur, gain: sw[2], attack: dur * 0.9, lowpass: 1400 });
+  tone(t, { freq: pentFreq(sw[0]) / 2, glideTo: pentFreq(sw[1]) / 2, type: 'sine', dur, gain: sw[2] * 1.2, attack: dur * 0.9 });
+}
+
+// the cutscene "1 IN X" stamp hit — a low thump + a bright clang, bigger for rarer tiers (LEGENDARY+)
+export function sndCutStamp(tier = 'legendary') {
+  const ctx = ready();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const big = tier === 'mythic' || tier === 'secret';
+  tone(t, { freq: 110, glideTo: 46, type: 'sine', dur: big ? 0.5 : 0.36, gain: big ? 0.3 : 0.24, attack: 0.003, lowpass: 600 });
+  tone(t, { freq: pentFreq(NOTE.C5), type: 'square', dur: 0.12, gain: 0.07, attack: 0.002, lowpass: 3200 });
+  if (tier === 'secret') tone(t + 0.06, { freq: pentFreq(NOTE.G5), type: 'triangle', dur: 0.3, gain: 0.1, attack: 0.003 });
+}
+
 // rarity sting — plays as the reel lands; scales with the tier. COMMON one soft note; RARE a two-note lift;
 // EPIC a struck chord; LEGENDARY a run into a chord; MYTHIC adds a low swell under it; SECRET climbs two octaves.
 const STING = {
