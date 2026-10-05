@@ -21,7 +21,7 @@
 // PURE + guarded store (taw.stars). Blocked storage → no stars, every perk at 0, never throws.
 import { rebirthThreshold, loadProgress, saveProgress, getRebirths, doRebirth } from './xp.js';
 import { queueClaim } from './claims.js';
-import { noteRebirth } from './gems.js';
+import { noteRebirth } from './gemsCore.js';
 
 export const STARS_KEY = 'taw.stars';
 export const LAYER_STARS_AT = 1; // rebirths to unlock STARS

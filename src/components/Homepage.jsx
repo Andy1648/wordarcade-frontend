@@ -42,8 +42,8 @@ const MarksIndex = ROLLS
   : lazyWithReload(() => import('./MarksIndexLegacy'), 'MarksIndexLegacy');
 import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark } from '../progress/marks';
 import { wornMarkId, markEntry, loadRollState } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
-import { useGems } from './gems/Gems';
-import { canAffordRoll } from '../progress/gems';
+import { useGems } from './gems/GemChip';
+import { canAffordRoll } from '../progress/gemsCore';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -630,10 +630,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // from STATS, a code, a purchase or a level-up payout all land here at once, no remount needed.
   const wins = useWinsBalance();
   // GEMS (Andy oct5): the roll currency, live off its own channel. The MARKS dot means only "you can afford a roll":
-  // gems ≥ 10, or the free starter roll is still waiting (read per render — one small storage read).
+  // gems ≥ 10, or the free starter roll is still waiting. The roll store is read when the balance moves or MARKS
+  // opens/closes (where the starter roll is spent) — never per render: menu typing re-renders this every keystroke.
   const gems = useGems();
-  const rollStateNow = loadRollState();
-  const rollDot = canAffordRoll(gems) || !(rollStateNow && rollStateNow.starter);
+  const starterWaiting = useMemo(() => { const st = loadRollState(); return !(st && st.starter); }, [gems, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  const rollDot = canAffordRoll(gems) || starterWaiting;
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());

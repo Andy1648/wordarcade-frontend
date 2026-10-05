@@ -2,19 +2,12 @@
    ----------------------------------------------------------------------------
    REUSABLE "ALLEY WALL" SURFACE SYSTEM.
 
-   Three pieces of vocabulary, used together, turn a flat panel into a crafted
+   Two pieces of vocabulary, used together, turn a flat panel into a crafted
    graffiti wall that still reads as a usable menu:
 
      .wall-surface     SURFACE  - weathered concrete: feTurbulence grain +
                                   layered grime gradients + floor shade +
                                   vignette. Real texture, not a flat field.
-     .wall-tag-panel   LEGIBILITY - a fresh dark tag sprayed onto the wall with
-                                  rough torn/sprayed edges, its own paper-noise
-                                  texture, overspray mist and a hard cast shadow.
-                                  Sits BEHIND the controls (a sibling, never the
-                                  parent, so it can't clip them) to give labels a
-                                  crisp surface that still belongs in the world.
-                                  NOT a flat rectangle.
      .wall-spotlight   LIGHTING  - a streetlight pool: a soft warm radial cast
                                   that brightens toward its source and fades out,
                                   for dramatic light on the focal point. screen
@@ -69,60 +62,6 @@
      were removed). */
   background-image:
     radial-gradient(ellipse 120% 90% at 50% 40%, transparent 60%, rgba(0, 0, 0, 0.35) 100%);
-}
-
-/* ============================ TAG PANEL ============================= */
-
-/* A fresh dark tag sprayed straight onto the wall: rough torn/sprayed edges
-   (clip-path, deterministic), a sprayed dark fill so bright controls pop, its
-   own paper-noise texture, a soft overspray mist at the top, and a HARD cast
-   shadow (drop-shadow follows the torn shape, unlike box-shadow). Slightly
-   off-axis so it reads applied-by-hand, never a CSS rectangle.
-
-   Use it as a BACKGROUND SIBLING behind the controls (absolutely positioned,
-   z-index 0, with the buttons at z-index 1) - NOT as their container - so the
-   torn clip never bites into a button. */
-.wall-tag-panel {
-  position: absolute;
-  pointer-events: none;
-  z-index: 0;
-  /* sprayed dark patch, a touch lighter toward the top like fresh wet paint */
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 22%, rgba(38, 24, 64, 0.96) 0%, rgba(20, 12, 38, 0.97) 55%, rgba(9, 5, 20, 0.98) 100%);
-  /* rough sprayed / torn rectangle - jittered points around the perimeter */
-  clip-path: polygon(
-    1% 12%, 9% 2%, 23% 9%, 39% 1%, 54% 8%, 69% 1%, 85% 7%, 98% 3%,
-    99% 30%, 100% 54%, 98% 78%, 99% 96%,
-    87% 99%, 71% 93%, 55% 100%, 38% 94%, 21% 99%, 6% 93%,
-    2% 74%, 0% 50%, 2% 30%
-  );
-  filter: drop-shadow(5px 6px 0 rgba(0, 0, 0, 0.5));
-  transform: rotate(-0.7deg);
-}
-
-/* Paper / spray grain on the panel (clipped with it). */
-.wall-tag-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23p)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
-  opacity: 0.5;
-  mix-blend-mode: overlay;
-}
-
-/* Overspray mist hazing off the top edge - a few soft dots so the spray reads
-   as feathered, not printed. */
-.wall-tag-panel::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle 3px at 14% 6%, rgba(255, 255, 255, 0.05), transparent),
-    radial-gradient(circle 2px at 33% 3%, rgba(255, 255, 255, 0.05), transparent),
-    radial-gradient(circle 2.5px at 62% 5%, rgba(255, 255, 255, 0.05), transparent),
-    radial-gradient(circle 2px at 84% 4%, rgba(255, 255, 255, 0.04), transparent);
-  background-repeat: no-repeat;
 }
 
 /* ============================ SPOTLIGHT ============================= */
