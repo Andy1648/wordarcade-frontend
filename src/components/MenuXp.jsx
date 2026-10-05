@@ -14,19 +14,9 @@ import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank } from '../progress/marks';
-import { mainMultOf, markLevel, loadRollState } from '../progress/markRollsCore';
+import { mainMultOf } from '../progress/markRollsCore';
 import { rarityClass, levelRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
-
-/** The worn mark's dupe finish ('base' | 'gold' | 'rainbow') — guarded, a storage failure is 'base'. */
-function wornFinish(id) {
-  try {
-    const s = loadRollState();
-    return (s && markLevel(s, id).variant) || 'base';
-  } catch {
-    return 'base';
-  }
-}
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult } from '../progress/xp';
@@ -365,7 +355,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         onMarkClick ? (
           <button
             type="button"
-            className={`menu-mark ${rarityClass(mark.tier, { finish: wornFinish(mark.id) })}`}
+            className={`menu-mark ${rarityClass(mark.tier)}`}
             onClick={onMarkClick}
             aria-label={`Mark equipped: ${mark.name}. ${mark.blurb}`}
             title={`${mark.name} - ${mark.blurb}`}
@@ -376,14 +366,14 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             {/* H6/M12: the same formatter the marks index and the receipt use (×3.18, not ×3.2); it carries the "×". */}
             <span className="menu-mark-mult" aria-hidden="true">{formatMult(mainMultOf(mark.id))}</span>
             {markNew && <span className="homepage-shop-dot" aria-hidden="true" />}
-            {/* RARITY IDENTITY: the chip is filled in its tier (CSS); shimmer / sparks / finish sweep on top */}
-            <RarityFx tier={mark.tier} finish={wornFinish(mark.id)} />
+            {/* RARITY IDENTITY: the chip is filled in its tier (CSS); EPIC+ glow + shimmer, LEGENDARY+ sparks on top */}
+            <RarityFx tier={mark.tier} />
           </button>
         ) : (
-          <span className={`menu-mark ${rarityClass(mark.tier, { finish: wornFinish(mark.id) })}`} title={`${mark.name} - ${mark.blurb}`}>
+          <span className={`menu-mark ${rarityClass(mark.tier)}`} title={`${mark.name} - ${mark.blurb}`}>
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
-            <RarityFx tier={mark.tier} finish={wornFinish(mark.id)} />
+            <RarityFx tier={mark.tier} />
           </span>
         )
       )}

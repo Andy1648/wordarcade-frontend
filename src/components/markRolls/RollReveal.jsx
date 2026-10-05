@@ -154,7 +154,7 @@ export default function RollReveal({ seq, skipSeq, result, results = null, card,
               <div
                 key={i}
                 ref={reg(`m${i}`)}
-                className={`mr-tile is-${r ? r.tier : 'none'}${r && r.shiny ? ' is-shiny' : ''}${i === best ? ' is-best' : ''}${r ? ` ${rarityClass(r.tier, { tint: true, finish: r.rainbow > 0 ? 'rainbow' : r.gold > 0 ? 'gold' : 'base' })}` : ''}`}
+                className={`mr-tile is-${r ? r.tier : 'none'}${r && r.shiny ? ' is-shiny' : ''}${i === best ? ' is-best' : ''}${r ? ` ${rarityClass(r.tier, { tint: true })}` : ''}`}
                 style={r ? { '--mr-tier': tierColour(r.tier) } : undefined}
                 role={r ? 'img' : undefined}
                 aria-label={r ? `${e ? e.name : ''}, ${tierName(r.tier)}` : undefined}

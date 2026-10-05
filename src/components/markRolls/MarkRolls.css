@@ -424,7 +424,7 @@
 
 /* ---- RARITY IDENTITY (Andy oct5) — the roll surfaces wear src/components/rarity/RarityFin.css --------------
    The reel bars are SOLID tier fills (white Bungee on top, as before); the result card and the ×10 tiles are
-   TINTED panels with the tier glow; the card adds <RarityFx> (shimmer EPIC+, sparks LEGENDARY+, GOLD / RAINBOW
+   TINTED panels (glow from EPIC up); the card adds <RarityFx> (shimmer EPIC+, sparks LEGENDARY+, SECRET rainbow
    sweep). The pooled ×10 tiles stay CSS-only: their LEGENDARY+ spark is a pseudo-element, never a new node. */
 .mr-reel-row.rarity-fin { color: #fff; --rar-off: 0 0 #0000; }
 .mr-card.rarity-fin { --rar-off: 5px 5px 0 #000; --rar-spark: 20px; }
@@ -448,8 +448,8 @@
 }
 .mr-tile.rarity-fin.is-mythic::after { background-image: url(/art/rarity/spark-mythic.svg); }
 .mr-tile.rarity-fin.is-secret::after { background-image: url(/art/rarity/spark-secret.svg); }
-/* SECRET's full-screen plate is BLACK, its ray fan the house rainbow */
-.mr-cover[data-tier="secret"] .mr-cover-plate { background: #0d0618; }
+/* SECRET's full-screen plate is the house RAINBOW (static), its ray fan too */
+.mr-cover[data-tier="secret"] .mr-cover-plate { background: linear-gradient(120deg, #FF4FA3 0%, #FF6B3D 24%, #FFE94A 46%, #2EFFE0 70%, #9A1AFF 100%); }
 .mr-cover.is-full[data-tier="secret"] .mr-rays-ink {
   background: conic-gradient(#FF4FA3, #FF6B3D, #FFE94A, #2EFFE0, #9A1AFF, #FF4FA3);
   opacity: 0.6;
@@ -457,6 +457,6 @@
 /* the INDEX: owned tiles, the detail and the MAIN hero are tinted in their tier (RarityFin.css). Locked tiles
    stay the dark "not yours yet" panel. Sparks sit just inside a tile (the grid clips past its edge). */
 .mx-tile.rarity-fin { --rar-off: 0 0 #0000; --rar-spark: 14px; --rar-spark-out: 2px; }
-.mx-tile.is-sel.rarity-fin.rarity-fin { box-shadow: var(--rar-fin), 4px 4px 0 #000, 0 0 var(--rar-g) var(--rar-gc); }
+.mx-tile.is-sel.rarity-fin.rarity-fin { box-shadow: 4px 4px 0 #000, 0 0 var(--rar-g) var(--rar-gc); }
 .mx-detail.rarity-fin { --rar-off: 3px 3px 0 #000; --rar-spark: 16px; }
 .mx-hero.rarity-fin { --rar-off: 6px 6px 0 #000; --rar-spark: 24px; }

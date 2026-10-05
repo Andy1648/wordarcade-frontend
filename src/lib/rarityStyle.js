@@ -1,10 +1,14 @@
-// rarityStyle.js — THE RARITY IDENTITY (Andy oct5): "rarity must be legible EVERYWHERE, not just plain borders".
-// One table says what each tier LOOKS like; every surface (roll reel, result card, INDEX, MAIN, menu chip,
-// leaderboard ticker, end-game receipt — and app-wide, KEY tiers / rebirths / levels) reads it through the
-// helpers below + the finish classes in src/components/rarity/RarityFin.css.
+// rarityStyle.js — THE RARITY IDENTITY (Andy oct5): "RARITY = COLOUR, used everywhere a mark appears (reel,
+// results, INDEX, MAIN slot, menu, board, end-game) … Fill/gradient, not plain borders. Glow, shimmer and
+// particles only from EPIC up." One table says what each tier LOOKS like; every surface (and app-wide, KEY tiers
+// / rebirths / levels) reads it through the helpers below + the classes in src/components/rarity/RarityFin.css.
 //
-//   COMMON grey · RARE blue · EPIC purple · LEGENDARY gold · MYTHIC red-pink · SECRET black + rainbow.
-//   glow grows with rarity · shimmer on EPIC+ · particles on LEGENDARY+ · GOLD / RAINBOW dupes add a finish.
+//   COMMON grey · RARE blue      fill only — no glow, no shimmer, no particles
+//   EPIC purple                  + glow + shimmer
+//   LEGENDARY gold · MYTHIC red-pink  + particles
+//   SECRET rainbow               a rainbow FILL (static gradient) + a finite rainbow sweep
+//
+// Dupes are ★ pips (<MarkPips>, src/components/rarity/MarkPips.jsx) — the old GOLD / RAINBOW finishes are gone.
 //
 // DOCUMENTED EXCEPTION (Andy oct5): rarity fills / gradients / glow are allowed for rarity + tier identity,
 // despite the house "flat colours, no gradients, no glow". Shimmer and the SECRET rainbow are FINITE one-shot
@@ -12,30 +16,31 @@
 
 export const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
 
+/** The rank effects start at: glow + shimmer from EPIC, particles from LEGENDARY. */
+export const FX_FROM = Object.freeze({ glow: 2, shimmer: 2, particles: 3 });
+
 /**
- * fill  — the surface colour (solid chips, reel bars, the reveal plate)
+ * fill  — the surface colour (solid chips, reel bars, the reveal plate). SECRET's surface is the rainbow; its
+ *         `fill` is the single colour for places that can only take one.
  * hi    — the light end of the fill gradient
  * line  — the darker outline shade (house rule: coloured outlines)
  * ink   — text ON the solid fill
  * text  — the tier as an ACCENT on a dark panel (readable on #1a0b2e)
- * glow  — blur radius in px of the tier glow (grows with rarity; 0 = none)
+ * glow  — blur radius in px of the tier glow (0 below EPIC; grows from EPIC up)
  * glowColour — the glow's colour
  * shimmer / particles / rainbow — the effects the tier earns
  */
 export const RARITY = Object.freeze({
   common: Object.freeze({ fill: '#B9B3C6', hi: '#E6E1EE', line: '#5E5770', ink: '#0d0618', text: '#C9C2D6', glow: 0, glowColour: '#B9B3C6', shimmer: false, particles: false, rainbow: false }),
-  rare: Object.freeze({ fill: '#3D8BFF', hi: '#9CC6FF', line: '#1B4A9E', ink: '#0d0618', text: '#5EA2FF', glow: 6, glowColour: '#3D8BFF', shimmer: false, particles: false, rainbow: false }),
+  rare: Object.freeze({ fill: '#3D8BFF', hi: '#9CC6FF', line: '#1B4A9E', ink: '#0d0618', text: '#5EA2FF', glow: 0, glowColour: '#3D8BFF', shimmer: false, particles: false, rainbow: false }),
   epic: Object.freeze({ fill: '#9A1AFF', hi: '#C98BFF', line: '#5c0fa3', ink: '#ffffff', text: '#B65CFF', glow: 10, glowColour: '#9A1AFF', shimmer: true, particles: false, rainbow: false }),
   legendary: Object.freeze({ fill: '#FFD54A', hi: '#FFF3B0', line: '#A8800F', ink: '#0d0618', text: '#FFD54A', glow: 14, glowColour: '#FFC21A', shimmer: true, particles: true, rainbow: false }),
   mythic: Object.freeze({ fill: '#FF3D6E', hi: '#FF9DB6', line: '#A3173A', ink: '#ffffff', text: '#FF5C84', glow: 18, glowColour: '#FF3D6E', shimmer: true, particles: true, rainbow: false }),
-  secret: Object.freeze({ fill: '#0d0618', hi: '#2a1648', line: '#000000', ink: '#ffffff', text: '#FFFFFF', glow: 22, glowColour: '#FF4FA3', shimmer: true, particles: true, rainbow: true }),
+  secret: Object.freeze({ fill: '#2EFFE0', hi: '#FFE94A', line: '#5c0fa3', ink: '#0d0618', text: '#FFFFFF', glow: 22, glowColour: '#FF4FA3', shimmer: true, particles: true, rainbow: true }),
 });
 
-/** The house palette in rainbow order — the SECRET edge and the RAINBOW finish (flat stops, palette only). */
+/** The house palette in rainbow order — the SECRET fill and sweep (palette only). */
 export const RAINBOW_STOPS = Object.freeze(['#FF4FA3', '#FF6B3D', '#FFE94A', '#2EFFE0', '#9A1AFF']);
-
-/** The finishes a duped mark can carry on top of its tier. */
-export const FINISHES = Object.freeze(['base', 'gold', 'rainbow']);
 
 /** Any tier id → a RARITY key. PERMANENT reads as LEGENDARY (rarest by how you get it); unknown → COMMON. */
 export function rarityKey(tier) {
@@ -50,27 +55,23 @@ export function rarityRank(tier) {
 export function rarityOf(tier) {
   return RARITY[rarityKey(tier)];
 }
-function finishKey(finish) {
-  return finish === 'gold' || finish === 'rainbow' ? finish : 'base';
-}
 /**
- * The finish classes for a host element: "rarity-fin is-epic", + " is-tint" (a dark panel washed in the tier,
- * keeps light text) + " is-gold" / " is-rainbow" (a dupe finish on top).
+ * The classes for a host element: "rarity-fin is-epic", + " is-tint" (a dark panel washed in the tier, keeps
+ * light text). Any other option (an old `finish`) is ignored — dupes are ★ pips now.
  */
-export function rarityClass(tier, { finish = 'base', tint = false } = {}) {
-  const f = finishKey(finish);
-  return `rarity-fin is-${rarityKey(tier)}${tint ? ' is-tint' : ''}${f !== 'base' ? ` is-${f}` : ''}`;
+export function rarityClass(tier, { tint = false } = {}) {
+  return `rarity-fin is-${rarityKey(tier)}${tint ? ' is-tint' : ''}`;
 }
-/** Which effects a tier + finish earns — what <RarityFx> draws. */
-export function rarityFx(tier, finish = 'base') {
+/** Which effects a tier earns — what <RarityFx> draws. COMMON / RARE earn none. */
+export function rarityFx(tier) {
   const s = rarityOf(tier);
-  const f = finishKey(finish);
-  return {
-    shimmer: s.shimmer,
-    particles: s.particles,
-    rainbow: s.rainbow || f === 'rainbow',
-    gold: f === 'gold',
-  };
+  return { glow: s.glow > 0, shimmer: s.shimmer, particles: s.particles, rainbow: s.rainbow };
+}
+
+/** ★ dupe pips (<MarkPips>): a whole number of lit pips in 0…max (max ≥ 1, default 5). */
+export function clampPips(pips, max = 5) {
+  const m = Math.max(1, Math.floor(Number(max) || 5));
+  return { on: Math.max(0, Math.min(m, Math.floor(Number(pips) || 0))), max: m };
 }
 
 // ------------------------------------------------------------------------------- app-wide tier ramps

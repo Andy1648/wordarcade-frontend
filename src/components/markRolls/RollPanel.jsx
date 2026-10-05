@@ -37,7 +37,7 @@ function ResultCard({ result, worn, seq = 0, fxDelay = null }) {
   const isWorn = worn === result.markId;
   const finish = result.rainbow > 0 ? 'rainbow' : result.gold > 0 ? 'gold' : 'base';
   return (
-    <div className={`mr-card is-${result.tier}${result.shiny ? ' is-shiny' : ''} ${rarityClass(result.tier, { tint: true, finish })}`} data-testid="mark-roll-result" data-shiny={result.shiny ? '1' : undefined}>
+    <div className={`mr-card is-${result.tier}${result.shiny ? ' is-shiny' : ''} ${rarityClass(result.tier, { tint: true })}`} data-testid="mark-roll-result" data-shiny={result.shiny ? '1' : undefined}>
       {/* SHINY: a gold streak over the card (RollReveal sweeps it once) + ONE small badge, no text */}
       {result.shiny ? <img className="mr-card-streak" src="/art/rolls/shimmer.svg" alt="" aria-hidden="true" draggable="false" /> : null}
       <span className="mr-card-artwrap">
@@ -59,9 +59,9 @@ function ResultCard({ result, worn, seq = 0, fxDelay = null }) {
           )}
         </div>
       </div>
-      {/* RARITY IDENTITY: shimmer (EPIC+), sparks (LEGENDARY+), the GOLD / RAINBOW finish sweep — once per roll,
+      {/* RARITY IDENTITY: shimmer (EPIC+), sparks (LEGENDARY+), the SECRET rainbow sweep — once per roll,
           timed to land with the reveal (keyed on the roll, so each new result replays it once) */}
-      <RarityFx key={seq} tier={result.tier} finish={finish} delay={fxDelay} />
+      <RarityFx key={seq} tier={result.tier} delay={fxDelay} />
     </div>
   );
 }

@@ -13,7 +13,7 @@
 import Num from './Num';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import './PayoutBreakdown.css';
-import { wornMarkId, markEntry, markLevel, loadRollState } from '../progress/markRollsCore';
+import { wornMarkId, markEntry } from '../progress/markRollsCore';
 import { rarityClass } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 
@@ -23,9 +23,7 @@ function wornMarkLook() {
   try {
     const id = wornMarkId();
     const e = id ? markEntry(id) : null;
-    if (!e) return null;
-    const st = loadRollState();
-    return { tier: e.tier, finish: (st && markLevel(st, id).variant) || 'base' };
+    return e ? { tier: e.tier } : null;
   } catch {
     return null;
   }
@@ -33,9 +31,9 @@ function wornMarkLook() {
 function MarkLabel({ label, look, fx }) {
   if (!look) return <span className="payout-k">{label}</span>;
   return (
-    <span className={`payout-k payout-mark rarity-chip ${rarityClass(look.tier, { finish: look.finish })}`}>
+    <span className={`payout-k payout-mark rarity-chip ${rarityClass(look.tier)}`}>
       {label}
-      {fx ? <RarityFx tier={look.tier} finish={look.finish} /> : null}
+      {fx ? <RarityFx tier={look.tier} /> : null}
     </span>
   );
 }
