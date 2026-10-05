@@ -90,7 +90,7 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(roll).not.toContainText('WINS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
   // marks v2: the card says the mark's STAT ("×1.1 WINS", "+1 BASE WINS/WORD" …)
-  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^[+×][\d.,]+ [A-Z]/);
+  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^[+×][\d.,]+s? [A-Z]/);
   // finite: once landed nothing animates, nothing loops, will-change is off
   await page.waitForTimeout(3600);
   expect(await rollUiAnims(page)).toBe(0);
@@ -286,7 +286,7 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await page.locator('.mx-panel').waitFor();
   // nothing worn → the first mark AUTO-equipped; INDEX v2: the worn card says its stat
   await expect(page.locator('.mx-tile.is-on')).toHaveCount(1);
-  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^[+×][\d.,]+ [A-Z]/);
+  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^[+×][\d.,]+s? [A-Z]/);
   await page.locator('.mx-close').click();
   await expect(page.locator('.rs-overlay')).toBeVisible();
   await page.locator('.rs-close').click();
