@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~13:20 MERGED #203 payload trim (−7.8 KB initial: roll sounds lazy with the reel, dead menu/splash CSS deleted; INFINITE_BUDGET 51→49; ratchet unchanged) — main green on payload again. #194 / #201 / #202 refreshed onto it, CI running.
 - oct5 ~12:30 ⚠ MAIN RED on payload-budget: 963,965 vs ratchet 963,000 — #193 and #198 each passed alone, together they cross it. Fix in flight (perf/initial-payload-trim, lazy/dead-code, ratchet NOT raised). #194 GEMS (−244 B vs main), #201, #202 wait behind it; their only CI failure is that same check.
 - oct5 ~11:40 MERGED #193 ROLL SCREEN (full-screen reel, version a; INDEX/✕ work mid-reveal; ROLL tutorial = spotlight on ROLL). Next in the stack: #194 GEMS → #201 named stats → #202 word cut + ROLL/INDEX split (all refreshed onto main, CI running).
 - oct5 ~11:20 MERGED #198 Chromebook pages (3 full-ratio cards a page at ≤700px tall; arrows/dots/keys/swipe; pager lazy; at 1163×501 the cards cap to the row, ~11% squat — the only size short of full ratio).
