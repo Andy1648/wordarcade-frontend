@@ -222,32 +222,6 @@
   opacity: 0.05;
 }
 
-/* ---- Fuse sparks: small flat motes crackling off the bomb's lit fuse tip
-   (top-right of the PNG). Pure EFFECT particles - flat fills, no blur/glow. ---- */
-.splash-fuse {
-  position: absolute;
-  top: 7%;
-  left: 75%;
-  width: 0;
-  height: 0;
-  z-index: 3;
-  pointer-events: none;
-}
-
-.splash-spark {
-  position: absolute;
-  border-radius: 50%;
-  will-change: transform, opacity;
-  /* Flicker in, drift up-and-out (dx/dy), shrink + fade, then loop. */
-  animation: splash-spark-flicker var(--s-dur, 0.6s) ease-out var(--s-delay, 0s) infinite;
-}
-
-@keyframes splash-spark-flicker {
-  0%   { transform: translate(0, 0) scale(0.2); opacity: 0; }
-  30%  { transform: translate(calc(var(--s-dx) * 0.4), calc(var(--s-dy) * 0.4)) scale(1); opacity: 1; }
-  100% { transform: translate(var(--s-dx), var(--s-dy)) scale(0.1); opacity: 0; }
-}
-
 /* ---- Ambient embers: ONE STATIC layer of motes behind the text (perf/first-load).
    Position/opacity/rotation are inline per mote (SplashScreen.jsx EMBERS); nothing
    animates, nothing is promoted (no will-change) — one paint, then free. ---- */
@@ -349,8 +323,7 @@
   }
   .splash-logo::before,
   .splash-logo::after { opacity: 0; }
-  .splash-embers,
-  .splash-fuse { display: none; }
+  .splash-embers { display: none; }
 }
 
 /* Mini XP readout under the start prompt, centred; hidden entirely when xp === 0. */

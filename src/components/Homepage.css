@@ -258,54 +258,7 @@
   --spot-h: 72%;
 }
 
-/* Decorative paint splatters scattered around the stage edges. Behind the
-   content (z-index 0), non-interactive, and clipped by the stage's
-   overflow so they bleed off the edges like real thrown paint. */
-.homepage-splatter {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  width: 150px;
-  height: 150px;
-  /* Let the splatter's drips/droplets spill past the SVG viewBox. */
-  overflow: visible;
-}
-
-.homepage-splatter-1 {
-  top: -34px;
-  left: -40px;
-  opacity: 0.2;
-  transform: rotate(18deg);
-}
-
-.homepage-splatter-2 {
-  top: 40px;
-  right: -46px;
-  width: 180px;
-  height: 180px;
-  opacity: 0.18;
-  transform: rotate(-26deg);
-}
-
-.homepage-splatter-3 {
-  bottom: 24px;
-  left: -50px;
-  width: 170px;
-  height: 170px;
-  opacity: 0.2;
-  transform: rotate(40deg);
-}
-
-.homepage-splatter-4 {
-  bottom: -36px;
-  right: -30px;
-  width: 160px;
-  height: 160px;
-  opacity: 0.18;
-  transform: rotate(-12deg);
-}
-
-/* Keep the real content above the brick texture and splatter layers. */
+/* Keep the real content above the brick texture. */
 .homepage-logo,
 .homepage-cards-grid {
   position: relative;
@@ -989,9 +942,6 @@ html[data-beat='true'] .homepage-beat-glow {
    interaction. The old idle selectors are retained here as belt-and-braces in case
    a base loop is ever reintroduced. */
 @media (prefers-reduced-motion: reduce) {
-  .homepage-tagline,
-  .homepage-section-label,
-  .homepage-splatter,
   .homepage-btn,
   html[data-beat='true'] .homepage-logo,   /* title-beat-pop */
   html[data-beat='true'] .game-card::after, /* card-beat-glow (prototype) */
@@ -1003,7 +953,6 @@ html[data-beat='true'] .homepage-beat-glow {
   .game-card::after {
     opacity: 0 !important;
   }
-
   /* Buttons respond via COLOUR, not motion: drop the hover zoom / press squash /
      POW starburst, flash the outline white on hover instead. Resting skew kept. */
   .homepage-btn:hover:not(:disabled) {
