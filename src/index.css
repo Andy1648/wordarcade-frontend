@@ -228,10 +228,7 @@ html[data-view='game'] .screen-flash {
 @media (prefers-reduced-motion: reduce) {
   .wave-letter,
   .homepage-logo,
-  .homepage-burst,
-  .homepage-speedlines,
   .homepage-btn,
-  .homepage-splatter,
   .game-card,
   .room-player-chip,
   .room-gametype-btn,
