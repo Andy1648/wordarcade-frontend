@@ -1323,7 +1323,7 @@ function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerI
     if (reduce) return undefined; // static, visible
     if (!staggerIn) return { opacity: 0 }; // hidden until the stagger beat
     return {
-      animation: 'celeb-statline-in 260ms ease-out both',
+      animation: 'celeb-statline-in 520ms ease-out both',
       animationDelay: `${i * JUICE.CELEBRATION.statStagger}ms`,
     };
   };
@@ -3421,7 +3421,7 @@ export default function GameScreen({
             layer re-keys to replay the pop (mirrors ComboMeter's stable badge +
             keyed .combo-pop at ComboMeter.jsx:50). */}
         <div className="game-combo-box" ref={comboBoxRef}>
-          {/* Punch layer: re-keyed per accepted word so the 280ms scale-pop replays.
+          {/* Punch layer: re-keyed per accepted word so the 520ms scale-pop replays.
               Scoped to this inner node, so the surrounding box stays mounted. */}
           <div
             key={comboPunch}
@@ -4880,7 +4880,7 @@ function CategoryBlitzScreen({
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (
             <div className="go-stats-summary cb-stats-summary">
-              <div className="go-summary-item">
+              <div className="go-summary-item go-summary-item--hero">
                 <div className="go-summary-value">
                   <CountUp to={myScore} duration={500} />
                 </div>

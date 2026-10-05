@@ -34,7 +34,7 @@
   border: 3px solid #000;
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
 }
 
 /* Pre-gate state ("3 WORDS TO EARN"): muted cream fill so it reads as a target to
@@ -58,7 +58,7 @@
   font-weight: 700;
   /* TYPE FLOOR: "WORDS TO EARN" / "WINS" is what the number MEANS - the number is
      unreadable without it, so it is a label, not decoration. */
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
 }
 
@@ -83,7 +83,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.1em;
   color: #2effe0;
 }
@@ -102,7 +102,7 @@
   width: 100%;
   padding: 2px 0;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
+  font-size: var(--fs-body) /* was --fs-micro: words (fix/min-text-sweep) */;
   color: #ffe94a;
 }
 .wins-earned-line-label {
