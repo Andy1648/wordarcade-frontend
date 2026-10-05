@@ -6,6 +6,7 @@
 // notched medallion reads as a thing you EARNED and shows the rank colour on the most surface; the
 // shield pin and stitched patch read as UI chrome. The other two frames are kept as variants.
 import { memo, useEffect, useState } from 'react';
+import { RARITY, rarityKey } from '../lib/rarityStyle.js';
 
 // Rank rims: flat fill + darker outline shade (house rule: coloured outlines, not black).
 export const RANK_RIMS = [
@@ -170,6 +171,13 @@ const RAINBOW_TEETH = [
   { fill: '#9A1AFF', line: '#5c0fa3' },
 ];
 const PERM_RIM = { fill: '#9A1AFF', line: '#5c0fa3' };
+// RARITY IDENTITY (Andy oct5): a mark at rank I wears its TIER on the rim — COMMON grey, RARE blue, EPIC purple,
+// LEGENDARY gold, MYTHIC red-pink, SECRET black with rainbow teeth. Ranks II–V keep the rank rims (earned).
+function rarityRim(tier) {
+  const k = rarityKey(tier);
+  if (k === 'secret') return { fill: '#1a0b2e', line: '#9A1AFF', secret: true };
+  return { fill: RARITY[k].fill, line: RARITY[k].line };
+}
 const LOCK = (
   <g stroke="#6b5a86" strokeWidth="4" strokeLinejoin="round" fill="none">
     <path d="M38 48 L38 40 C38 30 62 30 62 40 L62 48" />
@@ -220,14 +228,15 @@ function Frame({ variant, rim, locked, finish, permanent }) {
     );
   }
   // COIN (default): a medallion with a notched rim
+  const rainbowTeeth = !locked && (finish === 'rainbow' || !!(rim && rim.secret && finish !== 'gold'));
   const body = !locked && finish === 'gold' ? GOLD_RIM : !locked && finish === 'rainbow' ? RAINBOW_TEETH[2] : ring;
   const teeth = [];
   for (let i = 0; i < 16; i += 1) {
     const a = (i / 16) * Math.PI * 2;
     const x = 50 + Math.cos(a) * 46;
     const y = 50 + Math.sin(a) * 46;
-    const t = !locked && finish === 'rainbow' ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : body;
-    teeth.push(<circle key={i} cx={x.toFixed(1)} cy={y.toFixed(1)} r={finish === 'rainbow' && !locked ? '6' : '5'} fill={t.fill} stroke={t.line} strokeWidth="2.5" />);
+    const t = rainbowTeeth ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : body;
+    teeth.push(<circle key={i} cx={x.toFixed(1)} cy={y.toFixed(1)} r={rainbowTeeth ? '6' : '5'} fill={t.fill} stroke={t.line} strokeWidth="2.5" />);
   }
   return (
     <g>
@@ -254,7 +263,7 @@ function Crown() {
  */
 function MarkBadge({ mark, rank = 1, locked = false, size = 56, variant = 'coin', className = '', finish = 'base', permanent = false }) {
   const r = Math.max(1, Math.min(5, rank || 1));
-  const rim = RANK_RIMS[r - 1];
+  const rim = r === 1 && mark && mark.tier ? rarityRim(mark.tier) : RANK_RIMS[r - 1];
   const [, redraw] = useState(0);
   const missing = !!mark && !locked && !GLYPHS[mark.id] && !EXTRA[mark.id];
   useEffect(() => {

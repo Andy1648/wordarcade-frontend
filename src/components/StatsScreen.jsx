@@ -8,6 +8,7 @@
 // CREDITS-only again. The tab bodies live in CollectionScreen.jsx / AchievementsScreen.jsx.
 import { useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
+import './rarity/RarityFin.css';
 import {
   loadProgress,
   getRebirths,
@@ -43,6 +44,14 @@ import { getMyProfile, selfReset } from '../leaderboard/client';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { flagOn } from '../lib/featureFlags';
 import { rebirthLadder } from '../progress/rebirthLadder';
+import { rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
+
+// TIER IDENTITY (Andy oct5): a ladder chip's rebirth count — BASE is R0, NOW is yours, NEXT is one more.
+const ladderRb = (id, rc) => (id === 'base' ? 0 : id === 'next' ? rc + 1 : rc);
+const ladderLook = (id, rc) => {
+  const k = rebirthRarity(ladderRb(id, rc));
+  return k ? ` ${rarityClass(k, { tint: id === 'next' })}` : '';
+};
 
 const TABS = [
   { id: 'stats', label: 'STATS' },
@@ -388,7 +397,7 @@ export default function StatsScreen({ onBack }) {
                 <div className="stats-row stats-ladder" key={k}>
                   <dd className="stats-ladder-chips" aria-label="Rebirth ladder">
                     {ladder.map((c) => (
-                      <span className={`stats-chip is-${c.state}`} key={c.id}>
+                      <span className={`stats-chip is-${c.state}${ladderLook(c.id, rebirths)}`} key={c.id}>
                         {[`${c.name} ${c.mult}`, c.gate, c.gain].filter(Boolean).join(' · ')}
                       </span>
                     ))}
@@ -543,8 +552,8 @@ function PlayerCard({ card }) {
       </div>
       <div className="pc-hero">
         <span className="pc-lv-unit">LV</span>
-        <span className="pc-lv">{fmt(card.level)}</span>
-        {card.rebirths > 0 && <span className="pc-rb">R{fmt(card.rebirths)}</span>}
+        <span className={`pc-lv rarity-ink is-${levelRarity(card.level)}`}>{fmt(card.level)}</span>
+        {card.rebirths > 0 && <span className={`pc-rb rarity-chip ${rarityClass(rebirthRarity(card.rebirths))}`}>R{fmt(card.rebirths)}</span>}
       </div>
       <dl className="pc-grid">
         {card.cells.map((c) => (

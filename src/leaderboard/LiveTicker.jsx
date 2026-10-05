@@ -4,7 +4,9 @@
 import { useEffect, useState } from 'react';
 import { subscribeLive } from './live.js';
 import { LEADERBOARD_ENABLED } from './client.js';
-import { tickText } from './tickText.js';
+import { tickParts } from './tickText.js';
+import { rarityClass } from '../lib/rarityStyle.js';
+import RarityFx from '../components/rarity/RarityFx';
 import './LiveTicker.css';
 
 const SHOW_MS = 6000;
@@ -27,11 +29,21 @@ export default function LiveTicker({ className = '' }) {
       clearTimeout(timer);
     };
   }, []);
-  if (!LEADERBOARD_ENABLED || !tick) return null;
+  const parts = LEADERBOARD_ENABLED && tick ? tickParts(tick) : null;
+  if (!parts) return null;
   return (
     <span className={`live-ticker ${className}`} aria-live="polite">
       <span key={tick.key} className="live-tick">
-        {tickText(tick)}
+        {parts.lead}
+        {/* RARITY IDENTITY (Andy oct5): the tier wears its fill, glow and shimmer — one sweep as the line lands */}
+        {parts.tag ? (
+          parts.rarity ? (
+            <span className={`live-tick-tag rarity-chip ${rarityClass(parts.rarity)}`}>
+              {parts.tag}
+              <RarityFx tier={parts.rarity} particles={false} delay={200} />
+            </span>
+          ) : parts.tag
+        ) : null}
       </span>
     </span>
   );
