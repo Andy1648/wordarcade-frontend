@@ -23,7 +23,8 @@
 // on wins AND XP).
 import { MARKS, MARK_TIERS, MARKS_EQUIPPED_KEY } from './marks.js';
 import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY } from './markPerks.js';
-import { formatNum, formatRate } from '../format.js';
+import { formatNum, formatRate, formatMultExact } from '../format.js';
+const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints as ×1.1
 
 export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
 export const ROLL_STATE_VERSION = 2;
@@ -341,16 +342,20 @@ export function statOf(id, state) {
   const k = s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
   return { kind: m.stat.kind, value: m.stat.value * k };
 }
-/** The stat as the card prints it: "+10% WINS", "+2.5 BASE WINS/WORD", "+30s OVERDRIVE". '' for none. */
+/**
+ * The stat as the card prints it, NAMED and short (Andy oct5): a % stat reads as the multiplier it pays — "×1.1 WINS",
+ * "×1.25 XP", "×1.5 ROLL LUCK" — a flat one as "+2.5 BASE WINS/WORD", "+5 BASE XP/LETTER", "+30s OVERDRIVE". '' for none.
+ */
 export function statText(stat) {
   if (!stat) return '';
   const v = stat.value;
+  const x = (pct) => xMult(1 + pct / 100);
   switch (stat.kind) {
-    case 'winsPct': return `+${formatNum(v)}% WINS`;
-    case 'xpPct': return `+${formatNum(v)}% XP`;
+    case 'winsPct': return `${x(v)} WINS`;
+    case 'xpPct': return `${x(v)} XP`;
     case 'baseWins': return `+${formatRate(v)} BASE WINS/WORD`;
     case 'baseXp': return `+${formatRate(v)} BASE XP/LETTER`;
-    case 'luckPct': return `+${formatNum(v)}% ROLL LUCK`;
+    case 'luckPct': return `${x(v)} ROLL LUCK`;
     case 'overdriveSec': return `+${formatNum(v)}s OVERDRIVE`;
     default: return '';
   }
@@ -370,11 +375,10 @@ export function mainMultOf(id, state) {
   const k = ROLL_BY_ID.has(id) && s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
   return 1 + mainBonus(tier) * k;
 }
-/** ONE tag for a mark: its stat line (a rolled mark), or "MAIN ×N" (a PERMANENT / retired mark — wins AND XP). */
+/** ONE tag for a mark: its stat line (a rolled mark), or "×N WINS + XP" (a PERMANENT / retired mark pays both). */
 export function mainTag(id, state) {
   if (ROLL_BY_ID.has(id)) return statLine(id, state);
-  const v = mainMultOf(id, state);
-  return `MAIN ×${+v.toFixed(2)}`;
+  return `${xMult(mainMultOf(id, state))} WINS + XP`;
 }
 /** The perk line(s) of a mark ("LETTERS COUNT ×2"), or '' when it has none. */
 export function perkLine(id) {
@@ -388,6 +392,23 @@ export function perkLine(id) {
 export function perkTag(state, id) {
   const p = perkLine(id);
   return p ? `WEAR: ${p}` : mainTag(id, state);
+}
+
+const PERK_TIERS = new Set(['legendary', 'mythic', 'secret']);
+/**
+ * The COMPACT mark line (Andy oct5) — the roll result, the MAIN chip and the INDEX cards all print this: the named stat,
+ * then "PERK: …" on a LEGENDARY+ mark that has one, then "★N" once it has pips. "×1.5 WINS · PERK: LETTERS COUNT ×2 · ★2".
+ * { perk: false } drops the perk (the small menu chip).
+ */
+export function markTag(id, state, { perk = true } = {}) {
+  const out = [mainTag(id, state)];
+  const tier = id ? tierOfAny(id) : null;
+  const p = perk && PERK_TIERS.has(tier) ? perkLine(id) : '';
+  if (p) out.push(`PERK: ${p}`);
+  const s = ROLL_BY_ID.has(id) ? resolve(state) : null;
+  const pips = s ? markLevel(s, id).pips : 0;
+  if (pips > 0) out.push(`★${formatNum(pips)}`);
+  return out.filter(Boolean).join(' · ');
 }
 
 let cacheRaw;

@@ -104,7 +104,7 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   await expect(worn.locator('svg.mark-badge')).toBeVisible();
   await expect(worn.locator('.mx-tile-name')).toHaveText('BOMBER');
   await expect(worn.locator('.mx-tile-main')).toHaveText('MAIN');
-  await expect(worn.locator('.mx-tile-sub')).toHaveText('+10% WINS');
+  await expect(worn.locator('.mx-tile-sub')).toHaveText('×1.1 WINS');
   // no emoji left in the index
   const text = await page.locator('.mx-panel').innerText();
   expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);

@@ -1,7 +1,7 @@
 // e2e/mark-rolls.spec.js — THE ROLL SCREEN (Andy oct5; replaces the in-panel roll UI + rolls-reveal.spec.js). Written
 // WITHOUT being run (the authoring machine runs no Playwright); CI runs it. Covers: MARKS opens the full-screen
 // ROLL screen (one big ROLL, no ×10) → the tutorial → a roll spins the reel and the card + pity only change when it
-// LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (marks v2: "+10% WINS" …); tap
+// LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (Andy oct5: named — "×1.1 WINS", "+1 BASE WINS/WORD" …); tap
 // anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with "1 IN X" huge; AUTO ROLL stops on its
 // tier; AUTO ROLL spends GEMS and stops when they run out; the skip setting is stored; a short balance says NEED X
 // MORE GEMS (rolls cost 10 GEMS — wins never buy one); reduced motion goes straight to the card; the
@@ -88,8 +88,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(roll.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
   await expect(roll).not.toContainText('WINS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
-  // marks v2: the card says the mark's STAT ("+10% WINS", "+1 BASE WINS/WORD" …)
-  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^\+[\d.,]+/);
+  // marks v2: the card says the mark's STAT ("×1.1 WINS", "+1 BASE WINS/WORD" …)
+  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^[+×][\d.,]+s? [A-Z]/);
   // finite: once landed nothing animates, nothing loops, will-change is off
   await page.waitForTimeout(3600);
   expect(await rollUiAnims(page)).toBe(0);
@@ -282,7 +282,7 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await page.locator('.mx-panel').waitFor();
   // nothing worn → the first mark AUTO-equipped; INDEX v2: the worn card says its stat
   await expect(page.locator('.mx-tile.is-on')).toHaveCount(1);
-  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/);
+  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^[+×][\d.,]+s? [A-Z]/);
   await page.locator('.mx-close').click();
   await expect(page.locator('.rs-overlay')).toBeVisible();
   await page.locator('.rs-close').click();

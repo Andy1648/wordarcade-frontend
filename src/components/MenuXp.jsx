@@ -7,14 +7,14 @@
 import BoostPill from '../frenzy/BoostPill';
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import './MenuXp.css';
-import { formatNum, formatMultExact } from '../format';
+import { formatNum } from '../format';
 import { createBarPlayer } from '../lib/barPlan';
 import { useCountUp } from '../hooks/useCountUp';
 import { sndBarMilestone } from '../audio/gameSounds';
 import { rankTitle } from '../progress/rank';
 import MarkBadge from './MarkBadge';
 import { markRank } from '../progress/marks';
-import { mainMultOf } from '../progress/markRollsCore';
+import { markTag } from '../progress/markRollsCore';
 import { rarityClass, levelRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
@@ -46,10 +46,6 @@ function streakTier(count) {
   if (c >= 3) return 3;
   return 2;
 }
-// "×1.05" style. THE SHARED EXACT FORMATTER, not a second local copy of it: the streak ladder is
-// 1.05 / 1.10 / 1.20 / 1.25, so the one-decimal `formatMult` (the cards' combined-product
-// formatter) would print ×1.05 as "×1.1" — a bonus the game does not pay.
-const formatMult = (m) => `×${formatMultExact(m)}`;
 
 // The progress bar: a LEVEL block welded to a track holding the fill, a leading-edge marker,
 // and a readout spanning the track — XP into the level (left) and the level's cost (right). NO %
@@ -393,8 +389,8 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
             <MarkBadge mark={mark} rank={markRank(mark.id)} size={30} className="menu-mark-icon" />
             {/* STEP 49: the worn mark is the player's TITLE, and its MAIN bonus is said right here. */}
             <span className="menu-mark-name" aria-hidden="true">{mark.name}</span>
-            {/* H6/M12: the same formatter the marks index and the receipt use (×3.18, not ×3.2); it carries the "×". */}
-            <span className="menu-mark-mult" aria-hidden="true">{formatMult(mainMultOf(mark.id))}</span>
+            {/* Andy oct5: the MAIN says its stat, named — "×1.1 WINS ★2" — never a bare strength "×1.1" */}
+            <span className="menu-mark-mult" aria-hidden="true">{markTag(mark.id, undefined, { perk: false })}</span>
             {/* GEMS: the dot means ONE thing — you can afford a roll (gems ≥ 10, or the free roll waits) */}
             {rollDot && <span className="homepage-shop-dot" data-testid="marks-roll-dot" aria-hidden="true" />}
             {/* RARITY IDENTITY: the chip is filled in its tier (CSS); EPIC+ glow + shimmer, LEGENDARY+ sparks on top */}

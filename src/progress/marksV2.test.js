@@ -128,7 +128,7 @@ test('INDEX entry: owned count, first roll #, ★ line, the stat as it pays, 1 I
   assert.equal(e.firstRoll, 42);
   assert.deepEqual([e.pips, e.have, e.need], [0, 1, 10]);
   assert.deepEqual(e.stat, statOf('mk-bomber', b.state));
-  assert.equal(e.statLine, '+10% WINS');
+  assert.equal(e.statLine, '×1.1 WINS');
   assert.equal(e.oneInX, Math.round(ROLL_MARKS[0].x));
   assert.equal(indexEntry('mk-origin', b.state).owned, 0);
   assert.equal(indexEntry('mk-origin', b.state).firstRoll, null);
