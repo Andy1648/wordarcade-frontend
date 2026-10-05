@@ -1,0 +1,10 @@
+/* KitIcon — static art: the hard drop is a filter that never animates. */
+.kit-icon {
+  display: block;
+  flex: none;
+  overflow: visible;
+  filter: drop-shadow(var(--ki-drop, 3px) var(--ki-drop, 3px) 0 var(--k-ink));
+}
+.kit-icon--bare .x {
+  display: none;
+}

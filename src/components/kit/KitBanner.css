@@ -1,0 +1,112 @@
+/* KitBanner.css — v2 top banners. The host is a zero-height strip pinned to the TOP edge (never
+   centre-screen); banners hang from it, slide by transform, and only a banner takes a pointer. */
+.kbn-host {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 9000;
+  width: min(620px, calc(100vw - 32px));
+  height: 0;
+  overflow: visible;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.kbn-host.is-contained { position: absolute; z-index: 60; }
+.kbn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 80px;
+  transition: transform 300ms cubic-bezier(.2, 1.2, .4, 1);
+}
+.kbn-card {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  text-align: left;
+  background: var(--kbn-fill);
+  border: var(--k-ink-l) solid var(--k-ink);
+  box-shadow: var(--k-sh-xl) var(--k-sh-xl) 0 var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  color: var(--k-white);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+.kbn-card:focus-visible { outline: var(--k-ink-m) solid var(--k-cyan); outline-offset: 3px; }
+.kbn.is-leaving .kbn-card { pointer-events: none; }
+.kbn-stripe {
+  flex: none;
+  width: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--kbn-c);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 10px, rgba(0, 0, 0, .2) 10px 14px);
+  border-right: var(--k-ink-l) solid var(--k-ink);
+}
+.kbn-text {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 14px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.kbn-line { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; overflow: hidden; }
+.kbn-name { font-size: var(--fs-k34); line-height: 1; color: var(--kbn-c); -webkit-text-stroke: var(--k-ink-xl) var(--k-ink); paint-order: stroke fill; }
+.kbn-verb { font-size: var(--fs-k20); color: var(--k-white); -webkit-text-stroke: var(--k-stroke-m) var(--k-ink); paint-order: stroke fill; }
+.kbn-who {
+  margin-top: 3px;
+  font-family: var(--k-mono);
+  font-weight: 700;
+  font-size: var(--fs-k13);
+  color: var(--k-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kbn-chip {
+  flex: none;
+  align-self: center;
+  margin-right: 18px;
+  padding: 4px 10px;
+  background: var(--k-yellow);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
+  transform: rotate(-5deg);
+  font-size: var(--fs-k20);
+  color: var(--k-ink);
+  white-space: nowrap;
+}
+.kbn-drain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  box-sizing: border-box;
+  background: var(--kbn-c);
+  border-top: var(--k-ink-xs) solid var(--k-ink);
+  transform-origin: 0 50%;
+}
+
+@media (max-width: 560px) {
+  .kbn-stripe { width: 60px; }
+  .kbn-stripe svg { width: 38px; height: 38px; }
+  .kbn-text { padding: 6px 8px 0; }
+  .kbn-line { gap: 8px; }
+  .kbn-name { font-size: var(--fs-k24); -webkit-text-stroke-width: var(--k-stroke-m); }
+  .kbn-verb { font-size: var(--fs-k14); -webkit-text-stroke-width: var(--k-stroke-s); }
+  .kbn-chip { margin-right: 10px; padding: 2px 6px; font-size: var(--fs-k14); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kbn { transition: none; }
+}

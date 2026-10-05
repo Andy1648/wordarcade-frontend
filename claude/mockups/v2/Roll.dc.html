@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roll screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes rsRays{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes rsPop{0%{transform:scale(.2) rotate(-8deg);opacity:0}60%{transform:scale(1.12) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes rsSlam{0%{transform:scale(3);opacity:0}70%{transform:scale(.92);opacity:1}100%{transform:scale(1)}}
+@keyframes rsShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-8px,4px)}40%{transform:translate(7px,-5px)}60%{transform:translate(-5px,-3px)}80%{transform:translate(4px,5px)}}
+@keyframes rsBlink{0%,100%{opacity:1}50%{opacity:.35}}
+.rs-rays{position:absolute;left:50%;top:50%;width:1900px;height:1900px;border-radius:50%;animation:rsRays 9s linear infinite;opacity:.32}
+.rs-pop{animation:rsPop .55s cubic-bezier(.2,1.4,.4,1) both}
+.rs-slam{animation:rsSlam .5s cubic-bezier(.2,1.2,.4,1) both}
+.rs-shake{animation:rsShake .4s linear 2}
+.rs-blink{animation:rsBlink 1.2s ease-in-out infinite}
+.rs-btn:hover{transform:translate(-2px,-2px);box-shadow:10px 10px 0 #000}
+.rs-btn:active{transform:translate(4px,4px);box-shadow:3px 3px 0 #000}
+a.rs-link{color:#fff;text-decoration:none}
+a.rs-link:hover{color:#FFE94A}
+</style>
+</helmet>
+<div class="{{shakeClass}}" style="width: 1280px; height: 720px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.16) 46px 50px)"></div>
+
+<div style="position: absolute; left: 40px; right: 40px; top: 28px; height: 72px; display: flex; align-items: center; justify-content: space-between">
+<a class="rs-link" href="Index.dc.html" style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 20px; background: #1a0b2e; border: 4px solid #5c0fa3; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px">INDEX <span style="font-family: 'Space Mono', monospace; font-size: 16px; color: #FFE94A">{{owned}}/27</span></a>
+<div style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 64px; line-height: 1; color: #2EFFE0; letter-spacing: 0.04em">ROLL</div>
+<div style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 20px; background: #1a0b2e; border: 4px solid #2EFFE0; box-shadow: 6px 6px 0 #000">
+<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M8 3 L22 3 L28 11 L15 28 L2 11 Z" fill="#2EFFE0" stroke="#000" stroke-width="3" stroke-linejoin="round"></path><path d="M2 11 L28 11 M10 3 L15 28 M20 3 L15 28" stroke="#000" stroke-width="2" fill="none"></path></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 30px; color: #fff">{{gems}}</span>
+</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 140px; height: 300px; background: #08030f; border-top: 6px solid #000; border-bottom: 6px solid #000; overflow: hidden">
+<div style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 158px, rgba(255,255,255,.03) 158px 160px)"></div>
+<div style="position: absolute; left: 0; top: 46px; display: flex; gap: 16px; transform: translateX({{offset}}px); transition: {{trans}}">
+<sc-for list="{{strip}}" as="item" hint-placeholder-count="12">
+<div style="width: 144px; height: 208px; flex: none; opacity: {{item.op}}">
+<dc-import name="MarkCard" m="{{item.m}}" w="144" h="208" hint-size="144px,208px"></dc-import>
+</div>
+</sc-for>
+</div>
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 360px; background: linear-gradient(90deg, #08030f, rgba(8,3,15,0))"></div>
+<div style="position: absolute; right: 0; top: 0; bottom: 0; width: 360px; background: linear-gradient(270deg, #08030f, rgba(8,3,15,0))"></div>
+<div style="position: absolute; left: 637px; top: 0; bottom: 0; width: 6px; background: #FFE94A; box-shadow: 0 0 0 3px #000"></div>
+<svg width="44" height="30" viewBox="0 0 44 30" style="position: absolute; left: 618px; top: -2px" aria-hidden="true"><path d="M2 2 L42 2 L22 28 Z" fill="#FFE94A" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+<svg width="44" height="30" viewBox="0 0 44 30" style="position: absolute; left: 618px; bottom: -2px" aria-hidden="true"><path d="M2 28 L42 28 L22 2 Z" fill="#FFE94A" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 452px; height: 44px; display: flex; justify-content: center; align-items: center">
+<sc-if value="{{showLine}}" hint-placeholder-val="{{ false }}">
+<div class="rs-pop" style="display: flex; align-items: baseline; gap: 14px; font-family: 'Bungee', sans-serif">
+<span style="font-size: 26px; color: {{res.line}}; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{res.name}}</span>
+<span style="font-size: 26px; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{res.statNum}}</span>
+<span style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px">{{res.statKind}}</span>
+<span style="font-size: 20px; color: #FFE94A">{{res.pipsText}}</span>
+</div>
+</sc-if>
+</div>
+
+<div style="position: absolute; left: 40px; right: 40px; bottom: 40px; height: 160px; display: flex; align-items: center; justify-content: space-between">
+<div style="width: 300px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 10px; font-family: 'Bungee', sans-serif">
+<span style="font-size: 18px; color: #B04BFF">EPIC+ IN</span>
+<span style="font-size: 44px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{pity}}</span>
+</div>
+<div style="height: 22px; background: #1a0b2e; border: 4px solid #000; box-shadow: 4px 4px 0 #000; position: relative">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{pityPct}}%; background: #B04BFF; transition: width .4s"></div>
+</div>
+<div style="font-size: 13px; color: #c9b8e8">LEGENDARY+ IN {{pityLeg}}</div>
+</div>
+
+<button class="rs-btn" onClick="{{roll}}" style="width: 380px; height: 140px; background: {{rollBg}}; border: 6px solid #000; box-shadow: 8px 8px 0 #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; transition: transform .08s, box-shadow .08s; font-family: 'Bungee', sans-serif; color: #000">
+<span style="font-size: 64px; line-height: 1">{{rollLabel}}</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 22px"><svg width="22" height="22" viewBox="0 0 30 30" aria-hidden="true"><path d="M8 3 L22 3 L28 11 L15 28 L2 11 Z" fill="#2EFFE0" stroke="#000" stroke-width="3" stroke-linejoin="round"></path></svg>10</span>
+</button>
+
+<div style="width: 300px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px">
+<button class="rs-btn" onClick="{{cycleAuto}}" style="height: 72px; padding: 0 22px; background: {{autoBg}}; border: 5px solid #000; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: {{autoColor}}; cursor: pointer; transition: transform .08s, box-shadow .08s">{{autoLabel}}</button>
+<div style="font-size: 13px; color: #c9b8e8">TAP TO SET TARGET</div>
+</div>
+</div>
+
+<sc-if value="{{showDim}}" hint-placeholder-val="{{ false }}">
+<button onClick="{{close}}" aria-label="Continue" style="position: absolute; inset: 0; border: 0; padding: 0; background: rgba(5,2,10,.82); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; font-family: 'Bungee', sans-serif; color: #fff">
+<div class="rs-slam" style="font-size: 60px; line-height: 1; color: {{res.line}}; -webkit-text-stroke: 6px #000; paint-order: stroke fill">{{res.oddsText}}</div>
+<div class="rs-pop"><dc-import name="MarkCard" m="{{res}}" w="216" h="312" hint-size="216px,312px"></dc-import></div>
+</button>
+</sc-if>
+
+<sc-if value="{{showFull}}" hint-placeholder-val="{{ false }}">
+<button onClick="{{close}}" aria-label="Continue" style="position: absolute; inset: 0; border: 0; padding: 0; background: #05020a; cursor: pointer; overflow: hidden; font-family: 'Bungee', sans-serif; color: #fff">
+<div class="rs-rays" style="background: repeating-conic-gradient({{res.line}} 0deg 9deg, transparent 9deg 18deg)"></div>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px">
+<div class="rs-slam" style="font-size: 26px; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; letter-spacing: 0.2em">{{res.rarityName}}</div>
+<div class="rs-slam" style="font-size: 92px; line-height: 1; color: {{res.line}}; -webkit-text-stroke: 8px #000; paint-order: stroke fill">{{res.oddsText}}</div>
+<div class="rs-pop"><dc-import name="MarkCard" m="{{res}}" w="252" h="364" hint-size="252px,364px"></dc-import></div>
+<div class="rs-blink" style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px; color: #fff">TAP TO KEEP</div>
+</div>
+</button>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"demoLuck":{"editor":"boolean","default":true},"$preview":{"width":1280,"height":720}}'>
+var RAR = {
+  common:    { name: 'COMMON',    rank: 0, odds: '1 IN 2',    line: '#A9B4C8', fill: '#262b38', inner: '#5d6678' },
+  rare:      { name: 'RARE',      rank: 1, odds: '1 IN 10',   line: '#3D8BFF', fill: '#0f2350', inner: '#1f4fa8' },
+  epic:      { name: 'EPIC',      rank: 2, odds: '1 IN 100',  line: '#B04BFF', fill: '#2a0e4a', inner: '#6a20b0' },
+  legendary: { name: 'LEGENDARY', rank: 3, odds: '1 IN 1K',   line: '#FFC23D', fill: '#3d2a05', inner: '#b07a10' },
+  mythic:    { name: 'MYTHIC',    rank: 4, odds: '1 IN 10K',  line: '#FF3D7F', fill: '#4a0a22', inner: '#a8164e' },
+  secret:    { name: 'SECRET',    rank: 5, odds: '1 IN 100K', line: '#FFFFFF', fill: '#050208', inner: '#1c1c22' }
+};
+var MARKS = [
+  { id: 'spark',  name: 'SPARK',     r: 'common',    g: 'bolt',  num: '+10%', kind: 'WINS' },
+  { id: 'ink',    name: 'INKBLOT',   r: 'common',    g: 'drop',  num: '+5',   kind: 'BASE XP' },
+  { id: 'dash',   name: 'DASH',      r: 'common',    g: 'arrow', num: '+10%', kind: 'XP' },
+  { id: 'wick',   name: 'WICK',      r: 'rare',      g: 'flame', num: '+20',  kind: 'BASE WINS' },
+  { id: 'glint',  name: 'GLINT',     r: 'rare',      g: 'eye',   num: '+25%', kind: 'XP' },
+  { id: 'crown',  name: 'CROWNLESS', r: 'epic',      g: 'crown', num: '×1.5', kind: 'WINS' },
+  { id: 'tide',   name: 'TIDE',      r: 'epic',      g: 'drop',  num: '+15%', kind: 'LUCK' },
+  { id: 'key',    name: 'GOLD KEY',  r: 'legendary', g: 'key',   num: '×3',   kind: 'WINS', perk: 'KEY −20%' },
+  { id: 'blaze',  name: 'BLAZE',     r: 'legendary', g: 'flame', num: '×3',   kind: 'XP',   perk: 'OVERDRIVE ×2' },
+  { id: 'nova',   name: 'NOVA',      r: 'mythic',    g: 'star',  num: '×10',  kind: 'WINS', perk: 'GEMS ×2' },
+  { id: 'zap',    name: 'ZAP',       r: 'mythic',    g: 'bolt',  num: '×10',  kind: 'XP',   perk: 'LUCK ×2' },
+  { id: 'void',   name: 'VOID',      r: 'secret',    g: 'eye',   num: '×25',  kind: 'WINS', perk: '10TH WORD ×100' }
+];
+var ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+function pips(n) { var s = ''; for (var i = 0; i < 5; i++) s += i < n ? '★' : '☆'; return s; }
+function card(mk, dupes) {
+  var R = RAR[mk.r];
+  var g = {}; g[mk.g] = true;
+  return {
+    id: mk.id, name: mk.name, rarityName: R.name, oddsText: R.odds, rank: R.rank,
+    fill: R.fill, line: R.line, inner: R.inner,
+    cogClass: R.rank >= 2 ? 'mc-cog' : 'mc-still',
+    toothClass: mk.r === 'secret' ? 'mc-rb' : '',
+    glow: R.rank >= 2, shine: R.rank >= 2,
+    g: g, glyphFilter: 'none',
+    statNum: mk.num, statKind: mk.kind, statColor: '#FFE94A',
+    hasPerk: !!mk.perk, perk: mk.perk || '',
+    pipsText: pips(Math.min(5, dupes || 0))
+  };
+}
+function pickRarity(lucky) {
+  var w = lucky ? [40, 27, 17, 9, 5, 2] : [50, 10, 1, 0.1, 0.01, 0.001];
+  var t = 0, i; for (i = 0; i < w.length; i++) t += w[i];
+  var x = Math.random() * t;
+  for (i = 0; i < w.length; i++) { x -= w[i]; if (x <= 0) return ORDER[i]; }
+  return 'common';
+}
+function pickMark(r) {
+  var list = MARKS.filter(function (m) { return m.r === r; });
+  return list[Math.floor(Math.random() * list.length)];
+}
+var SLOT = 160, LAND = 40, START = 3;
+var AUTO = [
+  { label: 'AUTO: OFF', target: -1, bg: '#1a0b2e', color: '#fff' },
+  { label: 'AUTO → RARE+', target: 1, bg: '#3D8BFF', color: '#000' },
+  { label: 'AUTO → EPIC+', target: 2, bg: '#B04BFF', color: '#000' },
+  { label: 'AUTO → LEGENDARY+', target: 3, bg: '#FFC23D', color: '#000' }
+];
+function centerOffset(idx, jitter) { return 640 - (idx * SLOT + 72) - (jitter || 0); }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var strip = [];
+    for (var i = 0; i < 12; i++) strip.push({ m: card(pickMark(pickRarity(true)), 0), op: 1 });
+    this.timers = [];
+    this.dupes = { spark: 2, ink: 1, wick: 1, crown: 0 };
+    this.state = {
+      strip: strip, offset: centerOffset(START, 0), trans: 'none',
+      spinning: false, gems: 240, pity: 37, pityLeg: 412, owned: 9,
+      res: null, phase: 'idle', autoIdx: 0, shake: false
+    };
+  }
+  componentWillUnmount() { this.timers.forEach(clearTimeout); }
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); }
+  doRoll() {
+    var st = this.state;
+    if (st.spinning || st.gems < 10) return;
+    var lucky = this.props.demoLuck !== false;
+    var r = pickRarity(lucky);
+    if (st.pity <= 1 && RAR[r].rank < 2) r = 'epic';
+    var mk = pickMark(r);
+    var d = (this.dupes[mk.id] || 0) + 1; this.dupes[mk.id] = d;
+    var res = card(mk, d - 1);
+    var strip = [];
+    for (var i = 0; i < LAND + 6; i++) {
+      if (i === LAND) strip.push({ m: res, op: 1 });
+      else strip.push({ m: card(pickMark(pickRarity(lucky)), 0), op: 1 });
+    }
+    var rank = RAR[r].rank;
+    var dur = 3000 + rank * 450;
+    var jitter = Math.round((Math.random() - 0.5) * 90);
+    this.setState({
+      strip: strip, offset: centerOffset(START, 0), trans: 'none', spinning: true,
+      gems: st.gems - 10, phase: 'spin', res: res, shake: false,
+      pity: rank >= 2 ? 50 : Math.max(1, st.pity - 1),
+      pityLeg: rank >= 3 ? 500 : Math.max(1, st.pityLeg - 1)
+    });
+    var self = this;
+    this.later(function () {
+      self.setState({ offset: centerOffset(LAND, jitter), trans: 'transform ' + dur + 'ms cubic-bezier(.1,.72,.16,1)' });
+    }, 50);
+    this.later(function () {
+      var phase = rank >= 3 ? 'full' : rank === 2 ? 'dim' : 'line';
+      var strip2 = self.state.strip.map(function (it, k) { return { m: it.m, op: k === LAND ? 1 : 0.35 }; });
+      if (!self.dupesOwned) self.dupesOwned = {};
+      var owned = self.state.owned + (d === 1 ? 1 : 0);
+      self.setState({ spinning: false, phase: phase, strip: strip2, shake: rank >= 3, owned: owned });
+      var a = AUTO[self.state.autoIdx];
+      if (a.target >= 0) {
+        if (rank >= a.target) { self.setState({ autoIdx: 0 }); }
+        else {
+          self.later(function () {
+            if (self.state.phase === 'dim') self.setState({ phase: 'line' });
+            self.doRoll();
+          }, phase === 'dim' ? 1300 : 700);
+        }
+      }
+    }, dur + 120);
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var a = AUTO[st.autoIdx];
+    return {
+      strip: st.strip, offset: st.offset, trans: st.trans,
+      gems: st.gems, owned: st.owned,
+      pity: st.pity, pityLeg: st.pityLeg, pityPct: Math.round((50 - st.pity) / 50 * 100),
+      res: st.res || card(MARKS[0], 0),
+      showLine: !!st.res && !st.spinning,
+      showDim: st.phase === 'dim',
+      showFull: st.phase === 'full',
+      shakeClass: st.shake ? 'rs-shake' : '',
+      rollLabel: st.spinning ? '...' : st.gems < 10 ? 'NO GEMS' : 'ROLL',
+      rollBg: st.spinning ? '#8a7f3a' : '#FFE94A',
+      autoLabel: a.label, autoBg: a.bg, autoColor: a.color,
+      roll: function () { self.doRoll(); },
+      close: function () { self.setState({ phase: 'line', shake: false }); },
+      cycleAuto: function () {
+        var n = (self.state.autoIdx + 1) % AUTO.length;
+        self.setState({ autoIdx: n });
+        if (n > 0 && !self.state.spinning) self.later(function () { self.doRoll(); }, 60);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

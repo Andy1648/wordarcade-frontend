@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rebirth</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes rbSlam{0%{transform:scale(2.8);opacity:0}60%{transform:scale(.9);opacity:1}100%{transform:scale(1)}}
+@keyframes rbShakeS{0%,100%{transform:translate(0,0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,-2px)}}
+@keyframes rbShakeB{0%,100%{transform:translate(0,0)}20%{transform:translate(-10px,6px)}40%{transform:translate(9px,-7px)}60%{transform:translate(-6px,-4px)}80%{transform:translate(5px,6px)}}
+@keyframes rbFlash{0%{opacity:.9}100%{opacity:0}}
+@keyframes rbRise{0%{transform:translateY(20px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes rbDrain{0%{width:100%}100%{width:0%}}
+@keyframes rbPulse{0%,100%{box-shadow:9px 9px 0 #000,0 0 0 0 rgba(176,75,255,.0)}50%{box-shadow:9px 9px 0 #000,0 0 0 14px rgba(176,75,255,.35)}}
+.rb-slam{animation:rbSlam .45s cubic-bezier(.2,1.2,.4,1) both}
+.rb-charging{animation:rbShakeS .12s linear infinite}
+.rb-boom{animation:rbShakeB .4s linear 1}
+.rb-flash{position:absolute;inset:0;background:#fff;animation:rbFlash .5s ease-out forwards;pointer-events:none}
+.rb-rise{animation:rbRise .35s ease-out both}
+.rb-ready{animation:rbPulse 1.1s ease-in-out infinite}
+.rb-out{-webkit-text-stroke:6px #000;paint-order:stroke fill}
+.rb-btn:hover{transform:translate(-2px,-2px)}
+a.rb-link{color:#fff;text-decoration:none}
+a.rb-link:hover{color:#FFE94A}
+</style>
+</helmet>
+<div class="{{shakeClass}}" style="width: 1280px; height: 720px; position: relative; overflow: hidden; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(176,75,255,{{bgAlpha}}) 46px 50px); transition: background-image .2s"></div>
+
+<div style="position: absolute; left: 40px; right: 40px; top: 26px; height: 60px; display: flex; align-items: center; justify-content: space-between">
+<a class="rb-link" href="MenuV2.dc.html" style="height: 56px; padding: 0 20px; display: flex; align-items: center; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px">← MENU</a>
+<div style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 58px; line-height: 1; color: #B04BFF">REBIRTH</div>
+<div style="height: 56px; padding: 0 18px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000; border-bottom: 7px solid #FFE94A">
+<span class="rb-out" style="font-family: 'Bungee', sans-serif; font-size: 26px; color: #FFE94A; -webkit-text-stroke: 4px #000">{{levelsText}}</span><span style="font-size: 14px">LEVELS</span>
+</div>
+</div>
+
+<div style="position: absolute; left: 40px; top: 120px; width: 560px; height: 380px; display: flex; flex-direction: column; align-items: center">
+<div style="display: flex; align-items: center; gap: 26px">
+<div style="display: flex; flex-direction: column; align-items: center">
+<span style="font-size: 15px; color: #c9b8e8">NOW</span>
+<span class="rb-out" style="font-family: 'Bungee', sans-serif; font-size: 70px; line-height: 1; color: #fff">R{{rNow}}</span>
+</div>
+<svg width="70" height="44" viewBox="0 0 70 44" aria-hidden="true"><path d="M4 16 L44 16 L44 4 L66 22 L44 40 L44 28 L4 28 Z" fill="#B04BFF" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>
+<div class="{{slamClass}}" style="display: flex; flex-direction: column; align-items: center">
+<span style="font-size: 15px; color: #c9b8e8">AFTER</span>
+<span class="rb-out" style="font-family: 'Bungee', sans-serif; font-size: 96px; line-height: 1; color: #D88BFF; -webkit-text-stroke: 8px #000; text-shadow: 7px 7px 0 #000">R{{rAfter}}</span>
+</div>
+</div>
+
+
+
+<button class="{{readyClass}}" onMouseDown="{{holdStart}}" onMouseUp="{{holdEnd}}" onMouseLeave="{{holdEnd}}" onTouchStart="{{holdStart}}" onTouchEnd="{{holdEnd}}" style="position: relative; margin-top: 24px; width: 470px; height: 112px; padding: 0; background: {{goBg}}; border: 6px solid #000; box-shadow: 9px 9px 0 #000; overflow: hidden; cursor: pointer; font-family: 'Bungee', sans-serif; color: #000">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{chargePct}}%; background: #fff; opacity: .55; transition: {{chargeTrans}}"></div>
+<div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05">
+<span style="font-size: 42px">{{goLabel}}</span>
+<span style="font-size: 17px">{{goSub}}</span>
+</div>
+</button>
+</div>
+
+<div style="position: absolute; right: 40px; top: 120px; width: 560px; background: #1a0b2e; border: 5px solid #000; box-shadow: 8px 8px 0 #000; border-top: 10px solid #B04BFF">
+<div style="padding: 12px 20px 6px; font-family: 'Bungee', sans-serif; font-size: 20px; color: #c9b8e8">YOU GET</div>
+<div style="padding: 0 20px 16px; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{gets}}" as="g" hint-placeholder-count="4">
+<div class="rb-rise" style="height: 62px; display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 14px; padding: 0 14px; background: #12071f; border: 4px solid #000; animation-delay: {{g.delay}}">
+<svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true" style="filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{g.i.mult}}" hint-placeholder-val="{{ false }}"><path d="M8 8 L32 32 M32 8 L8 32" stroke-width="10"></path><path d="M8 8 L32 32 M32 8 L8 32" stroke="#D88BFF" stroke-width="4.5"></path></sc-if>
+<sc-if value="{{g.i.gem}}" hint-placeholder-val="{{ false }}"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A" stroke="none"></path><path d="M2 15 L38 15" fill="none" stroke-width="2.5"></path></sc-if>
+<sc-if value="{{g.i.key}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-25 20 20)"><circle cx="12" cy="20" r="8" fill="#FFC23D"></circle><rect x="19" y="17" width="19" height="7" fill="#FFC23D"></rect><rect x="31" y="24" width="4" height="6" fill="#FFC23D"></rect></g></sc-if>
+<sc-if value="{{g.i.drain}}" hint-placeholder-val="{{ false }}"><rect x="6" y="12" width="28" height="16" fill="#3a2160"></rect><path d="M14 20 L26 20" stroke="#FF3D7F" stroke-width="4"></path></sc-if>
+</g></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">{{g.label}}</span>
+<span class="rb-out" style="font-family: 'Bungee', sans-serif; font-size: 30px; color: {{g.c}}; -webkit-text-stroke: 5px #000">{{g.v}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="position: absolute; left: 40px; right: 40px; bottom: 30px; height: 150px">
+<div style="position: absolute; left: 0; top: 0; font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">UNLOCKS</div>
+<div style="position: absolute; left: 30px; right: 30px; top: 70px; height: 16px; background: #1a0b2e; border: 4px solid #000">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{trackPct}}%; background: #B04BFF; transition: width .5s"></div>
+</div>
+<sc-for list="{{milestones}}" as="m" hint-placeholder-count="5">
+<div style="position: absolute; left: calc(30px + (100% - 60px) * {{m.f}}); top: 30px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; width: 170px">
+<div style="width: 64px; height: 64px; box-sizing: border-box; background: {{m.bg}}; border: 5px solid #000; box-shadow: 4px 4px 0 #000; transform: rotate(45deg); display: flex; align-items: center; justify-content: center">
+<span style="transform: rotate(-45deg); font-family: 'Bungee', sans-serif; font-size: 17px; color: {{m.tc}}">R{{m.r}}</span>
+</div>
+<span style="margin-top: 6px; font-family: 'Bungee', sans-serif; font-size: 16px; color: {{m.lc}}; text-align: center; white-space: nowrap">{{m.what}}</span>
+</div>
+</sc-for>
+</div>
+
+<sc-if value="{{flash}}" hint-placeholder-val="{{ false }}"><div class="rb-flash"></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+function fmt(x) {
+  var S = [['Qi', 1e18], ['Qa', 1e15], ['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + S[i][0]; }
+  return String(Math.floor(x));
+}
+function cost(n) { return 100 * Math.pow(n, 2.2); }
+function bulk(R, levels, want) { var k = R + 1, n = 0, spent = 0; while (n < want && spent + cost(k) <= levels) { spent += cost(k); k++; n++; } return { n: n, spent: spent }; }
+var MS = [
+  { r: 10, what: 'AUTO ROLL' }, { r: 25, what: 'LUCK ×1.25' }, { r: 50, what: '2ND MARK SLOT' }, { r: 75, what: 'GEMS ×2' }, { r: 100, what: 'ASCEND ★' }
+];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { R: 59, levels: 1.1e6, pick: 0, hold: false, slam: false, flash: false, boom: false }; this.t = []; }
+  componentWillUnmount() { this.t.forEach(clearTimeout); }
+  renderVals() {
+    var self = this, st = this.state;
+    var wants = [1, 10, 1e9];
+    var b = bulk(st.R, st.levels, wants[st.pick]);
+    var max = bulk(st.R, st.levels, 1e9).n;
+    var rAfter = st.R + b.n;
+    var amounts = ['×1', '×10', 'MAX ×' + max].map(function (l, i) { var on = i === st.pick; return { label: l, bg: on ? '#FFE94A' : '#1a0b2e', color: on ? '#000' : '#fff', pick: function () { self.setState({ pick: i }); } }; });
+    var maxR = 100;
+    return {
+      levelsText: fmt(st.levels), rNow: st.R, rAfter: fmt(rAfter),
+      amounts: amounts,
+      goBg: b.n ? '#B04BFF' : '#3a2160', readyClass: b.n && !st.hold ? 'rb-ready' : '',
+      goLabel: b.n ? (st.hold ? 'HOLD…' : 'HOLD TO REBIRTH') : 'NEED LEVELS',
+      goSub: b.n ? '−' + fmt(b.spent) + ' LEVELS' : 'NEXT: ' + fmt(cost(st.R + 1)),
+      chargePct: st.hold ? 100 : 0, chargeTrans: st.hold ? 'width 1s linear' : 'width .15s',
+      shakeClass: st.boom ? 'rb-boom' : st.hold ? 'rb-charging' : '',
+      bgAlpha: st.hold ? '.30' : '.10',
+      slamClass: st.slam ? 'rb-slam' : '', flash: st.flash,
+      gets: [
+        { label: 'WINS + XP', v: '×' + fmt(1 + st.R) + ' → ×' + fmt(1 + rAfter), c: '#D88BFF', i: { mult: true }, delay: '0s' },
+        { label: 'GEMS', v: '+' + 7 * b.n, c: '#2EFFE0', i: { gem: true }, delay: '.05s' },
+        { label: 'POWER', v: 'KEPT', c: '#FFC23D', i: { key: true }, delay: '.1s' },
+        { label: 'LEVELS', v: '→ ' + fmt(st.levels - b.spent), c: '#FF3D7F', i: { drain: true }, delay: '.15s' }
+      ],
+      trackPct: Math.min(100, st.R / maxR * 100),
+      milestones: MS.map(function (m) {
+        var got = st.R >= m.r;
+        return { r: m.r, what: m.what, f: m.r / maxR, bg: got ? '#B04BFF' : '#1a0b2e', tc: got ? '#000' : '#c9b8e8', lc: got ? '#fff' : '#5d4a78' };
+      }),
+      holdStart: function () {
+        if (!b.n) return;
+        self.setState({ hold: true });
+        self.t.push(setTimeout(function () {
+          if (!self.state.hold) return;
+          self.setState({ hold: false, R: rAfter, levels: st.levels - b.spent, slam: false, flash: true, boom: true });
+          self.t.push(setTimeout(function () { self.setState({ slam: true }); }, 20));
+          self.t.push(setTimeout(function () { self.setState({ flash: false, boom: false }); }, 520));
+        }, 1000));
+      },
+      holdEnd: function () { if (self.state.hold) self.setState({ hold: false }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

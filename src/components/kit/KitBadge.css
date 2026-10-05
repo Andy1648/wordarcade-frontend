@@ -1,0 +1,64 @@
+/* KitBadge.css — v2 to-do badges. Corner-pinned; the parent must be position: relative. */
+.kbg { position: absolute; z-index: 2; pointer-events: none; }
+.kbg--dot { top: -13px; right: -13px; width: 28px; height: 28px; }
+.kbg--count { top: -16px; right: -18px; }
+.kbg--alert { top: -16px; right: -16px; width: 34px; height: 34px; }
+.kbg-bump,
+.kbg-nudge { display: block; position: relative; }
+.kbg--dot .kbg-nudge,
+.kbg--alert .kbg-nudge { width: 100%; height: 100%; }
+.kbg--dot .kbg-bump,
+.kbg--alert .kbg-bump { width: 100%; height: 100%; }
+.kbg-dot {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 28px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--k-hot);
+  border: var(--k-ink-l) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  overflow: hidden;
+}
+.kbg-hi { position: absolute; left: 3px; top: 2px; width: 8px; height: 5px; border-radius: 50%; background: var(--k-white); transform: rotate(-30deg); }
+.kbg-count {
+  display: block;
+  min-width: 34px;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 6px;
+  border-radius: 17px;
+  background: var(--k-hot);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  font-family: var(--k-display);
+  font-size: var(--fs-k17);
+  line-height: 26px;
+  text-align: center;
+  color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-s) var(--k-ink);
+  paint-order: stroke fill;
+}
+.kbg-diamond {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  background: var(--k-yellow);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  transform: rotate(45deg);
+}
+.kbg-bang {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--k-display);
+  font-size: var(--fs-k18);
+  color: var(--k-ink);
+}

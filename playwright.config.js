@@ -77,6 +77,9 @@ export default defineConfig({
     env: {
       VITE_SUPABASE_URL: 'https://lb.e2e.invalid/rest/v1/',
       VITE_SUPABASE_ANON_KEY: 'e2e-anon-key',
+      // The v2 kit gallery (/?kit=1, e2e/kit.spec.js) is compiled into the e2e build only; the
+      // production build leaves it out entirely (vite.config.js define __KIT_GALLERY__).
+      VITE_KIT_GALLERY: '1',
     },
   },
 });
