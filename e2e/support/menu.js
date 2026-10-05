@@ -89,6 +89,38 @@ export function modeEntry(page, id) {
   return page.locator(`.game-card-magnet[data-game="${id}"] .game-card`);
 }
 
+/**
+ * CARD PAGES (feat/chromebook-card-pages): on a short-wide desktop — Homepage.jsx PAGED_MENU_QUERY,
+ * '(min-width: 761px) and (max-height: 700px)', e.g. 1366x657, 1280x551, 1163x501 — the menu shows
+ * three cards a page and the other three are display:none until the row flips. A spec that wants a
+ * card on the other page flips to it first. No-op on a phone, on an unpaged menu, or when the card
+ * is already showing. Returns modeEntry(page, id), so `await (await revealMode(page, id)).click()`.
+ */
+export const PAGED_MENU_MIN_W = 761;
+export const PAGED_MENU_MAX_H = 700;
+export function isPagedMenu(page) {
+  const vp = page.viewportSize();
+  return !!vp && vp.width >= PAGED_MENU_MIN_W && vp.height <= PAGED_MENU_MAX_H;
+}
+export async function revealMode(page, id) {
+  const entry = modeEntry(page, id);
+  if (isPhoneMenu(page) || !isPagedMenu(page)) return entry;
+  const want = await page.evaluate((gid) => {
+    const all = [...document.querySelectorAll('.homepage-cards-grid > .game-card-magnet')];
+    const i = all.findIndex((m) => m.getAttribute('data-game') === gid);
+    return i < 0 ? null : Math.floor(i / 3);
+  }, id);
+  if (want == null) return entry;
+  for (let n = 0; n < 4; n += 1) {
+    const cur = Number(await page.locator('.homepage-cards-grid').getAttribute('data-page'));
+    if (cur === want) break;
+    await page.locator(`.homepage-cards-arrow.${cur < want ? 'is-next' : 'is-prev'}`).click();
+    await page.waitForTimeout(320); // the 260ms slide (instant under reduced motion)
+  }
+  await entry.waitFor({ state: 'visible' });
+  return entry;
+}
+
 /** Can the phone menu open this mode? Since fix/phone-menu-nav, every mode. */
 export const phoneCanOpen = (id) => PHONE_MODE_IDS.includes(id) || PHONE_SOLO_IDS.includes(id);
 

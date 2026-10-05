@@ -23,7 +23,7 @@
 // so SAT is gated on .sr-app. This gate covers all five, plus the FUSE 26-tile strip.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, modeEntry } from './support/menu.js';
+import { menuReady, modeEntry, revealMode } from './support/menu.js';
 
 const ME = 'e2e-player';
 async function enterMpGame(page, gameType) {
@@ -81,9 +81,8 @@ const VIEWPORTS = [
   { w: 1280, h: 551 }, // wide-short — the reported regression case
 ];
 const MIN_FILL = 0.9;
-// THE MODE ENTRY POINT, at either width — the desktop card or the phone row. Both call the
-// same Homepage handler, so only the object you press differs (support/menu.js).
-const card = (page, id) => modeEntry(page, id);
+// THE MODE ENTRY POINT, at either width — the desktop card or the phone row (support/menu.js
+// revealMode: on a paged short-wide menu it flips to the card's page first).
 
 async function enterSolo(page, id) {
   await page.addInitScript(() => {
@@ -94,7 +93,7 @@ async function enterSolo(page, id) {
   await page.goto('/?portal=1&soloms=20000');
   await menuReady(page);
   await page.waitForTimeout(300);
-  await card(page, id).click({ force: true });
+  await (await revealMode(page, id)).click({ force: true });
   await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
   await page.locator('.mode-dialog-btn-create').click();
   await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
