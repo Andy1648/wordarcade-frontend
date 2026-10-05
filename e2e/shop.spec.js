@@ -87,7 +87,7 @@ test.describe('shop', () => {
     // cumulative-XP seed lands well BELOW the LV15 rebirth gate it used to clear. Seeded through
     // the v5 {lv, into} shape instead of a cumulative total - it says what it means ("this player
     // is level 15") and cannot be invalidated by another curve retune.
-    await openRebirth(page, { 'taw.econ': '12', 'taw.xp': JSON.stringify({ lv: 15, into: 0 }), 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
+    await openRebirth(page, { 'taw.econ': '12', 'taw.xp': JSON.stringify({ lv: 25, into: 0 }), 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
     const rebirth = page.locator('.shop-rebirth');
     await expect(rebirth).toBeEnabled(); // past the level gate → eligible
 
@@ -100,10 +100,10 @@ test.describe('shop', () => {
 
     await rebirth.click(); // arm the confirmation
     await page.locator('.shop-confirm-actions .shop-card-btn.danger').click(); // CONFIRM
-    // BB1: the ceremony shows what was RESET (LV 15 → 1) and what was KEPT, with the real numbers
+    // BB1: the ceremony shows what was RESET (LV 25 → 1) and what was KEPT, with the real numbers
     const cer = page.locator('.rbc-card');
     await expect(cer.locator('.rbc-kicker')).toHaveText('REBIRTH 1');
-    await expect(cer.locator('.rbc-level:not(.rbc-key) .rbc-from')).toHaveText('15'); // the KEY → T0 row (Rebirth Rush) is .rbc-key
+    await expect(cer.locator('.rbc-level:not(.rbc-key) .rbc-from')).toHaveText('25'); // KEY TIER is kept now (Andy oct5) — no KEY row
     await expect(cer.locator('.rbc-level:not(.rbc-key) .rbc-to')).toHaveText('1');
     const wins = cer.locator('.rbc-kept-row', { hasText: 'WINS' }).first();
     await expect(wins.locator('.rbc-val')).toHaveText('400');

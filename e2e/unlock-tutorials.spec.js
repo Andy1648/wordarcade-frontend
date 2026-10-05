@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
-const REBIRTH = { 'taw.xp': { lv: 15, into: 0 } };
+const REBIRTH = { 'taw.xp': { lv: 25, into: 0 } }; // the gate: LV 25 × (R+1)
 
 async function boot(page, seed, vp, mockOpts = {}) {
   await page.setViewportSize(vp);
