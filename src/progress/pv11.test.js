@@ -165,8 +165,8 @@ test('rebirth (Rebirth Rush): ×5 XP AND wins a rebirth — R1 ×5, R2 ×25, R10
     assert.equal(rebirthMult(rc), m, `wins R${rc}`);
   }
   assert.ok(Number.isFinite(rebirthXpMult(1e6)), 'finite at absurd counts');
-  // the gate: LV 15 + 18R
-  for (const [rc, lv] of [[0, 15], [1, 33], [4, 87], [10, 195], [20, 375], [30, 555]]) assert.equal(tableRebirthThreshold(rc), lv, `gate R${rc}`);
+  // the gate (Andy oct5): round numbers, LV 25 × (R+1)
+  for (const [rc, lv] of [[0, 25], [1, 50], [4, 125], [10, 275], [20, 525], [30, 775]]) assert.equal(tableRebirthThreshold(rc), lv, `gate R${rc}`);
   assert.equal(levelXpPerLetter(4, 3), 31250); // 10 × 25 × 125
   assert.ok(close(levelXpPerLetter(0, 0, 1.3), 13));
   // MARKS via ROLLS: the letter-XP boost IS the MAIN's bonus (one MARK number for XP and wins)
@@ -259,7 +259,7 @@ test('each KEY tier visibly speeds levels: +20% XP a letter = ~17% fewer letters
   for (const t of [0, 5, 12]) assert.ok(lettersFor(t + 1) / lettersFor(t) < 0.85, `T${t} → T${t + 1}`);
 });
 
-test('a rebirth re-climb is FASTER per level than the first climb once the KEY is re-bought (×5 a rebirth)', () => {
+test('a rebirth re-climb is FASTER per level than the first climb (×5 a rebirth, KEY kept)', () => {
   const climb = () => {
     let letters = 0;
     while (loadProgress().level < 15 && letters < 100000) {
@@ -270,10 +270,9 @@ test('a rebirth re-climb is FASTER per level than the first climb once the KEY i
   };
   withStorage({ 'taw.keytier': '3' }, (map) => {
     const first = climb(); // R0
-    doRebirth(); // R1, back to LV1 — and KEY back to T0
+    doRebirth(); // R1, back to LV1 — KEY TIER kept (Andy oct5)
     assert.equal(loadProgress().level, 1);
-    assert.equal(map.get('taw.keytier'), '0');
-    map.set('taw.keytier', '3'); // the rebuy spree (wins were kept)
+    assert.equal(map.get('taw.keytier'), '3');
     const second = climb();
     assert.ok(second < first, `R1 re-climb ${second} letters vs first climb ${first}`);
     assert.ok(second <= Math.ceil(first / 5) + 15, 'R1 ×5 XP a letter → about a fifth of the letters');
@@ -431,19 +430,19 @@ test('doRebirth writes the v10 shape with the NEW rebirth count', () => {
 });
 
 // ---- the v10 grandfathered gate is GONE: Rebirth Rush is one rule for everyone ---------------------------
-test('Rebirth Rush drops any grandfathered gate at migration: LV 15 + 18R applies to everyone', () => {
+test('Rebirth Rush drops any grandfathered gate at migration: one gate (LV 25 × (R+1)) applies to everyone', () => {
   // a legacy save v10 would have given min(table, LV + 25)
   withStorage({ [XP_KEY]: legacy(40, 0), 'taw.rebirths': '10' }, (map) => {
     migrateEconomyV11();
     assert.equal(map.has(REBIRTH_GATE_KEY), false);
-    assert.equal(rebirthThreshold(10), 195);
+    assert.equal(rebirthThreshold(10), 275);
     assert.equal(loadProgress().level, 40);
   });
   // a v10/v11 browser's stored gate is removed by the one-time conversion
   withStorage({ [XP_KEY]: v10(30, 0.1, 10), [XP_SHADOW_KEY]: v10(30, 0.1, 10), 'taw.econ': '11', 'taw.rebirths': '10', [REBIRTH_GATE_KEY]: JSON.stringify({ rc: 10, lv: 55 }) }, (map) => {
     migrateEconomyV11();
     assert.equal(map.has(REBIRTH_GATE_KEY), false);
-    assert.equal(rebirthThreshold(10), 195);
+    assert.equal(rebirthThreshold(10), 275);
   });
   withStorage({}, (map) => {
     migrateEconomyV11();

@@ -313,10 +313,11 @@ export function saveRebirths(n) {
 // The LEVEL required to perform the NEXT rebirth, given how many are already done. rc=0 gates
 // R1 at LV15; rc=19 gates R20 at LV600; past that, +50 levels each (R21→650, R22→700 …).
 // The published TABLE gate (pure; no grandfathering).
-// REBIRTH GATE (Rebirth Rush): LV 15 + 18·R — R1 at LV15, R2 at LV33, R10 at LV195, R20 at LV375.
-// (REBIRTH_TABLE above is the v6–v11 table, kept for the record.)
-export const REBIRTH_GATE_BASE = 15;
-export const REBIRTH_GATE_STEP = 18;
+// REBIRTH GATE (Andy oct5): ROUND numbers, LV 25 × (R+1) — R1 at LV25, R2 at LV50, R10 at LV275 (never "141").
+// (Rebirth Rush shipped 15 + 18·R; the one-time conversion keeps using that, econMigrate CONV_GATE_*.)
+// CI sim (10 h, no marks, KEY kept): 25×(R+1) → casual 6 / median 7 / strong 8 rebirths (15+18R gave 30 / 36 / 41).
+export const REBIRTH_GATE_BASE = 25;
+export const REBIRTH_GATE_STEP = 25;
 export function tableRebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
   return REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * rc;
@@ -390,11 +391,11 @@ function keyTiersKept() {
     return 0;
   }
 }
-/** The KEY tier a rebirth leaves: T{min(T, kept)} — T0 unless the HEIRLOOM perk keeps tiers. What the rebirth
- *  screens quote, and exactly what doRebirth writes. */
+/** The KEY tier a rebirth leaves. Andy oct5: KEY TIER no longer resets on rebirth — it is KEPT (the rebirth gate
+ *  was raised instead, CI-sim tuned). Kept for its callers; HEIRLOOM's "keep 3 tiers" is moot now. */
 export function keyTierAfterRebirth(tier = getKeyTier()) {
-  const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
-  return Math.min(t, keyTiersKept());
+  void keyTiersKept;
+  return Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
 }
 // Perform a rebirth: zero XP, bump the rebirth count. Returns the new count.
 // Wins/owned/equipped/rounds live under their own keys — untouched.
@@ -416,8 +417,7 @@ export function doRebirth() {
   const rc = getRebirths() + 1;
   saveRebirths(rc);
   clearGrandfatheredGate();
-  // Rebirth Rush: KEY → T0 every rebirth (wins kept — the rebuy spree); HEIRLOOM keeps up to 3 tiers
-  saveKeyTier(keyTierAfterRebirth());
+  // Andy oct5: KEY TIER is KEPT across rebirths (no more reset to T0)
   saveProgress({ level: 1, intoLevel: 0 });
   pendingRebirth = rc;
   return rc;

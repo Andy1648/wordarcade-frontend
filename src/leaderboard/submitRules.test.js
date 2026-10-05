@@ -167,14 +167,14 @@ test('RR rebirths: a token bucket — 1 per minute, 60 banked, no free +1 per su
   }
 });
 
-test("RR level: free within the next gate + 36 headroom; past that, 015's +0.5/s", () => {
-  // rebirthed to R20 and climbed to LV375 inside one submit window (gate(R20) = 375)
-  const row = rrRow({ level: 300, rebirths: 19, submitted_at: T0 - 6000 });
-  assert.equal(decideSubmitRR(row, { ...same(row), level: 375, rebirths: 20 }, T0).row.level, 375);
-  assert.equal(decideSubmitRR(row, { ...same(row), level: 900, rebirths: 20 }, T0).row.level, 15 + 18 * 20 + 36);
+test("RR level: free within the next gate + 50 headroom (019); past that, 015's +0.5/s", () => {
+  // rebirthed to R20 and climbed to LV525 inside one submit window (019 gate(R20) = 25 × 21 = 525)
+  const row = rrRow({ level: 480, rebirths: 19, submitted_at: T0 - 6000 });
+  assert.equal(decideSubmitRR(row, { ...same(row), level: 525, rebirths: 20 }, T0).row.level, 525);
+  assert.equal(decideSubmitRR(row, { ...same(row), level: 900, rebirths: 20 }, T0).row.level, 25 * (20 + 1) + 50);
   // same run, no rebirth, already past the headroom: 015's allowance from the stored level (100 s → +50)
-  const past = rrRow({ level: 420, rebirths: 20, submitted_at: T0 - 100_000 });
-  assert.equal(decideSubmitRR(past, { ...same(past), level: 999 }, T0).row.level, 470);
+  const past = rrRow({ level: 600, rebirths: 20, submitted_at: T0 - 100_000 });
+  assert.equal(decideSubmitRR(past, { ...same(past), level: 999 }, T0).row.level, 650);
   // a rebirth drops the level: an increase (rebirths went up), not a reset
   const reb = decideSubmitRR(row, { ...same(row), level: 3, rebirths: 20 }, T0);
   assert.equal(reb.action, 'increase');
@@ -192,9 +192,9 @@ test('RR keeps 017: throttle, first baseline, reset as baseline, words/letters r
   assert.deepEqual([wipe.row.level, wipe.row.rebirths, wipe.row.lifetime_words], [1, 0, 0]);
   assert.equal(decideSubmitRR(row, { ...same(row), words: 1000 + 20 * 600 + 1 }, T0).action, 'rejected');
   assert.equal(decideSubmitRR(row, { ...same(row), letters: 5000 + 150 * 600 + 1 }, T0).action, 'rejected');
-  // NoBuffCookies-style mixed reset: rebirths lower, level higher → capped at gate(R0) + 36, counted from 1
+  // NoBuffCookies-style mixed reset: rebirths lower, level higher → capped at gate(R0) + 50 = 75 (019), counted from 1
   const nb = rrRow({ level: 12, rebirths: 7, submitted_at: T0 - 10_000 });
-  assert.equal(decideSubmitRR(nb, { ...same(nb), level: 175, rebirths: 0 }, T0).row.level, 51);
+  assert.equal(decideSubmitRR(nb, { ...same(nb), level: 175, rebirths: 0 }, T0).row.level, 75);
 });
 
 test('018 SQL carries the same branches + constants as decideSubmitRR, gated on econ 12, board rebirths-first', () => {
@@ -216,4 +216,11 @@ test('018 SQL carries the same branches + constants as decideSubmitRR, gated on 
   assert.doesNotMatch(sql, /p_econ is distinct from 1[01]\b/);
   assert.match(sql, /'econ', 12\)/);
   assert.match(sql, /order by rebirths desc, level desc, lifetime_words desc, created_at asc/);
+});
+
+test('019 SQL mirrors decideSubmitRR: round gate 25 × (R+1) + 50 headroom, conversion frozen at 15 + 18R', () => {
+  const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '019_round_rebirth_gate.sql'), 'utf8');
+  assert.match(sql, /LV_HEADROOM constant integer := 50;/);
+  assert.match(sql, /lv_cap := greatest\(25 \* \(rb::bigint \+ 1\) \+ LV_HEADROOM, base_lv \+ max_rise\);/);
+  assert.match(sql, /old_gate := 15 \+ 18 \* old\.rebirths/);
 });
