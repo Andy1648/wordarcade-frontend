@@ -1,6 +1,7 @@
 # Andy's notes — Oct 2 (outrank everything else queued)
 
 ## CHECKUPS (every ~2 h)
+- oct5 ~13:50 MERGED + LIVE #194 GEMS (rolls cost 10 GEMS; gems from word drops / wins / streaks / level-ups / rebirths; menu gem chip; own line on results; menu chip code split so GEMS adds ~0 B initial). Still open: #201 named stats, #202 word cut + ROLL/INDEX split (CI re-running after a test-regex fix).
 - oct5 ~13:20 MERGED #203 payload trim (−7.8 KB initial: roll sounds lazy with the reel, dead menu/splash CSS deleted; INFINITE_BUDGET 51→49; ratchet unchanged) — main green on payload again. #194 / #201 / #202 refreshed onto it, CI running.
 - oct5 ~12:30 ⚠ MAIN RED on payload-budget: 963,965 vs ratchet 963,000 — #193 and #198 each passed alone, together they cross it. Fix in flight (perf/initial-payload-trim, lazy/dead-code, ratchet NOT raised). #194 GEMS (−244 B vs main), #201, #202 wait behind it; their only CI failure is that same check.
 - oct5 ~11:40 MERGED #193 ROLL SCREEN (full-screen reel, version a; INDEX/✕ work mid-reveal; ROLL tutorial = spotlight on ROLL). Next in the stack: #194 GEMS → #201 named stats → #202 word cut + ROLL/INDEX split (all refreshed onto main, CI running).
@@ -211,7 +212,7 @@ Specs verbatim: `claude/QUEUE-specs.md` (§ Oct 2).
 ## GEMS (Andy oct5 ~09:00) — REPLACES the roll currency (wins never buy rolls)
 - [ ] Rolls cost 10 GEMS each.
 - [ ] Earn GEMS: random drops while typing in game modes — each accepted word has a 1 in 15 chance to drop 1–3 GEMS (random), with a gem pop on the word; beat a bot +5; multiplayer +5 per player you beat (placement scales it); win streak +1 per win in a row; level-up +2; rebirth +20.
-- [~] (#194) Target ~1 roll per 2–3 min of normal play. Sim it on CI; tune ONLY the drop chance and win payouts to hit it; report the numbers.
+- [x] (#194 MERGED) Target ~1 roll per 2–3 min of normal play. Sim it on CI; tune ONLY the drop chance and win payouts to hit it; report the numbers.
 - [ ] GEMS show as their own icon + count (formatNum) on the menu and the ROLL screen. MARKS gets a notification dot only when you can afford a roll.
 - [ ] Existing players get a fair starting GEMS amount based on their current roll progress. No one loses.
 - [ ] Earned gems always show as their own line in end-of-game results (never hidden).
