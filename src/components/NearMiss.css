@@ -1,5 +1,5 @@
 /* NearMiss — one big line, house sticker style: flat cyan fill, darker cyan outline, hard black
-   offset shadow, 8px radius. ONE finite entrance (320ms, transform/opacity) after the end card has
+   offset shadow, 8px radius. ONE finite entrance (450ms, transform/opacity) after the end card has
    landed; nothing loops; reduced motion = static. Never under 16px; ≥44px tall (it is a button). */
 .nm-line {
   display: block;
@@ -20,10 +20,10 @@
   box-shadow: 5px 5px 0 #000;
   cursor: pointer;
   overflow-wrap: anywhere;
-  animation: nm-in 320ms cubic-bezier(.2, .9, .3, 1.2) 500ms both;
+  animation: nm-in 450ms cubic-bezier(.2, .9, .3, 1.2) 500ms both; /* fine-tune oct5: bigger + longer (was 320ms from 14px / 0.94); no overshoot keyframe — a mid-bounce tap must still land */
 }
 @keyframes nm-in {
-  0% { opacity: 0; transform: translateY(14px) scale(0.94); }
+  0% { opacity: 0; transform: translateY(28px) scale(0.84); }
   100% { opacity: 1; transform: none; }
 }
 .nm-line:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }

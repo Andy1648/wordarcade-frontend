@@ -23,10 +23,10 @@
   text-align: center;
   color: #0d0618;
   transform: rotate(-3deg);
-  animation: winner-pop-in 320ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  animation: winner-pop-in 720ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 .winner-pop.is-out {
-  animation: winner-pop-out 280ms ease-in both;
+  animation: winner-pop-out 360ms ease-in both;
 }
 
 .winner-pop-title {
@@ -63,14 +63,15 @@
   margin-top: 4px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.04em;
   color: #0d0618;
 }
 
 @keyframes winner-pop-in {
-  0% { opacity: 0; transform: rotate(-3deg) scale(0.55); }
-  70% { opacity: 1; transform: rotate(-3deg) scale(1.08); }
+  0% { opacity: 0; transform: rotate(-12deg) scale(0.3); }
+  45% { opacity: 1; transform: rotate(2deg) scale(1.22); }
+  70% { opacity: 1; transform: rotate(-5deg) scale(0.96); }
   100% { opacity: 1; transform: rotate(-3deg) scale(1); }
 }
 @keyframes winner-pop-out {
