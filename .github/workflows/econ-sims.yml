@@ -72,7 +72,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Long run (3 skills)
+      - name: Long run (3 skills + FAST)
         run: |
           # PROGRESSION FINAL targets are for 10 h with NO marks (SIM_ROLLS=0); then the same 10 h WITH rolls (runaway check)
           SIM_ROLLS=0 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-long --hours="${{ github.event.inputs.hours || '10' }}" | tee long-run.txt
@@ -80,7 +80,7 @@ jobs:
           {
             echo '## Long run — first reach of each level (minutes)'
             echo '```'
-            grep -E '^=== |reach \(min\)|KE |v11 |MASHER' long-run.txt || true
+            grep -E '^=== |reach \(min\)|KE |v11 |MASHER|FAST' long-run.txt || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Board saves (every real board save, median bot, 3 h)

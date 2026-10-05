@@ -152,7 +152,7 @@ const GEMS = fs.existsSync(path.join(SRC, 'progress', 'gems.js')) ? await imp('p
 const GEMS_MIG = GEMS && fs.existsSync(path.join(SRC, 'progress', 'gemsMigrate.js')) ? await imp('progress/gemsMigrate.js') : null;
 // WB game results (assumed, no measured rate): the share of WB games WON per skill, and the share played with PEOPLE
 // (3-player rooms: 2 rivals) rather than a bot. A people game won beats both; lost, it beats one half the time.
-const WB_WIN = { casual: 0.35, median: 0.5, strong: 0.7 };
+const WB_WIN = { casual: 0.35, median: 0.5, strong: 0.7, fast: 0.8 };
 const WB_PEOPLE_SHARE = 0.25;
 if (MR && process.env.SIM_SPEC_CUT === '1') {
   const keep = new Set(MR.KEPT_ACHIEVEMENTS);
@@ -169,6 +169,10 @@ const SKILLS = [
   { id: 'casual', wpm: 6, len: 5, vocab: 4000, obscure: 0.005, miss: 0.15, typing: 35, frenzyRunP: 0.001, strips: 1, runLen: { fuse: 10, chain: 10, 'word-bomb': 6 } },
   { id: 'median', wpm: 10, len: 6, vocab: 9000, obscure: 0.015, miss: 0.08, typing: 50, frenzyRunP: 0.192, strips: 1, runLen: { fuse: 18, chain: 16, 'word-bomb': 10 } },
   { id: 'strong', wpm: 16, len: 7, vocab: 20000, obscure: 0.04, miss: 0.04, typing: 75, frenzyRunP: 0.989, strips: 1.68, runLen: { fuse: 40, chain: 25, 'word-bomb': 14 } },
+  // FAST (Andy oct5, the R100 row): the fastest honest player — 24 words a minute, long words, rebirths the moment the
+  // gate allows and spends every win on KEY (the shared policy). Must stay within FAST_LIMIT × the median's rebirths,
+  // and the board (020) must never clip it: its words at every rebirth ≥ WORDS_PER_RB × that rebirth.
+  { id: 'fast', wpm: 24, len: 7, vocab: 20000, obscure: 0.05, miss: 0.02, typing: 100, frenzyRunP: 0.99, strips: 1.68, runLen: { fuse: 40, chain: 25, 'word-bomb': 14 } },
 ];
 const MODE_MIX = [['fuse', 0.35], ['chain', 0.35], ['word-bomb', 0.3]];
 const PAYOUT_KEY = { 'word-bomb': 'wordBomb', chain: 'chain', fuse: 'fuse' };
@@ -530,7 +534,7 @@ function simulate(skill, start = null) {
     while (lv() >= XP.rebirthThreshold(XP.getRebirths())) {
       const at = lv();
       const runMin = minute - runT0;
-      runs.push({ rc: XP.getRebirths(), min: +runMin.toFixed(2), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier(), passOldWallShare: passOldWallAt == null || runMin <= 0 ? null : +(passOldWallAt / runMin).toFixed(3) });
+      runs.push({ rc: XP.getRebirths(), words, min: +runMin.toFixed(2), peak: at, lastLevelMin: lastLevelMin == null ? null : +lastLevelMin.toFixed(2), keyTier: XP.getKeyTier(), passOldWallShare: passOldWallAt == null || runMin <= 0 ? null : +(passOldWallAt / runMin).toFixed(3) });
       passOldWallAt = null;
       runT0 = minute;
       lastLevelT = minute;
@@ -1090,11 +1094,32 @@ if (medianRes && !args['no-masher']) {
   masher = { ...m, vs, worstRatio: worst, pass: worst <= MASHER_LIMIT };
   if (!QUIET) console.log(`\n=== MASHER\n  v11 MASHER (${m.cap} letters/s menu gibberish, no wins) vs median, cumulative level-ups: ${vs.map((v) => `${v.min}m ×${v.ratio}`).join(' · ')} | worst ×${worst} ${masher.pass ? 'PASS' : 'FAIL'} (limit ×${MASHER_LIMIT}) | R${m.rebirths} LV${m.level}`);
 }
+// FAST vs MEDIAN (Andy oct5): rebirths reached by 60 / 300 / 600 min; the fast bot may lead by at most FAST_LIMIT×.
+// And the board rule (020, src/leaderboard/submitRules.js) must never clip it: words at rebirth n ≥ WORDS_PER_RB × n.
+const FAST_LIMIT = 1.5;
+let fast = null;
+{
+  const f = results.find((r) => r.skill === 'fast');
+  const m = results.find((r) => r.skill === 'median');
+  if (f && m) {
+    const rbBy = (r, T) => { let t = 0; let n = 0; for (const x of r.v11.ke.runs) { t += x.min; if (t <= T) n += 1; } return n; };
+    const vs = [60, 300, 600].filter((T) => T <= HOURS * 60).map((T) => ({ min: T, fast: rbBy(f, T), median: rbBy(m, T), ratio: rbBy(m, T) > 0 ? +(rbBy(f, T) / rbBy(m, T)).toFixed(2) : null }));
+    const worst = Math.max(0, ...vs.map((v) => (v.ratio == null ? (v.fast > 1 ? 99 : 0) : v.ratio)));
+    let wordsPerRb = null;
+    try { ({ WORDS_PER_RB: wordsPerRb } = await import(pathToFileURL(path.join(SRC, 'leaderboard', 'submitRules.js')).href)); } catch { wordsPerRb = null; }
+    const clipped = wordsPerRb ? f.v11.ke.runs.filter((x) => x.words < wordsPerRb * (x.rc + 1)).map((x) => ({ rc: x.rc + 1, words: x.words })) : [];
+    const perHour = f.v11.ke.runs.length ? +(f.v11.ke.runs.length / (f.v11.ke.runs.reduce((a, x) => a + x.min, 0) / 60)).toFixed(2) : 0;
+    fast = { vs, worstRatio: worst, pass: worst <= FAST_LIMIT, rebirthsPerHour: perHour, wordsPerRb, serverClips: clipped, serverPass: clipped.length === 0 };
+    if (!QUIET) console.log(`
+=== FAST
+  FAST (24 w/min, rebirth at the gate, all wins → KEY) vs median rebirths: ${vs.map((v) => `${v.min}m ${v.fast} vs ${v.median} ×${v.ratio}`).join(' · ')} | worst ×${worst} ${fast.pass ? 'PASS' : 'FAIL'} (limit ×${FAST_LIMIT}) | ${perHour} rebirths/h | board 020 (≥ ${wordsPerRb} words a rebirth) clips the honest fast bot: ${clipped.length ? 'FAIL ' + JSON.stringify(clipped.slice(0, 5)) : 'never — PASS'}`);
+  }
+}
 const fmtRows = formatCheck(results);
 if (!QUIET) {
   console.log('\n=== FORMAT');
   for (const f of fmtRows) console.log(`  ${f.ok ? 'ok  ' : 'FAIL'} ${f.fn}(${f.label} = ${f.value}) -> "${f.out}"`);
 }
 const outFile = path.join(HERE, `loop-sim${TAG === 'base' ? '' : '-' + TAG}.json`);
-fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, masher, format: fmtRows }, null, 1));
+fs.writeFileSync(outFile, JSON.stringify({ src: SRC, tag: TAG, hours: HOURS, patch: process.env.SIM_PATCH || null, results, masher, fast, format: fmtRows }, null, 1));
 if (!QUIET) console.log(`\nwrote ${outFile}`);
