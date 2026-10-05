@@ -180,6 +180,7 @@ export default function MobileMenu({
   navLayout = 'top',
   rewardsCount = 0,
   onRewards = null,
+  onAchievements = null, // v3 (SEASON2): the ACHIEVEMENTS trophy slab
   level = null,
   levelFrac = 0,
   wins = 0,
@@ -379,6 +380,17 @@ export default function MobileMenu({
           {rewardsCount > 0 && onRewards ? 'CLAIM' : 'STATS'}
           {rewardsCount > 0 && <span className="hp-m-count" aria-hidden="true">{formatNum(rewardsCount)}</span>}
         </button>
+        {onAchievements && (
+          <button
+            type="button"
+            className={`hp-m-navbtn is-ach${navigating ? ' is-disabled' : ''}`}
+            onClick={onAchievements}
+            disabled={navigating}
+            aria-label="Open achievements"
+          >
+            <img src="/ach/cup.svg" width="28" height="28" alt="" aria-hidden="true" />
+          </button>
+        )}
         <button
           ref={shopRef}
           type="button"

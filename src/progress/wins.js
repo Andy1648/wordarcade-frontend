@@ -30,6 +30,11 @@ import { addLetters } from './letters.js';
 import { rebirthKeyKeep } from './markPerks.js';
 import { creditAcceptedWordLetters } from './letterXp.js';
 import { dropGemsForWord } from './gemsCore.js';
+// PROGRESSION v3 (SEASON2, default OFF): the season's own balance keys (season.s2Key), the (1 + ★) row on the
+// receipt and the ACHIEVEMENTS counters. OFF = every key, number and call exactly as before.
+import { SEASON2, s2Key } from './season.js';
+import { WINS_BASE as V3_WINS_BASE, starMult as v3StarMult } from './v3/econ.js';
+import { getStarsV3, bumpCounter, maxCounter } from './v3/store.js';
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn MARK (markMult — the same number the payout reads).
@@ -49,7 +54,7 @@ export const MIN_WORDS = 3;
 
 function readInt(key) {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(s2Key(key));
     if (raw == null) return 0;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
@@ -59,7 +64,7 @@ function readInt(key) {
 }
 function writeInt(key, n) {
   try {
-    localStorage.setItem(key, String(n));
+    localStorage.setItem(s2Key(key), String(n));
   } catch {
     /* storage blocked */
   }
@@ -242,7 +247,7 @@ export function wordWinsBase({ keyTier, wordLength = WORD_LEN_REF, markId } = {}
   const add = markBaseWins({ markId });
   return ((keyTierXp(kt) * len) / 10) * ((BASE_WINS + add) / BASE_WINS);
 }
-const BASE_WINS = 10;
+const BASE_WINS = SEASON2 ? V3_WINS_BASE : 10; // v3: BASE 15 wins a 5-letter word
 
 /**
  * THE MULTIPLIER STACK, as named factors — the single definition, used by the XP award, by the
@@ -281,6 +286,8 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     frenzy: frenzyMult(id),
     // BOOST (boost.js, R10): a redeem code's wall-clock ×N on EVERY mode; stacks with FRENZY.
     boost: boostMult(),
+    // v3 ★ STARS: (1 + ★) on wins (xpPerWord applies it; this row only names it). Absent with the flag OFF.
+    ...(SEASON2 ? { stars: v3StarMult(getStarsV3()) } : {}),
     // LETTER FORGE (forge.js, replaced MOMENTUM): +5% per forged level of each letter in THIS word.
     // Word-specific (×1 when no word is given — the card's reference rate is the base, and the
     // forge is one of the things that makes a real word worth MORE than it).
@@ -600,6 +607,7 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   // Through the ONE door, like every other credit — so the per-word money and the bonus money are
   // summable by the same test and renderable by the same component.
   credit(granted, 'WORDS', { kind: 'word', mode });
+  if (SEASON2 && modeKey(mode) === 'chain') maxCounter('chain', nowN); // v3 ACHIEVEMENTS: the longest CHAIN run
   // First time this round crosses the gate → count the round (mode counters only).
   if (prevN < MIN_WORDS && nowN >= MIN_WORDS && mode && ROUND_MODES.includes(mode)) {
     const r = getRounds();
@@ -646,6 +654,7 @@ export function awardWordXp(opts = {}) {
   // GEMS: this is the one door every mode's accepted word passes, so the word DROP rolls here (game words only —
   // menu typing never drops). `gems` is what dropped (0 most words); the GemPop on the word hears the grant.
   const gems = dropGemsForWord({ mode });
+  if (SEASON2 && mode !== 'menu') bumpCounter('words'); // v3 ACHIEVEMENTS: TYPE WORDS
   return { state, level: state.level, leveledUp: false, gain, mastery, mark, gems };
 }
 

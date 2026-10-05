@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rooms and settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes rsBump{0%{transform:scale(1)}35%{transform:scale(1.18) rotate(-3deg)}100%{transform:scale(1)}}
+@keyframes rsSlam{0%{transform:scale(2.2) rotate(-12deg);opacity:0}65%{transform:scale(.92) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+@keyframes rsDeny{0%,100%{transform:translateX(0)}15%{transform:translateX(-9px)}35%{transform:translateX(8px)}55%{transform:translateX(-6px)}75%{transform:translateX(4px)}}
+@keyframes rsBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes rsPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes rsSquash{0%{transform:scaleX(1)}40%{transform:scaleX(1.1) scaleY(.88)}100%{transform:scaleX(1)}}
+@keyframes rsPop{0%{transform:scaleY(.4)}60%{transform:scaleY(1.2)}100%{transform:scaleY(1)}}
+@keyframes rsIn{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes rsWob{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(-6deg) translateY(-2px)}}
+.rs-bump{animation:rsBump .3s cubic-bezier(.2,1.4,.4,1)}
+.rs-slam{animation:rsSlam .34s cubic-bezier(.2,1.3,.4,1) both}
+.rs-deny{animation:rsDeny .38s linear}
+.rs-blink{animation:rsBlink 1s steps(1) infinite}
+.rs-pulse{animation:rsPulse 1.1s ease-in-out infinite}
+.rs-squash{animation:rsSquash .3s cubic-bezier(.2,1.4,.4,1)}
+.rs-pop{animation:rsPop .28s cubic-bezier(.2,1.5,.4,1);transform-origin:bottom}
+.rs-in{animation:rsIn .26s ease-out both}
+.rs-wob{animation:rsWob 2.4s ease-in-out infinite}
+
+.rs-p{-webkit-tap-highlight-color:transparent;user-select:none}
+.rs-p .rs-face{transition:transform .6s cubic-bezier(.3,.7,.4,1),filter .2s}
+.rs-p:hover .rs-face{transform:translateY(-4px);filter:brightness(1.07);transition:transform .25s cubic-bezier(.3,.7,.4,1.5),filter .2s}
+.rs-p:active .rs-face{transform:translateY(11px);filter:brightness(.96);transition:transform 34ms}
+.rs-p.rs-off:hover .rs-face{transform:none;filter:none}
+.rs-p.rs-off:active .rs-face{transform:translateY(3px)}
+.rs-g .rs-gface{transition:transform .5s cubic-bezier(.3,.7,.4,1)}
+.rs-g:hover .rs-gface{transform:translateY(-3px)}
+.rs-g:active .rs-gface{transform:translateY(5px);transition:transform 34ms}
+.rs-seat{transition:transform .4s cubic-bezier(.3,.7,.4,1.5)}
+.rs-seatb:hover .rs-seat{transform:translateY(-4px)}
+.rs-seatb:active .rs-seat{transform:translateY(4px);transition:transform 34ms}
+.rs-mode{transition:transform .34s cubic-bezier(.3,.7,.4,1.5)}
+.rs-modeb:hover .rs-mode{filter:brightness(1.08)}
+.rs-modeb:active .rs-mode{transform:translateY(6px);transition:transform 34ms}
+.rs-slab{transition:transform .34s cubic-bezier(.3,.7,.4,1.35)}
+.rs-knob{transition:transform .26s cubic-bezier(.3,.7,.4,1.5)}
+.rs-tog:active .rs-knobin{transform:scaleX(1.18)}
+.rs-blk{transition:transform .2s cubic-bezier(.3,.7,.4,1.5)}
+.rs-blkb:hover .rs-blk{transform:translateY(-3px)}
+.rs-ico{transition:transform .2s cubic-bezier(.3,.7,.4,1.5)}
+.rs-icob:hover .rs-ico{transform:rotate(-8deg) scale(1.08)}
+.rs-icob:active .rs-ico{transform:translateY(3px)}
+.rs-tlab{transition:color .15s}
+
+.rs-rm *,.rs-rm *::before,.rs-rm *::after{animation:none !important;transition:none !important}
+.rs-name{width:240px;height:44px;box-sizing:border-box;padding:0 12px;background:#08030f;border:4px solid #2EFFE0;color:#fff;font-family:'Bungee',sans-serif;font-size:20px;outline:none;text-transform:uppercase}
+button{font:inherit}
+button:focus-visible{outline:4px solid #2EFFE0;outline-offset:4px}
+</style>
+</helmet>
+
+<div class="{{rmClass}}" style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.12) 46px 50px); pointer-events: none"></div>
+
+<!-- HEADER -->
+<div style="position: absolute; left: 28px; top: 26px; padding: 4px 12px; background: #FFE94A; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: rotate(-4deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">ROOMS</div>
+
+<div role="tablist" aria-label="Room screens" style="position: absolute; left: 375px; top: 16px; width: 616px; height: 64px; box-sizing: border-box; background: #08030f; border: 5px solid #000; box-shadow: 6px 6px 0 #000; transform: skewX(-8deg)">
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 6px; background: #000; opacity: .6"></span>
+<span class="rs-slab" style="position: absolute; top: 4px; bottom: 4px; left: 0; width: 196px; display: block; transform: translateX({{slabX}}px)">
+<span class="{{slabSquash}}" style="position: absolute; inset: 0; box-sizing: border-box; background: {{slabC}}; border: 4px solid #000; overflow: hidden; display: block">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 32%; background: {{slabD}}"></span>
+<span style="position: absolute; left: 8px; right: 50%; top: 4px; height: 5px; background: #fff"></span>
+</span>
+</span>
+<div style="position: absolute; inset: 0; display: flex">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="flex: 1; padding: 0; border: 0; background: transparent; cursor: pointer">
+<span class="rs-tlab" style="display: inline-flex; align-items: center; gap: 8px; transform: skewX(8deg); font-family: 'Bungee', sans-serif; font-size: 19px; color: {{t.ink}}">
+<svg viewBox="0 0 26 26" width="24" height="24" aria-hidden="true" style="overflow: visible"><g stroke="#000" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{t.i.door}}" hint-placeholder-val="{{ false }}"><rect x="11" y="2" width="13" height="22" fill="{{t.fill}}"></rect><circle cx="14.5" cy="13" r="1.6" fill="#000"></circle><path d="M1 13 L10 13 M6 8 L11 13 L6 18" fill="none" stroke-width="3.5"></path></sc-if>
+<sc-if value="{{t.i.ppl}}" hint-placeholder-val="{{ false }}"><circle cx="17" cy="8" r="4.5" fill="{{t.fill}}"></circle><path d="M9 24 C9 16 25 16 25 24 Z" fill="{{t.fill}}"></path><circle cx="9" cy="10" r="4.5" fill="#fff"></circle><path d="M1 24 C1 17 17 17 17 24 Z" fill="#fff"></path></sc-if>
+<sc-if value="{{t.i.sl}}" hint-placeholder-val="{{ false }}"><path d="M2 6 L24 6 M2 13 L24 13 M2 20 L24 20" stroke-width="3.5"></path><rect x="13" y="2.5" width="6" height="7" fill="{{t.fill}}"></rect><rect x="4" y="9.5" width="6" height="7" fill="#fff"></rect><rect x="16" y="16.5" width="6" height="7" fill="{{t.fill}}"></rect></sc-if>
+</g></svg>{{t.label}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<!-- PANEL FRAME -->
+<div style="position: absolute; left: 28px; top: 106px; width: 1310px; height: 526px; box-sizing: border-box; background: #12071f; border: 4px solid #000; box-shadow: 8px 8px 0 #000">
+
+<!-- ============ JOIN ROOM ============ -->
+<sc-if value="{{showJoin}}" hint-placeholder-val="{{ true }}">
+<div class="rs-in" style="position: absolute; inset: 0">
+
+<div class="{{nameDeny}}" style="position: absolute; left: 0; right: 0; top: 18px; display: flex; justify-content: center; align-items: center; gap: 12px">
+<span style="font-size: 13px; color: #c9b8e8">PLAYING AS</span>
+<sc-if value="{{notEditing}}" hint-placeholder-val="{{ true }}">
+<div class="{{nameBump}}" style="position: relative; height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 6px 0 6px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 8px solid #B04BFF">
+<span style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: #D88BFF; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 16px; color: #000; transform: rotate(-4deg)">{{nameInitial}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">{{name}}</span>
+<button class="rs-icob" onClick="{{startEdit}}" aria-label="Edit name" style="width: 38px; height: 34px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg class="rs-ico" viewBox="0 0 30 30" width="30" height="30" aria-hidden="true" style="filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="2.5" stroke-linejoin="round"><path d="M6 20 L20 6 L25 11 L11 25 Z" fill="#FFE94A"></path><path d="M20 6 L23 3 L28 8 L25 11 Z" fill="#FF3D7F"></path><path d="M6 20 L11 25 L3 28 Z" fill="#fff"></path><path d="M14 17 L22 9" stroke="#F2A900" stroke-width="2"></path></g></svg>
+</button>
+</div>
+</sc-if>
+<sc-if value="{{editing}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 10px">
+<input class="rs-name" value="{{draft}}" onChange="{{onDraft}}" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Username, 16 max">
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: {{draftCountC}}">{{draftCount}}</span>
+<button onClick="{{saveName}}" aria-label="Save name" style="width: 44px; height: 44px; padding: 0; background: #2EFFE0; border: 4px solid #000; box-shadow: 4px 4px 0 #000; cursor: pointer"><svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true"><path d="M3 11 L9 17 L19 4" fill="none" stroke="#000" stroke-width="5" stroke-linecap="square"></path></svg></button>
+<button onClick="{{cancelEdit}}" aria-label="Cancel" style="width: 44px; height: 44px; padding: 0; background: #1a0b2e; border: 4px solid #000; box-shadow: 4px 4px 0 #000; cursor: pointer"><svg viewBox="0 0 22 22" width="18" height="18" aria-hidden="true"><path d="M4 4 L18 18 M18 4 L4 18" fill="none" stroke="#FF3D7F" stroke-width="5"></path></svg></button>
+</div>
+</sc-if>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 86px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">ROOM CODE</div>
+
+<div class="{{codeDeny}}" onClick="{{focusTiles}}" style="position: absolute; left: 352px; top: 116px; width: 598px; height: 150px; display: flex; gap: 22px; cursor: text">
+<sc-for list="{{tiles}}" as="c" hint-placeholder-count="4">
+<div class="{{c.cls}}" style="position: relative; width: 132px; height: 146px">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: {{c.lip}}; border: 5px solid #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 132px; box-sizing: border-box; background: {{c.face}}; border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 28%; background: {{c.shade}}"></span>
+<span style="position: absolute; left: 10px; right: 50%; top: 7px; height: 6px; background: {{c.glint}}"></span>
+<span style="position: relative; font-family: 'Bungee', sans-serif; font-size: 92px; line-height: 1; color: #000">{{c.ch}}</span>
+<sc-if value="{{c.caret}}" hint-placeholder-val="{{ false }}"><span class="rs-blink" style="position: absolute; left: 34px; right: 34px; bottom: 22px; height: 10px; background: #2EFFE0; border: 3px solid #000"></span></sc-if>
+</span>
+</div>
+</sc-for>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 278px; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 13px; color: #c9b8e8">
+<svg viewBox="0 0 34 22" width="30" height="20" aria-hidden="true"><rect x="2" y="2" width="30" height="18" fill="#1a0b2e" stroke="#c9b8e8" stroke-width="2.5"></rect><path d="M7 7 L9 7 M13 7 L15 7 M19 7 L21 7 M25 7 L27 7 M9 15 L25 15" stroke="#c9b8e8" stroke-width="2.5"></path></svg>
+<span>{{typeHint}}</span>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 308px; display: flex; justify-content: center">
+<div class="{{joinWrap}}">
+<button class="{{joinCls}}" onClick="{{join}}" aria-label="Join room" aria-disabled="{{joinAria}}" style="position: relative; display: block; width: 380px; height: 104px; padding: 0; border: 0; background: transparent; cursor: {{joinCursor}}; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: {{joinLip}}; border: 5px solid #000"></span>
+<span class="rs-face" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: {{joinFace}}; border: 5px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: {{joinShade}}"></span>
+<span style="position: absolute; left: 10px; right: 50%; top: 6px; height: 6px; background: {{joinGlint}}"></span>
+<span style="position: relative; transform: skewX(7deg); display: flex; align-items: center; gap: 14px; font-family: 'Bungee', sans-serif; line-height: 1; color: {{joinInk}}">
+<span style="font-size: 44px">{{joinLabel}}</span>
+<span style="padding: 2px 8px; background: #000; font-size: 16px; color: {{joinSubC}}">{{joinSub}}</span>
+</span>
+</span>
+</button>
+</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 434px; display: flex; justify-content: center; align-items: center; gap: 16px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #5d4a78">OR</span>
+<button class="rs-g" onClick="{{create}}" aria-label="Create room" style="position: relative; display: block; height: 62px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-7deg)">
+<span style="position: absolute; left: 5px; right: -5px; top: 5px; bottom: -5px; background: #000"></span>
+<span class="rs-gface" style="position: relative; height: 62px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 22px; background: #1a0b2e; border: 4px solid #000; border-bottom: 10px solid #2EFFE0">
+<span style="transform: skewX(7deg); display: flex; align-items: center; gap: 10px">
+<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 2 L15 2 L15 9 L22 9 L22 15 L15 15 L15 22 L9 22 L9 15 L2 15 L2 9 L9 9 Z" fill="#2EFFE0" stroke="#000" stroke-width="2.5" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">CREATE ROOM</span>
+</span>
+</span>
+</button>
+</div>
+</div>
+</sc-if>
+
+<!-- ============ LOBBY ============ -->
+<sc-if value="{{showLobby}}" hint-placeholder-val="{{ false }}">
+<div class="rs-in" style="position: absolute; inset: 0">
+
+<div style="position: absolute; left: 26px; top: 20px; font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">ROOM CODE</div>
+<div style="position: absolute; left: 26px; top: 50px; display: flex; gap: 10px">
+<sc-for list="{{lobbyTiles}}" as="lt" hint-placeholder-count="4">
+<div style="position: relative; width: 78px; height: 90px">
+<span style="position: absolute; left: 5px; right: -5px; top: 13px; bottom: -5px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 9px; bottom: 0; box-sizing: border-box; background: #F2A900; border: 4px solid #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 81px; box-sizing: border-box; background: #FFE94A; border: 4px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 28%; background: #F2A900"></span>
+<span style="position: relative; font-family: 'Bungee', sans-serif; font-size: 52px; line-height: 1; color: #000">{{lt.ch}}</span>
+</span>
+</div>
+</sc-for>
+</div>
+<div style="position: absolute; left: 26px; top: 160px">
+<button class="rs-g" onClick="{{copy}}" aria-label="Copy room code" style="position: relative; display: block; height: 54px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-7deg)">
+<span style="position: absolute; left: 5px; right: -5px; top: 5px; bottom: -5px; background: #000"></span>
+<span class="rs-gface" style="position: relative; height: 54px; box-sizing: border-box; display: flex; align-items: center; padding: 0 18px; background: {{copyBg}}; border: 4px solid #000; border-bottom: 9px solid {{copyLip}}">
+<span style="transform: skewX(7deg); display: flex; align-items: center; gap: 10px">
+<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g stroke="#000" stroke-width="2.5" stroke-linejoin="round"><rect x="8" y="2" width="14" height="16" fill="#fff"></rect><rect x="2" y="7" width="14" height="16" fill="#2EFFE0"></rect></g></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; color: {{copyInk}}">{{copyLabel}}</span>
+</span>
+</span>
+</button>
+</div>
+<sc-if value="{{copied}}" hint-placeholder-val="{{ false }}"><div class="rs-slam" style="position: absolute; left: 176px; top: 112px; padding: 2px 12px; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #000; pointer-events: none">COPIED!</div></sc-if>
+
+<div style="position: absolute; left: 26px; top: 244px; display: flex; align-items: center; gap: 10px">
+<svg viewBox="0 0 40 30" width="36" height="27" aria-hidden="true" style="filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="3" stroke-linejoin="round"><path d="M3 26 L5 7 L13 15 L20 2 L27 15 L35 7 L37 26 Z" fill="#FFC23D"></path><rect x="3" y="21" width="34" height="6" fill="#F2A900"></rect><circle cx="20" cy="15" r="3" fill="#FF3D7F" stroke-width="2"></circle></g></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: {{hostLineC}}">{{hostLine}}</span>
+</div>
+
+<div style="position: absolute; left: 26px; top: 300px">
+<div class="{{startWrap}}" style="position: relative">
+<button class="{{startCls}}" onClick="{{start}}" aria-label="Start game" aria-disabled="{{startAria}}" style="position: relative; display: block; width: 380px; height: 104px; padding: 0; border: 0; background: transparent; cursor: {{startCursor}}; transform: skewX(-7deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 20px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: {{startLip}}; border: 5px solid #000"></span>
+<span class="rs-face" style="position: absolute; left: 0; right: 0; top: 0; height: 90px; box-sizing: border-box; background: {{startFace}}; border: 5px {{startBorder}} #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: {{startShade}}"></span>
+<span style="position: absolute; left: 10px; right: 50%; top: 6px; height: 6px; background: {{startGlint}}"></span>
+<span style="position: relative; transform: skewX(7deg); display: flex; flex-direction: column; align-items: center; line-height: 1; font-family: 'Bungee', sans-serif; color: {{startInk}}">
+<span style="font-size: {{startFs}}px">{{startLabel}}</span>
+<span style="margin-top: 4px; padding: 1px 8px; background: #000; font-size: 14px; color: {{startSubC}}">{{startSub}}</span>
+</span>
+</span>
+</button>
+<sc-if value="{{go}}" hint-placeholder-val="{{ false }}"><div class="rs-slam" style="position: absolute; right: -26px; top: -26px; padding: 0 14px; background: #2EFFE0; border: 5px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: 38px; color: #000; pointer-events: none">GO!</div></sc-if>
+</div>
+</div>
+
+<div style="position: absolute; left: 26px; top: 444px; display: flex; align-items: center; gap: 10px">
+<span style="font-size: 13px; color: #5d4a78">DEMO · VIEW AS</span>
+<sc-for list="{{viewAs}}" as="v" hint-placeholder-count="2">
+<button onClick="{{v.pick}}" aria-pressed="{{v.sel}}" style="height: 36px; padding: 0 12px; background: {{v.bg}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 15px; color: {{v.ink}}; cursor: pointer"><span style="display: inline-block; transform: skewX(10deg)">{{v.label}}</span></button>
+</sc-for>
+</div>
+
+<!-- seats -->
+<div style="position: absolute; left: 446px; top: 20px; width: 832px; display: flex; justify-content: space-between; align-items: baseline">
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">PLAYERS <span style="color: #FFE94A">{{count}}/8</span></span>
+<span style="font-size: 13px; color: #5d4a78">{{seatHint}}</span>
+</div>
+<div style="position: absolute; left: 446px; top: 54px; width: 840px; display: flex; flex-wrap: wrap; gap: 18px 16px">
+<sc-for list="{{seats}}" as="s" hint-placeholder-count="8">
+<button class="rs-seatb" onClick="{{s.tap}}" aria-label="{{s.aria}}" style="position: relative; display: block; width: 196px; height: 104px; padding: 0; border: 0; background: transparent; cursor: {{s.cursor}}">
+<sc-if value="{{s.filled}}" hint-placeholder-val="{{ false }}">
+<span style="position: absolute; left: 6px; right: -6px; top: 6px; bottom: -6px; background: #000"></span>
+<span class="rs-seat" style="position: absolute; inset: 0; box-sizing: border-box; background: {{s.bg}}; border: 4px solid #000; overflow: hidden; display: block; text-align: left">
+<span style="position: absolute; left: -8px; top: -4px; bottom: -4px; width: 26px; background: {{s.stripe}}; border-right: 4px solid #000; transform: skewX(-12deg)"></span>
+<span style="position: absolute; left: 30px; right: 10px; top: 22px; font-family: 'Bungee', sans-serif; font-size: 16px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.name}}</span>
+<span style="position: absolute; left: 30px; top: 56px; padding: 1px 8px; background: {{s.stripe}}; border: 3px solid #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">{{s.rank}}</span>
+</span>
+<sc-if value="{{s.host}}" hint-placeholder-val="{{ false }}"><svg class="rs-wob" viewBox="0 0 40 30" width="44" height="33" aria-hidden="true" style="position: absolute; left: -16px; top: -20px; filter: drop-shadow(3px 3px 0 #000)"><g stroke="#000" stroke-width="3" stroke-linejoin="round"><path d="M3 26 L5 7 L13 15 L20 2 L27 15 L35 7 L37 26 Z" fill="#FFC23D"></path><path d="M20 2 L27 15 L35 7 L37 26 L20 26 Z" fill="#F2A900" stroke="none"></path><path d="M3 26 L5 7 L13 15 L20 2 L27 15 L35 7 L37 26 Z" fill="none"></path><rect x="3" y="21" width="34" height="6" fill="#F2A900"></rect><circle cx="20" cy="15" r="3" fill="#FF3D7F" stroke-width="2"></circle><circle cx="10" cy="24" r="1.6" fill="#2EFFE0" stroke="none"></circle><circle cx="30" cy="24" r="1.6" fill="#2EFFE0" stroke="none"></circle><path d="M8 12 L9 18" stroke="#fff" stroke-width="2.5" stroke-linecap="round"></path></g></svg></sc-if>
+<sc-if value="{{s.you}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; right: -8px; top: -12px; padding: 0 6px; background: #FF3D7F; border: 3px solid #000; transform: rotate(6deg); font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">YOU</span></sc-if>
+</sc-if>
+<sc-if value="{{s.empty}}" hint-placeholder-val="{{ true }}">
+<span class="rs-seat" style="position: absolute; inset: 0; box-sizing: border-box; border: 4px dashed #3a2160; background: rgba(26,11,46,.5); display: flex; align-items: center; justify-content: center">
+<svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M9 2 L15 2 L15 9 L22 9 L22 15 L15 15 L15 22 L9 22 L9 15 L2 15 L2 9 L9 9 Z" fill="#3a2160" stroke="#000" stroke-width="2" stroke-linejoin="round"></path></svg>
+</span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+
+<!-- modes -->
+<div style="position: absolute; left: 446px; top: 306px; width: 832px; display: flex; justify-content: space-between; align-items: baseline">
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">MODE</span>
+<span style="font-size: 13px; color: #5d4a78">{{modeHint}}</span>
+</div>
+<div style="position: absolute; left: 446px; top: 340px; width: 840px; display: flex; gap: 20px">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+<div class="{{m.deny}}">
+<button class="rs-modeb" onClick="{{m.pick}}" aria-pressed="{{m.sel}}" aria-label="{{m.label}}" style="position: relative; display: block; width: 264px; height: 150px; padding: 0; border: 0; background: transparent; cursor: {{m.cursor}}">
+<span style="position: absolute; left: 7px; right: -7px; top: 21px; bottom: -7px; background: #000"></span>
+<span style="position: absolute; left: 0; right: 0; top: 14px; bottom: 0; box-sizing: border-box; background: {{m.lip}}; border: 5px solid #000"></span>
+<span class="rs-mode" style="position: absolute; left: 0; right: 0; top: 0; height: 136px; box-sizing: border-box; background: {{m.face}}; border: 5px solid #000; overflow: hidden; display: block; text-align: left; transform: translateY({{m.lift}}px)">
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 9px; background: {{m.band}}; border-bottom: 3px solid #000"></span>
+<svg viewBox="0 0 48 48" width="62" height="62" aria-hidden="true" style="position: absolute; left: 14px; top: 26px; overflow: visible; filter: drop-shadow(3px 3px 0 #000)"><g stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{m.i.bomb}}" hint-placeholder-val="{{ false }}"><circle cx="21" cy="29" r="15" fill="#1a0b2e"></circle><rect x="16" y="9" width="11" height="7" fill="#3a2160"></rect><path d="M22 9 C24 3 30 3 34 6" fill="none"></path><path d="M38 1 L39.5 5 L44 6 L39.5 7.5 L38 12 L36.5 7.5 L32 6 L36.5 5 Z" fill="#FFE94A" stroke-width="2.5"></path><path d="M12 24 C13 20 16 18 19 17" stroke="#fff" stroke-width="3" fill="none"></path></sc-if>
+<sc-if value="{{m.i.bolt}}" hint-placeholder-val="{{ false }}"><path d="M27 2 L8 27 L21 27 L16 46 L40 18 L26 18 L32 2 Z" fill="#FFE94A"></path><path d="M27 2 L32 2 L26 18 L40 18 L16 46 L21 27 Z" fill="#F2A900" stroke="none"></path><path d="M27 2 L8 27 L21 27 L16 46 L40 18 L26 18 L32 2 Z" fill="none"></path></sc-if>
+<sc-if value="{{m.i.mask}}" hint-placeholder-val="{{ false }}"><path d="M6 10 C14 6 34 6 42 10 C43 28 36 42 24 44 C12 42 5 28 6 10 Z" fill="#fff"></path><path d="M12 20 L21 23 L19 27 L12 25 Z M36 20 L27 23 L29 27 L36 25 Z" fill="#000"></path><path d="M17 35 C21 32 27 38 31 34" fill="none"></path><path d="M24 44 C36 42 43 28 42 10 C38 8 34 7 30 7 C36 20 34 34 24 44 Z" fill="#D88BFF" stroke="none" opacity=".55"></path></sc-if>
+</g></svg>
+<span style="position: absolute; left: 92px; right: 8px; top: 30px; font-family: 'Bungee', sans-serif; font-size: 22px; line-height: 1.05; color: {{m.ink}}">{{m.label}}</span>
+<span style="position: absolute; left: 92px; right: 8px; top: 86px; font-size: 13px; line-height: 1.3; color: {{m.subC}}">{{m.sub}}</span>
+</span>
+<sc-if value="{{m.on}}" hint-placeholder-val="{{ false }}"><span class="rs-slam" style="position: absolute; right: -10px; top: -14px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: #fff; border: 4px solid #000; box-shadow: 3px 3px 0 #000"><svg viewBox="0 0 22 22" width="18" height="18" aria-hidden="true"><path d="M3 11 L9 17 L19 4" fill="none" stroke="#000" stroke-width="5" stroke-linecap="square"></path></svg></span></sc-if>
+<sc-if value="{{m.locked}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; right: 10px; bottom: 22px"><svg viewBox="0 0 24 28" width="16" height="18" aria-hidden="true"><path d="M6 12 L6 8 C6 2 18 2 18 8 L18 12" fill="none" stroke="#8f7bb3" stroke-width="4"></path><rect x="2" y="12" width="20" height="14" fill="#8f7bb3"></rect></svg></span></sc-if>
+</button>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- ============ SETTINGS ============ -->
+<sc-if value="{{showSettings}}" hint-placeholder-val="{{ false }}">
+<div class="rs-in" style="position: absolute; left: 0; right: 0; top: 18px; display: flex; flex-direction: column; align-items: center; gap: 14px">
+
+<!-- SOUND -->
+<div style="position: relative; width: 900px; height: 84px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 24px 0 30px; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000">
+<span style="position: absolute; left: -4px; top: -4px; bottom: -4px; width: 12px; background: #FFE94A; border: 4px solid #000"></span>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">SOUND</span><span style="font-size: 13px; color: #c9b8e8">BOOMS, DINGS, BUZZERS</span></div>
+<div style="display: flex; align-items: center; gap: 16px">
+<button class="rs-icob" onClick="{{muteSound}}" aria-label="Mute sound" style="width: 50px; height: 50px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg class="rs-ico" viewBox="0 0 40 40" width="44" height="44" aria-hidden="true" style="overflow: visible; filter: drop-shadow(3px 3px 0 #000)"><g stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+<path d="M4 15 L12 15 L22 6 L22 34 L12 25 L4 25 Z" fill="#FFE94A"></path>
+<sc-if value="{{sW1}}" hint-placeholder-val="{{ true }}"><path d="M27 15 C30 18 30 22 27 25" fill="none" stroke="#FFE94A" stroke-width="3.5"></path></sc-if>
+<sc-if value="{{sW2}}" hint-placeholder-val="{{ true }}"><path d="M31 10 C37 16 37 24 31 30" fill="none" stroke="#FFE94A" stroke-width="3.5"></path></sc-if>
+<sc-if value="{{sMute}}" hint-placeholder-val="{{ false }}"><path d="M27 13 L38 27 M38 13 L27 27" fill="none" stroke="#FF3D7F" stroke-width="5"></path></sc-if>
+</g></svg>
+</button>
+<div role="slider" aria-label="Sound volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{sound}}" style="display: flex; align-items: flex-end; gap: 6px; height: 50px">
+<sc-for list="{{soundBlocks}}" as="b" hint-placeholder-count="10">
+<button class="rs-blkb" onClick="{{b.pick}}" aria-label="{{b.aria}}" style="width: 30px; height: 50px; padding: 0; border: 0; background: transparent; cursor: pointer; display: flex; align-items: flex-end">
+<span class="rs-blk" style="display: block; width: 30px; height: {{b.h}}px"><span class="{{b.cls}}" style="display: block; width: 100%; height: 100%; box-sizing: border-box; background: {{b.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-8deg)"></span></span>
+</button>
+</sc-for>
+</div>
+<span class="{{sBump}}" style="width: 64px; text-align: right; font-family: 'Bungee', sans-serif; font-size: 28px; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{sound}}</span>
+</div>
+</div>
+
+<!-- MUSIC -->
+<div style="position: relative; width: 900px; height: 84px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 24px 0 30px; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000">
+<span style="position: absolute; left: -4px; top: -4px; bottom: -4px; width: 12px; background: #B04BFF; border: 4px solid #000"></span>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">MUSIC</span><span style="font-size: 13px; color: #c9b8e8">LOBBY + MATCH TRACKS</span></div>
+<div style="display: flex; align-items: center; gap: 16px">
+<button class="rs-icob" onClick="{{muteMusic}}" aria-label="Mute music" style="width: 50px; height: 50px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg class="rs-ico" viewBox="0 0 40 40" width="44" height="44" aria-hidden="true" style="overflow: visible; filter: drop-shadow(3px 3px 0 #000)"><g stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+<path d="M14 8 L32 3 L32 27" fill="none" stroke-width="6"></path><path d="M14 8 L32 3 L32 27" fill="none" stroke="#D88BFF" stroke-width="2.5"></path><path d="M14 8 L14 31" fill="none" stroke-width="6"></path><path d="M14 8 L14 31" fill="none" stroke="#D88BFF" stroke-width="2.5"></path>
+<ellipse cx="9" cy="31" rx="6" ry="5" fill="#D88BFF"></ellipse><ellipse cx="27" cy="27" rx="6" ry="5" fill="#D88BFF"></ellipse>
+<sc-if value="{{mMute}}" hint-placeholder-val="{{ false }}"><path d="M4 4 L36 36" fill="none" stroke="#FF3D7F" stroke-width="5"></path></sc-if>
+</g></svg>
+</button>
+<div role="slider" aria-label="Music volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{music}}" style="display: flex; align-items: flex-end; gap: 6px; height: 50px">
+<sc-for list="{{musicBlocks}}" as="b" hint-placeholder-count="10">
+<button class="rs-blkb" onClick="{{b.pick}}" aria-label="{{b.aria}}" style="width: 30px; height: 50px; padding: 0; border: 0; background: transparent; cursor: pointer; display: flex; align-items: flex-end">
+<span class="rs-blk" style="display: block; width: 30px; height: {{b.h}}px"><span class="{{b.cls}}" style="display: block; width: 100%; height: 100%; box-sizing: border-box; background: {{b.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-8deg)"></span></span>
+</button>
+</sc-for>
+</div>
+<span class="{{mBump}}" style="width: 64px; text-align: right; font-family: 'Bungee', sans-serif; font-size: 28px; color: #D88BFF; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{music}}</span>
+</div>
+</div>
+
+<!-- REDUCE MOTION -->
+<div style="position: relative; width: 900px; height: 84px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 24px 0 30px; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000">
+<span style="position: absolute; left: -4px; top: -4px; bottom: -4px; width: 12px; background: #2EFFE0; border: 4px solid #000"></span>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">REDUCE MOTION</span><span style="font-size: 13px; color: #c9b8e8">ON = CALMER</span></div>
+<button class="rs-tog" role="switch" aria-checked="{{rmAria}}" aria-label="Reduce motion" onClick="{{toggleRm}}" style="position: relative; width: 150px; height: 58px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-10deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 6px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; inset: 0; box-sizing: border-box; background: {{rmTrack}}; border: 5px solid #000; overflow: hidden">
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 6px; background: rgba(0,0,0,.35)"></span>
+<span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%) skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000; opacity: {{rmOnOp}}">ON</span>
+<span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%) skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #8f7bb3; opacity: {{rmOffOp}}">OFF</span>
+</span>
+<span class="rs-knob" style="position: absolute; top: 5px; bottom: 5px; left: 5px; width: 56px; transform: translateX({{rmKnob}}px)">
+<span class="rs-knobin" style="position: absolute; inset: 0; box-sizing: border-box; background: {{rmKnobBg}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; display: flex; align-items: center; justify-content: center; transition: transform .12s">
+<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" style="transform: skewX(10deg)">
+<sc-if value="{{rmOn}}" hint-placeholder-val="{{ false }}"><path d="M3 11 L9 17 L19 4" fill="none" stroke="#000" stroke-width="5" stroke-linecap="square"></path></sc-if>
+<sc-if value="{{rmOff}}" hint-placeholder-val="{{ true }}"><path d="M4 4 L18 18 M18 4 L4 18" fill="none" stroke="#000" stroke-width="5"></path></sc-if>
+</svg>
+</span>
+</span>
+</button>
+</div>
+
+<!-- NUMBER STYLE -->
+<div style="position: relative; width: 900px; height: 84px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 24px 0 30px; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000">
+<span style="position: absolute; left: -4px; top: -4px; bottom: -4px; width: 12px; background: #FFC23D; border: 4px solid #000"></span>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">NUMBER STYLE</span><span style="font-size: 13px; color: #c9b8e8">SCORE <span class="{{numBump}}" style="display: inline-block; color: #FFC23D">{{numPreview}}</span></span></div>
+<div role="radiogroup" aria-label="Number style" style="position: relative; width: 340px; height: 58px; box-sizing: border-box; background: #08030f; border: 5px solid #000; box-shadow: 5px 5px 0 #000; transform: skewX(-8deg)">
+<span class="rs-slab" style="position: absolute; top: 4px; bottom: 4px; left: 0; width: 158px; display: block; transform: translateX({{numX}}px)">
+<span class="{{numSquash}}" style="position: absolute; inset: 0; box-sizing: border-box; background: #FFC23D; border: 4px solid #000; overflow: hidden; display: block">
+<span style="position: absolute; left: 0; right: 0; bottom: 0; height: 32%; background: #E09A12"></span>
+<span style="position: absolute; left: 8px; right: 50%; top: 4px; height: 5px; background: #fff"></span>
+</span>
+</span>
+<div style="position: absolute; inset: 0; display: flex">
+<sc-for list="{{numOpts}}" as="n" hint-placeholder-count="2">
+<button role="radio" aria-checked="{{n.sel}}" onClick="{{n.pick}}" style="flex: 1; padding: 0; border: 0; background: transparent; cursor: pointer"><span class="rs-tlab" style="display: inline-block; transform: skewX(8deg); font-family: 'Bungee', sans-serif; font-size: {{n.fs}}px; color: {{n.ink}}">{{n.label}}</span></button>
+</sc-for>
+</div>
+</div>
+</div>
+
+<!-- KEYBOARD SOUNDS -->
+<div style="position: relative; width: 900px; height: 84px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 24px 0 30px; background: #1a0b2e; border: 4px solid #000; box-shadow: 6px 6px 0 #000">
+<span style="position: absolute; left: -4px; top: -4px; bottom: -4px; width: 12px; background: #FF3D7F; border: 4px solid #000"></span>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">KEYBOARD SOUNDS</span><span style="font-size: 13px; color: #c9b8e8">CLICK ON EVERY KEY</span></div>
+<button class="rs-tog" role="switch" aria-checked="{{ksAria}}" aria-label="Keyboard sounds" onClick="{{toggleKs}}" style="position: relative; width: 150px; height: 58px; padding: 0; border: 0; background: transparent; cursor: pointer; transform: skewX(-10deg)">
+<span style="position: absolute; left: 6px; right: -6px; top: 6px; bottom: -6px; background: #000"></span>
+<span style="position: absolute; inset: 0; box-sizing: border-box; background: {{ksTrack}}; border: 5px solid #000; overflow: hidden">
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 6px; background: rgba(0,0,0,.35)"></span>
+<span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%) skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000; opacity: {{ksOnOp}}">ON</span>
+<span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%) skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #8f7bb3; opacity: {{ksOffOp}}">OFF</span>
+</span>
+<span class="rs-knob" style="position: absolute; top: 5px; bottom: 5px; left: 5px; width: 56px; transform: translateX({{ksKnob}}px)">
+<span class="rs-knobin" style="position: absolute; inset: 0; box-sizing: border-box; background: {{ksKnobBg}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; display: flex; align-items: center; justify-content: center; transition: transform .12s">
+<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" style="transform: skewX(10deg)">
+<sc-if value="{{ksOn}}" hint-placeholder-val="{{ true }}"><path d="M3 11 L9 17 L19 4" fill="none" stroke="#000" stroke-width="5" stroke-linecap="square"></path></sc-if>
+<sc-if value="{{ksOff}}" hint-placeholder-val="{{ false }}"><path d="M4 4 L18 18 M18 4 L4 18" fill="none" stroke="#000" stroke-width="5"></path></sc-if>
+</svg>
+</span>
+</span>
+</button>
+</div>
+
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+var TABS = [
+  { label: 'JOIN ROOM', c: '#FFE94A', d: '#F2A900', i: { door: true } },
+  { label: 'LOBBY', c: '#2EFFE0', d: '#12A99A', i: { ppl: true } },
+  { label: 'SETTINGS', c: '#D88BFF', d: '#B04BFF', i: { sl: true } }
+];
+var RANKS = [
+  { n: 'ROOKIE', c: '#c9b8e8' }, { n: 'GOLD', c: '#FFC23D' }, { n: 'DIAMOND', c: '#2EFFE0' },
+  { n: 'MYTHIC', c: '#D88BFF' }, { n: 'LEGEND', c: '#FF3D7F' }
+];
+var MODES = [
+  { label: 'WORD BOMB', sub: 'PASS IT BEFORE IT BLOWS', c: '#FF3D7F', d: '#a8174a', i: { bomb: true } },
+  { label: 'CATEGORY BLITZ', sub: 'AI JUDGES YOUR WORDS', c: '#2EFFE0', d: '#12A99A', i: { bolt: true } },
+  { label: 'IMPOSTER', sub: 'ONE OF YOU IS BLUFFING', c: '#B04BFF', d: '#6a20b0', i: { mask: true } }
+];
+var POOL = [
+  { n: 'KEYSMASH', r: 3 }, { n: 'LOWERCASE', r: 1 }, { n: 'QWERTYQUEEN', r: 4 }, { n: 'SPELLCASTER', r: 2 },
+  { n: 'NOVOWELS', r: 0 }, { n: 'TYPO_KING', r: 2 }, { n: 'ZZZ', r: 1 }, { n: 'LEXI', r: 3 }
+];
+var ALPHA = 'BCDFGHJKLMNPQRSTVWXZ';
+function fmtShort(x) { return (x / 1e6).toFixed(1) + 'M'; }
+function fmtLong(x) { return String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tab: 0, squash: false,
+      code: [], bumpI: -1, codeDeny: false, joining: false,
+      name: 'ANDY', editing: false, draft: '', nameDeny: false, nameBump: false,
+      lobbyCode: 'KZRT', host: true,
+      players: [{ you: true, host: true, r: 2 }, { n: 'KEYSMASH', r: 3 }, { n: 'LOWERCASE', r: 1 }],
+      mode: 0, modeDeny: -1, copied: false, go: false,
+      sound: 70, music: 40, lastS: 70, lastM: 40, popS: -1, popM: -1, sBump: false, mBump: false,
+      rm: false, num: 0, numSquash: false, numBump: false, ks: true
+    };
+    this.t = [];
+    this.onKey = this.onKey.bind(this);
+  }
+  componentDidMount() { window.addEventListener('keydown', this.onKey); }
+  componentWillUnmount() { window.removeEventListener('keydown', this.onKey); this.t.forEach(clearTimeout); }
+  later(fn, ms) { this.t.push(setTimeout(fn, ms)); }
+  pulse(key, ms, on, off) {
+    var self = this, o = {}; o[key] = off === undefined ? false : off; this.setState(o);
+    this.later(function () { var p = {}; p[key] = on === undefined ? true : on; self.setState(p); }, 20);
+    this.later(function () { var p = {}; p[key] = off === undefined ? false : off; self.setState(p); }, ms || 400);
+  }
+  onKey(e) {
+    var st = this.state, k = e.key;
+    if (st.editing) {
+      if (k === 'Enter') { e.preventDefault(); this.saveName(); }
+      else if (k === 'Escape') { this.setState({ editing: false }); }
+      return;
+    }
+    if (st.tab !== 0 || st.joining || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (/^[a-zA-Z]$/.test(k)) {
+      e.preventDefault();
+      if (st.code.length >= 4) { this.pulse('codeDeny', 400); return; }
+      var i = st.code.length;
+      this.setState({ code: st.code.concat([k.toUpperCase()]) });
+      this.pulse('bumpI', 320, i, -1);
+    } else if (k === 'Backspace') {
+      e.preventDefault();
+      if (st.code.length) this.setState({ code: st.code.slice(0, -1) });
+    } else if (k === 'Enter') {
+      e.preventDefault(); this.join();
+    } else if (k.length === 1 && k !== ' ') {
+      this.pulse('codeDeny', 400);
+    }
+  }
+  setTab(i) { if (this.state.tab === i) return; this.setState({ tab: i, editing: false }); this.pulse('squash', 320); }
+  join() {
+    var self = this, st = this.state;
+    if (st.joining) return;
+    if (st.code.length < 4) { this.pulse('codeDeny', 400); return; }
+    this.setState({ joining: true });
+    this.later(function () {
+      self.setState({
+        joining: false, lobbyCode: self.state.code.join(''), code: [], host: false, mode: 1, go: false,
+        players: [{ n: 'QWERTYQUEEN', r: 4, host: true }, { n: 'LOWERCASE', r: 1 }, { you: true, r: 2 }]
+      });
+      self.setTab(1);
+    }, 650);
+  }
+  create() {
+    var c = ''; for (var i = 0; i < 4; i++) c += ALPHA[Math.floor(Math.random() * ALPHA.length)];
+    this.setState({ lobbyCode: c, host: true, mode: 0, go: false, code: [], players: [{ you: true, host: true, r: 2 }] });
+    this.setTab(1);
+  }
+  saveName() {
+    var d = this.state.draft;
+    if (d.length < 3) { this.pulse('nameDeny', 400); return; }
+    this.setState({ name: d, editing: false });
+    this.pulse('nameBump', 340);
+  }
+  setVol(which, v) {
+    var o = {};
+    o[which] = v;
+    if (v > 0) o[which === 'sound' ? 'lastS' : 'lastM'] = v;
+    this.setState(o);
+    this.pulse(which === 'sound' ? 'popS' : 'popM', 300, v / 10 - 1, -1);
+    this.pulse(which === 'sound' ? 'sBump' : 'mBump', 320);
+  }
+  blocks(which, val, pop, on, onD) {
+    var self = this, out = [];
+    for (var i = 0; i < 10; i++) (function (i) {
+      var lit = (i + 1) * 10 <= val;
+      out.push({
+        h: 18 + i * 3.5, bg: lit ? (i === val / 10 - 1 ? on : onD) : '#08030f',
+        cls: pop === i ? 'rs-pop' : '', aria: which + ' ' + ((i + 1) * 10),
+        pick: function () { self.setVol(which, (i + 1) * 10 === self.state[which] && i === 0 ? 0 : (i + 1) * 10); }
+      });
+    })(i);
+    return out;
+  }
+  renderVals() {
+    var self = this, st = this.state, T = TABS[st.tab];
+    var n = st.code.length, full = n === 4;
+    var count = st.players.length;
+    var canStart = st.host && count >= 2;
+    var pool = POOL.filter(function (p) { return !st.players.some(function (q) { return q.n === p.n; }); });
+
+    var seats = [];
+    for (var i = 0; i < 8; i++) (function (i) {
+      var p = st.players[i];
+      if (p) {
+        var nm = p.you ? st.name : p.n, R = RANKS[p.r];
+        var kick = st.host && !p.you;
+        seats.push({
+          filled: true, empty: false, name: nm, rank: R.n, stripe: R.c, host: !!p.host, you: !!p.you,
+          bg: p.you ? '#2a0e4a' : '#1a0b2e', cursor: kick ? 'pointer' : 'default',
+          aria: nm + (p.host ? ', host' : '') + (kick ? ', tap to kick' : ''),
+          tap: function () { if (!kick) return; self.setState({ players: self.state.players.filter(function (q, j) { return j !== i; }), go: false }); }
+        });
+      } else {
+        seats.push({
+          filled: false, empty: true, name: '', rank: '', stripe: '', host: false, you: false, bg: '',
+          cursor: 'pointer', aria: 'Empty seat, add a friend',
+          tap: function () { if (!pool.length || self.state.players.length >= 8) return; self.setState({ players: self.state.players.concat([{ n: pool[0].n, r: pool[0].r }]) }); }
+        });
+      }
+    })(i);
+
+    var big = 1200000;
+
+    return {
+      rmClass: st.rm ? 'rs-rm' : '',
+      slabX: 4 + st.tab * 200, slabC: T.c, slabD: T.d, slabSquash: st.squash ? 'rs-squash' : '',
+      tabs: TABS.map(function (t, i) {
+        var on = st.tab === i;
+        return { label: t.label, i: t.i, sel: on ? 'true' : 'false', ink: on ? '#000' : '#c9b8e8', fill: on ? '#fff' : t.c, pick: function () { self.setTab(i); } };
+      }),
+      showJoin: st.tab === 0, showLobby: st.tab === 1, showSettings: st.tab === 2,
+
+      name: st.name, nameInitial: st.name.charAt(0), editing: st.editing, notEditing: !st.editing,
+      draft: st.draft, draftCount: st.draft.length + '/16', draftCountC: st.draft.length >= 16 ? '#FF3D7F' : '#c9b8e8',
+      nameDeny: st.nameDeny ? 'rs-deny' : '', nameBump: st.nameBump ? 'rs-bump' : '',
+      startEdit: function () { self.setState({ editing: true, draft: self.state.name }); },
+      cancelEdit: function () { self.setState({ editing: false }); },
+      saveName: function () { self.saveName(); },
+      onDraft: function (e) { self.setState({ draft: String(e.target.value || '').toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 16) }); },
+
+      codeDeny: st.codeDeny ? 'rs-deny' : '',
+      focusTiles: function () { try { window.focus(); } catch (err) {} },
+      tiles: [0, 1, 2, 3].map(function (i) {
+        var ch = st.code[i] || '', has = !!ch;
+        return {
+          ch: ch, caret: !has && i === n && !full,
+          face: has ? '#FFE94A' : '#1a0b2e', lip: has ? '#F2A900' : (i === n ? '#12A99A' : '#08030f'),
+          shade: has ? '#F2A900' : 'transparent', glint: has ? '#fff' : 'transparent',
+          cls: st.bumpI === i ? 'rs-bump' : ''
+        };
+      }),
+      typeHint: full ? 'ENTER TO JOIN · ⌫ TO FIX' : 'JUST TYPE · LETTERS ONLY',
+      joinCls: full && !st.joining ? 'rs-p' : 'rs-p rs-off',
+      joinWrap: full && !st.joining ? 'rs-pulse' : '',
+      joinAria: full ? 'false' : 'true', joinCursor: full ? 'pointer' : 'not-allowed',
+      joinFace: full ? '#FFE94A' : 'repeating-linear-gradient(-45deg, #2a1747 0 8px, #22113c 8px 14px)',
+      joinLip: full ? '#F2A900' : '#1a0b2e', joinShade: full ? '#F2A900' : 'transparent', joinGlint: full ? '#fff' : 'transparent',
+      joinInk: full ? '#000' : '#8f7bb3',
+      joinLabel: st.joining ? 'JOINING' : 'JOIN',
+      joinSub: full ? st.code.join('') : n + '/4', joinSubC: full ? '#FFE94A' : '#FF3D7F',
+      join: function () { self.join(); },
+      create: function () { self.create(); },
+
+      lobbyTiles: st.lobbyCode.split('').map(function (c) { return { ch: c }; }),
+      copied: st.copied, copyLabel: st.copied ? 'COPIED' : 'COPY',
+      copyBg: st.copied ? '#2EFFE0' : '#1a0b2e', copyLip: st.copied ? '#12A99A' : '#2EFFE0', copyInk: st.copied ? '#000' : '#fff',
+      copy: function () {
+        try { if (navigator.clipboard) navigator.clipboard.writeText(self.state.lobbyCode).catch(function () {}); } catch (err) {}
+        self.pulse('copied', 1400);
+      },
+      hostLine: st.host ? 'YOU ARE HOST' : 'QWERTYQUEEN IS HOST', hostLineC: st.host ? '#FFC23D' : '#c9b8e8',
+      startCls: canStart ? 'rs-p' : 'rs-p rs-off', startWrap: canStart && !st.go ? 'rs-pulse' : '',
+      startAria: canStart ? 'false' : 'true', startCursor: canStart ? 'pointer' : 'not-allowed',
+      startFace: canStart ? '#FFE94A' : (st.host ? 'repeating-linear-gradient(-45deg, #2a1747 0 8px, #22113c 8px 14px)' : '#12071f'),
+      startBorder: st.host ? 'solid' : 'dashed',
+      startLip: canStart ? '#F2A900' : '#1a0b2e', startShade: canStart ? '#F2A900' : 'transparent', startGlint: canStart ? '#fff' : 'transparent',
+      startInk: canStart ? '#000' : '#8f7bb3', startFs: st.host ? 44 : 26,
+      startLabel: st.host ? 'START' : 'WAITING',
+      startSub: !st.host ? 'HOST STARTS' : (count < 2 ? 'NEED 2 PLAYERS' : MODES[st.mode].label),
+      startSubC: canStart ? '#FFE94A' : '#FF3D7F',
+      go: st.go,
+      start: function () { if (!canStart) return; self.pulse('go', 1200); },
+      viewAs: ['HOST', 'GUEST'].map(function (l, i) {
+        var on = (i === 0) === st.host;
+        return {
+          label: l, sel: on ? 'true' : 'false', bg: on ? '#2EFFE0' : '#1a0b2e', ink: on ? '#000' : '#c9b8e8',
+          pick: function () {
+            var h = i === 0; if (h === self.state.host) return;
+            var ps = self.state.players.map(function (p) { return { n: p.n, r: p.r, you: p.you }; });
+            if (h) { ps = ps.filter(function (p) { return p.you; }).concat(ps.filter(function (p) { return !p.you; })); ps[0].host = true; }
+            else {
+              var others = ps.filter(function (p) { return !p.you; });
+              if (!others.length) others = [{ n: 'QWERTYQUEEN', r: 4 }];
+              else others = [{ n: 'QWERTYQUEEN', r: 4 }].concat(others.filter(function (p) { return p.n !== 'QWERTYQUEEN'; }));
+              others[0].host = true;
+              ps = others.concat([{ you: true, r: 2 }]).slice(0, 8);
+            }
+            self.setState({ host: h, players: ps, go: false });
+          }
+        };
+      }),
+      count: count, seats: seats,
+      seatHint: st.host ? 'TAP + TO ADD · TAP A FRIEND TO KICK' : 'TAP + TO ADD',
+      modeHint: st.host ? 'HOST PICKS' : 'HOST PICKS · LOCKED',
+      modes: MODES.map(function (m, i) {
+        var on = st.mode === i;
+        return {
+          label: m.label, sub: m.sub, i: m.i, on: on, sel: on ? 'true' : 'false', locked: !st.host && !on,
+          face: on ? m.c : '#1a0b2e', lip: on ? m.d : '#08030f', band: on ? '#fff' : m.c,
+          ink: on ? '#000' : '#fff', subC: on ? '#000' : '#c9b8e8', lift: on ? -6 : 0,
+          cursor: st.host ? 'pointer' : 'not-allowed', deny: st.modeDeny === i ? 'rs-deny' : '',
+          pick: function () {
+            if (!self.state.host) { self.pulse('modeDeny', 400, i, -1); return; }
+            self.setState({ mode: i });
+          }
+        };
+      }),
+
+      sound: st.sound, music: st.music,
+      sW1: st.sound > 0, sW2: st.sound >= 50, sMute: st.sound === 0, mMute: st.music === 0,
+      sBump: st.sBump ? 'rs-bump' : '', mBump: st.mBump ? 'rs-bump' : '',
+      soundBlocks: this.blocks('sound', st.sound, st.popS, '#FFE94A', '#F2A900'),
+      musicBlocks: this.blocks('music', st.music, st.popM, '#D88BFF', '#B04BFF'),
+      muteSound: function () { self.setVol('sound', self.state.sound > 0 ? 0 : (self.state.lastS || 50)); },
+      muteMusic: function () { self.setVol('music', self.state.music > 0 ? 0 : (self.state.lastM || 50)); },
+
+      rmOn: st.rm, rmOff: !st.rm, rmAria: st.rm ? 'true' : 'false',
+      rmTrack: st.rm ? '#2EFFE0' : '#12071f', rmKnob: st.rm ? 84 : 0, rmKnobBg: st.rm ? '#fff' : '#c9b8e8',
+      rmOnOp: st.rm ? 1 : 0, rmOffOp: st.rm ? 0 : 1,
+      toggleRm: function () { self.setState({ rm: !self.state.rm }); },
+
+      numX: 4 + st.num * 166, numSquash: st.numSquash ? 'rs-squash' : '', numBump: st.numBump ? 'rs-bump' : '',
+      numPreview: st.num === 0 ? fmtShort(big) : fmtLong(big),
+      numOpts: ['1.2M', '1,200,000'].map(function (l, i) {
+        var on = st.num === i;
+        return { label: l, sel: on ? 'true' : 'false', ink: on ? '#000' : '#c9b8e8', fs: i === 0 ? 20 : 16,
+          pick: function () { if (self.state.num === i) return; self.setState({ num: i }); self.pulse('numSquash', 320); self.pulse('numBump', 320); } };
+      }),
+
+      ksOn: st.ks, ksOff: !st.ks, ksAria: st.ks ? 'true' : 'false',
+      ksTrack: st.ks ? '#FF3D7F' : '#12071f', ksKnob: st.ks ? 84 : 0, ksKnobBg: st.ks ? '#fff' : '#c9b8e8',
+      ksOnOp: st.ks ? 1 : 0, ksOffOp: st.ks ? 0 : 1,
+      toggleKs: function () { self.setState({ ks: !self.state.ks }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -559,3 +559,9 @@
   .hp-m-stats-fill.is-levelflash { background: #FFE94A; }
   .hp-m-stats-wins { color: #FFE94A; }
 }
+
+/* v3 (SEASON2): the ACHIEVEMENTS trophy slab — an icon slab like the board's (46px in the 390 strip) */
+.hp-m-navbtn.is-ach img { display: block; }
+@media (max-width: 480px) {
+  .hp-m-navbtn.is-ach { flex: 0 0 46px; }
+}

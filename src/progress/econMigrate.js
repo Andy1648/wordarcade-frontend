@@ -31,6 +31,7 @@ import {
   getRebirths,
   tableRebirthThreshold,
 } from './xp.js';
+import { SEASON2 } from './season.js';
 
 export const ECON_VERSION_KEY = ECON_STAMP_KEY;
 export const ECON_VERSION = 12; // REBIRTH RUSH (PROGRESSION FINAL) — see rebirthRushConvert below
@@ -120,6 +121,9 @@ export function clearRebirthRushNotice() {
 }
 
 export function migrateEconomyV11() {
+  // PROGRESSION v3 (SEASON2): a season-2 save is born on its own keys — nothing to convert (and the season-1 save
+  // is left exactly as it is).
+  if (SEASON2) return { migrated: false, season2: true };
   // Rebirth Rush runs once per SAVE: keyed on the save's own taw.econ stamp (< 12), read BEFORE the shape step
   // bumps it — so a restored cloud blob from before Rebirth Rush (it carries its old stamp) converts too.
   let before = 0;

@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Leaderboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes lbWobble{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg) translateY(-3px)}}
+@keyframes lbBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes lbSink{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+@keyframes lbPulse{0%,100%{transform:rotate(-1deg) scale(1)}50%{transform:rotate(-1deg) scale(1.018)}}
+@keyframes lbRise{0%{transform:translateY(46px);opacity:0}70%{transform:translateY(-5px);opacity:1}100%{transform:translateY(0);opacity:1}}
+@keyframes lbSlide{0%{transform:translateX(40px);opacity:0}100%{transform:translateX(0);opacity:1}}
+@keyframes lbFill{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+.lb-crown{transform-origin:50% 90%;animation:lbWobble 2.2s ease-in-out infinite}
+.lb-up{animation:lbBob .9s ease-in-out infinite}
+.lb-down{animation:lbSink 1.3s ease-in-out infinite}
+.lb-me{animation:lbPulse 1.5s ease-in-out infinite}
+.lb-rise{animation:lbRise .5s cubic-bezier(.2,1.2,.4,1) both}
+.lb-slide{animation:lbSlide .35s ease-out both}
+.lb-fill{transform-origin:0 50%;animation:lbFill .8s cubic-bezier(.2,.9,.3,1) both}
+.lb-out{-webkit-text-stroke:5px #000;paint-order:stroke fill}
+.lb-tab:hover{transform:translate(-2px,-2px)}
+.lb-tab:active{transform:translate(3px,3px)}
+a.lb-link{color:#fff;text-decoration:none}
+a.lb-link:hover{color:#FFE94A}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.10) 46px 50px)"></div>
+
+<div style="position: absolute; left: 30px; right: 30px; top: 18px; height: 60px; display: flex; align-items: center; justify-content: space-between">
+<a class="lb-link" href="MenuV2.dc.html" style="height: 54px; padding: 0 20px; display: flex; align-items: center; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px">← MENU</a>
+<div style="position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 52px; line-height: 1; color: #fff">LEADERBOARD</div>
+<div style="position: relative; display: flex; border: 4px solid #000; box-shadow: 5px 5px 0 #000; background: #000; gap: 4px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+<button class="lb-tab" onClick="{{t.pick}}" style="height: 50px; padding: 0 16px; border: 0; background: {{t.bg}}; color: {{t.color}}; font-family: 'Bungee', sans-serif; font-size: 18px; cursor: pointer; transition: transform .08s; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05">{{t.label}}<span style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; color: {{t.subColor}}">{{t.sub}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div style="position: absolute; left: 30px; top: 92px; width: 670px; height: 552px">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: #000; border-top: 4px solid #5c0fa3"></div>
+
+<div class="{{riseClass}}" style="position: absolute; left: 20px; bottom: 12px; width: 210px; display: flex; flex-direction: column; align-items: center; animation-delay: .08s">
+<div style="padding: 2px 10px; transform: skewX(-12deg); background: {{p2.tagBg}}; border: 3px solid {{p2.tagLine}}; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{p2.tagInk}}"><span style="display: inline-block; transform: skewX(12deg)">{{p2.title}}</span></div>
+<div class="lb-out" style="margin-top: 8px; max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Bungee', sans-serif; font-size: 18px; color: #fff; -webkit-text-stroke: 4px #000">{{p2.name}}</div>
+<div class="lb-out" style="font-family: 'Bungee', sans-serif; font-size: 42px; line-height: 1.05; color: #D88BFF; -webkit-text-stroke: 6px #000">{{p2.r}}</div>
+<div style="margin-bottom: 8px; font-family: 'Bungee', sans-serif; font-size: 16px; color: #FFE94A">{{p2.lv}} <span style="color: #c9b8e8; font-size: 13px">LV</span></div>
+<div style="position: relative; width: 210px; height: 190px">
+<svg width="210" height="190" viewBox="0 0 210 190" style="position: absolute; left: 0; top: 0; overflow: visible" aria-hidden="true">
+<polygon points="11,41 41,11 205,11 205,185 11,185" fill="#000"></polygon>
+<polygon points="3,33 33,3 197,3 197,177 3,177" fill="#fff" stroke="#000" stroke-width="6" stroke-linejoin="round"></polygon>
+<polygon points="168,6 194,6 194,174 168,174" fill="#e4ddf0"></polygon>
+<path d="M168 6 L168 174" stroke="#000" stroke-width="3"></path>
+<path d="M14 150 L156 150" stroke="#000" stroke-width="3"></path>
+<path d="M14 160 L156 160" stroke="#e4ddf0" stroke-width="6"></path>
+</svg>
+<div class="lb-out" style="position: absolute; left: 0; top: 18px; width: 168px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 96px; line-height: 1; color: #2EFFE0; -webkit-text-stroke: 8px #000; text-shadow: 5px 5px 0 #000">2</div>
+</div>
+</div>
+
+<div class="{{riseClass}}" style="position: absolute; left: 236px; bottom: 12px; width: 214px; display: flex; flex-direction: column; align-items: center">
+<svg class="lb-crown" width="74" height="50" viewBox="0 0 74 50" aria-hidden="true" style="overflow: visible">
+<path d="M8 44 L4 12 L22 26 L37 4 L52 26 L70 12 L66 44 Z" fill="#000" transform="translate(4 4)"></path>
+<path d="M8 44 L4 12 L22 26 L37 4 L52 26 L70 12 L66 44 Z" fill="#FFC23D" stroke="#000" stroke-width="5" stroke-linejoin="round"></path>
+<path d="M10 36 L64 36" stroke="#000" stroke-width="4"></path>
+<path d="M14 22 L18 32" stroke="#fff" stroke-width="4" stroke-linecap="round"></path>
+</svg>
+<div style="margin-top: 6px; padding: 2px 12px; transform: skewX(-12deg); background: {{p1.tagBg}}; border: 3px solid {{p1.tagLine}}; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 15px; color: {{p1.tagInk}}"><span style="display: inline-block; transform: skewX(12deg)">{{p1.title}}</span></div>
+<div class="lb-out" style="margin-top: 8px; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff; -webkit-text-stroke: 4px #000">{{p1.name}}</div>
+<div class="lb-out" style="font-family: 'Bungee', sans-serif; font-size: 58px; line-height: 1.02; color: #FFE94A; -webkit-text-stroke: 7px #000; text-shadow: 5px 5px 0 #000">{{p1.r}}</div>
+<div style="margin-bottom: 8px; font-family: 'Bungee', sans-serif; font-size: 18px; color: #FFE94A">{{p1.lv}} <span style="color: #c9b8e8; font-size: 13px">LV</span></div>
+<div style="position: relative; width: 214px; height: 262px">
+<svg width="214" height="262" viewBox="0 0 214 262" style="position: absolute; left: 0; top: 0; overflow: visible" aria-hidden="true">
+<polygon points="21,39 205,39 205,255 21,255" fill="#000"></polygon>
+<polygon points="11,11 215,11 215,39 11,39" fill="#000"></polygon>
+<polygon points="13,31 197,31 197,247 13,247" fill="#fff" stroke="#000" stroke-width="6" stroke-linejoin="round"></polygon>
+<polygon points="170,34 194,34 194,244 170,244" fill="#e4ddf0"></polygon>
+<path d="M170 34 L170 244" stroke="#000" stroke-width="3"></path>
+<polygon points="3,3 207,3 207,31 3,31" fill="#fff" stroke="#000" stroke-width="6" stroke-linejoin="round"></polygon>
+<path d="M6 22 L204 22" stroke="#e4ddf0" stroke-width="8"></path>
+<path d="M30 220 L150 220 M30 230 L150 230" stroke="#000" stroke-width="3"></path>
+</svg>
+<div class="lb-out" style="position: absolute; left: 13px; top: 46px; width: 157px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 132px; line-height: 1; color: #FFC23D; -webkit-text-stroke: 9px #000; text-shadow: 6px 6px 0 #000">1</div>
+</div>
+</div>
+
+<div class="{{riseClass}}" style="position: absolute; left: 456px; bottom: 12px; width: 210px; display: flex; flex-direction: column; align-items: center; animation-delay: .16s">
+<div style="padding: 2px 10px; transform: skewX(-12deg); background: {{p3.tagBg}}; border: 3px solid {{p3.tagLine}}; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{p3.tagInk}}"><span style="display: inline-block; transform: skewX(12deg)">{{p3.title}}</span></div>
+<div class="lb-out" style="margin-top: 8px; max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Bungee', sans-serif; font-size: 18px; color: #fff; -webkit-text-stroke: 4px #000">{{p3.name}}</div>
+<div class="lb-out" style="font-family: 'Bungee', sans-serif; font-size: 38px; line-height: 1.05; color: #D88BFF; -webkit-text-stroke: 6px #000">{{p3.r}}</div>
+<div style="margin-bottom: 8px; font-family: 'Bungee', sans-serif; font-size: 16px; color: #FFE94A">{{p3.lv}} <span style="color: #c9b8e8; font-size: 13px">LV</span></div>
+<div style="position: relative; width: 210px; height: 138px">
+<svg width="210" height="138" viewBox="0 0 210 138" style="position: absolute; left: 0; top: 0; overflow: visible" aria-hidden="true">
+<polygon points="11,11 205,27 205,135 11,135" fill="#000"></polygon>
+<polygon points="3,3 197,19 197,127 3,127" fill="#fff" stroke="#000" stroke-width="6" stroke-linejoin="round"></polygon>
+<polygon points="170,20 194,22 194,124 170,124" fill="#e4ddf0"></polygon>
+<path d="M170 20 L170 124" stroke="#000" stroke-width="3"></path>
+<path d="M18 104 L56 104 M70 104 L156 104" stroke="#000" stroke-width="3"></path>
+</svg>
+<div class="lb-out" style="position: absolute; left: 0; top: 14px; width: 170px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 76px; line-height: 1; color: #FF3D7F; -webkit-text-stroke: 7px #000; text-shadow: 4px 4px 0 #000">3</div>
+</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 738px; width: 588px; top: 94px; height: 20px; display: grid; grid-template-columns: 50px 1fr 48px 90px 84px; gap: 10px; padding: 0 14px; box-sizing: border-box; align-items: end; font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8">
+<span>#</span><span>PLAYER</span><span></span><span style="text-align: right">{{hR}}</span><span style="text-align: right">{{hL}}</span>
+</div>
+
+<div class="{{slideClass}}" style="position: absolute; left: 738px; width: 588px; top: 120px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; box-shadow: 8px 8px 0 #000">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+<div class="{{r.cls}}" style="position: relative; z-index: {{r.z}}; height: {{r.h}}px; margin: {{r.margin}}; display: grid; grid-template-columns: 50px 1fr 48px 90px 84px; gap: 10px; align-items: center; padding: 0 14px; box-sizing: border-box; background: {{r.bg}}; border: {{r.border}}; border-top: {{r.top}}; box-shadow: {{r.shadow}}">
+<span style="justify-self: start; min-width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: {{r.rkBg}}; font-family: 'Bungee', sans-serif; font-size: {{r.rkSize}}px; color: {{r.rkInk}}">{{r.rank}}</span>
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<span style="display: flex; align-items: center; gap: 8px; min-width: 0">
+<sc-if value="{{r.me}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 1px 6px; background: #000; color: #FFE94A; font-family: 'Bungee', sans-serif; font-size: 13px">YOU</span></sc-if>
+<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Bungee', sans-serif; font-size: {{r.nameSize}}px; color: {{r.ink}}">{{r.name}}</span>
+</span>
+<span style="align-self: flex-start; margin-left: 4px; padding: 0 7px; transform: skewX(-12deg); background: {{r.tagBg}}; border: 2px solid {{r.tagLine}}; font-family: 'Bungee', sans-serif; font-size: 13px; line-height: 1.25; color: {{r.tagInk}}"><span style="display: inline-block; transform: skewX(12deg)">{{r.title}}</span></span>
+</span>
+<span style="display: flex; align-items: center; gap: 3px; font-family: 'Bungee', sans-serif; font-size: 15px; color: {{r.mvInk}}">
+<sc-if value="{{r.up}}" hint-placeholder-val="{{ false }}"><svg class="lb-up" width="18" height="16" viewBox="0 0 18 16" aria-hidden="true"><path d="M9 2 L16 14 L2 14 Z" fill="#2EFFE0" stroke="#000" stroke-width="3" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{r.down}}" hint-placeholder-val="{{ false }}"><svg class="lb-down" width="18" height="16" viewBox="0 0 18 16" aria-hidden="true"><path d="M2 2 L16 2 L9 14 Z" fill="#FF3D7F" stroke="#000" stroke-width="3" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{r.flat}}" hint-placeholder-val="{{ false }}"><svg width="18" height="16" viewBox="0 0 18 16" aria-hidden="true"><path d="M3 8 L15 8" stroke="#5d4a78" stroke-width="4" stroke-linecap="round"></path></svg></sc-if>
+<span>{{r.mv}}</span>
+</span>
+<span class="lb-out" style="text-align: right; font-family: 'Bungee', sans-serif; font-size: {{r.rSize}}px; color: {{r.rInk}}; -webkit-text-stroke: {{r.rStroke}}">{{r.r}}</span>
+<span style="text-align: right; font-family: 'Bungee', sans-serif; font-size: {{r.lvSize}}px; color: {{r.lvInk}}">{{r.lv}}</span>
+</div>
+</sc-for>
+</div>
+
+<div class="{{slideClass}}" style="position: absolute; left: 738px; width: 588px; top: 518px; height: 100px; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; background: #12071f; border: 5px solid #000; box-shadow: 8px 8px 0 #000; animation-delay: .1s">
+<div style="position: relative; padding: 10px 16px 0; border-right: 4px solid #000; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 8px; font-family: 'Bungee', sans-serif">
+<span class="lb-out" style="font-size: 34px; line-height: 1; color: #2EFFE0">{{chase.need}}</span>
+<span style="font-size: 16px; color: #fff">R</span>
+<span style="font-size: 16px; color: #c9b8e8">→</span>
+<span style="padding: 0 6px; background: #2EFFE0; color: #000; border: 3px solid #000; font-size: 16px">#{{chase.target}}</span>
+</div>
+<div style="position: relative; height: 18px; background: #1a0b2e; border: 3px solid #000">
+<div class="lb-fill" style="position: absolute; left: 0; top: 0; bottom: 0; width: {{chase.pct}}%; background: #2EFFE0"></div>
+<div style="position: absolute; left: {{chase.pct}}%; top: -3px; bottom: -3px; width: 4px; background: #000"></div>
+</div>
+<div style="display: flex; justify-content: space-between; font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8"><span>{{chase.from}}</span><span>{{chase.to}}</span></div>
+</div>
+<div style="position: relative; padding: 10px 16px 0; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 8px; font-family: 'Bungee', sans-serif">
+<span class="lb-out" style="font-size: 34px; line-height: 1; color: #FFE94A">{{climb.need}}</span>
+<span style="font-size: 16px; color: #fff">LV</span>
+<span style="font-size: 16px; color: #c9b8e8">→</span>
+<span style="padding: 0 6px; transform: skewX(-12deg); background: {{climb.tagBg}}; border: 3px solid {{climb.tagLine}}; font-size: 15px; color: {{climb.tagInk}}"><span style="display: inline-block; transform: skewX(12deg)">{{climb.next}}</span></span>
+</div>
+<div style="position: relative; height: 18px; background: #1a0b2e; border: 3px solid #000">
+<div class="lb-fill" style="position: absolute; left: 0; top: 0; bottom: 0; width: {{climb.pct}}%; background: #FFE94A"></div>
+<div style="position: absolute; left: {{climb.pct}}%; top: -3px; bottom: -3px; width: 4px; background: #000"></div>
+</div>
+<div style="display: flex; justify-content: space-between; font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8"><span>{{climb.from}}</span><span>{{climb.to}}</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+function fmt(x) {
+  var S = [['Qi', 1e18], ['Qa', 1e15], ['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; var s = v >= 100 ? v.toFixed(0) : v.toFixed(1); return s.replace(/\.0$/, '') + S[i][0]; }
+  return String(Math.floor(x));
+}
+var LADDER = [
+  [1, 'KEYMASH', '#c9b8e8'], [10, 'TYPO', '#c9b8e8'], [50, 'CLACKER', '#c9b8e8'],
+  [150, 'HOTKEY', '#2EFFE0'], [500, 'INKSTORM', '#2EFFE0'], [1500, 'WORDSMITH', '#2EFFE0'],
+  [5e3, 'KEYFIEND', '#D88BFF'], [15e3, 'CAPSLOCK', '#D88BFF'], [5e4, 'OVERCLOCK', '#B04BFF'],
+  [15e4, 'GLYPHLORD', '#FFC23D'], [5e5, 'LEXIBEAST', '#FFC23D'], [15e5, 'VOIDTYPER', '#FFE94A'],
+  [5e6, 'ASCENDANT', '#FF3D7F'], [15e6, 'OMNIKEY', '#FF3D7F'], [5e7, 'FINAL BOSS', '#FF3D7F'],
+  [15e7, 'ENDGAME', '#000']
+];
+function tierIdx(lv) { var k = 0; for (var i = 0; i < LADDER.length; i++) if (lv >= LADDER[i][0]) k = i; return k; }
+function tag(i) {
+  var t = LADDER[i];
+  if (t[1] === 'ENDGAME') return { title: t[1], tagBg: '#000', tagInk: '#FFE94A', tagLine: '#FFE94A' };
+  return { title: t[1], tagBg: t[2], tagInk: '#000', tagLine: '#000' };
+}
+var DATA = {
+  all: [
+    { name: 'PLAYER ONE', r: 2400, lv: 212e6, tot: 212e6, mv: 0 },
+    { name: 'PLAYER TWO', r: 880, lv: 61e6, tot: 61e6, mv: 0 },
+    { name: 'PLAYER THREE', r: 141, lv: 18.4e6, tot: 18.4e6, mv: 1 },
+    { name: 'NOBUFFCOOKIES', r: 59, lv: 1.2e6, tot: 1.2e6, mv: 2, me: true },
+    { name: 'PLAYER FIVE', r: 41, lv: 640e3, tot: 640e3, mv: -1 },
+    { name: 'PLAYER SIX', r: 33, lv: 410e3, tot: 410e3, mv: 0 },
+    { name: 'PLAYER SEVEN', r: 20, lv: 160e3, tot: 160e3, mv: 1 },
+    { name: 'PLAYER EIGHT', r: 6, lv: 52e3, tot: 52e3, mv: -2 },
+    { name: 'PLAYER NINE', r: 6, lv: 9.8e3, tot: 9.8e3, mv: 0 },
+    { name: 'PLAYER TEN', r: 2, lv: 1.9e3, tot: 1.9e3, mv: 3 }
+  ],
+  week: [
+    { name: 'PLAYER TWO', r: 212, lv: 14e6, tot: 61e6, mv: 0 },
+    { name: 'PLAYER FIVE', r: 38, lv: 590e3, tot: 640e3, mv: 0 },
+    { name: 'PLAYER ONE', r: 31, lv: 9.2e6, tot: 212e6, mv: 0 },
+    { name: 'PLAYER SEVEN', r: 17, lv: 150e3, tot: 160e3, mv: 2 },
+    { name: 'PLAYER ELEVEN', r: 12, lv: 88e3, tot: 95e3, mv: -1 },
+    { name: 'NOBUFFCOOKIES', r: 9, lv: 310e3, tot: 1.2e6, mv: 4, me: true },
+    { name: 'PLAYER THREE', r: 6, lv: 2.2e6, tot: 18.4e6, mv: -3 },
+    { name: 'PLAYER SIX', r: 4, lv: 60e3, tot: 410e3, mv: 0 },
+    { name: 'PLAYER NINE', r: 3, lv: 7e3, tot: 9.8e3, mv: 1 },
+    { name: 'PLAYER TEN', r: 2, lv: 1.9e3, tot: 1.9e3, mv: -1 }
+  ]
+};
+function sorted(list) {
+  return list.slice().sort(function (a, b) { return b.r - a.r || b.lv - a.lv; });
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'all', anim: true };
+    this.t = [];
+  }
+  componentWillUnmount() { this.t.forEach(clearTimeout); }
+  pick(tab) {
+    if (tab === this.state.tab) return;
+    var self = this;
+    this.setState({ tab: tab, anim: false });
+    this.t.push(setTimeout(function () { self.setState({ anim: true }); }, 30));
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var wk = st.tab === 'week';
+    var pre = wk ? '+' : '';
+    var list = sorted(DATA[st.tab]);
+    function pod(i) {
+      var p = list[i], tg = tag(tierIdx(p.tot));
+      return { name: p.name, r: pre + 'R' + fmt(p.r), lv: pre + fmt(p.lv), title: tg.title, tagBg: tg.tagBg, tagInk: tg.tagInk, tagLine: tg.tagLine };
+    }
+    var meIdx = 0;
+    var rows = list.slice(3).map(function (p, k) {
+      var i = k + 3, me = !!p.me, tg = tag(tierIdx(p.tot));
+      if (me) meIdx = i;
+      return {
+        rank: i + 1, name: p.name, me: me,
+        title: tg.title, tagBg: tg.tagBg, tagInk: tg.tagInk, tagLine: tg.tagLine,
+        r: pre + 'R' + fmt(p.r), lv: pre + fmt(p.lv),
+        up: p.mv > 0, down: p.mv < 0, flat: p.mv === 0,
+        mv: p.mv === 0 ? '' : String(Math.abs(p.mv)),
+        mvInk: p.mv > 0 ? (me ? '#000' : '#2EFFE0') : (me ? '#000' : '#FF3D7F'),
+        cls: me ? 'lb-me' : '',
+        z: me ? 2 : 1,
+        h: me ? 68 : 51,
+        margin: me ? '-3px -16px' : '0',
+        bg: me ? '#FFE94A' : (k % 2 ? '#1a0b2e' : '#160926'),
+        border: me ? '5px solid #000' : '0',
+        top: me ? '5px solid #000' : (k === 0 ? '0' : '3px solid #000'),
+        shadow: me ? '7px 7px 0 #000' : 'none',
+        rkBg: me ? '#000' : 'transparent', rkInk: me ? '#FFE94A' : '#fff', rkSize: me ? 26 : 22,
+        ink: me ? '#000' : '#fff', nameSize: me ? 19 : 17,
+        rInk: me ? '#B04BFF' : '#D88BFF', rSize: me ? 28 : 22, rStroke: me ? '5px #000' : '4px #000',
+        lvInk: me ? '#000' : '#FFE94A', lvSize: me ? 21 : 17
+      };
+    });
+    var me = list[meIdx], above = list[meIdx - 1];
+    var need = above.r - me.r + 1;
+    var ti = tierIdx(me.tot), nx = Math.min(ti + 1, LADDER.length - 1);
+    var lo = LADDER[ti][0], hi = LADDER[nx][0];
+    var ntag = tag(nx);
+    return {
+      tabs: [
+        { label: 'ALL TIME', sub: 'R → LV', key: 'all' },
+        { label: 'THIS WEEK', sub: '2D 14H', key: 'week' }
+      ].map(function (t) {
+        var on = t.key === st.tab;
+        return { label: t.label, sub: t.sub, bg: on ? '#FFE94A' : '#1a0b2e', color: on ? '#000' : '#fff', subColor: on ? '#000' : '#c9b8e8', pick: function () { self.pick(t.key); } };
+      }),
+      p1: pod(0), p2: pod(1), p3: pod(2),
+      rows: rows,
+      hR: wk ? '+REBIRTHS' : 'REBIRTHS', hL: wk ? '+LEVELS' : 'LEVELS',
+      riseClass: st.anim ? 'lb-rise' : '',
+      slideClass: st.anim ? 'lb-slide' : '',
+      chase: {
+        need: fmt(need), target: meIdx,
+        pct: Math.max(4, Math.min(100, Math.round(me.r / (above.r + 1) * 100))),
+        from: pre + 'R' + fmt(me.r), to: pre + 'R' + fmt(above.r + 1)
+      },
+      climb: {
+        need: fmt(Math.max(0, hi - me.tot)), next: ntag.title, tagBg: ntag.tagBg, tagInk: ntag.tagInk, tagLine: ntag.tagLine,
+        pct: hi > lo ? Math.max(4, Math.round((me.tot - lo) / (hi - lo) * 100)) : 100,
+        from: fmt(me.tot), to: fmt(hi)
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

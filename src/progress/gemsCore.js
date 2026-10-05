@@ -7,24 +7,29 @@
 // LEAF MODULE ON PURPOSE: it imports nothing from progress/*, so wins.js / xp.js / letterXp.js / stars.js can call
 // into it without joining an import cycle. Every storage access is guarded (a blocked store reads as 0, never throws).
 
+// PROGRESSION v3 (SEASON2, default OFF): the v3 gem table (v3/econ.js) and the season's own balance key. Both are
+// leaves, so this module stays a leaf. OFF = every constant below as it was.
+import { SEASON2, s2Key } from './season.js';
+import * as V3 from './v3/econ.js';
+
 // ------------------------------------------------------------------------------------ tuning (exported)
 // TUNED ON THE CI SIM (PR #194, Andy: "tune only the drop chance and win payouts"): at Andy's 1/15 + 5 + 5 the
 // 10 h loop-sim read casual 0.445 / median 0.585 / strong 0.748 rolls per minute vs the 1-per-2–3-min target
 // (0.33–0.5). LEVEL UP + REBIRTH (fixed) are ~60% of it, so the two tunable knobs carry the whole correction.
-export const GEM_DROP_CHANCE = 1 / 30; // per accepted game word (Andy's start: 1/15)
-export const GEM_DROP_MIN = 1;
-export const GEM_DROP_MAX = 3;
-export const BOT_WIN = 3; // won a game whose every rival was a bot (Andy's start: 5)
-export const PER_PLAYER_BEATEN = 3; // a game with people in it: per person placed below you (Andy's start: 5)
-export const STREAK_PER_WIN = 1; // × the wins in a row BEFORE this one (2nd straight win +1, 3rd +2 …)
-export const LEVEL_UP = 2; // per level reached for the first time on this save
+export const GEM_DROP_CHANCE = SEASON2 ? V3.DROP_CHANCE : 1 / 30; // per accepted game word (Andy's start: 1/15)
+export const GEM_DROP_MIN = SEASON2 ? V3.DROP_MIN : 1;
+export const GEM_DROP_MAX = SEASON2 ? V3.DROP_MAX : 3;
+export const BOT_WIN = SEASON2 ? V3.BOT_WIN : 3; // won a game whose every rival was a bot (Andy's start: 5)
+export const PER_PLAYER_BEATEN = SEASON2 ? V3.PER_PLAYER_BEATEN : 3; // a game with people in it: per person placed below you (Andy's start: 5)
+export const STREAK_PER_WIN = 1; // (v3: a FLAT +4 a streak win instead — gems.js gameResultPayout) // × the wins in a row BEFORE this one (2nd straight win +1, 3rd +2 …)
+export const LEVEL_UP = SEASON2 ? V3.LEVEL_UP : 2; // v3: 0 — not in the table (levels reach millions) // per level reached for the first time on this save
 export const REBIRTH = 20;
-export const ROLL_PRICE_GEMS = 10;
+export const ROLL_PRICE_GEMS = SEASON2 ? V3.ROLL_PRICE : 10;
 
-export const GEMS_KEY = 'taw.gems';
+export const GEMS_KEY = s2Key('taw.gems'); // v3: taw.s2.gems
 
 // The reasons a gem can be granted (the ledger's `reason`; the sim's "by source").
-export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start'];
+export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement']; // v3 ACHIEVEMENTS pay gems
 
 // ------------------------------------------------------------------------------------ state
 // taw.gems = { v: 1, bal, peak (highest level that has paid LEVEL_UP), streak (game wins in a row), mig (the
@@ -169,5 +174,6 @@ export function noteLevelReached(level) {
 }
 /** A rebirth happened (stars.rebirthWithStars). */
 export function noteRebirth(rc) {
+  if (SEASON2) return grantGems(V3.rebirthGems(rc), 'rebirth', { detail: Number.isFinite(rc) ? `rb-${rc}` : null }); // v3: +7 × R
   return grantGems(REBIRTH, 'rebirth', { detail: Number.isFinite(rc) ? `rb-${rc}` : null });
 }

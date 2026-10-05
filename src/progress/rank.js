@@ -5,7 +5,13 @@
 // The bands partition ALL levels 1..∞ with no gaps and no overlaps: each entry owns [min, next
 // entry's min). The last band (BEYOND) runs to infinity.
 
-export const RANKS = [
+// PROGRESSION v3 (SEASON2, default OFF): ranks go by REBIRTHS then STARS (v3/ranks.js — KEYMASH … ENDGAME),
+// never by level, and never drop. With the flag ON, RANKS is that ladder (min = the rank's index) and
+// rankTitle / rankFor read the live save; the level argument is ignored. OFF = the level bands below.
+import { SEASON2 } from './season.js';
+import { RANKS_V3, liveRankV3 } from './v3/ranks.js';
+
+const RANKS_LIVE = [
   { min: 1, name: 'ROOKIE' }, //   LV 1-4    green
   { min: 5, name: 'TYPIST' }, //   LV 5-9
   { min: 10, name: 'SPELLER' }, // LV 10-15
@@ -27,11 +33,14 @@ export const RANKS = [
   { min: 1000, name: 'BEYOND' }, // LV 1000+
 ];
 
+export const RANKS = SEASON2 ? RANKS_V3 : RANKS_LIVE;
+
 export const MAX_RANK_NAME_LEN = 8;
 
 // The rank NAME for a level. Total and deterministic: every level >= 1 returns exactly one of
 // RANKS' names; anything below 1 / non-finite is treated as LV 1 (ROOKIE).
 export function rankTitle(level) {
+  if (SEASON2) return liveRankV3().name;
   const lvl = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
   let name = RANKS[0].name;
   for (const r of RANKS) {
@@ -44,6 +53,7 @@ export function rankTitle(level) {
 // The full rank entry (name + the band's min level) for a level — handy for a stats readout
 // that wants "SHARK (LV 31+)".
 export function rankFor(level) {
+  if (SEASON2) return liveRankV3();
   const lvl = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
   let pick = RANKS[0];
   for (const r of RANKS) {

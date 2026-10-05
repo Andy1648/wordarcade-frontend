@@ -10,6 +10,8 @@
 // player is simply on the menu with the CTA still showing).
 import { loadProgress, getRebirths, rebirthThreshold, REBIRTH_POWER } from './xp.js';
 import { formatNum } from '../format.js';
+import { SEASON2 } from './season.js';
+import { REBIRTH_STEP as V3_REBIRTH_STEP } from './v3/econ.js';
 
 let intent = false;
 
@@ -40,4 +42,5 @@ export function takeRebirthNow() {
 }
 
 // The button copy — exactly "REBIRTH READY → ×5 FOREVER"; the 5 is REBIRTH_POWER through formatNum.
-export const REBIRTH_READY_COPY = `REBIRTH READY → ×${formatNum(REBIRTH_POWER)} FOREVER`;
+// v3 (SEASON2): ×2 a rebirth
+export const REBIRTH_READY_COPY = `REBIRTH READY → ×${formatNum(SEASON2 ? V3_REBIRTH_STEP : REBIRTH_POWER)} FOREVER`;

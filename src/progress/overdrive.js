@@ -11,6 +11,10 @@
 import { announceTimers } from './boost.js';
 import { overdrivePerkMinutes } from './markPerks.js';
 import { markOverdriveSec } from './markRollsCore.js';
+// PROGRESSION v3 (SEASON2, default OFF): OVERDRIVE is NOT in the v3 formulas (XP per letter = 7 × 1.8^P × 2^R ×
+// (1 + ★) × MARK) — a random ×10 on both currencies averages ~×2 and would double every v3 pace. With the flag ON it
+// never triggers and multiplies by 1. OFF = unchanged.
+import { SEASON2 } from './season.js';
 
 export const OVERDRIVE_KEY = 'taw.overdrive';
 export const OVERDRIVE_MULT = 10;
@@ -71,6 +75,7 @@ export function isOverdriveActive(now = Date.now()) {
 }
 /** ×10 while OVERDRIVE runs, else 1. */
 export function overdriveMult(now = Date.now()) {
+  if (SEASON2) return 1;
   return isOverdriveActive(now) ? OVERDRIVE_MULT : 1;
 }
 
@@ -79,6 +84,7 @@ export function overdriveMult(now = Date.now()) {
  * OVERDRIVE does not count toward the next (the clock restarts when it starts). `rng` is injectable (sim/tests).
  */
 export function notePlay(ms, now = Date.now(), rng) {
+  if (SEASON2) return false;
   const add = Number.isFinite(ms) && ms > 0 ? Math.min(ms, PLAY_GAP_CAP_MS) : 0;
   if (!add) return false;
   const st = read() || { playMs: 0, nextMs: null, until: 0 };

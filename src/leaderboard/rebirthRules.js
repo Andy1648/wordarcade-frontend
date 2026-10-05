@@ -34,6 +34,11 @@ export const GATE0_STEP = 25;
 export const GATE2_BASE = 100;
 export const GATE2_GROWTH = 2.5;
 export const SEASONS = [0, 2];
+// 022_season2_board.sql: a SEASON-2 request (rebirth or ascend) needs a SEASON-2 row (econ 13 — its last accepted
+// board write came from a season-2 client). Without it a season-1 row could mint ★ / rebirths on the season-2 board
+// by naming season 2. A row with no `econ` field (021-era callers) is not checked.
+export const SEASON2_ECON = 13;
+const wrongSeasonRow = (row, season) => season === 2 && row && Object.prototype.hasOwnProperty.call(row, 'econ') && Number(row.econ) !== SEASON2_ECON;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const int = (v, min) => {
@@ -86,7 +91,7 @@ export function decideRebirth(row, { requestId, season = 0 } = {}, log = [], now
   const rb = int(row.rebirths, 0);
   let result;
   let next = row;
-  const gate = SEASONS.includes(season) ? serverGate(rb, season) : null;
+  const gate = SEASONS.includes(season) && !wrongSeasonRow(row, season) ? serverGate(rb, season) : null;
   if (gate == null) {
     result = { ok: false, reason: 'season' };
   } else if (lv < gate) {
@@ -115,7 +120,7 @@ export function decideAscend(row, { requestId, season = 0 } = {}, log = [], now 
   const st = int(row.stars, 0);
   let result;
   let next = row;
-  if (season !== 2) {
+  if (season !== 2 || wrongSeasonRow(row, season)) {
     result = { ok: false, reason: 'season' };
   } else if (rb < ASCEND_AT) {
     result = { ok: false, reason: 'gate', need: ASCEND_AT, rebirths: rb };

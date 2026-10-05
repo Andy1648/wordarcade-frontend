@@ -7,7 +7,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { takeRebirthNow, peekRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
-import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
+import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower, itemPrice } from '../progress/shop';
+// PROGRESSION v3 (SEASON2, default OFF): KEY TIER is POWER, cosmetics cost GEMS, a rebirth is ×2 (+7 × R gems, no ★,
+// no star perks) and R10 opens ASCEND (performAscend → lb_ascend). Functional only — the kit restyle is phase 2.
+import { SEASON2 } from '../progress/season';
+import { XP_BASE as V3_XP_BASE, REBIRTH_STEP as V3_RB_STEP, rebirthGems as v3RebirthGems, starsForAscend as v3StarsForAscend, canAscend as v3CanAscend } from '../progress/v3/econ';
+import { getGems, subscribeGems } from '../progress/gemsCore';
+import { starsV3 } from '../progress/stars';
 import { getWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, REBIRTH_POWER } from '../progress/xp';
@@ -28,7 +34,7 @@ import RedeemCodes from './RedeemCodes';
 import RebirthCeremony from './RebirthCeremony';
 import { ownedMarkIds } from '../progress/marks';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
-import { LEADERBOARD_ENABLED, performRebirth } from '../leaderboard/client';
+import { LEADERBOARD_ENABLED, performRebirth, performAscend } from '../leaderboard/client';
 import { rebirthRefusalText } from '../leaderboard/rebirthFlow';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
@@ -50,6 +56,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const [rbMsg, setRbMsg] = useState(null);
   const rbBusyRef = useRef(false);
   const wins = useWinsBalance(); // W: the one balance channel
+  // v3: cosmetics are priced in GEMS — the cards read the gem balance (live)
+  const [gems, setGems] = useState(() => (SEASON2 ? getGems() : 0));
+  useEffect(() => (SEASON2 ? subscribeGems(setGems) : undefined), []);
+  const shelfBalance = SEASON2 ? gems : wins;
+  const KEY_LABEL = SEASON2 ? 'POWER' : 'KEY TIER';
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
   const [confirming, setConfirming] = useState(false);
@@ -91,7 +102,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     : null;
   const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
     .filter((i) => !owned.has(i.id))
-    .sort((a, b) => a.price - b.price)[0] || null;
+    .sort((a, b) => itemPrice(a.id) - itemPrice(b.id))[0] || null;
 
   const [reveal, setReveal] = useState(null);
   const [ceremony, setCeremony] = useState(null); // BB1: the kept-vs-reset rebirth ceremony
@@ -113,7 +124,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         blurb: isSound
           ? `Every keystroke now sounds ${(item ? item.name : 'new').toUpperCase()}.`
           : `Your letter pops are now ${(item ? item.name : 'new').toUpperCase()}.`,
-        coin: `−${formatNum(item ? item.price : 0)} WINS`,
+        coin: `−${formatNum(item ? itemPrice(item.id) : 0)} ${SEASON2 ? 'GEMS' : 'WINS'}`,
         itemId: id,
         previewChar: 'A',
       });
@@ -126,9 +137,9 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     setReveal({
       kind: 'keypower',
       // H6/M14: "TIER n" everywhere (the shop heading, stats and the ceremony say the same).
-      name: `KEY TIER ${t}${n > 1 ? ` (+${n})` : ''}`,
+      name: `${KEY_LABEL} ${t}${n > 1 ? ` (+${n})` : ''}`,
       // Rebirth Rush: KEY multiplies XP / LETTER only (not wins) — say exactly that.
-      blurb: `KEY T${formatNum(t)}: ×${keyMult(keyXpMult(t))} XP / LETTER.`,
+      blurb: `${SEASON2 ? 'POWER ' : 'KEY T'}${formatNum(t)}: ×${keyMult(keyXpMult(t))} XP / LETTER.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: t >= 5 ? '#FFD54A' : '#2EFFE0',
       tier: t,
@@ -202,6 +213,24 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
     // the multiplier the rebirth actually reached (server mode lands on the server's count)
     setCeremony({ rc, mult: rebirthMult(rc), stars: starsGot, fromLevel, toLevel: loadProgress().level, fromKey, toKey: getKeyTier(), kept });
   };
+  // v3 ASCEND (R10): rebirths, levels and POWER reset; ★ += R − 9 — server-checked like the rebirth (lb_ascend).
+  const [ascMsg, setAscMsg] = useState(null);
+  const confirmAscend = async () => {
+    if (rbBusyRef.current) return;
+    rbBusyRef.current = true;
+    setRbBusy(true);
+    setAscMsg(null);
+    const res = await performAscend();
+    rbBusyRef.current = false;
+    setRbBusy(false);
+    if (!res.ok) {
+      setAscMsg(rebirthRefusalText(res));
+      return;
+    }
+    sndRebirth();
+    setAscMsg(`ASCENDED — ★${formatNum(res.stars)} (+${formatNum(res.added || 0)} ★)`);
+    setKeyTier(getKeyTier());
+  };
   // REBIRTH READY → ×5 FOREVER (Andy oct3): opened from that button (menu CTA or a round-end card),
   // the rebirth runs straight away — the ONE tap was the confirm — and the ceremony plays. Layout
   // effect, so the panel is never painted first; the ref + the re-checked gate make a StrictMode
@@ -234,7 +263,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
           <div className="shop-body">
             {/* KEY TIER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
             {/* CLUTTER PASS: no "— TIER n" — the KEY Tn → Tn+1 line right under it carries the tier. */}
-            <h3 className="shop-subtitle">KEY TIER</h3>
+            <h3 className="shop-subtitle">{KEY_LABEL}</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
                 {/* REBIRTH RUSH: KEY multiplies XP / LETTER only — it no longer touches wins, so the shelf
@@ -244,10 +273,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <div className="shop-kp-current">
                   {/* TIER IDENTITY (Andy oct5): each KEY tier wears its rung's rarity look (KEY_RAMP) — colour + glow,
                       shimmer / sparks as it climbs — so the tier reads at a glance, not from the number */}
-                  KEY <span key={`kt${keyTier}`} className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier))}`}>T{formatNum(keyTier)}<RarityFx tier={keyRarity(keyTier)} /></span> <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → <span className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier + 1))}`}>T{formatNum(keyTier + 1)}</span> <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
+                  {SEASON2 ? 'POWER ' : 'KEY '}<span key={`kt${keyTier}`} className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier))}`}>T{formatNum(keyTier)}<RarityFx tier={keyRarity(keyTier)} /></span> <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → <span className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier + 1))}`}>T{formatNum(keyTier + 1)}</span> <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
                 </div>
                 <div className="shop-kp-rate">
-                  BASE 10 XP / LETTER × KEY × REBIRTH
+                  {SEASON2 ? `BASE ${V3_XP_BASE} XP / LETTER × POWER × REBIRTH × (1 + ★)` : 'BASE 10 XP / LETTER × KEY × REBIRTH'}
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier).
                     CLUTTER PASS: no "READY TO UNLOCK" — the full bar + the live HOLD price button say it. */}
@@ -283,11 +312,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               {POP_STYLES.map((item) => (
                 <Card
                   key={item.id}
-                  item={item}
+                  item={SEASON2 ? { ...item, price: itemPrice(item.id) } : item}
                   type="popStyle"
                   owned={owned}
                   equipped={equipped}
-                  wins={wins}
+                  wins={shelfBalance}
                   cheapestUnowned={cheapestUnowned}
                   onBuy={onBuy}
                   onEquip={onEquip}
@@ -300,11 +329,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               {SOUND_PACKS.map((item) => (
                 <Card
                   key={item.id}
-                  item={item}
+                  item={SEASON2 ? { ...item, price: itemPrice(item.id) } : item}
                   type="soundPack"
                   owned={owned}
                   equipped={equipped}
-                  wins={wins}
+                  wins={shelfBalance}
                   cheapestUnowned={cheapestUnowned}
                   onBuy={onBuy}
                   onEquip={onEquip}
@@ -327,17 +356,18 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             <div className={`shop-rb-hero${advice.badTime ? ' is-bad' : ''}`}>
               {/* REBIRTH RUSH: every rebirth is ×5 XP & WINS, forever — the line names the step, then the
                   total it moves (×5^R → ×5^(R+1)). */}
-              <div className="shop-rb-hero-label">REBIRTH: ×{formatNum(REBIRTH_POWER)} XP &amp; WINS</div>
+              <div className="shop-rb-hero-label">REBIRTH: ×{formatNum(SEASON2 ? V3_RB_STEP : REBIRTH_POWER)} XP &amp; WINS</div>
               <div className="shop-rb-hero-val">
                 ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(nextMult)}
-                {rebirthReady && (
+                {rebirthReady && !SEASON2 && (
                   <>
                     {' · +'}
                     {formatNum(advice.stars)} <span className="shop-rb-star">★</span>
                   </>
                 )}
+                {rebirthReady && SEASON2 && <>{' · +'}{formatNum(v3RebirthGems(rebirths + 1))} GEMS</>}
               </div>
-              {rebirthReady && (
+              {rebirthReady && !SEASON2 && (
                 <div className="shop-rb-advice">
                   {advice.badTime
                     ? `BAD TIME — WAIT ${advice.nextIn} LV = +1 ★`
@@ -362,7 +392,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))}.
               </li>
               <li>
-                <b>KEEP:</b> WINS · KEY TIER · MARKS · PURCHASES · STATS.
+                <b>KEEP:</b> WINS · {KEY_LABEL} · MARKS · PURCHASES · STATS.
               </li>
             </ul>
 
@@ -378,7 +408,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 </div>
               ) : (
                 <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)} disabled={rbBusy} aria-busy={rbBusy}>
-                  {rbBusy ? '…' : <>REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {formatNum(advice.stars)} ★</>}
+                  {rbBusy ? '…' : SEASON2 ? <>REBIRTH {rebirths + 1} — ×{formatMult(nextMult)}</> : <>REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {formatNum(advice.stars)} ★</>}
                 </button>
               )
             ) : (
@@ -393,9 +423,25 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
               </div>
             )}
 
+            {/* v3 ASCEND (R10): ★ += R − 9; rebirths, levels and POWER reset. The ★ multiply XP and wins (1 + ★). */}
+            {SEASON2 && (
+              <div className="shop-ascend">
+                <h3 className="shop-subtitle">ASCEND — {formatNum(starsV3())} ★</h3>
+                <button
+                  type="button"
+                  className="shop-rebirth shop-ascend-btn"
+                  onClick={confirmAscend}
+                  disabled={rbBusy || !v3CanAscend(rebirths)}
+                  aria-busy={rbBusy}
+                >
+                  {v3CanAscend(rebirths) ? `ASCEND → +${formatNum(v3StarsForAscend(rebirths))} ★` : 'ASCEND AT REBIRTH 10'}
+                </button>
+                {ascMsg && <div className="shop-goal shop-asc-msg" role="status">{ascMsg}</div>}
+              </div>
+            )}
             {/* LAYER 1/2 — STAR PERKS and AUTOMATION (stars.js). Hidden until the first rebirth
                 unlocks them (the claimable reveal names it); AUTOMATION shows its gate until R3. */}
-            {rebirths >= 1 && (
+            {rebirths >= 1 && !SEASON2 && (
               <>
                 <h3 className="shop-subtitle">STAR PERKS — {formatNum(stars.balance)} ★</h3>
                 <div className="shop-perks">

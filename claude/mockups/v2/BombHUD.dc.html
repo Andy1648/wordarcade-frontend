@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Word Bomb HUD</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes bhBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes bhShk1{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-2px,1px) rotate(-1deg)}50%{transform:translate(2px,-1px) rotate(1deg)}75%{transform:translate(-1px,-2px)}}
+@keyframes bhShk2{0%,100%{transform:translate(0,0) rotate(0) scale(1.04)}20%{transform:translate(-5px,2px) rotate(-4deg) scale(1.06)}40%{transform:translate(5px,-3px) rotate(3deg) scale(1.03)}60%{transform:translate(-4px,-2px) rotate(-2deg) scale(1.07)}80%{transform:translate(4px,3px) rotate(4deg) scale(1.04)}}
+@keyframes bhPopA{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+@keyframes bhPopB{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+@keyframes bhNoA{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes bhNoB{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes bhUpA{0%{transform:translateY(10px) scale(.6);opacity:0}20%{transform:translateY(0) scale(1.15);opacity:1}100%{transform:translateY(-90px) scale(1);opacity:0}}
+@keyframes bhUpB{0%{transform:translateY(10px) scale(.6);opacity:0}20%{transform:translateY(0) scale(1.15);opacity:1}100%{transform:translateY(-90px) scale(1);opacity:0}}
+@keyframes bhGlowA{0%{opacity:.9;transform:scale(.8)}100%{opacity:0;transform:scale(1.25)}}
+@keyframes bhGlowB{0%{opacity:.9;transform:scale(.8)}100%{opacity:0;transform:scale(1.25)}}
+@keyframes bhFlash{0%{opacity:.85}100%{opacity:0}}
+@keyframes bhWave{0%{transform:scale(.25);opacity:1}100%{transform:scale(3.2);opacity:0}}
+@keyframes bhWave2{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.2);opacity:0}}
+@keyframes bhShard{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+@keyframes bhSlam{0%{transform:scale(3) rotate(-8deg);opacity:0}45%{transform:scale(.9) rotate(-5deg);opacity:1}70%{transform:scale(1.05) rotate(-5deg);opacity:1}100%{transform:scale(1) rotate(-5deg);opacity:0}}
+@keyframes bhStage{0%,100%{transform:translate(0,0)}15%{transform:translate(-10px,6px)}30%{transform:translate(9px,-7px)}45%{transform:translate(-7px,-4px)}60%{transform:translate(6px,5px)}80%{transform:translate(-3px,2px)}}
+@keyframes bhHL{0%{transform:translate(0,0) rotate(0);opacity:1}30%{transform:translate(-2px,1px) rotate(-6deg);opacity:1}100%{transform:translate(-9px,10px) rotate(-30deg);opacity:0}}
+@keyframes bhHR{0%{transform:translate(0,0) rotate(0);opacity:1}30%{transform:translate(2px,1px) rotate(6deg);opacity:1}100%{transform:translate(9px,10px) rotate(30deg);opacity:0}}
+@keyframes bhHit{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,0) rotate(-2deg)}40%{transform:translate(6px,0) rotate(2deg)}60%{transform:translate(-4px,0)}80%{transform:translate(3px,0)}}
+@keyframes bhAct{0%,100%{transform:translate(0,0)}50%{transform:translate(-3px,-4px)}}
+@keyframes bhBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes bhHot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes bhFlick{0%,100%{transform:scale(1) rotate(0);opacity:1}33%{transform:scale(1.35) rotate(20deg);opacity:.8}66%{transform:scale(.8) rotate(-15deg);opacity:1}}
+@keyframes bhLit{0%{transform:scale(1.7);opacity:0}60%{transform:scale(.9);opacity:1}100%{transform:scale(1)}}
+@keyframes bhBonus{0%,100%{transform:scale(1)}50%{transform:scale(1.4) rotate(-8deg)}}
+.bh-bob{animation:bhBob 1.3s ease-in-out infinite}
+.bh-shk1{animation:bhShk1 .2s linear infinite}
+.bh-shk2{animation:bhShk2 .09s linear infinite}
+.bh-popA{animation:bhPopA .35s cubic-bezier(.2,1.4,.4,1) both}
+.bh-popB{animation:bhPopB .35s cubic-bezier(.2,1.4,.4,1) both}
+.bh-noA{animation:bhNoA .35s linear}
+.bh-noB{animation:bhNoB .35s linear}
+.bh-upA{animation:bhUpA 1s ease-out forwards}
+.bh-upB{animation:bhUpB 1s ease-out forwards}
+.bh-glowA{animation:bhGlowA .5s ease-out forwards}
+.bh-glowB{animation:bhGlowB .5s ease-out forwards}
+.bh-flash{animation:bhFlash .45s ease-out forwards}
+.bh-wave{animation:bhWave .7s cubic-bezier(.1,.6,.3,1) forwards}
+.bh-wave2{animation:bhWave2 .55s .08s cubic-bezier(.1,.6,.3,1) both}
+.bh-shard{animation:bhShard .8s cubic-bezier(.1,.6,.3,1) forwards}
+.bh-slam{animation:bhSlam 1.1s cubic-bezier(.2,1.2,.4,1) forwards}
+.bh-stage{animation:bhStage .45s linear}
+.bh-hl{animation:bhHL 1.1s ease-in forwards;transform-box:fill-box;transform-origin:50% 100%}
+.bh-hr{animation:bhHR 1.1s ease-in forwards;transform-box:fill-box;transform-origin:50% 100%}
+.bh-hit{animation:bhHit .4s linear}
+.bh-act{animation:bhAct .9s ease-in-out infinite}
+.bh-caret{animation:bhBlink .9s steps(1) infinite}
+.bh-hot{animation:bhHot .4s ease-in-out infinite}
+.bh-flick{animation:bhFlick .18s linear infinite;transform-box:fill-box;transform-origin:50% 50%}
+.bh-lit{animation:bhLit .35s cubic-bezier(.2,1.4,.4,1) both}
+.bh-bonus{animation:bhBonus .3s ease-in-out 3}
+.bh-out{-webkit-text-stroke:6px #000;paint-order:stroke fill}
+.bh-btn{transition:transform .08s,box-shadow .08s}
+.bh-btn:hover{transform:translate(-2px,-2px)}
+.bh-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace; color: #fff">
+<svg width="0" height="0" style="position: absolute" aria-hidden="true"><defs>
+<clipPath id="bhCL"><path d="M-4 -4 L16 -4 L13 8 L18 13 L12 19 L17 24 L16 36 L-4 36 Z"></path></clipPath>
+<clipPath id="bhCR"><path d="M36 -4 L16 -4 L13 8 L18 13 L12 19 L17 24 L16 36 L36 36 Z"></path></clipPath>
+</defs></svg>
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px); pointer-events: none"></div>
+
+<div class="{{stageCls}}" style="position: absolute; inset: 0">
+
+<!-- table ellipse linking the seats -->
+<svg width="1366" height="657" viewBox="0 0 1366 657" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+<ellipse cx="683" cy="340" rx="393" ry="250" fill="none" stroke="#000" stroke-width="16"></ellipse>
+<ellipse cx="683" cy="340" rx="393" ry="250" fill="none" stroke="#1f0f33" stroke-width="8" stroke-dasharray="18 14"></ellipse>
+</svg>
+
+<!-- red danger frame (last 3s) -->
+<div class="bh-hot" style="position: absolute; inset: 0; border: 10px solid #FF3D7F; box-sizing: border-box; pointer-events: none; opacity: {{hotFrame}}; visibility: {{hotVis}}"></div>
+
+<!-- ===== FUSE RING ===== -->
+<svg width="320" height="320" viewBox="0 0 320 320" style="position: absolute; left: 523px; top: 160px; overflow: visible" aria-hidden="true">
+<circle cx="160" cy="160" r="130" fill="none" stroke="#000" stroke-width="30"></circle>
+<circle cx="160" cy="160" r="130" fill="none" stroke="#12071f" stroke-width="20"></circle>
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="40">
+<path d="{{s.d}}" fill="none" stroke="{{s.c}}" stroke-width="16" style="opacity: {{s.o}}; transition: opacity .12s"></path>
+</sc-for>
+</svg>
+<!-- burn spark riding the ring -->
+<div style="position: absolute; left: 683px; top: 320px; width: 0; height: 0; transform: rotate({{sparkDeg}}deg); transition: transform .1s linear; visibility: {{bombVis}}">
+<svg viewBox="0 0 40 40" width="40" height="40" style="position: absolute; left: -20px; top: -150px; overflow: visible" aria-hidden="true">
+<path class="bh-flick" d="M20 1 L24 14 L38 12 L27 21 L34 35 L20 27 L6 35 L13 21 L2 12 L16 14 Z" fill="{{sparkC}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round"></path>
+<circle cx="20" cy="20" r="5" fill="#fff"></circle>
+</svg>
+</div>
+
+<!-- arrow to active player -->
+<div style="position: absolute; left: 683px; top: 320px; width: 0; height: 0; transform: rotate({{arrowDeg}}deg); transition: transform .32s cubic-bezier(.3,1.3,.5,1); visibility: {{bombVis}}">
+<svg viewBox="0 0 40 44" width="40" height="44" style="position: absolute; left: 146px; top: -22px; filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><path d="M4 4 L36 22 L4 40 L12 22 Z" fill="{{arrowC}}" stroke="#000" stroke-width="4.5" stroke-linejoin="round"></path></svg>
+</div>
+
+<!-- ===== BOMB ===== -->
+<sc-if value="{{bombOn}}" hint-placeholder-val="{{ true }}">
+<div class="{{popCls}}" style="position: absolute; left: 573px; top: 200px; width: 220px; height: 220px; transform-origin: 110px 120px">
+<div class="{{shakeCls}}" style="position: absolute; inset: 0; transform-origin: 110px 120px">
+<svg viewBox="0 0 220 220" width="220" height="220" style="position: absolute; left: 0; top: 0; overflow: visible" aria-hidden="true">
+<circle cx="119" cy="129" r="78" fill="#000"></circle>
+<g transform="rotate(40 160 54)"><rect x="142" y="42" width="36" height="26" fill="#5d4a78" stroke="#000" stroke-width="6" stroke-linejoin="round"></rect><rect x="147" y="47" width="8" height="16" fill="#8a76ad"></rect></g>
+<path d="M168 42 C 176 32 170 26 178 18" fill="none" stroke="#000" stroke-width="11" stroke-linecap="round"></path>
+<path d="M168 42 C 176 32 170 26 178 18" fill="none" stroke="#e8d9b0" stroke-width="5" stroke-linecap="round"></path>
+<path class="bh-flick" d="M178 6 L181 14 L190 13 L183 19 L187 28 L178 23 L169 28 L173 19 L166 13 L175 14 Z" fill="#FFC23D" stroke="#000" stroke-width="3" stroke-linejoin="round"></path>
+<circle cx="110" cy="120" r="78" fill="#2a1748" stroke="#000" stroke-width="7"></circle>
+<circle cx="110" cy="120" r="74" fill="#FF3D7F" style="opacity: {{hotTint}}; transition: opacity .3s"></circle>
+<path d="M54 172 A74 74 0 0 0 184 122 A82 82 0 0 1 54 172 Z" fill="#000" opacity=".35"></path>
+<path d="M58 100 A56 56 0 0 1 92 62" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"></path>
+<circle cx="106" cy="56" r="5.5" fill="#fff"></circle>
+</svg>
+<div style="position: absolute; left: 0; width: 220px; top: 78px; text-align: center; font-family: 'Bungee', sans-serif; font-size: {{chunkF}}px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000">{{chunk}}</div>
+<div style="position: absolute; left: 0; width: 220px; top: 150px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 18px; color: {{secC}}; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{secText}}</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ===== EXPLOSION ===== -->
+<sc-if value="{{boomOn}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 683px; top: 320px; width: 0; height: 0">
+<div class="bh-wave" style="position: absolute; left: -110px; top: -110px; width: 220px; height: 220px; border-radius: 50%; border: 14px solid #FFE94A; box-sizing: border-box; box-shadow: 0 0 0 6px #000, inset 0 0 0 6px #000"></div>
+<div class="bh-wave2" style="position: absolute; left: -110px; top: -110px; width: 220px; height: 220px; border-radius: 50%; border: 10px solid #FF3D7F; box-sizing: border-box"></div>
+<sc-for list="{{shards}}" as="sh" hint-placeholder-count="10">
+<svg class="bh-shard" viewBox="0 0 30 30" width="30" height="30" style="position: absolute; left: -15px; top: -15px; --dx: {{sh.dx}}px; --dy: {{sh.dy}}px; --r: {{sh.r}}deg" aria-hidden="true"><path d="M4 6 L26 2 L20 28 Z" fill="{{sh.c}}" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+</sc-for>
+<svg viewBox="0 0 200 200" width="200" height="200" class="bh-wave2" style="position: absolute; left: -100px; top: -100px" aria-hidden="true"><path d="M100 4 L118 66 L180 30 L140 86 L196 104 L136 118 L170 176 L112 140 L96 196 L82 138 L24 172 L60 116 L4 96 L64 82 L28 24 L86 64 Z" fill="#FFC23D" stroke="#000" stroke-width="6" stroke-linejoin="round"></path><path d="M100 46 L110 80 L146 70 L122 98 L150 124 L112 116 L98 152 L88 116 L52 126 L78 98 L56 68 L90 80 Z" fill="#fff"></path></svg>
+<div class="bh-slam" style="position: absolute; left: -200px; width: 400px; top: -48px; text-align: center; font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 86px; line-height: 1; color: #FF3D7F; text-shadow: 6px 6px 0 #000">BOOM</div>
+</div>
+</sc-if>
+
+<!-- ===== PLAYERS ===== -->
+<sc-for list="{{players}}" as="p" hint-placeholder-count="6">
+<div style="position: absolute; left: {{p.x}}px; top: {{p.y}}px; width: {{p.w}}px; height: {{p.h}}px; opacity: {{p.op}}; transition: opacity .4s">
+<div class="{{p.cls}}" style="position: absolute; inset: 0">
+<div class="{{p.hitCls}}" style="position: absolute; inset: 0; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 12px; background: {{p.bg}}; border: {{p.bw}}px solid {{p.bd}}; box-shadow: 6px 6px 0 {{p.sh}}">
+<div style="position: relative; flex: none; width: {{p.av}}px; height: {{p.av}}px; box-sizing: border-box; background: #2a1748; border: 4px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: {{p.stripeH}}px; background: {{p.stripe}}; border-bottom: 3px solid #000"></div>
+<span style="position: relative; top: {{p.initTop}}px; font-family: 'Bungee', sans-serif; font-size: {{p.avF}}px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{p.init}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{p.nameF}}px; line-height: 1; color: {{p.nameC}}; white-space: nowrap">{{p.name}}</span>
+<div style="display: flex; gap: 5px">
+<sc-for list="{{p.hearts}}" as="h" hint-placeholder-count="3">
+<svg viewBox="-2 -2 36 36" width="{{p.hs}}" height="{{p.hs}}" style="overflow: visible" aria-hidden="true">
+<sc-if value="{{h.full}}" hint-placeholder-val="{{ true }}"><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="#FF3D7F" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M8 8 C6 9 5.5 11 6 13" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"></path></sc-if>
+<sc-if value="{{h.empty}}" hint-placeholder-val="{{ false }}"><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="#12071f" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="none" stroke="#3a2160" stroke-width="1.5"></path></sc-if>
+<sc-if value="{{h.crack}}" hint-placeholder-val="{{ false }}"><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="#12071f" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><g class="bh-hl"><g clip-path="url(#bhCL)"><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="#FF3D7F" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></g><path d="M16 6 L13 8 L18 13 L12 19 L17 24 L16 29" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round"></path></g><g class="bh-hr"><g clip-path="url(#bhCR)"><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="#FF3D7F" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></g><path d="M16 6 L13 8 L18 13 L12 19 L17 24 L16 29" fill="none" stroke="#000" stroke-width="3" stroke-linejoin="round"></path></g></sc-if>
+</svg>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+<sc-if value="{{p.pill}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: {{p.px}}px; top: {{p.py}}px; transform: translateX({{p.pt}}%); height: 36px; padding: 0 12px; display: flex; align-items: center; background: #08030f; border: 4px solid #000; box-shadow: 4px 4px 0 #000; white-space: nowrap; font-family: 'Bungee', sans-serif; font-size: 22px; line-height: 1">
+<sc-for list="{{p.letters}}" as="l" hint-placeholder-count="5"><span style="color: {{l.c}}">{{l.ch}}</span></sc-for>
+<span class="bh-caret" style="display: inline-block; width: 4px; height: 22px; margin-left: 3px; background: #FFE94A"></span>
+</div>
+</sc-if>
+</div>
+</sc-for>
+
+<!-- ===== MY INPUT (under bomb) ===== -->
+<sc-if value="{{myTurn}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 283px; width: 800px; top: 468px; height: 66px; display: flex; justify-content: center; align-items: center">
+<div class="{{okGlowCls}}" style="position: absolute; left: 230px; right: 230px; top: 0; bottom: 0; background: #5CFF8A; border: 5px solid #000; opacity: 0"></div>
+<div class="{{inCls}}" style="position: relative; display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: 54px; line-height: 1; -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">
+<sc-for list="{{myLetters}}" as="l" hint-placeholder-count="4"><span style="color: {{l.c}}">{{l.ch}}</span></sc-for>
+<span class="bh-caret" style="display: inline-block; width: 8px; height: 50px; margin-left: 6px; background: #FFE94A; border: 3px solid #000; box-sizing: border-box"></span>
+<span style="margin-left: 14px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 14px; color: #c9b8e8; -webkit-text-stroke: 0; text-shadow: none; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; visibility: {{enterVis}}">ENTER ↵</span>
+</div>
+<sc-if value="{{gainShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{gainCls}}" style="position: absolute; right: 120px; top: -30px; padding: 0 10px; background: #5CFF8A; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 26px; color: #000">{{gainText}}</div>
+</sc-if>
+</div>
+</sc-if>
+
+</div>
+
+<!-- explosion flash (outside stage shake) -->
+<sc-if value="{{boomOn}}" hint-placeholder-val="{{ false }}">
+<div class="bh-flash" style="position: absolute; inset: 0; background: #FFE94A; pointer-events: none"></div>
+</sc-if>
+
+<!-- ===== TOP BAR ===== -->
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 46px; box-sizing: border-box; background: #12071f; border-bottom: 5px solid #000; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 6px; background: #B04BFF; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff"><span style="font-size: 13px; color: #000">RD</span>{{round}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8; margin-left: 6px">{{aliveText}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 3px">
+<sc-for list="{{alpha}}" as="a" hint-placeholder-count="26">
+<span class="{{a.cls}}" style="width: 22px; height: 26px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: {{a.bg}}; border: 2px solid #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{a.c}}">{{a.ch}}</span>
+</sc-for>
+<span style="margin-left: 6px; font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8">{{alphaCount}}</span>
+<svg class="{{bonusCls}}" viewBox="-2 -2 36 36" width="24" height="24" style="margin-left: 4px; overflow: visible" aria-hidden="true"><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="#FF3D7F" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M16 10 L16 22 M10 16 L22 16" stroke="#fff" stroke-width="4" stroke-linecap="round"></path></svg>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 6px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #2EFFE0">+{{perL}}<span style="font-size: 13px; color: #c9b8e8">XP/LETTER</span></span>
+<span class="{{xpCls}}" style="height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 6px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000">{{xpText}}<span style="font-size: 13px">XP</span></span>
+</div>
+</div>
+
+<!-- ===== DEMO CONTROLS ===== -->
+<div style="position: absolute; left: 14px; bottom: 12px; display: flex; align-items: center; gap: 8px">
+<span style="font-size: 13px; color: #5d4a78">DEMO</span>
+<button class="bh-btn" onClick="{{demoMine}}" style="height: 32px; padding: 0 10px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">MY TURN</button>
+<button class="bh-btn" onClick="{{demoOther}}" style="height: 32px; padding: 0 10px; background: #2EFFE0; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">OTHER TURN</button>
+<button class="bh-btn" onClick="{{demoBoom}}" style="height: 32px; padding: 0 10px; background: #FF3D7F; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">BOOM</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+var BX = 683, BY = 320, R = 130, NSEG = 40, MAXL = 3, TMAX = 10;
+var POS = [[683, 594], [282, 470], [282, 200], [683, 92], [1084, 200], [1084, 470]];
+var RAR = { leg: '#FFC23D', epic: '#B04BFF', rare: '#2EFFE0', myth: '#FF3D7F', com: '#8a76ad' };
+var BANK = {
+  ING: ['SINGER', 'KINGDOM', 'RINGTONE', 'STINGRAY', 'WINGS'],
+  TER: ['WATERFALL', 'TERMINAL', 'OTTER', 'MASTERY', 'TERROR'],
+  ANT: ['GIANT', 'ANTENNA', 'PANTHER', 'ELEPHANT', 'PLANTS'],
+  OUS: ['FAMOUS', 'HOUSE', 'MOUSE', 'JOYOUS', 'CLOUDS'],
+  ION: ['LION', 'ONION', 'MILLION', 'REGION', 'CUSHION'],
+  ATE: ['PLATE', 'SKATE', 'PIRATE', 'LATER', 'GATEWAY'],
+  IGH: ['NIGHT', 'HIGHWAY', 'KNIGHT', 'FIGHT', 'SLIGHT'],
+  ECT: ['INSECT', 'PERFECT', 'OBJECT', 'SECTOR', 'EFFECT'],
+  OR: ['STORM', 'FORK', 'CORAL', 'WORLD', 'ORBIT'],
+  QU: ['QUEEN', 'QUIZ', 'SQUID', 'EQUAL', 'QUACK'],
+  AR: ['GUITAR', 'STAR', 'ARCADE', 'HARBOR', 'MARBLE'],
+  EA: ['OCEAN', 'BEACH', 'DREAM', 'MEADOW', 'STEAM'],
+  ST: ['FASTER', 'STONE', 'BLAST', 'CASTLE', 'FROST']
+};
+var CHUNKS = Object.keys(BANK);
+var ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function fmt(x) {
+  var S = [['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + S[i][0]; }
+  return String(Math.floor(x));
+}
+function arc(a0, a1) {
+  var r = Math.PI / 180, c = 160;
+  var x0 = c + R * Math.cos(a0 * r), y0 = c + R * Math.sin(a0 * r), x1 = c + R * Math.cos(a1 * r), y1 = c + R * Math.sin(a1 * r);
+  return 'M' + x0.toFixed(1) + ' ' + y0.toFixed(1) + ' A' + R + ' ' + R + ' 0 0 1 ' + x1.toFixed(1) + ' ' + y1.toFixed(1);
+}
+var SEGD = []; for (var i = 0; i < NSEG; i++) { var a0 = -90 + i * (360 / NSEG) + 1.3; SEGD.push(arc(a0, a0 + 360 / NSEG - 2.6)); }
+function angTo(i) { return Math.atan2(POS[i][1] - BY, POS[i][0] - BX) * 180 / Math.PI; }
+function colorize(txt, chunk, base) {
+  var at = chunk ? txt.indexOf(chunk) : -1, out = [];
+  for (var i = 0; i < txt.length; i++) out.push({ ch: txt[i], c: (at >= 0 && i >= at && i < at + chunk.length) ? '#FFE94A' : base });
+  return out;
+}
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      players: [
+        { name: 'ANDY', init: 'A', rar: 'leg', lives: 3 },
+        { name: 'NOVA', init: 'N', rar: 'epic', lives: 3 },
+        { name: 'KAIJU', init: 'K', rar: 'rare', lives: 2 },
+        { name: 'PIXEL', init: 'P', rar: 'com', lives: 3 },
+        { name: 'MOTH', init: 'M', rar: 'myth', lives: 1 },
+        { name: 'ZED', init: 'Z', rar: 'rare', lives: 2 }
+      ],
+      active: 0, chunk: 'ING', tLeft: TMAX, typed: 'RING', botTyped: '', phase: 'play',
+      round: 7, xp: 48200, perL: 12, used: 'AEGILNORST', fresh: '', usedWords: {},
+      arrowDeg: angTo(0), popN: 0, okN: 0, badN: 0, bad: false, gainN: 0, gainShow: false, gainText: '',
+      boomN: 0, crackP: -1, crackH: -1, hitP: -1, hitN: 0, bonusN: 0, xpN: 0
+    };
+    this.timers = []; this.bot = [];
+    this.onKey = this.onKey.bind(this);
+  }
+  componentDidMount() {
+    var self = this;
+    window.addEventListener('keydown', this.onKey);
+    this.iv = setInterval(function () { self.tick(); }, 100);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.onKey);
+    clearInterval(this.iv); this.timers.forEach(clearTimeout); this.bot.forEach(clearTimeout);
+  }
+  later(fn, ms) { var id = setTimeout(fn, ms); this.timers.push(id); return id; }
+  botLater(fn, ms) { var id = setTimeout(fn, ms); this.bot.push(id); return id; }
+  tick() {
+    var st = this.state;
+    if (st.phase !== 'play') return;
+    var t = Math.max(0, st.tLeft - 0.1);
+    if (t <= 0) { this.boom(); return; }
+    this.setState({ tLeft: t });
+  }
+  nextAlive(from) {
+    var ps = this.state.players;
+    for (var k = 1; k <= ps.length; k++) { var j = (from + k) % ps.length; if (ps[j].lives > 0) return j; }
+    return from;
+  }
+  startTurn(idx, chunk) {
+    this.bot.forEach(clearTimeout); this.bot = [];
+    var st = this.state, c = chunk || pick(CHUNKS.filter(function (x) { return x !== st.chunk; }));
+    var target = angTo(idx), d = target - st.arrowDeg;
+    d = ((d % 360) + 540) % 360 - 180;
+    this.setState({ active: idx, chunk: c, tLeft: TMAX, typed: '', botTyped: '', phase: 'play', arrowDeg: st.arrowDeg + d, popN: st.popN + 1, bad: false });
+    if (idx !== 0) this.runBot(c);
+  }
+  runBot(c) {
+    var self = this, used = this.state.usedWords;
+    var opts = BANK[c].filter(function (w) { return !used[w]; }); if (!opts.length) opts = BANK[c];
+    var word = pick(opts), fail = Math.random() < 0.22, n = fail ? 2 + Math.floor(Math.random() * 2) : word.length;
+    var t = 700 + Math.random() * 1100;
+    for (var i = 1; i <= n; i++) (function (i, t) {
+      self.botLater(function () { self.setState({ botTyped: word.slice(0, i) }); }, t);
+    })(i, t + i * (110 + Math.random() * 60));
+    if (!fail) self.botLater(function () {
+      var uw = Object.assign({}, self.state.usedWords); uw[word] = 1;
+      self.setState({ phase: 'ok', usedWords: uw });
+      self.later(function () { self.startTurn(self.nextAlive(self.state.active)); }, 300);
+    }, t + n * 170 + 260);
+  }
+  boom() {
+    var self = this, st = this.state, v = st.active;
+    this.bot.forEach(clearTimeout); this.bot = [];
+    var ps = st.players.map(function (p) { return Object.assign({}, p); });
+    ps[v].lives = Math.max(0, ps[v].lives - 1);
+    this.setState({ phase: 'boom', tLeft: 0, players: ps, boomN: st.boomN + 1, crackP: v, crackH: ps[v].lives, hitP: v, hitN: st.hitN + 1 });
+    this.later(function () {
+      var ps2 = self.state.players.map(function (p) { return Object.assign({}, p); });
+      var alive = ps2.filter(function (p) { return p.lives > 0; }).length;
+      if (alive < 2) ps2.forEach(function (p) { p.lives = MAXL; });
+      self.setState({ crackP: -1, crackH: -1, hitP: -1, players: ps2, round: self.state.round + 1 });
+      self.startTurn(ps2[v].lives > 0 ? v : self.nextAlive(v));
+    }, 1250);
+  }
+  submit() {
+    var self = this, st = this.state, w = st.typed;
+    if (w.length >= 3 && w.indexOf(st.chunk) >= 0 && !st.usedWords[w]) {
+      var gain = w.length * st.perL, used = st.used, fresh = '';
+      for (var i = 0; i < w.length; i++) if (used.indexOf(w[i]) < 0) { used += w[i]; fresh += w[i]; }
+      var up = { phase: 'ok', xp: st.xp + gain, xpN: st.xpN + 1, okN: st.okN + 1, gainN: st.gainN + 1, gainShow: true, gainText: '+' + fmt(gain) + ' XP', used: used, fresh: fresh };
+      var uw = Object.assign({}, st.usedWords); uw[w] = 1; up.usedWords = uw;
+      if (used.length >= 26) {
+        var ps = st.players.map(function (p) { return Object.assign({}, p); });
+        ps[0].lives = Math.min(MAXL, ps[0].lives + 1);
+        up.players = ps; up.bonusN = st.bonusN + 1;
+        this.later(function () { self.setState({ used: '', fresh: '' }); }, 900);
+      }
+      this.setState(up);
+      this.later(function () { self.setState({ gainShow: false }); }, 1000);
+      this.later(function () { self.startTurn(self.nextAlive(0)); }, 420);
+    } else {
+      this.setState({ badN: st.badN + 1, bad: true });
+      this.later(function () { self.setState({ bad: false }); }, 380);
+    }
+  }
+  onKey(e) {
+    var st = this.state;
+    if (st.active !== 0 || st.phase !== 'play') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (k === 'Enter') { e.preventDefault(); this.submit(); return; }
+    if (k === 'Backspace') { e.preventDefault(); this.setState({ typed: st.typed.slice(0, -1), bad: false }); return; }
+    if (/^[a-zA-Z]$/.test(k) && st.typed.length < 18) { e.preventDefault(); this.setState({ typed: st.typed + k.toUpperCase(), bad: false }); }
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var hot = st.phase === 'play' && st.tLeft <= 3, warm = st.phase === 'play' && st.tLeft <= 6;
+    var f = st.phase === 'boom' ? 0 : st.tLeft / TMAX, lit = Math.ceil(f * NSEG - 0.001);
+    var segC = hot ? '#FF3D7F' : (warm ? '#FFC23D' : '#FFE94A');
+    var segs = SEGD.map(function (d, i) { return { d: d, c: segC, o: i < lit ? 1 : 0 }; });
+    var myTurn = st.active === 0 && st.phase !== 'boom';
+    var players = st.players.map(function (p, i) {
+      var me = i === 0, act = i === st.active && st.phase !== 'boom';
+      var w = me ? 300 : 222, h = me ? 96 : 78, cx = POS[i][0], cy = POS[i][1];
+      var hearts = [];
+      for (var k = 0; k < MAXL; k++) {
+        var cr = st.crackP === i && st.crackH === k;
+        hearts.push({ full: !cr && k < p.lives, empty: !cr && k >= p.lives, crack: cr });
+      }
+      var side = i === 3, showPill = act && !me;
+      return {
+        x: cx - w / 2, y: cy - h / 2, w: w, h: h, op: p.lives > 0 ? 1 : 0.35,
+        cls: act ? 'bh-act' : '', hitCls: st.hitP === i ? "bh-hit" : "",
+        bg: act ? '#2a1748' : '#1a0b2e', bw: me ? 6 : 4, bd: me ? '#FFE94A' : '#000', sh: act ? '#FF3D7F' : '#000',
+        av: me ? 72 : 56, avF: me ? 34 : 26, stripeH: me ? 14 : 11, initTop: me ? 6 : 5, stripe: RAR[p.rar], init: p.init,
+        name: p.name, nameF: me ? 24 : 18, nameC: me ? '#FFE94A' : '#fff', hs: me ? 30 : 23, hearts: hearts,
+        pill: showPill, px: side ? w + 14 : w / 2, py: side ? (h - 36) / 2 : h + 12, pt: side ? 0 : -50,
+        letters: colorize(st.botTyped, st.chunk, '#fff')
+      };
+    });
+    var shards = [];
+    for (var s = 0; s < 10; s++) { var a = s * 36 + 12, dist = 170 + (s % 3) * 40; shards.push({ dx: Math.round(Math.cos(a * Math.PI / 180) * dist), dy: Math.round(Math.sin(a * Math.PI / 180) * dist), r: 180 + s * 50, c: ['#FFE94A', '#FF3D7F', '#2a1748', '#FFC23D', '#B04BFF'][s % 5] }); }
+    var alpha = ABC.split('').map(function (ch) {
+      var on = st.used.indexOf(ch) >= 0, nw = on && st.fresh.indexOf(ch) >= 0;
+      return { ch: ch, bg: on ? '#FFE94A' : '#1a0b2e', c: on ? '#000' : '#5d4a78', cls: nw ? 'bh-lit' : '' };
+    });
+    var baseC = st.phase === 'ok' ? '#5CFF8A' : (st.bad ? '#FF3D7F' : '#fff');
+    var alive = st.players.filter(function (p) { return p.lives > 0; }).length;
+    return {
+      stageCls: st.phase === 'boom' ? 'bh-stage' : '',
+      hotFrame: hot ? 1 : 0, hotVis: hot ? 'visible' : 'hidden',
+      segs: segs, sparkDeg: f * 360, sparkC: hot ? '#FF3D7F' : '#FFC23D', bombVis: st.phase === 'boom' ? 'hidden' : 'visible',
+      arrowDeg: st.arrowDeg, arrowC: st.active === 0 ? '#FFE94A' : '#2EFFE0',
+      bombOn: st.phase !== 'boom', boomOn: st.phase === 'boom',
+      popCls: st.popN % 2 ? 'bh-popA' : 'bh-popB',
+      shakeCls: hot ? 'bh-shk2' : (warm ? 'bh-shk1' : 'bh-bob'),
+      hotTint: hot ? 0.6 : (warm ? 0.18 : 0),
+      chunk: st.chunk, chunkF: st.chunk.length > 2 ? 64 : 76,
+      secText: (Math.ceil(st.tLeft * 10) / 10).toFixed(1), secC: hot ? '#FF3D7F' : '#c9b8e8',
+      shards: shards, players: players,
+      myTurn: myTurn, myLetters: colorize(st.typed, st.chunk, baseC),
+      enterVis: st.typed.length >= 3 && st.phase === 'play' ? 'visible' : 'hidden',
+      inCls: st.badN ? (st.badN % 2 ? 'bh-noA' : 'bh-noB') : '',
+      okGlowCls: st.okN ? (st.okN % 2 ? 'bh-glowA' : 'bh-glowB') : '',
+      gainShow: st.gainShow, gainText: st.gainText, gainCls: st.gainN % 2 ? 'bh-upA' : 'bh-upB',
+      round: st.round, aliveText: alive + '/6',
+      alpha: alpha, alphaCount: st.used.length + '/26', bonusCls: st.bonusN ? 'bh-bonus' : '',
+      perL: st.perL, xpText: fmt(st.xp), xpCls: '',
+      demoMine: function () {
+        self.timers.forEach(clearTimeout); self.timers = [];
+        var ps = self.state.players.map(function (p) { return Object.assign({}, p); });
+        if (ps[0].lives < 1) ps[0].lives = MAXL;
+        self.setState({ players: ps, crackP: -1, hitP: -1, gainShow: false });
+        self.startTurn(0, 'ING');
+      },
+      demoOther: function () {
+        self.timers.forEach(clearTimeout); self.timers = [];
+        self.setState({ crackP: -1, hitP: -1, gainShow: false });
+        var n = self.nextAlive(self.state.active); if (n === 0) n = self.nextAlive(0);
+        self.startTurn(n);
+      },
+      demoBoom: function () { if (self.state.phase === 'play') self.boom(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -12,6 +12,12 @@
 // every pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
 import { noteLevelReached } from './gemsCore.js'; // GEMS: LEVEL_UP (a leaf module — no cycle)
+// PROGRESSION v3 (SEASON2 flag, default OFF): every v3 rule is a leaf module selected at the entry points below;
+// with the flag OFF each `if (SEASON2)` is skipped and every number + storage key is exactly as before.
+import { SEASON2, s2Key } from './season.js';
+import * as V3 from './v3/econ.js';
+import { needV3, creditXpV3 } from './v3/curve.js';
+import { getStarsV3, bumpCounter } from './v3/store.js';
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Tier
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -129,6 +135,7 @@ export const CURVE_V11_LEAN = 1.004;
 
 /** need(n) — PURE, the ONE curve. Any extra argument (v10's power) is ignored. Finite, ≥ 100. */
 export function needAt(n) {
+  if (SEASON2) return needV3(n); // v3: 40 × √level (closed form, v3/curve.js)
   let lv;
   if (Number.isFinite(n)) lv = Math.max(1, Math.floor(n));
   else if (n === Infinity) return Number.MAX_VALUE;
@@ -167,6 +174,7 @@ export const KEY_LADDER = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000];
 export const KEY_PAST_LADDER_STEP = 2.15;
 /** KEY tier → XP-per-letter multiplier (the ladder above). Finite at any tier. */
 export function keyXpMult(tier) {
+  if (SEASON2) return V3.powerXpMult(tier); // v3 POWER: 1.8^P
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
   if (t < KEY_LADDER.length) return KEY_LADDER[t];
   const v = KEY_LADDER[KEY_LADDER.length - 1] * Math.pow(KEY_PAST_LADDER_STEP, t - (KEY_LADDER.length - 1));
@@ -177,6 +185,7 @@ export function keyXpMult(tier) {
 export const REBIRTH_POWER = 5;
 const REBIRTH_CAP = 1e300;
 export function rebirthPow(rebirthCount) {
+  if (SEASON2) return V3.rebirthMult(rebirthCount); // v3: ×2 per rebirth
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
   const v = Math.pow(REBIRTH_POWER, rc);
   return Number.isFinite(v) ? Math.min(v, REBIRTH_CAP) : REBIRTH_CAP;
@@ -208,6 +217,8 @@ export function levelXpPerLetter(keyTier, rebirthCount, markMult = 1, baseAdd) {
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   const mm = Number.isFinite(markMult) && markMult > 0 ? markMult : 1;
   const add = baseAdd === undefined ? liveLetterBaseAdd() : Number.isFinite(baseAdd) && baseAdd > 0 ? baseAdd : 0;
+  // v3: 7 × 1.8^POWER × 2^R × (1 + ★) × MARK (the worn mark's +N BASE XP still adds to the base)
+  if (SEASON2) return V3.xpPerLetter({ power: kt, rebirths: rc, stars: getStarsV3(), mark: mm, markBase: add });
   // KEY and REBIRTH are each capped at 1e300, but their PRODUCT is not: past ~R430 it overflowed to Infinity,
   // and creditXp drops a non-finite gain to 0 — the bar would silently stop filling. Clamp the product.
   return finiteCap((LEVEL_XP_PER_LETTER + add) * keyXpMult(kt) * rebirthXpMult(rc) * mm);
@@ -296,7 +307,7 @@ export const REBIRTH_TABLE = [
 
 export function getRebirths() {
   try {
-    const raw = localStorage.getItem(REBIRTH_KEY);
+    const raw = localStorage.getItem(s2Key(REBIRTH_KEY));
     if (raw == null) return 0;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
@@ -306,7 +317,7 @@ export function getRebirths() {
 }
 export function saveRebirths(n) {
   try {
-    localStorage.setItem(REBIRTH_KEY, String(n));
+    localStorage.setItem(s2Key(REBIRTH_KEY), String(n));
   } catch {
     /* storage blocked */
   }
@@ -321,6 +332,7 @@ export const REBIRTH_GATE_BASE = 25;
 export const REBIRTH_GATE_STEP = 25;
 export function tableRebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
+  if (SEASON2) return V3.rebirthGate(rc); // v3: LV ⌈100 × 2.5^R⌉ (= 021's season-2 server gate)
   return REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * rc;
 }
 
@@ -332,7 +344,7 @@ export function tableRebirthThreshold(rebirthCount) {
 export const REBIRTH_GATE_KEY = 'taw.rbgate';
 export function grandfatheredGate() {
   try {
-    const g = JSON.parse(localStorage.getItem(REBIRTH_GATE_KEY) || 'null');
+    const g = JSON.parse(localStorage.getItem(s2Key(REBIRTH_GATE_KEY)) || 'null');
     if (g && Number.isFinite(g.rc) && g.rc >= 0 && Number.isFinite(g.lv) && g.lv >= 1) {
       return { rc: Math.floor(g.rc), lv: Math.floor(g.lv) };
     }
@@ -343,7 +355,7 @@ export function grandfatheredGate() {
 }
 export function clearGrandfatheredGate() {
   try {
-    localStorage.removeItem(REBIRTH_GATE_KEY);
+    localStorage.removeItem(s2Key(REBIRTH_GATE_KEY));
   } catch {
     /* blocked */
   }
@@ -352,6 +364,7 @@ export function clearGrandfatheredGate() {
 export function rebirthThreshold(rebirthCount) {
   const rc = Number.isFinite(rebirthCount) && rebirthCount > 0 ? Math.floor(rebirthCount) : 0;
   const table = tableRebirthThreshold(rc);
+  if (SEASON2) return table; // v3: one gate for everyone, no grandfathering
   const g = grandfatheredGate();
   return g && g.rc === rc && g.lv < table ? g.lv : table;
 }
@@ -407,10 +420,10 @@ export function doRebirth() {
   // and the Stats record read it, and under the Keyboard Escape loop every run ends in a rebirth.
   try {
     const peak = loadProgress().level;
-    const rec = JSON.parse(localStorage.getItem('taw.records') || 'null') || {};
+    const rec = JSON.parse(localStorage.getItem(s2Key('taw.records')) || 'null') || {};
     if (!(Number.isFinite(rec.maxLevel) && rec.maxLevel >= peak)) {
       rec.maxLevel = peak;
-      localStorage.setItem('taw.records', JSON.stringify(rec));
+      localStorage.setItem(s2Key('taw.records'), JSON.stringify(rec));
     }
   } catch {
     /* storage blocked / corrupt records — the rebirth still happens */
@@ -421,6 +434,7 @@ export function doRebirth() {
   // Andy oct5: KEY TIER is KEPT across rebirths (no more reset to T0)
   saveProgress({ level: 1, intoLevel: 0 });
   pendingRebirth = rc;
+  if (SEASON2) bumpCounter('reb'); // v3 ACHIEVEMENTS: REBIRTH (every climb)
   return rc;
 }
 
@@ -469,7 +483,7 @@ export const TIER_COST_STEP = 6; // cost multiplier per tier past T8
 
 export function getKeyTier() {
   try {
-    const raw = localStorage.getItem(KEYTIER_KEY);
+    const raw = localStorage.getItem(s2Key(KEYTIER_KEY));
     if (raw == null) return 0;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
@@ -479,7 +493,7 @@ export function getKeyTier() {
 }
 export function saveKeyTier(n) {
   try {
-    localStorage.setItem(KEYTIER_KEY, String(Math.max(0, Math.floor(n))));
+    localStorage.setItem(s2Key(KEYTIER_KEY), String(Math.max(0, Math.floor(n))));
   } catch {
     /* storage blocked */
   }
@@ -494,6 +508,7 @@ export const WINS_BASIS_PER_LETTER = 20;
 export const WINS_BASE_PER_WORD = 10; // "BASE 10" wins: WINS_BASIS_PER_LETTER × 5 letters ÷ 10
 // eslint-disable-next-line no-unused-vars
 export function keyTierXp(tier) {
+  if (SEASON2) return (V3.WINS_BASE * 10) / V3.WORD_REF; // v3: 15 wins a 5-letter word = 30 a letter in these units
   return WINS_BASIS_PER_LETTER;
 }
 // The wins cost to REACH a given tier (T0 = 0). Within the table it's the published price; past T8
@@ -509,6 +524,7 @@ const KEY_COST_CAP = 1e300;
 export function keyTierCostAt(tier, rebirthCount) {
   const t = Number.isFinite(tier) && tier > 0 ? Math.floor(tier) : 0;
   if (t === 0) return 0;
+  if (SEASON2) return V3.powerCostAt(t); // v3 POWER: P → P+1 costs 100 × 4^P wins
   const v = KEY_COST_C0 * Math.pow(KEY_COST_STEP, t - 1);
   if (!Number.isFinite(v)) return KEY_COST_CAP;
   // every price a round multiple of 10 (48 · 6^(t−1) → 50, 290, 1,730 …) while that is still exact
@@ -566,6 +582,7 @@ export function xpPerInput({ mode = 'menu', keyTier, rebirthCount, popMult = 1, 
 export const CREDIT_LOOP_MAX = 1e6;
 // eslint-disable-next-line no-unused-vars
 export function creditXp(state, xpGain, _ignoredPower) {
+  if (SEASON2) return creditXpV3(state, xpGain); // v3: O(1) closed-form carry (levels reach millions)
   let level = Number.isFinite(state && state.level) && state.level >= 1 ? Math.floor(state.level) : 1;
   let cost = needAt(level);
   let intoLevel;
@@ -642,6 +659,11 @@ export function xpPerWord({
   const bm = Number.isFinite(bonusMult) && bonusMult > 0 ? bonusMult : 1;
   // MARKS v2: a worn +N BASE WINS/WORD mark makes BASE 10 → 10 + N (before every multiplier): × (10 + N) / 10
   const ba = Number.isFinite(baseWinsAdd) && baseWinsAdd > 0 ? baseWinsAdd : 0;
+  if (SEASON2) {
+    // v3: WINS / word = (15 + mark base) × length/5 × MODE × 2^R × (1 + ★) × MARK × BOOST (× FRENZY on FUSE)
+    const b3 = keyTierXp() * ((V3.WINS_BASE + ba) / V3.WINS_BASE);
+    return roundWordXp(finiteCap(b3 * len * modePower(mode) * rebirthMult(rc) * V3.starMult(getStarsV3()) * bm));
+  }
   const base = keyTierXp() * ((WINS_BASE_PER_WORD + ba) / WINS_BASE_PER_WORD);
   return roundWordXp(finiteCap(base * len * modePower(mode) * rebirthMult(rc) * bm)); // never Infinity → 0
 }
@@ -792,12 +814,12 @@ export function resolveXpState(get) {
       return null;
     }
   };
-  const parsed = parseJson(g(XP_KEY));
+  const parsed = parseJson(g(s2Key(XP_KEY)));
   if (isV10Shape(parsed)) return { ...fromV10(parsed), source: 'v10' };
   const legacy = convertLegacyXp(parsed);
   const stamp = Number(g(ECON_STAMP_KEY));
-  const shadow = parseJson(g(XP_SHADOW_KEY));
-  const rcNow = toCount(g(REBIRTH_KEY));
+  const shadow = parseJson(g(s2Key(XP_SHADOW_KEY)));
+  const rcNow = toCount(g(s2Key(REBIRTH_KEY)));
   if (stamp >= XP_SHAPE_VERSION && isV10Shape(shadow)) {
     const sh = fromV10(shadow);
     if (legacy && rcNow > sh.rc) {
@@ -835,8 +857,8 @@ function writeLevelState(level, frac, rc) {
       rc: Number.isFinite(rc) && rc >= 0 ? Math.floor(rc) : getRebirths(),
       v: XP_SHAPE_VERSION,
     });
-    localStorage.setItem(XP_KEY, v);
-    localStorage.setItem(XP_SHADOW_KEY, v);
+    localStorage.setItem(s2Key(XP_KEY), v);
+    localStorage.setItem(s2Key(XP_SHADOW_KEY), v);
   } catch {
     /* storage blocked */
   }

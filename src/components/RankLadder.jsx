@@ -7,6 +7,9 @@
 import { useEffect, useRef } from 'react';
 import './RankLadder.css';
 import { RANKS, rankFor } from '../progress/rank';
+// v3 (SEASON2): ranks go by rebirths then stars — RANKS is that ladder, `min` its index, `req` what it needs ("R5",
+// "★10"); the ladder compares the live rank's index instead of the level.
+import { SEASON2 } from '../progress/season';
 
 // The top of each band (one below the next band's min; the last band is open-ended).
 function bandTop(i) {
@@ -27,6 +30,7 @@ export default function RankLadder({ level = 1, onClose }) {
   }, [onClose]);
 
   const current = rankFor(level);
+  if (SEASON2) level = current.min; // eslint-disable-line no-param-reassign
 
   return (
     <div
@@ -54,13 +58,13 @@ export default function RankLadder({ level = 1, onClose }) {
             // The next rank = the first band above the current one.
             const isNext = !earned && r.min > level && RANKS.findIndex((q) => !(level >= q.min)) === i;
             const top = bandTop(i);
-            const range = top === Infinity ? `LV ${r.min}+` : `LV ${r.min}–${top}`;
+            const range = r.req ? r.req : top === Infinity ? `LV ${r.min}+` : `LV ${r.min}–${top}`;
             const cls =
               `rank-row${earned ? ' is-earned' : ' is-locked'}` +
               `${isCurrent ? ' is-current' : ''}${isNext ? ' is-next' : ''}`;
             const aria = earned
               ? `Rank ${i + 1}, ${r.name}, ${range}${isCurrent ? ', your current rank' : ', earned'}`
-              : `Rank ${i + 1}, ${r.name}, locked, unlocks at LV ${r.min}${isNext ? ', next up' : ''}`;
+              : `Rank ${i + 1}, ${r.name}, locked, unlocks at ${r.req || `LV ${r.min}`}${isNext ? ', next up' : ''}`;
             return (
               <li key={r.name} className={cls} aria-label={aria}>
                 <span className="rank-num" aria-hidden="true">{i + 1}</span>
