@@ -11,11 +11,13 @@
 // Everything is OFF-by-default / persisted, and the AudioContext is only ever created or resumed
 // INSIDE a user gesture (enable*/ensureCtx run from the toggle/slider handlers), so nothing plays
 // before the user asks for it and OFF is genuinely silent.
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import './AudioControls.css';
 import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../audio/gameSounds';
 import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
+import { setReduceMotion } from '../lib/reduceMotion';
+import { useReduceMotion } from '../lib/useReduceMotion';
 
 // `variant` — 'fixed' (default) is the app-wide bottom-right corner control; 'inline' drops the
 // fixed positioning so it can sit INSIDE the menu's corner-nav cluster (fix/visual-real item 4),
@@ -34,6 +36,11 @@ export default function AudioControls({
   const [events, setEvents] = useState(() => isEventSoundsEnabled());
   const [clack, setClack] = useState(() => isClackEnabled());
   const [vol, setVol] = useState(() => getMasterVolume());
+  // REDUCE MOTION lives in this panel too: it is the app's one settings cluster (CLAUDE.md NO ORPHAN
+  // FIXED UI). OFF by default and NOT the OS setting — managed school Chromebooks force
+  // prefers-reduced-motion: reduce. Takes effect live (src/lib/reduceMotion.js flips <html data-reduce-motion>).
+  const reduceOn = useReduceMotion();
+  const motionLabelId = useId();
 
   const toggleEvents = () => {
     if (events) { disableEventSounds(); setEvents(false); }
@@ -80,6 +87,20 @@ export default function AudioControls({
           )}
           <Toggle on={clack} onClick={toggleClack} glyph="⌨" label="KEYSTROKE" />
           <Toggle on={events} onClick={toggleEvents} glyph="🔊" label="EVENTS" />
+          <div className="audio-row">
+            <span className="audio-row-label" id={motionLabelId}>REDUCE MOTION</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={reduceOn}
+              aria-labelledby={motionLabelId}
+              className={`audio-toggle audio-toggle--motion${reduceOn ? '' : ' off'}`}
+              style={{ borderColor: accent, color: accent }}
+              onClick={() => setReduceMotion(!reduceOn)}
+            >
+              ∿
+            </button>
+          </div>
           <div className="audio-row audio-row-vol">
             <span className="audio-row-label">VOLUME</span>
             <input

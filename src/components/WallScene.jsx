@@ -22,6 +22,8 @@ import { scenePositions } from '../progress/sceneLayout';
 import { getWallTier, WALL_EVENT, WALL_FX_DONE_EVENT } from '../progress/wallTier';
 import { WALL_FX_MS } from '../lib/menuMoments';
 import './WallScene.css';
+import { reduceMotion } from '../lib/reduceMotion';
+import { useReduceMotion } from '../lib/useReduceMotion';
 
 // ---- Self-writing graffiti: words that spray-paint themselves onto the wall
 // at random intervals and stay (capped, oldest drops off). ----
@@ -244,7 +246,7 @@ function WallScene({ intensity = 'calm', resetKey }) {
       const prev = sceneRef.current;
       if (next <= prev) return;
       sceneRef.current = next;
-      const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reduce = reduceMotion();
       fxRef.current = { from: prev, to: next, reduce };
       setScene(next);
     };
@@ -316,13 +318,14 @@ function WallScene({ intensity = 'calm', resetKey }) {
   // turns those into per-layer transl(e). Skipped entirely for reduced-motion
   // and non-cursor (touch) devices so neither tracks a phantom pointer.
   const rootRef = useRef(null);
+  // Live: flipping REDUCE MOTION in the settings panel re-runs this effect (on → torn down).
+  const reduceOn = useReduceMotion();
   useEffect(() => {
     const root = rootRef.current;
     if (!root || typeof window === 'undefined' || !window.matchMedia) return undefined;
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    if (reduceMotion || !finePointer) return undefined; // no real cursor / less motion
+    if (reduceOn || !finePointer) return undefined; // no real cursor / less motion
 
     root.classList.add('parallax-on');
 
@@ -378,7 +381,7 @@ function WallScene({ intensity = 'calm', resetKey }) {
       root.style.removeProperty('--mx');
       root.style.removeProperty('--my');
     };
-  }, []);
+  }, [reduceOn]);
 
   return (
     <div ref={rootRef} className={`wall-scene ${intensity}`} aria-hidden="true">

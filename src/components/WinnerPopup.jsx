@@ -15,16 +15,11 @@ import { useEffect, useRef, useState } from 'react';
 import { formatNum, formatMult } from '../format';
 import { createCountUp } from '../juice/countUp';
 import './WinnerPopup.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 const HOLD_MS = 3800; // pop-in + the (up to 2 s) count + a beat to read it; the fade-out starts here
 
-function reducedMotion() {
-  try {
-    return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return false;
-  }
-}
+const reducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, not the OS
 
 /** @param {{ pay: { wins:number, mult:number, tier:string, note:string|null } }} props */
 export default function WinnerPopup({ pay }) {

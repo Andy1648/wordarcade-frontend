@@ -1,9 +1,11 @@
 // src/juice/settings.js
-// Global motion/sound switches for the shared juice layer, plus live
-// prefers-reduced-motion detection. Pure: reading any of these has no side
+// Global motion/sound switches for the shared juice layer, plus the live
+// in-game REDUCE MOTION toggle. Pure: reading any of these has no side
 // effects, so the effect primitives (squash / burst / shake / sfx) can consult
 // them and individual call sites never have to think about accessibility or the
 // global mute. Defaults are ON; callers flip them to honor an app-level toggle.
+
+import { reduceMotion } from '../lib/reduceMotion.js';
 
 const settings = { motion: true, sound: true };
 
@@ -14,21 +16,17 @@ export function setSound(on) { settings.sound = !!on; }
 export function setMuted(muted) { settings.sound = !muted; }
 export function getSettings() { return { ...settings }; }
 
-// Live OS preference - queried per call so the module installs no listener at
-// import time (keeps it side-effect-free until an effect actually runs). Wrapped
-// because matchMedia is missing in some non-browser/test environments.
+// The in-game REDUCE MOTION toggle (src/lib/reduceMotion.js). NOT the OS media query: managed
+// school Chromebooks force prefers-reduced-motion: reduce, which killed every effect for players
+// who never asked. The name is kept so existing callers read naturally.
 export function prefersReducedMotion() {
-  try {
-    return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-  } catch {
-    return false;
-  }
+  return reduceMotion();
 }
 
 // --- predicates the effects gate on ---
 // The user-facing motion flag alone (a hard off switch).
 export const motionFlag = () => settings.motion;
-// Motion that is also allowed by the OS (off if the flag is off OR reduce is on).
+// Motion that is also allowed by REDUCE MOTION (off if the flag is off OR reduce is on).
 export const motionAllowed = () => settings.motion && !prefersReducedMotion();
 export const soundAllowed = () => settings.sound;
 export const reduced = () => prefersReducedMotion();

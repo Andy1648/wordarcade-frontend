@@ -7,6 +7,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { sfx } from '../juice';
 import './CardPager.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
 const PER_PAGE = 3;
 
@@ -96,9 +97,7 @@ function Controls({ page, onFlip, gridRef, rowRef, blockedRef }) {
       const first = grid.querySelector(`.game-card-magnet:nth-child(${page * PER_PAGE + 1}) .game-card`);
       if (first) first.focus({ preventScroll: true });
     }
-    let reduce = false;
-    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { reduce = false; }
-    if (reduce || typeof grid.animate !== 'function') return undefined;
+    if (reduceMotion() || typeof grid.animate !== 'function') return undefined;
     grid.style.willChange = 'transform, opacity';
     const anim = grid.animate(
       [{ transform: `translateX(${dir * 48}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }],

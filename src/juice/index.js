@@ -2,7 +2,7 @@
 // Shared game-feel ("juice") layer: a single import surface for squash, flash,
 // burst, shake, hitStop, mark and synthesized sfx. Pure-additive and
 // side-effect-free on import - canvases, the rAF loop and the AudioContext are
-// all created lazily on first use. Accessibility (prefers-reduced-motion) and a
+// all created lazily on first use. Accessibility (the in-game REDUCE MOTION toggle) and a
 // global motion/sound flag are honored inside the module, so callers just call.
 //
 //   import { squash, flash, burst, sfx } from '../juice';

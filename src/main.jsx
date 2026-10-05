@@ -14,6 +14,7 @@ import './theme/themes.css'
 // that already exists, so it must win the cascade on equal specificity.
 import './theme/arcane.css'
 import { initTheme } from './theme/themes'
+import { initReduceMotion } from './lib/reduceMotion'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'
 import { installChunkReloadGuard, isStaleChunkError } from './lib/chunkReload'
@@ -49,6 +50,9 @@ try { installSwUpdateReload() } catch { /* never block startup */ }
 // Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
 // player's palette (no default-then-swap flash). Guarded internally; a blocked store → default.
 try { initTheme() } catch { /* never block startup */ }
+// REDUCE MOTION: the in-game toggle owns data-reduce-motion. index.html's one-line inline script sets it
+// pre-paint (so a player who turned it on never sees a frame of motion); this is the fallback.
+try { initReduceMotion() } catch { /* never block startup */ }
 
 // ---- Third-party boot (perf/first-load): NOTHING third-party runs on the critical path. ----
 // Sentry's init and PostHog both start from ONE idle callback scheduled after the window 'load'

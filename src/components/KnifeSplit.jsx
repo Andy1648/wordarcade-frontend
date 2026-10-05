@@ -37,6 +37,7 @@ import './TransitionIntro.css';
 // inline-block <span> letters (not a plain text node) makes the per-letter advance
 // rounding / kerning identical, so the title width doesn't jump at the handoff.
 import { IntroLetters } from './TransitionIntro.jsx';
+import { reduceMotion } from '../lib/reduceMotion';
 
 // ===== Shared geometry =====
 const CUT_ANGLE = 4; // deg — drives BOTH the slash rotation AND the seam clip
@@ -65,11 +66,7 @@ const COVER_COLOR = '#000';
 const TOTAL = SLASH_DELAY + SLASH_DRAW + SLASH_HOLD + OPEN_GAP + OPEN_DUR; // ~2020ms
 
 function prefersReduced() {
-  return (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  return reduceMotion();
 }
 
 export default function KnifeSplit({ onComplete, onSlash, onOpen }) {

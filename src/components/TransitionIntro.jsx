@@ -27,13 +27,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSound } from '../contexts/SoundContext';
 import './TransitionIntro.css';
+import { reduceMotion } from '../lib/reduceMotion';
 
-// Whether the viewer asked for reduced motion. Read once - the card lives ~2.5s,
-// so it doesn't need to react to a mid-card preference change.
-const PREFERS_REDUCED =
-  typeof window !== 'undefined' &&
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Whether REDUCE MOTION is on (the in-game toggle, not the OS). Read once per card
+// mount (below) - the card lives ~2.5s, so it doesn't need to react to a mid-card change.
 
 // The second title line. Its length is the number of per-letter entrance
 // animations we wait on before handing off (one `die-letter-in` per character).
@@ -74,6 +71,7 @@ export function IntroLetters({ text }) {
  *   so App can run the knife-split reveal to the homepage and fade the music up.
  */
 export default function TransitionIntro({ onComplete }) {
+  const [PREFERS_REDUCED] = useState(reduceMotion);
   // 'black' -> 'line1' -> 'line2'
   const [step, setStep] = useState('black');
   // Bumped per impact so the white flash re-mounts and replays.
@@ -256,7 +254,7 @@ export default function TransitionIntro({ onComplete }) {
       window.removeEventListener('pointermove', onMove);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [PREFERS_REDUCED]); // fixed for the card's life (read once on mount)
 
   // Both line elements stay mounted once revealed (so a punch never replays and
   // the layout never reflows); their `active` class drives the entrance, then the

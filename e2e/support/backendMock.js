@@ -20,6 +20,85 @@ import { menuReady } from './menu.js';
 const BACKEND_WS_RE = /onrender\.com/;
 
 /**
+ * REDUCE MOTION MIRROR. The app no longer reads the OS `prefers-reduced-motion` setting — reduce
+ * motion is an in-game toggle stored at localStorage `taw.reduceMotion` (src/lib/reduceMotion.js),
+ * because managed school Chromebooks force the OS setting on. But this SUITE relies on calm motion:
+ * playwright.config.js emulates `reducedMotion: 'reduce'`, and dozens of specs assume that stills
+ * the decorative loops. So the harness mirrors the EMULATED media query into the toggle: while the
+ * page matches `(prefers-reduced-motion: reduce)` and the key is absent, it seeds `'1'`; a spec that
+ * opts into `no-preference` (test.use or page.emulateMedia) gets motion back, live. Every existing
+ * spec therefore sees exactly the motion it saw when the app followed the OS.
+ *
+ * It only ever touches a value IT wrote (remembered in sessionStorage), so a spec that sets the key
+ * itself, or a click on the in-game toggle, always wins. Idempotent per page.
+ * `installBackendMock(page, { seedReduceMotion: false })` skips it (e2e/reduce-motion-toggle.spec.js).
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function mirrorReduceMotion(page) {
+  if (page.__tawReduceMotionMirror) return;
+  page.__tawReduceMotionMirror = true;
+  await page.addInitScript(() => {
+    const KEY = 'taw.reduceMotion';
+    const OWN = 'taw.e2e.reduceMotionMirror'; // the value the mirror last wrote
+    let mq;
+    try {
+      mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    } catch {
+      return;
+    }
+    const sync = () => {
+      try {
+        const cur = localStorage.getItem(KEY);
+        const mine = sessionStorage.getItem(OWN);
+        if (cur !== null && cur !== mine) return false; // set by the spec / the toggle — leave it
+        if (mq.matches) {
+          if (cur === '1') return false;
+          localStorage.setItem(KEY, '1');
+          sessionStorage.setItem(OWN, '1');
+          return true;
+        }
+        sessionStorage.removeItem(OWN);
+        if (cur === null) return false;
+        localStorage.removeItem(KEY);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    sync();
+    // A spec's own init script may localStorage.clear() before seeding — re-seed after it.
+    try {
+      const clear = Storage.prototype.clear;
+      Storage.prototype.clear = function clearKeepReduceMotionMirror() {
+        clear.call(this);
+        if (this === window.localStorage) {
+          try {
+            sessionStorage.removeItem(OWN);
+          } catch {
+            /* ignore */
+          }
+          sync();
+        }
+      };
+    } catch {
+      /* no Storage */
+    }
+    // page.emulateMedia mid-test: follow it live (the app listens for `storage`, like a second tab).
+    const onChange = () => {
+      if (!sync()) return;
+      try {
+        window.dispatchEvent(new StorageEvent('storage', { key: KEY, newValue: localStorage.getItem(KEY) }));
+      } catch {
+        /* ignore */
+      }
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  });
+}
+
+/**
  * Install the WebSocket intercept + external-network block. Call this BEFORE
  * page.goto so it is in place when the app opens its socket on mount.
  *
@@ -28,6 +107,8 @@ const BACKEND_WS_RE = /onrender\.com/;
  * @param {boolean} [opts.autoConnect=true] - send a `connected` frame on open so
  *   the app's wsStatus flips to 'open' (matching a real backend handshake), which
  *   is what unblocks the connect-gated CREATE / JOIN buttons on the menu.
+ * @param {boolean} [opts.seedReduceMotion=true] - mirror the emulated prefers-reduced-motion into
+ *   the in-game REDUCE MOTION toggle (see mirrorReduceMotion). false = the app's real default (motion ON).
  * @param {number} [opts.openDelayMs=0] - hold the socket in the 'connecting' state
  *   for this long before it opens (awaited inside the route handler, which delays
  *   the client's `onopen`). Simulates a cold Render backend so a test can observe
@@ -41,7 +122,10 @@ const BACKEND_WS_RE = /onrender\.com/;
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true, openDelayMs = 0, newTutorials = false } = opts;
+  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true } = opts;
+
+  // Mirror the emulated prefers-reduced-motion into the in-game REDUCE MOTION toggle (see above).
+  if (seedReduceMotion) await mirrorReduceMotion(page);
 
   // SPOTLIGHT TUTORIALS: the KEY TIER spotlight covers the SHOP the first time a KEY tier is affordable, and
   // the GEMS one covers the menu the first time the gem count shows — every shop / menu spec that seeds wins
@@ -210,6 +294,7 @@ export async function freezeAnimations(page) {
  * @param {import('@playwright/test').Page} page
  */
 export async function gotoMenu(page) {
+  await mirrorReduceMotion(page); // no-op if installBackendMock already installed it
   await page.goto('/?portal=1');
   // The homepage wordmark is the menu's stable landmark.
   await menuReady(page);

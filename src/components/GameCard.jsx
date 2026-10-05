@@ -8,6 +8,7 @@ import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
 import { formatRate, formatMultExact } from '../format';
 import './GameCard.css';
+import { reduceMotion, onReduceMotionChange } from '../lib/reduceMotion';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
 // layer in GameCard.css. Falls back to the card's fill for any other game.
@@ -88,7 +89,7 @@ const magnet = (() => {
     active =
       typeof window !== 'undefined' &&
       window.matchMedia('(pointer: fine)').matches &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      !reduceMotion();
     if (!active) return; // touch / reduced-motion: stay static (CSS rest pose)
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('blur', onLeave);
@@ -107,6 +108,18 @@ const magnet = (() => {
     document.removeEventListener('mouseleave', onLeave);
     window.removeEventListener('resize', measure);
   }
+
+  // Live REDUCE MOTION: flipping the toggle restarts the loop (on → stays at the CSS rest pose).
+  onReduceMotionChange(() => {
+    if (!cards.size) return;
+    stop();
+    for (const c of cards) {
+      c.el.style.transform = '';
+      c.el.style.willChange = '';
+    }
+    start();
+    if (active) for (const c of cards) c.el.style.willChange = 'transform';
+  });
 
   return {
     register(card) {

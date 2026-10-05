@@ -9,6 +9,7 @@
 // existing static hover/glow.
 
 import { useEffect } from 'react';
+import { useReduceMotion } from './useReduceMotion';
 
 const PULL = 0.34; // fraction of cursor-distance pulled toward
 const STIFF = 0.16; // spring stiffness toward the target
@@ -161,14 +162,15 @@ export function unregisterMagnet(it) {
 // with motion allowed engages; touch/coarse + reduced-motion are no-ops, leaving
 // the element's existing static hover/press/glow untouched.
 export function useMagneticPull(ref, { max, base = 6 }) {
+  // Live: flipping REDUCE MOTION re-runs the effect (on → the magnet is unregistered).
+  const reduce = useReduceMotion();
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return undefined;
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!fine || reduce) return undefined;
     const el = ref.current;
     if (!el) return undefined;
     const handle = registerMagnet(el, { max, base });
     return () => unregisterMagnet(handle);
-  }, [ref, max, base]);
+  }, [ref, max, base, reduce]);
 }

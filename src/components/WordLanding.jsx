@@ -44,7 +44,7 @@ export function hasLanding(band, secret) {
  * @param {string} props.band    COMMON | UNCOMMON | RARE | OBSCURE
  * @param {number} [props.wins]  what it paid — shown counting up on OBSCURE and on a secret
  * @param {{stamp: string, wins: number}|null} [props.secret]  a secret found ON this word
- * @param {boolean} [props.reduced]  prefers-reduced-motion (the caller reads the media query once)
+ * @param {boolean} [props.reduced]  REDUCE MOTION is on (the caller reads the in-game toggle once)
  */
 export default function WordLanding({ word, band = 'COMMON', wins = 0, secret = null, reduced = false }) {
   const showCount = band === 'OBSCURE' || !!secret;

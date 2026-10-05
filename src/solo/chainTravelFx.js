@@ -15,13 +15,13 @@
 //    `void el.offsetWidth` reflow hack.
 //  - Keyframes are transform (translate) + opacity ONLY; nothing here ever touches the
 //    input or any ancestor of it.
+import { reduceMotion } from '../lib/reduceMotion.js';
 
 const DURATION_MS = 260;
 const EASING = 'cubic-bezier(.2,.8,.2,1)';
 const OPTS = { duration: DURATION_MS, easing: EASING, fill: 'both' };
 
-const prefersReduced = () =>
-  typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReduced = reduceMotion; // the in-game REDUCE MOTION toggle, not the OS
 
 export function createTravelFx({ root, traveler, fader }) {
   let geom = null; // { outCx, outCy, inCx, inCy } in root-local px
