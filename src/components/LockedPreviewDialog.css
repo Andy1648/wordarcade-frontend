@@ -25,10 +25,11 @@
   padding: 28px 26px 26px;
   text-align: center;
   outline: none;
-  animation: lp-pop 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lp-pop 480ms cubic-bezier(0.34, 1.4, 0.64, 1) both; /* bigger + longer (oct5), still one-shot */
 }
 @keyframes lp-pop {
-  from { transform: scale(0.9); opacity: 0; }
+  from { transform: scale(0.8) translateY(14px); opacity: 0; }
+  60% { opacity: 1; }
   to { transform: scale(1); opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {

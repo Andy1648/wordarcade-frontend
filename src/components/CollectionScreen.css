@@ -68,7 +68,7 @@
 .coll-total-label { font-size: var(--fs-label); letter-spacing: 0.1em; color: #b9a7d6; font-weight: 700; }
 
 .coll-milestone { margin: 0 0 6px; }
-.coll-milestone-track { height: 12px; background: #2a1f3d; border: 2px solid #000; border-radius: 8px; overflow: hidden; }
+.coll-milestone-track { height: 16px; background: #2a1f3d; border: 2px solid #000; border-radius: 8px; overflow: hidden; }
 .coll-milestone-fill { height: 100%; background: #FFE94A; }
 .coll-milestone-label { margin-top: 6px; text-align: center; font-weight: 700; font-size: var(--fs-label); color: #ffe94a; letter-spacing: 0.04em; }
 .coll-milestone-done { color: #2EFFE0; }

@@ -220,7 +220,7 @@
   border: 3px solid #000;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body); /* visual-1: was --fs-label — the count is the news */
   line-height: 1;
 }
 .homepage-shop-dot {
@@ -798,6 +798,14 @@ html[data-beat='true'] .homepage-logo {
   .menu-xp-cluster { gap: 3px; }
   .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
   .homepage-footer-links { margin-top: 0; }
+  /* visual-1 CROWDING (1163x501, six 166px cards): ONE BIG THING is the title + the featured card,
+     so the short screen spends nothing on words that repeat what a shape already says.
+     - The LEVEL kicker goes: the numeral in the cyan badge is self-evident (it already goes under
+       400px wide), and at --fs-body it would have grown the badge past the 44px track.
+     - The live-WPM / "longer words pay more" tail of the hint row stays, but the row loses its
+       tracking so it holds one line at --fs-body. */
+  .menu-xp-bar.is-loud .menu-xp-label { display: none; }
+  .homepage-stage .menu-xp-hint { letter-spacing: 0; }
 }
 
 /* ---- SHORT ARRANGEMENT (fix/card-fit-height) -------------------------------------------------
@@ -1175,7 +1183,7 @@ html[data-beat='true'] .homepage-beat-glow {
 .connecting-sub {
   font-family: 'Space Mono', monospace;
   font-weight: 400;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
+  font-size: var(--fs-body) /* visual-1: was --fs-label — it is the wait's only explanation */;
   letter-spacing: 0.02em;
   text-transform: none;
   margin-top: 2px;

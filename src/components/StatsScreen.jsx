@@ -320,8 +320,6 @@ export default function StatsScreen({ onBack }) {
           <h3 className="stats-subtitle">
             SECRETS <span className="stats-secret-count">{fmt(secrets.found)} / {fmt(secrets.total)} FOUND</span>
           </h3>
-          {/* H6/M18: two masked grids that look the same, so each says what it holds. */}
-          <p className="stats-caption">THINGS YOU DO — FIND THEM BY PLAYING</p>
           <div className="stats-secrets">
             {secrets.items.map((sec) => (
               <div

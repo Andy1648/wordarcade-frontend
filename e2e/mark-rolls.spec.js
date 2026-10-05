@@ -1,7 +1,7 @@
 // e2e/mark-rolls.spec.js — MARK ROLLS UI (Andy M + H3; the oct3 review hybrid). Written WITHOUT being run (memory
 // rules on the authoring machine); Andy runs it. Covers: open MARKS → the ROLL tutorial → roll once → a result
 // card, and % COLLECTED / pity only move when the reveal LANDS; the ROLL button never moves; a short balance says
-// NEED X MORE; reduced motion shows a static card; the worn mark reads MAIN ×N; nothing loops after a reveal.
+// NEED X MORE; reduced motion shows a static card; the worn mark reads its STAT (marks v2: "+10% WINS", "+1 BASE WINS/WORD" …); nothing loops after a reveal.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -33,7 +33,8 @@ async function openMarks(page) {
 const collected = (page) => page.locator('[data-testid="marks-collected"]').getAttribute('data-pct').then(Number);
 const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
-  return el && el.closest && el.closest('.mr-stage, .mr-cover');
+  // RUNNING only: a finished one-shot (the rarity sweep's fill-mode both) stays in getAnimations() but moves nothing
+  return el && el.closest && el.closest('.mr-stage, .mr-cover') && a.playState === 'running';
 }).length);
 
 test('roll once: tutorial, result card, nothing updates before the reveal lands, nothing loops after', async ({ page }) => {
@@ -72,7 +73,7 @@ test('roll once: tutorial, result card, nothing updates before the reveal lands,
   await expect(page.locator('.mr-pity')).toContainText(/EPIC\+ IN ≤\d+/);
   await expect(page.locator('.mr-luck')).toHaveText(/^LUCK ×[\d.]+$/);
   // nothing worn → the first mark AUTO-equips (no question, a hold never stalls) and the hero shows it
-  await expect(page.locator('[data-testid="marks-main-tag"]')).toHaveText(/^MAIN ×\d/);
+  await expect(page.locator('[data-testid="marks-main-tag"]')).toHaveText(/^\+[\d.,]+/);
   await expect(page.locator('.mx-hero')).not.toContainText('NO MAIN YET');
   // every reveal is finite: once landed, nothing in the roll UI animates, nothing loops, will-change is off
   await page.waitForTimeout(2700);
@@ -155,8 +156,8 @@ test('the worn mark shows MAIN ×N; every other owned mark shows its perk or MAI
   await openMarks(page);
   await page.locator('.mr-roll').click();
   const card = page.locator('[data-testid="mark-roll-result"]');
-  await expect(card.locator('.mr-card-tag')).toHaveText(/^MAIN ×\d/, { timeout: 4000 });
-  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^MAIN ×\d/);
+  await expect(card.locator('.mr-card-tag')).toHaveText(/^\+[\d.,]+/, { timeout: 4000 });
+  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/);
   // roll until a SECOND distinct mark is owned; it reads PERK, not MAIN
   for (let i = 0; i < 12; i += 1) {
     const owned = await page.locator('.mx-tile:not(.is-locked):not(.is-on)').count();
@@ -167,7 +168,7 @@ test('the worn mark shows MAIN ×N; every other owned mark shows its perk or MAI
   await page.waitForTimeout(2700);
   const other = page.locator('.mx-tile:not(.is-locked):not(.is-on) .mx-tile-sub').first();
   // MARKS via ROLLS: a non-worn owned mark shows its PERK line (LEGENDARY+) or what wearing it pays
-  await expect(other).toHaveText(/^(MAIN ×[\d.]+|[A-Z][A-Z0-9 ×+]+)$/);
+  await expect(other).toHaveText(/^(\+[\d.,]+.*|[A-Z][A-Z0-9 ×+:]+)$/);
   await page.locator('.mx-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText(/^×\d/);
 });
