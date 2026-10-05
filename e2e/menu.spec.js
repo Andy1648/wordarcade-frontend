@@ -96,12 +96,13 @@ test.describe('menu', () => {
     expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split('\n').join(' '));
 
     // PROGRESSION v11 (amended): LETTERS fill the bar at ONE price — BASE 10 XP / LETTER on a fresh
-    // profile (T0, R0, no mark), menu or game — and the featured card says so. Words pay WINS only.
+    // profile (T0, R0, no mark), menu or game. Words pay WINS only.
     const letters = Number((m.hint.match(/(\d[\d,]*)\s+LETTERS?/) || [])[1].replace(/,/g, ''));
     const cost = Number(m.cost.replace(/[^0-9]/g, ''));
     expect(letters, `hint "${m.hint}" over ${cost}`).toBe(Math.ceil(cost / 10));
     expect(m.hint).not.toMatch(/WORDS? TO/);
-    expect(m.cardXp).toContain('BASE 10 XP / LETTER');
+    // the card is ONE line since #172 ("BASE n / WORD · POWER ×N") — the XP rule lives on the bar's hint, not the card
+    expect(m.cardXp).toBeNull();
   });
 
 });

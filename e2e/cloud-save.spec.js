@@ -13,6 +13,7 @@ const seedProgress = (page, lv) => page.addInitScript((lv) => {
   localStorage.setItem('taw.seenMenu', '1');
   localStorage.setItem('taw.seenMenuSpotlight', '1');
   localStorage.setItem('taw.xp', JSON.stringify({ lv, into: 0 }));
+  localStorage.setItem('taw.econ', '12'); // already on Rebirth Rush (this spec is about backup + restore, not the conversion)
   localStorage.setItem('taw.rebirths', '2');
   localStorage.setItem('taw.wins', '4242');
 }, lv);

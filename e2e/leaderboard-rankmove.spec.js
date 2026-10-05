@@ -33,6 +33,7 @@ async function setup(page, { lastRank = 12 } = {}) {
       sessionStorage.setItem('rankmove.seeded', '1');
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.xp', JSON.stringify({ lv: 60, into: 0 }));
+      localStorage.setItem('taw.econ', '12'); // already on Rebirth Rush (this spec is about the rank move, not the conversion)
       localStorage.setItem('taw.lb.secret', 's'.repeat(48));
       localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'me', username: 'Climber_1' }));
       localStorage.setItem('taw.lb.lastRank', String(last));

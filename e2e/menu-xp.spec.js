@@ -28,7 +28,7 @@ test.describe('menu XP', () => {
     // (frame-count-bound, so robust even when parallel test load throttles the frame rate); a
     // huge fresh-context 0→0.8 gap would instead take many frames and isn't what "at rest" means.
     await page.addInitScript(() => {
-      try { localStorage.setItem('taw.xp', '200000'); } catch { /* storage blocked */ }
+      try { localStorage.setItem('taw.xp', '200000'); localStorage.setItem('taw.econ', '12'); } catch { /* storage blocked */ } // econ 12: already on Rebirth Rush (no conversion to rebirths)
     });
     await gotoMenuLive(page);
     await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'q', bubbles: true })));
