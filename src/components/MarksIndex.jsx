@@ -1,19 +1,20 @@
 // MarksIndex.jsx — INDEX v2 (Andy oct5, verbatim): "INDEX (separate button): unowned marks are locked silhouettes
 // with rarity colour + "1 IN X". Each new mark and each ★ level pays wins; there's a per-rarity completion reward.
-// Card face max 4 things (name, rarity, 1 IN X, stat). Tap shows the flavour line, owned count, first roll #, and
-// a replay-reveal button."
+// Card face max 4 things (name, rarity, 1 IN X, stat). Tap shows the flavour line, owned count, first roll #."
+//
+// ROLL vs INDEX are TWO screens, never mixed (Andy oct5): this is the COLLECTION only — no roll buttons, no pity,
+// no gems, and no REPLAY (it jumped back to the reel, mixing the two). Rolling lives on the ROLL screen
+// (rollScreen/RollScreen.jsx). WORDS (Andy oct5: "cut words everywhere except the INDEX detail view"): the grid is
+// data only; the detail Sheet alone carries the flavour, how-to, perk and the "7/10 → ★3" line.
 //
 // PROPS (the ROLL screen opens this from its INDEX button):
 //   onClose()           close the INDEX
-//   onReplay(markId)    replay that mark's reveal (the detail's REPLAY button; owned rollable marks only)
 //   unlockedIds, equippedId, earned, onEquip   optional — the owned set / worn MAIN; with onEquip the detail can
-//                       SET AS MAIN. achievementNames names a locked PERMANENT's task.
-// Rolling lives on the ROLL screen (rollScreen/RollScreen.jsx) — this screen never rolls. Without onReplay the
-// detail simply has no REPLAY button.
+//                       SET AS MAIN. achievementNames names a locked PERMANENT's task (detail only).
 //
-// THE CARD (rule: max 4 things) — name · rarity · 1 IN X · stat, on the tier's fill; the ★ pips sit under the
-// art with their "7/10 → ★3" (Andy: "Card shows 7/10 → ★3"). LOCKED: no name — a silhouette (an asset, masked
-// and painted in the tier colour) + rarity + 1 IN X. PERMANENT: its task instead of odds.
+// THE CARD (rule: max 4 things) — name · rarity · 1 IN X · stat, on the tier's fill; the ★ pip graphic sits under
+// the art. LOCKED: no name — a silhouette (an asset, masked and painted in the tier colour) + rarity + 1 IN X.
+// PERMANENT: rarity only; its task is in the detail.
 // COMPLETION: one chip per rarity in the head, filled in the tier colour by owned/total (numbers only, no words);
 // a complete tier is a solid tier fill. The engine pays the INDEX rewards (new mark / ★ / tier complete) — this
 // screen never states an amount, so it can never claim more than it pays.
@@ -85,8 +86,8 @@ function Silhouette({ className = '' }) {
   );
 }
 
-/** The art block: the mark (or its silhouette) with the ★ pip row + "7/10 → ★3" under it. */
-function Art({ e, have, size, pips, view }) {
+/** The art block: the mark (or its silhouette) with the ★ pip row under it (+ "7/10 → ★3" in the detail only). */
+function Art({ e, have, size, pips, view, pipWords = false }) {
   const legacy = markById(e.id);
   return (
     <span className="mx-art">
@@ -96,7 +97,7 @@ function Art({ e, have, size, pips, view }) {
       {have && pips ? (
         <span className="mx-pips">
           <MarkPips pips={pips.pips} />
-          <span className="mx-pips-text">{pipText(pips)}</span>
+          {pipWords ? <span className="mx-pips-text">{pipText(pips)}</span> : null}
         </span>
       ) : null}
       {have && view && view.marks && view.marks[e.id] && view.marks[e.id].shiny ? <ShinyBadge className="mx-tile-shiny" /> : null}
@@ -104,7 +105,7 @@ function Art({ e, have, size, pips, view }) {
   );
 }
 
-function Sheet({ e, have, on, view, howTo, onSet, onReplay, onClose }) {
+function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
   const closeRef = useRef(null);
   useEffect(() => { closeRef.current?.focus(); }, [e.id]);
   const rolled = e.kind === 'roll';
@@ -124,7 +125,7 @@ function Sheet({ e, have, on, view, howTo, onSet, onReplay, onClose }) {
         onClick={(ev) => ev.stopPropagation()}
       >
         <button type="button" className="mx-close mx-sheet-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
-        <Art e={e} have={have} size={132} pips={pips} view={view} />
+        <Art e={e} have={have} size={132} pips={pips} view={view} pipWords />
         <div className="mx-sheet-body">
           {have ? <div className="mx-sheet-name">{e.name}</div> : null}
           <div className="mx-sheet-tier">
@@ -141,16 +142,11 @@ function Sheet({ e, have, on, view, howTo, onSet, onReplay, onClose }) {
               {info.firstRoll ? <span data-testid="mark-first-roll">FIRST ROLL #{formatNum(info.firstRoll)}</span> : null}
             </div>
           ) : null}
-          {have && (onReplay || onSet) ? (
+          {have && onSet ? (
             <div className="mx-sheet-actions">
-              {rolled && onReplay ? (
-                <button type="button" className="mx-replay" onClick={() => onReplay(e.id)}>REPLAY</button>
-              ) : null}
-              {onSet ? (
-                <button type="button" className={`mx-set${on ? ' is-on' : ''}`} onClick={() => onSet(on ? null : e.id)}>
-                  {on ? 'YOUR MAIN — TAKE OFF' : 'SET AS MAIN'}
-                </button>
-              ) : null}
+              <button type="button" className={`mx-set${on ? ' is-on' : ''}`} onClick={() => onSet(on ? null : e.id)}>
+                {on ? 'YOUR MAIN — TAKE OFF' : 'SET AS MAIN'}
+              </button>
             </div>
           ) : null}
         </div>
@@ -161,7 +157,7 @@ function Sheet({ e, have, on, view, howTo, onSet, onReplay, onClose }) {
 }
 
 export default function MarksIndex({
-  onClose, onReplay, unlockedIds = [], equippedId = null, achievementNames = {}, earned = [], onEquip,
+  onClose, unlockedIds = [], equippedId = null, achievementNames = {}, earned = [], onEquip,
 }) {
   const idsRef = useRef(unlockedIds);
   idsRef.current = unlockedIds;
@@ -229,10 +225,10 @@ export default function MarksIndex({
             const rolled = e.kind === 'roll';
             const lv = rolled && have ? markLevel(view, e.id) : null;
             const pips = lv ? { pips: lv.pips, have: lv.have, need: lv.need } : null;
-            // the FOUR things: name · rarity · 1 IN X · stat (locked: rarity · 1 IN X; PERMANENT: its task)
+            // the FOUR things: name · rarity · 1 IN X · stat (locked: rarity · 1 IN X). No prose on the grid — a
+            // locked PERMANENT's task is in the detail sheet only (Andy oct5).
             const odds = rolled ? `1 IN ${formatNum(oneInX(e.id))}` : '';
             const stat = have ? markTag(e.id, view) : ''; // the compact line — the detail sheet spells out the rest
-            const task = !have && e.kind === 'perm' ? ACH_HINT[e.from] || achievementNames[e.from] || '' : '';
             return (
               <button
                 key={e.id}
@@ -250,7 +246,6 @@ export default function MarksIndex({
                 <span className="mx-tile-tier">{tierName(e.tier)}</span>
                 {odds ? <span className="mx-tile-odds">{odds}</span> : null}
                 {stat ? <span className="mx-tile-sub">{stat}</span> : null}
-                {task ? <span className="mx-tile-sub is-task">{task}</span> : null}
                 {on && <span className="mx-tile-main">MAIN</span>}
                 {have ? <RarityFx tier={e.tier} /> : null}
               </button>
@@ -267,7 +262,6 @@ export default function MarksIndex({
           view={view}
           howTo={selE.kind === 'perm' ? ACH_HINT[selE.from] || achievementNames[selE.from] || selE.from : ''}
           onSet={set}
-          onReplay={typeof onReplay === 'function' ? onReplay : null}
           onClose={() => setSel(null)}
         />
       ) : null}

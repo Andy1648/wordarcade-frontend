@@ -184,12 +184,7 @@ export function autoShouldStop(result, until = 'epic') {
 export const AUTO_GAP_MS = 420;
 
 // ---- copy helpers (no new words) ----
-/** The short-balance line: "NEED 4 MORE GEMS" (GEMS buy rolls — Andy oct5; wins never do). */
+/** The short-balance sentence, for screen readers only: "NEED 4 MORE GEMS" (the screen shows −4 + gem) (GEMS buy rolls — Andy oct5; wins never do). */
 export function needMoreText(price, have, fmt = (n) => String(n)) {
   return `NEED ${fmt(Math.max(1, Math.ceil(price - have)))} MORE GEMS`;
-}
-/** "7/10 → ★3" — the next pip's progress (null at ★5). */
-export function pipLine(have, need, pips, fmt = (n) => String(n)) {
-  if (!(need > 0)) return null;
-  return `${fmt(have)}/${fmt(need)} → ★${fmt(pips + 1)}`;
 }

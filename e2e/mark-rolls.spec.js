@@ -3,9 +3,10 @@
 // ROLL screen (one big ROLL, no ×10) → the tutorial → a roll spins the reel and the card + pity only change when it
 // LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (Andy oct5: named — "×1.1 WINS", "+1 BASE WINS/WORD" …); tap
 // anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with "1 IN X" huge; AUTO ROLL stops on its
-// tier; AUTO ROLL spends GEMS and stops when they run out; the skip setting is stored; a short balance says NEED X
-// MORE GEMS (rolls cost 10 GEMS — wins never buy one); reduced motion goes straight to the card; the
-// reel fits 360x640 → 1366x657; INDEX opens the MARKS INDEX, and its REPLAY replays a reveal for free; nothing loops after.
+// tier; AUTO ROLL spends GEMS and stops when they run out; the skip setting is stored; a short balance shows −X + gem
+// (the NEED X MORE GEMS sentence is screen-reader only — Andy oct5: no prose on the ROLL screen; rolls cost 10 GEMS —
+// wins never buy one); reduced motion goes straight to the card; the reel fits 360x640 → 1366x657; INDEX opens the
+// MARKS INDEX (the collection only: no REPLAY, no roll, no pity, no gems); the ROLL screen has no prose; nothing loops after.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -159,7 +160,8 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
   await page.getByTestId('roll-until').selectOption('secret');
   await page.getByTestId('roll-auto').click();
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
-  await expect(page.locator('.rs-msg')).toHaveText('NEED 5 MORE GEMS');
+  await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '5');
+  await expect(page.locator('.rs-need')).toHaveText('−5');
   const after = await page.evaluate(() => ({
     gems: JSON.parse(localStorage.getItem('taw.gems')).bal,
     wins: localStorage.getItem('taw.wins'),
@@ -183,7 +185,7 @@ test('skip reveals below [tier]: default EPIC, the pick is stored', async ({ pag
   expect(stored).toBe('legendary');
 });
 
-test('short balance: the press says NEED X MORE GEMS (never a silent grey button) — a huge wins balance never buys a roll', async ({ page }) => {
+test('short balance: the press shows −X + gem (never a silent grey button) — a huge wins balance never buys a roll', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, {
     'taw.tut.markRolls': '1',
@@ -198,7 +200,9 @@ test('short balance: the press says NEED X MORE GEMS (never a silent grey button
   await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
   await page.locator('.rs-overlay').waitFor();
   await page.locator('.rs-roll').click();
-  await expect(page.locator('.rs-msg')).toHaveText('NEED 6 MORE GEMS');
+  await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '6');
+  await expect(page.locator('.rs-need')).toHaveText('−6');
+  await expect(page.locator('.rs-sr')).toHaveText('NEED 6 MORE GEMS'); // screen readers still get the sentence
   await expect(card(page)).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('taw.wins'))).toBe('50000000');
 });
@@ -285,24 +289,24 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await expect(page.locator('.rs-overlay')).toHaveCount(0);
 });
 
-test('INDEX REPLAY replays that mark’s reveal on the reel — no roll, no charge', async ({ page }) => {
+test('ROLL vs INDEX never mix (Andy oct5): INDEX has no REPLAY / roll / pity / gems; ROLL has no prose', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
   await page.locator('.rs-roll').click();
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
-  await page.waitForTimeout(4200);
+  // the result card: the ★ pip graphic, never the "7/10 → ★3" sentence
+  await expect(card(page)).not.toContainText('→');
+  // the auto-roll settings are compact — no UNTIL / OR BETTER / SKIP REVEALS BELOW captions
+  const controls = await page.locator('.rs-controls').innerText();
+  expect(controls).not.toMatch(/UNTIL|OR BETTER|REVEALS BELOW/);
   const markId = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('taw.markRolls')).marks)[0]);
-  const before = await page.evaluate(() => ({ gems: JSON.parse(localStorage.getItem('taw.gems')).bal, wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
   await page.getByTestId('roll-index').click();
+  await page.locator('.mx-panel').waitFor();
+  await expect(page.locator('.mx-overlay .rs-roll, .mx-overlay [data-testid="roll-pity"], .mx-overlay .gem-count')).toHaveCount(0);
+  // the grid is data only; the pip sentence lives in the detail sheet
+  await expect(page.locator('.mx-grid .mx-pips-text')).toHaveCount(0);
   await page.locator(`.mx-tile[data-mark="${markId}"]`).click();
-  await page.locator('.mx-replay').click();
-  // back on the ROLL screen, the reel spins again (the card waits for the landing) and lands on that mark
-  await expect(page.locator('.mx-panel')).toHaveCount(0);
-  await expect(page.locator('.rs-overlay')).toBeVisible();
-  await expect(card(page)).toHaveCount(0);
-  await expect(card(page)).toHaveCount(1, { timeout: SPUN });
-  expect(await page.locator('.rs-cell.is-land').getAttribute('data-mark')).toBe(markId);
-  const after = await page.evaluate(() => ({ gems: JSON.parse(localStorage.getItem('taw.gems')).bal, wins: Number(localStorage.getItem('taw.wins')), rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls }));
-  expect(after).toEqual(before);
+  await expect(page.locator('.mx-sheet')).toBeVisible();
+  await expect(page.locator('.mx-replay')).toHaveCount(0);
 });
