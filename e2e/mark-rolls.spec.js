@@ -5,7 +5,9 @@
 // anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with "1 IN X" huge; AUTO ROLL stops on its
 // tier; AUTO ROLL spends GEMS and stops when they run out; the skip setting is stored; a short balance shows −X + gem
 // (the NEED X MORE GEMS sentence is screen-reader only — Andy oct5: no prose on the ROLL screen; rolls cost 10 GEMS —
-// wins never buy one); reduced motion goes straight to the card; the reel fits 360x640 → 1366x657; INDEX opens the
+// wins never buy one); reduced motion goes straight to the card; ROLL v1 (Andy oct5 mockup, claude/mockups/roll-v1): the
+// price sits UNDER the label ("ROLL" / gem 10), AUTO is ONE button cycling OFF → RARE+ → EPIC+ → LEGENDARY+, and a
+// DIM / FULL reveal stays up until a tap ("TAP TO KEEP"); the reel fits 360x640 → 1366x657; INDEX opens the
 // MARKS INDEX (the collection only: no REPLAY, no roll, no pity, no gems); the ROLL screen has no prose; nothing loops after.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -80,11 +82,13 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   expect(await card(page).getAttribute('data-tier')).toBe(landTier);
   await expect(card(page).locator('.mark-pips')).toHaveCount(1);
   // the ROLL button never moved, and is priced in ONE unit now that the starter is spent
+  await page.mouse.move(1, 1); // ROLL v1: the button lifts 2px under the pointer (hover) — measure it at rest
+  await page.waitForTimeout(250);
   const boxAfter = await roll.boundingBox();
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
   // price in ONE unit: GEMS (wins never buy rolls) — the gem icon + 10 — and the balance it is paid from shows
   // as icon + count right under it
-  await expect(roll).toHaveText(/^ROLL · 10$/);
+  await expect(roll).toHaveText(/^ROLL\s*10$/); // ROLL v1: the gem price is stacked under the label
   await expect(roll).toHaveAttribute('aria-label', 'ROLL · 10 GEMS');
   await expect(roll.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
   await expect(roll).not.toContainText('WINS');
@@ -129,8 +133,11 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await expect(page.getByTestId('roll-cutscene-odds')).toHaveText(/^1 IN [\d,.K]+$/);
   const size = await page.getByTestId('roll-cutscene-odds').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
   expect(size).toBeGreaterThanOrEqual(40);
-  // the cutscene ends by itself on the result card
-  await expect(cut).not.toHaveClass(/is-on/, { timeout: 4000 });
+  // ROLL v1: the full reveal stays up ("TAP TO KEEP") until a tap, then the result line is there
+  await page.waitForTimeout(1500);
+  await expect(cut).toHaveClass(/is-on/);
+  await cut.click();
+  await expect(cut).not.toHaveClass(/is-on/, { timeout: 2000 });
   await expect(card(page)).toHaveCount(1);
   await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 500');
 });
@@ -143,8 +150,10 @@ test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
     'taw.markRolls': JSON.stringify({ v: 1, rolls: 60, sinceEpic: 47, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
-  await page.getByTestId('roll-until').selectOption('epic');
+  // ROLL v1: one AUTO button cycles OFF → RARE+ → EPIC+ (the first tap starts rolling)
   await page.getByTestId('roll-auto').click();
+  await page.getByTestId('roll-auto').click();
+  await expect(page.getByTestId('roll-auto')).toHaveAttribute('data-target', 'epic');
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
   expect(['epic', 'legendary', 'mythic', 'secret']).toContain(await card(page).getAttribute('data-tier'));
@@ -159,10 +168,9 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
     'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, sinceEpic: 0, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
-  // reveals below SECRET skip, so the two rolls go fast
+  // reveals below SECRET skip, so the two rolls go fast; AUTO cycled to its highest target (LEGENDARY+)
   await page.getByTestId('roll-skip').selectOption('secret');
-  await page.getByTestId('roll-until').selectOption('secret');
-  await page.getByTestId('roll-auto').click();
+  for (let i = 0; i < 3; i += 1) await page.getByTestId('roll-auto').click();
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '5');
   await expect(page.locator('.rs-need')).toHaveText('−5');
@@ -308,8 +316,10 @@ test('ROLL vs INDEX never mix (Andy oct5): INDEX has no REPLAY / roll / pity / g
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
   await expect(page.locator('.mx-overlay .rs-roll, .mx-overlay [data-testid="roll-pity"], .mx-overlay .gem-count')).toHaveCount(0);
-  // the grid is data only; the pip sentence lives in the detail sheet
+  // ROLL v1: the card face is data only — the "7/10 → ★3" line sits UNDER an owned card (.mx-tile-next), never on it
   await expect(page.locator('.mx-grid .mx-pips-text')).toHaveCount(0);
+  await expect(page.locator('.mx-tile').filter({ hasText: '→' })).toHaveCount(0);
+  await expect(page.locator(`.mx-tile[data-mark="${markId}"] + .mx-tile-next`)).toHaveText(/^\d+\/\d+ → ★\d$/);
   await page.locator(`.mx-tile[data-mark="${markId}"]`).click();
   await expect(page.locator('.mx-sheet')).toBeVisible();
   await expect(page.locator('.mx-replay')).toHaveCount(0);

@@ -1,10 +1,11 @@
-/* RollScreen.css — THE ROLL SCREEN (Andy oct5): one full screen, the reel is the one big thing, one big ROLL button.
+/* RollScreen.css — THE ROLL SCREEN, ROLL v1 (Andy oct5 mockup claude/mockups/roll-v1/Main.dc.html).
    The overlay takes the MARKS overlay slot (the same layer the MARKS panel used — not a new orphan fixed element);
-   the dim and the LEGENDARY+ cutscene are absolute LAYERS inside it.
-   MOTION: the reel track is moved by ONE rAF loop (transform writes only); every other effect is a finite WAAPI
-   one-shot on transform/opacity (Reel.jsx); will-change is set by JS only while a node animates. Nothing here
-   animates and nothing loops. Every non-rectangle shape is an asset (/art/rolls). Rarity fills / glow come from
-   RarityFin.css (DOCUMENTED EXCEPTION, Andy oct5). */
+   the slowdown dim and the DIM / FULL reveal are absolute LAYERS inside it.
+   MOTION: the reel spin is ONE compositor animation on the track (sampled keyframes, transform only); every other effect is a finite WAAPI
+   one-shot on transform/opacity (Reel.jsx) or a finite CSS one-shot here (the result line pop); will-change is set by
+   JS only while a node animates. Nothing loops. Every non-rectangle shape is an asset (/art/rolls, the pointer SVG).
+   The stripe backdrop and the reel's lane lines are hard-stop stripes (flat colour, no blend); the reel's two EDGE
+   FADES are the one soft gradient, straight from the mockup (they only darken the band toward its ends). */
 
 .rs-overlay {
   position: fixed;
@@ -12,268 +13,104 @@
   z-index: 120;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 16px;
-  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
-  background: #0d0618;
+  gap: 12px;
+  padding: 24px 40px max(28px, env(safe-area-inset-bottom));
+  background-color: #0d0618;
+  background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92, 15, 163, 0.16) 46px 50px);
   color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   overflow: hidden;
-  /* sized from BOTH axes so the reel + card + controls fit 360x640, 390x844 and a 1366x657 laptop */
-  --cell: clamp(60px, min(19vw, 14dvh), 136px);
-  --card-h: clamp(104px, 16dvh, 148px);
-  --gut: 16px;
+  --gut: 40px;
+  --cw: 144px; --cs: 0.8; /* a reel card's width; the slot adds the 16px gap */
+  --slot: calc(var(--cw) + 16px);
+  --band: calc(var(--cw) * 1.4444 + 92px);
 }
 
-/* ---- top: INDEX · pity ladder · close ---- */
+/* while ROLL / INDEX covers the page (RollScreen sets html[data-roll-cover]), what it covers is not rendered at all:
+   no style, layout or paint for the hidden menu, wall art and particles (they keep their state; closing shows them) */
+html[data-roll-cover] .homepage-stage,
+html[data-roll-cover] .menu-xp-fx,
+html[data-roll-cover] .wall-scene,
+html[data-roll-cover] .particle-field,
+html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
+
+/* ---- top: INDEX n/N · ROLL · gems pill + close ---- */
 .rs-top {
   position: relative;
   z-index: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
 }
 .rs-index-btn,
 .rs-close {
-  min-height: var(--tap-min, 44px);
-  min-width: var(--tap-min, 44px);
-  padding: 0 18px;
+  min-height: 56px;
+  min-width: 56px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: #fff;
   background: #1a0b2e;
-  border: 3px solid #4a2a7a;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
+  border: 4px solid #5c0fa3;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 #000;
   cursor: pointer;
+  transition: transform 80ms;
 }
-.rs-close { padding: 0; }
+.rs-index-btn { justify-self: start; display: inline-flex; align-items: center; gap: 10px; padding: 0 20px; }
+.rs-index-n { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #FFE94A; }
+.rs-close { padding: 0; font-family: 'Space Mono', monospace; font-weight: 700; }
+.rs-index-btn:hover,
+.rs-close:hover { transform: translate(-2px, -2px); }
 .rs-index-btn:active,
-.rs-close:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
-.rs-pity {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  gap: 6px;
-  min-width: 0;
-}
-.rs-pity-step {
-  --rar-off: 3px 3px 0 #000;
-  padding: 6px 8px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  white-space: nowrap;
-  border: 3px solid;
-  border-radius: 8px;
-}
-
-/* ---- the stage: the reel + the result card (above the dim layer) ---- */
-.rs-stage {
-  position: relative;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  min-height: 0;
-}
-.rs-shake {
-  width: min(100%, 1040px);
-  display: grid;
-  justify-items: center;
-  gap: 20px;
-}
-/* HORIZONTAL CASE STRIP: a wide window, the strip slides left and settles under the frame */
-.rs-reel { position: relative; width: 100%; --rs-cy: calc(24px + var(--cell) / 2); }
-.rs-win {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  overflow: hidden;
-  background: #1a0b2e;
-  border: 4px solid #4a2a7a;
-  border-radius: 8px;
-  box-shadow: 6px 6px 0 #000;
-  box-sizing: border-box;
-}
-.rs-track { position: absolute; }
-.rs-slot { flex: none; width: var(--cell); height: var(--cell); padding: 6px; box-sizing: border-box; }
-.rs-cell {
-  --rar-off: 3px 3px 0 #000;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  border: 3px solid;
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-.rs-cell-art { width: 72%; height: auto; }
-/* the screen dim: every cell but the landing one fades (class toggled by Reel.jsx; an opacity transition, finite) */
-.rs-cell { transition: opacity 360ms ease-in; }
-.rs-track.is-dim .rs-cell:not(.is-land) { opacity: 0.22; }
-/* the frame around the landing cell — a plain rectangle */
-.rs-line {
-  position: absolute;
-  z-index: 2;
-  left: calc(50% - var(--cell) / 2 - 4px);
-  width: calc(var(--cell) + 8px);
-  height: calc(var(--cell) + 8px);
-  border: 5px solid #FFE94A;
-  border-radius: 12px;
-  box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #000;
-  pointer-events: none;
-  box-sizing: border-box;
-}
-/* the rarity light: the ray fan asset as a tinted mask BEHIND the reel window, opacity/transform only (EPIC+) */
-.rs-light {
-  position: absolute;
-  z-index: 0;
-  left: calc(50% - var(--cell) * 2.5);
-  top: calc(var(--rs-cy) - var(--cell) * 2.5);
-  width: calc(var(--cell) * 5);
-  height: calc(var(--cell) * 5);
-  opacity: 0;
-  pointer-events: none;
-}
-.rs-rays-ink {
-  width: 100%;
-  height: 100%;
-  background: var(--rs-tier, #9A1AFF);
-  -webkit-mask: url(/art/rolls/rays.svg) center / contain no-repeat;
-  mask: url(/art/rolls/rays.svg) center / contain no-repeat;
-}
-/* the burst: OUTSIDE the window's clip, centred on the landing cell */
-.rs-parts {
-  position: absolute;
-  z-index: 3;
-  left: 50%;
-  top: var(--rs-cy);
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-.rs-part {
-  position: absolute;
-  left: -12px;
-  top: -12px;
-  width: 24px;
-  height: 24px;
-  opacity: 0;
-}
-
-.rs-win { height: calc(var(--cell) + 48px); }
-.rs-track { top: 20px; left: calc(50% - var(--cell) / 2); display: flex; width: calc(var(--cell) * 44); height: var(--cell); }
-.rs-line { top: 16px; }
-
-/* ---- the result card: a slot sized from the screen height; the card grows only when its lines must wrap ---- */
-.rs-card-slot { width: min(100%, 620px); min-height: var(--card-h); display: grid; }
-.rs-card {
-  --rar-off: 6px 6px 0 #000;
-  min-height: var(--card-h);
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 14px 18px;
-  border: 4px solid;
-  border-radius: 8px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-.rs-card.is-empty { border: 4px dashed #3a2560; background: transparent; }
-.rs-card-artwrap { position: relative; flex: none; display: inline-grid; }
-.rs-card-art { width: 96px; height: auto; }
-.rs-card-body { min-width: 0; display: grid; gap: 4px; }
-.rs-card-name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  min-width: 0;
-  font-family: 'Bungee', sans-serif;
-  font-size: var(--fs-panel);
+.rs-close:active { transform: translate(4px, 4px); }
+.rs-title {
+  margin: 0;
+  font-family: 'Bungee Shade', 'Bungee', sans-serif;
+  font-weight: 400;
+  font-size: var(--fs-h1);
   text-transform: uppercase;
-  line-height: 1.05;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #2EFFE0;
 }
-.rs-card-nm { min-width: 0; overflow-wrap: anywhere; }
-.rs-chip.is-new {
-  flex: none;
-  padding: 2px 10px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  color: #0d0618;
-  background: #FFE94A;
-  border: 3px solid #b8a020;
-  border-radius: 8px;
-}
-.rs-card-tier,
-.rs-card-stat {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-}
-.rs-card-tier span { white-space: nowrap; }
-.rs-card-stat { color: #fff; }
-.rs-card-pips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; --pip: 20px; }
-/* a DOUBLE ROLL's extra result(s): "+NAME" in its rarity fill */
-.rs-card-extra { display: flex; flex-wrap: wrap; gap: 6px; }
-.rs-chip.is-extra {
-  --rar-off: 2px 2px 0 #000;
-  padding: 2px 10px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  border: 3px solid;
-  border-radius: 8px;
-}
-
-/* ---- controls: one big ROLL, then ONE compact options band: AUTO ROLL [tier+] · SKIP [< tier] ---- */
-.rs-controls {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  justify-items: center;
+.rs-topr { justify-self: end; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rs-sub { display: flex; align-items: center; gap: 10px; }
+.rs-gems-bal {
+  display: inline-flex;
+  align-items: center;
   gap: 10px;
-}
-.rs-roll {
-  width: min(100%, 560px);
-  min-height: 80px;
-  padding: 8px 20px;
+  height: 56px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  background: #1a0b2e;
+  border: 4px solid #2EFFE0;
+  box-shadow: 6px 6px 0 #000;
   font-family: 'Bungee', sans-serif;
   font-size: var(--fs-panel);
   text-transform: uppercase;
-  color: #0d0618;
-  background: #FF4FA3;
-  border: 4px solid #b8236f;
-  border-radius: 8px;
-  box-shadow: 6px 6px 0 #000;
-  cursor: pointer;
+  color: #fff;
 }
-.rs-roll.is-free { background: #FFE94A; border-color: #b8a020; }
-.rs-roll.is-short { color: #C9C2D6; background: #3a2560; border-color: #5a3d8a; }
-.rs-roll:active { transform: translate(3px, 3px); box-shadow: 3px 3px 0 #000; }
-.rs-roll-price { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
-.rs-roll-gem { flex: none; }
-/* the gem balance + the short-balance line share ONE row under ROLL */
-.rs-sub {
-  display: flex;
-  flex-wrap: wrap;
+.rs-msg { display: flex; align-items: center; }
+.rs-msg:empty { display: none; }
+.rs-need {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px 14px;
-  min-height: 1.4em;
-}
-.rs-gems-bal { font-size: var(--fs-body); }
-.rs-sub .rs-msg:empty { margin-left: -14px; } /* an empty status line never pushes the balance off-centre */
-.rs-msg {
-  min-height: 1.4em;
+  gap: 4px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  background: #FF3D7F;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  color: #000;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-body);
-  color: #FF6B3D;
 }
-/* short balance: "−6 ◆" on screen; the sentence is for screen readers only */
-.rs-need { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .rs-need-gem { flex: none; }
 .rs-sr {
   position: absolute;
@@ -286,71 +123,222 @@
   white-space: nowrap;
   border: 0;
 }
-.rs-opts {
+
+/* ---- the stage: the reel band (bleeds to the screen edges) + the result line ---- */
+.rs-stage {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  align-content: center;
+  min-height: 0;
+  margin: 0 calc(var(--gut) * -1);
+}
+.rs-shake { display: grid; justify-items: center; gap: 10px; }
+.rs-reel { position: relative; width: 100%; }
+.rs-win {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: var(--band);
+  overflow: hidden;
+  box-sizing: border-box;
+  background-color: #08030f;
+  background-image: repeating-linear-gradient(90deg, transparent 0 158px, rgba(255, 255, 255, 0.03) 158px 160px);
+  border-top: 6px solid #000;
+  border-bottom: 6px solid #000;
+}
+/* the mockup's edge fades: the band darkens toward both ends so the eye stays on the pointer */
+.rs-win::before,
+.rs-win::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: min(360px, 28%);
+  pointer-events: none;
+}
+.rs-win::before { left: 0; background: linear-gradient(90deg, #08030f, rgba(8, 3, 15, 0)); }
+.rs-win::after { right: 0; background: linear-gradient(270deg, #08030f, rgba(8, 3, 15, 0)); }
+.rs-track {
+  position: absolute;
+  top: calc((var(--band) - 12px - var(--cw) * 1.4444) / 2);
+  left: calc(50% - var(--slot) / 2);
+  display: flex;
+  width: calc(var(--slot) * 44);
+}
+.rs-slot { flex: none; width: var(--slot); display: grid; justify-items: center; }
+.rs-cell { --mc-w: var(--cw); --mc-s: var(--cs); }
+.rs-cell.is-blank { width: var(--cw); height: calc(var(--cw) * 1.4444); background: #1a0b2e; border: 5px solid #000; border-radius: 10px; box-sizing: border-box; }
+/* the two SHADES (Reel.jsx): band-coloured plates left / right of the landing slot; their opacity (one animation each)
+   fades the other cards — 22% during the slowdown, 35% once landed */
+.rs-shade { position: absolute; z-index: 1; top: 0; bottom: 0; background: #08030f; opacity: 0; pointer-events: none; }
+.rs-shade.is-l { left: 0; right: calc(50% + var(--cw) / 2 + 6px); }
+.rs-shade.is-r { left: calc(50% + var(--cw) / 2 + 6px); right: 0; }
+/* the pointer: a yellow bar (a rectangle) between two triangles (inline SVG) */
+.rs-ptr { position: absolute; z-index: 3; left: 50%; top: 0; bottom: 0; width: 44px; margin-left: -22px; pointer-events: none; }
+.rs-ptr-bar { position: absolute; left: 19px; top: 0; bottom: 0; width: 6px; background: #FFE94A; box-shadow: 0 0 0 3px #000; }
+.rs-ptr-tri { position: absolute; left: 0; display: block; }
+.rs-ptr-tri.is-top { top: -2px; }
+.rs-ptr-tri.is-bot { bottom: -2px; }
+/* the rarity light: the ray fan asset as a tinted mask BEHIND the band, opacity/transform only (EPIC+) */
+.rs-light {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: calc(var(--band) / 2);
+  width: calc(var(--slot) * 5);
+  height: calc(var(--slot) * 5);
+  margin: calc(var(--slot) * -2.5) 0 0 calc(var(--slot) * -2.5);
+  opacity: 0;
+  pointer-events: none;
+}
+.rs-rays-ink {
+  width: 100%;
+  height: 100%;
+  background: var(--rs-tier, #B04BFF);
+  -webkit-mask: url(/art/rolls/rays.svg) center / contain no-repeat;
+  mask: url(/art/rolls/rays.svg) center / contain no-repeat;
+}
+/* the burst: OUTSIDE the band's clip, centred on the landing card */
+.rs-parts { position: absolute; z-index: 3; left: 50%; top: calc(var(--band) / 2); width: 0; height: 0; pointer-events: none; }
+.rs-part { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; opacity: 0; }
+
+/* ---- the result LINE: NAME · ×1.5 · WINS · ★ — pops in once ---- */
+.rs-result-slot { min-height: 44px; display: grid; place-items: center; padding: 0 var(--gut); max-width: 100%; box-sizing: border-box; }
+.rs-result {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 10px 24px;
-  max-width: 100%;
+  gap: 4px 14px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  animation: rs-pop 550ms cubic-bezier(0.2, 1.4, 0.4, 1) 1 both;
 }
-.rs-auto {
+.rs-result.is-empty,
+.rs-result.is-rest,
+.rs-result.is-rest .mark-pip.is-newest { animation: none; }
+.rs-res-name,
+.rs-res-num {
+  font-size: var(--fs-panel);
+  line-height: 1.1;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.rs-res-name { color: var(--rs-tier, #fff); }
+.rs-res-num { color: #FFE94A; }
+.rs-card-stat { display: inline-flex; align-items: baseline; gap: 10px; white-space: nowrap; }
+.rs-res-kind { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #fff; }
+.rs-res-pips { --pip: 20px; }
+.rs-res-shiny { width: 26px; height: 26px; }
+.rs-chip {
+  padding: 2px 8px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  color: #000;
+  background: #2EFFE0;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+}
+.rs-chip.is-new { background: #FFE94A; transform: rotate(-4deg); }
+.rs-chip.is-extra { background: var(--rs-tier, #2EFFE0); }
+.rs-card-extra { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+@keyframes rs-pop {
+  0% { transform: scale(0.2) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ---- bottom: pity · ROLL · AUTO ---- */
+.rs-controls {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+}
+.rs-pity { width: min(300px, 100%); display: grid; gap: 10px; justify-self: start; }
+.rs-pity-top { display: flex; align-items: baseline; gap: 10px; }
+.rs-pity-lbl { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); letter-spacing: 0.04em; color: #B04BFF; }
+.rs-pity-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-h2); line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
+.rs-pity-bar { position: relative; height: 22px; overflow: hidden; background: #1a0b2e; border: 4px solid #000; box-shadow: 4px 4px 0 #000; }
+.rs-pity-fill { position: absolute; inset: 0; background: #B04BFF; transform-origin: 0 50%; transition: transform 400ms ease-out; }
+.rs-pity-leg { font-size: var(--fs-label); color: #c9b8e8; }
+
+.rs-roll {
+  width: 380px;
+  height: 140px;
   display: flex;
-  flex-wrap: nowrap;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-width: 0;
+  gap: 4px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  color: #000;
+  background: #FFE94A;
+  border: 6px solid #000;
+  border-radius: 0;
+  box-shadow: 8px 8px 0 #000;
+  cursor: pointer;
+  transition: transform 80ms;
 }
+.rs-roll-lbl { font-size: var(--fs-h1); line-height: 1; white-space: nowrap; }
+.rs-roll.is-free .rs-roll-lbl,
+.rs-roll.is-short .rs-roll-lbl { font-size: var(--fs-h2); }
+.rs-roll-price { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-panel); line-height: 1; }
+.rs-roll-gem { flex: none; }
+.rs-roll.is-rolling { background: #8a7f3a; }
+.rs-roll.is-short { background: #5a4f8a; color: #fff; }
+.rs-roll:hover { transform: translate(-2px, -2px); }
+.rs-roll:active { transform: translate(4px, 4px); }
+
+.rs-opts { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .rs-auto-btn {
-  flex: none;
-  min-height: 52px;
-  padding: 0 16px;
+  min-height: 72px;
+  padding: 0 22px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: #1a0b2e;
+  border: 5px solid #000;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 #000;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.rs-auto-btn.is-rare { background: #3D8BFF; color: #000; }
+.rs-auto-btn.is-epic { background: #B04BFF; color: #000; }
+.rs-auto-btn.is-legendary { background: #FFC23D; color: #000; }
+.rs-auto-btn:hover { transform: translate(-2px, -2px); }
+.rs-auto-btn:active { transform: translate(4px, 4px); }
+.rs-auto-cap { font-size: var(--fs-label); color: #c9b8e8; }
+.rs-pick { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-label); color: #c9b8e8; }
+.rs-select {
+  min-height: 44px;
+  padding: 0 10px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-body);
   color: #fff;
   background: #1a0b2e;
-  border: 3px solid #2EFFE0;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-}
-.rs-auto-btn.is-on { color: #0d0618; background: #2EFFE0; border-color: #12a893; }
-.rs-auto-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
-.rs-pick {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  color: #C9C2D6;
-}
-.rs-select {
-  --rar-off: 3px 3px 0 #000;
-  min-height: var(--tap-min, 44px);
-  padding: 0 10px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  border: 3px solid;
-  border-radius: 8px;
+  border: 3px solid #5c0fa3;
+  box-shadow: 3px 3px 0 #000;
   cursor: pointer;
 }
 .rs-select option { color: #0d0618; background: #fff; }
 
-/* ---- the dim + the LEGENDARY+ cutscene: absolute layers of this overlay ---- */
-.rs-dim {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: #000;
-  opacity: 0;
-  pointer-events: none;
-}
+/* ---- the slowdown dim + the DIM / FULL reveal: absolute layers of this overlay ---- */
+.rs-dim { position: absolute; inset: 0; z-index: 2; background: #000; opacity: 0; pointer-events: none; }
 .rs-cut {
   position: absolute;
   inset: 0;
@@ -358,61 +346,57 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  opacity: 0;
   visibility: hidden;
   pointer-events: none;
   container-type: inline-size;
-  background: #0d0618;
+  cursor: pointer;
+  background: rgba(5, 2, 10, 0.82);
+  --mc-w: 216px;
+  --mc-s: 1.2;
 }
-.rs-cut.is-on { visibility: visible; }
-.rs-cut .rs-cut-wash.rarity-fin.rarity-fin.rarity-fin { position: absolute; inset: 0; opacity: 0.32; box-shadow: none; border: 0; }
+.rs-cut.is-full { background: #05020a; --mc-w: 252px; --mc-s: 1.4; }
+.rs-cut.is-on { visibility: visible; pointer-events: auto; }
 .rs-cut-rays {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 150vmax;
-  height: 150vmax;
-  margin: -75vmax 0 0 -75vmax;
+  width: 124vmax; /* the rays fan from the centre: a 62vmax radius still reaches every corner */
+  height: 124vmax;
+  margin: -62vmax 0 0 -62vmax;
   opacity: 0;
 }
-.rs-cut-shake {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 10px;
-  padding: 16px;
-  text-align: center;
-}
-.rs-cut-mark { display: grid; justify-items: center; gap: 6px; opacity: 0; }
-.rs-cut-art { width: clamp(132px, 32vw, 220px); height: auto; }
-.rs-cut-name {
-  font-family: 'Bungee', sans-serif;
-  font-size: var(--fs-h1);
-  text-transform: uppercase;
-  line-height: 1;
-  text-shadow: 4px 4px 0 #000;
-}
+.rs-cut.is-dim .rs-cut-rays,
+.rs-cut.is-dim .rs-cut-tier,
+.rs-cut.is-dim .rs-cut-keep { display: none; }
+.rs-cut-shake { position: relative; display: grid; justify-items: center; gap: 14px; padding: 16px; text-align: center; }
+.rs-cut.is-dim .rs-cut-shake { gap: 18px; }
 .rs-cut-tier {
   font-family: 'Bungee', sans-serif;
   font-size: var(--fs-panel);
   text-transform: uppercase;
+  letter-spacing: 0.2em;
   color: #fff;
-  text-shadow: 3px 3px 0 #000;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
 }
-/* "1 IN X" HUGE — sized to the screen (cqw FIT_TO_SLOT): "1 IN 100K" fits a 320px phone */
+/* "1 IN X" — HUGE on a full reveal (cqw FIT: "1 IN 100,000" fits a 320px phone) */
 .rs-cut-stamp {
   font-family: 'Bungee', sans-serif;
-  font-size: min(12cqw, 150px);
   text-transform: uppercase;
+  font-size: min(9cqw, 60px);
   line-height: 1;
   white-space: nowrap;
-  text-shadow: 6px 6px 0 #000;
-  opacity: 0;
+  color: var(--rs-tier, #fff);
+  -webkit-text-stroke: 6px #000;
+  paint-order: stroke fill;
 }
+.rs-cut.is-full .rs-cut-stamp { font-size: min(11cqw, 92px); -webkit-text-stroke: 8px #000; }
+.rs-cut-mark { display: grid; justify-items: center; }
+.rs-cut-keep { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #fff; opacity: 0; }
 .rs-parts.is-cut { top: 50%; }
 .rs-cut .rs-part { width: 34px; height: 34px; left: -17px; top: -17px; }
 
-/* SHINY: one small badge (asset, no text) — the result card + the INDEX tiles */
+/* SHINY: one small badge (asset, no text) — the result line, the cards */
 .mr-shiny {
   position: absolute;
   top: -6px;
@@ -422,27 +406,88 @@
   pointer-events: none;
   transform: rotate(8deg);
 }
-.mr-shiny.is-big { width: 44px; height: 44px; top: -8px; right: -12px; }
+.rs-result .mr-shiny { position: static; }
+
+/* ---- shorter laptops (1366x657, 1280x551) ---- */
+@media (max-height: 760px) {
+  .rs-overlay { gap: 8px; padding-top: 14px; padding-bottom: max(16px, env(safe-area-inset-bottom)); --cw: 120px; --cs: 0.6667; --band: calc(var(--cw) * 1.4444 + 44px); }
+  .rs-index-btn, .rs-close, .rs-gems-bal { min-height: 48px; height: 48px; }
+  .rs-title { font-size: var(--fs-h2); }
+  .rs-roll { height: 112px; width: 340px; }
+  .rs-auto-btn { min-height: 60px; }
+}
+@media (max-height: 600px) {
+  .rs-overlay { --cw: 104px; --cs: 0.5778; --band: calc(var(--cw) * 1.4444 + 28px); }
+  .rs-roll { height: 92px; }
+  .rs-roll-lbl { font-size: var(--fs-h2); }
+  .rs-result-slot { min-height: 36px; }
+  .rs-cut { --mc-w: 180px; --mc-s: 1; }
+  .rs-cut.is-full { --mc-w: 180px; --mc-s: 1; }
+  .rs-cut-shake { gap: 8px; }
+}
+
+/* ---- tablets / narrow laptops ---- */
+@media (max-width: 900px) {
+  .rs-overlay { padding-left: 20px; padding-right: 20px; --gut: 20px; }
+  .rs-controls { grid-template-columns: 1fr 1fr; }
+  .rs-roll { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+  .rs-pity { grid-row: 2; }
+  .rs-opts { grid-row: 2; }
+}
 
 /* ---- phones ---- */
 @media (max-width: 480px) {
-  .rs-overlay { --gut: 12px; gap: 10px; padding: 10px var(--gut) max(12px, env(safe-area-inset-bottom)); }
-  .rs-top { flex-wrap: wrap; row-gap: 8px; }
-  .rs-pity { order: 3; flex-basis: 100%; }
-  .rs-shake { gap: 12px; }
-  /* the window bleeds to the screen edges: ~5 real draws show at 390px */
-  .rs-reel { width: calc(100% + var(--gut) * 2); margin: 0 calc(var(--gut) * -1); }
-  .rs-win { border-left: 0; border-right: 0; border-radius: 0; box-shadow: 0 6px 0 #000; }
-  .rs-card { gap: 12px; padding: 10px 12px; }
-  .rs-card-art { width: 72px; }
-  .rs-roll { min-height: 64px; }
-  .rs-controls { gap: 8px; }
-  .rs-opts { gap: 8px; }
+  .rs-overlay { gap: 8px; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); --gut: 12px; --cw: 144px; --cs: 0.8; --band: calc(var(--cw) * 1.4444 + 44px); }
+  .rs-top { grid-template-columns: auto 1fr; gap: 8px; }
+  .rs-index-btn, .rs-close, .rs-gems-bal { min-height: 44px; height: 44px; box-shadow: 4px 4px 0 #000; border-width: 3px; }
+  .rs-close { min-width: 44px; }
+  .rs-index-btn { padding: 0 10px; letter-spacing: 0; gap: 6px; }
+  .rs-index-n { font-size: var(--fs-body); }
+  .rs-title { display: none; }
+  .rs-gems-bal { padding: 0 10px; gap: 6px; }
+  .rs-gems-bal .gem-icon { width: 22px; height: 22px; }
+  .rs-need { font-size: var(--fs-label); padding: 2px 6px; }
+  .rs-topr { gap: 8px; }
+  .rs-res-name, .rs-res-num { -webkit-text-stroke: 3px #000; }
+  .rs-res-kind { font-size: var(--fs-label); }
+  .rs-res-pips { --pip: 16px; }
+  .rs-controls { gap: 10px 12px; }
+  .rs-roll { width: 100%; height: 92px; box-shadow: 6px 6px 0 #000; }
+  .rs-roll-lbl { font-size: var(--fs-hero); }
+  .rs-roll.is-free .rs-roll-lbl, .rs-roll.is-short .rs-roll-lbl { font-size: var(--fs-h1); }
+  .rs-pity { gap: 6px; }
+  .rs-pity-lbl { font-size: var(--fs-label); }
+  .rs-pity-n { -webkit-text-stroke: 4px #000; }
+  .rs-pity-bar { height: 16px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
+  .rs-pity-leg { font-size: var(--fs-micro); }
+  .rs-auto-btn { min-height: 48px; padding: 0 10px; letter-spacing: 0; border-width: 4px; box-shadow: 4px 4px 0 #000; }
+  /* phones: ROLL · then the pity bars · then AUTO + its caption + SKIP on one full-width row */
+  .rs-controls { grid-template-columns: minmax(0, 1fr); }
+  .rs-pity { grid-row: 2; width: 100%; }
+  .rs-opts { grid-row: 3; justify-self: stretch; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+  .rs-auto-cap, .rs-pick { font-size: var(--fs-micro); }
+  .rs-cut { --mc-w: 180px; --mc-s: 1; }
+  .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
-@media (max-height: 700px) {
-  .rs-overlay { gap: 10px; }
-  .rs-shake { gap: 12px; }
-  .rs-card-art { width: 64px; }
-  .rs-roll { min-height: 64px; }
+@media (max-width: 480px) and (max-height: 700px) {
+  .rs-overlay { --cw: 92px; --cs: 0.5111; --band: calc(var(--cw) * 1.4444 + 24px); }
+  .rs-roll { height: 76px; }
+  .rs-roll-lbl { font-size: var(--fs-h1); }
   .rs-auto-btn { min-height: 44px; }
+  .rs-auto-cap { display: none; }
+  .rs-cut, .rs-cut.is-full { --mc-w: 162px; --mc-s: 0.9; }
+}
+
+/* the in-game REDUCE MOTION toggle (RollScreen adds .is-reduced) — the same as the OS setting below */
+.rs-overlay.is-reduced .rs-result,
+.rs-overlay.is-reduced .mc .mc-cog,
+.rs-overlay.is-reduced .mc .mc-shine::after,
+.rs-overlay.is-reduced .mc .mc-glow,
+.rs-overlay.is-reduced .mark-pip.is-newest { animation: none; }
+.rs-overlay.is-reduced .rs-pity-fill,
+.rs-overlay.is-reduced .rs-roll,
+.rs-overlay.is-reduced .rs-auto-btn { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rs-result { animation: none; }
+  .rs-pity-fill { transition: none; }
 }
