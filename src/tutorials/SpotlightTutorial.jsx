@@ -90,7 +90,6 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
       )}
       <div ref={lineRef} className={`ut-line${lineStyle ? '' : ' is-centered'}`} style={lineStyle || undefined} aria-live="polite">
         {tutorial.line}
-        <span className="ut-tap" aria-hidden="true">TAP ANYWHERE</span>
       </div>
     </div>,
     document.body,

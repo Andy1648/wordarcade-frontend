@@ -51,15 +51,6 @@
   top: 50%;
   transform: translateY(-50%);
 }
-.ut-tap {
-  display: block;
-  margin-top: 10px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  color: #c9b8e8;
-  -webkit-text-stroke: 0;
-}
 @keyframes ut-fade {
   0% { opacity: 0; }
   100% { opacity: 1; }
