@@ -118,7 +118,14 @@ const px = (v) => {
  */
 export function applyRingSize(stage, { head, top, bottomBar, bottom } = {}) {
   if (!stage) return null;
-  const box = stage.getBoundingClientRect();
+  // LAYOUT size, never the painted rect. getBoundingClientRect includes every ancestor
+  // TRANSFORM, and an accepted word punches/shakes the screen with a brief scale(~1.01). The
+  // first accepted word also re-runs this measure (railSample 0 -> 1), so whenever that re-run
+  // landed mid-punch the stage read ~7px bigger, the ring was written ~7px bigger, and nothing
+  // ever corrected it: a ResizeObserver does not fire when a transform ends. offsetWidth/Height
+  // are the untransformed border box (the same kind of read as the rows below), so the ring
+  // is a function of LAYOUT only and an accept-time effect cannot change it.
+  const box = { width: stage.offsetWidth, height: stage.offsetHeight };
   if (!box.width || !box.height) return null;
   const cs = getComputedStyle(stage);
   const contentW = box.width - px(cs.paddingLeft) - px(cs.paddingRight) - px(cs.borderLeftWidth) - px(cs.borderRightWidth);
