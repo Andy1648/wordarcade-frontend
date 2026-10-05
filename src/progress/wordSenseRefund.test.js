@@ -24,7 +24,7 @@ function withStorage(seed, fn, { throwOnSet = false } = {}) {
   }
 }
 
-// The FROZEN v8 KEY POWER ladder WORD SENSE was sold on. KEY POWER is re-priced in v9 (STEP 19), so
+// The FROZEN v8 KEY TIER ladder WORD SENSE was sold on. KEY TIER is re-priced in v9 (STEP 19), so
 // the refund must NOT follow keyTierCostAt any more — it returns what was actually paid.
 const PAID_V8 = [10, 60, 360, 2160, 12960]; // tiers 1..5
 
@@ -44,8 +44,8 @@ test('the refund is the sum of the frozen v8 prices actually paid', () => {
   assert.equal(wordSenseRefundAmount(undefined), 0);
 });
 
-test('the refund is the v8 prices actually PAID — its own table, whatever the live KEY POWER price is', () => {
-  // KEY POWER is back on v8 prices (Andy oct2 KP2), so live and paid coincide again; the refund still
+test('the refund is the v8 prices actually PAID — its own table, whatever the live KEY TIER price is', () => {
+  // KEY TIER is back on v8 prices (Andy oct2 KP2), so live and paid coincide again; the refund still
   // reads its own fixed table (10 / 60 / 360 …), so a future price change can never move it.
   assert.equal(wordSenseRefundAmount(1), 10);
   assert.equal(wordSenseRefundAmount(3), 430);

@@ -1,5 +1,5 @@
 // rr-ready.spec.js — REBIRTH READY → ×5 FOREVER (Andy oct3: "never let a player miss that they can rebirth").
-//   1. MENU: a save AT the gate (LV15 R0) shows the big CTA (desktop: under the level bar; phone: under the
+//   1. MENU: a save AT the gate (LV25 R0) shows the big CTA (desktop: under the level bar; phone: under the
 //      LV strip) and lights the REBIRTH nav control; ONE tap rebirths (taw.rebirths 0 → 1, level → 1) and
 //      plays the ceremony — no confirm step. CONTINUE lands on the menu with the REBIRTH 1 card.
 //   2. MENU: a save one level under the gate (LV14) shows no CTA.
@@ -33,10 +33,10 @@ const savedLevel = (page) => page.evaluate(() => {
 const savedRebirths = (page) => page.evaluate(() => localStorage.getItem('taw.rebirths'));
 
 for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
-  test(`menu: LV15 R0 shows the CTA and ONE tap rebirths into the ceremony @ ${vp.width}`, async ({ page }) => {
+  test(`menu: LV25 R0 shows the CTA and ONE tap rebirths into the ceremony @ ${vp.width}`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
-    await seed(page, 15);
+    await seed(page, 25);
     await page.goto('/?portal=1');
     await menuReady(page);
 
@@ -75,7 +75,7 @@ test('CHAIN round end at the gate: the button is FIRST on the death card and goe
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await installBackendMock(page);
-  await seed(page, 15);
+  await seed(page, 25);
   // soloms: the dev clock cap that ends the run in well under a second once armed (solo-exit.spec.js);
   // portal=1 keeps the query through App's URL canonicalisation.
   await page.goto('/?chain=1&soloms=350&portal=1');

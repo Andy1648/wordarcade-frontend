@@ -23,8 +23,6 @@ import {
   saveProgress,
   saveRebirths,
   clearGrandfatheredGate,
-  REBIRTH_GATE_BASE,
-  REBIRTH_GATE_STEP,
   XP_KEY,
   ECON_STAMP_KEY,
   REBIRTH_GATE_KEY,
@@ -56,14 +54,19 @@ function parse(raw) {
 // the new ladder) and resets at the next rebirth like everyone's. The run's peak level goes into taw.records first
 // (mode unlocks read the peak), the old v10 one-time gate is dropped (one rule for everyone), and
 // taw.rrnotice = N queues the "YOUR LEVELS BECAME +N REBIRTHS" moment.
+// The one-time conversion is FROZEN at the Rebirth Rush gate it shipped with (15 + 18·R): the live gate later became
+// round numbers (25 × (R+1), Andy oct5), but every save converts under the SAME rule as the first players did — fair.
+// The server (018/019 old_gate) and submitRules.js CONV_GATE_* use the same numbers.
+export const CONV_GATE_BASE = 15;
+export const CONV_GATE_STEP = 18;
 export const RR_NOTICE_KEY = 'taw.rrnotice';
 /** PURE: the conversion for a level / rebirth count → { rebirths, level, added }. */
 export function rebirthRushConvert(level, rebirths) {
   const L = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
   const R = Number.isFinite(rebirths) && rebirths > 0 ? Math.floor(rebirths) : 0;
-  const gate = REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * R;
+  const gate = CONV_GATE_BASE + CONV_GATE_STEP * R;
   if (L < gate) return { rebirths: R, level: L, added: 0 };
-  const added = Math.floor((L - gate) / REBIRTH_GATE_STEP) + 1;
+  const added = Math.floor((L - gate) / CONV_GATE_STEP) + 1;
   return { rebirths: R + added, level: 1, added };
 }
 function applyRebirthRush() {

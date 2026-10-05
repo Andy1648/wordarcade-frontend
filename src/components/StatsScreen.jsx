@@ -350,7 +350,7 @@ export default function StatsScreen({ onBack }) {
             ))}
           </div>
 
-          {/* STAT BOARD (Andy oct5, Keyboard Escape / Genshin): BASE big, each multiplier on its own line, TOTAL
+          {/* STAT BOARD (Andy oct5): TOTAL ×N huge first, then BASE, then each multiplier on its own line, then the pay;
               huge — WINS / WORD, then XP / LETTER. The rebirth ladder chips (?ladder=1) sit under the two boards. */}
           <StatBoard stack={board.wins} title="WINS / WORD" />
           <StatBoard stack={board.xp} title="XP / LETTER" />
@@ -493,15 +493,21 @@ export default function StatsScreen({ onBack }) {
   );
 }
 
-// STAT BOARD — one stack: BASE (big) → a line per multiplier (rarity/tier colour on KEY, REBIRTH, MARK) → TOTAL
-// (huge). Static like the rest of this screen. The big numerals size to their box by length (cqw), so a long
-// "1.25Qa" never overflows a phone. A ×1 line is dimmed, not hidden: every multiplier keeps its line.
+// STAT BOARD (Andy oct5): the TOTAL MULTIPLIER (×N, huge) FIRST, then BASE, then a line per multiplier (rarity/tier
+// colour on KEY, REBIRTH, MARK), then "= " the pay itself (BASE × the multiplier — the payout's own number). Static
+// like the rest of this screen. The big numerals size to their box by length (cqw), so a long "1.25Qa" never
+// overflows a phone. A ×1 line is dimmed, not hidden: every multiplier keeps its line.
 function StatBoard({ stack, title }) {
   const baseText = formatRate(stack.base);
   const totalText = formatRate(stack.total);
+  const multText = `×${boardMult(stack.base > 0 ? stack.total / stack.base : 1)}`;
   return (
     <section className={`sb sb--${stack.id}`} aria-label={title}>
       <h3 className="stats-subtitle sb-title">{title}</h3>
+      <div className="sb-total">
+        <span className="sb-k">TOTAL</span>
+        <span className="sb-total-v" style={{ '--sb-len': Math.max(4, multText.length) }}>{multText}</span>
+      </div>
       <div className="sb-base">
         <span className="sb-k">BASE</span>
         <span className="sb-base-v" style={{ '--sb-len': Math.max(4, baseText.length) }}>{baseText}</span>
@@ -517,9 +523,9 @@ function StatBoard({ stack, title }) {
           </li>
         ))}
       </ul>
-      <div className="sb-total">
-        <span className="sb-k">TOTAL</span>
-        <span className="sb-total-v" style={{ '--sb-len': Math.max(4, totalText.length) }}>{totalText}</span>
+      <div className="sb-base sb-pay">
+        <span className="sb-k">=</span>
+        <span className="sb-base-v" style={{ '--sb-len': Math.max(4, totalText.length) }}>{totalText}</span>
       </div>
     </section>
   );

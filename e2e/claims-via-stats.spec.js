@@ -20,7 +20,7 @@ async function menuWith(page, vp, claims) {
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.xp', JSON.stringify({ lv: claims.length ? 27 : 2, into: 0 }));
-    localStorage.setItem('taw.wins', '5000'); // KEY POWER I affordable → a SHOP dot to measure
+    localStorage.setItem('taw.wins', '5000'); // KEY TIER I affordable → a SHOP dot to measure
     localStorage.setItem('taw.claims', JSON.stringify(claims));
   }, claims);
   await page.goto('/?portal=1');

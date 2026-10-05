@@ -1,0 +1,88 @@
+/* CardPager.css — lazy with CardPager.jsx (only a short-wide desktop fetches it): the paged row's
+   layout (arrows either side of a shrink-wrapped 3-card grid), the arrows and the two-dot indicator.
+   The off-page HIDE stays in Homepage.css so the menu never paints six cards in a paged row. */
+.homepage-stage[data-paged] .homepage-cards-pagerow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: clamp(10px, 1.4vw, 20px);
+  width: 100%;
+  flex: 0 0 auto;
+  /* a horizontal swipe flips; a vertical one is still the browser's */
+  touch-action: pan-y;
+}
+.homepage-stage[data-paged] .homepage-cards-scroll,
+.homepage-stage[data-paged][data-fit='short'] .homepage-cards-scroll {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 0 8px;
+}
+.homepage-stage[data-paged] .homepage-cards-grid {
+  width: auto;
+  grid-template-columns: repeat(var(--cards-cols, 3), var(--card-w, 200px));
+}
+.homepage-stage[data-paged] .homepage-cards-grid .game-card-magnet { grid-column: auto; }
+.homepage-cards-arrow {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: var(--v-ink);
+  background: var(--v-panel-hi);
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s, opacity 0.2s;
+}
+.homepage-cards-arrow:hover:not([aria-disabled='true']),
+.homepage-cards-arrow:active:not([aria-disabled='true']) { will-change: transform; }
+.homepage-cards-arrow:hover:not([aria-disabled='true']) { transform: scale(1.08); }
+.homepage-cards-arrow:active:not([aria-disabled='true']) {
+  transform: scale(0.9);
+  box-shadow: 1px 1px 0 #000;
+}
+.homepage-cards-arrow:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 3px; }
+/* The end of the row: still in place (the cards never shift), just plainly spent. */
+.homepage-cards-arrow[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.homepage-cards-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  height: 14px;
+  flex: 0 0 auto;
+  /* an indicator, not a control: it must never take a tap meant for whatever sits beside it */
+  pointer-events: none;
+}
+.homepage-cards-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--v-ink);
+  background: transparent;
+  opacity: 0.55;
+  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.5, 1);
+}
+.homepage-cards-dot.is-on {
+  background: #FF4FA3;
+  border-color: #991A75;
+  opacity: 1;
+  transform: scale(1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .homepage-cards-arrow,
+  .homepage-cards-dot { transition: none; }
+}
