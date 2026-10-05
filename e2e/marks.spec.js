@@ -27,6 +27,10 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   const btn = page.locator('.menu-mark');
   await expect(btn).toContainText('NEW MARK');
   await btn.click();
+  // Andy oct5: MARKS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX
+  await page.locator('.rs-overlay').waitFor();
+  await expect(page.locator('.rs-roll')).toBeVisible();
+  await page.locator('[data-testid="roll-index"]').click();
   // INDEX v2 (Andy oct5): card = name · rarity · 1 IN X · stat; tap → the detail sheet (flavour, owned, first roll)
   await page.locator('.mx-panel').waitFor();
   const tile = page.locator('.mx-tile', { hasText: 'BOMBER' });
@@ -67,7 +71,8 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await page.locator('.mx-sheet-close').click();
   // per-rarity completion is colour + numbers: six tier chips
   await expect(page.locator('[data-testid="marks-collected"] .mx-tierchip')).toHaveCount(6);
-  await page.locator('.mx-close').click();
+  await page.locator('.mx-close').click(); // back to the ROLL screen
+  await page.locator('.rs-close').click();
   await expect(page.locator('.menu-mark .menu-mark-mult')).toHaveText('×1.1'); // the worn MAIN under Rebirth Rush (COMMON ×1.1)
 });
 
@@ -111,10 +116,10 @@ for (const [label, seed] of [
     const btn = page.locator('.menu-mark');
     await expect(btn).toBeVisible();
     await btn.click();
-    await page.locator('.mx-panel').waitFor();
-    await page.locator('.mx-close').click();
-    // still there after the picker closes with nothing worn — the old disappearing act
-    await expect(page.locator('.mx-panel')).toHaveCount(0);
+    await page.locator('.rs-overlay').waitFor();
+    await page.locator('.rs-close').click();
+    // still there after MARKS closes with nothing worn — the old disappearing act
+    await expect(page.locator('.rs-overlay')).toHaveCount(0);
     await expect(btn).toBeVisible();
   });
 }

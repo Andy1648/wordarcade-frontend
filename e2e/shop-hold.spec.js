@@ -97,6 +97,8 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   const slot = page.locator('.menu-mark').first();
   await expect(slot.locator('svg.mark-badge')).toBeVisible();
   await slot.click();
+  // Andy oct5: MARKS opens the ROLL screen; INDEX opens the MARKS INDEX
+  await page.locator('[data-testid="roll-index"]').click();
   // INDEX v2: the worn mark's card — its art, MAIN tag and ONE stat line (no sentence explaining it)
   const worn = page.locator('.mx-tile.is-on');
   await expect(worn.locator('svg.mark-badge')).toBeVisible();

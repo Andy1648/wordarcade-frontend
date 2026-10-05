@@ -32,9 +32,9 @@ test('every tutorial is ONE spotlight: a target to light + one short line, no st
   assert.doesNotMatch(TUTORIALS.map((t) => t.line).join(" "), /KEY POWER/);
 });
 
-test('targets: ROLL in MARKS, the gem count, the REBIRTH button, the SHOP KEY item', () => {
+test('targets: ROLL on the ROLL screen, the gem count, the REBIRTH button, the SHOP KEY item', () => {
   const by = Object.fromEntries(TUTORIALS.map((t) => [t.id, t]));
-  assert.match(by.markRolls.target, /\.mr-roll/);
+  assert.match(by.markRolls.target, /\.rs-roll/);
   assert.match(by.gems.target, /\.gems-count/);
   assert.match(by.rebirth.target, /is-rebirth/);
   assert.match(by.keyTier.target, /\.shop-keypower/);

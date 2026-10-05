@@ -89,9 +89,7 @@
   .mx-tiers { order: 0; flex: 1 1 auto; max-width: 720px; }
 }
 
-/* ---- compat: the ROLL panel above the grid (only when the menu hosts the INDEX directly) ------------------ */
-.mx-roll-slot { min-width: 0; }
-.mx-panel:not(.is-compat) { grid-template-rows: auto minmax(0, 1fr); }
+.mx-panel { grid-template-rows: auto minmax(0, 1fr); }
 
 /* ---- the grid --------------------------------------------------------------------------------------------- */
 .mx-grid {
@@ -269,11 +267,6 @@
   .mx-sheet-body { padding-right: 0; justify-items: center; }
   .mx-sheet-tier, .mx-sheet-facts, .mx-sheet-actions { justify-content: center; }
   .mx-sheet .mx-art .mx-sil-wrap { width: 104px; height: 109px; }
-}
-/* compat on a short screen: the ROLL panel and the grid share the column, so the panel scrolls as a whole */
-@media (max-height: 760px), (max-width: 899px) {
-  .mx-panel.is-compat { overflow-y: auto; grid-template-rows: none; }
-  .mx-panel.is-compat .mx-grid { overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) {
   .mx-sheet { animation: none; }

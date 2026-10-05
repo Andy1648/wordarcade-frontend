@@ -8,8 +8,8 @@
 //   onReplay(markId)    replay that mark's reveal (the detail's REPLAY button; owned rollable marks only)
 //   unlockedIds, equippedId, earned, onEquip   optional — the owned set / worn MAIN; with onEquip the detail can
 //                       SET AS MAIN. achievementNames names a locked PERMANENT's task.
-// COMPAT: a host that passes no onReplay (the menu's MARKS button, until the ROLL screen owns it) still gets the
-// ROLL panel above the grid, so rolling never disappears between the two PRs. `level` feeds that panel's price.
+// Rolling lives on the ROLL screen (rollScreen/RollScreen.jsx) — this screen never rolls. Without onReplay the
+// detail simply has no REPLAY button.
 //
 // THE CARD (rule: max 4 things) — name · rarity · 1 IN X · stat, on the tier's fill; the ★ pips sit under the
 // art with their "7/10 → ★3" (Andy: "Card shows 7/10 → ★3"). LOCKED: no name — a silhouette (an asset, masked
@@ -18,7 +18,7 @@
 // a complete tier is a solid tier fill. The engine pays the INDEX rewards (new mark / ★ / tier complete) — this
 // screen never states an amount, so it can never claim more than it pays.
 //
-// NO SPOILERS: storage is snapshotted on mount and re-read only when a roll's reveal LANDS (compat ROLL panel).
+// NO SPOILERS: storage is snapshotted on mount (the ROLL screen remounts this layer each time it opens it).
 // Motion: the detail sheet pops in once (transform/opacity, finite); RarityFx sweeps once per card from EPIC up;
 // nothing loops; reduced motion shows the same states still.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -32,17 +32,13 @@ import { wearMark } from '../progress/markRollShop';
 import { flavourOf } from '../progress/markFlavour';
 import MarkBadge, { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS } from './markGlyphsRolled.jsx';
-import RollPanel from './markRolls/RollPanel';
-import { ShinyBadge } from './markRolls/RollReveal';
-import SpotlightTutorial from '../tutorials/SpotlightTutorial.jsx';
-import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
+import ShinyBadge from './rollScreen/ShinyBadge';
 import { formatNum } from '../format';
 import { rarityClass } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 import MarkPips from './rarity/MarkPips';
 import './rarity/RarityFin.css';
 import './MarksIndex.css';
-import './markRolls/MarkRolls.css';
 
 registerMarkGlyphs(ROLLED_GLYPHS);
 
@@ -78,20 +74,6 @@ function tierCompletion(view, owns) {
     const owned = ms.filter((m) => owns(m.id)).length;
     return { tier, owned, total: ms.length, complete: done.has(tier) || (ms.length > 0 && owned === ms.length) };
   });
-}
-
-function useReducedMotion() {
-  const [r, setR] = useState(() => {
-    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
-  });
-  useEffect(() => {
-    let mq;
-    try { mq = window.matchMedia('(prefers-reduced-motion: reduce)'); } catch { return undefined; }
-    const on = () => setR(mq.matches);
-    if (mq.addEventListener) mq.addEventListener('change', on); else mq.addListener(on);
-    return () => (mq.removeEventListener ? mq.removeEventListener('change', on) : mq.removeListener(on));
-  }, []);
-  return r;
 }
 
 /** A locked mark: the silhouette asset, masked and painted in the tier colour (the host carries the tier vars). */
@@ -179,17 +161,15 @@ function Sheet({ e, have, on, view, howTo, onSet, onReplay, onClose }) {
 }
 
 export default function MarksIndex({
-  onClose, onReplay, unlockedIds = [], equippedId = null, achievementNames = {}, level = 1, earned = [], onEquip,
+  onClose, onReplay, unlockedIds = [], equippedId = null, achievementNames = {}, earned = [], onEquip,
 }) {
-  const compat = typeof onReplay !== 'function'; // hosted by the menu's MARKS button: keep the ROLL panel here
-  // `landed` ticks when a roll's reveal lands — the ONLY time this screen re-reads storage
-  const [landed, setLanded] = useState(0);
   const idsRef = useRef(unlockedIds);
   idsRef.current = unlockedIds;
-  const snap = useMemo(() => {
+  // storage is read ONCE, on mount — a re-render (a balance write behind) never moves a tile or a counter
+  const [snap] = useState(() => {
     const ids = idsRef.current;
     return { unlocked: new Set(ids), view: viewState(ids), permOwned: new Set(permanentOwnedIds()) };
-  }, [landed]); // eslint-disable-line react-hooks/exhaustive-deps -- re-read storage ONLY when a reveal lands
+  });
   const { unlocked, view, permOwned } = snap;
   const entries = useMemo(() => buildEntries(unlocked), [unlocked]);
   const ownsId = (id, kind) => (kind === 'roll' ? markLevel(view, id).copies > 0 || unlocked.has(id) : kind === 'perm' ? permOwned.has(id) || unlocked.has(id) : unlocked.has(id));
@@ -197,9 +177,6 @@ export default function MarksIndex({
   const [worn, setWorn] = useState(equippedId);
   useEffect(() => { setWorn(equippedId); }, [equippedId]);
   const [sel, setSel] = useState(null);
-  const [coverHost, setCoverHost] = useState(null);
-  const [tut, setTut] = useState(() => compat && !hasSeenTutorial('markRolls'));
-  const reduced = useReducedMotion();
   const closeRef = useRef(null);
   const selRef = useRef(sel);
   selRef.current = sel;
@@ -221,11 +198,10 @@ export default function MarksIndex({
   const col = collection(view);
   const tiers = tierCompletion(view, (id) => ownsId(id, 'roll'));
   const selE = sel ? entries.find((e) => e.id === sel) : null;
-  const tutDef = TUTORIALS.find((t) => t.id === 'markRolls');
 
   return (
-    <div className="marks-overlay mx-overlay" role="dialog" aria-modal="true" aria-label="Index" ref={setCoverHost}>
-      <div className={`mx-panel${compat ? ' is-compat' : ''}`}>
+    <div className="marks-overlay mx-overlay" role="dialog" aria-modal="true" aria-label="Index">
+      <div className="mx-panel">
         <div className="mx-head">
           <h2 className="mx-title">INDEX</h2>
           {/* per-rarity completion, by COLOUR: each chip fills in its tier colour as you collect; complete = solid */}
@@ -246,22 +222,6 @@ export default function MarksIndex({
           </div>
           <button type="button" className="mx-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
         </div>
-        {compat ? (
-          <div className="mx-roll-slot">
-            <RollPanel
-              level={level}
-              view={view}
-              worn={worn}
-              earned={earned}
-              reduced={reduced}
-              coverHost={coverHost}
-              onRolled={(res, wornNow) => {
-                setLanded((n) => n + 1);
-                if (wornNow) { setWorn(wornNow); onEquip && onEquip(wornNow); }
-              }}
-            />
-          </div>
-        ) : null}
         <div className="mx-grid" role="list">
           {entries.map((e) => {
             const have = owns(e);
@@ -307,13 +267,10 @@ export default function MarksIndex({
           view={view}
           howTo={selE.kind === 'perm' ? ACH_HINT[selE.from] || achievementNames[selE.from] || selE.from : ''}
           onSet={set}
-          onReplay={compat ? null : onReplay}
+          onReplay={typeof onReplay === 'function' ? onReplay : null}
           onClose={() => setSel(null)}
         />
       ) : null}
-      {tut && tutDef && (
-        <SpotlightTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
-      )}
     </div>
   );
 }

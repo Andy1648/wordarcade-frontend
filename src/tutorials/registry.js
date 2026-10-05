@@ -23,12 +23,12 @@ export const TUT_INIT_KEY = 'taw.tut.init';
  *  panel, not the menu), needsTarget (not due until its target is on screen — no target, no tutorial). */
 export const TUTORIALS = [
   {
-    // MARK ROLLS: hosted by the MARKS panel (MarksIndex.jsx shows it the first time the panel opens).
+    // MARK ROLLS: hosted by the ROLL screen (rollScreen/RollScreen.jsx shows it the first time it opens).
     id: 'markRolls',
     host: 'marks',
     isNew: true,
     when: (s) => s.marksRevealed && rollsEnabled(),
-    target: '.mr-roll',
+    target: '.rs-roll',
     line: 'ROLL FOR MARKS. YOUR FIRST ROLL IS FREE.',
   },
   {
