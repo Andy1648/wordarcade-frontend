@@ -138,6 +138,12 @@ export const GOLDS_PER_RAINBOW = 10; // 10 golds → a RAINBOW
 // The bonus part, not the whole multiplier: a GOLD common at ×2.2 would out-pay a base LEGENDARY's tier ladder.
 export const GOLD_MULT = 2;
 export const RAINBOW_MULT = 5;
+// SHINY (Andy, rolls-live): any roll has a flat 1.5% chance to come up SHINY — independent of LUCK and pity. A mark
+// is shiny once ANY copy of it rolled shiny (kept forever). Shiny ×2 THAT mark's bonus part, stacking with the
+// finish: COMMON ×1.1 → ×1.2, LEGENDARY ×3 → ×5, GOLD COMMON ×1.2 → ×1.4, RAINBOW SECRET ×121 → ×241.
+// Perks don't scale with finish (they're on/off), so shiny doesn't touch them either.
+export const SHINY_CHANCE = 0.015;
+export const SHINY_MULT = 2;
 // The INDEX: % of the rollable marks owned pays a small permanent bonus — +0.5% per % collected (+50% at 100%).
 export const INDEX_BONUS_PER_PCT = 0.005;
 // INDEX milestones: % of the rollable marks owned (base), and of their GOLD and RAINBOW versions → LUCK + a lump.
@@ -172,7 +178,8 @@ export function normalize(raw) {
   if (raw.marks && typeof raw.marks === 'object') {
     for (const [id, v] of Object.entries(raw.marks)) {
       const n = num(v && typeof v === 'object' ? v.n : v);
-      if (ROLL_BY_ID.has(id) && n > 0) s.marks[id] = { n };
+      // old states have no shiny flag → not shiny (migration is just this read)
+      if (ROLL_BY_ID.has(id) && n > 0) s.marks[id] = v && typeof v === 'object' && v.shiny === true ? { n, shiny: true } : { n };
     }
   }
   if (Array.isArray(raw.milestones)) s.milestones = [...new Set(raw.milestones.filter((id) => COLLECTION_MILESTONES.some((m) => m.id === id)))];
@@ -193,6 +200,16 @@ export function variantMult(level) {
   if (level && level.rainbow > 0) return RAINBOW_MULT;
   if (level && level.gold > 0) return GOLD_MULT;
   return 1;
+}
+
+/** True once any copy of this mark rolled SHINY (kept forever). Pure. */
+export function isShiny(markId, state) {
+  const v = state && state.marks && markId ? state.marks[markId] : null;
+  return !!(v && typeof v === 'object' && v.shiny === true && num(v.n) > 0);
+}
+/** What SHINY does to the MAIN's bonus part: ×2 when the mark is shiny, else ×1. */
+export function shinyMult(markId, state) {
+  return isShiny(markId, state) ? SHINY_MULT : 1;
 }
 
 /** The INDEX: base / gold / rainbow % over the rollable pool. */
@@ -223,14 +240,15 @@ function tierOfAny(id) {
   return l ? l.tier : null;
 }
 /**
- * The MAIN multiplier a mark pays when worn: 1 + tier bonus × its finish (GOLD ×2, RAINBOW ×5 of the bonus).
+ * The MAIN multiplier a mark pays when worn: 1 + tier bonus × its finish (GOLD ×2, RAINBOW ×5 of the bonus)
+ * × SHINY (×2 of the bonus, stacking).
  * `state` = the roll state its finish is read from (omit → the stored one; null → base finish).
  */
 export function mainMultOf(id, state) {
   const tier = id ? tierOfAny(id) : null;
   if (!tier) return 1;
   const s = state === undefined ? loadRollState() : state;
-  const k = ROLL_BY_ID.has(id) && s ? variantMult(markLevel(s, id)) : 1;
+  const k = ROLL_BY_ID.has(id) && s ? variantMult(markLevel(s, id)) * shinyMult(id, s) : 1;
   return 1 + mainBonus(tier) * k;
 }
 export function mainTag(id, state) {

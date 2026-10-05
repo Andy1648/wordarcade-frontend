@@ -20,6 +20,7 @@ import { getWins, subscribeBalance } from '../../progress/wins';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndLucky, sndAchievement, sndWordRejected } from '../../audio/gameSounds';
 import { formatNum } from '../../format';
+import { announceRolls } from '../../leaderboard/live';
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t).toUpperCase());
@@ -125,6 +126,7 @@ export default function RollPanel({ level = 1, view, worn, earned = [], reduced 
     if (!res) return;
     pending.current = null;
     if (res.tier !== 'common') (isHeavy(res.tier) ? sndAchievement : sndLucky)(); // the payoff lands with the result
+    announceRolls([res, ...(res.extra || [])]); // MYTHIC+ → one ticker line each ("NAME ROLLED MYTHIC")
     const wornNow = res.decision === 'auto' ? applyRollEquip(res, earned) : null;
     onRolled && onRolled(res, wornNow);
   };

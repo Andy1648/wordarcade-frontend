@@ -13,6 +13,7 @@
 // COST: one socket per open menu, heartbeat every 25 s, dropped after 60 s in a hidden tab.
 import { LEADERBOARD_ENABLED, getMyProfile } from './client.js';
 import { nameVerdict } from './nameFilter.js';
+import { ROLL_TICK_TIERS } from './tickText.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -20,7 +21,7 @@ const HOST = RAW_URL.replace(/^https?:\/\//, '').replace(/\/+$/, '').replace(/\/
 const TOPIC = 'realtime:taw-lobby';
 const HEARTBEAT_MS = 25000;
 const HIDDEN_DROP_MS = 60000;
-export const TICKER_KINDS = ['lv', 'rank', 'rb'];
+export const TICKER_KINDS = ['lv', 'rank', 'rb', 'roll'];
 
 let ws = null;
 let ref = 1;
@@ -54,6 +55,7 @@ export function cleanTick(p) {
   const v = Number(p.v);
   if (!k || !n || n.length > 16 || nameVerdict(n, { cjk: true }) !== 'ok') return null;
   if (!Number.isInteger(v) || v < 1 || v > (k === 'rank' ? 100 : 100000)) return null;
+  if (k === 'roll' && !ROLL_TICK_TIERS[v]) return null; // only MYTHIC / SECRET codes
   return { k, n, v };
 }
 
@@ -162,6 +164,28 @@ export function announceTick(k, v) {
   if (ws && ws.tracked && send(TOPIC, 'broadcast', { type: 'broadcast', event: 'tick', payload: t })) return true;
   pending = [...pending, t].slice(-3);
   return true;
+}
+
+/** The ticker tier code for a rolled tier (MYTHIC 4, SECRET 5), or 0 when it isn't worth a line. */
+export function rollTickCode(tier) {
+  return tier === 'mythic' ? 4 : tier === 'secret' ? 5 : 0;
+}
+/**
+ * MARK ROLLS: one line per MYTHIC+ result ("NAME ROLLED MYTHIC") — called when the reveal LANDS (no spoilers).
+ * `results` = the shown roll + any DOUBLE ROLLS extra. Unclaimed players post nothing (announceTick). Best-effort:
+ * never throws. Returns how many lines were posted.
+ */
+export function announceRolls(results) {
+  let n = 0;
+  try {
+    for (const r of results || []) {
+      const v = r ? rollTickCode(r.tier) : 0;
+      if (v && announceTick('roll', v)) n += 1;
+    }
+  } catch {
+    /* the ticker never breaks a roll */
+  }
+  return n;
 }
 
 /** Level milestones worth telling the room about. */

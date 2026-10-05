@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanTick, isLevelMilestone } from './live.js';
+import { cleanTick, isLevelMilestone, announceRolls, rollTickCode } from './live.js';
 import { tickText } from './tickText.js';
 
 test('the ticker renders only well-formed, clean {kind, name, number} messages', () => {
@@ -22,4 +22,31 @@ test('templated text only', () => {
 
 test('milestone levels: 10, 25, then every 50', () => {
   assert.deepEqual([9, 10, 25, 26, 50, 75, 100, 150].map(isLevelMilestone), [false, true, true, false, true, false, true, true]);
+});
+
+test('MARK ROLLS ticker: MYTHIC+ only, one line each, "NAME ROLLED MYTHIC" / "NAME ROLLED SECRET"', () => {
+  assert.equal(tickText({ k: 'roll', n: 'ZED', v: 4 }), 'ZED ROLLED MYTHIC');
+  assert.equal(tickText({ k: 'roll', n: 'ZED', v: 5 }), 'ZED ROLLED SECRET');
+  assert.equal(tickText({ k: 'roll', n: 'ZED', v: 3 }), '');
+  assert.deepEqual(cleanTick({ k: 'roll', n: 'ZED', v: 4 }), { k: 'roll', n: 'ZED', v: 4 });
+  assert.equal(cleanTick({ k: 'roll', n: 'ZED', v: 3 }), null, 'LEGENDARY and below never post');
+  assert.equal(cleanTick({ k: 'roll', n: 'ZED', v: 99 }), null);
+  assert.deepEqual(['common', 'rare', 'epic', 'legendary', 'mythic', 'secret', undefined].map(rollTickCode), [0, 0, 0, 0, 4, 5, 0]);
+});
+
+test('MARK ROLLS ticker: unclaimed posts nothing; claimed posts one per MYTHIC+ result; never throws', () => {
+  const map = new Map();
+  const saved = globalThis.localStorage;
+  globalThis.localStorage = { getItem: (k) => (map.has(k) ? map.get(k) : null), setItem: (k, v) => map.set(k, String(v)), removeItem: (k) => map.delete(k) };
+  try {
+    const rolls = [{ tier: 'mythic' }, { tier: 'common' }, { tier: 'secret' }, null];
+    assert.equal(announceRolls(rolls), 0, 'unclaimed');
+    map.set('taw.lb.profile', JSON.stringify({ id: 1, username: 'ZED' }));
+    assert.equal(announceRolls(rolls), 2);
+    assert.equal(announceRolls([{ tier: 'legendary' }]), 0);
+    assert.equal(announceRolls(undefined), 0);
+  } finally {
+    if (saved === undefined) delete globalThis.localStorage;
+    else globalThis.localStorage = saved;
+  }
 });

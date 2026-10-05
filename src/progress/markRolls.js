@@ -26,7 +26,7 @@ import { gameKey, WORD_LEN_REF } from './wins.js';
 import { xpPerWord } from './xp.js';
 import {
   ROLL_MARKS, rollMarkById, permanentMarkById, PERMANENT_MARKS, tierRank, mainBonus, oneInX, COLLECTION_MILESTONES,
-  freshState, normalize, markLevel, mainMultOf, loadRollState, saveRollState, num, collection,
+  freshState, normalize, markLevel, mainMultOf, loadRollState, saveRollState, num, collection, SHINY_CHANCE, isShiny,
 } from './markRollsCore.js';
 
 export * from './markRollsCore.js';
@@ -150,7 +150,9 @@ export function rollTable(state, ctx = {}) {
 /**
  * ONE ROLL. Pure: returns { state (new), result }. `rng` is () → [0,1). ctx: { permanentOwned,
  * boost }. result: { markId, tier, oneInX, dupe, newMark, copies, goldUp, rainbowUp, gold, rainbow,
- * pityHit ('epic'|null), bonusRoll, luck, milestones (newly reached ids) }.
+ * pityHit ('epic'|null), bonusRoll, luck, milestones (newly reached ids), shiny (THIS roll came up shiny),
+ * shinyNew (it made the mark shiny for the first time) }.
+ * SHINY is a second draw from the same rng AFTER the pick: a flat SHINY_CHANCE, untouched by luck and pity.
  */
 export function roll(rng, state, ctx = {}) {
   const s0 = normalize(state);
@@ -170,9 +172,12 @@ export function roll(rng, state, ctx = {}) {
     u -= p;
   }
   pick = pick || last; // float dust at the very end of the table
+  const sh = rng();
+  const shiny = sh >= 0 && sh < SHINY_CHANCE;
+  const wasShiny = isShiny(pick.id, s0);
   const before = markLevel(s0, pick.id);
   const s = { ...s0, marks: { ...s0.marks }, milestones: [...s0.milestones] };
-  s.marks[pick.id] = { n: before.copies + 1 };
+  s.marks[pick.id] = shiny || wasShiny ? { n: before.copies + 1, shiny: true } : { n: before.copies + 1 };
   const after = markLevel(s, pick.id);
   s.rolls = s0.rolls + 1;
   const tr = tierRank(pick.tier);
@@ -198,6 +203,8 @@ export function roll(rng, state, ctx = {}) {
       bonusRoll: bonus,
       luck: L,
       milestones: reached,
+      shiny,
+      shinyNew: shiny && !wasShiny,
     },
   };
 }
@@ -279,7 +286,7 @@ export function migrate(raw, { ownedIds = [] } = {}) {
   for (const id of ownedIds) {
     if (!ROLL_BY_ID.has(id)) continue;
     const n = s.marks[id] ? s.marks[id].n : 0;
-    s.marks[id] = { n: Math.max(n, 1) };
+    s.marks[id] = { ...s.marks[id], n: Math.max(n, 1) };
   }
   const had = new Set(s.milestones);
   s.milestones = [...s.milestones, ...milestonesReached(s).filter((id) => !had.has(id))];
