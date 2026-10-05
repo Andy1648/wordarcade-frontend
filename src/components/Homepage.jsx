@@ -524,6 +524,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             let w = Math.min(colW, (rowH * 3) / 4);
             if (w < minW) w = Math.min(colW, minW);
             f = { w, h: (w * 4) / 3, cols, rows, aspect: true };
+            // LAST RESORT (only once the short arrangement and the 0.4 wordmark are both spent, e.g.
+            // 1163x501): the card stops at the row's height rather than run into the dots and the
+            // CREDITS row under it. Never reached at 1366x657 / 1280x551.
+            if (clampPaged && f.h > rowH) f = { ...f, h: rowH, aspect: false };
             owed = Math.max(0, f.h - rowH);
           } else {
             const w0 = Math.min(colW, (rowH * 3) / 4);
@@ -554,11 +558,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       // WHERE THE LEFTOVER GOES on a wide screen: the 3:4 cards are width-bound and the region
       // hugs its TOP, so the surplus sits below the cards (see .homepage-cards-region).
+      let clampPaged = false;
       let r = pass('normal', 0);
       if (!r || narrow) return;
       if (r.wide > 0.5 || r.tall > 0.5) r = pass('short', 0);
       // Still short of height: take it out of the wordmark, a row's worth per row of cards.
       for (let i = 0; r && r.tall > 0.5 && i < 2; i += 1) r = pass('short', Math.ceil(r.tall * r.rows) + 2);
+      if (r && isPagedMenu && r.tall > 0.5) {
+        clampPaged = true;
+        pass('short', 0);
+      }
     };
     const onResize = () => {
       cancelAnimationFrame(raf);

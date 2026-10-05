@@ -1006,6 +1006,8 @@ html[data-beat='true'] .homepage-logo {
   margin-top: 8px;
   height: 14px;
   flex: 0 0 auto;
+  /* an indicator, not a control: it must never take a tap meant for whatever sits beside it */
+  pointer-events: none;
 }
 .homepage-cards-dot {
   width: 12px;
