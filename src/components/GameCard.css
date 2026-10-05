@@ -481,6 +481,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 /* THE MULTIPLIER IS THE REWARD, so it is the reward colour. It was #fff — the same white as
    everything else on the bar, at 6px. */
 .game-card-payout-mult { color: #ffe94a; font-weight: 700; }
+/* Andy oct5: the real pay per word is the card's ONE number — the reward yellow, at the line's fit-to-slot size
+   (the payout line is already the card's second-loudest type); " / WORD" stays the line's plain colour. */
+.game-card-payout-num { color: #ffe94a; }
 
 /* THE XP LINE, directly above the wins line and the louder of the two — XP is what the bar on
    the same screen is counting, and it is the bigger number. Same cqw sizing as the payout (this
