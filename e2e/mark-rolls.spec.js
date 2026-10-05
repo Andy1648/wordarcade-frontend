@@ -1,7 +1,7 @@
 // e2e/mark-rolls.spec.js — MARK ROLLS UI (Andy M + H3; the oct3 review hybrid). Written WITHOUT being run (memory
 // rules on the authoring machine); Andy runs it. Covers: open MARKS → the ROLL tutorial → roll once → a result
 // card, and % COLLECTED / pity only move when the reveal LANDS; the ROLL button never moves; a short balance says
-// NEED X MORE; reduced motion shows a static card; the worn mark reads MAIN ×N; nothing loops after a reveal.
+// NEED X MORE; reduced motion shows a static card; the worn mark reads its STAT (marks v2: "+10% WINS", "+1 BASE WINS/WORD" …); nothing loops after a reveal.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -33,7 +33,8 @@ async function openMarks(page) {
 const collected = (page) => page.locator('[data-testid="marks-collected"]').getAttribute('data-pct').then(Number);
 const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
-  return el && el.closest && el.closest('.mr-stage, .mr-cover');
+  // RUNNING only: a finished one-shot (the rarity sweep's fill-mode both) stays in getAnimations() but moves nothing
+  return el && el.closest && el.closest('.mr-stage, .mr-cover') && a.playState === 'running';
 }).length);
 
 test('roll once: tutorial, result card, nothing updates before the reveal lands, nothing loops after', async ({ page }) => {
@@ -155,7 +156,7 @@ test('the worn mark shows MAIN ×N; every other owned mark shows its perk or MAI
   await openMarks(page);
   await page.locator('.mr-roll').click();
   const card = page.locator('[data-testid="mark-roll-result"]');
-  await expect(card.locator('.mr-card-tag')).toHaveText(/^MAIN ×\d/, { timeout: 4000 });
+  await expect(card.locator('.mr-card-tag')).toHaveText(/^\+[\d.,]+/, { timeout: 4000 });
   await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^\+[\d.,]+/); // INDEX v2: the stat line
   // roll until a SECOND distinct mark is owned; it reads PERK, not MAIN
   for (let i = 0; i < 12; i += 1) {
