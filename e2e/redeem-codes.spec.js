@@ -30,6 +30,7 @@ async function boot(page, { live = true, level = 20 } = {}) {
     sessionStorage.setItem('rc.seeded', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.xp', JSON.stringify({ lv: level, into: 0 }));
+    localStorage.setItem('taw.econ', '12'); // already on Rebirth Rush: econ 12 (this spec is not about the one-time conversion)
     localStorage.setItem('taw.wins', '1000');
     localStorage.setItem('taw.claims', '[]');
   }, level);

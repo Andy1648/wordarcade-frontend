@@ -87,7 +87,7 @@ test.describe('shop', () => {
     // cumulative-XP seed lands well BELOW the LV15 rebirth gate it used to clear. Seeded through
     // the v5 {lv, into} shape instead of a cumulative total - it says what it means ("this player
     // is level 15") and cannot be invalidated by another curve retune.
-    await openRebirth(page, { 'taw.xp': JSON.stringify({ lv: 15, into: 0 }), 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
+    await openRebirth(page, { 'taw.econ': '12', 'taw.xp': JSON.stringify({ lv: 15, into: 0 }), 'taw.wins': '400', 'taw.owned': JSON.stringify(['classic', 'thock', 'clack', 'cream', 'inferno']) });
     const rebirth = page.locator('.shop-rebirth');
     await expect(rebirth).toBeEnabled(); // past the level gate → eligible
 
