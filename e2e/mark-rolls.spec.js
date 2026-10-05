@@ -48,10 +48,14 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page);
   await openRoll(page);
+  // the one-time spotlight lights ROLL on the ROLL screen: no buttons, tap anywhere to continue
   const tut = page.locator('.ut-overlay[data-tut="markRolls"]');
   await expect(tut).toBeVisible();
-  await tut.getByRole('button', { name: 'GOT IT' }).click();
+  await expect(page.locator('.ut-ring')).toBeVisible();
+  await expect(tut.locator('button')).toHaveCount(0);
+  await tut.click({ position: { x: 8, y: 8 } });
   await expect(tut).toHaveCount(0);
+  await expect(page.locator('.rs-overlay')).toBeVisible(); // the tap closed the spotlight, not the ROLL screen
 
   await expect(page.getByTestId('mark-roll-10')).toHaveCount(0);
   await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN [\d,]+/);

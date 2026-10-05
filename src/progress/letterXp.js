@@ -73,9 +73,10 @@ export function creditLetterXp(letters, { mode, perLetter } = {}) {
   lastCreditAt = now;
   const per = Number.isFinite(perLetter) && perLetter > 0 ? perLetter : letterXpNow();
   const xp = roundWordXp(n * per);
-  const res = creditXp(loadProgress(), xp);
+  const before = loadProgress();
+  const res = creditXp(before, xp);
   saveProgress(res.state);
-  if (res.leveledUp && mode && mode !== 'menu') emitMidGameLevelUp(res.level, mode);
+  if (res.leveledUp && mode && mode !== 'menu') emitMidGameLevelUp(res.level, mode, before.level);
   return { ...res, xp };
 }
 

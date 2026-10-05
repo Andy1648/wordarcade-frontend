@@ -43,7 +43,7 @@ test.describe('shop', () => {
     // All catalog cards render; unaffordable ones are visible-but-dimmed (not hidden).
     // 16 cards = 5 POP STYLES + 6 SOUND PACKS (the original 11 cosmetics) + 5 THEMES
     // (default/midnight/inferno/toxic/prism — themes render as .shop-card too via .shop-theme-card;
-    // feat/themes added them). KEY POWER + MOMENTUM are upgrade TRACKS, not .shop-card, so not counted.
+    // feat/themes added them). KEY TIER + MOMENTUM are upgrade TRACKS, not .shop-card, so not counted.
     // Derived from the catalog: STEP 19 lengthened both cosmetic ladders.
     // STEP 50: THEMES left the shop (worlds replaced them), so the cards are the cosmetics only.
     await expect(page.locator('.shop-card')).toHaveCount(POP_STYLES.length + SOUND_PACKS.length);

@@ -18,8 +18,8 @@
 //     earned; a refund is not earnings, and inflating it would corrupt every achievement gated on
 //     it. (The original purchase did not decrement it either, so the pair stays consistent.)
 //
-// The old price ladder was KEY POWER's v8 ladder, reused: tier N cost 10 / 60 / 360 / 2,160 / 12,960.
-// KEY POWER itself is priced differently since Economy v9 (STEP 19), so the prices that were ACTUALLY
+// The old price ladder was KEY TIER's v8 ladder, reused: tier N cost 10 / 60 / 360 / 2,160 / 12,960.
+// KEY TIER itself is priced differently since Economy v9 (STEP 19), so the prices that were ACTUALLY
 // PAID are frozen here — a refund must return what was spent, not what the tier costs today.
 import { getWins, saveWins } from './wins.js';
 

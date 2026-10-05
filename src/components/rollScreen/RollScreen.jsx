@@ -21,7 +21,7 @@ import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
 import MarkPips from '../rarity/MarkPips';
 import RarityFx from '../rarity/RarityFx';
-import UnlockTutorial from '../../tutorials/UnlockTutorial.jsx';
+import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/registry.js';
 import { MARK_TIERS } from '../../progress/marks';
 import {
@@ -380,7 +380,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
       </div>
 
       {tut && tutDef && (
-        <UnlockTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
+        <SpotlightTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
       )}
     </div>
   );

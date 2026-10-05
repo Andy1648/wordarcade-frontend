@@ -34,8 +34,8 @@ async function openShop(page, { wins = 999999, keytier = 0 } = {}) {
 
 test('§3 the shop always shows a next goal + progress bar', async ({ page }) => {
   await openShop(page, { wins: 5, keytier: 0 }); // < 50 (the Rebirth Rush T1 price, round10(48)) → shows the gap
-  // KEY POWER goal + bar always present. MOMENTUM reuses .shop-keypower/.shop-goal, so scope to
-  // the FIRST .shop-keypower (KEY POWER, which renders above it). At 5 wins vs the T1 cost 10 →
+  // KEY TIER goal + bar always present. MOMENTUM reuses .shop-keypower/.shop-goal, so scope to
+  // the FIRST .shop-keypower (KEY TIER, which renders above it). At 5 wins vs the T1 cost 10 →
   // "UNLOCKS AT".
   const kp = page.locator('.shop-keypower').first();
   await expect(kp.locator('.shop-goal')).toBeVisible();
@@ -50,21 +50,21 @@ test('§3 the shop always shows a next goal + progress bar', async ({ page }) =>
 test('§2 buy is a plain click that commits and reveals the sticker', async ({ page }) => {
   await openShop(page, { wins: 999999, keytier: 0 }); // can afford T1 (90)
   // MOMENTUM is a second upgrade track that reuses .shop-keypower / .shop-kp-actions, so scope to
-  // the FIRST .shop-keypower — KEY POWER, which renders above it. (The reveal banner assertion
+  // the FIRST .shop-keypower — KEY TIER, which renders above it. (The reveal banner assertion
   // below double-checks which one was bought.)
   // fix/shop-click-buy: buying is a plain CLICK (the unlabelled 400ms hold gate is gone), and
   // feat/shop-reveal-sticker: the reveal is the shared sticker — ribbon "★ UNLOCKED ★" plus the
   // item's own name, in place of the old one-line banner.
   const buyBtn = page.locator('.shop-keypower').first().locator('.shop-buy');
   await expect(buyBtn).toBeVisible();
-  // Clutter pass: the KEY POWER heading no longer repeats the tier — the KEY Tn line under it carries it.
+  // Clutter pass: the KEY TIER heading no longer repeats the tier — the KEY Tn line under it carries it.
   await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('KEY T0 ');
   await expect(page.locator('.sticker')).toHaveCount(0);
 
   // One click → commit → the sticker appears and the tier advances.
   await buyBtn.click();
   await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY POWER TIER 1');
+  await expect(page.locator('.sticker-name')).toContainText('KEY TIER 1');
   await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
   await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('KEY T1 ');
 });

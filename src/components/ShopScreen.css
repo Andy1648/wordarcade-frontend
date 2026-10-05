@@ -267,7 +267,7 @@
   letter-spacing: 0.04em;
 }
 
-/* KEY POWER — the primary (repeatable) upgrade card: highlighted yellow border. */
+/* KEY TIER — the primary (repeatable) upgrade card: highlighted yellow border. */
 .shop-keypower {
   display: flex;
   flex-wrap: wrap;
@@ -314,7 +314,7 @@
   font-size: var(--fs-panel);
   color: #ffe94a;
 }
-/* KEY POWER copy: the current XP-per-letter value, the next value + cost, and the milestone
+/* KEY TIER copy: the current XP-per-letter value, the next value + cost, and the milestone
    doubler ahead. No level is ever shown — the integer stays internal. */
 .shop-kp-current {
   font-family: 'Space Mono', monospace;
@@ -874,7 +874,7 @@
     font-size: var(--fs-panel);
   }
 }
-/* The KEY POWER rate ("39.6M → 99M WINS / WORD") is the card's one big number; it may wrap at 360. */
+/* The KEY TIER rate ("39.6M → 99M WINS / WORD") is the card's one big number; it may wrap at 360. */
 .shop-kp-current {
   flex-wrap: wrap;
 }

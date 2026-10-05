@@ -11,7 +11,7 @@
 //   FRENZY+     FUSE FRENZY lasts +1 min per level (to +5)
 //   HEAD START  every rebirth climb starts +5 levels higher per level (to half the next gate)
 // LAYER 2 — AUTOMATION (unlocks at R3). The idle-game manager layer: perks that BUY for you.
-//   AUTO-KEY    buys KEY POWER whenever you can afford it (on every menu return)
+//   AUTO-KEY    buys KEY TIER whenever you can afford it (on every menu return)
 //   AUTO-FORGE  buys LETTER FORGE the same way
 // Each layer unlock is a claimable "NEW SYSTEM" reveal (claims.js kind 'layer').
 // REBIRTH RUSH: STAR POWER (+10% wins) is out of the wins formula and the LETTER FORGE is off the shelf,
@@ -31,7 +31,7 @@ export const PERKS = [
   { id: 'power', name: 'STAR POWER', layer: 1, max: Infinity, blurb: '+10% WINS PER LEVEL — NO CAP' },
   { id: 'frenzy', name: 'FRENZY+', layer: 1, max: 5, blurb: 'FUSE FRENZY LASTS +1 MIN PER LEVEL' },
   { id: 'head', name: 'HEAD START', layer: 1, max: 6, blurb: 'EVERY CLIMB STARTS +5 LEVELS HIGHER' },
-  { id: 'autoKey', name: 'AUTO-KEY', layer: 2, max: 1, blurb: 'BUYS KEY POWER FOR YOU' },
+  { id: 'autoKey', name: 'AUTO-KEY', layer: 2, max: 1, blurb: 'BUYS KEY TIER FOR YOU' },
   { id: 'autoForge', name: 'AUTO-FORGE', layer: 2, max: 1, blurb: 'BUYS LETTER FORGE FOR YOU' },
 ];
 export const STAR_POWER_PCT = 0.1;
@@ -162,7 +162,7 @@ export function rebirthWithStars() {
     queueClaim({ id: 'layer-stars', kind: 'layer', label: 'NEW SYSTEM — STAR PERKS', detail: 'stars', meta: { blurb: 'Rebirths pay ★ — more the further past the gate. Spend in REBIRTH → STAR PERKS.' } });
   }
   if (rc === LAYER_AUTO_AT) {
-    queueClaim({ id: 'layer-auto', kind: 'layer', label: 'NEW SYSTEM — AUTOMATION', detail: 'auto', meta: { blurb: 'AUTO-KEY buys KEY POWER for you. Unlock it with ★ in REBIRTH.' } }); // AUTO-FORGE retired (Rebirth Rush)
+    queueClaim({ id: 'layer-auto', kind: 'layer', label: 'NEW SYSTEM — AUTOMATION', detail: 'auto', meta: { blurb: 'AUTO-KEY buys KEY TIER for you. Unlock it with ★ in REBIRTH.' } }); // AUTO-FORGE retired (Rebirth Rush)
   }
   return { rc, stars };
 }
