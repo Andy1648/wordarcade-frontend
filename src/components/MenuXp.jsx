@@ -7,7 +7,7 @@
 import BoostPill from '../frenzy/BoostPill';
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import './MenuXp.css';
-import { formatNum, formatMultExact, formatPct, formatGainPct } from '../format';
+import { formatNum, formatMultExact } from '../format';
 import { createCountUp } from '../juice/countUp';
 import { useCountUp } from '../hooks/useCountUp';
 import { sndBarMilestone } from '../audio/gameSounds';
@@ -49,8 +49,8 @@ function streakTier(count) {
 const formatMult = (m) => `×${formatMultExact(m)}`;
 
 // The progress bar: a LEVEL block welded to a track holding the fill, a leading-edge marker,
-// and a readout spanning the track — XP into the level (left), the % of the level ONE decimal
-// (centre, Andy oct3 #5), and the level's cost (right). The fill is scaleX (never width).
+// and a readout spanning the track — XP into the level (left) and the level's cost (right). NO %
+// READOUT (clutter pass, Andy oct3: "REMOVE the % on the progression bar") — the fill is the percent. The fill is scaleX (never width).
 //
 // EVERY NUMBER HERE COUNTS THROUGH THE ONE COUNT-UP (src/juice/countUp.js, Andy oct3 #4): the fill
 // + its readout, the wins chip and the level numeral. 1.2–2 s scaled to the jump, a new gain
@@ -61,16 +61,13 @@ const formatMult = (m) => `×${formatMultExact(m)}`;
 // 180ms. Fill colour keys off the rebirth count (class/attr swap only).
 //
 // THE BAR MOVES ON EVERY WORD (Andy oct3 #5, LV175: "bar just isn't moving"). Under PROGRESSION v10
-// a high level is hundreds of words long, so three things make each gain visible:
-//   - the % readout to one decimal ("43.7%");
-//   - a "+X.X%" pop over the fill's leading edge per credit — ONE pooled node, retargeted while a
-//     burst of credits lands (the number grows, the node never multiplies), finite, and never
-//     smaller than "+0.1%" for a real gain;
+// a high level is hundreds of words long, so each gain is made visible by the counting XP numeral
+// and the fill (the old "43.7%" readout and "+X.X%" pop were cut in the clutter pass), plus:
+//   - a "+N LV" pop on a level-up — ONE pooled node, finite;
 //   - a MILESTONE TICK every 10%: one pooled flash node on the crossed segment line + a soft
 //     rising note (sndBarMilestone), fired as the COUNTED value crosses it. Nothing loops.
 // SESSION MEMORY: what the bar last showed survives a remount (module scope, not storage), so the
-// menu you return to from a game counts up FROM where you left it — the whole game's gain, with its
-// "+X.X%" — instead of gliding up from zero as if nothing had happened.
+// menu you return to from a game counts up FROM where you left it — the whole game's gain — instead of gliding up from zero as if nothing had happened.
 // `variant="mini"` (splash) drops the readout, the pops and the ticks, and shrinks the track.
 const seen = { level: null, frac: 0, wins: null };
 /** Test hook: forget the session memory (a fresh tab). */
@@ -82,7 +79,6 @@ export function resetMenuXpSession() {
 
 const GAINPOP_MS = 1400; // pop in · hold · rise-and-fade — the "+X.X%" over the fill
 const GAINPOP_HOLD_END = 0.72; // a new credit before this point keeps the pop up (no re-punch)
-const GAIN_CHAIN_MS = 1500; // credits closer than this add into one "+X.X%"
 const TICK_MS = 420; // the 10% milestone flash
 
 export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, intoLevel = 0, cost = 0, rebirths = 0, onWinsClick = null, onRankClick = null, streak = 0, freezes = 0, markSlot = false, mark = null, onMarkClick = null, markNew = false, lettersToNext = null, hintRight = null }) {
@@ -96,7 +92,6 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   const markerRef = useRef(null);
   const trackRef = useRef(null);
   const readoutNumRef = useRef(null);
-  const readoutPctRef = useRef(null);
   const gainPopRef = useRef(null);
   const gainAnimRef = useRef(null);
   const tickRef = useRef(null);
@@ -104,7 +99,6 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
   const trackWRef = useRef(0);
   const costRef = useRef(cost);
   const prevRef = useRef(null); // the last {level, frac} this instance was handed
-  const chainRef = useRef({ t: -Infinity, gain: 0, level: null }); // the running "+X.X%" burst
   const tenthRef = useRef(null); // the 10% segment the COUNTED value is in (milestone ticks)
   const ticksArmedRef = useRef(false); // no ticks for the landing on mount
   const frameRef = useRef(() => {});
@@ -226,8 +220,6 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
     }
     const num = readoutNumRef.current;
     if (num) num.textContent = formatNum(Math.max(0, Math.round(v * costRef.current)));
-    const pct = readoutPctRef.current;
-    if (pct) pct.textContent = formatPct(v);
     // MILESTONE: the counted value crossed a 10% line (10…90%; 100% is the level-up's moment).
     const tenth = Math.floor(Number((v * 10).toPrecision(12)));
     const prevTenth = tenthRef.current;
@@ -245,14 +237,12 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
     prevRef.current = { level, frac: f };
     seen.level = level;
     seen.frac = f;
-    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
     if (!prev || level < prev.level || (level === prev.level && f < prev.frac)) {
       // first sight this session, a rebirth, or a reset: land — nothing was gained
       c.set(f);
       tenthRef.current = Math.floor(f * 10);
       ticksArmedRef.current = true;
-      chainRef.current = { t: -Infinity, gain: 0, level };
       return undefined;
     }
     if (level === prev.level && f === prev.frac) {
@@ -270,7 +260,6 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
       c.to(f);
       if (!mini) {
         const n = level - prev.level;
-        chainRef.current = { t: now, gain: f, level };
         popGain(`+${formatNum(n)} LV`);
       }
       return () => clearTimeout(flash);
@@ -278,13 +267,8 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
     // Same level, a gain. On a remount (prev from the session memory) start from what was shown.
     if (!c.running && c.value !== prev.frac) c.set(prev.frac);
     c.to(f);
-    if (!mini) {
-      const ch = chainRef.current;
-      const g = f - prev.frac;
-      const gain = ch.level === level && now - ch.t < GAIN_CHAIN_MS ? ch.gain + g : g;
-      chainRef.current = { t: now, gain, level };
-      popGain(formatGainPct(gain));
-    }
+    // CLUTTER PASS (Andy oct3): no "+X.X%" pop — the bar is never printed as a percent. The fill
+    // and the XP numeral count the gain; the pooled pop is kept for "+N LV" only.
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, frac]);
@@ -309,7 +293,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <button type="button" className="menu-wins-chip" data-wins={wins} onClick={onWinsClick} aria-label={`${formatNum(wins)} wins. Open shop`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(Math.round(winsShown))}
-            <span className="menu-wins-label" aria-hidden="true">WINS</span>
+            {/* CLUTTER PASS: no "WINS" caption — the coin + number already read as wins (aria-label keeps the word). */}
             {/* THE GAIN, BIG, beside the counting number (Andy oct3 #4) — only while it counts + a beat. */}
             {winsCount.showGain && winsCount.gain > 0 && <span key={winsCount.chain} className="menu-wins-gain" aria-hidden="true">+{formatNum(Math.round(winsCount.gain))}</span>}
           </button>
@@ -317,7 +301,6 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
           <span className="menu-wins-chip" data-wins={wins} aria-label={`${formatNum(wins)} wins`}>
             <span className="menu-wins-coin" aria-hidden="true" />
             {formatNum(Math.round(winsShown))}
-            <span className="menu-wins-label" aria-hidden="true">WINS</span>
             {/* THE GAIN, BIG, beside the counting number (Andy oct3 #4) — only while it counts + a beat. */}
             {winsCount.showGain && winsCount.gain > 0 && <span key={winsCount.chain} className="menu-wins-gain" aria-hidden="true">+{formatNum(Math.round(winsCount.gain))}</span>}
           </span>
@@ -335,7 +318,7 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         >
           <span className="menu-streak-flame" aria-hidden="true">🔥</span>
           <span className="menu-streak-count">{formatNum(streak)}</span>
-          <span className="menu-streak-day" aria-hidden="true">DAY{Number(streak) === 1 ? '' : 'S'}</span>
+          {/* CLUTTER PASS: no "DAYS" — the flame + count is the streak (aria-label says "N day streak"). */}
           {/* Rebirth Rush: the streak is a COUNT only — it multiplies neither XP nor wins, so no "×" chip. */}
           {freezes > 0 && (
             <span className="menu-streak-freeze" aria-hidden="true" title={`${freezes} freeze token${freezes === 1 ? '' : 's'} — a missed day is forgiven`}>
@@ -424,10 +407,9 @@ export function MenuXpBar({ level, toNext, frac, variant = 'full', wins = null, 
         {variant !== 'mini' && (
           <span className="menu-xp-readout">
             <span className="menu-xp-readout-now" ref={readoutNumRef}>{formatNum(Math.max(0, Math.round(intoLevel)))}</span>
-            {/* the % of the level, one decimal — and the "+X.X%" gain pop beside it (one pooled node,
-                absolutely placed so an idle pop takes no width from the row) */}
+            {/* CLUTTER PASS (Andy oct3): the % readout is gone — the fill IS the percent. Only the
+                pooled "+N LV" pop stays here (absolutely placed: an idle pop takes no width). */}
             <span className="menu-xp-readout-mid">
-              <span className="menu-xp-readout-pct" ref={readoutPctRef}>{formatPct(frac)}</span>
               <span className="menu-xp-gainpop" ref={gainPopRef} />
             </span>
             <span className="menu-xp-readout-need">/ {formatNum(Math.max(0, Math.round(cost)))}</span>
@@ -987,7 +969,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         levelSubRef.current.textContent = m ? 'MILESTONE' : LEVEL_PHRASES[(Math.max(1, level) - 1) % LEVEL_PHRASES.length];
       }
       // Economy v3: level-ups no longer pay wins, so there is no "+N WINS" reward line here.
-      if (levelDetailRef.current) levelDetailRef.current.textContent = `LV ${level - 1} → LV ${level}`;
+      // CLUTTER PASS (Andy oct3): no "LV n-1 → LV n" — the LEVEL n title right above it says it (:empty hides the row).
+      if (levelDetailRef.current) levelDetailRef.current.textContent = '';
       a.cancel();
       a.play();
       // BIGGER at higher tiers: the starburst from T1, and a ring of shards that grows per tier.

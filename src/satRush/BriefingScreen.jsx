@@ -27,19 +27,19 @@ function FilledSentence({ context, word }) {
 }
 
 function BriefCard({ card }) {
-  const { word, pos, length, context, gloss, root, isReview, knownCousins } = card;
+  const { word, pos, context, gloss, root, isReview, knownCousins } = card;
   const known = new Set(knownCousins);
   return (
     <li className={`sr-brief-card${isReview ? ' review' : ''}`}>
       {isReview && (
         <div className="sr-brief-review" aria-label="you missed this before">
-          SEEN BEFORE — you let this one get away
+          SEEN BEFORE
         </div>
       )}
       <div className="sr-brief-wordrow">
         <span className="sr-brief-word">{word}</span>
         <span className="sr-brief-meta">
-          {pos} · {length} letters
+          {pos}
         </span>
       </div>
 
@@ -99,7 +99,7 @@ export default function Briefing({ briefing, onStart, onExit }) {
           </div>
           {familyMorpheme ? (
             <div className="sr-brief-family">
-              {familyCountWord} SHARE A ROOT — <b>{familyMorpheme}</b> — grouped below
+              {familyCountWord} SHARE A ROOT — <b>{familyMorpheme}</b>
             </div>
           ) : (
             <div className="sr-brief-family">Five words to know before the run</div>

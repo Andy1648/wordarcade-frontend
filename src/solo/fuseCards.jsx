@@ -14,14 +14,12 @@ function FuseExample({ pre, frag, post }) {
   );
 }
 
-export function FuseNormalCard({ fragment, wordsSolved }) {
+export function FuseNormalCard({ fragment }) {
   return (
     <>
       <h2>OUT OF FUSES</h2>
       <div className="solo-death-killed">the last fragment was “{(fragment || '').toUpperCase()}”</div>
-      <div className="solo-death-links">
-        <span>{wordsSolved} words defused</span>
-      </div>
+      {/* CLUTTER PASS: no "N words defused" — FUSE's SCORE line below is that same count. */}
     </>
   );
 }

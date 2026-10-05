@@ -61,21 +61,6 @@
   transition: transform 0.05s ease-out, box-shadow 0.05s;
 }
 
-.lobby-instruction {
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  font-size: var(--fs-panel); /* >=17px at every width: 20px phone, 28px desk */
-  /* Bold cyan (fine-tune oct2): thin pink with a heavy stroke read as an ERROR message on the
-     first screen of making a room; it is an instruction. */
-  font-weight: 700;
-  color: #2effe0;
-  -webkit-text-stroke: 4px #000;
-  paint-order: stroke fill;
-  line-height: 1;
-  margin-bottom: 6px;
-}
-
 /* (.lobby-subtitle is deleted with .lobby-title — one instruction line replaces both.) */
 
 
@@ -305,7 +290,6 @@
     padding: 18px 24px;
   }
   .lobby-back-btn { grid-area: back; justify-self: start; }
-  .lobby-instruction { grid-area: instr; }
   .lobby-box > .lobby-field-label { grid-area: label; }
   .lobby-input { grid-area: input; }
   .lobby-field-group { grid-area: vis; margin-top: 0; }

@@ -130,7 +130,8 @@ export default function ClaimPrompt() {
         <>
           <span className="lb-cp-rank" aria-hidden="true">#{formatNum(rank)}</span>
           <span className="lb-cp-copy">
-            <span className="lb-cp-kicker">YOU’D BE #{formatNum(rank)} ON THE BOARD</span>
+            {/* CLUTTER PASS: the big #rank beside it is the number — the kicker no longer repeats it */}
+            <span className="lb-cp-kicker">YOU’D BE ON THE BOARD</span>
             {/* the board ranks REBIRTHS, then LEVEL (Andy oct3 19:55) — say the numbers that earn the place */}
             <span className="lb-cp-hint">{(({ rebirths, level }) => standingText(rebirths, level))(myStats())} · NO SIGN-IN. JUST A NAME.</span>
           </span>
@@ -170,7 +171,7 @@ export default function ClaimPrompt() {
         <>
           {claimedRank ? <span className="lb-cp-rank" aria-hidden="true">#{formatNum(claimedRank)}</span> : null}
           <p className="lb-cp-done">
-            {claimedRank ? `YOU’RE #${formatNum(claimedRank)}. ` : 'YOU’RE ON THE BOARD. '}
+            {claimedRank ? '' : 'YOU’RE ON THE BOARD. ' /* with a rank, the big #n beside it says it */}
             FIND IT UNDER <PodiumIcon size={26} className="lb-cp-trophy" /> ON THE MENU.
           </p>
           <button type="button" className="lb-cp-x" onClick={() => setPhase('dismissed')} aria-label="Close">✕</button>

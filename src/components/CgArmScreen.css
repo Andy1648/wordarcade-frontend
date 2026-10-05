@@ -174,15 +174,6 @@
   box-shadow: 2px 2px 0 #000;
 }
 
-.cg-arm-hint {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
-  letter-spacing: 0.1em;
-  color: var(--c-purple-text) /* contrast: #9A1AFF text on dark = 3.75 -> 9.05 */;
-  text-transform: uppercase;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .cg-arm-combo,
   .cg-arm-waking-dot {

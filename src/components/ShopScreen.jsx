@@ -194,7 +194,6 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
           <div className="shop-wins" aria-label={`${formatNum(wins)} wins`}>
             <span className="shop-coin" aria-hidden="true" />
             {formatNum(wins)}
-            <span className="shop-wins-label" aria-hidden="true">WINS</span>
           </div>
           <button type="button" className="shop-close" onClick={onBack} aria-label="Back to menu">
             ✕
@@ -204,7 +203,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
         {view === 'shop' ? (
           <div className="shop-body">
             {/* KEY POWER — FIRST, so it is above the fold on a laptop (see THEMES below). */}
-            <h3 className="shop-subtitle">KEY POWER — TIER {formatNum(keyTier)}</h3>
+            {/* CLUTTER PASS: no "— TIER n" — the KEY Tn → Tn+1 line right under it carries the tier. */}
+            <h3 className="shop-subtitle">KEY POWER</h3>
             <div className="shop-keypower">
               <div className="shop-kp-info">
                 {/* REBIRTH RUSH: KEY multiplies XP / LETTER only — it no longer touches wins, so the shelf
@@ -217,9 +217,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <div className="shop-kp-rate">
                   BASE 10 XP / LETTER × KEY × REBIRTH · KEY RESETS ON REBIRTH
                 </div>
-                {/* §3 — the shop always shows this next goal + progress (there is always a next tier). */}
+                {/* §3 — the shop always shows this next goal + progress (there is always a next tier).
+                    CLUTTER PASS: no "READY TO UNLOCK" — the full bar + the live HOLD price button say it. */}
                 <div className="shop-goal">
-                  {wins >= kpCost ? 'READY TO UNLOCK' : `NEED ${formatNum(kpCost - wins)} MORE WINS`}
+                  {wins >= kpCost ? null : `NEED ${formatNum(kpCost - wins)} MORE WINS`}
                 </div>
                 <ProgressBar value={kpProgress} />
               </div>
@@ -315,9 +316,10 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                   REBIRTH n already says how many came before. */}
             </div>
 
-            {/* §3 — rebirth always shows how far to the next rebirth + progress. */}
+            {/* §3 — rebirth always shows how far to the next rebirth + progress.
+                CLUTTER PASS: no "READY TO REBIRTH" — the full bar + the live REBIRTH n button say it. */}
             <div className="shop-goal">
-              {rebirthReady ? 'READY TO REBIRTH' : `${threshold - level} LEVELS TO GO — LV ${level} / ${threshold}`}
+              {rebirthReady ? null : `${threshold - level} LEVELS TO GO` /* the bar is the ratio; the button says the gate LV */}
             </div>
             <ProgressBar value={rbProgress} />
 
@@ -328,7 +330,7 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 <b>LOSE:</b> LEVEL → {formatNum(headStartLevel(rebirths + 1))} · KEY RESETS → T{formatNum(keyTierAfterRebirth(keyTier))}.
               </li>
               <li>
-                <b>KEEP:</b> WINS KEPT · MARKS · PURCHASES · STATS.
+                <b>KEEP:</b> WINS · MARKS · PURCHASES · STATS.
               </li>
             </ul>
 

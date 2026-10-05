@@ -354,7 +354,6 @@ export default function StatsScreen({ onBack }) {
               <div
                 key={sec.id}
                 className={`stats-secret${sec.earned ? ' is-found' : ''}`}
-                title={sec.earned ? `${sec.name} — ${sec.blurb}` : 'Undiscovered'}
               >
                 <span className="stats-secret-mark" aria-hidden="true">{sec.earned ? '★' : '?'}</span>
                 <span className="stats-secret-name">{sec.name}</span>
@@ -372,7 +371,6 @@ export default function StatsScreen({ onBack }) {
               <div
                 key={sec.id}
                 className={`stats-secret${sec.earned ? ' is-found' : ''}`}
-                title={sec.earned ? `${sec.name} — ${sec.hint}` : 'Undiscovered'}
               >
                 <span className="stats-secret-mark" aria-hidden="true">{sec.earned ? '★' : '?'}</span>
                 <span className="stats-secret-name">{sec.name}</span>

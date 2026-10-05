@@ -42,7 +42,7 @@ test.describe('milestone moments (?milestones=1)', () => {
     expect(r.milestone).toBe('S');
     expect(r.title).toBe('LEVEL 10');
     expect(r.sub).toBe('MILESTONE');
-    expect(r.detail).toBe('LV 9 → LV 10');
+    expect(r.detail).toBe(''); // clutter pass: no "LV 9 → LV 10" — the LEVEL 10 title says it
     expect(r.infinite, 'a milestone adds no infinite animation').toBe(infiniteBefore);
   });
 

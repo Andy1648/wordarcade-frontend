@@ -6221,6 +6221,8 @@ html[data-beat='true'] .wb-belly {
 /* PLAYERS — a table: the column names once, one row per player, the longest word under the name. */
 .go-ptable {
   width: 100%;
+  /* CLUTTER PASS: the "PLAYERS" label above it is gone; this is the gap it used to make. */
+  margin-top: 16px;
   border-collapse: separate;
   border-spacing: 0;
   font-family: 'Space Mono', monospace;

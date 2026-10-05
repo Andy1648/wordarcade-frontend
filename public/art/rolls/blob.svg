@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <!-- an overspray blob with a drip and two stray flecks -->
+  <path d="M10 12 C12 4 26 3 30 10 C36 13 34 24 27 25 C26 30 25 35 22 35 C20 35 21 29 19 27 C11 28 5 20 10 12 Z" transform="translate(3,3)" fill="#000"/>
+  <path d="M10 12 C12 4 26 3 30 10 C36 13 34 24 27 25 C26 30 25 35 22 35 C20 35 21 29 19 27 C11 28 5 20 10 12 Z" fill="#2EFFE0" stroke="#0F8F7E" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="35" cy="5" r="2.2" fill="#2EFFE0" stroke="#0F8F7E" stroke-width="1.5"/>
+  <circle cx="5" cy="31" r="1.8" fill="#2EFFE0" stroke="#0F8F7E" stroke-width="1.5"/>
+</svg>

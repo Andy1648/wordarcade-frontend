@@ -702,12 +702,6 @@
   border: max(4px, calc(4 * var(--lb-u))) solid #a3175e;
   box-shadow: calc(6 * var(--lb-u)) calc(6 * var(--lb-u)) 0 #000;
 }
-.lb-hero-label {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: max(var(--fs-label), calc(15 * var(--lb-t)));
-  letter-spacing: 0.08em;
-}
 .lb-hero-line {
   display: flex;
   flex-direction: column;
@@ -758,7 +752,6 @@
    under it (your name is already on your row) — the list keeps its rows on a phone. */
 @media (max-width: 899px) {
   .lb-you.lb-hero { gap: 2px; padding: 8px 12px; }
-  .lb-hero-label,
   .lb-hero .lb-you-name,
   .lb-hero-lv,
   .lb-hero .lb-long { display: none; }

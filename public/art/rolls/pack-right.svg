@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" preserveAspectRatio="none" fill="none">
+  <!-- the right half of the PACK: its zig-zag left edge meets pack-left's -->
+  <path d="M4 0 L100 0 L100 200 L5 200 L12 181 L4 160 L13 139 L0 118 L10 96 L3 74 L14 55 L1 36 L12 18 Z" fill="#1a0b2e" stroke="#9A1AFF" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M40 14 L90 14" stroke="#9A1AFF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M52 186 L90 186" stroke="#9A1AFF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M74 186 C75 192 77 196 74 198 C71 196 73 192 74 186 Z" fill="#9A1AFF"/>
+</svg>

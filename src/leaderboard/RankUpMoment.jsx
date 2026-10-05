@@ -71,7 +71,8 @@ export default function RankUpMoment({ from, to, onDone, onPop, kind = 'up', nam
           <span className="lb-rankup-arrow">→</span>
           <span className="lb-rankup-to">#{formatNum(to)}</span>
         </span>
-        <span className="lb-rankup-sub">{standing} · ON THE LEADERBOARD</span>
+        {/* CLUTTER PASS: no "· ON THE LEADERBOARD" — the podium glyph above is the leaderboard */}
+        <span className="lb-rankup-sub">{standing}</span>
       </div>
     </div>
   );

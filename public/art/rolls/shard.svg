@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <!-- a torn paint shard: lopsided, one drip off the bottom, hard black offset shadow -->
+  <path d="M8 6 L31 3 L36 17 L27 25 L24 36 L21 27 L6 22 Z" transform="translate(3,3)" fill="#000"/>
+  <path d="M8 6 L31 3 L36 17 L27 25 L24 36 L21 27 L6 22 Z" fill="#FF4FA3" stroke="#A3175E" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M13 9 L24 8" stroke="#FFC2E0" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
