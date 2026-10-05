@@ -61,6 +61,8 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
+// CARD PAGES controls (arrows, dots, keys, swipe): only a short-wide desktop ever fetches these.
+const CardPager = lazyWithReload(() => import('./CardPager.jsx'), 'CardPager');
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
@@ -588,84 +590,21 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, [isPhoneMenu, isPagedMenu]);
 
   // ---- CARD PAGES (short-wide desktop only) -----------------------------------------------------
-  // The flip is a finite WAAPI slide (transform + opacity, ~260ms) on the grid, will-change on only
-  // for its life; reduced motion swaps instantly. A pager that stops matching resets to page 1.
+  // Homepage owns the page and the fit; the arrows, dots, keys, swipe and the flip slide are the lazy
+  // CardPager (only a paged viewport ever fetches it). A pager that stops matching shows everything.
   const cardsGridRef = useRef(null);
-  const flipDirRef = useRef(0);
-  const flipFocusRef = useRef(false);
+  const cardsRowRef = useRef(null);
   const pageCount = isPagedMenu ? CARD_PAGES : 1;
   const shownPage = isPagedMenu ? Math.min(cardPage, pageCount - 1) : 0;
-  const flipCards = (to) => {
-    const next = Math.max(0, Math.min(pageCount - 1, to));
-    if (next === shownPage) return;
-    flipDirRef.current = next > shownPage ? 1 : -1;
-    // Keyboard focus on a card that is about to hide moves to the same slot on the new page, so
-    // ←/→ from a focused card never strands focus on <body>.
-    const grid = cardsGridRef.current;
-    const active = document.activeElement;
-    flipFocusRef.current = !!(grid && active && grid.contains(active));
-    setCardPage(next);
-  };
-  useLayoutEffect(() => {
-    const dir = flipDirRef.current;
-    flipDirRef.current = 0;
-    const grid = cardsGridRef.current;
-    if (!dir || !grid) return undefined;
-    if (flipFocusRef.current) {
-      flipFocusRef.current = false;
-      const first = grid.querySelector(`.game-card-magnet:nth-child(${shownPage * CARDS_PER_PAGE + 1}) .game-card`);
-      if (first) first.focus({ preventScroll: true });
-    }
-    let reduce = false;
-    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { reduce = false; }
-    if (reduce || typeof grid.animate !== 'function') return undefined;
-    grid.style.willChange = 'transform, opacity';
-    const anim = grid.animate(
-      [{ transform: `translateX(${dir * 48}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }],
-      { duration: 260, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)' },
-    );
-    const done = () => { grid.style.willChange = ''; };
-    anim.onfinish = done;
-    anim.oncancel = done;
-    return () => anim.cancel();
-  }, [shownPage]);
-  // ←/→ flip the pages while the menu itself has the keys: never inside a text field, never under an
-  // open dialog / panel, never with a modifier. Letters are untouched — they still go to typing.
+  const flipCards = (to) => setCardPage(Math.max(0, Math.min(pageCount - 1, to)));
+  // the keys never flip under an open dialog / panel
   const pagerBlockedRef = useRef(false);
   pagerBlockedRef.current = !!(dialog || lockedPreview || showClaims || showRanks || showMarks || claimReveal || navigating);
-  const flipRef = useRef(flipCards);
-  flipRef.current = flipCards;
-  const shownPageRef = useRef(shownPage);
-  shownPageRef.current = shownPage;
-  useEffect(() => {
-    if (!isPagedMenu) return undefined;
-    const onKey = (e) => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-      if (pagerBlockedRef.current) return;
-      const t = e.target;
-      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-      e.preventDefault();
-      flipRef.current(shownPageRef.current + (e.key === 'ArrowRight' ? 1 : -1));
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isPagedMenu]);
-  // Swipe (touch / pen only — a mouse drag would fight the cards' own press + magnetic pull).
-  const swipeRef = useRef(null);
-  const onPagerPointerDown = (e) => {
-    if (e.pointerType === 'mouse') return;
-    swipeRef.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
-  };
-  const onPagerPointerUp = (e) => {
-    const s = swipeRef.current;
-    swipeRef.current = null;
-    if (!s || s.id !== e.pointerId) return;
-    const dx = e.clientX - s.x;
-    const dy = e.clientY - s.y;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    flipCards(shownPage + (dx < 0 ? 1 : -1));
-  };
+  const pager = (slot) => (
+    <Suspense fallback={null}>
+      <CardPager slot={slot} page={shownPage} pageCount={pageCount} onFlip={flipCards} gridRef={cardsGridRef} rowRef={cardsRowRef} blockedRef={pagerBlockedRef} />
+    </Suspense>
+  );
 
   // NOTE (fix/logic-and-onboarding): the old peek-scroll + "N MORE" pager machinery was
   // REMOVED here. The card-sizing effect above sizes all five cards to fit ONE screen and
@@ -1511,23 +1450,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           {/* CARD PAGES: on a short-wide desktop (PAGED_MENU_QUERY) the row carries an arrow each
               side and a two-dot indicator under it, all in flow inside the region (no fixed UI).
               Elsewhere the row is display:contents and the region is exactly what it was. */}
-          <div
-            className="homepage-cards-pagerow"
-            onPointerDown={isPagedMenu ? onPagerPointerDown : undefined}
-            onPointerUp={isPagedMenu ? onPagerPointerUp : undefined}
-            onPointerCancel={isPagedMenu ? () => { swipeRef.current = null; } : undefined}
-          >
-            {isPagedMenu && (
-              <button
-                type="button"
-                className="homepage-cards-arrow is-prev"
-                aria-label="Previous games"
-                aria-disabled={shownPage === 0}
-                onClick={() => { sfx('tap'); flipCards(shownPage - 1); }}
-              >
-                <span aria-hidden="true">←</span>
-              </button>
-            )}
+          <div className="homepage-cards-pagerow" ref={cardsRowRef}>
+            {isPagedMenu && pager('prev')}
             <div className="homepage-cards-scroll" data-count={GAMES.length}>
               <div
                 ref={cardsGridRef}
@@ -1550,25 +1474,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                 ))}
               </div>
             </div>
-            {isPagedMenu && (
-              <button
-                type="button"
-                className="homepage-cards-arrow is-next"
-                aria-label="Next games"
-                aria-disabled={shownPage >= pageCount - 1}
-                onClick={() => { sfx('tap'); flipCards(shownPage + 1); }}
-              >
-                <span aria-hidden="true">→</span>
-              </button>
-            )}
+            {isPagedMenu && pager('next')}
           </div>
-          {isPagedMenu && (
-            <div className="homepage-cards-dots" aria-hidden="true">
-              {Array.from({ length: pageCount }, (_, i) => (
-                <span key={i} className={`homepage-cards-dot${i === shownPage ? ' is-on' : ''}`} data-page={i} />
-              ))}
-            </div>
-          )}
+          {isPagedMenu && pager('dots')}
+          {isPagedMenu && pager('ctl')}
         </div>
 
         <div className="homepage-bottom-bar">

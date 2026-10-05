@@ -57,7 +57,10 @@ for (const { w, h } of VIEWPORTS) {
     let cards = await perCardMargins(page);
     if (isPagedMenu(page)) {
       expect(cards.length, 'three cards a page').toBe(3);
-      await page.locator('.homepage-cards-arrow.is-next').click();
+      // Flip by KEY, not a click: moving the pointer swings the cards' cursor-magnetic lean, which
+      // skews every rect this measures (a 3D lean read as "text clipped by its card").
+      await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
+      await page.keyboard.press('ArrowRight');
       await page.waitForTimeout(400);
       cards = [...cards, ...(await perCardMargins(page))];
     }

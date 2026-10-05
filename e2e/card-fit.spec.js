@@ -194,7 +194,10 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
       if (isPagedMenu(page)) {
         // CARD PAGES: three showing; flip and measure the other three under the same rules.
         expect(m.cards.length, 'a paged menu shows three cards a page').toBe(3);
-        await page.locator('.homepage-cards-arrow.is-next').click();
+        // Flip by KEY, not a click: moving the pointer swings the cards' cursor-magnetic lean, which
+        // skews every rect this measures (a 3D lean read as "text clipped by its card").
+        await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
+        await page.keyboard.press('ArrowRight');
         await page.waitForTimeout(400);
         const m2 = await measure(page);
         expect(m2.cards.length, 'page 2 shows the other three').toBe(3);
