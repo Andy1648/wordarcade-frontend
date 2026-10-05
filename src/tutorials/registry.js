@@ -1,110 +1,90 @@
-// registry.js — T (Andy oct2): SHORT TUTORIALS FOR EVERY UNLOCK. "A one-time, skippable, big-type, 1–3 step
-// tutorial the first time a player reaches each feature … One shared component, shown once (stored
-// flag), never blocking a game in progress, readable with motion off."
+// registry.js — the tutorials. SPOTLIGHT STYLE (Andy oct5): "screen dims, the one target glows, tap anywhere
+// to continue. No OK-button popups. Keep only the few that matter (roll, gems, rebirth, KEY TIER); cut minor
+// ones like the wall moving." Every tutorial is ONE spotlight: a target selector + one short line.
+// (Cut: pv10 notice, marks reveal, frenzy, boost, weekly, chain/fuse unlock, the new wall. The features still
+// happen exactly as before — only their tutorial is gone.)
 //
-// PURE: which tutorial (if any) the menu should show now, from a snapshot of the player's state. The UI
-// (UnlockTutorial.jsx) and the "seen" flags live elsewhere. One at a time, in this order.
+// PURE: which tutorial (if any) a surface should show now, from a snapshot of the player's state. The UI
+// (SpotlightTutorial.jsx) and the "seen" flags live elsewhere. One at a time, in this order.
 //
-// EXISTING PLAYERS: the first time this system runs on a save (no TUT_INIT_KEY), every tutorial the player
-// has ALREADY reached is marked seen — a LV300 player must not sit through five cards on their next visit —
-// except the ones for things that are new to everyone (the LV100 wall change), which they have never seen.
-import { FRENZY_MULT, frenzyMinutes } from '../progress/frenzy.js';
+// HOSTS: a tutorial whose target lives inside a panel is shown BY that panel (`host`), never by the menu's
+// TutorialHost: the ROLL button is inside MARKS (`host: 'marks'`), the KEY TIER item inside the SHOP
+// (`host: 'shop'`). Both panels hold the moment queue, so the menu host could never show them anyway.
+//
+// EXISTING PLAYERS: the first time this system runs on a save (no TUT_INIT_KEY), every menu tutorial the player
+// has ALREADY reached is marked seen, except the ones for things that are new to everyone (`isNew`).
 import { rollsEnabled } from '../progress/rollsFlag.js';
 
 export const TUT_KEY_PREFIX = 'taw.tut.';
 export const TUT_INIT_KEY = 'taw.tut.init';
 
-/** Every tutorial: id, when(snapshot) → boolean, isNew (still shown to players who passed it before
- *  tutorials existed), and 1–3 steps of { title, line, target? } (target = a CSS selector to point at). */
+/** Every tutorial: id, when(snapshot) → boolean, target (CSS selector of the ONE thing it lights), line (the
+ *  one short line), isNew (still shown to players who passed it before tutorials existed), host (shown by that
+ *  panel, not the menu), needsTarget (not due until its target is on screen — no target, no tutorial). */
 export const TUTORIALS = [
   {
-    // PROGRESSION v10: the ONE-TIME notice after the level-curve migration (econMigrate.js sets the flag
-    // only for a save that had progress). New to everyone, so never pre-marked as seen; first in line.
-    id: 'pv10',
-    isNew: true,
-    when: (s) => !!s.pv10Notice,
-    steps: [{ title: 'LETTERS FILL THE BAR', line: 'BASE 10 XP / LETTER · BASE 10 WINS / WORD. YOU KEPT EVERY LEVEL.' }], // v11
-  },
-  {
-    id: 'marks',
-    when: (s) => s.marksRevealed,
-    steps: [
-      { title: 'MARKS', line: 'EARN THEM AS YOU PLAY.' },
-      { title: 'WEAR ONE AS YOUR MAIN', line: 'YOUR MAIN: MORE WINS A WORD, MORE XP A LETTER.', target: '.menu-mark, .hp-m-navbtn.is-marks' },
-    ],
-  },
-  {
-    // MARK ROLLS (Andy M): unlocks with MARKS. It points at the ROLL button, which lives INSIDE the MARKS
-    // panel — so it is hosted there (`host: 'marks'`, MarksIndex.jsx shows it the first time the panel
-    // opens), never by the menu's TutorialHost (dueTutorial skips hosted entries). New to everyone.
+    // MARK ROLLS: hosted by the MARKS panel (MarksIndex.jsx shows it the first time the panel opens).
     id: 'markRolls',
     host: 'marks',
     isNew: true,
     when: (s) => s.marksRevealed && rollsEnabled(),
-    // ONE step (oct3 review): the button's own HOLD tag already says "hold"; a second card repeating it was noise
-    steps: [
-      { title: 'ROLL FOR MARKS', line: 'YOUR FIRST ROLL IS FREE. RARER MARKS PAY MORE.', target: '.mr-roll' },
-    ],
+    target: '.mr-roll',
+    line: 'ROLL FOR MARKS. YOUR FIRST ROLL IS FREE.',
   },
   {
-    id: 'frenzy',
-    when: (s) => s.frenzyActive,
-    steps: [{ title: `FRENZY ×${FRENZY_MULT}`, line: `EVERY FUSE WORD PAYS ×${FRENZY_MULT} WINS FOR ${frenzyMinutes()} MIN.` }],
-  },
-  {
-    id: 'boost',
-    when: (s) => s.boostActive,
-    steps: [{ title: 'BOOST', line: 'EVERY WORD IN EVERY MODE PAYS MORE WINS UNTIL THE CLOCK RUNS OUT.', target: '.boost-pill' }],
-  },
-  {
-    id: 'weekly',
-    when: (s) => s.hasProfile,
-    steps: [
-      { title: 'THIS WEEK', line: 'A FRESH BOARD EVERY MONDAY. EVERY WORD YOU PLAY IN A GAME COUNTS.' },
-      { title: 'YOUR RANK', line: 'TAP THE TROPHY TO SEE IT.', target: '.homepage-board-hero, .hp-m-board-hero' },
-    ],
+    // GEMS: the roll currency's count on the menu. No-ops until the count is actually on screen (the gems
+    // chip may not be on this build yet; when it is, this lights it the first time it shows).
+    id: 'gems',
+    isNew: true,
+    needsTarget: true,
+    when: (s) => !!s.marksRevealed,
+    target: '.gems-count, .menu-gems-chip, .hp-m-stats-gems',
+    line: 'GEMS PAY FOR ROLLS.',
   },
   {
     id: 'rebirth',
     when: (s) => s.rebirthReady && s.rebirths === 0,
-    steps: [
-      { title: 'REBIRTH READY', line: 'YOUR LEVEL GOES BACK TO 1 — FOR ×5 XP & WINS, FOR GOOD.' },
-      { title: 'KEY RESETS · WINS KEPT', line: 'KEEP YOUR WINS AND MARKS — REBUY KEY FAST.', target: '.homepage-nav-btn.is-rebirth, .hp-m-navbtn.is-rebirth' },
-    ],
+    target: '.homepage-nav-btn.is-rebirth, .hp-m-navbtn.is-rebirth',
+    line: 'REBIRTH READY: ×5 XP & WINS, FOR GOOD.',
   },
   {
-    id: 'chain',
-    when: (s) => s.level >= s.chainLevel,
-    steps: [{ title: 'CHAIN UNLOCKED', line: 'EACH WORD STARTS WITH THE LAST WORD\'S LAST LETTER.', target: '[data-game="chain"], .hp-m-solo-btn--chain' }],
-  },
-  {
-    id: 'fuse',
-    when: (s) => s.level >= s.fuseLevel,
-    steps: [{ title: 'FUSE UNLOCKED', line: 'SNEAK THE LETTERS INTO A WORD BEFORE THE FUSE BURNS.', target: '[data-game="fuse"], .hp-m-solo-btn--fuse' }],
-  },
-  {
-    id: 'wall',
+    // KEY TIER: the first time a KEY tier is affordable (T0, before any rebirth). Hosted by the SHOP.
+    id: 'keyTier',
+    host: 'shop',
     isNew: true,
-    when: (s) => s.wallTier >= 1,
-    steps: [{ title: 'NEW WALL', line: 'EVERY 100 LEVELS THE WALL MOVES.', sub: (s) => `NEXT AT LV ${(s.wallTier + 1) * 100}` }],
+    when: (s) => !!s.keyAffordable && s.keyTier === 0 && s.rebirths === 0,
+    target: '.shop-keypower',
+    line: 'KEY TIER: MORE XP / LETTER. HOLD TO BUY.',
   },
 ];
 
-/** The first tutorial that is due and not yet seen, or null. `seen(id)` reads the stored flag. */
-export function dueTutorial(snapshot, seen) {
+const isDue = (t, snapshot) => { try { return !!t.when(snapshot); } catch { return false; } };
+
+/** The first MENU tutorial that is due and not yet seen, or null. `seen(id)` reads the stored flag;
+ *  `hasTarget(selector)` says whether a target is on screen (only asked of `needsTarget` tutorials). */
+export function dueTutorial(snapshot, seen, hasTarget = () => true) {
   for (const t of TUTORIALS) {
-    if (t.host) continue; // shown by its own screen (e.g. markRolls inside the MARKS panel), not the menu
+    if (t.host) continue; // shown by its own panel (MARKS / SHOP), not the menu
     if (seen(t.id)) continue;
-    let due = false;
-    try { due = !!t.when(snapshot); } catch { due = false; }
-    if (due) return t;
+    if (!isDue(t, snapshot)) continue;
+    if (t.needsTarget && !hasTarget(t.target)) continue;
+    return t;
+  }
+  return null;
+}
+
+/** The tutorial a panel hosts, if it is due and not yet seen, or null. */
+export function dueHosted(host, snapshot, seen) {
+  for (const t of TUTORIALS) {
+    if (t.host !== host || seen(t.id)) continue;
+    if (isDue(t, snapshot)) return t;
   }
   return null;
 }
 
 /** First run on a save: the ids to mark seen right away (already reached, and not new to everyone). */
 export function alreadyReached(snapshot) {
-  return TUTORIALS.filter((t) => !t.isNew && !t.host && (() => { try { return !!t.when(snapshot); } catch { return false; } })()).map((t) => t.id);
+  return TUTORIALS.filter((t) => !t.isNew && !t.host && isDue(t, snapshot)).map((t) => t.id);
 }
 
 // ---- the stored flags (guarded, like every other store) ----------------------------------------------
