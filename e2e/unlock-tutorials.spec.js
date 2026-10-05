@@ -28,6 +28,7 @@ async function boot(page, seed, vp) {
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.tut.init', '1'); // a fresh player whose tutorials started at LV1
+    localStorage.setItem('taw.econ', '12'); // already on Rebirth Rush: econ 12 (this spec is not about the one-time conversion)
     const u = String(Date.now() + 5 * 60 * 1000);
     for (const [k, v] of Object.entries(s)) {
       const raw = typeof v === 'string' ? v : JSON.stringify(v);
