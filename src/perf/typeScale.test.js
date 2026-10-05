@@ -63,7 +63,14 @@ const lineOf = (css, i) => css.slice(0, i).split('\n').length;
 //
 // Both are the same class of exception as --slot-size — text sized to a BOX, not to the
 // document scale.
-const FIT_TO_SLOT = /cqw|var\(--slot-size\)|var\(--solo-hero\)|var\(--wb-bomb-w\)/i;
+//
+// --mc-u is ONE px of the MARK CARD drawing (markCard/MarkCard.css, ROLL v1 — Andy's mockup
+// claude/mockups/roll-v1/MarkCard.dc.html). The card is a fixed 180x260 drawing — header bar,
+// cog, name, stat, perk chip, pips — scaled as ONE object by transform to every size it is
+// shown at (a 92px reel cell on a phone up to the 252px reveal). Its text is part of the
+// drawing: on the scale it would be the same pixels at every card size and leave the card.
+// Same class again — text sized to a BOX.
+const FIT_TO_SLOT = /cqw|var\(--slot-size\)|var\(--solo-hero\)|var\(--wb-bomb-w\)|var\(--mc-u\)/i;
 
 test('every font-size goes through a --fs-* token (the scale cannot be bypassed)', () => {
   const offenders = [];

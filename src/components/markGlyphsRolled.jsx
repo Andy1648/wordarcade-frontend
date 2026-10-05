@@ -3,6 +3,8 @@
 // MarkBadge registers them on demand: MarksIndex imports this module, and a badge for an id it can't draw
 // yet (the menu chip of a worn ROLLED mark) loads it once and re-draws. Same hand as the base glyphs:
 // chunky ink, flat fills, nothing centred or mirrored.
+export { GLYPH_FINISH } from './markGlyphFinish.jsx';
+
 const INK = '#0d0618';
 
 export const ROLLED_GLYPHS = {

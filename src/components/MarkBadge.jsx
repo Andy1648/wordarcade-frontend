@@ -1,14 +1,15 @@
-// MarkBadge — STEP 21 / Andy A3: marks get real art. Each mark is a drawn SVG glyph (no emoji) set in
-// a badge whose RIM shows the mark's rank: I bronze → II silver → III gold → IV cyan → V pink with a
-// star crown. ART VS MOTION: every shape here is vector art; CSS only animates it.
+// MarkBadge — a mark's drawn GLYPH inside its COG (ROLL v1, Andy oct5 mockup claude/mockups/roll-v1/MarkCard.dc.html:
+// "this is gold"). The cog is twelve teeth + a ring in the TIER colour (markCard/palette.js), black-inked, around a
+// dark inner disc; SECRET's teeth are the rainbow (one static colour per tooth — never an animated fill). The glyph
+// sits on a hard black drop shadow; once the lazy glyph chunk (markGlyphsRolled.jsx) has loaded, every glyph also
+// gets its SHADE (a lower-right crescent), a HIGHLIGHT gleam and EXTRAS (markGlyphFinish.jsx). ART VS MOTION: every
+// shape here is vector art; CSS only moves it — the cog spins ONCE on a reveal / hover (MarkCard.css), never loops.
 //
-// STEP 21 compared three frames (claude/step21/marks-{coin,pin,patch}-*.png): the COIN shipped — a
-// notched medallion reads as a thing you EARNED and shows the rank colour on the most surface; the
-// shield pin and stitched patch read as UI chrome. The other two frames are kept as variants.
-import { memo, useEffect, useState } from 'react';
-import { RARITY, rarityKey } from '../lib/rarityStyle.js';
+// Kept small on purpose: this file rides the menu's index chunk (the worn-mark chip). Payload ratchet.
+import { memo, useEffect, useId, useState } from 'react';
+import { CARD_RAR, RAINBOW_TEETH, LOCKED, cardTier } from './markCard/palette.js';
 
-// Rank rims: flat fill + darker outline shade (house rule: coloured outlines, not black).
+// Rank rims (legacy marks, ranks II–V): the cog's colour once a legacy mark ranks up.
 export const RANK_RIMS = [
   { fill: '#C98A4B', line: '#6E3F17' }, // I bronze
   { fill: '#CFD8E3', line: '#5F6F84' }, // II silver
@@ -16,6 +17,7 @@ export const RANK_RIMS = [
   { fill: '#2EFFE0', line: '#0F8F7E' }, // IV cyan
   { fill: '#FF4FA3', line: '#A3175E' }, // V pink
 ];
+
 
 const INK = '#0d0618';
 
@@ -147,36 +149,21 @@ const GLYPHS = {
     </g>
   ),
 };
-// The 26 MARK ROLLS glyphs live in markGlyphsRolled.jsx (lazy — payload ratchet). A screen that needs them
-// registers them (MarksIndex); a badge asked to draw one before that loads the module once and re-draws.
+// The 26 MARK ROLLS glyphs + every glyph's FINISH (shade / highlight / extras) live in markGlyphsRolled.jsx (lazy —
+// payload ratchet). A screen that needs them registers them (RollScreen, MarksIndex); a badge drawn before that
+// loads the module once and re-draws.
 const EXTRA = {};
+let FINISH = null;
 let extraLoad = null;
-export function registerMarkGlyphs(map) {
+export function registerMarkGlyphs(map, finish) {
   Object.assign(EXTRA, map);
+  if (finish) FINISH = finish;
 }
 function loadExtraGlyphs() {
   if (!extraLoad) {
-    extraLoad = import('./markGlyphsRolled.jsx').then((m) => registerMarkGlyphs(m.ROLLED_GLYPHS), () => { extraLoad = null; });
+    extraLoad = import('./markGlyphsRolled.jsx').then((m) => registerMarkGlyphs(m.ROLLED_GLYPHS, m.GLYPH_FINISH), () => { extraLoad = null; });
   }
   return extraLoad;
-}
-// A rolled mark's FINISH replaces the rank rim: GOLD (10 dupes) and RAINBOW (10 golds). Flat fills only —
-// the rainbow is the house palette in hard-edged teeth, never a gradient.
-const GOLD_RIM = { fill: '#FFD54A', line: '#A8800F' };
-const RAINBOW_TEETH = [
-  { fill: '#FF4FA3', line: '#A3175E' },
-  { fill: '#FF6B3D', line: '#A63A12' },
-  { fill: '#FFE94A', line: '#A8800F' },
-  { fill: '#2EFFE0', line: '#0F8F7E' },
-  { fill: '#9A1AFF', line: '#5c0fa3' },
-];
-const PERM_RIM = { fill: '#9A1AFF', line: '#5c0fa3' };
-// RARITY IDENTITY (Andy oct5): a mark at rank I wears its TIER on the rim — COMMON grey, RARE blue, EPIC purple,
-// LEGENDARY gold, MYTHIC red-pink, SECRET black with rainbow teeth. Ranks II–V keep the rank rims (earned).
-function rarityRim(tier) {
-  const k = rarityKey(tier);
-  if (k === 'secret') return { fill: '#1a0b2e', line: '#9A1AFF', secret: true };
-  return { fill: RARITY[k].fill, line: RARITY[k].line };
 }
 const LOCK = (
   <g stroke="#6b5a86" strokeWidth="4" strokeLinejoin="round" fill="none">
@@ -185,106 +172,68 @@ const LOCK = (
     <circle cx="50" cy="60" r="3.5" fill="#6b5a86" stroke="none" />
   </g>
 );
-
-function Frame({ variant, rim, locked, finish, permanent }) {
-  const fill = locked ? '#1a0b2e' : '#2a1648';
-  const ring = locked ? { fill: '#3d3150', line: '#241a33' } : rim;
-  if (permanent) {
-    // PERMANENT frame (spec §2): a ten-point burst, not the coin — earned, never rolled. Uneven points.
-    const pts = [];
-    for (let i = 0; i < 20; i += 1) {
-      const a = (i / 20) * Math.PI * 2 - Math.PI / 2;
-      const r = i % 2 === 0 ? (i % 4 === 0 ? 49 : 46) : 37;
-      pts.push(`${(50 + Math.cos(a) * r).toFixed(1)},${(50 + Math.sin(a) * r).toFixed(1)}`);
-    }
-    const p = locked ? ring : PERM_RIM;
-    return (
-      <g>
-        <polygon points={pts.join(' ')} transform="translate(4,4)" fill="#000" />
-        <polygon points={pts.join(' ')} fill={p.fill} stroke={p.line} strokeWidth="4" strokeLinejoin="round" />
-        <circle cx="50" cy="50" r="32" fill={fill} stroke={p.line} strokeWidth="2.5" />
-      </g>
-    );
-  }
-  if (variant === 'pin') {
-    // enamel PIN: a shield, metal rim, enamel field
-    return (
-      <g>
-        <path d="M50 6 L88 18 L84 58 C80 78 64 90 50 96 C36 90 20 78 16 58 L12 18 Z" transform="translate(4,4)" fill="#000" />
-        <path d="M50 6 L88 18 L84 58 C80 78 64 90 50 96 C36 90 20 78 16 58 L12 18 Z" fill={ring.fill} stroke={ring.line} strokeWidth="4" strokeLinejoin="round" />
-        <path d="M50 16 L78 25 L75 57 C72 72 60 81 50 86 C40 81 28 72 25 57 L22 25 Z" fill={fill} stroke={ring.line} strokeWidth="2.5" />
-      </g>
-    );
-  }
-  if (variant === 'patch') {
-    // stitched PATCH: an uneven hexagon with a dashed stitch line
-    return (
-      <g>
-        <path d="M50 5 L90 27 L89 73 L50 95 L10 72 L11 27 Z" transform="translate(4,4)" fill="#000" />
-        <path d="M50 5 L90 27 L89 73 L50 95 L10 72 L11 27 Z" fill={ring.fill} stroke={ring.line} strokeWidth="4" strokeLinejoin="round" />
-        <path d="M50 15 L81 32 L80 68 L50 85 L19 67 L20 32 Z" fill={fill} />
-        <path d="M50 11 L85 30 L84 70 L50 89 L15 69 L16 30 Z" fill="none" stroke={ring.line} strokeWidth="2" strokeDasharray="5 4" />
-      </g>
-    );
-  }
-  // COIN (default): a medallion with a notched rim
-  const rainbowTeeth = !locked && (finish === 'rainbow' || !!(rim && rim.secret && finish !== 'gold'));
-  const body = !locked && finish === 'gold' ? GOLD_RIM : !locked && finish === 'rainbow' ? RAINBOW_TEETH[2] : ring;
-  const teeth = [];
-  for (let i = 0; i < 16; i += 1) {
-    const a = (i / 16) * Math.PI * 2;
-    const x = 50 + Math.cos(a) * 46;
-    const y = 50 + Math.sin(a) * 46;
-    const t = rainbowTeeth ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : body;
-    teeth.push(<circle key={i} cx={x.toFixed(1)} cy={y.toFixed(1)} r={rainbowTeeth ? '6' : '5'} fill={t.fill} stroke={t.line} strokeWidth="2.5" />);
-  }
+const SHADOW = { filter: 'drop-shadow(3px 3px 0 #000)' };
+const TEETH = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+/** The COG: twelve black-inked teeth + the ring, in `line` (or the rainbow, one colour a tooth), in a 120 box. */
+export function CogRing({ line, rainbow = false }) {
   return (
-    <g>
-      <circle cx="54" cy="54" r="46" fill="#000" />
-      {teeth}
-      <circle cx="50" cy="50" r="43" fill={body.fill} stroke={body.line} strokeWidth="4" />
-      <circle cx="50" cy="50" r="33" fill={fill} stroke={ring.line} strokeWidth="2.5" />
+    <g className="mb-cog">
+      <g stroke="#000" strokeWidth="3" strokeLinejoin="round">
+        {TEETH.map((a, i) => (
+          <rect key={a} x="51" y="1" width="18" height="20" rx="2" fill={rainbow ? RAINBOW_TEETH[i % 5] : line} transform={a ? `rotate(${a} 60 60)` : undefined} />
+        ))}
+      </g>
+      <circle cx="60" cy="60" r="44" fill={line} stroke="#000" strokeWidth="5" />
     </g>
   );
 }
 
-function Crown() {
-  return <path d="M34 4 L39 -8 L45 1 L50 -11 L55 1 L61 -8 L66 4 Z" fill="#FFE94A" stroke="#000" strokeWidth="3" strokeLinejoin="round" />;
-}
-
 /**
- * @param mark     a MARKS entry (or null for an empty slot)
- * @param rank     1..5
- * @param locked   draws the lock in a dead frame
- * @param size     px
- * @param variant  'coin' | 'pin' | 'patch'
- * @param finish   'base' | 'gold' | 'rainbow' — a rolled mark's dupe finish (replaces the rank rim)
- * @param permanent  draws the PERMANENT burst frame (hard-achievement marks)
+ * @param mark        a marks entry ({ id, tier }) or null (an empty slot)
+ * @param rank        1..5 — a legacy mark's rank (II–V recolour the cog; V adds the crown)
+ * @param locked      the LOCK glyph in a dead grey cog (legacy panels, blank reel cells)
+ * @param silhouette  ROLL v1 locked card: the mark's own glyph in solid black, the cog still in its tier colour
+ * @param permanent   a PERMANENT (hard-achievement) mark — the cyan cog
+ * @param size        px
+ * @param cog         false = no cog (MarkCard draws its own, in an HTML layer it can spin on the compositor)
  */
-function MarkBadge({ mark, rank = 1, locked = false, size = 56, variant = 'coin', className = '', finish = 'base', permanent = false }) {
+function MarkBadge({ mark, rank = 1, locked = false, silhouette = false, size = 56, className = '', permanent = false, cog = true }) {
+  const uid = useId().replace(/[^\w-]/g, '');
   const r = Math.max(1, Math.min(5, rank || 1));
-  const rim = r === 1 && mark && mark.tier ? rarityRim(mark.tier) : RANK_RIMS[r - 1];
+  const dead = locked || !mark;
+  const tier = permanent ? 'permanent' : cardTier(mark && mark.tier);
+  const pal = CARD_RAR[tier];
+  const line = dead ? '#3d3150' : r > 1 ? RANK_RIMS[r - 1].fill : pal.line;
+  const rainbow = !dead && r === 1 && tier === 'secret';
   const [, redraw] = useState(0);
-  const missing = !!mark && !locked && !GLYPHS[mark.id] && !EXTRA[mark.id];
+  const want = !!mark && !locked && (!(GLYPHS[mark.id] || EXTRA[mark.id]) || !FINISH);
   useEffect(() => {
-    if (!missing) return undefined;
+    if (!want) return undefined;
     let live = true;
     loadExtraGlyphs().then(() => { if (live) redraw((n) => n + 1); });
     return () => { live = false; };
-  }, [missing]);
-  const glyph = !mark || locked ? LOCK : GLYPHS[mark.id] || EXTRA[mark.id] || null;
+  }, [want]);
+  const glyph = dead ? LOCK : GLYPHS[mark.id] || EXTRA[mark.id] || null;
   return (
     <svg
-      className={`mark-badge v-${variant}${locked ? ' is-locked' : ''}${finish !== 'base' ? ` is-${finish}` : ''}${permanent ? ' is-permanent' : ''} ${className}`}
-      viewBox="-6 -14 112 120"
+      className={`mark-badge${dead ? ' is-locked' : ''}${silhouette ? ' is-sil' : ''} ${className}`}
+      viewBox="0 0 120 120"
       width={size}
       height={size}
       aria-hidden="true"
       style={{ overflow: 'visible' }}
     >
-      <Frame variant={variant} rim={rim} locked={locked || !mark} finish={finish} permanent={permanent} />
-      <g transform="translate(50 50) scale(1.18) translate(-50 -50)">{glyph}</g>
-      {!locked && mark && r >= 5 && <Crown />}
+      {cog ? <CogRing line={line} rainbow={rainbow} /> : null}
+      <circle cx="60" cy="60" r="35" fill={dead ? '#1a0b2e' : silhouette ? LOCKED.inner : pal.inner} stroke="#000" strokeWidth="4" />
+      {glyph ? (
+        <g className="mb-glyph" style={SHADOW}>
+          <g className={silhouette ? 'mx-sil' : undefined} transform="translate(60 60) scale(1.32) translate(-50 -50)">
+            {glyph}
+            {!dead && !silhouette && FINISH ? FINISH(mark.id, uid) : null}
+          </g>
+        </g>
+      ) : null}
+      {!dead && r >= 5 ? <path d="M44 -2 L49 -14 L55 -5 L60 -17 L65 -5 L71 -14 L76 -2 Z" fill="#FFE94A" stroke="#000" strokeWidth="3" strokeLinejoin="round" /> : null}
     </svg>
   );
 }

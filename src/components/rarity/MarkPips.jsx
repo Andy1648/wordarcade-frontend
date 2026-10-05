@@ -13,7 +13,7 @@ import './MarkPips.css';
 
 const ART = '/art/rarity/';
 
-export default function MarkPips({ pips = 0, max = 5, className = '' }) {
+export default function MarkPips({ pips = 0, max = 5, className = '', off = 'pip-off.svg' }) {
   const { on, max: m } = clampPips(pips, max);
   const row = [];
   for (let i = 0; i < m; i += 1) {
@@ -22,7 +22,7 @@ export default function MarkPips({ pips = 0, max = 5, className = '' }) {
       <img
         key={lit && i === on - 1 ? `n${on}` : i}
         className={`mark-pip${lit ? ' is-on' : ''}${lit && i === on - 1 ? ' is-newest' : ''}`}
-        src={`${ART}${lit ? 'pip-on.svg' : 'pip-off.svg'}`}
+        src={`${ART}${lit ? 'pip-on.svg' : off}`}
         alt=""
         draggable="false"
       />,

@@ -188,3 +188,29 @@ export const AUTO_GAP_MS = 420;
 export function needMoreText(price, have, fmt = (n) => String(n)) {
   return `NEED ${fmt(Math.max(1, Math.ceil(price - have)))} MORE GEMS`;
 }
+
+// ---- ROLL v1 reveals (Andy oct5 mockup claude/mockups/roll-v1/Main.dc.html) ----
+/**
+ * Which reveal a landed roll gets — RARITY-SCALED: 'line' (COMMON / RARE, and every short / reduced-motion land: the
+ * result line under the reel), 'dim' (EPIC: the screen dims, "1 IN X" slams, the card pops), 'full' (LEGENDARY+:
+ * full-screen rays, the rarity, "1 IN X" huge, the card, the screen shakes). 'dim' and 'full' stay up until a tap.
+ */
+export function revealKind(tier, mode = 'full') {
+  if (mode !== 'full') return 'line';
+  const r = tierIndex(tier);
+  if (r >= tierIndex('legendary')) return 'full';
+  return r === tierIndex('epic') ? 'dim' : 'line';
+}
+/** Under AUTO ROLL an EPIC dim reveal closes by itself after this long (the mockup's 1.3 s), then the next roll. */
+export const AUTO_DIM_MS = 1300;
+/** The rays turn only while a full reveal plays in (finite), then rest. */
+export const RAYS_MS = 3200;
+/**
+ * The AUTO cycle (one button, Andy oct5 mockup): OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF. Each tap sets the target
+ * (and starts rolling from OFF); a hit at the target or better stops it.
+ */
+export const AUTO_CYCLE = [null, 'rare', 'epic', 'legendary'];
+export function nextAutoTarget(cur) {
+  const i = AUTO_CYCLE.indexOf(cur == null ? null : cur);
+  return AUTO_CYCLE[i < 0 ? 1 : (i + 1) % AUTO_CYCLE.length];
+}

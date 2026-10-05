@@ -1,102 +1,100 @@
-// RollScreen.jsx — THE ROLL SCREEN (Andy oct5): "own full screen from the MARKS button; one big ROLL button,
-// nothing crowding". The MARKS button opens this; its INDEX button opens the MARKS INDEX (MarksIndex.jsx) as a
-// layer of the same overlay slot.
+// RollScreen.jsx — THE ROLL SCREEN (ROLL v1 — Andy oct5 mockup claude/mockups/roll-v1/Main.dc.html: "this is gold,
+// before was ass"). The MARKS button opens this; its INDEX button opens the MARKS INDEX (MarksIndex.jsx) as a layer of
+// the same overlay slot.
 //
-//   top      INDEX · the pity ladder (EPIC+ IN N · LEGENDARY+ IN N — always visible) · close
-//   middle   THE ONE BIG THING: the reel (Reel.jsx — real-odds strip, decelerates onto the result) + the result card
-//   bottom   ROLL (price) · gems · AUTO ROLL [tier+] · SKIP [< tier]
+//   top      INDEX n/N · ROLL · the GEMS pill (+ ✕)
+//   middle   THE REEL: a full-width band of mark cards under a yellow pointer (Reel.jsx), and the result LINE under
+//            it (name · stat number · what it touches · ★ pips)
+//   bottom   the PITY bars (EPIC+ IN n, big, + its bar · LEGENDARY+ IN n) · ROLL (gem price) · AUTO (one button that
+//            cycles OFF → RARE+ → EPIC+ → LEGENDARY+, "TAP TO SET TARGET") + SKIP < tier
 //
-// ROLL vs INDEX are TWO screens, never mixed (Andy oct5): this one is ROLL, AUTO ROLL, gems, pity and the result;
-// the INDEX (the collection) is one small button away and never rolls, prices or replays. NO PROSE here (Andy oct5:
-// "cut words everywhere except the INDEX detail view") — names, rarity, the markTag line, odds, numbers, pips.
+// ROLL vs INDEX are TWO screens, never mixed (Andy oct5): this one is ROLL, AUTO, gems, pity and the result; the
+// INDEX (the collection) is one button away and never rolls, prices or replays.
 //
 // HONEST: the strip is drawn from the live roll table of the roll that was just paid for (reelPlan.drawStrip), the
-// landing cell is the real result, nothing is inserted next to it. NO SPOILERS: the card, the pity ladder, the
-// INDEX and an auto-equipped MAIN update when the reel LANDS, never before. TAP ANYWHERE mid-reveal jumps to the
-// result. Closing mid-reveal still lands it (the roll is already paid and saved). A DOUBLE ROLL's extra shows on the
-// card ("+NAME"), and a first-time mark anywhere in the roll gets the full reveal.
+// landing cell is the real result, nothing is inserted next to it; the odds and pity are the game's (rollTable /
+// oneInX / pityLadder) — the mockup's boosted demo luck is not here. NO SPOILERS: the line, the pity, the INDEX
+// count and an auto-equipped MAIN update when the reel LANDS, never before. TAP ANYWHERE mid-reveal jumps to the
+// result; a tap closes a DIM / FULL reveal. Closing mid-reveal still lands it (the roll is already paid and saved).
+// A DOUBLE ROLL's extra shows on the line ("+NAME"), and a first-time mark anywhere in the roll gets the full reveal.
 // Coming back from the INDEX never replays the last roll (the `played` ref outlives the Reel's remount).
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import MarkBadge, { registerMarkGlyphs } from '../MarkBadge';
-import { ROLLED_GLYPHS } from '../markGlyphsRolled.jsx';
+import { registerMarkGlyphs } from '../MarkBadge';
+import { ROLLED_GLYPHS, GLYPH_FINISH } from '../markGlyphsRolled.jsx';
 import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
 import MarkPips from '../rarity/MarkPips';
-import RarityFx from '../rarity/RarityFx';
 import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/registry.js';
 import { MARK_TIERS } from '../../progress/marks';
 import {
-  markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, markTag, getSkipBelow, setSkipBelow,
-  SKIP_TIERS, MAX_PIPS,
+  markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
+  setSkipBelow, SKIP_TIERS, MAX_PIPS, PITY,
 } from '../../progress/markRolls';
-import { buyMarkRoll, nextRollCost, applyRollEquip, AUTO_ROLL_TIERS } from '../../progress/markRollShop';
+import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getGems, subscribeGems } from '../../progress/gems';
 import { GemIcon, GemCount } from '../gems/Gems';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndWordRejected } from '../../audio/gameSounds';
 import { announceRolls } from '../../leaderboard/live';
 import { formatNum } from '../../format';
-import { rarityClass } from '../../lib/rarityStyle.js';
 import { lazyWithReload } from '../../lib/chunkReload';
-import { drawStrip, revealMode, restOffset, autoShouldStop, needMoreText, AUTO_GAP_MS } from './reelPlan.js';
-import '../rarity/RarityFin.css';
+import { holdBeats } from '../../hooks/useBeatSync';
+import { CARD_RAR, cardTier } from '../markCard/palette.js';
+import { splitTag } from '../markCard/cardModel.js';
+import {
+  drawStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS,
+} from './reelPlan.js';
 import './RollScreen.css';
 import { useReduceMotion } from '../../lib/useReduceMotion';
 
-registerMarkGlyphs(ROLLED_GLYPHS);
+registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
+
+// This screen covers the whole menu: a pointer moving over it must not drive the menu's magnetic cards / wall
+// parallax / cursor trail underneath (window listeners — each move restyled the hidden menu every frame).
+export const stopMenuPointer = (e) => e.stopPropagation();
 
 const MarksIndex = lazyWithReload(() => import('../MarksIndex'), 'MarksIndex');
-const AUTO_KEY = 'taw.rollAutoUntil'; // per-viewer convenience: the last "until" tier picked
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t || '').toUpperCase());
-const readAuto = () => {
-  try {
-    const v = localStorage.getItem(AUTO_KEY);
-    return AUTO_ROLL_TIERS.includes(v) ? v : 'epic';
-  } catch { return 'epic'; }
-};
 
-// The in-game REDUCE MOTION toggle (live), not the OS media query.
+// REDUCE MOTION: the in-game toggle (PR #207, src/lib/reduceMotion.js) — live, never the OS media query.
 const useReducedMotion = useReduceMotion;
 
-/** The result card — in the rarity system: tier fill, the ★ pip graphic (no "7/10 → ★3" text), the stat. */
-function ResultCard({ result, seq }) {
-  if (!result) return <div className="rs-card is-empty" aria-hidden="true" />;
+/** The result LINE under the reel (mockup): NAME in its tier colour · the stat number · what it touches · ★ pips. */
+function ResultLine({ result, view, pop = true }) {
+  if (!result) return <div className="rs-result is-empty" aria-hidden="true" />;
   const m = markEntry(result.markId);
-  const stat = markTag(result.markId, result.state); // "×1.5 WINS · PERK: … · ★2" (Andy oct5)
+  const { num, kind } = splitTag(mainTag(result.markId, view)); // "×1.1 WINS" → ×1.1 · WINS (numbers first)
   const extra = (result.extra || []).filter(Boolean);
   return (
-    <div className={`rs-card ${rarityClass(result.tier, { tint: true })}`} data-testid="mark-roll-result" data-tier={result.tier} data-shiny={result.shiny ? '1' : undefined}>
-      <span className="rs-card-artwrap">
-        <MarkBadge mark={m} size={84} className="rs-card-art" />
-        {result.shiny ? <ShinyBadge /> : null}
+    <div
+      className={`rs-result${pop ? '' : ' is-rest'}`}
+      data-testid="mark-roll-result"
+      data-tier={result.tier}
+      data-shiny={result.shiny ? '1' : undefined}
+      style={{ '--rs-tier': CARD_RAR[cardTier(result.tier)].line }}
+    >
+      <span className="rs-res-name">{m ? m.name : ''}</span>
+      {result.newMark ? <span className="rs-chip is-new">NEW</span> : null}
+      <span className="rs-card-stat">
+        <span className="rs-res-num">{num}</span>
+        {kind ? ' ' : null}
+        {kind ? <span className="rs-res-kind">{kind}</span> : null}
       </span>
-      <div className="rs-card-body">
-        <div className="rs-card-name">
-          <span className="rs-card-nm">{m ? m.name : ''}</span>
-          {result.newMark ? <span className="rs-chip is-new">NEW</span> : null}
-        </div>
-        <div className={`rs-card-tier rarity-ink is-${result.tier}`}>
-          <span>{tierName(result.tier)}</span> <span>· 1 IN {formatNum(result.oneInX)}</span>
-        </div>
-        {stat ? <div className="rs-card-stat">{stat}</div> : null}
-        <div className="rs-card-pips">
-          <MarkPips pips={result.pips} max={MAX_PIPS} />
-        </div>
-        {extra.length ? (
-          <div className="rs-card-extra" data-testid="mark-roll-extra">
-            {extra.map((x, i) => {
-              const xm = markEntry(x.markId);
-              return (
-                <span key={i} className={`rs-chip is-extra rarity-fin is-${x.tier}`} data-tier={x.tier}>
-                  +{xm ? xm.name : ''}{x.newMark ? ' · NEW' : ''}
-                </span>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
-      <RarityFx key={seq} tier={result.tier} />
+      <MarkPips pips={result.pips} max={MAX_PIPS} className="rs-res-pips" off="pip-off-gold.svg" />
+      {result.shiny ? <ShinyBadge className="rs-res-shiny" /> : null}
+      {extra.length ? (
+        <span className="rs-card-extra" data-testid="mark-roll-extra">
+          {extra.map((x, i) => {
+            const xm = markEntry(x.markId);
+            return (
+              <span key={i} className="rs-chip is-extra" data-tier={x.tier} style={{ '--rs-tier': CARD_RAR[cardTier(x.tier)].line }}>
+                +{xm ? xm.name : ''}{x.newMark ? ' · NEW' : ''}
+              </span>
+            );
+          })}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -119,9 +117,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const [shown, setShown] = useState(null);
   const [need, setNeed] = useState(0); // short balance: the gems missing — a number + gem, never a sentence
   const [skipBelow, setSkip] = useState(() => getSkipBelow());
-  const [until, setUntil] = useState(readAuto);
-  const [autoOn, setAutoOn] = useState(false);
+  const [target, setTarget] = useState(null); // the AUTO target (null = OFF) — the one button cycles it
   const [showIndex, setShowIndex] = useState(false);
+  const [fresh, setFresh] = useState(false); // the result line pops only for a roll that just landed
   const [coverHost, setCoverHost] = useState(null);
   const [tut, setTut] = useState(() => !hasSeenTutorial('markRolls'));
   const ctl = useRef(null);
@@ -129,23 +127,36 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const btn = useRef(null);
   const closeRef = useRef(null);
   const pending = useRef(null); // the paid roll whose reel has not landed yet
-  const lastRes = useRef(null); // the roll on the reel now (AUTO ROLL reads it when the reveal ends)
-  const auto = useRef({ on: false, until: 'epic', timer: null });
-  auto.current.until = until;
+  const auto = useRef({ on: false, until: null, timer: null });
   const live = useRef({});
 
   useEffect(() => subscribeGems(setGems), []);
+  // this screen covers the whole menu: hold the menu's music-beat pops (each one restyled the whole document), and
+  // mark <html> so the covered menu / wall / particles skip rendering entirely (RollScreen.css: content-visibility) —
+  // a wins count-up or a parallax drift under an opaque screen was relayout + repaint every frame for nothing
+  useEffect(() => {
+    const release = holdBeats();
+    const de = document.documentElement;
+    de.setAttribute('data-roll-cover', '');
+    return () => { release(); de.removeAttribute('data-roll-cover'); };
+  }, []);
 
   const cost = nextRollCost(level, view);
   const canAfford = cost.free || gems >= cost.gems;
   const ladder = pityLadder(view);
+  const epicLeft = (ladder.find((p) => p.tier === 'epic') || { left: 0 }).left;
+  const legLeft = (ladder.find((p) => p.tier === 'legendary') || { left: 0 }).left;
+  const epicFrac = Math.max(0, Math.min(1, 1 - epicLeft / PITY.epic.hard));
+  const col = collection(view);
   const tutDef = TUTORIALS.find((t) => t.id === 'markRolls');
+  const rolling = !!(spin && pending.current);
 
   const stopAuto = () => {
     auto.current.on = false;
+    auto.current.until = null;
     if (auto.current.timer) clearTimeout(auto.current.timer);
     auto.current.timer = null;
-    setAutoOn(false);
+    setTarget(null);
   };
   const short = () => {
     const c = nextRollCost(level);
@@ -163,13 +174,16 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     }
   };
 
-  // the reel LANDED (or was skipped): now the card, pity, INDEX and the MAIN may change
+  // the reel LANDED (or was skipped): now the line, pity, INDEX count and the MAIN may change; a hit at the AUTO
+  // target (or better) stops AUTO right here, so its reveal stays up for the tap
   const commit = (res) => {
     const p = pending.current;
     if (!p || p !== res) return;
     pending.current = null;
     setShown(res);
+    setFresh(true);
     setLanded((n) => n + 1);
+    if (auto.current.on && autoShouldStop(res, auto.current.until)) stopAuto();
     announceRolls([res, ...(res.extra || [])]); // MYTHIC+ → one ticker line each
     const wornNow = res.decision === 'auto' ? applyRollEquip(res, earned) : null;
     if (wornNow && onEquip) onEquip(wornNow);
@@ -185,12 +199,11 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (!res) { short(); stopAuto(); return null; }
     setNeed(0);
     sndPurchase();
-    // the hit that stops AUTO ROLL always gets the full reveal
+    // the hit that stops AUTO always gets the full reveal
     const mode = revealMode(res, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
     const strip = drawStrip(table.probs, Math.random, { resultId: res.markId });
     const rest = restOffset();
     pending.current = res;
-    lastRes.current = res;
     setShown(null);
     setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: res, strip, mode, rest }));
     return res;
@@ -199,9 +212,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
 
   const onLand = (res) => commit(res);
   const onDone = () => {
-    const last = lastRes.current;
     if (!auto.current.on) return;
-    if (!last || autoShouldStop(last, auto.current.until)) { stopAuto(); return; }
     auto.current.timer = setTimeout(() => {
       auto.current.timer = null;
       if (auto.current.on) live.current.doRoll();
@@ -212,30 +223,29 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return; }
     doRoll();
   };
+  // AUTO (mockup): one button cycles OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF. From OFF it starts rolling; while on, a
+  // tap only moves the target (the spin in flight is judged against the new one when it lands).
   const pressAuto = () => {
-    if (auto.current.on) {
-      stopAuto();
-      return;
-    }
-    if (ctl.current && ctl.current.busy()) ctl.current.finish(true);
+    const next = nextAutoTarget(target);
+    if (!next) { stopAuto(); return; }
+    setTarget(next);
+    auto.current.until = next;
+    if (auto.current.on) return;
     auto.current.on = true;
-    setAutoOn(true);
+    if (ctl.current && ctl.current.busy()) return; // the land in flight hands over (onDone) — never a double roll
     if (!doRoll()) stopAuto();
-  };
-  const pickUntil = (t) => {
-    setUntil(t);
-    try { localStorage.setItem(AUTO_KEY, t); } catch { /* blocked */ }
   };
   const pickSkip = (t) => setSkip(setSkipBelow(t));
   // leaving for the INDEX: a running reveal lands at once (no effects) so nothing is left half-played
   const openIndex = () => {
     stopAuto();
     if (ctl.current && ctl.current.busy()) ctl.current.finish(true);
+    setFresh(false); // coming back shows the line at rest — never a replayed pop
     setShowIndex(true);
   };
-  // TAP ANYWHERE mid-reveal jumps to the result (capture: the tap never also presses what is under it). The AUTO
-  // ROLL button is let through so a running auto roll can always be stopped in one tap; INDEX and ✕ too — they
-  // land the reveal themselves, and a first tap that only skipped read as a dead button.
+  // TAP ANYWHERE mid-reveal jumps to the result / closes the reveal (capture: the tap never also presses what is
+  // under it). The AUTO button is let through so it always answers in one tap; INDEX and ✕ too — they land the
+  // reveal themselves, and a first tap that only skipped read as a dead button.
   useEffect(() => {
     const host = coverHost;
     if (!host || typeof host.addEventListener !== 'function') return undefined;
@@ -263,12 +273,29 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     };
   }, [coverHost]);
 
+  // focus ✕ when this screen shows (and on the way back from the INDEX) — ONLY then: App passes a fresh onClose on
+  // every render, and re-running focus() on each of those was a forced style/layout on every roll
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
-    if (!showIndex) closeRef.current?.focus();
-    const onKey = (ev) => { if (ev.key === 'Escape' && !showIndex) onClose && onClose(); };
+    if (showIndex) return undefined;
+    closeRef.current?.focus();
+    const onKey = (ev) => { if (ev.key === 'Escape' && onCloseRef.current) onCloseRef.current(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, showIndex]);
+  }, [showIndex]);
+  // the tab goes HIDDEN mid-roll (or mid-AUTO): the roll lands now, quietly (it is already paid and saved), and AUTO
+  // stops — no gems are ever spent while nobody is looking
+  useEffect(() => {
+    const onVis = () => {
+      if (typeof document === 'undefined' || document.visibilityState !== 'hidden') return;
+      live.current.stopAuto && live.current.stopAuto();
+      if (ctl.current && ctl.current.busy()) ctl.current.finish(true);
+      else if (pending.current) live.current.commit && live.current.commit(pending.current);
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
   // closing mid-reveal still lands the roll (equip + ticker), and an auto roll stops
   useEffect(() => () => {
     if (auto.current.timer) clearTimeout(auto.current.timer);
@@ -276,7 +303,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (pending.current) live.current.commit && live.current.commit(pending.current);
   }, []);
   live.current.commit = commit;
-
+  live.current.stopAuto = stopAuto;
 
   if (showIndex) {
     return (
@@ -293,73 +320,76 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     );
   }
 
+  const rollLabel = cost.free ? 'FREE ROLL' : rolling ? '...' : canAfford ? 'ROLL' : 'NO GEMS';
   return (
-    <div className="marks-overlay rs-overlay" role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost}>
+    <div className={`marks-overlay rs-overlay${reduced ? ' is-reduced' : ''}`} role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="rs-top">
-        <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">INDEX</button>
-        <div className="rs-pity" data-testid="roll-pity" aria-label="Pity">
-          {ladder.map((p) => (
-            <span key={p.tier} className={`rs-pity-step rarity-fin is-${p.tier}`} data-tier={p.tier}>
-              {tierName(p.tier)}+ IN {formatNum(p.left)}
-            </span>
-          ))}
+        <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">
+          INDEX <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
+        </button>
+        <h2 className="rs-title" aria-hidden="true">ROLL</h2>
+        <div className="rs-topr">
+          {/* GEMS: the balance the price is paid from, in its pill; a short balance shows −N + gem beside it */}
+          <div className="rs-sub">
+            <div className="rs-msg" role="status" aria-live="polite" data-need={need || undefined}>
+              {need ? (
+                <>
+                  <span className="rs-sr">{needMoreText(need, 0, formatNum)}</span>
+                  <span className="rs-need" aria-hidden="true">−{formatNum(need)}<GemIcon size={16} className="rs-need-gem" /></span>
+                </>
+              ) : null}
+            </div>
+            <GemCount value={gems} size={30} className="rs-gems-bal" />
+          </div>
+          <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
         </div>
-        <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
       </div>
 
       <div className="rs-stage" data-tier={spin ? spin.result.tier : undefined} data-mode={spin ? spin.mode : undefined}>
-        <Reel spin={spin} idle={idle} coverHost={coverHost} ctl={ctl} played={played} onLand={onLand} onDone={onDone}>
-          <div className="rs-card-slot">
-            <ResultCard result={shown} seq={spin ? spin.seq : 0} />
+        <Reel spin={spin} idle={idle} view={view} auto={target != null} coverHost={coverHost} ctl={ctl} played={played} onLand={onLand} onDone={onDone}>
+          <div className="rs-result-slot">
+            <ResultLine key={spin ? spin.seq : 0} result={shown} view={view} pop={fresh} />
           </div>
         </Reel>
       </div>
 
       <div className="rs-controls">
+        <div className="rs-pity" data-testid="roll-pity" aria-label="Pity">
+          <div className="rs-pity-top">
+            <span className="rs-pity-lbl">EPIC+ IN</span>{' '}<span className="rs-pity-n">{formatNum(epicLeft)}</span>
+          </div>
+          <div className="rs-pity-bar" aria-hidden="true"><span className="rs-pity-fill" style={{ transform: `scaleX(${epicFrac})` }} /></div>
+          <div className="rs-pity-leg">LEGENDARY+ IN {formatNum(legLeft)}</div>
+        </div>
         <button
           type="button"
           ref={btn}
-          className={`rs-roll${canAfford ? '' : ' is-short'}${cost.free ? ' is-free' : ''}`}
+          className={`rs-roll${canAfford ? '' : ' is-short'}${cost.free ? ' is-free' : ''}${rolling ? ' is-rolling' : ''}`}
           onClick={pressRoll}
           aria-label={cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.gems)} GEMS`}
         >
-          {cost.free ? 'FREE ROLL' : (
-            <>ROLL · <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{formatNum(cost.gems)}</span></>
+          <span className="rs-roll-lbl">{rollLabel}</span>
+          {cost.free ? null : (
+            <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{formatNum(cost.gems)}</span>
           )}
         </button>
-        {/* GEMS: the balance the price is paid from — its own icon + count, right under the price (same row as the
-            short-balance line, so the controls never grow) */}
-        <div className="rs-sub">
-          <GemCount value={gems} size={18} className="rs-gems-bal" />
-          <div className="rs-msg" role="status" aria-live="polite" data-need={need || undefined}>
-            {need ? (
-              <>
-                <span className="rs-sr">{needMoreText(need, 0, formatNum)}</span>
-                <span className="rs-need" aria-hidden="true">−{formatNum(need)}<GemIcon size={16} className="rs-need-gem" /></span>
-              </>
-            ) : null}
-          </div>
-        </div>
         <div className="rs-opts">
-          <div className="rs-auto">
-            <button type="button" className={`rs-auto-btn${autoOn ? ' is-on' : ''}`} aria-pressed={autoOn} onClick={pressAuto} data-testid="roll-auto">
-              AUTO ROLL
-            </button>
-            {/* AUTO ROLL's stop tier, compact: "EPIC+" (the pity ladder's own notation) */}
-            <select
-              className={`rs-select rarity-fin is-${until}`}
-              value={until}
-              onChange={(e) => pickUntil(e.target.value)}
-              aria-label="Auto roll until this tier or better"
-              data-testid="roll-until"
-            >
-              {AUTO_ROLL_TIERS.map((t) => <option key={t} value={t}>{tierName(t)}+</option>)}
-            </select>
-          </div>
+          <button
+            type="button"
+            className={`rs-auto-btn${target ? ` is-on is-${target}` : ''}`}
+            aria-pressed={target != null}
+            aria-label={target ? `Auto roll until ${tierName(target)} or better — tap to change` : 'Auto roll off — tap to set a target'}
+            onClick={pressAuto}
+            data-testid="roll-auto"
+            data-target={target || 'off'}
+          >
+            {target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
+          </button>
+          <div className="rs-auto-cap" aria-hidden="true">TAP TO SET TARGET</div>
           <label className="rs-pick rs-skip">
             <span aria-hidden="true">SKIP</span>
             <select
-              className={`rs-select rarity-fin is-${skipBelow}`}
+              className="rs-select"
               value={skipBelow}
               onChange={(e) => pickSkip(e.target.value)}
               aria-label="Skip reveals below this tier"
