@@ -25,7 +25,7 @@ import UnlockTutorial from '../../tutorials/UnlockTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/registry.js';
 import { MARK_TIERS } from '../../progress/marks';
 import {
-  markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, statLine, getSkipBelow, setSkipBelow,
+  markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, markTag, getSkipBelow, setSkipBelow,
   SKIP_TIERS, MAX_PIPS, indexEntry,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip, AUTO_ROLL_TIERS } from '../../progress/markRollShop';
@@ -71,7 +71,7 @@ function useReducedMotion() {
 function ResultCard({ result, seq }) {
   if (!result) return <div className="rs-card is-empty" aria-hidden="true" />;
   const m = markEntry(result.markId);
-  const stat = statLine(result.markId, result.state);
+  const stat = markTag(result.markId, result.state); // "×1.5 WINS · PERK: … · ★2" (Andy oct5)
   const pl = pipLine(result.have, result.need, result.pips, formatNum);
   const extra = (result.extra || []).filter(Boolean);
   return (

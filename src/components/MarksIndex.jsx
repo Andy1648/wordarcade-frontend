@@ -26,7 +26,7 @@ import { markProgress, markTier, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
 import {
   ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ROLLABLE_TIERS, viewState, markLevel, mainTag, oneInX, collection,
-  permanentOwnedIds, markEntry, indexEntry, completedTiers, perkLine, statLine,
+  permanentOwnedIds, markEntry, indexEntry, completedTiers, perkLine, markTag,
 } from '../progress/markRolls';
 import { wearMark } from '../progress/markRollShop';
 import { flavourOf } from '../progress/markFlavour';
@@ -231,7 +231,7 @@ export default function MarksIndex({
             const pips = lv ? { pips: lv.pips, have: lv.have, need: lv.need } : null;
             // the FOUR things: name · rarity · 1 IN X · stat (locked: rarity · 1 IN X; PERMANENT: its task)
             const odds = rolled ? `1 IN ${formatNum(oneInX(e.id))}` : '';
-            const stat = have ? (rolled ? statLine(e.id, view) : mainTag(e.id, view)) : '';
+            const stat = have ? markTag(e.id, view) : ''; // the compact line — the detail sheet spells out the rest
             const task = !have && e.kind === 'perm' ? ACH_HINT[e.from] || achievementNames[e.from] || '' : '';
             return (
               <button
