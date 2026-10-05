@@ -173,7 +173,7 @@
 .rec-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
+  font-size: var(--fs-body);
   letter-spacing: 0.08em;
   color: #b9a7d6;
   text-transform: uppercase;
@@ -183,7 +183,7 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-body);
+  font-size: var(--fs-panel); /* the card's one big thing */
   line-height: 1.05;
   color: #ffe94a;
   overflow-wrap: anywhere; /* a long rarest word wraps rather than breaking the grid */
@@ -196,7 +196,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.04em;
   color: #ff4fa3;
 }
@@ -228,7 +228,7 @@
 
 .rec-req {
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */;
+  font-size: var(--fs-body);
   letter-spacing: 0.04em;
   color: #d8c9f0; /* the goal is the readable line now, not a muted footnote */
   font-weight: 700;
@@ -568,7 +568,7 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   line-height: 1.05;
 }
 .stats-secret-hint {
@@ -621,7 +621,7 @@
   flex: none;
   padding: 1px 8px;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.08em;
   color: #000;
   background: var(--pc-c);
@@ -658,7 +658,7 @@
   border: 2px solid #3a2160;
   border-radius: 8px;
 }
-.pc-label { font-size: var(--fs-label); letter-spacing: 0.08em; color: #c9b8e8; }
+.pc-label { font-size: var(--fs-body); letter-spacing: 0.08em; color: #c9b8e8; }
 .pc-val {
   margin: 0;
   font-weight: 700;
@@ -669,14 +669,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pc-sub { margin: 0; font-size: var(--fs-label); letter-spacing: 0.06em; color: var(--pc-c); }
+.pc-sub { margin: 0; font-size: var(--fs-body); letter-spacing: 0.06em; color: var(--pc-c); }
 .pc-foot {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
   margin-top: 8px;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.06em;
   color: #c9b8e8;
 }
 .pc-site { margin-left: auto; color: var(--pc-c); font-weight: 700; }
+
+/* TIER IDENTITY (Andy oct5): the R badge and the rebirth ladder chips wear their rung's rarity look; the level
+   numeral is inked in its level rung (src/components/rarity/RarityFin.css). The NOW chip keeps its hard shadow. */
+.pc-rb.rarity-chip { padding: 2px 8px; border-width: 3px; }
+.stats-chip.is-now.rarity-fin { --rar-off: 3px 3px 0 #000; }
+.stats-chip.is-next.rarity-fin,
+.stats-chip.is-past.rarity-fin { --rar-off: 0 0 #0000; }

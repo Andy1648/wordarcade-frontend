@@ -117,7 +117,7 @@
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   letter-spacing: 0.04em;
   color: #2effe0;
 }
@@ -177,10 +177,6 @@
   background: #2a1f3d;
 }
 
-@media (max-width: 380px) {
-  .rank-name { font-size: var(--fs-label); }
-  .rank-range { font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */; }
-}
 
 /* BIG / HUGE MONITORS (big-monitor pass): --ov-k (theme/type.css: 1.2 at >=1800x1000, 1.45 at
    >=2200x1250) grows the panel and its fixed px bits with the type tokens. Panel 420 -> 504 / 609. */

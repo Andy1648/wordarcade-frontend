@@ -34,10 +34,12 @@
      64px of a 302px bar left the XP TRACK just 28px, and the readout centred on it
      spilled outside its clipping parent. Space Mono at --fs-body keeps the numerals
      legible and gives the track its width back. */
+  /* visual-1 (Andy: "bar just isn't moving"): the level numeral is the bar's headline, so it takes
+     --fs-panel on every bar (the loud bar already did; the splash mini bar was 13px). */
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  font-size: var(--fs-panel);
   line-height: 1;
   color: var(--theme-xp-fill, #2effe0); /* THEME: matches the XP fill */
   letter-spacing: 0.02em;
@@ -50,8 +52,9 @@
   /* --fs-label (13px), not --fs-micro (11px): this was the last text on the MENU under the 12px
      floor. Moving this one kicker up a step is the narrow fix — raising --fs-micro itself would
      move every decoration in the app, and the step is documented as "decoration only", which a
-     word telling a newcomer what the bar IS is not. */
-  font-size: var(--fs-label);
+     word telling a newcomer what the bar IS is not.
+     visual-1: --fs-body. It names the menu's main progress signal; 13px read as a footnote. */
+  font-size: var(--fs-body);
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -150,12 +153,13 @@
   box-shadow: 2px 2px 0 #000;
 }
 
-/* Splash mini readout: LV + a 6px fill bar, capped at 220px. Same fill/flash logic. */
+/* Splash mini readout: LV + a 16px fill bar (visual-1: was a 6px hairline that did not read at a
+   glance), capped at 260px so the --fs-panel numeral and the track both fit. Same fill/flash logic. */
 .menu-xp-bar.is-mini {
-  max-width: 220px;
+  max-width: 260px;
 }
 .menu-xp-bar.is-mini .menu-xp-track {
-  height: 6px;
+  height: 16px;
   background: #1a0b2e; /* no notches on the mini bar */
 }
 .menu-xp-bar.is-mini .menu-xp-marker {
@@ -164,6 +168,9 @@
 .menu-xp-track {
   position: relative;
   flex: 1;
+  /* The readout's fit-to-slot ruler (see .menu-xp-readout). The track's width comes from the flex
+     row, never from its content (the readout is absolutely placed), so this changes no layout. */
+  container-type: inline-size;
   height: 30px;
   /* 10 static notch marks (thin lines every 10%) painted on the track background via a
      repeating gradient — zero extra elements, no animation. Shown under the fill. */
@@ -240,7 +247,11 @@
   padding: 0 9px;
   font-family: 'Space Mono', monospace; font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-label);
+  /* visual-1: the numbers are the bar's point, so they take --fs-body wherever the track is wide
+     enough and step toward the 13px floor ONLY when the track itself is narrow (a phone-width
+     menu). FIT-TO-SLOT: 11.5cqw of the TRACK (its container, below) is what twelve Space Mono
+     glyphs ("12.3K" + "/ 52.3K") plus the padding need, so the pair never clips. */
+  font-size: clamp(var(--fs-label), 11.5cqw, var(--fs-body));
   line-height: 1;
   color: #f0ead9;
   -webkit-text-stroke: 2px #000;
@@ -262,7 +273,7 @@
   align-items: baseline;
   gap: 8px;
   font-family: 'Space Mono', monospace;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body); /* visual-1: was --fs-label — it is the bar's plan, in words */
   font-weight: 700;
   letter-spacing: 0.08em;
   line-height: 1.2;
@@ -585,7 +596,7 @@ button.menu-wins-chip:focus-visible {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body); /* visual-1: was --fs-label */
   letter-spacing: 0.5px;
   color: #0d0618;
   background: #FFE94A;
@@ -669,6 +680,12 @@ button.menu-mark:active {
 .menu-mark-mult {
   color: #1a0b2e;
 }
+/* RARITY IDENTITY (Andy oct5): the worn mark's chip is filled in its tier (src/components/rarity/RarityFin.css) —
+   COMMON grey … SECRET black + rainbow — so its ink follows the tier, and the press keeps its hard shadow. */
+.menu-mark.rarity-fin { --rar-spark: 12px; }
+.menu-mark.rarity-fin .menu-mark-mult { color: inherit; }
+button.menu-mark.rarity-fin:hover { --rar-off: 4px 4px 0 #000; }
+button.menu-mark.rarity-fin:active { --rar-off: 1px 1px 0 #000; }
 @media (max-width: 560px) {
   .menu-mark-name,
   .menu-mark-mult {
@@ -784,8 +801,9 @@ button.menu-mark:active {
 }
 .menu-xp-bar.is-loud .menu-xp-label {
   /* --fs-label, matching the base rule: this override is the one that actually paints on a
-     desktop menu, and at --fs-micro it was the last 11px text left on the screen. */
-  font-size: var(--fs-label);
+     desktop menu, and at --fs-micro it was the last 11px text left on the screen.
+     visual-1: --fs-body now, matching the base rule. */
+  font-size: var(--fs-body);
   letter-spacing: 0.16em;
   line-height: 1;
   /* Black ink on the badge's flat fill, per the flat-colour rule — the cream that worked on the
@@ -868,7 +886,7 @@ button.menu-mark:active {
 /* ---- The readout: the XP numbers, now real type instead of a whisper ---- */
 .menu-xp-bar.is-loud .menu-xp-readout {
   z-index: 2;
-  font-size: var(--fs-body);
+  font-size: clamp(var(--fs-label), 11.5cqw, var(--fs-body));
   -webkit-text-stroke: 3px #000;
 }
 
@@ -940,8 +958,11 @@ button.menu-mark:active {
   /* LEFT-ALIGNED, not centred: centred put the XP numbers at x~150-270, which
      runs under the nav column. */
   .menu-xp-bar.is-loud .menu-xp-readout {
-    padding: 0 7px;
-    font-size: var(--fs-label);
+    padding: 0 6px;
+    letter-spacing: 0;
+    /* visual-1: no longer pinned to 13px — the same fit-to-track size as the desktop bar, so a
+       roomy phone track reads at --fs-body and only a narrow one steps down toward the floor. */
+    font-size: clamp(var(--fs-label), 12cqw, var(--fs-body));
     -webkit-text-stroke: 2px #000;
   }
 }
@@ -1070,6 +1091,9 @@ button.menu-mark:active {
      line that has 131px of clear width before the corner nav. Measured: 132px tracked, 117px
      without — the difference between the sentence and "12 WORDS · L…". */
   .menu-xp-hint { letter-spacing: 0; }
+  /* visual-1: at --fs-body the short sentence can run past 131px of clear width; it WRAPS onto a
+     second line rather than ellipsising away the number it exists to show. */
+  .menu-xp-hint-text { white-space: normal; }
 }
 
 /* ==== NUMBERS-FEEL (Andy oct3 #4/#5) ==========================================================
@@ -1131,11 +1155,15 @@ button.menu-mark:active {
   pointer-events: none;
   z-index: 3;
   transform: translateY(-50%);
-  animation: menu-wins-gain-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* visual-1 (A1/V "longer, bigger than the last"): 260ms / 1.5x -> 700ms / 2.4x with an
+     overshoot settle. Still one finite run, transform/opacity only. */
+  animation: menu-wins-gain-in 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 @keyframes menu-wins-gain-in {
-  from { opacity: 0; transform: translateY(-50%) scale(1.5); }
-  to { opacity: 1; transform: translateY(-50%) scale(1); }
+  0% { opacity: 0; transform: translateY(-50%) scale(2.4) rotate(-6deg); }
+  45% { opacity: 1; transform: translateY(-50%) scale(0.88) rotate(2deg); }
+  70% { transform: translateY(-50%) scale(1.08) rotate(0deg); }
+  100% { opacity: 1; transform: translateY(-50%) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
   .menu-wins-gain { animation: none; }
@@ -1143,3 +1171,7 @@ button.menu-mark:active {
 
 /* Andy oct3 18:55: the one place the menu says LONGER WORDS PAY MORE (the cards no longer repeat it) */
 .menu-xp-hint-rule { color: #FFE94A; margin-right: 10px; white-space: nowrap; }
+
+/* TIER IDENTITY (Andy oct5): the welded level badge has no shadow of its own — re-apply the tier edge
+   (src/components/rarity/RarityFin.css); its sparks sit just inside (the barrow clips). */
+.menu-xp-bar.is-loud .menu-xp-lvblock.rarity-edge { box-shadow: var(--rar-edge); --rar-spark: 12px; --rar-spark-out: 2px; }

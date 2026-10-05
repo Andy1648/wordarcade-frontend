@@ -35,6 +35,8 @@ import './LeaderboardScreen.css';
 import PodiumIcon from './PodiumIcon';
 import { formatNum, formatRate } from '../format';
 import { useMomentHold } from '../lib/useMomentSlot';
+import { RARITY, rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
+import './rarity/RarityFin.css';
 
 const VERDICT_COPY = {
   shape: '3–16 LETTERS, NUMBERS OR _',
@@ -57,13 +59,15 @@ export const MIN_ROWS = 10;
 
 // STEP 51 (Andy oct2): no rebirth stars — the REBIRTH TIER is the name's colour and frame.
 // R0 plain white · R1-2 cyan · R3-4 yellow · R5-9 orange · R10-19 pink · R20+ purple, framed.
+// TIER IDENTITY (Andy oct5): each rebirth tier wears the rarity look of its rung (REBIRTH_RAMP) — REBORN blue,
+// TWICE-BORN purple, PHOENIX gold, ETERNAL red-pink, ASCENDED white on the rainbow — one colour language app-wide.
 export const REBIRTH_TIERS = [
   { min: 0, name: 'R0', colour: '#ffffff', frame: false },
-  { min: 1, name: 'REBORN', colour: '#2EFFE0', frame: false },
-  { min: 3, name: 'TWICE-BORN', colour: '#FFE94A', frame: false },
-  { min: 5, name: 'PHOENIX', colour: '#FF6B3D', frame: true },
-  { min: 10, name: 'ETERNAL', colour: '#FF4FA3', frame: true },
-  { min: 20, name: 'ASCENDED', colour: '#C58BFF', frame: true },
+  { min: 1, name: 'REBORN', colour: RARITY.rare.text, frame: false },
+  { min: 3, name: 'TWICE-BORN', colour: RARITY.epic.text, frame: false },
+  { min: 5, name: 'PHOENIX', colour: RARITY.legendary.text, frame: true },
+  { min: 10, name: 'ETERNAL', colour: RARITY.mythic.text, frame: true },
+  { min: 20, name: 'ASCENDED', colour: RARITY.secret.text, frame: true },
 ];
 export function rebirthTier(n) {
   const r = Math.max(0, Math.floor(Number(n) || 0));
@@ -94,12 +98,15 @@ const fmtRate = (n) => formatRate(Number(n) || 0);
 function Standing({ rebirths, level, className }) {
   const text = standingText(rebirths, level);
   const at = text.indexOf(' · ');
-  if (at < 0) return <span className={className}>{text}</span>;
+  // TIER IDENTITY: R is a chip in its rebirth rung's rarity look, LV is inked in its level rung's colour + glow
+  const lv = `lb-lvnum rarity-ink is-${levelRarity(level)}`;
+  if (at < 0) return <span className={className}><span className={lv}>{text}</span></span>;
+  const rb = rebirthRarity(rebirths);
   return (
     <span className={`${className} has-rb`}>
-      <span className="lb-rb">{text.slice(0, at)}</span>
+      <span className={`lb-rb${rb ? ` rarity-chip ${rarityClass(rb)}` : ''}`}>{text.slice(0, at)}</span>
       <span className="lb-sep"> · </span>
-      <span className="lb-lvnum">{text.slice(at + 3)}</span>
+      <span className={lv}>{text.slice(at + 3)}</span>
     </span>
   );
 }
@@ -457,7 +464,7 @@ export default function LeaderboardScreen({ onBack }) {
             <div className="lb-code">
               <div className="lb-code-title">YOUR RECOVERY CODE</div>
               <code className="lb-code-value">{formatRecoveryCode(getSecret())}</code>
-              <div className="lb-code-note">ON A NEW DEVICE OR AFTER A WIPE, ENTER IT HERE TO GET YOUR PROGRESS BACK. KEEP IT PRIVATE.</div>
+              <div className="lb-code-note">ON A NEW DEVICE ENTER IT HERE. KEEP IT PRIVATE.</div>
               <button
                 type="button"
                 className="lb-claim-btn"

@@ -58,6 +58,21 @@
   background: #ff5c5c;
   border-color: #a82020;
 }
+/* visual-1 (E5 on the menu): the MENU pill is hero-sized like the in-game one — the clock steps up
+   to the name's --fs-panel and the padding grows to match, so a live boost is the loudest chip on
+   the XP row (desktop) and on the title row (phone, .hp-m-boost), not a 13px tag. Two-class
+   selectors so they outrank MechanicScale's single-class .boost-pill sizing. */
+.boost-pill.menu-boost-pill,
+.boost-pill.hp-m-boost {
+  font-size: var(--fs-panel);
+  line-height: 1;
+  gap: 10px;
+  padding: 8px 16px;
+  min-height: 44px;
+  box-sizing: border-box;
+  border-width: 4px;
+  box-shadow: 4px 4px 0 #000;
+}
 @media (prefers-reduced-motion: reduce) {
   .boost-pill, .boost-pill.is-ending { animation: none; }
 }

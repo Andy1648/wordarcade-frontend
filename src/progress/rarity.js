@@ -91,7 +91,9 @@ export function bumpRarity(r) {
     lengthMult: band.mult > 0 ? mult / band.mult : 1,
     color: band.color,
     announce: band.announce,
-    label: band.announce ? band.name : '', // Rebirth Rush: the band only — rarity pays no ×N
+    // Word Bomb + Blitz pay rarity (a BOOST factor), so the label carries the ×N they pay. The solo modes
+    // and the menu, which do not, show `band` instead (RarityFlash, useXpCapture).
+    label: band.announce ? `${band.name} ×${mult}` : '',
     bumped: true,
   };
 }
@@ -119,7 +121,8 @@ export function wordRarity(word, rankIndex) {
     announce: band.announce,
     // e.g. "RARE ×2.5" — the multiplier carries the length bonus, so a long uncommon word
     // reads e.g. "UNCOMMON ×1.8". COMMON returns announce:false so callers show nothing.
-    label: band.announce ? band.name : '', // Rebirth Rush: the band only — rarity pays no ×N
+    // Word Bomb + Blitz pay it (a BOOST factor); the solo modes and the menu show `band` (no ×N) instead.
+    label: band.announce ? `${band.name} ×${mult}` : '',
   };
 }
 
