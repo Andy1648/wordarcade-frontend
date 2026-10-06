@@ -45,7 +45,7 @@
   --hp-coin-pull: calc(max(34px, calc(44 * var(--u))) * 0.42);
   --hp-tr: max(46px, calc(58 * var(--u)));
   --hp-tr-ico: max(28px, calc(36 * var(--u)));
-  --hp-xp-h: max(40px, calc(54 * var(--u)));
+  --hp-xp-h: max(26px, calc(33 * var(--u))); /* ~60% of the old max(40px, 54u) — Andy oct6 "smooth and clean" */
   --hp-chip-h: max(44px, calc(42 * var(--u)));
   --hp-dot: max(18px, calc(22 * var(--u)));
   --hp-gap: calc(24 * var(--u));
@@ -231,7 +231,7 @@ html[data-beat='true'] .homepage-logo {
 .menu-xp-cluster .kx-lv-k { font-size: var(--fs-hp24); }
 .menu-xp-cluster .kx-lv-n { font-size: var(--fs-hplv); text-shadow: var(--b4) var(--b4) 0 #000; }
 .menu-xp-cluster .kx-barwrap { flex: 1 1 auto; }
-.menu-xp-cluster .kx-bar { height: var(--hp-xp-h); border-width: var(--b5); box-shadow: var(--b6) var(--b6) 0 #000; }
+.menu-xp-cluster .kx-bar { height: var(--hp-xp-h); border-width: var(--b4); box-shadow: var(--b4) var(--b4) 0 #000; }
 .menu-xp-cluster .kx-read { right: calc(12 * var(--u)); }
 .menu-xp-cluster .kx-read-n { font-size: var(--fs-hp18); }
 .menu-xp-cluster .kx-read-s,

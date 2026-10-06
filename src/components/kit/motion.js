@@ -105,7 +105,8 @@ export const FX = {
   popDown: { frames: [{ transform: 'translate(-50%,-10px) scale(1.3)', opacity: 0 }, { transform: 'translate(-50%,0) scale(1)', opacity: 1, offset: 0.14 }, { transform: 'translate(-50%,10px) scale(1)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%,30px) scale(.85)', opacity: 0 }], opts: { duration: 1000, easing: 'ease-in' } },
   need: { frames: [{ transform: 'translate(-50%,-12px)', opacity: 0 }, { transform: 'translate(-50%,3px)', opacity: 1, offset: 0.1 }, { transform: 'translate(-50%,0)', opacity: 1, offset: 0.18 }, { transform: 'translate(-50%,0)', opacity: 1, offset: 0.85 }, { transform: 'translate(-50%,0)', opacity: 0 }], opts: { duration: 1500, easing: 'ease-out' } },
   // KitBars
-  barFlash: { frames: [{ opacity: 0.95 }, { opacity: 0 }], opts: { duration: 260, easing: 'ease-out' } },
+  // the XP bar's level wrap: one white band crosses the track (SWEEP_MS, kit/climb.js) — the node rests offscreen
+  barSweep: { frames: [{ transform: 'translateX(-100%)', opacity: 1 }, { transform: 'translateX(300%)', opacity: 1 }], opts: { duration: 150, easing: 'cubic-bezier(.2,.8,.2,1)' } },
   barBump: { frames: [{ transform: 'scale(1)' }, { transform: 'scale(1.16) rotate(-3deg)', offset: 0.3 }, { transform: 'scale(1)' }], opts: { duration: 280, easing: E.bounce } },
 };
 
