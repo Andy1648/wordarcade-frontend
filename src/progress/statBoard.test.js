@@ -92,8 +92,8 @@ test('the lines are Andy\'s: wins = REBIRTH · MARK · BOOST; XP = KEY · REBIRT
   withStorage({}, () => {
     // a fresh save: nothing owned (no INDEX bonus), nothing worn
     const b = statBoard();
-    assert.deepEqual(b.wins.lines.map((l) => l.label), ['REBIRTH', 'MARK', 'BOOST']);
-    assert.deepEqual(b.xp.lines.map((l) => l.label), ['POWER', 'REBIRTH', 'MARK', 'BOOST']);
+    assert.deepEqual(b.wins.lines.map((l) => l.label), ['MODE', 'REBIRTH', 'MARK', 'INDEX', 'BOOST']);
+    assert.deepEqual(b.xp.lines.map((l) => l.label), ['POWER', 'REBIRTH', 'MARK', 'INDEX', 'BOOST']);
     assert.equal(b.wins.base, 10);
     assert.equal(b.xp.base, 10);
     assert.equal(b.wins.total, 10);
@@ -130,11 +130,14 @@ test('tier colours: KEY and REBIRTH from their ramps, MARK from the worn mark\'s
   });
 });
 
-test('boardMult: exact below ×10, whole from ×10 (no ×27.98), abbreviated from ×10,000', () => {
+test('boardMult: exact (two decimals, grouped) below ×10,000 so the chain multiplies out; abbreviated from ×10,000', () => {
   assert.equal(boardMult(1), '1');
   assert.equal(boardMult(1.05), '1.05');
-  assert.equal(boardMult(3.017), '3.02');
-  assert.equal(boardMult(27.98), '28');
+  assert.equal(boardMult(3.017), '3.017');
+  assert.equal(boardMult(1.0033), '1.003', 'a real INDEX bonus never prints as ×1');
+  assert.equal(boardMult(27.98), '27.98');
+  assert.equal(boardMult(15.625), '15.63', 'POWER 3 is ×15.63, never ×16');
+  assert.equal(boardMult(1024), '1,024');
   assert.equal(boardMult(125), '125');
   assert.equal(boardMult(9765625), '9.77M');
   assert.doesNotMatch(boardMult(1e300), /e|Infinity|NaN/);
@@ -146,8 +149,9 @@ test('statChain (flag OFF): the stack\'s own lines, no ASCEND; BASE × every chi
     const b = statBoard();
     const w = statChain(b.wins);
     const x = statChain(b.xp);
-    assert.deepEqual(w.chips.map((c) => c.label), ['REBIRTH', 'MARK', 'BOOST']);
-    assert.deepEqual(x.chips.map((c) => c.label), ['POWER', 'REBIRTH', 'MARK', 'BOOST']);
+    // every mark owned → the INDEX pays, so it has its own chip
+    assert.deepEqual(w.chips.map((c) => c.label), ['MODE', 'REBIRTH', 'MARK', 'INDEX', 'BOOST']);
+    assert.deepEqual(x.chips.map((c) => c.label), ['POWER', 'REBIRTH', 'MARK', 'INDEX', 'BOOST']);
     for (const c of [w, x]) close(c.chips.reduce((p, k) => p * k.mult, c.base), c.total, 0.05 + 1e-9, c.id);
   });
 });
