@@ -892,9 +892,10 @@ export function progressOf(state, _ignoredPower) {
 
 // ---- PROGRESSION v3 (SEASON2, default OFF) ------------------------------------------------------------------------
 // v3/install.js (a lazy chunk, loaded before the first render only with the flag on) swaps these for the v3 rules
-// (v3/hooks.js xpSwap: 40·√L curve + O(1) carry, 7 × 1.8^P × 2^R × (1 + ★) × MARK, 15 wins a word, POWER 100 × 4^P,
-// gate ⌈100 × 2.5^R⌉). Never called with the flag OFF, so the live functions above are exactly as they were.
+// (v3/hooks.js xpSwap — PROGRESSION FINAL: 400 × 1.06^(n−1) curve + O(1) carry, 10 × 2.5^P × 2^R × (1 + ★) × MARK,
+// 22 wins a word × the FINAL MODE table, POWER 300 × 8^P, rebirth LV > 25 × (R+1)). Never called with the flag OFF, so the live functions above are exactly as they were.
 export function __v3(o) {
   // eslint-disable-next-line no-func-assign
   ({ a: needAt, b: keyXpMult, c: rebirthPow, d: levelXpPerLetter, e: tableRebirthThreshold, f: keyTierXp, g: keyTierCostAt, h: creditXp, i: xpPerWord } = o);
+  if (o.j) modePower = o.j; // eslint-disable-line no-func-assign
 }

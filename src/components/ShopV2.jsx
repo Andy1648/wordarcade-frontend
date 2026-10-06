@@ -3,7 +3,7 @@
 // LAZY, its own chunk: ShopScreen renders it in place of the live SHOP only while the SEASON2 flag is on (live
 // players see the old shop, untouched, until the flip). Built from the v2 kit (KitBackButton, KitPill ×2,
 // KitHoldButton, KitTimerChip, KitStampCard, KitIcon, kit motion) on the REAL logic:
-//   * POWER (left) — "wins buy only POWER": the price is keyTierCost(P) (v3: 100 × 4^P, CI-tuned — v3/econ.js), the
+//   * POWER (left) — "wins buy only POWER": the price is keyTierCost(P) (PROGRESSION FINAL: 300 × 8^P — v3/econ.js), the
 //     buy is shop.buyKeyPower() (the v3 swap counts the POWER LEVEL achievement), on a 1 s KitHoldButton (one POWER
 //     per hold). The plate is a tilted square carrying the kit POWER key.
 //   * STOCK (right) — six GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,

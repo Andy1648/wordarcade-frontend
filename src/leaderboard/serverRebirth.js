@@ -56,8 +56,9 @@ const flow = makeRebirthFlow({
   localReady: () => isRebirthReadyNow(),
   applyLocal: applyLocalRebirth,
   season: () => (SEASON2 ? 2 : 0),
-  // v3 ASCEND: `target` = the server's new ★ total, null = local (+ R − 9)
-  localAscendReady: () => SEASON2 && (getRebirths() || 0) >= ASCEND_AT,
+  // ASCEND: `target` = the server's new ★ total, null = local (+1 ★)
+  // FINAL: R ≥ 10 + 5 × ★ (V3.econ.canAscend — the season chunk is installed whenever SEASON2 is on)
+  localAscendReady: () => SEASON2 && (getRebirths() || 0) >= ASCEND_AT && (!V3.econ || V3.econ.canAscend(getRebirths() || 0, V3.store ? V3.store.getStarsV3() : 0)),
   applyAscend: (target) => V3.hooks.ascend(target),
 });
 // client.js's submitStats skips a push while a request id is stored (in flight or unanswered): that push would carry

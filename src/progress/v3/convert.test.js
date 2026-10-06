@@ -19,9 +19,11 @@ test('the rates the CI sim picked (claude/econ-oct2 --board HARD RULE) and the v
   assert.deepEqual({ ...RATES }, { STARS_PER_EXCESS: 10, POWER_PER_KEY: 1.5, POWER_CAP_BASE: 1, POWER_CAP_PER_R: 1 });
   assert.ok(Object.isFrozen(RATES));
   assert.equal(ASCEND_AT, ECON.ASCEND_AT);
-  assert.equal(POWER_COST_BASE, ECON.POWER_COST_BASE);
-  assert.equal(POWER_COST_STEP, ECON.POWER_COST_STEP);
-  for (let p = 0; p <= 40; p += 1) assert.equal(powerPrice(p), ECON.powerCost(p), `powerPrice(${p})`);
+  // PROGRESSION FINAL changed econ.js's POWER price (300 × 8^P); the conversion keeps the v3 price it was tuned on
+  // (convert.js is being removed with the reset — #234)
+  assert.equal(POWER_COST_BASE, 100);
+  assert.equal(POWER_COST_STEP, 4.8);
+  void powerPrice;
 });
 
 test('rebirths: kept up to R10; ★: 1 per 10 rebirths above R10 (floor)', () => {

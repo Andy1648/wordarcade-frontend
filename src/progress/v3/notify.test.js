@@ -43,11 +43,11 @@ test('rankNews: up only, old → new with the v3 names (KEYMASH … ENDGAME); ne
 test('unlockNews: every rebirth unlock open and not yet said, in ladder order, with its R code', () => {
   assert.deepEqual(N.unlockNews([], { rebirths: 0, stars: 0 }), []);
   const r3 = N.unlockNews([], { rebirths: 3, stars: 0 });
-  assert.deepEqual(r3.map((u) => [u.code, u.label]), [['R1', 'ROLL SCREEN'], ['R2', 'AUTO ROLL'], ['R3', '2ND BOOST SLOT']]);
+  assert.deepEqual(r3.map((u) => [u.code, u.label]), [['R1', 'AUTO ROLL'], ['R2', 'AUTO REBIRTH']], 'ROLL + INDEX is open from the start — never news');
   assert.ok(r3.every((u) => u.tile && u.icon), 'each toast has a tile colour and a kit icon');
-  assert.deepEqual(N.unlockNews(['rollScreen', 'autoRoll'], { rebirths: 3, stars: 0 }).map((u) => u.id), ['boost2']);
-  // ASCEND needs R10 in this climb; the others are kept by ★
-  assert.deepEqual(N.unlockNews([], { rebirths: 0, stars: 1 }).map((u) => u.id), ['rollScreen', 'autoRoll', 'boost2', 'mark2', 'luck']);
+  assert.deepEqual(N.unlockNews(['autoRoll'], { rebirths: 3, stars: 0 }).map((u) => u.id), ['autoRebirth']);
+  // ASCEND needs the climb; the others are kept by ★
+  assert.deepEqual(N.unlockNews([], { rebirths: 0, stars: 1 }).map((u) => u.id), ['autoRoll', 'autoRebirth', 'mark2', 'luck']);
 });
 
 test('checkNews: the first look is silent; a rebirth then says RANK UP + its unlock ONCE; nothing pays', () => {
@@ -59,7 +59,7 @@ test('checkNews: the first look is silent; a rebirth then says RANK UP + its unl
   const gems0 = G.getGems();
   const after = N.checkNews({ state: { rebirths: 1, stars: 0 }, best: 0, store });
   assert.deepEqual(after.rank, { from: { name: 'KEYMASH', req: 'R0' }, to: { name: 'TYPO', req: 'R1' } });
-  assert.deepEqual(after.unlocks.map((u) => u.label), ['ROLL SCREEN']);
+  assert.deepEqual(after.unlocks.map((u) => u.label), ['AUTO ROLL']);
   assert.equal(W.getWins(), wins0, 'a rank-up pays no wins');
   assert.equal(G.getGems(), gems0, 'a rank-up pays no gems');
   assert.deepEqual(N.checkNews({ state: { rebirths: 1, stars: 0 }, best: 0, store }), { rank: null, unlocks: [] }, 'said once');

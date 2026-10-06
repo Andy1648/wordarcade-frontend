@@ -13,7 +13,7 @@ import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import RebirthReadyButton from './RebirthReadyButton';
 import BoostPill from '../frenzy/BoostPill';
@@ -587,7 +587,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rollDot = canAffordRoll(gems) || starterWaiting;
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
-  const [rebirths] = useState(() => getRebirths());
+  const [rebirths, setRebirths] = useState(() => getRebirths());
   // All-time wins earned, snapshotted on mount (it only changes inside a round, which remounts this
   // screen on return). It drives the first-run gating (hide REBIRTH until it means something).
   const [winsLifetime] = useState(() => getWinsLifetime());
@@ -595,12 +595,35 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
   useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
-  const { progress: xpProgress } = useXpCapture({
+  const { progress: xpProgress, refresh: refreshXp } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
     // (the wins chip no longer polls here — useWinsBalance above hears every balance change)
     onCredit: () => {},
   });
+  // AUTO REBIRTH (PROGRESSION FINAL, the R2 toggle on the REBIRTH screen): on the menu, whenever the level passes the
+  // gate, rebirth — still ONE server call per rebirth through performRebirth (lb_rebirth: idempotent, ≤ 12 an hour).
+  // A refusal (pace / offline) stops it until the level moves again.
+  const autoRbRef = useRef(false);
+  useEffect(() => {
+    if (!SEASON2 || !V3.hooks || !V3.hooks.autoRebirthOn() || autoRbRef.current) return;
+    if (xpProgress.level < rebirthThreshold(getRebirths())) return;
+    autoRbRef.current = true;
+    import('../leaderboard/serverRebirth.js')
+      .then(async (m) => {
+        for (let i = 0; i < 12 && loadProgress().level >= rebirthThreshold(getRebirths()); i++) {
+          const r = await m.performRebirth();
+          if (!r || !r.ok) break;
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        autoRbRef.current = false;
+        refreshXp();
+        setRebirths(getRebirths());
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xpProgress.level]);
   // SESSION MEMORY for the XP bar: the menu you come back to from a game shows the bar where you left
   // it, then CLIMBS to where you are now (the whole game's gain, one flash per level — KitXpBar). A
   // rebirth (a drop) or a first visit just lands.

@@ -3,8 +3,9 @@
 // the DB's name rules via the CLIENT filter (DB/client parity is pinned by claude/step24/db-parity.mjs).
 // Ranking matches the view (017, Andy oct3 19:55): rebirths, level, lifetime words, then first-come (stable sort).
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
-import { decideSubmit, decideSubmitS2 } from '../../src/leaderboard/submitRules.js';
+import { decideSubmit } from '../../src/leaderboard/submitRules.js';
 import { decideRebirth, decideAscend } from '../../src/leaderboard/rebirthRules.js';
+import { decideSubmitFinal } from '../../src/leaderboard/finalRules.js'; // 026: FINAL's season-2 write
 import { convertRow } from '../../src/progress/v3/convert.js';
 import { s2WeekGains, compareWeekS2 } from '../../src/leaderboard/s2Board.js';
 
@@ -162,13 +163,13 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       if (!c) return json(200, { found: false, ran: true });
       return json(200, { found: true, rebirths_before: c.before.rebirths, stars_before: c.before.stars, rebirths: c.after.rebirths, stars: c.after.stars, seen: !!c.seen });
     }
-    // 022: the season-2 board write (p_econ 13) — the real rule (submitRules.decideSubmitS2)
+    // 022/026: the season-2 board write (p_econ 13) — the real rule (finalRules.decideSubmitFinal, 026)
     if (caps && season2 && url.pathname.endsWith('/rpc/lb_submit3') && body.p_econ === 13) {
       calls.submit += 1;
       calls.submitS2 = (calls.submitS2 || 0) + 1;
       const row = rows.find((r) => r.id === secrets.get(body.p_secret));
       if (!row) return json(404, { message: 'no_profile' });
-      const d = decideSubmitS2(
+      const d = decideSubmitFinal( // 026 supersedes 022's write (decideSubmitS2 kept for its own tests)
         { level: row.level, rebirths: row.rebirths || 0, lifetime_words: row.lifetime_words || 0, lifetime_letters: row.lifetime_letters || 0, submitted_at: row.submitted_at ?? null, econ: row.econ || 0 },
         { level: body.p_level, rebirths: body.p_rebirths, words: body.p_lifetime_words, letters: body.p_lifetime_letters },
         Date.now(),
