@@ -3,12 +3,13 @@
 //   <KitXpBar level={lv} frac={0.69} need={35000} />
 //
 // ANDY (oct6, "smooth and clean"): THREE layers — a dark track, ONE solid yellow fill with a single
-// thin top highlight, a black ink outline. EVERY gain GLIDES (kit/climb.js: 250 ms on
-// cubic-bezier(.2,.8,.2,1), retargeted mid-glide from the frac on screen — typing fast is one
-// continuous glide, never steps). A LEVEL WRAP glides to full, a 150 ms white SWEEP crosses the bar
-// (one pooled node, transform only), the fill resets to 0 and carries on; the LV numeral BUMPS and a
-// "+N LEVELS" chip counts them. Multi-level climbs stay ≤ 1 s (lib/barPlan via planClimb). The fill
-// is a scaleX write on one rAF loop that sleeps at rest (no React render per frame, no layout reads).
+// thin top highlight, a black ink outline. SEASON 2 list item 5: EVERY gain GLIDES ~600 ms ease-out
+// (kit/climb.js — one continuous position, retargeted mid-glide from the position AND speed on screen,
+// so typing fast is one slow continuous climb, never steps). A LEVEL WRAP is the same glide crossing
+// full: a soft 280 ms white SWEEP crosses the bar (one pooled node, transform/opacity only), the fill
+// carries on from 0; the LV numeral BUMPS and a "+N LEVELS" chip counts them. Big climbs compress
+// (600 ms + 200 ms a level, ≤ 1 s whole). The fill is a scaleX write on one rAF loop that sleeps at
+// rest (no React render per frame, no layout reads).
 // REDUCE MOTION lands instantly.
 //
 // The root carries data-state ('climb' | 'rest'), data-climb-ms (the last climb's duration) and

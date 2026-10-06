@@ -120,7 +120,7 @@ function SheetHead({ title, tone, tag, right, tagFirst, sub }) {
 const COST = 75;
 const GIFT = 45;
 const RAIL = [
-  { label: 'SHOP', icon: 'shop', tone: 'yellow' },
+  { label: 'UPGRADES', icon: 'shop', tone: 'yellow' },
   { label: 'ROLL', icon: 'roll', tone: 'cyan' },
   { label: 'INDEX', icon: 'index', tone: 'pink' },
   { label: 'REBIRTH', icon: 'rebirth', tone: 'purple' },
@@ -151,7 +151,7 @@ function ButtonsSheet({ rm }) {
   const [rank, setRank] = useState(4);
   const [ach, setAch] = useState(2);
   const [rail, setRail] = useState(1);
-  const [dots, setDots] = useState({ SHOP: true, ROLL: false, INDEX: false, REBIRTH: true });
+  const [dots, setDots] = useState({ UPGRADES: true, ROLL: false, INDEX: false, REBIRTH: true });
   const [tabA, setTabA] = useState(0);
   const [tabB, setTabB] = useState(0);
   const [auto, setAuto] = useState(0);
@@ -494,7 +494,7 @@ function CurrencySheet() {
             {[
               { name: 'STATS', icon: 'stats', kind: 'count', count: statsN, show: statsN > 0, state: statsN > 0 ? `${statsN} TO CLAIM` : 'ALL CLAIMED', tap: () => statsN > 0 && setStatsN(0) },
               { name: 'BOARD', icon: 'leaderboard', kind: 'dot', show: boardOn, state: boardOn ? 'RANK UP' : 'SEEN', tap: () => setBoardOn(false) },
-              { name: 'SHOP', icon: 'shop', kind: 'alert', show: shopReady, state: shopReady ? 'POWER READY' : 'NOT YET', tap: () => spend('wins') },
+              { name: 'UPGRADES', icon: 'shop', kind: 'alert', show: shopReady, state: shopReady ? 'POWER READY' : 'NOT YET', tap: () => spend('wins') },
               { name: 'ROLL', icon: 'roll', kind: 'count', count: rollN, show: rollN > 0, state: rollN > 0 ? `${rollN} ROLLS` : 'NO GEMS', tap: () => spend('gems') },
             ].map((b) => (
               <div key={b.name} className="kg-badge">
@@ -508,7 +508,7 @@ function CurrencySheet() {
             ))}
           </div>
           <div className="kg-badge-foot">
-            <span className="kg-cap">SHOP + ROLL BADGES READ YOUR REAL WINS + GEMS</span>
+            <span className="kg-cap">UPGRADES + ROLL BADGES READ YOUR REAL WINS + GEMS</span>
             <button type="button" className="kg-btn kg-bg-lilac kg-btn--sm" onClick={() => { setStatsN((n) => n + 3); setBoardOn(true); }}>+ NEW TODO</button>
           </div>
         </BarPanel>
@@ -624,7 +624,7 @@ function BarsSheet() {
   return (
     <div className="kg-sheet kg-sheet--bars" id="bars">
       <SheetHead title="BARS + METERS" tone="cyan" tag="KIT 05" right={<><span className="kg-chip">FILL = SCALEX</span><span className="kg-chip">WRAP CAP 1S</span><span className="kg-chip">URGENT &lt; 30S</span></>} />
-      <EdgePanel num="01" title="MENU XP BAR" tone="yellow" extra="HERO · SPAM THE BUTTONS" right={<><span className="kg-out">A · 250MS GLIDE</span><span className="kg-out">B · RETARGET, NEVER RESTART</span><span className="kg-out">C · SWEEP PER LEVEL</span><span className="kg-out">D · 6+ LEVELS COMPRESS</span></>} className="kg-x">
+      <EdgePanel num="01" title="MENU XP BAR" tone="yellow" extra="HERO · SPAM THE BUTTONS" right={<><span className="kg-out">A · 600MS EASE-OUT GLIDE</span><span className="kg-out">B · RETARGET, NEVER RESTART</span><span className="kg-out">C · SWEEP PER LEVEL</span><span className="kg-out">D · BIG CLIMBS COMPRESS ≤ 1S</span></>} className="kg-x">
         <div className="kg-x-bar" data-testid="kit-xp-wrap">
           <KitXpBar level={lvl} frac={frac} need={NEED} onClimbDone={onClimbDone} className="kg-xp" />
         </div>
@@ -667,9 +667,9 @@ function BarsSheet() {
 
 // ======================================================================== LEVEL + RANK UP (KitLevelUp.dc.html, P9a)
 const LU_UNLOCKS = [
-  { code: 'R1', label: 'ROLL', id: 'rollScreen' },
-  { code: 'R2', label: 'AUTO ROLL', id: 'autoRoll' },
-  { code: 'R3', label: 'BOOST SLOT', id: 'boost2' },
+  { code: 'R0', label: 'ROLL + INDEX', id: 'rollScreen' },
+  { code: 'R1', label: 'AUTO ROLL', id: 'autoRoll' },
+  { code: 'R2', label: 'AUTO REBIRTH', id: 'autoRebirth' },
   { code: 'R5', label: 'MARK SLOT', id: 'mark2' },
   { code: 'R7', label: 'LUCK ×1.25', id: 'luck' },
   { code: 'R10', label: 'ASCEND', id: 'ascend' },

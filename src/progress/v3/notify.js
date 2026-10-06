@@ -23,7 +23,7 @@ export const UNLOCKS_SHOWN_KEY = `${S2_PREFIX}unlocksShown`; // the unlock ids a
 export const UNLOCK_TOAST = {
   rollScreen: { tile: '#FFC23D', icon: 'roll' },
   autoRoll: { tile: '#2EFFE0', icon: 'roll' },
-  boost2: { tile: '#FF3D7F', icon: 'boost', badge: '2' },
+  autoRebirth: { tile: '#FF3D7F', icon: 'rebirth' },
   mark2: { tile: '#B04BFF', icon: 'index', badge: '2' },
   luck: { tile: '#12A99A', icon: 'luck' },
   ascend: { tile: '#FFE94A', icon: 'ascend' },
@@ -40,7 +40,8 @@ export function rankNews(seen, now) {
 /** PURE: the toasts for unlocks open in `state` that are not in `shown` (in ladder order). */
 export function unlockNews(shown, state) {
   const seen = new Set(shown || []);
-  return UNLOCKS.filter((u) => !seen.has(u.id) && unlocked(u.id, state)).map((u) => ({
+  // a start feature (at 0 — ROLL + INDEX) is never news
+  return UNLOCKS.filter((u) => u.at > 0 && !seen.has(u.id) && unlocked(u.id, state)).map((u) => ({
     id: u.id,
     code: `R${u.at}`,
     label: u.label,

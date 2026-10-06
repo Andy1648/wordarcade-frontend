@@ -68,7 +68,7 @@ const LEVELUP_MS = CARD_MS; // 1500 — lib/menuMoments.js (the moments queue re
 // and the level-up flashed by. Linear effect timing + an eased entry keeps the hold a hold.
 const EASE_OUT = 'cubic-bezier(.2,.8,.2,1)';
 const WINSSTAMP_MS = 700; // wins stamp keeps its own shorter envelope
-const WINSHINT_MS = 3000; // one-time "WINS BUY UPGRADES IN THE SHOP" explainer — a full 3s read
+const WINSHINT_MS = 3000; // one-time "SPEND WINS IN UPGRADES" explainer — a full 3s read
 const LEVEL_PHRASES = ['WARMING UP', 'PICKING UP SPEED', 'COOKING', 'UNREAL', 'MENACE'];
 // The level-up card's timeline (shared by every card that reuses the element).
 const LEVELUP_FRAMES = [
@@ -317,7 +317,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       winsStampAnimRef.current = a;
     }
 
-    // Wins EXPLAINER — the one-time "WINS BUY UPGRADES IN THE SHOP" banner. 3s envelope
+    // Wins EXPLAINER — the one-time "SPEND WINS IN UPGRADES" banner. 3s envelope
     // (pop in 0-0.08, hold, fade out over the last 0.15) so a newcomer can actually read it.
     if (winsHintRef.current) {
       const a = winsHintRef.current.animate(
@@ -615,7 +615,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     winsHint() {
       const a = winsHintAnimRef.current;
       if (!a || !winsHintRef.current) return;
-      winsHintRef.current.textContent = 'WINS BUY UPGRADES IN THE SHOP';
+      winsHintRef.current.textContent = 'SPEND WINS IN UPGRADES';
       a.cancel();
       a.play();
     },

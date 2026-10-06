@@ -109,7 +109,7 @@ test.describe('menu XP', () => {
       const samples = [];
       let on = true;
       const tick = () => {
-        samples.push({ l: lv(), s: scale() });
+        samples.push({ l: lv(), s: scale(), t: performance.now() });
         if (on) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
@@ -118,7 +118,7 @@ test.describe('menu XP', () => {
         window.dispatchEvent(new KeyboardEvent('keydown', { key: keys[i % keys.length], bubbles: true }));
         await sleep(70);
       }
-      await sleep(700);
+      await sleep(900); // the last retarget's ~600 ms ease-out glide (SEASON 2 #5) + slack
       on = false;
       const real = window.__tawXp();
       return { before, real, samples, endScale: scale(), endLv: lv(), state: document.querySelector('.menu-xp-bar').dataset.state };
@@ -127,11 +127,15 @@ test.describe('menu XP', () => {
     expect(r.samples.length).toBeGreaterThan(20);
     let wraps = 0;
     let moved = 0;
+    let steps = 0;
     for (let i = 1; i < r.samples.length; i += 1) {
       const a = r.samples[i - 1];
       const b = r.samples[i];
       if (b.l === a.l) {
         expect(b.s, `frame ${i}: ${a.s} → ${b.s} went backwards inside LV ${a.l} (a restart/jump back)`).toBeGreaterThanOrEqual(a.s);
+        // a STEP = one ordinary frame (< 40 ms — a janky long frame under load is not counted) carrying (nearly) a
+        // whole key's gain (~1.5%) at once. The glide moves ~0.3% a frame while typing (SEASON 2 #5: never steps)
+        if (b.t - a.t < 40 && b.s - a.s >= 0.014) steps += 1;
         if (b.s > a.s) moved += 1;
       } else {
         wraps += 1;
@@ -142,6 +146,7 @@ test.describe('menu XP', () => {
     expect(wraps, 'exactly one reset — at the level wrap').toBe(1);
     // a GLIDE, not steps: the fill moved on many frames, not once per key
     expect(moved, 'frames the fill moved on').toBeGreaterThan(26);
+    expect(steps, 'frames that jumped a whole key at once (a dropped frame or two is tolerated)').toBeLessThanOrEqual(2);
     expect(r.endLv).toBe(r.real.level);
     expect(Math.abs(r.endScale - r.real.frac)).toBeLessThan(0.005);
     expect(r.state).toBe('rest');

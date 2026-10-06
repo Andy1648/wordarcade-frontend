@@ -245,7 +245,7 @@
   white-space: nowrap;
 }
 
-/* One-time WINS explainer banner — "WINS BUY UPGRADES IN THE SHOP". A single finite pooled
+/* One-time WINS explainer banner — "SPEND WINS IN UPGRADES". A single finite pooled
    element (3s WAAPI envelope), hidden at rest; position:absolute so it never affects layout.
    Smaller than the payout stamp and wrappable (it's a sentence), boxed like a call-out so it
    reads as a tip, not a score. */

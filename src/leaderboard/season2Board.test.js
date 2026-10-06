@@ -22,7 +22,8 @@ test('season-2 constants: econ 13; level room = 4 × ⌈100 × 2.5^R⌉ (capped 
   assert.equal(S2_ECON, 13);
   assert.equal(SEASON2_ECON, 13);
   assert.deepEqual([0, 1, 5, 9, 10].map(s2LevelRoom), [400, 1000, 39064, 1525880, 3814700]);
-  assert.equal(s2LevelRoom(10), 4 * serverGate(10, 2));
+  assert.equal(s2LevelRoom(10), 4 * Math.ceil(100 * 2.5 ** 10)); // 022's v3 room (026 re-sizes it — finalRules.test.js)
+  assert.equal(serverGate(10, 2), 275, 'season 2 is FINAL now (026)');
   assert.equal(s2LevelRoom(500), S2_LV_MAX);
 });
 
@@ -37,22 +38,6 @@ test('FIRST season-2 write (new name or a season-1 row switching): a baseline bo
   const sw = decideSubmitS2(row({ econ: 12, rebirths: 30, level: 60, lifetime_words: 9000 }), sub({ level: 120, rebirths: 0, words: 9000 }), T0);
   assert.deepEqual([sw.action, sw.row.rebirths, sw.row.level, sw.row.econ], ['first', 0, 120, 13]);
   assert.equal('stars' in sw.row, false, 'a submit never writes stars');
-});
-
-test('NO RESET (Andy oct6): a CONVERTED season-1 row keeps its rebirths + level on its first season-2 write', () => {
-  // imbetterthanandy after 025: R10 (was R100), LV1, 422 words — the old words/100 baseline would have clamped it to R4
-  const andyRow = row({ econ: 12, rebirths: 10, level: 1, lifetime_words: 422, submitted_at: T0 - 3600_000 });
-  const a = decideSubmitS2(andyRow, sub({ level: 1, rebirths: 10, words: 422 }), T0);
-  assert.deepEqual([a.action, a.row.rebirths, a.row.level, a.row.econ, a.weekDelta], ['first', 10, 1, 13, 0]);
-  // john_does_a_bum R29 LV558 → R10 LV558 kept
-  const j = decideSubmitS2(row({ econ: 12, rebirths: 10, level: 558, lifetime_words: 1170 }), sub({ level: 558, rebirths: 10, words: 1170 }), T0);
-  assert.deepEqual([j.row.rebirths, j.row.level], [10, 558]);
-  // never RAISED past the server's (converted) count, and the level is still bounded
-  const forged = decideSubmitS2(row({ econ: 12, rebirths: 4, level: 103, lifetime_words: 401 }), sub({ level: 9e8, rebirths: 10, words: 401 }), T0);
-  assert.deepEqual([forged.row.rebirths, forged.row.level], [4, s2LevelRoom(4)]);
-  // a stored level above the room is kept (a season-1 LV558 at R0 would still land as LV558)
-  const high = decideSubmitS2(row({ econ: 12, rebirths: 0, level: 558, lifetime_words: 50 }), sub({ level: 558, rebirths: 0, words: 50 }), T0);
-  assert.equal(high.row.level, 558);
 });
 
 test('a submit never raises rebirths (lb_rebirth only); the level is free up to 4 × the gate or 500/s', () => {
@@ -87,7 +72,7 @@ test('econ-13 guard: a season-2 rebirth / ascension needs a season-2 row', () =>
   assert.equal(decideRebirth(s1, { requestId: UUID(1), season: 2 }, [], T0).result.reason, 'season');
   assert.equal(decideAscend(s1, { requestId: UUID(2), season: 2 }, [], T0).result.reason, 'season');
   const s2 = { ...s1, econ: 13 };
-  assert.equal(decideAscend(s2, { requestId: UUID(3), season: 2 }, [], T0).result.stars, 3);
+  assert.equal(decideAscend(s2, { requestId: UUID(3), season: 2 }, [], T0).result.stars, 1); // FINAL (026): +1 ★
   assert.equal(decideRebirth({ ...s2, level: 100, rebirths: 0 }, { requestId: UUID(4), season: 2 }, [], T0).result.ok, true);
   // 021 callers that carry no econ are unchanged; season 0 never needs it
   assert.equal(decideRebirth({ level: 100, rebirths: 0 }, { requestId: UUID(5), season: 2 }, [], T0).result.ok, true);
@@ -104,10 +89,7 @@ test('022 SQL mirrors decideSubmitS2 + the econ-13 guard; board ★ → R → le
   assert.match(s, new RegExp(`S2_WORDS_PER_RB constant integer := ${S2_WORDS_PER_RB};`));
   assert.match(s, new RegExp(`S2_LV_MAX constant bigint := ${S2_LV_MAX};`));
   assert.match(s, new RegExp(`S2_GATE_EXP_CAP constant integer := ${S2_GATE_EXP_CAP};`));
-  assert.match(s, /if old\.submitted_at is null then/);
-  assert.match(s, /elsif old\.econ is distinct from S2_ECON then/);
-  assert.match(s, /rb := least\(rb, greatest\(coalesce\(old\.rebirths, 0\), 0\)::bigint\);/);
-  assert.match(s, /lv := least\(lv, greatest\(coalesce\(old\.level, 1\)::bigint, least\(S2_LV_MAX, S2_LV_GATE_MULT \* ceil/);
+  assert.match(s, /if old\.submitted_at is null or old\.econ is distinct from S2_ECON then/);
   assert.match(s, /rb := least\(rb, floor\(w \/ S2_WORDS_PER_RB\)::bigint\);/);
   assert.match(s, /rb := least\(rb, old\.rebirths::bigint\); -- a submit never raises rebirths/);
   assert.match(s, /S2_LV_GATE_MULT \* ceil\(100 \* power\(2\.5::numeric, least\(rb, S2_GATE_EXP_CAP\)::numeric\)\)::bigint/);

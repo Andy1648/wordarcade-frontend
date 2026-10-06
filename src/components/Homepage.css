@@ -34,12 +34,15 @@
   --fs-hp13: max(14px, calc(15.86 * var(--u)));
   --fs-hp18: max(17px, calc(21.96 * var(--u)));
   --fs-hp24: max(21px, calc(29.28 * var(--u)));
-  --fs-hp30: max(26px, calc(36.6 * var(--u)));
   --fs-hplv: max(40px, calc(70.76 * var(--u)));
   --fs-hpword: max(34px, calc(56.12 * var(--u)));
+  --fs-hp30: max(26px, calc(36.6 * var(--u)));
   --hp-nav-w: max(176px, calc(214 * var(--u)));
-  --hp-nav-h: max(44px, calc(54 * var(--u)));
-  --hp-nav-ico: max(20px, calc(26 * var(--u)));
+  /* SEASON 2 #5 "fill the buttons": a taller slab, a big icon, a bigger label and a live value line */
+  --hp-nav-h: max(44px, calc(66 * var(--u)));
+  --hp-nav-ico: max(24px, calc(36 * var(--u)));
+  --fs-hprail: max(17px, calc(21 * var(--u)));
+  --fs-hpval: max(13px, calc(15 * var(--u)));
   --hp-cur-h: max(34px, calc(44 * var(--u)));
   --hp-coin: calc(max(34px, calc(44 * var(--u))) * 1.05);
   --hp-coin-pull: calc(max(34px, calc(44 * var(--u))) * 0.42);
@@ -76,6 +79,15 @@
     'rail logo icons'
     'rail xp extras'
     'rail cards cards';
+}
+/* PAGED (short-wide desktop, Andy oct6 SEASON 2 #5 "centre the game cards exactly"): the cards take the CENTRE
+   column only — the same column as the wordmark and the XP bar — so the row sits on the page's centre line with
+   equal gaps left and right (e2e/chromebook-cards.spec.js measures them). The pager row is under the cards. */
+.homepage-stage[data-paged] {
+  grid-template-areas:
+    'rail logo icons'
+    'rail xp extras'
+    'rail cards .';
 }
 .homepage-stage.is-dimmed { transform: scale(0.965); }
 @media (prefers-reduced-motion: reduce) {
@@ -202,13 +214,15 @@ html[data-beat='true'] .homepage-logo {
 .hp-rail .kb-rwrap { width: 100%; }
 .hp-rail .kb--rail { width: 100%; height: var(--hp-nav-h); }
 .hp-rail .kb--rail .kb-shadow { left: var(--b5); right: calc(-1 * var(--b5)); top: var(--b5); bottom: calc(-1 * var(--b5)); }
-.hp-rail .kb-rface { gap: calc(10 * var(--u)); }
 .hp-rail .kb-rface .kit-icon { width: var(--hp-nav-ico); height: var(--hp-nav-ico); }
-.hp-rail .kb-rlabel { font-size: var(--fs-hp18); }
+.hp-rail .kb-rface { gap: calc(8 * var(--u)); padding-left: calc(24 * var(--u)); padding-right: calc(6 * var(--u)); }
+.hp-rail .kb-rtext { align-items: flex-start; text-align: left; }
+.hp-rail .kb-rlabel { font-size: var(--fs-hprail); }
+.hp-rail .kb-rval { font-size: var(--fs-hpval); }
 .hp-rail .kb-rdot { left: auto; right: -8px; top: -8px; width: var(--hp-dot); height: var(--hp-dot); }
 .hp-rail .kb--rail:disabled { opacity: 0.5; pointer-events: none; }
 
-/* ---- centre: LV + XP bar, the per-letter line + the mark chip, TYPE ANYTHING ---- */
+/* ---- centre: LV + XP bar, the per-letter line + the mark chip ---- */
 .menu-xp-cluster {
   grid-area: xp;
   position: relative;
@@ -282,25 +296,25 @@ html[data-beat='true'] .homepage-logo {
 .hp-chip .menu-mark-name { display: flex; align-items: center; padding: 0 calc(12 * var(--u)); white-space: nowrap; }
 .hp-chip.is-empty { background: #1a0b2e; }
 .hp-chip.is-new .hp-chip-edge { background: #FF3D7F; }
+/* nothing worn: the chip reads ROLL with a notification dot (SEASON 2 #5) */
+.hp-chip.is-roll .hp-chip-edge { background: #2EFFE0; }
+.hp-chip-dot {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: var(--hp-dot, 18px);
+  height: var(--hp-dot, 18px);
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #FF3D7F;
+  border: 3px solid #000;
+  pointer-events: none;
+}
 @media (hover: hover) {
   .hp-chip:hover { transform: translate(-2px, -2px); }
 }
 .hp-chip:active { transform: translate(3px, 3px); }
 
-.hp-typed {
-  height: var(--fs-hp30);
-  font-family: 'Bungee', sans-serif;
-  text-transform: uppercase;
-  font-size: var(--fs-hp30);
-  line-height: 1;
-  letter-spacing: 0.08em;
-  color: #fff;
-  white-space: nowrap;
-  pointer-events: none;
-}
-.hp-typed-hint { color: #5d4a78; }
-.hp-typed.has-text .hp-typed-hint { display: none; }
-.hp-typed-caret { color: #2EFFE0; }
 
 /* ---- the cards: the EXISTING GameCards, sized by the fit-math in Homepage.jsx ---- */
 .homepage-cards-region {
@@ -354,6 +368,8 @@ html[data-beat='true'] .homepage-logo {
     --hp-nav-w: 150px;
     --fs-hpword: max(24px, calc(56.12 * var(--u)));
     --fs-hp18: var(--fs-body);
+    --fs-hprail: var(--fs-body);
+    --hp-nav-ico: 26px;
   }
   .hp-rail .kb-rface { padding-left: 20px; }
 }
@@ -442,3 +458,7 @@ html[data-beat='true'] .homepage-logo {
   color: #FFE94A;
   white-space: nowrap;
 }
+
+/* Andy oct6: with the TYPE ANYTHING row gone the cards grow into the bottom of the stage — while the (fixed, bottom-
+   centre) REWARDS popup shows, the cards' region keeps its height clear so no card text sits under it. */
+body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bottom: 64px; }
