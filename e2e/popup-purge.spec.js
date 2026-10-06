@@ -202,7 +202,7 @@ test('SEASON2: played words (a WINS gain + the TYPE WORDS I unlock) → the menu
   await expect(page.locator('.menu-xp-winsstamp')).toHaveCSS('opacity', '0');
   await expect(page.locator('.menu-xp-winshint')).toHaveCSS('opacity', '0');
   const wins = await page.evaluate(() => Number(localStorage.getItem('taw.s2.wins')));
-  await expect(page.locator('.menu-wins-chip').first()).toHaveAttribute('data-wins', String(wins));
+  await expect(page.locator('.menu-wins-chip').first()).toHaveAttribute('data-value', String(wins));
 
   // the ONLY claim place: ACHIEVEMENTS (TYPE WORDS I → +40 gems)
   await page.locator('.homepage-nav-btn.is-ach').click();
