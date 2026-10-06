@@ -123,3 +123,4 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - #222 POPUP PURGE MERGED (26918c9) — P7 DONE. #223 updating with main → merge when green, then #224, #225.
 - #223 STATS MERGED (216a6ed) · #224 LEADERBOARD MERGED (272a8d8) — P8 DONE. #225 RESET: conflicts (boardMock, installUi) resolved keeping both sides, CI running → merge when green.
 - ANDY (oct6): after P4 (#225) merges, make main E2E reliably green again (red after #215 + #223: websocket-boundary create_room, claims-via-stats:57) BEFORE P9. P9 agent PAUSED (partial work in ../p9a etc.); fixer agent on fix/main-flakes-2.
+- #225 RESET MERGED + LIVE (7642fa5) — P4 code DONE (flag OFF). Prod check: a live econ-12 save (R3, KEY 4, 5,000 wins) survives two loads untouched, no welcome, 0 errors. ANDY: run 022 → 024 → claude/run-season2.sql → notify pgrst → say 'flip SEASON2'. NEXT: main E2E green (fixer agent) → then P9.
