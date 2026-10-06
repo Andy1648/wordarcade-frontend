@@ -1,0 +1,161 @@
+/* Season2Welcome.css — the SEASON 2 welcome (claude/mockups/v2/Season2.dc.html). A full-screen moment over the app.
+   Flat colours, hard black offsets, one-shot motion only (the mockup's looping band drift and button pulse are dropped:
+   zero new infinite animations). REDUCE MOTION: no slam / rise — everything sits at rest. */
+.s2w {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 40px 16px 44px;
+  overflow: hidden auto;
+  background: var(--k-bg);
+  color: var(--k-white);
+  font-family: 'Space Mono', monospace;
+}
+/* the slanted band behind the trade (a flat rotated panel — the mockup's stripes are a gradient, so flat here) */
+.s2w-band {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 34%;
+  height: 230px;
+  background: var(--k-panel);
+  border-top: 8px solid var(--k-ink);
+  border-bottom: 8px solid var(--k-ink);
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+.s2w-wallet {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  z-index: 2;
+}
+.s2w-head,
+.s2w-trade,
+.s2w-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+}
+.s2w-head {
+  flex-direction: column;
+  margin-top: 24px;
+  text-align: center;
+}
+.s2w-title {
+  margin: 0;
+  font-family: 'Bungee Shade', 'Bungee', sans-serif;
+  font-size: var(--fs-k100);
+  line-height: 1;
+  font-weight: 400;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--k-yellow);
+  transform: rotate(-3deg);
+}
+.s2w-sub {
+  margin: 10px 0 0;
+  font-family: var(--k-display);
+  font-size: var(--fs-k22);
+  text-transform: uppercase;
+  color: var(--k-dim);
+}
+.s2w-trade {
+  justify-content: center;
+  gap: 40px;
+}
+.s2w-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.s2w-cap {
+  font-family: var(--k-display);
+  font-size: var(--fs-k18);
+  text-transform: uppercase;
+  color: var(--k-dim);
+}
+.s2w-oldr,
+.s2w-gems {
+  font-family: var(--k-display);
+  line-height: 1;
+  text-transform: uppercase;
+  -webkit-text-stroke: 6px var(--k-ink);
+  paint-order: stroke fill;
+}
+.s2w-oldr {
+  font-size: var(--fs-k68);
+  color: var(--k-lilac);
+}
+.s2w-gift {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.s2w-gift > svg { transform: rotate(-8deg); }
+.s2w-arrow { display: flex; }
+.s2w-gems {
+  font-size: var(--fs-k96);
+  color: var(--k-cyan);
+  -webkit-text-stroke-width: 8px;
+  text-shadow: 7px 7px 0 var(--k-ink);
+}
+.s2w-rolls {
+  margin-top: 4px;
+  font-family: var(--k-display);
+  font-size: var(--fs-k18);
+  text-transform: uppercase;
+  color: var(--k-yellow);
+}
+.s2w-foot {
+  flex-direction: column;
+  gap: 12px;
+}
+/* the primary never wider than the screen (16px gutters) */
+.s2w-foot .kb { --kb-w: min(360px, calc(100vw - 48px)) !important; }
+.s2w-once,
+.s2w-note {
+  margin: 0;
+  font-size: var(--fs-k14);
+  color: var(--k-faint);
+  text-align: center;
+}
+.s2w-note { color: var(--k-dim); }
+
+/* one-shot entrances (transform + opacity only) */
+@keyframes s2w-slam {
+  0% { transform: scale(3) rotate(-6deg); opacity: 0; }
+  65% { transform: scale(.92) rotate(-3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-3deg); opacity: 1; }
+}
+@keyframes s2w-rise {
+  0% { transform: translateY(30px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.s2w-slam { animation: s2w-slam 500ms cubic-bezier(.2, 1.2, .4, 1) both; }
+.s2w-rise { animation: s2w-rise 400ms ease-out both; animation-delay: var(--s2w-d, 0ms); }
+
+@media (prefers-reduced-motion: reduce) {
+  .s2w-slam,
+  .s2w-rise { animation: none; }
+}
+
+/* phones: the trade stacks, the figures step down */
+@media (max-width: 600px) {
+  .s2w { padding: 112px 16px 28px; justify-content: flex-start; gap: 22px; }
+  .s2w-wallet { top: 14px; right: 16px; }
+  .s2w-head { margin-top: 0; }
+  .s2w-title { font-size: var(--fs-k38); }
+  .s2w-sub { font-size: var(--fs-k16); }
+  .s2w-trade { flex-direction: column; gap: 12px; }
+  .s2w-arrow > svg { transform: rotate(90deg); }
+  .s2w-oldr { font-size: var(--fs-k44); }
+  .s2w-gems { font-size: var(--fs-k60); -webkit-text-stroke-width: 6px; text-shadow: 5px 5px 0 var(--k-ink); }
+  .s2w-band { top: 30%; height: 360px; }
+}

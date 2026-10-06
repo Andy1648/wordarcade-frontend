@@ -36,9 +36,7 @@ async function boot(page) {
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, f: 0.5, rc: 7, v: 10 }));
     // a season-1 claim waiting in the inbox — season 2 must not pop it
     localStorage.setItem('taw.claims', JSON.stringify([{ id: 'ach-vol-1', kind: 'achievement', label: 'ACHIEVEMENT — FIRST BLOOD', amount: 50, detail: 'vol-1', ts: 1 }]));
-    // the SEASON-2 save: LV99, almost through it; 500 wins; 150 season-2 words (TYPE WORDS I is ready). This browser
-    // CONVERTED at an earlier boot (taw.s2.conv — v3/convertLocal.js), so the season-1 save above is not converted again.
-    localStorage.setItem('taw.s2.conv', JSON.stringify({ v: 1, st: 'shown', had: true, srv: 1 }));
+    // the SEASON-2 save: LV99, almost through it; 500 wins; 150 season-2 words (TYPE WORDS I is ready)
     localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 99, f: 0.985, rc: 0, v: 10 }));
     localStorage.setItem('taw.s2.wins', '500');
     localStorage.setItem('taw.s2.count', JSON.stringify({ words: 150 }));

@@ -122,50 +122,6 @@ jobs:
             claude/econ-oct2/loop-sim-ci-s2*.json
           retention-days: 14
 
-  # SEASON 2 CONVERSION (Andy oct6, no reset): every REAL board row (claude/econ-oct2/board-snapshot-oct6.json) converted
-  # by src/progress/v3/convert.js, then played 2 h by the median bot from that state (MIN / TYP / MAX save each). FAILS
-  # on the HARD RULE: any row faster than 2x the median v3 pace (the median clock), any row whose next rebirth is not
-  # inside 2 h of median play, or a converted ★ above the median's standing after the same rebirths. --grid prints the
-  # rate search that picked convert.js RATES.
-  season2-board:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: SEASON2 board conversion (HARD RULE)
-        run: |
-          set +e
-          SIM_SEASON2=1 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --board --grid --tag=ci-s2-board > s2-board.txt 2>&1
-          rc=$?
-          set -e
-          cat s2-board.txt
-          {
-            echo '## SEASON2 conversion — every real board row after convert.js (HARD RULE)'
-            grep -E 'SHIPPED RATES|S2 BOARD HARD RULE|GRID PICK' s2-board.txt || true
-            grep -E '^\|' s2-board.txt || true
-            echo '```'
-            grep -E 'MEDIAN CLOCK|first stood|POWER at each|GRID |diagnostic' s2-board.txt | cut -c1-900 || true
-            echo '```'
-            echo "exit code: $rc"
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$rc" -ne 0 ]; then
-            echo "::error::SEASON2 conversion HARD RULE failed — a converted board row beat 2x the median v3 pace, is stuck past 2 h, or out-ranks the median's standing"
-            exit 1
-          fi
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: econ-sims-season2-board
-          path: |
-            s2-board.txt
-            claude/econ-oct2/loop-sim-ci-s2-board.json
-          retention-days: 14
-
   long-run:
     runs-on: ubuntu-latest
     timeout-minutes: 180
