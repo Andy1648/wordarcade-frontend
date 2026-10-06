@@ -18,6 +18,7 @@ import { standingText } from './boardTarget.js';
 import PodiumIcon from '../components/PodiumIcon';
 import { RANKUP_MS } from '../lib/menuMoments.js';
 import { rivalCopy, rivalGapLine, rivalGapSpoken } from './rival.js';
+import { SEASON2, V3 } from '../progress/season.js'; // P7: V3.rankUp = the kit's top-edge RANK-UP banner (v3 chunk)
 import './RankUpMoment.css';
 
 export { RANKUP_MS };
@@ -27,6 +28,7 @@ export const RANKUP_POP_MS = Math.round(RANKUP_MS * 0.36);
 export default function RankUpMoment({ from, to, onDone, onPop, kind = 'up', name = '', levels = 0, rebirths = 0, onTap }) {
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
+  const sentRef = useRef(false);
   const popRef = useRef(onPop);
   popRef.current = onPop;
   // Andy oct3 19:55: the board ranks REBIRTHS, then LEVEL — the moment names both ("R8 · LV16").
@@ -34,11 +36,27 @@ export default function RankUpMoment({ from, to, onDone, onPop, kind = 'up', nam
   // a live region announces a CHANGE, so the status line fills a beat after the region mounts
   const [said, setSaid] = useState(false);
   useEffect(() => {
+    // P7 POPUP PURGE (SEASON2 only): no card over the menu — the board news drops from the TOP edge (the RANK-UP
+    // banner; it pays nothing), the podium ticks at once and the queue is released. Flag OFF: the card below, unchanged.
+    if (SEASON2) {
+      if (sentRef.current) return undefined; // once per mount (StrictMode re-runs effects in dev)
+      sentRef.current = true;
+      if (kind === 'passed') {
+        V3.rankUp({ head: rivalCopy({ name, from, to, levels, rebirths }).title, from: { name: `#${formatNum(from)}`, req: 'R6' }, to: { name: `#${formatNum(to)}`, req: 'R0' } });
+      } else {
+        V3.rankUp({ head: 'BOARD', from: { name: `#${formatNum(from)}`, req: 'R0' }, to: { name: `#${formatNum(to)}`, req: 'R7', code: standing } });
+      }
+      if (popRef.current) popRef.current();
+      if (doneRef.current) doneRef.current();
+      return undefined;
+    }
     const a = setTimeout(() => setSaid(true), 60);
     const b = setTimeout(() => doneRef.current && doneRef.current(), RANKUP_MS);
     const c = setTimeout(() => popRef.current && popRef.current(), RANKUP_POP_MS);
     return () => { clearTimeout(a); clearTimeout(b); clearTimeout(c); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one moment per mount: its props are fixed for its life
   }, []);
+  if (SEASON2) return null;
   if (kind === 'passed') {
     const copy = rivalCopy({ name, from, to, levels, rebirths });
     const gap = rivalGapLine(levels, rebirths);

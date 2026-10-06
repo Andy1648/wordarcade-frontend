@@ -1,0 +1,84 @@
+/* KitRankBanner.css — 02 RANK-UP BANNER (KitLevelUp.dc.html). Hangs from the TOP edge, never centre-screen; takes
+   no pointer. Flat fills, black ink, hard offset shadow (house style). Only transform/opacity animate (motion.js). */
+.krb-host {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 9001;
+  width: min(470px, calc(100vw - 24px));
+  height: 0;
+  overflow: visible;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.krb-host.is-contained { position: absolute; z-index: 60; }
+.krb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 98px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--k-panel);
+  border: var(--k-ink-l) solid var(--k-ink);
+  border-top: 0;
+  border-bottom: 8px solid var(--krb-c);
+  box-shadow: var(--k-sh-l) var(--k-sh-l) 0 var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  color: var(--k-white);
+}
+.krb-head {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-k13);
+  color: var(--k-dim);
+}
+.krb-code { color: var(--krb-c); }
+.krb-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+}
+.krb-plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 12px;
+  background: var(--krb-c);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
+  color: var(--krb-t);
+  white-space: nowrap;
+  line-height: 1;
+}
+.krb-plate.is-old { height: 44px; min-width: 120px; font-size: var(--fs-k13); }
+.krb-plate.is-new { height: 56px; min-width: 150px; font-size: var(--fs-k16); transform: skewX(-6deg); }
+.krb-arrow { flex: none; }
+.krb-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .krb-row { gap: 8px; }
+  .krb-plate.is-old { min-width: 0; padding: 0 8px; }
+  .krb-plate.is-new { min-width: 0; padding: 0 10px; }
+}
