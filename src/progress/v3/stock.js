@@ -1,11 +1,11 @@
 // v3/stock.js — the SHOP's STOCK (season 2 only; claude/mockups/v2/Shop.dc.html, P3). "Wins buy only POWER;
-// everything else costs gems" (progression-v3.md): six gem-priced items at the mockup's odd prices, each with a
+// everything else costs gems" (progression-v3.md): five gem-priced items at the mockup's odd prices (the mockup's ×2 GEM DROPS is out: gems never scale), each with a
 // limited count that RESTOCKS every 5:00 (a shared wall-clock window — every player's restock lands on the same
 // :00 / :05 boundary, so the timer is the clock, not a per-save countdown).
 //
 //   COMMON     +25% XP · 10 MIN        45   ×5   → stockXpMult() ×1.25 on XP / LETTER (v3/hooks.js xpSwap.d)
 //   RARE       ×2 LUCK · 15 MIN        120  ×3   → stockLuckMult() ×2 on roll luck (v3/unlocks.js unlockLuckMult)
-//   COMMON     ×2 GEM DROPS · 10 MIN   65   ×4   → stockGemMult() ×2 on the 1-in-15 drop chance (hooks gemsSwap.a)
+//   (×2 GEM DROPS removed — Andy oct6: "Do NOT scale gems"; the gem earn table stays exactly FINAL's)
 //   EPIC       ×10 OVERDRIVE · NOW     225  ×2   → a ×10 BOOST for 5 min (boost.js startBoost — the R3 2nd slot too)
 //   RARE       +5 MIN EVERY BOOST      150  ×2   → +5 min on every running timer (both boost slots + the three above)
 //   LEGENDARY  1 FREE EPIC+ ROLL       495  ×1   → VISUAL ONLY for now (buyable: false) — the roll's reveal belongs
@@ -30,7 +30,6 @@ export const EXTEND_MS = 5 * 60 * 1000;
 export const STOCK = [
   { id: 'xp25', rarity: 'common', icon: 'levels', big: '+25%', what: 'XP · 10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.25, min: 10 },
   { id: 'luck2', rarity: 'rare', icon: 'luck', big: '×2', what: 'LUCK · 15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
-  { id: 'gems2', rarity: 'common', icon: 'gems', big: '×2', what: 'GEM DROPS · 10 MIN', price: 65, max: 4, fx: 'gems', mult: 2, min: 10 },
   { id: 'overdrive', rarity: 'epic', icon: 'overdrive', big: '×10', what: 'OVERDRIVE · NOW', price: 225, max: 2, boost: { mult: 10, min: 5 } },
   { id: 'extend', rarity: 'rare', icon: 'clock', big: '+5 MIN', what: 'EVERY BOOST', price: 150, max: 2, extend: true },
   { id: 'epicroll', rarity: 'legendary', icon: 'roll', big: '1', what: 'FREE EPIC+ ROLL', price: 495, max: 1, buyable: false },
@@ -92,8 +91,6 @@ const fxMult = (kind, now) => (stockFxLeft(kind, now) > 0 ? FX_MULT[kind] : 1);
 export const stockXpMult = (now = Date.now()) => fxMult('xp', now);
 /** ×2 on roll luck while a ×2 LUCK is running. */
 export const stockLuckMult = (now = Date.now()) => fxMult('luck', now);
-/** ×2 on the gem-drop chance while a ×2 GEM DROPS is running. */
-export const stockGemMult = (now = Date.now()) => fxMult('gems', now);
 
 /** Every running timer a "+5 MIN EVERY BOOST" would extend: [{ key, field|null }]. */
 function liveTimers(now) {

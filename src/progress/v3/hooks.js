@@ -18,7 +18,7 @@ import { needV3, creditXpV3 } from './curve.js';
 import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter, S2_PREFIX } from './store.js';
 import { featureOpen } from './unlocks.js';
 import { liveRankV3 } from './ranks.js';
-import { stockXpMult, stockGemMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
+import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
 
 export const SERVER_FLAG_KEY = `${S2_PREFIX}server`; // the server hook's note (read at the NEXT boot)
 const fin = (v, d) => (Number.isFinite(v) ? v : d);
@@ -107,7 +107,7 @@ export function ascend(target = null) {
 export const gemsSwap = {
   /** rollGemDrop: 1 in 15 accepted words drops 3–12 gems. */
   a(rng = Math.random, chance = DROP_CHANCE) {
-    if (!(rng() < chance * stockGemMult())) return 0; // the STOCK's ×2 GEM DROPS · 10 MIN
+    if (!(rng() < chance)) return 0; // FINAL: exactly 1 in 15 — nothing scales gems (Andy oct6)
     const v = rng();
     return DROP_MIN + Math.floor((v >= 0 && v < 1 ? v : 0) * (DROP_MAX - DROP_MIN + 1));
   },

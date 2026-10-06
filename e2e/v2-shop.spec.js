@@ -80,8 +80,8 @@ test('POWER is bought with WINS on a 1 s hold — a tap does nothing; 300 wins �
 test('a STOCK item costs GEMS: +25% XP · 10 MIN for 45, ×5 → ×4 LEFT, the effect runs', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
-  await expect(shop.locator('.sp2-card')).toHaveCount(6);
-  await expect(shop.locator('.sp2-price')).toHaveText(['45', '120', '65', '225', '150', 'SOON']);
+  await expect(shop.locator('.sp2-card')).toHaveCount(5); // ×2 GEM DROPS removed — gems never scale
+  await expect(shop.locator('.sp2-price')).toHaveText(['45', '120', '225', '150', 'SOON']);
   await expect(shop.locator('.ktc')).toContainText('4:00'); // pinned 60 s into the window
   const xp = card(shop, 'xp25');
   await expect(xp.locator('.sp2-left')).toHaveText('×5 LEFT');
@@ -131,8 +131,8 @@ test('phone 390×844: the same shop; POWER hold and a gem buy', async ({ page })
   expect(overflow).toBeLessThanOrEqual(0);
   await hold(page, shop.locator('.sp2-buy .kb'), 1150);
   await expect(shop.locator('[data-testid="sp2-power"]')).toHaveText('1');
-  await card(shop, 'gems2').click();
-  await expect.poll(async () => (await s2(page)).gems).toBe(575);
+  await card(shop, 'xp25').click();
+  await expect.poll(async () => (await s2(page)).gems).toBe(595);
   await shop.locator('.sp2-back').click();
   await expect(shop).toHaveCount(0);
 });
