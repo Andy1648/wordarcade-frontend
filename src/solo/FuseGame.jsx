@@ -109,9 +109,11 @@ export default function FuseGame({ onExit, offerMenu = false }) {
     };
   }, [loadKey]);
 
-  // STEERING WARM-UP: each letter's "leads to" set is a one-off ~50ms scan (cached for the session
-  // in fuse.js). Build all 26 in idle slices while the player reads the screen, so the late-run
-  // steering never stalls a keystroke on a slow Chromebook.
+  // STEERING WARM-UP: each letter's "leads to" set is a one-off scan (cached for the session in
+  // fuse.js). Build all 26 in idle slices while the player reads the screen, so the late-run
+  // steering never stalls a keystroke on a slow Chromebook. An idle slice still BLOCKS a keystroke
+  // that arrives while it runs, so each slice must stay small: ~3-17 ms a letter (fuse.js
+  // eachPoolFragmentIn). It was 80-1,000 ms at 4x CPU — FUSE's input-latency p95 hit 300 ms on CI.
   useEffect(() => {
     if (!data) return undefined;
     const e = createFuseEngine({ accept: data.accept, pools: POOLS });

@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fuse</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes fzEdge{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes fzInL{0%{transform:translateX(-100%)}100%{transform:translateX(0)}}
+@keyframes fzInR{0%{transform:translateX(100%)}100%{transform:translateX(0)}}
+@keyframes fzInT{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
+@keyframes fzInB{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
+@keyframes fzSlideV{0%{transform:translateY(0)}100%{transform:translateY(-56px)}}
+@keyframes fzSlideH{0%{transform:translateX(0)}100%{transform:translateX(-56px)}}
+@keyframes fzShk{0%,100%{transform:translate(0,0)}25%{transform:translate(-3px,1px) rotate(-.6deg)}50%{transform:translate(3px,-1px) rotate(.6deg)}75%{transform:translate(-1px,-2px)}}
+@keyframes fzNoA{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes fzNoB{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes fzUpA{0%{transform:translateY(10px) scale(.6);opacity:0}15%{transform:translateY(0) scale(1.15);opacity:1}28%{transform:scale(1)}100%{transform:translateY(-70px);opacity:0}}
+@keyframes fzUpB{0%{transform:translateY(10px) scale(.6);opacity:0}15%{transform:translateY(0) scale(1.15);opacity:1}28%{transform:scale(1)}100%{transform:translateY(-70px);opacity:0}}
+@keyframes fzLit{0%{transform:scale(1.7) rotate(-8deg)}60%{transform:scale(.9)}100%{transform:scale(1)}}
+@keyframes fzPopA{0%{transform:scale(.3) rotate(-10deg);opacity:0}60%{transform:scale(1.12) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes fzPopB{0%{transform:scale(.3) rotate(10deg);opacity:0}60%{transform:scale(1.12) rotate(-2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes fzSlam{0%{transform:scale(2.6) rotate(-14deg);opacity:0}55%{transform:scale(.9) rotate(-3deg);opacity:1}75%{transform:scale(1.06)}100%{transform:scale(1) rotate(0)}}
+@keyframes fzGold{0%{opacity:.95}100%{opacity:0}}
+@keyframes fzWave{0%{transform:scale(.3);opacity:1}100%{transform:scale(2.4);opacity:0}}
+@keyframes fzFlick{0%,100%{transform:scale(1) rotate(0)}33%{transform:scale(1.35) rotate(20deg)}66%{transform:scale(.8) rotate(-15deg)}}
+@keyframes fzBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes fzBeat{0%,100%{transform:scale(1)}15%{transform:scale(1.1)}30%{transform:scale(1)}}
+@keyframes fzBump{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+@keyframes fzSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes fzGlow{0%{opacity:.9;transform:scale(.85)}100%{opacity:0;transform:scale(1.2)}}
+.fz-edge{animation:fzEdge .4s ease-in-out infinite}
+.fz-inL{animation:fzInL .22s cubic-bezier(.2,1.2,.4,1) both}
+.fz-inR{animation:fzInR .22s cubic-bezier(.2,1.2,.4,1) both}
+.fz-inT{animation:fzInT .22s cubic-bezier(.2,1.2,.4,1) both}
+.fz-inB{animation:fzInB .22s cubic-bezier(.2,1.2,.4,1) both}
+.fz-slideV{animation:fzSlideV .35s linear infinite}
+.fz-slideH{animation:fzSlideH .35s linear infinite}
+.fz-shk{animation:fzShk .14s linear infinite}
+.fz-noA{animation:fzNoA .35s linear}
+.fz-noB{animation:fzNoB .35s linear}
+.fz-upA{animation:fzUpA 1.2s ease-out forwards}
+.fz-upB{animation:fzUpB 1.2s ease-out forwards}
+.fz-lit{animation:fzLit .38s cubic-bezier(.2,1.4,.4,1) both}
+.fz-popA{animation:fzPopA .36s cubic-bezier(.2,1.4,.4,1) both}
+.fz-popB{animation:fzPopB .36s cubic-bezier(.2,1.4,.4,1) both}
+.fz-slam{animation:fzSlam .6s cubic-bezier(.2,1.2,.4,1) both}
+.fz-gold{animation:fzGold .9s ease-out forwards}
+.fz-wave{animation:fzWave .7s cubic-bezier(.1,.6,.3,1) forwards}
+.fz-flick{animation:fzFlick .16s linear infinite;transform-box:fill-box;transform-origin:50% 50%}
+.fz-caret{animation:fzBlink .9s steps(1) infinite}
+.fz-beat{animation:fzBeat .5s ease-out infinite}
+.fz-beatS{animation:fzBeat 1s ease-out infinite}
+.fz-bump{animation:fzBump .35s cubic-bezier(.2,1.4,.4,1)}
+.fz-spin{animation:fzSpin 8s linear infinite}
+.fz-glowA{animation:fzGlow .5s ease-out forwards}
+.fz-glowB{animation:fzGlow .5s ease-out forwards}
+.fz-btn{transition:transform .08s,box-shadow .08s}
+.fz-btn:hover{transform:translate(-2px,-2px)}
+.fz-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+.fz-out{-webkit-text-stroke:6px #000;paint-order:stroke fill}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace; color: #fff">
+<svg width="0" height="0" style="position: absolute" aria-hidden="true"><defs>
+<path id="fzHeart" d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z"></path>
+</defs></svg>
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px); pointer-events: none"></div>
+<!-- frenzy wash: gold stripes over the purple ones while ×5 runs -->
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(255,194,61,.12) 46px 50px); pointer-events: none; opacity: {{frzWash}}; transition: opacity .6s"></div>
+
+<!-- =================================================================== -->
+<!-- ============================ VERSION A ============================= -->
+<!-- "WICK": fragment plate centre, wick across the screen, strip on the floor, ×5 badge on the right edge -->
+<sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; inset: 0">
+
+<!-- LIVES column (left edge) -->
+<div style="position: absolute; left: 0; top: 112px; width: 150px; height: 316px; box-sizing: border-box; background: #12071f; border: 5px solid #000; border-left: 0; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px">
+<sc-for list="{{hearts}}" as="h" hint-placeholder-count="3">
+<svg class="{{h.cls}}" viewBox="-2 -2 36 36" width="58" height="58" style="overflow: visible" aria-hidden="true">
+<use href="#fzHeart" fill="{{h.fill}}" stroke="#000" stroke-width="4" stroke-linejoin="round"></use>
+<path d="M8 8 C6 9 5.5 11 6 13" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" style="opacity: {{h.hl}}"></path>
+</svg>
+</sc-for>
+<div style="margin-top: 4px; display: flex; flex-direction: column; align-items: center">
+<span class="{{wordsCls}} fz-out" style="font-family: 'Bungee', sans-serif; font-size: 40px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000">{{words}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #8a76ad">WORDS</span>
+</div>
+</div>
+
+<!-- FRAGMENT PLATE -->
+<div class="{{plateShk}}" style="position: absolute; left: 403px; top: 92px; width: 560px; height: 220px">
+<div class="{{popCls}}" style="position: absolute; inset: 0">
+<svg viewBox="0 0 560 220" width="560" height="220" style="position: absolute; left: 0; top: 0; overflow: visible" aria-hidden="true">
+<path d="M52 18 L548 6 L520 214 L14 206 Z" fill="#000" transform="translate(10 10)"></path>
+<path d="M52 18 L548 6 L520 214 L14 206 Z" fill="{{plateFill}}" stroke="#000" stroke-width="7" stroke-linejoin="round" style="transition: fill .2s"></path>
+<path d="M60 30 L300 24" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".18"></path>
+<path d="M548 6 L520 214 L496 214 L522 7 Z" fill="{{plateEdge}}"></path>
+<path d="M14 206 L40 160 L64 206 Z" fill="{{plateEdge}}" stroke="#000" stroke-width="4" stroke-linejoin="round"></path>
+</svg>
+<div style="position: absolute; left: 0; right: 0; top: 34px; text-align: center; font-family: 'Bungee', sans-serif; font-size: {{fragF}}px; line-height: 1; color: {{fragC}}; -webkit-text-stroke: 11px #000; paint-order: stroke fill; text-shadow: 8px 8px 0 #000; letter-spacing: 4px">{{frag}}</div>
+</div>
+</div>
+
+<!-- INPUT -->
+<div style="position: absolute; left: 160px; right: 220px; top: 334px; height: 86px; display: flex; justify-content: center; align-items: center">
+<div class="{{okGlowCls}}" style="position: absolute; left: 260px; right: 260px; top: 4px; bottom: 4px; background: #5CFF8A; border: 5px solid #000; opacity: 0"></div>
+<div class="{{inCls}}" style="position: relative; display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: 66px; line-height: 1; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">
+<sc-for list="{{typedL}}" as="l" hint-placeholder-count="5"><span style="color: {{l.c}}">{{l.ch}}</span></sc-for>
+<span class="fz-caret" style="display: inline-block; width: 10px; height: 60px; margin-left: 6px; background: #FFE94A; border: 3px solid #000; box-sizing: border-box"></span>
+</div>
+<sc-if value="{{gainShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{gainCls}}" style="position: absolute; right: -10px; top: -14px; display: flex; align-items: stretch; border: 4px solid #000; box-shadow: 5px 5px 0 #000; transform-origin: 0 100%">
+<sc-if value="{{gainX5}}" hint-placeholder-val="{{ false }}"><span style="padding: 0 8px; display: flex; align-items: center; background: #1a0b2e; border-right: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">{{gainBase}}<span style="margin-left: 6px; padding: 0 5px; background: #FFC23D; color: #000; border: 3px solid #000">×5</span></span></sc-if>
+<span style="padding: 0 10px; background: {{gainBg}}; font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 40px; color: #000">+{{gainText}}</span>
+</div>
+</sc-if>
+</div>
+
+<!-- WICK -->
+<div style="position: absolute; left: 30px; right: 30px; top: 452px; height: 52px">
+<div style="position: absolute; left: 0; right: 0; top: 16px; height: 20px; background: #12071f; border: 5px solid #000; box-sizing: border-box"></div>
+<div style="position: absolute; left: 0; right: 0; top: 16px; height: 20px; transform: scaleX({{fuseF}}); transform-origin: 0 50%; transition: transform .1s linear">
+<div style="position: absolute; inset: 0; background: {{wickC}}; border: 5px solid #000; box-sizing: border-box; background-image: repeating-linear-gradient(60deg, rgba(0,0,0,.35) 0 6px, transparent 6px 14px)"></div>
+</div>
+<div style="position: absolute; left: 0; top: 0; width: 0; height: 52px; transform: translateX({{sparkX}}px); transition: transform .1s linear">
+<svg viewBox="0 0 40 40" width="{{sparkS}}" height="{{sparkS}}" style="position: absolute; left: {{sparkO}}px; top: {{sparkT}}px; overflow: visible" aria-hidden="true">
+<path class="fz-flick" d="M20 1 L24 14 L38 12 L27 21 L34 35 L20 27 L6 35 L13 21 L2 12 L16 14 Z" fill="{{sparkC}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round"></path>
+<circle cx="20" cy="20" r="5" fill="#fff"></circle>
+</svg>
+<span class="fz-out" style="position: absolute; left: {{secL}}px; width: 140px; text-align: {{secAl}}; top: -40px; font-family: 'Bungee', sans-serif; font-size: {{secF}}px; line-height: 1; color: {{secC}}; -webkit-text-stroke: 5px #000; white-space: nowrap">{{secText}}</span>
+</div>
+<sc-if value="{{dockOn}}" hint-placeholder-val="{{ false }}">
+<span style="position: absolute; left: 0; top: -26px; padding: 0 6px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #FF3D7F">SHORT WORD · FUSE {{dockText}}</span>
+</sc-if>
+</div>
+
+<!-- LETTER STRIP (floor) -->
+<div class="{{stripCls}}" style="position: absolute; left: 0; right: 0; bottom: 0; height: 130px; background: #12071f; border-top: 6px solid #000; box-sizing: border-box">
+<div style="position: absolute; left: 24px; top: 30px; display: flex; gap: 4px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="26">
+<div class="{{t.cls}}" style="position: relative; width: 46px; height: 66px; box-sizing: border-box; background: {{t.bg}}; border: 4px solid #000; box-shadow: {{t.sh}}; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 32px; line-height: 1; color: {{t.c}}; transform: translateY({{t.ty}}px); transition: transform .15s">{{t.ch}}</div>
+</sc-for>
+</div>
+<div style="position: absolute; left: 24px; top: 6px; display: flex; align-items: center; gap: 8px; font-family: 'Bungee', sans-serif; font-size: 14px; color: #8a76ad">
+<span style="color: {{stripC}}">{{litText}}</span><span>LETTERS</span>
+</div>
+</div>
+
+<!-- FRENZY BADGE (right edge) -->
+<div style="position: absolute; right: 0; top: 96px; width: 206px; height: 336px">
+<div class="{{badgeCls}}" style="position: absolute; inset: 0; box-sizing: border-box; background: {{badgeBg}}; border: 6px solid #000; border-right: 0; box-shadow: -6px 8px 0 #000; transform-origin: 100% 50%; overflow: hidden">
+<sc-if value="{{frzOn}}" hint-placeholder-val="{{ false }}">
+<div class="fz-slideV" style="position: absolute; left: 0; right: 0; top: 0; height: 420px; background-image: repeating-linear-gradient(-45deg, rgba(0,0,0,.18) 0 20px, transparent 20px 40px)"></div>
+</sc-if>
+<div style="position: absolute; left: 0; right: 0; top: 14px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 18px; color: {{badgeTopC}}">{{badgeTop}}</div>
+<div style="position: absolute; left: 13px; top: 46px; width: 180px; height: 180px">
+<svg viewBox="0 0 180 180" width="180" height="180" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+<circle cx="90" cy="90" r="74" fill="#12071f" stroke="#000" stroke-width="30"></circle>
+<circle cx="90" cy="90" r="74" fill="none" stroke="#2a1748" stroke-width="18"></circle>
+<sc-for list="{{ringA}}" as="s" hint-placeholder-count="48">
+<path d="{{s.d}}" fill="none" stroke="{{s.c}}" stroke-width="18" style="opacity: {{s.o}}"></path>
+</sc-for>
+<circle cx="90" cy="90" r="56" fill="none" stroke="#000" stroke-width="5"></circle>
+</svg>
+<div class="{{x5Cls}}" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 66px; line-height: 1; color: {{x5C}}; -webkit-text-stroke: 9px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">×5</div>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 236px; text-align: center; font-family: 'Bungee', sans-serif; font-size: {{badgeBigF}}px; line-height: 1; color: {{badgeBigC}}; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000">{{badgeBig}}</div>
+<div style="position: absolute; left: 0; right: 0; top: 296px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{badgeSubC}}">{{badgeSub}}</div>
+</div>
+<sc-if value="{{waveOn}}" hint-placeholder-val="{{ false }}">
+<div class="{{waveCls}}" style="position: absolute; left: 13px; top: 46px; width: 180px; height: 180px; border-radius: 50%; border: 14px solid #FFC23D; box-sizing: border-box; box-shadow: 0 0 0 6px #000"></div>
+</sc-if>
+</div>
+
+<!-- CLUTCH (≤2s): hazard bands slam in from the left + right edges -->
+<sc-if value="{{clutch}}" hint-placeholder-val="{{ false }}">
+<div class="fz-inL" style="position: absolute; left: 0; top: 0; bottom: 0; width: 34px; overflow: hidden; border-right: 6px solid #000; pointer-events: none">
+<div class="fz-slideV" style="position: absolute; left: 0; right: 0; top: 0; height: 760px; background-image: repeating-linear-gradient(45deg, #FF3D7F 0 20px, #000 20px 40px)"></div>
+</div>
+<div class="fz-inR" style="position: absolute; right: 0; top: 0; bottom: 0; width: 34px; overflow: hidden; border-left: 6px solid #000; pointer-events: none">
+<div class="fz-slideV" style="position: absolute; left: 0; right: 0; top: 0; height: 760px; background-image: repeating-linear-gradient(-45deg, #FF3D7F 0 20px, #000 20px 40px)"></div>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<!-- =================================================================== -->
+<!-- ============================ VERSION B ============================= -->
+<!-- "DIAL": the 26 letters ARE the clock face; the fuse burns inside it; typed word on a rail; ×5 tab bottom-right -->
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0">
+
+<!-- rail from dial to the right edge -->
+<div style="position: absolute; left: 360px; right: 0; top: 262px; height: 150px; background: #12071f; border-top: 6px solid #000; border-bottom: 6px solid #000; box-sizing: border-box"></div>
+<div style="position: absolute; left: 360px; right: 0; top: 274px; height: 126px; background-image: repeating-linear-gradient(90deg, transparent 0 54px, #1f0f33 54px 60px)"></div>
+
+<!-- DIAL -->
+<div style="position: absolute; left: 70px; top: 52px; width: 600px; height: 600px">
+<svg viewBox="0 0 600 600" width="600" height="600" style="position: absolute; left: 0; top: 0; overflow: visible" aria-hidden="true">
+<circle cx="300" cy="300" r="236" fill="#12071f" stroke="#000" stroke-width="8"></circle>
+<circle cx="300" cy="300" r="236" fill="none" stroke="#1f0f33" stroke-width="3" stroke-dasharray="10 12"></circle>
+<circle cx="300" cy="300" r="176" fill="none" stroke="#000" stroke-width="34"></circle>
+<circle cx="300" cy="300" r="176" fill="none" stroke="#0d0618" stroke-width="22"></circle>
+<sc-for list="{{segsB}}" as="s" hint-placeholder-count="40">
+<path d="{{s.d}}" fill="none" stroke="{{s.c}}" stroke-width="18" style="opacity: {{s.o}}; transition: opacity .12s"></path>
+</sc-for>
+<circle cx="300" cy="300" r="152" fill="#1a0b2e" stroke="#000" stroke-width="7"></circle>
+<path d="M190 236 A120 120 0 0 1 250 172" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".12"></path>
+</svg>
+<!-- spark riding the fuse ring -->
+<div style="position: absolute; left: 300px; top: 300px; width: 0; height: 0; transform: rotate({{sparkDeg}}deg); transition: transform .1s linear">
+<svg viewBox="0 0 40 40" width="{{sparkS}}" height="{{sparkS}}" style="position: absolute; left: {{sparkOB}}px; top: {{sparkTB}}px; overflow: visible" aria-hidden="true">
+<path class="fz-flick" d="M20 1 L24 14 L38 12 L27 21 L34 35 L20 27 L6 35 L13 21 L2 12 L16 14 Z" fill="{{sparkC}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round"></path>
+<circle cx="20" cy="20" r="5" fill="#fff"></circle>
+</svg>
+</div>
+<!-- letters around the face -->
+<sc-for list="{{tilesB}}" as="t" hint-placeholder-count="26">
+<div class="{{t.cls}}" style="position: absolute; left: {{t.x}}px; top: {{t.y}}px; width: 44px; height: 50px; box-sizing: border-box; background: {{t.bg}}; border: 4px solid #000; box-shadow: {{t.sh}}; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 28px; line-height: 1; color: {{t.c}}">{{t.ch}}</div>
+</sc-for>
+<!-- fragment -->
+<div class="{{plateShk}}" style="position: absolute; left: 150px; top: 150px; width: 300px; height: 300px">
+<div class="{{popCls}}" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{fragFB}}px; line-height: 1; color: {{fragC}}; -webkit-text-stroke: 10px #000; paint-order: stroke fill; text-shadow: 7px 7px 0 #000">{{frag}}</span>
+<span style="margin-top: 10px; font-family: 'Bungee', sans-serif; font-size: {{secFB}}px; line-height: 1; color: {{secC}}; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{secText}}</span>
+</div>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 404px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 16px; color: {{stripC}}">{{litText}}</div>
+</div>
+
+<!-- typed word on the rail -->
+<div style="position: absolute; left: 690px; right: 24px; top: 268px; height: 138px; display: flex; align-items: center">
+<div class="{{okGlowCls}}" style="position: absolute; left: 0; right: 0; top: 10px; bottom: 10px; background: #5CFF8A; border: 5px solid #000; opacity: 0"></div>
+<div class="{{inCls}}" style="position: relative; display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: {{typedFB}}px; line-height: 1; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000; white-space: nowrap">
+<sc-for list="{{typedL}}" as="l" hint-placeholder-count="5"><span style="color: {{l.c}}">{{l.ch}}</span></sc-for>
+<span class="fz-caret" style="display: inline-block; width: 10px; height: 60px; margin-left: 6px; background: #FFE94A; border: 3px solid #000; box-sizing: border-box"></span>
+</div>
+<sc-if value="{{gainShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{gainCls}}" style="position: absolute; left: 0; top: -44px; display: flex; align-items: stretch; border: 4px solid #000; box-shadow: 5px 5px 0 #000; transform-origin: 0 100%">
+<sc-if value="{{gainX5}}" hint-placeholder-val="{{ false }}"><span style="padding: 0 8px; display: flex; align-items: center; background: #1a0b2e; border-right: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">{{gainBase}}<span style="margin-left: 6px; padding: 0 5px; background: #FFC23D; color: #000; border: 3px solid #000">×5</span></span></sc-if>
+<span style="padding: 0 10px; background: {{gainBg}}; font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 40px; color: #000">+{{gainText}}</span>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{dockOn}}" hint-placeholder-val="{{ false }}">
+<span style="position: absolute; left: 690px; top: 420px; padding: 0 6px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #FF3D7F">SHORT WORD · FUSE {{dockText}}</span>
+</sc-if>
+
+<!-- lives + words (top right, under the bar) -->
+<div style="position: absolute; right: 24px; top: 84px; display: flex; align-items: center; gap: 18px">
+<div style="display: flex; gap: 8px">
+<sc-for list="{{hearts}}" as="h" hint-placeholder-count="3">
+<svg class="{{h.cls}}" viewBox="-2 -2 36 36" width="50" height="50" style="overflow: visible" aria-hidden="true">
+<use href="#fzHeart" fill="{{h.fill}}" stroke="#000" stroke-width="4" stroke-linejoin="round"></use>
+<path d="M8 8 C6 9 5.5 11 6 13" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" style="opacity: {{h.hl}}"></path>
+</svg>
+</sc-for>
+</div>
+<div style="height: 62px; padding: 0 14px; display: flex; align-items: center; gap: 8px; background: #1a0b2e; border: 5px solid #000; box-shadow: 5px 5px 0 #000">
+<span class="{{wordsCls}} fz-out" style="font-family: 'Bungee', sans-serif; font-size: 38px; line-height: 1; -webkit-text-stroke: 5px #000">{{words}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #8a76ad">WORDS</span>
+</div>
+</div>
+
+<!-- FRENZY TAB (bottom-right corner) -->
+<div style="position: absolute; right: 0; bottom: 0; width: 470px; height: 196px">
+<div class="{{badgeCls}}" style="position: absolute; inset: 0; box-sizing: border-box; background: {{badgeBg}}; border: 6px solid #000; border-right: 0; border-bottom: 0; box-shadow: -7px -7px 0 #000; transform-origin: 100% 100%; overflow: hidden">
+<sc-if value="{{frzOn}}" hint-placeholder-val="{{ false }}">
+<div class="fz-slideH" style="position: absolute; left: 0; top: 0; bottom: 0; width: 560px; background-image: repeating-linear-gradient(-45deg, rgba(0,0,0,.18) 0 20px, transparent 20px 40px)"></div>
+</sc-if>
+<!-- countdown ring -->
+<div style="position: absolute; left: 18px; top: 14px; width: 168px; height: 168px">
+<svg viewBox="0 0 180 180" width="168" height="168" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+<circle cx="90" cy="90" r="74" fill="#12071f" stroke="#000" stroke-width="30"></circle>
+<circle cx="90" cy="90" r="74" fill="none" stroke="#2a1748" stroke-width="18"></circle>
+<sc-for list="{{ringA}}" as="s" hint-placeholder-count="48">
+<path d="{{s.d}}" fill="none" stroke="{{s.c}}" stroke-width="18" style="opacity: {{s.o}}"></path>
+</sc-for>
+<circle cx="90" cy="90" r="56" fill="none" stroke="#000" stroke-width="5"></circle>
+</svg>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{ringBigF}}px; line-height: 1; color: {{badgeBigC}}; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{ringBig}}</span>
+<span style="margin-top: 2px; font-family: 'Bungee', sans-serif; font-size: 13px; color: {{badgeSubC}}">{{ringSub}}</span>
+</div>
+</div>
+<!-- the big ×5 chip -->
+<div class="{{x5Cls}}" style="position: absolute; left: 206px; top: 18px; width: 236px; height: 116px; box-sizing: border-box; background: {{chipBg}}; border: 6px solid #000; box-shadow: 7px 7px 0 #000; transform: rotate(-4deg); display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Bungee', sans-serif; font-size: 96px; line-height: 1; color: {{x5C}}; -webkit-text-stroke: 10px #000; paint-order: stroke fill; text-shadow: 6px 6px 0 #000">×5</span>
+</div>
+<div style="position: absolute; left: 206px; right: 20px; top: 146px; font-family: 'Bungee', sans-serif; font-size: 18px; line-height: 1.1; color: {{badgeTopC}}">{{tabLine}}</div>
+</div>
+<sc-if value="{{waveOn}}" hint-placeholder-val="{{ false }}">
+<div class="{{waveCls}}" style="position: absolute; left: 18px; top: 14px; width: 168px; height: 168px; border-radius: 50%; border: 14px solid #FFC23D; box-sizing: border-box; box-shadow: 0 0 0 6px #000"></div>
+</sc-if>
+</div>
+
+<!-- CLUTCH (≤2s): hazard bands drop in from the top + bottom edges -->
+<sc-if value="{{clutch}}" hint-placeholder-val="{{ false }}">
+<div class="fz-inT" style="position: absolute; left: 0; right: 0; top: 58px; height: 30px; overflow: hidden; border-bottom: 6px solid #000; pointer-events: none; z-index: 2">
+<div class="fz-slideH" style="position: absolute; left: 0; top: 0; bottom: 0; width: 1480px; background-image: repeating-linear-gradient(45deg, #FF3D7F 0 20px, #000 20px 40px)"></div>
+</div>
+<div class="fz-inB" style="position: absolute; left: 0; right: 0; bottom: 0; height: 30px; overflow: hidden; border-top: 6px solid #000; pointer-events: none; z-index: 2">
+<div class="fz-slideH" style="position: absolute; left: 0; top: 0; bottom: 0; width: 1480px; background-image: repeating-linear-gradient(-45deg, #FF3D7F 0 20px, #000 20px 40px)"></div>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<!-- ===== shared edge frames ===== -->
+<div style="position: absolute; inset: 0; border: 6px solid #FFC23D; box-sizing: border-box; pointer-events: none; opacity: {{frzFrame}}; transition: opacity .5s"></div>
+<sc-if value="{{clutch}}" hint-placeholder-val="{{ false }}">
+<div class="fz-edge" style="position: absolute; inset: 0; border: 10px solid #FF3D7F; box-sizing: border-box; pointer-events: none"></div>
+</sc-if>
+<sc-if value="{{goldOn}}" hint-placeholder-val="{{ false }}">
+<div class="{{goldCls}}" style="position: absolute; inset: 0; box-sizing: border-box; border: 46px solid #FFC23D; pointer-events: none"></div>
+</sc-if>
+
+<!-- ===== TOP BAR ===== -->
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 58px; box-sizing: border-box; background: #12071f; border-bottom: 5px solid #000; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 14px; z-index: 3">
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="display: flex; border: 3px solid #000; box-shadow: 3px 3px 0 #000">
+<button class="fz-btn" onClick="{{pickA}}" style="width: 34px; height: 32px; border: 0; border-right: 3px solid #000; background: {{abA}}; font-family: 'Bungee', sans-serif; font-size: 16px; color: #000; cursor: pointer">A</button>
+<button class="fz-btn" onClick="{{pickB}}" style="width: 34px; height: 32px; border: 0; background: {{abB}}; font-family: 'Bungee', sans-serif; font-size: 16px; color: #000; cursor: pointer">B</button>
+</div>
+<span style="margin-left: 10px; font-family: 'Bungee', sans-serif; font-size: 22px; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill">FUSE</span>
+<span style="margin-left: 14px; font-size: 13px; color: #5d4a78">DEMO</span>
+<button class="fz-btn" onClick="{{demoNormal}}" style="height: 32px; padding: 0 10px; background: #2EFFE0; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">NORMAL</button>
+<button class="fz-btn" onClick="{{demoClutch}}" style="height: 32px; padding: 0 10px; background: #FF3D7F; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">CLUTCH</button>
+<button class="fz-btn" onClick="{{demoFrenzy}}" style="height: 32px; padding: 0 10px; background: #FFC23D; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">FRENZY</button>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-size: 13px; color: #8a76ad">TYPE · ENTER ↵</span>
+<span class="{{winsCls}}" style="height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 8px; background: {{winsBg}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 24px; color: #000">{{winsText}}<span style="font-size: 13px">WINS</span></span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+// Real FUSE rules (src/solo/fuse.js + src/progress/frenzy.js): a fragment appears, type any word CONTAINING it,
+// no repeats. 2 lives, cap 3. Fuse = 3500 + 9000·e^(−w/15) ms × tier mult; a 3-letter word docks the NEXT fuse ×0.8
+// (4-letter ×0.92). Every distinct letter of a solved word lights the a–z strip; a full strip = +1 life, the strip
+// resets, and FRENZY starts: ×5 wins for 5 REAL minutes (wall clock — survives death/reload, a re-clear does NOT
+// extend it) plus a trigger bonus of 10 words' worth at the frenzy rate. From 21 lit letters, 75% of fragments are
+// steered toward a dark letter.
+var ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+var FRENZY_MS = 5 * 60 * 1000, FRENZY_MULT = 5, TRIGGER_WORDS = 10, START_LIVES = 2, MAX_LIVES = 3, CLUTCH_S = 2;
+var FRAGS = ['ING', 'TER', 'ANT', 'OUS', 'ION', 'ATE', 'IGH', 'ECT', 'OR', 'AR', 'EA', 'ST', 'ENT', 'AL', 'IN', 'RE', 'OM', 'UN', 'CH', 'TH', 'PL', 'BR', 'SH', 'ER'];
+var STEER = { Q: ['QU', 'QUI'], X: ['OX', 'EX', 'AX'], Z: ['IZ', 'AZ', 'ZE'], J: ['JU', 'JA', 'ECT'], K: ['CK', 'KN', 'NK'], V: ['VE', 'IV', 'AV'], W: ['WH', 'OW', 'AW'], Y: ['LY', 'YP', 'AY'], F: ['FF', 'IF', 'FL'], P: ['PH', 'MP', 'PL'], B: ['BL', 'BR', 'UB'], G: ['GH', 'NG', 'GR'], M: ['MP', 'OM', 'UM'], H: ['SH', 'CH', 'TH'], C: ['CK', 'CH', 'IC'], D: ['ND', 'ED', 'DR'], U: ['UN', 'OU', 'QU'] };
+var NSEG = 40, NRING = 48;
+
+function fmt(x) {
+  var S = [['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)).replace(/\.0$/, '') + S[i][0]; }
+  return String(Math.floor(x));
+}
+function mmss(ms) { var s = Math.ceil(ms / 1000), m = Math.floor(s / 60); s = s % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+function fuseBase(w) { return 3500 + 9000 * Math.exp(-w / 15); }
+function lenFactor(n) { return n <= 3 ? 0.8 : (n === 4 ? 0.92 : 1); }
+function perWord(len) { return Math.round(10 * len / 5 * 2); } // BASE 10 × len/5 × FUSE mode ×2
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function arcPath(c, r, a0, a1) {
+  var k = Math.PI / 180, x0 = c + r * Math.cos(a0 * k), y0 = c + r * Math.sin(a0 * k), x1 = c + r * Math.cos(a1 * k), y1 = c + r * Math.sin(a1 * k);
+  return 'M' + x0.toFixed(1) + ' ' + y0.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + x1.toFixed(1) + ' ' + y1.toFixed(1);
+}
+var SEGB = [], RINGD = [];
+for (var i = 0; i < NSEG; i++) { var a = -90 + i * 360 / NSEG + 1.2; SEGB.push(arcPath(300, 176, a, a + 360 / NSEG - 2.4)); }
+for (var j = 0; j < NRING; j++) { var b = -90 + j * 360 / NRING + 1; RINGD.push(arcPath(90, 74, b, b + 360 / NRING - 2)); }
+var TILEPOS = ABC.split('').map(function (ch, i) {
+  var ang = (-90 + i * 360 / 26) * Math.PI / 180;
+  return { x: Math.round(300 + 246 * Math.cos(ang) - 22), y: Math.round(300 + 246 * Math.sin(ang) - 25) };
+});
+function colorize(txt, frag, base) {
+  var at = frag ? txt.indexOf(frag) : -1, out = [];
+  for (var i = 0; i < txt.length; i++) out.push({ ch: txt[i], c: (at >= 0 && i >= at && i < at + frag.length) ? '#FFE94A' : base });
+  return out;
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.normalState('A');
+    this.timers = [];
+    this.onKey = this.onKey.bind(this);
+  }
+  normalState(v) {
+    var w = 9, f = 'ECT', ms = fuseBase(w);
+    return {
+      v: v, frag: f, typed: '', fuseS: ms / 1000, tLeft: ms / 1000, w: w, lives: START_LIVES,
+      used: 'ABEILNORSTCDGHMPU', fresh: '', usedWords: {}, wins: 31400, dock: 1,
+      frzUntil: 0, now: Date.now(), phase: 'play', slow: false,
+      popN: 1, okN: 0, badN: 0, bad: false, gainN: 0, gainShow: false, gain: null,
+      clearN: 0, allLit: '', goldOn: false, waveOn: false, heartBump: -1, heartLost: -1, winsN: 0, wordsN: 0
+    };
+  }
+  componentDidMount() {
+    var self = this;
+    window.addEventListener('keydown', this.onKey);
+    this.iv = setInterval(function () { self.tick(); }, 100);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.onKey);
+    clearInterval(this.iv); this.timers.forEach(clearTimeout);
+  }
+  later(fn, ms) { var id = setTimeout(fn, ms); this.timers.push(id); return id; }
+  clearLater() { this.timers.forEach(clearTimeout); this.timers = []; }
+  tick() {
+    var st = this.state, now = Date.now(), up = { now: now };
+    if (st.phase === 'play') {
+      var t = st.tLeft - (st.slow ? 0.025 : 0.1);
+      if (t <= 0) { this.setState(up); this.expire(); return; }
+      up.tLeft = t;
+    }
+    this.setState(up);
+  }
+  serve(w, dock) {
+    var st = this.state, dark = ABC.split('').filter(function (c) { return st.used.indexOf(c) < 0; }), f = null;
+    if (st.used.length >= 21 && Math.random() < 0.75) {
+      var leads = [];
+      dark.forEach(function (c) { (STEER[c] || [c + 'E', 'A' + c]).forEach(function (x) { leads.push(x); }); });
+      if (leads.length) f = pick(leads);
+    }
+    if (!f) f = pick(FRAGS.filter(function (x) { return x !== st.frag; }));
+    var tierMult = f.length >= 3 ? 1.05 : 1, ms = fuseBase(w) * tierMult * dock;
+    return { frag: f, fuseS: ms / 1000, tLeft: ms / 1000, dock: dock, typed: '', popN: st.popN + 1, slow: false, phase: 'play', bad: false };
+  }
+  expire() {
+    var self = this, st = this.state, lives = st.lives - 1;
+    if (lives <= 0) {
+      // run over — FRENZY's wall clock keeps running into the next run
+      this.setState({ phase: 'out', lives: 0, heartLost: 0, slow: false, tLeft: 0 });
+      this.later(function () {
+        var s = self.state, ns = self.serve(0, 1);
+        ns.w = 0; ns.lives = START_LIVES; ns.used = ''; ns.fresh = ''; ns.usedWords = {}; ns.heartLost = -1; ns.wordsN = s.wordsN + 1;
+        self.setState(ns);
+      }, 1400);
+      return;
+    }
+    var ns = this.serve(st.w, 1); ns.lives = lives; ns.heartLost = lives;
+    this.setState(ns);
+    this.later(function () { self.setState({ heartLost: -1 }); }, 600);
+  }
+  frenzyLeft() { return Math.max(0, this.state.frzUntil - Date.now()); }
+  clearStrip(st, up) {
+    var self = this, now = Date.now(), running = st.frzUntil > now;
+    if (!running) up.frzUntil = now + FRENZY_MS; // a re-clear while running does NOT extend
+    var bonus = TRIGGER_WORDS * perWord(5) * FRENZY_MULT;
+    up.wins = (up.wins || st.wins) + bonus;
+    up.gain = { base: fmt(TRIGGER_WORDS * perWord(5)), x5: true, total: fmt(bonus) };
+    if (st.lives < MAX_LIVES) { up.lives = (up.lives || st.lives) + 1; up.heartBump = up.lives - 1; }
+    up.clearN = st.clearN + 1; up.goldOn = true; up.waveOn = true;
+    up.allLit = up.fresh || st.fresh || 'X'; up.used = ''; up.fresh = ''; // the engine resets the strip at once; the view holds it lit for a beat
+    this.later(function () { self.setState({ allLit: '', goldOn: false }); }, 900);
+    this.later(function () { self.setState({ waveOn: false, heartBump: -1 }); }, 1200);
+  }
+  submit() {
+    var self = this, st = this.state, w = st.typed;
+    if (w.length >= 3 && w.indexOf(st.frag) >= 0 && !st.usedWords[w]) {
+      var mult = st.frzUntil > Date.now() ? FRENZY_MULT : 1, base = perWord(w.length), gain = base * mult;
+      var used = st.used, fresh = '';
+      for (var i = 0; i < w.length; i++) if (used.indexOf(w[i]) < 0) { used += w[i]; fresh += w[i]; }
+      var uw = Object.assign({}, st.usedWords); uw[w] = 1;
+      var up = { phase: 'ok', wins: st.wins + gain, winsN: st.winsN + 1, okN: st.okN + 1, gainN: st.gainN + 1, gainShow: true,
+        gain: { base: fmt(base), x5: mult > 1, total: fmt(gain) }, used: used, fresh: fresh, usedWords: uw, w: st.w + 1, wordsN: st.wordsN + 1 };
+      if (used.length >= 26) this.clearStrip(st, up);
+      this.setState(up);
+      this.later(function () { self.setState({ gainShow: false }); }, 1200);
+      this.later(function () { self.setState(self.serve(self.state.w, lenFactor(w.length))); }, 320);
+    } else {
+      this.setState({ badN: st.badN + 1, bad: true });
+      this.later(function () { self.setState({ bad: false }); }, 380);
+    }
+  }
+  onKey(e) {
+    var st = this.state;
+    if (st.phase !== 'play' || e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (k === 'Enter') { e.preventDefault(); this.submit(); return; }
+    if (k === 'Backspace') { e.preventDefault(); this.setState({ typed: st.typed.slice(0, -1), bad: false }); return; }
+    if (/^[a-zA-Z]$/.test(k) && st.typed.length < 14) { e.preventDefault(); this.setState({ typed: st.typed + k.toUpperCase(), bad: false }); }
+  }
+  renderVals() {
+    var self = this, st = this.state, now = Math.max(st.now, Date.now());
+    var frzLeft = Math.max(0, st.frzUntil - now), frzOn = frzLeft > 0;
+    var playing = st.phase === 'play' || st.phase === 'ok';
+    var clutch = st.phase === 'play' && st.tLeft <= CLUTCH_S;
+    var warm = st.phase === 'play' && st.tLeft <= 4;
+    var f = st.phase === 'out' ? 0 : Math.max(0, Math.min(1, st.tLeft / st.fuseS));
+    var hotC = clutch ? '#FF3D7F' : (warm ? '#FFC23D' : '#FFE94A');
+    var lit = Math.ceil(f * NSEG - 0.001);
+    var dark = 26 - (st.allLit ? 26 : st.used.length);
+    var ringLit = frzOn ? Math.ceil(frzLeft / FRENZY_MS * NRING - 0.001) : Math.round((26 - dark) / 26 * NRING);
+    var ringC = frzOn ? '#FFC23D' : '#B04BFF';
+
+    var tileFor = function (ch) {
+      var on = !!st.allLit || st.used.indexOf(ch) >= 0, nw = on && (st.allLit || st.fresh).indexOf(ch) >= 0, inFrag = st.frag.indexOf(ch) >= 0 && !on;
+      return {
+        ch: ch, bg: on ? (frzOn ? '#FFC23D' : '#FFE94A') : '#1a0b2e', c: on ? '#000' : (inFrag ? '#D88BFF' : '#5d4a78'),
+        sh: on ? '4px 4px 0 #000' : '0 0 0 #000', cls: nw ? 'fz-lit' : '', ty: on ? -4 : 0
+      };
+    };
+    var tiles = ABC.split('').map(tileFor);
+    var tilesB = ABC.split('').map(function (ch, i) { var t = tileFor(ch); t.x = TILEPOS[i].x; t.y = TILEPOS[i].y; return t; });
+
+    var hearts = [];
+    for (var k = 0; k < MAX_LIVES; k++) {
+      var full = k < st.lives;
+      hearts.push({ fill: full ? '#FF3D7F' : '#12071f', hl: full ? 1 : 0, cls: st.heartBump === k ? 'fz-bump' : (st.heartLost === k ? 'fz-noA' : (full && st.lives === 1 ? 'fz-beatS' : '')) });
+    }
+
+    var baseC = st.phase === 'ok' ? '#5CFF8A' : (st.bad ? '#FF3D7F' : '#fff');
+    var typedFB = st.typed.length > 10 ? 52 : 72;
+    var g = st.gain || { base: '', x5: false, total: '' };
+    var secs = Math.max(0, st.tLeft);
+    var stripFull = st.allLit ? 26 : st.used.length;
+
+    var badgeTop, badgeTopC, badgeBig, badgeBigC, badgeBigF, badgeSub, badgeSubC;
+    if (frzOn) {
+      badgeTop = 'FRENZY'; badgeTopC = '#000';
+      badgeBig = mmss(frzLeft); badgeBigC = '#fff'; badgeBigF = 46;
+      badgeSub = st.phase === 'out' || st.w < 3 ? 'STILL ON · REAL TIME' : 'EVERY WORD ×5'; badgeSubC = '#000';
+    } else {
+      badgeTop = 'LIGHT ALL 26'; badgeTopC = '#c9b8e8';
+      badgeBig = dark + ' LEFT'; badgeBigC = '#D88BFF'; badgeBigF = 36;
+      badgeSub = '→ 5 MIN OF ×5 WINS'; badgeSubC = '#8a76ad';
+    }
+
+    return {
+      isA: st.v === 'A', isB: st.v === 'B',
+      abA: st.v === 'A' ? '#FFE94A' : '#1a0b2e', abB: st.v === 'B' ? '#FFE94A' : '#1a0b2e',
+      pickA: function () { self.setState({ v: 'A' }); }, pickB: function () { self.setState({ v: 'B' }); },
+      frzWash: frzOn ? 1 : 0, frzFrame: frzOn ? 1 : 0, frzOn: frzOn,
+      clutch: clutch,
+      goldOn: st.goldOn, goldCls: 'fz-gold',
+      hearts: hearts,
+      words: st.w, wordsCls: st.wordsN ? (st.wordsN % 2 ? 'fz-popA' : 'fz-popB') : '',
+      plateShk: clutch ? 'fz-shk' : '',
+      popCls: st.popN % 2 ? 'fz-popA' : 'fz-popB',
+      plateFill: clutch ? '#3a0b24' : (frzOn ? '#3a2408' : '#2a1748'),
+      plateEdge: clutch ? '#FF3D7F' : (frzOn ? '#FFC23D' : '#B04BFF'),
+      frag: st.phase === 'out' ? '—' : st.frag,
+      fragF: st.frag.length > 2 ? 150 : 170, fragFB: st.frag.length > 2 ? 104 : 124,
+      fragC: clutch ? '#FF3D7F' : '#FFE94A',
+      typedL: colorize(st.typed, st.frag, baseC), typedFB: typedFB,
+      inCls: st.badN ? (st.badN % 2 ? 'fz-noA' : 'fz-noB') : '',
+      okGlowCls: st.okN ? (st.okN % 2 ? 'fz-glowA' : 'fz-glowB') : '',
+      gainShow: st.gainShow, gainCls: st.gainN % 2 ? 'fz-upA' : 'fz-upB',
+      gainX5: g.x5, gainBase: g.base, gainText: g.total, gainBg: g.x5 ? '#FFC23D' : '#5CFF8A',
+      fuseF: f.toFixed(3), wickC: hotC,
+      sparkX: Math.round(f * 1306), sparkS: clutch ? 56 : 40, sparkO: clutch ? -28 : -20, sparkT: clutch ? -2 : 6,
+      sparkC: clutch ? '#FF3D7F' : '#FFC23D',
+      secText: st.phase === 'out' ? 'OUT' : secs.toFixed(1), secC: clutch ? '#FF3D7F' : (warm ? '#FFC23D' : '#c9b8e8'),
+      secF: clutch ? 40 : 22, secFB: clutch ? 44 : 26,
+      dockOn: st.dock < 1 && st.phase === 'play', dockText: '×' + st.dock,
+      segsB: SEGB.map(function (d, i) { return { d: d, c: hotC, o: i < lit ? 1 : 0 }; }),
+      sparkDeg: f * 360, sparkOB: clutch ? -28 : -20, sparkTB: clutch ? -204 : -196,
+      tiles: tiles, tilesB: tilesB,
+      stripCls: st.goldOn ? 'fz-bump' : '',
+      litText: stripFull + ' / 26', stripC: frzOn ? '#FFC23D' : '#FFE94A',
+      ringA: RINGD.map(function (d, i) { return { d: d, c: ringC, o: i < ringLit ? 1 : 0 }; }),
+      badgeBg: frzOn ? '#FFC23D' : '#12071f',
+      badgeCls: st.clearN ? (st.clearN % 2 ? 'fz-slam' : 'fz-popB') : '',
+      badgeTop: badgeTop, tabLine: frzOn ? 'EVERY WORD PAYS ×5' : 'LIGHT ALL 26 LETTERS',
+      secL: f > 0.5 ? -170 : 34, secAl: f > 0.5 ? 'right' : 'left',
+      badgeTopC: badgeTopC,
+      badgeBig: badgeBig, badgeBigC: badgeBigC, badgeBigF: badgeBigF, badgeSub: badgeSub, badgeSubC: badgeSubC,
+      x5C: frzOn ? '#FFE94A' : '#3a2160', x5Cls: frzOn ? 'fz-beatS' : '',
+      chipBg: frzOn ? '#FF3D7F' : '#1a0b2e',
+      ringBig: frzOn ? mmss(frzLeft) : String(dark), ringBigF: frzOn ? 38 : 50,
+      ringSub: frzOn ? (st.phase === 'out' || st.w < 3 ? 'STILL ON' : 'LEFT') : 'TO GO',
+      waveOn: st.waveOn, waveCls: 'fz-wave',
+      winsText: fmt(st.wins), winsBg: frzOn ? '#FFC23D' : '#FFE94A', winsCls: st.winsN ? (st.winsN % 2 ? 'fz-popA' : 'fz-popB') : '',
+      demoNormal: function () { self.clearLater(); var ns = self.normalState(self.state.v); ns.wins = self.state.wins; self.setState(ns); },
+      demoClutch: function () {
+        self.clearLater();
+        var s = self.state;
+        if (s.phase !== 'play') { var ns = self.serve(s.w, 1); ns.lives = Math.max(1, s.lives); self.setState(ns); }
+        self.setState({ tLeft: CLUTCH_S, slow: true, typed: '', bad: false, phase: 'play' });
+      },
+      demoFrenzy: function () {
+        self.clearLater();
+        var s = self.state, up = { used: ABC, fresh: ABC.split('').filter(function (c) { return s.used.indexOf(c) < 0; }).join(''), gainShow: true, gainN: s.gainN + 1, winsN: s.winsN + 1 };
+        if (s.phase !== 'play') { Object.assign(up, self.serve(s.w, 1)); up.lives = Math.max(1, s.lives); }
+        self.clearStrip(s, up);
+        self.setState(up);
+        self.later(function () { self.setState({ gainShow: false }); }, 1200);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

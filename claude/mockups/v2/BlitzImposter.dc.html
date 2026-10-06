@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blitz and Imposter</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes twLandA{0%{transform:translateY(-14px) scale(1.12) rotate(-2deg)}60%{transform:translateY(3px) scale(.97)}100%{transform:translateY(0) scale(1)}}
+@keyframes twLandB{0%{transform:translateY(-14px) scale(1.12) rotate(2deg)}60%{transform:translateY(3px) scale(.97)}100%{transform:translateY(0) scale(1)}}
+@keyframes twRing{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.5);opacity:0}}
+@keyframes twUpA{0%{transform:scale(1.3) rotate(-3deg)}100%{transform:scale(1)}}
+@keyframes twUpB{0%{transform:scale(1.3) rotate(3deg)}100%{transform:scale(1)}}
+@keyframes twNoA{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes twNoB{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes twBumpA{0%{transform:scale(1)}35%{transform:scale(1.22) rotate(-3deg)}100%{transform:scale(1)}}
+@keyframes twBumpB{0%{transform:scale(1)}35%{transform:scale(1.22) rotate(3deg)}100%{transform:scale(1)}}
+@keyframes twSlam{0%{transform:scale(1.3) rotate(-4deg)}100%{transform:scale(1) rotate(-2deg)}}
+@keyframes twFlipA{0%{transform:scale(1.05) rotate(-1deg)}100%{transform:scale(1)}}
+@keyframes twFlipB{0%{transform:scale(1.05) rotate(1deg)}100%{transform:scale(1)}}
+@keyframes twStamp{0%{transform:scale(1.4) rotate(-4deg)}100%{transform:scale(1) rotate(-9deg)}}
+@keyframes twSlide{0%{transform:translateX(16px)}100%{transform:translateX(0)}}
+@keyframes twAct{0%,100%{transform:translate(0,0)}50%{transform:translate(-3px,-4px)}}
+@keyframes twBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes twHot{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes twPip{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes twNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}
+.tw-landA{animation:twLandA .42s cubic-bezier(.2,1.3,.4,1) both}
+.tw-landB{animation:twLandB .42s cubic-bezier(.2,1.3,.4,1) both}
+.tw-ring{animation:twRing .5s ease-out forwards;opacity:0}
+.tw-upA{animation:twUpA .3s cubic-bezier(.2,1.4,.4,1)}
+.tw-upB{animation:twUpB .3s cubic-bezier(.2,1.4,.4,1)}
+.tw-noA{animation:twNoA .35s linear}
+.tw-noB{animation:twNoB .35s linear}
+.tw-bumpA{animation:twBumpA .32s cubic-bezier(.2,1.4,.4,1)}
+.tw-bumpB{animation:twBumpB .32s cubic-bezier(.2,1.4,.4,1)}
+.tw-slam{animation:twSlam .45s cubic-bezier(.2,1.2,.4,1) both}
+.tw-flipA{animation:twFlipA .4s cubic-bezier(.2,1.2,.4,1) both}
+.tw-flipB{animation:twFlipB .4s cubic-bezier(.2,1.2,.4,1) both}
+.tw-stamp{animation:twStamp .4s cubic-bezier(.2,1.3,.4,1) both}
+.tw-slide{animation:twSlide .35s cubic-bezier(.2,1.2,.4,1) both}
+.tw-act{animation:twAct .9s ease-in-out infinite}
+.tw-caret{animation:twBlink .9s steps(1) infinite}
+.tw-hot{animation:twHot .4s ease-in-out infinite}
+.tw-pip{animation:twPip .3s cubic-bezier(.2,1.4,.4,1) both}
+.tw-nudge{animation:twNudge .8s ease-in-out infinite}
+.tw-btn{transition:transform .08s,box-shadow .08s}
+.tw-btn:hover{transform:translate(-2px,-2px)}
+.tw-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+.tw-plate{transition:transform .1s}
+.tw-plate:hover{transform:translate(-3px,-3px)}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace; color: #fff">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px); pointer-events: none"></div>
+
+<!-- ============================== BLITZ ============================== -->
+<sc-if value="{{isBlitz}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; inset: 0">
+
+<!-- category band -->
+<div style="position: absolute; left: -40px; right: -40px; top: 70px; height: 168px; background: repeating-linear-gradient(90deg, #1a0b2e 0 60px, #12071f 60px 120px); border-top: 8px solid #000; border-bottom: 8px solid #000; transform: rotate(-1.5deg)"></div>
+<div style="position: absolute; left: -40px; right: -40px; top: 244px; height: 6px; background: #3DA8FF; transform: rotate(-1.5deg)"></div>
+<div style="position: absolute; left: 38px; top: 92px; width: 22px; height: 138px; background: #3DA8FF; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: rotate(-1.5deg) skewX(-14deg)"></div>
+<div style="position: absolute; left: 868px; top: 80px; width: 6px; height: 160px; background: #000; transform: rotate(-1.5deg) skewX(-14deg)"></div>
+
+<!-- AI BUILT ribbon -->
+<div style="position: absolute; left: 92px; top: 58px; height: 28px; padding: 0 12px; display: flex; align-items: center; gap: 7px; background: #2EFFE0; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: rotate(-1.5deg) skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 14px; color: #000">
+<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M10 1 L12.5 7.5 L19 10 L12.5 12.5 L10 19 L7.5 12.5 L1 10 L7.5 7.5 Z" fill="#000"></path></svg>AI BUILT</div>
+
+<!-- category -->
+<div style="position: absolute; left: 92px; top: 84px; width: 760px; height: 150px; display: flex; flex-direction: column; justify-content: center; transform: rotate(-1.5deg)">
+<sc-for list="{{catLines}}" as="ln" hint-placeholder-count="1">
+<div style="font-family: 'Bungee', sans-serif; font-size: {{catF}}px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 10px #000; paint-order: stroke fill; text-shadow: 8px 8px 0 #000; white-space: nowrap">{{ln.t}}</div>
+</sc-for>
+</div>
+
+<!-- found / total -->
+<div style="position: absolute; right: 56px; top: 86px; width: 420px; height: 150px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; transform: rotate(-1.5deg)">
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #c9b8e8; margin-right: 6px">FOUND</span>
+<div style="display: flex; align-items: baseline">
+<span class="{{foundCls}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 112px; line-height: 1; color: #2EFFE0; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 6px 6px 0 #000">{{found}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 56px; line-height: 1; color: #c9b8e8; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000">/{{total}}</span>
+</div>
+</div>
+
+<!-- timer -->
+<div style="position: absolute; left: 40px; top: 286px; width: 1286px; height: 30px">
+<div style="position: absolute; left: 96px; right: 0; top: 2px; height: 26px; box-sizing: border-box; background: #08030f; border: 5px solid #000; box-shadow: 4px 4px 0 #000; overflow: hidden">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: {{tBarC}}; transform-origin: 0 50%; transform: scaleX({{tFrac}})"></div>
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, transparent 0 40px, #000 40px 44px); opacity: .5"></div>
+</div>
+<div class="{{tHotCls}}" style="position: absolute; left: 0; top: -12px; width: 86px; height: 52px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: {{tBoxBg}}; border: 5px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 34px; color: #000">{{tSec}}</div>
+</div>
+
+<!-- answer tiles -->
+<div style="position: absolute; left: 44px; top: 334px; width: 1280px; height: 206px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="12">
+<div class="{{t.cls}}" style="position: absolute; left: {{t.x}}px; top: {{t.y}}px; width: {{t.w}}px; height: 56px">
+<sc-if value="{{t.ring}}" hint-placeholder-val="{{ false }}"><div class="tw-ring" style="position: absolute; inset: -10px; border: 6px solid {{t.ringC}}; transform: skewX(-10deg)"></div></sc-if>
+<div style="position: absolute; inset: 0; box-sizing: border-box; transform: skewX(-10deg); background: {{t.bg}}; border: 4px solid #000; box-shadow: 5px 5px 0 #000; display: flex; overflow: hidden">
+<div style="flex: none; width: {{t.tagW}}px; box-sizing: border-box; background: {{t.tagBg}}; border-right: {{t.tagB}}px solid #000; display: flex; align-items: center; justify-content: center"><span style="transform: skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: {{t.tagC}}">{{t.tag}}</span></div>
+<div style="position: relative; flex: 1; display: flex; align-items: center; justify-content: center">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 5px; background: {{t.hl}}"></div>
+<span style="transform: skewX(10deg); font-family: 'Bungee', sans-serif; font-size: 27px; line-height: 1; color: {{t.wc}}; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap">{{t.word}}</span>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<!-- input row -->
+<sc-if value="{{bzPlay}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 263px; width: 840px; top: 548px; height: 78px; display: flex; justify-content: center; align-items: center">
+<div style="position: absolute; inset: 0; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; border-bottom: 9px solid {{bzLineC}}; box-shadow: 6px 6px 0 #000; transform: skewX(-8deg)"></div>
+<div class="{{bzInCls}}" style="position: relative; display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: 64px; line-height: 1; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">
+<span style="color: {{bzInC}}">{{bzTyped}}</span>
+<span class="tw-caret" style="display: inline-block; width: 10px; height: 56px; margin-left: 6px; background: #FFE94A; border: 3px solid #000; box-sizing: border-box"></span>
+<span style="margin-left: 10px; color: #c9b8e8">{{bzGhost}}</span>
+<span style="margin-left: 14px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 14px; color: #fff; -webkit-text-stroke: 0; text-shadow: none; background: #000; border: 3px solid #000; visibility: {{bzEnterVis}}">ENTER ↵</span>
+</div>
+<sc-if value="{{bzRej}}" hint-placeholder-val="{{ false }}">
+<div class="tw-slide" style="position: absolute; right: 26px; top: 18px; height: 38px; padding: 0 12px; display: flex; align-items: center; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">{{bzRejText}}</div>
+</sc-if>
+<sc-if value="{{bzGainShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{bzGainCls}}" style="position: absolute; right: 26px; top: 17px; height: 40px; padding: 0 12px; display: flex; align-items: center; gap: 8px; background: {{bzGainBg}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 26px; color: #000">{{bzGainText}}<span style="font-size: 14px">{{bzGainSub}}</span></div>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- time up row (in the input slot, never centre-screen) -->
+<sc-if value="{{bzUp}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 233px; width: 900px; top: 546px; height: 80px; display: flex; justify-content: center; align-items: center; gap: 30px">
+<span class="tw-slam" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 62px; line-height: 1; color: #FF3D7F; -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">TIME</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 30px; color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill">+{{roundWins}}<span style="font-size: 16px; color: #c9b8e8; -webkit-text-stroke: 0"> WINS</span></span>
+<button class="tw-btn" onClick="{{nextRound}}" style="height: 70px; padding: 0 30px; background: #FFE94A; border: 6px solid #000; box-shadow: 7px 7px 0 #000; cursor: pointer; font-family: 'Bungee', sans-serif; font-size: 30px; color: #000">{{nextLabel}}</button>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<!-- ============================== IMPOSTER ============================== -->
+<sc-if value="{{isImp}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0">
+
+<!-- structure: rail behind the plates -->
+<div style="position: absolute; left: 594px; top: 66px; width: 12px; height: 540px; background: #000"></div>
+<div style="position: absolute; left: 598px; top: 66px; width: 4px; height: 540px; background: #2a1748"></div>
+
+<!-- secret card -->
+<div class="{{cardCls}}" style="position: absolute; left: 50px; top: 68px; width: 500px; height: 330px; perspective: 900px">
+<sc-if value="{{crewCard}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; inset: 0; box-sizing: border-box; background: #FFE94A; border: 6px solid #000; box-shadow: 11px 11px 0 #000; overflow: hidden">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 30px, rgba(0,0,0,.06) 30px 36px)"></div>
+<div style="position: absolute; left: 14px; right: 14px; top: 14px; bottom: 14px; border: 4px solid #000"></div>
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 58px; background: #000; display: flex; align-items: center; justify-content: space-between; padding: 0 24px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; color: #FFE94A">YOUR WORD</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #c9b8e8">{{imRoundText}}</span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 70px; bottom: 74px; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{secretF}}px; line-height: 1; color: #fff; -webkit-text-stroke: 10px #000; paint-order: stroke fill; text-shadow: 8px 8px 0 #000">{{secret}}</span>
+</div>
+<div style="position: absolute; left: 30px; bottom: 30px; height: 40px; padding: 0 14px; display: flex; align-items: center; background: #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 20px; color: #2EFFE0">{{secretCat}}</div>
+<svg viewBox="0 0 60 60" width="60" height="60" style="position: absolute; right: -6px; bottom: -6px" aria-hidden="true"><path d="M60 0 L60 60 L0 60 Z" fill="#000"></path><path d="M54 12 L54 54 L12 54 Z" fill="#F2A900" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+</div>
+</sc-if>
+<sc-if value="{{impCard}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; box-sizing: border-box; background: #FF3D7F; border: 6px solid #000; box-shadow: 11px 11px 0 #000; overflow: hidden">
+<div style="position: absolute; left: -40px; right: -40px; top: 62px; height: 40px; background: repeating-linear-gradient(-45deg, #000 0 22px, #FF3D7F 22px 44px); border-top: 4px solid #000; border-bottom: 4px solid #000"></div>
+<div style="position: absolute; left: -40px; right: -40px; bottom: 62px; height: 40px; background: repeating-linear-gradient(-45deg, #000 0 22px, #FF3D7F 22px 44px); border-top: 4px solid #000; border-bottom: 4px solid #000"></div>
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 58px; background: #000; display: flex; align-items: center; justify-content: space-between; padding: 0 24px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; color: #FF3D7F">YOU ARE THE</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #c9b8e8">{{imRoundText}}</span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 104px; bottom: 104px; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Bungee', sans-serif; font-size: 82px; line-height: 1; color: #fff; -webkit-text-stroke: 10px #000; paint-order: stroke fill; text-shadow: 7px 7px 0 #000">IMPOSTER</span>
+</div>
+<div style="position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center">
+<div style="height: 40px; padding: 0 14px; display: flex; align-items: center; gap: 10px; background: #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 20px; color: #2EFFE0"><span style="font-size: 14px; color: #c9b8e8">HINT</span>{{secretCat}}</div>
+</div>
+</div>
+</sc-if>
+</div>
+
+<!-- under-card action slot -->
+<div style="position: absolute; left: 50px; width: 520px; top: 424px; height: 188px">
+<sc-if value="{{imTyping}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 0; top: 0; height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 10px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 16px; color: #000">YOUR CLUE<span class="{{imSecCls}}" style="color: #FF3D7F; -webkit-text-stroke: 0">{{imSec}}</span></div>
+<div class="{{imInCls}}" style="position: absolute; left: 0; top: 40px; display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: 54px; line-height: 1; -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">
+<span style="color: {{imInC}}">{{imTyped}}</span>
+<span class="tw-caret" style="display: inline-block; width: 9px; height: 50px; margin-left: 6px; background: #FFE94A; border: 3px solid #000; box-sizing: border-box"></span>
+<span style="margin-left: 14px; padding: 2px 8px; font-family: 'Space Mono', monospace; font-size: 14px; color: #c9b8e8; -webkit-text-stroke: 0; text-shadow: none; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; visibility: {{imEnterVis}}">ENTER ↵</span>
+</div>
+<sc-if value="{{imRej}}" hint-placeholder-val="{{ false }}">
+<div class="tw-slide" style="position: absolute; left: 190px; top: 0; height: 30px; padding: 0 10px; display: flex; align-items: center; background: #FF3D7F; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 16px; color: #000">{{imRejText}}</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{imWait}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; top: 18px; display: flex; align-items: center; gap: 16px">
+<svg class="tw-nudge" viewBox="0 0 70 44" width="62" height="40" aria-hidden="true"><path d="M4 16 L44 16 L44 4 L66 22 L44 40 L44 28 L4 28 Z" fill="#2EFFE0" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 46px; line-height: 1; color: #2EFFE0; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000">{{waitName}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">{{waitSub}}</span>
+</div>
+</sc-if>
+<sc-if value="{{imVote}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; top: 14px; display: flex; align-items: center; gap: 18px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 62px; line-height: 1; color: #FF3D7F; -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">{{voteHead}}</span>
+<svg class="tw-nudge" viewBox="0 0 70 44" width="76" height="48" aria-hidden="true" style="visibility: {{voteArrowVis}}"><path d="M4 16 L44 16 L44 4 L66 22 L44 40 L44 28 L4 28 Z" fill="#FF3D7F" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>
+<span class="{{imSecCls}}" style="font-family: 'Bungee', sans-serif; font-size: 40px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{imSec}}</span>
+</div>
+</sc-if>
+<sc-if value="{{imReveal}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; top: 4px; right: 0; display: flex; flex-direction: column; gap: 12px">
+<span class="tw-slam" style="align-self: flex-start; display: inline-block; font-family: 'Bungee', sans-serif; font-size: 44px; line-height: 1; color: {{resultC}}; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000">{{resultText}}</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 34px">
+<sc-for list="{{gains}}" as="g" hint-placeholder-count="2">
+<div class="tw-slide" style="height: 34px; padding: 0 10px; display: flex; align-items: center; gap: 7px; background: {{g.bg}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 20px; color: #000; animation-delay: {{g.d}}s">{{g.amt}}<span style="font-size: 13px">{{g.why}}</span></div>
+</sc-for>
+</div>
+<button class="tw-btn" onClick="{{imNext}}" style="align-self: flex-start; height: 54px; padding: 0 24px; background: #FFE94A; border: 5px solid #000; box-shadow: 6px 6px 0 #000; cursor: pointer; font-family: 'Bungee', sans-serif; font-size: 24px; color: #000">NEXT ROUND</button>
+</div>
+</sc-if>
+</div>
+
+<!-- player plates -->
+<sc-for list="{{plates}}" as="p" hint-placeholder-count="6">
+<div class="{{p.actCls}}" style="position: absolute; left: {{p.x}}px; top: {{p.y}}px; width: 336px; height: 156px">
+<div class="{{p.hovCls}}" onClick="{{p.vote}}" style="position: absolute; inset: 0; box-sizing: border-box; background: {{p.bg}}; border: {{p.bw}}px solid {{p.bd}}; box-shadow: 7px 7px 0 {{p.sh}}; cursor: {{p.cur}}; overflow: hidden; opacity: {{p.op}}">
+<div style="position: absolute; left: 12px; top: 10px; width: 62px; height: 62px; box-sizing: border-box; background: #2a1748; border: 4px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 12px; background: {{p.stripe}}; border-bottom: 3px solid #000"></div>
+<span style="position: relative; top: 5px; font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{p.init}}</span>
+</div>
+<span style="position: absolute; left: 88px; top: 14px; font-family: 'Bungee', sans-serif; font-size: 24px; line-height: 1; color: {{p.nameC}}">{{p.name}}</span>
+<span style="position: absolute; left: 88px; top: 46px; font-family: 'Bungee', sans-serif; font-size: 14px; line-height: 1; color: #8a76ad">{{p.sub}}</span>
+<div style="position: absolute; right: 12px; top: 12px; display: flex; gap: 5px">
+<sc-for list="{{p.pips}}" as="v" hint-placeholder-count="0">
+<span class="tw-pip" style="width: 26px; height: 26px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: {{v.bg}}; border: 3px solid #000; box-shadow: 2px 2px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">{{v.i}}</span>
+</sc-for>
+</div>
+<div style="position: absolute; left: 12px; right: 12px; top: 84px; height: 58px; box-sizing: border-box; background: #08030f; border: 4px solid #000; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{p.clueF}}px; line-height: 1; color: {{p.clueC}}; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap">{{p.clue}}</span>
+<span class="tw-caret" style="display: inline-block; width: 6px; height: 30px; margin-left: 4px; background: #FFE94A; visibility: {{p.caretVis}}"></span>
+<div style="position: absolute; left: 0; bottom: 0; height: 6px; width: 100%; background: #FF3D7F; transform-origin: 0 50%; transform: scaleX({{p.tFrac}})"></div>
+</div>
+</div>
+<sc-if value="{{p.mine}}" hint-placeholder-val="{{ false }}">
+<div class="tw-pip" style="position: absolute; left: 100px; top: -15px; height: 26px; padding: 0 8px; display: flex; align-items: center; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000">YOUR VOTE</div>
+</sc-if>
+<sc-if value="{{p.stamp}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 46px; display: flex; justify-content: center; pointer-events: none">
+<div class="tw-stamp" style="padding: 4px 16px; background: {{p.stampBg}}; border: 5px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: {{p.stampF}}px; line-height: 1.1; color: #000">{{p.stampText}}</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+
+</div>
+</sc-if>
+
+<!-- ============================== TOP BAR ============================== -->
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 50px; box-sizing: border-box; background: #12071f; border-bottom: 5px solid #000">
+<div style="position: absolute; left: 14px; top: 0; height: 45px; display: flex; align-items: center; gap: 10px">
+<sc-for list="{{tabs}}" as="tb" hint-placeholder-count="2">
+<button class="tw-btn" onClick="{{tb.pick}}" style="height: 32px; padding: 0 14px; background: {{tb.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-12deg); cursor: pointer; font-family: 'Bungee', sans-serif; font-size: 17px; color: {{tb.c}}">{{tb.label}}</button>
+</sc-for>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 45px; display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+<span style="height: 30px; padding: 0 14px; display: flex; align-items: center; gap: 6px; background: {{s.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 16px; color: {{s.c}}">{{s.t}}<span style="font-size: 20px">{{s.n}}</span></span>
+</sc-for>
+</div>
+<div style="position: absolute; right: 16px; top: 0; height: 45px; display: flex; align-items: center; gap: 10px">
+<sc-if value="{{isBlitz}}" hint-placeholder-val="{{ true }}">
+<span style="height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 6px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #2EFFE0"><span style="font-size: 13px; color: #c9b8e8">BASE</span>{{baseText}}<span style="font-size: 13px; color: #c9b8e8">/ANSWER</span></span>
+</sc-if>
+<span class="{{walletCls}}" style="height: 32px; padding: 0 12px; display: flex; align-items: center; gap: 6px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #000">{{walletText}}<span style="font-size: 13px">WINS</span></span>
+</div>
+</div>
+
+<!-- demo controls -->
+<div style="position: absolute; left: 14px; bottom: 10px; display: flex; align-items: center; gap: 8px">
+<span style="font-size: 13px; color: #5d4a78">DEMO</span>
+<sc-for list="{{demos}}" as="d" hint-placeholder-count="2">
+<button class="tw-btn" onClick="{{d.go}}" style="height: 30px; padding: 0 10px; background: {{d.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">{{d.t}}</button>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+var RC = { com: '#A9B4C8', rare: '#3D8BFF', epic: '#B04BFF', leg: '#FFC23D', myth: '#FF3D7F' };
+var RN = { com: 'COMMON', rare: 'RARE', epic: 'EPIC', leg: 'LEGENDARY', myth: 'MYTHIC' };
+var RM = { com: 1, rare: 2, epic: 3, leg: 5, myth: 10 };
+var BASE = 40, RTIME = 30, ROUNDS = 3;
+function tierList(groups) {
+  var out = [];
+  ['com', 'rare', 'epic', 'leg', 'myth'].forEach(function (r) { (groups[r] || []).forEach(function (w) { out.push({ w: w, k: w.replace(/ /g, ''), r: r }); }); });
+  return out;
+}
+var CATS = [
+  { name: ['FRUITS'], list: tierList({
+    com: ['APPLE', 'BANANA', 'ORANGE', 'GRAPE', 'STRAWBERRY', 'MANGO', 'PINEAPPLE', 'WATERMELON', 'PEACH', 'PEAR', 'CHERRY', 'LEMON', 'BLUEBERRY', 'KIWI', 'LIME', 'PLUM', 'COCONUT', 'RASPBERRY', 'AVOCADO', 'APRICOT'],
+    rare: ['CANTALOUPE', 'GRAPEFRUIT', 'PAPAYA', 'BLACKBERRY', 'POMEGRANATE', 'NECTARINE', 'TANGERINE', 'CRANBERRY', 'FIG', 'HONEYDEW', 'CLEMENTINE'],
+    epic: ['GUAVA', 'PASSIONFRUIT', 'DATE', 'LYCHEE', 'PERSIMMON', 'DRAGONFRUIT', 'STARFRUIT', 'KUMQUAT', 'QUINCE', 'GOOSEBERRY'],
+    leg: ['DURIAN', 'JACKFRUIT', 'RAMBUTAN', 'MULBERRY', 'ELDERBERRY'],
+    myth: ['MANGOSTEEN', 'LONGAN', 'SOURSOP', 'CHERIMOYA'] }) },
+  { name: ['EUROPEAN', 'COUNTRIES'], list: tierList({
+    com: ['FRANCE', 'GERMANY', 'ITALY', 'SPAIN', 'PORTUGAL', 'GREECE', 'IRELAND', 'POLAND', 'SWEDEN', 'NORWAY', 'NETHERLANDS', 'BELGIUM', 'SWITZERLAND', 'AUSTRIA', 'DENMARK', 'FINLAND', 'UKRAINE', 'RUSSIA', 'UNITED KINGDOM'],
+    rare: ['CROATIA', 'HUNGARY', 'ICELAND', 'CZECHIA', 'ROMANIA', 'SERBIA', 'BULGARIA', 'SLOVAKIA'],
+    epic: ['SLOVENIA', 'ESTONIA', 'LATVIA', 'LITHUANIA', 'BELARUS', 'ALBANIA', 'MONACO', 'LUXEMBOURG', 'MALTA'],
+    leg: ['MOLDOVA', 'MONTENEGRO', 'BOSNIA', 'NORTH MACEDONIA', 'CYPRUS'],
+    myth: ['ANDORRA', 'LIECHTENSTEIN', 'SAN MARINO', 'VATICAN CITY'] }) },
+  { name: ['ZODIAC SIGNS'], list: tierList({
+    com: ['ARIES', 'TAURUS', 'GEMINI', 'CANCER', 'LEO', 'VIRGO'],
+    rare: ['LIBRA', 'SCORPIO', 'PISCES'],
+    epic: ['AQUARIUS', 'CAPRICORN'],
+    leg: ['SAGITTARIUS'] }) }
+];
+var PRE = ['APPLE', 'BANANA', 'MANGO', 'KIWI', 'CHERRY', 'LEMON', 'GRAPE', 'PEACH', 'COCONUT', 'PAPAYA', 'FIG', 'DRAGONFRUIT'];
+
+var PLAYERS = [
+  { name: 'ANDY', init: 'A', rar: 'leg' }, { name: 'NOVA', init: 'N', rar: 'epic' }, { name: 'KAIJU', init: 'K', rar: 'rare' },
+  { name: 'PIXEL', init: 'P', rar: 'com' }, { name: 'MOTH', init: 'M', rar: 'myth' }, { name: 'ZED', init: 'Z', rar: 'rare' }
+];
+var ORDER = [1, 2, 0, 3, 4, 5];
+var WORDS = [
+  { w: 'PIZZA', cat: 'FOOD', clues: ['CHEESE', 'SLICE', 'OVEN', 'DELIVERY', 'PEPPERONI', 'CRUST'], vague: ['DINNER', 'HOT', 'TASTY'] },
+  { w: 'SHARK', cat: 'ANIMALS', clues: ['FINS', 'OCEAN', 'TEETH', 'JAWS', 'BITE', 'GILLS'], vague: ['WILD', 'BIG', 'SCARY'] },
+  { w: 'GUITAR', cat: 'MUSIC', clues: ['STRINGS', 'STRUM', 'FRET', 'ROCK', 'PICK', 'AMP'], vague: ['LOUD', 'STAGE', 'SOUND'] }
+];
+var CLUE_T = 12, VOTE_T = 12;
+
+function fmt(x) {
+  var S = [['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)).replace(/\.0$/, '') + S[i][0]; }
+  return String(Math.floor(x));
+}
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function winOf(r) { return BASE * RM[r]; }
+function tileW(word, tagW) { return tagW + 30 + word.length * 23; }
+// pack tiles into 3 rows of 1280px; returns positions or null if it overflows
+function pack(items) {
+  var x = 0, row = 0, out = [], GAP = 20, W = 1270, RH = 74;
+  for (var i = 0; i < items.length; i++) {
+    var w = items[i].w;
+    if (x > 0 && x + w > W) { row++; x = 0; }
+    if (row > 2 || w > W) return null;
+    out.push({ x: x + 8, y: row * RH });
+    x += w + GAP;
+  }
+  return out;
+}
+function tileOf(e, cls) {
+  var tag = '+' + fmt(winOf(e.r));
+  return { word: e.w, tag: tag, tagW: 70, tagB: 4, tagBg: RC[e.r], tagC: '#000', bg: '#1a0b2e', hl: 'rgba(255,255,255,.12)', wc: '#fff', cls: cls || '', ring: false, ringC: RC[e.r], w: tileW(e.w, 70) };
+}
+function ghostOf(e) {
+  return { word: e.w, tag: '+' + fmt(winOf(e.r)), tagW: 70, tagB: 4, tagBg: '#12071f', tagC: RC[e.r], bg: '#08030f', hl: 'transparent', wc: '#6d5a88', cls: '', ring: false, ringC: '#000', w: tileW(e.w, 70) };
+}
+function chipOf(text, bg, c, w) {
+  w = w || 92;
+  return { word: '', tag: text, tagW: w, tagB: 0, tagBg: bg, tagC: c, bg: bg, hl: 'transparent', wc: '#fff', cls: '', ring: false, ringC: '#000', w: w };
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var c = CATS[0], found = [], wins = 0;
+    PRE.forEach(function (w) { for (var i = 0; i < c.list.length; i++) if (c.list[i].k === w) { found.push(c.list[i]); wins += winOf(c.list[i].r); } });
+    this.state = {
+      landOn: false,
+      tab: 'blitz', wallet: 184200 + wins, walletN: 0,
+      // blitz
+      ci: 0, round: 1, found: found, roundWins: wins, tLeft: 21, bz: 'play', typed: '',
+      badN: 0, bad: false, rej: '', okN: 0, gainShow: false, gainText: '', gainSub: '', gainBg: '#FFE94A', foundN: 0,
+      // imposter
+      role: 'crew', wi: 0, imp: 2, ph: 'clue', turn: 0, clues: ['', '', '', '', '', ''], botTyped: '', imTyped: '', imT: CLUE_T,
+      imBadN: 0, imBad: false, imRej: '', votes: {}, myVote: -1, flipN: 1, gains: [], usedVague: 0
+    };
+    this.timers = []; this.bot = [];
+    this.onKey = this.onKey.bind(this);
+  }
+  componentDidMount() {
+    var self = this;
+    window.addEventListener('keydown', this.onKey);
+    this.iv = setInterval(function () { self.tick(); }, 100);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.onKey);
+    clearInterval(this.iv); this.timers.forEach(clearTimeout); this.bot.forEach(clearTimeout);
+  }
+  later(fn, ms) { var id = setTimeout(fn, ms); this.timers.push(id); return id; }
+  botLater(fn, ms) { var id = setTimeout(fn, ms); this.bot.push(id); return id; }
+  clearBot() { this.bot.forEach(clearTimeout); this.bot = []; }
+  addWins(n) { this.setState({ wallet: this.state.wallet + n, walletN: this.state.walletN + 1 }); }
+
+  tick() {
+    var st = this.state;
+    if (st.tab === 'blitz' && st.bz === 'play') {
+      var t = Math.max(0, st.tLeft - 0.1);
+      if (t <= 0) this.setState({ tLeft: 0, bz: 'up', typed: '', gainShow: false, rej: '' });
+      else if (Math.ceil(t) !== Math.ceil(st.tLeft)) this.setState({ tLeft: t });
+      else st.tLeft = t;
+    }
+    if (st.tab === 'imp' && ((st.ph === 'clue' && ORDER[st.turn] === 0) || st.ph === 'vote')) {
+      var t2 = Math.max(0, st.imT - 0.1);
+      if (Math.ceil(t2) !== Math.ceil(st.imT)) this.setState({ imT: t2 }); else st.imT = t2;
+      if (t2 <= 0) {
+        if (st.ph === 'clue') this.giveClue(0, '—');
+        else this.reveal();
+      }
+    }
+  }
+
+  // ---------------- BLITZ ----------------
+  startBlitz(ci, round, keep) {
+    this.setState({ ci: ci, round: round, found: [], roundWins: 0, tLeft: RTIME, bz: 'play', typed: '', rej: '', bad: false, gainShow: false, foundN: this.state.foundN + 1 });
+  }
+  submitBlitz() {
+    var self = this, st = this.state, k = st.typed;
+    if (!k) return;
+    var reject = function (why) {
+      self.setState({ badN: st.badN + 1, bad: true, rej: why });
+      self.later(function () { self.setState({ bad: false }); }, 380);
+      self.later(function () { if (self.state.rej === why) self.setState({ rej: '' }); }, 1300);
+    };
+    if (k.length < 2) return reject('2+ LETTERS');
+    var list = CATS[st.ci].list, hit = null;
+    for (var i = 0; i < list.length; i++) if (list[i].k === k) hit = list[i];
+    if (!hit) return reject('NOT ON THE LIST');
+    for (var j = 0; j < st.found.length; j++) if (st.found[j].k === k) return reject('ALREADY FOUND');
+    var g = winOf(hit.r);
+    this.setState({ found: st.found.concat([hit]), roundWins: st.roundWins + g, typed: '', rej: '', okN: st.okN + 1, foundN: st.foundN + 1,
+      landOn: true, gainShow: true, gainText: '+' + fmt(g), gainSub: RN[hit.r] + (RM[hit.r] > 1 ? ' ×' + RM[hit.r] : ''), gainBg: RC[hit.r] });
+    this.addWins(g);
+    this.later(function () { if (self.state.okN === st.okN + 1) self.setState({ landOn: false }); }, 520);
+    this.later(function () { if (self.state.okN === st.okN + 1) self.setState({ gainShow: false }); }, 1400);
+    if (st.found.length + 1 >= list.length) this.later(function () { self.setState({ bz: 'up', tLeft: 0 }); }, 400);
+  }
+
+  // ---------------- IMPOSTER ----------------
+  startImp(role, wi) {
+    this.clearBot(); this.timers.forEach(clearTimeout); this.timers = [];
+    var imp = role === 'imp' ? 0 : 1 + Math.floor(Math.random() * 5);
+    this.setState({ role: role, wi: wi, imp: imp, ph: 'clue', turn: 0, clues: ['', '', '', '', '', ''], botTyped: '', imTyped: '', imT: CLUE_T,
+      imRej: '', imBad: false, votes: {}, myVote: -1, flipN: this.state.flipN + 1, gains: [], usedVague: 0 });
+    var self = this;
+    this.later(function () { self.runTurn(); }, 700);
+  }
+  runTurn() {
+    var self = this, st = this.state, who = ORDER[st.turn];
+    if (who === 0) { this.setState({ imT: CLUE_T, imTyped: '' }); return; }
+    var W = WORDS[st.wi], used = st.clues, word;
+    if (who === st.imp) word = W.vague[st.usedVague % W.vague.length];
+    else { var opts = W.clues.filter(function (c) { return used.indexOf(c) < 0; }); word = pick(opts.length ? opts : W.clues); }
+    var t = 500 + Math.random() * 600;
+    for (var i = 1; i <= word.length; i++) (function (i) {
+      self.botLater(function () { self.setState({ botTyped: word.slice(0, i) }); }, t + i * 120);
+    })(i);
+    this.botLater(function () {
+      if (who === st.imp) self.setState({ usedVague: self.state.usedVague + 1 });
+      self.giveClue(who, word);
+    }, t + word.length * 120 + 350);
+  }
+  giveClue(who, word) {
+    var self = this, st = this.state, cl = st.clues.slice();
+    cl[who] = word;
+    var nt = st.turn + 1;
+    this.setState({ clues: cl, botTyped: '', imTyped: '', turn: nt, imRej: '' });
+    if (nt >= ORDER.length) this.later(function () { self.startVote(); }, 600);
+    else this.later(function () { self.runTurn(); }, 350);
+  }
+  submitClue() {
+    var self = this, st = this.state, w = st.imTyped, W = WORDS[st.wi];
+    var reject = function (why) {
+      self.setState({ imBadN: st.imBadN + 1, imBad: true, imRej: why });
+      self.later(function () { self.setState({ imBad: false }); }, 380);
+      self.later(function () { if (self.state.imRej === why) self.setState({ imRej: '' }); }, 1300);
+    };
+    if (w.length < 2) return reject('2+ LETTERS');
+    if (st.role === 'crew' && (w === W.w || w.indexOf(W.w) >= 0)) return reject("CAN'T SAY IT");
+    if (st.clues.indexOf(w) >= 0) return reject('ALREADY SAID');
+    this.giveClue(0, w);
+  }
+  startVote() {
+    var self = this, st = this.state;
+    this.setState({ ph: 'vote', imT: VOTE_T, votes: {}, myVote: -1 });
+    [1, 2, 3, 4, 5].forEach(function (b) {
+      self.botLater(function () {
+        var s = self.state; if (s.ph !== 'vote') return;
+        var c = [0, 1, 2, 3, 4, 5].filter(function (i) { return i !== b; }), tgt;
+        if (b !== s.imp && Math.random() < 0.6) tgt = s.imp; else tgt = pick(c.filter(function (i) { return i !== s.imp || b !== s.imp; }));
+        if (tgt === b) tgt = c[0];
+        var v = Object.assign({}, s.votes); v[b] = tgt;
+        self.setState({ votes: v });
+        self.maybeReveal();
+      }, 900 + Math.random() * 4200);
+    });
+  }
+  castVote(i) {
+    var st = this.state;
+    if (st.tab !== 'imp' || st.ph !== 'vote' || st.myVote >= 0 || i === 0) return;
+    var v = Object.assign({}, st.votes); v[0] = i;
+    this.setState({ votes: v, myVote: i });
+    this.maybeReveal();
+  }
+  maybeReveal() {
+    var self = this;
+    if (Object.keys(this.state.votes).length >= 6) this.later(function () { self.reveal(); }, 700);
+  }
+  reveal() {
+    var st = this.state;
+    if (st.ph !== 'vote') return;
+    this.clearBot();
+    var tally = [0, 0, 0, 0, 0, 0];
+    Object.keys(st.votes).forEach(function (k) { tally[st.votes[k]]++; });
+    var max = Math.max.apply(null, tally), top = [];
+    tally.forEach(function (n, i) { if (n === max && n > 0) top.push(i); });
+    var out = top.length === 1 ? top[0] : -1, caught = out === st.imp;
+    var gains = [], d = 0;
+    if (st.clues[0] && st.clues[0] !== '—') { gains.push({ amt: '+40', why: 'CLUE', bg: '#A9B4C8', d: (d++ * 0.25).toFixed(2), n: 40 }); }
+    if (st.role === 'crew') {
+      if (st.myVote === st.imp) gains.push({ amt: '+150', why: 'RIGHT VOTE', bg: '#2EFFE0', d: (d++ * 0.25).toFixed(2), n: 150 });
+      if (caught) gains.push({ amt: '+300', why: 'CREW WIN', bg: '#FFE94A', d: (d++ * 0.25).toFixed(2), n: 300 });
+    } else if (!caught) gains.push({ amt: '+600', why: 'ESCAPED', bg: '#FF3D7F', d: (d++ * 0.25).toFixed(2), n: 600 });
+    var total = gains.reduce(function (a, g) { return a + g.n; }, 0);
+    this.setState({ ph: 'reveal', out: out, caught: caught, gains: gains, imT: 0 });
+    if (total) this.addWins(total);
+  }
+
+  onKey(e) {
+    var st = this.state;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (st.tab === 'blitz') {
+      if (st.bz !== 'play') return;
+      if (k === 'Enter') { e.preventDefault(); this.submitBlitz(); return; }
+      if (k === 'Backspace') { e.preventDefault(); this.setState({ typed: st.typed.slice(0, -1), bad: false }); return; }
+      if (/^[a-zA-Z]$/.test(k) && st.typed.length < 16) { e.preventDefault(); this.setState({ typed: st.typed + k.toUpperCase(), bad: false }); }
+      return;
+    }
+    if (st.ph !== 'clue' || ORDER[st.turn] !== 0) return;
+    if (k === 'Enter') { e.preventDefault(); this.submitClue(); return; }
+    if (k === 'Backspace') { e.preventDefault(); this.setState({ imTyped: st.imTyped.slice(0, -1), imBad: false }); return; }
+    if (/^[a-zA-Z]$/.test(k) && st.imTyped.length < 12) { e.preventDefault(); this.setState({ imTyped: st.imTyped + k.toUpperCase(), imBad: false }); }
+  }
+
+  renderVals() {
+    var self = this, st = this.state, isBlitz = st.tab === 'blitz';
+    var cat = CATS[st.ci], total = cat.list.length;
+
+    // ---- blitz tiles ----
+    var tiles = [];
+    if (st.bz === 'play') {
+      var f = st.found, k = 0, best = [];
+      for (k = 1; k <= f.length; k++) {
+        var hidden = f.length - k, items = [];
+        if (hidden > 0) items.push(chipOf('+' + hidden, '#2a1748', '#c9b8e8'));
+        f.slice(f.length - k).forEach(function (e, i, arr) { items.push(tileOf(e, i === arr.length - 1 && st.landOn ? (st.foundN % 2 ? 'tw-landA' : 'tw-landB') : '')); });
+        if (!pack(items)) break;
+        best = items;
+      }
+      if (best.length && st.landOn) { var lt = best[best.length - 1]; if (lt.word) { var fe = f[f.length - 1]; lt.ring = RM[fe.r] >= 3; } }
+      tiles = best;
+    } else {
+      var have = {}; st.found.forEach(function (e) { have[e.k] = 1; });
+      var missed = cat.list.filter(function (e) { return !have[e.k]; });
+      var its = [chipOf('MISSED ' + missed.length, '#FF3D7F', '#000', 168)];
+      for (var m = 0; m < missed.length; m++) { var g = ghostOf(missed[m]); if (!pack(its.concat([g]))) break; its.push(g); }
+      if (missed.length === 0) its = [chipOf('ALL FOUND', '#2EFFE0', '#000', 168)];
+      tiles = its;
+    }
+    var pos = pack(tiles) || [];
+    tiles.forEach(function (t, i) { t.x = pos[i] ? pos[i].x : 0; t.y = pos[i] ? pos[i].y : 0; });
+
+    var two = cat.name.length > 1, longest = Math.max.apply(null, cat.name.map(function (s) { return s.length; }));
+    var catF = Math.min(two ? 70 : 132, Math.floor(760 / (longest * 0.86)));
+    var hot = st.tLeft <= 5 && st.bz === 'play';
+
+    // ---- imposter ----
+    var W = WORDS[st.wi], cur = ORDER[st.turn];
+    var votedBy = {}; Object.keys(st.votes).forEach(function (v) { var t = st.votes[v]; (votedBy[t] = votedBy[t] || []).push(+v); });
+    var plates = PLAYERS.map(function (p, i) {
+      var col = i % 2, row = Math.floor(i / 2), me = i === 0;
+      var act = st.ph === 'clue' && cur === i;
+      var votable = st.ph === 'vote' && st.myVote < 0 && !me;
+      var clue = st.clues[i], clueC = '#fff';
+      if (act && !me) clue = st.botTyped;
+      if (act && me) { clue = st.imTyped; clueC = '#FFE94A'; }
+      if (!clue && !act) { clue = '· · ·'; clueC = '#3a2160'; }
+      var rv = st.ph === 'reveal', isImp = i === st.imp;
+      var stamp = rv && (isImp || i === st.out);
+      var pips = (votedBy[i] || []).map(function (v) { return { i: PLAYERS[v].init, bg: v === 0 ? '#FFE94A' : '#FF3D7F' }; });
+      return {
+        x: 634 + col * 360, y: 72 + row * 178,
+        actCls: act ? 'tw-act' : '', hovCls: votable ? 'tw-plate' : '',
+        bg: act ? '#2a1748' : '#1a0b2e', bw: me || st.myVote === i ? 6 : 4,
+        bd: st.myVote === i ? '#FFE94A' : (me ? '#FFE94A' : '#000'),
+        sh: act ? '#FF3D7F' : (votable ? '#B04BFF' : '#000'), cur: votable ? 'pointer' : 'default',
+        op: rv && !stamp ? 0.55 : 1,
+        stripe: RC[p.rar], init: p.init, name: p.name, nameC: me ? '#FFE94A' : '#fff',
+        sub: me ? 'YOU' : (rv && !isImp ? 'CREW' : ''),
+        pips: pips, clue: clue, clueC: clueC, clueF: clue.length > 9 ? 26 : 32,
+        caretVis: act ? 'visible' : 'hidden',
+        tFrac: act && me ? (Math.ceil(st.imT) / CLUE_T).toFixed(3) : 0,
+        mine: st.myVote === i,
+        stamp: stamp, stampText: isImp ? 'IMPOSTER' : 'CREW', stampBg: isImp ? '#FF3D7F' : '#2EFFE0', stampF: isImp ? 34 : 24,
+        vote: function () { self.castVote(i); }
+      };
+    });
+    var myTurn = st.ph === 'clue' && cur === 0;
+    var resultText = '', resultC = '#FFE94A';
+    if (st.ph === 'reveal') {
+      if (st.role === 'crew') { resultText = st.caught ? 'CREW WINS' : (st.out < 0 ? 'TIE · NO ONE OUT' : 'IMPOSTER WINS'); resultC = st.caught ? '#2EFFE0' : '#FF3D7F'; }
+      else { resultText = st.caught ? 'CAUGHT' : 'YOU ESCAPED'; resultC = st.caught ? '#FF3D7F' : '#FFE94A'; }
+    }
+
+    // ---- steps (top centre) ----
+    var steps;
+    if (isBlitz) {
+      steps = [{ t: 'ROUND', n: st.round + '/' + ROUNDS, bg: '#3DA8FF', c: '#000' }];
+    } else {
+      var phs = ['clue', 'vote', 'reveal'], at = phs.indexOf(st.ph);
+      steps = [['CLUES', ''], ['VOTE', ''], ['REVEAL', '']].map(function (s, i) {
+        return { t: s[0], n: '', bg: i === at ? '#FFE94A' : (i < at ? '#5d2a8a' : '#1a0b2e'), c: i === at ? '#000' : (i < at ? '#D88BFF' : '#5d4a78') };
+      });
+    }
+
+    var demos = isBlitz
+      ? [{ t: 'RESTART', bg: '#FFE94A', go: function () { self.startBlitz(st.ci, st.round); } },
+         { t: 'TIME UP', bg: '#FF3D7F', go: function () { if (self.state.bz === 'play') self.setState({ tLeft: 0.05 }); } }]
+      : [{ t: 'PLAY AS CREW', bg: st.role === 'crew' ? '#FFE94A' : '#2EFFE0', go: function () { self.startImp('crew', self.state.wi); } },
+         { t: 'PLAY AS IMPOSTER', bg: st.role === 'imp' ? '#FFE94A' : '#FF3D7F', go: function () { self.startImp('imp', self.state.wi); } }];
+
+    return {
+      isBlitz: isBlitz, isImp: !isBlitz,
+      tabs: [['blitz', 'BLITZ'], ['imp', 'IMPOSTER']].map(function (t) {
+        var on = st.tab === t[0];
+        return { label: t[1], bg: on ? '#FFE94A' : '#1a0b2e', c: on ? '#000' : '#c9b8e8', pick: function () {
+          if (self.state.tab === t[0]) return;
+          self.setState({ tab: t[0] });
+          if (t[0] === 'imp' && self.state.clues.join('') === '' && self.state.turn === 0) self.later(function () { self.runTurn(); }, 600);
+        } };
+      }),
+      steps: steps, walletText: fmt(st.wallet), walletCls: st.walletN ? (st.walletN % 2 ? 'tw-bumpA' : 'tw-bumpB') : '',
+      baseText: BASE, gains: isBlitz ? [] : st.gains, demos: demos,
+
+      catLines: cat.name.map(function (s) { return { t: s }; }), catF: catF,
+      found: st.found.length, total: total, foundCls: st.okN ? (st.okN % 2 ? 'tw-bumpA' : 'tw-bumpB') : '',
+      tFrac: (Math.ceil(st.tLeft) / RTIME).toFixed(3), tSec: Math.ceil(st.tLeft), tBarC: hot ? '#FF3D7F' : (st.tLeft <= 12 ? '#FFC23D' : '#FFE94A'),
+      tBoxBg: hot ? '#FF3D7F' : '#FFE94A', tHotCls: hot ? 'tw-hot' : '',
+      tiles: tiles,
+      bzPlay: st.bz === 'play', bzUp: st.bz === 'up',
+      bzTyped: st.typed, bzGhost: st.typed ? '' : 'TYPE ANSWERS', bzLineC: st.bad ? '#FF3D7F' : (st.gainShow ? st.gainBg : '#FFE94A'), bzInC: st.bad ? '#FF3D7F' : '#fff',
+      bzEnterVis: st.typed.length >= 2 ? 'visible' : 'hidden', bzInCls: st.badN ? (st.badN % 2 ? 'tw-noA' : 'tw-noB') : '',
+      bzRej: !!st.rej, bzRejText: st.rej,
+      bzGainShow: st.gainShow, bzGainCls: st.okN % 2 ? 'tw-upA' : 'tw-upB', bzGainText: st.gainText, bzGainSub: st.gainSub, bzGainBg: st.gainBg,
+      roundWins: fmt(st.roundWins), nextLabel: st.round >= ROUNDS ? 'PLAY AGAIN' : 'NEXT ROUND',
+      nextRound: function () { var r = self.state.round >= ROUNDS ? 1 : self.state.round + 1; self.startBlitz((self.state.ci + 1) % CATS.length, r); },
+
+      cardCls: st.flipN % 2 ? 'tw-flipA' : 'tw-flipB',
+      crewCard: st.role === 'crew', impCard: st.role === 'imp',
+      secret: W.w, secretF: W.w.length > 5 ? 96 : 116, secretCat: W.cat, imRoundText: 'RD ' + (st.wi + 1),
+      imTyping: myTurn, imTyped: st.imTyped, imInC: st.imBad ? '#FF3D7F' : '#fff',
+      imInCls: st.imBadN ? (st.imBadN % 2 ? 'tw-noA' : 'tw-noB') : '', imEnterVis: st.imTyped.length >= 2 ? 'visible' : 'hidden',
+      imRej: !!st.imRej, imRejText: st.imRej,
+      imSec: Math.ceil(st.imT), imSecCls: st.imT <= 3 && st.imT > 0 ? 'tw-hot' : '',
+      imWait: st.ph === 'clue' && !myTurn, waitName: PLAYERS[cur] ? PLAYERS[cur].name : 'VOTE', waitSub: PLAYERS[cur] ? 'GIVING A CLUE' : 'NEXT',
+      imVote: st.ph === 'vote', voteHead: st.myVote >= 0 ? 'VOTED' : 'VOTE', voteArrowVis: st.myVote >= 0 ? 'hidden' : 'visible',
+      imReveal: st.ph === 'reveal', resultText: resultText, resultC: resultC,
+      imNext: function () { self.startImp(self.state.role, (self.state.wi + 1) % WORDS.length); },
+      plates: plates
+    };
+  }
+}
+</script>
+</body>
+</html>
