@@ -48,12 +48,20 @@ import { dueHosted, hasSeenTutorial, markTutorialSeen } from '../tutorials/regis
 
 const itemPrice = (id) => (SEASON2 ? V3.hooks.itemGemPrice(id) : (POP_STYLES.find((i) => i.id === id) || SOUND_PACKS.find((i) => i.id === id) || { price: Infinity }).price);
 
-// P3 (SEASON2 only): the v2 SHOP (claude/mockups/v2/Shop.dc.html — POWER + the gem STOCK) — its own lazy chunk.
-// With the flag OFF the live SHOP below is untouched.
+// P3 (SEASON2 only): the v2 SHOP (Shop.dc.html — POWER + the gem STOCK) and the v2 REBIRTH screen (Rebirth.dc.html),
+// each its own lazy chunk. With the flag OFF the live SHOP / REBIRTH views below are untouched.
 const ShopV2 = lazy(() => import('./ShopV2.jsx'));
+const RebirthV2 = lazy(() => import('./RebirthV2.jsx'));
 
 export default function ShopScreen(props) {
-  if (SEASON2 && props.initialView !== 'rebirth') {
+  if (SEASON2 && props.initialView === 'rebirth') {
+    return (
+      <Suspense fallback={<OverlaySkeleton title="REBIRTH" />}>
+        <RebirthV2 onBack={props.onBack} />
+      </Suspense>
+    );
+  }
+  if (SEASON2) {
     return (
       <Suspense fallback={<OverlaySkeleton title="SHOP" />}>
         <ShopV2 onBack={props.onBack} />
