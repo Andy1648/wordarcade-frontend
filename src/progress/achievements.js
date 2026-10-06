@@ -20,7 +20,6 @@ import { bestWpmPlayed } from './wpm.js';
 // PROGRESSION v3 (SEASON2, default OFF): the season's ACHIEVEMENTS are v3/achievements.js (gems, claimed on the
 // ACHIEVEMENTS screen). With the flag ON this catalogue grants nothing, rank-ups pay nothing and no layer / mark
 // reveal is queued — no menu claim notifications at all. OFF = unchanged.
-import { SEASON2 } from './season.js';
 
 export const ACHIEVEMENTS_KEY = 'taw.achievements';
 
@@ -194,7 +193,6 @@ export function secretsProgress() {
 }
 
 export function checkAchievements() {
-  if (SEASON2) return [];
   // TEST-ONLY suppression of the on-load / on-home grant. Specs that seed progression (a high
   // level, lifetime wins, …) would otherwise get surprise achievement wins credited the moment the
   // menu mounts, corrupting a seeded wins balance. A spec opts out by setting the global BEFORE the
@@ -250,7 +248,6 @@ export function checkAchievements() {
 export const RANK_CLAIM_KEY = 'taw.rankClaimed';
 export const RANK_UP_WORDS = 25;
 export function checkRankClaims() {
-  if (SEASON2) return []; // v3: no wins for ranking up
   let lv = 1;
   let rc = 0;
   try {
@@ -308,4 +305,10 @@ export function achievementList() {
 export function achievementCounts() {
   const earned = loadEarned().length;
   return { earned, total: ACHIEVEMENTS.length };
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: checkAchievements, b: checkRankClaims } = o);
 }

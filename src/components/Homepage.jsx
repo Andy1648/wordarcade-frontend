@@ -74,7 +74,6 @@ const LockedPreviewDialog = lazyWithReload(() => import('./LockedPreviewDialog')
 const RankLadder = lazyWithReload(() => import('./RankLadder'), 'RankLadder');
 // PROGRESSION v3 (SEASON2, default OFF): no menu claim notifications (no claim popup, no REWARDS count — claims.js is
 // empty in season 2); every claim lives in ACHIEVEMENTS (gems), opened from the corner-nav cluster. OFF = unchanged.
-const AchievementsV3 = lazyWithReload(() => import('./AchievementsV3.jsx'), 'AchievementsV3');
 // The REWARDS panel loads on first open (H4 payload offset): only the small ClaimPopup is on the menu at rest.
 const ClaimsPanel = lazyWithReload(() => import('../claims/ClaimsPanel.jsx'), 'ClaimsPanel');
 // The mode dialog loads on demand (payload ratchet, PV10 offset): fetched the moment a pointer or focus first
@@ -95,7 +94,7 @@ import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
-import { SEASON2 } from '../progress/season';
+import { V3 } from '../progress/season'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -240,7 +239,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
   const [showRanks, setShowRanks] = useState(false); // rank-ladder overlay (fix/card-polish)
-  const [showAch, setShowAch] = useState(false); // v3 ACHIEVEMENTS overlay (SEASON2 only)
   // MARKS (feat/progression-clarity): the one equipped badge, and its picker. Read once on mount
   // and after an equip — the earned-achievement set only changes on a grant, which re-renders the
   // menu anyway.
@@ -607,7 +605,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const flipCards = (to) => setCardPage(Math.max(0, Math.min(pageCount - 1, to)));
   // the keys never flip under an open dialog / panel
   const pagerBlockedRef = useRef(false);
-  pagerBlockedRef.current = !!(dialog || lockedPreview || showClaims || showRanks || showMarks || claimReveal || showAch || navigating);
+  pagerBlockedRef.current = !!(dialog || lockedPreview || showClaims || showRanks || showMarks || claimReveal || navigating);
   const pager = (slot) => (
     <Suspense fallback={null}>
       <CardPager slot={slot} page={shownPage} pageCount={pageCount} onFlip={flipCards} gridRef={cardsGridRef} rowRef={cardsRowRef} blockedRef={pagerBlockedRef} />
@@ -806,8 +804,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (xpProgress.level > lastLevelRef.current) {
       setFramePunch((k) => k + 1);
       // STEP 51 ticker: "NAME just hit LV 50" (claimed players, milestone levels only)
-      // v3 levels jump by thousands a word: walk at most the last 1,000 levels (never one step per level)
-      for (let lv = Math.max(lastLevelRef.current + 1, xpProgress.level - 999); lv <= xpProgress.level; lv += 1) if (isLevelMilestone(lv)) announceTick('lv', lv);
+      for (let lv = lastLevelRef.current + 1; lv <= xpProgress.level; lv += 1) if (isLevelMilestone(lv)) announceTick('lv', lv);
     }
     lastLevelRef.current = xpProgress.level;
   }, [xpProgress.level]);
@@ -1215,13 +1212,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // audit's #2 leak). It is shown ONLY once it means something: the player can actually rebirth
   // now, OR has ever earned wins, OR has already rebirthed. ONE gate, read by both menu trees, so
   // the phone and desktop menus can never disagree about whether REBIRTH exists yet.
+  // v3 (SEASON2 only): the ACHIEVEMENTS trophy — installed with the v3 chunk, joins whichever nav cluster renders
+  const trophy = V3.Trophy && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
   const showRebirth = rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths);
   // STEP 21: REBIRTH badges itself the moment it's available — it IS an upgrade, the biggest one.
   const rebirthReady = xpProgress.level >= rebirthThreshold(rebirths);
 
   // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
-  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || showRanks || claimReveal || showAch));
+  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || showRanks || claimReveal));
 
   return (
     <div className="homepage-wrap" onPointerOver={warmModeDialog} onFocusCapture={warmModeDialog} onTouchStart={warmModeDialog}>
@@ -1289,10 +1288,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             navLayout={NAV_LAYOUT}
             rewardsCount={claims.length}
             onRewards={() => setShowClaims(true)}
-            claimSlot={!SEASON2 && !showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview
+            claimSlot={!showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
               : null}
-            onAchievements={SEASON2 ? () => setShowAch(true) : null}
+            achSlot={trophy}
             level={xpProgress.level}
             levelFrac={xpProgress.frac}
             wins={wins}
@@ -1341,21 +1340,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             STATS
             {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{formatNum(claims.length)}</span>}
           </button>
-          {/* v3 ACHIEVEMENTS (SEASON2): joins the corner-nav cluster (no orphan fixed UI) — a trophy slab, no badge
-              (no menu claim notifications: the screen itself says what is ready). */}
-          {SEASON2 && (
-            <button
-              type="button"
-              className={`homepage-nav-btn is-ach${navigating ? ' disabled' : ''}`}
-              onClick={() => setShowAch(true)}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label="Open achievements"
-              title="Achievements"
-            >
-              <img src="/ach/cup.svg" width="30" height="30" alt="" aria-hidden="true" />
-            </button>
-          )}
+          {/* v3 ACHIEVEMENTS (SEASON2 only): a trophy slab JOINS the corner-nav cluster (no badge) */}
+          {trophy}
           {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
           {showRebirth && (
             <button
@@ -1603,15 +1589,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
       {/* The popup never floats over another overlay (rank ladder, marks, a mode dialog). */}
-      {!SEASON2 && !isPhoneMenu && !showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview && (
+      {!isPhoneMenu && !showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview && (
         <ClaimPopup onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
-      )}
-      {showAch && (
-        <ScreenBoundary name="achievements" onBack={() => setShowAch(false)}>
-          <Suspense fallback={null}>
-            <AchievementsV3 onClose={() => setShowAch(false)} />
-          </Suspense>
-        </ScreenBoundary>
       )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>

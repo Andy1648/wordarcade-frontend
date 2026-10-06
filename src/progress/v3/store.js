@@ -7,7 +7,9 @@
 //   taw.s2.ach       claimed ACHIEVEMENT tiers: { id: tiers claimed }
 //   taw.s2.rank      the best RANK index reached (ranks never drop)
 //   taw.s2.mark2     the 2nd MARK slot's worn mark id (R5 unlock)
-import { SEASON2, S2_PREFIX } from '../season.js';
+import { SEASON2 } from '../season.js';
+
+export const S2_PREFIX = 'taw.s2.'; // every season-2 key
 
 export const STARS_KEY = `${S2_PREFIX}stars`;
 export const COUNT_KEY = `${S2_PREFIX}count`;

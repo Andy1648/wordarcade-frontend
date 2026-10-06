@@ -28,9 +28,7 @@ const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints 
 // PROGRESSION v3 (SEASON2, default OFF): the R5 unlock "2nd MARK slot" — a second worn mark (v3/store mark2Id)
 // whose +N% WINS / +N% XP stat multiplies too. MINIMAL MODEL ONLY (phase 3): its flat BASE / LUCK / OVERDRIVE stats
 // do not apply, and the slot's UI is the visual PR's. OFF = only the one worn mark, exactly as before.
-import { SEASON2 } from './season.js';
-import { mark2Id, saveMark2Id } from './v3/store.js';
-import { featureOpen } from './v3/unlocks.js';
+import { V3 } from './season.js'; // V3.m = the 2nd MARK slot (v3/hooks.js mark2Factor), installed in season 2 only
 
 export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
 export const ROLL_STATE_VERSION = 2;
@@ -494,24 +492,8 @@ function pctMult(kind, opts) {
   const { s, id, stat } = worn(opts);
   // a PERMANENT / retired mark (no stat) pays its tier MAIN on wins AND XP, as before v2
   const main = stat ? (stat.kind === kind ? 1 + stat.value / 100 : 1) : mainMultOf(id, s);
-  const v = main * indexMult(s) * (SEASON2 ? mark2Factor(kind, opts, s, id) : 1);
+  const v = main * indexMult(s) * (V3.m ? V3.m(kind, opts, s, id) : 1);
   return v > 0 ? v : 1;
-}
-// v3: the 2nd MARK slot's % stat on what it touches (×1 unless season 2, R5 open, a different owned mark in it).
-function mark2Factor(kind, opts, s, wornId) {
-  if (opts.markId !== undefined || !featureOpen('mark2')) return 1;
-  const id2 = mark2Id();
-  if (!id2 || id2 === wornId || !(s && s.marks && s.marks[id2])) return 1;
-  const st2 = statOf(id2, s);
-  const m = st2 ? (st2.kind === kind ? 1 + st2.value / 100 : 1) : mainMultOf(id2, s);
-  return m > 0 ? m : 1;
-}
-/** v3: wear `id` in the 2nd MARK slot (season 2, R5+, an owned rolled mark; null empties it). Returns success. */
-export function equipMark2(id) {
-  if (!SEASON2 || !featureOpen('mark2')) return false;
-  if (id == null) return saveMark2Id(null);
-  const s = loadRollState();
-  return !!(s && s.marks && s.marks[id]) && saveMark2Id(id);
 }
 /** × on WINS: a worn +N% WINS mark (or a PERMANENT's MAIN) × the INDEX. ×1 with nothing worn, never rolled. */
 export function markWinsMult(opts = {}) {

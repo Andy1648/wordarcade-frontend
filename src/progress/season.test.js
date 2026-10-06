@@ -29,10 +29,9 @@ const U = await import('./v3/unlocks.js');
 
 test('SEASON2 defaults OFF (no ?season2, no VITE_SEASON2, no global) and keys are the live ones', () => {
   assert.equal(S.SEASON2, false);
-  assert.equal(S.isSeason2(), false);
-  for (const k of ['taw.xp', 'taw.rebirths', 'taw.keytier', 'taw.wins', 'taw.gems', 'taw.records']) assert.equal(S.s2Key(k), k);
+
   assert.equal(G.GEMS_KEY, 'taw.gems');
-  assert.equal(S.SEASON2_ECON, 13);
+  assert.equal(Object.keys(S.V3).length, 0, 'nothing installed');
 });
 
 test('OFF: the level curve, XP per letter, KEY, rebirth and wins numbers are exactly the live ones', () => {
@@ -65,7 +64,8 @@ test('OFF: claims, ranks, star perks, cosmetics and every unlock behave as today
   assert.equal(R.rankTitle(1), 'ROOKIE');
   assert.equal(R.rankTitle(150), 'MYTHIC');
   assert.equal(ST.starsForRebirth(50, 0), 9); // gate 25: 1 + floor(25 / 3)
-  assert.equal(SH.itemPrice('chrome'), SH.POP_STYLES.find((i) => i.id === 'chrome').price);
+  assert.equal(SH.POP_STYLES.find((i) => i.id === 'chrome').price, 6000, 'cosmetics keep their wins price');
+  assert.equal(S.V3.ready, undefined, 'the v3 rules are not even loaded with the flag OFF');
   for (const u of U.UNLOCKS) assert.equal(U.featureOpen(u.id), true, `${u.id} is not gated with the flag OFF`);
   assert.equal(U.unlockLuckMult(), 1);
 });

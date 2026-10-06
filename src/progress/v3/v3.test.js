@@ -13,9 +13,10 @@ globalThis.localStorage = {
   key: (i) => [...mem.keys()][i] ?? null,
   get length() { return mem.size; },
 };
-globalThis.__TAW_SEASON2__ = true;
+globalThis.location = { search: '?season2=1' };
 
 const S = await import('../season.js');
+await import('./install.js'); // main.jsx does this before the first render
 const E = await import('./econ.js');
 const CV = await import('./curve.js');
 const U = await import('./unlocks.js');
@@ -39,8 +40,8 @@ const near = (a, b, rel = 1e-9) => assert.ok(Math.abs(a - b) <= rel * Math.max(1
 
 test('the flag is ON and the season keeps its own save (taw.s2.*)', () => {
   assert.equal(S.SEASON2, true);
-  assert.equal(S.s2Key('taw.xp'), 'taw.s2.xp');
-  assert.equal(G.GEMS_KEY, 'taw.s2.gems');
+  assert.equal(S.V3.hooks.s2MapKey('taw.xp'), 'taw.s2.xp');
+  assert.equal(S.V3.hooks.s2MapKey(G.GEMS_KEY), 'taw.s2.gems');
   reset();
   X.saveProgress({ level: 5, frac: 0.5 });
   X.saveRebirths(2);
@@ -96,7 +97,7 @@ test('WINS per word = 15 × length/5 × MODE × 2^R × (1 + ★) × MARK; POWER 
   assert.equal(W.perWordWins({ mode: 'chain', wordLength: 5, rebirthCount: 3 }), 15 * 2 * 8);
   ST3.saveStarsV3(1);
   assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 30);
-  assert.equal(W.perWordFactors({ mode: 'wordBomb' }).stars, 2, 'the receipt names ★');
+  assert.equal(W.perWordFactors({ mode: 'wordBomb', rebirthCount: 0 }).rebirth, 2, 'the receipt REBIRTH row carries (1 + ★)');
   assert.deepEqual([0, 1, 2, 3].map((p) => X.keyTierCost(p)), [100, 400, 1600, 6400]);
   near(X.keyXpMult(4), 1.8 ** 4);
   reset();
@@ -134,18 +135,18 @@ test('REBIRTH: gate LV ⌈100 × 2.5^R⌉, levels → 1, ×2, +7 gems × R, POWE
 test('ASCEND at R10: rebirths, levels and POWER reset; ★ += R − 9 — and ★ multiplies XP and wins', () => {
   reset();
   X.saveRebirths(9);
-  assert.equal(STARS.ascendWithStars().ok, false, 'R9 cannot ascend');
+  assert.equal(S.V3.hooks.ascend().ok, false, 'R9 cannot ascend');
   X.saveRebirths(12);
   X.saveKeyTier(7);
   X.saveProgress({ level: 5000, frac: 0.3 });
-  const a = STARS.ascendWithStars();
+  const a = S.V3.hooks.ascend();
   assert.deepEqual(a, { ok: true, stars: 3, added: 3 });
   assert.deepEqual([X.getRebirths(), X.getKeyTier(), X.loadProgress().level], [0, 0, 1]);
-  assert.equal(STARS.starsV3(), 3);
+  assert.equal(ST3.getStarsV3(), 3);
   assert.equal(X.levelXpPerLetter(0, 0, 1, 0), 7 * 4);
   // a server-granted ascension lands on the server's ★ total
   X.saveRebirths(10);
-  assert.equal(STARS.ascendWithStars(9).stars, 9);
+  assert.equal(S.V3.hooks.ascend(9).stars, 9);
   assert.equal(E.starsForAscend(10), 1);
   assert.equal(E.starsForAscend(15), 6);
 });
@@ -199,7 +200,7 @@ test('RANKS by rebirths then stars — monotonic, never by level', () => {
   assert.equal(R.rankTitle(999999), 'INKSTORM', 'the level is ignored');
   X.saveRebirths(0); // a reset row (e.g. the board lowered it) never lowers the rank shown
   assert.equal(R.rankTitle(1), 'INKSTORM');
-  assert.equal(R.RANKS, RK.RANKS_V3);
+  assert.equal(S.V3.ranks.RANKS_V3, RK.RANKS_V3);
 });
 
 test('REWARDS: no wins for ranking up, no menu claims — the inbox reads empty and every inbox kind is cut', () => {
@@ -255,8 +256,9 @@ test('ACHIEVEMENTS pay GEMS (40–200), one tier per claim, from season-2 play o
 
 test('GEMS: 75 a roll; drops 1 in 15 for 3–12; bot win +18; +15 per player beaten; streak +4; no LEVEL UP gems', () => {
   assert.equal(G.ROLL_PRICE_GEMS, 75);
-  assert.equal(G.GEM_DROP_CHANCE, 1 / 15);
-  assert.deepEqual([G.GEM_DROP_MIN, G.GEM_DROP_MAX, G.BOT_WIN, G.PER_PLAYER_BEATEN, G.LEVEL_UP], [3, 12, 18, 15, 0]);
+  // the drop: under 1/15 drops, from 3 (v = 0) to 12 (v → 1); above it, nothing
+  assert.equal(G.rollGemDrop(() => 0.066), 3);
+  assert.equal(G.rollGemDrop(() => 0.067), 0);
   assert.equal(G.rollGemDrop(() => 0.5), 0);
   const seq = [0.01, 0.999];
   assert.equal(G.rollGemDrop(() => seq.shift()), 12);
@@ -273,7 +275,7 @@ test('GEMS: 75 a roll; drops 1 in 15 for 3–12; bot win +18; +15 per player bea
 test('WINS BUY ONLY POWER: cosmetics cost gems', () => {
   reset();
   W.saveWins(1e9);
-  assert.equal(SH.itemPrice('chrome'), 75);
+  assert.equal(S.V3.hooks.itemGemPrice('chrome'), 75);
   assert.equal(SH.buy('chrome').ok, false, 'a billion wins buys no cosmetic');
   assert.equal(W.getWins(), 1e9);
   G.grantGems(80, 'drop');
@@ -281,4 +283,14 @@ test('WINS BUY ONLY POWER: cosmetics cost gems', () => {
   assert.equal(r.ok, true);
   assert.equal(G.getGems(), 5);
   assert.equal(SH.canAffordAny(1e9, SH.getOwned()), true, 'POWER is still a wins buy');
+});
+
+test('the eager modules carry v3 values as literals (v3/econ.js is lazy) — every one equals econ.js', async () => {
+  const RN = await import('../rebirthNow.js');
+  assert.equal(S.V3.ready, true);
+  assert.equal(G.ROLL_PRICE_GEMS, E.ROLL_PRICE);
+  assert.equal(S.V3.hooks.gemsSwap.c, E.ROLL_PRICE);
+  assert.equal(X.keyTierXp(), (E.WINS_BASE * 10) / E.WORD_REF);
+  assert.equal(W.wordWinsBase({ wordLength: 5, markId: null }), E.WINS_BASE);
+  assert.match(RN.REBIRTH_READY_COPY, new RegExp(`×${E.REBIRTH_STEP} FOREVER`));
 });

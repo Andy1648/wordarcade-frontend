@@ -15,8 +15,7 @@
 // storage by the grid (best/avg WPM → wpm.js, current streak → streak.js, rebirths → xp.js).
 import { rarityOf } from './rarityIndex.js';
 
-import { s2Key } from './season.js';
-export const RECORDS_KEY = s2Key('taw.records'); // v3 (SEASON2): taw.s2.records
+export const RECORDS_KEY = 'taw.records';
 export const SEEN_KEY = 'taw.records.seen';
 const VERSION = 1;
 

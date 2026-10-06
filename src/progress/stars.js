@@ -19,14 +19,11 @@
 // PERKS so stored levels load untouched.
 //
 // PURE + guarded store (taw.stars). Blocked storage → no stars, every perk at 0, never throws.
-import { rebirthThreshold, loadProgress, saveProgress, getRebirths, doRebirth, saveRebirths, saveKeyTier } from './xp.js';
+import { rebirthThreshold, loadProgress, saveProgress, getRebirths, doRebirth } from './xp.js';
 import { queueClaim } from './claims.js';
 import { noteRebirth } from './gemsCore.js';
 // PROGRESSION v3 (SEASON2, default OFF): a rebirth pays +7 × R gems (no ★, no layer claims); ★ come ONLY from
 // ASCENSION at R10 (ascendWithStars); star perks and AUTO-KEY are not part of v3. OFF = unchanged.
-import { SEASON2 } from './season.js';
-import { canAscend, starsForAscend } from './v3/econ.js';
-import { getStarsV3, saveStarsV3 } from './v3/store.js';
 
 export const STARS_KEY = 'taw.stars';
 export const LAYER_STARS_AT = 1; // rebirths to unlock STARS
@@ -85,7 +82,6 @@ export function starStep(rc) {
 }
 /** ★ a rebirth from `level` (standing at `rc` rebirths) would pay. 0 below the gate. */
 export function starsForRebirth(level, rc) {
-  if (SEASON2) return 0; // v3: a rebirth pays gems, never ★
   const gate = rebirthThreshold(rc);
   if (!Number.isFinite(level) || level < gate) return 0;
   return 1 + Math.floor((level - gate) / starStep(rc));
@@ -95,7 +91,6 @@ export function starsForRebirth(level, rc) {
  * `badTime` = true when that is BAD_TIME_LEVELS or fewer (so rebirthing now leaves a star behind).
  */
 export function rebirthAdvice(level, rc) {
-  if (SEASON2) return { stars: 0, nextIn: Math.max(0, rebirthThreshold(rc) - level), badTime: false };
   const stars = starsForRebirth(level, rc);
   if (stars === 0) return { stars: 0, nextIn: rebirthThreshold(rc) - level, badTime: false };
   const step = starStep(rc);
@@ -114,7 +109,6 @@ export function addStars(n) {
 
 /** Buy one level of a perk. Returns { ok, level, balance }. */
 export function buyPerk(id, rebirths) {
-  if (SEASON2) return { ok: false, locked: true }; // v3: no star perks (★ multiply XP and wins instead)
   const p = PERKS.find((x) => x.id === id);
   if (!p) return { ok: false };
   if (!layerUnlocked(p.layer, rebirths)) return { ok: false, locked: true };
@@ -160,12 +154,6 @@ export function headStartLevel(rcAfter) {
  * { rc, stars }. Every rebirth in the app goes through here (ShopScreen; the sims call it too).
  */
 export function rebirthWithStars() {
-  if (SEASON2) {
-    // v3: ONE rebirth — level → 1, R + 1, POWER kept (xp.doRebirth), +7 × R gems. No ★, no layer claim.
-    const rc = doRebirth();
-    noteRebirth(rc);
-    return { rc, stars: 0 };
-  }
   const before = getRebirths();
   const lv = loadProgress().level;
   const stars = starsForRebirth(lv, before);
@@ -190,7 +178,6 @@ export function rebirthWithStars() {
  */
 export function runAutomation({ buyKey, buyForge, cap = 500 } = {}) {
   const out = { keys: 0, forges: 0 };
-  if (SEASON2) return out; // v3: no AUTO-KEY / AUTO-FORGE (R2 unlocks AUTO ROLL instead)
   const auto = { key: perkLevel('autoKey') > 0, forge: perkLevel('autoForge') > 0 };
   // Alternate the two so neither starves the other when both are on.
   for (let i = 0; i < cap; i++) {
@@ -201,26 +188,10 @@ export function runAutomation({ buyKey, buyForge, cap = 500 } = {}) {
   }
   return out;
 }
-
-// ---- PROGRESSION v3: ASCENSION (season 2 only) --------------------------------------------------------------
-/** The live ★ (season 2; 0 with the flag OFF). */
-export function starsV3() {
-  return getStarsV3();
-}
-/**
- * ASCEND (v3, at R10): rebirths, levels and POWER reset; ★ += R − 9. `target` = the server's new ★ total (local
- * lands exactly on it, like a server rebirth), null = local (+ R − 9). Returns { ok, stars, added } — ok:false
- * below R10 or with the flag OFF. Every ascension in the app goes through here (leaderboard/client performAscend).
- */
-export function ascendWithStars(target = null) {
-  if (!SEASON2) return { ok: false, stars: 0, added: 0 };
-  const rb = getRebirths();
-  const before = getStarsV3();
-  if (target == null && !canAscend(rb)) return { ok: false, stars: before, added: 0 };
-  const after = Number.isFinite(target) && target >= 0 ? Math.floor(target) : before + starsForAscend(rb);
-  saveStarsV3(after);
-  saveRebirths(0);
-  saveKeyTier(0); // POWER resets on ascension (it is kept through rebirths)
-  saveProgress({ level: 1, intoLevel: 0 });
-  return { ok: true, stars: after, added: after - before };
+// (v3 ★ STARS + ASCENSION live in v3/store.js getStarsV3 and v3/hooks.js ascend — season 2 only.)
+// v3 (SEASON2): v3/install.js swaps these for the v3 rules (v3/hooks.js starsSwap — a rebirth pays +7 × R gems and
+// no ★, no star perks, no AUTO-KEY). Never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: starsForRebirth, b: rebirthAdvice, c: buyPerk, d: rebirthWithStars, e: runAutomation } = o);
 }

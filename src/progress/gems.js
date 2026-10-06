@@ -18,9 +18,6 @@
 // PAYLOAD SPLIT: the eager half (balance, the one grant door, drops, LEVEL UP, REBIRTH) is gemsCore.js — the index
 // chunk imports only that. This module re-exports it and adds what only the lazy game screens need.
 import { loadGemState, saveGemState, grantGems, tellBalance, gemsLedgerSince, resetGemsLedgerCore, BOT_WIN, PER_PLAYER_BEATEN, STREAK_PER_WIN } from './gemsCore.js';
-import { SEASON2 } from './season.js';
-import { STREAK_BONUS } from './v3/econ.js';
-import { bumpCounter } from './v3/store.js';
 
 const int = (x) => (Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0);
 
@@ -79,8 +76,7 @@ export function gameResultPayout({ iWon = false, rivals = [], selfIds = [], stre
     if (beaten > 0) lines.push({ reason: 'placement', amount: beaten * PER_PLAYER_BEATEN });
   }
   const before = int(streak);
-  // v3: a FLAT +4 on every win that extends a streak (the live game: STREAK_PER_WIN × the wins before it)
-  if (iWon && before > 0) lines.push({ reason: 'streak', amount: SEASON2 ? STREAK_BONUS : before * STREAK_PER_WIN });
+  if (iWon && before > 0) lines.push({ reason: 'streak', amount: before * STREAK_PER_WIN });
   return { lines, total: lines.reduce((t, l) => t + l.amount, 0), streak: iWon ? before + 1 : 0 };
 }
 const paidGames = new Set();
@@ -102,13 +98,15 @@ export function payGameResult({ key, iWon, rivals, selfIds, mode } = {}) {
   s.streak = p.streak;
   saveGemState(s);
   for (const l of p.lines) grantGems(l.amount, l.reason, { mode });
-  // v3 ACHIEVEMENTS: BEAT BOTS (a won game with no people in it) / WIN MULTIPLAYER (a won game with people)
-  if (SEASON2 && iWon) {
-    const self = new Set(selfIds || []);
-    bumpCounter(list.some((r) => r && !r.isBot && !self.has(r.id)) ? 'mp' : 'bots');
-  }
   return p;
 }
 export function getWinStreak() {
   return loadGemState().streak;
+}
+
+// v3 (SEASON2): v3/install.js wraps these (v3/hooks.js — the streak is a FLAT +4, and the BEAT BOTS / WIN MULTIPLAYER
+// achievement counters); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: gameResultPayout, b: payGameResult } = o);
 }

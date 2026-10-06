@@ -54,11 +54,7 @@ function hasRollState() {
 /** Run once per save (main.jsx boot, after the economy migration). Returns the gems granted (0 when already run). */
 export function migrateGems() {
   if (gemsMigrated()) return 0;
-  // PROGRESSION v3 (SEASON2): the season's gems start at 0 (the reset's grant is phase 4) — stamp and stop.
-  if (SEASON2) {
-    stampGemsMigrated({ peak: storedLevel() });
-    return 0;
-  }
+  if (SEASON2) return 0; // v3: the season's gems start at 0 — v3/install.js stamps its own (mapped) gem state
   const level = storedLevel();
   const peak = Math.max(level, peakLevel());
   const rollsOpen = peak >= ROLLS_OPEN_LEVEL || getRebirths() > 0 || hasRollState();

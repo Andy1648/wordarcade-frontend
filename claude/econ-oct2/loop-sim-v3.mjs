@@ -36,7 +36,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-globalThis.__TAW_SEASON2__ = true; // BEFORE any economy module loads (season.js reads it once)
+globalThis.location = { search: '?season2=1' }; // BEFORE any economy module loads (season.js reads it once)
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
@@ -83,6 +83,7 @@ Date.now = () => SIM_NOW;
 const imp = (rel) => import(pathToFileURL(path.join(SRC, rel)).href);
 const SEASON = await imp('progress/season.js');
 if (!SEASON.SEASON2) throw new Error('loop-sim-v3: the SEASON2 flag did not turn on (is this a tree with progress/season.js?)');
+await imp('progress/v3/install.js'); // the v3 rules (main.jsx installs them before the first render)
 const XP = await imp('progress/xp.js');
 const WINS = await imp('progress/wins.js');
 const SHOP = await imp('progress/shop.js');
@@ -227,7 +228,7 @@ function makeSimFlow(S, statsNow) {
     newId: () => `00000000-0000-4000-8000-${(++k).toString(16).padStart(12, '0')}`,
     season: () => 2,
     localAscendReady: () => XP.getRebirths() >= V3.ASCEND_AT,
-    applyAscend: (target) => STARS.ascendWithStars(target),
+    applyAscend: (target) => SEASON.V3.hooks.ascend(target),
   });
 }
 
@@ -235,6 +236,7 @@ function makeSimFlow(S, statsNow) {
 const mainValue = (id) => (id ? MR.mainMultOf(id) : 1);
 async function simulate(skill) {
   globalThis.localStorage = makeStore();
+  SEASON.V3.hooks.patchStorage(globalThis.localStorage); // the season's own keys (taw.s2.*), as install maps them
   SIM_NOW = T0;
   const seed = SEED_OF[skill.id] + (Number(process.env.SIM_SEED) || 0) * 7919;
   Math.random = LUCK.mulberry32(4242 + seed * 31);
@@ -304,7 +306,7 @@ async function simulate(skill) {
         const v = mainValue(id);
         if (v > bestV) { bestV = v; best = id; }
       }
-      if (best && STORE.mark2Id() !== best) MR.equipMark2(best);
+      if (best && STORE.mark2Id() !== best) SEASON.V3.hooks.equipMark2(best);
     }
   }
   async function menuReturn() {
@@ -386,7 +388,7 @@ async function simulate(skill) {
       sessionLeft -= dt;
       for (const T of PACE_CHECKS) if (rbAt[T] == null && minute >= T) rbAt[T] = XP.getRebirths();
       for (const T of PACE_CHECKS) if (powerAt[T] == null && minute >= T) powerAt[T] = XP.getKeyTier();
-      if (lv10h == null && minute >= 600) lv10h = { level: lv(), rebirths: XP.getRebirths(), stars: STARS.starsV3() };
+      if (lv10h == null && minute >= 600) lv10h = { level: lv(), rebirths: XP.getRebirths(), stars: STORE.getStarsV3() };
     }
     if (mode === 'word-bomb') {
       const iWon = rng() < skill.win;
@@ -410,7 +412,7 @@ async function simulate(skill) {
   return {
     skill: skill.id, lpm: skill.lpm, wpm: skill.wpm, words, letters, minutes: totalMin,
     firstR, rbAt, powerAt, runs, lv10h, ascends,
-    final: { level: lv(), rebirths: XP.getRebirths(), power: XP.getKeyTier(), stars: STARS.starsV3(), wins: WINS.getWins(), gems: GEMS.getGems(), rank: RANKS.liveRankV3().name, rolls, achGems, achClaims, achTiers: ACH.tierCountsV3(), mark: MR.wornMarkId(), mark2: STORE.mark2Id(), markMain: mainValue(MR.wornMarkId()) },
+    final: { level: lv(), rebirths: XP.getRebirths(), power: XP.getKeyTier(), stars: STORE.getStarsV3(), wins: WINS.getWins(), gems: GEMS.getGems(), rank: RANKS.liveRankV3().name, rolls, achGems, achClaims, achTiers: ACH.tierCountsV3(), mark: MR.wornMarkId(), mark2: STORE.mark2Id(), markMain: mainValue(MR.wornMarkId()) },
     winsBy: Object.fromEntries(Object.entries(winsBy).sort((a, b) => b[1] - a[1])),
     gems: { byReason: gemsBy, perMin: +(Object.values(gemsBy).reduce((a, b) => a + b, 0) / totalMin).toFixed(2) },
     server: { calls: srv.calls, grants: srv.grants, ascends: srv.ascends, storedRebirths: srv.row.rebirths, storedLevel: srv.row.level, refusals: srv.refusals, replays: srv.replays, replayMoves: srv.replayMoves, violations: srv.violations.slice(0, 20), violationCount: srv.violations.length, submits: srv.submits, spam: skill.spam ? spam : null },
@@ -419,6 +421,7 @@ async function simulate(skill) {
 
 async function simulateMasher(hours) {
   globalThis.localStorage = makeStore();
+  SEASON.V3.hooks.patchStorage(globalThis.localStorage); // the season's own keys (taw.s2.*), as install maps them
   SIM_NOW = T0;
   LX.resetLetterXp();
   const srv = makeSimServer();

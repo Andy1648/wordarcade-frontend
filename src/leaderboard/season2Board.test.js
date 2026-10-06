@@ -160,3 +160,12 @@ test('performAscend: server ok → applied once on the server ★; refusal appli
   const loc = await mk(false).performAscend();
   assert.deepEqual([loc.ok, loc.mode, loc.added], [true, 'local', 3]);
 });
+
+test('serverRebirth.js keeps ASCEND_AT as a literal equal to v3/econ.js (an import would drag ~19 KB eager)', async () => {
+  const src = readFileSync(join(process.cwd(), 'src', 'leaderboard', 'serverRebirth.js'), 'utf8');
+  const m = src.match(/const ASCEND_AT = (\d+);/);
+  const { ASCEND_AT } = await import('../progress/v3/econ.js');
+  assert.ok(m, 'literal present');
+  assert.equal(Number(m[1]), ASCEND_AT);
+  assert.doesNotMatch(src, /from '\.\.\/progress\/v3\//);
+});

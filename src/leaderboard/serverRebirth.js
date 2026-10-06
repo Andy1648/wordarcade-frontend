@@ -3,11 +3,11 @@
 // the menu's eager chunk (payload ratchet, e2e/payload-budget.spec.js). ShopScreen (already lazy) imports it; the
 // eager client.js only `import()`s it when an unanswered request id is in storage (settle before a board submit).
 import { getRebirths, saveRebirths } from '../progress/xp.js';
-import { rebirthWithStars, ascendWithStars } from '../progress/stars.js';
+import { rebirthWithStars } from '../progress/stars.js';
 // PROGRESSION v3 (SEASON2, default OFF): rebirths name season 2 (gate ⌈100 × 2.5^R⌉ on an econ-13 row, 022), and
 // performAscend (R10 → ★) goes through lb_ascend the same way. OFF = season 0, exactly as before.
-import { SEASON2 } from '../progress/season.js';
-import { ASCEND_AT } from '../progress/v3/econ.js';
+import { SEASON2, V3 } from '../progress/season.js';
+const ASCEND_AT = 10; // = v3/econ.js ASCEND_AT (a literal: importing econ here split this lazy chunk and dragged ~19 KB into the eager index — payload ratchet). Pinned by season2Board.test.js
 import { isRebirthReadyNow } from '../progress/rebirthNow.js';
 import { makeRebirthFlow } from './rebirthFlow.js';
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, getSecret, myStats, submitStats, rpc, pushMeta } from './client.js';
@@ -58,7 +58,7 @@ const flow = makeRebirthFlow({
   season: () => (SEASON2 ? 2 : 0),
   // v3 ASCEND: `target` = the server's new ★ total, null = local (+ R − 9)
   localAscendReady: () => SEASON2 && (getRebirths() || 0) >= ASCEND_AT,
-  applyAscend: (target) => ascendWithStars(target),
+  applyAscend: (target) => V3.hooks.ascend(target),
 });
 // client.js's submitStats skips a push while a request id is stored (in flight or unanswered): that push would carry
 // the old, lower count, which the board reads as a RESET.

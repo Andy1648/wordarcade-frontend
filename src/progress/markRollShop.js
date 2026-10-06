@@ -13,9 +13,7 @@ import {
 import { rollsPerRoll } from './markPerks.js';
 import { isBoostActive } from './boost.js';
 // PROGRESSION v3 (SEASON2, default OFF): ROLL EPIC+ / FILL INDEX achievement counters, and the R2 AUTO ROLL unlock.
-import { SEASON2 } from './season.js';
-import { bumpCounter, noteMarkSeen } from './v3/store.js';
-import { featureOpen } from './v3/unlocks.js';
+import { SEASON2, V3 } from './season.js'; // V3.store / V3.unlocks: installed lazily (season.js)
 
 /** What the next roll costs: { free, gems }. The first roll on a save is the free starter. `level` is accepted for
  *  old callers and ignored (the price is flat). */
@@ -60,8 +58,8 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   for (const r of all) if (tierRank(r.tier) >= tierRank(res.tier)) res = r;
   if (SEASON2) {
     for (const r of all) {
-      noteMarkSeen(r.markId);
-      if (tierRank(r.tier) >= tierRank('epic')) bumpCounter('epic');
+      V3.store.noteMarkSeen(r.markId);
+      if (tierRank(r.tier) >= tierRank('epic')) V3.store.bumpCounter('epic');
     }
   }
   const extra = all.filter((r) => r !== res);
@@ -93,7 +91,7 @@ const AUTO_ROLL_CAP = 100000; // a hard stop so no loop can run away (the gems r
  * results in roll order ([] when the first can't be paid). Equips nothing (the UI lands each result).
  */
 export function autoRoll({ until = 'epic', level = 1, rng = Math.random, onEach, budget = Infinity, max = AUTO_ROLL_CAP } = {}) {
-  if (SEASON2 && !featureOpen('autoRoll')) return []; // v3: AUTO ROLL opens at R2
+  if (SEASON2 && !V3.unlocks.featureOpen('autoRoll')) return []; // v3: AUTO ROLL opens at R2
   const goal = tierRank(AUTO_ROLL_TIERS.includes(until) ? until : 'epic');
   const cap = Math.min(AUTO_ROLL_CAP, Math.max(0, Math.floor(Number.isFinite(max) ? max : AUTO_ROLL_CAP)));
   const out = [];

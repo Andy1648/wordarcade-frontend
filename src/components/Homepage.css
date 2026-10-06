@@ -1136,14 +1136,3 @@ html[data-beat='true'] .homepage-beat-glow {
 @media (prefers-reduced-motion: reduce) {
   .homepage-board-hero:hover .pi { transform: none; }
 }
-
-/* v3 (SEASON2): the ACHIEVEMENTS trophy in the corner-nav stack — square, icon only, the stack's own slab look */
-.homepage-nav-btn.is-ach {
-  min-width: 44px;
-  padding-left: 7px;
-  padding-right: 7px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.homepage-nav-btn.is-ach img { display: block; }

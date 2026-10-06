@@ -49,7 +49,8 @@ const s2 = (page) => page.evaluate(() => ({
   power: localStorage.getItem('taw.s2.keytier'),
   wins: localStorage.getItem('taw.s2.wins'),
   gems: (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0,
-  s1: { wins: localStorage.getItem('taw.wins'), rebirths: localStorage.getItem('taw.rebirths'), xp: localStorage.getItem('taw.xp') },
+  // the season-1 keys, read RAW (named access — season 2 maps getItem('taw.wins') to taw.s2.wins at the storage layer)
+  s1: { wins: localStorage['taw.wins'], rebirths: localStorage['taw.rebirths'], xp: localStorage['taw.xp'] },
 }));
 const noClaimPopups = async (page) => {
   await expect(page.locator('.claim-pop')).toHaveCount(0);
@@ -58,6 +59,7 @@ const noClaimPopups = async (page) => {
 
 for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
   test(`SEASON2 @${vp.width}: type → level, rebirth through lb_rebirth, POWER, v3 ranks, no claim popups, ACHIEVEMENTS pay gems`, async ({ page }) => {
+    test.setTimeout(90_000); // a whole season-2 loop: type, rebirth (server), POWER, ACHIEVEMENTS
     await page.setViewportSize(vp);
     const { board, shared } = await boot(page);
     const phone = isPhoneMenu(page);
@@ -97,7 +99,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.locator('.shop-kp-actions .shop-card-btn').first().click();
     await expect.poll(async () => (await s2(page)).power).toBe('1');
     expect((await s2(page)).wins).toBe('400');
-    await page.locator('.shop-close').click();
+    await page.keyboard.press('Escape'); // (the POWER reveal sticker may still cover the ✕)
     await expect(page.locator('.shop-panel')).toHaveCount(0);
 
     // ACHIEVEMENTS: the trophy in the nav cluster; TYPE WORDS I pays 40 gems
@@ -118,6 +120,6 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
 
     // the season-1 save is untouched
     expect(st.s1).toEqual({ wins: '999999', rebirths: '7', xp: JSON.stringify({ lv: 30, f: 0.5, rc: 7, v: 10 }) });
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims')).length)).toBe(1);
+    expect(await page.evaluate(() => JSON.parse(localStorage['taw.claims']).length)).toBe(1);
   });
 }

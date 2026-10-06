@@ -19,14 +19,13 @@
 // PURE + guarded store, like every progress module: blocked storage → claims are granted on the
 // spot instead (never lost, never throws).
 import { grantWins } from './wins.js';
-import { storedLevel, getRebirths, rebirthMult } from './xp.js';
+import { storedLevel } from './xp.js';
 import { startBoost } from './boost.js';
 // PROGRESSION v3 (SEASON2, default OFF — Andy phase 3: "no wins for ranking up, and remove ALL menu claim
 // notifications. Every claim lives in ACHIEVEMENTS and pays gems"): with the flag ON nothing enters this inbox —
 // achievement / rank / layer / collection / welcome claims are CUT (v3/achievements.js pays gems for play
 // instead), codes and boosts still apply on the spot, and the inbox reads empty (a season-1 inbox is left in
 // storage untouched). OFF = unchanged.
-import { SEASON2 } from './season.js';
 
 export const CLAIMS_KEY = 'taw.claims';
 
@@ -43,9 +42,7 @@ export const CLAIMS_KEY = 'taw.claims';
 //   cut      welcome back                        — a gift for being away; wins come only from playing (O9)
 const INBOX_KINDS = new Set(['achievement', 'rank']);
 const CUT_KINDS = new Set(['welcome']);
-const S2_CUT_KINDS = new Set(['achievement', 'rank', 'layer', 'collection', 'welcome']);
 export function claimPolicy(kind, id) {
-  if (SEASON2 && S2_CUT_KINDS.has(kind)) return 'cut';
   if (INBOX_KINDS.has(kind)) return 'inbox';
   if (id === 'theme-refund') return 'instant';
   if (CUT_KINDS.has(kind)) return 'cut';
@@ -102,7 +99,6 @@ export function subscribeClaims(fn) {
 }
 
 function load() {
-  if (SEASON2) return []; // v3: no inbox
   try {
     const raw = localStorage.getItem(CLAIMS_KEY);
     if (!raw) return [];
@@ -113,7 +109,6 @@ function load() {
   }
 }
 function save(arr) {
-  if (SEASON2) return true; // v3: never rewrite (the season-1 inbox stays as it was)
   try {
     localStorage.setItem(CLAIMS_KEY, JSON.stringify(arr.slice(-MAX_CLAIMS)));
     return true;
@@ -185,7 +180,6 @@ export function claimAmount(c) {
   if (!c) return 0;
   const base = Number.isFinite(c.amount) && c.amount > 0 ? c.amount : 0;
   // v3: levels reach millions, so a per-level code scales with the REBIRTH multiplier (2^R) instead
-  if (SEASON2 && c.meta && c.meta.perLevel) return base * rebirthMult(getRebirths());
   return c.meta && c.meta.perLevel ? base * currentLevel() : base;
 }
 
@@ -276,4 +270,10 @@ export function trimClaimInbox() {
   save(keep);
   emit();
   return { applied, dropped };
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: claimPolicy, b: claimAmount } = o);
 }

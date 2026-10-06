@@ -7,76 +7,38 @@
 // ON when, at PAGE LOAD (never mid-session — a v3 save must never be read by the live rules or the reverse):
 //   * the URL carries ?season2=1 (dev / e2e),
 //   * the build was made with VITE_SEASON2=1,
-//   * globalThis.__TAW_SEASON2__ === true before this module is first imported (the CI loop-sim, node tests),
+//   * node (the CI loop-sim, unit tests): globalThis.location = { search: '?season2=1' } before the first import,
 //   * the SERVER HOOK (below) — later, once lb_caps says season 2 (wired but inert: SERVER_FLAG_LIVE = false).
 //
 // SEASON 2 KEEPS ITS OWN SAVE. The progression keys whose MEANING v3 changes (level state, rebirths, POWER, wins,
-// gems, records) are read and written under `taw.s2.*` while the flag is on (s2Key). So a tester who opens
+// gems, records, the claims inbox) are read and written under `taw.s2.*` while the flag is on: v3/install.js maps them
+// at the storage layer (patchStorage), so the live modules carry no key logic at all. So a tester who opens
 // ?season2=1 on a real save never touches it, and turning the flag off returns that save untouched. The reset
 // itself (phase 4) is separate.
 //
 // LEAF MODULE: imports nothing (xp.js, gemsCore.js and every other leaf can read it without a cycle).
 
-export const SEASON2_ECON = 13; // the board's econ value for a season-2 row (supabase/migrations/022_season2_board.sql)
-export const S2_PREFIX = 'taw.s2.';
-export const SERVER_FLAG_KEY = 'taw.s2.server'; // the server hook's note (read at the NEXT boot)
-export const SERVER_FLAG_LIVE = false; // phase 3: the server hook is wired but does not turn the season on
 
-function readFlag() {
-  try {
-    if (typeof globalThis !== 'undefined' && globalThis.__TAW_SEASON2__ === true) return true;
-  } catch {
-    /* ignore */
-  }
-  try {
-    if (import.meta.env && import.meta.env.VITE_SEASON2 === '1') return true;
-  } catch {
-    /* no import.meta.env (node) */
-  }
-  try {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search || '').get('season2') === '1') return true;
-  } catch {
-    /* no window */
-  }
-  if (SERVER_FLAG_LIVE) {
-    try {
-      if (typeof localStorage !== 'undefined' && localStorage.getItem(SERVER_FLAG_KEY) === '1') return true;
-    } catch {
-      /* blocked */
-    }
-  }
-  return false;
-}
-
+// The flag, read once (node: no import.meta.env → reads location.search, which the sim / tests set; none → throws → OFF). The server
+// hook (SERVER_FLAG_LIVE, false in phase 3) would add `|| localStorage.getItem(SERVER_FLAG_KEY) === '1'` here.
 /** THE FLAG — fixed for the page load. */
-export const SEASON2 = readFlag();
-
-/** Function form (for call sites that read better as a call). */
-export function isSeason2() {
-  return SEASON2;
-}
-
-/**
- * The storage key a progression value lives under: `taw.x` with the flag OFF (unchanged), `taw.s2.x` with it ON.
- * Only the keys whose meaning v3 changes go through here.
- */
-export function s2Key(key) {
-  if (!SEASON2) return key;
-  return S2_PREFIX + String(key).replace(/^taw\./, '');
-}
-
-/**
- * SERVER HOOK (for later): lb_caps may one day carry { season: 2 }. Noted here, applied at the NEXT boot, and only
- * once SERVER_FLAG_LIVE is flipped — a season must never change under a running page. Returns whether it noted.
- */
-export function noteServerSeason(caps) {
+export const SEASON2 = (() => {
   try {
-    if (typeof localStorage === 'undefined') return false;
-    if (caps && Number(caps.season) === 2) localStorage.setItem(SERVER_FLAG_KEY, '1');
-    else if (caps && caps.season != null) localStorage.removeItem(SERVER_FLAG_KEY);
-    else return false;
-    return true;
+    return /season2=1/.test(location.search) || import.meta.env.VITE_SEASON2 === '1';
   } catch {
     return false;
   }
-}
+})();
+
+
+
+// SERVER HOOK (for later): v3/hooks.js noteServerSeason(caps) notes lb_caps { season: 2 } for the NEXT boot.
+
+/**
+ * THE v3 RULES, INSTALLED LAZILY. The v3 modules (v3/econ, curve, store, unlocks, ranks) live in their own chunk —
+ * the live game never downloads them (payload ratchet, e2e/payload-budget.spec.js). main.jsx imports
+ * ./v3/install.js BEFORE the first render when SEASON2 is on, and that fills this holder; every season-2 branch in the
+ * eager modules reads its rules through it (V3.econ.xpPerLetter(...), V3.store.bumpCounter(...) ...). Node tests and
+ * the sim import ./v3/install.js themselves after turning the flag on.
+ */
+export const V3 = {}; // { econ, curve, store, unlocks, ranks, hooks, Trophy, ready } once installed

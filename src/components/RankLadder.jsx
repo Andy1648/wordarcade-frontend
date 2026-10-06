@@ -6,13 +6,13 @@
 // offset shadow, Bungee headings). ZERO animation. Escape / backdrop / the X all close it.
 import { useEffect, useRef } from 'react';
 import './RankLadder.css';
-import { RANKS, rankFor } from '../progress/rank';
+import { RANKS as LIVE_RANKS, rankFor } from '../progress/rank';
 // v3 (SEASON2): ranks go by rebirths then stars — RANKS is that ladder, `min` its index, `req` what it needs ("R5",
 // "★10"); the ladder compares the live rank's index instead of the level.
-import { SEASON2 } from '../progress/season';
+import { SEASON2, V3 } from '../progress/season';
 
 // The top of each band (one below the next band's min; the last band is open-ended).
-function bandTop(i) {
+function bandTop(RANKS, i) {
   return i < RANKS.length - 1 ? RANKS[i + 1].min - 1 : Infinity;
 }
 
@@ -29,6 +29,7 @@ export default function RankLadder({ level = 1, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const RANKS = SEASON2 ? V3.ranks.RANKS_V3 : LIVE_RANKS;
   const current = rankFor(level);
   if (SEASON2) level = current.min; // eslint-disable-line no-param-reassign
 
@@ -57,7 +58,7 @@ export default function RankLadder({ level = 1, onClose }) {
             const isCurrent = r.name === current.name;
             // The next rank = the first band above the current one.
             const isNext = !earned && r.min > level && RANKS.findIndex((q) => !(level >= q.min)) === i;
-            const top = bandTop(i);
+            const top = bandTop(RANKS, i);
             const range = r.req ? r.req : top === Infinity ? `LV ${r.min}+` : `LV ${r.min}–${top}`;
             const cls =
               `rank-row${earned ? ' is-earned' : ' is-locked'}` +

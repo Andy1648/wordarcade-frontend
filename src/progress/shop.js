@@ -8,10 +8,6 @@ import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
 // PROGRESSION v3 (SEASON2, default OFF): WINS BUY ONLY POWER — cosmetics cost GEMS (v3/econ cosmeticGemPrice), and
 // the best POWER feeds the ACHIEVEMENTS counter. OFF = every price and balance exactly as before.
-import { SEASON2 } from './season.js';
-import { cosmeticGemPrice } from './v3/econ.js';
-import { maxCounter } from './v3/store.js';
-import { loadGemState, saveGemState, tellBalance } from './gemsCore.js';
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` is a LEGACY field: PROGRESSION v11 (review
 // round 2) made cosmetics LOOKS ONLY — xpPerInput ignores it and no copy quotes it (it was "+N% MENU XP",
@@ -140,40 +136,12 @@ export function equippedSoundMult() {
   return xpMultOf(getEquipped().soundPack);
 }
 
-/** v3: an item's price in GEMS — its rung among the PAID items of its own list (0 for a free one). */
-export function itemGemPrice(id) {
-  const list = POP_IDS.has(id) ? POP_STYLES : SOUND_IDS.has(id) ? SOUND_PACKS : null;
-  if (!list) return 0;
-  const paid = list.filter((i) => i.price > 0);
-  const k = paid.findIndex((i) => i.id === id);
-  return k < 0 ? 0 : cosmeticGemPrice(k + 1);
-}
-/** The price the shop charges for an item now: GEMS in season 2, wins otherwise. */
-export function itemPrice(id) {
-  const it = itemById(id);
-  if (!it) return Infinity;
-  return SEASON2 ? itemGemPrice(id) : it.price;
-}
-function buyWithGems(id, item) {
-  const price = itemGemPrice(id);
-  const g = loadGemState();
-  if (g.bal < price) return { ok: false, reason: 'unaffordable', wins: getWins(), gems: g.bal };
-  g.bal -= price;
-  saveGemState(g);
-  tellBalance(g.bal);
-  saveOwned([...getOwned(), id]);
-  equip(id);
-  void item;
-  return { ok: true, wins: getWins(), gems: g.bal, equipped: true, spentGems: price };
-}
-
 // Buy an item: it must exist, not already be owned, and be affordable. Deducts from wins
 // ONLY (winsLifetime is untouched). Returns { ok, reason?, wins }.
 export function buy(id) {
   const item = itemById(id);
   if (!item) return { ok: false, reason: 'unknown', wins: getWins() };
   if (isOwned(id)) return { ok: false, reason: 'owned', wins: getWins() };
-  if (SEASON2) return buyWithGems(id, item); // v3: cosmetics cost GEMS
   const wins = getWins();
   if (wins < item.price) return { ok: false, reason: 'unaffordable', wins };
   const next = wins - item.price;
@@ -195,7 +163,6 @@ export function buyKeyPower() {
   const nextWins = wins - cost;
   saveWins(nextWins);
   saveKeyTier(tier + 1);
-  if (SEASON2) maxCounter('power', tier + 1); // v3 ACHIEVEMENTS: POWER LEVEL (the best ever — ascension resets POWER)
   return { ok: true, wins: nextWins, tier: tier + 1, spent: cost };
 }
 
@@ -223,7 +190,7 @@ export function canAffordAny(wins = getWins(), owned = getOwned()) {
   const ownedSet = new Set(owned);
   const bal = Number.isFinite(wins) ? wins : 0;
   // Cosmetics (pop styles + sound packs). v3: they cost GEMS, so wins never light the dot for them.
-  if (!SEASON2 && ALL.some((it) => !ownedSet.has(it.id) && bal >= it.price)) return true;
+  if (ALL.some((it) => !ownedSet.has(it.id) && bal >= it.price)) return true;
   // Key Tier — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
   if (Number.isFinite(kCost) && bal >= kCost) return true;
@@ -243,4 +210,10 @@ export function equip(id) {
   eq[type] = id;
   saveEquipped(eq);
   return true;
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: buy, b: buyKeyPower, c: canAffordAny } = o);
 }

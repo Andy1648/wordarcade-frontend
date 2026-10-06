@@ -14,7 +14,7 @@ import { getRebirths, storedLevel } from '../progress/xp.js';
 // says season2 (never season-2 numbers onto the season-1 board), reads public.leaderboard_s2 (★ → R → level), and
 // skips the cloud save (it backs up the season-1 keys; season 2's is phase 4). lb_rebirth / lb_ascend name season 2
 // in the lazy serverRebirth.js.
-import { SEASON2, SEASON2_ECON } from '../progress/season.js';
+import { SEASON2 } from '../progress/season.js';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
@@ -160,8 +160,8 @@ export function boardCaps() {
       // econ: the p_econ to send (cloudSave econRpcArg) — 12 once 018_rebirth_rush.sql runs, 10 with only 016/017
       // (the version-gated lb_submit3 / lb_save2 / lb_load2 exist), 0 = neither (old RPCs)
       // boardEcon: 017_board_reality.sql — the board views carry `econ` (which economy a row last submitted on)
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud) && !SEASON2, weekly: !!(c && c.weekly), econ: econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ), season2: !!(c && c.season2) }))
-      .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: 0, boardEcon: false, season2: false }));
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !SEASON2 && !!(c && c.cloud), weekly: !!(c && c.weekly), econ: SEASON2 ? +(c && c.econ2) || 0 : econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ) }))
+      .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: 0, boardEcon: false }));
   }
   return capsPromise;
 }
@@ -217,19 +217,9 @@ export async function submitStats(force = false, { internal = false } = {}) {
   const s = myStats();
   try {
     const caps = await boardCaps();
-    if (SEASON2) {
-      // v3: only onto the season-2 board (022). Before 022 runs, a season-2 client submits nothing.
-      if (!caps.season2) return false;
-      await rpc('lb_submit3', {
-        p_secret: getSecret(),
-        p_level: s.level,
-        p_rebirths: s.rebirths,
-        p_lifetime_words: s.lifetimeWords,
-        p_lifetime_letters: s.lifetimeLetters,
-        p_wins_per_word: s.winsPerWord,
-        p_econ: SEASON2_ECON,
-      });
-    } else if (caps.econ) {
+    // v3 (SEASON2): caps.econ is lb_caps.econ2 = 13 once 022 runs (the season-2 board); before that it is 0 and the
+    // old RPCs below are no-ops (016), so season-2 numbers never land on the season-1 board.
+    if (caps.econ) {
       // PV10 (016): the version-gated submit — the old lb_submit2 / lb_submit are no-ops once 016 runs.
       await rpc('lb_submit3', {
         p_secret: getSecret(),
@@ -279,7 +269,7 @@ export async function submitStats(force = false, { internal = false } = {}) {
  * and report { restored: true } (the caller reloads). Also re-learns the profile after a wipe.
  */
 export async function restoreFromCloud({ restore = true } = {}) {
-  if (!LEADERBOARD_ENABLED || SEASON2) return { restored: false }; // v3: the season-2 save is local (phase 4)
+  if (!LEADERBOARD_ENABLED) return { restored: false }; // (v3: caps.cloud is off in season 2 — its save is local, phase 4)
   const secret = peekSecret();
   if (!secret) return { restored: false };
   const caps = await boardCaps();
