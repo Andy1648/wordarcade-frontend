@@ -191,9 +191,12 @@ export function decideSubmitRR(old, sub, now) {
 // ---- 022 (supabase/migrations/022_season2_board.sql): THE SEASON-2 BOARD WRITE (PROGRESSION v3, econ 13) ----------
 // KEEP IN SYNC WITH private.lb_board_write_s2: same branches, order and constants. lb_submit3 routes p_econ = 13 here
 // (and refuses a season-1 client on a season-2 row). Differences from decideSubmitRR:
-//   * FIRST season-2 write — a new name, or a row whose last write was season 1 (econ ≠ 13): a baseline, but rebirths
-//     ≤ lifetime words / S2_WORDS_PER_RB (an honest FAST player needs ≥ 150 words for R1, ~1,400 for R5) and the
-//     level ≤ S2_LV_GATE_MULT × the gate of those rebirths. No weekly words.
+//   * FIRST season-2 write of a NEW name (never submitted): a baseline, but rebirths ≤ lifetime words / S2_WORDS_PER_RB
+//     (an honest FAST player needs ≥ 150 words for R1, ~1,400 for R5) and the level ≤ S2_LV_GATE_MULT × the gate of
+//     those rebirths. No weekly words.
+//   * FIRST season-2 write of a SEASON-1 ROW (econ ≠ 13 — Andy oct6, no reset: 025 converted its rebirths / stars): it
+//     KEEPS its progress — rebirths ≤ the stored (converted) count, the level ≤ max(stored level, S2_LV_GATE_MULT ×
+//     the gate). No weekly words. (action 'first' too.)
 //   * REBIRTHS never rise on a submit (lb_rebirth season 2 only); STARS are never written here (lb_ascend only).
 //   * LEVEL — v3 levels reach millions (40·√L, cumulative ∝ L^1.5): free up to S2_LV_GATE_MULT × gate(R) (= 8× the
 //     gate's XP, two rebirths of headroom — every rebirth needs ×4 XP), or the stored level + S2_LEVELS_PER_SEC a
@@ -229,9 +232,14 @@ export function decideSubmitS2(old, sub, now) {
   let l = int(sub.letters, 0, 0);
   const write = (level, rebirths, words, letters) => ({ level, rebirths, lifetime_words: words, lifetime_letters: letters, submitted_at: now, econ: S2_ECON });
   if (old.submitted_at != null && old.submitted_at >= now - THROTTLE_MS) return { action: 'throttled' };
-  if (old.submitted_at == null || Number(old.econ) !== S2_ECON) {
+  if (old.submitted_at == null) {
     rb = Math.min(rb, Math.floor(w / S2_WORDS_PER_RB));
     lv = Math.min(lv, s2LevelRoom(rb));
+    return { action: 'first', row: write(lv, rb, w, l), weekDelta: 0 };
+  }
+  if (Number(old.econ) !== S2_ECON) {
+    rb = Math.min(rb, int(old.rebirths, 0, 0));
+    lv = Math.min(lv, Math.max(int(old.level, 1, 1), s2LevelRoom(rb)));
     return { action: 'first', row: write(lv, rb, w, l), weekDelta: 0 };
   }
   const oLv = int(old.level, 1, 1);
