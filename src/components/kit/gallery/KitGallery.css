@@ -198,6 +198,11 @@ html.kg-page #root { height: auto; overflow: visible; }
 .kg-c-grid { display: grid; grid-template-columns: minmax(0, 800fr) minmax(0, 486fr); gap: 20px 24px; }
 .kg-c-pills .kg-bp-body { padding: 40px 4px 18px; }
 .kg-c-stamps .kg-bp-body { padding: 18px 8px; }
+/* A stamp SLAMS in from x2.9 (KitStamp FX.stampSlam): for those 400 ms its transformed box is ~600px wide, and a
+   transform still counts toward the page's scrollable overflow, so at 390px the slam flashed a horizontal page
+   scroll (kit.spec "no horizontal page scroll" read 22-39px when it sampled mid-slam). The panel clips its own
+   stamps; the stamps' REST pose (a rotated SOLD OUT band hangs ~20px past its card) stays inside the body padding. */
+.kg-c-stamps { overflow: clip; }
 .kg-pills { display: flex; flex-wrap: wrap; gap: 20px 0; justify-content: space-around; }
 .kg-pillcol { display: flex; flex-direction: column; gap: 14px; width: 236px; }
 .kg-pillbtns { display: flex; gap: 8px; margin-left: 30px; width: 210px; margin-top: 16px; }
@@ -355,6 +360,7 @@ html.kg-page #root { height: auto; overflow: visible; }
   .kg-tp-note { position: static; margin-bottom: 10px; }
   .kg-bp-body { padding: 14px 12px; }
   .kg-bp-note { display: none; }
+  .kg-c-stamps .kg-bp-body { padding: 14px 26px; } /* room for SOLD OUT's ~20px rest overhang inside the clip */
   .kg-ep { padding: 10px 12px 16px; }
   .kg-col--hold { min-width: 0; flex-basis: 100%; }
   .kg-col--hold .kb--primary { width: 300px; max-width: calc(100vw - 80px); }
