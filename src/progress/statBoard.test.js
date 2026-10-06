@@ -139,3 +139,15 @@ test('boardMult: exact below ×10, whole from ×10 (no ×27.98), abbreviated fro
   assert.equal(boardMult(9765625), '9.77M');
   assert.doesNotMatch(boardMult(1e300), /e|Infinity|NaN/);
 });
+
+test('statChain (flag OFF): the stack\'s own lines, no ASCEND; BASE × every chip = TOTAL', async () => {
+  const { statChain } = await import('./statBoard.js');
+  withStorage(save({ mark: 'mk-eclipse', kt: 4, rc: 3, boost: true }), () => {
+    const b = statBoard();
+    const w = statChain(b.wins);
+    const x = statChain(b.xp);
+    assert.deepEqual(w.chips.map((c) => c.label), ['REBIRTH', 'MARK', 'BOOST']);
+    assert.deepEqual(x.chips.map((c) => c.label), ['POWER', 'REBIRTH', 'MARK', 'BOOST']);
+    for (const c of [w, x]) close(c.chips.reduce((p, k) => p * k.mult, c.base), c.total, 0.05 + 1e-9, c.id);
+  });
+});
