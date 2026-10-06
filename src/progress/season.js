@@ -41,4 +41,4 @@ export const SEASON2 = (() => {
  * eager modules reads its rules through it (V3.econ.xpPerLetter(...), V3.store.bumpCounter(...) ...). Node tests and
  * the sim import ./v3/install.js themselves after turning the flag on.
  */
-export const V3 = {}; // { econ, curve, store, unlocks, ranks, hooks, Trophy, ready } once installed
+export const V3 = {}; // { econ, curve, store, unlocks, ranks, hooks, stock, Trophy, ready } once installed
