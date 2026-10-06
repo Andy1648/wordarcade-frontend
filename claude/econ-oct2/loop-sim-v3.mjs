@@ -615,8 +615,8 @@ async function runBoard() {
   if (args.grid) {
     gridOut = { power: [], stars: [] };
     const NO_STARS = 1e9;
-    const ks = String(args['grid-k'] || '0.5,0.75,1').split(',').map(Number);
-    const bases = String(args['grid-base'] || '0,2,4,6').split(',').map(Number);
+    const ks = String(args['grid-k'] || '0.5,0.75,1,1.25,1.5').split(',').map(Number);
+    const bases = String(args['grid-base'] || '0,1,2,4').split(',').map(Number);
     const perRs = String(args['grid-perr'] || '1').split(',').map(Number);
     const Ss = String(args['grid-s'] || '10,15,20,30,45,60,90').split(',').map(Number);
     let bestP = null;
@@ -628,7 +628,8 @@ async function runBoard() {
       const failing = failList(res);
       gridOut.power.push({ rates, ...v, generosity, failing });
       if (!QUIET) console.log(`  GRID POWER k${k} cap ${b}+${pr}R: ${v.pass ? 'PASS' : `FAIL ${v.fails}`} · worst pace ×${v.worstPace} · slowest next rebirth ${fmtMin(v.slowestRebirth)} · ΣPOWER(typ) ${generosity}${v.pass ? '' : ` · ${failing.slice(0, 8).join(', ')}`}`);
-      if (v.pass && (!bestP || generosity > bestP.generosity)) bestP = { rates, generosity };
+      // the pick: most POWER handed back (Σ over the TYP saves), then the most room under the 2 h stuck limit
+      if (v.pass && (!bestP || generosity > bestP.generosity || (generosity === bestP.generosity && v.slowestRebirth < bestP.slow))) bestP = { rates, generosity, slow: v.slowestRebirth };
     }
     const powerRates = bestP ? bestP.rates : { ...CONVERT.RATES, STARS_PER_EXCESS: NO_STARS };
     let bestS = null;
