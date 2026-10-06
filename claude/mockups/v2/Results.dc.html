@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Round Results</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes rsSlamA{0%{transform:scale(3.2) rotate(-8deg);opacity:0}55%{transform:scale(.88) rotate(-2deg);opacity:1}75%{transform:scale(1.06) rotate(-3deg)}100%{transform:scale(1) rotate(-3deg);opacity:1}}
+@keyframes rsSlamB{0%{transform:scale(3.2) rotate(-8deg);opacity:0}55%{transform:scale(.88) rotate(-2deg);opacity:1}75%{transform:scale(1.06) rotate(-3deg)}100%{transform:scale(1) rotate(-3deg);opacity:1}}
+@keyframes rsStampA{0%{transform:scale(3.6) rotate(4deg);opacity:0}60%{transform:scale(.9) rotate(-14deg);opacity:1}100%{transform:scale(1) rotate(-12deg);opacity:1}}
+@keyframes rsStampB{0%{transform:scale(3.6) rotate(4deg);opacity:0}60%{transform:scale(.9) rotate(-14deg);opacity:1}100%{transform:scale(1) rotate(-12deg);opacity:1}}
+@keyframes rsDropA{0%{transform:translateY(-90px) rotate(-14deg);opacity:0}60%{transform:translateY(8px) rotate(4deg);opacity:1}80%{transform:translateY(-4px) rotate(-2deg)}100%{transform:translateY(0) rotate(0);opacity:1}}
+@keyframes rsDropB{0%{transform:translateY(-90px) rotate(-14deg);opacity:0}60%{transform:translateY(8px) rotate(4deg);opacity:1}80%{transform:translateY(-4px) rotate(-2deg)}100%{transform:translateY(0) rotate(0);opacity:1}}
+@keyframes rsRiseA{0%{transform:translateY(26px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes rsRiseB{0%{transform:translateY(26px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes rsSlideA{0%{transform:translateX(60px);opacity:0}100%{transform:translateX(0);opacity:1}}
+@keyframes rsSlideB{0%{transform:translateX(60px);opacity:0}100%{transform:translateX(0);opacity:1}}
+@keyframes rsChipA{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.3) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes rsChipB{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.3) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes rsBumpA{0%{transform:scale(1)}35%{transform:scale(1.14) rotate(-2deg)}100%{transform:scale(1)}}
+@keyframes rsBumpB{0%{transform:scale(1)}35%{transform:scale(1.14) rotate(2deg)}100%{transform:scale(1)}}
+@keyframes rsLandA{0%{transform:translate(0,0)}30%{transform:translate(-4px,-6px) scale(1.03)}60%{transform:translate(2px,2px) scale(.99)}100%{transform:translate(0,0) scale(1)}}
+@keyframes rsLandB{0%{transform:translate(0,0)}30%{transform:translate(-4px,-6px) scale(1.03)}60%{transform:translate(2px,2px) scale(.99)}100%{transform:translate(0,0) scale(1)}}
+@keyframes rsPopA{0%{transform:translateY(20px) scale(.3) rotate(-12deg);opacity:0}30%{transform:translateY(-8px) scale(1.35) rotate(4deg);opacity:1}50%{transform:translateY(-4px) scale(1) rotate(-6deg)}100%{transform:translateY(-4px) scale(1) rotate(-6deg);opacity:1}}
+@keyframes rsPopB{0%{transform:translateY(20px) scale(.3) rotate(-12deg);opacity:0}30%{transform:translateY(-8px) scale(1.35) rotate(4deg);opacity:1}50%{transform:translateY(-4px) scale(1) rotate(-6deg)}100%{transform:translateY(-4px) scale(1) rotate(-6deg);opacity:1}}
+@keyframes rsFlashA{0%{opacity:.85}100%{opacity:0}}
+@keyframes rsFlashB{0%{opacity:.85}100%{opacity:0}}
+@keyframes rsFlyX{0%{transform:translateX(0)}100%{transform:translateX(var(--dx))}}
+@keyframes rsFlyY{0%{transform:translateY(0) scale(1) rotate(0);opacity:1}85%{opacity:1}100%{transform:translateY(var(--dy)) scale(.45) rotate(200deg);opacity:0}}
+@keyframes rsSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes rsOwn{0%,100%{transform:translateX(0) scale(1)}50%{transform:translateX(-6px) scale(1.025)}}
+@keyframes rsGlow{0%,100%{opacity:0}50%{opacity:.55}}
+@keyframes rsPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes rsShakeA{0%,100%{transform:translate(0,0)}20%{transform:translate(-8px,4px) rotate(-.6deg)}40%{transform:translate(7px,-5px) rotate(.5deg)}60%{transform:translate(-4px,-3px)}80%{transform:translate(3px,3px)}}
+@keyframes rsShakeB{0%,100%{transform:translate(0,0)}20%{transform:translate(-8px,4px) rotate(-.6deg)}40%{transform:translate(7px,-5px) rotate(.5deg)}60%{transform:translate(-4px,-3px)}80%{transform:translate(3px,3px)}}
+.rs-slamA{animation:rsSlamA .55s cubic-bezier(.2,1.2,.4,1) both}
+.rs-slamB{animation:rsSlamB .55s cubic-bezier(.2,1.2,.4,1) both}
+.rs-stampA{animation:rsStampA .4s cubic-bezier(.2,1.3,.4,1) .5s both}
+.rs-stampB{animation:rsStampB .4s cubic-bezier(.2,1.3,.4,1) .5s both}
+.rs-dropA{animation:rsDropA .55s cubic-bezier(.2,1.2,.4,1) .15s both}
+.rs-dropB{animation:rsDropB .55s cubic-bezier(.2,1.2,.4,1) .15s both}
+.rs-riseA{animation:rsRiseA .35s ease-out both}
+.rs-riseB{animation:rsRiseB .35s ease-out both}
+.rs-slideA{animation:rsSlideA .35s cubic-bezier(.2,1.2,.4,1) both}
+.rs-slideB{animation:rsSlideB .35s cubic-bezier(.2,1.2,.4,1) both}
+.rs-chipA{animation:rsChipA .3s cubic-bezier(.2,1.4,.4,1) both}
+.rs-chipB{animation:rsChipB .3s cubic-bezier(.2,1.4,.4,1) both}
+.rs-bumpA{animation:rsBumpA .22s cubic-bezier(.2,1.5,.4,1)}
+.rs-bumpB{animation:rsBumpB .22s cubic-bezier(.2,1.5,.4,1)}
+.rs-landA{animation:rsLandA .32s cubic-bezier(.2,1.5,.4,1)}
+.rs-landB{animation:rsLandB .32s cubic-bezier(.2,1.5,.4,1)}
+.rs-popA{animation:rsPopA .5s cubic-bezier(.2,1.3,.4,1) both}
+.rs-popB{animation:rsPopB .5s cubic-bezier(.2,1.3,.4,1) both}
+.rs-flashA{animation:rsFlashA .25s ease-out both}
+.rs-flashB{animation:rsFlashB .25s ease-out both}
+.rs-shakeA{animation:rsShakeA .36s linear 1}
+.rs-shakeB{animation:rsShakeB .36s linear 1}
+.rs-hide{opacity:0}
+.rs-flyx{position:absolute;animation:rsFlyX .75s cubic-bezier(.3,.6,.5,1) both}
+.rs-flyy{display:block;animation:rsFlyY .75s cubic-bezier(.6,0,.9,.5) both}
+.rs-spin{animation:rsSpin 14s linear infinite}
+.rs-own{animation:rsOwn 1.1s ease-in-out infinite}
+.rs-glow{animation:rsGlow 1.1s ease-in-out infinite}
+.rs-pulse{animation:rsPulse .9s ease-in-out infinite}
+.rs-out{-webkit-text-stroke:5px #000;paint-order:stroke fill}
+.rs-btn{transition:transform .08s}
+.rs-btn:hover{transform:translate(-3px,-3px)}
+.rs-btn:active{transform:translate(4px,4px)}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.12) 46px 50px)"></div>
+
+<!-- top-left mode tag -->
+<div style="position: absolute; left: 36px; top: 22px; height: 40px; padding: 0 14px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; box-shadow: 4px 4px 0 #000; border-left: 10px solid #FF3D7F; font-family: 'Bungee', sans-serif; font-size: 16px; color: #fff">WORD BOMB<span style="font-size: 14px; color: #c9b8e8">· 6P</span></div>
+
+<!-- wallet pill (gem target) -->
+<div style="position: absolute; left: 1140px; top: 22px; width: 190px" class="{{pillClass}}">
+<div style="height: 54px; box-sizing: border-box; padding: 0 18px 0 46px; position: relative; display: flex; align-items: center; justify-content: flex-end; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; border-bottom: 8px solid #12A99A">
+<svg viewBox="0 0 40 40" width="58" height="58" style="position: absolute; left: -22px; top: -6px; transform: rotate(10deg); filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15" stroke="#000" stroke-width="2.5" fill="none"></path><path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="rs-out" style="font-family: 'Bungee', sans-serif; font-size: 28px; -webkit-text-stroke: 4px #000">{{walletText}}</span>
+</div>
+</div>
+
+<!-- HERO plate -->
+<div style="position: absolute; left: -30px; top: 78px; width: 520px; height: 452px; background: #160a28; border: 6px solid #000; box-shadow: 10px 10px 0 #000; transform: skewX(-5deg)">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 12px; background: {{heroEdge}}"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: repeating-linear-gradient(90deg, #1d0e33 0 22px, #160a28 22px 44px); border-top: 5px solid #000"></div>
+</div>
+<div class="{{heroShake}}" style="position: absolute; left: 36px; top: 84px; width: 440px; height: 440px">
+<sc-if value="{{isWin}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 50px; top: -90px; width: 340px; height: 340px; -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 68%); mask-image: radial-gradient(circle, #000 30%, transparent 68%)">
+<div class="rs-spin" style="width: 100%; height: 100%; border-radius: 50%; background: repeating-conic-gradient(rgba(255,233,74,.32) 0 10deg, transparent 10deg 24deg)"></div>
+</div>
+</sc-if>
+
+<div class="{{dropClass}}" style="position: absolute; left: 158px; top: 6px; width: 124px; height: 124px">
+<sc-if value="{{isWin}}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 120 120" width="124" height="124" style="filter: drop-shadow(6px 6px 0 #000)" aria-hidden="true">
+<path d="M30 26 C6 26 6 64 36 66" fill="none" stroke="#000" stroke-width="13" stroke-linecap="round"></path>
+<path d="M90 26 C114 26 114 64 84 66" fill="none" stroke="#000" stroke-width="13" stroke-linecap="round"></path>
+<path d="M30 26 C6 26 6 64 36 66" fill="none" stroke="#F2A900" stroke-width="5" stroke-linecap="round"></path>
+<path d="M90 26 C114 26 114 64 84 66" fill="none" stroke="#F2A900" stroke-width="5" stroke-linecap="round"></path>
+<path d="M54 76 H66 L70 92 H50 Z" fill="#F2A900" stroke="#000" stroke-width="5" stroke-linejoin="round"></path>
+<path d="M28 18 H92 V42 C92 64 78 78 60 78 C42 78 28 64 28 42 Z" fill="#FFC23D" stroke="#000" stroke-width="5" stroke-linejoin="round"></path>
+<path d="M76 21 H89 V42 C89 60 80 72 68 75 C76 64 80 54 80 42 Z" fill="#F2A900"></path>
+<rect x="20" y="10" width="80" height="12" fill="#FFE94A" stroke="#000" stroke-width="5" stroke-linejoin="round"></rect>
+<path d="M60 33 L64.5 42 L74 43 L67 49.5 L69 59 L60 54 L51 59 L53 49.5 L46 43 L55.5 42 Z" fill="#FFE94A" stroke="#000" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M36 28 V42 C36 50 39 57 44 62" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"></path>
+<rect x="34" y="92" width="52" height="18" fill="#FFC23D" stroke="#000" stroke-width="5" stroke-linejoin="round"></rect>
+<rect x="46" y="97" width="28" height="7" fill="#000"></rect>
+</svg>
+</sc-if>
+<sc-if value="{{isMid}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 120 120" width="124" height="124" style="filter: drop-shadow(6px 6px 0 #000)" aria-hidden="true">
+<path d="M30 4 L52 52 L38 58 L14 10 Z" fill="#FF3D7F" stroke="#000" stroke-width="5" stroke-linejoin="round"></path>
+<path d="M90 4 L68 52 L82 58 L106 10 Z" fill="#B04BFF" stroke="#000" stroke-width="5" stroke-linejoin="round"></path>
+<path d="M24 12 L36 38" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"></path>
+<circle cx="60" cy="80" r="34" fill="#D88BFF" stroke="#000" stroke-width="5"></circle>
+<path d="M60 46 A34 34 0 0 1 94 80 A34 34 0 0 1 60 114 Z" fill="#B04BFF" opacity=".55"></path>
+<circle cx="60" cy="80" r="23" fill="#B04BFF" stroke="#000" stroke-width="4"></circle>
+<text x="60" y="93" text-anchor="middle" font-family="Bungee, sans-serif" font-size="34" fill="#fff" stroke="#000" stroke-width="5" paint-order="stroke">{{rank}}</text>
+<path d="M36 70 A26 26 0 0 1 50 54" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"></path>
+</svg>
+</sc-if>
+<sc-if value="{{isKo}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 120 120" width="124" height="124" style="filter: drop-shadow(6px 6px 0 #000)" aria-hidden="true">
+<path d="M60 10 C30 10 15 32 17 56 C18 68 25 75 30 79 V93 C30 99 34 103 40 103 H80 C86 103 90 99 90 93 V79 C95 75 102 68 103 56 C105 32 90 10 60 10 Z" fill="#F4EAFF" stroke="#000" stroke-width="5" stroke-linejoin="round"></path>
+<path d="M80 18 C94 28 100 42 98 56 C97 66 92 72 86 76 V93 C86 97 84 99 80 99 H74 C80 90 82 74 84 60 C86 42 84 28 80 18 Z" fill="#c9b8e8"></path>
+<path d="M60 10 L56 22 L64 29 L58 39" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"></path>
+<ellipse cx="43" cy="55" rx="12" ry="13" fill="#0d0618" stroke="#000" stroke-width="3"></ellipse>
+<ellipse cx="77" cy="55" rx="12" ry="13" fill="#0d0618" stroke="#000" stroke-width="3"></ellipse>
+<path d="M38 50 L48 60 M48 50 L38 60 M72 50 L82 60 M82 50 L72 60" stroke="#FF3D7F" stroke-width="4" stroke-linecap="round"></path>
+<path d="M60 66 L54 79 H66 Z" fill="#0d0618" stroke="#000" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M30 86 H90" stroke="#000" stroke-width="4"></path>
+<path d="M46 86 V103 M60 86 V103 M74 86 V103" stroke="#000" stroke-width="4"></path>
+<path d="M30 36 C33 26 40 19 49 16" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"></path>
+</svg>
+</sc-if>
+</div>
+
+<div class="{{slamClass}}" style="position: absolute; left: 0; right: 0; top: 128px; display: flex; justify-content: center; align-items: baseline; gap: 6px">
+<span class="rs-out" style="font-family: 'Bungee', sans-serif; font-size: 196px; line-height: 1; color: {{rankColor}}; -webkit-text-stroke: 12px #000; text-shadow: 10px 10px 0 #000">#{{rank}}</span>
+<sc-if value="{{showOf}}" hint-placeholder-val="{{ false }}">
+<span class="rs-out" style="font-family: 'Bungee', sans-serif; font-size: 56px; line-height: 1; color: #c9b8e8; -webkit-text-stroke: 6px #000">/{{of}}</span>
+</sc-if>
+</div>
+
+<div class="{{stampClass}}" style="position: absolute; left: {{stampLeft}}px; top: 296px">
+<div style="padding: 6px; background: {{stampBg}}; border: 5px solid #000; box-shadow: 7px 7px 0 #000">
+<div style="padding: 2px 16px; border: 3px solid rgba(0,0,0,.55); font-family: 'Bungee', sans-serif; font-size: 44px; line-height: 1.05; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{stampText}}</div>
+</div>
+</div>
+
+<div class="{{bestClass}}" style="position: absolute; left: 40px; top: 382px; display: flex; align-items: stretch; height: 48px; border: 4px solid #000; box-shadow: 5px 5px 0 #000; animation-delay: .7s">
+<div style="display: flex; align-items: center; padding: 0 10px; background: #FF3D7F; font-family: 'Bungee', sans-serif; font-size: 13px; line-height: 1; color: #000; text-align: center">BEST<br>WORD</div>
+<div style="display: flex; align-items: center; padding: 0 14px; background: #0d0618; border-left: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff; letter-spacing: .02em">{{bestWord}}</div>
+<div style="display: flex; align-items: center; padding: 0 12px; background: #FFE94A; border-left: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 24px; color: #000">{{bestLen}}</div>
+</div>
+</div>
+
+<!-- TALLY column -->
+<div style="position: absolute; left: 518px; top: 76px; width: 444px">
+<div class="{{statRise}}" style="display: flex; gap: 12px; animation-delay: .35s">
+<div style="height: 50px; padding: 0 14px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 7px solid #FFE94A">
+<span class="{{wordsBump}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 28px; color: #FFE94A">{{wordsText}}</span><span style="font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8">WORDS</span>
+</div>
+<div style="height: 50px; padding: 0 14px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 7px solid #2EFFE0">
+<span class="{{lettersBump}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 28px; color: #2EFFE0">{{lettersText}}</span><span style="font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8">LETTERS</span>
+</div>
+</div>
+
+<!-- XP -->
+<div class="{{xpRise}}" style="margin-top: 16px; animation-delay: .9s">
+<div class="{{xpLand}}" style="position: relative; padding: 10px 16px 14px; background: #1a0b2e; border: 5px solid #000; box-shadow: 7px 7px 0 #000; border-left: 12px solid #B04BFF">
+<div style="display: flex; align-items: center; gap: 12px">
+<svg viewBox="0 0 44 44" width="44" height="44" style="filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><path d="M22 3 L39 12.5 V31.5 L22 41 L5 31.5 V12.5 Z" fill="#B04BFF" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M22 3 L39 12.5 V31.5 L22 41 Z" fill="#8a2fd6"></path><text x="22" y="28" text-anchor="middle" font-family="Bungee, sans-serif" font-size="14" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">XP</text><path d="M10 15 L18 10.5" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="rs-out {{xpBump}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 44px; line-height: 1; color: #D88BFF">+{{xpText}}</span>
+<span style="margin-left: auto; font-size: 15px; color: #c9b8e8">{{letters}} × {{powerText}}</span>
+</div>
+<div style="margin-top: 10px; display: flex; align-items: center; gap: 10px">
+<div class="{{lvBump}}" style="height: 34px; padding: 0 10px; display: flex; align-items: center; background: #000; font-family: 'Bungee', sans-serif; font-size: 18px; color: #FFE94A; white-space: nowrap">LV {{lvText}}</div>
+<div style="position: relative; flex: 1; height: 30px; box-sizing: border-box; background: #0d0618; border: 4px solid #000; overflow: hidden">
+<div style="position: absolute; inset: 0; transform-origin: left center; transform: scaleX({{fill}}); background: repeating-linear-gradient(-45deg, #B04BFF 0 12px, #9a36e8 12px 24px)"></div>
+<div style="position: absolute; left: 0; right: 0; top: 2px; height: 5px; background: #fff; opacity: .25"></div>
+<div class="{{barFlash}}" style="position: absolute; inset: 0; background: #fff; opacity: 0"></div>
+</div>
+</div>
+<sc-if value="{{showLvPop}}" hint-placeholder-val="{{ false }}">
+<div class="{{lvPopClass}}" style="position: absolute; right: -26px; top: 56px; height: 44px; padding: 0 14px; display: flex; align-items: center; background: #FFE94A; border: 5px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: 26px; color: #000; white-space: nowrap">LV +{{lvGain}}</div>
+</sc-if>
+</div>
+</div>
+
+<!-- WINS chain -->
+<div class="{{winsRise}}" style="margin-top: 16px; animation-delay: 1.1s">
+<div class="{{winsLand}}" style="padding: 12px 16px 12px; background: #1a0b2e; border: 5px solid #000; box-shadow: 7px 7px 0 #000; border-left: 12px solid #FFC23D">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; padding: 0 10px; background: #12A99A; border: 4px solid #000; box-shadow: 4px 4px 0 #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: 26px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{baseText}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; line-height: 1.2; color: #000">BASE</span>
+</div>
+<span class="rs-out" style="font-family: 'Bungee', sans-serif; font-size: 30px; -webkit-text-stroke: 5px #000">×</span>
+<div class="{{multBump}}" style="display: flex; align-items: center; justify-content: center; height: 58px; min-width: 92px; box-sizing: border-box; padding: 0 10px; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: 32px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{multText}}</span>
+</div>
+<span class="rs-out" style="font-family: 'Bungee', sans-serif; font-size: 30px; -webkit-text-stroke: 5px #000">=</span>
+<span class="rs-out {{winsBump}}" style="display: inline-block; margin-left: auto; font-family: 'Bungee', sans-serif; font-size: 44px; line-height: 1; color: #FFE94A">+{{winsText}}</span>
+</div>
+<div style="margin-top: 10px; display: flex; align-items: center; gap: 8px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #FFC23D; margin-right: 2px">WINS</span>
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
+<div class="{{c.cls}}" style="height: 30px; padding: 0 8px; display: flex; align-items: center; gap: 6px; background: #0d0618; border: 3px solid #000; box-shadow: 3px 3px 0 #000; border-bottom: 5px solid {{c.col}}">
+<span style="font-family: 'Bungee', sans-serif; font-size: 17px; color: {{c.col}}">{{c.v}}</span><span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8">{{c.k}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<!-- GEMS -->
+<div class="{{gemsRise}}" style="margin-top: 16px; animation-delay: 1.3s">
+<div class="{{gemsLand}}" style="height: 70px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; gap: 12px; background: #1a0b2e; border: 5px solid #000; box-shadow: 7px 7px 0 #000; border-left: 12px solid #2EFFE0">
+<svg viewBox="0 0 40 40" width="48" height="48" style="filter: drop-shadow(3px 3px 0 #000); transform: rotate(-8deg)" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="3.5" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15" stroke="#000" stroke-width="2" fill="none"></path><path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="rs-out {{gemsBump}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 44px; line-height: 1; color: #2EFFE0">+{{gemsText}}</span>
+<span style="margin-left: auto; font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8">GEMS · #{{rank}}</span>
+</div>
+</div>
+</div>
+
+<!-- PLAYERS -->
+<div style="position: absolute; left: 994px; top: 94px; width: 336px">
+<div style="display: flex; justify-content: space-between; padding: 0 6px 6px; font-family: 'Bungee', sans-serif; font-size: 13px; color: #8a7aa8"><span>RANK</span><span>WORDS</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{players}}" as="p" hint-placeholder-count="6">
+<div class="{{p.rise}}" style="animation-delay: {{p.d}}s">
+<div class="{{p.own}}" style="position: relative; height: 52px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 0; background: {{p.bg}}; border: 4px solid #000; box-shadow: 5px 5px 0 #000">
+<div style="width: 46px; align-self: stretch; display: flex; align-items: center; justify-content: center; background: {{p.badge}}; border-right: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: {{p.badgeC}}">{{p.r}}</div>
+<span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Bungee', sans-serif; font-size: 16px; color: {{p.nameC}}">{{p.name}}</span>
+<sc-if value="{{p.me}}" hint-placeholder-val="{{ false }}">
+<span style="height: 22px; padding: 0 6px; display: flex; align-items: center; background: #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #FFE94A">YOU</span>
+</sc-if>
+<span style="font-family: 'Bungee', sans-serif; font-size: 24px; color: {{p.wc}}">{{p.w}}</span>
+<sc-if value="{{p.me}}" hint-placeholder-val="{{ false }}">
+<div class="rs-glow" style="position: absolute; inset: -4px; border: 4px solid #fff; pointer-events: none"></div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<!-- gem flyers -->
+<sc-for list="{{flyers}}" as="f" hint-placeholder-count="0">
+<div class="rs-flyx" style="left: {{f.x}}px; top: {{f.y}}px; --dx: {{f.dx}}px; animation-delay: {{f.d}}s">
+<svg class="rs-flyy" viewBox="0 0 40 40" width="34" height="34" style="--dy: {{f.dy}}px; animation-delay: {{f.d}}s" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+</div>
+</sc-for>
+
+<!-- demo toggles -->
+<div style="position: absolute; left: 36px; bottom: 24px; display: flex; align-items: center; gap: 8px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #5d4a78; margin-right: 2px">DEMO</span>
+<sc-for list="{{demos}}" as="d" hint-placeholder-count="3">
+<button class="rs-btn" onClick="{{d.pick}}" style="height: 34px; padding: 0 12px; background: {{d.bg}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; cursor: pointer; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{d.c}}">{{d.label}}</button>
+</sc-for>
+</div>
+
+<!-- buttons -->
+<div style="position: absolute; right: 36px; bottom: 26px; display: flex; align-items: flex-end; gap: 18px">
+<a class="rs-btn" href="MenuV2.dc.html" style="height: 58px; box-sizing: border-box; padding: 0 22px; display: flex; align-items: center; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; text-decoration: none; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">MENU</a>
+<div class="{{playPulse}}">
+<button class="rs-btn" onClick="{{replay}}" style="width: 336px; height: 82px; background: #FFE94A; border: 6px solid #000; box-shadow: 9px 9px 0 #000; border-bottom: 12px solid #F2A900; cursor: pointer; font-family: 'Bungee', sans-serif; font-size: 36px; color: #000">PLAY AGAIN</button>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+function fmt(x) {
+  x = Math.round(x);
+  var U = [[1e15, 'Q'], [1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+  for (var i = 0; i < U.length; i++) {
+    if (x >= U[i][0] * 0.9995) { var n = x / U[i][0]; var s = n >= 100 ? String(Math.round(n)) : n.toFixed(1).replace(/\.0$/, ''); return s + U[i][1]; }
+  }
+  return String(x);
+}
+function fmtX(m) { return '×' + String(Math.round(m * 100) / 100); }
+function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+function eo(v) { return 1 - Math.pow(1 - v, 3); }
+var NAMES = ['IMBETTERTHANANDY', 'KEYB0ARD', 'LEXI_TYPES', 'ZZZAP', 'WORDNERD'];
+var V = {
+  win: { label: 'WIN', rank: 1, words: 42, letters: 238, power: 5000, lvGain: 37, base: 320, gems: 33, best: 'PHOTOSYNTHESIS', stamp: 'WIN', stampBg: '#FF3D7F', rankColor: '#FFE94A', edge: '#FFC23D', others: [38, 31, 22, 15, 9] },
+  mid: { label: 'MID', rank: 3, words: 27, letters: 141, power: 5000, lvGain: 22, base: 140, gems: 18, best: 'WATERMELON', stamp: 'TOP 3', stampBg: '#B04BFF', rankColor: '#D88BFF', edge: '#B04BFF', others: [44, 35, 22, 15, 9] },
+  ko: { label: "KO'D", rank: 6, words: 9, letters: 44, power: 5000, lvGain: 7, base: 21, gems: 5, best: 'QUICK', stamp: "KO'D", stampBg: '#FF3D7F', rankColor: '#F4EAFF', edge: '#FF3D7F', others: [44, 35, 30, 21, 14] }
+};
+var CHAIN = [{ v: 8, k: 'R3', col: '#D88BFF' }, { v: 1.5, k: '★', col: '#FFC23D' }, { v: 1.25, k: 'MARK', col: '#2EFFE0' }];
+var LV0 = 412, FRAC0 = 0.35, WALLET0 = 486, END = 5800;
+// timeline (ms)
+var T = { stats: [450, 1000], xp: [1100, 2600], chip0: 2750, chipGap: 260, wins: [3600, 4250], gems: [4350, 4800], wallet: [4950, 5450] };
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { v: 'win', t: 0, gen: 0 }; this.iv = null; }
+  componentDidMount() { this.start(); }
+  componentWillUnmount() { clearInterval(this.iv); }
+  start() {
+    var self = this;
+    clearInterval(this.iv);
+    this.iv = setInterval(function () {
+      var t = self.state.t + 40;
+      if (t >= END) { clearInterval(self.iv); t = END; }
+      self.setState({ t: t });
+    }, 40);
+  }
+  renderVals() {
+    var self = this, st = this.state, d = V[st.v], t = st.t, P = st.gen % 2 ? 'A' : 'B';
+    var r = function (a) { return clamp((t - a[0]) / (a[1] - a[0])); };
+    var alt = function (on, k) { return on ? ((k % 2) ? 'rs-bumpA' : 'rs-bumpB') : ''; };
+    var land = function (doneAt) { return t >= doneAt && t < doneAt + 360 ? 'rs-land' + P : ''; };
+    // stats
+    var sx = eo(r(T.stats)), sCount = t > T.stats[0] && t < T.stats[1];
+    var tick = Math.floor(t / 40);
+    // xp
+    var xx = eo(r(T.xp)), xCount = t > T.xp[0] && t < T.xp[1];
+    var xp = d.letters * d.power;
+    var p = FRAC0 + d.lvGain * xx, lvlUp = Math.floor(p);
+    var fill = p - lvlUp;
+    // chain
+    var nOn = 0, mult = 1;
+    var chips = CHAIN.map(function (c, i) {
+      var at = T.chip0 + i * T.chipGap, on = t >= at;
+      if (on) { nOn++; mult *= c.v; }
+      return { v: fmtX(c.v), k: c.k, col: c.col, cls: on ? 'rs-chip' + P : 'rs-hide' };
+    });
+    var multTotal = CHAIN.reduce(function (a, c) { return a * c.v; }, 1);
+    var wins = d.base * multTotal;
+    var wx = eo(r(T.wins)), wCount = t > T.wins[0] && t < T.wins[1];
+    var gx = eo(r(T.gems)), gCount = t > T.gems[0] && t < T.gems[1];
+    var px = eo(r(T.wallet)), pCount = t > T.wallet[0] && t <= T.wallet[1] + 40;
+    var lastChipAt = T.chip0 + (nOn - 1) * T.chipGap;
+    // flyers
+    var flyers = [];
+    if (t >= T.gems[0]) {
+      var n = Math.min(10, Math.max(4, d.gems));
+      for (var i = 0; i < n; i++) {
+        var x = 570 + (i % 4) * 10 - 32, y = 482 + (i % 3) * 8 - 25;
+        flyers.push({ x: x, y: y, dx: 1147 - 17 - x, dy: 49 - 17 - y, d: (i * 0.07).toFixed(2) });
+      }
+    }
+    // players
+    var list = d.others.slice(), players = [];
+    list.splice(d.rank - 1, 0, d.words);
+    var oi = 0;
+    for (var k = 0; k < 6; k++) {
+      var me = k === d.rank - 1;
+      var name = me ? 'ANDY1648' : NAMES[oi++];
+      var badge = k === 0 ? '#FFC23D' : k === 1 ? '#2EFFE0' : k === 2 ? '#D88BFF' : '#2a1a40';
+      players.push({
+        r: k + 1, name: name, w: fmt(list[k]), me: me,
+        bg: me ? '#FFE94A' : '#1a0b2e', nameC: me ? '#000' : '#fff', wc: me ? '#000' : '#FFE94A',
+        badge: me ? '#000' : badge, badgeC: me ? '#FFE94A' : (k < 3 ? '#000' : '#fff'),
+        own: me ? 'rs-own' : '', rise: 'rs-slide' + P, d: (0.3 + k * 0.07).toFixed(2)
+      });
+    }
+    var isWin = st.v === 'win', isKo = st.v === 'ko';
+    return {
+      isWin: isWin, isMid: st.v === 'mid', isKo: isKo,
+      rank: d.rank, of: 6, showOf: d.rank > 1, rankColor: d.rankColor, heroEdge: d.edge,
+      slamClass: 'rs-slam' + P, dropClass: 'rs-drop' + P, stampClass: 'rs-stamp' + P,
+      heroShake: t >= 520 && t < 900 ? 'rs-shake' + P : '',
+      stampText: d.stamp, stampBg: d.stampBg, stampLeft: d.rank > 1 ? 262 : 236,
+      bestClass: 'rs-rise' + P, bestWord: d.best, bestLen: d.best.length,
+      statRise: 'rs-rise' + P, xpRise: 'rs-rise' + P, winsRise: 'rs-rise' + P, gemsRise: 'rs-rise' + P,
+      wordsText: fmt(d.words * sx), lettersText: fmt(d.letters * sx),
+      wordsBump: alt(sCount, tick), lettersBump: alt(sCount, tick + 1),
+      letters: fmt(d.letters), powerText: fmt(d.power),
+      xpText: fmt(xp * xx), xpBump: alt(xCount, tick),
+      lvText: fmt(LV0 + lvlUp), lvBump: alt(xCount && lvlUp > 0, lvlUp),
+      fill: (t >= T.xp[1] ? (FRAC0 + d.lvGain) % 1 : fill).toFixed(3),
+      barFlash: xCount && lvlUp > 0 ? 'rs-flash' + (lvlUp % 2 ? 'A' : 'B') : '',
+      showLvPop: t >= T.xp[1], lvPopClass: 'rs-pop' + P, lvGain: fmt(d.lvGain),
+      xpLand: land(T.xp[1]),
+      baseText: fmt(d.base), chips: chips, multText: fmtX(mult),
+      multBump: nOn > 0 && t < lastChipAt + 300 ? (nOn % 2 ? 'rs-bumpA' : 'rs-bumpB') : '',
+      winsText: fmt(wins * wx), winsBump: alt(wCount, tick), winsLand: land(T.wins[1]),
+      gemsText: fmt(d.gems * gx), gemsBump: alt(gCount, tick), gemsLand: land(T.gems[1]),
+      flyers: flyers,
+      walletText: fmt(WALLET0 + d.gems * px), pillClass: alt(pCount, tick),
+      players: players,
+      playPulse: t >= T.wallet[1] ? 'rs-pulse' : '',
+      replay: function () { self.setState({ t: 0, gen: self.state.gen + 1 }); self.start(); },
+      demos: ['win', 'mid', 'ko'].map(function (key) {
+        var on = key === st.v;
+        return { label: V[key].label, bg: on ? '#FFE94A' : '#1a0b2e', c: on ? '#000' : '#fff',
+          pick: function () { self.setState({ v: key, t: 0, gen: self.state.gen + 1 }); self.start(); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
