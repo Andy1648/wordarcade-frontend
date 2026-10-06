@@ -24,7 +24,24 @@ P7 POPUP PURGE: remove every centre-screen popup and every menu claim notificati
 
 P8 STATS + LEADERBOARD (Stats.dc.html, Leaderboard.dc.html): stats = total multiplier FIRST (Balatro-style), tabs, replay. Leaderboard = white podium, rank-title plates (v3 ladder KEYMASH…ENDGAME), ▲▼, pulsing own row (also correct when you ARE top 3), ALL TIME / THIS WEEK. In season 2 board order is ★ → rebirths → level (write that view change as a migration for Andy; never run it).
 
-Then P9, P10 as already queued. STANDING RULES: re-read this checklist before every step; record result + PR # after each; resume from it after a usage limit; never end the turn while steps remain; one heavy local job at a time, CI on GitHub; Claude never runs migrations.
+P9 now has pictures — the untracked files in claude/mockups/v2/ (Results.dc.html, BombHUD.dc.html, KitLevelUp.dc.html, RoomSettings.dc.html): commit them on their own docs branch first, then build each as its own PR, in this order:
+ 9a KitLevelUp → XP-bar wrap + "+N LV" chip, top-edge rank-up banner (v3 rank names), 16 rank plates next to names on the board, edge unlock toasts. Nothing in the middle of the screen. No wins for rank-ups.
+ 9b Results/KO → one big placement, tally counts up line by line, the multiplier chain shown once, PLAY AGAIN big. Every win credited must appear as its own line (no unexplained wins). Replaces the old "where your wins came from" breakdown.
+ 9c Word Bomb HUD → bomb + chunk centre, fuse ring, players on a ring (NEVER sideways/stretched cards), hearts, alphabet bonus row. PAUSE-TO-LEARN: when you blow up, show for ~2s one valid word containing the chunk ("NEXT TIME: SING") before the bomb moves on. This is Tier-1 (game logic touches the WS) → play-test with 2 Playwright contexts + bot locally before merging, as the backend rule says.
+ 9d JOIN ROOM / LOBBY / SETTINGS → letter tiles for the code, 8-seat lobby, 5-row settings (REDUCE MOTION, NUMBER STYLE). No JOIN ROOM button on the menu (players click a mode).
+Every screen: check 1280×551, 1366×657, 1920×1080 and 390×844 phone; no text <13px; no scrollbars; numbers through formatNum; transform/opacity only; works with REDUCE MOTION on. Attach before/after shots of each size to the PR.
+
+P10 MODE HUDs — new mockups in claude/mockups/v2/ (commit them on a docs branch first). Ship the version named here; ignore the other:
+ 10a KitTutorial → section 02 version B (typed letters become the XP bar's slots, LV 2 at 8 letters) as the first-30-seconds hook for new players; section 01 spotlight steps advance by doing the action (no OK buttons); section 03 PAUSE-TO-LEARN edge card ("NEXT TIME: SING") in every mode where you can lose a word.
+ 10b Fuse → version A (fuse line across the screen, 26-letter strip on the floor, ×5 FRENZY badge at the right edge, clutch = edge hazard bands, nothing in the centre).
+ 10c Chain → version B (chain stacks up the left, huge next letter, wins/word column on the right). Keep today's CHAIN texture quality — Andy loves it.
+ 10d SatRush → version A (giant "THIS WORD PAYS" number + base × ante × SAT chips, CASE CLOSED stamped file). NO scrollbars.
+ 10e Race → version A (the RACE card's pink lanes + cars, current word huge with per-letter colour). Whole words only.
+ 10f Blitz → BLITZ tab (huge category, found/total, answers land as rarity tiles, AI BUILT ribbon, never claim AI judging). SKIP the IMPOSTER tab — there's no Imposter code in the repo; Andy decides later.
+Keep every mode's real rules/payouts; only the look changes. Mockup numbers are placeholders, NOT economy changes (e.g. SAT "8× bomb" is illustrative; the live SAT ×3 stays unless the v3 sim says otherwise). Every win shown as its own line. Each mode = its own PR, before/after shots at 1280×551, 1366×657, 1920×1080 and 390×844 attached. Any change touching WS/game logic = Tier-1 → 2-context Playwright play-test before merge.
+(Mockups: P9 committed via #212, P10 via #217 — both merged.)
+
+STANDING RULES: re-read this checklist before every step; record result + PR # after each; resume from it after a usage limit; never end the turn while steps remain; one heavy local job at a time, CI on GitHub; Claude never runs migrations.
 
 ## STATUS BY P
 - P0: #213 merged; #216 open; main E2E green on 4aec9e8 + 9c9b3aa, c13f436 running (agent confirming 3 in a row)
