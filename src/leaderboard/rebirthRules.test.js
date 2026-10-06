@@ -132,7 +132,9 @@ test(`ASCEND (season 2 only): needs ≥ ${ASCEND_AT} rebirths; stars += R − 9,
 });
 
 test('021 SQL mirrors rebirthRules.js: order, constants, idempotency, grants, the no-raise board write', () => {
-  const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '021_server_rebirth.sql'), 'utf8');
+  // CRLF -> LF: a Windows checkout (core.autocrlf + .gitattributes text=auto) gets CRLF while the blob and CI are LF.
+  // The SQL and rebirthRules.js agree; only the line-end anchor (`stars\n` below) read the checkout's endings.
+  const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '021_server_rebirth.sql'), 'utf8').replace(/\r\n/g, '\n');
   assert.match(sql, /KEEP IN SYNC WITH src\/leaderboard\/rebirthRules\.js/);
   assert.match(sql, /create table if not exists public\.rebirth_requests/);
   assert.match(sql, /primary key \(profile_id, request_id\)/);

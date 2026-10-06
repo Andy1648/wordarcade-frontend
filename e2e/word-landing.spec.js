@@ -37,6 +37,9 @@ async function enterGame(page, playerCount = 2) {
     // feel ladder: a LUCKY word owns the light slot (LUCKY > RARE) and turns the landing into a
     // tag — pin the 1/40 roll off so these band assertions stay deterministic.
     window.__TAW_LUCKY = 'off';
+    // ...and the 1-in-750 MIDAS golden-word secret (useWordSecrets): it rolls on every accepted word and, when it
+    // hits, the landing is SECRET instead of the band under test (main E2E: 'monster' landed "wl wl--secret").
+    window.__TAW_RARE_POP = 'off';
   });
   await page.goto('/?portal=1');
   await menuReady(page);
