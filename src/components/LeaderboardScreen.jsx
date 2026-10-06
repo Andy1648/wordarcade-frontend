@@ -6,7 +6,7 @@
 // instantly and asks the server (lb_name_status) for "taken" after a 350 ms pause; the server is
 // what actually refuses a name (DB trigger + lb_claim), so a bypassed client can't put one on the
 // board. Moderation beyond that is Andy editing rows in the Supabase Table Editor.
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
   LEADERBOARD_ENABLED,
   claimName,
@@ -38,6 +38,24 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { RARITY, rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
 import './rarity/RarityFin.css';
 import { reduceMotion } from '../lib/reduceMotion';
+import { SEASON2 } from '../progress/season';
+import OverlaySkeleton from './OverlaySkeleton';
+
+// P8 (SEASON2 only): the v2 LEADERBOARD (Leaderboard.dc.html — white podium, v3 rank plates, ▲▼, ALL TIME / THIS
+// WEEK), its own lazy chunk, for a claimed name (claiming a name stays on the live form below). Flag OFF: untouched.
+const LeaderboardV2 = lazy(() => import('./LeaderboardV2.jsx'));
+
+export default function LeaderboardScreen({ onBack }) {
+  const [v2] = useState(() => SEASON2 && LEADERBOARD_ENABLED && !!getMyProfile());
+  if (v2) {
+    return (
+      <Suspense fallback={<OverlaySkeleton title="LEADERBOARD" />}>
+        <LeaderboardV2 onBack={onBack} />
+      </Suspense>
+    );
+  }
+  return <LeaderboardScreenLive onBack={onBack} />;
+}
 
 const VERDICT_COPY = {
   shape: '3–16 LETTERS, NUMBERS OR _',
@@ -162,7 +180,7 @@ function WeekRow({ row, mine }) {
   );
 }
 
-export default function LeaderboardScreen({ onBack }) {
+function LeaderboardScreenLive({ onBack }) {
   useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const [board, setBoard] = useState({ rows: [], me: null });
   const [loading, setLoading] = useState(LEADERBOARD_ENABLED);
