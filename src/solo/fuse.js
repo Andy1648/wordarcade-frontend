@@ -123,6 +123,29 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
   if (!byPools) LEADS_CACHE.set(accept, (byPools = new WeakMap()));
   let leadsTo = byPools.get(pools);
   if (!leadsTo) byPools.set(pools, (leadsTo = new Map()));
+  // Every DISTINCT pool fragment a word contains, once each. PERF (main-e2e-green, oct5): this used to
+  // test all ~1,000 pool fragments against each word with w.includes(f) — ~2.5M substring searches per
+  // letter, 80-1,000 ms a letter at 4x CPU. Those scans run in FuseGame's idle warm-up, and an idle
+  // callback that starts just before a keystroke still blocks it: FUSE's keystroke→paint p95 went to
+  // 216-320 ms on CI whenever the warm-up overlapped the typing. Enumerating the word's own substrings
+  // of the pool's fragment lengths (2 and 3) and looking each up in a Set gives the SAME counts with
+  // ~15 lookups a word instead of ~1,000 scans.
+  const fragSet = new Set();
+  for (const t of FUSE_TIERS) for (const f of pools[t]) fragSet.add(f);
+  const fragLens = [...new Set([...fragSet].map((f) => f.length))].sort((a, b) => a - b);
+  function eachPoolFragmentIn(w, fn) {
+    let seen = null; // a word repeats a fragment rarely ("banana"): count it once, as includes() did
+    for (const L of fragLens) {
+      for (let i = 0; i + L <= w.length; i++) {
+        const f = w.slice(i, i + L);
+        if (!fragSet.has(f)) continue;
+        if (seen === null) seen = new Set();
+        else if (seen.has(f)) continue;
+        seen.add(f);
+        fn(f);
+      }
+    }
+  }
   // Each fragment's base rate (share of a common-word sample containing it), computed once.
   function baseRates() {
     if (leadsTo.has('__base')) return leadsTo.get('__base');
@@ -130,7 +153,7 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
     let n = 0;
     for (const w of accept) {
       if (++n > STEER_BASE_SAMPLE) break;
-      for (const t of FUSE_TIERS) for (const f of pools[t]) if (w.includes(f)) freq.set(f, (freq.get(f) || 0) + 1);
+      eachPoolFragmentIn(w, (f) => freq.set(f, (freq.get(f) || 0) + 1));
     }
     const out = { freq, n: Math.min(n, STEER_BASE_SAMPLE) };
     leadsTo.set('__base', out);
@@ -144,7 +167,7 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
     for (const w of accept) {
       if (!w.includes(ch)) continue;
       if (++scanned > STEER_SCAN_CAP) break;
-      for (const t of FUSE_TIERS) for (const f of pools[t]) if (w.includes(f)) hits.set(f, (hits.get(f) || 0) + 1);
+      eachPoolFragmentIn(w, (f) => hits.set(f, (hits.get(f) || 0) + 1));
     }
     const n = Math.max(1, Math.min(scanned, STEER_SCAN_CAP));
     const leads = (f) => {
