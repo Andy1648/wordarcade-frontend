@@ -30,6 +30,7 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { flagOn } from '../lib/featureFlags';
 import { rebirthLadder } from '../progress/rebirthLadder';
 import { rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
+import { takeStatsTab } from '../lib/statsTab';
 
 // TIER IDENTITY (Andy oct5): a ladder chip's rebirth count — BASE is R0, NOW is yours, NEXT is one more.
 const ladderRb = (id, rc) => (id === 'base' ? 0 : id === 'next' ? rc + 1 : rc);
@@ -153,7 +154,7 @@ export default function StatsScreen({ onBack }) {
     setRestoreMsg(res.error); // readable; existing progress untouched
   };
   // Active tab: STATS (default — the one the layout gate exercises) | COLLECTION | ACHIEVEMENTS.
-  const [tab, setTab] = useState('stats');
+  const [tab, setTab] = useState(() => takeStatsTab() || 'stats');
   const activeLabel = TABS.find((t) => t.id === tab)?.label || 'STATS';
   // A11y: move focus into the dialog on open; Escape closes it (once on mount).
   useEffect(() => {

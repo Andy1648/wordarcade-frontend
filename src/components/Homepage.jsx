@@ -4,18 +4,19 @@ import { lazyWithReload } from '../lib/chunkReload';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
-import { squash, flash, burst, sfx, setMuted as setJuiceMuted } from '../juice';
-import { useMagneticPull } from '../lib/magneticPull';
+import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
-import { MenuXpBar, MenuXpFx } from './MenuXp';
-import LiveWpm from './LiveWpm';
+import { MenuXpFx } from './MenuXp';
+import { KitXpBar } from './kit/KitXpBar.jsx';
+import { MenuIcons, MenuRail, MenuMarkChip, MenuTyped, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import RebirthReadyButton from './RebirthReadyButton';
+import { setStatsTab } from '../lib/statsTab';
 import { rebirthRushNotice, clearRebirthRushNotice } from '../progress/econMigrate';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -57,7 +58,6 @@ import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
-import PodiumIcon from './PodiumIcon';
 import { moments } from '../lib/moments';
 import { momentOpts, MENU_MOMENTS, CARD_MS, WALL_SETTLE_MS } from '../lib/menuMoments';
 import { useMomentHold } from '../lib/useMomentSlot';
@@ -71,7 +71,6 @@ const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotic
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
 // Overlays that only render when opened load on first open (payload ratchet; H2 batch offset).
 const LockedPreviewDialog = lazyWithReload(() => import('./LockedPreviewDialog'), 'LockedPreviewDialog');
-const RankLadder = lazyWithReload(() => import('./RankLadder'), 'RankLadder');
 // The REWARDS panel loads on first open (H4 payload offset): only the small ClaimPopup is on the menu at rest.
 const ClaimsPanel = lazyWithReload(() => import('../claims/ClaimsPanel.jsx'), 'ClaimsPanel');
 // The mode dialog loads on demand (payload ratchet, PV10 offset): fetched the moment a pointer or focus first
@@ -135,19 +134,8 @@ function coldStartHintMs() {
  * matching passed-in handler from App (which owns the create/join room flow and
  * WebSocket wiring). The handlers are guarded so a missing one is simply a no-op.
  */
-// STEP 58 (Andy oct2: "SHOP / REBIRTH sit at the bottom and feel odd"): where the menu's nav
-// cluster lives. Three layouts were built and compared (claude/menu-layout/) — 'top' won; 'stack'
-// (the old desktop corner column + phone bottom strip) and 'rail' stay reachable with ?nav= for a
-// side-by-side look. Read once at module load: a layout never changes under a mounted menu.
-const NAV_LAYOUTS = ['top', 'rail', 'stack'];
-const NAV_LAYOUT = (() => {
-  try {
-    const q = new URLSearchParams(window.location.search).get('nav');
-    return NAV_LAYOUTS.includes(q) ? q : 'top';
-  } catch {
-    return 'top';
-  }
-})();
+// What the menu XP bar last showed this session (see SESSION MEMORY in Homepage).
+const barSeen = { level: null, frac: 0 };
 
 // One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
 let cloudBootChecked = false;
@@ -235,7 +223,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, [connecting, wsStatus]);
   // The card currently hovered (drives the mascot's reaction pose).
   const [hoverGame, setHoverGame] = useState(null);
-  const [showRanks, setShowRanks] = useState(false); // rank-ladder overlay (fix/card-polish)
   // MARKS (feat/progression-clarity): the one equipped badge, and its picker. Read once on mount
   // and after an equip — the earned-achievement set only changes on a grant, which re-renders the
   // menu anyway.
@@ -279,11 +266,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [lockedPreview, setLockedPreview] = useState(null);
   const { sound, muted } = useSound();
 
-  // Magnetic cursor-pull on the JOIN CTA (wrapper div, so the button's own
-  // :hover/:active transforms compose underneath). Gated to fine-pointer + motion
-  // (see useMagneticPull).
-  const joinMagnetRef = useRef(null);
-  useMagneticPull(joinMagnetRef, { max: 8, base: 6 });
 
   // ---- Cards peek-scroll region (presentational) -------------------------------
   // The 3-column grid can wrap to >1 row; the region shows one full row + a peek of
@@ -440,53 +422,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       // card height is still owed, then pick and apply the card grid. Returns what it could not fit.
       const pass = (mode, deficit) => {
         stage.setAttribute('data-fit', mode);
-        const cs = getComputedStyle(stage);
-        const padT = parseFloat(cs.paddingTop) || 0;
-        const padB = parseFloat(cs.paddingBottom) || 0;
-        const rowGap = parseFloat(cs.rowGap) || 0;
-        const inner = stage.clientHeight - padT - padB;
-        if (inner <= 0) return null;
-        // In-flow children only — the absolutely-positioned glow/spotlight/corner buttons don't
-        // take part in the column's height.
-        const kids = Array.from(stage.children).filter((el) => {
-          const p = getComputedStyle(el).position;
-          return p !== 'absolute' && p !== 'fixed' && el.offsetHeight > 0;
-        });
-        if (!kids.length) return null;
-        // --menu-scale SHRINKS the WORDMARK on a short screen so the card region keeps a usable
-        // height (never above 1x — menu-fit). It used to zoom the XP cluster too, which takes the
-        // cluster's 13px labels under the --fs-label floor; the cluster now keeps its size.
+        // v2 MENU (claude/mockups/v2/Menu.dc.html): the stage is a GRID. 'normal' = the rail beside the
+        // wordmark + XP cluster, the cards one full-width row under them; 'short' = the rail runs the
+        // full height on the left and the cards sit right of it (Homepage.css). --menu-scale shrinks the
+        // TOP ROW (the wordmark) by whatever card height is still owed — never above 1x, never under 0.4.
         const logo = stage.querySelector('.homepage-logo-wrap');
         const logoH = logo ? logo.offsetHeight : 0;
-        if (mode === 'normal') {
-          let fixed = 0;
-          for (const el of kids) {
-            if (el.classList.contains('homepage-cards-region') || el === logo) continue;
-            fixed += el.offsetHeight;
-          }
-          let marginAdj = 0;
-          for (const el of kids) marginAdj += parseFloat(getComputedStyle(el).marginTop) || 0;
-          const gaps = rowGap * Math.max(0, kids.length - 1) + marginAdj;
-          const MINROW = 120;
-          if (logoH > 0) {
-            const scale = Math.max(0.4, Math.min(1, (inner - fixed - gaps - MINROW) / logoH));
-            stage.style.setProperty('--menu-scale', scale.toFixed(4));
-          }
-        }
         if (deficit > 0 && logoH > 0) {
           const cur = parseFloat(stage.style.getPropertyValue('--menu-scale')) || 1;
           const scale = Math.max(0.4, Math.min(1, cur * (1 - deficit / logoH)));
           stage.style.setProperty('--menu-scale', scale.toFixed(4));
-        }
-        // LANDSCAPE nav safe-gutter (fix/landscape-nav): the absolute top-right corner nav is a
-        // ~200px stacked column; on a short viewport the card row would pack under it. Measure its
-        // footprint from the right edge and expose it as --corner-nav-reserve (Homepage.css). In
-        // the 'short' arrangement the nav sits in the bottom row instead and the reserve is unused.
-        const nav = stage.querySelector('.homepage-corner-nav');
-        if (nav) {
-          const nr = nav.getBoundingClientRect();
-          const reserve = Math.max(0, Math.ceil(window.innerWidth - nr.left) + 12);
-          stage.style.setProperty('--corner-nav-reserve', `${reserve}px`);
         }
         let regionH = region.clientHeight;
         // Available WIDTH from the REGION (full, stable) minus the scroll's gutter — never from the
@@ -602,7 +547,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const flipCards = (to) => setCardPage(Math.max(0, Math.min(pageCount - 1, to)));
   // the keys never flip under an open dialog / panel
   const pagerBlockedRef = useRef(false);
-  pagerBlockedRef.current = !!(dialog || lockedPreview || showClaims || showRanks || showMarks || claimReveal || navigating);
+  pagerBlockedRef.current = !!(dialog || lockedPreview || showClaims || showMarks || claimReveal || navigating);
   const pager = (slot) => (
     <Suspense fallback={null}>
       <CardPager slot={slot} page={shownPage} pageCount={pageCount} onFlip={flipCards} gridRef={cardsGridRef} rowRef={cardsRowRef} blockedRef={pagerBlockedRef} />
@@ -643,9 +588,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // first-run gating (hide REBIRTH / the XP caption until the player has actually earned wins);
   // streak drives the menu chip (shown only at >= 2 days).
   const [winsLifetime] = useState(() => getWinsLifetime());
-  const [streak] = useState(() => getStreak().count);
-  // Freeze tokens (earned 1 per 7 days) shown on the menu BEFORE they're needed (Job 10).
-  const [streakFreezes] = useState(() => getStreak().freezes || 0);
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
@@ -656,6 +598,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // (the wins chip no longer polls here — useWinsBalance above hears every balance change)
     onCredit: () => {},
   });
+  // SESSION MEMORY for the XP bar: the menu you come back to from a game shows the bar where you left
+  // it, then CLIMBS to where you are now (the whole game's gain, one flash per level — KitXpBar). A
+  // rebirth (a drop) or a first visit just lands.
+  const [barFrom] = useState(() => {
+    const f = barSeen.level;
+    return f != null && (f < xpProgress.level || (f === xpProgress.level && barSeen.frac < xpProgress.frac)) ? { level: f, frac: barSeen.frac } : null;
+  });
+  const [barLive, setBarLive] = useState(!barFrom);
+  useEffect(() => {
+    if (barLive) return undefined;
+    const t = requestAnimationFrame(() => setBarLive(true));
+    return () => cancelAnimationFrame(t);
+  }, [barLive]);
+  useEffect(() => {
+    barSeen.level = xpProgress.level;
+    barSeen.frac = xpProgress.frac;
+  }, [xpProgress.level, xpProgress.frac]);
   // THE FIVE SECRETS ARE NOT A MENU FEATURE ANY MORE (feat/cut-secrets-rarity). They used to
   // fire here and announce themselves as a centre-screen sticker over a modal backdrop — a
   // one-off popup, mid-aim, that you clicked away and that could swallow the click meant for the
@@ -806,10 +765,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     lastLevelRef.current = xpProgress.level;
   }, [xpProgress.level]);
 
-  const shopLinkRef = useRef(null);
-  const statsLinkRef = useRef(null);
-  const boardLinkRef = useRef(null);
-  const rebirthLinkRef = useRef(null);
+  // The menu root: focus-restore finds its control by data-nav (the kit buttons take no ref — React 18).
+  const navRootRef = useRef(null);
   // THEMES: grant any level-unlocked theme (LV10 MIDNIGHT, LV30 TOXIC) as progression reaches it,
   // so the free path works even if the player never opens the shop. Idempotent + persisted.
   // (STEP 50: themes are retired — no more level-granted themes. A refund for BOUGHT ones waits as
@@ -828,10 +785,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
   // restore focus to that footer link on this remount, then clear the flag.
   useEffect(() => {
-    if (restoreFocus === 'shop' && shopLinkRef.current) shopLinkRef.current.focus();
-    else if (restoreFocus === 'stats' && statsLinkRef.current) statsLinkRef.current.focus();
-    else if (restoreFocus === 'leaderboard' && boardLinkRef.current) boardLinkRef.current.focus();
-    else if (restoreFocus === 'rebirth' && rebirthLinkRef.current) rebirthLinkRef.current.focus();
+    if (restoreFocus) focusNav(navRootRef.current, restoreFocus);
     if (restoreFocus && onFocusRestored) onFocusRestored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -841,7 +795,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     const r = runAutomation({ buyKey: buyKeyPower });
     if (!r.keys) return undefined;
-    const parts = [`+${formatNum(r.keys)} KEY TIER`];
+    const parts = [`+${formatNum(r.keys)} POWER`];
     // H5: an INFO moment on the queue (was an 800 ms guess at clearing the level-up card)
     announceMenu('automation', (done) => {
       if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }
@@ -924,19 +878,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     setJuiceMuted(muted);
   }, [muted]);
-
-  // Fire the shared game-feel on a menu action button press: squash + color
-  // flash + a small spark burst from the button's center + a tap tick. The juice
-  // module self-gates on reduced-motion and the mute flag, so this stays
-  // unconditional here. `accent` tints the flash/sparks to the button's color.
-  function pressJuice(e, accent) {
-    const el = e.currentTarget;
-    const r = el.getBoundingClientRect();
-    squash(el);
-    flash(el, accent);
-    burst(r.left + r.width / 2, r.top + r.height / 2, { count: 16, colors: [accent], speed: 240 });
-    sfx('tap');
-  }
 
   // Hovering a card plays a subtle blip - but only when moving onto a NEW card,
   // so it never machine-guns while you sit on one card. (hoverGame is kept just
@@ -1029,18 +970,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     else if (id === 'fuse' && onFuse) onFuse();
   }
 
-  function handleJoinRoom(e) {
-    if (navigating) return;
-    pressJuice(e, '#2EFFE0'); // cyan accent juice
-    sound.click(); // the whoosh follows from the screen transition in App
-    setNavigating(true);
-    runWhenConnected('join', () => onJoinRoom && onJoinRoom());
-  }
-
   function handleStats() {
     if (navigating) return;
     sound.click();
     if (onStats) onStats();
+  }
+  // ACHIEVEMENTS (v2 menu): rewards waiting → the claims panel (they are achievement payouts and
+  // rank-ups); nothing waiting → Stats, opened on its ACHIEVEMENTS tab.
+  function handleAchievements() {
+    if (navigating) return;
+    if (claims.length > 0) {
+      sound.click();
+      setShowClaims(true);
+      return;
+    }
+    setStatsTab('achievements');
+    handleStats();
   }
 
   // STEP 24: the leaderboard. Every menu visit also pushes this browser's stats to the board (if it
@@ -1060,9 +1005,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const boardRank = LEADERBOARD_ENABLED ? getLastRank() : null;
   const [rankUp, setRankUp] = useState(null);
   // Andy oct3 11:42 (podium): the icon shows the OLD rank until the rank-up card's "#to" pops, then bounces
-  // and ticks down to the new one. boardHold = the rank to show meanwhile; boardBump = the one-shot trigger.
+  // and ticks down to the new one. boardHold = the rank to show meanwhile (the tile's #rank tag bumps when it changes — KitIconButton).
   const [boardHold, setBoardHold] = useState(null);
-  const [boardBump, setBoardBump] = useState(null);
   const rankDoneRef = useRef(null);
   const rankCancelRef = useRef(null);
   const boardShown = boardHold != null ? boardHold : boardRank;
@@ -1153,7 +1097,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     };
   }, []);
   const rankPop = () => {
-    if (rankUp) setBoardBump({ from: rankUp.from, to: rankUp.to, key: Date.now() });
     setBoardHold(null);
   };
   const rankDone = () => {
@@ -1215,255 +1158,129 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
   // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
-  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || showRanks || claimReveal));
+  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal));
+
+  // ---- v2 MENU chrome (claude/mockups/v2/Menu.dc.html) — one set of props, both trees -------------
+  const markShown = markUnlocked.length > 0 || marksRevealed();
+  const openMarks = (view) => {
+    if (navigating) return;
+    sound.click();
+    markMarksSeen(markUnlocked.map((m) => m.id));
+    setMarksNew(false);
+    setShowMarks(view);
+  };
+  const hover = () => sfx('hover');
+  const railItems = {
+    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover },
+    roll: markShown ? { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover } : null,
+    index: markShown ? { onClick: () => openMarks('index'), dot: marksNew, onHover: hover } : null,
+    rebirth: showRebirth ? { onClick: handleRebirth, dot: rebirthReady, onHover: hover } : null,
+  };
+  const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
+  const ach = { count: claims.length, onClick: handleAchievements };
+  const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} isNew={marksNew} onClick={() => openMarks('roll')} /> : null;
+  const perLetter = (
+    <span className="hp-per">
+      +{formatNum(letterXpNow())} XP<span className="hp-per-u"> / LETTER</span>
+    </span>
+  );
+  const xpBar = (
+    <KitXpBar
+      className="menu-xp-bar"
+      level={barLive ? xpProgress.level : barFrom.level}
+      frac={barLive ? xpProgress.frac : barFrom.frac}
+      need={barLive ? xpProgress.cost : needAt(barFrom.level)}
+    />
+  );
 
   return (
-    <div className="homepage-wrap" onPointerOver={warmModeDialog} onFocusCapture={warmModeDialog} onTouchStart={warmModeDialog}>
+    <div ref={navRootRef} className="homepage-wrap" onPointerOver={warmModeDialog} onFocusCapture={warmModeDialog} onTouchStart={warmModeDialog}>
       <div
         ref={stageRef}
-        className={`homepage-stage wall-surface${dialog ? ' is-dimmed' : ''}${isPhoneMenu ? ' is-phone-menu' : ''}`}
+        className={`homepage-stage${dialog ? ' is-dimmed' : ''}${isPhoneMenu ? ' is-phone-menu' : ''}`}
         data-menu-frame={menuFrame || undefined}
         data-menu-tier={tier}
-        data-nav={NAV_LAYOUT}
         data-paged={isPagedMenu ? '' : undefined}
       >
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
-        {/* BEAT GLOW: a soft pink pool that pulses on each detected beat - the
-            menu's one piece of ambient motion now that the idle loops are gone.
-            Opacity-only, sits above the wall texture but below the content. */}
+        {/* BEAT GLOW: the menu's one ambient pulse (MENU MOTION LAW) — opacity-only, under the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
         {rankUp && rankUp.kind !== 'passed' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
         {rankUp && rankUp.kind === 'passed' && <Suspense fallback={null}><RankUpMoment kind="passed" from={rankUp.from} to={rankUp.to} name={rankUp.name} levels={rankUp.levels} rebirths={rankUp.rebirths} onDone={rankDone} onTap={() => { rankDone(); handleLeaderboard(); }} /></Suspense>}
-        {/* STREETLIGHT: a warm pool of light dropping from above onto the focal
-            point (title + cards), brightest at the top and falling off. */}
-        <div className="homepage-spotlight wall-spotlight" aria-hidden="true" />
 
-        {/* PHONE (<=480px): the whole desktop menu below — corner nav, wordmark, XP cluster,
-            card grid, bottom bar, footer — is replaced by full-width typographic bands (three
-            mode rows, a CHAIN | FUSE band, a SHOP / STATS / REBIRTH strip, CREDITS + JOIN).
-            Nothing in the desktop branch mounts at this width, which is the point: the card
-            region alone is ~390 DOM nodes. Every component is still imported and still used
-            at every other width; they simply are not rendered here. */}
+        {/* PHONE (<=480px): MobileMenu instead of the desktop grid below (a RENDER branch — the card
+            region alone is ~390 nodes). Same handlers, same kit chrome. */}
         {isPhoneMenu ? (
           <MobileMenu
             games={GAMES}
             onOpen={handleOpenDialog}
-            onJoin={handleJoinRoom}
-            joinLabel={connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN ROOM'}
             onHookPlay={firstTimer && onPlaySolo ? handleHookSolo : null}
             hookPlayLabel={connecting === 'solo' && !dialog ? <ConnectingContent cold={coldStart} /> : null}
             navigating={navigating}
             musicMuted={musicMuted}
             onToggleMusic={onToggleMusic}
-            /* Everything the desktop corner nav, footer and CHAIN/FUSE cards reach, through the
-               SAME handlers and the same focus-restore refs — the phone gets entry points, not a
-               second copy of the logic. Only one tree mounts, so sharing the refs is safe. */
             lockedIds={GAMES.filter((g) => isModeLocked(g, xpProgress.level)).map((g) => g.id)}
             onLockedSelect={handleLockedSelect}
-            onShop={handleShop}
             onStats={handleStats}
-            onLeaderboard={LEADERBOARD_ENABLED && onLeaderboard ? handleLeaderboard : null}
-            boardDot={boardNews}
-            boardRank={boardRank}
-            boardShown={boardShown}
-            boardBump={boardBump}
-            boardRef={boardLinkRef}
-            onRebirth={showRebirth ? handleRebirth : null}
-            onMarks={marksRevealed() || markUnlocked.length ? () => { markMarksSeen(markUnlocked.map((m) => m.id)); setMarksNew(false); setShowMarks(true); } : null}
-            marksDot={rollDot}
-            gems={marksRevealed() || markUnlocked.length ? gems : null}
-            rebirthDot={rebirthReady}
-            rebirthReadySlot={rebirthReady ? <RebirthReadyButton ready onGo={handleRebirthNow} className="is-compact hp-m-rr-ready" /> : null}
             onCredits={handleCredits}
-            shopDot={winsAffordable}
-            shopRef={shopLinkRef}
-            statsRef={statsLinkRef}
-            rebirthRef={rebirthLinkRef}
-            navLayout={NAV_LAYOUT}
-            rewardsCount={claims.length}
-            onRewards={() => setShowClaims(true)}
-            claimSlot={!showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview
+            board={board}
+            ach={ach}
+            railItems={railItems}
+            rebirthReadySlot={rebirthReady ? <RebirthReadyButton ready onGo={handleRebirthNow} className="is-compact hp-m-rr-ready" /> : null}
+            claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
               : null}
-            level={xpProgress.level}
-            levelFrac={xpProgress.frac}
+            xpBar={xpBar}
+            perLetter={perLetter}
+            markChip={markChip}
             wins={wins}
+            gems={markShown ? gems : null}
           />
         ) : (
         <>
-        {/* Corner nav — three WORD buttons (not glyphs), stacked in the top-right corner. Each
-            is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall, width
-            auto (item 3). SHOP keeps its affordable-item dot. */}
-        {/* N3 (Andy oct2): the LEADERBOARD on its OWN, top-left — hero-size, with your rank — so it reads as
-            its own thing, not one more nav chip. It mirrors the corner nav's top-right offsets (a layout
-            relationship with the frame, not an orphan) and keeps .homepage-nav-btn.is-board for the gates. */}
-        {LEADERBOARD_ENABLED && onLeaderboard && (
-          <div className="homepage-board-corner">
-            <button
-              ref={boardLinkRef}
-              type="button"
-              className={`homepage-nav-btn is-board homepage-board-hero${navigating ? ' disabled' : ''}`}
-              onClick={handleLeaderboard}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label={`Open leaderboard${boardRank ? ` — you're #${formatNum(boardRank)}` : ''}${boardNews ? ' — your rank went up' : ''}`}
-              title="Leaderboard"
-            >
-              {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
-              <PodiumIcon rank={boardShown} bump={boardBump} />
-              {boardNews && <span className="homepage-shop-dot is-board-news" aria-hidden="true" />}
-            </button>
-          </div>
-        )}
-        <nav className="homepage-corner-nav" aria-label="Menu">
-          {/* NO SEPARATE REWARDS BUTTON (Andy oct2 A4): claims happen through STATS. While anything is
-              waiting, STATS wears the count badge and opens the claims; with nothing waiting it opens
-              Stats as always. */}
-          {/* SHOP and STATS SWAPPED (Andy A4): STATS leads, SHOP sits last in the word stack —
-              nearest the trophy + audio, where the eye lands after the cards. */}
-          <button
-            ref={statsLinkRef}
-            type="button"
-            className={`homepage-nav-btn is-stats${navigating ? ' disabled' : ''}`}
-            onClick={claims.length > 0 ? () => setShowClaims(true) : handleStats}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            aria-label={claims.length > 0 ? `Open stats — ${formatNum(claims.length)} to claim` : 'Open stats'}
-          >
-            STATS
-            {claims.length > 0 && <span className="homepage-claim-count" aria-hidden="true">{formatNum(claims.length)}</span>}
-          </button>
-          {/* REBIRTH: gated by showRebirth (see its definition above the return). */}
-          {showRebirth && (
-            <button
-              ref={rebirthLinkRef}
-              type="button"
-              className={`homepage-nav-btn is-rebirth${rebirthReady ? ' is-ready' : ''}${navigating ? ' disabled' : ''}`}
-              onClick={handleRebirth}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              aria-label={`Open rebirth${rebirthReady ? ' — ready' : ''}`}
-            >
-              REBIRTH
-              {rebirthReady && <span className="homepage-shop-dot" aria-hidden="true" />}
-            </button>
-          )}
-          <button
-            ref={shopLinkRef}
-            type="button"
-            className={`homepage-nav-btn is-shop${navigating ? ' disabled' : ''}`}
-            onClick={handleShop}
-            onMouseEnter={() => sfx('hover')}
-            disabled={navigating}
-            aria-label={`Open shop${winsAffordable ? ' — items available' : ''}`}
-          >
-            SHOP
-            {winsAffordable && <span className="homepage-shop-dot" aria-hidden="true" />}
-          </button>
-          {/* fix/visual-real item 4: the sound control JOINS the corner-nav cluster (SHOP / REBIRTH /
-              STATS / audio) on the menu instead of floating as an orphan fixed button bottom-right —
-              exactly the grouping CLAUDE.md's NO ORPHAN FIXED UI rule prescribes. The global fixed
-              AudioControls is suppressed on the home view (App.jsx) so there's only one here. */}
-          <AudioControls
-            variant="inline"
-            accent="#2EFFE0"
-            musicMuted={musicMuted}
-            onToggleMusic={onToggleMusic}
-          />
-        </nav>
+        {/* LEFT: the WINS / GEMS pills over the SHOP · ROLL · INDEX · REBIRTH rail. */}
+        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} />
 
-        {/* Title: the wordmark with a handstyle 3D extrude (.wall-handstyle) and
-            paint dripping off the letters - hand-painted on the wall, not set. */}
+        {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
-          {/* "TYPE A WORD": the non-breaking space keeps "TYPE A" together
-              so the title only ever wraps before "WORD" on narrow screens. The
-              data-text must match exactly so the RGB-split clones line up. */}
-          <div
-            className="homepage-logo wall-handstyle"
-            data-text={'TYPE A WORD'}
-            role="img"
-            aria-label="Type a Word"
-          >
-            {'TYPE A WORD'}
-          </div>
-          {/* Paint running off the wordmark. */}
-          <div className="homepage-logo-drip" aria-hidden="true">
-            <span style={{ left: '17%', '--len': '20px' }} />
-            <span style={{ left: '49%', '--len': '34px' }} />
-            <span style={{ left: '78%', '--len': '16px' }} />
+          <div className="homepage-logo" role="img" aria-label="Type a Word">
+            <span className="hp-face is-a" aria-hidden="true">TYPE A WORD</span>
+            <span className="hp-face is-b" aria-hidden="true">TYPE A WORD</span>
+            <span className="hp-face is-c" aria-hidden="true">TYPE A WORD</span>
           </div>
         </div>
 
+        {/* TOP RIGHT: leaderboard / stats / achievements. */}
+        <MenuIcons board={board} onStats={handleStats} ach={ach} navigating={navigating} />
 
-        {/* fix/visual-real item 6: the XP bar + its small meta rows are grouped in ONE cluster with a
-            tight internal gap, so the NEXT-unlock line sits right under the XP row it belongs to
-            instead of floating alone in the dead space between the bar and the cards. The cluster is
-            the single fit-math child that carries --menu-scale (see SCALES + .menu-xp-cluster CSS). */}
+        {/* RIGHT, under the icons: sound + CREDITS + the live room. They JOIN this cluster (no orphan
+            fixed UI) — the mockup has no slot for them. */}
+        <div className="homepage-footer-links hp-extras">
+          <AudioControls variant="inline" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
+          <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
+            CREDITS
+          </button>
+          {LEADERBOARD_ENABLED && <LiveTicker className="homepage-live" />}
+        </div>
+
+        {/* CENTRE: LV + the XP bar, the per-letter line + the worn mark, TYPE ANYTHING. */}
         <div className="menu-xp-cluster">
-          {/* XP meta-progression bar — the PRIMARY element in the space the words-typed
-              odometer used to occupy (that chip was removed). LV chip + fill + an "XP-into /
-              XP-needed" readout, fed by global keystroke capture (see the effect above). */}
-          <MenuXpBar
-            level={xpProgress.level}
-            toNext={xpProgress.toNext}
-            frac={xpProgress.frac}
-            /* LETTERS TO THE NEXT LEVEL (PROGRESSION v11, amended): the bar fills from LETTERS typed — in the
-               menu or in any game — counted at the LETTERS-OF-YOUR-WORDS price, BASE 10 XP / LETTER × KEY × rebirth ×
-               the worn mark (letterXp.js letterXpNow; typed letters pay a fifth until their word is accepted). Words
-               pay wins, never per-word XP, so there is no per-mode rate to quote. */
-            lettersToNext={Math.max(1, Math.ceil(xpProgress.toNext / Math.max(1, letterXpNow())))}
-            /* The first-run lead-in ("TYPE ANYWHERE ·") rides the hint instead of the separate
-               caption line that used to sit under the bar — see below. */
-            firstRun={xpProgress.level < 2 && winsLifetime === 0 && rebirths === 0}
-            /* WPM joins the hint row (see .menu-xp-hint) instead of holding a row of its own. */
-            hintRight={<><span className="menu-xp-hint-rule">LONGER WORDS PAY MORE</span><LiveWpm hideZero /></>}
-            intoLevel={xpProgress.intoLevel}
-            cost={xpProgress.cost}
-            rebirths={rebirths}
-            wins={wins}
-            onWinsClick={handleShop}
-            onRankClick={() => setShowRanks(true)}
-            streak={streak}
-            freezes={streakFreezes}
-            /* The slot is only drawn once there is something to put in it — an empty badge on a
-               brand-new account is a question with no answer yet. */
-            /* Andy oct2 A3: once MARKS is revealed (LV10 / R1) the slot is always there. */
-            markSlot={markUnlocked.length > 0 || marksRevealed()}
-            mark={markEntry(equippedMark)}
-            markNew={marksNew}
-            /* GEMS: the count rides beside the wins chip once MARKS is there (where they are spent);
-               the MARKS dot = a roll is affordable */
-            gems={markUnlocked.length > 0 || marksRevealed() ? gems : null}
-            rollDot={rollDot}
-            onMarkClick={() => {
-              markMarksSeen(markUnlocked.map((m) => m.id));
-              setMarksNew(false);
-              setShowMarks(true);
-            }}
-          />
-          {/* REBIRTH READY → ×5 FOREVER (Andy oct3: "never let a player miss that they can rebirth"):
-              IN this cluster, right under the level bar it is about — in flow, never fixed. One tap
-              rebirths and plays the ceremony (no confirm, no shop detour). */}
+          {xpBar}
+          <div className="hp-perrow">
+            {perLetter}
+            {markChip}
+            <BoostPill className="menu-boost-pill" />
+          </div>
+          {/* REBIRTH READY → ×5 FOREVER (Andy oct3): in flow under the bar it is about (nothing until ready). */}
           <RebirthReadyButton ready={rebirthReady} onGo={handleRebirthNow} className="is-menu" />
-          {/* THE FIRST-VISIT CAPTION IS GONE, folded into the bar's own hint line. It said "TYPE
-              ANYWHERE TO EARN XP" on its own row directly under a row that now says "12 WORDS TO
-              LEVEL 2" — two lines of the same small type, saying two halves of one sentence, on
-              the one screen in the app with no vertical room to spare. The hint carries both on a
-              first run ("TYPE ANYWHERE · 12 WORDS TO LEVEL 2") and drops the lead-in afterwards.
-              Its 20px + the cluster's 5px gap are what pay for the hint line at 320x640. */}
-          {/* (The MOMENTUM rail is gone with MOMENTUM — Andy oct2: the LETTER FORGE replaced it, and
-              its 22px row was part of what pushed SHOP / REBIRTH down the screen.) */}
-          {/* THE NEXT-UNLOCK TEASER IS GONE (Andy's cut). Three spans promising a cosmetic FRAME,
-              which at R1 rendered as "NEXT REBIRTH 1 FRAME REBIRTH 1" — a line that says the same
-              word three times and names a reward the player cannot see. No affordance, nothing
-              clickable, and the ladder it teased is already in the shop. */}
+          <MenuTyped blockedRef={pagerBlockedRef} />
         </div>
 
         <div className="homepage-cards-region">
           {/* CARD PAGES: on a short-wide desktop (PAGED_MENU_QUERY) the row carries an arrow each
               side and a two-dot indicator under it, all in flow inside the region (no fixed UI).
-              Elsewhere the row is display:contents and the region is exactly what it was. */}
+              Elsewhere the row is display:contents. */}
           <div className="homepage-cards-pagerow" ref={cardsRowRef}>
             {isPagedMenu && pager('prev')}
             <div className="homepage-cards-scroll" data-count={GAMES.length}>
@@ -1492,40 +1309,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </div>
           {isPagedMenu && pager('dots')}
           {isPagedMenu && pager('ctl')}
-        </div>
-
-        <div className="homepage-bottom-bar">
-          {/* CREATE is per-game (each card's dialog has its own CREATE), so the
-              menu only needs JOIN here. Magnetic wrapper carries the cursor-pull. */}
-          <div ref={joinMagnetRef} className="homepage-btn-magnet">
-            <button
-              className={`homepage-btn homepage-btn-join${navigating ? ' disabled' : ''}${connecting === 'join' && coldStart ? ' is-waking' : ''}`}
-              onClick={handleJoinRoom}
-              onMouseEnter={() => sfx('hover')}
-              disabled={navigating}
-              data-juice-self
-            >
-              {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN ROOM'}
-            </button>
-          </div>
-        </div>
-
-        {/* DAILY button removed (fix/three-things §3). The daily challenge is still
-            reachable via the ?daily=1 deep link (App LAUNCH_INTENT.daily); only the
-            loose menu entry was deleted. */}
-
-        {/* Quiet footer link: CREDITS only. (SHOP + STATS are the loud top-corner icon
-            buttons now; the guide/help nav was removed to keep the menu clean.) */}
-        <div className="homepage-footer-links">
-          <button
-            className={`homepage-credits-link${navigating ? ' disabled' : ''}`}
-            onClick={handleCredits}
-            disabled={navigating}
-          >
-            CREDITS
-          </button>
-          {/* STEP 51: the live room — online count + other players' moments — joins the footer. */}
-          {LEADERBOARD_ENABLED && <LiveTicker className="homepage-live" />}
         </div>
         </>
         )}
@@ -1581,7 +1364,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
       {/* The popup never floats over another overlay (rank ladder, marks, a mode dialog). */}
-      {!isPhoneMenu && !showClaims && !claimReveal && !showRanks && !showMarks && !dialog && !lockedPreview && (
+      {!isPhoneMenu && !showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview && (
         <ClaimPopup onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
       )}
       {showClaims && (
@@ -1595,14 +1378,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </Suspense>
         </ScreenBoundary>
       )}
-      {tutReady && !dialog && !showMarks && !showClaims && !showRanks && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
+      {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost level={xpProgress.level} rebirths={rebirths} />
         </Suspense>
       )}
-      {claimReveal && <Suspense fallback={null}><ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks(true); }} /></Suspense>}
+      {claimReveal && <Suspense fallback={null}><ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks('roll'); }} /></Suspense>}
 
-      {/* MARKS overlay — one slot: the ROLL screen (its INDEX button opens the MARKS INDEX in the same slot). */}
+      {/* MARKS overlay — one slot: the ROLL screen (its INDEX button opens the MARKS INDEX in the same slot); the
+          rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
       {showMarks && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>
@@ -1614,16 +1398,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               earned={earnedAch}
               onEquip={(id) => setEquippedMark(ROLLS ? id : equipMark(id, earnedAch))}
               onClose={() => setShowMarks(false)}
+              startIndex={showMarks === 'index'}
             />
-          </Suspense>
-        </ScreenBoundary>
-      )}
-
-      {/* RANK LADDER overlay — all ten ranks, which you hold, which is next (fix/card-polish). */}
-      {showRanks && (
-        <ScreenBoundary name="rank-ladder" onBack={() => setShowRanks(false)}>
-          <Suspense fallback={null}>
-            <RankLadder level={xpProgress.level} onClose={() => setShowRanks(false)} />
           </Suspense>
         </ScreenBoundary>
       )}
@@ -1640,7 +1416,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           // Never over the wordmark or a card title (fine-tune oct2, loop C): the caption picks a
           // clear slot, drops to its compact headline, or hides and lets the ring teach.
           avoidTextIn=".homepage-stage"
-          avoidSelector=".homepage-logo-wrap, .homepage-cards-region, .homepage-corner-nav"
+          avoidSelector=".homepage-logo-wrap, .homepage-cards-region, .homepage-corner-nav, .hp-icons"
           // No wash (fine-tune oct2): a first-time player's first screen was ~70% dimmed behind a
           // ring; the ring + the bar's own TYPE ANYWHERE line teach without hiding the modes.
           dim={false}

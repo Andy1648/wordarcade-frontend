@@ -5,9 +5,10 @@
 // .homepage-stage, of which the card region alone is ~391. None of it is readable at that
 // width; the cards are a horizontal strip of thumbnails with 8px type.
 //
-// This is FULL-WIDTH TYPOGRAPHIC BANDS instead: the title, the three big modes as tappable
-// slabs, a split CHAIN | FUSE band, a SHOP / STATS / REBIRTH strip, and a footer with CREDITS +
-// JOIN ROOM. Everywhere the desktop menu can go, the phone can go — and the whole screen still
+// This is FULL-WIDTH TYPOGRAPHIC BANDS instead: the title + the v2 LEADERBOARD / STATS /
+// ACHIEVEMENTS tiles, the level bar, the mode slabs, a split CHAIN | FUSE band, the v2 rail (WINS /
+// GEMS pills over SHOP · ROLL · INDEX · REBIRTH — MenuNav.jsx, the same chrome as the desktop menu)
+// and a footer with CREDITS + sound. JOIN ROOM lives in the multiplayer mode dialogs (JOIN WITH CODE). Everywhere the desktop menu can go, the phone can go — and the whole screen still
 // fits one viewport with no scroll. It is a separate COMPONENT
 // (not a pile of `display:none`) on purpose — see lib/useMediaQuery.js for why the node count
 // is the point.
@@ -19,17 +20,15 @@
 // SVG. There is no CSS-drawn art and no character illustration — the <Mascot> PNG component is
 // untouched and simply has no place on this screen.
 import AudioControls from './AudioControls';
+import { MenuIcons, MenuRail } from './MenuNav';
 import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
 import { formatNum } from '../format';
-import { useLevelBar } from '../hooks/useLevelBar';
-import PodiumIcon from './PodiumIcon';
 import WordHook from './WordHook';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
 import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
-import { GemCount } from './gems/GemChip';
 
 // The one thing that sets each solo mode apart, in the half-band's sub line (Andy oct2: FUSE's
 // FRENZY must be obvious on the card; CHAIN's POWER is real money per word).
@@ -136,57 +135,33 @@ const isModified = (e) => e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.
  * @param onOpen  (gameId, el) => void — the SAME handler the desktop cards call
  * @param onLockedSelect  (gameId) => void — the SAME handler a desktop locked card calls
  * @param lockedIds  ids of the modes that are level-gated for this player right now
- * @param onJoin  join-room handler
- * @param joinLabel  node for the JOIN control (carries the CONNECTING… state)
- * @param navigating  true once a navigation has fired (locks the controls)
- * @param onShop / onStats / onCredits  the desktop corner-nav / footer handlers
- * @param onRebirth  the desktop REBIRTH handler, or null while REBIRTH is gated off (LV1 etc.)
- * @param boardDot true while a leaderboard rank-up is unread (STEP 47)
- * @param shopDot  true when something in the shop is affordable (the desktop SHOP dot)
- * @param shopRef / statsRef / rebirthRef  Homepage's focus-restore refs (return from an overlay)
+ * @param board / ach / railItems  the v2 chrome (MenuNav.jsx) — built once in Homepage for both trees
+ * @param xpBar / perLetter / markChip  the level bar, the per-letter line and the worn mark (Homepage)
  * @param onHookPlay  first-timers only: starts solo Word Bomb from the TYPE A WORD hook; null hides it
- * @param hookPlayLabel  node for the hook's PLAY button while the socket wakes (or null)
  */
 export default function MobileMenu({
   games,
   onOpen,
   onLockedSelect,
   lockedIds = [],
-  onJoin,
-  joinLabel = 'JOIN ROOM',
   navigating = false,
   musicMuted = false,
   onToggleMusic,
-  onShop,
   onStats,
-  onRebirth = null,
-  onMarks = null, // E6: the MARKS index (desktop reaches it from the mark chip by the level)
-  marksDot = false,
   onCredits,
-  shopDot = false,
-  rebirthDot = false,
-  rebirthReadySlot = null, // REBIRTH READY → ×5 FOREVER (Andy oct3) — in flow under the LV strip
-  shopRef,
-  statsRef,
-  rebirthRef,
+  board = null,
+  ach,
+  railItems,
+  rebirthReadySlot = null, // REBIRTH READY → ×5 FOREVER (Andy oct3) — in flow under the level bar
   onHookPlay = null,
   hookPlayLabel = null,
-  onLeaderboard = null,
-  boardDot = false,
-  boardRank = null,
-  boardShown,
-  boardBump = null,
-  boardRef,
-  navLayout = 'top',
-  rewardsCount = 0,
-  onRewards = null,
-  level = null,
-  levelFrac = 0,
+  xpBar = null,
+  perLetter = null,
+  markChip = null,
   wins = 0,
   gems = null,
   claimSlot = null,
 }) {
-  const lvBar = useLevelBar(level == null ? 1 : level, Number(levelFrac) || 0);
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
     .filter(Boolean);
@@ -195,58 +170,25 @@ export default function MobileMenu({
     .filter(Boolean);
 
   return (
-    <div className="hp-m" data-nav={navLayout}>
-      {/* 1. TITLE + the sound toggle, sharing one row. The toggle JOINS this cluster rather
-             than floating as its own fixed control (CLAUDE.md: NO ORPHAN FIXED UI). */}
+    <div className="hp-m">
+      {/* 1. TITLE + the v2 LEADERBOARD / STATS / ACHIEVEMENTS tiles, sharing one row. */}
       <div className="hp-m-top">
-        {/* N3 (Andy oct2): the LEADERBOARD on its own, top-left, hero-size with your rank — first in the
-            title row (a cluster member, not an orphan); keeps .hp-m-navbtn.is-board for the gates */}
-        {onLeaderboard && (
-          <button
-            ref={boardRef}
-            type="button"
-            className={`hp-m-navbtn is-board hp-m-board-hero${navigating ? ' is-disabled' : ''}`}
-            onClick={onLeaderboard}
-            disabled={navigating}
-            aria-label={`Open leaderboard${boardRank ? ` — you're #${formatNum(boardRank)}` : ''}${boardDot ? ' — your rank went up' : ''}`}
-          >
-            {/* the podium wears your #rank on its top step (it replaced the separate #rank badge) */}
-            <PodiumIcon rank={boardShown !== undefined ? boardShown : boardRank} bump={boardBump} />
-            {boardDot && <span className="hp-m-dot is-board-news" aria-hidden="true" />}
-          </button>
-        )}
         <h1 className="hp-m-title">
           TYPE A
           <br />
           WORD
         </h1>
-        <AudioControls
-          variant="inline"
-          accent="#2EFFE0"
-          musicMuted={musicMuted}
-          onToggleMusic={onToggleMusic}
-        />
+        <MenuIcons board={board} onStats={onStats} ach={ach} navigating={navigating} />
+      </div>
+
+      {/* 1a. THE LEVEL: LV + the XP bar (KitXpBar), then the per-letter line + the worn mark. */}
+      {xpBar && <div className="hp-m-xp">{xpBar}</div>}
+      <div className="hp-m-per">
+        {perLetter}
+        {markChip}
         {/* E5 follow-up: a live BOOST shows on the phone too, joining this row (renders nothing at rest) */}
         <BoostPill className="hp-m-boost" />
       </div>
-
-      {/* 1a. H6 audit M19: the phone menu showed no level, no XP bar and no wins at all — the main
-             progress readout of the game was desktop-only. One compact row: LV · bar · WINS. In flow,
-             so the mode rows below flex a little shorter (still one screen, no scroll). */}
-      {level != null && (
-        <div className="hp-m-stats" role="group" aria-label={`Level ${formatNum(level)}, ${formatNum(wins || 0)} wins`}>
-          {/* The numeral + fill run lib/barPlan (useLevelBar): a multi-level climb flashes the
-              fill once per level passed while the numeral ticks, then fills to the real %. */}
-          <span className="hp-m-stats-lv"><span className="hp-m-stats-k">LV</span>{formatNum(lvBar.shownLevel)}</span>
-          <span className="hp-m-stats-track" aria-hidden="true">
-            <span className="hp-m-stats-fill" ref={lvBar.fillRef} />
-          </span>
-          {/* CLUTTER PASS (Andy oct3): no % readout — the fill is the percent. */}
-          <span className="hp-m-stats-wins" data-wins={wins || 0}>{formatNum(wins || 0)}<span className="hp-m-stats-k">WINS</span></span>
-          {/* GEMS (Andy oct5): the roll currency, icon + count, in this same strip (once MARKS is there) */}
-          {gems != null && <GemCount value={gems} size={16} className="hp-m-stats-gems" />}
-        </div>
-      )}
 
       {/* 1a''. REBIRTH READY → ×5 FOREVER (Andy oct3): joins the LV strip's cluster, in flow (never
              fixed) — the mode rows flex a little shorter while it shows. */}
@@ -359,65 +301,9 @@ export default function MobileMenu({
         })}
       </div>
 
-      {/* 4. SHOP / STATS / REBIRTH — the desktop corner nav, as one strip of slabs in the thumb
-             zone. REBIRTH obeys the desktop gate exactly (Homepage passes null until it means
-             something), and the strip re-flows to two slabs without it. */}
-      <nav className="hp-m-nav" aria-label="Menu">
-        {/* No separate REWARDS slab (Andy oct2 A4): STATS carries the claim count and opens the
-            claims while anything is waiting. */}
-        {/* STATS before SHOP (Andy A4: swap their places) — same order as the desktop stack. */}
-        <button
-          ref={statsRef}
-          type="button"
-          className={`hp-m-navbtn is-stats${navigating ? ' is-disabled' : ''}`}
-          onClick={rewardsCount > 0 && onRewards ? onRewards : onStats}
-          disabled={navigating}
-          aria-label={rewardsCount > 0 ? `Open stats — ${formatNum(rewardsCount)} to claim` : 'Open stats'}
-        >
-          {/* H6/M20: while claims wait this slab OPENS THE CLAIMS, so it says so (same 5 letters,
-              same slab, same count bubble) — "STATS" opening a rewards panel was a surprise. */}
-          {rewardsCount > 0 && onRewards ? 'CLAIM' : 'STATS'}
-          {rewardsCount > 0 && <span className="hp-m-count" aria-hidden="true">{formatNum(rewardsCount)}</span>}
-        </button>
-        <button
-          ref={shopRef}
-          type="button"
-          className={`hp-m-navbtn is-shop${navigating ? ' is-disabled' : ''}`}
-          onClick={onShop}
-          disabled={navigating}
-          aria-label={`Open shop${shopDot ? ' — items available' : ''}`}
-        >
-          SHOP
-          {shopDot && <span className="hp-m-dot" aria-hidden="true" />}
-        </button>
-        {onRebirth && (
-          <button
-            ref={rebirthRef}
-            type="button"
-            className={`hp-m-navbtn is-rebirth${rebirthDot ? ' is-ready' : ''}${navigating ? ' is-disabled' : ''}`}
-            onClick={onRebirth}
-            disabled={navigating}
-            aria-label={`Open rebirth${rebirthDot ? ' — ready' : ''}`}
-          >
-            REBIRTH
-            {rebirthDot && <span className="hp-m-dot" aria-hidden="true" />}
-          </button>
-        )}
-        {onMarks && (
-          <button
-            type="button"
-            className={`hp-m-navbtn is-marks${navigating ? ' is-disabled' : ''}`}
-            onClick={onMarks}
-            disabled={navigating}
-            aria-label={`Open marks${marksDot ? ' — a roll is ready' : ''}`}
-          >
-            MARKS
-            {marksDot && <span className="hp-m-dot" aria-hidden="true" />}
-          </button>
-        )}
-      </nav>
+      {/* 4. THE RAIL: WINS / GEMS over SHOP · ROLL · INDEX · REBIRTH (MenuNav.jsx — the desktop rail). */}
+      <MenuRail items={railItems} wins={wins} gems={gems} navigating={navigating} className="hp-m-rail" />
 
-      {/* 5. The footer: CREDITS (the desktop footer link) on the left, JOIN ROOM on the right. */}
       <div className="hp-m-foot">
         <button
           type="button"
@@ -427,15 +313,8 @@ export default function MobileMenu({
         >
           CREDITS
         </button>
-        {onLeaderboard && <LiveTicker className="hp-m-live" />}
-        <button
-          type="button"
-          className={`hp-m-join${navigating ? ' is-disabled' : ''}`}
-          onClick={onJoin}
-          disabled={navigating}
-        >
-          {joinLabel}
-        </button>
+        {board && <LiveTicker className="hp-m-live" />}
+        <AudioControls variant="inline" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
       </div>
     </div>
   );

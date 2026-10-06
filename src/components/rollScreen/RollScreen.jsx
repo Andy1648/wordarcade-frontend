@@ -99,7 +99,8 @@ function ResultLine({ result, view, pop = true }) {
   );
 }
 
-export default function RollScreen({ unlockedIds = [], equippedId = null, achievementNames = {}, level = 1, earned = [], onEquip, onClose }) {
+// startIndex: opened from the menu's INDEX rail button — the INDEX shows at once and its ✕ closes the whole overlay.
+export default function RollScreen({ unlockedIds = [], equippedId = null, achievementNames = {}, level = 1, earned = [], onEquip, onClose, startIndex = false }) {
   const [landed, setLanded] = useState(0);
   const idsRef = useRef(unlockedIds);
   idsRef.current = unlockedIds;
@@ -118,7 +119,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const [need, setNeed] = useState(0); // short balance: the gems missing — a number + gem, never a sentence
   const [skipBelow, setSkip] = useState(() => getSkipBelow());
   const [target, setTarget] = useState(null); // the AUTO target (null = OFF) — the one button cycles it
-  const [showIndex, setShowIndex] = useState(false);
+  const [showIndex, setShowIndex] = useState(!!startIndex);
   const [fresh, setFresh] = useState(false); // the result line pops only for a roll that just landed
   const [coverHost, setCoverHost] = useState(null);
   const [tut, setTut] = useState(() => !hasSeenTutorial('markRolls'));
@@ -314,7 +315,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           achievementNames={achievementNames}
           earned={earned}
           onEquip={onEquip}
-          onClose={() => { setShowIndex(false); setLanded((n) => n + 1); }}
+          onClose={() => { if (startIndex) { onClose(); return; } setShowIndex(false); setLanded((n) => n + 1); }}
         />
       </Suspense>
     );
