@@ -122,3 +122,4 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - P4: PR #225 open (a7573db) — 023_season2_reset.sql = claude/run-season2.sql + claude/rollback-season2.sql; welcome per Season2.dc.html; flip = SEASON2_LIVE in src/progress/season.js (false). Merges after #223/#224. P9: BUILDING (9a feat/v2-levelup → 9b results → 9c WB HUD (Tier 1, 2-context play-test) → 9d rooms).
 - #222 POPUP PURGE MERGED (26918c9) — P7 DONE. #223 updating with main → merge when green, then #224, #225.
 - #223 STATS MERGED (216a6ed) · #224 LEADERBOARD MERGED (272a8d8) — P8 DONE. #225 RESET: conflicts (boardMock, installUi) resolved keeping both sides, CI running → merge when green.
+- ANDY (oct6): after P4 (#225) merges, make main E2E reliably green again (red after #215 + #223: websocket-boundary create_room, claims-via-stats:57) BEFORE P9. P9 agent PAUSED (partial work in ../p9a etc.); fixer agent on fix/main-flakes-2.
