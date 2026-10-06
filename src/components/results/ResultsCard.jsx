@@ -30,8 +30,8 @@ const T = { stats: 350, xp: 900, wins: 1900, step: 520, count: 520 };
 // reveals come in from ABOVE / the LEFT: a transform below the card's bottom edge would count as scrollable overflow
 // for the length of the animation (the card must never scroll, even mid-tally)
 const RISE = [{ transform: 'translateY(-22px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }];
-const SLAM = [{ transform: 'scale(3.2) rotate(-8deg)', opacity: 0 }, { transform: 'scale(.88) rotate(-2deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.06) rotate(-3deg)', offset: 0.75 }, { transform: 'scale(1) rotate(-3deg)', opacity: 1 }];
-const STAMP = [{ transform: 'scale(3.6) rotate(4deg)', opacity: 0 }, { transform: 'scale(.9) rotate(-14deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(-12deg)', opacity: 1 }];
+const SLAM = [{ transform: 'scale(1.8) rotate(-8deg)', opacity: 0 }, { transform: 'scale(.88) rotate(-2deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.06) rotate(-3deg)', offset: 0.75 }, { transform: 'scale(1) rotate(-3deg)', opacity: 1 }];
+const STAMP = [{ transform: 'scale(2) rotate(4deg)', opacity: 0 }, { transform: 'scale(.9) rotate(-14deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(-12deg)', opacity: 1 }];
 const DROP = [{ transform: 'translateY(-90px) rotate(-14deg)', opacity: 0 }, { transform: 'translateY(8px) rotate(4deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(-4px) rotate(-2deg)', offset: 0.8 }, { transform: 'translateY(0) rotate(0)', opacity: 1 }];
 const CHIP = [{ transform: 'scale(0) rotate(-10deg)', opacity: 0 }, { transform: 'scale(1.3) rotate(4deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 const POP = [{ transform: 'translateY(20px) scale(.3) rotate(-12deg)', opacity: 0 }, { transform: 'translateY(-8px) scale(1.35) rotate(4deg)', opacity: 1, offset: 0.3 }, { transform: 'translateY(-4px) scale(1) rotate(-6deg)', opacity: 1 }];
@@ -149,6 +149,7 @@ export default function ResultsCard({ cardRef, iWon, place, of, winnerName = '',
   const { lines, total } = tallyLines({ wordsWins, bonusLines, ledger });
   const chain = chainOf(ledger, wordsWins);
   const stamp = stampFor(place, iWon);
+  const bestWord = `${me.best || ''}`.toUpperCase();
   const lvGain = xp && xp.to && xp.from ? Math.max(0, Math.floor(xp.to.level) - Math.floor(xp.from.level)) : 0;
   const xpGained = xp && Number.isFinite(xp.gained) ? Math.max(0, xp.gained) : null;
   const perLetter = xpGained != null && me.letters > 0 ? xpGained / me.letters : 0;
@@ -263,8 +264,8 @@ export default function ResultsCard({ cardRef, iWon, place, of, winnerName = '',
           {me.best ? (
             <div className="rs2-best" data-rv="rise" data-at="700">
               <span className="rs2-best-k">BEST<br />WORD</span>
-              <span className="rs2-best-w" translate="no">{String(me.best).toUpperCase()}</span>
-              <span className="rs2-best-n">{formatNum(String(me.best).length)}</span>
+              <span className="rs2-best-w" translate="no">{bestWord}</span>
+              <span className="rs2-best-n">{formatNum(bestWord.length)}</span>
             </div>
           ) : null}
         </div>
