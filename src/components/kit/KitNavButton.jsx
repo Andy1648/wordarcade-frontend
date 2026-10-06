@@ -60,24 +60,56 @@ export function KitIconButton({ icon, tone = 'yellow', rot = 0, tag, tagTone, do
 
 /**
  * 03 LEFT RAIL item. `tone` / `toneD` = the destination colour and its shade.
+ * `value` = the live line under the label — a string, or { full, short } (a narrow slab shows `short`, e.g. "55" for "55 ROLLS") (Andy oct6 SEASON 2 #5: "1,250 WINS", "3 ROLLS", "IN 12 LV", "14/120").
+ * `locked` = the gate it opens at ("R2", "LV10"): the face goes dark, the icon becomes the padlock, the value line
+ * says the gate, and a tap SHAKES the face instead of opening (the button stays focusable — aria-disabled).
  */
-export function KitRailButton({ icon, label, tone = 'yellow', active = false, dot = false, onClick, className, ...rest }) {
+export function KitRailButton({ icon, label, tone = 'yellow', active = false, dot = false, value, locked, onClick, className, ...rest }) {
   const ptrRef = useRef(null);
   const dotRef = useRef(null);
+  const faceRef = useRef(null);
   useEffect(() => {
     if (active) fx(ptrRef.current, FX.slamSmall);
   }, [active]);
+  const showDot = dot && !active && !locked;
   useEffect(() => {
-    if (dot && !active) fx(dotRef.current, FX.dotIn);
-  }, [dot, active]);
+    if (showDot) fx(dotRef.current, FX.dotIn);
+  }, [showDot]);
+  const click = locked
+    ? () => {
+        fx(faceRef.current, FX.shake);
+      }
+    : onClick;
+  const sub = locked ? locked : value;
   return (
-    <span className={cx('kb-rwrap', active && 'is-active', className)}>
-      <button type="button" className={cx('kb', 'kb--rail', `kb-tone-${tone}`, active && 'is-active')} aria-current={active ? 'page' : undefined} onClick={onClick} {...rest}>
+    <span className={cx('kb-rwrap', active && 'is-active', locked && 'is-locked', className)}>
+      <button
+        type="button"
+        className={cx('kb', 'kb--rail', `kb-tone-${locked ? 'off' : tone}`, active && 'is-active', sub != null && sub !== '' && 'has-value')}
+        aria-current={active ? 'page' : undefined}
+        aria-disabled={locked ? 'true' : undefined}
+        onClick={click}
+        {...rest}
+      >
         <span className="kb-shadow" aria-hidden="true" />
-        <span className="kb-rface">
+        <span ref={faceRef} className="kb-rface">
           <span className="kb-redge" aria-hidden="true" />
-          <KitIcon name={icon} size={28} shadow={2} extras={false} />
-          <span className="kb-rlabel">{label}</span>
+          <KitIcon name={locked ? 'lock' : icon} size={28} shadow={2} extras={false} />
+          <span className="kb-rtext">
+            <span className="kb-rlabel">{label}</span>
+            {sub != null && sub !== '' && (
+              <span className={cx('kb-rval', locked && 'is-lock')}>
+                {typeof sub === 'object' ? (
+                  <>
+                    <span className="kb-rval-full">{sub.full}</span>
+                    <span className="kb-rval-short">{sub.short}</span>
+                  </>
+                ) : (
+                  sub
+                )}
+              </span>
+            )}
+          </span>
         </span>
       </button>
       {active && (
@@ -85,8 +117,7 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
           <path d="M2 3 L19 15 L2 27 Z" stroke="#000" strokeWidth="4" strokeLinejoin="round" />
         </svg>
       )}
-      {dot && !active && <span ref={dotRef} className="kb-rdot" aria-hidden="true" />}
+      {showDot && <span ref={dotRef} className="kb-rdot" aria-hidden="true" />}
     </span>
   );
 }
-

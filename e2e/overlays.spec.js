@@ -58,13 +58,13 @@ test.describe('overlays render without console errors', () => {
     expect(errors, `console/page errors: ${errors.join(' | ')}`).toHaveLength(0);
   });
 
-  test('SHOP opens, renders the panel, and throws zero errors', async ({ page }) => {
+  test('UPGRADES (was SHOP) opens, renders the panel, and throws zero errors', async ({ page }) => {
     const errors = [];
     await gotoSeededMenu(page, errors);
     await page.locator('.homepage-nav-btn.is-shop').click();
     const panel = page.locator('.shop-panel');
     await expect(panel).toBeVisible();
-    await expect(page.locator('.shop-title')).toHaveText('SHOP');
+    await expect(page.locator('.shop-title')).toHaveText('UPGRADES'); // SEASON 2 #5: SHOP → UPGRADES
     await page.waitForTimeout(150);
     expect(errors, `console/page errors: ${errors.join(' | ')}`).toHaveLength(0);
   });

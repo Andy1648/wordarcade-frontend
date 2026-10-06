@@ -165,13 +165,13 @@ export default function ShopV2({ onBack }) {
   };
 
   return (
-    <div className="sp2" role="dialog" aria-modal="true" aria-label="Shop" tabIndex={-1} ref={rootRef}>
+    <div className="sp2" role="dialog" aria-modal="true" aria-label="Upgrades" tabIndex={-1} ref={rootRef}>
       <div className="sp2-stripes" aria-hidden="true" />
       <div className="sp2-scale">
       <div className="sp2-stage">
         <header className="sp2-head">
           <KitBackButton label="MENU" ariaLabel="Back to menu" onClick={onBack} className="sp2-back" />
-          <h2 className="sp2-title">SHOP</h2>
+          <h2 className="sp2-title">UPGRADES</h2>
           <div className="sp2-pills">
             <KitPill ref={winsPill} kind="wins" value={wins} ariaLabel={`${formatNum(wins)} wins`} />
             <KitPill ref={gemsPill} kind="gems" value={gems} ariaLabel={`${formatNum(gems)} gems`} />
