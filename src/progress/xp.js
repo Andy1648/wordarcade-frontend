@@ -12,6 +12,8 @@
 // every pure entry point still takes its factors as arguments, so the unit tests stay DOM-free.
 import { getStreakMult } from './streak.js';
 import { noteLevelReached } from './gemsCore.js'; // GEMS: LEVEL_UP (a leaf module — no cycle)
+// PROGRESSION v3 (SEASON2 flag, default OFF): every v3 rule is a leaf module selected at the entry points below;
+// with the flag OFF each `if (SEASON2)` is skipped and every number + storage key is exactly as before.
 
 // Per-MODE XP multiplier (menu is the ×1 base). The base XP per input comes from the Key Tier
 // TIER table (see keyTierXp); this only scales it by which mode produced the input.
@@ -886,4 +888,13 @@ export function progressOf(state, _ignoredPower) {
   }
   const intoLevel = intoOf(frac, cost);
   return { level, intoLevel, cost, toNext: Math.max(0, cost - intoLevel), frac };
+}
+
+// ---- PROGRESSION v3 (SEASON2, default OFF) ------------------------------------------------------------------------
+// v3/install.js (a lazy chunk, loaded before the first render only with the flag on) swaps these for the v3 rules
+// (v3/hooks.js xpSwap: 40·√L curve + O(1) carry, 7 × 1.8^P × 2^R × (1 + ★) × MARK, 15 wins a word, POWER 100 × 4^P,
+// gate ⌈100 × 2.5^R⌉). Never called with the flag OFF, so the live functions above are exactly as they were.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: needAt, b: keyXpMult, c: rebirthPow, d: levelXpPerLetter, e: tableRebirthThreshold, f: keyTierXp, g: keyTierCostAt, h: creditXp, i: xpPerWord } = o);
 }

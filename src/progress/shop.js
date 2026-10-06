@@ -6,6 +6,8 @@
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
+// PROGRESSION v3 (SEASON2, default OFF): WINS BUY ONLY POWER — cosmetics cost GEMS (v3/econ cosmeticGemPrice), and
+// the best POWER feeds the ACHIEVEMENTS counter. OFF = every price and balance exactly as before.
 
 // `blurb` = what the cosmetic changes (its flair). `xpMult` is a LEGACY field: PROGRESSION v11 (review
 // round 2) made cosmetics LOOKS ONLY — xpPerInput ignores it and no copy quotes it (it was "+N% MENU XP",
@@ -187,7 +189,7 @@ export function buyForge() {
 export function canAffordAny(wins = getWins(), owned = getOwned()) {
   const ownedSet = new Set(owned);
   const bal = Number.isFinite(wins) ? wins : 0;
-  // Cosmetics (pop styles + sound packs).
+  // Cosmetics (pop styles + sound packs). v3: they cost GEMS, so wins never light the dot for them.
   if (ALL.some((it) => !ownedSet.has(it.id) && bal >= it.price)) return true;
   // Key Tier — the cost ladder extrapolates forever, so there is always a next tier to buy.
   const kCost = keyTierCost(getKeyTier());
@@ -208,4 +210,10 @@ export function equip(id) {
   eq[type] = id;
   saveEquipped(eq);
   return true;
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: buy, b: buyKeyPower, c: canAffordAny } = o);
 }

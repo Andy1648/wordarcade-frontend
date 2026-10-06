@@ -1,52 +1,51 @@
-# PROGRESSION v3 — "LEVELS ARE CURRENCY" (draft for Andy, Oct 5)
+# PROGRESSION v3 — FINAL (fresh start after the full reset)
 
-Why: Rebirth Rush + KEY-kept snowballed (imbetterthanandy R100 on 422 words). Andy wants a final system before a full reset. He wants levels to be cheap: millions of levels, rebirths bought in bulk (not 1 by 1), every number in K/M/B, and ascension (stars) above rebirth.
+Designed Oct 5 evening for Andy, from his own reactions this week. Frozen after he signs off: only ±20% constant tuning after a CI sim, never a restructure.
 
-Reference games: Clicker Simulator (clicks are the currency; you rebirth the moment you can afford it, which resets clicks and raises the multiplier; first rebirth costs 750; buy up to 10 at once, more with a pass), Rebirth Champions / Button Simulator (rebirth buttons for bulk amounts, then an ultra rebirth layer), and devforum rebirth-cost math (polynomial costs, not recursive ×).
+## Guardrails from Andy's own words (what went right / wrong)
+- RIGHT: Rebirth Rush was "so much better". Rebirth is the main event, and after one you should blow past levels. Mark rolls feel like gambling plus multipliers. Big exponential numbers. Multipliers visible with the total first. Keyboard Escape-style 2–5× steps.
+- WRONG: "too extreme" (XP needed scaling with your own rebirths: R8 LV16 needing 233M). Stagnation (a level-20 wall at R8, stuck around LV40). imbetterthanandy's R100 from spamming the rebirth popup ("sloppy code"). Bulk rebirths that snowball. Chunky/laggy bar. KEY resetting every rebirth. "BASE 10" confusion. Unexplained wins. Constant restructuring.
+- RULES: one fixed level curve for everyone; levels cheap and plural (millions eventually); rebirths one at a time, each one HARDER than the last (no snowball); ascension in the low double digits; every number K/M/B; every win shown.
 
-## The loop (one sentence)
-Type → LEVELS pile up → spend LEVELS on REBIRTHS (in bulk) → rebirths multiply levels + wins → spend WINS on KEY TIERS → at R100+ ASCEND for STARS.
+## The loop
+Type → XP → LEVELS (cheap, millions) → reach the rebirth gate → HOLD TO REBIRTH (one) → ×2 on everything → wins buy POWER → at R10 ASCEND for ★ STARS → climb again, faster.
 
-## Numbers (frozen once Andy signs off; only ±20% tuning after)
-| thing | formula |
+## Numbers
+| thing | rule |
 |---|---|
-| LEVELS per letter | 1 × 1.8^KEY × (1 + R) × (1 + STARS) × MARK |
-| WINS per word | 10 × len/5 × MODE × (1 + R) × (1 + STARS) × MARK |
-| REBIRTH n costs | 100 × n^2.2 LEVELS (rebirth 1 = 100, rebirth 10 = 15.8K, rebirth 100 = 2.5M) |
-| bulk rebirth | REMOVED — one at a time (see Naming + ranks) |
-| KEY TIER T costs | 100 × 4^T WINS; kept through rebirth, reset on ascension |
-| ASCEND | at R ≥ 100: rebirths, levels and KEY reset; STARS += floor(R / 100) |
-| GEMS | rolls (unchanged): drops 1 in 15 words, bot win +5, MP +5 per player beaten, level-up replaced by +2 per rebirth bought, ascension +50 |
+| XP per letter | 7 × 1.8^POWER × 2^R × (1 + ★) × MARK |
+| XP for next level | 40 × √level (barely grows → levels pile up) |
+| WINS per word | 15 × length/5 × MODE × 2^R × (1 + ★) × MARK |
+| POWER | costs 100 × 4^P wins; kept through rebirth, reset on ascension |
+| REBIRTH gate | LV 100 × 2.5^R (R1 at LV100, R2 250, R5 9.8K, R10 954K) — levels reset to 1 |
+| REBIRTH reward | ×2 XP and wins, +7 gems × R |
+| ASCEND | available at R10: rebirths, levels and POWER reset; ★ += R − 9 |
+| GEMS / ROLLS | 75 gems a roll; drops 1 in 15 words for 3–12, bot win +18, MP +15 per player beaten, streak +4, achievements 40–200 |
 
-The level bar no longer shows "to next level". It shows progress to the NEXT REBIRTH ("REBIRTH ×3 READY" when full). That is the bar that matters, and it moves smoothly.
+Why it can't snowball: each rebirth needs ×2.5 more levels (≈ ×4 more XP) but only gives ×2. POWER adds about ×1.3 per rebirth. So every rebirth takes longer than the last.
 
-## Sim (greedy fast player, 150 letters/min, 25 words/min; worst case)
-| time | rebirths | KEY | lifetime levels | levels per letter |
-|---|---|---|---|---|
-| 6 min | R6 | T3 | 18.1K | 48 |
-| 1 h | R59 | T6 | 15.0M | 3.8K |
-| 3 h | R165 | T8 | 394.3M | 42.2K |
-| 10 h | R464 | T10 | 10.7B | 475.1K |
-| 50 h | R2.0K | T12 | 1.1T | 8.2M |
-(before ascension; ascension speeds the second climb ×(1+stars))
-A normal player is slower; the sim is the fast-player ceiling Claude Code must keep in CI.
+## Sim (100 lpm / 14 wpm median; 160 / 26 fast; 60 / 8 casual)
+| first time to | casual | median | fast |
+|---|---|---|---|
+| R1 | 18 min | 12 min | 6 min |
+| R5 | 2.5 h | 1.5 h | 54 min |
+| R10 (ascend) | 11.4 h | 6.8 h | 4.1 h |
+Levels by 10 h: casual 221K, median 1.1M, fast 3.2M. Fast stays ~1.7× median: no runaway.
 
-## Display rules
-- Every number through formatNum: 1.2K, 3.4M, 5.6B, 7.8T, then Qa, Qi, Sx… Never a full long number.
-- Menu headline: "1.2M LEVELS" (plural, cheap-feeling).
-- Board: rebirths first, then levels, both formatted (R2.0K · 1.1T LEVELS).
+## Ranks (monotonic; never drop when levels reset)
+By rebirths, then stars: R0 KEYMASH · R1 TYPO · R2 CLACKER · R3 HOTKEY · R4 INKSTORM · R5 WORDSMITH · R6 KEYFIEND · R7 CAPSLOCK · R8 OVERCLOCK · R9 GLYPHLORD · R10 LEXIBEAST · ★1 VOIDTYPER · ★3 ASCENDANT · ★5 OMNIKEY · ★10 FINAL BOSS · ★20 ENDGAME.
+Board order: ★ desc, rebirths desc, levels desc.
 
-## The reset (after fine-tune, Andy's call)
-Everything resets (levels, rebirths, KEY, wins, marks). Each player gets GEMS = 20 × their old rebirths (R100 → 2,000 gems = 200 rolls). Needs one migration + a client "season 2" splash.
+## Rebirth unlocks (the reason to rebirth besides ×2)
+R1 ROLL screen · R2 AUTO ROLL · R3 2nd boost slot · R5 2nd MARK slot · R7 LUCK ×1.25 · R10 ASCEND.
 
-## Roll pricing (Andy, Oct 5): odd amounts, Genshin-style
-Real gacha games never price a pull at a round 10/100 (Genshin: 160 per wish). Earn amounts are set so they never divide evenly into the price, which always leaves a "so close" remainder that pulls you into one more round.
-- 1 ROLL = 75 GEMS
-- earn: drop 1 in 15 words for 3–12 gems; bot win +18; multiplayer +15 per player beaten; win streak +4 each; +7 per rebirth bought; ascension +250; achievements 40–200
-- same ~1 roll per 2–3 min of play as before (×7.5 scale)
-- reset compensation: 150 gems per old rebirth (R100 = 15,000 = 200 rolls)
+## Anti-exploit (non-negotiable, built FIRST)
+- Rebirth is a server-checked action: the server recomputes the gate from the stored level and refuses if it isn't met. One rebirth per request; idempotent (a double click can't do two).
+- The client's hold-to-rebirth only sends after the hold completes; the button disables until the server answers.
+- CI sim includes a "spammer" (clicks rebirth 1,000×) and a "fast greedy" player; it fails if anyone exceeds 2× median pace.
 
-## Naming + ranks (Andy approved Oct 5)
-- Shop XP-per-letter upgrade = POWER (was KEY TIER). REBIRTH keeps its name. Wins buy only POWER; every other shop item costs gems.
-- NO BULK REBIRTH (Andy Oct 5): one rebirth at a time, hold-to-rebirth. The requirement must scale so rebirths never snowball; ascension later at single/low-double-digit rebirths. Rebirth pace math to be redone (logic phase) with a fast-player CI sim + server guard so spamming the rebirth button can never mint rebirths.
-- Rank titles by level (bands widen): 1 KEYMASH · 10 TYPO · 50 CLACKER · 150 HOTKEY · 500 INKSTORM · 1.5K WORDSMITH · 5K KEYFIEND · 15K CAPSLOCK · 50K OVERCLOCK · 150K GLYPHLORD · 500K LEXIBEAST · 1.5M VOIDTYPER · 5M ASCENDANT · 15M OMNIKEY · 50M FINAL BOSS · 150M+ ENDGAME
+## Naming
+POWER (was KEY TIER). REBIRTH stays. LEVELS plural on the menu. Wins buy only POWER; everything else costs gems.
+
+## The reset
+Everything resets. Each player gets 150 gems × old rebirths (R100 → 15,000 gems = 200 rolls) and a "SEASON 2" banner.

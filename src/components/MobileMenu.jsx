@@ -180,6 +180,7 @@ export default function MobileMenu({
   navLayout = 'top',
   rewardsCount = 0,
   onRewards = null,
+  achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy slab (lazy S2Trophy)
   level = null,
   levelFrac = 0,
   wins = 0,
@@ -379,6 +380,7 @@ export default function MobileMenu({
           {rewardsCount > 0 && onRewards ? 'CLAIM' : 'STATS'}
           {rewardsCount > 0 && <span className="hp-m-count" aria-hidden="true">{formatNum(rewardsCount)}</span>}
         </button>
+        {achSlot}
         <button
           ref={shopRef}
           type="button"

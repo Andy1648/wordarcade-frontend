@@ -30,6 +30,8 @@ import { addLetters } from './letters.js';
 import { rebirthKeyKeep } from './markPerks.js';
 import { creditAcceptedWordLetters } from './letterXp.js';
 import { dropGemsForWord } from './gemsCore.js';
+// PROGRESSION v3 (SEASON2, default OFF): the season's own balance keys (mapped at the storage layer, v3/install.js), the (1 + ★) row on the
+// receipt and the ACHIEVEMENTS counters. OFF = every key, number and call exactly as before.
 
 // Prices are in words at the player's FULL rate (xp.js priceRateBoost): forge + STAR POWER + the
 // worn MARK (markMult — the same number the payout reads).
@@ -671,4 +673,10 @@ export function recordRound({ mode, wordsAccepted, difficulty } = {}) {
 const MODE_LABELS = { 'word-bomb': 'WORD BOMB', 'category-blitz': 'BLITZ', 'sat-rush': 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE', 'word-race': 'WORD RACE' };
 function modeLabel(mode) {
   return MODE_LABELS[mode] || String(mode || '').toUpperCase();
+}
+
+// v3 (SEASON2): v3/install.js wraps bankWordWins (the CHAIN achievement counter); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: bankWordWins } = o);
 }

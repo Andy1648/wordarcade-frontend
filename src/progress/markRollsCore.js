@@ -25,6 +25,10 @@ import { MARKS, MARK_TIERS, MARKS_EQUIPPED_KEY } from './marks.js';
 import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY } from './markPerks.js';
 import { formatNum, formatRate, formatMultExact } from '../format.js';
 const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints as ×1.1
+// PROGRESSION v3 (SEASON2, default OFF): the R5 unlock "2nd MARK slot" — a second worn mark (v3/store mark2Id)
+// whose +N% WINS / +N% XP stat multiplies too. MINIMAL MODEL ONLY (phase 3): its flat BASE / LUCK / OVERDRIVE stats
+// do not apply, and the slot's UI is the visual PR's. OFF = only the one worn mark, exactly as before.
+import { V3 } from './season.js'; // V3.m = the 2nd MARK slot (v3/hooks.js mark2Factor), installed in season 2 only
 
 export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
 export const ROLL_STATE_VERSION = 2;
@@ -488,7 +492,7 @@ function pctMult(kind, opts) {
   const { s, id, stat } = worn(opts);
   // a PERMANENT / retired mark (no stat) pays its tier MAIN on wins AND XP, as before v2
   const main = stat ? (stat.kind === kind ? 1 + stat.value / 100 : 1) : mainMultOf(id, s);
-  const v = main * indexMult(s);
+  const v = main * indexMult(s) * (V3.m ? V3.m(kind, opts, s, id) : 1);
   return v > 0 ? v : 1;
 }
 /** × on WINS: a worn +N% WINS mark (or a PERMANENT's MAIN) × the INDEX. ×1 with nothing worn, never rolled. */

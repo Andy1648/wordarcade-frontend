@@ -81,6 +81,13 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   const m = a.match(/^--([^=]+)(?:=(.*))?$/);
   return m ? [m[1], m[2] ?? true] : [a, true];
 }));
+// PROGRESSION v3 (SEASON2, Andy oct5 phase 3): SIM_SEASON2=1 runs the v3 mode instead — loop-sim-v3.mjs turns the
+// flag on before the economy loads, plays the spec's bots (casual 60/8, median 100/14, fast 160/26 + the SPAMMER and
+// the MASHER) and carries the same HARD CHECK (exit 1). Same flags: --hours, --tag, --skills, SIM_SRC, SIM_PATCH.
+if (process.env.SIM_SEASON2 === '1') {
+  await import('./loop-sim-v3.mjs');
+  process.exit(process.exitCode || 0);
+}
 let SRC = path.resolve(process.env.SIM_SRC || args.src || path.join(HERE, '..', '..', '..', 'sim-wt', 'src'));
 const TAG = typeof args.tag === 'string' ? args.tag : 'base';
 const HOURS = Number(args.hours) || 20;

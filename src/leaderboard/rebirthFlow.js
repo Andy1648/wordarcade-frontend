@@ -61,6 +61,9 @@ export function isNotDeployed(err) {
  *   server's new count (local rebirths land exactly on it), null = local mode (+1)
  * @param {() => string} [d.newId]
  * @param {() => number} [d.season]                  0 today; 2 once the SEASON2 flag is on
+ * @param {() => boolean} [d.localAscendReady]       v3: the local ascension gate (R10; local mode only)
+ * @param {(target:number|null) => {ok:boolean, stars:number, added:number}} [d.applyAscend]  v3: do the local
+ *   ascension; `target` = the server's new ★ total (local lands exactly on it), null = local (+ R − 9)
  */
 export function makeRebirthFlow(d) {
   const newId = d.newId || newRequestId;
@@ -155,7 +158,49 @@ export function makeRebirthFlow(d) {
     }
   }
 
-  /** lb_ascend (season 2; phase 3 wires the UI). Returns the server's answer; applies nothing locally yet. */
+  function localAscend() {
+    if (!d.applyAscend || !d.localAscendReady || !d.localAscendReady()) return { ok: false, reason: 'gate', mode: 'local' };
+    const r = d.applyAscend(null);
+    return r && r.ok ? { ok: true, mode: 'local', stars: r.stars, added: r.added } : { ok: false, reason: 'gate', mode: 'local' };
+  }
+
+  /**
+   * v3 ASCENSION (season 2) — the ascend twin of performRebirth: single-flight (shared with the rebirth), server
+   * mode = push stats, lb_ascend with a persisted request id, apply locally only on ok and only once per id (landing
+   * on the server's ★); local mode (no profile / 022 not live / lb_ascend not deployed) = the local R10 gate.
+   */
+  async function performAscend() {
+    if (busy) return { ok: false, reason: 'pending' };
+    busy = true;
+    try {
+      let server = false;
+      try { server = await d.serverEnabled(); } catch { server = false; }
+      if (!server) return localAscend();
+      try { await d.pushStats(); } catch { /* the server checks whatever it has */ }
+      const res = await request('lb_ascend', PENDING_ASCEND_KEY);
+      if (res.reason === 'not_ready') return localAscend();
+      if (res.ok) {
+        const p = res.pending;
+        let added = 0;
+        let applied = false;
+        if (d.applyAscend && (!p || d.localRebirths() === p.from)) {
+          const a = d.applyAscend(Number(res.stars));
+          added = (a && a.added) || 0;
+          applied = !!(a && a.ok);
+        }
+        clearPending(PENDING_ASCEND_KEY);
+        return { ok: true, mode: 'server', stars: Number(res.stars), added, applied, replay: !!res.replay };
+      }
+      if (res.reason !== 'offline' && res.reason !== 'rate') clearPending(PENDING_ASCEND_KEY);
+      const { pending: _p, ...rest } = res;
+      void _p;
+      return { ...rest, ok: false, mode: 'server' };
+    } finally {
+      busy = false;
+    }
+  }
+
+  /** lb_ascend with a persisted id — the raw call (performAscend is the action). Applies nothing locally. */
   async function requestAscend() {
     const res = await request('lb_ascend', PENDING_ASCEND_KEY);
     if (res.reason !== 'offline' && res.reason !== 'rate') clearPending(PENDING_ASCEND_KEY);
@@ -188,6 +233,7 @@ export function makeRebirthFlow(d) {
     performRebirth,
     requestRebirth: () => request('lb_rebirth', PENDING_REBIRTH_KEY),
     requestAscend,
+    performAscend,
     settlePending,
     isBusy: () => busy,
     hasPending: () => !!readPending(PENDING_REBIRTH_KEY),
@@ -199,6 +245,9 @@ export function rebirthRefusalText(res) {
   if (!res || res.ok || res.reason === 'pending') return null;
   if (res.reason === 'gate' && Number.isFinite(Number(res.gate)) && Number.isFinite(Number(res.level))) {
     return `LV ${formatNum(Number(res.level))} / ${formatNum(Number(res.gate))} — NOT THERE YET`;
+  }
+  if (res.reason === 'gate' && Number.isFinite(Number(res.need)) && Number.isFinite(Number(res.rebirths))) {
+    return `R${formatNum(Number(res.rebirths))} / R${formatNum(Number(res.need))} — NOT THERE YET`; // v3 ascend
   }
   if (res.reason === 'wait') {
     const s = Math.max(1, Math.ceil(Number(res.retry_in) || 0));
