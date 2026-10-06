@@ -271,6 +271,17 @@ export async function installBackendMock(page, opts = {}) {
  * app source is untouched — and never used by the full-intro test, which must
  * see the real boot animation.
  *
+ * TRANSITIONS GO TO 0s, NOT 1ms. A `transition-duration` on `*` applies to every element's
+ * `transition-property` — which defaults to `all`. So a 1ms duration did not shorten the app's
+ * transitions, it INVENTED one on every property of every element, `zoom` included. The form
+ * screens fit themselves with zoom (hooks/useFitZoom.js): the view wrapper's app-scale zoom flipping
+ * to 1 and the box's own zoom writes became 1ms transitions, so the fit measured a mid-transition
+ * box and walked 1.80 → 1.63 → … → 1.25 over ~10 frames instead of landing once (a real browser
+ * lands on 1.25 in the first frame). Playwright's two-equal-frames "stable" check passed between
+ * steps, the CONTINUE press and release straddled a step, and no click fired — the intermittent
+ * websocket-boundary.spec.js:34 "no create_room frame" failure. 0s = no transition at all (the app
+ * listens for no transitionend), which is what "frozen" means.
+ *
  * @param {import('@playwright/test').Page} page
  */
 export async function freezeAnimations(page) {
@@ -278,8 +289,8 @@ export async function freezeAnimations(page) {
     content: `*, *::before, *::after {
       animation-duration: 1ms !important;
       animation-delay: 0ms !important;
-      transition-duration: 1ms !important;
-      transition-delay: 0ms !important;
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
     }`,
   });
 }
