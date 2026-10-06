@@ -10,11 +10,11 @@ Every screen: 1280×551, 1366×657, 1920×1080, 390×844 · no text < 13px · no
 - [x] #210 PHASE 1 server rebirth (lb_rebirth / lb_ascend, CI spammer hard check) — ANDY: RUN 021
 
 ## IN PROGRESS (agents running — do not interrupt)
-- [ ] PHASE 2a MENU (feat/v2-menu, worktree ../v2menu)
-- [ ] PHASE 3 progression v3 behind SEASON2 (feat/progression-v3, ../progv3) — sims must hit median R1 ~12 min / R5 ~1.5 h / R10 ~7 h, fast ≤ 2×
+- [~] PHASE 2a MENU — PR #215 open (payload −4.7 KB; JOIN ROOM via mode dialogs; KEY TIER → POWER copy). HOLD merge until P0 confirms main green. After merge: CLAUDE.md CANONICAL MENU TITLE section must be updated (wordmark now follows the mockup).
+- [~] PHASE 3 progression v3 behind SEASON2 — PR #214 open, CI sims tuning (agent running) — sims must hit median R1 ~12 min / R5 ~1.5 h / R10 ~7 h, fast ≤ 2×
 
 ## QUEUE (in order)
-- [ ] P0 main E2E red since ~14:00 (1 shard fails per merge): find the flaky/broken spec, fix for real (no skip / no retry bump), confirm 3 green main runs in a row. BLOCKS every new screen PR.
+- [~] P0 (agent running; also: unit test '021 SQL mirrors rebirthRules' red on main since #210) main E2E red since ~14:00 (1 shard fails per merge): find the flaky/broken spec, fix for real (no skip / no retry bump), confirm 3 green main runs in a row. BLOCKS every new screen PR.
 - [ ] PHASE 2b ROLL / INDEX / MARK CARD finish vs Roll/Index/MarkCard.dc.html
 - [ ] PHASE 2c REBIRTH (hold-to-rebirth → performRebirth, one at a time, YOU GET, unlocks track "SOON" until v3)
 - [ ] PHASE 2d SHOP (POWER panel hold-to-buy; gems STOCK grid behind a flag)
