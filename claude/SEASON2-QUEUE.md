@@ -121,3 +121,4 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - P4: reset agent RESUMED (023_season2_reset.sql + claude/run-season2.sql + Season2 welcome + one-line flip prepared, NOT flipped).
 - P4: PR #225 open (a7573db) — 023_season2_reset.sql = claude/run-season2.sql + claude/rollback-season2.sql; welcome per Season2.dc.html; flip = SEASON2_LIVE in src/progress/season.js (false). Merges after #223/#224. P9: BUILDING (9a feat/v2-levelup → 9b results → 9c WB HUD (Tier 1, 2-context play-test) → 9d rooms).
 - #222 POPUP PURGE MERGED (26918c9) — P7 DONE. #223 updating with main → merge when green, then #224, #225.
+- #223 STATS MERGED (216a6ed) · #224 LEADERBOARD MERGED (272a8d8) — P8 DONE. #225 RESET: conflicts (boardMock, installUi) resolved keeping both sides, CI running → merge when green.
