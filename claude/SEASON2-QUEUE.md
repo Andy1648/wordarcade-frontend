@@ -198,3 +198,6 @@ NOTE: progression-final-sim.py's __main__ uses NEED0=100/G=1.08 (a rejected tuni
   fast ÷ median ×1.85–1.90 (≤ ×2) · spammer = median (238,000 spam calls → 0 granted) · masher 0. Real game ~+10–23% slower than python: only accepted-word letters pay ×1 in games (typed letters ×0.2).
   Migration 026_progression_final.sql (does NOT touch lb_caps). FLIP ORDER: 022 → 024 → 026 → claude/run-season2.sql (023) → notify pgrst → "flip SEASON2".
   NEXT: 4 ROLL end-to-end play-test (season2 preview), 5a menu list (building), 5b stats + number audit.
+- FINAL 4 ROLL PLAY-TEST (prod, ?season2=1, after #235): PASS for the roll flow — 75 gems charged once (1000 → 925) · AUTO ROLL locked at R0 ("AUTO · R1"), open at R1 · pity: roll #50 forced EPIC+ (landed LEGENDARY, sinceEpic → 0) · AUTO with 310 gems → exactly 4 rolls (10 left) then AUTO OFF · INDEX opens · 0 console errors.
+  BUG (fix rides the 5a menu PR): a FRESH S2 save's rail shows only SHOP — ROLL/INDEX hidden (still gated on S1 marksRevealed/LV10); FINAL says ROLL + INDEX from the start. Told the 5a agent.
+  NOTE: a fresh save's FIRST roll is FREE (season-1 starter roll, "YOUR FIRST ROLL IS FREE") — not in FINAL; kept unless Andy says otherwise.
