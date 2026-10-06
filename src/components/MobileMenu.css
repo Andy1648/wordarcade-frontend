@@ -322,9 +322,9 @@
   .hp-m-xp .kx-lv { min-width: 0; }
   .hp-m-xp .kx-lv-k { font-size: var(--fs-k16); }
   .hp-m-xp .kx-lv-n { font-size: var(--fs-k32); text-shadow: 3px 3px 0 #000; }
-  .hp-m-xp .kx-bar { height: 34px; border-width: 3px; box-shadow: 4px 4px 0 #000; }
+  .hp-m-xp .kx-bar { height: 22px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .hp-m-xp .kx-read { right: 8px; }
-  .hp-m-xp .kx-read-n { font-size: var(--fs-k16); }
+  .hp-m-xp .kx-read-n { font-size: var(--fs-k13); }
   .hp-m-xp .kx-read-s,
   .hp-m-xp .kx-read-u { font-size: var(--fs-k13); }
   .hp-m-per {
