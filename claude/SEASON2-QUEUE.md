@@ -147,3 +147,25 @@ STATUS: #225 (reset) had ALREADY merged (7642fa5) before the cancel — nothing 
 - #229 CONVERSION MERGED + LIVE (0ffd0b8): main has NO wipe (023 / run-season2.sql / rollback-season2.sql gone); 025 + claude/run-season2-convert.sql + rollback present. Prod check: a live R13 KEY6 5,000-wins save is untouched with the flag OFF, 0 errors. B DONE (pending Andy's wallet-cap decision). Next: A menu typing (building), main E2E streak, then P9.
 - MAIN GREEN again: 4 E2E in a row (7642fa5, c6572f3, fad6f82, 0ffd0b8). A MENU TYPING — PR #230 (7cb4e6c): the box removed (old pops were the untouched MenuXpFx pool — the box just drew on top); empty slot kept so cards don't move; CI running. P9 RESUMED (9a on the new KitXpBar).
 - #230 MENU TYPING MERGED + LIVE (945af23) — A DONE. Remaining: P9 (9a building), P10. Andy decisions pending: S2 wallet cap; empty typed-slot vs cards growing.
+
+## NEW PRIORITY ORDER (Andy, oct6 evening — verbatim; REPLACES the rest of the queue; P9/P10 move to the END)
+1. ASAP: remove the "TYPE ANYTHING" label/box in the middle of the menu entirely. Typing anywhere still works with the old letter animations. Ship alone, merge when green.
+
+2. PROGRESSION v3.1 (before the SEASON2 flip — players are spamming cheap rebirths and we can't reset anyone):
+ - REBIRTH SPENDS LEVELS instead of resetting to LV1: cost(R) = levels needed for the next rebirth; on rebirth, level -= cost (leftover levels stay). Cost scales up every rebirth.
+ - Rebirth worth reduced: ×1.5 XP and wins per rebirth instead of ×2 (stars/POWER/marks unchanged).
+ - AUTO REBIRTH: a toggle unlocked at R2; when level ≥ cost it rebirths automatically. Every rebirth still goes through lb_rebirth (server-checked, idempotent, the 12/hour pace cap). Write the migration that changes lb_rebirth from level=1 to level=level−cost (Andy runs it; never run it).
+ - Tune the cost curve with the v3 CI sim on the REAL board snapshot: time to R1 ≈ 15 min, R5 ≈ 2 h, R10 ≈ 10 h median; nobody faster than 2× median; a spammer clicking 1000× gains nothing extra; the converted R10 ★9 player can't run away. Write the chosen constants + sim table into the checklist and claude/mockups/v2/progression-v3.md.
+ - Update the rebirth screen copy: "COSTS N LEVELS · KEEP THE REST", YOU GET ×1.5.
+
+3. MENU / VISUALS (after 2):
+ - Show SHOP/ROLL/INDEX/REBIRTH buttons from the start, LOCKED (padlock + "R1" etc.) until unlocked, so the left side isn't empty.
+ - Rename SHOP → UPGRADES everywhere.
+ - No mark equipped → the mark chip says "ROLL" with a notification dot.
+ - Chromebook (1366×657): game cards are shifted right — centre them exactly. Check 1280×551 and 1920×1080 too.
+ - XP bar: slower and smoother. Every gain glides over ~600ms with ease-out, retargeting mid-glide (never steps or restarts). Fast typing = one continuous slow climb. Level wrap: glide to full, soft sweep, continue. Attach a GIF.
+ - Buttons look empty: fill each with its icon big, label bigger, a value or state where it has one (UPGRADES: cheapest POWER price; ROLL: gems/75; REBIRTH: progress to next cost).
+4. NUMBERS LOGIC CHECK: audit every number shown on the menu, stats, rebirth, upgrades, roll and results screens against the real formulas. The stats screen must read as BASE × each multiplier = TOTAL, and the math must actually multiply out. Fix anything that doesn't add up and list each fix in the PR.
+Then the SEASON2 flip prep, then P9/P10. Same standing rules.
+
+STATUS: P9 agent PAUSED (9a partial in ../p9a). Item 1 starting now (#230 removed the box but left an empty slot — removing that too).
