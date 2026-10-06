@@ -188,3 +188,13 @@ NOTE: progression-final-sim.py's __main__ uses NEED0=100/G=1.08 (a rejected tuni
 - FINAL STATUS (oct6 17:40): 1 → PR #233 (TYPE ANYTHING row gone entirely; REWARDS popup reserves its space) in CI. 2 → feat/progression-final BUILDING (026_progression_final.sql). 3 → feat/season2-reset-back BUILDING (restores 023 reset, removes #229 conversion). P9 partial work parked in ../p9a etc.
 - FINAL 1 DONE: #233 MERGED + LIVE (53b03b9) — TYPE ANYTHING row gone entirely. 3: #234 updating with main → merge when green.
 - FINAL 3 DONE: #234 RESET BACK MERGED + LIVE (e13ef5b) — #229 conversion reverted; 023 / claude/run-season2.sql / rollback / Season2Welcome restored. Prod check: live R13 save untouched with the flag OFF, 0 errors. 2: #235 in CI (1 failure so far, agent on it). 5a menu list BUILDING (feat/menu-list-final).
+- FINAL 2 DONE: #235 PROGRESSION FINAL MERGED (5226513), flag OFF. Constants = the md's (none changed). CI hard check PASS (real modules, 40 h):
+  | first to | casual | median | fast | menu |
+  | R1 | 27 min (+23%) | 14 min (+14%) | 7 min (+22%) | 74 min (+1%) |
+  | R3 | 1.6 h (+14%) | 49 min (+12%) | 27 min (+7%) | 11.7 h (0%) |
+  | R5 | 3.9 h (+14%) | 2.0 h (+10%) | 64 min (+8%) | — |
+  | R10/★1 | 22.2 h (+17%) | 11.5 h (+16%) | 6.1 h (+10%) | — |
+  | ★2 | — | 39.3 h (+16%) | 20.7 h (+9%) | — |
+  fast ÷ median ×1.85–1.90 (≤ ×2) · spammer = median (238,000 spam calls → 0 granted) · masher 0. Real game ~+10–23% slower than python: only accepted-word letters pay ×1 in games (typed letters ×0.2).
+  Migration 026_progression_final.sql (does NOT touch lb_caps). FLIP ORDER: 022 → 024 → 026 → claude/run-season2.sql (023) → notify pgrst → "flip SEASON2".
+  NEXT: 4 ROLL end-to-end play-test (season2 preview), 5a menu list (building), 5b stats + number audit.
