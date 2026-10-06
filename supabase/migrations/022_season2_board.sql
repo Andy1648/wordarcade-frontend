@@ -6,12 +6,8 @@
 --   * public.leaderboard_s2 — the season-2 board, ORDER ★ desc, rebirths desc, level desc (then lifetime words,
 --     first-come). Same columns + grants as public.leaderboard (021). public.leaderboard is NOT touched.
 --   * private.lb_board_write_s2 — the season-2 write rule (v3 levels reach millions):
---       - the FIRST season-2 write of a NEW name is a baseline: rebirths ≤ lifetime words / 100, level ≤ 4 × the gate of
---         those rebirths; no weekly words;
---       - the FIRST season-2 write of a SEASON-1 ROW (Andy oct6, no reset — 025_season2_convert.sql converted its
---         rebirths / stars) KEEPS its progress: rebirths = the stored (converted) count at most — never raised — and the
---         level up to the stored level or 4 × the gate, whichever is higher; no weekly words. (Edited before it ever
---         ran: it was "rebirths ≤ words / 100" for both, which would have clamped a kept R10 with 422 words to R4.)
+--       - the FIRST season-2 write (a new name, or a season-1 row switching) is a baseline: rebirths ≤ lifetime words
+--         / 100, level ≤ 4 × the gate of those rebirths; no weekly words;
 --       - a submit NEVER raises rebirths (they rise only through lb_rebirth, season 2) and never writes stars (only
 --         lb_ascend does);
 --       - the level is free up to 4 × ⌈100 × 2.5^R⌉ (8× the gate's XP on the 40·√L curve — two rebirths of
@@ -65,15 +61,10 @@ begin
   w := greatest(0, coalesce(p_lifetime_words, 0));
   l := greatest(0, coalesce(p_lifetime_letters, 0));
   delta := 0;
-  if old.submitted_at is null then
-    -- FIRST season-2 write of a NEW name: a baseline, bounded by its own play
+  if old.submitted_at is null or old.econ is distinct from S2_ECON then
+    -- FIRST season-2 write: a baseline, bounded by its own play
     rb := least(rb, floor(w / S2_WORDS_PER_RB)::bigint);
     lv := least(lv, least(S2_LV_MAX, S2_LV_GATE_MULT * ceil(100 * power(2.5::numeric, least(rb, S2_GATE_EXP_CAP)::numeric))::bigint));
-  elsif old.econ is distinct from S2_ECON then
-    -- FIRST season-2 write of a SEASON-1 ROW (converted by 025): its kept progress — the stored rebirths (never raised)
-    -- and the level up to the stored one or 4 × the gate
-    rb := least(rb, greatest(coalesce(old.rebirths, 0), 0)::bigint);
-    lv := least(lv, greatest(coalesce(old.level, 1)::bigint, least(S2_LV_MAX, S2_LV_GATE_MULT * ceil(100 * power(2.5::numeric, least(rb, S2_GATE_EXP_CAP)::numeric))::bigint)));
   else
     secs := greatest(1, extract(epoch from (now() - old.submitted_at)));
     max_rise := floor(least(secs, S2_LEVEL_BANK_SECS) * S2_LEVELS_PER_SEC)::bigint;

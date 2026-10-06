@@ -63,7 +63,7 @@ export default function ShopScreen(props) {
   }
   if (SEASON2) {
     return (
-      <Suspense fallback={<OverlaySkeleton title="SHOP" />}>
+      <Suspense fallback={<OverlaySkeleton title="UPGRADES" />}>
         <ShopV2 onBack={props.onBack} />
       </Suspense>
     );
@@ -273,10 +273,10 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
 
 
   return (
-    <div className={`shop-overlay${autoMode ? ' is-rr-auto' : ''}`} role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
+    <div className={`shop-overlay${autoMode ? ' is-rr-auto' : ''}`} role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Upgrades'} tabIndex={-1} ref={overlayRef}>
       <div className="shop-panel">
         <div className="shop-header">
-          <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'SHOP'}</h2>
+          <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'UPGRADES'}</h2>
           <div className="shop-wins" aria-label={`${formatNum(wins)} wins`}>
             <span className="shop-coin" aria-hidden="true" />
             {formatNum(wins)}
@@ -392,7 +392,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                     {formatNum(advice.stars)} <span className="shop-rb-star">★</span>
                   </>
                 )}
-                {rebirthReady && SEASON2 && <>{' · +'}{formatNum(V3.econ.rebirthGems(rebirths + 1))} GEMS</>}
+                {rebirthReady && SEASON2 && <>{' · COSTS '}{formatNum(V3.econ.rebirthCost(rebirths))} LEVELS · KEEP THE REST</>}
               </div>
               {rebirthReady && !SEASON2 && (
                 <div className="shop-rb-advice">
@@ -450,7 +450,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
               </div>
             )}
 
-            {/* v3 ASCEND (R10): ★ += R − 9; rebirths, levels and POWER reset. The ★ multiply XP and wins (1 + ★). */}
+            {/* ASCEND (R = 10 + 5 × ★): ★ + 1; rebirths, levels and POWER reset. The ★ multiply XP and wins (1 + ★). */}
             {SEASON2 && (
               <div className="shop-ascend">
                 <h3 className="shop-subtitle">ASCEND — {formatNum(V3.store.getStarsV3())} ★</h3>
@@ -458,10 +458,10 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                   type="button"
                   className="shop-rebirth shop-ascend-btn"
                   onClick={confirmAscend}
-                  disabled={rbBusy || !V3.econ.canAscend(rebirths)}
+                  disabled={rbBusy || !V3.econ.canAscend(rebirths, V3.store.getStarsV3())}
                   aria-busy={rbBusy}
                 >
-                  {V3.econ.canAscend(rebirths) ? `ASCEND → +${formatNum(V3.econ.starsForAscend(rebirths))} ★` : 'ASCEND AT REBIRTH 10'}
+                  {V3.econ.canAscend(rebirths, V3.store.getStarsV3()) ? 'ASCEND → +1 ★' : `ASCEND AT REBIRTH ${V3.econ.ascendAt(V3.store.getStarsV3())}`}
                 </button>
                 {ascMsg && <div className="shop-goal shop-asc-msg" role="status">{ascMsg}</div>}
               </div>

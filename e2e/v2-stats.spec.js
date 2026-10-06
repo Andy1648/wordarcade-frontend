@@ -1,6 +1,6 @@
 // e2e/v2-stats.spec.js — THE v2 STATS SCREEN (P8; claude/mockups/v2/Stats.dc.html) behind ?season2=1. A season-2 save
 // at R5 ★1 POWER 6 (no mark, no boost):
-//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×64 = 960 WINS / WORD, then the chain BASE 15 · REBIRTH ×32 ·
+//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×64 = 1,408 WINS / WORD, then the chain BASE 22 · REBIRTH ×32 ·
 //      MARK ×1 · BOOST ×1 · ASCEND ×2 — the v3 numbers (2^R and (1 + ★) as separate chips); the XP tab is POWER-first;
 //   2. REPLAY (tap the TOTAL) runs the chain again from ×1 and lands on the same total — and every animation it plays
 //      is FINITE (nothing on the screen loops at rest);
@@ -46,14 +46,14 @@ async function boot(page, { reduce = false } = {}) {
 const chipIds = (st) => st.locator('.st2-chip').evaluateAll((els) => els.map((e) => e.dataset.chip));
 const chipVals = (st) => st.locator('.st2-chip-v').allTextContents();
 
-test('the TOTAL first: ×64 = 960 WINS / WORD, then BASE · REBIRTH · MARK · BOOST · ASCEND; XP is POWER-first', async ({ page }) => {
+test('the TOTAL first: ×64 = 1,408 WINS / WORD, then BASE · REBIRTH · MARK · BOOST · ASCEND; XP is POWER-first', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
   await expect(total).toHaveText('×64', { timeout: 8000 });
-  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('960');
+  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('1,408');
   await expect(st.locator('.st2-unit')).toHaveText('WINS / WORD');
-  await expect(st.locator('.st2-basex')).toHaveText('BASE 15 × 64');
+  await expect(st.locator('.st2-basex')).toHaveText('BASE 22 × 64');
   // the TOTAL is the first number on the screen (before the chain)
   const order = await st.evaluate((root) => {
     const t = root.querySelector('[data-testid="st2-total"]');
@@ -62,19 +62,19 @@ test('the TOTAL first: ×64 = 960 WINS / WORD, then BASE · REBIRTH · MARK · B
   });
   expect(order, 'TOTAL precedes the chain').toBe(true);
   expect(await chipIds(st)).toEqual(['base', 'rebirth', 'mark', 'boost', 'ascend']);
-  expect(await chipVals(st)).toEqual(['15', '×32', '×1', '×1', '×2']);
+  expect(await chipVals(st)).toEqual(['22', '×32', '×1', '×1', '×2']);
   await expect(st.locator('[data-chip="ascend"] .st2-chip-tag')).toHaveText('1 STAR');
   await expect(st.locator('[data-chip="rebirth"] .st2-chip-tag')).toHaveText('R5');
   // the tabs carry their own totals
   await expect(st.locator('.st2-tab[data-tab="wins"] .st2-tab-total')).toHaveText('×64');
-  // XP / LETTER: POWER 1.65^6 · REBIRTH 2^5 · MARK · BOOST · ASCEND (1 + ★)
+  // XP / LETTER: POWER 2.5^6 · REBIRTH 2^5 · MARK · BOOST · ASCEND (1 + ★)
   await st.locator('.st2-tab[data-tab="xp"]').click();
   await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
   expect(await chipIds(st)).toEqual(['base', 'power', 'rebirth', 'mark', 'boost', 'ascend']);
   await expect(st.locator('.st2-unit')).toHaveText('XP / LETTER');
   const xpTab = (await st.locator('.st2-tab[data-tab="xp"] .st2-tab-total').textContent()).trim();
   await expect(total).toHaveText(xpTab, { timeout: 8000 });
-  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×20');
+  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×244');
   await expect(st.locator('[data-chip="power"] .st2-chip-tag')).toHaveText('LV 6');
 });
 
@@ -88,7 +88,7 @@ test('REPLAY runs the chain again from ×1 to the same total — every animation
   // mid-chain: a running total between ×1 and ×64 (the REBIRTH chip counts up)
   await expect(total).not.toHaveText('×1', { timeout: 3000 });
   await expect(total).toHaveText('×64', { timeout: 8000 });
-  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('960');
+  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('1,408');
   const loops = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.st2'))
     .filter((a) => a.effect.getTiming().iterations === Infinity).length);

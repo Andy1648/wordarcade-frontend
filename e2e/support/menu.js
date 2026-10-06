@@ -25,8 +25,8 @@
 //   - a split CHAIN | FUSE band          .hp-m-solo-btn--chain / --fuse  (modeEntry below)
 //   - a SHOP / STATS / REBIRTH strip     .hp-m-navbtn.is-shop / is-stats / is-rebirth
 //   - CREDITS in the foot, next to JOIN  .hp-m-credits
-// Each calls the SAME Homepage handler as its desktop twin, and REBIRTH obeys the same gate
-// (hidden until it means something), so navControl() below resolves at either width.
+// Each calls the SAME Homepage handler as its desktop twin. Since SEASON 2 #5 every rail button (UPGRADES /
+// ROLL / INDEX / REBIRTH) shows from the start (a gated one LOCKED), so navControl() resolves at either width.
 
 export const PHONE_MENU_MAX = 480; // Homepage.jsx PHONE_MENU_QUERY = '(max-width: 480px)'
 

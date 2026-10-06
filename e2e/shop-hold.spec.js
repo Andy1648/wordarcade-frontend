@@ -70,16 +70,17 @@ test('KEY TIER: BUY MAX spends down to below the next tier', async ({ page }) =>
 
 // v2 MENU (claude/mockups/v2/Menu.dc.html) supersedes A4's word stack: SHOP leads the left RAIL, STATS
 // is a top-right tile beside the leaderboard / achievements — in both menu trees.
-test('SHOP leads the rail and STATS is a top-right tile, in both menu trees (v2)', async ({ page }) => {
+test('UPGRADES (was SHOP) leads the rail and STATS is a top-right tile, in both menu trees (v2)', async ({ page }) => {
   await boot(page);
   const where = async () => page.evaluate(() => ({
     railFirst: (document.querySelector('.hp-rail [data-nav]') || {}).getAttribute?.('data-nav') || null,
+    railFirstLabel: (document.querySelector('.hp-rail [data-nav] .kb-rlabel') || {}).textContent || null,
     statsInIcons: !!document.querySelector('.hp-icons [data-nav="stats"]'),
   }));
-  expect(await where()).toEqual({ railFirst: 'shop', statsInIcons: true });
+  expect(await where()).toEqual({ railFirst: 'shop', railFirstLabel: 'UPGRADES', statsInIcons: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(400);
-  expect(await where()).toEqual({ railFirst: 'shop', statsInIcons: true });
+  expect(await where()).toEqual({ railFirst: 'shop', railFirstLabel: 'UPGRADES', statsInIcons: true });
 });
 
 test('STEP 50: the shop sells no themes — the WORLD is earned, not bought', async ({ page }) => {
