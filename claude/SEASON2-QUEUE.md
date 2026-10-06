@@ -119,3 +119,4 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - #221 ROLL/INDEX MERGED (0079e8b) — P6 DONE. #222 conflict (S2Trophy) resolved → CI → merge when green.
 - P8: PRs #223 STATS (b863b8b) + #224 LEADERBOARD (e17420a) open; 022 covers ALL TIME; new 024_season2_weekly.sql for THIS WEEK (Andy runs at the flip). Note: no CHANGE NAME on the v2 board (S2 only). Merge after #222.
 - P4: reset agent RESUMED (023_season2_reset.sql + claude/run-season2.sql + Season2 welcome + one-line flip prepared, NOT flipped).
+- P4: PR #225 open (a7573db) — 023_season2_reset.sql = claude/run-season2.sql + claude/rollback-season2.sql; welcome per Season2.dc.html; flip = SEASON2_LIVE in src/progress/season.js (false). Merges after #223/#224. P9: BUILDING (9a feat/v2-levelup → 9b results → 9c WB HUD (Tier 1, 2-context play-test) → 9d rooms).
