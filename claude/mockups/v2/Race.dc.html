@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Word Race HUD</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes wrPopA{0%{transform:scale(.8) rotate(-6deg);opacity:1}60%{transform:scale(1.08) rotate(-3deg);opacity:1}100%{transform:scale(1) rotate(-3deg)}}
+@keyframes wrPopB{0%{transform:scale(.8) rotate(-6deg);opacity:1}60%{transform:scale(1.08) rotate(-3deg);opacity:1}100%{transform:scale(1) rotate(-3deg)}}
+@keyframes wrPopFlatA{0%{transform:scale(.8);opacity:1}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes wrPopFlatB{0%{transform:scale(.8);opacity:1}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes wrNoA{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes wrNoB{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(12px)}60%{transform:translateX(-8px)}80%{transform:translateX(5px)}}
+@keyframes wrBumpA{0%{transform:scale(1)}40%{transform:scale(1.18) rotate(-2deg)}100%{transform:scale(1)}}
+@keyframes wrBumpB{0%{transform:scale(1)}40%{transform:scale(1.18) rotate(2deg)}100%{transform:scale(1)}}
+@keyframes wrSlam{0%{transform:scale(1.8) rotate(-10deg);opacity:1}55%{transform:scale(.9) rotate(-6deg);opacity:1}100%{transform:scale(1) rotate(-6deg);opacity:1}}
+@keyframes wrCount{0%{transform:scale(1.4);opacity:1}40%{transform:scale(.92);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes wrBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes wrRumble{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes wrStreak{0%{transform:translateX(0);opacity:1}100%{transform:translateX(-26px);opacity:.2}}
+@keyframes wrBoostA{0%{transform:translateX(0) scaleX(1);opacity:1}100%{transform:translateX(-60px) scaleX(1.6);opacity:.2}}
+@keyframes wrBoostB{0%{transform:translateX(0) scaleX(1);opacity:1}100%{transform:translateX(-60px) scaleX(1.6);opacity:.2}}
+@keyframes wrFlutter{0%,100%{transform:skewY(0)}50%{transform:skewY(-6deg)}}
+.wr-popA{animation:wrPopA .28s cubic-bezier(.2,1.4,.4,1) both}
+.wr-popB{animation:wrPopB .28s cubic-bezier(.2,1.4,.4,1) both}
+.wr-pfA{animation:wrPopFlatA .26s cubic-bezier(.2,1.4,.4,1) both}
+.wr-pfB{animation:wrPopFlatB .26s cubic-bezier(.2,1.4,.4,1) both}
+.wr-noA{animation:wrNoA .3s linear}
+.wr-noB{animation:wrNoB .3s linear}
+.wr-bumpA{animation:wrBumpA .3s cubic-bezier(.2,1.4,.4,1)}
+.wr-bumpB{animation:wrBumpB .3s cubic-bezier(.2,1.4,.4,1)}
+.wr-slam{animation:wrSlam .45s cubic-bezier(.2,1.2,.4,1) both}
+.wr-count{animation:wrCount .5s cubic-bezier(.2,1.3,.4,1) both}
+.wr-caret{animation:wrBlink .9s steps(1) infinite}
+.wr-rumble{animation:wrRumble .16s linear infinite}
+.wr-streak{animation:wrStreak .35s linear infinite}
+.wr-boostA{animation:wrBoostA .45s ease-out forwards}
+.wr-boostB{animation:wrBoostB .45s ease-out forwards}
+.wr-flutter{animation:wrFlutter .5s ease-in-out infinite;transform-origin:0 50%}
+.wr-out{-webkit-text-stroke:6px #000;paint-order:stroke fill}
+.wr-btn{transition:transform .08s,box-shadow .08s}
+.wr-btn:hover{transform:translate(-2px,-2px)}
+.wr-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace; color: #fff">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px); pointer-events: none"></div>
+
+<!-- ======================= VERSION A : LANES UP TOP, WORD TILE BELOW ======================= -->
+<sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; inset: 0">
+
+<!-- track field (the RACE card, stretched into a 5-lane track) -->
+<div style="position: absolute; left: 22px; top: 64px; width: 1322px; height: 290px; transform: rotate(-1deg); background: #FF4FA3; border: 6px solid #000; box-shadow: 9px 9px 0 #000; overflow: hidden; box-sizing: border-box">
+<svg width="1310" height="278" viewBox="0 0 1310 278" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+<path d="M212 120 L1270 40 L1270 210 L212 278 Z" fill="#E23A8C"></path>
+<g stroke="#FFE94A" stroke-width="7" stroke-linecap="round" opacity=".55"><path d="M230 28 L330 20"></path><path d="M560 250 L640 244"></path><path d="M900 30 L960 26"></path></g>
+<path d="M234 28 q-3 14 2 22 q4 -7 1 -22" fill="#FFE94A" opacity=".55"></path>
+<path d="M564 250 q-2 10 3 15 q3 -6 0 -15" fill="#FFE94A" opacity=".55"></path>
+</svg>
+<sc-for list="{{lanes}}" as="r" hint-placeholder-count="5">
+<div style="position: absolute; left: 0; right: 0; top: {{r.top}}px; height: 55px; border-bottom: {{r.rule}}">
+<!-- name plate -->
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 212px; z-index: 3; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: {{r.plateBg}}; border-right: 5px solid #000; box-shadow: {{r.plateGlow}}">
+<div style="position: relative; flex: none; width: 38px; height: 38px; box-sizing: border-box; background: #2a1748; border: 4px solid #000; overflow: hidden; display: flex; align-items: center; justify-content: center">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 8px; background: {{r.c}}; border-bottom: 3px solid #000"></div>
+<span style="position: relative; top: 4px; font-family: 'Bungee', sans-serif; font-size: 18px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{r.init}}</span>
+</div>
+<span style="flex: 1; min-width: 0; font-family: 'Bungee', sans-serif; font-size: 17px; line-height: 1; color: {{r.nameC}}; white-space: nowrap">{{r.name}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; line-height: 1; color: {{r.c}}">{{r.count}}</span>
+</div>
+<!-- car -->
+<div style="position: absolute; left: 218px; top: 4px; width: 104px; height: 48px; transform: translateX({{r.x}}px); transition: transform .12s linear">
+<sc-if value="{{r.moving}}" hint-placeholder-val="{{ true }}">
+<svg class="wr-streak" viewBox="0 0 70 40" width="70" height="40" style="position: absolute; left: -62px; top: 4px" aria-hidden="true"><g stroke="#FFE94A" stroke-width="5" stroke-linecap="round"><path d="M8 12 L56 12"></path><path d="M22 24 L62 24"></path><path d="M2 34 L44 34"></path></g><path d="M10 12 q-2 10 2 15 q3 -6 0 -15" fill="#FFE94A"></path></svg>
+</sc-if>
+<sc-if value="{{r.boost}}" hint-placeholder-val="{{ false }}">
+<svg class="{{r.boostCls}}" viewBox="0 0 80 40" width="80" height="40" style="position: absolute; left: -50px; top: 4px" aria-hidden="true"><path d="M78 20 L30 6 L40 18 L2 20 L40 22 L30 34 Z" fill="#FFE94A" stroke="#000" stroke-width="3" stroke-linejoin="round"></path></svg>
+</sc-if>
+<div style="position: absolute; inset: 0; transform: scale({{r.scale}}); transform-origin: 30% 60%">
+<sc-if value="{{r.me}}" hint-placeholder-val="{{ false }}"><div style="position: absolute; left: 2px; right: -4px; top: 30px; height: 22px; background: #FFE94A; border: 4px solid #000; border-radius: 50%; box-shadow: 0 0 0 4px #fff"></div><div style="position: absolute; left: 104px; top: 12px; height: 20px; border: 3px solid #FFE94A; padding: 0 6px; display: flex; align-items: center; background: #000; font-family: 'Bungee', sans-serif; font-size: 13px; line-height: 1; color: #FFE94A">YOU</div></sc-if>
+<div class="{{r.rumble}}" style="position: absolute; inset: 0">
+<svg viewBox="0 0 104 48" width="104" height="48" style="overflow: visible" aria-hidden="true">
+<path d="M8 34 L16 21 L42 17 L56 9 L76 9 L84 18 L98 22 L98 36 L8 38 Z" fill="#000" transform="translate(4 4)"></path>
+<path d="M4 13 L18 13 L18 19 L4 19 Z M10 19 L12 25" fill="{{r.c}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M8 34 L16 21 L42 17 L56 9 L76 9 L84 18 L98 22 L98 36 L8 38 Z" fill="{{r.c}}" stroke="#000" stroke-width="4.5" stroke-linejoin="round"></path>
+<path d="M56 12 L74 12 L80 19 L54 20 Z" fill="#1a0b2e" stroke="#000" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M60 14 L66 14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M20 23 L42 20" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"></path>
+<path d="M10 33 L96 31" stroke="#000" stroke-width="3" opacity=".25"></path>
+<circle cx="40" cy="28" r="10" fill="#fff" stroke="#000" stroke-width="3"></circle>
+<text x="40" y="33" text-anchor="middle" font-family="Bungee, sans-serif" font-size="14" fill="#000">{{r.num}}</text>
+<circle cx="26" cy="38" r="9" fill="#000"></circle><circle cx="26" cy="38" r="4" fill="#c9b8e8"></circle>
+<circle cx="80" cy="38" r="9" fill="#000"></circle><circle cx="80" cy="38" r="4" fill="#c9b8e8"></circle>
+</svg>
+</div>
+</div>
+</div>
+<!-- placement at the line -->
+<sc-if value="{{r.placed}}" hint-placeholder-val="{{ false }}">
+<div class="wr-slam" style="position: absolute; right: 172px; top: 7px; height: 38px; padding: 0 12px; display: flex; align-items: center; background: {{r.placeBg}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 24px; line-height: 1; color: #000">{{r.place}}</div>
+</sc-if>
+</div>
+</sc-for>
+<!-- checkered finish -->
+<div style="position: absolute; right: 0; top: 0; bottom: 0; width: 40px; border-left: 5px solid #1a0b2e; background-color: #fff; background-image: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0); background-size: 40px 40px"></div>
+</div>
+
+<!-- WPM -->
+<div class="{{wpmBump}}" style="position: absolute; left: 26px; top: 386px; width: 268px; height: 196px; box-sizing: border-box; background: #1a0b2e; border: 6px solid #000; box-shadow: 8px 8px 0 #FF4FA3, 14px 14px 0 #000; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<span class="wr-out" style="font-family: 'Bungee', sans-serif; font-size: 112px; line-height: .95; color: #FFE94A; -webkit-text-stroke: 8px #000; text-shadow: 6px 6px 0 #000">{{wpm}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 24px; line-height: 1; color: #FF4FA3; margin-top: 6px">WPM</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; line-height: 1; color: #c9b8e8; margin-top: 8px">{{accText}}</span>
+</div>
+
+<!-- the WORD tile (the card's tilted fragment tile, now the whole show) -->
+<div style="position: absolute; left: 336px; top: 386px; width: 640px; height: 196px">
+<div style="position: absolute; inset: 0; transform: rotate(-3deg) translate(12px, 12px); background: #FF4FA3; border: 6px solid #000; border-radius: 12px"></div>
+<div class="{{tileCls}}" style="position: absolute; inset: 0; box-sizing: border-box; background: #1a0b2e; border: 6px solid #000; border-radius: 12px; box-shadow: 6px 6px 0 #000; display: flex; align-items: center; justify-content: center; overflow: hidden">
+<span style="position: absolute; left: 14px; top: 10px; height: 30px; padding: 0 10px; display: flex; align-items: center; background: #FF4FA3; border: 3px solid #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">{{progText}}</span>
+<sc-if value="{{showCount}}" hint-placeholder-val="{{ false }}">
+<span class="wr-count" style="font-family: 'Bungee', sans-serif; font-size: 130px; line-height: 1; color: {{countC}}; -webkit-text-stroke: 9px #000; paint-order: stroke fill; text-shadow: 7px 7px 0 #000">{{countText}}</span>
+</sc-if>
+<sc-if value="{{showWord}}" hint-placeholder-val="{{ true }}">
+<div class="{{shakeCls}}" style="display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: {{wordF}}px; line-height: 1; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 6px 6px 0 #000; margin-top: 10px">
+<sc-for list="{{letters}}" as="l" hint-placeholder-count="6"><span style="position: relative; color: {{l.c}}; min-width: {{l.mw}}px">{{l.ch}}<sc-if value="{{l.car}}" hint-placeholder-val="{{ false }}"><span class="wr-caret" style="position: absolute; left: -5px; top: 8%; width: 8px; height: 84%; background: #FFE94A; border: 3px solid #000; box-sizing: border-box"></span></sc-if></span></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{showDone}}" hint-placeholder-val="{{ false }}">
+<div class="wr-slam" style="display: flex; align-items: baseline; gap: 18px">
+<span style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 128px; line-height: 1; color: {{placeC}}; text-shadow: 6px 6px 0 #000">{{placeText}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 34px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{timeText}}</span>
+</div>
+</sc-if>
+</div>
+</div>
+
+<!-- NEXT queue -->
+<div style="position: absolute; left: 1010px; top: 392px; width: 330px; height: 196px; display: flex; flex-direction: column; justify-content: center; gap: 6px">
+<sc-for list="{{nextA}}" as="n" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 12px; opacity: {{n.o}}">
+<span style="width: 26px; height: 26px; flex: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #FF4FA3; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">{{n.k}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{n.f}}px; line-height: 1.05; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; white-space: nowrap">{{n.w}}</span>
+</div>
+</sc-for>
+<sc-if value="{{flagA}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 26px; height: 26px; box-sizing: border-box; border: 3px solid #000; background-color: #fff; background-image: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0); background-size: 10px 10px"></span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 22px; color: #FFE94A">FINISH</span>
+</div>
+</sc-if>
+</div>
+
+</div>
+</sc-if>
+
+<!-- ======================= VERSION B : WORD STREAM ON THE TRACK, ROAD MAP BELOW ======================= -->
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0">
+
+<!-- big numbers row -->
+<div class="{{wpmBump}}" style="position: absolute; left: 40px; top: 58px; display: flex; align-items: flex-end; gap: 12px">
+<span class="wr-out" style="font-family: 'Bungee', sans-serif; font-size: 120px; line-height: .9; color: #FFE94A; -webkit-text-stroke: 9px #000; text-shadow: 7px 7px 0 #000">{{wpm}}</span>
+<div style="display: flex; flex-direction: column; gap: 6px; padding-bottom: 6px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 28px; line-height: 1; color: #FF4FA3">WPM</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; line-height: 1; color: #c9b8e8">{{accText}}</span>
+</div>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 70px; display: flex; justify-content: center">
+<div style="height: 74px; padding: 0 22px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; transform: skewX(-10deg)">
+<span style="font-family: 'Bungee', sans-serif; font-size: 52px; line-height: 1; color: #fff">{{wordsDone}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 28px; line-height: 1; color: #5d4a78">/25</span>
+</div>
+</div>
+<div class="{{placeBump}}" style="position: absolute; right: 40px; top: 58px; display: flex; align-items: flex-end; gap: 10px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; line-height: 1; color: #c9b8e8; padding-bottom: 10px">{{placeLabel}}</span>
+<span class="wr-out" style="font-family: 'Bungee', sans-serif; font-size: 120px; line-height: .9; color: {{livePlaceC}}; -webkit-text-stroke: 9px #000; text-shadow: 7px 7px 0 #000">{{livePlace}}</span>
+</div>
+
+<!-- the stream band: card's pink track with the passage riding on it -->
+<div style="position: absolute; left: -6%; right: -6%; top: 214px; height: 190px; transform: rotate(-2deg); background: #FF4FA3; border-top: 8px solid #000; border-bottom: 8px solid #000; overflow: hidden">
+<svg width="1530" height="190" viewBox="0 0 1530 190" preserveAspectRatio="none" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+<path d="M0 120 L1530 30 L1530 150 L0 190 Z" fill="#E23A8C"></path>
+<path d="M0 95 L1530 95" stroke="#1a0b2e" stroke-width="5" stroke-dasharray="26 18" opacity=".55"></path>
+<g stroke="#FFE94A" stroke-width="7" stroke-linecap="round" opacity=".6"><path d="M90 30 L200 22"></path><path d="M60 160 L150 154"></path><path d="M1380 40 L1460 34"></path></g>
+<path d="M94 30 q-3 14 2 22 q4 -7 1 -22" fill="#FFE94A" opacity=".6"></path>
+</svg>
+<div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center">
+<div style="flex: 1; min-width: 0; overflow: hidden; display: flex; justify-content: flex-end; align-items: center; gap: 22px; padding-right: 26px">
+<sc-for list="{{pastB}}" as="pb" hint-placeholder-count="3">
+<span style="font-family: 'Bungee', sans-serif; font-size: 34px; line-height: 1; color: #1a0b2e; opacity: {{pb.o}}; white-space: nowrap">{{pb.w}}</span>
+</sc-for>
+</div>
+<div class="{{tileClsB}}" style="flex: none; position: relative; min-width: 300px; height: 150px; box-sizing: border-box; padding: 0 30px; background: #1a0b2e; border: 6px solid #000; border-radius: 12px; box-shadow: 9px 9px 0 #000; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{showCount}}" hint-placeholder-val="{{ false }}">
+<span class="wr-count" style="font-family: 'Bungee', sans-serif; font-size: 116px; line-height: 1; color: {{countC}}; -webkit-text-stroke: 9px #000; paint-order: stroke fill; text-shadow: 7px 7px 0 #000">{{countText}}</span>
+</sc-if>
+<sc-if value="{{showWord}}" hint-placeholder-val="{{ true }}">
+<div class="{{shakeCls}}" style="display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: {{wordFB}}px; line-height: 1; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 6px 6px 0 #000">
+<sc-for list="{{letters}}" as="l" hint-placeholder-count="6"><span style="position: relative; color: {{l.c}}; min-width: {{l.mw}}px">{{l.ch}}<sc-if value="{{l.car}}" hint-placeholder-val="{{ false }}"><span class="wr-caret" style="position: absolute; left: -5px; top: 8%; width: 8px; height: 84%; background: #FFE94A; border: 3px solid #000; box-sizing: border-box"></span></sc-if></span></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{showDone}}" hint-placeholder-val="{{ false }}">
+<div class="wr-pfA" style="display: flex; align-items: baseline; gap: 16px">
+<span style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 92px; line-height: 1; color: {{placeC}}; text-shadow: 5px 5px 0 #000">{{placeText}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 30px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{timeText}}</span>
+</div>
+</sc-if>
+</div>
+<div style="flex: 1; min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 24px; padding-left: 30px">
+<sc-for list="{{nextB}}" as="nb" hint-placeholder-count="4">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{nb.f}}px; line-height: 1; color: #fff; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000; opacity: {{nb.o}}; white-space: nowrap">{{nb.w}}</span>
+</sc-for>
+<sc-if value="{{flagB}}" hint-placeholder-val="{{ false }}">
+<span style="flex: none; width: 54px; height: 120px; box-sizing: border-box; border: 5px solid #000; background-color: #fff; background-image: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0); background-size: 22px 22px"></span>
+</sc-if>
+</div>
+</div>
+</div>
+
+<!-- the road map: one shared road, 25 word ticks, a flag pin per racer -->
+<div style="position: absolute; left: 40px; top: 562px; width: 1286px; height: 34px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000"></div>
+<div style="position: absolute; left: 48px; top: 570px; width: 1230px; height: 18px; display: flex; gap: 4px">
+<sc-for list="{{ticks}}" as="t" hint-placeholder-count="25">
+<span style="flex: 1; background: {{t.bg}}; border: 2px solid #000"></span>
+</sc-for>
+</div>
+<div style="position: absolute; left: 1284px; top: 562px; width: 42px; height: 34px; box-sizing: border-box; border: 5px solid #000; background-color: #fff; background-image: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0); background-size: 12px 12px"></div>
+<sc-for list="{{pins}}" as="p" hint-placeholder-count="5">
+<div style="position: absolute; left: 50px; top: 0; width: 0; height: 0; transform: translateX({{p.x}}px); transition: transform .12s linear; z-index: {{p.z}}">
+<div style="position: absolute; left: -3px; top: {{p.poleTop}}px; width: 6px; height: {{p.poleH}}px; background: #000"></div>
+<div style="position: absolute; left: 0; top: {{p.flagTop}}px; transform: translateX({{p.fx}})"><div class="{{p.flut}}" style="position: relative; height: {{p.fh}}px; padding: 0 10px 0 8px; display: flex; align-items: center; gap: 8px; background: {{p.c}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%); padding-right: 20px; white-space: nowrap">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{p.ff}}px; line-height: 1; color: #000">{{p.label}}</span>
+</div></div>
+<div style="position: absolute; left: -9px; top: 572px; width: 18px; height: 18px; box-sizing: border-box; background: {{p.c}}; border: 4px solid #000; transform: rotate(45deg)"></div>
+</div>
+</sc-for>
+
+</div>
+</sc-if>
+
+<!-- ===== TOP BAR ===== -->
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 46px; box-sizing: border-box; background: #12071f; border-bottom: 5px solid #000; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="display: flex; border: 3px solid #000; box-shadow: 3px 3px 0 #000">
+<button onClick="{{pickA}}" style="width: 30px; height: 26px; border: 0; border-right: 3px solid #000; background: {{aBg}}; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{aC}}; cursor: pointer; padding: 0">A</button>
+<button onClick="{{pickB}}" style="width: 30px; height: 26px; border: 0; background: {{bBg}}; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{bC}}; cursor: pointer; padding: 0">B</button>
+</div>
+<span style="height: 30px; padding: 0 12px; display: flex; align-items: center; background: #FF4FA3; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">RACE</span>
+<span style="height: 30px; padding: 0 10px; display: flex; align-items: center; background: #000; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #FF4FA3">MULTI</span>
+</div>
+<span style="font-family: 'Bungee', sans-serif; font-size: 26px; line-height: 1; color: {{clockC}}">{{clockText}}</span>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 6px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #FFE94A">{{bestWpm}}<span style="font-size: 13px; color: #c9b8e8">BEST WPM</span></span>
+</div>
+</div>
+
+<!-- ===== DEMO CONTROLS ===== -->
+<div style="position: absolute; left: 14px; bottom: 12px; display: flex; align-items: center; gap: 8px; z-index: 20">
+<span style="font-size: 13px; color: #5d4a78">DEMO</span>
+<button class="wr-btn" onClick="{{demoStart}}" style="height: 32px; padding: 0 12px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">START</button>
+<button class="wr-btn" onClick="{{demoFinish}}" style="height: 32px; padding: 0 12px; background: #FF4FA3; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; cursor: pointer">FINISH</button>
+<span style="font-size: 13px; color: #5d4a78; margin-left: 6px">{{hintText}}</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+// Real rules (fe/src/race): ENTIRE-WORD racing. Same 25 words for everyone, 60s cap; the word
+// auto-advances the moment it's typed exactly; space on a wrong word = TYPE THE WORD SHOWN.
+// Placement comes from finish order; at the cap the unfinished field ranks by words done.
+var WORDS = ['rocket', 'jump', 'neon', 'ghost', 'pixel', 'storm', 'candy', 'laser', 'orbit', 'fast',
+  'dragon', 'wave', 'spark', 'maze', 'turbo', 'comet', 'blaze', 'quest', 'river', 'flash',
+  'zebra', 'lucky', 'night', 'drift', 'winner'];
+var N = WORDS.length, CAP = 60000, COUNT = 3000;
+var RACERS = [
+  { name: 'ANDY', init: 'A', c: '#FFE94A', num: 1, wpm: 0 },
+  { name: 'NOVA', init: 'N', c: '#B04BFF', num: 7, wpm: 68 },
+  { name: 'KAIJU', init: 'K', c: '#2EFFE0', num: 3, wpm: 57 },
+  { name: 'PIXEL', init: 'P', c: '#3D8BFF', num: 9, wpm: 48 },
+  { name: 'MOTH', init: 'M', c: '#A9B4C8', num: 5, wpm: 39 }
+];
+var PLACE_C = ['#FFC23D', '#E6ECF5', '#E0894A', '#A9B4C8', '#A9B4C8'];
+var PIN_H = [70, 34, 100, 52, 86];
+
+function ordinal(n) { var s = ['TH', 'ST', 'ND', 'RD'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+function wordDur(w, wpm, sp) { return (w.length + 1) * 12000 / wpm * (0.8 + Math.random() * 0.45) / sp; }
+function clock(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.fresh('A', 0);
+    this.onKey = this.onKey.bind(this);
+  }
+  fresh(v, best) {
+    var now = Date.now(), goAt = now + COUNT;
+    return {
+      v: v, phase: 'count', goAt: goAt, now: now, idx: 0, typed: '', okChars: 0, keys: 0, good: 0,
+      myFin: null, myPlace: 0, nextPlace: 1, shakeN: 0, popN: 0, bumpN: 0, boostN: 0, popAt: 0, shakeAt: 0, boostAt: 0, best: best || 0, overAt: null,
+      bots: RACERS.slice(1).map(function (r) { return { idx: 0, ws: goAt, wd: wordDur(WORDS[0], r.wpm, 1), fin: null, place: 0, boostN: 0, boostAt: 0 }; })
+    };
+  }
+  componentDidMount() {
+    var self = this;
+    window.addEventListener('keydown', this.onKey);
+    this.iv = setInterval(function () { self.tick(); }, 50);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this.onKey); clearInterval(this.iv); }
+  tick() {
+    var st = this.state, now = Date.now();
+    if (st.phase === 'over') return;
+    var up = { now: now };
+    if (st.phase === 'count') { if (now >= st.goAt) up.phase = 'race'; this.setState(up); return; }
+    var np = st.nextPlace, bots = st.bots.map(function (b) { return Object.assign({}, b); });
+    bots.forEach(function (b, i) {
+      while (b.fin == null && now >= b.ws + b.wd) {
+        b.ws += b.wd; b.idx++; b.boostN++; b.boostAt = now;
+        if (b.idx >= N) { b.fin = b.ws - st.goAt; b.place = np++; }
+        else b.wd = wordDur(WORDS[b.idx], RACERS[i + 1].wpm, st.fast ? 7 : 1);
+      }
+    });
+    up.bots = bots; up.nextPlace = np;
+    var allIn = st.myFin != null && bots.every(function (b) { return b.fin != null; });
+    if (allIn || now - st.goAt >= CAP) {
+      // cap: rank the unfinished field by progress, server-style
+      var field = [];
+      if (st.myFin == null) field.push({ me: true, p: st.idx + this.myPartial(st) });
+      bots.forEach(function (b, i) { if (b.fin == null) field.push({ i: i, p: b.idx + Math.min(1, (now - b.ws) / b.wd) }); });
+      field.sort(function (a, b) { return b.p - a.p; });
+      field.forEach(function (f) { if (f.me) up.myPlace = np++; else bots[f.i].place = np++; });
+      up.nextPlace = np; up.phase = 'over'; up.overAt = now;
+    }
+    this.setState(up);
+  }
+  myPartial(st) {
+    var w = WORDS[st.idx]; if (!w) return 0;
+    var k = 0; while (k < st.typed.length && st.typed[k] === w[k]) k++;
+    return Math.min(k, w.length) / w.length * 0.9;
+  }
+  wpmOf(st) {
+    var t0 = st.goAt, t1 = st.myFin != null ? t0 + st.myFin : (st.phase === 'over' ? st.overAt : st.now);
+    var el = t1 - t0; if (el < 1000 || st.phase === 'count') return 0;
+    var w = WORDS[st.idx] || '', k = 0; while (k < st.typed.length && st.typed[k] === w[k]) k++;
+    return Math.round((st.okChars + k) / 5 / (el / 60000));
+  }
+  onKey(e) {
+    var st = this.state;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (st.phase !== 'race' || st.myFin != null) return;
+    var k = e.key, w = WORDS[st.idx];
+    if (k === 'Backspace') { e.preventDefault(); this.setState({ typed: st.typed.slice(0, -1) }); return; }
+    if (k === ' ' || k === 'Enter') {
+      e.preventDefault();
+      if (st.typed && st.typed !== w) this.setState({ shakeN: st.shakeN + 1, shakeAt: Date.now() });
+      return;
+    }
+    if (!/^[a-zA-Z]$/.test(k) || st.typed.length >= w.length + 4) return;
+    e.preventDefault();
+    var t = st.typed + k.toLowerCase(), ok = t === w.slice(0, t.length);
+    var up = { typed: t, keys: st.keys + 1, good: st.good + (ok ? 1 : 0) };
+    if (!ok) { up.shakeN = st.shakeN + 1; up.shakeAt = Date.now(); }
+    if (t === w) {
+      up.idx = st.idx + 1; up.typed = ''; up.okChars = st.okChars + w.length + (st.idx + 1 < N ? 1 : 0);
+      up.popN = st.popN + 1; up.bumpN = st.bumpN + 1; up.boostN = st.boostN + 1; up.popAt = up.boostAt = Date.now();
+      if (up.idx >= N) { up.myFin = Date.now() - st.goAt; up.myPlace = st.nextPlace; up.nextPlace = st.nextPlace + 1; }
+    }
+    this.setState(up);
+  }
+  renderVals() {
+    var self = this, st = this.state, now = st.now;
+    var racing = st.phase === 'race', done = st.myFin != null || st.phase === 'over';
+    var word = WORDS[st.idx] || '', typed = st.typed;
+    var wpm = this.wpmOf(st), best = Math.max(st.best, done ? wpm : 0);
+    // letters of the current word, lit as typed
+    var len = Math.max(word.length, typed.length), letters = [];
+    for (var i = 0; i < len; i++) {
+      var ch = i < word.length ? word[i] : typed[i], c = '#8a76ad';
+      if (i < typed.length) c = typed[i] === word[i] ? '#FFE94A' : '#FF3D7F';
+      letters.push({ ch: ch.toUpperCase(), c: c, car: racing && i === typed.length, mw: 0 });
+    }
+    if (racing && typed.length >= len) letters.push({ ch: '', c: '#fff', car: true, mw: 10 });
+    var wordF = Math.min(126, Math.floor(560 / (Math.max(len, 3) * 0.86)));
+    var wordFB = Math.min(118, Math.floor(620 / (Math.max(len, 3) * 0.86)));
+    // countdown
+    var cdLeft = st.goAt - now, cdN = Math.ceil(cdLeft / 1000);
+    var showCount = st.phase === 'count' || (racing && now - st.goAt < 450 && st.idx === 0 && !typed);
+    var countText = st.phase === 'count' ? String(Math.max(1, cdN)) : 'GO';
+    // progress per racer
+    function prog(i) {
+      if (i === 0) return st.myFin != null ? 1 : (st.idx + (racing ? self.myPartial(st) : 0)) / N;
+      var b = st.bots[i - 1]; if (b.fin != null) return 1;
+      var part = racing ? Math.min(1, Math.max(0, (now - b.ws) / b.wd)) : 0;
+      return (b.idx + part) / N;
+    }
+    function placeOf(i) { return i === 0 ? st.myPlace : st.bots[i - 1].place; }
+    function count(i) { return i === 0 ? st.idx : st.bots[i - 1].idx; }
+    // live rank (B)
+    var scores = RACERS.map(function (r, i) { var p = placeOf(i); return p ? 100 - p : prog(i); });
+    var rank = 1; for (var j = 1; j < scores.length; j++) if (scores[j] > scores[0]) rank++;
+    var finalPlace = st.myPlace || rank;
+    var lanes = RACERS.map(function (r, i) {
+      var p = prog(i), pl = placeOf(i), me = i === 0;
+      var boostN = me ? st.boostN : st.bots[i - 1].boostN;
+      return {
+        top: i * 55, rule: i < 4 ? (i === 1 || i === 2 ? '5px dashed #1a0b2e' : '5px solid #1a0b2e') : '0',
+        plateBg: me ? '#2a1748' : '#1a0b2e', plateGlow: me ? 'inset 6px 0 0 #FFE94A' : 'none',
+        c: r.c, init: r.init, name: r.name, nameC: me ? '#FFE94A' : '#fff', count: count(i) + '/' + N,
+        x: Math.round(p * (me ? 920 : 944)), num: r.num, me: me, scale: me ? 1.3 : 1,
+        moving: racing && !pl, rumble: racing && !pl ? 'wr-rumble' : '',
+        boost: now - (me ? st.boostAt : st.bots[i - 1].boostAt) < 450 && !pl, boostCls: boostN % 2 ? 'wr-boostA' : 'wr-boostB',
+        placed: !!pl, place: pl ? ordinal(pl) : '', placeBg: pl ? PLACE_C[pl - 1] : '#fff'
+      };
+    });
+    var pins = RACERS.map(function (r, i) {
+      var p = prog(i), pl = placeOf(i), me = i === 0, h = PIN_H[i], fh = me ? 40 : 32;
+      return {
+        x: Math.round(p * 1222), z: me ? 5 : 1,
+        poleTop: 572 - h, poleH: h, flagTop: 572 - h, fh: fh, ff: me ? 22 : 16,
+        fx: p > 0.86 ? '-100%' : '0', c: r.c, label: pl ? r.init + ' ' + ordinal(pl) : (me ? 'YOU' : r.name),
+        flut: racing && !pl ? 'wr-flutter' : ''
+      };
+    });
+    var ticks = WORDS.map(function (w, i) { return { bg: i < st.idx ? '#FFE94A' : (i === st.idx && !done ? '#FF4FA3' : '#2a1748') }; });
+    var nextA = WORDS.slice(st.idx + 1, st.idx + 5).map(function (w, i) { return { w: w.toUpperCase(), k: st.idx + 2 + i, f: [44, 34, 28, 24][i], o: [1, .8, .6, .45][i] }; });
+    var nextB = WORDS.slice(st.idx + 1, st.idx + 5).map(function (w, i) { return { w: w.toUpperCase(), f: [58, 46, 38, 32][i], o: [1, .8, .62, .45][i] }; });
+    var pastB = WORDS.slice(Math.max(0, st.idx - 3), st.idx).map(function (w, i, a) { return { w: w.toUpperCase(), o: .3 + .2 * (i + 3 - a.length) }; });
+    if (done) { nextA = []; nextB = []; }
+    var elapsed = st.phase === 'count' ? 0 : (st.phase === 'over' ? st.overAt : now) - st.goAt;
+    var acc = st.keys ? Math.round(st.good / st.keys * 100) : 100;
+    var timeText = st.myFin != null ? (st.myFin / 1000).toFixed(1) + 's' : st.idx + '/' + N;
+    var pc = PLACE_C[finalPlace - 1] || '#A9B4C8';
+    var isA = st.v === 'A';
+    return {
+      isA: isA, isB: !isA,
+      aBg: isA ? '#FFE94A' : '#1a0b2e', aC: isA ? '#000' : '#c9b8e8', bBg: isA ? '#1a0b2e' : '#FFE94A', bC: isA ? '#c9b8e8' : '#000',
+      pickA: function () { self.setState({ v: 'A' }); }, pickB: function () { self.setState({ v: 'B' }); },
+      lanes: lanes, pins: pins, ticks: ticks,
+      wpm: wpm, wpmBump: now - st.popAt < 300 ? (st.bumpN % 2 ? 'wr-bumpA' : 'wr-bumpB') : '',
+      accText: acc + '% ACC',
+      tileCls: now - st.popAt < 280 ? (st.popN % 2 ? 'wr-popA' : 'wr-popB') : '', tileClsB: now - st.popAt < 260 ? (st.popN % 2 ? 'wr-pfA' : 'wr-pfB') : '',
+      progText: Math.min(st.idx + 1, N) + '/' + N,
+      showCount: showCount && !done, countText: countText, countC: countText === 'GO' ? '#5CFF8A' : '#FFE94A',
+      showWord: !showCount && !done, letters: letters, wordF: wordF, wordFB: wordFB,
+      shakeCls: now - st.shakeAt < 300 ? (st.shakeN % 2 ? 'wr-noA' : 'wr-noB') : '',
+      showDone: done, placeText: ordinal(finalPlace), placeC: pc, timeText: timeText,
+      nextA: nextA, nextB: nextB, pastB: pastB,
+      flagA: !done && st.idx + 5 > N, flagB: !done && st.idx + 5 > N,
+      wordsDone: st.idx,
+      livePlace: ordinal(done ? finalPlace : rank), livePlaceC: done ? pc : (rank === 1 ? '#FFC23D' : '#fff'),
+      placeLabel: done ? 'FINAL' : 'PLACE', placeBump: '',
+      clockText: st.phase === 'over' ? 'FINISHED' : (st.phase === 'count' ? clock(CAP) : clock(CAP - elapsed)),
+      clockC: st.phase === 'race' && CAP - elapsed <= 10000 ? '#FF3D7F' : '#fff',
+      bestWpm: best,
+      hintText: st.phase === 'over' ? 'START = RACE AGAIN' : 'TYPE THE WORD · IT ADVANCES ITSELF',
+      demoStart: function () { self.setState(self.fresh(self.state.v, best)); },
+      demoFinish: function () {
+        var s = self.state, n = Date.now();
+        var base = s.phase === 'count' ? { phase: 'race', goAt: n - 20000 } : {};
+        var goAt = base.goAt || s.goAt;
+        var bots = s.bots.map(function (b, i) {
+          var c = Object.assign({}, b);
+          if (base.goAt) { c.ws = n; c.idx = Math.floor(Math.random() * 6) + 12; }
+          if (c.fin == null) c.wd = Math.max(60, wordDur(WORDS[Math.min(c.idx, N - 1)], RACERS[i + 1].wpm, 7));
+          return c;
+        });
+        var up = Object.assign(base, { bots: bots, fast: true, now: n });
+        if (s.myFin == null) {
+          up.idx = N; up.typed = ''; up.okChars = WORDS.join(' ').length; up.myFin = Math.max(n - goAt, 18000);
+          up.myPlace = s.nextPlace; up.nextPlace = s.nextPlace + 1; up.popN = s.popN + 1; up.bumpN = s.bumpN + 1; up.popAt = n;
+          up.keys = Math.max(s.keys, 140); up.good = Math.max(s.good, 136);
+        }
+        self.setState(up);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
