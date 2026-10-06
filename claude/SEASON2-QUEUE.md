@@ -3,6 +3,8 @@ Source of truth: Andy's goal (oct5 ~19:00) + claude/mockups/v2/progression-v3.md
 Rules: merge each PR when green · never stop to ask except SQL Andy must run · Claude never runs migrations · one heavy local job at a time · e2e + sims on GitHub Actions only · kill preview servers after every run · after a usage limit resume from THIS file · never end a turn while steps remain.
 Every screen: 1280×551, 1366×657, 1920×1080, 390×844 · no text < 13px · no scrollbars · formatNum · transform/opacity only · REDUCE MOTION · before/after shots of each size attached to the PR · screenshot next to its mockup before merging.
 
+## GOAL (Andy): every item P0–P10 merged on main with CI green — except P4's SQL run and the SEASON2 flip (Andy's).
+
 ## PIPELINE (Andy, oct5 late)
 - While a PR is in CI, start building the next queue item on a fresh branch off main. Up to 2 PRs in CI at once.
 - Merges in order, one at a time: before each merge rebase on main and let CI go green again.
@@ -18,7 +20,7 @@ Every screen: 1280×551, 1366×657, 1920×1080, 390×844 · no text < 13px · no
 - [x] #210 PHASE 1 server rebirth (lb_rebirth / lb_ascend, CI spammer hard check) — ANDY: RUN 021
 
 ## IN PROGRESS (agents running — do not interrupt)
-- [~] PHASE 2a MENU — PR #215 open (payload −4.7 KB; JOIN ROOM via mode dialogs; KEY TIER → POWER copy). HOLD merge until P0 confirms main green. After merge: CLAUDE.md CANONICAL MENU TITLE section must be updated (wordmark now follows the mockup).
+- [~] PHASE 2a MENU — PR #215 open, CI RED (menu-vgap ×5, claims-via-stats ×2, game-fill fuse ×2, viewport-integrity fuse @1366, reduce-motion-toggle ×2) — agent fixing; (payload −4.7 KB; JOIN ROOM via mode dialogs; KEY TIER → POWER copy). HOLD merge until P0 confirms main green. After merge: CLAUDE.md CANONICAL MENU TITLE section must be updated (wordmark now follows the mockup).
 - [~] PHASE 3 progression v3 behind SEASON2 — PR #214 open, CI sims tuning (agent running) — sims must hit median R1 ~12 min / R5 ~1.5 h / R10 ~7 h, fast ≤ 2×
 
 ## QUEUE (in order)
@@ -27,7 +29,7 @@ Every screen: 1280×551, 1366×657, 1920×1080, 390×844 · no text < 13px · no
 - [ ] PHASE 2c REBIRTH (hold-to-rebirth → performRebirth, one at a time, YOU GET, unlocks track "SOON" until v3)
 - [ ] PHASE 2d SHOP (POWER panel hold-to-buy; gems STOCK grid behind a flag)
 - [ ] PHASE 2e STATS · ACHIEVEMENTS · LEADERBOARD (rank titles, top-3 case, real data)
-- [~] PHASE 4 THE RESET (agent running, feat/season2-reset stacked on #214; SQL → claude/run-season2.sql + rollback) (ready, OFF): migration snapshots old rebirths, resets all but usernames, gems = round5(300 + 40 × old rebirths); SEASON 2 welcome (Season2.dc.html) once per player, server-flagged; SQL → claude/run-season2.sql; tell Andy; SEASON2 flips on only after he runs it
+- [~] PHASE 4 THE RESET (agent PAUSED for the one-heavy-local-job rule — resume after P8; partial work in ../s2reset, feat/season2-reset stacked on #214; SQL → claude/run-season2.sql + rollback) (ready, OFF): migration snapshots old rebirths, resets all but usernames, gems = round5(300 + 40 × old rebirths); SEASON 2 welcome (Season2.dc.html) once per player, server-flagged; SQL → claude/run-season2.sql; tell Andy; SEASON2 flips on only after he runs it
 - [ ] PHASE 5 every other screen with the kit (no centre popups): level-up/rank-up/secrets/reward popups → top banners or gone; results; KO; WB HUD; SAT case closed; FUSE frenzy; CHAIN + RACE HUDs; tutorial spotlights; room code + username; settings
 - [ ] P9 mockups — COMMITTED via #212 (merged); then, then one PR each, in order:
   - [ ] 9a KitLevelUp: XP-bar wrap + "+N LV" chip, top-edge rank-up banner (v3 rank names), 16 rank plates next to names on the board, edge unlock toasts. Nothing mid-screen. No wins for rank-ups.
