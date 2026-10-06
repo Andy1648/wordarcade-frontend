@@ -141,21 +141,21 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       <div className="kx-barwrap">
         <span ref={gainRef} className="kx-gain" aria-hidden="true" />
         <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
-          <div className="kx-ticks" />
-          <div className="kx-low" />
-          <div ref={ghostRef} className="kx-ghost" />
-          <div ref={ghostLoRef} className="kx-ghost-low" />
-          <div ref={fillRef} className="kx-fill">
-            <div className="kx-fill-hi" />
-            <div className="kx-fill-lo" />
+          <div className="kx-ticks" aria-hidden="true" />
+          <div className="kx-low" aria-hidden="true" />
+          <div ref={ghostRef} className="kx-ghost" aria-hidden="true" />
+          <div ref={ghostLoRef} className="kx-ghost-low" aria-hidden="true" />
+          <div ref={fillRef} className="kx-fill" aria-hidden="true">
+            <div className="kx-fill-hi" aria-hidden="true" />
+            <div className="kx-fill-lo" aria-hidden="true" />
           </div>
-          <div className="kx-ticks-low" />
-          <div className="kx-mid" />
-          <div ref={edgeRef} className="kx-edge">
-            <div className="kx-edge-w" />
-            <div className="kx-edge-b" />
+          <div className="kx-ticks-low" aria-hidden="true" />
+          <div className="kx-mid" aria-hidden="true" />
+          <div ref={edgeRef} className="kx-edge" aria-hidden="true">
+            <div className="kx-edge-w" aria-hidden="true" />
+            <div className="kx-edge-b" aria-hidden="true" />
           </div>
-          <div ref={flashRef} className="kx-flash" />
+          <div ref={flashRef} className="kx-flash" aria-hidden="true" />
           <div className="kx-read" aria-hidden="true">
             <span ref={curRef} className="kx-read-n">
               {initial.cur}

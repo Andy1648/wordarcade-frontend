@@ -38,10 +38,10 @@ export function KitIconButton({ icon, tone = 'yellow', rot = 0, tag, tagTone, do
   }, [tag]);
   return (
     <button type="button" className={cx('kb', 'kb--icon', `kb-tone-${tone}`, className)} style={{ '--kb-rot': `${rot}deg` }} onClick={onClick} aria-label={ariaLabel} {...rest}>
-      <span className="kb-shadow" />
-      <span className="kb-lip" />
+      <span className="kb-shadow" aria-hidden="true" />
+      <span className="kb-lip" aria-hidden="true" />
       <span className="kb-iface">
-        <span className="kb-ibar" />
+        <span className="kb-ibar" aria-hidden="true" />
         <KitIcon name={icon} size={44} shadow={2} extras={false} />
       </span>
       {tag != null && (
@@ -73,9 +73,9 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
   return (
     <span className={cx('kb-rwrap', active && 'is-active', className)}>
       <button type="button" className={cx('kb', 'kb--rail', `kb-tone-${tone}`, active && 'is-active')} aria-current={active ? 'page' : undefined} onClick={onClick} {...rest}>
-        <span className="kb-shadow" />
+        <span className="kb-shadow" aria-hidden="true" />
         <span className="kb-rface">
-          <span className="kb-redge" />
+          <span className="kb-redge" aria-hidden="true" />
           <KitIcon name={icon} size={28} shadow={2} extras={false} />
           <span className="kb-rlabel">{label}</span>
         </span>

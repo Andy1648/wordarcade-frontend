@@ -136,10 +136,10 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
       <div className="kp-name" aria-hidden="true">{name}</div>
       <div ref={bodyRef} className="kp-body">
         <div className="kp-box">
-          <div className="kp-hi" />
-          <div className="kp-lo" />
-          <div ref={sheenRef} className="kp-sheen" />
-          <div ref={flashRef} className="kp-flash" />
+          <div className="kp-hi" aria-hidden="true" />
+          <div className="kp-lo" aria-hidden="true" />
+          <div ref={sheenRef} className="kp-sheen" aria-hidden="true" />
+          <div ref={flashRef} className="kp-flash" aria-hidden="true" />
           <div className="kp-numwrap">
             <span ref={numRef} className="kp-num" aria-hidden="true">
               {initialText}

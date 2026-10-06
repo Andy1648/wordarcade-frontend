@@ -584,10 +584,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
-  // All-time wins earned + the current daily-streak count, both snapshotted on mount (they only
-  // change inside a round, which remounts this screen on return). winsLifetime drives the
-  // first-run gating (hide REBIRTH / the XP caption until the player has actually earned wins);
-  // streak drives the menu chip (shown only at >= 2 days).
+  // All-time wins earned, snapshotted on mount (it only changes inside a round, which remounts this
+  // screen on return). It drives the first-run gating (hide REBIRTH until it means something).
   const [winsLifetime] = useState(() => getWinsLifetime());
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
