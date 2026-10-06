@@ -635,6 +635,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         <div
           key={`e${i}`}
           className="menu-xp-edge"
+          aria-hidden="true"
           ref={(n) => {
             edgeElsRef.current[i] = n;
           }}
@@ -644,6 +645,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         <span
           key={`s${i}`}
           className="menu-xp-shard"
+          aria-hidden="true"
           ref={(n) => {
             shardElsRef.current[i] = n;
           }}

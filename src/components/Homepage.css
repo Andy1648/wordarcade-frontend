@@ -426,3 +426,19 @@ html[data-beat='true'] .homepage-logo {
   .connecting-spinner { display: none; }
   .connecting-spinner-rm { display: inline-block; }
 }
+
+/* v3 (SEASON2 only): the rank title in the per-letter row — a static chip in the mark chip's shape */
+.hp-rank {
+  height: var(--hp-chip-h);
+  display: flex;
+  align-items: center;
+  padding: 0 calc(12 * var(--u));
+  background: #1a0b2e;
+  border: var(--b4) solid #000;
+  box-shadow: var(--b4) var(--b4) 0 #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hp18);
+  color: #FFE94A;
+  white-space: nowrap;
+}

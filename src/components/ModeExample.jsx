@@ -127,7 +127,7 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
             POWER ×{formatMultExact(power)} <span className="mode-ex-power-vs">VS WORD BOMB</span>
           </span>
         )}
-        <span className="mode-ex-longer">BASE 10 WINS / WORD · BASE 10 XP / LETTER × POWER × REBIRTH</span>
+        <span className="mode-ex-longer">BASE 10 WINS / WORD · BASE 10 XP/LETTER × POWER × REBIRTH</span>
       </div>
       {mode === 'fuse' && (
         <div className={`mode-ex-frenzy${frenzy.active ? ' is-live' : ''}`}>

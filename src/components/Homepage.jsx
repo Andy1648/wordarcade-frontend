@@ -94,7 +94,8 @@ import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
-import { V3 } from '../progress/season'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
+import { V3, SEASON2 } from '../progress/season';
+import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -1275,6 +1276,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           <div className="hp-perrow">
             {perLetter}
             {markChip}
+            {/* v3 (SEASON2): the rank (KEYMASH … by rebirths, then stars) is a season-2 headline — it rides this row */}
+            {SEASON2 && <span className="menu-xp-rank hp-rank">{rankTitle(xpProgress.level)}</span>}
             <BoostPill className="menu-boost-pill" />
           </div>
           {/* REBIRTH READY → ×5 FOREVER (Andy oct3): in flow under the bar it is about (nothing until ready). */}
