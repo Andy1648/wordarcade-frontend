@@ -14,6 +14,8 @@ import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
+import { SEASON2 } from '../progress/season';
+import { WbFuseRing, WbAlphabet, LearnCard, lettersUsed } from './wb/BombHudV2.jsx';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import { exampleContaining } from '../progress/teachExample.js';
 import { WordPayout, RoundPayout } from './PayoutBreakdown';
@@ -2046,6 +2048,7 @@ export default function GameScreen({
   // just went out tilts away. Hooks live before the category early-return so
   // the hook order stays stable across renders.
   const prevPlayersRef = useRef({});
+  const prevComboRef = useRef(''); // P9c: the fragment on screen before the latest turn_update
   // playerId -> true while the just-lost heart is mid-shatter (cleared after 500ms).
   const [shatteredHearts, setShatteredHearts] = useState({});
   // playerId -> true once eliminated; stays set so the card holds its final
@@ -2386,6 +2389,10 @@ export default function GameScreen({
     // Our own life lost (a timeout or a skip - rejections don't cost a life)
     // breaks our personal streak.
     if (shatterIds.includes(myId)) streak.miss();
+    // PAUSE TO LEARN: the fragment I just failed is the combo from BEFORE this update (a dead-combo rescue may have swapped it)
+    const failedCombo = prevComboRef.current;
+    prevComboRef.current = gameState.combo || '';
+    if (shatterIds.includes(myId) && !gameOver && learnRef.current) learnRef.current(failedCombo);
 
     if (eliminateIds.length) {
       setEliminatingPlayers((cur) => {
@@ -2859,8 +2866,11 @@ export default function GameScreen({
   const missCombo = (gameState && gameState.combo ? String(gameState.combo) : '').toUpperCase();
   const [missWords, setMissWords] = useState(null);
   const [, setGlossTick] = useState(0);
+  // P9c: the list is pulled once the GAME is up (not only at game over) — PAUSE TO LEARN needs it mid-game, the moment
+  // you blow up. Still lazy (the shared solo word chunk, usually already prefetched), never on the play path.
+  const missLoadKey = !!gameState && !missIsCategory;
   useEffect(() => {
-    if (!gameOver || missIsCategory) return;
+    if (!missLoadKey || missIsCategory || missWords) return;
     let live = true;
     Promise.all([
       import('../solo/words.js').then((m) => m.loadSoloWords()),
@@ -2869,7 +2879,8 @@ export default function GameScreen({
       .then(([d]) => { if (live) { setMissWords(d); setGlossTick((n) => n + 1); } })
       .catch(() => { /* no list, no hold — never block a game-over */ });
     return () => { live = false; };
-  }, [gameOver, missIsCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missLoadKey, missIsCategory]);
 
   // Word Bomb: a real word containing the last fragment, skipping everything already played.
   // Blitz: the server's own sample of answers nobody got — real answers, no derivation needed.
@@ -2883,6 +2894,20 @@ export default function GameScreen({
     const used = new Set(((gameState && gameState.usedWords) || []).map((w) => String(w).toLowerCase()));
     return exampleContaining(missWords.recall, missCombo, (w) => used.has(w));
   })();
+
+  // PAUSE TO LEARN (P9c): when MY turn blows up mid-game, the bomb holds (server: learnPauseMs, else ~2 s) and an edge card
+  // shows ONE valid word containing the fragment I missed ("NEXT TIME: SING"), from the same list the game-over hold uses.
+  // Set by the lives diff below; display-only, never touches the socket or the turn.
+  const [learn, setLearn] = useState(null);
+  const learnRef = useRef(null);
+  learnRef.current = (combo) => {
+    if (!combo || !missWords) return;
+    const used = new Set(((gameState && gameState.usedWords) || []).map((w) => String(w).toLowerCase()));
+    const word = exampleContaining(missWords.recall, combo, (w) => used.has(w));
+    if (!word) return;
+    const ms = gameState && Number.isFinite(gameState.learnPauseMs) && gameState.learnPauseMs > 0 ? gameState.learnPauseMs : 2000;
+    setLearn((cur) => ({ word, combo: String(combo).toUpperCase(), ms, key: ((cur && cur.key) || 0) + 1 }));
+  };
 
   // ONE-TIME first-game input spotlight (fix/logic-and-onboarding). MUST live with the other
   // hooks ABOVE the early returns below (the category-blitz branch + the null-gameState
@@ -3354,6 +3379,7 @@ export default function GameScreen({
         /* EDGE FRAME (escalation ladder): the board edge takes the combo tier's colour — a static
            attribute toggle (FeelLadder.css), never animated, kept under reduced motion. */
         data-heat={heatTier(streak.count)}
+        data-hud={SEASON2 ? 'v2' : undefined}
         style={
           railFitted
             ? { '--drain-sat': drainSat, '--wb-railh': `${railFitted.height}px` }
@@ -3402,6 +3428,8 @@ export default function GameScreen({
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
           </div>
+          {/* SEASON 2 HUD (P9c): the alphabet row — the letters YOUR accepted words have used this game. */}
+          {SEASON2 && !isCategory ? <WbAlphabet used={lettersUsed((gameStats.wordsPlayed || []).filter((w) => w.playerId === myId).map((w) => w.word))} /> : null}
           <div className="game-header-right">
             {/* Always rendered. At <=2 players ON A RAILS BOARD the CSS hides it,
                 because the MATCH readout in the right rail carries ROUND and MODE
@@ -3617,6 +3645,8 @@ export default function GameScreen({
                   )}
                   {/* Panic sweat flinging off your own card when time is dire. */}
                   {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
+                  {/* SEASON 2 HUD (P9c): the seat is an UPRIGHT card — a square initial tile in the player's colour. */}
+                  {SEASON2 ? <span className="wb-v2-init" aria-hidden="true" translate="no">{String(player.name || '?').slice(0, 1)}</span> : null}
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                     <span className="game-player-name-text" translate="no">{player.name}</span>
@@ -3690,6 +3720,7 @@ export default function GameScreen({
               ring (see the note there); this cell is the bomb's alone so it can own a
               majority of the circle's free middle. */}
           <div className="wb-core">
+            {SEASON2 && !isCategory ? <WbFuseRing ratio={showCountdown ? 1 : timeRatio} seconds={timerSeconds} critical={critical} /> : null}
         {/* THE FRAGMENT, ON THE BOMB'S BELLY. It used to be a plaque ABOVE the ring, and the
             note there was right that a 76px hero step cannot fit the circle's free middle — so
             this is not that glyph moved, it is a chip SIZED TO THE BELLY (--wb-frag, a share of
@@ -3845,6 +3876,8 @@ export default function GameScreen({
         </div>
 
         <div className="wb-bottombar" ref={wbBarRef}>
+        {/* PAUSE TO LEARN (P9c): an edge card in the bottom cluster (absolute, pointer-events:none), never centre. */}
+        {learn ? <LearnCard key={learn.key} word={learn.word} combo={learn.combo} ms={learn.ms} onDone={() => setLearn(null)} /> : null}
         {isSpectating ? (
           /* Spectators get quick-react buttons where the input used to be. */
           <div className="spectator-reactions">
