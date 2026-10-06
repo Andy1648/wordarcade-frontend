@@ -3,6 +3,37 @@ Source of truth: Andy's goal (oct5 ~19:00) + claude/mockups/v2/progression-v3.md
 Rules: merge each PR when green · never stop to ask except SQL Andy must run · Claude never runs migrations · one heavy local job at a time · e2e + sims on GitHub Actions only · kill preview servers after every run · after a usage limit resume from THIS file · never end a turn while steps remain.
 Every screen: 1280×551, 1366×657, 1920×1080, 390×844 · no text < 13px · no scrollbars · formatNum · transform/opacity only · REDUCE MOTION · before/after shots of each size attached to the PR · screenshot next to its mockup before merging.
 
+## ANDY'S DEFINITIONS (verbatim, oct6 — these rule; order P0 → P2 → P3 → P5 → P6 → P7 → P8 → P4 code → P9 → P10)
+Each = its own PR(s), mockup in claude/mockups/v2/ is the target (build the look exactly, real logic underneath), spec numbers from claude/mockups/v2/progression-v3.md. New screens render v3 behind the SEASON2 flag; live players see no change until the flip.
+
+P3 REBIRTH + SHOP + ACHIEVEMENTS screens
+ - Rebirth.dc.html: HOLD to rebirth (1s charge, shake, flash, slam), ONE at a time, calls lb_rebirth (server-checked, idempotent request id; button disabled until the server answers). YOU GET panel (×2 XP/wins, +gems), UNLOCKS diamond track (R1 ROLL, R2 AUTO ROLL, R3 2nd boost slot, R5 2nd MARK slot, R7 LUCK ×1.25, R10 ASCEND), hexagon plate (NO cog). At R10 an ASCEND action via lb_ascend (★ += R−9).
+ - Shop.dc.html: POWER panel (wins only buy POWER: cost 100×4^P, hold-to-buy, tilted square plate). STOCK grid of 6 gem-priced items with odd prices (45/65/120/150/225/495), rarity bands, ×N LEFT, 5:00 restock timer, SOLD OUT stamp. Everything except POWER costs gems.
+ - Achievements.dc.html: hero next-claim panel, 4×2 grid, tiers I–V, CLAIM pays GEMS (40–200) that fly to the counter, CLAIMED stamp. This is the ONLY place anything is claimed.
+
+P4 THE RESET (code only — Andy runs the SQL and the flip)
+ - Write supabase/migrations/0xx_season2_reset.sql + claude/run-season2.sql: wipe everything except usernames (levels, rebirths, stars, wins, POWER, marks, gems, achievements); gems = round to 5 of (300 + 40 × old rebirths). Safe to re-run (one-shot guard). Never run it.
+ - Season2.dc.html welcome: shown ONCE after the reset — SEASON 2, "SORRY FOR THE MAINTENANCE · EVERYONE STARTS FRESH", OLD RUN R → YOU GET gems, rolls count with "EPIC+ GUARANTEED" when ≥50 rolls, COLLECT flies gems into the wallet. Never a basic popup.
+ - The SEASON2 flag flip is one config line Andy approves ("flip SEASON2").
+
+P5 MENU = #215 (Menu.dc.html): left column wins/gems pills + SHOP/ROLL/INDEX/REBIRTH; top-right leaderboard/stats/achievements; logo; simple XP bar (LV left, xp/need right, starts at 0, wraps on level-up); type-anywhere; game cards centred, scroll sideways; fits 1280×551, 1366×657, 1920×1080, phone.
+
+P6 ROLL + INDEX (Roll.dc.html, Index.dc.html, MarkCard.dc.html): 75 gems a roll; decelerating reel swinging through marks; rarity-scaled reveals; AUTO roll until a chosen rarity; pity bars (EPIC 50 / LEGENDARY 500); INDEX separate screen with locked silhouettes, ★ dupe pips, x/y → ★n; cog ring on marks only (spins EPIC+, rainbow SECRET). No paid luck, no paid-only marks.
+
+P7 POPUP PURGE: remove every centre-screen popup and every menu claim notification (incl. "claimed wins" toasts). Rank-ups pay nothing (status only, shown via the KitLevelUp top-edge banner). Unlocks = edge toasts. Gains = motion on the bar/counters. Achievements page is the only claim place.
+
+P8 STATS + LEADERBOARD (Stats.dc.html, Leaderboard.dc.html): stats = total multiplier FIRST (Balatro-style), tabs, replay. Leaderboard = white podium, rank-title plates (v3 ladder KEYMASH…ENDGAME), ▲▼, pulsing own row (also correct when you ARE top 3), ALL TIME / THIS WEEK. In season 2 board order is ★ → rebirths → level (write that view change as a migration for Andy; never run it).
+
+Then P9, P10 as already queued. STANDING RULES: re-read this checklist before every step; record result + PR # after each; resume from it after a usage limit; never end the turn while steps remain; one heavy local job at a time, CI on GitHub; Claude never runs migrations.
+
+## STATUS BY P
+- P0: #213 merged; #216 open; main E2E green on 4aec9e8 + 9c9b3aa, c13f436 running (agent confirming 3 in a row)
+- P2: progression v3 — #214 MERGED + LIVE (c13f436), flag OFF
+- P3: next to build (after P0 frees the machine)
+- P4: reset — partial work in ../s2reset (paused); merges in its turn (after P8)
+- P5: #215 open, CI red, fix paused (resumes after P0)
+- P6, P7, P8, P9, P10: queued
+
 ## GOAL (Andy): every item P0–P10 merged on main with CI green — except P4's SQL run and the SEASON2 flip (Andy's).
 
 ## PIPELINE (Andy, oct5 late)
