@@ -93,3 +93,37 @@ export function boardMult(v) {
   const n = Number.isFinite(v) ? v : 0;
   return Math.abs(n) >= 10 ? formatNum(n) : formatMultExact(n);
 }
+
+/**
+ * THE CHAIN (P8, claude/mockups/v2/Stats.dc.html) — a stack as the v2 STATS screen plays it: BASE, then one chip per
+ * multiplier in the mockup's order, ending at the TOTAL multiplier (Balatro-style: the total first, then the chain
+ * that makes it). PURE over a statBoard() stack + the v3 numbers it is handed.
+ *
+ * SEASON 2 (`v3` given — the V3 holder from season.js): v3 folds ★ into the REBIRTH factor (2^R × (1 + ★)) and the
+ * XP base is v3's own (econ.XP_BASE, not the live 10), so the chain splits REBIRTH into REBIRTH 2^R + ASCEND (1 + ★),
+ * rebases XP on econ.XP_BASE + the worn mark's +N, and names the SHOP STOCK's timed XP multiplier when one runs.
+ * With the flag off (no `v3`) the chain is the stack's own lines. Either way BASE × every chip = TOTAL
+ * (statBoard.test.js / statChain.s2.test.js).
+ *
+ * Returns { id, base, total, mult, chips: [{ id, label, mult, tag }] } — `mult` = TOTAL / BASE.
+ */
+export function statChain(stack, { v3 = null, stars = 0, markBaseXp: mbx = 0, tags = {} } = {}) {
+  const line = (id) => stack.lines.find((l) => l.id === id) || { mult: 1 };
+  const st = Number.isFinite(stars) && stars > 0 ? Math.floor(stars) : 0;
+  const starM = v3 ? v3.econ.starMult(st) : 1;
+  const chip = (id, label, mult) => ({ id, label, mult: pos(mult), tag: tags[id] || '' });
+  let base = stack.base;
+  let chips;
+  if (stack.id === 'wins') {
+    chips = [chip('rebirth', 'REBIRTH', line('rebirth').mult / starM), chip('mark', 'MARK', line('mark').mult), chip('boost', 'BOOST', line('boost').mult)];
+  } else {
+    chips = [chip('power', 'POWER', line('key').mult), chip('rebirth', 'REBIRTH', line('rebirth').mult / starM), chip('mark', 'MARK', line('mark').mult), chip('boost', 'BOOST', line('boost').mult)];
+    if (v3) {
+      base = v3.econ.XP_BASE + Math.max(0, Number(mbx) || 0);
+      const shop = v3.stock && typeof v3.stock.stockXpMult === 'function' ? pos(v3.stock.stockXpMult()) : 1;
+      if (shop !== 1) chips.push(chip('shop', 'SHOP', shop));
+    }
+  }
+  if (v3) chips.push(chip('ascend', 'ASCEND', starM));
+  return { id: stack.id, base, total: stack.total, mult: base > 0 ? stack.total / base : 1, chips };
+}

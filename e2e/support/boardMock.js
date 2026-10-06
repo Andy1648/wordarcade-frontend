@@ -6,6 +6,7 @@ import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 import { decideSubmit, decideSubmitS2 } from '../../src/leaderboard/submitRules.js';
 import { decideRebirth, decideAscend } from '../../src/leaderboard/rebirthRules.js';
 import { decideSeason2Claim, peekSeason2Grant } from '../../src/leaderboard/season2Rules.js';
+import { s2WeekGains, compareWeekS2 } from '../../src/leaderboard/s2Board.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
 // carries letters; the board ranks by REBIRTHS, then LEVEL, then words (017, Andy oct3 19:55). Without it the mock is the v1 DB (lb_caps 404s).
@@ -26,7 +27,10 @@ import { decideSeason2Claim, peekSeason2Grant } from '../../src/leaderboard/seas
 // and public.leaderboard_s2 ranks ★ → rebirths → level.
 // `season2Reset` emulates 023_season2_reset.sql (THE RESET): lb_caps.season2_reset + lb_season2_grant / lb_season2_claim
 // running the REAL rule (season2Rules.js) on db.grants (profile id → { gems, rebirths, claimed_at, claim_request }).
-export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true, rules = false, econ = false, boardEcon = false, rebirth = null, season2 = false, season2Reset = false } = {}) {
+// `s2Weekly` emulates 024_season2_weekly.sql: public.leaderboard_s2_weekly — season-2 rows ranked by ★ / rebirths /
+// levels GAINED this week (a row's week_* fields, or s2Board.s2WeekGains over its s2_week_* baseline). Off → that view
+// 404s like an unrun migration (the client then reads leaderboard_weekly filtered to econ 13).
+export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true, rules = false, econ = false, boardEcon = false, rebirth = null, season2 = false, season2Reset = false, s2Weekly = false } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
   const rows = db.rows;
@@ -228,8 +232,20 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       });
       return route.fulfill({ status: 204, body: '' });
     }
+    if (season2 && s2Weekly && url.pathname.endsWith('/rest/v1/leaderboard_s2_weekly')) {
+      calls.s2Weekly = (calls.s2Weekly || 0) + 1;
+      const all = rows.filter((r) => r.econ === 13)
+        .map((r) => ({ ...r, stars: r.stars || 0, ...(r.week_stars != null || r.week_rebirths != null || r.week_levels != null ? {} : s2WeekGains(r)) }))
+        .filter((r) => (r.week_stars || 0) > 0 || (r.week_rebirths || 0) > 0 || (r.week_levels || 0) > 0 || (r.week_words || 0) > 0)
+        .sort(compareWeekS2)
+        .map((r, i) => ({ rank: i + 1, id: r.id, username: r.username, level: r.level, rebirths: r.rebirths, stars: r.stars, week_stars: r.week_stars || 0, week_rebirths: r.week_rebirths || 0, week_levels: r.week_levels || 0, week_words: r.week_words || 0 }));
+      const id = url.searchParams.get('id');
+      return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
+    }
     if (weekly && url.pathname.endsWith('/rest/v1/leaderboard_weekly')) {
-      const all = rows.filter((r) => (r.week_words || 0) > 0).slice()
+      // 021's view carries econ: `econ=eq.13` (the season-2 client's fallback before 024) keeps season-2 rows only
+      const econEq = /^eq\.(\d+)$/.exec(url.searchParams.get('econ') || '');
+      const all = rows.filter((r) => (r.week_words || 0) > 0 && (!econEq || r.econ === Number(econEq[1]))).slice()
         .sort((a, b) => b.week_words - a.week_words || b.level - a.level)
         .map((r, i) => ({ rank: i + 1, id: r.id, username: r.username, level: r.level, rebirths: r.rebirths, week_words: r.week_words }));
       const id = url.searchParams.get('id');

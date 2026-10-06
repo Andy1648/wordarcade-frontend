@@ -413,20 +413,27 @@ export async function fetchBoard(limit = BOARD_SIZE) {
 }
 
 // ---- BB3: THIS WEEK (013_weekly_board.sql) ------------------------------------------------------
-/** The weekly board (words typed this ET week; resets Monday 00:00 ET in the DB) + my own row. */
-export async function fetchWeekly(limit = BOARD_SIZE) {
+/**
+ * A rank-ordered board view + my own row when I am past `limit`. `filter` is extra PostgREST query (e.g. "&econ=eq.13").
+ * A failure throws { code: 'http_<status>', status } (the season-2 board reads a 404 as "024 not run yet").
+ */
+export async function fetchView(view, cols, limit = BOARD_SIZE, filter = '') {
   if (!LEADERBOARD_ENABLED) return { rows: [], me: null };
-  const cols = 'rank,id,username,level,rebirths,week_words';
-  const r = await fetch(`${BASE}/rest/v1/leaderboard_weekly?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
-  if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { code: `http_${r.status}` });
+  const q = `${BASE}/rest/v1/${view}?select=${cols}${filter}`;
+  const r = await fetch(`${q}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { code: `http_${r.status}`, status: r.status });
   const rows = await r.json();
   const mine = getMyProfile();
   let me = null;
   if (mine && mine.id && !rows.some((x) => x.id === mine.id)) {
-    const r2 = await fetch(`${BASE}/rest/v1/leaderboard_weekly?select=${cols}&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
+    const r2 = await fetch(`${q}&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
     if (r2.ok) me = (await r2.json())[0] || null;
   }
   return { rows, me };
+}
+/** The weekly board (words typed this ET week; resets Monday 00:00 ET in the DB) + my own row. */
+export function fetchWeekly(limit = BOARD_SIZE) {
+  return fetchView('leaderboard_weekly', 'rank,id,username,level,rebirths,week_words', limit);
 }
 
 const DOW = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };

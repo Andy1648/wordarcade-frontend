@@ -16,13 +16,19 @@ import { formatNum, formatMult } from '../format';
 import { createCountUp } from '../juice/countUp';
 import './WinnerPopup.css';
 import { reduceMotion } from '../lib/reduceMotion';
+import { SEASON2 } from '../progress/season';
 
 const HOLD_MS = 3800; // pop-in + the (up to 2 s) count + a beat to read it; the fade-out starts here
 
 const reducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, not the OS
 
 /** @param {{ pay: { wins:number, mult:number, tier:string, note:string|null } }} props */
-export default function WinnerPopup({ pay }) {
+// P7 POPUP PURGE (SEASON2 only): the centre WINNER card is gone — the result screen's placement + receipt say it, and the wins count up on the pill. Flag OFF: unchanged.
+export default function WinnerPopup(props) {
+  return SEASON2 ? null : <WinnerPopupLive {...props} />;
+}
+
+function WinnerPopupLive({ pay }) {
   const [reduce] = useState(reducedMotion);
   const [phase, setPhase] = useState('in'); // 'in' → 'out' → 'gone'
   const numRef = useRef(null);

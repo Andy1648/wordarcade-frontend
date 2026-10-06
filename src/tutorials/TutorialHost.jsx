@@ -4,7 +4,7 @@
 // moments queue (lib/moments.js) at PRIORITY.TUTORIAL, the lowest, so the wall, a tier-up, a rank-up or the
 // claim popup always play first, and an open panel (which holds the queue) keeps it waiting. No polling.
 // Menu-only by construction — a game in progress never sees it. (MARKS and SHOP host their own.)
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SpotlightTutorial from './SpotlightTutorial.jsx';
 import { dueTutorial, hasSeenTutorial, markTutorialSeen, initTutorials } from './registry.js';
 import { hasVisibleTarget } from './spotlightLayout.js';
@@ -12,6 +12,15 @@ import { marksRevealed } from '../progress/marks.js';
 import { rebirthThreshold } from '../progress/xp.js';
 import { useMomentSlot } from '../lib/useMomentSlot.js';
 import { momentOpts } from '../lib/menuMoments.js';
+import { SEASON2, V3 } from '../progress/season.js'; // P7: V3.toast = the kit's right-edge toast (v3 chunk)
+
+// P7 POPUP PURGE (SEASON2 only): "unlocks = edge toasts". A due menu tutorial is said ONCE as a right-edge toast
+// (KitEdgeToast, hosted by the menu's S2Notify) instead of a screen-dimming spotlight; it is marked seen the same way.
+// (Season-2 copy: a rebirth is ×2 there, so the live "×5" line is not reused.) Flag OFF: the spotlight, unchanged.
+const S2_TIP = {
+  rebirth: { head: 'READY', code: '×2', label: 'REBIRTH', icon: 'rebirth', tile: '#FF3D7F' },
+  gems: { head: 'NEW', label: 'GEMS PAY FOR ROLLS', icon: 'gems', tile: '#2EFFE0' },
+};
 
 function snapshotFor(level, rebirths) {
   return {
@@ -36,7 +45,14 @@ export default function TutorialHost({ level, rebirths }) {
   // so the next due one queues afresh once this one is marked seen)
   const opts = useMemo(() => momentOpts('tutorial', due ? `tutorial:${due.id}` : 'tutorial'), [due]);
   const [on, release] = useMomentSlot(!!due, opts);
-  if (!due || !on) return null;
+  useEffect(() => {
+    if (!SEASON2 || !due || !on) return;
+    V3.toast(S2_TIP[due.id] || { head: 'NEW', label: due.line, icon: 'levels', tile: '#FFE94A' });
+    markTutorialSeen(due.id);
+    release();
+    setTick((n) => n + 1);
+  }, [due, on, release]);
+  if (SEASON2 || !due || !on) return null;
   return (
     <SpotlightTutorial
       key={due.id}
