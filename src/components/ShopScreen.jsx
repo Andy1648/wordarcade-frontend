@@ -4,7 +4,7 @@
 // (OWNED / EQUIPPED state; unaffordable items visible-but-dimmed). REBIRTH: count, multiplier,
 // next threshold, what's lost/kept, and the action (disabled with the requirement shown when
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { takeRebirthNow, peekRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
@@ -31,6 +31,7 @@ const LIVE_PERKS = PERKS.filter((p) => !RETIRED_PERKS.has(p.id));
 import ShopSticker from './ShopSticker';
 import RedeemCodes from './RedeemCodes';
 import RebirthCeremony from './RebirthCeremony';
+import OverlaySkeleton from './OverlaySkeleton';
 import { ownedMarkIds } from '../progress/marks';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { LEADERBOARD_ENABLED } from '../leaderboard/client';
@@ -47,7 +48,22 @@ import { dueHosted, hasSeenTutorial, markTutorialSeen } from '../tutorials/regis
 
 const itemPrice = (id) => (SEASON2 ? V3.hooks.itemGemPrice(id) : (POP_STYLES.find((i) => i.id === id) || SOUND_PACKS.find((i) => i.id === id) || { price: Infinity }).price);
 
-export default function ShopScreen({ onBack, initialView = 'shop' }) {
+// P3 (SEASON2 only): the v2 SHOP (claude/mockups/v2/Shop.dc.html — POWER + the gem STOCK) — its own lazy chunk.
+// With the flag OFF the live SHOP below is untouched.
+const ShopV2 = lazy(() => import('./ShopV2.jsx'));
+
+export default function ShopScreen(props) {
+  if (SEASON2 && props.initialView !== 'rebirth') {
+    return (
+      <Suspense fallback={<OverlaySkeleton title="SHOP" />}>
+        <ShopV2 onBack={props.onBack} />
+      </Suspense>
+    );
+  }
+  return <ShopScreenLive {...props} />;
+}
+
+function ShopScreenLive({ onBack, initialView = 'shop' }) {
   useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
   // Opened by REBIRTH READY (see the layout effect below): the panel stays hidden under the ceremony.
