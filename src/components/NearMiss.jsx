@@ -10,8 +10,14 @@ import { useState } from 'react';
 import { flagOn } from '../lib/featureFlags';
 import { nearMissNow } from '../progress/nearMissData';
 import './NearMiss.css';
+import { SEASON2 } from '../progress/season';
 
-export default function NearMiss({ mode, onPlay, disabled = false, look }) {
+// P7 POPUP PURGE (SEASON2 only): no near-miss sticker on the end screen — the XP bar shows how close the next level is. Flag OFF: unchanged.
+export default function NearMiss(props) {
+  return SEASON2 ? null : <NearMissLive {...props} />;
+}
+
+function NearMissLive({ mode, onPlay, disabled = false, look }) {
   const [line] = useState(() => (flagOn('nearmiss') ? nearMissNow(mode) : null));
   if (!line) return null;
   return (
