@@ -15,7 +15,8 @@ import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
 import ResultsCard from './results/ResultsCard.jsx';
 import { placementOrder, xpBetween } from './results/resultsModel.js';
-import { progressOf, loadProgress, need as levelNeed } from '../progress/xp';
+import { SEASON2, V3 } from '../progress/season';
+import { progressOf, loadProgress, need as levelNeed, getRebirths } from '../progress/xp';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import { exampleContaining } from '../progress/teachExample.js';
 import { WordPayout } from './PayoutBreakdown';
@@ -3876,12 +3877,18 @@ export default function GameScreen({
             for (const w of gameStats.wordsPlayed || []) wordsBy[w.playerId] = (wordsBy[w.playerId] || 0) + 1;
             const table = placementOrder({ players, winnerId: gameOver.winnerId, elimOrder: gemElimRef.current, wordsBy }).map((r) => ({ ...r, me: r.id === myId }));
             const meRow = table.find((r) => r.me);
+            // SEASON 2 (FINAL): the REBIRTH factor is 2^R × (1 + ★) — shown as its two FINAL chips
+            let resultsSplit = null;
+            try {
+              if (SEASON2 && V3.econ && V3.store) resultsSplit = { rebirth: V3.econ.rebirthMult(getRebirths()), star: V3.econ.starMult(V3.store.getStarsV3()) };
+            } catch { resultsSplit = null; }
             const place = meRow ? meRow.place : iWon ? 1 : table.length;
             const best = mine.reduce((a, w) => (w.length > a.length ? w : a), '');
             return (
               <ResultsCard
                 key={`rs-${gameNonce}`}
                 cardRef={goCardRef}
+                split={resultsSplit}
                 iWon={iWon}
                 place={place}
                 of={Math.max(1, table.length)}

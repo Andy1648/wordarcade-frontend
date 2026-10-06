@@ -127,7 +127,7 @@ function N({ to, at, ms = T.count, prefix = '', className = '' }) {
  * @param {React.ReactNode} p.actions the exits row (PLAY AGAIN / MENU / offer)
  * @param {React.ReactNode} p.extras  rebirth-ready, claim prompt, near miss, try-a-mode
  */
-export default function ResultsCard({ cardRef, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null }) {
+export default function ResultsCard({ cardRef, split = null, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null }) {
   const local = useRef(null);
   const root = cardRef || local;
   // ONE drawing (the mockup's 1366×657 sheet) scaled by --rs-k to the window; a phone gets its own stack.
@@ -147,7 +147,7 @@ export default function ResultsCard({ cardRef, iWon, place, of, winnerName = '',
   }, []);
   const gemsBal = useGems();
   const { lines, total } = tallyLines({ wordsWins, bonusLines, ledger });
-  const chain = chainOf(ledger, wordsWins);
+  const chain = chainOf(ledger, wordsWins, split);
   const stamp = stampFor(place, iWon);
   const bestWord = `${me.best || ''}`.toUpperCase();
   const lvGain = xp && xp.to && xp.from ? Math.max(0, Math.floor(xp.to.level) - Math.floor(xp.from.level)) : 0;

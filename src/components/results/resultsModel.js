@@ -50,11 +50,24 @@ export function xpBetween(a, b, need, { maxLevels = 4000 } = {}) {
   return s + fb * need(lb);
 }
 
-/** The multiplier chain: { base, mult, chips: [{ key, label, mult }] } — the payout ledger's rows, biggest first. */
-export function chainOf(ledger, wordsWins) {
+/**
+ * The multiplier chain: { base, mult, chips: [{ key, label, mult }] } — the payout ledger's rows, biggest first.
+ * `split` (SEASON 2, PROGRESSION FINAL): the ledger's REBIRTH row is 2^R × (1 + ★) there; given { rebirth, star } it is
+ * shown as its two FINAL factors — REBIRTH ×2^R and ★ ×(1 + ★) — so the chain reads like the FINAL formula.
+ */
+export function chainOf(ledger, wordsWins, split = null) {
   const base = ledger && Number.isFinite(ledger.base) ? Math.max(0, ledger.base) : 0;
   const words = Math.max(0, Number(wordsWins) || 0);
-  const chips = ((ledger && ledger.rows) || []).filter((r) => r && Number.isFinite(r.mult) && Math.abs(r.mult - 1) > 0.004).map((r) => ({ key: r.key, label: r.label, mult: r.mult }));
+  const chips = [];
+  for (const r of (ledger && ledger.rows) || []) {
+    if (!r || !Number.isFinite(r.mult) || Math.abs(r.mult - 1) <= 0.004) continue;
+    if (r.key === 'rebirth' && split && Number.isFinite(split.rebirth) && Number.isFinite(split.star)) {
+      if (Math.abs(split.rebirth - 1) > 0.004) chips.push({ key: 'rebirth', label: 'REBIRTH', mult: split.rebirth });
+      if (Math.abs(split.star - 1) > 0.004) chips.push({ key: 'star', label: '★', mult: split.star });
+      continue;
+    }
+    chips.push({ key: r.key, label: r.label, mult: r.mult });
+  }
   return { base, mult: base > 0 ? words / base : 0, chips };
 }
 

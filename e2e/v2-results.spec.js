@@ -18,20 +18,21 @@ const ME = 'e2e-player';
 const NAMES = ['YOU', 'RIVAL', 'KIMBERLY', 'SAMWISE', 'LEXI', 'ZZZAP'];
 const WORDS = ['STRAND', 'INSTRUCT', 'STRONGEST', 'ASTRAY', 'DESTROY', 'STRIPE', 'CONSTRUCT', 'STRESS', 'STRAW', 'STREAM', 'MISTRUST', 'STRUT', 'STRIKE', 'STRING', 'STROLL', 'STRUCK', 'STRAIN', 'STRANGE'];
 
-async function play(page, { outcome, place = 3, reduce = false, vp = { width: 1366, height: 657 } }) {
+async function play(page, { outcome, place = 3, reduce = false, vp = { width: 1366, height: 657 }, season2 = false, seed = {} }) {
   await page.setViewportSize(vp);
   await page.emulateMedia({ reducedMotion: reduce ? 'reduce' : 'no-preference' });
   const mock = await installBackendMock(page);
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.continue());
-  await page.addInitScript((reduce) => {
+  await page.addInitScript(({ reduce, seed }) => {
     if (sessionStorage.getItem('rs.seeded')) return;
     sessionStorage.setItem('rs.seeded', '1');
+    for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.seenGameSpotlight', '1');
     localStorage.setItem('taw.reduceMotion', reduce ? '1' : '0');
-  }, reduce);
-  await page.goto('/?portal=1');
+  }, { reduce, seed });
+  await page.goto(`/?portal=1${season2 ? '&season2=1' : ''}`);
   await menuReady(page);
   const players = NAMES.map((name, i) => ({ id: i ? `p${i + 1}` : ME, name, lives: 3, isHost: i === 0 }));
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players } });
@@ -165,3 +166,19 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     expect(m.play, 'PLAY AGAIN on screen').toBe(true);
   });
 }
+
+test('SEASON 2 (PROGRESSION FINAL): the chain shows REBIRTH ×2^R and ★ ×(1 + ★) as their own chips; lines still sum', async ({ page }) => {
+  test.setTimeout(90_000);
+  await play(page, { outcome: 'win', season2: true, seed: { 'taw.s2.rebirths': '2', 'taw.s2.stars': '1', 'taw.s2.xp': JSON.stringify({ lv: 5, f: 0.1, rc: 2, v: 10 }) } });
+  const card = page.locator('.rs2');
+  await expect(card).toHaveAttribute('data-tally', 'done', { timeout: 12_000 });
+  const chips = await card.locator('.rs2-chip').allTextContents();
+  expect(chips.join(' | ')).toContain('×4REBIRTH');
+  expect(chips.join(' | ')).toContain('×2★');
+  const shown = await page.evaluate(() => ({
+    total: Number(document.querySelector('[data-wins-total]').getAttribute('data-wins-total')),
+    sum: [...document.querySelectorAll('.rs2 [data-wins-line]')].reduce((a, n) => a + Number(n.getAttribute('data-wins-amount')), 0),
+  }));
+  expect(shown.total).toBe(shown.sum);
+  expect(shown.total).toBeGreaterThan(0);
+});

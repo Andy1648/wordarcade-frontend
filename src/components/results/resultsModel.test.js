@@ -59,3 +59,11 @@ test('stamp: WIN / TOP 3 / KO\'D', () => {
   assert.equal(stampFor(3, false).text, 'TOP 3');
   assert.equal(stampFor(4, false).text, "KO'D");
 });
+
+test('SEASON 2 (FINAL): the REBIRTH row splits into REBIRTH ×2^R and ★ ×(1 + ★)', () => {
+  const ledger = { base: 40, rows: [{ key: 'rebirth', label: 'REBIRTH', mult: 16 }, { key: 'bonus', label: 'MARK', mult: 1.5 }] };
+  const c = chainOf(ledger, 960, { rebirth: 8, star: 2 });
+  assert.deepEqual(c.chips.map((x) => [x.label, x.mult]), [['REBIRTH', 8], ['★', 2], ['MARK', 1.5]]);
+  assert.equal(c.mult, 24);
+  assert.deepEqual(chainOf(ledger, 960, { rebirth: 8, star: 1 }).chips.map((x) => x.label), ['REBIRTH', 'MARK']);
+});
