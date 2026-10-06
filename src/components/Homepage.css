@@ -287,8 +287,6 @@ html[data-beat='true'] .homepage-logo {
 }
 .hp-chip:active { transform: translate(3px, 3px); }
 
-/* The removed TYPE ANYTHING row's height, held empty so the card fit-math sees the same centre cluster. */
-.hp-typed-slot { height: var(--fs-hp30); pointer-events: none; }
 
 /* ---- the cards: the EXISTING GameCards, sized by the fit-math in Homepage.jsx ---- */
 .homepage-cards-region {
@@ -430,3 +428,7 @@ html[data-beat='true'] .homepage-logo {
   color: #FFE94A;
   white-space: nowrap;
 }
+
+/* Andy oct6: with the TYPE ANYTHING row gone the cards grow into the bottom of the stage — while the (fixed, bottom-
+   centre) REWARDS popup shows, the cards' region keeps its height clear so no card text sits under it. */
+body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bottom: 64px; }
