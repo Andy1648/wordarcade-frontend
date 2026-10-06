@@ -22,7 +22,8 @@ test('season-2 constants: econ 13; level room = 4 × ⌈100 × 2.5^R⌉ (capped 
   assert.equal(S2_ECON, 13);
   assert.equal(SEASON2_ECON, 13);
   assert.deepEqual([0, 1, 5, 9, 10].map(s2LevelRoom), [400, 1000, 39064, 1525880, 3814700]);
-  assert.equal(s2LevelRoom(10), 4 * serverGate(10, 2));
+  assert.equal(s2LevelRoom(10), 4 * Math.ceil(100 * 2.5 ** 10)); // 022's v3 room (026 re-sizes it — finalRules.test.js)
+  assert.equal(serverGate(10, 2), 275, 'season 2 is FINAL now (026)');
   assert.equal(s2LevelRoom(500), S2_LV_MAX);
 });
 
@@ -71,7 +72,7 @@ test('econ-13 guard: a season-2 rebirth / ascension needs a season-2 row', () =>
   assert.equal(decideRebirth(s1, { requestId: UUID(1), season: 2 }, [], T0).result.reason, 'season');
   assert.equal(decideAscend(s1, { requestId: UUID(2), season: 2 }, [], T0).result.reason, 'season');
   const s2 = { ...s1, econ: 13 };
-  assert.equal(decideAscend(s2, { requestId: UUID(3), season: 2 }, [], T0).result.stars, 3);
+  assert.equal(decideAscend(s2, { requestId: UUID(3), season: 2 }, [], T0).result.stars, 1); // FINAL (026): +1 ★
   assert.equal(decideRebirth({ ...s2, level: 100, rebirths: 0 }, { requestId: UUID(4), season: 2 }, [], T0).result.ok, true);
   // 021 callers that carry no econ are unchanged; season 0 never needs it
   assert.equal(decideRebirth({ level: 100, rebirths: 0 }, { requestId: UUID(5), season: 2 }, [], T0).result.ok, true);

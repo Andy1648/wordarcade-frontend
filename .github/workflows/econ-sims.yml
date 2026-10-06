@@ -70,11 +70,11 @@ jobs:
             claude/econ-oct2/loop-sim-ci-*.json
           retention-days: 14
 
-  # SEASON2 (PROGRESSION v3, Andy oct5 phase 3): loop-sim's v3 mode (SIM_SEASON2=1) — the spec's bots (casual 60/8,
-  # median 100/14, fast 160/26) + the SPAMMER and the MASHER, 10 h, through the shipped v3 code behind the flag. FAILS on
-  # its HARD CHECK (any bot > 2x the median's rebirths at 60/300/600 min, FAST > 2x the median's pace to R1/R5/R10, a
-  # server grant below the v3 gate, or the spammer not ending level with the median). The targets table (first time
-  # to R1 / R5 / R10 vs the spec, levels at 10 h) goes into the job summary.
+  # SEASON2 = PROGRESSION FINAL (claude/progression-FINAL.md, FROZEN): claude/econ-oct2/final-sim.mjs — the python
+  # reference sim ported onto the REAL modules behind the flag (casual / median / fast / menu-only + MASHER + SPAMMER,
+  # 40 h). FAILS on any miss: a FINAL-table cell (R1/R3/R5/R10/★1/★2 first times) outside ±25%, FAST > 2x the median's
+  # pace, the MASHER earning levels, the SPAMMER not ending level with the median, or a server grant below the FINAL gate.
+  # The table goes into the job summary. (s2probes: constant probes through loop-sim's v3 mode, unchanged.)
   season2:
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -85,20 +85,20 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: SEASON2 10 h (v3 targets + HARD CHECK)
+      - name: PROGRESSION FINAL 40 h (FINAL table ±25% + HARD CHECK)
         env:
           S2PROBES: ${{ github.event.inputs.s2probes || '' }}
         run: |
           set +e
-          SIM_SEASON2=1 SIM_SRC=src node claude/econ-oct2/loop-sim.mjs --tag=ci-s2 --hours="${{ github.event.inputs.hours || '10' }}" > s2-run.txt 2>&1
+          SIM_SRC=src node claude/econ-oct2/final-sim.mjs --tag=ci > final-run.txt 2>&1
           rc=$?
           set -e
-          cat s2-run.txt
+          cat final-run.txt
           {
-            echo '## SEASON2 (progression v3) — first time to R1 / R5 / R10 vs the spec'
-            grep -E '^\|' s2-run.txt || true
+            echo '## PROGRESSION FINAL — real-module sim vs claude/progression-FINAL.md (±25%)'
+            grep -E '^\|' final-run.txt || true
             echo '```'
-            grep -E '^=== S2|first time to|at 10 h|S2 HARD|FAST pace|[0-9]+m: |server\[|SPAMMER|WINS by|GEMS ' s2-run.txt || true
+            grep -E '^=== FINAL|first:|at [0-9]+ h:|MISS' final-run.txt || true
             echo '```'
             echo "exit code: $rc"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -109,7 +109,7 @@ jobs:
             { echo '## SEASON2 probes'; cat s2-probes.txt; } >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "$rc" -ne 0 ]; then
-            echo "::error::SEASON2 HARD CHECK failed — a bot beat 2x the median's pace, or the server granted a rebirth below the v3 gate"
+            echo "::error::PROGRESSION FINAL sim missed — a FINAL-table cell outside ±25%, FAST > 2x median, the masher earned levels, the spammer diverged, or a server grant broke the FINAL gate"
             exit 1
           fi
       - uses: actions/upload-artifact@v4
@@ -117,9 +117,9 @@ jobs:
         with:
           name: econ-sims-season2
           path: |
-            s2-run.txt
+            final-run.txt
             s2-probes.txt
-            claude/econ-oct2/loop-sim-ci-s2*.json
+            claude/econ-oct2/final-sim-ci.json
           retention-days: 14
 
   long-run:
