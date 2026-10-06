@@ -7,6 +7,7 @@
 // pops it out (240 ms) before it unmounts. The mockup's 2.8 s nudge LOOP is played once on arrival.
 import { useEffect, useRef, useState } from 'react';
 import { FX, fx } from './motion.js';
+import './motionMore.js';
 import { formatNum } from '../../format.js';
 import './tokens.css';
 import './KitBadge.css';

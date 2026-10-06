@@ -12,6 +12,7 @@ import * as store from './store.js';
 import * as unlocks from './unlocks.js';
 import * as ranks from './ranks.js';
 import * as hooks from './hooks.js';
+import * as stock from './stock.js'; // the SHOP's STOCK (P3) — ShopV2 reads it as V3.stock
 import { __v3 as xpV3, storedLevel } from '../xp.js';
 import { __v3 as starsV3 } from '../stars.js';
 import { __v3 as gemsV3, dropGemsForWord, gemsMigrated, stampGemsMigrated } from '../gemsCore.js';
@@ -35,7 +36,7 @@ if (!V3.ready) {
   boostV3(hooks.boostSwap(codeBoostMult, startBoost));
   winsV3({ a: hooks.countingBank(bankWordWins) });
   gemsResultV3({ a: hooks.flatStreak(gameResultPayout), b: hooks.countingResult(payGameResult) });
-  Object.assign(V3, { econ, curve, store, unlocks, ranks, hooks, m: hooks.mark2Factor, ready: true });
+  Object.assign(V3, { econ, curve, store, unlocks, ranks, hooks, stock, m: hooks.mark2Factor, ready: true });
   try {
     if (!gemsMigrated()) stampGemsMigrated({ peak: storedLevel() });
   } catch {

@@ -48,7 +48,7 @@ test.describe('menu XP', () => {
     // keystroke, that count must be zero (the lerp has settled and scheduled nothing more).
     const xpFramesAtRest = await page.evaluate(async () => {
       const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-      const fill = document.querySelector('.menu-xp-fill');
+      const fill = document.querySelector('.menu-xp-bar .kx-fill'); // v2 menu: KitXpBar's fill
       // Wait for the initial mount fill-in glide to settle to a true resting bar — poll the
       // transform until it stops changing (frame-count robust; no fixed wall-clock guess).
       const settle = async () => {

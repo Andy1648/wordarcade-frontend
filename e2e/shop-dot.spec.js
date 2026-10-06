@@ -3,7 +3,7 @@
 // since STEP 50) still counted, so 60+ wins lit the dot with nothing on the shelf.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, navControl } from './support/menu.js';
+import { menuReady, navControl, navDot } from './support/menu.js';
 
 async function menuWith(page, seed) {
   await installBackendMock(page);
@@ -17,7 +17,7 @@ async function menuWith(page, seed) {
   await menuReady(page);
 }
 
-const shopDot = (page) => navControl(page, 'shop').locator('.homepage-shop-dot, .hp-m-dot');
+const shopDot = (page) => navDot(page, 'shop');
 
 test('a fresh LV1 profile with 0 wins shows no shop dot', async ({ page }) => {
   await menuWith(page, { 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1' });

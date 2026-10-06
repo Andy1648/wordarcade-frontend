@@ -7,6 +7,7 @@
 // Both are WAI-ARIA tablists: roving tabindex, ←/→/Home/End move AND select (automatic activation).
 import { useEffect, useRef } from 'react';
 import { FX, fx } from './motion.js';
+import './motionMore.js';
 import './tokens.css';
 import './KitTabs.css';
 

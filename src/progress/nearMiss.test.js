@@ -62,9 +62,9 @@ test('KEY TIER: words = (cost − balance) / wins per word; picked when it is th
   const k = nearMiss({ level: 10, frac: 0, ...flat, avgWords: 15, key: { tier: 4, cost: 12960, balance: 12500, rate: 80 } });
   // 460/80 = 5.75 words → KEY wins, rounded UP to whole words
   assert.equal(k.kind, 'key');
-  assert.equal(k.text, 'KEY TIER 5 IN 6 WORDS');
+  assert.equal(k.text, 'POWER 5 IN 6 WORDS');
   const one = nearMiss({ level: 10, frac: 0, ...flat, avgWords: 15, key: { tier: 0, cost: 10, balance: 5, rate: 40 } });
-  assert.equal(one.text, 'KEY TIER 1 IN 1 WORD');
+  assert.equal(one.text, 'POWER 1 IN 1 WORD');
 });
 
 test('KEY TIER already affordable is not a near miss', () => {

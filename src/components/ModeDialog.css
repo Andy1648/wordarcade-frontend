@@ -366,6 +366,19 @@
   transform: skewX(-2deg) translateY(-4px);
   box-shadow: 6px 6px 0 #000;
 }
+/* THE LIFT KEEPS ITS HIT AREA. A hover that moves the button 4px up also moved its bottom edge out from under a
+   cursor parked there — un-hover, drop back, re-hover: a 4px flicker forever (CI caught it: a pointer left on a card
+   that sits under PLAY's bottom edge made PLAY "not stable"). The pseudo-element fills the gap under the lifted
+   button, so the cursor is still over it. Invisible, no layout. */
+.mode-dialog-btn { position: relative; }
+.mode-dialog-btn:hover::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+}
 .mode-dialog-btn:active {
   transform: skewX(-2deg) scale(0.95);
   box-shadow: 2px 2px 0 #000;
