@@ -52,7 +52,7 @@
   justify-content: center;
   background: var(--k-yellow);
   border: var(--k-ink-s) solid var(--k-ink);
-  font-size: var(--fs-k14, 14px);
+  font-size: var(--fs-k14);
   color: var(--k-ink);
 }
 .ket-text {

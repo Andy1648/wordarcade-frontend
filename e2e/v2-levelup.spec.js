@@ -10,7 +10,8 @@
 //   * REDUCE MOTION: the banner still shows (no animation), nothing runs.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady } from './support/menu.js';
+import { menuReady, navControl } from './support/menu.js';
+import { mockBoard } from './support/boardMock.js';
 
 const V3_LADDER = ['KEYMASH', 'TYPO', 'CLACKER', 'HOTKEY', 'INKSTORM', 'WORDSMITH', 'KEYFIEND', 'CAPSLOCK', 'OVERCLOCK', 'GLYPHLORD', 'LEXIBEAST', 'VOIDTYPER', 'ASCENDANT', 'OMNIKEY', 'FINAL BOSS', 'ENDGAME'];
 
@@ -141,3 +142,60 @@ test('menu XP bar (live): a multi-level gain wraps ≤ 3 times, "+N LV" chip sli
   expect(r.end).toBe(r.real);
   expect(r.state).toBe('rest');
 });
+
+// THE BOARD: every name wears its SHAPED plate (FIT mode) — podium and rows — with the v3 title, never under 13 px.
+const SECRET = 'b8'.repeat(24);
+const FUTURE = Date.now() + 3_600_000;
+const row = (id, username, o) => ({ id, username, level: 10, rebirths: 0, stars: 0, lifetime_words: 500, lifetime_letters: 2500, wins_per_word: 10, econ: 13, submitted_at: FUTURE, ...o });
+const BOARD = [
+  row('a', 'NOVA', { stars: 20, rebirths: 4, level: 900 }), row('b', 'KIRA', { stars: 5, rebirths: 11 }), row('c', 'ZED', { stars: 1, rebirths: 10 }),
+  row('d', 'MOXIE', { stars: 10 }), row('e', 'PIXEL', { stars: 3, rebirths: 8 }), row('f', 'RUNE', { rebirths: 10 }), row('g', 'VEX', { rebirths: 8 }),
+  row('h', 'ORBIT', { rebirths: 6 }), row('i', 'JUNO', { rebirths: 5 }), row('j', 'QUILL', { rebirths: 4 }),
+];
+const TITLE = { a: 'ENDGAME', b: 'OMNIKEY', c: 'VOIDTYPER', d: 'FINAL BOSS', e: 'ASCENDANT', f: 'LEXIBEAST', g: 'OVERCLOCK', h: 'KEYFIEND', i: 'WORDSMITH' }; // (#10 QUILL gives its row to YOU, pinned)
+
+for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
+  test(`SEASON2 board @${vp.width}: the 16-step shaped plates sit next to every name (podium + rows), ≥ 13 px`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await installBackendMock(page);
+    const shared = { rows: [...BOARD.map((x) => ({ ...x })), row('me', 'NOBUFF', { rebirths: 3, level: 60 })], secrets: new Map([[SECRET, 'me']]), saves: new Map() };
+    await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, weekly: true, rebirth: { delayMs: 0 }, season2: true });
+    await page.addInitScript((secret) => {
+      if (sessionStorage.getItem('lub.seeded')) return;
+      sessionStorage.setItem('lub.seeded', '1');
+      localStorage.setItem('taw.seenMenu', '1');
+      localStorage.setItem('taw.seenMenuSpotlight', '1');
+      localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'me', username: 'NOBUFF' }));
+      localStorage.setItem('taw.lb.secret', secret);
+      localStorage.setItem('taw.econ', '12');
+      localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 60, f: 0.1, rc: 3, v: 10 }));
+      localStorage.setItem('taw.s2.rebirths', '3');
+    }, SECRET);
+    await page.goto('/?portal=1&season2=1');
+    await navControl(page, 'leaderboard').click();
+    const lb = page.locator('.lb2');
+    await expect(lb.locator('.lb2-col--1')).toHaveAttribute('data-id', 'a', { timeout: 10_000 });
+    for (const [id, title] of Object.entries(TITLE)) {
+      const where = lb.locator(`.lb2-col[data-id="${id}"] .lb2-pod-plate, .lb2-row[data-id="${id}"] .lb2-plate`); // podium (★20, ★10, ★5) or row
+      await expect(where).toHaveAttribute('data-rank-title', title);
+      await expect(where).toHaveClass(/(^| )krp( |$)/);
+      expect(await where.locator('svg path').count(), `${title} is the shaped SVG plate`).toBeGreaterThanOrEqual(4);
+      await expect(where.locator('.krp-name')).toHaveText(title);
+    }
+    await expect(lb.locator('.lb2-row.is-me .lb2-plate')).toHaveAttribute('data-rank-title', 'HOTKEY');
+    await expect(lb.locator('.lb2-climb .lb2-next')).toHaveAttribute('data-rank-title', 'INKSTORM');
+    const sizes = await lb.locator('.krp-name').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);
+    // each row plate stays inside its row (no spill onto the neighbours)
+    const spill = await lb.locator('.lb2-row').evaluateAll((rows) => rows.filter((r) => {
+      const p = r.querySelector('.lb2-plate');
+      if (!p) return false;
+      const a = r.getBoundingClientRect();
+      const b = p.getBoundingClientRect();
+      return b.top < a.top - 1 || b.bottom > a.bottom + 1;
+    }).length);
+    expect(spill, 'row plates fit their rows').toBe(0);
+    const sc = await page.evaluate(() => ({ h: document.documentElement.scrollWidth > innerWidth, v: document.documentElement.scrollHeight > innerHeight }));
+    expect(sc).toEqual({ h: false, v: false });
+  });
+}

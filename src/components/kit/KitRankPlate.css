@@ -18,11 +18,38 @@
   justify-content: center;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: 13px;
+  font-size: var(--fs-k13);
   line-height: 1;
   white-space: nowrap;
   color: var(--krp-txt, #fff);
 }
 .krp-name.is-stroked { -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.krp-m .krp-name { font-size: 14px; }
-.krp-l .krp-name { font-size: 16px; }
+.krp-m .krp-name { font-size: var(--fs-k14); }
+.krp-l .krp-name { font-size: var(--fs-k16); }
+
+/* FIT: an inline badge sized by its name; the art stretches behind it (dense lists — the board). The slab's face is
+   the top ~70 % of the art (the lip is under it), so the name sits a little high. */
+.krp-fit {
+  --krp-h: 28px;
+  display: inline-flex;
+  align-items: center;
+  height: var(--krp-h);
+  padding: 0 calc(var(--krp-h) * 0.62) calc(var(--krp-h) * 0.16);
+  box-sizing: border-box;
+  max-width: 100%;
+  font-size: var(--fs-k13);
+}
+.krp-fit .krp-art { width: 100%; height: 100%; }
+.krp-fit .krp-name {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  height: auto;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: inherit;
+}
+.krp-fit .krp-name.is-stroked { -webkit-text-stroke-width: 2.5px; }

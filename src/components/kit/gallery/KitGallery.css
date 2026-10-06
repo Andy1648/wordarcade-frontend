@@ -377,11 +377,11 @@ html.kg-page #root { height: auto; overflow: visible; }
 /* LEVEL + RANK UP sheet (KitLevelUp.dc.html, P9a) */
 .kg-lu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .kg-lu-screen { position: relative; height: 156px; box-sizing: border-box; background: #08030f; border: 4px solid #000; overflow: hidden; }
-.kg-lu-ghost { position: absolute; left: 10px; bottom: 6px; font-size: 13px; color: #5d4a78; }
+.kg-lu-ghost { position: absolute; left: 10px; bottom: 6px; font-size: var(--fs-k13); color: #5d4a78; }
 .kg-lu-toasthost { position: absolute; right: 0; top: 36px; }
 .kg-lu-plates { display: grid; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); row-gap: 22px; column-gap: 8px; }
 .kg-lu-plate { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 14px; }
-.kg-lu-pcap { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c9b8e8; white-space: nowrap; }
-.kg-lu-pcode { padding: 0 5px; background: #000; font-family: 'Bungee', sans-serif; }
+.kg-lu-pcap { display: flex; align-items: center; gap: 6px; font-size: var(--fs-k13); color: #c9b8e8; white-space: nowrap; }
+.kg-lu-pcode { padding: 0 5px; background: #000; font-family: 'Bungee', sans-serif; text-transform: uppercase; }
 @media (max-width: 760px) { .kg-lu-grid { grid-template-columns: 1fr; } }
 .kg-lu-toasthost .ket-host { top: 0; }
