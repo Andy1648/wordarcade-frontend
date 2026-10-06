@@ -264,7 +264,7 @@ export function patchStorage(target) {
     };
   }
   Object.defineProperty(P, '__s2', { value: true });
-  Object.defineProperty(P, '__s2raw', { value: raw }); // the unmapped methods (the season-2 conversion reads the season-1 save, v3/convertLocal.js)
+  Object.defineProperty(P, '__s2raw', { value: raw }); // the unmapped methods (the season-2 reset's wipe, season2Boot.js)
   return true;
 }
 /** `storage` with the RAW (unmapped) key methods — `taw.xp` means the season-1 key, not taw.s2.xp. */
