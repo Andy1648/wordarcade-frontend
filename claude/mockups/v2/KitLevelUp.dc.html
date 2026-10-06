@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kit: Level and Rank Up</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes luFlA{0%{opacity:.9}100%{opacity:0}}
+@keyframes luFlB{0%{opacity:.9}100%{opacity:0}}
+@keyframes luSwA{0%{transform:translateX(-140%) skewX(-20deg);opacity:1}100%{transform:translateX(560%) skewX(-20deg);opacity:1}}
+@keyframes luSwB{0%{transform:translateX(-140%) skewX(-20deg);opacity:1}100%{transform:translateX(560%) skewX(-20deg);opacity:1}}
+@keyframes luBmA{0%{transform:scale(1)}30%{transform:scale(1.2) rotate(-4deg)}100%{transform:scale(1)}}
+@keyframes luBmB{0%{transform:scale(1)}30%{transform:scale(1.2) rotate(-4deg)}100%{transform:scale(1)}}
+@keyframes luChip{0%{transform:translateY(-30px) skewX(-10deg);opacity:0}60%{transform:translateY(4px) skewX(-10deg);opacity:1}100%{transform:translateY(0) skewX(-10deg);opacity:1}}
+@keyframes luBanA{0%{transform:translateY(-118%);animation-timing-function:cubic-bezier(.2,1.3,.4,1)}20%{transform:translateY(0)}84%{transform:translateY(0);animation-timing-function:cubic-bezier(.6,0,.9,.5)}100%{transform:translateY(-118%)}}
+@keyframes luBanB{0%{transform:translateY(-118%);animation-timing-function:cubic-bezier(.2,1.3,.4,1)}20%{transform:translateY(0)}84%{transform:translateY(0);animation-timing-function:cubic-bezier(.6,0,.9,.5)}100%{transform:translateY(-118%)}}
+@keyframes luPlA{0%{transform:scale(1.5);opacity:0}60%{transform:scale(.9);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes luPlB{0%{transform:scale(1.5);opacity:0}60%{transform:scale(.9);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes luOldA{0%{opacity:1;transform:translateX(0)}100%{opacity:.45;transform:translateX(-6px) scale(.94)}}
+@keyframes luOldB{0%{opacity:1;transform:translateX(0)}100%{opacity:.45;transform:translateX(-6px) scale(.94)}}
+@keyframes luShA{0%{transform:translateX(-120%) skewX(-20deg)}100%{transform:translateX(700%) skewX(-20deg)}}
+@keyframes luShB{0%{transform:translateX(-120%) skewX(-20deg)}100%{transform:translateX(700%) skewX(-20deg)}}
+@keyframes luToA{0%{transform:translateX(120%);animation-timing-function:cubic-bezier(.2,1.3,.4,1)}17%{transform:translateX(0)}85%{transform:translateX(0);animation-timing-function:cubic-bezier(.6,0,.9,.5)}100%{transform:translateX(120%)}}
+@keyframes luToB{0%{transform:translateX(120%);animation-timing-function:cubic-bezier(.2,1.3,.4,1)}17%{transform:translateX(0)}85%{transform:translateX(0);animation-timing-function:cubic-bezier(.6,0,.9,.5)}100%{transform:translateX(120%)}}
+@keyframes luIcA{0%,100%{transform:rotate(0) scale(1)}30%{transform:rotate(-12deg) scale(1.18)}60%{transform:rotate(8deg) scale(1)}}
+@keyframes luIcB{0%,100%{transform:rotate(0) scale(1)}30%{transform:rotate(-12deg) scale(1.18)}60%{transform:rotate(8deg) scale(1)}}
+@keyframes luShim{0%{transform:translateX(0)}55%,100%{transform:translateX(260px)}}
+@keyframes luBlink{0%,100%{opacity:1}50%{opacity:0}}
+.lu-flA{animation:luFlA .28s ease-out}
+.lu-flB{animation:luFlB .28s ease-out}
+.lu-swA{animation:luSwA .34s cubic-bezier(.3,0,.6,1) both}
+.lu-swB{animation:luSwB .34s cubic-bezier(.3,0,.6,1) both}
+.lu-bmA{animation:luBmA .3s cubic-bezier(.2,1.4,.4,1)}
+.lu-bmB{animation:luBmB .3s cubic-bezier(.2,1.4,.4,1)}
+.lu-chip{animation:luChip .28s cubic-bezier(.2,1.2,.4,1) both}
+.lu-banIdle{transform:translateY(-118%)}
+.lu-banA{animation:luBanA 2.5s both}
+.lu-banB{animation:luBanB 2.5s both}
+.lu-plA{animation:luPlA .32s cubic-bezier(.2,1.2,.4,1) .42s both}
+.lu-plB{animation:luPlB .32s cubic-bezier(.2,1.2,.4,1) .42s both}
+.lu-oldA{animation:luOldA .25s ease-out .42s both}
+.lu-oldB{animation:luOldB .25s ease-out .42s both}
+.lu-shA{animation:luShA .5s ease-in .6s both}
+.lu-shB{animation:luShB .5s ease-in .6s both}
+.lu-toIdle{transform:translateX(120%)}
+.lu-toA{animation:luToA 2.4s both}
+.lu-toB{animation:luToB 2.4s both}
+.lu-icA{animation:luIcA .4s ease-out .35s}
+.lu-icB{animation:luIcB .4s ease-out .35s}
+.lu-shim{animation:luShim 2.6s ease-in-out infinite}
+.lu-blink{animation:luBlink 1s steps(1) infinite}
+.lu-btn{transition:transform .08s,box-shadow .08s}
+.lu-btn:hover{transform:translate(-2px,-2px)}
+.lu-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+</style>
+</helmet>
+<div style="width: 1366px; height: 900px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace; color: #fff">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px); pointer-events: none"></div>
+
+<!-- ===== SHEET HEADER ===== -->
+<div style="position: absolute; left: 24px; right: 24px; top: 16px; height: 62px; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; align-items: baseline; gap: 18px">
+<span style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 46px; line-height: 1; color: #FFE94A">LEVEL + RANK UP</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #c9b8e8">KIT 06</span>
+</div>
+<div style="display: flex; gap: 10px; font-size: 13px; color: #c9b8e8">
+<span style="padding: 5px 10px; background: #12071f; border: 3px solid #000; box-shadow: 3px 3px 0 #000">EDGES ONLY · NO CENTER POPUPS</span>
+<span style="padding: 5px 10px; background: #12071f; border: 3px solid #000; box-shadow: 3px 3px 0 #000">RANK = STATUS · NO REWARDS</span>
+<span style="padding: 5px 10px; background: #12071f; border: 3px solid #000; box-shadow: 3px 3px 0 #000">TRANSFORM + OPACITY</span>
+</div>
+</div>
+
+<!-- ===== 01 XP BAR LEVEL-UP ===== -->
+<div style="position: absolute; left: 24px; top: 90px; width: 1310px; height: 214px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; border-top: 10px solid #FFE94A; box-shadow: 8px 8px 0 #000">
+<div style="position: absolute; inset: 0; background: #12071f; clip-path: polygon(0 62%, 100% 38%, 100% 100%, 0 100%); opacity: .7; pointer-events: none"></div>
+
+<div style="position: absolute; left: 22px; top: 12px; display: flex; align-items: center; gap: 12px">
+<span style="height: 30px; padding: 0 10px; display: flex; align-items: center; background: #FFE94A; border: 3px solid #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 16px; color: #000">01</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 22px">XP BAR LEVEL-UP</span>
+<span style="font-size: 13px; color: #c9b8e8">IN-RUN · LIVES ON THE BAR</span>
+</div>
+<div style="position: absolute; right: 22px; top: 14px; display: flex; gap: 8px; font-size: 13px; color: #c9b8e8">
+<span style="padding: 3px 8px; border: 2px solid #3a2160">A · FILL TO CAP</span>
+<span style="padding: 3px 8px; border: 2px solid #3a2160">B · WHITE SWEEP + WRAP</span>
+<span style="padding: 3px 8px; border: 2px solid #3a2160">C · LV TICK BUMP</span>
+<span style="padding: 3px 8px; border: 2px solid #3a2160">D · MULTI = CHIP, 3 WRAPS MAX</span>
+</div>
+
+<!-- LV block -->
+<div style="position: absolute; left: 22px; top: 62px; width: 262px; height: 76px; display: flex; align-items: center; font-family: 'Bungee', sans-serif; line-height: 1; white-space: nowrap">
+<span style="font-size: 26px; color: #c9b8e8; -webkit-text-stroke: 4px #000; paint-order: stroke fill; margin-right: 8px">LV</span>
+<span class="{{bumpCls}}" style="display: inline-block; transform-origin: 30% 60%; font-size: 64px; color: #FFE94A; -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">{{lvText}}</span>
+</div>
+
+<!-- +N LV chip, slides out from under the bar -->
+<sc-if value="{{gainShow}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 318px; top: 134px; display: flex; align-items: center; gap: 8px">
+<span class="lu-chip" style="display: inline-block; height: 34px; padding: 0 12px; line-height: 34px; background: #2EFFE0; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000"><span class="{{bumpCls}}" style="display: inline-block">{{gainText}}</span></span>
+</div>
+</sc-if>
+
+<!-- the bar -->
+<div style="position: absolute; left: 302px; right: 34px; top: 66px; height: 68px; box-sizing: border-box; background: #08030f; border: 6px solid #000; box-shadow: 7px 7px 0 #000; transform: skewX(-12deg); overflow: hidden">
+<div style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 3px), #1f0f33 calc(10% - 3px) 10%)"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: #05020a"></div>
+<div style="position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX({{fill}}); background: #FFE94A">
+<div style="position: absolute; left: 0; right: 0; top: 12%; height: 12%; background: #FFF9C9"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: #F2A900"></div>
+</div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 3px), rgba(0,0,0,.32) calc(10% - 3px) 10%)"></div>
+<!-- leading edge -->
+<div style="position: absolute; inset: 0; transform: translateX({{edgeX}}%); opacity: {{edgeOp}}; pointer-events: none">
+<div style="position: absolute; left: -12px; top: 0; bottom: 0; width: 8px; background: #fff"></div>
+<div style="position: absolute; left: -4px; top: 0; bottom: 0; width: 4px; background: #000"></div>
+</div>
+<!-- wrap: flash + sweep -->
+<div class="{{flashCls}}" style="position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none"></div>
+<div class="{{sweepCls}}" style="position: absolute; left: 0; top: -10%; width: 18%; height: 120%; background: #fff; transform: translateX(-140%) skewX(-20deg); pointer-events: none"></div>
+<!-- readout -->
+<div style="position: absolute; right: 18px; top: 0; bottom: 0; display: flex; align-items: center; transform: skewX(12deg); font-family: 'Bungee', sans-serif; white-space: nowrap">
+<span style="font-size: 26px; color: #fff; -webkit-text-stroke: 6px #000; paint-order: stroke fill">{{xpCur}}</span>
+<span style="font-size: 20px; color: #c9b8e8; -webkit-text-stroke: 5px #000; paint-order: stroke fill; margin: 0 6px">/</span>
+<span style="font-size: 26px; color: #fff; -webkit-text-stroke: 6px #000; paint-order: stroke fill">{{xpNeed}}</span>
+<span style="font-size: 16px; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; margin-left: 6px">XP</span>
+</div>
+</div>
+
+<!-- controls -->
+<div style="position: absolute; left: 22px; top: 148px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; gap: 8px">
+<sc-for list="{{presets}}" as="p" hint-placeholder-count="2">
+<button class="lu-btn" onClick="{{p.pick}}" style="height: 30px; padding: 0 10px; background: {{p.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: {{p.c}}; cursor: pointer">{{p.label}}</button>
+</sc-for>
+</div>
+<div style="font-size: 13px; color: #c9b8e8">LAST <span style="color: #2EFFE0">{{lastText}}</span></div>
+</div>
+<div style="position: absolute; right: 34px; top: 142px; display: flex; gap: 14px">
+<button class="lu-btn" onClick="{{add1}}" style="height: 50px; padding: 0 22px; background: #FFE94A; border: 5px solid #000; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000; cursor: pointer">+1 LV</button>
+<button class="lu-btn" onClick="{{add37}}" style="height: 50px; padding: 0 22px; background: #2EFFE0; border: 5px solid #000; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000; cursor: pointer">+37 LV</button>
+</div>
+</div>
+
+<!-- ===== 02 RANK-UP BANNER ===== -->
+<div style="position: absolute; left: 24px; top: 320px; width: 647px; height: 232px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; border-top: 10px solid #B04BFF; box-shadow: 8px 8px 0 #000; overflow: hidden">
+<div style="position: absolute; left: 20px; top: 10px; display: flex; align-items: center; gap: 12px">
+<span style="height: 28px; padding: 0 9px; display: flex; align-items: center; background: #B04BFF; border: 3px solid #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 15px; color: #000">02</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px">RANK-UP BANNER</span>
+<span style="font-size: 13px; color: #c9b8e8">0.5S IN · 1.6S HOLD · 0.4S OUT</span>
+</div>
+<div style="position: absolute; right: 18px; top: 8px">
+<button class="lu-btn" onClick="{{nextRank}}" style="height: 36px; padding: 0 14px; background: #FFE94A; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 15px; color: #000; cursor: pointer">NEXT RANK</button>
+</div>
+
+<!-- mini screen: top edge of the game -->
+<div style="position: absolute; left: 20px; right: 20px; top: 54px; height: 156px; box-sizing: border-box; background: #08030f; border: 4px solid #000; overflow: hidden">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 30px, rgba(92,15,163,.12) 30px 33px)"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: center; gap: 4px; font-family: 'Bungee', sans-serif; font-size: 30px; color: #2a1745">CLACKE<span style="color: #3a2160">R</span><span class="lu-blink" style="width: 4px; height: 30px; background: #3a2160"></span></div>
+<div style="position: absolute; left: 10px; bottom: 6px; font-size: 13px; color: #5d4a78">GAME STAYS CLEAR</div>
+
+<div class="{{banCls}}" style="position: absolute; left: 50%; top: 0; width: 470px; margin-left: -235px">
+<div style="position: relative; height: 98px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; border-top: 0; border-bottom: 8px solid {{newP.c1}}; box-shadow: 6px 6px 0 #000; overflow: hidden">
+<div style="position: absolute; left: 0; right: 0; top: 4px; display: flex; justify-content: center; align-items: center; gap: 8px; font-family: 'Bungee', sans-serif; font-size: 13px">
+<span style="color: #c9b8e8">RANK UP</span>
+<span style="color: {{newP.c1}}">{{newP.code}}</span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 24px; display: flex; justify-content: center; align-items: center; gap: 14px">
+<!-- old plate -->
+<div class="{{oldCls}}" style="position: relative; width: 140px; height: 56px">
+<svg viewBox="0 0 180 72" width="140" height="56" style="position: absolute; left: 0; top: 0; overflow: visible; filter: {{oldP.fx}}" aria-hidden="true">
+<defs>
+<linearGradient id="{{oldP.gid}}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{{oldP.g1}}"></stop><stop offset=".5" stop-color="{{oldP.g2}}"></stop><stop offset="1" stop-color="{{oldP.g3}}"></stop></linearGradient>
+<clipPath id="{{oldP.cid}}"><path d="{{oldP.shape}}"></path></clipPath>
+</defs>
+<path d="{{oldP.back}}" fill="{{oldP.c3}}" stroke="#000" stroke-width="4" stroke-linejoin="round" fill-rule="evenodd"></path>
+<g clip-path="{{oldP.clipUrl}}">
+<rect x="-10" y="-10" width="200" height="90" fill="{{oldP.lip}}"></rect>
+<rect x="-10" y="-10" width="200" height="57" fill="{{oldP.gradUrl}}"></rect>
+<rect x="-10" y="21" width="200" height="3" fill="#fff" opacity=".35"></rect>
+<path class="{{oldP.shCls}}" d="M-40 -10 H-18 L-38 82 H-60 Z" fill="#fff" opacity="{{oldP.shOp}}"></path>
+</g>
+<path d="{{oldP.shape}}" fill="none" stroke="#000" stroke-width="{{oldP.sw}}" stroke-linejoin="round"></path>
+<path d="{{oldP.front}}" fill="{{oldP.c4}}" stroke="#000" stroke-width="2.5" stroke-linejoin="round"></path>
+</svg>
+<div style="position: absolute; left: 12%; right: 12%; top: 20%; height: 46%; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 13px; line-height: 1; white-space: nowrap; color: {{oldP.txt}}; -webkit-text-stroke: {{oldP.tStroke}}; paint-order: stroke fill">{{oldP.name}}</div>
+</div>
+<svg width="38" height="26" viewBox="0 0 70 44" aria-hidden="true"><path d="M4 16 L44 16 L44 4 L66 22 L44 40 L44 28 L4 28 Z" fill="#2EFFE0" stroke="#000" stroke-width="6" stroke-linejoin="round"></path></svg>
+<!-- new plate -->
+<div class="{{newCls}}" style="position: relative; width: 180px; height: 72px">
+<svg viewBox="0 0 180 72" width="180" height="72" style="position: absolute; left: 0; top: 0; overflow: visible; filter: {{newP.fx}}" aria-hidden="true">
+<defs>
+<linearGradient id="{{newP.gid}}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{{newP.g1}}"></stop><stop offset=".5" stop-color="{{newP.g2}}"></stop><stop offset="1" stop-color="{{newP.g3}}"></stop></linearGradient>
+<clipPath id="{{newP.cid}}"><path d="{{newP.shape}}"></path></clipPath>
+</defs>
+<path d="{{newP.back}}" fill="{{newP.c3}}" stroke="#000" stroke-width="4" stroke-linejoin="round" fill-rule="evenodd"></path>
+<g clip-path="{{newP.clipUrl}}">
+<rect x="-10" y="-10" width="200" height="90" fill="{{newP.lip}}"></rect>
+<rect x="-10" y="-10" width="200" height="57" fill="{{newP.gradUrl}}"></rect>
+<rect x="-10" y="21" width="200" height="3" fill="#fff" opacity=".35"></rect>
+<path class="{{newP.shCls}}" d="M-40 -10 H-18 L-38 82 H-60 Z" fill="#fff" opacity="{{newP.shOp}}"></path>
+</g>
+<path d="{{newP.shape}}" fill="none" stroke="#000" stroke-width="{{newP.sw}}" stroke-linejoin="round"></path>
+<path d="{{newP.front}}" fill="{{newP.c4}}" stroke="#000" stroke-width="2.5" stroke-linejoin="round"></path>
+</svg>
+<div style="position: absolute; left: 12%; right: 12%; top: 20%; height: 46%; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 16px; line-height: 1; white-space: nowrap; color: {{newP.txt}}; -webkit-text-stroke: {{newP.tStroke}}; paint-order: stroke fill">{{newP.name}}</div>
+</div>
+</div>
+<!-- landing sheen -->
+<div class="{{sheenCls}}" style="position: absolute; left: 0; top: -10px; width: 60px; height: 120px; background: rgba(255,255,255,.22); transform: translateX(-120%) skewX(-20deg); pointer-events: none"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ===== 04 UNLOCK TOAST ===== -->
+<div style="position: absolute; left: 687px; top: 320px; width: 647px; height: 232px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; border-top: 10px solid #2EFFE0; box-shadow: 8px 8px 0 #000; overflow: hidden">
+<div style="position: absolute; left: 20px; top: 10px; display: flex; align-items: center; gap: 12px">
+<span style="height: 28px; padding: 0 9px; display: flex; align-items: center; background: #2EFFE0; border: 3px solid #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 15px; color: #000">04</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px">UNLOCK TOAST</span>
+</div>
+<div style="position: absolute; right: 18px; top: 9px; display: flex; gap: 6px">
+<sc-for list="{{unlockBtns}}" as="u" hint-placeholder-count="6">
+<button class="lu-btn" onClick="{{u.pick}}" style="height: 32px; padding: 0 8px; background: {{u.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: {{u.c}}; cursor: pointer">{{u.code}}</button>
+</sc-for>
+</div>
+
+<div style="position: absolute; left: 20px; right: 20px; top: 54px; height: 156px; box-sizing: border-box; background: #08030f; border: 4px solid #000; overflow: hidden">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 30px, rgba(92,15,163,.12) 30px 33px)"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: center; gap: 4px; font-family: 'Bungee', sans-serif; font-size: 30px; color: #2a1745">REBIRT<span style="color: #3a2160">H</span><span class="lu-blink" style="width: 4px; height: 30px; background: #3a2160"></span></div>
+<div style="position: absolute; left: 10px; top: 8px; font-size: 13px; color: #5d4a78">RIGHT EDGE · 2.4S · STACKS DOWN</div>
+<div style="position: absolute; right: 0; top: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, #2EFFE0 0 8px, #12A99A 8px 16px); opacity: .5"></div>
+
+<div class="{{toastCls}}" style="position: absolute; right: 0; top: 36px; display: flex; align-items: stretch; height: 70px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; border-right: 0; border-left: 8px solid {{toast.tile}}; box-shadow: -6px 6px 0 #000">
+<div style="position: relative; width: 60px; display: flex; align-items: center; justify-content: center; background: {{toast.tile}}; border-right: 4px solid #000">
+<svg class="{{iconCls}}" viewBox="0 0 44 44" width="44" height="44" aria-hidden="true" style="overflow: visible">
+<path d="{{toast.p1}}" fill="#fff" stroke="#000" stroke-width="3" stroke-linejoin="round"></path>
+<path d="{{toast.p3}}" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"></path>
+<path d="{{toast.p2}}" fill="#000"></path>
+</svg>
+<sc-if value="{{toast.hasBadge}}" hint-placeholder-val="{{ false }}">
+<span style="position: absolute; right: -10px; bottom: -6px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: #FFE94A; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000">2</span>
+</sc-if>
+</div>
+<div style="padding: 0 22px 0 18px; display: flex; flex-direction: column; justify-content: center; gap: 2px; white-space: nowrap">
+<div style="display: flex; align-items: center; gap: 8px; font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8">UNLOCKED<span style="padding: 0 5px; background: #000; color: {{toast.tile}}">{{toast.code}}</span></div>
+<div style="font-family: 'Bungee', sans-serif; font-size: 24px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{toast.label}}</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ===== 03 RANK PLATES ===== -->
+<div style="position: absolute; left: 24px; top: 568px; width: 1310px; height: 318px; box-sizing: border-box; background: #1a0b2e; border: 5px solid #000; border-top: 10px solid #FF3D7F; box-shadow: 8px 8px 0 #000; overflow: hidden">
+<div style="position: absolute; inset: 0; background: #12071f; clip-path: polygon(0 40%, 100% 60%, 100% 100%, 0 100%); opacity: .6; pointer-events: none"></div>
+<div style="position: absolute; left: 22px; top: 10px; display: flex; align-items: center; gap: 12px">
+<span style="height: 28px; padding: 0 9px; display: flex; align-items: center; background: #FF3D7F; border: 3px solid #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 15px; color: #000">03</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px">RANK PLATES</span>
+<span style="font-size: 13px; color: #c9b8e8">NAME BADGES · SHAPE + TRIM ESCALATE · ★ TIERS SHIMMER</span>
+</div>
+<div style="position: absolute; right: 22px; top: 12px; display: flex; gap: 8px; font-size: 13px; color: #c9b8e8">
+<span style="padding: 3px 8px; border: 2px solid #3a2160">R0-R10 REBIRTH</span>
+<span style="padding: 3px 8px; border: 2px solid #FFE94A; color: #FFE94A">★ ASCENSION</span>
+</div>
+
+<div style="position: absolute; left: 22px; right: 22px; top: 58px; display: grid; grid-template-columns: repeat(8, 1fr); row-gap: 22px">
+<sc-for list="{{plates}}" as="p" hint-placeholder-count="16">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<div style="position: relative; width: 156px; height: 62px; margin-top: 14px">
+<svg viewBox="0 0 180 72" width="156" height="62" style="position: absolute; left: 0; top: 0; overflow: visible; filter: {{p.fx}}" aria-hidden="true">
+<defs>
+<linearGradient id="{{p.gid}}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{{p.g1}}"></stop><stop offset=".5" stop-color="{{p.g2}}"></stop><stop offset="1" stop-color="{{p.g3}}"></stop></linearGradient>
+<clipPath id="{{p.cid}}"><path d="{{p.shape}}"></path></clipPath>
+</defs>
+<path d="{{p.back}}" fill="{{p.c3}}" stroke="#000" stroke-width="4" stroke-linejoin="round" fill-rule="evenodd"></path>
+<g clip-path="{{p.clipUrl}}">
+<rect x="-10" y="-10" width="200" height="90" fill="{{p.lip}}"></rect>
+<rect x="-10" y="-10" width="200" height="57" fill="{{p.gradUrl}}"></rect>
+<rect x="-10" y="21" width="200" height="3" fill="#fff" opacity=".35"></rect>
+<path class="{{p.shCls}}" d="M-40 -10 H-18 L-38 82 H-60 Z" fill="#fff" opacity="{{p.shOp}}" style="animation-delay: {{p.shDelay}}s"></path>
+</g>
+<path d="{{p.shape}}" fill="none" stroke="#000" stroke-width="{{p.sw}}" stroke-linejoin="round"></path>
+<path d="{{p.front}}" fill="{{p.c4}}" stroke="#000" stroke-width="2.5" stroke-linejoin="round"></path>
+</svg>
+<div style="position: absolute; left: 12%; right: 12%; top: 20%; height: 46%; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 14px; line-height: 1; white-space: nowrap; color: {{p.txt}}; -webkit-text-stroke: {{p.tStroke}}; paint-order: stroke fill">{{p.name}}</div>
+</div>
+<div style="display: flex; align-items: center; gap: 6px; white-space: nowrap">
+<span style="padding: 0 5px; background: #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: {{p.c1}}">{{p.code}}</span>
+<span style="font-size: 13px; color: #c9b8e8">{{p.cap}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":900}}'>
+function fmt(x) {
+  if (!(x > 0)) return '0';
+  var S = [['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + S[i][0]; }
+  return String(Math.floor(x));
+}
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function need(lv) { return Math.round(800 * Math.pow(lv + 1, 0.75)); }
+function sp(x, y, r) { var q = r * 0.3; return 'M' + x + ' ' + (y - r) + ' L' + (x + q) + ' ' + (y - q) + ' L' + (x + r) + ' ' + y + ' L' + (x + q) + ' ' + (y + q) + ' L' + x + ' ' + (y + r) + ' L' + (x - q) + ' ' + (y + q) + ' L' + (x - r) + ' ' + y + ' L' + (x - q) + ' ' + (y - q) + ' Z'; }
+function dot(x, y, r) { return 'M' + (x - r) + ' ' + y + ' a' + r + ' ' + r + ' 0 1 0 ' + (2 * r) + ' 0 a' + r + ' ' + r + ' 0 1 0 ' + (-2 * r) + ' 0 Z'; }
+
+/* plate shapes, viewBox 0 0 180 72 */
+var SH = {
+  rect: 'M26 16 H154 V58 H26 Z',
+  notch: 'M26 16 H144 L154 26 V58 H26 Z',
+  key: 'M20 14 H160 L154 60 H26 Z',
+  hex: 'M12 37 L28 14 H152 L168 37 L152 60 H28 Z',
+  ribbon: 'M6 16 H174 L162 37 L174 58 H6 L18 37 Z',
+  shield: 'M22 14 H158 L166 22 V50 L150 60 H30 L14 50 V22 Z',
+  slant: 'M30 16 H164 L150 58 H16 Z',
+  zig: 'M30 16 H150 L160 26 L152 31 L164 42 L150 58 H30 L20 48 L28 43 L16 31 L28 26 Z',
+  oct: 'M36 14 H144 L162 26 V48 L144 60 H36 L18 48 V26 Z'
+};
+var AD = {
+  horns: 'M44 18 L26 -2 L60 16 Z M136 18 L154 -2 L120 16 Z',
+  crown: 'M66 16 L66 0 L79 9 L90 -4 L101 9 L114 0 L114 16 Z',
+  caps: 'M72 16 L90 -2 L108 16 H98 V18 H82 V16 Z',
+  wings: 'M30 22 L2 8 L10 23 L-4 30 L12 36 L2 50 L30 50 Z M150 22 L178 8 L170 23 L184 30 L168 36 L178 50 L150 50 Z',
+  wingsS: 'M30 24 L12 16 L18 28 L8 34 L30 46 Z M150 24 L168 16 L162 28 L172 34 L150 46 Z',
+  halo: 'M56 4 a34 6 0 1 0 68 0 a34 6 0 1 0 -68 0 Z M66 4 a24 3 0 1 0 48 0 a24 3 0 1 0 -48 0 Z',
+  squig: 'M60 54 l5 -4 l5 4 l5 -4 l5 4 l5 -4 l5 4 l5 -4 l5 4 v3 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 l-5 -4 l-5 4 Z',
+  splat: dot(160, 10, 6) + ' ' + dot(22, 64, 4) + ' ' + dot(170, 62, 3) + ' ' + dot(10, 12, 3),
+  rivets: dot(28, 24, 3) + ' ' + dot(152, 24, 3) + ' ' + dot(28, 50, 3) + ' ' + dot(152, 50, 3),
+  bolts: 'M10 18 L20 18 L14 30 L22 30 L6 52 L11 36 L3 36 Z M170 18 L160 18 L166 30 L158 30 L174 52 L169 36 L177 36 Z',
+  fangs: 'M64 56 L69 68 L74 56 Z M106 56 L111 68 L116 56 Z',
+  gems: 'M28 30 L35 37 L28 44 L21 37 Z M152 30 L159 37 L152 44 L145 37 Z',
+  void: sp(10, 10, 8) + ' ' + sp(172, 60, 7) + ' ' + sp(164, 6, 4) + ' ' + sp(16, 64, 4)
+};
+var NONE = 'M0 0';
+
+var RANKS = [
+  { code: 'R0', name: 'KEYMASH', cap: 'BARE SLAB', shape: SH.rect, g: ['#7d6b98', '#7d6b98', '#6b5a85'], lip: '#3a2160', c1: '#a08cc0', txt: '#fff' },
+  { code: 'R1', name: 'TYPO', cap: 'RED SQUIGGLE', shape: SH.notch, g: ['#e0d4f5', '#c9b8e8', '#c9b8e8'], lip: '#7a66a0', c1: '#c9b8e8', txt: '#000', front: AD.squig, c4: '#FF3D7F' },
+  { code: 'R2', name: 'CLACKER', cap: 'KEYCAP', shape: SH.key, g: ['#8affef', '#2EFFE0', '#2EFFE0'], lip: '#12A99A', c1: '#2EFFE0', txt: '#000' },
+  { code: 'R3', name: 'HOTKEY', cap: 'HEX CUT', shape: SH.hex, g: ['#FFE94A', '#FFC23D', '#FFC23D'], lip: '#b07a10', c1: '#FFC23D', txt: '#000' },
+  { code: 'R4', name: 'INKSTORM', cap: 'RIBBON + INK', shape: SH.ribbon, g: ['#c77aff', '#B04BFF', '#9a3ae8'], lip: '#5c0fa3', c1: '#D88BFF', txt: '#fff', front: AD.splat, c4: '#D88BFF' },
+  { code: 'R5', name: 'WORDSMITH', cap: 'FORGED + RIVETS', shape: SH.shield, g: ['#ffffff', '#e0d4f5', '#c9b8e8'], lip: '#6b5a85', c1: '#ffffff', txt: '#000', front: AD.rivets, c4: '#FFC23D' },
+  { code: 'R6', name: 'KEYFIEND', cap: 'HORNS', shape: SH.slant, g: ['#ff6f9c', '#FF3D7F', '#e02866'], lip: '#a3164a', c1: '#FF3D7F', txt: '#fff', back: AD.horns, c3: '#f3e9ff' },
+  { code: 'R7', name: 'CAPSLOCK', cap: 'UP ARROW', shape: SH.rect, g: ['#fff6a8', '#FFE94A', '#FFE94A'], lip: '#F2A900', c1: '#FFE94A', txt: '#000', back: AD.caps, c3: '#2EFFE0' },
+  { code: 'R8', name: 'OVERCLOCK', cap: 'VOLTAGE EDGE', shape: SH.zig, g: ['#2EFFE0', '#12A99A', '#B04BFF'], lip: '#3a0f6a', c1: '#2EFFE0', txt: '#fff', front: AD.bolts, c4: '#FFE94A' },
+  { code: 'R9', name: 'GLYPHLORD', cap: 'CROWNED', shape: SH.oct, g: ['#ecc4ff', '#D88BFF', '#B04BFF'], lip: '#5c0fa3', c1: '#D88BFF', txt: '#fff', back: AD.crown, c3: '#FFE94A' },
+  { code: 'R10', name: 'LEXIBEAST', cap: 'WINGS + FANGS', shape: SH.shield, g: ['#FF3D7F', '#d83aa8', '#B04BFF'], lip: '#4a0a6e', c1: '#FF3D7F', txt: '#fff', back: AD.wingsS, c3: '#2EFFE0', front: AD.fangs, c4: '#fff' },
+  { code: '★1', name: 'VOIDTYPER', cap: 'STARFIELD', shape: SH.oct, g: ['#2a0d4a', '#12071f', '#000000'], lip: '#000', c1: '#D88BFF', txt: '#D88BFF', front: AD.void, c4: '#fff', star: true, glow: '#B04BFF' },
+  { code: '★3', name: 'ASCENDANT', cap: 'HALO + WINGS', shape: SH.shield, g: ['#ffffff', '#fff6a8', '#FFE94A'], lip: '#F2A900', c1: '#FFE94A', txt: '#000', back: AD.wings + ' ' + AD.halo, c3: '#ffffff', star: true, glow: '#FFE94A' },
+  { code: '★5', name: 'OMNIKEY', cap: 'PRISM KEYCAP', shape: SH.key, g: ['#2EFFE0', '#B04BFF', '#FF3D7F'], lip: '#3a0f6a', c1: '#2EFFE0', txt: '#fff', back: AD.wingsS, c3: '#D88BFF', front: AD.gems, c4: '#FFE94A', star: true, glow: '#2EFFE0' },
+  { code: '★10', name: 'FINAL BOSS', cap: 'HORNS + CROWN', shape: SH.zig, g: ['#FF3D7F', '#a3164a', '#3a0016'], lip: '#1a0008', c1: '#FF3D7F', txt: '#FFE94A', back: AD.horns + ' ' + AD.crown, c3: '#FFE94A', front: AD.fangs, c4: '#fff', star: true, glow: '#FF3D7F' },
+  { code: '★20', name: 'ENDGAME', cap: 'EVERYTHING', shape: SH.oct, g: ['#fff6a8', '#FFE94A', '#F2A900'], lip: '#8a5a00', c1: '#FFE94A', txt: '#000', back: AD.wings + ' ' + AD.crown, c3: '#2EFFE0', front: AD.gems + ' ' + sp(90, 66, 6), c4: '#FF3D7F', star: true, glow: '#FFE94A' }
+];
+
+function plate(i, ctx) {
+  var r = RANKS[i], gid = 'lug-' + ctx + i, cid = 'luc-' + ctx + i;
+  var fx = 'drop-shadow(3px 3px 0 #000)' + (r.glow ? ' drop-shadow(0 0 7px ' + r.glow + ')' : '');
+  var white = r.txt !== '#000';
+  return {
+    code: r.code, name: r.name, cap: r.cap, c1: r.c1, txt: r.txt,
+    shape: r.shape, back: r.back || NONE, front: r.front || NONE,
+    g1: r.g[0], g2: r.g[1], g3: r.g[2], lip: r.lip, c3: r.c3 || '#000', c4: r.c4 || '#000',
+    gid: gid, cid: cid, gradUrl: 'url(#' + gid + ')', clipUrl: 'url(#' + cid + ')',
+    shCls: r.star ? 'lu-shim' : '', shOp: r.star ? '.6' : '0', shDelay: ((i % 5) * 0.37).toFixed(2),
+    sw: r.star ? 5.5 : 4.5, fx: fx, tStroke: white ? '3px #000' : '0'
+  };
+}
+
+var UNLOCKS = [
+  { code: 'R1', label: 'ROLL', tile: '#FFC23D', p1: 'M7 7 H37 V37 H7 Z', p2: dot(15, 15, 3.5) + ' ' + dot(22, 22, 3.5) + ' ' + dot(29, 29, 3.5), p3: NONE },
+  { code: 'R2', label: 'AUTO ROLL', tile: '#2EFFE0', p1: 'M13 13 H31 V31 H13 Z', p2: dot(18, 18, 2.6) + ' ' + dot(26, 26, 2.6) + ' M34 0 L42 8 L32 10 Z M10 44 L2 36 L12 34 Z', p3: 'M5 20 A17 17 0 0 1 36 7 M39 24 A17 17 0 0 1 8 37' },
+  { code: 'R3', label: 'BOOST SLOT', tile: '#FF3D7F', p1: 'M26 3 L9 25 H20 L16 41 L35 16 H24 Z', p2: NONE, p3: NONE, badge: true },
+  { code: 'R5', label: 'MARK SLOT', tile: '#B04BFF', p1: 'M11 5 H33 V39 L22 30 L11 39 Z', p2: sp(22, 17, 7), p3: NONE, badge: true },
+  { code: 'R7', label: 'LUCK ×1.25', tile: '#12A99A', p1: dot(15, 15, 7.5) + ' ' + dot(29, 15, 7.5) + ' ' + dot(15, 29, 7.5) + ' ' + dot(29, 29, 7.5), p2: 'M25 30 L37 41 L34 43 L23 33 Z', p3: NONE },
+  { code: 'R10', label: 'ASCEND', tile: '#FFE94A', p1: 'M22 3 L39 21 H29 V41 H15 V21 H5 Z', p2: sp(38, 6, 6), p3: NONE }
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      lv: 1243100, fr: 0.62, gain: 0, gainShow: false, flashN: 0, bumpN: 0, last: '-',
+      rk: 2, banN: 0, un: 1, toN: 0
+    };
+    this.timers = []; this.raf = 0; this.anim = null; this.hideT = 0;
+    this.tick = this.tick.bind(this);
+  }
+  componentDidMount() {
+    var self = this;
+    this.later(function () { self.setState({ banN: 1 }); }, 500);
+    this.later(function () { self.setState({ toN: 1 }); }, 1100);
+  }
+  componentWillUnmount() {
+    this.timers.forEach(clearTimeout);
+    if (this.hideT) clearTimeout(this.hideT);
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.anim = null;
+  }
+  later(fn, ms) { var id = setTimeout(fn, ms); this.timers.push(id); return id; }
+
+  /* 01: fill to cap, wrap with sweep, tick LV; big jumps compress to 3 wraps */
+  addLv(n) {
+    if (this.anim) return;
+    var st = this.state, wraps = Math.min(n, 3);
+    var dur = Math.round(380 + 260 * wraps);
+    if (this.hideT) { clearTimeout(this.hideT); this.hideT = 0; }
+    this.anim = { vStart: st.fr, vEnd: wraps + st.fr, t0: performance.now(), dur: dur, baseLv: st.lv, wraps: wraps, k: n, w: 0 };
+    if (!this.raf) this.raf = requestAnimationFrame(this.tick);
+  }
+  tick(now) {
+    this.raf = 0;
+    var a = this.anim; if (!a) return;
+    var u = clamp((now - a.t0) / a.dur, 0, 1), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+    var Pv = a.vStart + (a.vEnd - a.vStart) * e;
+    var w = Math.min(a.wraps, Math.floor(Pv)), fr = Math.min(1, Pv - w);
+    var inc = w >= a.wraps ? a.k : Math.floor(w * a.k / a.wraps);
+    var up = { lv: a.baseLv + inc, fr: fr };
+    if (w > a.w) {
+      a.w = w; up.flashN = this.state.flashN + 1; up.bumpN = this.state.bumpN + 1;
+      if (a.k > 1) { up.gain = inc; up.gainShow = true; }
+    }
+    if (u >= 1) {
+      this.anim = null;
+      up.last = '+' + a.k + ' LV IN ' + (a.dur / 1000).toFixed(2) + 'S';
+      var self = this;
+      this.hideT = setTimeout(function () { self.hideT = 0; self.setState({ gainShow: false, gain: 0 }); }, 1400);
+    }
+    this.setState(up);
+    if (this.anim) this.raf = requestAnimationFrame(this.tick);
+  }
+
+  renderVals() {
+    var self = this, st = this.state;
+    var nd = need(st.lv), ab = function (n, a, b) { return n ? (n % 2 ? a : b) : ''; };
+    var nr = st.rk, orr = nr - 1;
+    var t = UNLOCKS[st.un];
+    var presets = [['LV 41', 41], ['LV 12.4K', 12400], ['LV 1.2M', 1243100]].map(function (p) {
+      var on = Math.abs(st.lv - p[1]) < 40 && p[1] <= st.lv;
+      return { label: p[0], bg: on ? '#FFE94A' : '#12071f', c: on ? '#000' : '#fff', pick: function () { if (self.anim) return; self.setState({ lv: p[1], fr: 0.62, gainShow: false, last: '-' }); } };
+    });
+    return {
+      lvText: fmt(st.lv), xpCur: fmt(st.fr * nd), xpNeed: fmt(nd),
+      fill: st.fr.toFixed(4), edgeX: (st.fr * 100).toFixed(2), edgeOp: st.fr > 0.01 && st.fr < 0.995 ? 1 : 0,
+      flashCls: ab(st.flashN, 'lu-flA', 'lu-flB'), sweepCls: ab(st.flashN, 'lu-swA', 'lu-swB'),
+      bumpCls: ab(st.bumpN, 'lu-bmA', 'lu-bmB'),
+      gainShow: st.gainShow, gainText: '+' + st.gain + ' LV', lastText: st.last, presets: presets,
+      add1: function () { self.addLv(1); }, add37: function () { self.addLv(37); },
+
+      oldP: plate(orr, 'o'), newP: plate(nr, 'n'),
+      banCls: st.banN ? ab(st.banN, 'lu-banA', 'lu-banB') : 'lu-banIdle',
+      newCls: ab(st.banN, 'lu-plA', 'lu-plB'), oldCls: ab(st.banN, 'lu-oldA', 'lu-oldB'), sheenCls: ab(st.banN, 'lu-shA', 'lu-shB'),
+      nextRank: function () { var r = self.state.rk + 1; if (r > 15) r = 1; self.setState({ rk: r, banN: self.state.banN + 1 }); },
+
+      plates: RANKS.map(function (r, i) { return plate(i, 'g'); }),
+
+      toast: { code: t.code, label: t.label, tile: t.tile, p1: t.p1, p2: t.p2, p3: t.p3, hasBadge: !!t.badge },
+      toastCls: st.toN ? ab(st.toN, 'lu-toA', 'lu-toB') : 'lu-toIdle', iconCls: ab(st.toN, 'lu-icA', 'lu-icB'),
+      unlockBtns: UNLOCKS.map(function (u, i) {
+        var on = i === st.un;
+        return { code: u.code, bg: on ? u.tile : '#12071f', c: on ? '#000' : '#fff', pick: function () { self.setState({ un: i, toN: self.state.toN + 1 }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
