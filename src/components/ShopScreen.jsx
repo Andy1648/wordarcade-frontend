@@ -498,7 +498,10 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
           </div>
         )}
       </div>
-      {reveal && <ShopReveal reveal={reveal} onDone={() => setReveal(null)} />}
+      {/* P7 POPUP PURGE (SEASON2 only): no centre sticker — the purchase is said as a right-edge toast (V3.Notify hosts
+          it here, since the menu and its hosts are unmounted under the shop). Flag OFF: the sticker, unchanged. */}
+      {reveal && (SEASON2 ? <S2BuyToast reveal={reveal} onDone={() => setReveal(null)} /> : <ShopReveal reveal={reveal} onDone={() => setReveal(null)} />)}
+      {SEASON2 && V3.Notify && <V3.Notify />}
       {ceremony && <RebirthCeremony c={ceremony} onContinue={onBack} />}
       {keyTut && !reveal && !ceremony && (
         <SpotlightTutorial tutorial={keyTut} onDone={() => { markTutorialSeen(keyTut.id); setKeyTutDone(true); }} />
@@ -622,6 +625,17 @@ function HoldBuy({ label, onCommit, onBatchEnd = null, className = 'shop-card-bt
       )}
     </button>
   );
+}
+
+// P7 (SEASON2 only): the purchase, said once at the RIGHT edge (kit toast), then the reveal is over.
+function S2BuyToast({ reveal, onDone }) {
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  useEffect(() => {
+    V3.toast(reveal.kind === 'keypower' ? { head: 'BOUGHT', label: reveal.name, icon: 'power', tile: '#FFE94A' } : { head: 'UNLOCKED', label: reveal.name, icon: 'shop', tile: '#FF4FA3' });
+    onDoneRef.current();
+  }, [reveal]);
+  return null;
 }
 
 // §2 — the REVEAL: the shared reveal STICKER (see ShopSticker.jsx / Sticker.jsx), showing the

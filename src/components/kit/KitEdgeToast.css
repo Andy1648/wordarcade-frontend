@@ -1,0 +1,71 @@
+/* KitEdgeToast.css — 04 UNLOCK TOAST (KitLevelUp.dc.html). A zero-width strip on the RIGHT edge; toasts hang from
+   it and slide in by transform. Never centre-screen; takes no pointer. Flat fills, black ink, hard offset shadow.
+   It starts BELOW the menu's corner-nav cluster (STATS / SHOP / REBIRTH / audio — a column down to ~230px on a laptop),
+   so a toast never hides a control, even for its 2.4 s. */
+.ket-host {
+  position: fixed;
+  top: max(250px, 34vh);
+  right: 0;
+  z-index: 9000;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.ket-host.is-contained { position: absolute; z-index: 60; }
+.ket {
+  position: absolute;
+  right: 0;
+}
+.ket-card {
+  display: flex;
+  align-items: stretch;
+  height: 70px;
+  box-sizing: border-box;
+  background: var(--k-panel);
+  border: var(--k-ink-l) solid var(--k-ink);
+  border-right: 0;
+  border-left: 8px solid var(--ket-c);
+  box-shadow: calc(var(--k-sh-l) * -1) var(--k-sh-l) 0 var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ket-tile {
+  position: relative;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ket-c);
+  border-right: var(--k-ink-m) solid var(--k-ink);
+}
+.ket-icon { display: flex; }
+.ket-text {
+  padding: 0 22px 0 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.ket-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-k13);
+  color: var(--k-dim);
+}
+.ket-code { padding: 0 5px; background: var(--k-ink); color: var(--ket-c); }
+.ket-label {
+  font-size: var(--fs-k24);
+  line-height: 1;
+  color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
+  paint-order: stroke fill;
+}
+
+@media (max-width: 480px) {
+  .ket-host { top: 210px; } /* under the phone's rank banner + nav strip */
+  .ket-label { font-size: var(--fs-k18); }
+  .ket-text { padding: 0 14px 0 12px; }
+}

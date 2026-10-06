@@ -2,9 +2,12 @@
 // (payload ratchet). It JOINS the nav cluster it is rendered in — the desktop corner-nav stack (`variant="desk"`) or the
 // phone's nav strip (`variant="phone"`) — never a fixed control of its own. No badge: Andy phase 3 removed every menu
 // claim notification; the ACHIEVEMENTS screen itself says what is ready. It owns the overlay's open state.
+// P7: it also carries the menu's EDGE notification layer (S2Notify — rank-up banner, unlock toasts, board news), so
+// the purge needs no new eager code on the menu.
 import { useState } from 'react';
 import './S2Trophy.css';
 import AchievementsV3 from './AchievementsV3.jsx';
+import { V3 } from '../progress/season';
 import { useMomentHold } from '../lib/useMomentSlot';
 
 export default function S2Trophy({ variant = 'desk', disabled = false }) {
@@ -17,6 +20,7 @@ export default function S2Trophy({ variant = 'desk', disabled = false }) {
         <img src="/ach/cup.svg" width={variant === 'phone' ? 28 : 30} height={variant === 'phone' ? 28 : 30} alt="" aria-hidden="true" />
       </button>
       {open && <AchievementsV3 onClose={() => setOpen(false)} />}
+      {V3.Notify && <V3.Notify check />}
     </>
   );
 }

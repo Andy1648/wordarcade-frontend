@@ -15,6 +15,10 @@ export { KitStamp, KitStampCard, STAMP_KINDS } from './KitStamp.jsx';
 export { KitBadge } from './KitBadge.jsx';
 export { KitBannerHost, BANNER_TONES } from './KitBanner.jsx';
 export { banners, pushBanner, closeBanner, createBannerStore } from './bannerStore.js';
+// KitLevelUp.dc.html 02 RANK-UP BANNER (top edge) + 04 UNLOCK TOAST (right edge) — P7's minimal pieces; P9a extends them.
+export { KitRankBannerHost, RANK_PLATE } from './KitRankBanner.jsx';
+export { KitEdgeToastHost, TOAST_STEP } from './KitEdgeToast.jsx';
+export { rankBanners, pushRankUp, edgeToasts, pushToast, RANK_BANNER_MS, TOAST_MS } from './edgeStores.js';
 
 export { KitXpBar } from './KitXpBar.jsx';
 export { KitPityBar } from './KitPityBar.jsx';
