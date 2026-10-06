@@ -29,7 +29,7 @@ Then P9, P10 as already queued. STANDING RULES: re-read this checklist before ev
 ## STATUS BY P
 - P0: #213 merged; #216 open; main E2E green on 4aec9e8 + 9c9b3aa, c13f436 running (agent confirming 3 in a row)
 - P2: progression v3 — #214 MERGED + LIVE (c13f436), flag OFF
-- P3: next to build (after P0 frees the machine)
+- P3: BUILDING (agent; 3 PRs in order: feat/v2-rebirth → feat/v2-shop → feat/v2-achievements)
 - P4: reset — partial work in ../s2reset (paused); merges in its turn (after P8)
 - P5: #215 open, CI red, fix paused (resumes after P0)
 - P6, P7, P8, P9, P10: queued
