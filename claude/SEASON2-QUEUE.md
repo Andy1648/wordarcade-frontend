@@ -110,3 +110,5 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - #215 MENU: CI red (FUSE viewport-integrity/game-fill @1366/1280, season2.spec @1280) — menu agent fixing (only heavy local job); merge after the fix goes green.
 - P6: paused in ../p6roll (resume after the #215 fix frees the machine). Then P7, P8, P4 merge, P9, P10.
 - ANDY (oct6): #215 menu TIMEBOXED to 08:13 local — if still red then: PARK it (PR stays open, reason noted here), menu ships LAST. #219 / #220 merge as soon as green (independent of #215). Order now: P6 (resumed) → P7 → P8 → P4 reset code → P9 → P10 → #215.
+- P6: PR #221 open (df91aaf) — v2 roll/index mockups were identical to roll-v1 (#209 already built them); adds AUTO unlock at R2 under SEASON2 + 75-gem season2 e2e. QUESTION for Andy: P6 says "no paid luck" but Shop mockup (#219) sells ×2 LUCK for 120 gems — treated as allowed (gems are earned) unless Andy says otherwise.
+- P7: BUILDING (feat/v2-popup-purge)
