@@ -12,6 +12,7 @@
 // Fills are scaleX; the ring's hand is a rotate. REDUCE MOTION: no glide, no beat.
 import { useEffect, useRef, useState } from 'react';
 import { FX, fx } from './motion.js';
+import './motionMore.js';
 import './tokens.css';
 import './KitTimer.css';
 

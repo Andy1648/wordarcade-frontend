@@ -7,7 +7,7 @@
 // homepage chunk). Each control is a real <button> (≥ 44px) carrying data-nav="<id>" — the one hook
 // focus-restore and the e2e specs use, at either width (React 18: the kit buttons take no ref).
 import { useEffect, useRef } from 'react';
-import { KitIconButton, KitRailButton } from './kit/KitButton.jsx';
+import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
 
@@ -34,7 +34,7 @@ export function MenuIcons({ board, onStats, ach, navigating }) {
           title="Leaderboard"
         />
       )}
-      <KitIconButton icon="stats" tone="cyan" className="hp-ico is-stats" data-nav="stats" disabled={navigating} onClick={onStats} ariaLabel="Open stats" title="Stats" />
+      <KitIconButton icon="stats" tone="cyan" className="hp-ico homepage-nav-btn is-stats" data-nav="stats" disabled={navigating} onClick={onStats} ariaLabel="Open stats" title="Stats" />
       <KitIconButton
         icon="achievements"
         tone="gold"
@@ -62,12 +62,14 @@ const DOT_SAYS = { shop: ' — items available', roll: ' — a roll is ready', i
 /**
  * @param items  { shop, roll, index, rebirth }: each { onClick, dot } or null (gated off — not rendered)
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
+ * @param extra  rendered after the pills (the phone puts CREDITS there)
  */
-export function MenuRail({ items, wins, gems, navigating, className = '' }) {
+export function MenuRail({ items, wins, gems, navigating, className = '', extra = null }) {
   return (
     <nav className={`homepage-corner-nav hp-rail ${className}`} aria-label="Menu">
       <KitPill kind="wins" value={wins} className="menu-wins-chip" />
       {gems != null && <KitPill kind="gems" value={gems} className="menu-gems-chip" />}
+      {extra}
       <span className="hp-rail-gap" aria-hidden="true" />
       {RAIL.map(({ id, label, tone }) => {
         const it = items[id];
@@ -79,7 +81,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '' }) {
             label={label}
             tone={tone}
             dot={!!it.dot}
-            className={`hp-nav is-${id}`}
+            className={`hp-nav homepage-nav-btn is-${id}${id === 'rebirth' && it.dot ? ' is-ready' : ''}`}
             data-nav={id}
             disabled={navigating}
             onClick={it.onClick}

@@ -5,13 +5,14 @@
 // server rejection. Now a full room reads FULL and its row button is disabled.
 import { test, expect } from '@playwright/test';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
+import { joinControl } from './support/menu.js';
 
 test('a full public room shows FULL and cannot be joined; an open one stays joinable', async ({ page }) => {
   const mock = await installBackendMock(page);
   await gotoMenu(page);
 
   // Open the public-rooms browser (the app requests the list at the WS boundary).
-  await page.getByRole('button', { name: 'JOIN ROOM' }).click();
+  await (await joinControl(page)).click(); // v2 menu: the Word Bomb dialog's JOIN WITH CODE
   await mock.waitForSent('list_public_rooms', 10000);
 
   // One room at capacity, one with a free seat.

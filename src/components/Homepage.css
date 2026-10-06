@@ -64,7 +64,7 @@
     'cards cards cards';
   column-gap: var(--hp-gap);
   row-gap: max(14px, calc(14 * var(--u)));
-  padding: max(6px, calc(8 * var(--u))) max(12px, calc(30 * var(--u))) max(10px, calc(16 * var(--u)));
+  padding: max(10px, calc(14 * var(--u))) max(12px, calc(30 * var(--u))) max(10px, calc(16 * var(--u)));
   background-color: transparent;
   /* Eased so the menu gently "pushes back" when a mode dialog opens. */
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -107,8 +107,8 @@
   text-transform: uppercase;
   color: #2EFFE0;
 }
-.hp-face.is-b { font-family: 'Bungee Inline', 'Bungee', sans-serif; color: rgba(255, 255, 255, 0.55); }
-.hp-face.is-c { font-family: 'Bungee Shade', 'Bungee', sans-serif; color: #000; letter-spacing: -0.08em; }
+.hp-face.is-b { font-family: 'Bungee Inline', 'Bungee', sans-serif; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+.hp-face.is-c { font-family: 'Bungee Shade', 'Bungee', sans-serif; text-transform: uppercase; color: #000; letter-spacing: -0.08em; }
 /* MENU MOTION LAW: the wordmark's beat-pop (one-shot per detected beat; will-change only while it plays). */
 html[data-beat='true'] .homepage-logo {
   animation: title-beat-pop 120ms ease-out;
@@ -133,7 +133,6 @@ html[data-beat='true'] .homepage-logo {
 .hp-icons .kb--icon { width: var(--hp-tr); height: calc(var(--hp-tr) + 8px); }
 .hp-icons .kb-iface { width: var(--hp-tr); height: var(--hp-tr); }
 .hp-icons .kb-iface .kit-icon { width: var(--hp-tr-ico); height: var(--hp-tr-ico); }
-.hp-icons .kb-idot { width: var(--hp-dot); height: var(--hp-dot); top: -8px; right: -8px; }
 .hp-icons .kb--icon:disabled { opacity: 0.5; pointer-events: none; }
 
 /* ---- under the icons: sound · CREDITS · the live room ---- */

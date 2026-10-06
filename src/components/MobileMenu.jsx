@@ -8,7 +8,7 @@
 // This is FULL-WIDTH TYPOGRAPHIC BANDS instead: the title + the v2 LEADERBOARD / STATS /
 // ACHIEVEMENTS tiles, the level bar, the mode slabs, a split CHAIN | FUSE band, the v2 rail (WINS /
 // GEMS pills over SHOP · ROLL · INDEX · REBIRTH — MenuNav.jsx, the same chrome as the desktop menu)
-// and a footer with CREDITS + sound. JOIN ROOM lives in the multiplayer mode dialogs (JOIN WITH CODE). Everywhere the desktop menu can go, the phone can go — and the whole screen still
+// (CREDITS rides the rail, sound the title row). JOIN ROOM lives in the multiplayer mode dialogs (JOIN WITH CODE). Everywhere the desktop menu can go, the phone can go — and the whole screen still
 // fits one viewport with no scroll. It is a separate COMPONENT
 // (not a pile of `display:none`) on purpose — see lib/useMediaQuery.js for why the node count
 // is the point.
@@ -178,7 +178,10 @@ export default function MobileMenu({
           <br />
           WORD
         </h1>
-        <MenuIcons board={board} onStats={onStats} ach={ach} navigating={navigating} />
+        <div className="hp-m-topr">
+          <AudioControls variant="inline" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
+          <MenuIcons board={board} onStats={onStats} ach={ach} navigating={navigating} />
+        </div>
       </div>
 
       {/* 1a. THE LEVEL: LV + the XP bar (KitXpBar), then the per-letter line + the worn mark. */}
@@ -188,6 +191,7 @@ export default function MobileMenu({
         {markChip}
         {/* E5 follow-up: a live BOOST shows on the phone too, joining this row (renders nothing at rest) */}
         <BoostPill className="hp-m-boost" />
+        {board && <LiveTicker className="hp-m-live" />}
       </div>
 
       {/* 1a''. REBIRTH READY → ×5 FOREVER (Andy oct3): joins the LV strip's cluster, in flow (never
@@ -301,21 +305,19 @@ export default function MobileMenu({
         })}
       </div>
 
-      {/* 4. THE RAIL: WINS / GEMS over SHOP · ROLL · INDEX · REBIRTH (MenuNav.jsx — the desktop rail). */}
-      <MenuRail items={railItems} wins={wins} gems={gems} navigating={navigating} className="hp-m-rail" />
-
-      <div className="hp-m-foot">
-        <button
-          type="button"
-          className={`hp-m-credits${navigating ? ' is-disabled' : ''}`}
-          onClick={onCredits}
-          disabled={navigating}
-        >
-          CREDITS
-        </button>
-        {board && <LiveTicker className="hp-m-live" />}
-        <AudioControls variant="inline" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
-      </div>
+      {/* 4. THE RAIL: WINS / GEMS (+ CREDITS) over SHOP · ROLL · INDEX · REBIRTH (MenuNav.jsx — the desktop rail). */}
+      <MenuRail
+        items={railItems}
+        wins={wins}
+        gems={gems}
+        navigating={navigating}
+        className="hp-m-rail"
+        extra={
+          <button type="button" className={`hp-m-credits${navigating ? ' is-disabled' : ''}`} onClick={onCredits} disabled={navigating}>
+            CREDITS
+          </button>
+        }
+      />
     </div>
   );
 }

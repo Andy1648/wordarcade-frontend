@@ -125,26 +125,40 @@ export async function revealMode(page, id) {
 export const phoneCanOpen = (id) => PHONE_MODE_IDS.includes(id) || PHONE_SOLO_IDS.includes(id);
 
 /**
- * The menu's non-mode controls, at either width: SHOP / STATS / REBIRTH (desktop corner nav,
- * phone strip) and CREDITS (desktop footer link, phone foot row).
+ * The menu's non-mode controls, at either width. v2 MENU (claude/mockups/v2/Menu.dc.html): both trees
+ * render the SAME kit chrome (MenuNav.jsx) — the rail's SHOP / ROLL / INDEX / REBIRTH and the top-right
+ * LEADERBOARD / STATS / ACHIEVEMENTS tiles — each a real <button> carrying data-nav="<id>". CREDITS is
+ * the desktop's link under the tiles and the phone's link in the rail row.
  */
 export function navControl(page, which) {
-  const phone = isPhoneMenu(page);
   switch (which) {
-    case 'shop': return page.locator(phone ? '.hp-m-navbtn.is-shop' : '.homepage-nav-btn.is-shop');
-    case 'stats': return page.locator(phone ? '.hp-m-navbtn.is-stats' : '.homepage-nav-btn.is-stats');
-    case 'rebirth': return page.locator(phone ? '.hp-m-navbtn.is-rebirth' : '.homepage-nav-btn.is-rebirth');
-    case 'credits': return page.locator(phone ? '.hp-m-credits' : '.homepage-credits-link');
+    case 'shop':
+    case 'stats':
+    case 'rebirth':
+    case 'roll':
+    case 'index':
+    case 'achievements':
+    case 'leaderboard':
+      return page.locator(`[data-nav="${which}"]`);
+    case 'credits': return page.locator(isPhoneMenu(page) ? '.hp-m-credits' : '.homepage-credits-link');
     default: throw new Error(`navControl: unknown control "${which}"`);
   }
 }
 
+/** The to-do dot on a rail button (SHOP affordable, ROLL affordable, REBIRTH ready …). */
+export function navDot(page, which) {
+  return page.locator(`.hp-nav.is-${which} .kb-rdot`);
+}
+
 /**
- * The JOIN ROOM control, at either width. The phone menu puts it in the foot row next to the
- * unlock line; the desktop menu has it in the bottom bar.
+ * JOIN BY CODE. The v2 menu has no JOIN ROOM button: joining is the multiplayer mode dialog's
+ * JOIN WITH CODE (Word Bomb's, here). Opens the dialog and returns its JOIN button, at either width.
  */
-export function joinControl(page) {
-  return isPhoneMenu(page) ? page.locator('.hp-m-join') : page.locator('.homepage-btn-join');
+export async function joinControl(page) {
+  await (await revealMode(page, 'word-bomb')).click();
+  const join = page.locator('.mode-dialog-btn-join');
+  await join.waitFor({ state: 'visible' });
+  return join;
 }
 
 /**

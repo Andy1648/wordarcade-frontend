@@ -9,6 +9,7 @@
 // `hit` slams "{label} HIT" over the panel.
 import { useEffect, useRef } from 'react';
 import { FX, fx } from './motion.js';
+import './motionMore.js';
 import { formatNum } from '../../format.js';
 import './tokens.css';
 import './KitPityBar.css';

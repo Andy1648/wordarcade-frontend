@@ -16,6 +16,7 @@ import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHint
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import RebirthReadyButton from './RebirthReadyButton';
+import BoostPill from '../frenzy/BoostPill';
 import { setStatsTab } from '../lib/statsTab';
 import { rebirthRushNotice, clearRebirthRushNotice } from '../progress/econMigrate';
 import { getStreak } from '../progress/streak';

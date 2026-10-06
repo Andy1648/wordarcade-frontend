@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 import { GAMES, FEATURED_GAME } from '../src/gameData.js';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
-import { menuMark, menuMarkAll } from './support/menu.js';
+import { joinControl, menuMark, menuMarkAll } from './support/menu.js';
 
 
 
@@ -44,8 +44,9 @@ test.describe('menu', () => {
     }
   });
 
-  test('the JOIN ROOM entry navigates to the room browser and back (no dead-end)', async ({ page }) => {
-    await page.getByRole('button', { name: 'JOIN ROOM' }).click();
+  // v2 menu: no JOIN ROOM button on the menu — joining is the mode dialog's JOIN WITH CODE.
+  test('JOIN WITH CODE (mode dialog) navigates to the room browser and back (no dead-end)', async ({ page }) => {
+    await (await joinControl(page)).click();
 
     // We leave the menu for the JOIN ROOM / public-rooms browser…
     const back = page.getByRole('button', { name: /←\s*BACK/ });
@@ -74,34 +75,22 @@ test.describe('menu', () => {
     await expect(menuMark(page)).toBeVisible();
   });
 
-  // THE HINT AND THE CARD MUST QUOTE THE SAME RATE, and this compares the two RENDERED strings
-  // rather than the code behind them — which is the only way the original defect was visible.
-  // The hint divided by the MENU's x1 rate and printed "12 WORDS TO LEVEL 2" directly above a
-  // FEATURED card printing "100 XP / WORD": both numbers correct, the pair incoherent.
-  test('the XP hint counts LETTERS at BASE 10 XP / LETTER, and the featured card says the same', async ({ page }) => {
+  // THE PER-LETTER LINE (v2 menu) quotes BASE 10 XP / LETTER on a fresh profile (T0, R0, no mark) — the
+  // one XP rate there is, menu or game; words pay WINS only, so the featured card quotes no XP line.
+  test('the per-letter line says +10 XP / LETTER, and the featured card quotes no XP', async ({ page }) => {
     const m = await page.evaluate(() => {
       const read = (e) => (e ? e.innerText.replace(/\s+/g, ' ').trim() : null);
       const ribbon = document.querySelector('.game-card-ribbon.is-featured');
       const card = ribbon ? ribbon.closest('.game-card') : null;
       return {
-        hint: read(document.querySelector('.menu-xp-hint-text')),
+        per: read(document.querySelector('.hp-per')),
         cardName: read(card && card.querySelector('.game-card-name')),
-        cardWins: card && card.querySelector('.game-card-payout') ? `${card.querySelector('.game-card-payout').getAttribute('data-rate')} WINS` : null, // the live rate (the card prints BASE)
-        cost: read(document.querySelector('.menu-xp-readout-need')),
         cardXp: read(card && card.querySelector('.game-card-xp')),
       };
     });
-    // Exactly one card carries the ribbon, and it is the one gameData marks.
     expect(await page.locator('.game-card-ribbon.is-featured').count()).toBe(1);
-    expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split('\n').join(' '));
-
-    // PROGRESSION v11 (amended): LETTERS fill the bar at ONE price — BASE 10 XP / LETTER on a fresh
-    // profile (T0, R0, no mark), menu or game. Words pay WINS only.
-    const letters = Number((m.hint.match(/(\d[\d,]*)\s+LETTERS?/) || [])[1].replace(/,/g, ''));
-    const cost = Number(m.cost.replace(/[^0-9]/g, ''));
-    expect(letters, `hint "${m.hint}" over ${cost}`).toBe(Math.ceil(cost / 10));
-    expect(m.hint).not.toMatch(/WORDS? TO/);
-    // the card is ONE line since #172 ("BASE n / WORD · POWER ×N") — the XP rule lives on the bar's hint, not the card
+    expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split(String.fromCharCode(10)).join(' '));
+    expect(m.per).toBe('+10 XP / LETTER');
     expect(m.cardXp).toBeNull();
   });
 

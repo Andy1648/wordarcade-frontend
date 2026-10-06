@@ -16,9 +16,11 @@
 //
 // Every one is a real <button> (focusable, Enter/Space), ≥ 44px, and all motion is transform/opacity.
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import KitIcon from './KitIcon.jsx';
+// 02 ICON + 03 RAIL (and the shared tones / base CSS — loaded first) live in KitNavButton.jsx.
+export { KitIconButton, KitRailButton } from './KitNavButton.jsx';
 import { createHoldConfirm, HOLD_MS, HOLD_SHAKE_AT_MS } from './holdConfirm.js';
 import { FX, fx, kitStop } from './motion.js';
+import './motionMore.js';
 import './tokens.css';
 import './KitButton.css';
 
@@ -74,7 +76,7 @@ const LABEL_FS = { 24: 'kb-fs24', 30: 'kb-fs30', 34: 'kb-fs34', 38: 'kb-fs38' };
  * @param {number} [p.drainMs] / [p.drainKey]  a cooldown strip that drains once per key
  * @param {'hover'|'pressed'} [p.freeze]     render a frozen state (kit gallery)
  */
-export const KitButton = forwardRef(function KitButton(
+export const KitButton = /* @__PURE__ */ forwardRef(function KitButton(
   { tone = 'yellow', label, sub, labelSize = 38, width = 160, disabled = false, lockText, tag, drainMs, drainKey, freeze, onClick, onDeny, className, ariaLabel, ...rest },
   ref,
 ) {
@@ -135,7 +137,7 @@ export const KitButton = forwardRef(function KitButton(
  * @param {React.ReactNode} [p.label='HOLD TO BUY'] / [p.holdingLabel='HOLDING'] / [p.sub]
  * @param {string} [p.confirmText]           floats up on commit ("+1 POWER")
  */
-export const KitHoldButton = forwardRef(function KitHoldButton(
+export const KitHoldButton = /* @__PURE__ */ forwardRef(function KitHoldButton(
   { tone = 'gold', label = 'HOLD TO BUY', holdingLabel = 'HOLDING', sub, labelSize = 30, width = 300, holdMs = HOLD_MS, disabled = false, confirmText, onConfirm, onCancel, className, ariaLabel, ...rest },
   ref,
 ) {
@@ -281,87 +283,6 @@ export function KitBackButton({ label = 'MENU', onClick, className, ariaLabel = 
         </g>
       </svg>
     </button>
-  );
-}
-
-/**
- * 02 ICON tile. `tag` = rank sticker text (#4); `dot` = a count (or true) for a real to-do.
- */
-export function KitIconButton({ icon, tone = 'yellow', rot = 0, tag, tagTone, dot, ariaLabel, onClick, className, ...rest }) {
-  const dotRef = useRef(null);
-  const tagRef = useRef(null);
-  const hasDot = dot != null && dot !== false && dot !== 0;
-  useEffect(() => {
-    if (hasDot && dotRef.current) {
-      fx(dotRef.current, FX.dotIn);
-    }
-  }, [hasDot]);
-  useEffect(() => {
-    if (hasDot && dotRef.current) {
-      const a = dotRef.current.__kitAnim;
-      // one beat after the dot lands (the mockup's 1.4s pulse, played once)
-      if (!a) fx(dotRef.current, FX.dotBeat);
-    }
-  }, [dot, hasDot]);
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    if (tag != null) fx(tagRef.current, FX.bump);
-  }, [tag]);
-  return (
-    <button type="button" className={cx('kb', 'kb--icon', `kb-tone-${tone}`, className)} style={{ '--kb-rot': `${rot}deg` }} onClick={onClick} aria-label={ariaLabel} {...rest}>
-      <span className="kb-shadow" />
-      <span className="kb-lip" />
-      <span className="kb-iface">
-        <span className="kb-ibar" />
-        <KitIcon name={icon} size={44} shadow={2} extras={false} />
-      </span>
-      {tag != null && (
-        <span ref={tagRef} className={cx('kb-itag', `kb-tone-${tagTone || 'yellow'}`)}>
-          {tag}
-        </span>
-      )}
-      {hasDot && (
-        <span ref={dotRef} className="kb-idot" aria-hidden="true">
-          {dot === true ? '' : dot}
-        </span>
-      )}
-    </button>
-  );
-}
-
-/**
- * 03 LEFT RAIL item. `tone` / `toneD` = the destination colour and its shade.
- */
-export function KitRailButton({ icon, label, tone = 'yellow', active = false, dot = false, onClick, className, ...rest }) {
-  const ptrRef = useRef(null);
-  const dotRef = useRef(null);
-  useEffect(() => {
-    if (active) fx(ptrRef.current, FX.slamSmall);
-  }, [active]);
-  useEffect(() => {
-    if (dot && !active) fx(dotRef.current, FX.dotIn);
-  }, [dot, active]);
-  return (
-    <span className={cx('kb-rwrap', active && 'is-active', className)}>
-      <button type="button" className={cx('kb', 'kb--rail', `kb-tone-${tone}`, active && 'is-active')} aria-current={active ? 'page' : undefined} onClick={onClick} {...rest}>
-        <span className="kb-shadow" />
-        <span className="kb-rface">
-          <span className="kb-redge" />
-          <KitIcon name={icon} size={28} shadow={2} extras={false} />
-          <span className="kb-rlabel">{label}</span>
-        </span>
-      </button>
-      {active && (
-        <svg ref={ptrRef} className={cx('kb-rptr', `kb-tone-${tone}`)} width="22" height="30" viewBox="0 0 22 30" aria-hidden="true" focusable="false">
-          <path d="M2 3 L19 15 L2 27 Z" stroke="#000" strokeWidth="4" strokeLinejoin="round" />
-        </svg>
-      )}
-      {dot && !active && <span ref={dotRef} className="kb-rdot" aria-hidden="true" />}
-    </span>
   );
 }
 

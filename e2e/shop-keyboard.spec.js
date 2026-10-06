@@ -35,7 +35,7 @@ test('an Enter tap buys KEY TIER once — keyboard only, no mouse', async ({ pag
   await btn.focus();
   await page.keyboard.press('Enter');
   // The purchase landed exactly once: KEY TIER advanced to TIER 1 (not 2).
-  await expect(keyPowerHeading(page)).toContainText('KEY T1 ');
+  await expect(keyPowerHeading(page)).toContainText('POWER T1 ');
 });
 
 test('Enter buys KEY TIER and reveals the unlock sticker', async ({ page }) => {
@@ -45,9 +45,9 @@ test('Enter buys KEY TIER and reveals the unlock sticker', async ({ page }) => {
   await btn.focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY TIER 1');
+  await expect(page.locator('.sticker-name')).toContainText('POWER 1');
   await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
-  await expect(keyPowerHeading(page)).toContainText('KEY T1 ');
+  await expect(keyPowerHeading(page)).toContainText('POWER T1 ');
 });
 
 test('Space also buys via the keyboard', async ({ page }) => {
@@ -57,6 +57,6 @@ test('Space also buys via the keyboard', async ({ page }) => {
   await btn.focus();
   await page.keyboard.press('Space');
   await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY TIER 2');
-  await expect(keyPowerHeading(page)).toContainText('KEY T2 ');
+  await expect(page.locator('.sticker-name')).toContainText('POWER 2');
+  await expect(keyPowerHeading(page)).toContainText('POWER T2 ');
 });

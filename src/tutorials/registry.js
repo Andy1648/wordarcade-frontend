@@ -54,7 +54,7 @@ export const TUTORIALS = [
     isNew: true,
     when: (s) => !!s.keyAffordable && s.keyTier === 0 && s.rebirths === 0,
     target: '.shop-keypower',
-    line: 'KEY TIER: MORE XP / LETTER. HOLD TO BUY.',
+    line: 'POWER: MORE XP / LETTER. HOLD TO BUY.',
   },
 ];
 

@@ -3,7 +3,7 @@
 // clearly larger." Before: a yellow ★ REWARDS button led the nav; dots were 10x10, the count 22x22.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, navControl } from './support/menu.js';
+import { menuReady, navControl, navDot } from './support/menu.js';
 
 const CLAIMS = [
   { id: 'ach-x', kind: 'ach', label: 'TEST A', amount: 100, at: 1 },
@@ -28,17 +28,18 @@ async function menuWith(page, vp, claims) {
 }
 
 for (const vp of [{ width: 1280, height: 551 }, { width: 1280, height: 800 }, { width: 390, height: 844 }]) {
-  test(`${vp.width}x${vp.height}: no REWARDS icon; STATS carries the count and opens the claims; dots are big`, async ({ page }) => {
+  // v2 MENU: the claims ride the ACHIEVEMENTS tile (top right) — its count dot, its tap opens the claims.
+  test(`${vp.width}x${vp.height}: no REWARDS icon; ACHIEVEMENTS carries the count and opens the claims; dots are big`, async ({ page }) => {
     await menuWith(page, vp, CLAIMS);
     await expect(page.locator('.is-rewards')).toHaveCount(0);
-    const stats = navControl(page, 'stats');
+    const stats = navControl(page, 'achievements');
     // LV27 also queues the system reveals, so the count is >= the 2 seeded claims
-    await expect(stats).toHaveAttribute('aria-label', /^Open stats — \d+ to claim$/);
-    const count = stats.locator('.homepage-claim-count, .hp-m-count');
+    await expect(stats).toHaveAttribute('aria-label', /^Open achievements — \d+ to claim$/);
+    const count = stats.locator('.kb-idot');
     await expect(count).toHaveText(/^\d+$/);
     const cb = await count.boundingBox();
     expect(cb.height, 'claim count height (was 22)').toBeGreaterThanOrEqual(28);
-    const dot = navControl(page, 'shop').locator('.homepage-shop-dot, .hp-m-dot');
+    const dot = navDot(page, 'shop');
     const db = await dot.boundingBox();
     expect(db.width, 'notification dot (was 10x10)').toBeGreaterThanOrEqual(18);
     await stats.click();
@@ -49,11 +50,13 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1280, height: 800 }, { 
   });
 }
 
-test('with nothing to claim, STATS opens Stats and has no count', async ({ page }) => {
+test('with nothing to claim, ACHIEVEMENTS opens Stats on its ACHIEVEMENTS tab and has no count', async ({ page }) => {
   await menuWith(page, { width: 1280, height: 800 }, []);
-  const stats = navControl(page, 'stats');
-  await expect(stats).toHaveAttribute('aria-label', 'Open stats');
-  await expect(stats.locator('.homepage-claim-count')).toHaveCount(0);
+  const stats = navControl(page, 'achievements');
+  await expect(stats).toHaveAttribute('aria-label', 'Open achievements');
+  await expect(stats.locator('.kb-idot')).toHaveCount(0);
   await stats.click();
+  await page.locator('.stats-panel').waitFor({ state: 'visible' });
   await expect(page.locator('.claims-panel')).toHaveCount(0);
+  await expect(page.locator('.stats-tab.is-active')).toHaveText('ACHIEVEMENTS');
 });

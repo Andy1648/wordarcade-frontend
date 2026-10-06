@@ -24,7 +24,7 @@ async function openShop(page, kv) {
 test('the shop does not sell the LETTER FORGE, and a forged save keeps its data', async ({ page }) => {
   const forged = JSON.stringify({ e: 3, t: 2 });
   await openShop(page, { 'taw.wins': '100000', 'taw.xp': JSON.stringify({ lv: 40, into: 0 }), 'taw.layer.forge': '1', 'taw.forge': forged });
-  await expect(page.locator('.shop-subtitle', { hasText: 'KEY TIER' })).toBeVisible();
+  await expect(page.locator('.shop-subtitle', { hasText: 'POWER' })).toBeVisible();
   await expect(page.locator('.shop-subtitle', { hasText: 'LETTER FORGE' })).toHaveCount(0);
   await expect(page.locator('.shop-forge')).toHaveCount(0);
   await expect(page.locator('.forge-tile')).toHaveCount(0);

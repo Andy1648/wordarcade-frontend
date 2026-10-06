@@ -97,7 +97,7 @@ export function nearMiss(p = {}) {
     if (short > 0 && rate > 0) {
       const words = short / rate;
       const w = Math.max(1, Math.ceil(words - EPS));
-      out.push({ kind: 'key', words, text: `KEY TIER ${formatNum(Math.max(0, Math.floor(num(k.tier))) + 1)} IN ${formatNum(w)} WORD${w === 1 ? '' : 'S'}` });
+      out.push({ kind: 'key', words, text: `POWER ${formatNum(Math.max(0, Math.floor(num(k.tier))) + 1)} IN ${formatNum(w)} WORD${w === 1 ? '' : 'S'}` });
     }
   }
 

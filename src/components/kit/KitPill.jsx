@@ -132,7 +132,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
 
   const name = label || k.label;
   return (
-    <div ref={rootRef} className={`kp kp-tone-${tone || k.tone}${className ? ` ${className}` : ''}`} role="group" aria-label={ariaLabel || `${name} ${formatNum(value)}`}>
+    <div ref={rootRef} className={`kp kp-tone-${tone || k.tone}${className ? ` ${className}` : ''}`} role="group" aria-label={ariaLabel || `${name} ${formatNum(value)}`} data-value={value}>
       <div className="kp-name" aria-hidden="true">{name}</div>
       <div ref={bodyRef} className="kp-body">
         <div className="kp-box">
