@@ -74,7 +74,7 @@ test.describe('shop', () => {
     await expect(rb).toHaveCount(1);
     const gate = await page.evaluate(() => window.__tawXp && window.__tawXp().level);
     expect(gate).toBe(1);
-    await expect(rb.locator('.kb-rval')).toHaveText(/^IN \d[\d,.]*[KMB]? LV$/);
+    await expect(rb.locator('.kb-rval-full')).toHaveText(/^IN \d[\d,.]*[KMB]? LV$/);
     await expect(rb.locator('.kb-rdot')).toHaveCount(0);
   });
 
