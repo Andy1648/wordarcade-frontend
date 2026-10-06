@@ -87,7 +87,7 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
   - [ ] 9d JOIN ROOM / LOBBY / SETTINGS: letter tiles for the code, 8-seat lobby, 5-row settings (REDUCE MOTION, NUMBER STYLE); no JOIN ROOM on the menu.
 
 ## ANDY TODO (SQL)
-- [ ] (at the SEASON2 flip, not before) run supabase/migrations/022_season2_board.sql, then claude/run-season2.sql (phase 4), then `notify pgrst`
+- [ ] (at the SEASON2 flip, not before) run supabase/migrations/022_season2_board.sql, then 024_season2_weekly.sql (P8 #224), then claude/run-season2.sql (023, P4), then `notify pgrst`, then say "flip SEASON2"
 - [x] 021 RUN (Andy, oct5 late: lb_caps rebirth_rpc true, leaderboard has stars) — server rebirth is live
 - [ ] P10 MODE HUDs (mockups committed via #217, merged) — one PR each, real rules/payouts kept (mockup numbers are placeholders, NOT economy; e.g. SAT stays ×3), every win its own line, before/after shots at 1280×551 / 1366×657 / 1920×1080 / 390×844; WS/game-logic changes = Tier 1 → 2-context Playwright play-test before merge:
   - [ ] 10a KitTutorial: section 02 version B (typed letters fill the XP bar's slots, LV 2 at 8 letters) = first-30-seconds hook for new players; section 01 spotlight steps advance by DOING the action (no OK buttons); section 03 PAUSE-TO-LEARN edge card ("NEXT TIME: SING") in every mode where you can lose a word
@@ -117,3 +117,5 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - #215 MENU MERGED + LIVE (40ac7bf) — P5 DONE. Prod smoke 1366×657 + 390×844: 0 errors, no scroll. Note: live (S1) achievement claim prompt overlaps the bottom of the Word Bomb card at 1366×657 — P7 removes it under SEASON2. TODO: CLAUDE.md CANONICAL MENU TITLE section to update (wordmark now per mockup). #221 updating with main → merge when green.
 - P7: PR #222 open (42c5c82) — every centre popup + menu claim notification removed under SEASON2 (25-row inventory in PR), rank-ups → top-edge banner (pay nothing), unlocks → right-edge toasts; payload 962,337. Merges after #221. P8: BUILDING (feat/v2-stats → feat/v2-leaderboard).
 - #221 ROLL/INDEX MERGED (0079e8b) — P6 DONE. #222 conflict (S2Trophy) resolved → CI → merge when green.
+- P8: PRs #223 STATS (b863b8b) + #224 LEADERBOARD (e17420a) open; 022 covers ALL TIME; new 024_season2_weekly.sql for THIS WEEK (Andy runs at the flip). Note: no CHANGE NAME on the v2 board (S2 only). Merge after #222.
+- P4: reset agent RESUMED (023_season2_reset.sql + claude/run-season2.sql + Season2 welcome + one-line flip prepared, NOT flipped).
