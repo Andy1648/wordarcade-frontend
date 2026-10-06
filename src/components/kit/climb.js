@@ -6,14 +6,60 @@
 // rule is the WHOLE climb ≤ CLIMB_MAX_MS (1 s): planClimb scales every step of a plan that would run
 // longer, keeping the per-level rhythm and the proportions.
 //
-// createClimbPlayer runs a plan on one rAF loop (injected clock for node --test); frames hand out
-// numbers only — callers write transform: scaleX and text. A new target mid-climb re-plans from what
-// is on screen. REDUCE MOTION lands instantly.
+// ANDY (oct6, "smooth and clean"): EVERY gain GLIDES — each fill is a GLIDE_MS (250 ms) ease-out on
+// cubic-bezier(.2,.8,.2,1), retargeted from wherever the bar is (never a jump, never a restart), so
+// typing fast reads as one continuous glide. barPlan's 200 ms final fill becomes the same glide.
+//
+// createClimbPlayer runs a plan on one rAF loop (injected clock for node --test) that sleeps at rest;
+// frames hand out numbers only — callers write transform: scaleX and text. A new target mid-climb
+// re-plans from the frac ON SCREEN (a JS number the loop tracks — never a style read). REDUCE MOTION
+// lands instantly.
 import { planBar } from '../../lib/barPlan.js';
 import { reduceMotion } from '../../lib/reduceMotion.js';
-import { easeOutCubic } from '../../juice/countUp.js';
 
 export const CLIMB_MAX_MS = 1000;
+/** Every fill (a same-level gain, the landing after a wrap) glides this long. */
+export const GLIDE_MS = 250;
+/** The white sweep that marks each level wrap (KitXpBar; transform only, one pooled node). */
+export const SWEEP_MS = 150;
+
+/** CSS cubic-bezier(x1,y1,x2,y2) as a function of progress k ∈ [0,1]. */
+export function cubicBezier(x1, y1, x2, y2) {
+  const cx = 3 * x1;
+  const bx = 3 * (x2 - x1) - cx;
+  const ax = 1 - cx - bx;
+  const cy = 3 * y1;
+  const by = 3 * (y2 - y1) - cy;
+  const ay = 1 - cy - by;
+  const sx = (t) => ((ax * t + bx) * t + cx) * t;
+  const sy = (t) => ((ay * t + by) * t + cy) * t;
+  const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+  return (k) => {
+    if (!(k > 0)) return 0;
+    if (k >= 1) return 1;
+    let t = k;
+    for (let i = 0; i < 8; i += 1) {
+      const e = sx(t) - k;
+      if (Math.abs(e) < 1e-6) return sy(t);
+      const d = dx(t);
+      if (Math.abs(d) < 1e-6) break;
+      t -= e / d;
+    }
+    let lo = 0;
+    let hi = 1;
+    t = k;
+    for (let i = 0; i < 30; i += 1) {
+      const x = sx(t);
+      if (Math.abs(x - k) < 1e-6) break;
+      if (x < k) lo = t;
+      else hi = t;
+      t = (lo + hi) / 2;
+    }
+    return sy(t);
+  };
+}
+/** The house glide: cubic-bezier(.2,.8,.2,1). */
+export const glideEase = cubicBezier(0.2, 0.8, 0.2, 1);
 // The player PLANS for 950 ms so the frame that lands the climb (one rAF after the plan ends) is still
 // inside the 1 s budget on a real clock.
 export const CLIMB_PLAN_MS = 950;
@@ -21,36 +67,17 @@ export const CLIMB_PLAN_MS = 950;
 const clamp01 = (f) => (f > 0 ? Math.min(1, f) : 0);
 const lvOf = (l) => (Number.isFinite(l) && l >= 1 ? Math.floor(l) : 1);
 
-// P9a (KitLevelUp.dc.html 01 "D · MULTI = CHIP, 3 WRAPS MAX"): a multi-level gain WRAPS the bar at most MAX_WRAPS
-// times — each wrap a WRAP_MS fill-to-cap + white sweep, the LV numeral ticking through near-even chunks that sum to
-// the real gain — then fills to the real fraction. The "+N LV" chip (KitXpBar) carries the count.
-export const MAX_WRAPS = 3;
-export const WRAP_MS = 240;
-
-/** barPlan's plan, regrouped to ≤ MAX_WRAPS wraps of WRAP_MS, then compressed so the whole climb fits in maxMs. */
-export function planClimb(from, to, { maxMs = CLIMB_MAX_MS, maxWraps = MAX_WRAPS, wrapMs = WRAP_MS } = {}) {
-  const raw = planBar(from, to);
+/** barPlan's plan, compressed so the whole climb fits in maxMs. Same shape as planBar's result. */
+export function planClimb(from, to, { maxMs = CLIMB_MAX_MS } = {}) {
+  const raw = planBar(from, to, { sameLevelMs: GLIDE_MS });
   if (raw.drop || raw.steps.length === 0) return raw;
-  const flashes = raw.steps.filter((s) => s.kind === 'flash');
-  let steps = raw.steps;
-  if (flashes.length) {
-    const n = flashes.reduce((a, s) => a + s.levels, 0);
-    const count = Math.min(maxWraps, n);
-    const out = [];
-    let level = flashes[0].level;
-    for (let i = 0; i < count; i += 1) {
-      const levels = Math.floor(n / count) + (i < n % count ? 1 : 0);
-      out.push({ kind: 'flash', level, levels, fromFrac: i === 0 ? flashes[0].fromFrac : 0, toFrac: 1, ms: wrapMs });
-      level += levels;
-    }
-    steps = [...out, ...raw.steps.filter((s) => s.kind !== 'flash')];
-  }
-  let totalMs = steps.reduce((a, s) => a + s.ms, 0);
-  if (totalMs > maxMs) {
-    const k = maxMs / totalMs;
-    steps = steps.map((s) => ({ ...s, ms: Math.floor(s.ms * k * 1000) / 1000 }));
-    totalMs = steps.reduce((a, s) => a + s.ms, 0);
-  }
+  // every fill is the house glide (barPlan's landing fill is 200 ms)
+  const glided = raw.steps.map((s) => (s.kind === 'fill' ? { ...s, ms: GLIDE_MS } : s));
+  const plan = { steps: glided, totalMs: glided.reduce((a, s) => a + s.ms, 0), drop: false };
+  if (plan.totalMs <= maxMs) return plan;
+  const k = maxMs / plan.totalMs;
+  const steps = plan.steps.map((s) => ({ ...s, ms: Math.floor(s.ms * k * 1000) / 1000 }));
+  const totalMs = steps.reduce((a, s) => a + s.ms, 0);
   return { steps, totalMs, drop: false };
 }
 
@@ -99,7 +126,7 @@ export function createClimbPlayer({
       if (el < s.ms) {
         const k = s.ms > 0 ? el / s.ms : 1;
         if (s.kind === 'flash') show(s.level, s.fromFrac + (1 - s.fromFrac) * k, 'flash');
-        else show(s.level, s.fromFrac + (s.toFrac - s.fromFrac) * easeOutCubic(k), 'fill');
+        else show(s.level, s.fromFrac + (s.toFrac - s.fromFrac) * glideEase(k), 'fill');
         id = raf(step);
         return;
       }

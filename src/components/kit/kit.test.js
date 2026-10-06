@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHoldConfirm, HOLD_MS, HOLD_SHAKE_AT_MS } from './holdConfirm.js';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS, easeOutQuart } from './countTween.js';
-import { planClimb, createClimbPlayer, CLIMB_MAX_MS, WRAP_MS } from './climb.js';
+import { planClimb, createClimbPlayer, CLIMB_MAX_MS, GLIDE_MS, glideEase } from './climb.js';
 import { planBar } from '../../lib/barPlan.js';
 import { createBannerStore, BANNER_MS, BANNER_LEAVE_MS } from './bannerStore.js';
 
@@ -159,19 +159,79 @@ test('climb: every multi-level climb fits in 1 s (barPlan alone overruns at 10+ 
   }
 });
 
-test('climb: a multi-level gain wraps at most 3 times (KitLevelUp "3 WRAPS MAX"), chunks sum to the gain', () => {
-  for (const n of [1, 2, 3, 4, 37, 500]) {
-    const p = planClimb({ level: 3, frac: 0.1 }, { level: 3 + n, frac: 0.4 });
-    const flashes = p.steps.filter((s) => s.kind === 'flash');
-    assert.equal(flashes.length, Math.min(3, n), `+${n} → ${flashes.length} wraps`);
-    assert.equal(flashes.reduce((a, s) => a + s.levels, 0), n);
-    assert.equal(flashes[0].fromFrac, 0.1, 'the first wrap fills from where the bar is');
-    for (const f of flashes.slice(1)) assert.equal(f.fromFrac, 0);
-    assert.deepEqual(p.steps[p.steps.length - 1], { kind: 'fill', level: 3 + n, fromFrac: 0, toFrac: 0.4, ms: 200 });
+test('climb: short climbs keep the barPlan flashes untouched; every fill glides GLIDE_MS', () => {
+  const raw = planBar({ level: 3, frac: 0.1 }, { level: 5, frac: 0.4 });
+  const k = planClimb({ level: 3, frac: 0.1 }, { level: 5, frac: 0.4 });
+  assert.equal(GLIDE_MS, 250);
+  assert.equal(k.drop, false);
+  assert.equal(k.steps.length, raw.steps.length);
+  k.steps.forEach((s, i) => {
+    const r = raw.steps[i];
+    if (s.kind === 'flash') assert.deepEqual(s, r);
+    else assert.deepEqual(s, { ...r, ms: GLIDE_MS });
+  });
+  assert.equal(k.totalMs, k.steps.reduce((a, s) => a + s.ms, 0));
+  // a same-level gain is ONE glide of GLIDE_MS
+  const same = planClimb({ level: 3, frac: 0.1 }, { level: 3, frac: 0.12 });
+  assert.deepEqual(same.steps, [{ kind: 'fill', level: 3, fromFrac: 0.1, toFrac: 0.12, ms: GLIDE_MS }]);
+});
+
+test('climb: the glide is cubic-bezier(.2,.8,.2,1) — 0 → 1, monotonic, no overshoot, ease-out', () => {
+  assert.equal(glideEase(0), 0);
+  assert.equal(glideEase(1), 1);
+  let prev = 0;
+  for (let i = 1; i <= 100; i += 1) {
+    const v = glideEase(i / 100);
+    assert.ok(v >= prev && v <= 1, `ease(${i / 100}) = ${v}`);
+    prev = v;
   }
-  const one = planClimb({ level: 3, frac: 0.1 }, { level: 4, frac: 0.4 });
-  assert.equal(one.steps[0].ms, WRAP_MS, 'one wrap at the wrap pace');
-  assert.deepEqual(planClimb({ level: 3, frac: 0.1 }, { level: 3, frac: 0.4 }), planBar({ level: 3, frac: 0.1 }, { level: 3, frac: 0.4 }), 'a same-level gain is barPlan untouched');
+  assert.ok(glideEase(0.25) > 0.6, 'front-loaded (ease-out)');
+  // exact points on the curve: at bezier parameter t, x = 3·.2·t(1−t)² + 3·.2·t²(1−t) + t³, y likewise with .8 / 1
+  for (const t of [0.25, 0.5, 0.75]) {
+    const x = 0.6 * t * (1 - t) ** 2 + 0.6 * t * t * (1 - t) + t ** 3;
+    const y = 2.4 * t * (1 - t) ** 2 + 3 * t * t * (1 - t) + t ** 3;
+    assert.ok(Math.abs(glideEase(x) - y) < 1e-4, `ease(${x}) = ${glideEase(x)}, want ${y}`);
+  }
+});
+
+test('climb: a BURST of gains is one continuous glide (retarget mid-tween, never a jump or a restart)', () => {
+  const c = fakeClock();
+  const frames = [];
+  let done = null;
+  const p = createClimbPlayer({ level: 4, frac: 0.6, ...c, reduced: () => false, onFrame: (l, f) => frames.push({ l, f }), onDone: (l, f) => { done = { l, f }; } });
+  frames.length = 0;
+  // 30 keys at ~14/s, each +1.5% — crosses one level wrap mid-burst
+  let lv = 4;
+  let fr = 0.6;
+  for (let i = 0; i < 30; i += 1) {
+    fr += 0.015;
+    if (fr >= 1) { fr -= 1; lv += 1; }
+    p.to(lv, Math.round(fr * 1e6) / 1e6);
+    c.advance(70);
+  }
+  c.advance(600);
+  assert.ok(done, 'landed');
+  assert.equal(done.l, lv);
+  assert.equal(done.f, Math.round(fr * 1e6) / 1e6);
+  assert.ok(frames.length > 60, `a frame every rAF (${frames.length})`);
+  let wraps = 0;
+  for (let i = 1; i < frames.length; i += 1) {
+    const a = frames[i - 1];
+    const b = frames[i];
+    if (b.l === a.l) {
+      assert.ok(b.f >= a.f, `frame ${i}: ${a.f} → ${b.f} went backwards (a restart)`);
+      // never a JUMP: one 16 ms frame moves the bar a small step, not to the target
+      assert.ok(b.f - a.f < 0.06, `frame ${i}: ${a.f} → ${b.f} jumped`);
+    } else {
+      wraps += 1;
+      assert.equal(b.l, a.l + 1, 'a wrap is one level up');
+      assert.ok(a.f > 0.9, `wrapped from ${a.f} — the fill glides to full first`);
+      assert.ok(b.f < 0.1, `reset to ${b.f} — 0 only at the wrap`);
+    }
+  }
+  assert.equal(wraps, 1, 'exactly the one level wrap');
+  // nothing scheduled at rest: the loop sleeps
+  assert.equal(p.running, false);
 });
 
 test('climb: the player lands exactly on the target within 1 s and reports each level', () => {

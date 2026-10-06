@@ -28,3 +28,8 @@ V3.Notify = (props) => (
 V3.toast = say('pushToast'); // right-edge UNLOCK toast (KitEdgeToast)
 V3.rankUp = say('pushRankUp'); // top-edge RANK-UP banner (KitRankBanner) — v3 ranks, and the board's #N news
 V3.fx = (api) => wrapFx(api, V3.toast);
+
+// THE SEASON 2 CONVERSION (Andy oct6: no reset — 025_season2_convert.sql): install.js already converted this
+// browser's save (convertLocal); this lazy chunk adopts the server's converted rebirths / ★ for a board player and shows
+// the UPDATE card once. Started WITHOUT blocking the first render — V3.boot is the promise client.js submitStats waits on.
+V3.boot = import('./season2Update.js').then((m) => m.bootSeason2Update()).catch(() => true);

@@ -5,8 +5,8 @@
 //   * the 16 SHAPED plates (gallery sheet) are the v3 ladder in order; only the ★ tiers shimmer, and only once;
 //   * SEASON2 menu: the rank-up banner hangs from the TOP edge with the shaped old → new plates, fits a phone, pays
 //     no wins / gems; slot unlocks toast on the RIGHT edge with their "2" badge;
-//   * the menu XP bar (live): a multi-level gain wraps ≤ 3 times, the "+N LV" chip slides out UNDER the bar's left
-//     end, and the bar lands on the real level + fraction;
+//   * the menu XP bar (live, the #228 glide bar): a multi-level gain shows the "+N LV" chip sliding out UNDER the bar's
+//     left end, and the bar lands on the real level + fraction;
 //   * REDUCE MOTION: the banner still shows (no animation), nothing runs.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -101,7 +101,7 @@ test('SEASON2 + REDUCE MOTION: the rank banner still shows, nothing animates', a
   expect(running).toBe(0);
 });
 
-test('menu XP bar (live): a multi-level gain wraps ≤ 3 times, "+N LV" chip slides out under the bar, lands on the real level', async ({ page }) => {
+test('menu XP bar (live): a multi-level gain ticks the LV up, the "+N LV" chip slides out under the bar, lands on the real level', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   // LV1 on 6 rebirths (live econ): one keystroke crosses tens of levels (e2e/bar-multilevel.spec.js's seed)
   const save = JSON.stringify({ lv: 1, f: 0, rc: 6, v: 10 });
@@ -134,7 +134,7 @@ test('menu XP bar (live): a multi-level gain wraps ≤ 3 times, "+N LV" chip sli
     return { before, real: real.level, seen, chipText, chipBelow, end: lv(), state: document.querySelector('.menu-xp-bar').dataset.state };
   });
   expect(r.real - r.before, 'a multi-level gain').toBeGreaterThanOrEqual(5);
-  expect(r.seen.length - 1, `wraps: ${r.seen.join(' → ')}`).toBeLessThanOrEqual(3);
+  expect(r.seen.length - 1, `the LV ticked up: ${r.seen.join(' → ')}`).toBeGreaterThanOrEqual(1);
   for (let i = 1; i < r.seen.length; i += 1) expect(r.seen[i]).toBeGreaterThan(r.seen[i - 1]);
   expect(r.chipText).toMatch(/^\+[\d.,]+[KMB]? LV$/);
   expect(r.chipBelow.top, 'the chip hangs under the bar').toBeGreaterThanOrEqual(r.chipBelow.barBottom - 8);

@@ -624,7 +624,7 @@ function BarsSheet() {
   return (
     <div className="kg-sheet kg-sheet--bars" id="bars">
       <SheetHead title="BARS + METERS" tone="cyan" tag="KIT 05" right={<><span className="kg-chip">FILL = SCALEX</span><span className="kg-chip">WRAP CAP 1S</span><span className="kg-chip">URGENT &lt; 30S</span></>} />
-      <EdgePanel num="01" title="MENU XP BAR" tone="yellow" extra="HERO · SPAM THE BUTTONS" right={<><span className="kg-out">A · GHOST LEADS</span><span className="kg-out">B · FILL CHASES</span><span className="kg-out">C · FLASH PER LEVEL</span><span className="kg-out">D · 6+ LEVELS COMPRESS</span></>} className="kg-x">
+      <EdgePanel num="01" title="MENU XP BAR" tone="yellow" extra="HERO · SPAM THE BUTTONS" right={<><span className="kg-out">A · 250MS GLIDE</span><span className="kg-out">B · RETARGET, NEVER RESTART</span><span className="kg-out">C · SWEEP PER LEVEL</span><span className="kg-out">D · 6+ LEVELS COMPRESS</span></>} className="kg-x">
         <div className="kg-x-bar" data-testid="kit-xp-wrap">
           <KitXpBar level={lvl} frac={frac} need={NEED} onClimbDone={onClimbDone} className="kg-xp" />
         </div>

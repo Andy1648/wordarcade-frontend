@@ -31,7 +31,7 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { flagOn } from '../lib/featureFlags';
 import { rebirthLadder } from '../progress/rebirthLadder';
 import { rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
-import { takeStatsTab } from '../lib/statsTab';
+import { peekStatsTab, clearStatsTab } from '../lib/statsTab';
 import OverlaySkeleton from './OverlaySkeleton';
 
 // P8 (SEASON2 only): the v2 STATS screen (Stats.dc.html — the TOTAL multiplier first, the chain, REPLAY), its own lazy
@@ -40,7 +40,11 @@ import OverlaySkeleton from './OverlaySkeleton';
 const StatsV2 = lazy(() => import('./StatsV2.jsx'));
 
 export default function StatsScreen({ onBack }) {
-  const [initialTab] = useState(() => takeStatsTab());
+  // peek, not take: a discarded (interrupted) render must not eat the deep-linked tab — see lib/statsTab.js
+  const [initialTab] = useState(() => peekStatsTab());
+  useEffect(() => {
+    clearStatsTab(); // mounted for real: the deep link is spent
+  }, []);
   const [full, setFull] = useState(() => !SEASON2 || !!initialTab);
   if (!full) {
     return (

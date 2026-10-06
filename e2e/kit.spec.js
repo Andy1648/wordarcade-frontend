@@ -112,6 +112,52 @@ test('the XP climb (+30 levels) finishes within 1 s', async ({ page }) => {
   await expect(page.getByTestId('kit-xp-last')).toHaveText(/^\+30 LV IN (0\.\d\d|1\.00)S$/);
 });
 
+test('a burst of gains is one continuous glide — the fill climbs, resetting to 0 only at a wrap', async ({ page }) => {
+  await open(page);
+  const r = await page.evaluate(async () => {
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    const root = document.querySelector('.kg-xp');
+    const fill = root.querySelector('.kx-fill');
+    const btn = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === '+1 LETTER');
+    const scale = () => {
+      const m = /scaleX\(([^)]+)\)/.exec(fill.style.transform || '');
+      return m ? Number(m[1]) : NaN;
+    };
+    const lv = () => Number(root.dataset.level); // the numeral is compacted (1.24M) — data-level is exact
+    const startLv = lv();
+    const samples = [];
+    let on = true;
+    const tick = () => {
+      samples.push({ l: lv(), s: scale() });
+      if (on) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    for (let i = 0; i < 8; i += 1) {
+      btn.click();
+      await sleep(60);
+    }
+    await sleep(1200);
+    on = false;
+    return { startLv, samples, endLv: lv(), state: root.dataset.state, sweep: !!root.querySelector('.kx-sweep') };
+  });
+  expect(r.sweep, 'the one pooled sweep node').toBe(true);
+  let wraps = 0;
+  for (let i = 1; i < r.samples.length; i += 1) {
+    const a = r.samples[i - 1];
+    const b = r.samples[i];
+    if (b.l === a.l) expect(b.s, `frame ${i}: ${a.s} → ${b.s} went backwards inside LV ${a.l}`).toBeGreaterThanOrEqual(a.s);
+    else {
+      wraps += 1;
+      expect(b.l).toBeGreaterThan(a.l);
+      expect(b.s, 'a reset happens only at a wrap').toBeLessThan(a.s);
+    }
+  }
+  // 8 × 0.6 of a level = 4.8 levels: every level crossed shows as a wrap, never a jump past it
+  expect(r.endLv - r.startLv).toBe(wraps);
+  expect(wraps).toBeGreaterThanOrEqual(4);
+  expect(r.state).toBe('rest');
+});
+
 test('REDUCE MOTION makes everything land instantly', async ({ page }) => {
   await open(page, { reduce: true });
   await expect(page.getByTestId('kit-rm-state')).toHaveText(/ON/);

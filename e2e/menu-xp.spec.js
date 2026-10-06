@@ -81,6 +81,72 @@ test.describe('menu XP', () => {
     expect(xpFramesAtRest).toBe(0);
   });
 
+  test('typing fast is ONE continuous glide: the fill only climbs, resetting to 0 only at a level wrap', async ({ page }) => {
+    // Andy oct6: "every gain glides … retarget mid-tween, never jump or restart. Typing fast = one
+    // continuous glide, not steps." LV3 at 78% → ~1.5% a key, so a 26-key burst crosses ONE level.
+    await page.addInitScript(() => {
+      try {
+        if (sessionStorage.getItem('glide-seeded')) return;
+        sessionStorage.setItem('glide-seeded', '1');
+        const save = JSON.stringify({ lv: 3, f: 0.78, rc: 0, v: 10 });
+        localStorage.setItem('taw.xp', save);
+        localStorage.setItem('taw.xpv10', save);
+        localStorage.setItem('taw.econ', '12');
+      } catch { /* storage blocked */ }
+    });
+    await gotoMenuLive(page);
+    const r = await page.evaluate(async () => {
+      const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+      const fill = document.querySelector('.menu-xp-bar .kx-fill');
+      const num = document.querySelector('.menu-xp-bar .kx-lv-n');
+      const scale = () => {
+        const m = /scaleX\(([^)]+)\)/.exec(fill.style.transform || '');
+        return m ? Number(m[1]) : NaN;
+      };
+      const lv = () => Number(String(num.textContent).replace(/[^0-9]/g, ''));
+      await sleep(800); // the entry wipe + the bar's mount landing
+      const before = window.__tawXp();
+      const samples = [];
+      let on = true;
+      const tick = () => {
+        samples.push({ l: lv(), s: scale() });
+        if (on) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+      const keys = 'qzxjkvwy';
+      for (let i = 0; i < 26; i += 1) {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: keys[i % keys.length], bubbles: true }));
+        await sleep(70);
+      }
+      await sleep(700);
+      on = false;
+      const real = window.__tawXp();
+      return { before, real, samples, endScale: scale(), endLv: lv(), state: document.querySelector('.menu-xp-bar').dataset.state };
+    });
+    expect(r.real.level - r.before.level, 'the burst crossed exactly one level').toBe(1);
+    expect(r.samples.length).toBeGreaterThan(20);
+    let wraps = 0;
+    let moved = 0;
+    for (let i = 1; i < r.samples.length; i += 1) {
+      const a = r.samples[i - 1];
+      const b = r.samples[i];
+      if (b.l === a.l) {
+        expect(b.s, `frame ${i}: ${a.s} → ${b.s} went backwards inside LV ${a.l} (a restart/jump back)`).toBeGreaterThanOrEqual(a.s);
+        if (b.s > a.s) moved += 1;
+      } else {
+        wraps += 1;
+        expect(b.l, 'a wrap is one level up').toBe(a.l + 1);
+        expect(b.s, 'the reset to 0 happens only at the wrap').toBeLessThan(a.s);
+      }
+    }
+    expect(wraps, 'exactly one reset — at the level wrap').toBe(1);
+    // a GLIDE, not steps: the fill moved on many frames, not once per key
+    expect(moved, 'frames the fill moved on').toBeGreaterThan(26);
+    expect(r.endLv).toBe(r.real.level);
+    expect(Math.abs(r.endScale - r.real.frac)).toBeLessThan(0.005);
+    expect(r.state).toBe('rest');
+  });
+
   test('sustained 30 keys/sec burst — concurrent finite animations (advisory) + XP credited', async ({ page }) => {
     await gotoMenuLive(page);
 
