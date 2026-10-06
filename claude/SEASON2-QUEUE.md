@@ -96,3 +96,9 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
   - [ ] 10d SatRush — version A: giant "THIS WORD PAYS" number + base × ante × SAT chips, CASE CLOSED stamped file; NO scrollbars
   - [ ] 10e Race — version A: the RACE card's pink lanes + cars, current word huge with per-letter colour; whole words only
   - [ ] 10f Blitz — BLITZ tab: huge category, found/total, answers land as rarity tiles, AI BUILT ribbon, never claim AI judging; SKIP the IMPOSTER tab (no Imposter code; Andy decides later)
+
+## RESUME POINT (usage limit, oct6)
+- #218 REBIRTH: merged if green at the limit (check `pulls/218`); else update-branch + merge when green.
+- Then in order: #219 SHOP (update-branch, keep both ShopScreen SEASON2 wrappers) → #220 ACHIEVEMENTS (green, needs update-branch) → #215 MENU (CI was running on 6a83f86).
+- P6 agent STOPPED mid-build in ../p6roll (feat/v2-roll-index, not pushed) — resume it.
+- P4 agent paused in ../s2reset. Then P7, P8, P4 merge, P9, P10.
