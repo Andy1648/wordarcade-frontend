@@ -1225,13 +1225,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // reads: the price follows `wins`, the rolls `gems`, the index the roll store, the rebirth line the LEVEL). REBIRTH reads "IN 21 LV" (fits the phone slab).
   const rollsAfford = Math.floor((Number(gems) || 0) / (ROLL_PRICE_GEMS > 0 ? ROLL_PRICE_GEMS : 1));
   const rollValue = rollsAfford > 0 ? `${formatNum(rollsAfford)} ${rollsAfford === 1 ? 'ROLL' : 'ROLLS'}` : starterWaiting ? 'FREE ROLL' : '0 ROLLS';
+  const rollShort = rollsAfford > 0 ? formatNum(rollsAfford) : starterWaiting ? 'FREE' : '0';
   const toRebirth = Math.max(0, rebirthGate - xpProgress.level);
   const rebirthValue = toRebirth > 0 ? `IN ${formatNum(toRebirth)} LV` : 'READY';
+  const rebirthShort = toRebirth > 0 ? `${formatNum(toRebirth)} LV` : 'READY';
   const railItems = {
-    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: `${formatNum(nextPowerCost)} WINS`, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
-    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: rollValue, valueSays: rollValue.toLowerCase(), locked: rollLock },
+    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: { full: `${formatNum(nextPowerCost)} WINS`, short: formatNum(nextPowerCost) }, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
+    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: { full: rollValue, short: rollShort }, valueSays: rollValue.toLowerCase(), locked: rollLock },
     index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
-    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: rebirthValue, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
+    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };

@@ -32,8 +32,8 @@ test('a fresh LV1 player sees all four rail buttons: UPGRADES + REBIRTH open, RO
   expect(labels).toEqual(['UPGRADES', 'ROLL', 'INDEX', 'REBIRTH']);
   for (const id of RAIL) await expect(btn(page, id)).toBeVisible();
   // live values: the cheapest POWER (KEY tier I = 50 wins), the levels to the first rebirth
-  await expect(btn(page, 'shop').locator('.kb-rval')).toHaveText('50 WINS');
-  await expect(btn(page, 'rebirth').locator('.kb-rval')).toHaveText(/^IN \d[\d,.]*[KMB]? LV$/);
+  await expect(btn(page, 'shop').locator('.kb-rval-full')).toHaveText('50 WINS');
+  await expect(btn(page, 'rebirth').locator('.kb-rval-full')).toHaveText(/^IN \d[\d,.]*[KMB]? LV$/);
   // ROLL + INDEX: locked with the REAL season-1 gate (MARKS reveal at LV10), the padlock icon, aria-disabled
   for (const id of ['roll', 'index']) {
     const b = btn(page, id);
@@ -67,7 +67,7 @@ test('season 1, marks revealed: ROLL = gems ÷ the roll price, INDEX = owned/tot
     'taw.wins': '0',
   });
   // season 1 rolls cost 10 gems: 157 → 15 ROLLS (whole rolls only)
-  await expect(btn(page, 'roll').locator('.kb-rval')).toHaveText('15 ROLLS');
+  await expect(btn(page, 'roll').locator('.kb-rval-full')).toHaveText('15 ROLLS');
   await expect(btn(page, 'roll')).not.toHaveAttribute('data-locked', '');
   const idx = await btn(page, 'index').locator('.kb-rval').textContent();
   expect(idx).toMatch(/^\d+\/\d+$/);
@@ -120,18 +120,29 @@ test('season 2: a roll costs 75 gems — ROLL reads gems ÷ 75; nothing on the r
     },
     { season2: true },
   );
-  await expect(btn(page, 'roll').locator('.kb-rval')).toHaveText('2 ROLLS');
+  await expect(btn(page, 'roll').locator('.kb-rval-full')).toHaveText('2 ROLLS');
   for (const id of RAIL) await expect(btn(page, id)).not.toHaveAttribute('data-locked', '');
 });
 
-test('phone (390x844): the four rail slabs share one row, each with its live value', async ({ page }) => {
-  await boot(page, {}, { w: 390, h: 844 });
-  const slabs = page.locator('.hp-m-rail .kb-rwrap');
-  await expect(slabs).toHaveCount(4);
-  const tops = await slabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
-  expect(new Set(tops).size, `one row: ${tops}`).toBe(1);
-  await expect(page.locator('.hp-m-rail .is-shop .kb-rval')).toHaveText('50 WINS');
-  // the value line is never clipped by its slab
-  const clipped = await page.locator('.hp-m-rail .kb-rval').evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent));
-  expect(clipped).toEqual([]);
-});
+for (const [w, h] of [[390, 844], [360, 640]]) {
+  test(`phone (${w}x${h}): the four rail slabs share one row, each with its live value, never clipped`, async ({ page }) => {
+    await boot(page, {
+      'taw.xp': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
+      'taw.xpv10': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
+      'taw.marksRevealed': '1',
+      'taw.gems': JSON.stringify({ v: 1, bal: 557, peak: 50, streak: 0, mig: 1 }),
+    }, { w, h });
+    const slabs = page.locator('.hp-m-rail .kb-rwrap');
+    await expect(slabs).toHaveCount(4);
+    const tops = await slabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+    expect(new Set(tops).size, `one row: ${tops}`).toBe(1);
+    // narrow slab: the unit is implied ("50", not "50 WINS"; "55", not "55 ROLLS")
+    await expect(page.locator('.hp-m-rail .is-shop .kb-rval-short')).toHaveText('50');
+    await expect(page.locator('.hp-m-rail .is-shop .kb-rval-short')).toBeVisible();
+    await expect(page.locator('.hp-m-rail .is-shop .kb-rval-full')).toBeHidden();
+    await expect(page.locator('.hp-m-rail .is-roll .kb-rval-short')).toHaveText('55');
+    const clipped = await page.locator('.hp-m-rail .kb-rval').evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth).map((e) => `${e.textContent} ${e.scrollWidth}>${e.clientWidth}`));
+    expect(clipped).toEqual([]);
+    for (const b of await page.locator('.hp-m-rail .kb--rail').all()) expect((await b.boundingBox()).height).toBeGreaterThanOrEqual(44);
+  });
+}

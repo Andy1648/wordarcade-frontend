@@ -60,7 +60,7 @@ export function KitIconButton({ icon, tone = 'yellow', rot = 0, tag, tagTone, do
 
 /**
  * 03 LEFT RAIL item. `tone` / `toneD` = the destination colour and its shade.
- * `value` = the live line under the label (Andy oct6 SEASON 2 #5: "1,250 WINS", "3 ROLLS", "IN 12 LV", "14/120").
+ * `value` = the live line under the label — a string, or { full, short } (a narrow slab shows `short`, e.g. "55" for "55 ROLLS") (Andy oct6 SEASON 2 #5: "1,250 WINS", "3 ROLLS", "IN 12 LV", "14/120").
  * `locked` = the gate it opens at ("R2", "LV10"): the face goes dark, the icon becomes the padlock, the value line
  * says the gate, and a tap SHAKES the face instead of opening (the button stays focusable — aria-disabled).
  */
@@ -97,7 +97,18 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
           <KitIcon name={locked ? 'lock' : icon} size={28} shadow={2} extras={false} />
           <span className="kb-rtext">
             <span className="kb-rlabel">{label}</span>
-            {sub != null && sub !== '' && <span className={cx('kb-rval', locked && 'is-lock')}>{sub}</span>}
+            {sub != null && sub !== '' && (
+              <span className={cx('kb-rval', locked && 'is-lock')}>
+                {typeof sub === 'object' ? (
+                  <>
+                    <span className="kb-rval-full">{sub.full}</span>
+                    <span className="kb-rval-short">{sub.short}</span>
+                  </>
+                ) : (
+                  sub
+                )}
+              </span>
+            )}
           </span>
         </span>
       </button>

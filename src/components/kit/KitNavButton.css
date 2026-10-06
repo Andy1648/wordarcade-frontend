@@ -157,6 +157,7 @@
 /* the live value under the label (SEASON 2 #5) — the destination colour, Space Mono, never under 13px */
 .kb-rval { margin-top: 3px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; text-transform: uppercase; font-size: var(--fs-k13); color: var(--kb-val, var(--kb-face)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kb-rval.is-lock { color: var(--k-gold); }
+.kb-rval-short { display: none; }
 .kb-rwrap.is-locked .kb-rlabel { color: var(--k-dim); }
 .kb-rwrap.is-locked .kb--rail { cursor: not-allowed; }
 .kb--rail.is-active .kb-rface { background: var(--kb-face); }

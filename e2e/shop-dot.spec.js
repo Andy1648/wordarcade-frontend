@@ -25,7 +25,7 @@ test('a fresh LV1 profile with 0 wins shows no shop dot', async ({ page }) => {
   // SEASON 2 #5: SHOP → UPGRADES, and the button says the cheapest POWER (KEY tier I: 50 wins) in its label + value line
   await expect(navControl(page, 'shop')).toHaveAttribute('aria-label', 'Open upgrades — next power 50 wins');
   await expect(navControl(page, 'shop').locator('.kb-rlabel')).toHaveText('UPGRADES');
-  await expect(navControl(page, 'shop').locator('.kb-rval')).toHaveText('50 WINS');
+  await expect(navControl(page, 'shop').locator('.kb-rval-full')).toHaveText('50 WINS');
   await expect(shopDot(page)).toHaveCount(0);
 });
 
