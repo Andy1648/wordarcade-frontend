@@ -23,6 +23,7 @@ import * as satLexicon from '../satRush/lexicon';
 import { formatNum, formatRate } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
+import { SEASON2 } from '../progress/season';
 import { exportSave, importSave } from '../save/saveBackup';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { getMyProfile, selfReset } from '../leaderboard/client';
@@ -43,7 +44,7 @@ const TABS = [
   { id: 'stats', label: 'STATS' },
   { id: 'collection', label: 'COLLECTION' },
   { id: 'achievements', label: 'ACHIEVEMENTS' },
-];
+].filter((t) => !(SEASON2 && t.id === 'achievements')); // v3: the season's ACHIEVEMENTS are their own screen (menu trophy)
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
 

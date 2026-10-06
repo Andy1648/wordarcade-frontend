@@ -22,6 +22,8 @@
 import { rebirthThreshold, loadProgress, saveProgress, getRebirths, doRebirth } from './xp.js';
 import { queueClaim } from './claims.js';
 import { noteRebirth } from './gemsCore.js';
+// PROGRESSION v3 (SEASON2, default OFF): a rebirth pays +7 × R gems (no ★, no layer claims); ★ come ONLY from
+// ASCENSION at R10 (ascendWithStars); star perks and AUTO-KEY are not part of v3. OFF = unchanged.
 
 export const STARS_KEY = 'taw.stars';
 export const LAYER_STARS_AT = 1; // rebirths to unlock STARS
@@ -185,4 +187,11 @@ export function runAutomation({ buyKey, buyForge, cap = 500 } = {}) {
     if (!any) break;
   }
   return out;
+}
+// (v3 ★ STARS + ASCENSION live in v3/store.js getStarsV3 and v3/hooks.js ascend — season 2 only.)
+// v3 (SEASON2): v3/install.js swaps these for the v3 rules (v3/hooks.js starsSwap — a rebirth pays +7 × R gems and
+// no ★, no star perks, no AUTO-KEY). Never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: starsForRebirth, b: rebirthAdvice, c: buyPerk, d: rebirthWithStars, e: runAutomation } = o);
 }

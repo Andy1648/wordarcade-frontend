@@ -163,7 +163,12 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
     // Instead an init script records `performance.now()` (i.e. ms since this navigation started)
     // at the first frame on which all four things are on screen, and THAT is what gets asserted.
     // Same 2s requirement, measured on the visitor's clock rather than the test harness's.
+    // THE LINEUP IS 6 — OR FEWER, HONESTLY. suspects.js never pads a lineup with free eliminations: a word whose
+    // length/POS pool is too thin gets 4 or 2 suspects (its fallback ladder; never fewer than 2). VEX is TIER 1, so
+    // ~1 in 129 cold visits is served it with a 2-suspect lineup, and the old `=== 6` here could never become true:
+    // the poll ran out at 20 s (main E2E, PR #216 shard 1). The gate is a lineup to pick from, not a fixed count.
     await page.addInitScript(() => {
+      const MIN_LINEUP = 2;
       window.__boardReadyAt = null;
       const ready = () => {
         const input = document.querySelector('.sr-app input.sr-keyinput');
@@ -174,7 +179,7 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
         if (r.width < 1 || r.height < 1) return false;
         if (input.disabled || input.readOnly) return false;
         if (parseFloat(cs.fontSize) < 16) return false; // below 16px iOS zooms the page on focus
-        if (document.querySelectorAll('.sr-suspect-word').length !== 6) return false;
+        if (document.querySelectorAll('.sr-suspect-word').length < MIN_LINEUP) return false;
         const clue = document.querySelector('.sr-sentence');
         if (!clue || (clue.textContent || '').trim().length <= 20) return false;
         const exit = document.querySelector('.sr-hud-exit');
@@ -213,7 +218,8 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
     }));
     expect(state.clue.length, 'the LAST SEEN clue sentence must be on screen').toBeGreaterThan(20);
     expect(state.slots, 'the mugshot slots show the letters as they land').toBeGreaterThan(2);
-    expect(state.suspects, 'six suspects').toBe(6);
+    expect(state.suspects, 'a full lineup (6, or the honest 2-4 suspects.js serves a thin word)').toBeGreaterThanOrEqual(2);
+    expect(state.suspects).toBeLessThanOrEqual(6);
     expect(state.inputs, 'exactly one typing field').toBe(1);
 
     // NOT the cover, NOT the mode picker, NOT the briefing — the four taps that used to stand
@@ -234,7 +240,7 @@ test.describe('a genuinely cold visitor lands IN the mode', () => {
     await page.goto('/sat-rush/play');
     const field = page.locator('.sr-app input.sr-keyinput');
     await expect(field).toHaveCount(1);
-    await expect(page.locator('.sr-suspect-word')).toHaveCount(6);
+    await expect.poll(() => page.locator('.sr-suspect-word').count()).toBeGreaterThanOrEqual(2);
 
     // Tapping the board hands focus to the field — that tap is what opens a soft keyboard, so if
     // it does not take focus, no phone ever gets one.

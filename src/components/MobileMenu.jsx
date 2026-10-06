@@ -151,6 +151,7 @@ export default function MobileMenu({
   onCredits,
   board = null,
   ach,
+  achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy (lazy S2Trophy) in the tile's place
   railItems,
   rebirthReadySlot = null, // REBIRTH READY → ×5 FOREVER (Andy oct3) — in flow under the level bar
   onHookPlay = null,
@@ -180,7 +181,7 @@ export default function MobileMenu({
         </h1>
         <div className="hp-m-topr">
           <AudioControls variant="inline" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
-          <MenuIcons board={board} onStats={onStats} ach={ach} navigating={navigating} />
+          <MenuIcons board={board} onStats={onStats} ach={ach} achSlot={achSlot} navigating={navigating} />
         </div>
       </div>
 

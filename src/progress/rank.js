@@ -5,7 +5,11 @@
 // The bands partition ALL levels 1..∞ with no gaps and no overlaps: each entry owns [min, next
 // entry's min). The last band (BEYOND) runs to infinity.
 
-export const RANKS = [
+// PROGRESSION v3 (SEASON2, default OFF): ranks go by REBIRTHS then STARS (v3/ranks.js — KEYMASH … ENDGAME),
+// never by level, and never drop. With the flag ON, RANKS is that ladder (min = the rank's index) and
+// rankTitle / rankFor read the live save; the level argument is ignored. OFF = the level bands below.
+
+const RANKS_LIVE = [
   { min: 1, name: 'ROOKIE' }, //   LV 1-4    green
   { min: 5, name: 'TYPIST' }, //   LV 5-9
   { min: 10, name: 'SPELLER' }, // LV 10-15
@@ -26,6 +30,8 @@ export const RANKS = [
   { min: 800, name: 'INFINITE' }, //LV 800-999
   { min: 1000, name: 'BEYOND' }, // LV 1000+
 ];
+
+export const RANKS = RANKS_LIVE;
 
 export const MAX_RANK_NAME_LEN = 8;
 
@@ -51,4 +57,10 @@ export function rankFor(level) {
     else break;
   }
   return pick;
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: rankTitle, b: rankFor } = o);
 }

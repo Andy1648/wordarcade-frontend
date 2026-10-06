@@ -72,6 +72,8 @@ const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotic
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
 // Overlays that only render when opened load on first open (payload ratchet; H2 batch offset).
 const LockedPreviewDialog = lazyWithReload(() => import('./LockedPreviewDialog'), 'LockedPreviewDialog');
+// PROGRESSION v3 (SEASON2, default OFF): no menu claim notifications (claims.js is empty in season 2); every claim
+// lives in ACHIEVEMENTS (gems) — V3.Trophy takes the ACHIEVEMENTS tile's place in the top-right cluster. OFF = unchanged.
 // The REWARDS panel loads on first open (H4 payload offset): only the small ClaimPopup is on the menu at rest.
 const ClaimsPanel = lazyWithReload(() => import('../claims/ClaimsPanel.jsx'), 'ClaimsPanel');
 // The mode dialog loads on demand (payload ratchet, PV10 offset): fetched the moment a pointer or focus first
@@ -92,6 +94,7 @@ import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
+import { V3 } from '../progress/season'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -1151,6 +1154,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // audit's #2 leak). It is shown ONLY once it means something: the player can actually rebirth
   // now, OR has ever earned wins, OR has already rebirthed. ONE gate, read by both menu trees, so
   // the phone and desktop menus can never disagree about whether REBIRTH exists yet.
+  // v3 (SEASON2 only): the ACHIEVEMENTS trophy — installed with the v3 chunk, joins whichever nav cluster renders
+  const trophy = V3.Trophy && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
   const showRebirth = rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths);
   // STEP 21: REBIRTH badges itself the moment it's available — it IS an upgrade, the biggest one.
   const rebirthReady = xpProgress.level >= rebirthThreshold(rebirths);
@@ -1225,6 +1230,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onCredits={handleCredits}
             board={board}
             ach={ach}
+            achSlot={trophy}
             railItems={railItems}
             rebirthReadySlot={rebirthReady ? <RebirthReadyButton ready onGo={handleRebirthNow} className="is-compact hp-m-rr-ready" /> : null}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
@@ -1251,7 +1257,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / stats / achievements. */}
-        <MenuIcons board={board} onStats={handleStats} ach={ach} navigating={navigating} />
+        <MenuIcons board={board} onStats={handleStats} ach={ach} achSlot={trophy} navigating={navigating} />
 
         {/* RIGHT, under the icons: sound + CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -6 112 112" width="112" height="112"><defs><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="3" dy="3" stdDeviation="0" flood-color="#000" flood-opacity="1"/></filter></defs><g filter="url(#s)"><g stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"><g>
+<rect x="10" y="22" width="42" height="60" rx="6" fill="#3D8BFF" transform="rotate(-18 31 52)"></rect>
+<rect x="29" y="14" width="42" height="60" rx="6" fill="#B04BFF"></rect>
+<g transform="rotate(16 69 54)">
+<rect x="48" y="24" width="42" height="60" rx="6" fill="#FFC23D"></rect>
+<path d="M78 28 L84 28 C86 28 86 30 86 32 L86 76 C86 78 85 80 82 80 L78 80 Z" fill="#E09A12" stroke="none"></path>
+<rect x="48" y="24" width="42" height="60" rx="6" fill="none"></rect>
+<rect x="56" y="34" width="26" height="30" rx="3" fill="#3d2a05" stroke-width="4"></rect>
+<path d="M63 44 C63 38 75 38 75 44 C75 49 69 49 69 54" fill="none" stroke="#FFE94A" stroke-width="4"></path>
+<circle cx="69" cy="59" r="2.5" fill="#FFE94A" stroke="none"></circle>
+<path d="M54 72 L70 72" stroke="#fff" stroke-width="4" fill="none"></path>
+</g>
+</g></g></g></svg>

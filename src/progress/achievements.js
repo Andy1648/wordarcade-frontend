@@ -17,6 +17,9 @@ import { collectionSummary } from './collection.js';
 import { masteryState, masteryWords, MASTERY_MODES } from './mastery.js';
 import { getStreak } from './streak.js';
 import { bestWpmPlayed } from './wpm.js';
+// PROGRESSION v3 (SEASON2, default OFF): the season's ACHIEVEMENTS are v3/achievements.js (gems, claimed on the
+// ACHIEVEMENTS screen). With the flag ON this catalogue grants nothing, rank-ups pay nothing and no layer / mark
+// reveal is queued — no menu claim notifications at all. OFF = unchanged.
 
 export const ACHIEVEMENTS_KEY = 'taw.achievements';
 
@@ -302,4 +305,10 @@ export function achievementList() {
 export function achievementCounts() {
   const earned = loadEarned().length;
   return { earned, total: ACHIEVEMENTS.length };
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: checkAchievements, b: checkRankClaims } = o);
 }

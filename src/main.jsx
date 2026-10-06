@@ -24,10 +24,12 @@ import { loadProgress, getRebirths, progressOf } from './progress/xp'
 import { migrateEconomyV11 } from './progress/econMigrate'
 import { forgeMigrateMomentum } from './progress/forge'
 import { migrateGems } from './progress/gemsMigrate'
+import { SEASON2 } from './progress/season'
 
 // PROGRESSION v11 (stamp 11): convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps
 // every level; a v10 save keeps its {lv, f} untouched (one fixed curve now — f keeps the bar position).
-migrateEconomyV11()
+// v3 (SEASON2): a season-2 save is born on its own keys — nothing to convert, and the season-1 save is left as it is
+if (!SEASON2) migrateEconomyV11()
 // GEMS (Andy oct5): the one-time starting grant — wins held ÷ the old roll price, as rolls' worth of gems (capped);
 // stamped per save, so it runs once (and again for a restored save that has no taw.gems). Never blocks startup.
 try { migrateGems() } catch { /* never block startup */ }
@@ -176,11 +178,15 @@ window.addEventListener('resize', applyAppScale);
 if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   import('./components/kit/gallery/boot.jsx')
 } else {
-  ReactDOM.createRoot(document.getElementById('root')).render(
+  const renderApp = () => ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>
         <App />
       </ErrorBoundary>
     </React.StrictMode>,
   )
+  // PROGRESSION v3 (SEASON2, default OFF): the v3 rules are their own lazy chunk (progress/season.js V3 holder) —
+  // installed BEFORE the first render, so every season-2 read finds them. The live game never downloads it.
+  if (SEASON2) import('./progress/v3/installUi.jsx').then(renderApp, renderApp)
+  else renderApp()
 }

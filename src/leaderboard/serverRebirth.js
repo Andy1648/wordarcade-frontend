@@ -4,6 +4,10 @@
 // eager client.js only `import()`s it when an unanswered request id is in storage (settle before a board submit).
 import { getRebirths, saveRebirths } from '../progress/xp.js';
 import { rebirthWithStars } from '../progress/stars.js';
+// PROGRESSION v3 (SEASON2, default OFF): rebirths name season 2 (gate ⌈100 × 2.5^R⌉ on an econ-13 row, 022), and
+// performAscend (R10 → ★) goes through lb_ascend the same way. OFF = season 0, exactly as before.
+import { SEASON2, V3 } from '../progress/season.js';
+const ASCEND_AT = 10; // = v3/econ.js ASCEND_AT (a literal: importing econ here split this lazy chunk and dragged ~19 KB into the eager index — payload ratchet). Pinned by season2Board.test.js
 import { isRebirthReadyNow } from '../progress/rebirthNow.js';
 import { makeRebirthFlow } from './rebirthFlow.js';
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, getSecret, myStats, submitStats, rpc, pushMeta } from './client.js';
@@ -25,6 +29,8 @@ async function serverRebirthEnabled() {
   if (!LEADERBOARD_ENABLED || !getMyProfile() || !peekSecret()) return false;
   try {
     const c = await rpc('lb_caps', {});
+    // v3: the season-2 rebirth checks a season-2 row, which only exists once 022 runs
+    if (SEASON2) return !!(c && c.rebirth_rpc && c.season2);
     return !!(c && c.rebirth_rpc);
   } catch {
     return false;
@@ -49,6 +55,10 @@ const flow = makeRebirthFlow({
   localRebirths: () => getRebirths() || 0,
   localReady: () => isRebirthReadyNow(),
   applyLocal: applyLocalRebirth,
+  season: () => (SEASON2 ? 2 : 0),
+  // v3 ASCEND: `target` = the server's new ★ total, null = local (+ R − 9)
+  localAscendReady: () => SEASON2 && (getRebirths() || 0) >= ASCEND_AT,
+  applyAscend: (target) => V3.hooks.ascend(target),
 });
 // client.js's submitStats skips a push while a request id is stored (in flight or unanswered): that push would carry
 // the old, lower count, which the board reads as a RESET.
@@ -71,9 +81,17 @@ export async function performRebirth() {
 export function requestRebirth() {
   return flow.requestRebirth();
 }
-/** lb_ascend (season 2 only; phase 3 wires the UI). Persisted request id; applies nothing locally yet. */
+/** lb_ascend with a persisted request id (no local apply) — performAscend is the action; this is the raw call. */
 export function requestAscend() {
   return flow.requestAscend();
+}
+/**
+ * THE ascension (v3, season 2, R10+): server-checked through lb_ascend when the player has a season-2 board row (022
+ * live), else local. Single-flight with the rebirth. Resolves { ok:true, mode, stars, added } or { ok:false, reason }.
+ * Never throws.
+ */
+export function performAscend() {
+  return flow.performAscend();
 }
 /** Is a server rebirth in flight? */
 export function rebirthPending() {

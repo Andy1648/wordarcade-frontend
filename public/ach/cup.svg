@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -6 112 112" width="112" height="112"><defs><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="3" dy="3" stdDeviation="0" flood-color="#000" flood-opacity="1"/></filter></defs><g filter="url(#s)"><g stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"><g transform="rotate(-5 50 50)">
+<path d="M28 22 C8 20 8 48 32 52 M72 22 C92 20 92 48 68 52" fill="none" stroke-width="16"></path>
+<path d="M28 22 C8 20 8 48 32 52 M72 22 C92 20 92 48 68 52" fill="none" stroke="#FFC23D" stroke-width="6"></path>
+<rect x="42" y="62" width="16" height="16" fill="#E09A12"></rect>
+<path d="M24 10 L76 10 L74 42 C72 58 62 66 50 66 C38 66 28 58 26 42 Z" fill="#FFC23D"></path>
+<path d="M60 10 L76 10 L74 42 C72 58 62 66 50 66 C60 58 63 44 60 10 Z" fill="#E09A12" stroke="none"></path>
+<path d="M24 10 L76 10 L74 42 C72 58 62 66 50 66 C38 66 28 58 26 42 Z" fill="none"></path>
+<rect x="24" y="76" width="52" height="16" fill="#FF3D7F"></rect>
+<path d="M44 30 L52 23 L52 48" fill="none" stroke-width="6"></path>
+<path d="M32 17 L34 40" stroke="#fff" stroke-width="4" fill="none"></path>
+<path d="M30 84 L44 84" stroke="#fff" stroke-width="3" fill="none"></path>
+</g></g></g></svg>

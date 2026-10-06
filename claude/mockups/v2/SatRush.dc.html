@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SAT Rush HUD</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes srBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes srNoA{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+@keyframes srNoB{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+@keyframes srUpA{0%{transform:translateY(16px) scale(.5);opacity:0}18%{transform:translateY(0) scale(1.18);opacity:1}70%{transform:translateY(-40px) scale(1);opacity:1}100%{transform:translateY(-110px) scale(.8);opacity:0}}
+@keyframes srUpB{0%{transform:translateY(16px) scale(.5);opacity:0}18%{transform:translateY(0) scale(1.18);opacity:1}70%{transform:translateY(-40px) scale(1);opacity:1}100%{transform:translateY(-110px) scale(.8);opacity:0}}
+@keyframes srBumpA{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes srBumpB{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes srDropA{0%{transform:translateY(-8px) scale(1.3);opacity:.4}60%{transform:translateY(2px) scale(.95);opacity:1}100%{transform:translateY(0) scale(1)}}
+@keyframes srDropB{0%{transform:translateY(-8px) scale(1.3);opacity:.4}60%{transform:translateY(2px) scale(.95);opacity:1}100%{transform:translateY(0) scale(1)}}
+@keyframes srIn{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes srSlam{0%{transform:scale(3.2) rotate(-16deg);opacity:0}55%{transform:scale(.9) rotate(-9deg);opacity:1}75%{transform:scale(1.05) rotate(-9deg)}100%{transform:scale(1) rotate(-9deg);opacity:1}}
+@keyframes srFolder{0%{transform:translateY(60px) rotate(2deg);opacity:0}100%{transform:translateY(0) rotate(0);opacity:1}}
+@keyframes srFolderB{0%{transform:translateY(60px) rotate(-1deg);opacity:0}100%{transform:translateY(0) rotate(-3deg);opacity:1}}
+@keyframes srHot{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes srSheen{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
+@keyframes srPulse{0%,100%{transform:translate(0,0)}50%{transform:translate(-2px,-3px)}}
+.sr-caret{animation:srBlink .9s steps(1) infinite}
+.sr-noA{animation:srNoA .3s linear}
+.sr-noB{animation:srNoB .3s linear}
+.sr-upA{animation:srUpA 1.1s ease-out forwards}
+.sr-upB{animation:srUpB 1.1s ease-out forwards}
+.sr-bumpA{animation:srBumpA .3s cubic-bezier(.2,1.5,.4,1)}
+.sr-bumpB{animation:srBumpB .3s cubic-bezier(.2,1.5,.4,1)}
+.sr-dropA{animation:srDropA .35s cubic-bezier(.2,1.4,.4,1)}
+.sr-dropB{animation:srDropB .35s cubic-bezier(.2,1.4,.4,1)}
+.sr-in{animation:srIn .35s ease-out both}
+.sr-slam{animation:srSlam .5s cubic-bezier(.2,1.2,.4,1) .45s both}
+.sr-folder{animation:srFolder .45s cubic-bezier(.2,1.2,.4,1) both}
+.sr-folderB{animation:srFolderB .45s cubic-bezier(.2,1.2,.4,1) both}
+.sr-hot{animation:srHot .5s ease-in-out infinite}
+.sr-sheen{animation:srSheen 1.6s linear infinite}
+.sr-pulse{animation:srPulse 1s ease-in-out infinite}
+.sr-out{-webkit-text-stroke:6px #000;paint-order:stroke fill}
+.sr-btn{transition:transform .08s,box-shadow .08s;cursor:pointer}
+.sr-btn:hover{transform:translate(-2px,-2px)}
+.sr-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; font-family: 'Space Mono', monospace; color: #fff">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px); pointer-events: none"></div>
+
+<!-- ================= TOP BAR ================= -->
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 54px; box-sizing: border-box; background: #12071f; border-bottom: 5px solid #000; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 10px">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="display: flex; border: 3px solid #000; box-shadow: 3px 3px 0 #000">
+<sc-for list="{{vers}}" as="vv" hint-placeholder-count="2">
+<button class="sr-btn" onClick="{{vv.pick}}" style="width: 32px; height: 30px; border: 0; border-right: 2px solid #000; background: {{vv.bg}}; font-family: 'Bungee', sans-serif; font-size: 16px; color: {{vv.c}}; padding: 0">{{vv.k}}</button>
+</sc-for>
+</div>
+<span style="height: 34px; padding: 0 12px; display: flex; align-items: center; background: #1a0b2e; border: 3px solid #000; border-left: 10px solid #B04BFF; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 18px; color: #fff">SAT RUSH<span style="margin-left: 8px; font-size: 13px; color: #c9b8e8">{{modeSub}}</span></span>
+<span style="height: 34px; padding: 0 10px; display: flex; align-items: center; gap: 6px; background: #B04BFF; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: skewX(-12deg); font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff"><span style="font-size: 13px; color: #000">WORD</span>{{wordNoText}}</span>
+</div>
+
+<div style="display: flex; align-items: center; gap: 22px">
+<div class="{{livesCls}}" style="display: flex; gap: 6px">
+<sc-for list="{{hearts}}" as="h" hint-placeholder-count="3">
+<svg viewBox="-2 -2 36 36" width="30" height="30" style="overflow: visible; opacity: {{h.op}}" aria-hidden="true"><path d="M16 29 C6 21 2 16 2 10 C2 5 6 2 10 2 C13 2 15 4 16 6 C17 4 19 2 22 2 C26 2 30 5 30 10 C30 16 26 21 16 29 Z" fill="{{h.fill}}" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M8 8 C6 9 5.5 11 6 13" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" style="opacity: {{h.hl}}"></path></svg>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 5px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8; margin-right: 4px">HEAT</span>
+<sc-for list="{{heatBlocks}}" as="hb" hint-placeholder-count="5">
+<span style="width: 20px; height: 24px; background: {{hb.bg}}; border: 3px solid #000; transform: skewX(-14deg); box-shadow: 2px 2px 0 #000"></span>
+</sc-for>
+<span style="margin-left: 6px; height: 28px; padding: 0 8px; display: flex; align-items: center; background: #F4EAFF; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 14px; color: #000; visibility: {{silverVis}}">SILVER ×2</span>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 10px">
+<span class="{{streakCls}}" style="height: 34px; padding: 0 10px; display: flex; align-items: center; gap: 8px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #FFC23D"><span style="font-size: 13px; color: #c9b8e8">STREAK</span>{{streak}}</span>
+<span class="{{xpCls}}" style="height: 34px; padding: 0 12px; display: flex; align-items: center; gap: 6px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #000">{{walletText}}<span style="font-size: 13px">XP</span></span>
+</div>
+</div>
+
+<!-- ================= VERSION A — POSTER ================= -->
+<sc-if value="{{showA}}" hint-placeholder-val="{{ true }}">
+
+<!-- BOUNTY column -->
+<div style="position: absolute; left: 24px; top: 74px; width: 356px; height: 516px; box-sizing: border-box; background: #160a28; border: 6px solid #000; box-shadow: 9px 9px 0 #000">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 34px; background: #B04BFF; border-bottom: 5px solid #000; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-family: 'Bungee', sans-serif; font-size: 16px; color: #000"><span>THIS WORD PAYS</span><span style="color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill">{{payTagText}}</span></div>
+<div style="position: absolute; left: 0; right: 0; top: 40px; height: 126px; display: flex; align-items: center; justify-content: center; gap: 8px">
+<span class="{{payCls}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: {{payF}}px; line-height: 1; color: {{payC}}; -webkit-text-stroke: 9px #000; paint-order: stroke fill; text-shadow: 7px 7px 0 #000">{{payText}}</span>
+<span style="align-self: flex-end; margin-bottom: 22px; font-family: 'Bungee', sans-serif; font-size: 24px; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">XP</span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 168px; display: flex; justify-content: center; gap: 6px">
+<sc-for list="{{chips}}" as="cp" hint-placeholder-count="3">
+<span style="height: 30px; padding: 0 8px; display: flex; align-items: center; gap: 5px; background: {{cp.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 17px; color: {{cp.c}}">{{cp.v}}<span style="font-size: 13px; opacity: .8">{{cp.k}}</span></span>
+</sc-for>
+</div>
+<!-- ante ladder -->
+<div style="position: absolute; left: 18px; right: 18px; top: 222px; display: flex; gap: 10px">
+<sc-for list="{{ladder}}" as="ld" hint-placeholder-count="3">
+<div class="{{ld.cls}}" style="position: relative; flex: 1; height: 64px; box-sizing: border-box; background: {{ld.bg}}; border: 5px solid #000; box-shadow: 4px 4px 0 #000; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 32px; color: {{ld.c}}; opacity: {{ld.op}}">{{ld.k}}<div style="position: absolute; left: 6px; right: 6px; top: 26px; height: 5px; background: #000; transform: rotate(-14deg); visibility: {{ld.x}}"></div></div>
+</sc-for>
+</div>
+<!-- drain -->
+<div style="position: absolute; left: 18px; right: 18px; top: 300px; height: 24px; box-sizing: border-box; background: #08030f; border: 4px solid #000; box-shadow: 4px 4px 0 #000; overflow: hidden">
+<div style="position: absolute; inset: 0; background: {{drainC}}; transform-origin: 0 50%; transform: scaleX({{drainF}}); transition: transform .1s linear"></div>
+</div>
+<div style="position: absolute; left: 18px; right: 18px; top: 330px; display: flex; justify-content: space-between; font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8"><span>{{drainLabel}}</span><span style="color: {{drainC}}">{{drainSec}}</span></div>
+<!-- vs word bomb -->
+<div style="position: absolute; left: 0; right: 0; top: 360px; height: 5px; background: #000"></div>
+<div style="position: absolute; left: 18px; top: 380px; font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8">VS WORD BOMB</div>
+<div style="position: absolute; left: 18px; right: 18px; top: 414px">
+<div style="display: flex; align-items: center; gap: 8px; height: 42px">
+<span style="width: 62px; font-family: 'Bungee', sans-serif; font-size: 15px; color: #FFE94A">SAT</span>
+<div style="position: relative; flex: 1; height: 36px">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #FFE94A; border: 4px solid #000; box-sizing: border-box; box-shadow: 4px 4px 0 #000"></div>
+<span style="position: absolute; right: 8px; top: 3px; font-family: 'Bungee', sans-serif; font-size: 20px; color: #000">{{payText}}</span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; height: 42px; margin-top: 2px">
+<span style="width: 62px; font-family: 'Bungee', sans-serif; font-size: 15px; color: #FF3D7F">BOMB</span>
+<div style="position: relative; flex: 1; height: 36px">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #FF3D7F; border: 4px solid #000; box-sizing: border-box; box-shadow: 4px 4px 0 #000; transform-origin: 0 50%; transform: scaleX({{bombF}}); transition: transform .3s"></div>
+<span style="position: absolute; left: {{bombL}}px; top: 3px; font-family: 'Bungee', sans-serif; font-size: 20px; color: #FF3D7F">{{bombPay}}</span>
+</div>
+</div>
+</div>
+<div class="{{ratioCls}}" style="position: absolute; right: -24px; top: 366px; padding: 0 12px; background: #2EFFE0; border: 5px solid #000; box-shadow: 6px 6px 0 #000; transform: rotate(-6deg); font-family: 'Bungee', sans-serif; font-size: 28px; line-height: 1.1; color: #000">{{ratioText}}<span style="font-size: 14px"> BOMB</span></div>
+</div>
+
+<!-- CASE card -->
+<div class="{{cardCls}}" style="position: absolute; left: 404px; top: 74px; width: 938px; height: 516px; box-sizing: border-box; background: #160a28; border: 6px solid {{cardBd}}; box-shadow: 9px 9px 0 #000">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 92px; background: repeating-linear-gradient(90deg, #1d0e33 0 22px, #160a28 22px 44px); border-top: 5px solid #000"></div>
+<!-- tags -->
+<div style="position: absolute; left: 24px; top: 18px; display: flex; align-items: center; gap: 8px">
+<span style="height: 32px; padding: 0 12px; display: flex; align-items: center; background: #FFE94A; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">CASE #{{wordNo}}</span>
+<sc-for list="{{tags}}" as="tg" hint-placeholder-count="3">
+<span style="height: 30px; padding: 0 10px; display: flex; align-items: center; background: {{tg.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 15px; color: {{tg.c}}">{{tg.t}}</span>
+</sc-for>
+</div>
+<!-- sentence -->
+<div style="position: absolute; left: 30px; right: 30px; top: 72px; height: 66px; font-size: 22px; line-height: 32px; color: #e9dcff; overflow: hidden">{{s0}}<span style="color: {{blankC}}; letter-spacing: 2px">{{blank}}</span>{{s1}}</div>
+<!-- definition -->
+<div style="position: absolute; left: 24px; right: 24px; top: 146px; height: 118px">
+<sc-if value="{{defOn}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; inset: 0; display: flex; align-items: center; gap: 14px">
+<svg viewBox="0 0 60 50" width="54" height="46" style="flex: none; filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><path d="M4 26 C4 12 12 4 24 3 L25 11 C18 13 15 17 15 22 L25 22 L25 46 L4 46 Z M34 26 C34 12 42 4 54 3 L55 11 C48 13 45 17 45 22 L55 22 L55 46 L34 46 Z" fill="#FFE94A" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+<div style="font-family: 'Bungee', sans-serif; font-size: {{defF}}px; line-height: 1.12; color: #fff; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000">{{def}}</div>
+</div>
+</sc-if>
+<sc-if value="{{defOff}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 18px; height: 80px; box-sizing: border-box; border: 5px solid #000; background: repeating-linear-gradient(-45deg, #1d0e33 0 16px, #24123d 16px 32px); display: flex; align-items: center; justify-content: center; gap: 14px">
+<svg viewBox="0 0 40 44" width="34" height="38" aria-hidden="true"><path d="M10 20 V13 C10 6 15 3 20 3 C25 3 30 6 30 13 V20" fill="none" stroke="#000" stroke-width="9"></path><path d="M10 20 V13 C10 6 15 3 20 3 C25 3 30 6 30 13 V20" fill="none" stroke="#8a76ad" stroke-width="4"></path><rect x="4" y="19" width="32" height="22" fill="#8a76ad" stroke="#000" stroke-width="4"></rect><rect x="17" y="25" width="6" height="9" fill="#000"></rect></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 30px; color: #8a76ad; -webkit-text-stroke: 5px #000; paint-order: stroke fill">AT 3×</span>
+</div>
+</sc-if>
+</div>
+<!-- root -->
+<div style="position: absolute; left: 30px; right: 30px; top: 272px; height: 30px; display: flex; align-items: center; gap: 10px; opacity: {{rootOp}}; transition: opacity .3s">
+<span style="height: 28px; padding: 0 10px; display: flex; align-items: center; background: #2EFFE0; border: 3px solid #000; font-family: 'Bungee', sans-serif; font-size: 15px; color: #000">{{rootK}}</span>
+<span style="font-size: 17px; color: #c9b8e8">{{rootV}}</span>
+<span style="font-size: 16px; color: #8a76ad">{{rootCz}}</span>
+</div>
+<!-- slots -->
+<div class="{{slotsCls}}" style="position: absolute; left: 0; right: 0; top: 318px; height: 96px; display: flex; justify-content: center; gap: 10px">
+<sc-for list="{{slots}}" as="sl" hint-placeholder-count="8">
+<div style="position: relative; width: {{sl.w}}px; height: 92px; box-sizing: border-box; background: {{sl.bg}}; border: 5px solid {{sl.bd}}; box-shadow: 5px 5px 0 #000; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: {{sl.f}}px; line-height: 1; color: {{sl.c}}"><span class="{{sl.cls}}" style="display: inline-block">{{sl.ch}}</span><sc-if value="{{sl.cur}}" hint-placeholder-val="{{ false }}"><span class="sr-caret" style="position: absolute; left: 50%; bottom: 12px; width: 30px; margin-left: -15px; height: 7px; background: #FFE94A; border: 2px solid #000"></span></sc-if><span style="position: absolute; right: 4px; top: 3px; width: 9px; height: 9px; background: #FFC23D; border: 2px solid #000; visibility: {{sl.lock}}"></span></div>
+</sc-for>
+</div>
+<!-- feedback row -->
+<div style="position: absolute; left: 30px; right: 30px; top: 432px; height: 64px; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; align-items: center; gap: 10px">
+<span class="{{statusCls}}" style="height: 40px; padding: 0 14px; display: flex; align-items: center; background: {{statusBg}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 20px; color: {{statusC}}">{{statusText}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #FF3D7F; visibility: {{penVis}}">{{penText}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 4px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #8a76ad; margin-right: 6px">RUN</span>
+<sc-for list="{{film}}" as="fm" hint-placeholder-count="8">
+<span style="width: 18px; height: 26px; box-sizing: border-box; background: {{fm.bg}}; border: 3px solid #000"></span>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{gainShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{gainCls}}" style="position: absolute; left: 50%; top: 340px; margin-left: {{gainX}}px; padding: 0 12px; background: #5CFF8A; border: 5px solid #000; box-shadow: 5px 5px 0 #000; transform-origin: 0 50%; font-family: 'Bungee', sans-serif; font-size: 34px; color: #000; white-space: nowrap">{{gainText}}</div>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ================= VERSION B — LINEUP ================= -->
+<sc-if value="{{showB}}" hint-placeholder-val="{{ false }}">
+
+<!-- clue banner -->
+<div class="{{cardCls}}" style="position: absolute; left: 24px; top: 72px; width: 1318px; height: 136px; box-sizing: border-box; background: #160a28; border: 6px solid {{cardBd}}; box-shadow: 9px 9px 0 #000">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 150px; background: #FFE94A; border-right: 5px solid #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 14px; color: #000">CASE</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 48px; line-height: 1; color: #000">#{{wordNo}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 14px; color: #000">{{posLen}}</span>
+</div>
+<div style="position: absolute; left: 176px; right: 22px; top: 12px; height: 32px; font-size: 21px; line-height: 32px; color: #e9dcff; white-space: nowrap; overflow: hidden">{{s0}}<span style="color: {{blankC}}; letter-spacing: 2px">{{blank}}</span>{{s1}}</div>
+<div style="position: absolute; left: 176px; right: 22px; top: 50px; height: 70px; display: flex; align-items: center">
+<sc-if value="{{defOn}}" hint-placeholder-val="{{ true }}">
+<div style="font-family: 'Bungee', sans-serif; font-size: {{defFB}}px; line-height: 1.05; color: #fff; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000; white-space: nowrap">{{def}}</div>
+</sc-if>
+<sc-if value="{{defOff}}" hint-placeholder-val="{{ false }}">
+<div style="width: 100%; height: 56px; box-sizing: border-box; border: 5px solid #000; background: repeating-linear-gradient(-45deg, #1d0e33 0 16px, #24123d 16px 32px); display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 26px; color: #8a76ad; -webkit-text-stroke: 5px #000; paint-order: stroke fill">MEANING AT 3×</div>
+</sc-if>
+</div>
+</div>
+
+<!-- standing ring (timer) -->
+<div style="position: absolute; left: 24px; top: 232px; width: 214px; height: 358px; box-sizing: border-box; background: #160a28; border: 6px solid #000; box-shadow: 9px 9px 0 #000">
+<svg width="202" height="202" viewBox="0 0 200 200" style="position: absolute; left: 0; top: 14px" aria-hidden="true">
+<circle cx="100" cy="100" r="78" fill="none" stroke="#000" stroke-width="26"></circle>
+<sc-for list="{{ring}}" as="rg" hint-placeholder-count="30">
+<path d="{{rg.d}}" fill="none" stroke="{{rg.c}}" stroke-width="14" style="opacity: {{rg.o}}; transition: opacity .12s"></path>
+</sc-for>
+</svg>
+<div class="{{standCls}}" style="position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 76px; line-height: 1; color: {{drainC}}; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">{{standing}}</div>
+<div style="position: absolute; left: 0; right: 0; top: 150px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 14px; color: #c9b8e8">STANDING</div>
+<div style="position: absolute; left: 0; right: 0; top: 228px; height: 5px; background: #000"></div>
+<div style="position: absolute; left: 0; right: 0; top: 238px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8">PER WORD</div>
+<div style="position: absolute; left: 22px; right: 22px; top: 260px; height: 64px; display: flex; align-items: flex-end; gap: 14px">
+<div style="position: relative; flex: 1; height: 64px; box-sizing: border-box; background: #FFE94A; border: 4px solid #000; box-shadow: 4px 4px 0 #000; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">{{payText}}</div>
+<div style="position: relative; flex: 1; height: 64px">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64px; box-sizing: border-box; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform-origin: 50% 100%; transform: scaleY({{bombF}}); transition: transform .3s"></div>
+<span style="position: absolute; left: 0; right: 0; bottom: {{bombB}}px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 18px; color: #FF3D7F">{{bombPay}}</span>
+</div>
+</div>
+<div style="position: absolute; left: 22px; right: 22px; top: 328px; display: flex; gap: 14px; font-family: 'Bungee', sans-serif; font-size: 13px"><span style="flex: 1; text-align: center; color: #FFE94A">SAT</span><span style="flex: 1; text-align: center; color: #FF3D7F">BOMB</span></div>
+</div>
+
+<!-- suspects -->
+<div style="position: absolute; left: 262px; top: 232px; width: 840px; height: 188px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; gap: 16px">
+<sc-for list="{{suspects}}" as="sp" hint-placeholder-count="6">
+<div style="position: relative; box-sizing: border-box; background: {{sp.bg}}; border: 5px solid #000; box-shadow: 6px 6px 0 #000; display: flex; align-items: center; justify-content: center; opacity: {{sp.op}}; transition: opacity .3s, background .2s; overflow: hidden">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{sp.f}}px; line-height: 1; color: {{sp.c}}; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{sp.w}}</span>
+<sc-if value="{{sp.out}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: -10px; right: -10px; top: 38px; height: 6px; background: #000; transform: rotate(-8deg)"></div>
+<span style="position: absolute; right: 8px; bottom: 4px; padding: 0 6px; border: 3px solid #FF3D7F; font-family: 'Bungee', sans-serif; font-size: 13px; color: #FF3D7F; transform: rotate(-6deg)">CLEARED</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<!-- slots -->
+<div class="{{slotsCls}}" style="position: absolute; left: 262px; width: 840px; top: 446px; height: 96px; display: flex; justify-content: center; gap: 10px">
+<sc-for list="{{slots}}" as="sl" hint-placeholder-count="8">
+<div style="position: relative; width: {{sl.w}}px; height: 88px; box-sizing: border-box; background: {{sl.bg}}; border: 5px solid {{sl.bd}}; box-shadow: 5px 5px 0 #000; display: flex; align-items: center; justify-content: center; font-family: 'Bungee', sans-serif; font-size: {{sl.f}}px; line-height: 1; color: {{sl.c}}"><span class="{{sl.cls}}" style="display: inline-block">{{sl.ch}}</span><sc-if value="{{sl.cur}}" hint-placeholder-val="{{ false }}"><span class="sr-caret" style="position: absolute; left: 50%; bottom: 10px; width: 28px; margin-left: -14px; height: 7px; background: #FFE94A; border: 2px solid #000"></span></sc-if><span style="position: absolute; right: 4px; top: 3px; width: 9px; height: 9px; background: #FFC23D; border: 2px solid #000; visibility: {{sl.lock}}"></span></div>
+</sc-for>
+</div>
+<div style="position: absolute; left: 262px; width: 840px; top: 556px; height: 40px; display: flex; justify-content: center; align-items: center; gap: 12px">
+<span class="{{statusCls}}" style="height: 36px; padding: 0 14px; display: flex; align-items: center; background: {{statusBg}}; border: 4px solid #000; box-shadow: 4px 4px 0 #000; transform: skewX(-10deg); font-family: 'Bungee', sans-serif; font-size: 18px; color: {{statusC}}">{{statusText}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #FF3D7F; visibility: {{penVis}}">{{penText}}</span>
+</div>
+<sc-if value="{{gainShow}}" hint-placeholder-val="{{ false }}">
+<div class="{{gainCls}}" style="position: absolute; left: 682px; top: 466px; margin-left: {{gainX}}px; padding: 0 12px; background: #5CFF8A; border: 5px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: 34px; color: #000; white-space: nowrap">{{gainText}}</div>
+</sc-if>
+
+<!-- price tag -->
+<div style="position: absolute; left: 1126px; top: 226px; width: 222px; height: 372px">
+<svg width="222" height="372" viewBox="0 0 222 372" style="position: absolute; left: 0; top: 0; filter: drop-shadow(8px 8px 0 #000)" aria-hidden="true">
+<path d="M40 6 H182 L214 40 V362 H8 V40 Z" fill="{{tagFill}}" stroke="#000" stroke-width="6" stroke-linejoin="round"></path>
+<path d="M44 14 H176 L204 42 V60 H18 V42 Z" fill="#fff" opacity=".22"></path>
+<circle cx="111" cy="34" r="11" fill="#0d0618" stroke="#000" stroke-width="5"></circle>
+</svg>
+<div style="position: absolute; left: 0; right: 0; top: 54px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 15px; color: #000">PAYS</div>
+<div class="{{payCls}}" style="position: absolute; left: 0; right: 0; top: 74px; text-align: center; font-family: 'Bungee', sans-serif; font-size: {{payFB}}px; line-height: 1; color: #fff; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">{{payText}}</div>
+<div style="position: absolute; left: 0; right: 0; top: 140px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 15px; color: #000">XP · {{payTagText}}</div>
+<div style="position: absolute; left: 22px; right: 22px; top: 170px; display: flex; flex-direction: column; gap: 7px">
+<sc-for list="{{ladder}}" as="ld" hint-placeholder-count="3">
+<div class="{{ld.cls}}" style="position: relative; height: 38px; box-sizing: border-box; background: {{ld.bg}}; border: 4px solid #000; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-family: 'Bungee', sans-serif; font-size: 22px; color: {{ld.c}}; opacity: {{ld.op}}"><span>{{ld.k}}</span><span style="font-size: 13px">{{ld.n}}</span><div style="position: absolute; left: 4px; right: 4px; top: 13px; height: 4px; background: #000; transform: rotate(-6deg); visibility: {{ld.x}}"></div></div>
+</sc-for>
+</div>
+<div style="position: absolute; left: 22px; right: 22px; top: 312px; height: 40px; display: flex; align-items: center; justify-content: space-between; background: #0d0618; border: 4px solid #000; padding: 0 8px; box-sizing: border-box">
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #FF3D7F">BOMB {{bombPay}}</span>
+<span class="{{ratioCls}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 22px; color: #2EFFE0">{{ratioText}}</span>
+</div>
+</div>
+</sc-if>
+
+<!-- ================= CASE CLOSED ================= -->
+<sc-if value="{{closedA}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 54px; bottom: 0; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px)"></div>
+<div class="sr-folder" style="position: absolute; left: 213px; top: 26px; width: 940px; height: 500px">
+<svg width="940" height="500" viewBox="0 0 940 500" style="position: absolute; left: 0; top: 0; filter: drop-shadow(10px 10px 0 #000)" aria-hidden="true">
+<path d="M6 40 H250 L282 8 H460 L478 40 H934 V494 H6 Z" fill="#F2A900" stroke="#000" stroke-width="6" stroke-linejoin="round"></path>
+<path d="M6 70 H934 V494 H6 Z" fill="#FFC23D" stroke="#000" stroke-width="6" stroke-linejoin="round"></path>
+<path d="M300 22 H440" stroke="#000" stroke-width="5" stroke-linecap="round"></path>
+</svg>
+<div style="position: absolute; left: 40px; top: 92px; width: 860px; height: 380px; box-sizing: border-box; background: #F4EAFF; border: 5px solid #000; transform: rotate(-.6deg); box-shadow: 6px 6px 0 rgba(0,0,0,.35)">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 36px; border-bottom: 4px solid #000; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 14px; color: #5d4a78"><span>CASE FILE · SAT RUSH · {{modeSub}}</span><span>{{wordsSeenText}}</span></div>
+<!-- captured -->
+<div style="position: absolute; left: 22px; top: 52px; width: 300px">
+<div style="font-family: 'Bungee', sans-serif; font-size: 15px; color: #5d4a78">CAPTURED</div>
+<div style="font-family: 'Bungee', sans-serif; font-size: 156px; line-height: 1; color: #B04BFF; -webkit-text-stroke: 8px #000; paint-order: stroke fill; text-shadow: 6px 6px 0 #000">{{tCaptured}}</div>
+<div style="margin-top: 10px; display: inline-flex; height: 34px; padding: 0 10px; align-items: center; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">{{tMissed}} GOT AWAY</div>
+</div>
+<!-- tally -->
+<div style="position: absolute; left: 350px; right: 22px; top: 52px; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{tally}}" as="ty" hint-placeholder-count="3">
+<div style="display: flex; align-items: baseline; gap: 10px; height: 36px; border-bottom: 3px dashed #8a76ad">
+<span style="font-size: 16px; color: #3a2160">{{ty.k}}</span>
+<span style="flex: 1"></span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 26px; color: #000">{{ty.v}}</span>
+</div>
+</sc-for>
+<div style="display: flex; align-items: center; gap: 12px; margin-top: 6px">
+<span style="font-size: 16px; color: #3a2160">XP EARNED</span>
+<span style="flex: 1"></span>
+<span class="{{tallyCls}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 56px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000">+{{tXp}}</span>
+</div>
+</div>
+<!-- film -->
+<div style="position: absolute; left: 22px; bottom: 22px; display: flex; gap: 4px">
+<sc-for list="{{filmAll}}" as="fm" hint-placeholder-count="10">
+<span style="width: 18px; height: 26px; box-sizing: border-box; background: {{fm.bg}}; border: 3px solid #000"></span>
+</sc-for>
+</div>
+<div style="position: absolute; right: 22px; bottom: 18px; display: flex; gap: 12px">
+<button class="sr-btn" onClick="{{again}}" style="height: 52px; padding: 0 22px; background: #FFE94A; border: 5px solid #000; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #000">RUN IT BACK</button>
+<button class="sr-btn" onClick="{{again}}" style="height: 52px; padding: 0 18px; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; font-family: 'Bungee', sans-serif; font-size: 18px; color: #fff">MENU</button>
+</div>
+</div>
+<div class="sr-slam" style="position: absolute; right: -20px; top: 40px; padding: 6px 18px; border: 7px double #FF3D7F; background: rgba(244,234,255,.0); font-family: 'Bungee', sans-serif; font-size: 62px; line-height: 1; color: #FF3D7F; -webkit-text-stroke: 3px #000; paint-order: stroke fill; box-shadow: 0 0 0 4px #000, inset 0 0 0 4px #000">CASE CLOSED</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{closedB}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 54px; bottom: 0; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.14) 46px 50px)"></div>
+<div style="position: absolute; left: -10%; right: -10%; top: 140px; height: 250px; background: repeating-linear-gradient(90deg, #1a0b2e 0 60px, #12071f 60px 120px); transform: rotate(-4deg); border-top: 8px solid #000; border-bottom: 8px solid #000"></div>
+<!-- closed folder -->
+<div class="sr-folderB" style="position: absolute; left: 60px; top: 50px; width: 540px; height: 470px">
+<svg width="540" height="470" viewBox="0 0 540 470" style="position: absolute; left: 0; top: 0; filter: drop-shadow(10px 10px 0 #000)" aria-hidden="true">
+<path d="M6 34 H170 L194 6 H330 L344 34 H534 V464 H6 Z" fill="#F2A900" stroke="#000" stroke-width="6" stroke-linejoin="round"></path>
+<path d="M6 58 H534 V464 H6 Z" fill="#FFC23D" stroke="#000" stroke-width="6" stroke-linejoin="round"></path>
+
+<rect x="360" y="380" width="140" height="56" fill="#F4EAFF" stroke="#000" stroke-width="5"></rect>
+</svg>
+<div style="position: absolute; left: 40px; top: 170px; font-family: 'Bungee', sans-serif; font-size: 15px; color: #3a2160">CAPTURED</div>
+<div style="position: absolute; left: 34px; top: 190px; font-family: 'Bungee', sans-serif; font-size: 150px; line-height: 1; color: #B04BFF; -webkit-text-stroke: 9px #000; paint-order: stroke fill; text-shadow: 7px 7px 0 #000">{{tCaptured}}</div>
+<div style="position: absolute; left: 300px; top: 230px; display: flex; flex-direction: column; gap: 8px">
+<span style="display: inline-flex; height: 34px; padding: 0 10px; align-items: center; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 18px; color: #000">{{tMissed}} GOT AWAY</span>
+</div>
+<div style="position: absolute; left: 40px; top: 388px; display: flex; gap: 4px">
+<sc-for list="{{filmAll}}" as="fm" hint-placeholder-count="10">
+<span style="width: 16px; height: 24px; box-sizing: border-box; background: {{fm.bg}}; border: 3px solid #000"></span>
+</sc-for>
+</div>
+<div style="position: absolute; left: 360px; top: 384px; width: 140px; text-align: center; font-family: 'Bungee', sans-serif; font-size: 14px; line-height: 1.3; color: #000">{{modeSub}}<br>{{wordsSeenText}}</div>
+<div class="sr-slam" style="position: absolute; left: 60px; top: 30px; padding: 6px 16px; border: 7px double #FF3D7F; font-family: 'Bungee', sans-serif; font-size: 58px; line-height: 1; color: #FF3D7F; -webkit-text-stroke: 3px #000; paint-order: stroke fill; box-shadow: 0 0 0 4px #000, inset 0 0 0 4px #000">CASE CLOSED</div>
+</div>
+<!-- payout column -->
+<div style="position: absolute; left: 680px; top: 70px; width: 640px">
+<div style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">XP EARNED</div>
+<div class="{{tallyCls}}" style="display: inline-block; font-family: 'Bungee', sans-serif; font-size: 140px; line-height: 1; color: #FFE94A; -webkit-text-stroke: 10px #000; paint-order: stroke fill; text-shadow: 8px 8px 0 #000">+{{tXp}}</div>
+<div style="margin-top: 14px; display: flex; gap: 12px">
+<sc-for list="{{tally}}" as="ty" hint-placeholder-count="3">
+<div style="flex: 1; height: 92px; box-sizing: border-box; background: #160a28; border: 5px solid #000; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{ty.f}}px; color: {{ty.c}}; -webkit-text-stroke: 4px #000; paint-order: stroke fill">{{ty.v}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 13px; color: #c9b8e8">{{ty.k}}</span>
+</div>
+</sc-for>
+</div>
+<div style="margin-top: 26px; display: flex; gap: 14px">
+<button class="sr-btn sr-pulse" onClick="{{again}}" style="height: 70px; padding: 0 30px; background: #FFE94A; border: 6px solid #000; box-shadow: 8px 8px 0 #000; font-family: 'Bungee', sans-serif; font-size: 28px; color: #000">RUN IT BACK</button>
+<button class="sr-btn" onClick="{{again}}" style="height: 70px; padding: 0 24px; background: #1a0b2e; border: 6px solid #000; box-shadow: 8px 8px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">MENU</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ================= DEMO CONTROLS ================= -->
+<div style="position: absolute; left: 14px; bottom: 10px; display: flex; align-items: center; gap: 8px">
+<span style="font-size: 13px; color: #5d4a78">DEMO</span>
+<button class="sr-btn" onClick="{{demoClose}}" style="height: 30px; padding: 0 10px; background: #FF3D7F; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">CASE CLOSED</button>
+<button class="sr-btn" onClick="{{again}}" style="height: 30px; padding: 0 10px; background: #2EFFE0; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000">NEW RUN</button>
+<button class="sr-btn" onClick="{{demoHint}}" style="height: 30px; padding: 0 10px; background: #FFE94A; border: 3px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 13px; color: #000; visibility: {{hintVis}}">NEXT LETTER</button>
+<span style="font-size: 13px; color: #5d4a78; visibility: {{hintVis}}">TYPE THE WORD · WRONG KEY −2</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+var ANTE = [5, 3, 1], SAT_MULT = 3, BOMB_PAY = 60, LIVES = 3, HEAT_CAP = 5;
+var STAGE_MS = { A: 3600, B: 5200 }, SPELL_MS = 1100, REV_OFFSET = 6;
+var WORDS = [
+  { w: 'PLACID', pos: 'ADJ', tier: 2, s: ['The lake was ', ' at dawn, not a ripple on it.'], d: 'calm and still; not easily upset', rk: 'PLAC', rv: 'to please', cz: 'placate · complacent', sus: ['ARDENT', 'CALLOW', 'FERVID', 'LUCENT', 'STOLID'] },
+  { w: 'LACONIC', pos: 'ADJ', tier: 3, s: ['Her ', ' reply, just "no," ended the meeting.'], d: 'using very few words', rk: 'LACON', rv: 'Sparta', cz: 'laconism', sus: ['VERBOSE', 'CAUSTIC', 'PENSIVE', 'ZEALOUS', 'CORDIAL'] },
+  { w: 'EPHEMERAL', pos: 'ADJ', tier: 3, s: ['Internet fame is ', '; by Friday nobody remembers.'], d: 'lasting a very short time', rk: 'HEMERA', rv: 'a day', cz: 'ephemeris', sus: ['PERENNIAL', 'EQUIVOCAL', 'MERCURIAL', 'INCIPIENT', 'DIFFIDENT'] },
+  { w: 'CANDOR', pos: 'NOUN', tier: 3, s: ['I respected the coach\'s ', ' about why I was benched.'], d: 'honest, open directness', rk: 'CAND', rv: 'to shine', cz: 'candid · candle', sus: ['RANCOR', 'FERVOR', 'TORPOR', 'STUPOR', 'PALLOR'] },
+  { w: 'OBDURATE', pos: 'ADJ', tier: 4, s: ['No argument could move the ', ' referee.'], d: 'stubbornly refusing to change', rk: 'DUR', rv: 'hard', cz: 'endure · durable', sus: ['AMENABLE', 'ABRASIVE', 'LUMINOUS', 'RESOLUTE', 'INSOLENT'] },
+  { w: 'MITIGATE', pos: 'VERB', tier: 4, s: ['Sandbags helped ', ' the flood damage.'], d: 'make something less severe', rk: 'MITIS', rv: 'soft', cz: 'unmitigated', sus: ['ABROGATE', 'INUNDATE', 'OBSTRUCT', 'FLOUNDER', 'RENOUNCE'] },
+  { w: 'GREGARIOUS', pos: 'ADJ', tier: 4, s: ['A ', ' host, he knew every guest by name.'], d: 'fond of company; sociable', rk: 'GREG', rv: 'a flock', cz: 'congregate · segregate', sus: ['AUSPICIOUS', 'FASTIDIOUS', 'PERFIDIOUS', 'IMPERVIOUS', 'INSATIABLE'] },
+  { w: 'CACOPHONY', pos: 'NOUN', tier: 5, s: ['The band warming up was a ', ' of squeaks.'], d: 'a harsh, jarring mix of sounds', rk: 'PHON', rv: 'sound', cz: 'symphony · phonics', sus: ['MAELSTROM', 'HARBINGER', 'PRECEDENT', 'SOLILOQUY', 'CHARLATAN'] }
+];
+var SEED_LOG = [{ ok: true, a: 5 }, { ok: true, a: 3 }, { ok: false }, { ok: true, a: 5 }, { ok: true, a: 3, silver: false }, { ok: true, a: 1 }];
+
+function fmt(x) {
+  x = Math.round(x);
+  var S = [['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; return (v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '')) + S[i][0]; }
+  return String(x);
+}
+function pad2(n) { return n < 10 ? '0' + n : String(n); }
+function arc(a0, a1, R) {
+  var r = Math.PI / 180, c = 100;
+  return 'M' + (c + R * Math.cos(a0 * r)).toFixed(1) + ' ' + (c + R * Math.sin(a0 * r)).toFixed(1) + ' A' + R + ' ' + R + ' 0 0 1 ' + (c + R * Math.cos(a1 * r)).toFixed(1) + ' ' + (c + R * Math.sin(a1 * r)).toFixed(1);
+}
+var NSEG = 30, RINGD = [];
+for (var q = 0; q < NSEG; q++) { var a0 = -90 + q * (360 / NSEG) + 1.6; RINGD.push(arc(a0, a0 + 360 / NSEG - 3.2, 78)); }
+function shuffleIdx(n, seed) {
+  var a = []; for (var i = 0; i < n; i++) a.push(i);
+  var s = seed * 9301 + 49297;
+  for (var j = n - 1; j > 0; j--) { s = (s * 9301 + 49297) % 233280; var k = Math.floor(s / 233280 * (j + 1)); var t = a[j]; a[j] = a[k]; a[k] = t; }
+  return a;
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.fresh('A');
+    this.tm = []; this.ui = [];
+    this.onKey = this.onKey.bind(this);
+  }
+  fresh(v) {
+    return {
+      v: v, phase: 'play', lives: 2, heat: 3, streak: 3, best: 3, runXp: 1240, wallet: 48200,
+      wordNo: 6, deck: 0, queue: [], cur: null, status: 'live',
+      log: SEED_LOG.slice(), cleared: 5, missed: 1, antes: [5, 3, 5, 3, 1], hardest: { w: 'UBIQUITOUS', tier: 4 },
+      t0: 0, dur: 1, now: 0, badN: 0, pen: '', penN: 0, gainN: 0, gainShow: false, gainText: '', xpN: 0, payN: 0,
+      tally: 0, livesN: 0
+    };
+  }
+  componentDidMount() {
+    var self = this;
+    window.addEventListener('keydown', this.onKey);
+    this.iv = setInterval(function () { if (self.state.phase === 'play' && self.state.status === 'live') self.setState({ now: Date.now() }); }, 100);
+    this.nextWord();
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.onKey);
+    clearInterval(this.iv); this.clearStage(); this.ui.forEach(clearTimeout); clearInterval(this.cu);
+  }
+  later(fn, ms) { this.tm.push(setTimeout(fn, ms)); }
+  uiLater(fn, ms) { this.ui.push(setTimeout(fn, ms)); }
+  clearStage() { this.tm.forEach(clearTimeout); this.tm = []; }
+
+  nextWord() {
+    var st = this.state, n = st.wordNo + 1, queue = st.queue.slice(), row = null, rev = false, miss = 0, deck = st.deck;
+    for (var i = 0; i < queue.length; i++) if (queue[i].due <= n) { row = queue[i].row; miss = queue[i].miss; queue.splice(i, 1); rev = true; break; }
+    if (!row) { row = WORDS[deck % WORDS.length]; deck++; }
+    var cur = { row: row, typed: '', revealed: 0, wrong: 0, spam: 0, rev: rev, miss: miss, stage: rev ? 1 : 0, order: shuffleIdx(6, n + row.w.length) };
+    this.setState({ wordNo: n, deck: deck, queue: queue, cur: cur, status: 'live', pen: '', gainShow: false });
+    this.armStage();
+  }
+  armStage() {
+    var self = this, st = this.state, cur = st.cur, now = Date.now(), dur;
+    this.clearStage();
+    if (cur.stage < 2) {
+      dur = STAGE_MS[st.v];
+      this.later(function () { self.advance(); }, dur);
+    } else if (st.v === 'A') {
+      var L = cur.row.w.length, left = Math.max(0, (L - 2) - cur.revealed);
+      dur = left * SPELL_MS + 2 * SPELL_MS;
+      for (var k = 1; k <= left; k++) this.later(function () { self.reveal(false); }, k * SPELL_MS);
+      this.later(function () { self.miss(); }, dur);
+    } else {
+      dur = 4000 + cur.row.w.length * 270;
+      this.later(function () { self.miss(); }, dur);
+    }
+    this.setState({ t0: now, now: now, dur: dur });
+  }
+  advance() {
+    var st = this.state, cur = Object.assign({}, st.cur);
+    if (st.status !== 'live') return;
+    cur.stage = Math.min(2, cur.stage + 1);
+    this.setState({ cur: cur, payN: st.payN + 1 });
+    if (cur.stage === 2 && cur.revealed < 1) this.reveal(false);
+    this.armStage();
+  }
+  reveal(spam) {
+    var st = this.state;
+    if (st.status !== 'live') return;
+    var cur = Object.assign({}, st.cur), w = cur.row.w;
+    if (cur.revealed >= w.length) return;
+    cur.revealed += 1;
+    if (cur.typed.length < cur.revealed) cur.typed = w.slice(0, cur.revealed);
+    this.setState({ cur: cur });
+    if (cur.typed.length === w.length) this.capture();
+  }
+  press(letter) {
+    var self = this, st = this.state;
+    if (st.phase !== 'play' || st.status !== 'live' || !st.cur) return;
+    var cur = Object.assign({}, st.cur), w = cur.row.w;
+    if (w[cur.typed.length] === letter) {
+      cur.typed += letter;
+      this.setState({ cur: cur });
+      if (cur.typed.length === w.length) this.capture();
+      return;
+    }
+    cur.wrong += 1;
+    var pen = 2, up = { cur: cur, badN: st.badN + 1, penN: st.penN + 1 };
+    if (cur.wrong % 3 === 0) {
+      pen += 8; cur.spam += 1; up.heat = 0;
+      up.pen = cur.spam >= 2 ? 'MASHING = MISS' : '−' + pen + ' XP · LETTER GIVEN';
+      up.runXp = Math.max(0, st.runXp - pen); up.wallet = st.wallet - pen;
+      this.setState(up);
+      if (cur.spam >= 2) { this.miss(); return; }
+      this.reveal(true);
+    } else {
+      up.pen = '−2 XP'; up.runXp = Math.max(0, st.runXp - pen); up.wallet = st.wallet - pen;
+      this.setState(up);
+    }
+    var n = this.state.penN;
+    this.uiLater(function () { if (self.state.penN === n) self.setState({ pen: '' }); }, 900);
+  }
+  payNow(st, forClear) {
+    var cur = st.cur; if (!cur) return { base: 0, ante: 0, silver: false, total: 0 };
+    var L = cur.row.w.length, base = cur.row.tier * 10 + L * 2, ante = ANTE[cur.stage];
+    var heat = st.heat;
+    if (forClear && cur.revealed <= 1) heat = Math.min(HEAT_CAP, heat + 1);
+    var silver = heat >= HEAT_CAP, mult = ante * SAT_MULT * (silver ? 2 : 1) * (cur.rev ? 2 : 1);
+    var paid = cur.spam ? Math.max(0, (L - cur.spam) / L) : 1;
+    return { base: base, ante: ante, silver: silver, total: Math.round(base * mult * paid), heatAfter: heat };
+  }
+  capture() {
+    var self = this, st = this.state, cur = st.cur, p = this.payNow(st, true);
+    this.clearStage();
+    var log = st.log.concat([{ ok: true, a: p.ante, silver: p.silver, rev: cur.rev }]);
+    var hard = st.hardest; if (!hard || cur.row.tier > hard.tier || (cur.row.tier === hard.tier && cur.row.w.length > hard.w.length)) hard = { w: cur.row.w, tier: cur.row.tier };
+    this.setState({
+      status: 'ok', runXp: st.runXp + p.total, wallet: st.wallet + p.total, heat: p.heatAfter, streak: st.streak + 1, best: Math.max(st.best, st.streak + 1),
+      cleared: st.cleared + 1, antes: st.antes.concat([p.ante]), log: log, hardest: hard, gainShow: true, gainN: st.gainN + 1, gainText: '+' + fmt(p.total) + ' XP', pen: ''
+    });
+    this.uiLater(function () { self.setState({ xpN: self.state.xpN + 1 }); }, 650);
+    this.later(function () { self.setState({ gainShow: false }); self.nextWord(); }, 1250);
+  }
+  miss() {
+    var self = this, st = this.state, cur = st.cur;
+    if (st.status !== 'live') return;
+    this.clearStage();
+    var lives = st.lives - 1;
+    var queue = st.queue.concat([{ row: cur.row, due: st.wordNo + REV_OFFSET, miss: cur.miss + 1 }]);
+    this.setState({ status: 'miss', lives: lives, heat: 0, streak: 0, missed: st.missed + 1, log: st.log.concat([{ ok: false }]), queue: queue, livesN: st.livesN + 1 });
+    this.later(function () { if (lives <= 0) self.close(); else self.nextWord(); }, 1900);
+  }
+  close() {
+    var self = this, target = this.state.runXp;
+    this.clearStage(); clearInterval(this.cu);
+    this.setState({ phase: 'closed', tally: 0, gainShow: false });
+    var t0 = Date.now() + 600, D = 1400;
+    this.cu = setInterval(function () {
+      var f = Math.max(0, Math.min(1, (Date.now() - t0) / D)), e = 1 - Math.pow(1 - f, 3);
+      self.setState({ tally: Math.round(target * e) });
+      if (f >= 1) clearInterval(self.cu);
+    }, 40);
+  }
+  restart(v) {
+    this.clearStage(); this.ui.forEach(clearTimeout); this.ui = []; clearInterval(this.cu);
+    var s = this.fresh(v || this.state.v);
+    s.lives = LIVES; s.heat = 0; s.streak = 0; s.best = 0; s.runXp = 0; s.wordNo = 0; s.log = []; s.cleared = 0; s.missed = 0; s.antes = []; s.hardest = null;
+    s.wallet = this.state.wallet;
+    this.setState(s);
+    this.nextWord();
+  }
+  reseed(v) {
+    this.clearStage(); this.ui.forEach(clearTimeout); this.ui = []; clearInterval(this.cu);
+    var s = this.fresh(v); s.wallet = this.state.wallet;
+    this.setState(s);
+    this.nextWord();
+  }
+  onKey(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var st = this.state, k = e.key;
+    if (st.phase !== 'play') return;
+    if (k === 'Backspace') {
+      e.preventDefault();
+      if (st.status !== 'live') return;
+      var cur = Object.assign({}, st.cur);
+      if (cur.typed.length > cur.revealed) { cur.typed = cur.typed.slice(0, -1); this.setState({ cur: cur }); }
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(k)) { e.preventDefault(); this.press(k.toUpperCase()); }
+  }
+
+  renderVals() {
+    var self = this, st = this.state, cur = st.cur || { row: WORDS[0], typed: '', revealed: 0, stage: 0, rev: false, miss: 0, order: [0, 1, 2, 3, 4, 5], spam: 0 };
+    var row = cur.row, w = row.w, L = w.length, A = st.v === 'A';
+    var p = this.payNow(st, false);
+    var live = st.status === 'live';
+    var frac = live ? Math.max(0, 1 - (st.now - st.t0) / st.dur) : (st.status === 'ok' ? 1 : 0);
+    var secLeft = live ? Math.max(0, (st.dur - (st.now - st.t0)) / 1000) : 0;
+    var fin = cur.stage === 2;
+    var drainC = fin ? '#FF3D7F' : (cur.stage === 1 ? '#FFC23D' : '#FFE94A');
+
+    // slots
+    var sw = Math.min(A ? 84 : 76, Math.floor(((A ? 880 : 830) - (L - 1) * 10) / L));
+    var firstEmpty = cur.typed.length;
+    var slots = [];
+    for (var i = 0; i < L; i++) {
+      var ch = i < cur.typed.length ? w[i] : '', locked = i < cur.revealed;
+      var s = { ch: ch, w: sw, f: sw >= 76 ? 56 : 48, bg: '#12071f', bd: '#000', c: '#fff', cls: '', cur: false, lock: locked ? 'visible' : 'hidden' };
+      if (st.status === 'ok') { s.bg = '#5CFF8A'; s.c = '#000'; s.ch = w[i]; }
+      else if (st.status === 'miss') { s.bg = '#FF3D7F'; s.c = '#000'; s.ch = w[i]; }
+      else if (locked) { s.c = '#FFC23D'; s.bg = '#1d0e33'; }
+      else if (ch) { s.bg = '#2a1748'; }
+      if (live && i === firstEmpty) { s.cur = true; s.bd = '#FFE94A'; }
+      slots.push(s);
+    }
+
+    // ladder
+    var ladder = ANTE.map(function (a, i) {
+      var on = i === cur.stage, past = i < cur.stage;
+      return {
+        k: a + '×', n: fmt(Math.round(p.base * a * SAT_MULT * (p.silver ? 2 : 1) * (cur.rev ? 2 : 1))),
+        bg: on ? (i === 2 ? '#FF3D7F' : '#FFE94A') : '#1a0b2e', c: on ? '#000' : '#8a76ad', op: past ? 0.45 : 1, x: past ? 'visible' : 'hidden',
+        cls: on ? (st.payN % 2 ? 'sr-dropA' : 'sr-dropB') : ''
+      };
+    });
+
+    var chips = [{ v: p.base, k: 'BASE', bg: '#1a0b2e', c: '#fff' }, { v: '×' + p.ante, k: 'ANTE', bg: '#FFE94A', c: '#000' }, { v: '×' + SAT_MULT, k: 'SAT', bg: '#B04BFF', c: '#fff' }];
+    if (p.silver) chips.push({ v: '×2', k: 'SILVER', bg: '#F4EAFF', c: '#000' });
+    if (cur.rev) chips.push({ v: '×2', k: 'ESCAPED', bg: '#FF3D7F', c: '#000' });
+    if (chips.length > 4) chips = chips.slice(0, 2).concat(chips.slice(3));
+
+    var tags = [{ t: row.pos, bg: '#1a0b2e', c: '#fff' }, { t: L + ' LETTERS', bg: '#1a0b2e', c: '#fff' }, { t: 'TIER ' + row.tier, bg: '#1a0b2e', c: '#2EFFE0' }];
+    if (cur.rev) tags.push({ t: 'ESCAPED ×' + cur.miss + ' · PAY ×2', bg: '#FF3D7F', c: '#000' });
+
+    var blank = ''; for (var b = 0; b < L; b++) blank += '_';
+    var defOn = cur.stage >= 1 || st.status !== 'live';
+
+    // status
+    var statusText, statusBg, statusC = '#000';
+    if (st.status === 'ok') { statusText = 'CAPTURED'; statusBg = '#5CFF8A'; }
+    else if (st.status === 'miss') { statusText = 'GOT AWAY · ' + w; statusBg = '#FF3D7F'; }
+    else if (fin) { statusText = A ? 'LETTERS PRINTING · LAST 2 ARE YOURS' : 'LAST CALL · 2 LEFT'; statusBg = '#FFC23D'; }
+    else { statusText = 'TYPE IT AT ' + ANTE[cur.stage] + '×'; statusBg = '#1a0b2e'; statusC = '#FFE94A'; }
+
+    // film
+    var film = st.log.slice(-14).map(function (e) { return { bg: e.ok ? (e.silver ? '#F4EAFF' : (e.a === 5 ? '#5CFF8A' : e.a === 3 ? '#2EFFE0' : '#12A99A')) : '#FF3D7F' }; });
+    var filmAll = st.log.slice(-24).map(function (e) { return { bg: e.ok ? (e.silver ? '#F4EAFF' : (e.a === 5 ? '#5CFF8A' : e.a === 3 ? '#2EFFE0' : '#12A99A')) : '#FF3D7F' }; });
+
+    // suspects (lineup): 6 → 4 → 2, answer always standing, positions fixed
+    var names = [w].concat(row.sus);
+    var elim = cur.stage === 0 ? 0 : (cur.stage === 1 ? 2 : 4);
+    var suspects = cur.order.map(function (ix) {
+      var nm = names[ix], out = ix !== 0 && ix <= elim;
+      var bg = '#1a0b2e', c = '#fff';
+      if (ix === 0 && st.status === 'ok') { bg = '#5CFF8A'; c = '#fff'; }
+      if (ix === 0 && st.status === 'miss') { bg = '#FF3D7F'; }
+      return { w: nm, f: nm.length >= 10 ? 26 : nm.length >= 9 ? 29 : 34, bg: bg, c: c, op: out ? 0.38 : 1, out: out };
+    });
+    var standing = 6 - elim;
+
+    var ring = RINGD.map(function (d, i) { return { d: d, c: drainC, o: i < Math.ceil(frac * NSEG - 0.001) ? 1 : 0.08 }; });
+
+    var hearts = []; for (var h = 0; h < LIVES; h++) { var on = h < st.lives; hearts.push({ fill: on ? '#FF3D7F' : '#12071f', hl: on ? 1 : 0, op: on ? 1 : 0.6 }); }
+    var heatBlocks = []; for (var hb = 0; hb < HEAT_CAP; hb++) heatBlocks.push({ bg: hb < st.heat ? (st.heat >= HEAT_CAP ? '#F4EAFF' : '#FFC23D') : '#1a0b2e' });
+
+    var ratio = p.total / BOMB_PAY, ratioText = (ratio >= 10 ? Math.round(ratio) : Math.round(ratio * 10) / 10) + '×';
+    var bombF = Math.max(0.03, Math.min(1, BOMB_PAY / Math.max(p.total, 1)));
+    var payText = fmt(p.total);
+
+    var avg = st.antes.length ? (st.antes.reduce(function (s, a) { return s + a; }, 0) / st.antes.length).toFixed(1) + '×' : '—';
+    var hardW = st.hardest ? st.hardest.w : '—';
+    var tally = [
+      { k: 'AVG ANTE', v: avg, f: 34, c: '#FFE94A' },
+      { k: 'BEST STREAK', v: String(st.best), f: 34, c: '#FFC23D' },
+      { k: 'HARDEST', v: hardW, f: hardW.length > 8 ? 20 : 26, c: '#2EFFE0' }
+    ];
+    var closed = st.phase === 'closed';
+
+    return {
+      vers: ['A', 'B'].map(function (k) { var on = k === st.v; return { k: k, bg: on ? '#FFE94A' : '#1a0b2e', c: on ? '#000' : '#8a76ad', pick: function () { if (self.state.v !== k) self.reseed(k); } }; }),
+      modeSub: A ? 'BRIEFING' : 'LINEUP',
+      wordNoText: pad2(st.wordNo), wordNo: pad2(st.wordNo),
+      hearts: hearts, livesCls: st.livesN ? (st.livesN % 2 ? 'sr-noA' : 'sr-noB') : '',
+      heatBlocks: heatBlocks, silverVis: st.heat >= HEAT_CAP ? 'visible' : 'hidden',
+      streak: st.streak, streakCls: st.gainN ? (st.gainN % 2 ? 'sr-bumpA' : 'sr-bumpB') : '',
+      walletText: fmt(st.wallet), xpCls: st.xpN ? (st.xpN % 2 ? 'sr-bumpA' : 'sr-bumpB') : '',
+      showA: A && !closed, showB: !A && !closed, closedA: A && closed, closedB: !A && closed,
+      payTagText: 'AT ' + p.ante + '×', payText: payText, payF: payText.length >= 4 ? 96 : 112, payFB: payText.length >= 4 ? 52 : 64,
+      payC: p.silver ? '#F4EAFF' : '#FFE94A', payCls: st.payN % 2 ? 'sr-dropA' : 'sr-dropB',
+      chips: chips, ladder: ladder,
+      drainF: frac.toFixed(3), drainC: drainC, drainSec: secLeft.toFixed(1) + 's',
+      drainLabel: fin ? (A ? 'PRINTING' : 'LAST CALL') : 'DROPS TO ' + ANTE[cur.stage + 1] + '× IN',
+      bombF: bombF.toFixed(3), bombB: Math.round(bombF * 64) + 4, bombL: Math.round(bombF * 238) + 10, bombPay: BOMB_PAY,
+      ratioText: ratioText, ratioCls: st.payN % 2 ? 'sr-bumpA' : 'sr-bumpB',
+      cardCls: st.badN ? (st.badN % 2 ? 'sr-noA' : 'sr-noB') : '', cardBd: st.status === 'ok' ? '#5CFF8A' : (st.status === 'miss' ? '#FF3D7F' : '#000'),
+      tags: tags, posLen: row.pos + ' · ' + L,
+      s0: row.s[0], s1: row.s[1], blank: st.status === 'live' ? blank : w, blankC: st.status === 'ok' ? '#5CFF8A' : (st.status === 'miss' ? '#FF3D7F' : '#FFE94A'),
+      defOn: defOn, defOff: !defOn, def: row.d, defF: row.d.length > 26 ? 38 : 46, defFB: row.d.length > 30 ? 32 : 38,
+      rootOp: defOn ? 1 : 0, rootK: row.rk, rootV: '= ' + row.rv, rootCz: '· ' + row.cz,
+      slots: slots, slotsCls: st.badN ? (st.badN % 2 ? 'sr-noA' : 'sr-noB') : '',
+      statusText: statusText, statusBg: statusBg, statusC: statusC, statusCls: '',
+      penText: st.pen, penVis: st.pen ? 'visible' : 'hidden',
+      film: film, filmAll: filmAll,
+      gainShow: st.gainShow, gainText: st.gainText, gainCls: st.gainN % 2 ? 'sr-upA' : 'sr-upB', gainX: Math.round(L * (sw + 10) / 2) + 6,
+      suspects: suspects, standing: standing, standCls: st.payN % 2 ? 'sr-dropA' : 'sr-dropB', ring: ring,
+      tagFill: p.silver ? '#F4EAFF' : (fin ? '#FF3D7F' : '#FFE94A'),
+      tCaptured: st.cleared, tMissed: st.missed, tXp: fmt(st.tally), tallyCls: '', tally: tally,
+      wordsSeenText: (st.cleared + st.missed) + ' WORDS',
+      hintVis: closed ? 'hidden' : 'visible',
+      again: function () { self.restart(); },
+      demoClose: function () { if (self.state.phase === 'play') self.close(); },
+      demoHint: function () { var c = self.state.cur; if (c && self.state.status === 'live') self.press(c.row.w[c.typed.length]); }
+    };
+  }
+}
+</script>
+</body>
+</html>

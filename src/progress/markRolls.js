@@ -34,6 +34,7 @@ import {
 } from './markRollsCore.js';
 
 export * from './markRollsCore.js';
+import { SEASON2 as S2_ON, V3 as S2_V3 } from './season.js'; // V3.unlocks: installed lazily
 const ROLL_BY_ID = { get: rollMarkById, has: (id) => !!rollMarkById(id) };
 const PERM_BY_ID = { get: permanentMarkById };
 
@@ -102,7 +103,7 @@ export function luck(state, ctx = {}) {
     if (ms) add += ms.luck;
   }
   if (ctx.boost) add += LUCK_SOURCES.boost;
-  return 1 + add;
+  return (1 + add) * (S2_ON ? S2_V3.unlocks.unlockLuckMult() : 1); // v3 (SEASON2): the R7 unlock LUCK ×1.25 (×1 otherwise / flag OFF)
 }
 export function isBonusRoll(state) {
   return (num(state.rolls) + 1) % BONUS_ROLL_EVERY === 0;

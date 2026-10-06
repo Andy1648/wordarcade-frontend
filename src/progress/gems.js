@@ -103,3 +103,10 @@ export function payGameResult({ key, iWon, rivals, selfIds, mode } = {}) {
 export function getWinStreak() {
   return loadGemState().streak;
 }
+
+// v3 (SEASON2): v3/install.js wraps these (v3/hooks.js — the streak is a FLAT +4, and the BEAT BOTS / WIN MULTIPLAYER
+// achievement counters); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: gameResultPayout, b: payGameResult } = o);
+}

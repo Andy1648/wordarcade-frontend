@@ -7,6 +7,10 @@
 // LEAF MODULE ON PURPOSE: it imports nothing from progress/*, so wins.js / xp.js / letterXp.js / stars.js can call
 // into it without joining an import cycle. Every storage access is guarded (a blocked store reads as 0, never throws).
 
+// PROGRESSION v3 (SEASON2, default OFF): the v3 gem table (v3/econ.js) and the season's own balance key. Both are
+// leaves, so this module stays a leaf. OFF = every constant below as it was.
+// (v3: the gem table is swapped in by v3/install.js — __v3 below; ROLL_PRICE_GEMS is `let` so the swap reaches every importer)
+
 // ------------------------------------------------------------------------------------ tuning (exported)
 // TUNED ON THE CI SIM (PR #194, Andy: "tune only the drop chance and win payouts"): at Andy's 1/15 + 5 + 5 the
 // 10 h loop-sim read casual 0.445 / median 0.585 / strong 0.748 rolls per minute vs the 1-per-2–3-min target
@@ -16,15 +20,15 @@ export const GEM_DROP_MIN = 1;
 export const GEM_DROP_MAX = 3;
 export const BOT_WIN = 3; // won a game whose every rival was a bot (Andy's start: 5)
 export const PER_PLAYER_BEATEN = 3; // a game with people in it: per person placed below you (Andy's start: 5)
-export const STREAK_PER_WIN = 1; // × the wins in a row BEFORE this one (2nd straight win +1, 3rd +2 …)
-export const LEVEL_UP = 2; // per level reached for the first time on this save
+export const STREAK_PER_WIN = 1; // (v3: a FLAT +4 a streak win instead — gems.js gameResultPayout) // × the wins in a row BEFORE this one (2nd straight win +1, 3rd +2 …)
+export const LEVEL_UP = 2; // v3: 0 — not in the table (levels reach millions) // per level reached for the first time on this save
 export const REBIRTH = 20;
-export const ROLL_PRICE_GEMS = 10;
+export let ROLL_PRICE_GEMS = 10;
 
-export const GEMS_KEY = 'taw.gems';
+export const GEMS_KEY = 'taw.gems'; // (v3: taw.s2.gems — mapped at the storage layer, v3/install.js)
 
 // The reasons a gem can be granted (the ledger's `reason`; the sim's "by source").
-export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start'];
+export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement']; // v3 ACHIEVEMENTS pay gems
 
 // ------------------------------------------------------------------------------------ state
 // taw.gems = { v: 1, bal, peak (highest level that has paid LEVEL_UP), streak (game wins in a row), mig (the
@@ -170,4 +174,10 @@ export function noteLevelReached(level) {
 /** A rebirth happened (stars.rebirthWithStars). */
 export function noteRebirth(rc) {
   return grantGems(REBIRTH, 'rebirth', { detail: Number.isFinite(rc) ? `rb-${rc}` : null });
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: rollGemDrop, b: noteLevelReached, c: ROLL_PRICE_GEMS, d: noteRebirth, e: dropGemsForWord } = o);
 }

@@ -10,6 +10,11 @@
 // (supabase/migrations/001_leaderboard.sql). Lose the secret (clear storage) and the name stays on
 // the board, owned by nobody — exactly what a guest handle should do.
 import { getRebirths, storedLevel } from '../progress/xp.js';
+// PROGRESSION v3 (SEASON2, default OFF; 022_season2_board.sql): the season-2 client submits econ 13 ONLY when lb_caps
+// says season2 (never season-2 numbers onto the season-1 board), reads public.leaderboard_s2 (★ → R → level), and
+// skips the cloud save (it backs up the season-1 keys; season 2's is phase 4). lb_rebirth / lb_ascend name season 2
+// in the lazy serverRebirth.js.
+import { SEASON2 } from '../progress/season.js';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
@@ -30,6 +35,8 @@ const SECRET_KEY = 'taw.lb.secret';
 const PROFILE_KEY = 'taw.lb.profile';
 export const BOARD_SIZE = 10; // Andy oct2 LB10: the board shows the TOP 10; anyone below gets a pinned row with their real rank
 const SUBMIT_EVERY_MS = 30 * 1000;
+// The board view this client reads: the season-2 board (022 — ★ → R → level, econ-13 rows) with the SEASON2 flag.
+const BOARD_VIEW = SEASON2 ? 'leaderboard_s2' : 'leaderboard';
 
 function headers() {
   return { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };
@@ -153,7 +160,7 @@ export function boardCaps() {
       // econ: the p_econ to send (cloudSave econRpcArg) — 12 once 018_rebirth_rush.sql runs, 10 with only 016/017
       // (the version-gated lb_submit3 / lb_save2 / lb_load2 exist), 0 = neither (old RPCs)
       // boardEcon: 017_board_reality.sql — the board views carry `econ` (which economy a row last submitted on)
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !!(c && c.cloud), weekly: !!(c && c.weekly), econ: econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ) }))
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !SEASON2 && !!(c && c.cloud), weekly: !!(c && c.weekly), econ: SEASON2 ? +(c && c.econ2) || 0 : econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ) }))
       .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: 0, boardEcon: false }));
   }
   return capsPromise;
@@ -210,6 +217,8 @@ export async function submitStats(force = false, { internal = false } = {}) {
   const s = myStats();
   try {
     const caps = await boardCaps();
+    // v3 (SEASON2): caps.econ is lb_caps.econ2 = 13 once 022 runs (the season-2 board); before that it is 0 and the
+    // old RPCs below are no-ops (016), so season-2 numbers never land on the season-1 board.
     if (caps.econ) {
       // PV10 (016): the version-gated submit — the old lb_submit2 / lb_submit are no-ops once 016 runs.
       await rpc('lb_submit3', {
@@ -240,7 +249,9 @@ export async function submitStats(force = false, { internal = false } = {}) {
       });
     }
     const p = pushMeta.last;
-    pushMeta.last = { at: now, level: s.level, rebirths: s.rebirths, words: s.lifetimeWords, likely: !p || now - p.at > 5000 };
+    // `at` = when the push was ANSWERED (≥ the DB's own now()): stamping the moment it was SENT let a slow first push
+    // land < 5 s before the rebirth's own push, which the DB then throttled (e2e season2 @390: "LV 99 / 100").
+    pushMeta.last = { at: Date.now(), level: s.level, rebirths: s.rebirths, words: s.lifetimeWords, likely: !p || now - p.at > 5000 };
     // STEP 52: the cloud save rides the same push (throttled to once a minute; never lowers).
     if (caps.cloud) backupNow({ rpc, secret: getSecret(), econ: caps.econ });
     return true;
@@ -258,7 +269,7 @@ export async function submitStats(force = false, { internal = false } = {}) {
  * and report { restored: true } (the caller reloads). Also re-learns the profile after a wipe.
  */
 export async function restoreFromCloud({ restore = true } = {}) {
-  if (!LEADERBOARD_ENABLED) return { restored: false };
+  if (!LEADERBOARD_ENABLED) return { restored: false }; // (v3: caps.cloud is off in season 2 — its save is local, phase 4)
   const secret = peekSecret();
   if (!secret) return { restored: false };
   const caps = await boardCaps();
@@ -378,20 +389,21 @@ export function rowEconCurrent(row) {
 export async function fetchBoard(limit = BOARD_SIZE) {
   if (!LEADERBOARD_ENABLED) return { rows: [], me: null };
   const caps = await boardCaps();
-  const base = `rank,id,username,level,rebirths,lifetime_words,${caps.letters ? 'lifetime_letters,' : ''}wins_per_word`;
+  // v3: the season-2 board carries ★ (its order is ★ → R → level; 022)
+  const base = `rank,id,username,level,rebirths,lifetime_words,${caps.letters ? 'lifetime_letters,' : ''}wins_per_word${SEASON2 ? ',stars' : ''}`;
   let cols = caps.boardEcon && !econColBroken ? `${base},econ` : base;
-  let r = await fetch(`${BASE}/rest/v1/leaderboard?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  let r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
   if (!r.ok && r.status === 400 && cols !== base) {
     econColBroken = true;
     cols = base;
-    r = await fetch(`${BASE}/rest/v1/leaderboard?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+    r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
   }
   if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { code: `http_${r.status}` });
   const rows = await r.json();
   const mine = getMyProfile();
   let me = null;
   if (mine && mine.id && !rows.some((x) => x.id === mine.id)) {
-    const r2 = await fetch(`${BASE}/rest/v1/leaderboard?select=${cols}&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
+    const r2 = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
     if (r2.ok) me = (await r2.json())[0] || null;
   }
   return { rows, me };
@@ -508,7 +520,7 @@ export async function serverRankFor(stats) {
   const rb = Math.max(0, Math.floor(Number(stats.rebirths) || 0));
   const or = rankAheadFilter(rb, l, w);
   try {
-    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=id&or=${encodeURIComponent(or)}`, {
+    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=id&or=${encodeURIComponent(or)}`, {
       method: 'HEAD',
       headers: { ...headers(), Prefer: 'count=exact' },
     });
@@ -549,7 +561,7 @@ export async function fetchMyRank() {
   const mine = getMyProfile();
   if (!LEADERBOARD_ENABLED || !mine || !mine.id) return null;
   try {
-    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
+    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=rank&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
     if (!r.ok) return null;
     const row = (await r.json())[0];
     return row ? Number(row.rank) : null;
@@ -653,7 +665,7 @@ export async function fetchRowAbove(rank) {
   if (!LEADERBOARD_ENABLED) return null;
   const mine = getMyProfile();
   try {
-    const r = await fetch(`${BASE}/rest/v1/leaderboard?select=rank,id,username,level,rebirths&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
+    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=rank,id,username,level,rebirths&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
     if (!r.ok) return null;
     const rows = await r.json();
     return (rows || []).find((x) => !mine || x.id !== mine.id) || null;

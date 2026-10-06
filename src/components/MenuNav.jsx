@@ -17,7 +17,7 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, onStats, ach, navigating }) {
+export function MenuIcons({ board, onStats, ach, achSlot = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
       {board && (
@@ -35,7 +35,7 @@ export function MenuIcons({ board, onStats, ach, navigating }) {
         />
       )}
       <KitIconButton icon="stats" tone="cyan" className="hp-ico homepage-nav-btn is-stats" data-nav="stats" disabled={navigating} onClick={onStats} ariaLabel="Open stats" title="Stats" />
-      <KitIconButton
+      {achSlot || <KitIconButton
         icon="achievements"
         tone="gold"
         className="hp-ico is-ach"
@@ -45,7 +45,7 @@ export function MenuIcons({ board, onStats, ach, navigating }) {
         onClick={ach.onClick}
         ariaLabel={ach.count > 0 ? `Open achievements — ${formatNum(ach.count)} to claim` : 'Open achievements'}
         title="Achievements"
-      />
+      />}
     </div>
   );
 }

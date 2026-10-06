@@ -21,6 +21,11 @@
 import { grantWins } from './wins.js';
 import { storedLevel } from './xp.js';
 import { startBoost } from './boost.js';
+// PROGRESSION v3 (SEASON2, default OFF — Andy phase 3: "no wins for ranking up, and remove ALL menu claim
+// notifications. Every claim lives in ACHIEVEMENTS and pays gems"): with the flag ON nothing enters this inbox —
+// achievement / rank / layer / collection / welcome claims are CUT (v3/achievements.js pays gems for play
+// instead), codes and boosts still apply on the spot, and the inbox reads empty (a season-1 inbox is left in
+// storage untouched). OFF = unchanged.
 
 export const CLAIMS_KEY = 'taw.claims';
 
@@ -174,6 +179,7 @@ function currentLevel() {
 export function claimAmount(c) {
   if (!c) return 0;
   const base = Number.isFinite(c.amount) && c.amount > 0 ? c.amount : 0;
+  // v3: levels reach millions, so a per-level code scales with the REBIRTH multiplier (2^R) instead
   return c.meta && c.meta.perLevel ? base * currentLevel() : base;
 }
 
@@ -264,4 +270,10 @@ export function trimClaimInbox() {
   save(keep);
   emit();
   return { applied, dropped };
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: claimPolicy, b: claimAmount } = o);
 }

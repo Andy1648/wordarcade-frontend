@@ -8,14 +8,17 @@
 // PURE + guarded store, like every other progress module: blocked storage → no boost, never throws.
 
 import { overdriveMult } from './overdrive.js';
+// PROGRESSION v3 (SEASON2, default OFF): the R3 unlock "2nd boost slot" — a boost that starts while one is live
+// runs in its OWN slot (taw.s2.boost2) at the same time instead of extending the first, and the two multiply.
+// MINIMAL MODEL (phase 3): one extra slot; the HUD pill for it is the visual PR's. OFF = one slot, as before.
 
 export const BOOST_KEY = 'taw.boost';
 export const BOOST_DEFAULT_MULT = 3;
 export const BOOST_DEFAULT_MIN = 10;
 
-function read() {
+function read(key = BOOST_KEY) {
   try {
-    const o = JSON.parse(localStorage.getItem(BOOST_KEY) || 'null');
+    const o = JSON.parse(localStorage.getItem(key) || 'null');
     if (!o) return null;
     const until = Number(o.until);
     const mult = Number(o.mult);
@@ -71,4 +74,10 @@ export function startBoost(mult = BOOST_DEFAULT_MULT, minutes = BOOST_DEFAULT_MI
   }
   announceTimers();
   return { mult: next.mult, remaining: until - now };
+}
+
+// v3 (SEASON2): v3/install.js swaps the v3 versions in (v3/hooks.js); never called with the flag OFF.
+export function __v3(o) {
+  // eslint-disable-next-line no-func-assign
+  ({ a: codeBoostMult, b: startBoost } = o);
 }

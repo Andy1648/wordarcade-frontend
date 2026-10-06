@@ -187,3 +187,73 @@ export function decideSubmitRR(old, sub, now) {
   }
   return { action: 'increase', row: write(Math.min(lv, lvCap), rb2, w, l), weekDelta: Math.max(0, w - oW), conv };
 }
+
+// ---- 022 (supabase/migrations/022_season2_board.sql): THE SEASON-2 BOARD WRITE (PROGRESSION v3, econ 13) ----------
+// KEEP IN SYNC WITH private.lb_board_write_s2: same branches, order and constants. lb_submit3 routes p_econ = 13 here
+// (and refuses a season-1 client on a season-2 row). Differences from decideSubmitRR:
+//   * FIRST season-2 write — a new name, or a row whose last write was season 1 (econ ≠ 13): a baseline, but rebirths
+//     ≤ lifetime words / S2_WORDS_PER_RB (an honest FAST player needs ≥ 150 words for R1, ~1,400 for R5) and the
+//     level ≤ S2_LV_GATE_MULT × the gate of those rebirths. No weekly words.
+//   * REBIRTHS never rise on a submit (lb_rebirth season 2 only); STARS are never written here (lb_ascend only).
+//   * LEVEL — v3 levels reach millions (40·√L, cumulative ∝ L^1.5): free up to S2_LV_GATE_MULT × gate(R) (= 8× the
+//     gate's XP, two rebirths of headroom — every rebirth needs ×4 XP), or the stored level + S2_LEVELS_PER_SEC a
+//     second since the last accepted write (banking S2_LEVEL_BANK_SECS) for a player who keeps climbing past the
+//     gate (a 10 h FAST bot sits at ~3.2M levels, ~100 levels/s). Clamped (never rejected) — a clamped row only shows
+//     less than the truth. ≤ S2_LV_MAX (the int column).
+//   * words / letters: rate-checked exactly as 011/013/015 (an increase too fast → rejected); a lower number is a
+//     RESET (017): lands as submitted, anything that went up is bounded.
+export const S2_ECON = 13;
+export const S2_LV_GATE_MULT = 4;
+export const S2_LEVELS_PER_SEC = 500;
+export const S2_LEVEL_BANK_SECS = 1200;
+export const S2_WORDS_PER_RB = 100;
+export const S2_LV_MAX = 2147483647;
+export const S2_GATE_EXP_CAP = 30; // power(2.5, R) is read at R ≤ 30 (2.5^30 × 400 is already far past S2_LV_MAX)
+/** 4 × ⌈100 × 2.5^R⌉, capped at the int column. */
+export function s2LevelRoom(rebirths) {
+  const r = Math.min(S2_GATE_EXP_CAP, int(rebirths, 0, 0));
+  return Math.min(S2_LV_MAX, S2_LV_GATE_MULT * Math.ceil(100 * 2.5 ** r));
+}
+/**
+ * @param {{level:number, rebirths:number, lifetime_words:number, lifetime_letters:number, submitted_at:number|null,
+ *          econ?:number}} old  the stored row (times in ms since epoch)
+ * @param {{level:number, rebirths:number, words:number, letters:number}} sub
+ * @param {number} now
+ * @returns {{action:'first'|'throttled'|'reset'|'increase'|'rejected', row?:object, weekDelta?:number}}
+ *   `row` = level, rebirths, lifetime_words, lifetime_letters, submitted_at, econ (13) — never stars
+ */
+export function decideSubmitS2(old, sub, now) {
+  let lv = int(sub.level, 1, 1);
+  let rb = int(sub.rebirths, 0, 0);
+  let w = int(sub.words, 0, 0);
+  let l = int(sub.letters, 0, 0);
+  const write = (level, rebirths, words, letters) => ({ level, rebirths, lifetime_words: words, lifetime_letters: letters, submitted_at: now, econ: S2_ECON });
+  if (old.submitted_at != null && old.submitted_at >= now - THROTTLE_MS) return { action: 'throttled' };
+  if (old.submitted_at == null || Number(old.econ) !== S2_ECON) {
+    rb = Math.min(rb, Math.floor(w / S2_WORDS_PER_RB));
+    lv = Math.min(lv, s2LevelRoom(rb));
+    return { action: 'first', row: write(lv, rb, w, l), weekDelta: 0 };
+  }
+  const oLv = int(old.level, 1, 1);
+  const oRb = int(old.rebirths, 0, 0);
+  const oW = int(old.lifetime_words, 0, 0);
+  const oL = int(old.lifetime_letters, 0, 0);
+  const secs = Math.max(1, (now - old.submitted_at) / 1000);
+  const maxRise = Math.floor(Math.min(secs, S2_LEVEL_BANK_SECS) * S2_LEVELS_PER_SEC);
+  const isReset = rb < oRb || w < oW || l < oL || (lv < oLv && rb === oRb);
+  if (!isReset) {
+    if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected' };
+    if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected' };
+  }
+  rb = Math.min(rb, oRb); // never raised by a submit
+  const base = isReset ? 1 : oLv;
+  const lvCap = Math.min(S2_LV_MAX, Math.max(s2LevelRoom(rb), base + maxRise));
+  if (isReset) {
+    return {
+      action: 'reset',
+      row: write(Math.min(lv, Math.max(oLv, lvCap)), rb, Math.min(w, oW + Math.floor(WORDS_PER_SEC * secs)), Math.min(l, oL + Math.floor(LETTERS_PER_SEC * secs))),
+      weekDelta: 0,
+    };
+  }
+  return { action: 'increase', row: write(Math.min(lv, lvCap), rb, w, l), weekDelta: Math.max(0, w - oW) };
+}
