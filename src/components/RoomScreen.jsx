@@ -10,7 +10,14 @@ import { resolvePlayerColor } from '../playerColors';
 import { inviteLink } from '../share/links.js';
 import { track } from '../lib/analytics';
 import { DIFFICULTIES, difficultyDesc, difficultyReadout } from '../difficulty';
+import { SEASON2 } from '../progress/season';
 import './RoomScreen.css';
+import './kit/tokens.css';
+import './RoomScreenV2.css';
+
+// P9c/9d (claude/mockups/v2/RoomSettings.dc.html LOBBY): the SEASON2 skin — the code as LETTER TILES, an 8-SEAT grid
+// (empty seats drawn as open slots), a big START. Same handlers, same server messages; live (flag OFF) is untouched.
+const SEATS = 8; // roomManager MAX_PLAYERS_PER_ROOM
 
 // The two playable game modes. `key` is the value the server expects in
 // set_game_type / reports back in room_update's gameType; `label` is the
@@ -187,7 +194,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   }
 
   return (
-    <div className="room-wrap">
+    <div className="room-wrap" data-skin={SEASON2 ? 'v2' : undefined}>
       <div className="room-box" ref={boxRef}>
         {/* THE WAY OUT, IN THE CORNER CLUSTER. It was a full-width LEAVE ROOM button at the
             very bottom of the box, below the start button — the last thing on a screen whose
@@ -222,7 +229,13 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             job — the wrapper carries `translate="no"` (an identifier: never translate it), the
             accessible name, and the beat reaction. */}
         <div className="room-code" translate="no" aria-label={`Room code ${room.code}`}>
-          <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
+          {SEASON2 ? (
+            <span className="room-code-tiles" aria-hidden="true">
+              {String(room.code).split('').map((ch, i) => <span key={i} className="room-code-tile">{ch}</span>)}
+            </span>
+          ) : (
+            <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
+          )}
         </div>
         {/* CLUTTER PASS: no "SHARE THIS CODE" — the COPY INVITE LINK / SHARE buttons under it say it. */}
 
@@ -240,7 +253,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           )}
         </div>
 
-        <div className="room-players-label">PLAYERS ({room.players.length})</div>
+        {SEASON2 && isHost ? <div className="room-you-host">YOU ARE HOST</div> : null}
+        <div className="room-players-label">{SEASON2 ? <>PLAYERS <b>{room.players.length}/{SEATS}</b></> : `PLAYERS (${room.players.length})`}</div>
         <div className="room-players-list">
           {room.players.map((player) => {
             const pc = resolvePlayerColor(playerColors, player.id);
@@ -261,6 +275,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                   <span className="room-player-name" translate="no">{player.name}</span>
                   {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
+                  {SEASON2 && player.id === myId ? <span className="room-you-badge">YOU</span> : null}
                   {player.isBot && (
                     <span className="room-bot-badge">
                       BOT · {botDifficultyLabel(player.botDifficulty)}
@@ -281,6 +296,9 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
               </div>
             );
           })}
+          {SEASON2 ? Array.from({ length: Math.max(0, SEATS - room.players.length) }).map((_, i) => (
+            <div key={`open-${i}`} className="room-player-slot room-seat-open" aria-hidden="true"><span>+</span></div>
+          )) : null}
         </div>
         </div>
 
@@ -418,7 +436,10 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
               ? 'STARTING...'
               : isSoloCategoryBlitz
               ? 'PLAY SOLO'
+              : SEASON2
+              ? 'START'
               : 'START GAME'}
+            {SEASON2 && canStart && !startPending ? <span className="room-start-mode">{gameTypeLabel(room.gameType)}</span> : null}
           </button>
         ) : (
           <div className="room-waiting-msg">WAITING FOR HOST...</div>

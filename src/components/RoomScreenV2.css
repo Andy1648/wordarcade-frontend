@@ -1,0 +1,131 @@
+/* RoomScreenV2.css — the SEASON2 LOBBY skin (claude/mockups/v2/RoomSettings.dc.html). Only under
+   .room-wrap[data-skin="v2"]; the live lobby is untouched. Flat fills, black ink, hard offset shadows; nothing loops. */
+.room-wrap[data-skin="v2"] .room-box {
+  background: #12071f;
+  border: 5px solid #000;
+  border-radius: 0;
+  box-shadow: 8px 8px 0 #000;
+}
+
+/* the code: one yellow LETTER TILE per character */
+.room-wrap[data-skin="v2"] .room-code { display: flex; justify-content: flex-start; }
+.room-code-tiles { display: flex; gap: 10px; }
+.room-code-tile {
+  width: 64px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  background: #FFE94A;
+  border: 4px solid #000;
+  border-bottom: 12px solid #F2A900;
+  box-shadow: 5px 5px 0 #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k44);
+  line-height: 1;
+  color: #000;
+}
+
+.room-you-host {
+  margin: 6px 0 2px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k16);
+  color: #FFC23D;
+}
+.room-wrap[data-skin="v2"] .room-players-label b { color: #FFE94A; font-weight: 400; }
+
+/* the 8-SEAT grid: 4 × 2 cards, open seats dashed */
+.room-wrap[data-skin="v2"] .room-players-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.room-wrap[data-skin="v2"] .room-player-slot { min-width: 0; }
+.room-wrap[data-skin="v2"] .room-player-chip {
+  position: relative;
+  min-height: 64px;
+  height: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 10px 8px 18px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-left: 10px solid var(--pc, #2EFFE0);
+  border-radius: 0;
+  box-shadow: 5px 5px 0 #000;
+}
+.room-wrap[data-skin="v2"] .room-player-chip .player-dot { display: none; }
+.room-wrap[data-skin="v2"] .room-player-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+  color: #fff;
+}
+.room-you-badge {
+  position: absolute;
+  right: -6px;
+  top: -12px;
+  padding: 0 6px;
+  background: #FF3D7F;
+  border: 3px solid #000;
+  transform: rotate(4deg);
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k15); /* the lobby box fit-zooms on a short laptop: 15 × ~0.9 stays ≥ 13 */
+  color: #000;
+}
+.room-seat-open {
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 4px dashed #3a2160;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k28);
+  color: #3a2160;
+}
+
+/* START: big, with the mode under it */
+.room-wrap[data-skin="v2"] .room-start-btn {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #FFE94A;
+  border: 6px solid #000;
+  border-bottom: 14px solid #F2A900;
+  border-radius: 0;
+  box-shadow: 9px 9px 0 #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k44);
+  line-height: 1;
+  color: #000;
+}
+.room-wrap[data-skin="v2"] .room-start-btn:disabled { background: #2a1745; border-bottom-color: #1a0b2e; color: #8a7aa8; font-size: var(--fs-k20); }
+.room-start-mode {
+  padding: 1px 8px;
+  background: #000;
+  font-size: var(--fs-k14);
+  color: #FFE94A;
+}
+
+@media (max-width: 700px) {
+  .room-code-tile { width: 48px; height: 58px; font-size: var(--fs-k32); border-bottom-width: 9px; }
+  .room-wrap[data-skin="v2"] .room-players-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .room-wrap[data-skin="v2"] .room-player-chip,
+  .room-seat-open { min-height: 50px; }
+  .room-wrap[data-skin="v2"] .room-start-btn { min-height: 76px; font-size: var(--fs-k34); }
+}

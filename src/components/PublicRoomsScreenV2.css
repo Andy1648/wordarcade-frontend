@@ -1,0 +1,54 @@
+/* PublicRoomsScreenV2.css — the SEASON2 JOIN ROOM skin (claude/mockups/v2/RoomSettings.dc.html): the code as big
+   LETTER TILES (one per character — the next one lit, typed ones yellow), and a big JOIN with an n/5 counter. Only
+   under .browser-wrap[data-skin="v2"]; the live screen is untouched. */
+.browser-wrap[data-skin="v2"] .browser-box {
+  background: #12071f;
+  border: 5px solid #000;
+  border-radius: 0;
+  box-shadow: 8px 8px 0 #000;
+}
+.browser-wrap[data-skin="v2"] .browser-code-row { flex-direction: column; align-items: stretch; gap: 14px; }
+.browser-wrap[data-skin="v2"] .browser-code-slots { gap: 12px; }
+.browser-wrap[data-skin="v2"] .browser-code-slot {
+  min-height: 84px;
+  max-width: 96px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-bottom: 10px solid #2a1745;
+  border-radius: 0;
+  box-shadow: 5px 5px 0 #000;
+  font-size: var(--fs-k44);
+  color: #000;
+}
+.browser-wrap[data-skin="v2"] .browser-code-slot:not(:empty) { background: #FFE94A; border-bottom-color: #F2A900; }
+.browser-wrap[data-skin="v2"] .browser-code-slot.is-next { border-color: #000; border-bottom-color: #2EFFE0; }
+.browser-wrap[data-skin="v2"] .browser-code-row .browser-code-join-btn {
+  flex: 1 1 auto;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: #FFE94A;
+  border: 6px solid #000;
+  border-bottom: 12px solid #F2A900;
+  border-radius: 0;
+  box-shadow: 8px 8px 0 #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k38);
+  color: #000;
+}
+.browser-code-count {
+  padding: 0 6px;
+  background: #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k16);
+  color: #FF3D7F;
+}
+@media (max-width: 600px) {
+  .browser-wrap[data-skin="v2"] .browser-code-slots { gap: 8px; }
+  .browser-wrap[data-skin="v2"] .browser-code-slot { min-height: 64px; font-size: var(--fs-k32); }
+  .browser-wrap[data-skin="v2"] .browser-code-row .browser-code-join-btn { min-height: 60px; font-size: var(--fs-k28); }
+}

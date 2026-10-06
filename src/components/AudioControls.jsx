@@ -11,13 +11,18 @@
 // Everything is OFF-by-default / persisted, and the AudioContext is only ever created or resumed
 // INSIDE a user gesture (enable*/ensureCtx run from the toggle/slider handlers), so nothing plays
 // before the user asks for it and OFF is genuinely silent.
-import { useId, useState } from 'react';
+import { lazy, Suspense, useId, useState } from 'react';
+import { SEASON2 } from '../progress/season';
 import './AudioControls.css';
 import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../audio/gameSounds';
 import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
 import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
+
+// SEASON 2 (P9d): the popover is the v2 FIVE-ROW SETTINGS (SOUND · MUSIC · REDUCE MOTION · NUMBER STYLE · KEYBOARD
+// SOUNDS). Lazy, and only fetched when a season-2 player opens it, so the live menu's payload is unchanged.
+const SettingsPanel = lazy(() => import('./SettingsPanel.jsx'));
 
 // `variant` — 'fixed' (default) is the app-wide bottom-right corner control; 'inline' drops the
 // fixed positioning so it can sit INSIDE the menu's corner-nav cluster (fix/visual-real item 4),
@@ -79,7 +84,17 @@ export default function AudioControls({
 
   return (
     <div className={`audio-ctrl${variant === 'inline' ? ' audio-ctrl--inline' : ''}`}>
-      {open && (
+      {open && SEASON2 && (
+        <div className="audio-panel audio-panel--v2" role="group" aria-label="Sound settings">
+          <Suspense fallback={null}>
+            <SettingsPanel musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
+          </Suspense>
+          {onToggleSfx && (
+            <Toggle on={!sfxMuted} onClick={onToggleSfx} glyph="💥" label="GAME SFX" />
+          )}
+        </div>
+      )}
+      {open && !SEASON2 && (
         <div className="audio-panel" role="group" aria-label="Sound settings">
           <Toggle on={!musicMuted} onClick={onToggleMusic} glyph="♫" label="MUSIC" />
           {onToggleSfx && (
