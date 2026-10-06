@@ -77,10 +77,8 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
     await expect(page.locator('.menu-xp-pop')).toHaveCount(POP_POOL);
     // Still no box after typing, and the desktop's held slot never shows text.
     await noBox();
-    if (vp.width > 480) {
-      await expect(page.locator('.hp-typed-slot')).toHaveCount(1);
-      await expect(page.locator('.hp-typed-slot')).toHaveText('');
-    }
+    // Andy oct6: the TYPE ANYTHING row is gone ENTIRELY — no held slot either; the cards take the room.
+    await expect(page.locator('.hp-typed-slot')).toHaveCount(0);
     // Typing anywhere still credits XP.
     const xpAfter = await page.evaluate(() => localStorage.getItem('taw.xp'));
     expect(xpAfter).not.toBe(xpBefore);
