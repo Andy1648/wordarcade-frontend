@@ -2,7 +2,8 @@
 // One claimed board player on the season-2 board (boardMock `season2` — 022's REAL write rule + 021's lb_rebirth with
 // the econ-13 guard), on a desktop and a phone:
 //   * TYPES on the menu and LEVELS (40 × √level: LV99 → LV100 in a handful of letters);
-//   * REBIRTHS through the mocked lb_rebirth (season 2, gate LV100) — one request, the ceremony, +7 gems, R1;
+//   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2, gate LV100) — one
+//     request, +7 gems, R1;
 //   * BUYS POWER with wins (100 wins, ×1.8 XP / LETTER);
 //   * sees the v3 RANKS (KEYMASH → TYPO — by rebirths, not by level);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
@@ -71,14 +72,18 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     for (let i = 0; i < 3; i++) await page.keyboard.type('qwertyuiop', { delay: 90 });
     await expect.poll(async () => (await s2(page)).level, { timeout: 15_000 }).toBeGreaterThanOrEqual(100);
 
-    // REBIRTH (season 2) through the mocked lb_rebirth: gate LV100 on the stored row
+    // REBIRTH (season 2) through the mocked lb_rebirth: gate LV100 on the stored row — the v2 REBIRTH screen (P3):
+    // HOLD TO REBIRTH (1 s), one request, R0 → R1 in place
     await navControl(page, 'rebirth').click();
-    await page.locator('.shop-panel').waitFor({ state: 'visible' });
-    await expect(page.locator('.shop-rb-hero-label')).toHaveText('REBIRTH: ×2 XP & WINS');
-    await page.locator('.shop-rebirth').first().click();
-    // the phone panel never settles for Playwright's stability check (its own scroll fit), so press it like a tap
-    await page.locator('.shop-confirm-actions .shop-card-btn.danger').evaluate((b) => b.click());
-    await expect(page.locator('.rbc-card .rbc-kicker')).toHaveText('REBIRTH 1');
+    const rb = page.locator('.rb2');
+    await rb.waitFor({ state: 'visible' });
+    await expect(rb.locator('.rb2-get')).toContainText('×1 → ×2');
+    const holdBtn = await rb.locator('.rb2-hold .kb').boundingBox();
+    await page.mouse.move(holdBtn.x + holdBtn.width / 2, holdBtn.y + holdBtn.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(1150);
+    await page.mouse.up();
+    await expect(rb.locator('[data-testid="rb2-now"]')).toHaveText('R1', { timeout: 15_000 });
     expect(board.calls.rebirth).toBe(1);
     expect(board.calls.submitS2 || 0).toBeGreaterThanOrEqual(1);
     expect(shared.rows[0].econ, 'the row moved onto the season-2 board').toBe(13);
@@ -87,8 +92,8 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect(st.rebirths).toBe('1');
     expect(st.level).toBe(1);
     expect(st.gems, '+7 gems × R1').toBe(7);
-    await page.locator('.rbc-continue').click();
-    await expect(page.locator('.shop-panel')).toHaveCount(0);
+    await rb.locator('.rb2-back').click();
+    await expect(rb).toHaveCount(0);
     await noClaimPopups(page);
     if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveText('TYPO');
 
