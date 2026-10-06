@@ -1,12 +1,13 @@
 // v3/unlocks.js — REBIRTH UNLOCKS (progression-v3.md "Rebirth unlocks — the reason to rebirth besides ×2"), as DATA
-// plus one pure predicate. The REBIRTH screen PR shows them (it reads UNLOCKS and says "SOON" until this lands);
-// the systems below read unlocked() at their own door. LEAF (imports only store.js / season.js).
+// plus one pure predicate (imports store.js / season.js, and stock.js for the STOCK ×2 LUCK). The REBIRTH screen PR shows them (it reads UNLOCKS and says "SOON" until this lands);
+// the systems below read unlocked() at their own door.
 //
 //   R1 ROLL screen · R2 AUTO ROLL · R3 2nd boost slot · R5 2nd MARK slot · R7 LUCK ×1.25 · R10 ASCEND
 //
 // An unlock is KEPT through ascension: once ★ ≥ 1 every unlock stays open (the player reached R10 to get there).
 import { SEASON2 } from '../season.js';
 import { s2Rebirths, getStarsV3 } from './store.js';
+import { stockLuckMult } from './stock.js'; // the SHOP's STOCK ×2 LUCK · 15 MIN (P3)
 
 export const UNLOCKS = [
   { id: 'rollScreen', at: 1, label: 'ROLL SCREEN' },
@@ -49,8 +50,9 @@ export function featureOpen(feature) {
   const s = liveUnlockState();
   return s ? unlocked(feature, s) : true;
 }
-/** The roll-luck multiplier from the R7 unlock: ×1.25 once open (season 2), else ×1. */
+/** The roll-luck multiplier from the R7 unlock: ×1.25 once open (season 2), else ×1 — and × the STOCK's ×2 LUCK. */
 export function unlockLuckMult() {
   const s = liveUnlockState();
-  return s && unlocked('luck', s) ? LUCK_UNLOCK_MULT : 1;
+  // × the STOCK's ×2 LUCK while one runs (season 2; stock.js is a no-op with the flag OFF)
+  return (s && unlocked('luck', s) ? LUCK_UNLOCK_MULT : 1) * (s ? stockLuckMult() : 1);
 }
