@@ -137,3 +137,4 @@ B) NO RESET. Andy cancelled the Season 2 wipe — players keep their progress. C
  - Season2.dc.html welcome becomes an "UPDATE" card shown once: what's new, your converted stars/POWER. No "everyone starts fresh", no gems gift.
 Then continue P9/P10.
 STATUS: #225 (reset) had ALREADY merged (7642fa5) before the cancel — nothing ran (flag OFF, no SQL). feat/season2-convert deletes 023/run-season2.sql/rollback from main and replaces the reset client code with the conversion + UPDATE card. A = fix/menu-typing-pops BUILDING. B = feat/season2-convert BUILDING (sims on CI). #227 main-flakes + #228 XP bar in CI.
+- #227 MAIN FLAKES MERGED (c6572f3) · #228 XP BAR SMOOTH MERGED (fad6f82) — awaiting main E2E green streak.
