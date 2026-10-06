@@ -40,7 +40,7 @@ test('SEASON2: REBIRTH 2^R and ASCEND (1 + ★) are separate chips; BASE × chip
     assert.deepEqual(x.chips.map((c) => c.label), ['POWER', 'REBIRTH', 'MARK', 'BOOST', 'ASCEND']);
     assert.equal(w.chips[0].mult, 2 ** rc, 'REBIRTH is 2^R');
     assert.equal(w.chips[3].mult, 1 + stars, 'ASCEND is 1 + ★');
-    assert.equal(w.base, 15, 'v3 WINS base: 15 a 5-letter word');
+    assert.equal(w.base, V3.econ.WINS_BASE, 'FINAL WINS base: 22 a 5-letter word');
     assert.equal(x.base, V3.econ.XP_BASE, 'v3 XP base (econ.XP_BASE)');
     assert.equal(w.total, perWordRateNow({ mode: 'wordBomb' }).rate);
     assert.equal(x.total, letterXpNow());

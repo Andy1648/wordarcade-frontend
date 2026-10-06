@@ -121,7 +121,7 @@ export function statChain(stack, { v3 = null, stars = 0, markBaseXp: mbx = 0, ta
     if (v3) {
       base = v3.econ.XP_BASE + Math.max(0, Number(mbx) || 0);
       const shop = v3.stock && typeof v3.stock.stockXpMult === 'function' ? pos(v3.stock.stockXpMult()) : 1;
-      if (shop !== 1) chips.push(chip('shop', 'SHOP', shop));
+      if (shop !== 1) chips.push(chip('shop', 'UPGRADES', shop));
     }
   }
   if (v3) chips.push(chip('ascend', 'ASCEND', starM));

@@ -2660,7 +2660,7 @@ function App() {
     );
   } else if (view === 'shop') {
     screen = (
-      <Suspense fallback={<OverlaySkeleton title={shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'SHOP'} />}>
+      <Suspense fallback={<OverlaySkeleton title={shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'UPGRADES'} />}>
         <ShopScreen onBack={goHome} initialView={shopViewRef.current} />
       </Suspense>
     );

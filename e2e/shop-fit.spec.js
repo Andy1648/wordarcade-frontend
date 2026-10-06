@@ -43,7 +43,7 @@ async function measure(page) {
 }
 
 for (const { w, h } of VIEWPORTS) {
-  for (const [view, which] of [['SHOP', 'shop'], ['REBIRTH', 'rebirth']]) {
+  for (const [view, which] of [['UPGRADES', 'shop'], ['REBIRTH', 'rebirth']]) {
     test(`${view} panel fits ${w}x${h}: top>=0 and bottom<=innerHeight`, async ({ page }) => {
       // Every width, phones included: at <=480px SHOP and REBIRTH are the phone menu's nav strip
       // (fix/phone-menu-nav), so the panel is measured there too instead of being skipped.

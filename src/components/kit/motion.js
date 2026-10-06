@@ -106,7 +106,7 @@ export const FX = {
   need: { frames: [{ transform: 'translate(-50%,-12px)', opacity: 0 }, { transform: 'translate(-50%,3px)', opacity: 1, offset: 0.1 }, { transform: 'translate(-50%,0)', opacity: 1, offset: 0.18 }, { transform: 'translate(-50%,0)', opacity: 1, offset: 0.85 }, { transform: 'translate(-50%,0)', opacity: 0 }], opts: { duration: 1500, easing: 'ease-out' } },
   // KitBars
   // the XP bar's level wrap: one white band crosses the track (SWEEP_MS, kit/climb.js) — the node rests offscreen
-  barSweep: { frames: [{ transform: 'translateX(-100%)', opacity: 1 }, { transform: 'translateX(300%)', opacity: 1 }], opts: { duration: 150, easing: 'cubic-bezier(.2,.8,.2,1)' } },
+  barSweep: { frames: [{ transform: 'translateX(-100%)', opacity: 0 }, { transform: 'translateX(60%)', opacity: 0.55, offset: 0.4 }, { transform: 'translateX(300%)', opacity: 0 }], opts: { duration: 280, easing: 'ease-out' } }, // SOFT (Andy oct6: glide to full, soft sweep, continue) — climb.js SWEEP_MS
   barBump: { frames: [{ transform: 'scale(1)' }, { transform: 'scale(1.16) rotate(-3deg)', offset: 0.3 }, { transform: 'scale(1)' }], opts: { duration: 280, easing: E.bounce } },
 };
 

@@ -75,7 +75,7 @@ test('clicking the sticker dismisses it and the shop stays open', async ({ page 
   await expect(page.locator('.sticker')).toHaveCount(0);
   await expect(page.locator('.sticker-backdrop')).toHaveCount(0);
   await expect(page.locator('.shop-panel')).toBeVisible();
-  await expect(page.locator('.shop-title')).toHaveText('SHOP');
+  await expect(page.locator('.shop-title')).toHaveText('UPGRADES'); // SEASON 2 #5: SHOP → UPGRADES
 });
 
 test('the backdrop also dismisses, and the sticker auto-dismisses on its own', async ({ page }) => {

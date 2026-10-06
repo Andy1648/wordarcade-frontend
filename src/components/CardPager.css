@@ -1,5 +1,6 @@
 /* CardPager.css — lazy with CardPager.jsx (only a short-wide desktop fetches it): the paged row's
-   layout (arrows either side of a shrink-wrapped 3-card grid), the arrows and the two-dot indicator.
+   layout (a shrink-wrapped 3-card grid on the centre line), the pager row under it (← • • →): the
+   arrows and the two-dot indicator.
    The off-page HIDE stays in Homepage.css so the menu never paints six cards in a paged row. */
 .homepage-stage[data-paged] .homepage-cards-pagerow {
   display: flex;
@@ -57,11 +58,19 @@
   box-shadow: 2px 2px 0 #000;
 }
 
+.homepage-cards-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 10px;
+  flex: 0 0 auto;
+}
 .homepage-cards-dots {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 10px;
-  margin-top: 8px;
   height: 14px;
   flex: 0 0 auto;
   /* an indicator, not a control: it must never take a tap meant for whatever sits beside it */
