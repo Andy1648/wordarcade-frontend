@@ -11,7 +11,7 @@ import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower
 import { getWins } from '../progress/wins';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, getKeyTier, keyTierCost, keyXpMult, REBIRTH_POWER } from '../progress/xp';
-import { rebirthAdvice, rebirthWithStars, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
+import { rebirthAdvice, headStartLevel, starsState, PERKS, perkCost, buyPerk, layerUnlocked, LAYER_AUTO_AT } from '../progress/stars';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased, rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { formatNum, formatMult, formatMultExact } from '../format';
 
@@ -29,6 +29,8 @@ import RebirthCeremony from './RebirthCeremony';
 import { ownedMarkIds } from '../progress/marks';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { LEADERBOARD_ENABLED } from '../leaderboard/client';
+import { performRebirth } from '../leaderboard/serverRebirth';
+import { rebirthRefusalText } from '../leaderboard/rebirthFlow';
 import { burst } from '../juice';
 import { sndPurchase, sndRebirth } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
@@ -42,7 +44,12 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const view = initialView === 'rebirth' ? 'rebirth' : 'shop'; // fixed per open; the two icons pick it
   // Opened by REBIRTH READY (see the layout effect below): the panel stays hidden under the ceremony.
-  const [autoMode] = useState(() => view === 'rebirth' && peekRebirthNow() && isRebirthReadyNow());
+  const [autoMode, setAutoMode] = useState(() => view === 'rebirth' && peekRebirthNow() && isRebirthReadyNow());
+  // 021: the rebirth is a server action for board players — the buttons stay disabled ("…") until it answers, and a
+  // refusal (gate / pace / offline) shows one numbers-first line instead of a rebirth.
+  const [rbBusy, setRbBusy] = useState(false);
+  const [rbMsg, setRbMsg] = useState(null);
+  const rbBusyRef = useRef(false);
   const wins = useWinsBalance(); // W: the one balance channel
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
@@ -157,13 +164,27 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
   const onEquip = (id) => {
     if (equip(id)) setEquipped(getEquipped());
   };
-  const confirmRebirth = () => {
-    const gained = nextMult;
+  // 021: ONE async action (leaderboard/client.js performRebirth — single-flight; server-checked when the player has a
+  // board row and 021 is live, else today's local rebirth). The v2 kit's HOLD-TO-REBIRTH will call this same path.
+  const confirmRebirth = async () => {
+    if (rbBusyRef.current) return; // a second click while pending does nothing
+    rbBusyRef.current = true;
+    setRbBusy(true);
+    setRbMsg(null);
     const fromLevel = level;
-    const fromKey = getKeyTier(); // read BEFORE the rebirth zeroes it
-    // Zeroes xp (HEAD START may lift the new climb), pays the stars for how far past the gate the
-    // player went, queues the REBIRTH N celebration + any layer-unlock claim (stars.js).
-    const { rc, stars: starsGot } = rebirthWithStars();
+    const fromKey = getKeyTier(); // read BEFORE the rebirth
+    // Zeroes xp, pays the stars for how far past the gate the player went, queues the REBIRTH N celebration + any
+    // layer-unlock claim (stars.js) — only once the server said ok (server mode) or the local gate holds (local).
+    const res = await performRebirth();
+    rbBusyRef.current = false;
+    setRbBusy(false);
+    if (!res.ok) {
+      setRbMsg(rebirthRefusalText(res));
+      setAutoMode(false); // REBIRTH READY one-tap: show the panel with the reason
+      return;
+    }
+    const rc = res.rc;
+    const starsGot = res.stars;
     sndRebirth(); // Job 11: rebirth swell
     { const n = getRebirths(); evRebirth(n); refreshSessionProps({ rebirths: n }); } // analytics
     setConfirming(false);
@@ -179,7 +200,8 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
       { label: 'MARKS', value: formatNum(ownedMarkIds().length) },
       { label: 'WORDS TYPED', value: formatNum(words) },
     ];
-    setCeremony({ rc, mult: gained, stars: starsGot, fromLevel, toLevel: loadProgress().level, fromKey, toKey: getKeyTier(), kept });
+    // the multiplier the rebirth actually reached (server mode lands on the server's count)
+    setCeremony({ rc, mult: rebirthMult(rc), stars: starsGot, fromLevel, toLevel: loadProgress().level, fromKey, toKey: getKeyTier(), kept });
   };
   // REBIRTH READY → ×5 FOREVER (Andy oct3): opened from that button (menu CTA or a round-end card),
   // the rebirth runs straight away — the ONE tap was the confirm — and the ceremony plays. Layout
@@ -348,16 +370,16 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
             {rebirthReady ? (
               confirming ? (
                 <div className="shop-confirm-actions">
-                  <button type="button" className="shop-card-btn danger" onClick={confirmRebirth}>
-                    CONFIRM REBIRTH {rebirths + 1}
+                  <button type="button" className="shop-card-btn danger" onClick={confirmRebirth} disabled={rbBusy} aria-busy={rbBusy}>
+                    {rbBusy ? '…' : `CONFIRM REBIRTH ${rebirths + 1}`}
                   </button>
-                  <button type="button" className="shop-card-btn ghost" onClick={() => setConfirming(false)}>
+                  <button type="button" className="shop-card-btn ghost" onClick={() => setConfirming(false)} disabled={rbBusy}>
                     CANCEL
                   </button>
                 </div>
               ) : (
-                <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)}>
-                  REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {formatNum(advice.stars)} ★
+                <button type="button" className="shop-rebirth" onClick={() => setConfirming(true)} disabled={rbBusy} aria-busy={rbBusy}>
+                  {rbBusy ? '…' : <>REBIRTH {rebirths + 1} — ×{formatMult(nextMult)} + {formatNum(advice.stars)} ★</>}
                 </button>
               )
             ) : (
@@ -365,6 +387,11 @@ export default function ShopScreen({ onBack, initialView = 'shop' }) {
                 {/* H2d: the goal line above already says how many levels to go and LV n / gate. */}
                 REBIRTH AT LV {threshold}
               </button>
+            )}
+            {rbMsg && (
+              <div className="shop-goal shop-rb-msg" role="status">
+                {rbMsg}
+              </div>
             )}
 
             {/* LAYER 1/2 — STAR PERKS and AUTOMATION (stars.js). Hidden until the first rebirth
