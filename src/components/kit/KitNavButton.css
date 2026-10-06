@@ -8,7 +8,7 @@
 .kb-tone-yellow { --kb-face: var(--k-yellow); --kb-lipc: var(--k-yellow-d); --kb-shade: var(--k-yellow-d); --kb-glint: var(--k-white); --kb-ink: var(--k-ink); }
 .kb-tone-cyan   { --kb-face: var(--k-cyan);   --kb-lipc: var(--k-cyan-lip);  --kb-shade: var(--k-cyan-d);   --kb-glint: var(--k-white); --kb-ink: var(--k-ink); }
 .kb-tone-gold   { --kb-face: var(--k-gold);   --kb-lipc: var(--k-gold-lip);  --kb-shade: var(--k-gold-d);   --kb-glint: var(--k-white); --kb-ink: var(--k-ink); }
-.kb-tone-purple { --kb-face: var(--k-purple); --kb-lipc: var(--k-purple-lip); --kb-shade: var(--k-purple-d); --kb-glint: var(--k-lilac); --kb-ink: var(--k-ink); }
+.kb-tone-purple { --kb-face: var(--k-purple); --kb-lipc: var(--k-purple-lip); --kb-shade: var(--k-purple-d); --kb-glint: var(--k-lilac); --kb-ink: var(--k-ink); --kb-val: var(--k-lilac); }
 .kb-tone-lilac  { --kb-face: var(--k-lilac);  --kb-lipc: var(--k-purple-lip); --kb-shade: var(--k-purple);  --kb-glint: var(--k-white); --kb-ink: var(--k-ink); }
 .kb-tone-blue   { --kb-face: var(--k-blue);   --kb-lipc: var(--k-blue-lip);  --kb-shade: var(--k-blue-lip); --kb-glint: var(--k-white); --kb-ink: var(--k-ink); }
 .kb-tone-pink   { --kb-face: var(--k-pink);   --kb-lipc: var(--k-pink-d);    --kb-shade: var(--k-pink-d);   --kb-glint: var(--k-white); --kb-ink: var(--k-ink); }
@@ -152,7 +152,13 @@
   transform: skewX(-14deg);
 }
 .kb-rface .kit-icon { position: relative; }
-.kb-rlabel { position: relative; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); color: var(--k-white); }
+.kb-rtext { position: relative; display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 1; }
+.kb-rlabel { position: relative; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); color: var(--k-white); white-space: nowrap; }
+/* the live value under the label (SEASON 2 #5) — the destination colour, Space Mono, never under 13px */
+.kb-rval { margin-top: 3px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; text-transform: uppercase; font-size: var(--fs-k13); color: var(--kb-val, var(--kb-face)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-rval.is-lock { color: var(--k-gold); }
+.kb-rwrap.is-locked .kb-rlabel { color: var(--k-dim); }
+.kb-rwrap.is-locked .kb--rail { cursor: not-allowed; }
 .kb--rail.is-active .kb-rface { background: var(--kb-face); }
 .kb--rail.is-active .kb-redge { background: var(--kb-shade); }
 .kb--rail.is-active .kb-rlabel { color: var(--k-ink); }

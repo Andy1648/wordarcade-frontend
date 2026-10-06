@@ -63,7 +63,7 @@ export default function ShopScreen(props) {
   }
   if (SEASON2) {
     return (
-      <Suspense fallback={<OverlaySkeleton title="SHOP" />}>
+      <Suspense fallback={<OverlaySkeleton title="UPGRADES" />}>
         <ShopV2 onBack={props.onBack} />
       </Suspense>
     );
@@ -273,10 +273,10 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
 
 
   return (
-    <div className={`shop-overlay${autoMode ? ' is-rr-auto' : ''}`} role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Shop'} tabIndex={-1} ref={overlayRef}>
+    <div className={`shop-overlay${autoMode ? ' is-rr-auto' : ''}`} role="dialog" aria-modal="true" aria-label={view === 'rebirth' ? 'Rebirth' : 'Upgrades'} tabIndex={-1} ref={overlayRef}>
       <div className="shop-panel">
         <div className="shop-header">
-          <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'SHOP'}</h2>
+          <h2 className="shop-title">{view === 'rebirth' ? 'REBIRTH' : 'UPGRADES'}</h2>
           <div className="shop-wins" aria-label={`${formatNum(wins)} wins`}>
             <span className="shop-coin" aria-hidden="true" />
             {formatNum(wins)}

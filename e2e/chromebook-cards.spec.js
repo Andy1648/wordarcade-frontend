@@ -144,3 +144,34 @@ for (const { w, h } of SIZES) {
     expect(await check('keys forward')).toEqual(p2);
   });
 }
+
+// Andy oct6 SEASON 2 #5: "centre game cards exactly at 1366×657, 1280×551, 1920×1080" (they sat shifted RIGHT at
+// 1366×657: the paged row spanned the rail's neighbour column AND the right column). The row of visible cards must
+// sit on the page's centre line — the wordmark's — with the left and right gaps to the viewport equal within 1px, on
+// every page of a paged row.
+const cardGaps = (page) => page.evaluate(() => {
+  const rs = [...document.querySelectorAll('.homepage-cards-grid > .game-card-magnet')]
+    .filter((m) => m.getClientRects().length)
+    .map((m) => m.getBoundingClientRect());
+  const left = Math.min(...rs.map((r) => r.left));
+  const right = innerWidth - Math.max(...rs.map((r) => r.right));
+  return { n: rs.length, left, right };
+});
+for (const { w, h, paged } of [{ w: 1366, h: 657, paged: true }, { w: 1280, h: 551, paged: true }, { w: 1920, h: 1080, paged: false }]) {
+  test(`${w}x${h}: the cards are centred — left gap = right gap (±1px)`, async ({ page }) => {
+    await installBackendMock(page);
+    await boot(page, w, h);
+    const pages = paged ? 2 : 1;
+    for (let p = 0; p < pages; p += 1) {
+      if (p > 0) {
+        await page.locator('.homepage-cards-arrow.is-next').click();
+        await expect.poll(() => pageOf(page)).toBe(String(p));
+        await page.waitForTimeout(450); // the finite flip slide
+      }
+      const g = await cardGaps(page);
+      expect(g.n, `cards on page ${p}`).toBe(paged ? 3 : 6);
+      expect(g.left, `page ${p}: a card is off the left edge`).toBeGreaterThan(0);
+      expect(Math.abs(g.left - g.right), `page ${p}: left gap ${g.left.toFixed(1)} vs right gap ${g.right.toFixed(1)}`).toBeLessThanOrEqual(1);
+    }
+  });
+}

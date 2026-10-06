@@ -4,8 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHoldConfirm, HOLD_MS, HOLD_SHAKE_AT_MS } from './holdConfirm.js';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS, easeOutQuart } from './countTween.js';
-import { planClimb, createClimbPlayer, CLIMB_MAX_MS, GLIDE_MS, glideEase } from './climb.js';
-import { planBar } from '../../lib/barPlan.js';
+import { planClimb, createClimbPlayer, CLIMB_MAX_MS, GLIDE_MS, glideEase, glideMs, hermite } from './climb.js';
 import { createBannerStore, BANNER_MS, BANNER_LEAVE_MS } from './bannerStore.js';
 
 // A tiny deterministic clock: timers + rAF on one virtual timeline.
@@ -147,51 +146,47 @@ test('count: easeOutQuart is 0 → 1 and clamps', () => {
 });
 
 // ---------------------------------------------------------------- the XP climb
-test('climb: every multi-level climb fits in 1 s (barPlan alone overruns at 10+ levels)', () => {
-  assert.ok(planBar({ level: 1, frac: 0.2 }, { level: 11, frac: 0.5 }).totalMs > CLIMB_MAX_MS, 'the raw plan is 1.2 s — the reason this wrapper exists');
+test('climb: a gain of up to one level glides 600 ms; bigger climbs compress and every climb fits in 1 s', () => {
+  assert.equal(GLIDE_MS, 600);
+  assert.equal(glideMs(0.01), 600);
+  assert.equal(glideMs(1), 600);
+  assert.equal(glideMs(2), 800);
   for (const n of [1, 2, 5, 6, 9, 10, 11, 25, 30, 31, 50, 500, 50000]) {
     for (const tf of [0, 0.01, 0.5, 0.99]) {
       const p = planClimb({ level: 7, frac: 0.3 }, { level: 7 + n, frac: tf });
-      assert.ok(p.totalMs <= CLIMB_MAX_MS, `+${n} levels → ${p.totalMs} ms`);
-      const flashes = p.steps.filter((s) => s.kind === 'flash');
-      assert.equal(flashes.reduce((a, s) => a + s.levels, 0), n, 'every level is still crossed');
+      assert.ok(p.ms <= CLIMB_MAX_MS, `+${n} levels → ${p.ms} ms`);
+      assert.equal(p.drop, false);
+      assert.ok(Math.abs(p.levels - (n + tf - 0.3)) < 1e-9, 'the whole distance, in levels');
     }
   }
+  // a same-level gain is ONE fresh ease-out glide of GLIDE_MS
+  assert.deepEqual(planClimb({ level: 3, frac: 0.1 }, { level: 3, frac: 0.12 }), { drop: false, levels: 0.12 - 0.1, ms: GLIDE_MS, s0: 3 });
+  assert.equal(planClimb({ level: 9, frac: 0.1 }, { level: 3, frac: 0.12 }).drop, true);
 });
 
-test('climb: short climbs keep the barPlan flashes untouched; every fill glides GLIDE_MS', () => {
-  const raw = planBar({ level: 3, frac: 0.1 }, { level: 5, frac: 0.4 });
-  const k = planClimb({ level: 3, frac: 0.1 }, { level: 5, frac: 0.4 });
-  assert.equal(GLIDE_MS, 250);
-  assert.equal(k.drop, false);
-  assert.equal(k.steps.length, raw.steps.length);
-  k.steps.forEach((s, i) => {
-    const r = raw.steps[i];
-    if (s.kind === 'flash') assert.deepEqual(s, r);
-    else assert.deepEqual(s, { ...r, ms: GLIDE_MS });
-  });
-  assert.equal(k.totalMs, k.steps.reduce((a, s) => a + s.ms, 0));
-  // a same-level gain is ONE glide of GLIDE_MS
-  const same = planClimb({ level: 3, frac: 0.1 }, { level: 3, frac: 0.12 });
-  assert.deepEqual(same.steps, [{ kind: 'fill', level: 3, fromFrac: 0.1, toFrac: 0.12, ms: GLIDE_MS }]);
-});
-
-test('climb: the glide is cubic-bezier(.2,.8,.2,1) — 0 → 1, monotonic, no overshoot, ease-out', () => {
+test('climb: the glide is ease-out cubic — 0 → 1, monotonic, no overshoot; every retarget slope stays monotone', () => {
   assert.equal(glideEase(0), 0);
   assert.equal(glideEase(1), 1);
   let prev = 0;
   for (let i = 1; i <= 100; i += 1) {
     const v = glideEase(i / 100);
     assert.ok(v >= prev && v <= 1, `ease(${i / 100}) = ${v}`);
+    assert.ok(Math.abs(v - hermite(i / 100, 3)) < 1e-12, 'glideEase is the slope-3 Hermite');
     prev = v;
   }
-  assert.ok(glideEase(0.25) > 0.6, 'front-loaded (ease-out)');
-  // exact points on the curve: at bezier parameter t, x = 3·.2·t(1−t)² + 3·.2·t²(1−t) + t³, y likewise with .8 / 1
-  for (const t of [0.25, 0.5, 0.75]) {
-    const x = 0.6 * t * (1 - t) ** 2 + 0.6 * t * t * (1 - t) + t ** 3;
-    const y = 2.4 * t * (1 - t) ** 2 + 3 * t * t * (1 - t) + t ** 3;
-    assert.ok(Math.abs(glideEase(x) - y) < 1e-4, `ease(${x}) = ${glideEase(x)}, want ${y}`);
+  assert.ok(glideEase(0.25) > 0.5, 'front-loaded (ease-out)');
+  for (const s0 of [0, 0.5, 1, 2, 3]) {
+    let last = 0;
+    for (let i = 1; i <= 200; i += 1) {
+      const v = hermite(i / 200, s0);
+      assert.ok(v >= last - 1e-12 && v <= 1 + 1e-12, `s0 ${s0}: h(${i / 200}) = ${v}`);
+      last = v;
+    }
   }
+  // a fast bar retargeted close by keeps its speed and lands sooner rather than kink or overshoot
+  const p = planClimb({ level: 3, frac: 0.5 }, { level: 3, frac: 0.52 }, { v: 0.001, fresh: false });
+  assert.equal(p.s0, 3);
+  assert.ok(p.ms < GLIDE_MS);
 });
 
 test('climb: a BURST of gains is one continuous glide (retarget mid-tween, never a jump or a restart)', () => {
@@ -209,7 +204,7 @@ test('climb: a BURST of gains is one continuous glide (retarget mid-tween, never
     p.to(lv, Math.round(fr * 1e6) / 1e6);
     c.advance(70);
   }
-  c.advance(600);
+  c.advance(GLIDE_MS + 40);
   assert.ok(done, 'landed');
   assert.equal(done.l, lv);
   assert.equal(done.f, Math.round(fr * 1e6) / 1e6);
@@ -222,6 +217,9 @@ test('climb: a BURST of gains is one continuous glide (retarget mid-tween, never
       assert.ok(b.f >= a.f, `frame ${i}: ${a.f} → ${b.f} went backwards (a restart)`);
       // never a JUMP: one 16 ms frame moves the bar a small step, not to the target
       assert.ok(b.f - a.f < 0.06, `frame ${i}: ${a.f} → ${b.f} jumped`);
+      // never a STEP: a retarget keeps the bar's speed (no per-key speed spike) — frame deltas change smoothly
+      const c0 = frames[i - 2];
+      if (c0 && c0.l === a.l) assert.ok(Math.abs((b.f - a.f) - (a.f - c0.f)) < 0.004, `frame ${i}: speed jumped ${a.f - c0.f} → ${b.f - a.f}`);
     } else {
       wraps += 1;
       assert.equal(b.l, a.l + 1, 'a wrap is one level up');

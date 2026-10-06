@@ -12,8 +12,8 @@ import { MenuIcons, MenuRail, MenuMarkChip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { getWinsLifetime, consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt } from '../progress/xp';
+import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, getKeyTier, keyTierCost } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import RebirthReadyButton from './RebirthReadyButton';
 import BoostPill from '../frenzy/BoostPill';
@@ -42,10 +42,10 @@ const ROLLS = rollsEnabled();
 const MarksIndex = ROLLS
   ? lazyWithReload(() => import('./rollScreen/RollScreen'), 'RollScreen')
   : lazyWithReload(() => import('./MarksIndexLegacy'), 'MarksIndexLegacy');
-import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark } from '../progress/marks';
-import { wornMarkId, markEntry, loadRollState } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
+import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark, MARKS_UNLOCK_LEVEL } from '../progress/marks';
+import { wornMarkId, markEntry, loadRollState, collection, ROLL_MARKS } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
 import { useGems } from './gems/GemChip';
-import { canAffordRoll } from '../progress/gemsCore';
+import { canAffordRoll, ROLL_PRICE_GEMS } from '../progress/gemsCore';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -444,14 +444,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         const scs = getComputedStyle(scroll);
         const gutter = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
         let availW = region.clientWidth - gutter;
-        // PAGED: the two arrows (+ the row's gaps) sit beside the cards, and the dot indicator under
-        // them — both in flow, both paid for here so the 3:4 cards never overlap or clip them.
+        // PAGED: the pager row (← • • →) sits UNDER the cards, in flow — paid for here so the 3:4 cards
+        // never overlap or clip it. The arrows are not beside the cards any more (Andy oct6 SEASON 2 #5:
+        // the cards sit on the page's centre line, under the wordmark — the region is the centre column).
         if (isPagedMenu) {
-          const row = region.querySelector('.homepage-cards-pagerow');
-          const rowGap2 = row ? parseFloat(getComputedStyle(row).columnGap) || 0 : 0;
-          for (const a of region.querySelectorAll('.homepage-cards-arrow')) availW -= a.offsetWidth + rowGap2;
-          const dots = region.querySelector('.homepage-cards-dots');
-          if (dots) regionH -= dots.offsetHeight + (parseFloat(getComputedStyle(dots).marginTop) || 0);
+          const nav = region.querySelector('.homepage-cards-nav');
+          if (nav) regionH -= nav.offsetHeight + (parseFloat(getComputedStyle(nav).marginTop) || 0);
         }
         if (regionH <= 0 || availW <= 0) return null;
         const gcs = getComputedStyle(grid);
@@ -596,17 +594,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // opens/closes (where the starter roll is spent) — never per render: menu typing re-renders this every keystroke.
   const gems = useGems();
   const starterWaiting = useMemo(() => { const st = loadRollState(); return !(st && st.starter); }, [gems, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The INDEX rail's OWNED/TOTAL (SEASON 2 #5): read with the roll store, on the same cheap triggers (a roll only
+  // lands inside the ROLL screen, so MARKS closing re-reads it) — never per keystroke.
+  const indexCount = useMemo(() => { const st = loadRollState(); return st ? collection(st) : { base: 0, total: ROLL_MARKS.length }; }, [gems, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
   const rollDot = canAffordRoll(gems) || starterWaiting;
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
   const [rebirths] = useState(() => getRebirths());
-  // All-time wins earned, snapshotted on mount (it only changes inside a round, which remounts this
-  // screen on return). It drives the first-run gating (hide REBIRTH until it means something).
-  const [winsLifetime] = useState(() => getWinsLifetime());
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
   useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
+  // The UPGRADES rail's live value (SEASON 2 #5): the cheapest POWER (KEY tier) price — the one wins buy in both
+  // seasons (v3 swaps keyTierCostAt). Re-read when the balance moves (a purchase spends it), never per keystroke.
+  const nextPowerCost = useMemo(() => keyTierCost(getKeyTier()), [wins]); // eslint-disable-line react-hooks/exhaustive-deps
   const { progress: xpProgress } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
@@ -874,8 +875,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     } else {
       const stamp = consumePendingWinsStamp();
       if (stamp > 0 && xpFxRef.current) {
-        // The FIRST time a round ever pays out, show the one-time explainer ("WINS BUY UPGRADES
-        // IN THE SHOP") instead of the bare "+N WINS" — a newcomer has no idea what wins are for
+        // The FIRST time a round ever pays out, show the one-time explainer ("SPEND WINS IN
+        // UPGRADES") instead of the bare "+N WINS" — a newcomer has no idea what wins are for
         // (the audit's #1 leak). Every later payout shows the normal stamp.
         if (!hasSeenWinsHint()) {
           markWinsHintSeen();
@@ -1163,22 +1164,27 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     setLockedPreview({ game });
   }
 
-  // REBIRTH is a prestige-RESET mechanic — noise to a level-1 newcomer with nothing to reset (the
-  // audit's #2 leak). It is shown ONLY once it means something: the player can actually rebirth
-  // now, OR has ever earned wins, OR has already rebirthed. ONE gate, read by both menu trees, so
-  // the phone and desktop menus can never disagree about whether REBIRTH exists yet.
   // v3 (SEASON2 only): the ACHIEVEMENTS trophy — installed with the v3 chunk, joins whichever nav cluster renders
   const trophy = V3.Trophy && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
-  const showRebirth = rebirths > 0 || winsLifetime > 0 || xpProgress.level >= rebirthThreshold(rebirths);
+  // Andy oct6 SEASON 2 #5: the four rail buttons show FROM THE START (a gated one is LOCKED with its gate) — REBIRTH
+  // included: at LV1 it says how many levels to go, which is what a newcomer needs to know about it.
+  const rebirthGate = useMemo(() => rebirthThreshold(rebirths), [rebirths]);
   // STEP 21: REBIRTH badges itself the moment it's available — it IS an upgrade, the biggest one.
-  const rebirthReady = xpProgress.level >= rebirthThreshold(rebirths);
+  const rebirthReady = xpProgress.level >= rebirthGate;
 
   // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
   useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal));
 
   // ---- v2 MENU chrome (claude/mockups/v2/Menu.dc.html) — one set of props, both trees -------------
-  const markShown = markUnlocked.length > 0 || marksRevealed();
+  // ROLL + INDEX: the REAL gate per season. Season 1: the MARKS layer reveals at LV10 (or any rebirth / an owned mark).
+  // Season 2 (PROGRESSION FINAL): v3/unlocks 'rollScreen' — open from the start (at 0); a gate above 0 shows "R<n>".
+  const s2Unlocks = SEASON2 && V3.unlocks ? V3.unlocks : null;
+  const rollGateAt = s2Unlocks ? s2Unlocks.unlockAt('rollScreen') : null;
+  const markShown = s2Unlocks
+    ? !(rollGateAt > 0) || s2Unlocks.featureOpen('rollScreen')
+    : markUnlocked.length > 0 || marksRevealed();
+  const rollLock = markShown ? null : s2Unlocks ? `R${rollGateAt}` : `LV${MARKS_UNLOCK_LEVEL}`;
   const openMarks = (view) => {
     if (navigating) return;
     sound.click();
@@ -1187,15 +1193,21 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     setShowMarks(view);
   };
   const hover = () => sfx('hover');
+  // SEASON 2 #5 — every rail button carries a LIVE value, read from state the menu already holds (no per-keystroke
+  // reads: the price follows `wins`, the rolls `gems`, the index the roll store, the rebirth line the LEVEL). REBIRTH reads "IN 21 LV" (fits the phone slab).
+  const rollsAfford = Math.floor((Number(gems) || 0) / (ROLL_PRICE_GEMS > 0 ? ROLL_PRICE_GEMS : 1));
+  const rollValue = rollsAfford > 0 ? `${formatNum(rollsAfford)} ${rollsAfford === 1 ? 'ROLL' : 'ROLLS'}` : starterWaiting ? 'FREE ROLL' : '0 ROLLS';
+  const toRebirth = Math.max(0, rebirthGate - xpProgress.level);
+  const rebirthValue = toRebirth > 0 ? `IN ${formatNum(toRebirth)} LV` : 'READY';
   const railItems = {
-    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover },
-    roll: markShown ? { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover } : null,
-    index: markShown ? { onClick: () => openMarks('index'), dot: marksNew, onHover: hover } : null,
-    rebirth: showRebirth ? { onClick: handleRebirth, dot: rebirthReady, onHover: hover } : null,
+    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: `${formatNum(nextPowerCost)} WINS`, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
+    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: rollValue, valueSays: rollValue.toLowerCase(), locked: rollLock },
+    index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
+    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: rebirthValue, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready' },
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
-  const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} isNew={marksNew} onClick={() => openMarks('roll')} /> : null;
+  const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} /> : null;
   const perLetter = (
     <span className="hp-per">
       +{formatNum(letterXpNow())} XP<span className="hp-per-u"> / LETTER</span>
@@ -1257,7 +1269,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           />
         ) : (
         <>
-        {/* LEFT: the WINS / GEMS pills over the SHOP · ROLL · INDEX · REBIRTH rail. */}
+        {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
         <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} />
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
@@ -1298,11 +1310,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         <div className="homepage-cards-region">
-          {/* CARD PAGES: on a short-wide desktop (PAGED_MENU_QUERY) the row carries an arrow each
-              side and a two-dot indicator under it, all in flow inside the region (no fixed UI).
-              Elsewhere the row is display:contents. */}
+          {/* CARD PAGES: on a short-wide desktop (PAGED_MENU_QUERY) the row is the three cards on the page's
+              centre line, with ONE pager row under them (← • • →), all in flow inside the region (no fixed
+              UI). Elsewhere the row is display:contents. */}
           <div className="homepage-cards-pagerow" ref={cardsRowRef}>
-            {isPagedMenu && pager('prev')}
             <div className="homepage-cards-scroll" data-count={GAMES.length}>
               <div
                 ref={cardsGridRef}
@@ -1325,9 +1336,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                 ))}
               </div>
             </div>
-            {isPagedMenu && pager('next')}
           </div>
-          {isPagedMenu && pager('dots')}
+          {isPagedMenu && (
+            <div className="homepage-cards-nav">
+              {pager('prev')}
+              {pager('dots')}
+              {pager('next')}
+            </div>
+          )}
           {isPagedMenu && pager('ctl')}
         </div>
         </>
