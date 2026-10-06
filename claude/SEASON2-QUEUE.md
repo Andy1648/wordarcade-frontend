@@ -114,3 +114,4 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - P7: BUILDING (feat/v2-popup-purge)
 - #219 SHOP MERGED (c31d447). #215 MENU green (9/9) — merges after #220 (update + green first).
 - #220 ACHIEVEMENTS MERGED (d6b98f5) — P3 COMPLETE (#218 #219 #220). #215 conflict (S2Trophy) resolved, CI re-running → merge when green.
+- #215 MENU MERGED + LIVE (40ac7bf) — P5 DONE. Prod smoke 1366×657 + 390×844: 0 errors, no scroll. Note: live (S1) achievement claim prompt overlaps the bottom of the Word Bomb card at 1366×657 — P7 removes it under SEASON2. TODO: CLAUDE.md CANONICAL MENU TITLE section to update (wordmark now per mockup). #221 updating with main → merge when green.
