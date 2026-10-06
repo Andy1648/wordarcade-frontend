@@ -3,6 +3,14 @@ Source of truth: Andy's goal (oct5 ~19:00) + claude/mockups/v2/progression-v3.md
 Rules: merge each PR when green · never stop to ask except SQL Andy must run · Claude never runs migrations · one heavy local job at a time · e2e + sims on GitHub Actions only · kill preview servers after every run · after a usage limit resume from THIS file · never end a turn while steps remain.
 Every screen: 1280×551, 1366×657, 1920×1080, 390×844 · no text < 13px · no scrollbars · formatNum · transform/opacity only · REDUCE MOTION · before/after shots of each size attached to the PR · screenshot next to its mockup before merging.
 
+## PIPELINE (Andy, oct5 late)
+- While a PR is in CI, start building the next queue item on a fresh branch off main. Up to 2 PRs in CI at once.
+- Merges in order, one at a time: before each merge rebase on main and let CI go green again.
+- Local work: ONE heavy job at a time (CI doesn't count). Two PRs touching the same files (menu/kit): finish the first before starting the second.
+- ORDER (Andy): P2 → P3 → P5 → P6 → P7 → P8 → P4 code (behind the flag) → P9 → P10, after P0.
+  Mapping used here: P2 = PHASE 2 (kit ✓ + screens: menu #215 → roll/index → rebirth → shop → stats/ach/board), P3 = PHASE 3 progression v3 (#214), P4 = PHASE 4 reset (code behind the flag; agent already building it — its MERGE waits for its turn), P5 = PHASE 5 every other screen.
+  P6 / P7 / P8: NOT DEFINED in any queue/notes file this session — skipped until Andy's definitions land (flagged in the report).
+
 ## DONE
 - [x] #206 board rebirth play guard (migration 020 — superseded by 021)
 - [x] #207 REDUCE MOTION toggle · #208 menu stars/chip · #209 roll-v1 visuals
