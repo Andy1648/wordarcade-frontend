@@ -34,9 +34,9 @@
   --fs-hp13: max(14px, calc(15.86 * var(--u)));
   --fs-hp18: max(17px, calc(21.96 * var(--u)));
   --fs-hp24: max(21px, calc(29.28 * var(--u)));
-  --fs-hp30: max(26px, calc(36.6 * var(--u)));
   --fs-hplv: max(40px, calc(70.76 * var(--u)));
   --fs-hpword: max(34px, calc(56.12 * var(--u)));
+  --fs-hp30: max(26px, calc(36.6 * var(--u)));
   --hp-nav-w: max(176px, calc(214 * var(--u)));
   --hp-nav-h: max(44px, calc(54 * var(--u)));
   --hp-nav-ico: max(20px, calc(26 * var(--u)));
@@ -208,7 +208,7 @@ html[data-beat='true'] .homepage-logo {
 .hp-rail .kb-rdot { left: auto; right: -8px; top: -8px; width: var(--hp-dot); height: var(--hp-dot); }
 .hp-rail .kb--rail:disabled { opacity: 0.5; pointer-events: none; }
 
-/* ---- centre: LV + XP bar, the per-letter line + the mark chip, TYPE ANYTHING ---- */
+/* ---- centre: LV + XP bar, the per-letter line + the mark chip ---- */
 .menu-xp-cluster {
   grid-area: xp;
   position: relative;
@@ -287,20 +287,8 @@ html[data-beat='true'] .homepage-logo {
 }
 .hp-chip:active { transform: translate(3px, 3px); }
 
-.hp-typed {
-  height: var(--fs-hp30);
-  font-family: 'Bungee', sans-serif;
-  text-transform: uppercase;
-  font-size: var(--fs-hp30);
-  line-height: 1;
-  letter-spacing: 0.08em;
-  color: #fff;
-  white-space: nowrap;
-  pointer-events: none;
-}
-.hp-typed-hint { color: #5d4a78; }
-.hp-typed.has-text .hp-typed-hint { display: none; }
-.hp-typed-caret { color: #2EFFE0; }
+/* The removed TYPE ANYTHING row's height, held empty so the card fit-math sees the same centre cluster. */
+.hp-typed-slot { height: var(--fs-hp30); pointer-events: none; }
 
 /* ---- the cards: the EXISTING GameCards, sized by the fit-math in Homepage.jsx ---- */
 .homepage-cards-region {

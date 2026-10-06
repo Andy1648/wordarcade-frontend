@@ -8,7 +8,7 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
-import { MenuIcons, MenuRail, MenuMarkChip, MenuTyped, focusNav } from './MenuNav';
+import { MenuIcons, MenuRail, MenuMarkChip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
@@ -1270,7 +1270,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           {LEADERBOARD_ENABLED && <LiveTicker className="homepage-live" />}
         </div>
 
-        {/* CENTRE: LV + the XP bar, the per-letter line + the worn mark, TYPE ANYTHING. */}
+        {/* CENTRE: LV + the XP bar, the per-letter line + the worn mark. No typed-text box (Andy oct6): what you
+            type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
         <div className="menu-xp-cluster">
           {xpBar}
           <div className="hp-perrow">
@@ -1282,7 +1283,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </div>
           {/* REBIRTH READY → ×5 FOREVER (Andy oct3): in flow under the bar it is about (nothing until ready). */}
           <RebirthReadyButton ready={rebirthReady} onGo={handleRebirthNow} className="is-menu" />
-          <MenuTyped blockedRef={pagerBlockedRef} />
+          {/* The old TYPE ANYTHING row's slot, kept EMPTY so the cards keep their size and place (Andy: "nothing
+              else on the menu changes"). Nothing renders in it — typing shows as the MenuXpFx pops. */}
+          <div className="hp-typed-slot" aria-hidden="true" />
         </div>
 
         <div className="homepage-cards-region">
