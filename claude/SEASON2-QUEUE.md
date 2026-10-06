@@ -87,7 +87,7 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
   - [ ] 9d JOIN ROOM / LOBBY / SETTINGS: letter tiles for the code, 8-seat lobby, 5-row settings (REDUCE MOTION, NUMBER STYLE); no JOIN ROOM on the menu.
 
 ## ANDY TODO (SQL)
-- [ ] (at the SEASON2 flip, not before) run supabase/migrations/022_season2_board.sql, then 024_season2_weekly.sql (P8 #224), then claude/run-season2.sql (023, P4), then `notify pgrst`, then say "flip SEASON2"
+- [ ] (at the SEASON2 flip, not before) run 022_season2_board.sql → 024_season2_weekly.sql → 025_season2_convert.sql (claude/run-season2-convert.sql, from feat/season2-convert) → `notify pgrst` → say "flip SEASON2". NO WIPE: run-season2.sql / 023 are CANCELLED (Andy oct6) and are being deleted from main.
 - [x] 021 RUN (Andy, oct5 late: lb_caps rebirth_rpc true, leaderboard has stars) — server rebirth is live
 - [ ] P10 MODE HUDs (mockups committed via #217, merged) — one PR each, real rules/payouts kept (mockup numbers are placeholders, NOT economy; e.g. SAT stays ×3), every win its own line, before/after shots at 1280×551 / 1366×657 / 1920×1080 / 390×844; WS/game-logic changes = Tier 1 → 2-context Playwright play-test before merge:
   - [ ] 10a KitTutorial: section 02 version B (typed letters fill the XP bar's slots, LV 2 at 8 letters) = first-30-seconds hook for new players; section 01 spotlight steps advance by DOING the action (no OK buttons); section 03 PAUSE-TO-LEARN edge card ("NEXT TIME: SING") in every mode where you can lose a word
@@ -125,3 +125,15 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - ANDY (oct6): after P4 (#225) merges, make main E2E reliably green again (red after #215 + #223: websocket-boundary create_room, claims-via-stats:57) BEFORE P9. P9 agent PAUSED (partial work in ../p9a etc.); fixer agent on fix/main-flakes-2.
 - #225 RESET MERGED + LIVE (7642fa5) — P4 code DONE (flag OFF). Prod check: a live econ-12 save (R3, KEY 4, 5,000 wins) survives two loads untouched, no welcome, 0 errors. ANDY: run 022 → 024 → claude/run-season2.sql → notify pgrst → say 'flip SEASON2'. NEXT: main E2E green (fixer agent) → then P9.
 - ANDY (oct6) XP BAR SMOOTH — inserted before P9, after the main-green fix: KitXpBar (menu + everywhere) → 3 layers (dark track, solid yellow fill + one thin top highlight, black ink outline); remove kx-ticks / kx-ticks-low / kx-mid / kx-low / kx-fill-lo / ghost bars; height ~60%; LV left + xp/need right. Motion: scaleX glide 250ms cubic-bezier(.2,.8,.2,1), retarget mid-tween, fast typing = one glide; wrap = glide to 100% → 150ms white sweep → 0 → continue; climbs ≤1s. Kit gallery too. Before/after GIF at 1366×657. Merge when green. — BUILDING (fix/xpbar-smooth)
+
+## ANDY (oct6, later) — BEFORE P9, verbatim:
+A) MENU TYPING: remove the visible typed-text box in the middle of the menu. Typing anywhere still works, but what you type shows with the OLD letter animations from before the v2 menu (find them in git history before #215 and restore them exactly). Nothing else on the menu changes.
+B) NO RESET. Andy cancelled the Season 2 wipe — players keep their progress. Close/park the P4 reset PR (don't merge 023, delete run-season2.sql from the queue, Andy runs no wipe). Replace it with a one-time CONVERSION when SEASON2 flips:
+ - KEEP as-is: username, levels, lifetime words/letters, wins, marks, gems, achievements.
+ - REBIRTHS: keep up to R10; rebirths above 10 convert to ★ stars at a rate the sim picks.
+ - KEY TIER → POWER: convert at a rate the sim picks.
+ - HARD RULE: run the v3 CI sim on a snapshot of the REAL leaderboard rows (incl. R100 imbetterthanandy, R29, R22) after conversion. Nobody may progress faster than 2× the median v3 pace, and nobody may be stuck (every player's next rebirth reachable in under 2h of median play). Pick the conversion rates that pass, and write them + the sim results into the checklist.
+ - Server-side: the conversion is a migration Andy runs (write it, never run it). Idempotent, one-shot, and it only touches rebirths/stars/POWER.
+ - Season2.dc.html welcome becomes an "UPDATE" card shown once: what's new, your converted stars/POWER. No "everyone starts fresh", no gems gift.
+Then continue P9/P10.
+STATUS: #225 (reset) had ALREADY merged (7642fa5) before the cancel — nothing ran (flag OFF, no SQL). feat/season2-convert deletes 023/run-season2.sql/rollback from main and replaces the reset client code with the conversion + UPDATE card. A = fix/menu-typing-pops BUILDING. B = feat/season2-convert BUILDING (sims on CI). #227 main-flakes + #228 XP bar in CI.
