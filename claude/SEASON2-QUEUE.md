@@ -46,9 +46,9 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 ## STATUS BY P
 - P0: DONE — #213 + #216 merged; main E2E green 4× in a row (37406619410, 37408883717, 37410602426, 37411222042) + unit CI green. Causes: FUSE warm-up scan blocking keystrokes (fuse.js set lookup, 2,593 → 230 ms), roll-robust reveal covering ROLL, kit stamp overflow at 390, CRLF in the 021 SQL test, word-landing secret roll, SAT lineup size
 - P2: progression v3 — #214 MERGED + LIVE (c13f436), flag OFF
-- P3: BUILDING (agent; 3 PRs in order: feat/v2-rebirth → feat/v2-shop → feat/v2-achievements)
+- P3: PRs open — #218 REBIRTH (updating with main, merging first), #219 SHOP (green; rebase keeps both ShopScreen SEASON2 wrappers), #220 ACHIEVEMENTS (CI). Flag OFF = live screens untouched. Payload ~962.9K (tight).
 - P4: reset — partial work in ../s2reset (paused); merges in its turn (after P8)
-- P5: #215 open, CI red, fix paused (resumes after P0)
+- P5: #215 fix RESUMED (only heavy local job)
 - P6, P7, P8, P9, P10: queued
 
 ## GOAL (Andy): every item P0–P10 merged on main with CI green — except P4's SQL run and the SEASON2 flip (Andy's).
