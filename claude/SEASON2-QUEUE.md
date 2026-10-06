@@ -48,8 +48,9 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - P2: progression v3 — #214 MERGED + LIVE (c13f436), flag OFF
 - P3: PRs open — #218 REBIRTH (updating with main, merging first), #219 SHOP (green; rebase keeps both ShopScreen SEASON2 wrappers), #220 ACHIEVEMENTS (CI). Flag OFF = live screens untouched. Payload ~962.9K (tight).
 - P4: reset — partial work in ../s2reset (paused); merges in its turn (after P8)
-- P5: #215 fix RESUMED (only heavy local job)
-- P6, P7, P8, P9, P10: queued
+- P5: #215 fixed + pushed (6a83f86; payload 958,114, −4.8 KB vs main), CI running; merges after P3
+- P6: BUILDING (feat/v2-roll-index, only heavy local job)
+- P7, P8, P9, P10: queued
 
 ## GOAL (Andy): every item P0–P10 merged on main with CI green — except P4's SQL run and the SEASON2 flip (Andy's).
 
