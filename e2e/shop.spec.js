@@ -38,7 +38,7 @@ test.describe('shop', () => {
     // The tabs are gone (two icons, two destinations) and the shop view shows no rebirth action.
     await expect(page.locator('.shop-tab')).toHaveCount(0);
     await expect(page.locator('.shop-rebirth')).toHaveCount(0);
-    await expect(page.locator('.shop-title')).toHaveText('SHOP');
+    await expect(page.locator('.shop-title')).toHaveText('UPGRADES'); // SEASON 2 #5: SHOP → UPGRADES
 
     // All catalog cards render; unaffordable ones are visible-but-dimmed (not hidden).
     // 16 cards = 5 POP STYLES + 6 SOUND PACKS (the original 11 cosmetics) + 5 THEMES
@@ -64,13 +64,18 @@ test.describe('shop', () => {
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.equipped')).popStyle)).toBe('chrome');
   });
 
-  test('REBIRTH icon: hidden for a brand-new level-1 player (nothing to reset)', async ({ page }) => {
-    // fix/firstrun #1: a prestige-RESET mechanic is noise to a fresh account. With no wins ever
-    // earned, no rebirths, and level 1, the top-nav REBIRTH icon is not rendered at all.
+  test('REBIRTH: shown from the start — a brand-new level-1 player sees how many levels to go', async ({ page }) => {
+    // Andy oct6 SEASON 2 #5 supersedes fix/firstrun #1 ("hidden for a fresh account"): every rail button shows
+    // from the start, and REBIRTH's value line is the levels to the next rebirth (LV1 → the first gate).
     await installBackendMock(page);
     await page.goto('/?portal=1');
     await page.locator('.menu-xp-bar').waitFor({ state: 'visible' });
-    await expect(page.locator('.homepage-nav-btn.is-rebirth')).toHaveCount(0);
+    const rb = page.locator('.homepage-nav-btn.is-rebirth');
+    await expect(rb).toHaveCount(1);
+    const gate = await page.evaluate(() => window.__tawXp && window.__tawXp().level);
+    expect(gate).toBe(1);
+    await expect(rb.locator('.kb-rval-full')).toHaveText(/^IN \d[\d,.]*[KMB]? LV$/);
+    await expect(rb.locator('.kb-rdot')).toHaveCount(0);
   });
 
   test('REBIRTH icon: reappears once wins are earned; opens the view, disabled at level 1', async ({ page }) => {

@@ -1,6 +1,6 @@
 // e2e/v2-shop.spec.js — THE v2 SHOP (P3; claude/mockups/v2/Shop.dc.html) behind ?season2=1, with the season-2 board
 // mock. Wins buy only POWER (hold to buy, 1 s, one per hold); everything in the STOCK costs GEMS (v3/stock.js):
-//   1. POWER with wins: a tap does nothing, a full hold buys P0 → P1 for 100 wins;
+//   1. POWER with wins: a tap does nothing, a full hold buys P0 → P1 for 300 wins (FINAL 300 × 8^P);
 //   2. a gem item: +25% XP for 45 gems, ×5 → ×4 LEFT, the effect is running;
 //   3. SOLD OUT: ×10 OVERDRIVE ×2 → two buys → the stamp; a third try charges nothing;
 //   4. short on gems / the visual-only FREE EPIC+ ROLL charge nothing;
@@ -57,13 +57,13 @@ async function hold(page, loc, ms) {
 }
 const card = (shop, id) => shop.locator(`.sp2-card:has([data-stock="${id}"])`);
 
-test('POWER is bought with WINS on a 1 s hold — a tap does nothing; 100 wins → POWER 1', async ({ page }) => {
+test('POWER is bought with WINS on a 1 s hold — a tap does nothing; 300 wins → POWER 1', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   const shop = await boot(page);
   const buy = shop.locator('.sp2-buy .kb');
   await expect(shop.locator('[data-testid="sp2-power"]')).toHaveText('0');
   await expect(buy).toContainText('HOLD TO BUY');
-  await expect(buy).toContainText('100');
+  await expect(buy).toContainText('300');
   await hold(page, buy, 300);
   await page.waitForTimeout(200);
   expect((await s2(page)).power, 'a tap buys nothing').toBe(0);
@@ -71,9 +71,9 @@ test('POWER is bought with WINS on a 1 s hold — a tap does nothing; 100 wins �
   await expect(shop.locator('[data-testid="sp2-power"]')).toHaveText('1');
   const st = await s2(page);
   expect(st.power).toBe(1);
-  expect(st.wins).toBe(400);
+  expect(st.wins).toBe(200);
   expect(st.gems, 'POWER never costs gems').toBe(640);
-  // the next tier (480 wins) is out of reach with 400 → locked
+  // the next tier (2,400 wins) is out of reach with 200 → locked
   await expect(buy).toContainText('NEED WINS');
 });
 

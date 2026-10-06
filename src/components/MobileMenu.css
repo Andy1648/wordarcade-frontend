@@ -261,7 +261,8 @@
     flex: 0 0 auto;
     padding-left: 14px;
   }
-  .hp-m-rail .hp-rail-gap { display: none; }
+  /* the four rail slabs always start their own row (all four show from the start — SEASON 2 #5) */
+  .hp-m-rail .hp-rail-gap { display: block; flex: 0 0 100%; height: 0; }
   .hp-m-rail .kp { display: block; flex: 1 1 34%; width: auto; padding: 0; }
   .hp-m-rail .kp-name { display: none; }
   .hp-m-rail .kp-body { width: 100%; height: 36px; }
@@ -277,8 +278,14 @@
   .hp-m-rail .kb-rwrap { flex: 1 1 20%; min-width: 0; }
   .hp-m-rail .kp + .kb-rwrap,
   .hp-m-rail .hp-m-credits + .kb-rwrap { margin-left: -14px; }
-  .hp-m-rail .kb--rail { width: 100%; height: 52px; }
-  .hp-m-rail .kb-rface { flex-direction: column; justify-content: center; gap: 2px; padding: 4px 0 0; }
+  .hp-m-rail .kb--rail { width: 100%; height: 64px; }
+  .hp-m-rail .kb-rface { flex-direction: column; justify-content: center; gap: 2px; padding: 6px 2px 0; }
+  .hp-m-rail .kb-rtext { align-items: center; max-width: 100%; }
+  .hp-m-rail .kb-rlabel { letter-spacing: -0.02em; }
+  .hp-m-rail .kb-rval { margin-top: 1px; max-width: 100%; }
+  /* a phone slab is ~59px wide at 360: the value drops its unit ("55 ROLLS" → "55", "IN 21 LV" → "21 LV") so it never clips */
+  .hp-m-rail .kb-rval-full { display: none; }
+  .hp-m-rail .kb-rval-short { display: inline; }
   .hp-m-rail .kb-redge { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 6px; transform: none; border-right: 0; border-bottom: 3px solid #000; }
   .hp-m-rail .kb-rface .kit-icon { width: 22px; height: 22px; }
   .hp-m-rail .kb-rlabel { font-size: var(--fs-k13); }
@@ -352,6 +359,7 @@
     color: #c9b8e8;
   }
   .hp-m-per .hp-chip {
+    position: relative;
     height: 44px;
     display: flex;
     align-items: stretch;
@@ -368,6 +376,8 @@
   .hp-m-per .hp-chip.is-empty { background: #1a0b2e; }
   .hp-m-per .hp-chip-edge { width: 8px; background: #B04BFF; border-right: 3px solid #000; }
   .hp-m-per .hp-chip.is-new .hp-chip-edge { background: #FF3D7F; }
+  .hp-m-per .hp-chip.is-roll .hp-chip-edge { background: #2EFFE0; }
+  .hp-m-per .hp-chip-dot { top: -7px; right: -7px; width: 16px; height: 16px; }
   .hp-m-per .menu-mark-name { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; }
 
   /* ---- BACKDROP: drop the loose wall ornaments on the HOME view only ----
@@ -424,6 +434,7 @@
   .hp-m-top .hp-icons .kb--icon { width: 44px; height: 50px; }
   .hp-m-top .hp-icons .kb-iface { width: 44px; height: 44px; }
   .hp-m-rail { row-gap: 6px; }
-  .hp-m-rail .kb--rail { height: 48px; }
+  .hp-m-rail .kb--rail { height: 58px; }
+  .hp-m-rail .kb-rface .kit-icon { width: 18px; height: 18px; }
   .hp-m-solo-btn { padding-top: 4px; padding-bottom: 4px; }
 }
