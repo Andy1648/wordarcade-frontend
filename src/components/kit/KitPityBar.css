@@ -1,0 +1,93 @@
+/* KitPityBar.css — v2 pity meter. Segment fills = scaleX transitions. */
+.kpy {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px 10px;
+  min-height: 140px;
+}
+.kpy-count { flex: none; width: 150px; display: flex; flex-direction: column; font-family: var(--k-display); text-transform: uppercase; line-height: 1; }
+.kpy-label { font-size: var(--fs-k20); color: var(--k-purple); -webkit-text-stroke: var(--k-stroke-m) var(--k-ink); paint-order: stroke fill; }
+.kpy-num {
+  display: inline-block;
+  align-self: flex-start;
+  transform-origin: 20% 70%;
+  font-size: var(--fs-k76);
+  color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-xl) var(--k-ink);
+  paint-order: stroke fill;
+  text-shadow: 5px 5px 0 var(--k-ink);
+}
+.kpy.is-near .kpy-num { color: var(--k-lilac); }
+.kpy-done { margin-top: 6px; font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k13); color: var(--k-dim); text-transform: uppercase; }
+.kpy-right { flex: 1 1 360px; min-width: 0; padding-top: 8px; }
+.kpy-segs { display: flex; align-items: center; gap: 7px; }
+.kpy-seg {
+  position: relative;
+  flex: 1 1 24px;
+  max-width: 24px;
+  height: 50px;
+  box-sizing: border-box;
+  background: var(--k-well);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  transform: skewX(var(--k-skew-bar));
+  overflow: hidden;
+}
+.kpy-seg.is-hot { border-color: var(--k-lilac); }
+.kpy-seg-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  background: var(--k-purple);
+  transition: transform 300ms cubic-bezier(.2, 1.5, .4, 1);
+}
+.kpy-seg-hi { position: absolute; left: 0; right: 0; top: 10%; height: 10%; background: var(--k-lilac); }
+.kpy-seg-lo { position: absolute; left: 0; right: 0; bottom: 0; height: 32%; background: var(--k-purple-lip); }
+.kpy-cap { flex: none; margin-left: 8px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; }
+.kpy-cap svg { overflow: visible; filter: drop-shadow(3px 3px 0 var(--k-ink)); }
+.kpy-sub { margin-top: 26px; max-width: 420px; }
+.kpy-sub-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; font-family: var(--k-display); text-transform: uppercase; }
+.kpy-sub-l { font-size: var(--fs-k14); color: var(--k-gold); }
+.kpy-sub-n { font-size: var(--fs-k18); color: var(--k-white); }
+.kpy-sub-r { font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k13); color: var(--k-dim); }
+.kpy-sub-bar {
+  position: relative;
+  height: 18px;
+  box-sizing: border-box;
+  background: var(--k-well);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  transform: skewX(var(--k-skew-bar));
+  overflow: hidden;
+}
+.kpy-sub-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: var(--k-gold); transition: transform 300ms var(--k-e-fill); }
+.kpy-sub-lo { position: absolute; left: 0; right: 0; bottom: 0; height: 40%; background: var(--k-gold-lip); }
+.kpy-sub-ticks { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(0, 0, 0, .45) calc(10% - 2px) 10%); }
+.kpy-hit {
+  position: absolute;
+  inset: -20px;
+  background: rgba(5, 2, 10, .78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.kpy-hit-t {
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k60);
+  color: var(--k-purple);
+  -webkit-text-stroke: var(--k-stroke-xl) var(--k-ink);
+  paint-order: stroke fill;
+  text-shadow: 6px 6px 0 var(--k-ink);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpy-seg-fill,
+  .kpy-sub-fill {
+    transition: none;
+  }
+}

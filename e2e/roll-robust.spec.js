@@ -58,6 +58,22 @@ const reelAnims = (page) => page.evaluate(() => document.getAnimations().filter(
   return el && el.closest && el.closest('.rs-stage') && a.playState === 'running';
 }).length);
 const SPUN = 4600;
+// ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
+// A roll's tier is random, so any test that clicks after a roll taps through whatever reveal is still up (a no-op when
+// the roll landed COMMON/RARE): the reveal must be clear for 3 checks in a row (~450 ms) before the test goes on.
+async function keepReveal(page) {
+  const cut = page.getByTestId('roll-cutscene');
+  let clear = 0;
+  for (let i = 0; i < 40 && clear < 3; i += 1) {
+    const on = (await cut.count()) > 0 && (await cut.evaluate((el) => el.classList.contains('is-on')));
+    if (on) {
+      clear = 0;
+      await cut.click().catch(() => {});
+      await page.waitForTimeout(900); // RollScreen swallows any click for 800 ms after the tap that closed a reveal
+    } else clear += 1;
+    await page.waitForTimeout(150);
+  }
+}
 
 test('1. smooth: a full spin + the LEGENDARY reveal run at 60fps at 4x CPU (transform/opacity only)', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 }); // a school Chromebook
@@ -185,6 +201,7 @@ test('5. hidden tab / leaving mid-roll still lands and saves the result', async 
   expect(after.copies).toBe(before.copies + 1);
   // (b) INDEX mid-spin → the INDEX already shows the mark owned
   await page.waitForTimeout(600);
+  await keepReveal(page); // (a)'s roll may have been an EPIC+ whose reveal waits for a tap
   before = after;
   await page.locator('.rs-roll').click();
   await page.waitForTimeout(300);
@@ -194,6 +211,7 @@ test('5. hidden tab / leaving mid-roll still lands and saves the result', async 
   expect(after.rolls).toBe(before.rolls + 1);
   for (const id of after.owned) await expect(page.locator(`.mx-tile[data-mark="${id}"]`)).not.toHaveClass(/is-locked/);
   await page.locator('.mx-close').click();
+  await keepReveal(page);
   // (c) ✕ mid-spin → back on the menu, the roll saved and (nothing better worn) auto-equipped
   before = await store(page);
   await page.locator('.rs-roll').click();

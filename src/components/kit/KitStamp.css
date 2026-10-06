@@ -1,0 +1,136 @@
+/* KitStamp.css — v2 stamps. The art is static; the slam / spatter / jolt are one-shots. */
+.kstc {
+  position: relative;
+  display: block;
+  width: 172px;
+  height: 152px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+button.kstc { cursor: pointer; }
+button.kstc:focus-visible { outline: var(--k-ink-m) solid var(--k-cyan); outline-offset: 4px; }
+.kstc-card {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  background: var(--kstc-bg, var(--k-panel));
+  border: var(--k-ink-l) solid var(--k-ink);
+  box-shadow: var(--k-sh-l) var(--k-sh-l) 0 var(--k-ink);
+  overflow: hidden;
+}
+.kstc-body { height: 100%; transition: opacity 200ms; }
+.kstc-body.is-dim { opacity: .5; }
+.kstc-anchor { position: absolute; width: 0; height: 0; }
+
+.kst { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.kst-tick { position: absolute; left: 0; top: -3px; width: 0; height: 0; }
+.kst-spat {
+  width: 18px;
+  height: 6px;
+  border: var(--k-ink-xs) solid var(--k-ink);
+  transform-origin: 0 50%;
+  opacity: 0;
+}
+.kst-spat.is-short { width: 14px; }
+.kst-spat--cyan { background: var(--k-cyan); }
+.kst-spat--hot { background: var(--k-hot); }
+.kst-spat--yellow { background: var(--k-yellow); }
+.kst-spat--lilac { background: var(--k-lilac); }
+.kst-center { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); }
+.kst-art { position: relative; font-family: var(--k-display); text-transform: uppercase; white-space: nowrap; }
+.kst-grain { position: absolute; pointer-events: none; }
+
+/* CLAIMED — double frame */
+.kst-cl { padding: 3px; border: var(--k-ink-l) solid var(--k-cyan); }
+.kst-cl-in { padding: 1px 10px; border: var(--k-ink-xs) solid var(--k-cyan); font-size: var(--fs-k20); line-height: 1.15; color: var(--k-cyan); }
+.kst-cl--under { position: absolute; left: 4px; top: 4px; border-color: var(--k-ink); }
+.kst-cl--under .kst-cl-in { border-color: var(--k-ink); color: var(--k-ink); }
+.kst-cl--ghost { position: absolute; left: -3px; top: 2px; opacity: .35; }
+.kst-cl--main { position: relative; }
+.kst-grain--claimed {
+  inset: -6px;
+  background-image:
+    repeating-linear-gradient(104deg, transparent 0 9px, rgba(26, 11, 46, .8) 9px 10px, transparent 10px 23px, rgba(26, 11, 46, .6) 23px 25px),
+    repeating-linear-gradient(17deg, transparent 0 13px, rgba(26, 11, 46, .55) 13px 14px);
+}
+
+/* SOLD OUT — band */
+.kst-sold { width: 210px; }
+.kst-sold-under { position: absolute; left: 4px; top: 4px; right: -4px; height: 44px; background: var(--k-ink); }
+.kst-sold-ghost { position: absolute; left: -3px; top: 2px; right: 3px; height: 44px; background: var(--k-hot); opacity: .35; }
+.kst-sold-band {
+  position: relative;
+  height: 44px;
+  box-sizing: border-box;
+  background: var(--k-hot);
+  border-top: var(--k-ink-m) solid var(--k-ink);
+  border-bottom: var(--k-ink-m) solid var(--k-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-k25);
+  letter-spacing: .06em;
+  color: var(--k-panel-deep);
+}
+.kst-grain--sold {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 44px;
+  background-image:
+    repeating-linear-gradient(98deg, transparent 0 11px, rgba(15, 35, 80, .75) 11px 12px, transparent 12px 27px, rgba(15, 35, 80, .5) 27px 29px),
+    repeating-linear-gradient(12deg, transparent 0 9px, rgba(15, 35, 80, .45) 9px 10px);
+}
+
+/* NEW! — disc */
+.kst-new { width: 74px; height: 74px; }
+.kst-new-under { position: absolute; left: 4px; top: 4px; width: 74px; height: 74px; border-radius: 50%; background: var(--k-ink); }
+.kst-new-ghost { position: absolute; left: -3px; top: 2px; width: 74px; height: 74px; box-sizing: border-box; border-radius: 50%; border: var(--k-ink-l) solid var(--k-yellow); opacity: .4; }
+.kst-new-disc {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--k-yellow);
+  border: var(--k-ink-m) solid var(--k-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kst-new-dash { position: absolute; inset: 5px; border-radius: 50%; border: var(--k-ink-xs) dashed var(--k-ink); }
+.kst-new-t { font-size: var(--fs-k21); color: var(--k-ink); transform: rotate(-8deg); }
+.kst-grain--new {
+  inset: 0;
+  border-radius: 50%;
+  background-image: repeating-linear-gradient(110deg, transparent 0 8px, rgba(74, 10, 34, .55) 8px 9px, transparent 9px 21px, rgba(74, 10, 34, .4) 21px 23px);
+}
+
+/* MAX — skewed plate */
+.kst-max-under { position: absolute; left: 5px; top: 5px; right: -5px; bottom: -5px; background: var(--k-ink); transform: skewX(-14deg); }
+.kst-max-ghost { position: absolute; left: -3px; top: 2px; right: 3px; bottom: -2px; border: var(--k-ink-l) solid var(--k-lilac); opacity: .4; transform: skewX(-14deg); }
+.kst-max-plate {
+  position: relative;
+  padding: 2px 16px 2px 12px;
+  background: var(--k-purple);
+  border: var(--k-ink-l) solid var(--k-ink);
+  transform: skewX(-14deg);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kst-max-plate svg { transform: skewX(14deg); }
+.kst-max-t { transform: skewX(14deg); font-size: var(--fs-k34); line-height: 1.1; color: var(--k-white); -webkit-text-stroke: var(--k-stroke-l) var(--k-ink); paint-order: stroke fill; }
+.kst-grain--max {
+  inset: 0;
+  transform: skewX(-14deg);
+  background-image: repeating-linear-gradient(100deg, transparent 0 10px, rgba(26, 11, 46, .55) 10px 11px, transparent 11px 26px, rgba(26, 11, 46, .4) 26px 28px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kstc-body { transition: none; }
+}

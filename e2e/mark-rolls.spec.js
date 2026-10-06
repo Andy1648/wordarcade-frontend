@@ -49,6 +49,22 @@ const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filte
   return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running';
 }).length);
 const SPUN = 4600; // past the slowest full spin (SECRET 4 s) + its land beat
+// ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
+// A roll's tier is random, so any test that clicks after a roll taps through whatever reveal is still up (a no-op when
+// the roll landed COMMON/RARE): the reveal must be clear for 3 checks in a row (~450 ms) before the test goes on.
+async function keepReveal(page) {
+  const cut = page.getByTestId('roll-cutscene');
+  let clear = 0;
+  for (let i = 0; i < 40 && clear < 3; i += 1) {
+    const on = (await cut.count()) > 0 && (await cut.evaluate((el) => el.classList.contains('is-on')));
+    if (on) {
+      clear = 0;
+      await cut.click().catch(() => {});
+      await page.waitForTimeout(900); // RollScreen swallows any click for 800 ms after the tap that closed a reveal
+    } else clear += 1;
+    await page.waitForTimeout(150);
+  }
+}
 
 test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder, the reel lands on the real result', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -275,6 +291,7 @@ test('coming back from the INDEX never replays the last reveal', async ({ page }
   await page.locator('.rs-roll').click();
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
   await page.waitForTimeout(4200);
+  await keepReveal(page);
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
   await page.locator('.mx-close').click();
@@ -290,6 +307,7 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await openRoll(page);
   await page.locator('.rs-roll').click();
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
+  await keepReveal(page);
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
   // nothing worn → the first mark AUTO-equipped; INDEX v2: the worn card says its stat
@@ -313,6 +331,7 @@ test('ROLL vs INDEX never mix (Andy oct5): INDEX has no REPLAY / roll / pity / g
   const controls = await page.locator('.rs-controls').innerText();
   expect(controls).not.toMatch(/UNTIL|OR BETTER|REVEALS BELOW/);
   const markId = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('taw.markRolls')).marks)[0]);
+  await keepReveal(page);
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
   await expect(page.locator('.mx-overlay .rs-roll, .mx-overlay [data-testid="roll-pity"], .mx-overlay .gem-count')).toHaveCount(0);

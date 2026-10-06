@@ -1,0 +1,74 @@
+/* KitToggle.css — the v2 switch. Knob = transform; labels = opacity; colours swap instantly. */
+.ktg {
+  position: relative;
+  flex: none;
+  width: 150px;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transform: skewX(var(--k-skew-plate));
+  -webkit-tap-highlight-color: transparent;
+}
+.ktg:focus-visible { outline: var(--k-ink-m) solid var(--k-cyan); outline-offset: 4px; }
+.ktg-shadow { position: absolute; left: 6px; right: -6px; top: 6px; bottom: -6px; background: var(--k-ink); }
+.ktg-track {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  background: var(--k-panel-deep);
+  border: var(--k-ink-l) solid var(--k-ink);
+  overflow: hidden;
+}
+.ktg.is-on .ktg-track { background: var(--k-cyan); }
+.ktg-band { position: absolute; left: 0; right: 0; top: 0; height: 6px; background: rgba(0, 0, 0, .35); }
+.ktg-on,
+.ktg-off {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) skewX(10deg);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k18);
+  transition: opacity var(--k-t-color);
+}
+.ktg-on { left: 14px; color: var(--k-ink); opacity: 0; }
+.ktg-off { right: 12px; color: var(--k-mute); opacity: 1; }
+.ktg.is-on .ktg-on { opacity: 1; }
+.ktg.is-on .ktg-off { opacity: 0; }
+.ktg-knob {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: 56px;
+  transform: translateX(0);
+  transition: transform var(--k-t-knob) var(--k-e-pop);
+}
+.ktg.is-on .ktg-knob { transform: translateX(84px); }
+.ktg-knob-face {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  background: var(--k-dim);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--k-t-press);
+}
+.ktg.is-on .ktg-knob-face { background: var(--k-white); }
+.ktg-knob-shade { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: rgba(0, 0, 0, .18); }
+.ktg-knob svg { position: relative; transform: skewX(10deg); }
+.ktg:active .ktg-knob-face { transform: scaleX(1.18); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ktg-on,
+  .ktg-off,
+  .ktg-knob,
+  .ktg-knob-face {
+    transition: none !important;
+  }
+}

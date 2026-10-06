@@ -1,0 +1,118 @@
+/* KitPill.css — v2 currency pill. Every effect is a transform/opacity one-shot (motion.js). */
+.kp-tone-gold { --kp-edge: var(--k-gold); }
+.kp-tone-cyan { --kp-edge: var(--k-cyan); }
+.kp-tone-purple { --kp-edge: var(--k-purple); }
+.kp-tone-yellow { --kp-edge: var(--k-yellow); }
+.kp-tone-pink { --kp-edge: var(--k-pink); }
+
+.kp {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  width: 210px;
+  padding: 26px 0 0 30px;
+}
+.kp-name {
+  position: absolute;
+  left: 70px;
+  top: 0;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+  line-height: 1.2;
+  color: var(--kp-edge);
+}
+.kp-body { position: relative; width: 210px; height: 64px; }
+.kp-box {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  background: var(--k-panel);
+  border: var(--k-ink-l) solid var(--k-ink);
+  border-bottom: 9px solid var(--kp-edge);
+  box-shadow: var(--k-sh-l) var(--k-sh-l) 0 var(--k-ink);
+  overflow: hidden;
+}
+.kp-hi { position: absolute; left: 0; right: 0; top: 0; height: 5px; background: rgba(255, 255, 255, .07); }
+.kp-lo { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--k-ink); opacity: .45; }
+.kp-sheen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20%;
+  background: rgba(255, 255, 255, .32);
+  transform: translateX(-140%) skewX(-22deg);
+}
+.kp-flash { position: absolute; inset: 0; background: var(--k-hot); opacity: 0; }
+.kp-numwrap { position: absolute; right: 16px; top: 0; bottom: 0; display: flex; align-items: center; }
+.kp-num {
+  display: inline-block;
+  transform-origin: 100% 60%;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k31);
+  line-height: 1;
+  color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+.kp-num.is-counting { color: var(--k-yellow); }
+.kp-num.is-deny { color: var(--k-hot); }
+.kp-icon { position: absolute; left: -30px; top: -7px; width: 70px; height: 70px; }
+.kp-sq { width: 70px; height: 70px; transform-origin: 50% 85%; }
+.kp-dip { width: 70px; height: 70px; transform-origin: 50% 90%; display: flex; align-items: center; justify-content: center; }
+
+.kp-pop {
+  position: absolute;
+  left: 160px;
+  top: -26px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 0);
+}
+.kp-pop.is-down { top: 96px; }
+.kp-pop-t {
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k28);
+  line-height: 1;
+  color: var(--kp-edge);
+  -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
+  paint-order: stroke fill;
+}
+.kp-pop.is-down .kp-pop-t { color: var(--k-hot); }
+.kp-pop-n {
+  padding: 0 5px;
+  background: var(--k-white);
+  border: var(--k-ink-s) solid var(--k-ink);
+  transform: rotate(8deg);
+  font-family: var(--k-display);
+  font-size: var(--fs-k14);
+  color: var(--k-ink);
+}
+.kp-pop-n[hidden] { display: none; }
+.kp-need {
+  position: absolute;
+  left: 135px;
+  top: 102px;
+  z-index: 5;
+  padding: 2px 10px;
+  background: var(--k-hot);
+  border: var(--k-ink-m) solid var(--k-ink);
+  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
+  white-space: nowrap;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k15);
+  color: var(--k-ink);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 0);
+}
