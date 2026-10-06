@@ -10,7 +10,7 @@ Every screen: 1280×551, 1366×657, 1920×1080, 390×844 · no text < 13px · no
 - Merges in order, one at a time: before each merge rebase on main and let CI go green again.
 - Local work: ONE heavy job at a time (CI doesn't count). Two PRs touching the same files (menu/kit): finish the first before starting the second.
 - ORDER (Andy): P2 → P3 → P5 → P6 → P7 → P8 → P4 code (behind the flag) → P9 → P10, after P0.
-  Mapping used here: P2 = PHASE 2 (kit ✓ + screens: menu #215 → roll/index → rebirth → shop → stats/ach/board), P3 = PHASE 3 progression v3 (#214), P4 = PHASE 4 reset (code behind the flag; agent already building it — its MERGE waits for its turn), P5 = PHASE 5 every other screen.
+  ANDY'S MAPPING (correction): P2 = progression v3 (#214) · P4 = the reset (code behind the flag) · P5 = the menu (#215) and the screen rebuilds. P3 / P6 / P7 / P8 = not defined in any file this session — asked Andy; until then P3 = next after P2 is taken as the remaining phase-2 screens? NO — held: next build after P0 is #215's fix (P5).
   P6 / P7 / P8: NOT DEFINED in any queue/notes file this session — skipped until Andy's definitions land (flagged in the report).
 
 ## DONE
