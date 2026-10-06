@@ -100,7 +100,7 @@ test('no hidden wins: every credit is on screen, over a 20-word run', async ({ p
   // itself; it is the number Andy reads. Parsed from the rendered DOM rather than from state, so
   // this measures what a player can actually see.
   const shown = await page.evaluate(() => {
-    const num = document.querySelector('.wins-earned-num');
+    const num = document.querySelector('[data-wins-total]'); // the results card's WINS EARNED (P9b) / the solo cards' total
     return {
       total: num ? Number(num.getAttribute('data-wins-total')) : null, // exact (the text abbreviates past 9,999)
       lines: [...document.querySelectorAll('[data-wins-line]')].map((n) => ({
