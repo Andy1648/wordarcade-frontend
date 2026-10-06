@@ -348,8 +348,6 @@ test('ROLL vs INDEX never mix (Andy oct5): INDEX has no REPLAY / roll / pity / g
 // SEASON 2 (P6, ?season2=1 — progression-v3.md "75 gems a roll"): the same ROLL screen at the v3 price. The season keeps
 // its own gems (taw.s2.gems); the live save's taw.gems is never read or charged. AUTO ROLL is the R1 unlock (FINAL).
 const S2_GEMS = (bal) => JSON.stringify({ v: 1, bal, peak: 12, streak: 0, mig: 1 });
-// this browser converted its season-1 save at an earlier boot (v3/convertLocal.js) — the season-2 wallet below stands
-const S2_CONVERTED = JSON.stringify({ v: 1, st: 'shown', had: true, srv: 1 });
 const S2_STARTED = JSON.stringify({ v: 2, rolls: 3, sinceEpic: 3, sinceLegendary: 3, everEpic: true, starter: true, marks: {}, milestones: [], skipBelow: 'secret' });
 const s2Store = (page) => page.evaluate(() => ({
   s2: JSON.parse(localStorage['taw.s2.gems'] || '{}').bal,
@@ -359,7 +357,7 @@ const s2Store = (page) => page.evaluate(() => ({
 
 test('SEASON2: a roll costs 75 gems — charged once from the season-2 wallet, the live wallet untouched', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.conv': S2_CONVERTED, 'taw.s2.gems': S2_GEMS(100), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
+  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(100), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
   await openRoll(page, '&season2=1');
   const roll = page.locator('.rs-roll');
   await expect(roll).toHaveText(/^ROLL\s*75$/);
@@ -382,7 +380,7 @@ test('SEASON2: a roll costs 75 gems — charged once from the season-2 wallet, t
 
 test('SEASON2: AUTO ROLL is locked before R1: a tap rolls nothing and charges nothing', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.conv': S2_CONVERTED, 'taw.s2.gems': S2_GEMS(150), 'taw.s2.rebirths': '0', 'taw.markRolls': S2_STARTED });
+  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(150), 'taw.s2.rebirths': '0', 'taw.markRolls': S2_STARTED });
   await openRoll(page, '&season2=1');
   const auto = page.getByTestId('roll-auto');
   await expect(auto).toHaveText('AUTO · R1');
@@ -397,7 +395,7 @@ test('SEASON2: AUTO ROLL is locked before R1: a tap rolls nothing and charges no
 
 test('SEASON2 at R1+: AUTO ROLL spends 75 a roll and stops when the season-2 gems run out', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.conv': S2_CONVERTED, 'taw.s2.gems': S2_GEMS(160), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
+  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(160), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
   await openRoll(page, '&season2=1');
   const auto = page.getByTestId('roll-auto');
   await expect(auto).toHaveText('AUTO: OFF');
