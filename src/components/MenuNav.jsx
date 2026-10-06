@@ -6,7 +6,6 @@
 // Kit components only, imported file by file (the kit barrel would drag every kit stylesheet into the
 // homepage chunk). Each control is a real <button> (≥ 44px) carrying data-nav="<id>" — the one hook
 // focus-restore and the e2e specs use, at either width (React 18: the kit buttons take no ref).
-import { useEffect, useRef } from 'react';
 import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
@@ -107,40 +106,5 @@ export function MenuMarkChip({ mark, isNew, onClick }) {
       <span className="hp-chip-edge" aria-hidden="true" />
       <span className="menu-mark-name">{name}</span>
     </button>
-  );
-}
-
-/**
- * The mockup's TYPE ANYTHING line: echoes what you type on the menu (it earns XP — useXpCapture).
- * One keydown listener, one text write per key, no layout reads; the caret is static (the mockup's
- * blink would be an infinite animation — CLAUDE.md ANIMATION BUDGET). `blockedRef.current` true
- * (a dialog / overlay is open) ignores keys, like the XP capture.
- */
-export function MenuTyped({ blockedRef }) {
-  const rootRef = useRef(null);
-  const textRef = useRef(null);
-  useEffect(() => {
-    let s = '';
-    const onKey = (e) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || (blockedRef && blockedRef.current)) return;
-      const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      const k = e.key;
-      if (k && k.length === 1 && /[a-z]/i.test(k)) s = s.length >= 16 ? k : s + k;
-      else if (k === 'Backspace') s = s.slice(0, -1);
-      else if (k === ' ' || k === 'Enter') s = '';
-      else return;
-      if (textRef.current) textRef.current.textContent = s;
-      if (rootRef.current) rootRef.current.classList.toggle('has-text', s.length > 0);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [blockedRef]);
-  return (
-    <div ref={rootRef} className="hp-typed" aria-hidden="true">
-      <span className="hp-typed-hint">TYPE ANYTHING</span>
-      <span ref={textRef} className="hp-typed-text" />
-      <span className="hp-typed-caret">_</span>
-    </div>
   );
 }
