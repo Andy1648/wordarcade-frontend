@@ -108,8 +108,9 @@ test('phone: the hero is a one-line strip and the pin never covers a row', async
     const pb = await pin.boundingBox();
     const body = await page.locator('.lb-body').boundingBox();
     // the pin sits under the scroll box; CI measures a stable ~2px flex overlap into the box's 18px bottom
-    // padding (688.55 vs 690.57), which covers no row — allow 3px
-    expect(pb.y).toBeGreaterThanOrEqual(body.y + body.height - 3);
+    // padding (688.55 vs 690.57), which covers no row — allow 3px. Compared in WHOLE device pixels: layout lands on
+    // sub-pixel boundaries (686.40 vs 686.49 failed once on CI), and 0.1px of overlap covers nothing either.
+    expect(Math.round(pb.y)).toBeGreaterThanOrEqual(Math.round(body.y + body.height - 3));
     await pin.click();
     await expect(page.locator('.lb-row.is-me')).toBeInViewport();
     await expect(pin).toHaveCount(0);
