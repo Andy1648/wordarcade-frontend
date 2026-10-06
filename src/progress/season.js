@@ -21,8 +21,14 @@
 
 // The flag, read once (node: no import.meta.env → reads location.search, which the sim / tests set; none → throws → OFF). The server
 // hook (SERVER_FLAG_LIVE, false in phase 3) would add `|| localStorage.getItem(SERVER_FLAG_KEY) === '1'` here.
+// THE FLIP (phase 4): Andy runs claude/run-season2.sql (023), then says "flip SEASON2" — and only then this ONE line
+// becomes `true`. Every visitor is then season 2 (the reset's welcome + wipe run once lb_caps says season2_reset).
+// KEEP false until that word. (?season2=1 / VITE_SEASON2=1 still turn it on for testing.)
+export const SEASON2_LIVE = false;
+
 /** THE FLAG — fixed for the page load. */
 export const SEASON2 = (() => {
+  if (SEASON2_LIVE) return true;
   try {
     return /season2=1/.test(location.search) || import.meta.env.VITE_SEASON2 === '1';
   } catch {

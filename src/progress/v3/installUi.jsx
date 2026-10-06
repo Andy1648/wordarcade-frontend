@@ -6,3 +6,8 @@ import './install.js';
 import S2Trophy from '../../components/S2Trophy.jsx';
 
 V3.Trophy = S2Trophy;
+
+// PHASE 4 — THE SEASON 2 RESET (023_season2_reset.sql): the boot check (wipe a pre-season-2 save once the server reset
+// ran, then the SEASON 2 welcome once). Its own lazy chunk; started here WITHOUT blocking the first render — V3.boot is
+// the promise client.js submitStats waits on.
+V3.boot = import('./season2Boot.js').then((m) => m.bootSeason2()).catch(() => true);

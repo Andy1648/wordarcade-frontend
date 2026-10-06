@@ -5,6 +5,7 @@
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 import { decideSubmit, decideSubmitS2 } from '../../src/leaderboard/submitRules.js';
 import { decideRebirth, decideAscend } from '../../src/leaderboard/rebirthRules.js';
+import { decideSeason2Claim, peekSeason2Grant } from '../../src/leaderboard/season2Rules.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
 // carries letters; the board ranks by REBIRTHS, then LEVEL, then words (017, Andy oct3 19:55). Without it the mock is the v1 DB (lb_caps 404s).
@@ -23,7 +24,9 @@ import { decideRebirth, decideAscend } from '../../src/leaderboard/rebirthRules.
 // `season2` emulates 022_season2_board.sql (PROGRESSION v3): lb_caps.season2 + econ2 13, lb_submit3 with p_econ 13 runs
 // the REAL season-2 write (submitRules.decideSubmitS2), lb_rebirth / lb_ascend see the row's econ (the econ-13 guard),
 // and public.leaderboard_s2 ranks ★ → rebirths → level.
-export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true, rules = false, econ = false, boardEcon = false, rebirth = null, season2 = false } = {}) {
+// `season2Reset` emulates 023_season2_reset.sql (THE RESET): lb_caps.season2_reset + lb_season2_grant / lb_season2_claim
+// running the REAL rule (season2Rules.js) on db.grants (profile id → { gems, rebirths, claimed_at, claim_request }).
+export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true, rules = false, econ = false, boardEcon = false, rebirth = null, season2 = false, season2Reset = false } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
   const rows = db.rows;
@@ -49,7 +52,7 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
     try { body = req.postDataJSON(); } catch { body = null; }
     if (url.pathname.endsWith('/rpc/lb_caps')) {
       return caps
-        ? json(200, { letters: true, cjk: true, cloud: true, ...(weekly ? { weekly: true } : {}), ...(econ ? { econ: 10 } : {}), ...(boardEcon ? { board_econ: true } : {}), ...(rebirth ? { rebirth_rpc: true } : {}), ...(season2 ? { season2: true, econ2: 13 } : {}) })
+        ? json(200, { letters: true, cjk: true, cloud: true, ...(weekly ? { weekly: true } : {}), ...(econ ? { econ: 10 } : {}), ...(boardEcon ? { board_econ: true } : {}), ...(rebirth ? { rebirth_rpc: true } : {}), ...(season2 ? { season2: true, econ2: 13 } : {}), ...(season2Reset ? { season2_reset: true } : {}) })
         : json(404, { message: 'Could not find the function public.lb_caps' });
     }
     if (caps && (url.pathname.endsWith('/rpc/lb_save') || (econ && url.pathname.endsWith('/rpc/lb_save2')))) {
@@ -121,6 +124,18 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       Object.assign(row, { level: out.row.level, rebirths: out.row.rebirths, stars: out.row.stars || 0 });
       if (out.entry) log.push(out.entry);
       db.rebirthLogs.set(pid, log);
+      return json(200, out.result);
+    }
+    // 023: the season-2 gift — peek + the one-shot claim (the real rule)
+    if (caps && (url.pathname.endsWith('/rpc/lb_season2_grant') || url.pathname.endsWith('/rpc/lb_season2_claim'))) {
+      if (!season2Reset) return json(404, { code: 'PGRST202', message: 'Could not find the function' });
+      const pid = secrets.get(body.p_secret);
+      if (!pid) return json(400, { message: 'no_profile' });
+      if (!db.grants) db.grants = new Map();
+      if (url.pathname.endsWith('/rpc/lb_season2_grant')) return json(200, peekSeason2Grant(db.grants.get(pid) || null));
+      calls.season2Claim = (calls.season2Claim || 0) + 1;
+      const out = decideSeason2Claim(db.grants.get(pid) || null, body.p_request_id);
+      if (out.grant) db.grants.set(pid, out.grant);
       return json(200, out.result);
     }
     // 022: the season-2 board write (p_econ 13) — the real rule (submitRules.decideSubmitS2)
