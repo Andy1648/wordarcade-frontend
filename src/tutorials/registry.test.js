@@ -28,7 +28,7 @@ test('every tutorial is ONE spotlight: a target to light + one short line, no st
     assert.equal(t.line, t.line.toUpperCase());
     assert.equal(t.steps, undefined, `${t.id}: no multi-step card`);
   }
-  assert.match(TUTORIALS.find((t) => t.id === 'keyTier').line, /KEY TIER/);
+  assert.match(TUTORIALS.find((t) => t.id === 'keyTier').line, /POWER/);
   assert.doesNotMatch(TUTORIALS.map((t) => t.line).join(" "), /KEY POWER/);
 });
 

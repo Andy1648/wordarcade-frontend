@@ -63,7 +63,7 @@ function measure(page) {
       vScroll: de.scrollHeight > vh + 1 || document.body.scrollHeight > vh + 1,
       hScroll: de.scrollWidth > vw + 1,
       rowsInView: ids.map((id) => inView(document.querySelector(`.hp-m-row--${id}`))),
-      footInView: inView(document.querySelector('.hp-m-foot')),
+      footInView: inView(document.querySelector('.hp-m-rail')), // v2 menu: the rail (pills + CREDITS + nav) is the foot
       small,
       targets,
     };

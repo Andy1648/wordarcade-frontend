@@ -47,6 +47,7 @@ import {
 } from './reelPlan.js';
 import './RollScreen.css';
 import { useReduceMotion } from '../../lib/useReduceMotion';
+import { SEASON2, V3 } from '../../progress/season';
 
 registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
 
@@ -99,7 +100,8 @@ function ResultLine({ result, view, pop = true }) {
   );
 }
 
-export default function RollScreen({ unlockedIds = [], equippedId = null, achievementNames = {}, level = 1, earned = [], onEquip, onClose }) {
+// startIndex: opened from the menu's INDEX rail button — the INDEX shows at once and its ✕ closes the whole overlay.
+export default function RollScreen({ unlockedIds = [], equippedId = null, achievementNames = {}, level = 1, earned = [], onEquip, onClose, startIndex = false }) {
   const [landed, setLanded] = useState(0);
   const idsRef = useRef(unlockedIds);
   idsRef.current = unlockedIds;
@@ -118,7 +120,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const [need, setNeed] = useState(0); // short balance: the gems missing — a number + gem, never a sentence
   const [skipBelow, setSkip] = useState(() => getSkipBelow());
   const [target, setTarget] = useState(null); // the AUTO target (null = OFF) — the one button cycles it
-  const [showIndex, setShowIndex] = useState(false);
+  const [showIndex, setShowIndex] = useState(!!startIndex);
   const [fresh, setFresh] = useState(false); // the result line pops only for a roll that just landed
   const [coverHost, setCoverHost] = useState(null);
   const [tut, setTut] = useState(() => !hasSeenTutorial('markRolls'));
@@ -225,7 +227,11 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
   // AUTO (mockup): one button cycles OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF. From OFF it starts rolling; while on, a
   // tap only moves the target (the spin in flight is judged against the new one when it lands).
+  // v3 (SEASON2): AUTO ROLL is the R2 unlock (progression-v3.md; markRollShop.autoRoll gates the same door). Flag OFF:
+  // always open, as today.
+  const autoOpen = !SEASON2 || !V3.unlocks || V3.unlocks.featureOpen('autoRoll');
   const pressAuto = () => {
+    if (!autoOpen) { sndWordRejected(); return; }
     const next = nextAutoTarget(target);
     if (!next) { stopAuto(); return; }
     setTarget(next);
@@ -314,7 +320,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           achievementNames={achievementNames}
           earned={earned}
           onEquip={onEquip}
-          onClose={() => { setShowIndex(false); setLanded((n) => n + 1); }}
+          onClose={() => { if (startIndex) { onClose(); return; } setShowIndex(false); setLanded((n) => n + 1); }}
         />
       </Suspense>
     );
@@ -376,16 +382,17 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
         <div className="rs-opts">
           <button
             type="button"
-            className={`rs-auto-btn${target ? ` is-on is-${target}` : ''}`}
+            className={`rs-auto-btn${target ? ` is-on is-${target}` : ''}${autoOpen ? '' : ' is-locked'}`}
             aria-pressed={target != null}
-            aria-label={target ? `Auto roll until ${tierName(target)} or better — tap to change` : 'Auto roll off — tap to set a target'}
+            aria-disabled={autoOpen ? undefined : 'true'}
+            aria-label={!autoOpen ? 'Auto roll unlocks at rebirth 2' : target ? `Auto roll until ${tierName(target)} or better — tap to change` : 'Auto roll off — tap to set a target'}
             onClick={pressAuto}
             data-testid="roll-auto"
             data-target={target || 'off'}
           >
-            {target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
+            {!autoOpen ? 'AUTO · R2' : target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
           </button>
-          <div className="rs-auto-cap" aria-hidden="true">TAP TO SET TARGET</div>
+          <div className="rs-auto-cap" aria-hidden="true">{autoOpen ? 'TAP TO SET TARGET' : 'UNLOCKS AT REBIRTH 2'}</div>
           <label className="rs-pick rs-skip">
             <span aria-hidden="true">SKIP</span>
             <select

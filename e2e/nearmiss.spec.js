@@ -65,7 +65,7 @@ test('?nearmiss=1: the CHAIN death card shows one near-miss line, and tapping it
   const line = page.locator('.solo-over .nm-line');
   await expect(line).toHaveCount(1);
   await expect(line).toBeVisible();
-  await expect(line).toHaveText(/^(\d[\d,.]*[A-Z]* LETTERS? TO LV \d[\d,.]*[A-Z]*|KEY TIER \d+ IN \d[\d,.]*[A-Z]* WORDS?|\d+ LV TO #\d+)$/);
+  await expect(line).toHaveText(/^(\d[\d,.]*[A-Z]* LETTERS? TO LV \d[\d,.]*[A-Z]*|POWER \d+ IN \d[\d,.]*[A-Z]* WORDS?|\d+ LV TO #\d+)$/);
   // a real tap target, never tiny text
   const box = await line.boundingBox();
   expect(box.height).toBeGreaterThanOrEqual(44);

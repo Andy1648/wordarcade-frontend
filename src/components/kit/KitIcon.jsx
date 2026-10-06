@@ -5,7 +5,7 @@
 // Sizes follow the sheet: the hard DROP is 4px at ≥72, 3px at ≥36, 2px below; the EXTRAS (sparkles,
 // speed lines — class "x" in the data) drop out under 32px ("AT 24PX THE EXTRAS DROP OUT"). Pass
 // `title` to make it an image with a name; without it the icon is decorative (aria-hidden).
-import { KIT_ICONS } from './kitIconData.js';
+import { KIT_ICONS } from './kitIconsCore.js'; // the full set once kitIconData.js is imported (kit barrel)
 import './tokens.css';
 import './KitIcon.css';
 

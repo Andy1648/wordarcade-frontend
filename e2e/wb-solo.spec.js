@@ -122,7 +122,7 @@ for (const vp of VIEWPORTS) {
       const ctx2 = await browser.newContext({ viewport: vp });
       const other = await ctx2.newPage();
       const mock2 = await openMenu(other, { played: true });
-      await joinControl(other).click();
+      await (await joinControl(other)).click();
       await mock2.waitForSent('list_public_rooms', 10000);
       mock2.pushToClient({
         type: 'public_rooms',

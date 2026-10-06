@@ -16,7 +16,7 @@ export const PERKS = {
   doubleRoll: { name: 'DOUBLE ROLLS', line: 'EVERY ROLL ROLLS TWICE' },
   overdrive15: { name: 'OVERCLOCK', line: 'OVERDRIVE EVERY 15 MIN' },
   frenzyAll: { name: 'WILDFIRE', line: 'FRENZY IN EVERY MODE' },
-  keyKeep3: { name: 'HEIRLOOM', line: 'REBIRTH KEEPS 3 KEY TIERS' },
+  keyKeep3: { name: 'HEIRLOOM', line: 'REBIRTH KEEPS 3 POWER TIERS' },
 };
 
 /** Which rolled mark carries which perk(s). markRollsCore attaches these to the pool. */

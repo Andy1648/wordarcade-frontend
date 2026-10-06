@@ -38,7 +38,7 @@ async function openRoll(page, query = '') {
   await page.goto(`/?portal=1${query}`);
   await menuReady(page);
   // desktop: the menu's mark chip; phone (≤480px): the MARKS nav button
-  await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
+  await page.locator('.hp-nav.is-roll:visible').first().click(); // v2 menu: the ROLL rail button
   await page.locator('.rs-overlay').waitFor();
 }
 const pity = (page) => page.getByTestId('roll-pity').innerText();
@@ -224,8 +224,8 @@ test('short balance: the press shows −X + gem (never a silent grey button) —
   await page.goto('/?portal=1');
   await menuReady(page);
   // the MARKS dot means "a roll is affordable": 4 gems, the starter spent → no dot
-  await expect(page.getByTestId('marks-roll-dot')).toHaveCount(0);
-  await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
+  await expect(page.locator('.hp-nav.is-roll .kb-rdot')).toHaveCount(0); // v2 menu: the ROLL rail button's dot
+  await page.locator('.hp-nav.is-roll:visible').first().click(); // v2 menu: the ROLL rail button
   await page.locator('.rs-overlay').waitFor();
   await page.locator('.rs-roll').click();
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '6');
@@ -235,7 +235,7 @@ test('short balance: the press shows −X + gem (never a silent grey button) —
   expect(await page.evaluate(() => localStorage.getItem('taw.wins'))).toBe('50000000');
 });
 
-test('GEMS on the menu: icon + count beside the wins chip; the MARKS dot only when a roll is affordable', async ({ page }) => {
+test('GEMS on the menu: icon + count under the wins pill; the ROLL dot only when a roll is affordable', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, {
     'taw.tut.markRolls': '1',
@@ -245,9 +245,10 @@ test('GEMS on the menu: icon + count beside the wins chip; the MARKS dot only wh
   await page.goto('/?portal=1');
   await menuReady(page);
   const chip = page.locator('.menu-gems-chip:visible').first();
-  await expect(chip).toHaveAttribute('data-gems', '12');
-  await expect(chip.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
-  await expect(page.getByTestId('marks-roll-dot').first()).toBeAttached();
+  // v2 menu: the kit's GEMS pill (KitPill) in the left rail, its gem the kit icon; the dot rides ROLL
+  await expect(chip).toHaveAttribute('data-value', '12');
+  await expect(chip.locator('.kit-icon[data-icon="gems"]')).toHaveCount(1);
+  await expect(page.locator('.hp-nav.is-roll .kb-rdot').first()).toBeAttached();
   // it is in the bar cluster, not a fixed element of its own
   expect(await chip.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
 });
@@ -342,4 +343,68 @@ test('ROLL vs INDEX never mix (Andy oct5): INDEX has no REPLAY / roll / pity / g
   await page.locator(`.mx-tile[data-mark="${markId}"]`).click();
   await expect(page.locator('.mx-sheet')).toBeVisible();
   await expect(page.locator('.mx-replay')).toHaveCount(0);
+});
+
+// SEASON 2 (P6, ?season2=1 — progression-v3.md "75 gems a roll"): the same ROLL screen at the v3 price. The season keeps
+// its own gems (taw.s2.gems); the live save's taw.gems is never read or charged. AUTO ROLL is the R2 unlock.
+const S2_GEMS = (bal) => JSON.stringify({ v: 1, bal, peak: 12, streak: 0, mig: 1 });
+const S2_STARTED = JSON.stringify({ v: 2, rolls: 3, sinceEpic: 3, sinceLegendary: 3, everEpic: true, starter: true, marks: {}, milestones: [], skipBelow: 'secret' });
+const s2Store = (page) => page.evaluate(() => ({
+  s2: JSON.parse(localStorage['taw.s2.gems'] || '{}').bal,
+  live: JSON.parse(localStorage['taw.gems'] || '{}').bal, // named access = the RAW season-1 key
+  rolls: JSON.parse(localStorage['taw.markRolls'] || '{}').rolls,
+}));
+
+test('SEASON2: a roll costs 75 gems — charged once from the season-2 wallet, the live wallet untouched', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(100), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
+  await openRoll(page, '&season2=1');
+  const roll = page.locator('.rs-roll');
+  await expect(roll).toHaveText(/^ROLL\s*75$/);
+  await expect(roll).toHaveAttribute('aria-label', 'ROLL · 75 GEMS');
+  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '100');
+  await roll.click();
+  await page.waitForTimeout(SPUN);
+  await keepReveal(page);
+  await expect(card(page)).toHaveCount(1);
+  const st = await s2Store(page);
+  expect(st.s2).toBe(25); // exactly one 75-gem charge
+  expect(st.live).toBe(1000); // the season-1 balance is never charged
+  expect(st.rolls).toBe(4);
+  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '25');
+  // 25 < 75: the next press shows the gap, charges nothing, rolls nothing
+  await roll.click();
+  await expect(page.locator('.rs-need')).toHaveText('−50');
+  expect(await s2Store(page)).toEqual(st);
+});
+
+test('SEASON2: AUTO ROLL is locked before R2: a tap rolls nothing and charges nothing', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(150), 'taw.s2.rebirths': '1', 'taw.markRolls': S2_STARTED });
+  await openRoll(page, '&season2=1');
+  const auto = page.getByTestId('roll-auto');
+  await expect(auto).toHaveText('AUTO · R2');
+  await expect(auto).toHaveAttribute('aria-disabled', 'true');
+  await auto.click({ force: true }); // a real tap on the locked button (aria-disabled): it must do nothing
+  await page.waitForTimeout(600);
+  await expect(auto).toHaveAttribute('aria-pressed', 'false');
+  const st = await s2Store(page);
+  expect(st.s2).toBe(150);
+  expect(st.rolls).toBe(3);
+});
+
+test('SEASON2 at R2: AUTO ROLL spends 75 a roll and stops when the season-2 gems run out', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(160), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
+  await openRoll(page, '&season2=1');
+  const auto = page.getByTestId('roll-auto');
+  await expect(auto).toHaveText('AUTO: OFF');
+  for (let i = 0; i < 3; i += 1) await auto.click(); // → LEGENDARY+: only the gems (or a LEGENDARY+) stop it
+  await expect(auto).toHaveAttribute('aria-pressed', 'false', { timeout: 30000 });
+  await keepReveal(page);
+  const st = await s2Store(page);
+  // 160 = two rolls (or one, if the first already hit LEGENDARY+); never negative, never the live wallet
+  expect([10, 85]).toContain(st.s2);
+  expect(st.live).toBe(1000);
+  expect(st.rolls).toBe(3 + (160 - st.s2) / 75);
 });

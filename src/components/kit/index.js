@@ -29,3 +29,4 @@ export { createHoldConfirm, HOLD_MS } from './holdConfirm.js';
 export { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS } from './countTween.js';
 export { planClimb, createClimbPlayer, CLIMB_MAX_MS } from './climb.js';
 export { kitPlay, fx, FX } from './motion.js';
+import './motionMore.js';

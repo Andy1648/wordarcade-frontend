@@ -93,7 +93,7 @@ test('the lines are Andy\'s: wins = REBIRTH · MARK · BOOST; XP = KEY · REBIRT
     // a fresh save: nothing owned (no INDEX bonus), nothing worn
     const b = statBoard();
     assert.deepEqual(b.wins.lines.map((l) => l.label), ['REBIRTH', 'MARK', 'BOOST']);
-    assert.deepEqual(b.xp.lines.map((l) => l.label), ['KEY', 'REBIRTH', 'MARK', 'BOOST']);
+    assert.deepEqual(b.xp.lines.map((l) => l.label), ['POWER', 'REBIRTH', 'MARK', 'BOOST']);
     assert.equal(b.wins.base, 10);
     assert.equal(b.xp.base, 10);
     assert.equal(b.wins.total, 10);

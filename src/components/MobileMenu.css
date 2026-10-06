@@ -42,8 +42,9 @@
     flex: 1 1 auto;
     min-height: 0; /* lets the flex children actually shrink instead of overflowing */
     /* 8px, not 10: five sections share the height now (title, modes, solo pair, nav, foot). */
-    gap: 8px;
-    padding: 12px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+    /* one even gutter on all four sides (menu-vgap: the vertical gutter matches the side gutter) */
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
     position: relative;
     z-index: 2;
   }
@@ -57,7 +58,6 @@
     gap: 12px;
     flex: 0 0 auto;
   }
-  .hp-m-top .hp-m-boost { order: 3; flex: 0 0 auto; }
 
   .hp-m-title {
     margin: 0;
@@ -65,23 +65,12 @@
     /* TYPE SCALE (src/theme/type.css, enforced by src/perf/typeScale.test.js): every
        font-size goes through a --fs-* token. --fs-hero is clamp(42px, 9.5vw, 96px), so this
        renders 42px at 390px and 45.6px at 480px — the spec's 46px, on the scale. */
-    font-size: var(--fs-hero);
+    font-size: var(--fs-panel);
     line-height: 0.84;
     letter-spacing: 0.5px;
-    color: #FF4FA3;
+    color: #2EFFE0;
     text-shadow: 3px 3px 0 #000;
     text-transform: uppercase;
-  }
-
-  /* The sound toggle: a real 44x44 target, right-aligned on the title's row. */
-  .hp-m-top .audio-ctrl {
-    position: static;
-    flex: 0 0 auto;
-  }
-
-  .hp-m-top .audio-ctrl button {
-    min-width: 44px;
-    min-height: 44px;
   }
 
   /* ---- 2. MODE ROWS ---- */
@@ -210,7 +199,7 @@
   .hp-m-solo-btn {
     flex: 1 1 0;
     min-width: 0;
-    min-height: 60px;
+    min-height: 48px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -239,7 +228,7 @@
   }
 
   .hp-m-solo-name {
-    font-size: var(--fs-h2);
+    font-size: var(--fs-panel);
     line-height: 0.84;
     --lw-ls: -0.01em;
   }
@@ -260,111 +249,46 @@
     flex: 0 0 auto;
   }
 
-  /* ---- 4. SHOP / STATS / REBIRTH — the desktop corner nav, as a strip ----
-     Chrome, not a mode: the desktop corner nav's own recipe (--v-panel-hi fill, --v-ink type, 3px
-     black keyline, 4px hard shadow) so it reads as the same buttons. Space Mono rather than the
-     corner nav's Bungee: Bungee may not go below --fs-panel, and three Bungee words at 20px do
-     not fit 320px. Each slab takes an equal share, so the strip re-flows when REBIRTH is gated. */
-  .hp-m-nav {
+  /* ---- 4. THE RAIL (MenuNav.jsx): one wrapping row — WINS · GEMS · CREDITS, then SHOP · ROLL · INDEX ·
+     REBIRTH as four compact slabs (icon over label, the edge wedge becomes a top stripe) ---- */
+  .hp-m-rail {
+    align-self: stretch;
     display: flex;
-    gap: 8px;
-    flex: 0 0 auto;
-  }
-
-  .hp-m-navbtn {
-    position: relative;
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 44px;
-    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    padding: 0 6px;
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: var(--fs-body);
-    letter-spacing: 0.5px;
-    color: var(--v-ink);
-    background: var(--v-panel-hi);
-    border: 3px solid #000;
-    border-radius: 8px;
-    box-shadow: 4px 4px 0 #000;
-    cursor: pointer;
-    transition: transform 180ms ease;
+    gap: 8px 6px;
+    flex: 0 0 auto;
+    padding-left: 14px;
   }
-
-  .hp-m-navbtn:active {
-    transform: translate(2px, 2px);
-  }
-  /* REBIRTH READY (Andy oct3): the strip's REBIRTH lights up pink while the gate is reached. */
-  .hp-m-navbtn.is-rebirth.is-ready {
-    background: #FF4FA3;
-    color: #000;
-    border-color: #B8236F;
-  }
-  /* The REBIRTH READY → ×5 FOREVER CTA rides with the LV strip (same order slot in the 'top' layout). */
+  .hp-m-rail .hp-rail-gap { display: none; }
+  .hp-m-rail .kp { display: block; flex: 1 1 34%; width: auto; padding: 0; }
+  .hp-m-rail .kp-name { display: none; }
+  .hp-m-rail .kp-body { width: 100%; height: 36px; }
+  .hp-m-rail .kp-numwrap { right: 8px; }
+  .hp-m-rail .kp-num { font-size: var(--fs-k20); }
+  .hp-m-rail .kp-icon { left: -14px; top: 0; width: 36px; height: 36px; }
+  .hp-m-rail .kp-sq,
+  .hp-m-rail .kp-dip,
+  .hp-m-rail .kp-icon .kit-icon { width: 100%; height: 100%; }
+  .hp-m-rail .kp-pop { left: 60%; }
+  .hp-m-rail .kp-need { left: 50%; top: 44px; }
+  .hp-m-rail .hp-m-credits { flex: 0 0 auto; margin-left: auto; }
+  .hp-m-rail .kb-rwrap { flex: 1 1 20%; min-width: 0; }
+  .hp-m-rail .kp + .kb-rwrap,
+  .hp-m-rail .hp-m-credits + .kb-rwrap { margin-left: -14px; }
+  .hp-m-rail .kb--rail { width: 100%; height: 52px; }
+  .hp-m-rail .kb-rface { flex-direction: column; justify-content: center; gap: 2px; padding: 4px 0 0; }
+  .hp-m-rail .kb-redge { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 6px; transform: none; border-right: 0; border-bottom: 3px solid #000; }
+  .hp-m-rail .kb-rface .kit-icon { width: 22px; height: 22px; }
+  .hp-m-rail .kb-rlabel { font-size: var(--fs-k13); }
+  .hp-m-rail .kb-rdot { left: auto; right: -6px; top: -8px; width: 18px; height: 18px; }
+  .hp-m-rail .kb--rail:disabled { opacity: 0.6; pointer-events: none; }
+  /* The REBIRTH READY → ×5 FOREVER CTA rides under the level bar. */
   .hp-m > .hp-m-rr-ready { flex: 0 0 auto; }
-  .hp-m[data-nav='top'] > .hp-m-rr-ready { order: -1; }
-  .hp-m[data-nav='rail'] > .hp-m-rr-ready { grid-column: 1 / -1; }
 
-  .hp-m-navbtn.is-disabled {
-    opacity: 0.6;
-    pointer-events: none;
-  }
-
-  /* The leaderboard trophy: an icon slab, so it takes a fixed 52px (a full 44px target + keyline)
-     instead of an equal share, and SHOP / STATS / REBIRTH keep the width their words need at 320px. */
-  .hp-m-navbtn.is-board {
-    flex: 0 0 52px;
-    padding: 0;
-    color: #FFE94A;
-  }
-
-  /* The desktop SHOP dot (something is affordable), same size and colour. A circle. */
-  /* The claim count rides STATS (Andy oct2 A4 — no separate REWARDS slab); 22 → 30px. */
-  .hp-m-count {
-    position: absolute;
-    top: -13px;
-    right: -13px;
-    min-width: 30px;
-    height: 30px;
-    padding: 0 6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 15px;
-    background: #ff4fa3;
-    color: #0d0618;
-    border: 3px solid #000;
-    font-size: var(--fs-body); /* visual-1: was --fs-label — it is a count, and it is the news */
-    line-height: 1;
-  }
-  .hp-m-dot {
-    position: absolute;
-    top: -9px;
-    right: -9px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #FF4FA3;
-    border: 3px solid #000;
-  }
-
-  /* ---- 5. FOOT: CREDITS + JOIN ROOM ---- */
-  .hp-m-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex: 0 0 auto;
-    min-height: 44px;
-  }
-
-  .hp-m-join,
   .hp-m-credits {
-    /* Text links, not slabs — but still 44px tap targets (padding carries the height, so the
-       visible type stays quiet while the hit box is full size). 16px: tappable text never goes
-       under --fs-body (typeScale.test.js). Small UI text is Space Mono by rule. */
+    /* a text link, still a 44px tap target; 16px — tappable text never goes under --fs-body */
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -376,22 +300,75 @@
     font-weight: 700;
     font-size: var(--fs-body);
     letter-spacing: 0.5px;
-    color: #2EFFE0;
+    color: #A89EC4;
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
   }
+  .hp-m-credits.is-disabled { opacity: 0.6; pointer-events: none; }
+  .hp-m-topr { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .hp-m-topr .audio-ctrl { position: static; flex: 0 0 auto; }
+  .hp-m-topr .audio-ctrl button { min-width: 44px; min-height: 44px; }
+  .hp-m-live { flex-basis: 100%; }
 
-  /* CREDITS is the quiet one — the desktop footer link's weight, in the muted menu violet. */
-  .hp-m-credits {
-    color: #A89EC4;
+  /* ---- 1a. THE LEVEL (KitXpBar) + the per-letter line + the worn mark ---- */
+  .hp-m-top .hp-icons { display: flex; gap: 8px; flex: 0 0 auto; }
+  .hp-m-top .hp-icons .kb--icon { width: 46px; height: 54px; }
+  .hp-m-top .hp-icons .kb-iface { width: 46px; height: 46px; }
+  .hp-m-top .hp-icons .kb-iface .kit-icon { width: 30px; height: 30px; }
+  .hp-m-top .hp-icons .kb-itag { left: -12px; }
+  .hp-m-xp { flex: 0 0 auto; }
+  .hp-m-xp .kx { flex-wrap: nowrap; gap: 10px; padding-top: 0; }
+  .hp-m-xp .kx-lv { min-width: 0; }
+  .hp-m-xp .kx-lv-k { font-size: var(--fs-k16); }
+  .hp-m-xp .kx-lv-n { font-size: var(--fs-k32); text-shadow: 3px 3px 0 #000; }
+  .hp-m-xp .kx-bar { height: 34px; border-width: 3px; box-shadow: 4px 4px 0 #000; }
+  .hp-m-xp .kx-read { right: 8px; }
+  .hp-m-xp .kx-read-n { font-size: var(--fs-k16); }
+  .hp-m-xp .kx-read-s,
+  .hp-m-xp .kx-read-u { font-size: var(--fs-k13); }
+  .hp-m-per {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
   }
-
-  .hp-m-join.is-disabled,
-  .hp-m-credits.is-disabled {
-    opacity: 0.6;
-    pointer-events: none;
+  .hp-m-per .hp-per {
+    font-family: 'Bungee', sans-serif;
+    text-transform: uppercase;
+    font-size: var(--fs-k18);
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: 3px #000;
+    paint-order: stroke fill;
+    white-space: nowrap;
   }
+  .hp-m-per .hp-per-u {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: var(--fs-k13);
+    -webkit-text-stroke: 0;
+    color: #c9b8e8;
+  }
+  .hp-m-per .hp-chip {
+    height: 44px;
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    background: #2a0e4a;
+    border: 3px solid #000;
+    box-shadow: 3px 3px 0 #000;
+    font-family: 'Bungee', sans-serif;
+    text-transform: uppercase;
+    font-size: var(--fs-k16);
+    color: #fff;
+    cursor: pointer;
+  }
+  .hp-m-per .hp-chip.is-empty { background: #1a0b2e; }
+  .hp-m-per .hp-chip-edge { width: 8px; background: #B04BFF; border-right: 3px solid #000; }
+  .hp-m-per .hp-chip.is-new .hp-chip-edge { background: #FF3D7F; }
+  .hp-m-per .menu-mark-name { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; }
 
   /* ---- BACKDROP: drop the loose wall ornaments on the HOME view only ----
      27 discrete decorations: .wall-graffiti-tag (12), .wall-splatter (4), .wall-sticker (6),
@@ -425,137 +402,28 @@
   }
 }
 
-/* ---- STEP 58: where the nav strip lives (Homepage NAV_LAYOUT, ?nav= to compare) ----
-   'stack' = the old thumb-zone strip under CHAIN | FUSE. 'top' = the strip right under the title,
-   where a player looks for SHOP. 'rail' = a column beside the mode rows. */
-@media (max-width: 480px) {
-  .hp-m[data-nav='top'] > .hp-m-top { order: -2; }
-  .hp-m[data-nav='top'] > .hp-m-nav { order: -1; }
-
-  .hp-m[data-nav='rail'] {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 84px;
-    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-    grid-template-areas:
-      'top top'
-      'hook hook'
-      'modes nav'
-      'solo solo'
-      'foot foot';
-  }
-  .hp-m[data-nav='rail'] > .hp-m-top { grid-area: top; }
-  .hp-m[data-nav='rail'] > .hp-m-hook { grid-area: hook; }
-  .hp-m[data-nav='rail'] > .hp-m-modes { grid-area: modes; min-height: 0; }
-  .hp-m[data-nav='rail'] > .hp-m-solo { grid-area: solo; }
-  .hp-m[data-nav='rail'] > .hp-m-foot { grid-area: foot; }
-  .hp-m[data-nav='rail'] > .hp-m-nav {
-    grid-area: nav;
-    flex-direction: column;
-  }
-  .hp-m[data-nav='rail'] > .hp-m-nav .hp-m-navbtn {
-    flex: 1 1 0;
-    /* visual-1: --fs-body (was --fs-label) — these are tappable, and 16px is the control floor.
-       REBIRTH is 7 glyphs, ~67px, inside the 84px rail column (letter-spacing 0 below). */
-    font-size: var(--fs-body);
-  }
-}
-
-/* Five slabs in one strip at 390 (★ / STATS / SHOP / trophy / REBIRTH): the icon slabs take 46px
-   and the word slabs drop their side padding + tracking so REBIRTH fits (fine-tune oct2: it was
-   clipped at the right edge). */
-@media (max-width: 480px) {
-  .hp-m-nav { gap: 6px; }
-  .hp-m-navbtn { padding: 0 3px; letter-spacing: 0; }
-  .hp-m-navbtn.is-board { flex: 0 0 46px; }
-}
-
 @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
   .hp-m-row,
-  .hp-m-solo-btn,
-  .hp-m-navbtn {
+  .hp-m-solo-btn {
     transition: none;
   }
 
   .hp-m-row:active,
-  .hp-m-solo-btn:active,
-  .hp-m-navbtn:active {
+  .hp-m-solo-btn:active {
     transform: none;
   }
 }
 
-/* N3 (Andy oct2): the LEADERBOARD on its own at the top-left of the title row — hero-size, with your rank */
-@media (max-width: 899px) {
-  .hp-m-top .hp-m-board-hero {
-    order: -1;
-    flex: 0 0 auto;
-    /* oct3 verdict: bigger in AREA than the STATS chip (72² = 5,184 px² vs ~4,752 at 390) */
-    width: 72px;
-    min-height: 72px;
-    height: 72px;
-    padding: 0;
-    /* H2a: the golden button — flat gold, darker-gold outline; oct3: the podium glyph wears your #rank */
-    color: #1a0b2e;
-    background: #FFE94A;
-    border-color: #b8a020;
-  }
-  /* the podium fills the 66px content box: "#9" at ~30px, "#800" / "1.2K" at ~21px (all >= --fs-panel 20px) */
-  .hp-m-board-hero .pi { width: 100%; height: 100%; }
-  .hp-m-top .hp-m-title { flex: 1 1 auto; }
-}
-/* SHORT PHONES (320x568 menu-hook gate: every mode row must stay in view): the title row gives back height —
-   the gold button steps down to 60px, still the biggest control in its row (the nav chips are 44px tall). */
-@media (max-width: 899px) and (max-height: 600px) {
-  .hp-m-top .hp-m-board-hero { width: 60px; min-height: 60px; height: 60px; }
-}
-
-/* H6 audit M19: the phone's one progress row — LV · bar · WINS, right under the title (before the nav
-   strip in the 'top' layout). Flat house style: panel fill, coloured outline, hard black offset. The bar
-   fill is a plain rectangle scaled with transform (no animation at rest). */
-@media (max-width: 480px) {
-  .hp-m-stats {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 44px;
-    padding: 6px 10px;
-    background: #1a0b2e;
-    border: 3px solid #2a8f86;
-    border-radius: 8px;
-    box-shadow: 3px 3px 0 #000;
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: var(--fs-body);
-    color: #fff;
-    white-space: nowrap;
-  }
-  .hp-m[data-nav='top'] > .hp-m-stats { order: -1; }
-  /* the 'rail' layout is a ?nav= comparison grid with named areas; the strip stays out of it */
-  .hp-m[data-nav='rail'] > .hp-m-stats { display: none; }
-  .hp-m-stats-k {
-    font-size: var(--fs-body); /* visual-1: was --fs-label */
-    color: #2EFFE0;
-    margin: 0 4px;
-  }
-  .hp-m-stats-lv .hp-m-stats-k { margin-left: 0; }
-  .hp-m-stats-track {
-    flex: 1 1 auto;
-    min-width: 40px;
-    height: 16px; /* visual-1: was 12px — the bar has to read at a glance */
-    background: #0d0618;
-    border: 2px solid #3a2160;
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .hp-m-stats-fill {
-    display: block;
-    width: 100%;
-    height: 100%;
-    background: #2EFFE0;
-    transform-origin: left center;
-    transform: scaleX(0); /* written by useLevelBar (lib/barPlan) — scaleX only */
-  }
-  /* a level being flashed through on a multi-level climb (class swap, colour only) */
-  .hp-m-stats-fill.is-levelflash { background: #FFE94A; }
-  .hp-m-stats-wins { color: #FFE94A; }
+/* SHORT PHONES (≤ 700px tall, e.g. 360x640 with a REWARDS popup in flow): every band gives back a few px
+   so the four mode rows stay whole — the rows step down to 56px (two 20px name lines + a 6px pad), the
+   rail's slabs to 48px. */
+@media (max-width: 480px) and (max-height: 700px) {
+  .hp-m { padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .hp-m-modes { gap: 6px; }
+  .hp-m-row { min-height: 56px; padding-top: 6px; padding-bottom: 6px; }
+  .hp-m-top .hp-icons .kb--icon { width: 44px; height: 50px; }
+  .hp-m-top .hp-icons .kb-iface { width: 44px; height: 44px; }
+  .hp-m-rail { row-gap: 6px; }
+  .hp-m-rail .kb--rail { height: 48px; }
+  .hp-m-solo-btn { padding-top: 4px; padding-bottom: 4px; }
 }

@@ -13,6 +13,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { banners as defaultStore } from './bannerStore.js';
 import { FX, fx } from './motion.js';
+import './motionMore.js';
 import './tokens.css';
 import './KitBanner.css';
 

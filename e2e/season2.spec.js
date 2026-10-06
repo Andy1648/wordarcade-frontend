@@ -97,25 +97,29 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await noClaimPopups(page);
     if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveText('TYPO');
 
-    // POWER: wins buy only POWER (100 × 4^0 = 100 wins)
+    // POWER: wins buy only POWER (100 × 4^0 = 100 wins) — the v2 SHOP (P3): HOLD TO BUY, 1 s
     await navControl(page, 'shop').click();
-    await page.locator('.shop-panel').waitFor({ state: 'visible' });
-    await expect(page.locator('.shop-subtitle').first()).toHaveText('POWER');
-    await page.locator('.shop-kp-actions .shop-card-btn').first().click();
+    const sp = page.locator('.sp2');
+    await sp.waitFor({ state: 'visible' });
+    const buyBtn = await sp.locator('.sp2-buy .kb').boundingBox();
+    await page.mouse.move(buyBtn.x + buyBtn.width / 2, buyBtn.y + buyBtn.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(1150);
+    await page.mouse.up();
     await expect.poll(async () => (await s2(page)).power).toBe('1');
     expect((await s2(page)).wins).toBe('400');
-    await page.keyboard.press('Escape'); // (the POWER reveal sticker may still cover the ✕)
-    await expect(page.locator('.shop-panel')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(sp).toHaveCount(0);
 
-    // ACHIEVEMENTS: the trophy in the nav cluster; TYPE WORDS I pays 40 gems
+    // ACHIEVEMENTS (the v2 screen, P3 — the only claim place): the trophy in the nav cluster; TYPE WORDS I pays 40 gems
     await page.locator(phone ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();
     const ach = page.locator('.av3-overlay');
     await ach.waitFor({ state: 'visible' });
-    await expect(ach.locator('.av3-gems b')).toHaveText('7');
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('7');
     const type = ach.locator('[data-ach="type"]');
     await expect(type.locator('.av3-strip')).toContainText('READY!');
     await type.locator('.av3-claim').click();
-    await expect(ach.locator('.av3-gems b')).toHaveText('47');
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('47'); // the gems fly in, then the pill lands
     st = await s2(page);
     expect(st.gems).toBe(47);
     expect(await page.evaluate(() => localStorage.getItem('taw.s2.ach'))).toBe('{"type":1}');

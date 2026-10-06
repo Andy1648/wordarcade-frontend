@@ -12,6 +12,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import KitIcon from './KitIcon.jsx';
 import { FX, fx, fxOrShow, kitStop } from './motion.js';
+import './motionMore.js';
 import './tokens.css';
 import './KitPops.css';
 

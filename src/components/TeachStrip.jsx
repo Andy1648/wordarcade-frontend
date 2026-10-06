@@ -28,7 +28,7 @@
 // exactly the player who still needs it.
 import './TeachStrip.css';
 
-export default function TeachStrip({ rule, example, onDismiss, payLine = 'BASE 10 XP / LETTER × KEY × REBIRTH' }) {
+export default function TeachStrip({ rule, example, onDismiss, payLine = 'BASE 10 XP/LETTER × POWER × REBIRTH' }) {
   return (
     <div className="teach-strip" role="note" aria-label="How to play this mode">
       <div className="teach-strip-main">

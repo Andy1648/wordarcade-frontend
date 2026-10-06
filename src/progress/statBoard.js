@@ -70,7 +70,7 @@ export function statBoard() {
     id: 'xp',
     base: LEVEL_XP_PER_LETTER + Math.max(0, Number(markBaseXp()) || 0),
     lines: [
-      { id: 'key', label: 'KEY', mult: pos(keyXpMult(kt)), tier: keyRarity(kt), keyTier: kt },
+      { id: 'key', label: 'POWER', mult: pos(keyXpMult(kt)), tier: keyRarity(kt), keyTier: kt },
       { id: 'rebirth', label: 'REBIRTH', mult: pos(rebirthXpMult(rc)), tier: rbTier },
       { id: 'mark', label: 'MARK', mult: pos(markXpBoost()) * pos(letterPerkMult()), tier: markTier },
       { id: 'boost', label: 'BOOST', mult: pos(boostMult()), tier: null },

@@ -10,6 +10,7 @@
 import { useEffect, useRef } from 'react';
 import KitIcon from './KitIcon.jsx';
 import { FX, fx } from './motion.js';
+import './motionMore.js';
 import { formatNum } from '../../format.js';
 import './tokens.css';
 import './KitGoalBar.css';
