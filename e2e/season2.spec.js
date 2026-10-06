@@ -111,15 +111,15 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.keyboard.press('Escape');
     await expect(sp).toHaveCount(0);
 
-    // ACHIEVEMENTS: the trophy in the nav cluster; TYPE WORDS I pays 40 gems
+    // ACHIEVEMENTS (the v2 screen, P3 — the only claim place): the trophy in the nav cluster; TYPE WORDS I pays 40 gems
     await page.locator(phone ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();
     const ach = page.locator('.av3-overlay');
     await ach.waitFor({ state: 'visible' });
-    await expect(ach.locator('.av3-gems b')).toHaveText('7');
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('7');
     const type = ach.locator('[data-ach="type"]');
     await expect(type.locator('.av3-strip')).toContainText('READY!');
     await type.locator('.av3-claim').click();
-    await expect(ach.locator('.av3-gems b')).toHaveText('47');
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('47'); // the gems fly in, then the pill lands
     st = await s2(page);
     expect(st.gems).toBe(47);
     expect(await page.evaluate(() => localStorage.getItem('taw.s2.ach'))).toBe('{"type":1}');
