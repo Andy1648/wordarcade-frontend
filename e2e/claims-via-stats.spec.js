@@ -37,9 +37,13 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1280, height: 800 }, { 
     await expect(stats).toHaveAttribute('aria-label', /^Open achievements — \d+ to claim$/);
     const count = stats.locator('.kb-idot');
     await expect(count).toHaveText(/^\d+$/);
+    // the kit dots arrive with a one-shot pop (scale 0 → 1.25 → 1, 300ms): measure the settled dot, not the pop
+    const settled = (loc) => loc.evaluate((el) => Promise.all(el.getAnimations().map((x) => x.finished.catch(() => {}))));
+    await settled(count);
     const cb = await count.boundingBox();
     expect(cb.height, 'claim count height (was 22)').toBeGreaterThanOrEqual(28);
     const dot = navDot(page, 'shop');
+    await settled(dot);
     const db = await dot.boundingBox();
     expect(db.width, 'notification dot (was 10x10)').toBeGreaterThanOrEqual(18);
     await stats.click();

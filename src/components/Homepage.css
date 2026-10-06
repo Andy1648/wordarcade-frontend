@@ -64,7 +64,8 @@
     'cards cards cards';
   column-gap: var(--hp-gap);
   row-gap: max(14px, calc(14 * var(--u)));
-  padding: max(10px, calc(14 * var(--u))) max(12px, calc(30 * var(--u))) max(10px, calc(16 * var(--u)));
+  /* top = bottom: the content's breathing gap to the frame is symmetric and in the 16-32px band (menu-vgap) */
+  padding: clamp(16px, 2.4vh, 28px) max(12px, calc(30 * var(--u)));
   background-color: transparent;
   /* Eased so the menu gently "pushes back" when a mode dialog opens. */
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
