@@ -15,7 +15,8 @@ import './ShopV2.css';
 import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { getKeyTier, keyTierCost, getRebirths, levelXpPerLetter } from '../progress/xp';
+import { getKeyTier, keyTierCost, keyXpMult } from '../progress/xp';
+import { letterXpNow } from '../progress/letterXp';
 import { buyKeyPower } from '../progress/shop';
 // v3/stock.js rides in the v3 chunk (installed before the first render in season 2) — read through the V3 holder, so
 // no extra shared chunk is added to the eager index's preload map (payload ratchet)
@@ -23,7 +24,7 @@ import { V3 } from '../progress/season';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased } from '../lib/events.js';
 import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
-import { formatNum } from '../format';
+import { formatNum, formatRate } from '../format';
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
@@ -131,9 +132,11 @@ export default function ShopV2({ onBack }) {
   // ---- POWER: wins only, one per 1 s hold ----
   const cost = keyTierCost(tier);
   const canPower = Number.isFinite(cost) && wins >= cost;
-  const rb = getRebirths() || 0;
-  const perNow = levelXpPerLetter(tier, rb);
-  const perNext = levelXpPerLetter(tier + 1, rb);
+  // XP / LETTER now → after the buy: the SAME number the bar pays and STATS / the menu show (letterXpNow — the worn
+  // mark, INDEX and any BOOST included; levelXpPerLetter alone left them out), × POWER's own step (2.5) for the next.
+  const perNow = letterXpNow();
+  const kNow = keyXpMult(tier);
+  const perNext = kNow > 0 ? (perNow * keyXpMult(tier + 1)) / kNow : perNow;
   const onPower = () => {
     const r = buyKeyPower();
     if (!r.ok) {
@@ -189,9 +192,9 @@ export default function ShopV2({ onBack }) {
             <span className="sp2-pw-next">{formatNum(tier + 1)}</span>
           </div>
           <div className="sp2-per">
-            <span className="sp2-per-now">{formatNum(perNow)}</span>
+            <span className="sp2-per-now">{formatRate(perNow)}</span>
             <span className="sp2-per-arrow">→</span>
-            <span className="sp2-per-next">{formatNum(perNext)}</span>
+            <span className="sp2-per-next">{formatRate(perNext)}</span>
           </div>
           <div className="sp2-per-lab">XP / LETTER</div>
           <KitHoldButton
