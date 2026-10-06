@@ -25,7 +25,9 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]').map((c) => c.id));
   expect(claims.filter((id) => id.startsWith('mark-') || id.startsWith('layer-'))).toEqual([]);
   const btn = page.locator('.menu-mark');
-  await expect(btn).toContainText('NEW MARK');
+  // SEASON 2 #5: nothing worn → the chip says ROLL with a notification dot (it opens the ROLL screen)
+  await expect(btn.locator('.menu-mark-name')).toHaveText('ROLL');
+  await expect(btn.locator('.hp-chip-dot')).toHaveCount(1);
   await btn.click();
   // Andy oct5: MARKS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX
   await page.locator('.rs-overlay').waitFor();
@@ -129,7 +131,7 @@ for (const [label, seed] of [
   });
 }
 
-test('no MARKS button before the system is revealed (LV5)', async ({ page }) => {
+test('no MARKS chip before the system is revealed (LV5) — ROLL / INDEX show LOCKED at LV10', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   await installBackendMock(page);
   await page.addInitScript(() => {
@@ -142,4 +144,16 @@ test('no MARKS button before the system is revealed (LV5)', async ({ page }) => 
   await page.goto('/?portal=1');
   await menuReady(page);
   await expect(page.locator('.menu-mark')).toHaveCount(0);
+  // SEASON 2 #5: the rail shows ROLL + INDEX from the start, padlocked with their real gate (season 1: LV10)
+  for (const id of ['roll', 'index']) {
+    const b = page.locator(`.hp-nav.is-${id} > button`);
+    await expect(b).toHaveAttribute('data-locked', '');
+    await expect(b).toHaveAttribute('aria-disabled', 'true');
+    await expect(b.locator('.kb-rval')).toHaveText('LV10');
+    await expect(b.locator('svg[data-icon="lock"]')).toHaveCount(1);
+  }
+  // a locked tap opens nothing
+  await page.locator('.hp-nav.is-roll > button').click({ force: true }); // aria-disabled
+  await page.waitForTimeout(300);
+  await expect(page.locator('.rs-overlay')).toHaveCount(0);
 });
