@@ -169,3 +169,19 @@ STATUS: #225 (reset) had ALREADY merged (7642fa5) before the cancel — nothing 
 Then the SEASON2 flip prep, then P9/P10. Same standing rules.
 
 STATUS: P9 agent PAUSED (9a partial in ../p9a). Item 1 starting now (#230 removed the box but left an empty slot — removing that too).
+
+## FINAL ORDER (Andy, oct6 ~17:00 — verbatim; REPLACES everything above; DEADLINE before 7 AM oct7)
+Andy's decision: the FULL RESET is back ON. The progression is now FROZEN in claude/progression-FINAL.md (read it fully; the python sim is claude/progression-final-sim.py). It REPLACES v3's constants and the no-reset conversion.
+1. If not merged yet: remove "TYPE ANYTHING" from the menu entirely (old letter animations stay).
+2. PROGRESSION FINAL, behind SEASON2:
+ - Swap v3 constants for FINAL's: need(n)=400×1.06^(n−1); XP/letter 10×2.5^POWER×2^R×(1+★)×MARK; game letters ×1, menu ×0.2 real dictionary words only (repeat decay ×0.5/×0.25/0 within 60s, >12 letters/s earns 0); wins/word 22×len/5×MODE×2^R×(1+★)×MARK (WB/Blitz 1, RACE 1.5, CHAIN 2, SAT 3, FUSE 1 + FRENZY ×5); POWER cost 300×8^P wins, ×2.5 XP/tier, kept through rebirth, reset on ascend.
+ - REBIRTH spends 25×(R+1) levels, keeps leftovers, ×2. ASCEND at R=10+5×★ → +1★ (NOT R−9), R/POWER→0, LV1. AUTO REBIRTH toggle at R2. Unlocks: ROLL+INDEX from start, R1 AUTO ROLL, R2 AUTO REBIRTH, R5 2nd MARK slot, R7 LUCK ×1.25, R10 ASCEND.
+ - Gems from games only (FINAL table). Mark multipliers COMMON ×1.1, RARE ×1.25, EPIC ×1.5, LEGENDARY ×2, MYTHIC ×3, SECRET ×5; pity EPIC+ 50, LEGENDARY+ 500.
+ - New migration: lb_rebirth gate = level > 25×(R+1), then level −= that (not level=1); lb_ascend at R ≥ 10+5×★, ★+1. Never run it.
+ - Port the FINAL sim into CI (casual/median/fast/menu-only + masher + spammer). It must reproduce the FINAL table ±25%, fast ≤ 2× median, masher ≈ 0, spammer = median. CI fails otherwise.
+3. RESET back ON: undo #229's conversion. Restore the reset from git history (023 reset SQL + claude/run-season2.sql + rollback + the Season2Welcome screen from #225). Gems = round5(300 + 40×old rebirths). Everything except usernames resets. Andy runs the SQL; never run it.
+4. ROLL system must work end-to-end with the FINAL gem economy (75 gems, pity, AUTO ROLL at R1, INDEX). Play-test it in the season2 preview.
+5. Then the menu list: show UPGRADES/ROLL/INDEX/REBIRTH from the start (locked ones with a padlock + "R2" etc.); rename SHOP → UPGRADES; no mark equipped → chip says ROLL + notification dot; centre game cards exactly at 1366×657, 1280×551, 1920×1080; XP bar glides ~600ms ease-out with retargeting, never steps (GIF in the PR); fill the buttons (big icon, bigger label, live value: cheapest POWER price / gems÷75 / levels to next rebirth); stats screen = BASE × each multiplier = TOTAL and the math must multiply out; audit every displayed number against the FINAL formulas and list the fixes.
+6. When 1–4 are merged: write claude/FLIP-STEPS.md with the exact SQL files in order for Andy, and stop before the flip.
+STANDING RULES: re-read the checklist before every step; record result + PR # after each; resume after usage limits; never end the turn while steps remain; one heavy local job at a time, CI on GitHub; Claude never runs migrations.
+NOTE: progression-final-sim.py's __main__ uses NEED0=100/G=1.08 (a rejected tuning per the md); the FROZEN constants are the md's (400 × 1.06). The CI port uses the md's constants and reproduces the md's table.
