@@ -44,7 +44,7 @@ Keep every mode's real rules/payouts; only the look changes. Mockup numbers are 
 STANDING RULES: re-read this checklist before every step; record result + PR # after each; resume from it after a usage limit; never end the turn while steps remain; one heavy local job at a time, CI on GitHub; Claude never runs migrations.
 
 ## STATUS BY P
-- P0: #213 merged; #216 open; main E2E green on 4aec9e8 + 9c9b3aa, c13f436 running (agent confirming 3 in a row)
+- P0: DONE — #213 + #216 merged; main E2E green 4× in a row (37406619410, 37408883717, 37410602426, 37411222042) + unit CI green. Causes: FUSE warm-up scan blocking keystrokes (fuse.js set lookup, 2,593 → 230 ms), roll-robust reveal covering ROLL, kit stamp overflow at 390, CRLF in the 021 SQL test, word-landing secret roll, SAT lineup size
 - P2: progression v3 — #214 MERGED + LIVE (c13f436), flag OFF
 - P3: BUILDING (agent; 3 PRs in order: feat/v2-rebirth → feat/v2-shop → feat/v2-achievements)
 - P4: reset — partial work in ../s2reset (paused); merges in its turn (after P8)
@@ -72,7 +72,7 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - [x] P2 (Andy's numbering) progression v3 behind SEASON2 — #214 MERGED + LIVE (c13f436), flag OFF. CI 10 h sim: median R1 13.0 min / R5 1.23 h / R10 6.94 h; fast R1 7.4 min / R5 47.9 min / R10 4.33 h (×1.6–1.75 median); casual R1 22.6 min / R5 2.82 h / R10 not in 10 h; spammer 0 extra. Tuned XP_BASE 7→8.4, POWER_XP_STEP 1.8→1.65, POWER_COST_STEP 4→4.8 (±20%). OVERDRIVE off in S2. SQL 022_season2_board.sql written (Andy runs before the flip). — sims must hit median R1 ~12 min / R5 ~1.5 h / R10 ~7 h, fast ≤ 2×
 
 ## QUEUE (in order)
-- [~] P0 (agent running; also: unit test '021 SQL mirrors rebirthRules' red on main since #210) main E2E red since ~14:00 (1 shard fails per merge): find the flaky/broken spec, fix for real (no skip / no retry bump), confirm 3 green main runs in a row. BLOCKS every new screen PR.
+- [x] P0 DONE (#213, #216; main green 4× in a row) (was: also: unit test '021 SQL mirrors rebirthRules' red on main since #210) main E2E red since ~14:00 (1 shard fails per merge): find the flaky/broken spec, fix for real (no skip / no retry bump), confirm 3 green main runs in a row. BLOCKS every new screen PR.
 - [ ] PHASE 2b ROLL / INDEX / MARK CARD finish vs Roll/Index/MarkCard.dc.html
 - [ ] PHASE 2c REBIRTH (hold-to-rebirth → performRebirth, one at a time, YOU GET, unlocks track "SOON" until v3)
 - [ ] PHASE 2d SHOP (POWER panel hold-to-buy; gems STOCK grid behind a flag)
