@@ -316,6 +316,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   cursor: pointer;
   transition: transform 80ms;
 }
+.rs-auto-btn.is-locked { color: #8f7fb0; cursor: not-allowed; }
+.rs-auto-btn.is-locked:hover, .rs-auto-btn.is-locked:active { transform: none; }
 .rs-auto-btn.is-rare { background: #3D8BFF; color: #000; }
 .rs-auto-btn.is-epic { background: #B04BFF; color: #000; }
 .rs-auto-btn.is-legendary { background: #FFC23D; color: #000; }

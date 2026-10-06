@@ -47,6 +47,7 @@ import {
 } from './reelPlan.js';
 import './RollScreen.css';
 import { useReduceMotion } from '../../lib/useReduceMotion';
+import { SEASON2, V3 } from '../../progress/season';
 
 registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
 
@@ -225,7 +226,11 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
   // AUTO (mockup): one button cycles OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF. From OFF it starts rolling; while on, a
   // tap only moves the target (the spin in flight is judged against the new one when it lands).
+  // v3 (SEASON2): AUTO ROLL is the R2 unlock (progression-v3.md; markRollShop.autoRoll gates the same door). Flag OFF:
+  // always open, as today.
+  const autoOpen = !SEASON2 || !V3.unlocks || V3.unlocks.featureOpen('autoRoll');
   const pressAuto = () => {
+    if (!autoOpen) { sndWordRejected(); return; }
     const next = nextAutoTarget(target);
     if (!next) { stopAuto(); return; }
     setTarget(next);
@@ -376,16 +381,17 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
         <div className="rs-opts">
           <button
             type="button"
-            className={`rs-auto-btn${target ? ` is-on is-${target}` : ''}`}
+            className={`rs-auto-btn${target ? ` is-on is-${target}` : ''}${autoOpen ? '' : ' is-locked'}`}
             aria-pressed={target != null}
-            aria-label={target ? `Auto roll until ${tierName(target)} or better — tap to change` : 'Auto roll off — tap to set a target'}
+            aria-disabled={autoOpen ? undefined : 'true'}
+            aria-label={!autoOpen ? 'Auto roll unlocks at rebirth 2' : target ? `Auto roll until ${tierName(target)} or better — tap to change` : 'Auto roll off — tap to set a target'}
             onClick={pressAuto}
             data-testid="roll-auto"
             data-target={target || 'off'}
           >
-            {target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
+            {!autoOpen ? 'AUTO · R2' : target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
           </button>
-          <div className="rs-auto-cap" aria-hidden="true">TAP TO SET TARGET</div>
+          <div className="rs-auto-cap" aria-hidden="true">{autoOpen ? 'TAP TO SET TARGET' : 'UNLOCKS AT REBIRTH 2'}</div>
           <label className="rs-pick rs-skip">
             <span aria-hidden="true">SKIP</span>
             <select
