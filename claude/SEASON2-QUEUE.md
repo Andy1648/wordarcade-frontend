@@ -185,3 +185,4 @@ Andy's decision: the FULL RESET is back ON. The progression is now FROZEN in cla
 6. When 1–4 are merged: write claude/FLIP-STEPS.md with the exact SQL files in order for Andy, and stop before the flip.
 STANDING RULES: re-read the checklist before every step; record result + PR # after each; resume after usage limits; never end the turn while steps remain; one heavy local job at a time, CI on GitHub; Claude never runs migrations.
 NOTE: progression-final-sim.py's __main__ uses NEED0=100/G=1.08 (a rejected tuning per the md); the FROZEN constants are the md's (400 × 1.06). The CI port uses the md's constants and reproduces the md's table.
+- FINAL STATUS (oct6 17:40): 1 → PR #233 (TYPE ANYTHING row gone entirely; REWARDS popup reserves its space) in CI. 2 → feat/progression-final BUILDING (026_progression_final.sql). 3 → feat/season2-reset-back BUILDING (restores 023 reset, removes #229 conversion). P9 partial work parked in ../p9a etc.
