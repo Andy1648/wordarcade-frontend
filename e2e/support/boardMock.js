@@ -5,6 +5,8 @@
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 import { decideSubmit, decideSubmitS2 } from '../../src/leaderboard/submitRules.js';
 import { decideRebirth, decideAscend } from '../../src/leaderboard/rebirthRules.js';
+import { convertRow } from '../../src/progress/v3/convert.js';
+import { s2WeekGains, compareWeekS2 } from '../../src/leaderboard/s2Board.js';
 
 // `caps` emulates supabase/migrations/005_letters_cjk.sql (STEP 51): lb_caps answers, lb_submit2
 // carries letters; the board ranks by REBIRTHS, then LEVEL, then words (017, Andy oct3 19:55). Without it the mock is the v1 DB (lb_caps 404s).
@@ -23,10 +25,31 @@ import { decideRebirth, decideAscend } from '../../src/leaderboard/rebirthRules.
 // `season2` emulates 022_season2_board.sql (PROGRESSION v3): lb_caps.season2 + econ2 13, lb_submit3 with p_econ 13 runs
 // the REAL season-2 write (submitRules.decideSubmitS2), lb_rebirth / lb_ascend see the row's econ (the econ-13 guard),
 // and public.leaderboard_s2 ranks ★ → rebirths → level.
-export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true, rules = false, econ = false, boardEcon = false, rebirth = null, season2 = false } = {}) {
+// `season2Convert` emulates 025_season2_convert.sql (THE CONVERSION, no reset): at mock start every season-1 row's
+// rebirths / stars convert by the REAL rule (v3/convert.js convertRow) into db.conv (profile id → { before, after,
+// seen }); lb_caps.season2_convert, lb_season2_conv (a late row converts once, lazily) and lb_season2_seen.
+// `s2Weekly` emulates 024_season2_weekly.sql: public.leaderboard_s2_weekly — season-2 rows ranked by ★ / rebirths /
+// levels GAINED this week (a row's week_* fields, or s2Board.s2WeekGains over its s2_week_* baseline). Off → that view
+// 404s like an unrun migration (the client then reads leaderboard_weekly filtered to econ 13).
+export async function mockBoard(page, seed = [], { caps = false, shared = null, weekly = false, selfReset = true, rules = false, econ = false, boardEcon = false, rebirth = null, season2 = false, season2Convert = false, s2Weekly = false } = {}) {
   // `shared` lets two pages / contexts (a "new device") see the same DB.
   const db = shared || { rows: seed.map((r) => ({ lifetime_letters: (r.lifetime_words || 0) * 5, ...r })), secrets: new Map(), saves: new Map() };
   const rows = db.rows;
+  // 025: the one-shot conversion of every season-1 row (rebirths + stars only), snapshot first
+  const convertOne = (pid) => {
+    if (!db.conv) db.conv = new Map();
+    if (db.conv.has(pid)) return;
+    const row = rows.find((r) => r.id === pid);
+    if (!row || row.econ === 13) return;
+    const before = { rebirths: row.rebirths || 0, stars: row.stars || 0 };
+    const after = convertRow(before);
+    db.conv.set(pid, { before, after, seen: false });
+    Object.assign(row, after);
+  };
+  if (season2Convert && !db.convRan) {
+    db.convRan = true;
+    for (const r of rows) convertOne(r.id);
+  }
   const secrets = db.secrets;
   const saves = db.saves; // 006_cloud_save.sql: secret's profile id → { blob, score }
   const calls = { claim: 0, submit: 0 };
@@ -49,7 +72,7 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
     try { body = req.postDataJSON(); } catch { body = null; }
     if (url.pathname.endsWith('/rpc/lb_caps')) {
       return caps
-        ? json(200, { letters: true, cjk: true, cloud: true, ...(weekly ? { weekly: true } : {}), ...(econ ? { econ: 10 } : {}), ...(boardEcon ? { board_econ: true } : {}), ...(rebirth ? { rebirth_rpc: true } : {}), ...(season2 ? { season2: true, econ2: 13 } : {}) })
+        ? json(200, { letters: true, cjk: true, cloud: true, ...(weekly ? { weekly: true } : {}), ...(econ ? { econ: 10 } : {}), ...(boardEcon ? { board_econ: true } : {}), ...(rebirth ? { rebirth_rpc: true } : {}), ...(season2 ? { season2: true, econ2: 13 } : {}), ...(season2Convert ? { season2_convert: true } : {}) })
         : json(404, { message: 'Could not find the function public.lb_caps' });
     }
     if (caps && (url.pathname.endsWith('/rpc/lb_save') || (econ && url.pathname.endsWith('/rpc/lb_save2')))) {
@@ -122,6 +145,22 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       if (out.entry) log.push(out.entry);
       db.rebirthLogs.set(pid, log);
       return json(200, out.result);
+    }
+    // 025: MY conversion (the UPDATE card) + the card's seen flag (the real rule)
+    if (caps && (url.pathname.endsWith('/rpc/lb_season2_conv') || url.pathname.endsWith('/rpc/lb_season2_seen'))) {
+      if (!season2Convert) return json(404, { code: 'PGRST202', message: 'Could not find the function' });
+      const pid = secrets.get(body.p_secret);
+      if (!pid) return json(400, { message: 'no_profile' });
+      convertOne(pid);
+      const c = db.conv.get(pid);
+      if (url.pathname.endsWith('/rpc/lb_season2_seen')) {
+        calls.season2Seen = (calls.season2Seen || 0) + 1;
+        if (c) c.seen = true;
+        return json(200, { ok: !!c });
+      }
+      calls.season2Conv = (calls.season2Conv || 0) + 1;
+      if (!c) return json(200, { found: false, ran: true });
+      return json(200, { found: true, rebirths_before: c.before.rebirths, stars_before: c.before.stars, rebirths: c.after.rebirths, stars: c.after.stars, seen: !!c.seen });
     }
     // 022: the season-2 board write (p_econ 13) — the real rule (submitRules.decideSubmitS2)
     if (caps && season2 && url.pathname.endsWith('/rpc/lb_submit3') && body.p_econ === 13) {
@@ -213,8 +252,20 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       });
       return route.fulfill({ status: 204, body: '' });
     }
+    if (season2 && s2Weekly && url.pathname.endsWith('/rest/v1/leaderboard_s2_weekly')) {
+      calls.s2Weekly = (calls.s2Weekly || 0) + 1;
+      const all = rows.filter((r) => r.econ === 13)
+        .map((r) => ({ ...r, stars: r.stars || 0, ...(r.week_stars != null || r.week_rebirths != null || r.week_levels != null ? {} : s2WeekGains(r)) }))
+        .filter((r) => (r.week_stars || 0) > 0 || (r.week_rebirths || 0) > 0 || (r.week_levels || 0) > 0 || (r.week_words || 0) > 0)
+        .sort(compareWeekS2)
+        .map((r, i) => ({ rank: i + 1, id: r.id, username: r.username, level: r.level, rebirths: r.rebirths, stars: r.stars, week_stars: r.week_stars || 0, week_rebirths: r.week_rebirths || 0, week_levels: r.week_levels || 0, week_words: r.week_words || 0 }));
+      const id = url.searchParams.get('id');
+      return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
+    }
     if (weekly && url.pathname.endsWith('/rest/v1/leaderboard_weekly')) {
-      const all = rows.filter((r) => (r.week_words || 0) > 0).slice()
+      // 021's view carries econ: `econ=eq.13` (the season-2 client's fallback before 024) keeps season-2 rows only
+      const econEq = /^eq\.(\d+)$/.exec(url.searchParams.get('econ') || '');
+      const all = rows.filter((r) => (r.week_words || 0) > 0 && (!econEq || r.econ === Number(econEq[1]))).slice()
         .sort((a, b) => b.week_words - a.week_words || b.level - a.level)
         .map((r, i) => ({ rank: i + 1, id: r.id, username: r.username, level: r.level, rebirths: r.rebirths, week_words: r.week_words }));
       const id = url.searchParams.get('id');

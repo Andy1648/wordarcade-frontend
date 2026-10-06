@@ -6,7 +6,7 @@
 // tab bar. COLLECTION and ACHIEVEMENTS used to be their own menu footer links + views; they were
 // consolidated in here (same kind of thing as records/progression/danger-zone) so the menu footer is
 // CREDITS-only again. The tab bodies live in CollectionScreen.jsx / AchievementsScreen.jsx.
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
 import './rarity/RarityFin.css';
 import { loadProgress, getRebirths, need } from '../progress/xp';
@@ -31,7 +31,30 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { flagOn } from '../lib/featureFlags';
 import { rebirthLadder } from '../progress/rebirthLadder';
 import { rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
-import { takeStatsTab } from '../lib/statsTab';
+import { peekStatsTab, clearStatsTab } from '../lib/statsTab';
+import OverlaySkeleton from './OverlaySkeleton';
+
+// P8 (SEASON2 only): the v2 STATS screen (Stats.dc.html — the TOTAL multiplier first, the chain, REPLAY), its own lazy
+// chunk. Its ALL TIME cell opens this live panel (records, collection, backup, reset) — and a deep link to a tab
+// (setStatsTab) opens the panel straight away. With the flag OFF the live panel below is untouched.
+const StatsV2 = lazy(() => import('./StatsV2.jsx'));
+
+export default function StatsScreen({ onBack }) {
+  // peek, not take: a discarded (interrupted) render must not eat the deep-linked tab — see lib/statsTab.js
+  const [initialTab] = useState(() => peekStatsTab());
+  useEffect(() => {
+    clearStatsTab(); // mounted for real: the deep link is spent
+  }, []);
+  const [full, setFull] = useState(() => !SEASON2 || !!initialTab);
+  if (!full) {
+    return (
+      <Suspense fallback={<OverlaySkeleton title="STATS" />}>
+        <StatsV2 onBack={onBack} onMore={() => setFull(true)} />
+      </Suspense>
+    );
+  }
+  return <StatsScreenLive onBack={onBack} initialTab={initialTab} />;
+}
 
 // TIER IDENTITY (Andy oct5): a ladder chip's rebirth count — BASE is R0, NOW is yours, NEXT is one more.
 const ladderRb = (id, rc) => (id === 'base' ? 0 : id === 'next' ? rc + 1 : rc);
@@ -116,7 +139,7 @@ async function resetAllProgress() {
   }
 }
 
-export default function StatsScreen({ onBack }) {
+function StatsScreenLive({ onBack, initialTab }) {
   useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel
   const overlayRef = useRef(null);
   const onBackRef = useRef(onBack);
@@ -155,7 +178,7 @@ export default function StatsScreen({ onBack }) {
     setRestoreMsg(res.error); // readable; existing progress untouched
   };
   // Active tab: STATS (default — the one the layout gate exercises) | COLLECTION | ACHIEVEMENTS.
-  const [tab, setTab] = useState(() => takeStatsTab() || 'stats');
+  const [tab, setTab] = useState(() => initialTab || 'stats');
   const activeLabel = TABS.find((t) => t.id === tab)?.label || 'STATS';
   // A11y: move focus into the dialog on open; Escape closes it (once on mount).
   useEffect(() => {

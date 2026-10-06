@@ -255,12 +255,28 @@ export const s2MapKey = (k) => (KEYSET.has(k) ? S2_PREFIX + String(k).slice(4) :
 export function patchStorage(target) {
   const P = target || (typeof Storage !== 'undefined' ? Storage.prototype : null);
   if (!P || P.__s2) return false;
+  const raw = {};
   for (const m of ['getItem', 'setItem', 'removeItem']) {
     const f = P[m];
+    raw[m] = f;
     P[m] = function s2(k, ...rest) {
       return f.call(this, s2MapKey(k), ...rest);
     };
   }
   Object.defineProperty(P, '__s2', { value: true });
+  Object.defineProperty(P, '__s2raw', { value: raw }); // the unmapped methods (the season-2 conversion reads the season-1 save, v3/convertLocal.js)
   return true;
+}
+/** `storage` with the RAW (unmapped) key methods — `taw.xp` means the season-1 key, not taw.s2.xp. */
+export function rawStorage(storage = globalThis.localStorage) {
+  const P = storage && (storage.__s2raw ? storage : Object.getPrototypeOf(storage));
+  const raw = (P && P.__s2raw) || null;
+  const call = (m, ...a) => (raw ? raw[m].call(storage, ...a) : storage[m](...a));
+  return {
+    getItem: (k) => call('getItem', k),
+    setItem: (k, v) => call('setItem', k, v),
+    removeItem: (k) => call('removeItem', k),
+    key: (i) => storage.key(i),
+    get length() { return storage.length; },
+  };
 }
