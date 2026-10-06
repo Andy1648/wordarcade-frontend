@@ -13,15 +13,18 @@
 //                     streak +4, achievements 40–200
 //
 // TUNING (frozen structure; only ±20% on these constants after a CI sim — see the PR body for before/after).
+// CI 10 h sim (loop-sim SIM_SEASON2, PR #214): at the spec's own 7 / 1.8 / 4 the median reached R10 in 3.75 h (spec 6.8 h)
+// — the real game adds MODE (CHAIN ×2), FUSE FRENZY, WB word weights and MARK rolls to the spec's bare formula. Tuned:
+// XP_BASE 7 → 8.4 (+20%), POWER_XP_STEP 1.8 → 1.65 (−8%), POWER_COST_STEP 4 → 4.8 (+20%). Gate, curve, ×2, ★ untouched.
 
-export const XP_BASE = 7; // XP per letter at P0 R0 ★0, no mark
-export const POWER_XP_STEP = 1.8; // × XP per letter per POWER
+export const XP_BASE = 8.4; // XP per letter at P0 R0 ★0, no mark — spec 7, CI-tuned +20% (PR #214)
+export const POWER_XP_STEP = 1.65; // × XP per letter per POWER — spec 1.8, CI-tuned −8%
 export const REBIRTH_STEP = 2; // × XP and wins per rebirth
 export const CURVE_A = 40; // XP for the next level = CURVE_A × √level
 export const WINS_BASE = 15; // wins for a 5-letter word at R0 ★0, MODE ×1, no mark
 export const WORD_REF = 5; // the reference word length (length / 5)
 export const POWER_COST_BASE = 100; // wins for P0 → P1
-export const POWER_COST_STEP = 4; // × price per POWER
+export const POWER_COST_STEP = 4.8; // × price per POWER — spec 4, CI-tuned +20%
 export const GATE_BASE = 100; // LV for R0 → R1
 export const GATE_GROWTH = 2.5; // × gate per rebirth
 export const REBIRTH_GEMS_PER_R = 7; // a rebirth to R pays 7 × R gems
@@ -49,7 +52,8 @@ export function powerXpMult(power) {
 }
 /** Wins to buy P → P+1 (standing at `power`): 100 × 4^P. */
 export function powerCost(power) {
-  return fin(POWER_COST_BASE * Math.pow(POWER_COST_STEP, int0(power)));
+  const v = POWER_COST_BASE * Math.pow(POWER_COST_STEP, int0(power));
+  return fin(v < 1e15 ? Math.round(v / 10) * 10 : v); // whole wins, to the nearest 10 (480, 2,300, 11,060 …)
 }
 /** Wins to REACH tier t (t ≥ 1) from t − 1 — the shop's keyTierCostAt shape. 0 for t ≤ 0. */
 export function powerCostAt(tier) {

@@ -52,14 +52,17 @@ test('the flag is ON and the season keeps its own save (taw.s2.*)', () => {
   assert.equal(mem.get('taw.rebirths'), undefined);
 });
 
-test('XP per letter = 7 × 1.8^POWER × 2^R × (1 + ★) × MARK', () => {
+test('XP per letter = XP_BASE × POWER_XP_STEP^POWER × 2^R × (1 + ★) × MARK (spec 7 × 1.8^P, CI-tuned)', () => {
+  const B = E.XP_BASE;
+  const K = E.POWER_XP_STEP;
+  assert.ok(Math.abs(B / 7 - 1) <= 0.2 && Math.abs(K / 1.8 - 1) <= 0.2 && Math.abs(E.POWER_COST_STEP / 4 - 1) <= 0.2, 'tuning stays within ±20% of the spec');
   reset();
-  assert.equal(X.levelXpPerLetter(0, 0, 1, 0), 7);
-  near(X.levelXpPerLetter(3, 2, 1, 0), 7 * 1.8 ** 3 * 4);
-  near(X.levelXpPerLetter(1, 1, 1.5, 0), 7 * 1.8 * 2 * 1.5);
+  assert.equal(X.levelXpPerLetter(0, 0, 1, 0), B);
+  near(X.levelXpPerLetter(3, 2, 1, 0), B * K ** 3 * 4);
+  near(X.levelXpPerLetter(1, 1, 1.5, 0), B * K * 2 * 1.5);
   ST3.saveStarsV3(2);
-  near(X.levelXpPerLetter(0, 0, 1, 0), 7 * 3);
-  near(E.xpPerLetter({ power: 2, rebirths: 3, stars: 4, mark: 1.1 }), 7 * 1.8 ** 2 * 8 * 5 * 1.1);
+  near(X.levelXpPerLetter(0, 0, 1, 0), B * 3);
+  near(E.xpPerLetter({ power: 2, rebirths: 3, stars: 4, mark: 1.1 }), B * K ** 2 * 8 * 5 * 1.1);
   assert.ok(Number.isFinite(X.levelXpPerLetter(5000, 5000, 1, 0)), 'finite at absurd tiers');
 });
 
@@ -90,7 +93,7 @@ test('XP for the next level = 40 × √level; a credit of any size is O(1) and e
   assert.equal(s.leveledUp, false);
 });
 
-test('WINS per word = 15 × length/5 × MODE × 2^R × (1 + ★) × MARK; POWER costs 100 × 4^P and buys ×1.8', () => {
+test('WINS per word = 15 × length/5 × MODE × 2^R × (1 + ★) × MARK; POWER costs 100 × STEP^P and buys ×POWER_XP_STEP', () => {
   reset();
   assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 15);
   assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 10, rebirthCount: 0 }), 30);
@@ -98,10 +101,10 @@ test('WINS per word = 15 × length/5 × MODE × 2^R × (1 + ★) × MARK; POWER 
   ST3.saveStarsV3(1);
   assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 30);
   assert.equal(W.perWordFactors({ mode: 'wordBomb', rebirthCount: 0 }).rebirth, 2, 'the receipt REBIRTH row carries (1 + ★)');
-  assert.deepEqual([0, 1, 2, 3].map((p) => X.keyTierCost(p)), [100, 400, 1600, 6400]);
-  near(X.keyXpMult(4), 1.8 ** 4);
+  assert.deepEqual([0, 1, 2, 3].map((p) => X.keyTierCost(p)), [0, 1, 2, 3].map((p) => Math.round((100 * E.POWER_COST_STEP ** p) / 10) * 10));
+  near(X.keyXpMult(4), E.POWER_XP_STEP ** 4);
   reset();
-  W.saveWins(500);
+  W.saveWins(100 + X.keyTierCost(1));
   const r1 = SH.buyKeyPower();
   const r2 = SH.buyKeyPower();
   assert.deepEqual([r1.ok, r1.tier, r2.ok, r2.tier], [true, 1, true, 2]);
@@ -143,7 +146,7 @@ test('ASCEND at R10: rebirths, levels and POWER reset; ★ += R − 9 — and �
   assert.deepEqual(a, { ok: true, stars: 3, added: 3 });
   assert.deepEqual([X.getRebirths(), X.getKeyTier(), X.loadProgress().level], [0, 0, 1]);
   assert.equal(ST3.getStarsV3(), 3);
-  assert.equal(X.levelXpPerLetter(0, 0, 1, 0), 7 * 4);
+  assert.equal(X.levelXpPerLetter(0, 0, 1, 0), E.XP_BASE * 4);
   // a server-granted ascension lands on the server's ★ total
   X.saveRebirths(10);
   assert.equal(S.V3.hooks.ascend(9).stars, 9);
