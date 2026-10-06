@@ -32,9 +32,9 @@
 
    BUNGEE RULES (also enforced)
      ALL-CAPS only - never below --fs-panel (28px) - letter-spacing -0.02em at >=48px
-     - line-height 0.98 - never for strings over 3 words. Use the .t-display helper.
+     - line-height 0.98 - never for strings over 3 words. (See TYPE HELPERS below.)
    SPACE MONO LABELS
-     caps + 0.08em tracking. Use the .t-label helper.
+     caps + 0.08em tracking. (See TYPE HELPERS below.)
    ============================================================================ */
 
 :root {
@@ -109,51 +109,10 @@
   --c-ink-paper: #1a1410;     /* near-black for the SAT cream paper - 15.18:1 on #F0EAD9 */
 }
 
-/* ============================================================================
-   TYPE HELPERS - the only sanctioned way to set Bungee or a Space Mono label.
-   ============================================================================ */
-
-/* Bungee display type. ALL-CAPS, tight tracking, 0.98 line-height. Never apply to
-   a string longer than 3 words and never below --fs-panel. */
-.t-display {
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  line-height: 0.98;
-  letter-spacing: 0;
-}
-/* -0.02em tracking kicks in at >=48px, where Bungee's default spacing reads loose. */
-.t-display.t-hero,
-.t-display.t-h1 {
-  letter-spacing: -0.02em;
-}
-.t-hero { font-size: var(--fs-hero); }
-.t-h1 { font-size: var(--fs-h1); }
-.t-h2 { font-size: var(--fs-h2); }
-.t-panel { font-size: var(--fs-panel); }
-.t-body { font-size: var(--fs-body); }
-
-/* Space Mono label. Caps + 0.08em tracking, held at the 13px floor. */
-.t-label {
-  font-family: 'Space Mono', monospace;
-  font-size: var(--fs-label);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-  color: var(--v-ink-dim);
-}
-.t-micro {
-  font-family: 'Space Mono', monospace;
-  font-size: var(--fs-micro);
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-}
-
-/* Any tappable thing: the 44x44 / 16px floors in one place. */
-.t-tappable {
-  min-height: var(--tap-min);
-  min-width: var(--tap-min);
-  font-size: var(--fs-body);
-}
+/* TYPE HELPERS (.t-display / .t-hero … .t-label / .t-micro / .t-tappable) were REMOVED (P7, payload ratchet): no
+   component ever used them — every screen sets its type through the --fs-* tokens above. The rules they encoded still
+   hold: Bungee is ALL-CAPS, >= --fs-panel, line-height 0.98, -0.02em at >= 48px; a Space Mono label is caps + 0.08em
+   at --fs-label; a tappable thing is >= --tap-min with >= --fs-body text. */
 
 /* BIG SCREENS (fine-tune oct2: at 1920x1080 every overlay and solo/race screen rendered at its 1366
    size — panels at 35–45% of the width with 13px labels, the rest of the screen empty). The scale

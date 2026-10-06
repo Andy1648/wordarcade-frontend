@@ -22,6 +22,7 @@
 import { useEffect, useState } from 'react';
 import { subscribeWins } from '../progress/wins';
 import { formatNum } from '../format';
+import { SEASON2 } from '../progress/season';
 import './WinsCreditToast.css';
 
 const MAX_ON_SCREEN = 3;
@@ -34,7 +35,9 @@ export default function WinsCreditToast() {
     const off = subscribeWins((entry) => {
       // Per-word money is already on screen continuously in the pill; announcing it again per word
       // would be noise on top of the thing it duplicates.
-      if (!entry || entry.kind !== 'bonus' || entry.amount <= 0) return;
+      // P7 POPUP PURGE (SEASON2 only): no "claimed wins" / bonus toasts at all — a gain is motion on the pill, a claim
+      // lives in ACHIEVEMENTS, and every credited win is still its own line on the run's receipt. Flag OFF: unchanged.
+      if (SEASON2 || !entry || entry.kind !== 'bonus' || entry.amount <= 0) return;
       setItems((prev) => [...prev, entry].slice(-MAX_ON_SCREEN));
       const id = entry.id;
       setTimeout(() => setItems((prev) => prev.filter((e) => e.id !== id)), HOLD_MS);

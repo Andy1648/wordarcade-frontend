@@ -33,6 +33,7 @@ import {
 import { nameVerdict } from './nameFilter.js';
 import PodiumIcon from '../components/PodiumIcon';
 import './ClaimPrompt.css';
+import { SEASON2 } from '../progress/season.js';
 
 const VERDICT_COPY = {
   shape: '3–16 LETTERS, NUMBERS OR _',
@@ -50,7 +51,12 @@ const ERROR_COPY = {
   unavailable: 'THE BOARD IS OFFLINE RIGHT NOW.',
 };
 
-export default function ClaimPrompt() {
+// P7 POPUP PURGE (SEASON2 only): no claim sticker on the end screen — a name is claimed on the LEADERBOARD itself. Flag OFF: unchanged.
+export default function ClaimPrompt(props) {
+  return SEASON2 ? null : <ClaimPromptLive {...props} />;
+}
+
+function ClaimPromptLive() {
   const [rank, setRank] = useState(null);
   const [phase, setPhase] = useState('hidden'); // hidden | offer | form | done | dismissed
   const [draft, setDraft] = useState('');

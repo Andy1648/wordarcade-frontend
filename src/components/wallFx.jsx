@@ -6,6 +6,7 @@ import { sfx } from '../juice/audio';
 import { formatNum } from '../format';
 import { WALL_LEVELS_PER_TIER } from '../progress/wallTier';
 import { WALL_FX_MS } from './WallScene';
+import { SEASON2 } from '../progress/season';
 import './wallFx.css';
 
 export function landSound() {
@@ -115,8 +116,9 @@ export function runWallFx(pane, a, b, { reduce = false, variant = WALL_FX } = {}
 }
 
 /** The level stamp that names the moment — portalled above the (stepped-back) menu. Finite. */
+// P7 POPUP PURGE (SEASON2 only): no LV N slam over the menu — the wall's own re-form is the moment. Flag OFF: unchanged.
 export function WallStamp({ fx }) {
-  if (!fx) return null;
+  if (!fx || SEASON2) return null;
   return createPortal(
     <div className="wall-stamp" key={fx.key} aria-live="polite">
       <div className="wall-stamp-lv">LV {formatNum(fx.to * WALL_LEVELS_PER_TIER)}</div>

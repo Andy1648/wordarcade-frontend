@@ -12,6 +12,7 @@ import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult } from '../progress/xp';
 import { reduceMotion } from '../lib/reduceMotion';
+import { V3 } from '../progress/season'; // P7 (SEASON2 only): V3.fx turns the centre cards below into edge toasts
 
 // MenuXpBar — the SPLASH's mini level bar ("LV n" + a bare track). The menu's bar is the v2 kit's
 // KitXpBar now (Homepage); this is all that is left of the old dense bar. lib/barPlan via useLevelBar:
@@ -386,7 +387,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     }
   }
 
-  useImperativeHandle(ref, () => ({
+  // P7 POPUP PURGE (SEASON2 only): V3.fx (v3/notify.js wrapFx, the lazy v3 chunk) swaps every CENTRE card on this
+  // handle (LEVEL N, NEW FRAME, REBIRTH, +N WINS, the wins hint, mark/automation) for an edge toast or nothing.
+  // Flag OFF: V3.fx is never installed, the handle is exactly as before.
+  useImperativeHandle(ref, () => (V3.fx || Object)({
     letterPop(letter, plusText, scale = 1, colour = '#2EFFE0', feelTier = 0) {
       const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
