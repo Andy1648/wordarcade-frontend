@@ -717,7 +717,7 @@ function LevelUpSheet() {
   return (
     <div className="kg-sheet kg-sheet--lu" id="levelup">
       <SheetHead title="LEVEL + RANK UP" tone="yellow" tag="KIT 06" right={<><span className="kg-chip">EDGES ONLY · NO CENTER POPUPS</span><span className="kg-chip">RANK = STATUS · NO REWARDS</span><span className="kg-chip">TRANSFORM + OPACITY</span></>} />
-      <EdgePanel num="01" title="XP BAR LEVEL-UP" tone="yellow" extra="IN-RUN · LIVES ON THE BAR" right={<><span className="kg-out">A · FILL TO CAP</span><span className="kg-out">B · WHITE SWEEP + WRAP</span><span className="kg-out">C · LV TICK BUMP</span><span className="kg-out">D · MULTI = CHIP, 3 WRAPS MAX</span></>} className="kg-x">
+      <EdgePanel num="01" title="XP BAR LEVEL-UP" tone="yellow" extra="IN-RUN · LIVES ON THE BAR" right={<><span className="kg-out">A · FILL TO CAP</span><span className="kg-out">B · WHITE SWEEP + WRAP</span><span className="kg-out">C · LV TICK BUMP</span><span className="kg-out">D · MULTI = +N LV CHIP</span></>} className="kg-x">
         <div className="kg-x-bar" data-testid="lu-xp-wrap">
           <KitXpBar level={xp.lv} frac={xp.fr} need={Math.round(800 * Math.pow(xp.lv + 1, 0.75))} onClimbDone={onClimbDone} className="kg-xp" />
         </div>
