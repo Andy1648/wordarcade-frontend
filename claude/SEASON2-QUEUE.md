@@ -109,3 +109,4 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - #220 ACHIEVEMENTS: green; update-branch + merge after #219.
 - #215 MENU: CI red (FUSE viewport-integrity/game-fill @1366/1280, season2.spec @1280) — menu agent fixing (only heavy local job); merge after the fix goes green.
 - P6: paused in ../p6roll (resume after the #215 fix frees the machine). Then P7, P8, P4 merge, P9, P10.
+- ANDY (oct6): #215 menu TIMEBOXED to 08:13 local — if still red then: PARK it (PR stays open, reason noted here), menu ships LAST. #219 / #220 merge as soon as green (independent of #215). Order now: P6 (resumed) → P7 → P8 → P4 reset code → P9 → P10 → #215.
