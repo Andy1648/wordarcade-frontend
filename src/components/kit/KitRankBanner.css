@@ -52,21 +52,17 @@
   align-items: center;
   gap: 14px;
 }
-.krb-plate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 0 12px;
-  background: var(--krb-c);
-  border: var(--k-ink-m) solid var(--k-ink);
-  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
-  color: var(--krb-t);
-  white-space: nowrap;
-  line-height: 1;
+.krb-plate.is-new { transform-origin: 50% 50%; }
+.krb-sheen {
+  position: absolute;
+  left: 0;
+  top: -10px;
+  width: 60px;
+  height: 120px;
+  background: rgba(255, 255, 255, .22);
+  transform: translateX(-120%) skewX(-20deg);
+  pointer-events: none;
 }
-.krb-plate.is-old { height: 44px; min-width: 120px; font-size: var(--fs-k13); }
-.krb-plate.is-new { height: 56px; min-width: 150px; font-size: var(--fs-k16); transform: skewX(-6deg); }
 .krb-arrow { flex: none; }
 .krb-sr {
   position: absolute;
@@ -78,7 +74,6 @@
 }
 
 @media (max-width: 420px) {
-  .krb-row { gap: 8px; }
-  .krb-plate.is-old { min-width: 0; padding: 0 8px; }
-  .krb-plate.is-new { min-width: 0; padding: 0 10px; }
+  .krb-row { gap: 6px; }
+  .krb-arrow { width: 28px; }
 }

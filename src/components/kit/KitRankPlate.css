@@ -1,0 +1,28 @@
+/* KitRankPlate.css — the 16 v3 rank plates (KitLevelUp.dc.html 03). The art is the SVG; this only places the name. */
+.krp {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+}
+.krp-art { position: absolute; left: 0; top: 0; overflow: visible; }
+.krp-sheen { transform: translateX(0) skewX(-20deg); }
+.krp-name {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 20%;
+  height: 46%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--krp-txt, #fff);
+}
+.krp-name.is-stroked { -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.krp-m .krp-name { font-size: 14px; }
+.krp-l .krp-name { font-size: 16px; }

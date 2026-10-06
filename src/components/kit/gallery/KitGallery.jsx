@@ -34,7 +34,13 @@ import {
   KitTimerBar,
   KitTimerChip,
   KitGoalBar,
+  KitRankPlate,
+  RANK_PLATES,
+  KitRankBannerHost,
+  KitEdgeToastHost,
+  createBannerStore,
 } from '../index.js';
+import { UNLOCK_TOAST } from '../../../progress/v3/notify.js';
 import { useReduceMotion } from '../../../lib/useReduceMotion.js';
 import { setReduceMotion } from '../../../lib/reduceMotion.js';
 import { formatNum } from '../../../format.js';
@@ -659,6 +665,97 @@ function BarsSheet() {
   );
 }
 
+// ======================================================================== LEVEL + RANK UP (KitLevelUp.dc.html, P9a)
+const LU_UNLOCKS = [
+  { code: 'R1', label: 'ROLL', id: 'rollScreen' },
+  { code: 'R2', label: 'AUTO ROLL', id: 'autoRoll' },
+  { code: 'R3', label: 'BOOST SLOT', id: 'boost2' },
+  { code: 'R5', label: 'MARK SLOT', id: 'mark2' },
+  { code: 'R7', label: 'LUCK ×1.25', id: 'luck' },
+  { code: 'R10', label: 'ASCEND', id: 'ascend' },
+];
+const luBanners = createBannerStore({ lifeMs: 2500, leaveMs: 0, max: 1 });
+const luToasts = createBannerStore({ lifeMs: 2400, leaveMs: 0, max: 3 });
+
+function LevelUpSheet() {
+  const [xp, setXp] = useState({ lv: 1243100, fr: 0.62 });
+  const [last, setLast] = useState('-');
+  const startT = useRef(null);
+  const onClimbDone = useCallback((l, f, ms) => {
+    if (startT.current === null) return;
+    setLast(`+${formatNum(l - startT.current)} LV IN ${(ms / 1000).toFixed(2)}S`);
+    startT.current = null;
+  }, []);
+  const addLv = (n) => {
+    if (startT.current === null) startT.current = xp.lv;
+    setXp((s) => ({ lv: s.lv + n, fr: s.fr }));
+  };
+  const [rk, setRk] = useState(2);
+  const [un, setUn] = useState(1);
+  const bannerFor = (r) => ({ from: { name: RANK_PLATES[r - 1].name, req: RANK_PLATES[r - 1].req }, to: { name: RANK_PLATES[r].name, req: RANK_PLATES[r].req } });
+  const toastFor = (i) => {
+    const u = LU_UNLOCKS[i];
+    return { code: u.code, label: u.label, ...UNLOCK_TOAST[u.id] };
+  };
+  useEffect(() => {
+    const a = setTimeout(() => luBanners.push(bannerFor(2)), 500);
+    const b = setTimeout(() => luToasts.push(toastFor(1)), 1100);
+    return () => {
+      clearTimeout(a);
+      clearTimeout(b);
+    };
+  }, []);
+  const nextRank = () => {
+    const r = rk + 1 > 15 ? 1 : rk + 1;
+    setRk(r);
+    luBanners.push(bannerFor(r));
+  };
+  const pickUnlock = (i) => {
+    setUn(i);
+    luToasts.push(toastFor(i));
+  };
+  return (
+    <div className="kg-sheet kg-sheet--lu" id="levelup">
+      <SheetHead title="LEVEL + RANK UP" tone="yellow" tag="KIT 06" right={<><span className="kg-chip">EDGES ONLY · NO CENTER POPUPS</span><span className="kg-chip">RANK = STATUS · NO REWARDS</span><span className="kg-chip">TRANSFORM + OPACITY</span></>} />
+      <EdgePanel num="01" title="XP BAR LEVEL-UP" tone="yellow" extra="IN-RUN · LIVES ON THE BAR" right={<><span className="kg-out">A · FILL TO CAP</span><span className="kg-out">B · WHITE SWEEP + WRAP</span><span className="kg-out">C · LV TICK BUMP</span><span className="kg-out">D · MULTI = CHIP, 3 WRAPS MAX</span></>} className="kg-x">
+        <div className="kg-x-bar" data-testid="lu-xp-wrap">
+          <KitXpBar level={xp.lv} frac={xp.fr} need={Math.round(800 * Math.pow(xp.lv + 1, 0.75))} onClimbDone={onClimbDone} className="kg-xp" />
+        </div>
+        <div className="kg-x-foot">
+          <div className="kg-cap">LAST <span className="kg-c-cyan" data-testid="lu-xp-last">{last}</span></div>
+          <div className="kg-x-btns">
+            <button type="button" className="kg-btn kg-btn--big kg-bg-yellow" onClick={() => addLv(1)}>+1 LV</button>
+            <button type="button" className="kg-btn kg-btn--big kg-bg-cyan" onClick={() => addLv(37)}>+37 LV</button>
+          </div>
+        </div>
+      </EdgePanel>
+      <div className="kg-lu-grid">
+        <EdgePanel num="02" title="RANK-UP BANNER" tone="purple" extra="0.5S IN · 1.6S HOLD · 0.4S OUT" right={<button type="button" className="kg-btn kg-btn--sm kg-bg-yellow" onClick={nextRank}>NEXT RANK</button>}>
+          <div className="kg-lu-screen" data-testid="lu-banner-screen">
+            <KitRankBannerHost store={luBanners} contained />
+            <div className="kg-lu-ghost">GAME STAYS CLEAR</div>
+          </div>
+        </EdgePanel>
+        <EdgePanel num="04" title="UNLOCK TOAST" tone="cyan" extra="RIGHT EDGE · 2.4S · STACKS DOWN" right={<>{LU_UNLOCKS.map((u, i) => <button key={u.code} type="button" className={`kg-btn kg-btn--sm ${i === un ? 'kg-bg-cyan' : 'kg-btn--dark'}`} onClick={() => pickUnlock(i)}>{u.code}</button>)}</>}>
+          <div className="kg-lu-screen kg-lu-screen--toast" data-testid="lu-toast-screen">
+            <div className="kg-lu-toasthost"><KitEdgeToastHost store={luToasts} contained /></div>
+          </div>
+        </EdgePanel>
+      </div>
+      <EdgePanel num="03" title="RANK PLATES" tone="hot" extra="NAME BADGES · SHAPE + TRIM ESCALATE · ★ TIERS SHIMMER" right={<><span className="kg-out">R0-R10 REBIRTH</span><span className="kg-out kg-c-yellow">★ ASCENSION</span></>}>
+        <div className="kg-lu-plates" data-testid="lu-plates">
+          {RANK_PLATES.map((p) => (
+            <div key={p.req} className="kg-lu-plate">
+              <KitRankPlate rank={p.req} w={156} />
+              <div className="kg-lu-pcap"><span className="kg-lu-pcode" style={{ color: p.c1 }}>{p.req}</span>{p.cap}</div>
+            </div>
+          ))}
+        </div>
+      </EdgePanel>
+    </div>
+  );
+}
+
 // ======================================================================== ICONS
 function IconsSheet() {
   return (
@@ -722,12 +819,14 @@ export default function KitGallery() {
         <a href="#buttons">BUTTONS</a>
         <a href="#bars">BARS</a>
         <a href="#icons">ICONS</a>
+        <a href="#levelup">LEVEL UP</a>
         <span className="kg-nav-rm" data-testid="kit-rm-state">REDUCE MOTION {rm ? 'ON' : 'OFF'}</span>
       </nav>
       {show('buttons') && <ButtonsSheet rm={rm} />}
       {show('currency') && <CurrencySheet />}
       {show('bars') && <BarsSheet />}
       {show('icons') && <IconsSheet />}
+      {show('levelup') && <LevelUpSheet />}
     </main>
   );
 }

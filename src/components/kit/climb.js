@@ -21,13 +21,36 @@ export const CLIMB_PLAN_MS = 950;
 const clamp01 = (f) => (f > 0 ? Math.min(1, f) : 0);
 const lvOf = (l) => (Number.isFinite(l) && l >= 1 ? Math.floor(l) : 1);
 
-/** barPlan's plan, compressed so the whole climb fits in maxMs. Same shape as planBar's result. */
-export function planClimb(from, to, { maxMs = CLIMB_MAX_MS } = {}) {
-  const plan = planBar(from, to);
-  if (plan.drop || plan.steps.length === 0 || plan.totalMs <= maxMs) return plan;
-  const k = maxMs / plan.totalMs;
-  const steps = plan.steps.map((s) => ({ ...s, ms: Math.floor(s.ms * k * 1000) / 1000 }));
-  const totalMs = steps.reduce((a, s) => a + s.ms, 0);
+// P9a (KitLevelUp.dc.html 01 "D · MULTI = CHIP, 3 WRAPS MAX"): a multi-level gain WRAPS the bar at most MAX_WRAPS
+// times — each wrap a WRAP_MS fill-to-cap + white sweep, the LV numeral ticking through near-even chunks that sum to
+// the real gain — then fills to the real fraction. The "+N LV" chip (KitXpBar) carries the count.
+export const MAX_WRAPS = 3;
+export const WRAP_MS = 240;
+
+/** barPlan's plan, regrouped to ≤ MAX_WRAPS wraps of WRAP_MS, then compressed so the whole climb fits in maxMs. */
+export function planClimb(from, to, { maxMs = CLIMB_MAX_MS, maxWraps = MAX_WRAPS, wrapMs = WRAP_MS } = {}) {
+  const raw = planBar(from, to);
+  if (raw.drop || raw.steps.length === 0) return raw;
+  const flashes = raw.steps.filter((s) => s.kind === 'flash');
+  let steps = raw.steps;
+  if (flashes.length) {
+    const n = flashes.reduce((a, s) => a + s.levels, 0);
+    const count = Math.min(maxWraps, n);
+    const out = [];
+    let level = flashes[0].level;
+    for (let i = 0; i < count; i += 1) {
+      const levels = Math.floor(n / count) + (i < n % count ? 1 : 0);
+      out.push({ kind: 'flash', level, levels, fromFrac: i === 0 ? flashes[0].fromFrac : 0, toFrac: 1, ms: wrapMs });
+      level += levels;
+    }
+    steps = [...out, ...raw.steps.filter((s) => s.kind !== 'flash')];
+  }
+  let totalMs = steps.reduce((a, s) => a + s.ms, 0);
+  if (totalMs > maxMs) {
+    const k = maxMs / totalMs;
+    steps = steps.map((s) => ({ ...s, ms: Math.floor(s.ms * k * 1000) / 1000 }));
+    totalMs = steps.reduce((a, s) => a + s.ms, 0);
+  }
   return { steps, totalMs, drop: false };
 }
 

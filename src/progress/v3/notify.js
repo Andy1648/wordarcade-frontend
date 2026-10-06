@@ -23,8 +23,8 @@ export const UNLOCKS_SHOWN_KEY = `${S2_PREFIX}unlocksShown`; // the unlock ids a
 export const UNLOCK_TOAST = {
   rollScreen: { tile: '#FFC23D', icon: 'roll' },
   autoRoll: { tile: '#2EFFE0', icon: 'roll' },
-  boost2: { tile: '#FF3D7F', icon: 'boost' },
-  mark2: { tile: '#B04BFF', icon: 'index' },
+  boost2: { tile: '#FF3D7F', icon: 'boost', badge: '2' },
+  mark2: { tile: '#B04BFF', icon: 'index', badge: '2' },
   luck: { tile: '#12A99A', icon: 'luck' },
   ascend: { tile: '#FFE94A', icon: 'ascend' },
 };

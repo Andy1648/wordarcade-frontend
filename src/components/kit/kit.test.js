@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHoldConfirm, HOLD_MS, HOLD_SHAKE_AT_MS } from './holdConfirm.js';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS, easeOutQuart } from './countTween.js';
-import { planClimb, createClimbPlayer, CLIMB_MAX_MS } from './climb.js';
+import { planClimb, createClimbPlayer, CLIMB_MAX_MS, WRAP_MS } from './climb.js';
 import { planBar } from '../../lib/barPlan.js';
 import { createBannerStore, BANNER_MS, BANNER_LEAVE_MS } from './bannerStore.js';
 
@@ -159,10 +159,19 @@ test('climb: every multi-level climb fits in 1 s (barPlan alone overruns at 10+ 
   }
 });
 
-test('climb: short climbs keep barPlan timing untouched', () => {
-  const raw = planBar({ level: 3, frac: 0.1 }, { level: 5, frac: 0.4 });
-  const k = planClimb({ level: 3, frac: 0.1 }, { level: 5, frac: 0.4 });
-  assert.deepEqual(k, raw);
+test('climb: a multi-level gain wraps at most 3 times (KitLevelUp "3 WRAPS MAX"), chunks sum to the gain', () => {
+  for (const n of [1, 2, 3, 4, 37, 500]) {
+    const p = planClimb({ level: 3, frac: 0.1 }, { level: 3 + n, frac: 0.4 });
+    const flashes = p.steps.filter((s) => s.kind === 'flash');
+    assert.equal(flashes.length, Math.min(3, n), `+${n} → ${flashes.length} wraps`);
+    assert.equal(flashes.reduce((a, s) => a + s.levels, 0), n);
+    assert.equal(flashes[0].fromFrac, 0.1, 'the first wrap fills from where the bar is');
+    for (const f of flashes.slice(1)) assert.equal(f.fromFrac, 0);
+    assert.deepEqual(p.steps[p.steps.length - 1], { kind: 'fill', level: 3 + n, fromFrac: 0, toFrac: 0.4, ms: 200 });
+  }
+  const one = planClimb({ level: 3, frac: 0.1 }, { level: 4, frac: 0.4 });
+  assert.equal(one.steps[0].ms, WRAP_MS, 'one wrap at the wrap pace');
+  assert.deepEqual(planClimb({ level: 3, frac: 0.1 }, { level: 3, frac: 0.4 }), planBar({ level: 3, frac: 0.1 }, { level: 3, frac: 0.4 }), 'a same-level gain is barPlan untouched');
 });
 
 test('climb: the player lands exactly on the target within 1 s and reports each level', () => {
