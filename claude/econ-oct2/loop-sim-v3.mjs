@@ -234,7 +234,8 @@ function makeSimFlow(S, statsNow) {
 
 // ----------------------------------------------------------------------------- ONE BOT
 const mainValue = (id) => (id ? MR.mainMultOf(id) : 1);
-async function simulate(skill) {
+async function simulate(skill, opts = {}) {
+  // opts (the --board scenario): { hours, ascend, start: a converted season-2 state, trace: [] (menu-return samples) }
   globalThis.localStorage = makeStore();
   SEASON.V3.hooks.patchStorage(globalThis.localStorage); // the season's own keys (taw.s2.*), as install maps them
   SIM_NOW = T0;
@@ -248,7 +249,9 @@ async function simulate(skill) {
   const rng = LUCK.mulberry32(1648 + seed * 7919);
   const rollRng = LUCK.mulberry32(77 + seed * 131);
   const V = makeVocab(skill.vocab);
-  const totalMin = HOURS * 60;
+  const totalMin = (opts.hours ?? HOURS) * 60;
+  const ascendPolicy = opts.ascend ?? ASCEND;
+  const trace = Array.isArray(opts.trace) ? opts.trace : null;
   const dt = 1 / skill.wpm;
   const lettersPerWord = skill.lpm / skill.wpm;
 
@@ -277,8 +280,27 @@ async function simulate(skill) {
   const srv = makeSimServer();
   const flow = makeSimFlow(srv, () => ({ level: lv(), rebirths: XP.getRebirths(), words, letters }));
   const spam = { calls: 0, ok: 0, replaysSent: 0 };
+  // --board: start from a CONVERTED season-1 save (v3/convert.js) — kept level, R ≤ 10, ★, POWER, the capped wallet,
+  // kept gems (spent on rolls at the first menu return, standing in for the player's kept marks too); the server row
+  // holds the same rebirths / ★ (025 converted it) and is already season 2 (its first season-2 write).
+  const start = opts.start || null;
+  if (start) {
+    XP.saveRebirths(start.rebirths);
+    STORE.saveStarsV3(start.stars);
+    XP.saveKeyTier(start.power);
+    XP.saveProgress({ level: start.level, frac: 0 });
+    WINS.saveWins(start.wins);
+    if (start.gems > 0) GEMS.grantGems(start.gems, 'start');
+    srv.row = { ...srv.row, level: start.level, rebirths: start.rebirths, stars: start.stars, econ: 13, submitted_at: SIM_NOW - 3600e3 };
+  }
+  let firstRebirthMin = null;
+  let firstAscendMin = null;
+  const sample = (a, r, l) => { if (trace) trace.push({ t: +minute.toFixed(3), a, r, l }); };
+  sample(0, XP.getRebirths(), lv());
 
   const noteRebirth = (rc, at) => {
+    if (firstRebirthMin == null) firstRebirthMin = +minute.toFixed(2);
+    sample(ascends, rc, lv());
     runs.push({ rc, min: +(minute - runT0).toFixed(2), at: +minute.toFixed(2), fromLevel: at, power: XP.getKeyTier() });
     runT0 = minute;
     if (firstR[rc] == null) firstR[rc] = +minute.toFixed(2);
@@ -310,6 +332,7 @@ async function simulate(skill) {
     }
   }
   async function menuReturn() {
+    sample(ascends, XP.getRebirths(), lv());
     // 1. ACHIEVEMENTS: claim every ready tier (gems)
     for (let guard = 0; guard < 50; guard++) {
       const ready = ACH.achievementsV3().filter((r) => r.ready);
@@ -323,9 +346,14 @@ async function simulate(skill) {
       if (!r.ok) break;
       noteRebirth(r.rc, at);
     }
-    if (ASCEND && XP.getRebirths() >= V3.ASCEND_AT) {
+    if (ascendPolicy && XP.getRebirths() >= V3.ASCEND_AT) {
       const a = await flow.performAscend();
-      if (a.ok) { ascends += 1; runT0 = minute; }
+      if (a.ok) {
+        ascends += 1;
+        runT0 = minute;
+        if (firstAscendMin == null) firstAscendMin = +minute.toFixed(2);
+        sample(ascends, XP.getRebirths(), lv());
+      }
     }
     if (skill.spam && XP.getRebirths() < V3.ASCEND_AT) {
       // (below R10 only: at R10 the honest bots HOLD by policy, so a legit gate-passing rebirth there is not a spam win)
@@ -406,12 +434,13 @@ async function simulate(skill) {
     }
   }
   for (const T of PACE_CHECKS) if (rbAt[T] == null && totalMin >= T) rbAt[T] = XP.getRebirths();
+  sample(ascends, XP.getRebirths(), lv());
   gemsOff();
   winsOff();
   GEMS.setGemRng(null);
   return {
     skill: skill.id, lpm: skill.lpm, wpm: skill.wpm, words, letters, minutes: totalMin,
-    firstR, rbAt, powerAt, runs, lv10h, ascends,
+    firstR, rbAt, powerAt, runs, lv10h, ascends, firstRebirthMin, firstAscendMin,
     final: { level: lv(), rebirths: XP.getRebirths(), power: XP.getKeyTier(), stars: STORE.getStarsV3(), wins: WINS.getWins(), gems: GEMS.getGems(), rank: RANKS.liveRankV3().name, rolls, achGems, achClaims, achTiers: ACH.tierCountsV3(), mark: MR.wornMarkId(), mark2: STORE.mark2Id(), markMain: mainValue(MR.wornMarkId()) },
     winsBy: Object.fromEntries(Object.entries(winsBy).sort((a, b) => b[1] - a[1])),
     gems: { byReason: gemsBy, perMin: +(Object.values(gemsBy).reduce((a, b) => a + b, 0) / totalMin).toFixed(2) },
@@ -451,6 +480,199 @@ async function simulateMasher(hours) {
 // ----------------------------------------------------------------------------- RUN
 const fmtMin = (m) => (m == null ? '—' : m >= 60 ? `${(m / 60).toFixed(2)} h` : `${m.toFixed(1)} min`);
 const fmtLv = (n) => (n == null ? '—' : n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(0)}K` : String(n));
+// ----------------------------------------------------------------------------- BOARD (--board): THE SEASON 2 CONVERSION
+// Andy oct6: NO RESET — at the flip every season-1 save CONVERTS (src/progress/v3/convert.js): levels / wins / gems /
+// marks kept, rebirths ≤ 10, the rebirths above 10 → ★, KEY tier → POWER. HARD RULE, on every REAL board row
+// (claude/econ-oct2/board-snapshot-oct6.json — the live board, oct6) after the conversion:
+//   (a) PACE ≤ 2× the median v3 player's. DEFINITION: the MEDIAN CLOCK M(asc, R, LV) = the minutes of play the median
+//       fresh v3 bot (100 letters/min · 14 words/min, ascending at R10, same dice) needs to first stand at that ascension
+//       count, rebirth count and level (linear in level between its menu-return samples; a level past the median's in
+//       that leg counts as the leg's end). A converted bot (median skill) plays 2 h from its converted state; its pace =
+//       (M(end) − M(start)) / 120 min — how many minutes of the median's own climb it covers per minute played. The
+//       median itself is 1.00 by construction. A converted bot that ends past the median's horizon fails.
+//   (b) NOT STUCK: its next rebirth (for an R10 row: ascend, then the first rebirth after it) inside those 2 h.
+//   (c) STANDING (the ★ tie-break — the server's 12-rebirths-an-hour pace cap binds a high-★ climb, so (a) alone
+//       passes any ★ rate): the converted (★, R) never ranks above where the median stands after the SAME number of
+//       rebirths (it ascends at every R10: N rebirths → ★ floor(N/10), R N mod 10, ★ first as on the board).
+// KEY TIER is not on the board (it lives in taw.keytier), so every row runs as THREE saves: MIN / TYP / MAX = the KEY
+// tier its own live wins/word buys with 10 / 100 / 1,000 words of wins (live price 48 × 6^(T−1)), a season-1 wallet of
+// 0 / half / a full next-KEY price (capped by the rule), and kept gems of ×1 / ×2 / ×4 the floor the live gem table
+// paid them (LEVEL UP 2 × level + REBIRTH 20 × R + word drops), spent on rolls at once — they stand in for the
+// player's kept marks too. The HARD RULE must hold for all three.
+// --grid: also searches the rates (POWER first with no ★, then ★ with that POWER) and prints every combo's verdict.
+// The CI job fails (exit 1) when the SHIPPED rates (convert.js RATES) break the HARD RULE on any row.
+async function runBoard() {
+  const CONVERT = await imp('progress/v3/convert.js');
+  const board = JSON.parse(fs.readFileSync(path.join(HERE, 'board-snapshot-oct6.json'), 'utf8'));
+  const rows = Array.isArray(board) ? board : board.rows;
+  const WINDOW_H = 2;
+  const WINDOW = WINDOW_H * 60;
+  const MED_H = Number(args['med-hours']) || 16;
+  const KEY_WORDS = { min: 10, typ: 100, max: 1000 };
+  const GEMS_MULT = { min: 1, typ: 2, max: 4 };
+  const WALLET_SHARE = { min: 0, typ: 0.5, max: 1 };
+  const LIVE_C0 = 48;
+  const LIVE_STEP = 6;
+  const med = SKILLS.find((x) => x.id === 'median');
+  const keyTierFor = (wpw, words) => Math.max(0, Math.floor(1 + Math.log((words * Math.max(1, Number(wpw) || 0)) / LIVE_C0) / Math.log(LIVE_STEP) + 1e-9));
+  const liveKeyPrice = (t) => LIVE_C0 * Math.pow(LIVE_STEP, t);
+  const save = (row, which, rates) => {
+    const T = keyTierFor(row.wins_per_word, KEY_WORDS[which]);
+    const wallet = WALLET_SHARE[which] * liveKeyPrice(T);
+    // season-1 gems EARNED (kept as gems, or already in kept marks): at least LEVEL UP 2 a level reached + REBIRTH 20 a
+    // rebirth + drops (1 in 30 words, 1–3) — the live table (gemsCore.js); MIN = that floor, TYP ×2, MAX ×4
+    const gems = Math.round(GEMS_MULT[which] * (2 * Math.max(1, row.level) + 20 * row.rebirths + (row.lifetime_words || 0) / 15));
+    const c = CONVERT.convertSave({ level: row.level, rebirths: row.rebirths, stars: row.stars, keyTier: T, wins: wallet, gems }, rates);
+    return { T, wallet, ...c };
+  };
+
+  // 1. THE MEDIAN CLOCK — the median fresh v3 bot, ascending at R10, MED_H hours
+  const t0 = process.hrtime.bigint();
+  const medTrace = [];
+  const medRun = await simulate(med, { hours: MED_H, ascend: true, trace: medTrace });
+  const last = medTrace[medTrace.length - 1];
+  const legs = new Map();
+  for (const x of medTrace) {
+    const k = `${x.a}:${x.r}`;
+    if (!legs.has(k)) legs.set(k, []);
+    legs.get(k).push(x);
+  }
+  const after = (a, r, b, q) => a - b || r - q;
+  const clock = (a, r, l) => {
+    const arr = legs.get(`${a}:${r}`);
+    if (!arr) {
+      if (after(a, r, last.a, last.r) > 0) return Infinity;
+      const later = medTrace.find((x) => after(x.a, x.r, a, r) > 0);
+      return later ? later.t : Infinity;
+    }
+    if (l <= arr[0].l) return arr[0].t;
+    for (let i = 1; i < arr.length; i++) {
+      if (arr[i].l >= l) {
+        const p = arr[i - 1];
+        const q = arr[i];
+        return p.t + (q.t - p.t) * (q.l === p.l ? 0 : (l - p.l) / (q.l - p.l));
+      }
+    }
+    return a === last.a && r === last.r ? Infinity : arr[arr.length - 1].t; // past the median's open leg = past its horizon
+  };
+  const legTimes = [];
+  for (const [k, arr] of legs) legTimes.push(`${k.replace(':', '/R')} @${fmtMin(arr[0].t)}`);
+  const medPower = medRun.runs.map((x) => `R${x.rc}:P${x.power}`).join(' ');
+  if (!QUIET) {
+    console.log(`=== S2 BOARD — the MEDIAN CLOCK (median fresh v3, ascending at R10, ${MED_H} h, ${(Number(process.hrtime.bigint() - t0) / 1e9).toFixed(1)}s)`);
+    console.log(`  first stood at (ascensions/R): ${legTimes.join(' · ')}`);
+    console.log(`  POWER at each rebirth: ${medPower}`);
+    console.log(`  ascended ${medRun.ascends}× · final ${JSON.stringify({ level: medRun.final.level, rebirths: medRun.final.rebirths, stars: medRun.final.stars, power: medRun.final.power })}`);
+  }
+
+  // the median's standing after N rebirths (checked against its trace: it ascends at every R10)
+  const medStanding = (n) => ({ stars: Math.floor(n / CONVERT.ASCEND_AT), rebirths: n % CONVERT.ASCEND_AT });
+  for (const x of medTrace) {
+    const m = medStanding(x.a * CONVERT.ASCEND_AT + x.r);
+    if (x.r < CONVERT.ASCEND_AT && (m.stars !== x.a || m.rebirths !== x.r)) throw new Error(`median standing model broke at ${JSON.stringify(x)}`);
+  }
+  const standingOk = (n, st) => {
+    const m = medStanding(n);
+    return st.stars < m.stars || (st.stars === m.stars && st.rebirths <= m.rebirths);
+  };
+  // 2. one converted row → its verdict
+  let runsDone = 0;
+  const judge = async (row, which, rates, override = null) => {
+    const st = { ...save(row, which, rates), ...(override ? override(save(row, which, rates)) : {}) };
+    const trace = [];
+    const r = await simulate(med, { hours: WINDOW_H, ascend: true, trace, start: { level: st.level, rebirths: st.rebirths, stars: st.stars, power: st.power, wins: st.wins, gems: st.gems } });
+    runsDone += 1;
+    const end = trace[trace.length - 1];
+    const m0 = clock(0, st.rebirths, st.level);
+    const m1 = clock(end.a, end.r, end.l);
+    const pace = Number.isFinite(m1) ? Math.max(0, (m1 - m0) / WINDOW) : Infinity;
+    const stuck = r.firstRebirthMin == null || r.firstRebirthMin > WINDOW;
+    return {
+      name: row.username, R0: row.rebirths, which, T: st.T,
+      to: { rebirths: st.rebirths, stars: st.stars, power: st.power, wins: st.wins, gems: st.gems, level: st.level },
+      m0: +m0.toFixed(1), m1: Number.isFinite(m1) ? +m1.toFixed(1) : null, pace: Number.isFinite(pace) ? +pace.toFixed(2) : null,
+      firstRebirthMin: r.firstRebirthMin, firstAscendMin: r.firstAscendMin,
+      end: `${end.a ? `asc${end.a} ` : ''}R${end.r} LV${fmtLv(end.l)}`, endPower: r.final.power, endStars: r.final.stars,
+      fastFail: !(pace <= PACE_LIMIT), stuck, standFail: !standingOk(row.rebirths, st), fail: !(pace <= PACE_LIMIT) || stuck || !standingOk(row.rebirths, st),
+    };
+  };
+  const judgeAll = async (rates, whichList, filter = () => true) => {
+    const out = [];
+    for (const row of rows.filter(filter)) for (const w of whichList) out.push(await judge(row, w, rates));
+    return out;
+  };
+  const fmtRates = (r) => `★ 1 per ${r.STARS_PER_EXCESS} rebirths above R10 · POWER floor(KEY×${r.POWER_PER_KEY}) ≤ ${r.POWER_CAP_BASE} + ${r.POWER_CAP_PER_R}×R`;
+  const verdict = (res) => {
+    const fails = res.filter((x) => x.fail);
+    const worst = res.reduce((m, x) => Math.max(m, x.pace == null ? Infinity : x.pace), 0);
+    const slow = res.reduce((m, x) => Math.max(m, x.firstRebirthMin == null ? Infinity : x.firstRebirthMin), 0);
+    return { pass: !fails.length, fails: fails.length, worstPace: worst, slowestRebirth: slow };
+  };
+  const failList = (res) => res.filter((x) => x.fail).map((x) => `${x.name}/${x.which}${x.stuck ? ' STUCK' : ''}${x.fastFail ? ` ×${x.pace ?? '∞'}` : ''}${x.standFail ? ` ★${x.to.stars} ABOVE STANDING` : ''}`);
+
+  // 3. --grid: search the rates (stage 1 POWER with no ★, stage 2 ★ with that POWER)
+  let gridOut = null;
+  if (args.grid) {
+    gridOut = { power: [], stars: [] };
+    const NO_STARS = 1e9;
+    const ks = String(args['grid-k'] || '0.5,0.75,1').split(',').map(Number);
+    const bases = String(args['grid-base'] || '0,2,4,6').split(',').map(Number);
+    const perRs = String(args['grid-perr'] || '1').split(',').map(Number);
+    const Ss = String(args['grid-s'] || '10,15,20,30,45,60,90').split(',').map(Number);
+    let bestP = null;
+    for (const k of ks) for (const b of bases) for (const pr of perRs) {
+      const rates = { STARS_PER_EXCESS: NO_STARS, POWER_PER_KEY: k, POWER_CAP_BASE: b, POWER_CAP_PER_R: pr };
+      const res = await judgeAll(rates, ['max', 'min']);
+      const v = verdict(res);
+      const generosity = rows.reduce((t, row) => t + save(row, 'typ', rates).power, 0);
+      const failing = failList(res);
+      gridOut.power.push({ rates, ...v, generosity, failing });
+      if (!QUIET) console.log(`  GRID POWER k${k} cap ${b}+${pr}R: ${v.pass ? 'PASS' : `FAIL ${v.fails}`} · worst pace ×${v.worstPace} · slowest next rebirth ${fmtMin(v.slowestRebirth)} · ΣPOWER(typ) ${generosity}${v.pass ? '' : ` · ${failing.slice(0, 8).join(', ')}`}`);
+      if (v.pass && (!bestP || generosity > bestP.generosity)) bestP = { rates, generosity };
+    }
+    const powerRates = bestP ? bestP.rates : { ...CONVERT.RATES, STARS_PER_EXCESS: NO_STARS };
+    let bestS = null;
+    for (const S of Ss) {
+      const rates = { ...powerRates, STARS_PER_EXCESS: S };
+      const res = await judgeAll(rates, ['max', 'min'], (row) => row.rebirths > CONVERT.ASCEND_AT);
+      const v = verdict(res);
+      const failing = failList(res);
+      gridOut.stars.push({ rates, ...v, failing });
+      if (!QUIET) console.log(`  GRID ★ 1/${S}: ${v.pass ? 'PASS' : `FAIL ${v.fails}`} · worst pace ×${v.worstPace} · R100 → ★${CONVERT.starsFromRebirths(100, rates)}, R29 → ★${CONVERT.starsFromRebirths(29, rates)}${v.pass ? '' : ` · ${failing.slice(0, 8).join(', ')}`}`);
+      if (v.pass && (!bestS || S < bestS)) bestS = S;
+    }
+    gridOut.pick = bestP ? { ...powerRates, STARS_PER_EXCESS: bestS ?? NO_STARS } : null;
+    if (!QUIET) console.log(`  GRID PICK: ${gridOut.pick ? fmtRates(gridOut.pick) : 'NONE PASSES'} (${runsDone} runs so far)`);
+  }
+
+  // 4. THE SHIPPED RATES on every row × MIN / TYP / MAX — the CI gate
+  const rates = CONVERT.RATES;
+  const res = await judgeAll(rates, ['min', 'typ', 'max']);
+  const v = verdict(res);
+  const table = [];
+  table.push('| row (season 1) | save | KEY | converted R · ★ · POWER · wins | pace × median | next rebirth | ascend | after 2 h |');
+  table.push('|---|---|---|---|---|---|---|---|');
+  for (const x of res) {
+    table.push(`| ${x.name} R${x.R0} LV${x.to.level} | ${x.which} | T${x.T} | R${x.to.rebirths} · ★${x.to.stars} · P${x.to.power} · ${x.to.wins >= 1e9 ? x.to.wins.toExponential(2) : fmtLv(Math.round(x.to.wins))} | ${x.pace ?? '∞'}${x.fastFail ? ' FAIL' : ''} | ${x.firstRebirthMin == null ? 'none — STUCK' : fmtMin(x.firstRebirthMin)}${x.stuck && x.firstRebirthMin != null ? ' STUCK' : ''} | ${x.firstAscendMin == null ? '—' : fmtMin(x.firstAscendMin)} | ${x.end} P${x.endPower} ★${x.endStars} |`);
+  }
+  if (!QUIET) {
+    console.log(`\n=== S2 BOARD — SHIPPED RATES: ${fmtRates(rates)}`);
+    for (const l of table) console.log(l);
+    console.log(`  S2 BOARD HARD RULE: ${v.pass ? 'PASS' : `FAIL (${v.fails} row-saves: ${failList(res).join(', ')})`} — worst pace ×${v.worstPace} (limit ×${PACE_LIMIT}), slowest next rebirth ${fmtMin(v.slowestRebirth)} (limit ${fmtMin(WINDOW)}) · ${runsDone} bot runs`);
+  }
+  // WHY THE WALLET IS CAPPED (diagnostic, not gated): the same TYP saves with the season-1 wallet kept UNCAPPED
+  const asIs = [];
+  for (const row of rows.filter((x) => x.rebirths >= 3)) asIs.push(await judge(row, 'typ', rates, (st) => ({ wins: st.wallet })));
+  if (!QUIET) console.log(`  (diagnostic) WALLET KEPT UNCAPPED, typ saves: ${asIs.map((x) => `${x.name} R${x.R0} ${x.to.wins >= 1e9 ? x.to.wins.toExponential(1) : fmtLv(x.to.wins)} wins → ×${x.pace ?? '∞'}${x.fail ? ' FAIL' : ''} (P${x.endPower})`).join(' · ')}`);
+  const outFile = path.join(HERE, `loop-sim-${TAG}.json`);
+  fs.writeFileSync(outFile, JSON.stringify({ season: 2, board: true, walletAsIs: asIs, tag: TAG, medHours: MED_H, windowH: WINDOW_H, rates, verdict: v, results: res, table, grid: gridOut, median: { legs: [...legs.entries()].map(([k, arr]) => ({ k, t: arr[0].t })), power: medRun.runs } }, null, 1));
+  if (!v.pass) process.exitCode = 1;
+}
+
+if (args.board) {
+  await runBoard();
+  process.exit(process.exitCode || 0);
+}
 const want = typeof args.skills === 'string' ? args.skills.split(',') : SKILLS.map((s) => s.id);
 const results = [];
 for (const s of SKILLS.filter((x) => want.includes(x.id))) {

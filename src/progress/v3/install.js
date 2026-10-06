@@ -4,7 +4,10 @@
 //   1. maps the season's keys to taw.s2.* at the storage layer (hooks.patchStorage) — the season keeps its own save,
 //   2. swaps the v3 versions into the live modules through their `__v3` setters (v3/hooks.js),
 //   3. fills season.js's V3 holder (the few remaining one-line season-2 branches read it),
-//   4. stamps the season's gem state (no starting grant — the reset's is phase 4).
+//   4. CONVERTS the browser's season-1 save into the season-2 one, ONCE (v3/convertLocal.js — Andy oct6: no reset;
+//      levels / wins / gems kept, R ≤ 10, ★ from the rebirths above 10, KEY → POWER; no season-1 key is removed) —
+//      before anything reads a season key,
+//   5. stamps the season's gem state (no starting grant).
 import { V3 } from '../season.js';
 import * as econ from './econ.js';
 import * as curve from './curve.js';
@@ -13,6 +16,7 @@ import * as unlocks from './unlocks.js';
 import * as ranks from './ranks.js';
 import * as hooks from './hooks.js';
 import * as stock from './stock.js'; // the SHOP's STOCK (P3) — ShopV2 reads it as V3.stock
+import { convertLocal } from './convertLocal.js';
 import { __v3 as xpV3, storedLevel } from '../xp.js';
 import { __v3 as starsV3 } from '../stars.js';
 import { __v3 as gemsV3, dropGemsForWord, gemsMigrated, stampGemsMigrated } from '../gemsCore.js';
@@ -26,6 +30,7 @@ import { __v3 as gemsResultV3, gameResultPayout, payGameResult } from '../gems.j
 
 if (!V3.ready) {
   hooks.patchStorage(typeof Storage !== 'undefined' ? null : globalThis.localStorage);
+  convertLocal(); // the one-time SEASON 2 CONVERSION of this browser's save (never removes a key)
   xpV3(hooks.xpSwap);
   starsV3(hooks.starsSwap);
   gemsV3({ ...hooks.gemsSwap, e: hooks.countingDrop(dropGemsForWord) });

@@ -160,7 +160,7 @@ export function boardCaps() {
       // econ: the p_econ to send (cloudSave econRpcArg) — 12 once 018_rebirth_rush.sql runs, 10 with only 016/017
       // (the version-gated lb_submit3 / lb_save2 / lb_load2 exist), 0 = neither (old RPCs)
       // boardEcon: 017_board_reality.sql — the board views carry `econ` (which economy a row last submitted on)
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !SEASON2 && !!(c && c.cloud), weekly: !!(c && c.weekly), econ: SEASON2 ? +(c && c.econ2) || 0 : econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ), season2Reset: SEASON2 && !!(c && c.season2_reset) }))
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !SEASON2 && !!(c && c.cloud), weekly: !!(c && c.weekly), econ: SEASON2 ? +(c && c.econ2) || 0 : econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ), season2Convert: SEASON2 && !!(c && c.season2_convert) }))
       .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: 0, boardEcon: false }));
   }
   return capsPromise;
@@ -203,8 +203,8 @@ export const pushMeta = { last: null };
  *  flow's own pre-rebirth push. */
 export async function submitStats(force = false, { internal = false } = {}) {
   if (!LEADERBOARD_ENABLED || !getMyProfile()) return false;
-  // 023 (SEASON2): the season-2 reset's boot check (v3/season2Boot.js) settles first — a push must never carry a
-  // pre-wipe save; false = it is wiping and reloading (V3.boot is unset with the flag OFF).
+  // 025 (SEASON2): the season-2 conversion's boot (v3/season2Update.js) settles first — the first season-2 push carries
+  // the server's converted rebirths / ★; false = it is reloading onto them (V3.boot is unset with the flag OFF).
   if (SEASON2 && V3.boot && !(await V3.boot.catch(() => true))) return false;
   if (!internal) {
     // a server rebirth in flight or unanswered (its request id is stored for that whole time — KEEP IN SYNC WITH
