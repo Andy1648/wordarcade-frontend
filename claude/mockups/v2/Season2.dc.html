@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Season 2 welcome</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes s2Slam{0%{transform:scale(3) rotate(-6deg);opacity:0}65%{transform:scale(.92) rotate(-3deg);opacity:1}100%{transform:scale(1) rotate(-3deg)}}
+@keyframes s2Rise{0%{transform:translateY(30px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes s2Fly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+@keyframes s2Bump{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes s2Pulse{0%,100%{transform:translate(0,0)}50%{transform:translate(-2px,-3px)}}
+@keyframes s2Bands{0%{transform:translateX(-30%)}100%{transform:translateX(0)}}
+.s2-slam{animation:s2Slam .5s cubic-bezier(.2,1.2,.4,1) both}
+.s2-rise{animation:s2Rise .4s ease-out both}
+.s2-fly{position:absolute;animation:s2Fly .7s cubic-bezier(.5,0,.8,.4) forwards}
+.s2-bump{animation:s2Bump .3s cubic-bezier(.2,1.4,.4,1)}
+.s2-pulse{animation:s2Pulse 1s ease-in-out infinite}
+.s2-out{-webkit-text-stroke:6px #000;paint-order:stroke fill}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618">
+<div style="position: absolute; left: -10%; right: -10%; top: 150px; height: 230px; background: repeating-linear-gradient(90deg, #1a0b2e 0 60px, #12071f 60px 120px); transform: rotate(-4deg); border-top: 8px solid #000; border-bottom: 8px solid #000; animation: s2Bands 6s linear infinite alternate"></div>
+
+<div style="position: absolute; right: 36px; top: 26px" class="{{pillBump}}">
+<div style="height: 58px; padding: 0 20px 0 56px; position: relative; display: flex; align-items: center; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; border-bottom: 8px solid #12A99A">
+<svg viewBox="0 0 40 40" width="58" height="58" style="position: absolute; left: -22px; top: -4px; transform: rotate(10deg); filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15" stroke="#000" stroke-width="2.5" fill="none"></path><path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="s2-out" style="font-family: 'Bungee', sans-serif; font-size: 30px; -webkit-text-stroke: 4px #000">{{walletText}}</span>
+</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 46px; display: flex; flex-direction: column; align-items: center">
+<div class="s2-slam" style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 110px; line-height: 1; color: #FFE94A">SEASON 2</div>
+<div class="s2-rise" style="margin-top: 8px; font-family: 'Bungee', sans-serif; font-size: 22px; color: #c9b8e8; animation-delay: .3s">SORRY FOR THE MAINTENANCE · EVERYONE STARTS FRESH</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 248px; display: flex; justify-content: center; align-items: center; gap: 40px">
+<div class="s2-rise" style="display: flex; flex-direction: column; align-items: center; animation-delay: .45s">
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">YOUR OLD RUN</span>
+<span class="s2-out" style="font-family: 'Bungee', sans-serif; font-size: 72px; line-height: 1; color: #D88BFF">R{{oldR}}</span>
+</div>
+<svg width="84" height="50" viewBox="0 0 70 44" aria-hidden="true" class="s2-rise" style="animation-delay: .55s"><path d="M4 16 L44 16 L44 4 L66 22 L44 40 L44 28 L4 28 Z" fill="#2EFFE0" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>
+<div class="s2-rise" style="position: relative; display: flex; flex-direction: column; align-items: center; animation-delay: .65s">
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">YOU GET</span>
+<div style="display: flex; align-items: center; gap: 14px">
+<svg viewBox="0 0 40 40" width="76" height="76" style="filter: drop-shadow(4px 4px 0 #000); transform: rotate(-8deg)" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="3.5" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15" stroke="#000" stroke-width="2" fill="none"></path><path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="s2-out" style="font-family: 'Bungee', sans-serif; font-size: 96px; line-height: 1; color: #2EFFE0; -webkit-text-stroke: 8px #000; text-shadow: 7px 7px 0 #000">{{giftText}}</span>
+</div>
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #FFE94A">{{rollsText}}</span>
+<sc-for list="{{flyers}}" as="f" hint-placeholder-count="0">
+<svg class="s2-fly" viewBox="0 0 40 40" width="34" height="34" style="left: {{f.x}}px; top: 40px; --dx: {{f.dx}}px; --dy: {{f.dy}}px; animation-delay: {{f.d}}s" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path></svg>
+</sc-for>
+</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 50px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+<button class="{{btnClass}}" onClick="{{collect}}" style="width: 420px; height: 96px; background: {{btnBg}}; border: 6px solid #000; box-shadow: 9px 9px 0 #000; cursor: pointer; font-family: 'Bungee', sans-serif; font-size: 40px; color: #000">{{btnLabel}}</button>
+<div style="font-size: 14px; color: #5d4a78">SHOWS ONCE · CHANGE THE DEMO RUN:</div>
+<div style="display: flex; gap: 10px">
+<sc-for list="{{demos}}" as="d" hint-placeholder-count="4">
+<button onClick="{{d.pick}}" style="height: 38px; padding: 0 14px; background: {{d.bg}}; border: 4px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 16px; color: {{d.c}}; cursor: pointer">R{{d.r}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+function gift(r) { var g = 300 + 40 * r; return Math.round(g / 5) * 5; }
+function fmt(x) { if (x >= 1e6) return (x / 1e6).toFixed(1) + 'M'; if (x >= 1e3) return (x / 1e3).toFixed(1) + 'K'; return String(x); }
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { r: 100, wallet: 0, done: false, flyers: [], bump: false }; this.t = []; }
+  componentWillUnmount() { this.t.forEach(clearTimeout); }
+  renderVals() {
+    var self = this, st = this.state, g = gift(st.r), rolls = Math.floor(g / 75);
+    return {
+      oldR: st.r, giftText: fmt(g), walletText: fmt(st.wallet),
+      rollsText: rolls + ' ROLLS' + (rolls >= 50 ? ' · EPIC+ GUARANTEED' : ''),
+      flyers: st.flyers, pillBump: st.bump ? 's2-bump' : '',
+      btnLabel: st.done ? 'PLAY' : 'COLLECT', btnBg: st.done ? '#FFE94A' : '#2EFFE0', btnClass: st.done ? '' : 's2-pulse',
+      demos: [0, 10, 40, 100].map(function (r) { var on = r === st.r; return { r: r, bg: on ? '#FFE94A' : '#1a0b2e', c: on ? '#000' : '#fff', pick: function () { self.setState({ r: r, wallet: 0, done: false, flyers: [] }); } }; }),
+      collect: function () {
+        if (self.state.done) return;
+        var fl = []; for (var i = 0; i < 10; i++) fl.push({ x: 80 + i * 12, dx: 400 - i * 6, dy: -300 + (i % 3) * 10, d: (i * 0.06).toFixed(2) });
+        self.setState({ flyers: fl, done: true });
+        var steps = 20;
+        for (var k = 1; k <= steps; k++) (function (k) {
+          self.t.push(setTimeout(function () { self.setState({ wallet: Math.round(g * k / steps), bump: false }); self.t.push(setTimeout(function () { self.setState({ bump: true }); }, 10)); }, 300 + k * 45));
+        })(k);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

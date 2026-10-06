@@ -118,19 +118,25 @@ test('1. smooth: a full spin + the LEGENDARY reveal run at 60fps at 4x CPU (tran
 
 test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  // a worn LEGENDARY with no double-roll perk: auto-equip only upgrades, so every roll is one paid roll
+  // a worn LEGENDARY with no double-roll perk: auto-equip only upgrades, so every roll is one paid roll. sinceEpic 49 =
+  // the first roll is a guaranteed EPIC+ (hard pity 50), so the spam ALWAYS meets a reveal over ROLL — the case that
+  // used to time out at random — instead of only when the tier dice say so.
   await seed(page, {
-    'taw.markRolls': STARTED({ skipBelow: 'secret', marks: { 'mk-eclipse': { n: 1, first: 1 } } }),
+    'taw.markRolls': STARTED({ sinceEpic: 49, skipBelow: 'secret', marks: { 'mk-eclipse': { n: 1, first: 1 } } }),
     'taw.mark': 'mk-eclipse',
   });
   await openRoll(page);
   const before = await store(page);
   const roll = page.locator('.rs-roll');
-  for (let i = 0; i < 20; i += 1) await roll.click({ delay: 0 });
-  // let the last one settle (a first-time EPIC+ reveal stays up until a tap — tap it away)
+  // SPAM = 20 raw taps on ROLL's spot, like a real thumb. NOT locator.click(): that waits for ROLL to be the hit target,
+  // and a press mid-spin skips the reel to its result — when that result is EPIC+, its reveal ("TAP TO KEEP") covers
+  // ROLL, so locator.click() waited 30 s on an element that was never coming back (main E2E red, run 37388543708). A
+  // real spammer's taps land on whatever is on top: the reveal takes one, and RollScreen swallows the next 800 ms.
+  const box = await roll.boundingBox();
+  for (let i = 0; i < 20; i += 1) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  // let the last one settle, tapping away any EPIC+ reveal still up
   await page.waitForTimeout(SPUN);
-  const cut = page.getByTestId('roll-cutscene');
-  if (await cut.evaluate((el) => el.classList.contains('is-on'))) await cut.click();
+  await keepReveal(page);
   await expect(roll).not.toHaveClass(/is-rolling/, { timeout: SPUN });
   const after = await store(page);
   const made = after.rolls - before.rolls;
