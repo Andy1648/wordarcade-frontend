@@ -40,7 +40,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
     await expect(tut).toBeFocused();
     // the target glows: a ring over the visible REBIRTH button
     const ring = await page.locator('.ut-ring').boundingBox();
-    const btn = await page.locator('.homepage-nav-btn.is-rebirth:visible, .hp-m-navbtn.is-rebirth:visible').first().boundingBox();
+    const btn = await page.locator('.hp-nav.is-rebirth:visible').first().boundingBox();
     expect(ring && btn, 'ring + target').toBeTruthy();
     expect(Math.abs((ring.x + ring.width / 2) - (btn.x + btn.width / 2))).toBeLessThan(4);
     expect(Math.abs((ring.y + ring.height / 2) - (btn.y + btn.height / 2))).toBeLessThan(4);
@@ -90,7 +90,7 @@ test('KEY TIER: the first affordable KEY tier lights the KEY item in the SHOP, o
   await page.locator('.shop-overlay').waitFor();
   const tut = page.locator('.ut-overlay[data-tut="keyTier"]');
   await expect(tut).toBeVisible({ timeout: 5000 });
-  await expect(page.locator('.ut-line')).toContainText('KEY TIER');
+  await expect(page.locator('.ut-line')).toContainText('POWER');
   await expect(tut.locator('button')).toHaveCount(0);
   // Escape closes the spotlight only — the SHOP stays open under it
   await page.keyboard.press('Escape');
@@ -108,7 +108,7 @@ test('GEMS: once MARKS is there, the gem count is lit once — tap anywhere, nev
   await expect(tut.locator('button')).toHaveCount(0);
   // the ring sits on the visible gem count
   const ring = await page.locator('.ut-ring').boundingBox();
-  const chip = await page.locator('.menu-gems-chip:visible, .hp-m-stats-gems:visible').first().boundingBox();
+  const chip = await page.locator('.menu-gems-chip:visible').first().boundingBox();
   expect(ring && chip, 'ring + gem count').toBeTruthy();
   expect(Math.abs((ring.x + ring.width / 2) - (chip.x + chip.width / 2))).toBeLessThan(4);
   await page.mouse.click(8, 720 - 8);

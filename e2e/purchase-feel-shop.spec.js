@@ -58,15 +58,15 @@ test('§2 buy is a plain click that commits and reveals the sticker', async ({ p
   const buyBtn = page.locator('.shop-keypower').first().locator('.shop-buy');
   await expect(buyBtn).toBeVisible();
   // Clutter pass: the KEY TIER heading no longer repeats the tier — the KEY Tn line under it carries it.
-  await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('KEY T0 ');
+  await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('POWER T0 ');
   await expect(page.locator('.sticker')).toHaveCount(0);
 
   // One click → commit → the sticker appears and the tier advances.
   await buyBtn.click();
   await expect(page.locator('.sticker')).toBeVisible();
-  await expect(page.locator('.sticker-name')).toContainText('KEY TIER 1');
+  await expect(page.locator('.sticker-name')).toContainText('POWER 1');
   await expect(page.locator('.sticker-ribbon')).toContainText('UNLOCKED');
-  await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('KEY T1 ');
+  await expect(page.locator('.shop-keypower').first().locator('.shop-kp-current')).toContainText('POWER T1 ');
 });
 
 test('§2/§3 add zero new infinite animations in the shop', async ({ page }) => {

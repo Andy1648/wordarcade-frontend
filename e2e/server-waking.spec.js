@@ -24,19 +24,19 @@ test.describe('server-waking cold-start copy', () => {
     await menuReady(page);
     await freezeAnimations(page);
 
-    const join = joinControl(page);
+    // v2 menu: JOIN is the Word Bomb dialog's JOIN WITH CODE
+    const join = await joinControl(page);
 
     // Socket isn't open yet, so JOIN queues the connect-gated action instead of
     // firing. (It shows CONNECTING… first, then WAKING once the threshold passes.)
     await join.click();
 
-    // Phase 2: the WAKING copy + the Space Mono reassurance sub-line appear, and
-    // the tapped slab shifts to the yellow WAKING variant.
+    // Phase 2: the WAKING copy + the Space Mono reassurance sub-line appear IN the tapped button.
     await expect(page.locator('.connecting-main')).toHaveText('WAKING THE SERVER…');
     await expect(page.locator('.connecting-sub')).toHaveText(
       '~30s — YOU DROP IN AUTOMATICALLY.',
     );
-    await expect(join).toHaveClass(/is-waking/);
+    await expect(join).toContainText('WAKING THE SERVER…');
 
     // When the socket finally opens (~6s), the SAME queued action auto-fires: the
     // app's JOIN flow sends a list_public_rooms frame at the WebSocket boundary.

@@ -1,979 +1,387 @@
-/* Homepage.css */
+/* Homepage.css — the v2 MENU (claude/mockups/v2/Menu.dc.html), built from the v2 kit.
+ *
+ * SCALE: the mockup sizes everything off s = min(W / 1366, H / 657). --u is that, as a length
+ * (1px at 1366x657); --fs-hp* are its type steps (the mockup's t(n) = n × s × 1.22, with the mockup's
+ * floors) so every font-size still goes through an --fs-* token (src/perf/typeScale.test.js).
+ *
+ * LAYOUT (a grid, so nothing is absolutely placed over anything else):
+ *   normal  'rail logo  icons'     the rail sits beside the wordmark + XP cluster, the cards are
+ *           'rail xp    extras'    one full-width row under them (menu-frame's 16-32px gutter)
+ *           'cards cards cards'
+ *   short   'rail logo  icons'     [data-paged] (short-wide desktop) or [data-fit='short'] (the
+ *           'rail xp    extras'    fit-math in Homepage.jsx): the rail runs the full height and the
+ *           'rail cards cards'     cards sit right of it, so a 3:4 card keeps the height it needs.
+ * The right column is the rail's width too, so the wordmark and the XP bar sit on the true centre
+ * (the mockup's margin-right: navW).
+ */
 
-/* Outer wrapper fills the whole viewport with the dark background edge to edge
-   (no max-width, margin, or rounded corners against the viewport), and centres
-   the content card both ways. */
 .homepage-wrap {
-  /* Transparent so the persistent WallScene shows through around the
-     card; the page's dark base comes from body/#root. */
   background: transparent;
   width: 100%;
-  /* Fit the whole menu within ONE screen height so the landing never grows a
-     vertical scrollbar. Pinned to the viewport (dvh handles mobile chrome) with
-     overflow hidden as the hard guarantee; the spacing below is trimmed so the
-     content genuinely fits rather than getting clipped. */
   min-height: 100dvh;
   height: 100dvh;
   overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* Vertical padding is small + vh-based so it never eats the height budget on
-     short laptops; horizontal keeps a side breathing gap to the neon frame.
-     fix/visual-real item 2: the horizontal gutter was clamp(14px, 4vw, 72px) — up to 72px per side,
-     which (with the stage's own cap) held the app shell under 90% width on mid-desktops like
-     1366/1422. Tightened to clamp(10px, 2vw, 44px) so the frame reaches ≥90% of the width while
-     still leaving a clear gutter to the viewport edge. */
-  padding: clamp(8px, 1.6vh, 20px) clamp(10px, 2vw, 44px);
-  /* fix/visual-real item 2 (production regression): the home view is rendered with .view-screen
-     zoom forced to 1 (see App.jsx isHomeMenu), so --app-scale never scales the menu and there is
-     NO nested zoom to cancel here. The old `zoom: calc(1/var(--app-scale))` reciprocal LOOKED right
-     (and cancelled correctly in headless Chromium), but recent Chrome's standardized `zoom` did not
-     compound it, leaving the menu rendered at --app-scale (~64% at 1568x675) on real browsers. With
-     the zoom removed on both sides, the one-screen menu renders at true scale on every browser. */
 }
 
-/* The content card fills most of the viewport width and only caps (and centres)
-   on ultrawide screens so it never stretches infinitely. */
-/* The menu stage is now a TRANSPARENT, EDGELESS container - no fill, border,
-   box-shadow or border-radius - so the persistent WallScene backdrop (brick +
-   graffiti) shows straight through it and the whole homepage reads as ONE
-   continuous surface rather than a framed panel. This rule only owns the box:
-   size, padding and content clipping. (The element still carries the shared
-   .wall-surface class, but its flat fill + image are overridden to transparent
-   here for the homepage only; the game screens keep their .wall-surface surface.) */
 .homepage-stage {
+  --u: min(0.073206vw, 0.152207vh);
+  --b4: max(3px, calc(4 * max(var(--u), 0.85px)));
+  --b5: max(3px, calc(5 * max(var(--u), 0.85px)));
+  --b6: max(3px, calc(6 * max(var(--u), 0.85px)));
+  --fs-hp13: max(14px, calc(15.86 * var(--u)));
+  --fs-hp18: max(17px, calc(21.96 * var(--u)));
+  --fs-hp24: max(21px, calc(29.28 * var(--u)));
+  --fs-hp30: max(26px, calc(36.6 * var(--u)));
+  --fs-hplv: max(40px, calc(70.76 * var(--u)));
+  --fs-hpword: max(34px, calc(56.12 * var(--u)));
+  --hp-nav-w: max(176px, calc(214 * var(--u)));
+  --hp-nav-h: max(44px, calc(54 * var(--u)));
+  --hp-nav-ico: max(20px, calc(26 * var(--u)));
+  --hp-cur-h: max(34px, calc(44 * var(--u)));
+  --hp-coin: calc(max(34px, calc(44 * var(--u))) * 1.05);
+  --hp-coin-pull: calc(max(34px, calc(44 * var(--u))) * 0.42);
+  --hp-tr: max(46px, calc(58 * var(--u)));
+  --hp-tr-ico: max(28px, calc(36 * var(--u)));
+  --hp-xp-h: max(40px, calc(54 * var(--u)));
+  --hp-chip-h: max(44px, calc(42 * var(--u)));
+  --hp-dot: max(18px, calc(22 * var(--u)));
+  --hp-gap: calc(24 * var(--u));
+
   position: relative;
-  /* Fit-to-height flex column (item 1). A real row-gap guarantees the title never
-     collides with the XP bar; justify-content:center + the tall card region fill the
-     screen on large displays; --menu-scale (measured in Homepage.jsx) shrinks the
-     title/cards/XP together so short screens fit without overflow. */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* The column's row-gap, as a variable, because ONE child needs to opt out of it: the card
-     region sits ~10px under the XP bar rather than a full gap below it (see
-     .homepage-cards-region). Everything else keeps the full gap. */
-  --stage-rowgap: clamp(22px, 3vh, 30px);
-  /* THE CARDS START RIGHT UNDER THE BAR. 10px, not a row-gap: the bar and the cards are the same
-     conversation — "here is your level, here is what each mode pays toward it" — and 30px of
-     nothing between them read as two unrelated regions. Applied as a negative margin so the
-     stage's row-gap still governs every other pair. */
-  --cards-lift: 10px;
-  /* justify-content:center (NOT space-evenly): the --menu-scale RESERVE (Homepage.jsx)
-     scales the title/xp/cards to fill the stage MINUS a fixed 44px reserve, and center
-     splits that reserve into ~22px SYMMETRIC frame gaps — so the content fills the
-     stage (no dead space) with in-band top/bottom gaps. §8's space-evenly broke that by
-     stretching the gaps unevenly on tall screens; reverted here (fix/three-things §3). */
-  height: 100%;
-  /* row-gap sets the title↔XP clearance (item 1). The title carries a rotate(-2deg)
-     skewX(-4deg) pose, so its AABB overhangs the wrap's flex box by ~0.14×font-size and
-     EATS into this gap — the measured title↔XP gap is row-gap MINUS that overhang, which
-     grows with the title size. Raised (was clamp(16,2.2vh,28)) so the residual gap stays
-     ≥12px at every menu-fit viewport (worst case was 1280×720 at 9.4px). Fully counted in
-     the fit math (gaps = row-gap × (kids−1)), so the fit-to-one-screen scale compensates. */
-  row-gap: var(--stage-rowgap);
-  justify-content: center;
-  /* Homepage-only: make the panel transparent so the persistent WallScene backdrop
-     (brick + graffiti) shows straight through, so panel + backdrop read as one
-     continuous surface. This element also carries .wall-surface, so setting these
-     here overrides its flat fill + image on the HOMEPAGE element only - the shared
-     game screens keep their own .wall-surface surface untouched. */
-  background-color: transparent;
-  background-image: none;
-  /* Tighter padding so the content sits close to the neon frame (items 2 + 3). Vertical
-     padding trimmed further (was clamp 8-14); the 16-40px breathing gap to the content
-     column is now owned by the --menu-scale RESERVE (Homepage.jsx), not this padding. */
-  /* HEIGHT-FILL (feat/cards-live): the content column now fills the stage (flex-grown card
-     region), so the symmetric top/bottom frame gap (menu-vgap: 16-32px) IS this vertical
-     padding — the old RESERVE-based gap is gone with the stage-height hug. */
-  padding: clamp(18px, 2vh, 26px) clamp(10px, 1vw, 16px);
-  /* Clips content to one screen. FUTURE (not implemented here): to let the panel
-     SCROLL once more mode cards are added, switch this to overflow-y:auto with a
-     bounded max-height (the max-height below is what a scroll would attach to). */
-  overflow: hidden;
+  box-sizing: border-box;
   width: 100%;
-  /* Never exceed the wrap's height, so the card fits one screen. */
-  max-height: 100%;
-  /* fix/visual-real item 2: the old cap min(94vw, 1180px) pinned the whole menu to 1180px on any
-     monitor wider than ~1255px, so it filled only ~62% of a 1920 window (1180/1920) and ~46% of a
-     2560 one — the "broken embed" look. The homepage cancels --app-scale (zoom nets to 1), so THIS
-     max-width is the sole width cap on the app shell. Raised to fill the viewport: 96vw fills wide
-     screens ≥90%, and the 2400px ceiling still stops an ultrawide from stretching the 3-card row
-     infinitely. Predicted stage fill: 1422→~92%, 1920→~92.5%, 2560→~93.75%. */
-  max-width: min(96vw, 2400px);
-  /* A neon edge to DEFINE the panel (Blitz blue #3DA8FF @ ~45% - reads over the
-     busy wall where the faint white edge didn't). Background stays transparent (the
-     WallScene shows through) - no fill/glow/vignette/box-shadow, just border + radius. */
-  border: 1px solid rgba(61, 168, 255, 0.45);
-  border-radius: 10px;
+  height: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: var(--hp-nav-w) minmax(0, 1fr) var(--hp-nav-w);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    'rail logo icons'
+    'rail xp extras'
+    'cards cards cards';
+  column-gap: var(--hp-gap);
+  row-gap: max(14px, calc(14 * var(--u)));
+  /* top = bottom: the content's breathing gap to the frame is symmetric and in the 16-32px band (menu-vgap) */
+  padding: clamp(16px, 2.4vh, 28px) max(12px, calc(30 * var(--u)));
+  background-color: transparent;
   /* Eased so the menu gently "pushes back" when a mode dialog opens. */
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
-
-/* While a mode dialog is open the menu recedes slightly behind the dialog's
-   scrim, reinforcing the focus shift. The scrim (in ModeDialog) owns the dim +
-   blur; this only adds the small scale-back. */
-.homepage-stage.is-dimmed {
-  transform: scale(0.965);
+.homepage-stage[data-paged],
+.homepage-stage[data-fit='short'] {
+  grid-template-areas:
+    'rail logo icons'
+    'rail xp extras'
+    'rail cards cards';
 }
-
-/* Corner nav (item 3) — SHOP / REBIRTH / STATS as WORD buttons, stacked in the top-right
-   corner. Each is Bungee on a flat fill, thick black border + hard offset shadow, 44px tall,
-   width auto — the three read as one matched set. */
-.homepage-corner-nav {
-  position: absolute;
-  top: clamp(10px, 1.6vh, 20px);
-  right: clamp(12px, 2vw, 24px);
-  z-index: 6;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* right-align the auto-width buttons into a clean stack */
-  gap: 8px;
-  /* THE CONTAINER MUST NOT EAT CLICKS IT DOESN'T PAINT (fix/mobile-and-routing, Batch F).
-     The buttons are auto-width and right-aligned, so this box is as wide as the WIDEST of them
-     (REBIRTH) at every row, and the 8px gaps between them are empty. But the box still won the
-     hit test across all of that: measured at 320x640 AT REST, the nav's left edge is x=175 while
-     the XP track sits at x=170..197, and the element answering a tap over the track was
-     `nav.homepage-corner-nav` itself — not a button. Same cause as the card collisions this run
-     found at short viewports. Making the container transparent to pointers and the buttons opaque
-     means the nav can only ever intercept a tap where a real button is drawn. */
-  pointer-events: none;
-}
-.homepage-corner-nav > * {
-  pointer-events: auto;
-}
-.homepage-nav-btn {
-  position: relative;
-  height: 44px;
-  /* max-content (not auto) so the box includes the TRAILING letter-spacing —
-     otherwise "SHOP" laid out 5px wider than the auto content box and clipped
-     (fix/qa-sweep §5). */
-  width: max-content;
-  padding: 0 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  line-height: 0.98;
-  font-size: var(--fs-panel);
-  letter-spacing: 0.04em;
-  /* INK FOLLOWS THE FILL. The value-group pass moved all three buttons onto --v-panel-hi but only
-     REBIRTH got its ink swapped, so SHOP/STATS were #0d0618 on #221640 = 1.19:1. White is 16.6:1. */
-  color: var(--v-ink);
-  border: 3px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.homepage-nav-btn.is-shop { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
-.homepage-nav-btn.is-rebirth { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
-.homepage-nav-btn.is-stats { background: var(--v-panel-hi) /* value-group: corner nav is chrome, mid-value */; }
-/* REBIRTH READY (Andy oct3): the corner REBIRTH lights up PINK the moment the gate is reached — the
-   same pink as the REBIRTH READY → ×5 FOREVER button under the level bar. Static (no loop). */
-.homepage-nav-btn.is-rebirth.is-ready {
-  background: #FF4FA3;
-  color: #000;
-  border-color: #B8236F;
-}
-/* STEP 24: the leaderboard trophy — an icon button in the same cluster, square 44px, yellow ink. */
-.homepage-nav-btn.is-board {
-  background: var(--v-panel-hi);
-  width: 44px;
-  padding: 0;
-  color: #FFE94A;
-}
-.homepage-nav-btn:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 #000;
-}
-.homepage-nav-btn:active {
-  transform: translate(4px, 4px);
-  box-shadow: none;
-}
-.homepage-nav-btn.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-/* Affordable-item dot — a contrasting pink badge on the SHOP button corner; static, corner-
-   anchored so it adds no layout. */
-/* CLAIM count on STATS (Andy oct2 A4): a number, not a dot — how many claims are waiting.
-   Bigger in A4 ("make notification dots clearly larger"): 22 → 30px, 2 → 3px ring. */
-.homepage-claim-count {
-  position: absolute;
-  top: -13px;
-  right: -13px;
-  min-width: 30px;
-  height: 30px;
-  padding: 0 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 15px;
-  background: #ff4fa3;
-  color: #0d0618;
-  border: 3px solid #000;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body); /* visual-1: was --fs-label — the count is the news */
-  line-height: 1;
-}
-.homepage-shop-dot {
-  /* Andy oct2 A4: clearly larger — 10 → 20px with a 3px ring, still corner-anchored (no layout). */
-  position: absolute;
-  top: -9px;
-  right: -9px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ff4fa3;
-  border: 3px solid #000;
-}
-
-/* Reduced motion: drop the recede entirely (the dialog cross-fades; the scrim
-   still dims), so nothing scales. */
+.homepage-stage.is-dimmed { transform: scale(0.965); }
 @media (prefers-reduced-motion: reduce) {
-  .homepage-stage {
-    transition: none;
-  }
-  .homepage-stage.is-dimmed {
-    transform: none;
-  }
+  .homepage-stage { transition: none; }
+  .homepage-stage.is-dimmed { transform: none; }
 }
 
-/* Streetlight pool: a tall warm cast from above, centred over the title + cards.
-   .wall-spotlight supplies the gradient + screen blend; this only places it. */
-.homepage-spotlight {
-  top: -10%;
-  left: 50%;
-  width: 78%;
-  height: 86%;
-  transform: translateX(-50%);
-  --spot-w: 60%;
-  --spot-h: 72%;
-}
-
-/* Keep the real content above the brick texture. */
-.homepage-logo,
-.homepage-cards-grid {
-  position: relative;
-  z-index: 1;
-}
-
-/* Title container: holds the spinning starburst (behind) and the wordmark. */
+/* ---- the wordmark: three stacked Bungee faces (cyan · inline · shade) ---- */
 .homepage-logo-wrap {
+  grid-area: logo;
   position: relative;
   z-index: 1;
+  min-width: 0;
+  height: calc(max(66px, 13vh) * min(1, var(--menu-scale, 1)));
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .homepage-logo {
   position: relative;
-  z-index: 1;
-  /* Bungee Shade (with a Bungee fallback) - the built-in shade layer gives the
-     wordmark its 3D body, matching the splash title exactly. */
-  font-family: 'Bungee Shade', 'Bungee', cursive;
-  text-transform: uppercase;
-  /* Scales with viewport WIDTH and HEIGHT (min of the two) so it stays big on
-     desktop but shrinks on short laptops to help the menu fit one screen, then the
-     container-driven --menu-scale trims it further to clear the XP bar / fit. */
-  /* The wordmark scales DOWN with --menu-scale on short screens, but is capped at 1× so it
-     never UPSCALES when the fit grows the cards/XP to fill a tall screen — an upscaled title's
-     rotate/skew AABB overhang would eat the title↔XP row-gap below the 12px floor (menu-fit). */
-  /* Token-governed: the wordmark IS the hero step. The 9.5vh cap is the height guard (the
-     pre-existing rule capped at 9vh). Without it the hero token renders 96px on a 768-tall
-     laptop and eats the title<->XP gap below the 12px floor menu-fit asserts; with it the
-     wordmark is a full 96px on a tall screen and 73px at 1366x768 (was 69px). */
-  font-size: calc(min(var(--fs-hero), 9.5vh) * min(1, var(--menu-scale, 1)));
+  display: grid;
+  font-size: calc(var(--fs-hpword) * min(1, var(--menu-scale, 1)));
   line-height: 1;
-  color: var(--theme-ink, #ff4fa3); /* THEME: wordmark fill */
-  -webkit-text-stroke: 5px #000;
-  paint-order: stroke fill;
-  display: inline-block;
-  text-align: center;
-  /* Resting pose. The beat-driven motion is a discrete one-shot POP fired by
-     data-beat (see below), not a continuous transform - so the wordmark sits
-     still and snaps on each detected drum hit instead of bobbing smoothly. */
-  transform: rotate(-2deg) skewX(-4deg);
-  /* NO text-shadow: the 3D body comes from the Bungee Shade font itself - exactly
-     like the splash title, which carries no extra extrude. `none` also overrides the
-     shared .wall-handstyle extrude on this element (the logo doesn't set the --hs-*
-     vars, so that would otherwise leak a flat black 3-layer drop). Both the bold-clean
-     single drop and the old 6-layer magenta extrude are intentionally gone. */
-  text-shadow: none;
-  /* will-change MOVED to the html[data-beat='true'] rule below (Batch G). CLAUDE.md: it "must
-     NEVER sit on an idle / pooled / always-present node ... Toggle it ON for the life of the
-     animation and OFF at rest: a CSS :hover / html[data-beat] state". The wordmark is the
-     always-present headline of the LCP screen and, under the MENU MOTION LAW, does not move at
-     rest at all — so this held a compositor layer for a large Bungee Shade glyph permanently, and
-     for zero motion whenever the music is muted or never started. .homepage-btn:hover 280 lines
-     below already does it the right way. */
+  letter-spacing: 0.02em;
 }
-
-/* The paint drips stay OFF (the JSX element is still in the markup; hide it) - the
-   restored title is the wordmark itself, no extra decorative siblings. The HERO HALO
-   glow is intentionally NOT restored either (the splash title has none; this keeps the
-   menu title matching it). */
-.homepage-logo-drip {
-  display: none;
+.hp-face {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  color: #2EFFE0;
 }
-
-/* Beat pulse: when useBeatSync flips data-beat="true" (~120ms on a detected kick) the
-   wordmark snaps up + out (scaled by --beat-intensity), then settles. data-beat is
-   cleared between hits so the one-shot pop restarts on the next beat. The keyframe
-   carries the resting rotate/skew pose so only the motion fires - the look is
-   unchanged at rest. (The continuous chromatic split below drifts independently,
-   matching the splash; the splash title has no beat-driven shadow slam.) */
+.hp-face.is-b { font-family: 'Bungee Inline', 'Bungee', sans-serif; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+.hp-face.is-c { font-family: 'Bungee Shade', 'Bungee', sans-serif; text-transform: uppercase; color: #000; letter-spacing: -0.08em; }
+/* MENU MOTION LAW: the wordmark's beat-pop (one-shot per detected beat; will-change only while it plays). */
 html[data-beat='true'] .homepage-logo {
   animation: title-beat-pop 120ms ease-out;
-  /* ON for the life of the animation, off at rest — data-beat is cleared between hits. */
   will-change: transform;
 }
-
 @keyframes title-beat-pop {
-  0% { transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0); }
-  35% {
-    transform: rotate(-2deg) skewX(-4deg)
-      scale(calc(1 + 0.16 * var(--beat-intensity, 1)))
-      translateY(calc(-16px * var(--beat-intensity, 1)));
-  }
-  100% { transform: rotate(-2deg) skewX(-4deg) scale(1) translateY(0); }
+  0% { transform: scale(1) translateY(0); }
+  35% { transform: scale(calc(1 + 0.16 * var(--beat-intensity, 1))) translateY(calc(-16px * var(--beat-intensity, 1))); }
+  100% { transform: scale(1) translateY(0); }
 }
 
-/* (Removed the dead `.homepage-logo::before/::after { display:none }` block: those pseudo-
-   elements have no `content` set anywhere, so they generate no boxes and the rule did nothing.
-   The chromatic-split ghosts were already gone; the markup/data-text contract is unaffected.) */
-
-/* fix/visual-real item 6: the XP bar + its small meta rows (wins caption, MOMENTUM rail, live WPM,
-   and the NEXT-unlock teaser) are grouped in ONE cluster with a tight internal gap, so the NEXT
-   line sits right under the XP row it belongs to instead of floating alone in the dead space
-   between the bar and the cards. The cluster (not each row) now carries the --menu-scale zoom, so
-   the whole block still shrinks in step with the title/cards on short screens and the fit math
-   stays honest (the fit loop keys off .menu-xp-cluster now — see Homepage.jsx SCALES). */
-.menu-xp-cluster {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  /* NO ZOOM (fix/card-fit-height). This cluster used to carry zoom: var(--menu-scale), which
-     shrank its 13px labels under the --fs-label floor on any screen short enough to engage it.
-     --menu-scale now shrinks the WORDMARK only; a short screen gets the [data-fit='short']
-     arrangement below instead of a smaller XP bar. */
-}
-
-.homepage-cards-grid {
-  display: grid;
-  /* 3D depth for the cards' cursor-magnetic lean (rotateX/rotateY on each
-     .game-card-wrap reads against this parent perspective). Purely visual. */
-  perspective: 1000px;
-  /* ART-LED v2 (feat/cards-live): the column count (--cards-cols) and the exact 3:4 card size
-     (--card-w / --card-h) are computed in Homepage.jsx from the AVAILABLE HEIGHT, so all five
-     cards fit ONE screen with no scrolling (5-in-one-row, or a 3+2 grid on a very narrow/tall
-     viewport). Cards are centred in their cells; the scenes are 3:4 and never cropped. */
-  width: 100%;
-  grid-template-columns: repeat(var(--cards-cols, var(--card-count, 5)), minmax(0, 1fr));
-  justify-content: center;
-  justify-items: center;
-  align-items: center;
-  gap: var(--gap, clamp(10px, 1.4vw, 20px));
-  padding: 0;
-}
-/* A 3-column grid of five ends 3+2: run it on SIX half-tracks, each card spanning two, and start
-   card 4 on the second so the pair of row two sits centred under the three (fix/card-fit-height).
-   A cell is still (width - 2 gaps) / 3, which is what the fit-math sizes the card to. */
-.homepage-cards-grid[data-cols='3'] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.homepage-cards-grid[data-cols='3'] .game-card-magnet { grid-column: span 2; }
-.homepage-cards-grid[data-cols='3'] .game-card-magnet:nth-child(4):nth-last-child(2) { grid-column: 2 / span 2; }
-/* A 2-column grid of five ends 2+2+1 — span the lone last card across both columns so it
-   centres under the pair above instead of hanging off to the left (feat/cards-live). */
-.homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-}
-
-/* Peek-scroll region wrapping the cards grid (desktop / >760px). Shows one full row
-   plus ~0.46 of the next, hides its own scrollbar, and fades its bottom edge; a
-   centred "N MORE" button pages down by one row. Purely presentational — the grid
-   and cards inside are unchanged. --rowh is MEASURED by Homepage.jsx (tallest row-1
-   card incl. its stagger margin-top) on mount + resize; never hardcoded. */
-.homepage-cards-region {
+/* ---- top right: LEADERBOARD / STATS / ACHIEVEMENTS (KitIconButton, sized to the mockup) ---- */
+.hp-icons {
+  grid-area: icons;
   position: relative;
-  z-index: 1;
-  width: 100%;
-  /* The region GROWS to fill the stage's leftover vertical space (after title/XP/footer) so the
-     app shell still fills the viewport (menu-fill) and the top/bottom frame gaps stay symmetric
-     (menu-vgap) — but the 3:4 cards keep their aspect and are CENTRED inside it (feat/cards-live),
-     so the scenes render whole. The region carries no `zoom`, so the menu stays free of any
-     ancestor zoom (menu-fill's no-ancestor-zoom guard). --menu-scale still shrinks title/XP on
-     short screens. */
-  flex: 1 1 auto;
-  min-height: 0;
-  /* THE 10px GAP TO THE BAR. The stage's row-gap is 22-30px and is right for every other pair on
-     the column; this one pair is not a pair of regions, it is a bar and the thing it describes. */
-  margin-top: calc(var(--cards-lift) - var(--stage-rowgap));
-  /* align-self:stretch overrides the stage's align-items:center so the region is the FULL stage
-     width (the JS reads it to size the cards); align-items:center then centres the card group. */
-  align-self: stretch;
+  z-index: 2;
+  align-self: center;
+  justify-self: end;
   display: flex;
-  flex-direction: column;
-  /* TOP, not centre. The region flex-grows to fill the stage (which is what keeps the menu
-     filling the screen and the frame gaps inside their band), and on a wide viewport the 3:4
-     cards cannot use all of it — centring split the surplus above AND below, which put 54px of
-     nothing between the XP bar and the first card. Hugging the top spends the whole surplus
-     below the cards, where it is the bottom bar's breathing room rather than a gap in the
-     middle of a sentence. */
-  justify-content: flex-start;
+  gap: calc(14 * var(--u));
+}
+.hp-icons .kb--icon { width: var(--hp-tr); height: calc(var(--hp-tr) + 8px); }
+.hp-icons .kb-iface { width: var(--hp-tr); height: var(--hp-tr); }
+.hp-icons .kb-iface .kit-icon { width: var(--hp-tr-ico); height: var(--hp-tr-ico); }
+.hp-icons .kb--icon:disabled { opacity: 0.5; pointer-events: none; }
+
+/* ---- under the icons: sound · CREDITS · the live room ---- */
+.hp-extras {
+  grid-area: extras;
+  position: relative;
+  z-index: 2;
+  align-self: start;
+  justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
+  gap: 4px 10px;
+  max-width: 100%;
 }
-.homepage-cards-scroll {
-  --gap: clamp(10px, 1.4vw, 20px);
-  width: 100%;
-  box-sizing: border-box;
-  /* Sizes to the fitted card row and is centred in the region (justify-content:center). The cards
-     are sized in JS to fit the region height, so this NEVER needs to scroll — no "N MORE". */
-  flex: 0 1 auto;
-  min-height: 0;
-  /* Horizontal padding = the 16-32px gutter between the grid and the stage's inner edge. */
-  padding: 0 clamp(18px, 1.8vw, 30px);
-  /* NO clipping here (fix/ui-pass-4, item 1): the REAL cause of the "still clipped" cards was
-     THIS element — its overflow-y:auto (with a 1.46-row max-height) clipped the row-1 card tops
-     (rest-rotate / featured upscale poked a few px above the scroll top) and hid the whole
-     second row below the fold. Every OTHER ancestor already clears every card with a wide
-     margin, so simply not clipping here shows all five cards uncut; --menu-scale (measured in
-     Homepage.jsx over the now-two-row region) shrinks the menu to keep it one screen tall. */
-  overflow: visible;
-}
-
-/* R1 (Andy oct2): SIX cards (WORD RACE on for everyone). The row runs the narrowest gutter menu-frame
-   allows (16px) and a 10px gap so six cards keep their 160px text floor down to 1163 wide; otherwise the
-   fit-math falls back to a squat 3x2 grid that clips the names. */
-.homepage-cards-scroll[data-count='6'],
-.homepage-stage[data-fit='short'] .homepage-cards-scroll[data-count='6'] {
-  --gap: clamp(8px, 0.9vw, 20px);
-  padding: 0 16px;
-}
-
-/* (fix/logic-and-onboarding) the "N MORE" pager + its `.homepage-cards-more` styles were
-   removed — all five cards are sized to fit one screen, so the pager is vestigial. */
-
-.homepage-bottom-bar {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  gap: clamp(8px, 1.2vw, 16px);
-  /* Extra horizontal inset so the two buttons (with their skew + hard offset
-     shadow) always sit comfortably INSIDE the card, never touching/spilling past
-     its rounded border. */
-  padding: clamp(3px, 0.5vh, 6px) clamp(16px, 3vw, 44px); /* small vertical (shadow clearance only) so the JOIN<->CREDITS gap is the row-gap, not padding (§3) */
-}
-
-/* Keep the buttons above the bar's stacking context. */
-.homepage-bottom-bar .homepage-btn {
-  z-index: 1;
-}
-
-/* Magnetic cursor-pull wrapper for the CTAs. Shrink-wraps the button so the
-   flex-row layout (centered, gap) is unchanged; its translate/scale + leaning
-   box-shadow are set inline by lib/magneticPull.js. No static style of its own. */
-/* WPM (§2): the menu self-test readout. It used to hold a ROW of its own under the XP bar,
-   reserving 1em of line whether or not the player was typing; it now rides the right end of the
-   bar's hint row (see .menu-xp-hint-right in MenuXp.css), which is a row that already exists and
-   is about the same thing. The wrapper and its reserve are gone with the row. */
-
-.homepage-btn-magnet {
-  display: inline-flex;
-  position: relative;
-  z-index: 1;
-  border-radius: 8px;
-  /* will-change toggled in lib/magneticPull.js only while the pull is engaged (same as
-     .game-card-magnet) — never parked idle on the button wrapper. */
-}
-
-/* Discreet link to the standalone credits page. Desktop keeps the original
-   compact box: the homepage is height-locked to one screen (overflow:hidden),
-   so extra height here risks clipping the bottom nav on short laptops. The
-   44px tap floor is applied in the <=760px block below, where the homepage
-   switches to height:auto and the target is actually tapped by a finger. */
+.hp-extras .audio-ctrl { position: static; }
 .homepage-credits-link {
-  display: block;
-  margin: 0 auto;
-  padding: 0 18px; /* no internal top/bottom pad: the credits box = its text, so the gap to the frame is the stage's padding-bottom, kept in the 16-32 band (§3) */
+  min-height: 44px;
+  padding: 0 6px;
   background: none;
   border: none;
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
+  font-size: var(--fs-body);
   letter-spacing: 1px;
   color: #9c90b4;
   cursor: pointer;
+}
+.homepage-credits-link:hover { color: #C9B8E8; text-decoration: underline; }
+.homepage-credits-link.disabled { opacity: 0.5; pointer-events: none; }
+.hp-extras .homepage-live { flex-basis: 100%; text-align: right; }
+
+/* ---- the left rail: WINS / GEMS pills + SHOP · ROLL · INDEX · REBIRTH (kit, sized to the mockup) ---- */
+.hp-rail {
+  grid-area: rail;
   position: relative;
-  /* Sit clearly above the drifting sparkle particles and carry a dark halo so the
-     small footer text stays legible when a bright particle drifts behind it. */
-  z-index: 3;
-  text-shadow: 0 1px 3px rgba(13, 6, 24, 0.95), 0 0 3px rgba(13, 6, 24, 0.95);
+  z-index: 2;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  min-width: 0;
+  padding-left: var(--hp-coin-pull);
 }
-
-.homepage-credits-link:hover {
-  color: #C9B8E8;
-  text-decoration: underline;
+.hp-rail-gap { height: calc(4 * var(--u)); }
+.hp-rail .kp { display: block; width: 100%; padding: 0; }
+.hp-rail .kp-name { display: none; }
+.hp-rail .kp-body { width: 100%; height: var(--hp-cur-h); }
+.hp-rail .kp-box { border-width: var(--b4); border-bottom-width: var(--b6); box-shadow: var(--b5) var(--b5) 0 #000; }
+.hp-rail .kp-numwrap { right: calc(16 * var(--u)); }
+.hp-rail .kp-num { font-size: var(--fs-hp24); }
+.hp-rail .kp-icon {
+  left: calc(-1 * var(--hp-coin-pull));
+  top: calc((var(--hp-cur-h) - var(--hp-coin)) / 2);
+  width: var(--hp-coin);
+  height: var(--hp-coin);
 }
+.hp-rail .kp-sq,
+.hp-rail .kp-dip { width: 100%; height: 100%; }
+.hp-rail .kp-icon .kit-icon { width: 100%; height: 100%; }
+.hp-rail .kp-pop { left: 70%; }
+.hp-rail .kp-pop.is-down { top: calc(var(--hp-cur-h) + 8px); }
+.hp-rail .kp-need { left: 60%; top: calc(var(--hp-cur-h) + 10px); }
+.hp-rail .kb-rwrap { width: 100%; }
+.hp-rail .kb--rail { width: 100%; height: var(--hp-nav-h); }
+.hp-rail .kb--rail .kb-shadow { left: var(--b5); right: calc(-1 * var(--b5)); top: var(--b5); bottom: calc(-1 * var(--b5)); }
+.hp-rail .kb-rface { gap: calc(10 * var(--u)); }
+.hp-rail .kb-rface .kit-icon { width: var(--hp-nav-ico); height: var(--hp-nav-ico); }
+.hp-rail .kb-rlabel { font-size: var(--fs-hp18); }
+.hp-rail .kb-rdot { left: auto; right: -8px; top: -8px; width: var(--hp-dot); height: var(--hp-dot); }
+.hp-rail .kb--rail:disabled { opacity: 0.5; pointer-events: none; }
 
-.homepage-credits-link.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Subtle credit footer - centered, quiet, doesn't compete with the cards. */
-.homepage-btn {
+/* ---- centre: LV + XP bar, the per-letter line + the mark chip, TYPE ANYTHING ---- */
+.menu-xp-cluster {
+  grid-area: xp;
   position: relative;
-  font-family: 'Bungee', cursive;
+  z-index: 1;
+  min-width: 0;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(14 * var(--u));
+}
+.menu-xp-cluster .kx {
+  width: 100%;
+  max-width: 60vw;
+  flex-wrap: nowrap;
+  gap: calc(14 * var(--u));
+  padding-top: 0;
+}
+.menu-xp-cluster .kx-lv { min-width: 0; }
+.menu-xp-cluster .kx-lv-k { font-size: var(--fs-hp24); }
+.menu-xp-cluster .kx-lv-n { font-size: var(--fs-hplv); text-shadow: var(--b4) var(--b4) 0 #000; }
+.menu-xp-cluster .kx-barwrap { flex: 1 1 auto; }
+.menu-xp-cluster .kx-bar { height: var(--hp-xp-h); border-width: var(--b5); box-shadow: var(--b6) var(--b6) 0 #000; }
+.menu-xp-cluster .kx-read { right: calc(12 * var(--u)); }
+.menu-xp-cluster .kx-read-n { font-size: var(--fs-hp18); }
+.menu-xp-cluster .kx-read-s,
+.menu-xp-cluster .kx-read-u { font-size: var(--fs-hp13); }
+
+.hp-perrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: calc(14 * var(--u));
+}
+.hp-per {
+  font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  line-height: 0.98;
-  /* More compact than the hero: smaller type + tighter vertical padding so the
-     pair fits inside the card at laptop size. */
-  font-size: var(--fs-panel);
-  /* Each variant sets its own darker-than-fill border colour below. */
-  border: 4px solid #000;
-  border-radius: 8px;
-  padding: clamp(9px, 1.1vh, 14px) clamp(10px, 1.4vw, 18px);
-  cursor: pointer;
-  flex: 1;
-  /* Grow to fill the bar but cap each button so they stay compact on wide
-     screens (the bar centres them). */
-  max-width: 340px;
-  text-align: center;
-  box-shadow: 4px 4px 0 #000;
-  transform: skewX(-2deg);
-  /* Overshoot bezier so hover/release POP rather than ease smoothly. */
-  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
-  /* will-change scoped to hover/press below (transform only) — border-color was a
-     non-compositing no-op and is dropped; the button is not promoted at rest. */
+  font-size: var(--fs-hp24);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: var(--b4) #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
 }
-
-/* Punchy zoom on hover (idle bounce yields to it via the :hover animation:none
-   in the idle section below). Promote only while the transform is actually animating. */
-.homepage-btn:hover:not(:disabled),
-.homepage-btn:active:not(:disabled) {
-  will-change: transform;
-}
-.homepage-btn:hover:not(:disabled) {
-  transform: skewX(-2deg) scale(1.06);
-}
-
-/* "POW!" starburst that pops out from behind the button on hover. Sits behind
-   the opaque button (z-index -1) so only its spikes poke past the edges. */
-.homepage-btn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 150%;
-  height: 230%;
-  z-index: -1;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, -50%) scale(0) rotate(-8deg);
-  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
-  /* The burst SHAPE is now a real SVG asset (public/art/starburst.svg) — a 12-spike comic
-     "POW!" burst — masked in so each button tints it via `background` below. Was a hand-rolled
-     clip-path polygon. CSS only tints, scales, and fades it on hover. */
-  -webkit-mask: url(/art/starburst.svg) center / 100% 100% no-repeat;
-  mask: url(/art/starburst.svg) center / 100% 100% no-repeat;
-}
-
-.homepage-btn:hover::before {
-  opacity: 0.2;
-  transform: translate(-50%, -50%) scale(1) rotate(-8deg);
-}
-
-/* Disabled buttons don't pop. */
-.homepage-btn:disabled::before,
-.homepage-btn.disabled::before {
-  display: none;
-}
-
-.homepage-btn-join::before { background: #2EFFE0; }
-
-.homepage-btn:active {
-  /* Squash-IN on press; release pops back via the bouncy transition. */
-  transform: skewX(-2deg) scale(0.9);
-  box-shadow: 1px 1px 0 #000;
-  transition: transform 0.05s ease-out, box-shadow 0.05s;
-}
-
-/* Disabled while navigating away - dimmed, unclickable, no press animation. */
-.homepage-btn:disabled,
-.homepage-btn.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
-.homepage-btn:disabled:active,
-.homepage-btn.disabled:active {
-  transform: skewX(-2deg);
-  box-shadow: 4px 4px 0 #000;
-}
-
-.homepage-btn-join {
-  /* value-group: THE accent element of the menu. JOIN ROOM is the only CTA the menu
-     actually renders (.homepage-btn-create has no matching class in Homepage.jsx), so
-     the screen's one hot colour is spent here. */
-  background: var(--v-accent);
-  border-color: #991A75;
-  color: var(--v-field);
-}
-
-/* ---- SHORT-HEIGHT RECLAIM (feat/cards-live) --------------------------------------------
-   On a short laptop (≤600px tall, e.g. 1163×501) the wordmark + XP cluster + footer ate ~250px
-   of the 501, leaving ~117px cards. Reclaim vertical space for the cards: shrink the wordmark
-   hard, fold away the WPM reserve and the NEXT-unlock teaser (both non-essential on a short
-   screen — they return ≥600px), and tighten the footer + section gaps. Cards then measure
-   ~170px+ wide at 1163×501 (target ≥160). */
-@media (max-height: 600px) {
-  /* Through the VARIABLE, so the card region's opt-out (--cards-lift) stays exact. Setting
-     row-gap directly here left the region subtracting a gap the column was not using. */
-  .homepage-stage { --stage-rowgap: clamp(18px, 2.4vh, 24px); }
-  /* height guard: was clamp(22px, 5.4vh, 34px) - the vh cap keeps the wordmark off the
-     card region on a short screen, so it stays expressed through the token. */
-  /* --menu-scale now applies here too (fix/card-fit-height): the fit-math takes a short card
-     row's missing height out of the wordmark first — but never under --fs-body (16px). */
-  .homepage-logo { font-size: max(var(--fs-body), calc(min(var(--fs-panel), 5.4vh) * min(1, var(--menu-scale, 1)))); }
-  .menu-xp-cluster { gap: 3px; }
-  .homepage-bottom-bar { padding: clamp(2px, 0.4vh, 4px) clamp(16px, 3vw, 44px); }
-  .homepage-footer-links { margin-top: 0; }
-  /* visual-1 CROWDING (1163x501, six 166px cards): ONE BIG THING is the title + the featured card,
-     so the short screen spends nothing on words that repeat what a shape already says.
-     - The LEVEL kicker goes: the numeral in the cyan badge is self-evident (it already goes under
-       400px wide), and at --fs-body it would have grown the badge past the 44px track.
-     - The live-WPM / "longer words pay more" tail of the hint row stays, but the row loses its
-       tracking so it holds one line at --fs-body. */
-  .menu-xp-bar.is-loud .menu-xp-label { display: none; }
-  .homepage-stage .menu-xp-hint { letter-spacing: 0; }
-}
-
-/* ---- SHORT ARRANGEMENT (fix/card-fit-height) -------------------------------------------------
-   Set by the fit-math in Homepage.jsx (data-fit='short') when the normal column cannot give the
-   five cards the width + height their own text needs — measured, not a breakpoint. The cards do NOT
-   get smaller; the page re-flows: the corner nav leaves its top-right stack (which also cost the card
-   row its right-hand reserve) and joins JOIN ROOM and CREDITS in ONE bottom row, so the card region
-   gets that row, that reserve and the tighter gaps. Same controls, same cluster — just one row. */
-.homepage-stage[data-fit='short'] {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    'logo logo logo'
-    'xp xp xp'
-    'cards cards cards'
-    'join credits nav';
-  justify-items: center;
-  align-items: center;
-  align-content: stretch;
-  column-gap: clamp(12px, 1.6vw, 24px);
-  /* No uniform row-gap here: each pair gets exactly what it needs. Title -> XP keeps menu-fit's 12px
-     clearance (16px of margin; the wordmark's skew overhang eats ~3 of it), XP -> cards keeps the
-     10px --cards-lift (the region's own margin, lift - rowgap), and only the bottom row runs tight. */
-  --stage-rowgap: 0px;
-}
-.homepage-stage[data-fit='short'] > .homepage-logo-wrap { grid-area: logo; margin-bottom: 16px; }
-.homepage-stage[data-fit='short'] > .menu-xp-cluster { grid-area: xp; }
-.homepage-stage[data-fit='short'] > .homepage-cards-region {
-  grid-area: cards;
-  justify-self: stretch;
-  align-self: stretch;
-}
-.homepage-stage[data-fit='short'] > .homepage-bottom-bar,
-.homepage-stage[data-fit='short'] > .homepage-footer-links,
-.homepage-stage[data-fit='short'] > .homepage-corner-nav {
-  margin-top: clamp(6px, 1.2vh, 16px);
-}
-.homepage-stage[data-fit='short'] > .homepage-bottom-bar {
-  grid-area: join;
-  justify-self: start;
-  padding-left: clamp(8px, 1.6vw, 24px);
-  padding-right: 0;
-}
-.homepage-stage[data-fit='short'] > .homepage-footer-links { grid-area: credits; }
-.homepage-stage[data-fit='short'] > .homepage-footer-links .homepage-credits-link { margin: 0; }
-.homepage-stage[data-fit='short'] > .homepage-corner-nav {
-  grid-area: nav;
-  position: static;
-  justify-self: end;
-  flex-direction: row;
-  align-items: center;
-}
-/* The nav no longer overhangs the card row, so the row gives back the reserve it held for it. */
-.homepage-stage[data-fit='short'] .homepage-cards-scroll {
-  padding-right: clamp(18px, 1.8vw, 30px);
-}
-
-/* LANDSCAPE corner-nav safe-gutter (fix/landscape-nav). In landscape the five cards pack into one
-   full-height row; the absolute top-right corner nav (a ~200px-tall stacked column) then overlaps
-   the row's right end, sliding the rightmost card (FUSE, LV25-gated) UNDER the nav so a tap opens
-   STATS instead of launching the mode. Reserve the nav's measured footprint (--corner-nav-reserve,
-   set in Homepage.jsx) as right padding on the card row so no card is ever beneath the nav. Never
-   drops below the normal gutter, and falls back to a safe fixed reserve before the JS measures. */
-/* EXTENDED BEYOND LANDSCAPE (fix/mobile-and-routing, Batch F). The rule above was keyed on
-   `orientation: landscape`, but the collision is caused by the viewport being SHORT, not by it
-   being wide — the card region rises into the nav's band either way. Measured with the keyboard
-   raised: at 390x509 (a 390x844 phone with an Android keyboard up) the SAT RUSH card hit-tests to
-   .homepage-corner-nav and cannot be clicked at all, and at 320x380 tapping CHAIN opens STATS —
-   the audit's nav step landed on the Stats screen and censused .stats-backup-* instead of the
-   game. Both viewports are PORTRAIT, so the landscape-only guard never fired. Keying on height
-   alone covers landscape phones and keyboard-shortened portrait with one rule.
-   BUT ONLY WHERE THE WIDTH CAN AFFORD IT (min-width: 560px). Applying this at 320x380 reserved
-   157px of a 320px screen and drove the five cards from 31x41 down to 15x20 — trading an
-   untappable card for an unreadable one. On a narrow-and-short viewport the collision is handled
-   instead by .homepage-corner-nav's pointer-events rule above, which stops the nav's empty box
-   intercepting taps, so the cards stay full-width AND clickable. */
-@media (max-height: 560px) and (min-width: 560px) {
-  .homepage-cards-scroll {
-    padding-right: max(var(--corner-nav-reserve, 132px), clamp(18px, 1.8vw, 30px));
-  }
-}
-
-/* ---- STEP 58: where the nav cluster lives (Homepage NAV_LAYOUT; ?nav= to compare) ----------
-   'stack' = the old behaviour: the top-right column on a tall screen, but on a SHORT screen (a
-   laptop browser, 1280x551) the nav dropped into the bottom row beside JOIN ROOM — SHOP and REBIRTH
-   at the bottom of the page. 'top' = the nav is at the top on every screen: the tall column is
-   unchanged, the short arrangement puts it on the wordmark's row, right side. 'rail' = a column
-   down the left edge (squeezes the card row; kept only for comparison). */
-.homepage-stage[data-nav='top'][data-fit='short'] {
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  grid-template-areas:
-    '. logo nav'
-    'xp xp xp'
-    'cards cards cards'
-    'join credits .';
-}
-.homepage-stage[data-nav='top'][data-fit='short'] > .homepage-corner-nav {
-  margin-top: 0;
-  margin-bottom: 16px;
-  align-self: start;
-  gap: 6px;
-}
-.homepage-stage[data-nav='top'][data-fit='short'] .homepage-nav-btn:not(.is-board) {
+.hp-per-u {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-body);
-  letter-spacing: 0.02em;
-  padding: 0 6px;
+  font-size: var(--fs-hp13);
+  -webkit-text-stroke: 0;
+  color: #c9b8e8;
 }
-.homepage-stage[data-nav='rail']:not([data-fit='short']) > .homepage-corner-nav {
-  right: auto;
-  left: clamp(12px, 2vw, 24px);
-  top: 50%;
-  transform: translateY(-50%);
+/* the worn mark — NAME ONLY (Andy oct5), a purple stripe on a plum chip */
+.hp-chip {
+  position: relative;
+  height: var(--hp-chip-h);
+  display: flex;
   align-items: stretch;
+  padding: 0;
+  background: #2a0e4a;
+  border: var(--b4) solid #000;
+  box-shadow: var(--b4) var(--b4) 0 #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hp18);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 80ms;
 }
-.homepage-stage[data-nav='rail']:not([data-fit='short']) .homepage-nav-btn {
-  width: auto;
+.hp-chip-edge { width: calc(10 * var(--u)); min-width: 8px; background: #B04BFF; border-right: 3px solid #000; }
+.hp-chip .menu-mark-name { display: flex; align-items: center; padding: 0 calc(12 * var(--u)); white-space: nowrap; }
+.hp-chip.is-empty { background: #1a0b2e; }
+.hp-chip.is-new .hp-chip-edge { background: #FF3D7F; }
+@media (hover: hover) {
+  .hp-chip:hover { transform: translate(-2px, -2px); }
 }
-.homepage-stage[data-nav='rail']:not([data-fit='short']) .homepage-cards-scroll {
-  padding-left: 170px;
-}
+.hp-chip:active { transform: translate(3px, 3px); }
 
-/* ---- CARD PAGES (feat/chromebook-card-pages) ---------------------------------------------------
-   Short-wide desktop only — Homepage.jsx PAGED_MENU_QUERY '(min-width: 761px) and (max-height: 700px)'
-   sets [data-paged] on the stage. Six cards could only be squat there; instead THREE sit at the full
-   3:4 ratio (sized by the fit-math, arrows + dots already paid for) and the row flips page 1 <-> 2.
-   Everywhere else the pagerow is display:contents, so the region's box tree is what it always was. */
+.hp-typed {
+  height: var(--fs-hp30);
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hp30);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.hp-typed-hint { color: #5d4a78; }
+.hp-typed.has-text .hp-typed-hint { display: none; }
+.hp-typed-caret { color: #2EFFE0; }
+
+/* ---- the cards: the EXISTING GameCards, sized by the fit-math in Homepage.jsx ---- */
+.homepage-cards-region {
+  grid-area: cards;
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+.homepage-cards-scroll {
+  --gap: clamp(8px, 0.9vw, 20px);
+  width: 100%;
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  min-height: 0;
+  padding: 0 16px;
+  overflow: visible;
+}
+.homepage-cards-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  perspective: 1000px;
+  width: 100%;
+  grid-template-columns: repeat(var(--cards-cols, var(--card-count, 5)), minmax(0, 1fr));
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+  gap: var(--gap);
+  padding: 0;
+}
+/* A 3-column grid of five ends 3+2 (six half-tracks, card 4 starts on the second). */
+.homepage-cards-grid[data-cols='3'] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.homepage-cards-grid[data-cols='3'] .game-card-magnet { grid-column: span 2; }
+.homepage-cards-grid[data-cols='3'] .game-card-magnet:nth-child(4):nth-last-child(2) { grid-column: 2 / span 2; }
+.homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* CARD PAGES (feat/chromebook-card-pages): the paged row's layout ships with the lazy CardPager.css. */
 .homepage-cards-pagerow { display: contents; }
-/* The paged row's LAYOUT (arrows either side, a shrink-wrapped 3-card grid) ships with the lazy
-   CardPager.css; until it lands the 3 cards sit in the plain data-cols=3 grid, same size. */
-/* The off-page cards. data-measuring (set for the length of one synchronous fit pass) shows them all,
-   so the minimum card width and each card's measured title-bar height cover every page. */
 .homepage-stage[data-paged] .homepage-cards-grid[data-page='0']:not([data-measuring]) > .game-card-magnet:nth-child(n+4),
 .homepage-stage[data-paged] .homepage-cards-grid[data-page='1']:not([data-measuring]) > .game-card-magnet:nth-child(-n+3) {
   display: none;
 }
 
-/* ---- Responsive ---- */
-
-/* The column count and card size are computed in Homepage.jsx from the available height at ALL
-   widths (phones included), so all five cards fit ONE screen without scrolling — a 3+2 grid on a
-   narrow/tall phone, five-in-a-row on a wide screen. No per-width column breakpoints here. */
+/* ---- a narrow desktop window (481-760px): a slimmer rail, a smaller wordmark floor ---- */
 @media (max-width: 760px) {
-  /* One screen, never a page scrollbar. */
-  .homepage-wrap {
-    height: 100dvh;
-    min-height: 100dvh;
-    overflow: hidden;
-  }
   .homepage-stage {
-    max-height: 100%;
-    --stage-rowgap: clamp(16px, 2vh, 22px);
+    --hp-nav-w: 150px;
+    --fs-hpword: max(24px, calc(56.12 * var(--u)));
+    --fs-hp18: var(--fs-body);
   }
-  /* The card region is still the flex-fill row; the cards are SIZED to fit it, so it never scrolls. */
-  .homepage-cards-region {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-x: hidden;
-  }
-  /* Everything that frames the scroll stays put (never compresses). */
-  .homepage-logo-wrap,
-  .menu-xp-bar,
-  .homepage-bottom-bar,
-  .homepage-footer-links {
-    flex-shrink: 0;
-  }
-
-  /* 44px tap floor for the credits link, phone-only: the wrap is height:auto
-     here so the taller box can never clip the one-screen desktop layout. */
-  .homepage-credits-link {
-    padding: 14px 18px 16px;
-    min-height: 44px;
-  }
+  .hp-rail .kb-rface { padding-left: 20px; }
 }
 
-/* Below 760px the single-column list scrolls the page normally, so the peek-scroll
-   region is neutralised: no height cap, no clipping, no bottom fade (the "N MORE"
-   button is not rendered at this width — see Homepage.jsx). */
-@media (max-width: 760px) {
-  .homepage-cards-scroll {
-    max-height: none;
-    overflow: visible;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-}
-
-/* Phones: tighten padding and give the action buttons full-height tap targets.
-   (Type sizes are fluid via clamp() so no per-breakpoint font overrides needed.) */
-@media (max-width: 600px) {
-  .homepage-wrap { padding: 14px; }
-  /* Symmetric vertical padding: was `18px 14px 0` — 18px top / 0 bottom, a real top↔bottom
-     asymmetry the after-padding gap measurement hid. Match top and bottom so the content
-     frames evenly. */
-  .homepage-stage { padding: 18px 14px; }
-
-  .homepage-logo {
-    -webkit-text-stroke: 4px #000;
-    /* MOBILE: the corner nav (SHOP/STATS/REBIRTH) is a fixed top-right stack. A centered wordmark
-       at the desktop size runs its right end UNDER that stack (JOB 9: "TYPE A WO" with SHOP over
-       "RD"). Shrink the font and cap the width so the title wraps to TWO lines (TYPE A / WORD) that
-       both clear the nav column. max-width reserves ~the nav gutter on each side of the centred
-       title; the nbsp in "TYPE A" keeps that line intact so it only ever breaks before WORD. */
-    font-size: calc(var(--fs-h2) * var(--menu-scale, 1));
-    /* px cap (not vw) so it is ALWAYS below the single-line width → the title reliably breaks to
-       TYPE A / WORD; the resulting ~90px block, centred, clears the (also-tightened) nav column. */
-    max-width: 140px;
-    line-height: 0.9;
-  }
-
-  .homepage-bottom-bar {
-    padding: 16px 14px 20px;
-  }
-
-  .homepage-btn {
-    min-height: 44px;
-  }
-  /* Tighten the corner-nav stack on phones so it reserves less of the top row for the wrapped
-     title to clear. Keeps the 44px touch height (JOB 14) — only the width/text shrinks. */
-  .homepage-nav-btn {
-    padding: 0 10px;
-    font-size: var(--fs-body) /* floor: tappable text is never below 16px */;
-  }
-}
-
-/* ============================================================= */
-/* ==================  BEAT-REACTIVE MOTION  ================== */
-/* ============================================================= */
-
-/* The menu's idle/ambient loops (tagline sway, section-label breathe, button
-   idle bounce, splatter parallax) were intentionally REMOVED to stop the visual
-   "jumping" - every element now keeps its static resting pose (the same look its
-   reduced-motion state already showed). Motion is concentrated into exactly two
-   beat-driven moments: the title beat-pop (.homepage-logo, above) and the frame
-   glow below. Hover/press feedback is unchanged. */
-
-/* FRAME GLOW: a soft pink pool over the menu frame that pulses up on each
-   detected beat, then fades. Opacity-only (no transform/layout) over a single
-   static radial gradient, so it restarts cleanly per beat like the title pop and
-   stays 60fps. data-beat is cleared between hits, re-firing the one-shot. Sits
-   above the wall texture (z-index 0) but below the z-index:1 content, which stays
-   crisp on top. NOTE: this menu-scoped pink gradient is a documented, intentional
-   exception to the flat / no-gradient design rule. */
+/* ---- BEAT GLOW: the frame's pink pool (the documented flat-rule exception). Its beat animation has
+   been off on main (animation: none) — kept that way; the node rests at opacity 0. ---- */
 .homepage-beat-glow {
   position: absolute;
   inset: 0;
-  border-radius: 14px;
   pointer-events: none;
   opacity: 0;
   z-index: 0;
-  will-change: opacity;
-  /* Concentrated on the OUTER frame band (transparent core out to 62%) so the
-     glow rings the stage edge - which IS the visible menu frame - and the inner
-     content stays clear. Redder pink (#FF7EC0). Kept inside .homepage-stage: the
-     stage's overflow:hidden + the persistent WallScene make outward bleed unsafe,
-     so no negative inset / .homepage-wrap move. */
   background: radial-gradient(120% 82% at 50% 50%, transparent 62%, #FF7EC0 102%);
 }
-
-html[data-beat='true'] .homepage-beat-glow {
-  animation: none;
-}
-
-@keyframes menu-beat-glow {
-  0% { opacity: 0; }
-  32% { opacity: calc(0.20 * var(--beat-intensity, 1)); }
-  100% { opacity: 0; }
-}
-
-/* ============================================================= */
-/* ==============  REDUCED MOTION (homepage)  ================== */
-/* ============================================================= */
-
-/* Reduced-motion: silence the remaining beat-driven motion - the title beat-pop
-   and the new frame glow - on top of the (now permanently removed) idle loops.
-   The page stays fully laid out and legible, just calm. Resting design POSES are
-   kept (the tagline's sticker tilt, the buttons' skew), and the buttons swap their
-   hover/press ZOOM for a white-outline COLOUR cue so they still clearly respond to
-   interaction. The old idle selectors are retained here as belt-and-braces in case
-   a base loop is ever reintroduced. */
 @media (prefers-reduced-motion: reduce) {
-  .homepage-btn,
-  html[data-beat='true'] .homepage-logo,   /* title-beat-pop */
-  html[data-beat='true'] .game-card::after, /* card-beat-glow (prototype) */
-  .homepage-beat-glow {                     /* menu-beat-glow */
+  html[data-beat='true'] .homepage-logo,
+  html[data-beat='true'] .game-card::after,
+  .homepage-beat-glow {
     animation: none !important;
   }
-  /* Keep the frame glow and the card beat-glow fully hidden when motion is reduced. */
   .homepage-beat-glow,
   .game-card::after {
     opacity: 0 !important;
   }
-  /* Buttons respond via COLOUR, not motion: drop the hover zoom / press squash /
-     POW starburst, flash the outline white on hover instead. Resting skew kept. */
-  .homepage-btn:hover:not(:disabled) {
-    transform: skewX(-2deg) !important;
-    border-color: #fff !important;
-  }
-  .homepage-btn:active {
-    transform: skewX(-2deg) !important;
-  }
-  .homepage-btn::before {
-    display: none !important;
-  }
 }
 
-/* ---- Connect / cold-start feedback (rendered INSIDE a tapped CTA) ----
-   Shown while a connect-gated action waits for the socket to open. The spinning
-   ink ring is FEEDBACK during an active wait, not idle motion, so it's a
-   sanctioned exception to the menu's no-idle-motion law. Phase 1 = CONNECTING…;
-   phase 2 (after COLD_START_HINT_MS, marked by .is-waking on the button) recolours
-   the slab yellow and adds the reassurance sub-line. Reduced motion swaps the ring
-   for a static ⏳. */
+/* ---- Connect / cold-start feedback (rendered INSIDE a tapped CTA — the mode dialog, the phone hook,
+   the deep-land screen). The ring spins only during an active wait; reduced motion swaps it for ⏳. ---- */
 .connecting {
   display: inline-flex;
   align-items: center;
@@ -986,11 +394,10 @@ html[data-beat='true'] .homepage-beat-glow {
   height: 14px;
   flex: none;
   border: 2px solid rgba(0, 0, 0, 0.25);
-  border-top-color: currentColor; /* ink — tracks the button's text colour */
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: connecting-spin 0.7s linear infinite;
 }
-/* Static stand-in for the ring, only shown under reduced motion (see below). */
 .connecting-spinner-rm {
   display: none;
   font-size: var(--fs-label);
@@ -1002,137 +409,36 @@ html[data-beat='true'] .homepage-beat-glow {
   align-items: flex-start;
   text-align: left;
 }
-.connecting-main {
-  white-space: nowrap;
-}
+.connecting-main { white-space: nowrap; }
 .connecting-sub {
   font-family: 'Space Mono', monospace;
   font-weight: 400;
-  font-size: var(--fs-body) /* visual-1: was --fs-label — it is the wait's only explanation */;
+  font-size: var(--fs-body);
   letter-spacing: 0.02em;
   text-transform: none;
   margin-top: 2px;
   opacity: 0.85;
 }
 @keyframes connecting-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
-
-/* Phase 2 — the tapped slab shifts to the yellow WAKING variant. Compound
-   selectors out-specify each button's base fill, so no !important is needed. */
-.homepage-btn-join.is-waking {
-  background: #FFE94A;
-  border-color: #B8A020;
-  color: #000;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .connecting-spinner {
-    display: none;
-  }
-  .connecting-spinner-rm {
-    display: inline-block;
-  }
+  .connecting-spinner { display: none; }
+  .connecting-spinner-rm { display: inline-block; }
 }
 
-/* STATS + CREDITS quiet footer links, side by side. */
-.homepage-footer-links {
+/* v3 (SEASON2 only): the rank title in the per-letter row — a static chip in the mark chip's shape */
+.hp-rank {
+  height: var(--hp-chip-h);
   display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 22px;
-}
-.homepage-footer-links .homepage-credits-link {
-  margin: 4px 0 0;
-}
-
-/* ===== FREE UNLOCK LADDER (Job 3) ===================================================
-   The always-on "NEXT UNLOCK" teaser + the applied theme (accent recolor) and frame
-   (LV-chip border) cosmetics. All STATIC at rest — no idle/infinite animation, so the
-/* The NEXT-UNLOCK teaser was removed (Andy's cut) - see Homepage.jsx. Its rules go with it. */
-
-/* (The ladder's THEME accent rules were removed on merge — main's themes system, src/theme/
-   themes.css, owns menu colour now. Only the FRAME cosmetics below remain from the ladder.) */
-
-/* FRAMES — a distinct border treatment on the LV badge. It moved from .menu-xp-lv (the bare
-   numeral) to .menu-xp-lvblock (the welded badge) when the badge absorbed the chip: a border on
-   the numeral itself would now draw a box inside the badge rather than around it. */
-.homepage-stage[data-menu-frame='frame-bolt'] .menu-xp-lvblock {
-  border-color: #FFE94A;
-  box-shadow: 2px 2px 0 #000, 0 0 0 2px #FFE94A;
-}
-.homepage-stage[data-menu-frame='frame-tape'] .menu-xp-lvblock { border-style: dashed; }
-.homepage-stage[data-menu-frame='frame-chrome'] .menu-xp-lvblock {
-  border-color: #cfd8e3;
-  box-shadow: 3px 3px 0 #000;
-}
-.homepage-stage[data-menu-frame='frame-spike'] .menu-xp-lvblock { border-width: 4px; }
-.homepage-stage[data-menu-frame='frame-gold'] .menu-xp-lvblock {
-  border-color: #FFB800;
-  box-shadow: 2px 2px 0 #000, 0 0 0 3px #FFB800;
-}
-.homepage-stage[data-menu-frame^='rebirth'] .menu-xp-lvblock {
-  border-color: #ff4fa3;
-  box-shadow: 2px 2px 0 #000, 0 0 0 3px #ff4fa3;
-}
-
-/* MENU SECRET sticker (Job 9) lives in SecretSticker.css (the old .secret-stamp was
-   pointer-events:none, so its dismiss click fell through and opened the card beneath). */
-
-/* The trophy's rank-news dot is CYAN — the pink dot already means "something in the shop is
-   affordable", and one colour must not mean two things. (Moved here from RankUpMoment.css when the
-   moment became a lazy chunk: the dot is always on the menu, the moment almost never.) */
-.homepage-shop-dot.is-board-news,
-.hp-m-dot.is-board-news { background: #2EFFE0; }
-
-/* N3 (Andy oct2): the LEADERBOARD on its own, TOP-LEFT, hero-size, wearing your rank. It mirrors the corner
-   nav's top-right offsets inside the same stage (a layout relationship with the frame, not an orphan), and
-   is absolutely placed, so it sits outside the short-fit grid too. */
-.homepage-board-corner {
-  /* H2a (Andy: "the golden button for most players — make it much bigger"): ONE size dial, scaled to
-     the viewport so a 2560x1440 monitor gets a big button, not a 3% chip. 6.4vw tracks the width the
-     wordmark leaves free; 17vh keeps it clear of the cards on a short window. 68px floor (the old size
-     at 1280x551) → 82 at 1280x551, 123 at 1920x1080, 164 at 2560x1440, capped at 168. */
-  /* Board-icon verdict (oct3): ~1.5x the STATS chip's area at 1280x551 — 6.4vw → 7.4vw (the 17vh short-window
-     guard is unchanged and is what binds there: 94px at 1280x551, 101 at 1366x625, 142 at 1920x1080), cap 168 →
-     176 (2560x1440). */
-  --hb: clamp(68px, min(7.4vw, 17vh), 176px);
-  position: absolute;
-  /* inset by a share of its own size as well, so the big button clears the frame's top-left corner
-     ornament at 1920 / 2560 instead of sitting on it */
-  top: max(clamp(10px, 1.6vh, 20px), calc(var(--hb) * 0.3));
-  left: max(clamp(12px, 2vw, 24px), calc(var(--hb) * 0.48));
-  z-index: 6;
-}
-/* THE GOLDEN BUTTON (Andy: "LEADERBOARD golden button"): a flat gold fill, a darker-gold outline, the
-   hard black offset shadow, and (Andy oct3 11:42) the PODIUM glyph wearing your #rank on its top step —
-   the old separate .homepage-board-rank badge is gone; the rank IS part of the icon now. */
-.homepage-nav-btn.homepage-board-hero {
-  width: var(--hb);
-  height: var(--hb);
-  padding: 0;
-  color: #1a0b2e;
-  background: #FFE94A;
-  border-color: #b8a020;
-  border-width: max(3px, calc(var(--hb) * 0.04));
-  box-shadow: max(4px, calc(var(--hb) * 0.06)) max(4px, calc(var(--hb) * 0.06)) 0 #000;
-}
-.homepage-nav-btn.homepage-board-hero:hover {
-  box-shadow: max(5px, calc(var(--hb) * 0.07)) max(5px, calc(var(--hb) * 0.07)) 0 #000;
-}
-.homepage-nav-btn.homepage-board-hero:active { box-shadow: none; }
-.homepage-board-hero .pi {
-  /* the podium FILLS the button's content box (its own viewBox already leaves the die-cut + shadow margin) */
-  width: 100%;
-  height: 100%;
-}
-.homepage-board-hero:hover .pi { transform: rotate(-5deg) scale(1.06); transition: transform 160ms ease-out; }
-.homepage-board-hero .homepage-shop-dot.is-board-news {
-  width: max(20px, calc(var(--hb) * 0.2));
-  height: max(20px, calc(var(--hb) * 0.2));
-}
-@media (prefers-reduced-motion: reduce) {
-  .homepage-board-hero:hover .pi { transform: none; }
+  align-items: center;
+  padding: 0 calc(12 * var(--u));
+  background: #1a0b2e;
+  border: var(--b4) solid #000;
+  box-shadow: var(--b4) var(--b4) 0 #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hp18);
+  color: #FFE94A;
+  white-space: nowrap;
 }

@@ -7,6 +7,7 @@
 // overlay. `playKey` re-slams. The card dims to 50% under a CLAIMED / SOLD OUT / MAX stamp.
 import { useEffect, useRef } from 'react';
 import { FX, fx } from './motion.js';
+import './motionMore.js';
 import './tokens.css';
 import './KitStamp.css';
 

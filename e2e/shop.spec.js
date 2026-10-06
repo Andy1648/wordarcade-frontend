@@ -95,7 +95,7 @@ test.describe('shop', () => {
     await expect(detail).toContainText('LOSE');
     await expect(detail).toContainText('KEEP');
     await expect(detail).not.toContainText('KEY RESETS'); // Andy oct5: KEY TIER is KEPT across rebirths
-    await expect(detail).toContainText('KEY TIER');
+    await expect(detail).toContainText('POWER');
     await expect(detail).toContainText('KEEP: WINS'); // clutter pass: was "WINS KEPT" under KEEP:
     await expect(page.locator('.shop-rb-hero-label')).toContainText('×5 XP & WINS');
 

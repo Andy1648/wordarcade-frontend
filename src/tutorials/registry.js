@@ -38,13 +38,13 @@ export const TUTORIALS = [
     isNew: true,
     needsTarget: true,
     when: (s) => !!s.marksRevealed,
-    target: '.gems-count, .menu-gems-chip, .hp-m-stats-gems',
+    target: '.gems-count, .menu-gems-chip',
     line: 'GEMS PAY FOR ROLLS.',
   },
   {
     id: 'rebirth',
     when: (s) => s.rebirthReady && s.rebirths === 0,
-    target: '.homepage-nav-btn.is-rebirth, .hp-m-navbtn.is-rebirth',
+    target: '.hp-nav.is-rebirth',
     line: 'REBIRTH READY: ×5 XP & WINS, FOR GOOD.',
   },
   {
@@ -54,7 +54,7 @@ export const TUTORIALS = [
     isNew: true,
     when: (s) => !!s.keyAffordable && s.keyTier === 0 && s.rebirths === 0,
     target: '.shop-keypower',
-    line: 'KEY TIER: MORE XP / LETTER. HOLD TO BUY.',
+    line: 'POWER: MORE XP / LETTER. HOLD TO BUY.',
   },
 ];
 

@@ -6,6 +6,7 @@
 // attempt / sent the expected frame. No fake game server is stood up here.
 import { test, expect } from '@playwright/test';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
+import { joinControl } from './support/menu.js';
 
 test.describe('WebSocket boundary', () => {
   test('the app opens exactly one socket to the backend — and it is intercepted, not live', async ({ page }) => {
@@ -23,7 +24,7 @@ test.describe('WebSocket boundary', () => {
 
     // JOIN ROOM opens the public-rooms browser, which requests the room list over
     // the socket the moment it mounts. That send is our boundary.
-    await page.getByRole('button', { name: 'JOIN ROOM' }).click();
+    await (await joinControl(page)).click(); // v2 menu: the Word Bomb dialog's JOIN WITH CODE
 
     const frame = await mock.waitForSent('list_public_rooms');
     expect(frame).toBeTruthy();

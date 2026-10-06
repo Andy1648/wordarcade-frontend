@@ -68,16 +68,18 @@ test('KEY TIER: BUY MAX spends down to below the next tier', async ({ page }) =>
   expect(await wins(page)).toBeGreaterThanOrEqual(0);
 });
 
-test('STATS sits before SHOP in both menu trees (A4)', async ({ page }) => {
+// v2 MENU (claude/mockups/v2/Menu.dc.html) supersedes A4's word stack: SHOP leads the left RAIL, STATS
+// is a top-right tile beside the leaderboard / achievements — in both menu trees.
+test('SHOP leads the rail and STATS is a top-right tile, in both menu trees (v2)', async ({ page }) => {
   await boot(page);
-  const order = async () => page.evaluate(() => [...document.querySelectorAll('.homepage-nav-btn, .hp-m-navbtn')]
-    .map((b) => (b.className.match(/is-(shop|stats|rebirth|board)/) || [])[1]).filter(Boolean));
-  let o = await order();
-  expect(o.indexOf('stats')).toBeLessThan(o.indexOf('shop'));
+  const where = async () => page.evaluate(() => ({
+    railFirst: (document.querySelector('.hp-rail [data-nav]') || {}).getAttribute?.('data-nav') || null,
+    statsInIcons: !!document.querySelector('.hp-icons [data-nav="stats"]'),
+  }));
+  expect(await where()).toEqual({ railFirst: 'shop', statsInIcons: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(400);
-  o = await order();
-  expect(o.indexOf('stats')).toBeLessThan(o.indexOf('shop'));
+  expect(await where()).toEqual({ railFirst: 'shop', statsInIcons: true });
 });
 
 test('STEP 50: the shop sells no themes — the WORLD is earned, not bought', async ({ page }) => {
@@ -95,7 +97,8 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
     'taw.tut.markRolls': '1', // MARK ROLLS are LIVE: their tutorial would cover the panel
   });
   const slot = page.locator('.menu-mark').first();
-  await expect(slot.locator('svg.mark-badge')).toBeVisible();
+  // v2 menu: the worn-mark chip shows its NAME ONLY (the art and stat live on ROLL / INDEX)
+  await expect(slot.locator('.menu-mark-name')).toHaveText('BOMBER');
   await slot.click();
   // Andy oct5: MARKS opens the ROLL screen; INDEX opens the MARKS INDEX
   await page.locator('[data-testid="roll-index"]').click();

@@ -100,7 +100,7 @@ test('a key tier buy shows the tier and what it pays, and adds no infinite anima
   await openShop(page);
   await page.locator('.shop-keypower').first().locator('.shop-buy').click();
   const sticker = page.locator('.sticker');
-  await expect(sticker).toContainText('KEY TIER 1');
+  await expect(sticker).toContainText('POWER 1');
   // Rebirth Rush: KEY multiplies XP / LETTER only (not wins) — the sticker says exactly that, and claims no WINS rate.
   await expect(sticker).toContainText('XP / LETTER');
   await expect(sticker).not.toContainText('WINS / WORD');

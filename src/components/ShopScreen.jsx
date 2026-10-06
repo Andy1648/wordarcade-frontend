@@ -86,7 +86,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
   const [gems, setGems] = useState(() => (SEASON2 ? getGems() : 0));
   useEffect(() => (SEASON2 ? subscribeGems(setGems) : undefined), []);
   const shelfBalance = SEASON2 ? gems : wins;
-  const KEY_LABEL = SEASON2 ? 'POWER' : 'KEY TIER';
+  const KEY_LABEL = 'POWER'; // v2 menu: KEY TIER is POWER in every season
   // v3: a cosmetic's GEM price (v3/hooks.js); the live game's wins price otherwise
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => getEquipped());
@@ -166,7 +166,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
       // H6/M14: "TIER n" everywhere (the shop heading, stats and the ceremony say the same).
       name: `${KEY_LABEL} ${t}${n > 1 ? ` (+${n})` : ''}`,
       // Rebirth Rush: KEY multiplies XP / LETTER only (not wins) — say exactly that.
-      blurb: `${SEASON2 ? 'POWER ' : 'KEY T'}${formatNum(t)}: ×${keyMult(keyXpMult(t))} XP / LETTER.`,
+      blurb: `POWER T${formatNum(t)}: ×${keyMult(keyXpMult(t))} XP / LETTER.`,
       coin: `−${formatNum(spent)} WINS`,
       colour: t >= 5 ? '#FFD54A' : '#2EFFE0',
       tier: t,
@@ -300,10 +300,10 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                 <div className="shop-kp-current">
                   {/* TIER IDENTITY (Andy oct5): each KEY tier wears its rung's rarity look (KEY_RAMP) — colour + glow,
                       shimmer / sparks as it climbs — so the tier reads at a glance, not from the number */}
-                  {SEASON2 ? 'POWER ' : 'KEY '}<span key={`kt${keyTier}`} className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier))}`}>T{formatNum(keyTier)}<RarityFx tier={keyRarity(keyTier)} /></span> <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → <span className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier + 1))}`}>T{formatNum(keyTier + 1)}</span> <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
+                  POWER <span key={`kt${keyTier}`} className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier))}`}>T{formatNum(keyTier)}<RarityFx tier={keyRarity(keyTier)} /></span> <b>×{keyMult(keyXpMult(keyTier))}</b> XP / LETTER → <span className={`shop-kp-tier rarity-chip ${rarityClass(keyRarity(keyTier + 1))}`}>T{formatNum(keyTier + 1)}</span> <b>×{keyMult(keyXpMult(keyTier + 1))}</b>
                 </div>
                 <div className="shop-kp-rate">
-                  {SEASON2 ? `BASE ${V3.econ.XP_BASE} XP / LETTER × POWER × REBIRTH × (1 + ★)` : 'BASE 10 XP / LETTER × KEY × REBIRTH'}
+                  {SEASON2 ? `BASE ${V3.econ.XP_BASE} XP / LETTER × POWER × REBIRTH × (1 + ★)` : 'BASE 10 XP / LETTER × POWER × REBIRTH'}
                 </div>
                 {/* §3 — the shop always shows this next goal + progress (there is always a next tier).
                     CLUTTER PASS: no "READY TO UNLOCK" — the full bar + the live HOLD price button say it. */}

@@ -18,7 +18,8 @@
 // one, so that is what is asserted:
 //   1. every mode row is FULLY inside the viewport — with NO scrolling at all, not "after
 //      scrolling to it" (the old test's bar),
-//   2. the foot row (the unlock line + JOIN ROOM) is fully visible too — the phone equivalent of
+//   2. the foot row (v2 menu: the RAIL — pills, CREDITS, SHOP · ROLL · INDEX · REBIRTH; JOIN moved to the
+//      mode dialogs' JOIN WITH CODE) is fully visible too — the phone equivalent of
 //      "the XP bar never scrolls out": the persistent control that must not be pushed off,
 //   3. no horizontal scroll AND no vertical scroll — the old spec could only check horizontal,
 //      because vertical scrolling was the mechanism it was testing,
@@ -64,7 +65,7 @@ for (const { w, h } of VIEWPORTS) {
           box: `${Math.round(b.top)}..${Math.round(b.bottom)} of ${vh}`,
         };
       }
-      const footEl = document.querySelector('.hp-m-foot');
+      const footEl = document.querySelector('.hp-m-rail');
       const joinEl = document.querySelector('.hp-m-join');
       const boxOf = (el) => {
         if (!el) return null;
@@ -78,8 +79,9 @@ for (const { w, h } of VIEWPORTS) {
       };
       const others = {};
       for (const id of soloIds) others[id] = boxOf(document.querySelector(`.hp-m-solo-btn--${id}`));
-      others.shop = boxOf(document.querySelector('.hp-m-navbtn.is-shop'));
-      others.stats = boxOf(document.querySelector('.hp-m-navbtn.is-stats'));
+      others.shop = boxOf(document.querySelector('[data-nav="shop"]'));
+      others.stats = boxOf(document.querySelector('[data-nav="stats"]'));
+      others.achievements = boxOf(document.querySelector('[data-nav="achievements"]'));
       others.credits = boxOf(document.querySelector('.hp-m-credits'));
       return {
         rows,
@@ -113,9 +115,8 @@ for (const { w, h } of VIEWPORTS) {
 
     expect(r.foot, 'the foot row is rendered').not.toBeNull();
     expect(r.foot.inside, `foot row pushed out of view @ ${w}x${h} (${r.foot.box})`).toBe(true);
-    expect(r.join, 'JOIN ROOM is rendered').not.toBeNull();
-    expect(r.join.inside, `JOIN ROOM pushed out of view @ ${w}x${h} (${r.join.box})`).toBe(true);
-    expect(r.join.h, `JOIN ROOM height @ ${w}x${h}`).toBeGreaterThanOrEqual(44);
+    // v2 menu: JOIN ROOM left the menu (the mode dialogs' JOIN WITH CODE — see menu.spec / support/menu.js joinControl)
+    expect(r.join, 'no JOIN ROOM on the v2 menu').toBeNull();
 
     // Every other destination: rendered, fully in view, and a real 44x44 target.
     for (const [name, b] of Object.entries(r.others)) {

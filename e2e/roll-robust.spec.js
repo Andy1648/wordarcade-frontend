@@ -39,7 +39,7 @@ async function seed(page, extra = {}) {
 async function openRoll(page) {
   await page.goto('/?portal=1');
   await menuReady(page);
-  await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
+  await page.locator('.hp-nav.is-roll:visible').first().click(); // v2 menu: the ROLL rail button
   await page.locator('.rs-overlay').waitFor();
 }
 const store = (page) => page.evaluate(() => {
@@ -245,7 +245,7 @@ test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, cha
   expect(after.gems).toBe(90); // charged exactly once
   expect(after.rolls).toBe(before.rolls + 1);
   expect(after.owned).toHaveLength(1);
-  await page.locator('.menu-mark:visible, .hp-m-navbtn.is-marks:visible').first().click();
+  await page.locator('.hp-nav.is-roll:visible').first().click(); // v2 menu: the ROLL rail button
   await page.locator('.rs-overlay').waitFor();
   await expect(page.getByTestId('roll-index')).toContainText('1/29');
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', '90');
