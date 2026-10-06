@@ -102,3 +102,10 @@ STANDING RULES: re-read this checklist before every step; record result + PR # a
 - Then in order: #219 SHOP (update-branch, keep both ShopScreen SEASON2 wrappers) → #220 ACHIEVEMENTS (green, needs update-branch) → #215 MENU (CI was running on 6a83f86).
 - P6 agent STOPPED mid-build in ../p6roll (feat/v2-roll-index, not pushed) — resume it.
 - P4 agent paused in ../s2reset. Then P7, P8, P4 merge, P9, P10.
+
+## STATUS (oct6, resumed)
+- #218 REBIRTH: MERGED (d15ba97), behind SEASON2.
+- #219 SHOP: conflict with #218 resolved (both SEASON2 wrappers kept), pushed 909f368, CI running → merge next.
+- #220 ACHIEVEMENTS: green; update-branch + merge after #219.
+- #215 MENU: CI red (FUSE viewport-integrity/game-fill @1366/1280, season2.spec @1280) — menu agent fixing (only heavy local job); merge after the fix goes green.
+- P6: paused in ../p6roll (resume after the #215 fix frees the machine). Then P7, P8, P4 merge, P9, P10.
