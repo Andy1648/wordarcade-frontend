@@ -82,6 +82,33 @@ test('season 1, marks revealed: ROLL = gems ÷ the roll price, INDEX = owned/tot
   await page.locator('.rs-overlay').waitFor();
 });
 
+test('season 2 (?season2=1), a FRESH save: ROLL + INDEX unlocked from the start and they open; REBIRTH padlocked until reachable', async ({ page }) => {
+  // PROGRESSION FINAL "start: ROLL + INDEX visible" — never the season-1 MARKS reveal (LV10). (prod bug: only SHOP showed)
+  await boot(page, { 'taw.s2.conv': JSON.stringify({ v: 1, st: 'shown', had: false, srv: 1 }) }, { season2: true });
+  const labels = await page.locator('.hp-rail .kb-rlabel').allTextContents();
+  expect(labels).toEqual(['UPGRADES', 'ROLL', 'INDEX', 'REBIRTH']);
+  for (const id of ['shop', 'roll', 'index']) {
+    await expect(btn(page, id)).not.toHaveAttribute('data-locked', '');
+    await expect(btn(page, id)).not.toHaveAttribute('aria-disabled', 'true');
+  }
+  await expect(btn(page, 'index').locator('.kb-rval')).toHaveText(/^0\/\d+$/);
+  // REBIRTH: padlock + the gate level until this climb first reaches it
+  await expect(btn(page, 'rebirth')).toHaveAttribute('data-locked', '');
+  await expect(btn(page, 'rebirth').locator('.kb-rval')).toHaveText(/^LV\d+$/);
+  // ROLL opens the ROLL screen …
+  await btn(page, 'roll').click();
+  await page.locator('.rs-overlay').waitFor();
+  await page.locator('.rs-close').click();
+  await expect(page.locator('.rs-overlay')).toHaveCount(0);
+  // … and INDEX opens the MARKS INDEX
+  await btn(page, 'index').click();
+  await page.locator('.mx-panel').waitFor();
+  // the empty mark chip is there from the start too: ROLL + dot
+  await page.locator('.mx-close').click();
+  await expect(page.locator('.menu-mark .menu-mark-name')).toHaveText('ROLL');
+  await expect(page.locator('.menu-mark .hp-chip-dot')).toHaveCount(1);
+});
+
 test('season 2: a roll costs 75 gems — ROLL reads gems ÷ 75; nothing on the rail is locked at R1', async ({ page }) => {
   await boot(
     page,

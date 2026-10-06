@@ -1,13 +1,13 @@
-// e2e/season2.spec.js — PROGRESSION v3 behind ?season2=1 (Andy oct5 phase 3; claude/mockups/v2/progression-v3.md).
-// One claimed board player on the season-2 board (boardMock `season2` — 022's REAL write rule + 021's lb_rebirth with
+// e2e/season2.spec.js — PROGRESSION FINAL behind ?season2=1 (claude/progression-FINAL.md).
+// One claimed board player on the season-2 board (boardMock `season2` — 026's REAL write rule + lb_rebirth season 2 with
 // the econ-13 guard), on a desktop and a phone:
-//   * TYPES on the menu and LEVELS (40 × √level: LV99 → LV100 in a handful of letters);
-//   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2, gate LV100) — one
-//     request, +7 gems, R1;
-//   * BUYS POWER with wins (100 wins, ×1.8 XP / LETTER);
+//   * TYPES REAL WORDS on the menu and LEVELS (menu words ×0.2; need(40) = 400 × 1.06^39) — gibberish pays nothing;
+//   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV > 25, SPENDS 25
+//     levels, keeps the rest) — one request, no gems, R1, LV41 → LV16;
+//   * BUYS POWER with wins (300 wins, ×2.5 XP / LETTER);
 //   * sees the v3 RANKS (KEYMASH → TYPO — by rebirths, not by level);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
-//   * CLAIMS an ACHIEVEMENT for GEMS (TYPE WORDS I → +40).
+//   * CLAIMS an ACHIEVEMENT for GEMS (TYPE WORDS I → +40) — gems come from games / achievements, never a rebirth.
 // The season-1 save (taw.*) is never touched: season 2 lives under taw.s2.*.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -36,10 +36,8 @@ async function boot(page) {
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, f: 0.5, rc: 7, v: 10 }));
     // a season-1 claim waiting in the inbox — season 2 must not pop it
     localStorage.setItem('taw.claims', JSON.stringify([{ id: 'ach-vol-1', kind: 'achievement', label: 'ACHIEVEMENT — FIRST BLOOD', amount: 50, detail: 'vol-1', ts: 1 }]));
-    // the SEASON-2 save: LV99, almost through it; 500 wins; 150 season-2 words (TYPE WORDS I is ready). This browser
-    // CONVERTED at an earlier boot (taw.s2.conv — v3/convertLocal.js), so the season-1 save above is not converted again.
-    localStorage.setItem('taw.s2.conv', JSON.stringify({ v: 1, st: 'shown', had: true, srv: 1 }));
-    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 99, f: 0.985, rc: 0, v: 10 }));
+    // the SEASON-2 save: LV40, almost through it; 500 wins; 150 season-2 words (TYPE WORDS I is ready)
+    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 40, f: 0.985, rc: 0, v: 10 }));
     localStorage.setItem('taw.s2.wins', '500');
     localStorage.setItem('taw.s2.count', JSON.stringify({ words: 150 }));
   }, { secret: SECRET, id: row.id });
@@ -70,16 +68,27 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await noClaimPopups(page);
     if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveText('KEYMASH');
 
-    // TYPE → LEVEL: LV99 → LV100 (40 × √99 ≈ 398 XP a level; a menu letter is 1 XP at P0 R0)
-    for (let i = 0; i < 3; i++) await page.keyboard.type('qwertyuiop', { delay: 90 });
-    await expect.poll(async () => (await s2(page)).level, { timeout: 15_000 }).toBeGreaterThanOrEqual(100);
+    // TYPE → LEVEL. Gibberish pays nothing (FINAL: real dictionary words only) …
+    await page.keyboard.type('qwrtzxpv ', { delay: 130 });
+    await page.waitForTimeout(400);
+    expect((await s2(page)).level).toBe(40);
+    // … real words do: LV40 → LV41 (need(40) = 400 × 1.06^39 ≈ 3,874 XP, 1.5% left ≈ 58 XP; a menu word letter pays
+    // 10 × 0.2 = 2 XP at P0 R0), typed under 12 letters a second, each closed by a space
+    await expect.poll(async () => {
+      await page.keyboard.type('house garden window little ', { delay: 130 });
+      await page.keyboard.type('simple yellow market planet ', { delay: 130 });
+      return (await s2(page)).level;
+    }, { timeout: 30_000 }).toBeGreaterThanOrEqual(41);
+    const lvBefore = (await s2(page)).level;
 
-    // REBIRTH (season 2) through the mocked lb_rebirth: gate LV100 on the stored row — the v2 REBIRTH screen (P3):
-    // HOLD TO REBIRTH (1 s), one request, R0 → R1 in place
+    // REBIRTH (season 2) through the mocked lb_rebirth: LV > 25 on the stored row, 25 levels SPENT — the v2 REBIRTH
+    // screen (P3): HOLD TO REBIRTH (1 s), one request, R0 → R1 in place
     await navControl(page, 'rebirth').click();
     const rb = page.locator('.rb2');
     await rb.waitFor({ state: 'visible' });
     await expect(rb.locator('.rb2-get')).toContainText('×1 → ×2');
+    await expect(rb.locator('[data-testid="rb2-cost"]')).toHaveText('COSTS 25 LEVELS · KEEP THE REST');
+    await expect(rb.locator('[data-testid="rb2-auto"]'), 'AUTO REBIRTH opens at R2').toHaveCount(0);
     const holdBtn = await rb.locator('.rb2-hold .kb').boundingBox();
     await page.mouse.move(holdBtn.x + holdBtn.width / 2, holdBtn.y + holdBtn.height / 2);
     await page.mouse.down();
@@ -92,14 +101,15 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect(shared.rows[0].rebirths).toBe(1);
     let st = await s2(page);
     expect(st.rebirths).toBe('1');
-    expect(st.level).toBe(1);
-    expect(st.gems, '+7 gems × R1').toBe(7);
+    expect(st.level, 'the rebirth spent 25 levels and kept the rest').toBe(lvBefore - 25);
+    expect(shared.rows[0].level, 'the server spent the gate too (026)').toBeGreaterThanOrEqual(1);
+    expect(st.gems, 'a rebirth pays no gems (FINAL)').toBe(0);
     await rb.locator('.rb2-back').click();
     await expect(rb).toHaveCount(0);
     await noClaimPopups(page);
     if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveText('TYPO');
 
-    // POWER: wins buy only POWER (100 × 4^0 = 100 wins) — the v2 SHOP (P3): HOLD TO BUY, 1 s
+    // POWER: wins buy only POWER (300 × 8^0 = 300 wins) — the v2 SHOP (P3): HOLD TO BUY, 1 s
     await navControl(page, 'shop').click();
     const sp = page.locator('.sp2');
     await sp.waitFor({ state: 'visible' });
@@ -109,7 +119,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.waitForTimeout(1150);
     await page.mouse.up();
     await expect.poll(async () => (await s2(page)).power).toBe('1');
-    expect((await s2(page)).wins).toBe('400');
+    expect((await s2(page)).wins).toBe('200');
     await page.keyboard.press('Escape');
     await expect(sp).toHaveCount(0);
 
@@ -117,13 +127,13 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.locator(phone ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();
     const ach = page.locator('.av3-overlay');
     await ach.waitFor({ state: 'visible' });
-    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('7');
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('0');
     const type = ach.locator('[data-ach="type"]');
     await expect(type.locator('.av3-strip')).toContainText('READY!');
     await type.locator('.av3-claim').click();
-    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('47'); // the gems fly in, then the pill lands
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('40'); // the gems fly in, then the pill lands
     st = await s2(page);
-    expect(st.gems).toBe(47);
+    expect(st.gems).toBe(40);
     expect(await page.evaluate(() => localStorage.getItem('taw.s2.ach'))).toBe('{"type":1}');
     await ach.locator('.av3-back').click();
     await expect(ach).toHaveCount(0);

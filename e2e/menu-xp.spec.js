@@ -109,7 +109,7 @@ test.describe('menu XP', () => {
       const samples = [];
       let on = true;
       const tick = () => {
-        samples.push({ l: lv(), s: scale() });
+        samples.push({ l: lv(), s: scale(), t: performance.now() });
         if (on) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
@@ -133,8 +133,9 @@ test.describe('menu XP', () => {
       const b = r.samples[i];
       if (b.l === a.l) {
         expect(b.s, `frame ${i}: ${a.s} → ${b.s} went backwards inside LV ${a.l} (a restart/jump back)`).toBeGreaterThanOrEqual(a.s);
-        // a STEP = one frame carrying (nearly) a whole key's gain (~1.5%) at once (SEASON 2 #5: never steps)
-        if (b.s - a.s >= 0.014) steps += 1;
+        // a STEP = one ordinary frame (< 40 ms — a janky long frame under load is not counted) carrying (nearly) a
+        // whole key's gain (~1.5%) at once. The glide moves ~0.3% a frame while typing (SEASON 2 #5: never steps)
+        if (b.t - a.t < 40 && b.s - a.s >= 0.014) steps += 1;
         if (b.s > a.s) moved += 1;
       } else {
         wraps += 1;

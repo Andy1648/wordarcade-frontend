@@ -385,14 +385,14 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             className={`rs-auto-btn${target ? ` is-on is-${target}` : ''}${autoOpen ? '' : ' is-locked'}`}
             aria-pressed={target != null}
             aria-disabled={autoOpen ? undefined : 'true'}
-            aria-label={!autoOpen ? 'Auto roll unlocks at rebirth 2' : target ? `Auto roll until ${tierName(target)} or better — tap to change` : 'Auto roll off — tap to set a target'}
+            aria-label={!autoOpen ? 'Auto roll unlocks at rebirth 1' : target ? `Auto roll until ${tierName(target)} or better — tap to change` : 'Auto roll off — tap to set a target'}
             onClick={pressAuto}
             data-testid="roll-auto"
             data-target={target || 'off'}
           >
-            {!autoOpen ? 'AUTO · R2' : target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
+            {!autoOpen ? `AUTO · R${(V3.unlocks && V3.unlocks.unlockAt('autoRoll')) || 1}` : target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
           </button>
-          <div className="rs-auto-cap" aria-hidden="true">{autoOpen ? 'TAP TO SET TARGET' : 'UNLOCKS AT REBIRTH 2'}</div>
+          <div className="rs-auto-cap" aria-hidden="true">{autoOpen ? 'TAP TO SET TARGET' : 'UNLOCKS AT REBIRTH 1'}</div>
           <label className="rs-pick rs-skip">
             <span aria-hidden="true">SKIP</span>
             <select

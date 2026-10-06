@@ -2,7 +2,11 @@
 // public.lb_ascend), as pure JS (no DOM, no fetch, no clock), so node:test, the e2e board mock and the CI loop-sim
 // all run the exact rule the database runs.
 //
-// KEEP IN SYNC WITH 021_server_rebirth.sql: the same checks in the same order, the same constants. A change to one
+// SEASON 2 = PROGRESSION FINAL (026_progression_final.sql supersedes 021 / 022's season-2 branch): lb_rebirth needs
+// LEVEL > 25 × (R+1) and SPENDS it (level −= 25 × (R+1), the leftovers stay — never level = 1); lb_ascend needs
+// R ≥ 10 + 5 × ★ and adds ONE ★ (never R − 9), R → 0, level → 1. Season 0 (the live game) is unchanged.
+//
+// KEEP IN SYNC WITH 021_server_rebirth.sql (season 0) and 026_progression_final.sql (season 2): the same checks in the same order, the same constants. A change to one
 // is a change to both; src/leaderboard/rebirthRules.test.js pins the SQL text against these constants.
 //
 // WHY (progression-v3 "Anti-exploit", Andy oct5): imbetterthanandy posted R100 with 422 words. Rebirth was purely
@@ -24,15 +28,15 @@
 export const RATE_PER_SEC = 2; // logged calls per profile per rolling second
 export const RB_WINDOW_SECS = 3600; // the pace window (020: 1 token / 5 min, 12 banked ⇒ ≤ 12 an hour)
 export const RB_PER_WINDOW = 12; // granted rebirths allowed inside one window
-export const ASCEND_AT = 10; // season 2: ascension needs this many rebirths; stars += rebirths − (ASCEND_AT − 1)
+export const ASCEND_AT = 10; // season 2: the first ascension needs this many rebirths …
+export const ASCEND_STEP = 5; // … and each ★ adds 5 more (R ≥ 10 + 5 × ★, FINAL); an ascension adds ONE ★
 export const LOG_KEEP_DAYS = 30; // request-log rows older than this are pruned (≫ the pace window)
 // season 0 — the live rule (019): LV 25 × (R+1)
 export const GATE0_BASE = 25;
 export const GATE0_STEP = 25;
-// season 2 — progression v3: LV ⌈100 × 2.5^R⌉ (unused until the SEASON2 flag; strictly harder than season 0, so a
-// client that names season 2 early only makes its own gate higher)
-export const GATE2_BASE = 100;
-export const GATE2_GROWTH = 2.5;
+// season 2 — PROGRESSION FINAL (026): the gate is the same 25 × (R+1), but STRICT (level > it) and SPENT (level −= it).
+// A season-1 row cannot use it (the econ-13 guard below), so the subtraction never touches the live board.
+export const GATE2_STEP = 25;
 export const SEASONS = [0, 2];
 // 022_season2_board.sql: a SEASON-2 request (rebirth or ascend) needs a SEASON-2 row (econ 13 — its last accepted
 // board write came from a season-2 client). Without it a season-1 row could mint ★ / rebirths on the season-2 board
@@ -46,12 +50,19 @@ const int = (v, min) => {
   return Math.max(min, Number.isFinite(n) ? Math.floor(n) : min);
 };
 
-/** The level the NEXT rebirth needs, standing at `rebirths`, in `season` (null for an unknown season). */
+/**
+ * The rebirth GATE standing at `rebirths`, in `season` (null for an unknown season). Season 0: the level needed
+ * (level ≥ gate). Season 2 (FINAL): the levels a rebirth SPENDS — it needs level > gate and leaves level − gate.
+ */
 export function serverGate(rebirths, season = 0) {
   const r = int(rebirths, 0);
-  if (season === 2) return Math.ceil(GATE2_BASE * GATE2_GROWTH ** r);
+  if (season === 2) return GATE2_STEP * (r + 1);
   if (season === 0) return GATE0_BASE + GATE0_STEP * r;
   return null;
+}
+/** Season 2: the rebirth count an ascension needs at `stars` — 10 + 5 × ★. */
+export function ascendGate(stars) {
+  return ASCEND_AT + ASCEND_STEP * int(stars, 0);
 }
 
 /** Log rows of this profile that are still inside `secs` of `now`. */
@@ -94,24 +105,27 @@ export function decideRebirth(row, { requestId, season = 0 } = {}, log = [], now
   const gate = SEASONS.includes(season) && !wrongSeasonRow(row, season) ? serverGate(rb, season) : null;
   if (gate == null) {
     result = { ok: false, reason: 'season' };
-  } else if (lv < gate) {
-    result = { ok: false, reason: 'gate', gate, level: lv, rebirths: rb };
+  } else if (season === 2 ? lv <= gate : lv < gate) {
+    // season 2 reports the LEVEL needed (gate + 1) and what it costs
+    result = season === 2 ? { ok: false, reason: 'gate', gate: gate + 1, cost: gate, level: lv, rebirths: rb } : { ok: false, reason: 'gate', gate, level: lv, rebirths: rb };
   } else {
     const granted = within(log, now, RB_WINDOW_SECS).filter((e) => e.action === 'rebirth' && e.result && e.result.ok === true);
     if (granted.length >= RB_PER_WINDOW) {
       const oldest = Math.min(...granted.map((e) => e.created_at));
       result = { ok: false, reason: 'wait', retry_in: Math.max(1, Math.ceil((oldest + RB_WINDOW_SECS * 1000 - now) / 1000)), rebirths: rb };
     } else {
-      next = { ...row, rebirths: rb + 1, level: 1 };
-      result = { ok: true, rebirths: rb + 1, level: 1 };
+      // season 0: level → 1; season 2 (FINAL): the gate's levels are SPENT, the rest kept
+      const left = season === 2 ? lv - gate : 1;
+      next = { ...row, rebirths: rb + 1, level: left };
+      result = { ok: true, rebirths: rb + 1, level: left };
     }
   }
   return { result, row: next, entry: { request_id: requestId, action: 'rebirth', result, created_at: now } };
 }
 
 /**
- * public.lb_ascend, modelled. Season 2 only: needs ≥ ASCEND_AT stored rebirths; then stars += rebirths − 9,
- * rebirths = 0, level = 1. Same request log, same idempotency and rate limit as lb_rebirth.
+ * public.lb_ascend, modelled (026). Season 2 only: needs R ≥ 10 + 5 × ★ stored; then stars + 1, rebirths = 0,
+ * level = 1. Same request log, same idempotency and rate limit as lb_rebirth.
  */
 export function decideAscend(row, { requestId, season = 0 } = {}, log = [], now = Date.now()) {
   const pre = prelude(row, requestId, 'ascend', log, now);
@@ -122,10 +136,10 @@ export function decideAscend(row, { requestId, season = 0 } = {}, log = [], now 
   let next = row;
   if (season !== 2 || wrongSeasonRow(row, season)) {
     result = { ok: false, reason: 'season' };
-  } else if (rb < ASCEND_AT) {
-    result = { ok: false, reason: 'gate', need: ASCEND_AT, rebirths: rb };
+  } else if (rb < ascendGate(st)) {
+    result = { ok: false, reason: 'gate', need: ascendGate(st), rebirths: rb };
   } else {
-    const stars = st + rb - (ASCEND_AT - 1);
+    const stars = st + 1;
     next = { ...row, stars, rebirths: 0, level: 1 };
     result = { ok: true, stars, rebirths: 0, level: 1 };
   }

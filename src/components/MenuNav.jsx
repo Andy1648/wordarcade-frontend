@@ -62,7 +62,7 @@ const DOT_SAYS = { shop: ' — items available', roll: ' — a roll is ready', i
 const NAME = { shop: 'Upgrades', roll: 'Roll', index: 'Marks index', rebirth: 'Rebirth' };
 /** "R2" → "rebirth 2", "LV10" → "level 10" (the locked button's spoken gate). */
 function sayGate(g) {
-  const m = /^(R|LV)\s*(\d+)$/i.exec(String(g || ''));
+  const m = /^(R|LV)\s*([\d,.]+[KMB]?)$/i.exec(String(g || ''));
   if (!m) return String(g || '');
   return `${m[1].toUpperCase() === 'R' ? 'rebirth' : 'level'} ${m[2]}`;
 }

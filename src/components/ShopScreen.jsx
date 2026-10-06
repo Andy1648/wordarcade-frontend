@@ -392,7 +392,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                     {formatNum(advice.stars)} <span className="shop-rb-star">★</span>
                   </>
                 )}
-                {rebirthReady && SEASON2 && <>{' · +'}{formatNum(V3.econ.rebirthGems(rebirths + 1))} GEMS</>}
+                {rebirthReady && SEASON2 && <>{' · COSTS '}{formatNum(V3.econ.rebirthCost(rebirths))} LEVELS · KEEP THE REST</>}
               </div>
               {rebirthReady && !SEASON2 && (
                 <div className="shop-rb-advice">
@@ -450,7 +450,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
               </div>
             )}
 
-            {/* v3 ASCEND (R10): ★ += R − 9; rebirths, levels and POWER reset. The ★ multiply XP and wins (1 + ★). */}
+            {/* ASCEND (R = 10 + 5 × ★): ★ + 1; rebirths, levels and POWER reset. The ★ multiply XP and wins (1 + ★). */}
             {SEASON2 && (
               <div className="shop-ascend">
                 <h3 className="shop-subtitle">ASCEND — {formatNum(V3.store.getStarsV3())} ★</h3>
@@ -458,10 +458,10 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                   type="button"
                   className="shop-rebirth shop-ascend-btn"
                   onClick={confirmAscend}
-                  disabled={rbBusy || !V3.econ.canAscend(rebirths)}
+                  disabled={rbBusy || !V3.econ.canAscend(rebirths, V3.store.getStarsV3())}
                   aria-busy={rbBusy}
                 >
-                  {V3.econ.canAscend(rebirths) ? `ASCEND → +${formatNum(V3.econ.starsForAscend(rebirths))} ★` : 'ASCEND AT REBIRTH 10'}
+                  {V3.econ.canAscend(rebirths, V3.store.getStarsV3()) ? 'ASCEND → +1 ★' : `ASCEND AT REBIRTH ${V3.econ.ascendAt(V3.store.getStarsV3())}`}
                 </button>
                 {ascMsg && <div className="shop-goal shop-asc-msg" role="status">{ascMsg}</div>}
               </div>

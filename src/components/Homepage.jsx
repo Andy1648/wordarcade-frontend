@@ -13,7 +13,7 @@ import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, getKeyTier, keyTierCost } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import RebirthReadyButton from './RebirthReadyButton';
 import BoostPill from '../frenzy/BoostPill';
@@ -600,7 +600,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rollDot = canAffordRoll(gems) || starterWaiting;
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
-  const [rebirths] = useState(() => getRebirths());
+  const [rebirths, setRebirths] = useState(() => getRebirths());
   // Can the player buy at least one unowned item? Drives the wins-chip dot. Refreshed
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
@@ -608,12 +608,35 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // The UPGRADES rail's live value (SEASON 2 #5): the cheapest POWER (KEY tier) price — the one wins buy in both
   // seasons (v3 swaps keyTierCostAt). Re-read when the balance moves (a purchase spends it), never per keystroke.
   const nextPowerCost = useMemo(() => keyTierCost(getKeyTier()), [wins]); // eslint-disable-line react-hooks/exhaustive-deps
-  const { progress: xpProgress } = useXpCapture({
+  const { progress: xpProgress, refresh: refreshXp } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
     // (the wins chip no longer polls here — useWinsBalance above hears every balance change)
     onCredit: () => {},
   });
+  // AUTO REBIRTH (PROGRESSION FINAL, the R2 toggle on the REBIRTH screen): on the menu, whenever the level passes the
+  // gate, rebirth — still ONE server call per rebirth through performRebirth (lb_rebirth: idempotent, ≤ 12 an hour).
+  // A refusal (pace / offline) stops it until the level moves again.
+  const autoRbRef = useRef(false);
+  useEffect(() => {
+    if (!SEASON2 || !V3.hooks || !V3.hooks.autoRebirthOn() || autoRbRef.current) return;
+    if (xpProgress.level < rebirthThreshold(getRebirths())) return;
+    autoRbRef.current = true;
+    import('../leaderboard/serverRebirth.js')
+      .then(async (m) => {
+        for (let i = 0; i < 12 && loadProgress().level >= rebirthThreshold(getRebirths()); i++) {
+          const r = await m.performRebirth();
+          if (!r || !r.ok) break;
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        autoRbRef.current = false;
+        refreshXp();
+        setRebirths(getRebirths());
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xpProgress.level]);
   // SESSION MEMORY for the XP bar: the menu you come back to from a game shows the bar where you left
   // it, then CLIMBS to where you are now (the whole game's gain, one flash per level — KitXpBar). A
   // rebirth (a drop) or a first visit just lands.
@@ -1179,12 +1202,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // ---- v2 MENU chrome (claude/mockups/v2/Menu.dc.html) — one set of props, both trees -------------
   // ROLL + INDEX: the REAL gate per season. Season 1: the MARKS layer reveals at LV10 (or any rebirth / an owned mark).
   // Season 2 (PROGRESSION FINAL): v3/unlocks 'rollScreen' — open from the start (at 0); a gate above 0 shows "R<n>".
+  // (Season 2 never reads the season-1 MARKS reveal / LV10: a fresh season-2 save gets ROLL + INDEX at once.)
   const s2Unlocks = SEASON2 && V3.unlocks ? V3.unlocks : null;
+  const s2State = s2Unlocks ? s2Unlocks.liveUnlockState() || {} : null;
   const rollGateAt = s2Unlocks ? s2Unlocks.unlockAt('rollScreen') : null;
   const markShown = s2Unlocks
-    ? !(rollGateAt > 0) || s2Unlocks.featureOpen('rollScreen')
+    ? rollGateAt == null || s2Unlocks.unlocked('rollScreen', s2State)
     : markUnlocked.length > 0 || marksRevealed();
   const rollLock = markShown ? null : s2Unlocks ? `R${rollGateAt}` : `LV${MARKS_UNLOCK_LEVEL}`;
+  // REBIRTH (season 2): LOCKED until it is first reachable — padlock + the gate level ("LV26") while this climb has
+  // never rebirthed (R0, ★0) and the level is under the gate. Season 1 keeps it open with its "IN N LV" line.
+  const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && !rebirthReady ? `LV${formatNum(rebirthGate)}` : null;
   const openMarks = (view) => {
     if (navigating) return;
     sound.click();
@@ -1203,7 +1231,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: `${formatNum(nextPowerCost)} WINS`, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
     roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: rollValue, valueSays: rollValue.toLowerCase(), locked: rollLock },
     index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
-    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: rebirthValue, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready' },
+    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: rebirthValue, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };

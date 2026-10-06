@@ -120,6 +120,25 @@
 }
 .rb2-gate-txt { flex: 0 0 auto; font-size: var(--fs-k14); color: var(--k-dim); white-space: nowrap; }
 .rb2-msg { min-height: 22px; font-size: var(--fs-k16); color: var(--k-yellow); text-align: center; }
+.rb2-cost { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k16); color: var(--k-white); text-align: center; }
+/* AUTO REBIRTH (FINAL, R2): a plain toggle — 44px touch target, static shadow, press = transform only */
+.rb2-auto {
+  min-height: 44px;
+  padding: 0 18px;
+  font-family: var(--k-display);
+  font-size: var(--fs-k16);
+  text-transform: uppercase;
+  color: var(--k-white);
+  background: var(--k-panel-deep);
+  border: var(--k-ink-m) solid var(--k-ink);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--k-ink);
+  cursor: pointer;
+  transition: transform .2s;
+}
+.rb2-auto:active { transform: translate(2px, 2px); }
+.rb2-auto.is-on { background: var(--k-purple); }
+.rb2-get-sub { font-size: var(--fs-k14); color: var(--k-dim); text-align: right; margin-top: -6px; }
 
 /* ---- right: YOU GET ---- */
 .rb2-get {

@@ -1,40 +1,40 @@
-// v3/curve.js — THE v3 LEVEL CURVE: XP for the next level = 40 × √level, the same for everyone.
+// v3/curve.js — THE FINAL LEVEL CURVE: XP for the next level need(n) = 400 × 1.06^(n−1), the same for everyone
+// (never scales with R / POWER / ★).
 //
-// LEVELS REACH MILLIONS, so the carry is O(1) per credit — never one loop step per level. The curve is defined by
-// its CLOSED-FORM CUMULATIVE (the midpoint rule of ∫ 40√x dx):
-//     cum(L)  = XP from LV1 to reach LV L = (80/3) · ((L − ½)^1.5 − (½)^1.5)          cum(1) = 0
-//     need(L) = cum(L + 1) − cum(L)  = (80/3) · ((L + ½)^1.5 − (L − ½)^1.5)  = 40·√L · (1 − 1/(96·L²) − …)
-// so need(1) = 39.6, need(100) = 400.0, need(1M) = 40,000 — 40·√L to within 1% from LV1 and 0.001% from LV10.
-// A credit adds XP to the cumulative total and INVERTS cum() (a cube-root-squared closed form, then at most a
-// couple of ±1 fix-ups for float noise) — exactly additive: credit(a) then credit(b) lands where credit(a + b) does.
-// LEAF: imports nothing.
-import { CURVE_A } from './econ.js';
+// LEVELS REACH THE THOUSANDS, so a credit is O(1) — never one loop step per level. The curve is geometric, so the XP
+// for k levels from L is a closed-form sum:  S(L, k) = need(L) × (1.06^k − 1) / 0.06.  A credit inverts it relative
+// to need(L) (k = ⌊log(1 + rest × 0.06 / need(L)) / log 1.06⌋, then at most a couple of ±1 fix-ups for float noise),
+// so it stays exact at any level and is additive: credit(a) then credit(b) lands where credit(a + b) does.
+// LEAF: imports econ.js only.
+import { CURVE_BASE, CURVE_GROWTH } from './econ.js';
 
-const K = (2 * CURVE_A) / 3; // (80/3) for CURVE_A = 40
-const H15 = Math.pow(0.5, 1.5);
-export const LEVEL_MAX = 1e15; // a level stays an exact integer (far past any reachable level)
+const G = CURVE_GROWTH;
+const LG = Math.log(G);
+const R = G - 1;
+// 400 × 1.06^(L−1) stays finite to L ≈ 11,900; past the cap the level holds (XP/letter is capped at 1e300 too)
+export const LEVEL_MAX = Math.floor(Math.log(1e300 / CURVE_BASE) / LG);
 export const FRAC_MAX = 1 - 1e-9;
 
 const lvOf = (n) => (Number.isFinite(n) ? Math.min(LEVEL_MAX, Math.max(1, Math.floor(n))) : n === Infinity ? LEVEL_MAX : 1);
 
-/** Cumulative XP from LV1 to reach `level` (0 at LV1). */
-export function cumXp(level) {
-  const L = lvOf(level);
-  return K * (Math.pow(L - 0.5, 1.5) - H15);
-}
-/** XP to advance FROM `level` to level + 1 (≈ 40 × √level). Always finite and > 0. */
+/** XP to advance FROM `level` to level + 1: 400 × 1.06^(level−1). Always finite and > 0. */
 export function needV3(level) {
-  const L = lvOf(level);
-  const v = K * (Math.pow(L + 0.5, 1.5) - Math.pow(L - 0.5, 1.5));
-  return v > 0 && Number.isFinite(v) ? v : CURVE_A * Math.sqrt(L);
+  return CURVE_BASE * Math.pow(G, lvOf(level) - 1);
+}
+/** Cumulative XP from LV1 to reach `level` (0 at LV1): 400 × (1.06^(L−1) − 1) / 0.06. */
+export function cumXp(level) {
+  return (CURVE_BASE * (Math.pow(G, lvOf(level) - 1) - 1)) / R;
+}
+/** XP for `k` levels starting at `level` (closed form). */
+function span(level, k) {
+  return k <= 0 ? 0 : (needV3(level) * (Math.pow(G, k) - 1)) / R;
 }
 /** The level a cumulative XP total reaches (the inverse of cumXp; floor). O(1). */
 export function levelAtCum(total) {
   const T = Number.isFinite(total) && total > 0 ? total : 0;
-  let L = Math.floor(Math.pow(T / K + H15, 2 / 3) + 0.5);
+  let L = 1 + Math.floor(Math.log(1 + (T * R) / CURVE_BASE) / LG);
   if (!Number.isFinite(L) || L >= LEVEL_MAX) return LEVEL_MAX;
   L = Math.max(1, L);
-  // float noise: at most a step or two either way
   for (let i = 0; i < 4 && L > 1 && cumXp(L) > T; i++) L -= 1;
   for (let i = 0; i < 4 && L < LEVEL_MAX && cumXp(L + 1) <= T; i++) L += 1;
   return L;
@@ -55,9 +55,14 @@ export function creditXpV3(state, gain) {
   let level = level0;
   let rest = into + g;
   if (rest >= cost0 && level0 < LEVEL_MAX) {
-    const total = cumXp(level0) + rest;
-    level = Math.max(level0 + 1, levelAtCum(total));
-    rest = total - cumXp(level);
+    let k = Math.floor(Math.log(1 + (rest * R) / cost0) / LG);
+    if (!Number.isFinite(k)) k = LEVEL_MAX - level0;
+    k = Math.max(1, Math.min(k, LEVEL_MAX - level0));
+    // float noise: at most a step or two either way
+    for (let i = 0; i < 4 && k > 1 && span(level0, k) > rest; i++) k -= 1;
+    for (let i = 0; i < 4 && level0 + k < LEVEL_MAX && span(level0, k + 1) <= rest; i++) k += 1;
+    level = level0 + k;
+    rest = Math.max(0, rest - span(level0, k));
   }
   const cost = needV3(level);
   const frac = clampFrac(cost > 0 ? rest / cost : 0);
