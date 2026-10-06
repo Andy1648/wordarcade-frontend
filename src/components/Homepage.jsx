@@ -535,10 +535,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     let live = true;
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (live) onResize(); });
     window.addEventListener('resize', onResize);
+    // The cards' region changes size when an in-flow item above it comes or goes (the REWARDS popup, REBIRTH
+    // READY): re-fit then too. Observed, never read per frame — the fit runs once per change, in a rAF.
+    const regionEl = stage.querySelector('.homepage-cards-region');
+    let lastRegionH = regionEl ? regionEl.clientHeight : 0;
+    const ro = typeof ResizeObserver === 'function' && regionEl
+      ? new ResizeObserver((entries) => {
+        const h = Math.round(entries[0].contentRect.height);
+        if (Math.abs(h - lastRegionH) > 1) { lastRegionH = h; onResize(); }
+      })
+      : null;
+    if (ro) ro.observe(regionEl);
     return () => {
       live = false;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
+      if (ro) ro.disconnect();
     };
   }, [isPhoneMenu, isPagedMenu]);
 
@@ -1283,9 +1295,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </div>
           {/* REBIRTH READY → ×5 FOREVER (Andy oct3): in flow under the bar it is about (nothing until ready). */}
           <RebirthReadyButton ready={rebirthReady} onGo={handleRebirthNow} className="is-menu" />
-          {/* The old TYPE ANYTHING row's slot, kept EMPTY so the cards keep their size and place (Andy: "nothing
-              else on the menu changes"). Nothing renders in it — typing shows as the MenuXpFx pops. */}
-          <div className="hp-typed-slot" aria-hidden="true" />
         </div>
 
         <div className="homepage-cards-region">
@@ -1374,7 +1383,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
 
       {/* REWARDS — the claim popup (unseen claims) and the inbox panel. */}
-      {/* The popup never floats over another overlay (rank ladder, marks, a mode dialog). */}
+      {/* The popup never floats over another overlay (rank ladder, marks, a mode dialog). While it shows, the cards'
+          region reserves its height at the bottom (Homepage.css), and the fit re-runs (the region's ResizeObserver). */}
       {!isPhoneMenu && !showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview && (
         <ClaimPopup onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
       )}
