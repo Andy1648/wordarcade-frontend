@@ -48,10 +48,10 @@ test.describe('overlays render without console errors', () => {
     await openStats(page); // claims ride STATS (Andy oct2 A4)
     const panel = page.locator('.stats-panel');
     await expect(panel).toBeVisible();
-    // STAT BOARD (Andy oct5): WINS / WORD and XP / LETTER, each BASE → KEY / REBIRTH / MARK / BOOST lines → TOTAL
+    // STAT BOARD (Andy oct5; numbers audit: + MODE and INDEX lines): WINS / WORD and XP / LETTER, each BASE → lines → TOTAL
     await expect(panel.locator('.sb')).toHaveCount(2);
-    await expect(panel.locator('.sb--wins .sb-line')).toHaveText([/^REBIRTH/, /^MARK/, /^BOOST/]);
-    await expect(panel.locator('.sb--xp .sb-line')).toHaveText([/^POWER/, /^REBIRTH/, /^MARK/, /^BOOST/]);
+    await expect(panel.locator('.sb--wins .sb-line')).toHaveText([/^MODE/, /^REBIRTH/, /^MARK/, /^INDEX/, /^BOOST/]);
+    await expect(panel.locator('.sb--xp .sb-line')).toHaveText([/^POWER/, /^REBIRTH/, /^MARK/, /^INDEX/, /^BOOST/]);
     await expect(panel.locator('.sb-total-v')).toHaveCount(2);
     await expect(panel.locator('.sb--xp .sb-line[data-line="key"]')).toContainText('TIER 3'); // shows the TIER, not "LV undefined"
     await page.waitForTimeout(150);

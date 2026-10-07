@@ -1,5 +1,5 @@
 // stock.test.js — the SHOP's STOCK (season 2, P3): 6 gem-priced items, ×N LEFT per 5-minute window, SOLD OUT, the
-// timed effects (+25% XP, ×2 LUCK, ×2 GEM DROPS), ×10 OVERDRIVE (a boost), +5 MIN EVERY BOOST, and the visual-only
+// timed effects (+25% XP, ×2 LUCK), ×10 OVERDRIVE (a boost), +5 MIN EVERY BOOST, and the visual-only
 // FREE EPIC+ ROLL. The flag is set before any import (node --test runs each file in its own process).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,11 +29,11 @@ test('the boost keys match boost.js / hooks.js', () => {
   assert.equal(ST.BOOST2_KEY, 'taw.s2.boost2');
 });
 
-test('the stock: six items at the odd gem prices, rarity bands, counts; a 5:00 restock window', () => {
+test('the stock: five items (no gem scaling) at the odd gem prices, rarity bands, counts; a 5:00 restock window', () => {
   mem.clear();
-  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 120, 65, 225, 150, 495]);
-  assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'rare', 'common', 'epic', 'rare', 'legendary']);
-  assert.deepEqual(ST.stockLeft(T0), { xp25: 5, luck2: 3, gems2: 4, overdrive: 2, extend: 2, epicroll: 1 });
+  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 120, 225, 150, 495]);
+  assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'rare', 'epic', 'rare', 'legendary']);
+  assert.deepEqual(ST.stockLeft(T0), { xp25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 1 });
   assert.equal(ST.restockIn(T0), 300 - 37);
   assert.equal(ST.restockIn(T0 + 262_500), 1);
 });
@@ -65,18 +65,16 @@ test('short on gems → refused with the gap; nothing charged, nothing taken', (
   assert.equal(ST.stockLeft(T0).luck2, 3);
 });
 
-test('timed effects: +25% XP on XP / LETTER, ×2 LUCK, ×2 GEM DROPS — for their minutes only', () => {
+test('timed effects: +25% XP on XP / LETTER, ×2 LUCK — for their minutes only; NOTHING scales gems', () => {
   mem.clear();
   setGems(1000);
   const base = X.levelXpPerLetter(0, 0);
   const luck0 = U.unlockLuckMult();
   assert.equal(ST.buyStock('xp25', T0).ok, true);
   assert.equal(ST.buyStock('luck2', T0).ok, true);
-  assert.equal(ST.buyStock('gems2', T0).ok, true);
   const now = T0 + 1000;
   assert.equal(ST.stockXpMult(now), 1.25);
   assert.equal(ST.stockLuckMult(now), 2);
-  assert.equal(ST.stockGemMult(now), 2);
   assert.equal(ST.stockXpMult(T0 + 10 * 60000 + 1), 1, 'the XP one ends after 10 min');
   assert.equal(ST.stockLuckMult(T0 + 15 * 60000 - 1), 2, 'LUCK runs 15 min');
   // wired into the live v3 rules (wall clock: these run "now", so re-buy against Date.now())
@@ -84,12 +82,12 @@ test('timed effects: +25% XP on XP / LETTER, ×2 LUCK, ×2 GEM DROPS — for the
   setGems(1000);
   ST.buyStock('xp25');
   ST.buyStock('luck2');
-  ST.buyStock('gems2');
   assert.ok(Math.abs(X.levelXpPerLetter(0, 0) - base * 1.25) < 1e-9, 'XP / LETTER × 1.25');
   assert.equal(U.unlockLuckMult(), luck0 * 2, 'roll luck × 2');
-  // gem drop chance 1/15 → 2/15: an rng draw of 0.1 (between them) now drops
+  // gems are NEVER scaled (Andy oct6): the drop chance stays exactly 1 in 15 — a draw of 0.1 (> 1/15) never drops
   let draws = [0.1, 0.5];
-  assert.ok(G.rollGemDrop(() => draws.shift()) > 0);
+  assert.equal(G.rollGemDrop(() => draws.shift()), 0);
+  assert.equal(ST.STOCK.some((i) => i.fx === 'gems'), false, 'no STOCK item touches gems');
 });
 
 test('+5 MIN EVERY BOOST: needs a running timer; extends every one', () => {

@@ -88,13 +88,18 @@ export function xpPerLetter({ power = 0, rebirths = 0, stars = 0, mark = 1, mark
   const b = Number.isFinite(markBase) && markBase > 0 ? markBase : 0;
   return fin((XP_BASE + b) * powerXpMult(power) * rebirthMult(rebirths) * starMult(stars) * m);
 }
-/** WINS per word: (22 + markBase) × length/5 × MODE × 2^R × (1 + ★) × MARK (unrounded). `mode` = a number or a mode id. */
+/**
+ * WINS per word: 22 × (10 + markBase)/10 × length/5 × MODE × 2^R × (1 + ★) × MARK (unrounded). `mode` = a number or a
+ * mode id. `markBase` = a worn +N BASE WINS mark, which is sized against the live BASE 10 (a MYTHIC +20 = ×3, like
+ * every MYTHIC) — so it scales the 22 by (10 + N)/10, exactly as the payout does (hooks.xpSwap.i / wins.wordWinsBase).
+ * (NUMBERS AUDIT: this helper used to ADD it, 22 + N, which disagreed with what the game pays.)
+ */
 export function winsPerWord({ length = WORD_REF, mode = 1, rebirths = 0, stars = 0, mark = 1, markBase = 0 } = {}) {
   const len = Number.isFinite(length) && length > 0 ? Math.floor(length) : 1;
   const md = typeof mode === 'string' ? modeMult(mode) : Number.isFinite(mode) && mode > 0 ? mode : 1;
   const m = Number.isFinite(mark) && mark > 0 ? mark : 1;
   const b = Number.isFinite(markBase) && markBase > 0 ? markBase : 0;
-  return fin((WINS_BASE + b) * (len / WORD_REF) * md * rebirthMult(rebirths) * starMult(stars) * m);
+  return fin(WINS_BASE * ((10 + b) / 10) * (len / WORD_REF) * md * rebirthMult(rebirths) * starMult(stars) * m);
 }
 /** The LEVELS a rebirth from `rebirths` SPENDS: 25 × (R + 1). */
 export function rebirthCost(rebirths) {

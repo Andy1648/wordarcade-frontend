@@ -103,7 +103,7 @@ test('toggles and tabs work by keyboard', async ({ page }) => {
 
 test('the XP climb (+30 levels) finishes within 1 s', async ({ page }) => {
   await open(page);
-  const xp = page.locator('.kx');
+  const xp = page.locator('.kg-sheet--bars .kx');
   await page.getByRole('button', { name: '+50 STRESS' }).click();
   await expect(xp).toHaveAttribute('data-state', 'rest', { timeout: 3000 });
   const ms = Number(await xp.getAttribute('data-climb-ms'));
@@ -169,8 +169,8 @@ test('REDUCE MOTION makes everything land instantly', async ({ page }) => {
   expect(await pill.locator('.kp-num').textContent()).toBe(target);
   // the XP climb lands with no climb at all
   await page.getByRole('button', { name: '+50 STRESS' }).click();
-  await expect(page.locator('.kx')).toHaveAttribute('data-state', 'rest');
-  expect(await page.locator('.kx').getAttribute('data-climb-ms')).toBe('0');
+  await expect(page.locator('.kg-sheet--bars .kx')).toHaveAttribute('data-state', 'rest');
+  expect(await page.locator('.kg-sheet--bars .kx').getAttribute('data-climb-ms')).toBe('0');
   // pops, stamps, banners, the deny shake — nothing animates
   await page.getByRole('button', { name: /OVERDRIVE/ }).filter({ has: page.locator('.kg-tier-l') }).click();
   await page.getByTestId('kit-spend-wins').click();

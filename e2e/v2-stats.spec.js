@@ -1,7 +1,8 @@
 // e2e/v2-stats.spec.js — THE v2 STATS SCREEN (P8; claude/mockups/v2/Stats.dc.html) behind ?season2=1. A season-2 save
 // at R5 ★1 POWER 6 (no mark, no boost):
-//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×64 = 1,408 WINS / WORD, then the chain BASE 22 · REBIRTH ×32 ·
-//      MARK ×1 · BOOST ×1 · ASCEND ×2 — the v3 numbers (2^R and (1 + ★) as separate chips); the XP tab is POWER-first;
+//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×64 = 1,408 WINS / WORD, then the chain in FINAL's order BASE 22 ·
+//      MODE ×1 · REBIRTH ×32 · STARS ×2 · MARK ×1 · BOOST ×1 — the v3 numbers (2^R and (1 + ★) as separate chips); the XP
+//      tab is POWER-first; the PRINTED chips multiply out to the PRINTED total (numbers audit, Andy item 5);
 //   2. REPLAY (tap the TOTAL) runs the chain again from ×1 and lands on the same total — and every animation it plays
 //      is FINITE (nothing on the screen loops at rest);
 //   3. REDUCE MOTION shows the finished chain at once and plays nothing;
@@ -15,13 +16,13 @@ import { navControl } from './support/menu.js';
 
 const SECRET = 'c7'.repeat(24);
 
-async function boot(page, { reduce = false } = {}) {
+async function boot(page, { reduce = false, extra = null } = {}) {
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   const row = { id: 'me-st', username: 'Statter', level: 420, rebirths: 5, stars: 1, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 13 };
   const shared = { rows: [row], secrets: new Map([[SECRET, row.id]]), saves: new Map() };
   await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, rebirth: { delayMs: 0 }, season2: true });
-  await page.addInitScript(({ secret, id, reduce }) => {
+  await page.addInitScript(({ secret, id, reduce, extra }) => {
     if (sessionStorage.getItem('st.seeded')) return;
     sessionStorage.setItem('st.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
@@ -34,7 +35,8 @@ async function boot(page, { reduce = false } = {}) {
     localStorage.setItem('taw.s2.rebirths', '5');
     localStorage.setItem('taw.s2.keytier', '6');
     localStorage.setItem('taw.s2.stars', '1');
-  }, { secret: SECRET, id: row.id, reduce });
+    for (const [k, v] of Object.entries(extra || {})) localStorage.setItem(k, v);
+  }, { secret: SECRET, id: row.id, reduce, extra });
   await page.goto('/?portal=1&season2=1');
   await navControl(page, 'stats').waitFor({ state: 'visible' });
   await navControl(page, 'stats').click();
@@ -44,9 +46,16 @@ async function boot(page, { reduce = false } = {}) {
 }
 
 const chipIds = (st) => st.locator('.st2-chip').evaluateAll((els) => els.map((e) => e.dataset.chip));
+// a printed number back to a value: "×1,024" → 1024, "×15.63" → 15.63, "1.13K" → 1130
+const SUF = { '': 1, K: 1e3, M: 1e6, B: 1e9, T: 1e12 };
+const val = (t) => {
+  const m = /^×?([\d,]*\.?\d+)([KMBT]?)$/.exec(String(t).trim());
+  if (!m) throw new Error(`not a number: ${t}`);
+  return Number(m[1].replace(/,/g, '')) * SUF[m[2]];
+};
 const chipVals = (st) => st.locator('.st2-chip-v').allTextContents();
 
-test('the TOTAL first: ×64 = 1,408 WINS / WORD, then BASE · REBIRTH · MARK · BOOST · ASCEND; XP is POWER-first', async ({ page }) => {
+test('the TOTAL first: ×64 = 1,408 WINS / WORD, then BASE · MODE · REBIRTH · STARS · MARK · BOOST; XP is POWER-first', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
@@ -61,22 +70,65 @@ test('the TOTAL first: ×64 = 1,408 WINS / WORD, then BASE · REBIRTH · MARK ·
     return !!(t.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
   expect(order, 'TOTAL precedes the chain').toBe(true);
-  expect(await chipIds(st)).toEqual(['base', 'rebirth', 'mark', 'boost', 'ascend']);
-  expect(await chipVals(st)).toEqual(['22', '×32', '×1', '×1', '×2']);
+  expect(await chipIds(st)).toEqual(['base', 'mode', 'rebirth', 'ascend', 'mark', 'boost']);
+  expect(await chipVals(st)).toEqual(['22', '×1', '×32', '×2', '×1', '×1']);
+  await expect(st.locator('[data-chip="mode"] .st2-chip-tag')).toHaveText('WORD BOMB');
   await expect(st.locator('[data-chip="ascend"] .st2-chip-tag')).toHaveText('1 STAR');
   await expect(st.locator('[data-chip="rebirth"] .st2-chip-tag')).toHaveText('R5');
   // the tabs carry their own totals
   await expect(st.locator('.st2-tab[data-tab="wins"] .st2-tab-total')).toHaveText('×64');
-  // XP / LETTER: POWER 2.5^6 · REBIRTH 2^5 · MARK · BOOST · ASCEND (1 + ★)
+  // XP / LETTER: POWER 2.5^6 · REBIRTH 2^5 · STARS (1 + ★) · MARK · BOOST
   await st.locator('.st2-tab[data-tab="xp"]').click();
   await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
-  expect(await chipIds(st)).toEqual(['base', 'power', 'rebirth', 'mark', 'boost', 'ascend']);
+  expect(await chipIds(st)).toEqual(['base', 'power', 'rebirth', 'ascend', 'mark', 'boost']);
   await expect(st.locator('.st2-unit')).toHaveText('XP / LETTER');
   const xpTab = (await st.locator('.st2-tab[data-tab="xp"] .st2-tab-total').textContent()).trim();
   await expect(total).toHaveText(xpTab, { timeout: 8000 });
-  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×244');
-  await expect(st.locator('[data-chip="power"] .st2-chip-tag')).toHaveText('LV 6');
+  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×244.14'); // 2.5^6 = 244.140625 — exact, so the chain multiplies out
+  await expect(st.locator('[data-chip="power"] .st2-chip-tag')).toHaveText('TIER 6');
 });
+
+// NUMBERS AUDIT (Andy item 5): "BASE × each multiplier = TOTAL and the math must multiply out". A deeper save — POWER 3
+// (2.5³ = 15.625, the chip that used to print ×16), R3, ★1 and a worn LEGENDARY +% WINS mark (FINAL ×2, plus the INDEX
+// it brings) — on both tabs: the PRINTED chips multiply to the PRINTED TOTAL multiplier and BASE × TOTAL to the result.
+for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
+  test(`@${vp.width}: the printed chips multiply out to the printed TOTAL on both tabs (POWER 3, R3, ★1, LEGENDARY mark)`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    const extra = {
+      'taw.s2.keytier': '3',
+      'taw.s2.rebirths': '3',
+      'taw.s2.xp': JSON.stringify({ lv: 120, f: 0.3, rc: 3, v: 10 }),
+      'taw.markRolls': JSON.stringify({ v: 2, starter: true, marks: { 'mk-eclipse': { n: 1 } } }),
+      'taw.mark': 'mk-eclipse',
+    };
+    const st = await boot(page, { reduce: true, extra });
+    for (const tab of ['wins', 'xp']) {
+      await st.locator(`.st2-tab[data-tab="${tab}"]`).click();
+      await expect(st.locator(`.st2-tab[data-tab="${tab}"]`)).toHaveAttribute('aria-selected', 'true');
+      const vals = (await st.locator('.st2-chip-v').allTextContents()).map(val);
+      const ids = await chipIds(st);
+      const total = val(await st.locator('[data-testid="st2-total"]').textContent());
+      const result = val(await st.locator('[data-testid="st2-result"]').textContent());
+      const [base, ...mults] = vals;
+      const product = mults.reduce((p, m) => p * m, 1);
+      expect(Math.abs(product - total) / total, `${tab}: ${ids.join(' × ')} = ${product} vs TOTAL ×${total}`).toBeLessThan(0.003);
+      expect(Math.abs(base * total - result) / result, `${tab}: BASE ${base} × ${total} vs ${result}`).toBeLessThan(0.006);
+      if (tab === 'wins') {
+        expect(ids).toEqual(['base', 'mode', 'rebirth', 'ascend', 'mark', 'index', 'boost']);
+        expect(vals.slice(0, 5)).toEqual([22, 1, 8, 2, 2]); // BASE 22 · MODE 1 · 2^3 · (1 + ★) · LEGENDARY ×2 (FINAL)
+      } else {
+        expect(ids).toEqual(['base', 'power', 'rebirth', 'ascend', 'mark', 'index', 'boost']);
+        expect(vals.slice(0, 4)).toEqual([10, 15.63, 8, 2]);
+      }
+      // every chip on screen (seven of them on a phone too)
+      const off = await st.locator('.st2-chip').evaluateAll((els) => els.filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.left < 0 || r.right > window.innerWidth + 0.5 || r.top < 0 || r.bottom > window.innerHeight + 0.5;
+      }).map((e) => { const r = e.getBoundingClientRect(); return `${e.dataset.chip} ${Math.round(r.left)},${Math.round(r.top)} → ${Math.round(r.right)},${Math.round(r.bottom)}`; }));
+      expect(off, `${tab}: chips off-screen`).toEqual([]);
+    }
+  });
+}
 
 test('REPLAY runs the chain again from ×1 to the same total — every animation finite', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });

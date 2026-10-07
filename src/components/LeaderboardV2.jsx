@@ -17,6 +17,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
+import { KitRankPlate } from './kit/KitRankPlate.jsx';
 import {
   boardCaps,
   fetchBoard,
@@ -119,13 +120,10 @@ function Crown({ crownRef }) {
   );
 }
 
+// P9a: every name wears its SHAPED v3 plate (KitLevelUp.dc.html 03 — kit/KitRankPlate, FIT mode for a dense list).
 function Plate({ row, className = '' }) {
   const p = rankPlate(row);
-  return (
-    <span className={`lb2-plate ${className}`} data-rank-title={p.name} style={{ '--pl-bg': p.bg, '--pl-ink': p.ink, '--pl-line': p.line }}>
-      <span>{p.name}</span>
-    </span>
-  );
+  return <KitRankPlate rank={p.i} fit shine={false} className={`lb2-plate ${className}`} />;
 }
 
 function Move({ n }) {
@@ -401,7 +399,7 @@ export default function LeaderboardV2({ onBack }) {
                   <span className="lb2-need" style={{ color: '#FFE94A' }}>{fmt(climb.need)}</span>
                   <span className="lb2-unit">{climb.unit}</span>
                   <span className="lb2-arrow">→</span>
-                  <span className="lb2-plate lb2-next" data-rank-title={climb.next.name} style={{ '--pl-bg': climb.next.bg, '--pl-ink': climb.next.ink, '--pl-line': climb.next.line }}><span>{climb.next.name}</span></span>
+                  <KitRankPlate rank={climb.next.i} fit shine={false} className="lb2-plate lb2-next" />
                 </div>
                 <div className="lb2-bar"><span className="lb2-fill" style={{ background: '#FFE94A', width: `${climb.pct}%` }} /><span className="lb2-mark" style={{ left: `${climb.pct}%` }} /></div>
                 <div className="lb2-ends"><span>{fromTo(climb.unit, climb.from)}</span><span>{fromTo(climb.unit, climb.to)}</span></div>

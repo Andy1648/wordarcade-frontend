@@ -30,7 +30,6 @@ const PROTECTED = {
     'bomb-vignette',           // WB fuse timer (seconds in an SVG <text> inside)
     'game-timer-num',          // CB seconds readout
     'game-player-name-text',   // WB player card name
-    'go-player-name-text',     // WB game-over name
     'cb-progress-name-text',   // CB live rail name
     'cb-result-name-text',     // CB round-results name
     'cb-score-name-text',      // CB final scoreboard name
@@ -39,6 +38,10 @@ const PROTECTED = {
     'cb-answers-list',         // your CB answers
     'cb-result-answers',       // everyone's CB answers
     'cb-missed-answers',       // the answers-you-missed list
+  ],
+  'src/components/results/ResultsCard.jsx': [
+    'rs2-pname',               // WB results: player names (P9b)
+    'rs2-best-w',              // WB results: your best word
   ],
   'src/components/RoomScreen.jsx': [
     'room-code',               // an identifier — must never be translated

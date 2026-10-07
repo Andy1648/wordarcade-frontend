@@ -181,7 +181,6 @@ const BAN = [
 // REVIEWED EXCEPTIONS to the bans: a value BOUNDED far below 10,000 by construction, matched by
 // file + rule + a needle from the line. A stale entry fails the build like the one above.
 const BAN_ALLOW = [
-  { file: 'GameScreen.jsx', rule: 'toFixed text child', needle: 'p.avg.toFixed(1)', why: 'average word LENGTH in letters (< 50)' },
   { file: 'ClutchBurst.jsx', rule: 'toFixed text child', needle: '(leftMs / 1000).toFixed(1)', why: 'seconds left in the clutch window (< 60)' },
 ];
 const banAllowed = (base, rule, code) => BAN_ALLOW.find((a) => a.file === base && a.rule === rule && code.includes(a.needle));

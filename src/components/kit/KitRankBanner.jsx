@@ -7,8 +7,8 @@
 //   (the leaderboard's own rank news rides the same slab: `head` replaces RANK UP, `code` the rank code, `req` only
 //   picks the plate colour)
 //
-// MINIMAL PLATES (P7): the plates are flat rectangles in the rank's colour. The 16 shaped plates (horns, wings,
-// crowns …) are P9a's job — it swaps <Plate> for the real art; the host, the store and the timing stay.
+// PLATES (P9a): the 16 shaped v3 plates (KitRankPlate — horns, wings, crowns …), old one dimming → new one slamming
+// in, then one sheen pass across the slab. The host, the store and the timing are P7's.
 // ONE host (mount <KitRankBannerHost /> once); it portals to a zero-height strip pinned to the top edge.
 // Motion: one finite WAAPI timeline per banner (transform/opacity only), skipped under REDUCE MOTION (the slab
 // simply shows for the same 2.5 s). Nothing loops.
@@ -16,16 +16,15 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { rankBanners, RANK_BANNER_MS } from './edgeStores.js';
 import { kitPlay } from './motion.js';
+import { KitRankPlate } from './KitRankPlate.jsx';
+import { plateFor } from './rankPlates.js';
 import './tokens.css';
 import './KitRankBanner.css';
 
-// The mockup's plate colour (c1) + text colour per rank code — v3/ranks.js RANKS_V3 `req`.
-export const RANK_PLATE = {
-  R0: ['#a08cc0', '#fff'], R1: ['#c9b8e8', '#000'], R2: ['#2EFFE0', '#000'], R3: ['#FFC23D', '#000'],
-  R4: ['#D88BFF', '#fff'], R5: ['#ffffff', '#000'], R6: ['#FF3D7F', '#fff'], R7: ['#FFE94A', '#000'],
-  R8: ['#2EFFE0', '#000'], R9: ['#D88BFF', '#000'], R10: ['#FF3D7F', '#fff'], '★1': ['#D88BFF', '#000'],
-  '★3': ['#FFE94A', '#000'], '★5': ['#2EFFE0', '#000'], '★10': ['#FF3D7F', '#FFE94A'], '★20': ['#FFE94A', '#000'],
-};
+// The mockup's plate colour (c1) + text colour per rank code — v3/ranks.js RANKS_V3 `req` (rankPlates.js).
+export const RANK_PLATE = Object.fromEntries(
+  ['R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', '★1', '★3', '★5', '★10', '★20'].map((r) => [r, [plateFor(r).c1, plateFor(r).txt]]),
+);
 const plateOf = (req) => RANK_PLATE[req] || RANK_PLATE.R0;
 
 const DROP = [
@@ -36,25 +35,27 @@ const DROP = [
 ];
 const NEW_IN = [{ transform: 'scale(1.5)', opacity: 0 }, { transform: 'scale(.9)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }];
 const OLD_OUT = [{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(-6px) scale(.94)', opacity: 0.45 }];
+const SHEEN = [{ transform: 'translateX(-120%) skewX(-20deg)' }, { transform: 'translateX(900%) skewX(-20deg)' }];
+
+// A phone's slab is ~366 px: the pair shrinks so old → new still fits on one row (names stay ≥ 13 px).
+const narrow = () => typeof window !== 'undefined' && window.innerWidth <= 420;
 
 function Plate({ name, req, big, innerRef }) {
-  const [c, txt] = plateOf(req);
-  return (
-    <span ref={innerRef} className={`krb-plate${big ? ' is-new' : ' is-old'}`} style={{ '--krb-c': c, '--krb-t': txt }}>
-      {name}
-    </span>
-  );
+  const w = narrow() ? (big ? 156 : 124) : big ? 180 : 140;
+  return <KitRankPlate rank={req} label={name} w={w} innerRef={innerRef} className={`krb-plate${big ? ' is-new' : ' is-old'}`} />;
 }
 
 function Banner({ b }) {
   const slab = useRef(null);
   const oldP = useRef(null);
   const newP = useRef(null);
+  const sheen = useRef(null);
   useEffect(() => {
     // keep: the slab rests above the edge until the store unmounts it (no one-frame flash back to its CSS spot)
     kitPlay(slab.current, DROP, { duration: RANK_BANNER_MS, fill: 'both', keep: true });
     kitPlay(newP.current, NEW_IN, { duration: 320, delay: 420, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' });
     kitPlay(oldP.current, OLD_OUT, { duration: 250, delay: 420, easing: 'ease-out', fill: 'forwards', keep: true });
+    kitPlay(sheen.current, SHEEN, { duration: 500, delay: 600, easing: 'ease-in' });
   }, []);
   const [c] = plateOf(b.to.req);
   return (
@@ -72,6 +73,7 @@ function Banner({ b }) {
         ) : null}
         <Plate name={b.to.name} req={b.to.req} big innerRef={newP} />
       </div>
+      <span ref={sheen} className="krb-sheen" aria-hidden="true" />
     </div>
   );
 }

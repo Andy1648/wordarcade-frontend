@@ -49,17 +49,16 @@ test('winning pays +50% of the game, once, on its own receipt row and wins line'
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1280, height: 800 });
   const delta = await playTo(page, ME);
-  const row = page.locator('.payout-row--bonus');
-  await expect(row).toHaveCount(1);
-  await expect(row).toContainText('WINNER BONUS');
-  await expect(row).toContainText('×1.5');
+  // P9b: the results card itemises the bonus ONCE — its own tally line, with its ×1.5 (resultsModel.tallyLines)
   const line = page.locator('[data-wins-line="WINNER BONUS"]');
   await expect(line).toHaveCount(1);
+  await expect(line).toContainText('WINNER BONUS');
+  await expect(line).toContainText('×1.5');
   const amount = Number(await line.getAttribute('data-wins-amount'));
   expect(amount).toBeGreaterThan(0);
   expect(delta, 'the bonus is credited exactly once').toBe(amount);
   // +50% of the words: TOTAL = words + bonus, so bonus ≈ (TOTAL - bonus) / 2.
-  const total = Number(((await page.locator('.payout--round .payout-total-val').textContent()) || '').replace(/[^0-9]/g, ''));
+  const total = Number(await page.locator('[data-wins-total]').getAttribute('data-wins-total'));
   expect(Math.abs(amount - Math.round((total - amount) * 0.5))).toBeLessThanOrEqual(1);
 });
 
@@ -67,6 +66,6 @@ test('losing pays no winner bonus', async ({ page }) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1280, height: 800 });
   const delta = await playTo(page, 'p1');
-  await expect(page.locator('.payout-row--bonus')).toHaveCount(0);
+  await expect(page.locator('[data-wins-line="WINNER BONUS"]')).toHaveCount(0);
   expect(delta).toBe(0);
 });
