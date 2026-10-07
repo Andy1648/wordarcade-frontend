@@ -73,6 +73,25 @@ function HeroLetter({ text }) {
   );
 }
 
+// SEASON 2: the typed word drawn BIG over the (transparent-text) input, the mode's letters lit inside it — the
+// mockups' "per-letter colour". Display only (aria-hidden, pointer-events none); the real input keeps focus/caret.
+function V2Typed({ text, mark }) {
+  const t = String(text || '').toUpperCase();
+  const m = String(mark || '').toUpperCase();
+  const at = m ? t.indexOf(m) : -1;
+  return (
+    <div className="sv2-typed" aria-hidden="true" translate="no" style={{ '--len': Math.max(t.length, 1) }}>
+      {at >= 0 ? (
+        <>
+          {t.slice(0, at)}
+          <b>{t.slice(at, at + m.length)}</b>
+          {t.slice(at + m.length)}
+        </>
+      ) : t}
+    </div>
+  );
+}
+
 export default function SoloShell({
   accent,
   title,
@@ -118,6 +137,11 @@ export default function SoloShell({
   // (App: SOLO_LAUNCH for this mode && !hasSeenMenu()). Adds the one-line run-over offer
   // below. Everyone who arrived via the menu gets the card exactly as before.
   offerMenu = false,
+  // SEASON 2 HUD (P10, claude/mockups/v2/Fuse|Chain.dc.html): a function that lays out the WHOLE play phase
+  // itself — handed the pieces this shell owns ({ exit, form, teach, reason, winsPill, stack }) so the input, its
+  // focus/WPM/letter-XP wiring, the reject sill and the gem pop stay in ONE place. Absent (flag off) = the live layout.
+  v2 = null,
+  v2Mark = '', // v2: the letters to light inside the typed word (FUSE's fragment / CHAIN's required letter)
 }) {
   const inputRef = useRef(null);
 
@@ -183,6 +207,53 @@ export default function SoloShell({
 
   const secs = Math.max(0, (clock.remaining || 0) / 1000);
 
+  const formNode = phase === 'playing' ? (
+        <form className="solo-inputwrap" onSubmit={submit} data-wrap={wrapLong ? '1' : undefined}>
+          <input
+            ref={inputRef}
+            className="solo-input"
+            type="text"
+            value={input}
+            style={{ '--len': Math.max(input.length, 1) }}
+            onChange={(e) => {
+              wpmKeyStroke(); // WPM (§2): typing activity opens this word's active-typing span
+              noteTypedLetters(input, e.target.value, mode); // v11: LETTERS fill the bar (batched)
+              onInput(e.target.value);
+            }}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck="false"
+            aria-label={title}
+          />
+          {v2 && !wrapLong && input ? <V2Typed text={input} mark={v2Mark} /> : null}
+          {wrapLong ? (
+            <div className="solo-input-mirror" aria-hidden="true">
+              <span className="solo-input-mirror-text">
+                {input}
+                <span className="solo-input-mirror-caret" />
+              </span>
+            </div>
+          ) : null}
+          {/* The reject sill: an always-red bar whose OPACITY pulses on each reject
+              (keyed remount re-fires the 140ms opacity animation). */}
+          <div className="solo-sill" key={sillKey} data-fire={sillKey > 0 ? '1' : '0'} />
+          {/* GEMS: the drop pop on the word — one pooled node inside this (already positioned) field */}
+          <GemPop />
+        </form>
+  ) : null;
+  const teachNode = teachOpen && phase === 'playing' ? (
+    <TeachStrip rule={teachRule} example={teachExample} onDismiss={closeTeach} />
+  ) : null;
+  const reasonNode = (
+    <div className="solo-reason" aria-live="polite">
+      {phase === 'playing' && reason ? reason : ''}
+    </div>
+  );
+  const v2On = typeof v2 === 'function';
+
   // COMBO BREAK at T2+ (4+ in a row): the same shatter Word Bomb's meter plays, so a lost streak is
   // never silent here either. `comboBreaks` bumps on every break; the streak it ended is the one we
   // saw on the render before.
@@ -206,10 +277,24 @@ export default function SoloShell({
       className="solo-root wall-surface"
       style={{ '--solo-accent': accent }}
       data-mode={mode}
+      data-hud={v2On ? 'v2' : undefined}
       /* EDGE FRAME: the card's border takes the combo tier colour — a static toggle, never animated. */
       data-heat={phase === 'playing' ? heatTier(comboStreak) : 0}
       ref={rootRef}
     >
+      {v2On ? (
+        phase === 'playing'
+          ? v2({
+              exit: <SoloExit onExit={onExit} />,
+              form: formNode,
+              teach: teachNode,
+              reason: reasonNode,
+              winsPill: <WinsHudPill amount={winsTally} words={winsWords} showWpm={false} />,
+              stack: mode ? <LiveStack mode={mode} compact /> : null,
+            })
+          : null
+      ) : (
+      <>
       {/* STATIC STRUCTURE LAYER — the poster's geometry: an off-axis band cutting across the
           card, a violet facet above it, and the two rules that pin the cut. Four inert divs,
           no animation, no pointer events. This is what gives the panel an ARRANGEMENT to hang
@@ -287,52 +372,13 @@ export default function SoloShell({
       </div>{/* .solo-primary */}
 
       <div className="solo-secondary">
-      {phase === 'playing' ? (
-        <form className="solo-inputwrap" onSubmit={submit} data-wrap={wrapLong ? '1' : undefined}>
-          <input
-            ref={inputRef}
-            className="solo-input"
-            type="text"
-            value={input}
-            style={{ '--len': Math.max(input.length, 1) }}
-            onChange={(e) => {
-              wpmKeyStroke(); // WPM (§2): typing activity opens this word's active-typing span
-              noteTypedLetters(input, e.target.value, mode); // v11: LETTERS fill the bar (batched)
-              onInput(e.target.value);
-            }}
-            placeholder={placeholder}
-            maxLength={maxLength}
-            autoComplete="off"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck="false"
-            aria-label={title}
-          />
-          {wrapLong ? (
-            <div className="solo-input-mirror" aria-hidden="true">
-              <span className="solo-input-mirror-text">
-                {input}
-                <span className="solo-input-mirror-caret" />
-              </span>
-            </div>
-          ) : null}
-          {/* The reject sill: an always-red bar whose OPACITY pulses on each reject
-              (keyed remount re-fires the 140ms opacity animation). */}
-          <div className="solo-sill" key={sillKey} data-fire={sillKey > 0 ? '1' : '0'} />
-          {/* GEMS: the drop pop on the word — one pooled node inside this (already positioned) field */}
-          <GemPop />
-        </form>
-      ) : null}
+      {formNode}
 
       {/* THE FIRST-RUN TEACH, in the layout (not over it) and per mode. */}
-      {teachOpen && phase === 'playing' ? (
-        <TeachStrip rule={teachRule} example={teachExample} onDismiss={closeTeach} />
-      ) : null}
+      {teachNode}
 
       {/* Reason line (reject) or the arm hint before the clock starts. */}
-      <div className="solo-reason" aria-live="polite">
-        {phase === 'playing' && reason ? reason : ''}
-      </div>
+      {reasonNode}
       {/* The arm hint and the first-run teach say the same rule in the same window, and rendering
           both put two overlapping explanations on the screen (caught in the 320/390 screenshots of
           the cold-visitor path — invisible to every gate). The teach is the fuller one, so it wins;
@@ -364,6 +410,9 @@ export default function SoloShell({
           animations. */}
       {phase === 'playing' && (
         <Mascot pose={outState ? 'panic' : 'idle'} size={172} className="solo-mascot" />
+      )}
+
+      </>
       )}
 
       {phase === 'over' ? (

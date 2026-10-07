@@ -1,0 +1,75 @@
+/* SoloV2.css — the SEASON 2 solo play phase (P10, claude/mockups/v2/Fuse.dc.html + Chain.dc.html): what FUSE and
+   CHAIN share once SoloShell hands the whole play phase to a mode's v2 layout (data-hud="v2", only while playing).
+   The card keeps its frame + wall texture; it stops hugging content and becomes the full play field.
+   Flat colours, hard offset shadows, no idle loops (every motion is a finite kitPlay one-shot). */
+
+.solo-root[data-hud='v2'] {
+  /* type sizes (perf/typeScale.test.js: every font-size through a --fs-* token) */
+  --fs-sv1: clamp(16px, calc((100cqw - 2 * clamp(14px, 1.6vw, 24px) - 8px) / (var(--len, 1) * 0.86)), clamp(28px, 7vh, 64px));
+  height: calc(100dvh - 16px);
+  padding: 0;
+  gap: 0;
+  display: block;
+}
+
+/* THE TYPED WORD, BIG, the mode's letters lit inside it. Drawn over the real input (whose own text goes
+   transparent while it shows) with the input's exact metrics, so the native caret lands at its end. */
+.solo-root[data-hud='v2'] .solo-inputwrap {
+  max-width: 100%;
+}
+.solo-root[data-hud='v2'] .solo-input {
+  height: clamp(56px, 11vh, 96px);
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-sv1);
+  letter-spacing: 0.04em;
+  background: #12071f;
+  caret-color: #ffe94a;
+}
+.solo-root[data-hud='v2'] .solo-inputwrap:has(.sv2-typed) .solo-input {
+  color: transparent;
+}
+.sv2-typed {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 clamp(14px, 1.6vw, 24px);
+  border: 4px solid transparent;
+  pointer-events: none;
+  overflow: hidden;
+  white-space: pre;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-sv1);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: #fff;
+}
+.sv2-typed b {
+  font-weight: inherit;
+  color: #ffe94a;
+}
+
+/* NOTHING IN THE CENTRE: the shared feel layer (tier slam / tags / LV chip / shatter) and the LUCKY stamp leave the
+   middle of the screen for a spot each mode's layout leaves open (--sv2-feel-x / -y, set by the mode's own CSS). */
+.solo-root[data-hud='v2'] .solo-feel {
+  left: var(--sv2-feel-x, 24%);
+  top: var(--sv2-feel-y, 70%);
+}
+.solo-root[data-hud='v2'] .solo-lucky {
+  inset: auto;
+  left: var(--sv2-feel-x, 24%);
+  top: var(--sv2-feel-y, 70%);
+  width: 0;
+  height: 0;
+  overflow: visible;
+}
+
+@media (max-width: 899px) {
+  .solo-root[data-hud='v2'] {
+    height: calc(100dvh - 12px);
+  }
+}

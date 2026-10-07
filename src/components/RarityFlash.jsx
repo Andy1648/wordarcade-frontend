@@ -6,15 +6,16 @@
 // Re-key it at the callsite (`key={acceptCount}`) so a new accept REMOUNTS it and the one-shot
 // animation replays. Purely decorative: position:fixed, pointer-events:none, aria-hidden, and a
 // finite transform/opacity-only animation (animation budget). Renders nothing for COMMON/absent.
+// `edge` (SEASON 2 CHAIN): the same pop, pinned over the right-hand WINS / WORD column instead of the centre.
 import { useState } from 'react';
 import './RarityFlash.css';
 
-export default function RarityFlash({ rarity }) {
+export default function RarityFlash({ rarity, edge = false }) {
   const [done, setDone] = useState(false);
   if (done || !rarity || !rarity.announce) return null;
   return (
     <div
-      className="rarity-flash"
+      className={`rarity-flash${edge ? ' rarity-flash--edge' : ''}`}
       style={{ color: rarity.color }}
       onAnimationEnd={() => setDone(true)}
       aria-hidden="true"
