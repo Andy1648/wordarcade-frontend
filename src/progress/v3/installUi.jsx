@@ -20,13 +20,19 @@ const say = (k) => (payload) => {
 };
 
 V3.Trophy = S2Trophy;
-V3.Notify = (props) => (
-  <Suspense fallback={null}>
-    <NotifyUi {...props} />
-  </Suspense>
-);
-V3.toast = say('pushToast'); // right-edge UNLOCK toast (KitEdgeToast)
-V3.rankUp = say('pushRankUp'); // top-edge RANK-UP banner (KitRankBanner) — v3 ranks, and the board's #N news
+// THE ONE-NOTICE RULE (SEASON 2 checklist, Andy oct6): the game has exactly ONE notice — the EDITOR'S NOTE welcome
+// (season2Boot.js). Every other progression / economy notice is gone: no rank-up banner, no unlock / bought /
+// dev-reset toast, no centre card (wrapFx). The edge layer (S2Notify) stays in the tree, silent, for later.
+const SILENT = true;
+const none = () => {};
+V3.Notify = (props) =>
+  SILENT ? null : (
+    <Suspense fallback={null}>
+      <NotifyUi {...props} />
+    </Suspense>
+  );
+V3.toast = SILENT ? none : say('pushToast'); // right-edge toast (KitEdgeToast)
+V3.rankUp = SILENT ? none : say('pushRankUp'); // top-edge RANK-UP banner (KitRankBanner)
 V3.fx = (api) => wrapFx(api, V3.toast);
 
 // PHASE 4 — THE SEASON 2 RESET (023_season2_reset.sql): the boot check (wipe a pre-season-2 save once the server reset

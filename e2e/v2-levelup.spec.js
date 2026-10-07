@@ -3,11 +3,11 @@
 // edge unlock toasts. Nothing in the middle of the screen. No wins for rank-ups."
 //
 //   * the 16 SHAPED plates (gallery sheet) are the v3 ladder in order; only the ★ tiers shimmer, and only once;
-//   * SEASON2 menu: the rank-up banner hangs from the TOP edge with the shaped old → new plates, fits a phone, pays
-//     no wins / gems; slot unlocks toast on the RIGHT edge with their "2" badge;
+//   * SEASON2 menu: THE ONE-NOTICE RULE (Andy oct6) — the owed rank-up / unlock news is NOT said (no top-edge banner, no
+//     edge toast; the EDITOR'S NOTE welcome is the game's one notice), and it pays no wins / gems;
 //   * the menu XP bar (live, the #228 glide bar): a multi-level gain shows the "+N LV" chip sliding out UNDER the bar's
 //     left end, and the bar lands on the real level + fraction;
-//   * REDUCE MOTION: the banner still shows (no animation), nothing runs.
+//   * REDUCE MOTION: still nothing shown, nothing runs.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
@@ -57,46 +57,22 @@ const RANK_SEED = {
 };
 
 for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
-  test(`SEASON2 @${vp.width}x${vp.height}: rank-up = shaped plates on the TOP edge, slot unlocks = right-edge toasts with a 2 badge, no pay`, async ({ page }) => {
+  test(`SEASON2 @${vp.width}x${vp.height}: ONE-NOTICE rule — the owed rank-up / unlock news shows nothing, pays nothing`, async ({ page }) => {
     await page.setViewportSize(vp);
     await menu(page, { seed: RANK_SEED });
-    const banner = page.locator('.krb');
-    await expect(banner).toBeVisible({ timeout: 5000 });
-    await expect(banner).toHaveAttribute('data-rank', 'KEYFIEND');
-    await expect(banner.locator('.krb-code')).toHaveText('R6');
-    const oldP = banner.locator('.krb-plate.is-old');
-    const newP = banner.locator('.krb-plate.is-new');
-    await expect(oldP).toHaveAttribute('data-rank-plate', 'R0');
-    await expect(newP).toHaveAttribute('data-rank-plate', 'R6');
-    await expect(newP).toHaveText('KEYFIEND');
-    expect(await newP.locator('svg path').count(), 'the new plate is the shaped SVG (horns)').toBeGreaterThanOrEqual(4);
-    await page.waitForTimeout(700); // past the 0.5 s drop
-    const bb = await banner.boundingBox();
-    expect(bb.y, 'hangs from the top edge').toBeLessThanOrEqual(2);
-    expect(bb.y + bb.height, 'stays in the top band — nothing mid-screen').toBeLessThan(vp.height * 0.25);
-    for (const p of [oldP, newP]) {
-      const b = await p.boundingBox();
-      expect(b.x, 'plate inside the viewport').toBeGreaterThanOrEqual(0);
-      expect(b.x + b.width, 'plate inside the viewport').toBeLessThanOrEqual(vp.width);
-    }
-    // the slot unlocks (R3 BOOST, R5 MARK) toast from the RIGHT edge with their "2"
-    const slot = page.locator('.ket-card[data-toast="R5"]');
-    await expect(slot).toBeVisible();
-    await expect(slot.locator('.ket-badge')).toHaveText('2');
-    const tb = await slot.boundingBox();
-    expect(Math.round(tb.x + tb.width), 'on the right edge').toBeGreaterThanOrEqual(vp.width - 2);
-    // rank-ups pay nothing
+    await page.waitForTimeout(2500); // past when the old banner / toasts dropped
+    await expect(page.locator('.krb')).toHaveCount(0);
+    await expect(page.locator('.ket-card')).toHaveCount(0);
     expect(await page.evaluate(() => localStorage.getItem('taw.s2.wins'))).toBeNull();
     expect(await page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0)).toBe(0);
   });
 }
 
-test('SEASON2 + REDUCE MOTION: the rank banner still shows, nothing animates', async ({ page }) => {
+test('SEASON2 + REDUCE MOTION: still no rank banner / toast, nothing animates', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   await menu(page, { seed: RANK_SEED, reduce: true });
-  const banner = page.locator('.krb');
-  await expect(banner).toBeVisible({ timeout: 5000 });
-  await expect(banner.locator('.krb-plate.is-new')).toHaveText('KEYFIEND');
+  await page.waitForTimeout(2000);
+  await expect(page.locator('.krb')).toHaveCount(0);
   const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.krb-host, .ket-host')).length);
   expect(running).toBe(0);
 });

@@ -23,7 +23,7 @@ test('season-2 constants: econ 13; level room = 4 × ⌈100 × 2.5^R⌉ (capped 
   assert.equal(SEASON2_ECON, 13);
   assert.deepEqual([0, 1, 5, 9, 10].map(s2LevelRoom), [400, 1000, 39064, 1525880, 3814700]);
   assert.equal(s2LevelRoom(10), 4 * Math.ceil(100 * 2.5 ** 10)); // 022's v3 room (026 re-sizes it — finalRules.test.js)
-  assert.equal(serverGate(10, 2), 275, 'season 2 is FINAL now (026)');
+  assert.equal(serverGate(10, 2), 195, 'season 2 is FINAL v2 now (027): 15 + 18·R');
   assert.equal(s2LevelRoom(500), S2_LV_MAX);
 });
 
@@ -72,7 +72,7 @@ test('econ-13 guard: a season-2 rebirth / ascension needs a season-2 row', () =>
   assert.equal(decideRebirth(s1, { requestId: UUID(1), season: 2 }, [], T0).result.reason, 'season');
   assert.equal(decideAscend(s1, { requestId: UUID(2), season: 2 }, [], T0).result.reason, 'season');
   const s2 = { ...s1, econ: 13 };
-  assert.equal(decideAscend(s2, { requestId: UUID(3), season: 2 }, [], T0).result.stars, 1); // FINAL (026): +1 ★
+  assert.equal(decideAscend(s2, { requestId: UUID(3), season: 2 }, [], T0).result.reason, 'off'); // FINAL v2 (027): ascension hidden
   assert.equal(decideRebirth({ ...s2, level: 100, rebirths: 0 }, { requestId: UUID(4), season: 2 }, [], T0).result.ok, true);
   // 021 callers that carry no econ are unchanged; season 0 never needs it
   assert.equal(decideRebirth({ level: 100, rebirths: 0 }, { requestId: UUID(5), season: 2 }, [], T0).result.ok, true);
@@ -124,7 +124,7 @@ test('022 SQL mirrors decideSubmitS2 + the econ-13 guard; board ★ → R → le
   assert.match(s, /'econ', 12/);
 });
 
-test('performAscend: server ok → applied once on the server ★; refusal applies nothing; local fallback at R10', async () => {
+test('performAscend: the server refuses (ascension hidden, 027) → nothing applied; single flight; local fallback is the injected gate', async () => {
   const store = new Map();
   const st = { level: 1, rebirths: 10, stars: 0 };
   const srv = makeRebirthServer({ level: 1, rebirths: 10, stars: 0, econ: 13 });
@@ -150,12 +150,9 @@ test('performAscend: server ok → applied once on the server ★; refusal appli
   });
   const f = mk(true);
   const [a, b] = await Promise.all([f.performAscend(), f.performAscend()]);
-  assert.deepEqual([a.ok, a.mode, a.stars, a.added], [true, 'server', 1, 1]);
+  assert.deepEqual([a.ok, a.reason], [false, 'off']);
   assert.deepEqual([b.ok, b.reason], [false, 'pending'], 'single flight');
-  assert.deepEqual([st.stars, st.rebirths, srv.db.row.stars, srv.db.row.rebirths], [1, 0, 1, 0]);
-  const again = await f.performAscend();
-  assert.deepEqual([again.ok, again.reason], [false, 'gate']);
-  assert.equal(st.stars, 1, 'a refusal applies nothing');
+  assert.deepEqual([st.stars, st.rebirths, srv.db.row.stars, srv.db.row.rebirths], [0, 10, 0, 10], 'a refusal applies nothing');
   // local mode (no profile / 022 not live)
   st.rebirths = 12;
   const loc = await mk(false).performAscend();

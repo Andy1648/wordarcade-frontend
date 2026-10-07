@@ -136,7 +136,7 @@ export function statChain(stack, { v3 = null, stars = 0, markBaseXp: mbx = 0, ta
   // FINAL's order (Andy item 5): … × REBIRTH 2^R × STARS (1 + ★) × MARK … — STARS sits right after REBIRTH (v3 folds
   // it into the REBIRTH factor, so the chain splits it back out). INDEX is shown only while it pays (×1 = no marks).
   const rebirthChips = [chip('rebirth', 'REBIRTH', line('rebirth').mult / starM)];
-  if (v3) rebirthChips.push(chip('ascend', 'STARS', starM));
+  if (v3 && v3.econ.ASCENSION_ON) rebirthChips.push(chip('ascend', 'STARS', starM)); // FINAL v2: ascension hidden → no STARS chip
   const tail = [chip('mark', 'MARK', line('mark').mult)];
   if (line('index').mult !== 1) tail.push(chip('index', 'INDEX', line('index').mult));
   tail.push(chip('boost', 'BOOST', line('boost').mult));

@@ -587,21 +587,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       a.play();
       bigBurst();
     },
-    // Rebirth Rush one-time conversion: "YOUR LEVELS BECAME +N REBIRTHS" (econMigrate rebirthRushNotice).
-    // The new rebirth count is the headline; Andy's line rides the sub (it wraps on a phone).
-    rebirthRush(added, rebirths) {
-      const a = levelupAnimRef.current;
-      if (!a) return;
-      for (const p of popAnimsRef.current) p.cancel();
-      popCapRef.current = true;
-      resetMilestoneCard();
-      if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(rebirths)}`;
-      if (levelSubRef.current) levelSubRef.current.textContent = `YOUR LEVELS BECAME +${formatNum(added)} REBIRTHS`;
-      if (levelDetailRef.current) levelDetailRef.current.textContent = `×${formatNum(rebirthMult(rebirths))} XP & WINS`;
-      a.cancel();
-      a.play();
-      bigBurst();
-    },
     // One finite "+N WINS" stamp (menu return after a paying round). Same pooled pattern.
     winsStamp(amount) {
       const a = winsStampAnimRef.current;

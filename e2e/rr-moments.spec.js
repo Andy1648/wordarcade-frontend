@@ -1,8 +1,8 @@
 // rr-moments.spec.js — Rebirth Rush moments (PROGRESSION FINAL, Andy oct3 20:08).
 //   1. OVERDRIVE: a live taw.overdrive (until in the future) shows the big "OVERDRIVE ×10 · m:ss" pill in the
 //      menu's existing boost slot (desktop XP row / phone top row), and it is gone once OVERDRIVE has ended.
-//   2. "YOUR LEVELS BECAME +N REBIRTHS": an old save whose level passed the new gate is converted at boot
-//      (econMigrate, stamp 11 → 12) and the menu names it ONCE on the level-up card; a reload never repeats it.
+//   2. the conversion is SILENT: an old save whose level passed the new gate is converted at boot (econMigrate,
+//      stamp 11 → 12) and no "YOUR LEVELS BECAME +N REBIRTHS" card plays (the ONE-NOTICE rule, Andy oct6).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -41,7 +41,7 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
   });
 }
 
-test('+N REBIRTHS: an old LV40 save converts and the menu names it exactly once', async ({ page }) => {
+test('the conversion is silent: an old LV40 save converts to R2 and no card names it (ONE-NOTICE rule)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await boot(page, () => {
     if (sessionStorage.getItem('rr.seeded')) return;
@@ -50,17 +50,10 @@ test('+N REBIRTHS: an old LV40 save converts and the menu names it exactly once'
     // a pre-Rebirth-Rush save (stamp 11): LV40, no rebirths → gate 15 → +floor((40 − 15) / 18) + 1 = +2
     localStorage.setItem('taw.econ', '11');
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 40, f: 0, rc: 0, v: 10 }));
+    localStorage.setItem('taw.rrnotice', '5'); // a stale flag an older build left: deleted, never shown
   });
-  const sub = page.locator('.menu-xp-levelup-sub');
-  await expect(sub).toHaveText('YOUR LEVELS BECAME +2 REBIRTHS', { timeout: 10000 });
-  await expect(page.locator('.menu-xp-levelup-title')).toHaveText('REBIRTH 2');
-  await expect(page.locator('.menu-xp-levelup-detail')).toHaveText('×25 XP & WINS');
-  // played → cleared, so it is a one-time moment
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('taw.rebirths'))).toBe('2');
   await expect.poll(() => page.evaluate(() => localStorage.getItem('taw.rrnotice'))).toBeNull();
-
-  await page.reload();
-  await menuReady(page);
-  // give the queue the time it took the first time; the card must not come back
-  await page.waitForTimeout(4000);
-  await expect(sub).not.toHaveText(/REBIRTHS/);
+  await page.waitForTimeout(4000); // the time the card used to take to play
+  await expect(page.locator('.menu-xp-levelup-sub')).not.toHaveText(/BECAME/);
 });

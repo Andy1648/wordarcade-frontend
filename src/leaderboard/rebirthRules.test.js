@@ -13,33 +13,36 @@ const SEC = 1000;
 let n = 0;
 const id = () => `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`;
 
-test('the gate comes from the STORED row: season 0 = 25 × (R+1) (level ≥ it); season 2 FINAL = 25 × (R+1) (level > it, SPENT)', () => {
+test('the gate comes from the STORED row: season 0 = 25 × (R+1); season 2 FINAL v2 = 15 + 18·R (both: level ≥ it)', () => {
   assert.deepEqual([0, 1, 4, 9].map((r) => serverGate(r, 0)), [25, 50, 125, 250]);
-  assert.deepEqual([0, 1, 4, 9].map((r) => serverGate(r, 2)), [25, 50, 125, 250]);
+  assert.deepEqual([0, 1, 4, 9].map((r) => serverGate(r, 2)), [15, 33, 87, 177]);
   assert.equal(serverGate(3, 1), null);
-  // season 2 is the stricter gate at every R: LV 25 rebirths in season 0, not in season 2
   for (let r = 0; r < 30; r++) {
-    const lv = serverGate(r, 0);
-    assert.equal(decideRebirth({ level: lv, rebirths: r }, { requestId: id(), season: 0 }, [], T0).result.ok, true);
-    assert.equal(decideRebirth({ level: lv, rebirths: r, econ: 13 }, { requestId: id(), season: 2 }, [], T0).result.ok, false);
+    const lv = serverGate(r, 2);
+    assert.equal(decideRebirth({ level: lv, rebirths: r, econ: 13 }, { requestId: id(), season: 2 }, [], T0).result.ok, true);
+    assert.equal(decideRebirth({ level: lv - 1, rebirths: r, econ: 13 }, { requestId: id(), season: 2 }, [], T0).result.ok, false);
   }
 });
 
-test('season 2 (FINAL, 026): LV > 25 × (R+1) → ONE rebirth that SPENDS the gate and keeps the rest; refusal names the level needed', () => {
-  const no = decideRebirth({ level: 25, rebirths: 0, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
-  assert.deepEqual(no.result, { ok: false, reason: 'gate', gate: 26, cost: 25, level: 25, rebirths: 0 });
-  assert.equal(no.row.level, 25);
+test('season 2 (FINAL v2, 027): LV ≥ 15 + 18·R → ONE rebirth, level 1; refusal names the level needed', () => {
+  const no = decideRebirth({ level: 14, rebirths: 0, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
+  assert.deepEqual(no.result, { ok: false, reason: 'gate', gate: 15, level: 14, rebirths: 0 });
+  assert.equal(no.row.level, 14);
   const ok = decideRebirth({ level: 40, rebirths: 0, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
-  assert.deepEqual(ok.result, { ok: true, rebirths: 1, level: 15 });
-  assert.deepEqual([ok.row.rebirths, ok.row.level], [1, 15]);
-  const r4 = decideRebirth({ level: 126, rebirths: 4, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
+  assert.deepEqual(ok.result, { ok: true, rebirths: 1, level: 1 });
+  assert.deepEqual([ok.row.rebirths, ok.row.level], [1, 1]);
+  const r4 = decideRebirth({ level: 87, rebirths: 4, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
   assert.deepEqual([r4.result.ok, r4.row.rebirths, r4.row.level], [true, 5, 1]);
   // ≤ 12 granted an hour, idempotent by request id, one per call — the same as season 0
   const srv = makeRebirthServer({ level: 99999, rebirths: 0, econ: 13 });
   let granted = 0;
-  for (let i = 0; i < 40; i++) if (srv.rebirth({ requestId: id(), season: 2 }, T0 + i * 1000).ok) granted += 1;
+  for (let i = 0; i < 40; i++) {
+    srv.db.row.level = 99999; // the player climbs back past the gate between calls
+    if (srv.rebirth({ requestId: id(), season: 2 }, T0 + i * 1000).ok) granted += 1;
+  }
   assert.equal(granted, RB_PER_WINDOW);
   const rid = id();
+  srv.db.row.level = 99999;
   const a = srv.rebirth({ requestId: rid, season: 2 }, T0 + 4000e3);
   const b = srv.rebirth({ requestId: rid, season: 2 }, T0 + 4001e3);
   assert.equal(a.ok, true);
@@ -143,20 +146,19 @@ test('1,000 calls → at most the number of times the gate was legitimately met'
   assert.ok(srv.db.row.rebirths <= met);
 });
 
-test(`ASCEND (season 2 only, FINAL): needs R ≥ ${ASCEND_AT} + 5 × ★; ★ + 1, R → 0, LV → 1; idempotent`, () => {
+test('ASCEND is HIDDEN in FINAL v2 (027): season 0 → season; season 2 → off (logged, idempotent) at any R', () => {
   assert.equal(decideAscend({ level: 5, rebirths: 12 }, { requestId: id(), season: 0 }, [], T0).result.reason, 'season');
-  const low = decideAscend({ level: 5, rebirths: 9 }, { requestId: id(), season: 2 }, [], T0);
-  assert.deepEqual(low.result, { ok: false, reason: 'gate', need: 10, rebirths: 9 });
-  const low3 = decideAscend({ level: 5, rebirths: 24, stars: 3 }, { requestId: id(), season: 2 }, [], T0);
-  assert.deepEqual(low3.result, { ok: false, reason: 'gate', need: 25, rebirths: 24 });
+  for (const rebirths of [0, 9, 10, 40]) {
+    const out = decideAscend({ level: 5, rebirths, stars: 0 }, { requestId: id(), season: 2 }, [], T0);
+    assert.deepEqual(out.result, { ok: false, reason: 'off' });
+    assert.equal(out.row.rebirths, rebirths);
+    assert.ok(out.entry, 'an off refusal is logged (its id replays it)');
+  }
   const srv = makeRebirthServer({ level: 77, rebirths: 25, stars: 3 });
   const rid = id();
-  assert.deepEqual(srv.ascend({ requestId: rid, season: 2 }, T0), { ok: true, stars: 4, rebirths: 0, level: 1 });
-  assert.deepEqual(srv.ascend({ requestId: rid, season: 2 }, T0 + 5 * SEC), { ok: true, stars: 4, rebirths: 0, level: 1, replay: true });
-  assert.deepEqual([srv.db.row.stars, srv.db.row.rebirths, srv.db.row.level], [4, 0, 1]);
-  assert.equal(decideAscend({ level: 1, rebirths: 40, stars: 0 }, { requestId: id(), season: 2 }, [], T0).result.stars, 1, 'one ★, never R − 9');
-  // exactly at R10 → +1 star
-  assert.equal(decideAscend({ level: 1, rebirths: 10, stars: 0 }, { requestId: id(), season: 2 }, [], T0).result.stars, 1);
+  assert.deepEqual(srv.ascend({ requestId: rid, season: 2 }, T0), { ok: false, reason: 'off' });
+  assert.deepEqual(srv.ascend({ requestId: rid, season: 2 }, T0 + 5 * SEC), { ok: false, reason: 'off', replay: true });
+  assert.deepEqual([srv.db.row.stars, srv.db.row.rebirths, srv.db.row.level], [3, 25, 77]);
   // rebirth itself refuses an unknown season
   assert.equal(decideRebirth({ level: 999, rebirths: 0 }, { requestId: id(), season: 7 }, [], T0).result.reason, 'season');
 });

@@ -1,10 +1,10 @@
 // e2e/numbers-audit.spec.js — NUMBERS AUDIT (Andy item 5) behind ?season2=1: every number the menu, UPGRADES, REBIRTH
 // and ROLL screens print for one seeded season-2 save, read off the screen and checked against PROGRESSION FINAL
-// (claude/progression-FINAL.md) by hand-worked arithmetic. The save: LV120 (30% in), R3, POWER 2, ★0, 50,000 wins,
-// 200 gems, no mark (so XP / LETTER = 10 × 2.5² × 2³ × (1 + 0) = 500).
-//   MENU      LV 120 · need(120) = 400 × 1.06^119 · +500 XP / LETTER
-//   UPGRADES  POWER 2 → 3 · 500 → 1,250 XP / LETTER (×2.5) · price 300 × 8² = 19,200 wins · wins 50K / gems 200
-//   REBIRTH   COSTS 25 × (3+1) = 100 LEVELS · KEEP THE REST · YOU GET ×2 · ×8 → ×16 FOREVER · LV 120 → 20 · gate LV 101
+// (claude/progression-FINAL.md v2) by hand-worked arithmetic. The save: LV70 (30% in), R3, KEY 2, 50,000 wins, 200 gems,
+// no mark (so XP / LETTER = 10 × KEY ×5 × 3³ = 1,350).
+//   MENU      LV 70 · need(70) = 100 × 1.15^69 · +1,350 XP / LETTER
+//   UPGRADES  KEY 2 → 3 · 1,350 → 2,700 XP / LETTER (×5 → ×10) · price 150 × 5² = 3,750 wins · wins 50K / gems 200
+//   REBIRTH   BACK TO LV 1 · KEY KEPT · YOU GET ×3 · ×27 → ×81 FOREVER · LV 70 → 1 · gate LV 15 + 18 × 3 = 69
 //   ROLL      75 gems a roll · pity EPIC+ / LEGENDARY+ counters on FINAL's 50 / 500
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -16,7 +16,7 @@ const SECRET = 'a9'.repeat(24);
 async function boot(page) {
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
-  const row = { id: 'me-na', username: 'Auditor', level: 120, rebirths: 3, stars: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 13 };
+  const row = { id: 'me-na', username: 'Auditor', level: 70, rebirths: 3, stars: 0, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 13 };
   const shared = { rows: [row], secrets: new Map([[SECRET, row.id]]), saves: new Map() };
   await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, rebirth: { delayMs: 0 }, season2: true });
   await page.addInitScript(({ secret, id }) => {
@@ -28,7 +28,7 @@ async function boot(page) {
     localStorage.setItem('taw.lb.secret', secret);
     localStorage.setItem('taw.econ', '12');
     localStorage.setItem('taw.reduceMotion', '1');
-    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 120, f: 0.3, rc: 3, v: 10 }));
+    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 70, f: 0.3, rc: 3, v: 10 }));
     localStorage.setItem('taw.s2.rebirths', '3');
     localStorage.setItem('taw.s2.keytier', '2');
     localStorage.setItem('taw.s2.wins', '50000');
@@ -50,41 +50,41 @@ const fmt = (n) => {
   return `${n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0).replace(/\.?0+$/, '')}${s[t]}`;
 };
 
-test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print FINAL\'s formulas', async ({ page }) => {
+test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print FINAL v2\'s formulas', async ({ page }) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1366, height: 768 });
   await boot(page);
 
   // MENU: the level bar and XP / LETTER
-  const need120 = 400 * 1.06 ** 119;
+  const need70 = 100 * 1.15 ** 69;
   const read = page.locator('.menu-xp-bar:visible .kx-read-n');
-  await expect(read.nth(0)).toHaveText(fmt(0.3 * need120));
-  await expect(read.nth(1)).toHaveText(fmt(need120));
-  await expect(page.locator('.menu-xp-bar:visible .kx-lv-n').first()).toHaveText('120');
-  await expect(page.locator('.hp-per:visible').first()).toHaveText('+500 XP / LETTER');
+  await expect(read.nth(0)).toHaveText(fmt(0.3 * need70));
+  await expect(read.nth(1)).toHaveText(fmt(need70));
+  await expect(page.locator('.menu-xp-bar:visible .kx-lv-n').first()).toHaveText('70');
+  await expect(page.locator('.hp-per:visible').first()).toHaveText('+1,350 XP / LETTER');
 
-  // UPGRADES (POWER): 2 → 3, ×2.5 XP / LETTER, 300 × 8^2 wins
+  // UPGRADES (KEY): 2 → 3, the ladder ×5 → ×10, 150 × 5^2 wins
   await navControl(page, 'shop').click();
   const sp = page.locator('.sp2');
   await sp.waitFor({ state: 'visible' });
   await expect(sp.locator('[data-testid="sp2-power"]')).toHaveText('2');
   await expect(sp.locator('.sp2-pw-next')).toHaveText('3');
-  await expect(sp.locator('.sp2-per-now')).toHaveText('500');
-  await expect(sp.locator('.sp2-per-next')).toHaveText('1,250');
-  await expect(sp.locator('.sp2-buy')).toContainText(fmt(300 * 8 ** 2));
+  await expect(sp.locator('.sp2-per-now')).toHaveText('1,350');
+  await expect(sp.locator('.sp2-per-next')).toHaveText('2,700');
+  await expect(sp.locator('.sp2-buy')).toContainText(fmt(150 * 5 ** 2));
   await page.keyboard.press('Escape');
   await expect(sp).toHaveCount(0);
 
-  // REBIRTH: spends 25 × (R + 1), ×2 a rebirth, LV a → b
+  // REBIRTH: at LV 15 + 18·R → LV 1, ×3 a rebirth
   await navControl(page, 'rebirth').click();
   const rb = page.locator('.rb2');
   await rb.waitFor({ state: 'visible' });
-  await expect(rb.locator('[data-testid="rb2-cost"]')).toHaveText('COSTS 100 LEVELS · KEEP THE REST');
-  await expect(rb.locator('.rb2-get')).toContainText('×2');
-  await expect(rb.locator('.rb2-get-sub')).toHaveText('×8 → ×16 FOREVER');
-  await expect(rb.locator('.rb2-get')).toContainText('−100');
-  await expect(rb.locator('.rb2-hold')).toContainText('LV 120 → 20');
-  await expect(rb.locator('.rb2-gate-txt')).toHaveText('GATE LV 101 — READY');
+  await expect(rb.locator('[data-testid="rb2-cost"]')).toHaveText('BACK TO LV 1 · KEY KEPT');
+  await expect(rb.locator('.rb2-get')).toContainText('×3');
+  await expect(rb.locator('.rb2-get-sub')).toHaveText('×27 → ×81 FOREVER');
+  await expect(rb.locator('.rb2-get')).toContainText('→ LV 1');
+  await expect(rb.locator('.rb2-hold')).toContainText('LV 70 → 1');
+  await expect(rb.locator('.rb2-gate-txt')).toHaveText('GATE LV 69 — READY');
   await rb.locator('.rb2-back').click();
   await expect(rb).toHaveCount(0);
 

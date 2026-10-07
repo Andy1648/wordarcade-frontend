@@ -25,6 +25,9 @@ import { letterPerkMult } from './markPerks.js';
 import { emitMidGameLevelUp } from './levelUpSignal.js';
 import { boostMult } from './boost.js';
 import { notePlay } from './overdrive.js';
+// SEASON 2 (PROGRESSION FINAL v2, "mashing is the game"): ANY key counts — no rate cap — and a typed game letter pays
+// ×1 at once (no ×0.2 typed share, no accepted-word top-up). OFF = unchanged.
+import { SEASON2 } from './season.js';
 
 // The worn MAIN mark's XP boost by tier (base finish) — the SAME bonus wins get (MARKS via ROLLS: one MARK).
 // Read LAZILY (enumerable getters): wins.js imports this module, and marks.js → claims.js → wins.js → here is a
@@ -85,6 +88,7 @@ export const LETTER_RATE_CAP = 12; // credited letters per rolling second, menu 
 let limiter = createRateLimiter({ capacity: LETTER_RATE_CAP, windowMs: 1000 });
 /** Consume one letter credit from the shared cap (useXpCapture calls this for menu keys / taps). */
 export function tryLetterCredit(now = Date.now()) {
+  if (SEASON2) return true; // season 2: no rate cap
   try {
     return limiter.tryConsume(now);
   } catch {
@@ -109,7 +113,8 @@ export function noteLetters(n, mode, now = Date.now()) {
   try {
     const k = Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
     let ok = 0;
-    for (let i = 0; i < k; i++) if (limiter.tryConsume(now)) ok += 1;
+    if (SEASON2) ok = k; // season 2: no rate cap
+    else for (let i = 0; i < k; i++) if (limiter.tryConsume(now)) ok += 1;
     if (!ok) return 0;
     pending += ok;
     pendingMode = mode || pendingMode;
@@ -135,7 +140,7 @@ export function flushLetterXp() {
   pending = 0;
   if (!n) return null;
   try {
-    return creditLetterXp(n, { mode, perLetter: letterXpNow() * MENU_LETTER_SHARE });
+    return creditLetterXp(n, { mode, perLetter: letterXpNow() * (SEASON2 ? 1 : MENU_LETTER_SHARE) });
   } catch {
     return null;
   }
@@ -147,7 +152,7 @@ export function flushLetterXp() {
 export function creditAcceptedWordLetters(length, mode) {
   try {
     const n = Number.isFinite(length) && length > 0 ? Math.floor(length) : 0;
-    if (!n || !mode || mode === 'menu') return null;
+    if (SEASON2 || !n || !mode || mode === 'menu') return null; // season 2: typed letters already paid ×1
     return creditLetterXp(n, { mode, perLetter: letterXpNow() * (1 - MENU_LETTER_SHARE) });
   } catch {
     return null;

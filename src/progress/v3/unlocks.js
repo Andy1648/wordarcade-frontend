@@ -2,14 +2,12 @@
 // store.js / season.js, and stock.js for the STOCK ×2 LUCK). The REBIRTH screen shows them; the systems below read
 // unlocked() at their own door.
 //
-//   start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd MARK slot · R7 LUCK ×1.25 · R10 ASCEND
+//   start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd MARK slot · R7 LUCK ×1.25
 //
-// An unlock is KEPT through ascension: once ★ ≥ 1 every unlock stays open (the player reached R10 to get there).
-// ASCEND is the exception: it needs R ≥ 10 + 5 × ★ in the current climb (an ascension resets rebirths).
+// FINAL v2: ascension is hidden (no R10 ASCEND row). A save with ★ ≥ 1 (only a pre-v2 test save) keeps every unlock open.
 import { SEASON2 } from '../season.js';
 import { s2Rebirths, getStarsV3 } from './store.js';
 import { stockLuckMult } from './stock.js'; // the SHOP's STOCK ×2 LUCK · 15 MIN (P3)
-import { ascendAt } from './econ.js';
 
 export const UNLOCKS = [
   { id: 'rollScreen', at: 0, label: 'ROLL + INDEX' },
@@ -17,7 +15,6 @@ export const UNLOCKS = [
   { id: 'autoRebirth', at: 2, label: 'AUTO REBIRTH' },
   { id: 'mark2', at: 5, label: '2ND MARK SLOT' },
   { id: 'luck', at: 7, label: 'LUCK ×1.25' },
-  { id: 'ascend', at: 10, label: 'ASCEND' },
 ];
 export const LUCK_UNLOCK_MULT = 1.25;
 
@@ -33,7 +30,6 @@ export function unlocked(feature, state = {}) {
   if (at == null) return false;
   const r = Number.isFinite(state.rebirths) && state.rebirths > 0 ? Math.floor(state.rebirths) : 0;
   const st = Number.isFinite(state.stars) && state.stars > 0 ? Math.floor(state.stars) : 0;
-  if (feature === 'ascend') return r >= ascendAt(st);
   return r >= at || st >= 1;
 }
 

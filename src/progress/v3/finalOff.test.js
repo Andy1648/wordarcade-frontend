@@ -2,7 +2,7 @@
 // every number: the 100 × 1.15^(n−1) curve, BASE 10 × KEY 2.5^T × 5^R XP a letter, 10 wins a word × the live MODE table
 // (SAT ×5), KEY prices 48 × 6^(T−1), the LV 25 × (R+1) gate with rebirth → LV1, the menu's per-key 2 XP, the live mark
 // ladder (LEGENDARY ×3 · MYTHIC ×10 · SECRET ×25), and the live rebirth server rule (season 0). Pure FINAL modules
-// (econ / curve / menuWords) may be imported without touching any of it — only v3/install.js (season 2) applies them.
+// (econ / curve) may be imported without touching any of it — only v3/install.js (season 2) applies them.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -26,7 +26,6 @@ const G = await import('../gemsCore.js');
 // the FINAL modules, imported but NOT installed
 const E = await import('./econ.js');
 await import('./curve.js');
-await import('./menuWords.js');
 const RR = await import('../../leaderboard/rebirthRules.js');
 
 const UUID = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;

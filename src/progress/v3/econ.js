@@ -1,32 +1,37 @@
-// v3/econ.js — PROGRESSION FINAL NUMBERS (claude/progression-FINAL.md "Numbers (final constants)" — FROZEN, Andy
-// oct6 17:15), as pure functions. Selected only through the SEASON2 flag (src/progress/season.js) at the live entry
-// points; nothing here reads storage. LEAF: imports nothing.
+// v3/econ.js — PROGRESSION FINAL v2 NUMBERS (claude/progression-FINAL.md v2, Oct 6 22:30 — FROZEN), as pure functions.
+// Selected only through the SEASON2 flag (src/progress/season.js) at the live entry points; nothing here reads
+// storage. LEAF: imports nothing.
 //
-//   XP for next level need(n) = 400 × 1.06^(n−1)                     (v3/curve.js — O(1) closed-form carry)
-//   XP per letter     10 × 2.5^POWER × 2^R × (1 + ★) × MARK           game letters ×1, menu real-word letters ×0.2
-//   WINS per word     22 × length/5 × MODE × 2^R × (1 + ★) × MARK     MODE: WB/Blitz 1 · RACE 1.5 · CHAIN 2 · SAT 3 · FUSE 1
-//   POWER             P → P+1 costs 300 × 8^P wins; ×2.5 XP a tier; kept through rebirth, reset on ascension
-//   REBIRTH           needs LV > 25 × (R+1); SPENDS those levels, keeps the rest; ×2 XP and wins (no gems)
-//   ASCEND            at R = 10 + 5 × ★: R → 0, POWER → 0, level → 1, ★ + 1
+//   XP for next level need(n) = 100 × 1.15^(n−1)                       (v3/curve.js — O(1) closed-form carry)
+//   XP per letter     10 × KEY × 3^R × MARK × OVERDRIVE                 game letters ×1, menu letters ×0.2 — ANY keys
+//   WINS per word     10 × length/5 × MODE × 3^R × MARK × OVERDRIVE     games only. MODE: WB/Blitz 1 · RACE 1.5 ·
+//                                                                       CHAIN 2 · SAT 5 · FUSE 1 (+ FRENZY ×5)
+//   KEY (POWER)       ×1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, then ×2.15 a tier; T → T+1 costs 150 × 5^T wins;
+//                     KEPT through rebirth
+//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth, forever (no gems)
+//   ASCENSION         none for now (hidden: canAscend is always false; lb_ascend refuses — 027)
 //   GEMS              game-only: 1 in 15 game words drops 3–12 · bot win +18 · +15 per player beaten · streak +4 ·
 //                     achievements 40–200 · 75 a roll. Menu typing gives no gems.
 //
 // Only these constants may change later (±20%, after the CI sim — claude/econ-oct2/final-sim.mjs). No restructures.
 
-export const XP_BASE = 10; // XP per letter at P0 R0 ★0, no mark
-export const POWER_XP_STEP = 2.5; // × XP per letter per POWER tier
-export const REBIRTH_STEP = 2; // × XP and wins per rebirth
-export const CURVE_BASE = 400; // need(1)
-export const CURVE_GROWTH = 1.06; // × need per level
-export const WINS_BASE = 22; // wins for a 5-letter word at R0 ★0, MODE ×1, no mark
+export const XP_BASE = 10; // XP per letter at KEY T0 R0, no mark
+export const KEY_LADDER = Object.freeze([1, 2, 5, 10, 25, 50, 100, 250, 500, 1000]); // KEY T0–T9
+export const KEY_PAST_STEP = 2.15; // × per tier past T9
+export const REBIRTH_STEP = 3; // × XP and wins per rebirth
+export const CURVE_BASE = 100; // need(1)
+export const CURVE_GROWTH = 1.15; // × need per level
+export const WINS_BASE = 10; // wins for a 5-letter word at R0, MODE ×1, no mark
 export const WORD_REF = 5; // the reference word length (length / 5)
-export const POWER_COST_BASE = 300; // wins for P0 → P1
-export const POWER_COST_STEP = 8; // × price per POWER
-export const REBIRTH_COST_STEP = 25; // a rebirth from R spends 25 × (R + 1) levels
-export const ASCEND_AT = 10; // the first ascension: R10 (lb_ascend; serverRebirth.js keeps a literal copy)
-export const ASCEND_STEP = 5; // … then R15, R20 …: 10 + 5 × ★
-export const REBIRTH_GEMS_PER_R = 0; // FINAL: gems come from games only (a rebirth pays none)
-export const MENU_SHARE = 0.2; // a menu real-word letter = a fifth of a game letter
+export const POWER_COST_BASE = 150; // wins for T0 → T1
+export const POWER_COST_STEP = 5; // × price per tier
+export const REBIRTH_GATE_BASE = 15; // R1 at LV15 …
+export const REBIRTH_GATE_STEP = 18; // … then +18 levels a rebirth (R2 LV33, R5 LV105, R10 LV195)
+export const ASCENSION_ON = false; // FINAL v2: no ascension for now (hidden)
+export const ASCEND_AT = 10; // kept for the hidden ascension (lb_ascend refuses while ASCENSION_ON is false)
+export const ASCEND_STEP = 5;
+export const REBIRTH_GEMS_PER_R = 0; // gems come from games only (a rebirth pays none)
+export const MENU_SHARE = 0.2; // a menu letter = a fifth of a game letter
 
 /** MODE multipliers on WINS (gameData ids). Menu typing pays no wins. FUSE FRENZY (×5, 5 min) is frenzy.js. */
 export const MODE_MULT = Object.freeze({
@@ -34,7 +39,7 @@ export const MODE_MULT = Object.freeze({
   'category-blitz': 1,
   'word-race': 1.5,
   chain: 2,
-  'sat-rush': 3,
+  'sat-rush': 5,
   fuse: 1,
 });
 export function modeMult(mode) {
@@ -61,11 +66,13 @@ const CAP = 1e300; // every product stays finite (format.js reads it through the
 const int0 = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
 const fin = (v) => (Number.isNaN(v) ? 0 : Math.min(v, CAP));
 
-/** POWER → its XP-per-letter multiplier, 2.5^P. */
+/** KEY tier → its XP-per-letter multiplier: the ladder, then ×2.15 a tier. */
 export function powerXpMult(power) {
-  return fin(Math.pow(POWER_XP_STEP, int0(power)));
+  const t = int0(power);
+  if (t < KEY_LADDER.length) return KEY_LADDER[t];
+  return fin(KEY_LADDER[KEY_LADDER.length - 1] * Math.pow(KEY_PAST_STEP, t - (KEY_LADDER.length - 1)));
 }
-/** Wins to buy P → P+1 (standing at `power`): 300 × 8^P (exact integers while they are exact). */
+/** Wins to buy T → T+1 (standing at `power`): 150 × 5^T. */
 export function powerCost(power) {
   return fin(POWER_COST_BASE * Math.pow(POWER_COST_STEP, int0(power)));
 }
@@ -74,59 +81,48 @@ export function powerCostAt(tier) {
   const t = int0(tier);
   return t === 0 ? 0 : powerCost(t - 1);
 }
-/** ×2 per rebirth: 2^R. */
+/** ×3 per rebirth: 3^R. */
 export function rebirthMult(rebirths) {
   return fin(Math.pow(REBIRTH_STEP, int0(rebirths)));
 }
-/** (1 + ★). */
-export function starMult(stars) {
-  return 1 + int0(stars);
+/** ★ multiply nothing in FINAL v2 (ascension is hidden) — kept for the callers that still show it. */
+export function starMult() {
+  return 1;
 }
-/** XP per LETTER: (10 + markBase) × 2.5^P × 2^R × (1 + ★) × MARK. `markBase` = a worn +N BASE XP mark (0 none). */
-export function xpPerLetter({ power = 0, rebirths = 0, stars = 0, mark = 1, markBase = 0 } = {}) {
+/** XP per LETTER: (10 + markBase) × KEY × 3^R × MARK. `markBase` = a worn +N BASE XP mark (0 none). */
+export function xpPerLetter({ power = 0, rebirths = 0, mark = 1, markBase = 0 } = {}) {
   const m = Number.isFinite(mark) && mark > 0 ? mark : 1;
   const b = Number.isFinite(markBase) && markBase > 0 ? markBase : 0;
-  return fin((XP_BASE + b) * powerXpMult(power) * rebirthMult(rebirths) * starMult(stars) * m);
+  return fin((XP_BASE + b) * powerXpMult(power) * rebirthMult(rebirths) * m);
 }
 /**
- * WINS per word: 22 × (10 + markBase)/10 × length/5 × MODE × 2^R × (1 + ★) × MARK (unrounded). `mode` = a number or a
- * mode id. `markBase` = a worn +N BASE WINS mark, which is sized against the live BASE 10 (a MYTHIC +20 = ×3, like
- * every MYTHIC) — so it scales the 22 by (10 + N)/10, exactly as the payout does (hooks.xpSwap.i / wins.wordWinsBase).
- * (NUMBERS AUDIT: this helper used to ADD it, 22 + N, which disagreed with what the game pays.)
+ * WINS per word: 10 × (10 + markBase)/10 × length/5 × MODE × 3^R × MARK (unrounded). `mode` = a number or a mode id.
+ * `markBase` = a worn +N BASE WINS mark, sized against BASE 10 (exactly as the payout does — hooks.xpSwap.i).
  */
-export function winsPerWord({ length = WORD_REF, mode = 1, rebirths = 0, stars = 0, mark = 1, markBase = 0 } = {}) {
+export function winsPerWord({ length = WORD_REF, mode = 1, rebirths = 0, mark = 1, markBase = 0 } = {}) {
   const len = Number.isFinite(length) && length > 0 ? Math.floor(length) : 1;
   const md = typeof mode === 'string' ? modeMult(mode) : Number.isFinite(mode) && mode > 0 ? mode : 1;
   const m = Number.isFinite(mark) && mark > 0 ? mark : 1;
   const b = Number.isFinite(markBase) && markBase > 0 ? markBase : 0;
-  return fin(WINS_BASE * ((10 + b) / 10) * (len / WORD_REF) * md * rebirthMult(rebirths) * starMult(stars) * m);
+  return fin(WINS_BASE * ((10 + b) / 10) * (len / WORD_REF) * md * rebirthMult(rebirths) * m);
 }
-/** The LEVELS a rebirth from `rebirths` SPENDS: 25 × (R + 1). */
-export function rebirthCost(rebirths) {
-  return REBIRTH_COST_STEP * (int0(rebirths) + 1);
-}
-/** The LEVEL the next rebirth needs, standing at `rebirths`: LV > 25 × (R + 1), i.e. 25 × (R + 1) + 1. */
+/** The LEVEL the next rebirth needs, standing at `rebirths`: LV ≥ 15 + 18·R. */
 export function rebirthGate(rebirths) {
-  return rebirthCost(rebirths) + 1;
+  return REBIRTH_GATE_BASE + REBIRTH_GATE_STEP * int0(rebirths);
 }
-/** The level a rebirth leaves: level − 25 × (R + 1) (the leftovers stay; never below 1). */
-export function levelAfterRebirth(level, rebirths) {
-  const L = Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
-  return Math.max(1, L - rebirthCost(rebirths));
-}
-/** Gems a rebirth pays: none (FINAL — gems come from games only). */
+/** Gems a rebirth pays: none (gems come from games only). */
 export function rebirthGems(rcAfter) {
   return REBIRTH_GEMS_PER_R * int0(rcAfter);
 }
-/** The rebirth count an ascension needs at `stars`: 10 + 5 × ★. */
+/** The rebirth count an ascension would need at `stars` (hidden — see ASCENSION_ON). */
 export function ascendAt(stars = 0) {
   return ASCEND_AT + ASCEND_STEP * int0(stars);
 }
-/** Can this save ascend? R ≥ 10 + 5 × ★. */
+/** Can this save ascend? Never while ascension is hidden. */
 export function canAscend(rebirths, stars = 0) {
-  return int0(rebirths) >= ascendAt(stars);
+  return ASCENSION_ON && int0(rebirths) >= ascendAt(stars);
 }
-/** ★ an ascension adds: +1 (never R − 9 — that ran away to ★600 in 24 h in the FINAL tuning). 0 when not ready. */
+/** ★ an ascension adds: +1 when it can, else 0 (always 0 while hidden). */
 export function starsForAscend(rebirths, stars = 0) {
   return canAscend(rebirths, stars) ? 1 : 0;
 }

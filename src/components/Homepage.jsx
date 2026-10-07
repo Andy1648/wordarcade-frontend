@@ -18,7 +18,6 @@ import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/r
 import RebirthReadyButton from './RebirthReadyButton';
 import BoostPill from '../frenzy/BoostPill';
 import { setStatsTab } from '../lib/statsTab';
-import { rebirthRushNotice, clearRebirthRushNotice } from '../progress/econMigrate';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
 import { canAffordAny, buyKeyPower } from '../progress/shop';
@@ -855,21 +854,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       if (!xpFxRef.current || !xpFxRef.current.announce) { done(); return; }
       // H6 audit M7: RANK names the level titles only — a mark levels up as "SMITH IV · MARK UPGRADED"
       xpFxRef.current.announce(`${m.name} ${MARK_RANK_NAMES[r - 1]}`, 'MARK UPGRADED', markBlurbAt(m, r).toUpperCase());
-      setTimeout(done, CARD_MS);
-    });
-    return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  // Rebirth Rush one-time conversion (econMigrate): an old save whose levels passed the new gates was turned
-  // into rebirths — say so ONCE, as a LEVEL card on the queue. Cleared when it PLAYS (not when queued), so a
-  // menu left before its turn still shows it next visit.
-  useEffect(() => {
-    const added = rebirthRushNotice();
-    if (!added) return undefined;
-    announceMenu('rebirth-rush', (done) => {
-      if (!xpFxRef.current || !xpFxRef.current.rebirthRush) { done(); return; }
-      clearRebirthRushNotice();
-      xpFxRef.current.rebirthRush(added, getRebirths());
       setTimeout(done, CARD_MS);
     });
     return undefined;

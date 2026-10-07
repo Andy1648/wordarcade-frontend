@@ -41,5 +41,5 @@ export function takeRebirthNow() {
 }
 
 // The button copy — exactly "REBIRTH READY → ×5 FOREVER"; the 5 is REBIRTH_POWER through formatNum.
-// v3 (SEASON2): ×2 a rebirth
-export const REBIRTH_READY_COPY = `REBIRTH READY → ×${formatNum(SEASON2 ? 2 : REBIRTH_POWER)} FOREVER`;
+// v3 (SEASON2, PROGRESSION FINAL v2): ×3 a rebirth
+export const REBIRTH_READY_COPY = `REBIRTH READY → ×${formatNum(SEASON2 ? 3 : REBIRTH_POWER)} FOREVER`;

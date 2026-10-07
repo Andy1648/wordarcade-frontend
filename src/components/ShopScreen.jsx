@@ -392,7 +392,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                     {formatNum(advice.stars)} <span className="shop-rb-star">★</span>
                   </>
                 )}
-                {rebirthReady && SEASON2 && <>{' · COSTS '}{formatNum(V3.econ.rebirthCost(rebirths))} LEVELS · KEEP THE REST</>}
+                
               </div>
               {rebirthReady && !SEASON2 && (
                 <div className="shop-rb-advice">
@@ -450,8 +450,8 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
               </div>
             )}
 
-            {/* ASCEND (R = 10 + 5 × ★): ★ + 1; rebirths, levels and POWER reset. The ★ multiply XP and wins (1 + ★). */}
-            {SEASON2 && (
+            {/* ASCEND — hidden in PROGRESSION FINAL v2 (econ.ASCENSION_ON false). */}
+            {SEASON2 && V3.econ.ASCENSION_ON && (
               <div className="shop-ascend">
                 <h3 className="shop-subtitle">ASCEND — {formatNum(V3.store.getStarsV3())} ★</h3>
                 <button

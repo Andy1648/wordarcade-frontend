@@ -44,7 +44,7 @@ const MODES = [
   ['blitz', 'category-blitz', 1],
   ['wordRace', 'word-race', 1.5],
   ['chain', 'chain', 2],
-  ['satRush', 'sat-rush', 3],
+  ['satRush', 'sat-rush', 5],
   ['fuse', 'fuse', 1],
 ];
 const STATES = [
@@ -87,7 +87,7 @@ function shownNum(t) {
 }
 const relClose = (a, b, rel, msg) => assert.ok(Math.abs(a - b) <= Math.max(1e-9, Math.abs(b) * rel), `${msg}: ${a} vs ${b}`);
 
-test('FINAL: BASE × every chip = TOTAL (exact AND as printed) = the payout = 22 × len/5 × MODE × 2^R × (1+★) × MARK', () => {
+test('FINAL v2: BASE × every chip = TOTAL (exact AND as printed) = the payout = 10 × len/5 × MODE × 3^R × MARK', () => {
   let n = 0;
   for (const st of STATES) {
     for (const mark of MARKS) {
@@ -98,8 +98,8 @@ test('FINAL: BASE × every chip = TOTAL (exact AND as printed) = the payout = 22
         // the chain names FINAL's factors, in FINAL's order
         const by = Object.fromEntries(c.chips.map((k) => [k.id, k.mult]));
         assert.equal(by.mode, modeX, `${tag}: MODE`);
-        assert.equal(by.rebirth, 2 ** st.r, `${tag}: REBIRTH 2^R`);
-        assert.equal(by.ascend, 1 + st.s, `${tag}: STARS 1 + ★`);
+        assert.equal(by.rebirth, 3 ** st.r, `${tag}: REBIRTH 3^R`);
+        assert.equal(by.ascend, undefined, `${tag}: no STARS chip (ascension hidden)`);
         const fm = finalMark(mark);
         const idx = indexMult(loadRollState());
         assert.ok(Math.abs(by.mark - fm.wins) < 1e-9, `${tag}: MARK is FINAL's tier ×${fm.wins} (was ${by.mark})`);
@@ -126,7 +126,7 @@ test('FINAL: BASE × every chip = TOTAL (exact AND as printed) = the payout = 22
   assert.equal(n, STATES.length * MARKS.length * MODES.length);
 });
 
-test('FINAL: XP / LETTER chain — BASE 10 × POWER 2.5^P × REBIRTH 2^R × STARS (1+★) × MARK = TOTAL = what a letter credits', () => {
+test('FINAL v2: XP / LETTER chain — BASE 10 × KEY ladder × REBIRTH 3^R × MARK = TOTAL = what a letter credits', () => {
   let n = 0;
   for (const st of STATES) {
     for (const mark of MARKS) {
@@ -136,9 +136,9 @@ test('FINAL: XP / LETTER chain — BASE 10 × POWER 2.5^P × REBIRTH 2^R × STAR
       const c = statChain(statBoard().xp, { v3: V3, stars: st.s, markBaseXp: fm.xpBase });
       const by = Object.fromEntries(c.chips.map((k) => [k.id, k.mult]));
       assert.equal(c.base, 10 + fm.xpBase, `${tag}: BASE`);
-      assert.equal(by.power, 2.5 ** st.p, `${tag}: POWER 2.5^P`);
-      assert.equal(by.rebirth, 2 ** st.r, `${tag}: REBIRTH 2^R`);
-      assert.equal(by.ascend, 1 + st.s, `${tag}: STARS`);
+      assert.equal(by.power, E.powerXpMult(st.p), `${tag}: KEY ladder`);
+      assert.equal(by.rebirth, 3 ** st.r, `${tag}: REBIRTH 3^R`);
+      assert.equal(by.ascend, undefined, `${tag}: no STARS chip`);
       assert.ok(Math.abs(by.mark - fm.xp) < 1e-9, `${tag}: MARK is FINAL's tier ×${fm.xp} (was ${by.mark})`);
       relClose(c.chips.reduce((p, k) => p * k.mult, c.base), c.total, 1e-9, `${tag} exact`);
       const shown = c.chips.reduce((p, k) => p * shownNum(boardMult(k.mult)), shownNum(formatRate(c.base)));
@@ -148,7 +148,7 @@ test('FINAL: XP / LETTER chain — BASE 10 × POWER 2.5^P × REBIRTH 2^R × STAR
       const idx = indexMult(loadRollState());
       const final = E.xpPerLetter({ power: st.p, rebirths: st.r, stars: st.s, mark: fm.xp * idx, markBase: fm.xpBase });
       relClose(c.total, final, 1e-12, `${tag}: TOTAL is FINAL's formula`);
-      // a game letter credits exactly TOTAL (the 0.2 typed share + the 0.8 accepted top-up add up to one letter)
+      // a game letter credits exactly TOTAL (season 2: a typed game letter pays ×1 at once)
       const r = creditLetterXp(1, { mode: 'chain' });
       assert.equal(r.xp, roundWordXp(c.total), `${tag}: one letter credits TOTAL`);
       n += 1;

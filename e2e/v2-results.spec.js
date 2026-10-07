@@ -174,14 +174,14 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
   });
 }
 
-test('SEASON 2 (PROGRESSION FINAL): the chain shows REBIRTH ×2^R and ★ ×(1 + ★) as their own chips; lines still sum', async ({ page }) => {
+test('SEASON 2 (PROGRESSION FINAL v2): the chain shows REBIRTH ×3^R and no ★ chip (ascension hidden); lines still sum', async ({ page }) => {
   test.setTimeout(90_000);
   await play(page, { outcome: 'win', season2: true, seed: { 'taw.s2.rebirths': '2', 'taw.s2.stars': '1', 'taw.s2.xp': JSON.stringify({ lv: 5, f: 0.1, rc: 2, v: 10 }) } });
   const card = page.locator('.rs2');
   await expect(card).toHaveAttribute('data-tally', 'done', { timeout: 12_000 });
   const chips = await card.locator('.rs2-chip').allTextContents();
-  expect(chips.join(' | ')).toContain('×4REBIRTH');
-  expect(chips.join(' | ')).toContain('×2★');
+  expect(chips.join(' | ')).toContain('×9REBIRTH');
+  expect(chips.join(' | ')).not.toContain('★');
   const shown = await page.evaluate(() => ({
     total: Number(document.querySelector('[data-wins-total]').getAttribute('data-wins-total')),
     sum: [...document.querySelectorAll('.rs2 [data-wins-line]')].reduce((a, n) => a + Number(n.getAttribute('data-wins-amount')), 0),

@@ -87,9 +87,9 @@ async function boot(page, { season2 = true, seed = {}, path = '/' } = {}) {
   await page.goto(`${path}${path.includes('?') ? '&' : '?'}portal=1${season2 ? '&season2=1' : ''}`);
 }
 
-// LV20, nearly through it — a few REAL WORDS typed anywhere cross LV21 (PROGRESSION FINAL: menu words only, ×0.2). R1
-// since the last menu visit (the rank / unlocks last SEEN were R0's), so the menu owes a RANK UP (KEYMASH → TYPO) and
-// AUTO ROLL (ROLL + INDEX is open from the start — never news).
+// LV20, nearly through it — a few keys mashed anywhere cross LV21 (PROGRESSION FINAL v2: ANY key ×0.2). R1 since the
+// last menu visit (the rank / unlocks last SEEN were R0's): the old edge layer would have said a RANK UP (KEYMASH → TYPO)
+// and AUTO ROLL. THE ONE-NOTICE RULE (Andy oct6): it says NOTHING — the EDITOR'S NOTE welcome is the game's one notice.
 const S2_SEED = {
   'taw.s2.xp': JSON.stringify({ lv: 20, f: 0.985, rc: 1, v: 10 }),
   'taw.s2.rebirths': '1',
@@ -98,7 +98,7 @@ const S2_SEED = {
 };
 
 for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
-  test(`SEASON2 @${vp.width}: rank-up = top-edge banner, unlock = edge toast, level-up = the bar — nothing centred, no dialog, no claim toast`, async ({ page }) => {
+  test(`SEASON2 @${vp.width}: ONE-NOTICE rule — no rank-up banner, no unlock toast; level-up = the bar — nothing centred, no dialog, no claim toast`, async ({ page }) => {
     test.setTimeout(60_000);
     await page.setViewportSize(vp);
     // The page is seeded with the rank news already owed, so the sampler must be ARMED from the first frame: the
@@ -123,29 +123,16 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.reload();
     await menuReady(page);
 
-    // RANK UP: drops from the TOP edge with the v3 names, pays nothing
-    const banner = page.locator('.krb');
-    await expect(banner).toBeVisible({ timeout: 5000 });
-    await expect(banner).toHaveAttribute('data-rank', 'TYPO');
-    await expect(banner.locator('.krb-plate.is-old')).toHaveText('KEYMASH');
-    await expect(banner.locator('.krb-plate.is-new')).toHaveText('TYPO');
-    await expect(banner.locator('.krb-code')).toHaveText('R1');
-    await page.waitForTimeout(700); // past the 0.5 s drop
-    const bb = await banner.boundingBox();
-    expect(bb.y, 'the banner hangs from the top edge').toBeLessThanOrEqual(2);
-    expect(bb.y + bb.height, 'and stays in the top band').toBeLessThan(vp.height * 0.2);
-    // UNLOCK: a right-edge toast
-    const toast = page.locator('.ket-card[data-toast="R1"]');
-    await expect(toast).toBeVisible();
-    await expect(toast).toContainText('AUTO ROLL');
-    const tb = await toast.boundingBox();
-    expect(Math.round(tb.x + tb.width), 'the toast sits on the right edge').toBeGreaterThanOrEqual(vp.width - 2);
-    expect(await page.evaluate(() => localStorage.getItem('taw.s2.wins')), 'a rank-up pays no wins').toBeNull();
-    expect(await page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0), 'a rank-up pays no gems').toBe(0);
+    // the owed RANK UP / AUTO ROLL news is NOT said: no top-edge banner, no edge toast (the ONE-NOTICE rule)
+    await page.waitForTimeout(2500); // past when the old banner / toast would have dropped
+    await expect(page.locator('.krb')).toHaveCount(0);
+    await expect(page.locator('.ket-card')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('taw.s2.wins')), 'news pays no wins').toBeNull();
+    expect(await page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0), 'news pays no gems').toBe(0);
 
-    // LEVEL UP: LV20 → LV21 by typing real words on the menu — the bar wraps; no LEVEL card, no NEW WALL stamp
+    // LEVEL UP: LV20 → LV21 by mashing on the menu (ANY key counts) — the bar wraps; no LEVEL card, no NEW WALL stamp
     await expect.poll(async () => {
-      await page.keyboard.type('house garden window ', { delay: 130 });
+      await page.keyboard.type('qwrtzxpvqwrtzxpv', { delay: 40 });
       return page.evaluate(() => window.__tawXp().level);
     }, { timeout: 20_000 }).toBeGreaterThanOrEqual(21);
     await page.waitForTimeout(isPhoneMenu(page) ? 2500 : 4500); // every queued moment (wall 1.8 s + its fx, tier-up) has played
