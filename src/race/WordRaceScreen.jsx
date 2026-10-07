@@ -39,6 +39,8 @@ import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
 import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
+import { SEASON2 } from '../progress/season';
+import { RaceTrackV2, RaceDeckV2 } from './RaceHudV2.jsx';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -118,6 +120,7 @@ export default function WordRaceScreen({
   useEffect(() => {
     setSentIndex(0);
     setText('');
+    keysRef.current = { ok: 0, bad: 0 };
   }, [seed]);
   // A rejected word (only possible if the race ended under it) hands the cursor back to the server.
   useEffect(() => {
@@ -148,9 +151,17 @@ export default function WordRaceScreen({
   }
 
   // ENTIRE WORDS: letters only; the exact word sends itself; SPACE / ENTER on a wrong word nudges.
+  // SEASON 2 WPM / ACC (display only, never sent): every NEW letter typed is checked against the word on screen.
+  const keysRef = useRef({ ok: 0, bad: 0 });
   function onType(raw) {
     const hasBreak = /\s/.test(raw);
     const clean = raw.replace(/[^a-zA-Z]/g, '').slice(0, 30);
+    if (clean.length > text.length && fragment) {
+      for (let i = text.length; i < clean.length; i += 1) {
+        if (clean[i].toLowerCase() === fragment[i]) keysRef.current.ok += 1;
+        else keysRef.current.bad += 1;
+      }
+    }
     if (!wordsMode) {
       setText(clean);
       return;
@@ -267,8 +278,61 @@ export default function WordRaceScreen({
       : RACE_REASON_COPY[result.reason] || 'NOT ACCEPTED'
     : null;
 
+  const formNode = (
+          <form className={`wr-form${shakeSeq ? ` wr-shake-${shakeSeq % 2}` : ''}`} onSubmit={submit}>
+            <input
+              ref={inputRef}
+              className="wr-input"
+              value={text}
+              onChange={(e) => {
+                noteTypedLetters(text, e.target.value, 'word-race'); // v11: LETTERS fill the bar (batched)
+                onType(e.target.value);
+              }}
+              disabled={!live || finished}
+              placeholder={counting ? 'GET READY…' : wordsMode ? 'TYPE THE WORD' : 'TYPE A WORD'}
+              aria-label="Your word"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              enterKeyHint="send"
+            />
+            <button type="submit" className="wr-btn wr-btn-go" disabled={!live || finished || !text.trim()}>
+              SEND
+            </button>
+          </form>
+  );
+  const toastNode = (
+          <p className={`wr-toast${rejectCopy ? ' is-reject' : ''}`} role="status" data-reason={result && !result.accepted ? result.reason : ''}>
+            {rejectCopy || (result && result.accepted ? `✓ ${result.word.toUpperCase()}` : ' ')}
+          </p>
+  );
+  const earnNode = (
+          <p className="wr-earn" aria-label="Earned this race">
+            +{formatNum(earned?.wins || 0)} WINS
+          </p>
+  );
+
+  // SEASON 2 (P10 10e): the RACE card's pink lanes + cars, the WORD tile, WPM and the NEXT queue — ENTIRE WORDS only.
+  const v2On = SEASON2 && wordsMode;
+  const finishAtRef = useRef(0);
+  if (finished && !finishAtRef.current) finishAtRef.current = now;
+  if (!finished && finishAtRef.current) finishAtRef.current = 0;
+  let wpm = 0;
+  if (v2On && race && race.goAt) {
+    const until = finished ? finishAtRef.current : now;
+    const mins = Math.max(0, until - race.goAt) / 60000;
+    const doneWords = Math.min(myIndex, target);
+    let chars = 0;
+    for (let i = 0; i < doneWords; i += 1) chars += String(race.fragments[i] || '').length + 1;
+    wpm = mins > 0.02 && !counting ? Math.round(chars / 5 / mins) : 0;
+  }
+  const keyed = keysRef.current.ok + keysRef.current.bad;
+  const acc = keyed ? Math.round((keysRef.current.ok / keyed) * 100) : null;
+  const places = over ? Object.fromEntries(standings.map((s) => [s.id, s.place])) : null;
+
   return (
-    <div className="wr-root wall-surface" data-race-status={status}>
+    <div className="wr-root wall-surface" data-race-status={status} data-hud={v2On ? 'v2' : undefined}>
       <header className="wr-head">
         <span className="wr-chip">WORD RACE</span>
         {challenge && (
@@ -287,42 +351,70 @@ export default function WordRaceScreen({
         </div>
       </header>
 
+      {v2On ? (
+        <RaceTrackV2 racers={racers} myId={myId} target={target} places={places} />
+      ) : (
       <ol className="wr-lanes" aria-label="Race lanes">
-        {racers.map((r) => {
-          const isMe = r.id === myId;
-          const won = over && over.winnerId === r.id;
-          return (
-            <li
-              key={r.id}
-              className={`wr-lane${isMe ? ' is-me' : ''}${r.left ? ' is-left' : ''}${won ? ' is-winner' : ''}`}
-              data-racer-id={r.id}
-              data-racer-index={r.index}
-            >
-              <span className="wr-lane-name">
-                <span className="wr-lane-name-txt">{r.name}</span>
-                {isMe && <span className="wr-tag wr-tag-me">YOU</span>}
-                {r.isBot && <span className="wr-tag">BOT</span>}
-                {r.left && <span className="wr-tag">LEFT</span>}
-              </span>
-              <div className="wr-track" style={{ '--p': Math.min(1, r.index / target) }}>
-                <div className="wr-ticks" aria-hidden="true">
-                  {Array.from({ length: target }, (_, i) => (
-                    <span key={i} className={`wr-tick${i < r.index ? ' is-done' : ''}`} />
-                  ))}
+          {racers.map((r) => {
+            const isMe = r.id === myId;
+            const won = over && over.winnerId === r.id;
+            return (
+              <li
+                key={r.id}
+                className={`wr-lane${isMe ? ' is-me' : ''}${r.left ? ' is-left' : ''}${won ? ' is-winner' : ''}`}
+                data-racer-id={r.id}
+                data-racer-index={r.index}
+              >
+                <span className="wr-lane-name">
+                  <span className="wr-lane-name-txt">{r.name}</span>
+                  {isMe && <span className="wr-tag wr-tag-me">YOU</span>}
+                  {r.isBot && <span className="wr-tag">BOT</span>}
+                  {r.left && <span className="wr-tag">LEFT</span>}
+                </span>
+                <div className="wr-track" style={{ '--p': Math.min(1, r.index / target) }}>
+                  <div className="wr-ticks" aria-hidden="true">
+                    {Array.from({ length: target }, (_, i) => (
+                      <span key={i} className={`wr-tick${i < r.index ? ' is-done' : ''}`} />
+                    ))}
+                  </div>
+                  <div className="wr-runner-slide" aria-hidden="true">
+                    <Mascot pose={won || r.index >= target ? 'celebrate' : 'run'} size={36} className="wr-runner" />
+                  </div>
                 </div>
-                <div className="wr-runner-slide" aria-hidden="true">
-                  <Mascot pose={won || r.index >= target ? 'celebrate' : 'run'} size={36} className="wr-runner" />
-                </div>
-              </div>
-              <span className="wr-lane-count">
-                {r.index}/{target}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+                <span className="wr-lane-count">
+                  {r.index}/{target}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
 
-      {!over && (
+      {!over && v2On && (
+        <section className="wr-play rc2-play">
+          <RaceDeckV2
+            counting={counting}
+            goIn={goIn}
+            finished={finished}
+            word={fragment}
+            typed={text}
+            index={myIndex}
+            target={target}
+            upcoming={upcoming.slice(0, 4)}
+            wpm={wpm}
+            acc={acc}
+            form={formNode}
+            toast={toastNode}
+            earn={earnNode}
+            extra={<>
+              <GemPop />
+              {counting && hasHumanRival(racers, myId) ? <MatchWinBanner key={seed || 'race'} mode="word-race" /> : null}
+            </>}
+          />
+        </section>
+      )}
+
+      {!over && !v2On && (
         <section className="wr-play">
           <div className="wr-hero" aria-live="polite">
             {/* GEMS: the drop pop — one pooled node inside this positioned hero (aria-hidden itself) */}
@@ -369,34 +461,9 @@ export default function WordRaceScreen({
             ) : null}
           </div>
 
-          <form className={`wr-form${shakeSeq ? ` wr-shake-${shakeSeq % 2}` : ''}`} onSubmit={submit}>
-            <input
-              ref={inputRef}
-              className="wr-input"
-              value={text}
-              onChange={(e) => {
-                noteTypedLetters(text, e.target.value, 'word-race'); // v11: LETTERS fill the bar (batched)
-                onType(e.target.value);
-              }}
-              disabled={!live || finished}
-              placeholder={counting ? 'GET READY…' : wordsMode ? 'TYPE THE WORD' : 'TYPE A WORD'}
-              aria-label="Your word"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              enterKeyHint="send"
-            />
-            <button type="submit" className="wr-btn wr-btn-go" disabled={!live || finished || !text.trim()}>
-              SEND
-            </button>
-          </form>
-          <p className={`wr-toast${rejectCopy ? ' is-reject' : ''}`} role="status" data-reason={result && !result.accepted ? result.reason : ''}>
-            {rejectCopy || (result && result.accepted ? `✓ ${result.word.toUpperCase()}` : ' ')}
-          </p>
-          <p className="wr-earn" aria-label="Earned this race">
-            +{formatNum(earned?.wins || 0)} WINS
-          </p>
+          {formNode}
+          {toastNode}
+          {earnNode}
         </section>
       )}
 
