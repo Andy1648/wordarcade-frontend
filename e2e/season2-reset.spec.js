@@ -55,8 +55,12 @@ test('SEASON 2 RESET: a season-1 save is wiped (username kept), the welcome show
 
   const w = page.getByTestId('season2-welcome');
   await expect(w).toBeVisible({ timeout: 15_000 });
-  await expect(w.locator('#s2w-title')).toHaveText('SEASON 2');
-  await expect(w).toContainText('SORRY FOR THE MAINTENANCE · EVERYONE STARTS FRESH');
+  await expect(w.locator('#s2w-title')).toHaveText("EDITOR'S NOTE");
+  await expect(w).toContainText("SORRY FOR RESCALING THE PROGRESSION — HERE'S SOME GEMS");
+  // the gem pill sits on the LEFT half (the gems fly there)
+  const pb = await w.locator('.s2w-wallet').boundingBox();
+  const vw = page.viewportSize().width;
+  expect(pb.x + pb.width / 2, 'the gem pill is on the left').toBeLessThan(vw / 2);
   await expect(page.getByTestId('season2-old-run')).toHaveText('R7');
   await expect(page.getByTestId('season2-gems')).toHaveText('580');
   await expect(page.getByTestId('season2-rolls')).toHaveText('7 ROLLS');
@@ -76,6 +80,7 @@ test('SEASON 2 RESET: a season-1 save is wiped (username kept), the welcome show
   await page.getByTestId('season2-collect').click();
   await expect(w).toHaveAttribute('data-phase', 'done');
   await expect.poll(() => s2Gems(page)).toBe(580);
+  await expect(w.locator('.s2w-wallet .kp-num'), 'the left pill counted up to the gift').toHaveText('580');
   expect(board.calls.season2Claim).toBe(1);
   await expect(page.getByTestId('season2-collect')).toContainText('PLAY');
   await page.getByTestId('season2-collect').click();

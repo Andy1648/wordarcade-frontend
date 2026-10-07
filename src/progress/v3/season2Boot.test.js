@@ -185,16 +185,16 @@ test('offline: the claim throws → retry, nothing credited, the welcome stays p
   assert.equal(B.readWelcome().st, 'pending');
 });
 
-test('no board name: the base 300, once, keyed by the local flag (and its cookie mirror)', async () => {
+test('no board name: round5(300 + 40 × old R) on the local old run (R7 → 580), once, keyed by the local flag (and its cookie mirror)', async () => {
   seasonOneSave();
   mem.delete('taw.lb.profile');
   B.wipeForSeason2(rawFor());
   const rpc = async () => assert.fail('no server call without a name');
   const plan = await B.planWelcome({ rpc, secret: null, hasProfile: false, cookie: () => false });
-  assert.deepEqual([plan.server, plan.gems, plan.oldR], [false, 300, 7]);
+  assert.deepEqual([plan.server, plan.gems, plan.oldR], [false, 580, 7]);
   const g0 = G.getGems();
-  assert.deepEqual(await B.collectWelcome(plan, { rpc }), { ok: true, gems: 300 });
-  assert.equal(G.getGems(), g0 + 300);
+  assert.deepEqual(await B.collectWelcome(plan, { rpc }), { ok: true, gems: 580 });
+  assert.equal(G.getGems(), g0 + 580);
   assert.equal(await B.planWelcome({ rpc, hasProfile: false, cookie: () => false }), null, 'once');
   // RESET ALL PROGRESS wiped the local flag: the cookie mirror still says done
   mem.set('taw.s2.welcome', JSON.stringify({ st: 'pending', r: 0 }));
