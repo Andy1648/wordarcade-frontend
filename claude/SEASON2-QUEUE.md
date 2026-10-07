@@ -214,3 +214,4 @@ NOTE: progression-final-sim.py's __main__ uses NEED0=100/G=1.08 (a rejected tuni
 - P9: #226 9a MERGED (fa29fa28). #231 9b MERGED (0049c5d2). #232 9c: main merged in (GameScreen import conflict), unit 1275/0, CI running; 2-context play-test PASS (agent, 3 runs). Then backend #18 (wb-learn-pause), then #240 9d. P10 agent building 10b→10f→10a.
 - #232 9c MERGED (a459009e). Backend #18 learn-pause MERGED (804ff23f → Render). #240 9d update-branched, CI running.
 - PROD REGRESSION (9c + backend #18): PASS — 2 contexts + bot on typeaword.com, room BAVPK, 4 words accepted, turns pass, blow-up carried learnPauseMs 2000 (Render live), NEXT TIME card on loser only, first tick +3002ms, 0 errors / 0 key-collision. #240 payload trimmed to 961,023 (AudioPanel lazy), CI running.
+- #240 9d MERGED (fa08ca62). P9 COMPLETE (9a #226, 9b #231, 9c #232 + backend #18, 9d #240). Next: P10 (agent building 10b→10f→10a).
