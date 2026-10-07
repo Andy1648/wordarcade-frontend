@@ -8,9 +8,9 @@
 //   (c) no rendered text under 13px anywhere on the game-over overlay
 //   (d) zero INFINITE animations running on the screen
 //   (e) the cursor trail sits UNDER the overlay (lower z-index), so it cannot paint over it
-//   (f) on a loss, the K.O. hero is there and carries an accessible name (the LayeredWord stack is aria-hidden)
-//   (h) the PLAYERS table fits inside its GAME STATS box (layout widths, so the card's tilt does
-//       not skew it) — at 360x640 it ran 55px out of the card before the phone rows stacked
+//   (f) on a loss, the placement hero (P9b results card) is there and carries the K.O. line as its accessible name
+//   (h) the PLAYERS list fits inside its column (layout widths) and no row overflows itself (P9b results card;
+//       it was the GAME STATS table — at 360x640 that ran 55px out of the card before the phone rows stacked)
 //   (g) when the breakdown is folded (phone, or a laptop card that would not fit), its toggle is a
 //       real >= 44px control inside the card
 import { test, expect } from '@playwright/test';
@@ -81,7 +81,8 @@ for (const n of [2, 3, 4]) {
       if (outcome === 'win') {
         await expect(page.locator('.game-over-title.win')).toBeVisible();
       } else {
-        const hero = page.locator('.ko-hero');
+        // P9b: the results card's placement hero carries the K.O. line as its accessible name
+        const hero = page.locator('.rs2-hero');
         await expect(hero).toBeVisible();
         await expect(hero).toHaveAttribute('aria-label', /Knocked out\. RIVAL WINS/);
       }
@@ -114,13 +115,13 @@ for (const n of [2, 3, 4]) {
         const toggle = document.querySelector('.go-more-toggle');
         const folded = more && !more.open;
         const t = toggle && vis(toggle) ? toggle.getBoundingClientRect() : null;
-        const pt = document.querySelector('.go-ptable');
+        // P9b: the PLAYERS list of the results card — when shown, it fits its column and no row overflows itself
+        const pt = document.querySelector('.rs2-plist');
         let ptable = null;
-        if (pt) {
+        if (pt && vis(pt)) {
           const box = pt.parentElement;
-          const bcs = getComputedStyle(box);
-          const room = box.clientWidth - parseFloat(bcs.paddingLeft) - parseFloat(bcs.paddingRight);
-          const rows = [...pt.querySelectorAll('tr')].filter((tr) => tr.scrollWidth > tr.clientWidth + 1).length;
+          const room = box.clientWidth;
+          const rows = [...pt.querySelectorAll('li')].filter((li) => vis(li) && li.scrollWidth > li.clientWidth + 1).length;
           ptable = { w: pt.offsetWidth, sw: pt.scrollWidth, room: Math.round(room), rows };
         }
         return {

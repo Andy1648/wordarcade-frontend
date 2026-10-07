@@ -24,7 +24,7 @@ export const UNLOCK_TOAST = {
   rollScreen: { tile: '#FFC23D', icon: 'roll' },
   autoRoll: { tile: '#2EFFE0', icon: 'roll' },
   autoRebirth: { tile: '#FF3D7F', icon: 'rebirth' },
-  mark2: { tile: '#B04BFF', icon: 'index' },
+  mark2: { tile: '#B04BFF', icon: 'index', badge: '2' },
   luck: { tile: '#12A99A', icon: 'luck' },
   ascend: { tile: '#FFE94A', icon: 'ascend' },
 };

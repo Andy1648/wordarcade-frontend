@@ -3,6 +3,7 @@
 // UNLOCKED + its code, names it, and slides back out. Never centre-screen, never a claim, takes no pointer.
 //
 //   pushToast({ code: 'R1', label: 'ROLL SCREEN', tile: '#FFC23D', icon: 'roll' })
+//   pushToast({ code: 'R3', label: 'BOOST SLOT', tile: '#FF3D7F', icon: 'boost', badge: '2' })   (P9a: the slot-count badge)
 //
 // ONE host (mount <KitEdgeToastHost /> once). Up to 3 stack downward; a 4th retires the oldest. Motion: one finite
 // WAAPI slide per toast + one icon wiggle (transform only), skipped under REDUCE MOTION (the toast simply shows for
@@ -39,6 +40,7 @@ function Toast({ t, rank }) {
           <span ref={icon} className="ket-icon">
             <KitIcon name={t.icon || 'levels'} size={44} />
           </span>
+          {t.badge ? <span className="ket-badge">{t.badge}</span> : null}
         </span>
         <span className="ket-text">
           <span className="ket-head">

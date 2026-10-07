@@ -1,0 +1,189 @@
+/* BombHudV2.css — the v2 Word Bomb HUD skin (claude/mockups/v2/BombHUD.dc.html). Everything under [data-hud="v2"] is
+   SEASON2 only (the live board is untouched); .wb-learn (PAUSE TO LEARN) is live in every season. Flat fills, black ink,
+   hard offset shadows; only transform / opacity animate; nothing loops. */
+
+/* ---- the fuse ring round the bomb + the seconds under the fragment ---- */
+.wb-v2-fuse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--wb-bomb-w) * 1.42);
+  height: calc(var(--wb-bomb-w) * 1.42);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.wb-v2-fuse svg { width: 100%; height: 100%; display: block; }
+.wb-v2-fuse .is-on { stroke: #FFE94A; }
+.wb-v2-fuse .is-off { stroke: #2a1745; }
+.wb-v2-fuse.is-critical .is-on { stroke: #FF3D7F; }
+.wb-v2-secs {
+  position: absolute;
+  left: 50%;
+  top: 80%;
+  transform: translateX(-50%);
+  padding: 0 8px;
+  background: #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: max(var(--fs-k13), calc(var(--wb-bomb-w) * 0.11));
+  line-height: 1.2;
+  color: #c9b8e8;
+}
+
+/* ---- the alphabet row (joins the header row) ---- */
+.wb-v2-abc { display: flex; align-items: center; gap: 3px; min-width: 0; flex: 0 1 auto; overflow: hidden; }
+.wb-v2-abc-l {
+  flex: none;
+  width: 22px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: #1a0b2e;
+  border: 2px solid #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k13);
+  color: #4a3566;
+}
+.wb-v2-abc-l.is-on { background: #FFE94A; color: #000; }
+.wb-v2-abc-n { flex: none; margin-left: 6px; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k13); color: #c9b8e8; }
+@media (max-width: 1100px) {
+  .wb-v2-abc-l { display: none; }
+  .wb-v2-abc-l.is-on { display: grid; }
+}
+
+/* ---- the v2 board skin ---- */
+/* the prompt plaque + time box leave the screen (the fragment is on the bomb, the time is the fuse ring) but stay
+   readable to a screen reader */
+.game-stage--wb[data-hud="v2"] .wb-top {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+/* the side rails (live feed, used words) go: the board is the bomb and the ring */
+.game-stage--wb[data-hud="v2"] .kill-feed,
+.game-stage--wb[data-hud="v2"] .game-used { display: none; }
+/* the seats: UPRIGHT cards — an initial tile + the name + hearts, never stretched */
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 11px 8px 4px 4px; /* the card's accent bar owns the top ~8px */
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 0;
+  box-shadow: 5px 5px 0 #000;
+}
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card.current { outline: 4px solid #FFE94A; outline-offset: 2px; }
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card.eliminated { opacity: .45; }
+.wb-v2-init {
+  flex: none;
+  height: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-top: 6px solid var(--pc, #c9b8e8);
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: max(var(--fs-k13), calc(var(--wb-bomb-w) * 0.1));
+  color: #fff;
+}
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-name { flex: 1 1 auto; min-width: 0; align-items: flex-start; }
+
+/* ---- PAUSE TO LEARN: an edge card on the bottom cluster (every season) ---- */
+.wb-learn {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  z-index: 6;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: calc(100% - 8px);
+  padding: 8px 14px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-left: 10px solid #2EFFE0;
+  box-shadow: 5px 5px 0 #000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.wb-learn-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k14); color: #c9b8e8; }
+.wb-learn-w {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k28);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.wb-learn-w b { font-weight: 400; color: #FFE94A; }
+/* the card's own zero-height anchor at the top of the bottom bar (the bar itself must stay unpositioned: the receipt
+   rail and other absolute pieces in it resolve against the stage) */
+.wb-learn-anchor { position: relative; height: 0; }
+
+/* ---- v2 GEOMETRY: a big bomb, big UPRIGHT cards on an ELLIPSE (wider than tall, like the mockup) ----
+   The ring box stays the square --wb-size the board measured; the cards sit on x = rx·sin θ, y = −ry·cos θ (CSS trig,
+   transform only — no layout), so they may use the width the hidden rails gave back. */
+.game-stage--wb[data-hud="v2"] .wb-ring {
+  --wb-bomb-w: calc(var(--wb-size) * 0.44);
+  --wb-seat-w: clamp(132px, calc(var(--wb-size) * 0.46), 236px);
+  --wb-seat-h: max(56px, calc(var(--wb-seat-w) * 0.36));
+  --wb-rx: min(calc(var(--wb-size) * 0.92), calc(50vw - var(--wb-seat-w) / 2 - 28px));
+  --wb-ry: calc(var(--wb-size) / 2 - var(--wb-seat-h) / 2);
+}
+.game-stage--wb[data-hud="v2"] .wb-pointer { display: none; }
+.game-stage--wb[data-hud="v2"] .wb-seat {
+  --wb-a: calc(var(--wb-start, 0deg) + var(--i) / var(--n) * 360deg);
+  transform: translate(-50%, -50%) translate(calc(sin(var(--wb-a)) * var(--wb-rx)), calc(cos(var(--wb-a)) * var(--wb-ry) * -1));
+}
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card { height: var(--wb-seat-h); transform: none; }
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card.current {
+  transform: none;
+  background: #1a0b2e;
+  color: #fff;
+  border-color: #000;
+}
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-name { flex-direction: column; gap: 2px; justify-content: center; }
+/* the name lives INSIDE the card now (no floating label) */
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-name-text {
+  position: static;
+  transform: none;
+  max-width: 100%;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: max(var(--fs-k13), calc(var(--wb-seat-w) * 0.085));
+  color: #fff;
+}
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card.current .game-player-name-text { color: #FFE94A; }
+.game-stage--wb[data-hud="v2"] .wb-seat .player-dot { display: none; }
+/* the live typing line sits under the card */
+.game-stage--wb[data-hud="v2"] .wb-seat .player-typing,
+.game-stage--wb[data-hud="v2"] .wb-seat .player-status { top: calc(100% + 6px); bottom: auto; }
+.game-stage--wb[data-hud="v2"] .wb-seat--name-out-up .player-typing,
+.game-stage--wb[data-hud="v2"] .wb-seat--name-out-up .player-status { top: auto; bottom: calc(100% + 32px); }
+/* every name stays on its card (the cards are big enough; no one-label-per-crowd rule) */
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card .game-player-name-text { display: block; }
+/* MY seat does not echo my typing — the field below is where my word is */
+.game-stage--wb[data-hud="v2"] .wb-seat .game-player-card:has(.game-player-you) .player-typing { display: none; }
+/* PHONE: the column is narrow but tall — the ellipse turns upright, cards at their floor size */
+@media (max-width: 700px) {
+  .game-stage--wb[data-hud="v2"] .wb-ring {
+    --wb-seat-w: 132px;
+    --wb-seat-h: 56px;
+    --wb-rx: calc(50vw - 66px - 22px);
+    --wb-ry: min(calc(var(--wb-size) / 2 + 110px), calc(var(--wb-size) * 1.05));
+  }
+}
+.game-stage--wb[data-hud="v2"] .game-player-lastlife { top: -16px; right: -10px; left: auto; bottom: auto; transform: rotate(4deg); }
