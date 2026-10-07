@@ -13,7 +13,8 @@
 //   2. WELCOME (once): with a board name, the server holds the gift — lb_season2_grant (peek) gives the gems and the old
 //      R; already claimed (another device, a reload) → no welcome. COLLECT calls lb_season2_claim and credits the gems
 //      (gemsCore grantGems) ONLY on ok. With NO board name (or a name made after the reset: no grant row) the gift is
-//      the base 300, once, keyed by the local flag (+ a cookie mirror, so RESET ALL PROGRESS does not re-arm it).
+//      the same rule on this browser's own old run — round5(300 + 40 × old R) — once, keyed by the local flag (+ a
+//      cookie mirror, so RESET ALL PROGRESS does not re-arm it). (The EDITOR'S NOTE: "old run → gems", Andy oct6.)
 import { SEASON2, V3 } from '../season.js';
 import { LEADERBOARD_ENABLED, boardCaps, rpc as boardRpc, peekSecret, getMyProfile } from '../../leaderboard/client.js';
 import { wipeProgressKeys } from '../../save/cloudSave.js';
@@ -119,7 +120,7 @@ export function markWelcomeDone(storage = globalThis.localStorage) {
 
 /**
  * What the welcome shows, or null for none. Server-held gift (a name with a grant row): its gems + old R; claimed →
- * null (and the local flag is set). Local gift (no name / no grant row): the base 300, once (the cookie mirror too).
+ * null (and the local flag is set). Local gift (no name / no grant row): round5(300 + 40 × the old local R), once (the cookie mirror too).
  * Throws when the server can't be asked (the welcome stays pending for the next boot).
  */
 export async function planWelcome({ rpc = boardRpc, secret, hasProfile, storage = globalThis.localStorage, cookie = cookieDone } = {}) {
@@ -139,12 +140,12 @@ export async function planWelcome({ rpc = boardRpc, secret, hasProfile, storage 
     markWelcomeDone(storage);
     return null;
   }
-  return { server: false, gems: season2Gems(0), oldR: int0(w.r), req: w.req || defaultId() };
+  return { server: false, gems: season2Gems(int0(w.r)), oldR: int0(w.r), req: w.req || defaultId() };
 }
 
 /**
  * COLLECT. Server gift → lb_season2_claim (same request id on a retry); credits ONLY on ok (a replay of THIS request is
- * ok — its first answer was lost). Local gift → the base 300. The credit and the done flag land in the same tick.
+ * ok — its first answer was lost). Local gift → its planned gems. The credit and the done flag land in the same tick.
  * Returns { ok, gems, reason? } — ok:false with reason 'claimed' credits nothing; a thrown call = { ok:false, retry:true }.
  */
 export async function collectWelcome(plan, { rpc = boardRpc, secret, storage = globalThis.localStorage, grant = grantGems } = {}) {

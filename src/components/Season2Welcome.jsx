@@ -1,8 +1,10 @@
-// Season2Welcome.jsx — THE SEASON 2 WELCOME (claude/mockups/v2/Season2.dc.html; PROGRESSION v3 phase 4, the reset).
-// LAZY (its own chunk): v3/season2Boot.js mounts it once, after the server reset, for a player whose welcome is pending.
-// A FULL-SCREEN MOMENT (never a centre popup): SEASON 2 slams in · "SORRY FOR THE MAINTENANCE · EVERYONE STARTS FRESH" ·
-// YOUR OLD RUN R{n} → YOU GET {gems} · {rolls} ROLLS (· EPIC+ GUARANTEED from 50 rolls) · COLLECT → the gems fly into
-// the wallet pill (KitFlyLayer → KitPill counts up) → PLAY closes it. Built only from the v2 kit (KitPill, KitIcon,
+// Season2Welcome.jsx — THE EDITOR'S NOTE: the season-2 welcome and THE ONE NOTICE in the whole game (SEASON 2 checklist
+// step 2, Andy oct6; claude/mockups/v2/Season2.dc.html). LAZY (its own chunk): v3/season2Boot.js mounts it ONCE, after the
+// server reset, for a player whose welcome is pending.
+// A FULL-SCREEN MOMENT in the house style (never a plain box): EDITOR'S NOTE slams in · "SORRY FOR RESCALING THE
+// PROGRESSION — HERE'S SOME GEMS" · YOUR OLD RUN R{n} → YOU GET {gems} (round5(300 + 40 × old R), the server's grant) ·
+// {rolls} ROLLS · COLLECT → the gems float up out of the gift and fly into the gem pill on the LEFT (KitFlyLayer: burst
+// = the float, then the arc) while its counter ticks up one landing at a time (KitPill) → PLAY closes it. Built only from the v2 kit (KitPill, KitIcon,
 // KitButton, KitGhostButton, KitFlyLayer). The credit itself happens in collect() (season2Boot.collectWelcome) — ONLY
 // on the server's ok; the flight is the display of it. Every motion is a one-shot transform/opacity (no idle loop);
 // REDUCE MOTION: no slam/rise, the gems land at once (KitFlyLayer).
@@ -82,8 +84,8 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
         <KitPill ref={pill} kind="gems" value={wallet} ariaLabel={`Gems: ${formatNum(wallet)}`} />
       </div>
       <header className="s2w-head">
-        <h1 id="s2w-title" className="s2w-title s2w-slam">SEASON 2</h1>
-        <p className="s2w-sub s2w-rise" style={{ '--s2w-d': '300ms' }}>SORRY FOR THE MAINTENANCE · EVERYONE STARTS FRESH</p>
+        <h1 id="s2w-title" className="s2w-title s2w-slam">EDITOR&apos;S NOTE</h1>
+        <p className="s2w-sub s2w-rise" style={{ '--s2w-d': '300ms' }}>SORRY FOR RESCALING THE PROGRESSION — HERE&apos;S SOME GEMS</p>
       </header>
       <div className="s2w-trade">
         <div className="s2w-col s2w-rise" style={{ '--s2w-d': '450ms' }}>

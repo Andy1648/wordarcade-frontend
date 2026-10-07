@@ -10,7 +10,7 @@ The EDITOR'S NOTE welcome (step 2), shown once. Every other progression/economy 
 No other popups anywhere. (Replaces the old step 0 "LEVELS GOT HARDER" item — it never rendered; the
 flag that would have driven it goes with this rule.)
 
-## 1. PROGRESSION FINAL v2 behind SEASON2 — branch `feat/s2-progression-v2`, PR (see below), CI pending
+## 1. PROGRESSION FINAL v2 behind SEASON2 — ✅ PR #247 MERGED (d41d935), CI all green (4 e2e shards, season2 sim, long-run, rule-p)
 - [x] need(n) = 100 × 1.15^(n−1), one curve for everyone (v3/econ + v3/curve, O(1) carry kept)
 - [x] XP/letter = 10 × KEY × 3^R × MARK × OVERDRIVE; game letters ×1 (typed, no ×0.2 share / top-up), menu ×0.2;
       ANY keys count, no rate cap (v3/menuWords.js deleted; letterXp skips the 12/s limiter in season 2)
@@ -28,12 +28,15 @@ flag that would have driven it goes with this rule.)
       LV ≥ 15 + 18R → level 1, 12/hour cap kept; lb_ascend season 2 → 'off'; board-write room 15 + 18R + 100
 - [x] CI sim (`claude/econ-oct2/final-sim.mjs`, econ-sims `season2` job, 10 h): doc table ±25% + spammer + no ascension.
       Local 1.5 h probe: median R1 3.3 min / R3 20.8 / R5 69.2 · fast R1 2.0 / R3 12.2 / R5 44.7 (all within ±11%)
-- Unit 1270/1270 locally; e2e + econ sims on CI only.
+- Unit 1270/1270 locally; CI sim (10 h): every doc cell within ±17% — R at 10 h exactly R7 / R8 / R9 / R4.
 
-## 2. WELCOME = the one notice — EDITOR'S NOTE screen (house style, based on Season2.dc.html, not a plain box)
-- [ ] "EDITOR'S NOTE" / "SORRY FOR RESCALING THE PROGRESSION — HERE'S SOME GEMS"
-- [ ] old run → gems = round5(300 + 40 × old rebirths)
-- [ ] COLLECT → gems float + fly into the left gem pill (KitFly), counter ticks up; shown once
+## 2. WELCOME = the one notice — EDITOR'S NOTE screen — branch `feat/s2-editors-note`, PR (see below)
+- [x] "EDITOR'S NOTE" (Bungee Shade slam) / "SORRY FOR RESCALING THE PROGRESSION — HERE'S SOME GEMS" — the existing
+      Season2.dc.html full-screen moment (band, YOUR OLD RUN R{n} → YOU GET, rolls line), never a plain box
+- [x] old run → gems = round5(300 + 40 × old rebirths): the server grant (023) for named players; a no-name browser now
+      gets the same rule on its own old run (was a flat 300)
+- [x] COLLECT → the gems burst/float out of the gift and arc into the gem pill, now on the LEFT, counter ticking up one
+      landing at a time (KitFlyLayer → KitPill); shown once (local flag + cookie + server claim)
 
 ## 3. LEADERBOARD after the reset
 - [ ] everyone keeps their old position; every stat shows "—" until earned in season 2

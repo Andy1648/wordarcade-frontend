@@ -1,4 +1,4 @@
-/* Season2Welcome.css — the SEASON 2 welcome (claude/mockups/v2/Season2.dc.html). A full-screen moment over the app.
+/* Season2Welcome.css — the EDITOR'S NOTE, the season-2 welcome (claude/mockups/v2/Season2.dc.html). A full-screen moment over the app.
    Flat colours, hard black offsets, one-shot motion only (the mockup's looping band drift and button pulse are dropped:
    zero new infinite animations). REDUCE MOTION: no slam / rise — everything sits at rest. */
 .s2w {
@@ -29,10 +29,11 @@
   transform: rotate(-4deg);
   pointer-events: none;
 }
+/* the gem pill sits on the LEFT — where the menu's own gem pill lives — and the collected gems fly into it */
 .s2w-wallet {
   position: absolute;
   top: 22px;
-  right: 28px;
+  left: 28px;
   z-index: 2;
 }
 .s2w-head,
@@ -51,7 +52,7 @@
 .s2w-title {
   margin: 0;
   font-family: 'Bungee Shade', 'Bungee', sans-serif;
-  font-size: var(--fs-k100);
+  font-size: min(var(--fs-k100), 8.2vw);
   line-height: 1;
   font-weight: 400;
   text-transform: uppercase;
@@ -149,9 +150,9 @@
 /* phones: the trade stacks, the figures step down */
 @media (max-width: 600px) {
   .s2w { padding: 112px 16px 28px; justify-content: flex-start; gap: 22px; }
-  .s2w-wallet { top: 14px; right: 16px; }
+  .s2w-wallet { top: 14px; left: 16px; }
   .s2w-head { margin-top: 0; }
-  .s2w-title { font-size: var(--fs-k38); }
+  .s2w-title { font-size: min(var(--fs-k38), 9vw); white-space: normal; }
   .s2w-sub { font-size: var(--fs-k16); }
   .s2w-trade { flex-direction: column; gap: 12px; }
   .s2w-arrow > svg { transform: rotate(90deg); }
