@@ -253,10 +253,16 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
     }
     if (season2 && url.pathname.endsWith('/leaderboard_s2')) {
-      // 022: season-2 rows (econ 13) only, ★ → rebirths → level → words
+      // 028: season-2 rows (econ 13) only, ★ → rebirths → level → words → the season-1 rank (a row's `s1_rank` seed);
+      // `earned` = anything earned in season 2
+      const s1 = (r) => (r.s1_rank > 0 ? r.s1_rank : Infinity);
       const all = rows.filter((r) => r.econ === 13).slice()
-        .sort((a, b) => (b.stars || 0) - (a.stars || 0) || (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level || b.lifetime_words - a.lifetime_words)
-        .map((r, i) => { const o = { ...r, rank: i + 1, stars: r.stars || 0 }; delete o.submitted_at; return o; });
+        .sort((a, b) => (b.stars || 0) - (a.stars || 0) || (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level || b.lifetime_words - a.lifetime_words || (s1(a) === s1(b) ? 0 : s1(a) < s1(b) ? -1 : 1))
+        .map((r, i) => {
+          const o = { ...r, rank: i + 1, stars: r.stars || 0, earned: (r.rebirths || 0) > 0 || r.level > 1 || r.lifetime_words > 0 || (r.stars || 0) > 0, s1_rank: r.s1_rank || null };
+          delete o.submitted_at;
+          return o;
+        });
       const id = url.searchParams.get('id');
       return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
     }

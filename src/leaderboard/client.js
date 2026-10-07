@@ -379,6 +379,7 @@ export async function adoptRecoveryCode(code) {
 /** The top of the board + (if I have a name and I'm below it) my own row. */
 // 017: `econ` is selected only once lb_caps says the view has it — and a PostgREST 400 (unknown column, e.g.
 // the view was rebuilt by an older migration after 017) falls back to the select without it, for the session.
+let keepColBroken = false; // 028 (earned / s1_rank) not on the server yet
 let econColBroken = false;
 /** True when a board row's wins/word is from the CURRENT economy (or the DB can't say yet — pre-017). */
 export function rowEconCurrent(row) {
@@ -392,10 +393,17 @@ export function rowEconCurrent(row) {
 export async function fetchBoard(limit = BOARD_SIZE) {
   if (!LEADERBOARD_ENABLED) return { rows: [], me: null };
   const caps = await boardCaps();
-  // v3: the season-2 board carries ★ (its order is ★ → R → level; 022)
+  // v3: the season-2 board carries ★ (its order is ★ → R → level; 022) and, from 028, `earned` + `s1_rank` (everyone
+  // keeps their season-1 place until they earn something; a row that has not earned shows "—")
+  const keep = SEASON2 && !keepColBroken ? ',earned,s1_rank' : '';
   const base = `rank,id,username,level,rebirths,lifetime_words,${caps.letters ? 'lifetime_letters,' : ''}wins_per_word${SEASON2 ? ',stars' : ''}`;
-  let cols = caps.boardEcon && !econColBroken ? `${base},econ` : base;
+  let cols = `${caps.boardEcon && !econColBroken ? `${base},econ` : base}${keep}`;
   let r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  if (!r.ok && r.status === 400 && keep) {
+    keepColBroken = true; // 028 not run yet: 022's view has no earned / s1_rank
+    cols = cols.slice(0, -keep.length);
+    r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&order=rank.asc&limit=${limit}`, { headers: headers() });
+  }
   if (!r.ok && r.status === 400 && cols !== base) {
     econColBroken = true;
     cols = base;
