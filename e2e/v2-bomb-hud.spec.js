@@ -54,6 +54,19 @@ test('PAUSE TO LEARN: my turn blows up → "NEXT TIME: <real word containing ING
   test.setTimeout(60_000);
   const { mock, players } = await board(page);
   await expect(page.locator('.wb-learn')).toHaveCount(0);
+  // measure how long the card is on screen IN THE PAGE (rAF), so a slow runner's assertion latency cannot skew it
+  await page.evaluate(() => {
+    window.__learnMs = new Promise((resolve) => {
+      let t0 = 0;
+      const tick = () => {
+        const on = !!document.querySelector('.wb-learn');
+        if (on && !t0) t0 = performance.now();
+        if (!on && t0) { resolve(performance.now() - t0); return; }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  });
   await blowUp(mock, players, ME, { pause: 2000 });
   const card = page.locator('.wb-learn');
   await expect(card).toBeVisible({ timeout: 3000 });
@@ -68,10 +81,11 @@ test('PAUSE TO LEARN: my turn blows up → "NEXT TIME: <real word containing ING
   const vp = page.viewportSize();
   expect(b.y + b.height / 2, 'in the lower part of the board').toBeGreaterThan(vp.height * 0.55);
   expect(Math.min(...(await card.locator('*').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)))))).toBeGreaterThanOrEqual(13);
-  // ~2 s, then gone
-  await page.waitForTimeout(1400);
-  await expect(card).toBeVisible();
-  await expect(card).toHaveCount(0, { timeout: 2000 });
+  // ~2 s (the server's learnPauseMs), then gone
+  const ms = await page.evaluate(() => window.__learnMs);
+  expect(ms).toBeGreaterThanOrEqual(1800);
+  expect(ms).toBeLessThanOrEqual(2600);
+  await expect(card).toHaveCount(0);
 });
 
 test('PAUSE TO LEARN: the CURRENT server (no learnPauseMs) still teaches for ~2 s; someone else blowing up shows nothing', async ({ page }) => {

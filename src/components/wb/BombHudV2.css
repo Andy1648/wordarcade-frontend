@@ -129,7 +129,9 @@
   paint-order: stroke fill;
 }
 .wb-learn-w b { font-weight: 400; color: #FFE94A; }
-.wb-bottombar { position: relative; }
+/* the card's own zero-height anchor at the top of the bottom bar (the bar itself must stay unpositioned: the receipt
+   rail and other absolute pieces in it resolve against the stage) */
+.wb-learn-anchor { position: relative; height: 0; }
 
 /* ---- v2 GEOMETRY: a big bomb, big UPRIGHT cards on an ELLIPSE (wider than tall, like the mockup) ----
    The ring box stays the square --wb-size the board measured; the cards sit on x = rx·sin θ, y = −ry·cos θ (CSS trig,

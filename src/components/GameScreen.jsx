@@ -3877,7 +3877,7 @@ export default function GameScreen({
 
         <div className="wb-bottombar" ref={wbBarRef}>
         {/* PAUSE TO LEARN (P9c): an edge card in the bottom cluster (absolute, pointer-events:none), never centre. */}
-        {learn ? <LearnCard key={learn.key} word={learn.word} combo={learn.combo} ms={learn.ms} onDone={() => setLearn(null)} /> : null}
+        {learn ? <div className="wb-learn-anchor"><LearnCard key={learn.key} word={learn.word} combo={learn.combo} ms={learn.ms} onDone={() => setLearn(null)} /></div> : null}
         {isSpectating ? (
           /* Spectators get quick-react buttons where the input used to be. */
           <div className="spectator-reactions">
