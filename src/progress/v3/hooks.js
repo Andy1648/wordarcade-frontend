@@ -8,7 +8,7 @@ import { MARK_TIERS } from '../marks.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned } from '../shop.js';
 import { getWins } from '../wins.js';
 import { loadGemState, saveGemState, tellBalance, grantGems, PER_PLAYER_BEATEN as LIVE_PER_PLAYER } from '../gemsCore.js';
-import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT } from '../markRollsCore.js';
+import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue } from '../markRollsCore.js';
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, starMult, powerXpMult,
   rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN,
@@ -28,11 +28,21 @@ const pos = (v, d) => (Number.isFinite(v) && v > 0 ? v : d);
 // MYTHIC ×3 · SECRET ×5. marks.js MARK_TIERS holds the part above ×1 (the live season's LEGENDARY ×3 / MYTHIC ×10 /
 // SECRET ×25); this lazy chunk loads only with the SEASON2 flag, so the live numbers are untouched with it off.
 // The roll stats read the same ladder as a percent (markRollsCore TIER_PCT: +10 / +25 / +50 / +100 / +200 / +400 %).
-export function applyFinalMarkTiers(tiers = MARK_TIERS, main = TIER_MAIN, pct = TIER_PCT) {
+// NUMBERS AUDIT (Andy item 5): every ROLLED mark's stat (markRollsCore ROLL_MARKS[].stat) was sized from TIER_PCT
+// when that module LOADED — before this chunk re-tiered it — so in season 2 a LEGENDARY +% WINS / XP mark still paid
+// +200% (×3, FINAL ×2), a SECRET +2,400% (×25, FINAL ×5) and a MYTHIC +90 BASE (×10, FINAL ×3), on the card AND in the
+// payout. The pool's stats are re-sized here from the FINAL percents (`pool`; the shown stat, statOf and the payout all
+// read them).
+export function applyFinalMarkTiers(tiers = MARK_TIERS, main = TIER_MAIN, pct = TIER_PCT, pool = ROLL_MARKS) {
   for (const [t, m] of Object.entries(MARK_MULT)) {
     if (tiers[t]) tiers[t].bonus = +(m - 1).toFixed(4);
     if (main) main[t] = m;
     if (pct) pct[t] = Math.round((m - 1) * 100);
+  }
+  if (pool && pct === TIER_PCT) {
+    for (const mk of pool) {
+      if (mk && mk.stat) mk.stat = Object.freeze({ kind: mk.stat.kind, value: statBaseValue(mk.stat.kind, mk.tier) });
+    }
   }
   return tiers;
 }

@@ -18,7 +18,7 @@ import './StatsV2.css';
 import { kitPlay } from './kit/motion.js';
 import { reduceMotion } from '../lib/reduceMotion.js';
 import { V3 } from '../progress/season';
-import { statBoard, statChain, boardMult } from '../progress/statBoard';
+import { statBoard, statChain, boardMult, BOARD_MODE, BOARD_MODE_NAMES } from '../progress/statBoard';
 import { getKeyTier, getRebirths } from '../progress/xp';
 import { getLetters } from '../progress/letters';
 import { loadRollState, wornMarkId, markEntry, markBaseXp } from '../progress/markRollsCore';
@@ -36,7 +36,9 @@ const BOARDS = {
   xp: { name: 'XP', unit: 'XP / LETTER', color: '#2EFFE0', baseIcon: 'keycap' },
 };
 // Each multiplier's colour (the mockup's `c`).
-const CHIP_COLOR = { rebirth: '#D88BFF', mark: '#B04BFF', boost: '#FF3D7F', ascend: '#FFE94A', power: '#FFC23D', shop: '#2EFFE0' };
+const CHIP_COLOR = { mode: '#FF6B3D', rebirth: '#D88BFF', mark: '#B04BFF', index: '#B04BFF', boost: '#FF3D7F', ascend: '#FFE94A', power: '#FFC23D', shop: '#2EFFE0' };
+// Chips without art of their own borrow the closest kit icon (MODE → the keycap, INDEX → the mark plate).
+const CHIP_ICON = { mode: 'keycap', index: 'mark' };
 const GREY = '#5d4a78';
 
 /** Both chains + the ALL TIME numbers, read fresh from the save. */
@@ -55,11 +57,13 @@ function readBoards() {
   const board = statBoard();
   const boostOn = (board.wins.lines.find((l) => l.id === 'boost') || { mult: 1 }).mult > 1;
   const tags = {
+    mode: BOARD_MODE_NAMES[BOARD_MODE],
+    index: 'MARKS',
     rebirth: `R${fmt(rc)}`,
     mark: markName,
     boost: boostOn ? 'ON' : 'OFF',
     ascend: `${fmt(stars)} ${stars === 1 ? 'STAR' : 'STARS'}`,
-    power: `LV ${fmt(kt)}`,
+    power: `TIER ${fmt(kt)}`, // POWER's tier — never "LV" (that reads as the player's level)
     shop: 'STOCK',
   };
   const opts = { v3: V3.ready ? V3 : null, stars, markBaseXp: markBaseXp(), tags };
@@ -299,7 +303,7 @@ export default function StatsV2({ onBack, onMore }) {
 
   const chips = [
     { id: 'base', label: 'BASE', tag: look.name, v: formatRate(b.base), on: true, icon: look.baseIcon, c: '#fff', ic: look.color },
-    ...b.chips.map((m) => ({ id: m.id, label: m.label, tag: m.tag, v: xText(m.mult), on: m.mult > 1, icon: m.id, c: CHIP_COLOR[m.id] || '#fff', ic: CHIP_COLOR[m.id] || '#fff' })),
+    ...b.chips.map((m) => ({ id: m.id, label: m.label, tag: m.tag, v: xText(m.mult), on: m.mult > 1, icon: CHIP_ICON[m.id] || m.id, c: CHIP_COLOR[m.id] || '#fff', ic: CHIP_COLOR[m.id] || '#fff' })),
   ];
 
   return (
