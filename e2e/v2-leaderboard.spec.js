@@ -224,3 +224,24 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     await expect(lb).toHaveCount(0);
   });
 }
+
+// 028 — AFTER THE RESET: everyone keeps their season-1 place (the snapshot's s1_rank) and shows "—" until they earn
+// something in season 2; a row that has earned rises above every tie (order = season-2 stats desc, ties by s1_rank).
+test('after the reset: unearned rows keep their season-1 order and show "—"; an earned row rises above them', async ({ page }) => {
+  const z = { level: 1, rebirths: 0, stars: 0, lifetime_words: 0, lifetime_letters: 0 };
+  const rows = [
+    r('o3', 'OLDTHREE', { ...z, s1_rank: 3 }),
+    r('o1', 'OLDONE', { ...z, s1_rank: 1 }),
+    r('n', 'NEWCOMER', { level: 3, rebirths: 0, lifetime_words: 20 }), // no season-1 rank, but earned something
+    r('o2', 'OLDTWO', { ...z, s1_rank: 2 }),
+    r('o4', 'OLDFOUR', { ...z, s1_rank: 4 }),
+  ];
+  const { lb } = await boot(page, { me: { ...z, s1_rank: 5 }, rows });
+  expect(await podiumIds(lb)).toEqual(['n', 'o1', 'o2']);
+  expect(await rowIds(lb)).toEqual(['o3', 'o4', 'me']);
+  // the earned row shows its numbers; every unearned stat is "—"
+  await expect(lb.locator('.lb2-col--1 .lb2-pod-r')).toHaveText('R0');
+  await expect(lb.locator('.lb2-col--2 .lb2-pod-r')).toHaveText('—');
+  await expect(lb.locator('.lb2-row[data-id="o3"] .lb2-r')).toHaveText('—');
+  await expect(lb.locator('.lb2-row[data-id="me"] .lb2-r')).toHaveText('—');
+});

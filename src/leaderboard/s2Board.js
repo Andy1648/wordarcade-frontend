@@ -1,7 +1,8 @@
 // s2Board.js — the maths behind the v2 LEADERBOARD (P8, claude/mockups/v2/Leaderboard.dc.html; SEASON2 only). PURE —
 // no DOM, no storage — so node:test covers it (s2Board.test.js).
 //
-//   * the board order is ★ desc → rebirths desc → level desc (022_season2_board.sql leaderboard_s2);
+//   * the board order is ★ desc → rebirths desc → level desc → words, ties by the SEASON-1 rank (028: everyone keeps
+//     their old place until they earn something in season 2; a row with earned === false shows "—");
 //   * every name wears its v3 RANK plate (KEYMASH … ENDGAME, progress/v3/ranks.js — by rebirths, then ★);
 //   * ▲▼ = the place a player held when this browser last looked (a per-tab snapshot) vs now;
 //   * CHASE = what it takes to pass the player directly above you, in the board's own order;
@@ -27,10 +28,16 @@ export function rankPlate(row) {
     : { i, name, bg: PLATE_BG[i], ink: '#000', line: '#000' };
 }
 
-/** The board's own order (★ → R → level → words): < 0 when `a` ranks above `b`. */
+/** A row's season-1 rank for the tie-break (028): none (a name made after the reset) sorts after every ranked row. */
+const s1Of = (r) => (int0(r && r.s1_rank) > 0 ? int0(r.s1_rank) : Infinity);
+/** The board's own order (★ → R → level → words → season-1 rank, 028): < 0 when `a` ranks above `b`. */
 export function compareS2(a, b) {
   return int0(b.stars) - int0(a.stars) || int0(b.rebirths) - int0(a.rebirths) || lv1(b.level) - lv1(a.level)
-    || int0(b.lifetime_words) - int0(a.lifetime_words);
+    || int0(b.lifetime_words) - int0(a.lifetime_words) || (s1Of(a) === s1Of(b) ? 0 : s1Of(a) < s1Of(b) ? -1 : 1);
+}
+/** Has this row earned anything in season 2 (028's `earned`)? A row from a pre-028 view (no field) counts as earned. */
+export function hasEarned(row) {
+  return !(row && row.earned === false);
 }
 
 /**

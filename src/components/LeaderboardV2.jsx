@@ -31,7 +31,7 @@ import {
   weekResetInMs,
   formatResetIn,
 } from '../leaderboard/client.js';
-import { rankPlate, boardMoves, boardSnapshot, chaseTarget, climbTarget } from '../leaderboard/s2Board.js';
+import { rankPlate, boardMoves, boardSnapshot, chaseTarget, climbTarget, hasEarned } from '../leaderboard/s2Board.js';
 import { V3 } from '../progress/season';
 import { getRebirths } from '../progress/xp';
 import { useMomentHold } from '../lib/useMomentSlot';
@@ -157,6 +157,8 @@ function nums(row, tab, gains) {
     return { r: `${st > 0 ? `+★${fmt(st)} ` : ''}+R${fmt(row.week_rebirths)}`, lv: `+${fmt(row.week_levels)}` };
   }
   if (tab === 'week') return { r: `R${fmt(row.rebirths)}`, lv: fmt(row.week_words) };
+  // 028: a row that has earned nothing in season 2 keeps its old place and shows "—" for every stat
+  if (!hasEarned(row)) return { r: '—', lv: '—' };
   const st = Number(row.stars) || 0;
   return { r: `${st > 0 ? `★${fmt(st)} ` : ''}R${fmt(row.rebirths)}`, lv: fmt(row.level) };
 }

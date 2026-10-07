@@ -30,7 +30,7 @@ flag that would have driven it goes with this rule.)
       Local 1.5 h probe: median R1 3.3 min / R3 20.8 / R5 69.2 · fast R1 2.0 / R3 12.2 / R5 44.7 (all within ±11%)
 - Unit 1270/1270 locally; CI sim (10 h): every doc cell within ±17% — R at 10 h exactly R7 / R8 / R9 / R4.
 
-## 2. WELCOME = the one notice — EDITOR'S NOTE screen — branch `feat/s2-editors-note`, PR (see below)
+## 2. WELCOME = the one notice — EDITOR'S NOTE screen — ✅ PR #248 MERGED (9993015), CI green (shard 2 re-run once: an unrelated v2-rooms settings-panel size flake at 1366)
 - [x] "EDITOR'S NOTE" (Bungee Shade slam) / "SORRY FOR RESCALING THE PROGRESSION — HERE'S SOME GEMS" — the existing
       Season2.dc.html full-screen moment (band, YOUR OLD RUN R{n} → YOU GET, rolls line), never a plain box
 - [x] old run → gems = round5(300 + 40 × old rebirths): the server grant (023) for named players; a no-name browser now
@@ -38,10 +38,14 @@ flag that would have driven it goes with this rule.)
 - [x] COLLECT → the gems burst/float out of the gift and arc into the gem pill, now on the LEFT, counter ticking up one
       landing at a time (KitFlyLayer → KitPill); shown once (local flag + cookie + server claim)
 
-## 3. LEADERBOARD after the reset
-- [ ] everyone keeps their old position; every stat shows "—" until earned in season 2
-- [ ] order = season-2 stats desc, ties by season-1 rank from the reset snapshot
-- [ ] the view as a migration — never run it
+## 3. LEADERBOARD after the reset — branch `feat/s2-board-keep-place`, PR (see below)
+- [x] `supabase/migrations/028_season2_board_keep_place.sql` (never run; after 023): leaderboard_s2 ordered by
+      season-2 stats desc (★ → R → LV → words), ties by the SEASON-1 rank computed from public.season1_snapshot in the
+      season-1 board's own order, then created_at; new columns `earned` + `s1_rank` (owner-run view — the snapshot stays closed)
+- [x] everyone keeps their old position (all ties right after the reset → season-1 order); every stat shows "—" while
+      `earned` is false (LeaderboardV2 rows + podium); a name made after the reset sorts after the snapshot rows it ties
+- [x] client falls back to 022's columns if 028 is not in yet (no 400); s2Board.compareS2 mirrors the order;
+      s2BoardKeep.test.js pins the SQL; e2e v2-leaderboard "after the reset" case
 
 ## 4. FLIP-STEPS
 - [ ] update `claude/FLIP-STEPS.md` with the exact SQL files in order
