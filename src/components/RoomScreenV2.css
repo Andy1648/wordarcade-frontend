@@ -36,16 +36,16 @@
 }
 .room-wrap[data-skin="v2"] .room-players-label b { color: #FFE94A; font-weight: 400; }
 
-/* the 8-SEAT grid: 4 × 2 cards, open seats dashed */
+/* the 8-SEAT grid: 2 × 4 cards (wide enough for a whole name), open seats dashed */
 .room-wrap[data-skin="v2"] .room-players-list {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 .room-wrap[data-skin="v2"] .room-player-slot { min-width: 0; }
 .room-wrap[data-skin="v2"] .room-player-chip {
   position: relative;
-  min-height: 64px;
+  min-height: 52px;
   height: 100%;
   box-sizing: border-box;
   flex-direction: column;
@@ -84,7 +84,7 @@
   color: #000;
 }
 .room-seat-open {
-  min-height: 64px;
+  min-height: 52px;
   display: grid;
   place-items: center;
   box-sizing: border-box;
@@ -128,4 +128,16 @@
   .room-wrap[data-skin="v2"] .room-player-chip,
   .room-seat-open { min-height: 50px; }
   .room-wrap[data-skin="v2"] .room-start-btn { min-height: 76px; font-size: var(--fs-k34); }
+}
+/* the live chip's slam-in animates its BACKGROUND to white (fill: both); the v2 card keeps its own fill and slams in on
+   transform / opacity only */
+.room-wrap[data-skin="v2"] .room-player-chip { animation: room-chip-v2 420ms cubic-bezier(.18, 1.5, .4, 1) both; }
+@keyframes room-chip-v2 {
+  0% { opacity: 0; transform: translateX(-36px) scale(1.12) rotate(-3deg); }
+  60% { opacity: 1; transform: translateX(4px) scale(1.04) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}
+.room-wrap[data-skin="v2"] .room-host-badge { align-self: flex-start; }
+@media (prefers-reduced-motion: reduce) {
+  .room-wrap[data-skin="v2"] .room-player-chip { animation: none; }
 }

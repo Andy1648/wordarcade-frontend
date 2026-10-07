@@ -52,3 +52,10 @@
   .browser-wrap[data-skin="v2"] .browser-code-slot { min-height: 64px; font-size: var(--fs-k32); }
   .browser-wrap[data-skin="v2"] .browser-code-row .browser-code-join-btn { min-height: 60px; font-size: var(--fs-k28); }
 }
+/* a SHORT laptop window fit-zooms the box: keep the tiles compact there so the zoom stays near 1 (text ≥ 13 px) */
+@media (max-height: 640px) {
+  .browser-wrap[data-skin="v2"] .browser-code-slot { min-height: 60px; font-size: var(--fs-k32); border-bottom-width: 8px; }
+  .browser-wrap[data-skin="v2"] .browser-code-row .browser-code-join-btn { min-height: 56px; font-size: var(--fs-k28); border-bottom-width: 9px; }
+  .browser-wrap[data-skin="v2"] .browser-code-row { gap: 10px; }
+}
+.browser-wrap[data-skin="v2"] .browser-divider span { font-size: var(--fs-k14); }

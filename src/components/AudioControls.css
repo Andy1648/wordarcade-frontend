@@ -159,13 +159,3 @@
   width: 96px;
   cursor: pointer;
 }
-/* SEASON 2 (P9d): the popover holds the five-row SETTINGS — square, hard-shadowed, and sized to fit the window */
-.audio-panel.audio-panel--v2 {
-  border-radius: 0;
-  border-width: 5px;
-  box-shadow: 8px 8px 0 #000;
-  background: #12071f;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  z-index: 50;
-}

@@ -11,6 +11,7 @@
 // panel in its popover under SEASON2 (CLAUDE.md NO ORPHAN FIXED UI: no new fixed element). Every control is a real
 // ≥ 44 px button; nothing animates but the press.
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
 import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../audio/gameSounds';
 import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
@@ -43,7 +44,7 @@ function OnOff({ on, onClick, label }) {
   );
 }
 
-export default function SettingsPanel({ musicMuted = false, onToggleMusic }) {
+export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet = false, sfxMuted = false, onToggleSfx = null, onClose }) {
   const [vol, setVol] = useState(() => (isEventSoundsEnabled() ? Math.round(getMasterVolume() * STEPS) : 0));
   const [clack, setClack] = useState(() => isClackEnabled());
   const [style, setStyle] = useState(() => getNumberStyle());
@@ -66,7 +67,7 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic }) {
   };
   const pickStyle = (s) => setStyle(setNumberStyle(s));
 
-  return (
+  const rows = (
     <div className="sp" role="group" aria-label="Settings">
       <Row tone="#FFE94A" label="SOUND" sub="BOOMS, DINGS, BUZZERS">
         <div className="sp-bars" role="radiogroup" aria-label={`Sound ${vol * 10}`}>
@@ -101,5 +102,19 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic }) {
         <OnOff on={clack} onClick={toggleClack} label="Keyboard sounds" />
       </Row>
     </div>
+  );
+  if (!sheet || typeof document === 'undefined') return rows;
+  // the SHEET: season 2's sound-control popover (AudioControls opens/closes it; it never opens on its own)
+  return createPortal(
+    <div className="audio-panel--v2 sp-sheet" role="group" aria-label="Sound settings">
+      {rows}
+      {onToggleSfx ? (
+        <Row tone="#FF6B3D" label="GAME SFX" sub="THIS MATCH">
+          <OnOff on={!sfxMuted} onClick={onToggleSfx} label="Game sound effects" />
+        </Row>
+      ) : null}
+      <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
+    </div>,
+    document.body,
   );
 }

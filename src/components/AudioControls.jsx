@@ -84,15 +84,11 @@ export default function AudioControls({
 
   return (
     <div className={`audio-ctrl${variant === 'inline' ? ' audio-ctrl--inline' : ''}`}>
+      {/* SEASON 2: the five-row SETTINGS sheet (SettingsPanel.jsx — lazy, portalled, closes from here) */}
       {open && SEASON2 && (
-        <div className="audio-panel audio-panel--v2" role="group" aria-label="Sound settings">
-          <Suspense fallback={null}>
-            <SettingsPanel musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
-          </Suspense>
-          {onToggleSfx && (
-            <Toggle on={!sfxMuted} onClick={onToggleSfx} glyph="💥" label="GAME SFX" />
-          )}
-        </div>
+        <Suspense fallback={null}>
+          <SettingsPanel sheet musicMuted={musicMuted} onToggleMusic={onToggleMusic} sfxMuted={sfxMuted} onToggleSfx={onToggleSfx} onClose={() => setOpen(false)} />
+        </Suspense>
       )}
       {open && !SEASON2 && (
         <div className="audio-panel" role="group" aria-label="Sound settings">

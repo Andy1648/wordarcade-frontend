@@ -137,7 +137,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
       const vis = (el) => { const cs = getComputedStyle(el); const r = el.getBoundingClientRect(); return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 1 && r.height > 1; };
       const scope = document.querySelector(root) || document.body;
       const small = [...scope.querySelectorAll('*')].filter((el) => vis(el) && [...el.childNodes].some((x) => x.nodeType === 3 && x.textContent.trim()))
-        .filter((el) => parseFloat(getComputedStyle(el).fontSize) * (el.currentCSSZoom || 1) < 13).map((el) => `${el.className}`);
+        .filter((el) => parseFloat(getComputedStyle(el).fontSize) * (el.currentCSSZoom || 1) < 13).map((el) => `${el.tagName}.${el.className}:${el.textContent.trim().slice(0, 16)}:${(parseFloat(getComputedStyle(el).fontSize) * (el.currentCSSZoom || 1)).toFixed(1)}`);
       const tiny = [...scope.querySelectorAll('button, [role="switch"], [role="radio"]')].filter(vis)
         .filter((el) => { const r = el.getBoundingClientRect(); return r.height < 43.5 || r.width < 17; }).map((el) => `${el.className}:${Math.round(el.getBoundingClientRect().height)}`);
       return { h: de.scrollWidth > de.clientWidth, v: de.scrollHeight > de.clientHeight, small, tiny };
