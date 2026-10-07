@@ -208,3 +208,5 @@ NOTE: progression-final-sim.py's __main__ uses NEED0=100/G=1.08 (a rejected tuni
 - FINAL 5a DONE: #236 MENU LIST MERGED + LIVE (0b2312d). FINAL 4 RE-TEST PASS: fresh ?season2=1 save → rail shop,roll,index,rebirth:locked; ROLL opens, first roll works; live S1 menu 1366×657 + 390×844: 0 errors, no scroll, UPGRADES shown. Cosmetic: S1 claim popup slightly overlaps the pager arrows at 1366×657 (cleanup).
 - FINAL 6: claude/FLIP-STEPS.md → PR #238 (docs). ORDER: 022 → 024 → 026 → claude/run-season2.sql (023) → notify pgrst → check lb_caps season2_reset → "flip SEASON2". Pre-check: #237 merged before the flip. STOP BEFORE THE FLIP (Andy's).
 - Remaining after that: #237 merge (in CI), then P9 / P10 (parked partial work in ../p9a…).
+
+- oct6 late: #237 numbers audit (S2 mark tiers paid S1 values + 9 display fixes) MERGED (db5b03ce). #238 claude/FLIP-STEPS.md MERGED. Andy "Do NOT scale gems" → #239 fix/no-gem-scaling (×2 GEM DROPS stock item + stockGemMult removed; drop stays 1/15; gem table = FINAL) — CI green, updated on main, re-running.
