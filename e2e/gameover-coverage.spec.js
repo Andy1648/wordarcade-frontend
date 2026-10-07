@@ -4,7 +4,7 @@
 // console/page errors.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, modeEntry } from './support/menu.js';
+import { menuReady, modeEntry, revealMode } from './support/menu.js';
 
 const isNoise = (t) => /Failed to load resource|net::ERR|ERR_FAILED|the server responded with a status of|status of \d{3}|favicon/i.test(t);
 function attach(page, errors) {
@@ -71,7 +71,7 @@ test.describe('game-over screens render without console errors (JOB 4)', () => {
     await page.goto('/?portal=1&soloms=350'); // dev clock cap → fast, deterministic run-over
     await menuReady(page);
     await page.waitForTimeout(400);
-    await modeEntry(page, id).click({ force: true });
+    await (await revealMode(page, id)).click({ force: true }); // feat/menu-centre: flip to its page first
     await page.locator('.mode-dialog-shell').waitFor({ state: 'visible' });
     await page.locator('.mode-dialog-btn-create').click();
     await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });

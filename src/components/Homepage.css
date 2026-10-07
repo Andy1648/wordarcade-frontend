@@ -84,11 +84,28 @@
    column only — the same column as the wordmark and the XP bar — so the row sits on the page's centre line with
    equal gaps left and right (e2e/chromebook-cards.spec.js measures them). The pager row is under the cards. */
 .homepage-stage[data-paged] {
+  /* MENU CENTRE (feat/menu-centre, Andy oct7 "the middle part just looks so weird", "how tiny the game cards
+     looked"): paging is now the DESKTOP default (PAGED_MENU_QUERY), and the right column is only as wide as the
+     icon cluster, so the XP bar and the 3 cards take the whole width right of the rail — the cards are ~1.5x
+     taller at 1280x800 than the 6-up row was. Sound + CREDITS move to the bottom-left corner under the rail
+     (a footer corner — out of the play zone, still a cluster). */
+  grid-template-columns: var(--hp-nav-w) minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     'rail logo icons'
-    'rail xp extras'
-    'rail cards .';
+    'rail xp xp'
+    'rail cards cards'
+    'foot cards cards';
 }
+.homepage-stage[data-paged] .hp-extras {
+  grid-area: foot;
+  align-self: end;
+  justify-self: start;
+  justify-content: flex-start;
+  padding-left: var(--hp-coin-pull);
+}
+.homepage-stage[data-paged] .hp-rail { align-self: start; }
+.homepage-stage[data-paged] .menu-xp-cluster .kx { max-width: none; }
 .homepage-stage.is-dimmed { transform: scale(0.965); }
 @media (prefers-reduced-motion: reduce) {
   .homepage-stage { transition: none; }
@@ -462,3 +479,114 @@ html[data-beat='true'] .homepage-logo {
 /* Andy oct6: with the TYPE ANYTHING row gone the cards grow into the bottom of the stage — while the (fixed, bottom-
    centre) REWARDS popup shows, the cards' region keeps its height clear so no card text sits under it. */
 body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bottom: 64px; }
+
+/* THE PLAY-ZONE PANEL (feat/menu-centre, Andy oct7 "have like a border around it"): one plum box holds the LV +
+   XP bar, the per-letter row, the three cards and the pager — the "console". It is the stage's ::before placed
+   by grid (rows 2-4, cols 2-3), under the content (z 0), so the fit-math's region is untouched: the cards keep
+   their width, the panel just closes around them. Hard ink edge + offset shadow, like every kit box. */
+.homepage-stage[data-paged]::before {
+  content: '';
+  grid-area: 2 / 2 / 5 / 4;
+  z-index: 0;
+  margin: calc(-10 * var(--u)) calc(-18 * var(--u));
+  background: #1a0b2e;
+  border: var(--b4) solid #000;
+  border-radius: 8px;
+  box-shadow: var(--b6) var(--b6) 0 #000;
+}
+
+/* ---- THE 2-COLUMN RAIL (feat/menu-rail-2col, Andy oct6 "menu left side as two columns: coins + gems on top, then
+   UPGRADES + ROLL under one, INDEX + REBIRTH under the other"; oct7 "text is so small"). Desktop (paged) only — the
+   phone rail is MobileMenu's. Each button becomes a TILE: the label on a strip across the top, the icon big, the
+   NUMBER first and big with its unit small under it (numbers first, words second). ---- */
+.homepage-stage[data-paged] {
+  --hp-nav-w: max(300px, calc(344 * var(--u)));
+  --hp-tile-h: max(150px, calc(200 * var(--u)));
+  --hp-tile-ico: max(44px, calc(60 * var(--u)));
+  --fs-hptile: max(28px, calc(36 * var(--u)));
+  --fs-hpunit: max(13px, calc(14 * var(--u)));
+  --hp-tile-gap: max(10px, calc(12 * var(--u)));
+}
+.homepage-stage[data-paged] .hp-rail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: row;
+  column-gap: var(--hp-tile-gap);
+  row-gap: var(--hp-tile-gap);
+  align-content: start;
+}
+/* pills: WINS | GEMS side by side on the first row; the spacer row under them */
+.homepage-stage[data-paged] .hp-rail .kp { min-width: 0; }
+.homepage-stage[data-paged] .hp-rail .kp-numwrap { right: calc(10 * var(--u)); }
+.homepage-stage[data-paged] .hp-rail-gap { grid-column: 1 / -1; height: 0; }
+/* UPGRADES over ROLL in column 1, INDEX over REBIRTH in column 2 (DOM order shop, roll, index, rebirth) */
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-shop { grid-area: 3 / 1; }
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-roll { grid-area: 4 / 1; }
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-index { grid-area: 3 / 2; }
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-rebirth { grid-area: 4 / 2; }
+.homepage-stage[data-paged] .hp-rail .kb--rail { height: var(--hp-tile-h); }
+.homepage-stage[data-paged] .hp-rail .kb-rface {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 0;
+  padding: 0 calc(12 * var(--u)) calc(12 * var(--u));
+}
+/* the tone strip runs across the TOP (was the skewed left edge) and the label sits on it */
+.homepage-stage[data-paged] .hp-rail .kb-redge {
+  left: -4px;
+  right: -4px;
+  top: -4px;
+  bottom: auto;
+  width: auto;
+  height: calc(var(--fs-hprail) + 14 * var(--u));
+  transform: none;
+  border-right: 0;
+  border-bottom: var(--k-ink-m, 3px) solid var(--k-ink, #000);
+}
+.homepage-stage[data-paged] .hp-rail .kb-rface .kit-icon {
+  position: absolute;
+  right: calc(12 * var(--u));
+  top: calc(var(--fs-hprail) + 20 * var(--u));
+  width: var(--hp-tile-ico);
+  height: var(--hp-tile-ico);
+}
+.homepage-stage[data-paged] .hp-rail .kb-rtext { display: contents; }
+.homepage-stage[data-paged] .hp-rail .kb-rlabel {
+  position: absolute;
+  left: calc(12 * var(--u));
+  top: 0;
+  height: calc(var(--fs-hprail) + 10 * var(--u));
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-hprail);
+  color: var(--k-ink, #000);
+  letter-spacing: 0.5px;
+}
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-locked .kb-rlabel { color: var(--k-dim, #9c90b4); }
+.homepage-stage[data-paged] .hp-rail .kb-rval { margin: 0; overflow: visible; white-space: normal; }
+.homepage-stage[data-paged] .hp-rail .kb-rval-full,
+.homepage-stage[data-paged] .hp-rail .kb-rval-short { display: none; }
+.homepage-stage[data-paged] .hp-rail .kb-rval-tile { display: flex; flex-direction: column; gap: calc(4 * var(--u)); }
+.homepage-stage[data-paged] .hp-rail .kb-rval-big {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hptile);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: var(--b4) #000;
+  paint-order: stroke fill;
+  text-shadow: var(--b4) var(--b4) 0 #000;
+  white-space: nowrap;
+}
+.homepage-stage[data-paged] .hp-rail .kb-rval-unit { font-size: var(--fs-hpunit); line-height: 1.15; color: var(--kb-val, var(--kb-face)); }
+/* a locked tile: the padlock + its gate are the value (KitRailButton renders `locked` as the sub) — one line, gold */
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-locked .kb-rval { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hptile); color: var(--k-gold, #FFE94A); -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; }
+.homepage-stage[data-paged] .hp-rail .kb-rdot { right: -8px; top: -8px; }
+/* hover: the tile lifts (not the sideways slide of the list rail) */
+@media (hover: hover) {
+  .homepage-stage[data-paged] .hp-rail .kb--rail:hover .kb-rface { transform: translate(-3px, -3px); }
+}
+.homepage-stage[data-paged] .hp-rail .kb--rail:active .kb-rface { transform: translate(3px, 3px); }
+.homepage-stage[data-paged] .homepage-cards-region { justify-content: center; } /* slack splits above/below the cards, never a band under the pager */
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-locked .kb-rval::before { content: 'UNLOCKS AT'; display: block; margin-bottom: calc(4 * var(--u)); font-family: 'Space Mono', monospace; font-size: var(--fs-hpunit); color: var(--k-dim, #c9b8e8); -webkit-text-stroke: 0; text-shadow: none; }

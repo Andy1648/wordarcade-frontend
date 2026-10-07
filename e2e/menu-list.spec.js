@@ -69,7 +69,7 @@ test('season 1, marks revealed: ROLL = gems ÷ the roll price, INDEX = owned/tot
   // season 1 rolls cost 10 gems: 157 → 15 ROLLS (whole rolls only)
   await expect(btn(page, 'roll').locator('.kb-rval-full')).toHaveText('15 ROLLS');
   await expect(btn(page, 'roll')).not.toHaveAttribute('data-locked', '');
-  const idx = await btn(page, 'index').locator('.kb-rval').textContent();
+  const idx = await btn(page, 'index').locator('.kb-rval-full').textContent();
   expect(idx).toMatch(/^\d+\/\d+$/);
   const [owned, total] = idx.split('/').map(Number);
   expect(owned).toBeLessThanOrEqual(total);
@@ -91,7 +91,7 @@ test('season 2 (?season2=1), a FRESH save: ROLL + INDEX unlocked from the start 
     await expect(btn(page, id)).not.toHaveAttribute('data-locked', '');
     await expect(btn(page, id)).not.toHaveAttribute('aria-disabled', 'true');
   }
-  await expect(btn(page, 'index').locator('.kb-rval')).toHaveText(/^0\/\d+$/);
+  await expect(btn(page, 'index').locator('.kb-rval-full')).toHaveText(/^0\/\d+$/);
   // REBIRTH: padlock + the gate level until this climb first reaches it
   await expect(btn(page, 'rebirth')).toHaveAttribute('data-locked', '');
   await expect(btn(page, 'rebirth').locator('.kb-rval')).toHaveText(/^LV\d+$/);

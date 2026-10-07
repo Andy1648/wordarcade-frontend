@@ -109,7 +109,7 @@ const PHONE_MENU_QUERY = '(max-width: 480px)';
 // readable width — the fit-math fell back to SQUAT cards. On these viewports the menu shows
 // CARDS_PER_PAGE cards at the full 3:4 ratio and flips between pages (arrows, swipe, ←/→ keys) with
 // a two-dot indicator. Tall screens (> 700px) and anything ≤ 760px wide keep their layout exactly.
-const PAGED_MENU_QUERY = '(min-width: 761px) and (max-height: 700px)';
+const PAGED_MENU_QUERY = '(min-width: 761px) and (min-aspect-ratio: 5/4)';
 const CARDS_PER_PAGE = 3;
 const CARD_PAGES = Math.ceil(GAMES.length / CARDS_PER_PAGE);
 
@@ -1214,10 +1214,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rebirthValue = toRebirth > 0 ? `IN ${formatNum(toRebirth)} LV` : 'READY';
   const rebirthShort = toRebirth > 0 ? `${formatNum(toRebirth)} LV` : 'READY';
   const railItems = {
-    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: { full: `${formatNum(nextPowerCost)} WINS`, short: formatNum(nextPowerCost) }, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
-    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: { full: rollValue, short: rollShort }, valueSays: rollValue.toLowerCase(), locked: rollLock },
-    index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
-    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
+    // TILE values (feat/menu-rail-2col, the 2-column desktop rail): the NUMBER big, the unit small — numbers first.
+    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: { full: `${formatNum(nextPowerCost)} WINS`, short: formatNum(nextPowerCost), big: formatNum(nextPowerCost), unit: 'WINS FOR POWER' }, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
+    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: { full: rollValue, short: rollShort, big: rollsAfford > 0 ? formatNum(rollsAfford) : starterWaiting ? 'FREE' : '0', unit: rollsAfford > 0 ? (rollsAfford === 1 ? 'ROLL READY' : 'ROLLS READY') : starterWaiting ? 'ROLL WAITING' : `ROLLS (${formatNum(ROLL_PRICE_GEMS)} GEMS)` }, valueSays: rollValue.toLowerCase(), locked: rollLock },
+    index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: { full: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, short: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, big: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, unit: 'FOUND' }, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
+    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatNum(toRebirth) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };

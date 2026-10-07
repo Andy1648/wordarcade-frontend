@@ -21,8 +21,12 @@ async function measure(page) {
       right: sb.right - parseFloat(cs.paddingRight),
     };
     const grid = document.querySelector('.homepage-cards-grid').getBoundingClientRect();
+    // feat/menu-centre: the card row lives in the CONSOLE (the cards region, right of the rail) — its gutter is to
+    // the region's edges, and the row is centred in it.
+    const region = document.querySelector('.homepage-cards-region').getBoundingClientRect();
     const scroll = document.querySelector('.homepage-cards-scroll').getBoundingClientRect();
-    const cards = [...document.querySelectorAll('.game-card-magnet')].map((m) => {
+    // only the cards ON the shown page (feat/menu-centre: the other page is display:none, rect 0)
+    const cards = [...document.querySelectorAll('.game-card-magnet')].filter((m) => m.getClientRects().length).map((m) => {
       const c = m.querySelector('.game-card').getBoundingClientRect();
       return {
         name: m.getAttribute('data-game') || '?',
@@ -31,8 +35,10 @@ async function measure(page) {
       };
     });
     return {
-      gapL: +(grid.left - inner.left).toFixed(1),
-      gapR: +(inner.right - grid.right).toFixed(1),
+      gapL: +(grid.left - region.left).toFixed(1),
+      gapR: +(region.right - grid.right).toFixed(1),
+      regionW: region.width,
+      stageL: +(region.left - inner.left).toFixed(1),
       cards,
     };
   });
@@ -49,11 +55,15 @@ for (const { w, h } of VIEWPORTS) {
     // eslint-disable-next-line no-console
     console.log(`[menu-frame] ${w}x${h} gutter L=${m.gapL} R=${m.gapR} | ${m.cards.map((c) => `${c.name}(L${c.insideL},R${c.insideR})`).join(' ')}`);
 
-    // Item 2: the grid↔stage-inner gutter is 16-32px on the left and right.
+    // Item 2 (feat/menu-centre): the row is centred in the console — equal gutters (±1.5px), each at least the
+    // scroll gutter (8px) and never a dead band (≤ 15% of the region: the cards fill it, height-bound at most).
+    expect(Math.abs(m.gapL - m.gapR), `centred in the console at ${w}x${h}`).toBeLessThanOrEqual(1.5);
     for (const side of ['gapL', 'gapR']) {
-      expect(m[side], `${side} at ${w}x${h}`).toBeGreaterThanOrEqual(16);
-      expect(m[side], `${side} at ${w}x${h}`).toBeLessThanOrEqual(32);
+      expect(m[side], `${side} at ${w}x${h}`).toBeGreaterThanOrEqual(8);
+      expect(m[side], `${side} at ${w}x${h}`).toBeLessThanOrEqual(m.regionW * 0.15);
     }
+    // the console starts right of the rail, never at the stage edge (the rail column is real)
+    expect(m.stageL, `rail column at ${w}x${h}`).toBeGreaterThan(100);
     // Item 3: every card sits horizontally inside the scroll region (its clipping parent).
     for (const c of m.cards) {
       expect(c.insideL, `${c.name} left inside scroll @ ${w}x${h}`).toBeGreaterThanOrEqual(-0.5);
