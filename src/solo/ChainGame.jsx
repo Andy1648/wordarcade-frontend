@@ -28,6 +28,9 @@ import { useLatched } from '../components/FeelLadder.jsx';
 import TryModeRow from '../share/TryModeRow.jsx';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import NearMiss from '../components/NearMiss.jsx';
+import { SEASON2 } from '../progress/season.js';
+import { perWordRateNow } from '../progress/wins.js';
+import ChainHudV2 from './ChainHudV2.jsx';
 
 const ACCENT = '#2EFFE0'; // cyan
 const ARM_HINT = 'EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE';
@@ -376,9 +379,36 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
         })
       : { main: 'hype', tags: [], showRarity: false, labels: [] }
   );
+  // SEASON 2 (P10 10c): the whole play phase is the TOWER layout (ChainHudV2). The rarity band stays a
+  // RarityFlash but S2 re-homes it off-centre (the feel layer rule); the rate column reads the same factors the
+  // payout uses — re-read each render, so a boost / frenzy starting mid-run shows on its own line at once.
+  const v2 = SEASON2
+    ? (parts) => (
+        <ChainHudV2
+          parts={parts}
+          letter={required}
+          links={s.lastLinks || []}
+          rarityOf={rarityOf}
+          k={s.k}
+          best={g.best}
+          score={s.score}
+          clock={{ remaining: g.remaining, tMax: g.tMax, armed: g.armed, redZone: g.redZone }}
+          streak={g.combo.streak}
+          outState={outState}
+          outCap={outCap}
+          outHeat={outHeat}
+          rate={perWordRateNow({ mode: 'chain' })}
+          supplyNote={
+            supply.count < FEW_LEFT_BELOW ? (
+              <span className={supply.count < DEAD_END_BELOW ? 'is-dead' : ''}>{supply.label}</span>
+            ) : null
+          }
+        />
+      )
+    : null;
   return (
     <>
-    {chainSlot.showRarity && <RarityFlash key={s.k} rarity={chainRarity} />}
+    {chainSlot.showRarity && <RarityFlash key={s.k} rarity={chainRarity} edge={SEASON2} />}
     <SoloShell
       mode="chain"
       accent={ACCENT}
@@ -443,6 +473,8 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
       }}
       onExit={onExit}
       offerMenu={offerMenu}
+      v2={v2}
+      v2Mark={g.input.trim().toLowerCase().startsWith(required) ? required : ''}
     />
     </>
   );
