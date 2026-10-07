@@ -891,6 +891,7 @@ function buildView(state, cur, eng, input, extra) {
   // deep/revenant; the tag prioritises the rarer overlay but silver still styles.
   // The poster also reads the raw booleans directly: a revenant that is ALSO a
   // deep cut wears the MOST WANTED header AND the ESCAPED overprint.
+  const resultsNow = eng.results();
   let kind = 'normal';
   if (cur.isRevenant) kind = 'rev';
   else if (cur.isDeepCut) kind = 'deep';
@@ -919,6 +920,16 @@ function buildView(state, cur, eng, input, extra) {
     interval,
     graceMs: extra.graceMs, // full spell-along window (fixed at final-stage entry)
     meta: `${POS_LABEL[cur.pos] || cur.pos} · ${cur.length} letters · tier ${cur.tier}`,
+    // SEASON 2 HUD (P10 10d) reads the parts of `meta` + what THIS capture would pay right now, as data.
+    pos: POS_LABEL[cur.pos] || cur.pos,
+    tier: cur.tier,
+    scoreBase: eng.currentScoreBase(),
+    stageMults: eng.config.stageMultipliers,
+    stageMult: eng.config.stageMultipliers[cur.stage],
+    silverMult: eng.config.silverMultiplier,
+    revenantMult: eng.config.revenantMultiplier,
+    deepCutBonus: cur.isDeepCut ? eng.config.deepCutBonus : 0,
+    runLog: (resultsNow.runLog || []).slice(-10).map((e) => ({ ok: !!e.ok, silver: !!e.silver })),
     reveals: cur.reveals.map((r) => ({ type: r.type, stage: r.stage, visible: r.stage <= cur.stage })),
     context: cur.context,
     gloss: cur.gloss,
@@ -943,7 +954,7 @@ function buildView(state, cur, eng, input, extra) {
     // WORDS YOU KEEP MISSING list (top sticky misses) so the end screen can point
     // the player straight at what to study next.
     results: {
-      ...eng.results(),
+      ...resultsNow,
       mastered: lexicon.masteredCount(extra.lex),
       keepMissing: lexicon.mostMissed(extra.lex, 6),
     },

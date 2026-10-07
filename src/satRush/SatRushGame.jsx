@@ -51,6 +51,9 @@ import DevTuner from './DevTuner';
 import SatKeyInput from './SatKeyInput';
 import { LevelUpChip } from '../components/FeelLadder';
 import { GemPop, useGemsRunMark } from '../components/gems/Gems';
+import { SEASON2 } from '../progress/season';
+import SatHudV2 from './SatHudV2';
+import SatCaseFileV2 from './SatCaseFileV2';
 
 export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false }) {
   const game = useSatRushGame();
@@ -215,10 +218,10 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
 
   return (
     // .silver flips the whole page into a negative reprint (CSS var inversion).
-    <div className={`sr-app${view.silver ? ' silver' : ''}`} ref={appRef}>
+    <div className={`sr-app${view.silver ? ' silver' : ''}`} ref={appRef} data-hud={SEASON2 ? 'v2' : undefined}>
       {/* RARITY (word-value): a rarer captured word flashes its tier ("RARE ×2.5"). Re-keyed per
           clear so it replays; COMMON captures stay silent. */}
-      <RarityFlash key={view.clearId} rarity={rarityOf(view.lastClearedWord)} />
+      <RarityFlash key={view.clearId} rarity={rarityOf(view.lastClearedWord)} edge={SEASON2} />
       {/* manga focus lines: hidden until the final stage (endgame treatment) */}
       <SpeedLines active={view.hasWord && view.atFinal} />
       {/* miss: a 2-frame page-tear flash, re-keyed per miss so it fires once */}
@@ -226,13 +229,13 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
         <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
       )}
       {/* Live "+N WINS" pill — shared component + position with every other mode (item 2). */}
-      {view.hasWord && view.phase === 'playing' && (
+      {!SEASON2 && view.hasWord && view.phase === 'playing' && (
         <WinsHudPill amount={winsTally} words={view.cleared || 0} />
       )}
       {/* The multiplier stack, standing and live. SAT Rush's own retro-print register owns the
           PAGE; this is app chrome in the shared house style, like the wins pill beside it, and it
           hides itself below 900px where there is no column for it. */}
-      {view.hasWord && view.phase === 'playing' && (
+      {!SEASON2 && view.hasWord && view.phase === 'playing' && (
         <div className="sr-stack-dock">
           <LiveStack mode="sat-rush" compact />
           {/* Mid-game LEVEL-UP: a small finite "LV n" punch, in ink. Renders nothing until a
@@ -240,8 +243,21 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
           <LevelUpChip variant="ink" />
         </div>
       )}
-      <div className="sr-stage">
-        {view.hasWord && (
+      {/* SEASON 2 (P10 10d): the POSTER board — THIS WORD PAYS on the left, the case card on the right. The engine,
+          the key input and every payout are the same objects the live board uses. */}
+      {SEASON2 && view.hasWord ? (
+        <SatHudV2
+          view={view}
+          onExit={handleExitRun}
+          winsPill={view.phase === 'playing' ? <WinsHudPill amount={winsTally} words={view.cleared || 0} showWpm={false} /> : null}
+        >
+          <GemPop />
+          <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />
+          <div className="sat2-lv"><LevelUpChip variant="ink" /></div>
+        </SatHudV2>
+      ) : null}
+      <div className="sr-stage" hidden={SEASON2 && view.hasWord ? true : undefined}>
+        {!SEASON2 && view.hasWord && (
           <>
             <Hud
               score={view.score}
@@ -272,7 +288,18 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
         <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={onExit} />
       )}
       {view.phase === 'briefing' && <Briefing briefing={view.briefing} onStart={game.startRun} onExit={onExit} />}
-      {view.phase === 'over' && (
+      {view.phase === 'over' && SEASON2 && (
+        <SatCaseFileV2
+          results={view.results}
+          winsEarned={winsEarned}
+          winsBonusLines={winsBonusLines}
+          gemsSince={gemsSince}
+          onAgain={game.startGame}
+          onExit={onExit}
+          offerMenu={offerMenu}
+        />
+      )}
+      {view.phase === 'over' && !SEASON2 && (
         <SatRushResults
           results={view.results}
           winsEarned={winsEarned}

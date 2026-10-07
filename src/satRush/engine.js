@@ -385,6 +385,15 @@ export function createSatRushEngine({
     return { stage: cw.stage, atFinal: cw.stage >= last };
   }
 
+  /** A word's SCORE base before the ante (tier × 10 + length × 2) — the one formula submitCorrect pays and the
+   *  SEASON 2 HUD quotes ("THIS WORD PAYS"). */
+  function scoreBase(cw) {
+    return cw ? cw.tier * 10 + cw.length * 2 : 0;
+  }
+  function currentScoreBase() {
+    return scoreBase(state.current);
+  }
+
   /** The effective multiplier right now (stage decay * silver * revenant). */
   function currentMultiplier() {
     const cw = state.current;
@@ -459,7 +468,7 @@ export function createSatRushEngine({
     if (silver) mult *= cfg.silverMultiplier;
     if (cw.isRevenant) mult *= cfg.revenantMultiplier;
 
-    const base = cw.tier * 10 + cw.length * 2;
+    const base = scoreBase(cw);
     let raw = base * mult;
     if (cw.isDeepCut) raw += cfg.deepCutBonus; // flat, not multiplied
     let gained = Math.max(0, Math.round(raw));
@@ -624,6 +633,7 @@ export function createSatRushEngine({
     nextWord,
     advanceStage,
     currentMultiplier,
+    currentScoreBase,
     stageIntervalMs,
     endgame,
     visibleReveals,
