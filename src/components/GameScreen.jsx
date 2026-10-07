@@ -16,6 +16,9 @@ import MissedWordHold from './MissedWordHold.jsx';
 import ResultsCard from './results/ResultsCard.jsx';
 import { placementOrder, xpBetween } from './results/resultsModel.js';
 import { SEASON2, V3 } from '../progress/season';
+import { BlitzHero, BlitzTimer, BlitzTiles } from './blitz/BlitzHudV2.jsx';
+import { rarityOf as blitzRarityOf } from '../progress/rarityIndex';
+import { perWordRateNow as blitzRateNow } from '../progress/wins';
 import { progressOf, loadProgress, need as levelNeed, getRebirths } from '../progress/xp';
 import { WbFuseRing, WbAlphabet, LearnCard, lettersUsed } from './wb/BombHudV2.jsx';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
@@ -51,7 +54,7 @@ import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
-import { plural, formatNum, formatMult } from '../format';
+import { plural, formatNum, formatMult, formatRate } from '../format';
 import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
@@ -4468,6 +4471,19 @@ function CategoryBlitzScreen({
     getCenter: cbInputCenter,
     punchRef: cbReactRef,
   });
+  // SEASON 2 (P10 10f): the wins each of MY answers banked, so every tile says its own "+N" (read from the landing
+  // App already builds per accepted answer — display only). Cleared per round.
+  const [cbTileWins, setCbTileWins] = useState({});
+  const cbLandingKey = lastLanding ? lastLanding.key : null;
+  useEffect(() => {
+    if (!SEASON2 || !lastLanding || !lastLanding.word) return;
+    const w = String(lastLanding.word).toLowerCase();
+    setCbTileWins((m) => ({ ...m, [w]: lastLanding.wins || 0 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cbLandingKey]);
+  useEffect(() => {
+    if (SEASON2) setCbTileWins({});
+  }, [roundNumber]);
   // The light slot for the answer that just landed (no clutch slot in Blitz: its near-miss stays
   // the ClutchCallout by the field).
   const cbLanding = lastLanding && !gameOver ? lastLanding : null;
@@ -4786,6 +4802,209 @@ function CategoryBlitzScreen({
     // is authoritative - this just mirrors it so the button looks right.
     const withinRerollWindow = !showCountdown && timerSeconds > maxTimer - 5;
 
+    const cbInputRow = (
+          <div className="game-input-row">
+            {/* Personal hype streak, floats above the input (pointer-events:none). */}
+            <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
+                relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
+                feature. */}
+            {/* ONE REACTION SLOT — see the Word Bomb note. */}
+            <div className="wb-react" ref={cbReactRef} aria-hidden="true">
+              {/* ONE reaction per word — see the Word Bomb note (and its LIGHT SLOT). */}
+              {hypeKey > 0 && !gameOver && cbSlot.showHype
+                && <HypePopup key={hypeKey} tier={heatTier(streak.count)} />}
+              {cbLanding && cbSlot.main === 'lucky' && (
+                <LuckyBurst key={`lucky-${cbLanding.key}`} mult={cbSlot.luckyMult} />
+              )}
+              {cbLanding && cbSlot.showLanding && (
+                <WordLanding
+                  key={cbLanding.key}
+                  word={cbLanding.word}
+                  band={cbLanding.band}
+                  wins={cbLanding.wins}
+                  secret={cbLanding.secret}
+                  reduced={goReduce}
+                />
+              )}
+              {cbLanding && cbSlot.labels.length > 0 && (
+                <SlotTags key={`tags-${cbLanding.key}`} labels={cbSlot.labels} />
+              )}
+              <TierSlam count={streak.count} outranked={cbSlot.main !== 'hype'} />
+              <GemPop reduced={goReduce} />
+            </div>
+            {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
+            {clutchCall && (
+              <ClutchCallout
+                key={clutchCall.key}
+                seconds={clutchCall.seconds}
+                tier={clutchCall.tier}
+              />
+            )}
+            {/* Per-letter submit physics (accept pop / reject scatter). The reject
+                scatter REPLACES the input-shake, so the input below no longer
+                applies it - one coherent miss reaction. pointer-events:none. */}
+            {cbSubmitLetters && (
+              <SubmitLetters
+                key={cbSubmitLetters.key}
+                text={cbSubmitLetters.text}
+                mode={cbSubmitLetters.mode}
+              />
+            )}
+            <input
+              ref={inputRef}
+              className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
+              type="text"
+              value={draft}
+              onChange={(event) => {
+                const value = event.target.value;
+                noteTypedLetters(draft, value, 'category-blitz'); // v11: LETTERS fill the bar (batched)
+                // Soft key tick on actual character entry (parity with Word Bomb).
+                if (value.length > draft.length) sound.keystroke();
+                setDraft(value);
+              }}
+              onKeyDown={handleKeyDown}
+              disabled={showCountdown}
+              aria-label="Type an answer for the category"
+              placeholder="NAME ONE…"
+              maxLength={32}
+              autoComplete="off"
+              spellCheck="false"
+            />
+            <button className="game-send-btn" onClick={submit}>
+              SEND
+            </button>
+            {/* Stable wrapper: mount the keyed "+1" once per accept (see above). */}
+            <div style={{ display: 'contents' }}>
+              {hypeKey > 0 && <FloatingScore key={hypeKey} />}
+            </div>
+            {/* ONE-TIME first-game spotlight — only once the countdown is done and you can type. */}
+            {gameSpot && !showCountdown && (
+              <Spotlight
+                targetSelector=".game-input"
+                caption="NAME SOMETHING IN THE CATEGORY"
+                // Same text-aware placement as Word Bomb (fine-tune oct2): the caption printed over
+                // the CATEGORY card — the one thing the player must read.
+                avoidTextIn=".game-wrap"
+                onDismiss={dismissGameSpot}
+                dim={false} // as above — /category-blitz/play lands straight on this board
+              />
+            )}
+          </div>
+    );
+    const cbToast = (
+      <>
+          {/* (Pre-STEP 9: shown while the AI judge ran. Blitz is list-only now, so the server never sends ai_check;
+              kept for an old server.) A subtle "checking…"
+              chip instead of the previous result toast; it clears the instant the
+              answer_result lands and the normal accept/reject toast plays. */}
+          {checkingAnswer ? (
+            <div className="game-toast cb-checking-toast" aria-live="polite">
+              checking
+              <span className="cb-checking-dots" aria-hidden="true">
+                <i>.</i>
+                <i>.</i>
+                <i>.</i>
+              </span>
+            </div>
+          ) : (
+            lastWordResult && (
+              <div
+                className={`game-toast ${
+                  lastWordResult.accepted ? 'accepted' : 'rejected'
+                }`}
+              >
+                {lastWordResult.accepted
+                  ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
+                  : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+              </div>
+            )
+          )}
+      </>
+    );
+
+    // SEASON 2 (P10 10f): the BLITZ board — the category HUGE with the AI BUILT ribbon (the LISTS are AI-built; the
+    // answers are checked against them), FOUND, a 30-segment timer, every answer landing as a rarity tile with the
+    // wins it banked, the big field. The input row, the toast and every handler are the SAME nodes as the live board.
+    if (SEASON2) {
+      const cbRate = blitzRateNow({ mode: 'category-blitz' }).rate;
+      const cbTotal = Number.isFinite(categoryRound.total) && categoryRound.total > 0 ? categoryRound.total : null;
+      const cbExample = exampleFor(categoryRound.category);
+      const cbInfo = (a) => {
+        const r = blitzRarityOf(a) || {};
+        const w = cbTileWins[String(a).toLowerCase()] || 0;
+        return { band: r.band || 'COMMON', color: r.color, wins: w };
+      };
+      return (
+        <div className="game-wrap bz2-wrap">
+          {showCountdown && !gameOver && (
+            <CountdownOverlay
+              banner={(!categoryRound || (categoryRound.round || 1) <= 1) && hasHumanRival(roomPlayers, myId)
+                ? <MatchWinBanner mode="category-blitz" />
+                : null}
+              onComplete={() => setShowCountdown(false)}
+            />
+          )}
+          <div className={`game-stage game-stage--blitz bz2${shake ? ' game-shake' : ''}`} data-hud="v2" data-heat={heatTier(streak.count)}>
+            <div className="bz2-top">
+              <span className="bz2-tab">BLITZ</span>
+              <span className="bz2-rate">BASE <b translate="no">{formatRate(cbRate)}</b> / ANSWER</span>
+              {isSolo ? (
+                <span className="bz2-best">{soloBest != null ? `YOUR BEST ${formatNum(soloBest)}` : 'NO RECORD YET'}</span>
+              ) : null}
+              <div className="bz2-pill"><WinsHudPill amount={winsTally} words={winsWords} showWpm={false} /></div>
+              {audioSlot}
+              <button className="game-leave-btn" onClick={onLeave}>
+                LEAVE
+              </button>
+            </div>
+            {rerollNotice && <div className="cb-reroll-notice">HOST REROLLED — NEW CATEGORY</div>}
+            <BlitzHero
+              category={categoryRound.category}
+              round={categoryRound.round}
+              rounds={TOTAL_CATEGORY_ROUNDS}
+              solo={isSolo}
+              found={myAnswers.length}
+              total={cbTotal}
+            />
+            <div className="bz2-row">
+              <BlitzTimer seconds={timerSeconds} max={maxTimer} counting={showCountdown} />
+              {canReroll && (
+                <button
+                  className="cb-reroll-btn bz2-reroll"
+                  onClick={() => { sound.whoosh(); onRerollCategory(); }}
+                  disabled={rerollsLeft <= 0 || !withinRerollWindow || rerollPending}
+                  title={rerollsLeft <= 0 ? 'No rerolls left this game' : !withinRerollWindow ? 'Rerolls are only allowed at the start of a round' : undefined}
+                >
+                  NEW CATEGORY ({rerollsLeft})
+                </button>
+              )}
+            </div>
+            {cbExample ? <div className="bz2-eg">e.g. {cbExample}</div> : null}
+            <BlitzTiles answers={myAnswers} info={cbInfo} />
+            {!isSolo && others.length > 0 ? (
+              <ul className="bz2-others" aria-label="Other players">
+                {others.map((p) => {
+                  const pc = resolvePlayerColor(playerColors, p.id);
+                  return (
+                    <li key={p.id} className="cb-progress-row bz2-other" style={{ '--pc': pc.color, '--pc-dark': pc.dark }}>
+                      <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                      <span className="cb-progress-name-text" translate="no">{p.name}</span>
+                      <b className="cb-progress-count" translate="no">{formatNum(playerProgress[p.id] || 0)}</b>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+            <div className="bz2-field">
+              {cbInputRow}
+              {cbToast}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="game-wrap">
         {/* WINS: live running tally for this round (Blitz pays per round). No WPM pill — Category
@@ -4916,121 +5135,9 @@ function CategoryBlitzScreen({
             </div>
           </div>
 
-          <div className="game-input-row">
-            {/* Personal hype streak, floats above the input (pointer-events:none). */}
-            <ComboMeter count={streak.count} brk={streak.brk} />
-            {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
-                relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
-                feature. */}
-            {/* ONE REACTION SLOT — see the Word Bomb note. */}
-            <div className="wb-react" ref={cbReactRef} aria-hidden="true">
-              {/* ONE reaction per word — see the Word Bomb note (and its LIGHT SLOT). */}
-              {hypeKey > 0 && !gameOver && cbSlot.showHype
-                && <HypePopup key={hypeKey} tier={heatTier(streak.count)} />}
-              {cbLanding && cbSlot.main === 'lucky' && (
-                <LuckyBurst key={`lucky-${cbLanding.key}`} mult={cbSlot.luckyMult} />
-              )}
-              {cbLanding && cbSlot.showLanding && (
-                <WordLanding
-                  key={cbLanding.key}
-                  word={cbLanding.word}
-                  band={cbLanding.band}
-                  wins={cbLanding.wins}
-                  secret={cbLanding.secret}
-                  reduced={goReduce}
-                />
-              )}
-              {cbLanding && cbSlot.labels.length > 0 && (
-                <SlotTags key={`tags-${cbLanding.key}`} labels={cbSlot.labels} />
-              )}
-              <TierSlam count={streak.count} outranked={cbSlot.main !== 'hype'} />
-              <GemPop reduced={goReduce} />
-            </div>
-            {/* Near-miss callout for a late accepted answer (pointer-events:none). */}
-            {clutchCall && (
-              <ClutchCallout
-                key={clutchCall.key}
-                seconds={clutchCall.seconds}
-                tier={clutchCall.tier}
-              />
-            )}
-            {/* Per-letter submit physics (accept pop / reject scatter). The reject
-                scatter REPLACES the input-shake, so the input below no longer
-                applies it - one coherent miss reaction. pointer-events:none. */}
-            {cbSubmitLetters && (
-              <SubmitLetters
-                key={cbSubmitLetters.key}
-                text={cbSubmitLetters.text}
-                mode={cbSubmitLetters.mode}
-              />
-            )}
-            <input
-              ref={inputRef}
-              className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
-              type="text"
-              value={draft}
-              onChange={(event) => {
-                const value = event.target.value;
-                noteTypedLetters(draft, value, 'category-blitz'); // v11: LETTERS fill the bar (batched)
-                // Soft key tick on actual character entry (parity with Word Bomb).
-                if (value.length > draft.length) sound.keystroke();
-                setDraft(value);
-              }}
-              onKeyDown={handleKeyDown}
-              disabled={showCountdown}
-              aria-label="Type an answer for the category"
-              placeholder="NAME ONE…"
-              maxLength={32}
-              autoComplete="off"
-              spellCheck="false"
-            />
-            <button className="game-send-btn" onClick={submit}>
-              SEND
-            </button>
-            {/* Stable wrapper: mount the keyed "+1" once per accept (see above). */}
-            <div style={{ display: 'contents' }}>
-              {hypeKey > 0 && <FloatingScore key={hypeKey} />}
-            </div>
-            {/* ONE-TIME first-game spotlight — only once the countdown is done and you can type. */}
-            {gameSpot && !showCountdown && (
-              <Spotlight
-                targetSelector=".game-input"
-                caption="NAME SOMETHING IN THE CATEGORY"
-                // Same text-aware placement as Word Bomb (fine-tune oct2): the caption printed over
-                // the CATEGORY card — the one thing the player must read.
-                avoidTextIn=".game-wrap"
-                onDismiss={dismissGameSpot}
-                dim={false} // as above — /category-blitz/play lands straight on this board
-              />
-            )}
-          </div>
+          {cbInputRow}
 
-          {/* (Pre-STEP 9: shown while the AI judge ran. Blitz is list-only now, so the server never sends ai_check;
-              kept for an old server.) A subtle "checking…"
-              chip instead of the previous result toast; it clears the instant the
-              answer_result lands and the normal accept/reject toast plays. */}
-          {checkingAnswer ? (
-            <div className="game-toast cb-checking-toast" aria-live="polite">
-              checking
-              <span className="cb-checking-dots" aria-hidden="true">
-                <i>.</i>
-                <i>.</i>
-                <i>.</i>
-              </span>
-            </div>
-          ) : (
-            lastWordResult && (
-              <div
-                className={`game-toast ${
-                  lastWordResult.accepted ? 'accepted' : 'rejected'
-                }`}
-              >
-                {lastWordResult.accepted
-                  ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
-                  : rejectionMessage(lastWordResult.reason, { isCategory: true })}
-              </div>
-            )
-          )}
+          {cbToast}
 
             </div>
             {/* ---- Side rail: live state (your answers + opponents) ---- */}

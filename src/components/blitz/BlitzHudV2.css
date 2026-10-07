@@ -1,0 +1,269 @@
+/* blitz/BlitzHudV2.css — SEASON 2 CATEGORY BLITZ, the BLITZ tab (claude/mockups/v2/BlitzImposter.dc.html): the category
+   HUGE on a tilted band with the AI BUILT ribbon, FOUND on the right, the segmented timer, answers as rarity tiles,
+   the big field at the bottom. Flat colours, black outlines, hard offset shadows, no idle loops. */
+
+.game-stage.bz2 {
+  /* type sizes (perf/typeScale.test.js: every font-size goes through a --fs-* token) */
+  --fs-b13: 13px;
+  --fs-bhalf: 0.5em;
+  --fs-b16: 16px;
+  --fs-b18: clamp(16px, 2.6vh, 18px);
+  --fs-bcat: clamp(40px, min(14vh, 9vw), 120px);
+  --fs-bcatmid: clamp(34px, min(11vh, 7vw), 92px);
+  --fs-bcatlong: clamp(28px, min(8vh, 5vw), 64px);
+  --fs-bfound: clamp(40px, 12vh, 100px);
+  --fs-bsecs: clamp(20px, 4.4vh, 32px);
+  --fs-btile: clamp(16px, 3.4vh, 26px);
+  --fs-binput: clamp(22px, 6vh, 52px);
+  --bz-yel: #ffe94a;
+  --bz-cyan: #2effe0;
+  --bz-blue: #3d8bff;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.6vh, 14px);
+  /* one screen, exactly like the Word Bomb board (the wrap's own padding, twice) — the tiles absorb the rest */
+  height: calc(100dvh - 2 * var(--wrap-pad-y, 16px));
+  padding-top: clamp(10px, 1.8vh, 22px);
+  padding-bottom: clamp(10px, 1.8vh, 22px);
+  overflow: hidden;
+}
+
+.bz2-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.bz2-tab {
+  padding: 2px 14px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-b16);
+  color: #000;
+  background: var(--bz-yel);
+  border: 3px solid #000;
+  transform: skewX(-12deg);
+  box-shadow: 3px 3px 0 #000;
+}
+.bz2-rate,
+.bz2-best {
+  padding: 3px 10px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-b13);
+  color: #c9b8e8;
+  background: #12071f;
+  border: 3px solid #000;
+}
+.bz2-rate b { font-weight: 400; font-size: var(--fs-b16); color: var(--bz-cyan); }
+.bz2-pill { margin-left: auto; }
+/* the shared wins pill is a fixed corner chip elsewhere — here it JOINS the top row (NO ORPHAN FIXED UI) */
+.bz2-pill .wins-hud { position: static; }
+
+/* ---- the category, huge ---- */
+.bz2-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin: 14px -6px 0;
+  padding: clamp(14px, 3vh, 26px) clamp(14px, 2.4vw, 30px) clamp(10px, 2vh, 18px) clamp(26px, 4vw, 56px);
+  background: #1a0b2e;
+  border-top: 5px solid #000;
+  border-bottom: 6px solid var(--bz-blue);
+  border-left: 14px solid var(--bz-blue);
+  transform: rotate(-1deg);
+}
+.bz2-ribbon {
+  position: absolute;
+  left: clamp(30px, 5vw, 70px);
+  top: -16px;
+  padding: 2px 12px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-b13);
+  color: #000;
+  background: var(--bz-cyan);
+  border: 3px solid #000;
+  transform: skewX(-12deg);
+  box-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+}
+.bz2-cat {
+  min-width: 0;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-bcat);
+  line-height: 0.95;
+  color: var(--bz-yel);
+  -webkit-text-stroke: 0.08em #000;
+  paint-order: stroke fill;
+  text-shadow: 0.06em 0.06em 0 #000;
+  overflow-wrap: anywhere;
+}
+.bz2-cat.is-mid { font-size: var(--fs-bcatmid); }
+.bz2-cat.is-long { font-size: var(--fs-bcatlong); }
+.bz2-found {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.bz2-found-k,
+.bz2-round {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-b13);
+  color: #c9b8e8;
+}
+.bz2-round { color: var(--bz-blue); }
+.bz2-found-n {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-bfound);
+  line-height: 0.9;
+  color: var(--bz-cyan);
+  -webkit-text-stroke: 0.07em #000;
+  paint-order: stroke fill;
+  text-shadow: 0.05em 0.05em 0 #000;
+}
+.bz2-found-n small { font-size: var(--fs-bhalf); color: #c9b8e8; }
+
+/* ---- timer + reroll ---- */
+.bz2-row { display: flex; align-items: center; gap: 12px; }
+.bz2-timer { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bz2-secs.game-timer-num {
+  flex: none;
+  min-width: 58px;
+  text-align: center;
+  padding: 2px 8px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-bsecs);
+  color: #000;
+  background: var(--bz-yel);
+  border: 4px solid #000;
+  transform: skewX(-8deg);
+  box-shadow: 4px 4px 0 #000;
+}
+.bz2-timer.is-low .bz2-secs.game-timer-num { background: #ff3d7f; }
+.bz2-segs {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(30, minmax(0, 1fr));
+  gap: 2px;
+  height: 22px;
+  padding: 3px;
+  background: #000;
+  border: 3px solid #000;
+}
+.bz2-segs i { background: #1a0b2e; }
+.bz2-segs i.is-on { background: var(--bz-yel); }
+.bz2-timer.is-low .bz2-segs i.is-on { background: #ff3d7f; }
+.bz2-reroll.cb-reroll-btn { flex: none; margin: 0; }
+.bz2-eg {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-b16);
+  color: #c9b8e8;
+}
+
+/* ---- answers as rarity tiles ---- */
+.bz2-tiles {
+  flex: 1 1 0;
+  min-height: 0;
+  margin: 0;
+  padding: 2px 4px 4px 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 10px 12px;
+  overflow: hidden;
+}
+.bz2-tile.cb-answer-chip {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  margin: 0;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #000;
+  transform: skewX(-6deg);
+  overflow: hidden;
+}
+.bz2-tile-w {
+  display: flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-b13);
+  color: #000;
+  background: var(--rc);
+  border-right: 4px solid #000;
+}
+.bz2-tile-a {
+  display: flex;
+  align-items: center;
+  padding: 4px 14px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-btile);
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.bz2-empty {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-b16);
+  color: #8a76ad;
+}
+.bz2-others {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bz2-other.cb-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  margin: 0;
+  background: #12071f;
+  border: 3px solid #000;
+}
+.bz2-other .cb-progress-name-text { font-size: var(--fs-b13); }
+.bz2-other .cb-progress-count { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-weight: 400; font-size: var(--fs-b16); color: var(--pc); }
+
+/* ---- the field ---- */
+.bz2-field { flex: none; }
+.bz2 .game-input-row { max-width: none; }
+.bz2 .game-input {
+  color: #fff;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-binput);
+  min-height: clamp(54px, 10vh, 84px);
+  background: #12071f;
+  border: 5px solid #000;
+  border-bottom: 8px solid var(--bz-yel);
+}
+.bz2 .game-input::placeholder { color: #c9b8e8; }
+
+@media (max-width: 699px) {
+  .bz2-hero { grid-template-columns: minmax(0, 1fr); margin-top: 18px; }
+  .bz2-found { flex-direction: row; align-items: baseline; gap: 10px; }
+  .game-stage.bz2 { --fs-bfound: 40px; --fs-btile: 16px; --fs-binput: 30px; }
+  .bz2-tile-a { padding: 2px 10px; -webkit-text-stroke: 2px #000; }
+  .bz2-tiles { gap: 8px; }
+  .bz2-row { flex-wrap: wrap; }
+  .bz2-rate { display: none; }
+}
