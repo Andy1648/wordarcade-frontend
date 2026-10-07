@@ -38,7 +38,7 @@ flag that would have driven it goes with this rule.)
 - [x] COLLECT → the gems burst/float out of the gift and arc into the gem pill, now on the LEFT, counter ticking up one
       landing at a time (KitFlyLayer → KitPill); shown once (local flag + cookie + server claim)
 
-## 3. LEADERBOARD after the reset — branch `feat/s2-board-keep-place`, PR (see below)
+## 3. LEADERBOARD after the reset — ✅ PR #249 MERGED (3bc71fd), CI all green
 - [x] `supabase/migrations/028_season2_board_keep_place.sql` (never run; after 023): leaderboard_s2 ordered by
       season-2 stats desc (★ → R → LV → words), ties by the SEASON-1 rank computed from public.season1_snapshot in the
       season-1 board's own order, then created_at; new columns `earned` + `s1_rank` (owner-run view — the snapshot stays closed)
@@ -47,6 +47,7 @@ flag that would have driven it goes with this rule.)
 - [x] client falls back to 022's columns if 028 is not in yet (no 400); s2Board.compareS2 mirrors the order;
       s2BoardKeep.test.js pins the SQL; e2e v2-leaderboard "after the reset" case
 
-## 4. FLIP-STEPS
-- [ ] update `claude/FLIP-STEPS.md` with the exact SQL files in order
-- [ ] STOP — visual polish moves to a separate cloud session later
+## 4. FLIP-STEPS — branch `docs/s2-flip-steps`
+- [x] `claude/FLIP-STEPS.md`: 022 → 024 → 027 → claude/run-season2.sql (= 023) → 028 → `notify pgrst, 'reload schema';`
+      → checks (lb_caps season2_reset; leaderboard_s2 earned / s1_rank) → "flip SEASON2". 026 is NOT run (replaced by 027).
+- [x] STOP — visual polish moves to a separate cloud session later.
