@@ -8,12 +8,12 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
-import { MenuIcons, MenuRail, MenuMarkChip, focusNav } from './MenuNav';
+import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost, roundWordXp, MENU_LETTER_SHARE } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import RebirthReadyButton from './RebirthReadyButton';
 import BoostPill from '../frenzy/BoostPill';
@@ -1223,11 +1223,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
   const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} /> : null;
+  // THE HONEST RATE LINE (feat/menu-perrow, Andy oct6 "unclear per-key XP"): what a MENU key pays and what a GAME
+  // letter pays, both live — the menu is a fifth of a game letter (xp.js MENU_LETTER_SHARE, whole XP, never 0).
+  const gameLetterXp = letterXpNow();
+  const menuKeyXp = Math.max(1, roundWordXp(gameLetterXp * MENU_LETTER_SHARE));
   const perLetter = (
-    <span className="hp-per">
-      +{formatNum(letterXpNow())} XP<span className="hp-per-u"> / LETTER</span>
+    <span className="hp-per hp-rate">
+      <span className="hp-rate-k">MENU</span> +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY</span>
+      <span className="hp-rate-sep" aria-hidden="true">·</span>
+      <span className="hp-rate-k">GAMES</span> +{formatNum(gameLetterXp)} XP<span className="hp-per-u"> / LETTER</span>
     </span>
   );
+  const gearSlot = markShown ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
@@ -1285,7 +1292,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} />
+        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} foot={gearSlot} />
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
@@ -1315,9 +1322,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           {xpBar}
           <div className="hp-perrow">
             {perLetter}
-            {markChip}
-            {/* v3 (SEASON2): the rank (KEYMASH … by rebirths, then stars) is a season-2 headline — it rides this row */}
-            {SEASON2 && <span className="menu-xp-rank hp-rank">{rankTitle(xpProgress.level)}</span>}
+            {/* the worn mark lives in the rail's YOUR GEAR slot now (feat/menu-perrow) — the phone keeps its chip */}
+            {/* v3 (SEASON2): the rank (KEYMASH … by rebirths, then stars) is a season-2 headline — LABELLED, so a
+                newcomer knows the word is a rank (Andy oct6: nobody may be confused) */}
+            {SEASON2 && <span className="menu-xp-rank hp-rank"><span className="hp-rank-k">RANK</span>{rankTitle(xpProgress.level)}</span>}
             <BoostPill className="menu-boost-pill" />
           </div>
           {/* REBIRTH READY → ×5 FOREVER (Andy oct3): in flow under the bar it is about (nothing until ready). */}

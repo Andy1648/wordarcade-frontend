@@ -93,7 +93,8 @@ test.describe('menu', () => {
     });
     expect(await page.locator('.game-card-ribbon.is-featured').count()).toBe(1);
     expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split(String.fromCharCode(10)).join(' '));
-    expect(m.per).toBe('+10 XP / LETTER');
+    // feat/menu-perrow: the honest rate line — the menu key (a fifth, whole XP) and the game letter
+    expect(m.per.replace(/\s*·\s*/, ' · ')).toBe('MENU +2 XP / KEY · GAMES +10 XP / LETTER');
     expect(m.cardXp).toBeNull();
   });
 

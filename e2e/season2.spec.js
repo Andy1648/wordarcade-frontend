@@ -66,7 +66,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     const phone = isPhoneMenu(page);
     await navControl(page, 'stats').waitFor({ state: 'visible' });
     await noClaimPopups(page);
-    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveText('KEYMASH');
+    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('KEYMASH');
 
     // MASH → LEVEL (FINAL v2: ANY key counts, no rate cap): LV14 → LV15 (need(14) = 100 × 1.15^13 ≈ 613 XP, 1.5% left
     // ≈ 9 XP; a menu key pays 10 × 0.2 = 2 XP at KEY T0 R0) — gibberish, typed fast
@@ -101,7 +101,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await rb.locator('.rb2-back').click();
     await expect(rb).toHaveCount(0);
     await noClaimPopups(page);
-    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveText('TYPO');
+    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('TYPO');
 
     // KEY: wins buy only KEY (150 × 5^0 = 150 wins) — the v2 SHOP (P3): HOLD TO BUY, 1 s
     await navControl(page, 'shop').click();

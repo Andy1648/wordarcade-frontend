@@ -501,7 +501,7 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
    NUMBER first and big with its unit small under it (numbers first, words second). ---- */
 .homepage-stage[data-paged] {
   --hp-nav-w: max(300px, calc(344 * var(--u)));
-  --hp-tile-h: max(150px, calc(200 * var(--u)));
+  --hp-tile-h: clamp(140px, calc(200 * var(--u)), calc(50vh - 150px)); /* capped so pills + 2 tiles + YOUR GEAR clear the CREDITS corner on a 657px Chromebook */
   --hp-tile-ico: max(44px, calc(60 * var(--u)));
   --fs-hptile: max(28px, calc(36 * var(--u)));
   --fs-hpunit: max(13px, calc(14 * var(--u)));
@@ -590,3 +590,50 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .homepage-stage[data-paged] .hp-rail .kb--rail:active .kb-rface { transform: translate(3px, 3px); }
 .homepage-stage[data-paged] .homepage-cards-region { justify-content: center; } /* slack splits above/below the cards, never a band under the pager */
 .homepage-stage[data-paged] .hp-rail .kb-rwrap.is-locked .kb-rval::before { content: 'UNLOCKS AT'; display: block; margin-bottom: calc(4 * var(--u)); font-family: 'Space Mono', monospace; font-size: var(--fs-hpunit); color: var(--k-dim, #c9b8e8); -webkit-text-stroke: 0; text-shadow: none; }
+
+/* ---- THE PER-LETTER ROW + YOUR GEAR (feat/menu-perrow) ---- */
+/* the honest rate line: MENU +2 XP/KEY · GAMES +10 XP/LETTER — the key word dim, the numbers loud */
+.hp-rate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-hp13); -webkit-text-stroke: 0; color: #c9b8e8; margin-right: calc(6 * var(--u)); }
+.hp-rate-sep { font-family: 'Space Mono', monospace; color: #6b5a8a; -webkit-text-stroke: 0; margin: 0 calc(10 * var(--u)); }
+/* the rank chip, LABELLED: a small RANK caption before the name */
+.hp-rank-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-hp13); color: #c9b8e8; margin-right: calc(8 * var(--u)); }
+/* YOUR GEAR — the slot at the foot of the rail (desktop/paged only; the phone keeps its chip) */
+.hp-gear {
+  grid-column: 1 / -1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0;
+  background: var(--k-panel, #1a0b2e);
+  border: var(--b4) solid #000;
+  border-radius: 8px;
+  box-shadow: var(--b5) var(--b5) 0 #000;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.hp-gear.is-worn { border-color: var(--gear-line); }
+.hp-gear:disabled { opacity: 0.5; pointer-events: none; }
+@media (hover: hover) { .hp-gear:hover { transform: translate(-3px, -3px); } }
+.hp-gear:active { transform: translate(3px, 3px); }
+.hp-gear-label {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hpunit);
+  letter-spacing: 1px;
+  color: #c9b8e8;
+  padding: calc(8 * var(--u)) calc(12 * var(--u)) 0;
+}
+.hp-gear.is-worn .hp-gear-label { color: var(--gear-line); }
+.hp-gear-body { display: flex; align-items: center; gap: calc(12 * var(--u)); padding: calc(4 * var(--u)) calc(12 * var(--u)) calc(10 * var(--u)); }
+.hp-gear-cog { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); }
+.hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
+.hp-gear-text { display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: 0; }
+.hp-gear-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp24); line-height: 1; color: #fff; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
+.hp-gear-sub { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hpunit); color: #c9b8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hp-gear.is-worn .hp-gear-sub { color: var(--gear-line); }
+.hp-gear .hp-chip-dot { top: -8px; right: -8px; }
