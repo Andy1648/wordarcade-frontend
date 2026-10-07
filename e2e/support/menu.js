@@ -97,10 +97,12 @@ export function modeEntry(page, id) {
  * is already showing. Returns modeEntry(page, id), so `await (await revealMode(page, id)).click()`.
  */
 export const PAGED_MENU_MIN_W = 761;
-export const PAGED_MENU_MAX_H = 700;
+// feat/menu-centre (Andy oct7): paging is the desktop default on any landscape-ish screen (aspect >= 5/4); a
+// portrait tablet keeps the 3x2 grid.
+export const PAGED_MENU_MIN_ASPECT = 5 / 4;
 export function isPagedMenu(page) {
   const vp = page.viewportSize();
-  return !!vp && vp.width >= PAGED_MENU_MIN_W && vp.height <= PAGED_MENU_MAX_H;
+  return !!vp && vp.width >= PAGED_MENU_MIN_W && vp.width / vp.height >= PAGED_MENU_MIN_ASPECT;
 }
 export async function revealMode(page, id) {
   const entry = modeEntry(page, id);

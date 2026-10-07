@@ -109,7 +109,7 @@ const PHONE_MENU_QUERY = '(max-width: 480px)';
 // readable width — the fit-math fell back to SQUAT cards. On these viewports the menu shows
 // CARDS_PER_PAGE cards at the full 3:4 ratio and flips between pages (arrows, swipe, ←/→ keys) with
 // a two-dot indicator. Tall screens (> 700px) and anything ≤ 760px wide keep their layout exactly.
-const PAGED_MENU_QUERY = '(min-width: 761px) and (max-height: 700px)';
+const PAGED_MENU_QUERY = '(min-width: 761px) and (min-aspect-ratio: 5/4)';
 const CARDS_PER_PAGE = 3;
 const CARD_PAGES = Math.ceil(GAMES.length / CARDS_PER_PAGE);
 

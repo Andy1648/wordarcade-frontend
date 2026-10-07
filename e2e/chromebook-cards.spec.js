@@ -66,11 +66,12 @@ for (const { w, h } of SIZES) {
   test(`${w}x${h}: three full-ratio cards a page, arrows / keys flip to the other three, dots follow`, async ({ page }) => {
     await installBackendMock(page);
 
-    // The reference: the card's shape on a tall desktop, where all six share one row.
-    await boot(page, 1920, 1080);
+    // The reference: the card's shape on a PORTRAIT tablet, the one desktop-width layout that still shows all six
+    // (feat/menu-centre: every landscape desktop pages now).
+    await boot(page, 900, 1180);
     const tall = await readCards(page);
-    expect(tall.length, 'a tall desktop shows all six cards').toBe(6);
-    await expect(page.locator('.homepage-cards-arrow'), 'no pager on a tall screen').toHaveCount(0);
+    expect(tall.length, 'a portrait tablet shows all six cards').toBe(6);
+    await expect(page.locator('.homepage-cards-arrow'), 'no pager on a portrait tablet').toHaveCount(0);
     const ref = tall.map((c) => c.ratio).sort((a, b) => a - b)[3];
 
     await boot(page, w, h);
@@ -145,19 +146,20 @@ for (const { w, h } of SIZES) {
   });
 }
 
-// Andy oct6 SEASON 2 #5: "centre game cards exactly at 1366×657, 1280×551, 1920×1080" (they sat shifted RIGHT at
-// 1366×657: the paged row spanned the rail's neighbour column AND the right column). The row of visible cards must
-// sit on the page's centre line — the wordmark's — with the left and right gaps to the viewport equal within 1px, on
-// every page of a paged row.
+// Andy oct6 SEASON 2 #5 "centre game cards exactly" → Andy oct7 (feat/menu-centre, "how tiny the game cards looked",
+// mockup v3 B's proportions): paging is the desktop default and the cards take the whole console — the XP bar's
+// columns, right of the rail — so they are centred IN THE CONSOLE (equal gaps to the cards region's edges, ±1.5px),
+// never shifted inside it, on every page. 1920x1080 pages too now (3 cards, not a 6-up row).
 const cardGaps = (page) => page.evaluate(() => {
   const rs = [...document.querySelectorAll('.homepage-cards-grid > .game-card-magnet')]
     .filter((m) => m.getClientRects().length)
     .map((m) => m.getBoundingClientRect());
-  const left = Math.min(...rs.map((r) => r.left));
-  const right = innerWidth - Math.max(...rs.map((r) => r.right));
+  const box = document.querySelector('.homepage-cards-region').getBoundingClientRect();
+  const left = Math.min(...rs.map((r) => r.left)) - box.left;
+  const right = box.right - Math.max(...rs.map((r) => r.right));
   return { n: rs.length, left, right };
 });
-for (const { w, h, paged } of [{ w: 1366, h: 657, paged: true }, { w: 1280, h: 551, paged: true }, { w: 1920, h: 1080, paged: false }]) {
+for (const { w, h, paged } of [{ w: 1366, h: 657, paged: true }, { w: 1280, h: 551, paged: true }, { w: 1920, h: 1080, paged: true }]) {
   test(`${w}x${h}: the cards are centred — left gap = right gap (±1px)`, async ({ page }) => {
     await installBackendMock(page);
     await boot(page, w, h);
@@ -170,8 +172,8 @@ for (const { w, h, paged } of [{ w: 1366, h: 657, paged: true }, { w: 1280, h: 5
       }
       const g = await cardGaps(page);
       expect(g.n, `cards on page ${p}`).toBe(paged ? 3 : 6);
-      expect(g.left, `page ${p}: a card is off the left edge`).toBeGreaterThan(0);
-      expect(Math.abs(g.left - g.right), `page ${p}: left gap ${g.left.toFixed(1)} vs right gap ${g.right.toFixed(1)}`).toBeLessThanOrEqual(1);
+      expect(g.left, `page ${p}: a card is outside the console`).toBeGreaterThanOrEqual(0);
+      expect(Math.abs(g.left - g.right), `page ${p}: left gap ${g.left.toFixed(1)} vs right gap ${g.right.toFixed(1)}`).toBeLessThanOrEqual(1.5); // 1.5: the flipped page lands on a sub-pixel
     }
   });
 }

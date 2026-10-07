@@ -84,11 +84,28 @@
    column only — the same column as the wordmark and the XP bar — so the row sits on the page's centre line with
    equal gaps left and right (e2e/chromebook-cards.spec.js measures them). The pager row is under the cards. */
 .homepage-stage[data-paged] {
+  /* MENU CENTRE (feat/menu-centre, Andy oct7 "the middle part just looks so weird", "how tiny the game cards
+     looked"): paging is now the DESKTOP default (PAGED_MENU_QUERY), and the right column is only as wide as the
+     icon cluster, so the XP bar and the 3 cards take the whole width right of the rail — the cards are ~1.5x
+     taller at 1280x800 than the 6-up row was. Sound + CREDITS move to the bottom-left corner under the rail
+     (a footer corner — out of the play zone, still a cluster). */
+  grid-template-columns: var(--hp-nav-w) minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     'rail logo icons'
-    'rail xp extras'
-    'rail cards .';
+    'rail xp xp'
+    'rail cards cards'
+    'foot cards cards';
 }
+.homepage-stage[data-paged] .hp-extras {
+  grid-area: foot;
+  align-self: end;
+  justify-self: start;
+  justify-content: flex-start;
+  padding-left: var(--hp-coin-pull);
+}
+.homepage-stage[data-paged] .hp-rail { align-self: start; }
+.homepage-stage[data-paged] .menu-xp-cluster .kx { max-width: none; }
 .homepage-stage.is-dimmed { transform: scale(0.965); }
 @media (prefers-reduced-motion: reduce) {
   .homepage-stage { transition: none; }
@@ -462,3 +479,18 @@ html[data-beat='true'] .homepage-logo {
 /* Andy oct6: with the TYPE ANYTHING row gone the cards grow into the bottom of the stage — while the (fixed, bottom-
    centre) REWARDS popup shows, the cards' region keeps its height clear so no card text sits under it. */
 body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bottom: 64px; }
+
+/* THE PLAY-ZONE PANEL (feat/menu-centre, Andy oct7 "have like a border around it"): one plum box holds the LV +
+   XP bar, the per-letter row, the three cards and the pager — the "console". It is the stage's ::before placed
+   by grid (rows 2-4, cols 2-3), under the content (z 0), so the fit-math's region is untouched: the cards keep
+   their width, the panel just closes around them. Hard ink edge + offset shadow, like every kit box. */
+.homepage-stage[data-paged]::before {
+  content: '';
+  grid-area: 2 / 2 / 5 / 4;
+  z-index: 0;
+  margin: calc(-10 * var(--u)) calc(-18 * var(--u));
+  background: #1a0b2e;
+  border: var(--b4) solid #000;
+  border-radius: 8px;
+  box-shadow: var(--b6) var(--b6) 0 #000;
+}
