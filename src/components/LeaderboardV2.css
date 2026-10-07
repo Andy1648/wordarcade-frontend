@@ -547,3 +547,33 @@
   .lb2-back,
   .lb2-tab { transition: none; }
 }
+
+/* P9a: the SHAPED v3 plates (kit/KitRankPlate FIT) replace the flat skewed tags — the art is the SVG, so the flat
+   tag's fill / border / skew / shadow are dropped here; the plate sizes itself from its 13 px name. */
+.lb2 .lb2-plate.krp-fit {
+  --krp-h: max(24px, calc(28px * var(--lb2-k)));
+  display: inline-flex;
+  align-items: center;
+  height: var(--krp-h);
+  max-width: 100%;
+  padding: 0 calc(var(--krp-h) * 0.62) calc(var(--krp-h) * 0.16);
+  margin-left: 0;
+  transform: none;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  font-family: 'Bungee', sans-serif;
+  font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--lb2-k)));
+  line-height: 1;
+  text-transform: uppercase;
+}
+.lb2 .lb2-plate.krp-fit > .krp-name { display: block; transform: none; font-size: inherit; }
+.lb2 .lb2-pod-plate.krp-fit { font-size: max(var(--fs-k13), calc(var(--fs-k15) * var(--pk))); }
+.lb2 .lb2-row-plate.krp-fit { --krp-h: max(22px, calc(26px * var(--lb2-k))); }
+.lb2 .lb2-row .lb2-who-cell { gap: 1px; }
+.lb2 .lb2-row .lb2-name-line { line-height: 1; }
+.lb2 .lb2-pod-plate.krp-fit { --krp-h: max(26px, calc(34px * var(--pk))); }
+.lb2 .lb2-col--1 .lb2-pod-plate.krp-fit { --krp-h: max(28px, calc(38px * var(--pk))); }
+.lb2--narrow .lb2-row-plate.krp-fit { --krp-h: 22px; }
+.lb2--narrow .lb2-pod-plate.krp-fit,
+.lb2--narrow .lb2-col--1 .lb2-pod-plate.krp-fit { --krp-h: 24px; }

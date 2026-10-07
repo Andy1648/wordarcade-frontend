@@ -14,14 +14,18 @@
 //
 // The root carries data-state ('climb' | 'rest'), data-climb-ms (the last climb's duration) and
 // data-level (the level SHOWN right now) for tests and the gallery.
+//
+// P9a (KitLevelUp.dc.html 01 "D · MULTI = CHIP"): a gain that crosses MORE than one level shows a "+N LV" chip that
+// slides out from UNDER the bar's left end and counts the levels; a single level is the sweep + LV bump alone.
 import { useEffect, useRef } from 'react';
 import { createClimbPlayer } from './climb.js';
-import { FX, fx, kitHold, kitStop } from './motion.js';
+import { FX, fx, kitHold, kitStop, kitPlay } from './motion.js';
 import { formatNum } from '../../format.js';
 import './tokens.css';
 import './KitXpBar.css';
 
-export const GAIN_HIDE_MS = 1200;
+export const GAIN_HIDE_MS = 1400;
+const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
 
 export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone }) {
   const rootRef = useRef(null);
@@ -35,6 +39,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   const doneCb = useRef(onClimbDone);
   doneCb.current = onClimbDone;
   const gain = useRef({ n: 0, t: 0 });
+  const climbN = useRef(0); // levels the current climb crosses (the chip is for a MULTI-level gain only)
   const initial = useRef({ lvRaw: String(Math.max(1, Math.floor(level))), lv: formatNum(Math.max(1, Math.floor(level))), cur: formatNum((frac > 0 ? Math.min(1, frac) : 0) * need) }).current;
 
   // the fill is promoted for the life of a glide only (never at rest); the sweep promotes itself per play
@@ -75,10 +80,13 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
           clearTimeout(g.t);
           g.n += l - prev;
           const chip = gainRef.current;
-          if (chip) {
-            chip.textContent = `+${formatNum(g.n)} ${g.n === 1 ? 'LEVEL' : 'LEVELS'}`;
-            chip.classList.add('is-on');
-            fx(chip, FX.barBump);
+          if (chip && (g.n > 1 || climbN.current > 1)) {
+            const t = chip.firstChild;
+            if (t) t.textContent = `+${formatNum(g.n)} LV`;
+            if (!chip.classList.contains('is-on')) {
+              chip.classList.add('is-on');
+              kitPlay(chip, CHIP_IN, { duration: 280, easing: 'cubic-bezier(.2,1.2,.4,1)' });
+            } else fx(t, FX.barBump);
           }
         }
       },
@@ -107,6 +115,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     const tl = Math.max(1, Math.floor(level));
     const tf = frac > 0 ? Math.min(1, frac) : 0;
     const climbing = tl > p.level || (tl === p.level && tf > p.frac);
+    climbN.current = tl > p.level ? tl - p.level + gain.current.n : 0;
     if (root && climbing) root.dataset.state = 'climb';
     if (climbing) promote(true);
     p.to(level, frac);
@@ -134,7 +143,9 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         </span>
       </div>
       <div className="kx-barwrap">
-        <span ref={gainRef} className="kx-gain" aria-hidden="true" />
+        <span ref={gainRef} className="kx-gain" aria-hidden="true">
+          <span className="kx-gain-t" />
+        </span>
         <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
           <div ref={fillRef} className="kx-fill" aria-hidden="true">
             <div className="kx-fill-hi" aria-hidden="true" />

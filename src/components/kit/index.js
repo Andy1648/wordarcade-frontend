@@ -17,6 +17,8 @@ export { KitBannerHost, BANNER_TONES } from './KitBanner.jsx';
 export { banners, pushBanner, closeBanner, createBannerStore } from './bannerStore.js';
 // KitLevelUp.dc.html 02 RANK-UP BANNER (top edge) + 04 UNLOCK TOAST (right edge) — P7's minimal pieces; P9a extends them.
 export { KitRankBannerHost, RANK_PLATE } from './KitRankBanner.jsx';
+export { KitRankPlate } from './KitRankPlate.jsx';
+export { RANK_PLATES, plateFor } from './rankPlates.js';
 export { KitEdgeToastHost, TOAST_STEP } from './KitEdgeToast.jsx';
 export { rankBanners, pushRankUp, edgeToasts, pushToast, RANK_BANNER_MS, TOAST_MS } from './edgeStores.js';
 
