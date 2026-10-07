@@ -166,7 +166,9 @@ for (const { w, h, paged } of [{ w: 1366, h: 657, paged: true }, { w: 1280, h: 5
     const pages = paged ? 2 : 1;
     for (let p = 0; p < pages; p += 1) {
       if (p > 0) {
-        await page.locator('.homepage-cards-arrow.is-next').click();
+        // by KEY, not a click: the pointer near a card swings its cursor-magnetic lean and skews the rects
+        await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
+        await page.keyboard.press('ArrowRight');
         await expect.poll(() => pageOf(page)).toBe(String(p));
         await page.waitForTimeout(450); // the finite flip slide
       }

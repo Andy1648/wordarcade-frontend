@@ -103,6 +103,13 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
                   <>
                     <span className="kb-rval-full">{sub.full}</span>
                     <span className="kb-rval-short">{sub.short}</span>
+                    {/* TILE (the 2-column desktop rail, feat/menu-rail-2col): the NUMBER big, its unit small under it */}
+                    {sub.big != null && (
+                      <span className="kb-rval-tile">
+                        <span className="kb-rval-big">{sub.big}</span>
+                        <span className="kb-rval-unit">{sub.unit}</span>
+                      </span>
+                    )}
                   </>
                 ) : (
                   sub
