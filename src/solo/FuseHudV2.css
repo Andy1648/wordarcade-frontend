@@ -1,0 +1,548 @@
+/* FuseHudV2.css — SEASON 2 FUSE, version A "WICK" (claude/mockups/v2/Fuse.dc.html). Grid:
+     top    : exit · FUSE · help · [stack][wins]
+     lives  | plate + typed word | ×5 badge        (lives hug the LEFT edge, the badge the RIGHT edge)
+     wick   : the fuse line across the whole card, the spark riding its burning end
+     strip  : the 26 letters on the floor
+   No centre popups, no infinite animation. Colours are the mockup's. */
+
+.fz2 {
+  /* the type sizes this HUD uses (perf/typeScale.test.js: every font-size goes through a --fs-* token) */
+  --fs-fz1: clamp(18px, 2.4vh, 24px);
+  --fs-fz2: 13px;
+  --fs-fz3: clamp(26px, 5.6vh, 40px);
+  --fs-fz4: 68cqh;
+  --fs-fz5: 58cqh;
+  --fs-fz6: clamp(13px, 2.2vh, 16px);
+  --fs-fz7: 30cqw;
+  --fs-fz8: clamp(20px, 5vh, 36px);
+  --fs-fz9: clamp(24px, 6vh, 46px);
+  --fs-fz10: clamp(16px, 3.4vh, 24px);
+  --fs-fz11: clamp(24px, 6vh, 40px);
+  --fs-fz12: clamp(13px, 3.6vh, 24px);
+  --fs-fz13: 14px;
+  --fs-fz14: 18px;
+  --fs-fz15: 22px;
+  --fs-fz16: 16px;
+
+  --fz-yel: #ffe94a;
+  --fz-gold: #ffc23d;
+  --fz-hot: #ff3d7f;
+  --fz-vio: #b04bff;
+  --fz-side: clamp(118px, 12vw, 200px);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: var(--fz-side) minmax(0, 1fr) var(--fz-side);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'top top top'
+    'lives mid badge'
+    'wick wick wick'
+    'strip strip strip';
+  overflow: hidden;
+  font-family: 'Space Mono', monospace;
+  color: #fff;
+}
+
+/* ---- top bar ---- */
+.fz2-top {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.4vw, 18px);
+  padding: clamp(8px, 1.6vh, 14px) clamp(12px, 1.6vw, 22px);
+  border-bottom: 4px solid #000;
+  background: #12071f;
+  min-width: 0;
+}
+.fz2-title {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz1);
+  color: var(--fz-yel);
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.fz2-help {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz2);
+  color: #8a76ad;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fz2-top-r {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* ---- lives (left edge) ---- */
+.fz2-lives {
+  grid-area: lives;
+  align-self: center;
+  justify-self: start;
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(10px, 2vh, 20px) 8px;
+  background: #12071f;
+  border: 5px solid #000;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 6px 6px 0 #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.4vh, 12px);
+}
+.fz2-hearts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 1.2vh, 12px);
+}
+.fz2-heart {
+  width: clamp(34px, 8vh, 58px);
+  height: clamp(34px, 8vh, 58px);
+  overflow: visible;
+}
+.fz2-heart path:first-child {
+  fill: #12071f;
+  stroke: #000;
+}
+.fz2-heart.is-full path:first-child {
+  fill: var(--fz-hot);
+}
+.fz2-words {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  gap: 2px;
+}
+.fz2-words b {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: var(--fs-fz3);
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+}
+.fz2-words span {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz2);
+  color: #8a76ad;
+}
+.fz2-words .fz2-best {
+  color: #c9b8e8;
+}
+
+/* ---- middle: plate + typed word ---- */
+.fz2-mid {
+  grid-area: mid;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.6vh, 16px);
+  padding: clamp(6px, 1.6vh, 18px) clamp(10px, 2vw, 28px) 0;
+}
+.fz2-plate {
+  width: min(560px, 100%, calc(33vh * 560 / 220));
+  aspect-ratio: 560 / 220;
+  flex: 0 1 auto;
+  min-height: 0;
+  position: relative;
+}
+.fz2-plate-in {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+}
+.fz2-plate svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.fz2-plate-fill {
+  fill: #2a1748;
+}
+.fz2-plate-edge {
+  fill: var(--fz-vio);
+}
+.fz2.is-frenzy .fz2-plate-fill { fill: #3a2408; }
+.fz2.is-frenzy .fz2-plate-edge { fill: var(--fz-gold); }
+.fz2.is-clutch .fz2-plate-fill { fill: #3a0b24; }
+.fz2.is-clutch .fz2-plate-edge { fill: var(--fz-hot); }
+.fz2-frag {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz4);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--fz-yel);
+  -webkit-text-stroke: 0.07em #000;
+  paint-order: stroke fill;
+  text-shadow: 0.05em 0.05em 0 #000;
+}
+.fz2-frag.is-3 {
+  font-size: var(--fs-fz5);
+}
+.fz2.is-clutch .fz2-frag {
+  color: var(--fz-hot);
+}
+.fz2-type {
+  width: min(620px, 100%);
+}
+.fz2 .solo-reason {
+  min-height: 1.2em;
+  margin: 0;
+}
+.fz2 .teach-strip {
+  max-width: min(620px, 100%);
+}
+
+/* ---- ×5 badge (right edge) ---- */
+.fz2-badge {
+  grid-area: badge;
+  align-self: center;
+  justify-self: end;
+  width: 100%;
+  box-sizing: border-box;
+  background: #12071f;
+  border: 5px solid #000;
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -6px 6px 0 #000;
+}
+.fz2-badge.is-frenzy {
+  background: var(--fz-gold);
+}
+.fz2-badge-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(2px, 0.8vh, 8px);
+  padding: clamp(8px, 1.8vh, 16px) 6px;
+  text-align: center;
+}
+.fz2-badge-top {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz6);
+  color: #c9b8e8;
+}
+.fz2-badge.is-frenzy .fz2-badge-top { color: #000; }
+.fz2-ring {
+  position: relative;
+  width: min(100%, clamp(84px, 24vh, 172px));
+  aspect-ratio: 1;
+  container-type: inline-size;
+}
+.fz2-ring svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.fz2-ring .is-on { stroke: var(--fz-vio); }
+.fz2-ring .is-off { stroke: #2a1748; }
+.fz2-badge.is-frenzy .fz2-ring .is-on { stroke: var(--fz-gold); }
+.fz2-x5 {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz7);
+  color: #3a2160;
+  -webkit-text-stroke: 0.08em #000;
+  paint-order: stroke fill;
+}
+.fz2-badge.is-frenzy .fz2-x5 { color: var(--fz-yel); }
+.fz2-badge-big {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz8);
+  line-height: 1;
+  color: #d88bff;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+}
+.fz2-badge.is-frenzy .fz2-badge-big { color: #fff; font-size: var(--fs-fz9); }
+.fz2-badge-sub {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz2);
+  line-height: 1.2;
+  color: #8a76ad;
+}
+.fz2-badge.is-frenzy .fz2-badge-sub { color: #000; }
+
+/* ---- the fuse line across the card ---- */
+.fz2-wick {
+  grid-area: wick;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(22px, 5vh, 46px) clamp(16px, 2.4vw, 32px) clamp(8px, 2vh, 18px);
+}
+.fz2-dock {
+  position: absolute;
+  left: clamp(16px, 2.4vw, 32px);
+  top: 2px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz2);
+  color: #000;
+  background: var(--fz-gold);
+  border: 3px solid #000;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+.fz2-wick-track {
+  position: relative;
+  flex: 1;
+  height: 16px;
+  background: #12071f;
+  border: 4px solid #000;
+  border-radius: 8px;
+}
+.fz2-wick-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  background: var(--fz-yel);
+  border-radius: 4px;
+}
+.fz2-wick.is-warm .fz2-wick-fill { background: var(--fz-gold); }
+.fz2-wick.is-clutch .fz2-wick-fill { background: var(--fz-hot); }
+/* the spark rides a full-width carrier: translateX(f × 100%) of its OWN width = the track width, no layout read */
+.fz2-wick-run {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.fz2-spark {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: clamp(34px, 6vh, 44px);
+  height: clamp(34px, 6vh, 44px);
+  transform: translate(-50%, -50%);
+  fill: var(--fz-gold);
+  overflow: visible;
+}
+.fz2-wick.is-clutch .fz2-spark { fill: var(--fz-hot); width: clamp(42px, 8vh, 56px); height: clamp(42px, 8vh, 56px); }
+.fz2-secs {
+  position: absolute;
+  left: 22px;
+  bottom: calc(100% + 10px);
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz10);
+  color: #c9b8e8;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+/* past half-way the readout sits on the spark's LEFT (the carrier's left edge IS the spark) */
+.fz2-secs.is-left {
+  left: 0;
+  transform: translateX(calc(-100% - 22px));
+}
+.fz2-wick.is-warm .fz2-secs { color: var(--fz-gold); }
+.fz2-wick.is-clutch .fz2-secs { color: var(--fz-hot); font-size: var(--fs-fz11); }
+
+/* ---- the 26 letters on the floor ---- */
+.fz2-strip {
+  grid-area: strip;
+  box-sizing: border-box;
+  padding: 8px clamp(16px, 2vw, 26px) clamp(10px, 2vh, 18px);
+  padding-right: max(clamp(16px, 2vw, 26px), 64px); /* the audio cluster's corner (NO ORPHAN FIXED UI) */
+  border-top: 4px solid #000;
+  background: #12071f;
+  min-width: 0;
+}
+.fz2-strip-n {
+  display: inline-block;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz2);
+  color: #8a76ad;
+  margin-bottom: 6px;
+}
+.fz2-strip-n b {
+  font-weight: 400;
+  color: var(--fz-yel);
+}
+.fz2-strip.is-frenzy .fz2-strip-n b { color: var(--fz-gold); }
+.fz2-tiles {
+  display: grid;
+  grid-template-columns: repeat(26, minmax(0, 1fr));
+  gap: clamp(3px, 0.5vw, 8px);
+}
+.fz2-tile {
+  height: clamp(30px, 8vh, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz12);
+  background: #1a0b2e;
+  color: #5d4a78;
+  border: 3px solid #000;
+  border-radius: 6px;
+}
+.fz2-tile.is-frag { color: #d88bff; }
+.fz2-tile.is-lit {
+  background: var(--fz-yel);
+  color: #000;
+  box-shadow: 3px 3px 0 #000;
+  transform: translateY(-4px);
+}
+.fz2-strip.is-frenzy .fz2-tile.is-lit { background: var(--fz-gold); }
+
+/* ---- CLUTCH: hazard bands on the two side edges ---- */
+.fz2-haz {
+  /* an absolute grid child: its containing block is rows 2..end, so the bands start under the top bar */
+  position: absolute;
+  grid-row: 2 / -1;
+  grid-column: 1 / -1;
+  top: 0;
+  bottom: 0;
+  width: clamp(16px, 2vw, 28px);
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+.fz2-haz--l { left: 0; border-right: 4px solid #000; }
+.fz2-haz--r { right: 0; border-left: 4px solid #000; }
+
+/* ---- a moment's bonus, said on the left edge over the fuse line ---- */
+.fz2-gain {
+  grid-area: wick;
+  align-self: start;
+  justify-self: start;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: clamp(18px, 2.4vw, 30px);
+  padding: 4px 12px;
+  background: var(--fz-hot);
+  border: 4px solid #000;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 4px 4px 0 #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-fz13);
+  color: #000;
+  pointer-events: none;
+}
+.fz2-gain--frenzy {
+  background: var(--fz-gold);
+}
+.fz2-gain b {
+  font-weight: 400;
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+
+.fz2-rare {
+  grid-area: wick;
+  align-self: start;
+  justify-self: end;
+  z-index: 6;
+  margin-right: clamp(18px, 2.4vw, 30px);
+  padding: 2px 12px;
+  background: #12071f;
+  border: 4px solid #000;
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -4px 4px 0 #000;
+  font-family: 'Bungee', sans-serif;
+  font-size: var(--fs-fz14);
+  text-transform: uppercase;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+/* the shared feel layer (tier slam, tags, LV chip, LUCKY) hangs in the open floor under the input, off-centre */
+.fz2 ~ .solo-feel,
+.fz2 ~ .solo-lucky {
+  --sv2-feel-x: 24%;
+  --sv2-feel-y: 71%;
+}
+
+/* ---- short windows (1280×551): tighten the floor + the plate ---- */
+@media (max-height: 600px) {
+  .fz2-wick { padding-top: 30px; padding-bottom: 6px; }
+  .fz2-strip { padding-top: 4px; padding-bottom: 8px; }
+  .fz2-strip-n { margin-bottom: 3px; }
+  .fz2-tile { height: clamp(28px, 6.6vh, 40px); }
+}
+
+/* ---- phones: lives + badge share a row, the strip is two rows of 13 ---- */
+@media (max-width: 699px) {
+  .fz2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'top top'
+      'lives badge'
+      'mid mid'
+      'wick wick'
+      'strip strip';
+  }
+  .fz2-help { display: none; }
+  .fz2-lives {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 10px;
+    padding: 8px 10px;
+  }
+  .fz2-hearts { flex-direction: row; gap: 4px; }
+  .fz2-heart { width: 32px; height: 32px; }
+  .fz2-badge { margin-top: 10px; }
+  .fz2-badge-in {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px 8px;
+    padding: 8px 6px;
+  }
+  .fz2-ring { width: 64px; }
+  .fz2-badge-top { width: 100%; }
+  .fz2-badge-sub { display: none; }
+  .fz2-badge-big, .fz2-badge.is-frenzy .fz2-badge-big { font-size: var(--fs-fz15); }
+  .fz2-plate { width: min(100%, 340px); }
+  .fz2-tiles { grid-template-columns: repeat(13, minmax(0, 1fr)); }
+  .fz2-tile { height: 34px; font-size: var(--fs-fz16); }
+  .fz2-strip { padding-right: 64px; }
+  .fz2 ~ .solo-feel,
+  .fz2 ~ .solo-lucky {
+    --sv2-feel-x: 50%;
+    --sv2-feel-y: 70%;
+  }
+}

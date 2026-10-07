@@ -35,6 +35,10 @@ import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import NearMiss from '../components/NearMiss.jsx';
 import poolsRaw from './fragmentPools.json';
 import { formatNum } from '../format.js';
+import { SEASON2 } from '../progress/season.js';
+import { CLUTCH_MS, FRENZY_MS } from '../progress/frenzy.js';
+import { FUSE_MAX_LIVES } from './fuse.js';
+import FuseHudV2 from './FuseHudV2.jsx';
 
 const ACCENT = '#FFE94A'; // yellow (per-mode accent; CHAIN is teal #2EFFE0)
 
@@ -382,11 +386,63 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       : { main: 'hype', tags: [], showRarity: false, labels: [] }
   );
 
+  // SEASON 2 (P10 10b): nothing pops in the centre — the FRENZY start SLAMS the ×5 badge on the right edge and a
+  // CLUTCH word flashes the edge hazard bands. The moments still hold the shared queue for their beat, then free it.
+  // (Both bonuses are still paid + itemised exactly as before: the toast row now, the receipt line at run end.)
+  const burstKey = burst ? burst.key : 0;
+  const clutchKey = clutch ? clutch.key : 0;
+  // The bonus each moment paid is said ON THE EDGE for a beat (its own line — the S2 toasts are purged, P7).
+  const [edgeGain, setEdgeGain] = useState(null); // { key, kind: 'clutch'|'frenzy', bonus, leftMs }
+  useEffect(() => {
+    if (!SEASON2 || !burstKey) return undefined;
+    setEdgeGain({ key: burstKey, kind: 'frenzy', bonus: burst.bonus, started: burst.started });
+    const t = setTimeout(endBurst, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [burstKey]);
+  useEffect(() => {
+    if (!SEASON2 || !clutchKey) return undefined;
+    setEdgeGain({ key: clutchKey, kind: 'clutch', bonus: clutch.bonus, leftMs: clutch.leftMs });
+    const t = setTimeout(endClutch, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clutchKey]);
+  const edgeGainKey = edgeGain ? edgeGain.key : 0;
+  useEffect(() => {
+    if (!edgeGainKey) return undefined;
+    const t = setTimeout(() => setEdgeGain(null), 2200);
+    return () => clearTimeout(t);
+  }, [edgeGainKey]);
+  const v2 = SEASON2
+    ? (parts) => (
+        <FuseHudV2
+          parts={parts}
+          frag={s.fragment}
+          lives={s.lives}
+          maxLives={FUSE_MAX_LIVES}
+          words={s.wordsSolved}
+          best={g.best}
+          used={s.lettersUsed}
+          clock={{ remaining: g.remaining, tMax: g.tMax, armed: g.armed }}
+          clutchMs={CLUTCH_MS}
+          dock={s.shortPenalty ? `SHORT WORD · FUSE −${Math.round((1 - s.shortFactor) * 100)}%` : ''}
+          frenzyMs={frenzy.ms}
+          frenzyTotalMs={FRENZY_MS}
+          mult={FRENZY_MULT}
+          minutes={frenzyMinutes()}
+          slamKey={burstKey}
+          clutchFlash={clutchKey}
+          gain={edgeGain}
+          rare={fuseSlot.showRarity && fuseRarity && fuseRarity.announce ? { key: s.wordsSolved, band: fuseRarity.band, color: fuseRarity.color } : null}
+        />
+      )
+    : null;
+
   return (
     <>
-    {fuseSlot.showRarity && <RarityFlash key={s.wordsSolved} rarity={fuseRarity} />}
-    {burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={endBurst} />}
-    {clutch && <ClutchBurst key={clutch.key} leftMs={clutch.leftMs} bonus={clutch.bonus} onDone={endClutch} />}
+    {!SEASON2 && fuseSlot.showRarity && <RarityFlash key={s.wordsSolved} rarity={fuseRarity} />}
+    {!SEASON2 && burst && <FrenzyBurst key={burst.key} bonus={burst.bonus} started={burst.started} onDone={endBurst} />}
+    {!SEASON2 && clutch && <ClutchBurst key={clutch.key} leftMs={clutch.leftMs} bonus={clutch.bonus} onDone={endClutch} />}
     <SoloShell
       mode="fuse"
       accent={ACCENT}
@@ -443,6 +499,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       }}
       onExit={onExit}
       offerMenu={offerMenu}
+      v2={v2}
+      v2Mark={s.fragment}
     />
     </>
   );
