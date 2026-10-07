@@ -87,7 +87,36 @@ export function formatNumParts(n) {
   return { num: sign + str, suffix: SUFFIXES[tier], exact: false };
 }
 
+// NUMBER STYLE (P9d settings, claude/mockups/v2/RoomSettings.dc.html): 'short' (1.2M — the default, the rule above) or
+// 'full' (1,200,000 — every digit, grouped). FULL stops at FULL_MAX (a billion): past it a number is abbreviated in
+// either style, because a 13-digit figure does not fit any HUD slot. Read once at load, then set live by the settings
+// row; a screen re-renders on its next state change (no per-frame read). Stored as `taw.numStyle`.
+export const NUM_STYLE_KEY = 'taw.numStyle';
+export const FULL_MAX = 1e9;
+let numStyle = (() => {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem(NUM_STYLE_KEY) === 'full' ? 'full' : 'short';
+  } catch {
+    return 'short';
+  }
+})();
+export function getNumberStyle() {
+  return numStyle;
+}
+export function setNumberStyle(style) {
+  numStyle = style === 'full' ? 'full' : 'short';
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(NUM_STYLE_KEY, numStyle);
+  } catch {
+    /* blocked storage: the style holds for this page only */
+  }
+  return numStyle;
+}
+
 export function formatNum(n) {
+  if (numStyle === 'full' && Number.isFinite(n) && Math.abs(n) < FULL_MAX) {
+    return (n < 0 ? '-' : '') + grouped(Math.round(Math.abs(n)));
+  }
   const p = formatNumParts(n);
   return p.num + p.suffix;
 }

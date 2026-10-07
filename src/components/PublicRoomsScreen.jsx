@@ -13,6 +13,9 @@ import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import useFitZoom from '../hooks/useFitZoom';
 import './PublicRoomsScreen.css';
+import './kit/tokens.css';
+import './PublicRoomsScreenV2.css';
+import { SEASON2 } from '../progress/season';
 
 const MAX_NAME_LENGTH = 20;
 const ROOM_CODE_LENGTH = 5;
@@ -140,7 +143,7 @@ export default function PublicRoomsScreen({
   const isEmpty = !rooms || rooms.length === 0;
 
   return (
-    <div className="browser-wrap">
+    <div className="browser-wrap" data-skin={SEASON2 ? 'v2' : undefined}>
       <div className="browser-box" ref={boxRef}>
         <div className="browser-header">
           <button
@@ -225,6 +228,7 @@ export default function PublicRoomsScreen({
             disabled={!!joiningCode}
           >
             JOIN
+            {SEASON2 ? <span className="browser-code-count">{codeInput.length}/{ROOM_CODE_LENGTH}</span> : null}
           </button>
         </div>
 

@@ -1,0 +1,118 @@
+/* SettingsPanel.css — the v2 SETTINGS rows (RoomSettings.dc.html). Flat fills, black ink, hard offset shadows. */
+.sp { display: flex; flex-direction: column; gap: 10px; width: min(560px, calc(100vw - 72px)); } /* the popover adds padding + border */
+.sp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  box-sizing: border-box;
+  padding: 8px 12px 8px 14px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-left: 10px solid var(--sp-c);
+  box-shadow: 5px 5px 0 #000;
+  text-align: left;
+}
+.sp-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sp-label { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: #fff; line-height: 1.1; }
+.sp-sub { font-family: 'Space Mono', monospace; text-transform: uppercase; font-size: var(--fs-k13); color: #c9b8e8; }
+.sp-sub b { color: #FFC23D; }
+.sp-ctl { flex: none; display: flex; align-items: center; gap: 10px; }
+.sp-bars { display: flex; align-items: flex-end; gap: 3px; height: 44px; }
+.sp-bar {
+  width: 18px;
+  min-height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.sp-bar::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: var(--sp-h);
+  box-sizing: border-box;
+  background: #0d0618;
+  border: 3px solid #000;
+}
+.sp-bar.is-on::before { background: var(--sp-c, #FFE94A); }
+.sp-row .sp-bar.is-on::before { background: #FFC23D; }
+.sp-val { min-width: 40px; text-align: right; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); color: #FFE94A; }
+.sp-switch {
+  min-height: 44px;
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  background: #0d0618;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+}
+.sp-switch-k { min-width: 56px; display: grid; place-items: center; padding: 0 8px; color: #8a7aa8; }
+.sp-switch-box { width: 44px; display: grid; place-items: center; background: #c9b8e8; border-left: 4px solid #000; color: #000; }
+.sp-switch.is-on .sp-switch-k { background: var(--sp-c); color: #000; }
+.sp-switch.is-on .sp-switch-box { background: #fff; }
+.sp-seg { display: flex; border: 4px solid #000; box-shadow: 4px 4px 0 #000; }
+.sp-seg-b {
+  min-height: 44px;
+  min-width: 72px;
+  padding: 0 10px;
+  background: #0d0618;
+  border: 0;
+  cursor: pointer;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k13);
+  color: #c9b8e8;
+}
+.sp-seg-b + .sp-seg-b { border-left: 4px solid #000; }
+.sp-seg-b.is-on { background: #FFC23D; color: #000; }
+.sp-switch:active,
+.sp-seg-b:active,
+.sp-bar:active { transform: translate(2px, 2px); }
+
+@media (max-width: 480px) {
+  .sp-row { flex-wrap: wrap; }
+  .sp-ctl { width: 100%; justify-content: flex-end; }
+}
+
+/* SHORT windows (a 1366 laptop at 125%): the five rows tighten so the sheet fits without a scrollbar */
+@media (max-height: 700px) {
+  .sp { gap: 6px; }
+  .sp-row { min-height: 50px; padding-top: 3px; padding-bottom: 3px; }
+  .sp-bars { height: 44px; }
+}
+
+/* the SHEET (season 2's sound-control popover): portalled to <body>, hung from the top-right edge, above every layer */
+.sp-sheet {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #12071f;
+  border: 5px solid #000;
+  box-shadow: 8px 8px 0 #000;
+}
+.sp-close {
+  align-self: flex-end;
+  min-height: 44px;
+  padding: 0 16px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+  color: #fff;
+}

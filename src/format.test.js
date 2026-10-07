@@ -166,3 +166,23 @@ test('the streak ladder survives formatMultExact and does NOT survive formatMult
     assert.notEqual(formatMult(m), String(m));
   }
 });
+
+// ---- NUMBER STYLE (P9d settings) ----
+test('number style: FULL prints every digit (grouped) below a billion; SHORT is the default; past FULL_MAX both abbreviate', async () => {
+  const { formatNum: f, setNumberStyle, getNumberStyle, FULL_MAX } = await import('./format.js');
+  assert.equal(getNumberStyle(), 'short');
+  assert.equal(f(1200000), '1.2M');
+  setNumberStyle('full');
+  try {
+    assert.equal(f(1200000), '1,200,000');
+    assert.equal(f(-45678), '-45,678');
+    assert.equal(f(999), '999');
+    assert.equal(f(1.6), '2');
+    assert.equal(f(FULL_MAX - 1), '999,999,999');
+    assert.equal(f(FULL_MAX), '1B');
+    assert.equal(f(Infinity), '∞');
+  } finally {
+    setNumberStyle('short');
+  }
+  assert.equal(f(1200000), '1.2M');
+});
