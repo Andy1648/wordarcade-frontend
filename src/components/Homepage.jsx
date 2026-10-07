@@ -1234,7 +1234,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       <span className="hp-rate-k">GAMES</span> +{formatNum(gameLetterXp)} XP<span className="hp-per-u"> / LETTER</span>
     </span>
   );
-  const gearSlot = markShown ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
+  // the phone's row is 360px wide: the menu key rate big, the game rate small after it
+  const perLetterCompact = (
+    <span className="hp-per hp-rate">
+      +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY · GAMES +{formatNum(gameLetterXp)} / LETTER</span>
+    </span>
+  );
+  // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
+  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
@@ -1284,7 +1291,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
               : null}
             xpBar={xpBar}
-            perLetter={perLetter}
+            perLetter={perLetterCompact}
             markChip={markChip}
             wins={wins}
             gems={markShown ? gems : null}
@@ -1322,7 +1329,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           {xpBar}
           <div className="hp-perrow">
             {perLetter}
-            {/* the worn mark lives in the rail's YOUR GEAR slot now (feat/menu-perrow) — the phone keeps its chip */}
+            {/* the worn mark lives in the rail's YOUR GEAR slot on the paged (2-column) menu (feat/menu-perrow); the
+                narrower desktop rail and the phone keep the chip */}
+            {!isPagedMenu && markChip}
             {/* v3 (SEASON2): the rank (KEYMASH … by rebirths, then stars) is a season-2 headline — LABELLED, so a
                 newcomer knows the word is a rank (Andy oct6: nobody may be confused) */}
             {SEASON2 && <span className="menu-xp-rank hp-rank"><span className="hp-rank-k">RANK</span>{rankTitle(xpProgress.level)}</span>}

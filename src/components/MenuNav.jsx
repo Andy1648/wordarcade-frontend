@@ -11,8 +11,11 @@
 import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
-import MarkBadge from './MarkBadge.jsx';
+import { lazy, Suspense } from 'react';
 import { CARD_RAR } from './markCard/palette.js';
+// The cog + glyph art is the INDEX chunk's (MarkBadge, ~11 KB): the gear slot loads it only once a mark is worn —
+// payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
+const MarkBadge = lazy(() => import('./MarkBadge.jsx'));
 
 /** Focus the control `id` inside `root` (App's overlay-return a11y — see Homepage). */
 export function focusNav(root, id) {
@@ -82,7 +85,6 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
       {gems != null && <KitPill kind="gems" value={gems} className="menu-gems-chip" />}
       {extra}
       <span className="hp-rail-gap" aria-hidden="true" />
-      {foot}
       {RAIL.map(({ id, label, tone }) => {
         const it = items[id];
         if (!it) return null;
@@ -109,6 +111,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
           />
         );
       })}
+      {foot}
     </nav>
   );
 }
@@ -132,7 +135,11 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
     >
       <span className="hp-gear-label">YOUR GEAR</span>
       <span className="hp-gear-body">
-        {mark ? <MarkBadge mark={mark} size={56} className="hp-gear-cog" /> : <span className="hp-gear-hole" aria-hidden="true" />}
+        {mark ? (
+          <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
+            <MarkBadge mark={mark} size={56} className="hp-gear-cog" />
+          </Suspense>
+        ) : <span className="hp-gear-hole" aria-hidden="true" />}
         <span className="hp-gear-text">
           <span className="hp-gear-big menu-mark-name">{mark ? mark.blurb || mark.name : 'NONE'}</span>
           <span className="hp-gear-sub">{mark ? `${mark.name} · ${String(mark.tier).toUpperCase()}` : 'ROLL FOR ONE'}</span>
