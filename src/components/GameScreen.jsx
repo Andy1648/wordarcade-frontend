@@ -3,7 +3,6 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import { lazyWithReload } from '../lib/chunkReload';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
-import KoHero from './KoHero';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
@@ -14,9 +13,13 @@ import { exampleFor } from '../categoryExamples';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
+import ResultsCard from './results/ResultsCard.jsx';
+import { placementOrder, xpBetween } from './results/resultsModel.js';
+import { SEASON2, V3 } from '../progress/season';
+import { progressOf, loadProgress, need as levelNeed, getRebirths } from '../progress/xp';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import { exampleContaining } from '../progress/teachExample.js';
-import { WordPayout, RoundPayout } from './PayoutBreakdown';
+import { WordPayout } from './PayoutBreakdown';
 // THE STANDING STACK. The per-word receipt only exists after a word lands, so the rail was empty
 // for the first words of every round and said nothing about the multipliers the player had built.
 import LiveStack from './LiveStack';
@@ -1259,276 +1262,7 @@ function MissedAnswers({ answers }) {
   );
 }
 
-/**
- * End-of-game statistics panel for Word Bomb, shown on the game-over overlay
- * between the winner announcement and the action buttons. Three blocks:
- *   - GAME SUMMARY  : total words, duration, total timeouts
- *   - PER-PLAYER    : a card per player (words, longest, avg length, timeouts),
- *                     sorted by words played descending
- *   - AWARDS        : fun superlatives, only shown when there's a clear winner
- *
- * All of its data comes from the gameStats object accumulated in App.jsx; the
- * `players` roster (final standings) seeds the per-player rows so everyone
- * appears even if they never played a word.
- */
-/**
- * GAME STATS behind one tap WHEN THE CARD WOULD NOT FIT (feat/ko-screen).
- *
- * A phone card is one column — K.O. hero, the word you missed, the payout breakdown, highlights,
- * summary, a row per player, then REMATCH — ~1100px of card in 788px of window. And a 4-player card
- * on a 1280x551 laptop (a 1366 screen at 125% scaling) has ~1265px of content for ~340px of column.
- * So the per-player breakdown and the highlights fold into this <details>:
- *   - on a PHONE (<= 899px wide) it always starts closed;
- *   - on a LAPTOP it starts open, and ONE measurement — at mount and again once the fonts have
- *     loaded, never per frame — closes it and marks the card compact (data-ko-compact, which also
- *     moves the highlights in here) only if the card actually overflows.
- * The payout breakdown never folds: nothing about WINS is ever hidden.
- */
-function GameOverBreakdown({ children }) {
-  const ref = useRef(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-    const phone = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 899px)').matches;
-    el.open = !phone;
-    if (phone) return undefined;
-    let live = true;
-    const check = () => {
-      if (!live || !el.isConnected) return;
-      const card = el.closest('.game-over-card');
-      if (!card || card.dataset.koCompact) return;
-      if (card.scrollHeight - card.clientHeight > 0) {
-        card.dataset.koCompact = '1';
-        el.open = false;
-      }
-    };
-    check();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(check);
-    return () => { live = false; };
-  }, []);
-  return (
-    <details className="go-more" ref={ref}>
-      <summary className="go-more-toggle">GAME STATS · ALL PLAYERS</summary>
-      {children}
-    </details>
-  );
-}
-
-// `part` (feat/ko-screen): 'awards' renders only the HIGHLIGHTS; 'table' renders the game summary +
-// the per-player table; omitted, both. The laptop card puts the highlights in the money column and
-// the table in the breakdown column — split by height, so a 4-player card fits a 551px window.
-function GameOverStats({ gameStats, players, winner, playerColors = {}, staggerIn = false, reduce = true, part }) {
-  // Entrance choreography only (JUICE 03 parity) — the data/calculations below
-  // are unchanged. reduce defaults true so any caller that doesn't opt in keeps
-  // the prior static render. Reuses JUICE 03's global @keyframes (no CSS change).
-  const summaryStyle = (i) => {
-    if (reduce) return undefined; // static, visible
-    if (!staggerIn) return { opacity: 0 }; // hidden until the stagger beat
-    return {
-      animation: 'celeb-statline-in 520ms ease-out both',
-      animationDelay: `${i * JUICE.CELEBRATION.statStagger}ms`,
-    };
-  };
-  const words = gameStats.wordsPlayed || [];
-  const timeouts = gameStats.timeouts || [];
-  const skips = gameStats.skips || [];
-  const durationMs =
-    gameStats.gameEndTime && gameStats.gameStartTime
-      ? gameStats.gameEndTime - gameStats.gameStartTime
-      : 0;
-
-  // ---- Headline stats (screenshot-friendly big numbers) ----
-  // LONGEST word played across the whole table.
-  const longestWord = words.reduce(
-    (a, w) => ((w.word || '').length > a.length ? w.word : a),
-    ''
-  );
-  // FASTEST answer: the shortest gap between two consecutive accepted words (the
-  // quickest volley of the game). Needs >=2 words; words arrive in order but sort
-  // defensively by timestamp before diffing.
-  const wordTimes = words
-    .map((w) => w.timestamp)
-    .filter((t) => typeof t === 'number')
-    .sort((a, b) => a - b);
-  let fastestMs = 0;
-  for (let i = 1; i < wordTimes.length; i++) {
-    const gap = wordTimes[i] - wordTimes[i - 1];
-    if (gap > 0 && (fastestMs === 0 || gap < fastestMs)) fastestMs = gap;
-  }
-  // BEST STREAK (bestCombo): longest run of accepted words uninterrupted by a timeout or skip.
-  // Merge accepted words (+1) with the life-loss events (a break) on one timeline,
-  // ordered by timestamp, and track the longest unbroken accepted streak.
-  const timeline = [
-    ...words.map((w) => ({ t: w.timestamp || 0, hit: true })),
-    ...timeouts.map((e) => ({ t: e.timestamp || 0, hit: false })),
-    ...skips.map((e) => ({ t: e.timestamp || 0, hit: false })),
-  ].sort((a, b) => a.t - b.t);
-  let bestCombo = 0;
-  let run = 0;
-  timeline.forEach((e) => {
-    if (e.hit) {
-      run += 1;
-      if (run > bestCombo) bestCombo = run;
-    } else {
-      run = 0;
-    }
-  });
-
-  // Build a per-player accumulator seeded from the roster, then fold in each
-  // player's words and timeouts.
-  const byPlayer = new Map();
-  const ensure = (id, name) => {
-    if (!byPlayer.has(id)) byPlayer.set(id, { id, name, words: [], timeouts: 0, skips: 0 });
-    return byPlayer.get(id);
-  };
-  (players || []).forEach((p) => ensure(p.id, p.name));
-  words.forEach((w) => ensure(w.playerId, w.playerName).words.push(w.word || ''));
-  timeouts.forEach((t) => {
-    ensure(t.playerId, t.playerName).timeouts += 1;
-  });
-  // Skips are their OWN tally (a voluntary life burn), kept distinct from
-  // timeouts so the summary never conflates the two.
-  skips.forEach((s) => {
-    ensure(s.playerId, s.playerName).skips += 1;
-  });
-
-  const perPlayer = Array.from(byPlayer.values())
-    .map((p) => {
-      const total = p.words.length;
-      const longest = p.words.reduce((a, b) => (b.length > a.length ? b : a), '');
-      const avg = total
-        ? p.words.reduce((sum, w) => sum + w.length, 0) / total
-        : 0;
-      return { id: p.id, name: p.name, count: total, longest, avg, timeouts: p.timeouts, skips: p.skips };
-    })
-    .sort((a, b) => b.count - a.count);
-
-  // ---- Awards (only shown when unambiguous) ----
-  const awards = [];
-
-  // WORDSMITH: the single longest word, as long as one player owns that length.
-  if (words.length) {
-    const maxLen = words.reduce((m, w) => Math.max(m, (w.word || '').length), 0);
-    const topWords = words.filter((w) => (w.word || '').length === maxLen);
-    const distinctOwners = new Set(topWords.map((w) => w.playerId));
-    if (distinctOwners.size === 1) {
-      awards.push({
-        key: 'wordsmith',
-        label: 'WORDSMITH',
-        name: topWords[0].playerName,
-        detail: (topWords[0].word || '').toUpperCase(),
-      });
-    }
-  }
-
-  // SPEED DEMON: most words played, only if there's a sole leader.
-  if (perPlayer.length && perPlayer[0].count > 0) {
-    const top = perPlayer[0].count;
-    const leaders = perPlayer.filter((p) => p.count === top);
-    if (leaders.length === 1) {
-      awards.push({
-        key: 'speed-demon',
-        label: 'SPEED DEMON',
-        name: leaders[0].name,
-        detail: `${top} WORDS`,
-      });
-    }
-  }
-
-  // SURVIVOR: the winner, framed as an award.
-  if (winner) {
-    awards.push({
-      key: 'survivor',
-      label: 'SURVIVOR',
-      name: winner.name,
-      detail: 'LAST ONE STANDING',
-    });
-  }
-
-  const showAwards = part !== 'table' && awards.length > 0;
-  const showTable = part !== 'awards';
-  if (!showAwards && !showTable) return null;
-
-  return (
-    <div className={`go-stats${part ? ` go-stats--${part}` : ''}`}>
-      {/* GAME SUMMARY (3+ players): ONE wrapped strip of figures, not seven tiles. The tiles were
-          three rows of 70px boxes — the single biggest reason a 4-player card ran 308px past a
-          625px window. Same seven facts, same order. */}
-      {showTable && players.length > 2 && (
-      <>
-      <div className="go-section-label">GAME SUMMARY</div>
-      <ul className="go-sumstrip">
-        <li style={summaryStyle(0)}><b><CountUp to={words.length} duration={500} /></b> WORDS</li>
-        <li style={summaryStyle(1)}><b>{longestWord ? <CountUp to={longestWord.length} duration={500} /> : '—'}</b> LONGEST</li>
-        <li style={summaryStyle(2)}><b>{fastestMs ? `${(fastestMs / 1000).toFixed(1)}s` : '—'}</b> FASTEST</li>
-        <li style={summaryStyle(3)}><b>{formatDuration(durationMs)}</b> SURVIVED</li>
-        <li style={summaryStyle(4)}><b><CountUp to={bestCombo} duration={500} /></b> BEST COMBO</li>
-        <li style={summaryStyle(5)}><b><CountUp to={timeouts.length} duration={500} /></b> TIMEOUTS</li>
-        <li style={summaryStyle(6)}><b><CountUp to={skips.length} duration={500} /></b> SKIPS</li>
-      </ul>
-      </>
-      )}
-
-      {showAwards && (
-        <>
-          <div className="go-section-label">HIGHLIGHTS</div>
-          <div className="go-awards">
-            {awards.map((a) => (
-              <div key={a.key} className={`go-award ${a.key}`}>
-                <span className="go-award-label">{a.label}</span>
-                <span className="go-award-name">{a.name}</span>
-                {a.detail && <span className="go-award-detail">{a.detail}</span>}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* PLAYERS: a real TABLE — the column names once, one row per player. It was a card per
-          player with its own five labels, which is five label rows per player; at four players
-          that block alone was taller than a laptop window. The longest word rides under the name
-          (it is a word, not a number, and would widen a column). */}
-      {showTable && (
-      <>
-      {/* CLUTTER PASS: no "PLAYERS" label — the table's own PLAYER column header names it. */}
-      <table className="go-ptable">
-        <thead>
-          <tr>
-            <th scope="col">PLAYER</th>
-            <th scope="col">WORDS</th>
-            <th scope="col">AVG LEN</th>
-            <th scope="col">TIMEOUTS</th>
-            <th scope="col">SKIPS</th>
-          </tr>
-        </thead>
-        <tbody>
-          {perPlayer.map((p) => {
-            const pc = resolvePlayerColor(playerColors, p.id);
-            return (
-              <tr key={p.id} style={{ '--pc': pc.color, '--pc-dark': pc.dark }}>
-                <th scope="row" className="go-pt-name">
-                  <span className="go-pt-who">
-                    <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="go-player-name-text" translate="no">{p.name}</span>
-                  </span>
-                  {p.longest ? (
-                    <span className="go-pt-longest">LONGEST <b translate="no">{p.longest.toUpperCase()}</b></span>
-                  ) : null}
-                </th>
-                <td data-label="WORDS"><CountUp to={p.count} duration={500} /></td>
-                <td data-label="AVG LEN">{p.count ? p.avg.toFixed(1) : '—'}</td>
-                <td data-label="TIMEOUTS"><CountUp to={p.timeouts} duration={500} /></td>
-                <td data-label="SKIPS"><CountUp to={p.skips} duration={500} /></td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      </>
-      )}
-    </div>
-  );
-}
+// (P9b: the old GameOverStats / GameOverBreakdown columns were replaced by results/ResultsCard.jsx.)
 
 /**
  * Watches lastWordResult and reacts to each new result:
@@ -2908,6 +2642,22 @@ export default function GameScreen({
   const gemsSince = useGemsRound(gameNonce);
   const gemElimRef = useRef([]);
   useEffect(() => { gemElimRef.current = []; }, [gameNonce]);
+  // RESULTS (P9b): the level bar where this game STARTED (per gameNonce), so the results card can say the XP the game
+  // added and the levels it crossed. Read-only (progressOf/loadProgress) — nothing here writes progress.
+  const xpStartRef = useRef(null);
+  useEffect(() => {
+    try { xpStartRef.current = progressOf(loadProgress()); } catch { xpStartRef.current = null; }
+  }, [gameNonce]);
+  const resultsXp = useMemo(() => {
+    if (!gameOver) return null;
+    try {
+      const to = progressOf(loadProgress());
+      const from = xpStartRef.current || to;
+      return { from, to, gained: xpBetween(from, to, levelNeed) };
+    } catch {
+      return null;
+    }
+  }, [gameOver]);
   useEffect(() => {
     for (const p of (gameState && gameState.players) || []) {
       if ((p.eliminated || p.lives <= 0) && !gemElimRef.current.includes(p.id)) gemElimRef.current.push(p.id);
@@ -4115,125 +3865,77 @@ export default function GameScreen({
               <WinnerPopup key={gameNonce} pay={winnerPay} />
             </Suspense>
           )}
-          <div ref={goCardRef} className={`game-over-card ${iWon ? 'go-card-win' : 'go-card-loss'}`}>
-            {/* ===== COLUMNS ON A LAPTOP, ONE STACK ON A PHONE =========================
-                Measured on a live round: this card was scrollHeight 1388 inside
-                clientHeight 759 - 629px of it, including the entire PLAYERS breakdown
-                and (at 1366x625, where 837px was hidden) the REMATCH button itself,
-                was reachable only by scrolling a card most players never think to
-                scroll. It is not one thing that got too tall; it is ten blocks in a
-                440px column, inside a window with ~900px of empty board either side.
-
-                So the card splits by JOB rather than shrinking by degrees:
-                  .go-col-main  THE VERDICT - mascot, outcome, who won, the word you
-                                could have played, the roast. What you look at first.
-                  .go-col-mid   THE MONEY - what you earned and where it came from.
-                  .go-col-side  THE BREAKDOWN - highlights and the per-player table.
-                                This is the tall one, which is why it gets its own
-                                column at >=1160px instead of riding under the money.
-                  .go-foot      THE EXITS - REMATCH / LEAVE and the other-mode row,
-                                spanning every column so they are the last line of the
-                                card and always above the fold.
-                Below 900px every .go-col is `display: contents`, so the phone card is
-                the same single stack in the same DOM order it has always been.
-                ========================================================================= */}
-            <div className="go-col go-col-main">
-            {/* The mascot's emotional reaction, large and centred above the title.
-                The wrapper owns a dedicated transform (celebrate hop / defeat
-                tremble) so it never fights the mascot's own internal layers. */}
-            {iWon ? (
-              <>
-                <div className="go-mascot-wrap win">
-                  <Mascot pose="celebrate" emote="celebrate" size={150} className="game-over-mascot" />
-                </div>
-                {/* Outcome title routes through the JUICE 03 stamp-slam. */}
-                <div className="game-over-title win" style={goTitleStyle}>YOU WIN!</div>
-              </>
-            ) : (
-              // THE K.O. SIGN (feat/ko-screen): the fight banner replaces the mascot + ELIMINATED +
-              // "RIVAL WINS" stack. It carries its own heading role and winner line.
-              <KoHero winnerName={winner ? winner.name : ''} />
-            )}
-            {/* PAUSE TO LEARN. Word Bomb ends on a FRAGMENT you could not fill, not on a word
-                you got wrong — so this is a word that WOULD have worked, derived from that last
-                fragment. Word Bomb has no client-side dictionary (the server judges it), so the
-                solo acceptance list is pulled LAZILY and only here, at game over: it never
-                touches the play path or first paint. See the loader effect above. */}
-            {/* Loss only (fine-tune oct2): "you could have played…" read as a scolding beside YOU WIN! */}
-            {!iWon && <MissedWordHold
-              key={`wb-miss-${missedWord || ''}`}
-              word={missedWord}
-              gloss={glossFor(missedWord)}
-              prompt={missCombo}
-              promptLabel="A WORD CONTAINING"
-            />}
-            {/* A random FNF-voice roast blurb under the result. */}
-            <div className="game-over-blurb">{endBlurb}</div>
-            </div>
-            {/* ===== THE MONEY COLUMN: what you earned and where it came from. ===== */}
-            <div className="go-col go-col-mid">
-            {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
-            <div className="go-earned-row">
-              <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
-              <GemsEarnedLine since={gemsSince} />
-            </div>
-            {/* ...and WHY it is that number. Andy: "I got 40k and couldn't tell where it came
-                from." Every multiplier that contributed, ranked by its share of the total. */}
-            <RoundPayout ledger={payoutLedger} />
-            {/* HIGHLIGHTS ride under the money on a laptop (feat/ko-screen): that column had
-                ~300px of empty space under the payout while the breakdown column ran off the
-                window. On a phone this slot is hidden and the highlights sit in GAME STATS below. */}
-            <div className="go-awards-slot go-awards-slot--mid">
-              <GameOverStats gameStats={gameStats} players={players} winner={winner} playerColors={playerColors} staggerIn={goStaggered} reduce={goReduce} part="awards" />
-            </div>
-            </div>
-            {/* ===== THE BREAKDOWN COLUMN: the game summary + the per-player table. ===== */}
-            <div className="go-col go-col-side">
-            <GameOverBreakdown>
-              <div className="go-awards-slot go-awards-slot--side">
-                <GameOverStats gameStats={gameStats} players={players} winner={winner} playerColors={playerColors} staggerIn={goStaggered} reduce={goReduce} part="awards" />
-              </div>
-              <GameOverStats gameStats={gameStats} players={players} winner={winner} playerColors={playerColors} staggerIn={goStaggered} reduce={goReduce} part="table" />
-            </GameOverBreakdown>
-            </div>
-            {/* ===== THE EXITS — span both columns, so they are the last line of the
-                card at every width and can never fall below the fold. ===== */}
-            <div className="go-foot">
-            <div className="game-over-actions">
-              <RebirthReadyButton onGo={onLeave} className="is-compact" />
-              {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
-                  over ANY remaining player can restart it (the server accepts a post-game
-                  rematch from any seat), so a non-host is never stranded at game-over with
-                  no way to play again — the dead "WAITING FOR HOST" cue is gone. Both
-                  players hitting REMATCH is safe (the second reset is a no-op). */}
-              <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
-                {rematchPending ? 'REMATCHING...' : 'REMATCH'}
-              </button>
-              {offerMenu ? null : (
-                <button
-                  className="game-over-leave secondary"
-                  onClick={onLeave}
-                >
-                  LEAVE
-                </button>
-              )}
-              {offerMenu ? (
-                <div className="game-over-offer">
-                  <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
-                  <button type="button" className="game-over-offer-btn" onClick={onLeave}>
-                    SEE ALL MODES
-                  </button>
-                </div>
-              ) : null}
-            </div>
-            {/* SECOND ROW (feat/solo-endgame): one ghost button pointing at a DIFFERENT unlocked
-                mode — the one played least — so game-over is a fork, not a loop back into the same
-                mode. Renders nothing when everything else is still locked. */}
-            <ClaimPrompt />
-            <NearMiss mode="word-bomb" onPlay={onRematch} disabled={rematchPending} />
-            <TryModeRow current="word-bomb" />
-            </div>
-          </div>
+          {/* ===== THE RESULTS CARD (P9b, claude/mockups/v2/Results.dc.html) =====================================
+              One big placement, the tally counting up line by line (WORDS · LETTERS → XP → WINS = BASE × the
+              multiplier chain, shown once → one line per bonus → GEMS → TOTAL), the players by placement, and a big
+              PLAY AGAIN. Replaces the K.O. sign + YOU WIN! + "WHERE YOUR WINS CAME FROM" + the stats columns. Every
+              credited win is its own line (resultsModel.tallyLines); the card only DISPLAYS what was already paid.
+              PLAY AGAIN / MENU are the old REMATCH / LEAVE: same handlers, same pending state. ===================== */}
+          {(() => {
+            const mine = (gameStats.wordsPlayed || []).filter((w) => w.playerId === myId).map((w) => String(w.word || ''));
+            const wordsBy = {};
+            for (const w of gameStats.wordsPlayed || []) wordsBy[w.playerId] = (wordsBy[w.playerId] || 0) + 1;
+            const table = placementOrder({ players, winnerId: gameOver.winnerId, elimOrder: gemElimRef.current, wordsBy }).map((r) => ({ ...r, me: r.id === myId }));
+            const meRow = table.find((r) => r.me);
+            // SEASON 2 (FINAL): the REBIRTH factor is 2^R × (1 + ★) — shown as its two FINAL chips
+            let resultsSplit = null;
+            try {
+              if (SEASON2 && V3.econ && V3.store) resultsSplit = { rebirth: V3.econ.rebirthMult(getRebirths()), star: V3.econ.starMult(V3.store.getStarsV3()) };
+            } catch { resultsSplit = null; }
+            const place = meRow ? meRow.place : iWon ? 1 : table.length;
+            const best = mine.reduce((a, w) => (w.length > a.length ? w : a), '');
+            return (
+              <ResultsCard
+                key={`rs-${gameNonce}`}
+                cardRef={goCardRef}
+                split={resultsSplit}
+                iWon={iWon}
+                place={place}
+                of={Math.max(1, table.length)}
+                winnerName={winner ? winner.name : ''}
+                modeLabel="WORD BOMB"
+                me={{ words: mine.length, letters: mine.reduce((a, w) => a + w.length, 0), best }}
+                xp={resultsXp}
+                ledger={payoutLedger}
+                wordsWins={winsEarnedTotal}
+                bonusLines={winsBonusLines}
+                gemsSince={gemsSince}
+                table={table}
+                learn={!iWon && missedWord ? (
+                  // PAUSE TO LEARN (loss only): a word that WOULD have worked for the fragment you could not fill.
+                  <MissedWordHold key={`wb-miss-${missedWord}`} word={missedWord} gloss={glossFor(missedWord)} prompt={missCombo} promptLabel="A WORD CONTAINING" />
+                ) : null}
+                extras={(
+                  <>
+                    <RebirthReadyButton onGo={onLeave} className="is-compact" />
+                    <ClaimPrompt />
+                    <NearMiss mode="word-bomb" onPlay={onRematch} disabled={rematchPending} />
+                    <TryModeRow current="word-bomb" />
+                  </>
+                )}
+                actions={(
+                  <div className="game-over-actions">
+                    {offerMenu ? (
+                      <div className="game-over-offer">
+                        <p className="game-over-offer-line">{`${MORE_MODES} MORE MODES WHERE THIS CAME FROM.`}</p>
+                        <button type="button" className="game-over-offer-btn game-over-leave" onClick={onLeave}>
+                          SEE ALL MODES
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="button" className="game-over-leave secondary" onClick={onLeave}>
+                        MENU
+                      </button>
+                    )}
+                    {/* any remaining player can restart (mp-audit MEDIUM #3); a second press is a server no-op */}
+                    <button type="button" className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                      {rematchPending ? 'STARTING...' : 'PLAY AGAIN'}
+                    </button>
+                  </div>
+                )}
+              />
+            );
+          })()}
         </div>
       )}
     </div>
