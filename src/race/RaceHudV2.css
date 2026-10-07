@@ -1,0 +1,414 @@
+/* RaceHudV2.css — SEASON 2 WORD RACE, version A (claude/mockups/v2/Race.dc.html): the RACE card's pink track as one lane
+   per racer, cars driving to a checkered finish, then WPM · the WORD tile · NEXT. Flat colours, black outlines, hard
+   offset shadows; the only motion is a car sliding when its racer scores (finite transform) and the countdown pop. */
+
+.wr-root[data-hud='v2'] {
+  /* type sizes (perf/typeScale.test.js: every font-size goes through a --fs-* token) */
+  --fs-r13: 13px;
+  --fs-r16: 16px;
+  --fs-r18: clamp(16px, 2.6vh, 18px);
+  --fs-rname: clamp(13px, 2.4vh, 17px);
+  --fs-rwpm: clamp(48px, 13vh, 112px);
+  --fs-rnext: clamp(16px, 3.6vh, 30px);
+  --fs-rword: clamp(30px, min(22vh, calc(85cqw / (var(--len, 6) * 0.85))), 130px);
+  --fs-rcount: clamp(64px, 18vh, 130px);
+  --fs-rplace: clamp(16px, 3.4vh, 24px);
+  width: min(1320px, 96vw);
+  height: calc(100dvh - 16px);
+  max-height: none;
+  padding: 10px clamp(10px, 1.6vw, 22px) 12px;
+  gap: clamp(10px, 2vh, 22px);
+  background: #0d0618;
+}
+.wr-root[data-hud='v2'] .wr-head { flex: 0 0 auto; }
+
+/* ---- the track ---- */
+.rc2-track {
+  --lane-h: clamp(26px, calc((100dvh - 360px) / var(--n)), 56px);
+  position: relative;
+  flex: 0 0 auto;
+  margin: 0 6px 8px 0;
+  background: #ff4fa3;
+  border: 6px solid #000;
+  box-shadow: 9px 9px 0 #000;
+  transform: rotate(-0.6deg);
+  overflow: hidden;
+}
+.rc2-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.rc2-lanes.wr-lanes {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+/* (keeps the live .wr-lane class for the race's hooks; every live lane style is reset here) */
+.rc2-lane.wr-lane,
+.rc2-lane.wr-lane.is-me,
+.rc2-lane.wr-lane.is-winner {
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(150px, 17vw, 230px) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+  height: var(--lane-h);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 4px dashed #1a0b2e;
+  border-radius: 0;
+}
+.rc2-lane.wr-lane:last-child { border-bottom: 0; }
+.rc2-plate {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 10px;
+  background: #1a0b2e;
+  border-right: 5px solid #000;
+}
+.rc2-lane.is-me .rc2-plate { background: #2a1748; box-shadow: inset 6px 0 0 #ffe94a; }
+.rc2-init {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--lane-h) - 14px);
+  height: calc(var(--lane-h) - 14px);
+  max-width: 38px;
+  max-height: 38px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-r16);
+  color: #000;
+  background: var(--c);
+  border: 3px solid #000;
+}
+.rc2-name {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-rname);
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc2-lane.is-me .rc2-name { color: #ffe94a; }
+.rc2-tag {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-r13);
+  color: #c9b8e8;
+}
+.rc2-count {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-r16);
+  color: var(--c);
+}
+.rc2-lane.is-left { opacity: 0.55; }
+.rc2-road {
+  position: relative;
+  min-width: 0;
+  margin-right: 46px; /* the checkered finish */
+}
+/* the car rides a full-width carrier: translateX(p × 100%) of its OWN width = p of the road */
+.rc2-run {
+  position: absolute;
+  inset: 0;
+  right: calc(var(--lane-h) * 2.2);
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+  pointer-events: none;
+}
+.rc2-car {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: calc(var(--lane-h) * 2.1);
+  height: calc(var(--lane-h) * 0.95);
+  translate: 0 -50%;
+}
+.rc2-car-svg { width: 100%; height: 100%; overflow: visible; display: block; }
+.rc2-you {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 50%;
+  translate: 0 -50%;
+  padding: 0 6px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-r13);
+  color: #ffe94a;
+  background: #1a0b2e;
+  border: 3px solid #ffe94a;
+}
+.rc2-place {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 2;
+  padding: 0 10px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-rplace);
+  color: #000;
+  background: #a9b4c8;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+}
+.rc2-place--1 { background: #ffc23d; }
+.rc2-place--2 { background: #e6ecf5; }
+.rc2-place--3 { background: #e0894a; }
+.rc2-place--done { background: #fff; font-size: var(--fs-r13); }
+.rc2-finish {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  height: 100%;
+  border-left: 5px solid #1a0b2e;
+}
+
+/* ---- the deck: WPM · WORD · NEXT ---- */
+.rc2-play.wr-play { flex: 1; min-height: 0; display: block; }
+.rc2-deck {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(150px, 22%) minmax(0, 1fr) minmax(150px, 24%);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: 'wpm tile next' 'under under under';
+  gap: 8px clamp(14px, 2.4vw, 34px);
+}
+.rc2-wpm {
+  grid-area: wpm;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  background: #1a0b2e;
+  border: 6px solid #000;
+  box-shadow: 8px 8px 0 #ff4fa3, 14px 14px 0 #000;
+}
+.rc2-wpm b {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: var(--fs-rwpm);
+  line-height: 0.95;
+  color: #ffe94a;
+  -webkit-text-stroke: 0.07em #000;
+  paint-order: stroke fill;
+  text-shadow: 0.05em 0.05em 0 #000;
+}
+.rc2-wpm-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-r18); color: #ff4fa3; }
+.rc2-acc { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-r13); color: #c9b8e8; margin-top: 4px; }
+.rc2-tile-wrap { grid-area: tile; position: relative; min-height: 0; margin: 0 12px 12px 0; }
+.rc2-tile-back {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-3deg) translate(10px, 10px);
+  background: #ff4fa3;
+  border: 6px solid #000;
+  border-radius: 12px;
+}
+.rc2-tile {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a0b2e;
+  border: 6px solid #000;
+  border-radius: 12px;
+  box-shadow: 6px 6px 0 #000;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.rc2-prog {
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  z-index: 2;
+  padding: 0 10px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-r16);
+  color: #000;
+  background: #ff4fa3;
+  border: 3px solid #000;
+  transform: skewX(-12deg);
+}
+.wr-root[data-hud='v2'] .rc2-word.wr-typeword {
+  display: flex;
+  align-items: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-rword);
+  line-height: 1;
+  -webkit-text-stroke: 0.07em #000;
+  paint-order: stroke fill;
+  text-shadow: 0.05em 0.05em 0 #000;
+  margin-top: 0.2em;
+  pointer-events: none;
+}
+.rc2-l { position: relative; color: #8a76ad; }
+.rc2-l.is-ok { color: #ffe94a; }
+.rc2-l.is-bad { color: #ff3d7f; }
+.rc2-l.is-caret::before {
+  content: '';
+  position: absolute;
+  left: -0.06em;
+  top: 10%;
+  width: 0.08em;
+  height: 80%;
+  background: #ffe94a;
+  border: 2px solid #000;
+}
+.rc2-count-n {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-rcount);
+  line-height: 1;
+  color: #ffe94a;
+  -webkit-text-stroke: 0.07em #000;
+  paint-order: stroke fill;
+}
+.rc2-done {
+  padding: 0 16px;
+  text-align: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-r18);
+  color: #ffe94a;
+}
+/* the real input lies over the whole tile (tap the tile = type), its own text invisible — the tile draws the word */
+.rc2-form { position: absolute; inset: 0; z-index: 1; }
+.rc2-form .wr-form { position: absolute; inset: 0; display: block; margin: 0; }
+.rc2-form .wr-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  font-size: var(--fs-r16);
+  color: transparent;
+  caret-color: transparent;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  cursor: text;
+}
+.rc2-form .wr-input::placeholder { color: transparent; }
+.rc2-form .wr-btn-go {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  min-height: 44px;
+}
+.rc2-next {
+  grid-area: next;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.rc2-up {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: calc(1 - var(--k, 0) * 0.18);
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-rnext);
+  line-height: 1.05;
+  color: #fff;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+.rc2-up:first-child { font-size: calc(var(--fs-rnext) * 1.25); }
+.rc2-up i {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-style: normal;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-r13);
+  color: #000;
+  -webkit-text-stroke: 0;
+  background: #ff4fa3;
+  border: 3px solid #000;
+}
+.rc2-up .wr-up { all: unset; overflow: hidden; text-overflow: ellipsis; }
+.rc2-up--flag { color: #ffe94a; font-size: var(--fs-r18); }
+.rc2-flag { width: 26px; height: 26px; border: 3px solid #000; flex: none; }
+.rc2-under {
+  grid-area: under;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 0;
+}
+.rc2-under .wr-toast,
+.rc2-under .wr-earn { margin: 0; }
+
+/* over + short: the standings card says who finished where (the live board drops its lanes here too) */
+@media (max-height: 700px) {
+  .wr-root[data-race-status='over'] .rc2-track { display: none; }
+}
+
+/* ---- short windows ---- */
+@media (max-height: 600px) {
+  .wr-root[data-hud='v2'] { gap: 8px; }
+  .rc2-track { --lane-h: clamp(24px, calc((100dvh - 330px) / var(--n)), 44px); }
+}
+
+/* ---- phones: the plate shrinks to the initial + count, the deck stacks ---- */
+@media (max-width: 699px) {
+  .rc2-lane.wr-lane, .rc2-lane.wr-lane.is-me, .rc2-lane.wr-lane.is-winner { grid-template-columns: 92px minmax(0, 1fr); }
+  .rc2-name, .rc2-tag { display: none; }
+  .rc2-plate { padding: 0 6px; justify-content: space-between; }
+  .rc2-road { margin-right: 30px; }
+  .rc2-finish { width: 26px; }
+  .rc2-you { display: none; }
+  .rc2-track { --lane-h: clamp(30px, calc((100dvh - 520px) / var(--n)), 48px); }
+  .rc2-deck {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'wpm next' 'tile tile' 'under under';
+  }
+  .rc2-wpm { --fs-rwpm: 44px; box-shadow: 5px 5px 0 #ff4fa3, 9px 9px 0 #000; padding: 6px 0; }
+  .rc2-up { --fs-rnext: 16px; }
+  .rc2-tile-wrap { min-height: 150px; }
+  .rc2-under { padding-right: 60px; flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc2-run { transition: none; }
+}
