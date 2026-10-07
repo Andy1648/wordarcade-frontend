@@ -12,7 +12,7 @@
 //     gloss; the panel must then say something true rather than a filled-in blank.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, modeEntry } from './support/menu.js';
+import { menuReady, modeEntry, revealMode } from './support/menu.js';
 
 const ME = 'me';
 
@@ -27,7 +27,7 @@ async function soloDeath(page, mode) {
   await page.goto('/?portal=1&soloms=350');
   await menuReady(page);
   await page.waitForTimeout(400);
-  await modeEntry(page, mode).click({ force: true });
+  await (await revealMode(page, mode)).click({ force: true }); // feat/menu-centre: flip to its page first
   await page.locator('.mode-dialog-btn-create').click();
   await page.locator('.solo-root:not(.is-loadstate)').waitFor({ state: 'visible' });
   // ARM THE CLOCK FIRST. A solo run's timer only starts once the player types — a run where

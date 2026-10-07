@@ -34,7 +34,7 @@ test('cards pulse on the beat, featured harder, no new loops, within the animati
       return m.a;
     };
     const featuredSel = ".game-card-magnet[data-game='word-bomb'] .game-card";
-    const normalSel = ".game-card-magnet[data-game='chain'] .game-card";
+    const normalSel = ".game-card-magnet[data-game='category-blitz'] .game-card"; // on page 1 with WORD BOMB (feat/menu-centre pages every desktop)
 
     const infiniteRest = document.getAnimations().filter(isInf).length;
     const featRest = scaleOf(featuredSel);

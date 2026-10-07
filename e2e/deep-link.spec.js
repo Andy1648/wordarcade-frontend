@@ -15,7 +15,7 @@
 //     -> taking the offer reaches the menu -> the mode is NOT locked
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuMark, menuMarkAll } from './support/menu.js';
+import { menuMark, menuMarkAll, revealMode } from './support/menu.js';
 
 const MIN_TOUCH = 44;
 
@@ -338,7 +338,7 @@ test.describe('the run ends, and the rest of the game is offered', () => {
       // THE CONTRADICTION THIS CLOSES: the menu used to tell a player who had just finished a run
       // that the mode was locked (progress/modeAccess.js). It must not.
       await expect(page.locator(`[data-game="${mode.id}"] .game-card.locked`)).toHaveCount(0);
-      await expect(page.locator(`[data-game="${mode.id}"] .game-card`)).toBeVisible();
+      await expect(await revealMode(page, mode.id)).toBeVisible(); // feat/menu-centre: flip to its page first
     });
   }
 

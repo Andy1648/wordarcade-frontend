@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 import { GAMES, FEATURED_GAME } from '../src/gameData.js';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
-import { joinControl, menuMark, menuMarkAll } from './support/menu.js';
+import { joinControl, menuMark, menuMarkAll, revealMode } from './support/menu.js';
 
 
 
@@ -17,6 +17,7 @@ import { joinControl, menuMark, menuMarkAll } from './support/menu.js';
 // size every other card's name gets. `name` is still the accessible name (aria-label) and
 // still what the mode dialog shows, so the getByRole lookup below is unchanged.
 const CARDS = GAMES.map((g) => ({
+  id: g.id,
   name: g.name.replace('\n', ' '),
   cardName: (g.cardName || g.name).replace('\n', ' '),
   badge: g.badgeText,
@@ -32,10 +33,12 @@ test.describe('menu', () => {
     const cards = page.locator('.game-card');
     await expect(cards).toHaveCount(CARDS.length);
 
-    for (const { name, cardName, badge } of CARDS) {
+    for (const { id, name, cardName, badge } of CARDS) {
       // Each card is a role="button" whose accessible name combines its title and
       // badge, e.g. "WORD BOMB - SOLO · MULTI".
-      const card = page.getByRole('button', { name: new RegExp(`${name}\\b`, 'i') });
+      const card = page.getByRole('button', { name: new RegExp(`${name}\\b`, 'i'), includeHidden: true });
+      // feat/menu-centre: every desktop pages the row (3 a page) — flip to the card's page before looking
+      await revealMode(page, id);
       await expect(card).toBeVisible();
       // The name renders across two lines ("WORD\nBOMB"); toHaveText normalizes
       // whitespace, so the single-spaced label matches.

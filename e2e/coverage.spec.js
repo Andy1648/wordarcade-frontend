@@ -4,7 +4,7 @@
 // driven screens (room / in-game / multiplayer game-over) are covered separately where feasible.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { joinControl, menuReady, modeEntry } from './support/menu.js';
+import { joinControl, menuReady, modeEntry, revealMode } from './support/menu.js';
 
 // Network-resource failures (the backend mock blocks the socket; favicon/asset 404s) are
 // test-harness noise. A real bug is a pageerror (uncaught exception — the Stats ReferenceError
@@ -33,7 +33,7 @@ async function menu(page, errors, level) {
 }
 // THE MODE ENTRY POINT, at either width — the desktop card or the phone row. Both call the
 // same Homepage handler, so only the object you press differs (support/menu.js).
-const card = (page, id) => modeEntry(page, id);
+const card = (page, id) => revealMode(page, id); // feat/menu-centre: flips to the card's page first
 const assertClean = (errors) => expect(errors, `errors: ${errors.join(' | ')}`).toHaveLength(0);
 
 test.describe('every menu-reachable screen renders without console errors', () => {
@@ -50,7 +50,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('WORD BOMB mode dialog', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 30);
-    await card(page, 'word-bomb').click();
+    await (await card(page, 'word-bomb')).click();
     await expect(page.locator('.mode-dialog-shell')).toBeVisible();
     await page.waitForTimeout(300);
     assertClean(errors);
@@ -59,7 +59,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('CATEGORY BLITZ mode dialog + PACK PICKER', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 30);
-    await card(page, 'category-blitz').click();
+    await (await card(page, 'category-blitz')).click();
     await expect(page.locator('.mode-dialog-shell')).toBeVisible();
     await expect(page.locator('.ppp-picker')).toBeVisible(); // pack picker lives in the blitz dialog
     await page.waitForTimeout(300);
@@ -69,7 +69,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('CHAIN mode dialog (unlocked)', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 100);
-    await card(page, 'chain').click();
+    await (await card(page, 'chain')).click();
     await expect(page.locator('.mode-dialog-shell')).toBeVisible();
     await page.waitForTimeout(300);
     assertClean(errors);
@@ -78,7 +78,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('FUSE mode dialog (unlocked)', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 100);
-    await card(page, 'fuse').click();
+    await (await card(page, 'fuse')).click();
     await expect(page.locator('.mode-dialog-shell')).toBeVisible();
     await page.waitForTimeout(300);
     assertClean(errors);
@@ -87,7 +87,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('CHAIN locked preview', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 1); // below the LV50 gate, unplayed → locked
-    await card(page, 'chain').click({ force: true });
+    await (await card(page, 'chain')).click({ force: true });
     await expect(page.locator('.lp-panel')).toBeVisible();
     await page.waitForTimeout(300);
     assertClean(errors);
@@ -96,7 +96,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('FUSE locked preview', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 2); // below the LV100 gate, unplayed → locked
-    await card(page, 'fuse').click({ force: true });
+    await (await card(page, 'fuse')).click({ force: true });
     await expect(page.locator('.lp-panel')).toBeVisible();
     await page.waitForTimeout(300);
     assertClean(errors);
@@ -114,7 +114,7 @@ test.describe('every menu-reachable screen renders without console errors', () =
   test('LOBBY screen (CREATE a room)', async ({ page }) => {
     const errors = [];
     await menu(page, errors, 30);
-    await card(page, 'word-bomb').click();
+    await (await card(page, 'word-bomb')).click();
     await page.locator('.mode-dialog-btn-create').click(); // CREATE → lobby
     await expect(page.locator('.lobby-wrap')).toBeVisible();
     await page.waitForTimeout(300);
