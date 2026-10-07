@@ -22,7 +22,7 @@ import AnteMeter from './AnteMeter';
 // with the answer filled in and highlighted (the same encode step as the
 // briefing), the definition, and ONE cousin from the root if there is one. Held
 // for the between-word pause, or dismissed early by any key (handled in the hook).
-function ReEncode({ data }) {
+export function ReEncode({ data }) {
   const { word, context, gloss, cousin, kind } = data;
   const [before, after] = context.split(/_+/);
   return (
@@ -53,7 +53,7 @@ function ReEncode({ data }) {
 // suspects still standing. Eliminated suspects are crossed out IN PLACE with a
 // CLEARED alibi treatment (a strikethrough + stamp; positions never move). No copy
 // explains any of this — the narrowing does.
-function SuspectLineup({ suspects }) {
+export function SuspectLineup({ suspects }) {
   const { lineup, standing, count } = suspects;
   const cols = count >= 6 ? 3 : 2; // 6 → 3×2, 4 → 2×2, 2 → 2×1
   return (

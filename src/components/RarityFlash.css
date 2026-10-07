@@ -42,3 +42,16 @@
     opacity: 0;
   }
 }
+
+/* SEASON 2 (P10): nothing pops in the centre — the band lands over the right-hand column instead. */
+.rarity-flash--edge {
+  top: 72%;
+  left: 86%;
+  font-size: var(--fs-h2);
+}
+@media (max-width: 699px) {
+  .rarity-flash--edge {
+    top: 20%;
+    left: 50%;
+  }
+}
