@@ -26,7 +26,7 @@ const { STARS_KEY } = await import('./v3/store.js');
 const close = (a, b, grid, msg) => assert.ok(Math.abs(a - b) <= Math.max(grid, Math.abs(b) * 1e-9), `${msg}: chain ${a} vs paid ${b}`);
 const product = (c) => c.chips.reduce((p, k) => p * k.mult, c.base);
 
-test('SEASON2: REBIRTH 2^R and ASCEND (1 + ★) are separate chips; BASE × chips = the season-2 payout', () => {
+test('SEASON2: REBIRTH 2^R and STARS (1 + ★) are separate chips; BASE × chips = the season-2 payout', () => {
   let n = 0;
   for (const [kt, rc, stars] of [[0, 0, 0], [1, 1, 0], [6, 9, 0], [3, 2, 4], [12, 7, 21]]) {
     mem.clear();
@@ -36,10 +36,10 @@ test('SEASON2: REBIRTH 2^R and ASCEND (1 + ★) are separate chips; BASE × chip
     const b = statBoard();
     const w = statChain(b.wins, { v3: V3, stars });
     const x = statChain(b.xp, { v3: V3, stars });
-    assert.deepEqual(w.chips.map((c) => c.label), ['REBIRTH', 'MARK', 'BOOST', 'ASCEND']);
-    assert.deepEqual(x.chips.map((c) => c.label), ['POWER', 'REBIRTH', 'MARK', 'BOOST', 'ASCEND']);
-    assert.equal(w.chips[0].mult, 2 ** rc, 'REBIRTH is 2^R');
-    assert.equal(w.chips[3].mult, 1 + stars, 'ASCEND is 1 + ★');
+    assert.deepEqual(w.chips.map((c) => c.label), ['MODE', 'REBIRTH', 'STARS', 'MARK', 'BOOST']);
+    assert.deepEqual(x.chips.map((c) => c.label), ['POWER', 'REBIRTH', 'STARS', 'MARK', 'BOOST']);
+    assert.equal(w.chips[1].mult, 2 ** rc, 'REBIRTH is 2^R');
+    assert.equal(w.chips[2].mult, 1 + stars, 'STARS is 1 + ★');
     assert.equal(w.base, V3.econ.WINS_BASE, 'FINAL WINS base: 22 a 5-letter word');
     assert.equal(x.base, V3.econ.XP_BASE, 'v3 XP base (econ.XP_BASE)');
     assert.equal(w.total, perWordRateNow({ mode: 'wordBomb' }).rate);

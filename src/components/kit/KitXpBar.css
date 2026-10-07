@@ -30,10 +30,12 @@
 }
 .kx-barwrap { position: relative; flex: 1 1 320px; min-width: 0; }
 .kx-gain {
+  /* P9a: the "+N LV" chip hangs UNDER the bar's left end and slides out from beneath it (z under the bar) */
   position: absolute;
-  left: 0;
-  top: -34px;
-  padding: 0 8px;
+  left: 16px;
+  top: 100%;
+  z-index: 0;
+  padding: 0 10px;
   background: var(--k-cyan);
   border: var(--k-ink-s) solid var(--k-ink);
   box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
@@ -46,9 +48,11 @@
   white-space: nowrap;
   opacity: 0;
 }
+.kx-gain-t { display: inline-block; }
 .kx-gain.is-on { opacity: 1; }
 .kx-bar {
   position: relative;
+  z-index: 1;
   height: 44px;
   box-sizing: border-box;
   background: var(--k-well);

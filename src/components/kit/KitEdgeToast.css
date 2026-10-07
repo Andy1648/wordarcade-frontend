@@ -41,6 +41,20 @@
   border-right: var(--k-ink-m) solid var(--k-ink);
 }
 .ket-icon { display: flex; }
+.ket-badge {
+  position: absolute;
+  right: -10px;
+  bottom: -6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--k-yellow);
+  border: var(--k-ink-s) solid var(--k-ink);
+  font-size: var(--fs-k14);
+  color: var(--k-ink);
+}
 .ket-text {
   padding: 0 22px 0 18px;
   display: flex;

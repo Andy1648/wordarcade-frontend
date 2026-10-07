@@ -77,8 +77,11 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
   // 5-letter word, scaled by length). `perLetter` is the wins basis of one letter in XP units (÷10 = wins),
   // so ×5 ÷ 10 is the BASE for 5 letters.
   const look = rows.some((r) => r.key === 'bonus') ? wornMarkLook() : null;
+  // NUMBERS AUDIT (Andy item 5): the BASE is read back from the base the payout USED (payout.base ÷ letters/5), not
+  // from perLetter ÷ 2 — that left out a worn +N BASE WINS mark (BASE 22 printed while the word was paid on 24.2), so
+  // the line did not multiply out to its own headline. Without a +N mark the two are the same number.
   const baseTerm = payout.letters && payout.perLetter
-    ? `BASE ${formatRate(payout.perLetter / 2)} WINS × ${formatNum(payout.letters)}/5 ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
+    ? `BASE ${formatRate((payout.base * 5) / payout.letters)} WINS × ${formatNum(payout.letters)}/5 ${payout.letters === 1 ? 'LETTER' : 'LETTERS'}`
     : `BASE ${formatRate(payout.base)} WINS / WORD`;
   return (
     <div className={`payout${compact ? ' payout--compact' : ''}`} aria-label="Payout breakdown">
