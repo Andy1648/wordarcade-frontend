@@ -210,3 +210,4 @@ NOTE: progression-final-sim.py's __main__ uses NEED0=100/G=1.08 (a rejected tuni
 - Remaining after that: #237 merge (in CI), then P9 / P10 (parked partial work in ../p9a…).
 
 - oct6 late: #237 numbers audit (S2 mark tiers paid S1 values + 9 display fixes) MERGED (db5b03ce). #238 claude/FLIP-STEPS.md MERGED. Andy "Do NOT scale gems" → #239 fix/no-gem-scaling (×2 GEM DROPS stock item + stockGemMult removed; drop stays 1/15; gem table = FINAL) — CI green, updated on main, re-running.
+- #239 no gem scaling MERGED (b0a05fb3). P9: #226 update-branched, merging in order #226 → #231 → #232 → #240 (9d rooms).
