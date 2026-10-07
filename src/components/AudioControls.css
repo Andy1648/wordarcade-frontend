@@ -18,11 +18,6 @@
   bottom: auto;
   z-index: 6;
 }
-/* Open the popover DOWN from the inline button (it sits at the top of the screen), right-aligned. */
-.audio-ctrl--inline .audio-panel {
-  bottom: auto;
-  top: 52px;
-}
 /* fix/visual-real item 4 (round 2): give the inline button the SAME treatment as the SHOP / STATS
    nav buttons — square-cornered, 3px black border, hard offset shadow, flat fill — so it reads as
    the 4th chip in the corner-nav column instead of a detached round toggle floating below them.
@@ -83,79 +78,4 @@
   transform: translate(-50%, -50%) rotate(-45deg);
   border-radius: 2px;
   pointer-events: none;
-}
-
-/* The popover: opens UP from the button, right-aligned to it. Only present while open, so the
-   layout gate (which never opens it) only ever sees the single 44px button. */
-.audio-panel {
-  position: absolute;
-  bottom: 52px;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  min-width: 188px;
-  background: #1a0b2e;
-  border: 3px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-}
-.audio-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.audio-row-label {
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: var(--fs-body); /* visual-1: was --fs-label */
-  letter-spacing: 0.04em;
-  color: #b9a7d6;
-}
-.audio-toggle {
-  flex: 0 0 auto;
-  /* visual-1: 34 -> 44px, the touch-target floor (CLAUDE.md "Mobile: 44px minimum"). */
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--fs-body);
-  line-height: 1;
-  background: #1a0b2e;
-  border: 2px solid #2effe0; /* accent set inline */
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 2px 2px 0 #000;
-  transition: transform 0.1s, box-shadow 0.1s;
-}
-.audio-toggle:active {
-  transform: translate(2px, 2px);
-  box-shadow: none;
-}
-.audio-toggle.off {
-  opacity: 0.6;
-  position: relative;
-}
-.audio-toggle.off::after {
-  content: '';
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 50%;
-  height: 2px;
-  background: currentColor;
-  transform: rotate(-20deg);
-  border-radius: 2px;
-  pointer-events: none;
-}
-.audio-row-vol {
-  margin-top: 2px;
-}
-.audio-row-vol input[type='range'] {
-  width: 96px;
-  cursor: pointer;
 }

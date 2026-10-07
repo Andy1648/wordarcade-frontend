@@ -44,7 +44,7 @@ function OnOff({ on, onClick, label }) {
   );
 }
 
-export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet = false, sfxMuted = false, onToggleSfx = null, onClose }) {
+export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet = false, sfxMuted = false, onToggleSfx = null, onClose, onChange }) {
   const [vol, setVol] = useState(() => (isEventSoundsEnabled() ? Math.round(getMasterVolume() * STEPS) : 0));
   const [clack, setClack] = useState(() => isClackEnabled());
   const [style, setStyle] = useState(() => getNumberStyle());
@@ -59,11 +59,13 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
       setMasterVolume(n / STEPS);
     }
     setVol(n);
+    if (onChange) onChange();
   };
   const toggleClack = () => {
     if (clack) disableClack();
     else enableClack();
     setClack(!clack);
+    if (onChange) onChange();
   };
   const pickStyle = (s) => setStyle(setNumberStyle(s));
 
