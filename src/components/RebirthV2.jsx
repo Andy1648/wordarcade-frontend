@@ -8,12 +8,12 @@
 //     single-flight). The button is DISABLED while the request is pending; a refusal (gate / pace / offline) shows one
 //     numbers-first line (rebirthFlow.rebirthRefusalText) and applies nothing. ONE rebirth per hold — never bulk.
 //   * on ok: the stage SHAKES, the screen FLASHES, the AFTER numeral SLAMS in with the new count (kit FX one-shots).
-//   * PROGRESSION FINAL: a rebirth COSTS 25 × (R+1) LEVELS · KEEP THE REST. YOU GET ×2 XP & WINS (2^R → 2^(R+1),
-//     × (1 + ★)), POWER kept, LEVELS − cost (no gems — gems come from games).
+//   * PROGRESSION FINAL v2: a rebirth at LV 15 + 18·R → BACK TO LV 1 · KEY KEPT. YOU GET ×3 XP & WINS (3^R → 3^(R+1))
+//     forever (no gems — gems come from games).
 //   * UNLOCKS — the diamond track from v3/unlocks.js (START ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2ND MARK ·
-//     R7 LUCK · R10 ASCEND), lit by unlocked(feature, { rebirths, stars }).
+//     R7 LUCK), lit by unlocked(feature, { rebirths, stars }).
 //   * AUTO REBIRTH (R2): a toggle here; Homepage runs it (one performRebirth per rebirth, server-checked).
-//   * R ≥ 10 + 5 × ★: HOLD TO ASCEND — performAscend() (lb_ascend, same single-flight + request-id path): ★ + 1.
+//   * ASCENSION is hidden in v2 (econ.canAscend is always false), so HOLD TO ASCEND never renders.
 // The emblem is a HEXAGON plate (vector, no cog — cogs belong to marks). Motion: transform / opacity one-shots only;
 // nothing loops at rest; REDUCE MOTION drops every effect (kit motion.js).
 import { useEffect, useRef, useState } from 'react';
@@ -35,9 +35,8 @@ function readState() {
   const rebirths = getRebirths() || 0;
   const stars = V3.store ? V3.store.getStarsV3() : 0;
   const gate = rebirthThreshold(rebirths);
-  const cost = V3.econ ? V3.econ.rebirthCost(rebirths) : Math.max(0, gate - 1);
   const auto = !!(V3.hooks && V3.hooks.autoRebirthOn());
-  return { level, rebirths, stars, gate, cost, auto, ready: level >= gate };
+  return { level, rebirths, stars, gate, auto, ready: level >= gate };
 }
 
 /** The hexagon emblem plate (vector art; the kit's REBIRTH icon on it). */
@@ -163,11 +162,10 @@ export default function RebirthV2({ onBack }) {
     boom();
   };
 
-  const { level, rebirths, stars, gate, cost, auto, ready } = s;
+  const { level, rebirths, stars, gate, auto, ready } = s;
   const econ = V3.econ;
   const canAscend = !!(econ && econ.canAscend(rebirths, stars));
   const autoOpen = !!(V3.unlocks && V3.unlocks.unlocked('autoRebirth', { rebirths, stars }));
-  const left = Math.max(1, level - cost);
   const unlocks = V3.unlocks ? V3.unlocks.UNLOCKS : [];
   const lastAt = unlocks.length ? unlocks[unlocks.length - 1].at : 10;
   // the track fills to the last unlock reached, then part-way to the next (evenly spaced diamonds)
@@ -180,7 +178,7 @@ export default function RebirthV2({ onBack }) {
   const gateF = gate > 0 ? Math.max(0, Math.min(1, level / gate)) : 1;
 
   const holdLabel = busy ? 'REBIRTHING…' : ready ? 'HOLD TO REBIRTH' : 'NEED LEVELS';
-  const holdSub = ready ? `LV ${formatNum(level)} → ${formatNum(left)}` : `LV ${formatNum(level)} / ${formatNum(gate)}`;
+  const holdSub = ready ? `LV ${formatNum(level)} → 1` : `LV ${formatNum(level)} / ${formatNum(gate)}`;
 
   return (
     <div className="rb2" role="dialog" aria-modal="true" aria-label="Rebirth" tabIndex={-1} ref={rootRef}>
@@ -261,7 +259,7 @@ export default function RebirthV2({ onBack }) {
             </div>
             <span className="rb2-gate-txt">{ready ? `GATE LV ${formatNum(gate)} — READY` : `${formatNum(gate - level)} LEVELS TO GO`}</span>
           </div>
-          <div className="rb2-cost" data-testid="rb2-cost">COSTS {formatNum(cost)} LEVELS · KEEP THE REST</div>
+          <div className="rb2-cost" data-testid="rb2-cost">BACK TO LV 1 · KEY KEPT</div>
           {autoOpen && (
             <button
               type="button"
@@ -283,10 +281,10 @@ export default function RebirthV2({ onBack }) {
 
         <section className="rb2-get" aria-label="You get">
           <div className="rb2-get-head">YOU GET</div>
-          <GetRow icon="boost" label="WINS + XP" tone="lilac" value={`×${formatNum(econ ? econ.REBIRTH_STEP : 2)}`} />
+          <GetRow icon="boost" label="WINS + XP" tone="lilac" value={`×${formatNum(econ ? econ.REBIRTH_STEP : 3)}`} />
           <div className="rb2-get-sub">{`×${formatMult(rebirthMult(rebirths))} → ×${formatMult(rebirthMult(rebirths + 1))} FOREVER`}</div>
           <GetRow icon="power" label="POWER" tone="gold" value="KEPT" />
-          <GetRow icon="levels" label="LEVELS" tone="hot" value={`−${formatNum(cost)}`} />
+          <GetRow icon="levels" label="LEVELS" tone="hot" value="→ LV 1" />
           {stars > 0 && <div className="rb2-stars">★{formatNum(stars)} · ×{formatNum(1 + stars)} ON EVERYTHING</div>}
         </section>
 

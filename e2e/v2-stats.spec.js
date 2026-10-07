@@ -1,8 +1,8 @@
 // e2e/v2-stats.spec.js — THE v2 STATS SCREEN (P8; claude/mockups/v2/Stats.dc.html) behind ?season2=1. A season-2 save
-// at R5 ★1 POWER 6 (no mark, no boost):
-//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×64 = 1,408 WINS / WORD, then the chain in FINAL's order BASE 22 ·
-//      MODE ×1 · REBIRTH ×32 · STARS ×2 · MARK ×1 · BOOST ×1 — the v3 numbers (2^R and (1 + ★) as separate chips); the XP
-//      tab is POWER-first; the PRINTED chips multiply out to the PRINTED total (numbers audit, Andy item 5);
+// at R5 KEY 6 (no mark, no boost; a leftover ★1 that FINAL v2 ignores — ascension is hidden):
+//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×243 = 2,430 WINS / WORD, then the chain in FINAL v2's order
+//      BASE 10 · MODE ×1 · REBIRTH ×243 (3^R) · MARK ×1 · BOOST ×1 — no STARS chip; the XP tab is KEY-first; the PRINTED
+//      chips multiply out to the PRINTED total (numbers audit, Andy item 5);
 //   2. REPLAY (tap the TOTAL) runs the chain again from ×1 and lands on the same total — and every animation it plays
 //      is FINITE (nothing on the screen loops at rest);
 //   3. REDUCE MOTION shows the finished chain at once and plays nothing;
@@ -55,14 +55,14 @@ const val = (t) => {
 };
 const chipVals = (st) => st.locator('.st2-chip-v').allTextContents();
 
-test('the TOTAL first: ×64 = 1,408 WINS / WORD, then BASE · MODE · REBIRTH · STARS · MARK · BOOST; XP is POWER-first', async ({ page }) => {
+test('the TOTAL first: ×243 = 2,430 WINS / WORD, then BASE · MODE · REBIRTH · MARK · BOOST; XP is KEY-first', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
-  await expect(total).toHaveText('×64', { timeout: 8000 });
-  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('1,408');
+  await expect(total).toHaveText('×243', { timeout: 8000 });
+  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('2,430');
   await expect(st.locator('.st2-unit')).toHaveText('WINS / WORD');
-  await expect(st.locator('.st2-basex')).toHaveText('BASE 22 × 64');
+  await expect(st.locator('.st2-basex')).toHaveText('BASE 10 × 243');
   // the TOTAL is the first number on the screen (before the chain)
   const order = await st.evaluate((root) => {
     const t = root.querySelector('[data-testid="st2-total"]');
@@ -70,29 +70,28 @@ test('the TOTAL first: ×64 = 1,408 WINS / WORD, then BASE · MODE · REBIRTH ·
     return !!(t.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
   expect(order, 'TOTAL precedes the chain').toBe(true);
-  expect(await chipIds(st)).toEqual(['base', 'mode', 'rebirth', 'ascend', 'mark', 'boost']);
-  expect(await chipVals(st)).toEqual(['22', '×1', '×32', '×2', '×1', '×1']);
+  expect(await chipIds(st)).toEqual(['base', 'mode', 'rebirth', 'mark', 'boost']);
+  expect(await chipVals(st)).toEqual(['10', '×1', '×243', '×1', '×1']);
   await expect(st.locator('[data-chip="mode"] .st2-chip-tag')).toHaveText('WORD BOMB');
-  await expect(st.locator('[data-chip="ascend"] .st2-chip-tag')).toHaveText('1 STAR');
   await expect(st.locator('[data-chip="rebirth"] .st2-chip-tag')).toHaveText('R5');
   // the tabs carry their own totals
-  await expect(st.locator('.st2-tab[data-tab="wins"] .st2-tab-total')).toHaveText('×64');
-  // XP / LETTER: POWER 2.5^6 · REBIRTH 2^5 · STARS (1 + ★) · MARK · BOOST
+  await expect(st.locator('.st2-tab[data-tab="wins"] .st2-tab-total')).toHaveText('×243');
+  // XP / LETTER: KEY ladder T6 (×100) · REBIRTH 3^5 · MARK · BOOST
   await st.locator('.st2-tab[data-tab="xp"]').click();
   await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
-  expect(await chipIds(st)).toEqual(['base', 'power', 'rebirth', 'ascend', 'mark', 'boost']);
+  expect(await chipIds(st)).toEqual(['base', 'power', 'rebirth', 'mark', 'boost']);
   await expect(st.locator('.st2-unit')).toHaveText('XP / LETTER');
   const xpTab = (await st.locator('.st2-tab[data-tab="xp"] .st2-tab-total').textContent()).trim();
   await expect(total).toHaveText(xpTab, { timeout: 8000 });
-  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×244.14'); // 2.5^6 = 244.140625 — exact, so the chain multiplies out
+  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×100'); // the KEY ladder at T6
   await expect(st.locator('[data-chip="power"] .st2-chip-tag')).toHaveText('TIER 6');
 });
 
-// NUMBERS AUDIT (Andy item 5): "BASE × each multiplier = TOTAL and the math must multiply out". A deeper save — POWER 3
-// (2.5³ = 15.625, the chip that used to print ×16), R3, ★1 and a worn LEGENDARY +% WINS mark (FINAL ×2, plus the INDEX
-// it brings) — on both tabs: the PRINTED chips multiply to the PRINTED TOTAL multiplier and BASE × TOTAL to the result.
+// NUMBERS AUDIT (Andy item 5): "BASE × each multiplier = TOTAL and the math must multiply out". A deeper save — KEY 3
+// (×10), R3 (×27) and a worn LEGENDARY +% WINS mark (FINAL ×2, plus the INDEX it brings) — on both tabs: the PRINTED
+// chips multiply to the PRINTED TOTAL multiplier and BASE × TOTAL to the result.
 for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
-  test(`@${vp.width}: the printed chips multiply out to the printed TOTAL on both tabs (POWER 3, R3, ★1, LEGENDARY mark)`, async ({ page }) => {
+  test(`@${vp.width}: the printed chips multiply out to the printed TOTAL on both tabs (KEY 3, R3, LEGENDARY mark)`, async ({ page }) => {
     await page.setViewportSize(vp);
     const extra = {
       'taw.s2.keytier': '3',
@@ -114,11 +113,11 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
       expect(Math.abs(product - total) / total, `${tab}: ${ids.join(' × ')} = ${product} vs TOTAL ×${total}`).toBeLessThan(0.003);
       expect(Math.abs(base * total - result) / result, `${tab}: BASE ${base} × ${total} vs ${result}`).toBeLessThan(0.006);
       if (tab === 'wins') {
-        expect(ids).toEqual(['base', 'mode', 'rebirth', 'ascend', 'mark', 'index', 'boost']);
-        expect(vals.slice(0, 5)).toEqual([22, 1, 8, 2, 2]); // BASE 22 · MODE 1 · 2^3 · (1 + ★) · LEGENDARY ×2 (FINAL)
+        expect(ids).toEqual(['base', 'mode', 'rebirth', 'mark', 'index', 'boost']);
+        expect(vals.slice(0, 4)).toEqual([10, 1, 27, 2]); // BASE 10 · MODE 1 · 3^3 · LEGENDARY ×2 (FINAL)
       } else {
-        expect(ids).toEqual(['base', 'power', 'rebirth', 'ascend', 'mark', 'index', 'boost']);
-        expect(vals.slice(0, 4)).toEqual([10, 15.63, 8, 2]);
+        expect(ids).toEqual(['base', 'power', 'rebirth', 'mark', 'index', 'boost']);
+        expect(vals.slice(0, 3)).toEqual([10, 10, 27]); // BASE 10 · KEY T3 ×10 · 3^3
       }
       // every chip on screen (seven of them on a phone too)
       const off = await st.locator('.st2-chip').evaluateAll((els) => els.filter((e) => {
@@ -134,13 +133,13 @@ test('REPLAY runs the chain again from ×1 to the same total — every animation
   await page.setViewportSize({ width: 1280, height: 551 });
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
-  await expect(total).toHaveText('×64', { timeout: 8000 });
+  await expect(total).toHaveText('×243', { timeout: 8000 });
   await st.locator('.st2-big').click();
   await expect(total).toHaveText('×1');
   // mid-chain: a running total between ×1 and ×64 (the REBIRTH chip counts up)
   await expect(total).not.toHaveText('×1', { timeout: 3000 });
-  await expect(total).toHaveText('×64', { timeout: 8000 });
-  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('1,408');
+  await expect(total).toHaveText('×243', { timeout: 8000 });
+  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('2,430');
   const loops = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.st2'))
     .filter((a) => a.effect.getTiming().iterations === Infinity).length);
@@ -150,9 +149,9 @@ test('REPLAY runs the chain again from ×1 to the same total — every animation
 test('REDUCE MOTION: the finished chain at once, nothing plays', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page, { reduce: true });
-  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×64', { timeout: 1500 });
+  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243', { timeout: 1500 });
   await st.locator('.st2-big').click();
-  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×64');
+  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243');
   const running = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.st2'))
     .map((a) => `${a.constructor.name}:${a.transitionProperty || a.animationName || ''}:${a.effect.target.className}`));
@@ -178,7 +177,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
   test(`@${vp.width}×${vp.height}: no scrollbars, nothing off-screen, no text under 13px; ← MENU closes`, async ({ page }) => {
     await page.setViewportSize(vp);
     const st = await boot(page);
-    await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×64', { timeout: 8000 });
+    await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243', { timeout: 8000 });
     const m = await page.evaluate(() => {
       const root = document.querySelector('.st2');
       const W = window.innerWidth;

@@ -15,6 +15,9 @@ import { formatNum } from '../format.js';
 import { frenzyRemaining, FRENZY_MULT } from '../progress/frenzy.js';
 import { useQueuedMoment } from '../lib/useQueuedMoment';
 import { GAME_PRIORITY } from '../lib/moments';
+// SEASON 2 — THE ONE-NOTICE RULE (Andy oct6): no centre moments for timers (OVERDRIVE START, BOOST / FRENZY OVER). The
+// edge pill (BoostPill → OverdrivePill) carries every timer. OFF = unchanged.
+import { SEASON2 } from '../progress/season.js';
 // the moment (and its CSS) is a lazy chunk — it only loads when a FRENZY / BOOST clock actually ends
 const OverMoment = lazyWithReload(() => import('./TimerOverMoment.jsx'), 'TimerOverMoment');
 // Rebirth Rush OVERDRIVE START: the FUSE FRENZY blast, re-titled — also a lazy chunk, loaded only when one starts
@@ -49,6 +52,10 @@ function useExpiry(remainingFn, onExpire) {
 }
 
 export default function TimerOver() {
+  return SEASON2 ? null : <TimerOverLive />;
+}
+
+function TimerOverLive() {
   // FEEL LADDER (PASS 2): the OVER moment no longer mounts on its own over whatever is playing — it
   // asks the ONE moments queue for a turn (lib/moments.js), behind a running FRENZY / CLUTCH burst,
   // with the queue's gap between. A turn that cannot come within 5s is dropped (stale), not late.

@@ -1,21 +1,21 @@
-// finalRules.js — 026_progression_final.sql's SEASON-2 BOARD WRITE (private.lb_board_write_s2, PROGRESSION FINAL), as
-// pure JS (no DOM, no fetch, no clock) so node:test, the e2e board mock and the CI sim run the rule the database runs.
-// (026's lb_rebirth / lb_ascend season-2 rules live in rebirthRules.js, beside the season-0 ones.)
+// finalRules.js — 027_progression_final_v2.sql's SEASON-2 BOARD WRITE (private.lb_board_write_s2, PROGRESSION FINAL v2),
+// as pure JS (no DOM, no fetch, no clock) so node:test, the e2e board mock and the CI sim run the rule the database runs.
+// (027's lb_rebirth / lb_ascend season-2 rules live in rebirthRules.js, beside the season-0 ones.)
 //
-// KEEP IN SYNC WITH supabase/migrations/026_progression_final.sql: same branches, order and constants —
+// KEEP IN SYNC WITH supabase/migrations/027_progression_final_v2.sql: same branches, order and constants —
 // finalRules.test.js pins the SQL text against them.
 //
-// FINAL levels are geometric (need(n) = 400 × 1.06^(n−1)): a level is ~6% more XP than the last, so levels grow
-// LOGARITHMICALLY with XP — a median player gains ~150 levels an hour (the md sim), spending 25 × (R+1) of them on
-// each rebirth. v3's caps (4 × ⌈100 × 2.5^R⌉ or +500 levels a second) were sized for levels in the millions; FINAL's are:
+// FINAL v2 levels are geometric (need(n) = 100 × 1.15^(n−1)) and a rebirth sends the level back to 1 at the gate
+// LV 15 + 18·R, so a stored level sits near or below that gate. The caps:
 //   * FIRST season-2 write (never submitted, or a row whose last write was not season 2): a baseline — rebirths ≤
 //     lifetime words / F_WORDS_PER_RB, level ≤ the next gate + F_LV_HEADROOM; no weekly words;
 //   * after that: rebirths never rise on a submit (lb_rebirth only), stars are never written (lb_ascend only); the
-//     level is free up to 25 × (R+1) + F_LV_HEADROOM, or the stored level + F_LEVELS_PER_SEC a second since the last
+//     level is free up to 15 + 18·R + F_LV_HEADROOM, or the stored level + F_LEVELS_PER_SEC a second since the last
 //     accepted write (banking F_LEVEL_BANK_SECS) — whichever is higher; clamped, never rejected; ≤ the int column;
 //   * words / letters rate-checked as 011/013/015 (too fast → rejected); a lower number is a RESET (017).
 export const F_ECON = 13;
-export const F_GATE_STEP = 25; // the rebirth gate: level > 25 × (R+1)
+export const F_GATE_BASE = 15; // the rebirth gate: LV 15 + 18·R
+export const F_GATE_STEP = 18;
 export const F_LV_HEADROOM = 100; // levels allowed past the next gate (≈ 40 min of median play past it)
 export const F_LEVELS_PER_SEC = 1; // or + 1 level a second since the last accepted write (≫ the ~0.04/s honest pace) …
 export const F_LEVEL_BANK_SECS = 1200; // … banking 20 min
@@ -30,13 +30,13 @@ const int = (v, min, d) => {
   return Math.max(min, Number.isFinite(n) ? Math.floor(n) : d);
 };
 
-/** The level room at `rebirths`: 25 × (R+1) + 100 (capped at the int column). */
+/** The level room at `rebirths`: 15 + 18·R + 100 (capped at the int column). */
 export function finalLevelRoom(rebirths) {
-  return Math.min(F_LV_MAX, F_GATE_STEP * (int(rebirths, 0, 0) + 1) + F_LV_HEADROOM);
+  return Math.min(F_LV_MAX, F_GATE_BASE + F_GATE_STEP * int(rebirths, 0, 0) + F_LV_HEADROOM);
 }
 
 /**
- * private.lb_board_write_s2 (026), modelled. `old` = the stored row ({ level, rebirths, lifetime_words,
+ * private.lb_board_write_s2 (027), modelled. `old` = the stored row ({ level, rebirths, lifetime_words,
  * lifetime_letters, submitted_at (ms|null), econ }); `sub` = { level, rebirths, words, letters }; `now` ms.
  * Returns { action: 'throttled'|'rejected'|'first'|'reset'|'increase', row?, weekDelta } (decideSubmitS2's shape).
  */

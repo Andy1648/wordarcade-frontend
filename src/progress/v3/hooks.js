@@ -3,16 +3,16 @@
 // live game's eager chunk carries no v3 logic at all (payload ratchet, e2e/payload-budget.spec.js). The setters take
 // one-letter keys (that is what keeps them small); each swap object below names what it replaces. Imports the live
 // modules it extends — this chunk loads after them, so there is no cycle at evaluation time.
-import { keyTierCost as keyTierCostV, doRebirth, getRebirths, getKeyTier, saveRebirths, saveKeyTier, saveProgress, loadProgress, rebirthThreshold, rebirthMult, roundWordXp, finiteCap } from '../xp.js';
+import { keyTierCost as keyTierCostV, doRebirth, getRebirths, getKeyTier, saveRebirths, saveKeyTier, saveProgress, rebirthThreshold, rebirthMult, roundWordXp, finiteCap } from '../xp.js';
 import { MARK_TIERS } from '../marks.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned } from '../shop.js';
 import { getWins } from '../wins.js';
 import { loadGemState, saveGemState, tellBalance, grantGems, PER_PLAYER_BEATEN as LIVE_PER_PLAYER } from '../gemsCore.js';
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue } from '../markRollsCore.js';
 import {
-  cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, starMult, powerXpMult,
+  cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
   rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN,
-  PER_PLAYER_BEATEN, ROLL_PRICE, STREAK_BONUS, modeMult, levelAfterRebirth, MARK_MULT,
+  PER_PLAYER_BEATEN, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
 } from './econ.js';
 import { needV3, creditXpV3 } from './curve.js';
 import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter, S2_PREFIX } from './store.js';
@@ -50,32 +50,30 @@ applyFinalMarkTiers();
 
 // ---- xp.js (__v3) ---------------------------------------------------------------------------------------------------
 export const xpSwap = {
-  a: needV3, // needAt: XP for the next level = 400 × 1.06^(level−1) (closed-form carry)
-  b: powerXpMult, // keyXpMult: POWER 2.5^P
-  // rebirthPow: 2^R × (1 + ★) — the receipt's REBIRTH row (and the shop's ×N → ×N) carries ★ in season 2
-  c: (rc) => rebirthMultV3(rc) * starMult(getStarsV3()),
-  /** levelXpPerLetter: (10 + mark base) × 2.5^POWER × 2^R × (1 + ★) × MARK. */
+  a: needV3, // needAt: XP for the next level = 100 × 1.15^(level−1) (closed-form carry)
+  b: powerXpMult, // keyXpMult: the KEY ladder ×1, 2, 5 … 1000, then ×2.15 a tier
+  c: (rc) => rebirthMultV3(rc), // rebirthPow: 3^R — the receipt's REBIRTH row (and the shop's ×N → ×N)
+  /** levelXpPerLetter: (10 + mark base) × KEY × 3^R × MARK (× OVERDRIVE through the callers' boostMult). */
   d(keyTier, rebirthCount, markMult = 1, baseAdd) {
     return xpPerLetterV3({
       power: fin(keyTier, getKeyTier()),
       rebirths: fin(rebirthCount, getRebirths()),
-      stars: getStarsV3(),
       mark: pos(markMult, 1),
       markBase: baseAdd === undefined ? markBaseXp() : pos(baseAdd, 0),
     }) * stockXpMult(); // the STOCK's +25% XP · 10 MIN (×1 when none is running)
   },
-  // modePower: the FINAL MODE table (WB / Blitz ×1 · RACE ×1.5 · CHAIN ×2 · SAT ×3 · FUSE ×1) — the receipt reads it
+  // modePower: the FINAL MODE table (WB / Blitz ×1 · RACE ×1.5 · CHAIN ×2 · SAT ×5 · FUSE ×1) — the receipt reads it
   j: (mode) => modeMult(mode),
-  e: rebirthGate, // tableRebirthThreshold: LV > 25 × (R+1) → the level needed is 25 × (R+1) + 1 (no grandfathering)
-  f: () => (WINS_BASE * 10) / WORD_REF, // keyTierXp: 22 wins a 5-letter word = 44 a letter in the receipt's ×10 units
-  g: powerCostAt, // keyTierCostAt: P → P+1 costs 300 × 8^P wins
-  h: (state, gain) => creditXpV3(state, gain), // creditXp: O(1) carry — levels reach the thousands
-  /** xpPerWord (×10 "XP" units): (22 + mark) × len/5 × MODE × 2^R × (1 + ★) × MARK × BOOST (× FRENZY on FUSE). */
+  e: rebirthGate, // tableRebirthThreshold: LV ≥ 15 + 18·R (no grandfathering)
+  f: () => (WINS_BASE * 10) / WORD_REF, // keyTierXp: 10 wins a 5-letter word = 20 a letter in the receipt's ×10 units
+  g: powerCostAt, // keyTierCostAt: T → T+1 costs 150 × 5^T wins
+  h: (state, gain) => creditXpV3(state, gain), // creditXp: O(1) carry
+  /** xpPerWord (×10 "XP" units): (10 + mark) × len/5 × MODE × 3^R × MARK × BOOST (× FRENZY on FUSE). */
   i({ mode = 'menu', rebirthCount, wordLength = 1, bonusMult = 1, baseWinsAdd = 0 } = {}) {
     const len = Math.floor(pos(wordLength, 1));
     // a worn +N BASE WINS mark scales the base by (10 + N) / 10, exactly as the live receipt shows it (wins.wordWinsBase)
     const base = ((WINS_BASE * 10) / WORD_REF) * ((10 + pos(baseWinsAdd, 0)) / 10);
-    return roundWordXp(finiteCap(base * len * modeMult(mode) * rebirthMultV3(fin(rebirthCount, getRebirths())) * starMult(getStarsV3()) * pos(bonusMult, 1)));
+    return roundWordXp(finiteCap(base * len * modeMult(mode) * rebirthMultV3(fin(rebirthCount, getRebirths())) * pos(bonusMult, 1)));
   },
 };
 
@@ -84,12 +82,10 @@ export const starsSwap = {
   a: () => 0, // starsForRebirth
   b: (level, rc) => ({ stars: 0, nextIn: Math.max(0, rebirthThreshold(rc) - level), badTime: false }), // rebirthAdvice
   c: () => ({ ok: false, locked: true }), // buyPerk: no star perks — ★ multiply XP and wins instead
-  /** rebirthWithStars: ONE rebirth — SPENDS 25 × (R+1) levels (the leftovers stay), R + 1, POWER kept. No gems,
-   *  no ★, no layer claim. (The server's lb_rebirth does the same subtraction on the stored row — 026.) */
+  /** rebirthWithStars: ONE rebirth — back to LV 1, R + 1 (×3 forever), KEY kept. No gems, no ★, no layer claim.
+   *  (The server's lb_rebirth does the same on the stored row — 027.) */
   d() {
-    const left = levelAfterRebirth(loadProgress().level, getRebirths());
-    const rc = doRebirth(); // R + 1 (and the run's peak into records); it writes LV1 …
-    saveProgress({ level: left, intoLevel: 0 }); // … then the leftover levels land
+    const rc = doRebirth(); // R + 1 (and the run's peak into records); LV1
     bumpCounter('reb'); // ACHIEVEMENTS: REBIRTH (every climb)
     return { rc, stars: 0 };
   },
@@ -97,7 +93,8 @@ export const starsSwap = {
 };
 
 /**
- * ASCEND (R = 10 + 5 × ★): rebirths and POWER → 0, level → 1, ★ + 1. `target` = the server's new ★ total (local
+ * ASCEND — HIDDEN in FINAL v2 (econ.canAscend is always false; lb_ascend refuses). Kept for later: R = 10 + 5 × ★ →
+ * rebirths and POWER → 0, level → 1, ★ + 1. `target` = the server's new ★ total (local
  * lands exactly on it), null = local. Returns { ok, stars, added } — ok:false below the ascension gate.
  */
 export function ascend(target = null) {
@@ -278,7 +275,7 @@ export function noteServerSeason(caps) {
 // at the storage layer, so the live modules carry no key logic (and the season-1 save is never touched). Patched once,
 // by install, before anything reads them (main.jsx renders after install). Named-property access (localStorage['k'])
 // and Object.keys see the raw keys (the e2e reads the season-1 save that way).
-export const S2_KEYS = ['taw.xp', 'taw.xpv10', 'taw.rebirths', 'taw.keytier', 'taw.wins', 'taw.winsLifetime', 'taw.winsCarry', 'taw.gems', 'taw.records', 'taw.rbgate', 'taw.claims'];
+export const S2_KEYS = ['taw.xp', 'taw.xpv10', 'taw.rebirths', 'taw.keytier', 'taw.wins', 'taw.winsLifetime', 'taw.winsCarry', 'taw.gems', 'taw.records', 'taw.rbgate', 'taw.claims', 'taw.overdrive'];
 const KEYSET = new Set(S2_KEYS);
 export const s2MapKey = (k) => (KEYSET.has(k) ? S2_PREFIX + String(k).slice(4) : k);
 /** Map the season-2 keys on `target` (default: Storage.prototype; the node shims pass their localStorage object). */
@@ -311,12 +308,9 @@ export function rawStorage(storage = globalThis.localStorage) {
   };
 }
 
-// ---- the menu (PROGRESSION FINAL): real dictionary words only — useXpCapture reads these through V3.hooks ------------
-export { createMenuWordJudge, menuWordXp } from './menuWords.js';
-
 // ---- AUTO REBIRTH (PROGRESSION FINAL — the R2 unlock): a toggle on the REBIRTH screen; Homepage runs it ------------------
 export const AUTO_REBIRTH_KEY = `${S2_PREFIX}autoRebirth`;
-/** Is AUTO REBIRTH on (and unlocked — R2, or any ★)? */
+/** Is AUTO REBIRTH on (and unlocked — R2)? */
 export function autoRebirthOn() {
   try {
     return featureOpen('autoRebirth') && localStorage.getItem(AUTO_REBIRTH_KEY) === '1';

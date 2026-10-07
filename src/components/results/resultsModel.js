@@ -52,8 +52,8 @@ export function xpBetween(a, b, need, { maxLevels = 4000 } = {}) {
 
 /**
  * The multiplier chain: { base, mult, chips: [{ key, label, mult }] } — the payout ledger's rows, biggest first.
- * `split` (SEASON 2, PROGRESSION FINAL): the ledger's REBIRTH row is 2^R × (1 + ★) there; given { rebirth, star } it is
- * shown as its two FINAL factors — REBIRTH ×2^R and ★ ×(1 + ★) — so the chain reads like the FINAL formula.
+ * `split` (SEASON 2, PROGRESSION FINAL): the ledger's REBIRTH row is 3^R there (FINAL v2: ★ is ×1, ascension hidden); given { rebirth, star } it is
+ * shown as REBIRTH ×3^R (+ a ★ chip only if ascension ever returns) — so the chain reads like the FINAL formula.
  */
 export function chainOf(ledger, wordsWins, split = null) {
   const base = ledger && Number.isFinite(ledger.base) ? Math.max(0, ledger.base) : 0;

@@ -1,10 +1,10 @@
 // e2e/v2-rebirth.spec.js — THE v2 REBIRTH SCREEN (P3; claude/mockups/v2/Rebirth.dc.html) behind ?season2=1, on the
-// season-2 board mock (boardMock `season2` — 026's real write rule + lb_rebirth / lb_ascend season 2, PROGRESSION FINAL).
+// season-2 board mock (boardMock `season2` — 027's real write rule + lb_rebirth / lb_ascend season 2, PROGRESSION FINAL v2).
 //   1. a hold released before 1 s sends NOTHING; a full 1 s hold sends ONE lb_rebirth; while it is pending the
-//      button is disabled (a second full hold does nothing); the server's answer lands R1 once — 25 levels SPENT,
-//      the rest kept, no gems;
-//   2. the server's stored level is not past the gate → refused with "LV 20 / 26", nothing applied, button back;
-//   3. at R10 the ASCEND hold goes through lb_ascend: ★ + 1, rebirths → 0; the AUTO REBIRTH toggle (R2+) persists;
+//      button is disabled (a second full hold does nothing); the server's answer lands R1 once — back to LV 1, KEY kept,
+//      no gems;
+//   2. the server's stored level is below the gate (LV 15 at R0) → refused with "LV 10 / 15", nothing applied;
+//   3. at R10 there is no ASCEND (hidden in v2); the AUTO REBIRTH toggle (R2+) persists;
 //   4. the phone (390×844) gets the same screen and the same hold.
 // With the flag OFF the live REBIRTH view is untouched (server-rebirth.spec.js / rr-ready.spec.js cover it).
 import { test, expect } from '@playwright/test';
@@ -62,15 +62,15 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   await expect(screen.locator('[data-testid="rb2-now"]')).toHaveText('R0');
   await expect(screen.locator('.rb2-r-after')).toHaveText('R1');
   await expect(btn).toContainText('HOLD TO REBIRTH');
-  // YOU GET (FINAL): ×2 per rebirth, POWER kept, LEVELS − 25 (COSTS 25 LEVELS · KEEP THE REST), no gems
-  await expect(screen.locator('.rb2-get')).toContainText('×1 → ×2');
+  // YOU GET (FINAL v2): ×3 per rebirth, KEY kept, LEVELS → LV 1 (BACK TO LV 1 · KEY KEPT), no gems
+  await expect(screen.locator('.rb2-get')).toContainText('×1 → ×3');
   await expect(screen.locator('.rb2-get')).toContainText('KEPT');
-  await expect(screen.locator('.rb2-get')).toContainText('−25');
+  await expect(screen.locator('.rb2-get')).toContainText('→ LV 1');
   await expect(screen.locator('.rb2-get')).not.toContainText('GEMS');
-  await expect(screen.locator('[data-testid="rb2-cost"]')).toHaveText('COSTS 25 LEVELS · KEEP THE REST');
-  await expect(btn).toContainText('LV 60 → 35');
-  // the UNLOCKS track (v3/unlocks.js): six diamonds; ROLL + INDEX is lit from the start
-  await expect(screen.locator('.rb2-ms')).toHaveCount(6);
+  await expect(screen.locator('[data-testid="rb2-cost"]')).toHaveText('BACK TO LV 1 · KEY KEPT');
+  await expect(btn).toContainText('LV 60 → 1');
+  // the UNLOCKS track (v3/unlocks.js): five diamonds (no ASCEND in v2); ROLL + INDEX is lit from the start
+  await expect(screen.locator('.rb2-ms')).toHaveCount(5);
   await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(1);
   await expect(screen.locator('.rb2-ms[data-unlock="rollScreen"]')).toHaveClass(/is-got/);
   await expect(screen.locator('[data-testid="rb2-auto"]'), 'AUTO REBIRTH opens at R2').toHaveCount(0);
@@ -94,10 +94,10 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   const st = await s2(page);
   expect(st.rebirths).toBe(1);
   expect(st.gems, 'a rebirth pays no gems (FINAL)').toBe(0);
-  expect(st.level, 'LV60 − 25 = LV35 kept').toBe(35);
-  expect(shared.rows[0].level, 'the server spent the same 25 levels').toBe(35);
+  expect(st.level, 'back to LV 1').toBe(1);
+  expect(shared.rows[0].level, 'the server sent the row to LV 1 too').toBe(1);
   expect(st.pending, 'the answered request id is cleared').toBeNull();
-  // R1 lit (AUTO ROLL); the next gate (LV > 50) is out of reach → the button is locked
+  // R1 lit (AUTO ROLL); the next gate (LV 33) is out of reach → the button is locked
   await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(2);
   await expect(screen.locator('.rb2-ms[data-unlock="autoRoll"]')).toHaveClass(/is-got/);
   await expect(btn).toContainText('NEED LEVELS');
@@ -107,14 +107,14 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   await expect(screen).toHaveCount(0);
 });
 
-test('stored level not past the gate → refused "LV 20 / 26", nothing applied, the button comes back', async ({ page }) => {
+test('stored level below the gate → refused "LV 10 / 15", nothing applied, the button comes back', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
-  // the row's last submit is "in the future" → every push is throttled: the server keeps LV20
-  const row = { id: 'me-rb2', username: 'Holder', level: 20, rebirths: 0, lifetime_words: 400, lifetime_letters: 2400, wins_per_word: 0, econ: 13, submitted_at: Date.now() + 10 * 60 * 1000 };
+  // the row's last submit is "in the future" → every push is throttled: the server keeps LV10
+  const row = { id: 'me-rb2', username: 'Holder', level: 10, rebirths: 0, lifetime_words: 400, lifetime_letters: 2400, wins_per_word: 0, econ: 13, submitted_at: Date.now() + 10 * 60 * 1000 };
   const { board, shared, screen } = await boot(page, { row, local: { level: 120, rebirths: 0 } });
   const btn = screen.locator('.rb2-hold .kb');
   await hold(page, btn, 1150);
-  await expect(screen.locator('.rb2-msg')).toHaveText('LV 20 / 26 — NOT THERE YET');
+  await expect(screen.locator('.rb2-msg')).toHaveText('LV 10 / 15 — NOT THERE YET');
   await expect(btn).not.toHaveAttribute('aria-disabled', 'true');
   await expect(btn).toContainText('HOLD TO REBIRTH');
   expect(board.calls.rebirth).toBe(1);
@@ -123,12 +123,15 @@ test('stored level not past the gate → refused "LV 20 / 26", nothing applied, 
   await expect(screen.locator('[data-testid="rb2-now"]')).toHaveText('R0');
 });
 
-test('R10: HOLD TO ASCEND goes through lb_ascend — ★ + 1, rebirths → 0; AUTO REBIRTH toggles', async ({ page }) => {
+test('R10: no ASCEND (hidden in v2) — every unlock lit; AUTO REBIRTH toggles', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   // an established season-2 row (submitted a minute ago) — a first submit would clamp R to the word count
   const row = { id: 'me-rb2', username: 'Holder', level: 1, rebirths: 10, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 13, submitted_at: Date.now() - 60_000 };
-  const { board, shared, screen } = await boot(page, { row, local: { level: 1, rebirths: 10 } });
-  await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(6);
+  const { board, screen } = await boot(page, { row, local: { level: 1, rebirths: 10 } });
+  await expect(screen.locator('.rb2-ms')).toHaveCount(5);
+  await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(5);
+  await expect(screen.locator('.rb2-ms[data-unlock="ascend"]')).toHaveCount(0);
+  await expect(screen.locator('.rb2-ascend')).toHaveCount(0);
   // AUTO REBIRTH (R2+): a toggle on this screen, kept in taw.s2.autoRebirth
   const auto = screen.locator('[data-testid="rb2-auto"]');
   await expect(auto).toHaveText('AUTO REBIRTH: OFF');
@@ -138,21 +141,7 @@ test('R10: HOLD TO ASCEND goes through lb_ascend — ★ + 1, rebirths → 0; AU
   expect(await page.evaluate(() => localStorage.getItem('taw.s2.autoRebirth'))).toBe('1');
   await auto.click();
   await expect(auto).toHaveText('AUTO REBIRTH: OFF');
-  const asc = screen.locator('.rb2-ascend .kb');
-  await expect(asc).toContainText('HOLD TO ASCEND');
-  await expect(asc).toContainText('+1 ★');
-  await hold(page, asc, 1150);
-  await expect(screen.locator('.rb2-msg')).toHaveText('ASCENDED — ★1 (+1 ★)');
-  expect(board.calls.ascend).toBe(1);
-  expect(shared.rows[0].stars).toBe(1);
-  const st = await s2(page);
-  expect(st.stars).toBe(1);
-  expect(st.rebirths).toBe(0);
-  await expect(screen.locator('[data-testid="rb2-now"]')).toHaveText('R0');
-  await expect(screen.locator('.rb2-ascend')).toHaveCount(0);
-  // unlocks are KEPT through ascension (★ ≥ 1) — except ASCEND itself, which now needs R15
-  await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(5);
-  await expect(screen.locator('.rb2-ms[data-unlock="ascend"]')).toContainText('R15');
+  expect(board.calls.ascend || 0).toBe(0);
 });
 
 test('phone 390×844: the same screen, the same hold, no horizontal overflow', async ({ page }) => {

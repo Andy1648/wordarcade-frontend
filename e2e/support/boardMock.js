@@ -5,7 +5,7 @@
 import { isNameBlocked } from '../../src/leaderboard/nameFilter.js';
 import { decideSubmit } from '../../src/leaderboard/submitRules.js';
 import { decideRebirth, decideAscend } from '../../src/leaderboard/rebirthRules.js';
-import { decideSubmitFinal } from '../../src/leaderboard/finalRules.js'; // 026: FINAL's season-2 write
+import { decideSubmitFinal } from '../../src/leaderboard/finalRules.js'; // 027: FINAL v2's season-2 write
 import { decideSeason2Claim, peekSeason2Grant } from '../../src/leaderboard/season2Rules.js';
 import { s2WeekGains, compareWeekS2 } from '../../src/leaderboard/s2Board.js';
 
@@ -143,13 +143,13 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       if (out.grant) db.grants.set(pid, out.grant);
       return json(200, out.result);
     }
-    // 022/026: the season-2 board write (p_econ 13) — the real rule (finalRules.decideSubmitFinal, 026)
+    // 022/027: the season-2 board write (p_econ 13) — the real rule (finalRules.decideSubmitFinal, 027)
     if (caps && season2 && url.pathname.endsWith('/rpc/lb_submit3') && body.p_econ === 13) {
       calls.submit += 1;
       calls.submitS2 = (calls.submitS2 || 0) + 1;
       const row = rows.find((r) => r.id === secrets.get(body.p_secret));
       if (!row) return json(404, { message: 'no_profile' });
-      const d = decideSubmitFinal( // 026 supersedes 022's write (decideSubmitS2 kept for its own tests)
+      const d = decideSubmitFinal( // 027 supersedes 022's write (decideSubmitS2 kept for its own tests)
         { level: row.level, rebirths: row.rebirths || 0, lifetime_words: row.lifetime_words || 0, lifetime_letters: row.lifetime_letters || 0, submitted_at: row.submitted_at ?? null, econ: row.econ || 0 },
         { level: body.p_level, rebirths: body.p_rebirths, words: body.p_lifetime_words, letters: body.p_lifetime_letters },
         Date.now(),

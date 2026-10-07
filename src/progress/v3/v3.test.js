@@ -52,41 +52,41 @@ test('the flag is ON and the season keeps its own save (taw.s2.*)', () => {
   assert.equal(mem.get('taw.rebirths'), undefined);
 });
 
-test('XP per letter = 10 × 2.5^POWER × 2^R × (1 + ★) × MARK (FINAL, frozen)', () => {
-  assert.deepEqual([E.XP_BASE, E.POWER_XP_STEP, E.REBIRTH_STEP], [10, 2.5, 2]);
+test('XP per letter = 10 × KEY × 3^R × MARK (FINAL v2, frozen) — KEY ×1, 2, 5 … 1000, then ×2.15', () => {
+  assert.deepEqual([E.XP_BASE, E.REBIRTH_STEP], [10, 3]);
+  assert.deepEqual([...E.KEY_LADDER], [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000]);
   reset();
   assert.equal(X.levelXpPerLetter(0, 0, 1, 0), 10);
-  near(X.levelXpPerLetter(3, 2, 1, 0), 10 * 2.5 ** 3 * 4);
-  near(X.levelXpPerLetter(1, 1, 1.5, 0), 10 * 2.5 * 2 * 1.5);
+  near(X.levelXpPerLetter(3, 2, 1, 0), 10 * 10 * 9);
+  near(X.levelXpPerLetter(1, 1, 1.5, 0), 10 * 2 * 3 * 1.5);
+  near(X.keyXpMult(11), 1000 * 2.15 ** 2);
   ST3.saveStarsV3(2);
-  near(X.levelXpPerLetter(0, 0, 1, 0), 30);
-  near(E.xpPerLetter({ power: 2, rebirths: 3, stars: 4, mark: 1.1 }), 10 * 2.5 ** 2 * 8 * 5 * 1.1);
+  near(X.levelXpPerLetter(0, 0, 1, 0), 10); // ★ multiply nothing (ascension hidden)
+  near(E.xpPerLetter({ power: 2, rebirths: 3, mark: 1.1 }), 10 * 5 * 27 * 1.1);
   assert.ok(Number.isFinite(X.levelXpPerLetter(5000, 5000, 1, 0)), 'finite at absurd tiers');
 });
 
-test('XP for the next level = 400 × 1.06^(n−1); a credit of any size is O(1) and exactly additive', () => {
-  for (const L of [1, 2, 10, 100, 1000, 5000]) near(X.need(L), 400 * 1.06 ** (L - 1), 1e-9);
-  assert.equal(X.need(1), 400);
-  // levels reach the thousands: the gain that lands LV 3,001 from LV1 — no per-level loop
+test('XP for the next level = 100 × 1.15^(n−1); a credit of any size is O(1) and exactly additive', () => {
+  for (const L of [1, 2, 10, 100, 1000, 3000]) near(X.need(L), 100 * 1.15 ** (L - 1), 1e-9);
+  assert.equal(X.need(1), 100);
   const t0 = process.hrtime.bigint();
-  const big = X.creditXp({ level: 1, frac: 0 }, CV.cumXp(3001) * (1 + 1e-12));
+  const big = X.creditXp({ level: 1, frac: 0 }, CV.cumXp(1001) * (1 + 1e-12));
   const ms = Number(process.hrtime.bigint() - t0) / 1e6;
-  assert.equal(big.level, 3001);
+  assert.equal(big.level, 1001);
   assert.ok(ms < 20, `${ms} ms`);
   const huge = X.creditXp({ level: 1, frac: 0 }, 1e299);
-  assert.ok(Number.isFinite(huge.level) && huge.level <= CV.LEVEL_MAX && huge.level > 10000, `level ${huge.level}`);
-  // exactly 400 XP is LV2; less is not
-  assert.equal(X.creditXp({ level: 1, frac: 0 }, 400).level, 2);
-  assert.equal(X.creditXp({ level: 1, frac: 0 }, 399.99).level, 1);
+  assert.ok(Number.isFinite(huge.level) && huge.level <= CV.LEVEL_MAX && huge.level > 4000, `level ${huge.level}`);
+  // exactly 100 XP is LV2; less is not
+  assert.equal(X.creditXp({ level: 1, frac: 0 }, 100).level, 2);
+  assert.equal(X.creditXp({ level: 1, frac: 0 }, 99.99).level, 1);
   // additive: credit(a) then credit(b) == credit(a + b)
   const a = X.creditXp(X.creditXp({ level: 37, frac: 0.25 }, 123456).state, 7890123);
   const b = X.creditXp({ level: 37, frac: 0.25 }, 123456 + 7890123);
   assert.equal(a.level, b.level);
   near(a.state.frac, b.state.frac, 1e-6);
-  // at LV 2,000 a credit worth exactly 3 levels (+ a sliver) lands 3 levels up — precision is relative to need(L)
-  const at = X.creditXp({ level: 2000, frac: 0 }, X.need(2000) + X.need(2001) + X.need(2002) + 1e-6 * X.need(2003));
-  assert.equal(at.level, 2003);
-  for (const L of [2, 26, 100, 1000, 4000]) {
+  const at = X.creditXp({ level: 500, frac: 0 }, X.need(500) + X.need(501) + X.need(502) + 1e-6 * X.need(503));
+  assert.equal(at.level, 503);
+  for (const L of [2, 26, 100, 1000, 3000]) {
     assert.equal(CV.levelAtCum(CV.cumXp(L) * (1 + 1e-12)), L);
     assert.equal(CV.levelAtCum(CV.cumXp(L) * (1 - 1e-9) - 1e-3), L - 1);
   }
@@ -94,26 +94,26 @@ test('XP for the next level = 400 × 1.06^(n−1); a credit of any size is O(1) 
   assert.deepEqual([s.level, s.leveledUp], [10, false]);
 });
 
-test('WINS per word = 22 × length/5 × MODE × 2^R × (1 + ★) × MARK; MODE WB/Blitz 1 · RACE 1.5 · CHAIN 2 · SAT 3 · FUSE 1', () => {
+test('WINS per word = 10 × length/5 × MODE × 3^R × MARK; MODE WB/Blitz 1 · RACE 1.5 · CHAIN 2 · SAT 5 · FUSE 1', () => {
   reset();
-  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 22);
-  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 10, rebirthCount: 0 }), 44);
-  assert.equal(W.perWordWins({ mode: 'blitz', wordLength: 5, rebirthCount: 0 }), 22);
-  assert.equal(W.perWordWins({ mode: 'wordRace', wordLength: 5, rebirthCount: 0 }), 33);
-  assert.equal(W.perWordWins({ mode: 'chain', wordLength: 5, rebirthCount: 3 }), 22 * 2 * 8);
-  assert.equal(W.perWordWins({ mode: 'satRush', wordLength: 5, rebirthCount: 0 }), 66);
-  assert.equal(W.perWordWins({ mode: 'fuse', wordLength: 5, rebirthCount: 0 }), 22);
-  assert.deepEqual(['word-bomb', 'category-blitz', 'word-race', 'chain', 'sat-rush', 'fuse'].map((m) => X.modePower(m)), [1, 1, 1.5, 2, 3, 1], 'the receipt reads the FINAL table');
+  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 10);
+  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 10, rebirthCount: 0 }), 20);
+  assert.equal(W.perWordWins({ mode: 'blitz', wordLength: 5, rebirthCount: 0 }), 10);
+  assert.equal(W.perWordWins({ mode: 'wordRace', wordLength: 5, rebirthCount: 0 }), 15);
+  assert.equal(W.perWordWins({ mode: 'chain', wordLength: 5, rebirthCount: 3 }), 10 * 2 * 27);
+  assert.equal(W.perWordWins({ mode: 'satRush', wordLength: 5, rebirthCount: 0 }), 50);
+  assert.equal(W.perWordWins({ mode: 'fuse', wordLength: 5, rebirthCount: 0 }), 10);
+  assert.deepEqual(['word-bomb', 'category-blitz', 'word-race', 'chain', 'sat-rush', 'fuse'].map((m) => X.modePower(m)), [1, 1, 1.5, 2, 5, 1], 'the receipt reads the FINAL table');
   ST3.saveStarsV3(1);
-  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 44);
-  assert.equal(W.perWordFactors({ mode: 'wordBomb', rebirthCount: 0 }).rebirth, 2, 'the receipt REBIRTH row carries (1 + ★)');
+  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 10, '★ multiply nothing');
+  assert.equal(W.perWordFactors({ mode: 'wordBomb', rebirthCount: 1 }).rebirth, 3, 'the receipt REBIRTH row is 3^R');
 });
 
-test('POWER: P → P+1 costs 300 × 8^P wins, ×2.5 XP a tier, one at a time', () => {
+test('KEY: T → T+1 costs 150 × 5^T wins, the ladder on XP, one at a time', () => {
   reset();
-  assert.deepEqual([0, 1, 2, 3, 4].map((p) => X.keyTierCost(p)), [300, 2400, 19200, 153600, 1228800]);
-  near(X.keyXpMult(4), 2.5 ** 4);
-  W.saveWins(300 + 2400);
+  assert.deepEqual([0, 1, 2, 3, 4].map((p) => X.keyTierCost(p)), [150, 750, 3750, 18750, 93750]);
+  assert.equal(X.keyXpMult(4), 25);
+  W.saveWins(150 + 750);
   const r1 = SH.buyKeyPower();
   const r2 = SH.buyKeyPower();
   assert.deepEqual([r1.ok, r1.tier, r2.ok, r2.tier], [true, 1, true, 2]);
@@ -121,24 +121,25 @@ test('POWER: P → P+1 costs 300 × 8^P wins, ×2.5 XP a tier, one at a time', (
   assert.equal(ST3.readCounters().power, 2);
 });
 
-test('REBIRTH: needs LV > 25 × (R+1), SPENDS those levels (keeps the rest), ×2, POWER kept, no gems, no ★', () => {
-  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [26, 51, 126, 251]);
-  assert.deepEqual([0, 1, 4].map((r) => E.rebirthCost(r)), [25, 50, 125]);
+test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
+  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [15, 33, 87, 177]);
+  assert.equal(E.rebirthGate(4), 15 + 18 * 4);
   reset();
   X.saveKeyTier(4);
-  X.saveProgress({ level: 25, frac: 0 });
-  assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV25 is not past the R1 gate');
+  X.saveProgress({ level: 14, frac: 0 });
+  assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV14 is below the R1 gate');
   X.saveProgress({ level: 40, frac: 0.6 });
   let r = STARS.rebirthWithStars();
   assert.deepEqual(r, { rc: 1, stars: 0 });
-  assert.equal(X.loadProgress().level, 15, 'LV40 − 25 = LV15 kept');
-  assert.equal(X.getKeyTier(), 4, 'POWER is kept through a rebirth');
+  assert.equal(X.loadProgress().level, 1, 'back to LV 1');
+  assert.equal(X.getKeyTier(), 4, 'KEY is kept through a rebirth');
   assert.equal(G.getGems(), 0, 'a rebirth pays no gems (games only)');
-  assert.equal(X.rebirthMult(1), 2);
-  X.saveProgress({ level: 51, frac: 0 });
+  assert.equal(X.rebirthMult(1), 3);
+  assert.equal(X.rebirthMult(2), 9);
+  X.saveProgress({ level: 33, frac: 0 });
   r = STARS.rebirthWithStars();
   assert.equal(r.rc, 2);
-  assert.equal(X.loadProgress().level, 1, 'LV51 − 50 = LV1');
+  assert.equal(X.loadProgress().level, 1);
   assert.equal(ST3.readCounters().reb, 2);
   assert.equal(STARS.starsForRebirth(10000, 2), 0);
   assert.deepEqual(C.listClaims(), []);
@@ -146,32 +147,21 @@ test('REBIRTH: needs LV > 25 × (R+1), SPENDS those levels (keeps the rest), ×2
   assert.deepEqual(STARS.runAutomation({ buyKey: () => ({ ok: true }) }), { keys: 0, forges: 0 });
 });
 
-test('ASCEND at R = 10 + 5 × ★: R, POWER → 0, LV → 1, ★ + 1 (never R − 9) — and ★ multiplies XP and wins', () => {
+test('ASCENSION is HIDDEN (FINAL v2): no save can ascend locally, at any R', () => {
   reset();
-  X.saveRebirths(9);
-  assert.equal(S.V3.hooks.ascend().ok, false, 'R9 cannot ascend');
-  X.saveRebirths(12);
-  X.saveKeyTier(7);
-  X.saveProgress({ level: 500, frac: 0.3 });
-  assert.deepEqual(S.V3.hooks.ascend(), { ok: true, stars: 1, added: 1 });
-  assert.deepEqual([X.getRebirths(), X.getKeyTier(), X.loadProgress().level], [0, 0, 1]);
-  assert.equal(X.levelXpPerLetter(0, 0, 1, 0), E.XP_BASE * 2);
-  X.saveRebirths(14);
-  assert.equal(S.V3.hooks.ascend().ok, false, '★1 needs R15');
-  X.saveRebirths(15);
-  assert.equal(S.V3.hooks.ascend().stars, 2);
-  assert.deepEqual([0, 1, 2, 5].map((st) => E.ascendAt(st)), [10, 15, 20, 35]);
-  assert.equal(E.starsForAscend(10, 0), 1);
-  assert.equal(E.starsForAscend(40, 0), 1, 'one ★ per ascension, however far past');
-  assert.equal(E.starsForAscend(14, 1), 0);
-  // a server-granted ascension lands on the server's ★ total
-  X.saveRebirths(20);
-  assert.equal(S.V3.hooks.ascend(9).stars, 9);
+  assert.equal(E.ASCENSION_ON, false);
+  for (const rb of [9, 10, 15, 40]) {
+    X.saveRebirths(rb);
+    assert.equal(S.V3.hooks.ascend().ok, false, `R${rb}`);
+    assert.equal(E.canAscend(rb, 0), false);
+    assert.equal(E.starsForAscend(rb, 0), 0);
+  }
+  assert.equal(ST3.getStarsV3(), 0);
 });
 
-test('UNLOCKS: start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd MARK · R7 LUCK ×1.25 · R10 ASCEND (pure + live)', () => {
+test('UNLOCKS: start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd MARK · R7 LUCK ×1.25 (no ASCEND) (pure + live)', () => {
   const at = Object.fromEntries(U.UNLOCKS.map((u) => [u.id, u.at]));
-  assert.deepEqual(at, { rollScreen: 0, autoRoll: 1, autoRebirth: 2, mark2: 5, luck: 7, ascend: 10 });
+  assert.deepEqual(at, { rollScreen: 0, autoRoll: 1, autoRebirth: 2, mark2: 5, luck: 7 });
   assert.equal(U.unlocked('rollScreen', { rebirths: 0 }), true, 'ROLL + INDEX from the start');
   assert.equal(U.unlocked('autoRoll', { rebirths: 0 }), false);
   assert.equal(U.unlocked('autoRoll', { rebirths: 1 }), true);
@@ -179,11 +169,7 @@ test('UNLOCKS: start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd M
   assert.equal(U.unlocked('autoRebirth', { rebirths: 2 }), true);
   assert.equal(U.unlocked('mark2', { rebirths: 4 }), false);
   assert.equal(U.unlocked('mark2', { rebirths: 5 }), true);
-  assert.equal(U.unlocked('luck', { rebirths: 0, stars: 1 }), true, 'kept through ascension');
-  assert.equal(U.unlocked('ascend', { rebirths: 0, stars: 3 }), false, 'ASCEND needs the climb');
-  assert.equal(U.unlocked('ascend', { rebirths: 10 }), true);
-  assert.equal(U.unlocked('ascend', { rebirths: 10, stars: 1 }), false, '★1 ascends at R15');
-  assert.equal(U.unlocked('ascend', { rebirths: 15, stars: 1 }), true);
+  assert.equal(U.unlocked('ascend', { rebirths: 99 }), false, 'ascension is hidden');
   assert.equal(U.unlocked('boost2', { rebirths: 99 }), false, 'no 2nd boost slot in FINAL');
   reset();
   assert.equal(U.unlockLuckMult(), 1);

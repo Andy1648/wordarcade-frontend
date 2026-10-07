@@ -6,10 +6,7 @@ import {
   ECON_VERSION,
   ECON_VERSION_KEY,
   PV10_NOTICE_KEY,
-  pv10NoticePending,
   rebirthRushConvert,
-  rebirthRushNotice,
-  clearRebirthRushNotice,
   RR_NOTICE_KEY,
 } from './econMigrate.js';
 import { needV9, loadProgress, getRebirths, getKeyTier } from './xp.js';
@@ -43,7 +40,7 @@ test('rebirthRushConvert: L ≥ 15 + 18R → +floor((L − gate)/18) + 1 rebirth
   assert.deepEqual(rebirthRushConvert(undefined, undefined), { rebirths: 0, level: 1, added: 0 });
 });
 
-test('a v10/v11 save above its gate converts to rebirths: LV1, KEY tier kept, wins kept, peak recorded, notice queued', () => {
+test('a v10/v11 save above its gate converts to rebirths: LV1, KEY tier kept, wins kept, peak recorded, no notice', () => {
   withStorage({ 'taw.xp': v10(195, 0.5, 4), 'taw.xpv10': v10(195, 0.5, 4), 'taw.econ': '11', 'taw.rebirths': '4', 'taw.keytier': '6', 'taw.wins': '1e9' }, (map) => {
     const r = migrateEconomyV11();
     assert.equal(r.migrated, true);
@@ -57,10 +54,7 @@ test('a v10/v11 save above its gate converts to rebirths: LV1, KEY tier kept, wi
     assert.equal(map.get('taw.wins'), '1e9', 'nobody loses wins');
     assert.equal(JSON.parse(map.get('taw.records')).maxLevel, 195, 'the run peak is recorded first');
     assert.equal(map.get(ECON_VERSION_KEY), '12');
-    assert.equal(rebirthRushNotice(), 7);
-    clearRebirthRushNotice();
-    assert.equal(map.has(RR_NOTICE_KEY), false);
-    assert.equal(rebirthRushNotice(), 0);
+    assert.equal(map.has(RR_NOTICE_KEY), false, 'silent: no notice flag (the ONE-NOTICE rule)');
   });
 });
 
@@ -174,14 +168,16 @@ test('legacy save below its gate keeps the bar where it was (fraction against th
   });
 });
 
-test('the one-time pv10 notice is set for a legacy player with progress, and only once', () => {
+test('the ONE-NOTICE rule: no notice flag is ever set, and a stale one an older build left is deleted', () => {
   withStorage({ 'taw.xp': JSON.stringify({ lv: 3, into: 0 }) }, (map) => {
     migrateEconomyV10();
-    assert.equal(map.get(PV10_NOTICE_KEY), '1');
-    assert.equal(pv10NoticePending(), true);
-    map.delete(PV10_NOTICE_KEY);
-    migrateEconomyV10();
     assert.equal(map.has(PV10_NOTICE_KEY), false);
+    assert.equal(map.has(RR_NOTICE_KEY), false);
+  });
+  withStorage({ 'taw.econ': '12', [PV10_NOTICE_KEY]: '1', [RR_NOTICE_KEY]: '3' }, (map) => {
+    migrateEconomyV11();
+    assert.equal(map.has(PV10_NOTICE_KEY), false);
+    assert.equal(map.has(RR_NOTICE_KEY), false);
   });
 });
 
@@ -198,18 +194,17 @@ test('a stale legacy write after the v10 stamp never raises the level (shadow ke
   });
 });
 
-// RR review 9: a converted save must not also get the old v10 "you kept every level" notice.
-test('Rebirth Rush conversion drops the stale PV10 notice; a save below its gate keeps it', () => {
+// The ONE-NOTICE rule: neither a converted save nor one below its gate gets a notice flag.
+test('Rebirth Rush conversion sets no notice, above or below the gate', () => {
   withStorage({ 'taw.xp': JSON.stringify({ lv: 195, into: 0 }), 'taw.rebirths': '4' }, (map) => {
-    const r = migrateEconomyV11(); // legacy → v10 shape (queues the v10 notice) → Rebirth Rush (+7)
+    const r = migrateEconomyV11();
     assert.ok(r.rebirthRush.added > 0);
-    assert.equal(map.has(PV10_NOTICE_KEY), false, 'the levels became rebirths — no "kept every level" notice');
-    assert.equal(pv10NoticePending(), false);
-    assert.ok(rebirthRushNotice() > 0);
+    assert.equal(map.has(PV10_NOTICE_KEY), false);
+    assert.equal(map.has(RR_NOTICE_KEY), false);
   });
-  withStorage({ 'taw.xp': JSON.stringify({ lv: 10, into: 0 }), 'taw.rebirths': '1' }, () => {
+  withStorage({ 'taw.xp': JSON.stringify({ lv: 10, into: 0 }), 'taw.rebirths': '1' }, (map) => {
     const r = migrateEconomyV11(); // gate 33: nothing converts
     assert.equal(r.rebirthRush.added, 0);
-    assert.equal(pv10NoticePending(), true, 'kept its level — the v10 notice stays true');
+    assert.equal(map.has(PV10_NOTICE_KEY), false);
   });
 });

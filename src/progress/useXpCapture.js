@@ -13,10 +13,8 @@ import {
   progressOf,
   xpPerInput,
   getKeyTier,
-  levelXpPerLetter,
 } from './xp';
-// PROGRESSION FINAL (SEASON2): the menu pays only REAL WORDS (v3/menuWords.js via V3.hooks — the lazy season chunk)
-import { SEASON2, V3 } from './season.js';
+// SEASON 2 (PROGRESSION FINAL v2): ANY key counts at ×0.2 with no rate cap (letterXp.tryLetterCredit) — mashing is the game.
 import { markXpBoost, tryLetterCredit } from './letterXp';
 import { boostMult } from './boost';
 import { letterPerkMult } from './markPerks';
@@ -68,16 +66,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // v11: one key = one LETTER at the MENU price — 2 × KEY × rebirth × the worn mark (a fifth of a game letter).
     // Cosmetics (pop style / sound pack) are looks only — they never multiply XP (review round 2).
     // × BOOST (code boost × OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN)
-    const menuMark = markXpBoost() * letterPerkMult() * boostMult();
-    const menuGain = xpPerInput({ mode: 'menu', markMult: menuMark });
-    // SEASON 2 (PROGRESSION FINAL): no per-key / per-tap credit — a finished REAL word pays its letters × 0.2 × the
-    // 60 s repeat decay (×1 / ×0.5 / ×0.25 / 0), 0 when typed faster than 12 letters a second. The dictionary is the
-    // solo ACCEPT set, loaded lazily (until it lands a word pays nothing).
-    const s2Words = SEASON2 && V3.hooks && V3.hooks.createMenuWordJudge;
-    let dict = null;
-    const judge = s2Words ? V3.hooks.createMenuWordJudge({ isWord: (w) => !!(dict && dict.accept.has(w)) }) : null;
-    if (s2Words) import('../solo/words.js').then((m) => m.loadSoloWords()).then((d) => { dict = d; }).catch(() => {});
-    let wordT0 = 0;
+    const menuGain = xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
     // KEY TIER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
     // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).
     // Stable for this menu session (buying remounts this hook via the shop round-trip).
@@ -103,10 +92,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
-      if (judge) xpRef.current = loadProgress(); // season 2: one read per WORD (an auto rebirth may have moved it)
       const fromLevel = xpRef.current.level;
-      const gain = Number.isFinite(opts.gain) ? opts.gain : menuGain;
-      const res = creditXp(xpRef.current, gain);
+      const res = creditXp(xpRef.current, menuGain);
       xpRef.current = res.state;
       saveProgress(res.state);
       setProgress(progressOf(res.state));
@@ -123,8 +110,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
           evLevelUp(res.level);
           refreshSessionProps({ level: res.level });
         } else if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
-        if (isTap) fx.tapPop(`+${formatNum(gain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
-        else fx.letterPop(opts.letter, `+${formatNum(gain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
+        if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
+        else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
         // T4's per-accepted-word edge glow lives in-game). Gold at KEY TIER T5+.
         if (crossed && tier > 0) fx.edgePulse(feelTier >= 5 ? '#FFD54A' : popColors[tier]);
@@ -135,15 +122,9 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // Score the buffered word and, if it's rare enough to announce (UNCOMMON+), pop its tier
     // label in the tier colour via the existing letter-pop pool (label as the text, no "+N").
     const MAX_WORD = 24;
-    const finalizeWord = (pay = true) => {
+    const finalizeWord = () => {
       const w = wordBufRef.current;
       wordBufRef.current = '';
-      if (judge && pay && w.length >= 2) {
-        const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-        const f = judge.judge(w, wordT0, now);
-        const gain = f > 0 ? V3.hooks.menuWordXp(w.length, levelXpPerLetter(undefined, undefined, menuMark), f) : 0;
-        if (gain > 0) credit(now, { kind: 'key', letter: w[w.length - 1].toUpperCase(), gain });
-      }
       if (w.length < 2) return;
       // WPM: count every word typed toward the menu self-test's typing speed.
       wpmAddWord(w);
@@ -160,13 +141,11 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const k = e.key;
       if (k && k.length === 1 && /^[a-z]$/i.test(k)) {
         wpmKeyStroke(); // WPM (§2): a letter keystroke opens this word's active-typing span
-        if (!wordBufRef.current) wordT0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
         if (wordBufRef.current.length < MAX_WORD) wordBufRef.current += k.toLowerCase();
       } else if (k === ' ' || k === 'Enter' || k === 'Tab' || k === '.' || k === ',') {
         finalizeWord();
       }
       if (!isCreditableKey(e)) return;
-      if (judge) { playClack(0); return; } // season 2: the key only clacks — the finished WORD pays (finalizeWord)
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
       if (!tryLetterCredit()) return; // over the shared anti-mash cap → silently dropped (wall clock: games share it)
       credit(now, { kind: 'key', letter: e.key.toUpperCase() });
@@ -198,7 +177,6 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       pending.delete(e.pointerId);
       if (!p || p.ignore || p.moved) return; // interactive target or a scroll → no credit
       if (blockedRef.current && blockedRef.current()) return;
-      if (judge) return; // season 2: a tap is not a word — no XP
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
       if (!tryLetterCredit()) return; // SAME limiter as keystrokes and game letters (multitouch shares it)
       credit(now, { kind: 'tap', x: p.x, y: p.y });
@@ -211,7 +189,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     window.addEventListener('pointercancel', onCancel, true);
 
     return () => {
-      finalizeWord(false); // flush any half-typed word's WPM before the session ends (an unfinished word never pays)
+      finalizeWord(); // flush any half-typed word's WPM before the session ends
       wpmEnd(); // WPM: persist the menu self-test session on leave
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('pointerdown', onDown, true);

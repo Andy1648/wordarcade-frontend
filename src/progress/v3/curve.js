@@ -1,9 +1,9 @@
-// v3/curve.js — THE FINAL LEVEL CURVE: XP for the next level need(n) = 400 × 1.06^(n−1), the same for everyone
+// v3/curve.js — THE FINAL LEVEL CURVE: XP for the next level need(n) = 100 × 1.15^(n−1), the same for everyone
 // (never scales with R / POWER / ★).
 //
-// LEVELS REACH THE THOUSANDS, so a credit is O(1) — never one loop step per level. The curve is geometric, so the XP
-// for k levels from L is a closed-form sum:  S(L, k) = need(L) × (1.06^k − 1) / 0.06.  A credit inverts it relative
-// to need(L) (k = ⌊log(1 + rest × 0.06 / need(L)) / log 1.06⌋, then at most a couple of ±1 fix-ups for float noise),
+// A credit is O(1) at any level — never one loop step per level. The curve is geometric, so the XP
+// for k levels from L is a closed-form sum:  S(L, k) = need(L) × (1.15^k − 1) / 0.15.  A credit inverts it relative
+// to need(L) (k = ⌊log(1 + rest × 0.15 / need(L)) / log 1.15⌋, then at most a couple of ±1 fix-ups for float noise),
 // so it stays exact at any level and is additive: credit(a) then credit(b) lands where credit(a + b) does.
 // LEAF: imports econ.js only.
 import { CURVE_BASE, CURVE_GROWTH } from './econ.js';
@@ -11,17 +11,17 @@ import { CURVE_BASE, CURVE_GROWTH } from './econ.js';
 const G = CURVE_GROWTH;
 const LG = Math.log(G);
 const R = G - 1;
-// 400 × 1.06^(L−1) stays finite to L ≈ 11,900; past the cap the level holds (XP/letter is capped at 1e300 too)
+// 100 × 1.15^(L−1) stays finite to L ≈ 4,900; past the cap the level holds (XP/letter is capped at 1e300 too)
 export const LEVEL_MAX = Math.floor(Math.log(1e300 / CURVE_BASE) / LG);
 export const FRAC_MAX = 1 - 1e-9;
 
 const lvOf = (n) => (Number.isFinite(n) ? Math.min(LEVEL_MAX, Math.max(1, Math.floor(n))) : n === Infinity ? LEVEL_MAX : 1);
 
-/** XP to advance FROM `level` to level + 1: 400 × 1.06^(level−1). Always finite and > 0. */
+/** XP to advance FROM `level` to level + 1: 100 × 1.15^(level−1). Always finite and > 0. */
 export function needV3(level) {
   return CURVE_BASE * Math.pow(G, lvOf(level) - 1);
 }
-/** Cumulative XP from LV1 to reach `level` (0 at LV1): 400 × (1.06^(L−1) − 1) / 0.06. */
+/** Cumulative XP from LV1 to reach `level` (0 at LV1): 100 × (1.15^(L−1) − 1) / 0.15. */
 export function cumXp(level) {
   return (CURVE_BASE * (Math.pow(G, lvOf(level) - 1) - 1)) / R;
 }

@@ -14,7 +14,7 @@
 // EXISTING PLAYERS: the first time this system runs on a save (no TUT_INIT_KEY), every menu tutorial the player
 // has ALREADY reached is marked seen, except the ones for things that are new to everyone (`isNew`).
 import { rollsEnabled } from '../progress/rollsFlag.js';
-import { SEASON2 } from '../progress/season.js'; // leaf: the rebirth line's step (FINAL ×2, live ×5)
+import { SEASON2 } from '../progress/season.js'; // leaf: the rebirth line's step (FINAL v2 ×3, live ×5)
 
 export const TUT_KEY_PREFIX = 'taw.tut.';
 export const TUT_INIT_KEY = 'taw.tut.init';
@@ -47,7 +47,7 @@ export const TUTORIALS = [
     when: (s) => s.rebirthReady && s.rebirths === 0,
     target: '.hp-nav.is-rebirth',
     // NUMBERS AUDIT: season 2 says this as an edge toast, and a FINAL rebirth is ×2 (the live Rebirth Rush ×5)
-    line: `REBIRTH READY: ×${SEASON2 ? 2 : 5} XP & WINS, FOR GOOD.`,
+    line: `REBIRTH READY: ×${SEASON2 ? 3 : 5} XP & WINS, FOR GOOD.`,
   },
   {
     // KEY TIER: the first time a KEY tier is affordable (T0, before any rebirth). Hosted by the SHOP.
