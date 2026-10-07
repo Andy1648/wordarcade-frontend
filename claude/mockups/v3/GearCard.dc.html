@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gear card</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes gcSpin{to{transform:rotate(360deg)}}
+@keyframes gcBand{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes gcLift{0%{transform:translateY(0)}50%{transform:translateY(-4px)}100%{transform:translateY(0)}}
+.gc-ring{transform-origin:60px 60px}
+.gc-s0,.gc-s1{}
+.gc-s2{animation:gcSpin 14s linear infinite}
+.gc-s3{animation:gcSpin 10s linear infinite}
+.gc-s4{animation:gcSpin 7s linear infinite}
+.gc-s5{animation:gcSpin 3.5s linear infinite}
+.gc-rb{position:absolute;left:0;top:0;bottom:0;width:200%;background:repeating-linear-gradient(90deg,#FF3D7F 0 50px,#FFC23D 50px 100px,#FFE94A 100px 150px,#2EFFE0 150px 200px,#3D8BFF 200px 250px,#B04BFF 250px 300px);animation:gcBand 2.4s linear infinite}
+.gc-out{-webkit-text-stroke:5px #000;paint-order:stroke fill}
+.gc-pick{cursor:pointer;background:none;border:0;padding:0;transition:transform .12s}
+.gc-pick:hover{transform:translate(-3px,-3px)}
+.gc-pick:active{transform:translate(3px,3px)}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.16) 46px 50px)"></div>
+
+<!-- hero display case -->
+<div style="position: absolute; left: 24px; top: 20px; width: 470px; bottom: 20px; box-sizing: border-box; background: repeating-linear-gradient(90deg, #120720 0 34px, #170a28 34px 68px); border: 5px solid #000; box-shadow: 8px 8px 0 #000; border-radius: 14px; overflow: hidden">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 64px; box-sizing: border-box; padding: 0 20px; border-bottom: 5px solid #000; background: #1a0b2e; display: flex; align-items: center; justify-content: space-between">
+<span style="font-family: 'Bungee Shade', 'Bungee', sans-serif; font-size: 40px; line-height: 1; color: #2EFFE0">GEARS</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #c9b8e8">CLICK ANY CARD →</span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 64px; bottom: 0; display: flex; align-items: center; justify-content: center">
+<div style="position: relative; width: 340px; height: 535px">
+<div style="position: absolute; left: 0; top: 0; transform: scale(1.62); transform-origin: 0 0">
+<!--CARD hero-->
+<div style="position: relative; width: 210px; height: 330px; box-sizing: border-box; background: {{hero.fill}}; border: 5px solid #000; border-radius: 12px; box-shadow: 6px 6px 0 #000, inset 0 4px 0 rgba(255,255,255,.14); overflow: hidden; display: flex; flex-direction: column; align-items: center">
+<div style="position: relative; width: 100%; height: 40px; flex: none; box-sizing: border-box; background: {{hero.line}}; border-bottom: 4px solid #000; overflow: hidden">
+<sc-if value="{{hero.rainbow}}" hint-placeholder-val="{{ false }}"><div class="gc-rb"></div></sc-if>
+<div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; color: #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; letter-spacing: 0.06em">{{hero.rarityName}}</span>
+</div>
+</div>
+<div style="position: relative; width: 132px; height: 132px; margin-top: 2px; flex: none">
+<div style="position: absolute; inset: 6px; border-radius: 50%; background: {{hero.line}}; opacity: .16"></div>
+<svg viewBox="0 0 120 120" width="132" height="132" style="position: relative; display: block; overflow: visible">
+<g class="gc-ring {{hero.spin}}">
+<sc-for list="{{hero.teeth}}" as="t" hint-placeholder-count="12">
+<rect x="50" y="2" width="20" height="20" rx="3" fill="{{t.c}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round" transform="rotate({{t.a}} 60 60)"></rect>
+</sc-for>
+<circle cx="60" cy="60" r="45" fill="{{hero.ring}}" stroke="#000" stroke-width="5"></circle>
+<sc-for list="{{hero.notches}}" as="n" hint-placeholder-count="6">
+<rect x="57" y="17" width="6" height="7" fill="#000" transform="rotate({{n}} 60 60)"></rect>
+</sc-for>
+</g>
+<circle cx="60" cy="60" r="35" fill="{{hero.inner}}" stroke="#000" stroke-width="4.5"></circle>
+<path d="M33 48 A29 29 0 0 1 60 31" stroke="rgba(255,255,255,.35)" stroke-width="4" fill="none" stroke-linecap="round"></path>
+<g transform="translate(18 18) scale(.84)" stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" style="filter: drop-shadow(3px 3px 0 #000)">
+<sc-if value="{{hero.g.twin}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="rotate(-14 34 58)"><rect x="8" y="34" width="50" height="50" rx="9" fill="#12A99A"></rect><rect x="14" y="36" width="38" height="36" rx="6" fill="#2EFFE0" stroke-width="4"></rect><path d="M20 44 L34 44" stroke="#fff" stroke-width="4"></path></g>
+<g transform="rotate(12 66 42)"><rect x="42" y="16" width="50" height="50" rx="9" fill="#F2A900"></rect><rect x="48" y="18" width="38" height="36" rx="6" fill="#FFE94A" stroke-width="4"></rect><path d="M54 26 L68 26" stroke="#fff" stroke-width="4"></path></g>
+</g></sc-if>
+<sc-if value="{{hero.g.echo}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke="#2EFFE0" stroke-width="7"></path>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke-width="2.5"></path>
+<rect x="24" y="22" width="52" height="58" rx="10" fill="#5d6678"></rect><rect x="30" y="24" width="40" height="42" rx="7" fill="#DDE3EE" stroke-width="4"></rect>
+<path d="M50 34 L50 56 M40 46 L50 56 L60 46" fill="none" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.breaker}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="translate(-6 4) rotate(-10 30 50)"><path d="M10 22 L50 22 L42 40 L52 52 L40 66 L46 82 L10 82 Z" fill="#1f4fa8"></path><path d="M16 24 L48 24 L41 39 L49 50 L38 62 L42 70 L16 70 Z" fill="#3D8BFF" stroke-width="4"></path><path d="M22 32 L34 32" stroke="#fff" stroke-width="4"></path></g>
+<g transform="translate(8 -2) rotate(10 70 50)"><path d="M56 22 L90 22 L90 82 L52 82 L46 66 L58 52 L48 40 Z" fill="#1f4fa8"></path><path d="M58 24 L84 24 L84 70 L50 70 L48 62 L58 50 L50 39 Z" fill="#9CC3FF" stroke-width="4"></path></g>
+<path d="M52 4 L46 16 M60 8 L58 18 M44 92 L50 84" stroke="#FFE94A" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.warden}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="#3D8BFF"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 Z" fill="#1f4fa8" stroke="none"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="none"></path>
+<path d="M50 22 L74 50 L60 50 L60 72 L40 72 L40 50 L26 50 Z" fill="#fff"></path>
+<path d="M22 24 L22 46" stroke="#9CC3FF" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.divide}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M10 16 L80 16 L10 86 Z" fill="#6a20b0" transform="translate(4 6)"></path>
+<path d="M10 14 L78 14 L10 82 Z" fill="#D88BFF"></path>
+<path d="M18 22 L44 22" stroke="#fff" stroke-width="5"></path>
+<path d="M28 98 L96 30 L96 98 Z" fill="#a8164e" transform="translate(0 -2)"></path>
+<path d="M30 92 L92 30 L92 92 Z" fill="#FF3D7F"></path>
+<path d="M66 80 L86 80" stroke="#FFB0CC" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.mirror}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M30 6 L54 34 L40 34 L40 50 L20 50 L20 34 L6 34 Z" fill="#B04BFF"></path>
+<path d="M70 94 L46 66 L60 66 L60 50 L80 50 L80 66 L94 66 Z" fill="#2EFFE0"></path>
+<path d="M4 50 L96 50" stroke-width="5"></path>
+<path d="M18 30 L28 18" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.heart}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="#FF3D7F"></path>
+<path d="M50 92 C80 70 96 52 94 32 C93 24 88 18 82 16 C88 40 74 66 50 92 Z" fill="#a8164e" stroke="none"></path>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="none"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke="#FFC23D" stroke-width="8"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke-width="2.5"></path>
+<path d="M50 62 L70 40" stroke-width="6"></path>
+<circle cx="50" cy="62" r="7" fill="#FFE94A" stroke-width="4"></circle>
+<path d="M18 26 C20 20 26 16 32 16" stroke="#fff" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.abyss}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-12 50 50)">
+<rect x="0" y="30" width="100" height="44" rx="10" fill="#80123f"></rect>
+<rect x="6" y="32" width="88" height="32" rx="7" fill="#FF3D7F" stroke-width="4"></rect>
+<ellipse cx="50" cy="48" rx="26" ry="12" fill="#0d0618" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="15" ry="7" fill="none" stroke="#B04BFF" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="6" ry="3" fill="#000" stroke="none"></ellipse>
+<path d="M12 38 L22 38" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{hero.g.caret}}" hint-placeholder-val="{{ false }}"><g transform="rotate(30 50 50)">
+<rect x="45" y="30" width="10" height="68" fill="#FFC23D"></rect>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke-width="7"></path>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke="#fff" stroke-width="3"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="#fff"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 Z" fill="#D88BFF" stroke="none"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="none"></path>
+<path d="M48 46 L48 84" stroke="#FFE94A" stroke-width="3"></path>
+</g></sc-if>
+</g>
+</svg>
+<div style="position: absolute; left: 0; right: 0; bottom: -10px; z-index: 2; display: flex; justify-content: center"><div style="display: flex; gap: 1px; padding: 3px 6px; background: #000; border-radius: 14px">
+<sc-for list="{{hero.pips}}" as="p" hint-placeholder-count="5">
+<svg viewBox="0 0 20 20" width="19" height="19" aria-hidden="true" style="display: block"><path d="M10 1.5 L12.6 7 L18.6 7.6 L14 11.6 L15.4 17.6 L10 14.4 L4.6 17.6 L6 11.6 L1.4 7.6 L7.4 7 Z" fill="{{p.c}}" stroke="#000" stroke-width="2" stroke-linejoin="round"></path></svg>
+</sc-for>
+</div></div>
+</div>
+<div style="width: 196px; height: 56px; margin-top: 8px; flex: none; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'Bungee', sans-serif; font-size: 26px; line-height: 1.02; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{hero.name}}</div>
+<div style="width: 100%; height: 48px; flex: none; margin-top: 2px; box-sizing: border-box; background: #000; display: flex; align-items: center; justify-content: center; gap: 8px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 40px; line-height: 1; color: #FFE94A">{{hero.mult}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; line-height: 1; color: #fff">{{hero.kind}}</span>
+</div>
+<div style="height: 32px; width: 100%; margin-top: auto; flex: none; background: {{hero.deep}}; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 19px; color: {{hero.line}}">{{hero.oddsText}}</span>
+</div>
+</div>
+<!--/CARD-->
+</div>
+</div>
+</div>
+</div>
+
+<!-- six rarities -->
+<div style="position: absolute; left: 510px; right: 14px; top: 20px; bottom: 26px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); justify-items: center; align-items: center">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="6">
+<button class="gc-pick" onClick="{{c.pick}}" aria-label="{{c.name}}" style="width: 193px; height: 304px; position: relative; text-align: left">
+<div style="position: absolute; left: 0; top: 0; transform: scale({{c.s}}); transform-origin: 0 0">
+<!--CARD c-->
+<div style="position: relative; width: 210px; height: 330px; box-sizing: border-box; background: {{c.fill}}; border: 5px solid {{c.edge}}; border-radius: 12px; box-shadow: 6px 6px 0 #000, inset 0 4px 0 rgba(255,255,255,.14); overflow: hidden; display: flex; flex-direction: column; align-items: center">
+<div style="position: relative; width: 100%; height: 40px; flex: none; box-sizing: border-box; background: {{c.line}}; border-bottom: 4px solid #000; overflow: hidden">
+<sc-if value="{{c.rainbow}}" hint-placeholder-val="{{ false }}"><div class="gc-rb"></div></sc-if>
+<div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; color: #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; letter-spacing: 0.06em">{{c.rarityName}}</span>
+</div>
+</div>
+<div style="position: relative; width: 132px; height: 132px; margin-top: 2px; flex: none">
+<div style="position: absolute; inset: 6px; border-radius: 50%; background: {{c.line}}; opacity: .16"></div>
+<svg viewBox="0 0 120 120" width="132" height="132" style="position: relative; display: block; overflow: visible">
+<g class="gc-ring {{c.spin}}">
+<sc-for list="{{c.teeth}}" as="t" hint-placeholder-count="12">
+<rect x="50" y="2" width="20" height="20" rx="3" fill="{{t.c}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round" transform="rotate({{t.a}} 60 60)"></rect>
+</sc-for>
+<circle cx="60" cy="60" r="45" fill="{{c.ring}}" stroke="#000" stroke-width="5"></circle>
+<sc-for list="{{c.notches}}" as="n" hint-placeholder-count="6">
+<rect x="57" y="17" width="6" height="7" fill="#000" transform="rotate({{n}} 60 60)"></rect>
+</sc-for>
+</g>
+<circle cx="60" cy="60" r="35" fill="{{c.inner}}" stroke="#000" stroke-width="4.5"></circle>
+<path d="M33 48 A29 29 0 0 1 60 31" stroke="rgba(255,255,255,.35)" stroke-width="4" fill="none" stroke-linecap="round"></path>
+<g transform="translate(18 18) scale(.84)" stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" style="filter: drop-shadow(3px 3px 0 #000)">
+<sc-if value="{{c.g.twin}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="rotate(-14 34 58)"><rect x="8" y="34" width="50" height="50" rx="9" fill="#12A99A"></rect><rect x="14" y="36" width="38" height="36" rx="6" fill="#2EFFE0" stroke-width="4"></rect><path d="M20 44 L34 44" stroke="#fff" stroke-width="4"></path></g>
+<g transform="rotate(12 66 42)"><rect x="42" y="16" width="50" height="50" rx="9" fill="#F2A900"></rect><rect x="48" y="18" width="38" height="36" rx="6" fill="#FFE94A" stroke-width="4"></rect><path d="M54 26 L68 26" stroke="#fff" stroke-width="4"></path></g>
+</g></sc-if>
+<sc-if value="{{c.g.echo}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke="#2EFFE0" stroke-width="7"></path>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke-width="2.5"></path>
+<rect x="24" y="22" width="52" height="58" rx="10" fill="#5d6678"></rect><rect x="30" y="24" width="40" height="42" rx="7" fill="#DDE3EE" stroke-width="4"></rect>
+<path d="M50 34 L50 56 M40 46 L50 56 L60 46" fill="none" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{c.g.breaker}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="translate(-6 4) rotate(-10 30 50)"><path d="M10 22 L50 22 L42 40 L52 52 L40 66 L46 82 L10 82 Z" fill="#1f4fa8"></path><path d="M16 24 L48 24 L41 39 L49 50 L38 62 L42 70 L16 70 Z" fill="#3D8BFF" stroke-width="4"></path><path d="M22 32 L34 32" stroke="#fff" stroke-width="4"></path></g>
+<g transform="translate(8 -2) rotate(10 70 50)"><path d="M56 22 L90 22 L90 82 L52 82 L46 66 L58 52 L48 40 Z" fill="#1f4fa8"></path><path d="M58 24 L84 24 L84 70 L50 70 L48 62 L58 50 L50 39 Z" fill="#9CC3FF" stroke-width="4"></path></g>
+<path d="M52 4 L46 16 M60 8 L58 18 M44 92 L50 84" stroke="#FFE94A" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{c.g.warden}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="#3D8BFF"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 Z" fill="#1f4fa8" stroke="none"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="none"></path>
+<path d="M50 22 L74 50 L60 50 L60 72 L40 72 L40 50 L26 50 Z" fill="#fff"></path>
+<path d="M22 24 L22 46" stroke="#9CC3FF" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{c.g.divide}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M10 16 L80 16 L10 86 Z" fill="#6a20b0" transform="translate(4 6)"></path>
+<path d="M10 14 L78 14 L10 82 Z" fill="#D88BFF"></path>
+<path d="M18 22 L44 22" stroke="#fff" stroke-width="5"></path>
+<path d="M28 98 L96 30 L96 98 Z" fill="#a8164e" transform="translate(0 -2)"></path>
+<path d="M30 92 L92 30 L92 92 Z" fill="#FF3D7F"></path>
+<path d="M66 80 L86 80" stroke="#FFB0CC" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{c.g.mirror}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M30 6 L54 34 L40 34 L40 50 L20 50 L20 34 L6 34 Z" fill="#B04BFF"></path>
+<path d="M70 94 L46 66 L60 66 L60 50 L80 50 L80 66 L94 66 Z" fill="#2EFFE0"></path>
+<path d="M4 50 L96 50" stroke-width="5"></path>
+<path d="M18 30 L28 18" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{c.g.heart}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="#FF3D7F"></path>
+<path d="M50 92 C80 70 96 52 94 32 C93 24 88 18 82 16 C88 40 74 66 50 92 Z" fill="#a8164e" stroke="none"></path>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="none"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke="#FFC23D" stroke-width="8"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke-width="2.5"></path>
+<path d="M50 62 L70 40" stroke-width="6"></path>
+<circle cx="50" cy="62" r="7" fill="#FFE94A" stroke-width="4"></circle>
+<path d="M18 26 C20 20 26 16 32 16" stroke="#fff" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{c.g.abyss}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-12 50 50)">
+<rect x="0" y="30" width="100" height="44" rx="10" fill="#80123f"></rect>
+<rect x="6" y="32" width="88" height="32" rx="7" fill="#FF3D7F" stroke-width="4"></rect>
+<ellipse cx="50" cy="48" rx="26" ry="12" fill="#0d0618" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="15" ry="7" fill="none" stroke="#B04BFF" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="6" ry="3" fill="#000" stroke="none"></ellipse>
+<path d="M12 38 L22 38" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{c.g.caret}}" hint-placeholder-val="{{ false }}"><g transform="rotate(30 50 50)">
+<rect x="45" y="30" width="10" height="68" fill="#FFC23D"></rect>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke-width="7"></path>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke="#fff" stroke-width="3"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="#fff"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 Z" fill="#D88BFF" stroke="none"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="none"></path>
+<path d="M48 46 L48 84" stroke="#FFE94A" stroke-width="3"></path>
+</g></sc-if>
+</g>
+</svg>
+<div style="position: absolute; left: 0; right: 0; bottom: -10px; z-index: 2; display: flex; justify-content: center"><div style="display: flex; gap: 1px; padding: 3px 6px; background: #000; border-radius: 14px">
+<sc-for list="{{c.pips}}" as="p" hint-placeholder-count="5">
+<svg viewBox="0 0 20 20" width="19" height="19" aria-hidden="true" style="display: block"><path d="M10 1.5 L12.6 7 L18.6 7.6 L14 11.6 L15.4 17.6 L10 14.4 L4.6 17.6 L6 11.6 L1.4 7.6 L7.4 7 Z" fill="{{p.c}}" stroke="#000" stroke-width="2" stroke-linejoin="round"></path></svg>
+</sc-for>
+</div></div>
+</div>
+<div style="width: 196px; height: 56px; margin-top: 8px; flex: none; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'Bungee', sans-serif; font-size: 26px; line-height: 1.02; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{c.name}}</div>
+<div style="width: 100%; height: 48px; flex: none; margin-top: 2px; box-sizing: border-box; background: #000; display: flex; align-items: center; justify-content: center; gap: 8px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 40px; line-height: 1; color: #FFE94A">{{c.mult}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; line-height: 1; color: #fff">{{c.kind}}</span>
+</div>
+<div style="height: 32px; width: 100%; margin-top: auto; flex: none; background: {{c.deep}}; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 19px; color: {{c.line}}">{{c.oddsText}}</span>
+</div>
+</div>
+<!--/CARD-->
+</div>
+</button>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+var RAR = [
+  { name: 'COMMON',    odds: '1 IN 2',    line: '#A9B4C8', fill: '#262b38', deep: '#171a22', inner: '#3a4152', mult: '×1.1' },
+  { name: 'RARE',      odds: '1 IN 10',   line: '#3D8BFF', fill: '#0f2350', deep: '#08142e', inner: '#173a80', mult: '×1.25' },
+  { name: 'EPIC',      odds: '1 IN 100',  line: '#B04BFF', fill: '#2a0e4a', deep: '#170728', inner: '#4a1880', mult: '×1.5' },
+  { name: 'LEGENDARY', odds: '1 IN 1K',   line: '#FFC23D', fill: '#3d2a05', deep: '#221702', inner: '#6b4a08', mult: '×2' },
+  { name: 'MYTHIC',    odds: '1 IN 10K',  line: '#FF3D7F', fill: '#4a0a22', deep: '#2a0412', inner: '#80123f', mult: '×3' },
+  { name: 'LONGINUS',  odds: '1 IN 100K', line: '#FFFFFF', fill: '#120a1e', deep: '#07040c', inner: '#2a1a40', mult: '×5' }
+];
+var RB = ['#FF3D7F', '#FFC23D', '#FFE94A', '#2EFFE0', '#3D8BFF', '#B04BFF'];
+var BOARD = [
+  { name: 'TWIN STRIKE',      r: 0, g: 'twin',    kind: 'WINS', d: 4 },
+  { name: 'KEYBREAKER',       r: 1, g: 'breaker', kind: 'WINS', d: 2 },
+  { name: 'DIVIDING CAPS',    r: 2, g: 'divide',  kind: 'WINS', d: 1 },
+  { name: 'OVERCLOCK HEART',  r: 3, g: 'heart',   kind: 'WINS', d: 3 },
+  { name: 'ABYSS SPACEBAR',   r: 4, g: 'abyss',   kind: 'WINS', d: 0 },
+  { name: 'GOD-SLAYER CARET', r: 5, g: 'caret',   kind: 'WINS', d: 0 }
+];
+function cardVM(gr, s) {
+  var R = RAR[gr.r], g = {}; g[gr.g] = true;
+  var teeth = [], notches = [], pips = [], i;
+  for (i = 0; i < 12; i++) teeth.push({ a: i * 30, c: gr.r === 5 ? RB[i % 6] : R.line });
+  for (i = 0; i < 6; i++) notches.push(i * 60 + 15);
+  for (i = 0; i < 5; i++) pips.push({ c: i < gr.d ? '#FFE94A' : '#3a2f4a' });
+  return {
+    name: gr.name, rarityName: R.name, oddsText: R.odds, line: R.line, fill: R.fill, deep: R.deep, inner: R.inner,
+    ring: gr.r === 5 ? '#fff' : R.line, edge: '#000', spin: 'gc-s' + gr.r, rainbow: gr.r === 5,
+    teeth: teeth, notches: notches, pips: pips, g: g, mult: R.mult, kind: gr.kind, s: s || 1
+  };
+}
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { hero: 3 }; }
+  renderVals() {
+    var self = this, st = this.state;
+    return {
+      hero: cardVM(BOARD[st.hero], 1),
+      cards: BOARD.map(function (b, i) { var vm = cardVM(b, 0.92); vm.pick = function () { self.setState({ hero: i }); }; if (i === st.hero) vm.edge = '#FFE94A'; return vm; })
+    };
+  }
+}
+</script>
+</body>
+</html>
