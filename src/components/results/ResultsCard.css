@@ -346,3 +346,19 @@
   .rs2--narrow .game-over-actions .game-over-leave { height: 52px; }
 }
 .rs2--narrow[data-ko-tight] .rs2-extras { display: none; }
+
+/* the PLAY AGAIN pulse grows from its bottom edge (never past the card) */
+.rs2 .game-over-actions .game-over-rematch { transform-origin: 50% 100%; }
+.rs2 .rs2-xp, .rs2 .rs2-wins, .rs2 .rs2-gems { transform-origin: 50% 0; }
+/* SHORT LAPTOP WINDOWS (≤ 520 px tall, e.g. 1163×450): the text floors outweigh the scaled sheet, so the tally drops
+   what repeats elsewhere — WORDS · LETTERS (the PLAYERS list has your words) and the XP bar row (the +XP and LV +N
+   stay). Every WINS line, the chain, GEMS and the TOTAL stay. Measured: the tally ran 46 px into the footer without it. */
+@media (max-height: 520px) and (min-width: 701px) {
+  .rs2 .rs2-stats,
+  .rs2 .rs2-xp-bar-row { display: none; }
+  .rs2 .rs2-tally { gap: 6px; }
+  .rs2 .rs2-base,
+  .rs2 .rs2-mult { min-height: 34px; }
+  .rs2 .rs2-gems,
+  .rs2 .rs2-total { min-height: 40px; }
+}

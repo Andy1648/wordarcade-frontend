@@ -34,9 +34,11 @@ const SLAM = [{ transform: 'scale(1.8) rotate(-8deg)', opacity: 0 }, { transform
 const STAMP = [{ transform: 'scale(2) rotate(4deg)', opacity: 0 }, { transform: 'scale(.9) rotate(-14deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(-12deg)', opacity: 1 }];
 const DROP = [{ transform: 'translateY(-90px) rotate(-14deg)', opacity: 0 }, { transform: 'translateY(8px) rotate(4deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(-4px) rotate(-2deg)', offset: 0.8 }, { transform: 'translateY(0) rotate(0)', opacity: 1 }];
 const CHIP = [{ transform: 'scale(0) rotate(-10deg)', opacity: 0 }, { transform: 'scale(1.3) rotate(4deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
-const POP = [{ transform: 'translateY(20px) scale(.3) rotate(-12deg)', opacity: 0 }, { transform: 'translateY(-8px) scale(1.35) rotate(4deg)', opacity: 1, offset: 0.3 }, { transform: 'translateY(-4px) scale(1) rotate(-6deg)', opacity: 1 }];
-const LAND = [{ transform: 'translate(0,0)' }, { transform: 'translate(-4px,-6px) scale(1.03)', offset: 0.3 }, { transform: 'translate(2px,2px) scale(.99)', offset: 0.6 }, { transform: 'translate(0,0) scale(1)' }];
-const PULSE = [{ transform: 'scale(1)' }, { transform: 'scale(1.06)', offset: 0.5 }, { transform: 'scale(1)' }];
+const POP = [{ transform: 'translateY(-20px) scale(.3) rotate(-12deg)', opacity: 0 }, { transform: 'translateY(-8px) scale(1.35) rotate(4deg)', opacity: 1, offset: 0.3 }, { transform: 'translateY(-4px) scale(1) rotate(-6deg)', opacity: 1 }];
+// LAND / PULSE never push DOWN past where the node rests (the card must not scroll even mid-animation: a transform
+// below the bottom edge is scroll overflow) — up and in only; the PLAY AGAIN pulse grows from its bottom edge.
+const LAND = [{ transform: 'translate(0,0)' }, { transform: 'translate(-4px,-6px) scale(1.02)', offset: 0.35 }, { transform: 'translate(0,0) scale(1)' }];
+const PULSE = [{ transform: 'scale(1)' }, { transform: 'scale(1.05)', offset: 0.5 }, { transform: 'scale(1)' }];
 const SLIDE = [{ transform: 'translateX(-40px)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }];
 const eo = (k) => 1 - Math.pow(1 - k, 3);
 

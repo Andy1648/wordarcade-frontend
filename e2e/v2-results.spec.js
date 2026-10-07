@@ -143,7 +143,7 @@ test('REDUCE MOTION: every line is final on the first frame, nothing animates', 
   expect(running).toBe(0);
 });
 
-for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { width: 1920, height: 1080 }, { width: 390, height: 844 }]) {
+for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { width: 1920, height: 1080 }, { width: 390, height: 844 }, { width: 1163, height: 450 }]) {
   test(`@${vp.width}x${vp.height}: fits (no scroll), no text < 13 px, PLAY AGAIN on screen, nothing loops`, async ({ page }) => {
     test.setTimeout(90_000);
     await play(page, { outcome: 'loss', place: 3, vp });
@@ -157,9 +157,16 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
       const small = [...c.querySelectorAll('*')].filter((el) => vis(el) && [...el.childNodes].some((x) => x.nodeType === 3 && x.textContent.trim()))
         .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 13).map((el) => el.className || el.tagName);
       const infinite = document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().iterations === Infinity && a.playState === 'running').length;
-      return { over: c.scrollHeight - c.clientHeight, overX: c.scrollWidth - c.clientWidth, docV: document.documentElement.scrollHeight > innerHeight, small, infinite, play: b.top >= 0 && b.bottom <= innerHeight && b.left >= 0 && b.right <= innerWidth };
+      // no column runs into the footer (a column's own overflow is hidden from the card's scrollHeight)
+      const foot = document.querySelector('.rs2-foot').getBoundingClientRect();
+      const intoFoot = getComputedStyle(c).display === 'grid'
+        ? ['.rs2-tally', '.rs2-hero', '.rs2-players'].map((sel) => document.querySelector(sel)).filter((el) => el && getComputedStyle(el).display !== 'none')
+          .filter((el) => [...el.querySelectorAll('*')].some((k) => vis(k) && k.getBoundingClientRect().bottom > foot.top + 1)).map((el) => el.className)
+        : [];
+      return { intoFoot, over: c.scrollHeight - c.clientHeight, overX: c.scrollWidth - c.clientWidth, docV: document.documentElement.scrollHeight > innerHeight, small, infinite, play: b.top >= 0 && b.bottom <= innerHeight && b.left >= 0 && b.right <= innerWidth };
     });
     expect(m.over, 'card does not scroll').toBe(0);
+    expect(m.intoFoot, 'no column runs into the PLAY AGAIN footer').toEqual([]);
     expect(m.overX, 'card does not scroll sideways').toBe(0);
     expect(m.small, 'no text under 13px').toEqual([]);
     expect(m.infinite).toBe(0);
