@@ -22,6 +22,7 @@ import { __v3 as achV3 } from '../achievements.js';
 import { __v3 as rankV3 } from '../rank.js';
 import { __v3 as boostV3, codeBoostMult, startBoost } from '../boost.js';
 import { __v3 as winsV3, bankWordWins } from '../wins.js';
+import { __v3 as frenzyV3 } from '../frenzy.js';
 import { __v3 as gemsResultV3, gameResultPayout, payGameResult } from '../gems.js';
 
 if (!V3.ready) {
@@ -34,7 +35,8 @@ if (!V3.ready) {
   achV3(hooks.achSwap);
   rankV3(hooks.rankSwap);
   boostV3(hooks.boostSwap(codeBoostMult, startBoost));
-  winsV3({ a: hooks.countingBank(bankWordWins) });
+  winsV3({ a: hooks.countingBank(bankWordWins), w: stock.stockWinsMult });
+  frenzyV3(); // FUSE FRENZY = ×25 XP per key, no wins multiplier (Andy oct8)
   gemsResultV3({ a: hooks.flatStreak(gameResultPayout), b: hooks.countingResult(payGameResult) });
   Object.assign(V3, { econ, curve, store, unlocks, ranks, hooks, stock, m: hooks.mark2Factor, ready: true });
   try {
