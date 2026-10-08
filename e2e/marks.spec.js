@@ -25,8 +25,8 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]').map((c) => c.id));
   expect(claims.filter((id) => id.startsWith('mark-') || id.startsWith('layer-'))).toEqual([]);
   const btn = page.locator('.menu-mark');
-  // SEASON 2 #5: nothing worn → the chip says ROLL with a notification dot (it opens the ROLL screen)
-  await expect(btn.locator('.menu-mark-name')).toHaveText('ROLL');
+  // feat/menu-perrow: nothing worn → the YOUR GEAR slot says NONE with a notification dot (it opens the ROLL screen)
+  await expect(btn.locator('.menu-mark-name')).toHaveText('NONE');
   await expect(btn.locator('.hp-chip-dot')).toHaveCount(1);
   await btn.click();
   // Andy oct5: MARKS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX

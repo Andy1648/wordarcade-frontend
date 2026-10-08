@@ -76,7 +76,7 @@ test('season 1, marks revealed: ROLL = gems ÷ the roll price, INDEX = owned/tot
   expect(total).toBeGreaterThan(0);
   // nothing worn → the chip reads ROLL with a notification dot, and opens the ROLL screen
   const chip = page.locator('.menu-mark');
-  await expect(chip.locator('.menu-mark-name')).toHaveText('ROLL');
+  await expect(chip.locator('.menu-mark-name')).toHaveText('NONE'); // the YOUR GEAR slot (feat/menu-perrow)
   await expect(chip.locator('.hp-chip-dot')).toHaveCount(1);
   await chip.click();
   await page.locator('.rs-overlay').waitFor();
@@ -105,7 +105,7 @@ test('season 2 (?season2=1), a FRESH save: ROLL + INDEX unlocked from the start 
   await page.locator('.mx-panel').waitFor();
   // the empty mark chip is there from the start too: ROLL + dot
   await page.locator('.mx-close').click();
-  await expect(page.locator('.menu-mark .menu-mark-name')).toHaveText('ROLL');
+  await expect(page.locator('.menu-mark .menu-mark-name')).toHaveText('NONE'); // the YOUR GEAR slot (feat/menu-perrow)
   await expect(page.locator('.menu-mark .hp-chip-dot')).toHaveCount(1);
 });
 
