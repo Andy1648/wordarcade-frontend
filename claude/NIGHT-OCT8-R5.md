@@ -97,3 +97,12 @@ Andy: "when boosts are active they should have a timer at the bottom right of th
 1. **Overdrive stacking** — (a) multiply to ×100, or (b) parallel timers that multiply only while they overlap. My rec: **(b)**.
 2. **FUSE FRENZY = 25× XP** — today it is ×5 on WINS. (a) swap to ×25 XP, (b) ×25 on both, (c) keep ×5 wins and add ×25 xp. My rec: **(a)**.
 3. **Leaderboard composition** — the podium blocks are fixed, but the top-left third is a dead void, blocks sit low/short, names float off their steps, left half empty vs right half cramped. That is a layout change, not a component one, so it needs his go-ahead.
+
+### 22:0x UTC — #302 landed and answered the open questions by implementing them
+Andy (or a parallel session) merged **#302 feat/boosts-explained**: every boost names what it boosts (`name` / `big` / `what` / `time` per card), a NEW `wins25` WINS BOOST item, OVERDRIVE time stacks ("BUY AGAIN = +5 MIN"), "+5 MIN" skips OVERDRIVE (`EXTENDABLE_FX = ['xp','wins','luck']`), FRENZY = **×25 XP per key** in season 2 (`frenzyXpMult` / `__v3`, wins row reads ×1).
+
+- **#303 (my shop-says) CLOSED as superseded** — #302's split into name/what/time is strictly better than my single `says` line.
+- **#309 opened** — the one thing from #303 still worth having: #302's extra WHAT + TIME lines overflow the PHONE card and push the gem price OUTSIDE it. Measured each card's content vs its row at 390×844 and 360×640: OVERDRIVE needs 217px, TIME BOOST / EPIC+ ROLL 202px, row gives 196px → `225` out by 21px, `150` and `SOON` by 10px. Row 196 → 224px; all six clear by 3–13px. Desktop was never tight.
+- **#306 (boost dock) rebased onto #302 and corrected**: it knew nothing about the new WINS BOOST (buying one showed no timer at all), and its FRENZY row quoted ×5 FUSE ONLY — a multiplier season 2 does not pay. Now reads `frenzyXpMult` when live, else `frenzyMult`, and every row's wording matches that item's shop WHAT line.
+
+**Lesson for the next round:** when a parallel session is live in the same area, re-read main before writing copy — #303 was ~40 min of work that #302 had already done better. The *measurement* work (phone overflow) was the part that survived, because nobody else had done it.
