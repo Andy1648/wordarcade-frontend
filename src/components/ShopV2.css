@@ -374,7 +374,11 @@
   .sp2-stock-name { font-size: var(--fs-k28); }
   .sp2-stock-sub { font-size: var(--fs-k14); }
   .sp2-timer .ktc { width: 150px; }
-  .sp2-grid { grid-template-rows: none; grid-auto-rows: 196px; gap: 12px; padding: 0 7px 7px 0; }
+  /* 196 -> 224: the WHAT + TIME lines added by the "boost what?" pass wrap on a 110px-wide card, and the
+     tallest card (OVERDRIVE: "XP + WINS · EVERYTHING" over "5 MIN · BUY AGAIN = +5 MIN") needs 217px — at 196
+     its gem price was pushed clean out of the card (measured: 225 by 21px, 150 and SOON by 10px). Numbers never
+     leave their boxes. The phone shop already scrolls, so the taller row costs nothing. */
+  .sp2-grid { grid-template-rows: none; grid-auto-rows: 224px; gap: 12px; padding: 0 7px 7px 0; }
   .sp2-card .kstc-card { box-shadow: 5px 5px 0 var(--k-ink); border-width: var(--k-ink-m); }
   .sp2-card .kstc-anchor { transform: scale(.5); }
   .sp2-band { height: 36px; padding: 0 4px; flex-direction: column; justify-content: center; align-items: center; font-size: var(--fs-k14); line-height: 1.05; }

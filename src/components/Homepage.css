@@ -689,3 +689,24 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   }
   .homepage-stage[data-paged]::before { grid-area: 2 / 2 / 5 / 4; }
 }
+
+/* ---- BOOST timers (Andy oct8): bottom-right on the paged desktop; otherwise under the icons with sound · CREDITS ---- */
+.hp-dock { display: none; }
+.hp-dock .boost-dock { margin: 0; width: 100%; }
+.hp-dock--grid .bd-tile { width: 100%; }
+.hp-dock--extras { flex-basis: 100%; }
+.homepage-stage:not([data-paged]) .hp-dock--extras { display: flex; justify-content: flex-end; }
+@media (min-width: 1200px) {
+  .homepage-stage[data-paged] .hp-dock--grid {
+    display: flex;
+    grid-column: 3;
+    grid-row: 2 / 5;
+    align-self: end;
+    justify-self: stretch;
+    position: relative;
+    z-index: 2;
+  }
+}
+@media (max-width: 1199px) {
+  .homepage-stage[data-paged] .hp-dock--extras { display: flex; justify-content: flex-start; }
+}
