@@ -1598,3 +1598,63 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 @media (prefers-reduced-motion: reduce) {
   .solo-frenzy-goal.is-live.is-ending { animation: none; }
 }
+
+/* NIGHT OCT8 R3 — FUSE 26-LETTER TRACKER: read at a glance. The count leads ("14/26", number
+   ≥ 18px), lit tiles carry the reward yellow with a DARKER-YELLOW outline (coloured outlines, not
+   black), missing tiles step back (dim face, dim outline, no hard shadow) so the lit ones are the
+   only thing with weight. The live FRENZY plaque's timer is the one number in that state: 20px. */
+.solo-fuse-track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 14px;
+  width: 100%;
+}
+.solo-strip-count {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(22px, var(--fs-panel));
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #ffe94a;
+  -webkit-text-stroke: 0;
+}
+.solo-strip-count-of {
+  font-size: max(14px, var(--fs-label));
+  letter-spacing: 0.08em;
+  color: #9a8bbf;
+  margin-left: 1px;
+}
+.solo-strip-big span {
+  border-color: #3a2655;
+  color: #8a7aa8;
+  box-shadow: none;
+}
+.solo-strip-big span.is-lit {
+  border-color: #a88a00;
+  color: #0d0618;
+  box-shadow: 4px 4px 0 #000;
+}
+.solo-frenzy-goal.is-live {
+  font-size: max(20px, var(--fs-body));
+}
+@media (max-width: 899px) {
+  .solo-strip-big span.is-lit { box-shadow: 3px 3px 0 #000; }
+}
+/* A 3-letter fragment steps down so it clears the ring stroke (2-letter stays at 0.323; the ring's
+   inner width is ~2.3 glyphs at that size). Still the headline: ~78px desktop, ~39px at 390. */
+.solo-root[data-mode='fuse'] .solo-center[data-len='3'] .solo-cl {
+  font-size: calc(var(--solo-hero) * 0.26);
+}
+.solo-root[data-mode='fuse'] .solo-center[data-len='4'] .solo-cl {
+  font-size: calc(var(--solo-hero) * 0.2);
+}
+/* the short-laptop rule above hides the goal COPY; the count stays (it is the tracker's number) */
+@media (min-width: 701px) and (max-height: 600px) {
+  /* the deck's 22px gaps close to 8px so the count's line costs nothing (the deck overflowed
+     1280x551 with one more line at the desk gap) */
+  .solo-fusedeck { gap: 8px; }
+  .solo-fuse-track { gap: 0; }
+  .solo-strip-count { font-size: max(18px, var(--fs-body)); }
+}
