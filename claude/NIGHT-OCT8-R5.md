@@ -20,3 +20,14 @@
 
 ## Log
 (appended per step)
+
+### 16:30 UTC — round 5b resumes (round 5 died 13 min in; this run picks the plan up, branches are `day5b/<step>`)
+- main is at 6cc833c (#288 day4/roll-feel merged). Round 4b is live in parallel on rollScreen/*, markCard/*, GameScreen.jsx — not touched here.
+- Step order unchanged (smallest first): power → podium → buttons → panel (OPEN) → typing → critique → report.
+
+### Step 1 — POWER icon — research (before building)
+What's wrong today: kit `power` (kitIconData.js) is literally a KEY — round bow, shaft, two teeth (the plate in UPGRADES, the BOUGHT toast, the StatsV2 chip). The menu rail's UPGRADES tile (`shop`, kitIconsCore.js) is an up-arrow pierced by a white rung — reads as "ladder / arrow-through-rung", not POWER. Andy: "why is it a key animation?"
+1. Brawl Stars — POWER POINTS are a pink tile with a bold bolt-ish glyph; the whole upgrade economy is read through ONE repeated silhouette (the bolt), never the thing it unlocks. Lesson: a single, unmistakable silhouette — the bolt — repeated everywhere POWER is mentioned (tile, plate, chip, toast). Ref: https://4gnews.pt/brawl-stars-como-fazer-upgrade-aos-brawlers/
+2. Clash Royale — the UPGRADE action is a fat green up-arrow on a button, but the CARD LEVEL is a stacked chevron / numeral. The arrow is the verb (upgrade), not the noun (power). Our UPGRADES tile had the verb; the plate needs the NOUN — the power itself. Ref: https://supercell.com/en/games/clashroyale/blog/release-notes/game-update-december-13
+3. Pet Simulator 99 — enchant / upgrade icons are chunky flat silhouettes with a thick DARK outline, a single shade plane and ONE white glint — exactly the kit's house construction (ink 6/100, shade ↘, glint ↖, extras). The bolt must be built the same way or it won't sit next to WINS / GEMS. Ref: https://progameguides.com/roblox/how-to-use-enchantments-in-pet-simulator-99-roblox/
+Decision: a BOLT. `power` = a fat zig-zag bolt (yellow #FFE94A fill, #F2A900 shade plane, ink outline, one white glint, one off-centre spark). `shop` (UPGRADES tile) = the same bolt standing on its existing orange plate (so the tile and the plate rhyme). StatsV2 chip `shop` = a 40-board bolt. Hold-to-buy = the plate squashes and the bolt flashes while the hold fills (finite 1 s, transform/opacity only, via `.sp2-power:has([data-holding])`), and the NOW number lands when the buy confirms.
