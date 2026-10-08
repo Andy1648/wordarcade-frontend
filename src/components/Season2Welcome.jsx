@@ -19,7 +19,7 @@ import './Season2Welcome.css';
 
 
 export default function Season2Welcome({ plan, startWallet = 0, collect, onClose }) {
-  // idle → busy → done | claimed | retry
+  // idle → busy (server) → flying (the gems are in the air; the button is dead) → done | claimed | retry
   const [phase, setPhase] = useState('idle');
   const [wallet, setWallet] = useState(startWallet);
   const pill = useRef(null);
@@ -46,7 +46,7 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
 
   const gems = plan.gems;
   const onCollect = async () => {
-    if (phase === 'busy') return;
+    if (phase === 'busy' || phase === 'flying') return;
     if (phase === 'done' || phase === 'claimed') {
       onClose();
       return;
@@ -55,11 +55,13 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
     const r = await collect();
     if (!live.current) return;
     if (r && r.ok) {
-      setPhase('done');
       const target = startWallet + r.gems;
       // NIGHT oct8 #3 — THE GAIN ANIMATION (gains/GainLayer): the gems burst out of the gift and converge on the pill;
-      // the pill's counter starts on the FIRST landing and runs countMs(gems), and every landing bumps the pill
+      // the pill's counter starts on the FIRST landing (it TICKS up over countMs(gems)) and every landing BUMPS the
+      // pill. The button is DEAD (hatched, taps deny) until the last gem lands — PLAY must never close the welcome
+      // under gems still in the air (R2 oct8 #1). REDUCE MOTION: every gem lands at once → done in the same tick.
       if (fly.current) {
+        setPhase('flying');
         fly.current.gain({
           from: from.current,
           amount: r.gems,
@@ -68,15 +70,22 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
             setWallet(target);
           },
           onLand: () => pill.current && pill.current.bump(),
-          onDone: () => setWallet(target),
+          onDone: () => {
+            setWallet(target);
+            if (live.current) setPhase('done');
+          },
         });
-      } else setWallet(target);
+      } else {
+        setWallet(target);
+        setPhase('done');
+      }
     } else if (r && r.retry) setPhase('retry');
     else setPhase('claimed');
   };
 
-  const label = phase === 'done' || phase === 'claimed' ? 'PLAY' : phase === 'retry' ? 'TRY AGAIN' : phase === 'busy' ? 'COLLECTING' : 'COLLECT';
+  const label = phase === 'done' || phase === 'claimed' ? 'PLAY' : phase === 'retry' ? 'TRY AGAIN' : phase === 'busy' || phase === 'flying' ? 'COLLECTING' : 'COLLECT';
   const tone = phase === 'done' || phase === 'claimed' ? 'yellow' : 'cyan';
+  const dead = phase === 'busy' || phase === 'flying'; // the kit's disabled face (hatch, dead 3px press) — no lock chip
   return (
     <div className="s2w" role="dialog" aria-modal="true" aria-labelledby="s2w-title" data-testid="season2-welcome" data-phase={phase}>
       <div className="s2w-band" aria-hidden="true" />
@@ -107,7 +116,7 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
         </div>
       </div>
       <div className="s2w-foot">
-        <KitButton ref={btnRef} tone={tone} label={label} labelSize={38} width={360} onClick={onCollect} data-testid="season2-collect" />
+        <KitButton ref={btnRef} tone={tone} label={label} labelSize={38} width={360} disabled={dead} onClick={onCollect} data-testid="season2-collect" />
         {phase === 'claimed' && <p className="s2w-note" role="status">ALREADY COLLECTED — NOTHING NEW TO ADD</p>}
         {phase === 'retry' && (
           <>
@@ -115,7 +124,7 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
             <KitGhostButton label="LATER" tone="cyan" onClick={onClose} />
           </>
         )}
-        {(phase === 'idle' || phase === 'busy') && <p className="s2w-once">SHOWS ONCE</p>}
+        {(phase === 'idle' || phase === 'busy' || phase === 'flying') && <p className="s2w-once">SHOWS ONCE</p>}
       </div>
       <GainLayer ref={fly} icon="gems" target={() => pill.current && pill.current.iconEl()} />
     </div>

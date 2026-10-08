@@ -52,7 +52,9 @@
 .s2w-title {
   margin: 0;
   font-family: 'Bungee Shade', 'Bungee', sans-serif;
-  font-size: min(var(--fs-k100), 8.2vw);
+  /* R2 oct8 #1 — NUMBERS FIRST: the headline is a word, the gift is THE number. 76px (was 100) keeps the wordmark
+     under the 96px gem figure and clears the gem pill on the left at 1366 (the 100px title ran into it). */
+  font-size: min(var(--fs-k76), 6vw);
   line-height: 1;
   font-weight: 400;
   text-transform: uppercase;
@@ -61,7 +63,7 @@
   transform: rotate(-3deg);
 }
 .s2w-sub {
-  margin: 10px 0 0;
+  margin: 14px 0 0;
   font-family: var(--k-display);
   font-size: var(--fs-k22);
   text-transform: uppercase;
@@ -78,7 +80,7 @@
 }
 .s2w-cap {
   font-family: var(--k-display);
-  font-size: var(--fs-k18);
+  font-size: var(--fs-k20);
   text-transform: uppercase;
   color: var(--k-dim);
 }
@@ -91,8 +93,9 @@
   paint-order: stroke fill;
 }
 .s2w-oldr {
-  font-size: var(--fs-k68);
+  font-size: var(--fs-k76);
   color: var(--k-lilac);
+  text-shadow: 5px 5px 0 var(--k-ink);
 }
 .s2w-gift {
   display: flex;
@@ -108,9 +111,9 @@
   text-shadow: 7px 7px 0 var(--k-ink);
 }
 .s2w-rolls {
-  margin-top: 4px;
+  margin-top: 6px;
   font-family: var(--k-display);
-  font-size: var(--fs-k18);
+  font-size: var(--fs-k20);
   text-transform: uppercase;
   color: var(--k-yellow);
 }
@@ -123,11 +126,14 @@
 .s2w-once,
 .s2w-note {
   margin: 0;
-  font-size: var(--fs-k14);
+  font-family: var(--k-display);
+  font-size: var(--fs-k16);
   color: var(--k-faint);
   text-align: center;
 }
 .s2w-note { color: var(--k-dim); }
+/* COLLECTING (server + the gems in the air): the kit's dead face, but the label stays readable — no lock chip */
+.s2w-foot .kb.is-off .kb-main { color: var(--k-dim); }
 
 /* one-shot entrances (transform + opacity only) */
 @keyframes s2w-slam {
@@ -149,14 +155,17 @@
 
 /* phones: the trade stacks, the figures step down */
 @media (max-width: 600px) {
-  .s2w { padding: 112px 16px 28px; justify-content: flex-start; gap: 22px; }
+  .s2w { padding: 112px 16px 28px; justify-content: flex-start; gap: 28px; }
   .s2w-wallet { top: 14px; left: 16px; }
   .s2w-head { margin-top: 0; }
   .s2w-title { font-size: min(var(--fs-k38), 9vw); white-space: normal; }
-  .s2w-sub { font-size: var(--fs-k16); }
-  .s2w-trade { flex-direction: column; gap: 12px; }
-  .s2w-arrow > svg { transform: rotate(90deg); }
-  .s2w-oldr { font-size: var(--fs-k44); }
-  .s2w-gems { font-size: var(--fs-k60); -webkit-text-stroke-width: 6px; text-shadow: 5px 5px 0 var(--k-ink); }
-  .s2w-band { top: 30%; height: 360px; }
+  .s2w-sub { font-size: var(--fs-k16); margin-top: 8px; }
+  .s2w-trade { flex-direction: column; gap: 8px; }
+  .s2w-arrow > svg { transform: rotate(90deg) scale(.8); }
+  .s2w-cap { font-size: var(--fs-k18); }
+  .s2w-oldr { font-size: var(--fs-k44); text-shadow: 4px 4px 0 var(--k-ink); }
+  .s2w-gems { font-size: var(--fs-k68); -webkit-text-stroke-width: 6px; text-shadow: 5px 5px 0 var(--k-ink); }
+  .s2w-gift > svg { width: 56px; height: 56px; }
+  .s2w-rolls { font-size: var(--fs-k18); }
+  .s2w-band { top: 25%; height: 300px; } /* behind the whole R7 → 580 trade, not through it */
 }
