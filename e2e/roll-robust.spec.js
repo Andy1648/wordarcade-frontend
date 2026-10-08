@@ -307,3 +307,46 @@ for (const [w, h] of [[1280, 551], [1366, 657], [1920, 1080], [390, 844], [360, 
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
   });
 }
+
+// LAYOUT PASS (R4b): the result line is TWO rows on a phone once a DOUBLE ROLL adds its "+EXTRA" chip (SINGULARITY
+// worn) — the band must stay inside the stage (its top was pushed out under the frame), and with AUTO on the long
+// "AUTO → LEGENDARY+" label must never squeeze the SKIP plate's text out of its plate.
+for (const [w, h] of [[390, 844], [360, 640]]) {
+  test(`8b. ${w}x${h}: a two-row result line keeps the band inside the stage; AUTO on keeps SKIP in its plate`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await seed(page, {
+      'taw.markRolls': STARTED({ marks: { 'mk-singularity': { n: 1, first: 1 } }, skipBelow: 'legendary' }),
+      'taw.marksOwned': '["mk-singularity"]',
+      'taw.mark': 'mk-singularity',
+    });
+    await openRoll(page);
+    const inside = async (sel, hostSel, pad = 6) => { // pad: the host's frame (the stage's 6px border)
+      const b = await page.locator(sel).first().boundingBox();
+      const hb = await page.locator(hostSel).first().boundingBox();
+      expect(b, sel).not.toBeNull();
+      expect(b.y, `${sel} top inside ${hostSel}`).toBeGreaterThanOrEqual(hb.y + pad);
+      expect(b.y + b.height, `${sel} bottom inside ${hostSel}`).toBeLessThanOrEqual(hb.y + hb.height - pad);
+      expect(b.x, `${sel} left inside ${hostSel}`).toBeGreaterThanOrEqual(hb.x - 1);
+      expect(b.x + b.width, `${sel} right inside ${hostSel}`).toBeLessThanOrEqual(hb.x + hb.width + 1);
+    };
+    await holdRoll(page);
+    await expect(result(page)).toHaveCount(1, { timeout: SPUN });
+    await keepReveal(page);
+    await page.waitForTimeout(700);
+    await expect(page.locator('[data-testid="mark-roll-extra"]')).toHaveCount(1); // the double roll's "+EXTRA" chip
+    await inside('.rs-win', '.rs-stage');
+    await inside('[data-testid="mark-roll-result"]', '.rs-stage');
+    // AUTO → LEGENDARY+ (3 taps): the plate's text stays inside its plate, the plate inside the stepper, on screen
+    const auto = page.getByTestId('roll-auto');
+    await auto.click(); await auto.click(); await auto.click();
+    await expect(auto).toHaveText('AUTO → LEGENDARY+');
+    const plate = page.locator('.rs-skip-v');
+    expect(await plate.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await inside('.rs-skip-v', '.rs-skip', -1);
+    const sk = await page.locator('.rs-skip').boundingBox();
+    expect(sk.x + sk.width).toBeLessThanOrEqual(w + 1);
+    expect(sk.y + sk.height).toBeLessThanOrEqual(h + 1);
+    await auto.click(); // → OFF
+    await expect(auto).toHaveText('AUTO: OFF');
+  });
+}
