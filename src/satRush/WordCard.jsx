@@ -14,6 +14,7 @@
 // (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
 // state still carries a text label. The root .sr-card class is load-bearing (juice
 // centres bursts on it and the wrong-key shake keys off .sr-card.shake).
+import { useEffect, useRef } from 'react';
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
 
@@ -143,6 +144,23 @@ export default function WordCard({ view }) {
 
   // Reveals to render as fields (meta is the case id; firstLetter lives in slots).
   const rows = view.reveals.filter((r) => ['sentence', 'gloss', 'root'].includes(r.type));
+  const shown = rows.filter((r) => r.visible).length;
+
+  // Andy oct8: "part of the words are cut off by the borders". On a short phone the fields region
+  // scrolls, and a reveal landing below its fold printed half a line under the bottom rule. When a new
+  // field lights up, scroll just enough that it shows whole. Runs once per reveal (an event, never per
+  // key or frame), so the one layout read here is fine.
+  const fieldsRef = useRef(null);
+  const stage = view.stage;
+  useEffect(() => {
+    const box = fieldsRef.current;
+    if (!box || shown < 2 || box.scrollHeight <= box.clientHeight) return;
+    const lit = box.querySelectorAll('.sr-field.in');
+    const last = lit[lit.length - 1];
+    if (!last) return;
+    const over = last.getBoundingClientRect().bottom - box.getBoundingClientRect().bottom;
+    if (over > 0) box.scrollTop += Math.ceil(over) + 2;
+  }, [shown, stage, atFinal]);
 
   return (
     // The OUTER .sr-card is an unclipped positioning shell: the SFX burst is its
@@ -189,7 +207,7 @@ export default function WordCard({ view }) {
 
       {/* Fields scroll inside this region on a small screen; the mugshot slots
           below stay pinned and always visible. */}
-      <div className="sr-fields">
+      <div className="sr-fields" ref={fieldsRef}>
         {rows.map((r) => (
           <FieldRow key={r.type} type={r.type} visible={r.visible} view={view} />
         ))}
