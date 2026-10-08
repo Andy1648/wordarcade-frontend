@@ -50,6 +50,14 @@ export function sndRollRelease() {
   tone(t, { freq: pentFreq(NOTE.C6), glideTo: pentFreq(NOTE.C4), type: 'sawtooth', dur: 0.16, gain: 0.08, attack: 0.002, lowpass: 3000 });
   tone(t, { freq: pentFreq(NOTE.G5), type: 'triangle', dur: 0.06, gain: 0.06, attack: 0.002 });
 }
+// RE-ARM (R4 step 7): the slab is ready again — two quick soft notes, up (the "next one?" nudge)
+export function sndRollReady() {
+  const ctx = ready();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  tone(t, { freq: pentFreq(NOTE.G4), type: 'triangle', dur: 0.06, gain: 0.05, attack: 0.003 });
+  tone(t + 0.07, { freq: pentFreq(NOTE.C5), type: 'triangle', dur: 0.09, gain: 0.06, attack: 0.003 });
+}
 // THE TELL's rumble (LEGENDARY+ only): a low floor under the colour, rising until the land — finite, `durMs` long
 export function sndRollTell(tier = 'legendary', durMs = 700) {
   const ctx = ready();

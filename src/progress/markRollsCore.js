@@ -6,7 +6,7 @@
 // guarded read/write of one storage key.
 //
 // MARKS v2 (Andy oct5 — Genshin stats, ★ pips). Six tiers, same odds:
-//   COMMON 1 IN 2 · RARE 1 IN 10 · EPIC 1 IN 100 · LEGENDARY 1 IN 1,000 (+ perk) · MYTHIC 1 IN 10,000 (+ perk) ·
+//   COMMON 1 IN 2 · RARE 1 IN 10 · EPIC 1 IN 100 · LEGENDARY 1 IN 250 (+ perk; was 1,000 — Andy oct8) · MYTHIC 1 IN 10,000 (+ perk) ·
 //   SECRET 1 IN 100,000 (+ game-changing perks).
 // The "1 IN X" is the TIER's chance; each mark in a tier splits it evenly. COMMON takes whatever the five rarer
 // tiers leave (1 − 0.1111 = 88.9%).
@@ -37,7 +37,7 @@ export const ROLL_STATE_VERSION = 2;
 export const ROLL_TIER_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent'];
 export const ROLLABLE_TIERS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
 /** The TIER's "1 IN X" (Andy's table). COMMON is the remainder — see the header. */
-export const TIER_ODDS = { common: 2, rare: 10, epic: 100, legendary: 1000, mythic: 10000, secret: 100000 };
+export const TIER_ODDS = { common: 2, rare: 10, epic: 100, legendary: 250, mythic: 10000, secret: 100000 }; // LEGENDARY 1,000 → 250 (Andy oct8: "legendary should land more often")
 /** The tier's equivalent multiplier ("strength") at ★0. Mirrors marks.js MARK_TIERS (1 + bonus). */
 export const TIER_MAIN = { common: 1.1, rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
 /** The same, as the stat's percent (the part above ×1) — kept exact (1.1 − 1 is not 0.1 in floats). */
@@ -207,8 +207,9 @@ export const INDEX_PIP_WORDS = { common: 5, rare: 15, epic: 50, legendary: 250, 
 export const INDEX_COMPLETE_WORDS = { common: 100, rare: 300, epic: 500, legendary: 2000, mythic: 10000, secret: 25000 };
 export const SKIP_TIERS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
 export const DEFAULT_SKIP_BELOW = 'epic';
-// LEGENDARY+ guaranteed in 500 (Andy oct5) — beside the EPIC+ in 50 (markRolls.PITY). Here because normalize seeds it.
-export const LEGENDARY_PITY_HARD = 500;
+// LEGENDARY+ guaranteed in 125 (Andy oct8: was 500 with the 1 IN 1,000 odds; the ladder keeps its shape — the hard
+// pity is half the tier's 1 IN X, as before) — beside the EPIC+ in 50 (markRolls.PITY). Here because normalize seeds it.
+export const LEGENDARY_PITY_HARD = 125;
 
 // --------------------------------------------------------------------------------------- state
 export function freshState() {

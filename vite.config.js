@@ -86,18 +86,23 @@ function pwaPlugin() {
       // mp3 stays OUT on purpose: precaching would pull the 1.6MB track in the background
       // with no user gesture, which is exactly what this branch removed.
       globPatterns: ['**/*.{js,css,html,svg,png,avif,webp,ico,woff2}'],
-      globIgnores: ['**/sitemap.xml', '**/robots.txt'],
-      navigateFallback: '/index.html',
-      // The SEO landing pages are real HTML files, and workbox's precache only tries the
-      // `<path>/index.html` spelling for URLs ending in '/'. So a navigation to '/chain' (no
-      // trailing slash) missed the precache, hit this NavigationRoute and got the APP — meaning
-      // every repeat visitor with the service worker installed saw the menu where Vercel serves
-      // the landing page, and '/word-bomb' silently became the menu. Deny the five landing paths
-      // (with or without the trailing slash) so they resolve to their own precached HTML, exactly
-      // as Vercel serves them. Anchored, so '/chain/play' — which MUST get the app — never matches.
-      navigateFallbackDenylist: [
-        /^\/api\//,
-        /^\/(word-bomb|category-blitz|sat-rush|chain|fuse)\/?$/,
+      // NETWORK-FIRST HTML (Andy oct8: "people's updates still load after waiting a while or refreshing").
+      // With `navigateFallback: '/index.html'` every navigation was answered from the PRECACHE — the previous
+      // deploy's index.html, pointing at the previous deploy's hashed bundle — and the new build only appeared
+      // after the new worker had downloaded its whole precache (MBs of js/png/avif), activated, and the page
+      // reloaded. That is the "wait a while". Now index.html is NOT precached and navigations go to the network
+      // first (3 s timeout, then the last cached copy for offline), so the FIRST load after a deploy already
+      // runs the new bundle — the hashed assets are fetched straight from Vercel because the old precache has
+      // never seen them. The worker still updates in the background for the asset cache. The five SEO landing
+      // pages are real files and go network-first too, exactly as Vercel serves them.
+      globIgnores: ['**/sitemap.xml', '**/robots.txt', '**/*.html'],
+      navigateFallback: null,
+      runtimeCaching: [
+        {
+          urlPattern: ({ request }) => request.mode === 'navigate',
+          handler: 'NetworkFirst',
+          options: { cacheName: 'taw-pages', networkTimeoutSeconds: 3, cacheableResponse: { statuses: [0, 200] } },
+        },
       ],
       cleanupOutdatedCaches: true,
       clientsClaim: true,

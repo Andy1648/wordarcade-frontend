@@ -18,7 +18,7 @@
 import { memo } from 'react';
 import BoostPill from '../frenzy/BoostPill';
 import { useTimerClock } from '../frenzy/useTimerClock';
-import { overdriveRemaining } from '../progress/overdrive';
+import { liveBoostRemaining } from '../progress/liveBoost';
 import '../frenzy/MechanicScale.css';
 import { perWordRateNow, modeKey, WEIGHTED_MODES } from '../progress/wins';
 import { roundWordXp } from '../progress/xp';
@@ -38,8 +38,13 @@ const mult = (m) => `×${formatMultExact(m)}`;
 function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
   // Rebirth Rush OVERDRIVE can START mid-run (the letter flush rolls it) while this memoised chip's props
   // stay the same — subscribe to its clock so the rate and the OVERDRIVE pill appear (and leave) on time.
-  // 1 Hz only while OVERDRIVE runs; nothing ticks at rest.
-  useTimerClock(overdriveRemaining);
+  // 1 Hz only while a timer runs; nothing ticks at rest.
+  // BUG (Andy oct8, "XP boost item ×10 lasts until new screen and not timer"): the UPGRADES ×10 OVERDRIVE item is a
+  // code BOOST (boost.js startBoost → taw.boost), NOT the Rebirth Rush overdrive clock — so this chip only watched
+  // overdriveRemaining(), saw 0, armed nothing, and the BOOST ×10 row + rate sat on screen past the 5 minutes until
+  // the next screen re-rendered it. The WINS actually paid always followed the clock (wins.js reads boostMult per
+  // word). Watch BOTH timers: the longer one is the moment this chip must change.
+  useTimerClock(liveBoostRemaining);
   const now = perWordRateNow({ mode, difficulty });
   const frenzy = Number.isFinite(now.factors.frenzy) && now.factors.frenzy > 1 ? now.factors.frenzy : 0;
   const boost = Number.isFinite(now.factors.boost) && now.factors.boost > 1 ? now.factors.boost : 0;

@@ -29,15 +29,17 @@ test('an updated worker reloads at once on the splash (no data-view), the menu, 
   for (const v of [null, 'home', 'shop', 'stats', 'leaderboard', 'credits']) {
     const view = { value: v };
     const d = fakeDom(view);
-    assert.equal(installSwUpdateReload({ pollMs: 5 }), true);
+    assert.equal(installSwUpdateReload({ pollMs: 5, pageIsStale: () => true }), true);
     d.fire('controllerchange');
+    await new Promise((r) => setTimeout(r, 0));
     assert.equal(d.reloads(), 1, `reloads at once on view=${v}`);
   }
   for (const v of ['game', 'room', 'lobby', 'vs-bot', 'chain', 'fuse', 'sat-rush']) {
     const view = { value: v };
     const d = fakeDom(view);
-    installSwUpdateReload({ pollMs: 5 });
+    installSwUpdateReload({ pollMs: 5, pageIsStale: () => true });
     d.fire('controllerchange');
+    await new Promise((r) => setTimeout(r, 0));
     assert.equal(d.reloads(), 0, `holds during view=${v}`);
     view.value = 'home';
     await new Promise((r) => setTimeout(r, 20));
@@ -53,4 +55,35 @@ test('a tab coming back into view asks the registration for a new worker', async
   d.fire('focus');
   await new Promise((r) => setTimeout(r, 5));
   assert.equal(d.updates(), 2);
+});
+
+test('network-first html: a page that already runs the live bundle does NOT reload on controllerchange', async () => {
+  const { installSwUpdateReload } = await import('./swUpdate.js');
+  const d = fakeDom({ value: 'home' });
+  installSwUpdateReload({ pollMs: 5, pageIsStale: () => Promise.resolve(false) });
+  d.fire('controllerchange');
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(d.reloads(), 0);
+});
+
+test('the default stale check compares this page\'s main bundle with the network copy of index.html', async () => {
+  const { installSwUpdateReload } = await import('./swUpdate.js');
+  const run = async (live) => {
+    const d = fakeDom({ value: 'home' });
+    globalThis.document.scripts = [{ src: 'https://typeaword.com/assets/index-AAA111.js' }, { src: 'https://typeaword.com/assets/react-vendor-X.js' }];
+    globalThis.fetch = () => Promise.resolve({ ok: true, text: () => Promise.resolve(live) });
+    installSwUpdateReload({ pollMs: 5 });
+    d.fire('controllerchange');
+    await new Promise((r) => setTimeout(r, 10));
+    return d.reloads();
+  };
+  assert.equal(await run('<script src="/assets/index-AAA111.js"></script>'), 0, 'same bundle: no reload');
+  assert.equal(await run('<script src="/assets/index-BBB222.js"></script>'), 1, 'newer bundle live: reload');
+  globalThis.fetch = () => Promise.reject(new Error('offline'));
+  const d = fakeDom({ value: 'home' });
+  installSwUpdateReload({ pollMs: 5 });
+  d.fire('controllerchange');
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(d.reloads(), 1, 'check failed: reload (old behaviour)');
+  delete globalThis.fetch;
 });
