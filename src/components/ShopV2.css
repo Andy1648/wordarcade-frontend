@@ -237,6 +237,18 @@
   text-align: center;
   padding: 0 6px;
 }
+/* SAYS (R5 oct8 — "boost WHAT?"): the one line that names what the item multiplies. Dim, under the headline, so the
+   big number still leads; 14px is Andy's label floor, so it never shrinks below it at any breakpoint. */
+.sp2-says {
+  margin-top: 3px;
+  font-family: var(--k-mono);
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+  line-height: 1.15;
+  color: var(--k-dim);
+  text-align: center;
+  padding: 0 6px;
+}
 .sp2-price {
   margin: auto 10px 10px;
   align-self: stretch;
@@ -358,13 +370,16 @@
   .sp2-stock-name { font-size: var(--fs-k28); }
   .sp2-stock-sub { font-size: var(--fs-k14); }
   .sp2-timer .ktc { width: 150px; }
-  .sp2-grid { grid-template-rows: none; grid-auto-rows: 182px; gap: 12px; padding: 0 7px 7px 0; }
+  /* R5 oct8: the SAYS line is a 2-3 row wrap on a 110px card, so the row grew 182 → 232 — the phone shop already
+     scrolls, and pushing the gem price out of the card (Andy: numbers never leave their boxes) is not an option. */
+  .sp2-grid { grid-template-rows: none; grid-auto-rows: 232px; gap: 12px; padding: 0 7px 7px 0; }
   .sp2-card .kstc-card { box-shadow: 5px 5px 0 var(--k-ink); border-width: var(--k-ink-m); }
   .sp2-card .kstc-anchor { transform: scale(.5); }
   .sp2-band { height: 36px; padding: 0 4px; flex-direction: column; justify-content: center; align-items: center; font-size: var(--fs-k14); line-height: 1.05; }
   .sp2-ico { width: 40px; height: 40px; margin-top: 4px; }
   .sp2-big { font-size: var(--fs-k22); -webkit-text-stroke-width: var(--k-stroke-m); }
   .sp2-what { font-size: var(--fs-k14); line-height: 1.1; padding: 0 2px; }
+  .sp2-says { font-size: var(--fs-k14); line-height: 1.1; padding: 0 3px; margin-top: 2px; }
   .sp2-price { height: 30px; margin: auto 5px 5px; font-size: var(--fs-k16); gap: 3px; }
   .sp2-price .kit-icon { width: 16px; height: 16px; }
   .sp2-float { font-size: var(--fs-k18); }

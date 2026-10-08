@@ -44,7 +44,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
       className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
-      ariaLabel={`${it.big} ${it.what} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
+      ariaLabel={`${it.big} ${it.what}${it.says ? `, ${it.says}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
     >
       <span className="sp2-card-in" data-stock={it.id}>
         <span className="sp2-band">
@@ -54,6 +54,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
         <KitIcon name={it.icon} size={76} shadow={3} className="sp2-ico" />
         <span className="sp2-big">{it.big}</span>
         <span className="sp2-what">{it.what}</span>
+        {it.says && <span className="sp2-says">{it.says}</span>}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />
           {soon ? 'SOON' : formatNum(it.price)}

@@ -27,12 +27,15 @@ export const BOOST1_KEY = 'taw.boost';
 export const RESTOCK_MS = 5 * 60 * 1000;
 export const EXTEND_MS = 5 * 60 * 1000;
 
+// `says` (R5 oct8 — Andy: "there are boosts and … things like this should say — boost WHAT? and many don't"):
+// ONE line per card naming exactly what the item multiplies, so no card makes the player guess. Display only —
+// it never touches the effect. Keep each under ~26 characters: the card is 228px wide at 1366.
 export const STOCK = [
-  { id: 'xp25', rarity: 'common', icon: 'levels', big: '+25%', what: 'XP · 10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.25, min: 10 },
-  { id: 'luck2', rarity: 'rare', icon: 'luck', big: '×2', what: 'LUCK · 15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
-  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', big: '×10', what: 'OVERDRIVE · NOW', price: 225, max: 2, boost: { mult: 10, min: 5 } },
-  { id: 'extend', rarity: 'rare', icon: 'clock', big: '+5 MIN', what: 'EVERY BOOST', price: 150, max: 2, extend: true },
-  { id: 'epicroll', rarity: 'legendary', icon: 'roll', big: '1', what: 'FREE EPIC+ ROLL', price: 495, max: 1, buyable: false },
+  { id: 'xp25', rarity: 'common', icon: 'levels', big: '+25%', what: 'XP · 10 MIN', says: 'XP ONLY · NOT WINS', price: 45, max: 5, fx: 'xp', mult: 1.25, min: 10 },
+  { id: 'luck2', rarity: 'rare', icon: 'luck', big: '×2', what: 'LUCK · 15 MIN', says: 'BETTER GEAR ROLL ODDS', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
+  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', big: '×10', what: 'OVERDRIVE · NOW', says: 'WINS + XP · EVERY MODE', price: 225, max: 2, boost: { mult: 10, min: 5 } },
+  { id: 'extend', rarity: 'rare', icon: 'clock', big: '+5 MIN', what: 'EVERY BOOST', says: 'EXCEPT OVERDRIVE', price: 150, max: 2, extend: true },
+  { id: 'epicroll', rarity: 'legendary', icon: 'roll', big: '1', what: 'FREE EPIC+ ROLL', says: 'EPIC OR BETTER, GUARANTEED', price: 495, max: 1, buyable: false },
 ];
 export const RARITY = {
   common: { name: 'COMMON', line: '#A9B4C8', fill: '#262b38' },
