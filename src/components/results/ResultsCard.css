@@ -1,5 +1,5 @@
 /* ResultsCard.css — the v2 RESULTS / K.O. card (claude/mockups/v2/Results.dc.html). The laptop card is the mockup's
-   1366×657 sheet as ONE drawing: every length × --rs-k (set on mount / resize, ResultsCard.jsx), text floored at 13 px.
+   1366×657 sheet as ONE drawing: every length × --rs-k (set on mount / resize, ResultsCard.jsx), text floored at 14 px (R2 oct8: nothing under 14).
    A phone (≤ 700 px) is its own single stack (.rs2--narrow). Flat fills, black ink, hard offset shadows. Only
    transform / opacity animate (kit/motion.js); nothing loops. */
 .game-over-overlay .game-over-card.rs2 {
@@ -48,10 +48,10 @@
   box-shadow: 4px 4px 0 #000;
   font-family: var(--k-display);
   text-transform: uppercase;
-  font-size: max(var(--fs-k13), calc(var(--fs-k16) * var(--u)));
+  font-size: max(var(--fs-k14), calc(var(--fs-k16) * var(--u)));
   white-space: nowrap;
 }
-.rs2-mode-n { color: #c9b8e8; font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--u))); }
+.rs2-mode-n { color: #c9b8e8; font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--u))); }
 .rs2-wallets { display: flex; align-items: center; gap: calc(22px * var(--u)); }
 /* the WINS wallet (NIGHT oct8 #3): the gems wallet's twin in gold — the round's wins fly into it */
 .rs2-wallet.rs2-wallet--wins { border-bottom-color: #F2A900; }
@@ -112,10 +112,10 @@
 /* the live .game-over-title styles must not leak onto the stamp */
 .rs2 .rs2-stamp.game-over-title { margin-bottom: 0; font-size: inherit; color: inherit; white-space: nowrap; animation: none; }
 .rs2-best { display: flex; align-items: stretch; height: calc(46px * var(--u)); min-height: 36px; margin-top: calc(8px * var(--u)); border: 4px solid #000; box-shadow: 5px 5px 0 #000; max-width: 100%; }
-.rs2-best-k { display: flex; align-items: center; padding: 0 10px; background: #FF3D7F; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k13); line-height: 1; color: #000; text-align: center; }
+.rs2-best-k { display: flex; align-items: center; padding: 0 10px; background: #FF3D7F; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k14); line-height: 1; color: #000; text-align: center; }
 .rs2-best-w { display: flex; align-items: center; min-width: 0; padding: 0 14px; background: #0d0618; border-left: 4px solid #000; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k16), calc(var(--fs-k22) * var(--u))); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rs2-best-n { display: flex; align-items: center; padding: 0 12px; background: #FFE94A; border-left: 4px solid #000; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k16), calc(var(--fs-k24) * var(--u))); color: #000; }
-.rs2-winner { position: relative; margin-top: calc(-8px * var(--u)); padding-bottom: calc(8px * var(--u)); text-align: center; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k13), calc(var(--fs-k16) * var(--u))); color: #FFE94A; }
+.rs2-winner { position: relative; margin-top: calc(-8px * var(--u)); padding-bottom: calc(8px * var(--u)); text-align: center; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k14), calc(var(--fs-k16) * var(--u))); color: #FFE94A; }
 .rs2-winner span { color: #fff; }
 
 /* LOSS: the PAUSE-TO-LEARN hold shares the hero column — the hero shrinks above it */
@@ -132,11 +132,13 @@
 .rs2-tally { grid-area: tally; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: calc(10px * var(--u)); }
 .rs2-sum { display: flex; gap: calc(14px * var(--u)); min-width: 0; }
 .rs2-sum > * { flex: 1 1 0; min-width: 0; }
+.rs2-sum > .rs2-gems { flex: 0 0 32%; }
+.rs2-sum > .rs2-total { flex: 1 1 auto; }
 .rs2-stats { display: flex; gap: 12px; }
 .rs2-stat { height: calc(48px * var(--u)); min-height: 36px; padding: 0 14px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; border-bottom: 7px solid var(--c, #FFE94A); box-shadow: 5px 5px 0 #000; font-family: var(--k-display); text-transform: uppercase; }
 .rs2-stat--l { --c: #2EFFE0; }
 .rs2-stat .rs2-n { font-size: max(var(--fs-k20), calc(var(--fs-k28) * var(--u))); color: var(--c, #FFE94A); }
-.rs2-stat-k { font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--u))); color: #c9b8e8; }
+.rs2-stat-k { font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--u))); color: #c9b8e8; }
 .rs2-xp,
 .rs2-wins,
 .rs2-gems,
@@ -146,43 +148,46 @@
 .rs2-xp-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .rs2-xphex { width: calc(40px * var(--u)); height: calc(40px * var(--u)); min-width: 28px; min-height: 28px; flex: none; filter: drop-shadow(3px 3px 0 #000); }
 .rs2-xp-n { font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k24), calc(var(--fs-k44) * var(--u))); line-height: 1; color: #D88BFF; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap; }
-.rs2-xp-why { margin-left: auto; font-size: max(var(--fs-k13), calc(var(--fs-k15) * var(--u))); color: #c9b8e8; white-space: nowrap; }
+.rs2-xp-why { margin-left: auto; font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--u))); color: #c9b8e8; white-space: nowrap; }
 .rs2-xp-bar-row { margin-top: calc(8px * var(--u)); display: flex; align-items: center; gap: 10px; padding-right: calc(90px * var(--u)); }
-.rs2-xp-lv { height: calc(32px * var(--u)); min-height: 24px; padding: 0 10px; display: flex; align-items: center; background: #000; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k13), calc(var(--fs-k18) * var(--u))); color: #FFE94A; white-space: nowrap; }
+.rs2-xp-lv { height: calc(32px * var(--u)); min-height: 24px; padding: 0 10px; display: flex; align-items: center; background: #000; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k18), calc(var(--fs-k18) * var(--u))); color: #FFE94A; white-space: nowrap; }
 .rs2-xp-bar { position: relative; flex: 1; height: calc(28px * var(--u)); min-height: 18px; box-sizing: border-box; background: #0d0618; border: 4px solid #000; overflow: hidden; }
 .rs2-xp-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: repeating-linear-gradient(-45deg, #B04BFF 0 12px, #9a36e8 12px 24px); }
 .rs2-xp-pop { position: absolute; right: calc(-22px * var(--u)); bottom: calc(6px * var(--u)); height: calc(42px * var(--u)); min-height: 32px; padding: 0 14px; display: flex; align-items: center; background: #FFE94A; border: 5px solid #000; box-shadow: 5px 5px 0 #000; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k18), calc(var(--fs-k26) * var(--u))); color: #000; white-space: nowrap; transform: rotate(-6deg); }
 .rs2-wins { --c: #FFC23D; padding: calc(10px * var(--u)) 16px; }
-.rs2-wins-eq { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rs2-wins-eq { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rs2-base, .rs2-op, .rs2-mult { flex: none; }
 .rs2-base { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(56px * var(--u)); min-height: 40px; padding: 0 10px; background: #12A99A; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: var(--k-display); text-transform: uppercase; }
 .rs2-base b { font-weight: 400; font-size: max(var(--fs-k18), calc(var(--fs-k26) * var(--u))); line-height: 1; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
-.rs2-base small { font-size: var(--fs-k13); line-height: 1.2; color: #000; }
+.rs2-base small { font-size: var(--fs-k14); line-height: 1.2; color: #000; }
 .rs2-op { font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k20), calc(var(--fs-k30) * var(--u))); -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
-.rs2-mult { display: flex; align-items: center; justify-content: center; height: calc(56px * var(--u)); min-height: 40px; min-width: calc(90px * var(--u)); padding: 0 10px; box-sizing: border-box; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k20), calc(var(--fs-k32) * var(--u))); color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap; }
-.rs2-wins-n { margin-left: auto; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k24), calc(var(--fs-k44) * var(--u))); line-height: 1; color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap; }
+.rs2-mult { display: flex; align-items: center; justify-content: center; height: calc(56px * var(--u)); min-height: 40px; min-width: calc(72px * var(--u)); padding: 0 10px; box-sizing: border-box; background: #FF3D7F; border: 4px solid #000; box-shadow: 4px 4px 0 #000; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k20), calc(var(--fs-k28) * var(--u))); color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap; }
+.rs2-wins-n { margin-left: auto; flex: 1 1 auto; min-width: 0; text-align: right; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k24), calc(var(--fs-k34) * var(--u))); line-height: 1; color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap; }
 .rs2-chain { margin-top: calc(8px * var(--u)); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.rs2-chain-k { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k13); color: #FFC23D; }
-.rs2-chip { height: calc(30px * var(--u)); min-height: 24px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; background: #0d0618; border: 3px solid #000; border-bottom: 5px solid var(--c, #c9b8e8); box-shadow: 3px 3px 0 #000; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k13); color: #c9b8e8; white-space: nowrap; }
-.rs2-chip b { font-weight: 400; font-size: max(var(--fs-k14), calc(var(--fs-k17) * var(--u))); color: var(--c); }
+.rs2-chain-k { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k14); color: #FFC23D; }
+.rs2-chip { height: calc(32px * var(--u)); min-height: 28px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; background: #0d0618; border: 3px solid #000; border-bottom: 5px solid var(--c, #c9b8e8); box-shadow: 3px 3px 0 #000; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k14); color: #c9b8e8; white-space: nowrap; }
+.rs2-chip b { font-weight: 400; font-size: max(var(--fs-k18), calc(var(--fs-k18) * var(--u))); color: var(--c); }
 .rs2-chip--none { color: #8a7aa8; }
 .rs2-line { --c: #FF3D7F; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: calc(6px * var(--u)) 16px; font-family: var(--k-display); text-transform: uppercase; }
 .rs2-line-k { font-size: max(var(--fs-k14), calc(var(--fs-k18) * var(--u))); color: #fff; }
-.rs2-line-x { padding: 0 6px; background: #000; font-size: max(var(--fs-k13), calc(var(--fs-k16) * var(--u))); color: #FFE94A; }
+.rs2-line-x { padding: 0 6px; background: #000; font-size: max(var(--fs-k18), calc(var(--fs-k18) * var(--u))); color: #FFE94A; }
 .rs2-line-n { margin-left: auto; font-size: max(var(--fs-k18), calc(var(--fs-k28) * var(--u))); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
-.rs2-line-note { flex-basis: 100%; font-family: var(--k-mono); text-transform: uppercase; font-size: var(--fs-k13); color: #c9b8e8; }
+.rs2-line-note { flex-basis: 100%; font-family: var(--k-mono); text-transform: uppercase; font-size: var(--fs-k14); color: #c9b8e8; }
 .rs2-gems { --c: #2EFFE0; display: flex; align-items: center; gap: 10px; height: calc(60px * var(--u)); min-height: 44px; padding: 0 12px; }
 .rs2-gems .gems-earned { display: flex; align-items: center; gap: 10px; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
 .rs2-gems .gems-earned img { width: calc(42px * var(--u)); height: auto; min-width: 26px; transform: rotate(-8deg); }
-.rs2-gems .gems-earned-num { font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k24), calc(var(--fs-k44) * var(--u))); line-height: 1; color: #2EFFE0; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
-.rs2-gems .gems-earned-label { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k13); color: #c9b8e8; }
-.rs2-gems-k { display: none; margin-left: auto; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--u))); color: #c9b8e8; white-space: nowrap; }
-.rs2-total { --c: #FFE94A; display: flex; align-items: center; gap: 10px; height: calc(60px * var(--u)); min-height: 44px; padding: 0 12px; background: #FFE94A; border-left-color: #F2A900; font-family: var(--k-display); text-transform: uppercase; color: #000; }
-.rs2-total-k { font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--u))); line-height: 1.05; }
-.rs2-total-num { margin-left: auto; font-size: max(var(--fs-k24), calc(var(--fs-k34) * var(--u))); line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
+.rs2-gems .gems-earned-num { font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k24), calc(var(--fs-k32) * var(--u))); line-height: 1; color: #2EFFE0; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
+.rs2-gems .gems-earned-label { display: none; } /* the gem IS the label (the TOTAL beside it is the one big number) */
+.rs2-gems-k { display: none; margin-left: auto; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--u))); color: #c9b8e8; white-space: nowrap; }
+.rs2-total { --c: #FFE94A; display: flex; align-items: center; gap: 10px; height: calc(68px * var(--u)); min-height: 52px; padding: 0 12px; background: #FFE94A; border-left-color: #F2A900; font-family: var(--k-display); text-transform: uppercase; color: #000; }
+.rs2-total-k { font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--u))); line-height: 1.05; }
+/* THE one big number on the card (R2 oct8 #2): 44px at the sheet size (42 on the 1366×657 Chromebook, ≥ 40), bigger
+   than the WORDS line (38) and every bonus (28) — TOTAL > WORDS > bonus */
+.rs2-total-num { margin-left: auto; font-size: max(var(--fs-k38), calc(var(--fs-k44) * var(--u))); line-height: 1; color: #fff; -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 
 /* ---- players ---- */
 .rs2-players { grid-area: players; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-.rs2-players-h { display: flex; justify-content: space-between; padding: 0 6px 6px; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k13); color: #8a7aa8; }
+.rs2-players-h { display: flex; justify-content: space-between; padding: 0 6px 6px; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k14); color: #8a7aa8; }
 .rs2-plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: calc(8px * var(--u)); min-height: 0; }
 .rs2-prow { position: relative; height: calc(50px * var(--u)); min-height: 34px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 0; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; font-family: var(--k-display); text-transform: uppercase; }
 .rs2-prow.is-me { background: #FFE94A; color: #000; outline: 4px solid #fff; outline-offset: 0; }
@@ -191,8 +196,8 @@
 .rs2-prk--2 { background: #2EFFE0; color: #000; }
 .rs2-prk--3 { background: #D88BFF; color: #000; }
 .rs2-prow.is-me .rs2-prk { background: #000; color: #FFE94A; }
-.rs2-pname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: max(var(--fs-k13), calc(var(--fs-k16) * var(--u))); }
-.rs2-you { height: 22px; padding: 0 6px; display: flex; align-items: center; background: #000; font-size: var(--fs-k13); color: #FFE94A; }
+.rs2-pname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: max(var(--fs-k14), calc(var(--fs-k16) * var(--u))); }
+.rs2-you { height: 22px; padding: 0 6px; display: flex; align-items: center; background: #000; font-size: var(--fs-k14); color: #FFE94A; }
 .rs2-pw { font-size: max(var(--fs-k16), calc(var(--fs-k24) * var(--u))); color: #FFE94A; }
 .rs2-prow.is-me .rs2-pw { color: #000; }
 
@@ -240,7 +245,7 @@
 .rs2 .game-over-rematch:active:not(:disabled),
 .rs2 .game-over-leave:active { transform: translate(4px, 4px); }
 .rs2 .game-over-offer { display: flex; align-items: center; gap: 10px; margin: 0; }
-.rs2 .game-over-offer-line { margin: 0; font-size: var(--fs-k13); color: #c9b8e8; text-transform: uppercase; }
+.rs2 .game-over-offer-line { margin: 0; font-size: var(--fs-k14); color: #c9b8e8; text-transform: uppercase; }
 
 /* ---- PHONE: one stack ---- */
 .game-over-overlay .game-over-card.rs2.rs2--narrow {
@@ -258,7 +263,9 @@
 .rs2--narrow .rs2-mode { height: 34px; }
 .rs2--narrow .rs2-top { gap: 8px; }
 .rs2--narrow .rs2-mode { padding: 0 8px; }
-.rs2--narrow .rs2-wallets { gap: 14px; flex: 0 1 auto; min-width: 0; }
+.rs2--narrow .rs2-mode { flex: none; padding: 0 8px; }
+.rs2--narrow .rs2-mode-n { display: none; } /* "· 6P" is in the players list; the wallets must never clip */
+.rs2--narrow .rs2-wallets { gap: 10px; flex: none; }
 .rs2--narrow .rs2-wallet { min-width: 0; height: 40px; padding-left: 28px; padding-right: 8px; border-width: 4px; border-bottom-width: 6px; box-shadow: 4px 4px 0 #000; }
 .rs2--narrow .rs2-wallet-gem { width: 36px; left: -12px; top: -2px; }
 .rs2--narrow .rs2-wallet-n { font-size: var(--fs-k18); -webkit-text-stroke-width: 3px; }
@@ -273,7 +280,7 @@
 .rs2--narrow .rs2-best { flex-basis: 100%; justify-content: center; border: 0; box-shadow: none; height: 34px; }
 .rs2--narrow .rs2-best-w { font-size: var(--fs-k16); }
 .rs2--narrow .rs2-best-n { font-size: var(--fs-k16); }
-.rs2--narrow .rs2-winner { margin-top: -4px; padding-bottom: 6px; font-size: var(--fs-k13); }
+.rs2--narrow .rs2-winner { margin-top: -4px; padding-bottom: 6px; font-size: var(--fs-k14); }
 .rs2--narrow.has-learn .rs2-icon { width: 46px; height: 46px; }
 .rs2--narrow.has-learn .rs2-place-n { font-size: var(--fs-k60); }
 .rs2--narrow .rs2-learn { flex: none; }
@@ -292,7 +299,7 @@
 .rs2--narrow .rs2-xphex { width: 30px; height: 30px; }
 .rs2--narrow .rs2-xp-n { font-size: var(--fs-k24); }
 .rs2--narrow .rs2-xp-bar-row { margin-top: 4px; padding-right: 70px; }
-.rs2--narrow .rs2-xp-lv { height: 24px; font-size: var(--fs-k13); }
+.rs2--narrow .rs2-xp-lv { height: 26px; font-size: var(--fs-k18); }
 .rs2--narrow .rs2-xp-bar { height: 18px; }
 .rs2--narrow .rs2-xp-pop { right: -6px; bottom: 4px; height: 32px; font-size: var(--fs-k18); }
 .rs2--narrow .rs2-wins { padding: 6px 10px; }
@@ -301,18 +308,20 @@
 .rs2--narrow .rs2-base b { font-size: var(--fs-k18); }
 .rs2--narrow .rs2-op { font-size: var(--fs-k20); }
 .rs2--narrow .rs2-mult { height: 40px; min-width: 0; font-size: var(--fs-k20); }
-.rs2--narrow .rs2-wins-n { font-size: var(--fs-k24); }
+.rs2--narrow .rs2-wins-n { font-size: var(--fs-k28); }
 .rs2--narrow .rs2-chain { margin-top: 5px; gap: 5px; }
-.rs2--narrow .rs2-chip { height: 24px; padding: 0 6px; }
-.rs2--narrow .rs2-chip b { font-size: var(--fs-k14); }
+.rs2--narrow .rs2-chip { height: 28px; padding: 0 6px; }
+.rs2--narrow .rs2-chip b { font-size: var(--fs-k18); }
 .rs2--narrow .rs2-line { padding: 4px 10px; }
-.rs2--narrow .rs2-line-n { font-size: var(--fs-k20); }
+.rs2--narrow .rs2-line-n { font-size: var(--fs-k22); }
 .rs2--narrow .rs2-sum { gap: 8px; }
 .rs2--narrow .rs2-gems { height: 44px; padding: 0 8px; }
-.rs2--narrow .rs2-total { height: 44px; padding: 0 8px; }
+.rs2--narrow .rs2-total { height: 52px; padding: 0 8px; }
 .rs2--narrow .rs2-gems .gems-earned img { width: 30px; }
-.rs2--narrow .rs2-gems .gems-earned-num { font-size: var(--fs-k24); }
-.rs2--narrow .rs2-total-num { font-size: var(--fs-k24); }
+.rs2--narrow .rs2-gems .gems-earned-num { font-size: var(--fs-k28); }
+.rs2--narrow .rs2-total-num { font-size: var(--fs-k44); -webkit-text-stroke-width: 5px; }
+/* a phone stacks GEMS over the TOTAL: a 44px figure beside a 24px one does not fit two-up at 390 */
+.rs2--narrow .rs2-sum { flex-direction: column; }
 .rs2--narrow .rs2-players { flex: none; }
 .rs2--narrow .rs2-players-h { padding-bottom: 3px; }
 .rs2--narrow .rs2-plist { gap: 5px; }
