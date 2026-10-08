@@ -114,3 +114,24 @@ Andy (or a parallel session) merged **#302 feat/boosts-explained**: every boost 
   2. **`v2-results @1163x450` ("rs2-tally into the PLAY AGAIN footer") — NOT mine.** PR touches no ResultsV2 file; the identical test failed on #294 earlier (also unrelated) and passed on re-run; passes 3/3 locally here. Commented on the PR rather than porting a fix — nobody has root-caused it. **Worth its own pass: it keeps failing on unrelated PRs.**
 
 **Lesson:** the payload ratchet has ~700 bytes of headroom. ANY new always-mounted component in App.jsx must be lazy behind an eager predicate, or it trips the budget. Local `npm test` + targeted e2e do NOT catch this — only `e2e/payload-budget.spec.js` does. Run it before pushing anything that touches App.jsx's import list.
+
+### 22:3x UTC — #306 closed (superseded by #304); #310 opened; PROD VERIFIED
+**#304 feat/boost-dock merged from another session while #306 was open — second collision tonight.** Compared them properly instead of assuming mine was worth keeping; #304's is a strict superset:
+- covers the 2nd code-boost slot (`taw.s2.boost2`) that mine missed;
+- `frenzyShort()` already yields `×25 XP` / `XP PER KEY`, i.e. the season-2 correctness I'd fixed;
+- `LazyBoostDock`'s gate is CHEAPER than my `anyTimer.js` — raw localStorage reads, no module imports;
+- renders INSIDE AudioControls (a truer reading of NO ORPHAN FIXED UI than my matching-inset sibling);
+- same conclusion on the phone menu keeping its pill.
+→ **#306 CLOSED.** One real gap carried to **#310**: in-game the same boost showed TWO clocks (LiveStack's BoostPill + the dock), verified in SAT RUSH at 1366×657 with ×3 live — `BOOST ×3 6:48` top-left and `×3 BOOST 6:48` bottom-right. The stack now states the FACTOR; the dock owns time left.
+
+### PROD MARKER VERIFICATION (CLAUDE.md "green tests do not mean shipped") — ALL SHIPPED
+| merge | marker | where | result |
+|---|---|---|---|
+| #294 POWER bolt | `M66 2 L20 56 …` | eager `index-*.js` | ✓ |
+| #300 REBIRTH arc | `M31 29 A30 30 0 1 1 24 67` | eager `index-*.js` | ✓ |
+| #300 GEARS cog as extra | `class="x" d="M39 24` | eager `index-*.js` | ✓ |
+| #298 podium | `#9C6A0C` + `#8E2410` | `LeaderboardV2-*.js` | ✓ |
+| #302 shop copy | live DOM card text | typeaword.com shop | ✓ all 6 cards |
+| #309 phone fit | row height + price box | typeaword.com @390 | ✓ 224px, every price inside |
+
+**TRAP I nearly fell into:** grepping a chunk I *assumed* held the strings (ShopV2) returned 0 for both the OLD and NEW copy — because STOCK lives in the v3 chunk, not ShopV2. Chunk names pulled out of `__vite__mapDeps` also 404 when fetched directly, which looked like a broken deploy. I was one step from telling Andy production was stale. **Loading the real page and reading the DOM is the only trustworthy marker check; a grep against a guessed chunk proves nothing.**
