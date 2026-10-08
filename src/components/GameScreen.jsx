@@ -23,7 +23,6 @@ import { exampleContaining } from '../progress/teachExample.js';
 import { WordPayout } from './PayoutBreakdown';
 // THE STANDING STACK. The per-word receipt only exists after a word lands, so the rail was empty
 // for the first words of every round and said nothing about the multipliers the player had built.
-import LiveStack from './LiveStack';
 import MatchWinBanner, { hasHumanRival } from './MatchWinBanner';
 import WordLanding, { hasLanding } from './WordLanding';
 import {
@@ -3856,16 +3855,15 @@ export default function GameScreen({
             arriving never reflows the board — and at >=900px it is its own grid column, beside the
             prompt/used/input stack rather than on top of it. */}
         <div className="wb-receipt-rail" aria-hidden="true">
-          {!gameOver && (lastPayout ? (
+          {/* NIGHT oct8 R4 (Andy: the per-word BASE chip "hangs over the board and covers part of the Word Bomb
+              screen" — off the in-game HUD; STATS and the results receipt keep the per-word base). The standing
+              LiveStack quote that filled this slot before the first word is gone; the slot itself stays (docked,
+              always rendered) so the first receipt never reflows the board. */}
+          {!gameOver && lastPayout ? (
             <div className="wb-receipt" key={lastPayout.key}>
               <WordPayout payout={lastPayout.payout} compact />
             </div>
-          ) : (
-            // ALWAYS SHOWING SOMETHING. Before the first word of a round there is no receipt yet,
-            // and that used to be an empty column — the moment a player is most likely to be
-            // wondering what a word is worth.
-            <LiveStack mode={isCategory ? 'category-blitz' : 'word-bomb'} difficulty={gameState.difficultyKey || gameState.difficulty || ''} combo={combo > 1 ? combo : 1} compact />
-          ))}
+          ) : null}
         </div>
 
         {lastWordResult && !lastWordResult.accepted && lastWordResult !== dismissedResultRef.current && (
