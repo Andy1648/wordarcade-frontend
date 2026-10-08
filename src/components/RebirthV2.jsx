@@ -19,6 +19,10 @@
 import { useEffect, useRef, useState } from 'react';
 import './RebirthV2.css';
 import { KitBackButton, KitHoldButton, KitPill, KitIcon, FX, fx } from './kit/index.js';
+import { kitPlay } from './kit/motion.js';
+import ShardBurst from './gains/ShardBurst.jsx';
+// the hex plate rests at rotate(-4deg) (RebirthV2.css): the slam keeps the tilt in every frame
+const HEX_SLAM = [{ transform: 'rotate(-4deg) scale(1)' }, { transform: 'rotate(-10deg) scale(1.55)', offset: 0.18 }, { transform: 'rotate(2deg) scale(.86)', offset: 0.45 }, { transform: 'rotate(-5deg) scale(1.06)', offset: 0.7 }, { transform: 'rotate(-4deg) scale(1)' }];
 import { V3 } from '../progress/season';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult } from '../progress/xp';
 import { takeRebirthNow } from '../progress/rebirthNow';
@@ -93,6 +97,7 @@ export default function RebirthV2({ onBack }) {
   const stageRef = useRef(null);
   const flashRef = useRef(null);
   const afterRef = useRef(null);
+  const shardsRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const narrow = useStageScale(rootRef);
@@ -109,10 +114,18 @@ export default function RebirthV2({ onBack }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // THE ×3 MOMENT (NIGHT oct8 #3): one 600 ms one-shot — the hex plate SLAMS and a burst of shards flies out of it.
+  // No popup, no text box: the numbers on the screen are the message.
   const boom = () => {
     fx(stageRef.current, FX.shake);
     fx(flashRef.current, FX.flash);
     fx(afterRef.current, FX.slamBig);
+    const hex = stageRef.current && stageRef.current.querySelector('.rb2-hex');
+    if (hex) {
+      kitPlay(hex, HEX_SLAM, { duration: 600, easing: 'cubic-bezier(.2,1.3,.4,1)' });
+      const r = hex.getBoundingClientRect(); // once, on the rebirth itself (never per frame)
+      if (shardsRef.current) shardsRef.current.burst({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+    }
   };
 
   // ONE rebirth, sent only when the 1 s hold completes. Single-flight here AND in the flow.
@@ -314,6 +327,7 @@ export default function RebirthV2({ onBack }) {
       </div>
       </div>
       <div className="rb2-flash" ref={flashRef} aria-hidden="true" />
+      <ShardBurst ref={shardsRef} />
     </div>
   );
 }

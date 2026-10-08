@@ -14,7 +14,11 @@
 // will-change only while playing). REDUCE MOTION lands every line at its final value at once. A tap on the card
 // fast-forwards. Nothing loops (the mockup's spinning rays, glowing own row and pulsing button are one-shots here).
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { formatNum, formatMultExact } from '../../format';
+import { formatNum, formatMultExact, formatShort } from '../../format';
+import KitIcon from '../kit/KitIcon.jsx';
+import GainLayer from '../gains/GainLayer.jsx';
+import { countMs, BUMP_MS, BUMP_SCALE } from '../gains/gainPlan.js';
+import { getWins } from '../../progress/wins';
 import { kitPlay } from '../kit/motion.js';
 import { reduceMotion } from '../../lib/reduceMotion';
 import { GemIcon, GemsEarnedLine, useGems } from '../gems/Gems';
@@ -41,6 +45,7 @@ const LAND = [{ transform: 'translate(0,0)' }, { transform: 'translate(-4px,-6px
 const PULSE = [{ transform: 'scale(1)' }, { transform: 'scale(1.05)', offset: 0.5 }, { transform: 'scale(1)' }];
 const SLIDE = [{ transform: 'translateX(-40px)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }];
 const eo = (k) => 1 - Math.pow(1 - k, 3);
+const BUMP = [{ transform: 'scale(1)' }, { transform: `scale(${BUMP_SCALE})`, offset: 0.4 }, { transform: 'scale(1)' }];
 
 function Trophy() {
   return (
@@ -148,7 +153,16 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const gemsBal = useGems();
+  // NIGHT oct8 #3: the WINS wallet — the balance BEFORE this round (the round's wins are already paid), counted up to
+  // the real balance when the WINS EARNED particles land on it (GainLayer). Read once per card.
+  const winsNow = useRef(null);
+  if (winsNow.current == null) winsNow.current = Math.max(0, Number(getWins()) || 0);
+  const gainRef = useRef(null);
+  const winsWalletRef = useRef(null);
+  const winsNumRef = useRef(null);
   const { lines, total } = tallyLines({ wordsWins, bonusLines, ledger });
+  const winsEnd = winsNow.current;
+  const winsStart = Math.max(0, winsEnd - Math.max(0, total));
   const chain = chainOf(ledger, wordsWins, split);
   const stamp = stampFor(place, iWon);
   const bestWord = `${me.best || ''}`.toUpperCase();
@@ -168,7 +182,10 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     if (!el) return undefined;
     const nums = [...el.querySelectorAll('.rs2-n')];
     const reveals = [...el.querySelectorAll('[data-rv]')];
+    const winsN = winsNumRef.current;
+    const winsFinal = () => { if (winsN) winsN.textContent = formatShort(winsEnd); };
     if (reduceMotion()) {
+      winsFinal();
       el.dataset.tally = 'done';
       return undefined;
     }
@@ -191,6 +208,34 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     land('.rs2-wins', tWords + T.count);
     land('.rs2-gems', tGems + T.count);
     timers.push(setTimeout(() => { const b = el.querySelector('.game-over-rematch'); if (b) kitPlay(b, PULSE, { duration: 500, easing: 'ease-in-out' }); }, tEnd + 200));
+    // THE GAIN (NIGHT oct8 #3): once WINS EARNED has counted, its wins fly from the total into the WINS wallet; the
+    // wallet counts from the FIRST landing (countMs) and bumps on every landing
+    let winsRaf = 0;
+    if (total > 0) {
+      timers.push(setTimeout(() => {
+        const src = el.querySelector('.rs2-total-num');
+        if (!src || !gainRef.current) { winsFinal(); return; }
+        const r = src.getBoundingClientRect(); // once, when the flight starts (never per frame)
+        gainRef.current.measure();
+        gainRef.current.gain({
+          from: { x: r.left + r.width / 2, y: r.top + r.height / 2 },
+          amount: total,
+          onFirstLand: () => {
+            const ms = countMs(total);
+            const c0 = performance.now();
+            const tick = (now) => {
+              const k = Math.min(1, (now - c0) / ms);
+              const txt = formatShort(winsStart + (winsEnd - winsStart) * eo(k));
+              if (winsN && winsN.textContent !== txt) winsN.textContent = txt;
+              winsRaf = k < 1 ? requestAnimationFrame(tick) : 0;
+            };
+            winsRaf = requestAnimationFrame(tick);
+          },
+          onLand: () => kitPlay(winsWalletRef.current, BUMP, { duration: BUMP_MS, easing: 'cubic-bezier(.2,1.4,.4,1)' }),
+          onDone: () => { if (!winsRaf) winsFinal(); },
+        });
+      }, tEnd + 120));
+    }
     // the count-up: one loop, text writes only when the shown figure changes
     for (const n of nums) n.textContent = `${n.dataset.pre}${formatNum(0)}`;
     const t0 = performance.now();
@@ -226,10 +271,13 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       for (const id of timers) clearTimeout(id);
       for (const r of reveals) { if (r.__kitAnim) { try { r.__kitAnim.finish(); } catch { /* gone */ } } }
       finish();
+      cancelAnimationFrame(winsRaf);
+      winsFinal();
     };
     el.addEventListener('pointerdown', skip);
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(winsRaf);
       for (const id of timers) clearTimeout(id);
       el.removeEventListener('pointerdown', skip);
     };
@@ -245,11 +293,18 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     <div ref={root} className={`game-over-card rs2${narrow ? ' rs2--narrow' : ''}${learn ? ' has-learn' : ''} ${iWon ? 'go-card-win' : 'go-card-loss'}`} data-place={place} data-outcome={iWon ? 'win' : 'loss'} data-stamp={stamp.tone}>
       <div className="rs2-top">
         <div className="rs2-mode">{modeLabel}<span className="rs2-mode-n">· {formatNum(of)}P</span></div>
-        <div className="rs2-wallet" aria-label={`Gems ${formatNum(gemsBal)}`}>
-          <GemIcon size={44} className="rs2-wallet-gem" />
-          <span className="rs2-wallet-n">{formatNum(gemsBal)}</span>
+        <div className="rs2-wallets">
+          <div className="rs2-wallet rs2-wallet--wins" ref={winsWalletRef} aria-label={`Wins ${formatNum(winsEnd)}`} data-wins-wallet={winsEnd}>
+            <KitIcon name="wins" size={44} shadow={2} extras={false} className="rs2-wallet-gem" />
+            <span className="rs2-wallet-n" ref={winsNumRef}>{formatShort(winsStart)}</span>
+          </div>
+          <div className="rs2-wallet" aria-label={`Gems ${formatNum(gemsBal)}`}>
+            <GemIcon size={44} className="rs2-wallet-gem" />
+            <span className="rs2-wallet-n">{formatShort(gemsBal)}</span>
+          </div>
         </div>
       </div>
+      <GainLayer ref={gainRef} icon="wins" className="rs2-gains" target={() => winsWalletRef.current && winsWalletRef.current.querySelector('.rs2-wallet-gem')} />
 
       {/* ===== HERO: the placement ===== */}
       <section className={`rs2-hero rs2-hero--${stamp.tone}`} role="heading" aria-level={2} aria-label={heroLabel}>

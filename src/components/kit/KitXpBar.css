@@ -69,6 +69,8 @@
   transform: scaleX(0);
   background: var(--k-yellow);
 }
+/* the GHOST (NIGHT oct8 #3): a pale flat layer under the fill — it jumps to the target, the fill follows */
+.kx-ghost { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); background: #FFF6B8; opacity: 0.55; }
 .kx-fill-hi { position: absolute; left: 0; right: 0; top: 3px; height: 3px; background: var(--k-yellow-hi); }
 /* the level-wrap sweep: one band that rests offscreen left; FX.barSweep carries it across */
 .kx-sweep { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; background: var(--k-white); transform: translateX(-100%); opacity: 0; pointer-events: none; }
