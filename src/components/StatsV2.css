@@ -249,7 +249,7 @@
   -webkit-text-stroke: 4px #000;
   text-transform: uppercase;
 }
-.st2-basex { font-size: max(var(--fs-k13), calc(var(--fs-k15) * var(--st2-k))); color: #c9b8e8; }
+.st2-basex { font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--st2-k))); color: #c9b8e8; }
 
 /* ---- the chain: BASE × chip × chip … ---- */
 .st2-chain {
@@ -377,7 +377,7 @@
   text-transform: uppercase;
 }
 .st2-chip-tag {
-  font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--st2-k)));
+  font-size: max(var(--fs-k18), calc(var(--fs-k18) * var(--st2-k))); /* NIGHT oct8 #5: a tag can be a number (R2) */
   color: #c9b8e8;
   white-space: nowrap;
   overflow: hidden;
@@ -435,7 +435,7 @@
   margin-top: 4px;
   font-family: var(--k-mono, 'Space Mono', monospace);
   font-weight: 700;
-  font-size: var(--fs-k13);
+  font-size: var(--fs-k14);
   color: #fff;
 }
 .st2-life-cell {
@@ -455,7 +455,7 @@
   text-transform: uppercase;
 }
 .st2-life-l {
-  font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--st2-k)));
+  font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--st2-k)));
   color: #c9b8e8;
   white-space: nowrap;
 }
@@ -509,7 +509,7 @@
 .st2--narrow .st2-result-v::before { content: '= '; }
 .st2--narrow .st2-result-sub { flex-direction: column; align-items: flex-start; gap: 2px; }
 .st2--narrow .st2-unit { font-size: var(--fs-k16); -webkit-text-stroke: 3px #000; }
-.st2--narrow .st2-basex { font-size: var(--fs-k13); }
+.st2--narrow .st2-basex { font-size: var(--fs-k14); }
 .st2--narrow .st2-chain {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -517,8 +517,13 @@
 }
 .st2--narrow .st2-rail,
 .st2--narrow .st2-x { display: none; }
+.st2--narrow .st2-cell { min-width: 0; }
 .st2--narrow .st2-chip {
-  width: auto;
+  /* NIGHT oct8 #5: the chip fills its grid cell and never outgrows it (an 18 px tag wraps instead of sliding under
+     the next chip) */
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   height: auto;
   min-height: 92px;
   padding: 8px;
@@ -526,12 +531,13 @@
   border-top-width: 8px;
   box-shadow: 4px 4px 0 #000;
 }
-.st2--narrow .st2-chip-top { height: auto; gap: 6px; }
+.st2--narrow .st2-chip-top { height: auto; gap: 6px; width: 100%; max-width: 100%; box-sizing: border-box; }
 .st2--narrow .st2-chip-tile { width: 30px; height: 30px; }
 .st2--narrow .st2-chip-tile::before { border-width: 3px; box-shadow: 2px 2px 0 #000; }
 .st2--narrow .st2-icon { left: 2px; top: 2px; width: 26px; height: 26px; }
-.st2--narrow .st2-chip-name { font-size: var(--fs-k13); }
-.st2--narrow .st2-chip-tag { font-size: var(--fs-k13); }
+.st2--narrow .st2-chip-name { font-size: var(--fs-k14); }
+.st2--narrow .st2-chip-tag { font-size: var(--fs-k18); white-space: normal; line-height: 1.05; }
+.st2--narrow .st2-chip-names { flex: 1 1 0; min-width: 0; }
 .st2--narrow .st2-chip-v,
 .st2--narrow .st2-chain.is-compact .st2-chip-v { margin-top: 8px; font-size: var(--fs-k28); -webkit-text-stroke: 4px #000; }
 .st2--narrow .st2-life {
@@ -546,7 +552,7 @@
 .st2--narrow .st2-life > :nth-child(3n + 2) { border-right: 4px solid #000; }
 .st2--narrow .st2-life > :nth-child(-n + 3) { border-bottom: 4px solid #000; }
 .st2--narrow .st2-life-v { font-size: var(--fs-k26); -webkit-text-stroke: 4px #000; }
-.st2--narrow .st2-life-l { font-size: var(--fs-k13); }
+.st2--narrow .st2-life-l { font-size: var(--fs-k14); }
 
 @media (prefers-reduced-motion: reduce) {
   .st2-rail-fill,
