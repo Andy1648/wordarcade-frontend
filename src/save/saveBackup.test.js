@@ -156,3 +156,21 @@ test('RR: rolled marks + wins carry round-trip; a local pending RR notice goes w
   assert.equal(m.get('taw.winsCarry'), '0.4');
   assert.equal(m.has('taw.rrnotice'), false);
 });
+
+test('season 2 (Andy oct8): a save code carries every taw.s2.* progress key and restores them; device keys stay out', () => {
+  const mk = (o) => {
+    const m = new Map(Object.entries(o));
+    return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, m };
+  };
+  const src = mk({ 'taw.s2.xp': '{"lv":40}', 'taw.s2.rebirths': '3', 'taw.s2.gems': '{"bal":900}', 'taw.s2.platePick': '2', 'taw.musicMuted': '1', 'taw.wins': '5' });
+  const code = exportSave(src);
+  const dst = mk({});
+  const r = importSave(code, dst);
+  assert.equal(r.ok, true);
+  assert.equal(dst.m.get('taw.s2.xp'), '{"lv":40}');
+  assert.equal(dst.m.get('taw.s2.rebirths'), '3');
+  assert.equal(dst.m.get('taw.s2.gems'), '{"bal":900}');
+  assert.equal(dst.m.get('taw.wins'), '5');
+  assert.equal(dst.m.has('taw.s2.platePick'), false, 'a display choice is not progress');
+  assert.equal(dst.m.has('taw.musicMuted'), false, 'device keys never travel');
+});

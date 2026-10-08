@@ -58,11 +58,19 @@ export default function AudioControls({
         onClick={() => { warm(); setOpen((o) => !o); }}
         onPointerEnter={warm}
         onFocus={warm}
-        title="Sound settings"
-        aria-label="Sound settings"
+        title="Settings"
+        aria-label="Settings — sound, music, rank plate, save progress"
         aria-expanded={open}
       >
-        🔊
+        {/* SETTINGS (Andy oct8: "maybe have a settings icon"): a cog — the panel holds sound + music + motion +
+            number style + RANK PLATE + SAVE PROGRESS. A struck "all quiet" state keeps its own mark. */}
+        <svg className="audio-cog" viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+          <path d="M13.2 2.8h5.6l.9 3.7 2.6 1.1 3.3-2 4 4-2 3.3 1.1 2.6 3.7.9v5.6l-3.7.9-1.1 2.6 2 3.3-4 4-3.3-2-2.6 1.1-.9 3.7h-5.6l-.9-3.7-2.6-1.1-3.3 2-4-4 2-3.3-1.1-2.6-3.7-.9v-5.6l3.7-.9 1.1-2.6-2-3.3 4-4 3.3 2 2.6-1.1z"
+            fill="currentColor" stroke="#000" strokeWidth="2" strokeLinejoin="round" />
+          <circle cx="16" cy="16" r="5" fill="#1a0b2e" stroke="#000" strokeWidth="2" />
+          <circle cx="13.4" cy="9.4" r="1.4" fill="#fff" opacity="0.85" />
+        </svg>
+        {allOff ? <span className="audio-muted-mark" aria-hidden="true">✕</span> : null}
       </button>
     </div>
   );

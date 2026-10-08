@@ -18,6 +18,9 @@ import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
 import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum, getNumberStyle, setNumberStyle } from '../format';
+import { exportSave, importSave } from '../save/saveBackup';
+import { V3 } from '../progress/season';
+import { getPlatePick, setPlatePick } from '../progress/platePick';
 import './kit/tokens.css';
 import './SettingsPanel.css';
 
@@ -41,6 +44,80 @@ function OnOff({ on, onClick, label }) {
       <span className="sp-switch-k">{on ? 'ON' : 'OFF'}</span>
       <span className="sp-switch-box" aria-hidden="true">{on ? '✓' : '✕'}</span>
     </button>
+  );
+}
+
+// SAVE PROGRESS (Andy oct8: "you need a button for people to save their progress — remember the restore code"): the
+// save CODE (save/saveBackup — every progress key incl. season 2's taw.s2.*) to COPY, and a box to paste one back.
+function SaveRow() {
+  const [code, setCode] = useState('');
+  const [draft, setDraft] = useState('');
+  const [msg, setMsg] = useState('');
+  const copy = () => {
+    const c = exportSave();
+    setCode(c);
+    try {
+      navigator.clipboard.writeText(c).then(() => setMsg('COPIED — KEEP IT SOMEWHERE SAFE'), () => setMsg('SELECT THE CODE BELOW AND COPY IT'));
+    } catch {
+      setMsg('SELECT THE CODE BELOW AND COPY IT');
+    }
+  };
+  const restore = (e) => {
+    e.preventDefault();
+    const r = importSave(draft);
+    if (!r.ok) {
+      setMsg(String(r.error || 'THAT CODE DID NOT WORK').toUpperCase());
+      return;
+    }
+    setMsg('RESTORED — RELOADING…');
+    setTimeout(() => {
+      try { window.location.reload(); } catch { /* */ }
+    }, 700);
+  };
+  return (
+    <div className="sp-save" style={{ '--sp-c': '#2EFFE0' }}>
+      <div className="sp-text">
+        <span className="sp-label">SAVE PROGRESS</span>
+        <span className="sp-sub">COPY YOUR SAVE CODE · PASTE IT ON ANY DEVICE TO GET EVERYTHING BACK</span>
+      </div>
+      <button type="button" className="sp-btn" onClick={copy} data-testid="sp-save-copy">COPY SAVE CODE</button>
+      {code ? <textarea className="sp-code" readOnly value={code} rows={2} aria-label="Your save code" onFocus={(e) => e.target.select()} /> : null}
+      <form className="sp-restore" onSubmit={restore}>
+        <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value.slice(0, 200000))} placeholder="PASTE A SAVE CODE" aria-label="Paste a save code" autoComplete="off" spellCheck="false" />
+        <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim()}>RESTORE</button>
+      </form>
+      {msg ? <p className="sp-msg" role="status" aria-live="polite">{msg}</p> : null}
+    </div>
+  );
+}
+
+// RANK PLATE (Andy oct8: "choose which rank plate shows next to your name"): any rank already reached.
+function PlateRow() {
+  const R = V3.ranks;
+  const [pick, setPick] = useState(() => getPlatePick());
+  if (!R || !R.RANKS_V3 || typeof R.liveRankV3 !== 'function') return null;
+  const reached = R.RANKS_V3.indexOf(R.liveRankV3());
+  const opts = R.RANKS_V3.slice(0, Math.max(0, reached) + 1);
+  const shown = pick != null && pick <= reached ? pick : reached;
+  const choose = (i) => {
+    const v = i === reached ? null : i; // the current rank = "no pick" (it moves up with you)
+    setPlatePick(v);
+    setPick(v);
+  };
+  return (
+    <div className="sp-plates" style={{ '--sp-c': '#FFC23D' }}>
+      <div className="sp-text">
+        <span className="sp-label">RANK PLATE</span>
+        <span className="sp-sub">WHICH RANK SHOWS NEXT TO YOUR NAME · HIGHEST = DEFAULT</span>
+      </div>
+      <div className="sp-plate-list" role="radiogroup" aria-label="Rank plate">
+        {opts.map((r, i) => (
+          <button key={r.name} type="button" role="radio" aria-checked={shown === i} className={`sp-plate${shown === i ? ' is-on' : ''}`} onClick={() => choose(i)}>
+            {r.name}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -103,6 +180,8 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
       <Row tone="#FF3D7F" label="KEYBOARD SOUNDS" sub="CLICK ON EVERY KEY">
         <OnOff on={clack} onClick={toggleClack} label="Keyboard sounds" />
       </Row>
+      <PlateRow />
+      <SaveRow />
     </div>
   );
   if (!sheet || typeof document === 'undefined') return rows;

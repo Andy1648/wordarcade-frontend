@@ -18,6 +18,7 @@ import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
 import { KitRankPlate } from './kit/KitRankPlate.jsx';
+import { shownPlateIndex } from '../progress/platePick';
 import {
   boardCaps,
   fetchBoard,
@@ -84,8 +85,10 @@ function Crown({ crownRef }) {
 }
 
 // P9a: every name wears its SHAPED v3 plate (KitLevelUp.dc.html 03 — kit/KitRankPlate, FIT mode for a dense list).
-function Plate({ row, className = '' }) {
-  const p = rankPlate(row);
+function Plate({ row, className = '', mine = false }) {
+  const base = rankPlate(row);
+  // YOUR row / podium spot shows the plate you picked in SETTINGS (Andy oct8) — any rank already reached
+  const p = mine ? { ...base, i: shownPlateIndex(base.i) } : base;
   return <KitRankPlate rank={p.i} fit shine={false} className={`lb2-plate ${className}`} />;
 }
 
@@ -307,7 +310,7 @@ export default function LeaderboardV2({ onBack, onManageName }) {
               <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}`} data-place={place} data-id={p ? p.id : ''}>
                 {place === 1 && <Crown crownRef={crownRef} />}
                 <div className="lb2-who">
-                  {p ? <Plate row={p} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
+                  {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-name">
                     {mine && <span className="lb2-you">YOU</span>}
                     <span className="lb2-pod-name-t">{p ? p.username : 'YOUR NAME HERE?'}</span>
@@ -344,7 +347,7 @@ export default function LeaderboardV2({ onBack, onManageName }) {
                     {mine && <span className="lb2-you">YOU</span>}
                     <span className="lb2-name">{r.username}</span>
                   </span>
-                  <Plate row={r} className="lb2-row-plate" />
+                  <Plate row={r} mine={mine} className="lb2-row-plate" />
                 </span>
                 <Move n={data.moves[r.id] || 0} />
                 <span className="lb2-r">{n.r}</span>
