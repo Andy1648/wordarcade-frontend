@@ -15,7 +15,6 @@ import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost, roundWordXp, MENU_LETTER_SHARE } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
-import BoostPill from '../frenzy/BoostPill';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -1341,7 +1340,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             {/* the worn mark lives in the rail's YOUR GEAR slot on the paged (2-column) menu (feat/menu-perrow); the
                 narrower desktop rail and the phone keep the chip */}
             {!isPagedMenu && markChip}
-            <BoostPill className="menu-boost-pill" />
+            {/* R5 oct8 (Andy: "instead of dead center"): the live boost timer moved to the bottom-right
+                BoostDock (App.jsx), which shows EVERY running boost with what it boosts. */}
           </div>
           {/* NIGHT oct8 #1c: no in-flow REBIRTH READY CTA on the menu — readiness is the REBIRTH tile's dot + READY. */}
         </div>

@@ -20,8 +20,8 @@
 // SVG. There is no CSS-drawn art and no character illustration — the <Mascot> PNG component is
 // untouched and simply has no place on this screen.
 import AudioControls from './AudioControls';
-import { MenuIcons, MenuRail } from './MenuNav';
 import BoostPill from '../frenzy/BoostPill';
+import { MenuIcons, MenuRail } from './MenuNav';
 import LayeredWord from './LayeredWord';
 import { formatNum } from '../format';
 import WordHook from './WordHook';
@@ -189,6 +189,10 @@ export default function MobileMenu({
         {perLetter}
         {markChip}
         {/* E5 follow-up: a live BOOST shows on the phone too, joining this row (renders nothing at rest) */}
+        {/* R5 oct8: the bottom-right BoostDock owns live boosts everywhere EXCEPT the phone MENU — that screen is
+            fit-to-screen (100dvh, overflow hidden) with its rail tiles in the bottom-right corner, so there is no
+            free corner to dock to and yielding the height collapses the bands into each other. Here the pill keeps
+            its own line under the title; BoostDock.css hides the dock on this one view. */}
         <BoostPill className="hp-m-boost" />
         {board && <LiveTicker className="hp-m-live" />}
       </div>

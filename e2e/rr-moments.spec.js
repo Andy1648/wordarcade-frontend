@@ -23,12 +23,24 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.overdrive', JSON.stringify({ playMs: 0, nextMs: 30 * 60000, until: Date.now() + 4 * 60000 + 30000 }));
     });
-    const pill = page.getByTestId('overdrive-pill');
-    await expect(pill).toBeVisible();
-    await expect(pill).toContainText('OVERDRIVE ×10');
-    await expect(pill.locator('.boost-pill-clock')).toHaveText(/^[34]:\d\d$/);
-    // a code BOOST is not running, so only the OVERDRIVE pill is in the slot
-    await expect(page.locator('.boost-pill:not(.od-pill)')).toHaveCount(0);
+    // R5 oct8: live boosts read from the bottom-right BOOST DOCK — except on the PHONE MENU, which is
+    // fit-to-screen with no free corner and keeps the inline pill under the title (BoostDock.css).
+    const phoneMenu = vp.width <= 480;
+    if (phoneMenu) {
+      const pill = page.getByTestId('overdrive-pill');
+      await expect(pill).toBeVisible();
+      await expect(pill).toContainText('OVERDRIVE ×10');
+      await expect(pill.locator('.boost-pill-clock')).toHaveText(/^[34]:\d\d$/);
+      await expect(page.locator('.boost-pill:not(.od-pill)')).toHaveCount(0);
+    } else {
+      const row = page.getByTestId('bdock-overdrive');
+      await expect(row).toBeVisible();
+      await expect(row).toContainText('OVERDRIVE');
+      await expect(row).toContainText('×10');
+      await expect(row.locator('.bdock-clock')).toHaveText(/^[34]:\d\d$/);
+      // a code BOOST is not running, so OVERDRIVE is the only row in the dock
+      await expect(page.locator('.bdock-row')).toHaveCount(1);
+    }
   });
 
   test(`OVERDRIVE: an ended taw.overdrive shows no pill @ ${vp.width}`, async ({ page }) => {
@@ -38,6 +50,7 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
       localStorage.setItem('taw.overdrive', JSON.stringify({ playMs: 0, nextMs: 30 * 60000, until: Date.now() - 1000 }));
     });
     await expect(page.getByTestId('overdrive-pill')).toHaveCount(0);
+    await expect(page.getByTestId('bdock-overdrive')).toHaveCount(0);
   });
 }
 

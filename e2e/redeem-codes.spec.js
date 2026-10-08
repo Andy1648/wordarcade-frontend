@@ -94,12 +94,15 @@ test('a BOOST code starts ×3 on everything at once; a gold pill counts down on 
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
   expect(boost.mult).toBe(3);
   expect(boost.until - Date.now()).toBeGreaterThan(9 * 60 * 1000);
-  const pill = page.locator('.menu-boost-pill');
+  // R5 oct8: the live boost readout moved off the menu's centre row to the bottom-right BOOST DOCK
+  // (frenzy/BoostDock.jsx), which names the multiplier, WHAT it boosts and the clock on one row.
+  const pill = page.getByTestId('bdock-boost');
   await expect(pill).toBeVisible();
-  await expect(pill).toContainText('BOOST ×3');
+  await expect(pill).toContainText('×3');
+  await expect(pill).toContainText('BOOST');
   await expect(pill).toContainText(/\d:\d\d/);
   const px = await pill.evaluate((el) => Math.min(...[el, ...el.querySelectorAll('*')].map((n) => parseFloat(getComputedStyle(n).fontSize))));
-  expect(px).toBeGreaterThanOrEqual(13);
+  expect(px).toBeGreaterThanOrEqual(14); // Andy's label floor — the dock has no 13px text
   await page.screenshot({ path: 'claude/day-oct2/r10-boost-pill-1280x551.png' });
 });
 
@@ -115,13 +118,13 @@ test('BOOST OVER: when the clock hits 0 on the menu a finite moment plays and le
   });
   await page.goto('/?portal=1');
   await menuReady(page);
-  await expect(page.locator('.menu-boost-pill')).toBeVisible();
-  await expect(page.locator('.menu-boost-pill.is-ending')).toBeVisible({ timeout: 6000 }); // last 10 s: red
+  await expect(page.getByTestId('bdock-boost')).toBeVisible();
+  await expect(page.locator('.bdock-row.is-ending')).toBeVisible({ timeout: 6000 }); // last 10 s: red
   const over = page.locator('.tover.is-boost');
   await expect(over).toBeVisible({ timeout: 12000 });
   await expect(over).toContainText('BOOST OVER');
   await expect(over).toHaveCount(0, { timeout: 4000 });
-  await expect(page.locator('.menu-boost-pill')).toHaveCount(0);
+  await expect(page.getByTestId('bdock-boost')).toHaveCount(0);
   const infinite = await page.evaluate(() => document.getAnimations().filter((a) => a.effect && a.effect.getTiming().iterations === Infinity).length);
   expect(infinite).toBe(0);
 });
@@ -129,6 +132,6 @@ test('BOOST OVER: when the clock hits 0 on the menu a finite moment plays and le
 test('a fresh LV1 profile at 1280x551 shows no boost pill and pays as before', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   await boot(page, { level: 1 });
-  await expect(page.locator('.menu-boost-pill')).toHaveCount(0);
+  await expect(page.getByTestId('boost-dock')).toHaveCount(0); // no timer running -> the dock renders nothing
   await expect(page.locator('.tover')).toHaveCount(0);
 });

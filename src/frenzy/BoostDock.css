@@ -1,0 +1,103 @@
+/* BoostDock.css — the bottom-right boost dock (see BoostDock.jsx).
+   It shares the sound control's corner inset so the two are ONE cluster, never two orphans:
+   .audio-ctrl is fixed at right:16px / bottom:16px and is 44-48px tall, so a dock that must clear it
+   sits at bottom: 16 + 48 + 10. Flat fills, 3px ink, hard offset shadow — the house treatment.
+   NO infinite animation here: the row's entry slam is a finite WAAPI one-shot (BoostDock.jsx) and the
+   last-10s tell is a FINITE 10x1s pulse, the same envelope BoostPill already used. */
+.bdock {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 69; /* just under .audio-ctrl (70) — the sound button is never covered */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none; /* a readout, never a tap target over the game */
+}
+/* on every screen that shows the FIXED sound button, the dock starts above it */
+.bdock--lifted { bottom: 74px; }
+
+.bdock-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: 3px 10px;
+  background: #1a0b2e;
+  border: 3px solid #000;
+  border-left: 7px solid var(--bd-tone, #FFE94A);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  white-space: nowrap;
+}
+.bdock-mult {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase; /* Bungee is display type: ALL-CAPS only (src/perf/typeScale.test.js) */
+  font-size: var(--fs-k20); /* a NUMBER: 18px floor, comfortably over */
+  line-height: 1;
+  color: var(--bd-tone, #FFE94A);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.bdock-text { display: flex; flex-direction: column; line-height: 1.05; }
+.bdock-name {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k14); /* a LABEL: Andy's 14px floor */
+  color: #fff;
+}
+.bdock-says {
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+  color: #c9b8e8;
+}
+.bdock-clock {
+  margin-left: 2px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase; /* Bungee is display type: ALL-CAPS only (src/perf/typeScale.test.js) */
+  font-size: var(--fs-k18); /* a NUMBER: exactly the floor */
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+/* the last 10 s: a FINITE pulse (10 iterations of 1 s), never an infinite loop */
+.bdock-row.is-ending .bdock-clock {
+  color: #FF3D7F;
+  animation: bdock-end 1s steps(2, end) 10;
+}
+@keyframes bdock-end {
+  0% { opacity: 1; }
+  50% { opacity: .35; }
+  100% { opacity: 1; }
+}
+
+.bdock-more {
+  padding: 1px 8px;
+  background: #1a0b2e;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+  color: #c9b8e8;
+}
+/* phones: the dock keeps its own corner but sheds the "says" column so it never crosses the screen.
+   EXCEPT the phone MENU (html[data-view="home"], set by App.jsx): that screen is fit-to-screen with its rail
+   tiles in this exact corner and no height to yield, so there the inline pill under the title keeps the job
+   (MobileMenu.jsx) and the dock stands down. Every other phone screen has the corner free above the sound
+   control. */
+@media (max-width: 480px) {
+  html[data-view='home'] .bdock { display: none; }
+  .bdock { right: 10px; gap: 6px; }
+  .bdock--lifted { bottom: 68px; }
+  .bdock-row { min-height: 30px; padding: 2px 8px; gap: 6px; border-left-width: 6px; box-shadow: 3px 3px 0 #000; }
+  .bdock-says { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bdock-row.is-ending .bdock-clock { animation: none; }
+}

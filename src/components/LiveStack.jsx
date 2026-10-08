@@ -16,7 +16,6 @@
 // crowds out the rows that matter. `WordPayout` already handles the "an upgrade is doing nothing
 // on THIS word" case with its own inactive list.
 import { memo } from 'react';
-import BoostPill from '../frenzy/BoostPill';
 import { useTimerClock } from '../frenzy/useTimerClock';
 import { liveBoostRemaining } from '../progress/liveBoost';
 import '../frenzy/MechanicScale.css';
@@ -69,9 +68,12 @@ function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
             <span className="lstack-val">{mult(frenzy)}</span>
           </div>
         )}
+        {/* R5 oct8: the boost's CLOCK is the bottom-right BoostDock's job now (Andy: "instead of dead center"),
+            so this row states the FACTOR only — one clock on screen, not two. */}
         {boost > 0 && (
           <div className="lstack-row lstack-row--boost">
-            <BoostPill />
+            <span className="lstack-label">BOOST</span>
+            <span className="lstack-val">{mult(boost)}</span>
           </div>
         )}
         {live && (
