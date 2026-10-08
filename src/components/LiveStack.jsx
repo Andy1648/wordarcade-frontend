@@ -16,7 +16,6 @@
 // crowds out the rows that matter. `WordPayout` already handles the "an upgrade is doing nothing
 // on THIS word" case with its own inactive list.
 import { memo } from 'react';
-import BoostPill from '../frenzy/BoostPill';
 import { useTimerClock } from '../frenzy/useTimerClock';
 import { liveBoostRemaining } from '../progress/liveBoost';
 import '../frenzy/MechanicScale.css';
@@ -69,9 +68,14 @@ function LiveStack({ mode, difficulty, combo = 1, compact = false }) {
             <span className="lstack-val">{mult(frenzy)}</span>
           </div>
         )}
+        {/* R5 oct8: the BOOST DOCK (#304, bottom-right) owns boost CLOCKS now. This row was still rendering a
+            BoostPill with its own countdown, so in-game the same boost showed two clocks ticking in sync —
+            "BOOST x3 6:48" top-left and "x3 BOOST 6:48" bottom-right. The stack states the FACTOR, like every
+            other row in it; the dock states the time left. */}
         {boost > 0 && (
           <div className="lstack-row lstack-row--boost">
-            <BoostPill />
+            <span className="lstack-label">BOOST</span>
+            <span className="lstack-val">{mult(boost)}</span>
           </div>
         )}
         {live && (
