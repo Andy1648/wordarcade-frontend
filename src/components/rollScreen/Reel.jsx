@@ -25,12 +25,12 @@ import MarkCard from '../markCard/MarkCard';
 import { CARD_RAR, cardTier } from '../markCard/palette.js';
 import { tierLabel } from '../markCard/cardModel.js';
 import { rollMarkById } from '../../progress/markRolls';
-import { sndReelTick, sndRollSting, sndRollSwell, sndCutStamp } from '../../audio/rollSounds';
+import { sndReelTick, sndRollSting, sndRollSwell, sndCutStamp, sndRollTell, sndShardBurst } from '../../audio/rollSounds';
 import { formatNum } from '../../format';
 import {
   REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, AUTO_DIM_MS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
   tierIndex, revealKind, dimFor, hasLight, burstCount, shakePx, shakeFrames, burstVectors, NEAR_MISS_TICKS, FLASH_TIERS, WASH_TIERS,
-  KEEP_HOLD_MS,
+  KEEP_HOLD_MS, CHARGE_MS, CHARGE_SHAKE_AT, OVERHOLD_MS, CHARGE_RATTLE, tellFor, tellFrames,
 } from './reelPlan.js';
 
 const ART = '/art/rolls/';
@@ -49,6 +49,15 @@ const POP = [
 ];
 // the pointer KICK on each of the last NEAR_MISS_TICKS crossings (NIGHT oct8 #4) — transform only, ~110 ms
 const KICK = [{ transform: 'translateX(0) rotate(0deg)' }, { transform: 'translateX(5px) rotate(4deg)', offset: 0.35 }, { transform: 'translateX(0) rotate(0deg)' }];
+// the LEGENDARY+ card's THUD (R4, research: Hearthstone's "legendaries are sure heavy"): drops in from above, lands
+// with a squash, settles — transform/opacity only
+const THUD = [
+  { transform: 'translate3d(0,-90px,0) scale(1.15)', opacity: 0 },
+  { transform: 'translate3d(0,0,0) scale(1.15)', opacity: 1, offset: 0.3 },
+  { transform: 'translate3d(0,8px,0) scale(1.18,0.9)', opacity: 1, offset: 0.42 },
+  { transform: 'translate3d(0,-6px,0) scale(0.98,1.06)', opacity: 1, offset: 0.62 },
+  { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
+];
 const SLAM = [
   { transform: 'scale(3)', opacity: 0 },
   { transform: 'scale(0.92)', opacity: 1, offset: 0.7 },
@@ -60,16 +69,30 @@ export function reelTransform(p) {
   return `translate3d(${(-(p / REEL_LEN) * 100).toFixed(4)}%,0,0)`;
 }
 
-/** The pointer: a plain bar (CSS) between two triangles (inline vector art — a triangle is not a rectangle). */
-function Pointer({ ptrRef }) {
+/** The pointer: a plain bar (CSS) between two triangles (inline vector art — a triangle is not a rectangle).
+ *  THE TELL (R4): a second pointer in the tier colour sits over it at opacity 0 and fades in with the tell (EPIC+). */
+function Pointer({ ptrRef, tellRef, color }) {
   return (
     <div className="rs-ptr" aria-hidden="true" ref={ptrRef}>
       <svg className="rs-ptr-tri is-top" width="44" height="30" viewBox="0 0 44 30"><path d="M2 2 L42 2 L22 28 Z" fill="#FFE94A" stroke="#000" strokeWidth="4" strokeLinejoin="round" /></svg>
       <span className="rs-ptr-bar" />
       <svg className="rs-ptr-tri is-bot" width="44" height="30" viewBox="0 0 44 30"><path d="M2 28 L42 28 L22 2 Z" fill="#FFE94A" stroke="#000" strokeWidth="4" strokeLinejoin="round" /></svg>
+      <div className="rs-ptr-tell" ref={tellRef} style={{ color }}>
+        <svg className="rs-ptr-tri is-top" width="44" height="30" viewBox="0 0 44 30"><path d="M2 2 L42 2 L22 28 Z" fill="currentColor" stroke="#000" strokeWidth="4" strokeLinejoin="round" /></svg>
+        <span className="rs-ptr-bar is-tell" />
+        <svg className="rs-ptr-tri is-bot" width="44" height="30" viewBox="0 0 44 30"><path d="M2 28 L42 28 L22 2 Z" fill="currentColor" stroke="#000" strokeWidth="4" strokeLinejoin="round" /></svg>
+      </div>
     </div>
   );
 }
+/** The charge rattle's keyframes (transform only): a 4-step jitter of `px`, played for finite iterations. */
+const rattle = (px) => [
+  { transform: 'translate3d(0,0,0)' },
+  { transform: `translate3d(${-px}px,${px * 0.6}px,0)`, offset: 0.25 },
+  { transform: `translate3d(${px}px,${-px * 0.5}px,0)`, offset: 0.5 },
+  { transform: `translate3d(${-px * 0.7}px,${-px * 0.6}px,0)`, offset: 0.75 },
+  { transform: 'translate3d(0,0,0)' },
+];
 
 export default function Reel({ spin, idle = null, view = null, auto = false, coverHost, ctl, played, onLand, onDone, children }) {
   const nodes = useRef({});
@@ -97,6 +120,23 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     for (const a of anims.current) { try { a.cancel(); } catch { /* gone */ } }
     anims.current = [];
     for (const el of Object.values(nodes.current)) if (el && el.style) el.style.willChange = '';
+  };
+  // ---- the CHARGE (HOLD TO ROLL, R4): the reel rattles while the button is held — light while the fill crosses,
+  // hard once charged. Its own animation slot (never part of a spin), finite iterations sized to the hold. ----
+  const chargeAnim = useRef(null);
+  const charge = (phase) => {
+    const el = nodes.current.shake;
+    if (chargeAnim.current) { try { chargeAnim.current.cancel(); } catch { /* gone */ } chargeAnim.current = null; }
+    if (!el || !phase || typeof el.animate !== 'function') { if (el && el.style) el.style.willChange = ''; return; }
+    const hard = phase === 2;
+    const px = hard ? CHARGE_RATTLE.hard : CHARGE_RATTLE.light;
+    const step = hard ? 70 : 100;
+    const span = hard ? OVERHOLD_MS : CHARGE_MS * CHARGE_SHAKE_AT;
+    el.style.willChange = 'transform';
+    const a = el.animate(rattle(px), { duration: step, iterations: Math.max(1, Math.ceil(span / step)), easing: 'linear' });
+    chargeAnim.current = a;
+    const off = () => { if (chargeAnim.current === a) chargeAnim.current = null; if (el.style) el.style.willChange = ''; };
+    a.finished.then(off, off);
   };
   const place = (p) => {
     const tr = nodes.current.track;
@@ -211,6 +251,15 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       anim(n.dim, [{ opacity: 0 }, { opacity: d }], { duration: Math.max(200, dur - at), delay: at, easing: 'ease-in' });
       shade(SHADE.dim, { duration: 360, delay: at });
       later(() => { sndRollSwell(res.tier, dur - at); }, at);
+      // THE TELL (R4): the pointer turns the tier colour and the band plate pulses it — the colour says WHICH
+      // rarity before the card does; more pulses + a stronger peak for rarer; LEGENDARY+ rumbles under it
+      const tell = tellFor(res.tier, mode);
+      if (tell) {
+        const span = Math.max(200, dur - at);
+        anim(n.tell, tellFrames(res.tier, mode), { duration: span, delay: at, easing: 'ease-in-out', fill: 'none' });
+        anim(n.ptrTell, [{ opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1 }], { duration: span, delay: at, easing: 'ease-out' });
+        if (tell.rumble) later(() => { sndRollTell(res.tier, span); }, at);
+      }
     }
     const first = Math.ceil(from + 0.5);
     const ticks = tickTimes({ dur, pow, from, land: goal });
@@ -241,9 +290,11 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
     anim(n.dim, [{ opacity: dimFor(tier) }, { opacity: 0 }], { duration: 250 }); // the reveal brings its own backdrop
     anim(n.cutStamp, SLAM, { duration: 500, delay: full ? 80 : 0, easing: 'cubic-bezier(.2,1.2,.4,1)' });
-    anim(n.cutMark, POP, { duration: 550, delay: full ? 160 : 60, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+    // LEGENDARY+ (R4): the card DROPS in with mass (a thud: lands, squashes, settles) instead of the dim's pop
+    anim(n.cutMark, full ? THUD : POP, { duration: full ? 620 : 550, delay: full ? 160 : 60, easing: full ? 'cubic-bezier(.3,1.1,.4,1)' : 'cubic-bezier(.2,1.4,.4,1)' });
     later(() => sndCutStamp(tier), full ? 80 : 0);
     if (full) {
+      later(() => sndShardBurst(tier), 200);
       anim(n.cutRays, [
         { transform: 'rotate(0deg) scale(0.6)', opacity: 0 },
         { transform: 'rotate(8deg) scale(1)', opacity: 0.32, offset: 0.1 },
@@ -281,7 +332,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     return true;
   };
   const busy = () => phase.current === 'spin' || phase.current === 'landed' || phase.current === 'cut';
-  if (ctl) ctl.current = { finish, busy };
+  if (ctl) ctl.current = { finish, busy, charge };
 
   useEffect(() => () => { stopAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -352,7 +403,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
           <div className="rs-flash" ref={reg('flash')} />
           <div className="rs-shade is-l" ref={reg('shadeL')} />
           <div className="rs-shade is-r" ref={reg('shadeR')} />
-          <Pointer ptrRef={reg('ptr')} />
+          {/* THE TELL plate: a flat tier-colour rectangle over the band, opacity pulses only (EPIC+) */}
+          <div className="rs-tell" ref={reg('tell')} data-testid="roll-tell" style={{ '--rs-tier': lineOf(tier) }} />
+          <Pointer ptrRef={reg('ptr')} tellRef={reg('ptrTell')} color={lineOf(tier)} />
         </div>
         <div className="rs-parts">
           {PARTS.map((i) => (

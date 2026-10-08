@@ -184,6 +184,46 @@ export function burstVectors(n, spread = 1) {
   return out;
 }
 
+// ---- HOLD TO ROLL (NIGHT oct8 R4 — Andy: "I liked hold-to-buy — greater satisfaction") ----
+/** The charge: the ROLL button is HELD for CHARGE_MS (the fill crosses, the reel rattles harder), then the RELEASE
+ *  is the spin (a slingshot: pull, let go). A release before full charge cancels (the fill drains, nothing is paid).
+ *  A hold kept past full charge fires by itself after OVERHOLD_MS so the screen never feels stuck. */
+export const CHARGE_MS = 500;
+export const CHARGE_SHAKE_AT = 0.5; // the hard rattle starts at this share of the charge
+export const OVERHOLD_MS = 1200;
+/** The charge rattle on the reel (px): light while the fill crosses, hard once charged. Finite iterations. */
+export const CHARGE_RATTLE = { light: 1.5, hard: 4 };
+/**
+ * THE TELL (research: Genshin's meteor colour / Overwatch's "late" hint): for EPIC+ the reel's last cells carry the
+ * RARITY COLOUR before the card is shown — the pointer turns the tier colour and a flat plate over the band pulses it.
+ * Honest: it never shows for COMMON / RARE, it never lies about the colour, and it starts only once the reel is in
+ * its last DIM_CELLS (the dim's own gate). Intensity encodes the tier: more pulses, a stronger peak, and LEGENDARY+
+ * adds a low rumble under it.
+ */
+export const TELL = {
+  epic: { pulses: 2, peak: 0.3, rumble: false },
+  legendary: { pulses: 3, peak: 0.45, rumble: true },
+  mythic: { pulses: 4, peak: 0.55, rumble: true },
+  secret: { pulses: 5, peak: 0.65, rumble: true },
+};
+export function tellFor(tier, mode = 'full') {
+  return mode === 'full' ? TELL[tier] || null : null;
+}
+/** The tell's opacity keyframes: `pulses` beats up to `peak`, ending high (the land's wash takes over). */
+export function tellFrames(tier, mode = 'full') {
+  const t = tellFor(tier, mode);
+  if (!t) return [];
+  const out = [{ opacity: 0, offset: 0 }];
+  const n = t.pulses;
+  for (let i = 0; i < n; i += 1) {
+    const a = (i + 0.5) / n;
+    const b = (i + 1) / n;
+    out.push({ opacity: t.peak, offset: Math.min(0.999, a) });
+    out.push({ opacity: i === n - 1 ? t.peak * 0.8 : t.peak * 0.25, offset: Math.min(1, b) });
+  }
+  return out;
+}
+
 // ---- auto roll ----
 /** AUTO ROLL stops on a result (or its double-roll extra) at `until` or better. */
 export function autoShouldStop(result, until = 'epic') {
