@@ -26,7 +26,25 @@ const notInPlayDefault = () => {
   } catch { return true; }
 };
 
-export function installSwUpdateReload({ onMenu = notInPlayDefault, pollMs = 2000, checkOnFocus = true } = {}) {
+// NETWORK-FIRST HTML (vite.config.js, Andy oct8 "people's updates still load after waiting"): index.html is no longer
+// precached, so a visit after a deploy already runs the NEW bundle on its first load. The worker then installs
+// in the background and `controllerchange` still fires — reloading there would flash a page that is already
+// current. So before reloading we ask the network for index.html (no-store) and compare its main bundle name
+// with the one this page runs; only a DIFFERENT bundle (the page came from the offline cache, or an old tab)
+// reloads. If the check itself fails we reload — the old behaviour, never worse than before.
+const mainBundleOf = (html) => { const m = /\/assets\/index-[^"'\s]+\.js/.exec(html || ''); return m ? m[0] : null; };
+const pageIsStaleDefault = async () => {
+  try {
+    const mine = mainBundleOf(Array.from(document.scripts || []).map((s) => s.src || '').join(' '));
+    if (!mine) return true;
+    const res = await fetch('/', { cache: 'no-store', headers: { accept: 'text/html' } });
+    if (!res.ok) return true;
+    const live = mainBundleOf(await res.text());
+    return !live || live !== mine;
+  } catch { return true; }
+};
+
+export function installSwUpdateReload({ onMenu = notInPlayDefault, pollMs = 2000, checkOnFocus = true, pageIsStale = pageIsStaleDefault } = {}) {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return false;
   if (!navigator.serviceWorker.controller) return false; // first install: nothing stale on screen
   let done = false;
@@ -35,7 +53,10 @@ export function installSwUpdateReload({ onMenu = notInPlayDefault, pollMs = 2000
     const go = () => {
       if (done) return;
       done = true;
-      try { window.location.reload(); } catch { /* non-browser env */ }
+      Promise.resolve().then(pageIsStale).then((stale) => {
+        if (!stale) return;
+        try { window.location.reload(); } catch { /* non-browser env */ }
+      });
     };
     if (onMenu()) { go(); return; }
     const t = setInterval(() => { if (onMenu()) { clearInterval(t); go(); } }, pollMs);
