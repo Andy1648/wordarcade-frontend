@@ -99,9 +99,13 @@
 .sp2-pw-arrow,
 .sp2-pw-now,
 .sp2-pw-next,
+.sp2-mult-now,
+.sp2-mult-arrow,
+.sp2-mult-next,
 .sp2-per-now,
 .sp2-per-arrow,
-.sp2-per-next {
+.sp2-per-next,
+.sp2-per-lab {
   font-family: var(--k-display);
   text-transform: uppercase;
   line-height: 1;
@@ -110,20 +114,30 @@
 .sp2-pw-arrow { font-size: var(--fs-k30); color: var(--k-yellow); }
 .sp2-pw-now,
 .sp2-pw-next,
+.sp2-mult-now,
+.sp2-mult-next,
 .sp2-per-now,
 .sp2-per-next {
   -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
   paint-order: stroke fill;
 }
-.sp2-pw-now { font-size: var(--fs-k44); color: var(--k-white); }
-.sp2-pw-next { font-size: var(--fs-k44); color: var(--k-yellow); }
-.sp2-per { margin-top: 10px; display: flex; align-items: baseline; gap: 8px; }
-.sp2-per-now { font-size: var(--fs-k26); color: var(--k-white); -webkit-text-stroke-width: var(--k-stroke-m); }
-.sp2-per-arrow { font-size: var(--fs-k20); color: var(--k-yellow); }
-.sp2-per-next { font-size: var(--fs-k34); color: var(--k-cyan); }
-.sp2-per-lab { font-size: var(--fs-k14); color: var(--k-dim); }
+/* THE EFFECT — the one headline number on the panel (R2 oct8 #3): ×4 → ×8 */
+.sp2-mult { margin-top: 10px; display: flex; align-items: baseline; gap: 10px; }
+.sp2-mult-now { font-size: var(--fs-k38); color: var(--k-white); }
+.sp2-mult-arrow { font-size: var(--fs-k30); color: var(--k-yellow); }
+.sp2-mult-next { font-size: var(--fs-k60); color: var(--k-cyan); -webkit-text-stroke-width: var(--k-stroke-xl); text-shadow: 5px 5px 0 var(--k-ink); }
+.sp2-pw-now { font-size: var(--fs-k38); color: var(--k-white); }
+.sp2-pw-next { font-size: var(--fs-k38); color: var(--k-yellow); }
+/* the honest rate under it — the same number as the menu's "+N XP / KEY" line */
+.sp2-per { margin-top: 8px; display: flex; align-items: baseline; gap: 8px; }
+.sp2-per-now { font-size: var(--fs-k22); color: var(--k-white); -webkit-text-stroke-width: var(--k-stroke-m); }
+.sp2-per-arrow { font-size: var(--fs-k18); color: var(--k-yellow); }
+.sp2-per-next { font-size: var(--fs-k26); color: var(--k-cyan); -webkit-text-stroke-width: var(--k-stroke-m); }
+.sp2-per-lab { margin-left: 2px; font-size: var(--fs-k16); color: var(--k-dim); }
 .sp2-buy { margin-top: auto; padding-top: 10px; }
-.sp2-buy .kb-sub { display: inline-flex; align-items: center; gap: 6px; }
+/* THE PRICE is the other big number — on the button, where the hold happens (28px; "N MORE" when short) */
+.sp2-buy .kb-sub { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-k28); margin-top: 2px; }
+.sp2-buy .kb-sub .kit-icon { width: 24px; height: 24px; }
 
 /* ---- STOCK (right) ---- */
 .sp2-stock { grid-area: stock; min-height: 0; display: flex; flex-direction: column; gap: 14px; position: relative; }
@@ -234,11 +248,14 @@
   .sp2-plate { width: 110px; height: 110px; }
   .sp2-plate-b { inset: 15px; }
   .sp2-plate-ico { left: 15px; top: 15px; width: 80px; height: 80px; }
-  .sp2-pw { margin-top: 8px; }
+  .sp2-pw { margin-top: 6px; }
   .sp2-pw-now,
-  .sp2-pw-next { font-size: var(--fs-k38); }
-  .sp2-per { margin-top: 6px; }
-  .sp2-per-next { font-size: var(--fs-k30); }
+  .sp2-pw-next { font-size: var(--fs-k32); }
+  .sp2-mult { margin-top: 6px; }
+  .sp2-mult-now { font-size: var(--fs-k32); }
+  .sp2-mult-next { font-size: var(--fs-k44); }
+  .sp2-per { margin-top: 4px; }
+  .sp2-buy .kb-sub { font-size: var(--fs-k24); }
   .sp2-stock { gap: 8px; }
   .sp2-grid { gap: 14px; }
   .sp2-ico { width: 52px; height: 52px; margin-top: 4px; }
@@ -249,7 +266,7 @@
 @media (min-width: 700px) and (max-height: 580px) {
   .sp2-forever { display: none; }
   .sp2-ico { width: 40px; height: 40px; }
-  .sp2-what { font-size: var(--fs-k13); }
+  .sp2-what { font-size: var(--fs-k14); }
   .sp2-price { height: 30px; }
   .sp2-band { height: 26px; }
 }
@@ -279,7 +296,7 @@
     border-top-width: 8px;
     display: grid;
     grid-template-columns: 84px minmax(0, 1fr);
-    grid-template-areas: 'plate pw' 'plate per' 'plate perlab' 'buy buy';
+    grid-template-areas: 'plate pw' 'plate mult' 'plate per' 'buy buy';
     column-gap: 14px;
     align-items: center;
     justify-items: start;
@@ -291,27 +308,32 @@
   .sp2-pw { grid-area: pw; margin-top: 0; }
   .sp2-pw-lab { font-size: var(--fs-k18); }
   .sp2-pw-now,
-  .sp2-pw-next { font-size: var(--fs-k32); }
-  .sp2-per { grid-area: per; margin-top: 2px; }
+  .sp2-pw-next { font-size: var(--fs-k28); }
+  .sp2-mult { grid-area: mult; margin-top: 2px; gap: 8px; }
+  .sp2-mult-now { font-size: var(--fs-k28); }
+  .sp2-mult-arrow { font-size: var(--fs-k22); }
+  .sp2-mult-next { font-size: var(--fs-k44); text-shadow: 4px 4px 0 var(--k-ink); }
+  .sp2-per { grid-area: per; margin-top: 2px; gap: 6px; flex-wrap: wrap; }
   .sp2-per-now { font-size: var(--fs-k20); }
-  .sp2-per-next { font-size: var(--fs-k24); }
-  .sp2-per-lab { grid-area: perlab; font-size: var(--fs-k13); }
+  .sp2-per-next { font-size: var(--fs-k22); }
+  .sp2-per-lab { font-size: var(--fs-k14); }
+  .sp2-buy .kb-sub { font-size: var(--fs-k24); }
   .sp2-buy { grid-area: buy; justify-self: center; margin-top: 6px; padding-top: 0; }
   .sp2-stock { gap: 8px; }
   .sp2-stock-head { min-height: 0; }
   .sp2-stock-title { flex-direction: column; gap: 0; }
   .sp2-stock-name { font-size: var(--fs-k28); }
-  .sp2-stock-sub { font-size: var(--fs-k13); }
+  .sp2-stock-sub { font-size: var(--fs-k14); }
   .sp2-timer .ktc { width: 150px; }
   .sp2-grid { grid-template-rows: none; grid-auto-rows: 182px; gap: 12px; padding: 0 7px 7px 0; }
   .sp2-card .kstc-card { box-shadow: 5px 5px 0 var(--k-ink); border-width: var(--k-ink-m); }
   .sp2-card .kstc-anchor { transform: scale(.5); }
-  .sp2-band { height: 36px; padding: 0 4px; flex-direction: column; justify-content: center; align-items: center; font-size: var(--fs-k13); line-height: 1.05; }
+  .sp2-band { height: 36px; padding: 0 4px; flex-direction: column; justify-content: center; align-items: center; font-size: var(--fs-k14); line-height: 1.05; }
   .sp2-ico { width: 40px; height: 40px; margin-top: 4px; }
   .sp2-big { font-size: var(--fs-k22); -webkit-text-stroke-width: var(--k-stroke-m); }
-  .sp2-what { font-size: var(--fs-k13); line-height: 1.1; padding: 0 2px; }
+  .sp2-what { font-size: var(--fs-k14); line-height: 1.1; padding: 0 2px; }
   .sp2-price { height: 30px; margin: auto 5px 5px; font-size: var(--fs-k16); gap: 3px; }
   .sp2-price .kit-icon { width: 16px; height: 16px; }
   .sp2-float { font-size: var(--fs-k18); }
-  .sp2-note { bottom: -24px; font-size: var(--fs-k13); }
+  .sp2-note { bottom: -24px; font-size: var(--fs-k14); }
 }
