@@ -41,7 +41,7 @@ const MarksIndex = ROLLS
   ? lazyWithReload(() => import('./rollScreen/RollScreen'), 'RollScreen')
   : lazyWithReload(() => import('./MarksIndexLegacy'), 'MarksIndexLegacy');
 import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark, MARKS_UNLOCK_LEVEL } from '../progress/marks';
-import { wornMarkId, markEntry, loadRollState, collection, ROLL_MARKS } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
+import { wornMarkId, markEntry, loadRollState } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
 import { useGems } from './gems/GemChip';
 import { canAffordRoll, ROLL_PRICE_GEMS } from '../progress/gemsCore';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
@@ -597,7 +597,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const starterWaiting = useMemo(() => { const st = loadRollState(); return !(st && st.starter); }, [gems, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
   // The INDEX rail's OWNED/TOTAL (SEASON 2 #5): read with the roll store, on the same cheap triggers (a roll only
   // lands inside the ROLL screen, so MARKS closing re-reads it) — never per keystroke.
-  const indexCount = useMemo(() => { const st = loadRollState(); return st ? collection(st) : { base: 0, total: ROLL_MARKS.length }; }, [gems, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
   const rollDot = canAffordRoll(gems) || starterWaiting;
   // Rebirth count (read once on mount) — keys the XP-bar fill colour. Equipping/rebirth
   // happen on other screens, which remount this component, so a snapshot is correct.
@@ -1205,12 +1204,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const toRebirth = Math.max(0, rebirthGate - xpProgress.level);
   const rebirthValue = toRebirth > 0 ? `IN ${formatShort(toRebirth)} LV` : 'READY';
   const rebirthShort = toRebirth > 0 ? `${formatShort(toRebirth)} LV` : 'READY';
+  const statsMult = letterXpNow(); // read on render only (the menu re-renders on its own state), never per key
   const railItems = {
     // TILE values (feat/menu-rail-2col, the 2-column desktop rail): the NUMBER big, the unit small — numbers first.
     shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: { full: `${formatShort(nextPowerCost)} WINS`, short: formatShort(nextPowerCost), big: formatShort(nextPowerCost), unit: 'WINS FOR POWER' }, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
-    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: { full: rollValue, short: rollShort, big: rollsAfford > 0 ? formatShort(rollsAfford) : starterWaiting ? 'FREE' : '0', unit: rollsAfford > 0 ? (rollsAfford === 1 ? 'ROLL READY' : 'ROLLS READY') : starterWaiting ? 'ROLL WAITING' : `ROLLS (${formatShort(ROLL_PRICE_GEMS)} GEMS)` }, valueSays: rollValue.toLowerCase(), locked: rollLock },
-    index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: { full: `${formatShort(indexCount.base)}/${formatShort(indexCount.total)}`, short: `${formatShort(indexCount.base)}/${formatShort(indexCount.total)}`, big: `${formatShort(indexCount.base)}/${formatShort(indexCount.total)}`, unit: 'FOUND' }, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
+    // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
+    // says a roll is ready OR a new gear landed in the index
+    gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: { full: rollValue, short: rollShort, big: rollsAfford > 0 ? formatShort(rollsAfford) : starterWaiting ? 'FREE' : '0', unit: rollsAfford > 0 ? (rollsAfford === 1 ? 'ROLL READY' : 'ROLLS READY') : starterWaiting ? 'ROLL WAITING' : `ROLLS (${formatShort(ROLL_PRICE_GEMS)} GEMS)` }, valueSays: rollValue.toLowerCase(), locked: rollLock },
     rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
+    // STATS (moved down from the top-right): its number is the TOTAL multiplier on a key (v4: BASE 1 XP, so the rate IS it)
+    stats: { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
@@ -1288,7 +1291,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onToggleMusic={onToggleMusic}
             lockedIds={GAMES.filter((g) => isModeLocked(g, xpProgress.level)).map((g) => g.id)}
             onLockedSelect={handleLockedSelect}
-            onStats={handleStats}
             onCredits={handleCredits}
             board={board}
             ach={ach}
@@ -1318,7 +1320,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / stats / achievements. */}
-        <MenuIcons board={board} onStats={handleStats} ach={ach} achSlot={trophy} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} navigating={navigating} />
 
         {/* RIGHT, under the icons: sound + CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}

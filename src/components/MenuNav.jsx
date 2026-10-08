@@ -1,7 +1,8 @@
 // MenuNav.jsx — the v2 MENU's chrome (claude/mockups/v2/Menu.dc.html), shared by both menu trees:
-//   MenuIcons   the top-right LEADERBOARD / STATS / ACHIEVEMENTS tiles (KitIconButton)
-//   MenuRail    the left column: the WINS + GEMS pills (KitPill) over the UPGRADES / ROLL / INDEX / REBIRTH
-//               rail (KitRailButton). Andy oct6 SEASON 2 #5: all four show FROM THE START — a gated one is
+//   MenuIcons   the top-right LEADERBOARD / ACHIEVEMENTS tiles (KitIconButton)
+//   MenuRail    the left column: the WINS + GEMS pills (KitPill) over the UPGRADES | GEARS / REBIRTH | STATS
+//               rail (KitRailButton). NIGHT oct8 #2: GEARS = ROLL + INDEX merged (it opens the ROLL screen, whose
+//               INDEX button is the index's door); STATS moved down from the top-right. Andy oct6 SEASON 2 #5: all four show FROM THE START — a gated one is
 //               LOCKED (padlock + its gate, "R2" / "LV10") — and each carries a LIVE value line.
 //   MenuMarkChip the worn mark — its NAME only, a purple stripe (Andy oct5: the stat lives on ROLL / INDEX);
 //               nothing worn → "ROLL" + a notification dot (opens the ROLL screen)
@@ -23,7 +24,7 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, onStats, ach, achSlot = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
       {board && (
@@ -40,7 +41,6 @@ export function MenuIcons({ board, onStats, ach, achSlot = null, navigating }) {
           title="Leaderboard"
         />
       )}
-      <KitIconButton icon="stats" tone="cyan" className="hp-ico homepage-nav-btn is-stats" data-nav="stats" disabled={navigating} onClick={onStats} ariaLabel="Open stats" title="Stats" />
       {achSlot || <KitIconButton
         icon="achievements"
         tone="gold"
@@ -56,15 +56,16 @@ export function MenuIcons({ board, onStats, ach, achSlot = null, navigating }) {
   );
 }
 
+// row one UPGRADES | GEARS, row two REBIRTH | STATS (DOM order = reading order; the phone row keeps it too)
 const RAIL = [
   { id: 'shop', label: 'UPGRADES', tone: 'yellow' },
-  { id: 'roll', label: 'ROLL', tone: 'cyan' },
-  { id: 'index', label: 'INDEX', tone: 'pink' },
+  { id: 'gears', label: 'GEARS', tone: 'cyan' },
   { id: 'rebirth', label: 'REBIRTH', tone: 'purple' },
+  { id: 'stats', label: 'STATS', tone: 'pink' },
 ];
-const ARIA = { shop: 'Open upgrades', roll: 'Open roll', index: 'Open the marks index', rebirth: 'Open rebirth' };
-const DOT_SAYS = { shop: ' — items available', roll: ' — a roll is ready', index: ' — a new mark', rebirth: ' — ready' };
-const NAME = { shop: 'Upgrades', roll: 'Roll', index: 'Marks index', rebirth: 'Rebirth' };
+const ARIA = { shop: 'Open upgrades', gears: 'Open gears — roll and index', rebirth: 'Open rebirth', stats: 'Open stats' };
+const DOT_SAYS = { shop: ' — items available', gears: ' — a roll is ready or a new gear', rebirth: ' — ready', stats: '' };
+const NAME = { shop: 'Upgrades', gears: 'Gears', rebirth: 'Rebirth', stats: 'Stats' };
 /** "R2" → "rebirth 2", "LV10" → "level 10" (the locked button's spoken gate). */
 function sayGate(g) {
   const m = /^(R|LV)\s*([\d,.]+[KMB]?)$/i.exec(String(g || ''));
@@ -73,7 +74,7 @@ function sayGate(g) {
 }
 
 /**
- * @param items  { shop, roll, index, rebirth }: each { onClick, dot, value, valueSays, locked } or null (not rendered).
+ * @param items  { shop, gears, rebirth, stats }: each { onClick, dot, value, valueSays, locked } or null (not rendered).
  *               `value` = the live line under the label; `locked` = its gate ("R2" / "LV10") while it is closed.
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)

@@ -128,8 +128,8 @@ export const phoneCanOpen = (id) => PHONE_MODE_IDS.includes(id) || PHONE_SOLO_ID
 
 /**
  * The menu's non-mode controls, at either width. v2 MENU (claude/mockups/v2/Menu.dc.html): both trees
- * render the SAME kit chrome (MenuNav.jsx) — the rail's SHOP / ROLL / INDEX / REBIRTH and the top-right
- * LEADERBOARD / STATS / ACHIEVEMENTS tiles — each a real <button> carrying data-nav="<id>". CREDITS is
+ * render the SAME kit chrome (MenuNav.jsx) — the rail's UPGRADES / GEARS / REBIRTH / STATS and the top-right
+ * LEADERBOARD / ACHIEVEMENTS tiles — each a real <button> carrying data-nav="<id>". CREDITS is
  * the desktop's link under the tiles and the phone's link in the rail row.
  */
 export function navControl(page, which) {
@@ -137,8 +137,7 @@ export function navControl(page, which) {
     case 'shop':
     case 'stats':
     case 'rebirth':
-    case 'roll':
-    case 'index':
+    case 'gears':
     case 'achievements':
     case 'leaderboard':
       return page.locator(`[data-nav="${which}"]`);

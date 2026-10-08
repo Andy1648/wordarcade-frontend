@@ -89,7 +89,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await expect(rb).toHaveCount(0);
 
   // ROLL: 75 gems, the 50 / 500 pity ladder
-  await navControl(page, 'roll').click();
+  await navControl(page, 'gears').click(); // GEARS = ROLL + INDEX (NIGHT oct8 #2)
   const price = page.locator('.rs-roll-price');
   await price.waitFor({ state: 'visible' });
   await expect(price).toHaveText('75');
