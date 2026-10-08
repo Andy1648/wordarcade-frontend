@@ -533,7 +533,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-overlay { gap: 8px; padding-top: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); --cw: 216px; --cs: 1.2; --band: calc(var(--cw) * 1.4444 + 22px); }
   .rs-index-btn, .rs-close, .rs-gems-bal, .rs-equipped { min-height: 48px; height: 48px; }
   .rs-roll { height: 96px; width: 340px; }
-  .rs-roll-lbl { font-size: var(--fs-h2); }
+  .rs-roll-lbl { font-size: var(--fs-k34); } /* "HOLD TO ROLL" at h2 (42px) ran border to border on the 340 slab */
   .rs-auto-btn { min-height: 56px; }
   .rs-pity { gap: 8px; }
   .rs-pity-row { padding: 6px 12px 8px; }
@@ -615,7 +615,9 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
 @media (max-width: 480px) and (max-height: 700px) {
-  .rs-overlay { --cw: 112px; --cs: 0.6222; --band: calc(var(--cw) * 1.4444 + 10px); }
+  /* 112px cards left a hole under the band at 360x640 — 120 fills it (the two-row result line still fits: the EPIC+ bar
+     row below pays for it) */
+  .rs-overlay { --cw: 120px; --cs: 0.6667; --band: calc(var(--cw) * 1.4444 + 10px); }
   .rs-stage { padding: 6px 0 4px; }
   .rs-shake { gap: 6px; }
   .rs-roll { height: 72px; }
