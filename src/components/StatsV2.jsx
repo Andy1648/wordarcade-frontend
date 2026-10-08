@@ -12,6 +12,7 @@
 //     collection, backup, reset) — the v2 board does not drop any of the live panel's tools.
 // Motion: transform / opacity one-shots through the kit (kitPlay — will-change on for the effect only); nothing loops
 // at rest; REDUCE MOTION shows the finished chain at once and plays nothing.
+import StatsBoosts from './StatsBoosts';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './StatsV2.css';
@@ -293,8 +294,9 @@ export default function StatsV2({ onBack, onMore }) {
     };
   }, [run]);
 
-  const look = BOARDS[tab];
-  const b = boards[tab];
+  const bk = tab === 'boosts' ? 'wins' : tab; // the BOOSTS tab has no board; the hidden hero keeps the WINS one
+  const look = BOARDS[bk];
+  const b = boards[bk];
   const n = b.chips.length;
   const last = play.idx > 0 && !play.done ? b.chips[play.idx - 1] : null;
   const showTick = !!last && last.mult > 1;
@@ -323,7 +325,18 @@ export default function StatsV2({ onBack, onMore }) {
           <button type="button" className="st2-back" onClick={onBack} aria-label="Back to menu">← MENU</button>
           <h2 className="st2-title">STATS</h2>
           <div className="st2-tabs" role="tablist" aria-label="Stat boards">
-            {['wins', 'xp'].map((key) => {
+            {['wins', 'xp', 'boosts'].map((key) => {
+              if (key === 'boosts') {
+                // BOOSTS (Andy oct8): every running boost + where each comes from — not a multiplier board, no replay
+                const on = tab === 'boosts';
+                return (
+                  <button key={key} type="button" role="tab" aria-selected={on} data-tab={key}
+                    className={`st2-tab${on ? ' is-on' : ''}`} style={{ '--tab-c': '#FF4FA3' }}
+                    onClick={() => { clear(); setTab('boosts'); }}>
+                    <span className="st2-tab-name">BOOSTS</span>
+                  </button>
+                );
+              }
               const B = BOARDS[key];
               const on = key === tab;
               return (
@@ -345,7 +358,8 @@ export default function StatsV2({ onBack, onMore }) {
           </div>
         </header>
 
-        <div className="st2-hero" ref={heroRef}>
+        {tab === 'boosts' && <StatsBoosts />}
+        <div className="st2-hero" ref={heroRef} hidden={tab === 'boosts'}>
           <div className="st2-totalwrap">
             <span className="st2-total-k">TOTAL</span>
             <button type="button" className="st2-big" data-juice-self onClick={() => run(tab)} aria-label="Replay multiplier" title="REPLAY">
@@ -369,7 +383,7 @@ export default function StatsV2({ onBack, onMore }) {
           </div>
         </div>
 
-        <div className={`st2-chain${compact ? ' is-compact' : ''}`} style={{ '--n': chips.length }}>
+        <div className={`st2-chain${compact ? ' is-compact' : ''}`} style={{ '--n': chips.length }} hidden={tab === 'boosts'}>
           <div className="st2-rail" aria-hidden="true">
             <span className="st2-rail-fill" style={{ transform: `scaleX(${n ? play.idx / n : 1})` }} />
           </div>

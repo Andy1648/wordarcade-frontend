@@ -566,3 +566,70 @@
   .st2-big,
   .st2-back { transition: none; }
 }
+
+/* ---- BOOSTS tab (Andy oct8 "a location for that in stat menu … like bee swarm sim") ---- */
+.st2-hero[hidden], .st2-chain[hidden] { display: none; }
+.st2-boosts {
+  position: absolute;
+  left: calc(30px * var(--st2-k));
+  right: calc(30px * var(--st2-k));
+  top: calc(100px * var(--st2-k));
+  height: calc(400px * var(--st2-k));
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: calc(24px * var(--st2-k));
+}
+.st2-bl { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-rows: min-content; gap: 12px; overflow-y: auto; min-height: 0; }
+.st2-bt {
+  --bd-tone: #FFE94A;
+  --bd-line: #B8A215;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'mult name clock' 'mult what clock';
+  align-items: center;
+  column-gap: 14px;
+  padding: 10px 14px 10px 10px;
+  background: #1a0b2e;
+  border: 4px solid var(--bd-line);
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+}
+.st2-bt.bd-boost1, .st2-bt.bd-rush { --bd-tone: #FF4FA3; --bd-line: #B8226E; }
+.st2-bt.bd-frenzy { --bd-tone: #FF6B3D; --bd-line: #B8401C; }
+.st2-bt.bd-xp { --bd-tone: #2EFFE0; --bd-line: #12A99A; }
+.st2-bt.bd-luck, .st2-bt.bd-boost2 { --bd-tone: #9A1AFF; --bd-line: #5E0FA0; }
+.st2-bt-mult {
+  grid-area: mult;
+  min-width: 84px;
+  height: 56px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bd-tone);
+  border: 3px solid #000;
+  border-radius: 6px;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  text-transform: uppercase;
+  font-size: var(--fs-k26);
+  color: #0d0618;
+}
+.st2-bt-name { grid-area: name; font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-size: var(--fs-k22); color: var(--bd-tone); }
+.st2-bt-what { grid-area: what; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k16); color: #c9b8e8; }
+.st2-bt-clock { grid-area: clock; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k28); color: #fff; font-variant-numeric: tabular-nums; }
+.st2-bt-clock small { font-size: var(--fs-k14); color: #c9b8e8; }
+.st2-bl-none { margin: 0; align-self: center; justify-self: center; font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-size: var(--fs-k26); color: #c9b8e8; }
+.st2-where { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #12071f; border: 4px solid #000; box-shadow: 5px 5px 0 #000; align-self: start; }
+.st2-where-h { font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-size: var(--fs-k18); color: #FFE94A; }
+.st2-where-row { display: flex; flex-direction: column; gap: 1px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k14); color: #c9b8e8; }
+.st2-where-row b { font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; text-transform: uppercase; font-size: var(--fs-k16); color: #fff; }
+.st2-where-row i { font-style: normal; color: #2EFFE0; }
+.st2--narrow .st2-boosts { position: relative; left: auto; right: auto; top: auto; height: auto; grid-template-columns: 1fr; }
+.st2--narrow .st2-bt-mult { min-width: 64px; height: 44px; font-size: var(--fs-k20); }
+.st2--narrow .st2-bt-name { font-size: var(--fs-k18); }
+.st2--narrow .st2-bt-clock { font-size: var(--fs-k20); }
+/* phone: three tabs (WINS · XP · BOOSTS) need the full width — the title rides beside ← MENU instead */
+.st2--narrow .st2-head { grid-template-areas: 'back title' 'tabs tabs'; }
+.st2--narrow .st2-tabs { justify-self: stretch; display: flex; }
+.st2--narrow .st2-tab { flex: 1 1 0; justify-content: center; padding: 0 6px; }

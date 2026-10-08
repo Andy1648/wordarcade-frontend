@@ -16,7 +16,6 @@ import { lazy, Suspense, useState } from 'react';
 import './AudioControls.css';
 import { isEventSoundsEnabled } from '../audio/gameSounds';
 import { isClackEnabled } from '../progress/clack';
-import BoostDock from '../frenzy/LazyBoostDock';
 
 const loadPanel = () => import('./AudioPanel.jsx');
 const AudioPanel = lazy(loadPanel);
@@ -39,8 +38,6 @@ export default function AudioControls({
 
   return (
     <div className={`audio-ctrl${variant === 'inline' ? ' audio-ctrl--inline' : ''}`}>
-      {/* the bottom-right BOOST timers ride THIS cluster (Andy oct8) — never their own fixed element */}
-      {variant !== 'inline' && !open && <BoostDock />}
       {open && (
         <Suspense fallback={null}>
           <AudioPanel
