@@ -337,6 +337,7 @@
   gap: calc(12px * var(--st2-k));
   height: calc(52px * var(--st2-k));
   min-width: 0;
+  margin-top: auto;
 }
 .st2-chip-tile {
   position: relative;
@@ -386,7 +387,9 @@
 .st2-chip.is-off .st2-chip-name,
 .st2-chip.is-off .st2-chip-tag { color: #5d4a78; }
 .st2-chip-v {
-  margin-top: calc(14px * var(--st2-k));
+  /* NUMBERS FIRST (R2 oct8 #4): the figure is the chip's first line; icon + name sit under it */
+  order: -1;
+  margin: 0 0 calc(10px * var(--st2-k));
   font-family: var(--k-display, 'Bungee', sans-serif);
   font-size: calc(var(--fs-k100) * 0.54 * var(--st2-k));
   line-height: 1;
@@ -539,7 +542,7 @@
 .st2--narrow .st2-chip-tag { font-size: var(--fs-k18); white-space: normal; line-height: 1.05; }
 .st2--narrow .st2-chip-names { flex: 1 1 0; min-width: 0; }
 .st2--narrow .st2-chip-v,
-.st2--narrow .st2-chain.is-compact .st2-chip-v { margin-top: 8px; font-size: var(--fs-k28); -webkit-text-stroke: 4px #000; }
+.st2--narrow .st2-chain.is-compact .st2-chip-v { margin: 0 0 6px; font-size: var(--fs-k32); -webkit-text-stroke: 4px #000; }
 .st2--narrow .st2-life {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

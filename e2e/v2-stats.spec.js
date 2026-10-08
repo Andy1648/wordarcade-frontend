@@ -80,7 +80,7 @@ test('the TOTAL first: ×243 = 2,430 WINS / WORD, then BASE · MODE · REBIRTH �
   await st.locator('.st2-tab[data-tab="xp"]').click();
   await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
   expect(await chipIds(st)).toEqual(['base', 'power', 'rebirth', 'mark', 'boost']);
-  await expect(st.locator('.st2-unit')).toHaveText('XP / LETTER');
+  await expect(st.locator('.st2-unit')).toHaveText('XP / KEY'); // season 2: XP is paid per menu KEY (R2 oct8 #4)
   const xpTab = (await st.locator('.st2-tab[data-tab="xp"] .st2-tab-total').textContent()).trim();
   await expect(total).toHaveText(xpTab, { timeout: 8000 });
   await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×64'); // KEY 2^6
