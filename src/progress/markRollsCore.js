@@ -359,7 +359,10 @@ export function statText(stat) {
     case 'winsPct': return `${x(v)} WINS`;
     case 'xpPct': return `${x(v)} XP`;
     case 'baseWins': return `+${formatRate(v)} BASE WINS/WORD`;
-    case 'baseXp': return `+${formatRate(v)} BASE XP/LETTER`;
+    // SEASON 2 (Andy oct8: "an epic +10 base doesn't make sense — it should be added to the normal base, which is just
+    // 1"): the XP base is 1 XP / KEY and a +N BASE mark scales it by (10 + N)/10 — so its REAL addition to the base is
+    // N/10 (EPIC +5 → +0.5 = ×1.5, LEGENDARY +10 → +1 = ×2, exactly its tier's MAIN). Say that number, on that unit.
+    case 'baseXp': return V3 && V3.ready ? `+${formatRate(v / 10)} BASE XP/KEY` : `+${formatRate(v)} BASE XP/LETTER`;
     case 'luckPct': return `${x(v)} ROLL LUCK`;
     case 'overdriveSec': return `+${formatNum(v)}s OVERDRIVE`;
     default: return '';

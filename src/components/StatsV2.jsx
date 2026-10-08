@@ -302,10 +302,14 @@ export default function StatsV2({ onBack, onMore }) {
   const showTick = !!last && last.mult > 1;
   const totalText = xText(play.cur);
   const resultText = rateText(play.done ? b.total : b.base * play.cur);
+  const gearOn = !!(b.parts && b.parts.gear > 0);
   const compact = n > 4; // six chips or more: tighter gaps so the chain still fits one row
 
   const chips = [
-    { id: 'base', label: 'BASE', tag: look.name, v: rateText(b.base), on: true, icon: look.baseIcon, c: '#fff', ic: look.color },
+    // Andy oct8: (BASE + GEAR BASE) — a worn +N BASE gear is ADDED to the base before every multiplier, so say both parts
+    gearOn
+      ? { id: 'base', label: 'BASE + GEAR', tag: look.name, v: `${rateText(b.parts.base)} + ${rateText(b.parts.gear)}`, on: true, icon: look.baseIcon, c: '#fff', ic: look.color }
+      : { id: 'base', label: 'BASE', tag: look.name, v: rateText(b.base), on: true, icon: look.baseIcon, c: '#fff', ic: look.color },
     ...b.chips.map((m) => ({ id: m.id, label: CHIP_LABEL[m.id] || m.label, tag: m.tag, v: xText(m.mult), on: m.mult > 1, icon: CHIP_ICON[m.id] || m.id, c: CHIP_COLOR[m.id] || '#fff', ic: CHIP_COLOR[m.id] || '#fff' })),
   ];
 
@@ -378,7 +382,7 @@ export default function StatsV2({ onBack, onMore }) {
             <span className="st2-result-v" data-testid="st2-result" style={{ '--len': Math.max(4, resultText.length) }}>{resultText}</span>
             <div className="st2-result-sub">
               <span className="st2-unit">{look.unit}</span>
-              <span className="st2-basex">BASE {rateText(b.base)} × {boardMult(b.mult)}</span>
+              <span className="st2-basex">{gearOn ? `(BASE ${rateText(b.parts.base)} + GEAR ${rateText(b.parts.gear)})` : `BASE ${rateText(b.base)}`} × {boardMult(b.mult)}</span>
             </div>
           </div>
         </div>

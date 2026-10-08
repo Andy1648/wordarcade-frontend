@@ -19,7 +19,7 @@
 import { perWordFactors, perWordRateNow, wordWinsBase, WORD_LEN_REF } from './wins.js';
 import { keyXpMult, rebirthXpMult, getKeyTier, getRebirths, LEVEL_XP_PER_LETTER } from './xp.js';
 import { markXpBoost, letterXpNow } from './letterXp.js';
-import { markBaseXp, wornMarkId, markEntry, indexMult, loadRollState } from './markRollsCore.js';
+import { markBaseXp, markBaseWins, wornMarkId, markEntry, indexMult, loadRollState } from './markRollsCore.js';
 import { letterPerkMult } from './markPerks.js';
 import { boostMult } from './boost.js';
 import { keyRarity, rebirthRarity, rarityKey } from '../lib/rarityStyle.js';
@@ -70,6 +70,7 @@ export function statBoard({ mode = BOARD_MODE } = {}) {
     id: 'wins',
     mode,
     base: winsBase,
+    gearBase: Math.max(0, Number(markBaseWins()) || 0), // a worn +N BASE WINS gear's share of the base (STATS shows it)
     lines: [
       { id: 'mode', label: 'MODE', mult: pos(f.mode), tier: null },
       { id: 'rebirth', label: 'REBIRTH', mult: pos(f.rebirth), tier: rbTier },
@@ -141,16 +142,20 @@ export function statChain(stack, { v3 = null, stars = 0, markBaseXp: mbx = 0, ta
   if (line('index').mult !== 1) tail.push(chip('index', 'INDEX', line('index').mult));
   tail.push(chip('boost', 'BOOST', line('boost').mult));
   let base = stack.base;
+  let parts = null;
   let chips;
   if (stack.id === 'wins') {
     chips = [chip('mode', 'MODE', line('mode').mult), ...rebirthChips, ...tail];
+    if (v3 && Number.isFinite(stack.gearBase) && stack.gearBase > 0) parts = { base: base - stack.gearBase, gear: stack.gearBase };
   } else {
     chips = [chip('power', 'POWER', line('key').mult), ...rebirthChips, ...tail];
     if (v3) {
       base = v3.econ.XP_BASE * ((10 + Math.max(0, Number(mbx) || 0)) / 10); // a +N BASE XP mark: ×(10 + N)/10
+      // Andy oct8: STATS shows (BASE + GEAR BASE) × the multipliers — the two parts of the base, in XP / KEY
+      parts = { base: v3.econ.XP_BASE, gear: base - v3.econ.XP_BASE };
       const shop = v3.stock && typeof v3.stock.stockXpMult === 'function' ? pos(v3.stock.stockXpMult()) : 1;
       if (shop !== 1) chips.push(chip('shop', 'UPGRADES', shop));
     }
   }
-  return { id: stack.id, base, total: stack.total, mult: base > 0 ? stack.total / base : 1, chips };
+  return { id: stack.id, base, parts, total: stack.total, mult: base > 0 ? stack.total / base : 1, chips };
 }
