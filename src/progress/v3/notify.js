@@ -4,7 +4,7 @@
 // toasts). Rank-ups pay nothing (status only, shown via the KitLevelUp top-edge banner). Unlocks = edge toasts.
 // Gains = motion on the bar/counters. Achievements page is the only claim place."
 //
-//   rank-up  (v3 rank KEYMASH … ENDGAME, by rebirths then ★) → the top-edge RANK-UP banner. Pays nothing.
+//   rank-up  (v3 rank INKLING … ENDGAME, by rebirths then ★) → the top-edge RANK-UP banner. Pays nothing.
 //   unlock   (a rebirth unlock, a new frame, a mark rank, an automation buy, a bought item, a first-time tip)
 //            → a RIGHT-edge toast.
 //   gain     (wins / gems / XP) → no announcement here: the menu's pills count up (MenuXpBar useCountUp + "+N").

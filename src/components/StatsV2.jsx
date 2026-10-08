@@ -25,7 +25,7 @@ import { loadRollState, wornMarkId, markEntry, markBaseXp } from '../progress/ma
 import { readRecords } from '../progress/records';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { useMomentHold } from '../lib/useMomentSlot';
-import { formatNum, formatRate } from '../format';
+import { formatNum, formatStatRate as rateText } from '../format';
 
 const fmt = (n) => formatNum(Number.isFinite(n) ? n : 0);
 const xText = (v) => `×${boardMult(v)}`;
@@ -298,11 +298,11 @@ export default function StatsV2({ onBack, onMore }) {
   const last = play.idx > 0 && !play.done ? b.chips[play.idx - 1] : null;
   const showTick = !!last && last.mult > 1;
   const totalText = xText(play.cur);
-  const resultText = formatRate(play.done ? b.total : b.base * play.cur);
+  const resultText = rateText(play.done ? b.total : b.base * play.cur);
   const compact = n > 4; // six chips or more: tighter gaps so the chain still fits one row
 
   const chips = [
-    { id: 'base', label: 'BASE', tag: look.name, v: formatRate(b.base), on: true, icon: look.baseIcon, c: '#fff', ic: look.color },
+    { id: 'base', label: 'BASE', tag: look.name, v: rateText(b.base), on: true, icon: look.baseIcon, c: '#fff', ic: look.color },
     ...b.chips.map((m) => ({ id: m.id, label: m.label, tag: m.tag, v: xText(m.mult), on: m.mult > 1, icon: CHIP_ICON[m.id] || m.id, c: CHIP_COLOR[m.id] || '#fff', ic: CHIP_COLOR[m.id] || '#fff' })),
   ];
 
@@ -363,7 +363,7 @@ export default function StatsV2({ onBack, onMore }) {
             <span className="st2-result-v" data-testid="st2-result" style={{ '--len': Math.max(4, resultText.length) }}>{resultText}</span>
             <div className="st2-result-sub">
               <span className="st2-unit">{look.unit}</span>
-              <span className="st2-basex">BASE {formatRate(b.base)} × {boardMult(b.mult)}</span>
+              <span className="st2-basex">BASE {rateText(b.base)} × {boardMult(b.mult)}</span>
             </div>
           </div>
         </div>

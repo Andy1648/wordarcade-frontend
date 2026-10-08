@@ -13,7 +13,7 @@ import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
 import { mockBoard } from './support/boardMock.js';
 
-const V3_LADDER = ['KEYMASH', 'TYPO', 'CLACKER', 'HOTKEY', 'INKSTORM', 'WORDSMITH', 'KEYFIEND', 'CAPSLOCK', 'OVERCLOCK', 'GLYPHLORD', 'LEXIBEAST', 'VOIDTYPER', 'ASCENDANT', 'OMNIKEY', 'FINAL BOSS', 'ENDGAME'];
+const V3_LADDER = ['INKLING', 'TYPO', 'CLACKER', 'HOTKEY', 'INKSTORM', 'WORDSMITH', 'KEYFIEND', 'CAPSLOCK', 'OVERCLOCK', 'GLYPHLORD', 'LEXIBEAST', 'VOIDTYPER', 'ASCENDANT', 'OMNIKEY', 'FINAL BOSS', 'ENDGAME'];
 
 async function menu(page, { season2 = true, seed = {}, reduce = false } = {}) {
   await page.emulateMedia({ reducedMotion: reduce ? 'reduce' : 'no-preference' });
@@ -48,7 +48,7 @@ test('the 16 shaped rank plates are the v3 ladder, in order; ★ tiers glow + sh
   expect(infinite, 'no looping animation on the LEVEL + RANK UP sheet').toBe(0);
 });
 
-// R6 since the last look (the menu last SAW KEYMASH and no unlocks): KEYMASH → KEYFIEND + the R1…R5 unlocks owed.
+// R6 since the last look (the menu last SAW INKLING and no unlocks): INKLING → KEYFIEND + the R1…R5 unlocks owed.
 const RANK_SEED = {
   'taw.s2.xp': JSON.stringify({ lv: 5, f: 0.2, rc: 6, v: 10 }),
   'taw.s2.rebirths': '6',

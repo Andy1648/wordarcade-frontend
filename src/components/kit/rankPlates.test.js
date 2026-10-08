@@ -20,11 +20,11 @@ test('shape + trim escalate: every plate has a shape; the ★ tiers (and only th
   assert.ok(RANK_PLATES.slice(6).every((p) => p.back || p.front), 'every rank from KEYFIEND up wears trim');
 });
 
-test('plateFor finds a plate by code, name or index; unknown → KEYMASH', () => {
+test('plateFor finds a plate by code, name or index; unknown → INKLING', () => {
   assert.equal(plateFor('R6').name, 'KEYFIEND');
   assert.equal(plateFor('★10').name, 'FINAL BOSS');
   assert.equal(plateFor('ENDGAME').req, '★20');
   assert.equal(plateFor(11).name, 'VOIDTYPER');
   assert.equal(plateFor(99).name, 'ENDGAME');
-  assert.equal(plateFor('nope').name, 'KEYMASH');
+  assert.equal(plateFor('nope').name, 'INKLING');
 });

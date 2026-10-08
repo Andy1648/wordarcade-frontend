@@ -33,7 +33,7 @@ const UUID = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 test('flag OFF: the season is off and nothing FINAL is installed', () => {
   assert.equal(S.SEASON2, false);
   assert.equal(S.V3.ready, undefined);
-  assert.equal(E.XP_BASE, 10, '(econ.js is importable on its own)');
+  assert.equal(E.XP_BASE, 1, '(econ.js is importable on its own — FINAL v3: BASE 1)');
 });
 
 test('flag OFF: the live curve, XP per letter, wins per word, MODE table and KEY prices are unchanged', () => {

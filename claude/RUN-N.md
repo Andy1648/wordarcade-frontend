@@ -1,3 +1,49 @@
+# RUN — PROGRESSION FINAL v3 "START AT 1" (Andy, Oct 7 21:27) — branch `feat/s2-progression-v3`
+
+Re-read this section + `claude/SEASON2-CHECKLIST.md` before every step. SEASON2 flag stays OFF. Never touch
+Homepage.*, MenuNav, kit/*, CardPager, GameCard (another session owns them). e2e only on CI. ONE PR, NOT merged
+(Andy play-tests ?season2=1 first — Tier 1).
+
+## Plan
+1. CONSTANTS (src/progress/v3/econ.js): XP_BASE 10 → 1; KEY/POWER ladder → 2^T (×1, ×2, ×4 …); cost stays 150 × 5^T
+   unless the sim says otherwise. Menu stays ×0.2 with whole-XP rounding, floor 1 (xp.xpPerInput) → 1 XP a key at start.
+   A worn +N BASE XP mark keeps its ×(10 + N)/10 size (it was sized against BASE 10 — not 1 + N).
+2. TUNE with the real-module sim (claude/econ-oct2/final-sim.mjs, local, light): the level curve k in 100 × k^(n−1)
+   and the rebirth gate 15 + 18R, each within ±20%, to hit: median R1 ≈ 20 min, R3 ≈ 2 h, R5 ≈ 6 h, ≈ R6–R7 at 10 h.
+   If R1 ≈ 20 min is out of reach without a structural change → STOP and write the blocker in the checklist.
+3. SIM GATE: final-sim.mjs targets → the v3 table (every cell ±20%); update claude/progression-FINAL.md to v3 with the
+   new constants + the sim table beside v2's.
+4. RANK R0 KEYMASH → INKLING (v3/ranks.js, rankPlates, LeaderboardV2 comment, KitRankBanner doc example, tests, doc).
+   kit/* is otherwise off-limits: only the R0 name string changes there.
+5. NUMBERS: numbersAudit.s2 / statChain.s2 + v3.test pins → T0 R0 menu key +1, game letter +1; UPGRADES T1 price.
+6. SERVER: only if the gate constant changes → 029 (lb_rebirth gate + board-write room), FLIP-STEPS (029 after 027,
+   before 023), finalRules/rebirthRules mirrors + tests.
+7. Unit + lint + build local; push; ONE PR "feat(season2): PROGRESSION FINAL v3 — start at 1 XP, doubling POWER (~6x
+   slower)" with the before/after sim table; CI green (read logs, re-run only failed shards). Do NOT merge.
+
+## Log
+- STEP 1 ✅ constants: XP_BASE 1, KEY ×2^T (cost kept 150 × 5^T), a +N BASE XP mark keeps ×(10 + N)/10 (econ + statBoard).
+- STEP 2 ✅ tuned on the real-module sim (~60 grid points, median bot, 10 h). PICK: need(n) = 100 × **1.131**^(n−1)
+  (was 1.15: −12.7% on the growth), gate **18 + 20R** (was 15 + 18R: base +20%, step +11%), KEY cost unchanged.
+  Median: R1 20.7 min · R3 99.8 min · R5 6.75 h · R5 at 10 h (R6 ≈ 12 h).
+  BLOCKER (no new mechanic invented): R3 ≈ 2 h and R6–R7 by 10 h cannot both hold in this structure — every point with
+  R3 ≥ 96 min (−20%) reaches R6 after 10 h (R5 → R6 ≈ 5–6 h); every point with R6 < 10 h has R3 ≤ 93 min. Picked the
+  side that keeps R1/R3/R5 in band; 10 h ends at R5 (−17% vs R6). Andy decides: accept, or relax R3 to ~85–90 min
+  (k 1.125 + 18 + 20R + cost 250 gives R1 22.5 · R3 93 · R5 5.5 h · R6 9.7 h).
+  Gate changes → 029 needed.
+- STEP 3 ✅ 029_progression_final_v3.sql + rebirthRules/finalRules mirrors + tests (the SPAMMER caught the stale 15 + 18R
+  server gate: it reached R7 vs the median's R5 until 029's gate landed — now level).
+- STEP 4 ✅ final-sim.mjs = the v3 table at ±20% (median = Andy's targets, R6–R7 range cell); CI yaml text; doc v3 + v2.
+- STEP 5 ✅ KEYMASH → INKLING (Homepage.jsx comment left — not my file).
+- STEP 6 ✅ numbers: base 1 × (10 + N)/10; fractional season-2 letter XP; format.formatStatRate (< 10 → 2 decimals) in
+  StatsV2; T0 R0 menu +1 / game +1 / UPGRADES 150 test. e2e pins: season2 (LV17 → 18), numbers-audit (LV80 R3 KEY2),
+  v2-rebirth (LV 10 / 18), v2-stats (×64, [1, 8, 27]).
+- STEP 7 ✅ FLIP-STEPS 022 → 024 → 027 → 029 → 023 → 028. Local: unit 1273/1273, lint, build, sim PASS.
+  PR #255 opened (NOT merged). CI on 1cf0932: ALL GREEN — build, 4 e2e shards + e2e, season2 sim (v3 table ±20%),
+  long-run, rule-p. DONE — waiting on Andy's ?season2=1 play-test.
+
+---
+
 # RUN-N — the landing pad
 
 Last rewritten 2026-09-17. Screenshots referenced by name live in `claude/run-n/`.
@@ -198,3 +244,19 @@ guard, and the cancel path.
 Wave 2 of `release/prod-2` is the 16 branches that collide only on the media migration. They share
 one resolution rule, so they should go in one sitting rather than one per night. `feat/solo-slabs`
 is in that wave.
+
+---
+
+## PROGRESSION v3.1: "each level a bit harder" (Andy Oct 7 22:31), on `feat/s2-progression-v3` (PR #255)
+
+- **Change:** `CURVE_GROWTH` 1.131 → **1.15** (`src/progress/v3/econ.js`). need(n) = 100 × 1.15^(n−1).
+- **Gate:** kept at **18 + 20R**. The median's first rebirth is 24.0 min, inside the 18–25 min hold, so the gate stays.
+  Migration 029 is unchanged. Probed for reference: 17 + 20R → 21.2 min.
+- **Sim (final-sim.mjs, 10 h):** median R1 24.0 min · R3 2.64 h · R5 not reached · R4 at 10 h. Casual
+  44.7 min / 5.04 h / R3. Fast 14.3 min / 87.5 min / 8.46 h / R5. Menu masher 13.2 min / R2. HARD CHECK PASS.
+  Side-by-side with v3 in `claude/progression-FINAL.md`.
+- **Trade-off:** the old 21:27 targets after R1 (R3 ≈ 2 h, R5 ≈ 6 h, R6–R7 by 10 h) no longer hold. The median is now
+  ~1.6× slower to R3 and ends one rebirth lower at 10 h.
+- **Tests:** v3.test.js, numbers-audit.spec, season2.spec (comment + need(17) ≈ 936 XP), sim expectations all moved
+  to v3.1. The sim also now fails if the median's R1 leaves 18–25 min. Local: 642/642 progress + leaderboard units, sim
+  PASS. CI is the full gate. **Not merged.**

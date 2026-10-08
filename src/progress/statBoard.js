@@ -147,7 +147,7 @@ export function statChain(stack, { v3 = null, stars = 0, markBaseXp: mbx = 0, ta
   } else {
     chips = [chip('power', 'POWER', line('key').mult), ...rebirthChips, ...tail];
     if (v3) {
-      base = v3.econ.XP_BASE + Math.max(0, Number(mbx) || 0);
+      base = v3.econ.XP_BASE * ((10 + Math.max(0, Number(mbx) || 0)) / 10); // a +N BASE XP mark: ×(10 + N)/10
       const shop = v3.stock && typeof v3.stock.stockXpMult === 'function' ? pos(v3.stock.stockXpMult()) : 1;
       if (shop !== 1) chips.push(chip('shop', 'UPGRADES', shop));
     }

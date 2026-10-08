@@ -1335,7 +1335,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             {/* the worn mark lives in the rail's YOUR GEAR slot on the paged (2-column) menu (feat/menu-perrow); the
                 narrower desktop rail and the phone keep the chip */}
             {!isPagedMenu && markChip}
-            {/* v3 (SEASON2): the rank (KEYMASH … by rebirths, then stars) is a season-2 headline — LABELLED, so a
+            {/* v3 (SEASON2): the rank (INKLING … by rebirths, then stars) is a season-2 headline — LABELLED, so a
                 newcomer knows the word is a rank (Andy oct6: nobody may be confused) */}
             {SEASON2 && <span className="menu-xp-rank hp-rank"><span className="hp-rank-k">RANK</span>{rankTitle(xpProgress.level)}</span>}
             <BoostPill className="menu-boost-pill" />

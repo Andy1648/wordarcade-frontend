@@ -2,7 +2,7 @@
 // RANK = STATUS · NO REWARDS". A slab drops from the TOP edge (0.5 s in · 1.6 s hold · 0.4 s out), says RANK UP + the
 // new rank's code, and shows the old plate dimming → the new plate slamming in. It pays nothing and takes no pointer.
 //
-//   pushRankUp({ from: { name: 'KEYMASH', req: 'R0' }, to: { name: 'CLACKER', req: 'R2' } })
+//   pushRankUp({ from: { name: 'INKLING', req: 'R0' }, to: { name: 'CLACKER', req: 'R2' } })
 //   pushRankUp({ head: 'BOARD', from: { name: '#12', req: 'R0' }, to: { name: '#7', req: 'R7', code: 'R8 · LV16' } })
 //   (the leaderboard's own rank news rides the same slab: `head` replaces RANK UP, `code` the rank code, `req` only
 //   picks the plate colour)

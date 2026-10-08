@@ -31,8 +31,8 @@ test('the flag is on', () => {
   assert.equal(S.SEASON2, true);
 });
 
-test('rankNews: up only, old → new with the v3 names (KEYMASH … ENDGAME); never a drop, never a repeat', () => {
-  assert.deepEqual(N.rankNews(0, 2), { from: { name: 'KEYMASH', req: 'R0' }, to: { name: 'CLACKER', req: 'R2' } });
+test('rankNews: up only, old → new with the v3 names (INKLING … ENDGAME); never a drop, never a repeat', () => {
+  assert.deepEqual(N.rankNews(0, 2), { from: { name: 'INKLING', req: 'R0' }, to: { name: 'CLACKER', req: 'R2' } });
   assert.deepEqual(N.rankNews(10, 11).to, { name: 'VOIDTYPER', req: '★1' });
   assert.equal(N.rankNews(3, 3), null);
   assert.equal(N.rankNews(5, 2), null);
@@ -58,7 +58,7 @@ test('checkNews: the first look is silent; a rebirth then says RANK UP + its unl
   const wins0 = W.getWins();
   const gems0 = G.getGems();
   const after = N.checkNews({ state: { rebirths: 1, stars: 0 }, best: 0, store });
-  assert.deepEqual(after.rank, { from: { name: 'KEYMASH', req: 'R0' }, to: { name: 'TYPO', req: 'R1' } });
+  assert.deepEqual(after.rank, { from: { name: 'INKLING', req: 'R0' }, to: { name: 'TYPO', req: 'R1' } });
   assert.deepEqual(after.unlocks.map((u) => u.label), ['AUTO ROLL']);
   assert.equal(W.getWins(), wins0, 'a rank-up pays no wins');
   assert.equal(G.getGems(), gems0, 'a rank-up pays no gems');
@@ -119,6 +119,6 @@ test('no menu claim notification can exist: achievement / rank / layer / welcome
 
 test('the RANK banner names come from the v3 ladder (16 ranks, R0 … ★20)', () => {
   assert.equal(RK.RANKS_V3.length, 16);
-  assert.equal(RK.RANKS_V3[0].name, 'KEYMASH');
+  assert.equal(RK.RANKS_V3[0].name, 'INKLING');
   assert.equal(RK.RANKS_V3[15].name, 'ENDGAME');
 });

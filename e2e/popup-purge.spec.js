@@ -87,8 +87,8 @@ async function boot(page, { season2 = true, seed = {}, path = '/' } = {}) {
   await page.goto(`${path}${path.includes('?') ? '&' : '?'}portal=1${season2 ? '&season2=1' : ''}`);
 }
 
-// LV20, nearly through it — a few keys mashed anywhere cross LV21 (PROGRESSION FINAL v2: ANY key ×0.2). R1 since the
-// last menu visit (the rank / unlocks last SEEN were R0's): the old edge layer would have said a RANK UP (KEYMASH → TYPO)
+// LV20, nearly through it — a few keys mashed anywhere cross LV21 (PROGRESSION FINAL v3: ANY key ×0.2, floor 1 XP). R1 since the
+// last menu visit (the rank / unlocks last SEEN were R0's): the old edge layer would have said a RANK UP (INKLING → TYPO)
 // and AUTO ROLL. THE ONE-NOTICE RULE (Andy oct6): it says NOTHING — the EDITOR'S NOTE welcome is the game's one notice.
 const S2_SEED = {
   'taw.s2.xp': JSON.stringify({ lv: 20, f: 0.985, rc: 1, v: 10 }),

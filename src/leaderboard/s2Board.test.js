@@ -8,8 +8,8 @@ import { rankPlate, compareS2, boardMoves, boardSnapshot, chaseTarget, climbTarg
 
 const sql = (f) => readFileSync(join(process.cwd(), 'supabase', 'migrations', f), 'utf8').replace(/\r\n/g, '\n');
 
-test('rank plates are the v3 ladder (by rebirths, then ★): KEYMASH … LEXIBEAST, VOIDTYPER … ENDGAME', () => {
-  assert.equal(rankPlate({ rebirths: 0 }).name, 'KEYMASH');
+test('rank plates are the v3 ladder (by rebirths, then ★): INKLING … LEXIBEAST, VOIDTYPER … ENDGAME', () => {
+  assert.equal(rankPlate({ rebirths: 0 }).name, 'INKLING');
   assert.equal(rankPlate({ rebirths: 5, level: 9e6 }).name, 'WORDSMITH', 'the level never matters');
   assert.equal(rankPlate({ rebirths: 10 }).name, 'LEXIBEAST');
   assert.equal(rankPlate({ rebirths: 0, stars: 1 }).name, 'VOIDTYPER', 'any ★ outranks every R');

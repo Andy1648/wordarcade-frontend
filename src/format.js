@@ -137,6 +137,16 @@ export function formatRate(n) {
 }
 
 /**
+ * A STAT BOARD's BASE / RESULT (StatsV2): formatRate, but a value under 10 keeps two decimals (FINAL v3: XP / LETTER
+ * starts at 1, so 1.1 × 1.017 prints "1.12", never "1") — the printed chips must multiply out to the printed result
+ * (numbersAudit.s2.test.js).
+ */
+export function formatStatRate(n) {
+  const v = Number.isFinite(n) ? n : 0;
+  return Math.abs(v) < 10 ? formatMultExact(v) : formatRate(v);
+}
+
+/**
  * A SINGLE NAMED FACTOR, printed exactly. `formatMult` rounds to one decimal, which is right for a
  * resolved PRODUCT on a card (×3, ×4.5) and wrong for the individual factors a receipt names: the
  * daily-streak ladder is 1.05 / 1.10 / 1.20 / 1.25, and one decimal turns ×1.05 into "×1.1" and

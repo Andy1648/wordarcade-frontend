@@ -1,11 +1,11 @@
-// e2e/season2.spec.js — PROGRESSION FINAL v2 behind ?season2=1 (claude/progression-FINAL.md v2).
-// One claimed board player on the season-2 board (boardMock `season2` — 027's REAL write rule + lb_rebirth season 2 with
+// e2e/season2.spec.js — PROGRESSION FINAL v3 behind ?season2=1 (claude/progression-FINAL.md v3).
+// One claimed board player on the season-2 board (boardMock `season2` — 029's REAL write rule + lb_rebirth season 2 with
 // the econ-13 guard), on a desktop and a phone:
-//   * MASHES the menu and LEVELS (ANY key ×0.2 — mashing is the game; need(14) = 100 × 1.15^13);
-//   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 15 → LV 1, ×3)
-//     — one request, no gems, R1, LV15 → LV1;
+//   * MASHES the menu and LEVELS (ANY key ×0.2, floor 1 XP — mashing is the game; need(17) = 100 × 1.15^16);
+//   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 18 → LV 1, ×3)
+//     — one request, no gems, R1, LV18 → LV1;
 //   * BUYS KEY with wins (150 wins, ×2 XP / LETTER);
-//   * sees the v3 RANKS (KEYMASH → TYPO — by rebirths, not by level);
+//   * sees the v3 RANKS (INKLING → TYPO — by rebirths, not by level);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
 //   * CLAIMS an ACHIEVEMENT for GEMS (TYPE WORDS I → +40) — gems come from games / achievements, never a rebirth.
 // The season-1 save (taw.*) is never touched: season 2 lives under taw.s2.*.
@@ -36,8 +36,8 @@ async function boot(page) {
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, f: 0.5, rc: 7, v: 10 }));
     // a season-1 claim waiting in the inbox — season 2 must not pop it
     localStorage.setItem('taw.claims', JSON.stringify([{ id: 'ach-vol-1', kind: 'achievement', label: 'ACHIEVEMENT — FIRST BLOOD', amount: 50, detail: 'vol-1', ts: 1 }]));
-    // the SEASON-2 save: LV14, almost through it; 500 wins; 150 season-2 words (TYPE WORDS I is ready)
-    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 14, f: 0.985, rc: 0, v: 10 }));
+    // the SEASON-2 save: LV17, almost through it; 500 wins; 150 season-2 words (TYPE WORDS I is ready)
+    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 17, f: 0.985, rc: 0, v: 10 }));
     localStorage.setItem('taw.s2.wins', '500');
     localStorage.setItem('taw.s2.count', JSON.stringify({ words: 150 }));
   }, { secret: SECRET, id: row.id });
@@ -66,16 +66,16 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     const phone = isPhoneMenu(page);
     await navControl(page, 'stats').waitFor({ state: 'visible' });
     await noClaimPopups(page);
-    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('KEYMASH');
+    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('INKLING');
 
-    // MASH → LEVEL (FINAL v2: ANY key counts, no rate cap): LV14 → LV15 (need(14) = 100 × 1.15^13 ≈ 613 XP, 1.5% left
-    // ≈ 9 XP; a menu key pays 10 × 0.2 = 2 XP at KEY T0 R0) — gibberish, typed fast
+    // MASH → LEVEL (FINAL v3: ANY key counts, no rate cap): LV17 → LV18 (need(17) = 100 × 1.15^16 ≈ 936 XP, 1.5% left
+    // ≈ 14 XP; a menu key pays ×0.2 of 1 XP, floored to 1 XP, at KEY T0 R0) — gibberish, typed fast
     await expect.poll(async () => {
       await page.keyboard.type('qwrtzxpvqwrtzxpv', { delay: 20 });
       return (await s2(page)).level;
-    }, { timeout: 30_000 }).toBeGreaterThanOrEqual(15);
+    }, { timeout: 30_000 }).toBeGreaterThanOrEqual(18);
 
-    // REBIRTH (season 2) through the mocked lb_rebirth: LV ≥ 15 on the stored row → LV 1 — the v2 REBIRTH screen (P3):
+    // REBIRTH (season 2) through the mocked lb_rebirth: LV ≥ 18 on the stored row → LV 1 — the v2 REBIRTH screen (P3):
     // HOLD TO REBIRTH (1 s), one request, R0 → R1 in place
     await navControl(page, 'rebirth').click();
     const rb = page.locator('.rb2');
@@ -96,7 +96,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     let st = await s2(page);
     expect(st.rebirths).toBe('1');
     expect(st.level, 'back to LV 1').toBe(1);
-    expect(shared.rows[0].level, 'the server sent the row to LV 1 too (027)').toBe(1);
+    expect(shared.rows[0].level, 'the server sent the row to LV 1 too (029)').toBe(1);
     expect(st.gems, 'a rebirth pays no gems (FINAL)').toBe(0);
     await rb.locator('.rb2-back').click();
     await expect(rb).toHaveCount(0);

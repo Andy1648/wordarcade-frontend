@@ -1,6 +1,6 @@
 // v3/ranks.js — RANKS by REBIRTHS, then STARS (progression-v3.md "Ranks (monotonic; never drop when levels reset)").
 //
-//   R0 KEYMASH · R1 TYPO · R2 CLACKER · R3 HOTKEY · R4 INKSTORM · R5 WORDSMITH · R6 KEYFIEND · R7 CAPSLOCK ·
+//   R0 INKLING · R1 TYPO · R2 CLACKER · R3 HOTKEY · R4 INKSTORM · R5 WORDSMITH · R6 KEYFIEND · R7 CAPSLOCK ·
 //   R8 OVERCLOCK · R9 GLYPHLORD · R10 LEXIBEAST · ★1 VOIDTYPER · ★3 ASCENDANT · ★5 OMNIKEY · ★10 FINAL BOSS ·
 //   ★20 ENDGAME
 //
@@ -12,7 +12,7 @@
 import { s2Rebirths, getStarsV3, bestRankIndex, noteRankIndex } from './store.js';
 
 export const RANKS_V3 = [
-  { r: 0, name: 'KEYMASH' },
+  { r: 0, name: 'INKLING' },
   { r: 1, name: 'TYPO' },
   { r: 2, name: 'CLACKER' },
   { r: 3, name: 'HOTKEY' },
