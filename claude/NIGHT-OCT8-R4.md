@@ -37,3 +37,10 @@ Started 12:00 UTC. Andy at school until 20:00 UTC; authorised in full: build, PR
 
 ## Log
 (appended per step)
+
+### Step 1 — ROLL FEEL → PR #288 (day4/roll-feel) — 12:40 UTC, CI running
+Built (rollScreen/* + rollSounds.js + tutorial line + e2e): HOLD TO ROLL on the kit's hold clock re-timed (CHARGE_MS 500, OVERHOLD_MS 1200: charge → RELEASE! → the release is the spin; early release = cancel + drain; an overhold fires by itself); the reel rattles light (1.5px) while the fill crosses, hard (4px) once charged — finite iterations sized to the hold; a rising charge tone, a cancel blip, a release whip. THE TELL for EPIC+: `.rs-tell` (a flat tier-colour plate over the band) pulses — epic 2×.30 / legendary 3×.45 + rumble / mythic 4×.55 / secret 5×.65 — and a tier-colour pointer fades over the yellow one, both gated by the existing DIM_CELLS (3.5 cells before the land — Overwatch's "late hint" lesson). LEGENDARY+ reveal: the card THUDs in (drop, squash, settle) + a shard tick scatter. Label HOLD TO ROLL / HOLD… / RELEASE! at h2 (the 12-char label needed the step down from h1).
+Chose: release-to-fire over fire-at-full-charge — Andy wrote "release = the spin", and the slingshot gives the hand the moment of the roll; the overhold auto-fire keeps it from ever feeling stuck. Chose a full-band colour plate for the tell (a rectangle; flat; opacity only) over recolouring the frame (border-color is paint, not compositor).
+Tests: unit 1284 (+2); e2e mark-rolls + roll-robust 30/30 with a new `holdRoll()` (e2e/support/roll.js); the 4x-CPU smooth test p50 16.7 ms (identical to main — the first run's 33 ms was two workers sharing the container's CPU; re-ran alone). The spam test now proves 20 taps = 0 rolls, 8 fast holds = each paid once.
+Shots: claude/night-oct8-r4/s1-before-tell-1366x657.jpg (main: grey dim), s1-after-charged-1366x657.jpg, s1-after-tell-1366x657.jpg, s1-after-reveal-1366x657.jpg, s1-after-charged-390x844.jpg, s1-after-tell-390x844.jpg. Driver: tools/_shots/r4roll.mjs.
+Couldn't: nothing. Note: the container's headless shell is 1194; Playwright 1.62 wants 1234 — aliased (not committed).
