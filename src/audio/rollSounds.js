@@ -28,6 +28,47 @@ export function sndRollSwell(tier = 'epic', durMs = 1000) {
   tone(t, { freq: pentFreq(sw[0]) / 2, glideTo: pentFreq(sw[1]) / 2, type: 'sine', dur, gain: sw[2] * 1.2, attack: dur * 0.9 });
 }
 
+// ---- HOLD TO ROLL (NIGHT oct8 R4) --------------------------------------------------------------
+// the charge — one rising tone for the length of the hold ("sound effects rise in pitch just before the reveal");
+// finite: it ends with the charge. A cancel (released early) gets one dull low blip.
+export function sndRollCharge(durMs = 500) {
+  const ctx = ready();
+  if (!ctx) return;
+  const dur = Math.max(0.1, durMs / 1000);
+  tone(ctx.currentTime, { freq: pentFreq(NOTE.C4), glideTo: pentFreq(NOTE.C6), type: 'triangle', dur, gain: 0.07, attack: 0.01, lowpass: 2200 });
+}
+export function sndRollCancel() {
+  const ctx = ready();
+  if (!ctx) return;
+  tone(ctx.currentTime, { freq: 180, glideTo: 90, type: 'square', dur: 0.09, gain: 0.05, attack: 0.002, lowpass: 900 });
+}
+// the release — the slingshot lets go: a short down-whip + a bright tick as the reel starts
+export function sndRollRelease() {
+  const ctx = ready();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  tone(t, { freq: pentFreq(NOTE.C6), glideTo: pentFreq(NOTE.C4), type: 'sawtooth', dur: 0.16, gain: 0.08, attack: 0.002, lowpass: 3000 });
+  tone(t, { freq: pentFreq(NOTE.G5), type: 'triangle', dur: 0.06, gain: 0.06, attack: 0.002 });
+}
+// THE TELL's rumble (LEGENDARY+ only): a low floor under the colour, rising until the land — finite, `durMs` long
+export function sndRollTell(tier = 'legendary', durMs = 700) {
+  const ctx = ready();
+  if (!ctx) return;
+  const dur = Math.max(0.2, durMs / 1000);
+  const big = tier === 'mythic' || tier === 'secret';
+  tone(ctx.currentTime, { freq: 42, glideTo: big ? 70 : 58, type: 'sine', dur, gain: big ? 0.26 : 0.2, attack: dur * 0.6, lowpass: 240 });
+}
+// the LEGENDARY+ shard burst on the full reveal: a fast scatter of high ticks (one per shard, staggered)
+export function sndShardBurst(tier = 'legendary') {
+  const ctx = ready();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const n = tier === 'secret' ? 9 : tier === 'mythic' ? 7 : 6;
+  for (let i = 0; i < n; i += 1) {
+    tone(t + i * 0.028, { freq: pentFreq(NOTE.C6 + (i % 3)), type: 'triangle', dur: 0.05, gain: 0.05, attack: 0.001, lowpass: 5000 });
+  }
+}
+
 // the cutscene "1 IN X" stamp hit — a low thump + a bright clang, bigger for rarer tiers (LEGENDARY+)
 export function sndCutStamp(tier = 'legendary') {
   const ctx = ready();

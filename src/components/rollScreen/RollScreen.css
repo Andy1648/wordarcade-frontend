@@ -205,6 +205,12 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-ptr-tri { position: absolute; left: 0; display: block; }
 .rs-ptr-tri.is-top { top: -2px; }
 .rs-ptr-tri.is-bot { bottom: -2px; }
+/* THE TELL (R4): a flat tier-colour plate over the band (a rectangle) whose opacity pulses in the last cells of an
+   EPIC+ spin, and a second pointer in the tier colour that fades in over the yellow one — the colour says WHICH
+   rarity before the card is shown. Both rest at opacity 0; Reel.jsx animates them (finite, opacity only). */
+.rs-tell { position: absolute; z-index: 2; inset: 0; background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
+.rs-ptr-tell { position: absolute; inset: 0; opacity: 0; }
+.rs-ptr-bar.is-tell { background: currentColor; }
 /* the rarity light: the ray fan asset as a tinted mask BEHIND the band, opacity/transform only (EPIC+) */
 .rs-light {
   position: absolute;
@@ -335,12 +341,34 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   /* transform only: the shadow change on :active is a static toggle, never animated (ANIMATION BUDGET) */
   transition: transform var(--k-t-press, 120ms) var(--k-e-settle, ease-out);
 }
-.rs-roll-lbl { font-size: var(--fs-h1); line-height: 1; white-space: nowrap; }
-.rs-roll.is-free .rs-roll-lbl,
-.rs-roll.is-short .rs-roll-lbl { font-size: var(--fs-h2); }
+.rs-roll-lbl { font-size: var(--fs-h2); line-height: 1; white-space: nowrap; } /* R4: "HOLD TO ROLL" (12 chars) fits the 380 slab at h2 */
 .rs-roll-price { display: inline-flex; align-items: center; gap: 8px; padding: 2px 16px; border-radius: 999px; background: #000; color: #2EFFE0; font-size: var(--fs-k22); line-height: 1.2; }
 .rs-roll-gem { flex: none; }
 .rs-roll.is-rolling { background: #c9b84a; }
+/* HOLD TO ROLL (NIGHT oct8 R4): the charge fill is ONE rectangle crossing the face (transform only — the same
+   hard-stop stripe the kit's HOLD TO BUY uses); it drains on an early release. CHARGED: the face flips cyan with
+   "RELEASE!" — a static colour toggle, never animated. The label sits above the fill. */
+.rs-hold { position: relative; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.rs-hold-clip { position: absolute; inset: 0; overflow: hidden; border-radius: 2px; pointer-events: none; }
+.rs-hold-fill {
+  position: absolute;
+  inset: 0;
+  background-color: #fff7b0;
+  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0) 0 8px, rgba(255, 255, 255, 0.7) 8px 16px);
+  border-right: 5px solid #000;
+  box-sizing: border-box;
+  transform: translateX(-101%);
+  transition: transform 180ms ease-out;
+}
+.rs-roll.is-holding .rs-hold-fill { transform: translateX(0); transition: transform var(--rs-hold-ms, 500ms) linear; will-change: transform; }
+.rs-roll.is-charged .rs-hold-fill { transform: translateX(0); transition: none; }
+.rs-roll.is-charged { background: #2EFFE0; box-shadow: inset 0 -12px 0 #14b09a, 8px 8px 0 #000; }
+.rs-roll.is-charged .rs-hold-fill { background-color: #2EFFE0; background-image: none; border-right: 0; }
+.rs-roll.is-holding, .rs-roll.is-charged { transform: rotate(-1deg) translate(4px, 4px); box-shadow: inset 0 -8px 0 #F2A900, 4px 4px 0 #000; }
+.rs-roll.is-charged { box-shadow: inset 0 -8px 0 #14b09a, 4px 4px 0 #000; }
+.rs-roll.is-charged .rs-roll-lbl { color: #000; }
+.rs-roll-lbl, .rs-roll-price { position: relative; z-index: 1; }
+
 .rs-roll.is-short { background: #5a4f8a; color: #fff; box-shadow: inset 0 -12px 0 #3d3466, 8px 8px 0 #000; }
 .rs-roll:hover { transform: rotate(-1deg) translate(-2px, -2px); box-shadow: inset 0 -12px 0 #F2A900, 10px 10px 0 #000; }
 .rs-roll:active { transform: rotate(-1deg) translate(8px, 8px); box-shadow: inset 0 -6px 0 #F2A900, 0 0 0 #000; }
@@ -514,8 +542,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-res-pips { --pip: 16px; }
   .rs-controls { gap: 10px 12px; }
   .rs-roll { width: 100%; height: 92px; box-shadow: 6px 6px 0 #000; }
-  .rs-roll-lbl { font-size: var(--fs-hero); }
-  .rs-roll.is-free .rs-roll-lbl, .rs-roll.is-short .rs-roll-lbl { font-size: var(--fs-h1); }
+  .rs-roll-lbl { font-size: var(--fs-h2); }
   .rs-pity { gap: 6px; }
   .rs-pity-n { -webkit-text-stroke: 4px #000; }
   .rs-pity-bar { height: 16px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
@@ -531,7 +558,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 @media (max-width: 480px) and (max-height: 700px) {
   .rs-overlay { --cw: 112px; --cs: 0.6222; --band: calc(var(--cw) * 1.4444 + 10px); }
   .rs-roll { height: 76px; }
-  .rs-roll-lbl { font-size: var(--fs-h1); }
+  .rs-roll-lbl { font-size: var(--fs-panel); }
   .rs-auto-btn { min-height: 44px; }
   .rs-auto-cap { display: none; }
   .rs-cut, .rs-cut.is-full { --mc-w: 162px; --mc-s: 0.9; }
