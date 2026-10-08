@@ -17,7 +17,7 @@ Started 07:31 UTC (03:31 ET). Andy up 11:00 UTC. Round 1 (local) merged #258–#
 - [x] Step 4 — STATS (StatsV2): TOTAL multiplier first + biggest, BASE × POWER × REBIRTH × GEAR number-first rows; numbers verified vs numbersAudit tests (no math change).
 - [x] Step 5 — MARKS INDEX (MarksIndex): rarity by colour only, dupes "×N", no stars, names ≥ 18px, locked = black silhouettes + odds. No markCard/* edits.
 - [x] Step 6 — MOBILE MENU (MobileMenu, ≤480px): slabs label + number, gear chip = slot, "+N XP / KEY", fits 360x640 + 390x844.
-- [ ] Step 7 (if time) — LEADERBOARD rows (LeaderboardV2): rank plate, name, one stat ≥ 18px, "—" state, white podium icon (round 1 #266 already did the icon — verify only).
+- [x] Step 7 (verified, no PR) — LEADERBOARD rows (LeaderboardV2): rank plate, name, one stat ≥ 18px, "—" state, white podium icon (round 1 #266 already did the icon — verify only).
 
 ## Log
 (appended per step)
@@ -25,8 +25,7 @@ Started 07:31 UTC (03:31 ET). Andy up 11:00 UTC. Round 1 (local) merged #258–#
 ### Step 1 — EDITOR'S NOTE → PR #271 (night2/editors-note)
 Research (3): (a) Clash Royale chest-open: the reward NUMBER is the largest glyph on screen, the screen title is a fraction of it — our 100px wordmark was out-shouting the 96px gift. (b) Balatro's score pop: the counter ticks AND the plate bumps on every landing — ours already does (gains #262); keep it. (c) Pet Sim 99 / Genshin claim screens: the claim button goes dead for the whole flight so the player can't leave the reward mid-air — ours flipped to PLAY instantly on the server ok. Built: title 76px (clears the pill at 1366), captions 20/18, R7 76px + shadow, rolls 20, SHOWS ONCE 16 Bungee, phone gift 68px + band behind the trade, 'flying' phase → KitButton disabled until GainLayer onDone. Shots: claude/night-oct8-r2/s1-note-1366x657.jpg, s1-note-states-390x844.jpg. e2e season2-reset 2/2 local green.
 
-## REPORT
-(filled last)
+
 
 ### Step 2 — RESULTS → PR #272 (night2/results)
 Research (3): (a) Balatro's round-end: one number dominates (the hand total), its parts sit in a strip at half the size — ours had the WORDS line (44px) bigger than the TOTAL (34px), inverted. (b) Vampire Survivors results: every reward is one row "label · number", no prose; a row with nothing to say isn't drawn — our season-2 "+0 XP" block was an always-empty row. (c) Clash Royale battle-end: the equation shape "base × mult = total" reads only when the operators are singletons — ours printed "× ×15.74". Built: TOTAL 44px (42 on the Chromebook, floor 38; phones 44), WORDS 34, bonus 28, chips/×tag/LV 18, every 13 floor → 14, +0 XP block hidden (it pushed a 2-bonus WIN tally under MENU at 1366×657), equation boxes flex:none, GEMS 32% + no word label, phones stack GEMS/TOTAL + wallets never clip. Shots: claude/night-oct8-r2/s2-results-1366x657.jpg, s2-results-phones.jpg. e2e v2-results + ko-screen 46/46 local green.
@@ -42,3 +41,35 @@ Research (3): (a) gameuidatabase collection grids (Hades keepsakes, Balatro's co
 
 ### Step 6 — MOBILE MENU → PR #278 (night2/phone-rail)
 Research (3): (a) Clash Royale / Pet Sim 99 phone bottom rails: a slab is a LABEL over a NUMBER, the icon is the desktop luxury — a 4-up row on 360 only had room for 13px figures and clipped "UPGRADES" to "JPGRADES". (b) Balatro's mobile HUD: numbers never ellipsize; the label is what gives way. (c) Genshin's equipped-artifact slot: a labelled well ("GEAR" caption + the name) reads as a SLOT, a bare chip reads as a button. Built (MobileMenu.css only — MenuNav/Homepage markup untouched): slabs 2 × 2, label 14px over a 20px Space Mono number, no icon, the first slab of each row keeps the kit's -14px pull-in; the gear chip gains a GEAR caption on a dark well with its tier edge; the rate unit "/ KEY" 14px (was 13); XP-bar readout 14; short phones: slabs 46, mode rows 50 so 4 rows + CHAIN|FUSE + the rail all fit 360x640. e2e menu-list expectation updated (one row → 2 × 2, no icon, figures ≥ 18). Shots: claude/night-oct8-r2/s6-phone-menu.jpg (390 with a worn gear · 360x640), s6-phone-menu-before.jpg. e2e menu-list + menu-vgap + mobile-cards + menu-hook + season2 27/27, viewport-integrity (phone matrix) 240/240 local.
+
+### Step 7 — LEADERBOARD → verified only, no PR
+Shot the season-2 board through the board mock (tools/_shots/s2board.mjs, 13 seeded rows incl. un-earned stats) at 1366×657 and 390×844: rank plate, name + rank tag, "—" for an un-earned ★, R and LV ≥ 18px, the podium icon plain white (round 1 #266) — the audit reports nothing under 14px and nothing clipped. Nothing left to refine at the proportions level; redoing it would fight round 1. Shot: claude/night-oct8-r2/s7-board-verify.jpg.
+
+## REPORT
+
+Round 2 (cloud, 07:31–09:10 UTC). Six PRs, all CI-green and merged by me (Andy's overnight rule); every merge verified LIVE on typeaword.com by a marker grep against the production bundles (prodgrep — Season2Welcome-*.css, GameScreen-*.css, ShopV2-*.js, StatsV2-*.css, MarksIndex-*.css all carry their marker). Round 1's files were never touched.
+
+1. EDITOR'S NOTE — PR #271 (merged, live). Shot: claude/night-oct8-r2/s1-note-1366x657.jpg · s1-note-states-390x844.jpg.
+   Chose: wordmark 100 → 76px so the 580 gift is the headline and the title clears the gem pill at 1366; a `flying` phase keeps the button dead (kit hatch) until the last gem lands, then PLAY. The landing already ticked + bumped the pill (gains #262) — kept, verified in the flight frame.
+   Couldn't: nothing.
+2. RESULTS — PR #272 (merged, live). Shot: s2-results-1366x657.jpg · s2-results-phones.jpg.
+   Chose: TOTAL 44px (42 on the Chromebook) above WORDS 34 / bonus 28, every 13px floor → 14; hid the season-2 "+0 XP" block — it was pushing a two-bonus WIN tally under the MENU button at 1366×657 (a real overlap, see the before shot in the PR). The "× ×15.74" jam became "42 BASE × 15.74 = +661".
+   Couldn't: the PAUSE-TO-LEARN tag (13px) is MissedWordHold's, not the card's — left.
+3. UPGRADES — PR #273 (merged, live). Shot: s3-upgrades-1366x657.jpg · s3-upgrades-phones.jpg.
+   Chose: "XP / LETTER" → "XP / KEY" (ShopV2 only; the season-1 ShopScreen keeps its copy); "×4 → ×8" is the headline (60px cyan), the price on HOLD TO BUY at 28px; the rate "12 → 24 XP / KEY" stays under, smaller.
+   Couldn't: nothing.
+4. STATS — PR #274 (merged, live). Shot: s4-stats-1366x657.jpg · s4-stats-390x844.jpg.
+   Chose: the chain's chips go number-first (figure on line 1); XP tab unit → XP / KEY; MARK → GEAR (label map only). Verified WINS ×3 = 10×1×3×1×1 → 30 and XP ×12 = 1×4×3×1×1 → 12 against numbersAudit.s2 / statChain.s2 / statBoard (green; no math touched).
+   Couldn't: nothing.
+5. MARKS INDEX — PR #275 (merged, live). Shot: s5-index-1366x657.jpg · s5-index-phones.jpg.
+   Chose: the "6/10 → ★1" line under owned cards is gone (progress stays in the detail sheet); cards at their drawn size so every name ≥ 18px, panel widened to 1366 to keep six a row; phones two-up.
+   Couldn't: `mc-kind` on long stat rows (13.2px) and SINGULARITY at 360 wide (16.9px) live inside markCard/* (round 1's) — NOT TOUCHED.
+6. MOBILE MENU — PR #278 (merged, live). Shot: s6-phone-menu.jpg (390 with a worn gear · 360x640) · s6-phone-menu-before.jpg.
+   Chose: slabs 2 × 2, label 14 over a 20px number, no icon (a 4-up row clipped UPGRADES at 360 and could only fit a 13px figure); the gear chip gets a GEAR caption on a dark well (slot language); 360x640 now holds all four mode rows + CHAIN|FUSE + the rail. MobileMenu.css only.
+   Couldn't: the rate line's markup is Homepage's — its unit went 13 → 14px via MobileMenu.css, nothing else.
+7. LEADERBOARD — verified only (round 1 #266 already did it). Shot: s7-board-verify.jpg.
+
+ANDY, IN THE MORNING:
+- PLAY-TEST ON YOUR CHROMEBOOK + PHONE: EDITOR'S NOTE is one-shot per account — use a fresh profile (?portal=1 in a private window shows the local-gift path) to see COLLECT → COLLECTING (dead) → PLAY.
+- THE ONE JUDGEMENT CALL TO CONFIRM: results hides the XP block when a round pays 0 XP (season 2 always). If you want the empty "+0 XP" row back for the bar, say so and I'll revert that one line.
+- NIGHT LOG + REPORT: PR #279 (this file) — docs only, merge when green.
