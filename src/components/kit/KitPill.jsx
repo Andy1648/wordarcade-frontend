@@ -8,14 +8,16 @@
 // The pill is VALUE-DRIVEN: when `value` goes up it counts up (700 ms, number turns yellow while it
 // counts, then lands with a bump), the icon squashes, a sheen crosses, and a "+N" pops above — gains
 // inside 750 ms of each other STACK into one pop with a ×n chip. When `value` goes down it counts
-// down (320 ms), the icon dips and a "−N" drops below. Every number is formatNum'd.
+// down (320 ms), the icon dips and a "−N" drops below. Every number is formatNum'd; the pill's own figure is
+// formatShort'd (always abbreviated) and SHRINKS TO FIT (Andy oct8): the free width and one glyph's width are
+// measured on mount / resize only, so a text write just sets a scale on the number's wrapper (floor FIT_FLOOR).
 // Frames write text/transform straight to the DOM (no React render per frame); the pop and the
 // NEED tag are single pooled nodes.
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import KitIcon from './KitIcon.jsx';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS } from './countTween.js';
 import { FX, fx, fxOrShow } from './motion.js';
-import { formatNum } from '../../format.js';
+import { formatNum, formatShort } from '../../format.js';
 import './tokens.css';
 import './KitPill.css';
 
@@ -25,6 +27,13 @@ export const PILL_KINDS = {
   levels: { label: 'LEVELS', icon: 'levels', tone: 'purple' },
 };
 export const POP_STACK_MS = 750;
+export const FIT_FLOOR = 0.6; // the smallest the figure may shrink to (a 31px numeral stays ≥ 18px)
+
+/** The scale that fits `len` glyphs of width `cw` into `avail` px — 1 when it fits, never under FIT_FLOOR. */
+export function fitScale(len, cw, avail) {
+  if (!(len > 0 && cw > 0 && avail > 0)) return 1;
+  return Math.max(FIT_FLOOR, Math.min(1, avail / (len * cw)));
+}
 
 export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, label, icon, tone, className, ariaLabel }, ref) {
   const k = PILL_KINDS[kind] || PILL_KINDS.gems;
@@ -42,7 +51,18 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
   const needRef = useRef(null);
   // React renders the FIRST value only; after that the tween owns the text node (a re-render must
   // never snap a running count to its target).
-  const initialText = useRef(formatNum(value)).current;
+  const initialText = useRef(formatShort(value)).current;
+  const wrapRef = useRef(null);
+  // SHRINK-TO-FIT: { avail, cw } measured on mount / resize (never per frame); fit() is a pure write
+  const fitM = useRef({ avail: 0, cw: 0, s: 1 });
+  const fit = (text) => {
+    const m = fitM.current;
+    const sc = fitScale(text.length, m.cw, m.avail);
+    if (sc !== m.s && wrapRef.current) {
+      m.s = sc;
+      wrapRef.current.style.transform = sc < 1 ? `scale(${sc.toFixed(3)})` : '';
+    }
+  };
   const st = useRef({ prev: value, pop: { at: -1e9, dir: 0, amt: 0, n: 0 }, landDir: 1, gaining: false, denyT: 0 });
 
   const tween = useRef(null);
@@ -52,8 +72,11 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
       onFrame: (v) => {
         const el = numRef.current;
         if (!el) return;
-        const t = formatNum(v);
-        if (el.textContent !== t) el.textContent = t; // a text write only when the figure changes
+        const t = formatShort(v);
+        if (el.textContent !== t) {
+          el.textContent = t; // a text write only when the figure changes
+          fit(t);
+        }
         const counting = !!(tween.current && tween.current.running);
         if (el.classList.contains('is-counting') !== counting) el.classList.toggle('is-counting', counting);
       },
@@ -69,6 +92,31 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
     });
   }
   useEffect(() => () => tween.current && tween.current.cancel(), []);
+
+  // measure the free width (box minus the icon's overhang and the right inset) and one glyph's width — on mount
+  // and on resize only. offsetWidth is the untransformed layout width, so a running scale never skews it.
+  useEffect(() => {
+    const box = bodyRef.current;
+    const num = numRef.current;
+    const wrap = wrapRef.current;
+    const icon = iconRef.current;
+    if (!box || !num || !wrap) return undefined;
+    const measure = () => {
+      const bw = box.offsetWidth;
+      const right = bw - (wrap.offsetLeft + wrap.offsetWidth); // the wrapper's right inset
+      const iconEnd = icon ? icon.offsetLeft + icon.offsetWidth : 0;
+      const len = (num.textContent || '').length || 1;
+      fitM.current.avail = bw - right - Math.max(0, iconEnd) - 4;
+      fitM.current.cw = num.offsetWidth / len;
+      fitM.current.s = -1; // force the write
+      fit(num.textContent || '');
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const s = st.current;
@@ -140,7 +188,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
           <div className="kp-lo" aria-hidden="true" />
           <div ref={sheenRef} className="kp-sheen" aria-hidden="true" />
           <div ref={flashRef} className="kp-flash" aria-hidden="true" />
-          <div className="kp-numwrap">
+          <div ref={wrapRef} className="kp-numwrap">
             <span ref={numRef} className="kp-num" aria-hidden="true">
               {initialText}
             </span>

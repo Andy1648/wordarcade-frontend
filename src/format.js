@@ -122,6 +122,16 @@ export function formatNum(n) {
 }
 
 /**
+ * A FIXED-WIDTH SLOT's number (the WINS / GEMS pills, the rail tiles): ALWAYS abbreviated (1.28M, 999K), whatever
+ * the NUMBER STYLE setting — "999,999,999" does not fit a pill (Andy oct8: the WINS pill overflowed). At most
+ * five glyphs below a trillion ("9,999", "999K", "1.28M"); a slot still shrinks-to-fit past that (KitPill).
+ */
+export function formatShort(n) {
+  const p = formatNumParts(n);
+  return p.num + p.suffix;
+}
+
+/**
  * A PER-WORD WINS RATE, printed to the tenth it is actually paid at. A word is worth its XP ÷ 10
  * and XP is whole, so a rate is whole tenths of a win (10.1). `formatNum` rounds to a whole number
  * below 10,000 — which printed 10.1 as "10" and hid every momentum mark under ten. Same grouping

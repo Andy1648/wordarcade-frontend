@@ -15,7 +15,6 @@ import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost, roundWordXp, MENU_LETTER_SHARE } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
-import RebirthReadyButton from './RebirthReadyButton';
 import BoostPill from '../frenzy/BoostPill';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
@@ -91,7 +90,7 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
-import { formatNum } from '../format';
+import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
 import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
@@ -1144,17 +1143,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     sound.click();
     if (onRebirth) onRebirth();
   }
-  // REBIRTH READY → ×5 FOREVER (Andy oct3): the CTA has already armed the intent; open the REBIRTH
-  // view, which runs the rebirth + ceremony at once. A blocked tap disarms it so it can't fire later.
-  function handleRebirthNow() {
-    if (navigating || !onRebirth) {
-      takeRebirthNow();
-      return;
-    }
-    sound.click();
-    onRebirth();
-  }
-
   function handleCredits() {
     if (navigating) return;
     sound.click();
@@ -1210,18 +1198,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const hover = () => sfx('hover');
   // SEASON 2 #5 — every rail button carries a LIVE value, read from state the menu already holds (no per-keystroke
   // reads: the price follows `wins`, the rolls `gems`, the index the roll store, the rebirth line the LEVEL). REBIRTH reads "IN 21 LV" (fits the phone slab).
+  // tile figures are ALWAYS abbreviated (formatShort — NIGHT oct8 #1a: "1,185,…" clipped in the FULL style)
   const rollsAfford = Math.floor((Number(gems) || 0) / (ROLL_PRICE_GEMS > 0 ? ROLL_PRICE_GEMS : 1));
-  const rollValue = rollsAfford > 0 ? `${formatNum(rollsAfford)} ${rollsAfford === 1 ? 'ROLL' : 'ROLLS'}` : starterWaiting ? 'FREE ROLL' : '0 ROLLS';
-  const rollShort = rollsAfford > 0 ? formatNum(rollsAfford) : starterWaiting ? 'FREE' : '0';
+  const rollValue = rollsAfford > 0 ? `${formatShort(rollsAfford)} ${rollsAfford === 1 ? 'ROLL' : 'ROLLS'}` : starterWaiting ? 'FREE ROLL' : '0 ROLLS';
+  const rollShort = rollsAfford > 0 ? formatShort(rollsAfford) : starterWaiting ? 'FREE' : '0';
   const toRebirth = Math.max(0, rebirthGate - xpProgress.level);
-  const rebirthValue = toRebirth > 0 ? `IN ${formatNum(toRebirth)} LV` : 'READY';
-  const rebirthShort = toRebirth > 0 ? `${formatNum(toRebirth)} LV` : 'READY';
+  const rebirthValue = toRebirth > 0 ? `IN ${formatShort(toRebirth)} LV` : 'READY';
+  const rebirthShort = toRebirth > 0 ? `${formatShort(toRebirth)} LV` : 'READY';
   const railItems = {
     // TILE values (feat/menu-rail-2col, the 2-column desktop rail): the NUMBER big, the unit small — numbers first.
-    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: { full: `${formatNum(nextPowerCost)} WINS`, short: formatNum(nextPowerCost), big: formatNum(nextPowerCost), unit: 'WINS FOR POWER' }, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
-    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: { full: rollValue, short: rollShort, big: rollsAfford > 0 ? formatNum(rollsAfford) : starterWaiting ? 'FREE' : '0', unit: rollsAfford > 0 ? (rollsAfford === 1 ? 'ROLL READY' : 'ROLLS READY') : starterWaiting ? 'ROLL WAITING' : `ROLLS (${formatNum(ROLL_PRICE_GEMS)} GEMS)` }, valueSays: rollValue.toLowerCase(), locked: rollLock },
-    index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: { full: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, short: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, big: `${formatNum(indexCount.base)}/${formatNum(indexCount.total)}`, unit: 'FOUND' }, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
-    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatNum(toRebirth) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
+    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: { full: `${formatShort(nextPowerCost)} WINS`, short: formatShort(nextPowerCost), big: formatShort(nextPowerCost), unit: 'WINS FOR POWER' }, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
+    roll: { onClick: () => openMarks('roll'), dot: rollDot, onHover: hover, value: { full: rollValue, short: rollShort, big: rollsAfford > 0 ? formatShort(rollsAfford) : starterWaiting ? 'FREE' : '0', unit: rollsAfford > 0 ? (rollsAfford === 1 ? 'ROLL READY' : 'ROLLS READY') : starterWaiting ? 'ROLL WAITING' : `ROLLS (${formatShort(ROLL_PRICE_GEMS)} GEMS)` }, valueSays: rollValue.toLowerCase(), locked: rollLock },
+    index: { onClick: () => openMarks('index'), dot: marksNew, onHover: hover, value: { full: `${formatShort(indexCount.base)}/${formatShort(indexCount.total)}`, short: `${formatShort(indexCount.base)}/${formatShort(indexCount.total)}`, big: `${formatShort(indexCount.base)}/${formatShort(indexCount.total)}`, unit: 'FOUND' }, valueSays: `${formatNum(indexCount.base)} of ${formatNum(indexCount.total)} marks`, locked: rollLock },
+    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
@@ -1251,12 +1240,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   );
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
   const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
+  // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
+  // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
+  const rankPlate = SEASON2 ? (
+    <div className="menu-xp-rank hp-rankplate">
+      <span className="hp-rankplate-k">RANK</span>
+      <span className="hp-rankplate-n">{rankTitle(xpProgress.level)}</span>
+    </div>
+  ) : null;
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
       level={barLive ? xpProgress.level : barFrom.level}
       frac={barLive ? xpProgress.frac : barFrom.frac}
       need={barLive ? xpProgress.cost : needAt(barFrom.level)}
+      lvInside={SEASON2}
+      lead={rankPlate}
     />
   );
 
@@ -1295,7 +1294,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             ach={ach}
             achSlot={trophy}
             railItems={railItems}
-            rebirthReadySlot={rebirthReady ? <RebirthReadyButton ready onGo={handleRebirthNow} className="is-compact hp-m-rr-ready" /> : null}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
               : null}
@@ -1341,13 +1339,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             {/* the worn mark lives in the rail's YOUR GEAR slot on the paged (2-column) menu (feat/menu-perrow); the
                 narrower desktop rail and the phone keep the chip */}
             {!isPagedMenu && markChip}
-            {/* v3 (SEASON2): the rank (INKLING … by rebirths, then stars) is a season-2 headline — LABELLED, so a
-                newcomer knows the word is a rank (Andy oct6: nobody may be confused) */}
-            {SEASON2 && <span className="menu-xp-rank hp-rank"><span className="hp-rank-k">RANK</span>{rankTitle(xpProgress.level)}</span>}
             <BoostPill className="menu-boost-pill" />
           </div>
-          {/* REBIRTH READY → ×5 FOREVER (Andy oct3): in flow under the bar it is about (nothing until ready). */}
-          <RebirthReadyButton ready={rebirthReady} onGo={handleRebirthNow} className="is-menu" />
+          {/* NIGHT oct8 #1c: no in-flow REBIRTH READY CTA on the menu — readiness is the REBIRTH tile's dot + READY. */}
         </div>
 
         <div className="homepage-cards-region">

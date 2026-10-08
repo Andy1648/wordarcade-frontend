@@ -7,7 +7,7 @@ const path = process.env.PATHQ || '/?season2=1';
 const seed = process.env.SEED || '';
 fs.mkdirSync(out, { recursive: true });
 const sizes = (process.env.SIZES ? process.env.SIZES.split(' ').map(s=>s.split('x').map(Number)) : [[390, 844], [1280, 800], [1366, 768]]);
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 for (const [w, h] of sizes) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();

@@ -264,6 +264,35 @@ html[data-beat='true'] .homepage-logo {
 .menu-xp-cluster .kx-barwrap { flex: 1 1 auto; }
 .menu-xp-cluster .kx-bar { height: var(--hp-xp-h); border-width: var(--b4); box-shadow: var(--b4) var(--b4) 0 #000; }
 .menu-xp-cluster .kx-read { right: calc(12 * var(--u)); }
+/* NIGHT oct8 #1b (SEASON2): LV rides INSIDE the bar on its plate; the RANK plate takes the old LV slot */
+.menu-xp-cluster .kx.is-lvin { --kx-plate: max(84px, calc(112 * var(--u))); }
+.menu-xp-cluster .kx.is-lvin .kx-lvplate .kx-lv-n { font-size: max(22px, calc(28 * var(--u))); }
+.menu-xp-cluster .kx.is-lvin .kx-lvplate .kx-lv-k { font-size: max(14px, calc(16 * var(--u))); }
+.hp-rankplate {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(2 * var(--u));
+  padding: calc(6 * var(--u)) calc(14 * var(--u)) calc(8 * var(--u));
+  background: #1a0b2e;
+  border: var(--b4) solid #000;
+  border-radius: 8px;
+  box-shadow: var(--b4) var(--b4) 0 #000;
+  line-height: 1;
+  white-space: nowrap;
+}
+.hp-rankplate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(14px, calc(15 * var(--u))); letter-spacing: 0.12em; color: #c9b8e8; }
+.hp-rankplate-n {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: max(22px, calc(38 * var(--u)));
+  color: #FFE94A;
+  -webkit-text-stroke: var(--b4) #000;
+  paint-order: stroke fill;
+  text-shadow: var(--b3, 3px) var(--b3, 3px) 0 #000;
+}
 .menu-xp-cluster .kx-read-n { font-size: var(--fs-hp18); }
 .menu-xp-cluster .kx-read-s,
 .menu-xp-cluster .kx-read-u { font-size: var(--fs-hp13); }
@@ -582,6 +611,8 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   text-shadow: var(--b4) var(--b4) 0 #000;
   white-space: nowrap;
 }
+/* a WORD value (READY, FREE) is wider than a 5-glyph number: 80 % keeps it inside the tile (NIGHT oct8: "READ|Y" clipped) */
+.homepage-stage[data-paged] .hp-rail .kb-rval-big.is-word { font-size: calc(var(--fs-hptile) * 0.72); }
 .homepage-stage[data-paged] .hp-rail .kb-rval-unit { display: none; } /* the number is the tile (Andy oct7: no info lines) */
 /* a locked tile: the padlock + its gate are the value (KitRailButton renders `locked` as the sub) — one line, gold */
 .homepage-stage[data-paged] .hp-rail .kb-rwrap.is-locked .kb-rval { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hptile); color: var(--k-gold, #FFE94A); -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; }

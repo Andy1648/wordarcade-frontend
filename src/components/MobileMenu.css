@@ -291,8 +291,6 @@
   .hp-m-rail .kb-rlabel { font-size: var(--fs-k13); }
   .hp-m-rail .kb-rdot { left: auto; right: -6px; top: -8px; width: 18px; height: 18px; }
   .hp-m-rail .kb--rail:disabled { opacity: 0.6; pointer-events: none; }
-  /* The REBIRTH READY → ×5 FOREVER CTA rides under the level bar. */
-  .hp-m > .hp-m-rr-ready { flex: 0 0 auto; }
 
   .hp-m-credits {
     /* a text link, still a 44px tap target; 16px — tappable text never goes under --fs-body */
@@ -331,6 +329,17 @@
   .hp-m-xp .kx-lv-n { font-size: var(--fs-k32); text-shadow: 3px 3px 0 #000; }
   .hp-m-xp .kx-bar { height: 22px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .hp-m-xp .kx-read { right: 8px; }
+  /* NIGHT oct8 #1b: LV inside the bar (a taller bar so the numeral reads), the RANK plate in the old LV slot */
+  .hp-m-xp .kx.is-lvin { --kx-plate: 64px; }
+  .hp-m-xp .kx.is-lvin .kx-bar { height: 32px; }
+  .hp-m-xp .kx.is-lvin .kx-lvplate .kx-lv-n { font-size: 20px; }
+  .hp-m-xp .kx.is-lvin .kx-lvplate .kx-lv-k { font-size: 14px; }
+  .hp-m-xp .kx.is-lvin .kx-read-n,
+  .hp-m-xp .kx.is-lvin .kx-read-s,
+  .hp-m-xp .kx.is-lvin .kx-read-u { font-size: 14px; }
+  .hp-m-xp .hp-rankplate { padding: 4px 8px 5px; gap: 1px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
+  .hp-m-xp .hp-rankplate-k { font-size: 14px; letter-spacing: 0.06em; }
+  .hp-m-xp .hp-rankplate-n { font-size: 18px; -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   .hp-m-xp .kx-read-n { font-size: var(--fs-k13); }
   .hp-m-xp .kx-read-s,
   .hp-m-xp .kx-read-u { font-size: var(--fs-k13); }
