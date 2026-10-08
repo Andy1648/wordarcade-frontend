@@ -39,7 +39,6 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* ---- top: INDEX n/N · ROLL · gems pill + close ---- */
 .rs-top {
   position: relative;
-  z-index: 1;
   display: grid;
   grid-template-columns: auto auto auto minmax(0, 1fr) auto;
   align-items: center;
@@ -399,20 +398,52 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn:hover { transform: translate(-2px, -2px); }
 .rs-auto-btn:active { transform: translate(6px, 6px); box-shadow: 0 0 0 #000; }
 .rs-auto-cap { font-size: var(--fs-body); color: #c9b8e8; }
-.rs-pick { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-body); color: #c9b8e8; }
-.rs-select {
+/* SKIP (R4): a stepper — SKIP · ◀ · "< EPIC" on a plate in the tier colour · ▶. Flat, thick purple outline (the
+   INDEX button's), hard ink shadow, 44px targets; a dead end (nothing below COMMON / above SECRET) hatches out. */
+.rs-skip { display: inline-flex; align-items: center; gap: 8px; }
+.rs-skip-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #c9b8e8; letter-spacing: 0.06em; }
+.rs-skip-btn {
+  flex: none;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   min-height: 44px;
-  padding: 0 10px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #FFE94A;
   background: #1a0b2e;
   border: 3px solid #5c0fa3;
+  border-radius: 0;
   box-shadow: 3px 3px 0 #000;
   cursor: pointer;
+  transition: transform 120ms;
 }
-.rs-select option { color: #0d0618; background: #fff; }
+.rs-skip-btn svg { display: block; }
+.rs-skip-btn:hover { transform: translate(-1px, -1px); }
+.rs-skip-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #000; }
+.rs-skip-btn:disabled { color: #5a4f8a; border-color: #2e1a4a; cursor: default; box-shadow: 3px 3px 0 #000; transform: none; }
+.rs-skip-v {
+  min-width: 136px;
+  height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k18);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--rs-tier, #fff);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  background: #0d0618;
+  border: 3px solid #5c0fa3;
+  box-shadow: 3px 3px 0 #000;
+}
 
 /* ---- the RARE flash (over the band) and the EPIC+ rarity WASH (over the screen): flat colour, opacity one-shots ---- */
 .rs-flash { position: absolute; inset: 0; z-index: 2; background: #fff; opacity: 0; pointer-events: none; }
@@ -490,12 +521,19 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 .rs-result .mr-shiny { position: static; }
 
+/* ---- tall desktops (1920x1080): the 200px card sat in a 800px panel — the reel scales up to fill it (LAYOUT PASS R4b) ---- */
+@media (min-width: 1200px) and (min-height: 900px) {
+  .rs-overlay { --cw: 288px; --cs: 1.6; --band: calc(var(--cw) * 1.4444 + 48px); }
+  .rs-cut { --mc-w: 270px; --mc-s: 1.5; } /* the reveal card stays a step above the reel's */
+  .rs-cut.is-full { --mc-w: 324px; --mc-s: 1.8; }
+}
+
 /* ---- shorter laptops (1366x657, 1280x551) ---- */
 @media (max-height: 760px) {
   .rs-overlay { gap: 8px; padding-top: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); --cw: 216px; --cs: 1.2; --band: calc(var(--cw) * 1.4444 + 22px); }
   .rs-index-btn, .rs-close, .rs-gems-bal, .rs-equipped { min-height: 48px; height: 48px; }
   .rs-roll { height: 96px; width: 340px; }
-  .rs-roll-lbl { font-size: var(--fs-h2); }
+  .rs-roll-lbl { font-size: var(--fs-k34); } /* "HOLD TO ROLL" at h2 (42px) ran border to border on the 340 slab */
   .rs-auto-btn { min-height: 56px; }
   .rs-pity { gap: 8px; }
   .rs-pity-row { padding: 6px 12px 8px; }
@@ -523,8 +561,14 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 
 /* ---- phones ---- */
 @media (max-width: 480px) {
-  .rs-overlay { gap: 8px; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); --gut: 12px; --cw: 180px; --cs: 1; --band: calc(var(--cw) * 1.4444 + 16px); }
+  .rs-overlay { gap: 8px; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); --gut: 12px; --cw: 180px; --cs: 1; --band: calc(var(--cw) * 1.4444 + 12px); }
   .rs-top { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px; }
+  /* NO GEMS on a phone: the −N chip HANGS under the gems pill as a badge (beside it, it ran into INDEX at 360 wide; as a
+     second row it pushed the band out of the stage — LAYOUT PASS R4b). It is only ever up with no spin running (a paid
+     roll clears it), so lifting it over the stage never fights the slowdown dim. */
+  .rs-sub { position: relative; }
+  .rs-sub:has(.rs-msg[data-need]) { z-index: 4; }
+  .rs-msg { position: absolute; right: 0; top: calc(100% + 6px); }
   .rs-equipped { display: none; }
   .rs-topr { grid-column: 4; }
   .rs-close { padding: 0 10px; letter-spacing: 0; }
@@ -537,8 +581,14 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-gems-bal .gem-icon { width: 22px; height: 22px; }
   .rs-need { font-size: var(--fs-body); padding: 2px 6px; }
   .rs-topr { gap: 8px; }
-  .rs-res-name, .rs-res-num { -webkit-text-stroke: 3px #000; }
-  .rs-res-kind { font-size: var(--fs-body); }
+  /* the result LINE on a phone is TWO rows (name · NEW / stat · ×N · +EXTRA) — it was reserved one, and the second
+     pushed the band's top out of the stage (LAYOUT PASS R4b): the slot reserves two tight rows, the band gives 4px */
+  .rs-result-slot { min-height: 52px; }
+  .rs-result { gap: 2px 8px; }
+  .rs-res-name, .rs-res-num { font-size: var(--fs-k18); -webkit-text-stroke: 3px #000; }
+  .rs-res-kind { font-size: var(--fs-k14); }
+  .rs-chip { padding: 1px 6px; font-size: var(--fs-k14); border-width: 2px; box-shadow: 2px 2px 0 #000; }
+  .rs-chip.is-dupe { font-size: var(--fs-k16); }
   .rs-res-pips { --pip: 16px; }
   .rs-controls { gap: 10px 12px; }
   .rs-roll { width: 100%; height: 92px; box-shadow: 6px 6px 0 #000; }
@@ -551,16 +601,44 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-controls { grid-template-columns: minmax(0, 1fr); }
   .rs-pity { grid-row: 2; width: 100%; }
   .rs-opts { grid-row: 3; justify-self: stretch; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-  .rs-auto-cap, .rs-pick { font-size: var(--fs-body); }
+  .rs-auto-cap { font-size: var(--fs-body); }
+  /* phones: AUTO and the stepper share one 336px row — the SKIP word goes (the plate's "<" + the arrows say it), the
+     plate takes what is left at 16px, so "AUTO: OFF · ◀ < LEGENDARY ▶" fits 360 wide on one row */
+  .rs-skip { flex: 1 1 100%; min-width: 0; gap: 6px; }
+  .rs-skip-k { display: none; }
+  .rs-skip-v { flex: 1 1 auto; min-width: 0; padding: 0 4px; font-size: var(--fs-k16); -webkit-text-stroke: 2px #000; }
+  .rs-auto-btn { flex: none; }
+  /* AUTO ON: "AUTO → LEGENDARY+" pushed TAP TO SET TARGET onto its own row, and that row came out of the stage (the
+     band lost its padding at 390x844) — the caption is the OFF state's hint, so it goes while a target is set */
+  .rs-opts:has(.rs-auto-btn.is-on) .rs-auto-cap { display: none; }
   .rs-cut { --mc-w: 180px; --mc-s: 1; }
   .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
 @media (max-width: 480px) and (max-height: 700px) {
-  .rs-overlay { --cw: 112px; --cs: 0.6222; --band: calc(var(--cw) * 1.4444 + 10px); }
-  .rs-roll { height: 76px; }
+  /* 112px cards left a hole under the band at 360x640 — 120 fills it (the two-row result line still fits: the EPIC+ bar
+     row below pays for it) */
+  .rs-overlay { --cw: 120px; --cs: 0.6667; --band: calc(var(--cw) * 1.4444 + 10px); }
+  .rs-stage { padding: 6px 0 4px; }
+  .rs-shake { gap: 6px; }
+  .rs-roll { height: 72px; }
   .rs-roll-lbl { font-size: var(--fs-panel); }
+  .rs-rollcol { gap: 6px; }
+  .rs-pity-big { line-height: 1; }
+  /* short phones (360x640): the EPIC+ BAR row goes — its number is the big EPIC+ IN headline right above it — so the
+     two-row result line fits the stage (LAYOUT PASS R4b; the legendary row stays: it carries the other number) */
+  .rs-pity-row.is-epic { display: none; }
   .rs-auto-btn { min-height: 44px; }
   .rs-auto-cap { display: none; }
+  .rs-opts { flex-wrap: nowrap; }
+  .rs-skip { flex: 1 1 auto; } /* short phones: AUTO + the stepper on ONE row (the caption is gone) */
+  /* …except while AUTO is ON: "AUTO → LEGENDARY+" + ◀ < LEGENDARY ▶ cannot share 336px (the plate clipped onto the ▶
+     button) — the stepper drops to its own row for the length of the run (LAYOUT PASS R4b) */
+  .rs-opts:has(.rs-auto-btn.is-on) { flex-wrap: wrap; }
+  .rs-opts:has(.rs-auto-btn.is-on) .rs-skip { flex: 1 1 100%; }
+  /* "< LEGENDARY" spilled out of its plate beside AUTO: OFF at 360 wide — 14px + tighter gaps keep it inside */
+  .rs-opts { gap: 6px; }
+  .rs-auto-btn { padding: 0 8px; }
+  .rs-skip-v { font-size: var(--fs-k14); letter-spacing: 0; }
   .rs-cut, .rs-cut.is-full { --mc-w: 162px; --mc-s: 0.9; }
 }
 

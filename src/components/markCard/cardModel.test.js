@@ -52,7 +52,7 @@ test('locked: "???", no pips, still the odds + the ★0 stat', () => {
 test('permanent marks: PERMANENT, no odds, their MAIN on wins + XP', () => {
   for (const p of PERMANENT_MARKS) {
     const c = cardModel({ id: p.id, kind: 'perm', tier: 'permanent', name: p.name });
-    assert.equal(c.rarityName, 'PERMANENT');
+    assert.equal(c.rarityName, 'EARNED'); // R4: the PERMANENT tier's LABEL is EARNED (the id stays 'permanent')
     assert.equal(c.odds, '');
     assert.equal(c.statKind, 'WINS + XP');
     assert.equal(c.tier, 'permanent');

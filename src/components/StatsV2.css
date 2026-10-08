@@ -72,7 +72,9 @@
   z-index: 1;
   text-transform: uppercase;
 }
-.st2-back:hover { color: #FFE94A; }
+@media (hover: hover) {
+  .st2-back:hover { color: #FFE94A; transform: translate(-2px, -2px); } /* R5 oct8 #3: lifts like every kit button */
+}
 .st2-back:active { transform: translate(3px, 3px); }
 .st2-title {
   position: absolute;

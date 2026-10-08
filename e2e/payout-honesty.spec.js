@@ -115,12 +115,10 @@ for (const s of SETUPS) {
     });
     myTurn();
 
-    // THE IN-GAME QUOTE: the LiveStack in the receipt slot before the first word — the same as the card on
-    // every difficulty (Rebirth Rush: difficulty pays nothing).
-    const lstack = page.locator('.wb-receipt-rail .lstack-rate');
-    await expect(lstack).toBeVisible();
-    const stackWins = num(await lstack.innerText());
-    expect(stackWins * 10, `in-game quote = card × ${s.label} ×${DIFF_MULT[s.diff]}`).toBeCloseTo(cardXp * DIFF_MULT[s.diff], 6);
+    // NIGHT oct8 R4: the standing in-game quote (LiveStack in the receipt slot) is OFF the Word Bomb HUD (Andy: it
+    // covered the board). The slot stays docked and empty before the first word; the card and every receipt below
+    // still carry the per-word honesty check.
+    await expect(page.locator('.wb-receipt-rail .lstack')).toHaveCount(0);
 
     const rows = [];
     let released = 0; // receipt XP of words the 3-word gate is still holding

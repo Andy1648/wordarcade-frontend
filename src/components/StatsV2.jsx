@@ -127,14 +127,12 @@ function ChipIcon({ kind, c }) {
       );
       break;
     case 'power':
+      // R5 oct8 #1: the POWER BOLT (was a key) — the kit `power` path at 0.4, same construction (fill, shade ↘, glint ↖)
       body = (
-        <g transform="rotate(-30 20 20)">
-          <rect x="18" y="17" width="20" height="7" fill={c} />
-          <rect x="29" y="23" width="4" height="7" fill={c} />
-          <rect x="34" y="23" width="4" height="5" fill={c} />
-          <circle cx="11" cy="20" r="9" fill={c} />
-          <circle cx="11" cy="20" r="3.5" fill="#0d0618" strokeWidth="2.5" />
-          <path d="M5 16 A7 7 0 0 1 9 12.5" stroke="#fff" strokeWidth="2.5" fill="none" />
+        <g transform="rotate(4 20 20)">
+          <path d="M26.4 0.8 L8 22.4 L18.4 22.4 L11.2 39.2 L33.6 18.4 L23.2 18.4 Z" fill={c} />
+          <path d="M33.6 18.4 L11.2 39.2 L13.6 33.6 L29.6 18.4 Z" fill="#b8860b" stroke="none" opacity="0.55" />
+          <path d="M23.2 5.6 L13.6 17.6" stroke="#fff" strokeWidth="2.5" fill="none" />
         </g>
       );
       break;

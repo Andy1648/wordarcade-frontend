@@ -2,7 +2,9 @@
 // One card everywhere a mark is shown big: the reel cells, the EPIC dim reveal, the LEGENDARY+ full reveal, the
 // INDEX tiles and the INDEX detail sheet.
 //
-//   header   RARITY                    (the tier colour bar)
+//   frame    CardFrame.jsx (R4): vector art — the tier-colour frame outlined in its darker shade, the rarity plate,
+//            the rosette behind the cog, the name ribbon, the stat / perk / odds bands, LEGENDARY+ pins, the shadow
+//   header   RARITY                    (on the rarity plate)
 //   art      the COG (tier-coloured teeth; rainbow on SECRET) + the glyph (shade, highlight, extras, hard shadow);
 //            a dupe shows as a small "×N" tag on the art (NIGHT oct8 #4: no ★ row — colour is for rarity only)
 //   name     white, ink-stroked, BIG (sized by its length so it fits one line)
@@ -24,6 +26,7 @@ import MarkBadge, { CogRing, RANK_RIMS } from '../MarkBadge';
 import ShinyBadge from '../rollScreen/ShinyBadge';
 import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
+import CardFrame from './CardFrame.jsx';
 import { cardModel } from './cardModel.js';
 import './MarkCard.css';
 
@@ -36,7 +39,7 @@ function MarkCard({
   const c = cardModel({ id, kind, tier, name, locked, state });
   const pal = CARD_RAR[cardTier(c.tier)];
   const hi = c.hi && !locked;
-  const style = { '--mc-line': pal.line, '--mc-fill': locked ? LOCKED.fill : pal.fill };
+  const style = { '--mc-line': pal.line, '--mc-edge': pal.edge, '--mc-fill': locked ? LOCKED.fill : pal.fill };
   if (w) {
     style['--mc-w'] = `${w}px`;
     style['--mc-s'] = w / 180;
@@ -52,6 +55,8 @@ function MarkCard({
       data-tier={c.tier}
     >
       <div className="mc-face">
+        {/* R4: the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}
+        <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} perk={!!c.perk} />
         <div className={`mc-head${parts.head ? ` ${parts.head}` : ''}`}>
           <span className={`mc-tier${parts.tier ? ` ${parts.tier}` : ''}`}>{c.rarityName}</span>
         </div>
