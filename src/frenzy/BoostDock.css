@@ -1,0 +1,71 @@
+/* BoostDock — the bottom-right boost timers, stacked above the corner 🔊 button (inside .audio-ctrl). Flat panel,
+   thick coloured outline (darker shade of the fill), hard black offset shadow — the house look. */
+.boost-dock {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none; /* the tiles inform; the button under them stays the only control */
+}
+.bd-tile {
+  --bd-tone: #FFE94A;
+  --bd-line: #B8A215;
+  /* [×10 ] OVERDRIVE
+     [4:46] XP + WINS      — the number first, then what it is, then what it boosts */
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-areas: 'mult name' 'clock what';
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  width: 236px;
+  max-width: 100%;
+  padding: 6px 10px 6px 6px;
+  box-sizing: border-box;
+  background: #1a0b2e;
+  border: 3px solid var(--bd-line);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  color: #fff;
+  animation: bd-in 260ms cubic-bezier(.2, 1.4, .4, 1) both;
+}
+@keyframes bd-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.bd-boost1.bd-tile, .bd-rush.bd-tile { --bd-tone: #FF4FA3; --bd-line: #B8226E; }
+.bd-frenzy.bd-tile { --bd-tone: #FF6B3D; --bd-line: #B8401C; }
+.bd-xp.bd-tile { --bd-tone: #2EFFE0; --bd-line: #12A99A; }
+.bd-wins.bd-tile { --bd-tone: #FFE94A; --bd-line: #B8A215; }
+.bd-luck.bd-tile, .bd-boost2.bd-tile { --bd-tone: #9A1AFF; --bd-line: #5E0FA0; }
+.bd-mult {
+  grid-area: mult;
+  height: 32px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bd-tone);
+  border: 3px solid #000;
+  border-radius: 6px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k18);
+  color: #0d0618;
+}
+.bd-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k15); color: var(--bd-tone); white-space: nowrap; }
+/* the full 'what it boosts' line: it wraps rather than clips */
+.bd-what { grid-area: what; min-width: 0; line-height: 1.15; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); color: #c9b8e8; }
+.bd-clock { grid-area: clock; text-align: center; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k18); font-variant-numeric: tabular-nums; }
+.bd-tile.is-ending .bd-clock { color: #FF3D7F; }
+.bd-tile.is-ending { animation: bd-in 260ms cubic-bezier(.2, 1.4, .4, 1) both, bd-pulse 1s ease-in-out 10; }
+@keyframes bd-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+@media (max-width: 760px) { .boost-dock { display: none; } }
+@media (prefers-reduced-motion: reduce) { .bd-tile, .bd-tile.is-ending { animation: none; } }

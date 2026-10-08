@@ -7,6 +7,10 @@
   right: 16px;
   bottom: 16px;
   z-index: 70; /* above game-over / countdown overlays so it's always reachable */
+  /* the BoostDock tiles stack ABOVE the button, right-aligned with it (Andy oct8 bottom-right boost timers) */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 /* fix/visual-real item 4: INLINE variant — the control sits inside the menu's corner-nav cluster
    (a normal flex item, not a fixed orphan). position:relative so its absolutely-positioned popover
@@ -17,6 +21,7 @@
   right: auto;
   bottom: auto;
   z-index: 6;
+  display: block;
 }
 /* fix/visual-real item 4 (round 2): give the inline button the SAME treatment as the SHOP / STATS
    nav buttons — square-cornered, 3px black border, hard offset shadow, flat fill — so it reads as

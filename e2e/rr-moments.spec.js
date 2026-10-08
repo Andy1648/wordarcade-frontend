@@ -23,12 +23,22 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.overdrive', JSON.stringify({ playMs: 0, nextMs: 30 * 60000, until: Date.now() + 4 * 60000 + 30000 }));
     });
-    const pill = page.getByTestId('overdrive-pill');
-    await expect(pill).toBeVisible();
-    await expect(pill).toContainText('OVERDRIVE ×10');
-    await expect(pill.locator('.boost-pill-clock')).toHaveText(/^[34]:\d\d$/);
-    // a code BOOST is not running, so only the OVERDRIVE pill is in the slot
-    await expect(page.locator('.boost-pill:not(.od-pill)')).toHaveCount(0);
+    if (vp.width >= 1200) {
+      // desktop: the bottom-right BOOST dock (Andy oct8) — one OVERDRIVE tile, nothing else running
+      const tile = page.locator('.hp-dock--grid .bd-tile.bd-rush');
+      await expect(tile).toBeVisible();
+      await expect(tile.locator('.bd-name')).toHaveText('OVERDRIVE');
+      await expect(tile.locator('.bd-mult')).toHaveText('×10');
+      await expect(tile.locator('.bd-clock')).toHaveText(/^[34]:\d\d$/);
+      await expect(page.locator('.hp-dock--grid .bd-tile')).toHaveCount(1);
+    } else {
+      const pill = page.getByTestId('overdrive-pill');
+      await expect(pill).toBeVisible();
+      await expect(pill).toContainText('OVERDRIVE ×10');
+      await expect(pill.locator('.boost-pill-clock')).toHaveText(/^[34]:\d\d$/);
+      // a code BOOST is not running, so only the OVERDRIVE pill is in the slot
+      await expect(page.locator('.boost-pill:not(.od-pill)')).toHaveCount(0);
+    }
   });
 
   test(`OVERDRIVE: an ended taw.overdrive shows no pill @ ${vp.width}`, async ({ page }) => {
@@ -38,6 +48,7 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
       localStorage.setItem('taw.overdrive', JSON.stringify({ playMs: 0, nextMs: 30 * 60000, until: Date.now() - 1000 }));
     });
     await expect(page.getByTestId('overdrive-pill')).toHaveCount(0);
+    await expect(page.locator('.bd-tile')).toHaveCount(0);
   });
 }
 
