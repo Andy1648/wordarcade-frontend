@@ -21,7 +21,8 @@ const ALL_IDS = [...new Set([...ROLL_MARKS.map((m) => m.id), ...PERMANENT_MARKS.
 test('every mark id has a glyph and a finish body (shade + highlight)', () => {
   for (const id of ALL_IDS) {
     assert.ok(glyphSrc.includes(`'${id}': (`), `${id} has no glyph`);
-    assert.ok(finishSrc.includes(`'${id}': [`), `${id} has no finish body`);
+    // a finish body, or kit-drawn (markGlyphFinish.jsx KIT_DRAWN — the shade + glint are in the art itself)
+    assert.ok(finishSrc.includes(`'${id}': [`) || finishSrc.includes(`'${id}',`), `${id} has no finish body`);
   }
 });
 
