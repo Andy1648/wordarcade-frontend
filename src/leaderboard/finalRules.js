@@ -6,16 +6,16 @@
 // finalRules.test.js pins the SQL text against them.
 //
 // FINAL v3 levels are geometric (need(n) = 100 × 1.15^(n−1)) and a rebirth sends the level back to 1 at the gate
-// LV 18 + 20·R, so a stored level sits near or below that gate. The caps:
+// LV 15 + 18·R, so a stored level sits near or below that gate. The caps:
 //   * FIRST season-2 write (never submitted, or a row whose last write was not season 2): a baseline — rebirths ≤
 //     lifetime words / F_WORDS_PER_RB, level ≤ the next gate + F_LV_HEADROOM; no weekly words;
 //   * after that: rebirths never rise on a submit (lb_rebirth only), stars are never written (lb_ascend only); the
-//     level is free up to 18 + 20·R + F_LV_HEADROOM, or the stored level + F_LEVELS_PER_SEC a second since the last
+//     level is free up to 15 + 18·R + F_LV_HEADROOM, or the stored level + F_LEVELS_PER_SEC a second since the last
 //     accepted write (banking F_LEVEL_BANK_SECS) — whichever is higher; clamped, never rejected; ≤ the int column;
 //   * words / letters rate-checked as 011/013/015 (too fast → rejected); a lower number is a RESET (017).
 export const F_ECON = 13;
-export const F_GATE_BASE = 18; // the rebirth gate: LV 18 + 20·R
-export const F_GATE_STEP = 20;
+export const F_GATE_BASE = 15; // the rebirth gate: LV 15 + 18·R
+export const F_GATE_STEP = 18;
 export const F_LV_HEADROOM = 100; // levels allowed past the next gate (≈ 40 min of median play past it)
 export const F_LEVELS_PER_SEC = 1; // or + 1 level a second since the last accepted write (≫ the ~0.04/s honest pace) …
 export const F_LEVEL_BANK_SECS = 1200; // … banking 20 min
@@ -30,7 +30,7 @@ const int = (v, min, d) => {
   return Math.max(min, Number.isFinite(n) ? Math.floor(n) : d);
 };
 
-/** The level room at `rebirths`: 18 + 20·R + 100 (capped at the int column). */
+/** The level room at `rebirths`: 15 + 18·R + 100 (capped at the int column). */
 export function finalLevelRoom(rebirths) {
   return Math.min(F_LV_MAX, F_GATE_BASE + F_GATE_STEP * int(rebirths, 0, 0) + F_LV_HEADROOM);
 }

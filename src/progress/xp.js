@@ -898,4 +898,5 @@ export function __v3(o) {
   // eslint-disable-next-line no-func-assign
   ({ a: needAt, b: keyXpMult, c: rebirthPow, d: levelXpPerLetter, e: tableRebirthThreshold, f: keyTierXp, g: keyTierCostAt, h: creditXp, i: xpPerWord } = o);
   if (o.j) modePower = o.j; // eslint-disable-line no-func-assign
+  if (o.k) xpPerInput = o.k; // eslint-disable-line no-func-assign
 }

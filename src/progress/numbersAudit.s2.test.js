@@ -3,8 +3,8 @@
 //   1. multiplies out AS DISPLAYED — the printed BASE × every printed chip lands on the printed TOTAL (to display
 //      precision: chips print exact to 2 decimals below ×10,000);
 //   2. multiplies out EXACTLY — BASE × every chip value = TOTAL;
-//   3. TOTAL is what the game PAYS — perWordRateNow / letterXpNow, the real bank (bankWordWins) and the real letter
-//      credit (creditLetterXp);
+//   3. TOTAL is what the game PAYS — perWordRateNow / letterXpNow, the real bank (bankWordWins) and the real MENU KEY
+//      credit (xpPerInput — v4: the menu is the only XP source; a game letter, creditLetterXp, pays 0);
 //   4. TOTAL is PROGRESSION FINAL's formula (v3/econ.js, claude/progression-FINAL.md):
 //        XP / letter = 10 × 2.5^P × 2^R × (1 + ★) × MARK
 //        WINS / word = 22 × len/5 × MODE × 2^R × (1 + ★) × MARK   (MODE: WB/Blitz 1 · RACE 1.5 · CHAIN 2 · SAT 3 · FUSE 1)
@@ -29,7 +29,7 @@ const { V3 } = await import('./season.js');
 await import('./v3/install.js');
 const { statBoard, statChain, boardMult } = await import('./statBoard.js');
 const { perWordRateNow, bankWordWins, getWins } = await import('./wins.js');
-const { letterXpNow, creditLetterXp, resetLetterXp } = await import('./letterXp.js');
+const { letterXpNow, creditLetterXp, resetLetterXp, markXpBoost } = await import('./letterXp.js');
 const { roundWordXp, xpPerInput, keyTierCost } = await import('./xp.js');
 const { ROLL_STATE_KEY } = await import('./markRolls.js');
 const { MARKS_EQUIPPED_KEY } = await import('./marks.js');
@@ -148,9 +148,9 @@ test('FINAL v3: XP / LETTER chain — BASE 1 × (10 + N)/10 × KEY 2^T × REBIRT
       const idx = indexMult(loadRollState());
       const final = E.xpPerLetter({ power: st.p, rebirths: st.r, stars: st.s, mark: fm.xp * idx, markBase: fm.xpBase });
       relClose(c.total, final, 1e-12, `${tag}: TOTAL is FINAL's formula`);
-      // a game letter credits exactly TOTAL (season 2: a typed game letter pays ×1 at once)
-      const r = creditLetterXp(1, { mode: 'chain' });
-      relClose(r.xp, c.total, 1e-12, `${tag}: one letter credits TOTAL (season 2 keeps the fraction)`);
+      // v4 "SIMPLE": a MENU key credits exactly TOTAL (the full rate, unrounded); a game letter credits nothing
+      relClose(xpPerInput({ mode: 'menu', markMult: markXpBoost() }), c.total, 1e-12, `${tag}: one menu key credits TOTAL`);
+      assert.equal(creditLetterXp(1, { mode: 'chain' }), null, `${tag}: a game letter pays 0 XP`);
       n += 1;
     }
   }
@@ -163,20 +163,22 @@ test('FINAL mark tiers reach the rolled pool: LEGENDARY ×2, MYTHIC +20 BASE (×
   assert.equal(rollMarkById('mk-origin').stat.value, 400);
 });
 
-// The menu's rate line and the rail's UPGRADES tile at the very start (T0 R0, nothing worn): "MENU +1 XP / KEY · GAMES +1
-// XP / LETTER", and the UPGRADES tile prints the T1 price (150 wins).
-test('FINAL v3 at T0 R0: a menu key pays +1 XP (×0.2 rounded, floor 1), a game letter +1 XP; UPGRADES shows the T1 price 150', () => {
+// The menu's rate line and the rail's UPGRADES tile at the very start (T0 R0, nothing worn): "+1 XP / KEY" (v4: one
+// number — games pay wins only), and the UPGRADES tile prints the T1 price (150 wins).
+test('v4 at T0 R0: a menu key pays +1 XP, a game letter 0; POWER doubles it at once (T1 = 2, T2 = 4); UPGRADES shows 150', () => {
   localStorage.clear();
-  assert.equal(xpPerInput({ mode: 'menu' }), 1, 'MENU +1 XP / KEY');
-  assert.equal(letterXpNow(), 1, 'GAMES +1 XP / LETTER');
+  assert.equal(xpPerInput({ mode: 'menu' }), 1, '+1 XP / KEY');
+  assert.equal(letterXpNow(), 1, 'the rate line reads letterXpNow: +1');
   resetLetterXp();
-  assert.equal(creditLetterXp(1, { mode: 'chain' }).xp, 1, 'one game letter credits 1');
+  assert.equal(creditLetterXp(1, { mode: 'chain' }), null, 'a game letter credits nothing');
   assert.equal(keyTierCost(0), 150, 'UPGRADES: the T1 price');
   assert.deepEqual([1, 2, 3].map((t) => keyTierCost(t)), [750, 3750, 18750]);
-  // the menu key's floor: ×0.2 of 1, 2 and 4 XP all round to 0 → 1; at 8 XP a letter (T3) it is 2
-  localStorage.setItem('taw.keytier', '2');
-  assert.equal(xpPerInput({ mode: 'menu' }), 1);
-  localStorage.setItem('taw.keytier', '3');
-  assert.equal(xpPerInput({ mode: 'menu' }), 2);
+  // no ×0.2 share, no rounding, no floor: every POWER tier shows on the very next key
+  for (const [t, xp] of [[1, 2], [2, 4], [3, 8]]) {
+    localStorage.setItem('taw.keytier', String(t));
+    assert.equal(xpPerInput({ mode: 'menu' }), xp, `T${t} = ${xp} a key`);
+  }
+  localStorage.setItem('taw.rebirths', '2');
+  assert.equal(xpPerInput({ mode: 'menu' }), 8 * 9, 'T3 R2 = 2^3 × 3^2 a key');
   localStorage.clear();
 });

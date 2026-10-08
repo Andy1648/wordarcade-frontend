@@ -108,13 +108,13 @@ test('KEY: T → T+1 costs 150 × 5^T wins, ×2^T on XP, one at a time', () => {
   assert.equal(ST3.readCounters().power, 2);
 });
 
-test('REBIRTH: at LV 18 + 20·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
-  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [18, 38, 98, 198]);
-  assert.equal(E.rebirthGate(4), 18 + 20 * 4);
+test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
+  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [15, 33, 87, 177]);
+  assert.equal(E.rebirthGate(4), 15 + 18 * 4);
   reset();
   X.saveKeyTier(4);
-  X.saveProgress({ level: 17, frac: 0 });
-  assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV17 is below the R1 gate');
+  X.saveProgress({ level: 14, frac: 0 });
+  assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV14 is below the R1 gate');
   X.saveProgress({ level: 40, frac: 0.6 });
   let r = STARS.rebirthWithStars();
   assert.deepEqual(r, { rc: 1, stars: 0 });

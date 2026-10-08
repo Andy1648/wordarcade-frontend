@@ -1,10 +1,11 @@
-// e2e/season2.spec.js — PROGRESSION FINAL v3 behind ?season2=1 (claude/progression-FINAL.md v3).
+// e2e/season2.spec.js — PROGRESSION v4 "SIMPLE" (on FINAL v3) behind ?season2=1 (claude/progression-FINAL.md v4).
 // One claimed board player on the season-2 board (boardMock `season2` — 029's REAL write rule + lb_rebirth season 2 with
 // the econ-13 guard), on a desktop and a phone:
-//   * MASHES the menu and LEVELS (ANY key ×0.2, floor 1 XP — mashing is the game; need(17) = 100 × 1.15^16);
-//   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 18 → LV 1, ×3)
-//     — one request, no gems, R1, LV18 → LV1;
-//   * BUYS KEY with wins (150 wins, ×2 XP / LETTER);
+//   * reads the rate line "+1 XP / KEY" (v4: one number — the menu is the only XP source; games pay wins only);
+//   * MASHES the menu and LEVELS (ANY key, the full 1 XP at T0 R0; need(14) = 100 × 1.15^13);
+//   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 15 → LV 1, ×3)
+//     — one request, no gems, R1, LV15 → LV1;
+//   * BUYS KEY with wins (150 wins, ×2 XP / KEY — the rate line reads +6 at T1 R1);
 //   * sees the v3 RANKS (INKLING → TYPO — by rebirths, not by level);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
 //   * CLAIMS an ACHIEVEMENT for GEMS (TYPE WORDS I → +40) — gems come from games / achievements, never a rebirth.
@@ -36,8 +37,8 @@ async function boot(page) {
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, f: 0.5, rc: 7, v: 10 }));
     // a season-1 claim waiting in the inbox — season 2 must not pop it
     localStorage.setItem('taw.claims', JSON.stringify([{ id: 'ach-vol-1', kind: 'achievement', label: 'ACHIEVEMENT — FIRST BLOOD', amount: 50, detail: 'vol-1', ts: 1 }]));
-    // the SEASON-2 save: LV17, almost through it; 500 wins; 150 season-2 words (TYPE WORDS I is ready)
-    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 17, f: 0.985, rc: 0, v: 10 }));
+    // the SEASON-2 save: LV14, almost through it (the R1 gate is LV15); 500 wins; 150 season-2 words (TYPE WORDS I is ready)
+    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 14, f: 0.985, rc: 0, v: 10 }));
     localStorage.setItem('taw.s2.wins', '500');
     localStorage.setItem('taw.s2.count', JSON.stringify({ words: 150 }));
   }, { secret: SECRET, id: row.id });
@@ -68,14 +69,17 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await noClaimPopups(page);
     if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('INKLING');
 
-    // MASH → LEVEL (FINAL v3: ANY key counts, no rate cap): LV17 → LV18 (need(17) = 100 × 1.15^16 ≈ 936 XP, 1.5% left
-    // ≈ 14 XP; a menu key pays ×0.2 of 1 XP, floored to 1 XP, at KEY T0 R0) — gibberish, typed fast
+    // THE RATE LINE (v4 "SIMPLE"): one number, what a menu key pays — +1 XP / KEY at T0 R0 (no MENU / GAMES halves)
+    await expect(page.locator('.hp-per:visible').first()).toHaveText('+1 XP / KEY');
+
+    // MASH → LEVEL (v4: ANY key counts, no rate cap, the full rate): LV14 → LV15 (need(14) = 100 × 1.15^13 ≈ 614 XP,
+    // 1.5% left ≈ 10 XP; a menu key pays 1 XP at KEY T0 R0) — gibberish, typed fast
     await expect.poll(async () => {
       await page.keyboard.type('qwrtzxpvqwrtzxpv', { delay: 20 });
       return (await s2(page)).level;
-    }, { timeout: 30_000 }).toBeGreaterThanOrEqual(18);
+    }, { timeout: 30_000 }).toBeGreaterThanOrEqual(15);
 
-    // REBIRTH (season 2) through the mocked lb_rebirth: LV ≥ 18 on the stored row → LV 1 — the v2 REBIRTH screen (P3):
+    // REBIRTH (season 2) through the mocked lb_rebirth: LV ≥ 15 on the stored row → LV 1 — the v2 REBIRTH screen (P3):
     // HOLD TO REBIRTH (1 s), one request, R0 → R1 in place
     await navControl(page, 'rebirth').click();
     const rb = page.locator('.rb2');
@@ -116,6 +120,8 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect((await s2(page)).wins).toBe('350');
     await page.keyboard.press('Escape');
     await expect(sp).toHaveCount(0);
+    // POWER shows on the very next key: T1 R1 = 2 × 3 = +6 XP / KEY (no ×0.2 share, no rounding)
+    await expect(page.locator('.hp-per:visible').first()).toHaveText('+6 XP / KEY');
 
     // ACHIEVEMENTS (the v2 screen, P3 — the only claim place): the trophy in the nav cluster; TYPE WORDS I pays 40 gems
     await page.locator(phone ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();

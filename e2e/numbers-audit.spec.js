@@ -1,10 +1,10 @@
 // e2e/numbers-audit.spec.js — NUMBERS AUDIT (Andy item 5) behind ?season2=1: every number the menu, UPGRADES, REBIRTH
 // and ROLL screens print for one seeded season-2 save, read off the screen and checked against PROGRESSION FINAL
 // (claude/progression-FINAL.md v3) by hand-worked arithmetic. The save: LV80 (30% in), R3, KEY 2, 50,000 wins, 200 gems,
-// no mark (so XP / LETTER = 1 × 2² × 3³ = 108).
-//   MENU      LV 80 · need(80) = 100 × 1.15^79 · +108 XP / LETTER
+// no mark (so XP / KEY = 1 × 2² × 3³ = 108 — v4: the menu is the only XP source).
+//   MENU      LV 80 · need(80) = 100 × 1.15^79 · +108 XP / KEY
 //   UPGRADES  KEY 2 → 3 · 108 → 216 XP / LETTER (×4 → ×8) · price 150 × 5² = 3,750 wins · wins 50K / gems 200
-//   REBIRTH   BACK TO LV 1 · KEY KEPT · YOU GET ×3 · ×27 → ×81 FOREVER · LV 80 → 1 · gate LV 18 + 20 × 3 = 78
+//   REBIRTH   BACK TO LV 1 · KEY KEPT · YOU GET ×3 · ×27 → ×81 FOREVER · LV 80 → 1 · gate LV 15 + 18 × 3 = 69
 //   ROLL      75 gems a roll · pity EPIC+ / LEGENDARY+ counters on FINAL's 50 / 500
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -55,13 +55,13 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await page.setViewportSize({ width: 1366, height: 768 });
   await boot(page);
 
-  // MENU: the level bar and XP / LETTER
+  // MENU: the level bar and XP / KEY
   const need80 = 100 * 1.15 ** 79;
   const read = page.locator('.menu-xp-bar:visible .kx-read-n');
   await expect(read.nth(0)).toHaveText(fmt(0.3 * need80));
   await expect(read.nth(1)).toHaveText(fmt(need80));
   await expect(page.locator('.menu-xp-bar:visible .kx-lv-n').first()).toHaveText('80');
-  await expect(page.locator('.hp-per:visible').first()).toContainText('+108 XP / LETTER'); // GAMES side of the rate line (feat/menu-perrow)
+  await expect(page.locator('.hp-per:visible').first()).toContainText('+108 XP / KEY'); // v4: the rate line is one number, what a menu key pays
 
   // UPGRADES (KEY): 2 → 3, ×4 → ×8 (2^T), 150 × 5^2 wins
   await navControl(page, 'shop').click();
@@ -75,7 +75,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await page.keyboard.press('Escape');
   await expect(sp).toHaveCount(0);
 
-  // REBIRTH: at LV 18 + 20·R → LV 1, ×3 a rebirth
+  // REBIRTH: at LV 15 + 18·R → LV 1, ×3 a rebirth
   await navControl(page, 'rebirth').click();
   const rb = page.locator('.rb2');
   await rb.waitFor({ state: 'visible' });
@@ -84,7 +84,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await expect(rb.locator('.rb2-get-sub')).toHaveText('×27 → ×81 FOREVER');
   await expect(rb.locator('.rb2-get')).toContainText('→ LV 1');
   await expect(rb.locator('.rb2-hold')).toContainText('LV 80 → 1');
-  await expect(rb.locator('.rb2-gate-txt')).toHaveText('GATE LV 78 — READY');
+  await expect(rb.locator('.rb2-gate-txt')).toHaveText('GATE LV 69 — READY');
   await rb.locator('.rb2-back').click();
   await expect(rb).toHaveCount(0);
 

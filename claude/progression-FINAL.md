@@ -1,4 +1,43 @@
-# TYPE A WORD — PROGRESSION FINAL v3.1 "EACH LEVEL HARDER" (Oct 7 2026, 22:31 ET) — one constant on top of v3
+# TYPE A WORD — PROGRESSION v4 "SIMPLE" (Oct 7 2026, 23:20 ET) — on top of v3.1
+
+Andy 23:20: "games pay wins only, wins buy upgrades, upgrades give more xp/letter." Season 2 only; season 1 is untouched,
+and SEASON2 stays OFF.
+
+## The model
+| piece | v4 (now) | v3.1 |
+|---|---|---|
+| XP source | **MENU keys only**: 1 × 2^POWER × 3^R (× worn gear, × OVERDRIVE) a key. No ×0.2 share, no rounding, no floor, so T1 = 2 a key and T2 = 4, visible at once | menu key ×0.2 (rounded, floor 1) + every game letter ×1 |
+| game letters | **0 XP**. They still feed OVERDRIVE's play clock | 1 × KEY × 3^R each |
+| game words | WINS exactly as before (10 × len/5 × MODE × 3^R × MARK × OVERDRIVE) | same |
+| menu rate line | **"+{n} XP / KEY"**, one number, desktop and phone | MENU +n XP / KEY · GAMES +n XP / LETTER |
+| level curve | 100 × 1.15^(n−1) (unchanged) | same |
+| REBIRTH gate | **LV 15 + 18·R** (R1 LV15, R2 LV33, R5 LV105, R10 LV195). Migration 029 edited to match | LV 18 + 20·R |
+| POWER cost | 150 × 5^T (unchanged) | same |
+| rebirth | ×3, KEY kept (unchanged) | same |
+
+**Why the gate moved:** with XP from the menu only (median 60 keys/min), the median's first rebirth took **31.8 min** at
+18 + 20R, past the 18–25 min hold. Tuning probes (median R1 / R3): gate 16 + 20R → 24.5 min / 3.37 h; 15 + 20R → 21.5 min /
+3.14 h; **15 + 18R → 21.5 min / 2.29 h** (picked: the floor Andy allowed, the same R1, and R3 nearest the old ≈ 2 h);
+POWER cost 75 instead of 150 gave the same R1 at 16 + 20R (20.8 min) but changes two constants, so it was not used.
+
+## Sim — v4 beside v3.1 (real modules, no marks / overdrive, 10 h; first time to R1 / R3 / R5, R at 10 h)
+Bots: the same game play as before, plus menu typing between games: casual 20 keys/min, median 60, fast 150, masher 500.
+| bot | v4 R1 | v4 R3 | v4 R5 | v4 @10 h | v3.1 R1 | v3.1 R3 | v3.1 R5 | v3.1 @10 h |
+|---|---|---|---|---|---|---|---|---|
+| casual | 60 min | 5.81 h | — | R3 | 44.7 min | 5.04 h | — | R3 |
+| **median** | **21.5 min** | **2.29 h** | **8.91 h** | **R5** | 24.0 min | 2.64 h | — | R4 |
+| fast | 9.3 min | 62.8 min | 3.75 h | R6 | 14.3 min | 87.5 min | 8.46 h | R5 |
+| menu-only masher (500 keys/min) | 8.2 min | 3.45 h | — | R3 | 13.2 min | — | — | R2 |
+SPAMMER ends level with the median (R5 LV87). 59,000 spam calls granted 0 rebirths. No game step ever moved the bar (a
+new HARD CHECK). HARD CHECK: PASS.
+- **Fast vs median spreads out:** fast types 2.5× the median's menu keys, and keys are now the only XP. So fast ÷ median
+  pace is ×2.30 at R1 and ×2.38 at R5, and the sim's pace limit went from ×2 to **×2.5**.
+- **Mashing reaches R1 first:** the 500 keys/min masher gets to R1 in 8.2 min, before the median (21.5). After that, games
+  (wins → POWER) win: the masher ends at R3, the median at R5.
+
+---
+
+# (history) TYPE A WORD — PROGRESSION FINAL v3.1 "EACH LEVEL HARDER" (Oct 7 2026, 22:31 ET) — one constant on top of v3
 
 Andy 22:31: "make each level a bit harder than the last." The level curve goes from 1.131 to **1.15**:
 need(n) = 100 × 1.15^(n−1), so each level costs 15% more than the one before it (it was 13.1%). Nothing else changed.

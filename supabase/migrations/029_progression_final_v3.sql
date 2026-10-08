@@ -1,11 +1,12 @@
 -- 029_progression_final_v3.sql — PROGRESSION FINAL v3 "START AT 1" on the server (claude/progression-FINAL.md v3, Andy
--- Oct 7 21:27). v3 changes CONSTANTS only; on the server that is the REBIRTH GATE: LV 15 + 18 × R (027) → LV 18 + 20 × R
--- (the client's v3/econ.js REBIRTH_GATE_BASE / _STEP, CI-sim tuned for a ~20 min first rebirth). Everything else is 027's:
---   * public.lb_rebirth (season 2): needs LEVEL ≥ 18 + 20 × R on the STORED row → rebirths + 1, level = 1. ONE rebirth per
+-- Oct 7 21:27) + v4 "SIMPLE" (Andy Oct 7 23:20 — XP from menu keys only). On the server that is the REBIRTH GATE: v3 had
+-- moved 027's LV 15 + 18 × R to 18 + 20 × R; v4 puts it back at LV 15 + 18 × R (the client's v3/econ.js
+-- REBIRTH_GATE_BASE / _STEP, CI-sim tuned for an 18–25 min first rebirth). The SQL is unchanged apart from those numbers. Everything else is 027's:
+--   * public.lb_rebirth (season 2): needs LEVEL ≥ 15 + 18 × R on the STORED row → rebirths + 1, level = 1. ONE rebirth per
 --     call; idempotent request id; ≤ 2 logged calls a second; ≤ 12 granted rebirths in any rolling hour. A season-2
 --     request needs an econ-13 row. A refusal reports the LEVEL needed ('gate'). Season 0 is 021's (25 × (R+1) → 1).
 --   * public.lb_ascend: still HIDDEN — a season-2 call on a season-2 row is refused ('off').
---   * private.lb_board_write_s2: the level allowance follows the gate — 18 + 20 × R + 100 (the first write and the room);
+--   * private.lb_board_write_s2: the level allowance follows the gate — 15 + 18 × R + 100 (the first write and the room);
 --     every other cap as 027.
 --   * lb_caps is NOT touched.
 --
@@ -35,8 +36,8 @@ returns void language plpgsql security definer set search_path = public, private
 declare pid uuid; old public.profiles; lv bigint; rb bigint; w bigint; l bigint; wk date; delta bigint;
         secs numeric; base_lv bigint; max_rise bigint; is_reset boolean; lv_cap bigint;
         F_ECON constant smallint := 13;
-        F_GATE_BASE constant integer := 18;        -- the rebirth gate: LV 18 + 20 × R
-        F_GATE_STEP constant integer := 20;
+        F_GATE_BASE constant integer := 15;        -- the rebirth gate: LV 15 + 18 × R
+        F_GATE_STEP constant integer := 18;
         F_LV_HEADROOM constant integer := 100;     -- levels allowed past the next gate
         F_LEVELS_PER_SEC constant integer := 1;    -- or + 1 level a second since the last accepted write …
         F_LEVEL_BANK_SECS constant integer := 1200; -- … banking 20 min
@@ -92,7 +93,7 @@ end $$;
 revoke all on function private.lb_board_write_s2(text, integer, integer, bigint, bigint, numeric) from public;
 revoke all on function private.lb_board_write_s2(text, integer, integer, bigint, bigint, numeric) from anon, authenticated;
 
--- ---- lb_rebirth: season 0 = 021's rule; season 2 = FINAL v3 (LV ≥ 18 + 20 × R → level 1) ------------------------
+-- ---- lb_rebirth: season 0 = 021's rule; season 2 = FINAL v3 (LV ≥ 15 + 18 × R → level 1) ------------------------
 -- CHECK ORDER: bad id → profile + row lock → REPLAY → RATE → SEASON (+ econ-13 row for season 2) → GATE → PACE → GRANT.
 create or replace function public.lb_rebirth(p_secret text, p_request_id uuid, p_season smallint default 0)
 returns json language plpgsql security definer set search_path = public, private, pg_temp as $$
@@ -103,8 +104,8 @@ declare pid uuid; old public.profiles; prev public.rebirth_requests; res jsonb; 
         RB_PER_WINDOW constant integer := 12;     -- granted rebirths allowed inside one window
         LOG_KEEP_DAYS constant integer := 30;     -- request-log rows older than this are pruned
         S2_ECON constant smallint := 13;          -- a season-2 request needs a season-2 row
-        GATE2_BASE constant integer := 18;        -- FINAL v3: LV 18 + 20 × R …
-        GATE2_STEP constant integer := 20;        -- … → level 1
+        GATE2_BASE constant integer := 15;        -- v4: LV 15 + 18 × R …
+        GATE2_STEP constant integer := 18;        -- … → level 1
 begin
   if p_request_id is null then return json_build_object('ok', false, 'reason', 'bad_request'); end if;
   pid := private.profile_for_secret(p_secret);
@@ -120,7 +121,7 @@ begin
   select count(*) into recent from public.rebirth_requests
    where profile_id = pid and created_at > now() - interval '1 second';
   if recent >= RATE_PER_SEC then return json_build_object('ok', false, 'reason', 'rate'); end if;
-  -- the gate, from the STORED row: season 0 = 25 × (R+1) (019); season 2 = FINAL v3 18 + 20 × R
+  -- the gate, from the STORED row: season 0 = 25 × (R+1) (019); season 2 = FINAL v3 15 + 18 × R
   gate := case when p_season = 0 then 25 * (old.rebirths::numeric + 1)
                when p_season = 2 and old.econ = S2_ECON then GATE2_BASE + GATE2_STEP * old.rebirths::numeric
                else null end;

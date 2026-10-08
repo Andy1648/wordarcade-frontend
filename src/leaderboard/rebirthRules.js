@@ -3,7 +3,7 @@
 // all run the exact rule the database runs.
 //
 // SEASON 2 = PROGRESSION FINAL v3 (029_progression_final_v3.sql supersedes 027 / 026 / 022's season-2 branch): lb_rebirth
-// needs LEVEL ≥ 18 + 20·R on the stored row → rebirths + 1, level 1 (×3 is the client's multiplier); lb_ascend is
+// needs LEVEL ≥ 15 + 18·R on the stored row → rebirths + 1, level 1 (×3 is the client's multiplier); lb_ascend is
 // HIDDEN — it refuses every season-2 call ('off'). Season 0 (the live game) is unchanged.
 //
 // KEEP IN SYNC WITH 021_server_rebirth.sql (season 0) and 029_progression_final_v3.sql (season 2): the same checks in the same order, the same constants. A change to one
@@ -35,9 +35,9 @@ export const LOG_KEEP_DAYS = 30; // request-log rows older than this are pruned 
 // season 0 — the live rule (019): LV 25 × (R+1)
 export const GATE0_BASE = 25;
 export const GATE0_STEP = 25;
-// season 2 — PROGRESSION FINAL v3 (029): LV 18 + 20·R → level 1. A season-1 row cannot use it (the econ-13 guard below).
-export const GATE2_BASE = 18;
-export const GATE2_STEP = 20;
+// season 2 — PROGRESSION v4 (029): LV 15 + 18·R → level 1. A season-1 row cannot use it (the econ-13 guard below).
+export const GATE2_BASE = 15;
+export const GATE2_STEP = 18;
 export const SEASONS = [0, 2];
 // 022_season2_board.sql: a SEASON-2 request (rebirth or ascend) needs a SEASON-2 row (econ 13 — its last accepted
 // board write came from a season-2 client). Without it a season-1 row could mint ★ / rebirths on the season-2 board
