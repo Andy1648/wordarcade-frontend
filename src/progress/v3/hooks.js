@@ -19,6 +19,7 @@ import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter,
 import { featureOpen } from './unlocks.js';
 import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
+import { frenzyXpMult } from '../frenzy.js'; // FUSE FRENZY = ×25 XP per key for 5 min in season 2 (Andy oct8)
 
 export const SERVER_FLAG_KEY = `${S2_PREFIX}server`; // the server hook's note (read at the NEXT boot)
 const fin = (v, d) => (Number.isFinite(v) ? v : d);
@@ -60,7 +61,7 @@ export const xpSwap = {
       rebirths: fin(rebirthCount, getRebirths()),
       mark: pos(markMult, 1),
       markBase: baseAdd === undefined ? markBaseXp() : pos(baseAdd, 0),
-    }) * stockXpMult(); // the STOCK's +25% XP · 10 MIN (×1 when none is running)
+    }) * stockXpMult() * frenzyXpMult(); // the STOCK's +25% XP · 10 MIN, and a FRENZY's ×25 (×1 when none runs)
   },
   // modePower: the FINAL MODE table (WB / Blitz ×1 · RACE ×1.5 · CHAIN ×2 · SAT ×5 · FUSE ×1) — the receipt reads it
   j: (mode) => modeMult(mode),
