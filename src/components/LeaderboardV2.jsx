@@ -36,6 +36,7 @@ import { V3 } from '../progress/season';
 import { getRebirths } from '../progress/xp';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
+import { BLOCKS } from './PodiumBlocks.jsx';
 
 const fmt = (n) => formatNum(Number(n) || 0);
 const SEEN_KEY = 'taw.s2.lbseen'; // { all: { id: rank }, week: { id: rank } } — the last look, per tab
@@ -70,45 +71,7 @@ async function loadWeek() {
   }
 }
 
-// ---- the podium blocks (vector, verbatim from the mockup; plain white with a lilac side) ----
-function Block1() {
-  return (
-    <svg className="lb2-block" viewBox="0 0 214 262" width="214" height="262" aria-hidden="true" focusable="false">
-      <polygon points="21,39 205,39 205,255 21,255" fill="#000" />
-      <polygon points="11,11 215,11 215,39 11,39" fill="#000" />
-      <polygon points="13,31 197,31 197,247 13,247" fill="#fff" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
-      <polygon points="170,34 194,34 194,244 170,244" fill="#e4ddf0" />
-      <path d="M170 34 L170 244" stroke="#000" strokeWidth="3" />
-      <polygon points="3,3 207,3 207,31 3,31" fill="#fff" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
-      <path d="M6 22 L204 22" stroke="#e4ddf0" strokeWidth="8" />
-      <path d="M30 220 L150 220 M30 230 L150 230" stroke="#000" strokeWidth="3" />
-    </svg>
-  );
-}
-function Block2() {
-  return (
-    <svg className="lb2-block" viewBox="0 0 210 190" width="210" height="190" aria-hidden="true" focusable="false">
-      <polygon points="11,41 41,11 205,11 205,185 11,185" fill="#000" />
-      <polygon points="3,33 33,3 197,3 197,177 3,177" fill="#fff" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
-      <polygon points="168,6 194,6 194,174 168,174" fill="#e4ddf0" />
-      <path d="M168 6 L168 174" stroke="#000" strokeWidth="3" />
-      <path d="M14 150 L156 150" stroke="#000" strokeWidth="3" />
-      <path d="M14 160 L156 160" stroke="#e4ddf0" strokeWidth="6" />
-    </svg>
-  );
-}
-function Block3() {
-  return (
-    <svg className="lb2-block" viewBox="0 0 210 138" width="210" height="138" aria-hidden="true" focusable="false">
-      <polygon points="11,11 205,27 205,135 11,135" fill="#000" />
-      <polygon points="3,3 197,19 197,127 3,127" fill="#fff" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
-      <polygon points="170,20 194,22 194,124 170,124" fill="#e4ddf0" />
-      <path d="M170 20 L170 124" stroke="#000" strokeWidth="3" />
-      <path d="M18 104 L56 104 M70 104 L156 104" stroke="#000" strokeWidth="3" />
-    </svg>
-  );
-}
-const BLOCKS = { 1: Block1, 2: Block2, 3: Block3 };
+// ---- the podium blocks: real vector solids, gold / silver / bronze (R5 oct8 #2 — PodiumBlocks.jsx, imported above) ----
 function Crown({ crownRef }) {
   return (
     <svg ref={crownRef} className="lb2-crown" viewBox="0 0 74 50" width="74" height="50" aria-hidden="true" focusable="false">

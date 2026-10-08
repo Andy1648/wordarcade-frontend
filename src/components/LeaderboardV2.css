@@ -242,9 +242,11 @@
   paint-order: stroke fill;
   text-transform: uppercase;
 }
-.lb2-col--1 .lb2-place { left: calc(13px * var(--pk)); top: calc(46px * var(--pk)); width: calc(157px * var(--pk)); font-size: calc(var(--fs-k100) * 1.32 * var(--pk)); color: #FFC23D; -webkit-text-stroke: 9px #000; text-shadow: 6px 6px 0 #000; }
-.lb2-col--2 .lb2-place { left: 0; top: calc(18px * var(--pk)); width: calc(168px * var(--pk)); font-size: calc(var(--fs-k96) * var(--pk)); color: #2EFFE0; -webkit-text-stroke: 8px #000; text-shadow: 5px 5px 0 #000; }
-.lb2-col--3 .lb2-place { left: 0; top: calc(14px * var(--pk)); width: calc(170px * var(--pk)); font-size: calc(var(--fs-k76) * var(--pk)); color: #FF3D7F; -webkit-text-stroke: 7px #000; text-shadow: 4px 4px 0 #000; }
+/* the rank numerals ride the coloured FRONT face (PodiumBlocks.jsx: gold / silver / bronze) — WHITE with the black stroke
+   + hard shadow so they are the first thing read on every block (R5 oct8 #2); ≥ 18px at the phone's 0.5 scale */
+.lb2-col--1 .lb2-place { left: calc(4px * var(--pk)); top: calc(62px * var(--pk)); width: calc(186px * var(--pk)); font-size: calc(var(--fs-k100) * 1.32 * var(--pk)); color: #fff; -webkit-text-stroke: 9px #000; text-shadow: 6px 6px 0 #000; }
+.lb2-col--2 .lb2-place { left: calc(4px * var(--pk)); top: calc(50px * var(--pk)); width: calc(184px * var(--pk)); font-size: calc(var(--fs-k96) * var(--pk)); color: #fff; -webkit-text-stroke: 8px #000; text-shadow: 5px 5px 0 #000; }
+.lb2-col--3 .lb2-place { left: calc(4px * var(--pk)); top: calc(36px * var(--pk)); width: calc(184px * var(--pk)); font-size: calc(var(--fs-k76) * var(--pk)); color: #fff; -webkit-text-stroke: 7px #000; text-shadow: 4px 4px 0 #000; }
 .lb2-you {
   flex: none;
   padding: 1px 6px;
