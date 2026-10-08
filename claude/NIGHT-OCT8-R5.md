@@ -52,3 +52,15 @@ Decision: a `PodiumBlocks.jsx` SVG component (three blocks, same viewBox sizes a
 - Local: build ✓, lint 0 err, unit 1284/1284, e2e v2-leaderboard 11 passed.
 - Gotcha for next steps: `vite build` must carry the e2e env (VITE_SUPABASE_URL=https://lb.e2e.invalid/rest/v1/ VITE_SUPABASE_ANON_KEY=e2e-anon-key VITE_KIT_GALLERY=1) or the leaderboard nav never mounts in shot scripts.
 - #294 CI: build ✓, e2e shards 1/3/4 ✓, shard 2 running at 17:40.
+
+### Step 3 — DONE → PR #300 (day5b/buttons) — 18:05 UTC
+- Audit: all 22 kit icons rendered at 24/40/64/104 (tools/_shots/_tmp/sheet.mjs). Verdicts: REBIRTH read as a pie/spinner at 24–40 (tiny detached wedge) → redrawn with a 280° arc + fat tangent arrowhead; GEARS' small cog was a blob at 24 → made an extra (drops under 32px). Everything else reads at its size (STATS bars, LEADERBOARD white steps, ACHIEVEMENTS trophy, audio, BACK) — left alone.
+- Buttons: every kit family already lifts −2/−2 and presses ≤ 11px (#269). Non-kit `.lb2-back` / `.st2-back` only recoloured on hover → lift added (hover media query, transform only).
+- Shots: s3-rebirth-gears-24-40-64.png, s3-menu-1366x657.png, s3-menu-390x844.png. Local: lint 0, unit 1284, e2e menu-fit/kit/claims-via-stats/v2-leaderboard 32 passed.
+
+### Step 4 — DONE → PR #301 (day5b/panel, DRAFT, LEFT OPEN) — 18:15 UTC
+- `?panel=hollow` (border only, no fill/shadow) vs `?panel=filled` (current). main.jsx sets html[data-panel] from the query (3 lines); Homepage.css one rule. Shots: s4-panel-{hollow,filled}-{1366x657,1920x1080}.png.
+- My read in the PR: hollow's 4px black frame nearly vanishes on the dark wall at 1366 — if hollow wins, give the frame plum ink or an inner line.
+
+### CI note (18:05)
+- #294 e2e shard 2 failed ONCE on e2e/v2-results.spec.js @1163x450 ("rs2-tally runs into PLAY AGAIN footer") — ResultsV2, a screen #294 doesn't touch; passes locally 4/4 on the branch. Re-ran the failed job once (the one allowed re-run). Main moved meanwhile (#292, #293 merged by round 4b).
