@@ -32,7 +32,8 @@ const NOTE = {
   sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
 };
 
-/** One STOCK card: band · icon · big · what · gem price; SOLD OUT stamp at 0 left. */
+/** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
+ *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
 function StockCard({ it, left, onBuy, floatRef }) {
   const R = V3.stock.RARITY[it.rarity];
   const sold = left <= 0;
@@ -44,16 +45,17 @@ function StockCard({ it, left, onBuy, floatRef }) {
       className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
-      ariaLabel={`${it.big} ${it.what} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
+      ariaLabel={`${it.name || ''} ${it.big} ${it.what}${it.time ? `, ${it.time}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
     >
       <span className="sp2-card-in" data-stock={it.id}>
-        <span className="sp2-band">
-          <span>{R.name}</span>
+        <span className="sp2-band" title={R.name}>
+          <span className="sp2-name">{it.name || R.name}</span>
           <span className="sp2-left">×{formatNum(left)} LEFT</span>
         </span>
-        <KitIcon name={it.icon} size={76} shadow={3} className="sp2-ico" />
+        <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />
         <span className="sp2-big">{it.big}</span>
         <span className="sp2-what">{it.what}</span>
+        {it.time ? <span className="sp2-time">{it.time}</span> : null}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />
           {soon ? 'SOON' : formatNum(it.price)}
@@ -227,11 +229,11 @@ export default function ShopV2({ onBack }) {
           />
         </section>
 
-        <section className="sp2-stock" aria-label="Stock">
+        <section className="sp2-stock" aria-label="Boosts">
           <div className="sp2-stock-head">
             <div className="sp2-stock-title">
-              <span className="sp2-stock-name">STOCK</span>
-              <span className="sp2-stock-sub">CHANGES EVERY 5 MIN</span>
+              <span className="sp2-stock-name">BOOSTS</span>
+              <span className="sp2-stock-sub">STOCK REFILLS EVERY 5 MIN · SCROLL FOR MORE</span>
             </div>
             <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />
           </div>

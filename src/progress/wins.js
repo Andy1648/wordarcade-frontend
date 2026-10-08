@@ -281,8 +281,9 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
     // FUSE FRENZY (frenzy.js): ×5 while its wall-clock timer runs, FUSE only. Its own named row so
     // the receipt and the HUD say WHY a FUSE word just paid five times its usual.
     frenzy: frenzyMult(id),
-    // BOOST (boost.js, R10): a redeem code's wall-clock ×N on EVERY mode; stacks with FRENZY.
-    boost: boostMult(),
+    // BOOST (boost.js, R10): a redeem code's wall-clock ×N on EVERY mode; stacks with FRENZY. Season 2 also folds the
+    // SHOP's +25% WINS BOOST in here (winsBoostExtra, set by v3/install.js — ×1 otherwise).
+    boost: boostMult() * winsBoostExtra(),
     // LETTER FORGE (forge.js, replaced MOMENTUM): +5% per forged level of each letter in THIS word.
     // Word-specific (×1 when no word is given — the card's reference rate is the base, and the
     // forge is one of the things that makes a real word worth MORE than it).
@@ -676,7 +677,9 @@ function modeLabel(mode) {
 }
 
 // v3 (SEASON2): v3/install.js wraps bankWordWins (the CHAIN achievement counter); never called with the flag OFF.
+let winsBoostExtra = () => 1;
 export function __v3(o) {
   // eslint-disable-next-line no-func-assign
   ({ a: bankWordWins } = o);
+  if (typeof o.w === 'function') winsBoostExtra = o.w; // the SHOP's +25% WINS BOOST (v3/stock.js stockWinsMult)
 }

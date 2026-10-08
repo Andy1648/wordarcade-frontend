@@ -27,14 +27,14 @@ import { formatNum } from '../format';
 import WordHook from './WordHook';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
-import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
+import { frenzyShort, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
 
 // The one thing that sets each solo mode apart, in the half-band's sub line (Andy oct2: FUSE's
 // FRENZY must be obvious on the card; CHAIN's POWER is real money per word).
 function SoloPerk({ id }) {
   const frenzy = useFrenzyClock();
-  if (id === 'fuse') return frenzy.active ? `FRENZY ${formatFrenzy(frenzy.ms)}` : `FRENZY ×${FRENZY_MULT}`;
+  if (id === 'fuse') return frenzy.active ? `FRENZY ${formatFrenzy(frenzy.ms)}` : `FRENZY ${frenzyShort()}`;
   const p = modePower(id);
   return p > 1 ? `POWER ×${p}` : 'SOLO';
 }

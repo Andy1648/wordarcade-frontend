@@ -21,6 +21,15 @@ export const FRENZY_KEY = 'taw.frenzyUntil';
 export const FRENZY_MODE = 'fuse';
 export const FRENZY_MULT = 5;
 export const FRENZY_MS = 5 * 60 * 1000;
+// SEASON 2 (Andy oct8: "FRENZY should be 25x XP for 5 min" → "×25 XP only"): games pay WINS and menu keys pay XP, so
+// a FRENZY is ×25 on XP PER KEY (v3/hooks.js xpSwap.d reads frenzyXpMult) and NO wins multiplier. v3/install.js
+// flips this on; season 1 keeps ×FRENZY_MULT FUSE wins.
+export const FRENZY_XP_MULT = 25;
+let xpOnly = false;
+/** v3 (SEASON2): FRENZY becomes ×25 XP per key, everywhere; frenzyMult (the wins row) reads ×1. */
+export function __v3() {
+  xpOnly = true;
+}
 // The trigger payout: this many words' worth of FUSE wins at the frenzy rate, on the clear itself.
 export const FRENZY_TRIGGER_WORDS = 10;
 
@@ -45,9 +54,20 @@ export function isFrenzyActive(now = Date.now()) {
 /** The frenzy multiplier for a mode right now: ×FRENZY_MULT for FUSE while active, else 1. The WILDFIRE perk
  *  (ORIGIN, SECRET mark) pays a running FRENZY in EVERY mode. (It is still lit by clearing FUSE's strip.) */
 export function frenzyMult(mode, now = Date.now()) {
+  if (xpOnly) return 1; // season 2: FRENZY pays XP (frenzyXpMult), never wins
   const m = mode === 'fuse' || mode === FRENZY_MODE ? FRENZY_MODE : mode;
   if (m !== FRENZY_MODE && !frenzyEveryMode()) return 1;
   return isFrenzyActive(now) ? FRENZY_MULT : 1;
+}
+
+/** What a FRENZY pays, for labels: season 2 "×25 XP", season 1 "×5" (the FUSE wins multiplier). */
+export function frenzyShort() {
+  return xpOnly ? `×${FRENZY_XP_MULT} XP` : `×${FRENZY_MULT}`;
+}
+
+/** Season 2: ×FRENZY_XP_MULT on XP per key while a FRENZY runs (any screen), else ×1. Season 1: always ×1. */
+export function frenzyXpMult(now = Date.now()) {
+  return xpOnly && isFrenzyActive(now) ? FRENZY_XP_MULT : 1;
 }
 
 /** Start FRENZY (a no-op while one is already running). Returns { started, remaining }. */

@@ -29,11 +29,13 @@ test('the boost keys match boost.js / hooks.js', () => {
   assert.equal(ST.BOOST2_KEY, 'taw.s2.boost2');
 });
 
-test('the stock: five items (no gem scaling) at the odd gem prices, rarity bands, counts; a 5:00 restock window', () => {
+test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands, counts; a 5:00 restock window', () => {
   mem.clear();
-  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 120, 225, 150, 495]);
-  assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'rare', 'epic', 'rare', 'legendary']);
-  assert.deepEqual(ST.stockLeft(T0), { xp25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 1 });
+  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 225, 150, 495]);
+  assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'common', 'rare', 'epic', 'rare', 'legendary']);
+  assert.deepEqual(ST.stockLeft(T0), { xp25: 5, wins25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 1 });
+  // Andy oct8 "boost what?": every item says what it boosts and for how long
+  for (const it of ST.STOCK) assert.ok(it.name && it.what && (it.time || it.buyable === false), `${it.id} names what it boosts`);
   assert.equal(ST.restockIn(T0), 300 - 37);
   assert.equal(ST.restockIn(T0 + 262_500), 1);
 });
@@ -90,20 +92,45 @@ test('timed effects: +25% XP on XP / LETTER, ×2 LUCK — for their minutes only
   assert.equal(ST.STOCK.some((i) => i.fx === 'gems'), false, 'no STOCK item touches gems');
 });
 
-test('+5 MIN EVERY BOOST: needs a running timer; extends every one', () => {
+test('+5 MIN: needs an XP / WINS / LUCK boost running; extends those, NEVER OVERDRIVE (Andy oct8)', () => {
   mem.clear();
-  setGems(1000);
+  setGems(2000);
   let r = ST.buyStock('extend', T0);
   assert.deepEqual([r.ok, r.reason], [false, 'nothing']);
-  assert.equal(G.getGems(), 1000);
+  assert.equal(G.getGems(), 2000);
   ST.buyStock('overdrive', T0);
+  r = ST.buyStock('extend', T0);
+  assert.deepEqual([r.ok, r.reason], [false, 'nothing'], 'OVERDRIVE alone is not extendable');
   ST.buyStock('xp25', T0);
+  ST.buyStock('wins25', T0);
   const b0 = BO.boostRemaining(T0);
   const x0 = ST.stockFxLeft('xp', T0);
+  const w0 = ST.stockFxLeft('wins', T0);
   r = ST.buyStock('extend', T0);
   assert.equal(r.ok, true);
-  assert.equal(BO.boostRemaining(T0) - b0, ST.EXTEND_MS);
+  assert.equal(BO.boostRemaining(T0) - b0, 0, 'OVERDRIVE untouched');
   assert.equal(ST.stockFxLeft('xp', T0) - x0, ST.EXTEND_MS);
+  assert.equal(ST.stockFxLeft('wins', T0) - w0, ST.EXTEND_MS);
+});
+
+test('OVERDRIVE: ×10, a 2nd buy ADDS 5 MIN and stays ×10 — time stacks, the multiplier never does (Andy oct8)', () => {
+  mem.clear();
+  setGems(1000);
+  ST.buyStock('overdrive', T0);
+  assert.equal(BO.codeBoostMult(T0 + 1000), 10);
+  assert.equal(BO.boostRemaining(T0), 5 * 60_000);
+  ST.buyStock('overdrive', T0 + 60_000);
+  assert.equal(BO.codeBoostMult(T0 + 61_000), 10, 'still ×10, never ×100');
+  assert.equal(BO.boostRemaining(T0), 10 * 60_000, '5 + 5 minutes');
+});
+
+test('+25% WINS BOOST: ×1.25 on wins while it runs, ×1 after', () => {
+  mem.clear();
+  setGems(1000);
+  assert.equal(ST.stockWinsMult(T0), 1);
+  ST.buyStock('wins25', T0);
+  assert.equal(ST.stockWinsMult(T0 + 1000), 1.25);
+  assert.equal(ST.stockWinsMult(T0 + 10 * 60_000 + 1), 1);
 });
 
 test('FREE EPIC+ ROLL is visual-only for now: never sold, never charged', () => {

@@ -4,7 +4,7 @@ import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
 import { perWordRateNow } from '../progress/wins';
 import { modePower } from '../progress/xp';
-import { FRENZY_MULT, formatFrenzy } from '../progress/frenzy';
+import { frenzyShort, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
 import { formatRate, formatMultExact } from '../format';
 import './GameCard.css';
@@ -302,7 +302,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   // It is said ONCE, by the banner at the start of a multiplayer round with a human rival
   // (MatchWinBanner), and paid/stated on the end-of-game receipt.
   const perkHead = isFuse
-    ? (frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `ALL LETTERS → FRENZY ×${FRENZY_MULT}`)
+    ? (frenzy.active ? `FRENZY ${frenzyShort()} · ${formatFrenzy(frenzy.ms)}` : `ALL LETTERS → FRENZY ${frenzyShort()}`)
     : power > 1 ? `POWER ×${formatMultExact(power)}`
     : null;
   const xpLine = null; // one line per card (Andy oct3 18:55); the perk now sits on the payout line
