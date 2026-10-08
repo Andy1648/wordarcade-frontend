@@ -13,6 +13,10 @@
   width: var(--mc-w, 180px);
   height: calc(var(--mc-w, 180px) * 1.4444);
 }
+/* R4 FRAME SYSTEM: the face is a transparent 180×260 box; CardFrame (inline SVG) draws the frame, plates, rosette and
+   the hard shadow under it, and every text block sits at a fixed y over its plate (CardFrame.LAYOUT). No CSS border,
+   background or box-shadow draws any part of the card. A card with a perk chip shifts its lower plates up
+   (--mc-y-*). */
 .mc-face {
   position: absolute;
   left: 0;
@@ -20,52 +24,47 @@
   width: 180px;
   height: 260px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
   transform: scale(var(--mc-s, 1));
   transform-origin: 0 0;
-  background: var(--mc-fill, #262b38);
-  border: 5px solid #000;
-  border-radius: 10px;
-  box-shadow: 6px 6px 0 #000;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   color: #fff;
   text-align: center;
   text-transform: uppercase;
   --mc-u: 1px; /* ONE px of the 180x260 card drawing: every card text size is in these units (typeScale FIT-TO-SLOT) */
+  --mc-y-art: 46px; --mc-art: 112px;
+  --mc-y-name: 162px; --mc-y-stat: 196px; --mc-y-perk: 208px; --mc-y-foot: 232px;
 }
+.mc.has-perk .mc-face { --mc-y-art: 44px; --mc-art: 92px; --mc-y-name: 140px; --mc-y-stat: 174px; }
+.mc-frame { position: absolute; left: 0; top: 0; width: 180px; height: 260px; display: block; pointer-events: none; }
 
-/* NIGHT oct8 #4 (claude/mockups/v3/GearCard.dc.html): RARITY alone on the tier bar · the art · the NAME big · the stat
-   on a black band · "1 IN X" on the foot in the tier colour. No ★ row — a dupe is a small ×N tag on the art. Every
-   size is in --mc-u (one px of the 180×260 drawing), so the card scales as one picture. */
+/* RARITY on the rarity plate (y 9–37): the tier colour with an ink stroke */
 .mc-head {
-  flex: none;
-  width: 100%;
-  height: 34px;
-  box-sizing: border-box;
-  padding: 0 8px;
+  position: absolute;
+  left: 0;
+
+  top: 9px;
+  width: 180px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--mc-line);
-  border-bottom: 4px solid #000;
-  color: #000;
+  color: var(--mc-line);
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 19);
+  font-size: calc(var(--mc-u) * 18);
   letter-spacing: 0.06em;
   line-height: 1;
   white-space: nowrap;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
 }
 
-/* the art: the cog + glyph (MarkBadge), the EPIC+ glow behind it */
-.mc-art { position: relative; flex: none; width: 112px; height: 112px; margin-top: 6px; }
+/* the art: the cog + glyph (MarkBadge) over the frame's rosette, the EPIC+ glow behind it */
+.mc-art { position: absolute; top: var(--mc-y-art); left: calc(90px - var(--mc-art) / 2); width: var(--mc-art); height: var(--mc-art); }
 .mc-cog { position: absolute; inset: 0; display: block; }
 .mc-cog svg { display: block; }
-.mc-badge { position: relative; display: block; width: 112px; height: 112px; }
+.mc-badge { position: relative; display: block; width: 100%; height: 100%; }
 .mc-badge.is-sil .mx-sil { filter: brightness(0) opacity(0.9); }
 .mc-glow {
   position: absolute;
@@ -80,6 +79,7 @@
 .mc-dupes {
   position: absolute;
   right: -26px;
+  left: auto;
   top: 0;
   padding: 1px 6px;
   background: #fff;
@@ -94,14 +94,21 @@
   color: #000;
 }
 
+/* the NAME on its ribbon (30px tall): white, ink-stroked, sized by its length so it fits one line */
 .mc-name {
-  flex: none;
-  margin-top: 4px;
-  max-width: 168px;
+  position: absolute;
+  left: 0;
+
+  top: var(--mc-y-name);
+  width: 180px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
   font-size: calc(var(--mc-u) * 24);
-  line-height: 1.05;
+  line-height: 1;
   letter-spacing: 0;
   white-space: nowrap;
   color: #fff;
@@ -110,70 +117,79 @@
 }
 .mc-name.is-l { font-size: calc(var(--mc-u) * 21); }
 .mc-name.is-xl { font-size: calc(var(--mc-u) * 18.5); }
+/* the STAT on the ink band (32px tall): number big, kind small */
 .mc-stat {
-  flex: none;
-  width: 100%;
+  position: absolute;
+
+  top: var(--mc-y-stat);
+  left: 5px;
+  width: 170px;
+  height: 32px;
   box-sizing: border-box;
   display: flex;
   align-items: baseline;
   justify-content: center;
   gap: 6px;
-  margin-top: 6px;
-  padding: 3px 6px 4px;
-  background: #000;
+  padding: 2px 6px 0;
   white-space: nowrap;
 }
 .mc-num {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 30);
+  font-size: calc(var(--mc-u) * 28);
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
 }
 .mc-kind { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: calc(var(--mc-u) * 15); color: #fff; }
-.mc-stat.is-long .mc-num { font-size: calc(var(--mc-u) * 24); }
-.mc-stat.is-long .mc-kind { font-size: calc(var(--mc-u) * 13.5); letter-spacing: -0.03em; }
+.mc-stat.is-long { gap: 5px; }
+.mc-stat.is-long .mc-num { font-size: calc(var(--mc-u) * 22); }
+.mc-stat.is-long .mc-kind { font-size: calc(var(--mc-u) * 12.5); letter-spacing: -0.04em; }
 .mc.is-locked .mc-num { color: #5d4a78; }
 .mc.is-locked .mc-kind { color: #9a8ab8; }
+/* the PERK on its band (18px tall) */
 .mc-perk {
-  flex: none;
-  margin-top: 4px;
-  max-width: 162px;
-  padding: 1px 6px;
+  position: absolute;
+
+  top: var(--mc-y-perk);
+  left: 8px;
+  width: 164px;
+  height: 18px;
   box-sizing: border-box;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  background: #000;
-  color: #2EFFE0;
-  font-size: calc(var(--mc-u) * 13);
-  line-height: 1.35;
-}
-.mc-perk.is-long { font-size: calc(var(--mc-u) * 11); letter-spacing: -0.02em; }
-.mc.is-locked .mc-perk { color: #1d9e8c; }
-/* the foot: 1 IN X in the tier colour, on the card's darkest band */
-.mc-foot {
-  margin-top: auto;
-  width: 100%;
-  height: 30px;
-  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
-  border-top: 3px solid #000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2EFFE0;
+  font-size: calc(var(--mc-u) * 14);
+  line-height: 1;
+}
+.mc-perk.is-long { font-size: calc(var(--mc-u) * 11); letter-spacing: -0.02em; }
+.mc.is-locked .mc-perk { color: #1d9e8c; }
+/* the foot: 1 IN X in the tier colour on the odds plate (20px tall) */
+.mc-foot {
+  position: absolute;
+
+  top: var(--mc-y-foot);
+  left: 14px;
+  width: 152px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 16);
+  font-size: calc(var(--mc-u) * 15);
   letter-spacing: 0.04em;
   color: var(--mc-line);
   white-space: nowrap;
 }
 
 /* the shine: a plain rectangle band (CSS may draw rectangles), swept ONCE */
-.mc-shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.mc-shine { position: absolute; left: 2px; top: 2px; width: 176px; height: 256px; border-radius: 14px; overflow: hidden; pointer-events: none; }
 .mc-shine::after {
   content: '';
   position: absolute;
@@ -204,6 +220,3 @@
   .mc .mc-glow { animation: none !important; }
 }
 
-/* a card with a perk chip: the cog sits a little smaller so the chip clears the foot */
-.mc.has-perk .mc-art { width: 92px; height: 92px; margin-top: 4px; }
-.mc.has-perk .mc-badge { width: 92px; height: 92px; }
