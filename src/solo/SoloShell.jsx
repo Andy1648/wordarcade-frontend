@@ -66,8 +66,10 @@ function HeroRing({ remaining, tMax, redZone, armed }) {
 // string grew. A single CHAIN glyph hid it; a FUSE fragment was already drifting. Only the SIZE
 // and the mode colour live here now (.solo-cl in Solo.css).
 function HeroLetter({ text }) {
+  // data-len: a 3-letter FUSE fragment is ~1.5× the width of a 2-letter one and was crossing the
+  // ring stroke on both sides (R3 oct8: NTS at 1366, ERA at 390). Solo.css steps it down by length.
   return (
-    <div className="solo-center" aria-hidden="true">
+    <div className="solo-center" aria-hidden="true" data-len={text ? text.length : 0}>
       <LayeredWord className="solo-cl" text={text} />
     </div>
   );

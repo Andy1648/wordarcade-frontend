@@ -318,9 +318,17 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         ))}
       </div>
       {/* THE GOAL, SAID ONCE (Andy oct2: FRENZY must be OBVIOUS in-game). Dark: what the strip is
-          for. Live: the countdown, in the mode's flame orange. */}
-      <div className={`solo-frenzy-goal${frenzy.active ? ' is-live' : ''}${frenzy.active && frenzy.ms <= 10000 ? ' is-ending' : ''}`}>
-        {frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL LETTERS → FRENZY ×${FRENZY_MULT} FOR ${frenzyMinutes()} MIN`}
+          for. Live: the countdown, in the mode's flame orange.
+          R3 (oct8): the COUNT leads the line — "14/26" is the number the tracker is for (numbers
+          first, words second), the lit tiles are the detail. It is its own element so the short-
+          laptop rule that hides the goal copy keeps the count. */}
+      <div className="solo-fuse-track">
+        <b className="solo-strip-count" data-lit={s.lettersUsed.size}>
+          {s.lettersUsed.size}<span className="solo-strip-count-of">/{ALPHABET.length}</span>
+        </b>
+        <div className={`solo-frenzy-goal${frenzy.active ? ' is-live' : ''}${frenzy.active && frenzy.ms <= 10000 ? ' is-ending' : ''}`}>
+          {frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL LETTERS → FRENZY ×${FRENZY_MULT} FOR ${frenzyMinutes()} MIN`}
+        </div>
       </div>
       <div className="solo-strip-big">
         {ALPHABET.map((ch) => (
