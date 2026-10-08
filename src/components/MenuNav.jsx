@@ -142,7 +142,7 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
         ) : <span className="hp-gear-hole" aria-hidden="true" />}
         <span className="hp-gear-text">
           <span className="hp-gear-big menu-mark-name">{mark ? mark.blurb || mark.name : 'NONE'}</span>
-          <span className="hp-gear-sub">{mark ? `${mark.name} · ${String(mark.tier).toUpperCase()}` : 'ROLL FOR ONE'}</span>
+          <span className="hp-gear-sub">{mark ? mark.name : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>
       {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
