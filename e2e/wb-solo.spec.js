@@ -58,7 +58,7 @@ for (const vp of VIEWPORTS) {
 
       // TAP 1: the Word Bomb card / phone row → the mode dialog.
       await tap(modeEntry(page, 'word-bomb'));
-      const solo = page.getByRole('button', { name: 'PLAY SOLO' });
+      const solo = page.getByRole('button', { name: 'SOLO', exact: true });
       await expect(solo).toBeVisible();
 
       // The new entry: on screen with no scroll, a real touch target, readable text.
