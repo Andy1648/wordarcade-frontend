@@ -25,6 +25,7 @@ import { shopOpened as evShopOpened, itemPurchased as evItemPurchased } from '..
 import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
+import ShopV2Looks from './ShopV2Looks';
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
@@ -91,6 +92,8 @@ export default function ShopV2({ onBack }) {
   const [now, setNow] = useState(() => Date.now());
   const [left, setLeft] = useState(() => stockLeft());
   const [note, setNote] = useState(null);
+  // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
+  const [shelf, setShelf] = useState('boosts');
   const rootRef = useRef(null);
   const winsPill = useRef(null);
   const gemsPill = useRef(null);
@@ -231,13 +234,20 @@ export default function ShopV2({ onBack }) {
 
         <section className="sp2-stock" aria-label="Boosts">
           <div className="sp2-stock-head">
-            <div className="sp2-stock-title">
-              <span className="sp2-stock-name">BOOSTS</span>
-              <span className="sp2-stock-sub">STOCK REFILLS EVERY 5 MIN · SCROLL FOR MORE</span>
+            <div className="sp2-tabs" role="tablist" aria-label="Shop shelves">
+              {[['boosts', 'BOOSTS'], ['looks', 'LOOKS'], ['codes', 'CODES']].map(([k, label]) => (
+                <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k} onClick={() => setShelf(k)}>
+                  {label}
+                </button>
+              ))}
             </div>
-            <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />
+            {shelf === 'boosts' && <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />}
           </div>
-          <div className="sp2-grid">
+          <div className="sp2-stock-sub sp2-shelf-sub">
+            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY 5 MIN · SCROLL FOR MORE' : shelf === 'looks' ? 'COSMETICS — LOOKS ONLY, BOUGHT ONCE, KEPT FOREVER' : 'REDEEM A CODE'}
+          </div>
+          {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} /></div> : null}
+          <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {STOCK.map((it) => (
               <div key={it.id} className="sp2-cell" ref={(el) => { cards.current[it.id] = el; }}>
                 <StockCard it={it} left={left[it.id]} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />
