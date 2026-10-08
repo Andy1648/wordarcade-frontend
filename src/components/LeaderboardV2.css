@@ -55,7 +55,7 @@
   cursor: pointer;
   font-family: var(--k-mono, 'Space Mono', monospace);
   font-weight: 700;
-  font-size: max(14px, calc(15px * var(--lb2-k)));
+  font-size: var(--fs-k15);
   line-height: 1;
   white-space: nowrap;
   max-width: 30vw;
@@ -63,7 +63,7 @@
 }
 .lb2-name:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #000; }
 .lb2-name:active { transform: translate(5px, 5px); box-shadow: 0 0 0 #000; }
-.lb2-name-k { color: #FFE94A; font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; }
+.lb2-name-k { color: #FFE94A; font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; text-transform: uppercase; }
 .lb2-name-v { overflow: hidden; text-overflow: ellipsis; max-width: 12ch; }
 .lb2-name-a { color: #2EFFE0; text-decoration: underline; text-underline-offset: 3px; }
 
@@ -529,7 +529,7 @@
 .lb2--narrow .lb2-head { height: auto; display: grid; grid-template-columns: auto 1fr; grid-template-areas: 'back tabs' 'title title' 'name name'; row-gap: 4px; }
 .lb2--narrow .lb2-left { display: contents; }
 .lb2--narrow .lb2-back { grid-area: back; }
-.lb2--narrow .lb2-name { grid-area: name; justify-self: start; max-width: 100%; height: 44px; padding: 0 12px; font-size: 14px; gap: 8px; margin-top: 4px; }
+.lb2--narrow .lb2-name { grid-area: name; justify-self: start; max-width: 100%; height: 44px; padding: 0 12px; font-size: var(--fs-k14); gap: 8px; margin-top: 4px; }
 .lb2--narrow .lb2-name-v { max-width: 16ch; }
 .lb2--narrow .lb2-back { height: 48px; padding: 0 12px; font-size: var(--fs-k17); }
 .lb2--narrow .lb2-tabs { grid-area: tabs; justify-self: end; }
