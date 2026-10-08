@@ -35,6 +35,38 @@
 .lb2-stage *::after { box-sizing: border-box; }
 
 /* ---- header ---- */
+/* YOU · <name> · CHANGE — the door back to the claim form (CHANGE NAME + RECOVERY CODE live there). Sits with MENU
+   on the left so the centred title stays clear. */
+.lb2-left { position: relative; z-index: 1; display: flex; align-items: center; gap: calc(12px * var(--lb2-k)); min-width: 0; }
+.lb2-me-btn {
+  position: relative;
+  z-index: 1;
+  min-height: 44px;
+  height: max(44px, calc(54px * var(--lb2-k)));
+  padding: 0 calc(14px * var(--lb2-k));
+  display: flex;
+  align-items: center;
+  gap: calc(10px * var(--lb2-k));
+  background: #1a0b2e;
+  color: #fff;
+  border: 4px solid #000;
+  box-shadow: 5px 5px 0 #000;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--k-mono, 'Space Mono', monospace);
+  font-weight: 700;
+  font-size: var(--fs-k15);
+  line-height: 1;
+  white-space: nowrap;
+  max-width: 30vw;
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+.lb2-me-btn:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #000; }
+.lb2-me-btn:active { transform: translate(5px, 5px); box-shadow: 0 0 0 #000; }
+.lb2-me-k { color: #FFE94A; font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; text-transform: uppercase; }
+.lb2-me-v { overflow: hidden; text-overflow: ellipsis; max-width: 12ch; }
+.lb2-me-a { color: #2EFFE0; text-decoration: underline; text-underline-offset: 3px; }
+
 .lb2-head {
   position: absolute;
   left: calc(30px * var(--lb2-k));
@@ -494,8 +526,12 @@
   top: auto;
   width: auto;
 }
-.lb2--narrow .lb2-head { height: auto; display: grid; grid-template-columns: auto 1fr; grid-template-areas: 'back tabs' 'title title'; row-gap: 4px; }
-.lb2--narrow .lb2-back { grid-area: back; height: 48px; padding: 0 12px; font-size: var(--fs-k17); }
+.lb2--narrow .lb2-head { height: auto; display: grid; grid-template-columns: auto 1fr; grid-template-areas: 'back tabs' 'title title' 'name name'; row-gap: 4px; }
+.lb2--narrow .lb2-left { display: contents; }
+.lb2--narrow .lb2-back { grid-area: back; }
+.lb2--narrow .lb2-me-btn { grid-area: name; justify-self: start; max-width: 100%; height: 44px; padding: 0 12px; font-size: var(--fs-k14); gap: 8px; margin-top: 4px; }
+.lb2--narrow .lb2-me-v { max-width: 16ch; }
+.lb2--narrow .lb2-back { height: 48px; padding: 0 12px; font-size: var(--fs-k17); }
 .lb2--narrow .lb2-tabs { grid-area: tabs; justify-self: end; }
 .lb2--narrow .lb2-tab { height: 48px; padding: 0 8px; font-size: var(--fs-k15); }
 .lb2--narrow .lb2-title { position: static; grid-area: title; font-size: var(--fs-k28); }
