@@ -6,7 +6,8 @@
   width: var(--kb-w, 160px);
   height: 104px;
   margin-left: 6px;
-  transform: skewX(var(--k-skew));
+  /* a PRIMARY CTA rests on a 1.5deg tilt (NIGHT oct8 #7: the "rigid" feel) — primary CTAs only, never rail tiles */
+  transform: rotate(-1.5deg) skewX(var(--k-skew));
 }
 .kb--primary .kb-shadow { left: 6px; right: -6px; top: 20px; bottom: -6px; }
 .kb--primary .kb-lip {
@@ -68,12 +69,12 @@
 
 @media (hover: hover) {
   .kb--primary:not(.is-off):not(.is-held):hover .kb-face {
-    transform: translateY(-4px);
+    transform: translate(-2px, -2px);
     transition: transform var(--k-t-hover) var(--k-e-pop);
     will-change: transform;
   }
 }
-.kb--primary.is-hover .kb-face { transform: translateY(-4px); }
+.kb--primary.is-hover .kb-face { transform: translate(-2px, -2px); }
 .kb--primary:not(.is-off):active .kb-face,
 .kb--primary.is-pressed .kb-face {
   transform: translateY(11px);
@@ -203,9 +204,9 @@
 .kb-gtext { font-size: var(--fs-k22); color: var(--k-white); }
 .kb-gcount { font-size: var(--fs-k18); color: var(--k-yellow); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
 @media (hover: hover) {
-  .kb--ghost:hover .kb-gface { transform: translateY(-3px); will-change: transform; }
+  .kb--ghost:hover .kb-gface { transform: translate(-2px, -2px); will-change: transform; }
 }
-.kb--ghost.is-hover .kb-gface { transform: translateY(-3px); }
+.kb--ghost.is-hover .kb-gface { transform: translate(-2px, -2px); }
 .kb--ghost:active .kb-gface,
 .kb--ghost.is-pressed .kb-gface { transform: translateY(6px); transition: transform var(--k-t-press); will-change: transform; }
 
@@ -258,7 +259,7 @@
 .kb-pip.is-past { background: var(--k-ink); }
 .kb-pip.is-now { background: var(--k-white); }
 @media (hover: hover) {
-  .kb--cycle:hover .kb-cface { transform: translateY(-3px); will-change: transform; }
+  .kb--cycle:hover .kb-cface { transform: translate(-2px, -2px); will-change: transform; }
 }
 .kb--cycle:active .kb-cface { transform: translateY(7px); transition: transform var(--k-t-press); will-change: transform; }
 
