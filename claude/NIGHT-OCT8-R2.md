@@ -72,4 +72,4 @@ Round 2 (cloud, 07:31–09:10 UTC). Six PRs, all CI-green and merged by me (Andy
 ANDY, IN THE MORNING:
 - PLAY-TEST ON YOUR CHROMEBOOK + PHONE: EDITOR'S NOTE is one-shot per account — use a fresh profile (?portal=1 in a private window shows the local-gift path) to see COLLECT → COLLECTING (dead) → PLAY.
 - THE ONE JUDGEMENT CALL TO CONFIRM: results hides the XP block when a round pays 0 XP (season 2 always). If you want the empty "+0 XP" row back for the bar, say so and I'll revert that one line.
-- NIGHT LOG + REPORT: PR #279 (this file) — docs only, merge when green.
+- NIGHT LOG + REPORT: PR #280 (this file) — docs only, merge when green.
