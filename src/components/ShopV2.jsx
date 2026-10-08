@@ -93,6 +93,7 @@ export default function ShopV2({ onBack }) {
   const winsPill = useRef(null);
   const gemsPill = useRef(null);
   const plateRef = useRef(null);
+  const nowRef = useRef(null);
   const floats = useRef({});
   const cards = useRef({});
   const onBackRef = useRef(onBack);
@@ -149,6 +150,7 @@ export default function ShopV2({ onBack }) {
     evItemPurchased('key_power', r.tier);
     setTier(r.tier);
     fx(plateRef.current, FX.bump);
+    fx(nowRef.current, FX.land(1)); // R5 oct8 #1: the NOW number lands with the surge
   };
 
   // ---- STOCK: gems ----
@@ -189,7 +191,7 @@ export default function ShopV2({ onBack }) {
           </div>
           <div className="sp2-pw">
             <span className="sp2-pw-lab">POWER</span>
-            <span className="sp2-pw-now" data-testid="sp2-power">{formatNum(tier)}</span>
+            <span className="sp2-pw-now" data-testid="sp2-power" ref={nowRef}>{formatNum(tier)}</span>
             <span className="sp2-pw-arrow">→</span>
             <span className="sp2-pw-next">{formatNum(tier + 1)}</span>
           </div>

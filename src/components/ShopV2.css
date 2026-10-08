@@ -94,6 +94,39 @@
   transform: rotate(-6deg);
 }
 .sp2-plate-ico { position: absolute; left: 23px; top: 23px; }
+/* POWER SURGE (R5 oct8 #1): while HOLD TO BUY is held the plate squashes and charges and the bolt flickers + swells —
+   ONE finite 1 s run (= the hold), transform/opacity only, will-change only for its life (`.is-held` drops it). Release
+   early → the hold cancels and both snap to rest; complete → onPower bumps the plate and lands the NOW number. */
+.sp2-power:has(.kb--hold.is-held) .sp2-plate-a {
+  animation: sp2-surge-plate 1s cubic-bezier(.3, .7, .4, 1) forwards;
+  will-change: transform;
+}
+.sp2-power:has(.kb--hold.is-held) .sp2-plate-ico {
+  animation: sp2-surge-bolt 1s linear forwards;
+  will-change: transform, opacity;
+}
+@keyframes sp2-surge-plate {
+  0% { transform: rotate(-6deg) scale(1, 1); }
+  25% { transform: rotate(-6deg) scale(1.03, .96); }
+  55% { transform: rotate(-7deg) scale(1.06, .91); }
+  80% { transform: rotate(-8deg) scale(1.09, .87); }
+  100% { transform: rotate(-9deg) scale(1.12, .84); }
+}
+@keyframes sp2-surge-bolt {
+  0% { transform: scale(1); opacity: 1; }
+  20% { transform: scale(1.04); opacity: .55; }
+  30% { transform: scale(1.06); opacity: 1; }
+  45% { transform: scale(1.08) rotate(-3deg); opacity: .6; }
+  55% { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  70% { transform: scale(1.14) rotate(-2deg); opacity: .7; }
+  78% { transform: scale(1.18) rotate(3deg); opacity: 1; }
+  90% { transform: scale(1.22) rotate(-2deg); opacity: .8; }
+  100% { transform: scale(1.26); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp2-power:has(.kb--hold.is-held) .sp2-plate-a,
+  .sp2-power:has(.kb--hold.is-held) .sp2-plate-ico { animation: none; will-change: auto; }
+}
 .sp2-pw { margin-top: 12px; display: flex; align-items: baseline; gap: 10px; }
 .sp2-pw-lab,
 .sp2-pw-arrow,
