@@ -153,3 +153,37 @@ There is no clean CSS answer at 336px. The real options all need JSX, so they ar
 - **(c)** give the phone menu its own compact boost band that can hold two.
 
 **Two useful traps recorded:** (i) I guessed the pills' parent was `.hp-m-top` — it is `.hp-m-per`; the first CSS attempt silently did nothing. (ii) `.boost-pill.hp-m-boost` in BoostPill.css is 0,2,0, so a 2-class selector in MobileMenu.css loses on file order — needed `.hp-m-per .boost-pill.hp-m-boost`. **Read the DOM at runtime before writing the selector.**
+
+---
+
+# FINAL REPORT — ROUND 5b (16:26 → 22:50 UTC)
+
+## MERGED (7)
+| PR | What shipped | Shots |
+|---|---|---|
+| **#294** | **POWER is a BOLT, not a key.** kit `power` + `shop` icons redrawn in the house construction; StatsV2 POWER chip; hold-to-buy SURGE (plate squash + bolt flicker, finite 1 s, `:has(.is-held)`), NOW number lands on confirm. | `s1-power-icon-24-40-64.png`, `s1-power-surge-strip.png`, `s1-shop-*.png`, `s1-menu-1366x657.png` |
+| **#298** | **PODIUM rebuilt as three real solids.** `PodiumBlocks.jsx`: front + lighter top + darker side face, gold/silver/bronze, darker-shade outlines, hard black shadow, plinth band, overspray, drip, uneven depths. Rank numerals → white. Same viewBoxes, so the slot is untouched. | `s2-podium-before-1366x657.png` → `s2-podium-1366x657.png`, `s2-podium-390x844.png` |
+| **#300** | **Icon audit at the sizes icons are DRAWN at.** REBIRTH read as a pie/spinner at 24–40px → 280° arc + fat tangent arrowhead. GEARS' second cog was a blob at 24px → now an extra. Non-kit back buttons (`.lb2-back`, `.st2-back`) lift on hover like every kit button. | `s3-rebirth-gears-24-40-64.png`, `s3-menu-*.png` |
+| **#309** | **Phone shop cards stopped pushing their gem price outside the card.** #302's WHAT+TIME lines need 217px (OVERDRIVE) in a 196px row → `225`, `150`, `SOON` rendered outside. Row → 224px; all six clear by 3–13px at 390 and 360. | `s10-shopfit-390x844.png` |
+| **#310** | **One clock per boost.** #304's dock owns time left; LiveStack's in-game row stated a second, duplicate countdown (`BOOST ×3 6:48` top-left and `×3 BOOST 6:48` bottom-right, same second). The stack now states the FACTOR. | `s11-oneclock-1366x657.png` |
+| — | `tools/_shots/iconsheet.mjs` — renders any kit icons at 24/40/64/104 (the audit tool that found the REBIRTH + GEARS problems). | — |
+| — | This log. | — |
+
+## CLOSED, NOT MERGED (2) — both superseded by parallel sessions
+- **#303 shop copy** → **#302** did it better (name/what/time split, a WINS BOOST item, overdrive time-stacking, FRENZY ×25 XP). The one piece worth keeping became #309.
+- **#306 boost dock** → **#304** landed the same feature, and its version is a strict superset: covers the 2nd code-boost slot, `frenzyShort()` already yields ×25 XP, its lazy gate is cheaper, and it renders INSIDE AudioControls (a truer reading of NO ORPHAN FIXED UI). The one gap became #310.
+
+## STILL OPEN — NEEDS ANDY
+- ### **#301 — PICK `?panel=hollow` OR `?panel=filled`.** Draft, deliberately not merged. Both variants are live behind the dev query; screenshots at 1366×657 and 1920×1080 in the PR body. My read: hollow is quieter but its 4px black frame nearly vanishes on the dark wall at 1366 — if hollow wins, give the frame plum ink or an inner line.
+- ### **THE LEADERBOARD LAYOUT IS STILL THE BIGGEST VISUAL PROBLEM, AND IT IS BLOCKED ON YOU.** The podium blocks are fixed; the *composition* is not. Dead purple void across the top-left third (the crown floats in nothing, ~170px empty above the tallest block); blocks sit low and short (#1 is 230px in a 550px column, so the 1/2/3 silhouette barely reads); names float disconnected from their step; left half empty against a cramped right half (the list is squeezed into 50% width with 40px rows); and the numbers don't explain themselves (`★1 R0` vs `R9` — you cannot tell the sort is ★ → R → LV). **Fixing that is a layout change, not a component change, which crosses your "refine COMPONENTS, never redo whole screens" line — so I did not touch it.**
+- ### **PHONE MENU + TWO LIVE BOOSTS still crushes WORD RACE under CHAIN/FUSE** (pre-existing, reproduced on clean main). Measured: the row is 336px, the two pills need 378px. No clean CSS fix — equal-share flex ellipses both names into bare clocks; compacting alone saves only ~16px. Pick one: **(a)** abbreviate on phone (`OD ×10`), **(b)** cap to the biggest boost + `+N` (what the dock already does at ≤480px — my pick), **(c)** a dedicated compact boost band.
+- ### **`v2-results.spec.js @1163x450` fails intermittently on UNRELATED PRs** (`rs2-tally` runs into the PLAY AGAIN footer). Hit #294 and #306; passes 3/3 locally. Nobody has root-caused it; it will keep costing CI cycles.
+
+## PROD VERIFIED LIVE (marker grep, CLAUDE.md "green tests do not mean shipped")
+#294 bolt path ✓ · #300 REBIRTH arc + GEARS extra ✓ (eager `index-*.js`) · #298 podium `#9C6A0C`/`#8E2410` ✓ (`LeaderboardV2-*.js`) · #302 all six card texts ✓ · #309 224px rows, every price inside ✓ (live DOM at 390).
+
+## LESSONS WORTH KEEPING
+1. **Re-read main before writing, not just before pushing.** Two of my PRs (~an hour) duplicated parallel work that was already better. When another session is live in the same area, check first.
+2. **The payload ratchet has ~700 bytes of headroom.** Any always-mounted component in App.jsx must be lazy behind an eager predicate. `npm test` and targeted e2e do NOT catch this — only `e2e/payload-budget.spec.js` does.
+3. **A marker grep against a chunk you *assumed* holds the string proves nothing.** STOCK lives in the v3 chunk, not ShopV2; chunk names pulled from `__vite__mapDeps` 404 when fetched directly. I was one step from reporting production stale when it was fine. **Load the page and read the DOM.**
+4. **Read the DOM before writing a selector.** I guessed `.hp-m-top`; it was `.hp-m-per`, and the first CSS attempt silently did nothing.
