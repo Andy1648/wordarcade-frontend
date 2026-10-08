@@ -181,6 +181,7 @@ There is no clean CSS answer at 336px. The real options all need JSX, so they ar
 
 ## PROD VERIFIED LIVE (marker grep, CLAUDE.md "green tests do not mean shipped")
 #294 bolt path ✓ · #300 REBIRTH arc + GEARS extra ✓ (eager `index-*.js`) · #298 podium `#9C6A0C`/`#8E2410` ✓ (`LeaderboardV2-*.js`) · #302 all six card texts ✓ · #309 224px rows, every price inside ✓ (live DOM at 390).
+#310 ✓ — the live `LiveStack-*.js` chunk no longer contains `boost-pill-name` / `boost-pill-clock` (the duplicate clock) and does contain `lstack-label` (the factor row); the index hash moved `CHI0r7tw` → `CqkO47Qe`, confirming a fresh deploy.
 
 ## LESSONS WORTH KEEPING
 1. **Re-read main before writing, not just before pushing.** Two of my PRs (~an hour) duplicated parallel work that was already better. When another session is live in the same area, check first.
