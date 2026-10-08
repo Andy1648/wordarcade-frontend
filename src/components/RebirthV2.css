@@ -118,9 +118,9 @@
   transform-origin: 0 50%;
   transition: transform .35s var(--k-e-fill);
 }
-.rb2-gate-txt { flex: 0 0 auto; font-size: var(--fs-k14); color: var(--k-dim); white-space: nowrap; }
+.rb2-gate-txt { flex: 0 0 auto; font-size: var(--fs-k18); color: var(--k-dim); white-space: nowrap; }
 .rb2-msg { min-height: 22px; font-size: var(--fs-k16); color: var(--k-yellow); text-align: center; }
-.rb2-cost { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k16); color: var(--k-white); text-align: center; }
+.rb2-cost { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k18); color: var(--k-white); text-align: center; }
 /* AUTO REBIRTH (FINAL, R2): a plain toggle — 44px touch target, static shadow, press = transform only */
 .rb2-auto {
   min-height: 44px;
@@ -138,7 +138,7 @@
 }
 .rb2-auto:active { transform: translate(2px, 2px); }
 .rb2-auto.is-on { background: var(--k-purple); }
-.rb2-get-sub { font-size: var(--fs-k14); color: var(--k-dim); text-align: right; margin-top: -6px; }
+.rb2-get-sub { font-size: var(--fs-k18); color: var(--k-dim); text-align: right; margin-top: -6px; }
 
 /* ---- right: YOU GET ---- */
 .rb2-get {
@@ -245,19 +245,21 @@
   transform: rotate(-45deg);
   font-family: var(--k-display);
   text-transform: uppercase;
-  font-size: var(--fs-k17);
+  font-size: var(--fs-k20);
   color: var(--k-dim);
 }
 .rb2-ms-what {
   font-family: var(--k-display);
   text-transform: uppercase;
-  font-size: var(--fs-k16);
+  font-size: var(--fs-k18);
   color: var(--k-faint);
   text-align: center;
   white-space: nowrap;
 }
 .rb2-ms.is-got .rb2-ms-dia { background: var(--k-purple); }
 .rb2-ms.is-got .rb2-ms-r { color: var(--k-ink); }
+/* NIGHT oct8 #5: the hold's sub line is a NUMBER (LV 12 / 51) — 18 px, not the kit's 16 */
+.rb2 .kb-sub { font-size: var(--fs-k18); }
 .rb2-ms.is-got .rb2-ms-what { color: var(--k-white); }
 
 .rb2-flash {
@@ -341,6 +343,6 @@
   .rb2-track-list { position: static; margin-top: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 10px; }
   .rb2-ms { gap: 8px; }
   .rb2-ms-dia { width: 40px; height: 40px; border-width: var(--k-ink-m); }
-  .rb2-ms-r { font-size: var(--fs-k14); }
-  .rb2-ms-what { font-size: var(--fs-k13); white-space: normal; }
+  .rb2-ms-r { font-size: var(--fs-k18); }
+  .rb2-ms-what { font-size: var(--fs-k18); white-space: normal; }
 }
