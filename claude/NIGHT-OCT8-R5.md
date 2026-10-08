@@ -135,3 +135,21 @@ Andy (or a parallel session) merged **#302 feat/boosts-explained**: every boost 
 | #309 phone fit | row height + price box | typeaword.com @390 | ✓ 224px, every price inside |
 
 **TRAP I nearly fell into:** grepping a chunk I *assumed* held the strings (ShopV2) returned 0 for both the OLD and NEW copy — because STOCK lives in the v3 chunk, not ShopV2. Chunk names pulled out of `__vite__mapDeps` also 404 when fetched directly, which looked like a broken deploy. I was one step from telling Andy production was stale. **Loading the real page and reading the DOM is the only trustworthy marker check; a grep against a guessed chunk proves nothing.**
+
+### 22:4x UTC — phone two-boost overflow: ATTEMPTED, ABANDONED, MEASURED
+Tried to fix the pre-existing bug (phone menu + 2 live boosts → WORD RACE under CHAIN/FUSE). **Reverted; nothing pushed.** What the measurements say:
+
+- `.hp-m-per` (the row holding "+N XP / KEY", the mark chip and the pills) is **336px** wide at 390.
+- The two pills measure **211px** (OVERDRIVE ×10 2:51) + **157px** (BOOST ×3 6:50) = **378px** incl. gap.
+- 378 > 336, so they cannot share a line. They wrap to one line each; at 44px tall that is the ~90px this fit-to-screen column (100dvh, overflow hidden) cannot give back.
+
+Tried and rejected:
+1. `flex: 1 1 0` (equal share) — fits on one line but **ellipses both names away**, leaving two bare clocks "2:51" / "6:50" with no way to tell which boost is which. Fixes layout, destroys the information — the exact opposite of what Andy asked for.
+2. Compact only (44 → 36px, `--fs-k15` name / `--fs-k18` clock, `flex: 0 1 auto`) — names survive but they still wrap to two lines; saves ~16px, **not enough**, WORD RACE still clipped.
+
+There is no clean CSS answer at 336px. The real options all need JSX, so they are Andy's call:
+- **(a)** abbreviate the name on phone ("OD ×10" / "BOOST ×3");
+- **(b)** cap the phone row to the biggest boost + "+N" (the same trick the dock uses at ≤480px);
+- **(c)** give the phone menu its own compact boost band that can hold two.
+
+**Two useful traps recorded:** (i) I guessed the pills' parent was `.hp-m-top` — it is `.hp-m-per`; the first CSS attempt silently did nothing. (ii) `.boost-pill.hp-m-boost` in BoostPill.css is 0,2,0, so a 2-class selector in MobileMenu.css loses on file order — needed `.hp-m-per .boost-pill.hp-m-boost`. **Read the DOM at runtime before writing the selector.**
