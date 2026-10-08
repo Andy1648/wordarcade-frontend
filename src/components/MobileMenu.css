@@ -332,14 +332,14 @@
   /* NIGHT oct8 #1b: LV inside the bar (a taller bar so the numeral reads), the RANK plate in the old LV slot */
   .hp-m-xp .kx.is-lvin { --kx-plate: 64px; }
   .hp-m-xp .kx.is-lvin .kx-bar { height: 32px; }
-  .hp-m-xp .kx.is-lvin .kx-lvplate .kx-lv-n { font-size: 20px; }
-  .hp-m-xp .kx.is-lvin .kx-lvplate .kx-lv-k { font-size: 14px; }
+  .hp-m-xp .kx.is-lvin .kx-lvplate .kx-lv-n { font-size: var(--fs-k20); }
+  .hp-m-xp .kx.is-lvin .kx-lvplate .kx-lv-k { font-size: var(--fs-k14); }
   .hp-m-xp .kx.is-lvin .kx-read-n,
   .hp-m-xp .kx.is-lvin .kx-read-s,
-  .hp-m-xp .kx.is-lvin .kx-read-u { font-size: 14px; }
+  .hp-m-xp .kx.is-lvin .kx-read-u { font-size: var(--fs-k14); }
   .hp-m-xp .hp-rankplate { padding: 4px 8px 5px; gap: 1px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
-  .hp-m-xp .hp-rankplate-k { font-size: 14px; letter-spacing: 0.06em; }
-  .hp-m-xp .hp-rankplate-n { font-size: 18px; -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
+  .hp-m-xp .hp-rankplate-k { font-size: var(--fs-k14); letter-spacing: 0.06em; }
+  .hp-m-xp .hp-rankplate-n { font-size: var(--fs-k18); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   .hp-m-xp .kx-read-n { font-size: var(--fs-k13); }
   .hp-m-xp .kx-read-s,
   .hp-m-xp .kx-read-u { font-size: var(--fs-k13); }

@@ -35,6 +35,10 @@
   --fs-hp18: max(17px, calc(21.96 * var(--u)));
   --fs-hp24: max(21px, calc(29.28 * var(--u)));
   --fs-hplv: max(40px, calc(70.76 * var(--u)));
+  --fs-hplvin: max(22px, calc(28 * var(--u)));   /* NIGHT oct8 #1b: the LV numeral on the bar's plate */
+  --fs-hplvk: max(14px, calc(16 * var(--u)));
+  --fs-hprankk: max(14px, calc(15 * var(--u)));  /* the RANK plate's caption … */
+  --fs-hprank: max(22px, calc(38 * var(--u)));   /* … and its name */
   --fs-hpword: max(34px, calc(56.12 * var(--u)));
   --fs-hp30: max(26px, calc(36.6 * var(--u)));
   --hp-nav-w: max(176px, calc(214 * var(--u)));
@@ -266,8 +270,8 @@ html[data-beat='true'] .homepage-logo {
 .menu-xp-cluster .kx-read { right: calc(12 * var(--u)); }
 /* NIGHT oct8 #1b (SEASON2): LV rides INSIDE the bar on its plate; the RANK plate takes the old LV slot */
 .menu-xp-cluster .kx.is-lvin { --kx-plate: max(84px, calc(112 * var(--u))); }
-.menu-xp-cluster .kx.is-lvin .kx-lvplate .kx-lv-n { font-size: max(22px, calc(28 * var(--u))); }
-.menu-xp-cluster .kx.is-lvin .kx-lvplate .kx-lv-k { font-size: max(14px, calc(16 * var(--u))); }
+.menu-xp-cluster .kx.is-lvin .kx-lvplate .kx-lv-n { font-size: var(--fs-hplvin); }
+.menu-xp-cluster .kx.is-lvin .kx-lvplate .kx-lv-k { font-size: var(--fs-hplvk); }
 .hp-rankplate {
   flex: none;
   display: flex;
@@ -283,11 +287,11 @@ html[data-beat='true'] .homepage-logo {
   line-height: 1;
   white-space: nowrap;
 }
-.hp-rankplate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(14px, calc(15 * var(--u))); letter-spacing: 0.12em; color: #c9b8e8; }
+.hp-rankplate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-hprankk); letter-spacing: 0.12em; color: #c9b8e8; }
 .hp-rankplate-n {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: max(22px, calc(38 * var(--u)));
+  font-size: var(--fs-hprank);
   color: #FFE94A;
   -webkit-text-stroke: var(--b4) #000;
   paint-order: stroke fill;
