@@ -3,7 +3,9 @@
 //
 //   <KitPill ref={r} kind="gems" value={gems} />
 //   r.current.deny(41)          // can't afford: shake + red flash + "NEED 41 MORE"
-//   r.current.iconEl()          // the icon, for <KitFlyLayer target>
+//   r.current.iconEl()          // the icon, for <KitFlyLayer target> / <GainLayer target>
+//   r.current.bump()            // a gain particle landed: 1 → 1.12 → 1 in 180 ms (NIGHT oct8 #3)
+//   r.current.countNext(ms)     // the NEXT gain counts over `ms` (gains/gainPlan countMs), then back to the default
 //
 // The pill is VALUE-DRIVEN: when `value` goes up it counts up (700 ms, number turns yellow while it
 // counts, then lands with a bump), the icon squashes, a sheen crosses, and a "+N" pops above — gains
@@ -16,7 +18,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import KitIcon from './KitIcon.jsx';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS } from './countTween.js';
-import { FX, fx, fxOrShow } from './motion.js';
+import { FX, fx, fxOrShow, kitPlay } from './motion.js';
 import { formatNum, formatShort } from '../../format.js';
 import './tokens.css';
 import './KitPill.css';
@@ -27,6 +29,10 @@ export const PILL_KINDS = {
   levels: { label: 'LEVELS', icon: 'levels', tone: 'purple' },
 };
 export const POP_STACK_MS = 750;
+// the gain BUMP (gains/gainPlan.js BUMP_MS / BUMP_SCALE — inlined: the pill is on the menu's first paint, the gain
+// module is not)
+const BUMP_MS = 180;
+const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.12)' , offset: 0.4 }, { transform: 'scale(1)' }];
 export const FIT_FLOOR = 0.6; // the smallest the figure may shrink to (a 31px numeral stays ≥ 18px)
 
 /** The scale that fits `len` glyphs of width `cw` into `avail` px — 1 when it fits, never under FIT_FLOOR. */
@@ -63,6 +69,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
       wrapRef.current.style.transform = sc < 1 ? `scale(${sc.toFixed(3)})` : '';
     }
   };
+  const nextMs = useRef(0); // a one-shot count duration for the next gain (GainLayer's first landing sets it)
   const st = useRef({ prev: value, pop: { at: -1e9, dir: 0, amt: 0, n: 0 }, landDir: 1, gaining: false, denyT: 0 });
 
   const tween = useRef(null);
@@ -125,7 +132,9 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
     if (!d || !Number.isFinite(d)) return;
     const up = d > 0;
     s.gaining = up;
-    tween.current.to(value, up ? COUNT_GAIN_MS : COUNT_SPEND_MS);
+    const gainMs = nextMs.current > 0 ? nextMs.current : COUNT_GAIN_MS;
+    nextMs.current = 0;
+    tween.current.to(value, up ? gainMs : COUNT_SPEND_MS);
     if (up) {
       fx(sqRef.current, FX.squashIcon);
       fx(sheenRef.current, FX.sheen);
@@ -172,6 +181,14 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
         need.textContent = Number.isFinite(short) ? `NEED ${formatNum(Math.ceil(short))} MORE` : String(short || 'NOT ENOUGH');
         fxOrShow(need, FX.need);
       }
+    },
+    /** A gain particle landed: the body bumps 1 → 1.12 → 1 (180 ms, transform only; a re-trigger restarts it). */
+    bump() {
+      kitPlay(bodyRef.current, BUMP, { duration: BUMP_MS, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+    },
+    /** The next gain's count-up runs `ms` (the default COUNT_GAIN_MS after that). */
+    countNext(ms) {
+      nextMs.current = Number.isFinite(ms) && ms > 0 ? ms : 0;
     },
     iconEl: () => iconRef.current,
     el: () => rootRef.current,

@@ -1,0 +1,21 @@
+/* gains.css — the pooled gain layer + the shard burst (NIGHT oct8 #3). Each sits over its positioned parent and never
+   takes a pointer; every node rests invisible (opacity 0) and only moves by transform/opacity one-shots. */
+.gl,
+.gsb {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: visible;
+  pointer-events: none;
+}
+.gl-x,
+.gl-y,
+.gsb-s {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.gl-s,
+.gsb-s { opacity: 0; }
+.gsb-s { width: 26px; height: 26px; }
+.gsb-s svg { display: block; width: 100%; height: 100%; overflow: visible; }

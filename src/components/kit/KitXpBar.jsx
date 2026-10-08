@@ -20,14 +20,23 @@
 //
 // NIGHT oct8 #1b: `lvInside` puts the LV numeral INSIDE the bar, on the bar's own plate at its left edge (the fill
 // starts after the plate), and `lead` takes the old LV slot left of the bar (the menu's RANK plate).
+//
+// NIGHT oct8 #3 (with `lvInside` — the season-2 menu): a GHOST fill (a pale layer under the real fill) JUMPS to the
+// target the instant XP lands, and the real fill follows on the 600 ms glide. A ONE-level wrap is a beat of its own:
+// the fill runs to 100 %, HOLDS 200 ms, the LV plate POPS, the fill snaps to 0 and carries on to the target (keys that
+// land during the hold queue; a bigger climb keeps the compressed sweep). Writes only (no layout reads), finite.
 import { useEffect, useRef } from 'react';
 import { createClimbPlayer } from './climb.js';
 import { FX, fx, kitHold, kitStop, kitPlay } from './motion.js';
+import { reduceMotion } from '../../lib/reduceMotion.js';
 import { formatNum } from '../../format.js';
 import './tokens.css';
 import './KitXpBar.css';
 
 export const GAIN_HIDE_MS = 1400;
+export const WRAP_HOLD_MS = 200;
+// the plate's content rests counter-skewed (skewX 12deg — KitXpBar.css), so the pop keeps the skew in every frame
+const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
 const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
 
 export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null }) {
@@ -37,6 +46,10 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   const fillRef = useRef(null);
   const sweepRef = useRef(null);
   const curRef = useRef(null);
+  const ghostRef = useRef(null);
+  const plateRef = useRef(null);
+  // the one-level wrap beat: { phase: 'idle' | 'fill' | 'hold', next: { l, f }, t }
+  const wrap = useRef({ phase: 'idle', next: null, t: 0 });
   const needRef = useRef(need);
   needRef.current = need;
   const doneCb = useRef(onClimbDone);
@@ -94,6 +107,26 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         }
       },
       onDone: (l, f, ms) => {
+        const w = wrap.current;
+        if (w.phase === 'fill') {
+          // full: hold 200 ms, pop the plate, snap to 0 of the next level, carry on to the (latest) target
+          w.phase = 'hold';
+          w.t = setTimeout(() => {
+            w.phase = 'idle';
+            const p = player.current;
+            const nx = w.next;
+            w.next = null;
+            if (plateRef.current) kitPlay(plateRef.current, PLATE_POP, { duration: 260, easing: 'cubic-bezier(.2,1.5,.4,1)' });
+            p.set(l + 1, 0);
+            if (nx) {
+              if (ghostRef.current) ghostRef.current.style.transform = `scaleX(${nx.l > l + 1 ? 1 : nx.f})`;
+              promote(true);
+              if (rootRef.current) rootRef.current.dataset.state = 'climb';
+              p.to(nx.l, nx.f);
+            }
+          }, WRAP_HOLD_MS);
+          return;
+        }
         promote(false);
         const root = rootRef.current;
         if (root) {
@@ -117,12 +150,31 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     const root = rootRef.current;
     const tl = Math.max(1, Math.floor(level));
     const tf = frac > 0 ? Math.min(1, frac) : 0;
+    // the GHOST jumps now (a level ahead = full); the real fill follows on the glide below
+    const ghost = ghostRef.current;
+    if (ghost && lvInside) ghost.style.transform = `scaleX(${tl > p.level ? 1 : tf})`;
+    const w = wrap.current;
+    if (lvInside && w.phase !== 'idle') {
+      // mid-wrap: queue the newest target; the hold carries on to it
+      w.next = { l: tl, f: tf };
+      return;
+    }
+    if (lvInside && tl === p.level + 1 && p.target.level === p.level && !reduceMotion()) {
+      // a ONE-level wrap: run to full first (the hold + snap happen in onDone)
+      w.phase = 'fill';
+      w.next = { l: tl, f: tf };
+      climbN.current = 0;
+      if (root) root.dataset.state = 'climb';
+      promote(true);
+      p.to(p.level, 1);
+      return;
+    }
     const climbing = tl > p.level || (tl === p.level && tf > p.frac);
     climbN.current = tl > p.level ? tl - p.level + gain.current.n : 0;
     if (root && climbing) root.dataset.state = 'climb';
     if (climbing) promote(true);
     p.to(level, frac);
-  }, [level, frac]);
+  }, [level, frac, lvInside]);
 
   useEffect(() => {
     const p = player.current;
@@ -130,10 +182,12 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     p.set(p.target.level, p.target.frac);
     const g = gain.current;
     const sw = sweepRef.current;
+    const w = wrap.current;
     return () => {
       p.cancel();
       kitStop(sw);
       clearTimeout(g.t);
+      clearTimeout(w.t);
     };
   }, []);
 
@@ -148,7 +202,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   // inside the bar the numeral sits on a counter-skewed wrapper, so the LV bump (a transform) never fights the skew
   const lvNode = lvInside ? (
     <div className="kx-lvplate">
-      <span className="kx-lvplate-in">{lvText}</span>
+      <span ref={plateRef} className="kx-lvplate-in">{lvText}</span>
     </div>
   ) : (
     <div className="kx-lv">{lvText}</div>
@@ -162,6 +216,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         </span>
         <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
           <div className="kx-track" aria-hidden="true">
+            {lvInside && <div ref={ghostRef} className="kx-ghost" />}
             <div ref={fillRef} className="kx-fill">
               <div className="kx-fill-hi" />
             </div>

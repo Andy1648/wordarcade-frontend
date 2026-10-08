@@ -52,6 +52,11 @@
   white-space: nowrap;
 }
 .rs2-mode-n { color: #c9b8e8; font-size: max(var(--fs-k13), calc(var(--fs-k14) * var(--u))); }
+.rs2-wallets { display: flex; align-items: center; gap: calc(22px * var(--u)); }
+/* the WINS wallet (NIGHT oct8 #3): the gems wallet's twin in gold — the round's wins fly into it */
+.rs2-wallet.rs2-wallet--wins { border-bottom-color: #F2A900; }
+/* the flight is clipped to the card: a particle mid-burst never makes the card scroll */
+.rs2-gains { overflow: hidden; }
 .rs2-wallet {
   position: relative;
   min-width: calc(170px * var(--u));
@@ -251,9 +256,12 @@
 }
 .rs2--narrow .rs2-top { flex: none; }
 .rs2--narrow .rs2-mode { height: 34px; }
-.rs2--narrow .rs2-wallet { min-width: 110px; height: 40px; padding-left: 38px; }
-.rs2--narrow .rs2-wallet-gem { width: 44px; left: -14px; top: -6px; }
-.rs2--narrow .rs2-wallet-n { font-size: var(--fs-k20); }
+.rs2--narrow .rs2-top { gap: 8px; }
+.rs2--narrow .rs2-mode { padding: 0 8px; }
+.rs2--narrow .rs2-wallets { gap: 14px; flex: 0 1 auto; min-width: 0; }
+.rs2--narrow .rs2-wallet { min-width: 0; height: 40px; padding-left: 28px; padding-right: 8px; border-width: 4px; border-bottom-width: 6px; box-shadow: 4px 4px 0 #000; }
+.rs2--narrow .rs2-wallet-gem { width: 36px; left: -12px; top: -2px; }
+.rs2--narrow .rs2-wallet-n { font-size: var(--fs-k18); -webkit-text-stroke-width: 3px; }
 .rs2--narrow .rs2-hero { flex: none; height: auto; }
 .rs2--narrow .rs2-hero-plate { left: 0; }
 .rs2--narrow .rs2-hero-in { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px 14px; padding: 10px 6px 10px; }

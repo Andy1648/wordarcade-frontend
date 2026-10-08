@@ -3,26 +3,20 @@
 // server reset, for a player whose welcome is pending.
 // A FULL-SCREEN MOMENT in the house style (never a plain box): EDITOR'S NOTE slams in · "SORRY FOR RESCALING THE
 // PROGRESSION — HERE'S SOME GEMS" · YOUR OLD RUN R{n} → YOU GET {gems} (round5(300 + 40 × old R), the server's grant) ·
-// {rolls} ROLLS · COLLECT → the gems float up out of the gift and fly into the gem pill on the LEFT (KitFlyLayer: burst
-// = the float, then the arc) while its counter ticks up one landing at a time (KitPill) → PLAY closes it. Built only from the v2 kit (KitPill, KitIcon,
+// {rolls} ROLLS · COLLECT → the gems burst out of the gift and converge on the gem pill on the LEFT (gains/GainLayer —
+// NIGHT oct8 #3) while its counter runs from the first landing and every landing bumps it (KitPill) → PLAY closes it. Built only from the v2 kit (KitPill, KitIcon,
 // KitButton, KitGhostButton, KitFlyLayer). The credit itself happens in collect() (season2Boot.collectWelcome) — ONLY
 // on the server's ok; the flight is the display of it. Every motion is a one-shot transform/opacity (no idle loop);
 // REDUCE MOTION: no slam/rise, the gems land at once (KitFlyLayer).
 import { useEffect, useRef, useState } from 'react';
-import { KitPill, KitIcon, KitButton, KitGhostButton, KitFlyLayer, useCachedCenter } from './kit/index.js';
+import { KitPill, KitIcon, KitButton, KitGhostButton, useCachedCenter } from './kit/index.js';
+import GainLayer from './gains/GainLayer.jsx';
+import { countMs } from './gains/gainPlan.js';
 import { formatNum } from '../format.js';
 import { rollsLine } from '../leaderboard/season2Rules.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import './Season2Welcome.css';
 
-/** Split `total` into ≤ n flying chunks that sum to it exactly. */
-export function flyChunks(total, n = 10) {
-  const t = Math.max(0, Math.floor(total));
-  if (!t) return [];
-  const k = Math.min(n, t);
-  const base = Math.floor(t / k);
-  return Array.from({ length: k }, (_, i) => base + (i < t - base * k ? 1 : 0));
-}
 
 export default function Season2Welcome({ plan, startWallet = 0, collect, onClose }) {
   // idle → busy → done | claimed | retry
@@ -63,11 +57,17 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
     if (r && r.ok) {
       setPhase('done');
       const target = startWallet + r.gems;
+      // NIGHT oct8 #3 — THE GAIN ANIMATION (gains/GainLayer): the gems burst out of the gift and converge on the pill;
+      // the pill's counter starts on the FIRST landing and runs countMs(gems), and every landing bumps the pill
       if (fly.current) {
-        fly.current.fly({
+        fly.current.gain({
           from: from.current,
-          amounts: flyChunks(r.gems),
-          onLand: (amt) => setWallet((w) => Math.min(target, w + amt)),
+          amount: r.gems,
+          onFirstLand: () => {
+            if (pill.current) pill.current.countNext(countMs(r.gems));
+            setWallet(target);
+          },
+          onLand: () => pill.current && pill.current.bump(),
           onDone: () => setWallet(target),
         });
       } else setWallet(target);
@@ -117,7 +117,7 @@ export default function Season2Welcome({ plan, startWallet = 0, collect, onClose
         )}
         {(phase === 'idle' || phase === 'busy') && <p className="s2w-once">SHOWS ONCE</p>}
       </div>
-      <KitFlyLayer ref={fly} target={() => pill.current && pill.current.iconEl()} />
+      <GainLayer ref={fly} icon="gems" target={() => pill.current && pill.current.iconEl()} />
     </div>
   );
 }
