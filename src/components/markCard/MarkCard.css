@@ -38,36 +38,34 @@
   --mc-u: 1px; /* ONE px of the 180x260 card drawing: every card text size is in these units (typeScale FIT-TO-SLOT) */
 }
 
-/* header: RARITY · 1 IN X on the tier bar */
+/* NIGHT oct8 #4 (claude/mockups/v3/GearCard.dc.html): RARITY alone on the tier bar · the art · the NAME big · the stat
+   on a black band · "1 IN X" on the foot in the tier colour. No ★ row — a dupe is a small ×N tag on the art. Every
+   size is in --mc-u (one px of the 180×260 drawing), so the card scales as one picture. */
 .mc-head {
   flex: none;
   width: 100%;
-  height: 28px;
+  height: 34px;
   box-sizing: border-box;
   padding: 0 8px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  justify-content: center;
   background: var(--mc-line);
   border-bottom: 4px solid #000;
   color: #000;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 13);
-  letter-spacing: 0.04em;
+  font-size: calc(var(--mc-u) * 19);
+  letter-spacing: 0.06em;
   line-height: 1;
   white-space: nowrap;
 }
-.mc-odds { font-family: 'Space Mono', monospace; font-weight: 700; font-size: calc(var(--mc-u) * 13); letter-spacing: 0; }
-.mc-head.is-long { padding: 0 6px; font-size: calc(var(--mc-u) * 12); letter-spacing: 0.02em; }
-.mc-head.is-long .mc-odds { font-size: calc(var(--mc-u) * 11); letter-spacing: -0.02em; }
 
 /* the art: the cog + glyph (MarkBadge), the EPIC+ glow behind it */
-.mc-art { position: relative; flex: none; width: 132px; height: 132px; margin-top: 6px; }
+.mc-art { position: relative; flex: none; width: 112px; height: 112px; margin-top: 6px; }
 .mc-cog { position: absolute; inset: 0; display: block; }
 .mc-cog svg { display: block; }
-.mc-badge { position: relative; display: block; width: 132px; height: 132px; }
+.mc-badge { position: relative; display: block; width: 112px; height: 112px; }
 .mc-badge.is-sil .mx-sil { filter: brightness(0) opacity(0.9); }
 .mc-glow {
   position: absolute;
@@ -77,30 +75,52 @@
   opacity: 0.6;
   pointer-events: none;
 }
-.mc-shiny { position: absolute; top: 2px; right: 0; width: 26px; height: 26px; pointer-events: none; transform: rotate(8deg); }
+.mc-shiny { position: absolute; top: 2px; left: -14px; width: 26px; height: 26px; pointer-events: none; transform: rotate(-8deg); }
+/* a dupe: ×N, small, on the art's corner (white tag, ink outline — never a colour: colour is for rarity) */
+.mc-dupes {
+  position: absolute;
+  right: -26px;
+  top: 0;
+  padding: 1px 6px;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(6deg);
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: calc(var(--mc-u) * 16);
+  line-height: 1.1;
+  color: #000;
+}
 
 .mc-name {
   flex: none;
-  margin-top: 2px;
-  max-width: 166px;
+  margin-top: 4px;
+  max-width: 168px;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 15);
-  line-height: 1.15;
-  letter-spacing: 0.02em;
+  font-size: calc(var(--mc-u) * 24);
+  line-height: 1.05;
+  letter-spacing: 0;
   white-space: nowrap;
   color: #fff;
-  -webkit-text-stroke: 3px #000;
+  -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
 }
+.mc-name.is-l { font-size: calc(var(--mc-u) * 21); }
+.mc-name.is-xl { font-size: calc(var(--mc-u) * 18.5); }
 .mc-stat {
   flex: none;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: baseline;
   justify-content: center;
   gap: 6px;
-  margin-top: 2px;
-  max-width: 168px;
+  margin-top: 6px;
+  padding: 3px 6px 4px;
+  background: #000;
   white-space: nowrap;
 }
 .mc-num {
@@ -109,12 +129,12 @@
   font-size: calc(var(--mc-u) * 30);
   line-height: 1;
   color: #FFE94A;
-  -webkit-text-stroke: 5px #000;
+  -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
 }
-.mc-kind { font-family: 'Space Mono', monospace; font-weight: 700; font-size: calc(var(--mc-u) * 13); color: #fff; }
+.mc-kind { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: calc(var(--mc-u) * 15); color: #fff; }
 .mc-stat.is-long .mc-num { font-size: calc(var(--mc-u) * 24); }
-.mc-stat.is-long .mc-kind { font-size: calc(var(--mc-u) * 11); letter-spacing: -0.02em; }
+.mc-stat.is-long .mc-kind { font-size: calc(var(--mc-u) * 13.5); letter-spacing: -0.03em; }
 .mc.is-locked .mc-num { color: #5d4a78; }
 .mc.is-locked .mc-kind { color: #9a8ab8; }
 .mc-perk {
@@ -131,10 +151,26 @@
   font-size: calc(var(--mc-u) * 13);
   line-height: 1.35;
 }
-.mc-perk.is-long { font-size: calc(var(--mc-u) * 10.5); letter-spacing: -0.02em; }
+.mc-perk.is-long { font-size: calc(var(--mc-u) * 11); letter-spacing: -0.02em; }
 .mc.is-locked .mc-perk { color: #1d9e8c; }
-.mc-pips { position: absolute; left: 0; right: 0; bottom: 7px; --pip: 15px; }
-.mc.is-still .mark-pip.is-newest { animation: none; }
+/* the foot: 1 IN X in the tier colour, on the card's darkest band */
+.mc-foot {
+  margin-top: auto;
+  width: 100%;
+  height: 30px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  border-top: 3px solid #000;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: calc(var(--mc-u) * 16);
+  letter-spacing: 0.04em;
+  color: var(--mc-line);
+  white-space: nowrap;
+}
 
 /* the shine: a plain rectangle band (CSS may draw rectangles), swept ONCE */
 .mc-shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -168,7 +204,6 @@
   .mc .mc-glow { animation: none !important; }
 }
 
-/* a card with a perk chip: the cog sits a little smaller so the chip clears the ★ row */
-.mc.has-perk .mc-art { width: 116px; height: 116px; margin-top: 4px; }
-.mc.has-perk .mc-badge { width: 116px; height: 116px; }
-.mc.has-perk .mc-pips { bottom: 5px; }
+/* a card with a perk chip: the cog sits a little smaller so the chip clears the foot */
+.mc.has-perk .mc-art { width: 92px; height: 92px; margin-top: 4px; }
+.mc.has-perk .mc-badge { width: 92px; height: 92px; }

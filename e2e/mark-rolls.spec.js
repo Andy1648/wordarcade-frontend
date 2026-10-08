@@ -48,7 +48,7 @@ const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filte
   // RUNNING only: a finished one-shot (the rarity sweep's fill-mode both) stays in getAnimations() but moves nothing
   return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running';
 }).length);
-const SPUN = 4600; // past the slowest full spin (SECRET 4 s) + its land beat
+const SPUN = 4600; // past the full spin (2.4 s every tier, NIGHT oct8) + its land beat, with room
 // ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
 // A roll's tier is random, so any test that clicks after a roll taps through whatever reveal is still up (a no-op when
 // the roll landed COMMON/RARE): the reveal must be clear for 3 checks in a row (~450 ms) before the test goes on.
@@ -96,7 +96,7 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   // the landing cell IS the result
   const landTier = await page.locator('.rs-cell.is-land').getAttribute('data-tier');
   expect(await card(page).getAttribute('data-tier')).toBe(landTier);
-  await expect(card(page).locator('.mark-pips')).toHaveCount(1);
+  await expect(card(page).locator('.mark-pips')).toHaveCount(0); // NIGHT oct8 #4: no ★ row — a dupe is a small ×N
   // the ROLL button never moved, and is priced in ONE unit now that the starter is spent
   await page.mouse.move(1, 1); // ROLL v1: the button lifts 2px under the pointer (hover) — measure it at rest
   await page.waitForTimeout(250);

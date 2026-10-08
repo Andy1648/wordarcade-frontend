@@ -29,7 +29,8 @@ import { sndReelTick, sndRollSting, sndRollSwell, sndCutStamp } from '../../audi
 import { formatNum } from '../../format';
 import {
   REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, AUTO_DIM_MS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
-  tierIndex, revealKind, dimFor, hasLight, burstCount, shakePx, shakeFrames, burstVectors,
+  tierIndex, revealKind, dimFor, hasLight, burstCount, shakePx, shakeFrames, burstVectors, NEAR_MISS_TICKS, FLASH_TIERS, WASH_TIERS,
+  KEEP_HOLD_MS,
 } from './reelPlan.js';
 
 const ART = '/art/rolls/';
@@ -46,6 +47,8 @@ const POP = [
   { transform: 'scale(1.12) rotate(2deg)', opacity: 1, offset: 0.6 },
   { transform: 'scale(1) rotate(0deg)', opacity: 1 },
 ];
+// the pointer KICK on each of the last NEAR_MISS_TICKS crossings (NIGHT oct8 #4) — transform only, ~110 ms
+const KICK = [{ transform: 'translateX(0) rotate(0deg)' }, { transform: 'translateX(5px) rotate(4deg)', offset: 0.35 }, { transform: 'translateX(0) rotate(0deg)' }];
 const SLAM = [
   { transform: 'scale(3)', opacity: 0 },
   { transform: 'scale(0.92)', opacity: 1, offset: 0.7 },
@@ -58,9 +61,9 @@ export function reelTransform(p) {
 }
 
 /** The pointer: a plain bar (CSS) between two triangles (inline vector art — a triangle is not a rectangle). */
-function Pointer() {
+function Pointer({ ptrRef }) {
   return (
-    <div className="rs-ptr" aria-hidden="true">
+    <div className="rs-ptr" aria-hidden="true" ref={ptrRef}>
       <svg className="rs-ptr-tri is-top" width="44" height="30" viewBox="0 0 44 30"><path d="M2 2 L42 2 L22 28 Z" fill="#FFE94A" stroke="#000" strokeWidth="4" strokeLinejoin="round" /></svg>
       <span className="rs-ptr-bar" />
       <svg className="rs-ptr-tri is-bot" width="44" height="30" viewBox="0 0 44 30"><path d="M2 28 L42 28 L22 2 Z" fill="#FFE94A" stroke="#000" strokeWidth="4" strokeLinejoin="round" /></svg>
@@ -136,6 +139,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         { opacity: 0, transform: 'scale(1.25) rotate(44deg)' },
       ], { duration: 1800, easing: 'cubic-bezier(.2,.7,.3,1)' });
     }
+    // RARE: one flash over the band; EPIC+: a rarity-colour wash over the whole screen (the dim / reveal sit on top)
+    if (FLASH_TIERS.has(tier)) anim(n.flash, [{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'none' });
+    if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
     const k = burstCount(tier, mode);
     for (let i = 0; i < k; i += 1) {
       const v = VEC[i];
@@ -207,7 +213,12 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       later(() => { sndRollSwell(res.tier, dur - at); }, at);
     }
     const first = Math.ceil(from + 0.5);
-    tickTimes({ dur, pow, from, land: goal }).forEach((t, i) => later(() => sndReelTick(ranks[first + i] || 0), t));
+    const ticks = tickTimes({ dur, pow, from, land: goal });
+    ticks.forEach((t, i) => later(() => {
+      sndReelTick(ranks[first + i] || 0);
+      // the last few crossings are the "will it tip over" crawl: the pointer kicks on each one
+      if (i >= ticks.length - NEAR_MISS_TICKS) anim(n.ptr, KICK, { duration: 110, easing: 'cubic-bezier(.2,1.4,.4,1)', fill: 'none' });
+    }, t));
     const seq = spin.seq;
     const run = anim(n.track, keys, { duration: dur, easing: 'linear', fill: 'none' });
     const done = () => {
@@ -240,7 +251,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       ], { duration: RAYS_MS, easing: 'cubic-bezier(.2,.6,.3,1)' });
       anim(n.cutTier, SLAM, { duration: 500, easing: 'cubic-bezier(.2,1.2,.4,1)' });
       anim(n.cutShake, shakeFrames(shakePx(tier)), { duration: 400, delay: 120, iterations: 2 });
-      anim(n.cutKeep, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.35, offset: 0.45 }, { opacity: 1, offset: 0.7 }, { opacity: 0.35, offset: 0.85 }, { opacity: 1 }], { duration: 2000, delay: 700, easing: 'ease-in-out' });
+      // the reveal HOLDS 1.2 s (the card, the odds, the shards) before it asks for the tap
+      anim(n.cutKeep, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.35, offset: 0.45 }, { opacity: 1, offset: 0.7 }, { opacity: 0.35, offset: 0.85 }, { opacity: 1 }], { duration: 2000, delay: KEEP_HOLD_MS, easing: 'ease-in-out' });
       const k = burstCount(tier);
       for (let i = 0; i < k; i += 1) {
         const v = VEC_BIG[i];
@@ -281,6 +293,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
 
   const cover = (
     <>
+      <div className="rs-wash" ref={reg('wash')} aria-hidden="true" style={{ '--rs-tier': lineOf(tier) }} />
       <div className="rs-dim" ref={reg('dim')} aria-hidden="true" />
       <div
         className={`rs-cut is-${kind}${cr ? ` is-on is-${cr.tier}` : ''}`}
@@ -336,9 +349,10 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
               );
             })}
           </div>
+          <div className="rs-flash" ref={reg('flash')} />
           <div className="rs-shade is-l" ref={reg('shadeL')} />
           <div className="rs-shade is-r" ref={reg('shadeR')} />
-          <Pointer />
+          <Pointer ptrRef={reg('ptr')} />
         </div>
         <div className="rs-parts">
           {PARTS.map((i) => (

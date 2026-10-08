@@ -23,13 +23,12 @@ import { registerMarkGlyphs } from '../MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from '../markGlyphsRolled.jsx';
 import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
-import MarkPips from '../rarity/MarkPips';
 import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/registry.js';
 import { MARK_TIERS } from '../../progress/marks';
 import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
-  setSkipBelow, SKIP_TIERS, MAX_PIPS, PITY,
+  setSkipBelow, SKIP_TIERS, PITY,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getGems, subscribeGems } from '../../progress/gems';
@@ -82,7 +81,7 @@ function ResultLine({ result, view, pop = true }) {
         {kind ? ' ' : null}
         {kind ? <span className="rs-res-kind">{kind}</span> : null}
       </span>
-      <MarkPips pips={result.pips} max={MAX_PIPS} className="rs-res-pips" off="pip-off-gold.svg" />
+      {result.copies > 1 ? <span className="rs-chip is-dupe">×{formatNum(result.copies)}</span> : null}
       {result.shiny ? <ShinyBadge className="rs-res-shiny" /> : null}
       {extra.length ? (
         <span className="rs-card-extra" data-testid="mark-roll-extra">
@@ -149,9 +148,13 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const epicLeft = (ladder.find((p) => p.tier === 'epic') || { left: 0 }).left;
   const legLeft = (ladder.find((p) => p.tier === 'legendary') || { left: 0 }).left;
   const epicFrac = Math.max(0, Math.min(1, 1 - epicLeft / PITY.epic.hard));
+  const legFrac = PITY.legendary && PITY.legendary.hard ? Math.max(0, Math.min(1, 1 - legLeft / PITY.legendary.hard)) : 0;
   const col = collection(view);
   const tutDef = TUTORIALS.find((t) => t.id === 'markRolls');
   const rolling = !!(spin && pending.current);
+  // the worn mark's stat for the EQUIPPED chip (read on render; the line updates when a reel lands / an equip lands)
+  const wornE = equippedId ? markEntry(equippedId) : null;
+  const worn = wornE ? { name: wornE.name, tier: wornE.tier, tag: mainTag(equippedId, view) } : null;
 
   const stopAuto = () => {
     auto.current.on = false;
@@ -221,6 +224,16 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     }, AUTO_GAP_MS);
   };
 
+  // the ROLL button's PRESS (NIGHT oct8 #4): one 120 ms squash on pointer-down (transform only) — the CSS :active state
+  // collapses the shadow; this adds the bounce
+  const pressFx = () => {
+    const el = btn.current;
+    if (!el || reduced || typeof el.animate !== 'function') return;
+    el.style.willChange = 'transform';
+    const a = el.animate([{ transform: 'translate(0,0) scale(1)' }, { transform: 'translate(6px,6px) scale(.97,.94)', offset: 0.5 }, { transform: 'translate(6px,6px) scale(1)' }], { duration: 120, easing: 'cubic-bezier(.2,1.2,.4,1)' });
+    const off = () => { el.style.willChange = ''; };
+    a.finished.then(off, off);
+  };
   const pressRoll = () => {
     if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return; }
     doRoll();
@@ -330,9 +343,17 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   return (
     <div className={`marks-overlay rs-overlay${reduced ? ' is-reduced' : ''}`} role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="rs-top">
+        {/* NIGHT oct8 #4 (RollV3 mockup): ← MENU · INDEX n/N · EQUIPPED <stat> … the GEMS pill */}
+        <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>
+          <span aria-hidden="true">←</span> MENU
+        </button>
         <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">
           INDEX <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
         </button>
+        <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'}>
+          <span className="rs-equipped-k">EQUIPPED</span>
+          <span className="rs-equipped-v" style={worn ? { '--rs-tier': CARD_RAR[cardTier(worn.tier)].line } : undefined}>{worn ? worn.tag : 'NONE'}</span>
+        </div>
         <h2 className="rs-title" aria-hidden="true">ROLL</h2>
         <div className="rs-topr">
           {/* GEMS: the balance the price is paid from, in its pill; a short balance shows −N + gem beside it */}
@@ -347,7 +368,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             </div>
             <GemCount value={gems} size={30} className="rs-gems-bal" />
           </div>
-          <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
         </div>
       </div>
 
@@ -359,26 +379,38 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
         </Reel>
       </div>
 
-      <div className="rs-controls">
-        <div className="rs-pity" data-testid="roll-pity" aria-label="Pity">
-          <div className="rs-pity-top">
-            <span className="rs-pity-lbl">EPIC+ IN</span>{' '}<span className="rs-pity-n">{formatNum(epicLeft)}</span>
+      {/* the pity numbers live in TWO places (the EPIC+ headline under ROLL, the bars on the left): the testid wraps both */}
+      <div className="rs-controls" data-testid="roll-pity">
+        <div className="rs-pity" aria-label="Pity">
+          <div className="rs-pity-row is-epic">
+            <span className="rs-pity-lbl">EPIC+</span>
+            <div className="rs-pity-bar" aria-hidden="true"><span className="rs-pity-fill" style={{ transform: `scaleX(${epicFrac})` }} /></div>
           </div>
-          <div className="rs-pity-bar" aria-hidden="true"><span className="rs-pity-fill" style={{ transform: `scaleX(${epicFrac})` }} /></div>
-          <div className="rs-pity-leg">LEGENDARY+ IN {formatNum(legLeft)}</div>
+          <div className="rs-pity-row is-leg">
+            <span className="rs-pity-lbl rs-pity-leg">LEGENDARY+ IN</span>{' '}
+            <span className="rs-pity-n">{formatNum(legLeft)}</span>
+            <div className="rs-pity-bar" aria-hidden="true"><span className="rs-pity-fill" style={{ transform: `scaleX(${legFrac})` }} /></div>
+          </div>
         </div>
-        <button
-          type="button"
-          ref={btn}
-          className={`rs-roll${canAfford ? '' : ' is-short'}${cost.free ? ' is-free' : ''}${rolling ? ' is-rolling' : ''}`}
-          onClick={pressRoll}
-          aria-label={cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.gems)} GEMS`}
-        >
-          <span className="rs-roll-lbl">{rollLabel}</span>
-          {cost.free ? null : (
-            <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{formatNum(cost.gems)}</span>
-          )}
-        </button>
+        <div className="rs-rollcol">
+          <button
+            type="button"
+            ref={btn}
+            className={`rs-roll${canAfford ? '' : ' is-short'}${cost.free ? ' is-free' : ''}${rolling ? ' is-rolling' : ''}`}
+            onClick={pressRoll}
+            onPointerDown={pressFx}
+            aria-label={cost.free ? 'FREE ROLL' : `ROLL · ${formatNum(cost.gems)} GEMS`}
+          >
+            <span className="rs-roll-lbl">{rollLabel}</span>
+            {cost.free ? null : (
+              <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{formatNum(cost.gems)}</span>
+            )}
+          </button>
+          {/* the pity headline, BIG, right under the button it is about (NIGHT oct8 #4) */}
+          <div className="rs-pity-big" aria-hidden="true">
+            EPIC+ IN <b>{formatNum(epicLeft)}</b>
+          </div>
+        </div>
         <div className="rs-opts">
           <button
             type="button"

@@ -8,8 +8,8 @@
 // other result (drawStrip never reads the result to pick a filler), so a "LEGENDARY just above the line" happens
 // exactly as often as the odds say and never more.
 //
-// FEEL: the reel position is land × (1 − (1 − t/D)^k). D grows with rarity (2.5 s COMMON → 4 s SECRET) and so does
-// k — a higher power spends a longer share of the spin crawling over the last few cells: rarer = longer slowdown.
+// FEEL: the reel position is land × (1 − (1 − t/D)^k). D is 2.4 s for every tier (NIGHT oct8) and k grows with rarity
+// — a higher power spends a longer share of the spin crawling over the last few cells: rarer = longer slowdown.
 // k stays ≤ 2 so the result only crosses the line at ≥ 85% of the spin ("will it tip over" stays open), and the reel
 // rests at a random spot INSIDE the result cell (± REST_MAX of a cell), then settles to centre.
 
@@ -52,8 +52,19 @@ export function drawStrip(probs, rng = Math.random, { resultId, len = REEL_LEN, 
 }
 
 // ---- timing ----
-/** Full spin length by tier: ~2.5 s COMMON → ~4 s SECRET (Andy). */
-export const SPIN_MS = { common: 2500, rare: 2800, epic: 3200, legendary: 3500, mythic: 3800, secret: 4000 };
+/**
+ * Full spin length: 2.4 s for every tier (NIGHT oct8 #4, Andy: "the reel decelerates over 2.4 s") — the RARITY is in the
+ * slowdown power below (a rarer result crawls longer over its last cells inside the same 2.4 s) and in the reveal
+ * after the land, never in a longer wait.
+ */
+export const SPIN_MS = { common: 2400, rare: 2400, epic: 2400, legendary: 2400, mythic: 2400, secret: 2400 };
+/** The last NEAR_MISS_TICKS cell crossings kick the pointer (a visible "tick … tick … tick" as the reel crawls). */
+export const NEAR_MISS_TICKS = 3;
+/** RARITY-SCALED REVEAL beats (NIGHT oct8 #4): RARE gets one flash; EPIC+ a rarity-colour wash over the dim; a
+ *  LEGENDARY+ full reveal HOLDS 1.2 s before it asks for the tap. */
+export const FLASH_TIERS = new Set(['rare']);
+export const WASH_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret']);
+export const KEEP_HOLD_MS = 1200;
 /** The deceleration power by tier: higher = a longer crawl over the last cells. */
 export const EASE_POW = { common: 1.7, rare: 1.76, epic: 1.82, legendary: 1.88, mythic: 1.94, secret: 2 };
 /** The rest offset: the reel stops anywhere inside the result cell (± this much of a cell) — still the result. */
