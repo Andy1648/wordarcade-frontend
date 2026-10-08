@@ -46,10 +46,18 @@ const ACH_HINT = Object.fromEntries(
 const TILE_PARTS = { tier: 'mx-tile-tier', odds: 'mx-tile-odds', name: 'mx-tile-name', stat: 'mx-tile-sub' };
 const SHEET_PARTS = { head: 'mx-sheet-tier', name: 'mx-sheet-name', stat: 'mx-sheet-stat' };
 
-/** Every mark the INDEX draws, in order: rollable (common → secret), permanent, retired-but-owned. */
+/** Every mark the INDEX draws, in order: rollable (common → secret) with the EARNED gears right after the LEGENDARY
+ *  ones (Andy oct8: "put them with the normal rarity gears" — they pay the LEGENDARY ×3 and draw as legendary, locked
+ *  = ACHIEVEMENT REQUIRED), then retired-but-owned. */
 function buildEntries(unlocked) {
-  const out = ROLL_MARKS.map((m) => ({ id: m.id, name: m.name, tier: m.tier, kind: 'roll' }));
-  for (const p of PERMANENT_MARKS) out.push({ id: p.id, name: p.name, tier: 'permanent', kind: 'perm', from: p.from });
+  const out = [];
+  const perms = PERMANENT_MARKS.filter((p) => !p.retired || unlocked.has(p.id)).map((p) => ({ id: p.id, name: p.name, tier: 'legendary', kind: 'perm', from: p.from }));
+  const lastLeg = ROLL_MARKS.map((m) => m.tier).lastIndexOf('legendary');
+  ROLL_MARKS.forEach((m, i) => {
+    out.push({ id: m.id, name: m.name, tier: m.tier, kind: 'roll' });
+    if (i === lastLeg) out.push(...perms);
+  });
+  if (lastLeg < 0) out.push(...perms);
   for (const id of RETIRED_MARK_IDS) {
     const m = markById(id);
     if (m && unlocked.has(id)) out.push({ id, name: m.name, tier: m.tier, kind: 'retired' });
@@ -69,7 +77,7 @@ function tierCompletion(view, owns) {
 // a full-screen layer: the menu beneath never reacts to the pointer (see RollScreen stopMenuPointer)
 const stopPointer = (e) => e.stopPropagation();
 const rankOf = (id) => (markById(id) ? markProgress(id).rank : 1);
-const lineOf = (e) => (CARD_RAR[e.kind === 'perm' ? 'permanent' : e.tier] || CARD_RAR.common).line;
+const lineOf = (e) => (CARD_RAR[e.tier] || CARD_RAR.common).line;
 
 function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
   const closeRef = useRef(null);
@@ -101,7 +109,7 @@ function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
           {next ? <div className="mx-pips-text">{next}</div> : null}
           {perk ? <div className="mx-sheet-perk">{perk}</div> : null}
           {flavour ? <div className="mx-sheet-flavour" data-testid="mark-flavour">{flavour}</div> : null}
-          {!have && howTo ? <div className="mx-howto">{howTo}</div> : null}
+          {!have && howTo ? <div className="mx-howto">ACHIEVEMENT REQUIRED: {howTo}</div> : null}
           {rolled && have ? (
             <div className="mx-sheet-facts">
               <span data-testid="mark-owned">OWNED ×{formatNum(info.owned)}</span>
@@ -203,7 +211,8 @@ export default function MarksIndex({
                   aria-label={`${have ? `${e.name}, ` : ''}${tierLabel(e.tier, e.kind)}${odds ? `, ${odds}` : ''}${have ? '' : ', locked'}${on ? ', your main' : ''}`}
                   aria-haspopup="dialog"
                   data-mark={e.id}
-                  data-tier={e.kind === 'perm' ? 'permanent' : e.tier}
+                  data-tier={e.tier}
+                  data-earned={e.kind === 'perm' ? '' : undefined}
                   onClick={() => setSel(e.id)}
                 >
                   <MarkCard

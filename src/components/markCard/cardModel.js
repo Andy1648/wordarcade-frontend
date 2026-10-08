@@ -39,14 +39,17 @@ export function tierLabel(tier, kind = 'roll') {
  * mark the save still owns). locked: the stat at ★0, the name hidden, no pips. state: the roll state (pips + stat).
  */
 export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, state = null }) {
-  const t = kind === 'perm' ? 'permanent' : tier || 'common';
+  // EARNED gears (Andy oct8): they sit WITH the normal rarities — drawn as the LEGENDARY they pay (MAIN ×3), not a
+  // tier of their own; a locked one says ACHIEVEMENT REQUIRED where a rolled card says its odds
+  const t = kind === 'perm' ? 'legendary' : tier || 'common';
   const { num, kind: statKind } = splitTag(mainTag(id, locked ? null : state));
   const lv = kind === 'roll' && !locked ? markLevel(state, id) : null;
   return {
     tier: t,
-    rarityName: tierLabel(t, kind),
-    odds: kind === 'roll' ? `1 IN ${formatNum(oneInX(id))}` : '',
-    name: locked ? '???' : name,
+    rarityName: kind === 'perm' ? tierLabel('legendary') : tierLabel(t, kind),
+    odds: kind === 'roll' ? `1 IN ${formatNum(oneInX(id))}` : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '', // locked: a lock + ACHIEVEMENT (the full task is in the sheet)
+    earned: kind === 'perm',
+    name: locked && kind !== 'perm' ? '???' : name, // an EARNED gear is not a mystery roll: its name shows
     statNum: num,
     statKind,
     perk: perkText(id),

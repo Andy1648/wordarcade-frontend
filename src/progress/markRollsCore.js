@@ -152,7 +152,7 @@ export function yourOneInX(id, luckValue = 1) {
 export const PERMANENT_MARKS = [
   { id: 'mk-ironhand', name: 'IRONHAND', from: 'vol-10k' },
   { id: 'mk-marathon', name: 'MARATHON', from: 'vol-50k' },
-  { id: 'mk-blaze', name: 'BLAZE', from: 'wpm-100' },
+  { id: 'mk-blaze', name: 'BLAZE', from: 'wpm-100', retired: true }, // Andy oct8: the 100 WPM task is gone; owners keep BLAZE
   { id: 'mk-curator', name: 'ARCHIVIST', from: 'dist-2500', legacy: true }, // H6/M8: the achievement is CURATOR
   { id: 'mk-legend', name: 'LEGEND', from: 'lv-300', legacy: true },
   { id: 'mk-ritual', name: 'RITUALIST', from: 'streak-30' },

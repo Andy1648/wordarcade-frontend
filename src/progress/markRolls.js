@@ -47,7 +47,7 @@ export const RETIRED_MARK_IDS = ['mk-student', 'mk-magpie', 'mk-veteran'];
 // it awards the PERMANENT mark.
 export const ACHIEVEMENT_PLAN = {
   'vol-1': 'cut', 'vol-100': 'cut', 'vol-1k': 'cut', 'vol-10k': 'keep', 'vol-50k': 'keep',
-  'wpm-40': 'cut', 'wpm-70': 'cut', 'wpm-100': 'keep',
+  'wpm-40': 'cut', 'wpm-70': 'cut', 'wpm-100': 'cut', // Andy oct8: "what is 100 wpm for the achievement? get rid of it" — BLAZE is retired (owners keep it)
   'obs-1': 'cut', 'obs-50': 'cut', 'dist-500': 'cut', 'dist-2500': 'keep',
   'lv-15': 'cut', 'reb-1': 'cut', 'lv-50': 'cut', 'reb-5': 'cut', 'lv-300': 'keep',
   'streak-3': 'cut', 'streak-7': 'cut', 'streak-30': 'keep',

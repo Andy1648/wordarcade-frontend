@@ -49,13 +49,16 @@ test('locked: "???", no pips, still the odds + the ★0 stat', () => {
   assert.ok(c.statNum);
 });
 
-test('permanent marks: PERMANENT, no odds, their MAIN on wins + XP', () => {
+test('earned gears (Andy oct8): drawn as LEGENDARY with the rest; locked = ACHIEVEMENT REQUIRED, owned = EARNED', () => {
   for (const p of PERMANENT_MARKS) {
     const c = cardModel({ id: p.id, kind: 'perm', tier: 'permanent', name: p.name });
-    assert.equal(c.rarityName, 'EARNED'); // R4: the PERMANENT tier's LABEL is EARNED (the id stays 'permanent')
-    assert.equal(c.odds, '');
+    assert.equal(c.rarityName, 'LEGENDARY');
+    assert.equal(c.tier, 'legendary');
+    assert.equal(c.odds, 'EARNED');
+    assert.equal(c.earned, true);
     assert.equal(c.statKind, 'WINS + XP');
-    assert.equal(c.tier, 'permanent');
+    assert.equal(cardModel({ id: p.id, kind: 'perm', tier: 'permanent', name: p.name, locked: true }).odds, 'ACHIEVEMENT');
+    assert.equal(cardModel({ id: p.id, kind: 'perm', tier: 'permanent', name: p.name, locked: true }).name, p.name);
   }
 });
 
