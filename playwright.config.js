@@ -30,6 +30,10 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     baseURL: BASE_URL,
+    // SEASON 2 FLIPPED (Oct 8 2026): visitors get season 2; the e2e suite keeps testing SEASON 1 by default through
+    // the storage switch season.js honours (localStorage 'taw.season2.off'). A spec that wants season 2 opens
+    // ?season2=1 — the URL wins over the switch. backendMock re-applies the switch after any localStorage.clear().
+    storageState: { cookies: [], origins: [{ origin: BASE_URL, localStorage: [{ name: 'taw.season2.off', value: '1' }] }] },
     trace: 'on-first-retry',
     video: 'off',
     // This app runs constant idle animations on nearly everything (bob, beat
