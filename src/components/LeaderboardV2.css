@@ -95,7 +95,9 @@
   cursor: pointer;
   transition: transform .08s;
 }
-.lb2-back:hover { color: #FFE94A; }
+@media (hover: hover) {
+  .lb2-back:hover { color: #FFE94A; transform: translate(-2px, -2px); } /* R5 oct8 #3: lifts like every kit button */
+}
 .lb2-back:active { transform: translate(3px, 3px); }
 .lb2-title {
   position: absolute;
