@@ -184,3 +184,33 @@ test('the AUTO cycle: OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF', async () 
   assert.equal(nextAutoTarget('legendary'), null);
   assert.equal(nextAutoTarget('bogus'), 'rare');
 });
+
+test('R4 HOLD TO ROLL: the charge is 400–600 ms, the overhold fires on its own, the whole spin stays ≤ 3 s', async () => {
+  const { CHARGE_MS, OVERHOLD_MS, CHARGE_RATTLE, SPIN_MS } = await import('./reelPlan.js');
+  assert.ok(CHARGE_MS >= 400 && CHARGE_MS <= 600, `charge ${CHARGE_MS}`);
+  assert.ok(OVERHOLD_MS > 0 && OVERHOLD_MS <= 1500);
+  assert.ok(CHARGE_RATTLE.hard > CHARGE_RATTLE.light, 'the rattle ramps');
+  for (const t of Object.keys(SPIN_MS)) assert.ok(SPIN_MS[t] + 320 <= 3000, `${t} spin + land ≤ 3 s`);
+});
+
+test('R4 THE TELL: EPIC+ only, honest (never for COMMON / RARE or a short land), intensity climbs with the tier', async () => {
+  const { tellFor, tellFrames, TELL } = await import('./reelPlan.js');
+  assert.equal(tellFor('common'), null);
+  assert.equal(tellFor('rare'), null);
+  assert.equal(tellFor('epic', 'short'), null);
+  assert.equal(tellFor('legendary', 'none'), null);
+  assert.deepEqual(tellFrames('rare'), []);
+  let lastPulses = 0; let lastPeak = 0;
+  for (const t of ['epic', 'legendary', 'mythic', 'secret']) {
+    const tell = tellFor(t);
+    assert.ok(tell.pulses > lastPulses && tell.peak > lastPeak, `${t} is louder than the tier below`);
+    lastPulses = tell.pulses; lastPeak = tell.peak;
+    const f = tellFrames(t);
+    assert.equal(f[0].opacity, 0);
+    assert.ok(f.every((k) => k.opacity <= tell.peak && k.offset >= 0 && k.offset <= 1));
+    assert.ok(f.every((k, i) => i === 0 || k.offset >= f[i - 1].offset), 'offsets never go backwards');
+    assert.equal(f.filter((k) => k.opacity === tell.peak).length, tell.pulses);
+  }
+  assert.equal(TELL.epic.rumble, false);
+  assert.equal(TELL.legendary.rumble, true);
+});

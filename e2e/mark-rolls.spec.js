@@ -10,6 +10,7 @@
 // DIM / FULL reveal stays up until a tap ("TAP TO KEEP"); the reel fits 360x640 → 1366x657; INDEX opens the
 // MARKS INDEX (the collection only: no REPLAY, no roll, no pity, no gems); the ROLL screen has no prose; nothing loops after.
 import { test, expect } from '@playwright/test';
+import { holdRoll, tapRoll } from './support/roll.js'; // HOLD TO ROLL (R4): a hold + release is a roll; a tap is not
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
@@ -86,7 +87,7 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(roll).toHaveText(/FREE ROLL/);
   const pityBefore = await pity(page);
   const boxBefore = await roll.boundingBox();
-  await roll.click();
+  await holdRoll(page);
   // NO SPOILERS: mid-spin the card is not there and the pity ladder has not moved
   await page.waitForTimeout(300);
   await expect(card(page)).toHaveCount(0);
@@ -104,8 +105,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
   // price in ONE unit: GEMS (wins never buy rolls) — the gem icon + 10 — and the balance it is paid from shows
   // as icon + count right under it
-  await expect(roll).toHaveText(/^ROLL\s*10$/); // ROLL v1: the gem price is stacked under the label
-  await expect(roll).toHaveAttribute('aria-label', 'ROLL · 10 GEMS');
+  await expect(roll).toHaveText(/^HOLD TO ROLL\s*10$/); // ROLL v1: the gem price is stacked under the label (R4: the label says HOLD)
+  await expect(roll).toHaveAttribute('aria-label', 'HOLD TO ROLL · 10 GEMS');
   await expect(roll.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
   await expect(roll).not.toContainText('WINS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
@@ -127,7 +128,7 @@ test('tap anywhere mid-spin jumps straight to the result', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await page.waitForTimeout(250);
   await page.locator('.rs-stage').click({ position: { x: 20, y: 20 } });
   await expect(card(page)).toHaveCount(1, { timeout: 400 });
@@ -141,7 +142,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   });
   await openRoll(page);
   await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 1');
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   const cut = page.getByTestId('roll-cutscene');
   await expect(cut).toHaveClass(/is-on/, { timeout: SPUN });
   expect(['legendary', 'mythic', 'secret']).toContain(await cut.getAttribute('data-tier'));
@@ -227,7 +228,7 @@ test('short balance: the press shows −X + gem (never a silent grey button) —
   await expect(page.locator('.hp-nav.is-gears .kb-rdot')).toHaveCount(0); // v2 menu: the GEARS rail button (ROLL + INDEX)'s dot
   await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '6');
   await expect(page.locator('.rs-need')).toHaveText('−6');
   await expect(page.locator('.rs-sr')).toHaveText('NEED 6 MORE GEMS'); // screen readers still get the sentence
@@ -258,7 +259,7 @@ test('reduced motion: straight to the result card, no reel animation', async ({ 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await expect(card(page)).toHaveCount(1, { timeout: 300 });
   // the REEL never moves (the app-wide press squash on the ROLL button itself — shallow under reduced motion,
   // juice/motion.js — is button feedback, not the reveal)
@@ -274,7 +275,7 @@ for (const [w, h] of [[360, 640], [390, 844], [1366, 657]]) {
     await page.setViewportSize({ width: w, height: h });
     await seed(page, { 'taw.tut.markRolls': '1' });
     await openRoll(page);
-    await page.locator('.rs-roll').click();
+    await holdRoll(page);
     await expect(card(page)).toHaveCount(1, { timeout: SPUN });
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(sw).toBeLessThanOrEqual(w);
@@ -289,7 +290,7 @@ test('coming back from the INDEX never replays the last reveal', async ({ page }
   await page.setViewportSize({ width: 390, height: 844 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
   await page.waitForTimeout(4200);
   await keepReveal(page);
@@ -306,7 +307,7 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
   await keepReveal(page);
   await page.getByTestId('roll-index').click();
@@ -324,7 +325,7 @@ test('ROLL vs INDEX never mix (Andy oct5): INDEX has no REPLAY / roll / pity / g
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await expect(card(page)).toHaveCount(1, { timeout: SPUN });
   // the result card: the ★ pip graphic, never the "7/10 → ★3" sentence
   await expect(card(page)).not.toContainText('→');
@@ -361,10 +362,10 @@ test('SEASON2: a roll costs 75 gems — charged once from the season-2 wallet, t
   await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(100), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
   await openRoll(page, '&season2=1');
   const roll = page.locator('.rs-roll');
-  await expect(roll).toHaveText(/^ROLL\s*75$/);
-  await expect(roll).toHaveAttribute('aria-label', 'ROLL · 75 GEMS');
+  await expect(roll).toHaveText(/^HOLD TO ROLL\s*75$/);
+  await expect(roll).toHaveAttribute('aria-label', 'HOLD TO ROLL · 75 GEMS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '100');
-  await roll.click();
+  await holdRoll(page);
   await page.waitForTimeout(SPUN);
   await keepReveal(page);
   await expect(card(page)).toHaveCount(1);
@@ -374,7 +375,7 @@ test('SEASON2: a roll costs 75 gems — charged once from the season-2 wallet, t
   expect(st.rolls).toBe(4);
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '25');
   // 25 < 75: the next press shows the gap, charges nothing, rolls nothing
-  await roll.click();
+  await holdRoll(page);
   await expect(page.locator('.rs-need')).toHaveText('−50');
   expect(await s2Store(page)).toEqual(st);
 });
