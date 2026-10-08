@@ -390,3 +390,10 @@
   .av3-hero, .av3-cell { animation: none; }
   .av3-bar-fill, .av3-hero.is-stamped .av3-hero-main { transition: none; }
 }
+/* what the count means (Andy oct8 "what is CHAIN 35?") — only on the ladders whose name does not say it */
+.av3-tile-name, .av3-what { flex: none; }
+.av3-what { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k14); line-height: 1.15; color: var(--k-dim, #c9b8e8); }
+/* a tile that carries the explanation line gives that line's height back from the name gap and the foot */
+.av3-tile-body:has(.av3-what) .av3-tile-name { margin-top: 4px; }
+.av3-tile-body:has(.av3-what) .av3-bar { margin-top: 4px; }
+.av3-tile-body:has(.av3-what) .av3-tile-foot { min-height: 44px; padding-top: 4px; }

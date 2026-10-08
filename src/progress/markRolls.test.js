@@ -330,7 +330,8 @@ test('auto-equip: ANY higher MAIN equips, always when nothing is worn; never ask
 test('achievements: the keep/cut plan covers EVERY catalog achievement; each keep awards one permanent mark', () => {
   for (const a of ACHIEVEMENTS) assert.ok(ACHIEVEMENT_PLAN[a.id] === 'keep' || ACHIEVEMENT_PLAN[a.id] === 'cut', `${a.id} needs keep/cut`);
   assert.equal(Object.keys(ACHIEVEMENT_PLAN).length, ACHIEVEMENTS.length);
-  assert.deepEqual([...KEPT_ACHIEVEMENTS].sort(), PERMANENT_MARKS.map((m) => m.from).sort());
+  // a RETIRED permanent (BLAZE, Andy oct8) keeps its owners but no achievement awards it any more
+  assert.deepEqual([...KEPT_ACHIEVEMENTS].sort(), PERMANENT_MARKS.filter((m) => !m.retired).map((m) => m.from).sort());
 });
 
 test('carry-over: every existing mark is rollable, permanent or retired — none vanishes, none drops a tier', () => {
