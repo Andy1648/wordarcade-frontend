@@ -75,7 +75,9 @@ export function creditLetterXp(letters, { mode, perLetter } = {}) {
   if (lastCreditAt) notePlay(now - lastCreditAt, now);
   lastCreditAt = now;
   const per = Number.isFinite(perLetter) && perLetter > 0 ? perLetter : letterXpNow();
-  const xp = roundWordXp(n * per);
+  // SEASON 2 (FINAL v3, BASE 1 XP a letter): the credit stays FRACTIONAL (the bar stores the fraction) — rounding a
+  // one-letter flush of 1.1 XP to 1 would make every small mark / boost pay nothing at the start. Season 1 unchanged.
+  const xp = SEASON2 ? n * per : roundWordXp(n * per);
   const before = loadProgress();
   const res = creditXp(before, xp);
   saveProgress(res.state);

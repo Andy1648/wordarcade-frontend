@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// final-sim.mjs — PROGRESSION FINAL v2 (claude/progression-FINAL.md v2, Oct 6 22:30, FROZEN) on the REAL modules — the CI
-// port of claude/progression-final-sim.py. Turns the SEASON2 flag on before the economy loads, so every number comes
-// from the shipped code behind the flag:
+// final-sim.mjs — PROGRESSION FINAL v3 "START AT 1" (claude/progression-FINAL.md v3, Andy Oct 7 21:27) on the REAL
+// modules — the CI port of claude/progression-final-sim.py (v2's structure; v3 changed constants only). Turns the
+// SEASON2 flag on before the economy loads, so every number comes from the shipped code behind the flag:
 //   game letters → letterXp.creditLetterXp (season 2: every typed game letter ×1, no cap); wins → wins.awardWordXp +
-//     wins.bankWordWins; KEY → shop.buyKeyPower (the ladder, 150 × 5^T); menu keys → xp.xpPerInput (×0.2, ANY key,
+//     wins.bankWordWins; KEY → shop.buyKeyPower (×2^T, 150 × 5^T wins); menu keys → xp.xpPerInput (×0.2, ANY key,
 //     no cap — mashing is the game) through xp.creditXp;
 //   every rebirth → the app's client flow (rebirthFlow.performRebirth, season 2) against the JS model of the server
 //     (rebirthRules.decideRebirth + finalRules.decideSubmitFinal on an in-memory econ-13 row, on the sim clock) — so the
-//     12-an-hour pace cap and the LV 15 + 18·R → LV 1 rule are the real ones (027).
+//     12-an-hour pace cap and the LV 18 + 20·R → LV 1 rule are the real ones (029).
 //
 //   node claude/econ-oct2/final-sim.mjs                 # all bots, 10 h, table + HARD CHECK, exit 1 on any miss
 //   node claude/econ-oct2/final-sim.mjs --hours=4 --bots=median,fast --no-gate
@@ -22,9 +22,10 @@
 // NO MARKS, no rolls, no gems spent, no boosts, no OVERDRIVE, no achievements (the md: "no marks/overdrive").
 // SPAMMER: the median's exact dice, plus every 10 min 1,000 rebirth calls through the client flow (half at once, half in a
 //   row) and a replay of every old request id straight at the server — must end exactly level with the median.
-// HARD CHECK (exit 1 → CI fails): every doc-table cell (R1 / R3 / R5 first times, the R reached at 10 h) within ±25%
-//   (a "—" cell: not reached before 75% of the horizon); FAST ≤ 2× the median's pace to every milestone both reach;
-//   SPAMMER's final R / level = the median's; no server grant below the v2 gate, not to LV 1, > 1 per call, or by a
+// HARD CHECK (exit 1 → CI fails): every doc-table cell (R1 / R3 / R5 first times, the R reached at 10 h) within ±20%
+//   (a "—" cell: not reached before 75% of the horizon; a range cell R6–R7: ±20% of its nearest end). MEDIAN = Andy's v3
+//   targets (R1 ≈ 20 min, R3 ≈ 2 h, R5 ≈ 6 h, R6–R7 at 10 h); casual / fast / menu = the v3 sim table (regression guards); FAST ≤ 2× the median's pace to every milestone both reach;
+//   SPAMMER's final R / level = the median's; no server grant below the v3 gate, not to LV 1, > 1 per call, or by a
 //   replay; no ascension (hidden).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -86,13 +87,13 @@ for (const w of recall.slice(0, 9000)) {
   GAME_POOL.get(w.length).push(w);
 }
 
-// ----------------------------------------------------------------------------- THE FINAL v2 TABLE (md "Sim", minutes)
+// ----------------------------------------------------------------------------- THE FINAL v3 TABLE (md "Sim", minutes)
 const H = 60;
 const FINAL = {
-  casual: { R1: 6, R3: 39, R5: 2.4 * H, END: 7 },
-  median: { R1: 3, R3: 21, R5: 77, END: 8 },
-  fast: { R1: 2, R3: 12, R5: 45, END: 9 },
-  menu: { R1: 4, R3: 1.7 * H, R5: null, END: 4 },
+  casual: { R1: 38, R3: 3.3 * H, R5: null, END: 4 },
+  median: { R1: 20, R3: 2 * H, R5: 6 * H, END: [6, 7] }, // Andy's v3 targets
+  fast: { R1: 12, R3: 82, R5: 3.8 * H, END: 6 },
+  menu: { R1: 11, R3: null, R5: null, END: 2 },
 };
 const BOTS = [
   { id: 'casual', lpm: 60, wpm: 8, mlpm: 80, game: 0.6, seed: 1 },
@@ -101,7 +102,7 @@ const BOTS = [
   { id: 'menu', lpm: 0, wpm: 0, mlpm: 500, game: 0, seed: 4 },
   { id: 'spammer', lpm: 100, wpm: 14, mlpm: 150, game: 0.7, seed: 2, spam: true },
 ];
-const TOL = 0.25;
+const TOL = 0.2;
 const PACE_LIMIT = 2;
 const SPAM_EVERY_MIN = 10;
 const SPAM_CALLS = 1000;
@@ -137,7 +138,7 @@ function makeSimServer() {
     if (fn === 'lb_ascend' && r.ok && !r.replay) { S.ascends += 1; S.violations.push({ t: SIM_NOW, kind: 'ascended' }); }
     if (fn === 'lb_rebirth' && S.row.rebirths > rb0) {
       S.grants += 1;
-      const gate = ECON.rebirthGate(rb0); // the CLIENT's FINAL v2 rule, independent of the server model
+      const gate = ECON.rebirthGate(rb0); // the CLIENT's FINAL v3 rule, independent of the server model
       if (!(lv0 >= gate)) S.violations.push({ t: SIM_NOW, kind: 'below-gate', rebirths: rb0, level: lv0 });
       if (S.row.level !== 1) S.violations.push({ t: SIM_NOW, kind: 'not-lv1', from: lv0, to: S.row.level });
       if (S.row.rebirths - rb0 !== 1) S.violations.push({ t: SIM_NOW, kind: 'more-than-one' });
@@ -260,7 +261,7 @@ async function simulate(bot, hours = HOURS) {
   }
   return {
     bot: bot.id, hours,
-    times: { R1: first.R1 ?? null, R3: first.R3 ?? null, R5: first.R5 ?? null },
+    times: { R1: first.R1 ?? null, R3: first.R3 ?? null, R5: first.R5 ?? null, R6: first.R6 ?? null, R7: first.R7 ?? null },
     final: { level: lv(), rebirths: XP.getRebirths(), stars: STORE.getStarsV3(), power: XP.getKeyTier(), wins: WINS.getWins() },
     words, letters, menuXp,
     server: { calls: srv.calls, grants: srv.grants, ascends: srv.ascends, replays: srv.replays, refusals: srv.refusals, violations: srv.violations.slice(0, 10), violationCount: srv.violations.length, stored: { rebirths: srv.row.rebirths, stars: srv.row.stars, level: srv.row.level } },
@@ -269,7 +270,7 @@ async function simulate(bot, hours = HOURS) {
 }
 
 // ----------------------------------------------------------------------------- RUN
-const fmt = (m) => (m == null ? '—' : m < 90 ? `${Math.round(m * 10) / 10} min` : `${(m / 60).toFixed(1)} h`);
+const fmt = (m) => (m == null ? '—' : m < 150 ? `${Math.round(m * 10) / 10} min` : `${(m / 60).toFixed(2)} h`);
 const want = typeof args.bots === 'string' ? args.bots.split(',') : BOTS.map((b) => b.id);
 const results = [];
 for (const b of BOTS.filter((x) => want.includes(x.id))) {
@@ -281,7 +282,7 @@ for (const b of BOTS.filter((x) => want.includes(x.id))) {
   console.log(`  at ${HOURS} h: R${r.final.rebirths} ★${r.final.stars} KEY T${r.final.power} LV${r.final.level} · ${r.words} game words · menu XP ${Math.round(r.menuXp)} · server ${r.server.grants} grants / ${r.server.ascends} ascends, refused ${JSON.stringify(r.server.refusals)}, violations ${r.server.violationCount}${r.spam ? ` · spam ${r.spam.calls} calls → ${r.spam.ok} ok, ${r.spam.replaysSent} replays` : ''}`);
 }
 
-// ---- THE TABLE vs FINAL v2 (markdown rows start with '|': the CI job copies them into the summary) -------------------
+// ---- THE TABLE vs FINAL v3 (markdown rows start with '|': the CI job copies them into the summary) -------------------
 const KEYS = ['R1', 'R3', 'R5', 'END'];
 const LABEL = { R1: 'R1', R3: 'R3', R5: 'R5', END: `R at ${HOURS} h` };
 const misses = [];
@@ -291,11 +292,13 @@ const cellOf = (bot, key) => {
   const want = FINAL[bot][key];
   if (key === 'END') {
     const got = r.final.rebirths;
-    if (HOURS !== 10) return `R${got} (FINAL R${want} is the 10 h end — not checked at ${HOURS} h)`;
-    const dev = got / want - 1;
+    const [lo, hi] = Array.isArray(want) ? want : [want, want];
+    const label = lo === hi ? `R${lo}` : `R${lo}–R${hi}`;
+    if (HOURS !== 10) return `R${got} (FINAL ${label} is the 10 h end — not checked at ${HOURS} h)`;
+    const dev = got < lo ? got / lo - 1 : got > hi ? got / hi - 1 : 0;
     const ok = Math.abs(dev) <= TOL;
-    if (!ok) misses.push(`${bot} ${LABEL[key]}: R${got} vs FINAL R${want}`);
-    return `R${got} (FINAL R${want}, ${dev >= 0 ? '+' : ''}${Math.round(dev * 100)}%)${ok ? '' : ' **MISS**'}`;
+    if (!ok) misses.push(`${bot} ${LABEL[key]}: R${got} vs FINAL ${label}`);
+    return `R${got} (FINAL ${label}, ${dev >= 0 ? '+' : ''}${Math.round(dev * 100)}%)${ok ? '' : ' **MISS**'}`;
   }
   const got = r.times[key];
   if (want == null) {
@@ -310,7 +313,7 @@ const cellOf = (bot, key) => {
 };
 const table = [];
 const tbots = ['casual', 'median', 'fast', 'menu'].filter((b) => results.some((r) => r.bot === b));
-table.push(`| FINAL v2 (${HOURS} h, real modules) | ${tbots.join(' | ')} |`);
+table.push(`| FINAL v3 (${HOURS} h, real modules) | ${tbots.join(' | ')} |`);
 table.push(`|---|${tbots.map(() => '---').join('|')}|`);
 for (const k of KEYS) table.push(`| ${LABEL[k]} | ${tbots.map((b) => cellOf(b, k)).join(' | ')} |`);
 
@@ -331,13 +334,13 @@ if (med && fast) {
 }
 if (sp && med && (sp.final.rebirths !== med.final.rebirths || sp.final.level !== med.final.level)) misses.push(`SPAMMER ended R${sp.final.rebirths} LV${sp.final.level} vs the median's R${med.final.rebirths} LV${med.final.level}`);
 const stars = results.reduce((a, r) => a + r.final.stars + r.server.stored.stars, 0);
-if (stars) misses.push(`${stars} ★ granted — ascension is hidden in FINAL v2`);
+if (stars) misses.push(`${stars} ★ granted — ascension is hidden in FINAL v3`);
 const violations = results.reduce((a, r) => a + r.server.violationCount, 0);
-if (violations) misses.push(`${violations} server violations (grant below the v2 gate / not to LV 1 / > 1 per call / by a replay / an ascension)`);
+if (violations) misses.push(`${violations} server violations (grant below the v3 gate / not to LV 1 / > 1 per call / by a replay / an ascension)`);
 
 table.push(`| FAST ÷ MEDIAN pace (≤ ×${PACE_LIMIT}) | ${paceRows.join(' · ') || '—'} |${tbots.slice(1).map(() => '').join(' |')}`);
 table.push(`| SPAMMER vs MEDIAN | ${sp && med ? `R${sp.final.rebirths} LV${sp.final.level} vs R${med.final.rebirths} LV${med.final.level} · ${sp.spam.calls} spam calls → ${sp.spam.ok} granted` : '—'} |${tbots.slice(1).map(() => '').join(' |')}`);
-console.log('\n=== FINAL v2 TABLE (claude/progression-FINAL.md "Sim", ±25%)');
+console.log('\n=== FINAL v3 TABLE (claude/progression-FINAL.md "Sim", ±20%)');
 for (const l of table) console.log(l);
 const pass = misses.length === 0;
 console.log(`\n=== FINAL HARD CHECK: ${pass ? 'PASS' : `FAIL (${misses.length})`}`);

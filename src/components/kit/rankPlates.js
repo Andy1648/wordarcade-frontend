@@ -38,7 +38,7 @@ const AD = {
 
 // In RANKS_V3 order (index 0 … 15). `req` matches RANKS_V3[i].req.
 export const RANK_PLATES = [
-  { req: 'R0', name: 'KEYMASH', cap: 'BARE SLAB', shape: SH.rect, g: ['#7d6b98', '#7d6b98', '#6b5a85'], lip: '#3a2160', c1: '#a08cc0', txt: '#fff' },
+  { req: 'R0', name: 'INKLING', cap: 'BARE SLAB', shape: SH.rect, g: ['#7d6b98', '#7d6b98', '#6b5a85'], lip: '#3a2160', c1: '#a08cc0', txt: '#fff' },
   { req: 'R1', name: 'TYPO', cap: 'RED SQUIGGLE', shape: SH.notch, g: ['#e0d4f5', '#c9b8e8', '#c9b8e8'], lip: '#7a66a0', c1: '#c9b8e8', txt: '#000', front: AD.squig, c4: '#FF3D7F' },
   { req: 'R2', name: 'CLACKER', cap: 'KEYCAP', shape: SH.key, g: ['#8affef', '#2EFFE0', '#2EFFE0'], lip: '#12A99A', c1: '#2EFFE0', txt: '#000' },
   { req: 'R3', name: 'HOTKEY', cap: 'HEX CUT', shape: SH.hex, g: ['#FFE94A', '#FFC23D', '#FFC23D'], lip: '#b07a10', c1: '#FFC23D', txt: '#000' },

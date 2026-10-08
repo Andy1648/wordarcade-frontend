@@ -13,9 +13,9 @@ const SEC = 1000;
 let n = 0;
 const id = () => `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`;
 
-test('the gate comes from the STORED row: season 0 = 25 × (R+1); season 2 FINAL v2 = 15 + 18·R (both: level ≥ it)', () => {
+test('the gate comes from the STORED row: season 0 = 25 × (R+1); season 2 FINAL v3 = 18 + 20·R (both: level ≥ it)', () => {
   assert.deepEqual([0, 1, 4, 9].map((r) => serverGate(r, 0)), [25, 50, 125, 250]);
-  assert.deepEqual([0, 1, 4, 9].map((r) => serverGate(r, 2)), [15, 33, 87, 177]);
+  assert.deepEqual([0, 1, 4, 9].map((r) => serverGate(r, 2)), [18, 38, 98, 198]);
   assert.equal(serverGate(3, 1), null);
   for (let r = 0; r < 30; r++) {
     const lv = serverGate(r, 2);
@@ -24,14 +24,14 @@ test('the gate comes from the STORED row: season 0 = 25 × (R+1); season 2 FINAL
   }
 });
 
-test('season 2 (FINAL v2, 027): LV ≥ 15 + 18·R → ONE rebirth, level 1; refusal names the level needed', () => {
-  const no = decideRebirth({ level: 14, rebirths: 0, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
-  assert.deepEqual(no.result, { ok: false, reason: 'gate', gate: 15, level: 14, rebirths: 0 });
-  assert.equal(no.row.level, 14);
+test('season 2 (FINAL v3, 029): LV ≥ 18 + 20·R → ONE rebirth, level 1; refusal names the level needed', () => {
+  const no = decideRebirth({ level: 17, rebirths: 0, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
+  assert.deepEqual(no.result, { ok: false, reason: 'gate', gate: 18, level: 17, rebirths: 0 });
+  assert.equal(no.row.level, 17);
   const ok = decideRebirth({ level: 40, rebirths: 0, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
   assert.deepEqual(ok.result, { ok: true, rebirths: 1, level: 1 });
   assert.deepEqual([ok.row.rebirths, ok.row.level], [1, 1]);
-  const r4 = decideRebirth({ level: 87, rebirths: 4, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
+  const r4 = decideRebirth({ level: 98, rebirths: 4, econ: 13 }, { requestId: id(), season: 2 }, [], T0);
   assert.deepEqual([r4.result.ok, r4.row.rebirths, r4.row.level], [true, 5, 1]);
   // ≤ 12 granted an hour, idempotent by request id, one per call — the same as season 0
   const srv = makeRebirthServer({ level: 99999, rebirths: 0, econ: 13 });

@@ -1,32 +1,33 @@
-// v3/econ.js — PROGRESSION FINAL v2 NUMBERS (claude/progression-FINAL.md v2, Oct 6 22:30 — FROZEN), as pure functions.
+// v3/econ.js — PROGRESSION FINAL v3 "START AT 1" NUMBERS (claude/progression-FINAL.md v3, Andy Oct 7 21:27), as pure
+// functions. v3 changes CONSTANTS only (structure = v2).
 // Selected only through the SEASON2 flag (src/progress/season.js) at the live entry points; nothing here reads
 // storage. LEAF: imports nothing.
 //
-//   XP for next level need(n) = 100 × 1.15^(n−1)                       (v3/curve.js — O(1) closed-form carry)
-//   XP per letter     10 × KEY × 3^R × MARK × OVERDRIVE                 game letters ×1, menu letters ×0.2 — ANY keys
+//   XP for next level need(n) = 100 × 1.131^(n−1)                      (v3/curve.js — O(1) closed-form carry)
+//   XP per letter     1 × KEY × 3^R × MARK × OVERDRIVE                  game letters ×1, menu letters ×0.2 (whole XP,
+//                                                                       floor 1 — a menu key pays 1 at the start)
 //   WINS per word     10 × length/5 × MODE × 3^R × MARK × OVERDRIVE     games only. MODE: WB/Blitz 1 · RACE 1.5 ·
 //                                                                       CHAIN 2 · SAT 5 · FUSE 1 (+ FRENZY ×5)
-//   KEY (POWER)       ×1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, then ×2.15 a tier; T → T+1 costs 150 × 5^T wins;
-//                     KEPT through rebirth
-//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth, forever (no gems)
+//   KEY (POWER)       DOUBLES: tier T is ×2^T (×1, ×2, ×4, ×8 …); T → T+1 costs 150 × 5^T wins; KEPT through rebirth
+//   REBIRTH           at LV 18 + 20·R → LV 1; ×3 XP & wins per rebirth, forever (no gems)
 //   ASCENSION         none for now (hidden: canAscend is always false; lb_ascend refuses — 027)
 //   GEMS              game-only: 1 in 15 game words drops 3–12 · bot win +18 · +15 per player beaten · streak +4 ·
 //                     achievements 40–200 · 75 a roll. Menu typing gives no gems.
 //
 // Only these constants may change later (±20%, after the CI sim — claude/econ-oct2/final-sim.mjs). No restructures.
 
-export const XP_BASE = 10; // XP per letter at KEY T0 R0, no mark
-export const KEY_LADDER = Object.freeze([1, 2, 5, 10, 25, 50, 100, 250, 500, 1000]); // KEY T0–T9
-export const KEY_PAST_STEP = 2.15; // × per tier past T9
+export const XP_BASE = 1; // XP per letter at KEY T0 R0, no mark (v3: was 10)
+export const KEY_STEP = 2; // × XP per KEY tier: tier T is ×2^T (v3: replaces v2's ×1, 2, 5 … 1000, ×2.15 ladder)
+export const MARK_BASE_REF = 10; // a worn +N BASE XP mark is sized against BASE 10: ×(10 + N) / 10 (MYTHIC +20 = ×3)
 export const REBIRTH_STEP = 3; // × XP and wins per rebirth
 export const CURVE_BASE = 100; // need(1)
-export const CURVE_GROWTH = 1.15; // × need per level
+export const CURVE_GROWTH = 1.131; // × need per level (v3: was 1.15 — CI-sim tuned for a ~20 min first rebirth)
 export const WINS_BASE = 10; // wins for a 5-letter word at R0, MODE ×1, no mark
 export const WORD_REF = 5; // the reference word length (length / 5)
 export const POWER_COST_BASE = 150; // wins for T0 → T1
 export const POWER_COST_STEP = 5; // × price per tier
-export const REBIRTH_GATE_BASE = 15; // R1 at LV15 …
-export const REBIRTH_GATE_STEP = 18; // … then +18 levels a rebirth (R2 LV33, R5 LV105, R10 LV195)
+export const REBIRTH_GATE_BASE = 18; // R1 at LV18 … (v3: was 15)
+export const REBIRTH_GATE_STEP = 20; // … then +20 levels a rebirth (R2 LV38, R5 LV118, R10 LV218; v3: was 18)
 export const ASCENSION_ON = false; // FINAL v2: no ascension for now (hidden)
 export const ASCEND_AT = 10; // kept for the hidden ascension (lb_ascend refuses while ASCENSION_ON is false)
 export const ASCEND_STEP = 5;
@@ -66,11 +67,9 @@ const CAP = 1e300; // every product stays finite (format.js reads it through the
 const int0 = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
 const fin = (v) => (Number.isNaN(v) ? 0 : Math.min(v, CAP));
 
-/** KEY tier → its XP-per-letter multiplier: the ladder, then ×2.15 a tier. */
+/** KEY tier → its XP-per-letter multiplier: 2^T. */
 export function powerXpMult(power) {
-  const t = int0(power);
-  if (t < KEY_LADDER.length) return KEY_LADDER[t];
-  return fin(KEY_LADDER[KEY_LADDER.length - 1] * Math.pow(KEY_PAST_STEP, t - (KEY_LADDER.length - 1)));
+  return fin(Math.pow(KEY_STEP, int0(power)));
 }
 /** Wins to buy T → T+1 (standing at `power`): 150 × 5^T. */
 export function powerCost(power) {
@@ -89,11 +88,12 @@ export function rebirthMult(rebirths) {
 export function starMult() {
   return 1;
 }
-/** XP per LETTER: (10 + markBase) × KEY × 3^R × MARK. `markBase` = a worn +N BASE XP mark (0 none). */
+/** XP per LETTER: 1 × (10 + markBase)/10 × 2^T × 3^R × MARK. `markBase` = a worn +N BASE XP mark (0 none) — sized
+ *  against BASE 10, so it scales the base by (10 + N)/10 exactly as it did when the base was 10. */
 export function xpPerLetter({ power = 0, rebirths = 0, mark = 1, markBase = 0 } = {}) {
   const m = Number.isFinite(mark) && mark > 0 ? mark : 1;
   const b = Number.isFinite(markBase) && markBase > 0 ? markBase : 0;
-  return fin((XP_BASE + b) * powerXpMult(power) * rebirthMult(rebirths) * m);
+  return fin(XP_BASE * ((MARK_BASE_REF + b) / MARK_BASE_REF) * powerXpMult(power) * rebirthMult(rebirths) * m);
 }
 /**
  * WINS per word: 10 × (10 + markBase)/10 × length/5 × MODE × 3^R × MARK (unrounded). `mode` = a number or a mode id.

@@ -70,11 +70,11 @@ jobs:
             claude/econ-oct2/loop-sim-ci-*.json
           retention-days: 14
 
-  # SEASON2 = PROGRESSION FINAL v2 (claude/progression-FINAL.md v2, FROZEN): claude/econ-oct2/final-sim.mjs — the python
+  # SEASON2 = PROGRESSION FINAL v3 (claude/progression-FINAL.md v3): claude/econ-oct2/final-sim.mjs — the python
   # reference sim (claude/progression-final-sim.py) ported onto the REAL modules behind the flag (casual / median / fast /
   # menu-only masher + SPAMMER, 10 h). FAILS on any miss: a doc-table cell (R1 / R3 / R5 first times, the R reached at
-  # 10 h) outside ±25%, FAST > 2x the median's pace, the SPAMMER not ending level with the median, a server grant below
-  # the v2 gate (LV 15 + 18·R) or not to LV 1, or any ascension (hidden). The table goes into the job summary.
+  # 10 h) outside ±20%, FAST > 2x the median's pace, the SPAMMER not ending level with the median, a server grant below
+  # the v3 gate (LV 18 + 20·R) or not to LV 1, or any ascension (hidden). The table goes into the job summary.
   # (s2probes: constant probes through loop-sim's v3 mode, unchanged.)
   season2:
     runs-on: ubuntu-latest
@@ -86,7 +86,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: PROGRESSION FINAL v2 10 h (doc table ±25% + HARD CHECK)
+      - name: PROGRESSION FINAL v3 10 h (doc table ±20% + HARD CHECK)
         env:
           S2PROBES: ${{ github.event.inputs.s2probes || '' }}
         run: |
@@ -96,7 +96,7 @@ jobs:
           set -e
           cat final-run.txt
           {
-            echo '## PROGRESSION FINAL v2 — real-module sim vs claude/progression-FINAL.md (±25%)'
+            echo '## PROGRESSION FINAL v3 — real-module sim vs claude/progression-FINAL.md (±20%)'
             grep -E '^\|' final-run.txt || true
             echo '```'
             grep -E '^=== FINAL|first:|at [0-9]+ h:|MISS' final-run.txt || true
@@ -110,7 +110,7 @@ jobs:
             { echo '## SEASON2 probes'; cat s2-probes.txt; } >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "$rc" -ne 0 ]; then
-            echo "::error::PROGRESSION FINAL v2 sim missed — a doc-table cell outside ±25%, FAST > 2x median, the spammer diverged, a server grant broke the v2 gate, or an ascension happened"
+            echo "::error::PROGRESSION FINAL v3 sim missed — a doc-table cell outside ±20%, FAST > 2x median, the spammer diverged, a server grant broke the v3 gate, or an ascension happened"
             exit 1
           fi
       - uses: actions/upload-artifact@v4

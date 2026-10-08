@@ -52,22 +52,24 @@ test('the flag is ON and the season keeps its own save (taw.s2.*)', () => {
   assert.equal(mem.get('taw.rebirths'), undefined);
 });
 
-test('XP per letter = 10 × KEY × 3^R × MARK (FINAL v2, frozen) — KEY ×1, 2, 5 … 1000, then ×2.15', () => {
-  assert.deepEqual([E.XP_BASE, E.REBIRTH_STEP], [10, 3]);
-  assert.deepEqual([...E.KEY_LADDER], [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000]);
+test('XP per letter = 1 × 2^T × 3^R × MARK (FINAL v3) — a menu key ×0.2, whole XP, floor 1', () => {
+  assert.deepEqual([E.XP_BASE, E.KEY_STEP, E.REBIRTH_STEP], [1, 2, 3]);
   reset();
-  assert.equal(X.levelXpPerLetter(0, 0, 1, 0), 10);
-  near(X.levelXpPerLetter(3, 2, 1, 0), 10 * 10 * 9);
-  near(X.levelXpPerLetter(1, 1, 1.5, 0), 10 * 2 * 3 * 1.5);
-  near(X.keyXpMult(11), 1000 * 2.15 ** 2);
+  assert.equal(X.levelXpPerLetter(0, 0, 1, 0), 1);
+  near(X.levelXpPerLetter(3, 2, 1, 0), 8 * 9);
+  near(X.levelXpPerLetter(1, 1, 1.5, 0), 2 * 3 * 1.5);
+  near(X.keyXpMult(11), 2 ** 11);
+  near(X.levelXpPerLetter(0, 0, 1, 20), 3); // a MYTHIC +20 BASE mark: ×(10 + 20)/10, never 1 + 20
   ST3.saveStarsV3(2);
-  near(X.levelXpPerLetter(0, 0, 1, 0), 10); // ★ multiply nothing (ascension hidden)
-  near(E.xpPerLetter({ power: 2, rebirths: 3, mark: 1.1 }), 10 * 5 * 27 * 1.1);
+  near(X.levelXpPerLetter(0, 0, 1, 0), 1); // ★ multiply nothing (ascension hidden)
+  near(E.xpPerLetter({ power: 2, rebirths: 3, mark: 1.1 }), 4 * 27 * 1.1);
+  assert.equal(X.xpPerInput({ mode: 'menu', keyTier: 0, rebirthCount: 0, markMult: 1, baseAdd: 0 }), 1, 'a menu key pays 1 at the start');
   assert.ok(Number.isFinite(X.levelXpPerLetter(5000, 5000, 1, 0)), 'finite at absurd tiers');
 });
 
-test('XP for the next level = 100 × 1.15^(n−1); a credit of any size is O(1) and exactly additive', () => {
-  for (const L of [1, 2, 10, 100, 1000, 3000]) near(X.need(L), 100 * 1.15 ** (L - 1), 1e-9);
+test('XP for the next level = 100 × 1.131^(n−1); a credit of any size is O(1) and exactly additive', () => {
+  assert.equal(E.CURVE_GROWTH, 1.131);
+  for (const L of [1, 2, 10, 100, 1000, 3000]) near(X.need(L), 100 * 1.131 ** (L - 1), 1e-9);
   assert.equal(X.need(1), 100);
   const t0 = process.hrtime.bigint();
   const big = X.creditXp({ level: 1, frac: 0 }, CV.cumXp(1001) * (1 + 1e-12));
@@ -94,25 +96,10 @@ test('XP for the next level = 100 × 1.15^(n−1); a credit of any size is O(1) 
   assert.deepEqual([s.level, s.leveledUp], [10, false]);
 });
 
-test('WINS per word = 10 × length/5 × MODE × 3^R × MARK; MODE WB/Blitz 1 · RACE 1.5 · CHAIN 2 · SAT 5 · FUSE 1', () => {
-  reset();
-  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 10);
-  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 10, rebirthCount: 0 }), 20);
-  assert.equal(W.perWordWins({ mode: 'blitz', wordLength: 5, rebirthCount: 0 }), 10);
-  assert.equal(W.perWordWins({ mode: 'wordRace', wordLength: 5, rebirthCount: 0 }), 15);
-  assert.equal(W.perWordWins({ mode: 'chain', wordLength: 5, rebirthCount: 3 }), 10 * 2 * 27);
-  assert.equal(W.perWordWins({ mode: 'satRush', wordLength: 5, rebirthCount: 0 }), 50);
-  assert.equal(W.perWordWins({ mode: 'fuse', wordLength: 5, rebirthCount: 0 }), 10);
-  assert.deepEqual(['word-bomb', 'category-blitz', 'word-race', 'chain', 'sat-rush', 'fuse'].map((m) => X.modePower(m)), [1, 1, 1.5, 2, 5, 1], 'the receipt reads the FINAL table');
-  ST3.saveStarsV3(1);
-  assert.equal(W.perWordWins({ mode: 'wordBomb', wordLength: 5, rebirthCount: 0 }), 10, '★ multiply nothing');
-  assert.equal(W.perWordFactors({ mode: 'wordBomb', rebirthCount: 1 }).rebirth, 3, 'the receipt REBIRTH row is 3^R');
-});
-
-test('KEY: T → T+1 costs 150 × 5^T wins, the ladder on XP, one at a time', () => {
+test('KEY: T → T+1 costs 150 × 5^T wins, ×2^T on XP, one at a time', () => {
   reset();
   assert.deepEqual([0, 1, 2, 3, 4].map((p) => X.keyTierCost(p)), [150, 750, 3750, 18750, 93750]);
-  assert.equal(X.keyXpMult(4), 25);
+  assert.equal(X.keyXpMult(4), 16);
   W.saveWins(150 + 750);
   const r1 = SH.buyKeyPower();
   const r2 = SH.buyKeyPower();
@@ -121,13 +108,13 @@ test('KEY: T → T+1 costs 150 × 5^T wins, the ladder on XP, one at a time', ()
   assert.equal(ST3.readCounters().power, 2);
 });
 
-test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
-  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [15, 33, 87, 177]);
-  assert.equal(E.rebirthGate(4), 15 + 18 * 4);
+test('REBIRTH: at LV 18 + 20·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
+  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [18, 38, 98, 198]);
+  assert.equal(E.rebirthGate(4), 18 + 20 * 4);
   reset();
   X.saveKeyTier(4);
-  X.saveProgress({ level: 14, frac: 0 });
-  assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV14 is below the R1 gate');
+  X.saveProgress({ level: 17, frac: 0 });
+  assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV17 is below the R1 gate');
   X.saveProgress({ level: 40, frac: 0.6 });
   let r = STARS.rebirthWithStars();
   assert.deepEqual(r, { rc: 1, stars: 0 });
@@ -136,7 +123,7 @@ test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () =>
   assert.equal(G.getGems(), 0, 'a rebirth pays no gems (games only)');
   assert.equal(X.rebirthMult(1), 3);
   assert.equal(X.rebirthMult(2), 9);
-  X.saveProgress({ level: 33, frac: 0 });
+  X.saveProgress({ level: 38, frac: 0 });
   r = STARS.rebirthWithStars();
   assert.equal(r.rc, 2);
   assert.equal(X.loadProgress().level, 1);
@@ -212,7 +199,7 @@ test('MARKS (FINAL): COMMON ×1.1 · RARE ×1.25 · EPIC ×1.5 · LEGENDARY ×2 
 
 test('RANKS by rebirths then stars — monotonic, never by level', () => {
   const t = (rebirths, stars = 0) => RK.rankForV3({ rebirths, stars }).name;
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => t(r)), ['KEYMASH', 'TYPO', 'CLACKER', 'HOTKEY', 'INKSTORM', 'WORDSMITH', 'KEYFIEND', 'CAPSLOCK', 'OVERCLOCK', 'GLYPHLORD', 'LEXIBEAST']);
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => t(r)), ['INKLING', 'TYPO', 'CLACKER', 'HOTKEY', 'INKSTORM', 'WORDSMITH', 'KEYFIEND', 'CAPSLOCK', 'OVERCLOCK', 'GLYPHLORD', 'LEXIBEAST']);
   assert.equal(t(14), 'LEXIBEAST');
   assert.deepEqual([1, 2, 3, 5, 9, 10, 19, 20, 99].map((s) => t(0, s)), ['VOIDTYPER', 'VOIDTYPER', 'ASCENDANT', 'OMNIKEY', 'OMNIKEY', 'FINAL BOSS', 'FINAL BOSS', 'ENDGAME', 'ENDGAME']);
   // monotonic along a real path: R0 → R10 → ascend (R0 ★1) → R5 ★1 → ascend (★7)

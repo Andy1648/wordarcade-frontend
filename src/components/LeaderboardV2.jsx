@@ -6,7 +6,7 @@
 //   * THIS WEEK reads public.leaderboard_s2_weekly (024: ★ / rebirths / levels GAINED this ET week); until 024 runs it
 //     falls back to the live weekly view filtered to season-2 rows (words this week).
 //   * a WHITE PODIUM for the top 3 (vector blocks, the crown on #1), then ranks 4 … 10 in rows.
-//   * every name wears its v3 RANK plate (KEYMASH … ENDGAME — by rebirths, then ★; s2Board.rankPlate).
+//   * every name wears its v3 RANK plate (INKLING … ENDGAME — by rebirths, then ★; s2Board.rankPlate).
 //   * ▲▼ = the place each player held the last time this browser looked at the same tab (a snapshot under taw.s2.).
 //   * YOUR row is lifted and pulses (a FINITE pulse when the board lands / the tab changes) — wherever you are: on the
 //     podium (top 3), in the list, or pinned under it with your real rank when you are past #10.

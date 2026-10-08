@@ -3,7 +3,7 @@
 //
 //   * the board order is ★ desc → rebirths desc → level desc → words, ties by the SEASON-1 rank (028: everyone keeps
 //     their old place until they earn something in season 2; a row with earned === false shows "—");
-//   * every name wears its v3 RANK plate (KEYMASH … ENDGAME, progress/v3/ranks.js — by rebirths, then ★);
+//   * every name wears its v3 RANK plate (INKLING … ENDGAME, progress/v3/ranks.js — by rebirths, then ★);
 //   * ▲▼ = the place a player held when this browser last looked (a per-tab snapshot) vs now;
 //   * CHASE = what it takes to pass the player directly above you, in the board's own order;
 //   * CLIMB = what it takes to reach your next rank;

@@ -5,7 +5,7 @@
 // The bands partition ALL levels 1..∞ with no gaps and no overlaps: each entry owns [min, next
 // entry's min). The last band (BEYOND) runs to infinity.
 
-// PROGRESSION v3 (SEASON2, default OFF): ranks go by REBIRTHS then STARS (v3/ranks.js — KEYMASH … ENDGAME),
+// PROGRESSION v3 (SEASON2, default OFF): ranks go by REBIRTHS then STARS (v3/ranks.js — INKLING … ENDGAME),
 // never by level, and never drop. With the flag ON, RANKS is that ladder (min = the rank's index) and
 // rankTitle / rankFor read the live save; the level argument is ignored. OFF = the level bands below.
 

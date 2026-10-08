@@ -76,19 +76,19 @@ test('the TOTAL first: ×243 = 2,430 WINS / WORD, then BASE · MODE · REBIRTH �
   await expect(st.locator('[data-chip="rebirth"] .st2-chip-tag')).toHaveText('R5');
   // the tabs carry their own totals
   await expect(st.locator('.st2-tab[data-tab="wins"] .st2-tab-total')).toHaveText('×243');
-  // XP / LETTER: KEY ladder T6 (×100) · REBIRTH 3^5 · MARK · BOOST
+  // XP / LETTER: KEY 2^6 (×64) · REBIRTH 3^5 · MARK · BOOST
   await st.locator('.st2-tab[data-tab="xp"]').click();
   await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
   expect(await chipIds(st)).toEqual(['base', 'power', 'rebirth', 'mark', 'boost']);
   await expect(st.locator('.st2-unit')).toHaveText('XP / LETTER');
   const xpTab = (await st.locator('.st2-tab[data-tab="xp"] .st2-tab-total').textContent()).trim();
   await expect(total).toHaveText(xpTab, { timeout: 8000 });
-  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×100'); // the KEY ladder at T6
+  await expect(st.locator('[data-chip="power"] .st2-chip-v')).toHaveText('×64'); // KEY 2^6
   await expect(st.locator('[data-chip="power"] .st2-chip-tag')).toHaveText('TIER 6');
 });
 
 // NUMBERS AUDIT (Andy item 5): "BASE × each multiplier = TOTAL and the math must multiply out". A deeper save — KEY 3
-// (×10), R3 (×27) and a worn LEGENDARY +% WINS mark (FINAL ×2, plus the INDEX it brings) — on both tabs: the PRINTED
+// (×8, 2^3), R3 (×27) and a worn LEGENDARY +% WINS mark (FINAL ×2, plus the INDEX it brings) — on both tabs: the PRINTED
 // chips multiply to the PRINTED TOTAL multiplier and BASE × TOTAL to the result.
 for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
   test(`@${vp.width}: the printed chips multiply out to the printed TOTAL on both tabs (KEY 3, R3, LEGENDARY mark)`, async ({ page }) => {
@@ -117,7 +117,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
         expect(vals.slice(0, 4)).toEqual([10, 1, 27, 2]); // BASE 10 · MODE 1 · 3^3 · LEGENDARY ×2 (FINAL)
       } else {
         expect(ids).toEqual(['base', 'power', 'rebirth', 'mark', 'index', 'boost']);
-        expect(vals.slice(0, 3)).toEqual([10, 10, 27]); // BASE 10 · KEY T3 ×10 · 3^3
+        expect(vals.slice(0, 3)).toEqual([1, 8, 27]); // BASE 1 · KEY 2^3 · 3^3 (FINAL v3)
       }
       // every chip on screen (seven of them on a phone too)
       const off = await st.locator('.st2-chip').evaluateAll((els) => els.filter((e) => {

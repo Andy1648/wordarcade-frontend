@@ -1,9 +1,9 @@
 // e2e/v2-rebirth.spec.js — THE v2 REBIRTH SCREEN (P3; claude/mockups/v2/Rebirth.dc.html) behind ?season2=1, on the
-// season-2 board mock (boardMock `season2` — 027's real write rule + lb_rebirth / lb_ascend season 2, PROGRESSION FINAL v2).
+// season-2 board mock (boardMock `season2` — 029's real write rule + lb_rebirth / lb_ascend season 2, PROGRESSION FINAL v2).
 //   1. a hold released before 1 s sends NOTHING; a full 1 s hold sends ONE lb_rebirth; while it is pending the
 //      button is disabled (a second full hold does nothing); the server's answer lands R1 once — back to LV 1, KEY kept,
 //      no gems;
-//   2. the server's stored level is below the gate (LV 15 at R0) → refused with "LV 10 / 15", nothing applied;
+//   2. the server's stored level is below the gate (LV 18 at R0) → refused with "LV 10 / 18", nothing applied;
 //   3. at R10 there is no ASCEND (hidden in v2); the AUTO REBIRTH toggle (R2+) persists;
 //   4. the phone (390×844) gets the same screen and the same hold.
 // With the flag OFF the live REBIRTH view is untouched (server-rebirth.spec.js / rr-ready.spec.js cover it).
@@ -97,7 +97,7 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   expect(st.level, 'back to LV 1').toBe(1);
   expect(shared.rows[0].level, 'the server sent the row to LV 1 too').toBe(1);
   expect(st.pending, 'the answered request id is cleared').toBeNull();
-  // R1 lit (AUTO ROLL); the next gate (LV 33) is out of reach → the button is locked
+  // R1 lit (AUTO ROLL); the next gate (LV 38) is out of reach → the button is locked
   await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(2);
   await expect(screen.locator('.rb2-ms[data-unlock="autoRoll"]')).toHaveClass(/is-got/);
   await expect(btn).toContainText('NEED LEVELS');
@@ -107,14 +107,14 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   await expect(screen).toHaveCount(0);
 });
 
-test('stored level below the gate → refused "LV 10 / 15", nothing applied, the button comes back', async ({ page }) => {
+test('stored level below the gate → refused "LV 10 / 18", nothing applied, the button comes back', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   // the row's last submit is "in the future" → every push is throttled: the server keeps LV10
   const row = { id: 'me-rb2', username: 'Holder', level: 10, rebirths: 0, lifetime_words: 400, lifetime_letters: 2400, wins_per_word: 0, econ: 13, submitted_at: Date.now() + 10 * 60 * 1000 };
   const { board, shared, screen } = await boot(page, { row, local: { level: 120, rebirths: 0 } });
   const btn = screen.locator('.rb2-hold .kb');
   await hold(page, btn, 1150);
-  await expect(screen.locator('.rb2-msg')).toHaveText('LV 10 / 15 — NOT THERE YET');
+  await expect(screen.locator('.rb2-msg')).toHaveText('LV 10 / 18 — NOT THERE YET');
   await expect(btn).not.toHaveAttribute('aria-disabled', 'true');
   await expect(btn).toContainText('HOLD TO REBIRTH');
   expect(board.calls.rebirth).toBe(1);
