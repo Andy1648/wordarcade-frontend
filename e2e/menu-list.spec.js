@@ -123,7 +123,7 @@ test('season 2: a roll costs 75 gems — GEARS reads gems ÷ 75; nothing on the 
 });
 
 for (const [w, h] of [[390, 844], [360, 640]]) {
-  test(`phone (${w}x${h}): the four rail slabs share one row, each with its live value, never clipped`, async ({ page }) => {
+  test(`phone (${w}x${h}): the four rail slabs sit 2 × 2, each with its live value, never clipped`, async ({ page }) => {
     await boot(page, {
       'taw.xp': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
       'taw.xpv10': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
@@ -132,8 +132,14 @@ for (const [w, h] of [[390, 844], [360, 640]]) {
     }, { w, h });
     const slabs = page.locator('.hp-m-rail .kb-rwrap');
     await expect(slabs).toHaveCount(4);
+    // R2 oct8 #6: two rows of two (a 4-up row clipped "UPGRADES" at 360 and could only fit a 13px number)
     const tops = await slabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
-    expect(new Set(tops).size, `one row: ${tops}`).toBe(1);
+    expect(new Set(tops).size, `two rows: ${tops}`).toBe(2);
+    expect(tops[0], 'UPGRADES and GEARS share the first row').toBe(tops[1]);
+    expect(tops[2], 'REBIRTH and STATS share the second').toBe(tops[3]);
+    // label + number only: no icon on a phone slab
+    await expect(page.locator('.hp-m-rail .kb-rface .kit-icon:visible')).toHaveCount(0);
+    for (const el of await page.locator('.hp-m-rail .kb-rval').all()) expect(parseFloat(await el.evaluate((e) => getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(18);
     // narrow slab: the unit is implied ("50", not "50 WINS"; "55", not "55 ROLLS")
     await expect(page.locator('.hp-m-rail .is-shop .kb-rval-short')).toHaveText('50');
     await expect(page.locator('.hp-m-rail .is-shop .kb-rval-short')).toBeVisible();
