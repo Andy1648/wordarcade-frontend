@@ -249,8 +249,9 @@
     flex: 0 0 auto;
   }
 
-  /* ---- 4. THE RAIL (MenuNav.jsx): one wrapping row — WINS · GEMS · CREDITS, then SHOP · ROLL · INDEX ·
-     REBIRTH as four compact slabs (icon over label, the edge wedge becomes a top stripe) ---- */
+  /* ---- 4. THE RAIL (MenuNav.jsx): WINS · GEMS · CREDITS, then UPGRADES · GEARS · REBIRTH · STATS as four slabs
+     in a 2 × 2 grid (R2 oct8 #6 — the desktop language: LABEL left, the NUMBER right and loud, no icon; a 4-up
+     row clipped "UPGRADES" at 360 and could only fit a 13px number). The edge wedge becomes a top stripe. ---- */
   .hp-m-rail {
     align-self: stretch;
     display: flex;
@@ -275,20 +276,21 @@
   .hp-m-rail .kp-pop { left: 60%; }
   .hp-m-rail .kp-need { left: 50%; top: 44px; }
   .hp-m-rail .hp-m-credits { flex: 0 0 auto; margin-left: auto; }
-  .hp-m-rail .kb-rwrap { flex: 1 1 20%; min-width: 0; }
-  .hp-m-rail .kp + .kb-rwrap,
-  .hp-m-rail .hp-m-credits + .kb-rwrap { margin-left: -14px; }
-  .hp-m-rail .kb--rail { width: 100%; height: 64px; }
-  .hp-m-rail .kb-rface { flex-direction: column; justify-content: center; gap: 2px; padding: 6px 2px 0; }
-  .hp-m-rail .kb-rtext { align-items: center; max-width: 100%; }
-  .hp-m-rail .kb-rlabel { letter-spacing: -0.02em; }
-  .hp-m-rail .kb-rval { margin-top: 1px; max-width: 100%; }
-  /* a phone slab is ~59px wide at 360: the value drops its unit ("55 ROLLS" → "55", "IN 21 LV" → "21 LV") so it never clips */
+  /* 2 × 2: two slabs a row (the -14px pull-in on the first of each row keeps the kit's rail overlap) */
+  .hp-m-rail .kb-rwrap { flex: 1 1 42%; min-width: 0; }
+  .hp-m-rail .kb-rwrap.is-shop,
+  .hp-m-rail .kb-rwrap.is-rebirth { margin-left: -14px; }
+  .hp-m-rail .kb--rail { width: 100%; height: 52px; }
+  .hp-m-rail .kb-rface { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 10px 0 14px; }
+  .hp-m-rail .kb-rface .kit-icon { display: none; } /* label + number only */
+  .hp-m-rail .kb-rtext { align-items: flex-start; width: 100%; max-width: 100%; }
+  .hp-m-rail .kb-rlabel { font-size: var(--fs-k14); letter-spacing: 0; }
+  /* THE NUMBER: 20px Space Mono under its label, never clipped — the slab's point */
+  .hp-m-rail .kb-rval { margin-top: 2px; max-width: 100%; font-size: var(--fs-k20); }
+  /* the value keeps its unit when it is short ("3 LV", "×12", "FREE"); the long form ("55 ROLLS") would crowd the label */
   .hp-m-rail .kb-rval-full { display: none; }
   .hp-m-rail .kb-rval-short { display: inline; }
   .hp-m-rail .kb-redge { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 6px; transform: none; border-right: 0; border-bottom: 3px solid #000; }
-  .hp-m-rail .kb-rface .kit-icon { width: 22px; height: 22px; }
-  .hp-m-rail .kb-rlabel { font-size: var(--fs-k13); }
   .hp-m-rail .kb-rdot { left: auto; right: -6px; top: -8px; width: 18px; height: 18px; }
   .hp-m-rail .kb--rail:disabled { opacity: 0.6; pointer-events: none; }
 
@@ -340,9 +342,9 @@
   .hp-m-xp .hp-rankplate { padding: 4px 8px 5px; gap: 1px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .hp-m-xp .hp-rankplate-k { font-size: var(--fs-k14); letter-spacing: 0.06em; }
   .hp-m-xp .hp-rankplate-n { font-size: var(--fs-k18); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
-  .hp-m-xp .kx-read-n { font-size: var(--fs-k13); }
+  .hp-m-xp .kx-read-n { font-size: var(--fs-k14); }
   .hp-m-xp .kx-read-s,
-  .hp-m-xp .kx-read-u { font-size: var(--fs-k13); }
+  .hp-m-xp .kx-read-u { font-size: var(--fs-k14); }
   .hp-m-per {
     flex: 0 0 auto;
     display: flex;
@@ -363,17 +365,19 @@
   .hp-m-per .hp-per-u {
     font-family: 'Space Mono', monospace;
     font-weight: 700;
-    font-size: var(--fs-k13);
+    font-size: var(--fs-k14);
     -webkit-text-stroke: 0;
     color: #c9b8e8;
   }
+  /* THE GEAR SLOT (R2 oct8 #6): the worn gear reads like the desktop rail's YOUR GEAR slot — a dark well with a
+     GEAR caption before the name, the tier colour on its edge */
   .hp-m-per .hp-chip {
     position: relative;
     height: 44px;
     display: flex;
     align-items: stretch;
     padding: 0;
-    background: #2a0e4a;
+    background: #08030f;
     border: 3px solid #000;
     box-shadow: 3px 3px 0 #000;
     font-family: 'Bungee', sans-serif;
@@ -381,6 +385,12 @@
     font-size: var(--fs-k16);
     color: #fff;
     cursor: pointer;
+  }
+  .hp-m-per .hp-chip:not(.is-empty) .menu-mark-name::before {
+    content: 'GEAR';
+    margin-right: 8px;
+    font-size: var(--fs-k14);
+    color: #8f7bb3;
   }
   .hp-m-per .hp-chip.is-empty { background: #1a0b2e; }
   .hp-m-per .hp-chip-edge { width: 8px; background: #B04BFF; border-right: 3px solid #000; }
@@ -439,11 +449,11 @@
 @media (max-width: 480px) and (max-height: 700px) {
   .hp-m { padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
   .hp-m-modes { gap: 6px; }
-  .hp-m-row { min-height: 56px; padding-top: 6px; padding-bottom: 6px; }
+  .hp-m-row { min-height: 50px; padding-top: 5px; padding-bottom: 5px; }
   .hp-m-top .hp-icons .kb--icon { width: 44px; height: 50px; }
   .hp-m-top .hp-icons .kb-iface { width: 44px; height: 44px; }
   .hp-m-rail { row-gap: 6px; }
-  .hp-m-rail .kb--rail { height: 58px; }
-  .hp-m-rail .kb-rface .kit-icon { width: 18px; height: 18px; }
+  .hp-m-rail .kb--rail { height: 46px; }
+  .hp-m-rail .kb-rface { padding-top: 5px; }
   .hp-m-solo-btn { padding-top: 4px; padding-bottom: 4px; }
 }
