@@ -17,6 +17,9 @@
 //
 // P9a (KitLevelUp.dc.html 01 "D · MULTI = CHIP"): a gain that crosses MORE than one level shows a "+N LV" chip that
 // slides out from UNDER the bar's left end and counts the levels; a single level is the sweep + LV bump alone.
+//
+// NIGHT oct8 #1b: `lvInside` puts the LV numeral INSIDE the bar, on the bar's own plate at its left edge (the fill
+// starts after the plate), and `lead` takes the old LV slot left of the bar (the menu's RANK plate).
 import { useEffect, useRef } from 'react';
 import { createClimbPlayer } from './climb.js';
 import { FX, fx, kitHold, kitStop, kitPlay } from './motion.js';
@@ -27,7 +30,7 @@ import './KitXpBar.css';
 export const GAIN_HIDE_MS = 1400;
 const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
 
-export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone }) {
+export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null }) {
   const rootRef = useRef(null);
   const lvRef = useRef(null);
   const gainRef = useRef(null);
@@ -134,23 +137,37 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     };
   }, []);
 
+  const lvText = (
+    <>
+      <span className="kx-lv-k">LV</span>
+      <span ref={lvRef} className="kx-lv-n">
+        {initial.lv}
+      </span>
+    </>
+  );
+  // inside the bar the numeral sits on a counter-skewed wrapper, so the LV bump (a transform) never fights the skew
+  const lvNode = lvInside ? (
+    <div className="kx-lvplate">
+      <span className="kx-lvplate-in">{lvText}</span>
+    </div>
+  ) : (
+    <div className="kx-lv">{lvText}</div>
+  );
   return (
-    <div ref={rootRef} className={`kx${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
-      <div className="kx-lv">
-        <span className="kx-lv-k">LV</span>
-        <span ref={lvRef} className="kx-lv-n">
-          {initial.lv}
-        </span>
-      </div>
+    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
+      {lvInside ? lead : lvNode}
       <div className="kx-barwrap">
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
           <span className="kx-gain-t" />
         </span>
         <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
-          <div ref={fillRef} className="kx-fill" aria-hidden="true">
-            <div className="kx-fill-hi" aria-hidden="true" />
+          <div className="kx-track" aria-hidden="true">
+            <div ref={fillRef} className="kx-fill">
+              <div className="kx-fill-hi" />
+            </div>
+            <div ref={sweepRef} className="kx-sweep" />
           </div>
-          <div ref={sweepRef} className="kx-sweep" aria-hidden="true" />
+          {lvInside && lvNode}
           <div className="kx-read" aria-hidden="true">
             <span ref={curRef} className="kx-read-n">
               {initial.cur}

@@ -81,7 +81,7 @@ test('LOBBY: code tiles, 8 seats (3 players + 5 open), YOU + YOU ARE HOST, a big
   await mock.waitForSent('start_game');
 });
 
-test('SETTINGS: five rows; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 persists and the menu prints full digits', async ({ page }) => {
+test('SETTINGS: five rows; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 persists (the pill still abbreviates — it must fit)', async ({ page }) => {
   await boot(page, { seed: { 'taw.s2.wins': '1234567' } });
   const btn = page.getByRole('button', { name: 'Sound settings' }).first();
   await btn.click();
@@ -101,7 +101,11 @@ test('SETTINGS: five rows; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 pers
   await expect(panel.locator('.sp-sub b')).toHaveText('1,200,000');
   await page.reload();
   await menuReady(page);
-  await expect.poll(() => page.evaluate(() => /\b1,234,567\b/.test(document.body.innerText)), { timeout: 8000 }).toBe(true);
+  // NIGHT oct8 #1a (Andy): a PILL never prints the full figure — 1,234,567 cannot fit it — so the WINS pill reads 1.23M
+  // in either style; the FULL style still holds where a number has room (the pill's spoken label carries every digit)
+  const winsPill = page.locator('.menu-wins-chip:visible').first();
+  await expect(winsPill.locator('.kp-num')).toHaveText('1.23M');
+  await expect(winsPill).toHaveAttribute('aria-label', /1,234,567/);
   // KEYBOARD SOUNDS + SOUND are real controls
   await page.getByRole('button', { name: 'Sound settings' }).first().click();
   const kb = page.locator('.sp').getByRole('switch', { name: 'Keyboard sounds' });

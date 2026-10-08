@@ -153,7 +153,6 @@ export default function MobileMenu({
   ach,
   achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy (lazy S2Trophy) in the tile's place
   railItems,
-  rebirthReadySlot = null, // REBIRTH READY → ×5 FOREVER (Andy oct3) — in flow under the level bar
   onHookPlay = null,
   hookPlayLabel = null,
   xpBar = null,
@@ -194,10 +193,6 @@ export default function MobileMenu({
         <BoostPill className="hp-m-boost" />
         {board && <LiveTicker className="hp-m-live" />}
       </div>
-
-      {/* 1a''. REBIRTH READY → ×5 FOREVER (Andy oct3): joins the LV strip's cluster, in flow (never
-             fixed) — the mode rows flex a little shorter while it shows. */}
-      {rebirthReadySlot}
 
       {/* 1a'. REWARDS WAITING, IN FLOW (oct3 live check): the fixed top popup covered the title row — the gold
              podium button included. On the phone it sits here under the LV strip; the mode rows flex shorter. */}

@@ -106,7 +106,7 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
                     {/* TILE (the 2-column desktop rail, feat/menu-rail-2col): the NUMBER big, its unit small under it */}
                     {sub.big != null && (
                       <span className="kb-rval-tile">
-                        <span className="kb-rval-big">{sub.big}</span>
+                        <span className={cx('kb-rval-big', /[A-Z]{4,}/.test(String(sub.big)) && 'is-word')}>{sub.big}</span>
                         <span className="kb-rval-unit">{sub.unit}</span>
                       </span>
                     )}

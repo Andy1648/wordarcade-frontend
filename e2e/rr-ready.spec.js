@@ -1,7 +1,6 @@
 // rr-ready.spec.js — REBIRTH READY → ×5 FOREVER (Andy oct3: "never let a player miss that they can rebirth").
-//   1. MENU: a save AT the gate (LV25 R0) shows the big CTA (desktop: under the level bar; phone: under the
-//      LV strip) and lights the REBIRTH nav control; ONE tap rebirths (taw.rebirths 0 → 1, level → 1) and
-//      plays the ceremony — no confirm step. CONTINUE lands on the menu with the REBIRTH 1 card.
+//   1. MENU: a save AT the gate (LV25 R0) shows NO in-flow CTA (NIGHT oct8 #1c) — the REBIRTH tile lights up
+//      (READY + its dot) and that is the menu's only readiness signal.
 //   2. MENU: a save one level under the gate (LV14) shows no CTA.
 //   3. ROUND END: a CHAIN run ended at the gate shows the button FIRST on the death card; one tap leaves
 //      through the card's own exit and goes straight into the ceremony.
@@ -33,30 +32,18 @@ const savedLevel = (page) => page.evaluate(() => {
 const savedRebirths = (page) => page.evaluate(() => localStorage.getItem('taw.rebirths'));
 
 for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
-  test(`menu: LV25 R0 shows the CTA and ONE tap rebirths into the ceremony @ ${vp.width}`, async ({ page }) => {
+  test(`menu: LV25 R0 shows NO in-flow CTA — readiness is the REBIRTH tile's dot + READY @ ${vp.width}`, async ({ page }) => {
+    // NIGHT oct8 #1c (Andy): the menu's "REBIRTH READY → ×5 FOREVER" block is gone; the REBIRTH tile alone says ready
     await page.setViewportSize(vp);
     await installBackendMock(page);
     await seed(page, 25);
     await page.goto('/?portal=1');
     await menuReady(page);
-
-    const cta = page.locator('[data-rr-ready]:visible');
-    await expect(cta).toHaveCount(1);
-    await expect(cta).toHaveText(COPY);
-    // the existing REBIRTH nav control lights up too
-    await expect(page.locator('.homepage-nav-btn.is-rebirth.is-ready, .hp-m-navbtn.is-rebirth.is-ready')).toHaveCount(1);
-
-    await cta.click();
-    // straight into the moment: the ceremony, no confirm step in between
-    await expect(page.locator('.rbc-layer')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('.shop-confirm-actions')).toHaveCount(0);
-    await expect.poll(() => savedRebirths(page)).toBe('1');
-    await expect.poll(() => savedLevel(page)).toBe(1);
-
-    await page.locator('.rbc-continue').click();
-    await menuReady(page);
-    // R1 gate is LV33: the CTA is gone once the rebirth is done
+    await page.waitForTimeout(600);
     await expect(page.locator('[data-rr-ready]')).toHaveCount(0);
+    const tile = page.locator('.homepage-nav-btn.is-rebirth.is-ready:visible, .hp-m-navbtn.is-rebirth.is-ready:visible');
+    await expect(tile).toHaveCount(1);
+    await expect(tile.locator('.kb-rdot')).toHaveCount(1);
   });
 
   test(`menu: LV14 (one under the gate) shows no CTA @ ${vp.width}`, async ({ page }) => {

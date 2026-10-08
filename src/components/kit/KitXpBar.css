@@ -61,6 +61,7 @@
   transform: skewX(var(--k-skew-bar));
   overflow: hidden;
 }
+.kx-track { position: absolute; inset: 0; overflow: hidden; }
 .kx-fill {
   position: absolute;
   inset: 0;
@@ -86,6 +87,32 @@
 .kx-read-n { font-size: var(--fs-k26); color: var(--k-white); -webkit-text-stroke: var(--k-ink-xl) var(--k-ink); paint-order: stroke fill; }
 .kx-read-s { margin: 0 6px; font-size: var(--fs-k20); color: var(--k-dim); -webkit-text-stroke: var(--k-stroke-l) var(--k-ink); paint-order: stroke fill; }
 .kx-read-u { margin-left: 6px; font-size: var(--fs-k16); color: var(--k-yellow); -webkit-text-stroke: var(--k-stroke-m) var(--k-ink); paint-order: stroke fill; }
+
+/* LV INSIDE (NIGHT oct8 #1b): the LV numeral rides the bar's own plate at its left edge — an ink slab the full bar
+   height, its right edge the bar's skew; the track (fill + sweep) starts after it, so 0 % still reads as empty. */
+.kx.is-lvin { --kx-plate: 92px; }
+.kx.is-lvin .kx-track { left: var(--kx-plate); }
+.kx-lvplate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--kx-plate);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--k-panel);
+  border-right: var(--k-ink-m) solid var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+.kx-lvplate-in { display: flex; align-items: baseline; gap: 5px; transform: skewX(12deg); }
+.kx.is-lvin .kx-lvplate .kx-lv-k { margin-right: 0; font-size: var(--fs-k14); color: var(--k-dim); -webkit-text-stroke: 0; }
+.kx.is-lvin .kx-lvplate .kx-lv-n { font-size: var(--fs-k26); color: var(--k-yellow); -webkit-text-stroke: 0; text-shadow: none; }
 
 @media (max-width: 600px) {
   .kx-lv-n { font-size: var(--fs-k44); }

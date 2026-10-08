@@ -45,7 +45,7 @@
   transform: translateX(-140%) skewX(-22deg);
 }
 .kp-flash { position: absolute; inset: 0; background: var(--k-hot); opacity: 0; }
-.kp-numwrap { position: absolute; right: 16px; top: 0; bottom: 0; display: flex; align-items: center; }
+.kp-numwrap { position: absolute; right: 16px; top: 0; bottom: 0; display: flex; align-items: center; transform-origin: 100% 50%; }
 .kp-num {
   display: inline-block;
   transform-origin: 100% 60%;
