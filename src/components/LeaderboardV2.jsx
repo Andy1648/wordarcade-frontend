@@ -310,10 +310,10 @@ export default function LeaderboardV2({ onBack, onManageName }) {
           <div className="lb2-left">
             <button type="button" className="lb2-back" onClick={onBack} aria-label="Back to menu">← MENU</button>
             {profile && onManageName && (
-              <button type="button" className="lb2-name" onClick={onManageName} aria-label={`Your name is ${profile.username}. Change name or show recovery code`}>
-                <span className="lb2-name-k">YOU</span>
-                <span className="lb2-name-v">{profile.username}</span>
-                <span className="lb2-name-a">CHANGE</span>
+              <button type="button" className="lb2-me-btn" onClick={onManageName} aria-label={`Your name is ${profile.username}. Change name or show recovery code`}>
+                <span className="lb2-me-k">YOU</span>
+                <span className="lb2-me-v">{profile.username}</span>
+                <span className="lb2-me-a">CHANGE</span>
               </button>
             )}
           </div>
