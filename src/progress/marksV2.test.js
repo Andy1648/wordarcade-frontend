@@ -1,5 +1,5 @@
 // marksV2.test.js — MARKS v2 (Andy oct5): the stats reach the payout (BASE 10 → 10 + N on wins AND letter XP, the
-// OVERDRIVE length), the LEGENDARY+ pity in 500 + the ladder, the skip setting, the INDEX entry + rewards.
+// OVERDRIVE length), the LEGENDARY+ pity in 125 + the ladder, the skip setting, the INDEX entry + rewards.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -69,19 +69,19 @@ test('+N s OVERDRIVE lengthens the next OVERDRIVE', () => {
   withStorage({ [ROLL_STATE_KEY]: owning('mk-tinder'), [MARKS_EQUIPPED_KEY]: 'mk-tinder' }, () => assert.equal(overdriveLengthMs(), 375000));
 });
 
-test('pity ladder: EPIC+ in 50 AND LEGENDARY+ in 500 — always shown, both forced on time', () => {
-  assert.equal(PITY.legendary.hard, 500);
-  assert.equal(LEGENDARY_PITY_HARD, 500);
-  assert.deepEqual(pityLadder(freshState()), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 500 }]);
-  assert.deepEqual(pityLadder(null), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 500 }]);
-  const s = { ...freshState(), everEpic: true, rolls: 1000, sinceEpic: 3, sinceLegendary: 499 };
+test('pity ladder: EPIC+ in 50 AND LEGENDARY+ in 125 (oct8: was 500) — always shown, both forced on time', () => {
+  assert.equal(PITY.legendary.hard, 125);
+  assert.equal(LEGENDARY_PITY_HARD, 125);
+  assert.deepEqual(pityLadder(freshState()), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 125 }]);
+  assert.deepEqual(pityLadder(null), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 125 }]);
+  const s = { ...freshState(), everEpic: true, rolls: 1000, sinceEpic: 3, sinceLegendary: 124 };
   assert.equal(pityLeft(s).legendary, 1);
   const out = roll(() => 0.999, s);
   assert.equal(out.result.pityHit, 'legendary');
   assert.ok(['legendary', 'mythic', 'secret'].includes(out.result.tier));
   assert.equal(out.state.sinceLegendary, 0);
   assert.equal(out.state.sinceEpic, 0);
-  // the worst draw every time: a LEGENDARY+ at least every 500
+  // the worst draw every time: a LEGENDARY+ at least every 125
   let st = freshState();
   let last = 0;
   let maxGap = 0;
@@ -93,7 +93,7 @@ test('pity ladder: EPIC+ in 50 AND LEGENDARY+ in 500 — always shown, both forc
       last = i;
     }
   }
-  assert.ok(last > 0 && maxGap <= 500, `gap ${maxGap}`);
+  assert.ok(last > 0 && maxGap <= 125, `gap ${maxGap}`);
 });
 
 test('skip reveals below [tier]: default EPIC, stored in taw.markRolls; a first-time mark is never skipped', () => {

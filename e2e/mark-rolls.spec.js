@@ -156,7 +156,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await cut.click();
   await expect(cut).not.toHaveClass(/is-on/, { timeout: 2000 });
   await expect(card(page)).toHaveCount(1);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 500');
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 125'); // oct8: the hard pity is 125 (was 500)
 });
 
 test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
