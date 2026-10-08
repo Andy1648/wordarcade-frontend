@@ -2,12 +2,14 @@
 // One card everywhere a mark is shown big: the reel cells, the EPIC dim reveal, the LEGENDARY+ full reveal, the
 // INDEX tiles and the INDEX detail sheet.
 //
-//   header   RARITY · 1 IN X           (the tier colour bar; the mark's REAL odds — markRolls.oneInX)
-//   art      the COG (tier-coloured teeth; rainbow on SECRET) + the glyph (shade, highlight, extras, hard shadow)
-//   name     white, ink-stroked
-//   stat     NUMBERS FIRST — "×1.5" big, "WINS" small (markRolls.mainTag split, nothing new claimed)
+//   header   RARITY                    (the tier colour bar)
+//   art      the COG (tier-coloured teeth; rainbow on SECRET) + the glyph (shade, highlight, extras, hard shadow);
+//            a dupe shows as a small "×N" tag on the art (NIGHT oct8 #4: no ★ row — colour is for rarity only)
+//   name     white, ink-stroked, BIG (sized by its length so it fits one line)
+//   stat     NUMBERS FIRST — "×1.5" big, "WINS" small (markRolls.mainTag split, nothing new claimed), on a black band
 //   perk     "+ LETTERS COUNT ×2" (LEGENDARY+ with a perk)
-//   pips     ★ pips (assets — MarkPips)
+//   foot     1 IN X                    (the mark's REAL odds — markRolls.oneInX), in the tier colour
+// (claude/mockups/v3/GearCard.dc.html — NIGHT oct8 #4.)
 // LOCKED: the glyph as a black silhouette inside its tier-coloured cog, "???", and still the odds + the ★0 stat.
 //
 // The face is drawn at 180×260 and SCALED (transform) to the host's --mc-w / --mc-s (or the `w` prop), so every
@@ -19,7 +21,6 @@
 // hooks), so one card serves every screen's tests and styles.
 import { memo } from 'react';
 import MarkBadge, { CogRing, RANK_RIMS } from '../MarkBadge';
-import MarkPips from '../rarity/MarkPips';
 import ShinyBadge from '../rollScreen/ShinyBadge';
 import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
@@ -41,8 +42,9 @@ function MarkCard({
     style['--mc-s'] = w / 180;
   }
   const entry = markEntry(id) || (id ? { id, tier: c.tier } : null);
-  const longKind = c.statKind.length > 9;
-  const longHead = c.rarityName.length + c.odds.length > 17;
+  const longKind = c.statNum.length + c.statKind.length > 10; // "+30S OVERDRIVE" must fit the band
+  const nameLen = String(c.name || '').length;
+  const nameFit = nameLen >= 10 ? ' is-xl' : nameLen >= 8 ? ' is-l' : '';
   return (
     <div
       className={`mc is-${c.tier}${locked ? ' is-locked' : ''}${hi ? ' is-hi' : ''}${fx ? ' is-fx' : ''}${still ? ' is-still' : ''}${c.perk ? ' has-perk' : ''}${className ? ` ${className}` : ''}`}
@@ -50,9 +52,8 @@ function MarkCard({
       data-tier={c.tier}
     >
       <div className="mc-face">
-        <div className={`mc-head${longHead ? ' is-long' : ''}${parts.head ? ` ${parts.head}` : ''}`}>
+        <div className={`mc-head${parts.head ? ` ${parts.head}` : ''}`}>
           <span className={`mc-tier${parts.tier ? ` ${parts.tier}` : ''}`}>{c.rarityName}</span>
-          {c.odds ? <span className={`mc-odds${parts.odds ? ` ${parts.odds}` : ''}`}>{c.odds}</span> : null}
         </div>
         <div className="mc-art">
           {hi ? <span className="mc-glow" aria-hidden="true" /> : null}
@@ -64,15 +65,16 @@ function MarkCard({
           </span>
           <MarkBadge mark={entry} rank={rank} size={132} silhouette={locked} permanent={kind === 'perm'} cog={false} className="mc-badge" />
           {shiny && !locked ? <ShinyBadge className="mc-shiny" /> : null}
+          {c.copies > 1 && !locked ? <span className="mc-dupes" aria-label={`${c.copies} copies`}>×{c.copies}</span> : null}
         </div>
-        <div className={`mc-name${locked ? ' is-q' : parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>
+        <div className={`mc-name${nameFit}${locked ? ' is-q' : parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>
         <div className={`mc-stat${longKind ? ' is-long' : ''}${parts.stat ? ` ${parts.stat}` : ''}`}>
           <span className="mc-num">{c.statNum}</span>
           {c.statKind ? ' ' : null}
           {c.statKind ? <span className="mc-kind">{c.statKind}</span> : null}
         </div>
         {c.perk ? <div className={`mc-perk${c.perk.length > 16 ? ' is-long' : ''}`}>+ {c.perk}</div> : null}
-        {c.pips != null ? <MarkPips pips={c.pips} className="mc-pips" off="pip-off-gold.svg" /> : null}
+        {c.odds ? <div className={`mc-foot${parts.odds ? ` ${parts.odds}` : ''}`}>{c.odds}</div> : null}
         {hi ? <span className="mc-shine" aria-hidden="true" /> : null}
       </div>
     </div>

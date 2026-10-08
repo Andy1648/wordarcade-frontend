@@ -13,18 +13,19 @@
   z-index: 120;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 12px;
-  padding: 24px 40px max(28px, env(safe-area-inset-bottom));
+  gap: 10px;
+  padding: 18px 28px max(18px, env(safe-area-inset-bottom));
   background-color: #0d0618;
   background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92, 15, 163, 0.16) 46px 50px);
   color: #fff;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   overflow: hidden;
-  --gut: 40px;
-  --cw: 144px; --cs: 0.8; /* a reel card's width; the slot adds the 16px gap */
+  --gut: 28px;
+  /* NIGHT oct8 #4: bigger cards (names >= 24px rendered); the slot adds the 16px gap */
+  --cw: 200px; --cs: 1.1111;
   --slot: calc(var(--cw) + 16px);
-  --band: calc(var(--cw) * 1.4444 + 92px);
+  --band: calc(var(--cw) * 1.4444 + 40px);
 }
 
 /* while ROLL / INDEX covers the page (RollScreen sets html[data-roll-cover]), what it covers is not rendered at all:
@@ -40,10 +41,26 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
+.rs-title { display: none; }
+/* EQUIPPED <stat> - the worn mark's number in its tier colour (RollV3 mockup) */
+.rs-equipped {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  box-shadow: 6px 6px 0 #000;
+  white-space: nowrap;
+}
+.rs-equipped-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #c9b8e8; letter-spacing: 0.06em; }
+.rs-equipped-v { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: var(--rs-tier, #8f7fb0); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .rs-index-btn,
 .rs-close {
   min-height: 56px;
@@ -62,8 +79,9 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   transition: transform 80ms;
 }
 .rs-index-btn { justify-self: start; display: inline-flex; align-items: center; gap: 10px; padding: 0 20px; }
+.rs-close { display: inline-flex; align-items: center; gap: 8px; padding: 0 18px; }
 .rs-index-n { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #FFE94A; }
-.rs-close { padding: 0; font-family: 'Space Mono', monospace; font-weight: 700; }
+
 .rs-index-btn:hover,
 .rs-close:hover { transform: translate(-2px, -2px); }
 .rs-index-btn:active,
@@ -78,7 +96,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   letter-spacing: 0.04em;
   color: #2EFFE0;
 }
-.rs-topr { justify-self: end; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rs-topr { grid-column: 5; justify-self: end; display: flex; align-items: center; gap: 12px; min-width: 0; }
 .rs-sub { display: flex; align-items: center; gap: 10px; }
 .rs-gems-bal {
   display: inline-flex;
@@ -131,7 +149,13 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   display: grid;
   align-content: center;
   min-height: 0;
-  margin: 0 calc(var(--gut) * -1);
+  /* NIGHT oct8 #4 (RollV3): the reel sits in ONE panel - a thick purple frame, ink drop, the band inside it */
+  margin: 0;
+  padding: 8px 0 6px;
+  background: #08030f;
+  border: 6px solid #9A1AFF;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
 }
 .rs-shake { display: grid; justify-items: center; gap: 10px; }
 .rs-reel { position: relative; width: 100%; }
@@ -144,8 +168,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   box-sizing: border-box;
   background-color: #08030f;
   background-image: repeating-linear-gradient(90deg, transparent 0 158px, rgba(255, 255, 255, 0.03) 158px 160px);
-  border-top: 6px solid #000;
-  border-bottom: 6px solid #000;
+  border-top: 0;
+  border-bottom: 0;
 }
 /* the mockup's edge fades: the band darkens toward both ends so the eye stays on the pointer */
 .rs-win::before,
@@ -162,7 +186,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-win::after { right: 0; background: linear-gradient(270deg, #08030f, rgba(8, 3, 15, 0)); }
 .rs-track {
   position: absolute;
-  top: calc((var(--band) - 12px - var(--cw) * 1.4444) / 2);
+  top: calc((var(--band) - var(--cw) * 1.4444) / 2 - 3px);
   left: calc(50% - var(--slot) / 2);
   display: flex;
   width: calc(var(--slot) * 44);
@@ -236,7 +260,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   padding: 2px 8px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
+  font-size: var(--fs-body);
   text-transform: uppercase;
   color: #000;
   background: #2EFFE0;
@@ -246,6 +270,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 .rs-chip.is-new { background: #FFE94A; transform: rotate(-4deg); }
 .rs-chip.is-extra { background: var(--rs-tier, #2EFFE0); }
+.rs-chip.is-dupe { background: #fff; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); transform: rotate(4deg); }
 .rs-card-extra { display: inline-flex; flex-wrap: wrap; gap: 6px; }
 @keyframes rs-pop {
   0% { transform: scale(0.2) rotate(-8deg); opacity: 0; }
@@ -253,7 +278,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* ---- bottom: pity · ROLL · AUTO ---- */
+/* ---- bottom: pity panels · ROLL (+ the big EPIC+ IN line under it) · AUTO + SKIP ---- */
 .rs-controls {
   position: relative;
   z-index: 1;
@@ -262,41 +287,62 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   align-items: center;
   gap: 20px;
 }
-.rs-pity { width: min(300px, 100%); display: grid; gap: 10px; justify-self: start; }
-.rs-pity-top { display: flex; align-items: baseline; gap: 10px; }
-.rs-pity-lbl { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); letter-spacing: 0.04em; color: #B04BFF; }
-.rs-pity-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-h2); line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
-.rs-pity-bar { position: relative; height: 22px; overflow: hidden; background: #1a0b2e; border: 4px solid #000; box-shadow: 4px 4px 0 #000; }
+.rs-pity { width: min(340px, 100%); display: grid; gap: 12px; justify-self: start; }
+.rs-pity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 12px 10px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+}
+.rs-pity-lbl { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); letter-spacing: 0.02em; color: #D88BFF; white-space: nowrap; }
+.rs-pity-row.is-leg .rs-pity-lbl { color: #FFC23D; }
+.rs-pity-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k32); line-height: 1; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.rs-pity-bar { grid-column: 1 / -1; position: relative; height: 14px; overflow: hidden; background: #0d0618; border: 3px solid #000; }
 .rs-pity-fill { position: absolute; inset: 0; background: #B04BFF; transform-origin: 0 50%; transition: transform 400ms ease-out; }
-.rs-pity-leg { font-size: var(--fs-label); color: #c9b8e8; }
+.rs-pity-row.is-leg .rs-pity-fill { background: #FFC23D; }
+.rs-pity-row.is-epic { grid-template-columns: auto minmax(0, 1fr); }
+.rs-pity-row.is-epic .rs-pity-bar { grid-column: auto; }
 
+.rs-rollcol { display: grid; justify-items: center; gap: 10px; }
+.rs-pity-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: #D88BFF; letter-spacing: 0.04em; white-space: nowrap; }
+.rs-pity-big b { margin-left: 8px; font-weight: 400; font-size: var(--fs-k38); line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; vertical-align: -4px; }
+
+/* THE ROLL BUTTON (RollV3): yellow slab, a darker lip, an ink drop, a 1deg resting tilt (a primary CTA). PRESSED is
+   real: the face sinks onto its shadow (translate = the shadow offset, the shadow collapses) - plus a 120 ms squash on
+   pointer-down (RollScreen pressFx). */
 .rs-roll {
   width: 380px;
-  height: 140px;
+  height: 118px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
   color: #000;
   background: #FFE94A;
   border: 6px solid #000;
-  border-radius: 0;
-  box-shadow: 8px 8px 0 #000;
+  border-radius: 8px;
+  box-shadow: inset 0 -12px 0 #F2A900, 8px 8px 0 #000;
   cursor: pointer;
-  transition: transform 80ms;
+  transform: rotate(-1deg);
+  transition: transform 80ms, box-shadow 80ms;
 }
 .rs-roll-lbl { font-size: var(--fs-h1); line-height: 1; white-space: nowrap; }
 .rs-roll.is-free .rs-roll-lbl,
 .rs-roll.is-short .rs-roll-lbl { font-size: var(--fs-h2); }
-.rs-roll-price { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-panel); line-height: 1; }
+.rs-roll-price { display: inline-flex; align-items: center; gap: 8px; padding: 2px 16px; border-radius: 999px; background: #000; color: #2EFFE0; font-size: var(--fs-k22); line-height: 1.2; }
 .rs-roll-gem { flex: none; }
-.rs-roll.is-rolling { background: #8a7f3a; }
-.rs-roll.is-short { background: #5a4f8a; color: #fff; }
-.rs-roll:hover { transform: translate(-2px, -2px); }
-.rs-roll:active { transform: translate(4px, 4px); }
+.rs-roll.is-rolling { background: #c9b84a; }
+.rs-roll.is-short { background: #5a4f8a; color: #fff; box-shadow: inset 0 -12px 0 #3d3466, 8px 8px 0 #000; }
+.rs-roll:hover { transform: rotate(-1deg) translate(-2px, -2px); box-shadow: inset 0 -12px 0 #F2A900, 10px 10px 0 #000; }
+.rs-roll:active { transform: rotate(-1deg) translate(8px, 8px); box-shadow: inset 0 -6px 0 #F2A900, 0 0 0 #000; }
 
 .rs-opts { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .rs-auto-btn {
@@ -323,8 +369,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn.is-legendary { background: #FFC23D; color: #000; }
 .rs-auto-btn:hover { transform: translate(-2px, -2px); }
 .rs-auto-btn:active { transform: translate(4px, 4px); }
-.rs-auto-cap { font-size: var(--fs-label); color: #c9b8e8; }
-.rs-pick { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-label); color: #c9b8e8; }
+.rs-auto-cap { font-size: var(--fs-body); color: #c9b8e8; }
+.rs-pick { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-body); color: #c9b8e8; }
 .rs-select {
   min-height: 44px;
   padding: 0 10px;
@@ -338,6 +384,11 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   cursor: pointer;
 }
 .rs-select option { color: #0d0618; background: #fff; }
+
+/* ---- the RARE flash (over the band) and the EPIC+ rarity WASH (over the screen): flat colour, opacity one-shots ---- */
+.rs-flash { position: absolute; inset: 0; z-index: 2; background: #fff; opacity: 0; pointer-events: none; }
+.rs-wash { position: absolute; inset: 0; z-index: 2; background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
+.rs-ptr { transform-origin: 50% 0; }
 
 /* ---- the slowdown dim + the DIM / FULL reveal: absolute layers of this overlay ---- */
 .rs-dim { position: absolute; inset: 0; z-index: 2; background: #000; opacity: 0; pointer-events: none; }
@@ -412,15 +463,19 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 
 /* ---- shorter laptops (1366x657, 1280x551) ---- */
 @media (max-height: 760px) {
-  .rs-overlay { gap: 8px; padding-top: 14px; padding-bottom: max(16px, env(safe-area-inset-bottom)); --cw: 120px; --cs: 0.6667; --band: calc(var(--cw) * 1.4444 + 44px); }
-  .rs-index-btn, .rs-close, .rs-gems-bal { min-height: 48px; height: 48px; }
-  .rs-title { font-size: var(--fs-h2); }
-  .rs-roll { height: 112px; width: 340px; }
-  .rs-auto-btn { min-height: 60px; }
+  .rs-overlay { gap: 8px; padding-top: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); --cw: 216px; --cs: 1.2; --band: calc(var(--cw) * 1.4444 + 22px); }
+  .rs-index-btn, .rs-close, .rs-gems-bal, .rs-equipped { min-height: 48px; height: 48px; }
+  .rs-roll { height: 96px; width: 340px; }
+  .rs-roll-lbl { font-size: var(--fs-h2); }
+  .rs-auto-btn { min-height: 56px; }
+  .rs-pity { gap: 8px; }
+  .rs-pity-row { padding: 6px 12px 8px; }
+  .rs-pity-n { font-size: var(--fs-k28); }
 }
 @media (max-height: 600px) {
-  .rs-overlay { --cw: 104px; --cs: 0.5778; --band: calc(var(--cw) * 1.4444 + 28px); }
-  .rs-roll { height: 92px; }
+  .rs-overlay { --cw: 128px; --cs: 0.7111; --band: calc(var(--cw) * 1.4444 + 16px); }
+  .rs-roll { height: 84px; }
+  .rs-pity-row.is-leg { display: none; }
   .rs-roll-lbl { font-size: var(--fs-h2); }
   .rs-result-slot { min-height: 36px; }
   .rs-cut { --mc-w: 180px; --mc-s: 1; }
@@ -439,8 +494,11 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 
 /* ---- phones ---- */
 @media (max-width: 480px) {
-  .rs-overlay { gap: 8px; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); --gut: 12px; --cw: 144px; --cs: 0.8; --band: calc(var(--cw) * 1.4444 + 44px); }
-  .rs-top { grid-template-columns: auto 1fr; gap: 8px; }
+  .rs-overlay { gap: 8px; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); --gut: 12px; --cw: 180px; --cs: 1; --band: calc(var(--cw) * 1.4444 + 16px); }
+  .rs-top { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px; }
+  .rs-equipped { display: none; }
+  .rs-topr { grid-column: 4; }
+  .rs-close { padding: 0 10px; letter-spacing: 0; }
   .rs-index-btn, .rs-close, .rs-gems-bal { min-height: 44px; height: 44px; box-shadow: 4px 4px 0 #000; border-width: 3px; }
   .rs-close { min-width: 44px; }
   .rs-index-btn { padding: 0 10px; letter-spacing: 0; gap: 6px; }
@@ -448,31 +506,29 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-title { display: none; }
   .rs-gems-bal { padding: 0 10px; gap: 6px; }
   .rs-gems-bal .gem-icon { width: 22px; height: 22px; }
-  .rs-need { font-size: var(--fs-label); padding: 2px 6px; }
+  .rs-need { font-size: var(--fs-body); padding: 2px 6px; }
   .rs-topr { gap: 8px; }
   .rs-res-name, .rs-res-num { -webkit-text-stroke: 3px #000; }
-  .rs-res-kind { font-size: var(--fs-label); }
+  .rs-res-kind { font-size: var(--fs-body); }
   .rs-res-pips { --pip: 16px; }
   .rs-controls { gap: 10px 12px; }
   .rs-roll { width: 100%; height: 92px; box-shadow: 6px 6px 0 #000; }
   .rs-roll-lbl { font-size: var(--fs-hero); }
   .rs-roll.is-free .rs-roll-lbl, .rs-roll.is-short .rs-roll-lbl { font-size: var(--fs-h1); }
   .rs-pity { gap: 6px; }
-  .rs-pity-lbl { font-size: var(--fs-label); }
   .rs-pity-n { -webkit-text-stroke: 4px #000; }
   .rs-pity-bar { height: 16px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
-  .rs-pity-leg { font-size: var(--fs-micro); }
   .rs-auto-btn { min-height: 48px; padding: 0 10px; letter-spacing: 0; border-width: 4px; box-shadow: 4px 4px 0 #000; }
   /* phones: ROLL · then the pity bars · then AUTO + its caption + SKIP on one full-width row */
   .rs-controls { grid-template-columns: minmax(0, 1fr); }
   .rs-pity { grid-row: 2; width: 100%; }
   .rs-opts { grid-row: 3; justify-self: stretch; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-  .rs-auto-cap, .rs-pick { font-size: var(--fs-micro); }
+  .rs-auto-cap, .rs-pick { font-size: var(--fs-body); }
   .rs-cut { --mc-w: 180px; --mc-s: 1; }
   .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
 @media (max-width: 480px) and (max-height: 700px) {
-  .rs-overlay { --cw: 92px; --cs: 0.5111; --band: calc(var(--cw) * 1.4444 + 24px); }
+  .rs-overlay { --cw: 112px; --cs: 0.6222; --band: calc(var(--cw) * 1.4444 + 10px); }
   .rs-roll { height: 76px; }
   .rs-roll-lbl { font-size: var(--fs-h1); }
   .rs-auto-btn { min-height: 44px; }

@@ -51,6 +51,7 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
     statKind,
     perk: perkText(id),
     pips: lv ? lv.pips : null,
+    copies: lv ? lv.copies : 0, // NIGHT oct8 #4: dupes print as a small ×N (no ★ row under the card)
     next: pipNext(lv),
     hi: HI_TIERS.has(t),
   };

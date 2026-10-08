@@ -62,11 +62,11 @@ test('a pity-forced roll draws its strip from the forced (EPIC+) table — still
   for (const id of strip) assert.ok(TIER_LADDER.indexOf(tierOf(id)) >= 2);
 });
 
-test('duration by tier: ~2.5 s COMMON → ~4 s SECRET, monotonic; slowdown power grows too', () => {
-  assert.equal(spinMs('common'), 2500);
-  assert.equal(spinMs('secret'), 4000);
+test('duration: 2.4 s for every tier (NIGHT oct8); the slowdown power still grows with rarity', () => {
+  assert.equal(spinMs('common'), 2400);
+  assert.equal(spinMs('secret'), 2400);
   for (let i = 1; i < TIER_LADDER.length; i += 1) {
-    assert.ok(SPIN_MS[TIER_LADDER[i]] > SPIN_MS[TIER_LADDER[i - 1]]);
+    assert.equal(SPIN_MS[TIER_LADDER[i]], 2400);
     assert.ok(easePow(TIER_LADDER[i]) > easePow(TIER_LADDER[i - 1]));
   }
   assert.ok(spinMs('secret', 'short') < 700);

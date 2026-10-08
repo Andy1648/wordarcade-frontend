@@ -39,7 +39,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(tile.locator('.mx-tile-tier')).toHaveText('COMMON');
   await expect(tile.locator('.mx-tile-odds')).toHaveText(/^1 IN [\d\s,]+$/);
   await expect(tile.locator('.mx-tile-sub')).toHaveText('×1.1 WINS');
-  await expect(tile.locator('.mark-pips')).toHaveAttribute('data-pips', '0');
+  await expect(tile.locator('.mark-pips')).toHaveCount(0); // NIGHT oct8 #4: no ★ row under a card
   await tile.click();
   const sheet = page.locator('.mx-sheet');
   await expect(sheet).toBeVisible();
@@ -61,7 +61,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(locked.locator('.mx-tile-name')).toHaveCount(0);
   await expect(locked.locator('.mx-tile-odds')).toHaveText(/^1 IN /);
   await locked.click();
-  await expect(sheet.locator('.mx-sheet-tier')).toContainText('1 IN ');
+  await expect(sheet.locator('.mc-foot')).toContainText('1 IN '); // NIGHT oct8 #4: the odds sit on the card's foot
   await expect(sheet.getByTestId('mark-flavour')).toHaveCount(0);
   await expect(page.locator('.mx-howto')).toHaveCount(0);
   await page.keyboard.press('Escape'); // the sheet closes first, the INDEX stays
