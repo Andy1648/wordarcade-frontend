@@ -38,7 +38,7 @@ async function openRoll(page, query = '') {
   await page.goto(`/?portal=1${query}`);
   await menuReady(page);
   // desktop: the menu's mark chip; phone (≤480px): the MARKS nav button
-  await page.locator('.hp-nav.is-roll:visible').first().click(); // v2 menu: the ROLL rail button
+  await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
 }
 const pity = (page) => page.getByTestId('roll-pity').innerText();
@@ -224,8 +224,8 @@ test('short balance: the press shows −X + gem (never a silent grey button) —
   await page.goto('/?portal=1');
   await menuReady(page);
   // the MARKS dot means "a roll is affordable": 4 gems, the starter spent → no dot
-  await expect(page.locator('.hp-nav.is-roll .kb-rdot')).toHaveCount(0); // v2 menu: the ROLL rail button's dot
-  await page.locator('.hp-nav.is-roll:visible').first().click(); // v2 menu: the ROLL rail button
+  await expect(page.locator('.hp-nav.is-gears .kb-rdot')).toHaveCount(0); // v2 menu: the GEARS rail button (ROLL + INDEX)'s dot
+  await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
   await page.locator('.rs-roll').click();
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '6');
@@ -248,7 +248,7 @@ test('GEMS on the menu: icon + count under the wins pill; the ROLL dot only when
   // v2 menu: the kit's GEMS pill (KitPill) in the left rail, its gem the kit icon; the dot rides ROLL
   await expect(chip).toHaveAttribute('data-value', '12');
   await expect(chip.locator('.kit-icon[data-icon="gems"]')).toHaveCount(1);
-  await expect(page.locator('.hp-nav.is-roll .kb-rdot').first()).toBeAttached();
+  await expect(page.locator('.hp-nav.is-gears .kb-rdot').first()).toBeAttached();
   // it is in the bar cluster, not a fixed element of its own
   expect(await chip.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
 });

@@ -539,7 +539,7 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   --hp-nav-w: max(228px, calc(236 * var(--u)));
   --hp-tile-h: clamp(104px, calc(124 * var(--u)), calc(38vh - 100px));
   --hp-tile-ico: max(30px, calc(36 * var(--u)));
-  --fs-hptilelabel: max(13px, calc(15 * var(--u)));
+  --fs-hptilelabel: max(14px, calc(15 * var(--u)));
   --fs-hptile: max(24px, calc(30 * var(--u)));
   --fs-hpunit: max(13px, calc(14 * var(--u)));
   --hp-tile-gap: max(10px, calc(12 * var(--u)));
@@ -556,11 +556,11 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .homepage-stage[data-paged] .hp-rail .kp { min-width: 0; }
 .homepage-stage[data-paged] .hp-rail .kp-numwrap { right: calc(10 * var(--u)); }
 .homepage-stage[data-paged] .hp-rail-gap { grid-column: 1 / -1; height: 0; }
-/* UPGRADES over ROLL in column 1, INDEX over REBIRTH in column 2 (DOM order shop, roll, index, rebirth) */
+/* NIGHT oct8 #2: UPGRADES | GEARS on row one, REBIRTH | STATS on row two (DOM order shop, gears, rebirth, stats) */
 .homepage-stage[data-paged] .hp-rail .kb-rwrap.is-shop { grid-area: 3 / 1; }
-.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-roll { grid-area: 4 / 1; }
-.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-index { grid-area: 3 / 2; }
-.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-rebirth { grid-area: 4 / 2; }
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-gears { grid-area: 3 / 2; }
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-rebirth { grid-area: 4 / 1; }
+.homepage-stage[data-paged] .hp-rail .kb-rwrap.is-stats { grid-area: 4 / 2; }
 .homepage-stage[data-paged] .hp-rail .kb--rail { height: var(--hp-tile-h); }
 /* the tone strip runs across the TOP (was the skewed left edge) and the label sits on it */
 .homepage-stage[data-paged] .hp-rail .kb-redge {

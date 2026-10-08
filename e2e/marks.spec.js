@@ -131,7 +131,7 @@ for (const [label, seed] of [
   });
 }
 
-test('no MARKS chip before the system is revealed (LV5) — ROLL / INDEX show LOCKED at LV10', async ({ page }) => {
+test('no MARKS chip before the system is revealed (LV5) — GEARS shows LOCKED at LV10', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   await installBackendMock(page);
   await page.addInitScript(() => {
@@ -144,8 +144,8 @@ test('no MARKS chip before the system is revealed (LV5) — ROLL / INDEX show LO
   await page.goto('/?portal=1');
   await menuReady(page);
   await expect(page.locator('.menu-mark')).toHaveCount(0);
-  // SEASON 2 #5: the rail shows ROLL + INDEX from the start, padlocked with their real gate (season 1: LV10)
-  for (const id of ['roll', 'index']) {
+  // SEASON 2 #5: the rail shows GEARS (ROLL + INDEX, NIGHT oct8 #2) from the start, padlocked with its real gate (season 1: LV10)
+  for (const id of ['gears']) {
     const b = page.locator(`.hp-nav.is-${id} > button`);
     await expect(b).toHaveAttribute('data-locked', '');
     await expect(b).toHaveAttribute('aria-disabled', 'true');
@@ -153,7 +153,7 @@ test('no MARKS chip before the system is revealed (LV5) — ROLL / INDEX show LO
     await expect(b.locator('svg[data-icon="lock"]')).toHaveCount(1);
   }
   // a locked tap opens nothing
-  await page.locator('.hp-nav.is-roll > button').click({ force: true }); // aria-disabled
+  await page.locator('.hp-nav.is-gears > button').click({ force: true }); // aria-disabled
   await page.waitForTimeout(300);
   await expect(page.locator('.rs-overlay')).toHaveCount(0);
 });
