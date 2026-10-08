@@ -98,8 +98,8 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
     'taw.tut.markRolls': '1', // MARK ROLLS are LIVE: their tutorial would cover the panel
   });
   const slot = page.locator('.menu-mark').first();
-  // v2 menu: the worn-mark chip shows its NAME ONLY (the art and stat live on ROLL / INDEX)
-  await expect(slot.locator('.menu-mark-name')).toHaveText('BOMBER');
+  // feat/menu-perrow: the YOUR GEAR slot — the stat big, the name · tier under it
+  await expect(slot.locator('.hp-gear-sub')).toContainText('BOMBER');
   await slot.click();
   // Andy oct5: MARKS opens the ROLL screen; INDEX opens the MARKS INDEX
   await page.locator('[data-testid="roll-index"]').click();

@@ -61,7 +61,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await expect(read.nth(0)).toHaveText(fmt(0.3 * need80));
   await expect(read.nth(1)).toHaveText(fmt(need80));
   await expect(page.locator('.menu-xp-bar:visible .kx-lv-n').first()).toHaveText('80');
-  await expect(page.locator('.hp-per:visible').first()).toHaveText('+108 XP / LETTER');
+  await expect(page.locator('.hp-per:visible').first()).toContainText('+108 XP / LETTER'); // GAMES side of the rate line (feat/menu-perrow)
 
   // UPGRADES (KEY): 2 → 3, ×4 → ×8 (2^T), 150 × 5^2 wins
   await navControl(page, 'shop').click();

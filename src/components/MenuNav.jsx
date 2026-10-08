@@ -11,6 +11,11 @@
 import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
+import { lazy, Suspense } from 'react';
+import { CARD_RAR } from './markCard/palette.js';
+// The cog + glyph art is the INDEX chunk's (MarkBadge, ~11 KB): the gear slot loads it only once a mark is worn —
+// payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
+const MarkBadge = lazy(() => import('./MarkBadge.jsx'));
 
 /** Focus the control `id` inside `root` (App's overlay-return a11y — see Homepage). */
 export function focusNav(root, id) {
@@ -73,7 +78,7 @@ function sayGate(g) {
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)
  */
-export function MenuRail({ items, wins, gems, navigating, className = '', extra = null }) {
+export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, foot = null }) {
   return (
     <nav className={`homepage-corner-nav hp-rail ${className}`} aria-label="Menu">
       <KitPill kind="wins" value={wins} className="menu-wins-chip" />
@@ -106,7 +111,42 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
           />
         );
       })}
+      {foot}
     </nav>
+  );
+}
+
+/**
+ * YOUR GEAR (feat/menu-perrow, Andy oct6 "a floating mark icon nobody knows to click"): the worn mark as a labelled
+ * SLOT at the foot of the rail — the cog, the stat big ("×1.5 WINS"), the name · tier small in the tier colour.
+ * Nothing worn → NONE / ROLL FOR ONE + a notification dot. Opens the ROLL screen either way.
+ */
+export function MenuGearSlot({ mark, onClick, disabled }) {
+  const rar = mark ? CARD_RAR[mark.tier] || CARD_RAR.common : null;
+  return (
+    <button
+      type="button"
+      className={`hp-gear menu-mark${mark ? ' is-worn' : ' is-empty'}`}
+      style={rar ? { '--gear-line': rar.line } : undefined}
+      onClick={onClick}
+      disabled={disabled}
+      data-nav="gear"
+      aria-label={mark ? `Your gear: ${mark.name}, ${mark.tier}, ${mark.blurb || ''}. Open roll` : 'Your gear: none. Roll for one'}
+    >
+      <span className="hp-gear-label">YOUR GEAR</span>
+      <span className="hp-gear-body">
+        {mark ? (
+          <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
+            <MarkBadge mark={mark} size={56} className="hp-gear-cog" />
+          </Suspense>
+        ) : <span className="hp-gear-hole" aria-hidden="true" />}
+        <span className="hp-gear-text">
+          <span className="hp-gear-big menu-mark-name">{mark ? mark.blurb || mark.name : 'NONE'}</span>
+          <span className="hp-gear-sub">{mark ? mark.name : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
+        </span>
+      </span>
+      {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
+    </button>
   );
 }
 

@@ -8,12 +8,12 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
-import { MenuIcons, MenuRail, MenuMarkChip, focusNav } from './MenuNav';
+import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost, roundWordXp, MENU_LETTER_SHARE } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import RebirthReadyButton from './RebirthReadyButton';
 import BoostPill from '../frenzy/BoostPill';
@@ -111,6 +111,7 @@ const PHONE_MENU_QUERY = '(max-width: 480px)';
 // a two-dot indicator. Tall screens (> 700px) and anything ≤ 760px wide keep their layout exactly.
 const PAGED_MENU_QUERY = '(min-width: 761px) and (min-aspect-ratio: 5/4)';
 const CARDS_PER_PAGE = 3;
+const PAGED_CARD_MAX_W = 560;
 const CARD_PAGES = Math.ceil(GAMES.length / CARDS_PER_PAGE);
 
 // How long a queued connect attempt shows the plain CONNECTING… state before we
@@ -473,7 +474,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             // ALWAYS 3:4 — the whole point of paging. Under the text minimum the card keeps the
             // minimum (3:4 still) and the height it owes goes to the short arrangement + the
             // wordmark shrink below, exactly like a six-up row's shortfall.
-            let w = Math.min(colW, (rowH * 3) / 4);
+            // PAGED_CARD_MAX_W: a card past ~560px is a poster, and its payout line clips by a sub-pixel on an
+            // ultrawide (card-fit 3440x1440) — the row never needs to be that big.
+            let w = Math.min(colW, (rowH * 3) / 4, PAGED_CARD_MAX_W);
             if (w < minW) w = Math.min(colW, minW);
             f = { w, h: (w * 4) / 3, cols, rows, aspect: true };
             // LAST RESORT (only once the short arrangement and the 0.4 wordmark are both spent, e.g.
@@ -1223,11 +1226,25 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
   const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} /> : null;
+  // THE HONEST RATE LINE (feat/menu-perrow, Andy oct6 "unclear per-key XP"): what a MENU key pays and what a GAME
+  // letter pays, both live — the menu is a fifth of a game letter (xp.js MENU_LETTER_SHARE, whole XP, never 0).
+  const gameLetterXp = letterXpNow();
+  const menuKeyXp = Math.max(1, roundWordXp(gameLetterXp * MENU_LETTER_SHARE));
   const perLetter = (
-    <span className="hp-per">
-      +{formatNum(letterXpNow())} XP<span className="hp-per-u"> / LETTER</span>
+    <span className="hp-per hp-rate">
+      <span className="hp-rate-k">MENU</span> +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY</span>
+      <span className="hp-rate-sep" aria-hidden="true">·</span>
+      <span className="hp-rate-k">GAMES</span> +{formatNum(gameLetterXp)} XP<span className="hp-per-u"> / LETTER</span>
     </span>
   );
+  // the phone's row is 360px wide: the menu key rate big, the game rate small after it
+  const perLetterCompact = (
+    <span className="hp-per hp-rate">
+      +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY · GAMES +{formatNum(gameLetterXp)} / LETTER</span>
+    </span>
+  );
+  // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
+  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
@@ -1277,7 +1294,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
               : null}
             xpBar={xpBar}
-            perLetter={perLetter}
+            perLetter={perLetterCompact}
             markChip={markChip}
             wins={wins}
             gems={markShown ? gems : null}
@@ -1285,7 +1302,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} />
+        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} foot={gearSlot} />
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
@@ -1315,9 +1332,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           {xpBar}
           <div className="hp-perrow">
             {perLetter}
-            {markChip}
-            {/* v3 (SEASON2): the rank (KEYMASH … by rebirths, then stars) is a season-2 headline — it rides this row */}
-            {SEASON2 && <span className="menu-xp-rank hp-rank">{rankTitle(xpProgress.level)}</span>}
+            {/* the worn mark lives in the rail's YOUR GEAR slot on the paged (2-column) menu (feat/menu-perrow); the
+                narrower desktop rail and the phone keep the chip */}
+            {!isPagedMenu && markChip}
+            {/* v3 (SEASON2): the rank (INKLING … by rebirths, then stars) is a season-2 headline — LABELLED, so a
+                newcomer knows the word is a rank (Andy oct6: nobody may be confused) */}
+            {SEASON2 && <span className="menu-xp-rank hp-rank"><span className="hp-rank-k">RANK</span>{rankTitle(xpProgress.level)}</span>}
             <BoostPill className="menu-boost-pill" />
           </div>
           {/* REBIRTH READY → ×5 FOREVER (Andy oct3): in flow under the bar it is about (nothing until ready). */}
