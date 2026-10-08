@@ -45,8 +45,8 @@ import { getStreak } from './progress/streak'
 // lazy screen it opens rejects with "Failed to fetch dynamically imported module". One reload
 // picks up the new index and fixes it; the guard inside caps that at one reload per tab.
 try { installChunkReloadGuard() } catch { /* never block startup */ }
-// A service worker that just updated is still showing the previous deploy — reload onto the new one (on
-// the menu only). See lib/swUpdate.js.
+// A service worker that just updated is still showing the previous deploy — reload onto the new one at once
+// (anywhere that is not a round in progress), and ask for a new worker whenever the tab comes back. See lib/swUpdate.js.
 try { installSwUpdateReload() } catch { /* never block startup */ }
 
 // Apply the persisted menu theme BEFORE React mounts, so the first paint is already in the
