@@ -107,3 +107,8 @@
 /* "all quiet" on a cog is the small ✕ badge, not a strike through the whole button (that read as "settings off") */
 .audio-btn.off { opacity: 1; }
 .audio-btn.off::after { display: none; }
+/* In the game header the button is sized to the LEAVE chip (GameScreen.css: every px on that row comes off the
+   ring), so the cog matches the old glyph's 1em box there, and the out-of-flow ::after there is the 44px HIT
+   TARGET, not a strike — keep it when muted. */
+.game-header-actions .audio-cog { width: 1em; height: 1em; }
+.game-header-actions .audio-ctrl--inline .audio-btn.off::after { display: block; }
