@@ -111,6 +111,7 @@ const PHONE_MENU_QUERY = '(max-width: 480px)';
 // a two-dot indicator. Tall screens (> 700px) and anything ≤ 760px wide keep their layout exactly.
 const PAGED_MENU_QUERY = '(min-width: 761px) and (min-aspect-ratio: 5/4)';
 const CARDS_PER_PAGE = 3;
+const PAGED_CARD_MAX_W = 560;
 const CARD_PAGES = Math.ceil(GAMES.length / CARDS_PER_PAGE);
 
 // How long a queued connect attempt shows the plain CONNECTING… state before we
@@ -473,7 +474,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             // ALWAYS 3:4 — the whole point of paging. Under the text minimum the card keeps the
             // minimum (3:4 still) and the height it owes goes to the short arrangement + the
             // wordmark shrink below, exactly like a six-up row's shortfall.
-            let w = Math.min(colW, (rowH * 3) / 4);
+            // PAGED_CARD_MAX_W: a card past ~560px is a poster, and its payout line clips by a sub-pixel on an
+            // ultrawide (card-fit 3440x1440) — the row never needs to be that big.
+            let w = Math.min(colW, (rowH * 3) / 4, PAGED_CARD_MAX_W);
             if (w < minW) w = Math.min(colW, minW);
             f = { w, h: (w * 4) / 3, cols, rows, aspect: true };
             // LAST RESORT (only once the short arrangement and the 0.4 wordmark are both spent, e.g.
