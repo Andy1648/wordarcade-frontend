@@ -10,7 +10,7 @@ import { loadGlossary, glossFor } from '../progress/glossary.js';
 import MissedWordHold from '../components/MissedWordHold.jsx';
 import { useSoloGame } from './useSoloGame.js';
 import { bankWordWins, bankWeight, awardWordXp, subscribeWins, grantWins, perWordWins } from '../progress/wins.js';
-import { startFrenzy, formatFrenzy, frenzyMinutes, FRENZY_MULT, FRENZY_TRIGGER_WORDS, isClutch, CLUTCH_WORDS } from '../progress/frenzy.js';
+import { startFrenzy, formatFrenzy, frenzyMinutes, frenzyShort, FRENZY_TRIGGER_WORDS, isClutch, CLUTCH_WORDS } from '../progress/frenzy.js';
 import ClutchBurst from '../frenzy/ClutchBurst.jsx';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock.js';
 import FrenzyBurst from '../frenzy/FrenzyBurst.jsx';
@@ -327,7 +327,7 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
           {s.lettersUsed.size}<span className="solo-strip-count-of">/{ALPHABET.length}</span>
         </b>
         <div className={`solo-frenzy-goal${frenzy.active ? ' is-live' : ''}${frenzy.active && frenzy.ms <= 10000 ? ' is-ending' : ''}`}>
-          {frenzy.active ? `FRENZY ×${FRENZY_MULT} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL LETTERS → FRENZY ×${FRENZY_MULT} FOR ${frenzyMinutes()} MIN`}
+          {frenzy.active ? `FRENZY ${frenzyShort()} · ${formatFrenzy(frenzy.ms)}` : `LIGHT ALL LETTERS → FRENZY ${frenzyShort()} FOR ${frenzyMinutes()} MIN`}
         </div>
       </div>
       <div className="solo-strip-big">

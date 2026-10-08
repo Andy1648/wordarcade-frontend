@@ -80,8 +80,13 @@ test('KEY is bought with WINS on a 1 s hold — a tap does nothing; 150 wins →
 test('a STOCK item costs GEMS: +25% XP · 10 MIN for 45, ×5 → ×4 LEFT, the effect runs', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
-  await expect(shop.locator('.sp2-card')).toHaveCount(5); // ×2 GEM DROPS removed — gems never scale
-  await expect(shop.locator('.sp2-price')).toHaveText(['45', '120', '225', '150', 'SOON']);
+  await expect(shop.locator('.sp2-card')).toHaveCount(6); // + the +25% WINS BOOST (Andy oct8); gems never scale
+  await expect(shop.locator('.sp2-price')).toHaveText(['45', '60', '120', '225', '150', 'SOON']);
+  // "boost what?" (Andy oct8): every card names the item, what it boosts and for how long
+  await expect(card(shop, 'xp25').locator('.sp2-name')).toHaveText('XP BOOST');
+  await expect(card(shop, 'xp25').locator('.sp2-what')).toHaveText('XP PER KEY');
+  await expect(card(shop, 'xp25').locator('.sp2-time')).toHaveText('10 MIN');
+  await expect(card(shop, 'overdrive').locator('.sp2-what')).toContainText('XP + WINS');
   await expect(shop.locator('.ktc')).toContainText('4:00'); // pinned 60 s into the window
   const xp = card(shop, 'xp25');
   await expect(xp.locator('.sp2-left')).toHaveText('×5 LEFT');
