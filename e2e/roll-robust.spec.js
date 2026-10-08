@@ -2,7 +2,7 @@
 //   1. smooth: only transform/opacity move; at 4x CPU (CDP Emulation.setCPUThrottlingRate — a school Chromebook) the
 //      frame times through a full reel spin + the LEGENDARY full reveal run at 60fps: median ≤ 20 ms; p95 is a stall
 //      guard for now (see the test) — CI-aware, like input-latency.spec.js (CI is ~1.5x slower at the same throttle)
-//   2. spam-clicking ROLL never double-charges: 20 rapid clicks = exactly 10 gems per roll actually made
+//   2. spam on ROLL never double-charges: 20 raw taps roll nothing (R4: a tap is not a hold); 8 rapid holds = exactly 10 gems per roll actually made
 //   3. 0 gems: a clear state — "NO GEMS" on the button and, on a press, −N + gem; never a silent grey button
 //   4. AUTO stops cleanly when the gems run out: no negative balance, no stuck spinner, the toggle resets
 //   5. the tab going hidden, or leaving (✕ / INDEX) mid-roll, still lands and saves the result
@@ -10,6 +10,7 @@
 //   7. the in-game REDUCE MOTION toggle (taw.reduceMotion, PR #207) is respected: straight to the result, no reel motion
 //   8. 1280x551 · 1366x657 · 1920x1080 · 390x844 · 360x640: nothing clipped, ROLL visible, no horizontal scroll
 import { test, expect } from '@playwright/test';
+import { holdRoll, tapRoll } from './support/roll.js'; // HOLD TO ROLL (R4): a hold + release is a roll; a tap is not
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
@@ -88,7 +89,7 @@ test('1. smooth: a full spin + the LEGENDARY reveal run at 60fps at 4x CPU (tran
     const tick = (t) => { if (last) window.__ft.push(t - last); last = t; if (!window.__ftStop) requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
   });
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 20000 }); // 4x throttle
   await page.waitForTimeout(2000); // the reveal plays in (rays, slam, pop, burst)
   const r = await page.evaluate(() => {
@@ -133,7 +134,18 @@ test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made
   // ROLL, so locator.click() waited 30 s on an element that was never coming back (main E2E red, run 37388543708). A
   // real spammer's taps land on whatever is on top: the reveal takes one, and RollScreen swallows the next 800 ms.
   const box = await roll.boundingBox();
+  // R4 HOLD TO ROLL: 20 raw TAPS are 20 holds released early — not one roll, not one gem (a tap is never a roll)
   for (let i = 0; i < 20; i += 1) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(400);
+  expect((await store(page)).rolls).toBe(before.rolls);
+  expect((await store(page)).gems).toBe(before.gems);
+  // ...then 8 HOLDS as fast as a thumb can (a hold mid-spin lands the reel, the next one rolls again)
+  for (let i = 0; i < 8; i += 1) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(640);
+    await page.mouse.up();
+  }
   // let the last one settle, tapping away any EPIC+ reveal still up
   await page.waitForTimeout(SPUN);
   await keepReveal(page);
@@ -141,7 +153,7 @@ test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made
   const after = await store(page);
   const made = after.rolls - before.rolls;
   expect(made).toBeGreaterThanOrEqual(1);
-  expect(made).toBeLessThanOrEqual(20);
+  expect(made).toBeLessThanOrEqual(8);
   // every roll made is a copy saved, and was paid exactly once
   expect(after.copies - before.copies).toBe(made);
   if (after.worn !== 'mk-singularity') expect(before.gems - after.gems).toBe(10 * made);
@@ -156,7 +168,7 @@ test('3. 0 gems: "NO GEMS" + on a press −N + gem — never a silent grey butto
   await expect(roll).toHaveClass(/is-short/);
   await expect(roll.locator('.rs-roll-lbl')).toHaveText('NO GEMS');
   await expect(roll.locator('img.gem-icon')).toBeVisible();
-  await roll.click();
+  await holdRoll(page);
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '10');
   await expect(page.locator('.rs-need')).toHaveText('−10');
   await expect(page.locator('.rs-need img.gem-icon')).toBeVisible();
@@ -191,7 +203,7 @@ test('5. hidden tab / leaving mid-roll still lands and saves the result', async 
   await openRoll(page);
   // (a) the tab goes hidden mid-spin → the roll lands at once (quietly), AUTO-safe
   let before = await store(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await page.waitForTimeout(300);
   await page.evaluate(() => {
     Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
@@ -209,7 +221,7 @@ test('5. hidden tab / leaving mid-roll still lands and saves the result', async 
   await page.waitForTimeout(600);
   await keepReveal(page); // (a)'s roll may have been an EPIC+ whose reveal waits for a tap
   before = after;
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await page.waitForTimeout(300);
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
@@ -220,7 +232,7 @@ test('5. hidden tab / leaving mid-roll still lands and saves the result', async 
   await keepReveal(page);
   // (c) ✕ mid-spin → back on the menu, the roll saved and (nothing better worn) auto-equipped
   before = await store(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await page.waitForTimeout(300);
   await page.locator('.rs-close').click();
   await expect(page.locator('.rs-overlay')).toHaveCount(0);
@@ -234,7 +246,7 @@ test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, cha
   await seed(page, { 'taw.gems': gemsOf(100), 'taw.markRolls': STARTED() });
   await openRoll(page);
   const before = await store(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await page.waitForTimeout(250); // mid-spin: the reveal has not finished
   const mid = await store(page);
   expect(mid.rolls).toBe(before.rolls + 1); // persisted at purchase, before the reveal
@@ -255,7 +267,7 @@ test('7. the in-game REDUCE MOTION toggle (taw.reduceMotion) is respected: strai
   await page.setViewportSize({ width: 390, height: 844 });
   await seed(page, { 'taw.reduceMotion': '1', 'taw.markRolls': STARTED() });
   await openRoll(page);
-  await page.locator('.rs-roll').click();
+  await holdRoll(page);
   await expect(result(page)).toHaveCount(1, { timeout: 300 });
   expect(await reelAnims(page)).toBe(0);
   await expect(page.getByTestId('roll-cutscene')).not.toHaveClass(/is-on/);
@@ -275,12 +287,12 @@ for (const [w, h] of [[1280, 551], [1366, 657], [1920, 1080], [390, 844], [360, 
       expect(b.y + b.height, `${sel} bottom`).toBeLessThanOrEqual(h + 1);
       return b;
     };
-    for (const sel of ['.rs-index-btn', '.rs-gems-bal', '.rs-close', '.rs-pity', '.rs-roll', '.rs-auto-btn', '.rs-select']) await inView(sel);
+    for (const sel of ['.rs-index-btn', '.rs-gems-bal', '.rs-close', '.rs-pity', '.rs-roll', '.rs-auto-btn', '.rs-skip']) await inView(sel);
     const band = await page.locator('.rs-win').boundingBox();
     expect(band.y).toBeGreaterThanOrEqual(0);
     expect(band.y + band.height).toBeLessThanOrEqual(h);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
-    await page.locator('.rs-roll').click();
+    await holdRoll(page);
     await expect(result(page)).toHaveCount(1, { timeout: SPUN });
     const cut = page.getByTestId('roll-cutscene');
     if (await cut.evaluate((el) => el.classList.contains('is-on'))) {
