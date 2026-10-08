@@ -24,7 +24,7 @@ import { V3 } from '../progress/season';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased } from '../lib/events.js';
 import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
-import { formatNum, formatRate } from '../format';
+import { formatNum, formatRate, formatMultExact } from '../format';
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
@@ -132,11 +132,13 @@ export default function ShopV2({ onBack }) {
   // ---- POWER: wins only, one per 1 s hold ----
   const cost = keyTierCost(tier);
   const canPower = Number.isFinite(cost) && wins >= cost;
-  // XP / LETTER now → after the buy: the SAME number the bar pays and STATS / the menu show (letterXpNow — the worn
-  // mark, INDEX and any BOOST included; levelXpPerLetter alone left them out), × POWER's own step (2.5) for the next.
+  // XP / KEY now → after the buy: the SAME number the menu's rate line and STATS show (letterXpNow — the worn mark,
+  // INDEX and any BOOST included; levelXpPerLetter alone left them out), × POWER's own step for the next. SEASON 2
+  // (v4 SIMPLE): XP comes from MENU KEYS only, so the unit is "XP / KEY" (R2 oct8 #3 — "XP / LETTER" was season 1's).
   const perNow = letterXpNow();
   const kNow = keyXpMult(tier);
-  const perNext = kNow > 0 ? (perNow * keyXpMult(tier + 1)) / kNow : perNow;
+  const kNext = keyXpMult(tier + 1);
+  const perNext = kNow > 0 ? (perNow * kNext) / kNow : perNow;
   const onPower = () => {
     const r = buyKeyPower();
     if (!r.ok) {
@@ -191,12 +193,18 @@ export default function ShopV2({ onBack }) {
             <span className="sp2-pw-arrow">→</span>
             <span className="sp2-pw-next">{formatNum(tier + 1)}</span>
           </div>
+          {/* THE EFFECT, big (R2 oct8 #3): the POWER multiplier ×2^T → ×2^(T+1); the honest rate under it */}
+          <div className="sp2-mult" aria-label={`Power multiplier ×${formatMultExact(kNow)} now, ×${formatMultExact(kNext)} after`}>
+            <span className="sp2-mult-now">×{formatMultExact(kNow)}</span>
+            <span className="sp2-mult-arrow">→</span>
+            <span className="sp2-mult-next">×{formatMultExact(kNext)}</span>
+          </div>
           <div className="sp2-per">
             <span className="sp2-per-now">{formatRate(perNow)}</span>
             <span className="sp2-per-arrow">→</span>
             <span className="sp2-per-next">{formatRate(perNext)}</span>
+            <span className="sp2-per-lab">XP / KEY</span>
           </div>
-          <div className="sp2-per-lab">XP / LETTER</div>
           <KitHoldButton
             tone={canPower ? 'yellow' : 'gold'}
             className="sp2-buy"
