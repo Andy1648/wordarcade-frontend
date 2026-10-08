@@ -25,8 +25,9 @@ import LoadingScreen from './components/LoadingScreen';
 import { markAppReady } from './lib/bootReady.js';
 import AudioControls from './components/AudioControls';
 // R5 oct8 (Andy): every LIVE boost, bottom-right with its clock and what it boosts — docked to the sound
-// control's corner, never an orphan; renders nothing while no timer runs.
-import BoostDock from './frenzy/BoostDock';
+// control's corner, never an orphan. The MOUNT is the eager gate; the dock itself is lazy, so a visitor with
+// no boost running never downloads it (payload ratchet — e2e/payload-budget.spec.js).
+import BoostDockMount from './frenzy/BoostDockMount';
 import { sndWordAccepted, sndWordRejected, sndRunOver, sndAchievement } from './audio/gameSounds';
 const CreditsScreen = lazyWithReload(() => import('./components/CreditsScreen'), 'CreditsScreen');
 // StatsScreen now hosts COLLECTION and ACHIEVEMENTS as tabs (consolidated from their old standalone
@@ -2872,7 +2873,7 @@ function App() {
               Transient, pointer-events:none, docked under the wins pill's column. */}
           <WinsCreditToast />
           {/* R5 oct8: the boost dock — bottom-right, above the corner sound control, on every screen. */}
-          <BoostDock />
+          <BoostDockMount />
           {/* RETURN BONUS (Job 6): the welcome-back bonus is now a CLAIM (Andy oct2) — the menu's
               ClaimPopup announces it with a CLAIM button, so the old "already granted" card is gone. */}
           {/* Invite-link arrival: a friend tapped a ?join= link and we're

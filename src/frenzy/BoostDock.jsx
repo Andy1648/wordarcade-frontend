@@ -10,7 +10,8 @@
 // Motion: the only animation is a finite 320 ms slam when a row appears (transform/opacity, will-change cleared on
 // finish) and the last-10s pulse the pill already had. No loop, no layout read, one 1 Hz tick while a timer lives.
 import { useEffect, useRef } from 'react';
-import { liveTimers, anyTimerRemaining } from '../progress/liveTimers';
+import { liveTimers } from '../progress/liveTimers';
+import { anyTimerRemaining } from '../progress/anyTimer';
 import { formatFrenzy } from '../progress/frenzy';
 import { formatMultExact } from '../format';
 import { useTimerClock } from './useTimerClock';

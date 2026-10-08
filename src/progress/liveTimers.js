@@ -71,6 +71,7 @@ const ROWS = [
 /**
  * Every timer running at `now`, longest first: [{ id, name, says, tone, mult, ms }].
  * Empty when nothing is live — the dock renders nothing at rest (no idle chrome).
+ * "Is anything running at all?" is anyTimer.js: that question is asked eagerly, this table is not.
  */
 export function liveTimers(now = Date.now()) {
   const out = [];
@@ -98,10 +99,4 @@ export function liveTimers(now = Date.now()) {
     out.push({ id: r.id, name: r.name, says, tone: r.tone, mult, ms });
   }
   return out.sort((a, b) => b.ms - a.ms);
-}
-
-/** ms until the LAST live timer ends (0 when none) — the one clock the dock subscribes to. */
-export function anyTimerRemaining(now = Date.now()) {
-  const t = liveTimers(now);
-  return t.length ? t[0].ms : 0;
 }
