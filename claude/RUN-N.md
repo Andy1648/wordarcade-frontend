@@ -31,6 +31,16 @@ Homepage.*, MenuNav, kit/*, CardPager, GameCard (another session owns them). e2e
   side that keeps R1/R3/R5 in band; 10 h ends at R5 (−17% vs R6). Andy decides: accept, or relax R3 to ~85–90 min
   (k 1.125 + 18 + 20R + cost 250 gives R1 22.5 · R3 93 · R5 5.5 h · R6 9.7 h).
   Gate changes → 029 needed.
+- STEP 3 ✅ 029_progression_final_v3.sql + rebirthRules/finalRules mirrors + tests (the SPAMMER caught the stale 15 + 18R
+  server gate: it reached R7 vs the median's R5 until 029's gate landed — now level).
+- STEP 4 ✅ final-sim.mjs = the v3 table at ±20% (median = Andy's targets, R6–R7 range cell); CI yaml text; doc v3 + v2.
+- STEP 5 ✅ KEYMASH → INKLING (Homepage.jsx comment left — not my file).
+- STEP 6 ✅ numbers: base 1 × (10 + N)/10; fractional season-2 letter XP; format.formatStatRate (< 10 → 2 decimals) in
+  StatsV2; T0 R0 menu +1 / game +1 / UPGRADES 150 test. e2e pins: season2 (LV17 → 18), numbers-audit (LV80 R3 KEY2),
+  v2-rebirth (LV 10 / 18), v2-stats (×64, [1, 8, 27]).
+- STEP 7 ✅ FLIP-STEPS 022 → 024 → 027 → 029 → 023 → 028. Local: unit 1273/1273, lint, build, sim PASS.
+  PR #255 opened (NOT merged). CI on 1cf0932: ALL GREEN — build, 4 e2e shards + e2e, season2 sim (v3 table ±20%),
+  long-run, rule-p. DONE — waiting on Andy's ?season2=1 play-test.
 
 ---
 

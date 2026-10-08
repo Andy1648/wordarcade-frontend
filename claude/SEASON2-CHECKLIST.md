@@ -52,7 +52,7 @@ flag that would have driven it goes with this rule.)
       → checks (lb_caps season2_reset; leaderboard_s2 earned / s1_rank) → "flip SEASON2". 026 is NOT run (replaced by 027).
 - [x] STOP — visual polish moves to a separate cloud session later.
 
-## 5. PROGRESSION FINAL v3 "START AT 1" (Andy, Oct 7 21:27) — branch `feat/s2-progression-v3`, ONE PR, NOT merged (Andy play-tests ?season2=1 first)
+## 5. PROGRESSION FINAL v3 "START AT 1" (Andy, Oct 7 21:27) — PR #255, CI all green, NOT merged (Andy play-tests ?season2=1 first)
 - [x] BASE 1 XP a letter; menu key ×0.2 whole-XP, floor 1 (1 XP a key at the start); POWER ×2^T, cost kept 150 × 5^T
 - [x] tuned on the real-module sim: need 100 × 1.131^(n−1), gate 18 + 20R → median R1 20.7 min · R3 1.66 h · R5 6.75 h ·
       R5 at 10 h. BLOCKER noted: R3 ≈ 2 h and R6–R7 by 10 h can't both hold in this structure (see progression-FINAL.md v3)
