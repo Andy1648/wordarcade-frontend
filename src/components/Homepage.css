@@ -527,6 +527,14 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   border-radius: 8px;
   box-shadow: var(--b6) var(--b6) 0 #000;
 }
+/* PROTOTYPE (R5 oct8 #4 — Andy: "the menu centre background? MAYBE make it hollow like before?"): ?panel=hollow keeps
+   the inner border and drops the fill + shadow, so the cards sit on the splatter wall again; ?panel=filled is the
+   current panel (explicit, for side-by-side shots). main.jsx sets html[data-panel] from the query. PICK ONE, then
+   the loser and the query go. */
+html[data-panel='hollow'] .homepage-stage[data-paged]::before {
+  background: transparent;
+  box-shadow: none;
+}
 
 /* ---- THE 2-COLUMN RAIL (feat/menu-rail-2col, Andy oct6 "menu left side as two columns: coins + gems on top, then
    UPGRADES + ROLL under one, INDEX + REBIRTH under the other"; oct7 "text is so small"). Desktop (paged) only — the

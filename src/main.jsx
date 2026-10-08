@@ -55,6 +55,12 @@ try { initTheme() } catch { /* never block startup */ }
 // REDUCE MOTION: the in-game toggle owns data-reduce-motion. index.html's one-line inline script sets it
 // pre-paint (so a player who turned it on never sees a frame of motion); this is the fallback.
 try { initReduceMotion() } catch { /* never block startup */ }
+// PROTOTYPE (R5 oct8 #4, Andy picks): ?panel=hollow | filled → html[data-panel] — the menu's centre panel as an
+// inner border only (hollow) or the current plum fill (filled). Homepage.css reads it. Dev query only; no default.
+try {
+  const panel = new URLSearchParams(window.location.search).get('panel')
+  if (panel === 'hollow' || panel === 'filled') document.documentElement.setAttribute('data-panel', panel)
+} catch { /* never block startup */ }
 
 // ---- Third-party boot (perf/first-load): NOTHING third-party runs on the critical path. ----
 // Sentry's init and PostHog both start from ONE idle callback scheduled after the window 'load'
