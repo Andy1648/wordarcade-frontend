@@ -1,5 +1,5 @@
 // markRolls.test.js — MARK ROLLS engine (MARKS via ROLLS, PROGRESSION FINAL): six tiers + odds, the one MARK
-// stats, pity (EPIC 50 + LEGENDARY 500), dupes → ★ pips, the INDEX bonus + rewards, no caps, determinism, migration.
+// stats, pity (EPIC 50 + LEGENDARY 125 — oct8, was 500), dupes → ★ pips, the INDEX bonus + rewards, no caps, determinism, migration.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -38,7 +38,7 @@ const tierMass = (t, tier) => ROLL_MARKS.filter((m) => m.tier === tier).reduce((
 const TIERS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
 
 test('tiers: Andy\'s six tiers, odds and MAINs — and MARK_TIERS says the same MAIN', () => {
-  assert.deepEqual(TIER_ODDS, { common: 2, rare: 10, epic: 100, legendary: 1000, mythic: 10000, secret: 100000 });
+  assert.deepEqual(TIER_ODDS, { common: 2, rare: 10, epic: 100, legendary: 250, mythic: 10000, secret: 100000 }); // LEGENDARY 1 IN 250 (Andy oct8; was 1,000)
   assert.deepEqual(TIER_MAIN, { common: 1.1, rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 });
   for (const t of TIERS) assert.ok(Math.abs(1 + MARK_TIERS[t].bonus - TIER_MAIN[t]) < 1e-12, t);
   assert.equal(MARK_ROLLS_STORE_KEY, ROLL_STATE_KEY);
@@ -66,9 +66,9 @@ test('odds: the table sums to 1; each rarer TIER is exactly 1 IN X; commons take
   for (const tier of ['rare', 'epic', 'legendary', 'mythic', 'secret']) {
     assert.ok(Math.abs(tierMass(t, tier) - 1 / TIER_ODDS[tier]) < 1e-12, tier);
   }
-  assert.ok(Math.abs(tierMass(t, 'common') - (1 - 0.11111)) < 1e-9);
+  assert.ok(Math.abs(tierMass(t, 'common') - (1 - 0.11411)) < 1e-9); // 1/10 + 1/100 + 1/250 + 1/10,000 + 1/100,000
   assert.equal(oneInX('mk-origin'), 100000);
-  assert.equal(oneInX('mk-leviathan'), 2000, 'two legendaries split 1 IN 1,000');
+  assert.equal(oneInX('mk-leviathan'), 500, 'two legendaries split 1 IN 250');
 });
 
 test('luck: scales every non-common chance, commons absorb, sums stay 1', () => {
@@ -81,7 +81,7 @@ test('luck: scales every non-common chance, commons absorb, sums stay 1', () => 
   const t2 = rollTable(s, { permanentOwned: 10 }); // luck 2
   assert.ok(Math.abs(t2.probs.get('mk-leviathan') / t1.probs.get('mk-leviathan') - 2) < 1e-9);
   assert.ok(Math.abs(t2.probs.get('mk-origin') / t1.probs.get('mk-origin') - 2) < 1e-9);
-  assert.equal(yourOneInX('mk-leviathan', 2), 1000);
+  assert.equal(yourOneInX('mk-leviathan', 2), 250);
   const big = rollTable(s, { permanentOwned: 1e6 });
   assert.equal(tierMass(big, 'common'), 0);
   assert.ok(Math.abs(sumProbs(big) - 1) < 1e-9);
@@ -176,11 +176,11 @@ test('migration (never hurt): a v1 GOLD / RAINBOW keeps its ×2 / ×5 as a floor
   assert.equal(normalize({ v: 1, marks: { [id]: { n: 3 } } }).marks[id].k, undefined);
   // the old luck is a floor too
   assert.ok(luck(rainbow) >= 1.05 - 1e-9);
-  // a tier already complete in v1 is marked paid; the legendary pity starts from the save's rolls (≤ 499)
+  // a tier already complete in v1 is marked paid; the legendary pity starts from the save's rolls (≤ 124)
   const allCommons = Object.fromEntries(ROLL_MARKS.filter((m) => m.tier === 'common').map((m) => [m.id, { n: 1 }]));
   const v1 = normalize({ v: 1, rolls: 900, marks: allCommons });
   assert.deepEqual(v1.done, ['common']);
-  assert.equal(v1.sinceLegendary, 499);
+  assert.equal(v1.sinceLegendary, 124);
   assert.equal(normalize({ v: 1, rolls: 120, marks: { 'mk-eclipse': { n: 1 } } }).sinceLegendary, 0);
   assert.equal(normalize({ v: 1, rolls: 120, marks: {} }).sinceLegendary, 120);
   // copies never go down; nothing is removed
@@ -221,10 +221,10 @@ test('distribution: 60k seeded rolls land on the published tier odds (pity off)'
   const counts = { common: 0, rare: 0, epic: 0, legendary: 0, mythic: 0, secret: 0 };
   const N = 60000;
   for (let i = 0; i < N; i++) counts[roll(rng, { ...freshState(), everEpic: true, rolls: 1 }).result.tier]++;
-  assert.ok(Math.abs(counts.common / N - 0.8889) < 0.006);
+  assert.ok(Math.abs(counts.common / N - 0.8859) < 0.006);
   assert.ok(Math.abs(counts.rare / N - 0.1) < 0.006);
   assert.ok(Math.abs(counts.epic / N - 0.01) < 0.002);
-  assert.ok(Math.abs(counts.legendary / N - 0.001) < 0.0006);
+  assert.ok(Math.abs(counts.legendary / N - 0.004) < 0.0012);
 });
 
 test('GEMS: the wins price is gone from the roll engine (a roll costs gems — markRollShop)', async () => {

@@ -31,7 +31,7 @@ export function pipNext(lv) {
   return `${formatNum(lv.have)}/${formatNum(lv.need)} → ★${formatNum(lv.pips + 1)}`;
 }
 export function tierLabel(tier, kind = 'roll') {
-  if (kind === 'perm' || tier === 'permanent') return 'PERMANENT';
+  if (kind === 'perm' || tier === 'permanent') return 'EARNED'; // the LABEL only (Andy oct8: "PERMANENT sounds awful"); the tier id 'permanent' stays in data + save keys
   return MARK_TIERS[tier] ? MARK_TIERS[tier].name : String(tier || '').toUpperCase();
 }
 /**
