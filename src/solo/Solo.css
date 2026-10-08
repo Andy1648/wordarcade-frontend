@@ -1598,3 +1598,15 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 @media (prefers-reduced-motion: reduce) {
   .solo-frenzy-goal.is-live.is-ending { animation: none; }
 }
+
+/* NIGHT OCT8 R3 — CHAIN/FUSE PROPORTIONS (Andy's floor: nothing under 14px, numbers ≥ 18px, the
+   wins counter ≥ 24px). The shared --fs-label token is 13px (the global min-text floor); the two
+   solo screens take 14px. Guarded so the 1800x1000 bump (type.css, 16px) still wins there. */
+@media (max-width: 1799px), (max-height: 999px) {
+  .solo-root { --fs-label: 14px; }
+}
+/* The live wins counter (+N WINS / 3 WORDS TO EARN): the number is the stat, 24px; its caption
+   stays --fs-body. Scoped to the solo screens so the room HUDs keep their fit. */
+.solo-root .wins-hud-plus {
+  font-size: 24px;
+}
