@@ -33,8 +33,11 @@ const xText = (v) => `×${boardMult(v)}`;
 // The mockup's per-board look: the tab / total colour, the unit and the BASE icon.
 const BOARDS = {
   wins: { name: 'WINS', unit: 'WINS / WORD', color: '#FFE94A', baseIcon: 'coin' },
-  xp: { name: 'XP', unit: 'XP / LETTER', color: '#2EFFE0', baseIcon: 'keycap' },
+  // SEASON 2 (v4 SIMPLE): XP comes from MENU KEYS only — the unit is XP / KEY (R2 oct8 #4)
+  xp: { name: 'XP', unit: 'XP / KEY', color: '#2EFFE0', baseIcon: 'keycap' },
 };
+// What the chain calls a chip (statBoard.js ids) vs what the player calls it: marks are GEARS since NIGHT oct8 #2.
+const CHIP_LABEL = { mark: 'GEAR', index: 'INDEX' };
 // Each multiplier's colour (the mockup's `c`).
 const CHIP_COLOR = { mode: '#FF6B3D', rebirth: '#D88BFF', mark: '#B04BFF', index: '#B04BFF', boost: '#FF3D7F', ascend: '#FFE94A', power: '#FFC23D', shop: '#2EFFE0' };
 // Chips without art of their own borrow the closest kit icon (MODE → the keycap, INDEX → the mark plate).
@@ -58,7 +61,7 @@ function readBoards() {
   const boostOn = (board.wins.lines.find((l) => l.id === 'boost') || { mult: 1 }).mult > 1;
   const tags = {
     mode: BOARD_MODE_NAMES[BOARD_MODE],
-    index: 'MARKS',
+    index: 'GEARS',
     rebirth: `R${fmt(rc)}`,
     mark: markName,
     boost: boostOn ? 'ON' : 'OFF',
@@ -303,7 +306,7 @@ export default function StatsV2({ onBack, onMore }) {
 
   const chips = [
     { id: 'base', label: 'BASE', tag: look.name, v: rateText(b.base), on: true, icon: look.baseIcon, c: '#fff', ic: look.color },
-    ...b.chips.map((m) => ({ id: m.id, label: m.label, tag: m.tag, v: xText(m.mult), on: m.mult > 1, icon: CHIP_ICON[m.id] || m.id, c: CHIP_COLOR[m.id] || '#fff', ic: CHIP_COLOR[m.id] || '#fff' })),
+    ...b.chips.map((m) => ({ id: m.id, label: CHIP_LABEL[m.id] || m.label, tag: m.tag, v: xText(m.mult), on: m.mult > 1, icon: CHIP_ICON[m.id] || m.id, c: CHIP_COLOR[m.id] || '#fff', ic: CHIP_COLOR[m.id] || '#fff' })),
   ];
 
   return (

@@ -336,10 +336,11 @@ test('ROLL vs INDEX never mix (Andy oct5): INDEX has no REPLAY / roll / pity / g
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
   await expect(page.locator('.mx-overlay .rs-roll, .mx-overlay [data-testid="roll-pity"], .mx-overlay .gem-count')).toHaveCount(0);
-  // ROLL v1: the card face is data only — the "7/10 → ★3" line sits UNDER an owned card (.mx-tile-next), never on it
+  // ROLL v1 / R2 oct8 #5: the card face is data only and NOTHING sits under a card — the "7/10 → ★3" progress line
+  // lives in the detail sheet (rarity is colour, dupes are the card's own ×N)
   await expect(page.locator('.mx-grid .mx-pips-text')).toHaveCount(0);
   await expect(page.locator('.mx-tile').filter({ hasText: '→' })).toHaveCount(0);
-  await expect(page.locator(`.mx-tile[data-mark="${markId}"] + .mx-tile-next`)).toHaveText(/^\d+\/\d+ → ★\d$/);
+  await expect(page.locator('.mx-grid .mx-tile-next')).toHaveCount(0);
   await page.locator(`.mx-tile[data-mark="${markId}"]`).click();
   await expect(page.locator('.mx-sheet')).toBeVisible();
   await expect(page.locator('.mx-replay')).toHaveCount(0);

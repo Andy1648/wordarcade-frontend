@@ -1599,6 +1599,17 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   .solo-frenzy-goal.is-live.is-ending { animation: none; }
 }
 
+/* NIGHT OCT8 R3 — CHAIN/FUSE PROPORTIONS (Andy's floor: nothing under 14px, numbers ≥ 18px, the
+   wins counter ≥ 24px). The shared --fs-label token is 13px (the global min-text floor); the two
+   solo screens take 14px. Guarded so the 1800x1000 bump (type.css, 16px) still wins there. */
+@media (max-width: 1799px), (max-height: 999px) {
+  .solo-root { --fs-label: 14px; }
+}
+/* The live wins counter (+N WINS / 3 WORDS TO EARN): the number is the stat, 24px; its caption
+   stays --fs-body. Scoped to the solo screens so the room HUDs keep their fit. */
+.solo-root .wins-hud-plus {
+  font-size: max(24px, var(--fs-body));
+
 /* NIGHT OCT8 R3 — FUSE 26-LETTER TRACKER: read at a glance. The count leads ("14/26", number
    ≥ 18px), lit tiles carry the reward yellow with a DARKER-YELLOW outline (coloured outlines, not
    black), missing tiles step back (dim face, dim outline, no hard shadow) so the lit ones are the
