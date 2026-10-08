@@ -1608,5 +1608,5 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 /* The live wins counter (+N WINS / 3 WORDS TO EARN): the number is the stat, 24px; its caption
    stays --fs-body. Scoped to the solo screens so the room HUDs keep their fit. */
 .solo-root .wins-hud-plus {
-  font-size: 24px;
+  font-size: max(24px, var(--fs-body));
 }

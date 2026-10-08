@@ -41,6 +41,30 @@ for (const [w, h] of sizes) {
       else if (op === 'waitfor') await page.locator(arg).first().waitFor({ state: 'visible', timeout: 20000 });
       else if (op === 'eval') await page.evaluate(arg);
       else if (op === 'shot') await page.screenshot({ path: `${out}/${tag}-${arg}-${w}x${h}.png` });
+      else if (op === 'until3') {
+        // solve until the fragment on screen has `arg` letters (FUSE hero fit check)
+        const words = fs.readFileSync('src/solo/words.recall.txt', 'utf8').split(/\s+/).filter((x) => x.length >= 4);
+        for (let n = 0; n < 30; n++) {
+          const ph = await page.locator('.solo-root input').first().getAttribute('placeholder');
+          const m = /"([A-Z]+)"/.exec(ph || ''); if (!m || m[1].length === Number(arg)) break;
+          const frag = m[1].toLowerCase();
+          const pick = words.find((x) => x.includes(frag)); if (!pick) break;
+          await page.locator('.solo-root input').first().fill(pick); await page.keyboard.press('Enter'); await page.waitForTimeout(600);
+        }
+      }
+      else if (op === 'fusesolve') {
+        // solve N FUSE fragments with real words from the recall list (reads the fragment off the input placeholder)
+        const words = fs.readFileSync('src/solo/words.recall.txt', 'utf8').split(/\s+/).filter((x) => x.length >= 4);
+        const used = new Set();
+        for (let n = 0; n < Number(arg); n++) {
+          const ph = await page.locator('.solo-root input').first().getAttribute('placeholder');
+          const m = /"([A-Z]+)"/.exec(ph || ''); if (!m) break;
+          const frag = m[1].toLowerCase();
+          const pick = words.filter((x) => x.includes(frag) && !used.has(x)).sort((a, b) => new Set(b).size - new Set(a).size)[0];
+          if (!pick) break; used.add(pick);
+          await page.locator('.solo-root input').first().fill(pick); await page.keyboard.press('Enter'); await page.waitForTimeout(700);
+        }
+      }
     } catch (e) { console.log(`act ${a} failed @${w}x${h}:`, String(e).split('\n')[0].slice(0, 120)); }
   }
   const name = `${tag}-${w}x${h}.png`;
