@@ -24,16 +24,22 @@
 // THE FLIP (phase 4): Andy runs claude/run-season2.sql (023), then says "flip SEASON2" — and only then this ONE line
 // becomes `true`. Every visitor is then season 2 (the reset's welcome + wipe run once lb_caps says season2_reset).
 // KEEP false until that word. (?season2=1 / VITE_SEASON2=1 still turn it on for testing.)
-export const SEASON2_LIVE = false;
+export const SEASON2_LIVE = true;
 
-/** THE FLAG — fixed for the page load. */
+/** THE FLAG — fixed for the page load.
+ *  FLIPPED Oct 8 2026 (Andy: "flip season 2"). SEASON2_LIVE is for VISITORS: in a browser it turns the season on.
+ *  Node (unit tests, the CI sim) still opts IN with location.search '?season2=1' so the season-1 suites keep testing
+ *  season 1; a browser can opt OUT with ?season2=0 or localStorage 'taw.season2.off' = '1' (the e2e suite's season-1
+ *  runs, backendMock sets it). The URL always wins over the storage switch. */
 export const SEASON2 = (() => {
-  if (SEASON2_LIVE) return true;
-  try {
-    return /season2=1/.test(location.search) || import.meta.env.VITE_SEASON2 === '1';
-  } catch {
-    return false;
-  }
+  let q = '';
+  try { q = String(location.search || ''); } catch { q = ''; }
+  if (/season2=0/.test(q)) return false;
+  if (/season2=1/.test(q)) return true;
+  try { if (import.meta.env.VITE_SEASON2 === '1') return true; } catch { /* node */ }
+  if (typeof window === 'undefined') return false; // node: season 1 unless it asked (above)
+  try { if (localStorage.getItem('taw.season2.off') === '1') return false; } catch { /* storage off */ }
+  return SEASON2_LIVE;
 })();
 
 

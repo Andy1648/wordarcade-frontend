@@ -141,6 +141,7 @@ export async function installBackendMock(page, opts = {}) {
           localStorage.setItem('taw.tut.pv10', '1');
           localStorage.setItem('taw.tut.keyTier', '1');
           localStorage.setItem('taw.tut.gems', '1');
+          localStorage.setItem('taw.season2.off', '1'); // season 1 by default (the flag is LIVE for visitors; ?season2=1 wins)
         } catch {
           /* storage blocked */
         }

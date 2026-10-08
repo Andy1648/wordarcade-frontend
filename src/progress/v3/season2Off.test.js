@@ -19,7 +19,7 @@ const B = await import('./season2Boot.js');
 
 test('SEASON2 is OFF by default and the flip line is off', () => {
   assert.equal(S.SEASON2, false);
-  assert.equal(S.SEASON2_LIVE, false);
+  assert.equal(S.SEASON2_LIVE, true); // flipped Oct 8 — LIVE is for browsers; node stays season 1 unless ?season2=1
   assert.equal(S.V3.boot, undefined, 'no boot check is started (installUi.jsx loads only with the flag)');
 });
 

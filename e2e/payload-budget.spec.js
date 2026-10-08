@@ -29,7 +29,7 @@ fs.mkdirSync(OUT, { recursive: true });
 // Until then this is a RATCHET, not a rubber stamp: it pins the number this branch
 // achieved so the payload cannot silently grow back. Lower it whenever it improves.
 const TOTAL_BUDGET = 400_000; // the goal, documented above
-const TOTAL_RATCHET = 969_500; // what is actually achievable today; must only go DOWN (oct3: route chunks warm on the first gesture, not idle → 927,791). oct5 +3,000: the multi-level level-bar player (lib/barPlan, Andy oct5 #5) is a menu feature, +3.1 KB in the index chunk — measured, not slack. oct7 +2,000: paging is the desktop default (feat/menu-centre), so the CardPager chunk (~1.4 KB) is first-paint on every desktop — measured 964,422. oct7 +4,500: YOUR GEAR slot + the honest rate line + the tier palette on the menu (feat/menu-perrow; the cog art itself stays lazy) — measured 968,857
+const TOTAL_RATCHET = 971_000; /* oct8 +1,500: the SEASON2 flip — season.js now carries the browser/node split + the ?season2=0 and storage off-switches (measured 970,356) */ // what is actually achievable today; must only go DOWN (oct3: route chunks warm on the first gesture, not idle → 927,791). oct5 +3,000: the multi-level level-bar player (lib/barPlan, Andy oct5 #5) is a menu feature, +3.1 KB in the index chunk — measured, not slack. oct7 +2,000: paging is the desktop default (feat/menu-centre), so the CardPager chunk (~1.4 KB) is first-paint on every desktop — measured 964,422. oct7 +4,500: YOUR GEAR slot + the honest rate line + the tier palette on the menu (feat/menu-perrow; the cog art itself stays lazy) — measured 968,857
 const MASCOT_BUDGET = 150_000;
 
 function classify(url) {
