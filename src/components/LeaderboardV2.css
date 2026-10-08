@@ -379,8 +379,9 @@
 .lb2-who-cell {
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-direction: row; /* name THEN its rank plate on one line (Andy oct8: the stacked plate crowded every name) */
+  align-items: center;
+  gap: 8px;
 }
 .lb2-name-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .lb2-name {
@@ -390,14 +391,15 @@
   text-overflow: ellipsis;
   font-family: var(--k-display, 'Bungee', sans-serif);
   font-weight: 400;
-  font-size: max(var(--fs-k14), calc(var(--fs-k17) * var(--lb2-k)));
+  font-size: max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k)));
   color: #fff;
   text-transform: uppercase;
 }
 .lb2-row.is-me .lb2-name { color: #000; font-size: max(var(--fs-k14), calc(var(--fs-k100) * 0.19 * var(--lb2-k))); }
 .lb2-row-plate {
-  align-self: flex-start;
-  margin-left: 4px;
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: 0;
   padding: 0 7px;
   border-width: 2px;
   box-shadow: none;
@@ -617,3 +619,12 @@
 .lb2--narrow .lb2-row-plate.krp-fit { --krp-h: 22px; }
 .lb2--narrow .lb2-pod-plate.krp-fit,
 .lb2--narrow .lb2-col--1 .lb2-pod-plate.krp-fit { --krp-h: 24px; }
+/* YOUR row (taller, YOU tag + a bigger name): its plate drops under the name so the name never ellipsises */
+.lb2-row.is-me .lb2-who-cell { flex-direction: column; align-items: flex-start; gap: 2px; }
+/* phone: the column is too narrow for name + plate on one line — keep the plate under the name, and let the CHASE /
+   CLIMB headline wrap rather than run past the panel */
+.lb2--narrow .lb2-who-cell { flex-direction: column; align-items: flex-start; gap: 2px; }
+.lb2--narrow .lb2-panel-top { flex-wrap: wrap; row-gap: 2px; white-space: normal; }
+.lb2--narrow .lb2-panel { min-width: 0; overflow: hidden; }
+.lb2--narrow .lb2-panel { padding-top: 6px; gap: 2px; }
+.lb2--narrow .lb2-panel-top { row-gap: 0; line-height: 1.05; }
