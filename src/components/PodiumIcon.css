@@ -10,8 +10,9 @@
   width: 24px;
   height: 24px;
   vertical-align: middle;
-  /* the leaderboard's ink everywhere it stands alone (header, rank-up card, claim prompt) */
-  color: #FFE94A;
+  /* the leaderboard's ink everywhere it stands alone (header, rank-up card, claim prompt): PLAIN WHITE (NIGHT oct8 #5,
+     Andy: the coloured podium clashed) — the black outline + hard shadow carry it */
+  color: #FFFFFF;
   /* the rank-up punch grows DOWN from the top edge (never up into the rebirth stars) */
   transform-origin: 50% 6%;
   pointer-events: none;
