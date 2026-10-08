@@ -35,7 +35,7 @@ import { getGems, subscribeGems } from '../../progress/gems';
 import { GemIcon, GemCount } from '../gems/Gems';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndWordRejected } from '../../audio/gameSounds';
-import { sndRollCharge, sndRollCancel, sndRollRelease } from '../../audio/rollSounds';
+import { sndRollCharge, sndRollCancel, sndRollRelease, sndRollReady } from '../../audio/rollSounds';
 import { createHoldConfirm } from '../kit/holdConfirm.js';
 import { announceRolls } from '../../leaderboard/live';
 import { formatNum } from '../../format';
@@ -218,8 +218,23 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   live.current.doRoll = doRoll;
 
   const onLand = (res) => commit(res);
+  // RE-ARM (R4 step 7, the one thing the prod critique found missing): after a roll is kept, nothing pulled the thumb
+  // back — the slab just went quiet. Now the ROLL slab gives ONE bump (transform, 320 ms) + a two-note "ready" blip
+  // a beat after the reveal closes, the way Clash's chest slot and Pet Sim's egg re-light. Never under AUTO.
+  const rearm = () => {
+    const el = btn.current;
+    if (!el || reduced || typeof el.animate !== 'function') return;
+    el.style.willChange = 'transform';
+    const a = el.animate(
+      [{ transform: 'rotate(-1deg) scale(1)' }, { transform: 'rotate(-1deg) scale(1.07)', offset: 0.4 }, { transform: 'rotate(-1deg) scale(0.98)', offset: 0.7 }, { transform: 'rotate(-1deg) scale(1)' }],
+      { duration: 320, delay: 180, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+    );
+    const off = () => { el.style.willChange = ''; };
+    a.finished.then(off, off);
+    setTimeout(sndRollReady, 180);
+  };
   const onDone = () => {
-    if (!auto.current.on) return;
+    if (!auto.current.on) { rearm(); return; }
     auto.current.timer = setTimeout(() => {
       auto.current.timer = null;
       if (auto.current.on) live.current.doRoll();
