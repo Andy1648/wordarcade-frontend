@@ -1228,9 +1228,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} /> : null;
   // THE HONEST RATE LINE (feat/menu-perrow, Andy oct6 "unclear per-key XP"): what a MENU key pays and what a GAME
   // letter pays, both live — the menu is a fifth of a game letter (xp.js MENU_LETTER_SHARE, whole XP, never 0).
+  // SEASON 2 (v4 "SIMPLE"): games pay wins only, so the line is ONE number — what a menu key pays (letterXpNow).
   const gameLetterXp = letterXpNow();
   const menuKeyXp = Math.max(1, roundWordXp(gameLetterXp * MENU_LETTER_SHARE));
-  const perLetter = (
+  const keyOnly = SEASON2 ? (
+    <span className="hp-per hp-rate">
+      +{formatNum(gameLetterXp)} XP<span className="hp-per-u"> / KEY</span>
+    </span>
+  ) : null;
+  const perLetter = keyOnly || (
     <span className="hp-per hp-rate">
       <span className="hp-rate-k">MENU</span> +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY</span>
       <span className="hp-rate-sep" aria-hidden="true">·</span>
@@ -1238,7 +1244,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     </span>
   );
   // the phone's row is 360px wide: the menu key rate big, the game rate small after it
-  const perLetterCompact = (
+  const perLetterCompact = keyOnly || (
     <span className="hp-per hp-rate">
       +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY · GAMES +{formatNum(gameLetterXp)} / LETTER</span>
     </span>

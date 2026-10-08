@@ -22,11 +22,11 @@ const sql = () => readFileSync(join(process.cwd(), 'supabase', 'migrations', '02
 const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const has = (s, text) => assert.ok(s.includes(text), `029 is missing: ${text}`);
 
-test('FINAL v3 board constants: gate 18 + 20·R (= lb_rebirth season 2), room = 18 + 20·R + 100', () => {
+test('FINAL v3 board constants: gate 15 + 18·R (= lb_rebirth season 2), room = 15 + 18·R + 100', () => {
   assert.equal(F_ECON, SEASON2_ECON);
   assert.equal(F_GATE_BASE, GATE2_BASE);
   assert.equal(F_GATE_STEP, GATE2_STEP);
-  assert.deepEqual([0, 1, 9].map(finalLevelRoom), [118, 138, 298]);
+  assert.deepEqual([0, 1, 9].map(finalLevelRoom), [115, 133, 277]);
   assert.equal(finalLevelRoom(1e12), F_LV_MAX);
 });
 
@@ -36,7 +36,7 @@ test('FIRST season-2 write: a baseline bounded by play (rebirths ≤ words / 100
   const forged = decideSubmitFinal({ ...row(), submitted_at: null }, sub({ level: 9e8, rebirths: 40, words: 250 }), T0);
   assert.deepEqual([forged.row.rebirths, forged.row.level], [2, finalLevelRoom(2)]);
   const s1 = decideSubmitFinal(row({ econ: 12, rebirths: 30, level: 600 }), sub({ level: 600, rebirths: 30, words: 90 }), T0);
-  assert.deepEqual([s1.action, s1.row.rebirths, s1.row.level], ['first', 0, 118], 'a season-1 row starts a season-2 baseline');
+  assert.deepEqual([s1.action, s1.row.rebirths, s1.row.level], ['first', 0, 115], 'a season-1 row starts a season-2 baseline');
 });
 
 test('then: rebirths never rise on a submit; the level is free up to the room or +1/s (20 min bank); clamped, not rejected', () => {
@@ -46,7 +46,7 @@ test('then: rebirths never rise on a submit; the level is free up to the room or
   // a long-held climb past the room: + 1 level a second since the last write, banking 20 min
   const held = row({ level: 400, rebirths: 2, lifetime_words: 500, submitted_at: T0 - 3600_000 });
   assert.equal(decideSubmitFinal(held, sub({ level: 99999, rebirths: 2, words: 600 }), T0).row.level, 400 + F_LEVEL_BANK_SECS * F_LEVELS_PER_SEC);
-  // honest v3 pace (a run up to the gate 18 + 20·R) is never clamped
+  // honest v3 pace (a run up to the gate 15 + 18·R) is never clamped
   const honest = row({ level: 100, rebirths: 8, lifetime_words: 5000, submitted_at: T0 - 60_000 });
   assert.equal(decideSubmitFinal(honest, sub({ level: 159, rebirths: 8, words: 5014 }), T0).row.level, 159);
   // after a server rebirth (stored LV 1 at R1) the client's new climb lands
@@ -120,7 +120,7 @@ test('029 SQL mirrors finalRules.js + rebirthRules.js season 2: constants, order
   assert.doesNotMatch(s, /\bgrant [a-z, ]+ on (table )?public\.rebirth_requests/i);
 });
 
-test('JS rule == SQL rule on a FINAL v3 climb: R0 → R10, each at LV 18 + 20·R → LV 1; ascension refused', () => {
+test('JS rule == SQL rule on a FINAL v3 climb: R0 → R10, each at LV 15 + 18·R → LV 1; ascension refused', () => {
   let r = { level: 1, rebirths: 0, stars: 0, econ: 13 };
   let n = 0;
   const log = [];
@@ -133,7 +133,7 @@ test('JS rule == SQL rule on a FINAL v3 climb: R0 → R10, each at LV 18 + 20·R
     r = out.row;
     assert.equal(r.level, 1);
   }
-  assert.deepEqual([0, 1, 4, 9].map((x) => serverGate(x, 2)), [18, 38, 98, 198]);
+  assert.deepEqual([0, 1, 4, 9].map((x) => serverGate(x, 2)), [15, 33, 87, 177]);
   const asc = decideAscend(r, { requestId: UUID(++n), season: 2 }, [], (now += 1e6));
   assert.deepEqual([asc.result.reason, asc.row.stars, asc.row.rebirths], ['off', 0, 10]);
 });

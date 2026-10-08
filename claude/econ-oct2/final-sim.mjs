@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// final-sim.mjs — PROGRESSION FINAL v3 "START AT 1" (claude/progression-FINAL.md v3, Andy Oct 7 21:27) on the REAL
+// final-sim.mjs — PROGRESSION v4 "SIMPLE" (Andy Oct 7 23:20: games pay WINS only, wins buy POWER, POWER gives more XP
+// a KEY — the menu is the only XP source) on top of FINAL v3 (claude/progression-FINAL.md v3, Andy Oct 7 21:27) on the REAL
 // modules — the CI port of claude/progression-final-sim.py (v2's structure; v3 changed constants only). Turns the
 // SEASON2 flag on before the economy loads, so every number comes from the shipped code behind the flag:
-//   game letters → letterXp.creditLetterXp (season 2: every typed game letter ×1, no cap); wins → wins.awardWordXp +
-//     wins.bankWordWins; KEY → shop.buyKeyPower (×2^T, 150 × 5^T wins); menu keys → xp.xpPerInput (×0.2, ANY key,
-//     no cap — mashing is the game) through xp.creditXp;
+//   game letters → letterXp.creditLetterXp (v4: 0 XP — only OVERDRIVE's play clock; the HARD CHECK asserts the game
+//     share never moves the bar); wins → wins.awardWordXp + wins.bankWordWins; KEY → shop.buyKeyPower (×2^T, 150 × 5^T
+//     wins); menu keys → xp.xpPerInput (v4: the FULL 1 × 2^T × 3^R a key, ANY key, no cap) through xp.creditXp;
 //   every rebirth → the app's client flow (rebirthFlow.performRebirth, season 2) against the JS model of the server
 //     (rebirthRules.decideRebirth + finalRules.decideSubmitFinal on an in-memory econ-13 row, on the sim clock) — so the
 //     12-an-hour pace cap and the LV 18 + 20·R → LV 1 rule are the real ones (029).
@@ -13,18 +14,19 @@
 //   node claude/econ-oct2/final-sim.mjs --hours=4 --bots=median,fast --no-gate
 //
 // ----------------------------------------------------------------------------- MODEL (the python's, stated)
-// BOTS (the python sim's table): lpm_game · wpm_game · lpm_menu · share of play in games
-//   casual 60 · 8 · 80 · 60% | median 100 · 14 · 150 · 70% | fast 160 · 26 · 250 · 75% | menu masher 0 · 0 · 500 · 0%
+// BOTS: lpm_game · wpm_game · share of play in games (unchanged) + v4's MENU keys a minute, typed BETWEEN games over the
+//   whole session (Andy 23:20): casual 60 · 8 · 60% + 20/min | median 100 · 14 · 70% + 60/min | fast 160 · 26 · 75% +
+//   150/min | menu masher 0 · 0 · 0% + 500/min
 // GAMES: FUSE (MODE ×1, no rarity/combo weight) with FRENZY off; real words of mean length 5.5 (the python's ×1.1 =
 //   length/5); every typed game letter pays ×1 (the python credits lpm_game × 10 × KEY × 3^R).
-// MENU: ANY key at ×0.2 (xpPerInput) at the bot's menu speed.
+// MENU: ANY key at the full rate (xpPerInput) at the bot's menu keys / min (mkpm), every step, on top of the game share.
 // STEP: 10 s (python: 5 s) — game, menu, then the menu return (KEY greedily, REBIRTH whenever the level reaches the gate).
 // NO MARKS, no rolls, no gems spent, no boosts, no OVERDRIVE, no achievements (the md: "no marks/overdrive").
 // SPAMMER: the median's exact dice, plus every 10 min 1,000 rebirth calls through the client flow (half at once, half in a
 //   row) and a replay of every old request id straight at the server — must end exactly level with the median.
 // HARD CHECK (exit 1 → CI fails): every doc-table cell (R1 / R3 / R5 first times, the R reached at 10 h) within ±20%
 //   (a "—" cell: not reached before 75% of the horizon; a range cell R6–R7: ±20% of its nearest end). MEDIAN R1 = Andy's
-//   18–25 min hold (v3.1); every other cell = the v3.1 sim table (regression guards); FAST ≤ 2× the median's pace to every milestone both reach;
+//   18–25 min hold (v3.1); every other cell = the v3.1 sim table (regression guards); FAST ≤ 2.5× the median's pace to every milestone both reach;
 //   SPAMMER's final R / level = the median's; no server grant below the v3 gate, not to LV 1, > 1 per call, or by a
 //   replay; no ascension (hidden).
 import fs from 'node:fs';
@@ -89,24 +91,24 @@ for (const w of recall.slice(0, 9000)) {
 
 // ----------------------------------------------------------------------------- THE FINAL v3 TABLE (md "Sim", minutes)
 const H = 60;
-// v3.1 (Andy Oct 7 22:31, "each level a bit harder than the last"): need 1.131^n → 1.15^n, gate 18 + 20R kept (median R1
-// 24 min, inside his 18–25 min hold). The median's later cells are no longer the 21:27 targets (R3 ≈ 2 h, R5 ≈ 6 h,
-// R6–R7 at 10 h) — a steeper curve slows every later rebirth by design — so every row is now the v3.1 sim table.
+// v4 "SIMPLE" (Andy Oct 7 23:20): XP from MENU keys only (full rate), games pay wins only. Gate 18 + 20R → 15 + 18R (the
+// floor Andy allowed) to bring the median's first rebirth from 31.8 min back into 18–25; POWER cost unchanged. Every row
+// is the v4 sim table (regression guards); the median's R1 is also held to 18–25 min below.
 const FINAL = {
-  casual: { R1: 44.7, R3: 5.04 * H, R5: null, END: 3 },
-  median: { R1: 24, R3: 2.64 * H, R5: null, END: 4 }, // R1 held at 18–25 min (Andy 22:31)
-  fast: { R1: 14.3, R3: 87.5, R5: 8.46 * H, END: 5 },
-  menu: { R1: 13.2, R3: null, R5: null, END: 2 },
+  casual: { R1: 60, R3: 5.81 * H, R5: null, END: 3 },
+  median: { R1: 21.5, R3: 137.3, R5: 8.91 * H, END: 5 }, // R1 held at 18–25 min (Andy 22:31 / 23:20)
+  fast: { R1: 9.3, R3: 62.8, R5: 3.75 * H, END: 6 },
+  menu: { R1: 8.2, R3: 3.45 * H, R5: null, END: 3 },
 };
 const BOTS = [
-  { id: 'casual', lpm: 60, wpm: 8, mlpm: 80, game: 0.6, seed: 1 },
-  { id: 'median', lpm: 100, wpm: 14, mlpm: 150, game: 0.7, seed: 2 },
-  { id: 'fast', lpm: 160, wpm: 26, mlpm: 250, game: 0.75, seed: 3 },
-  { id: 'menu', lpm: 0, wpm: 0, mlpm: 500, game: 0, seed: 4 },
-  { id: 'spammer', lpm: 100, wpm: 14, mlpm: 150, game: 0.7, seed: 2, spam: true },
+  { id: 'casual', lpm: 60, wpm: 8, mkpm: 20, game: 0.6, seed: 1 },
+  { id: 'median', lpm: 100, wpm: 14, mkpm: 60, game: 0.7, seed: 2 },
+  { id: 'fast', lpm: 160, wpm: 26, mkpm: 150, game: 0.75, seed: 3 },
+  { id: 'menu', lpm: 0, wpm: 0, mkpm: 500, game: 0, seed: 4 },
+  { id: 'spammer', lpm: 100, wpm: 14, mkpm: 60, game: 0.7, seed: 2, spam: true },
 ];
 const TOL = 0.2;
-const PACE_LIMIT = 2;
+const PACE_LIMIT = 2.5; // v4: was 2 — FAST types 150 menu keys/min vs the median's 60 (Andy's bot spec), and keys are now the only XP
 const MEDIAN_R1_MIN = 18; // v3.1: the median's first rebirth, minutes (Andy Oct 7 22:31)
 const MEDIAN_R1_MAX = 25;
 const SPAM_EVERY_MIN = 10;
@@ -211,8 +213,10 @@ async function simulate(bot, hours = HOURS) {
   const spam = { calls: 0, ok: 0, replaysSent: 0 };
   let lastSpam = 0;
   const totalMin = hours * 60;
+  let gameXp = 0; // v4: XP the GAME share moved the bar by — must stay 0
   while (minute < totalMin) {
-    // ---- the game share of this step: every typed letter ×1, words bank wins
+    // ---- the game share of this step: words bank wins; typed letters pay 0 XP (v4)
+    const xpBefore = XP.loadProgress();
     gameCarry += bot.wpm * bot.game * DT;
     const n = Math.floor(gameCarry);
     gameCarry -= n;
@@ -228,10 +232,12 @@ async function simulate(bot, hours = HOURS) {
     letterCarry += bot.lpm * bot.game * DT;
     const typed = Math.floor(letterCarry);
     letterCarry -= typed;
-    if (typed) LX.creditLetterXp(typed, { mode: 'fuse' }); // season 2: × 1, the live XP per letter
+    if (typed) LX.creditLetterXp(typed, { mode: 'fuse' }); // v4: 0 XP (OVERDRIVE's play clock only)
     letters += typed;
-    // ---- the menu share: ANY key at ×0.2 (xpPerInput), no cap
-    menuCarry += bot.mlpm * (1 - bot.game) * DT;
+    const xpAfter = XP.loadProgress();
+    if (xpAfter.level !== xpBefore.level || xpAfter.intoLevel !== xpBefore.intoLevel) gameXp += 1;
+    // ---- the menu share: ANY key at the full rate (xpPerInput), no cap, between games
+    menuCarry += bot.mkpm * DT;
     const keys = Math.floor(menuCarry);
     menuCarry -= keys;
     if (keys) {
@@ -268,7 +274,7 @@ async function simulate(bot, hours = HOURS) {
     bot: bot.id, hours,
     times: { R1: first.R1 ?? null, R3: first.R3 ?? null, R5: first.R5 ?? null, R6: first.R6 ?? null, R7: first.R7 ?? null },
     final: { level: lv(), rebirths: XP.getRebirths(), stars: STORE.getStarsV3(), power: XP.getKeyTier(), wins: WINS.getWins() },
-    words, letters, menuXp,
+    words, letters, menuXp, gameXp,
     server: { calls: srv.calls, grants: srv.grants, ascends: srv.ascends, replays: srv.replays, refusals: srv.refusals, violations: srv.violations.slice(0, 10), violationCount: srv.violations.length, stored: { rebirths: srv.row.rebirths, stars: srv.row.stars, level: srv.row.level } },
     spam: bot.spam ? spam : null,
   };
@@ -282,7 +288,7 @@ for (const b of BOTS.filter((x) => want.includes(x.id))) {
   const t = process.hrtime.bigint();
   const r = await simulate(b);
   results.push(r);
-  console.log(`=== FINAL ${b.id.toUpperCase()} (${b.lpm}/${b.wpm} game · ${b.mlpm} menu · ${Math.round(b.game * 100)}% games) ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
+  console.log(`=== FINAL ${b.id.toUpperCase()} (${b.lpm}/${b.wpm} game · ${b.mkpm} menu keys/min · ${Math.round(b.game * 100)}% games) ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
   console.log(`  first: ${Object.entries(r.times).map(([k, v]) => `${k} ${fmt(v)}`).join(' · ')}`);
   console.log(`  at ${HOURS} h: R${r.final.rebirths} ★${r.final.stars} KEY T${r.final.power} LV${r.final.level} · ${r.words} game words · menu XP ${Math.round(r.menuXp)} · server ${r.server.grants} grants / ${r.server.ascends} ascends, refused ${JSON.stringify(r.server.refusals)}, violations ${r.server.violationCount}${r.spam ? ` · spam ${r.spam.calls} calls → ${r.spam.ok} ok, ${r.spam.replaysSent} replays` : ''}`);
 }
@@ -340,6 +346,7 @@ if (med && fast) {
 // v3.1 HOLD (Andy Oct 7 22:31): the median's first rebirth stays 18–25 min, whatever the ±20% band above allows
 if (med && !(med.times.R1 >= MEDIAN_R1_MIN && med.times.R1 <= MEDIAN_R1_MAX)) misses.push(`median R1 ${fmt(med.times.R1)} is outside the ${MEDIAN_R1_MIN}–${MEDIAN_R1_MAX} min hold`);
 if (sp && med && (sp.final.rebirths !== med.final.rebirths || sp.final.level !== med.final.level)) misses.push(`SPAMMER ended R${sp.final.rebirths} LV${sp.final.level} vs the median's R${med.final.rebirths} LV${med.final.level}`);
+for (const r of results) if (r.gameXp) misses.push(`${r.bot}: the GAME share moved the level bar in ${r.gameXp} steps (v4: games pay wins only)`);
 const stars = results.reduce((a, r) => a + r.final.stars + r.server.stored.stars, 0);
 if (stars) misses.push(`${stars} ★ granted — ascension is hidden in FINAL v3`);
 const violations = results.reduce((a, r) => a + r.server.violationCount, 0);

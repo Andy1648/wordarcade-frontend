@@ -4,12 +4,12 @@
 // storage. LEAF: imports nothing.
 //
 //   XP for next level need(n) = 100 × 1.15^(n−1)                      (v3/curve.js — O(1) closed-form carry)
-//   XP per letter     1 × KEY × 3^R × MARK × OVERDRIVE                  game letters ×1, menu letters ×0.2 (whole XP,
-//                                                                       floor 1 — a menu key pays 1 at the start)
+//   XP per MENU KEY   1 × KEY × 3^R × MARK × OVERDRIVE                  v4 "SIMPLE" (Andy Oct 7 23:20): the menu is the
+//                                                                       ONLY XP source; game letters pay NO XP
 //   WINS per word     10 × length/5 × MODE × 3^R × MARK × OVERDRIVE     games only. MODE: WB/Blitz 1 · RACE 1.5 ·
 //                                                                       CHAIN 2 · SAT 5 · FUSE 1 (+ FRENZY ×5)
 //   KEY (POWER)       DOUBLES: tier T is ×2^T (×1, ×2, ×4, ×8 …); T → T+1 costs 150 × 5^T wins; KEPT through rebirth
-//   REBIRTH           at LV 18 + 20·R → LV 1; ×3 XP & wins per rebirth, forever (no gems)
+//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth, forever (no gems)
 //   ASCENSION         none for now (hidden: canAscend is always false; lb_ascend refuses — 027)
 //   GEMS              game-only: 1 in 15 game words drops 3–12 · bot win +18 · +15 per player beaten · streak +4 ·
 //                     achievements 40–200 · 75 a roll. Menu typing gives no gems.
@@ -26,8 +26,8 @@ export const WINS_BASE = 10; // wins for a 5-letter word at R0, MODE ×1, no mar
 export const WORD_REF = 5; // the reference word length (length / 5)
 export const POWER_COST_BASE = 150; // wins for T0 → T1
 export const POWER_COST_STEP = 5; // × price per tier
-export const REBIRTH_GATE_BASE = 18; // R1 at LV18 … (v3: was 15)
-export const REBIRTH_GATE_STEP = 20; // … then +20 levels a rebirth (R2 LV38, R5 LV118, R10 LV218; v3: was 18)
+export const REBIRTH_GATE_BASE = 15; // R1 at LV15 … (v4: was 18 — CI-sim tuned for an 18–25 min first rebirth from menu keys only)
+export const REBIRTH_GATE_STEP = 18; // … then +18 levels a rebirth (R2 LV33, R5 LV105, R10 LV195; v4: was 20)
 export const ASCENSION_ON = false; // FINAL v2: no ascension for now (hidden)
 export const ASCEND_AT = 10; // kept for the hidden ascension (lb_ascend refuses while ASCENSION_ON is false)
 export const ASCEND_STEP = 5;

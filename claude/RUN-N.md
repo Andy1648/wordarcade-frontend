@@ -260,3 +260,28 @@ is in that wave.
 - **Tests:** v3.test.js, numbers-audit.spec, season2.spec (comment + need(17) ≈ 936 XP), sim expectations all moved
   to v3.1. The sim also now fails if the median's R1 leaves 18–25 min. Local: 642/642 progress + leaderboard units, sim
   PASS. CI is the full gate. **Not merged.**
+
+---
+
+## PROGRESSION v4 "SIMPLE" (Andy Oct 7 23:20), on `feat/s2-progression-v4` (off main 0b359a6, which has #255)
+
+- **Model (season 2 only, SEASON2 still OFF):** XP comes from menu keys only, at the full 1 × 2^T × 3^R (× gear,
+  × OVERDRIVE). That is a new `xpPerInput` swap in `v3/hooks.js`: no ×0.2 share, no rounding, no floor. Game letters
+  credit 0 XP: `letterXp.creditLetterXp` returns null in season 2 (the "keeps the fraction" branch is gone), the flush
+  credits nothing, and the accepted-word top-up stays off. OVERDRIVE's play clock still ticks from game typing. Games
+  pay wins exactly as before.
+- **Rate line:** in season 2 it is `+{n} XP / KEY`, one number, desktop and phone (Homepage `perLetter` /
+  `perLetterCompact`). Season 1 keeps MENU / GAMES.
+- **Gate 18 + 20R → 15 + 18R** (client econ.js, rebirthRules GATE2, finalRules F_GATE, **migration 029 edited**).
+  Menu-only XP put the median's R1 at 31.8 min; at 15 + 18R it is 21.5 min. POWER cost is unchanged.
+- **Sim:** median 21.5 min · 2.29 h · 8.91 h · R5 at 10 h. Casual 60 min / 5.81 h / R3. Fast 9.3 / 62.8 min / 3.75 h / R6.
+  Masher 8.2 min / 3.45 h / R3. Table next to v3.1 in `claude/progression-FINAL.md`. New HARD CHECK: the game share never
+  moves the bar. Pace limit ×2 → ×2.5 (fast types 2.5× the median's keys under the new bot spec).
+- **Tests:** new `src/progress/v3/gameNoXp.test.js` (every mode's typed letters, flush and accepted word leave the bar
+  where it was, and the same words still bank wins). numbersAudit.s2 (the menu key credits TOTAL, a game letter null,
+  T1 = 2 / T2 = 4 / T3 = 8). Gate numbers in finalRules / rebirthRules / season2Board / v3.test. e2e: menu.spec gets a new
+  season-2 `+1 XP / KEY` test at 1280 and 390, season2.spec (seed LV14 → mash to 15, `+1` then `+6 XP / KEY`),
+  numbers-audit (`+108 XP / KEY`, GATE LV 69), v2-rebirth (`LV 10 / 15`, next gate LV 33). statChain unchanged (still
+  green). Local: 644/644 progress + leaderboard units, sim PASS, vite build 0. e2e runs on CI. **Not merged.**
+- **Left as is:** the UPGRADES (ShopV2) and STATS screens still label the rate "XP / LETTER". Not in scope; it is a
+  one-word copy change if wanted.

@@ -99,3 +99,21 @@ test.describe('menu', () => {
   });
 
 });
+
+// SEASON 2 (PROGRESSION v4 "SIMPLE", Andy Oct 7 23:20): games pay wins only, so the rate line is ONE number — what a menu
+// key pays — "+1 XP / KEY" on a fresh season-2 save (T0, R0, no mark), the same on desktop and phone. Season 1 (above)
+// keeps its MENU / GAMES line.
+for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+  test(`season 2 @${vp.width}: the rate line says +1 XP / KEY (no MENU / GAMES halves)`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await installBackendMock(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('taw.seenMenu', '1');
+      localStorage.setItem('taw.seenMenuSpotlight', '1');
+    });
+    await page.goto('/?portal=1&season2=1');
+    const per = page.locator('.hp-per:visible').first();
+    await expect(per).toHaveText('+1 XP / KEY');
+    await expect(per).not.toContainText('GAMES');
+  });
+}

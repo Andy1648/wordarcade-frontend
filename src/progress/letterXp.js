@@ -25,8 +25,9 @@ import { letterPerkMult } from './markPerks.js';
 import { emitMidGameLevelUp } from './levelUpSignal.js';
 import { boostMult } from './boost.js';
 import { notePlay } from './overdrive.js';
-// SEASON 2 (PROGRESSION FINAL v2, "mashing is the game"): ANY key counts — no rate cap — and a typed game letter pays
-// ×1 at once (no ×0.2 typed share, no accepted-word top-up). OFF = unchanged.
+// SEASON 2 (PROGRESSION v4 "SIMPLE", Andy Oct 7 23:20 — "games pay wins only"): a game letter pays NO XP. Game
+// letters still count (no rate cap) and still feed OVERDRIVE's play clock, but nothing here credits the bar — the
+// level moves from MENU keys only (useXpCapture → xpPerInput). OFF = unchanged.
 import { SEASON2 } from './season.js';
 
 // The worn MAIN mark's XP boost by tier (base finish) — the SAME bonus wins get (MARKS via ROLLS: one MARK).
@@ -46,7 +47,7 @@ export function markXpBoost(markId) {
 // The worn +N BASE XP/LETTER, read by levelXpPerLetter for every letter path (menu keys included).
 setLetterBaseAdd(() => markBaseXp());
 
-/** XP per letter for the live save: (BASE 10 + MARK BASE XP) × KEY × REBIRTH 5^R × MARK × BOOST (code boost ×
+/** XP per letter for the live save (season 2: XP per MENU KEY — game letters pay none): (BASE 10 + MARK BASE XP) × KEY × REBIRTH 5^R × MARK × BOOST (code boost ×
  *  OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN: letters count ×2). */
 export function letterXpNow() {
   return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost()) * letterPerkMult() * boostMult();
@@ -74,10 +75,9 @@ export function creditLetterXp(letters, { mode, perLetter } = {}) {
   const now = Date.now();
   if (lastCreditAt) notePlay(now - lastCreditAt, now);
   lastCreditAt = now;
+  if (SEASON2) return null; // season 2 (v4): games pay wins only — a game letter never moves the level bar
   const per = Number.isFinite(perLetter) && perLetter > 0 ? perLetter : letterXpNow();
-  // SEASON 2 (FINAL v3, BASE 1 XP a letter): the credit stays FRACTIONAL (the bar stores the fraction) — rounding a
-  // one-letter flush of 1.1 XP to 1 would make every small mark / boost pay nothing at the start. Season 1 unchanged.
-  const xp = SEASON2 ? n * per : roundWordXp(n * per);
+  const xp = roundWordXp(n * per);
   const before = loadProgress();
   const res = creditXp(before, xp);
   saveProgress(res.state);
@@ -142,7 +142,8 @@ export function flushLetterXp() {
   pending = 0;
   if (!n) return null;
   try {
-    return creditLetterXp(n, { mode, perLetter: letterXpNow() * (SEASON2 ? 1 : MENU_LETTER_SHARE) });
+    if (SEASON2) return creditLetterXp(n, { mode, perLetter: 1 }); // season 2: the play clock only (0 XP)
+    return creditLetterXp(n, { mode, perLetter: letterXpNow() * MENU_LETTER_SHARE });
   } catch {
     return null;
   }
@@ -154,7 +155,7 @@ export function flushLetterXp() {
 export function creditAcceptedWordLetters(length, mode) {
   try {
     const n = Number.isFinite(length) && length > 0 ? Math.floor(length) : 0;
-    if (SEASON2 || !n || !mode || mode === 'menu') return null; // season 2: typed letters already paid ×1
+    if (SEASON2 || !n || !mode || mode === 'menu') return null; // season 2: game words pay wins only (0 XP)
     return creditLetterXp(n, { mode, perLetter: letterXpNow() * (1 - MENU_LETTER_SHARE) });
   } catch {
     return null;

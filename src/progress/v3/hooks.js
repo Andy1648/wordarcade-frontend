@@ -68,6 +68,9 @@ export const xpSwap = {
   f: () => (WINS_BASE * 10) / WORD_REF, // keyTierXp: 10 wins a 5-letter word = 20 a letter in the receipt's ×10 units
   g: powerCostAt, // keyTierCostAt: T → T+1 costs 150 × 5^T wins
   h: (state, gain) => creditXpV3(state, gain), // creditXp: O(1) carry
+  /** xpPerInput (v4 "SIMPLE"): a MENU key pays the FULL rate — 1 × 2^T × 3^R × MARK (× BOOST / OVERDRIVE through the
+   *  caller's markMult). No ×0.2 share, no rounding, no floor: T1 = 2 a key, T2 = 4. The ONLY source of XP. */
+  k: ({ keyTier, rebirthCount, markMult = 1, baseAdd } = {}) => xpSwap.d(keyTier, rebirthCount, markMult, baseAdd),
   /** xpPerWord (×10 "XP" units): (10 + mark) × len/5 × MODE × 3^R × MARK × BOOST (× FRENZY on FUSE). */
   i({ mode = 'menu', rebirthCount, wordLength = 1, bonusMult = 1, baseWinsAdd = 0 } = {}) {
     const len = Math.floor(pos(wordLength, 1));

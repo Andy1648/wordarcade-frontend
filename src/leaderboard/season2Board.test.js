@@ -23,7 +23,7 @@ test('season-2 constants: econ 13; level room = 4 × ⌈100 × 2.5^R⌉ (capped 
   assert.equal(SEASON2_ECON, 13);
   assert.deepEqual([0, 1, 5, 9, 10].map(s2LevelRoom), [400, 1000, 39064, 1525880, 3814700]);
   assert.equal(s2LevelRoom(10), 4 * Math.ceil(100 * 2.5 ** 10)); // 022's v3 room (026 re-sizes it — finalRules.test.js)
-  assert.equal(serverGate(10, 2), 218, 'season 2 is FINAL v3 now (029): 18 + 20·R');
+  assert.equal(serverGate(10, 2), 195, 'season 2 is v4 now (029): 15 + 18·R');
   assert.equal(s2LevelRoom(500), S2_LV_MAX);
 });
 
