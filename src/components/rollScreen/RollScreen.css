@@ -599,8 +599,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
 @media (max-width: 480px) and (max-height: 700px) {
-  /* R4: 112px cards left a 70px hole under the band at 360x640 — 124 fills the panel (band 189 + the 36px line slot; 130 put the line 4px under ROLL) */
-  .rs-overlay { --cw: 124px; --cs: 0.6889; --band: calc(var(--cw) * 1.4444 + 10px); }
+  /* R4: 112px cards left a 70px hole under the band at 360x640 — 120 fills the panel (band 183 + the 36px line slot; 130 put the line 4px under ROLL locally, 124 0.07px under it on CI — the runner rounds differently) */
+  .rs-overlay { --cw: 120px; --cs: 0.6667; --band: calc(var(--cw) * 1.4444 + 10px); }
   .rs-roll { height: 76px; }
   .rs-roll-lbl { font-size: var(--fs-panel); }
   .rs-auto-btn { min-height: 44px; }
