@@ -88,7 +88,7 @@ test('★ → R → level: the podium is the top 3, ranks 4 … 10 below; v3 ran
   await expect(lb.locator('.lb2-row.is-me')).toHaveCount(1);
   // CHASE: the nearest loaded row above you is #10 (JULIET R0 LV90) → 31 LV → #10; CLIMB: R0 → 1 R to TYPO
   await expect(lb.locator('.lb2-chase .lb2-need')).toHaveText('31');
-  await expect(lb.locator('.lb2-chase .lb2-unit')).toHaveText('LV');
+  await expect(lb.locator('.lb2-chase .lb2-unit')).toHaveAttribute('data-unit', 'LV');
   await expect(lb.locator('.lb2-chase .lb2-target')).toHaveText('#10');
   await expect(lb.locator('.lb2-climb .lb2-next')).toHaveAttribute('data-rank-title', 'TYPO');
 });
@@ -105,7 +105,7 @@ test('YOU IN THE TOP 3: your podium place says YOU (once), no list row is yours,
   expect(await rowIds(lb)).toEqual(['c', 'd', 'e', 'f', 'g', 'h', 'i']);
   await expect(lb.locator('.lb2-col--3 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'GLYPHLORD');
   // CHASE: BRAVO (#2) is R9 LV900 → same ★ and R → 401 LV → #2
-  await expect(lb.locator('.lb2-chase .lb2-unit')).toHaveText('LV');
+  await expect(lb.locator('.lb2-chase .lb2-unit')).toHaveAttribute('data-unit', 'LV');
   await expect(lb.locator('.lb2-chase .lb2-need')).toHaveText('401');
   await expect(lb.locator('.lb2-chase .lb2-target')).toHaveText('#2');
 });
@@ -119,7 +119,7 @@ test('YOU ARE #1: the gold place is yours, the CHASE says hold it', async ({ pag
   await expect(lb.locator('.lb2-col--1 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'ASCENDANT');
   // CLIMB: ★3 → ★5 OMNIKEY
   await expect(lb.locator('.lb2-climb .lb2-next')).toHaveAttribute('data-rank-title', 'OMNIKEY');
-  await expect(lb.locator('.lb2-climb .lb2-unit')).toHaveText('★');
+  await expect(lb.locator('.lb2-climb .lb2-unit')).toHaveAttribute('data-unit', '★');
 });
 
 test('▲▼ from the last look; the look is remembered for next time', async ({ page }) => {

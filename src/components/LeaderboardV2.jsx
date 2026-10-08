@@ -106,11 +106,8 @@ function Move({ n }) {
       </span>
     );
   }
-  return (
-    <span className="lb2-mv is-flat" aria-label="no change">
-      <svg viewBox="0 0 18 16" width="18" height="16" aria-hidden="true"><path d="M3 8 L15 8" stroke="#5d4a78" strokeWidth="4" strokeLinecap="round" /></svg>
-    </span>
-  );
+  // no change → nothing drawn (Andy oct8 "the leaderboard looks shit": a grey dash on every row read as filler)
+  return <span className="lb2-mv is-flat" aria-label="no change" />;
 }
 
 /** The two numbers a row shows, for the tab it is on. */
@@ -241,6 +238,14 @@ export default function LeaderboardV2({ onBack, onManageName }) {
   const hL = wk ? (gains ? '+LEVELS' : 'WORDS') : 'LEVELS';
   const chaseUnit = chase && chase.unit === 'LV' && wk && !gains ? 'WORDS' : chase && chase.unit;
   const fromTo = (u, v) => (u === '★' ? `★${fmt(v)}` : u === 'R' ? `R${fmt(v)}` : fmt(v));
+  // the unit in WORDS (Andy oct8: things must explain themselves) — "2 REBIRTHS → #10", "1 REBIRTH → HOTKEY"
+  const unitWord = (u, n) => {
+    const one = Number(n) === 1;
+    if (u === 'R') return one ? 'REBIRTH' : 'REBIRTHS';
+    if (u === 'LV') return one ? 'LEVEL' : 'LEVELS';
+    if (u === 'WORDS') return one ? 'WORD' : 'WORDS';
+    return u; // ★
+  };
 
   // ARRIVAL: the podium rises, the list + panels slide in, the bars fill, the crown wobbles once, ▲ / ▼ bob once and
   // YOUR row pulses (twice — finite). Re-played when the tab's data lands. No layout reads; nodes are the pool.
@@ -355,12 +360,12 @@ export default function LeaderboardV2({ onBack, onManageName }) {
               <>
                 <div className="lb2-panel-top">
                   <span className="lb2-need" style={{ color: '#2EFFE0' }}>{fmt(chase.need)}</span>
-                  <span className="lb2-unit">{chaseUnit}</span>
+                  <span className="lb2-unit" data-unit={chaseUnit}>{unitWord(chaseUnit, chase.need)}</span>
                   <span className="lb2-arrow">→</span>
                   <span className="lb2-target">#{fmt(chase.target)}</span>
                 </div>
                 <div className="lb2-bar"><span className="lb2-fill" style={{ background: '#2EFFE0', width: `${chase.pct}%` }} /><span className="lb2-mark" style={{ left: `${chase.pct}%` }} /></div>
-                <div className="lb2-ends"><span>{fromTo(chase.unit, chase.from)}</span><span>{fromTo(chase.unit, chase.to)}</span></div>
+                <div className="lb2-ends"><span>YOU {fromTo(chase.unit, chase.from)}</span><span>#{fmt(chase.target)} {fromTo(chase.unit, chase.to)}</span></div>
               </>
             ) : (
               <div className="lb2-panel-msg">{meRow ? (Number(meRow.rank) === 1 ? 'YOU’RE #1 — HOLD IT' : 'CLIMB TO CHASE') : 'TYPE TO GET ON THE BOARD'}</div>
@@ -371,12 +376,12 @@ export default function LeaderboardV2({ onBack, onManageName }) {
               <>
                 <div className="lb2-panel-top">
                   <span className="lb2-need" style={{ color: '#FFE94A' }}>{fmt(climb.need)}</span>
-                  <span className="lb2-unit">{climb.unit}</span>
+                  <span className="lb2-unit" data-unit={climb.unit}>{unitWord(climb.unit, climb.need)}</span>
                   <span className="lb2-arrow">→</span>
                   <KitRankPlate rank={climb.next.i} fit shine={false} className="lb2-plate lb2-next" />
                 </div>
                 <div className="lb2-bar"><span className="lb2-fill" style={{ background: '#FFE94A', width: `${climb.pct}%` }} /><span className="lb2-mark" style={{ left: `${climb.pct}%` }} /></div>
-                <div className="lb2-ends"><span>{fromTo(climb.unit, climb.from)}</span><span>{fromTo(climb.unit, climb.to)}</span></div>
+                <div className="lb2-ends"><span>YOU {fromTo(climb.unit, climb.from)}</span><span>{fromTo(climb.unit, climb.to)}</span></div>
               </>
             ) : (
               <div className="lb2-panel-msg">ENDGAME — THE TOP RANK</div>
