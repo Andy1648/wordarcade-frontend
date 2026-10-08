@@ -196,7 +196,7 @@ const BOB = [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', of
 const SINK = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 const pulse = (base) => [{ transform: `${base} scale(1)` }, { transform: `${base} scale(1.018)`, offset: 0.5 }, { transform: `${base} scale(1)` }];
 
-export default function LeaderboardV2({ onBack }) {
+export default function LeaderboardV2({ onBack, onManageName }) {
   useMomentHold(true); // no queued moment starts under the board
   const rootRef = useRef(null);
   const crownRef = useRef(null);
@@ -307,7 +307,16 @@ export default function LeaderboardV2({ onBack }) {
       <div className="lb2-stripes" aria-hidden="true" />
       <div className="lb2-stage">
         <header className="lb2-head">
-          <button type="button" className="lb2-back" onClick={onBack} aria-label="Back to menu">← MENU</button>
+          <div className="lb2-left">
+            <button type="button" className="lb2-back" onClick={onBack} aria-label="Back to menu">← MENU</button>
+            {profile && onManageName && (
+              <button type="button" className="lb2-name" onClick={onManageName} aria-label={`Your name is ${profile.username}. Change name or show recovery code`}>
+                <span className="lb2-name-k">YOU</span>
+                <span className="lb2-name-v">{profile.username}</span>
+                <span className="lb2-name-a">CHANGE</span>
+              </button>
+            )}
+          </div>
           <h2 className="lb2-title">LEADERBOARD</h2>
           <div className="lb2-tabs" role="tablist" aria-label="Board">
             {tabs.map((t) => (
