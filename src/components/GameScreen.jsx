@@ -17,7 +17,7 @@ import ResultsCard from './results/ResultsCard.jsx';
 import { placementOrder, xpBetween } from './results/resultsModel.js';
 import { SEASON2, V3 } from '../progress/season';
 import { progressOf, loadProgress, need as levelNeed, getRebirths } from '../progress/xp';
-import { WbFuseRing, WbAlphabet, LearnCard, lettersUsed } from './wb/BombHudV2.jsx';
+import { LearnCard } from './wb/BombHudV2.jsx'; // PAUSE TO LEARN (every season); the v2 HUD skin is off (NIGHT oct8 #6)
 import { loadGlossary, glossFor } from '../progress/glossary.js';
 import { exampleContaining } from '../progress/teachExample.js';
 import { WordPayout } from './PayoutBreakdown';
@@ -3128,7 +3128,8 @@ export default function GameScreen({
         /* EDGE FRAME (escalation ladder): the board edge takes the combo tier's colour — a static
            attribute toggle (FeelLadder.css), never animated, kept under reduced motion. */
         data-heat={heatTier(streak.count)}
-        data-hud={SEASON2 ? 'v2' : undefined}
+        /* NIGHT oct8 #6 (Andy: "they don't even look remotely similar to before"): season 2 plays on the ORIGINAL
+           board again — the v2 skin (data-hud="v2", the fuse ring, upright seat cards) is off in every season. */
         style={
           railFitted
             ? { '--drain-sat': drainSat, '--wb-railh': `${railFitted.height}px` }
@@ -3177,8 +3178,7 @@ export default function GameScreen({
           <div className="game-title">
             <SprayReveal>{title}</SprayReveal>
           </div>
-          {/* SEASON 2 HUD (P9c): the alphabet row — the letters YOUR accepted words have used this game. */}
-          {SEASON2 && !isCategory ? <WbAlphabet used={lettersUsed((gameStats.wordsPlayed || []).filter((w) => w.playerId === myId).map((w) => w.word))} /> : null}
+          {/* NIGHT oct8 #6: no 26-letter tracker in Word Bomb (it is FUSE's — Andy: "no question"). */}
           <div className="game-header-right">
             {/* Always rendered. At <=2 players ON A RAILS BOARD the CSS hides it,
                 because the MATCH readout in the right rail carries ROUND and MODE
@@ -3394,8 +3394,6 @@ export default function GameScreen({
                   )}
                   {/* Panic sweat flinging off your own card when time is dire. */}
                   {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
-                  {/* SEASON 2 HUD (P9c): the seat is an UPRIGHT card — a square initial tile in the player's colour. */}
-                  {SEASON2 ? <span className="wb-v2-init" aria-hidden="true" translate="no">{String(player.name || '?').slice(0, 1)}</span> : null}
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                     <span className="game-player-name-text" translate="no">{player.name}</span>
@@ -3469,7 +3467,6 @@ export default function GameScreen({
               ring (see the note there); this cell is the bomb's alone so it can own a
               majority of the circle's free middle. */}
           <div className="wb-core">
-            {SEASON2 && !isCategory ? <WbFuseRing ratio={showCountdown ? 1 : timeRatio} seconds={timerSeconds} critical={critical} /> : null}
         {/* THE FRAGMENT, ON THE BOMB'S BELLY. It used to be a plaque ABOVE the ring, and the
             note there was right that a 76px hero step cannot fit the circle's free middle — so
             this is not that glyph moved, it is a chip SIZED TO THE BELLY (--wb-frag, a share of
