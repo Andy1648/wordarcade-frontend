@@ -4,8 +4,8 @@
 //
 //   head   ← ROLL · INDEX n/N · one chip per rarity (the tier's colour bar + owned/total; solid when complete)
 //   grid   every mark as its CARD (markCard/MarkCard.jsx): rollable common → secret, then PERMANENT, then a retired
-//          mark the save still owns. Under an owned rollable card: "7/10 → ★3" (dupes toward the next ★). The worn
-//          MAIN wears a MAIN sticker.
+//          mark the save still owns. Nothing under a card (R2 oct8 #5: no ★ lines — rarity is COLOUR, dupes are the
+//          card's own small ×N; the "7/10 → ★3" progress lives in the detail sheet). The worn MAIN wears a sticker.
 //   LOCKED a black silhouette of the mark's own glyph in its tier-coloured cog, "???", and still its odds + its ★0
 //          stat (a PERMANENT: its stat; the task that earns it is in the detail sheet only).
 //   sheet  tap a card → the detail (the only place with words: the perk line, flavour, how-to, owned ×N, first roll #,
@@ -193,8 +193,6 @@ export default function MarksIndex({
             const have = owns(e);
             const on = worn === e.id;
             const rolled = e.kind === 'roll';
-            const lv = rolled && have ? markLevel(view, e.id) : null;
-            const next = lv ? pipNext(lv) : '';
             const odds = rolled ? `1 IN ${formatNum(oneInX(e.id))}` : '';
             const shiny = !!(have && view && view.marks && view.marks[e.id] && view.marks[e.id].shiny);
             return (
@@ -214,7 +212,6 @@ export default function MarksIndex({
                   />
                   {on && <span className="mx-tile-main">MAIN</span>}
                 </button>
-                {next ? <span className="mx-tile-next">{next}</span> : null}
               </div>
             );
           })}
