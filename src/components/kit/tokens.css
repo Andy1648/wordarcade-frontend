@@ -96,10 +96,10 @@
   --k-tap: 44px;           /* touch-target floor */
 
   /* ---- timings ---- */
-  --k-t-press: 34ms;       /* face down */
-  --k-t-release: 600ms;    /* face back up */
-  --k-t-hover: 250ms;
-  --k-t-small-release: 500ms;
+  --k-t-press: 120ms;      /* face down — THE one press animation, every kit button (NIGHT oct8 #7) */
+  --k-t-release: 240ms;    /* face back up (was 600 ms — floaty; the house rule is snappy 200–400 ms) */
+  --k-t-hover: 160ms;
+  --k-t-small-release: 220ms;
   --k-t-tab: 340ms;
   --k-t-plate: 280ms;
   --k-t-knob: 260ms;

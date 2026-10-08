@@ -201,12 +201,12 @@ function ButtonsSheet({ rm }) {
             <div className="kg-col" aria-hidden="true">
               <StateHead tone="cyan" label="HOVER" />
               <KitButton label="ROLL" sub={<><KitIcon name="gems" size={16} extras={false} shadow={0} />75</>} freeze="hover" tabIndex={-1} />
-              {cap(<>LIFT −4 · LIP 18<br />250MS OVERSHOOT</>)}
+              {cap(<>LIFT −2/−2 · TILT 1.5°<br />160MS OVERSHOOT</>)}
             </div>
             <div className="kg-col" aria-hidden="true">
               <StateHead tone="hot" label="PRESSED" />
               <KitButton label="ROLL" sub={<><KitIcon name="gems" size={16} extras={false} shadow={0} />75</>} freeze="pressed" tabIndex={-1} />
-              {cap(<>LIP 14 → 3<br />34MS DOWN · 600MS UP</>)}
+              {cap(<>LIP 14 → 3<br />120MS DOWN · 240MS UP</>)}
             </div>
             <div className="kg-col">
               <StateHead tone="faint" label="DISABLED" live="TAP" />
