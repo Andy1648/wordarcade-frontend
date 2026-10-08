@@ -75,7 +75,7 @@
   paint-order: stroke fill;
 }
 .av3-tiers span { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k18); }
-.av3-tiers small { font-size: var(--fs-k13); }
+.av3-tiers small { font-size: var(--fs-k14); } /* R3 oct8: 14px floor */
 .av3-gems { flex: 0 0 auto; }
 
 .av3-body {
@@ -170,7 +170,7 @@
   line-height: 1.05;
   color: var(--k-faint);
 }
-.av3-step span { font-size: var(--fs-k13); }
+.av3-step span { font-size: var(--fs-k14); } /* R3 oct8: 14px floor */
 .av3-step b { font-size: var(--fs-k17); font-weight: 400; }
 .av3-step.is-done { background: var(--tc); color: var(--k-ink); }
 .av3-step.is-cur { background: var(--tf); color: var(--k-white); transform: translateY(-6px); }
@@ -255,6 +255,13 @@
 .av3-cell.is-ready .av3-strip { background: var(--k-cyan); }
 .av3-cell.is-max .av3-strip { background: var(--k-gold); }
 .av3-strip-reward { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-k16); }
+/* R3 oct8 — NUMBERS FIRST on a claimable tile: the gem reward LEADS the strip at 20px and READY! follows;
+   in-progress tiles keep TIER n first (the reward is a promise there, not the headline). */
+.av3-cell.is-ready .av3-strip-reward { order: -1; font-size: var(--fs-k20); gap: 5px; }
+.av3-cell.is-ready .av3-strip-reward .kit-icon { transform: scale(1.2); }
+/* claimed-out (MAXED) tiles go quiet: nothing left to do, so the card steps back behind the live ones */
+.av3-cell.is-max .av3-tile { opacity: 0.72; }
+.av3-cell.is-max .av3-pct, .av3-cell.is-max .av3-tile-name { color: var(--k-gold); }
 .av3-tile-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 10px 12px 12px; }
 .av3-tile-row { display: flex; align-items: center; gap: 14px; }
 .av3-tile-nums { min-width: 0; display: flex; flex-direction: column; }
@@ -371,9 +378,10 @@
   .av3-tile-row { gap: 8px; }
   .av3-have { font-size: var(--fs-k24); }
   .av3-need { font-size: var(--fs-k14); }
-  .av3-tile-name { font-size: var(--fs-k13); }
+  .av3-tile-name { font-size: var(--fs-k14); } /* R3 oct8: 14px floor (was k13) */
   .av3-tile-body { padding: 8px 8px 10px; }
-  .av3-strip { font-size: var(--fs-k13); padding: 0 6px; }
+  .av3-strip { font-size: var(--fs-k14); padding: 0 6px; }
+  .av3-cell.is-ready .av3-strip-reward { font-size: var(--fs-k18); }
   .av3-pips i { width: 11px; }
   .av3-pct { font-size: var(--fs-k15); }
 }
