@@ -6,9 +6,9 @@
 //   * PAUSE TO LEARN (every season): MY turn blows up → an edge card "NEXT TIME: <a real word containing the fragment,
 //     not one already played>" for the server's learnPauseMs (else ~2 s), then it goes; someone else blowing up shows
 //     nothing; works with the CURRENT server (no learnPauseMs) and under REDUCE MOTION;
-//   * SEASON2 HUD: the board wears data-hud="v2"; the fuse ring lights segments for the time left and drops as the
-//     clock ticks; the alphabet row lights the letters MY accepted words used; seats are upright cards (wider than
-//     tall, unrotated); the fragment is on the bomb; four sizes: no scrollbars, no text < 13 px, nothing loops;
+//   * SEASON2 (NIGHT oct8 #6, Andy: "they don't even look remotely similar to before"): season 2 plays on the ORIGINAL
+//     board — no v2 skin, no fuse ring, no 26-letter row (that is FUSE's); four sizes: no scrollbars, no text < 13 px,
+//     nothing loops;
 //   * flag OFF: the live board is untouched (no v2 skin, no fuse ring, no alphabet row).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -108,59 +108,26 @@ test('PAUSE TO LEARN under REDUCE MOTION: shown, nothing animates', async ({ pag
   expect(await card.evaluate((el) => el.getAnimations().length)).toBe(0);
 });
 
-test('SEASON2 HUD: fuse ring tracks the clock, alphabet row lights my letters, seats are upright cards, fragment on the bomb', async ({ page }) => {
+test('SEASON2 plays on the ORIGINAL board (NIGHT oct8 #6): no v2 skin, no fuse ring, no 26-letter row; the fragment and the seats are the pre-season-2 ones', async ({ page }) => {
   test.setTimeout(60_000);
   const { mock, players } = await board(page, { season2: true });
   const stage = page.locator('.game-stage--wb');
-  await expect(stage).toHaveAttribute('data-hud', 'v2');
-  const fuse = page.locator('.wb-v2-fuse');
-  await expect(fuse).toBeVisible();
-  const lit0 = Number(await fuse.getAttribute('data-lit'));
-  mock.pushToClient({ type: 'timer_tick', payload: { secondsRemaining: 4 } });
-  await expect.poll(async () => Number(await fuse.getAttribute('data-lit'))).toBeLessThan(lit0);
-  expect(Number(await fuse.getAttribute('data-lit'))).toBe(16); // 4/10 of 40
-  await expect(fuse.locator('.wb-v2-secs')).toHaveText('4');
-  // the fragment sits on the bomb; the old plaque is gone from view but kept for a screen reader
-  await expect(page.locator('.wb-belly')).toBeVisible();
-  expect(await page.locator('.wb-top').evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
-  // alphabet row: two accepted words of mine light their letters
-  const abc = page.locator('.wb-v2-abc');
-  await expect(abc).toContainText('0/26');
+  await expect(stage).not.toHaveAttribute('data-hud', /.+/);
+  await expect(page.locator('.wb-v2-fuse')).toHaveCount(0);
+  await expect(page.locator('.wb-seat .wb-v2-init')).toHaveCount(0);
+  // the 26-letter tracker is FUSE's, never Word Bomb's (Andy: "no question") — not even after words land
   for (const word of ['SING', 'TOPAZ']) {
     mock.pushToClient({ type: 'word_result', payload: { accepted: true, word, playerId: ME } });
     await page.waitForTimeout(150);
     mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players, combo: 'ing', timerSeconds: 10, maxLives: 3, usedWords: [] } });
     await page.waitForTimeout(150);
   }
-  await expect(abc).toContainText('9/26'); // S I N G T O P A Z
-  await expect(abc.locator('.wb-v2-abc-l.is-on')).toHaveCount(9);
-  // seats: upright, unrotated cards with an initial tile, name and hearts
-  const seats = page.locator('.wb-seat .game-player-card');
-  await expect(seats).toHaveCount(6);
-  for (let i = 0; i < 6; i += 1) {
-    const s = seats.nth(i);
-    const box = await s.boundingBox();
-    expect(box.width, 'a card is wider than tall').toBeGreaterThan(box.height * 1.8);
-    expect(await s.evaluate((el) => getComputedStyle(el).transform)).toBe('none');
-    await expect(s.locator('.wb-v2-init')).toHaveCount(1);
-    await expect(s.locator('.game-player-name-text')).toBeVisible();
-    await expect(s.locator('.game-player-hearts')).toBeVisible();
-  }
-  // cards never overlap one another or the fuse ring
-  const hits = await page.evaluate(() => {
-    const r = (e) => e.getBoundingClientRect();
-    const cards = [...document.querySelectorAll('.wb-seat .game-player-card')].map(r);
-    const fuse = r(document.querySelector('.wb-v2-fuse'));
-    const x = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
-    let n = 0;
-    cards.forEach((a, i) => { if (x(a, fuse)) n += 1; cards.slice(i + 1).forEach((b) => { if (x(a, b)) n += 1; }); });
-    return n;
-  });
-  expect(hits, 'cards overlap each other / the fuse ring').toBe(0);
+  await expect(page.locator('.wb-v2-abc')).toHaveCount(0);
+  await expect(page.locator('.wb-seat .game-player-card')).toHaveCount(6);
 });
 
 for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { width: 1920, height: 1080 }, { width: 390, height: 844 }]) {
-  test(`SEASON2 HUD @${vp.width}x${vp.height}: no scrollbars, no text < 13 px, nothing loops`, async ({ page }) => {
+  test(`SEASON2 board @${vp.width}x${vp.height}: no scrollbars, no text < 13 px, nothing loops`, async ({ page }) => {
     test.setTimeout(60_000);
     await board(page, { season2: true, vp });
     await page.waitForTimeout(500);
