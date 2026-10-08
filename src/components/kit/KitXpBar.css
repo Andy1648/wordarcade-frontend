@@ -55,7 +55,10 @@
   z-index: 1;
   height: 44px;
   box-sizing: border-box;
-  background: var(--k-well);
+  /* NIGHT oct8 #8: the empty track carries a static hard-stop hatch (flat bands, no blend) so the bar reads as a
+     physical channel; the fill (scaleX) stays one solid yellow, so the Oct 2 glide is untouched */
+  background-color: var(--k-well);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 8px, rgba(255, 255, 255, 0.06) 8px 14px);
   border: var(--k-ink-l) solid var(--k-ink);
   box-shadow: 5px 5px 0 var(--k-ink);
   transform: skewX(var(--k-skew-bar));
