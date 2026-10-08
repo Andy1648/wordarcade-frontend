@@ -1609,6 +1609,7 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
    stays --fs-body. Scoped to the solo screens so the room HUDs keep their fit. */
 .solo-root .wins-hud-plus {
   font-size: max(24px, var(--fs-body));
+}
 
 /* NIGHT OCT8 R3 — FUSE 26-LETTER TRACKER: read at a glance. The count leads ("14/26", number
    ≥ 18px), lit tiles carry the reward yellow with a DARKER-YELLOW outline (coloured outlines, not
