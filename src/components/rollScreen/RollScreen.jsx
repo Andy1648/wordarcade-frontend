@@ -6,7 +6,7 @@
 //   middle   THE REEL: a full-width band of mark cards under a yellow pointer (Reel.jsx), and the result LINE under
 //            it (name · stat number · what it touches · ★ pips)
 //   bottom   the PITY bars (EPIC+ IN n, big, + its bar · LEGENDARY+ IN n) · ROLL (gem price) · AUTO (one button that
-//            cycles OFF → RARE+ → EPIC+ → LEGENDARY+, "TAP TO SET TARGET") + SKIP < tier
+//            cycles OFF → RARE+ → EPIC+ → LEGENDARY+, "TAP TO SET TARGET") + SKIP ◀ < tier ▶ (a stepper, R4)
 //
 // ROLL vs INDEX are TWO screens, never mixed (Andy oct5): this one is ROLL, AUTO, gems, pity and the result; the
 // INDEX (the collection) is one button away and never rolls, prices or replays.
@@ -289,6 +289,8 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (!doRoll()) stopAuto();
   };
   const pickSkip = (t) => setSkip(setSkipBelow(t));
+  const skipIdx = Math.max(0, SKIP_TIERS.indexOf(skipBelow));
+  const stepSkip = (d) => { const t = SKIP_TIERS[Math.max(0, Math.min(SKIP_TIERS.length - 1, skipIdx + d))]; if (t && t !== skipBelow) pickSkip(t); };
   // leaving for the INDEX: a running reveal lands at once (no effects) so nothing is left half-played
   const openIndex = () => {
     stopAuto();
@@ -472,18 +474,19 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             {!autoOpen ? `AUTO · R${(V3.unlocks && V3.unlocks.unlockAt('autoRoll')) || 1}` : target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
           </button>
           <div className="rs-auto-cap" aria-hidden="true">{autoOpen ? 'TAP TO SET TARGET' : 'UNLOCKS AT REBIRTH 1'}</div>
-          <label className="rs-pick rs-skip">
-            <span aria-hidden="true">SKIP</span>
-            <select
-              className="rs-select"
-              value={skipBelow}
-              onChange={(e) => pickSkip(e.target.value)}
-              aria-label="Skip reveals below this tier"
-              data-testid="roll-skip"
-            >
-              {SKIP_TIERS.map((t) => <option key={t} value={t}>&lt; {tierName(t)}</option>)}
-            </select>
-          </label>
+          {/* SKIP (R4): a stepper in the house style, not the native <select> (its white drop-down was the one foreign
+              control on the screen). ◀ ▶ step the tier; the plate reads "< EPIC" in the tier colour = reveals below
+              EPIC are skipped (same getSkipBelow / setSkipBelow behaviour). 44px targets. */}
+          <div className="rs-skip" role="group" aria-label="Skip reveals below this tier" data-testid="roll-skip" data-value={skipBelow}>
+            <span className="rs-skip-k" aria-hidden="true">SKIP</span>
+            <button type="button" className="rs-skip-btn is-dn" onClick={() => stepSkip(-1)} disabled={skipIdx <= 0} aria-label="Skip fewer reveals" data-testid="roll-skip-down">
+              <svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2 L2 9 L12 16 Z" fill="currentColor" /></svg>
+            </button>
+            <span className="rs-skip-v" style={{ '--rs-tier': CARD_RAR[cardTier(skipBelow)].line }} aria-live="polite">&lt; {tierName(skipBelow)}</span>
+            <button type="button" className="rs-skip-btn is-up" onClick={() => stepSkip(1)} disabled={skipIdx >= SKIP_TIERS.length - 1} aria-label="Skip more reveals" data-testid="roll-skip-up">
+              <svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2 L12 9 L2 16 Z" fill="currentColor" /></svg>
+            </button>
+          </div>
         </div>
       </div>
 
