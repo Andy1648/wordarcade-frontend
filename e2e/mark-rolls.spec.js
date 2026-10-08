@@ -186,7 +186,8 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
   });
   await openRoll(page);
   // reveals below SECRET skip, so the two rolls go fast; AUTO cycled to its highest target (LEGENDARY+)
-  await page.getByTestId('roll-skip').selectOption('secret');
+  while (await page.getByTestId('roll-skip-up').isEnabled()) await page.getByTestId('roll-skip-up').click(); // → SECRET (the stepper's top hatches out)
+  await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'secret');
   for (let i = 0; i < 3; i += 1) await page.getByTestId('roll-auto').click();
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '5');
@@ -208,8 +209,11 @@ test('skip reveals below [tier]: default EPIC, the pick is stored', async ({ pag
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
-  await expect(page.getByTestId('roll-skip')).toHaveValue('epic');
-  await page.getByTestId('roll-skip').selectOption('legendary');
+  await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'epic');
+  await expect(page.getByTestId('roll-skip')).toContainText('< EPIC');
+  for (const b of ['roll-skip-up', 'roll-skip-down']) { const r = await page.getByTestId(b).boundingBox(); expect(Math.min(r.width, r.height)).toBeGreaterThanOrEqual(44); } // 44px targets (measured at rest — a press squashes)
+  await page.getByTestId('roll-skip-up').click(); // R4: a stepper — ▶ skips one tier more (EPIC → LEGENDARY)
+  await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'legendary');
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.markRolls') || '{}').skipBelow);
   expect(stored).toBe('legendary');
 });

@@ -399,20 +399,52 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn:hover { transform: translate(-2px, -2px); }
 .rs-auto-btn:active { transform: translate(6px, 6px); box-shadow: 0 0 0 #000; }
 .rs-auto-cap { font-size: var(--fs-body); color: #c9b8e8; }
-.rs-pick { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-body); color: #c9b8e8; }
-.rs-select {
+/* SKIP (R4): a stepper — SKIP · ◀ · "< EPIC" on a plate in the tier colour · ▶. Flat, thick purple outline (the
+   INDEX button's), hard ink shadow, 44px targets; a dead end (nothing below COMMON / above SECRET) hatches out. */
+.rs-skip { display: inline-flex; align-items: center; gap: 8px; }
+.rs-skip-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #c9b8e8; letter-spacing: 0.06em; }
+.rs-skip-btn {
+  flex: none;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   min-height: 44px;
-  padding: 0 10px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #FFE94A;
   background: #1a0b2e;
   border: 3px solid #5c0fa3;
+  border-radius: 0;
   box-shadow: 3px 3px 0 #000;
   cursor: pointer;
+  transition: transform 120ms;
 }
-.rs-select option { color: #0d0618; background: #fff; }
+.rs-skip-btn svg { display: block; }
+.rs-skip-btn:hover { transform: translate(-1px, -1px); }
+.rs-skip-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #000; }
+.rs-skip-btn:disabled { color: #5a4f8a; border-color: #2e1a4a; cursor: default; box-shadow: 3px 3px 0 #000; transform: none; }
+.rs-skip-v {
+  min-width: 136px;
+  height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k18);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--rs-tier, #fff);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  background: #0d0618;
+  border: 3px solid #5c0fa3;
+  box-shadow: 3px 3px 0 #000;
+}
 
 /* ---- the RARE flash (over the band) and the EPIC+ rarity WASH (over the screen): flat colour, opacity one-shots ---- */
 .rs-flash { position: absolute; inset: 0; z-index: 2; background: #fff; opacity: 0; pointer-events: none; }
@@ -551,7 +583,13 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-controls { grid-template-columns: minmax(0, 1fr); }
   .rs-pity { grid-row: 2; width: 100%; }
   .rs-opts { grid-row: 3; justify-self: stretch; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-  .rs-auto-cap, .rs-pick { font-size: var(--fs-body); }
+  .rs-auto-cap { font-size: var(--fs-body); }
+  /* phones: AUTO and the stepper share one 336px row — the SKIP word goes (the plate's "<" + the arrows say it), the
+     plate takes what is left at 16px, so "AUTO: OFF · ◀ < LEGENDARY ▶" fits 360 wide on one row */
+  .rs-skip { flex: 1 1 100%; min-width: 0; gap: 6px; }
+  .rs-skip-k { display: none; }
+  .rs-skip-v { flex: 1 1 auto; min-width: 0; padding: 0 4px; font-size: var(--fs-k16); -webkit-text-stroke: 2px #000; }
+  .rs-auto-btn { flex: none; }
   .rs-cut { --mc-w: 180px; --mc-s: 1; }
   .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
@@ -561,6 +599,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-roll-lbl { font-size: var(--fs-panel); }
   .rs-auto-btn { min-height: 44px; }
   .rs-auto-cap { display: none; }
+  .rs-opts { flex-wrap: nowrap; }
+  .rs-skip { flex: 1 1 auto; } /* short phones: AUTO + the stepper on ONE row (the caption is gone) */
   .rs-cut, .rs-cut.is-full { --mc-w: 162px; --mc-s: 0.9; }
 }
 

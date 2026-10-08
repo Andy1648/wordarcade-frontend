@@ -287,7 +287,7 @@ for (const [w, h] of [[1280, 551], [1366, 657], [1920, 1080], [390, 844], [360, 
       expect(b.y + b.height, `${sel} bottom`).toBeLessThanOrEqual(h + 1);
       return b;
     };
-    for (const sel of ['.rs-index-btn', '.rs-gems-bal', '.rs-close', '.rs-pity', '.rs-roll', '.rs-auto-btn', '.rs-select']) await inView(sel);
+    for (const sel of ['.rs-index-btn', '.rs-gems-bal', '.rs-close', '.rs-pity', '.rs-roll', '.rs-auto-btn', '.rs-skip']) await inView(sel);
     const band = await page.locator('.rs-win').boundingBox();
     expect(band.y).toBeGreaterThanOrEqual(0);
     expect(band.y + band.height).toBeLessThanOrEqual(h);
