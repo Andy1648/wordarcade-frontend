@@ -57,7 +57,7 @@ function fakeServer(grant) {
 
 test('the flag is on and the storage layer maps the season keys (the setup this file relies on)', () => {
   assert.equal(S.SEASON2, true);
-  assert.equal(S.SEASON2_LIVE, false, 'the ONE flip line is still off');
+  assert.equal(S.SEASON2_LIVE, true, 'the ONE flip line is ON (Oct 8)'); // node still opts in per test
   mem.clear();
   localStorage.setItem('taw.xp', 'x');
   assert.ok(mem.has('taw.s2.xp') && !mem.has('taw.xp'));
