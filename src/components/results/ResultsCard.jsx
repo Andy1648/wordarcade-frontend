@@ -169,6 +169,10 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
   const lvGain = xp && xp.to && xp.from ? Math.max(0, Math.floor(xp.to.level) - Math.floor(xp.from.level)) : 0;
   const xpGained = xp && Number.isFinite(xp.gained) ? Math.max(0, xp.gained) : null;
   const perLetter = xpGained != null && me.letters > 0 ? xpGained / me.letters : 0;
+  // R2 oct8 #2: SEASON 2 pays 0 XP for game letters (XP comes from menu keys) — a "+0" XP block with an idle bar is
+  // noise, and its height is what pushed a two-bonus WIN tally into the PLAY AGAIN footer at 1366×657. Shown only
+  // when it has something to say (XP gained, a level gained, or an unknown total).
+  const showXp = !(xpGained === 0 && lvGain === 0);
   // the beats after WINS: one per bonus line, then gems, then the total
   const tWords = T.wins + 220 + chain.chips.length * 220;
   const tBonus = (i) => tWords + T.step * (i + 1);
@@ -336,7 +340,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
           <div className="rs2-stat rs2-stat--w"><N to={me.words} at={T.stats + 100} /><span className="rs2-stat-k">WORDS</span></div>
           <div className="rs2-stat rs2-stat--l"><N to={me.letters} at={T.stats + 100} /><span className="rs2-stat-k">LETTERS</span></div>
         </div>
-        <div className="rs2-xp" data-rv="rise" data-at={T.xp}>
+        {showXp ? <div className="rs2-xp" data-rv="rise" data-at={T.xp}>
           <div className="rs2-xp-top">
             <XpHex />
             {xpGained != null ? <N to={xpGained} at={T.xp + 200} ms={T.count * 2} prefix="+" className="rs2-xp-n" /> : <span className="rs2-xp-n">LEVELS</span>}
@@ -347,12 +351,12 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             <span className="rs2-xp-bar"><span className="rs2-xp-fill" style={{ transform: `scaleX(${xp && xp.to ? Math.min(1, Math.max(0, xp.to.frac)) : 0})` }} /></span>
           </div>
           {lvGain > 0 ? <span className="rs2-xp-pop" data-rv="pop" data-at={T.xp + 200 + T.count * 2}>LV +{formatNum(lvGain)}</span> : null}
-        </div>
+        </div> : null}
         <div className="rs2-wins" data-rv="rise" data-at={T.wins} data-wins-line="WORDS" data-wins-amount={lines[0].amount}>
           <div className="rs2-wins-eq">
             <span className="rs2-base"><b>{formatNum(chain.base)}</b><small>BASE</small></span>
             <span className="rs2-op">×</span>
-            <span className="rs2-mult">{chain.base > 0 ? mx(chain.mult) : '×0'}</span>
+            <span className="rs2-mult">{chain.base > 0 ? formatMultExact(chain.mult) : '0'}</span>
             <span className="rs2-op">=</span>
             <N to={lines[0].amount} at={tWords} prefix="+" className="rs2-wins-n" />
           </div>
