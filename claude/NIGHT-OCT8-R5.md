@@ -71,3 +71,29 @@ What exists: the MENU's per-key pops (MenuXp.jsx, pool 20) already escalate by s
 2. ZType — per keystroke the feedback is on the TARGET (the word/enemy), never on the typing field; the keystroke "kicks" the thing you're attacking, and the kick grows with the streak. Our menu has that target: the XP plate (LV + bar) — it should take the kick, scaled by the streak, instead of staying inert while pops fly. Ref: https://zty.pe
 3. Monkeytype / Typing of the Dead — the caret is sacred: nothing per key may delay or re-rasterise it; a miss gets a SHORT buzz (Monkeytype's error flash is ~150 ms), long shakes make the next keystroke feel late. Our 400 ms reject shake is too long at 110 WPM. Ref: https://monkeytype.com
 Decision: (a) MENU — a pooled XP-plate KICK per key (one pre-built WAAPI animation on `.menu-xp-bar`, transform only, 160 ms, will-change for its life), amplitude by streak tier (1.02 → 1.075); (b) IN-GAME accept — `punch()` becomes a SQUASH (wide/short → tall/narrow → rest) at 220 ms (PUNCH_MS 280 → 220; the ladder's per-tier amplitude stays); (c) reject shake 400 → 260 ms with a harder first hit. No JSX state, no layout reads, 0 new infinite animations.
+
+## ANDY BACK, 21:00 UTC — round 5b continues live
+
+### Merged
+- **#294** POWER bolt · **#298** podium · **#300** icon audit (conflicted on kitIconsCore.js after #294 landed; another session had already pushed a byte-identical resolution, so I took theirs, re-ran the gate and merged).
+- **#301** menu panel stays OPEN — ANDY PICKS `?panel=hollow` or `?panel=filled`.
+
+### Step 8 — SHOP: every card says WHAT it boosts → PR #303 (day5b/shop-says)
+Andy: "there are boosts … things like this should say — boost what? and many don't and things don't make sense."
+- `says` string per STOCK item (display only): XP ONLY · NOT WINS / BETTER GEAR ROLL ODDS / WINS + XP · EVERY MODE / EXCEPT OVERDRIVE / EPIC OR BETTER, GUARANTEED.
+- Phone rows 182 → 232px: the wrap was pushing the gem price out of the card.
+- **FINDING — "OVERDRIVE" means two different things.** `overdrive.js` is the earned Rebirth-Rush ×10 (key `taw.overdrive`). The shop's "×10 OVERDRIVE · NOW" card is NOT that system — it calls `startBoost(10, 5)`, i.e. the code-BOOST slot (`taw.boost`). So the card says OVERDRIVE, the pill says BOOST ×10, and "+5 MIN EVERY BOOST" DOES extend the bought one while it can't extend the earned one. This is a large part of "things don't make sense". Fix is pending Andy's stacking answer.
+
+### Step 9 — BOOST DOCK, bottom-right → PR #306 (day5b/boost-hud)
+Andy: "when boosts are active they should have a timer at the bottom right of the screen instead of dead center."
+- New `progress/liveTimers.js` (every running timer as one list, each with mult + clock + what it boosts) and `frenzy/BoostDock.jsx` + `.css`.
+- Docks to the sound control's corner (z 69 under its 70), renders nothing at rest, `pointer-events: none`. Menu centre pill removed; in-game LiveStack row states the FACTOR only (one clock, not two).
+- **PHONE MENU keeps the inline pill**: that screen is 100dvh / overflow hidden with the rail tiles in that corner. Measured two ways to make room (padding `.homepage-wrap`; yielding 112px from `.hp-m`) — both collapsed WORD RACE into CHAIN/FUSE. Dock stands down there via `html[data-view='home']`.
+- **PRE-EXISTING BUG (reproduced on clean main):** phone menu + TWO live boosts = two pill lines push WORD RACE under CHAIN/FUSE. Not fixed here; needs its own pass.
+- e2e `redeem-codes` + `rr-moments` rewritten to assert the dock (and the phone pill at 390).
+- NOT done: the BOOSTS section in STATS — StatsV2 is absolutely positioned at fixed mockup coords with no free band at 1366×657; needs its own layout pass.
+
+### WAITING ON ANDY (asked in chat, 21:1x UTC)
+1. **Overdrive stacking** — (a) multiply to ×100, or (b) parallel timers that multiply only while they overlap. My rec: **(b)**.
+2. **FUSE FRENZY = 25× XP** — today it is ×5 on WINS. (a) swap to ×25 XP, (b) ×25 on both, (c) keep ×5 wins and add ×25 xp. My rec: **(a)**.
+3. **Leaderboard composition** — the podium blocks are fixed, but the top-left third is a dead void, blocks sit low/short, names float off their steps, left half empty vs right half cramped. That is a layout change, not a component one, so it needs his go-ahead.
