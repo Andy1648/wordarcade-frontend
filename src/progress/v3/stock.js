@@ -7,7 +7,8 @@
 //   COMMON     +25% WINS · 10 MIN      60   ×5   → stockWinsMult() ×1.25 on WINS / WORD (wins.js perWordFactors.boost)
 //   RARE       ×2 LUCK · 15 MIN        120  ×3   → stockLuckMult() ×2 on roll luck (v3/unlocks.js unlockLuckMult)
 //   (×2 GEM DROPS removed — Andy oct6: "Do NOT scale gems"; the gem earn table stays exactly FINAL's)
-//   EPIC       ×10 OVERDRIVE           225  ×2   → ×10 on XP AND WINS for 5 min. A 2nd buy while it runs ADDS 5 MIN
+//   EPIC       ×10 OVERDRIVE           750  ×2   → ×10 on XP AND WINS for 5 min (Andy oct8: "they do SO MUCH — they should
+//                                                  def cost more gems": 225 → 750, ten rolls' worth — the premium boost). A 2nd buy while it runs ADDS 5 MIN
 //                                                  and stays ×10 (Andy oct8: "time stacks") — written to boost slot 1
 //                                                  directly, never the R3 2nd slot (that multiplied ×10 × ×10 = ×100)
 //   RARE       +5 MIN BOOSTS           150  ×2   → +5 min on the running XP / WINS / LUCK boosts ONLY — never OVERDRIVE
@@ -36,7 +37,7 @@ export const STOCK = [
   { id: 'xp25', rarity: 'common', icon: 'levels', name: 'XP BOOST', big: '+25%', what: 'XP PER KEY', time: '10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.25, min: 10 },
   { id: 'wins25', rarity: 'common', icon: 'wins', name: 'WINS BOOST', big: '+25%', what: 'WINS PER WORD', time: '10 MIN', price: 60, max: 5, fx: 'wins', mult: 1.25, min: 10 },
   { id: 'luck2', rarity: 'rare', icon: 'luck', name: 'LUCK BOOST', big: '×2', what: 'ROLL LUCK', time: '15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
-  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×10', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 225, max: 2, boost: { mult: 10, min: 5 } },
+  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×10', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 750, max: 2, boost: { mult: 10, min: 5 } },
   { id: 'extend', rarity: 'rare', icon: 'clock', name: 'TIME BOOST', big: '+5 MIN', what: 'XP · WINS · LUCK BOOSTS', time: 'NOT OVERDRIVE', price: 150, max: 2, extend: true },
   { id: 'epicroll', rarity: 'legendary', icon: 'roll', name: 'EPIC+ ROLL', big: '1', what: 'FREE EPIC+ ROLL', time: 'COMING SOON', price: 495, max: 1, buyable: false },
 ];

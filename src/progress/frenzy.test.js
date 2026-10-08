@@ -61,13 +61,13 @@ test('CLUTCH: a word with 2.0 s or less left', () => {
   assert.equal(isClutch(null), false);
 });
 
-test('season 2 (Andy oct8): FRENZY is ×25 XP per key for 5 min and pays NO wins multiplier', async () => {
+test('season 2 (Andy oct8): FRENZY is ×5 XP per key for 5 min and pays NO wins multiplier', async () => {
   const F = await import('./frenzy.js');
   const T = 5_000_000;
   withStorage(() => {
     localStorage.setItem(F.FRENZY_KEY, String(T + F.FRENZY_MS));
     F.__v3();
-    assert.equal(F.frenzyXpMult(T + 1000), 25);
+    assert.equal(F.frenzyXpMult(T + 1000), 5);
     assert.equal(F.frenzyMult('fuse', T + 1000), 1, 'no wins multiplier');
     assert.equal(F.frenzyXpMult(T + F.FRENZY_MS + 1), 1, 'ends on its timer');
   });

@@ -166,6 +166,7 @@ export default function AchievementsV3({ onClose }) {
                 <div className="av3-hero-main">
                   <Badge r={hero} size="big" />
                   <div className="av3-hero-name">{nameOf(hero)}</div>
+                  {hero.what ? <div className="av3-what">{hero.what}</div> : null}
                   <div className="av3-hero-nums">
                     <span className={`av3-have${hero.ready ? ' is-ready' : ''}`}>{formatNum(hero.have)}</span>
                     <span className="av3-need">/ {formatNum(hero.need)}</span>
@@ -243,6 +244,7 @@ export default function AchievementsV3({ onClose }) {
                           </div>
                         </div>
                         <div className="av3-tile-name">{nameOf(r)}</div>
+                        {r.what ? <div className="av3-what">{r.what}</div> : null}
                         <Bar pct={r.pct} ready={r.ready} maxed={r.maxed} />
                         <div className="av3-tile-foot">
                           {isReady ? (

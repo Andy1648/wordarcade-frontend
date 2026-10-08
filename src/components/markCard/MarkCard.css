@@ -220,3 +220,6 @@
   .mc .mc-glow { animation: none !important; }
 }
 
+/* a locked EARNED gear (Andy oct8): a lock + ACHIEVEMENT in the foot (it is not rolled — no odds) */
+.mc-foot.is-ach { gap: 5px; color: #fff; }
+.mc-lock { flex: none; color: var(--mc-line); }

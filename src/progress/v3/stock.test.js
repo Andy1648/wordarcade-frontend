@@ -31,7 +31,7 @@ test('the boost keys match boost.js / hooks.js', () => {
 
 test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands, counts; a 5:00 restock window', () => {
   mem.clear();
-  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 225, 150, 495]);
+  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 750, 150, 495]);
   assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'common', 'rare', 'epic', 'rare', 'legendary']);
   assert.deepEqual(ST.stockLeft(T0), { xp25: 5, wins25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 1 });
   // Andy oct8 "boost what?": every item says what it boosts and for how long
@@ -42,11 +42,11 @@ test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands,
 
 test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks', () => {
   mem.clear();
-  setGems(1000);
+  setGems(2000);
   let r = ST.buyStock('overdrive', T0);
   assert.equal(r.ok, true);
-  assert.equal(r.gems, 775);
-  assert.equal(G.getGems(), 775);
+  assert.equal(r.gems, 1250);
+  assert.equal(G.getGems(), 1250);
   assert.equal(r.left.overdrive, 1);
   assert.equal(BO.codeBoostMult(T0 + 1000), 10, '×10 OVERDRIVE is a ×10 boost');
   assert.ok(BO.boostRemaining(T0) <= 5 * 60000 && BO.boostRemaining(T0) > 4 * 60000);
@@ -54,7 +54,7 @@ test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks'
   assert.equal(r.ok, true);
   r = ST.buyStock('overdrive', T0 + 2000);
   assert.deepEqual([r.ok, r.reason], [false, 'sold_out']);
-  assert.equal(G.getGems(), 550, 'a sold-out try charges nothing');
+  assert.equal(G.getGems(), 500, 'a sold-out try charges nothing');
   assert.equal(ST.stockLeft(T0 + ST.RESTOCK_MS).overdrive, 2, 'restocked in the next window');
 });
 
@@ -115,7 +115,7 @@ test('+5 MIN: needs an XP / WINS / LUCK boost running; extends those, NEVER OVER
 
 test('OVERDRIVE: ×10, a 2nd buy ADDS 5 MIN and stays ×10 — time stacks, the multiplier never does (Andy oct8)', () => {
   mem.clear();
-  setGems(1000);
+  setGems(2000);
   ST.buyStock('overdrive', T0);
   assert.equal(BO.codeBoostMult(T0 + 1000), 10);
   assert.equal(BO.boostRemaining(T0), 5 * 60_000);

@@ -9,7 +9,7 @@ const WHERE = [
   ['OVERDRIVE ×10', 'XP + WINS', 'UPGRADES → BOOSTS (BUY AGAIN = +5 MIN)'],
   ['XP / WINS +25%', 'XP PER KEY / WINS PER WORD', 'UPGRADES → BOOSTS'],
   ['LUCK ×2', 'ROLL LUCK', 'UPGRADES → BOOSTS'],
-  ['FRENZY ×25', 'XP PER KEY', 'LIGHT ALL 26 LETTERS IN FUSE'],
+  ['FRENZY ×5', 'XP PER KEY', 'LIGHT ALL 26 LETTERS IN FUSE (FREE)'],
 ];
 
 export default function StatsBoosts() {
