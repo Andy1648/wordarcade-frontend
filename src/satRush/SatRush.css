@@ -601,9 +601,9 @@
 .sr-root {
   font-family: 'Space Mono', monospace;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-label);
-  line-height: 1.5;
+  letter-spacing: 0.04em; /* R3 oct8: was 0.08em at 13px; at body size the wider track wrapped the line */
+  font-size: var(--fs-body); /* R3 oct8: a poster FIELD is read, not a label — 16px floor (was --fs-label) */
+  line-height: 1.4;
   color: var(--ink);
 }
 .sr-root b {
@@ -2387,6 +2387,40 @@ html[data-beat='true'] .sr-mult.sr-print::before {
      0.16em it wrapped to two, another ~20px). */
   .sr-body { gap: 12px; }
   .sr-caseid { letter-spacing: 0.06em; }
+  /* R3 oct8: the same inline DESCRIPTION / ALIASES rows as the short-landscape spread, the clue at
+     1.4 (was 1.55), and the seven mugshot slots on ONE row (gap 8 → 6: 7×35 + 6×8 = 293px wrapped the
+     last slot onto its own row inside a 286px strip). The fields went from 120px to ~230px of room —
+     a four-line clue with both reveals now shows without scrolling. */
+  .sr-field--gloss,
+  .sr-field--root {
+    display: block;
+  }
+  .sr-field--gloss .sr-fieldlabel,
+  .sr-field--root .sr-fieldlabel {
+    float: left;
+    margin: 2px 8px 0 0;
+  }
+  .sr-sentence { line-height: 1.4; }
+  .sr-fields { gap: 8px; padding-block: 6px; }
+  .sr-slots { --gap: 4px; --slot-min: 28px; margin-top: 10px; } /* 9 letters on one row at 285px (was 6) */
+  .sr-body { gap: 10px; }
+  /* the HUD's first row sat under the torn top edge (--torn cuts up to 2.4% of a 809px page = 19px;
+     the text started at 17px) and the fifth HEAT block ran past the strip. Clear the tear, and the
+     heat blocks take the phone size. */
+  .sr-hud { padding-top: clamp(0px, 2.6vh - 14px, 12px); }
+  .sr-hud { grid-template-columns: auto auto minmax(0, 1fr); }
+  /* under 400px the two auto columns (SCORE 000000 / LIVES ♥♥♥) left WORD #01 and HEAT ~90px —
+     the number clipped at the frame. Equal thirds: every cell's content fits in ~115px. */
+  @media (max-width: 400px) {
+    .sr-hud { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.05fr) minmax(0, 1fr); }
+    .sr-hlabel { letter-spacing: 0; }
+  }
+  .sr-heat { gap: 2px; flex: 1 1 auto; min-width: 0; }
+  .sr-heatblock { flex: 1 1 8px; width: auto; max-width: 12px; height: 12px; }
+  .sr-hcell { padding: 4px 3px; }
+  /* the REWARD footer keeps the multiplier + pips + drain; the caption box (three lines at 14px on a
+     286px footer) is the cut — same call the keyboard-up block below already makes */
+  .sr-reward .sr-antebox { display: none; }
   .sr-hud-exit {
     grid-area: 2 / 1;
     justify-content: flex-start;
@@ -2433,11 +2467,42 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   /* the sentence stays the largest thing on the page, but at a line height that fits four lines */
   .sr-sentence {
     /* on the scale (16-28px); tracks height, and width so a narrow-but-taller laptop (1280x800)
-       still fits the longest clue in the left column */
-    font-size: clamp(var(--fs-body), min(3.6vh, 1.9vw), var(--fs-panel));
-    line-height: 1.4;
+       still fits the longest clue in the left column. R3 oct8: 3.4vh / 1.3 (was 3.6vh / 1.4) — a
+       four-line clue + DESCRIPTION + ALIASES scrolled the fields at 1366x657 (318 > 269px). */
+    font-size: clamp(var(--fs-body), min(3.2vh, 1.9vw), var(--fs-panel));
+    line-height: 1.25;
+  }
+  /* the two reveals at the 16px field floor on the spread (body is 18px here): a long gloss is two
+     lines, not three, and the clue keeps the big type */
+  .sr-gloss { font-size: max(16px, var(--fs-label)); line-height: 1.3; }
+  .sr-root { font-size: max(16px, var(--fs-label)); line-height: 1.3; }
+  /* R3 oct8: DESCRIPTION and KNOWN ALIASES run INLINE with their label chip (the clue keeps its
+     chip above) — the chip FLOATS so a long gloss wraps under it at full width; two rows of
+     chip-over-text were ~54px of the fields' height. With the clue tweak above and the case id
+     cut below 700px, the fields hold the longest clue + both reveals at 1366x657 without a scrollbar. */
+  .sr-field--gloss,
+  .sr-field--root {
+    display: block;
+  }
+  .sr-field--gloss .sr-fieldlabel,
+  .sr-field--root .sr-fieldlabel {
+    float: left;
+    margin: 2px 10px 0 0;
+  }
+  .sr-fields {
+    padding-block: 2px;
+    gap: 5px;
+  }
+  /* ...and under 700px tall (1366x657 / 1366x625 / 1280x551) the case id steps out, as it does on
+     small phones: it is the one poster field nobody reads mid-capture, and its 30px are what the
+     longest clue (5 lines) + DESCRIPTION + ALIASES need to show without a scrollbar. */
+  @media (max-height: 700px) {
+    .sr-caseid { display: none; }
   }
   .sr-slotwrap { grid-column: 1; grid-row: 4; margin-top: 4px; }
+  /* R3 oct8: 13 mugshot slots on one row of the 451px column (an 11-letter word wrapped its last
+     slot onto a row of its own at 1366x657); only the five 14+ letter words still wrap */
+  .sr-slots { --gap: 5px; --slot-min: 30px; }
   .sr-msg { grid-column: 1; grid-row: 5; margin-top: 6px; }
   .sr-lineup,
   .sr-spell {
@@ -2650,6 +2715,28 @@ body:has(.sr-app) .wpm-hud {
     font-size: var(--fs-panel);
   }
 }
+/* R3 oct8 — SMALL PHONES, keyboard DOWN (360x640, 375x667): the stacked poster's pinned rows
+   (WANTED + case id + slots + six suspects + reward) left the clue FIELDS ~0px — the LAST SEEN chip
+   peeked and the sentence, the question, was scrolled out of sight. Same cuts the keyboard-up block
+   below makes, minus the ones that cost legibility: case id out, two rows of suspects show (the
+   third scrolls), the WANTED banner and the footer step down. The multiplier stays >= 32px. */
+@media (max-width: 520px) and (min-height: 561px) and (max-height: 700px) {
+  .sr-caseid { display: none; }
+  .sr-fields { min-height: 96px; }
+  .sr-lineup {
+    flex: 1 0 96px;
+    min-height: 96px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 4px;
+  }
+  .sr-suspect { min-height: 40px; }
+  .sr-reward { margin-top: 6px; padding-top: 6px; }
+  .sr-reward-label { display: none; }
+  .sr-mult { font-size: max(32px, var(--fs-h2)); }
+  .sr-wanted { font-size: var(--fs-panel); }
+  .sr-body { gap: 8px; }
+}
 /* ...and the smallest phones (360x400 with the keyboard up): one row of suspects shows, the rest scroll */
 @media (max-width: 520px) and (max-height: 440px) {
   .sr-lineup {
@@ -2669,6 +2756,13 @@ body:has(.sr-app) .wpm-hud {
     margin-top: 2px;
     padding-top: 2px;
   }
+}
+
+/* R3 oct8 — Andy's floor: nothing under 14px. The SAT pages' labels (case id, field chips, HUD
+   captions, MENU, the ante note) ride --fs-label, 13px on the global scale. 14px here; guarded so
+   the big-monitor tokens (16px at >=1800x1000) still win. */
+@media (max-width: 1799px), (max-height: 999px) {
+  .sr-app { --fs-label: 14px; }
 }
 
 /* BIG / HUGE MONITORS (big-monitor pass; next-passes-spec PASS 1). At 2560x1440 the poster was a 920px

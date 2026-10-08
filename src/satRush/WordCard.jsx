@@ -92,7 +92,9 @@ function Blank({ length }) {
 // stays hidden (opacity) until its stage, exactly like before. A root-null
 // fugitive has no KNOWN ALIASES row at all.
 function FieldRow({ type, visible, view }) {
-  const cls = `sr-field sr-reveal${visible ? ' in' : ''}`;
+  // sr-field--<type>: the fit blocks in SatRush.css set DESCRIPTION / KNOWN ALIASES inline with their
+  // label chip (R3 oct8) — the clue (LAST SEEN) keeps its chip above.
+  const cls = `sr-field sr-field--${type} sr-reveal${visible ? ' in' : ''}`;
   if (type === 'sentence') {
     const [before, after] = view.context.split(/_+/);
     return (
