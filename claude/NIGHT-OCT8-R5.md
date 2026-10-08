@@ -106,3 +106,11 @@ Andy (or a parallel session) merged **#302 feat/boosts-explained**: every boost 
 - **#306 (boost dock) rebased onto #302 and corrected**: it knew nothing about the new WINS BOOST (buying one showed no timer at all), and its FRENZY row quoted ×5 FUSE ONLY — a multiplier season 2 does not pay. Now reads `frenzyXpMult` when live, else `frenzyMult`, and every row's wording matches that item's shop WHAT line.
 
 **Lesson for the next round:** when a parallel session is live in the same area, re-read main before writing copy — #303 was ~40 min of work that #302 had already done better. The *measurement* work (phone overflow) was the part that survived, because nobody else had done it.
+
+### 22:2x UTC — #309 MERGED; #306 CI caught a payload regression that was mine
+- **#309 phone card fit MERGED** (all 6 checks green). Phone STOCK row 196 → 224px; the gem prices are back inside their cards.
+- **#306 CI, two failures on the pre-merge head:**
+  1. **`payload-budget` — MINE.** `initial payload 977079 > ratchet 975000`. Static-importing BoostDock put its JSX + CSS in the homepage's INITIAL payload. Main's baseline is 974,265 → only **735 bytes** of headroom, and the dock spent 2,814. Fixed by splitting: `progress/anyTimer.js` (eager, only "is any boost running?", every import already eager) + `frenzy/BoostDockMount.jsx` (eager, ~15 lines, lazy-imports the dock when a timer goes live); `liveTimers.js`'s row table moved to the lazy chunk. Re-measured **974,712** — under the ratchet, +447 on main, all gate. No boost, no chunk.
+  2. **`v2-results @1163x450` ("rs2-tally into the PLAY AGAIN footer") — NOT mine.** PR touches no ResultsV2 file; the identical test failed on #294 earlier (also unrelated) and passed on re-run; passes 3/3 locally here. Commented on the PR rather than porting a fix — nobody has root-caused it. **Worth its own pass: it keeps failing on unrelated PRs.**
+
+**Lesson:** the payload ratchet has ~700 bytes of headroom. ANY new always-mounted component in App.jsx must be lazy behind an eager predicate, or it trips the budget. Local `npm test` + targeted e2e do NOT catch this — only `e2e/payload-budget.spec.js` does. Run it before pushing anything that touches App.jsx's import list.
