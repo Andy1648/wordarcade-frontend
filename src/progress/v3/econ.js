@@ -3,7 +3,7 @@
 // Selected only through the SEASON2 flag (src/progress/season.js) at the live entry points; nothing here reads
 // storage. LEAF: imports nothing.
 //
-//   XP for next level need(n) = 100 × 1.131^(n−1)                      (v3/curve.js — O(1) closed-form carry)
+//   XP for next level need(n) = 100 × 1.15^(n−1)                      (v3/curve.js — O(1) closed-form carry)
 //   XP per letter     1 × KEY × 3^R × MARK × OVERDRIVE                  game letters ×1, menu letters ×0.2 (whole XP,
 //                                                                       floor 1 — a menu key pays 1 at the start)
 //   WINS per word     10 × length/5 × MODE × 3^R × MARK × OVERDRIVE     games only. MODE: WB/Blitz 1 · RACE 1.5 ·
@@ -21,7 +21,7 @@ export const KEY_STEP = 2; // × XP per KEY tier: tier T is ×2^T (v3: replaces 
 export const MARK_BASE_REF = 10; // a worn +N BASE XP mark is sized against BASE 10: ×(10 + N) / 10 (MYTHIC +20 = ×3)
 export const REBIRTH_STEP = 3; // × XP and wins per rebirth
 export const CURVE_BASE = 100; // need(1)
-export const CURVE_GROWTH = 1.131; // × need per level (v3: was 1.15 — CI-sim tuned for a ~20 min first rebirth)
+export const CURVE_GROWTH = 1.15; // × need per level — each level 15% harder than the last (Andy Oct 7 22:31; v3 had 1.131)
 export const WINS_BASE = 10; // wins for a 5-letter word at R0, MODE ×1, no mark
 export const WORD_REF = 5; // the reference word length (length / 5)
 export const POWER_COST_BASE = 150; // wins for T0 → T1

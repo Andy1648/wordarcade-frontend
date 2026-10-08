@@ -23,8 +23,8 @@
 // SPAMMER: the median's exact dice, plus every 10 min 1,000 rebirth calls through the client flow (half at once, half in a
 //   row) and a replay of every old request id straight at the server — must end exactly level with the median.
 // HARD CHECK (exit 1 → CI fails): every doc-table cell (R1 / R3 / R5 first times, the R reached at 10 h) within ±20%
-//   (a "—" cell: not reached before 75% of the horizon; a range cell R6–R7: ±20% of its nearest end). MEDIAN = Andy's v3
-//   targets (R1 ≈ 20 min, R3 ≈ 2 h, R5 ≈ 6 h, R6–R7 at 10 h); casual / fast / menu = the v3 sim table (regression guards); FAST ≤ 2× the median's pace to every milestone both reach;
+//   (a "—" cell: not reached before 75% of the horizon; a range cell R6–R7: ±20% of its nearest end). MEDIAN R1 = Andy's
+//   18–25 min hold (v3.1); every other cell = the v3.1 sim table (regression guards); FAST ≤ 2× the median's pace to every milestone both reach;
 //   SPAMMER's final R / level = the median's; no server grant below the v3 gate, not to LV 1, > 1 per call, or by a
 //   replay; no ascension (hidden).
 import fs from 'node:fs';
@@ -89,11 +89,14 @@ for (const w of recall.slice(0, 9000)) {
 
 // ----------------------------------------------------------------------------- THE FINAL v3 TABLE (md "Sim", minutes)
 const H = 60;
+// v3.1 (Andy Oct 7 22:31, "each level a bit harder than the last"): need 1.131^n → 1.15^n, gate 18 + 20R kept (median R1
+// 24 min, inside his 18–25 min hold). The median's later cells are no longer the 21:27 targets (R3 ≈ 2 h, R5 ≈ 6 h,
+// R6–R7 at 10 h) — a steeper curve slows every later rebirth by design — so every row is now the v3.1 sim table.
 const FINAL = {
-  casual: { R1: 38, R3: 3.3 * H, R5: null, END: 4 },
-  median: { R1: 20, R3: 2 * H, R5: 6 * H, END: [6, 7] }, // Andy's v3 targets
-  fast: { R1: 12, R3: 82, R5: 3.8 * H, END: 6 },
-  menu: { R1: 11, R3: null, R5: null, END: 2 },
+  casual: { R1: 44.7, R3: 5.04 * H, R5: null, END: 3 },
+  median: { R1: 24, R3: 2.64 * H, R5: null, END: 4 }, // R1 held at 18–25 min (Andy 22:31)
+  fast: { R1: 14.3, R3: 87.5, R5: 8.46 * H, END: 5 },
+  menu: { R1: 13.2, R3: null, R5: null, END: 2 },
 };
 const BOTS = [
   { id: 'casual', lpm: 60, wpm: 8, mlpm: 80, game: 0.6, seed: 1 },
@@ -104,6 +107,8 @@ const BOTS = [
 ];
 const TOL = 0.2;
 const PACE_LIMIT = 2;
+const MEDIAN_R1_MIN = 18; // v3.1: the median's first rebirth, minutes (Andy Oct 7 22:31)
+const MEDIAN_R1_MAX = 25;
 const SPAM_EVERY_MIN = 10;
 const SPAM_CALLS = 1000;
 const RUN_WORDS = 18; // a FUSE run (bankWordWins' 3-word gate per run)
@@ -332,6 +337,8 @@ if (med && fast) {
     if (ratio > PACE_LIMIT) misses.push(`FAST ${LABEL[k]} is ×${ratio.toFixed(2)} the median's pace (limit ×${PACE_LIMIT})`);
   }
 }
+// v3.1 HOLD (Andy Oct 7 22:31): the median's first rebirth stays 18–25 min, whatever the ±20% band above allows
+if (med && !(med.times.R1 >= MEDIAN_R1_MIN && med.times.R1 <= MEDIAN_R1_MAX)) misses.push(`median R1 ${fmt(med.times.R1)} is outside the ${MEDIAN_R1_MIN}–${MEDIAN_R1_MAX} min hold`);
 if (sp && med && (sp.final.rebirths !== med.final.rebirths || sp.final.level !== med.final.level)) misses.push(`SPAMMER ended R${sp.final.rebirths} LV${sp.final.level} vs the median's R${med.final.rebirths} LV${med.final.level}`);
 const stars = results.reduce((a, r) => a + r.final.stars + r.server.stored.stars, 0);
 if (stars) misses.push(`${stars} ★ granted — ascension is hidden in FINAL v3`);

@@ -67,9 +67,9 @@ test('XP per letter = 1 × 2^T × 3^R × MARK (FINAL v3) — a menu key ×0.2, w
   assert.ok(Number.isFinite(X.levelXpPerLetter(5000, 5000, 1, 0)), 'finite at absurd tiers');
 });
 
-test('XP for the next level = 100 × 1.131^(n−1); a credit of any size is O(1) and exactly additive', () => {
-  assert.equal(E.CURVE_GROWTH, 1.131);
-  for (const L of [1, 2, 10, 100, 1000, 3000]) near(X.need(L), 100 * 1.131 ** (L - 1), 1e-9);
+test('XP for the next level = 100 × 1.15^(n−1); a credit of any size is O(1) and exactly additive', () => {
+  assert.equal(E.CURVE_GROWTH, 1.15);
+  for (const L of [1, 2, 10, 100, 1000, 3000]) near(X.need(L), 100 * 1.15 ** (L - 1), 1e-9);
   assert.equal(X.need(1), 100);
   const t0 = process.hrtime.bigint();
   const big = X.creditXp({ level: 1, frac: 0 }, CV.cumXp(1001) * (1 + 1e-12));

@@ -1,4 +1,28 @@
-# TYPE A WORD — PROGRESSION FINAL v3 "START AT 1" (Oct 7 2026, 21:27 ET) — constants only, structure = v2
+# TYPE A WORD — PROGRESSION FINAL v3.1 "EACH LEVEL HARDER" (Oct 7 2026, 22:31 ET) — one constant on top of v3
+
+Andy 22:31: "make each level a bit harder than the last." The level curve goes from 1.131 to **1.15**:
+need(n) = 100 × 1.15^(n−1), so each level costs 15% more than the one before it (it was 13.1%). Nothing else changed.
+- **Gate kept at 18 + 20·R.** With the steeper curve the median's first rebirth is **24.0 min**, inside Andy's 18–25 min
+  hold, so the gate stays where it was (his rule: lower it only if R1 goes past 25). Migration 029 is unchanged.
+  For reference, gate 17 + 20R would put the median's first rebirth at 21.2 min.
+- **What it costs later:** the curve compounds over the 20 levels between gates, so every rebirth after R1 slows down.
+  The median now reaches R3 at 2.64 h (it was 1.66 h) and ends 10 h at R4 (it was R5). The old 21:27 targets
+  (R5 ≈ 6 h, R6–R7 by 10 h) no longer hold. The CI sim now guards the v3.1 table below, plus a hard
+  18–25 min check on the median's first rebirth.
+
+## Sim — v3.1 beside v3 (real modules, no marks / overdrive, 10 h; first time to R1 / R3 / R5, R at 10 h)
+| bot | v3.1 R1 | v3.1 R3 | v3.1 R5 | v3.1 @10 h | v3 R1 | v3 R3 | v3 R5 | v3 @10 h |
+|---|---|---|---|---|---|---|---|---|
+| casual | 44.7 min | 5.04 h | — | R3 | 38.5 min | 3.3 h | — | R4 |
+| **median** | **24.0 min** | **2.64 h** | **—** | **R4** | 20.7 min | 1.66 h | 6.75 h | R5 |
+| fast | 14.3 min | 87.5 min | 8.46 h | R5 | 12.3 min | 82 min | 3.8 h | R6 |
+| menu-only masher (500 keys/min) | 13.2 min | — | — | R2 | 11 min | — | — | R2 |
+FAST ÷ MEDIAN pace: R1 ×1.67, R3 ×1.81 (limit ×2). SPAMMER ends level with the median (R4 LV90). 59,000 spam calls
+granted 0 rebirths. HARD CHECK: PASS.
+
+---
+
+# (history) TYPE A WORD — PROGRESSION FINAL v3 "START AT 1" (Oct 7 2026, 21:27 ET) — constants only, structure = v2
 
 Andy 21:27: start everyone at 1 XP a letter, POWER doubles, the whole climb ~6× slower (median first rebirth ≈ 20 min,
 not 3). Rebirth ×3, AUTO REBIRTH at R2, OVERDRIVE ×10, gems / rolls / marks / pity — all unchanged. Rank R0 is now
@@ -8,7 +32,7 @@ within ±20% of v2's, except the two Andy set (BASE 1, ×2 POWER).
 ## Numbers — v3 beside v2
 | piece | v3 (now) | v2 (Oct 6) |
 |---|---|---|
-| XP needed | need(n) = 100 × **1.131**^(n−1) | 100 × 1.15^(n−1) |
+| XP needed | need(n) = 100 × **1.131**^(n−1) (v3.1: **1.15**) | 100 × 1.15^(n−1) |
 | XP / letter | **1** × KEY × 3^R × MARK × OVERDRIVE · game letter ×1, menu key ×0.2 rounded to whole XP, **floor 1** (a menu key pays 1 at the start) | 10 × … (menu key 2) |
 | POWER (KEY) | **×2^T** (×1, ×2, ×4, ×8 …); T→T+1 costs 150 × 5^T wins (unchanged); KEPT through rebirth | ×1, 2, 5, 10 … 1000, then ×2.15 |
 | REBIRTH | at LV **18 + 20·R** (R1 LV18, R2 LV38, R5 LV118, R10 LV218) → LV 1, ×3 forever; server lb_rebirth (029), ≤12/hour | LV 15 + 18·R |

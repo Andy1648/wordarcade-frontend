@@ -1,7 +1,7 @@
 // e2e/season2.spec.js — PROGRESSION FINAL v3 behind ?season2=1 (claude/progression-FINAL.md v3).
 // One claimed board player on the season-2 board (boardMock `season2` — 029's REAL write rule + lb_rebirth season 2 with
 // the econ-13 guard), on a desktop and a phone:
-//   * MASHES the menu and LEVELS (ANY key ×0.2, floor 1 XP — mashing is the game; need(17) = 100 × 1.131^16);
+//   * MASHES the menu and LEVELS (ANY key ×0.2, floor 1 XP — mashing is the game; need(17) = 100 × 1.15^16);
 //   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 18 → LV 1, ×3)
 //     — one request, no gems, R1, LV18 → LV1;
 //   * BUYS KEY with wins (150 wins, ×2 XP / LETTER);
@@ -68,8 +68,8 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await noClaimPopups(page);
     if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('INKLING');
 
-    // MASH → LEVEL (FINAL v3: ANY key counts, no rate cap): LV17 → LV18 (need(17) = 100 × 1.131^16 ≈ 717 XP, 1.5% left
-    // ≈ 11 XP; a menu key pays ×0.2 of 1 XP, floored to 1 XP, at KEY T0 R0) — gibberish, typed fast
+    // MASH → LEVEL (FINAL v3: ANY key counts, no rate cap): LV17 → LV18 (need(17) = 100 × 1.15^16 ≈ 936 XP, 1.5% left
+    // ≈ 14 XP; a menu key pays ×0.2 of 1 XP, floored to 1 XP, at KEY T0 R0) — gibberish, typed fast
     await expect.poll(async () => {
       await page.keyboard.type('qwrtzxpvqwrtzxpv', { delay: 20 });
       return (await s2(page)).level;

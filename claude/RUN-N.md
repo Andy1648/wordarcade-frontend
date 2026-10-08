@@ -244,3 +244,19 @@ guard, and the cancel path.
 Wave 2 of `release/prod-2` is the 16 branches that collide only on the media migration. They share
 one resolution rule, so they should go in one sitting rather than one per night. `feat/solo-slabs`
 is in that wave.
+
+---
+
+## PROGRESSION v3.1: "each level a bit harder" (Andy Oct 7 22:31), on `feat/s2-progression-v3` (PR #255)
+
+- **Change:** `CURVE_GROWTH` 1.131 → **1.15** (`src/progress/v3/econ.js`). need(n) = 100 × 1.15^(n−1).
+- **Gate:** kept at **18 + 20R**. The median's first rebirth is 24.0 min, inside the 18–25 min hold, so the gate stays.
+  Migration 029 is unchanged. Probed for reference: 17 + 20R → 21.2 min.
+- **Sim (final-sim.mjs, 10 h):** median R1 24.0 min · R3 2.64 h · R5 not reached · R4 at 10 h. Casual
+  44.7 min / 5.04 h / R3. Fast 14.3 min / 87.5 min / 8.46 h / R5. Menu masher 13.2 min / R2. HARD CHECK PASS.
+  Side-by-side with v3 in `claude/progression-FINAL.md`.
+- **Trade-off:** the old 21:27 targets after R1 (R3 ≈ 2 h, R5 ≈ 6 h, R6–R7 by 10 h) no longer hold. The median is now
+  ~1.6× slower to R3 and ends one rebirth lower at 10 h.
+- **Tests:** v3.test.js, numbers-audit.spec, season2.spec (comment + need(17) ≈ 936 XP), sim expectations all moved
+  to v3.1. The sim also now fails if the median's R1 leaves 18–25 min. Local: 642/642 progress + leaderboard units, sim
+  PASS. CI is the full gate. **Not merged.**

@@ -5,7 +5,7 @@
 // KEEP IN SYNC WITH supabase/migrations/029_progression_final_v3.sql: same branches, order and constants —
 // finalRules.test.js pins the SQL text against them.
 //
-// FINAL v3 levels are geometric (need(n) = 100 × 1.131^(n−1)) and a rebirth sends the level back to 1 at the gate
+// FINAL v3 levels are geometric (need(n) = 100 × 1.15^(n−1)) and a rebirth sends the level back to 1 at the gate
 // LV 18 + 20·R, so a stored level sits near or below that gate. The caps:
 //   * FIRST season-2 write (never submitted, or a row whose last write was not season 2): a baseline — rebirths ≤
 //     lifetime words / F_WORDS_PER_RB, level ≤ the next gate + F_LV_HEADROOM; no weekly words;
