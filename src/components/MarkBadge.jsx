@@ -21,42 +21,14 @@ export const RANK_RIMS = [
 
 const INK = '#0d0618';
 
-// Glyphs, drawn in a 100×100 box centred on (50,50), ~44 units across. Uneven on purpose.
+// Glyphs, drawn in a 100×100 box centred on (50,50), ~44 units across. Uneven on purpose. Only the legacy (never
+// rolled) marks live here; the 29 rollable glyphs are in markGlyphsRolled.jsx (lazy, kit construction).
 const GLYPHS = {
-  'mk-bomber': (
-    <g>
-      <circle cx="47" cy="56" r="17" fill={INK} />
-      <path d="M58 41 L63 35" stroke={INK} strokeWidth="6" strokeLinecap="round" />
-      <path d="M63 35 C67 30 70 31 71 27" stroke="#FF6B3D" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-      <path d="M72 22 L74 27 L79 26 L75 30 L78 34 L73 32 L70 36 L70 31 L66 29 L71 28 Z" fill="#FFE94A" stroke={INK} strokeWidth="1.5" />
-      <circle cx="41" cy="50" r="4" fill="#fff" opacity="0.8" />
-    </g>
-  ),
-  'mk-sprinter': (
-    <path d="M56 26 L34 54 L48 54 L41 76 L66 44 L52 44 L60 26 Z" fill="#FFE94A" stroke={INK} strokeWidth="4" strokeLinejoin="round" />
-  ),
-  'mk-scholar': (
-    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
-      <path d="M50 30 L76 42 L50 54 L24 42 Z" fill={INK} />
-      <path d="M36 48 L36 60 C42 66 58 66 64 60 L64 48 L50 54 Z" fill="#9A1AFF" />
-      <path d="M72 44 L72 60" fill="none" strokeLinecap="round" />
-      <circle cx="72" cy="63" r="3.5" fill="#FFE94A" />
-    </g>
-  ),
   'mk-linguist': (
     <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
       <path d="M50 36 C42 31 32 31 25 34 L25 68 C32 65 42 65 50 70 Z" fill="#fff" />
       <path d="M50 36 C58 31 68 31 75 34 L75 68 C68 65 58 65 50 70 Z" fill="#EDE6FF" />
       <path d="M31 44 L43 44 M31 51 L43 51 M57 44 L69 44 M57 51 L66 51" strokeWidth="2.5" strokeLinecap="round" />
-    </g>
-  ),
-  'mk-metronome': (
-    <g stroke={INK} strokeWidth="3.5">
-      <circle cx="50" cy="51" r="23" fill="#fff" />
-      <circle cx="50" cy="51" r="14" fill="#FF4FA3" />
-      <circle cx="50" cy="51" r="5" fill={INK} />
-      <path d="M50 51 L72 29" strokeWidth="4" strokeLinecap="round" />
-      <path d="M72 29 L66 29 M72 29 L72 35" strokeWidth="3" strokeLinecap="round" />
     </g>
   ),
   'mk-student': (
@@ -85,34 +57,11 @@ const GLYPHS = {
     />
   ),
   // ---- STEP 49: the eight new marks, same hand: uneven, chunky ink, flat fills ----
-  'mk-linker': (
-    <g stroke={INK} strokeWidth="4" fill="none" strokeLinecap="round">
-      <rect x="24" y="40" width="30" height="18" rx="9" transform="rotate(-24 39 49)" stroke="#2EFFE0" strokeWidth="8" />
-      <rect x="24" y="40" width="30" height="18" rx="9" transform="rotate(-24 39 49)" />
-      <rect x="46" y="44" width="30" height="18" rx="9" transform="rotate(-24 61 53)" stroke="#FF4FA3" strokeWidth="8" />
-      <rect x="46" y="44" width="30" height="18" rx="9" transform="rotate(-24 61 53)" />
-    </g>
-  ),
   'mk-veteran': (
     <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
       <path d="M38 24 L50 40 L62 24 L66 27 L54 46 L46 46 L34 27 Z" fill="#FF4FA3" />
       <circle cx="50" cy="60" r="16" fill="#FFD54A" />
       <path d="M50 51 L53 57 L60 57 L54 61 L57 68 L50 64 L43 68 L46 61 L40 57 L47 57 Z" fill="#fff" strokeWidth="2" />
-    </g>
-  ),
-  'mk-phoenix': (
-    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
-      <path d="M50 78 C34 74 26 60 32 44 C36 52 40 54 42 50 C40 40 44 30 52 24 C52 34 58 38 62 34 C66 42 70 52 66 62 C62 72 56 76 50 78 Z" fill="#FF6B3D" />
-      <path d="M50 72 C42 68 40 60 44 52 C46 58 50 58 52 54 C56 58 60 62 58 66 C56 70 54 72 50 72 Z" fill="#FFE94A" strokeWidth="2.5" />
-    </g>
-  ),
-  'mk-smith': (
-    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
-      <path d="M26 70 L74 70 L68 62 L32 62 Z" fill="#5F6F84" />
-      <path d="M36 62 L40 54 L60 54 L64 62 Z" fill="#CFD8E3" />
-      <path d="M48 46 L66 28" strokeWidth="6" strokeLinecap="round" />
-      <rect x="58" y="18" width="20" height="12" rx="2" transform="rotate(45 68 24)" fill="#FF6B3D" />
-      <path d="M30 50 L26 44 M36 46 L35 39 M24 56 L18 54" stroke="#FFE94A" strokeWidth="3" strokeLinecap="round" />
     </g>
   ),
   'mk-curator': (
@@ -122,21 +71,6 @@ const GLYPHS = {
       <rect x="32" y="26" width="30" height="16" rx="2" fill="#fff" transform="rotate(-6 47 34)" />
       <path d="M36 32 L54 30" strokeWidth="2.5" strokeLinecap="round" />
       <path d="M50 50 L53 57 L60 58 L55 63 L56 70 L50 66 L44 70 L45 63 L40 58 L47 57 Z" fill="#FFE94A" strokeWidth="2" />
-    </g>
-  ),
-  'mk-pyro': (
-    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
-      <rect x="30" y="38" width="12" height="34" rx="3" fill="#FF4FA3" transform="rotate(-10 36 55)" />
-      <rect x="44" y="34" width="12" height="38" rx="3" fill="#FF6B3D" />
-      <rect x="58" y="38" width="12" height="34" rx="3" fill="#FFE94A" transform="rotate(10 64 55)" />
-      <path d="M50 34 C50 28 54 26 56 22" fill="none" strokeLinecap="round" />
-      <path d="M56 22 L60 16 L59 23 L66 21 L60 26 Z" fill="#FFE94A" strokeWidth="2" />
-    </g>
-  ),
-  'mk-nova': (
-    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
-      <path d="M50 18 L56 42 L80 38 L60 52 L74 74 L50 60 L28 76 L40 52 L20 36 L44 42 Z" fill="#fff" />
-      <circle cx="50" cy="50" r="9" fill="#2EFFE0" />
     </g>
   ),
   'mk-legend': (
@@ -149,7 +83,7 @@ const GLYPHS = {
     </g>
   ),
 };
-// The 26 MARK ROLLS glyphs + every glyph's FINISH (shade / highlight / extras) live in markGlyphsRolled.jsx (lazy —
+// The MARK ROLLS glyphs (29 rollable + 6 permanent) + every glyph's FINISH (shade / highlight / extras) live in markGlyphsRolled.jsx (lazy —
 // payload ratchet). A screen that needs them registers them (RollScreen, MarksIndex); a badge drawn before that
 // loads the module once and re-draws.
 const EXTRA = {};

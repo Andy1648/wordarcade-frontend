@@ -17,56 +17,14 @@ const INK = '#0d0618';
 /** id → [body, shadeOffset] (offset defaults to 7 — the crescent width on a filled shape). */
 const BODIES = {
   // ---- the legacy glyphs (MarkBadge.jsx) ----
-  'mk-bomber': [<circle cx="47" cy="56" r="17" />],
-  'mk-sprinter': [<path d="M56 26 L34 54 L48 54 L41 76 L66 44 L52 44 L60 26 Z" />, 6],
-  'mk-scholar': [<path d="M36 48 L36 60 C42 66 58 66 64 60 L64 48 L50 54 Z" />, 5],
   'mk-linguist': [<g><path d="M50 36 C42 31 32 31 25 34 L25 68 C32 65 42 65 50 70 Z" /><path d="M50 36 C58 31 68 31 75 34 L75 68 C68 65 58 65 50 70 Z" /></g>],
-  'mk-metronome': [<circle cx="50" cy="51" r="23" />],
   'mk-student': [<path d="M33 62 L45 48 L54 55 L70 36" fill="none" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />, 2],
   'mk-magpie': [<ellipse cx="50" cy="52" rx="22" ry="21" />],
   'mk-eternal': [<path d="M50 51 C43 41 29 40 28 51 C29 62 43 61 50 51 C57 41 71 40 72 51 C71 62 57 61 50 51 Z" fill="none" strokeWidth="8" strokeLinejoin="round" />, 2.5],
-  'mk-linker': [
-    <g fill="none" strokeWidth="8">
-      <rect x="24" y="40" width="30" height="18" rx="9" transform="rotate(-24 39 49)" />
-      <rect x="46" y="44" width="30" height="18" rx="9" transform="rotate(-24 61 53)" />
-    </g>,
-    2.5,
-  ],
   'mk-veteran': [<g><path d="M38 24 L50 40 L62 24 L66 27 L54 46 L46 46 L34 27 Z" /><circle cx="50" cy="60" r="16" /></g>, 6],
-  'mk-phoenix': [<path d="M50 78 C34 74 26 60 32 44 C36 52 40 54 42 50 C40 40 44 30 52 24 C52 34 58 38 62 34 C66 42 70 52 66 62 C62 72 56 76 50 78 Z" />],
-  'mk-smith': [<g><path d="M26 70 L74 70 L68 62 L32 62 Z" /><path d="M36 62 L40 54 L60 54 L64 62 Z" /></g>, 5],
   'mk-curator': [<rect x="26" y="34" width="48" height="36" rx="4" />],
-  'mk-pyro': [
-    <g>
-      <rect x="30" y="38" width="12" height="34" rx="3" transform="rotate(-10 36 55)" />
-      <rect x="44" y="34" width="12" height="38" rx="3" />
-      <rect x="58" y="38" width="12" height="34" rx="3" transform="rotate(10 64 55)" />
-    </g>,
-    4,
-  ],
-  'mk-nova': [<path d="M50 18 L56 42 L80 38 L60 52 L74 74 L50 60 L28 76 L40 52 L20 36 L44 42 Z" />, 6],
   'mk-legend': [<path d="M24 66 L28 34 L40 48 L50 26 L60 48 L72 34 L76 66 Z" />],
   // ---- the rolled + permanent glyphs (markGlyphsRolled.jsx) ----
-  'mk-sparky': [<path d="M55 19 L60 29 L71 24 L64 34 L74 41 L62 41 L60 52 L54 42 L44 45 L50 35 L42 27 L53 29 Z" />, 5],
-  'mk-dasher': [<path d="M32 40 L45 38 L51 50 L70 54 C78 56 80 62 78 66 L34 68 C30 60 30 48 32 40 Z" />],
-  'mk-crammer': [<rect x="26" y="40" width="48" height="32" rx="3" transform="rotate(-4 50 56)" />],
-  'mk-inkwell': [<g><path d="M24 70 C30 64 44 66 54 70 C64 74 76 70 80 74 C76 80 64 78 56 80 C46 82 30 80 24 70 Z" /><path d="M30 46 L51 34 L62 53 L41 65 Z" /></g>, 5],
-  'mk-shackle': [<path d="M40 66 C24 64 22 40 38 34 C50 30 60 38 58 50" fill="none" strokeWidth="6" strokeLinecap="round" />, 2],
-  'mk-wick': [<path d="M36 48 L64 46 L66 76 L34 77 Z" />],
-  'mk-matchstick': [<g><ellipse cx="61" cy="36" rx="8" ry="10" transform="rotate(38 61 36)" /><path d="M66 27 C62 20 67 15 72 11 C72 19 80 21 74 29 Z" /></g>, 4],
-  'mk-pacer': [<circle cx="50" cy="55" r="23" />],
-  'mk-nitro': [<rect x="34" y="30" width="28" height="44" rx="10" transform="rotate(-10 48 52)" />],
-  'mk-detonator': [<rect x="28" y="50" width="44" height="26" rx="3" />],
-  'mk-cyclone': [<path d="M22 32 C40 24 68 25 78 33 M28 45 C42 39 63 39 72 45 M36 57 C46 53 59 54 66 58 M46 68 C51 65 57 66 60 70" fill="none" strokeWidth="4" strokeLinecap="round" />, 1.5],
-  'mk-ouroboros': [<g><path d="M62 30 C45 21 24 32 26 52 C28 72 52 80 66 68 C74 60 74 47 69 40" fill="none" strokeWidth="6" strokeLinecap="round" /><path d="M58 23 L74 27 L72 40 L61 36 Z" /></g>, 2.5],
-  'mk-tinder': [<path d="M26 62 L36 44 L54 40 L66 50 L62 68 L40 74 Z" />],
-  'mk-slipstream': [<path d="M20 36 L58 36 C69 36 71 26 63 24 M28 52 L73 52 C83 52 83 66 73 64 M22 68 L51 68" fill="none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />, 1.5],
-  'mk-kraken': [<g><path d="M36 51 C24 64 22 66 20 74 C30 72 34 66 42 56 M46 53 C44 64 40 70 43 80 C49 74 51 64 53 55 M58 53 C61 64 66 70 75 71 C70 63 67 58 65 51" /><path d="M33 52 C29 30 71 26 68 51 Z" /></g>, 5],
-  'mk-golem': [<path d="M30 32 L68 28 L74 64 L56 76 L34 74 L26 52 Z" />],
-  'mk-eclipse': [<circle cx="47" cy="53" r="24" />, 5],
-  'mk-leviathan': [<g><path d="M18 70 C28 62 34 74 44 66 C54 58 60 72 70 64 C76 60 80 64 84 62 L84 78 L18 78 Z" /><path d="M36 63 C34 44 44 26 62 24 C70 24 74 30 70 34 L58 36 C52 40 50 50 52 63 Z" /></g>, 5],
-  'mk-singularity': [<g><ellipse cx="50" cy="52" rx="32" ry="11" transform="rotate(-14 50 52)" fill="none" strokeWidth="5" /><circle cx="49" cy="51" r="15" /></g>, 3],
-  'mk-origin': [<path d="M50 18 C64 38 74 50 70 64 C66 78 36 80 31 64 C27 52 38 38 50 18 Z" />],
   'mk-ironhand': [<path d="M30 44 C30 36 40 34 42 40 C44 32 54 32 55 40 C58 33 67 34 67 42 C72 40 76 46 74 54 L70 70 L36 72 C30 64 28 54 30 44 Z" />],
   'mk-marathon': [<path d="M62 18 L77 21 L71 25 L77 29 L62 28 Z" />, 3],
   'mk-blaze': [<path d="M52 20 C60 32 74 40 70 58 C67 72 56 78 46 78 C34 76 26 64 30 52 C32 44 38 42 40 36 C44 42 46 44 48 40 C50 34 48 26 52 20 Z" />],
@@ -83,11 +41,21 @@ function hash(s) {
   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
 }
-/** Which glyph ids have a body (the unit test checks every mark id is covered). */
-export const FINISHED_IDS = Object.keys(BODIES);
+/** The 29 ROLLABLE glyphs are drawn in the kit construction (markGlyphsRolled.jsx): their shade plane, one glint and
+ * asymmetric detail are part of the art, so the finish adds nothing to them (a second gleam + sparkle would break
+ * the kit's "exactly one glint"). */
+export const KIT_DRAWN = new Set([
+  'mk-bomber', 'mk-sparky', 'mk-sprinter', 'mk-dasher', 'mk-crammer', 'mk-inkwell', 'mk-linker', 'mk-shackle',
+  'mk-wick', 'mk-matchstick', 'mk-pacer', 'mk-nitro', 'mk-detonator', 'mk-cyclone', 'mk-scholar', 'mk-ouroboros',
+  'mk-tinder', 'mk-slipstream', 'mk-smith', 'mk-phoenix', 'mk-metronome', 'mk-pyro', 'mk-nova', 'mk-golem',
+  'mk-leviathan', 'mk-eclipse', 'mk-singularity', 'mk-kraken', 'mk-origin',
+]);
+/** Which glyph ids are finished — a body here, or kit-drawn (the unit test checks every mark id is covered). */
+export const FINISHED_IDS = [...Object.keys(BODIES), ...KIT_DRAWN];
 
 /** The finish layer for one glyph, drawn in the glyph's own 100×100 space on top of it. */
 export function GLYPH_FINISH(id, uid) {
+  if (KIT_DRAWN.has(id)) return null;
   const h = hash(String(id));
   const extras = (
     <g stroke={INK} strokeLinejoin="round">
