@@ -19,7 +19,6 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import KitIcon from './KitIcon.jsx';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS } from './countTween.js';
 import { FX, fx, fxOrShow, kitPlay } from './motion.js';
-import { BUMP_MS, BUMP_SCALE } from '../gains/gainPlan.js';
 import { formatNum, formatShort } from '../../format.js';
 import './tokens.css';
 import './KitPill.css';
@@ -30,7 +29,10 @@ export const PILL_KINDS = {
   levels: { label: 'LEVELS', icon: 'levels', tone: 'purple' },
 };
 export const POP_STACK_MS = 750;
-const BUMP = [{ transform: 'scale(1)' }, { transform: `scale(${BUMP_SCALE})`, offset: 0.4 }, { transform: 'scale(1)' }];
+// the gain BUMP (gains/gainPlan.js BUMP_MS / BUMP_SCALE — inlined: the pill is on the menu's first paint, the gain
+// module is not)
+const BUMP_MS = 180;
+const BUMP = [{ transform: 'scale(1)' }, { transform: 'scale(1.12)' , offset: 0.4 }, { transform: 'scale(1)' }];
 export const FIT_FLOOR = 0.6; // the smallest the figure may shrink to (a 31px numeral stays ≥ 18px)
 
 /** The scale that fits `len` glyphs of width `cw` into `avail` px — 1 when it fits, never under FIT_FLOOR. */
