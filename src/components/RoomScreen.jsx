@@ -115,6 +115,11 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   const inviteCopiedTimerRef = useRef(null);
   const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
   useEffect(() => () => clearTimeout(inviteCopiedTimerRef.current), []);
+  // R3 oct8: the CODE itself is copyable — tap the tiles, get the five letters (the invite button
+  // copies the LINK; a friend on a call wants the code). Same brief ✓ beat, its own timer.
+  const [codeCopied, setCodeCopied] = useState(false);
+  const codeCopiedTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(codeCopiedTimerRef.current), []);
 
   // Scale the lobby to the viewport (see hooks/useFitZoom.js). Above the guard: Rules of Hooks.
   const boxRef = useRef(null);
@@ -179,6 +184,19 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
     }
   }
 
+  async function handleCopyCode() {
+    sound.click();
+    try {
+      await navigator.clipboard.writeText(String(room.code));
+      setCodeCopied(true);
+      clearTimeout(codeCopiedTimerRef.current);
+      codeCopiedTimerRef.current = setTimeout(() => setCodeCopied(false), 1400);
+      track('room_code_copied');
+    } catch {
+      /* clipboard blocked: the invite button's path still works */
+    }
+  }
+
   async function handleShareInvite() {
     sound.click();
     try {
@@ -230,9 +248,16 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             accessible name, and the beat reaction. */}
         <div className="room-code" translate="no" aria-label={`Room code ${room.code}`}>
           {SEASON2 ? (
-            <span className="room-code-tiles" aria-hidden="true">
-              {String(room.code).split('').map((ch, i) => <span key={i} className="room-code-tile">{ch}</span>)}
-            </span>
+            <button
+              type="button"
+              className={`room-code-tiles${codeCopied ? ' is-copied' : ''}`}
+              onClick={handleCopyCode}
+              aria-label={`Copy room code ${room.code}`}
+              title="Copy the code"
+            >
+              {String(room.code).split('').map((ch, i) => <span key={i} className="room-code-tile" aria-hidden="true">{ch}</span>)}
+              <span className="room-code-copied" aria-live="polite">{codeCopied ? '✓ CODE COPIED' : 'TAP TO COPY'}</span>
+            </button>
           ) : (
             <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
           )}

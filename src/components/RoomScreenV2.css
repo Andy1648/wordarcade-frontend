@@ -9,7 +9,35 @@
 
 /* the code: one yellow LETTER TILE per character */
 .room-wrap[data-skin="v2"] .room-code { display: flex; justify-content: flex-start; }
-.room-code-tiles { display: flex; gap: 10px; }
+/* the tiles are ONE button (R3 oct8: tap → the code is on the clipboard); the caption under them says so */
+.room-code-tiles {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: 0 0 18px;
+  margin: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: transform 120ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.room-code-tiles:hover { transform: translate(-2px, -2px); }
+.room-code-tiles:active { transform: translate(2px, 2px); }
+.room-code-tiles:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 4px; }
+.room-code-copied {
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-k14);
+  letter-spacing: 0.08em;
+  color: #9a8bbf;
+}
+.room-code-tiles.is-copied .room-code-copied { color: #2EFFE0; }
+.room-code-tiles.is-copied .room-code-tile { background: #2EFFE0; border-bottom-color: #1A9985; }
 .room-code-tile {
   width: 64px;
   height: 76px;
@@ -67,7 +95,8 @@
   white-space: nowrap;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: var(--fs-k14);
+  font-size: var(--fs-k16); /* R3 oct8: was k14 — at the 0.96 fit-zoom of a 1280x551 laptop that rendered 13.4px,
+                               0.07 from the suite's 13px floor (the v2-rooms "settings/size" flake): 16 × 0.96 = 15.4 */
   color: #fff;
 }
 .room-you-badge {
@@ -80,7 +109,7 @@
   transform: rotate(4deg);
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: var(--fs-k15); /* the lobby box fit-zooms on a short laptop: 15 × ~0.9 stays ≥ 13 */
+  font-size: var(--fs-k16); /* the lobby box fit-zooms on a short laptop: 16 × 0.9 stays ≥ 14 (R3 oct8: was k15) */
   color: #000;
 }
 .room-seat-open {
@@ -95,7 +124,9 @@
   color: #3a2160;
 }
 
-/* START: big, with the mode under it */
+/* START: big, with the mode under it. R3 oct8 — REAL STATES: rest / hover lifts −2,−2 (shadow grows) /
+   pressed sits +3,+3 (shadow collapses) / disabled is the dark dashed panel. Transform is the only thing
+   that animates; the hard shadow toggles. */
 .room-wrap[data-skin="v2"] .room-start-btn {
   min-height: 92px;
   display: flex;
@@ -114,11 +145,14 @@
   line-height: 1;
   color: #000;
 }
-.room-wrap[data-skin="v2"] .room-start-btn:disabled { background: #2a1745; border-bottom-color: #1a0b2e; color: #8a7aa8; font-size: var(--fs-k20); }
+.room-wrap[data-skin="v2"] .room-start-btn { transition: transform 120ms cubic-bezier(0.2, 0.9, 0.2, 1); }
+.room-wrap[data-skin="v2"] .room-start-btn:hover { transform: translate(-2px, -2px); box-shadow: 11px 11px 0 #000; }
+.room-wrap[data-skin="v2"] .room-start-btn:active { transform: translate(3px, 3px); box-shadow: 6px 6px 0 #000; }
+.room-wrap[data-skin="v2"] .room-start-btn:disabled { background: #2a1745; border-bottom-color: #1a0b2e; color: #8a7aa8; font-size: var(--fs-k20); transform: none; box-shadow: none; }
 .room-start-mode {
   padding: 1px 8px;
   background: #000;
-  font-size: var(--fs-k14);
+  font-size: var(--fs-k16); /* R3 oct8: was k14 (13.4px under the short-laptop fit-zoom) */
   color: #FFE94A;
 }
 
@@ -128,6 +162,8 @@
   .room-wrap[data-skin="v2"] .room-player-chip,
   .room-seat-open { min-height: 50px; }
   .room-wrap[data-skin="v2"] .room-start-btn { min-height: 76px; font-size: var(--fs-k34); }
+  /* phones never fit-zoom (zoom 1), so the 14px floor holds at k14 and a 9-letter name still fits a two-up chip */
+  .room-wrap[data-skin="v2"] .room-player-name { font-size: var(--fs-k14); }
 }
 /* the live chip's slam-in animates its BACKGROUND to white (fill: both); the v2 card keeps its own fill and slams in on
    transform / opacity only */
