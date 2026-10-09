@@ -38,7 +38,7 @@ if (!V3.ready) {
   winsV3({ a: hooks.countingBank(bankWordWins), w: stock.stockWinsMult });
   frenzyV3(); // FUSE FRENZY = ×5 XP per key, no wins multiplier (Andy oct8)
   gemsResultV3({ a: hooks.flatStreak(gameResultPayout), b: hooks.countingResult(payGameResult) });
-  Object.assign(V3, { econ, curve, store, unlocks, ranks, hooks, stock, m: hooks.mark2Factor, ready: true });
+  Object.assign(V3, { econ, curve, store, unlocks, ranks, hooks, stock, m: hooks.mark2Factor, c2: hooks.mark2For, ready: true });
   try {
     if (!gemsMigrated()) stampGemsMigrated({ peak: storedLevel() });
   } catch {

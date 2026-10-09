@@ -26,6 +26,9 @@ import { sndLevelUp } from '../audio/gameSounds';
 import { formatNum } from '../format.js';
 import { flagOn } from '../lib/featureFlags.js';
 import { milestoneCrossed, MILESTONE_FX } from './menuTier.js';
+// CRIT (Andy oct8): the worn gears' CRIT RATE / POWER — each credited menu KEY rolls on its own (crit.js)
+import { critTotals } from './markRollsCore.js';
+import { critKey } from './crit.js';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -75,6 +78,10 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // pin here and no storage read per keystroke inside need().
     // MILESTONE MOMENTS (dormant: ?milestones=1). Read once per menu session, never per keystroke.
     const milestonesOn = flagOn('milestones');
+    // CRIT: the worn gears' RATE (0% with no RARE+ gear → no key ever crits) and POWER (×2 + gear). Read once per menu
+    // session like menuGain (wearing a gear happens on another screen, which remounts this hook) — never per key.
+    const crit = critTotals();
+    if (crit.rate > 0 && fxRef && fxRef.current && fxRef.current.critArm) fxRef.current.critArm(); // load the burst art
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; both credit the same
     // XP. A tap's only difference is its pop — the "+N" alone at the tap coordinates.
@@ -90,10 +97,13 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const crossed = tier > st.tier;
       st.tier = tier;
 
-      playClack(st.count - 1); // creates/resumes the AudioContext inside this gesture
       const isTap = opts.kind === 'tap';
+      // CRIT: a KEY (never a tap) rolls its own crit — that key pays menuGain × POWER, everything else menuGain
+      const hit = isTap ? { gain: menuGain, crit: false } : critKey(menuGain, crit);
+      // creates/resumes the AudioContext inside this gesture; a crit clacks an octave up (+5 pentatonic steps)
+      playClack(st.count - 1 + (hit.crit ? 5 : 0));
       const fromLevel = xpRef.current.level;
-      const res = creditXp(xpRef.current, menuGain);
+      const res = creditXp(xpRef.current, hit.gain);
       xpRef.current = res.state;
       saveProgress(res.state);
       setProgress(progressOf(res.state));
@@ -111,6 +121,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
           refreshSessionProps({ level: res.level });
         } else if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
         if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
+        else if (hit.crit && fx.critPop) fx.critPop(opts.letter, `CRIT +${formatNum(hit.gain)}`, TIER_SCALES[tier]);
         else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
         // T4's per-accepted-word edge glow lives in-game). Gold at KEY TIER T5+.

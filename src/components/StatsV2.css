@@ -408,8 +408,8 @@
   position: absolute;
   left: calc(30px * var(--st2-k));
   right: calc(76px * var(--st2-k)); /* the mockup's 36 + room for the app's corner sound control */
-  top: calc(520px * var(--st2-k));
-  height: calc(98px * var(--st2-k));
+  top: calc(552px * var(--st2-k)); /* CRIT row (oct8) sits above it: was 520 / 98 */
+  height: calc(86px * var(--st2-k));
   box-sizing: border-box;
   background: #12071f;
   border: 4px solid #000;
@@ -633,3 +633,82 @@
 .st2--narrow .st2-head { grid-template-areas: 'back title' 'tabs tabs'; }
 .st2--narrow .st2-tabs { justify-self: stretch; display: flex; }
 .st2--narrow .st2-tab { flex: 1 1 0; justify-content: center; padding: 0 6px; }
+
+/* ---- CRIT (Andy oct8): the worn gears' crit — its OWN row, a chance per key, never a chip in the multiplier chain ---- */
+.st2-crit[hidden] { display: none; }
+.st2-crit {
+  position: absolute;
+  left: calc(30px * var(--st2-k));
+  right: calc(76px * var(--st2-k));
+  top: calc(496px * var(--st2-k));
+  height: calc(46px * var(--st2-k));
+  min-height: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: calc(16px * var(--st2-k));
+  padding: 0 calc(16px * var(--st2-k)) 0 0;
+  background: #12071f;
+  border: 4px solid #000;
+  border-left: calc(10px * var(--st2-k)) solid #FFE94A;
+  box-shadow: 6px 6px 0 #000;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.st2-crit.is-off { border-left-color: #5d4a78; }
+.st2-crit-tile {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding-left: calc(10px * var(--st2-k));
+}
+/* the CRIT art: the same ink starburst the crit key bursts on (public/fx/crit-burst.svg), static here */
+.st2-crit-burst {
+  display: block;
+  width: max(34px, calc(40px * var(--st2-k)));
+  height: max(34px, calc(40px * var(--st2-k)));
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+.st2-crit.is-off .st2-crit-burst { opacity: 0.35; }
+.st2-crit-head {
+  flex: none;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: max(var(--fs-k20), calc(var(--fs-k28) * var(--st2-k)));
+  line-height: 1;
+  color: #FFE94A;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 4px #000;
+}
+.st2-crit.is-off .st2-crit-head { color: #c9b8e8; }
+.st2-crit-sub {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: max(var(--fs-k14), calc(var(--fs-k17) * var(--st2-k)));
+  color: #fff;
+}
+.st2-crit.is-off .st2-crit-sub { color: #c9b8e8; }
+.st2--narrow .st2-crit {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  height: auto;
+  flex: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'tile head' 'tile sub';
+  row-gap: 2px;
+  column-gap: 10px;
+  padding: 8px 12px 8px 0;
+  border-left-width: 8px;
+  box-shadow: 4px 4px 0 #000;
+  white-space: normal;
+}
+.st2--narrow .st2-crit-tile { grid-area: tile; padding-left: 8px; }
+.st2--narrow .st2-crit-burst { width: 52px; height: 52px; }
+.st2--narrow .st2-crit-head { grid-area: head; font-size: var(--fs-k24); }
+.st2--narrow .st2-crit-sub { grid-area: sub; font-size: var(--fs-k14); line-height: 1.25; }

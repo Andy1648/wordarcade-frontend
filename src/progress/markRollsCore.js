@@ -534,3 +534,71 @@ export function markOverdriveSec(opts = {}) {
 export function markMult(opts = {}) {
   return guard(() => markWinsMult(opts) * ((BASE_WINS_PER_WORD + markBaseWins(opts)) / BASE_WINS_PER_WORD), 1);
 }
+
+// ------------------------------------------------------------------------------------------ CRIT
+// CRIT (Andy oct8: "add crit power and crit rate to gears — gears can have more than 1 value"). A gear keeps its ONE
+// MAIN stat and, from RARE up, carries EXTRA crit stats by tier — deterministic per gear (no save field, no migration),
+// scaled by the SAME ★ pips × SHINY factor statOf uses. EARNED (permanent) gears carry the LEGENDARY crit, as they pay
+// the LEGENDARY MAIN. A crit is a MENU KEY that pays × CRIT POWER (progress/crit.js rolls it, useXpCapture applies it).
+//   COMMON none · RARE +2% RATE · EPIC +4%, +0.25× POWER · LEGENDARY +6%, +0.5× · MYTHIC +9%, +1× · SECRET +12%, +1.5×
+// Totals SUM over the worn gears (the MAIN + the season-2 2nd slot): RATE = min(50%, Σ rate) from a BASE of 0,
+// POWER = ×2 + Σ power. `rate` is a fraction (0.06 = 6%); `power` is the part ADDED to the base ×2.
+export const CRIT_BY_TIER = Object.freeze({
+  common: Object.freeze({ rate: 0, power: 0 }),
+  rare: Object.freeze({ rate: 0.02, power: 0 }),
+  epic: Object.freeze({ rate: 0.04, power: 0.25 }),
+  legendary: Object.freeze({ rate: 0.06, power: 0.5 }),
+  mythic: Object.freeze({ rate: 0.09, power: 1 }),
+  secret: Object.freeze({ rate: 0.12, power: 1.5 }),
+});
+export const CRIT_BASE_RATE = 0;
+export const CRIT_BASE_POWER = 2;
+export const CRIT_RATE_CAP = 0.5;
+const NO_CRIT = Object.freeze({ rate: 0, power: 0 });
+/** The crit tier row a gear id reads (a PERMANENT reads LEGENDARY), or null for an id with no crit (a retired mark). */
+export function critTierOf(id) {
+  const r = ROLL_BY_ID.get(id);
+  if (r) return CRIT_BY_TIER[r.tier] || NO_CRIT;
+  return PERM_BY_ID.has(id) ? CRIT_BY_TIER.legendary : null;
+}
+/**
+ * ONE gear's EXTRA crit stats as they pay right now: { rate, power } = its tier's row × ★ pips × SHINY (a PERMANENT:
+ * the LEGENDARY row, no pips). { 0, 0 } for a COMMON / an unknown or retired id. `state` as statOf.
+ */
+export function critStatsOf(id, state) {
+  const row = id ? critTierOf(id) : null;
+  if (!row || (!row.rate && !row.power)) return { rate: 0, power: 0 };
+  let k = 1;
+  if (ROLL_BY_ID.has(id)) {
+    const s = resolve(state);
+    k = s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
+  }
+  return { rate: row.rate * k, power: row.power * k };
+}
+/**
+ * The worn gears' CRIT, summed: { rate (capped 50%), power (×2 + Σ), rawRate (uncapped Σ), ids }. `markId` undefined →
+ * the worn MAIN; `mark2Id` undefined → the season-2 2nd slot (V3.c2 — null outside season 2 / below R5); null = none.
+ * `state` undefined → the stored roll state. Guarded: a failure is the base (0% · ×2).
+ */
+export function critTotals({ markId, mark2Id, state } = {}) {
+  try {
+    const s = resolve(state);
+    const id = markId === undefined ? wornMarkId() : markId;
+    const id2 = mark2Id === undefined ? (V3.c2 ? V3.c2(s, id) : null) : mark2Id;
+    let rate = CRIT_BASE_RATE;
+    let power = 0;
+    const ids = [];
+    for (const g of [id, id2]) {
+      if (!g || ids.includes(g)) continue;
+      const c = critStatsOf(g, s);
+      ids.push(g);
+      rate += c.rate;
+      power += c.power;
+    }
+    const r = Number.isFinite(rate) && rate > 0 ? rate : 0;
+    const p = Number.isFinite(power) && power > 0 ? power : 0;
+    return { rate: Math.min(CRIT_RATE_CAP, r), power: CRIT_BASE_POWER + p, rawRate: r, ids };
+  } catch {
+    return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: 0, ids: [] };
+  }
+}

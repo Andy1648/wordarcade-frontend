@@ -16,7 +16,7 @@
 import { memo } from 'react';
 import { RAINBOW_TEETH } from './palette.js';
 
-import { LAYOUT } from './frameLayout.js';
+import { layoutFor } from './frameLayout.js';
 
 function rosette(cx, cy, r, points = 12, inner = 0.86) {
   const pts = [];
@@ -35,8 +35,8 @@ const Pin = ({ cx, cy, fill, edge }) => (
   </g>
 );
 
-function CardFrame({ line, edge, fill, tier = 'common', locked = false, perk = false }) {
-  const L = perk ? LAYOUT.perk : LAYOUT.plain;
+function CardFrame({ line, edge, fill, tier = 'common', locked = false, perk = false, crit = false }) {
+  const L = layoutFor({ perk, crit });
   const pins = !locked && (tier === 'legendary' || tier === 'mythic' || tier === 'secret');
   const headPins = !locked && (tier === 'mythic' || tier === 'secret');
   const pinFill = (i) => (tier === 'secret' ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : line);
@@ -60,6 +60,8 @@ function CardFrame({ line, edge, fill, tier = 'common', locked = false, perk = f
       <path d={banner(2, 178, L.name, 30, 6)} fill={line} stroke={edge} strokeWidth="3" strokeLinejoin="round" />
       {/* the stat band (ink), the perk band, the odds plate */}
       <rect x="5" y={L.stat} width="170" height="32" rx="6" fill="#0d0618" stroke={edge} strokeWidth="2.5" />
+      {/* the CRIT band (RARE+ / EARNED): crit yellow, outlined in its darker yellow (grey when locked) */}
+      {crit ? <rect x="5" y={L.crit} width="170" height="18" rx="4" fill={locked ? '#5d4a78' : '#FFE94A'} stroke={locked ? '#2a1a40' : '#b3a100'} strokeWidth="2.5" /> : null}
       {perk ? <rect x="5" y={L.perk} width="170" height="18" rx="4" fill="#0d0618" stroke={edge} strokeWidth="2" /> : null}
       <rect x="14" y={L.foot} width="152" height="20" rx="4" fill={fill} stroke={edge} strokeWidth="2" />
       {/* LEGENDARY+: the pins */}

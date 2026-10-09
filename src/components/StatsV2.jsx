@@ -22,7 +22,8 @@ import { V3 } from '../progress/season';
 import { statBoard, statChain, boardMult, BOARD_MODE, BOARD_MODE_NAMES } from '../progress/statBoard';
 import { getKeyTier, getRebirths } from '../progress/xp';
 import { getLetters } from '../progress/letters';
-import { loadRollState, wornMarkId, markEntry, markBaseXp } from '../progress/markRollsCore';
+import { loadRollState, wornMarkId, markEntry, markBaseXp, critTotals } from '../progress/markRollsCore';
+import { critSummary } from '../progress/critText';
 import { readRecords } from '../progress/records';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { useMomentHold } from '../lib/useMomentSlot';
@@ -231,6 +232,8 @@ export default function StatsV2({ onBack, onMore }) {
 
   const [boards] = useState(readBoards);
   const [life] = useState(readLife);
+  // CRIT (Andy oct8): its OWN row — a chance per key, not a multiplier, so it is never folded into the chain's product
+  const [crit] = useState(() => critSummary(critTotals()));
   const [tab, setTab] = useState('wins');
   // the replay: idx = chips landed (after BASE), cur = the running multiplier, done = slammed
   const [play, setPlay] = useState({ idx: 0, cur: 1, done: false });
@@ -425,6 +428,16 @@ export default function StatsV2({ onBack, onMore }) {
               </div>
             );
           })}
+        </div>
+
+        <div className={`st2-crit${crit.on ? '' : ' is-off'}`} data-testid="st2-crit" hidden={tab === 'boosts'} role="group" aria-label={`${crit.head}. ${crit.sub}`}>
+          <span className="st2-crit-tile" aria-hidden="true">
+            <img className="st2-crit-burst" src="/fx/crit-burst.svg" alt="" draggable="false" />
+          </span>
+          <span className="st2-crit-head" data-testid="st2-crit-head">
+            {crit.head}
+          </span>
+          <span className="st2-crit-sub" data-testid="st2-crit-sub">{crit.on ? crit.sub : `— ${crit.sub}`}</span>
         </div>
 
         <div className="st2-life" role="group" aria-label="All time">

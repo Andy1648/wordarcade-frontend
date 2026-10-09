@@ -60,6 +60,18 @@ const TIER_TEAL = '#2EFFE0';
 const TIER_GOLD = '#FFD54A';
 const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, not the OS
 
+// CRIT KEY (Andy oct8, prototype "A + B"): the key's pop flashes CRIT YELLOW with a scale punch (1.35 → 0.92 → 1 in
+// ~260ms) and a bigger "CRIT +N", over a yellow ink STARBURST (the real asset public/fx/crit-burst.svg — never CSS
+// shapes). The bursts are a FIXED POOL reused round-robin: WAAPI scale / rotate / opacity, finite, will-change on for
+// the flight only. Placement reuses the pop's cached-size random position — no layout read per key.
+const CRIT_YELLOW = '#FFE94A';
+const CRIT_BURST_MS = 720; // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
+const CRIT_BURST_POOL = 6;
+const CRIT_BURST_SRC = '/fx/crit-burst.svg';
+const CRIT_PUNCH_MS = 380; // 1.6 → 0.88 → 1.08 → 1 — a harder slam with one rebound (was 260, 1.35 → 0.92 → 1)
+const CRIT_SHARDS = 6;
+const CRIT_BURST_LIFT = 16; // px: the crit pop stacks KEY over "CRIT +N", so the key sits ~16px above the pop's centre
+
 // Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
 const LEVELUP_MS = CARD_MS; // 1500 — lib/menuMoments.js (the moments queue releases on it)
@@ -199,6 +211,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   const shardElsRef = useRef([]);
   const shardAnimsRef = useRef([]);
   const shardNextRef = useRef(0);
+  // CRIT starbursts (pooled, round-robin)
+  const critElsRef = useRef([]);
+  const critAnimsRef = useRef([]);
+  const critNextRef = useRef(0);
   const layerRectRef = useRef({ left: 0, top: 0 }); // for converting tap client coords
   const barBoxRef = useRef(null); // XP bar box (layer-local) — taps must not cover it
 
@@ -274,6 +290,22 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // airborne window (set in spawnShards), never on the idle pooled node.
       a.onfinish = () => {
         el.style.willChange = '';
+      };
+      return a;
+    });
+
+    // CRIT starbursts — keyframes re-set per spawn (each lands at its own tilt), so create them idle.
+    critAnimsRef.current = critElsRef.current.map((el) => {
+      const a = el.animate(
+        [
+          { transform: `${CENTER}rotate(-30deg) scale(0.3)`, opacity: 0, offset: 0 },
+          { transform: `${CENTER}rotate(0deg) scale(1)`, opacity: 0, offset: 1 },
+        ],
+        { duration: CRIT_BURST_MS, easing: 'linear', fill: 'both' }
+      );
+      a.cancel();
+      a.onfinish = () => {
+        el.style.willChange = ''; // the hint lives only for the burst's flight, never on the idle pool
       };
       return a;
     });
@@ -401,7 +433,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const anim = anims[i];
       if (!el || !anim) return;
       const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
-      el.classList.remove('is-tap'); // reset if this node was last used for a tap
+      el.classList.remove('is-tap', 'is-crit'); // reset if this node was last used for a tap / a crit
       // KEY TIER tier (item 1) drives the visible/audible escalation the player BOUGHT:
       // T1-T4 teal, T5+ gold (overrides the streak colour); T3+ a hard offset shadow;
       // T2+ particle shards. All finite/pooled; particles skip under reduced motion.
@@ -436,6 +468,78 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       anim.cancel();
       anim.play();
     },
+    // CRIT KEY pop (Andy oct8 "A + B"): the SAME pooled pop node as letterPop, in its crit dress (.is-crit — the key
+    // CRIT YELLOW with a darker-yellow outline, "CRIT +N" big in Bungee), a scale PUNCH 1.35 → 0.92 → 1 over
+    // CRIT_PUNCH_MS before it floats off, a pooled ink STARBURST behind it and a ring of yellow shards. All finite,
+    // transform / opacity only, no layout read (the cached layer size + the pop's own random position).
+    // Arm the crit art: the menu session can crit (a RARE+ gear is worn), so the burst pool loads its asset now —
+    // once, on mount, never per key.
+    critArm() {
+      for (const n of critElsRef.current) if (n && !n.getAttribute('src')) n.setAttribute('src', CRIT_BURST_SRC);
+    },
+    critPop(letter, critText, scale = 1) {
+      const { w, h } = layerSizeRef.current;
+      const anims = popAnimsRef.current;
+      if (!w || !h || !anims.length) return;
+      const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
+      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const el = popElsRef.current[i];
+      const anim = anims[i];
+      if (!el || !anim) return;
+      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
+      el.classList.remove('is-tap');
+      el.classList.add('is-crit');
+      el.children[0].textContent = letter;
+      el.children[0].style.color = ''; // CSS crit yellow
+      el.children[0].style.textShadow = '';
+      el.children[1].textContent = critText;
+      el.children[1].style.color = '';
+      el.style.left = `${pos.x}px`;
+      el.style.top = `${pos.y}px`;
+      const still = prefersReducedMotion();
+      // the STARBURST behind the key (round-robin pool), on its own random tilt
+      const bAnims = critAnimsRef.current;
+      if (!still && bAnims.length) {
+        const b = critNextRef.current % CRIT_BURST_POOL;
+        critNextRef.current = (b + 1) % CRIT_BURST_POOL;
+        const bEl = critElsRef.current[b];
+        const bAnim = bAnims[b];
+        if (bEl && bAnim) {
+          if (!bEl.getAttribute('src')) bEl.setAttribute('src', CRIT_BURST_SRC); // never armed (a fallback, not the path)
+          bEl.style.left = `${pos.x}px`;
+          bEl.style.top = `${pos.y - CRIT_BURST_LIFT}px`; // behind the KEY (the top of the stacked pop), not its middle
+          bEl.style.willChange = 'transform, opacity';
+          const r0 = Math.random() * 40 - 20;
+          bAnim.effect.setKeyframes([
+            { transform: `${CENTER}rotate(${r0 - 30}deg) scale(0.2)`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
+            { transform: `${CENTER}rotate(${r0}deg) scale(1.2)`, opacity: 1, offset: 0.22, easing: 'cubic-bezier(.3,.7,.4,1)' },
+            { transform: `${CENTER}rotate(${r0 + 5}deg) scale(1)`, opacity: 1, offset: 0.4 },
+            { transform: `${CENTER}rotate(${r0 + 9}deg) scale(1.03)`, opacity: 1, offset: 0.72, easing: 'ease-in' },
+            { transform: `${CENTER}rotate(${r0 + 16}deg) scale(1.25)`, opacity: 0, offset: 1 },
+          ]);
+          bAnim.cancel();
+          bAnim.play();
+        }
+        spawnShards(pos.x, pos.y, CRIT_YELLOW, CRIT_SHARDS, 1.6);
+      }
+      // the PUNCH (1.35 → 0.92 → 1 in CRIT_PUNCH_MS), then the normal float-off — a little longer than a plain pop
+      const tf = tierRef.current;
+      const dur = tf.popMs + 550; // Andy oct8 "a bit longer": the crit key holds on screen before it floats off
+      const at = (ms) => Math.min(0.9, ms / dur);
+      const rot = Math.random() * 10 - 5;
+      const s = scale;
+      anim.effect.updateTiming({ duration: dur });
+      anim.effect.setKeyframes([
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.6})`, opacity: 1, offset: 0, easing: 'cubic-bezier(.3,.7,.4,1)' },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.88})`, opacity: 1, offset: at(CRIT_PUNCH_MS * 0.45) },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.08})`, opacity: 1, offset: at(CRIT_PUNCH_MS * 0.75) },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s})`, opacity: 1, offset: at(CRIT_PUNCH_MS) },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-8px)`, opacity: 1, offset: 0.7 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
+      ]);
+      anim.cancel();
+      anim.play();
+    },
     // Tap pop: no letter — the "+N" ALONE, at the letter's size (via .is-tap CSS), in the
     // tier colour, spawned AT the tap client coords (converted to layer-local), still kept
     // out of the XP bar's box.
@@ -455,6 +559,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
+      el.classList.remove('is-crit');
       el.classList.add('is-tap'); // hides the letter span, upsizes the "+N" (CSS)
       el.children[1].textContent = plusText;
       el.children[1].style.color = colour; // tier colour for the tap
@@ -608,6 +713,20 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
 
   return (
     <div className="menu-xp-fx" ref={layerRef} aria-hidden="true">
+      {/* CRIT starbursts: before the pops in the DOM, so a crit key always sits ON its burst. No src until critArm()
+          (a save that cannot crit never downloads the art — payload ratchet) */}
+      {Array.from({ length: CRIT_BURST_POOL }, (_, i) => (
+        <img
+          key={`c${i}`}
+          className="menu-xp-critburst"
+          alt=""
+          draggable="false"
+          decoding="async"
+          ref={(n) => {
+            critElsRef.current[i] = n;
+          }}
+        />
+      ))}
       {Array.from({ length: POP_POOL }, (_, i) => (
         <span
           key={`p${i}`}
