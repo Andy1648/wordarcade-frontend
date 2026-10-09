@@ -1036,6 +1036,7 @@ function App() {
   const wbWordsByIdRef = useRef({});
   const rosterIdsRef = useRef([]);
   const botIdsRef = useRef(new Set());
+  const botDiffRef = useRef(new Map()); // bot id -> its botDifficulty (Andy oct8: bot-room rewards scale with it)
   const [winnerPay, setWinnerPay] = useState(null);
 
   // The WS drain effect below is keyed only on [messages], so reading `room` /
@@ -1053,7 +1054,7 @@ function App() {
     playerCountRef.current = room?.players?.length || 0;
     gameDifficultyRef.current = room?.difficultyKey || null;
     rosterIdsRef.current = (room?.players || []).map((p) => p.id);
-    (room?.players || []).forEach((p) => { if (p.isBot) botIdsRef.current.add(p.id); });
+    (room?.players || []).forEach((p) => { if (p.isBot) { botIdsRef.current.add(p.id); if (p.botDifficulty) botDiffRef.current.set(p.id, p.botDifficulty); } });
   }, [room]);
   // H4 anti-farm: register this tab's live player id, so another tab of this browser in the same
   // room is recognised as the player themself (progress/seats.js), never as a rival.
@@ -1765,7 +1766,7 @@ function App() {
             gameTotal: blitzGameWinsRef.current,
             myWords: words[myIdRef.current] || 0,
             rivals: Object.keys(words).filter((id) => id !== myIdRef.current)
-              .map((id) => ({ id, words: words[id], isBot: botIdsRef.current.has(id) })),
+              .map((id) => ({ id, words: words[id], isBot: botIdsRef.current.has(id), botDifficulty: botDiffRef.current.get(id) })),
           }, 'category-blitz');
         }
       } else {
@@ -1779,7 +1780,7 @@ function App() {
           payWinner({
             gameTotal: led ? led.total : 0,
             myWords: myWbAcceptedRef.current,
-            rivals: [...ids].map((id) => ({ id, words: counts[id] || 0, isBot: botIdsRef.current.has(id) })),
+            rivals: [...ids].map((id) => ({ id, words: counts[id] || 0, isBot: botIdsRef.current.has(id), botDifficulty: botDiffRef.current.get(id) })),
           }, 'word-bomb');
         }
         // The receipt for the whole game, read once and frozen for the end screen.
@@ -1923,6 +1924,9 @@ function App() {
   // A ref, not state, and retired by goHome below — it is a fact about how the SESSION started, so
   // once the player has actually reached the menu, entering SAT from its card behaves normally.
   const satAutoStartRef = useRef(!!LAUNCH_INTENT.satrush);
+  // SAT RUSH from the menu dialog (Andy oct8: popups): the dialog's BRIEFING / LINEUP button is the mode pick, so the
+  // run opens straight into that mode (no cover, no PICK YOUR BEAT). Pure view navigation — no WS state.
+  const satStartModeRef = useRef(null);
 
   // Deep-link auto-fire: the moment the socket first opens, act on the launch
   // intent — join the invited room (?join=CODE) with the remembered/generated
@@ -2673,6 +2677,7 @@ function App() {
         musicSetVolume={music.setVolume}
         offerMenu={soloOfferRef.current}
         autoStart={satAutoStartRef.current}
+        startMode={satStartModeRef.current}
       />
     );
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
@@ -2707,7 +2712,7 @@ function App() {
         onSelectGame={(gameId) => goToLobby(gameId)}
         onPlaySolo={handlePlaySolo}
         onRaceQuickMatch={handleRaceQuickMatch}
-        onSatRush={goToSatRush}
+        onSatRush={(m) => { satStartModeRef.current = m === 'briefing' || m === 'lineup' ? m : null; goToSatRush(); }}
         onChain={goToChain}
         onFuse={goToFuse}
         onCreateRoom={() => goToLobby('solo')}

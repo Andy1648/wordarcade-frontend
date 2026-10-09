@@ -2088,20 +2088,22 @@ html[data-beat='true'] .sr-mult.sr-print::before {
   );
 }
 
-/* ---- the page frames: a few degrees of lean + a torn edge. No drop shadow —
-   manga panels sit flush on the black gutter; the torn silhouette + the inset
-   double-rule (which rides the tear) carry the separation. ---- */
+/* ---- the page frames = THE HOUSE POPUP (Andy oct8: "the UI design just doesn't fit … it should be a popup as
+   well — same border measures, whatever you want inside"). Every SAT page (the play poster, cover, mode pick,
+   briefing, results) sits in the site's dialog frame — ModeDialog.css .mode-dialog-shell: 4px black border, 16px
+   radius, a 10px hard black offset shadow, upright (no lean, no torn edge). INSIDE stays SAT's own: the cream paper
+   and the inset ink double-rule. ---- */
 .sr-stage,
 .sr-cover,
 .sr-modeselect,
-.sr-respage {
-  clip-path: var(--torn);
-  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 8px var(--ink);
+.sr-respage,
+.sr-brief-page {
+  clip-path: none;
+  transform: none;
+  border: 4px solid #000;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 8px var(--ink), 10px 10px 0 #000;
 }
-.sr-stage { transform: rotate(var(--tilt)); }
-.sr-cover { transform: rotate(calc(var(--tilt) * -1.3)); }
-.sr-modeselect { transform: rotate(calc(var(--tilt) * 1.1)); }
-.sr-respage { transform: rotate(calc(var(--tilt) * -0.9)); }
 
 /* the ONE screentone wedge: the old hard-triangle halftone becomes a bigger corner
    wedge MASKED so it fades into the page instead of sitting as a flat block. */
@@ -2265,7 +2267,6 @@ html[data-beat='true'] .sr-mult.sr-print::before {
    screentone flood, no bursts, no speed lines. This is a study surface read at
    length, so where manga energy and reading comfort conflict, comfort wins.
    ============================================================================ */
-.sr-brief-page { transform: rotate(-0.5deg); } /* a whisper of lean, no torn edge */
 .sr-brief-card:nth-child(odd) { transform: rotate(-0.7deg); }
 .sr-brief-card:nth-child(even) { transform: rotate(0.7deg); }
 

@@ -502,3 +502,33 @@
   .mode-dialog-mastery { display: none; }
   .mode-dialog-title { font-size: var(--fs-h2); }
 }
+
+/* SAT RUSH: two equal mode buttons (BRIEFING leads in the accent, LINEUP white), each its name + one line on what
+   it is — the choice the old PICK YOUR BEAT page made, now inside the dialog. */
+.mode-dialog-actions.has-choices .mode-dialog-btn-choice {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+}
+.mode-dialog-choice-label { font-size: var(--fs-panel); }
+.mode-dialog-choice-line {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(14px, var(--fs-label));
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+@media (max-width: 480px) {
+  .mode-dialog-actions.has-choices .mode-dialog-btn-choice { padding-inline: 8px; }
+  .mode-dialog-choice-label { font-size: var(--fs-body); }
+}
+/* the SAT dialog's lower block never squeezes UP over the SOLO chip on a short phone (the shared flex-end layout
+   let it overlap the title at 375x667); the content scrolls instead, and the one-liners go first */
+.mode-dialog-lower:has(.has-choices) { flex-shrink: 0; }
+@media (max-height: 700px), (max-width: 480px) {
+  .mode-dialog-choice-line { display: none; }
+}

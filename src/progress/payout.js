@@ -15,6 +15,8 @@
 // stamp), so the whole thing is unit-testable under node.
 import { roundWordXp } from './xp.js';
 import { winnerPerkMult } from './markPerks.js';
+import { hardestBot } from './botDiff.js';
+export { hardestBot };
 
 // The display ORDER, and the only sanctioned labels. Fixed rather than derived from the object's
 // key order so the breakdown reads the same way every time — a list that reorders itself between
@@ -187,6 +189,20 @@ export const WINNER_MATCH = {
 // Today's rule for each mode, paid when a gate fails (a bot room, a dummy tab, a 4-word game).
 // Keeping it EXACTLY today's means no gate can ever pay less than the game did before H4.
 export const WINNER_FALLBACK = { wordBomb: WINNER_BONUS, blitz: 0, wordRace: 0 };
+// BOT ROOMS PAY BY THE BOTS' SKILL (Andy oct8: "multiplayer bonuses with bots should scale with bot difficulty").
+// A win where every rival was a bot pays this share of the game's own wins, keyed by the HARDEST bot beaten
+// (MEDIUM = today's Word Bomb +50%, so nobody's medium-bot room pays less). Word Bomb + Category Blitz only — a
+// Word Race bot is paced to YOU (race/racePace.js), so it has no skill to scale by.
+export const BOT_DIFF_BONUS = Object.freeze({ easy: 0.25, medium: 0.5, hard: 1 });
+// WORD RACE vs bots (Andy oct8: "scale with time", picked FASTER = MORE): the bots are paced to you, so the bonus
+// follows YOUR speed in that race — +1% per 1.2 WPM, capped at +75% (a real human win pays +100%, so friends
+// always pay more). 30 WPM → +25%, 60 → +50%, 90+ → +75%.
+export const RACE_BOT_WPM_PER_PCT = 1.2;
+export const RACE_BOT_CAP = 0.75;
+export function raceBotBonus(words, minutes) {
+  if (!(words > 0) || !(minutes > 0)) return 0;
+  return Math.min(RACE_BOT_CAP, words / minutes / RACE_BOT_WPM_PER_PCT / 100);
+}
 export const WINNER_GATES = {
   minWinnerWords: 5, // a game you won with fewer valid words is not a match
   minRivalWords: 3, // a rival who typed fewer is an AFK seat, not an opponent
@@ -202,6 +218,9 @@ export function winnerMatchMult(mode) {
 // Receipt captions: why a winner got the fallback (or a capped bonus) instead of the full match pay.
 export const WINNER_NOTES = {
   bots: 'MATCH BONUS NEEDS A HUMAN RIVAL',
+  'bots-easy': 'EASY BOTS: +25%',
+  'bots-medium': 'MEDIUM BOTS: +50%',
+  'bots-hard': 'HARD BOTS: +100%',
   self: 'YOUR OTHER TAB IS NOT A RIVAL',
   'rival-words': `RIVAL PLAYED UNDER ${WINNER_GATES.minRivalWords} WORDS`,
   'my-words': `MATCH BONUS NEEDS ${WINNER_GATES.minWinnerWords}+ WORDS`,
@@ -248,7 +267,18 @@ export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, 
   const qualified = others.filter((r) => cnt(r.words) >= WINNER_GATES.minRivalWords);
   if (mine < WINNER_GATES.minWinnerWords) return fallback('my-words');
   if (!qualified.length) {
-    if (!humans.length) return fallback('bots');
+    if (!humans.length) {
+      if (k === 'wordRace') {
+        const rb = raceBotBonus(mine, minutes) * pm;
+        if (!(rb > 0)) return fallback('bots');
+        const wpm = Math.round(mine / minutes);
+        return { wins: Math.max(1, Math.round(total * rb)), mult: 1 + rb, tier: 'bots', reason: 'bots-race', capped: null, note: `${wpm} WPM VS BOTS: +${Math.round(rb * 100)}%` };
+      }
+      const hb = (k === 'wordBomb' || k === 'blitz') ? hardestBot(list) : null;
+      if (!hb) return fallback('bots');
+      const bb = BOT_DIFF_BONUS[hb] * pm;
+      return { wins: Math.max(1, Math.round(total * bb)), mult: 1 + bb, tier: 'bots', reason: `bots-${hb}`, capped: null, note: WINNER_NOTES[`bots-${hb}`] };
+    }
     if (!others.length || humans.some((r) => self.has(r.id) && cnt(r.words) >= WINNER_GATES.minRivalWords)) return fallback('self');
     return fallback('rival-words');
   }

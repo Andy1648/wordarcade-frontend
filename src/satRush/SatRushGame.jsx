@@ -52,7 +52,7 @@ import SatKeyInput from './SatKeyInput';
 import { LevelUpChip } from '../components/FeelLadder';
 import { GemPop, useGemsRunMark } from '../components/gems/Gems';
 
-export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false }) {
+export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false, startMode = null }) {
   const game = useSatRushGame();
   const { view } = game;
   const appRef = useRef(null);
@@ -74,14 +74,16 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
   // scheduler reads it); it lands on 'mode' for one synchronous beat before chooseMode leaves it.
   const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (!autoStart || autoStartedRef.current) return;
+    // the menu dialog's mode pick (startMode) opens that mode the same way — straight past the cover + picker
+    const pick = startMode === 'briefing' || startMode === 'lineup' ? startMode : autoStart ? 'lineup' : null;
+    if (!pick || autoStartedRef.current) return;
     if (view.phase !== 'start') return;
     autoStartedRef.current = true;
     game.startGame();
-    game.chooseMode('lineup');
+    game.chooseMode(pick);
     // game is a stable hook object; this fires once, guarded by the ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart, view.phase]);
+  }, [autoStart, startMode, view.phase]);
 
   // WINS: BANK per cleared word as the run plays (§2) so leaving mid-run keeps what was
   // earned — no end-of-run payout (that would double-pay). `view.cleared` is the authoritative

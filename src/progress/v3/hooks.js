@@ -11,12 +11,13 @@ import { loadGemState, saveGemState, tellBalance, grantGems, PER_PLAYER_BEATEN a
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue } from '../markRollsCore.js';
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
-  rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN,
+  rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
   PER_PLAYER_BEATEN, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
 } from './econ.js';
 import { needV3, creditXpV3 } from './curve.js';
 import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter, S2_PREFIX } from './store.js';
 import { featureOpen } from './unlocks.js';
+import { hardestBot } from '../botDiff.js';
 import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
 import { frenzyXpMult } from '../frenzy.js'; // FUSE FRENZY = ×5 XP per key for 5 min in season 2 (Andy oct8)
@@ -131,7 +132,8 @@ export const gemsSwap = {
 export const flatStreak = (livePayout) => (o) => {
   const p = livePayout(o);
   // the v3 table: bot win +18, +15 per player beaten, a FLAT +4 streak (the live lines carry 3 / 3 per player / +1×)
-  const v3 = { bot: () => BOT_WIN, placement: (l) => (l.amount / LIVE_PER_PLAYER) * PER_PLAYER_BEATEN, streak: () => STREAK_BONUS };
+  const hb = hardestBot(o && o.rivals);
+  const v3 = { bot: () => (hb && BOT_WIN_BY_DIFF[hb]) || BOT_WIN, placement: (l) => (l.amount / LIVE_PER_PLAYER) * PER_PLAYER_BEATEN, streak: () => STREAK_BONUS };
   const lines = p.lines.map((l) => (v3[l.reason] ? { ...l, amount: v3[l.reason](l) } : l));
   return { ...p, lines, total: lines.reduce((t, l) => t + l.amount, 0) };
 };

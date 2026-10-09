@@ -920,13 +920,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const game = GAMES.find((g) => g.id === gameId);
     if (!game || !game.enabled) return;
     sound.click();
-    // SAT RUSH is solo — there is no room to CREATE/JOIN, so it skips the mode
-    // dialog and navigates straight in (same pattern as Daily / Quick Play).
-    if (gameId === 'sat-rush') {
-      setNavigating(true);
-      if (onSatRush) onSatRush();
-      return;
-    }
+    // SAT RUSH opens the same mode dialog as CHAIN / FUSE (Andy oct8: "should be a popup as well"); its two
+    // buttons are the mode pick (BRIEFING / LINEUP) and go straight into that run.
     // CHAIN / FUSE are solo, but (unlocked) they now open the SAME mode dialog as
     // Word Bomb / Blitz — a solo variant with one PLAY button — so entering a mode
     // reads consistent across the menu. The PLAY button calls onChain/onFuse.
@@ -986,13 +981,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // Dialog PLAY (solo CHAIN / FUSE): local modes, no socket round-trip — navigate
   // straight into the mode via the matching handler. The dialog unmounts with the
   // screen change, so no reverse-morph is needed.
-  function handleDialogPlay() {
+  function handleDialogPlay(choice) {
     if (navigating || !dialog) return;
     sound.click();
     setNavigating(true);
     const id = dialog.game.id;
     if (id === 'chain' && onChain) onChain();
     else if (id === 'fuse' && onFuse) onFuse();
+    else if (id === 'sat-rush' && onSatRush) onSatRush(choice);
   }
 
   function handleStats() {
@@ -1419,7 +1415,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onClose={() => setDialog(null)}
             onCreate={handleDialogCreate}
             onJoin={handleDialogJoin}
-            onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' ? handleDialogPlay : undefined}
+            onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' || dialog.game.id === 'sat-rush' ? handleDialogPlay : undefined}
             onPlaySolo={
               dialog.game.id === 'word-bomb' && onPlaySolo
                 ? handleDialogSolo

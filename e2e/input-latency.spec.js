@@ -78,7 +78,6 @@ test('SAT RUSH: keystroke → paint p95 < 50 ms at 4x CPU (typing the real word)
   await page.addInitScript(SEED);
   await page.goto('/?satRush=1&portal=1');
   await page.locator('[data-game="sat-rush"] .game-card').click();
-  await page.getByRole('button', { name: 'Play' }).click();
   await page.getByRole('button', { name: /BRIEFING/ }).click();
   await page.locator('.sr-brief-card').first().waitFor();
   const briefed = [];
