@@ -54,6 +54,7 @@ const MODE_KEY = {
   chain: 'chain',
   fuse: 'fuse',
   'word-race': 'race',
+  'sat-rush': 'sat',
 };
 
 function prefersReduced() {
@@ -244,14 +245,29 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
             {/* SOLO (CHAIN/FUSE): a single PLAY button (the wins rate now lives in the example
                 block above). */}
             {isSolo ? (
-              <div className="mode-dialog-actions">
-                <button
-                  className="mode-dialog-btn mode-dialog-btn-create"
-                  style={{ background: accent, borderColor: darken(accent, 0.45) }}
-                  onClick={onPlay}
-                >
-                  PLAY
-                </button>
+              <div className={`mode-dialog-actions${mode.choices ? ' has-choices' : ''}`}>
+                {mode.choices ? (
+                  mode.choices.map((c, i) => (
+                    <button
+                      key={c.id}
+                      className={`mode-dialog-btn mode-dialog-btn-choice${i === 0 ? ' mode-dialog-btn-create' : ''}`}
+                      style={i === 0 ? { background: accent, borderColor: darken(accent, 0.45) } : undefined}
+                      onClick={() => onPlay(c.id)}
+                      data-choice={c.id}
+                    >
+                      <span className="mode-dialog-choice-label">{c.label}</span>
+                      <span className="mode-dialog-choice-line">{c.line}</span>
+                    </button>
+                  ))
+                ) : (
+                  <button
+                    className="mode-dialog-btn mode-dialog-btn-create"
+                    style={{ background: accent, borderColor: darken(accent, 0.45) }}
+                    onClick={() => onPlay()}
+                  >
+                    PLAY
+                  </button>
+                )}
               </div>
             ) : (
               /* CREATE/JOIN show the shared CONNECTING… / WAKING THE SERVER…

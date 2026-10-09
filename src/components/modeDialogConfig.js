@@ -40,6 +40,18 @@ export const MODES = {
     create: 'CREATE ROOM',
     lead: 'QUICK MATCH',
   },
+  // SAT RUSH (Andy oct8: "should be a popup as well"): the same dialog as CHAIN / FUSE, but its PLAY is the
+  // mode pick — BRIEFING or LINEUP — so the old cover + PICK YOUR BEAT pages are skipped from the menu.
+  sat: {
+    accent: '#FFE94A', bg: ['#2b2620', '#120f0b'], anim: 'streaks', solo: true,
+    chip: 'SOLO', name: 'SAT RUSH', t1: 'SAT', t2: 'RUSH',
+    liner: 'READ THE CLUE. TYPE THE WORD BEFORE IT SPELLS ITSELF.',
+    create: 'PLAY',
+    choices: [
+      { id: 'briefing', label: 'BRIEFING', line: 'STUDY 5 WORDS, THEN HUNT THEM' },
+      { id: 'lineup', label: 'LINEUP', line: 'NO STUDY · PICK FROM THE SUSPECTS' },
+    ],
+  },
   fuse: {
     accent: '#FFE94A', bg: ['#3a2a06', '#160f03'], anim: 'flame', solo: true,
     chip: 'SOLO', name: 'FUSE', t1: 'FUSE', t2: '',

@@ -52,7 +52,6 @@ async function enterSat(page) {
   await menuReady(page);
   await page.waitForTimeout(300);
   await modeEntry(page, 'sat-rush').click({ force: true });
-  await page.getByRole('button', { name: 'Play' }).click();
   await page.getByRole('button', { name: /BRIEFING/ }).click();
   await page.locator('.sr-brief-page').waitFor({ state: 'visible', timeout: 6000 });
   await page.getByRole('button', { name: 'Start the run' }).click();

@@ -25,11 +25,9 @@ function contextOf(locator, innerSelector) {
   }, innerSelector);
 }
 
-// Cover → Play → the mode picker's chosen card. Returns once the choice is made.
+// The menu card opens the SAT dialog (Andy oct8: popups); its BRIEFING / LINEUP buttons ARE the mode pick.
 async function pickMode(page, mode) {
-  await page.getByRole('button', { name: 'Play' }).click();
-  const picker = page.locator('.sr-modeselect');
-  await expect(picker).toBeVisible();
+  await expect(page.getByRole('dialog')).toBeVisible();
   const name = mode === 'lineup' ? /LINEUP/ : /BRIEFING/;
   await page.getByRole('button', { name }).click();
 }
@@ -39,12 +37,12 @@ test.describe('SAT Rush', () => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
 
-    // The mode opens straight from its menu card (solo — no CREATE/JOIN dialog).
+    // The menu card opens the SAT dialog: BRIEFING / LINEUP (solo — no CREATE/JOIN).
     const card = page.locator('[data-game="sat-rush"]');
     await expect(card).toBeVisible();
     await card.locator('.game-card').click();
 
-    // Cover → Play → the mode picker, then choose BRIEFING.
+    // The dialog's BRIEFING button.
     await pickMode(page, 'briefing');
 
     // THE BRIEFING is now MANDATORY: five study cards, one Start button, and NO
@@ -195,17 +193,20 @@ test.describe('SAT Rush', () => {
     await expect(page.locator('.sr-hud-exit')).toContainText('MENU');
   });
 
-  test('the COVER and the mode picker are still reachable from the menu card', async ({ page }) => {
-    // The deep link auto-starts, but that must not cost the menu route its mode choice (and with
-    // it the BRIEFING mode). `?satRush=1` enables the mode WITHOUT being a launch intent — the
-    // launch intent is the lowercase `satrush` — so this is the ordinary menu entry.
+  test('the menu card opens the SAT dialog; its two buttons are the mode pick (no cover, no PICK YOUR BEAT)', async ({ page }) => {
+    // `?satRush=1` enables the mode WITHOUT being a launch intent (that is the lowercase `satrush`), so this is
+    // the ordinary menu entry: the house popup with BRIEFING + LINEUP, and BRIEFING lands on the study page.
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
     const card = page.locator('[data-game="sat-rush"]');
     await expect(card).toBeVisible();
     await card.locator('.game-card').click();
-    await expect(page.locator('.sr-cover')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.locator('[data-choice="briefing"]')).toBeVisible();
+    await expect(dialog.locator('[data-choice="lineup"]')).toBeVisible();
     await pickMode(page, 'briefing');
+    await expect(page.locator('.sr-cover')).toHaveCount(0);
+    await expect(page.locator('.sr-modeselect')).toHaveCount(0);
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await page.getByRole('button', { name: 'Start the run' }).click();
     await expect(page.locator('.sr-slots')).toBeVisible();
