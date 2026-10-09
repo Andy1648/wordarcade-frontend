@@ -2,6 +2,7 @@
 // split from KitButton.jsx (which re-exports both) so a screen that needs only these — the menu — loads
 // only these and the shared button base (KitNavButton.css). Real <button>s, ≥ 44px, transform/opacity only.
 import { useEffect, useRef } from 'react';
+import FitText from './FitText.jsx';
 import KitIcon from './KitIcon.jsx';
 import { FX, fx } from './motion.js';
 import './tokens.css';
@@ -106,7 +107,7 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
                     {/* TILE (the 2-column desktop rail, feat/menu-rail-2col): the NUMBER big, its unit small under it */}
                     {sub.big != null && (
                       <span className="kb-rval-tile">
-                        <span className={cx('kb-rval-big', /[A-Z]{4,}/.test(String(sub.big)) && 'is-word')}>{sub.big}</span>
+                        <FitText className={cx('kb-rval-big', /[A-Z]{4,}/.test(String(sub.big)) && 'is-word')}>{sub.big}</FitText>
                         <span className="kb-rval-unit">{sub.unit}</span>
                       </span>
                     )}

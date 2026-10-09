@@ -468,7 +468,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   pointer-events: none;
   container-type: inline-size;
   cursor: pointer;
-  background: rgba(5, 2, 10, 0.82);
+  background: rgba(5, 2, 10, 0.9);
   --mc-w: 216px;
   --mc-s: 1.2;
 }
@@ -513,6 +513,105 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cut-keep { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #fff; opacity: 0; }
 .rs-parts.is-cut { top: 50%; }
 .rs-cut .rs-part { width: 34px; height: 34px; left: -17px; top: -17px; }
+
+/* ---- ROLL REVEAL v2 (Reel.jsx + revealPlan.js): the flip, its escalating layers, the stats extension ----
+   Every piece of art is an asset in /public/fx (card-back, card-back-edge as a mask, sheen, sparkle, burst-ring as a
+   mask); CSS only places them and the WAAPI one-shots move them (transform / opacity). Nothing loops; will-change is
+   set by the animation helper while a node plays and cleared when it stops. LITE (COMMON / RARE) is a lighter
+   backdrop that closes by itself. */
+.rs-cut.is-lite { background: rgba(5, 2, 10, 0.9); }
+.rs-cut.is-lite .rs-cut-rays,
+.rs-cut.is-lite .rs-cut-tier,
+.rs-cut.is-lite .rs-cut-keep { display: none; }
+.rs-cut.is-lite .rs-cut-stamp { font-size: min(7cqw, 40px); -webkit-text-stroke: 5px #000; }
+.rv-dim { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+.rv-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.rv-body { display: grid; justify-items: center; align-items: center; gap: 14px; min-width: 0; }
+.rs-cut-mark { position: relative; }
+.rv-rattle, .rv-card { position: relative; width: var(--mc-w); height: calc(var(--mc-w) * 1.4444); }
+.rv-face { position: absolute; left: 0; top: 0; }
+.rv-back { position: absolute; left: 0; top: 0; width: calc(var(--mc-w) * 1.0444); opacity: 0; }
+.rv-back-art { display: block; width: 100%; height: auto; }
+.rv-edge {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: var(--rs-tier, #FFC23D);
+  -webkit-mask: url(/fx/card-back-edge.svg) center / 100% 100% no-repeat;
+  mask: url(/fx/card-back-edge.svg) center / 100% 100% no-repeat;
+}
+.rv-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--mc-w) * 1.9);
+  height: calc(var(--mc-w) * 1.9);
+  margin: calc(var(--mc-w) * -0.95) 0 0 calc(var(--mc-w) * -0.95);
+  opacity: 0;
+  pointer-events: none;
+  background: var(--rs-tier, #B04BFF);
+  -webkit-mask: url(/fx/burst-ring.svg) center / contain no-repeat;
+  mask: url(/fx/burst-ring.svg) center / contain no-repeat;
+}
+.rv-ring.is-2 { background: #fff; }
+.rv-sparks { position: absolute; inset: 0; pointer-events: none; }
+.rv-spark {
+  position: absolute;
+  width: calc(34px * var(--mc-s, 1));
+  height: calc(34px * var(--mc-s, 1));
+  margin: calc(-17px * var(--mc-s, 1)) 0 0 calc(-17px * var(--mc-s, 1));
+  opacity: 0;
+}
+/* the STATS EXTENSION — the GEAR SHEET v2 hierarchy: MAIN biggest (yellow Bungee), extras quiet, the PERK on cyan */
+.rv-stats { display: grid; gap: 8px; justify-items: center; text-align: center; min-width: 0; max-width: min(100%, 380px); }
+.rv-main { display: grid; justify-items: inherit; gap: 0; transform-origin: 50% 60%; }
+.rv-main-num {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k60);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #FFE94A;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+.rv-main-num.is-l { font-size: var(--fs-k44); }
+.rv-main-kind { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k20); letter-spacing: 0.04em; color: #fff; }
+.rv-extras { display: grid; gap: 2px; justify-items: inherit; }
+.rv-extra { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.rv-extra-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rv-extra-kind { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); color: #c9b8e8; }
+.rv-perk {
+  display: grid;
+  gap: 2px;
+  justify-items: inherit;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 7px 12px 8px;
+  background: #2EFFE0;
+  color: #0d0618;
+  border: 3px solid #128f7e;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.rv-perk-kick { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.08em; color: #0b5d52; }
+.rv-perk-line { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); line-height: 1.25; text-transform: uppercase; }
+.rv-dupe { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; }
+.rv-dupe-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.04em; color: #c9b8e8; }
+.rv-stars { display: inline-flex; gap: 3px; }
+.rv-star { position: relative; display: block; width: 22px; height: 22px; }
+.rv-star svg { display: block; }
+.rv-star .rv-star-fill { position: absolute; left: 0; top: 0; }
+.rv-dupe-next { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; white-space: nowrap; }
+/* wide screens: the stats sit BESIDE the card (the sheet's layout), left-aligned */
+@media (min-width: 720px) {
+  .rv-body { grid-template-columns: auto auto; justify-content: center; column-gap: 40px; }
+  .rv-stats { max-width: 380px; }
+  .rv-stats { justify-items: start; text-align: left; }
+  .rv-main { transform-origin: 0 60%; }
+  .rv-dupe { justify-content: flex-start; }
+}
 
 /* SHINY: one small badge (asset, no text) — the result line, the cards */
 .mr-shiny {
@@ -648,12 +747,15 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-auto-btn { padding: 0 8px; }
   .rs-skip-v { font-size: var(--fs-k14); letter-spacing: 0; }
   .rs-cut, .rs-cut.is-full { --mc-w: 162px; --mc-s: 0.9; }
+  .rv-body { gap: 8px; }
+  .rv-stats { gap: 4px; }
+  .rv-main-num { font-size: var(--fs-k44); }
+  .rv-main-num.is-l { font-size: var(--fs-k38); }
 }
 
 /* the in-game REDUCE MOTION toggle (RollScreen adds .is-reduced) — the same as the OS setting below */
 .rs-overlay.is-reduced .rs-result,
 .rs-overlay.is-reduced .mc .mc-cog,
-.rs-overlay.is-reduced .mc .mc-shine::after,
 .rs-overlay.is-reduced .mc .mc-glow,
 .rs-overlay.is-reduced .mark-pip.is-newest { animation: none; }
 .rs-overlay.is-reduced .rs-pity-fill,

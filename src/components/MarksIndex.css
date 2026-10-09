@@ -134,7 +134,7 @@
 }
 .mx-sheet {
   position: relative;
-  width: min(100%, 620px);
+  width: min(100%, 680px);
   max-height: calc(100% - 8px);
   overflow-y: auto;
   box-sizing: border-box;
@@ -142,7 +142,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 24px;
-  padding: 26px 24px;
+  padding: 22px 24px 20px;
   background: #1a0b2e;
   border: 5px solid #000;
   box-shadow: 8px 8px 0 #000;
@@ -165,17 +165,59 @@
   box-shadow: 3px 3px 0 #000;
   cursor: pointer;
 }
-.mx-sheet-body { display: grid; gap: 10px; min-width: 0; padding-right: 36px; }
-.mx-pips-text { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.mx-sheet-perk { display: inline-block; justify-self: start; padding: 2px 8px; background: #000; color: #2EFFE0; font-size: var(--fs-body); }
-/* CRIT (oct8): the gear's extra stats, each its own line, in crit yellow */
+/* GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel): MAIN STAT (the biggest text in the sheet) → the extra stats
+   (a quiet list) → the PERK panel (its own contrasting plate, Genshin's set-bonus block) → odds + ★ progress → EQUIP */
+.mx-sheet-body { display: grid; gap: 10px; min-width: 0; padding-right: 36px; justify-items: start; }
+.mx-main { display: grid; justify-items: start; gap: 2px; min-width: 0; max-width: 100%; }
+.mx-main-num {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k60);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #FFE94A;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+.mx-main-kind { font-weight: 700; font-size: var(--fs-k18); letter-spacing: 0.04em; color: #fff; }
+/* LOCKED: the odds as the main line, in the tier colour; how to get it under it */
+.mx-main.is-locked .mx-main-num { color: var(--mx-tier); font-size: var(--fs-k44); }
+.mx-main.is-word .mx-main-num { font-size: var(--fs-panel); }
+.mx-main.is-locked .mx-main-kind { color: #c9b8e8; }
+.mx-main-kick { font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.08em; color: var(--mx-tier); margin-bottom: 4px; }
+.mx-main .mx-howto { color: #FF6B3D; line-height: 1.3; }
+.mx-hidden { font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.04em; color: #c9b8e8; padding: 4px 10px; border: 2px dashed #5d4a78; border-radius: 8px; }
+/* the extra stats: a quiet list — white numbers, one step down from the main */
 .mx-sheet-crit { display: grid; gap: 2px; justify-items: start; }
 .mx-crit-line { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
-.mx-crit-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.mx-crit-kind { font-weight: 700; font-size: var(--fs-k16); color: #fff; }
-.mx-crit-what { font-size: var(--fs-k14); color: #c9b8e8; }
-.mx-sheet-flavour { font-size: var(--fs-body); color: #fff; line-height: 1.35; }
-.mx-sheet-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-label); letter-spacing: 0.08em; color: #c9b8e8; }
+.mx-crit-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.mx-crit-kind { font-weight: 700; font-size: var(--fs-k16); color: #c9b8e8; }
+.mx-crit-what { font-size: var(--fs-k14); color: #9a8ab8; }
+/* the PERK panel: flat cyan plate, its darker-cyan outline, a hard shadow */
+.mx-sheet-perk {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px 9px;
+  background: #2EFFE0;
+  color: #0d0618;
+  border: 3px solid #128f7e;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.mx-perk-kick { font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.08em; color: #0b5d52; }
+.mx-perk-line { font-weight: 700; font-size: var(--fs-body); line-height: 1.25; }
+.mx-sheet-flavour { font-size: var(--fs-k16); color: #fff; line-height: 1.35; }
+/* odds + the ★ progress, side by side */
+.mx-sheet-odds { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 28px; }
+.mx-fact { display: grid; justify-items: start; gap: 2px; }
+.mx-fact-k { font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.08em; color: #9a8ab8; }
+.mx-odds { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: var(--mx-tier); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.mx-pips-text { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.mx-sheet-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-k14); letter-spacing: 0.06em; color: #c9b8e8; }
 .mx-sheet-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 .mx-set {
   min-height: 48px;
@@ -226,11 +268,14 @@
   .mx-tierchip { width: auto; height: 44px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .mx-tierchip-num { font-size: var(--fs-body); }
   .mx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 8px; row-gap: 20px; padding: 10px 2px 32px; }
-  .mx-sheet { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 22px 14px 18px; gap: 14px; --mc-w: 180px; --mc-s: 1; }
-  .mx-sheet-body { padding-right: 0; justify-items: center; }
-  .mx-sheet-perk { justify-self: center; }
-  .mx-sheet-crit { justify-items: center; }
-  .mx-sheet-facts, .mx-sheet-actions { justify-content: center; }
+  /* GEAR SHEET v2 on a phone: the card on top, a step smaller (the main stat under it stays the biggest text) */
+  .mx-sheet { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 22px 14px 18px; gap: 12px; --mc-w: 158px; --mc-s: 0.8778; }
+  .mx-sheet-body { padding-right: 0; justify-items: center; gap: 10px; }
+  .mx-main, .mx-sheet-perk, .mx-sheet-crit, .mx-fact { justify-items: center; }
+  .mx-main-num { font-size: var(--fs-k44); }
+  .mx-main.is-locked .mx-main-num { font-size: var(--fs-k38); }
+  .mx-main.is-word .mx-main-num { font-size: var(--fs-panel); }
+  .mx-sheet-odds, .mx-sheet-facts, .mx-sheet-actions { justify-content: center; }
 }
 @media (max-width: 375px) {
   .mx-panel { --mc-w: 164px; --mc-s: 0.9111; } /* 360 wide: 164 + 8 + 164 = 336 */

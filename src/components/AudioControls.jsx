@@ -14,6 +14,7 @@
 // "all quiet" glyph still reads the live sound state here (the panel reports every switch it flips).
 import { lazy, Suspense, useState } from 'react';
 import './AudioControls.css';
+import { KitIconButton } from './kit/KitNavButton.jsx';
 import { isEventSoundsEnabled } from '../audio/gameSounds';
 import { isClackEnabled } from '../progress/clack';
 
@@ -22,8 +23,10 @@ const AudioPanel = lazy(loadPanel);
 const warm = () => { loadPanel().catch(() => {}); };
 
 // `variant` — 'fixed' (default) is the app-wide bottom-right corner control; 'inline' drops the
-// fixed positioning so it can sit INSIDE the menu's corner-nav cluster (fix/visual-real item 4),
-// with its popover opening DOWNWARD from the button instead of up.
+// fixed positioning so it can sit INSIDE a header cluster (the game boards), with its popover opening
+// DOWNWARD from the button instead of up. 'kit' (Andy oct9 "top right placement instead") is the MENU's: the
+// same KitIconButton tile as LEADERBOARD / ACHIEVEMENTS, a member of their top-right cluster (MenuIcons
+// `settingsSlot`) — never a fixed element of its own.
 // `sfxMuted` / `onToggleSfx` — the GAME SFX engine's master mute (SoundContext, owned by App). Omit the handler and
 // the row is not rendered (the menu and every non-game screen have no SFX engine mounted).
 export default function AudioControls({
@@ -35,22 +38,44 @@ export default function AudioControls({
   // The corner glyph reflects the master state: struck-through when EVERY sound is off/muted, so
   // "all quiet" reads at a glance without opening the panel.
   const allOff = musicMuted && !snd.events && !snd.clack && (!onToggleSfx || sfxMuted);
+  const panel = open && (
+    <Suspense fallback={null}>
+      <AudioPanel
+        accent={accent}
+        musicMuted={musicMuted}
+        onToggleMusic={onToggleMusic}
+        sfxMuted={sfxMuted}
+        onToggleSfx={onToggleSfx}
+        onSound={setSnd}
+        onClose={() => setOpen(false)}
+      />
+    </Suspense>
+  );
+
+  if (variant === 'kit') {
+    return (
+      <div className="audio-ctrl audio-ctrl--inline audio-ctrl--kit">
+        {panel}
+        <KitIconButton
+          icon="settings"
+          tone="cyan"
+          className="homepage-nav-btn hp-m-navbtn is-settings"
+          data-nav="settings"
+          onClick={() => { warm(); setOpen((o) => !o); }}
+          onPointerEnter={warm}
+          onFocus={warm}
+          title="Settings"
+          ariaLabel="Settings — sound, music, rank plate, save progress"
+          aria-expanded={open}
+        />
+        {allOff ? <span className="audio-muted-mark" aria-hidden="true">✕</span> : null}
+      </div>
+    );
+  }
 
   return (
     <div className={`audio-ctrl${variant === 'inline' ? ' audio-ctrl--inline' : ''}`}>
-      {open && (
-        <Suspense fallback={null}>
-          <AudioPanel
-            accent={accent}
-            musicMuted={musicMuted}
-            onToggleMusic={onToggleMusic}
-            sfxMuted={sfxMuted}
-            onToggleSfx={onToggleSfx}
-            onSound={setSnd}
-            onClose={() => setOpen(false)}
-          />
-        </Suspense>
-      )}
+      {panel}
       <button
         type="button"
         className={`audio-btn${allOff ? ' off' : ''}`}

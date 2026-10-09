@@ -22,10 +22,10 @@ const shopDot = (page) => navDot(page, 'shop');
 test('a fresh LV1 profile with 0 wins shows no shop dot', async ({ page }) => {
   await menuWith(page, { 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1' });
   await expect(navControl(page, 'shop')).toBeVisible();
-  // SEASON 2 #5: SHOP → UPGRADES, and the button says the cheapest POWER (KEY tier I: 50 wins) in its label + value line
-  await expect(navControl(page, 'shop')).toHaveAttribute('aria-label', 'Open upgrades — next power 50 wins');
+  // SHOP → UPGRADES; NO COUNTS (Andy oct9): no price on the button — label only, the dot is the signal
+  await expect(navControl(page, 'shop')).toHaveAttribute('aria-label', 'Open upgrades');
   await expect(navControl(page, 'shop').locator('.kb-rlabel')).toHaveText('UPGRADES');
-  await expect(navControl(page, 'shop').locator('.kb-rval-full')).toHaveText('50 WINS');
+  await expect(navControl(page, 'shop').locator('.kb-rval')).toHaveCount(0);
   await expect(shopDot(page)).toHaveCount(0);
 });
 

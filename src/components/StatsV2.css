@@ -382,9 +382,7 @@
 .st2-chip-tag {
   font-size: max(var(--fs-k18), calc(var(--fs-k18) * var(--st2-k))); /* NIGHT oct8 #5: a tag can be a number (R2) */
   color: #c9b8e8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap; /* a long tag (SINGULARITY, WORD BOMB) SHRINKS to the chip (FitText), never "…" */
 }
 .st2-chip.is-off .st2-chip-name,
 .st2-chip.is-off .st2-chip-tag { color: #5d4a78; }
@@ -537,14 +535,21 @@
   box-shadow: 4px 4px 0 #000;
 }
 .st2--narrow .st2-chip-top { height: auto; gap: 6px; width: 100%; max-width: 100%; box-sizing: border-box; }
-.st2--narrow .st2-chip-tile { width: 30px; height: 30px; }
+/* a third of a phone is too narrow for tile + REBIRTH / a gear's name (they clipped): the phone chip drops its icon tile
+   and gives the name + tag the full width — the chip's top edge still carries its colour */
+.st2--narrow .st2-chip-tile { display: none; }
 .st2--narrow .st2-chip-tile::before { border-width: 3px; box-shadow: 2px 2px 0 #000; }
 .st2--narrow .st2-icon { left: 2px; top: 2px; width: 26px; height: 26px; }
 .st2--narrow .st2-chip-name { font-size: var(--fs-k14); }
 .st2--narrow .st2-chip-tag { font-size: var(--fs-k18); white-space: normal; line-height: 1.05; }
 .st2--narrow .st2-chip-names { flex: 1 1 0; min-width: 0; }
 .st2--narrow .st2-chip-v,
-.st2--narrow .st2-chain.is-compact .st2-chip-v { margin: 0 0 6px; font-size: var(--fs-k32); -webkit-text-stroke: 4px #000; }
+.st2--narrow .st2-chain.is-compact .st2-chip-v {
+  /* a long figure (×1.017) shrinks to its third-of-a-phone cell instead of clipping */
+  margin: 0 0 6px;
+  font-size: calc(var(--fs-k32) * min(1, 4 / var(--vlen, 4)));
+  -webkit-text-stroke: 4px #000;
+}
 .st2--narrow .st2-life {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

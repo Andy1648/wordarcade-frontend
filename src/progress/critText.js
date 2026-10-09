@@ -40,17 +40,5 @@ export function critSummary(totals = {}) {
   const avg = critAvgGain({ rate, power });
   return { on: true, head, value, sub: `1 KEY IN ${formatNum(oneIn)} CRITS · +${pct(avg)} XP ON AVERAGE`, rate, power, oneIn, avg };
 }
-
-/**
- * The gear CARD's one-line CRIT band (the 180-wide card drawing has room for one line): "CRIT +6% · +0.5×" (rate +
- * power), "CRIT RATE +2%" (rate only), '' for none. The full named lines (critLines) are on the roll result and the
- * INDEX detail sheet.
- */
-export function critCardText(stats) {
-  if (!stats) return '';
-  const r = stats.rate > 0 ? `+${pct(stats.rate)}` : '';
-  const p = stats.power > 0 ? `+${formatMultExact(stats.power)}×` : '';
-  if (r && p) return `CRIT ${r} · ${p}`;
-  if (r) return `CRIT RATE ${r}`;
-  return p ? `CRIT POWER ${p}` : '';
-}
+// (GEAR TILE v2, Andy oct9: the card's one-line CRIT band is gone — the tile shows a pip per extra stat and the full
+// critLines live in the INDEX detail sheet and the roll result.)

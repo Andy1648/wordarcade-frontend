@@ -64,7 +64,7 @@
 .lb2-me-btn:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #000; }
 .lb2-me-btn:active { transform: translate(5px, 5px); box-shadow: 0 0 0 #000; }
 .lb2-me-k { color: #FFE94A; font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; text-transform: uppercase; }
-.lb2-me-v { overflow: hidden; text-overflow: ellipsis; max-width: 12ch; }
+.lb2-me-v { overflow: hidden; text-overflow: ellipsis; max-width: calc(100px * var(--lb2-k, 1) + 24px); font-size: min(1em, max(var(--fs-k14), calc((100px * var(--lb2-k, 1) + 24px) / var(--nl, 8)))); } /* the full name, shrunk to its slot (Andy oct8) */
 .lb2-me-a { color: #2EFFE0; text-decoration: underline; text-underline-offset: 3px; }
 
 .lb2-head {
@@ -628,3 +628,69 @@
 .lb2--narrow .lb2-panel { min-width: 0; overflow: hidden; }
 .lb2--narrow .lb2-panel { padding-top: 6px; gap: 2px; }
 .lb2--narrow .lb2-panel-top { row-gap: 0; line-height: 1.05; }
+
+/* CHANGE NAME, inline (Andy oct8: one leaderboard — no hop to the season-1 screen). A box that drops from the YOU
+   button, inside the header's left cluster (absolute to .lb2-left, not a new fixed element). */
+.lb2-rename {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  z-index: 5;
+  width: max(300px, calc(420px * var(--lb2-k)));
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+}
+.lb2-rename-l { color: #FFE94A; font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(14px, var(--fs-label)); text-transform: uppercase; letter-spacing: 0.06em; }
+.lb2-rename-row { display: flex; gap: 8px; min-width: 0; }
+.lb2-rename-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: #000;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 6px;
+}
+.lb2-rename-save,
+.lb2-rename-x {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  text-transform: uppercase;
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.lb2-rename-save { background: #2EFFE0; color: #000; }
+.lb2-rename-save:disabled { background: #3a2a52; color: #9a8ab8; cursor: not-allowed; }
+.lb2-rename-x { background: #2a1450; color: #fff; padding: 0; }
+.lb2-rename-msg { margin: 0; font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(14px, var(--fs-label)); color: #b9a8d6; text-transform: uppercase; }
+.lb2-rename-msg.is-ok { color: #3DFF77; }
+.lb2-rename-msg.is-bad { color: #FF4FA3; }
+
+/* FULL USERNAMES (Andy oct8): rows 4+ dropped their plate, and a long name SHRINKS to the cell (its em width comes
+   from nameEms → --nl) instead of being cut; the ellipsis is only a last resort under the 13px floor. */
+.lb2-who-cell { container-type: inline-size; }
+.lb2-row .lb2-name { font-size: min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), max(13px, calc(100cqw / var(--nl, 8)))); }
+.lb2-row.is-me .lb2-name { font-size: min(max(var(--fs-k14), calc(var(--fs-k100) * 0.19 * var(--lb2-k))), max(13px, calc((100cqw - 64px) / var(--nl, 8)))); }
+/* the podium names fit their column the same way (a phone cut TUNGTUNGSA…) */
+.lb2-col { container-type: inline-size; }
+.lb2 .lb2-col .lb2-pod-name-t { font-size: min(max(var(--fs-k14), calc(var(--fs-k18) * var(--pk))), max(13px, calc(92cqw / var(--nl, 8)))); }
+.lb2 .lb2-col--1 .lb2-pod-name-t { font-size: min(max(var(--fs-k14), calc(var(--fs-k20) * var(--pk))), max(13px, calc(92cqw / var(--nl, 8)))); }
+/* a phone's podium column is ~85px: a long name WRAPS to a second line rather than being cut */
+.lb2--narrow .lb2-col .lb2-pod-name-t { white-space: normal; word-break: break-all; text-wrap: balance; text-overflow: clip; line-height: 1.05; text-align: center; }

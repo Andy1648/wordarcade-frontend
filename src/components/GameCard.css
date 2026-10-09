@@ -905,3 +905,5 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 @media (max-width: 1699px) {
   .game-card-bonus-word { display: none; }
 }
+/* SAT RUSH's payout on its cream foot: the NUMBER in the mode's red ink (the dark cards' yellow is unreadable on paper) */
+.game-card-foot .game-card-payout-num { color: #c8321e; }

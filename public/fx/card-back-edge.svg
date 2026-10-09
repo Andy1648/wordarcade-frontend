@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 188 268">
+  <!-- REVEAL TELEGRAPH: the card back's EDGE as a mask — the frame ring plus two corner glints. The reveal tints it the
+       rarity colour BEFORE the flip (LEGENDARY+), so the colour lands before the card does. -->
+  <rect x="5" y="5" width="170" height="250" rx="12" fill="none" stroke="#fff" stroke-width="12"/>
+  <path d="M20 -4 L23 12 L38 15 L23 18 L20 34 L17 18 L2 15 L17 12 Z" fill="#fff"/>
+  <path d="M162 228 L164.5 243 L179 245.5 L164.5 248 L162 264 L159.5 248 L146 245.5 L159.5 243 Z" fill="#fff"/>
+  <circle cx="44" cy="7" r="3" fill="#fff"/>
+</svg>

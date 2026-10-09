@@ -314,8 +314,6 @@
   }
   .hp-m-credits.is-disabled { opacity: 0.6; pointer-events: none; }
   .hp-m-topr { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-  .hp-m-topr .audio-ctrl { position: static; flex: 0 0 auto; }
-  .hp-m-topr .audio-ctrl button { min-width: 44px; min-height: 44px; }
   .hp-m-live { flex-basis: 100%; }
 
   /* ---- 1a. THE LEVEL (KitXpBar) + the per-letter line + the worn mark ---- */

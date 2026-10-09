@@ -35,8 +35,9 @@ test('a fresh LV1 player sees all four rail buttons: UPGRADES + REBIRTH + STATS 
   for (const id of RAIL) await expect(btn(page, id)).toBeVisible();
   // STATS left the top-right cluster (it lives on the rail now)
   await expect(page.locator('.hp-icons [data-nav="stats"]')).toHaveCount(0);
-  // live values: the cheapest POWER (KEY tier I = 50 wins), the levels to the first rebirth
-  await expect(btn(page, 'shop').locator('.kb-rval-full')).toHaveText('50 WINS');
+  // NO COUNTS (Andy oct9): UPGRADES carries no price — icon + label (+ the dot when something is affordable); REBIRTH
+  // keeps its status line (the levels to the first rebirth)
+  await expect(btn(page, 'shop').locator('.kb-rval')).toHaveCount(0);
   await expect(btn(page, 'rebirth').locator('.kb-rval-full')).toHaveText(/^IN \d[\d,.]*[KMB]? LV$/);
   // GEARS: locked with the REAL season-1 gate (MARKS reveal at LV10), the padlock icon, aria-disabled
   for (const id of ['gears']) {
@@ -57,13 +58,13 @@ test('a fresh LV1 player sees all four rail buttons: UPGRADES + REBIRTH + STATS 
   for (const id of RAIL) {
     const box = await btn(page, id).boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(44);
-    if (id === 'stats') continue;
+    if (id === 'stats' || id === 'shop') continue; // no value line: season-1 STATS, and UPGRADES (no counts)
     const fs = await btn(page, id).locator('.kb-rval').evaluate((n) => parseFloat(getComputedStyle(n).fontSize));
     expect(fs).toBeGreaterThanOrEqual(13);
   }
 });
 
-test('season 1, marks revealed: GEARS = gems ÷ the roll price, the empty chip says ROLL + dot', async ({ page }) => {
+test('season 1, marks revealed: GEARS shows no roll count — just its dot while a roll is affordable; the empty chip says ROLL + dot', async ({ page }) => {
   await boot(page, {
     'taw.xp': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
     'taw.xpv10': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
@@ -71,8 +72,9 @@ test('season 1, marks revealed: GEARS = gems ÷ the roll price, the empty chip s
     'taw.gems': JSON.stringify({ v: 1, bal: 157, peak: 50, streak: 0, mig: 1 }),
     'taw.wins': '0',
   });
-  // season 1 rolls cost 10 gems: 157 → 15 ROLLS (whole rolls only)
-  await expect(btn(page, 'gears').locator('.kb-rval-full')).toHaveText('15 ROLLS');
+  // NO COUNTS (Andy oct9): 157 gems buys rolls, but the tile never says how many — the dot is the whole signal
+  await expect(btn(page, 'gears').locator('.kb-rval')).toHaveCount(0);
+  await expect(page.locator('.hp-nav.is-gears .kb-rdot')).toHaveCount(1);
   await expect(btn(page, 'gears')).not.toHaveAttribute('data-locked', '');
   // nothing worn → the chip reads ROLL with a notification dot, and opens the ROLL screen
   const chip = page.locator('.menu-mark');
@@ -107,7 +109,7 @@ test('season 2 (?season2=1), a FRESH save: GEARS unlocked from the start — it 
   await expect(page.locator('.menu-mark .hp-chip-dot')).toHaveCount(1);
 });
 
-test('season 2: a roll costs 75 gems — GEARS reads gems ÷ 75; nothing on the rail is locked at R1', async ({ page }) => {
+test('season 2: 160 gems affords a 75-gem roll — GEARS dots with no count; nothing on the rail is locked at R1', async ({ page }) => {
   await boot(
     page,
     {
@@ -118,12 +120,13 @@ test('season 2: a roll costs 75 gems — GEARS reads gems ÷ 75; nothing on the 
     },
     { season2: true },
   );
-  await expect(btn(page, 'gears').locator('.kb-rval-full')).toHaveText('2 ROLLS');
+  await expect(btn(page, 'gears').locator('.kb-rval')).toHaveCount(0);
+  await expect(page.locator('.hp-nav.is-gears .kb-rdot')).toHaveCount(1);
   for (const id of RAIL) await expect(btn(page, id)).not.toHaveAttribute('data-locked', '');
 });
 
 for (const [w, h] of [[390, 844], [360, 640]]) {
-  test(`phone (${w}x${h}): the four rail slabs sit 2 × 2, each with its live value, never clipped`, async ({ page }) => {
+  test(`phone (${w}x${h}): the four rail slabs sit 2 × 2 — REBIRTH / STATS with their status, UPGRADES / GEARS label only — never clipped`, async ({ page }) => {
     await boot(page, {
       'taw.xp': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
       'taw.xpv10': JSON.stringify({ lv: 12, f: 0.2, rc: 0, v: 10 }),
@@ -140,11 +143,13 @@ for (const [w, h] of [[390, 844], [360, 640]]) {
     // label + number only: no icon on a phone slab
     await expect(page.locator('.hp-m-rail .kb-rface .kit-icon:visible')).toHaveCount(0);
     for (const el of await page.locator('.hp-m-rail .kb-rval').all()) expect(parseFloat(await el.evaluate((e) => getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(18);
-    // narrow slab: the unit is implied ("50", not "50 WINS"; "55", not "55 ROLLS")
-    await expect(page.locator('.hp-m-rail .is-shop .kb-rval-short')).toHaveText('50');
-    await expect(page.locator('.hp-m-rail .is-shop .kb-rval-short')).toBeVisible();
-    await expect(page.locator('.hp-m-rail .is-shop .kb-rval-full')).toBeHidden();
-    await expect(page.locator('.hp-m-rail .is-gears .kb-rval-short')).toHaveText('55');
+    // NO COUNTS (Andy oct9): no price on UPGRADES, no roll count on GEARS (557 gems affords rolls → the dot says so)
+    await expect(page.locator('.hp-m-rail .is-shop .kb-rval')).toHaveCount(0);
+    await expect(page.locator('.hp-m-rail .is-gears .kb-rval')).toHaveCount(0);
+    await expect(page.locator('.hp-m-rail .is-gears .kb-rdot')).toHaveCount(1);
+    // narrow slab: REBIRTH's status keeps the short form ("12 LV", not "IN 12 LV")
+    await expect(page.locator('.hp-m-rail .is-rebirth .kb-rval-short')).toBeVisible();
+    await expect(page.locator('.hp-m-rail .is-rebirth .kb-rval-full')).toBeHidden();
     const clipped = await page.locator('.hp-m-rail .kb-rval').evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth).map((e) => `${e.textContent} ${e.scrollWidth}>${e.clientWidth}`));
     expect(clipped).toEqual([]);
     for (const b of await page.locator('.hp-m-rail .kb--rail').all()) expect((await b.boundingBox()).height).toBeGreaterThanOrEqual(44);

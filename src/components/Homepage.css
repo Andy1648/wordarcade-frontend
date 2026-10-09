@@ -154,7 +154,7 @@ html[data-beat='true'] .homepage-logo {
   100% { transform: scale(1) translateY(0); }
 }
 
-/* ---- top right: LEADERBOARD / STATS / ACHIEVEMENTS (KitIconButton, sized to the mockup) ---- */
+/* ---- top right: LEADERBOARD / ACHIEVEMENTS / SETTINGS (KitIconButton, sized to the mockup) ---- */
 .hp-icons {
   grid-area: icons;
   position: relative;
@@ -169,7 +169,7 @@ html[data-beat='true'] .homepage-logo {
 .hp-icons .kb-iface .kit-icon { width: var(--hp-tr-ico); height: var(--hp-tr-ico); }
 .hp-icons .kb--icon:disabled { opacity: 0.5; pointer-events: none; }
 
-/* ---- under the icons: sound · CREDITS · the live room ---- */
+/* ---- under the icons: CREDITS · the live room (the settings cog moved INTO the icons — Andy oct9) ---- */
 .hp-extras {
   grid-area: extras;
   position: relative;
@@ -183,7 +183,6 @@ html[data-beat='true'] .homepage-logo {
   gap: 4px 10px;
   max-width: 100%;
 }
-.hp-extras .audio-ctrl { position: static; }
 .homepage-credits-link {
   min-height: 44px;
   padding: 0 6px;
@@ -587,6 +586,13 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   width: var(--hp-tile-ico);
   height: var(--hp-tile-ico);
 }
+/* NO COUNTS (Andy oct9): UPGRADES / GEARS carry no number — the icon IS the tile, centred and a size up (the dot says
+   when there is something to do) */
+.homepage-stage[data-paged] .hp-rail .kb--rail:not(.has-value) .kb-rface { align-items: center; justify-content: center; }
+.homepage-stage[data-paged] .hp-rail .kb--rail:not(.has-value) .kb-rface .kit-icon {
+  width: calc(var(--hp-tile-ico) * 1.5);
+  height: calc(var(--hp-tile-ico) * 1.5);
+}
 .homepage-stage[data-paged] .hp-rail .kb-rtext { display: contents; }
 .homepage-stage[data-paged] .hp-rail .kb-rlabel {
   position: absolute;
@@ -600,10 +606,10 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   letter-spacing: 0;
 }
 .homepage-stage[data-paged] .hp-rail .kb-rwrap.is-locked .kb-rlabel { color: var(--k-dim, #9c90b4); }
-.homepage-stage[data-paged] .hp-rail .kb-rval { margin: 0; overflow: visible; white-space: nowrap; min-width: 0; }
+.homepage-stage[data-paged] .hp-rail .kb-rval { margin: 0; overflow: visible; white-space: nowrap; min-width: 0; align-self: stretch; max-width: 100%; } /* bounded, so a long value FITS (FitText) instead of leaving the tile */
 .homepage-stage[data-paged] .hp-rail .kb-rval-full,
 .homepage-stage[data-paged] .hp-rail .kb-rval-short { display: none; }
-.homepage-stage[data-paged] .hp-rail .kb-rval-tile { display: flex; flex-direction: column; gap: calc(4 * var(--u)); }
+.homepage-stage[data-paged] .hp-rail .kb-rval-tile { display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: 0; }
 .homepage-stage[data-paged] .hp-rail .kb-rval-big {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
@@ -671,6 +677,7 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
 .hp-gear-text { display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: 0; }
 .hp-gear-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp24); line-height: 1; color: #fff; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
+.hp-gear-unit { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hpunit); color: #fff; line-height: 1.15; overflow-wrap: anywhere; }
 .hp-gear-sub { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hpunit); color: #c9b8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hp-gear.is-worn .hp-gear-sub { color: var(--gear-line); }
 .hp-gear .hp-chip-dot { top: -8px; right: -8px; }

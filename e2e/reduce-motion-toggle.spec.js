@@ -71,7 +71,7 @@ async function trailAfterMove(page) {
 }
 
 async function motionSwitch(page) {
-  const btn = page.locator('.hp-extras .audio-btn, .hp-m-topr .audio-btn').first(); // v2 menu: sound joins the cluster under the top-right tiles
+  const btn = page.locator('.hp-icons [data-nav="settings"]:visible').first(); // v2 menu: the settings cog is a top-right tile (Andy oct9)
   if ((await btn.getAttribute('aria-expanded')) !== 'true') await btn.click();
   const sw = page.getByRole('switch', { name: 'REDUCE MOTION' });
   await expect(sw).toBeVisible();

@@ -119,10 +119,17 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
       fit(num.textContent || '');
     };
     measure();
-    if (typeof ResizeObserver === 'undefined') return undefined;
+    // Andy oct9 ("make sure things fit"): the glyph width was measured in the FALLBACK font — Bungee lands later and is
+    // wider, so "1.23M" ran under the coin. Measure once more when the display font is in.
+    let live = true;
+    const onFonts = () => { if (live) measure(); };
+    const fonts = typeof document !== 'undefined' ? document.fonts : null;
+    if (fonts && fonts.ready) fonts.ready.then(onFonts);
+    if (fonts && fonts.addEventListener) fonts.addEventListener('loadingdone', onFonts); // a webfont that starts loading later
+    if (typeof ResizeObserver === 'undefined') return () => { live = false; if (fonts && fonts.removeEventListener) fonts.removeEventListener('loadingdone', onFonts); };
     const ro = new ResizeObserver(measure);
     ro.observe(box);
-    return () => ro.disconnect();
+    return () => { live = false; ro.disconnect(); if (fonts && fonts.removeEventListener) fonts.removeEventListener('loadingdone', onFonts); };
   }, []);
 
   useEffect(() => {

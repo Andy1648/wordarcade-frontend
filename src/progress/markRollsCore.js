@@ -349,7 +349,8 @@ export function statOf(id, state) {
 }
 /**
  * The stat as the card prints it, NAMED and short (Andy oct5): a % stat reads as the multiplier it pays — "×1.1 WINS",
- * "×1.25 XP", "×1.5 ROLL LUCK" — a flat one as "+2.5 BASE WINS/WORD", "+5 BASE XP/LETTER", "+30s OVERDRIVE". '' for none.
+ * "×1.25 XP", "×1.5 ROLL LUCK" — a flat one as "+2.5 BASE WINS", "+0.5 BASE XP", "+30s OVERDRIVE". '' for none.
+ * A BASE stat names no unit (Andy oct9: "no need to say xp/letter or wins/word — for bases just say xp or win").
  */
 export function statText(stat) {
   if (!stat) return '';
@@ -358,11 +359,11 @@ export function statText(stat) {
   switch (stat.kind) {
     case 'winsPct': return `${x(v)} WINS`;
     case 'xpPct': return `${x(v)} XP`;
-    case 'baseWins': return `+${formatRate(v)} BASE WINS/WORD`;
+    case 'baseWins': return `+${formatRate(v)} BASE WINS`;
     // SEASON 2 (Andy oct8: "an epic +10 base doesn't make sense — it should be added to the normal base, which is just
     // 1"): the XP base is 1 XP / KEY and a +N BASE mark scales it by (10 + N)/10 — so its REAL addition to the base is
     // N/10 (EPIC +5 → +0.5 = ×1.5, LEGENDARY +10 → +1 = ×2, exactly its tier's MAIN). Say that number, on that unit.
-    case 'baseXp': return V3 && V3.ready ? `+${formatRate(v / 10)} BASE XP/KEY` : `+${formatRate(v)} BASE XP/LETTER`;
+    case 'baseXp': return `+${formatRate(V3 && V3.ready ? v / 10 : v)} BASE XP`;
     case 'luckPct': return `${x(v)} ROLL LUCK`;
     case 'overdriveSec': return `+${formatNum(v)}s OVERDRIVE`;
     default: return '';
@@ -551,7 +552,7 @@ export const CRIT_BY_TIER = Object.freeze({
   mythic: Object.freeze({ rate: 0.09, power: 1 }),
   secret: Object.freeze({ rate: 0.12, power: 1.5 }),
 });
-export const CRIT_BASE_RATE = 0;
+export const CRIT_BASE_RATE = 0.01; // Andy oct9: "people should have a 1% crit chance to start" (×2 power) — gear adds on top
 export const CRIT_BASE_POWER = 2;
 export const CRIT_RATE_CAP = 0.5;
 const NO_CRIT = Object.freeze({ rate: 0, power: 0 });
@@ -599,6 +600,6 @@ export function critTotals({ markId, mark2Id, state } = {}) {
     const p = Number.isFinite(power) && power > 0 ? power : 0;
     return { rate: Math.min(CRIT_RATE_CAP, r), power: CRIT_BASE_POWER + p, rawRate: r, ids };
   } catch {
-    return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: 0, ids: [] };
+    return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: CRIT_BASE_RATE, ids: [] };
   }
 }

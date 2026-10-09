@@ -1,31 +1,29 @@
 // frameLayout.js — where the card's plates sit in the 180×260 drawing (CardFrame.jsx draws them, MarkCard.css puts the
-// text on them via --mc-y-*). PURE numbers, unit-tested: every plate stays inside the face and none overlap.
+// text on them). PURE numbers, unit-tested: every plate stays inside the face and none overlap.
+//
+// GEAR TILE v2 (Andy oct9 — "avoid overcrowding by having the main stat on display and have the user click for more
+// substats"; claude research gear-card-research.md §3, the Genshin / HSR / Diablo tile): ONE layout for every card.
+// The tile carries rarity → art → name → the MAIN STAT as the hero → a quiet pip row on the bottom band (a dot per
+// extra stat, ✦ for a perk, ★ for dupe pips). The crit / perk / odds lines left the tile for the detail sheet, so the
+// per-card layouts (plain / perk / crit / both) are gone: every tile in the grid lines up.
 export const CARD_W = 180;
 export const CARD_H = 260;
 export const FACE = { top: 42, bottom: 228 };
-export const PLATE_H = { head: 28, name: 30, stat: 32, crit: 18, perk: 18, foot: 20 };
-/**
- * plain: no extra band. perk: LEGENDARY+ with a perk — the art and the lower plates move up to fit the band.
- * crit (Andy oct8 CRIT): a RARE+ / EARNED gear's yellow CRIT band in the perk's slot. both: the CRIT band AND the perk
- * band (LEGENDARY+ with a perk) — the art shrinks once more so the two bands stack under the stat.
- */
-export const LAYOUT = {
-  plain: { head: 9, artC: 102, artR: 58, name: 162, stat: 196, crit: null, perk: null, foot: 232 },
-  perk: { head: 9, artC: 90, artR: 48, name: 140, stat: 174, crit: null, perk: 208, foot: 232 },
-  crit: { head: 9, artC: 90, artR: 48, name: 140, stat: 174, crit: 208, perk: null, foot: 232 },
-  both: { head: 9, artC: 82, artR: 40, name: 122, stat: 154, crit: 188, perk: 208, foot: 232 },
-};
-/** The layout a card draws: by whether it has a perk band and a crit band. */
-export function layoutFor({ perk = false, crit = false } = {}) {
-  if (perk && crit) return LAYOUT.both;
-  if (crit) return LAYOUT.crit;
-  return perk ? LAYOUT.perk : LAYOUT.plain;
+export const PLATE_H = { head: 28, name: 30, hero: 54, pips: 20 };
+export const LAYOUT = { head: 9, artC: 89, artR: 45, name: 138, hero: 172, pips: 232 };
+/** The pip plate's width for n pips (centred on the bottom band); 0 = no plate. */
+export const PIP_W = 15;
+export const PIP_GAP = 2;
+export function pipPlateW(n) {
+  return n > 0 ? Math.min(164, n * PIP_W + (n - 1) * PIP_GAP + 12) : 0;
 }
-/** The plates of a layout as [top, bottom] spans, in drawing order. */
-export function plateSpans(L) {
-  const out = [['head', L.head, L.head + PLATE_H.head], ['art', L.artC - L.artR, L.artC + L.artR], ['name', L.name, L.name + PLATE_H.name], ['stat', L.stat, L.stat + PLATE_H.stat]];
-  if (L.crit != null) out.push(['crit', L.crit, L.crit + PLATE_H.crit]);
-  if (L.perk != null) out.push(['perk', L.perk, L.perk + PLATE_H.perk]);
-  out.push(['foot', L.foot, L.foot + PLATE_H.foot]);
-  return out;
+/** The plates as [name, top, bottom] spans, in drawing order. */
+export function plateSpans(L = LAYOUT) {
+  return [
+    ['head', L.head, L.head + PLATE_H.head],
+    ['art', L.artC - L.artR, L.artC + L.artR],
+    ['name', L.name, L.name + PLATE_H.name],
+    ['hero', L.hero, L.hero + PLATE_H.hero],
+    ['pips', L.pips, L.pips + PLATE_H.pips],
+  ];
 }

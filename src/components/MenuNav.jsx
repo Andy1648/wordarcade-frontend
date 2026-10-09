@@ -10,6 +10,7 @@
 // homepage chunk). Each control is a real <button> (≥ 44px) carrying data-nav="<id>" — the one hook
 // focus-restore and the e2e specs use, at either width (React 18: the kit buttons take no ref).
 import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
+import FitText from './kit/FitText.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
 import { lazy, Suspense } from 'react';
@@ -24,7 +25,7 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
       {board && (
@@ -52,6 +53,8 @@ export function MenuIcons({ board, ach, achSlot = null, navigating }) {
         ariaLabel={ach.count > 0 ? `Open achievements — ${formatNum(ach.count)} to claim` : 'Open achievements'}
         title="Achievements"
       />}
+      {/* SETTINGS (Andy oct9 "top right placement instead"): the cog joins this cluster as its last tile */}
+      {settingsSlot}
     </div>
   );
 }
@@ -122,6 +125,12 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
  * SLOT at the foot of the rail — the cog, the stat big ("×1.5 WINS"), the name · tier small in the tier colour.
  * Nothing worn → NONE / ROLL FOR ONE + a notification dot. Opens the ROLL screen either way.
  */
+/** "+28 BASE WINS/WORD" → { big: "+28", unit: "BASE WINS/WORD" }; "×2 WINS + XP" → { big: "×2", unit: "WINS + XP" }. */
+export function gearSplit(text) {
+  const m = /^([+×x]?[\d.,]+[A-Za-z%]{0,2}s?)\s+(.+)$/.exec(String(text || '').trim());
+  return m ? { big: m[1], unit: m[2] } : { big: String(text || ''), unit: '' };
+}
+
 export function MenuGearSlot({ mark, onClick, disabled }) {
   const rar = mark ? CARD_RAR[mark.tier] || CARD_RAR.common : null;
   return (
@@ -142,7 +151,11 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
           </Suspense>
         ) : <span className="hp-gear-hole" aria-hidden="true" />}
         <span className="hp-gear-text">
-          <span className="hp-gear-big menu-mark-name">{mark ? mark.blurb || mark.name : 'NONE'}</span>
+          {/* Andy oct9 ("gear just goes into the Word Bomb card"): the stat's NUMBER is the big line ("+28", "×2"), its
+              unit a small line under it ("BASE WINS/WORD"), so a long stat never runs out of the slot; FitText is the
+              last guard. */}
+          <FitText className="hp-gear-big menu-mark-name">{mark ? gearSplit(mark.blurb || mark.name).big : 'NONE'}</FitText>
+          {mark && gearSplit(mark.blurb || mark.name).unit && <span className="hp-gear-unit">{gearSplit(mark.blurb || mark.name).unit}</span>}
           <span className="hp-gear-sub">{mark ? mark.name : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>

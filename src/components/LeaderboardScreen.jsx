@@ -49,11 +49,11 @@ export default function LeaderboardScreen({ onBack }) {
   // Andy oct8 ("where are the functions before, like change name"): the season-2 board (V2) had NO way back to the
   // claim form — CHANGE NAME and RECOVERY CODE lived only on the live screen, which a claimed player never saw again.
   // V2 now carries a NAME button that drops to the live screen (its hero row: your name · RECOVERY CODE · CHANGE NAME).
-  const [v2, setV2] = useState(() => SEASON2 && LEADERBOARD_ENABLED && !!getMyProfile());
+  const [v2] = useState(() => SEASON2 && LEADERBOARD_ENABLED && !!getMyProfile());
   if (v2) {
     return (
       <Suspense fallback={<OverlaySkeleton title="LEADERBOARD" />}>
-        <LeaderboardV2 onBack={onBack} onManageName={() => setV2(false)} />
+        <LeaderboardV2 onBack={onBack} />
       </Suspense>
     );
   }

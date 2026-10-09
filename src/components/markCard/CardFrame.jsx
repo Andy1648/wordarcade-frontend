@@ -7,16 +7,16 @@
 //   rarity plate a notched banner across the frame's top band (the RARITY label sits on it) + one paint drip
 //   backing      a 12-point rosette behind the cog so the glyph never floats on the wash (rotated 7° — asymmetry)
 //   name plate   a ribbon with wings that overhang the frame (the NAME sits on it)
-//   stat band    an ink band spanning the frame (the stat), the perk band (LEGENDARY+ with a perk), the odds plate
+//   hero band    GEAR TILE v2 (Andy oct9): one tall ink band for the MAIN STAT (a locked card: its odds)
+//   pip plate    a small plate on the bottom band, as wide as its pips (`pipW`; none when the card has no pips)
 //   pins         LEGENDARY+ ONLY: diamond pins holding the ribbon (MYTHIC adds pins on the rarity plate; SECRET's are
 //                the rainbow) — the rare card is DRAWN differently, not just recoloured (Balatro's soul layer)
 //
 // Pure geometry: no gradients, no filters. Colours come in as props (the tier's palette row) so one drawing serves
-// every tier; `perk` shifts the lower plates up to make room for the perk band. The text is HTML over it (MarkCard).
+// every tier; every card shares ONE layout (frameLayout.LAYOUT). The text is HTML over it (MarkCard).
 import { memo } from 'react';
 import { RAINBOW_TEETH } from './palette.js';
-
-import { layoutFor } from './frameLayout.js';
+import { LAYOUT as L, PLATE_H } from './frameLayout.js';
 
 function rosette(cx, cy, r, points = 12, inner = 0.86) {
   const pts = [];
@@ -35,8 +35,7 @@ const Pin = ({ cx, cy, fill, edge }) => (
   </g>
 );
 
-function CardFrame({ line, edge, fill, tier = 'common', locked = false, perk = false, crit = false }) {
-  const L = layoutFor({ perk, crit });
+function CardFrame({ line, edge, fill, tier = 'common', locked = false, pipW = 0 }) {
   const pins = !locked && (tier === 'legendary' || tier === 'mythic' || tier === 'secret');
   const headPins = !locked && (tier === 'mythic' || tier === 'secret');
   const pinFill = (i) => (tier === 'secret' ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : line);
@@ -45,7 +44,7 @@ function CardFrame({ line, edge, fill, tier = 'common', locked = false, perk = f
       {/* the hard shadow: the silhouette (frame + the ribbon's wings), offset */}
       <g transform="translate(6 6)" fill="#000">
         <rect x="2" y="2" width="176" height="256" rx="14" />
-        <path d={banner(2, 178, L.name, 30, 6)} />
+        <path d={banner(2, 178, L.name, PLATE_H.name, 6)} />
       </g>
       {/* the frame in the tier colour, outlined in its darker shade */}
       <rect x="2" y="2" width="176" height="256" rx="14" fill={line} stroke={edge} strokeWidth="5" />
@@ -57,16 +56,14 @@ function CardFrame({ line, edge, fill, tier = 'common', locked = false, perk = f
       {/* the backing rosette behind the cog */}
       <path d={rosette(90, L.artC, L.artR)} fill={edge} stroke={fill} strokeWidth="3" strokeLinejoin="round" transform={`rotate(7 90 ${L.artC})`} />
       {/* the name ribbon: wings overhang the frame */}
-      <path d={banner(2, 178, L.name, 30, 6)} fill={line} stroke={edge} strokeWidth="3" strokeLinejoin="round" />
-      {/* the stat band (ink), the perk band, the odds plate */}
-      <rect x="5" y={L.stat} width="170" height="32" rx="6" fill="#0d0618" stroke={edge} strokeWidth="2.5" />
-      {/* the CRIT band (RARE+ / EARNED): crit yellow, outlined in its darker yellow (grey when locked) */}
-      {crit ? <rect x="5" y={L.crit} width="170" height="18" rx="4" fill={locked ? '#5d4a78' : '#FFE94A'} stroke={locked ? '#2a1a40' : '#b3a100'} strokeWidth="2.5" /> : null}
-      {perk ? <rect x="5" y={L.perk} width="170" height="18" rx="4" fill="#0d0618" stroke={edge} strokeWidth="2" /> : null}
-      <rect x="14" y={L.foot} width="152" height="20" rx="4" fill={fill} stroke={edge} strokeWidth="2" />
+      <path d={banner(2, 178, L.name, PLATE_H.name, 6)} fill={line} stroke={edge} strokeWidth="3" strokeLinejoin="round" />
+      {/* the hero band (ink): the MAIN STAT — or, locked, the odds */}
+      <rect x="5" y={L.hero} width="170" height={PLATE_H.hero} rx="6" fill="#0d0618" stroke={edge} strokeWidth="2.5" />
+      {/* the pip plate on the bottom band, sized to its pips */}
+      {pipW ? <rect x={90 - pipW / 2} y={L.pips} width={pipW} height={PLATE_H.pips} rx="4" fill={fill} stroke={edge} strokeWidth="2" /> : null}
       {/* LEGENDARY+: the pins */}
-      {pins ? <Pin cx={8} cy={L.name + 15} fill={pinFill(0)} edge={edge} /> : null}
-      {pins ? <Pin cx={172} cy={L.name + 15} fill={pinFill(1)} edge={edge} /> : null}
+      {pins ? <Pin cx={8} cy={L.name + PLATE_H.name / 2} fill={pinFill(0)} edge={edge} /> : null}
+      {pins ? <Pin cx={172} cy={L.name + PLATE_H.name / 2} fill={pinFill(1)} edge={edge} /> : null}
       {headPins ? <Pin cx={10} cy={23} fill={pinFill(2)} edge={edge} /> : null}
       {headPins ? <Pin cx={170} cy={23} fill={pinFill(3)} edge={edge} /> : null}
     </svg>

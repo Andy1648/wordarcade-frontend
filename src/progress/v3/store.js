@@ -64,8 +64,19 @@ export function readCounters() {
   out.marks = Array.isArray(o.marks) ? o.marks.filter((x) => typeof x === 'string').slice(0, 500) : [];
   return out;
 }
+/** Fired on window whenever a counter or a claimed tier is written — the menu trophy's dot re-reads on it. */
+export const ACH_CHANGE = 'taw:ach-change';
+function achChanged() {
+  try {
+    window.dispatchEvent(new Event(ACH_CHANGE));
+  } catch {
+    /* no window (node sims / tests) */
+  }
+}
 function writeCounters(c) {
-  return set(COUNT_KEY, JSON.stringify(c));
+  const ok = set(COUNT_KEY, JSON.stringify(c));
+  if (ok) achChanged();
+  return ok;
 }
 /** counters[k] += n (season 2 only). */
 export function bumpCounter(k, n = 1) {
@@ -100,7 +111,9 @@ export function readClaimed() {
   return out;
 }
 export function writeClaimed(o) {
-  return set(ACH_KEY, JSON.stringify(o));
+  const ok = set(ACH_KEY, JSON.stringify(o));
+  if (ok) achChanged();
+  return ok;
 }
 
 // ---- best rank (monotonic) ----------------------------------------------------------------------------------

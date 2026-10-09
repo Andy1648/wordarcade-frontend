@@ -3,7 +3,8 @@
 // LAZY, its own chunk: StatsScreen renders it in place of the live STATS panel only while the SEASON2 flag is on (live
 // players see the old panel, untouched, until the flip). Balatro-style: the TOTAL multiplier FIRST (huge), "=" the pay
 // it makes, then the CHAIN of chips that builds it — BASE, then one chip per multiplier — and the ALL TIME strip.
-//   * TABS: WINS (WINS / WORD) and XP (XP / LETTER), each tab carrying its own total.
+//   * TABS: XP (XP / KEY) | WINS (WINS / WORD) | BOOSTS — XP first and the default (Andy oct9), each board tab
+//     carrying its own total.
 //   * REPLAY: tapping the TOTAL replays the chain — the total counts up chip by chip (a tick names each multiplier as
 //     it lands), then slams; a big total shakes the stage. FINITE: a fixed list of timeouts, cleared on unmount / tab.
 //   * REAL NUMBERS: progress/statBoard.js statChain() over statBoard() — BASE × every chip = the TOTAL the game pays
@@ -13,6 +14,7 @@
 // Motion: transform / opacity one-shots through the kit (kitPlay — will-change on for the effect only); nothing loops
 // at rest; REDUCE MOTION shows the finished chain at once and plays nothing.
 import StatsBoosts from './StatsBoosts';
+import FitText from './kit/FitText.jsx';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './StatsV2.css';
@@ -234,7 +236,7 @@ export default function StatsV2({ onBack, onMore }) {
   const [life] = useState(readLife);
   // CRIT (Andy oct8): its OWN row — a chance per key, not a multiplier, so it is never folded into the chain's product
   const [crit] = useState(() => critSummary(critTotals()));
-  const [tab, setTab] = useState('wins');
+  const [tab, setTab] = useState('xp'); // XP first + the default (Andy oct9)
   // the replay: idx = chips landed (after BASE), cur = the running multiplier, done = slammed
   const [play, setPlay] = useState({ idx: 0, cur: 1, done: false });
 
@@ -285,7 +287,7 @@ export default function StatsV2({ onBack, onMore }) {
   }, [boards]);
 
   useEffect(() => {
-    run('wins');
+    run('xp');
     rootRef.current?.focus();
     const onKey = (e) => {
       if (e.key === 'Escape') onBackRef.current();
@@ -297,7 +299,7 @@ export default function StatsV2({ onBack, onMore }) {
     };
   }, [run]);
 
-  const bk = tab === 'boosts' ? 'wins' : tab; // the BOOSTS tab has no board; the hidden hero keeps the WINS one
+  const bk = tab === 'boosts' ? 'xp' : tab; // the BOOSTS tab has no board; the hidden hero keeps the XP one
   const look = BOARDS[bk];
   const b = boards[bk];
   const n = b.chips.length;
@@ -332,7 +334,7 @@ export default function StatsV2({ onBack, onMore }) {
           <button type="button" className="st2-back" onClick={onBack} aria-label="Back to menu">← MENU</button>
           <h2 className="st2-title">STATS</h2>
           <div className="st2-tabs" role="tablist" aria-label="Stat boards">
-            {['wins', 'xp', 'boosts'].map((key) => {
+            {['xp', 'wins', 'boosts'].map((key) => {
               if (key === 'boosts') {
                 // BOOSTS (Andy oct8): every running boost + where each comes from — not a multiplier board, no replay
                 const on = tab === 'boosts';
@@ -420,10 +422,11 @@ export default function StatsV2({ onBack, onMore }) {
                     </span>
                     <span className="st2-chip-names">
                       <span className="st2-chip-name">{r.label}</span>
-                      <span className="st2-chip-tag">{r.tag}</span>
+                      <FitText className="st2-chip-tag">{r.tag}</FitText>
                     </span>
                   </div>
-                  <span className="st2-chip-v">{r.v}</span>
+                  {/* Andy oct9 "make sure things fit": a long figure (×4.78M, 10 + 28) shrinks to the chip, never past it */}
+                  <FitText className="st2-chip-v">{r.v}</FitText>
                 </div>
               </div>
             );
