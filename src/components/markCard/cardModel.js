@@ -26,6 +26,11 @@ export function perkText(id) {
   if (ps.length === 1) return PERKS[ps[0]] ? PERKS[ps[0]].line : ps[0];
   return ps.map((p) => (PERKS[p] ? PERKS[p].name : p)).join(' + ');
 }
+/** Each perk's full line, one per perk (the detail sheet's PERK panel): ["FRENZY IN EVERY MODE", …]. */
+export function perkLines(id) {
+  const m = rollMarkById(id);
+  return m ? m.perks.map((p) => (PERKS[p] ? PERKS[p].line : p)) : [];
+}
 /** How many perks the card shows (LEGENDARY+ only, as perkText). */
 export function perkCount(id) {
   const m = rollMarkById(id);

@@ -47,6 +47,9 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(sheet.locator('.mx-sheet-name')).toHaveText('BOMBER');
   await expect(sheet.locator('.mx-sheet-tier')).toContainText('COMMON');
   await expect(sheet.locator('.mx-sheet-stat')).toHaveText('×1.1 WINS');
+  // GEAR SHEET v2 (Andy oct9): the MAIN STAT is the sheet's biggest line; the odds sit under it with the ★ progress
+  await expect(sheet.getByTestId('mark-main')).toHaveText(/^×1\.1\s*WINS$/);
+  await expect(sheet.getByTestId('mark-odds')).toHaveText(/^1 IN \d+$/);
   const flavour = (await sheet.getByTestId('mark-flavour').innerText()).trim();
   expect(flavour.length).toBeGreaterThan(0);
   expect(flavour.length).toBeLessThanOrEqual(32);
@@ -66,6 +69,10 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(locked).not.toContainText(/[×+]\d/);
   await locked.click();
   await expect(sheet.locator('.mc-odds')).toContainText('1 IN '); // the sheet's card: the odds in its hero
+  // a locked sheet: the odds + how to get it as the main line, the COUNT of hidden stats, never a value
+  await expect(sheet.getByTestId('mark-main')).toContainText('ROLL TO UNLOCK');
+  await expect(sheet.getByTestId('mark-crit')).toHaveCount(0);
+  await expect(sheet).not.toContainText(/[×+]\d/);
   await expect(sheet.getByTestId('mark-flavour')).toHaveCount(0);
   await expect(page.locator('.mx-howto')).toHaveCount(0);
   await page.keyboard.press('Escape'); // the sheet closes first, the INDEX stays

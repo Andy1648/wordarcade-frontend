@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROLL_MARKS, PERMANENT_MARKS, oneInX, mainTag } from '../../progress/markRolls.js';
 import { MARKS } from '../../progress/marks.js';
-import { cardModel, splitTag, pipNext, tilePips, pipsLabel } from './cardModel.js';
+import { cardModel, splitTag, pipNext, tilePips, pipsLabel, perkLines } from './cardModel.js';
 import { CARD_RAR } from './palette.js';
 import { formatNum } from '../../format.js';
 
@@ -96,4 +96,11 @@ test('helpers: the tag split and the "7/10 → ★3" line', () => {
   assert.deepEqual(splitTag('+2.5 BASE WINS/WORD'), { num: '+2.5', kind: 'BASE WINS/WORD' });
   assert.equal(pipNext({ pips: 2, have: 7, need: 10 }), '7/10 → ★3');
   assert.equal(pipNext({ pips: 5, have: 0, need: 0 }), '');
+});
+
+test('the detail sheet: one PERK line per perk; a locked card\'s counts line names no value', () => {
+  const origin = ROLL_MARKS.find((m) => m.tier === 'secret');
+  assert.equal(perkLines(origin.id).length, origin.perks.length);
+  const locked = cardModel({ id: origin.id, tier: origin.tier, name: origin.name, locked: true, state: null });
+  assert.match(pipsLabel(locked, { stars: false }), /^\d+ EXTRA STATS? · \d+ PERKS?$/);
 });

@@ -9,8 +9,10 @@
 //   LOCKED a HIDDEN design (GEAR TILE v2, Andy oct9): a black silhouette of the mark's own glyph in its tier-coloured
 //          cog, "???", its odds as the hero and a "?" pip per hidden extra stat — no stat value (an EARNED gear: a lock
 //          + ACHIEVEMENT; the task that earns it is in the detail sheet only).
-//   sheet  tap a card → the detail (the only place with words: the perk line, flavour, how-to, owned ×N, first roll #,
-//          SET AS MAIN). The engine pays the INDEX rewards (new mark / ★ / tier complete) — this screen never states
+//   sheet  tap a card → the detail, GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel): the card, then the MAIN
+//          STAT biggest, the extra stats as a quiet list, the PERK in its own cyan panel, flavour, odds + ★ progress,
+//          owned ×N / first roll #, SET AS MAIN. LOCKED: rarity · LOCKED, the odds + ROLL TO UNLOCK (an EARNED gear:
+//          ACHIEVEMENT + its task) and only the COUNT of what is hidden ("2 EXTRA STATS · 1 PERK") — no values. The engine pays the INDEX rewards (new mark / ★ / tier complete) — this screen never states
 //          an amount, so it can never claim more than it pays.
 //
 // PROPS (the ROLL screen opens this from its INDEX button):
@@ -26,16 +28,15 @@ import { markProgress, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
 import {
   ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ROLLABLE_TIERS, viewState, markLevel, oneInX, collection,
-  permanentOwnedIds, indexEntry, completedTiers, perkLine, critStatsOf,
+  permanentOwnedIds, indexEntry, completedTiers,
 } from '../progress/markRolls';
 import { wearMark } from '../progress/markRollShop';
 import { flavourOf } from '../progress/markFlavour';
-import { critLines } from '../progress/critText';
 import { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
 import MarkCard from './markCard/MarkCard';
 import { CARD_RAR } from './markCard/palette.js';
-import { pipNext, tierLabel } from './markCard/cardModel.js';
+import { cardModel, pipNext, pipsLabel, perkLines, tierLabel } from './markCard/cardModel.js';
 import { formatNum } from '../format';
 import './MarksIndex.css';
 
@@ -86,11 +87,12 @@ function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
   useEffect(() => { closeRef.current?.focus(); }, [e.id]);
   const rolled = e.kind === 'roll';
   const info = rolled ? indexEntry(e.id, view) : null;
-  const next = rolled && have ? pipNext(info) : '';
-  const perk = perkLine(e.id);
+  // the same model the card draws from: a LOCKED one carries no stat value at all (GEAR TILE v2)
+  const c = cardModel({ id: e.id, kind: e.kind, tier: e.tier, name: e.name, locked: !have, state: view });
+  const next = rolled && have ? pipNext(info) || (info && info.pips >= 5 ? '★5 MAX' : '') : '';
+  const perks = have ? perkLines(e.id) : [];
   const flavour = have ? flavourOf(e.id) : '';
-  // CRIT (oct8): the gear's extra stats as full lines (a locked gear: at ★0, like its card)
-  const crit = e.kind === 'retired' ? [] : critLines(critStatsOf(e.id, have ? view : null));
+  const hidden = have ? '' : pipsLabel(c, { stars: false }); // "2 EXTRA STATS · 1 PERK" — counts, never values
   return (
     <div className="mx-sheet-layer" onClick={onClose}>
       <div
@@ -109,11 +111,31 @@ function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
             shiny={!!(info && info.shiny)} fx={have} parts={SHEET_PARTS}
           />
         </div>
+        {/* GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel): MAIN STAT biggest → the extra stats, quiet → the
+            PERK in its own panel → odds + ★ progress → EQUIP. LOCKED: the odds as the main line, how to get it, and
+            only the COUNT of what is hidden. */}
         <div className="mx-sheet-body">
-          {next ? <div className="mx-pips-text">{next}</div> : null}
-          {crit.length ? (
+          {have ? (
+            <div className="mx-main" data-testid="mark-main">
+              <span className="mx-main-num">{c.statNum}</span>
+              {c.statKind ? <span className="mx-main-kind">{c.statKind}</span> : null}
+            </div>
+          ) : rolled ? (
+            <div className="mx-main is-locked" data-testid="mark-main">
+              <span className="mx-main-kick">{c.rarityName} · LOCKED</span>
+              <span className="mx-main-num">{c.odds}</span>
+              <span className="mx-main-kind">ROLL TO UNLOCK</span>
+            </div>
+          ) : (
+            <div className="mx-main is-locked is-word" data-testid="mark-main">
+              <span className="mx-main-kick">{c.rarityName} · LOCKED</span>
+              <span className="mx-main-num">ACHIEVEMENT</span>
+              {howTo ? <span className="mx-main-kind mx-howto">{howTo}</span> : null}
+            </div>
+          )}
+          {c.critLines.length ? (
             <div className="mx-sheet-crit" data-testid="mark-crit">
-              {crit.map((l) => (
+              {c.critLines.map((l) => (
                 <span key={l.id} className="mx-crit-line">
                   <span className="mx-crit-num">{l.num}</span> <span className="mx-crit-kind">{l.kind}</span>
                 </span>
@@ -121,9 +143,30 @@ function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
               <span className="mx-crit-what">A CRIT KEY PAYS ×2 XP — CRIT POWER ADDS TO THE ×2</span>
             </div>
           ) : null}
-          {perk ? <div className="mx-sheet-perk">{perk}</div> : null}
+          {hidden ? <div className="mx-hidden" data-testid="mark-hidden">{hidden}</div> : null}
+          {perks.length ? (
+            <div className="mx-sheet-perk" data-testid="mark-perk">
+              <span className="mx-perk-kick">PERK{perks.length > 1 ? 'S' : ''} · WHILE MAIN</span>
+              {perks.map((p) => <span key={p} className="mx-perk-line">{p}</span>)}
+            </div>
+          ) : null}
           {flavour ? <div className="mx-sheet-flavour" data-testid="mark-flavour">{flavour}</div> : null}
-          {!have && howTo ? <div className="mx-howto">ACHIEVEMENT REQUIRED: {howTo}</div> : null}
+          {have && (c.odds || next) ? (
+            <div className="mx-sheet-odds">
+              {c.odds ? (
+                <span className="mx-fact">
+                  <span className="mx-odds" data-testid="mark-odds">{c.odds}</span>
+                  <span className="mx-fact-k">{rolled ? 'ODDS' : 'ACHIEVEMENT'}</span>
+                </span>
+              ) : null}
+              {next ? (
+                <span className="mx-fact">
+                  <span className="mx-pips-text">{next}</span>
+                  <span className="mx-fact-k">DUPES</span>
+                </span>
+              ) : null}
+            </div>
+          ) : null}
           {rolled && have ? (
             <div className="mx-sheet-facts">
               <span data-testid="mark-owned">OWNED ×{formatNum(info.owned)}</span>
