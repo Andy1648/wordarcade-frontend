@@ -1,7 +1,7 @@
 // e2e/mark-rolls.spec.js — THE ROLL SCREEN (Andy oct5; replaces the in-panel roll UI + rolls-reveal.spec.js). Written
 // WITHOUT being run (the authoring machine runs no Playwright); CI runs it. Covers: MARKS opens the full-screen
 // ROLL screen (one big ROLL, no ×10) → the tutorial → a roll spins the reel and the card + pity only change when it
-// LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (Andy oct5: named — "×1.1 WINS", "+1 BASE WINS/WORD" …); tap
+// LANDS, on the real result; the card + the worn INDEX card read the mark's STAT (Andy oct5: named — "×1.1 WINS", "+1 BASE WINS" …); tap
 // anywhere jumps to the result; a LEGENDARY+ pity roll plays the cutscene with "1 IN X" huge; AUTO ROLL stops on its
 // tier; AUTO ROLL spends GEMS and stops when they run out; the skip setting is stored; a short balance shows −X + gem
 // (the NEED X MORE GEMS sentence is screen-reader only — Andy oct5: no prose on the ROLL screen; rolls cost 10 GEMS —
@@ -110,7 +110,7 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(roll.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
   await expect(roll).not.toContainText('WINS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
-  // marks v2: the card says the mark's STAT ("×1.1 WINS", "+1 BASE WINS/WORD" …)
+  // marks v2: the card says the mark's STAT ("×1.1 WINS", "+1 BASE WINS" …)
   await expect(card(page).locator('.rs-card-stat')).toHaveText(/^[+×][\d.,]+s? [A-Z]/);
   // finite: once landed nothing animates, nothing loops, will-change is off
   await page.waitForTimeout(3600);
