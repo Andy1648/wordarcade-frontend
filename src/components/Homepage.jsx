@@ -13,7 +13,7 @@ import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, keyTierCost, roundWordXp, MENU_LETTER_SHARE } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, roundWordXp, MENU_LETTER_SHARE } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
@@ -42,7 +42,7 @@ const MarksIndex = ROLLS
 import { markById, unlockedMarks, getEquippedMark, hasUnseenMarks, markMarksSeen, takeMarkRankUp, MARK_RANK_NAMES, markBlurbAt, marksRevealed, equipMark, MARKS_UNLOCK_LEVEL } from '../progress/marks';
 import { wornMarkId, markEntry, loadRollState } from '../progress/markRollsCore'; // the menu chip only — the roll system is lazy with MARKS
 import { useGems } from './gems/GemChip';
-import { canAffordRoll, ROLL_PRICE_GEMS } from '../progress/gemsCore';
+import { canAffordRoll } from '../progress/gemsCore';
 import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 
 // The achievement each mark comes from, by name — the locked cards say what to go and do rather
@@ -606,9 +606,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
   useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
-  // The UPGRADES rail's live value (SEASON 2 #5): the cheapest POWER (KEY tier) price — the one wins buy in both
-  // seasons (v3 swaps keyTierCostAt). Re-read when the balance moves (a purchase spends it), never per keystroke.
-  const nextPowerCost = useMemo(() => keyTierCost(getKeyTier()), [wins]); // eslint-disable-line react-hooks/exhaustive-deps
   const { progress: xpProgress, refresh: refreshXp } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
@@ -1192,22 +1189,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     setShowMarks(view);
   };
   const hover = () => sfx('hover');
-  // SEASON 2 #5 — every rail button carries a LIVE value, read from state the menu already holds (no per-keystroke
-  // reads: the price follows `wins`, the rolls `gems`, the index the roll store, the rebirth line the LEVEL). REBIRTH reads "IN 21 LV" (fits the phone slab).
+  // SEASON 2 #5 — REBIRTH and STATS carry a LIVE status line, read from state the menu already holds (no per-keystroke
+  // reads: the rebirth line follows the LEVEL). REBIRTH reads "IN 21 LV" (fits the phone slab). UPGRADES / GEARS: no count (below).
   // tile figures are ALWAYS abbreviated (formatShort — NIGHT oct8 #1a: "1,185,…" clipped in the FULL style)
-  const rollsAfford = Math.floor((Number(gems) || 0) / (ROLL_PRICE_GEMS > 0 ? ROLL_PRICE_GEMS : 1));
-  const rollValue = rollsAfford > 0 ? `${formatShort(rollsAfford)} ${rollsAfford === 1 ? 'ROLL' : 'ROLLS'}` : starterWaiting ? 'FREE ROLL' : '0 ROLLS';
-  const rollShort = rollsAfford > 0 ? formatShort(rollsAfford) : starterWaiting ? 'FREE' : '0';
   const toRebirth = Math.max(0, rebirthGate - xpProgress.level);
   const rebirthValue = toRebirth > 0 ? `IN ${formatShort(toRebirth)} LV` : 'READY';
   const rebirthShort = toRebirth > 0 ? `${formatShort(toRebirth)} LV` : 'READY';
   const statsMult = letterXpNow(); // read on render only (the menu re-renders on its own state), never per key
   const railItems = {
     // TILE values (feat/menu-rail-2col, the 2-column desktop rail): the NUMBER big, the unit small — numbers first.
-    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: { full: `${formatShort(nextPowerCost)} WINS`, short: formatShort(nextPowerCost), big: formatShort(nextPowerCost), unit: 'WINS FOR POWER' }, valueSays: `next power ${formatNum(nextPowerCost)} wins` },
+    // NO COUNTS (Andy oct9: "get rid of the number on the main menu … like on the upgrade icon as well"): UPGRADES and
+    // GEARS are icon + label only; the DOT is the whole signal — on while something is actionable (an upgrade or a roll
+    // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
+    // are STATUS (where you stand), not a tally of things to buy.
+    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: null },
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
-    gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: { full: rollValue, short: rollShort, big: rollsAfford > 0 ? formatShort(rollsAfford) : starterWaiting ? 'FREE' : '0', unit: rollsAfford > 0 ? (rollsAfford === 1 ? 'ROLL READY' : 'ROLLS READY') : starterWaiting ? 'ROLL WAITING' : `ROLLS (${formatShort(ROLL_PRICE_GEMS)} GEMS)` }, valueSays: rollValue.toLowerCase(), locked: rollLock },
+    gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: null, locked: rollLock },
     rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
     // STATS (moved down from the top-right): its number is the TOTAL multiplier on a key (v4: BASE 1 XP, so the rate IS it)
     stats: { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
