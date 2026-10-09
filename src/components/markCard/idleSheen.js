@@ -14,3 +14,5 @@ export function nextIdleSheen(ids, visible, prev = -1) {
   }
   return -1;
 }
+/** The tiers that GLOW (GearFx — the rare-gear aura, a documented flat-rule exception): EPIC and up. */
+export const GLOW_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret']);

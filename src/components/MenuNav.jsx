@@ -16,13 +16,15 @@ import { formatNum } from '../format';
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { CARD_RAR } from './markCard/palette.js';
 import { mainTag, critTierOf } from '../progress/markRollsCore';
-import { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS } from './markCard/idleSheen.js';
+import { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS, GLOW_TIERS } from './markCard/idleSheen.js';
 import { useReduceMotion } from '../lib/useReduceMotion';
 // The cog + glyph art is the INDEX chunk's (MarkBadge, ~11 KB): the gear slot loads it only once a mark is worn —
 // payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
 const MarkBadge = lazy(() => import('./MarkBadge.jsx'));
 // the crit line's WORDS (critText) stay lazy too — loaded only when the worn gear has a crit rate
 const GearSlotCrit = lazy(() => import('./GearSlotCrit.jsx'));
+// the EPIC+ glow (aura + motes, Andy oct9 "clash royale cards") — code and art load only when such a gear is worn
+const GearFx = lazy(() => import('./GearFx.jsx'));
 
 /** Focus the control `id` inside `root` (App's overlay-return a11y — see Homepage). */
 export function focusNav(root, id) {
@@ -194,6 +196,7 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
       aria-haspopup={mark ? 'dialog' : undefined}
       aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open gear stats` : 'Your gear: none. Roll for one'}
     >
+      {mark && GLOW_TIERS.has(tier) ? <Suspense fallback={null}><GearFx tier={tier} /></Suspense> : null}
       {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img ref={bandRef} className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
       <span className="hp-gear-label">YOUR GEAR</span>
       <span className="hp-gear-body">
@@ -220,15 +223,21 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
   );
 }
 
-/** The worn mark, NAME ONLY — or, while nothing is worn, "ROLL" + a notification dot (it opens the ROLL screen). */
+/** The worn mark, NAME ONLY — or, while nothing is worn, "ROLL" + a notification dot (it opens the ROLL screen). It
+ *  wears the YOUR GEAR slot's TIER FRAME (Andy oct9): the edge stripe, border and shadow in the tier colour. */
 export function MenuMarkChip({ mark, onClick }) {
   const name = mark ? mark.name : 'ROLL';
+  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'common') : null;
+  const rar = tier ? CARD_RAR[tier] : null;
   return (
     <button
       type="button"
       className={`menu-mark hp-chip${mark ? '' : ' is-empty is-roll'}`}
+      data-tier={tier || undefined}
+      style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
       onClick={onClick}
-      aria-label={mark ? `Mark equipped: ${mark.name}` : 'No mark worn. Roll for a mark'}
+      aria-haspopup={mark ? 'dialog' : undefined}
+      aria-label={mark ? `Mark equipped: ${mark.name}, ${tier}. Open gear stats` : 'No mark worn. Roll for a mark'}
     >
       <span className="hp-chip-edge" aria-hidden="true" />
       <span className="menu-mark-name">{name}</span>

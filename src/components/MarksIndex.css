@@ -94,6 +94,7 @@
 .mx-cell { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; }
 .mx-tile {
   position: relative;
+  isolation: isolate; /* an owned EPIC+ card's GearFx glow sits behind the card, inside this box */
   display: block;
   padding: 0;
   border: 0;

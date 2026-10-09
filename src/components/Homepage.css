@@ -348,6 +348,13 @@ html[data-beat='true'] .homepage-logo {
 .hp-chip.is-new .hp-chip-edge { background: #FF3D7F; }
 /* nothing worn: the chip reads ROLL with a notification dot (SEASON 2 #5) */
 .hp-chip.is-roll .hp-chip-edge { background: #2EFFE0; }
+/* the worn gear's TIER FRAME (Andy oct9, as the YOUR GEAR slot): stripe, border and hard shadow in the tier colour */
+.hp-chip[data-tier] .hp-chip-edge { background: var(--gear-line); }
+.hp-chip[data-tier='common'] { border-color: var(--gear-edge); }
+.hp-chip:is([data-tier='rare'], [data-tier='epic']) { border-color: var(--gear-line); }
+.hp-chip[data-tier='epic'] { box-shadow: var(--b4) var(--b4) 0 var(--gear-edge); }
+.hp-chip:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { border-color: var(--gear-line); background: var(--gear-fill); box-shadow: var(--b4) var(--b4) 0 var(--gear-edge); }
+.hp-chip:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: var(--b5) var(--b5) 0 var(--gear-line); }
 .hp-chip-dot {
   position: absolute;
   top: -8px;
@@ -660,7 +667,9 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   cursor: pointer;
   transition: transform 80ms;
 }
-.hp-gear.is-worn { border-color: var(--gear-line); }
+/* an EPIC+ gear's GearFx glow (z -2) sits behind the slot; ::before repaints the slot's face over the glow's centre */
+.hp-gear.is-worn { border-color: var(--gear-line); isolation: isolate; }
+.hp-gear.is-worn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: inherit; border-radius: 4px; pointer-events: none; }
 /* RARITY is the FRAME (Andy oct9 "a glow or smthn to rarer gears" — a glow breaks the flat rule): the border and the
    hard offset shadow take the tier colour, quiet → loud. COMMON: its dark edge, black shadow. RARE: the tier line.
    EPIC: + the shadow in the tier's dark edge. LEGENDARY: + the tier's face colour behind it. MYTHIC / SECRET: the
