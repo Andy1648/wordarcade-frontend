@@ -245,3 +245,24 @@ test('after the reset: unearned rows keep their season-1 order and show "—"; a
   await expect(lb.locator('.lb2-row[data-id="o3"] .lb2-r')).toHaveText('—');
   await expect(lb.locator('.lb2-row[data-id="me"] .lb2-r')).toHaveText('—');
 });
+
+test('CHANGE NAME is inline on this board (Andy oct8: one leaderboard) — no hop to the season-1 screen', async ({ page }) => {
+  const { lb } = await boot(page, { me: { rebirths: 0, level: 60 } });
+  await lb.locator('.lb2-me-btn').click();
+  const box = lb.locator('.lb2-rename');
+  await expect(box).toBeVisible();
+  await expect(page.locator('.lb-overlay')).toHaveCount(0); // the old live screen never opens
+  await box.locator('#lb2-rename-input').fill('x');
+  await expect(box.locator('.lb2-rename-msg')).toHaveText(/3–16 LETTERS/);
+  await expect(box.locator('.lb2-rename-save')).toBeDisabled();
+  await box.locator('.lb2-rename-x').click();
+  await expect(box).toHaveCount(0);
+  // a real rename: the free-name verdict, SAVE, and the YOU button wears the new name — still this board
+  await lb.locator('.lb2-me-btn').click();
+  await box.locator('#lb2-rename-input').fill('NEWNAME');
+  await expect(box.locator('.lb2-rename-msg')).toHaveText(/FREE/);
+  if (process.env.LB_SHOT) await page.screenshot({ path: process.env.LB_SHOT });
+  await box.locator('.lb2-rename-save').click();
+  await expect(lb.locator('.lb2-me-v')).toHaveText('NEWNAME');
+  await expect(page.locator('.lb-overlay')).toHaveCount(0);
+});
