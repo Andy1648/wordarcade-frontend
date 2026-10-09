@@ -9,6 +9,7 @@
 //            a dupe shows as a small "×N" tag on the art (NIGHT oct8 #4: no ★ row — colour is for rarity only)
 //   name     white, ink-stroked, BIG (sized by its length so it fits one line)
 //   stat     NUMBERS FIRST — "×1.5" big, "WINS" small (markRolls.mainTag split, nothing new claimed), on a black band
+//   crit     "CRIT +6% · +0.5×" on a crit-yellow band (RARE+ and EARNED gears — Andy oct8 CRIT; cardModel.critText)
 //   perk     "+ LETTERS COUNT ×2" (LEGENDARY+ with a perk)
 //   foot     1 IN X                    (the mark's REAL odds — markRolls.oneInX), in the tier colour
 // (claude/mockups/v3/GearCard.dc.html — NIGHT oct8 #4.)
@@ -50,13 +51,13 @@ function MarkCard({
   const nameFit = nameLen >= 10 ? ' is-xl' : nameLen >= 8 ? ' is-l' : '';
   return (
     <div
-      className={`mc is-${c.tier}${locked ? ' is-locked' : ''}${hi ? ' is-hi' : ''}${fx ? ' is-fx' : ''}${still ? ' is-still' : ''}${c.perk ? ' has-perk' : ''}${className ? ` ${className}` : ''}`}
+      className={`mc is-${c.tier}${locked ? ' is-locked' : ''}${hi ? ' is-hi' : ''}${fx ? ' is-fx' : ''}${still ? ' is-still' : ''}${c.perk ? ' has-perk' : ''}${c.crit ? ' has-crit' : ''}${className ? ` ${className}` : ''}`}
       style={style}
       data-tier={c.tier}
     >
       <div className="mc-face">
         {/* R4: the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}
-        <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} perk={!!c.perk} />
+        <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} perk={!!c.perk} crit={!!c.crit} />
         <div className={`mc-head${parts.head ? ` ${parts.head}` : ''}`}>
           <span className={`mc-tier${parts.tier ? ` ${parts.tier}` : ''}`}>{c.rarityName}</span>
         </div>
@@ -78,6 +79,11 @@ function MarkCard({
           {c.statKind ? ' ' : null}
           {c.statKind ? <span className="mc-kind">{c.statKind}</span> : null}
         </div>
+        {c.crit ? (
+          <div className={`mc-crit${c.critText.length > 16 ? ' is-long' : ''}`} data-testid="mc-crit" title={c.critLines.map((l) => `${l.num} ${l.kind}`).join(' · ')}>
+            {c.critText}
+          </div>
+        ) : null}
         {c.perk ? <div className={`mc-perk${c.perk.length > 16 ? ' is-long' : ''}`}>+ {c.perk}</div> : null}
         {c.odds ? (
           <div className={`mc-foot${c.earned && locked ? ' is-ach' : ''}${parts.odds ? ` ${parts.odds}` : ''}`}>

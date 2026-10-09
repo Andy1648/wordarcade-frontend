@@ -253,6 +253,13 @@ export function mark2Factor(kind, opts, s, wornId) {
   const m = st2 ? (st2.kind === kind ? 1 + st2.value / 100 : 1) : mainMultOf(id2, s);
   return m > 0 ? m : 1;
 }
+/** CRIT (markRollsCore.critTotals reads it as V3.c2): the 2nd slot's gear id when it counts — the same door as
+ *  mark2Factor (R5, an owned rolled gear that is not the worn MAIN) — else null. */
+export function mark2For(s, wornId) {
+  if (!featureOpen('mark2')) return null;
+  const id2 = mark2Id();
+  return id2 && id2 !== wornId && s && s.marks && s.marks[id2] ? id2 : null;
+}
 /** Wear `id` in the 2nd MARK slot (R5+, an owned rolled mark, not the worn one; null empties it). */
 export function equipMark2(id) {
   if (!featureOpen('mark2')) return false;

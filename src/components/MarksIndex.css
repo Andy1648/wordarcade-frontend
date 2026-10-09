@@ -168,6 +168,12 @@
 .mx-sheet-body { display: grid; gap: 10px; min-width: 0; padding-right: 36px; }
 .mx-pips-text { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .mx-sheet-perk { display: inline-block; justify-self: start; padding: 2px 8px; background: #000; color: #2EFFE0; font-size: var(--fs-body); }
+/* CRIT (oct8): the gear's extra stats, each its own line, in crit yellow */
+.mx-sheet-crit { display: grid; gap: 2px; justify-items: start; }
+.mx-crit-line { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.mx-crit-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.mx-crit-kind { font-weight: 700; font-size: var(--fs-k16); color: #fff; }
+.mx-crit-what { font-size: var(--fs-k14); color: #c9b8e8; }
 .mx-sheet-flavour { font-size: var(--fs-body); color: #fff; line-height: 1.35; }
 .mx-sheet-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-label); letter-spacing: 0.08em; color: #c9b8e8; }
 .mx-sheet-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
@@ -223,6 +229,7 @@
   .mx-sheet { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 22px 14px 18px; gap: 14px; --mc-w: 180px; --mc-s: 1; }
   .mx-sheet-body { padding-right: 0; justify-items: center; }
   .mx-sheet-perk { justify-self: center; }
+  .mx-sheet-crit { justify-items: center; }
   .mx-sheet-facts, .mx-sheet-actions { justify-content: center; }
 }
 @media (max-width: 375px) {

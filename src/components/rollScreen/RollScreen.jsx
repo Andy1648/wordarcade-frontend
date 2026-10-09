@@ -28,7 +28,7 @@ import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/re
 import { MARK_TIERS } from '../../progress/marks';
 import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
-  setSkipBelow, SKIP_TIERS, PITY,
+  setSkipBelow, SKIP_TIERS, PITY, critStatsOf,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getGems, subscribeGems } from '../../progress/gems';
@@ -43,6 +43,7 @@ import { lazyWithReload } from '../../lib/chunkReload';
 import { holdBeats } from '../../hooks/useBeatSync';
 import { CARD_RAR, cardTier } from '../markCard/palette.js';
 import { splitTag } from '../markCard/cardModel.js';
+import { critLines } from '../../progress/critText';
 import {
   drawStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS, CHARGE_MS, OVERHOLD_MS,
 } from './reelPlan.js';
@@ -68,6 +69,7 @@ function ResultLine({ result, view, pop = true }) {
   const m = markEntry(result.markId);
   const { num, kind } = splitTag(mainTag(result.markId, view)); // "×1.1 WINS" → ×1.1 · WINS (numbers first)
   const extra = (result.extra || []).filter(Boolean);
+  const crit = critLines(critStatsOf(result.markId, view)); // CRIT (oct8): the gear's extra lines, under its MAIN
   return (
     <div
       className={`rs-result${pop ? '' : ' is-rest'}`}
@@ -95,6 +97,15 @@ function ResultLine({ result, view, pop = true }) {
               </span>
             );
           })}
+        </span>
+      ) : null}
+      {crit.length ? (
+        <span className="rs-res-crit" data-testid="mark-roll-crit">
+          {crit.map((l) => (
+            <span key={l.id} className="rs-crit-line">
+              <span className="rs-crit-num">{l.num}</span> <span className="rs-crit-kind">{l.kind}</span>
+            </span>
+          ))}
         </span>
       ) : null}
     </div>

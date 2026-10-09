@@ -25,10 +25,11 @@ import { markProgress, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
 import {
   ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ROLLABLE_TIERS, viewState, markLevel, oneInX, collection,
-  permanentOwnedIds, indexEntry, completedTiers, perkLine,
+  permanentOwnedIds, indexEntry, completedTiers, perkLine, critStatsOf,
 } from '../progress/markRolls';
 import { wearMark } from '../progress/markRollShop';
 import { flavourOf } from '../progress/markFlavour';
+import { critLines } from '../progress/critText';
 import { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
 import MarkCard from './markCard/MarkCard';
@@ -87,6 +88,8 @@ function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
   const next = rolled && have ? pipNext(info) : '';
   const perk = perkLine(e.id);
   const flavour = have ? flavourOf(e.id) : '';
+  // CRIT (oct8): the gear's extra stats as full lines (a locked gear: at ★0, like its card)
+  const crit = e.kind === 'retired' ? [] : critLines(critStatsOf(e.id, have ? view : null));
   return (
     <div className="mx-sheet-layer" onClick={onClose}>
       <div
@@ -107,6 +110,16 @@ function Sheet({ e, have, on, view, howTo, onSet, onClose }) {
         </div>
         <div className="mx-sheet-body">
           {next ? <div className="mx-pips-text">{next}</div> : null}
+          {crit.length ? (
+            <div className="mx-sheet-crit" data-testid="mark-crit">
+              {crit.map((l) => (
+                <span key={l.id} className="mx-crit-line">
+                  <span className="mx-crit-num">{l.num}</span> <span className="mx-crit-kind">{l.kind}</span>
+                </span>
+              ))}
+              <span className="mx-crit-what">A CRIT KEY PAYS ×2 XP — CRIT POWER ADDS TO THE ×2</span>
+            </div>
+          ) : null}
           {perk ? <div className="mx-sheet-perk">{perk}</div> : null}
           {flavour ? <div className="mx-sheet-flavour" data-testid="mark-flavour">{flavour}</div> : null}
           {!have && howTo ? <div className="mx-howto">ACHIEVEMENT REQUIRED: {howTo}</div> : null}

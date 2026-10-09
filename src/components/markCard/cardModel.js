@@ -3,7 +3,8 @@
 // formatNum. NUMBERS FIRST: the stat is split into its number ("×1.5", "+2.5", "+30s") printed big, and what it
 // touches ("WINS", "BASE WINS/WORD") printed small — the same text as markRolls.mainTag, so nothing new is claimed.
 import { MARK_TIERS } from '../../progress/marks.js';
-import { rollMarkById, oneInX, mainTag, markLevel } from '../../progress/markRolls.js';
+import { rollMarkById, oneInX, mainTag, markLevel, critStatsOf } from '../../progress/markRolls.js';
+import { critCardText, critLines } from '../../progress/critText.js';
 import { PERKS } from '../../progress/markPerks.js';
 import { formatNum } from '../../format.js';
 
@@ -44,7 +45,12 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
   const t = kind === 'perm' ? 'legendary' : tier || 'common';
   const { num, kind: statKind } = splitTag(mainTag(id, locked ? null : state));
   const lv = kind === 'roll' && !locked ? markLevel(state, id) : null;
+  // CRIT (Andy oct8): the gear's EXTRA stats under its MAIN — a locked card shows them at ★0, like its stat
+  const crit = kind === 'retired' ? { rate: 0, power: 0 } : critStatsOf(id, locked ? null : state);
   return {
+    crit: crit.rate > 0 || crit.power > 0 ? crit : null,
+    critText: critCardText(crit), // the card's one-line band: "CRIT +6% · +0.5×"
+    critLines: critLines(crit), // the full lines (roll result / INDEX sheet): "+6% CRIT RATE" · "+0.5× CRIT POWER"
     tier: t,
     rarityName: kind === 'perm' ? tierLabel('legendary') : tierLabel(t, kind),
     odds: kind === 'roll' ? `1 IN ${formatNum(oneInX(id))}` : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '', // locked: a lock + ACHIEVEMENT (the full task is in the sheet)

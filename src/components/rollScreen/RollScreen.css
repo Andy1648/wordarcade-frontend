@@ -277,6 +277,11 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-chip.is-extra { background: var(--rs-tier, #2EFFE0); }
 .rs-chip.is-dupe { background: #fff; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); transform: rotate(4deg); }
 .rs-card-extra { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+/* CRIT (oct8): the gear's extra lines on their own row under the MAIN — crit yellow numbers, white kinds */
+.rs-res-crit { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 18px; }
+.rs-crit-line { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.rs-crit-num { font-size: var(--fs-k22); line-height: 1.1; color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs-crit-kind { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); color: #fff; }
 @keyframes rs-pop {
   0% { transform: scale(0.2) rotate(-8deg); opacity: 0; }
   60% { transform: scale(1.12) rotate(2deg); opacity: 1; }
@@ -587,6 +592,9 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-result { gap: 2px 8px; }
   .rs-res-name, .rs-res-num { font-size: var(--fs-k18); -webkit-text-stroke: 3px #000; }
   .rs-res-kind { font-size: var(--fs-k14); }
+  .rs-crit-num { font-size: var(--fs-k18); }
+  .rs-crit-kind { font-size: var(--fs-k14); }
+  .rs-res-crit { gap: 0 12px; }
   .rs-chip { padding: 1px 6px; font-size: var(--fs-k14); border-width: 2px; box-shadow: 2px 2px 0 #000; }
   .rs-chip.is-dupe { font-size: var(--fs-k16); }
   .rs-res-pips { --pip: 16px; }
