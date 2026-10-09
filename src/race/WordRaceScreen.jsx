@@ -387,9 +387,8 @@ export default function WordRaceScreen({
               spellCheck={false}
               enterKeyHint="send"
             />
-            <button type="submit" className="wr-btn wr-btn-go" disabled={!live || finished || !text.trim()}>
-              SEND
-            </button>
+            {/* Andy oct8: no SEND button — the exact word sends itself; ENTER / the keyboard's send key
+                still submits the form. */}
           </form>
           <p className={`wr-toast${rejectCopy ? ' is-reject' : ''}`} role="status" data-reason={result && !result.accepted ? result.reason : ''}>
             {rejectCopy || (result && result.accepted ? `✓ ${result.word.toUpperCase()}` : ' ')}
