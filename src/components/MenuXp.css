@@ -114,14 +114,15 @@
 .menu-xp-pop.is-crit {
   flex-direction: column; /* the key on top, CRIT +N under it — the burst sits behind the KEY (JS lifts it) */
   align-items: center;
-  gap: 30px; /* Andy oct9 "cleaner": CRIT +N sits fully UNDER the burst's rim, never across its spikes */
+  gap: 4px;
 }
-/* Andy oct9 "cleaner": the KEY sits bare ON the burst — a dark glyph, no tile, no stroke — so key + burst read as ONE
-   shape; the only other thing is "CRIT +N" under it */
+/* Andy oct9 "C · RGB IMPACT": no background behind the key — the key itself is the hit: big CRIT YELLOW, thick black
+   stroke, the house hard offset shadow. Its pink + cyan copies (.menu-xp-critghost) split out from under it. */
 .menu-xp-pop.is-crit .menu-xp-pop-letter {
-  color: #0d0618;
-  -webkit-text-stroke: 0;
-  text-shadow: none;
+  font-size: var(--fs-h1);
+  color: #ffe94a;
+  -webkit-text-stroke: 5px #000;
+  text-shadow: 5px 5px 0 #000;
 }
 .menu-xp-pop.is-crit .menu-xp-pop-plus {
   font-family: 'Bungee', cursive;
@@ -133,19 +134,23 @@
   -webkit-text-stroke: 3px #000;
   text-shadow: 3px 3px 0 #000;
 }
-/* the CRIT STARBURST (public/fx/crit-burst.svg — the SHAPE is the asset): a pooled <img>, idle at opacity 0; a crit
-   sets left/top + a finite WAAPI scale / rotate / opacity (380ms). will-change only for its flight (JS). */
-.menu-xp-critburst {
+/* the CRIT RGB copies: the key's letter in flat PINK / CYAN (no stroke), pooled, idle at opacity 0, BEHIND the pops in
+   the DOM. A crit sets left/top + a finite WAAPI translate/scale/opacity (MenuXp.jsx critPop). */
+.menu-xp-critghost {
   position: absolute;
   left: -9999px;
   top: 0;
-  width: 112px;
-  height: 112px;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-h1);
+  line-height: 1;
   pointer-events: none;
   user-select: none;
   opacity: 0;
-  transform: translate(-50%, -50%);
+  white-space: nowrap;
 }
+.menu-xp-critghost.is-pink { color: #ff4fa3; }
+.menu-xp-critghost.is-cyan { color: #2effe0; }
 
 /* Screen-edge pulse (streak-tier crossing). Inset box-shadow (tier colour set inline);
    only opacity animates. position:absolute inset:0 so it never affects layout. */
