@@ -233,22 +233,22 @@ test('GEMS: the wins price is gone from the roll engine (a roll costs gems — m
 });
 
 test('tags: ONE short tag — the stat line, ×N WINS + XP for a PERMANENT, or the perk line for LEGENDARY+', () => {
-  assert.equal(mainTag('mk-sparky', null), '+1 BASE WINS/WORD');
+  assert.equal(mainTag('mk-sparky', null), '+1 BASE WINS');
   assert.equal(mainTag('mk-detonator', null), '×1.25 WINS');
-  assert.equal(mainTag('mk-cyclone', null), '+2.5 BASE WINS/WORD');
+  assert.equal(mainTag('mk-cyclone', null), '+2.5 BASE WINS');
   assert.equal(mainTag('mk-leviathan', null), '×3 XP');
-  assert.equal(mainTag('mk-kraken', null), '+90 BASE XP/LETTER');
+  assert.equal(mainTag('mk-kraken', null), '+90 BASE XP');
   assert.equal(mainTag('mk-origin', null), '×25 WINS');
   assert.equal(mainTag('mk-inkwell', null), '×1.1 ROLL LUCK');
   assert.equal(mainTag('mk-tinder', null), '+75s OVERDRIVE');
   assert.equal(mainTag('mk-eternal', null), '×3 WINS + XP', 'a PERMANENT pays the LEGENDARY MAIN');
-  assert.equal(perkTag(freshState(), 'mk-sparky'), '+1 BASE WINS/WORD');
+  assert.equal(perkTag(freshState(), 'mk-sparky'), '+1 BASE WINS');
   assert.equal(perkTag(freshState(), 'mk-leviathan'), 'WEAR: LETTERS COUNT ×2', 'a perk runs only while worn');
   assert.equal(perkTag(freshState(), 'mk-origin'), 'WEAR: FRENZY IN EVERY MODE + REBIRTH KEEPS 3 POWER TIERS');
 });
 
 test('markTag (Andy oct5): the COMPACT line — named stat, PERK: … on LEGENDARY+, ★N once it has pips', () => {
-  assert.equal(markTag('mk-sparky', null), '+1 BASE WINS/WORD');
+  assert.equal(markTag('mk-sparky', null), '+1 BASE WINS');
   assert.equal(markTag('mk-detonator', null), '×1.25 WINS');
   assert.equal(markTag('mk-leviathan', null), '×3 XP · PERK: LETTERS COUNT ×2');
   assert.equal(markTag('mk-leviathan', null, { perk: false }), '×3 XP');
@@ -256,7 +256,7 @@ test('markTag (Andy oct5): the COMPACT line — named stat, PERK: … on LEGENDA
   let n = 1;
   while (markLevel({ marks: { 'mk-sparky': { n } } }, 'mk-sparky').pips < 2) n++;
   const st = { ...freshState(), marks: { 'mk-sparky': { n } } };
-  assert.match(markTag('mk-sparky', st), /^\+[\d.,]+ BASE WINS\/WORD · ★2$/);
+  assert.match(markTag('mk-sparky', st), /^\+[\d.,]+ BASE WINS · ★2$/);
   assert.ok(!/MAIN|%/.test(markTag('mk-origin', null)), 'never a bare MAIN, never a %');
 });
 

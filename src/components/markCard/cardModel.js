@@ -1,7 +1,7 @@
 // cardModel.js — what a ROLL v1 mark card says (Andy oct5 mockup, claude/mockups/roll-v1/MarkCard.dc.html), PURE:
 // no DOM, no storage of its own (the caller passes the roll state it snapshotted). Every number goes through
 // formatNum. NUMBERS FIRST: the stat is split into its number ("×1.5", "+2.5", "+30s") printed big, and what it
-// touches ("WINS", "BASE WINS/WORD") printed small — the same text as markRolls.mainTag, so nothing new is claimed.
+// touches ("WINS", "BASE WINS") printed small — the same text as markRolls.mainTag, so nothing new is claimed.
 import { MARK_TIERS } from '../../progress/marks.js';
 import { rollMarkById, oneInX, mainTag, markLevel, critStatsOf } from '../../progress/markRolls.js';
 import { critCardText, critLines } from '../../progress/critText.js';
@@ -12,7 +12,7 @@ const PERK_TIERS = new Set(['legendary', 'mythic', 'secret']);
 /** EPIC and up (and PERMANENT) earn the glow, the shine sweep and the cog spin. */
 export const HI_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret', 'permanent']);
 
-/** "×1.5 WINS" → { num: '×1.5', kind: 'WINS' }; "+2.5 BASE WINS/WORD" → { num: '+2.5', kind: 'BASE WINS/WORD' }. */
+/** "×1.5 WINS" → { num: '×1.5', kind: 'WINS' }; "+2.5 BASE WINS" → { num: '+2.5', kind: 'BASE WINS' }. */
 export function splitTag(tag) {
   const s = String(tag || '').trim();
   const i = s.indexOf(' ');

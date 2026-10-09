@@ -142,7 +142,8 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
           </Suspense>
         ) : <span className="hp-gear-hole" aria-hidden="true" />}
         <span className="hp-gear-text">
-          <span className="hp-gear-big menu-mark-name">{mark ? mark.blurb || mark.name : 'NONE'}</span>
+          {/* a long stat ("+2.5 BASE WINS", "+30S OVERDRIVE") shrinks with its length instead of running off the slot */}
+          <span className="hp-gear-big menu-mark-name" style={{ '--len': String(mark ? mark.blurb || mark.name : 'NONE').length }}>{mark ? mark.blurb || mark.name : 'NONE'}</span>
           <span className="hp-gear-sub">{mark ? mark.name : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>
