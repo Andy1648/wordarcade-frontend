@@ -31,7 +31,7 @@ test.describe('item 2 — worked examples', () => {
   });
 
   test('CHAIN dialog shows the E → EAGLE → ELEPHANT → TIGER chain', async ({ page }) => {
-    await menu(page, 60); // past the LV50 gate → unlocked
+    await menu(page, 30); // past the LV25 gate → unlocked
     await (await card(page, 'chain')).click();
     const ex = page.locator('.mode-dialog-shell .mode-ex');
     await expect(ex).toBeVisible();
@@ -40,7 +40,7 @@ test.describe('item 2 — worked examples', () => {
   });
 
   test('FUSE locked preview shows AIN → RAIN / AGAIN / MOUNTAIN', async ({ page }) => {
-    await menu(page, 60); // below LV100 → FUSE locked → preview dialog
+    await menu(page, 30); // below LV50 → FUSE locked → preview dialog
     await (await card(page, 'fuse')).click({ force: true }); // locked card is aria-disabled but clickable
     const lp = page.locator('.lp-panel');
     await expect(lp).toBeVisible();
@@ -51,36 +51,36 @@ test.describe('item 2 — worked examples', () => {
 });
 
 test.describe('item 4 — the CHAIN / FUSE gates', () => {
-  // N1 (Andy oct2): CHAIN unlocks at EXACTLY LV50, FUSE at EXACTLY LV100 — Andy's numbers. Source of
+  // Andy oct9: CHAIN unlocks at EXACTLY LV25, FUSE at EXACTLY LV50 — Andy's numbers (was 50/100). Source of
   // truth is gameData.js; a played mode is never locked (the bypass block below).
-  test('CHAIN gate is LV50: locked at 49', async ({ page }) => {
-    await menu(page, 49);
+  test('CHAIN gate is LV25: locked at 24', async ({ page }) => {
+    await menu(page, 24);
     await expect(await card(page, 'chain')).toHaveClass(/locked/);
-    await expect(await card(page, 'chain')).toContainText('UNLOCKS AT LV 50');
+    await expect(await card(page, 'chain')).toContainText('UNLOCKS AT LV 25');
     await expect(await card(page, 'chain')).toContainText('1 TO GO');
   });
 
-  test('CHAIN unlocked at LV50', async ({ page }) => {
-    await menu(page, 50);
+  test('CHAIN unlocked at LV25', async ({ page }) => {
+    await menu(page, 25);
     await expect(await card(page, 'chain')).not.toHaveClass(/locked/);
   });
 
-  test('FUSE gate is LV100: locked at 99', async ({ page }) => {
-    await menu(page, 99);
+  test('FUSE gate is LV50: locked at 49', async ({ page }) => {
+    await menu(page, 49);
     await expect(await card(page, 'fuse')).toHaveClass(/locked/);
-    await expect(await card(page, 'fuse')).toContainText('UNLOCKS AT LV 100');
+    await expect(await card(page, 'fuse')).toContainText('UNLOCKS AT LV 50');
   });
 
-  test('FUSE unlocked at LV100', async ({ page }) => {
-    await menu(page, 100);
+  test('FUSE unlocked at LV50', async ({ page }) => {
+    await menu(page, 50);
     await expect(await card(page, 'fuse')).not.toHaveClass(/locked/);
   });
 
   // LV1 is the floor, not 0 (progress/xp.js clamps with Math.max(1, ...)).
   test('a brand-new player sees how far each gate is', async ({ page }) => {
     await menu(page, 0); // clamped to LV1 by the store
-    await expect(await card(page, 'chain')).toContainText('49 TO GO'); // clutter pass: no "YOU'RE LV 1 ·" — the menu bar shows the level
-    await expect(await card(page, 'fuse')).toContainText('99 TO GO');
+    await expect(await card(page, 'chain')).toContainText('24 TO GO'); // clutter pass: no "YOU'RE LV 1 ·" — the menu bar shows the level
+    await expect(await card(page, 'fuse')).toContainText('49 TO GO');
   });
 });
 
