@@ -587,6 +587,13 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   width: var(--hp-tile-ico);
   height: var(--hp-tile-ico);
 }
+/* NO COUNTS (Andy oct9): UPGRADES / GEARS carry no number — the icon IS the tile, centred and a size up (the dot says
+   when there is something to do) */
+.homepage-stage[data-paged] .hp-rail .kb--rail:not(.has-value) .kb-rface { align-items: center; justify-content: center; }
+.homepage-stage[data-paged] .hp-rail .kb--rail:not(.has-value) .kb-rface .kit-icon {
+  width: calc(var(--hp-tile-ico) * 1.5);
+  height: calc(var(--hp-tile-ico) * 1.5);
+}
 .homepage-stage[data-paged] .hp-rail .kb-rtext { display: contents; }
 .homepage-stage[data-paged] .hp-rail .kb-rlabel {
   position: absolute;
