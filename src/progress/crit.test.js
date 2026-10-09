@@ -9,7 +9,7 @@ import {
 import { MARKS_EQUIPPED_KEY } from './marks.js';
 import { MARK_ROLLS_STORE_KEY } from './markPerks.js';
 import { rollCrit, critKey, critBatch, critAvgGain, critOneIn } from './crit.js';
-import { critLines, critSummary, critCardText } from './critText.js';
+import { critLines, critSummary } from './critText.js';
 import { mulberry32 } from './luck.js';
 
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} ≠ ${b}`);
@@ -157,13 +157,8 @@ test('the average gain and the words the STATS row prints', () => {
   assert.equal(critSummary({ rate: 0.5, power: 8.5 }).head, 'CRIT 50% · ×8.5');
 });
 
-test('the gear card / sheet lines', () => {
+test('the detail sheet / roll result lines (the tile shows a pip per line — GEAR TILE v2)', () => {
   assert.deepEqual(critLines({ rate: 0.06, power: 0.5 }).map((l) => `${l.num} ${l.kind}`), ['+6% CRIT RATE', '+0.5× CRIT POWER']);
   assert.deepEqual(critLines({ rate: 0.02, power: 0 }).map((l) => `${l.num} ${l.kind}`), ['+2% CRIT RATE']);
   assert.deepEqual(critLines({ rate: 0, power: 0 }), []);
-  assert.equal(critCardText({ rate: 0.06, power: 0.5 }), 'CRIT +6% · +0.5×');
-  assert.equal(critCardText({ rate: 0.024, power: 0 }), 'CRIT RATE +2.4%');
-  assert.equal(critCardText({ rate: 0, power: 0 }), '');
-  // the longest real card text (★5 shiny secret) still fits the band's short form
-  assert.ok(critCardText({ rate: 0.48, power: 6 }).length <= 18);
 });

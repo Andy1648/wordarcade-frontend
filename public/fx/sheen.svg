@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" preserveAspectRatio="none">
+  <!-- REVEAL SHEEN: ONE wide soft diagonal band, swept once across a clipped card by transform. "Soft" is cel-shaded:
+       three flat white steps (no gradient, no blur), the core a touch off-centre and one chipped edge (personality). -->
+  <path d="M86 0 L176 0 L114 320 L24 320 Z" fill="#fff" opacity="0.16"/>
+  <path d="M102 0 L160 0 L98 320 L40 320 Z" fill="#fff" opacity="0.22"/>
+  <path d="M116 0 L146 0 L84 320 L54 320 Z" fill="#fff" opacity="0.38"/>
+  <path d="M160 0 L170 0 L166 22 Z" fill="#fff" opacity="0.2"/>
+</svg>

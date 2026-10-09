@@ -165,10 +165,10 @@ test('full reveal: a first-time mark in a double roll extra, and the hit that st
   assert.equal(revealMode({ tier: 'rare' }, { skipBelow: 'epic', autoUntil: null }), 'short');
 });
 
-test('ROLL v1 reveals are rarity-scaled: line < EPIC, dim at EPIC, full LEGENDARY+; short / none lands are a line', async () => {
+test('ROLL v1 reveals are rarity-scaled: lite < EPIC (REVEAL v2), dim at EPIC, full LEGENDARY+; short / none lands are a line', async () => {
   const { revealKind } = await import('./reelPlan.js');
-  assert.equal(revealKind('common'), 'line');
-  assert.equal(revealKind('rare'), 'line');
+  assert.equal(revealKind('common'), 'lite');
+  assert.equal(revealKind('rare'), 'lite');
   assert.equal(revealKind('epic'), 'dim');
   for (const t of ['legendary', 'mythic', 'secret']) assert.equal(revealKind(t), 'full');
   assert.equal(revealKind('secret', 'short'), 'line');
