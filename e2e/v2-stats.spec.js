@@ -7,7 +7,8 @@
 //      is FINITE (nothing on the screen loops at rest);
 //   3. REDUCE MOTION shows the finished chain at once and plays nothing;
 //   4. the ALL TIME cell opens the full panel (records, backup …) — nothing of the live panel is lost;
-//   5. at 1280×551, 1366×657, 1920×1080 and 390×844: no scrollbars, nothing off-screen, no text under 13px.
+//   5. at 1280×551, 1366×657, 1920×1080 and 390×844: no scrollbars, nothing off-screen, no text under 13px;
+//   6. the tabs read XP | WINS | BOOSTS and XP is the board it opens on (Andy oct9: "make xp come first").
 // With the flag OFF the live panel is untouched (every other stats spec runs flag-off).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -54,11 +55,21 @@ const val = (t) => {
   return Number(m[1].replace(/,/g, '')) * SUF[m[2]];
 };
 const chipVals = (st) => st.locator('.st2-chip-v').allTextContents();
+// the screen opens on XP (Andy oct9) — the WINS-board assertions switch tabs first
+const toWins = async (st) => {
+  await st.locator('.st2-tab[data-tab="wins"]').click();
+  await expect(st.locator('.st2-tab[data-tab="wins"]')).toHaveAttribute('aria-selected', 'true');
+};
 
 test('the TOTAL first: ×243 = 2,430 WINS / WORD, then BASE · MODE · REBIRTH · MARK · BOOST; XP is KEY-first', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
+  // XP comes first and is the default board (Andy oct9)
+  expect(await st.locator('.st2-tab').evaluateAll((els) => els.map((e) => e.dataset.tab))).toEqual(['xp', 'wins', 'boosts']);
+  await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(st.locator('.st2-unit')).toHaveText('XP / KEY');
+  await toWins(st);
   await expect(total).toHaveText('×243', { timeout: 8000 });
   await expect(st.locator('[data-testid="st2-result"]')).toHaveText('2,430');
   await expect(st.locator('.st2-unit')).toHaveText('WINS / WORD');
@@ -133,6 +144,7 @@ test('REPLAY runs the chain again from ×1 to the same total — every animation
   await page.setViewportSize({ width: 1280, height: 551 });
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
+  await toWins(st);
   await expect(total).toHaveText('×243', { timeout: 8000 });
   await st.locator('.st2-big').click();
   await expect(total).toHaveText('×1');
@@ -149,7 +161,10 @@ test('REPLAY runs the chain again from ×1 to the same total — every animation
 test('REDUCE MOTION: the finished chain at once, nothing plays', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page, { reduce: true });
+  await toWins(st);
   await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243', { timeout: 1500 });
+  // the tab click's own (softened) press squash is app-wide button feedback, not the chain — let it end first
+  await page.waitForFunction(() => !document.getAnimations().some((a) => a.playState === 'running' && a.effect?.target?.closest?.('.st2')));
   await st.locator('.st2-big').click();
   await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243');
   const running = await page.evaluate(() => document.getAnimations()
@@ -177,6 +192,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
   test(`@${vp.width}×${vp.height}: no scrollbars, nothing off-screen, no text under 13px; ← MENU closes`, async ({ page }) => {
     await page.setViewportSize(vp);
     const st = await boot(page);
+    await toWins(st);
     await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243', { timeout: 8000 });
     const m = await page.evaluate(() => {
       const root = document.querySelector('.st2');
