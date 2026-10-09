@@ -131,7 +131,7 @@ const BOARD = [
 const TITLE = { a: 'ENDGAME', b: 'OMNIKEY', c: 'VOIDTYPER', d: 'FINAL BOSS', e: 'ASCENDANT', f: 'LEXIBEAST', g: 'OVERCLOCK', h: 'KEYFIEND', i: 'WORDSMITH' }; // (#10 QUILL gives its row to YOU, pinned)
 
 for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
-  test(`SEASON2 board @${vp.width}: the 16-step shaped plates sit next to every name (podium + rows), ≥ 13 px`, async ({ page }) => {
+  test(`SEASON2 board @${vp.width}: the shaped plates sit on the TOP 3 (podium), rows show the full name, ≥ 13 px`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
     const shared = { rows: [...BOARD.map((x) => ({ ...x })), row('me', 'NOBUFF', { rebirths: 3, level: 60 })], secrets: new Map([[SECRET, 'me']]), saves: new Map() };
@@ -151,14 +151,15 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
     await navControl(page, 'leaderboard').click();
     const lb = page.locator('.lb2');
     await expect(lb.locator('.lb2-col--1')).toHaveAttribute('data-id', 'a', { timeout: 10_000 });
-    for (const [id, title] of Object.entries(TITLE)) {
-      const where = lb.locator(`.lb2-col[data-id="${id}"] .lb2-pod-plate, .lb2-row[data-id="${id}"] .lb2-plate`); // podium (★20, ★10, ★5) or row
+    // Andy oct8: only the TOP 3 wear plates (the podium); rows 4+ give that room to the full name
+    await expect(lb.locator('.lb2-row .lb2-plate')).toHaveCount(0);
+    for (const id of ['a', 'd', 'b']) { const title = TITLE[id];
+      const where = lb.locator(`.lb2-col[data-id="${id}"] .lb2-pod-plate`); // podium (★20, ★10, ★5)
       await expect(where).toHaveAttribute('data-rank-title', title);
       await expect(where).toHaveClass(/(^| )krp( |$)/);
       expect(await where.locator('svg path').count(), `${title} is the shaped SVG plate`).toBeGreaterThanOrEqual(4);
       await expect(where.locator('.krp-name')).toHaveText(title);
     }
-    await expect(lb.locator('.lb2-row.is-me .lb2-plate')).toHaveAttribute('data-rank-title', 'HOTKEY');
     await expect(lb.locator('.lb2-climb .lb2-next')).toHaveAttribute('data-rank-title', 'INKSTORM');
     const sizes = await lb.locator('.krp-name').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
     expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);

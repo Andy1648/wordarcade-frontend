@@ -162,6 +162,14 @@ const BOB = [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', of
 const SINK = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 const pulse = (base) => [{ transform: `${base} scale(1)` }, { transform: `${base} scale(1.018)`, offset: 0.5 }, { transform: `${base} scale(1)` }];
 
+// A name's printed width in em of Bungee caps (wide W/M ~1, CJK ~1.1, the rest ~0.8) — lets a long name SHRINK to
+// fit its cell (Andy oct8: "show full usernames") instead of being cut to "GREWUPALILPO…". Pure, per render.
+export function nameEms(name) {
+  let em = 0;
+  for (const ch of String(name || '')) em += /[\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch) ? 1.1 : /[WM]/i.test(ch) ? 1.0 : 0.8;
+  return Math.max(4, em);
+}
+
 const RENAME_VERDICT = {
   shape: '3–16 LETTERS, NUMBERS OR _',
   blocked: 'NOT THAT ONE. PICK ANOTHER NAME.',
@@ -360,7 +368,7 @@ export default function LeaderboardV2({ onBack }) {
             {profile && (
               <button type="button" className="lb2-me-btn" onClick={() => setRenaming((v) => !v)} aria-expanded={renaming} aria-label={`Your name is ${profile.username}. Change name`}>
                 <span className="lb2-me-k">YOU</span>
-                <span className="lb2-me-v">{profile.username}</span>
+                <span className="lb2-me-v" style={{ '--nl': nameEms(profile.username) }}>{profile.username}</span>
                 <span className="lb2-me-a">CHANGE</span>
               </button>
             )}
@@ -400,7 +408,7 @@ export default function LeaderboardV2({ onBack }) {
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-name">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <span className="lb2-pod-name-t">{p ? p.username : 'YOUR NAME HERE?'}</span>
+                    <span className="lb2-pod-name-t" style={{ '--nl': nameEms(p ? p.username : 'YOUR NAME HERE?') }}>{p ? p.username : 'YOUR NAME HERE?'}</span>
                   </span>
                   <span className="lb2-pod-r">{n ? n.r : '—'}</span>
                   <span className="lb2-pod-lv">{n ? n.lv : ''} {n ? <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span> : null}</span>
@@ -432,9 +440,9 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-who-cell">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <span className="lb2-name">{r.username}</span>
+                    <span className="lb2-name" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
                   </span>
-                  <Plate row={r} mine={mine} className="lb2-row-plate" />
+                  {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
                 </span>
                 <Move n={data.moves[r.id] || 0} />
                 <span className="lb2-r">{n.r}</span>

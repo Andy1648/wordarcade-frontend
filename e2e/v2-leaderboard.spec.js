@@ -79,8 +79,8 @@ test('★ → R → level: the podium is the top 3, ranks 4 … 10 below; v3 ran
   // v3 rank plates — by rebirths, then ★ (never the level)
   await expect(lb.locator('.lb2-col--1 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'VOIDTYPER');
   await expect(lb.locator('.lb2-col--2 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'GLYPHLORD');
-  await expect(lb.locator('.lb2-row[data-id="d"] .lb2-plate')).toHaveAttribute('data-rank-title', 'CLACKER');
-  await expect(lb.locator('.lb2-row[data-id="g"] .lb2-plate')).toHaveAttribute('data-rank-title', 'INKLING');
+  // Andy oct8: only the top 3 wear plates — the rows give that room to the full name
+  await expect(lb.locator('.lb2-row .lb2-plate')).toHaveCount(0);
   await expect(lb.locator('.lb2-col--1 .lb2-pod-r')).toHaveText('★1 R0');
   await expect(lb.locator('.lb2-col--2 .lb2-pod-r')).toHaveText('R9');
   // one YOU on the screen, on your own row; it is lifted (is-me)
