@@ -2690,10 +2690,10 @@ export default function GameScreen({
     if (!gameOver || gameType === 'category-blitz' || !gameState) return;
     const order = gemElimRef.current;
     const mine = order.indexOf(myId);
-    const bots = new Set((roomPlayers || []).filter((p) => p.isBot).map((p) => p.id));
+    const bots = new Map((roomPlayers || []).filter((p) => p.isBot).map((p) => [p.id, p.botDifficulty]));
     const rivals = (gameState.players || []).filter((p) => p.id !== myId).map((p) => {
       const at = order.indexOf(p.id);
-      return { id: p.id, isBot: bots.has(p.id) || !!p.isBot, beaten: at >= 0 && (mine < 0 || at < mine) };
+      return { id: p.id, isBot: bots.has(p.id) || !!p.isBot, botDifficulty: bots.get(p.id) || p.botDifficulty, beaten: at >= 0 && (mine < 0 || at < mine) };
     });
     payGameResult({ key: `wb-${gameNonce}-${gameOver.winnerId || ''}`, iWon: gameOver.winnerId === myId, rivals, selfIds: otherSeatIds(), mode: 'word-bomb' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4339,8 +4339,8 @@ function CategoryBlitzScreen({
     const scores = categoryScores || gameOver.finalScores || [];
     const me = scores.find((s) => s.id === myId);
     const myScore = me ? me.score || 0 : 0;
-    const bots = new Set((roomPlayers || []).filter((p) => p.isBot).map((p) => p.id));
-    const rivals = scores.filter((s) => s.id !== myId).map((s) => ({ id: s.id, isBot: bots.has(s.id), beaten: (s.score || 0) < myScore }));
+    const bots = new Map((roomPlayers || []).filter((p) => p.isBot).map((p) => [p.id, p.botDifficulty]));
+    const rivals = scores.filter((s) => s.id !== myId).map((s) => ({ id: s.id, isBot: bots.has(s.id), botDifficulty: bots.get(s.id), beaten: (s.score || 0) < myScore }));
     payGameResult({ key: gemGameKey, iWon: gameOver.winnerId === myId, rivals, selfIds: otherSeatIds(), mode: 'category-blitz' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameOver]);
