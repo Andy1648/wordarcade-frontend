@@ -42,14 +42,19 @@ import { SEASON2 } from '../progress/season';
 import OverlaySkeleton from './OverlaySkeleton';
 
 // P8 (SEASON2 only): the v2 LEADERBOARD (Leaderboard.dc.html — white podium, v3 rank plates, ▲▼, ALL TIME / THIS
-// WEEK), its own lazy chunk, for a claimed name (claiming a name stays on the live form below). Flag OFF: untouched.
+// WEEK), its own lazy chunk — for EVERY season-2 player, named or not (claiming a name is V2's inline box). Flag OFF:
+// the live board below, untouched.
 const LeaderboardV2 = lazy(() => import('./LeaderboardV2.jsx'));
 
 export default function LeaderboardScreen({ onBack }) {
   // Andy oct8 ("where are the functions before, like change name"): the season-2 board (V2) had NO way back to the
   // claim form — CHANGE NAME and RECOVERY CODE lived only on the live screen, which a claimed player never saw again.
   // V2 now carries a NAME button that drops to the live screen (its hero row: your name · RECOVERY CODE · CHANGE NAME).
-  const [v2] = useState(() => SEASON2 && LEADERBOARD_ENABLED && !!getMyProfile());
+  // Andy oct9 ("the leaderboard should show the new design style (new users still get old before creating a new
+  // username)"): the gate used to ALSO require a claimed name (!!getMyProfile()), so a fresh player got this file's
+  // season-1 screen until they claimed one. V2 now claims a name itself (its inline name box, CLAIM mode), so the
+  // gate is the season flag alone.
+  const [v2] = useState(() => SEASON2 && LEADERBOARD_ENABLED);
   if (v2) {
     return (
       <Suspense fallback={<OverlaySkeleton title="LEADERBOARD" />}>
