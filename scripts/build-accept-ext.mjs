@@ -13,7 +13,15 @@
 // a permissive/public real-word dictionary (the same MEMBERSHIP filter build-words.mjs
 // already uses). Filtered a-z, length 3+ (no upper cap), lowercase, deduped.
 //
-// Run:  node scripts/build-accept-ext.mjs
+// WORD BOMB PARITY (Andy oct8: "FUSE/CHAIN use same dictionary as Word Bomb"): pass
+//   --wb <file>   a newline word list exported from the backend's Word Bomb validator
+//                 (chain-reaction-backend: every an-array-of-english-words entry that
+//                 dictionary.isValidWord accepts, plus commonProperWords.txt).
+// and the extension is built from THAT list instead of word-list, so the merged solo accept set
+// is exactly what Word Bomb accepts (plus 34 brand/foreign words already in the frequency-ranked
+// RECALL list, which generation is fitted against and so are left alone).
+//
+// Run:  node scripts/build-accept-ext.mjs [--wb <file>]
 // Regenerates the committed asset and prints the counts, brotli size, and the CHAIN
 // bank-exploit link count. Do NOT wire it into the build.
 
@@ -35,7 +43,11 @@ const MIN = 3;
 const MAX = Infinity; // no upper bound — see ACCEPT_MAX in build-words.mjs
 
 // ---- 1. Build the extension (word-list ∩ [3..15] a-z) MINUS the current accept union.
-const wordList = readFileSync(join(ROOT, 'node_modules', 'word-list', 'words.txt'), 'utf8').trim().split('\n');
+const wbAt = process.argv.indexOf('--wb');
+const wbFile = wbAt > 0 ? process.argv[wbAt + 1] : null;
+const wordList = wbFile
+  ? readFileSync(wbFile, 'utf8').trim().split(/\s+/)
+  : readFileSync(join(ROOT, 'node_modules', 'word-list', 'words.txt'), 'utf8').trim().split('\n');
 const recall = readFileSync(join(SOLO, 'words.recall.txt'), 'utf8').split(' ');
 const acceptExtra = readFileSync(join(SOLO, 'words.accept.txt'), 'utf8').split(' ');
 
@@ -118,7 +130,7 @@ const bankNew = worstOver(merged);
 
 // ---- Report.
 console.log('=== ACCEPTANCE EXTENSION ===');
-console.log(`word-list source:        ${wordList.length} words (word-list v4.1.0, MIT / atebits Words)`);
+console.log(`source:                  ${wordList.length} words (${wbFile ? `Word Bomb export ${wbFile}` : 'word-list v4.1.0, MIT / atebits Words'})`);
 console.log(`full 3+ a-z vocab:       ${bigFiltered.size} words (the target accept set)`);
 console.log(`current accept union:    ${union.size} words (RECALL ∪ words.accept.txt)`);
 console.log(`extension increment:     ${ext.length} words  → src/solo/words.accept-ext.txt`);

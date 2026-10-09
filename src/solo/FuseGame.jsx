@@ -100,6 +100,11 @@ export default function FuseGame({ onExit, offerMenu = false }) {
     loadSoloWords()
       .then((d) => {
         if (live) setData(d);
+        // Andy oct8: solo takes the SAME dictionary as Word Bomb from the FIRST run — the big
+        // acceptance extension used to wait for the first run to END, so a fresh player's first
+        // game rejected ~185k real words Word Bomb accepts. Fetched once the base set is in (its
+        // merge is sliced, a few ms per slice, so a running game never hitches).
+        setTimeout(() => loadSoloAcceptExt(), 0);
       })
       .catch(() => {
         if (live) setLoadError(true);
