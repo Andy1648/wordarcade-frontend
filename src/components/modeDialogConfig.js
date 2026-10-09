@@ -11,7 +11,8 @@ export const MODES = {
     // start (audit #4). JOIN (with a code) stays as the secondary action in ModeDialog.
     // C2: PLAY SOLO now leads this dialog, so a second button called just "PLAY" read as the same
     // thing twice. It opens a room you share — say so.
-    create: 'WITH FRIENDS',
+    // Andy oct8: the three actions read SOLO / CREATE ROOM / JOIN — say what each one does.
+    create: 'CREATE ROOM',
   },
   blitz: {
     accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',
@@ -36,7 +37,7 @@ export const MODES = {
     // H6: race/config.js RACE_WORDS = 25 whole words, the same for everyone. (It said "SAME LETTERS.
     // FIRST TO 12 WINS." — wrong number, wrong unit, and "WINS" read as the currency.)
     liner: 'SAME WORDS. FIRST TO 25.',
-    create: 'PRIVATE ROOM',
+    create: 'CREATE ROOM',
     lead: 'QUICK MATCH',
   },
   fuse: {

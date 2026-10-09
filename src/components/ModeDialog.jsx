@@ -270,7 +270,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                     onClick={onPlaySolo}
                     disabled={!!connecting}
                   >
-                    {connecting === 'solo' ? <ConnectingContent cold={coldStart} /> : mode.lead || 'PLAY SOLO'}
+                    {connecting === 'solo' ? <ConnectingContent cold={coldStart} /> : mode.lead || 'SOLO'}
                   </button>
                 )}
                 <button
@@ -286,7 +286,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                   onClick={onJoin}
                   disabled={!!connecting}
                 >
-                  {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN WITH CODE'}
+                  {connecting === 'join' ? <ConnectingContent cold={coldStart} /> : 'JOIN'}
                 </button>
               </div>
             )}

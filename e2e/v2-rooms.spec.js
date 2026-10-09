@@ -119,7 +119,7 @@ test('SETTINGS: five rows; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 pers
 test('no JOIN ROOM button on the menu — joining is JOIN WITH CODE in a mode dialog', async ({ page }) => {
   await boot(page);
   await expect(page.getByRole('button', { name: /^JOIN( ROOM)?$/ })).toHaveCount(0);
-  await expect(await joinControl(page)).toHaveText(/JOIN WITH CODE/);
+  await expect(await joinControl(page)).toHaveText(/^JOIN$/);
 });
 
 test('flag OFF: the live lobby, join screen and sound panel are untouched', async ({ page }) => {
