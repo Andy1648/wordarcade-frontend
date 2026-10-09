@@ -54,16 +54,16 @@ test('losing pays nothing; a zero game pays nothing', () => {
   assert.equal(winnerPayout({ ...honestWb, gameTotal: 0 }).wins, 0);
 });
 
-test('BOT ROOM: bots never qualify as a rival -> today\'s fallback, with the reason', () => {
+test('BOT ROOM: bots never qualify as a rival -> paid by the hardest bot (Andy oct8), MEDIUM = the old +50%', () => {
   const p = winnerPayout({ ...honestWb, rivals: [bot('b1', 30), bot('b2', 30)] });
-  assert.equal(p.tier, 'fallback');
-  assert.equal(p.reason, 'bots');
-  assert.equal(p.wins, Math.round(300 * 0.5), 'Word Bomb vs bots is exactly today\'s +50%');
+  assert.equal(p.tier, 'bots');
+  assert.equal(p.reason, 'bots-medium', 'a bot without a difficulty is MEDIUM, the server default');
+  assert.equal(p.wins, Math.round(300 * 0.5), 'Word Bomb vs medium bots is exactly the old +50%');
   assert.equal(p.mult, 1.5);
   const blitz = winnerPayout({ ...honestWb, mode: 'blitz', rivals: [bot('b', 9)] });
-  assert.equal(blitz.wins, 0, 'Blitz vs a bot pays what it paid before: nothing');
-  assert.equal(blitz.reason, 'bots');
+  assert.equal(blitz.wins, Math.round(300 * 0.5), 'Blitz vs a medium bot now pays +50% (was nothing)');
   assert.equal(winnerPayout({ ...honestWb, mode: 'wordRace', rivals: [bot('b', 25), bot('c', 25)] }).wins, 0);
+  assert.equal(winnerPayout({ ...honestWb, mode: 'wordRace', rivals: [bot('b', 25)] }).reason, 'bots');
 });
 
 test('AFK DUMMY TAB: a rival who played under MIN_RIVAL_WORDS does not unlock the match bonus', () => {
@@ -134,7 +134,7 @@ test('RE-DELIVERED game_over: the ledger note pays once (noteRoundBonus dedupe s
 test('every fallback carries a human-readable note for the receipt', () => {
   for (const reason of ['bots', 'self', 'rival-words', 'my-words']) {
     const args = {
-      bots: { rivals: [bot('b', 9)] },
+      bots: { mode: 'wordRace', rivals: [bot('b', 9)] },
       self: { selfIds: ['r'] },
       'rival-words': { rivals: [human('r', 1)] },
       'my-words': { myWords: 2 },

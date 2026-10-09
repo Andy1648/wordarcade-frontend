@@ -1036,6 +1036,7 @@ function App() {
   const wbWordsByIdRef = useRef({});
   const rosterIdsRef = useRef([]);
   const botIdsRef = useRef(new Set());
+  const botDiffRef = useRef(new Map()); // bot id -> its botDifficulty (Andy oct8: bot-room rewards scale with it)
   const [winnerPay, setWinnerPay] = useState(null);
 
   // The WS drain effect below is keyed only on [messages], so reading `room` /
@@ -1053,7 +1054,7 @@ function App() {
     playerCountRef.current = room?.players?.length || 0;
     gameDifficultyRef.current = room?.difficultyKey || null;
     rosterIdsRef.current = (room?.players || []).map((p) => p.id);
-    (room?.players || []).forEach((p) => { if (p.isBot) botIdsRef.current.add(p.id); });
+    (room?.players || []).forEach((p) => { if (p.isBot) { botIdsRef.current.add(p.id); if (p.botDifficulty) botDiffRef.current.set(p.id, p.botDifficulty); } });
   }, [room]);
   // H4 anti-farm: register this tab's live player id, so another tab of this browser in the same
   // room is recognised as the player themself (progress/seats.js), never as a rival.
@@ -1765,7 +1766,7 @@ function App() {
             gameTotal: blitzGameWinsRef.current,
             myWords: words[myIdRef.current] || 0,
             rivals: Object.keys(words).filter((id) => id !== myIdRef.current)
-              .map((id) => ({ id, words: words[id], isBot: botIdsRef.current.has(id) })),
+              .map((id) => ({ id, words: words[id], isBot: botIdsRef.current.has(id), botDifficulty: botDiffRef.current.get(id) })),
           }, 'category-blitz');
         }
       } else {
@@ -1779,7 +1780,7 @@ function App() {
           payWinner({
             gameTotal: led ? led.total : 0,
             myWords: myWbAcceptedRef.current,
-            rivals: [...ids].map((id) => ({ id, words: counts[id] || 0, isBot: botIdsRef.current.has(id) })),
+            rivals: [...ids].map((id) => ({ id, words: counts[id] || 0, isBot: botIdsRef.current.has(id), botDifficulty: botDiffRef.current.get(id) })),
           }, 'word-bomb');
         }
         // The receipt for the whole game, read once and frozen for the end screen.

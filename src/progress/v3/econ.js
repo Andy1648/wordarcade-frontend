@@ -54,6 +54,8 @@ export const DROP_CHANCE = 1 / 15;
 export const DROP_MIN = 3;
 export const DROP_MAX = 12;
 export const BOT_WIN = 18;
+// Andy oct8: a bots-only win pays by the HARDEST bot beaten (MEDIUM stays the old flat 18).
+export const BOT_WIN_BY_DIFF = Object.freeze({ easy: 8, medium: 18, hard: 30 });
 export const PER_PLAYER_BEATEN = 15;
 export const STREAK_BONUS = 4; // flat, on every win that extends a streak (a win after a win)
 export const LEVEL_UP = 0; // levels pay no gems
