@@ -242,7 +242,7 @@ html[data-beat='true'] .homepage-logo {
 .hp-rail .kb-rdot { left: auto; right: -8px; top: -8px; width: var(--hp-dot); height: var(--hp-dot); }
 .hp-rail .kb--rail:disabled { opacity: 0.5; pointer-events: none; }
 
-/* ---- centre: LV + XP bar, the per-letter line + the mark chip ---- */
+/* ---- centre: LV + XP bar + the mark chip ---- */
 .menu-xp-cluster {
   grid-area: xp;
   position: relative;
@@ -306,23 +306,6 @@ html[data-beat='true'] .homepage-logo {
   align-items: center;
   justify-content: center;
   gap: calc(14 * var(--u));
-}
-.hp-per {
-  font-family: 'Bungee', sans-serif;
-  text-transform: uppercase;
-  font-size: var(--fs-hp24);
-  line-height: 1;
-  color: #fff;
-  -webkit-text-stroke: var(--b4) #000;
-  paint-order: stroke fill;
-  white-space: nowrap;
-}
-.hp-per-u {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-hp13);
-  -webkit-text-stroke: 0;
-  color: #c9b8e8;
 }
 /* the worn mark — NAME ONLY (Andy oct5), a purple stripe on a plum chip */
 .hp-chip {
@@ -634,10 +617,7 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .homepage-stage[data-paged] .hp-rail .kb--rail:active .kb-rface { transform: translate(3px, 3px); }
 .homepage-stage[data-paged] .homepage-cards-region { justify-content: center; } /* slack splits above/below the cards, never a band under the pager */
 
-/* ---- THE PER-LETTER ROW + YOUR GEAR (feat/menu-perrow) ---- */
-/* the honest rate line: MENU +2 XP/KEY · GAMES +10 XP/LETTER — the key word dim, the numbers loud */
-.hp-rate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-hp13); -webkit-text-stroke: 0; color: #c9b8e8; margin-right: calc(6 * var(--u)); }
-.hp-rate-sep { font-family: 'Space Mono', monospace; color: #6b5a8a; -webkit-text-stroke: 0; margin: 0 calc(10 * var(--u)); }
+/* ---- YOUR GEAR (feat/menu-perrow; the rate line was removed — Andy oct9) ---- */
 /* the rank chip, LABELLED: a small RANK caption before the name */
 .hp-rank-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-hp13); color: #c9b8e8; margin-right: calc(8 * var(--u)); }
 /* YOUR GEAR — the slot at the foot of the rail (desktop/paged only; the phone keeps its chip) */

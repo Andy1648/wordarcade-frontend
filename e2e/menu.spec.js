@@ -80,31 +80,30 @@ test.describe('menu', () => {
 
   // THE PER-LETTER LINE (v2 menu) quotes BASE 10 XP / LETTER on a fresh profile (T0, R0, no mark) — the
   // one XP rate there is, menu or game; words pay WINS only, so the featured card quotes no XP line.
-  test('the per-letter line says +10 XP / LETTER, and the featured card quotes no XP', async ({ page }) => {
+  test('no rate line under the bar, and the featured card quotes no XP', async ({ page }) => {
     const m = await page.evaluate(() => {
       const read = (e) => (e ? e.innerText.replace(/\s+/g, ' ').trim() : null);
       const ribbon = document.querySelector('.game-card-ribbon.is-featured');
       const card = ribbon ? ribbon.closest('.game-card') : null;
       return {
-        per: read(document.querySelector('.hp-per')),
+        per: document.querySelector('.hp-per, .hp-rate'),
         cardName: read(card && card.querySelector('.game-card-name')),
         cardXp: read(card && card.querySelector('.game-card-xp')),
       };
     });
     expect(await page.locator('.game-card-ribbon.is-featured').count()).toBe(1);
     expect(m.cardName).toBe((FEATURED_GAME.cardName || FEATURED_GAME.name).split(String.fromCharCode(10)).join(' '));
-    // feat/menu-perrow: the honest rate line — the menu key (a fifth, whole XP) and the game letter
-    expect(m.per.replace(/\s*·\s*/, ' · ')).toBe('MENU +2 XP / KEY · GAMES +10 XP / LETTER');
+    // no rate line under the bar (Andy oct9: "thats not always the case") — season 1 too
+    expect(m.per).toBeNull();
     expect(m.cardXp).toBeNull();
   });
 
 });
 
-// SEASON 2 (PROGRESSION v4 "SIMPLE", Andy Oct 7 23:20): games pay wins only, so the rate line is ONE number — what a menu
-// key pays — "+1 XP / KEY" on a fresh season-2 save (T0, R0, no mark), the same on desktop and phone. Season 1 (above)
-// keeps its MENU / GAMES line.
+// SEASON 2: NO rate line under the bar (Andy oct9: "no need to write how much xp/key below the progression bar bc thats
+// not always the case"), desktop and phone — a fresh save (T0, R0, no mark) still pays +1 XP a key.
 for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
-  test(`season 2 @${vp.width}: the rate line says +1 XP / KEY (no MENU / GAMES halves)`, async ({ page }) => {
+  test(`season 2 @${vp.width}: no XP / KEY line under the bar; a key still pays +1`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
     await page.addInitScript(() => {
@@ -112,8 +111,10 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
       localStorage.setItem('taw.seenMenuSpotlight', '1');
     });
     await page.goto('/?portal=1&season2=1');
-    const per = page.locator('.hp-per:visible').first();
-    await expect(per).toHaveText('+1 XP / KEY');
-    await expect(per).not.toContainText('GAMES');
+    await page.locator('.menu-xp-bar:visible').first().waitFor();
+    await expect(page.locator('.hp-per, .hp-rate')).toHaveCount(0);
+    await expect(page.locator('body')).not.toContainText('XP / KEY');
+    for (const k of 'qwe') { await page.keyboard.press(k); await page.waitForTimeout(80); } // 3 keys: a 1% CRIT pop is filtered out
+    await expect.poll(() => page.evaluate(() => Number(([...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter((t) => t && !/CRIT/.test(t)).pop() || '').replace(/[^\d.]/g, '')))).toBe(1);
   });
 }

@@ -350,23 +350,6 @@
     align-items: center;
     gap: 6px 10px;
   }
-  .hp-m-per .hp-per {
-    font-family: 'Bungee', sans-serif;
-    text-transform: uppercase;
-    font-size: var(--fs-k18);
-    line-height: 1;
-    color: #fff;
-    -webkit-text-stroke: 3px #000;
-    paint-order: stroke fill;
-    white-space: nowrap;
-  }
-  .hp-m-per .hp-per-u {
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: var(--fs-k14);
-    -webkit-text-stroke: 0;
-    color: #c9b8e8;
-  }
   /* THE GEAR SLOT (R2 oct8 #6): the worn gear reads like the desktop rail's YOUR GEAR slot — a dark well with a
      GEAR caption before the name, the tier colour on its edge */
   .hp-m-per .hp-chip {

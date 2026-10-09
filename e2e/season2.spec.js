@@ -1,11 +1,11 @@
 // e2e/season2.spec.js — PROGRESSION v4 "SIMPLE" (on FINAL v3) behind ?season2=1 (claude/progression-FINAL.md v4).
 // One claimed board player on the season-2 board (boardMock `season2` — 029's REAL write rule + lb_rebirth season 2 with
 // the econ-13 guard), on a desktop and a phone:
-//   * reads the rate line "+1 XP / KEY" (v4: one number — the menu is the only XP source; games pay wins only);
+//   * no rate line under the bar (Andy oct9); a key pays +1 at T0 R0 (v4: the menu is the only XP source);
 //   * MASHES the menu and LEVELS (ANY key, the full 1 XP at T0 R0; need(14) = 100 × 1.15^13);
 //   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 15 → LV 1, ×3)
 //     — one request, no gems, R1, LV15 → LV1;
-//   * BUYS KEY with wins (150 wins, ×2 XP / KEY — the rate line reads +6 at T1 R1);
+//   * BUYS KEY with wins (150 wins, ×2 XP a key — a key pops +6 at T1 R1);
 //   * sees the v3 RANKS (INKLING → TYPO — by rebirths, not by level);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
 //   * CLAIMS an ACHIEVEMENT for GEMS (TYPE WORDS I → +40) — gems come from games / achievements, never a rebirth.
@@ -69,8 +69,8 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await noClaimPopups(page);
     if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('INKLING');
 
-    // THE RATE LINE (v4 "SIMPLE"): one number, what a menu key pays — +1 XP / KEY at T0 R0 (no MENU / GAMES halves)
-    await expect(page.locator('.hp-per:visible').first()).toHaveText('+1 XP / KEY');
+    // NO RATE LINE under the bar (Andy oct9) — what a key pays shows as its pop (+1 at T0 R0, below)
+    await expect(page.locator('.hp-per, .hp-rate')).toHaveCount(0);
 
     // MASH → LEVEL (v4: ANY key counts, no rate cap, the full rate): LV14 → LV15 (need(14) = 100 × 1.15^13 ≈ 614 XP,
     // 1.5% left ≈ 10 XP; a menu key pays 1 XP at KEY T0 R0) — gibberish, typed fast
@@ -120,8 +120,9 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect((await s2(page)).wins).toBe('350');
     await page.keyboard.press('Escape');
     await expect(sp).toHaveCount(0);
-    // POWER shows on the very next key: T1 R1 = 2 × 3 = +6 XP / KEY (no ×0.2 share, no rounding)
-    await expect(page.locator('.hp-per:visible').first()).toHaveText('+6 XP / KEY');
+    // POWER shows on the very next key: T1 R1 = 2 × 3 = +6 a key (no ×0.2 share, no rounding)
+    for (const k of 'qwe') { await page.keyboard.press(k); await page.waitForTimeout(80); } // 3 keys: a 1% CRIT pop is filtered out
+    await expect.poll(() => page.evaluate(() => Number(([...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter((t) => t && !/CRIT/.test(t)).pop() || '').replace(/[^\d.]/g, '')))).toBe(6);
 
     // ACHIEVEMENTS (the v2 screen, P3 — the only claim place): the trophy in the nav cluster; TYPE WORDS I pays 40 gems
     await page.locator(phone ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();
