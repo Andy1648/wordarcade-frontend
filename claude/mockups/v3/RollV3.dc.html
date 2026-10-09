@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gear roll</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes gcSpin{to{transform:rotate(360deg)}}
+@keyframes gcBand{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes rvShake{0%,100%{transform:translate(0,0)}15%{transform:translate(-10px,5px)}30%{transform:translate(9px,-6px)}45%{transform:translate(-7px,-4px)}60%{transform:translate(6px,6px)}75%{transform:translate(-4px,2px)}}
+@keyframes rvFlash{0%{opacity:.95}100%{opacity:0}}
+@keyframes rvPop{0%{transform:scale(.7)}55%{transform:scale(1.2)}100%{transform:scale(1.12)}}
+@keyframes rvPopS{0%{transform:scale(.76)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes rvSlideL{0%{transform:translateX(-60px)}100%{transform:translateX(0)}}
+@keyframes rvSlideR{0%{transform:translateX(60px)}100%{transform:translateX(0)}}
+@keyframes rvRays{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes rvBumpA{0%{transform:scale(1)}35%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes rvBumpB{0%{transform:scale(1)}35%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes rvGlow{0%,100%{opacity:.35}50%{opacity:.9}}
+@keyframes rvBreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.gc-ring{transform-origin:60px 60px}
+.gc-s0,.gc-s1{}
+.gc-s2{animation:gcSpin 14s linear infinite}
+.gc-s3{animation:gcSpin 10s linear infinite}
+.gc-s4{animation:gcSpin 7s linear infinite}
+.gc-s5{animation:gcSpin 3.5s linear infinite}
+.gc-rb{position:absolute;left:0;top:0;bottom:0;width:200%;background:repeating-linear-gradient(90deg,#FF3D7F 0 50px,#FFC23D 50px 100px,#FFE94A 100px 150px,#2EFFE0 150px 200px,#3D8BFF 200px 250px,#B04BFF 250px 300px);animation:gcBand 2.4s linear infinite}
+.rv-shake{animation:rvShake .45s linear 1}
+.rv-shake-big{animation:rvShake .45s linear 3}
+.rv-flash{position:absolute;inset:0;pointer-events:none;animation:rvFlash .55s ease-out forwards}
+.rv-pop{animation:rvPop .42s cubic-bezier(.2,1.3,.4,1) both}
+.rv-pop-s{animation:rvPopS .3s cubic-bezier(.2,1.3,.4,1) both}
+.rv-in-l{animation:rvSlideL .3s cubic-bezier(.2,1.2,.4,1) both}
+.rv-in-r{animation:rvSlideR .3s cubic-bezier(.2,1.2,.4,1) both}
+.rv-rays{position:absolute;left:50%;top:50%;width:2200px;height:2200px;border-radius:50%;transform:translate(-50%,-50%);animation:rvRays 6s linear infinite}
+.rv-bA{animation:rvBumpA .32s cubic-bezier(.2,1.4,.4,1)}
+.rv-bB{animation:rvBumpB .32s cubic-bezier(.2,1.4,.4,1)}
+.rv-glow{animation:rvGlow .5s ease-in-out infinite}
+.rv-breathe{animation:rvBreathe 1.4s ease-in-out infinite}
+.rv-out{-webkit-text-stroke:6px #000;paint-order:stroke fill}
+.rv-btn{cursor:pointer;transition:transform .07s,box-shadow .07s}
+.rv-btn:hover{transform:translate(-2px,-2px)}
+.rv-btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #000 !important}
+.rv-roll{position:relative;width:400px;height:158px;padding:0;border:0;background:none;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.rv-roll .rv-face{transition:transform .07s}
+.rv-roll:hover .rv-face{transform:translateY(-3px)}
+.rv-roll:active .rv-face,.rv-roll.rv-held .rv-face{transform:translateY(10px)}
+</style>
+</helmet>
+<div style="width: 1366px; height: 657px; position: relative; overflow: hidden; background: #0d0618; user-select: none">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(92,15,163,.16) 46px 50px)"></div>
+
+
+
+<!-- TOP BAR -->
+<div style="position: absolute; left: 24px; right: 24px; top: 10px; height: 52px; display: flex; align-items: center; gap: 14px">
+<button class="rv-btn" style="height: 50px; padding: 0 18px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; font-family: 'Bungee', sans-serif; font-size: 20px; color: #fff">← MENU</button>
+<div class="{{eqBump}}" style="height: 50px; box-sizing: border-box; padding: 0 16px 0 10px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000">
+<span style="width: 26px; height: 26px; border-radius: 50%; background: {{eq.line}}; border: 4px solid #000; box-sizing: border-box"></span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #c9b8e8">EQUIPPED</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 24px; color: #FFE94A">{{eq.mult}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 18px; color: #fff">{{eq.kind}}</span>
+</div>
+<div style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #8a76a8">DEMO</span>
+<sc-for list="{{demos}}" as="d" hint-placeholder-count="4">
+<button class="rv-btn" onClick="{{d.go}}" style="height: 40px; padding: 0 11px; background: #12071f; border: 3px solid {{d.c}}; box-shadow: 4px 4px 0 #000; font-family: 'Bungee', sans-serif; font-size: 16px; color: {{d.c}}">{{d.label}}</button>
+</sc-for>
+</div>
+<div style="height: 50px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; gap: 8px; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #c9b8e8">LUCK</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 24px; color: #2EFFE0">×1</span>
+</div>
+<div class="{{gemBump}}" style="height: 50px; box-sizing: border-box; padding: 0 18px 0 50px; position: relative; display: flex; align-items: center; background: #1a0b2e; border: 4px solid #000; box-shadow: 5px 5px 0 #000; border-bottom: 7px solid #12A99A">
+<svg viewBox="0 0 40 40" width="50" height="50" style="position: absolute; left: -16px; top: -4px; transform: rotate(10deg); filter: drop-shadow(3px 3px 0 #000)" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="4" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15" stroke="#000" stroke-width="2.5" fill="none"></path><path d="M8 13 L12 7" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<span class="rv-out" style="font-family: 'Bungee', sans-serif; font-size: 28px; -webkit-text-stroke: 4px #000">{{gemsText}}</span>
+</div>
+</div>
+
+<!-- REEL WINDOW -->
+<div class="{{shakeClass}}" style="position: absolute; left: 24px; right: 24px; top: 72px; height: 372px; z-index: 3">
+<div style="position: absolute; inset: 0; box-sizing: border-box; border: 6px solid #000; border-radius: 18px; background: {{bezel}}; box-shadow: 9px 9px 0 #000; overflow: hidden">
+<sc-if value="{{bezelRainbow}}" hint-placeholder-val="{{ false }}"><div class="gc-rb" style="width: 400%"></div></sc-if>
+<sc-if value="{{bezelGlow}}" hint-placeholder-val="{{ false }}"><div class="rv-glow" style="position: absolute; inset: 0; background: #fff"></div></sc-if>
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 4px; background: rgba(255,255,255,.35)"></div>
+</div>
+<div style="position: absolute; left: 14px; right: 14px; top: 14px; bottom: 14px; box-sizing: border-box; border: 5px solid #000; border-radius: 10px; background: #08030f; overflow: hidden">
+<div style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 180px, rgba(255,255,255,.035) 180px 182px)"></div>
+<sc-if value="{{showRays}}" hint-placeholder-val="{{ false }}">
+<div class="rv-rays" style="width: 1600px; height: 1600px; background: repeating-conic-gradient({{res.line}} 0deg 8deg, transparent 8deg 20deg); opacity: .22"></div>
+</sc-if>
+<div id="rv-strip" style="position: absolute; left: 0; top: 38px; height: 257px; transform: translateX({{stripX}}px); will-change: transform">
+<sc-for list="{{strip}}" as="it" hint-placeholder-count="10">
+<div style="position: absolute; left: {{it.x}}px; top: 0; width: 164px; height: 257px; opacity: {{it.op}}; z-index: {{it.z}}">
+<div class="{{it.pop}}" style="position: absolute; left: 0; top: 0; width: 164px; height: 257px; transform: scale({{it.sc}}); transform-origin: 50% 50%">
+<div style="position: absolute; left: 0; top: 0; transform: scale(.78); transform-origin: 0 0">
+<div style="position: relative; width: 210px; height: 330px; box-sizing: border-box; background: {{it.m.fill}}; border: 5px solid {{it.m.edge}}; border-radius: 12px; box-shadow: 6px 6px 0 #000, inset 0 4px 0 rgba(255,255,255,.14); overflow: hidden; display: flex; flex-direction: column; align-items: center">
+<div style="position: relative; width: 100%; height: 40px; flex: none; box-sizing: border-box; background: {{it.m.line}}; border-bottom: 4px solid #000; overflow: hidden">
+<sc-if value="{{it.m.rainbow}}" hint-placeholder-val="{{ false }}"><div class="gc-rb"></div></sc-if>
+<div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; color: #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; letter-spacing: 0.06em">{{it.m.rarityName}}</span>
+</div>
+</div>
+<div style="position: relative; width: 132px; height: 132px; margin-top: 2px; flex: none">
+<div style="position: absolute; inset: 6px; border-radius: 50%; background: {{it.m.line}}; opacity: .16"></div>
+<svg viewBox="0 0 120 120" width="132" height="132" style="position: relative; display: block; overflow: visible">
+<g class="gc-ring {{it.m.spin}}">
+<sc-for list="{{it.m.teeth}}" as="t" hint-placeholder-count="12">
+<rect x="50" y="2" width="20" height="20" rx="3" fill="{{t.c}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round" transform="rotate({{t.a}} 60 60)"></rect>
+</sc-for>
+<circle cx="60" cy="60" r="45" fill="{{it.m.ring}}" stroke="#000" stroke-width="5"></circle>
+<sc-for list="{{it.m.notches}}" as="n" hint-placeholder-count="6">
+<rect x="57" y="17" width="6" height="7" fill="#000" transform="rotate({{n}} 60 60)"></rect>
+</sc-for>
+</g>
+<circle cx="60" cy="60" r="35" fill="{{it.m.inner}}" stroke="#000" stroke-width="4.5"></circle>
+<path d="M33 48 A29 29 0 0 1 60 31" stroke="rgba(255,255,255,.35)" stroke-width="4" fill="none" stroke-linecap="round"></path>
+<g transform="translate(18 18) scale(.84)" stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" style="filter: drop-shadow(3px 3px 0 #000)">
+<sc-if value="{{it.m.g.twin}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="rotate(-14 34 58)"><rect x="8" y="34" width="50" height="50" rx="9" fill="#12A99A"></rect><rect x="14" y="36" width="38" height="36" rx="6" fill="#2EFFE0" stroke-width="4"></rect><path d="M20 44 L34 44" stroke="#fff" stroke-width="4"></path></g>
+<g transform="rotate(12 66 42)"><rect x="42" y="16" width="50" height="50" rx="9" fill="#F2A900"></rect><rect x="48" y="18" width="38" height="36" rx="6" fill="#FFE94A" stroke-width="4"></rect><path d="M54 26 L68 26" stroke="#fff" stroke-width="4"></path></g>
+</g></sc-if>
+<sc-if value="{{it.m.g.echo}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke="#2EFFE0" stroke-width="7"></path>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke-width="2.5"></path>
+<rect x="24" y="22" width="52" height="58" rx="10" fill="#5d6678"></rect><rect x="30" y="24" width="40" height="42" rx="7" fill="#DDE3EE" stroke-width="4"></rect>
+<path d="M50 34 L50 56 M40 46 L50 56 L60 46" fill="none" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{it.m.g.breaker}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="translate(-6 4) rotate(-10 30 50)"><path d="M10 22 L50 22 L42 40 L52 52 L40 66 L46 82 L10 82 Z" fill="#1f4fa8"></path><path d="M16 24 L48 24 L41 39 L49 50 L38 62 L42 70 L16 70 Z" fill="#3D8BFF" stroke-width="4"></path><path d="M22 32 L34 32" stroke="#fff" stroke-width="4"></path></g>
+<g transform="translate(8 -2) rotate(10 70 50)"><path d="M56 22 L90 22 L90 82 L52 82 L46 66 L58 52 L48 40 Z" fill="#1f4fa8"></path><path d="M58 24 L84 24 L84 70 L50 70 L48 62 L58 50 L50 39 Z" fill="#9CC3FF" stroke-width="4"></path></g>
+<path d="M52 4 L46 16 M60 8 L58 18 M44 92 L50 84" stroke="#FFE94A" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{it.m.g.warden}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="#3D8BFF"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 Z" fill="#1f4fa8" stroke="none"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="none"></path>
+<path d="M50 22 L74 50 L60 50 L60 72 L40 72 L40 50 L26 50 Z" fill="#fff"></path>
+<path d="M22 24 L22 46" stroke="#9CC3FF" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{it.m.g.divide}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M10 16 L80 16 L10 86 Z" fill="#6a20b0" transform="translate(4 6)"></path>
+<path d="M10 14 L78 14 L10 82 Z" fill="#D88BFF"></path>
+<path d="M18 22 L44 22" stroke="#fff" stroke-width="5"></path>
+<path d="M28 98 L96 30 L96 98 Z" fill="#a8164e" transform="translate(0 -2)"></path>
+<path d="M30 92 L92 30 L92 92 Z" fill="#FF3D7F"></path>
+<path d="M66 80 L86 80" stroke="#FFB0CC" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{it.m.g.mirror}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M30 6 L54 34 L40 34 L40 50 L20 50 L20 34 L6 34 Z" fill="#B04BFF"></path>
+<path d="M70 94 L46 66 L60 66 L60 50 L80 50 L80 66 L94 66 Z" fill="#2EFFE0"></path>
+<path d="M4 50 L96 50" stroke-width="5"></path>
+<path d="M18 30 L28 18" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{it.m.g.heart}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="#FF3D7F"></path>
+<path d="M50 92 C80 70 96 52 94 32 C93 24 88 18 82 16 C88 40 74 66 50 92 Z" fill="#a8164e" stroke="none"></path>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="none"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke="#FFC23D" stroke-width="8"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke-width="2.5"></path>
+<path d="M50 62 L70 40" stroke-width="6"></path>
+<circle cx="50" cy="62" r="7" fill="#FFE94A" stroke-width="4"></circle>
+<path d="M18 26 C20 20 26 16 32 16" stroke="#fff" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{it.m.g.abyss}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-12 50 50)">
+<rect x="0" y="30" width="100" height="44" rx="10" fill="#80123f"></rect>
+<rect x="6" y="32" width="88" height="32" rx="7" fill="#FF3D7F" stroke-width="4"></rect>
+<ellipse cx="50" cy="48" rx="26" ry="12" fill="#0d0618" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="15" ry="7" fill="none" stroke="#B04BFF" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="6" ry="3" fill="#000" stroke="none"></ellipse>
+<path d="M12 38 L22 38" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{it.m.g.caret}}" hint-placeholder-val="{{ false }}"><g transform="rotate(30 50 50)">
+<rect x="45" y="30" width="10" height="68" fill="#FFC23D"></rect>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke-width="7"></path>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke="#fff" stroke-width="3"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="#fff"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 Z" fill="#D88BFF" stroke="none"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="none"></path>
+<path d="M48 46 L48 84" stroke="#FFE94A" stroke-width="3"></path>
+</g></sc-if>
+</g>
+</svg>
+<div style="position: absolute; left: 0; right: 0; bottom: -10px; z-index: 2; display: flex; justify-content: center"><div style="display: flex; gap: 1px; padding: 3px 6px; background: #000; border-radius: 14px">
+<sc-for list="{{it.m.pips}}" as="p" hint-placeholder-count="5">
+<svg viewBox="0 0 20 20" width="19" height="19" aria-hidden="true" style="display: block"><path d="M10 1.5 L12.6 7 L18.6 7.6 L14 11.6 L15.4 17.6 L10 14.4 L4.6 17.6 L6 11.6 L1.4 7.6 L7.4 7 Z" fill="{{p.c}}" stroke="#000" stroke-width="2" stroke-linejoin="round"></path></svg>
+</sc-for>
+</div></div>
+</div>
+<div style="width: 196px; height: 56px; margin-top: 8px; flex: none; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'Bungee', sans-serif; font-size: 26px; line-height: 1.02; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{it.m.name}}</div>
+<div style="width: 100%; height: 48px; flex: none; margin-top: 2px; box-sizing: border-box; background: #000; display: flex; align-items: center; justify-content: center; gap: 8px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 40px; line-height: 1; color: #FFE94A">{{it.m.mult}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; line-height: 1; color: #fff">{{it.m.kind}}</span>
+</div>
+<div style="height: 32px; width: 100%; margin-top: auto; flex: none; background: {{it.m.deep}}; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 19px; color: {{it.m.line}}">{{it.m.oddsText}}</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 300px; background: linear-gradient(90deg, #08030f 10%, rgba(8,3,15,0)); opacity: {{fadeOp}}"></div>
+<div style="position: absolute; right: 0; top: 0; bottom: 0; width: 300px; background: linear-gradient(270deg, #08030f 10%, rgba(8,3,15,0)); opacity: {{fadeOp}}"></div>
+<sc-if value="{{showPointer}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 637px; top: 0; bottom: 0; width: 4px; background: {{ptr}}; box-shadow: 0 0 0 2px #000; opacity: .7"></div>
+<svg id="rv-flap" width="48" height="40" viewBox="0 0 48 40" style="position: absolute; left: 615px; top: -6px; transform-origin: 24px 6px; transform: rotate({{flapDeg}}deg)" aria-hidden="true"><path d="M3 4 L45 4 L24 36 Z" fill="{{ptr}}" stroke="#000" stroke-width="5" stroke-linejoin="round"></path><path d="M12 9 L22 9" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg>
+<svg width="48" height="40" viewBox="0 0 48 40" style="position: absolute; left: 615px; bottom: -6px" aria-hidden="true"><path d="M3 36 L45 36 L24 4 Z" fill="{{ptr}}" stroke="#000" stroke-width="5" stroke-linejoin="round"></path></svg>
+</sc-if>
+
+<sc-if value="{{showResult}}" hint-placeholder-val="{{ false }}">
+<div class="rv-in-l" style="position: absolute; left: 0; width: 470px; top: 0; bottom: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 6px">
+<span class="rv-out" style="font-family: 'Bungee', sans-serif; font-size: 34px; line-height: 1; color: {{res.line}}">{{res.rarityName}}</span>
+<span class="rv-out" style="font-family: 'Bungee', sans-serif; font-size: 72px; line-height: 1; color: #fff; -webkit-text-stroke: 8px #000; text-shadow: 6px 6px 0 #000">{{res.oddsText}}</span>
+<span style="margin-top: 6px; padding: 4px 12px; background: {{res.tagBg}}; border: 4px solid #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #000">{{res.tag}}</span>
+</div>
+<sc-if value="{{showChoice}}" hint-placeholder-val="{{ true }}">
+<div class="rv-in-r" style="position: absolute; left: 818px; width: 300px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 16px">
+<button class="rv-btn" onClick="{{equip}}" style="height: 96px; background: #FFE94A; border: 5px solid #000; box-shadow: 7px 7px 0 #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: 'Bungee', sans-serif; color: #000">
+<span style="font-size: 34px; line-height: 1">EQUIP</span>
+<span style="font-size: 18px; line-height: 1">{{eqDelta}}</span>
+</button>
+<button class="rv-btn" onClick="{{keep}}" style="height: 70px; background: #1a0b2e; border: 5px solid #000; box-shadow: 7px 7px 0 #000; font-family: 'Bungee', sans-serif; font-size: 26px; color: #fff">KEEP</button>
+</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{flash}}" hint-placeholder-val="{{ false }}"><div class="rv-flash" style="background: {{flashC}}"></div></sc-if>
+</div>
+<sc-if value="{{showResult}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 548px; top: 21px; width: 210px; height: 330px; z-index: 4">
+<div class="{{res.popCls}}" style="width: 210px; height: 330px; transform-origin: 50% 50%">
+<div style="position: relative; width: 210px; height: 330px; box-sizing: border-box; background: {{res.fill}}; border: 5px solid {{res.edge}}; border-radius: 12px; box-shadow: 6px 6px 0 #000, inset 0 4px 0 rgba(255,255,255,.14); overflow: hidden; display: flex; flex-direction: column; align-items: center">
+<div style="position: relative; width: 100%; height: 40px; flex: none; box-sizing: border-box; background: {{res.line}}; border-bottom: 4px solid #000; overflow: hidden">
+<sc-if value="{{res.rainbow}}" hint-placeholder-val="{{ false }}"><div class="gc-rb"></div></sc-if>
+<div style="position: relative; height: 100%; display: flex; align-items: center; justify-content: center; color: #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; letter-spacing: 0.06em">{{res.rarityName}}</span>
+</div>
+</div>
+<div style="position: relative; width: 132px; height: 132px; margin-top: 2px; flex: none">
+<div style="position: absolute; inset: 6px; border-radius: 50%; background: {{res.line}}; opacity: .16"></div>
+<svg viewBox="0 0 120 120" width="132" height="132" style="position: relative; display: block; overflow: visible">
+<g class="gc-ring {{res.spin}}">
+<sc-for list="{{res.teeth}}" as="t" hint-placeholder-count="12">
+<rect x="50" y="2" width="20" height="20" rx="3" fill="{{t.c}}" stroke="#000" stroke-width="3.5" stroke-linejoin="round" transform="rotate({{t.a}} 60 60)"></rect>
+</sc-for>
+<circle cx="60" cy="60" r="45" fill="{{res.ring}}" stroke="#000" stroke-width="5"></circle>
+<sc-for list="{{res.notches}}" as="n" hint-placeholder-count="6">
+<rect x="57" y="17" width="6" height="7" fill="#000" transform="rotate({{n}} 60 60)"></rect>
+</sc-for>
+</g>
+<circle cx="60" cy="60" r="35" fill="{{res.inner}}" stroke="#000" stroke-width="4.5"></circle>
+<path d="M33 48 A29 29 0 0 1 60 31" stroke="rgba(255,255,255,.35)" stroke-width="4" fill="none" stroke-linecap="round"></path>
+<g transform="translate(18 18) scale(.84)" stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" style="filter: drop-shadow(3px 3px 0 #000)">
+<sc-if value="{{res.g.twin}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="rotate(-14 34 58)"><rect x="8" y="34" width="50" height="50" rx="9" fill="#12A99A"></rect><rect x="14" y="36" width="38" height="36" rx="6" fill="#2EFFE0" stroke-width="4"></rect><path d="M20 44 L34 44" stroke="#fff" stroke-width="4"></path></g>
+<g transform="rotate(12 66 42)"><rect x="42" y="16" width="50" height="50" rx="9" fill="#F2A900"></rect><rect x="48" y="18" width="38" height="36" rx="6" fill="#FFE94A" stroke-width="4"></rect><path d="M54 26 L68 26" stroke="#fff" stroke-width="4"></path></g>
+</g></sc-if>
+<sc-if value="{{res.g.echo}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke="#2EFFE0" stroke-width="7"></path>
+<path d="M14 30 C4 42 4 58 14 70 M86 30 C96 42 96 58 86 70" fill="none" stroke-width="2.5"></path>
+<rect x="24" y="22" width="52" height="58" rx="10" fill="#5d6678"></rect><rect x="30" y="24" width="40" height="42" rx="7" fill="#DDE3EE" stroke-width="4"></rect>
+<path d="M50 34 L50 56 M40 46 L50 56 L60 46" fill="none" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{res.g.breaker}}" hint-placeholder-val="{{ false }}"><g>
+<g transform="translate(-6 4) rotate(-10 30 50)"><path d="M10 22 L50 22 L42 40 L52 52 L40 66 L46 82 L10 82 Z" fill="#1f4fa8"></path><path d="M16 24 L48 24 L41 39 L49 50 L38 62 L42 70 L16 70 Z" fill="#3D8BFF" stroke-width="4"></path><path d="M22 32 L34 32" stroke="#fff" stroke-width="4"></path></g>
+<g transform="translate(8 -2) rotate(10 70 50)"><path d="M56 22 L90 22 L90 82 L52 82 L46 66 L58 52 L48 40 Z" fill="#1f4fa8"></path><path d="M58 24 L84 24 L84 70 L50 70 L48 62 L58 50 L50 39 Z" fill="#9CC3FF" stroke-width="4"></path></g>
+<path d="M52 4 L46 16 M60 8 L58 18 M44 92 L50 84" stroke="#FFE94A" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{res.g.warden}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="#3D8BFF"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 Z" fill="#1f4fa8" stroke="none"></path>
+<path d="M50 6 L88 18 L84 56 C80 76 66 88 50 94 C34 88 20 76 16 56 L12 18 Z" fill="none"></path>
+<path d="M50 22 L74 50 L60 50 L60 72 L40 72 L40 50 L26 50 Z" fill="#fff"></path>
+<path d="M22 24 L22 46" stroke="#9CC3FF" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{res.g.divide}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M10 16 L80 16 L10 86 Z" fill="#6a20b0" transform="translate(4 6)"></path>
+<path d="M10 14 L78 14 L10 82 Z" fill="#D88BFF"></path>
+<path d="M18 22 L44 22" stroke="#fff" stroke-width="5"></path>
+<path d="M28 98 L96 30 L96 98 Z" fill="#a8164e" transform="translate(0 -2)"></path>
+<path d="M30 92 L92 30 L92 92 Z" fill="#FF3D7F"></path>
+<path d="M66 80 L86 80" stroke="#FFB0CC" stroke-width="5"></path>
+</g></sc-if>
+<sc-if value="{{res.g.mirror}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M30 6 L54 34 L40 34 L40 50 L20 50 L20 34 L6 34 Z" fill="#B04BFF"></path>
+<path d="M70 94 L46 66 L60 66 L60 50 L80 50 L80 66 L94 66 Z" fill="#2EFFE0"></path>
+<path d="M4 50 L96 50" stroke-width="5"></path>
+<path d="M18 30 L28 18" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{res.g.heart}}" hint-placeholder-val="{{ false }}"><g>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="#FF3D7F"></path>
+<path d="M50 92 C80 70 96 52 94 32 C93 24 88 18 82 16 C88 40 74 66 50 92 Z" fill="#a8164e" stroke="none"></path>
+<path d="M50 92 C20 70 4 52 6 32 C8 14 30 6 50 26 C70 6 92 14 94 32 C96 52 80 70 50 92 Z" fill="none"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke="#FFC23D" stroke-width="8"></path>
+<path d="M24 62 A30 30 0 0 1 76 62" fill="none" stroke-width="2.5"></path>
+<path d="M50 62 L70 40" stroke-width="6"></path>
+<circle cx="50" cy="62" r="7" fill="#FFE94A" stroke-width="4"></circle>
+<path d="M18 26 C20 20 26 16 32 16" stroke="#fff" stroke-width="5" fill="none"></path>
+</g></sc-if>
+<sc-if value="{{res.g.abyss}}" hint-placeholder-val="{{ false }}"><g transform="rotate(-12 50 50)">
+<rect x="0" y="30" width="100" height="44" rx="10" fill="#80123f"></rect>
+<rect x="6" y="32" width="88" height="32" rx="7" fill="#FF3D7F" stroke-width="4"></rect>
+<ellipse cx="50" cy="48" rx="26" ry="12" fill="#0d0618" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="15" ry="7" fill="none" stroke="#B04BFF" stroke-width="4"></ellipse>
+<ellipse cx="50" cy="48" rx="6" ry="3" fill="#000" stroke="none"></ellipse>
+<path d="M12 38 L22 38" stroke="#fff" stroke-width="4"></path>
+</g></sc-if>
+<sc-if value="{{res.g.caret}}" hint-placeholder-val="{{ false }}"><g transform="rotate(30 50 50)">
+<rect x="45" y="30" width="10" height="68" fill="#FFC23D"></rect>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke-width="7"></path>
+<path d="M34 98 L66 98 M34 30 L66 30" stroke="#fff" stroke-width="3"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="#fff"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 Z" fill="#D88BFF" stroke="none"></path>
+<path d="M50 0 L74 34 L60 34 L50 20 L40 34 L26 34 Z" fill="none"></path>
+<path d="M48 46 L48 84" stroke="#FFE94A" stroke-width="3"></path>
+</g></sc-if>
+</g>
+</svg>
+<div style="position: absolute; left: 0; right: 0; bottom: -10px; z-index: 2; display: flex; justify-content: center"><div style="display: flex; gap: 1px; padding: 3px 6px; background: #000; border-radius: 14px">
+<sc-for list="{{res.pips}}" as="p" hint-placeholder-count="5">
+<svg viewBox="0 0 20 20" width="19" height="19" aria-hidden="true" style="display: block"><path d="M10 1.5 L12.6 7 L18.6 7.6 L14 11.6 L15.4 17.6 L10 14.4 L4.6 17.6 L6 11.6 L1.4 7.6 L7.4 7 Z" fill="{{p.c}}" stroke="#000" stroke-width="2" stroke-linejoin="round"></path></svg>
+</sc-for>
+</div></div>
+</div>
+<div style="width: 196px; height: 56px; margin-top: 8px; flex: none; display: flex; align-items: center; justify-content: center; text-align: center; font-family: 'Bungee', sans-serif; font-size: 26px; line-height: 1.02; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill">{{res.name}}</div>
+<div style="width: 100%; height: 48px; flex: none; margin-top: 2px; box-sizing: border-box; background: #000; display: flex; align-items: center; justify-content: center; gap: 8px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 40px; line-height: 1; color: #FFE94A">{{res.mult}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 21px; line-height: 1; color: #fff">{{res.kind}}</span>
+</div>
+<div style="height: 32px; width: 100%; margin-top: auto; flex: none; background: {{res.deep}}; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 19px; color: {{res.line}}">{{res.oddsText}}</span>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+
+<!-- BOTTOM CONTROLS -->
+<div style="position: absolute; left: 24px; width: 386px; top: 458px; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{pity}}" as="p" hint-placeholder-count="2">
+<div class="{{p.bump}}" style="height: 84px; box-sizing: border-box; display: flex; align-items: stretch; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; border-radius: 10px; overflow: hidden">
+<div style="flex: 1; padding: 0 14px; display: flex; flex-direction: column; justify-content: center; gap: 9px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 22px; line-height: 1; color: {{p.c}}">{{p.label}}</span>
+<div style="height: 18px; box-sizing: border-box; background: #08030f; border: 3px solid #000; position: relative; overflow: hidden">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: {{p.c}}; transform-origin: 0 50%; transform: scaleX({{p.frac}}); transition: transform .4s"></div>
+</div>
+</div>
+<div style="width: 136px; flex: none; border-left: 5px solid #000; background: #0f0619; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<span class="rv-out" style="font-family: 'Bungee', sans-serif; font-size: 54px; line-height: .95; color: #fff">{{p.n}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; line-height: 1.1; color: #c9b8e8">ROLLS</span>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="position: absolute; left: 483px; top: 456px; width: 400px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+<button class="rv-roll {{heldClass}}" onPointerDown="{{down}}" aria-label="Roll for 75 gems">
+<div style="position: absolute; left: 0; right: 0; top: 16px; bottom: 0; box-sizing: border-box; background: {{btnDeep}}; border: 6px solid #000; border-radius: 24px; box-shadow: 9px 9px 0 #000"></div>
+<div class="rv-face" style="position: absolute; left: 0; right: 0; top: 0; height: 142px; box-sizing: border-box; background: {{btnFace}}; border: 6px solid #000; border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+<div style="position: absolute; left: 14px; right: 14px; top: 8px; height: 12px; border-radius: 8px; background: rgba(255,255,255,.55)"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background: {{btnShade}}"></div>
+<span style="position: relative; font-family: 'Bungee', sans-serif; font-size: 66px; line-height: .9; color: #000; letter-spacing: 0.02em">{{btnLabel}}</span>
+<span style="position: relative; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 10px; background: #000; border-radius: 22px">
+<svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true"><path d="M10 4 L30 4 L38 15 L20 37 L2 15 Z" fill="#2EFFE0" stroke="#000" stroke-width="3" stroke-linejoin="round"></path><path d="M20 37 L38 15 L27 15 Z" fill="#12A99A"></path><path d="M2 15 L38 15 M20 37 L13 15 M20 37 L27 15" stroke="#000" stroke-width="2" fill="none"></path></svg>
+<span style="font-family: 'Bungee', sans-serif; font-size: 28px; line-height: 1; color: #2EFFE0">{{btnPrice}}</span>
+</span>
+</div>
+</button>
+<span style="font-family: 'Bungee', sans-serif; font-size: 16px; color: #8a76a8">{{btnHint}}</span>
+</div>
+
+<div style="position: absolute; right: 24px; width: 386px; top: 458px; display: flex; flex-direction: column; gap: 12px">
+<button class="rv-btn" onClick="{{toggleAuto}}" style="height: 84px; box-sizing: border-box; padding: 0 14px 0 18px; display: flex; align-items: center; justify-content: space-between; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; border-radius: 10px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 28px; color: #fff">AUTO ROLL</span>
+<span style="position: relative; width: 112px; height: 50px; box-sizing: border-box; border: 5px solid #000; border-radius: 26px; background: {{autoTrack}}">
+<span style="position: absolute; top: 3px; left: {{autoKnob}}px; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 4px solid #000; box-sizing: border-box; transition: left .15s"></span>
+<span style="position: absolute; top: 0; bottom: 0; left: {{autoTxtL}}px; display: flex; align-items: center; font-family: 'Bungee', sans-serif; font-size: 17px; color: {{autoTxtC}}">{{autoTxt}}</span>
+</span>
+</button>
+<div style="height: 84px; box-sizing: border-box; padding: 0 10px 0 18px; display: flex; align-items: center; justify-content: space-between; background: #1a0b2e; border: 5px solid #000; box-shadow: 6px 6px 0 #000; border-radius: 10px">
+<span style="font-family: 'Bungee', sans-serif; font-size: 20px; line-height: 1.05; color: #c9b8e8">STOP<br>AT</span>
+<div style="display: flex; align-items: center; gap: 6px">
+<button class="rv-btn" onClick="{{stopDown}}" aria-label="Lower stop rarity" style="width: 44px; height: 54px; background: #2a1645; border: 4px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">◀</button>
+<span style="width: 190px; height: 54px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: {{stop.line}}; border: 4px solid #000; position: relative; overflow: hidden; font-family: 'Bungee', sans-serif; font-size: 22px; color: #000">
+<sc-if value="{{stop.rainbow}}" hint-placeholder-val="{{ false }}"><span class="gc-rb"></span></sc-if>
+<span style="position: relative">{{stop.name}}+</span>
+</span>
+<button class="rv-btn" onClick="{{stopUp}}" aria-label="Raise stop rarity" style="width: 44px; height: 54px; background: #2a1645; border: 4px solid #000; box-shadow: 3px 3px 0 #000; font-family: 'Bungee', sans-serif; font-size: 22px; color: #fff">▶</button>
+</div>
+</div>
+</div>
+<sc-if value="{{takeover}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 2; overflow: hidden; background: #05020a">
+<div class="rv-rays" style="background: {{rainbowRays}}; opacity: .8"></div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":657}}'>
+var RAR = [
+  { name: 'COMMON',    odds: '1 IN 2',    line: '#A9B4C8', fill: '#262b38', deep: '#171a22', inner: '#3a4152', mult: '×1.1',  m: 1.1 },
+  { name: 'RARE',      odds: '1 IN 10',   line: '#3D8BFF', fill: '#0f2350', deep: '#08142e', inner: '#173a80', mult: '×1.25', m: 1.25 },
+  { name: 'EPIC',      odds: '1 IN 100',  line: '#B04BFF', fill: '#2a0e4a', deep: '#170728', inner: '#4a1880', mult: '×1.5',  m: 1.5 },
+  { name: 'LEGENDARY', odds: '1 IN 1K',   line: '#FFC23D', fill: '#3d2a05', deep: '#221702', inner: '#6b4a08', mult: '×2',    m: 2 },
+  { name: 'MYTHIC',    odds: '1 IN 10K',  line: '#FF3D7F', fill: '#4a0a22', deep: '#2a0412', inner: '#80123f', mult: '×3',    m: 3 },
+  { name: 'LONGINUS',  odds: '1 IN 100K', line: '#FFFFFF', fill: '#120a1e', deep: '#07040c', inner: '#2a1a40', mult: '×5',    m: 5 }
+];
+var RB = ['#FF3D7F', '#FFC23D', '#FFE94A', '#2EFFE0', '#3D8BFF', '#B04BFF'];
+var GEARS = [
+  { id: 'twin',    name: 'TWIN STRIKE',      r: 0, g: 'twin',    kind: 'WINS' },
+  { id: 'echo',    name: 'ECHO TAP',         r: 0, g: 'echo',    kind: 'XP' },
+  { id: 'breaker', name: 'KEYBREAKER',       r: 1, g: 'breaker', kind: 'WINS' },
+  { id: 'warden',  name: 'SHIFT WARDEN',     r: 1, g: 'warden',  kind: 'XP' },
+  { id: 'divide',  name: 'DIVIDING CAPS',    r: 2, g: 'divide',  kind: 'WINS' },
+  { id: 'mirror',  name: 'MIRROR SHIFT',     r: 2, g: 'mirror',  kind: 'XP' },
+  { id: 'heart',   name: 'OVERCLOCK HEART',  r: 3, g: 'heart',   kind: 'WINS' },
+  { id: 'abyss',   name: 'ABYSS SPACEBAR',   r: 4, g: 'abyss',   kind: 'WINS' },
+  { id: 'caret',   name: 'GOD-SLAYER CARET', r: 5, g: 'caret',   kind: 'WINS' }
+];
+// ---- timing (ms) ----
+var T_BASE = 2200;      // COMMON / RARE spin
+var T_QUICK = 800;      // after 3 COMMONs in a row
+var T_STEP = 700;       // + per rarity above RARE
+var T_PAUSE = 450;      // EPIC+ pause-beat on the edge of the pointer
+var T_SNAP = 260;       // tick-over into the slot
+var T_TAKEOVER = 1500;  // LONGINUS rainbow takeover before the card
+var SLOT = 182, CW = 164, PTR = 639, START = 3;
+var DEMO_W = [52, 30, 12, 4.5, 1.2, 0.3];
+var RAYS = (function () { var a = [], i, c; for (i = 0; i < 36; i++) { c = i % 2 ? '#05020a' : RB[(i / 2) % 6]; a.push(c + ' ' + (i * 10) + 'deg ' + (i * 10 + 10) + 'deg'); } return 'conic-gradient(' + a.join(', ') + ')'; })();
+var PITY_E = 50, PITY_L = 500, COST = 75;
+
+function fmt(x) { if (x >= 1e9) return (x / 1e9).toFixed(1).replace(/\.0$/, '') + 'B'; if (x >= 1e6) return (x / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'; if (x >= 1e3) return (x / 1e3).toFixed(1).replace(/\.0$/, '') + 'K'; return String(x); }
+function pickR(w) { var t = 0, i; for (i = 0; i < w.length; i++) t += w[i]; var x = Math.random() * t; for (i = 0; i < w.length; i++) { x -= w[i]; if (x <= 0) return i; } return 0; }
+function gearOf(r) { var l = GEARS.filter(function (g) { return g.r === r; }); return l[Math.floor(Math.random() * l.length)]; }
+function cardVM(gr, dupes) {
+  var R = RAR[gr.r], g = {}; g[gr.g] = true;
+  var teeth = [], notches = [], pips = [], i;
+  for (i = 0; i < 12; i++) teeth.push({ a: i * 30, c: gr.r === 5 ? RB[i % 6] : R.line });
+  for (i = 0; i < 6; i++) notches.push(i * 60 + 15);
+  for (i = 0; i < 5; i++) pips.push({ c: i < dupes ? '#FFE94A' : '#3a2f4a' });
+  return { id: gr.id, r: gr.r, name: gr.name, rarityName: R.name, oddsText: R.odds, line: R.line, fill: R.fill, deep: R.deep, inner: R.inner,
+    ring: gr.r === 5 ? '#fff' : R.line, edge: '#000', spin: 'gc-s' + gr.r, rainbow: gr.r === 5,
+    teeth: teeth, notches: notches, pips: pips, g: g, mult: R.mult, m: R.m, kind: gr.kind };
+}
+function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+function easeOutBack(t) { var c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+function offsetFor(i, j) { return PTR - (i * SLOT + CW / 2) - (j || 0); }
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var strip = [], i;
+    for (i = 0; i < 9; i++) strip.push(cardVM(gearOf(pickR(DEMO_W)), 0));
+    strip[START] = cardVM(GEARS[2], 1);
+    this.curX = offsetFor(START, 0);
+    this.flap = 0;
+    this.timers = [];
+    this.dupes = { twin: 3, echo: 1, breaker: 1 };
+    this.queue = [];
+    this.state = {
+      strip: strip, land: START, phase: 'idle', res: null, gems: 1840, pE: 23, pL: 412,
+      auto: false, stopAt: 2, held: false, streak: 0, eq: cardVM(GEARS[2], 1), takeover: false,
+      flash: false, shake: '', ptrHot: false, tick: 0, eqTick: 0, chain: false
+    };
+  }
+  componentDidMount() {
+    var self = this;
+    this.up = function () { if (self.state.held) self.setState({ held: false }); };
+    window.addEventListener('pointerup', this.up); window.addEventListener('pointercancel', this.up); window.addEventListener('blur', this.up);
+  }
+  componentWillUnmount() {
+    this.timers.forEach(clearTimeout); if (this.raf) cancelAnimationFrame(this.raf);
+    window.removeEventListener('pointerup', this.up); window.removeEventListener('pointercancel', this.up); window.removeEventListener('blur', this.up);
+  }
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); }
+  paint() {
+    var el = document.getElementById('rv-strip'); if (el) el.style.transform = 'translateX(' + this.curX.toFixed(1) + 'px)';
+    var u = PTR - this.curX, d = ((u - (CW + 9)) % SLOT + SLOT) % SLOT;
+    this.flap = d < 46 ? -26 * (1 - d / 46) : 0;
+    var f = document.getElementById('rv-flap'); if (f) f.style.transform = 'rotate(' + this.flap.toFixed(1) + 'deg)';
+  }
+  // ---------- roll ----------
+  roll() {
+    var st = this.state;
+    if (st.phase === 'spin' || st.phase === 'pause' || st.phase === 'fx') return;
+    if (st.gems < COST) { this.setState({ auto: false, held: false }); return; }
+    var r = this.queue.length ? this.queue.shift() : (this.force != null ? this.force : pickR(DEMO_W));
+    this.force = null;
+    if (st.pL <= 1 && r < 3) r = 3; else if (st.pE <= 1 && r < 2) r = 2;
+    var gr = gearOf(r);
+    var d = (this.dupes[gr.id] || 0); this.dupes[gr.id] = d + 1;
+    var res = cardVM(gr, Math.min(5, d)); res.isNew = d === 0;
+    var quick = r <= 1 && st.streak >= 3;
+    var land = quick ? 12 : 26 + r * 5;
+    // keep the cards that are on screen, then new ones
+    var old = st.strip, strip = [], i;
+    for (i = 0; i < START + 4; i++) strip.push(old[st.land - START + i] || cardVM(gearOf(pickR(DEMO_W)), 0));
+    while (strip.length < land + 6) strip.push(cardVM(gearOf(pickR(DEMO_W)), 0));
+    strip[land] = res;
+    if (r <= 1 && Math.random() < 0.4) strip[land + 1] = cardVM(gearOf(3 + Math.floor(Math.random() * 2)), 0);
+    if (r >= 2) strip[land - 1] = cardVM(gearOf(Math.random() < .5 ? 0 : 1), 0);
+    var jitter = r >= 2 ? 0 : Math.round((Math.random() - 0.5) * CW * 0.55);
+    var dur = quick ? T_QUICK : T_BASE + Math.max(0, r - 1) * T_STEP;
+    this.curX = offsetFor(START, 0) - (st.phase === 'result' ? 0 : 0);
+    this.spin = { t0: 0, from: this.curX, to: offsetFor(land, jitter), dur: dur, epic: r >= 2, r: r };
+    this.setState({
+      strip: strip, land: land, phase: 'spin', res: res, gems: st.gems - COST, tick: st.tick + 1,
+      pE: r >= 2 ? PITY_E : st.pE - 1, pL: r >= 3 ? PITY_L : st.pL - 1,
+      streak: r === 0 ? st.streak + 1 : 0, takeover: false, flash: false, shake: '', ptrHot: false
+    });
+    var self = this;
+    if (this.raf) cancelAnimationFrame(this.raf);
+    var step = function (now) {
+      var s = self.spin; if (!s.t0) s.t0 = now;
+      var t = now - s.t0, x;
+      if (!s.epic) {
+        var k = Math.min(1, t / s.dur); x = s.from + (s.to - s.from) * easeOutQuart(k);
+        self.curX = x; self.paint();
+        if (k < 1) { self.raf = requestAnimationFrame(step); return; }
+        self.landed(); return;
+      }
+      var a = s.dur - T_PAUSE - T_SNAP, pre = s.to + SLOT * 0.6;
+      if (t < a) { x = s.from + (pre - s.from) * easeOutQuart(t / a); }
+      else if (t < a + T_PAUSE) {
+        if (!self.state.ptrHot) self.setState({ phase: 'pause', ptrHot: true });
+        var q = (t - a) / T_PAUSE; x = pre - 14 * q + Math.sin(t / 22) * 2.2;
+      } else {
+        var q2 = Math.min(1, (t - a - T_PAUSE) / T_SNAP); x = (pre - 14) + (s.to - (pre - 14)) * easeOutBack(q2);
+        if (q2 >= 1) { self.curX = s.to; self.paint(); self.landed(); return; }
+      }
+      self.curX = x; self.paint(); self.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  }
+  landed() {
+    var self = this, st = this.state, r = st.res.r;
+    if (r >= 2) {
+      this.setState({ phase: 'fx', flash: true, shake: r >= 5 ? 'rv-shake-big' : 'rv-shake', takeover: r >= 5, ptrHot: false });
+      this.later(function () { self.setState({ flash: false }); }, 600);
+      this.later(function () { self.showResult(); }, r >= 5 ? T_TAKEOVER : 420);
+    } else {
+      this.showResult();
+    }
+  }
+  showResult() {
+    var self = this, st = this.state, r = st.res.r;
+    this.setState({ phase: 'result', shake: '', flash: false, cont: false });
+    if (st.auto && r >= st.stopAt) { this.setState({ auto: false }); return; }
+    var go = (st.auto || st.held || this.queue.length) && (r < 2 || st.auto);
+    this.setState({ cont: !!go });
+    if (go) this.later(function () { var s = self.state; if (s.phase === 'result' && (s.auto || s.held || self.queue.length)) self.roll(); }, st.held && !st.auto ? 300 : 550);
+  }
+  choose(eq) {
+    var st = this.state; if (st.phase !== 'result') return;
+    var u = { phase: 'idle', takeover: false };
+    if (eq) { u.eq = st.res; u.eqTick = st.eqTick + 1; }
+    this.setState(u);
+  }
+  renderVals() {
+    var self = this, st = this.state, res = st.res || st.strip[st.land];
+    var result = st.phase === 'result';
+    var big = result && res.r >= 2;
+    var strip = st.strip.map(function (c, i) {
+      var me = i === st.land && result;
+      return { m: c, x: i * SLOT, op: result ? (me ? 0 : 0.07) : 1, z: 1, sc: 1, pop: '' };
+    });
+    var hot = st.ptrHot || st.phase === 'fx';
+    var bezel = result || st.phase === 'fx' ? res.line : hot ? res.line : '#5c0fa3';
+    var resVM = Object.assign({}, res, {
+      tag: res.isNew ? 'NEW!' : 'DUPE ★' + res.pips.filter(function (p) { return p.c === '#FFE94A'; }).length,
+      tagBg: res.isNew ? '#2EFFE0' : '#FFE94A',
+      popCls: big ? 'rv-pop' : 'rv-pop-s'
+    });
+    var busy = st.phase === 'spin' || st.phase === 'pause' || st.phase === 'fx';
+    var stopR = RAR[st.stopAt];
+    var demos = [
+      { label: '4 COMMONS', c: '#A9B4C8', q: [0, 0, 0, 0] },
+      { label: 'EPIC', c: '#B04BFF', q: [2] },
+      { label: 'LEGENDARY', c: '#FFC23D', q: [3] },
+      { label: 'LONGINUS', c: '#FFFFFF', q: [5] }
+    ].map(function (d) { d.go = function () { if (self.state.phase === 'spin' || self.state.phase === 'pause' || self.state.phase === 'fx') return; self.queue = d.q.slice(); if (self.state.gems < COST * 4) self.setState({ gems: self.state.gems + 1500 }); self.roll(); }; return d; });
+    return {
+      demos: demos,
+      strip: strip, stripX: this.curX.toFixed(1), flapDeg: this.flap.toFixed(1),
+      res: resVM, showResult: result, showChoice: result && !st.cont, showRays: (result || st.phase === 'fx') && res.r >= 2,
+      showPointer: !result, fadeOp: result ? 0 : 1,
+      ptr: hot ? res.line : '#FFE94A', bezel: bezel, bezelRainbow: (result || st.phase === 'fx') && res.r >= 5, bezelGlow: st.phase === 'pause',
+      flash: st.flash, flashC: res.r >= 5 ? '#fff' : res.line,
+      shakeClass: st.shake, takeover: st.takeover, rainbowRays: RAYS,
+      gemsText: fmt(st.gems), gemBump: st.tick % 2 ? 'rv-bA' : (st.tick ? 'rv-bB' : ''),
+      eq: st.eq, eqBump: st.eqTick % 2 ? 'rv-bA' : (st.eqTick ? 'rv-bB' : ''),
+      eqDelta: st.eq.mult + ' → ' + res.mult + ' ' + res.kind,
+      pity: [
+        { label: 'EPIC+ IN', c: '#B04BFF', n: st.pE, frac: ((PITY_E - st.pE) / PITY_E).toFixed(3), bump: st.tick ? (st.tick % 2 ? 'rv-bA' : 'rv-bB') : '' },
+        { label: 'LEGENDARY+ IN', c: '#FFC23D', n: st.pL, frac: ((PITY_L - st.pL) / PITY_L).toFixed(3), bump: '' }
+      ],
+      btnLabel: st.auto ? 'STOP' : st.gems < COST ? 'NO GEMS' : 'ROLL',
+      btnFace: st.auto ? '#FF3D7F' : busy && !st.held ? '#E8D24A' : '#FFE94A',
+      btnShade: st.auto ? '#C2185B' : '#F2A900', btnDeep: st.auto ? '#7a0c33' : '#8a5a00',
+      btnPrice: COST, heldClass: st.held ? 'rv-held' : '',
+      btnHint: st.auto ? 'AUTO ROLLING · STOPS AT ' + stopR.name + '+' : st.held ? 'HOLDING · ROLLING NON-STOP' : 'CLICK = 1 ROLL · HOLD = NON-STOP',
+      down: function (e) {
+        if (self.state.auto) { self.setState({ auto: false }); return; }
+        self.setState({ held: true });
+        if (self.state.phase === 'result' && self.state.res.r >= 2) self.choose(false);
+        self.roll();
+      },
+      equip: function () { self.choose(true); }, keep: function () { self.choose(false); },
+      autoTrack: st.auto ? '#2EFFE0' : '#2a1645', autoKnob: st.auto ? 64 : 4, autoTxt: st.auto ? 'ON' : 'OFF',
+      autoTxtL: st.auto ? 12 : 46, autoTxtC: st.auto ? '#000' : '#c9b8e8',
+      toggleAuto: function () {
+        var on = !self.state.auto; self.setState({ auto: on });
+        if (on && (self.state.phase === 'idle' || self.state.phase === 'result')) { if (self.state.phase === 'result') self.choose(false); self.roll(); }
+      },
+      stop: { name: stopR.name, line: stopR.line, rainbow: st.stopAt === 5 },
+      stopDown: function () { self.setState({ stopAt: Math.max(1, self.state.stopAt - 1) }); },
+      stopUp: function () { self.setState({ stopAt: Math.min(5, self.state.stopAt + 1) }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
