@@ -84,3 +84,31 @@
   border-radius: 2px;
   pointer-events: none;
 }
+/* SETTINGS cog (Andy oct8) — the inline orange tile draws it in the panel colour, the fixed ring in its accent */
+.audio-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.audio-ctrl--inline .audio-btn .audio-cog { color: #FFE94A; }
+.audio-cog { display: block; }
+.audio-muted-mark {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FF3D7F;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 50%;
+  font-size: var(--fs-k14);
+  line-height: 1;
+}
+/* "all quiet" on a cog is the small ✕ badge, not a strike through the whole button (that read as "settings off") */
+.audio-btn.off { opacity: 1; }
+.audio-btn.off::after { display: none; }
+/* In the game header the button is sized to the LEAVE chip (GameScreen.css: every px on that row comes off the
+   ring), so the cog matches the old glyph's 1em box there, and the out-of-flow ::after there is the 44px HIT
+   TARGET, not a strike — keep it when muted. */
+.game-header-actions .audio-cog { width: 1em; height: 1em; }
+.game-header-actions .audio-ctrl--inline .audio-btn.off::after { display: block; }

@@ -81,13 +81,14 @@ test('LOBBY: code tiles, 8 seats (3 players + 5 open), YOU + YOU ARE HOST, a big
   await mock.waitForSent('start_game');
 });
 
-test('SETTINGS: five rows; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 persists (the pill still abbreviates — it must fit)', async ({ page }) => {
+test('SETTINGS: five rows + RANK PLATE + SAVE PROGRESS; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 persists (the pill still abbreviates — it must fit)', async ({ page }) => {
   await boot(page, { seed: { 'taw.s2.wins': '1234567' } });
-  const btn = page.getByRole('button', { name: 'Sound settings' }).first();
+  const btn = page.getByRole('button', { name: /^Settings/ }).first();
   await btn.click();
   const panel = page.locator('.sp');
   await expect(panel).toBeVisible();
-  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'NUMBER STYLE', 'KEYBOARD SOUNDS']);
+  // + RANK PLATE and SAVE PROGRESS (Andy oct8: choose your plate; a button to save progress)
+  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'NUMBER STYLE', 'KEYBOARD SOUNDS', 'RANK PLATE', 'SAVE PROGRESS']);
   // REDUCE MOTION, live
   const rm = panel.getByRole('switch', { name: 'Reduce motion' });
   const before = await rm.getAttribute('aria-checked');
@@ -107,7 +108,7 @@ test('SETTINGS: five rows; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 pers
   await expect(winsPill.locator('.kp-num')).toHaveText('1.23M');
   await expect(winsPill).toHaveAttribute('aria-label', /1,234,567/);
   // KEYBOARD SOUNDS + SOUND are real controls
-  await page.getByRole('button', { name: 'Sound settings' }).first().click();
+  await page.getByRole('button', { name: /^Settings/ }).first().click();
   const kb = page.locator('.sp').getByRole('switch', { name: 'Keyboard sounds' });
   const k0 = await kb.getAttribute('aria-checked');
   await kb.click();
@@ -151,7 +152,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     expect(a.h).toBe(false);
     expect(a.v).toBe(false);
     expect(a.small).toEqual([]);
-    await page.getByRole('button', { name: 'Sound settings' }).first().click();
+    await page.getByRole('button', { name: /^Settings/ }).first().click();
     await expect(page.locator('.sp')).toBeVisible();
     const s = await audit('.sp');
     expect(s.h).toBe(false);

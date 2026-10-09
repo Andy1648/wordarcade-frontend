@@ -51,6 +51,7 @@ const ACH_NAME = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.secret ? 'A
 import Spotlight from './Spotlight';
 import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../progress/onboarding';
 import BoostDock from '../frenzy/LazyBoostDock';
+import { shownPlateIndex } from '../progress/platePick';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
@@ -1245,10 +1246,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
+  // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
+  const shownRankName = (name) => {
+    const R = V3.ranks;
+    if (!R || !R.RANKS_V3) return name;
+    const at = R.RANKS_V3.findIndex((x) => x.name === name);
+    return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
+  };
   const rankPlate = SEASON2 ? (
     <div className="menu-xp-rank hp-rankplate">
       <span className="hp-rankplate-k">RANK</span>
-      <span className="hp-rankplate-n">{rankTitle(xpProgress.level)}</span>
+      <span className="hp-rankplate-n">{shownRankName(rankTitle(xpProgress.level))}</span>
     </div>
   ) : null;
   const xpBar = (

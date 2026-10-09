@@ -82,6 +82,30 @@ export const PROGRESS_KEYS = [
 // browser's balance.
 export const REMOVE_IF_ABSENT = ['taw.econ', 'taw.xpv10', 'taw.rbgate', 'taw.rrnotice', 'taw.gems'];
 
+// SEASON 2 (Andy oct8: "you need a button for people to save their progress"): every season-2 save key lives under
+// `taw.s2.` (v3/store.js S2_PREFIX — xp, rebirths, power, wins, gems, stock, claims, counters …). None of them were on
+// the list above, so a save code carried NO season-2 progress. The prefix is allowlisted as a whole; device / one-shot
+// UI keys under it are excluded by name.
+export const S2_PREFIX_KEY = 'taw.s2.';
+const S2_DEVICE = new Set(['taw.s2.seenWelcome', 'taw.s2.platePick']);
+export const isProgressKey = (k) => PROGRESS_KEYS.includes(k) || (typeof k === 'string' && k.startsWith(S2_PREFIX_KEY) && !S2_DEVICE.has(k));
+/** Every key this storage holds under the season-2 prefix (Storage-like with length/key(i), else none). */
+function s2KeysOf(storage) {
+  const out = [];
+  try {
+    const n = Number(storage.length);
+    if (Number.isFinite(n) && typeof storage.key === 'function') {
+      for (let i = 0; i < n; i++) {
+        const k = storage.key(i);
+        if (isProgressKey(k) && !PROGRESS_KEYS.includes(k)) out.push(k);
+      }
+    }
+  } catch {
+    /* no enumeration: the season-2 keys are simply not exported */
+  }
+  return out;
+}
+
 const FORMAT = 'taw-save';
 
 // UTF-8-safe base64 (values are ASCII-ish today, but be safe against any unicode in a name/theme).
@@ -95,6 +119,20 @@ function b64ToUtf8(b64) {
 // Default storage = a guarded localStorage wrapper; tests inject a Map-backed stub.
 function defaultStorage() {
   return {
+    get length() {
+      try {
+        return typeof localStorage !== 'undefined' ? localStorage.length : 0;
+      } catch {
+        return 0;
+      }
+    },
+    key(i) {
+      try {
+        return typeof localStorage !== 'undefined' ? localStorage.key(i) : null;
+      } catch {
+        return null;
+      }
+    },
     getItem(k) {
       try {
         return typeof localStorage !== 'undefined' ? localStorage.getItem(k) : null;
@@ -122,7 +160,7 @@ function defaultStorage() {
 // Snapshot the present progress keys into one base64 code the player can copy.
 export function exportSave(storage = defaultStorage()) {
   const keys = {};
-  for (const k of PROGRESS_KEYS) {
+  for (const k of [...PROGRESS_KEYS, ...s2KeysOf(storage)]) {
     const v = storage.getItem(k);
     if (v != null) keys[k] = v; // omit absent keys; a "new player" simply exports fewer
   }
@@ -152,14 +190,13 @@ export function parseSave(text) {
   // Strict allowlist: only known progress keys, only string values. Device keys / unknown keys /
   // non-string values are dropped here — they can never reach storage.
   const keys = {};
-  for (const k of PROGRESS_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(obj.keys, k)) {
-      const v = obj.keys[k];
-      if (typeof v !== 'string') {
-        return { ok: false, error: 'That save code is corrupted (bad field). Nothing was changed.' };
-      }
-      keys[k] = v;
+  for (const k of Object.keys(obj.keys)) {
+    if (!isProgressKey(k)) continue; // the allowlist (+ the season-2 prefix)
+    const v = obj.keys[k];
+    if (typeof v !== 'string') {
+      return { ok: false, error: 'That save code is corrupted (bad field). Nothing was changed.' };
     }
+    keys[k] = v;
   }
   if (Object.keys(keys).length === 0) {
     return { ok: false, error: 'That save code has no progress to restore. Nothing was changed.' };
