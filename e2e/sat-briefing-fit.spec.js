@@ -24,8 +24,6 @@ async function toBriefing(page) {
   await installBackendMock(page);
   await page.goto('/?satRush=1&portal=1');
   await modeEntry(page, 'sat-rush').click();
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(page.locator('.sr-modeselect')).toBeVisible();
   await page.getByRole('button', { name: /BRIEFING/ }).click();
   await expect(page.locator('.sr-brief-page')).toBeVisible();
 }

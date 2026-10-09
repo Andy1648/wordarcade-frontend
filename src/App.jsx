@@ -1924,6 +1924,9 @@ function App() {
   // A ref, not state, and retired by goHome below — it is a fact about how the SESSION started, so
   // once the player has actually reached the menu, entering SAT from its card behaves normally.
   const satAutoStartRef = useRef(!!LAUNCH_INTENT.satrush);
+  // SAT RUSH from the menu dialog (Andy oct8: popups): the dialog's BRIEFING / LINEUP button is the mode pick, so the
+  // run opens straight into that mode (no cover, no PICK YOUR BEAT). Pure view navigation — no WS state.
+  const satStartModeRef = useRef(null);
 
   // Deep-link auto-fire: the moment the socket first opens, act on the launch
   // intent — join the invited room (?join=CODE) with the remembered/generated
@@ -2674,6 +2677,7 @@ function App() {
         musicSetVolume={music.setVolume}
         offerMenu={soloOfferRef.current}
         autoStart={satAutoStartRef.current}
+        startMode={satStartModeRef.current}
       />
     );
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
@@ -2708,7 +2712,7 @@ function App() {
         onSelectGame={(gameId) => goToLobby(gameId)}
         onPlaySolo={handlePlaySolo}
         onRaceQuickMatch={handleRaceQuickMatch}
-        onSatRush={goToSatRush}
+        onSatRush={(m) => { satStartModeRef.current = m === 'briefing' || m === 'lineup' ? m : null; goToSatRush(); }}
         onChain={goToChain}
         onFuse={goToFuse}
         onCreateRoom={() => goToLobby('solo')}

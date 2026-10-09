@@ -67,7 +67,6 @@ const EXTRA = [
       await page.goto('/?satRush=1&portal=1');
       await menuReady(page);
       await card(page, 'sat-rush').click();
-      await page.getByRole('button', { name: 'Play' }).click();
       await page.getByRole('button', { name: /LINEUP/ }).click();
       await page.locator('.sr-lineup').waitFor({ state: 'visible', timeout: 20000 });
       await page.waitForTimeout(400);
@@ -80,7 +79,6 @@ const EXTRA = [
       await page.goto('/?satRush=1&portal=1');
       await menuReady(page);
       await card(page, 'sat-rush').click();
-      await page.getByRole('button', { name: 'Play' }).click();
       await page.getByRole('button', { name: /LINEUP/ }).click();
       await page.locator('.sr-lineup').waitFor({ state: 'visible', timeout: 20000 });
       await expect
