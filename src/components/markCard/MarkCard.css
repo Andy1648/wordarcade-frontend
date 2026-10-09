@@ -32,14 +32,10 @@
   text-align: center;
   text-transform: uppercase;
   --mc-u: 1px; /* ONE px of the 180x260 card drawing: every card text size is in these units (typeScale FIT-TO-SLOT) */
-  --mc-y-art: 46px; --mc-art: 112px;
-  --mc-y-name: 162px; --mc-y-stat: 196px; --mc-y-perk: 208px; --mc-y-foot: 232px;
+  /* GEAR TILE v2: ONE layout for every card (frameLayout.LAYOUT — art centre 89 r45, name 138, hero 172, pips 232) */
+  --mc-y-art: 46px; --mc-art: 86px;
+  --mc-y-name: 138px; --mc-y-hero: 172px; --mc-y-pips: 232px;
 }
-.mc.has-perk .mc-face { --mc-y-art: 44px; --mc-art: 92px; --mc-y-name: 140px; --mc-y-stat: 174px; }
-/* CRIT (oct8): the crit band takes the perk's slot (frameLayout.crit); with a perk too, both bands stack under the stat
-   and the art shrinks once more (frameLayout.both) */
-.mc.has-crit .mc-face { --mc-y-art: 44px; --mc-art: 92px; --mc-y-name: 140px; --mc-y-stat: 174px; --mc-y-crit: 208px; }
-.mc.has-crit.has-perk .mc-face { --mc-y-art: 44px; --mc-art: 76px; --mc-y-name: 122px; --mc-y-stat: 154px; --mc-y-crit: 188px; --mc-y-perk: 208px; }
 .mc-frame { position: absolute; left: 0; top: 0; width: 180px; height: 260px; display: block; pointer-events: none; }
 
 /* RARITY on the rarity plate (y 9–37): the tier colour with an ink stroke */
@@ -121,96 +117,66 @@
 }
 .mc-name.is-l { font-size: calc(var(--mc-u) * 21); }
 .mc-name.is-xl { font-size: calc(var(--mc-u) * 18.5); }
-/* the STAT on the ink band (32px tall): number big, kind small */
-.mc-stat {
+/* the HERO on the ink band (54px tall): the MAIN STAT — value huge in Bungee, its label under it in Space Mono
+   (GEAR TILE v2, Andy oct9: numbers first, ≥18px values / ≥14px labels at every tile size the INDEX draws) */
+.mc-hero {
   position: absolute;
-
-  top: var(--mc-y-stat);
+  top: var(--mc-y-hero);
   left: 5px;
   width: 170px;
-  height: 32px;
+  height: 54px;
   box-sizing: border-box;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 2px 6px 0;
+  gap: 1px;
+  padding: 1px 6px 0;
   white-space: nowrap;
 }
 .mc-num {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 28);
-  line-height: 1;
+  font-size: calc(var(--mc-u) * 34);
+  line-height: 0.92;
   color: #FFE94A;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
 }
-.mc-kind { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: calc(var(--mc-u) * 15); color: #fff; }
-.mc-stat.is-long { gap: 5px; }
-.mc-stat.is-long .mc-num { font-size: calc(var(--mc-u) * 22); }
-.mc-stat.is-long .mc-kind { font-size: calc(var(--mc-u) * 12.5); letter-spacing: -0.04em; }
-.mc.is-locked .mc-num { color: #5d4a78; }
-.mc.is-locked .mc-kind { color: #9a8ab8; }
-/* the CRIT on its yellow band (18px tall): ink on crit yellow — the same yellow as the CRIT key pop */
-.mc-crit {
-  position: absolute;
-  top: var(--mc-y-crit);
-  left: 8px;
-  width: 164px;
-  height: 18px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  white-space: nowrap;
-  color: #0d0618;
-  font-size: calc(var(--mc-u) * 14);
-  letter-spacing: -0.01em;
-  line-height: 1;
-}
-.mc-crit.is-long { font-size: calc(var(--mc-u) * 12.5); letter-spacing: -0.03em; }
-.mc.is-locked .mc-crit { color: #c9b8e8; }
-/* the PERK on its band (18px tall) */
-.mc-perk {
-  position: absolute;
-
-  top: var(--mc-y-perk);
-  left: 8px;
-  width: 164px;
-  height: 18px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #2EFFE0;
-  font-size: calc(var(--mc-u) * 14);
-  line-height: 1;
-}
-.mc-perk.is-long { font-size: calc(var(--mc-u) * 11); letter-spacing: -0.02em; }
-.mc.is-locked .mc-perk { color: #1d9e8c; }
-/* the foot: 1 IN X in the tier colour on the odds plate (20px tall) */
-.mc-foot {
-  position: absolute;
-
-  top: var(--mc-y-foot);
-  left: 14px;
-  width: 152px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Bungee', sans-serif;
+.mc-hero.is-l .mc-num { font-size: calc(var(--mc-u) * 30); }
+.mc-kind {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 15);
-  letter-spacing: 0.04em;
-  color: var(--mc-line);
-  white-space: nowrap;
+  font-size: calc(var(--mc-u) * 16);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #fff;
 }
+/* LOCKED: the hero is the ODDS — "1 IN" small, the number big, both in the tier colour (Sol's RNG: the odds are the
+   thing to want). An EARNED gear: a lock + ACHIEVEMENT. */
+.mc-hero.is-locked { flex-direction: row; gap: 7px; }
+.mc-odds { display: inline-flex; align-items: baseline; gap: 7px; color: var(--mc-line); }
+.mc-pre { font-size: calc(var(--mc-u) * 19); }
+.mc-hero.is-ach { color: var(--mc-line); }
+.mc-hero.is-ach .mc-kind { font-size: calc(var(--mc-u) * 17); }
+/* the PIP row on the bottom band (20px tall plate, sized to its pips — CardFrame draws the plate): quiet marks */
+.mc-pips {
+  position: absolute;
+  top: var(--mc-y-pips);
+  left: 0;
+  right: 0;
+  height: 20px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #2EFFE0; /* the ✦ perk colour (the perk line's cyan) */
+}
+.mc-pip { flex: none; display: block; }
+.mc.is-locked .mc-pips { color: var(--mc-line); }
+.mc.is-locked .mc-pip.is-perk { color: #1d9e8c; }
 
 /* the shine: a plain rectangle band (CSS may draw rectangles), swept ONCE */
 .mc-shine { position: absolute; left: 2px; top: 2px; width: 176px; height: 256px; border-radius: 14px; overflow: hidden; pointer-events: none; }
@@ -244,6 +210,5 @@
   .mc .mc-glow { animation: none !important; }
 }
 
-/* a locked EARNED gear (Andy oct8): a lock + ACHIEVEMENT in the foot (it is not rolled — no odds) */
-.mc-foot.is-ach { gap: 5px; color: #fff; }
+/* a locked EARNED gear (Andy oct8): a lock + ACHIEVEMENT in the hero (it is not rolled — no odds) */
 .mc-lock { flex: none; color: var(--mc-line); }

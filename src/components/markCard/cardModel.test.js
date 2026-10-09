@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROLL_MARKS, PERMANENT_MARKS, oneInX, mainTag } from '../../progress/markRolls.js';
 import { MARKS } from '../../progress/marks.js';
-import { cardModel, splitTag, pipNext } from './cardModel.js';
+import { cardModel, splitTag, pipNext, tilePips, pipsLabel } from './cardModel.js';
 import { CARD_RAR } from './palette.js';
 import { formatNum } from '../../format.js';
 
@@ -40,13 +40,42 @@ test('every rollable mark: real odds, its stat numbers-first, ★ pips', () => {
   }
 });
 
-test('locked: "???", no pips, still the odds + the ★0 stat', () => {
-  const m = ROLL_MARKS.find((x) => x.tier === 'legendary');
-  const c = cardModel({ id: m.id, tier: m.tier, name: m.name, locked: true, state: null });
-  assert.equal(c.name, '???');
-  assert.equal(c.pips, null);
-  assert.match(c.odds, /^1 IN /);
-  assert.ok(c.statNum);
+test('locked is a HIDDEN design (Andy oct9): "???", the odds as the hero, NO stat value anywhere, "?" pips', () => {
+  for (const m of ROLL_MARKS) {
+    const c = cardModel({ id: m.id, tier: m.tier, name: m.name, locked: true, state: null });
+    assert.equal(c.name, '???');
+    assert.equal(c.pips, null);
+    assert.equal(c.odds, `1 IN ${c.oddsNum}`);
+    assert.equal(c.statNum, '', `${m.id}: no stat number`);
+    assert.equal(c.statKind, '', `${m.id}: no stat kind`);
+    assert.equal(c.crit, null, `${m.id}: no crit values`);
+    assert.deepEqual(c.critLines, []);
+    const owned = cardModel({ id: m.id, tier: m.tier, name: m.name, state: null });
+    assert.equal(c.extras, owned.extras, `${m.id}: a locked card still knows HOW MANY extra stats it has`);
+    const pips = tilePips(c);
+    assert.equal(pips.filter((p) => p.k === 'hidden').length, c.extras);
+    assert.equal(pips.filter((p) => p.k === 'stat' || p.k === 'star').length, 0);
+  }
+  for (const p of PERMANENT_MARKS) {
+    const c = cardModel({ id: p.id, kind: 'perm', tier: 'permanent', name: p.name, locked: true });
+    assert.equal(c.statNum, '');
+    assert.equal(c.crit, null);
+  }
+});
+
+test('the tile pip row: a dot per extra stat, ✦ per perk, ★ per dupe pip (in that order)', () => {
+  const eclipse = ROLL_MARKS.find((m) => m.id === 'mk-eclipse');
+  const st = { v: 2, marks: { 'mk-eclipse': { n: 999 } } };
+  const c = cardModel({ id: eclipse.id, tier: eclipse.tier, name: eclipse.name, state: st });
+  assert.deepEqual(tilePips(c).map((p) => p.k), ['stat', 'stat', 'perk', 'star', 'star', 'star', 'star', 'star']);
+  assert.equal(pipsLabel(c), '2 EXTRA STATS · 1 PERK · ★5');
+  const common = ROLL_MARKS.find((m) => m.tier === 'common');
+  assert.deepEqual(tilePips(cardModel({ id: common.id, tier: 'common', name: common.name, state: null })), []);
+  // the most any card carries fits the pip plate (frameLayout.pipPlateW caps at 9)
+  for (const m of ROLL_MARKS) {
+    const n = tilePips(cardModel({ id: m.id, tier: m.tier, name: m.name, state: { v: 2, marks: { [m.id]: { n: 9999 } } } })).length;
+    assert.ok(n <= 9, `${m.id}: ${n} pips`);
+  }
 });
 
 test('earned gears (Andy oct8): drawn as LEGENDARY with the rest; locked = ACHIEVEMENT REQUIRED, owned = EARNED', () => {

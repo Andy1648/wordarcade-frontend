@@ -1,19 +1,22 @@
-// MarkCard — THE mark card (ROLL v1, Andy oct5 mockup claude/mockups/roll-v1/MarkCard.dc.html: "this is gold").
-// One card everywhere a mark is shown big: the reel cells, the EPIC dim reveal, the LEGENDARY+ full reveal, the
-// INDEX tiles and the INDEX detail sheet.
+// MarkCard — THE gear card (ROLL v1, Andy oct5 mockup claude/mockups/roll-v1/MarkCard.dc.html: "this is gold"; GEAR
+// TILE v2, Andy oct9). One card everywhere a gear is shown big: the reel cells, the EPIC dim reveal, the LEGENDARY+
+// full reveal, the INDEX tiles and the INDEX detail sheet.
 //
-//   frame    CardFrame.jsx (R4): vector art — the tier-colour frame outlined in its darker shade, the rarity plate,
-//            the rosette behind the cog, the name ribbon, the stat / perk / odds bands, LEGENDARY+ pins, the shadow
+// GEAR TILE v2 (Andy oct9: "it might be hard to cram multiple stats into one card that size… have the main stat on
+// display and have the user click for more substats"; research gear-card-research.md §3 — the Genshin / HSR /
+// Diablo / Clash tile: rarity + identity + ONE number; everything else behind the tap). Fewer things, bigger:
+//
+//   frame    CardFrame.jsx: vector art — the tier-colour frame outlined in its darker shade, the rarity plate, the
+//            rosette behind the cog, the name ribbon, the hero band, the pip plate, LEGENDARY+ pins, the shadow
 //   header   RARITY                    (on the rarity plate)
-//   art      the COG (tier-coloured teeth; rainbow on SECRET) + the glyph (shade, highlight, extras, hard shadow);
-//            a dupe shows as a small "×N" tag on the art (NIGHT oct8 #4: no ★ row — colour is for rarity only)
+//   art      the COG + the glyph; a dupe shows as a small "×N" tag on the art
 //   name     white, ink-stroked, BIG (sized by its length so it fits one line)
-//   stat     NUMBERS FIRST — "×1.5" big, "WINS" small (markRolls.mainTag split, nothing new claimed), on a black band
-//   crit     "CRIT +6% · +0.5×" on a crit-yellow band (RARE+ and EARNED gears — Andy oct8 CRIT; cardModel.critText)
-//   perk     "+ LETTERS COUNT ×2" (LEGENDARY+ with a perk)
-//   foot     1 IN X                    (the mark's REAL odds — markRolls.oneInX), in the tier colour
-// (claude/mockups/v3/GearCard.dc.html — NIGHT oct8 #4.)
-// LOCKED: the glyph as a black silhouette inside its tier-coloured cog, "???", and still the odds + the ★0 stat.
+//   HERO     the MAIN STAT — the value huge in Bungee ("×1.25"), its label under it ("XP", "BASE WINS/WORD")
+//   pips     a quiet row on the bottom band: a dot per extra stat (crit rate / crit power), ✦ per perk, ★ per dupe
+//            pip. The crit and perk VALUES and the odds are in the detail sheet (MarksIndex), not on the tile.
+// LOCKED — a HIDDEN design (Andy oct9: "including stats"): the rarity plate + frame keep their FULL tier colour, the
+//   glyph is a flat black silhouette, the name is "???", the HERO slot says the ODDS ("1 IN 90"; an EARNED gear: a
+//   lock + ACHIEVEMENT) and the pips are a "?" per hidden extra stat. No stat value anywhere (cardModel holds none).
 //
 // The face is drawn at 180×260 and SCALED (transform) to the host's --mc-w / --mc-s (or the `w` prop), so every
 // size is the same drawing. MOTION (MarkCard.css) — all finite one-shots, transform/opacity only: EPIC+ spins its
@@ -21,17 +24,46 @@
 // press; nothing loops at rest. Reduced motion: nothing moves.
 //
 // `parts` adds a screen's own class names to the header / tier / odds / name / stat nodes (the INDEX's .mx-tile-*
-// hooks), so one card serves every screen's tests and styles.
+// hooks), so one card serves every screen's tests and styles. `odds` lands on the locked hero (the only odds a tile
+// prints).
 import { memo } from 'react';
 import MarkBadge, { CogRing, RANK_RIMS } from '../MarkBadge';
 import ShinyBadge from '../rollScreen/ShinyBadge';
 import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
-import { cardModel } from './cardModel.js';
+import { cardModel, tilePips, pipsLabel } from './cardModel.js';
+import { pipPlateW } from './frameLayout.js';
 import './MarkCard.css';
 
 const NONE = {};
+const cls = (base, extra) => (extra ? `${base} ${extra}` : base);
+
+// the pip glyphs: small vector marks (drawn 13×13, shown at 15 card px — frameLayout.PIP_W), never text sized to the scale
+const STAR5 = 'M6.5 0.6 L8.2 4.6 L12.5 4.9 L9.2 7.7 L10.2 12 L6.5 9.7 L2.8 12 L3.8 7.7 L0.5 4.9 L4.8 4.6 Z';
+const STAR4 = 'M6.5 0.4 L8.1 4.9 L12.6 6.5 L8.1 8.1 L6.5 12.6 L4.9 8.1 L0.4 6.5 L4.9 4.9 Z';
+function Pip({ k }) {
+  return (
+    <svg className={`mc-pip is-${k}`} viewBox="0 0 13 13" width="15" height="15" aria-hidden="true" focusable="false">
+      {k === 'stat' ? <circle cx="6.5" cy="6.5" r="4.2" fill="#fff" stroke="#000" strokeWidth="1.6" /> : null}
+      {k === 'hidden' ? (
+        <>
+          <circle cx="6.5" cy="6.5" r="5.6" fill="#0d0618" stroke="currentColor" strokeWidth="1.4" />
+          <path d="M4.6 5.1 C4.6 2.9 8.4 2.9 8.4 5 C8.4 6.4 6.5 6.4 6.5 7.9" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="6.5" cy="10" r="0.95" fill="#fff" />
+        </>
+      ) : null}
+      {k === 'perk' ? <path d={STAR4} fill="currentColor" stroke="#000" strokeWidth="1.3" strokeLinejoin="round" /> : null}
+      {k === 'star' ? <path d={STAR5} fill="#FFE94A" stroke="#000" strokeWidth="1.3" strokeLinejoin="round" /> : null}
+    </svg>
+  );
+}
+const Lock = () => (
+  <svg className="mc-lock" viewBox="0 0 16 18" width="22" height="25" aria-hidden="true" focusable="false">
+    <path d="M4 8 V5.5 a4 4 0 0 1 8 0 V8" fill="none" stroke="currentColor" strokeWidth="2.4" />
+    <rect x="1.5" y="8" width="13" height="9" rx="2" fill="currentColor" stroke="#000" strokeWidth="1.5" />
+  </svg>
+);
 
 function MarkCard({
   id, kind = 'roll', tier, name, locked = false, state = null, rank = 1, shiny = false, fx = false, w = null,
@@ -46,20 +78,44 @@ function MarkCard({
     style['--mc-s'] = w / 180;
   }
   const entry = markEntry(id) || (id ? { id, tier: c.tier } : null);
-  const longKind = c.statNum.length + c.statKind.length > 10; // "+30S OVERDRIVE" must fit the band
   const nameLen = String(c.name || '').length;
   const nameFit = nameLen >= 10 ? ' is-xl' : nameLen >= 8 ? ' is-l' : '';
+  const pips = tilePips(c);
+  const numFit = c.statNum.length >= 5 ? ' is-l' : '';
+  let hero;
+  if (!locked) {
+    hero = (
+      <div className={cls(`mc-hero${numFit}`, parts.stat)}>
+        <span className="mc-num">{c.statNum}</span>
+        {c.statKind ? ' ' : null}
+        {c.statKind ? <span className="mc-kind">{c.statKind}</span> : null}
+      </div>
+    );
+  } else if (c.earned) {
+    hero = (
+      <div className="mc-hero is-locked is-ach">
+        <Lock />
+        <span className={cls('mc-kind', parts.odds)}>ACHIEVEMENT</span>
+      </div>
+    );
+  } else {
+    hero = (
+      <div className="mc-hero is-locked">
+        <span className={cls('mc-num mc-odds', parts.odds)}><span className="mc-pre">1 IN</span> {c.oddsNum}</span>
+      </div>
+    );
+  }
   return (
     <div
-      className={`mc is-${c.tier}${locked ? ' is-locked' : ''}${hi ? ' is-hi' : ''}${fx ? ' is-fx' : ''}${still ? ' is-still' : ''}${c.perk ? ' has-perk' : ''}${c.crit ? ' has-crit' : ''}${className ? ` ${className}` : ''}`}
+      className={`mc is-${c.tier}${locked ? ' is-locked' : ''}${hi ? ' is-hi' : ''}${fx ? ' is-fx' : ''}${still ? ' is-still' : ''}${className ? ` ${className}` : ''}`}
       style={style}
       data-tier={c.tier}
     >
       <div className="mc-face">
-        {/* R4: the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}
-        <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} perk={!!c.perk} crit={!!c.crit} />
-        <div className={`mc-head${parts.head ? ` ${parts.head}` : ''}`}>
-          <span className={`mc-tier${parts.tier ? ` ${parts.tier}` : ''}`}>{c.rarityName}</span>
+        {/* the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}
+        <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} pipW={pipPlateW(pips.length)} />
+        <div className={cls('mc-head', parts.head)}>
+          <span className={cls('mc-tier', parts.tier)}>{c.rarityName}</span>
         </div>
         <div className="mc-art">
           {hi ? <span className="mc-glow" aria-hidden="true" /> : null}
@@ -74,26 +130,10 @@ function MarkCard({
           {c.copies > 1 && !locked ? <span className="mc-dupes" aria-label={`${c.copies} copies`}>×{c.copies}</span> : null}
         </div>
         <div className={`mc-name${nameFit}${locked ? ' is-q' : parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>
-        <div className={`mc-stat${longKind ? ' is-long' : ''}${parts.stat ? ` ${parts.stat}` : ''}`}>
-          <span className="mc-num">{c.statNum}</span>
-          {c.statKind ? ' ' : null}
-          {c.statKind ? <span className="mc-kind">{c.statKind}</span> : null}
-        </div>
-        {c.crit ? (
-          <div className={`mc-crit${c.critText.length > 16 ? ' is-long' : ''}`} data-testid="mc-crit" title={c.critLines.map((l) => `${l.num} ${l.kind}`).join(' · ')}>
-            {c.critText}
-          </div>
-        ) : null}
-        {c.perk ? <div className={`mc-perk${c.perk.length > 16 ? ' is-long' : ''}`}>+ {c.perk}</div> : null}
-        {c.odds ? (
-          <div className={`mc-foot${c.earned && locked ? ' is-ach' : ''}${parts.odds ? ` ${parts.odds}` : ''}`}>
-            {c.earned && locked ? (
-              <svg className="mc-lock" viewBox="0 0 16 18" width="14" height="16" aria-hidden="true">
-                <path d="M4 8 V5.5 a4 4 0 0 1 8 0 V8" fill="none" stroke="currentColor" strokeWidth="2.4" />
-                <rect x="1.5" y="8" width="13" height="9" rx="2" fill="currentColor" stroke="#000" strokeWidth="1.5" />
-              </svg>
-            ) : null}
-            {c.odds}
+        {hero}
+        {pips.length ? (
+          <div className="mc-pips" data-testid="mc-pips" data-n={pips.length} role="img" aria-label={pipsLabel(c)} style={{ width: `${pipPlateW(pips.length)}px` }}>
+            {pips.map((p, i) => <Pip key={i} k={p.k} />)}
           </div>
         ) : null}
         {hi ? <span className="mc-shine" aria-hidden="true" /> : null}

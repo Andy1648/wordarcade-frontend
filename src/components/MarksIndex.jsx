@@ -6,8 +6,9 @@
 //   grid   every mark as its CARD (markCard/MarkCard.jsx): rollable common → secret, then PERMANENT, then a retired
 //          mark the save still owns. Nothing under a card (R2 oct8 #5: no ★ lines — rarity is COLOUR, dupes are the
 //          card's own small ×N; the "7/10 → ★3" progress lives in the detail sheet). The worn MAIN wears a sticker.
-//   LOCKED a black silhouette of the mark's own glyph in its tier-coloured cog, "???", and still its odds + its ★0
-//          stat (a PERMANENT: its stat; the task that earns it is in the detail sheet only).
+//   LOCKED a HIDDEN design (GEAR TILE v2, Andy oct9): a black silhouette of the mark's own glyph in its tier-coloured
+//          cog, "???", its odds as the hero and a "?" pip per hidden extra stat — no stat value (an EARNED gear: a lock
+//          + ACHIEVEMENT; the task that earns it is in the detail sheet only).
 //   sheet  tap a card → the detail (the only place with words: the perk line, flavour, how-to, owned ×N, first roll #,
 //          SET AS MAIN). The engine pays the INDEX rewards (new mark / ★ / tier complete) — this screen never states
 //          an amount, so it can never claim more than it pays.

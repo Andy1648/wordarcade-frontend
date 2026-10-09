@@ -37,7 +37,8 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await page.locator('.mx-panel').waitFor();
   const tile = page.locator('.mx-tile', { hasText: 'BOMBER' });
   await expect(tile.locator('.mx-tile-tier')).toHaveText('COMMON');
-  await expect(tile.locator('.mx-tile-odds')).toHaveText(/^1 IN [\d\s,]+$/);
+  // GEAR TILE v2 (Andy oct9): an OWNED tile's hero is its MAIN STAT; the odds moved to the detail sheet
+  await expect(tile.locator('.mx-tile-odds')).toHaveCount(0);
   await expect(tile.locator('.mx-tile-sub')).toHaveText('×1.1 WINS');
   await expect(tile.locator('.mark-pips')).toHaveCount(0); // NIGHT oct8 #4: no ★ row under a card
   await tile.click();
@@ -55,22 +56,26 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(sheet.getByRole('button', { name: 'YOUR MAIN — TAKE OFF' })).toBeVisible();
   await sheet.locator('.mx-sheet-close').click();
   await expect(sheet).toHaveCount(0);
-  // a locked ROLLABLE mark: no name, a tier-coloured silhouette + its rarity + "1 IN X"
+  // a locked ROLLABLE mark (GEAR TILE v2 — a HIDDEN design): no name, a tier-coloured silhouette, its rarity, "1 IN X"
+  // as the hero and NO stat value
   const locked = page.locator('.mx-tile.is-locked:not(.is-perm)').first();
   await expect(locked.locator('.mx-sil')).toHaveCount(1);
   await expect(locked.locator('.mx-tile-name')).toHaveCount(0);
-  await expect(locked.locator('.mx-tile-odds')).toHaveText(/^1 IN /);
+  await expect(locked.locator('.mx-tile-odds')).toHaveText(/^1 IN [\d\s,K]+$/);
+  await expect(locked.locator('.mx-tile-sub, .mc-kind')).toHaveCount(0);
+  await expect(locked).not.toContainText(/[×+]\d/);
   await locked.click();
-  await expect(sheet.locator('.mc-foot')).toContainText('1 IN '); // NIGHT oct8 #4: the odds sit on the card's foot
+  await expect(sheet.locator('.mc-odds')).toContainText('1 IN '); // the sheet's card: the odds in its hero
   await expect(sheet.getByTestId('mark-flavour')).toHaveCount(0);
   await expect(page.locator('.mx-howto')).toHaveCount(0);
   await page.keyboard.press('Escape'); // the sheet closes first, the INDEX stays
   await expect(sheet).toHaveCount(0);
   await expect(page.locator('.mx-panel')).toBeVisible();
   // a locked PERMANENT says the task that earns it — in the detail sheet only; the grid tile has no prose (Andy oct5).
-  // ROLL v1: like every locked card it still shows its stat (numbers, not prose)
+  // GEAR TILE v2: like every locked card it hides its stat — a lock + ACHIEVEMENT in the hero
   await expect(page.locator('.mx-tile.is-locked.is-perm').first().locator('.mx-howto')).toHaveCount(0);
-  await expect(page.locator('.mx-tile.is-locked.is-perm').first().locator('.mx-tile-sub')).toHaveText(/^×[\d.]+ WINS \+ XP$/);
+  await expect(page.locator('.mx-tile.is-locked.is-perm').first().locator('.mx-tile-sub')).toHaveCount(0);
+  await expect(page.locator('.mx-tile.is-locked.is-perm').first().locator('.mx-tile-odds')).toHaveText('ACHIEVEMENT');
   await page.locator('.mx-tile.is-locked.is-perm').first().click();
   await expect(page.locator('.mx-howto')).not.toBeEmpty();
   await page.locator('.mx-sheet-close').click();
