@@ -31,7 +31,10 @@ import {
   markBoardSeen,
   weekResetInMs,
   formatResetIn,
+  claimName,
+  nameStatus,
 } from '../leaderboard/client.js';
+import { nameVerdict } from '../leaderboard/nameFilter.js';
 import { rankPlate, boardMoves, boardSnapshot, chaseTarget, climbTarget, hasEarned } from '../leaderboard/s2Board.js';
 import { V3 } from '../progress/season';
 import { getRebirths } from '../progress/xp';
@@ -159,14 +162,96 @@ const BOB = [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', of
 const SINK = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 const pulse = (base) => [{ transform: `${base} scale(1)` }, { transform: `${base} scale(1.018)`, offset: 0.5 }, { transform: `${base} scale(1)` }];
 
-export default function LeaderboardV2({ onBack, onManageName }) {
+// A name's printed width in em of Bungee caps (wide W/M ~1, CJK ~1.1, the rest ~0.8) — lets a long name SHRINK to
+// fit its cell (Andy oct8: "show full usernames") instead of being cut to "GREWUPALILPO…". Pure, per render.
+export function nameEms(name) {
+  let em = 0;
+  for (const ch of String(name || '')) em += /[\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch) ? 1.1 : /[WM]/i.test(ch) ? 1.0 : 0.8;
+  return Math.max(4, em);
+}
+
+const RENAME_VERDICT = {
+  shape: '3–16 LETTERS, NUMBERS OR _',
+  blocked: 'NOT THAT ONE. PICK ANOTHER NAME.',
+  taken: 'TAKEN. TRY ANOTHER.',
+  ok: 'NICE. THAT ONE’S FREE.',
+  checking: 'CHECKING…',
+};
+const RENAME_ERROR = {
+  username_taken: 'SOMEONE JUST TOOK THAT ONE.',
+  username_blocked: 'NOT THAT ONE. PICK ANOTHER NAME.',
+  username_shape: '3–16 LETTERS, NUMBERS OR _',
+  unavailable: 'THE BOARD IS OFFLINE RIGHT NOW.',
+  rate_limited: 'TOO MANY NEW NAMES FROM HERE. TRY LATER.',
+  rename_cooldown: 'ONE NAME CHANGE PER DAY. TRY TOMORROW.',
+};
+/** The inline CHANGE NAME box: the same client verdict + server "taken" check + lb_claim the live screen used. */
+function RenameBox({ current, cjk, onDone }) {
+  const [draft, setDraft] = useState('');
+  const [verdict, setVerdict] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const inputRef = useRef(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    if (!draft) { setVerdict(null); return undefined; }
+    const local = nameVerdict(draft, { cjk });
+    if (local !== 'ok') { setVerdict(local); return undefined; }
+    if (draft.toLowerCase() === String(current).toLowerCase()) { setVerdict(null); return undefined; }
+    setVerdict('checking');
+    let live = true;
+    const t = setTimeout(() => {
+      nameStatus(draft).then((v) => { if (live) setVerdict(v); }).catch(() => { if (live) setVerdict('ok'); });
+    }, 350);
+    return () => { live = false; clearTimeout(t); };
+  }, [draft, current, cjk]);
+  async function save(e) {
+    e.preventDefault();
+    if (busy || verdict !== 'ok') return;
+    setBusy(true);
+    setErr(null);
+    try {
+      onDone(await claimName(draft));
+    } catch (x) {
+      setErr(RENAME_ERROR[x && x.code] || 'COULDN’T SAVE THAT. TRY AGAIN.');
+      setBusy(false);
+    }
+  }
+  const msg = err || (verdict ? RENAME_VERDICT[verdict] : 'ONE NAME CHANGE PER DAY');
+  return (
+    <form className="lb2-rename" onSubmit={save} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onDone(null); } }}>
+      <label className="lb2-rename-l" htmlFor="lb2-rename-input">NEW NAME</label>
+      <div className="lb2-rename-row">
+        <input
+          id="lb2-rename-input"
+          ref={inputRef}
+          className="lb2-rename-input"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value.slice(0, 16))}
+          placeholder={current}
+          autoComplete="off"
+          spellCheck="false"
+          maxLength={16}
+        />
+        <button type="submit" className="lb2-rename-save" disabled={busy || verdict !== 'ok'}>{busy ? '…' : 'SAVE'}</button>
+        <button type="button" className="lb2-rename-x" onClick={() => onDone(null)} aria-label="Cancel">✕</button>
+      </div>
+      <p className={`lb2-rename-msg${err || verdict === 'blocked' || verdict === 'taken' || verdict === 'shape' ? ' is-bad' : verdict === 'ok' ? ' is-ok' : ''}`} aria-live="polite">{msg}</p>
+    </form>
+  );
+}
+
+export default function LeaderboardV2({ onBack }) {
   useMomentHold(true); // no queued moment starts under the board
   const rootRef = useRef(null);
   const crownRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const narrow = useStageScale(rootRef);
-  const [profile] = useState(() => getMyProfile());
+  const [profile, setProfile] = useState(() => getMyProfile());
+  // CHANGE NAME lives ON this board (Andy oct8: "why does changing name show the old leaderboard? there shouldn't be
+  // 2 separate leaderboards") — an inline name box under YOU, not a hop to the season-1 screen.
+  const [renaming, setRenaming] = useState(false);
   const [caps, setCaps] = useState({ weekly: false });
   const [tab, setTab] = useState('all');
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
@@ -280,12 +365,22 @@ export default function LeaderboardV2({ onBack, onManageName }) {
         <header className="lb2-head">
           <div className="lb2-left">
             <button type="button" className="lb2-back" onClick={onBack} aria-label="Back to menu">← MENU</button>
-            {profile && onManageName && (
-              <button type="button" className="lb2-me-btn" onClick={onManageName} aria-label={`Your name is ${profile.username}. Change name or show recovery code`}>
+            {profile && (
+              <button type="button" className="lb2-me-btn" onClick={() => setRenaming((v) => !v)} aria-expanded={renaming} aria-label={`Your name is ${profile.username}. Change name`}>
                 <span className="lb2-me-k">YOU</span>
-                <span className="lb2-me-v">{profile.username}</span>
+                <span className="lb2-me-v" style={{ '--nl': nameEms(profile.username) }}>{profile.username}</span>
                 <span className="lb2-me-a">CHANGE</span>
               </button>
+            )}
+            {profile && renaming && (
+              <RenameBox
+                current={profile.username}
+                cjk={!!caps.cjk}
+                onDone={(row) => {
+                  setRenaming(false);
+                  if (row) { setProfile({ id: row.id, username: row.username }); loadAll(); }
+                }}
+              />
             )}
           </div>
           <h2 className="lb2-title">LEADERBOARD</h2>
@@ -313,7 +408,7 @@ export default function LeaderboardV2({ onBack, onManageName }) {
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-name">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <span className="lb2-pod-name-t">{p ? p.username : 'YOUR NAME HERE?'}</span>
+                    <span className="lb2-pod-name-t" style={{ '--nl': nameEms(p ? p.username : 'YOUR NAME HERE?') }}>{p ? p.username : 'YOUR NAME HERE?'}</span>
                   </span>
                   <span className="lb2-pod-r">{n ? n.r : '—'}</span>
                   <span className="lb2-pod-lv">{n ? n.lv : ''} {n ? <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span> : null}</span>
@@ -345,9 +440,9 @@ export default function LeaderboardV2({ onBack, onManageName }) {
                 <span className="lb2-who-cell">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <span className="lb2-name">{r.username}</span>
+                    <span className="lb2-name" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
                   </span>
-                  <Plate row={r} mine={mine} className="lb2-row-plate" />
+                  {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
                 </span>
                 <Move n={data.moves[r.id] || 0} />
                 <span className="lb2-r">{n.r}</span>
