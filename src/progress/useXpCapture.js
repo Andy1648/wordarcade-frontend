@@ -69,7 +69,13 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // v11: one key = one LETTER at the MENU price — 2 × KEY × rebirth × the worn mark (a fifth of a game letter).
     // Cosmetics (pop style / sound pack) are looks only — they never multiply XP (review round 2).
     // × BOOST (code boost × OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN)
-    const menuGain = xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
+    // Andy oct9: "it says I get 18 XP/KEY but when I type the bar goes up like 4". This was read ONCE per menu session,
+    // so a boost / FRENZY / OVERDRIVE that started (or POWER bought) while the menu was open never reached the keys,
+    // while the rate line (live) already showed it. Now it is re-read at most once a second while typing — the same
+    // number the rate line prints (letterXpNow) — never a storage read per key.
+    const readGain = () => xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
+    let menuGain = readGain();
+    let gainAt = typeof performance !== 'undefined' ? performance.now() : Date.now(); // same clock as credit()'s `now`
     // KEY TIER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
     // to 0..5 (the 6 escalation bands: plain / teal / +shards / +shadow / +edge / gold).
     // Stable for this menu session (buying remounts this hook via the shop round-trip).
@@ -101,6 +107,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const crossed = tier > st.tier;
       st.tier = tier;
 
+      if (now - gainAt > 1000) { menuGain = readGain(); gainAt = now; }
       const isTap = opts.kind === 'tap';
       // CRIT: a KEY (never a tap) rolls its own crit — that key pays menuGain × POWER, everything else menuGain
       if (!isTap) armCrit();
