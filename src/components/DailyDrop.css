@@ -1,0 +1,179 @@
+/* DailyDrop.css — THE DAILY FREE DROP tile (the top of the UPGRADES stock column). The house shop look: flat panel,
+   black ink border + hard offset shadow like the STOCK cards; the border takes the TIER colour while it climbs.
+   Bungee only in caps at >= 18px; every label >= 14px, every number >= 18px. Motion is kit one-shots (JS) — nothing
+   here loops; the only CSS transform at rest is the claimed lid's open pose. */
+.dd {
+  position: relative;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  height: 60px;
+  background: var(--k-panel);
+  border: var(--k-ink-l) solid var(--dd-line, var(--k-ink));
+  box-shadow: 7px 7px 0 var(--k-ink);
+  color: var(--k-white);
+  font-family: var(--k-mono);
+  --dd-line: var(--k-cyan-d);
+}
+.dd.is-opening,
+.dd.is-claimed { --dd-line: var(--dd-tier); }
+.dd.is-claimed { background: var(--k-panel-deep); }
+
+/* the whole tile (but the ⓘ) is the tap target */
+.dd-tap {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto auto;
+  grid-template-areas: 'chest head row stamp';
+  align-items: center;
+  column-gap: 14px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0 64px 0 10px;
+  margin: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dd.is-claimed .dd-tap { cursor: default; }
+.dd.is-odds .dd-tap { grid-template-columns: 56px minmax(0, 1fr); grid-template-areas: 'chest odds'; cursor: pointer; }
+.dd-tap:focus-visible { outline: 3px solid var(--k-cyan); outline-offset: 3px; }
+
+/* ---- the chest: two stacked assets (base + lid), the pooled burst behind ---- */
+.dd-chest { grid-area: chest; position: relative; width: 56px; height: 56px; margin-top: 0; display: block; }
+.dd-chest-in { position: absolute; inset: 0; display: block; transform-origin: 50% 85%; }
+.dd-base,
+.dd-lid { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
+.dd-lid { transform-origin: 8% 46%; }
+.dd.is-claimed .dd-lid { transform: translate(-4%, -10%) rotate(-24deg); }
+.dd.is-claimed .dd-chest-in { transform: translateY(6px) scale(.88); } /* sits lower so the lifted lid stays on the tile */
+.dd-burst { position: absolute; left: -22px; top: -24px; width: 100px; height: 100px; opacity: 0; pointer-events: none; overflow: visible; }
+
+/* ---- the head: tier name big + what's happening ---- */
+.dd-head { grid-area: head; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dd-big {
+  display: block;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k24);
+  line-height: 1;
+  color: var(--dd-tier, var(--k-cyan));
+  -webkit-text-stroke: var(--k-stroke-m) var(--k-ink);
+  paint-order: stroke fill;
+  white-space: nowrap;
+  transform-origin: 0 60%;
+}
+.dd-sub { font-weight: 700; font-size: var(--fs-k14); letter-spacing: .06em; color: var(--k-dim); white-space: nowrap; }
+
+/* ---- the tier row: the printed odds, filling with tier colour as the climb reaches each tier ---- */
+.dd-row { grid-area: row; display: flex; gap: 4px; }
+.dd-seg {
+  min-width: 46px;
+  box-sizing: border-box;
+  padding: 3px 5px;
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--fs-k18);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--dd-c);
+  background: var(--k-well);
+  border: var(--k-ink-s) solid var(--dd-cd);
+}
+.dd-seg.is-on { background: var(--dd-c); color: var(--k-ink); border-color: var(--k-ink); }
+
+/* ---- the stamp: TAP TO OPEN / TAP 2/4 / NEXT IN 13:42:07 ---- */
+.dd-stamp {
+  grid-area: stamp;
+  justify-self: end;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k20);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--k-ink);
+  background: var(--k-cyan);
+  border: var(--k-ink-s) solid var(--k-ink);
+  box-shadow: 3px 3px 0 var(--k-ink);
+  transform: rotate(-3deg);
+}
+.dd-stamp.is-opening { background: var(--dd-tier); }
+.dd-stamp.is-claimed { background: var(--k-plum); color: var(--k-white); transform: none; }
+.dd-stamp-k { font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k14); color: var(--k-dim); letter-spacing: .06em; }
+.dd-stamp-t { font-variant-numeric: tabular-nums; }
+
+/* ---- CLAIMED: the reward line in the tier row's place ---- */
+.dd-reward { grid-area: row; justify-self: start; }
+.dd-pay { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.dd-pay-n { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); line-height: 1; color: var(--k-yellow); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
+.dd-pay-u { font-weight: 700; font-size: var(--fs-k18); color: var(--k-white); }
+.dd-reward .dd-pay { gap: 8px; }
+.dd-reward .dd-pay-n { font-size: var(--fs-k28); }
+.dd-reward .dd-pay-u { font-size: var(--fs-k18); }
+
+/* ---- the ⓘ and its odds list ---- */
+.dd-info {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  margin-top: -22px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--k-plum);
+  color: var(--k-white);
+  border: var(--k-ink-s) solid var(--k-ink);
+  box-shadow: 3px 3px 0 var(--k-ink);
+  font-family: var(--k-mono);
+  font-weight: 700;
+  font-size: var(--fs-k22);
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.dd-info.is-on { background: var(--k-cyan); color: var(--k-ink); }
+.dd-info:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--k-ink); }
+.dd-info:focus-visible { outline: 3px solid var(--k-cyan); outline-offset: 3px; }
+.dd-odds { grid-area: odds; min-width: 0; display: block; }
+.dd-odds-h { display: none; font-weight: 700; font-size: var(--fs-k14); letter-spacing: .06em; color: var(--k-dim); }
+.dd-odds-list { display: grid; grid-template-columns: repeat(5, auto); justify-content: space-between; column-gap: 10px; }
+.dd-odd { display: grid; grid-template-columns: auto auto; grid-template-areas: 'name name' 'p pay'; column-gap: 8px; row-gap: 2px; align-items: center; justify-content: start; }
+.dd-odd-name { grid-area: name; font-weight: 700; font-size: var(--fs-k14); letter-spacing: .04em; color: var(--dd-c); white-space: nowrap; }
+.dd-odd-p { grid-area: p; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); line-height: 1; color: var(--k-white); font-variant-numeric: tabular-nums; }
+.dd-odd .dd-pay { grid-area: pay; gap: 3px; }
+.dd-odd .dd-pay-n { font-size: var(--fs-k18); }
+.dd-odd .is-gems .dd-pay-u { display: none; } /* the gem icon says GEMS; the full words are on the claimed line */
+.dd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---- phones: chest + head on top, the tier row full width, the stamp under it ---- */
+@media (max-width: 699px) {
+  .dd { height: auto; }
+  .dd-tap {
+    grid-template-columns: 62px minmax(0, 1fr);
+    grid-template-areas: 'chest head' 'chest stamp' 'row row';
+    row-gap: 8px;
+    column-gap: 12px;
+    padding: 10px 10px 12px;
+  }
+  .dd-head { padding-right: 50px; }
+  .dd-chest { width: 62px; height: 62px; }
+  .dd-big { font-size: var(--fs-k24); }
+  .dd-stamp { justify-self: start; font-size: var(--fs-k18); }
+  .dd-row { justify-content: space-between; }
+  .dd-seg { flex: 1 1 0; min-width: 0; padding: 4px 2px; }
+  .dd-reward { justify-self: start; }
+  .dd-info { top: 8px; margin-top: 0; }
+  .dd.is-odds .dd-tap { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'odds'; }
+  .dd.is-odds .dd-chest { display: none; }
+  .dd-odds-h { display: flex; align-items: center; min-height: 44px; padding-right: 54px; margin-top: -4px; }
+  .dd-odds-list { grid-template-columns: minmax(0, 1fr); row-gap: 6px; margin-top: 4px; }
+  .dd-odd { grid-template-columns: 104px 48px minmax(0, 1fr); grid-template-areas: 'name p pay'; }
+  .dd-odd .is-gems .dd-pay-u { display: inline; }
+}

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 168" width="170" height="168">
+  <!-- DAILY FREE DROP chest — the LID (stacked on chest-base.svg, same viewBox; CSS hinges it at its back-left corner
+       and lifts it on claim). A lopsided dome, gold strap with a drip, white glints, one hard offset shadow. -->
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <path transform="translate(7 8)" fill="#000" d="M14 77 Q8 36 46 26 L120 22 Q158 30 154 73 Z"/>
+    <path fill="#9A1AFF" d="M14 77 Q8 36 46 26 L120 22 Q158 30 154 73 Z"/>
+    <!-- flat shade on the right shoulder -->
+    <path fill="#7a14cc" d="M126 24 Q156 32 152 72 L132 73 Q136 44 126 24 Z"/>
+    <!-- rim band -->
+    <path fill="none" stroke="#45087a" stroke-width="4" d="M16 64 Q84 58 153 61"/>
+    <path fill="none" stroke="#45087a" stroke-width="6" d="M14 77 Q8 36 46 26 L120 22 Q158 30 154 73 Z"/>
+    <!-- the strap + drip -->
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M71 25 L97 23 L98 75 L70 76 Z"/>
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M90 73 C90 80 92 84 91 88 C90 92 84 92 84 88 C84 84 86 80 85 74 Z"/>
+    <!-- glints -->
+    <path fill="none" stroke="#fff" stroke-width="5" d="M28 52 Q31 40 42 35"/>
+    <path fill="none" stroke="#fff" stroke-width="4" d="M77 33 L77 42"/>
+    <!-- overspray -->
+    <circle cx="161" cy="40" r="3" fill="#9A1AFF" stroke="#45087a" stroke-width="2"/>
+    <circle cx="30" cy="14" r="2.5" fill="#FFE94A" stroke="#a88a00" stroke-width="1.5"/>
+    <circle cx="140" cy="12" r="2" fill="#000"/>
+  </g>
+</svg>

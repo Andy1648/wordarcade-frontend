@@ -122,6 +122,11 @@ function startOverdrive(mult, min, now) {
   return true;
 }
 
+/** The OVERDRIVE grant itself — the SAME path a STOCK buy takes (the DAILY FREE DROP's MYTHIC pays through it). */
+export function grantOverdrive(mult = 10, min = 5, now = Date.now()) {
+  return startOverdrive(mult, min, now);
+}
+
 function applyEffect(it, now) {
   if (it.fx) {
     const f = readFx();
