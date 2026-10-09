@@ -395,11 +395,13 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
                   {game.limited && <span className="game-card-limited-tag" aria-hidden="true">LIMITED</span>}
                 </div>
               </div>
+              {/* Andy oct9: "the SAT RUSH card doesn't show wins/word — it looks the odd one out". The foot shows the
+                  payout like every other card whenever there IS one (the slogan only when the mode can't pay yet). */}
               <div className="game-card-foot">
-                {xpLine ? (
+                {xpLine || payout ? (
                   <>
-                    <span className="game-card-xp">{xpLine}</span>
-                    <span className="game-card-payout" data-rate={rateNow ? rateNow.rate : undefined}>{payout}</span>
+                    {xpLine && <span className="game-card-xp">{xpLine}</span>}
+                    {payout && <span className="game-card-payout" data-rate={rateNow ? rateNow.rate : undefined}>{payout}</span>}
                   </>
                 ) : (
                   game.description
