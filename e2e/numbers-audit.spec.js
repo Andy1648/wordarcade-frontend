@@ -2,7 +2,7 @@
 // and ROLL screens print for one seeded season-2 save, read off the screen and checked against PROGRESSION FINAL
 // (claude/progression-FINAL.md v3) by hand-worked arithmetic. The save: LV80 (30% in), R3, KEY 2, 50,000 wins, 200 gems,
 // no mark (so XP / KEY = 1 × 2² × 3³ = 108 — v4: the menu is the only XP source).
-//   MENU      LV 80 · need(80) = 100 × 1.15^79 · +108 XP / KEY
+//   MENU      LV 80 · need(80) = 100 × 1.15^79 · a key pops +108
 //   UPGRADES  KEY 2 → 3 · 108 → 216 XP / LETTER (×4 → ×8) · price 150 × 5² = 3,750 wins · wins 50K / gems 200
 //   REBIRTH   BACK TO LV 1 · KEY KEPT · YOU GET ×3 · ×27 → ×81 FOREVER · LV 80 → 1 · gate LV 15 + 18 × 3 = 69
 //   ROLL      75 gems a roll · pity EPIC+ / LEGENDARY+ counters on FINAL's 50 / 125 (oct8: was 500)
@@ -61,7 +61,10 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await expect(read.nth(0)).toHaveText(fmt(0.3 * need80));
   await expect(read.nth(1)).toHaveText(fmt(need80));
   await expect(page.locator('.menu-xp-bar:visible .kx-lv-n').first()).toHaveText('80');
-  await expect(page.locator('.hp-per:visible').first()).toContainText('+108 XP / KEY'); // v4: the rate line is one number, what a menu key pays
+  // no rate line under the bar (Andy oct9) — a typed key pops what it pays: 1 × 2² × 3³ = 108
+  await expect(page.locator('.hp-per, .hp-rate')).toHaveCount(0);
+  for (const k of 'qwe') { await page.keyboard.press(k); await page.waitForTimeout(80); } // 3 keys: a 1% CRIT pop is filtered out
+  await expect.poll(() => page.evaluate(() => Number(([...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter((t) => t && !/CRIT/.test(t)).pop() || '').replace(/[^\d.]/g, '')))).toBe(108);
 
   // UPGRADES (KEY): 2 → 3, ×4 → ×8 (2^T), 150 × 5^2 wins
   await navControl(page, 'shop').click();
