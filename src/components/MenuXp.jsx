@@ -65,10 +65,10 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // shapes). The bursts are a FIXED POOL reused round-robin: WAAPI scale / rotate / opacity, finite, will-change on for
 // the flight only. Placement reuses the pop's cached-size random position — no layout read per key.
 const CRIT_YELLOW = '#FFE94A';
-const CRIT_BURST_MS = 380;
+const CRIT_BURST_MS = 720; // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
 const CRIT_BURST_POOL = 6;
 const CRIT_BURST_SRC = '/fx/crit-burst.svg';
-const CRIT_PUNCH_MS = 260; // 1.35 → 0.92 → 1
+const CRIT_PUNCH_MS = 380; // 1.6 → 0.88 → 1.08 → 1 — a harder slam with one rebound (was 260, 1.35 → 0.92 → 1)
 const CRIT_SHARDS = 6;
 const CRIT_BURST_LIFT = 16; // px: the crit pop stacks KEY over "CRIT +N", so the key sits ~16px above the pop's centre
 
@@ -511,10 +511,11 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           bEl.style.willChange = 'transform, opacity';
           const r0 = Math.random() * 40 - 20;
           bAnim.effect.setKeyframes([
-            { transform: `${CENTER}rotate(${r0 - 25}deg) scale(0.25)`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
-            { transform: `${CENTER}rotate(${r0}deg) scale(1.12)`, opacity: 1, offset: 0.4 },
-            { transform: `${CENTER}rotate(${r0 + 8}deg) scale(1)`, opacity: 1, offset: 0.7 },
-            { transform: `${CENTER}rotate(${r0 + 14}deg) scale(1.18)`, opacity: 0, offset: 1 },
+            { transform: `${CENTER}rotate(${r0 - 30}deg) scale(0.2)`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
+            { transform: `${CENTER}rotate(${r0}deg) scale(1.2)`, opacity: 1, offset: 0.22, easing: 'cubic-bezier(.3,.7,.4,1)' },
+            { transform: `${CENTER}rotate(${r0 + 5}deg) scale(1)`, opacity: 1, offset: 0.4 },
+            { transform: `${CENTER}rotate(${r0 + 9}deg) scale(1.03)`, opacity: 1, offset: 0.72, easing: 'ease-in' },
+            { transform: `${CENTER}rotate(${r0 + 16}deg) scale(1.25)`, opacity: 0, offset: 1 },
           ]);
           bAnim.cancel();
           bAnim.play();
@@ -523,16 +524,17 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       }
       // the PUNCH (1.35 → 0.92 → 1 in CRIT_PUNCH_MS), then the normal float-off — a little longer than a plain pop
       const tf = tierRef.current;
-      const dur = tf.popMs + 200;
+      const dur = tf.popMs + 550; // Andy oct8 "a bit longer": the crit key holds on screen before it floats off
       const at = (ms) => Math.min(0.9, ms / dur);
       const rot = Math.random() * 10 - 5;
       const s = scale;
       anim.effect.updateTiming({ duration: dur });
       anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.35})`, opacity: 1, offset: 0, easing: 'cubic-bezier(.3,.7,.4,1)' },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.92})`, opacity: 1, offset: at(CRIT_PUNCH_MS * 0.6) },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.6})`, opacity: 1, offset: 0, easing: 'cubic-bezier(.3,.7,.4,1)' },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.88})`, opacity: 1, offset: at(CRIT_PUNCH_MS * 0.45) },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.08})`, opacity: 1, offset: at(CRIT_PUNCH_MS * 0.75) },
         { transform: `${CENTER}rotate(${rot}deg) scale(${s})`, opacity: 1, offset: at(CRIT_PUNCH_MS) },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-10px)`, opacity: 1, offset: 0.55 },
+        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-8px)`, opacity: 1, offset: 0.7 },
         { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
