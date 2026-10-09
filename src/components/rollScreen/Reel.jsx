@@ -34,7 +34,8 @@ import {
   sndStatTick,
 } from '../../audio/rollSounds';
 import { formatNum } from '../../format';
-import RevealStats, { revealStatsOf } from './RevealStats';
+import RevealStats from './RevealStats';
+import { revealStatsOf } from './revealStats.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
   DIM_LIGHTS, FLASH_PEAK,
@@ -561,7 +562,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     data-tier={id ? m.tier : undefined}
                     data-mark={id || undefined}
                   >
-                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} still /> : null}
+                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} still /> : null}
                   </div>
                 </div>
               );

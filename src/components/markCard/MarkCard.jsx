@@ -20,8 +20,10 @@
 //
 // The face is drawn at 180×260 and SCALED (transform) to the host's --mc-w / --mc-s (or the `w` prop), so every
 // size is the same drawing. MOTION (MarkCard.css) — all finite one-shots, transform/opacity only: EPIC+ spins its
-// cog once, sweeps its shine once and pulses its glow once when the card is REVEALED (`fx`) and again on hover /
-// press; nothing loops at rest. Reduced motion: nothing moves.
+// cog once and pulses its glow once when the card is REVEALED (`fx`) and again on hover / press; nothing loops at
+// rest. The ONLY sheen is the `sheen` slot (the wide band asset, swept by the roll reveal / the INDEX's one shared
+// timer) — the old CSS shine stripe is gone (its skewed rest position leaked a thin line onto every EPIC+ card).
+// Reduced motion: nothing moves.
 //
 // `parts` adds a screen's own class names to the header / tier / odds / name / stat nodes (the INDEX's .mx-tile-*
 // hooks), so one card serves every screen's tests and styles. `odds` lands on the locked hero (the only odds a tile
@@ -136,7 +138,6 @@ function MarkCard({
             {pips.map((p, i) => <Pip key={i} k={p.k} />)}
           </div>
         ) : null}
-        {hi ? <span className="mc-shine" aria-hidden="true" /> : null}
         {/* ROLL REVEAL v2: the wide sheen band (an asset, /fx/sheen.svg) parked off the card in a clip the size of the
             face; the reveal / the INDEX idle timer sweeps it across ONCE by transform (WAAPI). At rest it moves nothing. */}
         {sheen ? <span className="mc-sheen" aria-hidden="true"><img className="mc-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}

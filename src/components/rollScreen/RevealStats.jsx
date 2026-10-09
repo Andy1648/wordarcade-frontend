@@ -7,26 +7,12 @@
 // the odds on the stamp above it. Every node is mounted once with the reveal and starts invisible (the WAAPI one-shots
 // in Reel.jsx bring them in; transform/opacity only). Reduced motion never mounts a reveal at all.
 import { memo } from 'react';
-import { mainTag, critStatsOf } from '../../progress/markRolls';
 import { MAX_PIPS } from '../../progress/markRollsCore';
-import { critLines } from '../../progress/critText';
-import { splitTag, perkLines, perkCount, pipNext } from '../markCard/cardModel.js';
 import { formatNum } from '../../format';
+
 
 const STAR5 = 'M6.5 0.6 L8.2 4.6 L12.5 4.9 L9.2 7.7 L10.2 12 L6.5 9.7 L2.8 12 L3.8 7.7 L0.5 4.9 L4.8 4.6 Z';
 const SLOTS = Array.from({ length: MAX_PIPS }, (_, i) => i);
-
-/** What the extension shows for a result (pure — also sizes its plan): { main, crit, perks, dupe, pips, next }. */
-export function revealStatsOf(res, view) {
-  if (!res) return null;
-  const { num, kind } = splitTag(mainTag(res.markId, view));
-  const crit = critLines(critStatsOf(res.markId, view));
-  const perks = perkCount(res.markId) ? perkLines(res.markId) : [];
-  const dupe = !!res.dupe;
-  const pips = Math.max(0, Math.min(MAX_PIPS, Number(res.pips) || 0));
-  const next = dupe ? (pips >= MAX_PIPS ? '★5 MAX' : pipNext({ have: res.have, need: res.need, pips })) : '';
-  return { num, kind, crit, perks, dupe, pips, pipUp: !!res.pipUp, copies: res.copies || 0, next };
-}
 
 function RevealStats({ stats, reg }) {
   if (!stats) return null;

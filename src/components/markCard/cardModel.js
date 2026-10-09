@@ -9,7 +9,7 @@ import { PERKS } from '../../progress/markPerks.js';
 import { formatNum } from '../../format.js';
 
 const PERK_TIERS = new Set(['legendary', 'mythic', 'secret']);
-/** EPIC and up (and PERMANENT) earn the glow, the shine sweep and the cog spin. */
+/** EPIC and up (and PERMANENT) earn the glow and the cog spin. */
 export const HI_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret', 'permanent']);
 
 /** "×1.5 WINS" → { num: '×1.5', kind: 'WINS' }; "+2.5 BASE WINS/WORD" → { num: '+2.5', kind: 'BASE WINS/WORD' }. */

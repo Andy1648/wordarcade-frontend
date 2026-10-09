@@ -524,7 +524,6 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cut.is-lite .rs-cut-tier,
 .rs-cut.is-lite .rs-cut-keep { display: none; }
 .rs-cut.is-lite .rs-cut-stamp { font-size: min(7cqw, 40px); -webkit-text-stroke: 5px #000; }
-.rs-cut .mc-shine { display: none; } /* the reveal sweeps its own wide band (.mc-sheen) — never two sheens */
 .rv-dim { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
 .rv-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 .rv-body { display: grid; justify-items: center; align-items: center; gap: 14px; min-width: 0; }
@@ -757,7 +756,6 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* the in-game REDUCE MOTION toggle (RollScreen adds .is-reduced) — the same as the OS setting below */
 .rs-overlay.is-reduced .rs-result,
 .rs-overlay.is-reduced .mc .mc-cog,
-.rs-overlay.is-reduced .mc .mc-shine::after,
 .rs-overlay.is-reduced .mc .mc-glow,
 .rs-overlay.is-reduced .mark-pip.is-newest { animation: none; }
 .rs-overlay.is-reduced .rs-pity-fill,

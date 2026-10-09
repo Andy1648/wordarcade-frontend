@@ -3,7 +3,7 @@
    the `w` prop). Black ink, hard offset shadow, tier colour on the header bar + the cog (palette.js).
    DOCUMENTED EXCEPTION (rarity identity, src/lib/rarityStyle.js — Andy oct5): the EPIC+ glow behind the cog is a
    soft radial wash in the tier colour. It is STATIC (no blur filter, no pulse loop) — it pulses ONCE on a reveal.
-   MOTION — the mockup looped its cog spin, shine sweep, glow pulse and SECRET rainbow forever; here every one is a
+   MOTION — the mockup looped its cog spin, glow pulse and SECRET rainbow forever; here every one is a
    finite one-shot: on a reveal (.is-fx, mounted fresh) and again on hover / press of an interactive card. The
    rainbow is static teeth (MarkBadge). transform/opacity only; will-change only while hovered. Nothing loops. */
 
@@ -178,39 +178,22 @@
 .mc.is-locked .mc-pips { color: var(--mc-line); }
 .mc.is-locked .mc-pip.is-perk { color: #1d9e8c; }
 
-/* the shine: a plain rectangle band (CSS may draw rectangles), swept ONCE */
-.mc-shine { position: absolute; left: 2px; top: 2px; width: 176px; height: 256px; border-radius: 14px; overflow: hidden; pointer-events: none; }
-.mc-shine::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 34%;
-  background: rgba(255, 255, 255, 0.28);
-  transform: translateX(-160%) skewX(-20deg);
-}
-
 /* ROLL REVEAL v2 sheen: a clip the size of the face; the band asset waits off its left edge until a WAAPI sweep */
 .mc-sheen { position: absolute; left: 2px; top: 2px; width: 176px; height: 256px; border-radius: 14px; overflow: hidden; pointer-events: none; }
 .mc-sheen-band { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; transform: translateX(-110%); }
 
 /* ---- one-shots: a REVEAL (.is-fx) and hover / press ---- */
 .mc.is-fx.is-hi .mc-cog { animation: mc-spin 1400ms cubic-bezier(0.2, 0.7, 0.3, 1) 1; }
-.mc.is-fx.is-hi .mc-shine::after { animation: mc-shine 1100ms ease-in-out 300ms 1 both; }
 .mc.is-fx.is-hi .mc-glow { animation: mc-glow 900ms ease-out 1; }
 :is(button, a):hover > .mc.is-hi .mc-cog,
 :is(button, a):active > .mc.is-hi .mc-cog { will-change: transform; animation: mc-spin-h 900ms cubic-bezier(0.2, 0.7, 0.3, 1) 1; }
-:is(button, a):hover > .mc.is-hi .mc-shine::after { animation: mc-shine-h 800ms ease-in-out 1 both; }
 
 @keyframes mc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes mc-spin-h { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes mc-shine { from { transform: translateX(-160%) skewX(-20deg); } to { transform: translateX(420%) skewX(-20deg); } }
-@keyframes mc-shine-h { from { transform: translateX(-160%) skewX(-20deg); } to { transform: translateX(420%) skewX(-20deg); } }
 @keyframes mc-glow { 0% { opacity: 0.2; } 45% { opacity: 1; } 100% { opacity: 0.6; } }
 
 @media (prefers-reduced-motion: reduce) {
   .mc .mc-cog,
-  .mc .mc-shine::after,
   .mc .mc-glow { animation: none !important; }
 }
 
