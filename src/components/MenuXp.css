@@ -114,19 +114,11 @@
 .menu-xp-pop.is-crit {
   flex-direction: column; /* the key on top, CRIT +N under it — the burst sits behind the KEY (JS lifts it) */
   align-items: center;
-  gap: 2px;
+  gap: 30px; /* Andy oct9 "cleaner": CRIT +N sits fully UNDER the burst's rim, never across its spikes */
 }
-/* the KEY as a yellow keycap tile (a rectangle — CSS may draw that): crit-yellow fill, darker-yellow outline, black
-   glyph, the house hard offset shadow (static, never animated) — so it reads ON the yellow burst */
+/* Andy oct9 "cleaner": the KEY sits bare ON the burst — a dark glyph, no tile, no stroke — so key + burst read as ONE
+   shape; the only other thing is "CRIT +N" under it */
 .menu-xp-pop.is-crit .menu-xp-pop-letter {
-  min-width: 1.1em;
-  padding: 0.08em 0.16em 0.04em;
-  box-sizing: border-box;
-  text-align: center;
-  background: #ffe94a;
-  border: 4px solid #b3a100;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
   color: #0d0618;
   -webkit-text-stroke: 0;
   text-shadow: none;
@@ -147,8 +139,8 @@
   position: absolute;
   left: -9999px;
   top: 0;
-  width: 132px;
-  height: 132px;
+  width: 112px;
+  height: 112px;
   pointer-events: none;
   user-select: none;
   opacity: 0;
