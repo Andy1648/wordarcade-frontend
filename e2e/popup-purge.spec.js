@@ -98,7 +98,7 @@ const S2_SEED = {
 };
 
 for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
-  test(`SEASON2 @${vp.width}: ONE-NOTICE rule — no rank-up banner, no unlock toast; level-up = the bar — nothing centred, no dialog, no claim toast`, async ({ page }) => {
+  test(`SEASON2 @${vp.width}: ONE-NOTICE rule — no rank-up banner, no unlock toast; level-up = the bar + the old LEVEL N card — nothing else centred, no dialog, no claim toast`, async ({ page }) => {
     test.setTimeout(60_000);
     await page.setViewportSize(vp);
     // The page is seeded with the rank news already owed, so the sampler must be ARMED from the first frame: the
@@ -130,7 +130,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect(await page.evaluate(() => localStorage.getItem('taw.s2.wins')), 'news pays no wins').toBeNull();
     expect(await page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0), 'news pays no gems').toBe(0);
 
-    // LEVEL UP: LV20 → LV21 by mashing on the menu (ANY key counts) — the bar wraps; no LEVEL card, no NEW WALL stamp
+    // LEVEL UP: LV20 → LV21 by mashing on the menu (ANY key counts) — the bar wraps + the LEVEL N card; no NEW WALL stamp
     await expect.poll(async () => {
       await page.keyboard.type('qwrtzxpvqwrtzxpv', { delay: 40 });
       return page.evaluate(() => window.__tawXp().level);
@@ -138,9 +138,12 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.waitForTimeout(isPhoneMenu(page) ? 2500 : 4500); // every queued moment (wall 1.8 s + its fx, tier-up) has played
     const v = await verdict(page);
     expect(v.dialogs, 'no dialog').toEqual([]);
-    expect(v.hits, 'nothing large appears in the middle of the screen').toEqual([]);
+    // Andy oct9 ("that addicting feeling is gone - get it back. just use old one"): the LEVEL N card (+ its starburst)
+    // is the ONE centre card season 2 keeps — it must play; nothing else large may appear in the middle
+    expect(v.hits.filter((h) => !/menu-xp-level(up|burst)/.test(h)), 'nothing else large appears in the middle of the screen').toEqual([]);
+    expect(v.hits.join(' | '), 'the old LEVEL N card played').toContain('menu-xp-levelup');
     expect(v.claims, 'no menu claim notification / claimed-wins toast').toEqual([]);
-    await expect(page.locator('.menu-xp-levelup')).toHaveCSS('opacity', '0');
+    await expect(page.locator('.menu-xp-levelup')).toHaveCSS('opacity', '0'); // finite: it has finished
   });
 }
 

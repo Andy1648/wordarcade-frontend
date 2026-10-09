@@ -77,7 +77,7 @@ test('checkNews survives blocked storage (says nothing it cannot remember, never
   assert.deepEqual(N.checkNews({ state: { rebirths: 2, stars: 0 }, best: 0, store: broken }), { rank: null, unlocks: [] });
 });
 
-test('wrapFx: every CENTRE card is gone; unlock-ish cards become edge toasts; per-key motion passes through', () => {
+test('wrapFx: every CENTRE card but LEVEL N is gone; unlock-ish cards become edge toasts; per-key motion passes through', () => {
   const calls = [];
   const api = {};
   for (const k of ['letterPop', 'tapPop', 'edgePulse', 'celebrate', 'milestoneBusyMs', 'announce', 'tierUp', 'rebirthCelebration', 'rebirthRush', 'winsStamp', 'winsHint']) {
@@ -94,7 +94,8 @@ test('wrapFx: every CENTRE card is gone; unlock-ish cards become edge toasts; pe
   fx.winsStamp(500);
   fx.winsHint();
   assert.equal(fx.milestoneBusyMs(), 0);
-  assert.deepEqual(calls.map((c) => c[0]), ['letterPop', 'tapPop', 'edgePulse'], 'no centre card ever reaches the live handle');
+  // the LEVEL N card is the one centre card kept (Andy oct9: the old level-up, restored); every other centre card is gone
+  assert.deepEqual(calls.map((c) => c[0]), ['letterPop', 'tapPop', 'edgePulse', 'celebrate'], 'only the level-up card reaches the live handle');
   fx.tierUp('STEEL');
   fx.announce('SMITH II', 'MARK UPGRADED', 'blurb');
   fx.announce('AUTOMATION', '+3 KEY TIER', 'BOUGHT WHILE YOU PLAYED');
@@ -103,7 +104,7 @@ test('wrapFx: every CENTRE card is gone; unlock-ish cards become edge toasts; pe
     ['MARK UPGRADED', 'SMITH II', 'index'],
     ['+3 KEY TIER', 'AUTOMATION', 'power'],
   ]);
-  assert.equal(calls.length, 3, 'the toasts never fall back to the centre card');
+  assert.equal(calls.length, 4, 'the toasts never fall back to the centre card');
 });
 
 test('no menu claim notification can exist: achievement / rank / layer / welcome claims never enter the inbox', () => {
