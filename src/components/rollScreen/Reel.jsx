@@ -6,9 +6,13 @@
 // THE STRIP: a full-width band of cards that bleeds to the screen edges, a yellow pointer through the middle. The
 // reel rests at a random spot INSIDE the result cell, then settles to centre (reelPlan.restOffset). On the land the
 // other cards fade back so the result stands alone.
-// RARITY-SCALED REVEALS (reelPlan.revealKind): COMMON / RARE → the result LINE under the reel (RollScreen);
-// EPIC → the DIM reveal ("1 IN X" slams, the card pops); LEGENDARY+ → the FULL reveal (rays, the rarity, "1 IN X"
-// huge, the card, a shake). DIM / FULL stay up until a tap ("TAP TO KEEP"); under AUTO ROLL the dim closes itself.
+// RARITY-SCALED REVEALS (reelPlan.revealKind): a SHORT land → the result LINE under the reel (RollScreen) only;
+// COMMON / RARE → the LITE reveal (closes by itself); EPIC → the DIM reveal ("1 IN X" slams); LEGENDARY+ → the FULL
+// reveal (rays, the rarity, "1 IN X" huge). ROLL REVEAL v2 (revealPlan.js): in every one the CARD BACK (asset) flips
+// and each rarity ADDS a layer — RARE a sheen pass + sparkles, EPIC a pre-flip shake + a burst, LEGENDARY the
+// telegraph (the back's edge in the rarity colour before the flip) + a slam + a small shake, MYTHIC a colour flash + a
+// second ring, SECRET the lights dim + a long spin-up — then the STATS EXTENSION (RevealStats.jsx) ticks the stats in.
+// DIM / FULL stay up until a tap ("TAP TO KEEP"); under AUTO ROLL the dim closes itself; a tap closes any reveal.
 // TAP: a tap mid-spin jumps to the land (the reveal still plays); a tap on a reveal closes it.
 // REPLAY GUARD: the `played` ref is owned by RollScreen, so a remount (coming back from the INDEX) never replays a spin.
 //
@@ -25,10 +29,18 @@ import MarkCard from '../markCard/MarkCard';
 import { CARD_RAR, cardTier } from '../markCard/palette.js';
 import { tierLabel } from '../markCard/cardModel.js';
 import { rollMarkById } from '../../progress/markRolls';
-import { sndReelTick, sndRollSting, sndRollSwell, sndCutStamp, sndRollTell, sndShardBurst } from '../../audio/rollSounds';
-import { formatNum } from '../../format';
 import {
-  REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, AUTO_DIM_MS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
+  sndReelTick, sndRollSting, sndRollSwell, sndCutStamp, sndRollTell, sndShardBurst, sndRevealFlip, sndRevealRise, sndRevealArp,
+  sndStatTick,
+} from '../../audio/rollSounds';
+import { formatNum } from '../../format';
+import RevealStats, { revealStatsOf } from './RevealStats';
+import {
+  revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
+  DIM_LIGHTS, FLASH_PEAK,
+} from './revealPlan.js';
+import {
+  REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
   tierIndex, revealKind, dimFor, hasLight, burstCount, shakePx, shakeFrames, burstVectors, NEAR_MISS_TICKS, FLASH_TIERS, WASH_TIERS,
   KEEP_HOLD_MS, CHARGE_MS, CHARGE_SHAKE_AT, OVERHOLD_MS, CHARGE_RATTLE, tellFor, tellFrames,
 } from './reelPlan.js';
@@ -42,22 +54,21 @@ const VEC_BIG = burstVectors(BURST_POOL, 2.6);
 const markOf = (id) => rollMarkById(id) || { id, tier: 'common', name: '' };
 const lineOf = (tier) => CARD_RAR[cardTier(tier)].line;
 const SPIN_KEYS = 64; // keyframes the spin curve is sampled into (linear between: smooth at any refresh rate)
-const POP = [
-  { transform: 'scale(0.2) rotate(-8deg)', opacity: 0 },
-  { transform: 'scale(1.12) rotate(2deg)', opacity: 1, offset: 0.6 },
-  { transform: 'scale(1) rotate(0deg)', opacity: 1 },
-];
+const SPARK_SLOTS = Array.from({ length: SPARK_POOL }, (_, i) => i);
 // the pointer KICK on each of the last NEAR_MISS_TICKS crossings (NIGHT oct8 #4) — transform only, ~110 ms
 const KICK = [{ transform: 'translateX(0) rotate(0deg)' }, { transform: 'translateX(5px) rotate(4deg)', offset: 0.35 }, { transform: 'translateX(0) rotate(0deg)' }];
-// the LEGENDARY+ card's THUD (R4, research: Hearthstone's "legendaries are sure heavy"): drops in from above, lands
-// with a squash, settles — transform/opacity only
-const THUD = [
-  { transform: 'translate3d(0,-90px,0) scale(1.15)', opacity: 0 },
-  { transform: 'translate3d(0,0,0) scale(1.15)', opacity: 1, offset: 0.3 },
-  { transform: 'translate3d(0,8px,0) scale(1.18,0.9)', opacity: 1, offset: 0.42 },
-  { transform: 'translate3d(0,-6px,0) scale(0.98,1.06)', opacity: 1, offset: 0.62 },
-  { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
-];
+/** REVEAL v2: the card back's pre-flip rattle — a jitter that BUILDS (40% → 100% of `px`) over `ms`, transform only. */
+function buildRattle(px, ms) {
+  const n = Math.max(4, Math.round(ms / 55));
+  const out = [{ transform: 'translate3d(0,0,0) rotate(0deg)' }];
+  for (let i = 1; i < n; i += 1) {
+    const k = px * (0.4 + (0.6 * i) / n);
+    const sx = i % 2 ? -1 : 1;
+    out.push({ transform: `translate3d(${(sx * k).toFixed(1)}px,${(((i % 3) - 1) * k * 0.5).toFixed(1)}px,0) rotate(${(sx * k * 0.45).toFixed(2)}deg)` });
+  }
+  out.push({ transform: 'translate3d(0,0,0) rotate(0deg)' });
+  return out;
+}
 const SLAM = [
   { transform: 'scale(3)', opacity: 0 },
   { transform: 'scale(0.92)', opacity: 1, offset: 0.7 },
@@ -182,7 +193,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // RARE: one flash over the band; EPIC+: a rarity-colour wash over the whole screen (the dim / reveal sit on top)
     if (FLASH_TIERS.has(tier)) anim(n.flash, [{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'none' });
     if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
-    const k = burstCount(tier, mode);
+    const kind = revealKind(tier, mode);
+    // REVEAL v2: a land that opens a reveal leaves the burst to the reveal (one burst, on the card, after its flip)
+    const k = kind === 'line' ? burstCount(tier, mode) : 0;
     for (let i = 0; i < k; i += 1) {
       const v = VEC[i];
       anim(n[`p${i}`], [
@@ -190,7 +203,6 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         { opacity: 0, transform: `translate3d(${v.x}px,${v.y}px,0) scale(${v.s}) rotate(${v.r}deg)` },
       ], { duration: 650 + (i % 4) * 60, easing: 'cubic-bezier(.15,.8,.3,1)' });
     }
-    const kind = revealKind(tier, mode);
     if (kind !== 'line') {
       phase.current = 'cut';
       setCut((c) => ({ res, kind, seq: (c ? c.seq : 0) + 1 }));
@@ -280,41 +292,163 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spin && spin.seq]);
 
-  // ---- the REVEAL (EPIC dim / LEGENDARY+ full): plays in once, then rests until a tap ----
+  // ---- the REVEAL v2 (revealPlan.js): the card back flips, each rarity ADDS a layer; then the STATS EXTENSION ticks
+  // the gear's stats in. LITE (COMMON / RARE) closes by itself; EPIC (dim) closes by itself under AUTO; LEGENDARY+
+  // (full) rests on "TAP TO KEEP". A tap closes any of them at once (the result line already holds the result). ----
   const cutRes = cut && cut.res;
+  const cutStats = cutRes ? revealStatsOf(cutRes, view) : null;
+  const statsRef = useRef(null);
+  statsRef.current = cutStats;
   useLayoutEffect(() => {
     if (!cutRes) return;
     const n = nodes.current;
     const tier = cutRes.tier;
-    const full = cut.kind === 'full';
-    anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+    const kind = cut.kind;
+    const full = kind === 'full';
+    const tl = revealTimeline(tier);
+    const st = statsRef.current;
+    const ext = extensionPlan({ extras: st ? st.crit.length : 0, perk: !!(st && st.perks.length), dupe: !!(st && st.dupe), stars: st ? st.pips : 0 });
+    const xAt = extensionAt(tier);
+    const ease = { in: 'cubic-bezier(.5,0,.9,.5)', out: 'cubic-bezier(.1,.6,.3,1)', pop: 'cubic-bezier(.2,1.4,.4,1)' };
+    anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: tier === 'common' ? 120 : 200 });
     anim(n.dim, [{ opacity: dimFor(tier) }, { opacity: 0 }], { duration: 250 }); // the reveal brings its own backdrop
-    anim(n.cutStamp, SLAM, { duration: 500, delay: full ? 80 : 0, easing: 'cubic-bezier(.2,1.2,.4,1)' });
-    // LEGENDARY+ (R4): the card DROPS in with mass (a thud: lands, squashes, settles) instead of the dim's pop
-    anim(n.cutMark, full ? THUD : POP, { duration: full ? 620 : 550, delay: full ? 160 : 60, easing: full ? 'cubic-bezier(.3,1.1,.4,1)' : 'cubic-bezier(.2,1.4,.4,1)' });
-    later(() => sndCutStamp(tier), full ? 80 : 0);
     if (full) {
-      later(() => sndShardBurst(tier), 200);
       anim(n.cutRays, [
         { transform: 'rotate(0deg) scale(0.6)', opacity: 0 },
         { transform: 'rotate(8deg) scale(1)', opacity: 0.32, offset: 0.1 },
         { transform: 'rotate(60deg) scale(1)', opacity: 0.32 },
       ], { duration: RAYS_MS, easing: 'cubic-bezier(.2,.6,.3,1)' });
-      anim(n.cutTier, SLAM, { duration: 500, easing: 'cubic-bezier(.2,1.2,.4,1)' });
-      anim(n.cutShake, shakeFrames(shakePx(tier)), { duration: 400, delay: 120, iterations: 2 });
-      // the reveal HOLDS 1.2 s (the card, the odds, the shards) before it asks for the tap
-      anim(n.cutKeep, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.35, offset: 0.45 }, { opacity: 1, offset: 0.7 }, { opacity: 0.35, offset: 0.85 }, { opacity: 1 }], { duration: 2000, delay: KEEP_HOLD_MS, easing: 'ease-in-out' });
+    }
+    // SECRET: the lights go down first (over the rays), stay down through the spin-up, and come back up on the flash
+    if (tl.dim) {
+      const span = tl.land + 420;
+      anim(n.rvDim, [
+        { opacity: 0 },
+        { opacity: DIM_LIGHTS, offset: tl.dim.ms / span },
+        { opacity: DIM_LIGHTS, offset: tl.flip.at / span },
+        { opacity: 0 },
+      ], { duration: span, easing: 'ease-in-out', fill: 'none' });
+    }
+    // BEFORE the flip: EPIC rattles; LEGENDARY+ telegraph — the back's edge lights in the RARITY COLOUR and the rattle
+    // builds; SECRET spins the back up (faster and faster) with the edge glinting through it
+    if (tl.preShake) {
+      anim(n.rvRattle, buildRattle(PRE_RATTLE[tier] || 3, tl.preShake.ms), { duration: tl.preShake.ms, delay: tl.preShake.at, fill: 'none' });
+      later(() => sndRevealRise(tier, tl.spinUp ? tl.spinUp.ms + 300 : tl.preShake.ms), tl.spinUp ? tl.spinUp.at : tl.preShake.at);
+    }
+    if (tl.telegraph) {
+      anim(n.rvEdge, [
+        { opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.5, offset: 0.36 }, { opacity: 1, offset: 0.52 },
+        { opacity: 0.7, offset: 0.68 }, { opacity: 1, offset: 0.82 }, { opacity: 1 },
+      ], { duration: tl.telegraph.ms, delay: tl.telegraph.at, easing: 'ease-in-out' });
+    }
+    // THE FLIP: the back turns edge-on (ease-in), the face turns in from the other side (ease-out — a slam tier
+    // overshoots). Real 3D turn, transform only. SECRET's back reaches edge-on at the end of its spin-up.
+    const half = tl.flip.ms / 2;
+    if (tl.spinUp) {
+      anim(n.rvBack, [
+        { transform: 'perspective(900px) rotateY(0deg)', opacity: 1 },
+        { transform: 'perspective(900px) rotateY(990deg)', opacity: 1, offset: 0.999 },
+        { transform: 'perspective(900px) rotateY(990deg)', opacity: 0 },
+      ], { duration: tl.spinUp.ms, delay: tl.spinUp.at, easing: 'cubic-bezier(.55,0,.75,.35)' });
+    } else {
+      anim(n.rvBack, [
+        { transform: 'perspective(900px) rotateY(0deg)', opacity: 1 },
+        { transform: 'perspective(900px) rotateY(90deg)', opacity: 1, offset: 0.999 },
+        { transform: 'perspective(900px) rotateY(90deg)', opacity: 0 },
+      ], { duration: half, delay: tl.flip.at, easing: ease.in });
+    }
+    anim(n.rvFace, [
+      { transform: 'perspective(900px) rotateY(-90deg)', opacity: 0 },
+      { transform: 'perspective(900px) rotateY(-90deg)', opacity: 1, offset: 0.001 },
+      { transform: 'perspective(900px) rotateY(0deg)', opacity: 1 },
+    ], { duration: tl.spinUp ? tl.flip.ms : half, delay: tl.spinUp ? tl.flip.at : tl.flip.at + half, easing: tl.slam ? 'cubic-bezier(.2,1.25,.45,1)' : ease.out });
+    later(() => sndRevealFlip(tier), tl.flip.at);
+    // LEGENDARY+: the flip lands as a SLAM — the card swells as it turns, then squashes on the land and settles
+    if (tl.slam) {
+      anim(n.rvCard, [
+        { transform: 'scale(1)' },
+        { transform: 'scale(1.2)', offset: 0.17 },
+        { transform: 'scale(1.16, 0.84)', offset: 0.42 },
+        { transform: 'scale(0.95, 1.06)', offset: 0.68 },
+        { transform: 'scale(1)' },
+      ], { duration: tl.slam.ms, delay: tl.slam.at, easing: 'ease-out', fill: 'none' });
+    }
+    if (tl.screenShake) anim(n.cutShake, shakeFrames(SCREEN_SHAKE[tier] || 4), { duration: tl.screenShake.ms, delay: tl.screenShake.at, fill: 'none' });
+    if (tl.flash) {
+      anim(n.rvFlash, [{ opacity: 0 }, { opacity: FLASH_PEAK, offset: 0.3 }, { opacity: 0 }], { duration: tl.flash.ms, delay: tl.flash.at, easing: 'ease-out', fill: 'none' });
+    }
+    // the stamp ("1 IN X") and the rarity land WITH the card, never before it (the telegraph is colour only)
+    if (kind === 'lite') anim(n.cutStamp, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, delay: tl.stampAt, easing: ease.out });
+    else anim(n.cutStamp, SLAM, { duration: 460, delay: tl.stampAt, easing: 'cubic-bezier(.2,1.2,.4,1)' });
+    if (full) anim(n.cutTier, SLAM, { duration: 460, delay: tl.land, easing: 'cubic-bezier(.2,1.2,.4,1)' });
+    if (kind !== 'lite') later(() => sndCutStamp(tier), tl.stampAt);
+    if (tier !== 'common') later(() => sndRevealArp(tier), tl.land);
+    // EPIC+: the BURST — the jagged ring (tinted the rarity) + the shard pool; MYTHIC+ a second, wider ring
+    if (tl.burst) {
+      anim(n.rvRing0, [{ transform: 'scale(0.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.25)', opacity: 0 }], { duration: tl.burst.ms, delay: tl.burst.at, easing: ease.out });
       const k = burstCount(tier);
+      const far = full ? 1.6 : 1.1;
       for (let i = 0; i < k; i += 1) {
         const v = VEC_BIG[i];
         anim(n[`q${i}`], [
           { opacity: 0, transform: 'translate3d(0,0,0) scale(0.5)' },
           { opacity: 1, transform: 'translate3d(0,0,0) scale(0.8)', offset: 0.01 },
-          { opacity: 0, transform: `translate3d(${v.x}px,${v.y}px,0) scale(${v.s * 1.6}) rotate(${v.r * 2}deg)` },
-        ], { duration: 1100 + (i % 5) * 90, delay: 160, easing: 'cubic-bezier(.15,.8,.3,1)' });
+          { opacity: 0, transform: `translate3d(${v.x * (far / 1.6)}px,${v.y * (far / 1.6)}px,0) scale(${v.s * far}) rotate(${v.r * 2}deg)` },
+        ], { duration: (full ? 1100 : 760) + (i % 5) * 90, delay: tl.burst.at, easing: 'cubic-bezier(.15,.8,.3,1)' });
       }
-    } else if (cbs.current.auto) {
-      later(finishCut, AUTO_DIM_MS);
+      if (full) later(() => sndShardBurst(tier), tl.burst.at);
+    }
+    if (tl.ring2) anim(n.rvRing1, [{ transform: 'scale(0.4) rotate(0deg)', opacity: 1 }, { transform: 'scale(1.35) rotate(10deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.7) rotate(14deg)', opacity: 0 }], { duration: tl.ring2.ms, delay: tl.ring2.at, easing: ease.out });
+    // RARE+: ONE sheen pass — the wide band asset swept across the clipped face (transform only)
+    const band = tl.sheen && n.cutMark ? n.cutMark.querySelector('.mc-sheen-band') : null;
+    if (band) anim(band, [{ transform: 'translateX(-110%)' }, { transform: 'translateX(110%)' }], { duration: tl.sheen.ms, delay: tl.sheen.at, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'none' });
+    // RARE+: the pooled sparkles pop on fixed spots round the card; SECRET plays the pool twice
+    if (tl.sparkles) {
+      for (let i = 0; i < tl.sparkles.n; i += 1) {
+        const slot = i % SPARK_POOL;
+        const wave = Math.floor(i / SPARK_POOL);
+        const s = SPARK_SPOTS[slot];
+        anim(n[`sp${slot}`], [
+          { opacity: 0, transform: `scale(0) rotate(${s.r}deg)` },
+          { opacity: 1, transform: `scale(${s.s * 1.15}) rotate(${s.r + 45}deg)`, offset: 0.35 },
+          { opacity: 0, transform: `scale(${s.s * 0.4}) rotate(${s.r + 90}deg)` },
+        ], { duration: tl.sparkles.ms, delay: tl.sparkles.at + slot * Math.round(tl.sparkles.ms / 10) + wave * 420, easing: ease.out, fill: 'none' });
+      }
+    }
+    // ---- the STATS EXTENSION: main slams in, extras + perk tick in ~120 ms apart, dupe ★ pips fill ----
+    if (st) {
+      anim(n.xMain, [
+        { opacity: 0, transform: 'scale(2.1) rotate(-5deg)' },
+        { opacity: 1, transform: 'scale(0.92) rotate(1deg)', offset: 0.6 },
+        { opacity: 1, transform: 'scale(1) rotate(0deg)' },
+      ], { duration: ext.main.ms, delay: xAt + ext.main.at, easing: ease.out });
+      later(() => sndStatTick(0), xAt + ext.main.at + 120);
+      ext.extras.forEach((e, i) => {
+        anim(n[`xEx${i}`], [{ opacity: 0, transform: 'translateX(-16px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: e.ms, delay: xAt + e.at, easing: ease.out });
+        later(() => sndStatTick(i + 1), xAt + e.at);
+      });
+      if (ext.perk) {
+        anim(n.xPerk, [{ opacity: 0, transform: 'translateY(10px) scale(0.94)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: ext.perk.ms, delay: xAt + ext.perk.at, easing: ease.pop });
+        later(() => sndStatTick(ext.extras.length + 2), xAt + ext.perk.at);
+      }
+      if (ext.dupe) {
+        anim(n.xDupe, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: ext.dupe.ms, delay: xAt + ext.dupe.at, easing: ease.out });
+        ext.stars.forEach((s, i) => {
+          const newest = st.pipUp && i === ext.stars.length - 1;
+          anim(n[`xStar${i}`], [
+            { opacity: 0, transform: 'scale(0) rotate(-40deg)' },
+            { opacity: 1, transform: `scale(${newest ? 1.7 : 1.3}) rotate(8deg)`, offset: 0.6 },
+            { opacity: 1, transform: 'scale(1) rotate(0deg)' },
+          ], { duration: newest ? s.ms + 120 : s.ms, delay: xAt + s.at, easing: ease.out });
+        });
+      }
+    }
+    const done = revealDoneMs(tier, ext);
+    if (full) {
+      // the card, the odds, the stats are all in before it asks for the tap
+      anim(n.cutKeep, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.35, offset: 0.45 }, { opacity: 1, offset: 0.7 }, { opacity: 0.35, offset: 0.85 }, { opacity: 1 }], { duration: 2000, delay: Math.max(KEEP_HOLD_MS, done + 150), easing: 'ease-in-out' });
+    } else if (kind === 'lite' || cbs.current.auto) {
+      later(finishCut, selfCloseMs(tier, ext, { auto: !!cbs.current.auto }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cutRes]);
@@ -356,18 +490,51 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         style={cr ? { '--rs-tier': lineOf(cr.tier) } : undefined}
       >
         <div className="rs-cut-rays" ref={reg('cutRays')}><div className="rs-rays-ink" /></div>
+        {/* SECRET's lights-down (a flat black plate over the rays) and the MYTHIC+ colour flash (over everything) */}
+        <div className="rv-dim" ref={reg('rvDim')} />
         <div className="rs-cut-shake" ref={reg('cutShake')}>
           <div className="rs-cut-tier" ref={reg('cutTier')}>{cr ? tierLabel(cr.tier) : ''}</div>
           <div className="rs-cut-stamp" ref={reg('cutStamp')} data-testid="roll-cutscene-odds">
             {cr ? `1 IN ${formatNum(cr.oneInX)}` : ''}
           </div>
-          <div className="rs-cut-mark" ref={reg('cutMark')}>
-            {cr ? (
-              <MarkCard key={cut.seq} id={cr.markId} tier={crm.tier} name={crm.name} state={view} shiny={!!cr.shiny} fx className="rs-cut-card" />
-            ) : null}
+          <div className="rv-body">
+            <div className="rs-cut-mark" ref={reg('cutMark')}>
+              {/* the burst rings: the jagged ring asset as a mask, tinted the rarity (EPIC+ one, MYTHIC+ two) */}
+              <span className="rv-ring" ref={reg('rvRing0')} />
+              <span className="rv-ring is-2" ref={reg('rvRing1')} />
+              <div className="rv-rattle" ref={reg('rvRattle')}>
+                <div className="rv-card" ref={reg('rvCard')}>
+                  {/* the FACE-DOWN card (asset) — its edge (a mask asset) lights in the rarity colour on a telegraph */}
+                  <div className="rv-back" ref={reg('rvBack')}>
+                    <img className="rv-back-art" src="/fx/card-back.svg" alt="" draggable="false" />
+                    <span className="rv-edge" ref={reg('rvEdge')} />
+                  </div>
+                  <div className="rv-face" ref={reg('rvFace')}>
+                    {cr ? (
+                      <MarkCard key={cut.seq} id={cr.markId} tier={crm.tier} name={crm.name} state={view} shiny={!!cr.shiny} fx sheen className="rs-cut-card" />
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+              <div className="rv-sparks">
+                {SPARK_SLOTS.map((i) => (
+                  <img
+                    key={i}
+                    className="rv-spark"
+                    ref={reg(`sp${i}`)}
+                    src="/fx/sparkle.svg"
+                    alt=""
+                    draggable="false"
+                    style={{ left: `${SPARK_SPOTS[i].x}%`, top: `${SPARK_SPOTS[i].y}%` }}
+                  />
+                ))}
+              </div>
+            </div>
+            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} /> : null}
           </div>
           <div className="rs-cut-keep" ref={reg('cutKeep')}>TAP TO KEEP</div>
         </div>
+        <div className="rv-flash" ref={reg('rvFlash')} style={cr ? { background: cr.tier === 'secret' ? '#fff' : lineOf(cr.tier) } : undefined} />
         <div className="rs-parts is-cut">
           {PARTS.map((i) => (
             <img key={i} className="rs-part" ref={reg(`q${i}`)} src={`${ART}${PARTICLE_ART[i % PARTICLE_ART.length]}`} alt="" draggable="false" />

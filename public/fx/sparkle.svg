@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <!-- REVEAL SPARKLE: a 4-point star, white with an ink outline; the arms are uneven (the down arm the longest) and a
+       speck of overspray rides beside it. Pooled in Reel.jsx, animated by transform/opacity only. -->
+  <path d="M20 1.5 L23.4 16.2 L38 19.6 L23.4 23 L20.6 38.5 L16.8 23 L2.5 20.2 L16.8 16.4 Z" fill="#fff" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M20 9 L21.6 17.6 L28 19.8 L21.6 21.8 L20.3 29 L18.6 21.8 L12.4 20 L18.6 17.8 Z" fill="#FFE94A"/>
+  <circle cx="33" cy="7.5" r="2.4" fill="#fff" stroke="#000" stroke-width="1.6"/>
+</svg>

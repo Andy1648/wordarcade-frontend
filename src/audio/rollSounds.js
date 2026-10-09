@@ -120,3 +120,52 @@ export function sndRollSting(tier = 'common') {
     tone(t, { freq: pentFreq(NOTE.C3), type: 'sine', dur: 0.9, gain: 0.14, attack: 0.08, lowpass: 500 });
   }
 }
+
+// ---- ROLL REVEAL v2 (the card flip + its escalation) -------------------------------------------
+// the flip — a short "thwip" as the card turns; a slam tier (LEGENDARY+) adds a low thump under it
+export function sndRevealFlip(tier = 'common') {
+  const ctx = ready();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  tone(t, { freq: pentFreq(NOTE.C6), glideTo: pentFreq(NOTE.G4), type: 'triangle', dur: 0.07, gain: 0.06, attack: 0.002, lowpass: 3600 });
+  if (tier === 'legendary' || tier === 'mythic' || tier === 'secret') {
+    tone(t + 0.12, { freq: 96, glideTo: 44, type: 'sine', dur: 0.28, gain: 0.22, attack: 0.003, lowpass: 500 });
+  }
+}
+// the rising sting under the pre-flip beat (EPIC's rattle, the LEGENDARY+ telegraph, the SECRET spin-up): one finite
+// climb, `durMs` long — rarer = a lower start and a higher top
+const RISE = { epic: [NOTE.G3, NOTE.C5, 0.05], legendary: [NOTE.Eb3, NOTE.G5, 0.06], mythic: [NOTE.C3, NOTE.Bb5, 0.07], secret: [NOTE.C3, NOTE.C6, 0.08] };
+export function sndRevealRise(tier = 'epic', durMs = 600) {
+  const ctx = ready();
+  const r = RISE[tier];
+  if (!ctx || !r) return;
+  const t = ctx.currentTime;
+  const dur = Math.max(0.15, durMs / 1000);
+  tone(t, { freq: pentFreq(r[0]), glideTo: pentFreq(r[1]), type: 'triangle', dur, gain: r[2], attack: dur * 0.85, lowpass: 2600 });
+  tone(t, { freq: pentFreq(r[0]) * 1.007, glideTo: pentFreq(r[1]) * 1.007, type: 'sawtooth', dur, gain: r[2] * 0.4, attack: dur * 0.9, lowpass: 1200 });
+}
+// the land's arpeggio (RARE+): a twinkle → a chime → a rising run; rarer = more steps, higher
+const ARP = {
+  rare: [NOTE.C5, NOTE.G5],
+  epic: [NOTE.G4, NOTE.C5, NOTE.G5],
+  legendary: [NOTE.C4, NOTE.G4, NOTE.C5, NOTE.Eb5, NOTE.G5],
+  mythic: [NOTE.C4, NOTE.Eb4, NOTE.G4, NOTE.C5, NOTE.Eb5, NOTE.G5],
+  secret: [NOTE.C3, NOTE.G3, NOTE.C4, NOTE.G4, NOTE.C5, NOTE.G5, NOTE.C6],
+};
+export function sndRevealArp(tier = 'rare') {
+  const ctx = ready();
+  const steps = ARP[tier];
+  if (!ctx || !steps) return;
+  const t = ctx.currentTime;
+  const gap = steps.length > 4 ? 0.055 : 0.07;
+  steps.forEach((deg, i) => {
+    const last = i === steps.length - 1;
+    tone(t + i * gap, { freq: pentFreq(deg), type: 'triangle', dur: last ? 0.45 : 0.12, gain: last ? 0.11 : 0.08, attack: 0.003, lowpass: 5200 });
+  });
+}
+// one tick per stat line of the stats extension — each a step higher
+export function sndStatTick(i = 0) {
+  const ctx = ready();
+  if (!ctx) return;
+  tone(ctx.currentTime, { freq: pentFreq(Math.min(NOTE.C6, NOTE.G4 + i)), type: 'square', dur: 0.04, gain: 0.035, attack: 0.002, lowpass: 2800 });
+}

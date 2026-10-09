@@ -38,6 +38,8 @@ import MarkCard from './markCard/MarkCard';
 import { CARD_RAR } from './markCard/palette.js';
 import { cardModel, pipNext, pipsLabel, perkLines, tierLabel } from './markCard/cardModel.js';
 import { formatNum } from '../format';
+import { useReduceMotion } from '../lib/useReduceMotion';
+import { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS, nextIdleSheen } from './rollScreen/revealPlan.js';
 import './MarksIndex.css';
 
 registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
@@ -77,6 +79,52 @@ function tierCompletion(view, owns) {
     return { tier, owned, total: ms.length, complete: done.has(tier) || (ms.length > 0 && owned === ms.length) };
   });
 }
+/**
+ * THE IDLE SHEEN (ROLL REVEAL v2): an owned LEGENDARY+ card catches the light — ONE card at a time, scheduled by ONE
+ * shared timer (every IDLE_SHEEN_EVERY_MS), each sweep a finite WAAPI one-shot of the card's sheen band (transform).
+ * Only cards on screen take a turn (an IntersectionObserver — no layout reads). Nothing loops in CSS; a hidden tab or
+ * REDUCE MOTION gets none.
+ */
+function useIdleSheen(gridRef, enabled) {
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!enabled || !grid || typeof grid.querySelectorAll !== 'function') return undefined;
+    const bands = [...grid.querySelectorAll('.mc-sheen-band')];
+    if (!bands.length) return undefined;
+    const clips = bands.map((b) => b.parentElement);
+    const visible = new Set();
+    let io = null;
+    if (typeof IntersectionObserver === 'function') {
+      io = new IntersectionObserver((es) => {
+        for (const e of es) { if (e.isIntersecting) visible.add(e.target); else visible.delete(e.target); }
+      });
+      clips.forEach((c) => io.observe(c));
+    } else clips.forEach((c) => visible.add(c));
+    let prev = -1;
+    let timer = null;
+    let run = null;
+    const sweep = () => {
+      timer = setTimeout(sweep, IDLE_SHEEN_EVERY_MS);
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const i = nextIdleSheen(clips, visible, prev);
+      if (i < 0) return;
+      prev = i;
+      const band = bands[i];
+      if (typeof band.animate !== 'function') return;
+      band.style.willChange = 'transform';
+      run = band.animate([{ transform: 'translateX(-110%)' }, { transform: 'translateX(110%)' }], { duration: IDLE_SHEEN_MS, easing: 'cubic-bezier(.45,0,.25,1)' });
+      const off = () => { band.style.willChange = ''; };
+      run.finished.then(off, off);
+    };
+    timer = setTimeout(sweep, 1200); // the first sweep soon after the INDEX opens
+    return () => {
+      clearTimeout(timer);
+      if (io) io.disconnect();
+      if (run) { try { run.cancel(); } catch { /* gone */ } }
+    };
+  }, [gridRef, enabled]);
+}
+
 // a full-screen layer: the menu beneath never reacts to the pointer (see RollScreen stopMenuPointer)
 const stopPointer = (e) => e.stopPropagation();
 const rankOf = (id) => (markById(id) ? markProgress(id).rank : 1);
@@ -226,6 +274,9 @@ export default function MarksIndex({
   const col = collection(view);
   const tiers = tierCompletion(view, (id) => ownsId(id, 'roll'));
   const selE = sel ? entries.find((e) => e.id === sel) : null;
+  const reduced = useReduceMotion();
+  const gridRef = useRef(null);
+  useIdleSheen(gridRef, !reduced);
 
   return (
     <div className="marks-overlay mx-overlay" role="dialog" aria-modal="true" aria-label="Index" onPointerMove={stopPointer} onMouseMove={stopPointer}>
@@ -253,7 +304,7 @@ export default function MarksIndex({
             ))}
           </div>
         </div>
-        <div className="mx-grid" role="list">
+        <div className="mx-grid" role="list" ref={gridRef}>
           {entries.map((e) => {
             const have = owns(e);
             const on = worn === e.id;
@@ -274,7 +325,7 @@ export default function MarksIndex({
                 >
                   <MarkCard
                     id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
-                    shiny={shiny} parts={TILE_PARTS}
+                    shiny={shiny} parts={TILE_PARTS} sheen={have && IDLE_SHEEN_TIERS.has(e.tier)}
                   />
                   {on && <span className="mx-tile-main">MAIN</span>}
                 </button>

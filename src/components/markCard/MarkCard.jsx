@@ -67,7 +67,7 @@ const Lock = () => (
 
 function MarkCard({
   id, kind = 'roll', tier, name, locked = false, state = null, rank = 1, shiny = false, fx = false, w = null,
-  parts = NONE, className = '', still = false,
+  parts = NONE, className = '', still = false, sheen = false,
 }) {
   const c = cardModel({ id, kind, tier, name, locked, state });
   const pal = CARD_RAR[cardTier(c.tier)];
@@ -137,6 +137,9 @@ function MarkCard({
           </div>
         ) : null}
         {hi ? <span className="mc-shine" aria-hidden="true" /> : null}
+        {/* ROLL REVEAL v2: the wide sheen band (an asset, /fx/sheen.svg) parked off the card in a clip the size of the
+            face; the reveal / the INDEX idle timer sweeps it across ONCE by transform (WAAPI). At rest it moves nothing. */}
+        {sheen ? <span className="mc-sheen" aria-hidden="true"><img className="mc-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
       </div>
     </div>
   );

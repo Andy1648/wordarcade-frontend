@@ -242,15 +242,17 @@ export function needMoreText(price, have, fmt = (n) => String(n)) {
 
 // ---- ROLL v1 reveals (Andy oct5 mockup claude/mockups/roll-v1/Main.dc.html) ----
 /**
- * Which reveal a landed roll gets — RARITY-SCALED: 'line' (COMMON / RARE, and every short / reduced-motion land: the
- * result line under the reel), 'dim' (EPIC: the screen dims, "1 IN X" slams, the card pops), 'full' (LEGENDARY+:
- * full-screen rays, the rarity, "1 IN X" huge, the card, the screen shakes). 'dim' and 'full' stay up until a tap.
+ * Which reveal a landed roll gets — RARITY-SCALED: 'line' (every short / reduced-motion land: the result line under the
+ * reel, no reveal), 'lite' (ROLL REVEAL v2: a COMMON / RARE full reveal — the card flips over the reel and its stats
+ * tick in, then it closes by itself), 'dim' (EPIC: the screen dims, "1 IN X" slams, the card flips), 'full'
+ * (LEGENDARY+: full-screen rays, the rarity, "1 IN X" huge, the card, the screen shakes). 'dim' and 'full' stay up
+ * until a tap. The layers each tier plays are revealPlan.js's.
  */
 export function revealKind(tier, mode = 'full') {
   if (mode !== 'full') return 'line';
   const r = tierIndex(tier);
   if (r >= tierIndex('legendary')) return 'full';
-  return r === tierIndex('epic') ? 'dim' : 'line';
+  return r === tierIndex('epic') ? 'dim' : 'lite';
 }
 /** Under AUTO ROLL an EPIC dim reveal closes by itself after this long (the mockup's 1.3 s), then the next roll. */
 export const AUTO_DIM_MS = 1300;

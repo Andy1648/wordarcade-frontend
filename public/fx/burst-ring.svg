@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- REVEAL BURST RING: a jagged comic ring (18 uneven spikes around a hole) used as a MASK — the reveal tints it the
+       rarity colour and scales it out once. Flat, even-odd fill, two specks of overspray. -->
+  <path fill="#fff" fill-rule="evenodd" d="M100.0 4.0 L116.2 21.7 L135.0 19.3 L139.5 31.6 L159.2 33.6 L162.7 53.5 L177.9 55.0 L177.9 74.3 L190.4 89.6 L181.0 100.0 L190.1 118.7 L173.4 131.8 L180.5 146.5 L159.0 152.6 L156.0 175.5 L139.0 167.5 L129.8 190.2 L109.4 181.5 L100.0 196.0 L83.5 179.3 L65.0 180.7 L60.0 169.3 L40.8 166.4 L36.5 147.1 L22.1 145.0 L25.9 124.5 L9.6 110.4 L18.0 100.0 L9.9 81.3 L25.7 67.8 L19.5 53.5 L40.3 46.8 L44.0 24.5 L60.5 31.6 L70.2 9.8 L91.1 22.5 Z M164.0 100.0 L162.8 116.8 L157.2 133.0 L147.4 147.4 L132.0 155.4 L116.8 162.8 L100.0 166.0 L82.7 164.7 L68.0 155.4 L54.0 146.0 L42.8 133.0 L35.3 117.3 L36.0 100.0 L37.2 83.2 L42.8 67.0 L52.6 52.6 L68.0 44.6 L83.2 37.2 L100.0 34.0 L117.3 35.3 L132.0 44.6 L146.0 54.0 L157.2 67.0 L164.7 82.7 Z"/>
+  <circle cx="186" cy="34" r="5" fill="#fff"/>
+  <circle cx="16" cy="170" r="4" fill="#fff"/>
+</svg>
