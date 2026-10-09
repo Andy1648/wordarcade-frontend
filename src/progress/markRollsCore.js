@@ -551,7 +551,7 @@ export const CRIT_BY_TIER = Object.freeze({
   mythic: Object.freeze({ rate: 0.09, power: 1 }),
   secret: Object.freeze({ rate: 0.12, power: 1.5 }),
 });
-export const CRIT_BASE_RATE = 0;
+export const CRIT_BASE_RATE = 0.01; // Andy oct9: "people should have a 1% crit chance to start" (×2 power) — gear adds on top
 export const CRIT_BASE_POWER = 2;
 export const CRIT_RATE_CAP = 0.5;
 const NO_CRIT = Object.freeze({ rate: 0, power: 0 });
@@ -599,6 +599,6 @@ export function critTotals({ markId, mark2Id, state } = {}) {
     const p = Number.isFinite(power) && power > 0 ? power : 0;
     return { rate: Math.min(CRIT_RATE_CAP, r), power: CRIT_BASE_POWER + p, rawRate: r, ids };
   } catch {
-    return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: 0, ids: [] };
+    return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: CRIT_BASE_RATE, ids: [] };
   }
 }

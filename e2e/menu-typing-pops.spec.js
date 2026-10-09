@@ -68,7 +68,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
     expect(letters).toContain('D');
     expect(letters).toContain('R');
     for (const p of pops) {
-      expect(p.plus).toMatch(/^\+\d/);
+      expect(p.plus).toMatch(/^(CRIT )?\+\d/); // a key can crit (1% base, Andy oct9) — its pop reads CRIT +N
       expect(p.finite).toBe(true);
       expect(p.props.every((x) => x === 'transform' || x === 'opacity')).toBe(true);
     }

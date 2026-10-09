@@ -27,7 +27,7 @@ import { formatNum } from '../format.js';
 import { flagOn } from '../lib/featureFlags.js';
 import { milestoneCrossed, MILESTONE_FX } from './menuTier.js';
 // CRIT (Andy oct8): the worn gears' CRIT RATE / POWER — each credited menu KEY rolls on its own (crit.js)
-import { critTotals } from './markRollsCore.js';
+import { critTotals, CRIT_BASE_RATE } from './markRollsCore.js';
 import { critKey } from './crit.js';
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
@@ -81,7 +81,11 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // CRIT: the worn gears' RATE (0% with no RARE+ gear → no key ever crits) and POWER (×2 + gear). Read once per menu
     // session like menuGain (wearing a gear happens on another screen, which remounts this hook) — never per key.
     const crit = critTotals();
-    if (crit.rate > 0 && fxRef && fxRef.current && fxRef.current.critArm) fxRef.current.critArm(); // load the burst art
+    // load the burst art: up front when a crit GEAR is worn; with only the 1% base, on the first typed key (so the
+    // menu's first paint never fetches it)
+    let critArmed = false;
+    const armCrit = () => { if (!critArmed && fxRef && fxRef.current && fxRef.current.critArm) { critArmed = true; fxRef.current.critArm(); } };
+    if (crit.rate > CRIT_BASE_RATE) armCrit();
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; both credit the same
     // XP. A tap's only difference is its pop — the "+N" alone at the tap coordinates.
@@ -99,6 +103,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
 
       const isTap = opts.kind === 'tap';
       // CRIT: a KEY (never a tap) rolls its own crit — that key pays menuGain × POWER, everything else menuGain
+      if (!isTap) armCrit();
       const hit = isTap ? { gain: menuGain, crit: false } : critKey(menuGain, crit);
       // creates/resumes the AudioContext inside this gesture; a crit clacks an octave up (+5 pentatonic steps)
       playClack(st.count - 1 + (hit.crit ? 5 : 0));
