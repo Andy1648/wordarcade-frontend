@@ -17,7 +17,7 @@ const CONTROLS = [
   // STATS opens the claims first while any wait (Andy oct2 A4), else Stats — either proves the click landed.
   { name: 'STATS', btn: '.homepage-nav-btn.is-stats', opens: '.stats-overlay, .claims-panel' },
   { name: 'REBIRTH', btn: '.homepage-nav-btn.is-rebirth', opens: '.shop-overlay' },
-  { name: 'audio', btn: '.hp-extras .audio-btn', opens: '.audio-panel' }, // v2 menu: sound joins the cluster under the top-right tiles
+  { name: 'audio', btn: '.hp-icons [data-nav="settings"]', opens: '.audio-panel' }, // v2 menu: the settings cog is a top-right tile (Andy oct9)
 ];
 
 const VIEWPORTS = [

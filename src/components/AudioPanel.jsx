@@ -1,8 +1,8 @@
 // AudioPanel.jsx — what the corner sound control (AudioControls) OPENS. Lazy (its own chunk), so the initial load ships
 // only the button. Two bodies:
 //   live      the MUSIC (♫) · GAME SFX (💥, in a game) · KEYSTROKE (⌨) · EVENTS (🔊) toggles, REDUCE MOTION, VOLUME;
-//   SEASON 2  the five-row SETTINGS sheet (SettingsPanel: SOUND · MUSIC · REDUCE MOTION · NUMBER STYLE · KEYBOARD
-//             SOUNDS — claude/mockups/v2/RoomSettings.dc.html).
+//   SEASON 2  the SETTINGS sheet (SettingsPanel, trimmed Andy oct9: SOUND · MUSIC · REDUCE MOTION · RANK PLATE · SAVE
+//             PROGRESS — claude/mockups/v2/RoomSettings.dc.html).
 // Everything is OFF-by-default / persisted, and the AudioContext is only created or resumed INSIDE a user gesture
 // (enable*/ensureCtx run from the handlers), so nothing plays before the user asks for it.
 import { useId, useState } from 'react';

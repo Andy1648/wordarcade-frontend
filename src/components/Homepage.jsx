@@ -1160,6 +1160,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
   // v3 (SEASON2 only): the ACHIEVEMENTS trophy — installed with the v3 chunk, joins whichever nav cluster renders
   const trophy = V3.Trophy && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
+  // SETTINGS (Andy oct9: "top right placement instead"): the cog is the top-right cluster's last tile, both trees
+  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />;
   // Andy oct6 SEASON 2 #5: the four rail buttons show FROM THE START (a gated one is LOCKED with its gate) — REBIRTH
   // included: at LV1 it says how many levels to go, which is what a newcomer needs to know about it.
   const rebirthGate = useMemo(() => rebirthThreshold(rebirths), [rebirths]);
@@ -1323,13 +1325,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </div>
         </div>
 
-        {/* TOP RIGHT: leaderboard / stats / achievements. */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} navigating={navigating} />
+        {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
+        <MenuIcons board={board} ach={ach} achSlot={trophy} settingsSlot={settingsSlot} navigating={navigating} />
 
-        {/* RIGHT, under the icons: sound + CREDITS + the live room. They JOIN this cluster (no orphan
+        {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
         <div className="homepage-footer-links hp-extras">
-          <AudioControls variant="inline" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
           <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
             CREDITS
           </button>

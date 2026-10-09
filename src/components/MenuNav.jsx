@@ -24,7 +24,7 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
       {board && (
@@ -52,6 +52,8 @@ export function MenuIcons({ board, ach, achSlot = null, navigating }) {
         ariaLabel={ach.count > 0 ? `Open achievements — ${formatNum(ach.count)} to claim` : 'Open achievements'}
         title="Achievements"
       />}
+      {/* SETTINGS (Andy oct9 "top right placement instead"): the cog joins this cluster as its last tile */}
+      {settingsSlot}
     </div>
   );
 }

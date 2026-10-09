@@ -154,7 +154,7 @@ html[data-beat='true'] .homepage-logo {
   100% { transform: scale(1) translateY(0); }
 }
 
-/* ---- top right: LEADERBOARD / STATS / ACHIEVEMENTS (KitIconButton, sized to the mockup) ---- */
+/* ---- top right: LEADERBOARD / ACHIEVEMENTS / SETTINGS (KitIconButton, sized to the mockup) ---- */
 .hp-icons {
   grid-area: icons;
   position: relative;
@@ -169,7 +169,7 @@ html[data-beat='true'] .homepage-logo {
 .hp-icons .kb-iface .kit-icon { width: var(--hp-tr-ico); height: var(--hp-tr-ico); }
 .hp-icons .kb--icon:disabled { opacity: 0.5; pointer-events: none; }
 
-/* ---- under the icons: sound · CREDITS · the live room ---- */
+/* ---- under the icons: CREDITS · the live room (the settings cog moved INTO the icons — Andy oct9) ---- */
 .hp-extras {
   grid-area: extras;
   position: relative;
@@ -183,7 +183,6 @@ html[data-beat='true'] .homepage-logo {
   gap: 4px 10px;
   max-width: 100%;
 }
-.hp-extras .audio-ctrl { position: static; }
 .homepage-credits-link {
   min-height: 44px;
   padding: 0 6px;

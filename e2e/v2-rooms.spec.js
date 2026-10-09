@@ -5,8 +5,8 @@
 //   * JOIN ROOM (SEASON2): one tile per code character fills as you type, the next one lit; JOIN counts n/5;
 //   * LOBBY (SEASON2): the code as letter tiles; 8 seats (the players + open seats); YOU and YOU ARE HOST; a big START
 //     naming the mode; START / LEAVE still send the same messages;
-//   * SETTINGS (SEASON2, the corner sound control): five rows — SOUND · MUSIC · REDUCE MOTION · NUMBER STYLE · KEYBOARD
-//     SOUNDS; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 persists and the menu prints full digits after a reload;
+//   * SETTINGS (SEASON2, the top-right cog): trimmed (Andy oct9) to SOUND (MUTE + bars) · MUSIC · REDUCE MOTION + RANK
+//     PLATE + SAVE PROGRESS; REDUCE MOTION flips live; a stored NUMBER STYLE / KEYBOARD SOUNDS still applies (no UI);
 //   * no JOIN ROOM button on the menu (joining is the mode dialogs' JOIN WITH CODE);
 //   * flag OFF: the live lobby / join screen / sound panel are untouched;
 //   * the four sizes: no scrollbars, no text < 13 px, every control ≥ 44 px.
@@ -81,40 +81,42 @@ test('LOBBY: code tiles, 8 seats (3 players + 5 open), YOU + YOU ARE HOST, a big
   await mock.waitForSent('start_game');
 });
 
-test('SETTINGS: five rows + RANK PLATE + SAVE PROGRESS; REDUCE MOTION flips live; NUMBER STYLE 1,200,000 persists (the pill still abbreviates — it must fit)', async ({ page }) => {
-  await boot(page, { seed: { 'taw.s2.wins': '1234567' } });
-  const btn = page.getByRole('button', { name: /^Settings/ }).first();
+test('SETTINGS (trimmed, Andy oct9): SOUND · MUSIC · REDUCE MOTION + RANK PLATE + SAVE PROGRESS; MUTE + the bars; REDUCE MOTION flips live; a stored NUMBER STYLE / KEYBOARD SOUNDS still applies with no UI', async ({ page }) => {
+  // a save that picked FULL numbers and the keyboard clack before those rows were cut
+  await boot(page, { seed: { 'taw.s2.wins': '1234567', 'taw.numStyle': 'full', 'taw.clack': JSON.stringify({ enabled: true }) } });
+  // the cog is the top-right cluster's tile now (no longer under it / bottom corner)
+  const btn = page.locator('.hp-icons [data-nav="settings"]:visible').first();
+  await expect(btn).toHaveAttribute('aria-label', /^Settings/);
   await btn.click();
   const panel = page.locator('.sp');
   await expect(panel).toBeVisible();
-  // + RANK PLATE and SAVE PROGRESS (Andy oct8: choose your plate; a button to save progress)
-  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'NUMBER STYLE', 'KEYBOARD SOUNDS', 'RANK PLATE', 'SAVE PROGRESS']);
+  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'RANK PLATE', 'SAVE PROGRESS']);
+  await expect(panel.getByRole('radio', { name: '1,200,000' })).toHaveCount(0);
+  await expect(panel.getByRole('switch', { name: 'Keyboard sounds' })).toHaveCount(0);
   // REDUCE MOTION, live
   const rm = panel.getByRole('switch', { name: 'Reduce motion' });
   const before = await rm.getAttribute('aria-checked');
   await rm.click();
   await expect(rm).toHaveAttribute('aria-checked', before === 'true' ? 'false' : 'true');
   expect(await page.evaluate(() => localStorage.getItem('taw.reduceMotion'))).toBe(before === 'true' ? '0' : '1');
-  // NUMBER STYLE
-  await panel.getByRole('radio', { name: '1,200,000' }).click();
-  await expect(panel.getByRole('radio', { name: '1,200,000' })).toHaveAttribute('aria-checked', 'true');
+  // SOUND: a bar sets the level, MUTE silences (events AND the clack) and un-mutes back to that level
+  const mute = panel.getByRole('switch', { name: 'Mute sound' });
+  await panel.getByRole('radio', { name: 'Sound 70' }).click();
+  await expect(page.locator('.sp-val')).toHaveText('70');
+  await expect(mute).toHaveAttribute('aria-checked', 'false');
+  await mute.click();
+  await expect(mute).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('.sp-val')).toHaveText('OFF');
+  expect(await page.evaluate(() => localStorage.getItem('taw.sfxEvents'))).toBe('0');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.clack')).enabled)).toBe(false);
+  await mute.click();
+  await expect(mute).toHaveAttribute('aria-checked', 'false');
+  await expect(page.locator('.sp-val')).toHaveText('70');
+  // the stored NUMBER STYLE still applies: the pill abbreviates (it must fit) but its spoken label carries every digit
   expect(await page.evaluate(() => localStorage.getItem('taw.numStyle'))).toBe('full');
-  await expect(panel.locator('.sp-sub b')).toHaveText('1,200,000');
-  await page.reload();
-  await menuReady(page);
-  // NIGHT oct8 #1a (Andy): a PILL never prints the full figure — 1,234,567 cannot fit it — so the WINS pill reads 1.23M
-  // in either style; the FULL style still holds where a number has room (the pill's spoken label carries every digit)
   const winsPill = page.locator('.menu-wins-chip:visible').first();
   await expect(winsPill.locator('.kp-num')).toHaveText('1.23M');
   await expect(winsPill).toHaveAttribute('aria-label', /1,234,567/);
-  // KEYBOARD SOUNDS + SOUND are real controls
-  await page.getByRole('button', { name: /^Settings/ }).first().click();
-  const kb = page.locator('.sp').getByRole('switch', { name: 'Keyboard sounds' });
-  const k0 = await kb.getAttribute('aria-checked');
-  await kb.click();
-  await expect(kb).toHaveAttribute('aria-checked', k0 === 'true' ? 'false' : 'true');
-  await page.locator('.sp').getByRole('radio', { name: 'Sound 70' }).click();
-  await expect(page.locator('.sp-val')).toHaveText('70');
 });
 
 test('no JOIN ROOM button on the menu — joining is JOIN WITH CODE in a mode dialog', async ({ page }) => {
