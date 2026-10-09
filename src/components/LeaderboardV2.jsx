@@ -185,14 +185,16 @@ const RENAME_ERROR = {
   rate_limited: 'TOO MANY NEW NAMES FROM HERE. TRY LATER.',
   rename_cooldown: 'ONE NAME CHANGE PER DAY. TRY TOMORROW.',
 };
-/** The inline CHANGE NAME box: the same client verdict + server "taken" check + lb_claim the live screen used. */
-function RenameBox({ current, cjk, onDone }) {
+/** The inline CHANGE NAME box: the same client verdict + server "taken" check + lb_claim the live screen used.
+ *  `claim` (no name yet — Andy oct9: a fresh player sees THIS board too): the same box, worded as the first claim,
+ *  and it does not grab focus (it is open on arrival, and a phone keyboard would cover the board). */
+function RenameBox({ current, cjk, onDone, claim = false }) {
   const [draft, setDraft] = useState('');
   const [verdict, setVerdict] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const inputRef = useRef(null);
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { if (!claim) inputRef.current?.focus(); }, [claim]);
   useEffect(() => {
     if (!draft) { setVerdict(null); return undefined; }
     const local = nameVerdict(draft, { cjk });
@@ -217,10 +219,10 @@ function RenameBox({ current, cjk, onDone }) {
       setBusy(false);
     }
   }
-  const msg = err || (verdict ? RENAME_VERDICT[verdict] : 'ONE NAME CHANGE PER DAY');
+  const msg = err || (verdict ? RENAME_VERDICT[verdict] : claim ? 'NO SIGN-IN. JUST A NAME.' : 'ONE NAME CHANGE PER DAY');
   return (
-    <form className="lb2-rename" onSubmit={save} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onDone(null); } }}>
-      <label className="lb2-rename-l" htmlFor="lb2-rename-input">NEW NAME</label>
+    <form className={`lb2-rename${claim ? ' is-claim' : ''}`} onSubmit={save} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onDone(null); } }}>
+      <label className="lb2-rename-l" htmlFor="lb2-rename-input">{claim ? 'CLAIM YOUR NAME' : 'NEW NAME'}</label>
       <div className="lb2-rename-row">
         <input
           id="lb2-rename-input"
@@ -228,12 +230,12 @@ function RenameBox({ current, cjk, onDone }) {
           className="lb2-rename-input"
           value={draft}
           onChange={(e) => setDraft(e.target.value.slice(0, 16))}
-          placeholder={current}
+          placeholder={claim ? 'YOUR_NAME' : current}
           autoComplete="off"
           spellCheck="false"
           maxLength={16}
         />
-        <button type="submit" className="lb2-rename-save" disabled={busy || verdict !== 'ok'}>{busy ? '…' : 'SAVE'}</button>
+        <button type="submit" className="lb2-rename-save" disabled={busy || verdict !== 'ok'}>{busy ? '…' : claim ? 'CLAIM' : 'SAVE'}</button>
         <button type="button" className="lb2-rename-x" onClick={() => onDone(null)} aria-label="Cancel">✕</button>
       </div>
       <p className={`lb2-rename-msg${err || verdict === 'blocked' || verdict === 'taken' || verdict === 'shape' ? ' is-bad' : verdict === 'ok' ? ' is-ok' : ''}`} aria-live="polite">{msg}</p>
@@ -251,7 +253,8 @@ export default function LeaderboardV2({ onBack }) {
   const [profile, setProfile] = useState(() => getMyProfile());
   // CHANGE NAME lives ON this board (Andy oct8: "why does changing name show the old leaderboard? there shouldn't be
   // 2 separate leaderboards") — an inline name box under YOU, not a hop to the season-1 screen.
-  const [renaming, setRenaming] = useState(false);
+  // no name yet → the box is open on arrival, as the claim prompt (Andy oct9: everyone sees this board)
+  const [renaming, setRenaming] = useState(() => !getMyProfile());
   const [caps, setCaps] = useState({ weekly: false });
   const [tab, setTab] = useState('all');
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
@@ -372,9 +375,17 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-me-a">CHANGE</span>
               </button>
             )}
-            {profile && renaming && (
+            {!profile && (
+              <button type="button" className="lb2-me-btn is-claim" onClick={() => setRenaming((v) => !v)} aria-expanded={renaming} aria-label="You have no name on the board yet. Claim a name">
+                <span className="lb2-me-k">YOU</span>
+                <span className="lb2-me-v" style={{ '--nl': nameEms('NO NAME') }}>NO NAME</span>
+                <span className="lb2-me-a">CLAIM</span>
+              </button>
+            )}
+            {renaming && (
               <RenameBox
-                current={profile.username}
+                current={profile ? profile.username : ''}
+                claim={!profile}
                 cjk={!!caps.cjk}
                 onDone={(row) => {
                   setRenaming(false);
@@ -466,7 +477,7 @@ export default function LeaderboardV2({ onBack }) {
                 <div className="lb2-ends"><span>YOU {fromTo(chase.unit, chase.from)}</span><span>#{fmt(chase.target)} {fromTo(chase.unit, chase.to)}</span></div>
               </>
             ) : (
-              <div className="lb2-panel-msg">{meRow ? (Number(meRow.rank) === 1 ? 'YOU’RE #1 — HOLD IT' : 'CLIMB TO CHASE') : 'TYPE TO GET ON THE BOARD'}</div>
+              <div className="lb2-panel-msg">{meRow ? (Number(meRow.rank) === 1 ? 'YOU’RE #1 — HOLD IT' : 'CLIMB TO CHASE') : profile ? 'TYPE TO GET ON THE BOARD' : 'CLAIM A NAME TO GET ON THE BOARD'}</div>
             )}
           </div>
           <div className="lb2-panel lb2-climb">

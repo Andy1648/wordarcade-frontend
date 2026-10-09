@@ -677,6 +677,9 @@
   cursor: pointer;
 }
 .lb2-rename-save { background: #2EFFE0; color: #000; }
+/* the buttons never shrink under their word (the CLAIM-mode label is wider than SAVE — the input gives instead) */
+.lb2-rename-save,
+.lb2-rename-x { flex: none; }
 .lb2-rename-save:disabled { background: #3a2a52; color: #9a8ab8; cursor: not-allowed; }
 .lb2-rename-x { background: #2a1450; color: #fff; padding: 0; }
 .lb2-rename-msg { margin: 0; font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(14px, var(--fs-label)); color: #b9a8d6; text-transform: uppercase; }
