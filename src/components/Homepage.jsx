@@ -88,6 +88,8 @@ const warmModeDialog = () => {
 // The NEW SYSTEM / NEW MARK reveal sticker loads when a claim reveals (payload ratchet).
 const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'ClaimReveal');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
+// YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
+const GearSheetOverlay = lazyWithReload(() => import('./GearSheetOverlay.jsx'), 'GearSheetOverlay');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -1214,7 +1216,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
-  const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} /> : null;
+  // YOUR GEAR (Andy oct9: "clicking the 'your gear' should show the gear stats not go to roll"): a worn gear opens its
+  // GEAR SHEET over the menu (the MARKS overlay slot, view 'gear'); nothing worn → ROLL, as before (nothing to show)
+  const wornGear = markShown ? markEntry(equippedMark) : null;
+  const openGear = () => {
+    if (navigating) return;
+    if (!wornGear) { openMarks('roll'); return; }
+    sound.click();
+    setShowMarks('gear');
+  };
+  const closeGear = () => {
+    setShowMarks(false);
+    requestAnimationFrame(() => focusNav(navRootRef.current, 'gear'));
+  };
+  const markChip = markShown ? <MenuMarkChip mark={wornGear} onClick={openGear} /> : null;
   // THE HONEST RATE LINE (feat/menu-perrow, Andy oct6 "unclear per-key XP"): what a MENU key pays and what a GAME
   // letter pays, both live — the menu is a fifth of a game letter (xp.js MENU_LETTER_SHARE, whole XP, never 0).
   // SEASON 2 (v4 "SIMPLE"): games pay wins only, so the line is ONE number — what a menu key pays (letterXpNow).
@@ -1239,7 +1254,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     </span>
   );
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
-  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
+  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={wornGear} onClick={openGear} disabled={navigating} /> : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
   // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
@@ -1471,7 +1486,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* MARKS overlay — one slot: the ROLL screen (its INDEX button opens the MARKS INDEX in the same slot); the
           rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
-      {showMarks && (
+      {showMarks === 'gear' && (
+        <ScreenBoundary name="gear-sheet" onBack={closeGear}>
+          <Suspense fallback={null}>
+            <GearSheetOverlay
+              markId={equippedMark}
+              unlockedIds={markIdList}
+              earned={earnedAch}
+              onEquip={(id) => setEquippedMark(ROLLS ? id : equipMark(id, earnedAch))}
+              onClose={closeGear}
+            />
+          </Suspense>
+        </ScreenBoundary>
+      )}
+      {showMarks && showMarks !== 'gear' && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>
             <MarksIndex

@@ -33,6 +33,7 @@
   --b6: max(3px, calc(6 * max(var(--u), 0.85px)));
   --fs-hp13: max(14px, calc(15.86 * var(--u)));
   --fs-hp18: max(17px, calc(21.96 * var(--u)));
+  --fs-hpgearn: max(18px, calc(20 * var(--u)));  /* YOUR GEAR's crit NUMBER (Andy: numbers ≥ 18px) */
   --fs-hp24: max(21px, calc(29.28 * var(--u)));
   --fs-hplv: max(40px, calc(70.76 * var(--u)));
   --fs-hplvin: max(22px, calc(28 * var(--u)));   /* NIGHT oct8 #1b: the LV numeral on the bar's plate */
@@ -347,6 +348,13 @@ html[data-beat='true'] .homepage-logo {
 .hp-chip.is-new .hp-chip-edge { background: #FF3D7F; }
 /* nothing worn: the chip reads ROLL with a notification dot (SEASON 2 #5) */
 .hp-chip.is-roll .hp-chip-edge { background: #2EFFE0; }
+/* the worn gear's TIER FRAME (Andy oct9, as the YOUR GEAR slot): stripe, border and hard shadow in the tier colour */
+.hp-chip[data-tier] .hp-chip-edge { background: var(--gear-line); }
+.hp-chip[data-tier='common'] { border-color: var(--gear-edge); }
+.hp-chip:is([data-tier='rare'], [data-tier='epic']) { border-color: var(--gear-line); }
+.hp-chip[data-tier='epic'] { box-shadow: var(--b4) var(--b4) 0 var(--gear-edge); }
+.hp-chip:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { border-color: var(--gear-line); background: var(--gear-fill); box-shadow: var(--b4) var(--b4) 0 var(--gear-edge); }
+.hp-chip:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: var(--b5) var(--b5) 0 var(--gear-line); }
 .hp-chip-dot {
   position: absolute;
   top: -8px;
@@ -659,26 +667,47 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   cursor: pointer;
   transition: transform 80ms;
 }
-.hp-gear.is-worn { border-color: var(--gear-line); }
+/* an EPIC+ gear's GearFx glow (z -2) sits behind the slot; ::before repaints the slot's face over the glow's centre */
+.hp-gear.is-worn { border-color: var(--gear-line); isolation: isolate; }
+.hp-gear.is-worn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: inherit; border-radius: 4px; pointer-events: none; }
+/* RARITY is the FRAME (Andy oct9 "a glow or smthn to rarer gears" — a glow breaks the flat rule): the border and the
+   hard offset shadow take the tier colour, quiet → loud. COMMON: its dark edge, black shadow. RARE: the tier line.
+   EPIC: + the shadow in the tier's dark edge. LEGENDARY: + the tier's face colour behind it. MYTHIC / SECRET: the
+   shadow in the full tier colour, a step deeper, and the YOUR GEAR label on a solid tier plate. Static — no motion. */
+.hp-gear[data-tier='common'] { border-color: var(--gear-edge); }
+.hp-gear[data-tier='epic'] { box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
+.hp-gear:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { background: var(--gear-fill); box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
+.hp-gear:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: var(--b6) var(--b6) 0 var(--gear-line); }
+.hp-gear.is-worn:is([data-tier='mythic'], [data-tier='secret']) .hp-gear-label { align-self: flex-start; color: #000; background: var(--gear-line); padding-bottom: calc(3 * var(--u)); border-radius: 0 0 6px 0; }
 .hp-gear:disabled { opacity: 0.5; pointer-events: none; }
 @media (hover: hover) { .hp-gear:hover { transform: translate(-3px, -3px); } }
 .hp-gear:active { transform: translate(3px, 3px); }
+/* the LEGENDARY+ sheen: the INDEX's band asset in a clip the size of the slot, parked off it; MenuNav sweeps it once
+   every ~6 s (finite WAAPI, transform only) */
+.hp-gear-sheen { position: absolute; inset: 0; z-index: 1; border-radius: 4px; overflow: hidden; pointer-events: none; }
+.hp-gear-sheen-band { position: absolute; left: 0; top: 0; width: 70%; height: 100%; display: block; transform: translateX(-110%); }
 .hp-gear-label {
-  font-family: 'Bungee', sans-serif;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: var(--fs-hpunit);
-  letter-spacing: 1px;
+  font-size: var(--fs-hp13);
+  letter-spacing: 0.08em;
+  line-height: 1.2;
   color: #c9b8e8;
-  padding: calc(8 * var(--u)) calc(12 * var(--u)) 0;
+  padding: calc(6 * var(--u)) calc(12 * var(--u)) 0;
 }
 .hp-gear.is-worn .hp-gear-label { color: var(--gear-line); }
-.hp-gear-body { display: flex; align-items: center; gap: calc(12 * var(--u)); padding: calc(4 * var(--u)) calc(12 * var(--u)) calc(10 * var(--u)); }
+.hp-gear-body { display: flex; align-items: center; gap: calc(12 * var(--u)); padding: calc(6 * var(--u)) calc(12 * var(--u)) calc(10 * var(--u)); }
 .hp-gear-cog { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); }
 .hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
-.hp-gear-text { display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: 0; }
-.hp-gear-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp24); line-height: 1; color: #fff; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
-.hp-gear-unit { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hpunit); color: #fff; line-height: 1.15; overflow-wrap: anywhere; }
-.hp-gear-sub { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hpunit); color: #c9b8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hp-gear-text { display: flex; flex-direction: column; gap: calc(3 * var(--u)); min-width: 0; }
+/* the NUMBER (the sheet's MAIN STAT colour), then WHAT it boosts, white, then the crit line, then the name */
+.hp-gear-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp30); line-height: 1; color: #FFE94A; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
+.hp-gear.is-empty .hp-gear-big { font-size: var(--fs-hp24); color: #fff; }
+.hp-gear-unit { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp18); letter-spacing: 0.04em; color: #fff; line-height: 1.1; white-space: nowrap; }
+.hp-gear-crit { display: flex; align-items: baseline; gap: calc(6 * var(--u)); font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp13); line-height: 1.2; color: #c9b8e8; white-space: nowrap; }
+.hp-gear-crit-num { font-size: var(--fs-hpgearn); color: #fff; }
+.hp-gear-sub { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp13); letter-spacing: 0.04em; color: #c9b8e8; white-space: nowrap; }
 .hp-gear.is-worn .hp-gear-sub { color: var(--gear-line); }
 .hp-gear .hp-chip-dot { top: -8px; right: -8px; }
 

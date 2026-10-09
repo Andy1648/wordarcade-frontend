@@ -1,0 +1,47 @@
+/* GearFx.css — THE RARE-GEAR GLOW (GearFx.jsx). DOCUMENTED FLAT-RULE EXCEPTION (CLAUDE.md, Andy oct9 "clash royale
+   cards … they just feel so satisfying"): EPIC+ gears only, the YOUR GEAR slot + the INDEX / GEAR SHEET cards only.
+   The glow is a BAKED asset — public/fx/gear-aura-<tier>.png, a 64px 9-slice whose outer 24px is the pre-rendered
+   falloff — laid round the host as a border-image, so it is full strength at the host's edge and fades over
+   --gfx-out px outside it whatever the host's size (no CSS filter, no blurred shadow). The layer sits BEHIND its
+   host's content (z-index -2 inside a host that isolates; the host covers the solid centre). Nothing here animates:
+   GearFx.jsx runs finite WAAPI opacity / transform cycles. */
+.gfx {
+  position: absolute;
+  inset: calc(-1 * var(--gfx-out, 12px));
+  z-index: -2;
+  pointer-events: none;
+}
+.gfx-aura {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  opacity: var(--gfx-lo, 0.5);
+  border: var(--gfx-out, 12px) solid transparent;
+  border-image-slice: 24 fill;
+  border-image-width: var(--gfx-out, 12px);
+  border-image-repeat: stretch;
+}
+.gfx[data-glow='epic'] .gfx-aura { border-image-source: url('/fx/gear-aura-epic.png'); }
+.gfx[data-glow='legendary'] .gfx-aura { border-image-source: url('/fx/gear-aura-legendary.png'); }
+.gfx[data-glow='mythic'] .gfx-aura { border-image-source: url('/fx/gear-aura-mythic.png'); }
+/* MYTHIC's second colour: a tighter halo, breathing out of phase */
+.gfx[data-glow='mythic'] .gfx-aura.is-2 {
+  inset: calc(var(--gfx-out, 12px) * 0.45);
+  border-width: calc(var(--gfx-out, 12px) * 0.55);
+  border-image-width: calc(var(--gfx-out, 12px) * 0.55);
+  border-image-source: url('/fx/gear-aura-mythic2.png');
+}
+/* SECRET: its own colour — the rainbow is baked into the asset */
+.gfx[data-glow='secret'] .gfx-aura { border-image-source: url('/fx/gear-aura-secret.png'); }
+.gfx-mote {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  opacity: 0;
+  background: var(--gfx-m, #fff);
+  -webkit-mask: url('/fx/gear-mote.svg') center / contain no-repeat;
+  mask: url('/fx/gear-mote.svg') center / contain no-repeat;
+}
+.gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - 17px); }
+.gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - 17px); }
