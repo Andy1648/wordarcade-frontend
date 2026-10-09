@@ -13,6 +13,7 @@
 // Motion: transform / opacity one-shots through the kit (kitPlay — will-change on for the effect only); nothing loops
 // at rest; REDUCE MOTION shows the finished chain at once and plays nothing.
 import StatsBoosts from './StatsBoosts';
+import FitText from './kit/FitText.jsx';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './StatsV2.css';
@@ -420,10 +421,11 @@ export default function StatsV2({ onBack, onMore }) {
                     </span>
                     <span className="st2-chip-names">
                       <span className="st2-chip-name">{r.label}</span>
-                      <span className="st2-chip-tag">{r.tag}</span>
+                      <FitText className="st2-chip-tag">{r.tag}</FitText>
                     </span>
                   </div>
-                  <span className="st2-chip-v">{r.v}</span>
+                  {/* Andy oct9 "make sure things fit": a long figure (×4.78M, 10 + 28) shrinks to the chip, never past it */}
+                  <FitText className="st2-chip-v">{r.v}</FitText>
                 </div>
               </div>
             );

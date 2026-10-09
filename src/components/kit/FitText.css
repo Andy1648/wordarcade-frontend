@@ -1,0 +1,7 @@
+/* FitText — the box takes the width it is given; the text inside scales down (transform only) when it is wider. */
+.fit-box { display: block; min-width: 0; max-width: 100%; white-space: nowrap; }
+.fit-in { display: inline-block; white-space: nowrap; transform-origin: left center; }
+.fit-box.fit-center { text-align: center; }
+.fit-box.fit-center .fit-in { transform-origin: center center; }
+.fit-box.fit-end { text-align: right; }
+.fit-box.fit-end .fit-in { transform-origin: right center; }

@@ -382,9 +382,7 @@
 .st2-chip-tag {
   font-size: max(var(--fs-k18), calc(var(--fs-k18) * var(--st2-k))); /* NIGHT oct8 #5: a tag can be a number (R2) */
   color: #c9b8e8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap; /* a long tag (SINGULARITY, WORD BOMB) SHRINKS to the chip (FitText), never "…" */
 }
 .st2-chip.is-off .st2-chip-name,
 .st2-chip.is-off .st2-chip-tag { color: #5d4a78; }

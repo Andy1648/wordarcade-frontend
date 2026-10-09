@@ -600,10 +600,10 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   letter-spacing: 0;
 }
 .homepage-stage[data-paged] .hp-rail .kb-rwrap.is-locked .kb-rlabel { color: var(--k-dim, #9c90b4); }
-.homepage-stage[data-paged] .hp-rail .kb-rval { margin: 0; overflow: visible; white-space: nowrap; min-width: 0; }
+.homepage-stage[data-paged] .hp-rail .kb-rval { margin: 0; overflow: visible; white-space: nowrap; min-width: 0; align-self: stretch; max-width: 100%; } /* bounded, so a long value FITS (FitText) instead of leaving the tile */
 .homepage-stage[data-paged] .hp-rail .kb-rval-full,
 .homepage-stage[data-paged] .hp-rail .kb-rval-short { display: none; }
-.homepage-stage[data-paged] .hp-rail .kb-rval-tile { display: flex; flex-direction: column; gap: calc(4 * var(--u)); }
+.homepage-stage[data-paged] .hp-rail .kb-rval-tile { display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: 0; }
 .homepage-stage[data-paged] .hp-rail .kb-rval-big {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
@@ -671,6 +671,7 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
 .hp-gear-text { display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: 0; }
 .hp-gear-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp24); line-height: 1; color: #fff; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
+.hp-gear-unit { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hpunit); color: #fff; line-height: 1.15; overflow-wrap: anywhere; }
 .hp-gear-sub { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hpunit); color: #c9b8e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hp-gear.is-worn .hp-gear-sub { color: var(--gear-line); }
 .hp-gear .hp-chip-dot { top: -8px; right: -8px; }
