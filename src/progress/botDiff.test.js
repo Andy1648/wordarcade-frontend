@@ -22,7 +22,9 @@ test('a bots-only win pays by the hardest bot: easy +25% < medium +50% (= the ol
   assert.equal(pay('hard').wins, 1000);
   assert.equal(pay('hard').note, 'HARD BOTS: +100%');
   assert.ok(pay('easy', 'category-blitz').wins > 0, 'Blitz bot rooms now pay too (were 0)');
-  assert.equal(pay('hard', 'word-race').wins, 0, 'a Word Race bot is paced to you — no skill to scale by');
+  // Word Race: bots are paced to you — the bonus follows YOUR speed (12 words in 0.2 min = 60 WPM → +50%)
+  assert.equal(winnerPayout({ mode: 'word-race', iWon: true, gameTotal: 1000, myWords: 12, minutes: 0.2, rivals: bots('hard'), perkMult: 1 }).wins, 500);
+  assert.equal(winnerPayout({ mode: 'word-race', iWon: true, gameTotal: 1000, myWords: 25, minutes: 0.1, rivals: bots('hard'), perkMult: 1 }).wins, 750, 'capped at +75% — a human win (+100%) always pays more');
 });
 
 test('the 5-word floor still holds in a bot room', () => {

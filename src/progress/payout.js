@@ -194,6 +194,15 @@ export const WINNER_FALLBACK = { wordBomb: WINNER_BONUS, blitz: 0, wordRace: 0 }
 // (MEDIUM = today's Word Bomb +50%, so nobody's medium-bot room pays less). Word Bomb + Category Blitz only — a
 // Word Race bot is paced to YOU (race/racePace.js), so it has no skill to scale by.
 export const BOT_DIFF_BONUS = Object.freeze({ easy: 0.25, medium: 0.5, hard: 1 });
+// WORD RACE vs bots (Andy oct8: "scale with time", picked FASTER = MORE): the bots are paced to you, so the bonus
+// follows YOUR speed in that race — +1% per 1.2 WPM, capped at +75% (a real human win pays +100%, so friends
+// always pay more). 30 WPM → +25%, 60 → +50%, 90+ → +75%.
+export const RACE_BOT_WPM_PER_PCT = 1.2;
+export const RACE_BOT_CAP = 0.75;
+export function raceBotBonus(words, minutes) {
+  if (!(words > 0) || !(minutes > 0)) return 0;
+  return Math.min(RACE_BOT_CAP, words / minutes / RACE_BOT_WPM_PER_PCT / 100);
+}
 export const WINNER_GATES = {
   minWinnerWords: 5, // a game you won with fewer valid words is not a match
   minRivalWords: 3, // a rival who typed fewer is an AFK seat, not an opponent
@@ -259,6 +268,12 @@ export function winnerPayout({ mode, iWon, gameTotal, myWords, minutes, rivals, 
   if (mine < WINNER_GATES.minWinnerWords) return fallback('my-words');
   if (!qualified.length) {
     if (!humans.length) {
+      if (k === 'wordRace') {
+        const rb = raceBotBonus(mine, minutes) * pm;
+        if (!(rb > 0)) return fallback('bots');
+        const wpm = Math.round(mine / minutes);
+        return { wins: Math.max(1, Math.round(total * rb)), mult: 1 + rb, tier: 'bots', reason: 'bots-race', capped: null, note: `${wpm} WPM VS BOTS: +${Math.round(rb * 100)}%` };
+      }
       const hb = (k === 'wordBomb' || k === 'blitz') ? hardestBot(list) : null;
       if (!hb) return fallback('bots');
       const bb = BOT_DIFF_BONUS[hb] * pm;
