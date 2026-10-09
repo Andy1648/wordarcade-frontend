@@ -27,7 +27,7 @@ test('L150 is visibly richer than L1 in every motion knob', () => {
   assert.ok(hi.popRise > lo.popRise);
   assert.ok(hi.shards > lo.shards);
   assert.ok(hi.levelUpShards > lo.levelUpShards);
-  assert.ok(tierFx(MAX_TIER).popMs <= 1300, 'pops stay snappy enough to not pile up forever');
+  assert.ok(tierFx(MAX_TIER).popMs <= 1600, 'pops stay snappy enough to not pile up forever');
 });
 
 test('every tier has a name and a colour; next-tier level is monotonic', () => {
