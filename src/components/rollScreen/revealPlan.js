@@ -120,16 +120,5 @@ export function selfCloseMs(tier, ext, { auto = false } = {}) {
   return revealDoneMs(tier, ext) + (auto ? SELF_CLOSE_HOLD.auto : SELF_CLOSE_HOLD.lite);
 }
 
-// ---- the INDEX idle sheen: LEGENDARY+ only, ONE card at a time, ONE shared timer ----
-export const IDLE_SHEEN_TIERS = new Set(['legendary', 'mythic', 'secret']);
-export const IDLE_SHEEN_EVERY_MS = 6000;
-export const IDLE_SHEEN_MS = 900;
-/** The next card to sweep: round-robin over the visible candidates, after `prev` (an index into `ids`). -1 = none. */
-export function nextIdleSheen(ids, visible, prev = -1) {
-  const n = ids.length;
-  for (let k = 1; k <= n; k += 1) {
-    const i = (prev + k + n) % n;
-    if (visible.has(ids[i])) return i;
-  }
-  return -1;
-}
+// ---- the INDEX idle sheen: LEGENDARY+ only, ONE card at a time, ONE shared timer (markCard/idleSheen.js) ----
+export { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS, nextIdleSheen } from '../markCard/idleSheen.js';
