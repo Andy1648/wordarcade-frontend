@@ -178,8 +178,7 @@ export default function MobileMenu({
           WORD
         </h1>
         <div className="hp-m-topr">
-          <AudioControls variant="inline" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />
-          <MenuIcons board={board} ach={ach} achSlot={achSlot} navigating={navigating} />
+          <MenuIcons board={board} ach={ach} achSlot={achSlot} settingsSlot={<AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />} navigating={navigating} />
         </div>
       </div>
 

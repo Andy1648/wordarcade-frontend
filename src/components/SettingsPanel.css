@@ -58,31 +58,35 @@
 .sp-switch-box { width: 44px; display: grid; place-items: center; background: #c9b8e8; border-left: 4px solid #000; color: #000; }
 .sp-switch.is-on .sp-switch-k { background: var(--sp-c); color: #000; }
 .sp-switch.is-on .sp-switch-box { background: #fff; }
-.sp-seg { display: flex; border: 4px solid #000; box-shadow: 4px 4px 0 #000; }
-.sp-seg-b {
+.sp-mute {
   min-height: 44px;
   min-width: 72px;
   padding: 0 10px;
   background: #0d0618;
-  border: 0;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
   cursor: pointer;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
   font-size: var(--fs-k13);
   color: #c9b8e8;
 }
-.sp-seg-b + .sp-seg-b { border-left: 4px solid #000; }
-.sp-seg-b.is-on { background: #FFC23D; color: #000; }
+.sp-mute.is-on { background: #FF3D7F; color: #000; }
 .sp-switch:active,
-.sp-seg-b:active,
+.sp-mute:active,
 .sp-bar:active { transform: translate(2px, 2px); }
 
 @media (max-width: 480px) {
-  .sp-row { flex-wrap: wrap; }
-  .sp-ctl { width: 100%; justify-content: flex-end; }
+  /* SOUND (mute + ten bars) takes its own line; an ON/OFF row keeps its switch beside the text (the text wraps), so
+     the trimmed sheet fits a phone without scrolling */
+  .sp-row--wide { flex-wrap: wrap; }
+  .sp-row--wide .sp-ctl { width: 100%; justify-content: flex-end; }
+  .sp-row:not(.sp-row--wide) .sp-text { flex: 1 1 0; }
+  .sp-row--wide .sp-bar { width: 17px; }
+  .sp-row--wide .sp-val { display: none; } /* the bars ARE the level; MUTE says when it is off */
 }
 
-/* SHORT windows (a 1366 laptop at 125%): the five rows tighten so the sheet fits without a scrollbar */
+/* SHORT windows (a 1366 laptop at 125%): the rows tighten so the sheet fits without a scrollbar */
 @media (max-height: 700px) {
   .sp { gap: 6px; }
   .sp-row { min-height: 50px; padding-top: 3px; padding-bottom: 3px; }

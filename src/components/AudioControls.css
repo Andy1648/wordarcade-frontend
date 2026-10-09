@@ -112,3 +112,8 @@
    TARGET, not a strike — keep it when muted. */
 .game-header-actions .audio-cog { width: 1em; height: 1em; }
 .game-header-actions .audio-ctrl--inline .audio-btn.off::after { display: block; }
+/* KIT variant (Andy oct9 "top right placement instead"): the MENU's settings tile — a KitIconButton in the top-right
+   cluster (MenuIcons), sized by that cluster's rules; this wrapper only anchors the "all quiet" badge + the live
+   panel's popover to it. */
+.audio-ctrl--kit { position: relative; display: block; flex: 0 0 auto; }
+.audio-ctrl--kit .audio-muted-mark { right: -6px; bottom: 2px; pointer-events: none; }

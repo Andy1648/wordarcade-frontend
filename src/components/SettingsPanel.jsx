@@ -1,11 +1,13 @@
-// SettingsPanel.jsx — the v2 SETTINGS (claude/mockups/v2/RoomSettings.dc.html, SEASON2-QUEUE 9d: "5-row settings
-// (REDUCE MOTION, NUMBER STYLE)"). FIVE rows, each a label + a one-line "what it does" + one control:
+// SettingsPanel.jsx — the v2 SETTINGS (claude/mockups/v2/RoomSettings.dc.html). TRIMMED (Andy oct9: "honestly too much
+// useless settings") to what matters — three rows, each a label + a one-line "what it does" + one control, then the
+// RANK PLATE picker and SAVE PROGRESS:
 //
-//   SOUND            10-step bar = the master volume (0 = event sounds off)      audio/audioCore + gameSounds
+//   SOUND            MUTE + a 10-step bar = the master volume (0 = sound off)     audio/audioCore + gameSounds + clack
 //   MUSIC            ON / OFF (App owns the music; it ducks it per screen)        onToggleMusic
-//   REDUCE MOTION    ON / OFF, live (<html data-reduce-motion>)                    lib/reduceMotion
-//   NUMBER STYLE     1.2M | 1,200,000 (format.js NUMBER STYLE, persisted)          format.js
-//   KEYBOARD SOUNDS  ON / OFF (the per-key clack)                                  progress/clack
+//   REDUCE MOTION    ON / OFF, live (<html data-reduce-motion>) — accessibility    lib/reduceMotion
+//
+// NUMBER STYLE and KEYBOARD SOUNDS have no UI any more; their stored values (format.js taw.numStyle, clack taw.clack)
+// still apply exactly as saved. MUTE silences the keyboard clack too, so a save that had it on is never stuck with it.
 //
 // It lives where the app's settings already live — the ONE sound/settings control (AudioControls), which renders this
 // panel in its popover under SEASON2 (CLAUDE.md NO ORPHAN FIXED UI: no new fixed element). Every control is a real
@@ -14,10 +16,10 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
 import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../audio/gameSounds';
-import { enableClack, disableClack, isClackEnabled } from '../progress/clack';
+import { disableClack } from '../progress/clack';
 import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
-import { formatNum, getNumberStyle, setNumberStyle } from '../format';
+import { formatNum } from '../format';
 import { exportSave, importSave } from '../save/saveBackup';
 import { V3 } from '../progress/season';
 import { getPlatePick, setPlatePick } from '../progress/platePick';
@@ -26,9 +28,9 @@ import './SettingsPanel.css';
 
 const STEPS = 10;
 
-function Row({ tone, label, sub, children }) {
+function Row({ tone, label, sub, wide = false, children }) {
   return (
-    <div className="sp-row" style={{ '--sp-c': tone }}>
+    <div className={`sp-row${wide ? ' sp-row--wide' : ''}`} style={{ '--sp-c': tone }}>
       <div className="sp-text">
         <span className="sp-label">{label}</span>
         <span className="sp-sub">{sub}</span>
@@ -123,32 +125,37 @@ function PlateRow() {
 
 export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet = false, sfxMuted = false, onToggleSfx = null, onClose, onChange }) {
   const [vol, setVol] = useState(() => (isEventSoundsEnabled() ? Math.round(getMasterVolume() * STEPS) : 0));
-  const [clack, setClack] = useState(() => isClackEnabled());
-  const [style, setStyle] = useState(() => getNumberStyle());
+  // the level MUTE returns to (the last one heard; a fresh save un-mutes to the stored master volume)
+  const [back, setBack] = useState(() => Math.max(1, Math.round(getMasterVolume() * STEPS)) || STEPS);
   const reduceOn = useReduceMotion();
 
   const setLevel = (n) => {
     ensureCtx(); // a user gesture: safe to warm the context so the change is audible
     if (n <= 0) {
       disableEventSounds();
+      disableClack(); // MUTE = quiet: the (no-longer-shown) keyboard clack goes too
     } else {
       if (!isEventSoundsEnabled()) enableEventSounds();
       setMasterVolume(n / STEPS);
+      setBack(n);
     }
     setVol(n);
     if (onChange) onChange();
   };
-  const toggleClack = () => {
-    if (clack) disableClack();
-    else enableClack();
-    setClack(!clack);
-    if (onChange) onChange();
-  };
-  const pickStyle = (s) => setStyle(setNumberStyle(s));
 
   const rows = (
     <div className="sp" role="group" aria-label="Settings">
-      <Row tone="#FFE94A" label="SOUND" sub="BOOMS, DINGS, BUZZERS">
+      <Row tone="#FFE94A" label="SOUND" sub="BOOMS, DINGS, BUZZERS" wide>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={vol === 0}
+          aria-label="Mute sound"
+          className={`sp-mute${vol === 0 ? ' is-on' : ''}`}
+          onClick={() => setLevel(vol === 0 ? back : 0)}
+        >
+          {vol === 0 ? 'MUTED' : 'MUTE'}
+        </button>
         <div className="sp-bars" role="radiogroup" aria-label={`Sound ${vol * 10}`}>
           {Array.from({ length: STEPS }, (_, i) => (
             <button
@@ -163,22 +170,13 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
             />
           ))}
         </div>
-        <span className="sp-val">{formatNum(vol * 10)}</span>
+        <span className="sp-val">{vol === 0 ? 'OFF' : formatNum(vol * 10)}</span>
       </Row>
       <Row tone="#B04BFF" label="MUSIC" sub="LOBBY + MATCH TRACKS">
         <OnOff on={!musicMuted} onClick={onToggleMusic} label="Music" />
       </Row>
       <Row tone="#2EFFE0" label="REDUCE MOTION" sub="ON = CALMER">
         <OnOff on={reduceOn} onClick={() => setReduceMotion(!reduceOn)} label="Reduce motion" />
-      </Row>
-      <Row tone="#FFC23D" label="NUMBER STYLE" sub={<>SCORE <b>{style === 'full' ? '1,200,000' : '1.2M'}</b></>}>
-        <div className="sp-seg" role="radiogroup" aria-label="Number style">
-          <button type="button" role="radio" aria-checked={style === 'short'} className={`sp-seg-b${style === 'short' ? ' is-on' : ''}`} onClick={() => pickStyle('short')}>1.2M</button>
-          <button type="button" role="radio" aria-checked={style === 'full'} className={`sp-seg-b${style === 'full' ? ' is-on' : ''}`} onClick={() => pickStyle('full')}>1,200,000</button>
-        </div>
-      </Row>
-      <Row tone="#FF3D7F" label="KEYBOARD SOUNDS" sub="CLICK ON EVERY KEY">
-        <OnOff on={clack} onClick={toggleClack} label="Keyboard sounds" />
       </Row>
       <PlateRow />
       <SaveRow />
