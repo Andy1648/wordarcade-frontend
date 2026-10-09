@@ -606,6 +606,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
   useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
+  // THE DAILY FREE DROP (season 2, v3/dailyDrop.js via the V3 holder): the UPGRADES dot is also on while today's free
+  // chest is waiting; a claim (or a new local day, re-read when the tab comes back) moves it. No polling.
+  const [dropReady, setDropReady] = useState(() => !!(SEASON2 && V3.drop && V3.drop.dropReady()));
+  useEffect(() => {
+    if (!SEASON2 || !V3.drop) return undefined;
+    const re = () => setDropReady(V3.drop.dropReady());
+    window.addEventListener(V3.drop.DROP_CHANGE, re);
+    document.addEventListener('visibilitychange', re);
+    return () => {
+      window.removeEventListener(V3.drop.DROP_CHANGE, re);
+      document.removeEventListener('visibilitychange', re);
+    };
+  }, []);
   const { progress: xpProgress, refresh: refreshXp } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
@@ -1204,7 +1217,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // GEARS are icon + label only; the DOT is the whole signal — on while something is actionable (an upgrade or a roll
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
-    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: null },
+    shop: { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null },
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: null, locked: rollLock },

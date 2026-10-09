@@ -6,6 +6,7 @@
 //   * POWER (left) — "wins buy only POWER": the price is keyTierCost(P) (PROGRESSION FINAL: 300 × 8^P — v3/econ.js), the
 //     buy is shop.buyKeyPower() (the v3 swap counts the POWER LEVEL achievement), on a 1 s KitHoldButton (one POWER
 //     per hold). The plate is a tilted square carrying the kit POWER key.
+//   * DAILY FREE DROP (top of the right column, DailyDrop.jsx / v3/dailyDrop.js) — one free chest a local day.
 //   * STOCK (right) — six GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,
 //     ×N LEFT, a 5:00 RESTOCK chip on the wall clock, the kit SOLD OUT stamp. FREE EPIC+ ROLL is shown but not sold
 //     yet (its reveal is the ROLL screen's, P6).
@@ -26,6 +27,7 @@ import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import ShopV2Looks from './ShopV2Looks';
+import DailyDrop from './DailyDrop';
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
@@ -233,6 +235,8 @@ export default function ShopV2({ onBack }) {
         </section>
 
         <section className="sp2-stock" aria-label="Boosts">
+          {/* THE DAILY FREE DROP — above the shelf tabs at every width; it rides the RESTOCK clock's 1 s tick (`now`) */}
+          {V3.drop ? <DailyDrop now={now} /> : null}
           <div className="sp2-stock-head">
             <div className="sp2-tabs" role="tablist" aria-label="Shop shelves">
               {[['boosts', 'BOOSTS'], ['looks', 'LOOKS'], ['codes', 'CODES']].map(([k, label]) => (

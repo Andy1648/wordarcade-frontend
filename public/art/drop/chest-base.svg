@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 168" width="170" height="168">
+  <!-- DAILY FREE DROP chest — the BASE (the lid is chest-lid.svg, same viewBox, stacked on top and hinged at its
+       back-left corner). Flat fills, coloured outlines (a darker shade of each fill), one hard black offset shadow,
+       a leaning body, a gold drip off the strap and a little overspray. -->
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <!-- hard offset shadow -->
+    <path transform="translate(7 8)" fill="#000" d="M16 76 L152 72 L146 140 Q86 148 22 141 Z"/>
+    <!-- the open mouth (hidden under the lid until it lifts): dark inside + gems peeking -->
+    <path fill="#22063f" stroke="#45087a" stroke-width="5" d="M17 77 Q84 56 151 73 Q86 90 17 77 Z"/>
+    <path fill="#2EFFE0" stroke="#0f8f80" stroke-width="3" d="M48 75 L56 62 L68 64 L70 76 Z"/>
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="3" d="M104 76 L109 61 L122 64 L121 75 Z"/>
+    <path fill="#FF4FA3" stroke="#b0186a" stroke-width="3" d="M30 76 L34 68 L42 69 L42 77 Z"/>
+    <!-- body -->
+    <path fill="#7a14cc" d="M16 76 L152 72 L146 140 Q86 148 22 141 Z"/>
+    <!-- side shade (flat, lower-right) -->
+    <path fill="#5f0fa3" d="M128 74 L152 72 L146 140 Q138 141 126 142 Z"/>
+    <!-- planks -->
+    <path fill="none" stroke="#45087a" stroke-width="4" d="M21 100 Q84 96 149 97 M23 121 Q86 118 147 120"/>
+    <path fill="none" stroke="#45087a" stroke-width="6" d="M16 76 L152 72 L146 140 Q86 148 22 141 Z"/>
+    <!-- gold corner caps -->
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M16 76 L36 75 L34 88 L18 92 Z"/>
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M152 72 L131 73 L133 86 L151 89 Z"/>
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M22 141 L21 127 L37 128 L40 143 Z"/>
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M146 140 L147 125 L131 126 L128 142 Z"/>
+    <!-- the strap + its drip -->
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M80 144 C79 152 77 157 79 161 C81 165 88 164 88 159 C88 155 86 151 87 144 Z"/>
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M72 75 L96 74 L99 145 L70 146 Z"/>
+    <!-- the lock -->
+    <path fill="#FFE94A" stroke="#a88a00" stroke-width="4" d="M68 66 L100 64 L102 92 Q85 96 69 93 Z"/>
+    <path fill="#000" d="M82 73 a5 5 0 1 1 6 0 L89 85 L81 85 Z"/>
+    <path fill="none" stroke="#fff" stroke-width="3.5" d="M73 70 L73 78"/>
+    <!-- glint on the body -->
+    <path fill="none" stroke="#b56bff" stroke-width="4" d="M28 106 L28 116"/>
+    <!-- overspray -->
+    <circle cx="161" cy="112" r="3.5" fill="#7a14cc" stroke="#45087a" stroke-width="2"/>
+    <circle cx="8" cy="128" r="2.5" fill="#FFE94A" stroke="#a88a00" stroke-width="1.5"/>
+    <circle cx="112" cy="160" r="3" fill="#000"/>
+    <circle cx="58" cy="158" r="2" fill="#7a14cc"/>
+  </g>
+</svg>

@@ -28,7 +28,7 @@ export let ROLL_PRICE_GEMS = 10;
 export const GEMS_KEY = 'taw.gems'; // (v3: taw.s2.gems — mapped at the storage layer, v3/install.js)
 
 // The reasons a gem can be granted (the ledger's `reason`; the sim's "by source").
-export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement']; // v3 ACHIEVEMENTS pay gems
+export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement', 'daily']; // v3 ACHIEVEMENTS pay gems; 'daily' = the DAILY FREE DROP
 
 // ------------------------------------------------------------------------------------ state
 // taw.gems = { v: 1, bal, peak (highest level that has paid LEVEL_UP), streak (game wins in a row), mig (the
