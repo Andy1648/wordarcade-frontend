@@ -96,3 +96,25 @@ test('phone 390×844: the same screen, a claim pays, no horizontal overflow', as
   await ach.locator('.av3-back').click();
   await expect(ach).toHaveCount(0);
 });
+
+// Andy oct9 "make achievements have the notification symbol too": the menu trophy wears the same plain notification dot
+// as the other nav buttons while a tier is ready to claim — and it clears once nothing is claimable.
+for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
+  test(`@${vp.width}: the menu trophy dots while a tier is claimable, and clears once it is claimed`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    const ach = await boot(page, { count: { words: 150, epic: 1 } }); // only TYPE WORDS I is ready
+    const trophy = page.locator(isPhoneMenu(page) ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach');
+    await ach.locator('.av3-back').click();
+    await expect(ach).toHaveCount(0);
+    await expect(trophy.locator('.kb-idot')).toHaveCount(1);
+    await expect(trophy.locator('.kb-idot')).toHaveText(''); // a plain dot — no count (no numbers on the menu)
+    await expect(trophy).toHaveAttribute('aria-label', 'Open achievements — a reward is ready to claim');
+    await trophy.click();
+    await ach.locator('[data-ach="type"] .av3-claim').click();
+    await expect.poll(async () => (await s2(page)).ach).toEqual({ type: 1 });
+    await ach.locator('.av3-back').click();
+    await expect(ach).toHaveCount(0);
+    await expect(trophy.locator('.kb-idot')).toHaveCount(0);
+    await expect(trophy).toHaveAttribute('aria-label', 'Open achievements');
+  });
+}
