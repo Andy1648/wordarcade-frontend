@@ -73,12 +73,16 @@ export const xpSwap = {
   /** xpPerInput (v4 "SIMPLE"): a MENU key pays the FULL rate — 1 × 2^T × 3^R × MARK (× BOOST / OVERDRIVE through the
    *  caller's markMult). No ×0.2 share, no rounding, no floor: T1 = 2 a key, T2 = 4. The ONLY source of XP. */
   k: ({ keyTier, rebirthCount, markMult = 1, baseAdd } = {}) => xpSwap.d(keyTier, rebirthCount, markMult, baseAdd),
-  /** xpPerWord (×10 "XP" units): (10 + mark) × len/5 × MODE × 3^R × MARK × BOOST (× FRENZY on FUSE). */
-  i({ mode = 'menu', rebirthCount, wordLength = 1, bonusMult = 1, baseWinsAdd = 0 } = {}) {
+  /** keyWinsMult (Andy oct10 econ: "games undercompensate"): POWER multiplies WINS too — ×2^T, the same step as XP.
+   *  Words-per-upgrade was 13 → 2,187 over 8 h (median sim; cost ×5 a tier vs wins ×3 a rebirth); with this +
+   *  POWER_COST_STEP 4 it stays 13 → ~770, and R1 holds at ~19 min (gate 18). */
+  l: (keyTier) => powerXpMult(fin(keyTier, getKeyTier())),
+  /** xpPerWord (×10 "XP" units): (10 + mark) × len/5 × MODE × 2^T × 3^R × MARK × BOOST (× FRENZY on FUSE). */
+  i({ mode = 'menu', keyTier, rebirthCount, wordLength = 1, bonusMult = 1, baseWinsAdd = 0 } = {}) {
     const len = Math.floor(pos(wordLength, 1));
     // a worn +N BASE WINS mark scales the base by (10 + N) / 10, exactly as the live receipt shows it (wins.wordWinsBase)
     const base = ((WINS_BASE * 10) / WORD_REF) * ((10 + pos(baseWinsAdd, 0)) / 10);
-    return roundWordXp(finiteCap(base * len * modeMult(mode) * rebirthMultV3(fin(rebirthCount, getRebirths())) * pos(bonusMult, 1)));
+    return roundWordXp(finiteCap(base * len * modeMult(mode) * xpSwap.l(keyTier) * rebirthMultV3(fin(rebirthCount, getRebirths())) * pos(bonusMult, 1)));
   },
 };
 

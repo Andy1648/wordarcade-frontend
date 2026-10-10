@@ -6,10 +6,10 @@
 //   XP for next level need(n) = 100 × 1.15^(n−1)                      (v3/curve.js — O(1) closed-form carry)
 //   XP per MENU KEY   1 × KEY × 3^R × MARK × OVERDRIVE                  v4 "SIMPLE" (Andy Oct 7 23:20): the menu is the
 //                                                                       ONLY XP source; game letters pay NO XP
-//   WINS per word     10 × length/5 × MODE × 3^R × MARK × OVERDRIVE     games only. MODE: WB/Blitz 1 · RACE 1.5 ·
+//   WINS per word     10 × length/5 × MODE × 2^T × 3^R × MARK × OVERDRIVE  games only (2^T: Andy oct10 econ). MODE: WB/Blitz 1 · RACE 1.5 ·
 //                                                                       CHAIN 2 · SAT 5 · FUSE 1 (+ FRENZY ×5)
-//   KEY (POWER)       DOUBLES: tier T is ×2^T (×1, ×2, ×4, ×8 …); T → T+1 costs 150 × 5^T wins; KEPT through rebirth
-//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth, forever (no gems)
+//   KEY (POWER)       DOUBLES XP AND WINS: tier T is ×2^T; T → T+1 costs 150 × 4^T wins (oct10: was 5^T); KEPT through rebirth
+//   REBIRTH           at LV 18 + 20·R → LV 1 (oct10: was 15 + 18·R); ×3 XP & wins per rebirth, forever (no gems)
 //   ASCENSION         none for now (hidden: canAscend is always false; lb_ascend refuses — 027)
 //   GEMS              game-only: 1 in 15 game words drops 3–12 · bot win +18 · +15 per player beaten · streak +4 ·
 //                     achievements 40–200 · 75 a roll. Menu typing gives no gems.
@@ -25,9 +25,9 @@ export const CURVE_GROWTH = 1.15; // × need per level — each level 15% harder
 export const WINS_BASE = 10; // wins for a 5-letter word at R0, MODE ×1, no mark
 export const WORD_REF = 5; // the reference word length (length / 5)
 export const POWER_COST_BASE = 150; // wins for T0 → T1
-export const POWER_COST_STEP = 5; // × price per tier
-export const REBIRTH_GATE_BASE = 15; // R1 at LV15 … (v4: was 18 — CI-sim tuned for an 18–25 min first rebirth from menu keys only)
-export const REBIRTH_GATE_STEP = 18; // … then +18 levels a rebirth (R2 LV33, R5 LV105, R10 LV195; v4: was 20)
+export const POWER_COST_STEP = 4; // × price per tier (Andy oct10 econ: was 5 — with POWER now ×2 on wins too, see hooks.xpSwap.l)
+export const REBIRTH_GATE_BASE = 18; // Andy oct10 econ: was 15 — holds R1 at ~19 min with POWER on wins
+export const REBIRTH_GATE_STEP = 20; // Andy oct10 econ: was 18
 export const ASCENSION_ON = false; // FINAL v2: no ascension for now (hidden)
 export const ASCEND_AT = 10; // kept for the hidden ascension (lb_ascend refuses while ASCENSION_ON is false)
 export const ASCEND_STEP = 5;
@@ -65,7 +65,10 @@ export const ACH_MAX = 200;
 // MARKS (FINAL): the MAIN multiplier by tier (the part above ×1 is marks.js MARK_TIERS[t].bonus in season 2).
 // GEAR OP (Andy oct9: "make the gear stats a bit more OP"): was ×1.25 / 1.5 / 2 / 3 / 5 — every tier's uplift ×1.6–2.25,
 // steeper at the top (RARE +40% · EPIC +80% · LEGENDARY +180% · MYTHIC +400% · SECRET +900%).
-export const MARK_MULT = Object.freeze({ rare: 1.4, epic: 1.8, legendary: 2.8, mythic: 5, secret: 10 });
+// GEARS MORE LUCRATIVE (Andy oct10: "emphasis on having the gears be more lucrative"): was ×1.4 / 1.8 / 2.8 / 5 / 10 —
+// every tier's uplift ×1.5–1.6 (RARE +60% · EPIC +120% · LEGENDARY +260% · MYTHIC +500% · SECRET +1,400%). Every gear stat
+// (base wins / XP, one-mode wins, crit, overdrive) is sized off this table (markRollsCore TIER_PCT).
+export const MARK_MULT = Object.freeze({ rare: 1.6, epic: 2.2, legendary: 3.6, mythic: 6, secret: 15 });
 
 const CAP = 1e300; // every product stays finite (format.js reads it through the named-suffix ladder)
 const int0 = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
@@ -100,15 +103,15 @@ export function xpPerLetter({ power = 0, rebirths = 0, mark = 1, markBase = 0 } 
   return fin(XP_BASE * ((MARK_BASE_REF + b) / MARK_BASE_REF) * powerXpMult(power) * rebirthMult(rebirths) * m);
 }
 /**
- * WINS per word: 10 × (10 + markBase)/10 × length/5 × MODE × 3^R × MARK (unrounded). `mode` = a number or a mode id.
+ * WINS per word: 10 × (10 + markBase)/10 × length/5 × MODE × 2^POWER × 3^R × MARK (unrounded) — POWER on wins since Andy oct10. `mode` = a number or a mode id.
  * `markBase` = a worn +N BASE WINS mark, sized against BASE 10 (exactly as the payout does — hooks.xpSwap.i).
  */
-export function winsPerWord({ length = WORD_REF, mode = 1, rebirths = 0, mark = 1, markBase = 0 } = {}) {
+export function winsPerWord({ length = WORD_REF, mode = 1, power = 0, rebirths = 0, mark = 1, markBase = 0 } = {}) {
   const len = Number.isFinite(length) && length > 0 ? Math.floor(length) : 1;
   const md = typeof mode === 'string' ? modeMult(mode) : Number.isFinite(mode) && mode > 0 ? mode : 1;
   const m = Number.isFinite(mark) && mark > 0 ? mark : 1;
   const b = Number.isFinite(markBase) && markBase > 0 ? markBase : 0;
-  return fin(WINS_BASE * ((10 + b) / 10) * (len / WORD_REF) * md * rebirthMult(rebirths) * m);
+  return fin(WINS_BASE * ((10 + b) / 10) * (len / WORD_REF) * md * powerXpMult(power) * rebirthMult(rebirths) * m);
 }
 /** The LEVEL the next rebirth needs, standing at `rebirths`: LV ≥ 15 + 18·R. */
 export function rebirthGate(rebirths) {

@@ -96,11 +96,11 @@ test('XP for the next level = 100 × 1.15^(n−1); a credit of any size is O(1) 
   assert.deepEqual([s.level, s.leveledUp], [10, false]);
 });
 
-test('KEY: T → T+1 costs 150 × 5^T wins, ×2^T on XP, one at a time', () => {
+test('KEY: T → T+1 costs 150 × 4^T wins (Andy oct10 econ), ×2^T on XP, one at a time', () => {
   reset();
-  assert.deepEqual([0, 1, 2, 3, 4].map((p) => X.keyTierCost(p)), [150, 750, 3750, 18750, 93750]);
+  assert.deepEqual([0, 1, 2, 3, 4].map((p) => X.keyTierCost(p)), [150, 600, 2400, 9600, 38400]);
   assert.equal(X.keyXpMult(4), 16);
-  W.saveWins(150 + 750);
+  W.saveWins(150 + 600);
   const r1 = SH.buyKeyPower();
   const r2 = SH.buyKeyPower();
   assert.deepEqual([r1.ok, r1.tier, r2.ok, r2.tier], [true, 1, true, 2]);
@@ -108,9 +108,9 @@ test('KEY: T → T+1 costs 150 × 5^T wins, ×2^T on XP, one at a time', () => {
   assert.equal(ST3.readCounters().power, 2);
 });
 
-test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
-  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [15, 33, 87, 177]);
-  assert.equal(E.rebirthGate(4), 15 + 18 * 4);
+test('REBIRTH: at LV 18 + 20·R (Andy oct10 econ) → LV 1, ×3, KEY kept, no gems, no ★', () => {
+  assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [18, 38, 98, 198]);
+  assert.equal(E.rebirthGate(4), 18 + 20 * 4);
   reset();
   X.saveKeyTier(4);
   X.saveProgress({ level: 14, frac: 0 });
@@ -182,10 +182,10 @@ test('AUTO REBIRTH: a toggle that opens at R2 (refused below); no 2nd boost slot
   assert.equal(BO.codeBoostMult(now + 1000), 3);
 });
 
-test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.4 · EPIC ×1.8 · LEGENDARY ×2.8 · MYTHIC ×5 · SECRET ×10; pity EPIC+ 10, LEGENDARY+ 50', async () => {
+test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.6 · EPIC ×2.2 · LEGENDARY ×3.6 · MYTHIC ×6 · SECRET ×15 (Andy oct10); pity EPIC+ 10, LEGENDARY+ 50', async () => {
   const M = await import('../marks.js');
   const MRC = await import('../markRollsCore.js');
-  const want = { rare: 1.4, epic: 1.8, legendary: 2.8, mythic: 5, secret: 10 };
+  const want = { rare: 1.6, epic: 2.2, legendary: 3.6, mythic: 6, secret: 15 };
   for (const [t, m] of Object.entries(want)) {
     near(1 + M.MARK_TIERS[t].bonus, m);
     near(MRC.TIER_MAIN[t], m);

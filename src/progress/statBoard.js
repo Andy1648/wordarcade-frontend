@@ -73,6 +73,8 @@ export function statBoard({ mode = BOARD_MODE } = {}) {
     gearBase: Math.max(0, Number(markBaseWins()) || 0), // a worn +N BASE WINS gear's share of the base (STATS shows it)
     lines: [
       { id: 'mode', label: 'MODE', mult: pos(f.mode), tier: null },
+      // POWER on WINS (season 2, Andy oct10 econ): ×2^T — only a line when it pays (season 1 / T0 = ×1)
+      ...(pos(f.key) !== 1 ? [{ id: 'key', label: 'POWER', mult: pos(f.key), tier: keyRarity(kt), keyTier: kt }] : []),
       { id: 'rebirth', label: 'REBIRTH', mult: pos(f.rebirth), tier: rbTier },
       { id: 'mark', label: 'MARK', mult: pos(f.bonus) / index, tier: markTier },
       { id: 'index', label: 'INDEX', mult: index, tier: null },
@@ -145,7 +147,8 @@ export function statChain(stack, { v3 = null, stars = 0, markBaseXp: mbx = 0, ta
   let parts = null;
   let chips;
   if (stack.id === 'wins') {
-    chips = [chip('mode', 'MODE', line('mode').mult), ...rebirthChips, ...tail];
+    // season 2: POWER multiplies WINS too (Andy oct10 econ) — its chip right after MODE, as on the XP side
+    chips = [chip('mode', 'MODE', line('mode').mult), ...(v3 ? [chip('power', 'POWER', line('key').mult)] : []), ...rebirthChips, ...tail];
     if (v3 && Number.isFinite(stack.gearBase) && stack.gearBase > 0) parts = { base: base - stack.gearBase, gear: stack.gearBase };
   } else {
     chips = [chip('power', 'POWER', line('key').mult), ...rebirthChips, ...tail];

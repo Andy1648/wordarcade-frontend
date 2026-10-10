@@ -31,6 +31,7 @@ export { hardestBot };
 // which of them moved this word. Only App's Word Bomb receipt passes them; any other mode leaves them ×1.
 export const PAYOUT_FACTORS = [
   { key: 'mode', label: 'MODE', kind: 'permanent' },
+  { key: 'key', label: 'POWER', kind: 'permanent' }, // season 2 (Andy oct10 econ): POWER ×2^T on wins — ×1 (hidden) in season 1
   { key: 'rebirth', label: 'REBIRTH', kind: 'permanent' },
   // The worn MARK × every rolled mark's perk for this mode (wins.js perWordFactors → `bonus`).
   { key: 'bonus', label: 'MARK', kind: 'permanent' },

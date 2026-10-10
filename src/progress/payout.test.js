@@ -36,7 +36,7 @@ test('retired factors are never named and never multiplied in', () => {
   assert.deepEqual(r.rows.map((x) => x.key), ['mode']);
   assert.equal(r.product, 2);
   assert.equal(r.paid, 20);
-  assert.deepEqual(PAYOUT_FACTORS.map((f) => f.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost', 'rarity', 'length', 'combo', 'lucky', 'cap']);
+  assert.deepEqual(PAYOUT_FACTORS.map((f) => f.key), ['mode', 'key', 'rebirth', 'bonus', 'frenzy', 'boost', 'rarity', 'length', 'combo', 'lucky', 'cap']);
   assert.equal(PAYOUT_FACTORS.find((f) => f.key === 'bonus').label, 'MARK');
 });
 
@@ -104,9 +104,9 @@ test('rows come out in the fixed published order, never in object-key order', ()
   const r = buildPayout({
     base: 100,
     // deliberately reversed on the way in
-    factors: { cap: 0.8, lucky: 5, combo: 1.2, length: 1.1, rarity: 2.5, boost: 3, frenzy: 5, bonus: 1.5, rebirth: 5, mode: 2 },
+    factors: { cap: 0.8, lucky: 5, combo: 1.2, length: 1.1, rarity: 2.5, boost: 3, frenzy: 5, bonus: 1.5, rebirth: 5, key: 4, mode: 2 },
   });
-  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'rebirth', 'bonus', 'frenzy', 'boost', 'rarity', 'length', 'combo', 'lucky', 'cap']);
+  assert.deepEqual(r.rows.map((x) => x.key), ['mode', 'key', 'rebirth', 'bonus', 'frenzy', 'boost', 'rarity', 'length', 'combo', 'lucky', 'cap']);
   // ...and that order is the module's published one.
   assert.deepEqual(r.rows.map((x) => x.key), PAYOUT_FACTORS.map((f) => f.key));
 });

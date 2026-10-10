@@ -19,6 +19,7 @@ import { useWinsBalance } from '../progress/useWinsBalance';
 import { getKeyTier, keyTierCost, keyXpMult } from '../progress/xp';
 import { letterXpNow } from '../progress/letterXp';
 import { buyKeyPower } from '../progress/shop';
+import { perWordRateNow } from '../progress/wins';
 // v3/stock.js rides in the v3 chunk (installed before the first render in season 2) — read through the V3 holder, so
 // no extra shared chunk is added to the eager index's preload map (payload ratchet)
 import { V3 } from '../progress/season';
@@ -147,6 +148,9 @@ export default function ShopV2({ onBack }) {
   const kNow = keyXpMult(tier);
   const kNext = keyXpMult(tier + 1);
   const perNext = kNow > 0 ? (perNow * kNext) / kNow : perNow;
+  // POWER ON WINS (Andy oct10 econ): the same ×2 lands on a Word Bomb word's BASE pay — the card's number, now → next.
+  const winsNow = perWordRateNow({ mode: 'word-bomb' }).rate;
+  const winsNext = perWordRateNow({ mode: 'word-bomb', keyTier: tier + 1 }).rate;
   const onPower = () => {
     const r = buyKeyPower();
     if (!r.ok) {
@@ -213,6 +217,12 @@ export default function ShopV2({ onBack }) {
             <span className="sp2-per-arrow">→</span>
             <span className="sp2-per-next">{formatRate(perNext)}</span>
             <span className="sp2-per-lab">XP / KEY</span>
+          </div>
+          <div className="sp2-per sp2-per-wins">
+            <span className="sp2-per-now">{formatRate(winsNow)}</span>
+            <span className="sp2-per-arrow">→</span>
+            <span className="sp2-per-next">{formatRate(winsNext)}</span>
+            <span className="sp2-per-lab">WINS / WORD</span>
           </div>
           <KitHoldButton
             tone={canPower ? 'yellow' : 'gold'}

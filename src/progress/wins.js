@@ -16,6 +16,7 @@ import {
   keyTierXp,
   getKeyTier,
   modePower,
+  keyWinsMult,
 } from './xp.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { addMarkWord } from './marks.js';
@@ -255,7 +256,7 @@ const BASE_WINS = 10;
  * separate near-1 rows taught nothing, and the player earns them in three different places
  * anyway. Each is still individually earnable and each still multiplies.
  */
-export function perWordFactors({ mode, difficulty, rebirthCount, markId, masteryMult, streakMult, word } = {}) {
+export function perWordFactors({ mode, difficulty, rebirthCount, markId, masteryMult, streakMult, word, keyTier } = {}) {
   const id = gameKey(mode);
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   // The equipped MARK (MARKS v2): its +N% WINS stat (or a PERMANENT's MAIN) × the INDEX bonus (markWinsMult), and
@@ -274,6 +275,7 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
   void difficulty; void stm; void mastery;
   return {
     mode: modePower(id),
+    key: keyWinsMult(keyTier), // POWER on WINS (season 2, Andy oct10 econ): ×2^T — ×1 in season 1. In the ×10 payout (xpSwap.i).
     difficulty: 1,
     rebirth: rebirthMult(rc),
     streak: 1,
