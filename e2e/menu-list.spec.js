@@ -140,8 +140,9 @@ for (const [w, h] of [[390, 844], [360, 640]]) {
     expect(new Set(tops).size, `two rows: ${tops}`).toBe(2);
     expect(tops[0], 'UPGRADES and GEARS share the first row').toBe(tops[1]);
     expect(tops[2], 'REBIRTH and STATS share the second').toBe(tops[3]);
-    // label + number only: no icon on a phone slab
-    await expect(page.locator('.hp-m-rail .kb-rface .kit-icon:visible')).toHaveCount(0);
+    // menu-polish-v2 (Andy oct9 "the 4 icons in the menu … at least some animation"): each slab is the desktop tile in
+    // miniature — the label on the tone strip, the ICON + its number as one centred row (e2e/rail-centre.spec.js)
+    await expect(page.locator('.hp-m-rail .kb-rface .kit-icon:visible')).toHaveCount(4);
     for (const el of await page.locator('.hp-m-rail .kb-rval').all()) expect(parseFloat(await el.evaluate((e) => getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(18);
     // NO COUNTS (Andy oct9): no price on UPGRADES, no roll count on GEARS (557 gems affords rolls → the dot says so)
     await expect(page.locator('.hp-m-rail .is-shop .kb-rval')).toHaveCount(0);

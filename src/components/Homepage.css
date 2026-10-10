@@ -564,11 +564,13 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
   border-bottom: var(--k-ink-m, 3px) solid var(--k-ink, #000);
 }
 .homepage-stage[data-paged] .hp-rail .kb-rface {
+  /* CENTRED (Andy oct9 "the gear icon, 'upgrades' are off center"): the icon, the number and the label all sit on the
+     tile's centre line — symmetric side padding, one column, centred (e2e/rail-centre.spec.js holds it to 1px) */
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
   gap: calc(4 * var(--u));
-  padding: calc(var(--fs-hptilelabel) + 18 * var(--u)) calc(8 * var(--u)) calc(8 * var(--u)) calc(10 * var(--u));
+  padding: calc(var(--fs-hptilelabel) + 14 * var(--u)) calc(8 * var(--u)) calc(6 * var(--u));
 }
 .homepage-stage[data-paged] .hp-rail .kb-rface .kit-icon {
   position: relative;
@@ -586,7 +588,9 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .homepage-stage[data-paged] .hp-rail .kb-rtext { display: contents; }
 .homepage-stage[data-paged] .hp-rail .kb-rlabel {
   position: absolute;
-  left: calc(12 * var(--u));
+  left: 0;
+  right: 0;
+  justify-content: center;
   top: 0;
   height: calc(var(--fs-hptilelabel) + 10 * var(--u));
   display: flex;
@@ -599,13 +603,14 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .homepage-stage[data-paged] .hp-rail .kb-rval { margin: 0; overflow: visible; white-space: nowrap; min-width: 0; align-self: stretch; max-width: 100%; } /* bounded, so a long value FITS (FitText) instead of leaving the tile */
 .homepage-stage[data-paged] .hp-rail .kb-rval-full,
 .homepage-stage[data-paged] .hp-rail .kb-rval-short { display: none; }
-.homepage-stage[data-paged] .hp-rail .kb-rval-tile { display: flex; flex-direction: column; gap: calc(4 * var(--u)); min-width: 0; }
+.homepage-stage[data-paged] .hp-rail .kb-rval-tile { display: flex; flex-direction: column; align-items: center; gap: calc(4 * var(--u)); min-width: 0; }
+.homepage-stage[data-paged] .hp-rail .kb-rval { text-align: center; }
 .homepage-stage[data-paged] .hp-rail .kb-rval-big {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
   font-size: var(--fs-hptile);
   line-height: 1;
-  color: #fff;
+  color: var(--kb-val, var(--kb-face, #fff)); /* the destination's colour (Andy oct9: palette colours, not plain white) */
   -webkit-text-stroke: var(--b4) #000;
   paint-order: stroke fill;
   text-shadow: var(--b4) var(--b4) 0 #000;
@@ -621,7 +626,47 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 @media (hover: hover) {
   .homepage-stage[data-paged] .hp-rail .kb--rail:hover .kb-rface { transform: translate(-3px, -3px); }
 }
-.homepage-stage[data-paged] .hp-rail .kb--rail:active .kb-rface { transform: translate(3px, 3px); }
+/* PRESS: the face sinks the whole way onto its hard shadow (the shadow is offset by --b5) */
+.homepage-stage[data-paged] .hp-rail .kb--rail:active .kb-rface { transform: translate(var(--b5), var(--b5)); }
+/* ---- THE RAIL ICONS (both trees): optical centre + the tiles' motion ----
+   OPTICAL CENTRE: a kit icon's ink is not centred in its 100-unit box (GEARS is drawn around the small cog the rail
+   hides; UPGRADES' plate juts right), so each is shifted by its measured ink offset (% of its own box, stroke
+   included, the hard drop excluded) — the `translate` property, which composes with every `transform` below.
+   MOTION (MENU MOTION LAW — the sanctioned tile beat + nudge): transform only, on the icon, never at rest.
+     hover  the icon pops + tilts (the face lifts — the kit's rule above)
+     press  the icon squashes, the face sinks onto its hard shadow
+     beat   html[data-beat] — a small icon bounce, staggered UPGRADES → GEARS → REBIRTH → STATS, inside the beat's
+            120 ms window (delay + duration ≤ 120 ms) like the title-beat-pop
+     nudge  a tile with an actionable dot nudges its icon once every ~8 s (MenuNav.jsx: one shared setTimeout, WAAPI) */
+.hp-rail .kb-rico .kit-icon[data-icon='shop'] { translate: -4.4% 2.6%; }
+.hp-rail .kb-rico .kit-icon[data-icon='gears'] { translate: -4.8% -8.8%; }
+.hp-rail .kb-rico .kit-icon[data-icon='rebirth'] { translate: 0.6% -2.1%; }
+.hp-rail .kb-rico .kit-icon[data-icon='stats'] { translate: -2.8% -1.9%; }
+.hp-rail .kb-rico .kit-icon[data-icon='lock'] { translate: 1.7% 0; }
+.hp-rail .kb-rico .kit-icon { transition: transform 180ms cubic-bezier(.2, 1.6, .4, 1); }
+@media (hover: hover) {
+  .hp-rail .kb--rail:not([aria-disabled]):hover .kb-rico .kit-icon { transform: scale(1.18) rotate(-9deg); will-change: transform; }
+}
+.hp-rail .kb--rail:not([aria-disabled]):active .kb-rico .kit-icon { transform: scale(0.86) rotate(5deg); transition-duration: 70ms; will-change: transform; }
+html[data-beat='true'] .hp-rail .kb-rico {
+  animation: hp-rail-beat 80ms ease-out;
+  will-change: transform;
+}
+html[data-beat='true'] .hp-rail .kb-rwrap.is-gears .kb-rico { animation-delay: 12ms; }
+html[data-beat='true'] .hp-rail .kb-rwrap.is-rebirth .kb-rico { animation-delay: 24ms; }
+html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 36ms; }
+@keyframes hp-rail-beat {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-5px) scale(1.12) rotate(-4deg); }
+  100% { transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-beat='true'] .hp-rail .kb-rico { animation: none !important; }
+  .hp-rail .kb-rico .kit-icon,
+  .hp-rail .kb--rail:hover .kb-rico .kit-icon,
+  .hp-rail .kb--rail:active .kb-rico .kit-icon { transition: none !important; transform: none !important; }
+}
+
 .homepage-stage[data-paged] .homepage-cards-region { justify-content: center; } /* slack splits above/below the cards, never a band under the pager */
 
 /* ---- YOUR GEAR (feat/menu-perrow; the rate line was removed — Andy oct9) ---- */
