@@ -683,13 +683,13 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .hp-gear-art { position: relative; flex: 0 0 auto; display: grid; place-items: center; }
 .hp-gear-cog { flex: 0 0 auto; width: calc(var(--hp-tile-ico) * 2); height: calc(var(--hp-tile-ico) * 2); } /* gear UI v3: the showcase glyph is the slot's hero — big enough for its pop to read */
 .hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
-.hp-gear-text { position: relative; z-index: 1; display: flex; flex-direction: column; gap: calc(3 * var(--u)); min-width: 0; } /* above the showcase ring + flash */
+.hp-gear-text { position: relative; z-index: 1; flex: 1 1 auto; display: flex; flex-direction: column; gap: calc(3 * var(--u)); min-width: 0; } /* above the showcase ring + flash */
 /* the NUMBER (the sheet's MAIN STAT colour), then WHAT it boosts, white, then the crit line, then the name */
 .hp-gear-big { transform-origin: 0 60%; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp30); line-height: 1; color: #FFE94A; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
 .hp-gear.is-empty .hp-gear-big { font-size: var(--fs-hp24); color: #fff; }
 .hp-gear-unit { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp13); letter-spacing: 0.03em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; line-height: 1.15; white-space: normal; overflow-wrap: break-word; } /* GEAR POOL v2: a one-mode stat ("WINS IN WORD BOMB") wraps inside the slot, never past it */
-.hp-gear-crit { display: flex; align-items: baseline; gap: calc(6 * var(--u)); font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp13); line-height: 1.2; color: #FF4FA3; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
-.hp-gear-crit-num { font-size: var(--fs-hpgearn); color: #fff; }
+.hp-gear-crit { display: block; gap: calc(6 * var(--u)); font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp13); line-height: 1.2; color: #FF4FA3; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
+.hp-gear-crit-num { font-size: var(--fs-hpgearn); color: #fff; margin-right: calc(4 * var(--u)); }
 .hp-gear-sub { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp13); letter-spacing: 0.04em; color: #c9b8e8; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
 .hp-gear.is-worn .hp-gear-sub { color: var(--gear-line); }
 .hp-gear .hp-chip-dot { top: -8px; right: -8px; }

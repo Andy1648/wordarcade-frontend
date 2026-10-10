@@ -214,7 +214,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
               <GearSlotCrit id={mark.id} />
             </Suspense>
           ) : null}
-          <span className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
+          <FitText className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</FitText>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>
       {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
