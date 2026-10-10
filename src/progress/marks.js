@@ -23,7 +23,7 @@
 // STEP 49 (Andy oct2) — ONE MARKS SYSTEM, AND THE WORN MARK MATTERS. The shop's MOMENTUM "marks"
 // are gone (the LETTER FORGE replaced them), so this is the only thing called a mark. Marks are
 // COLLECTIBLES in four rarity TIERS; the one you wear is your MAIN — your title on the menu and the
-// board — and it pays a REAL bonus on every word: COMMON +100%, RARE +150%, EPIC +200%,
+// board — and it pays a REAL bonus on every word: RARE +150%, EPIC +200%,
 // LEGENDARY +300% (rule 2 above was retired by Andy: "≥100%, not 10–25%"). Rank I–V still grows
 // that bonus with the words you wear it for, and each mark keeps its small flavour perk on top.
 // Marks unlock at LV 10 with a NEW SYSTEM reveal, and every new mark is a CLAIM (claims.js) — it
@@ -37,12 +37,12 @@ export const MARKS_EQUIPPED_KEY = 'taw.mark';
 export const MARKS_OWNED_KEY = 'taw.marksOwned';
 export const MARKS_UNLOCK_LEVEL = 10;
 // The MAIN bonus by tier (the part above ×1). MARKS via ROLLS (Andy, PROGRESSION FINAL): the worn MAIN multiplies
-// BOTH XP per letter and wins — COMMON ×1.1, RARE ×1.25, EPIC ×1.5, LEGENDARY ×3, MYTHIC ×10, SECRET ×25.
+// BOTH XP per letter and wins — RARE ×1.25, EPIC ×1.5, LEGENDARY ×3, MYTHIC ×10, SECRET ×25 (GEAR POOL v2, Andy oct9:
+// COMMON is gone — the tier, its marks here and the rolled commons; owned ones were refunded, markRollsCore).
 // GOLD doubles the bonus part, RAINBOW ×5 it (markRollsCore.mainMultOf). Ranks no longer scale the MAIN.
 export const MARK_TIERS = {
-  // `colour` = the tier's ACCENT from the rarity identity (src/lib/rarityStyle.js, Andy oct5): COMMON grey, RARE
-  // blue, EPIC purple, LEGENDARY gold, MYTHIC red-pink, SECRET white-on-black + rainbow.
-  common: { name: 'COMMON', bonus: 0.1, colour: RARITY.common.text },
+  // `colour` = the tier's ACCENT from the rarity identity (src/lib/rarityStyle.js, Andy oct5): RARE blue, EPIC
+  // purple, LEGENDARY gold, MYTHIC red-pink, SECRET white-on-black + rainbow.
   rare: { name: 'RARE', bonus: 0.25, colour: RARITY.rare.text },
   epic: { name: 'EPIC', bonus: 0.5, colour: RARITY.epic.text },
   legendary: { name: 'LEGENDARY', bonus: 2, colour: RARITY.legendary.text },
@@ -57,24 +57,6 @@ export const MARK_TIERS = {
 //   rarityStep : a CHANCE per word to roll the word up one rarity tier
 //   comboKeep  : a CHANCE that a broken combo is kept instead of reset
 export const MARKS = [
-  {
-    id: 'mk-bomber',
-    tier: 'common',
-    name: 'BOMBER',
-    icon: '💣',
-    from: 'm-wb-5',
-    blurb: '+25% wins in WORD BOMB.',
-    effect: { winsMult: 1.25, mode: 'wordBomb' },
-  },
-  {
-    id: 'mk-sprinter',
-    tier: 'common',
-    name: 'SPRINTER',
-    icon: '⚡',
-    from: 'm-blitz-5',
-    blurb: '+25% wins in CATEGORY BLITZ.',
-    effect: { winsMult: 1.25, mode: 'blitz' },
-  },
   {
     id: 'mk-scholar',
     tier: 'rare',
@@ -107,24 +89,6 @@ export const MARKS = [
     effect: { comboKeep: 0.3 },
   },
   {
-    id: 'mk-student',
-    tier: 'common',
-    name: 'STUDENT',
-    icon: '📈',
-    from: 'lv-15',
-    blurb: '+20% wins in every mode.',
-    effect: { xpMult: 1.2 },
-  },
-  {
-    id: 'mk-magpie',
-    tier: 'common',
-    name: 'MAGPIE',
-    icon: '🪙',
-    from: 'dist-500',
-    blurb: '+15% wins in every mode.',
-    effect: { winsMult: 1.15 },
-  },
-  {
     id: 'mk-eternal',
     tier: 'legendary',
     name: 'ETERNAL',
@@ -134,9 +98,6 @@ export const MARKS = [
     effect: { winsMult: 1.5 },
   },
   // ---- STEP 49: eight more, so the collection has a long tail and every tier has a few ----
-  { id: 'mk-linker', tier: 'common', name: 'LINKER', icon: '🔗', from: 'm-chain-5', blurb: '+25% wins in CHAIN.', effect: { winsMult: 1.25, mode: 'chain' } },
-  { id: 'mk-veteran', tier: 'common', name: 'OLD HAND', // H6/M8: not VETERAN — that is the achievement that unlocks it
-    icon: '🎖', from: 'lv-50', blurb: '+20% wins in every mode.', effect: { xpMult: 1.2 } },
   { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins in every mode.', effect: { winsMult: 1.2 } },
   { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
   // PERMANENT (dist-2500) → MAIN ×4, the LEGENDARY bonus (Andy oct3, decision 4). Was EPIC ×3.
@@ -248,11 +209,11 @@ export function markById(id) {
 // eslint-disable-next-line no-unused-vars
 export function markMainMult(m, rank = 1) {
   if (!m) return 1;
-  const t = MARK_TIERS[m.tier] || MARK_TIERS.common;
+  const t = MARK_TIERS[m.tier] || MARK_TIERS.rare;
   return 1 + t.bonus;
 }
 export function markTier(m) {
-  return MARK_TIERS[(m && m.tier) || 'common'];
+  return MARK_TIERS[(m && m.tier) || 'rare'];
 }
 
 function loadOwned() {
@@ -304,7 +265,7 @@ export function checkMarkClaims({ level = 1, rebirths = 0, earned = [] } = {}) {
       kind: 'layer',
       label: 'NEW SYSTEM — MARKS',
       detail: 'marks',
-      meta: { blurb: 'Roll and earn MARKS. WEAR ONE as your title: ×1.1 COMMON up to ×25 SECRET on XP per letter and wins.' },
+      meta: { blurb: 'Roll and earn MARKS. WEAR ONE as your title: ×1.25 RARE up to ×25 SECRET on XP per letter and wins.' },
     });
   }
   const queued = [];

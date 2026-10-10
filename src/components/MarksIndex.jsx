@@ -2,8 +2,9 @@
 // The COLLECTION only — ROLL vs INDEX are TWO screens, never mixed (Andy oct5): no roll buttons, no pity, no gems, no
 // REPLAY. Rolling lives on the ROLL screen (rollScreen/RollScreen.jsx), one "← ROLL" away.
 //
-//   head   ← ROLL · INDEX n/N · one chip per rarity (the tier's colour bar + owned/total; solid when complete)
-//   grid   every mark as its CARD (markCard/MarkCard.jsx): rollable common → secret, then PERMANENT, then a retired
+//   head   ← ROLL · INDEX n/N · one chip per rarity (the tier's colour bar + owned/total; solid when complete) · once,
+//          after GEAR POOL v2 retired COMMON: the one refund line ("3 COMMONS RETIRED · +45 GEMS")
+//   grid   every mark as its CARD (markCard/MarkCard.jsx): rollable rare → secret, then PERMANENT, then a retired
 //          mark the save still owns. Nothing under a card (R2 oct8 #5: no ★ lines — rarity is COLOUR, dupes are the
 //          card's own small ×N; the "7/10 → ★3" progress lives in the detail sheet). The worn MAIN wears a sticker.
 //   LOCKED a HIDDEN design (GEAR TILE v2, Andy oct9): a black silhouette of the mark's own glyph in its tier-coloured
@@ -28,7 +29,7 @@ import { markProgress, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
 import {
   ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ROLLABLE_TIERS, viewState, markLevel, oneInX, collection,
-  permanentOwnedIds, completedTiers,
+  permanentOwnedIds, completedTiers, loadRollState, clearRollNote,
 } from '../progress/markRolls';
 import { wearMark } from '../progress/markRollShop';
 import { registerMarkGlyphs } from './MarkBadge';
@@ -52,7 +53,7 @@ const ACH_HINT = Object.fromEntries(
 );
 const TILE_PARTS = { tier: 'mx-tile-tier', odds: 'mx-tile-odds', name: 'mx-tile-name', stat: 'mx-tile-sub' };
 
-/** Every mark the INDEX draws, in order: rollable (common → secret) with the EARNED gears right after the LEGENDARY
+/** Every mark the INDEX draws, in order: rollable (rare → secret) with the EARNED gears right after the LEGENDARY
  *  ones (Andy oct8: "put them with the normal rarity gears" — they pay the LEGENDARY ×3 and draw as legendary, locked
  *  = ACHIEVEMENT REQUIRED), then retired-but-owned. */
 function buildEntries(unlocked) {
@@ -138,9 +139,12 @@ export default function MarksIndex({
   // storage is read ONCE, on mount — a re-render (a balance write behind) never moves a tile or a counter
   const [snap] = useState(() => {
     const ids = idsRef.current;
-    return { unlocked: new Set(ids), view: viewState(ids), permOwned: new Set(permanentOwnedIds()) };
+    const st = loadRollState();
+    return { unlocked: new Set(ids), view: viewState(ids), permOwned: new Set(permanentOwnedIds()), note: (st && st.note) || null };
   });
-  const { unlocked, view, permOwned } = snap;
+  const { unlocked, view, permOwned, note } = snap;
+  // GEAR POOL v2: the COMMON refund is said ONCE — this visit shows it, the store forgets it
+  useEffect(() => { if (note) clearRollNote(); }, [note]);
   const entries = useMemo(() => buildEntries(unlocked), [unlocked]);
   const ownsId = (id, kind) => (kind === 'roll' ? markLevel(view, id).copies > 0 || unlocked.has(id) : kind === 'perm' ? permOwned.has(id) || unlocked.has(id) : unlocked.has(id));
   const owns = (e) => ownsId(e.id, e.kind);
@@ -199,6 +203,11 @@ export default function MarksIndex({
               </span>
             ))}
           </div>
+          {note ? (
+            <p className="mx-note" data-testid="index-refund">
+              {formatNum(note.commons)} COMMON{note.commons === 1 ? '' : 'S'} RETIRED · <b>+{formatNum(note.gems)} GEMS</b>
+            </p>
+          ) : null}
         </div>
         <div className="mx-grid" role="list" ref={gridRef}>
           {entries.map((e) => {

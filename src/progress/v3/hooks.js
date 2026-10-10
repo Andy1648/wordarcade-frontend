@@ -8,7 +8,7 @@ import { MARK_TIERS } from '../marks.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned } from '../shop.js';
 import { getWins } from '../wins.js';
 import { loadGemState, saveGemState, tellBalance, grantGems, PER_PLAYER_BEATEN as LIVE_PER_PLAYER } from '../gemsCore.js';
-import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue } from '../markRollsCore.js';
+import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue, statHits } from '../markRollsCore.js';
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
   rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
@@ -26,10 +26,10 @@ export const SERVER_FLAG_KEY = `${S2_PREFIX}server`; // the server hook's note (
 const fin = (v, d) => (Number.isFinite(v) ? v : d);
 const pos = (v, d) => (Number.isFinite(v) && v > 0 ? v : d);
 
-// MARKS (PROGRESSION FINAL): the MAIN multiplier by tier — COMMON ×1.1 · RARE ×1.25 · EPIC ×1.5 · LEGENDARY ×2 ·
+// MARKS (PROGRESSION FINAL): the MAIN multiplier by tier — RARE ×1.25 (the floor — GEAR POOL v2 removed COMMON) · EPIC ×1.5 · LEGENDARY ×2 ·
 // MYTHIC ×3 · SECRET ×5. marks.js MARK_TIERS holds the part above ×1 (the live season's LEGENDARY ×3 / MYTHIC ×10 /
 // SECRET ×25); this lazy chunk loads only with the SEASON2 flag, so the live numbers are untouched with it off.
-// The roll stats read the same ladder as a percent (markRollsCore TIER_PCT: +10 / +25 / +50 / +100 / +200 / +400 %).
+// The roll stats read the same ladder as a percent (markRollsCore TIER_PCT: +25 / +50 / +100 / +200 / +400 %).
 // NUMBERS AUDIT (Andy item 5): every ROLLED mark's stat (markRollsCore ROLL_MARKS[].stat) was sized from TIER_PCT
 // when that module LOADED — before this chunk re-tiered it — so in season 2 a LEGENDARY +% WINS / XP mark still paid
 // +200% (×3, FINAL ×2), a SECRET +2,400% (×25, FINAL ×5) and a MYTHIC +90 BASE (×10, FINAL ×3), on the card AND in the
@@ -252,7 +252,7 @@ export function mark2Factor(kind, opts, s, wornId) {
   const id2 = mark2Id();
   if (!id2 || id2 === wornId || !(s && s.marks && s.marks[id2])) return 1;
   const st2 = statOf(id2, s);
-  const m = st2 ? (st2.kind === kind ? 1 + st2.value / 100 : 1) : mainMultOf(id2, s);
+  const m = st2 ? (statHits(st2, kind, opts) ? 1 + st2.value / 100 : 1) : mainMultOf(id2, s); // a one-mode WINS gear pays in its mode
   return m > 0 ? m : 1;
 }
 /** CRIT (markRollsCore.critTotals reads it as V3.c2): the 2nd slot's gear id when it counts — the same door as

@@ -16,8 +16,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const HEX = /^#[0-9a-f]{6}$/i;
 
-test('six tiers in roll order, each with a full look', () => {
-  assert.deepEqual(RARITY_ORDER, ROLL_TIER_ORDER.filter((t) => t !== 'permanent'));
+test('six tiers in order (COMMON + the five gear tiers), each with a full look', () => {
+  // GEAR POOL v2: gears start at RARE; COMMON stays here as the LEVEL / KEY / REBIRTH ramp's first step (LV 1, T0)
+  assert.deepEqual(RARITY_ORDER, ['common', ...ROLL_TIER_ORDER.filter((t) => t !== 'permanent')]);
   for (const t of RARITY_ORDER) {
     const s = RARITY[t];
     for (const k of ['fill', 'hi', 'line', 'ink', 'text', 'glowColour']) assert.match(s[k], HEX, `${t}.${k}`);
@@ -97,7 +98,8 @@ test('no GOLD / RAINBOW finish classes or assets remain in the rarity layer; pip
 });
 
 test('MARK_TIERS accents ARE the rarity identity (one source of truth)', () => {
-  for (const t of RARITY_ORDER) assert.equal(MARK_TIERS[t].colour, RARITY[t].text, t);
+  for (const t of RARITY_ORDER) if (t !== 'common') assert.equal(MARK_TIERS[t].colour, RARITY[t].text, t);
+  assert.equal(MARK_TIERS.common, undefined, 'no COMMON gear tier (GEAR POOL v2)');
 });
 
 test('RarityFin.css: every tier class carries the table colours, nothing loops, will-change never appears', () => {

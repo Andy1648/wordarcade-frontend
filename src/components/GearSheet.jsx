@@ -22,7 +22,7 @@ registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
 
 const SHEET_PARTS = { head: 'mx-sheet-tier', name: 'mx-sheet-name', stat: 'mx-sheet-stat' };
 const rankOf = (id) => (markById(id) ? markProgress(id).rank : 1);
-const lineOf = (e) => (CARD_RAR[e.tier] || CARD_RAR.common).line;
+const lineOf = (e) => (CARD_RAR[e.tier] || CARD_RAR.rare).line;
 
 /**
  * e: { id, name, tier, kind: 'roll' | 'perm' | 'retired' } · have: owned · on: the worn MAIN · view: the roll state

@@ -14,8 +14,14 @@ export const LAYOUT = { head: 9, artC: 89, artR: 45, name: 138, hero: 172, pips:
 /** The pip plate's width for n pips (centred on the bottom band); 0 = no plate. */
 export const PIP_W = 15;
 export const PIP_GAP = 2;
+export const PIP_PLATE_MAX = 164;
+/** The gap between pips: PIP_GAP, or 0 when that would not fit the band (GEAR POOL v2: ORIGIN at ★5 carries 10 —
+ *  2 extra stats + 3 perks + ★5). MarkCard.css mirrors it on .mc-pips[data-tight]. */
+export function pipGap(n) {
+  return n * PIP_W + (n - 1) * PIP_GAP + 12 > PIP_PLATE_MAX ? 0 : PIP_GAP;
+}
 export function pipPlateW(n) {
-  return n > 0 ? Math.min(164, n * PIP_W + (n - 1) * PIP_GAP + 12) : 0;
+  return n > 0 ? Math.min(PIP_PLATE_MAX, n * PIP_W + (n - 1) * pipGap(n) + 12) : 0;
 }
 /** The plates as [name, top, bottom] spans, in drawing order. */
 export function plateSpans(L = LAYOUT) {

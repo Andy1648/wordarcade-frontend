@@ -154,7 +154,7 @@ export function need(n) {
 //   XP per letter = BASE 10 × KEY(T) × REBIRTH(R) × MARK
 //     KEY(T)     = 1.2^T   — every KEY tier: +20% XP / LETTER, compounding (T5 ×2.49, T10 ×6.19)
 //     REBIRTH(R) = 1 + R   — every rebirth: +100% (the SAME ×(1+R) wins get)
-//     MARK       = the worn MAIN mark: COMMON +10%, RARE +20%, EPIC +30%, LEGENDARY / PERMANENT +50%
+//     MARK       = the worn MAIN mark: RARE +20%, EPIC +30%, LEGENDARY / PERMANENT +50% (historic; see markRollsCore)
 //                  (resolved by letterXp.js — marks.js sits above this module in the import graph)
 // WINS keep their big exponential stack (xpPerWord ÷ 10, KEY ×2.5 a tier) — untouched; they never move the bar.
 export const LEVEL_XP_PER_LETTER = 10; // "BASE 10 XP / LETTER"

@@ -333,7 +333,6 @@ html[data-beat='true'] .homepage-logo {
 .hp-chip.is-roll .hp-chip-edge { background: #2EFFE0; }
 /* the worn gear's TIER FRAME (Andy oct9, as the YOUR GEAR slot): stripe, border and hard shadow in the tier colour */
 .hp-chip[data-tier] .hp-chip-edge { background: var(--gear-line); }
-.hp-chip[data-tier='common'] { border-color: var(--gear-edge); }
 .hp-chip:is([data-tier='rare'], [data-tier='epic']) { border-color: var(--gear-line); }
 .hp-chip[data-tier='epic'] { box-shadow: var(--b4) var(--b4) 0 var(--gear-edge); }
 .hp-chip:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { border-color: var(--gear-line); background: var(--gear-fill); box-shadow: var(--b4) var(--b4) 0 var(--gear-edge); }
@@ -651,10 +650,9 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 .hp-gear.is-worn { border-color: var(--gear-line); isolation: isolate; }
 .hp-gear.is-worn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: inherit; border-radius: 4px; pointer-events: none; }
 /* RARITY is the FRAME (Andy oct9 "a glow or smthn to rarer gears" — a glow breaks the flat rule): the border and the
-   hard offset shadow take the tier colour, quiet → loud. COMMON: its dark edge, black shadow. RARE: the tier line.
+   hard offset shadow take the tier colour, quiet → loud. RARE: the tier line.
    EPIC: + the shadow in the tier's dark edge. LEGENDARY: + the tier's face colour behind it. MYTHIC / SECRET: the
    shadow in the full tier colour, a step deeper, and the YOUR GEAR label on a solid tier plate. Static — no motion. */
-.hp-gear[data-tier='common'] { border-color: var(--gear-edge); }
 .hp-gear[data-tier='epic'] { box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
 .hp-gear:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { background: var(--gear-fill); box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
 .hp-gear:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: var(--b6) var(--b6) 0 var(--gear-line); }
@@ -684,7 +682,7 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 /* the NUMBER (the sheet's MAIN STAT colour), then WHAT it boosts, white, then the crit line, then the name */
 .hp-gear-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp30); line-height: 1; color: #FFE94A; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
 .hp-gear.is-empty .hp-gear-big { font-size: var(--fs-hp24); color: #fff; }
-.hp-gear-unit { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp18); letter-spacing: 0.04em; color: #fff; line-height: 1.1; white-space: nowrap; }
+.hp-gear-unit { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp18); letter-spacing: 0.04em; color: #fff; line-height: 1.1; white-space: normal; overflow-wrap: break-word; } /* GEAR POOL v2: a one-mode stat ("WINS IN WORD BOMB") wraps inside the slot, never past it */
 .hp-gear-crit { display: flex; align-items: baseline; gap: calc(6 * var(--u)); font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp13); line-height: 1.2; color: #c9b8e8; white-space: nowrap; }
 .hp-gear-crit-num { font-size: var(--fs-hpgearn); color: #fff; }
 .hp-gear-sub { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp13); letter-spacing: 0.04em; color: #c9b8e8; white-space: nowrap; }

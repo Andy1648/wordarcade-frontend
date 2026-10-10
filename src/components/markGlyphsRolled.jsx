@@ -1,9 +1,9 @@
-// markGlyphsRolled.jsx — the MARK ROLLS glyphs (the 29 rollable marks + the 6 permanent), split out of MarkBadge.jsx
+// markGlyphsRolled.jsx — the MARK ROLLS glyphs (the 27 rollable marks + the 6 permanent), split out of MarkBadge.jsx
 // so they load with the MARKS panel, not on the menu's first paint (payload ratchet, PR #156). MarkBadge registers
 // them on demand: MarksIndex / RollScreen import this module, and a badge for an id it can't draw yet (the menu chip
 // of a worn mark) loads it once and re-draws.
 //
-// NIGHT oct8 4b: the 29 ROLLABLE glyphs are drawn in the KIT construction (kit/kitIconsCore.js): one bold silhouette,
+// NIGHT oct8 4b: the ROLLABLE glyphs are drawn in the KIT construction (kit/kitIconsCore.js): one bold silhouette,
 // a BASE fill + ONE darker SHADE plane on its lower-right (flat, no stroke, between fill and outline), an INK outline,
 // exactly ONE white glint (upper-left) and ONE asymmetric detail (a spark, a drip, a trailing line, a crack). Their
 // shade + glint live in the art, so markGlyphFinish.jsx skips them (KIT_DRAWN). Each glyph keeps its object's own
@@ -51,137 +51,7 @@ function S({ d, f, s, w = 6, ink = 14 }) {
 const G = ({ d, w = 4 }) => <path d={d} stroke={W} strokeWidth={w} fill="none" />;
 
 export const ROLLED_GLYPHS = {
-  // ---- the 29 ROLLABLE marks, kit construction ----
-  'mk-bomber': (
-    <g {...KS}>
-      <path d="M54 42 L61 35 L69 43 L62 50 Z" fill="#8FA0B5" />
-      <F d={disc(45, 58, 20)} f="#3B2D5C" s="#1F1438" sd={moon(45, 58, 20)} />
-      <path d="M65 39 C70 33 72 30 76 27" strokeWidth="8" fill="none" />
-      <path d="M65 39 C70 33 72 30 76 27" stroke="#C98A4B" strokeWidth="3.5" fill="none" />
-      <path d="M79 15 L81 21 L87 19 L83 24 L88 28 L82 28 L80 34 L77 28 L71 29 L75 24 L72 18 L78 21 Z" fill="#FFE94A" strokeWidth="2.5" />
-      <path d="M90 37 L93 40 M69 13 L68 9" stroke="#FF6B3D" strokeWidth="3" />
-      <G d="M32 55 C33 49 36 45 41 43" w="4.5" />
-    </g>
-  ),
-  'mk-sparky': (
-    <g {...KS}>
-      <path d="M22 80 C30 70 42 74 44 62 C45 56 44 52 48 47" strokeWidth="9" fill="none" />
-      <path d="M22 80 C30 70 42 74 44 62 C45 56 44 52 48 47" stroke="#C98A4B" strokeWidth="4" fill="none" />
-      <g strokeWidth="3.5"><F d="M56 13 L61 27 L78 21 L68 35 L77 43 L65 45 L68 62 L56 50 L46 58 L47 45 L28 44 L44 35 L38 24 L51 27 Z" f="#FFE94A" s="#F2A900" sd="M56 38 L68 35 L77 43 L65 45 L68 62 L56 50 Z" /></g>
-      <path d="M82 52 L86 56 M78 64 L80 69" stroke="#FF6B3D" strokeWidth="3.5" />
-      <G d="M43 29 L48 31" w="3" />
-    </g>
-  ),
-  'mk-sprinter': (
-    <g {...KS}>
-      <F d="M58 18 L30 54 L46 54 L38 82 L70 42 L53 42 L63 18 Z" f="#FFE94A" s="#F2A900" sd="M63 18 L53 42 L70 42 L38 82 L50 47 L57 25 Z" />
-      <path d="M72 25 L82 21 M75 33 L86 31" stroke="#2EFFE0" strokeWidth="4" />
-      <G d="M55 27 L49 35" />
-    </g>
-  ),
-  'mk-dasher': (
-    <g {...KS}>
-      <F d="M30 38 L44 36 L50 48 L70 52 C80 54 82 62 80 66 L32 68 C28 58 28 46 30 38 Z" f="#FF4FA3" s="#C72E7E" sd="M56 49 L70 52 C80 54 82 62 80 66 L54 67 C68 62 70 56 56 49 Z" />
-      <path d="M32 68 L80 66 L79 74 L33 76 Z" fill="#CFD8E3" />
-      <path d="M44 45 L50 43 M46 51 L53 49" strokeWidth="3" />
-      <path d="M12 48 L23 48 M8 58 L23 57 M15 67 L24 66" stroke="#2EFFE0" strokeWidth="4" />
-      <G d="M35 44 L34 56" />
-    </g>
-  ),
-  'mk-crammer': (
-    <g {...KS}>
-      <g transform="rotate(-5 50 56)">
-        <path d="M30 44 L35 26 L45 35 L55 20 L62 33 L72 27 L71 44 Z" fill={W} strokeWidth="3.5" />
-        <F d="M26 42 L74 42 L74 74 L26 74 Z" f="#9A1AFF" s="#6A0FC0" sd="M62 42 L74 42 L74 74 L62 74 Z" />
-        <path d="M38 53 L56 53" stroke="#FFE94A" strokeWidth="5" />
-        <G d="M32 48 L32 64" />
-      </g>
-      <path d="M76 17 L86 21 L82 30 L72 26 Z" fill={W} strokeWidth="3.5" />
-    </g>
-  ),
-  'mk-inkwell': (
-    <g {...KS}>
-      <path d="M50 36 C54 22 64 14 80 10 C76 22 68 30 56 38 Z" fill="#FF4FA3" strokeWidth="3.5" />
-      <path d="M53 37 L73 17" strokeWidth="2.5" />
-      <path d="M40 32 L60 32 L60 44 L40 44 Z" fill="#5F6F84" />
-      <F d="M28 52 C28 46 34 43 50 43 C66 43 72 46 72 52 L72 74 C72 79 66 81 50 81 C34 81 28 79 28 74 Z" f="#2EFFE0" s="#12A99A" sd="M60 44 C67 45 72 47 72 52 L72 74 C72 79 66 81 54 81 C60 72 62 58 60 44 Z" />
-      <path d="M58 43 C60 48 65 50 65 56 C65 60 59 60 59 56 C59 51 57 48 56 44 Z" fill="#9A1AFF" strokeWidth="3" />
-      <path d="M31 66 C40 70 60 70 69 66 L69 74 C69 77 64 78 50 78 C36 78 31 77 31 74 Z" fill="#9A1AFF" stroke="none" />
-      <path d="M31 66 C40 70 60 70 69 66" strokeWidth="3" fill="none" />
-      <G d="M34 53 L34 61" />
-    </g>
-  ),
-  'mk-linker': (
-    <g {...KS}>
-      <g transform="rotate(-24 50 50)">
-        <S d="M27 41 L45 41 A9 9 0 0 1 45 59 L27 59 A9 9 0 0 1 27 41 Z" f="#2EFFE0" s="#12A99A" />
-        <S d="M55 41 L73 41 A9 9 0 0 1 73 59 L55 59 A9 9 0 0 1 55 41 Z" f="#FF4FA3" s="#C72E7E" />
-        <S d="M45 59 A9 9 0 0 0 54 50" f="#2EFFE0" s="#12A99A" />
-        <G d="M18 46 A9 9 0 0 1 23 40" w="3" />
-        <path d="M86 36 L90 31 M88 45 L94 45" stroke="#FFE94A" strokeWidth="4" />
-      </g>
-    </g>
-  ),
-  'mk-shackle': (
-    <g {...KS}>
-      <S d="M53 61 A16 16 0 1 1 58 46" f="#CFD8E3" s="#8FA0B5" w="8" ink="16" />
-      <g fill="none">
-        <ellipse cx="68" cy="66" rx="7" ry="4.5" transform="rotate(40 68 66)" strokeWidth="9" />
-        <ellipse cx="68" cy="66" rx="7" ry="4.5" transform="rotate(40 68 66)" stroke="#8FA0B5" strokeWidth="3.5" />
-        <ellipse cx="78" cy="75" rx="6.5" ry="4" transform="rotate(-30 78 75)" strokeWidth="9" />
-        <ellipse cx="78" cy="75" rx="6.5" ry="4" transform="rotate(-30 78 75)" stroke="#8FA0B5" strokeWidth="3.5" />
-      </g>
-      <path d="M52 44 L64 42 L66 57 L54 59 Z" fill="#5F6F84" />
-      <circle cx="59" cy="50" r="2.5" fill={INK} stroke="none" />
-      <G d="M25 45 A16 16 0 0 1 32 36" w="3" />
-    </g>
-  ),
-  'mk-wick': (
-    <g {...KS}>
-      <F d="M36 46 L64 44 L66 79 L34 80 Z" f="#FF4FA3" s="#C72E7E" sd="M56 45 L64 44 L66 79 L57 79 Z" />
-      <path d="M46 46 C47 53 50 53 50 58 C50 62 54 62 54 57 L54 45" strokeWidth="3" fill="none" />
-      <path d="M50 45 L51 38" strokeWidth="3.5" />
-      <path d="M51 39 C42 33 46 22 54 13 C55 22 63 27 57 36 C56 39 53 40 51 39 Z" fill="#FF6B3D" strokeWidth="3.5" />
-      <path d="M52 35 C49 32 51 28 53 26 C54 30 57 32 52 35 Z" fill="#FFE94A" stroke="none" />
-      <G d="M40 52 L40 66" />
-    </g>
-  ),
-  'mk-matchstick': (
-    <g {...KS}>
-      <F d="M24 75 L52 38 L60 44 L32 81 Z" f="#C98A4B" s="#8A5A2B" sd="M56 41 L60 44 L32 81 L28 78 Z" />
-      <F d={disc(58, 35, 10)} f="#FF4FA3" s="#C72E7E" sd={moon(58, 35, 10)} />
-      <path d="M60 26 C56 18 62 12 68 8 C68 16 77 18 70 27 C67 30 63 30 60 26 Z" fill="#FFE94A" strokeWidth="3.5" />
-      <path d="M63 25 C61 21 64 18 66 16 C67 20 70 22 66 26 Z" fill="#FF6B3D" stroke="none" />
-      <path d="M79 22 L83 20 M80 30 L84 31" stroke="#FF6B3D" strokeWidth="3.5" />
-      <G d="M51 33 C51 30 52 28 55 27" w="3.5" />
-    </g>
-  ),
-  'mk-pacer': (
-    <g {...KS}>
-      <path d="M45 22 L55 22 L55 31 L45 31 Z" fill="#5F6F84" />
-      <path d="M68 33 L74 27" strokeWidth="9" />
-      <path d="M68 33 L74 27" stroke="#8FA0B5" strokeWidth="3.5" />
-      <F d={disc(50, 56, 24)} f="#CFD8E3" s="#8FA0B5" sd={moon(50, 56, 24, 1.25)} />
-      <circle cx="50" cy="56" r="16" fill={W} strokeWidth="3.5" />
-      <path d="M50 42 L50 45 M64 56 L61 56" strokeWidth="3" />
-      <path d="M50 56 L50 46" strokeWidth="4" />
-      <path d="M50 56 L59 62" stroke="#FF4FA3" strokeWidth="4" />
-      <path d="M10 50 L20 50 M13 61 L22 61" stroke="#2EFFE0" strokeWidth="4" />
-      <G d="M31 49 A20 20 0 0 1 39 38" w="3.5" />
-    </g>
-  ),
-  'mk-nitro': (
-    <g {...KS}>
-      <g transform="rotate(-12 50 52)">
-        <path d="M43 19 L53 19 L53 27 L43 27 Z" fill="#5F6F84" />
-        <path d="M39 18 L57 18" strokeWidth="5" />
-        <F d="M44 26 L52 26 Q62 26 62 36 L62 62 Q62 72 52 72 L44 72 Q34 72 34 62 L34 36 Q34 26 44 26 Z" f="#2EFFE0" s="#12A99A" sd="M54 27 Q62 27 62 36 L62 62 Q62 71 54 71 Z" />
-        <path d="M34 44 L62 44 L62 56 L34 56 Z" fill="#FF4FA3" strokeWidth="3.5" />
-        <path d="M66 60 L80 56 M66 68 L78 71 M62 76 L70 82" stroke="#FF6B3D" strokeWidth="4" />
-        <G d="M40 32 L40 39" />
-      </g>
-    </g>
-  ),
+  // ---- the 27 ROLLABLE marks, kit construction ----
   'mk-detonator': (
     <g {...KS}>
       <path d="M48 52 L48 30" strokeWidth="6" />
@@ -354,6 +224,106 @@ export const ROLLED_GLYPHS = {
       <path d="M50 44 L54 54 L64 55 L56 61 L59 71 L50 65 L42 70 L44 61 L37 55 L47 54 Z" fill="#FFE94A" strokeWidth="3" />
       <path d="M77 64 C73 70 73 74 77 76 C81 74 81 70 77 64 Z" fill="#2EFFE0" strokeWidth="2.5" />
       <G d="M38 48 C40 42 43 36 47 30" />
+    </g>
+  ),
+  // ---- GEAR POOL v2 (Andy oct9): the 10 new gears, same kit construction (base + ONE shade plane, ink outline, ONE
+  // glint upper-left, ONE asymmetric detail). Placeholder-grade: flagged for a real art pass in the PR. ----
+  'mk-hotwire': (
+    <g {...KS}>
+      <S d="M14 70 C26 70 30 56 42 54 C46 53 48 52 49 50" f="#FF3D7F" s="#C2185B" w="6" ink="14" />
+      <S d="M86 30 C74 30 70 44 58 46 C54 47 52 48 51 50" f="#2EFFE0" s="#12A99A" w="6" ink="14" />
+      <path d="M42 54 L49 50 L45 58 Z M58 46 L51 50 L55 42 Z" fill="#CFD8E3" strokeWidth="3" />
+      <g strokeWidth="2.5"><F d="M50 34 L53 45 L64 44 L55 51 L61 62 L50 55 L41 63 L45 51 L36 44 L47 45 Z" f="#FFE94A" s="#F2A900" sd="M50 50 L55 51 L61 62 L50 55 Z" /></g>
+      <path d="M68 66 L74 72 M74 58 L82 60" stroke="#FFE94A" strokeWidth="3.5" />
+      <G d="M44 40 L47 44" w="3" />
+    </g>
+  ),
+  'mk-grapple': (
+    <g {...KS}>
+      <S d="M50 40 C50 30 56 22 64 18 C70 15 76 18 80 14" f="#C98A4B" s="#8A5A2B" w="5" ink="12" />
+      <F d="M45 38 L55 38 L55 66 L45 66 Z" f="#8FA0B5" s="#5F6F84" sd="M51 38 L55 38 L55 66 L51 66 Z" />
+      <S d="M50 66 C38 74 26 68 24 54 M50 66 C62 74 74 68 76 54 M50 66 L50 82" f="#CFD8E3" s="#8FA0B5" w="6" ink="14" />
+      <path d="M20 58 L24 52 L29 57 Z M80 58 L76 52 L71 57 Z M46 82 L50 88 L54 82 Z" fill="#CFD8E3" strokeWidth="3" />
+      <circle cx="50" cy="38" r="5" fill="#FF6B3D" strokeWidth="3" />
+      <G d="M47 44 L47 56" w="3" />
+    </g>
+  ),
+  'mk-sparkplug': (
+    <g {...KS}>
+      <F d="M40 16 L60 16 L60 46 L40 46 Z" f="#FFFFFF" s="#CFD8E3" sd="M54 16 L60 16 L60 46 L54 46 Z" />
+      <path d="M40 24 L60 24 M40 32 L60 32" strokeWidth="3" />
+      <F d="M32 46 L68 46 L72 56 L68 66 L32 66 L28 56 Z" f="#8FA0B5" s="#5F6F84" sd="M56 46 L68 46 L72 56 L68 66 L56 66 Z" />
+      <path d="M46 66 L54 66 L54 78 L46 78 Z" fill="#5F6F84" />
+      <path d="M50 78 L50 84 L58 84" strokeWidth="4" fill="none" />
+      <path d="M64 86 L70 80 L72 88 L79 84" stroke="#2EFFE0" strokeWidth="4" fill="none" />
+      <G d="M44 21 L44 42" w="3" />
+    </g>
+  ),
+  'mk-brainstorm': (
+    <g {...KS}>
+      <F d="M28 50 C20 46 22 32 32 32 C32 22 46 18 52 26 C58 18 74 22 72 32 C82 32 84 46 74 50 C76 58 66 64 58 60 C54 66 44 66 40 60 C32 64 24 58 28 50 Z" f="#FF4FA3" s="#C72E7E" sd="M72 32 C82 32 84 46 74 50 C76 58 66 64 58 60 C54 66 46 66 42 61 C56 60 70 50 72 32 Z" />
+      <path d="M40 40 C44 36 48 40 46 46 M56 34 C60 38 58 44 62 46" strokeWidth="3" fill="none" />
+      <g strokeWidth="3"><F d="M50 62 L42 78 L50 78 L44 92 L60 72 L52 72 L58 62 Z" f="#FFE94A" s="#F2A900" sd="M58 62 L52 72 L60 72 L50 85 L56 72 Z" /></g>
+      <path d="M80 62 L86 66 M18 62 L13 66" stroke="#2EFFE0" strokeWidth="3.5" />
+      <G d="M30 40 C31 36 34 34 38 34" w="3" />
+    </g>
+  ),
+  'mk-flashpoint': (
+    <g {...KS}>
+      <S d="M30 84 L56 50" f="#C98A4B" s="#8A5A2B" w="6" ink="14" />
+      <F d="M58 20 C70 32 78 42 74 54 C70 64 56 66 50 58 C44 50 48 40 54 36 C54 42 58 44 60 40 C62 34 58 28 58 20 Z" f="#FF6B3D" s="#D9381E" sd="M74 38 C78 46 77 50 74 54 C70 64 58 66 52 60 C64 58 72 50 74 38 Z" />
+      <path d="M60 58 C55 54 55 48 59 44 C60 48 63 48 64 45 C67 50 65 56 60 58 Z" fill="#FFE94A" strokeWidth="2.5" />
+      <path d="M22 30 L30 34 M18 44 L27 44 M80 72 L86 78 M86 62 L94 62" stroke="#FFE94A" strokeWidth="4" />
+      <G d="M56 30 C58 34 58 38 56 42" w="3" />
+    </g>
+  ),
+  'mk-voltage': (
+    <g {...KS}>
+      <F d="M50 14 L86 78 L14 78 Z" f="#FFE94A" s="#F2A900" sd="M50 14 L86 78 L66 78 Z" />
+      <g strokeWidth="3"><path d="M54 30 L38 58 L50 58 L44 74 L64 48 L52 48 L60 30 Z" fill={INK} /></g>
+      <path d="M86 40 L92 34 M88 52 L96 52" stroke="#2EFFE0" strokeWidth="4" />
+      <G d="M42 34 L32 52" w="3.5" />
+    </g>
+  ),
+  'mk-talisman': (
+    <g {...KS}>
+      <S d="M24 14 C30 30 40 38 50 40 C60 38 70 30 76 14" f="#C98A4B" s="#8A5A2B" w="4" ink="11" />
+      <F d="M50 38 L70 58 L50 84 L30 58 Z" f="#2EFFE0" s="#12A99A" sd="M50 58 L70 58 L50 84 Z" />
+      <path d="M30 58 L70 58 M50 38 L42 58 L50 84 M50 38 L58 58" strokeWidth="2.5" fill="none" />
+      <path d="M76 70 C73 75 73 78 76 79 C79 78 79 75 76 70 Z" fill="#FF4FA3" strokeWidth="2.5" />
+      <G d="M42 48 L47 43" w="3" />
+    </g>
+  ),
+  'mk-headmaster': (
+    <g {...KS}>
+      <path d="M46 16 L54 16 L54 24 L46 24 Z" fill="#5F6F84" />
+      <F d="M50 22 C64 22 70 34 70 48 C70 58 74 64 80 70 L20 70 C26 64 30 58 30 48 C30 34 36 22 50 22 Z" f="#FFC23D" s="#B07A10" sd="M62 26 C68 32 70 40 70 48 C70 58 74 64 80 70 L64 70 C66 58 66 40 62 26 Z" />
+      <path d="M18 70 L82 70 L82 76 L18 76 Z" fill="#B07A10" />
+      <circle cx="50" cy="82" r="6" fill="#CFD8E3" strokeWidth="3.5" />
+      <path d="M84 36 C88 40 89 44 88 48 M14 38 C11 42 11 46 12 50" stroke="#2EFFE0" strokeWidth="3.5" fill="none" />
+      <G d="M38 34 C36 40 36 46 36 52" w="3.5" />
+    </g>
+  ),
+  'mk-thunderclap': (
+    <g {...KS}>
+      <F d="M22 48 C14 46 14 32 26 32 C26 22 40 18 46 26 C52 16 70 18 72 30 C84 28 88 44 78 48 Z" f="#3B2D5C" s="#1F1438" sd="M72 30 C84 28 88 44 78 48 L60 48 C70 44 74 38 72 30 Z" />
+      <g strokeWidth="3"><F d="M50 44 L36 70 L48 70 L40 92 L66 60 L54 60 L62 44 Z" f="#FFE94A" s="#F2A900" sd="M62 44 L54 60 L66 60 L46 84 L58 60 Z" /></g>
+      <path d="M20 62 C16 66 15 70 16 74 M80 60 C85 63 87 67 87 72" stroke="#2EFFE0" strokeWidth="3.5" fill="none" />
+      <G d="M28 38 C29 34 32 32 36 31" w="3" />
+    </g>
+  ),
+  'mk-hydra': (
+    <g {...KS}>
+      <S d="M50 78 C48 62 50 46 50 30" f="#12A99A" s="#0A6E63" w="7" ink="16" />
+      <S d="M44 78 C34 66 26 54 22 40" f="#12A99A" s="#0A6E63" w="7" ink="16" />
+      <S d="M56 78 C66 68 74 58 80 46" f="#12A99A" s="#0A6E63" w="7" ink="16" />
+      <F d="M50 18 C58 18 60 26 56 32 L44 32 C40 26 42 18 50 18 Z" f="#2EFFE0" s="#12A99A" sd="M56 22 C59 26 58 30 56 32 L50 32 C54 30 56 26 56 22 Z" />
+      <F d="M16 30 C22 26 30 30 28 38 L18 42 C12 40 12 34 16 30 Z" f="#2EFFE0" s="#12A99A" sd="M28 34 L28 38 L18 42 C22 39 26 37 28 34 Z" />
+      <F d="M86 36 C90 42 86 48 80 50 L74 42 C74 36 80 32 86 36 Z" f="#2EFFE0" s="#12A99A" sd="M88 42 C87 46 84 49 80 50 L78 47 C82 46 86 44 88 42 Z" />
+      <path d="M30 80 L70 80 C72 86 64 90 50 90 C36 90 28 86 30 80 Z" fill="#3B2D5C" />
+      <path d="M47 24 h0.1 M53 24 h0.1" strokeWidth="3.5" />
+      <path d="M64 12 L67 18 L61 18 Z" fill="#FFE94A" strokeWidth="2.5" />
+      <G d="M45 22 L46 27" w="2.5" />
     </g>
   ),
   // ---- the 6 PERMANENT marks (finished by markGlyphFinish.jsx) ----

@@ -25,6 +25,7 @@ import { migrateEconomyV11 } from './progress/econMigrate'
 import { forgeMigrateMomentum } from './progress/forge'
 import { migrateGems } from './progress/gemsMigrate'
 import { SEASON2 } from './progress/season'
+import { migrateRollSave } from './progress/markRollsCore'
 
 // PROGRESSION v11 (stamp 11): convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps
 // every level; a v10 save keeps its {lv, f} untouched (one fixed curve now — f keeps the bar position).
@@ -187,6 +188,9 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   )
   // PROGRESSION v3 (SEASON2, default OFF): the v3 rules are their own lazy chunk (progress/season.js V3 holder) —
   // installed BEFORE the first render, so every season-2 read finds them. The live game never downloads it.
-  if (SEASON2) import('./progress/v3/installUi.jsx').then(renderApp, renderApp)
-  else renderApp()
+  // GEAR POOL v2 (Andy oct9): retire COMMON once per save — owned commons deleted + refunded in gems, a worn one taken
+  // off — AFTER the season install (its gem key mapping) and BEFORE the first render reads a gear. Never blocks startup.
+  const boot = () => { try { migrateRollSave() } catch { /* never block startup */ } renderApp() }
+  if (SEASON2) import('./progress/v3/installUi.jsx').then(boot, boot)
+  else boot()
 }

@@ -13,7 +13,7 @@
 // k stays ≤ 2 so the result only crosses the line at ≥ 85% of the spin ("will it tip over" stays open), and the reel
 // rests at a random spot INSIDE the result cell (± REST_MAX of a cell), then settles to centre.
 
-export const TIER_LADDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+export const TIER_LADDER = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 export const tierIndex = (t) => Math.max(0, TIER_LADDER.indexOf(t));
 
 // ---- the strip ----
@@ -57,7 +57,7 @@ export function drawStrip(probs, rng = Math.random, { resultId, len = REEL_LEN, 
  * slowdown power below (a rarer result crawls longer over its last cells inside the same 2.4 s) and in the reveal
  * after the land, never in a longer wait.
  */
-export const SPIN_MS = { common: 2400, rare: 2400, epic: 2400, legendary: 2400, mythic: 2400, secret: 2400 };
+export const SPIN_MS = { rare: 2400, epic: 2400, legendary: 2400, mythic: 2400, secret: 2400 };
 /** The last NEAR_MISS_TICKS cell crossings kick the pointer (a visible "tick … tick … tick" as the reel crawls). */
 export const NEAR_MISS_TICKS = 3;
 /** RARITY-SCALED REVEAL beats (NIGHT oct8 #4): RARE gets one flash; EPIC+ a rarity-colour wash over the dim; a
@@ -66,7 +66,7 @@ export const FLASH_TIERS = new Set(['rare']);
 export const WASH_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret']);
 export const KEEP_HOLD_MS = 1200;
 /** The deceleration power by tier: higher = a longer crawl over the last cells. */
-export const EASE_POW = { common: 1.7, rare: 1.76, epic: 1.82, legendary: 1.88, mythic: 1.94, secret: 2 };
+export const EASE_POW = { rare: 1.76, epic: 1.82, legendary: 1.88, mythic: 1.94, secret: 2 };
 /** The rest offset: the reel stops anywhere inside the result cell (± this much of a cell) — still the result. */
 export const REST_MAX = 0.3;
 export function restOffset(rng = Math.random) {
@@ -85,10 +85,10 @@ export const CUTSCENE_JUMP_MS = 1500;
 export function spinMs(tier, mode = 'full') {
   if (mode === 'none') return 0;
   if (mode === 'short') return SHORT_MS;
-  return SPIN_MS[tier] || SPIN_MS.common;
+  return SPIN_MS[tier] || SPIN_MS.rare;
 }
 export function easePow(tier, mode = 'full') {
-  return mode === 'short' ? SHORT_POW : EASE_POW[tier] || EASE_POW.common;
+  return mode === 'short' ? SHORT_POW : EASE_POW[tier] || EASE_POW.rare;
 }
 export const easeOut = (x, k) => 1 - (1 - Math.max(0, Math.min(1, x))) ** k;
 /** Where the reel is at time t (ms since the spin started), in cells. Lands exactly on `land` at t ≥ dur. */
@@ -148,7 +148,7 @@ export function hasCutscene(tier, mode = 'full') {
   return mode === 'full' && tierIndex(tier) >= tierIndex('legendary');
 }
 /** How dark the screen goes while the reel slows (EPIC+ only — rarer = darker). */
-export const DIM = { common: 0, rare: 0, epic: 0.5, legendary: 0.7, mythic: 0.8, secret: 0.88 };
+export const DIM = { rare: 0, epic: 0.5, legendary: 0.7, mythic: 0.8, secret: 0.88 };
 export function dimFor(tier, mode = 'full') {
   return mode === 'full' ? DIM[tier] || 0 : 0;
 }
@@ -158,12 +158,12 @@ export function hasLight(tier, mode = 'full') {
 }
 /** Pooled particle burst size on the land (EPIC+). The pool holds BURST_POOL nodes. */
 export const BURST_POOL = 18;
-export const BURST = { common: 0, rare: 0, epic: 10, legendary: 14, mythic: 16, secret: 18 };
+export const BURST = { rare: 0, epic: 10, legendary: 14, mythic: 16, secret: 18 };
 export function burstCount(tier, mode = 'full') {
   return mode === 'full' ? BURST[tier] || 0 : 0;
 }
 /** Shake amplitude (px) on the land — scales with rarity. */
-export const SHAKE_PX = { common: 0, rare: 2, epic: 5, legendary: 9, mythic: 12, secret: 16 };
+export const SHAKE_PX = { rare: 2, epic: 5, legendary: 9, mythic: 12, secret: 16 };
 export function shakePx(tier, mode = 'full') {
   return mode === 'short' ? 0 : SHAKE_PX[tier] || 0;
 }
@@ -196,7 +196,7 @@ export const CHARGE_RATTLE = { light: 1.5, hard: 4 };
 /**
  * THE TELL (research: Genshin's meteor colour / Overwatch's "late" hint): for EPIC+ the reel's last cells carry the
  * RARITY COLOUR before the card is shown — the pointer turns the tier colour and a flat plate over the band pulses it.
- * Honest: it never shows for COMMON / RARE, it never lies about the colour, and it starts only once the reel is in
+ * Honest: it never shows for RARE, it never lies about the colour, and it starts only once the reel is in
  * its last DIM_CELLS (the dim's own gate). Intensity encodes the tier: more pulses, a stronger peak, and LEGENDARY+
  * adds a low rumble under it.
  */
@@ -243,7 +243,7 @@ export function needMoreText(price, have, fmt = (n) => String(n)) {
 // ---- ROLL v1 reveals (Andy oct5 mockup claude/mockups/roll-v1/Main.dc.html) ----
 /**
  * Which reveal a landed roll gets — RARITY-SCALED: 'line' (every short / reduced-motion land: the result line under the
- * reel, no reveal), 'lite' (ROLL REVEAL v2: a COMMON / RARE full reveal — the card flips over the reel and its stats
+ * reel, no reveal), 'lite' (ROLL REVEAL v2: a RARE full reveal — the card flips over the reel and its stats
  * tick in, then it closes by itself), 'dim' (EPIC: the screen dims, "1 IN X" slams, the card flips), 'full'
  * (LEGENDARY+: full-screen rays, the rarity, "1 IN X" huge, the card, the screen shakes). 'dim' and 'full' stay up
  * until a tap. The layers each tier plays are revealPlan.js's.
@@ -259,10 +259,11 @@ export const AUTO_DIM_MS = 1300;
 /** The rays turn only while a full reveal plays in (finite), then rest. */
 export const RAYS_MS = 3200;
 /**
- * The AUTO cycle (one button, Andy oct5 mockup): OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF. Each tap sets the target
+ * The AUTO cycle (one button, Andy oct5 mockup): OFF → EPIC+ → LEGENDARY+ → OFF (GEAR POOL v2: RARE+
+ * is gone — RARE is the floor, every roll is one). Each tap sets the target
  * (and starts rolling from OFF); a hit at the target or better stops it.
  */
-export const AUTO_CYCLE = [null, 'rare', 'epic', 'legendary'];
+export const AUTO_CYCLE = [null, 'epic', 'legendary'];
 export function nextAutoTarget(cur) {
   const i = AUTO_CYCLE.indexOf(cur == null ? null : cur);
   return AUTO_CYCLE[i < 0 ? 1 : (i + 1) % AUTO_CYCLE.length];

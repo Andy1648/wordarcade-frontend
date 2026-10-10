@@ -3,14 +3,15 @@
 // claude/econ-oct2/rolls-rr-notes.md.
 //
 // THE SHAPE
-//   - Six tiers, Andy's odds: COMMON 1 IN 2, RARE 1 IN 10, EPIC 1 IN 100, LEGENDARY 1 IN 1,000,
-//     MYTHIC 1 IN 10,000, SECRET 1 IN 100,000 (the tier's chance; its marks split it evenly; COMMON is
-//     the remainder). The pool, the MAIN math and markMult() live in markRollsCore.js.
-//   - LUCK multiplies every non-common chance (Sol's shape). Commons take what is left, so luck
-//     removes trash rather than breaking the table.
-//   - PITY (the ladder, always visible): EPIC-or-better guaranteed at least every 50 rolls (soft from 40), the first
-//     by roll 10; LEGENDARY-or-better guaranteed at least every 500. The counters are state, so the UI can show them.
-//   - DUPES → ★ PIPS (markRollsCore): COMMON 10 / RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 dupes a pip, ★5 max,
+//   - Five tiers (GEAR POOL v2, Andy oct9 — COMMON is gone, RARE is the floor): RARE = the remainder (98.59%),
+//     EPIC 1 IN 100, LEGENDARY 1 IN 250, MYTHIC 1 IN 10,000, SECRET 1 IN 100,000 (the tier's chance; its marks split
+//     it evenly). The pool, the MAIN math and markMult() live in markRollsCore.js.
+//   - LUCK multiplies every chance above the floor (Sol's shape). RARE takes what is left, so luck removes the floor
+//     rather than breaking the table.
+//   - PITY, Genshin-style (the ladder, always visible): EPIC-or-better guaranteed at least every 10 rolls,
+//     LEGENDARY-or-better at least every 50. The 10th-roll guarantee is Genshin's 4★ one: LEGENDARY+ keep their
+//     own odds on it, EPIC takes the rest (never a legendary inflation). The counters are state, so the UI shows them.
+//   - DUPES → ★ PIPS (markRollsCore): RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 dupes a pip, ★5 max,
 //     each pip +20% of that mark's stat.
 //   - The INDEX (% collected) pays a small permanent bonus (+0.5% per %) + LUCK at milestones; each NEW mark, each ★
 //     and each completed tier pays wins (words at your rate).
@@ -29,7 +30,7 @@ import { xpPerWord } from './xp.js';
 import {
   ROLL_MARKS, rollMarkById, permanentMarkById, PERMANENT_MARKS, tierRank, mainBonus, oneInX, COLLECTION_MILESTONES,
   freshState, normalize, markLevel, mainMultOf, loadRollState, saveRollState, num, collection, SHINY_CHANCE, isShiny,
-  LEGENDARY_PITY_HARD, LEGACY_GOLD_K, LEGACY_RAINBOW_K, markLuck, INDEX_NEW_WORDS, INDEX_PIP_WORDS, INDEX_COMPLETE_WORDS,
+  LEGENDARY_PITY_HARD, EPIC_PITY_HARD, FLOOR_TIER, LEGACY_GOLD_K, LEGACY_RAINBOW_K, markLuck, INDEX_NEW_WORDS, INDEX_PIP_WORDS, INDEX_COMPLETE_WORDS,
   ROLLABLE_TIERS, SKIP_TIERS, DEFAULT_SKIP_BELOW, statOf, statLine, perkLine,
 } from './markRollsCore.js';
 
@@ -38,9 +39,10 @@ import { SEASON2 as S2_ON, V3 as S2_V3 } from './season.js'; // V3.unlocks: inst
 const ROLL_BY_ID = { get: rollMarkById, has: (id) => !!rollMarkById(id) };
 const PERM_BY_ID = { get: permanentMarkById };
 
-// Old marks that are neither rollable nor permanent: their owners keep them (wearable, ranked,
-// their marks.js tier's MAIN) but nobody new can get them. All three were ALL-MODE COMMONS.
-export const RETIRED_MARK_IDS = ['mk-student', 'mk-magpie', 'mk-veteran'];
+// Old marks that are neither rollable nor permanent: their owners would keep them (wearable, ranked, their marks.js
+// tier's MAIN) but nobody new can get them. EMPTY since GEAR POOL v2: all three (STUDENT, MAGPIE, OLD HAND) were
+// ALL-MODE COMMONS, retired with COMMON (refunded — markRollsCore.migrateRollSave). Kept as the INDEX's hook.
+export const RETIRED_MARK_IDS = [];
 
 // ---------------------------------------------------------------------- achievements keep / cut
 // KEEP = genuinely hard (≥10 h of median play, a skill bar the median never reaches, or 30 real days);
@@ -59,9 +61,8 @@ export const KEPT_ACHIEVEMENTS = Object.keys(ACHIEVEMENT_PLAN).filter((k) => ACH
 
 // ------------------------------------------------------------------------------------- numbers
 export const PITY = {
-  epic: { hard: 50, softFrom: 40, softStep: 0.05 }, // EPIC-or-better guaranteed on roll 50 of a drought (Andy)
-  legendary: { hard: LEGENDARY_PITY_HARD }, // LEGENDARY-or-better guaranteed on roll 500 of a drought (Andy oct5)
-  firstEpicBy: 10, // the first EPIC+ ever lands by roll 10
+  epic: { hard: EPIC_PITY_HARD }, // EPIC-or-better guaranteed on roll 10 of a drought (Andy oct9, Genshin's 4★ every 10)
+  legendary: { hard: LEGENDARY_PITY_HARD }, // LEGENDARY-or-better guaranteed on roll 50 of a drought (Andy oct9)
 };
 export const LUCK_SOURCES = {
   permanent: 0.1, // each PERMANENT (hard-achievement) mark owned
@@ -111,10 +112,9 @@ export function isBonusRoll(state) {
 /** The shown pity counters: rolls left until each guarantee (1 = the next roll is guaranteed). */
 export function pityLeft(state) {
   const st = state || freshState();
-  const epicHard = !st.everEpic ? Math.min(PITY.epic.hard, PITY.firstEpicBy - num(st.rolls)) : PITY.epic.hard - num(st.sinceEpic);
-  return { epic: Math.max(1, epicHard), legendary: Math.max(1, PITY.legendary.hard - num(st.sinceLegendary)) };
+  return { epic: Math.max(1, PITY.epic.hard - num(st.sinceEpic)), legendary: Math.max(1, PITY.legendary.hard - num(st.sinceLegendary)) };
 }
-/** THE PITY LADDER (always visible): [{ tier: 'epic', left }, { tier: 'legendary', left }] — "EPIC+ IN 50". */
+/** THE PITY LADDER (always visible): [{ tier: 'epic', left }, { tier: 'legendary', left }] — "EPIC+ IN 7". */
 export function pityLadder(state) {
   const p = pityLeft(state);
   return [{ tier: 'epic', left: p.epic }, { tier: 'legendary', left: p.legendary }];
@@ -128,35 +128,41 @@ export function rollTable(state, ctx = {}) {
   const bonus = isBonusRoll(state);
   const L = luck(state, ctx) * (bonus ? BONUS_ROLL_MULT : 1);
   const w = new Map();
-  for (const m of ROLL_MARKS) if (m.tier !== 'common') w.set(m.id, L / m.x);
-  const epicPlus = ROLL_MARKS.filter((m) => tierRank(m.tier) >= tierRank('epic'));
+  for (const m of ROLL_MARKS) if (m.tier !== FLOOR_TIER) w.set(m.id, L / m.x);
+  const legPlus = ROLL_MARKS.filter((m) => tierRank(m.tier) >= tierRank('legendary'));
   const sumOf = (arr) => arr.reduce((s, m) => s + w.get(m.id), 0);
-  // soft pity: add mass to the EPIC+ group, spread by its own weights
-  const nextEpic = num(state.sinceEpic) + 1;
-  const extra = PITY.epic.softStep * Math.max(0, nextEpic - PITY.epic.softFrom + 1);
-  if (extra > 0) {
-    const s = sumOf(epicPlus);
-    for (const m of epicPlus) w.set(m.id, w.get(m.id) + (extra * w.get(m.id)) / s);
-  }
   let forced = null;
-  if (nextEpic >= PITY.epic.hard || (!state.everEpic && num(state.rolls) + 1 >= PITY.firstEpicBy)) forced = 'epic';
+  if (num(state.sinceEpic) + 1 >= PITY.epic.hard) forced = 'epic';
   if (num(state.sinceLegendary) + 1 >= PITY.legendary.hard) forced = 'legendary';
   const probs = new Map();
-  if (forced) {
-    const group = forced === 'legendary' ? ROLL_MARKS.filter((m) => tierRank(m.tier) >= tierRank('legendary')) : epicPlus;
-    const s = sumOf(group);
-    for (const m of ROLL_MARKS) probs.set(m.id, group.includes(m) ? w.get(m.id) / s : 0);
+  if (forced === 'legendary') {
+    // the 50th roll: LEGENDARY+ only, spread by their own weights
+    const s = sumOf(legPlus);
+    for (const m of ROLL_MARKS) probs.set(m.id, legPlus.includes(m) ? w.get(m.id) / s : 0);
+    return { probs, forced, luck: L, bonus };
+  }
+  if (forced === 'epic') {
+    // the 10th roll (Genshin's 4★ guarantee): LEGENDARY+ keep their normal chance, EPIC takes everything else — so
+    // the guarantee lifts the floor to EPIC, never the LEGENDARY+ odds
+    const top = Math.min(1, sumOf(legPlus));
+    const epics = ROLL_MARKS.filter((m) => m.tier === 'epic');
+    const ew = sumOf(epics);
+    for (const m of ROLL_MARKS) {
+      if (legPlus.includes(m)) probs.set(m.id, top >= 1 ? w.get(m.id) / sumOf(legPlus) : w.get(m.id));
+      else if (m.tier === 'epic') probs.set(m.id, top >= 1 ? 0 : ((1 - top) * w.get(m.id)) / ew);
+      else probs.set(m.id, 0);
+    }
     return { probs, forced, luck: L, bonus };
   }
   let S = 0;
   for (const v of w.values()) S += v;
   if (S >= 1) {
-    // luck past the table: commons are gone, the rest renormalised (Sol's "luck removes trash")
-    for (const m of ROLL_MARKS) probs.set(m.id, m.tier === 'common' ? 0 : w.get(m.id) / S);
+    // luck past the table: the floor is gone, the rest renormalised (Sol's "luck removes trash")
+    for (const m of ROLL_MARKS) probs.set(m.id, m.tier === FLOOR_TIER ? 0 : w.get(m.id) / S);
   } else {
-    const commons = ROLL_MARKS.filter((m) => m.tier === 'common');
-    const cw = commons.reduce((s, m) => s + 1 / m.x, 0);
-    for (const m of ROLL_MARKS) probs.set(m.id, m.tier === 'common' ? ((1 - S) * (1 / m.x)) / cw : w.get(m.id));
+    const floor = ROLL_MARKS.filter((m) => m.tier === FLOOR_TIER);
+    const fw = floor.reduce((s, m) => s + 1 / m.x, 0);
+    for (const m of ROLL_MARKS) probs.set(m.id, m.tier === FLOOR_TIER ? ((1 - S) * (1 / m.x)) / fw : w.get(m.id));
   }
   return { probs, forced: null, luck: L, bonus };
 }

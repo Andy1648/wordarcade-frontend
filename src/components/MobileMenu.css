@@ -379,9 +379,8 @@
   .hp-m-per .hp-chip.is-roll .hp-chip-edge { background: #2EFFE0; }
   .hp-m-per .hp-chip-dot { top: -7px; right: -7px; width: 16px; height: 16px; }
   /* the TIER FRAME (Andy oct9 — the YOUR GEAR slot's, on the phone chip): the stripe is the tier colour; the border
-     and hard shadow escalate common quiet → mythic loud; the name takes the tier colour from EPIC up */
+     and hard shadow escalate rare quiet → mythic loud; the name takes the tier colour from EPIC up */
   .hp-m-per .hp-chip[data-tier] .hp-chip-edge { background: var(--gear-line); }
-  .hp-m-per .hp-chip[data-tier='common'] { border-color: var(--gear-edge); }
   .hp-m-per .hp-chip[data-tier='rare'] { border-color: var(--gear-line); }
   .hp-m-per .hp-chip[data-tier='epic'] { border-color: var(--gear-line); box-shadow: 3px 3px 0 var(--gear-edge); }
   .hp-m-per .hp-chip:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { border-color: var(--gear-line); background: var(--gear-fill); box-shadow: 3px 3px 0 var(--gear-edge); }

@@ -17,21 +17,43 @@ export const PERKS = {
   overdrive15: { name: 'OVERCLOCK', line: 'OVERDRIVE EVERY 15 MIN' },
   frenzyAll: { name: 'WILDFIRE', line: 'FRENZY IN EVERY MODE' },
   keyKeep3: { name: 'HEIRLOOM', line: 'REBIRTH KEEPS 3 POWER TIERS' },
+  // GEAR POOL v2 (Andy oct9)
+  freeOd: { name: 'FREE OVERDRIVE', line: 'FREE 60s OVERDRIVE EVERY 15 MIN' }, // every MYTHIC+ gear (agreed with Andy)
+  odLong: { name: 'AFTERBURN', line: 'OVERDRIVE LASTS ×2' },
+  critKey10: { name: 'DRUMROLL', line: 'EVERY 10TH KEY CRITS' },
 };
+
+// GEAR POOL v2 (Andy oct9): the 12 rolled COMMON gears that were removed, and the three marks.js-only COMMONS (the
+// retired ALL-MODE marks) that went with them — owned copies are refunded (markRollsCore.migrateRollSave) and they no
+// longer count anywhere (v3/achievements FILL INDEX). Here because this module is a LEAF.
+export const REMOVED_COMMON_IDS = Object.freeze([
+  'mk-bomber', 'mk-sparky', 'mk-sprinter', 'mk-dasher', 'mk-crammer', 'mk-inkwell', 'mk-linker', 'mk-shackle', 'mk-wick',
+  'mk-matchstick', 'mk-pacer', 'mk-nitro',
+]);
+export const RETIRED_COMMON_IDS = Object.freeze(['mk-student', 'mk-magpie', 'mk-veteran']);
 
 /** Which rolled mark carries which perk(s). markRollsCore attaches these to the pool. */
 export const MARK_PERKS = {
   'mk-leviathan': ['letters2'], // LEGENDARY
   'mk-eclipse': ['winner2'], // LEGENDARY
-  'mk-singularity': ['doubleRoll'], // MYTHIC
-  'mk-kraken': ['overdrive15'], // MYTHIC
-  'mk-origin': ['frenzyAll', 'keyKeep3'], // SECRET — the game-changers
+  'mk-headmaster': ['odLong'], // LEGENDARY (GEAR POOL v2)
+  'mk-thunderclap': ['critKey10'], // LEGENDARY (GEAR POOL v2)
+  'mk-singularity': ['doubleRoll', 'freeOd'], // MYTHIC
+  'mk-kraken': ['overdrive15', 'freeOd'], // MYTHIC
+  'mk-hydra': ['freeOd'], // MYTHIC (GEAR POOL v2)
+  'mk-origin': ['frenzyAll', 'keyKeep3', 'freeOd'], // SECRET — the game-changers
 };
 
 export const LETTERS_PERK_MULT = 2;
 export const WINNER_PERK_MULT = 2;
 export const OVERDRIVE_PERK_MIN = 15;
 export const KEY_KEEP_TIERS = 3;
+// FREE OVERDRIVE (every MYTHIC+ gear, Andy-agreed): ×10 for FREE_OD_SEC seconds after every FREE_OD_EVERY_MIN minutes
+// of PLAY while worn (overdrive.js — the same play clock and the same ×10 OVERDRIVE as the random one).
+export const FREE_OD_SEC = 60;
+export const FREE_OD_EVERY_MIN = 15;
+export const OD_LONG_MULT = 2; // AFTERBURN (HEADMASTER): an OVERDRIVE runs twice as long
+export const CRIT_PERK_EVERY = 10; // DRUMROLL (THUNDERCLAP): every 10th MENU key is a guaranteed crit
 
 let cacheRaw;
 let cacheWorn;
@@ -89,6 +111,14 @@ export function frenzyEveryMode() {
 /** KEY tiers a rebirth keeps (ORIGIN: 3; otherwise 0 — the Rebirth Rush reset). */
 export function rebirthKeyKeep() {
   return hasMarkPerk('keyKeep3') ? KEY_KEEP_TIERS : 0;
+}
+/** FREE OVERDRIVE (MYTHIC+): true while the worn MAIN carries it. */
+export function freeOverdriveOn() {
+  return hasMarkPerk('freeOd');
+}
+/** How much longer an OVERDRIVE runs (AFTERBURN ×2, else ×1). */
+export function overdriveLengthMult() {
+  return hasMarkPerk('odLong') ? OD_LONG_MULT : 1;
 }
 /** OVERDRIVE every 15 minutes of play (KRAKEN), or null for the default window. */
 export function overdrivePerkMinutes() {

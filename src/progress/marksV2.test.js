@@ -69,31 +69,31 @@ test('+N s OVERDRIVE lengthens the next OVERDRIVE', () => {
   withStorage({ [ROLL_STATE_KEY]: owning('mk-tinder'), [MARKS_EQUIPPED_KEY]: 'mk-tinder' }, () => assert.equal(overdriveLengthMs(), 375000));
 });
 
-test('pity ladder: EPIC+ in 50 AND LEGENDARY+ in 125 (oct8: was 500) — always shown, both forced on time', () => {
-  assert.equal(PITY.legendary.hard, 125);
-  assert.equal(LEGENDARY_PITY_HARD, 125);
-  assert.deepEqual(pityLadder(freshState()), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 125 }]);
-  assert.deepEqual(pityLadder(null), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 125 }]);
-  const s = { ...freshState(), everEpic: true, rolls: 1000, sinceEpic: 3, sinceLegendary: 124 };
+test('pity ladder (GEAR POOL v2, Genshin): EPIC+ in 10 AND LEGENDARY+ in 50 — always shown, both forced on time', () => {
+  assert.equal(PITY.legendary.hard, 50);
+  assert.equal(LEGENDARY_PITY_HARD, 50);
+  assert.deepEqual(pityLadder(freshState()), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 50 }]);
+  assert.deepEqual(pityLadder(null), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 50 }]);
+  const s = { ...freshState(), everEpic: true, rolls: 1000, sinceEpic: 3, sinceLegendary: 49 };
   assert.equal(pityLeft(s).legendary, 1);
   const out = roll(() => 0.999, s);
   assert.equal(out.result.pityHit, 'legendary');
   assert.ok(['legendary', 'mythic', 'secret'].includes(out.result.tier));
   assert.equal(out.state.sinceLegendary, 0);
   assert.equal(out.state.sinceEpic, 0);
-  // the worst draw every time: a LEGENDARY+ at least every 125
+  // the worst draw every time (a RARE, or an EPIC on the 10th): a LEGENDARY+ at least every 50
   let st = freshState();
   let last = 0;
   let maxGap = 0;
   for (let i = 1; i <= 2600; i++) {
-    const o = roll(() => 0.999999, st);
+    const o = roll(() => 0.985, st);
     st = o.state;
     if (['legendary', 'mythic', 'secret'].includes(o.result.tier)) {
       maxGap = Math.max(maxGap, i - last);
       last = i;
     }
   }
-  assert.ok(last > 0 && maxGap <= 125, `gap ${maxGap}`);
+  assert.ok(last > 0 && maxGap === 50, `gap ${maxGap}`);
 });
 
 test('skip reveals below [tier]: default EPIC, stored in taw.markRolls; a first-time mark is never skipped', () => {
@@ -108,7 +108,9 @@ test('skip reveals below [tier]: default EPIC, stored in taw.markRolls; a first-
   });
   assert.equal(shouldSkipReveal({ tier: 'rare', newMark: false }, 'epic'), true);
   assert.equal(shouldSkipReveal({ tier: 'epic', newMark: false }, 'epic'), false);
-  assert.equal(shouldSkipReveal({ tier: 'common', newMark: true }, 'secret'), false, 'a first-time mark plays in full');
+  assert.equal(shouldSkipReveal({ tier: 'rare', newMark: true }, 'secret'), false, 'a first-time mark plays in full');
+  assert.equal(shouldSkipReveal({ tier: 'rare', newMark: false }, 'rare'), false, '< RARE skips nothing');
+  assert.equal(normalize({ v: 2, skipBelow: 'common' }).skipBelow, 'epic', 'a stored < COMMON reads as the default');
   assert.equal(shouldSkipReveal(null, 'epic'), false);
   assert.equal(normalize({ v: 2, skipBelow: 'mythic' }).skipBelow, 'mythic');
   assert.equal(normalize({ v: 2, skipBelow: 'x' }).skipBelow, 'epic');
@@ -116,19 +118,19 @@ test('skip reveals below [tier]: default EPIC, stored in taw.markRolls; a first-
 
 test('INDEX entry: owned count, first roll #, ★ line, the stat as it pays, 1 IN X', () => {
   let s = { ...freshState(), everEpic: true, rolls: 41 };
-  const pick0 = () => { let i = 0; return () => (i++ % 2 ? 0.5 : 0); }; // BOMBER, never shiny
-  const a = roll(pick0(), s); // BOMBER, new, roll #42
+  const pick0 = () => { let i = 0; return () => (i++ % 2 ? 0.5 : 0); }; // DETONATOR, never shiny
+  const a = roll(pick0(), s); // DETONATOR, new, roll #42
   s = a.state;
   assert.equal(a.result.firstRoll, 42);
   assert.equal(a.result.newMark, true);
   const b = roll(pick0(), s);
   assert.equal(b.result.firstRoll, 42, 'first roll # never moves');
-  const e = indexEntry('mk-bomber', b.state);
+  const e = indexEntry('mk-detonator', b.state);
   assert.equal(e.owned, 2);
   assert.equal(e.firstRoll, 42);
-  assert.deepEqual([e.pips, e.have, e.need], [0, 1, 10]);
-  assert.deepEqual(e.stat, statOf('mk-bomber', b.state));
-  assert.equal(e.statLine, '×1.1 WINS');
+  assert.deepEqual([e.pips, e.have, e.need], [0, 1, 5]);
+  assert.deepEqual(e.stat, statOf('mk-detonator', b.state));
+  assert.equal(e.statLine, '×1.5 WINS IN WORD BOMB');
   assert.equal(e.oneInX, Math.round(ROLL_MARKS[0].x));
   assert.equal(indexEntry('mk-origin', b.state).owned, 0);
   assert.equal(indexEntry('mk-origin', b.state).firstRoll, null);
@@ -137,14 +139,14 @@ test('INDEX entry: owned count, first roll #, ★ line, the stat as it pays, 1 I
 });
 
 test('INDEX rewards: new mark + completion once, priced at your rate; milestones are LUCK only now', () => {
-  const commons = ROLL_MARKS.filter((m) => m.tier === 'common');
-  const s = { ...freshState(), everEpic: true, rolls: 5, marks: Object.fromEntries(commons.slice(1).map((m) => [m.id, { n: 1 }])) };
+  const rares = ROLL_MARKS.filter((m) => m.tier === 'rare');
+  const s = { ...freshState(), everEpic: true, rolls: 5, marks: Object.fromEntries(rares.slice(1).map((m) => [m.id, { n: 1 }])) };
   const a = roll(() => 0, s);
-  assert.equal(a.result.completed, 'common');
+  assert.equal(a.result.completed, 'rare');
   assert.deepEqual(a.result.rewards.map((r) => r.kind), ['new', 'complete']);
-  assert.equal(a.result.rewardWords, INDEX_NEW_WORDS.common + INDEX_COMPLETE_WORDS.common);
-  assert.deepEqual(a.state.done, ['common']);
-  assert.deepEqual(completedTiers(a.state), ['common']);
+  assert.equal(a.result.rewardWords, INDEX_NEW_WORDS.rare + INDEX_COMPLETE_WORDS.rare);
+  assert.deepEqual(a.state.done, ['rare']);
+  assert.deepEqual(completedTiers(a.state), ['rare']);
   assert.equal(indexRewardWins(a.result, 12.5), Math.round(a.result.rewardWords * 12.5));
   assert.equal(indexRewardWins(a.result, 0), 0);
   // completion pays once: lose nothing, roll the tier again

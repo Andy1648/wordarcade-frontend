@@ -28,7 +28,10 @@ import { flagOn } from '../lib/featureFlags.js';
 import { milestoneCrossed, MILESTONE_FX } from './menuTier.js';
 // CRIT (Andy oct8): the worn gears' CRIT RATE / POWER — each credited menu KEY rolls on its own (crit.js)
 import { critTotals, CRIT_BASE_RATE } from './markRollsCore.js';
-import { critKey } from './crit.js';
+import { critKeyAt } from './crit.js';
+// EVERY Nth KEY CRITS (GEAR POOL v2): the menu KEY count the guaranteed crit counts on — module-wide, so leaving the
+// menu and coming back never resets the count toward the next guaranteed crit.
+let critKeySeq = 0;
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -91,7 +94,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // menu's first paint never fetches it)
     let critArmed = false;
     const armCrit = () => { if (!critArmed && fxRef && fxRef.current && fxRef.current.critArm) { critArmed = true; fxRef.current.critArm(); } };
-    if (crit.rate > CRIT_BASE_RATE) armCrit();
+    if (crit.rate > CRIT_BASE_RATE || crit.every > 0) armCrit();
 
     // Shared credit path for a keystroke OR a tap. `kind` is 'key' | 'tap'; both credit the same
     // XP. A tap's only difference is its pop — the "+N" alone at the tap coordinates.
@@ -111,7 +114,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const isTap = opts.kind === 'tap';
       // CRIT: a KEY (never a tap) rolls its own crit — that key pays menuGain × POWER, everything else menuGain
       if (!isTap) armCrit();
-      const hit = isTap ? { gain: menuGain, crit: false } : critKey(menuGain, crit);
+      if (!isTap) critKeySeq += 1;
+      const hit = isTap ? { gain: menuGain, crit: false } : critKeyAt(critKeySeq, menuGain, crit);
       // creates/resumes the AudioContext inside this gesture; a crit clacks an octave up (+5 pentatonic steps)
       playClack(st.count - 1 + (hit.crit ? 5 : 0));
       const fromLevel = xpRef.current.level;

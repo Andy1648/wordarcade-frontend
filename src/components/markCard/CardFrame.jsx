@@ -35,7 +35,7 @@ const Pin = ({ cx, cy, fill, edge }) => (
   </g>
 );
 
-function CardFrame({ line, edge, fill, tier = 'common', locked = false, pipW = 0 }) {
+function CardFrame({ line, edge, fill, tier = 'rare', locked = false, pipW = 0 }) {
   const pins = !locked && (tier === 'legendary' || tier === 'mythic' || tier === 'secret');
   const headPins = !locked && (tier === 'mythic' || tier === 'secret');
   const pinFill = (i) => (tier === 'secret' ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : line);

@@ -22,29 +22,13 @@ export const RANK_RIMS = [
 const INK = '#0d0618';
 
 // Glyphs, drawn in a 100×100 box centred on (50,50), ~44 units across. Uneven on purpose. Only the legacy (never
-// rolled) marks live here; the 29 rollable glyphs are in markGlyphsRolled.jsx (lazy, kit construction).
+// rolled) marks live here; the rollable glyphs are in markGlyphsRolled.jsx (lazy, kit construction).
 const GLYPHS = {
   'mk-linguist': (
     <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
       <path d="M50 36 C42 31 32 31 25 34 L25 68 C32 65 42 65 50 70 Z" fill="#fff" />
       <path d="M50 36 C58 31 68 31 75 34 L75 68 C68 65 58 65 50 70 Z" fill="#EDE6FF" />
       <path d="M31 44 L43 44 M31 51 L43 51 M57 44 L69 44 M57 51 L66 51" strokeWidth="2.5" strokeLinecap="round" />
-    </g>
-  ),
-  'mk-student': (
-    <g stroke={INK} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" fill="none">
-      <path d="M27 70 L27 32" />
-      <path d="M27 70 L75 70" />
-      <path d="M33 62 L45 48 L54 55 L70 36" stroke="#2EFFE0" strokeWidth="6" />
-      <path d="M33 62 L45 48 L54 55 L70 36" strokeWidth="2" />
-      <path d="M62 35 L71 34 L71 43" />
-    </g>
-  ),
-  'mk-magpie': (
-    <g stroke={INK} strokeWidth="3.5">
-      <ellipse cx="50" cy="52" rx="22" ry="21" fill="#FFD54A" />
-      <ellipse cx="50" cy="52" rx="14" ry="13" fill="none" stroke="#A8800F" strokeWidth="3" />
-      <path d="M50 42 L53 49 L60 49 L54 53 L56 60 L50 56 L44 60 L46 53 L40 49 L47 49 Z" fill="#fff" strokeWidth="2" />
     </g>
   ),
   'mk-eternal': (
@@ -57,13 +41,6 @@ const GLYPHS = {
     />
   ),
   // ---- STEP 49: the eight new marks, same hand: uneven, chunky ink, flat fills ----
-  'mk-veteran': (
-    <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
-      <path d="M38 24 L50 40 L62 24 L66 27 L54 46 L46 46 L34 27 Z" fill="#FF4FA3" />
-      <circle cx="50" cy="60" r="16" fill="#FFD54A" />
-      <path d="M50 51 L53 57 L60 57 L54 61 L57 68 L50 64 L43 68 L46 61 L40 57 L47 57 Z" fill="#fff" strokeWidth="2" />
-    </g>
-  ),
   'mk-curator': (
     <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
       <rect x="26" y="34" width="48" height="36" rx="4" fill="#9A1AFF" />

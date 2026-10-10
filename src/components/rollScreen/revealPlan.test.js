@@ -12,11 +12,12 @@ test('escalation: every tier keeps every layer of the tier below and ADDS at lea
     for (const l of lo) assert.ok(hi.includes(l), `${REVEAL_TIERS[i]} keeps ${l}`);
     assert.ok(hi.length > lo.length, `${REVEAL_TIERS[i]} adds a layer`);
   }
-  assert.deepEqual(LAYERS.common, ['flip']);
+  assert.equal(LAYERS.common, undefined, 'GEAR POOL v2: no COMMON');
+  assert.deepEqual(LAYERS.rare, ['flip', 'sheen', 'sparkles']);
 });
 
-test('reveal lengths scale ~0.25 / 0.5 / 1.0 / 1.6 / 2.2 / 3.0 s, strictly rising', () => {
-  const want = { common: 250, rare: 500, epic: 1000, legendary: 1600, mythic: 2200, secret: 3000 };
+test('reveal lengths scale ~0.5 / 1.0 / 1.6 / 2.2 / 3.0 s, strictly rising', () => {
+  const want = { rare: 500, epic: 1000, legendary: 1600, mythic: 2200, secret: 3000 };
   let prev = 0;
   for (const t of REVEAL_TIERS) {
     const tl = revealTimeline(t);
@@ -27,7 +28,7 @@ test('reveal lengths scale ~0.25 / 0.5 / 1.0 / 1.6 / 2.2 / 3.0 s, strictly risin
 });
 
 test('the rarity colour shows BEFORE the flip from LEGENDARY up (the telegraph ends where the flip starts)', () => {
-  for (const t of ['common', 'rare', 'epic']) assert.equal(revealTimeline(t).telegraph, null);
+  for (const t of ['rare', 'epic']) assert.equal(revealTimeline(t).telegraph, null);
   for (const t of ['legendary', 'mythic', 'secret']) {
     const tl = revealTimeline(t);
     assert.ok(tl.telegraph, t);
@@ -42,8 +43,6 @@ test('the rarity colour shows BEFORE the flip from LEGENDARY up (the telegraph e
 });
 
 test('only the layers a tier owns are scheduled', () => {
-  assert.equal(revealTimeline('common').sheen, null);
-  assert.equal(revealTimeline('common').sparkles, null);
   assert.equal(revealTimeline('rare').burst, null);
   assert.equal(revealTimeline('epic').slam, null);
   assert.equal(revealTimeline('legendary').flash, null);

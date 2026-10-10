@@ -2,7 +2,6 @@
 // Reel.jsx plays these. Unit-tested in revealPlan.test.js.
 //
 // ESCALATION PRINCIPLE: each tier ADDS a layer — never "more of the same" only:
-//   common     flip
 //   rare       + one sheen pass + sparkles
 //   epic       + a pre-flip shake + a burst
 //   legendary  + a TELEGRAPH (the rarity colour shows BEFORE the flip: the back's edge glints in it and rattles)
@@ -12,22 +11,21 @@
 // The reveal lasts ~0.25 / 0.5 / 1.0 / 1.6 / 2.2 / 3.0 s. Then the STATS EXTENSION (≤ 1.2 s) ticks the gear's stats in.
 // A tap closes the reveal at any point (the result line under the reel already holds the result).
 
-export const REVEAL_TIERS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+export const REVEAL_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 
 /** Which layers each tier plays, in ladder order (each tier = the one below + its own). */
 export const LAYERS = {
-  common: ['flip'],
   rare: ['flip', 'sheen', 'sparkles'],
   epic: ['flip', 'sheen', 'sparkles', 'preShake', 'burst'],
   legendary: ['flip', 'sheen', 'sparkles', 'preShake', 'burst', 'telegraph', 'slam', 'screenShake'],
   mythic: ['flip', 'sheen', 'sparkles', 'preShake', 'burst', 'telegraph', 'slam', 'screenShake', 'flash', 'ring2'],
   secret: ['flip', 'sheen', 'sparkles', 'preShake', 'burst', 'telegraph', 'slam', 'screenShake', 'flash', 'ring2', 'dimLights', 'spinUp'],
 };
-export const hasLayer = (tier, layer) => (LAYERS[tier] || LAYERS.common).includes(layer);
+export const hasLayer = (tier, layer) => (LAYERS[tier] || LAYERS.rare).includes(layer);
 
 /** The sparkle pool (pooled 4-point stars, WAAPI) and how many each tier fires. SECRET fires the pool twice. */
 export const SPARK_POOL = 8;
-export const SPARKS = { common: 0, rare: 4, epic: 6, legendary: 8, mythic: 8, secret: 12 };
+export const SPARKS = { rare: 4, epic: 6, legendary: 8, mythic: 8, secret: 12 };
 /** Where the pool's sparkles sit, as % of the card box (fixed spots: a spawn is a pure write — no measuring). */
 export const SPARK_SPOTS = [
   { x: 8, y: 10, s: 1.1, r: 12 }, { x: 92, y: 18, s: 0.8, r: -20 }, { x: 96, y: 62, s: 1.2, r: 30 }, { x: 6, y: 72, s: 0.9, r: -8 },
@@ -47,7 +45,7 @@ export const FLASH_PEAK = 0.6;
  * `total` = when the last layer is done.
  */
 export function revealTimeline(tier) {
-  const t = REVEAL_TIERS.includes(tier) ? tier : 'common';
+  const t = REVEAL_TIERS.includes(tier) ? tier : 'rare';
   const on = (l) => hasLayer(t, l);
   // BEFORE the flip: secret dims + spins up (with the telegraph glinting through it); legendary / mythic telegraph;
   // epic only rattles
@@ -73,7 +71,7 @@ export function revealTimeline(tier) {
   const sparkles = on('sparkles') ? { at: t === 'rare' ? land - 50 : land + 30, ms: t === 'rare' ? 300 : 420, n: SPARKS[t] } : null;
   const stampAt = land + (on('slam') ? 60 : 0);
   // the TARGET durations (research §4) pad the tail so every tier's reveal reads as its own length
-  const TARGET = { common: 250, rare: 500, epic: 1000, legendary: 1600, mythic: 2200, secret: 3000 };
+  const TARGET = { rare: 500, epic: 1000, legendary: 1600, mythic: 2200, secret: 3000 };
   const ends = [flip, slam, screenShake, flash, burst, ring2, sheen, sparkles, dim, spinUp, telegraph, preShake]
     .filter(Boolean).map((s) => s.at + s.ms);
   const total = Math.max(TARGET[t], ...ends);
@@ -114,7 +112,7 @@ export function extensionAt(tier) {
 export function revealDoneMs(tier, ext) {
   return Math.max(revealTimeline(tier).total, extensionAt(tier) + (ext ? ext.total : 0));
 }
-/** How long a reveal stays up by itself before it closes (COMMON / RARE always; EPIC under AUTO): all done + a beat. */
+/** How long a reveal stays up by itself before it closes (RARE always; EPIC under AUTO): all done + a beat. */
 export const SELF_CLOSE_HOLD = { lite: 700, auto: 350 };
 export function selfCloseMs(tier, ext, { auto = false } = {}) {
   return revealDoneMs(tier, ext) + (auto ? SELF_CLOSE_HOLD.auto : SELF_CLOSE_HOLD.lite);

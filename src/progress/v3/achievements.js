@@ -13,10 +13,14 @@
 //   CHAIN             the longest CHAIN run (words)   (wins.bankWordWins)
 //   FILL INDEX        distinct marks rolled           (markRollShop.buyMarkRoll)
 //   POWER LEVEL       the highest POWER bought        (shop.buyKeyPower)
-// Imports only leaves (store.js, gemsCore.js, econ.js).
+// Imports only leaves (store.js, gemsCore.js, econ.js, markPerks.js).
 import { readCounters, readClaimed, writeClaimed } from './store.js';
 import { grantGems } from '../gemsCore.js';
 import { ACH_MIN, ACH_MAX } from './econ.js';
+import { REMOVED_COMMON_IDS, RETIRED_COMMON_IDS } from '../markPerks.js';
+
+// GEAR POOL v2: a retired COMMON found before the change no longer counts toward FILL INDEX (27 = every gear now)
+const GONE = new Set([...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]);
 
 const R5 = [40, 60, 90, 130, 200];
 export const ACHIEVEMENTS_V3 = [
@@ -32,7 +36,7 @@ export const ACHIEVEMENTS_V3 = [
 ];
 export const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
-const have = (c, a) => (a.counter === 'marks' ? c.marks.length : c[a.counter] || 0);
+const have = (c, a) => (a.counter === 'marks' ? c.marks.filter((id) => !GONE.has(id)).length : c[a.counter] || 0);
 
 /**
  * PURE: every achievement's row for given counters + claimed tiers.

@@ -32,11 +32,13 @@ function withStorage(seed, fn) {
 
 const MARK_IDS = [
   null, // nothing worn
-  'mk-bomber', // COMMON +% WINS (legacy id)
-  'mk-sprinter', // COMMON +% XP
-  'mk-sparky', // COMMON +BASE WINS
-  'mk-dasher', // COMMON +BASE XP
-  'mk-inkwell', // luck — touches neither stack
+  'mk-smith', // RARE +% WINS (legacy id) — GEAR POOL v2: RARE is the floor (no COMMON)
+  'mk-scholar', // RARE +% XP
+  'mk-cyclone', // RARE +BASE WINS
+  'mk-ouroboros', // RARE +BASE XP
+  'mk-slipstream', // luck — touches neither stack
+  'mk-detonator', // RARE ×1.5 WINS IN WORD BOMB — only in its mode
+  'mk-phoenix', // RARE +25% CRIT RATE — touches neither stack
   'mk-tinder', // OVERDRIVE length — touches neither stack
   'mk-nova', // EPIC +% WINS
   'mk-golem', // EPIC +BASE XP

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAYOUT, plateSpans, CARD_H, FACE, PLATE_H, pipPlateW, PIP_W, PIP_GAP } from './frameLayout.js';
+import { LAYOUT, plateSpans, CARD_H, FACE, PLATE_H, pipPlateW, pipGap, PIP_W, PIP_GAP } from './frameLayout.js';
 
 test('gear tile v2: every plate sits inside the card, in order, never overlapping the one above', () => {
   let prevBottom = 0;
@@ -18,6 +18,10 @@ test('gear tile v2: every plate sits inside the card, in order, never overlappin
 test('the pip plate grows with its pips and never leaves the bottom band', () => {
   assert.equal(pipPlateW(0), 0);
   assert.ok(pipPlateW(1) < pipPlateW(3));
-  // the most a card carries: 2 extra-stat dots + ✦✦ (SECRET has two perks) + ★★★★★ — and the plate is never capped short of its pips
+  // the most a card carries: 2 extra-stat dots + ✦✦✦ (SECRET has three perks — GEAR POOL v2 added FREE OVERDRIVE) +
+  // ★★★★★ — and the plate is never capped short of its pips (10 pips close the gaps up)
   for (let n = 1; n <= 9; n += 1) assert.ok(pipPlateW(n) <= 164 && pipPlateW(n) === n * PIP_W + (n - 1) * PIP_GAP + 12, `${n} pips fit`);
+  assert.equal(pipGap(10), 0);
+  assert.equal(pipPlateW(10), 10 * PIP_W + 12);
+  assert.ok(pipPlateW(10) <= 164);
 });

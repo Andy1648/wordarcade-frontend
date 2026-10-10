@@ -182,18 +182,19 @@ test('AUTO REBIRTH: a toggle that opens at R2 (refused below); no 2nd boost slot
   assert.equal(BO.codeBoostMult(now + 1000), 3);
 });
 
-test('MARKS (FINAL): COMMON ×1.1 · RARE ×1.25 · EPIC ×1.5 · LEGENDARY ×2 · MYTHIC ×3 · SECRET ×5; pity EPIC+ 50, LEGENDARY+ 125 (oct8: was 500)', async () => {
+test('MARKS (FINAL, GEAR POOL v2 — no COMMON): RARE ×1.25 · EPIC ×1.5 · LEGENDARY ×2 · MYTHIC ×3 · SECRET ×5; pity EPIC+ 10, LEGENDARY+ 50', async () => {
   const M = await import('../marks.js');
   const MRC = await import('../markRollsCore.js');
-  const want = { common: 1.1, rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 };
+  const want = { rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 };
   for (const [t, m] of Object.entries(want)) {
     near(1 + M.MARK_TIERS[t].bonus, m);
     near(MRC.TIER_MAIN[t], m);
     assert.equal(MRC.TIER_PCT[t], Math.round((m - 1) * 100));
   }
-  assert.deepEqual(MRC.TIER_ODDS, { common: 2, rare: 10, epic: 100, legendary: 250, mythic: 10000, secret: 100000 }); // LEGENDARY 1 IN 250 (Andy oct8)
-  assert.equal(MR.PITY.epic.hard, 50);
-  assert.equal(MR.PITY.legendary.hard, 125);
+  assert.deepEqual(MRC.TIER_ODDS, { epic: 100, legendary: 250, mythic: 10000, secret: 100000 }); // RARE = the remainder; LEGENDARY 1 IN 250 (Andy oct8)
+  assert.equal(M.MARK_TIERS.common, undefined);
+  assert.equal(MR.PITY.epic.hard, 10);
+  assert.equal(MR.PITY.legendary.hard, 50);
   assert.equal(G.ROLL_PRICE_GEMS, 75);
 });
 
