@@ -11,9 +11,8 @@
 // Everything is a finite WAAPI one-shot on transform / opacity, scheduled by one setTimeout chain per slot (never a
 // CSS loop); will-change is set for the run and cleared on finish. A hidden tab is skipped. No layout reads.
 // REDUCED MOTION: never started (MenuNav) — the slot stays static.
-// LAZY: MenuNav imports this only once an EPIC+ gear is worn (payload ratchet).
-
-import './gearShowcase.css';
+// LAZY: MenuNav imports this (and gearShowcase.css) only once an EPIC+ gear is worn (payload ratchet). Kept free of
+// any CSS import so node:test can load it.
 
 export const SHOWCASE_EVERY_MS = { epic: 8000, legendary: 7000, mythic: 7000, secret: 6500 };
 export const SHOWCASE_FIRST_MS = 1600;

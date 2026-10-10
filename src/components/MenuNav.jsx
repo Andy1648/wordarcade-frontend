@@ -159,7 +159,8 @@ function useGearShowcase(slotRef, tier, enabled) {
     if (!enabled || !el || !tier) return undefined;
     let live = true;
     let stop = null;
-    import('./gearShowcase.js').then((m) => { if (live) stop = m.startShowcase(el, tier); }, () => {});
+    Promise.all([import('./gearShowcase.js'), import('./gearShowcase.css')])
+      .then(([m]) => { if (live) stop = m.startShowcase(el, tier); }, () => {});
     return () => { live = false; if (stop) stop(); };
   }, [slotRef, tier, enabled]);
 }
