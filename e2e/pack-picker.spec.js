@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock, gotoMenu } from './support/backendMock.js';
 import PACKS from '../src/data/packs.js';
 
-const PACK_COUNT = PACKS.length; // 15
+const PACK_COUNT = PACKS.length; // 6 (Andy oct8: six easy packs)
 const TOTAL_CATS = PACKS.reduce((s, p) => s + p.count, 0); // sum of every pack's category count
 const MOVIES = PACKS.find((p) => p.id === 'movies'); // toggled in the count test
 // CLEAR leaves exactly the first pack selected (App handleSetAllBlitzPacks → PACKS.slice(0, 1)).
@@ -41,7 +41,7 @@ test.describe('Category Blitz pack picker', () => {
   });
 
   test('toggling a pack updates its pressed state and the count', async ({ page }) => {
-    const movies = page.getByRole('button', { name: 'MOVIES', exact: true });
+    const movies = page.getByRole('button', { name: MOVIES.label, exact: true });
     await expect(movies).toHaveAttribute('aria-pressed', 'true');
 
     await movies.click();
