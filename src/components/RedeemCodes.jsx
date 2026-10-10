@@ -33,7 +33,11 @@ export default function RedeemCodes() {
     if (r.ok) {
       setValue('');
       // E4 (Andy oct2 evening): a code applies the moment it is redeemed — no inbox, no second step.
-      const text = r.kind === 'boost'
+      const text = r.kind === 'gems'
+        ? `+${formatNum(r.gems)} GEMS — ADDED`
+        : r.kind === 'overdrive'
+          ? `OVERDRIVE ×10 · ${r.min} MIN — STARTED`
+          : r.kind === 'boost'
         ? `BOOST ×${r.mult} · ${r.min} MIN — STARTED`
         : r.perLevel
           // H2d: say what was ADDED (base × your level, the same claimAmount the credit used), not a
