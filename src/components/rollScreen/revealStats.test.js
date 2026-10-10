@@ -40,7 +40,7 @@ test('the label comes from statText (one place to rename "BASE WINS/WORD")', () 
 
 test('the reel cells draw from the live roll state, and no reveal file hardcodes a stat label', () => {
   const reel = readFileSync(join(HERE, 'Reel.jsx'), 'utf8');
-  assert.match(reel, /<MarkCard id=\{id\} tier=\{m\.tier\} name=\{m\.name\} state=\{view\} still \/>/);
+  assert.match(reel, /<MarkCard id=\{id\} tier=\{m\.tier\} name=\{m\.name\} state=\{view\}[^>]* still \/>/);
   for (const f of ['RevealStats.jsx', 'revealStats.js']) {
     const code = readFileSync(join(HERE, f), 'utf8').replace(/\/\/.*$/gm, '');
     assert.doesNotMatch(code, /BASE WINS|WINS\/WORD/, f);

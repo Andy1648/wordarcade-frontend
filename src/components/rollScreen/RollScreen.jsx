@@ -11,8 +11,9 @@
 // ROLL vs INDEX are TWO screens, never mixed (Andy oct5): this one is ROLL, AUTO, gems, pity and the result; the
 // INDEX (the collection) is one button away and never rolls, prices or replays.
 //
-// HONEST: the strip is drawn from the live roll table of the roll that was just paid for (reelPlan.drawStrip), the
-// landing cell is the real result, nothing is inserted next to it; the odds and pity are the game's (rollTable /
+// HONEST: the strip is drawn from the live roll table of the roll that was just paid for (reelPlan.drawShowcaseStrip:
+// far filler cells show EPIC+ more often as decoration — Andy oct9), the landing cell is the real result, the 3 cells
+// either side of it are plain live-odds draws; the odds and pity are the game's (rollTable /
 // oneInX / pityLadder) — the mockup's boosted demo luck is not here. NO SPOILERS: the line, the pity, the INDEX
 // count and an auto-equipped MAIN update when the reel LANDS, never before. TAP ANYWHERE mid-reveal jumps to the
 // result; a tap closes a DIM / FULL reveal. Closing mid-reveal still lands it (the roll is already paid and saved).
@@ -28,7 +29,7 @@ import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/re
 import { MARK_TIERS } from '../../progress/marks';
 import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
-  setSkipBelow, SKIP_TIERS, PITY, critStatsOf,
+  setSkipBelow, SKIP_TIERS, PITY, critStatsOf, ROLL_MARKS,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getGems, subscribeGems } from '../../progress/gems';
@@ -45,7 +46,7 @@ import { CARD_RAR, cardTier } from '../markCard/palette.js';
 import { splitTag } from '../markCard/cardModel.js';
 import { critLines } from '../../progress/critText';
 import {
-  drawStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS, CHARGE_MS, OVERHOLD_MS,
+  drawShowcaseStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS, CHARGE_MS, OVERHOLD_MS,
 } from './reelPlan.js';
 import './RollScreen.css';
 import { useReduceMotion } from '../../lib/useReduceMotion';
@@ -125,7 +126,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   // before the first roll the reel already shows REAL draws from your live odds (no result on it)
   const [idle] = useState(() => {
     try {
-      return drawStrip(rollTable(viewState(idsRef.current), { permanentOwned: permanentOwnedCount(), boost: isBoostActive() }).probs, Math.random, { resultId: null });
+      return drawShowcaseStrip(rollTable(viewState(idsRef.current), { permanentOwned: permanentOwnedCount(), boost: isBoostActive() }).probs, Math.random, { resultId: null, marks: ROLL_MARKS });
     } catch { return null; }
   });
   const [shown, setShown] = useState(null);
@@ -219,7 +220,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     sndPurchase();
     // the hit that stops AUTO always gets the full reveal
     const mode = revealMode(res, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
-    const strip = drawStrip(table.probs, Math.random, { resultId: res.markId });
+    const strip = drawShowcaseStrip(table.probs, Math.random, { resultId: res.markId, marks: ROLL_MARKS });
     const rest = restOffset();
     pending.current = res;
     setShown(null);
