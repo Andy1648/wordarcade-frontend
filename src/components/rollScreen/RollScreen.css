@@ -488,15 +488,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cut.is-dim .rs-cut-keep { display: none; }
 .rs-cut-shake { position: relative; display: grid; justify-items: center; gap: 14px; padding: 16px; text-align: center; }
 .rs-cut.is-dim .rs-cut-shake { gap: 18px; }
-.rs-cut-tier {
-  font-family: 'Bungee', sans-serif;
-  font-size: var(--fs-panel);
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: #fff;
-  -webkit-text-stroke: 4px #000;
-  paint-order: stroke fill;
-}
+/* the tier line is a TierBanner (markCard/TierBanner.jsx, gear UI v3) — the reveal slams it once */
+.rs-cut-tier { display: grid; justify-items: center; padding: 0 1.2em; }
 /* "1 IN X" — HUGE on a full reveal (cqw FIT: "1 IN 100,000" fits a 320px phone) */
 .rs-cut-stamp {
   font-family: 'Bungee', sans-serif;
@@ -578,14 +571,16 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   color: #FFE94A;
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #000;
   white-space: nowrap;
 }
 .rv-main-num.is-l { font-size: var(--fs-k44); }
-.rv-main-kind { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k20); letter-spacing: 0.04em; color: #fff; }
+/* EXPRESSIVE TEXT (gear UI v3, Andy oct9 "i dont want plain text anywhere"): every line inked Bungee, never small mono */
+.rv-main-kind { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k24); line-height: 1.05; letter-spacing: 0.02em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rv-extras { display: grid; gap: 2px; justify-items: inherit; }
-.rv-extra { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
-.rv-extra-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.rv-extra-kind { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); color: #c9b8e8; }
+.rv-extra { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; max-width: 100%; }
+.rv-extra-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k24); color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.rv-extra-kind { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: #FF4FA3; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rv-perk {
   display: grid;
   gap: 2px;
@@ -599,10 +594,10 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
 }
-.rv-perk-kick { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.08em; color: #0b5d52; }
-.rv-perk-line { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); line-height: 1.25; text-transform: uppercase; }
+.rv-perk-kick { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k16); letter-spacing: 0.1em; color: #2EFFE0; background: #0d0618; padding: 2px 8px 1px; margin-bottom: 3px; border-radius: 4px; transform: rotate(-2deg); }
+.rv-perk-line { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); line-height: 1.12; color: #0d0618; }
 .rv-dupe { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; }
-.rv-dupe-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.04em; color: #c9b8e8; }
+.rv-dupe-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); letter-spacing: 0.03em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rv-stars { display: inline-flex; gap: 3px; }
 .rv-star { position: relative; display: block; width: 22px; height: 22px; }
 .rv-star svg { display: block; }

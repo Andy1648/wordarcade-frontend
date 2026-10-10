@@ -89,7 +89,7 @@ const warmModeDialog = () => {
 const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'ClaimReveal');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
-const GearSheetOverlay = lazyWithReload(() => import('./GearSheetOverlay.jsx'), 'GearSheetOverlay');
+const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -1229,12 +1229,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
-  // YOUR GEAR (Andy oct9: "clicking the 'your gear' should show the gear stats not go to roll"): a worn gear opens its
-  // GEAR SHEET over the menu (the MARKS overlay slot, view 'gear'); nothing worn → ROLL, as before (nothing to show)
+  // YOUR GEAR (Andy oct9 22:56: "the equip gear page will be separate in the 'your gear' icon"): the EQUIP screen —
+  // the OWNED gears, the equipped one first, EQUIP / UNEQUIP on a tap (EquipScreen, lazy, the MARKS overlay slot, view
+  // 'gear'). A save that owns no gear yet has nothing to equip: ROLL, as before.
   const wornGear = markShown ? markEntry(equippedMark) : null;
+  // read once per change of the owned list / the worn gear / the overlay (never per keystroke)
+  const ownsAnyGear = useMemo(() => {
+    if (equippedMark || markIdList.length) return true;
+    const st = loadRollState();
+    return !!(st && st.marks && Object.keys(st.marks).length);
+  }, [equippedMark, markIdList, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
   const openGear = () => {
     if (navigating) return;
-    if (!wornGear) { openMarks('roll'); return; }
+    if (!ownsAnyGear) { openMarks('roll'); return; }
     sound.click();
     setShowMarks('gear');
   };
@@ -1242,11 +1249,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     setShowMarks(false);
     requestAnimationFrame(() => focusNav(navRootRef.current, 'gear'));
   };
-  const markChip = markShown ? <MenuMarkChip mark={wornGear} onClick={openGear} /> : null;
+  const markChip = markShown ? <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} /> : null;
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
-  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={wornGear} onClick={openGear} disabled={navigating} /> : null;
+  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} /> : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
   // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
@@ -1473,10 +1480,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* MARKS overlay — one slot: the ROLL screen (its INDEX button opens the MARKS INDEX in the same slot); the
           rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
       {showMarks === 'gear' && (
-        <ScreenBoundary name="gear-sheet" onBack={closeGear}>
+        <ScreenBoundary name="equip" onBack={closeGear}>
           <Suspense fallback={null}>
-            <GearSheetOverlay
-              markId={equippedMark}
+            <EquipScreen
+              equippedId={equippedMark}
               unlockedIds={markIdList}
               earned={earnedAch}
               onEquip={(id) => setEquippedMark(ROLLS ? id : equipMark(id, earnedAch))}

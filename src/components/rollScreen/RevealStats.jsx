@@ -42,7 +42,7 @@ function RevealStats({ stats, reg, glow = null }) {
       ) : null}
       {stats.perks.length ? (
         <div className="rv-perk" ref={reg('xPerk')}>
-          <span className="rv-perk-kick">PERK{stats.perks.length > 1 ? 'S' : ''} · WHILE MAIN</span>
+          <span className="rv-perk-kick">PERK{stats.perks.length > 1 ? 'S' : ''}</span>
           {stats.perks.map((p) => <span key={p} className="rv-perk-line">{p}</span>)}
         </div>
       ) : null}

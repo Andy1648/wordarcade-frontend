@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 228 308" width="228" height="308">
+  <!-- MYTHIC FRAME VARIANT (gear UI v3, Andy oct9 "mythic and secret should be even greater"): laid over the card's
+       180x260 frame (CardFrame.jsx) — four curled horns off the corners, a spiked crest over the rarity plate with a
+       cyan gem (mythic's SECOND colour), and two uneven paint drips off the bottom. Flat fills, darker-shade outlines,
+       hard black shadow; asymmetric on purpose. -->
+  <g fill="#000" transform="translate(5 5) translate(90 130) scale(0.94) translate(-90 -130)">
+    <path d="M6 34 C-6 22 -12 6 -18 -16 C0 -6 18 -2 34 6 C22 12 12 20 6 34 Z"/>
+    <path d="M174 30 C188 18 192 2 199 -14 C180 -6 164 -2 148 6 C160 12 168 18 174 30 Z"/>
+    <path d="M6 226 C-6 238 -10 252 -16 274 C2 266 18 262 32 254 C20 248 12 240 6 226 Z"/>
+    <path d="M174 230 C186 242 190 256 194 270 C178 264 164 260 150 254 C162 248 170 242 174 230 Z"/>
+    <path d="M64 10 L74 -6 L82 4 L90 -20 L98 4 L106 -6 L116 10 Z"/>
+  </g>
+  <!-- horns: pink, edged in the dark pink, a cyan inner sliver -->
+  <g stroke="#a8164e" stroke-width="3" stroke-linejoin="round" transform="translate(90 130) scale(0.94) translate(-90 -130)">
+    <path d="M6 34 C-6 22 -12 6 -18 -16 C0 -6 18 -2 34 6 C22 12 12 20 6 34 Z" fill="#FF3D7F"/>
+    <path d="M174 30 C188 18 192 2 199 -14 C180 -6 164 -2 148 6 C160 12 168 18 174 30 Z" fill="#FF3D7F"/>
+    <path d="M6 226 C-6 238 -10 252 -16 274 C2 266 18 262 32 254 C20 248 12 240 6 226 Z" fill="#FF3D7F"/>
+    <path d="M174 230 C186 242 190 256 194 270 C178 264 164 260 150 254 C162 248 170 242 174 230 Z" fill="#FF3D7F"/>
+  </g>
+  <g fill="#2EFFE0" transform="translate(90 130) scale(0.94) translate(-90 -130)">
+    <path d="M4 22 C-2 14 -6 4 -10 -8 C0 -2 8 2 14 6 C10 10 6 14 4 22 Z"/>
+    <path d="M178 20 C184 12 188 2 191 -6 C180 -2 172 2 166 6 C170 10 175 14 178 20 Z"/>
+    <path d="M4 238 C0 246 -4 256 -8 266 C2 262 10 258 16 254 C10 250 6 246 4 238 Z"/>
+    <path d="M180 242 C184 250 186 256 188 262 C180 258 172 256 164 254 C170 250 176 248 180 242 Z"/>
+  </g>
+  <!-- the crest over the rarity plate -->
+  <path d="M64 10 L74 -6 L82 4 L90 -20 L98 4 L106 -6 L116 10 Z" fill="#FF3D7F" stroke="#a8164e" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M90 -11 L95 -2 L90 7 L85 -2 Z" fill="#2EFFE0" stroke="#128f7e" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="88.4" cy="-3.6" r="1.4" fill="#fff"/>
+  <!-- drips off the bottom edge (uneven) -->
+  <path d="M40 256 C40 266 37 272 41 280 C46 274 45 266 46 256 Z" fill="#FF3D7F" stroke="#a8164e" stroke-width="2"/>
+  <circle cx="42" cy="287" r="2.6" fill="#FF3D7F" stroke="#a8164e" stroke-width="1.5"/>
+  <path d="M128 256 C128 262 126 266 129 271 C133 266 132 262 133 256 Z" fill="#FF3D7F" stroke="#a8164e" stroke-width="2"/>
+</svg>
