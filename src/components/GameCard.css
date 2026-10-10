@@ -329,7 +329,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   pointer-events: none; /* the whole card face stays ONE click target */
 }
 
-/* Corner ribbon (FEATURED / AI BUILT) — a diagonal banner cropping the top-left
+/* Corner ribbon (FEATURED / AI JUDGED) — a diagonal banner cropping the top-left
    corner (the card's overflow:hidden clips its bleed; it's aria-hidden so the
    viewport-integrity clip walk skips its intentional off-corner overhang). */
 .game-card-ribbon {
@@ -456,6 +456,8 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 /* Andy oct5: the real pay per word is the card's ONE number — the reward yellow, at the line's fit-to-slot size
    (the payout line is already the card's second-loudest type); " / WORD" stays the line's plain colour. */
 .game-card-payout-num { color: #ffe94a; }
+/* Andy oct10: "BASE 285 / WORD" — the line's plain colour, so the number stays the loud part. */
+.game-card-payout-base { white-space: nowrap; }
 
 /* THE XP LINE, directly above the wins line and the louder of the two — XP is what the bar on
    the same screen is counting, and it is the bigger number. Same cqw sizing as the payout (this
