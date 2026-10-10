@@ -41,6 +41,7 @@ import { GLOW_TIERS } from './markCard/idleSheen.js';
 import { CARD_RAR } from './markCard/palette.js';
 import { tierLabel } from './markCard/cardModel.js';
 import { formatNum } from '../format';
+import FitText from './kit/FitText.jsx';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS, nextIdleSheen } from './rollScreen/revealPlan.js';
 import './MarksIndex.css';
@@ -199,7 +200,7 @@ export default function MarksIndex({
                 aria-label={`${tierLabel(t.tier)} ${formatNum(t.owned)}/${formatNum(t.total)}`}
               >
                 <span className="mx-tierchip-bar" aria-hidden="true" />
-                <span className="mx-tierchip-num">{formatNum(t.owned)}/{formatNum(t.total)}</span>
+                <FitText className="mx-tierchip-num fit-center">{`${formatNum(t.owned)}/${formatNum(t.total)}`}</FitText>
               </span>
             ))}
           </div>

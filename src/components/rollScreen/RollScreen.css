@@ -58,8 +58,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   box-shadow: 6px 6px 0 #000;
   white-space: nowrap;
 }
-.rs-equipped-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #c9b8e8; letter-spacing: 0.06em; }
-.rs-equipped-v { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: var(--rs-tier, #8f7fb0); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs-equipped-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
+.rs-equipped-v { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: var(--rs-tier, #c79bff); -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rs-index-btn,
 .rs-close {
   min-height: 56px;
@@ -79,7 +79,21 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 .rs-index-btn { justify-self: start; display: inline-flex; align-items: center; gap: 10px; padding: 0 20px; }
 .rs-close { display: inline-flex; align-items: center; gap: 8px; padding: 0 18px; }
-.rs-index-n { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #FFE94A; }
+/* EXPRESSIVE TOP ROW (Andy oct9 "index icon … so boring and tiny"): Bungee, black-stroked, palette colours — the
+   destination word in its colour, the count in yellow and a size up */
+.rs-close,
+.rs-index-k,
+.rs-index-n {
+  font-family: 'Bungee', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+}
+.rs-close { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; }
+.rs-index-k { font-size: var(--fs-k20); color: #2EFFE0; -webkit-text-stroke: 3px #000; }
+.rs-index-n { font-size: var(--fs-k24); color: #FFE94A; -webkit-text-stroke: 4px #000; }
 
 .rs-index-btn:hover,
 .rs-close:hover { transform: translate(-2px, -2px); }
@@ -309,7 +323,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   border-radius: 8px;
   box-shadow: 5px 5px 0 #000;
 }
-.rs-pity-lbl { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); letter-spacing: 0.02em; color: #D88BFF; white-space: nowrap; }
+.rs-pity-lbl { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); letter-spacing: 0.02em; color: #D88BFF; white-space: nowrap; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rs-pity-row.is-leg .rs-pity-lbl { color: #FFC23D; }
 .rs-pity-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k32); line-height: 1; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
 .rs-pity-bar { grid-column: 1 / -1; position: relative; height: 14px; overflow: hidden; background: #0d0618; border: 3px solid #000; }
@@ -319,7 +333,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-pity-row.is-epic .rs-pity-bar { grid-column: auto; }
 
 .rs-rollcol { display: grid; justify-items: center; gap: 10px; }
-.rs-pity-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: #D88BFF; letter-spacing: 0.04em; white-space: nowrap; }
+.rs-pity-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); color: #D88BFF; letter-spacing: 0.04em; white-space: nowrap; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rs-pity-big b { margin-left: 8px; font-weight: 400; font-size: var(--fs-k38); line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; vertical-align: -4px; }
 
 /* THE ROLL BUTTON (RollV3): yellow slab, a darker lip, an ink drop, a 1deg resting tilt (a primary CTA). PRESSED is
@@ -381,11 +395,11 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn {
   min-height: 72px;
   padding: 0 22px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
+  font-family: 'Bungee', sans-serif;
+  font-weight: 400;
+  font-size: var(--fs-k24);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   color: #fff;
   background: #1a0b2e;
   border: 5px solid #000;
@@ -402,11 +416,20 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn.is-legendary { background: #FFC23D; color: #000; }
 .rs-auto-btn:hover { transform: translate(-2px, -2px); }
 .rs-auto-btn:active { transform: translate(6px, 6px); box-shadow: 0 0 0 #000; }
-.rs-auto-cap { font-size: var(--fs-body); color: #c9b8e8; }
+/* the AUTO word + its state, both Bungee, black-stroked (Andy oct9 "auto roll … so boring and tiny") */
+.rs-auto-k,
+.rs-auto-v { font-size: var(--fs-k24); line-height: 1; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.rs-auto-k { color: #2EFFE0; }
+.rs-auto-v { color: #fff; }
+.rs-auto-v.is-off { color: #FF4FA3; }
+.rs-auto-v.is-gate { color: #FFE94A; }
+.rs-auto-btn.is-on .rs-auto-k,
+.rs-auto-btn.is-on .rs-auto-v { color: #fff; }
+.rs-auto-btn.is-locked .rs-auto-k { color: #c79bff; }
 /* SKIP (R4): a stepper — SKIP · ◀ · "< EPIC" on a plate in the tier colour · ▶. Flat, thick purple outline (the
    INDEX button's), hard ink shadow, 44px targets; a dead end (nothing below RARE / above SECRET) hatches out. */
 .rs-skip { display: inline-flex; align-items: center; gap: 8px; }
-.rs-skip-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #c9b8e8; letter-spacing: 0.06em; }
+.rs-skip-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rs-skip-btn {
   flex: none;
   width: 44px;
@@ -439,7 +462,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   padding: 0 10px;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: var(--fs-k18);
+  font-size: var(--fs-k20);
   letter-spacing: 0.02em;
   white-space: nowrap;
   color: var(--rs-tier, #fff);
@@ -682,8 +705,13 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-close { padding: 0 10px; letter-spacing: 0; }
   .rs-index-btn, .rs-close, .rs-gems-bal { min-height: 44px; height: 44px; box-shadow: 4px 4px 0 #000; border-width: 3px; }
   .rs-close { min-width: 44px; }
+  /* phones: the back button is its ARROW (big) — the top row is ← · INDEX n/N · gems, and "← MENU" in Bungee pushed
+     INDEX under the gems pill at 390 and 360 wide. MENU stays in the button for screen readers (visually hidden). */
+  .rs-close { justify-content: center; padding: 0 8px; }
+  .rs-close-arrow { font-size: var(--fs-k24); line-height: 1; }
+  .rs-close-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .rs-index-btn { padding: 0 10px; letter-spacing: 0; gap: 6px; }
-  .rs-index-n { font-size: var(--fs-body); }
+  .rs-index-n { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; }
   .rs-title { display: none; }
   .rs-gems-bal { padding: 0 10px; gap: 6px; }
   .rs-gems-bal .gem-icon { width: 22px; height: 22px; }
@@ -708,20 +736,17 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-pity-n { -webkit-text-stroke: 4px #000; }
   .rs-pity-bar { height: 16px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .rs-auto-btn { min-height: 48px; padding: 0 10px; letter-spacing: 0; border-width: 4px; box-shadow: 4px 4px 0 #000; }
+  .rs-auto-k, .rs-auto-v { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   /* phones: ROLL · then the pity bars · then AUTO + its caption + SKIP on one full-width row */
   .rs-controls { grid-template-columns: minmax(0, 1fr); }
   .rs-pity { grid-row: 2; width: 100%; }
   .rs-opts { grid-row: 3; justify-self: stretch; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-  .rs-auto-cap { font-size: var(--fs-body); }
   /* phones: AUTO and the stepper share one 336px row — the SKIP word goes (the plate's "<" + the arrows say it), the
      plate takes what is left at 16px, so "AUTO: OFF · ◀ < LEGENDARY ▶" fits 360 wide on one row */
   .rs-skip { flex: 1 1 100%; min-width: 0; gap: 6px; }
   .rs-skip-k { display: none; }
   .rs-skip-v { flex: 1 1 auto; min-width: 0; padding: 0 4px; font-size: var(--fs-k16); -webkit-text-stroke: 2px #000; }
   .rs-auto-btn { flex: none; }
-  /* AUTO ON: "AUTO → LEGENDARY+" pushed TAP TO SET TARGET onto its own row, and that row came out of the stage (the
-     band lost its padding at 390x844) — the caption is the OFF state's hint, so it goes while a target is set */
-  .rs-opts:has(.rs-auto-btn.is-on) .rs-auto-cap { display: none; }
   .rs-cut { --mc-w: 180px; --mc-s: 1; }
   .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
@@ -739,7 +764,6 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
      two-row result line fits the stage (LAYOUT PASS R4b; the legendary row stays: it carries the other number) */
   .rs-pity-row.is-epic { display: none; }
   .rs-auto-btn { min-height: 44px; }
-  .rs-auto-cap { display: none; }
   .rs-opts { flex-wrap: nowrap; }
   .rs-skip { flex: 1 1 auto; } /* short phones: AUTO + the stepper on ONE row (the caption is gone) */
   /* …except while AUTO is ON: "AUTO → LEGENDARY+" + ◀ < LEGENDARY ▶ cannot share 336px (the plate clipped onto the ▶
