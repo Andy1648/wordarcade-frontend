@@ -6,20 +6,20 @@
 //          after GEAR POOL v2 retired COMMON: the one refund line ("3 COMMONS RETIRED · +45 GEMS")
 //   grid   every mark as its CARD (markCard/MarkCard.jsx): rollable rare → secret, then PERMANENT, then a retired
 //          mark the save still owns. Nothing under a card (R2 oct8 #5: no ★ lines — rarity is COLOUR, dupes are the
-//          card's own small ×N; the "7/10 → ★3" progress lives in the detail sheet). The worn MAIN wears a sticker.
+//          card's own small ×N; the "7/10 → ★3" progress lives in the detail sheet). The equipped one wears an EQUIPPED sticker.
 //   LOCKED a HIDDEN design (GEAR TILE v2, Andy oct9): a black silhouette of the mark's own glyph in its tier-coloured
 //          cog, "???", its odds as the hero and NO pip row (oct9: the "?" pips confused) — no stat value (an EARNED gear: a lock
 //          + ACHIEVEMENT; the task that earns it is in the detail sheet only).
-//   sheet  tap a card → the detail (GearSheet.jsx — the menu's YOUR GEAR slot opens the same one), GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel): the card, then the MAIN
-//          STAT biggest, the extra stats as a quiet list, the PERK in its own cyan panel, flavour, odds + ★ progress,
-//          owned ×N / first roll #, SET AS MAIN. LOCKED: rarity · LOCKED, the odds + ROLL TO UNLOCK (an EARNED gear:
+//   sheet  tap a card → the detail (GearSheet.jsx — the EQUIP screen opens the same one), GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel): the card, then the
+//          stat biggest, the extra stats, the PERK in its own cyan panel, flavour, odds + ★ progress,
+//          owned ×N / first roll #, EQUIP / UNEQUIP (owned only). LOCKED: rarity · LOCKED, the odds + ROLL TO UNLOCK (an EARNED gear:
 //          ACHIEVEMENT + its task) and only the COUNT of what is hidden ("2 EXTRA STATS · 1 PERK") — no values. The engine pays the INDEX rewards (new mark / ★ / tier complete) — this screen never states
 //          an amount, so it can never claim more than it pays.
 //
 // PROPS (the ROLL screen opens this from its INDEX button):
 //   onClose()           back to the ROLL screen
-//   unlockedIds, equippedId, earned, onEquip   optional — the owned set / worn MAIN; with onEquip the detail can
-//                       SET AS MAIN. achievementNames names a locked PERMANENT's task (detail only).
+//   unlockedIds, equippedId, earned, onEquip   optional — the owned set / the equipped gear; with onEquip the detail
+//                       shows EQUIP / UNEQUIP on an owned gear. achievementNames names a locked PERMANENT's task (detail only).
 //
 // NO SPOILERS: storage is snapshotted on mount (the ROLL screen remounts this layer each time it opens it).
 // Motion: the sheet pops in once and its card plays its reveal one-shots (cog spin, shine) once; cards spin their cog
@@ -28,9 +28,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { markProgress, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
 import {
-  ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, ROLLABLE_TIERS, viewState, markLevel, oneInX, collection,
-  permanentOwnedIds, completedTiers, loadRollState, clearRollNote,
+  ROLL_MARKS, ROLLABLE_TIERS, viewState, oneInX, collection, permanentOwnedIds, completedTiers, loadRollState, clearRollNote,
 } from '../progress/markRolls';
+import { buildEntries, ownsGear } from './gearEntries.js';
 import { wearMark } from '../progress/markRollShop';
 import { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
@@ -52,25 +52,6 @@ const ACH_HINT = Object.fromEntries(
   ACHIEVEMENTS.map((a) => [a.id, a.secret ? a.name : String(a.hint || a.name || '').replace(/\.$/, '').toUpperCase()]),
 );
 const TILE_PARTS = { tier: 'mx-tile-tier', odds: 'mx-tile-odds', name: 'mx-tile-name', stat: 'mx-tile-sub' };
-
-/** Every mark the INDEX draws, in order: rollable (rare → secret) with the EARNED gears right after the LEGENDARY
- *  ones (Andy oct8: "put them with the normal rarity gears" — they pay the LEGENDARY ×3 and draw as legendary, locked
- *  = ACHIEVEMENT REQUIRED), then retired-but-owned. */
-function buildEntries(unlocked) {
-  const out = [];
-  const perms = PERMANENT_MARKS.filter((p) => !p.retired || unlocked.has(p.id)).map((p) => ({ id: p.id, name: p.name, tier: 'legendary', kind: 'perm', from: p.from }));
-  const lastLeg = ROLL_MARKS.map((m) => m.tier).lastIndexOf('legendary');
-  ROLL_MARKS.forEach((m, i) => {
-    out.push({ id: m.id, name: m.name, tier: m.tier, kind: 'roll' });
-    if (i === lastLeg) out.push(...perms);
-  });
-  if (lastLeg < 0) out.push(...perms);
-  for (const id of RETIRED_MARK_IDS) {
-    const m = markById(id);
-    if (m && unlocked.has(id)) out.push({ id, name: m.name, tier: m.tier, kind: 'retired' });
-  }
-  return out;
-}
 
 /** Per-rarity completion: [{ tier, owned, total, complete }]. */
 function tierCompletion(view, owns) {
@@ -146,8 +127,9 @@ export default function MarksIndex({
   // GEAR POOL v2: the COMMON refund is said ONCE — this visit shows it, the store forgets it
   useEffect(() => { if (note) clearRollNote(); }, [note]);
   const entries = useMemo(() => buildEntries(unlocked), [unlocked]);
-  const ownsId = (id, kind) => (kind === 'roll' ? markLevel(view, id).copies > 0 || unlocked.has(id) : kind === 'perm' ? permOwned.has(id) || unlocked.has(id) : unlocked.has(id));
-  const owns = (e) => ownsId(e.id, e.kind);
+  const ctx = { view, unlocked, permOwned };
+  const ownsId = (id, kind) => ownsGear({ id, kind }, ctx);
+  const owns = (e) => ownsGear(e, ctx);
   const [worn, setWorn] = useState(equippedId);
   useEffect(() => { setWorn(equippedId); }, [equippedId]);
   const [sel, setSel] = useState(null);
@@ -221,7 +203,7 @@ export default function MarksIndex({
                 <button
                   type="button"
                   className={`mx-tile${have ? '' : ' is-locked'}${on ? ' is-on' : ''}${e.kind === 'perm' ? ' is-perm' : ''}`}
-                  aria-label={`${have ? `${e.name}, ` : ''}${tierLabel(e.tier, e.kind)}${odds ? `, ${odds}` : ''}${have ? '' : ', locked'}${on ? ', your main' : ''}`}
+                  aria-label={`${have ? `${e.name}, ` : ''}${tierLabel(e.tier, e.kind)}${odds ? `, ${odds}` : ''}${have ? '' : ', locked'}${on ? ', equipped' : ''}`}
                   aria-haspopup="dialog"
                   data-mark={e.id}
                   data-tier={e.tier}
@@ -233,7 +215,7 @@ export default function MarksIndex({
                     id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
                     shiny={shiny} parts={TILE_PARTS} sheen={have && IDLE_SHEEN_TIERS.has(e.tier)}
                   />
-                  {on && <span className="mx-tile-main">MAIN</span>}
+                  {on && <span className="mx-tile-main">EQUIPPED</span>}
                 </button>
               </div>
             );

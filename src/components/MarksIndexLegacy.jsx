@@ -16,8 +16,8 @@ import { formatNum, formatMultExact as formatMult } from '../format';
 import './MarksIndexLegacy.css';
 
 const pct = (m, rank) => Math.round((markMainMult(m, rank) - 1) * 100);
-// U (Andy oct2 22:25): a mark reads as ONE short tag — MAIN ×N — never a sentence explaining it
-const tag = (m, rank) => `MAIN ×${formatMult(markMainMult(m, rank))}`;
+// U (Andy oct2 22:25): a mark reads as ONE short tag — ×N — never a sentence explaining it (oct9: no "MAIN" word)
+const tag = (m, rank) => `×${formatMult(markMainMult(m, rank))}`;
 // the true ceiling — the best mark at MAX rank (the old hard-coded +300% was rank I only)
 const MAX_PCT = Math.max(...MARKS.map((m) => pct(m, MAX_MARK_RANK)));
 // H6/M10: "HOW TO GET IT" names the TASK (the achievement's hint), not just the achievement's name,
@@ -41,7 +41,7 @@ function Detail({ m, have, on, howTo, onSet }) {
         <div className="mx-detail-blurb">+ {markBlurbAt(m, rank).toUpperCase()}</div>
         {have ? (
           <button type="button" className={`mx-set${on ? ' is-on' : ''}`} onClick={() => onSet(on ? null : m.id)}>
-            {on ? 'YOUR MAIN — TAKE OFF' : 'SET AS MAIN'}
+            {on ? 'UNEQUIP' : 'EQUIP'}
           </button>
         ) : (
           <div className="mx-howto">HOW TO GET IT: {howTo}</div>
@@ -99,12 +99,12 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
         </div>
         <div className="mx-main-col">
           {/* THE ONE BIG THING: your MAIN — title + bonus, hero-size */}
-          <section className={`mx-hero${main ? '' : ' is-empty'}`} key={`p${punch}`} style={main ? { '--tier': markTier(main).colour } : undefined} aria-label="Your main mark">
+          <section className={`mx-hero${main ? '' : ' is-empty'}`} key={`p${punch}`} style={main ? { '--tier': markTier(main).colour } : undefined} aria-label="Equipped mark">
             {main ? (
               <>
                 <MarkBadge mark={main} rank={mp.rank} size={128} className="mx-hero-art" />
                 <div className="mx-hero-body">
-                  <div className="mx-hero-kicker">YOUR MAIN · <span className="mx-nowrap">MARK {MARK_RANK_NAMES[mp.rank - 1]}</span></div>
+                  <div className="mx-hero-kicker">EQUIPPED · <span className="mx-nowrap">MARK {MARK_RANK_NAMES[mp.rank - 1]}</span></div>
                   <div className="mx-hero-name">{main.name}</div>
                   <div className="mx-hero-pct">{tag(main, mp.rank)}</div>
                   {!mp.maxed ? (
@@ -117,7 +117,7 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
               </>
             ) : (
               <div className="mx-hero-body">
-                <div className="mx-hero-kicker">NO MAIN YET</div>
+                <div className="mx-hero-kicker">NONE EQUIPPED</div>
                 <div className="mx-hero-name">PICK ONE BELOW</div>
                 <div className="mx-hero-pct">UP TO ×{formatMult(1 + MAX_PCT / 100)}</div>
               </div>
@@ -140,13 +140,13 @@ export default function MarksIndex({ unlockedIds = [], equippedId = null, achiev
                 className={`mx-tile${have ? '' : ' is-locked'}${on ? ' is-on' : ''}${isSel ? ' is-sel' : ''}`}
                 style={{ '--tier': tier.colour }}
                 aria-pressed={isSel}
-                aria-label={`${m.name}, ${tier.name}${have ? '' : ', locked'}${on ? ', your main' : ''}`}
+                aria-label={`${m.name}, ${tier.name}${have ? '' : ', locked'}${on ? ', equipped' : ''}`}
                 onClick={() => setSel(m.id)}
               >
                 <MarkBadge mark={m} rank={have ? p.rank : 1} locked={!have} size={60} className="mx-tile-art" />
                 <span className="mx-tile-name">{m.name}</span>
                 <span className="mx-tile-sub">{have ? tag(m, p.rank) : `GET: ${achievementNames[m.from] || m.from}`}</span>
-                {on && <span className="mx-tile-main">MAIN</span>}
+                {on && <span className="mx-tile-main">EQUIPPED</span>}
               </button>
             );
           })}

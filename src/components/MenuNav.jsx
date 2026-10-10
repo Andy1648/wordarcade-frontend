@@ -134,8 +134,8 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
  * Andy oct9 ("add a glow or smthn to rarer gears … clicking the 'your gear' should show the gear stats"):
  *   - RARITY is the frame, not a glow (flat rule): the border and the hard offset shadow take the tier colour, rare
  *     quiet → mythic loud (Homepage.css `.hp-gear[data-tier]`); LEGENDARY+ also catch the INDEX's one-shot sheen.
- *   - a worn gear opens its GEAR SHEET (Homepage → GearSheetOverlay); nothing worn → NONE / ROLL FOR ONE + a dot,
- *     and the ROLL screen.
+ *   - a tap opens the EQUIP screen (Homepage → EquipScreen, Andy oct9 22:56); a save with no gear at all → NONE /
+ *     ROLL FOR ONE + a dot, and the ROLL screen.
  */
 /** "+28 BASE WINS/WORD" → { big: "+28", unit: "BASE WINS/WORD" } — split at the first space, exactly as the GEAR
  *  SHEET's splitTag (markCard/cardModel.js), so the slot's number and words are the sheet's. */
@@ -196,7 +196,7 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
       disabled={disabled}
       data-nav="gear"
       aria-haspopup={mark ? 'dialog' : undefined}
-      aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open gear stats` : 'Your gear: none. Roll for one'}
+      aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open your gear` : 'Your gear: none. Open your gear'}
     >
       {mark && GLOW_TIERS.has(tier) ? <Suspense fallback={null}><GearFx tier={tier} /></Suspense> : null}
       {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img ref={bandRef} className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
@@ -239,7 +239,8 @@ export function MenuMarkChip({ mark, onClick }) {
       style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
       onClick={onClick}
       aria-haspopup={mark ? 'dialog' : undefined}
-      aria-label={mark ? `Mark equipped: ${mark.name}, ${tier}. Open gear stats` : 'No mark worn. Roll for a mark'}
+      data-nav="gear"
+      aria-label={mark ? `Gear equipped: ${mark.name}, ${tier}. Open your gear` : 'No gear equipped. Open your gear'}
     >
       <span className="hp-chip-edge" aria-hidden="true" />
       <span className="menu-mark-name">{name}</span>

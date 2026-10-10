@@ -89,7 +89,7 @@ const warmModeDialog = () => {
 const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'ClaimReveal');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
-const GearSheetOverlay = lazyWithReload(() => import('./GearSheetOverlay.jsx'), 'GearSheetOverlay');
+const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -1229,12 +1229,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
-  // YOUR GEAR (Andy oct9: "clicking the 'your gear' should show the gear stats not go to roll"): a worn gear opens its
-  // GEAR SHEET over the menu (the MARKS overlay slot, view 'gear'); nothing worn → ROLL, as before (nothing to show)
+  // YOUR GEAR (Andy oct9 22:56: "the equip gear page will be separate in the 'your gear' icon"): the EQUIP screen —
+  // the OWNED gears, the equipped one first, EQUIP / UNEQUIP on a tap (EquipScreen, lazy, the MARKS overlay slot, view
+  // 'gear'). A save that owns no gear yet has nothing to equip: ROLL, as before.
   const wornGear = markShown ? markEntry(equippedMark) : null;
+  const ownsAnyGear = () => {
+    if (wornGear || markIdList.length) return true;
+    const st = loadRollState();
+    return !!(st && st.marks && Object.keys(st.marks).length);
+  };
   const openGear = () => {
     if (navigating) return;
-    if (!wornGear) { openMarks('roll'); return; }
+    if (!ownsAnyGear()) { openMarks('roll'); return; }
     sound.click();
     setShowMarks('gear');
   };
@@ -1473,10 +1479,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {/* MARKS overlay — one slot: the ROLL screen (its INDEX button opens the MARKS INDEX in the same slot); the
           rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
       {showMarks === 'gear' && (
-        <ScreenBoundary name="gear-sheet" onBack={closeGear}>
+        <ScreenBoundary name="equip" onBack={closeGear}>
           <Suspense fallback={null}>
-            <GearSheetOverlay
-              markId={equippedMark}
+            <EquipScreen
+              equippedId={equippedMark}
               unlockedIds={markIdList}
               earned={earnedAch}
               onEquip={(id) => setEquippedMark(ROLLS ? id : equipMark(id, earnedAch))}

@@ -1,8 +1,6 @@
-/* GearSheet.css — the GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel), split out of MarksIndex.css so the
-   menu's YOUR GEAR slot can open the SAME sheet (GearSheetOverlay.jsx, lazy) without the INDEX grid's styles.
-   Inside the INDEX it is a layer of that overlay; from the menu it sits in .gs-overlay (the MARKS overlay slot's
-   z-index — a modal layer, not a persistent fixed control). Motion: the sheet pops in ONCE (transform/opacity). */
-.gs-overlay { position: fixed; inset: 0; z-index: 120; color: #fff; font-family: 'Space Mono', monospace; font-weight: 700; }
+/* GearSheet.css — the GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel), shared by the INDEX and the EQUIP
+   screen (EquipScreen.jsx). It is a layer of whichever overlay opened it (never its own fixed element).
+   Motion: the sheet pops in ONCE (transform/opacity). */
 /* ---- the detail sheet: a layer of THIS overlay (not its own fixed element) ---- */
 .mx-sheet-layer {
   position: absolute;
@@ -76,7 +74,6 @@
 .mx-crit-line { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
 .mx-crit-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .mx-crit-kind { font-weight: 700; font-size: var(--fs-k16); color: #c9b8e8; }
-.mx-crit-what { font-size: var(--fs-k14); color: #9a8ab8; }
 /* the PERK panel: flat cyan plate, its darker-cyan outline, a hard shadow */
 .mx-sheet-perk {
   display: grid;
