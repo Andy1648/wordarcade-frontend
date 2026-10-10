@@ -108,13 +108,13 @@ test('every gear PRINTS what it PAYS — at ★0, ★ pips and SHINY, read throu
 test('the crit MAIN stats: PHOENIX rate (capped), SPARKPLUG / VOLTAGE / THUNDERCLAP power, METRONOME every 4th → 2nd at ★5', () => {
   assert.equal(scaleStat('critRatePct', 25, 4), CRIT_RATE_CAP * 100, 'a rate stat never prints past the cap');
   const ph = critTotals({ markId: 'mk-phoenix', mark2Id: null, state: own('mk-phoenix') });
-  near(ph.rate, 0.01 + 0.02 + 0.25, 'PHOENIX: base 1% + RARE 2% + 25%');
+  near(ph.rate, 0.01 + 0.03 + 0.25, 'PHOENIX: base 1% + RARE 3% + 25%');
   const v = critTotals({ markId: 'mk-voltage', mark2Id: null, state: own('mk-voltage') });
-  near(v.power, 2 + 0.25 + 2, 'VOLTAGE: ×2 + EPIC 0.25 + 2');
+  near(v.power, 2 + 0.5 + 2, 'VOLTAGE: ×2 + EPIC 0.5 + 2');
   assert.equal(critTotals({ markId: 'mk-metronome', mark2Id: null, state: own('mk-metronome') }).every, 4);
   assert.equal(critTotals({ markId: 'mk-metronome', mark2Id: null, state: own('mk-metronome', 26) }).every, 2);
   // the 2nd slot never lends its MAIN stat to crit (minimal model: WINS / XP only)
-  near(critTotals({ markId: null, mark2Id: 'mk-phoenix', state: own('mk-phoenix') }).rate, 0.01 + 0.02, '2nd slot: subs only');
+  near(critTotals({ markId: null, mark2Id: 'mk-phoenix', state: own('mk-phoenix') }).rate, 0.01 + 0.03, '2nd slot: subs only');
   // DRUMROLL (THUNDERCLAP's perk): every 10th key, only while worn and owned
   assert.equal(critTotals({ markId: 'mk-thunderclap', mark2Id: null, state: own('mk-thunderclap') }).every, CRIT_PERK_EVERY);
   assert.equal(critTotals({ markId: 'mk-thunderclap', mark2Id: null, state: freshState() }).every, 0, 'not owned → no perk');

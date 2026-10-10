@@ -62,8 +62,10 @@ export const LEVEL_UP = 0; // levels pay no gems
 export const ACH_MIN = 40;
 export const ACH_MAX = 200;
 
-// MARKS (FINAL): the MAIN multiplier by tier (the part above ×1 is marks.js MARK_TIERS[t].bonus in season 2)
-export const MARK_MULT = Object.freeze({ rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 });
+// MARKS (FINAL): the MAIN multiplier by tier (the part above ×1 is marks.js MARK_TIERS[t].bonus in season 2).
+// GEAR OP (Andy oct9: "make the gear stats a bit more OP"): was ×1.25 / 1.5 / 2 / 3 / 5 — every tier's uplift ×1.6–2.25,
+// steeper at the top (RARE +40% · EPIC +80% · LEGENDARY +180% · MYTHIC +400% · SECRET +900%).
+export const MARK_MULT = Object.freeze({ rare: 1.4, epic: 1.8, legendary: 2.8, mythic: 5, secret: 10 });
 
 const CAP = 1e300; // every product stays finite (format.js reads it through the named-suffix ladder)
 const int0 = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);

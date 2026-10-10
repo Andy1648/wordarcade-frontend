@@ -125,7 +125,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
       expect(Math.abs(base * total - result) / result, `${tab}: BASE ${base} × ${total} vs ${result}`).toBeLessThan(0.006);
       if (tab === 'wins') {
         expect(ids).toEqual(['base', 'mode', 'rebirth', 'mark', 'index', 'boost']);
-        expect(vals.slice(0, 4)).toEqual([10, 1, 27, 2]); // BASE 10 · MODE 1 · 3^3 · LEGENDARY ×2 (FINAL)
+        expect(vals.slice(0, 4)).toEqual([10, 1, 27, 2.8]); // BASE 10 · MODE 1 · 3^3 · LEGENDARY ×2.8 (FINAL, GEAR OP)
       } else {
         expect(ids).toEqual(['base', 'power', 'rebirth', 'mark', 'index', 'boost']);
         expect(vals.slice(0, 3)).toEqual([1, 8, 27]); // BASE 1 · KEY 2^3 · 3^3 (FINAL v3)

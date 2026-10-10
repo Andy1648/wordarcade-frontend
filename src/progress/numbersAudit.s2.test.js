@@ -55,7 +55,7 @@ const STATES = [
 // GEAR POOL v2: the RARE floor's +% WINS / +% XP / +BASE WINS, and the one-mode WINS gears (DETONATOR — WORD BOMB, RARE;
 // HEADMASTER — SAT RUSH, LEGENDARY), which must pay in their mode and nowhere else
 const MARKS = [null, 'mk-smith', 'mk-scholar', 'mk-cyclone', 'mk-eclipse', 'mk-singularity', 'mk-detonator', 'mk-headmaster'];
-const FINAL_TIER = { rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 };
+const FINAL_TIER = { rare: 1.4, epic: 1.8, legendary: 2.8, mythic: 5, secret: 10 }; // GEAR OP (Andy oct9)
 
 function seed({ p, r, s }, mark) {
   mem.clear();
@@ -161,10 +161,10 @@ test('FINAL v3: XP / LETTER chain — BASE 1 × (10 + N)/10 × KEY 2^T × REBIRT
   assert.equal(n, STATES.length * MARKS.length);
 });
 
-test('FINAL mark tiers reach the rolled pool: LEGENDARY ×2, MYTHIC +20 BASE (×3), SECRET ×5 — not the live ×3 / +90 / ×25', () => {
-  assert.equal(rollMarkById('mk-eclipse').stat.value, 100);
-  assert.equal(rollMarkById('mk-singularity').stat.value, 20);
-  assert.equal(rollMarkById('mk-origin').stat.value, 400);
+test('FINAL mark tiers reach the rolled pool: LEGENDARY ×2.8, MYTHIC +40 BASE (×5), SECRET ×10 — not the season-1 ×3 / +90 / ×25', () => {
+  assert.equal(rollMarkById('mk-eclipse').stat.value, 180);
+  assert.equal(rollMarkById('mk-singularity').stat.value, 40);
+  assert.equal(rollMarkById('mk-origin').stat.value, 900);
 });
 
 // The menu's rate line and the rail's UPGRADES tile at the very start (T0 R0, nothing worn): "+1 XP / KEY" (v4: one
