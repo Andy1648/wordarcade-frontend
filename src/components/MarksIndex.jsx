@@ -210,7 +210,7 @@ export default function MarksIndex({
                   data-earned={e.kind === 'perm' ? '' : undefined}
                   onClick={() => setSel(e.id)}
                 >
-                  {have && GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={0.9} /> : null}
+                  {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={0.9} /> : null}
                   <MarkCard
                     id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
                     shiny={shiny} parts={TILE_PARTS} sheen={have && IDLE_SHEEN_TIERS.has(e.tier)}

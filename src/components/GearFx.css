@@ -1,5 +1,5 @@
 /* GearFx.css — THE RARE-GEAR GLOW (GearFx.jsx). DOCUMENTED FLAT-RULE EXCEPTION (CLAUDE.md, Andy oct9 "clash royale
-   cards … they just feel so satisfying"): EPIC+ gears only, the YOUR GEAR slot + the INDEX / GEAR SHEET cards + the ROLL reel / reveal / stats.
+   cards … they just feel so satisfying"): every EPIC+ gear card, owned or locked — the YOUR GEAR slot, the EQUIP screen, the INDEX tiles, the GEAR SHEET, the ROLL reel / reveal / stats.
    The glow is a BAKED asset — public/fx/gear-aura-<tier>.png, a 128px 9-slice whose outer 56px is the pre-rendered
    falloff (a hot, near-white rim at the host's edge fading out to the tier colour — oct9 v2) — laid round the host as a border-image, so it is full strength at the host's edge and fades over
    --gfx-out px outside it whatever the host's size (no CSS filter, no blurred shadow). The layer sits BEHIND its

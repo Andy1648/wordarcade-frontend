@@ -92,7 +92,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  isolation: isolate; /* the owned EPIC+ tiles' GearFx glows sit behind EVERY card (a neighbour's glow never paints over a card) */
+  isolation: isolate; /* every EPIC+ tile's GearFx glow (owned or locked) sit behind EVERY card (a neighbour's glow never paints over a card) */
   /* the scroller clips sideways: it reaches 18px past the panel's padding (same content width as the old 6px inset) so
      an edge column's glow is not cut off at the card */
   margin: 0 -18px;

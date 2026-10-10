@@ -54,7 +54,7 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
       >
         <button type="button" className="mx-close mx-sheet-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
         <div className="mx-sheet-card">
-          {have && GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} /> : null}
+          {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} /> : null}
           <MarkCard
             id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
             shiny={!!(info && info.shiny)} fx={have} parts={SHEET_PARTS}

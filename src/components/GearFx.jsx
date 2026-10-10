@@ -1,8 +1,8 @@
 // GearFx.jsx — THE RARE-GEAR GLOW (Andy oct9: "by glow i was referencing clash royale cards (like evo cards or
 // legendary cards — they just feel so satisfying)"). A DOCUMENTED, SCOPED exception to the flat / no-glow rule
-// (CLAUDE.md, like .homepage-beat-glow): only EPIC+ gears — the YOUR GEAR slot, the INDEX tiles, the GEAR SHEET, and
-// the ROLL screen (the reel cells, the reveal card, the stats extension) — Andy oct9 "the glow should show in the roll
-// and index as well".
+// (CLAUDE.md, like .homepage-beat-glow): EVERY EPIC+ gear card, owned or locked (Andy oct9 22:56 "the glow should be
+// everywhere then (not just whats found)") — the YOUR GEAR slot, the EQUIP screen, the INDEX tiles, the GEAR SHEET, and
+// the ROLL screen (the reel cells, the reveal card, the stats extension).
 //
 // What Clash Royale does on a LEGENDARY / EVO card and what this borrows: a light AROUND the frame that breathes
 // (evo cards pulse their violet aura), a shine that crosses the face (the sheen — the host's), and sparkles rising off
