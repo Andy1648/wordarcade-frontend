@@ -350,23 +350,6 @@
     align-items: center;
     gap: 6px 10px;
   }
-  .hp-m-per .hp-per {
-    font-family: 'Bungee', sans-serif;
-    text-transform: uppercase;
-    font-size: var(--fs-k18);
-    line-height: 1;
-    color: #fff;
-    -webkit-text-stroke: 3px #000;
-    paint-order: stroke fill;
-    white-space: nowrap;
-  }
-  .hp-m-per .hp-per-u {
-    font-family: 'Space Mono', monospace;
-    font-weight: 700;
-    font-size: var(--fs-k14);
-    -webkit-text-stroke: 0;
-    color: #c9b8e8;
-  }
   /* THE GEAR SLOT (R2 oct8 #6): the worn gear reads like the desktop rail's YOUR GEAR slot — a dark well with a
      GEAR caption before the name, the tier colour on its edge */
   .hp-m-per .hp-chip {
@@ -395,6 +378,15 @@
   .hp-m-per .hp-chip.is-new .hp-chip-edge { background: #FF3D7F; }
   .hp-m-per .hp-chip.is-roll .hp-chip-edge { background: #2EFFE0; }
   .hp-m-per .hp-chip-dot { top: -7px; right: -7px; width: 16px; height: 16px; }
+  /* the TIER FRAME (Andy oct9 — the YOUR GEAR slot's, on the phone chip): the stripe is the tier colour; the border
+     and hard shadow escalate common quiet → mythic loud; the name takes the tier colour from EPIC up */
+  .hp-m-per .hp-chip[data-tier] .hp-chip-edge { background: var(--gear-line); }
+  .hp-m-per .hp-chip[data-tier='common'] { border-color: var(--gear-edge); }
+  .hp-m-per .hp-chip[data-tier='rare'] { border-color: var(--gear-line); }
+  .hp-m-per .hp-chip[data-tier='epic'] { border-color: var(--gear-line); box-shadow: 3px 3px 0 var(--gear-edge); }
+  .hp-m-per .hp-chip:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { border-color: var(--gear-line); background: var(--gear-fill); box-shadow: 3px 3px 0 var(--gear-edge); }
+  .hp-m-per .hp-chip:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: 4px 4px 0 var(--gear-line); }
+  .hp-m-per .hp-chip:is([data-tier='epic'], [data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) .menu-mark-name { color: var(--gear-line); }
   .hp-m-per .menu-mark-name { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; }
 
   /* ---- BACKDROP: drop the loose wall ornaments on the HOME view only ----

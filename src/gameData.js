@@ -96,9 +96,10 @@ const CHAIN_GAME = {
   // reasoning survives contact with an acquisition push: a gate measured in thousands of typed
   // letters is a wall in front of a first session, not a reward curve. CHAIN and FUSE are now
   // reachable inside the first couple of games — see FUSE below and progress/modeAccess.js.
-  // N1 (Andy oct2 ~22:40): EXACTLY LV50 — Andy's number, not a sim estimate. A mode you've played is
+  // Andy oct9: EXACTLY LV25 (was LV50, N1 oct2) — Andy's number, not a sim estimate. A mode you've played is
   // never locked again (progress/modeAccess.js), so nobody who already plays CHAIN loses it.
-  unlockLevel: 50,
+  // This is the ONE source: every "UNLOCKS AT LV n" (GameCard, LockedPreviewDialog, MobileMenu) reads it.
+  unlockLevel: 25,
   baseColor: '#2EFFE0', // teal field (the mode's accent)
   iconBg: '#0D2B28', // dark teal so the cyan link icon reads
   badgeText: 'SOLO',
@@ -113,7 +114,7 @@ const FUSE_GAME = {
   artKey: 'FuseArt',
   name: 'FUSE',
   description: 'SNEAK THE LETTERS INTO A WORD. BEAT THE FUSE.',
-  unlockLevel: 100, // N1 (Andy oct2 ~22:40): EXACTLY LV100 — Andy's number. Played = never locked (modeAccess.js).
+  unlockLevel: 50, // Andy oct9: EXACTLY LV50 (was LV100, N1 oct2) — Andy's number. Played = never locked (modeAccess.js).
   baseColor: '#FFE94A', // yellow field (the mode's accent)
   iconBg: '#2A1A0E', // burnt-cord dark so the flame icon reads
   badgeText: 'SOLO',

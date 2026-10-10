@@ -13,7 +13,7 @@ import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, roundWordXp, MENU_LETTER_SHARE } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
@@ -88,6 +88,8 @@ const warmModeDialog = () => {
 // The NEW SYSTEM / NEW MARK reveal sticker loads when a claim reveals (payload ratchet).
 const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'ClaimReveal');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
+// YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
+const GearSheetOverlay = lazyWithReload(() => import('./GearSheetOverlay.jsx'), 'GearSheetOverlay');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { announceTick, isLevelMilestone } from '../leaderboard/live.js';
 import useMediaQuery from '../lib/useMediaQuery';
@@ -606,6 +608,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
   useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
+  // THE DAILY FREE DROP (season 2, v3/dailyDrop.js via the V3 holder): the UPGRADES dot is also on while today's free
+  // chest is waiting; a claim (or a new local day, re-read when the tab comes back) moves it. No polling.
+  const [dropReady, setDropReady] = useState(() => !!(SEASON2 && V3.drop && V3.drop.dropReady()));
+  useEffect(() => {
+    if (!SEASON2 || !V3.drop) return undefined;
+    const re = () => setDropReady(V3.drop.dropReady());
+    window.addEventListener(V3.drop.DROP_CHANGE, re);
+    document.addEventListener('visibilitychange', re);
+    return () => {
+      window.removeEventListener(V3.drop.DROP_CHANGE, re);
+      document.removeEventListener('visibilitychange', re);
+    };
+  }, []);
   const { progress: xpProgress, refresh: refreshXp } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
@@ -1204,7 +1219,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // GEARS are icon + label only; the DOT is the whole signal — on while something is actionable (an upgrade or a roll
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
-    shop: { onClick: handleShop, dot: winsAffordable, onHover: hover, value: null },
+    shop: { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null },
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: null, locked: rollLock },
@@ -1214,32 +1229,24 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   };
   const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = { count: claims.length, onClick: handleAchievements };
-  const markChip = markShown ? <MenuMarkChip mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} /> : null;
-  // THE HONEST RATE LINE (feat/menu-perrow, Andy oct6 "unclear per-key XP"): what a MENU key pays and what a GAME
-  // letter pays, both live — the menu is a fifth of a game letter (xp.js MENU_LETTER_SHARE, whole XP, never 0).
-  // SEASON 2 (v4 "SIMPLE"): games pay wins only, so the line is ONE number — what a menu key pays (letterXpNow).
-  const gameLetterXp = letterXpNow();
-  const menuKeyXp = Math.max(1, roundWordXp(gameLetterXp * MENU_LETTER_SHARE));
-  const keyOnly = SEASON2 ? (
-    <span className="hp-per hp-rate">
-      +{formatNum(gameLetterXp)} XP<span className="hp-per-u"> / KEY</span>
-    </span>
-  ) : null;
-  const perLetter = keyOnly || (
-    <span className="hp-per hp-rate">
-      <span className="hp-rate-k">MENU</span> +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY</span>
-      <span className="hp-rate-sep" aria-hidden="true">·</span>
-      <span className="hp-rate-k">GAMES</span> +{formatNum(gameLetterXp)} XP<span className="hp-per-u"> / LETTER</span>
-    </span>
-  );
-  // the phone's row is 360px wide: the menu key rate big, the game rate small after it
-  const perLetterCompact = keyOnly || (
-    <span className="hp-per hp-rate">
-      +{formatNum(menuKeyXp)} XP<span className="hp-per-u"> / KEY · GAMES +{formatNum(gameLetterXp)} / LETTER</span>
-    </span>
-  );
+  // YOUR GEAR (Andy oct9: "clicking the 'your gear' should show the gear stats not go to roll"): a worn gear opens its
+  // GEAR SHEET over the menu (the MARKS overlay slot, view 'gear'); nothing worn → ROLL, as before (nothing to show)
+  const wornGear = markShown ? markEntry(equippedMark) : null;
+  const openGear = () => {
+    if (navigating) return;
+    if (!wornGear) { openMarks('roll'); return; }
+    sound.click();
+    setShowMarks('gear');
+  };
+  const closeGear = () => {
+    setShowMarks(false);
+    requestAnimationFrame(() => focusNav(navRootRef.current, 'gear'));
+  };
+  const markChip = markShown ? <MenuMarkChip mark={wornGear} onClick={openGear} /> : null;
+  // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
+  // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
-  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={markEntry(equippedMark)} onClick={() => openMarks('roll')} disabled={navigating} /> : null;
+  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={wornGear} onClick={openGear} disabled={navigating} /> : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
   // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
@@ -1304,7 +1311,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
               : null}
             xpBar={xpBar}
-            perLetter={perLetterCompact}
             markChip={markChip}
             wins={wins}
             gems={markShown ? gems : null}
@@ -1341,18 +1347,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             column, below the icons — a grid cell, not a fixed orphan. */}
         <div className="hp-dock hp-dock--grid"><BoostDock /></div>
 
-        {/* CENTRE: LV + the XP bar, the per-letter line + the worn mark. No typed-text box (Andy oct6): what you
+        {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
         <div className="menu-xp-cluster">
           {xpBar}
-          <div className="hp-perrow">
-            {perLetter}
-            {/* the worn mark lives in the rail's YOUR GEAR slot on the paged (2-column) menu (feat/menu-perrow); the
-                narrower desktop rail and the phone keep the chip */}
-            {!isPagedMenu && markChip}
-            {/* Andy oct8: boost timers live in the BOTTOM-RIGHT dock (frenzy/BoostDock, inside the corner sound control),
-                not dead centre under the XP bar */}
-          </div>
+          {/* the worn mark lives in the rail's YOUR GEAR slot on the paged (2-column) menu (feat/menu-perrow); the
+              narrower desktop rail keeps the chip under the bar. Boost timers live in the BOTTOM-RIGHT dock (Andy oct8). */}
+          {!isPagedMenu && markChip && <div className="hp-perrow">{markChip}</div>}
           {/* NIGHT oct8 #1c: no in-flow REBIRTH READY CTA on the menu — readiness is the REBIRTH tile's dot + READY. */}
         </div>
 
@@ -1471,7 +1472,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* MARKS overlay — one slot: the ROLL screen (its INDEX button opens the MARKS INDEX in the same slot); the
           rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
-      {showMarks && (
+      {showMarks === 'gear' && (
+        <ScreenBoundary name="gear-sheet" onBack={closeGear}>
+          <Suspense fallback={null}>
+            <GearSheetOverlay
+              markId={equippedMark}
+              unlockedIds={markIdList}
+              earned={earnedAch}
+              onEquip={(id) => setEquippedMark(ROLLS ? id : equipMark(id, earnedAch))}
+              onClose={closeGear}
+            />
+          </Suspense>
+        </ScreenBoundary>
+      )}
+      {showMarks && showMarks !== 'gear' && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>
             <MarksIndex

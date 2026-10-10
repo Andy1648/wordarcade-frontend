@@ -38,26 +38,27 @@ const BOARD = [
   { ...r('s1', 'OLDTIMER', { rebirths: 99, level: 999 }), econ: 12 },
 ];
 
-async function boot(page, { me, rows = BOARD, seen = null, s2Weekly = false, weekly = true, vp = { width: 1366, height: 657 } } = {}) {
+async function boot(page, { me, rows = BOARD, seen = null, s2Weekly = false, weekly = true, vp = { width: 1366, height: 657 }, named = true } = {}) {
   await page.setViewportSize(vp);
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   const meRow = r('me', 'NOBUFF', me);
-  const shared = { rows: [...rows.map((x) => ({ ...x })), meRow], secrets: new Map([[SECRET, 'me']]), saves: new Map() };
+  // named: false = a FRESH player — no profile, no row, a secret the board has never seen
+  const shared = { rows: [...rows.map((x) => ({ ...x })), ...(named ? [meRow] : [])], secrets: new Map(named ? [[SECRET, 'me']] : []), saves: new Map() };
   const board = await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, weekly, rebirth: { delayMs: 0 }, season2: true, s2Weekly });
-  await page.addInitScript(({ secret, me, seen }) => {
+  await page.addInitScript(({ secret, me, seen, named }) => {
     if (sessionStorage.getItem('lb2.seeded')) return;
     sessionStorage.setItem('lb2.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
-    localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'me', username: 'NOBUFF' }));
+    if (named) localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'me', username: 'NOBUFF' }));
     localStorage.setItem('taw.lb.secret', secret);
     localStorage.setItem('taw.econ', '12');
     localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: me.level || 10, f: 0.1, rc: me.rebirths || 0, v: 10 }));
     localStorage.setItem('taw.s2.rebirths', String(me.rebirths || 0));
     localStorage.setItem('taw.s2.stars', String(me.stars || 0));
     if (seen) localStorage.setItem('taw.s2.lbseen', JSON.stringify(seen));
-  }, { secret: SECRET, me: { level: 10, rebirths: 0, stars: 0, ...me }, seen });
+  }, { secret: SECRET, me: { level: 10, rebirths: 0, stars: 0, ...me }, seen, named });
   await page.goto('/?portal=1&season2=1');
   await navControl(page, 'leaderboard').waitFor({ state: 'visible' });
   await navControl(page, 'leaderboard').click();
@@ -265,4 +266,69 @@ test('CHANGE NAME is inline on this board (Andy oct8: one leaderboard) — no ho
   await box.locator('.lb2-rename-save').click();
   await expect(lb.locator('.lb2-me-v')).toHaveText('NEWNAME');
   await expect(page.locator('.lb-overlay')).toHaveCount(0);
+});
+
+// Andy oct9: "the leaderboard should show the new design style (new users still get old before creating a new
+// username)". The gate in LeaderboardScreen.jsx required a claimed name; a FRESH player now gets this board too, and
+// its claim prompt is the inline name box (CLAIM mode) — never the season-1 screen.
+for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
+  test(`@${vp.width}: a FRESH player (no name) gets the v2 board, claims inline, and lands as YOU`, async ({ page }) => {
+    const { lb } = await boot(page, { me: { rebirths: 0, level: 12 }, named: false, vp });
+    await expect(page.locator('.lb-overlay')).toHaveCount(0); // the old live screen never opens
+    const box = lb.locator('.lb2-rename.is-claim');
+    await expect(box, 'the claim box is open on arrival').toBeVisible();
+    await expect(box.locator('.lb2-rename-l')).toHaveText('CLAIM YOUR NAME');
+    await expect(box.locator('.lb2-rename-msg')).toHaveText('NO SIGN-IN. JUST A NAME.');
+    await expect(lb.locator('.lb2-me-btn.is-claim')).toContainText('CLAIM');
+    await expect(lb.locator('.lb2-chase')).toContainText('CLAIM A NAME TO GET ON THE BOARD');
+    await page.waitForTimeout(900);
+    if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/lb-fresh-${vp.width}x${vp.height}.png` });
+    // nothing overflows the viewport, labels ≥ 14px, 44px targets
+    const m = await page.evaluate(() => {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const off = [];
+      for (const el of document.querySelectorAll('.lb2-rename *, .lb2-me-btn, .lb2-me-btn *')) {
+        const rc = el.getBoundingClientRect();
+        if (rc.width && (rc.left < -1 || rc.right > W + 1 || rc.top < -1 || rc.bottom > H + 1)) off.push(String(el.className));
+      }
+      const fs = (s) => parseFloat(getComputedStyle(document.querySelector(s)).fontSize);
+      return { off, docX: document.documentElement.scrollWidth - W, label: fs('.lb2-rename-l'), msg: fs('.lb2-rename-msg'), input: fs('.lb2-rename-input') };
+    });
+    expect(m.off).toEqual([]);
+    expect(m.docX).toBeLessThanOrEqual(0);
+    expect(m.label).toBeGreaterThanOrEqual(14);
+    expect(m.msg).toBeGreaterThanOrEqual(14);
+    expect(m.input, 'inputs ≥ 16px (no iOS zoom)').toBeGreaterThanOrEqual(16);
+    for (const sel of ['.lb2-me-btn', '.lb2-rename-save', '.lb2-rename-x', '.lb2-rename-input']) {
+      const b = await lb.locator(sel).boundingBox();
+      expect(Math.min(b.width, b.height), `${sel} ≥ 44px`).toBeGreaterThanOrEqual(44);
+    }
+    // ✕ closes it; the CLAIM button reopens it
+    await box.locator('.lb2-rename-x').click();
+    await expect(box).toHaveCount(0);
+    await lb.locator('.lb2-me-btn.is-claim').click();
+    await box.locator('#lb2-rename-input').fill('FRESHIE');
+    await expect(box.locator('.lb2-rename-msg')).toHaveText(/FREE/);
+    await box.locator('.lb2-rename-save').click();
+    await expect(lb.locator('.lb2-me-v')).toHaveText('FRESHIE');
+    await expect(lb.locator('.lb2-me-btn.is-claim')).toHaveCount(0);
+    await expect(page.locator('.lb-overlay')).toHaveCount(0);
+  });
+}
+
+test('@390: a NAMED player keeps the v2 board with the YOU / CHANGE button, no claim box', async ({ page }) => {
+  const { lb } = await boot(page, { me: { rebirths: 0, level: 60 }, vp: { width: 390, height: 844 } });
+  await expect(lb.locator('.lb2-me-v')).toHaveText('NOBUFF');
+  await expect(lb.locator('.lb2-rename')).toHaveCount(0);
+  await page.waitForTimeout(900);
+  if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/lb-named-390x844.png` });
+});
+
+test('@1366: a NAMED player keeps the v2 board with the YOU / CHANGE button, no claim box', async ({ page }) => {
+  const { lb } = await boot(page, { me: { rebirths: 0, level: 60 } });
+  await expect(lb.locator('.lb2-me-v')).toHaveText('NOBUFF');
+  await expect(lb.locator('.lb2-rename')).toHaveCount(0);
+  await page.waitForTimeout(900);
+  if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/lb-named-1366x657.png` });
 });

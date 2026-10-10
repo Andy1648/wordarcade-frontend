@@ -7,10 +7,10 @@ import { isModeLocked, hasPlayedMode } from './modeAccess.js';
 
 // Fixtures, not the real GAMES: gameData.js uses Vite-style extensionless imports that
 // node:test can't resolve. The REAL unlockLevel values are asserted end-to-end against the
-// live menu copy in e2e/mode-preview.spec.js ('UNLOCKS AT LV 2' / 'LV 3').
+// live menu copy in e2e/mode-preview.spec.js ('UNLOCKS AT LV 25' / 'LV 50').
 const FIXTURES = {
-  chain: { id: 'chain', unlockLevel: 50 },
-  fuse: { id: 'fuse', unlockLevel: 100 },
+  chain: { id: 'chain', unlockLevel: 25 },
+  fuse: { id: 'fuse', unlockLevel: 50 },
   'word-bomb': { id: 'word-bomb' }, // ungated: no unlockLevel
 };
 
@@ -39,10 +39,10 @@ test('an ungated mode is never locked', () => {
 test('a gated, unplayed mode is locked below its level and open at it', () => {
   globalThis.localStorage = memStorage();
   assert.equal(isModeLocked(gameById('chain'), 0), true);
-  assert.equal(isModeLocked(gameById('chain'), 49), true);
-  assert.equal(isModeLocked(gameById('chain'), 50), false, 'EXACTLY LV50');
-  assert.equal(isModeLocked(gameById('fuse'), 99), true);
-  assert.equal(isModeLocked(gameById('fuse'), 100), false, 'EXACTLY LV100');
+  assert.equal(isModeLocked(gameById('chain'), 24), true);
+  assert.equal(isModeLocked(gameById('chain'), 25), false, 'EXACTLY LV25');
+  assert.equal(isModeLocked(gameById('fuse'), 49), true);
+  assert.equal(isModeLocked(gameById('fuse'), 50), false, 'EXACTLY LV50');
 });
 
 test('a PLAYED mode is never locked, whatever the level — the deep-link contradiction', () => {
@@ -68,7 +68,7 @@ test('blocked storage degrades to the level gate alone', () => {
   globalThis.localStorage = blockedStorage;
   assert.equal(hasPlayedMode('chain'), false);
   assert.equal(isModeLocked(gameById('chain'), 0), true);
-  assert.equal(isModeLocked(gameById('chain'), 50), false);
+  assert.equal(isModeLocked(gameById('chain'), 25), false);
 });
 
 test('a mode with no run counter has no bypass, and a missing game is not locked', () => {

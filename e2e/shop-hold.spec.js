@@ -101,8 +101,15 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   const slot = page.locator('.menu-mark').first();
   // feat/menu-perrow: the YOUR GEAR slot — the stat big, the name · tier under it
   await expect(slot.locator('.hp-gear-sub')).toContainText('BOMBER');
+  // Andy oct9: YOUR GEAR opens the worn gear's SHEET (the INDEX's), its number the slot's; Esc closes it
+  await expect(slot.locator('.hp-gear-big')).toHaveText('×1.1');
   await slot.click();
-  // Andy oct5: MARKS opens the ROLL screen; INDEX opens the MARKS INDEX
+  const sheet = page.locator('[data-testid="gear-sheet"] .mx-sheet');
+  await expect(sheet.locator('.mx-main-num')).toHaveText('×1.1');
+  await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0);
+  // GEARS opens the ROLL screen; INDEX opens the MARKS INDEX
+  await page.locator('[data-nav="gears"]').click();
   await page.locator('[data-testid="roll-index"]').click();
   // INDEX v2: the worn mark's card — its art, MAIN tag and ONE stat line (no sentence explaining it)
   const worn = page.locator('.mx-tile.is-on');

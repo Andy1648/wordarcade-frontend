@@ -13,11 +13,18 @@ import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
 import FitText from './kit/FitText.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { CARD_RAR } from './markCard/palette.js';
+import { mainTag, critTierOf } from '../progress/markRollsCore';
+import { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS, GLOW_TIERS } from './markCard/idleSheen.js';
+import { useReduceMotion } from '../lib/useReduceMotion';
 // The cog + glyph art is the INDEX chunk's (MarkBadge, ~11 KB): the gear slot loads it only once a mark is worn —
 // payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
 const MarkBadge = lazy(() => import('./MarkBadge.jsx'));
+// the crit line's WORDS (critText) stay lazy too — loaded only when the worn gear has a crit rate
+const GearSlotCrit = lazy(() => import('./GearSlotCrit.jsx'));
+// the EPIC+ glow (aura + motes, Andy oct9 "clash royale cards") — code and art load only when such a gear is worn
+const GearFx = lazy(() => import('./GearFx.jsx'));
 
 /** Focus the control `id` inside `root` (App's overlay-return a11y — see Homepage). */
 export function focusNav(root, id) {
@@ -122,27 +129,75 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
 
 /**
  * YOUR GEAR (feat/menu-perrow, Andy oct6 "a floating mark icon nobody knows to click"): the worn mark as a labelled
- * SLOT at the foot of the rail — the cog, the stat big ("×1.5 WINS"), the name · tier small in the tier colour.
- * Nothing worn → NONE / ROLL FOR ONE + a notification dot. Opens the ROLL screen either way.
+ * SLOT at the foot of the rail — the cog, the stat's NUMBER big ("×3"), WHAT it boosts under it ("WINS"), the crit
+ * rate as one compact line when the gear has one, the gear's name small in its tier colour.
+ * Andy oct9 ("add a glow or smthn to rarer gears … clicking the 'your gear' should show the gear stats"):
+ *   - RARITY is the frame, not a glow (flat rule): the border and the hard offset shadow take the tier colour, common
+ *     quiet → mythic loud (Homepage.css `.hp-gear[data-tier]`); LEGENDARY+ also catch the INDEX's one-shot sheen.
+ *   - a worn gear opens its GEAR SHEET (Homepage → GearSheetOverlay); nothing worn → NONE / ROLL FOR ONE + a dot,
+ *     and the ROLL screen.
  */
-/** "+28 BASE WINS/WORD" → { big: "+28", unit: "BASE WINS/WORD" }; "×2 WINS + XP" → { big: "×2", unit: "WINS + XP" }. */
+/** "+28 BASE WINS/WORD" → { big: "+28", unit: "BASE WINS/WORD" } — split at the first space, exactly as the GEAR
+ *  SHEET's splitTag (markCard/cardModel.js), so the slot's number and words are the sheet's. */
 export function gearSplit(text) {
-  const m = /^([+×x]?[\d.,]+[A-Za-z%]{0,2}s?)\s+(.+)$/.exec(String(text || '').trim());
-  return m ? { big: m[1], unit: m[2] } : { big: String(text || ''), unit: '' };
+  const s = String(text || '').trim();
+  const i = s.indexOf(' ');
+  return i < 0 ? { big: s, unit: '' } : { big: s.slice(0, i), unit: s.slice(i + 1) };
+}
+
+/**
+ * THE GEAR SHEEN (LEGENDARY+): the INDEX's idle sheen (MarksIndex useIdleSheen — the same band asset, cadence and
+ * sweep): one finite WAAPI transform sweep every IDLE_SHEEN_EVERY_MS on a setTimeout, never a CSS loop. will-change is
+ * on only for the sweep. A hidden tab or REDUCE MOTION gets none.
+ */
+function useGearSheen(bandRef, enabled) {
+  useEffect(() => {
+    const band = bandRef.current;
+    if (!enabled || !band || typeof band.animate !== 'function') return undefined;
+    let timer = null;
+    let run = null;
+    const sweep = () => {
+      timer = setTimeout(sweep, IDLE_SHEEN_EVERY_MS);
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      band.style.willChange = 'transform';
+      run = band.animate([{ transform: 'translateX(-110%)' }, { transform: 'translateX(110%)' }], { duration: IDLE_SHEEN_MS, easing: 'cubic-bezier(.45,0,.25,1)' });
+      const off = () => { band.style.willChange = ''; };
+      run.finished.then(off, off);
+    };
+    timer = setTimeout(sweep, 1200); // the first sweep soon after the menu lands
+    return () => {
+      clearTimeout(timer);
+      if (run) { try { run.cancel(); } catch { /* gone */ } }
+      band.style.willChange = '';
+    };
+  }, [bandRef, enabled]);
 }
 
 export function MenuGearSlot({ mark, onClick, disabled }) {
-  const rar = mark ? CARD_RAR[mark.tier] || CARD_RAR.common : null;
+  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'common') : null;
+  const rar = tier ? CARD_RAR[tier] : null;
+  // the stat as it PAYS (markRollsCore.mainTag — the payout's own statOf), never a legacy blurb sentence
+  const stat = mark ? gearSplit(mainTag(mark.id) || mark.blurb || mark.name) : null;
+  const crit = mark ? critTierOf(mark.id) : null;
+  const hasCrit = !!(crit && crit.rate > 0);
+  const reduced = useReduceMotion();
+  const sheen = !!mark && IDLE_SHEEN_TIERS.has(tier);
+  const bandRef = useRef(null);
+  useGearSheen(bandRef, sheen && !reduced);
   return (
     <button
       type="button"
       className={`hp-gear menu-mark${mark ? ' is-worn' : ' is-empty'}`}
-      style={rar ? { '--gear-line': rar.line } : undefined}
+      data-tier={tier || undefined}
+      style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
       onClick={onClick}
       disabled={disabled}
       data-nav="gear"
-      aria-label={mark ? `Your gear: ${mark.name}, ${mark.tier}, ${mark.blurb || ''}. Open roll` : 'Your gear: none. Roll for one'}
+      aria-haspopup={mark ? 'dialog' : undefined}
+      aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open gear stats` : 'Your gear: none. Roll for one'}
     >
+      {mark && GLOW_TIERS.has(tier) ? <Suspense fallback={null}><GearFx tier={tier} /></Suspense> : null}
+      {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img ref={bandRef} className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
       <span className="hp-gear-label">YOUR GEAR</span>
       <span className="hp-gear-body">
         {mark ? (
@@ -151,11 +206,15 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
           </Suspense>
         ) : <span className="hp-gear-hole" aria-hidden="true" />}
         <span className="hp-gear-text">
-          {/* Andy oct9 ("gear just goes into the Word Bomb card"): the stat's NUMBER is the big line ("+28", "×2"), its
-              unit a small line under it ("BASE WINS/WORD"), so a long stat never runs out of the slot; FitText is the
-              last guard. */}
-          <FitText className="hp-gear-big menu-mark-name">{mark ? gearSplit(mark.blurb || mark.name).big : 'NONE'}</FitText>
-          {mark && gearSplit(mark.blurb || mark.name).unit && <span className="hp-gear-unit">{gearSplit(mark.blurb || mark.name).unit}</span>}
+          {/* the NUMBER big ("×3"), WHAT it boosts under it ("WINS") — the sheet's MAIN STAT, small; FitText is the
+              last guard against a long number */}
+          <FitText className="hp-gear-big menu-mark-name">{mark ? stat.big : 'NONE'}</FitText>
+          {mark && stat.unit ? <span className="hp-gear-unit">{stat.unit}</span> : null}
+          {hasCrit ? (
+            <Suspense fallback={<span className="hp-gear-crit" aria-hidden="true">&nbsp;</span>}>
+              <GearSlotCrit id={mark.id} />
+            </Suspense>
+          ) : null}
           <span className="hp-gear-sub">{mark ? mark.name : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>
@@ -164,15 +223,21 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
   );
 }
 
-/** The worn mark, NAME ONLY — or, while nothing is worn, "ROLL" + a notification dot (it opens the ROLL screen). */
+/** The worn mark, NAME ONLY — or, while nothing is worn, "ROLL" + a notification dot (it opens the ROLL screen). It
+ *  wears the YOUR GEAR slot's TIER FRAME (Andy oct9): the edge stripe, border and shadow in the tier colour. */
 export function MenuMarkChip({ mark, onClick }) {
   const name = mark ? mark.name : 'ROLL';
+  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'common') : null;
+  const rar = tier ? CARD_RAR[tier] : null;
   return (
     <button
       type="button"
       className={`menu-mark hp-chip${mark ? '' : ' is-empty is-roll'}`}
+      data-tier={tier || undefined}
+      style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
       onClick={onClick}
-      aria-label={mark ? `Mark equipped: ${mark.name}` : 'No mark worn. Roll for a mark'}
+      aria-haspopup={mark ? 'dialog' : undefined}
+      aria-label={mark ? `Mark equipped: ${mark.name}, ${tier}. Open gear stats` : 'No mark worn. Roll for a mark'}
     >
       <span className="hp-chip-edge" aria-hidden="true" />
       <span className="menu-mark-name">{name}</span>

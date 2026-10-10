@@ -136,7 +136,7 @@ const isModified = (e) => e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.
  * @param onLockedSelect  (gameId) => void — the SAME handler a desktop locked card calls
  * @param lockedIds  ids of the modes that are level-gated for this player right now
  * @param board / ach / railItems  the v2 chrome (MenuNav.jsx) — built once in Homepage for both trees
- * @param xpBar / perLetter / markChip  the level bar, the per-letter line and the worn mark (Homepage)
+ * @param xpBar / markChip  the level bar and the worn mark (Homepage)
  * @param onHookPlay  first-timers only: starts solo Word Bomb from the TYPE A WORD hook; null hides it
  */
 export default function MobileMenu({
@@ -155,7 +155,6 @@ export default function MobileMenu({
   onHookPlay = null,
   hookPlayLabel = null,
   xpBar = null,
-  perLetter = null,
   markChip = null,
   wins = 0,
   gems = null,
@@ -182,10 +181,9 @@ export default function MobileMenu({
         </div>
       </div>
 
-      {/* 1a. THE LEVEL: LV + the XP bar (KitXpBar), then the per-letter line + the worn mark. */}
+      {/* 1a. THE LEVEL: LV + the XP bar (KitXpBar), then the worn mark (no rate line — Andy oct9). */}
       {xpBar && <div className="hp-m-xp">{xpBar}</div>}
       <div className="hp-m-per">
-        {perLetter}
         {markChip}
         {/* E5 follow-up: a live BOOST shows on the phone too, joining this row (renders nothing at rest) */}
         <BoostPill className="hp-m-boost" />

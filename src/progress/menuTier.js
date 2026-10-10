@@ -54,7 +54,7 @@ export function tierFx(tier) {
   const t = Math.max(0, Math.min(FX_TIER_CAP, Math.floor(tier) || 0));
   return {
     tier: t,
-    popMs: 600 + t * 90, // 600ms at T0 → 1230ms at T7
+    popMs: 850 + t * 100, // Andy oct9 "slightly longer so user can see how much xp": 850ms at T0 → 1550ms at T7 (was 600 → 1230)
     popRise: 49 + t * 9, // px of upward travel
     shards: t >= 2 ? Math.min(6, 2 + Math.floor(t / 2)) : 0, // T2 3 → T7 5 (and KEY TIER still adds its own)
     levelUpBurst: true, // the starburst behind LEVEL N — every tier (STEP 50: T0 level-ups were bare text on the cards)

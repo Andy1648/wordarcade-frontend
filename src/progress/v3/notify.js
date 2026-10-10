@@ -87,7 +87,10 @@ export function checkNews(o = {}) {
 
 // ---- the menu fx (MenuXpFx) in season 2 ----------------------------------------------------------------------------
 // MenuXpFx's imperative handle goes through V3.fx(api) with the flag on. Every CENTRE card it can play is replaced:
-//   celebrate (LEVEL N card)        → nothing in the middle: the bar wraps and its LV ticks (the gain IS the bar)
+//   celebrate (LEVEL N card)        → KEPT, passed straight through (Andy oct9: "that addicting feeling is gone - get it
+//                                     back. just use old one"). The P7 purge stubbed it and the Oct 8 FLIP made that
+//                                     live for everyone, so a menu level-up lost its LEVEL N slam + starburst + shard
+//                                     ring. It is the ORIGINAL MenuXpFx card, untouched — the bar wrap still plays too.
 //   tierUp (NEW FRAME card)         → a right-edge toast
 //   announce (mark rank / AUTOMATION) → a right-edge toast
 //   rebirthCelebration / rebirthRush → nothing (the REBIRTH screen already slammed; the rank banner says the status)
@@ -98,8 +101,7 @@ export function checkNews(o = {}) {
 export function wrapFx(api, toast) {
   const none = () => {};
   return {
-    ...api,
-    celebrate: none,
+    ...api, // celebrate (the LEVEL N card) passes through — the one centre card season 2 keeps
     rebirthCelebration: none,
     rebirthRush: none,
     winsStamp: none,
