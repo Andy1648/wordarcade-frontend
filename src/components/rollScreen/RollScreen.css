@@ -488,15 +488,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cut.is-dim .rs-cut-keep { display: none; }
 .rs-cut-shake { position: relative; display: grid; justify-items: center; gap: 14px; padding: 16px; text-align: center; }
 .rs-cut.is-dim .rs-cut-shake { gap: 18px; }
-.rs-cut-tier {
-  font-family: 'Bungee', sans-serif;
-  font-size: var(--fs-panel);
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: #fff;
-  -webkit-text-stroke: 4px #000;
-  paint-order: stroke fill;
-}
+/* the tier line is a TierBanner (markCard/TierBanner.jsx, gear UI v3) — the reveal slams it once */
+.rs-cut-tier { display: grid; justify-items: center; padding: 0 1.2em; }
 /* "1 IN X" — HUGE on a full reveal (cqw FIT: "1 IN 100,000" fits a 320px phone) */
 .rs-cut-stamp {
   font-family: 'Bungee', sans-serif;

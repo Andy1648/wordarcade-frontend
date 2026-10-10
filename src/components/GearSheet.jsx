@@ -12,6 +12,7 @@ import { flavourOf } from '../progress/markFlavour';
 import { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
 import MarkCard from './markCard/MarkCard';
+import TierBanner from './markCard/TierBanner.jsx';
 import { CARD_RAR } from './markCard/palette.js';
 import { cardModel, pipNext, pipsLabel, perkLines, tierLabel } from './markCard/cardModel.js';
 import { formatNum } from '../format';
@@ -64,6 +65,8 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
             PERK in its own panel → odds + ★ progress → EQUIP / UNEQUIP. LOCKED: the odds as the main line, how to get it, and
             only the COUNT of what is hidden. */}
         <div className="mx-sheet-body">
+          {/* the RARITY as a banner (gear UI v3) — it climbs the ladder, MYTHIC / SECRET a different class */}
+          <TierBanner tier={e.tier} kind={e.kind} className="mx-sheet-banner" />
           {have ? (
             <div className="mx-main" data-testid="mark-main">
               <span className="mx-main-num">{c.statNum}</span>
@@ -71,13 +74,13 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
             </div>
           ) : rolled ? (
             <div className="mx-main is-locked" data-testid="mark-main">
-              <span className="mx-main-kick">{c.rarityName} · LOCKED</span>
+              <span className="mx-main-kick">LOCKED</span>
               <span className="mx-main-num">{c.odds}</span>
               <span className="mx-main-kind">ROLL TO UNLOCK</span>
             </div>
           ) : (
             <div className="mx-main is-locked is-word" data-testid="mark-main">
-              <span className="mx-main-kick">{c.rarityName} · LOCKED</span>
+              <span className="mx-main-kick">LOCKED</span>
               <span className="mx-main-num">ACHIEVEMENT</span>
               {howTo ? <span className="mx-main-kind mx-howto">{howTo}</span> : null}
             </div>

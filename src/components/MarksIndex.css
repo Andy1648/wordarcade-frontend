@@ -85,7 +85,7 @@
 .mx-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(var(--mc-w) + 12px), 1fr));
-  row-gap: 32px;
+  row-gap: 40px; /* room for the MYTHIC / SECRET frame ornaments (public/fx/frame-*.svg reach ~20px past a card) */
   column-gap: 8px;
   justify-items: center;
   align-content: start;
@@ -96,7 +96,7 @@
   /* the scroller clips sideways: it reaches 18px past the panel's padding (same content width as the old 6px inset) so
      an edge column's glow is not cut off at the card */
   margin: 0 -18px;
-  padding: 12px 24px 40px;
+  padding: 28px 24px 40px;
 }
 .mx-cell { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; }
 .mx-tile {
@@ -137,7 +137,7 @@
 }
 @media (max-height: 640px) {
   .mx-panel { padding-top: 14px; gap: 12px; }
-  .mx-grid { row-gap: 20px; }
+  .mx-grid { row-gap: 30px; }
   .mx-title { font-size: var(--fs-h2); }
   .mx-count { font-size: var(--fs-panel); }
   .mx-back { min-height: 48px; }
@@ -154,7 +154,7 @@
   .mx-tiers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
   .mx-tierchip { width: auto; height: 44px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .mx-tierchip-num { font-size: var(--fs-body); }
-  .mx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 8px; row-gap: 20px; margin: 0 -12px; padding: 10px 14px 32px; } /* bleeds to the screen edge: room for the glow */
+  .mx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 8px; row-gap: 34px; margin: 0 -12px; padding: 10px 14px 32px; } /* bleeds to the screen edge: room for the glow */
 }
 @media (max-width: 375px) {
   .mx-panel { --mc-w: 164px; --mc-s: 0.9111; } /* 360 wide: 164 + 8 + 164 = 336 */
