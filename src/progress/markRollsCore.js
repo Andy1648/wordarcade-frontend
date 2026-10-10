@@ -5,24 +5,33 @@
 // panel (payload ratchet, PR #156). markRolls.js re-exports all of this, so its importers are unchanged. Pure + a
 // guarded read/write of one storage key.
 //
-// MARKS v2 (Andy oct5 — Genshin stats, ★ pips). Six tiers, same odds:
-//   COMMON 1 IN 2 · RARE 1 IN 10 · EPIC 1 IN 100 · LEGENDARY 1 IN 250 (+ perk; was 1,000 — Andy oct8) · MYTHIC 1 IN 10,000 (+ perk) ·
+// MARKS v2 (Andy oct5 — Genshin stats, ★ pips). GEAR POOL v2 (Andy oct9: "remove the common ones entirely … make epic a
+// 1 in 10 pity and legendary a 1 in 50"): FIVE tiers, RARE is the floor (Genshin's 3★ floor — a roll never lands on
+// trash). The tier odds:
+//   RARE = the remainder (98.59%) · EPIC 1 IN 100 · LEGENDARY 1 IN 250 (+ perk) · MYTHIC 1 IN 10,000 (+ perk) ·
 //   SECRET 1 IN 100,000 (+ game-changing perks).
-// The "1 IN X" is the TIER's chance; each mark in a tier splits it evenly. COMMON takes whatever the five rarer
-// tiers leave (1 − 0.1111 = 88.9%).
-// Each rollable mark has ONE MAIN STAT {kind, value} (claude/econ-oct2/marks-v2.md):
+// RARE absorbed the old COMMON share; EPIC / LEGENDARY / MYTHIC / SECRET keep their exact 1-IN-X (and so their odds
+// relative to each other). The "1 IN X" is the TIER's chance; each mark in a tier splits it evenly. PITY (markRolls):
+// EPIC+ at least every 10 rolls, LEGENDARY+ at least every 50.
+// Each rollable mark has ONE MAIN STAT {kind, value} (claude/econ-oct2/marks-v2.md, + the GEAR POOL v2 kinds):
 //   winsPct  +N% WINS            xpPct    +N% XP
 //   baseWins +N BASE WINS/WORD   (BASE 10 → 10 + N, before every multiplier)
 //   baseXp   +N BASE XP/LETTER   (BASE 10 → 10 + N, before every multiplier)
 //   luckPct  +N% ROLL LUCK       overdriveSec  +N s OVERDRIVE
-// sized so the tier's effect on what it touches ≈ the old MAIN (COMMON +10%, RARE +25%, EPIC +50%, LEGENDARY +200%,
-// MYTHIC +900%, SECRET +2,400%; a BASE +1 = +10% of BASE 10). Only the WORN MAIN's stat applies.
-// DUPES → ★ PIPS (replacing GOLD / RAINBOW): COMMON 10 / RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 dupes per pip, ★5
+//   <mode>WinsPct  +N% WINS IN ONE MODE (wb / blitz / sat / chain / fuse / race) — 2× the tier's all-mode percent
+//   critRatePct    +N% CRIT RATE (the worn MAIN's crit rate on MENU keys, inside the 50% cap)
+//   critPower      +N× CRIT POWER (added to the ×2 a crit key pays)
+//   critEvery      EVERY Nth MENU KEY IS A GUARANTEED CRIT (★ pips / SHINY shorten N)
+// sized so the tier's effect on what it touches ≈ the old MAIN (RARE +25%, EPIC +50%, LEGENDARY +200%, MYTHIC +900%,
+// SECRET +2,400%; season 2 re-sizes them to +25 / +50 / +100 / +200 / +400 — v3/hooks.applyFinalMarkTiers). Only the
+// WORN MAIN's stat applies. No two gears print the same MAIN stat (markRolls.test.js keeps it that way).
+// DUPES → ★ PIPS (replacing GOLD / RAINBOW): RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 dupes per pip, ★5
 // max; each pip +20% of the stat (★5 = ×2). SHINY ×2 on top. A save from before v2 keeps its GOLD (×2) / RAINBOW
 // (×5) as a floor (`k`), so no mark ever got weaker. The INDEX (% collected) keeps its small bonus (+0.5% per %,
 // on wins AND XP).
-import { MARKS, MARK_TIERS, MARKS_EQUIPPED_KEY } from './marks.js';
-import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY } from './markPerks.js';
+import { MARKS, MARK_TIERS, MARKS_EQUIPPED_KEY, MARKS_OWNED_KEY } from './marks.js';
+import { grantGems } from './gemsCore.js'; // a leaf: the COMMON refund goes through the one gem door
+import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY, CRIT_PERK_EVERY, REMOVED_COMMON_IDS, RETIRED_COMMON_IDS } from './markPerks.js';
 import { formatNum, formatRate, formatMultExact } from '../format.js';
 const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints as ×1.1
 // PROGRESSION v3 (SEASON2, default OFF): the R5 unlock "2nd MARK slot" — a second worn mark (v3/store mark2Id)
@@ -31,17 +40,19 @@ const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints 
 import { V3 } from './season.js'; // V3.m = the 2nd MARK slot (v3/hooks.js mark2Factor), installed in season 2 only
 
 export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
-export const ROLL_STATE_VERSION = 2;
+export const ROLL_STATE_VERSION = 3; // v3 = GEAR POOL v2: COMMON removed (owned commons refunded — migrateRollSave)
 
 // ---------------------------------------------------------------------------------------- tiers
-export const ROLL_TIER_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent'];
-export const ROLLABLE_TIERS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
-/** The TIER's "1 IN X" (Andy's table). COMMON is the remainder — see the header. */
-export const TIER_ODDS = { common: 2, rare: 10, epic: 100, legendary: 250, mythic: 10000, secret: 100000 }; // LEGENDARY 1,000 → 250 (Andy oct8: "legendary should land more often")
+export const ROLL_TIER_ORDER = ['rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent'];
+export const ROLLABLE_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
+/** The FLOOR tier: it takes whatever the rarer tiers leave, and LUCK never scales it (luck removes it). */
+export const FLOOR_TIER = 'rare';
+/** The rarer tiers' "1 IN X" (Andy's table). RARE (the floor) is the remainder — see the header. */
+export const TIER_ODDS = { epic: 100, legendary: 250, mythic: 10000, secret: 100000 }; // LEGENDARY 1,000 → 250 (Andy oct8: "legendary should land more often")
 /** The tier's equivalent multiplier ("strength") at ★0. Mirrors marks.js MARK_TIERS (1 + bonus). */
-export const TIER_MAIN = { common: 1.1, rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
+export const TIER_MAIN = { rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
 /** The same, as the stat's percent (the part above ×1) — kept exact (1.1 − 1 is not 0.1 in floats). */
-export const TIER_PCT = { common: 10, rare: 25, epic: 50, legendary: 200, mythic: 900, secret: 2400 };
+export const TIER_PCT = { rare: 25, epic: 50, legendary: 200, mythic: 900, secret: 2400 };
 export function tierRank(tier) {
   const i = ROLL_TIER_ORDER.indexOf(tier);
   return i < 0 ? 0 : i;
@@ -50,77 +61,110 @@ export function tierRank(tier) {
 // AND XP. Read at call time, not import time: marks.js → claims.js → wins.js → this module is a cycle.
 export function mainBonus(tier) {
   const t = tier === 'permanent' ? 'legendary' : tier;
-  return (MARK_TIERS[t] || MARK_TIERS.common).bonus;
+  return (MARK_TIERS[t] || { bonus: 0 }).bonus;
 }
 
 // ---------------------------------------------------------------------------------------- stats
-export const STAT_KINDS = ['winsPct', 'xpPct', 'baseWins', 'baseXp', 'luckPct', 'overdriveSec'];
+// GEAR POOL v2: one WINS kind per mode (payout key → kind), so a mode gear is its own stat (never a twin of another).
+export const MODE_WINS_KINDS = Object.freeze({
+  wordBomb: 'wbWinsPct', blitz: 'blitzWinsPct', satRush: 'satWinsPct', chain: 'chainWinsPct', fuse: 'fuseWinsPct', wordRace: 'raceWinsPct',
+});
+const MODE_OF_KIND = Object.fromEntries(Object.entries(MODE_WINS_KINDS).map(([m, k]) => [k, m]));
+/** The payout mode a <mode>WinsPct kind pays in (wins.js PAYOUT_MODES key), or null for any other kind. */
+export const modeOfKind = (kind) => MODE_OF_KIND[kind] || null;
+/** What the card calls each mode ("×1.5 WINS IN WORD BOMB"). */
+export const MODE_NAMES = Object.freeze({ wordBomb: 'WORD BOMB', blitz: 'BLITZ', satRush: 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE', wordRace: 'RACE' });
+export const STAT_KINDS = [
+  'winsPct', 'xpPct', 'baseWins', 'baseXp', 'luckPct', 'overdriveSec', ...Object.values(MODE_WINS_KINDS),
+  'critRatePct', 'critPower', 'critEvery',
+];
 export const BASE_WINS_PER_WORD = 10; // "BASE 10" wins on a 5-letter word (xp.js WINS_BASIS_PER_LETTER × 5 ÷ 10)
 export const BASE_XP_PER_LETTER = 10; // xp.js LEVEL_XP_PER_LETTER
 export const OVERDRIVE_BASE_SEC = 300; // overdrive.js OVERDRIVE_MIN × 60
+export const MODE_WINS_SCALE = 2; // a one-mode WINS stat is 2× the tier's all-mode percent (it only pays in one mode)
+export const CRIT_POWER_PER_PCT = 1 / 25; // +1× CRIT POWER per 25% of tier (RARE +1×, EPIC +2×, season-2 LEGENDARY +4×)
+export const CRIT_EVERY_BASIS = 100; // EVERY Nth KEY: N = 100 ÷ tier % (RARE: every 4th key — ×2 on 1 key in 4 = +25%)
 /** A stat's ★0 value for a tier: the tier's percent on what it touches. */
 export function statBaseValue(kind, tier) {
   const p = TIER_PCT[tier] || 0;
   if (kind === 'baseWins') return (BASE_WINS_PER_WORD * p) / 100;
   if (kind === 'baseXp') return (BASE_XP_PER_LETTER * p) / 100;
   if (kind === 'overdriveSec') return (OVERDRIVE_BASE_SEC * p) / 100;
+  if (MODE_OF_KIND[kind]) return MODE_WINS_SCALE * p;
+  if (kind === 'critPower') return p * CRIT_POWER_PER_PCT;
+  if (kind === 'critEvery') return p > 0 ? Math.max(1, Math.round(CRIT_EVERY_BASIS / p)) : 0;
   return p;
 }
+/**
+ * A stat's value after the ★ pips × SHINY factor `k` — the ONE scaling rule statOf (so the card, the sheet and the
+ * payout) uses. critEvery is a GAP (fewer keys between crits is better): N ÷ k, whole keys, ≥ 1. critRatePct stops
+ * at the crit cap (a gear never prints a rate the cap would not pay). Everything else: value × k.
+ */
+export function scaleStat(kind, value, k = 1) {
+  const f = Number.isFinite(k) && k > 0 ? k : 1;
+  if (kind === 'critEvery') return Math.max(1, Math.round(value / f));
+  if (kind === 'critRatePct') return Math.min(value * f, CRIT_RATE_CAP_PCT);
+  return value * f;
+}
+const CRIT_RATE_CAP_PCT = 50; // = CRIT_RATE_CAP × 100 (below; a test keeps them equal)
 
 // ---------------------------------------------------------------------------------------- pool
-// mode = payout key (wins.js PAYOUT_MODES) or null for ALL-MODE — flavour only (the stat pays in every mode).
-// `legacy` = the id already exists in marks.js (its owners keep it and its marks.js entry). `perks` come from
-// markPerks.js (LEGENDARY+ only). `stat` = the ONE MAIN stat kind (spread across the pool for variety).
+// mode = payout key (wins.js PAYOUT_MODES) or null for ALL-MODE. For a <mode>WinsPct gear the mode IS the stat (it
+// pays only there); for the rest it is flavour. `legacy` = the id already exists in marks.js (its owners keep it and
+// its marks.js entry). `perks` come from markPerks.js (LEGENDARY+ only). `stat` = the ONE MAIN stat kind — every
+// gear's (kind, ★0 value) is unique across the pool (markRolls.test.js).
 const RAW_POOL = [
-  // ---- COMMON (12): two per mode ----
-  { id: 'mk-bomber', name: 'BOMBER', tier: 'common', mode: 'wordBomb', legacy: true, stat: 'winsPct' },
-  { id: 'mk-sparky', name: 'SPARKY', tier: 'common', mode: 'wordBomb', stat: 'baseWins' },
-  { id: 'mk-sprinter', name: 'SPRINTER', tier: 'common', mode: 'blitz', legacy: true, stat: 'xpPct' },
-  { id: 'mk-dasher', name: 'DASHER', tier: 'common', mode: 'blitz', stat: 'baseXp' },
-  { id: 'mk-crammer', name: 'CRAMMER', tier: 'common', mode: 'satRush', stat: 'xpPct' },
-  { id: 'mk-inkwell', name: 'INKWELL', tier: 'common', mode: 'satRush', stat: 'luckPct' },
-  { id: 'mk-linker', name: 'LINKER', tier: 'common', mode: 'chain', legacy: true, stat: 'winsPct' },
-  { id: 'mk-shackle', name: 'SHACKLE', tier: 'common', mode: 'chain', stat: 'overdriveSec' },
-  { id: 'mk-wick', name: 'WICK', tier: 'common', mode: 'fuse', stat: 'baseWins' },
-  { id: 'mk-matchstick', name: 'MATCHSTICK', tier: 'common', mode: 'fuse', stat: 'luckPct' },
-  { id: 'mk-pacer', name: 'PACER', tier: 'common', mode: 'wordRace', stat: 'baseXp' },
-  { id: 'mk-nitro', name: 'NITRO', tier: 'common', mode: 'wordRace', stat: 'overdriveSec' },
-  // ---- RARE (9): one per mode + the three legacy rares ----
-  { id: 'mk-detonator', name: 'DETONATOR', tier: 'rare', mode: 'wordBomb', stat: 'winsPct' },
+  // ---- RARE (12): the floor ----
+  { id: 'mk-detonator', name: 'DETONATOR', tier: 'rare', mode: 'wordBomb', stat: 'wbWinsPct' },
   { id: 'mk-cyclone', name: 'CYCLONE', tier: 'rare', mode: 'blitz', stat: 'baseWins' },
   { id: 'mk-scholar', name: 'SAVANT', tier: 'rare', mode: 'satRush', legacy: true, stat: 'xpPct' },
   { id: 'mk-ouroboros', name: 'OUROBOROS', tier: 'rare', mode: 'chain', stat: 'baseXp' },
   { id: 'mk-tinder', name: 'TINDER', tier: 'rare', mode: 'fuse', stat: 'overdriveSec' },
   { id: 'mk-slipstream', name: 'SLIPSTREAM', tier: 'rare', mode: 'wordRace', stat: 'luckPct' },
   { id: 'mk-smith', name: 'SMITH', tier: 'rare', modes: ['satRush', 'chain'], legacy: true, stat: 'winsPct' },
-  { id: 'mk-phoenix', name: 'PHOENIX', tier: 'rare', mode: null, legacy: true, stat: 'xpPct' },
-  { id: 'mk-metronome', name: 'METRONOME', tier: 'rare', mode: null, legacy: true, stat: 'baseWins' },
-  // ---- EPIC (3) ----
+  { id: 'mk-phoenix', name: 'PHOENIX', tier: 'rare', mode: null, legacy: true, stat: 'critRatePct' },
+  { id: 'mk-metronome', name: 'METRONOME', tier: 'rare', mode: null, legacy: true, stat: 'critEvery' },
+  { id: 'mk-hotwire', name: 'HOTWIRE', tier: 'rare', mode: 'wordRace', stat: 'raceWinsPct' },
+  { id: 'mk-grapple', name: 'GRAPPLE', tier: 'rare', mode: 'chain', stat: 'chainWinsPct' },
+  { id: 'mk-sparkplug', name: 'SPARKPLUG', tier: 'rare', mode: null, stat: 'critPower' },
+  // ---- EPIC (7) ----
   { id: 'mk-pyro', name: 'PYRO', tier: 'epic', mode: 'fuse', legacy: true, stat: 'baseWins' },
   { id: 'mk-nova', name: 'NOVA', tier: 'epic', mode: null, legacy: true, stat: 'winsPct' },
   { id: 'mk-golem', name: 'GOLEM', tier: 'epic', mode: null, stat: 'baseXp' },
-  // ---- LEGENDARY (2) + perk ----
+  { id: 'mk-brainstorm', name: 'BRAINSTORM', tier: 'epic', mode: 'blitz', stat: 'blitzWinsPct' },
+  { id: 'mk-flashpoint', name: 'FLASHPOINT', tier: 'epic', mode: 'fuse', stat: 'fuseWinsPct' },
+  { id: 'mk-voltage', name: 'VOLTAGE', tier: 'epic', mode: null, stat: 'critPower' },
+  { id: 'mk-talisman', name: 'TALISMAN', tier: 'epic', mode: null, stat: 'luckPct' },
+  // ---- LEGENDARY (4) + perk ----
   { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct' },
   { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct' },
-  // ---- MYTHIC (2) + perk ----
+  { id: 'mk-headmaster', name: 'HEADMASTER', tier: 'legendary', mode: 'satRush', stat: 'satWinsPct' },
+  { id: 'mk-thunderclap', name: 'THUNDERCLAP', tier: 'legendary', mode: null, stat: 'critPower' },
+  // ---- MYTHIC (3) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
   { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins' },
   { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp' },
+  { id: 'mk-hydra', name: 'HYDRA', tier: 'mythic', mode: 'wordBomb', stat: 'wbWinsPct' },
   // ---- SECRET (1) + game-changing perks ----
   { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null, stat: 'winsPct' },
 ];
+// GEAR POOL v2: the 12 COMMON gears that were removed (each owned copy refunds COMMON_REFUND_GEMS — migrateRollSave),
+// and the three marks.js-only COMMONS (the retired ALL-MODE marks) that went with them.
+// (The lists live in the markPerks.js LEAF so v3/achievements.js can drop them from FILL INDEX without a cycle.)
+export { REMOVED_COMMON_IDS, RETIRED_COMMON_IDS };
+export const COMMON_REFUND_GEMS = 15;
 
 function buildPool() {
   const count = {};
   for (const m of RAW_POOL) count[m.tier] = (count[m.tier] || 0) + 1;
-  // every rarer tier is exact: each of its k marks is 1 IN (k × X); commons share the rest evenly
-  const rarer = Object.keys(TIER_ODDS).filter((t) => t !== 'common' && count[t]);
+  // every rarer tier is exact: each of its k marks is 1 IN (k × X); the FLOOR (RARE) shares the rest evenly
+  const rarer = Object.keys(TIER_ODDS).filter((t) => count[t]);
   const rest = 1 - rarer.reduce((s, t) => s + 1 / TIER_ODDS[t], 0);
-  const xCommon = (count.common || 1) / rest;
+  const xFloor = (count[FLOOR_TIER] || 1) / rest;
   return RAW_POOL.map((m) => ({
     id: m.id,
     name: m.name,
     tier: m.tier,
-    x: m.tier === 'common' ? xCommon : count[m.tier] * TIER_ODDS[m.tier],
+    x: m.tier === FLOOR_TIER ? xFloor : count[m.tier] * TIER_ODDS[m.tier],
     mode: m.modes ? null : m.mode,
     modes: m.modes || (m.mode ? [m.mode] : null), // null = every mode
     legacy: !!m.legacy,
@@ -138,11 +182,11 @@ export function oneInX(id) {
   const m = ROLL_BY_ID.get(id);
   return m ? Math.max(1, Math.round(m.x)) : null;
 }
-/** The player's own odds for a mark at a luck value ("YOUR ODDS 1 IN …"). Commons are not luck-scaled. */
+/** The player's own odds for a mark at a luck value ("YOUR ODDS 1 IN …"). The FLOOR (RARE) is not luck-scaled. */
 export function yourOneInX(id, luckValue = 1) {
   const m = ROLL_BY_ID.get(id);
   if (!m) return null;
-  if (m.tier === 'common') return oneInX(id);
+  if (m.tier === FLOOR_TIER) return oneInX(id);
   return Math.max(1, Math.round(m.x / Math.max(1, luckValue)));
 }
 
@@ -168,7 +212,7 @@ export function permanentMarkById(id) {
 
 // ---------------------------------------------------------------------------------------- ★ pips
 /** Dupes per ★ pip, by tier (Andy oct5). */
-export const DUPES_PER_PIP = { common: 10, rare: 5, epic: 3, legendary: 2, mythic: 1, secret: 1 };
+export const DUPES_PER_PIP = { rare: 5, epic: 3, legendary: 2, mythic: 1, secret: 1 };
 export const MAX_PIPS = 5;
 export const PIP_STEP = 0.2; // each pip +20% of the stat → ★5 = ×2
 // v1 finishes, kept as a floor for saves from before v2 (GOLD doubled the bonus part, RAINBOW ×5 it).
@@ -202,14 +246,18 @@ export const COLLECTION_MILESTONES = [
   { id: 'rainbow-100', track: 'rainbow', pct: 100, luck: 0.5 },
 ];
 // INDEX REWARDS (Andy oct5): words at your rate (markRolls.refWordWins), paid through the one grant path.
-export const INDEX_NEW_WORDS = { common: 10, rare: 30, epic: 100, legendary: 500, mythic: 2500, secret: 10000 };
-export const INDEX_PIP_WORDS = { common: 5, rare: 15, epic: 50, legendary: 250, mythic: 1250, secret: 5000 };
-export const INDEX_COMPLETE_WORDS = { common: 100, rare: 300, epic: 500, legendary: 2000, mythic: 10000, secret: 25000 };
-export const SKIP_TIERS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+export const INDEX_NEW_WORDS = { rare: 30, epic: 100, legendary: 500, mythic: 2500, secret: 10000 };
+export const INDEX_PIP_WORDS = { rare: 15, epic: 50, legendary: 250, mythic: 1250, secret: 5000 };
+export const INDEX_COMPLETE_WORDS = { rare: 300, epic: 500, legendary: 2000, mythic: 10000, secret: 25000 };
+// "Skip reveals below [tier]": RARE is the floor, so "< RARE" skips nothing (the first step of the stepper).
+export const SKIP_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 export const DEFAULT_SKIP_BELOW = 'epic';
-// LEGENDARY+ guaranteed in 125 (Andy oct8: was 500 with the 1 IN 1,000 odds; the ladder keeps its shape — the hard
-// pity is half the tier's 1 IN X, as before) — beside the EPIC+ in 50 (markRolls.PITY). Here because normalize seeds it.
-export const LEGENDARY_PITY_HARD = 125;
+// PITY, Genshin-style (Andy oct9: "make epic a 1 in 10 pity and legendary a 1 in 50"): EPIC-or-better guaranteed at
+// least every 10 rolls, LEGENDARY-or-better at least every 50; each counter resets when its tier (or better) drops.
+// Was EPIC+ 50 (soft from 40, first by 10) / LEGENDARY+ 125. markRolls.PITY reads these; here because normalize
+// clamps the stored counters to them.
+export const EPIC_PITY_HARD = 10;
+export const LEGENDARY_PITY_HARD = 50;
 
 // --------------------------------------------------------------------------------------- state
 export function freshState() {
@@ -263,7 +311,94 @@ export function normalize(raw) {
     s.sinceLegendary = num(raw.sinceLegendary);
     s.done = Array.isArray(raw.done) ? ROLLABLE_TIERS.filter((t) => raw.done.includes(t)) : [];
   }
+  // PITY IS A PROMISE (GEAR POOL v2): a drought carried from the old ladder (EPIC+ 50 / LEGENDARY+ 125) is kept, capped
+  // one short of the new guarantee — so a save that was past 10 / 50 gets its guaranteed roll NEXT, never a reset.
+  s.sinceEpic = Math.min(s.sinceEpic, EPIC_PITY_HARD - 1);
+  s.sinceLegendary = Math.min(s.sinceLegendary, LEGENDARY_PITY_HARD - 1);
+  // the one-line INDEX note of the COMMON refund (migrateRollSave), until the INDEX shows it once
+  const n = raw.note && typeof raw.note === 'object' ? raw.note : null;
+  if (n && num(n.commons) > 0) s.note = { commons: num(n.commons), gems: num(n.gems) };
   return s;
+}
+
+// ---------------------------------------------------------------------------- GEAR POOL v2 migration
+/**
+ * PURE. What removing COMMON takes from a save: { copies, gems, ids } — every owned copy of a removed COMMON gear
+ * (the roll state's count, or 1 for a marks.js-owned COMMON the roll state never counted) refunds
+ * COMMON_REFUND_GEMS. `raw` = the stored roll state (any shape; a v3+ state has no commons left to count),
+ * `ownedIds` = taw.marksOwned as stored, `wornId` = taw.mark. `unequip` = the worn MAIN was a COMMON.
+ * Idempotent by construction: its own output (a v3 state, the owned list without commons) refunds 0.
+ */
+export function commonRefund(raw, { ownedIds = [], wornId = null } = {}) {
+  const all = new Set([...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]);
+  const marks = raw && typeof raw === 'object' && raw.marks && typeof raw.marks === 'object' ? raw.marks : {};
+  const pre = !(raw && Number(raw.v) >= 3);
+  const by = {};
+  if (pre) {
+    for (const id of REMOVED_COMMON_IDS) {
+      const v = marks[id];
+      const n = num(v && typeof v === 'object' ? v.n : v);
+      if (n > 0) by[id] = n;
+    }
+  }
+  for (const id of Array.isArray(ownedIds) ? ownedIds : []) if (all.has(id) && !by[id]) by[id] = 1;
+  const copies = Object.values(by).reduce((t, n) => t + n, 0);
+  return { copies, gems: copies * COMMON_REFUND_GEMS, ids: Object.keys(by), unequip: !!(wornId && all.has(wornId)) };
+}
+function readRawJson(key) {
+  try {
+    const v = localStorage.getItem(key);
+    return v == null ? null : JSON.parse(v);
+  } catch {
+    return null;
+  }
+}
+/**
+ * ONCE PER SAVE, at boot (main.jsx, before the first render): retire COMMON. Owned COMMON gears are deleted (the roll
+ * state drops them; marks.js's owned set loses them), each copy refunds COMMON_REFUND_GEMS through the ONE gem door
+ * (grantGems 'refund'), a worn COMMON MAIN (or 2nd slot) is unequipped, and the roll state is stamped v3 with a
+ * `note` the INDEX prints once. Idempotent: a second run finds nothing to refund and writes nothing. Guarded.
+ * Returns the refund ({ copies, gems, ids, unequip }) or null when there was nothing to do.
+ */
+export function migrateRollSave() {
+  try {
+    const raw = readRawJson(ROLL_STATE_KEY);
+    const owned = readRawJson(MARKS_OWNED_KEY);
+    let worn = null;
+    try { worn = localStorage.getItem(MARKS_EQUIPPED_KEY); } catch { worn = null; }
+    const r = commonRefund(raw, { ownedIds: owned, wornId: worn });
+    const stale = raw && typeof raw === 'object' && !(Number(raw.v) >= ROLL_STATE_VERSION);
+    if (!r.copies && !r.unequip && !stale) return null;
+    if (raw && typeof raw === 'object') {
+      const s = normalize(raw);
+      if (r.copies > 0) s.note = { commons: r.copies, gems: r.gems };
+      saveRollState(s);
+    } else if (r.copies > 0) {
+      saveRollState({ ...freshState(), note: { commons: r.copies, gems: r.gems } });
+    }
+    if (Array.isArray(owned) && r.ids.length) {
+      const drop = new Set([...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]);
+      try { localStorage.setItem(MARKS_OWNED_KEY, JSON.stringify(owned.filter((id) => !drop.has(id)))); } catch { /* blocked */ }
+    }
+    if (r.unequip) {
+      try { localStorage.removeItem(MARKS_EQUIPPED_KEY); } catch { /* blocked */ }
+    }
+    try {
+      const id2 = V3.store && V3.store.mark2Id ? V3.store.mark2Id() : null;
+      if (id2 && (REMOVED_COMMON_IDS.includes(id2) || RETIRED_COMMON_IDS.includes(id2))) V3.store.saveMark2Id(null);
+    } catch { /* no season 2 */ }
+    if (r.gems > 0) grantGems(r.gems, 'refund', { detail: 'common-retired' });
+    return r.copies || r.unequip ? r : null;
+  } catch {
+    return null;
+  }
+}
+/** The INDEX printed the COMMON refund note: forget it (it shows once). */
+export function clearRollNote() {
+  const s = loadRollState();
+  if (!s || !s.note) return;
+  const { note, ...rest } = s; // eslint-disable-line no-unused-vars
+  saveRollState(rest);
 }
 
 /**
@@ -275,7 +410,7 @@ export function markLevel(state, id) {
   const n = num(e && e.n);
   const dupes = Math.max(0, n - 1);
   const m = ROLL_BY_ID.get(id);
-  const per = (m && DUPES_PER_PIP[m.tier]) || DUPES_PER_PIP.common;
+  const per = (m && DUPES_PER_PIP[m.tier]) || DUPES_PER_PIP.rare;
   const pips = Math.min(MAX_PIPS, Math.floor(dupes / per));
   const max = pips >= MAX_PIPS;
   const k = num(e && e.k);
@@ -345,7 +480,14 @@ export function statOf(id, state) {
   if (!m) return null;
   const s = resolve(state);
   const k = s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
-  return { kind: m.stat.kind, value: m.stat.value * k };
+  return { kind: m.stat.kind, value: scaleStat(m.stat.kind, m.stat.value, k) };
+}
+/** "4TH" — an English ordinal for the EVERY Nth KEY stat. */
+export function ordinal(n) {
+  const v = Math.max(1, Math.floor(n));
+  const t = v % 100;
+  const suf = t >= 11 && t <= 13 ? 'TH' : ({ 1: 'ST', 2: 'ND', 3: 'RD' })[v % 10] || 'TH';
+  return `${formatNum(v)}${suf}`;
 }
 /**
  * The stat as the card prints it, NAMED and short (Andy oct5): a % stat reads as the multiplier it pays — "×1.1 WINS",
@@ -359,14 +501,22 @@ export function statText(stat) {
   switch (stat.kind) {
     case 'winsPct': return `${x(v)} WINS`;
     case 'xpPct': return `${x(v)} XP`;
-    case 'baseWins': return `+${formatRate(v)} BASE WINS`;
+    // exact to 2 decimals (formatMultExact): a season-2 RARE +2.5 BASE XP adds 0.25 — formatRate printed it as 0.3
+    case 'baseWins': return `+${formatMultExact(v)} BASE WINS`;
     // SEASON 2 (Andy oct8: "an epic +10 base doesn't make sense — it should be added to the normal base, which is just
     // 1"): the XP base is 1 XP / KEY and a +N BASE mark scales it by (10 + N)/10 — so its REAL addition to the base is
     // N/10 (EPIC +5 → +0.5 = ×1.5, LEGENDARY +10 → +1 = ×2, exactly its tier's MAIN). Say that number, on that unit.
-    case 'baseXp': return `+${formatRate(V3 && V3.ready ? v / 10 : v)} BASE XP`;
+    case 'baseXp': return `+${formatMultExact(V3 && V3.ready ? v / 10 : v)} BASE XP`;
     case 'luckPct': return `${x(v)} ROLL LUCK`;
     case 'overdriveSec': return `+${formatNum(v)}s OVERDRIVE`;
-    default: return '';
+    // GEAR POOL v2: the one-mode WINS, the crit MAIN stats, the EVERY Nth KEY crit
+    case 'critRatePct': return `+${formatRate(v)}% CRIT RATE`;
+    case 'critPower': return `+${formatMultExact(v)}× CRIT POWER`;
+    case 'critEvery': return v <= 1 ? 'EVERY KEY CRITS' : `EVERY ${ordinal(v)} KEY CRITS`;
+    default: {
+      const mode = MODE_OF_KIND[stat.kind];
+      return mode ? `${x(v)} WINS IN ${MODE_NAMES[mode]}` : '';
+    }
   }
 }
 export function statLine(id, state) {
@@ -493,14 +643,22 @@ function guard(fn, fallback) {
     return fallback;
   }
 }
+/** Does a worn stat pay on `kind` here? A one-mode WINS stat (GEAR POOL v2) pays as WINS only in its own mode
+ *  (`opts.mode` = the payout key, wins.js modeKey — the menu / an unknown mode never matches). */
+export function statHits(stat, kind, opts = {}) {
+  if (!stat) return false;
+  if (stat.kind === kind) return true;
+  return kind === 'winsPct' && !!opts.mode && stat.kind === MODE_WINS_KINDS[opts.mode];
+}
 function pctMult(kind, opts) {
   const { s, id, stat } = worn(opts);
   // a PERMANENT / retired mark (no stat) pays its tier MAIN on wins AND XP, as before v2
-  const main = stat ? (stat.kind === kind ? 1 + stat.value / 100 : 1) : mainMultOf(id, s);
+  const main = stat ? (statHits(stat, kind, opts) ? 1 + stat.value / 100 : 1) : mainMultOf(id, s);
   const v = main * indexMult(s) * (V3.m ? V3.m(kind, opts, s, id) : 1);
   return v > 0 ? v : 1;
 }
-/** × on WINS: a worn +N% WINS mark (or a PERMANENT's MAIN) × the INDEX. ×1 with nothing worn, never rolled. */
+/** × on WINS: a worn +N% WINS mark (or a PERMANENT's MAIN) × the INDEX. ×1 with nothing worn, never rolled. `mode`
+ *  (a wins.js payout key) also lets a one-mode WINS gear pay in its mode. */
 export function markWinsMult(opts = {}) {
   return guard(() => pctMult('winsPct', opts), 1);
 }
@@ -541,11 +699,10 @@ export function markMult(opts = {}) {
 // MAIN stat and, from RARE up, carries EXTRA crit stats by tier — deterministic per gear (no save field, no migration),
 // scaled by the SAME ★ pips × SHINY factor statOf uses. EARNED (permanent) gears carry the LEGENDARY crit, as they pay
 // the LEGENDARY MAIN. A crit is a MENU KEY that pays × CRIT POWER (progress/crit.js rolls it, useXpCapture applies it).
-//   COMMON none · RARE +2% RATE · EPIC +4%, +0.25× POWER · LEGENDARY +6%, +0.5× · MYTHIC +9%, +1× · SECRET +12%, +1.5×
+//   RARE +2% RATE · EPIC +4%, +0.25× POWER · LEGENDARY +6%, +0.5× · MYTHIC +9%, +1× · SECRET +12%, +1.5×
 // Totals SUM over the worn gears (the MAIN + the season-2 2nd slot): RATE = min(50%, Σ rate) from a BASE of 0,
 // POWER = ×2 + Σ power. `rate` is a fraction (0.06 = 6%); `power` is the part ADDED to the base ×2.
 export const CRIT_BY_TIER = Object.freeze({
-  common: Object.freeze({ rate: 0, power: 0 }),
   rare: Object.freeze({ rate: 0.02, power: 0 }),
   epic: Object.freeze({ rate: 0.04, power: 0.25 }),
   legendary: Object.freeze({ rate: 0.06, power: 0.5 }),
@@ -564,7 +721,7 @@ export function critTierOf(id) {
 }
 /**
  * ONE gear's EXTRA crit stats as they pay right now: { rate, power } = its tier's row × ★ pips × SHINY (a PERMANENT:
- * the LEGENDARY row, no pips). { 0, 0 } for a COMMON / an unknown or retired id. `state` as statOf.
+ * the LEGENDARY row, no pips). { 0, 0 } for an unknown or retired id. `state` as statOf.
  */
 export function critStatsOf(id, state) {
   const row = id ? critTierOf(id) : null;
@@ -577,9 +734,11 @@ export function critStatsOf(id, state) {
   return { rate: row.rate * k, power: row.power * k };
 }
 /**
- * The worn gears' CRIT, summed: { rate (capped 50%), power (×2 + Σ), rawRate (uncapped Σ), ids }. `markId` undefined →
- * the worn MAIN; `mark2Id` undefined → the season-2 2nd slot (V3.c2 — null outside season 2 / below R5); null = none.
- * `state` undefined → the stored roll state. Guarded: a failure is the base (0% · ×2).
+ * The worn gears' CRIT, summed: { rate (capped 50%), power (×2 + Σ), rawRate (uncapped Σ), every, ids }. `markId`
+ * undefined → the worn MAIN; `mark2Id` undefined → the season-2 2nd slot (V3.c2 — null outside season 2 / below R5);
+ * null = none. `state` undefined → the stored roll state. Guarded: a failure is the base (1% · ×2).
+ * GEAR POOL v2: the worn MAIN's crit MAIN stat adds here too (+N% CRIT RATE / +N× CRIT POWER), and `every` is the
+ * guaranteed-crit gap (EVERY Nth MENU KEY CRITS — the MAIN's critEvery stat or the THUNDERCLAP perk's 10; 0 = none).
  */
 export function critTotals({ markId, mark2Id, state } = {}) {
   try {
@@ -596,10 +755,17 @@ export function critTotals({ markId, mark2Id, state } = {}) {
       rate += c.rate;
       power += c.power;
     }
+    const main = id ? statOf(id, s) : null; // only the worn MAIN's MAIN stat applies (the 2nd slot: WINS / XP only)
+    let every = 0;
+    if (main && main.kind === 'critRatePct') rate += main.value / 100;
+    if (main && main.kind === 'critPower') power += main.value;
+    if (main && main.kind === 'critEvery') every = main.value;
+    // the THUNDERCLAP perk (markPerks critKey10) — only while that gear is the worn MAIN of THIS read
+    if (id && (MARK_PERKS[id] || []).includes('critKey10') && s && s.marks && s.marks[id]) every = every ? Math.min(every, CRIT_PERK_EVERY) : CRIT_PERK_EVERY;
     const r = Number.isFinite(rate) && rate > 0 ? rate : 0;
     const p = Number.isFinite(power) && power > 0 ? power : 0;
-    return { rate: Math.min(CRIT_RATE_CAP, r), power: CRIT_BASE_POWER + p, rawRate: r, ids };
+    return { rate: Math.min(CRIT_RATE_CAP, r), power: CRIT_BASE_POWER + p, rawRate: r, every, ids };
   } catch {
-    return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: CRIT_BASE_RATE, ids: [] };
+    return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: CRIT_BASE_RATE, every: 0, ids: [] };
   }
 }

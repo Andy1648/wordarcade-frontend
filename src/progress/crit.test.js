@@ -32,8 +32,8 @@ function withStorage(seed, fn) {
   }
 }
 
-test('the tier table is Andy\'s: COMMON none · RARE +2% · EPIC +4% +0.25× · LEGENDARY +6% +0.5× · MYTHIC +9% +1× · SECRET +12% +1.5×', () => {
-  assert.deepEqual({ ...CRIT_BY_TIER.common }, { rate: 0, power: 0 });
+test('the tier table is Andy\'s (no COMMON — GEAR POOL v2): RARE +2% · EPIC +4% +0.25× · LEGENDARY +6% +0.5× · MYTHIC +9% +1× · SECRET +12% +1.5×', () => {
+  assert.equal(CRIT_BY_TIER.common, undefined);
   assert.deepEqual({ ...CRIT_BY_TIER.rare }, { rate: 0.02, power: 0 });
   assert.deepEqual({ ...CRIT_BY_TIER.epic }, { rate: 0.04, power: 0.25 });
   assert.deepEqual({ ...CRIT_BY_TIER.legendary }, { rate: 0.06, power: 0.5 });
@@ -60,14 +60,11 @@ test('★ pips × SHINY scale the crit stats exactly as they scale the MAIN stat
   const s = critStatsOf(leg.id, shiny);
   near(s.rate, 0.06 * 2 * SHINY_MULT, '★5 shiny rate');
   near(s.power, 0.5 * 2 * SHINY_MULT, '★5 shiny power');
-  // a COMMON stays at zero however many pips
-  const com = byTier('common');
-  assert.deepEqual(critStatsOf(com.id, own({ [com.id]: { n: 999, shiny: true } })), { rate: 0, power: 0 });
 });
 
 test('critTotals: BASE 1% · ×2, SUMS the worn MAIN + the 2nd slot, caps the rate at 50%', () => {
   const st = own({});
-  assert.deepEqual(critTotals({ markId: null, mark2Id: null, state: st }), { rate: CRIT_BASE_RATE, power: 2, rawRate: CRIT_BASE_RATE, ids: [] });
+  assert.deepEqual(critTotals({ markId: null, mark2Id: null, state: st }), { rate: CRIT_BASE_RATE, power: 2, rawRate: CRIT_BASE_RATE, every: 0, ids: [] });
   const leg = byTier('legendary');
   const myth = byTier('mythic');
   const one = critTotals({ markId: leg.id, mark2Id: null, state: st });
@@ -96,7 +93,7 @@ test('critTotals reads the worn MAIN from storage (season 1: no 2nd slot)', () =
     near(t.power, 2.5, 'worn legendary power');
     assert.deepEqual(t.ids, [leg.id]);
   });
-  withStorage({}, () => assert.deepEqual(critTotals(), { rate: CRIT_BASE_RATE, power: 2, rawRate: CRIT_BASE_RATE, ids: [] }));
+  withStorage({}, () => assert.deepEqual(critTotals(), { rate: CRIT_BASE_RATE, power: 2, rawRate: CRIT_BASE_RATE, every: 0, ids: [] }));
 });
 
 test('rollCrit: rng() < rate — 0% never (rng untouched), 100% always, and the rng decides in between', () => {

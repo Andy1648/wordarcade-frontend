@@ -52,8 +52,10 @@ const STATES = [
   { p: 2, r: 3, s: 0 },
   { p: 5, r: 10, s: 2 },
 ];
-const MARKS = [null, 'mk-bomber', 'mk-sprinter', 'mk-sparky', 'mk-eclipse', 'mk-singularity'];
-const FINAL_TIER = { common: 1.1, rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 };
+// GEAR POOL v2: the RARE floor's +% WINS / +% XP / +BASE WINS, and the one-mode WINS gears (DETONATOR — WORD BOMB, RARE;
+// HEADMASTER — SAT RUSH, LEGENDARY), which must pay in their mode and nowhere else
+const MARKS = [null, 'mk-smith', 'mk-scholar', 'mk-cyclone', 'mk-eclipse', 'mk-singularity', 'mk-detonator', 'mk-headmaster'];
+const FINAL_TIER = { rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 };
 
 function seed({ p, r, s }, mark) {
   mem.clear();
@@ -67,12 +69,14 @@ function seed({ p, r, s }, mark) {
   }
 }
 /** FINAL's MARK factors for the worn mark: { wins, xp, winsBase, xpBase } (the +N BASE stats are BASE addends). */
-function finalMark(mark) {
+function finalMark(mark, mode = null) {
   const out = { wins: 1, xp: 1, winsBase: 0, xpBase: 0 };
   if (!mark) return out;
   const m = rollMarkById(mark);
   const f = FINAL_TIER[m.tier];
   if (m.stat.kind === 'winsPct') out.wins = f;
+  // a one-mode WINS gear: 2× the tier's percent, in its own mode only
+  if (mode && m.stat.kind === `${{ wordBomb: 'wb', blitz: 'blitz', satRush: 'sat', chain: 'chain', fuse: 'fuse', wordRace: 'race' }[mode]}WinsPct`) out.wins = 1 + 2 * (f - 1);
   if (m.stat.kind === 'xpPct') out.xp = f;
   if (m.stat.kind === 'baseWins') out.winsBase = (f - 1) * 10; // sized on BASE 10: a +N BASE is worth ×(1 + N/10)
   if (m.stat.kind === 'baseXp') out.xpBase = (f - 1) * 10;
@@ -100,7 +104,7 @@ test('FINAL v2: BASE × every chip = TOTAL (exact AND as printed) = the payout =
         assert.equal(by.mode, modeX, `${tag}: MODE`);
         assert.equal(by.rebirth, 3 ** st.r, `${tag}: REBIRTH 3^R`);
         assert.equal(by.ascend, undefined, `${tag}: no STARS chip (ascension hidden)`);
-        const fm = finalMark(mark);
+        const fm = finalMark(mark, key);
         const idx = indexMult(loadRollState());
         assert.ok(Math.abs(by.mark - fm.wins) < 1e-9, `${tag}: MARK is FINAL's tier ×${fm.wins} (was ${by.mark})`);
         // 2. exact
@@ -180,5 +184,48 @@ test('v4 at T0 R0: a menu key pays +1 XP, a game letter 0; POWER doubles it at o
   }
   localStorage.setItem('taw.rebirths', '2');
   assert.equal(xpPerInput({ mode: 'menu' }), 8 * 9, 'T3 R2 = 2^3 × 3^2 a key');
+  localStorage.clear();
+});
+
+// GEAR POOL v2 (Andy oct9: "every number shown matches what actually pays"): in SEASON 2, every gear's printed MAIN
+// stat — at ★0, ★2 and ★5 SHINY — is the number the payout path uses: the real per-word WINS in its mode, the real
+// XP per key, the BASE addend (season 2 prints a +N BASE XP as its N/10 share of the 1 XP base), luck, OVERDRIVE, crit.
+test('GEAR POOL v2: every gear prints exactly what it pays (season 2 values, ★ pips, shiny)', async () => {
+  const MR = await import('./markRolls.js');
+  const num = (t) => (/^EVERY KEY/.test(t) ? 1 : Number(/^(?:EVERY )?[+×]?([\d,]*\.?\d+)/.exec(t)[1].replace(/,/g, '')));
+  for (const m of MR.ROLL_MARKS) {
+    const per = MR.DUPES_PER_PIP[m.tier];
+    for (const [n, shiny] of [[1, false], [1 + 2 * per, false], [1 + 5 * per, true]]) {
+      seed({ p: 0, r: 0, s: 0 }, m.id);
+      const st = JSON.parse(localStorage.getItem(ROLL_STATE_KEY));
+      st.marks[m.id] = shiny ? { n, shiny: true } : { n };
+      localStorage.setItem(ROLL_STATE_KEY, JSON.stringify(st));
+      const s = loadRollState();
+      const text = MR.mainTag(m.id, s);
+      const v = num(text);
+      const ix = indexMult(s);
+      const k = m.stat.kind;
+      const tag = `${m.id} ★n${n}${shiny ? ' shiny' : ''} "${text}"`;
+      const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${tag}: pays ${a}, prints ${b}`);
+      if (k === 'winsPct') near(MR.markWinsMult() / ix, v);
+      else if (k === 'xpPct') near(MR.markXpMult() / ix, v);
+      else if (k === 'baseWins') near(MR.markBaseWins(), v);
+      else if (k === 'baseXp') near(MR.markBaseXp() / 10, v);
+      else if (k === 'luckPct') near(1 + MR.markLuck(), v);
+      else if (k === 'overdriveSec') near(MR.markOverdriveSec(), v);
+      else if (k === 'critRatePct') near(MR.critTotals().rawRate, 0.01 + MR.critStatsOf(m.id, s).rate + v / 100);
+      else if (k === 'critPower') near(MR.critTotals().power, 2 + MR.critStatsOf(m.id, s).power + v);
+      else if (k === 'critEvery') assert.equal(MR.critTotals().every, v, tag);
+      else {
+        const mode = MR.modeOfKind(k);
+        near(MR.markWinsMult({ mode }) / ix, v);
+        // and the real per-word payout in that mode is exactly ×v the same word with nothing worn
+        const worn = perWordRateNow({ mode }).rate;
+        localStorage.removeItem(MARKS_EQUIPPED_KEY);
+        const bare = perWordRateNow({ mode }).rate;
+        assert.ok(Math.abs(worn / bare - v) < 0.01 * v, `${tag}: ${mode} word ${worn} vs ${bare} (the INDEX rides on both)`);
+      }
+    }
+  }
   localStorage.clear();
 });

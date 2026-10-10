@@ -1,7 +1,7 @@
 /* GearFx.css — THE RARE-GEAR GLOW (GearFx.jsx). DOCUMENTED FLAT-RULE EXCEPTION (CLAUDE.md, Andy oct9 "clash royale
-   cards … they just feel so satisfying"): EPIC+ gears only, the YOUR GEAR slot + the INDEX / GEAR SHEET cards only.
-   The glow is a BAKED asset — public/fx/gear-aura-<tier>.png, a 64px 9-slice whose outer 24px is the pre-rendered
-   falloff — laid round the host as a border-image, so it is full strength at the host's edge and fades over
+   cards … they just feel so satisfying"): EPIC+ gears only, the YOUR GEAR slot + the INDEX / GEAR SHEET cards + the ROLL reel / reveal / stats.
+   The glow is a BAKED asset — public/fx/gear-aura-<tier>.png, a 128px 9-slice whose outer 56px is the pre-rendered
+   falloff (a hot, near-white rim at the host's edge fading out to the tier colour — oct9 v2) — laid round the host as a border-image, so it is full strength at the host's edge and fades over
    --gfx-out px outside it whatever the host's size (no CSS filter, no blurred shadow). The layer sits BEHIND its
    host's content (z-index -2 inside a host that isolates; the host covers the solid centre). Nothing here animates:
    GearFx.jsx runs finite WAAPI opacity / transform cycles. */
@@ -17,7 +17,7 @@
   box-sizing: border-box;
   opacity: var(--gfx-lo, 0.5);
   border: var(--gfx-out, 12px) solid transparent;
-  border-image-slice: 24 fill;
+  border-image-slice: 56 fill;
   border-image-width: var(--gfx-out, 12px);
   border-image-repeat: stretch;
 }
@@ -35,13 +35,13 @@
 .gfx[data-glow='secret'] .gfx-aura { border-image-source: url('/fx/gear-aura-secret.png'); }
 .gfx-mote {
   position: absolute;
-  width: 14px;
-  height: 14px;
-  margin-top: -7px;
+  width: var(--gfx-ms, 26px);
+  height: var(--gfx-ms, 26px);
+  margin-top: calc(var(--gfx-ms, 26px) / -2);
   opacity: 0;
   background: var(--gfx-m, #fff);
   -webkit-mask: url('/fx/gear-mote.svg') center / contain no-repeat;
   mask: url('/fx/gear-mote.svg') center / contain no-repeat;
 }
-.gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - 17px); }
-.gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - 17px); }
+.gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }
+.gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }

@@ -15,6 +15,9 @@ export const HI_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret', 'perma
 /** "×1.5 WINS" → { num: '×1.5', kind: 'WINS' }; "+2.5 BASE WINS" → { num: '+2.5', kind: 'BASE WINS' }. */
 export function splitTag(tag) {
   const s = String(tag || '').trim();
+  // GEAR POOL v2: "EVERY 4TH KEY CRITS" — the number is the ordinal, so the big part is "EVERY 4TH"
+  const ev = /^(EVERY \S+) (.+)$/.exec(s);
+  if (ev) return { num: ev[1], kind: ev[2] };
   const i = s.indexOf(' ');
   return i < 0 ? { num: s, kind: '' } : { num: s.slice(0, i), kind: s.slice(i + 1) };
 }
@@ -57,7 +60,7 @@ export function tierLabel(tier, kind = 'roll') {
 export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, state = null }) {
   // EARNED gears (Andy oct8): they sit WITH the normal rarities — drawn as the LEGENDARY they pay (MAIN ×3), not a
   // tier of their own; a locked one says ACHIEVEMENT where a rolled card says its odds
-  const t = kind === 'perm' ? 'legendary' : tier || 'common';
+  const t = kind === 'perm' ? 'legendary' : tier || 'rare';
   const { num, kind: statKind } = locked ? { num: '', kind: '' } : splitTag(mainTag(id, state));
   const lv = kind === 'roll' && !locked ? markLevel(state, id) : null;
   // CRIT (Andy oct8): the gear's EXTRA stats. A locked card knows only HOW MANY it has (at ★0), never their values.
@@ -66,7 +69,7 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
   return {
     crit: !locked && extras ? crit : null,
     critLines: locked ? [] : critLines(crit), // the full lines (detail sheet): "+6% CRIT RATE" · "+0.5× CRIT POWER"
-    extras, // how many extra stats the gear has (a pip each on the tile — a "?" when locked)
+    extras, // how many extra stats the gear has (a pip each on an owned tile; a locked tile shows none)
     tier: t,
     rarityName: kind === 'perm' ? tierLabel('legendary') : tierLabel(t, kind),
     odds: kind === 'roll' ? `1 IN ${formatNum(oneInX(id))}` : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '',
@@ -85,15 +88,17 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
   };
 }
 /**
- * The tile's quiet pip row, in order: a dot per extra stat, ✦ for a perk, then a ★ per dupe pip. LOCKED: a "?" per
- * hidden extra stat and the ✦ (that a perk EXISTS is part of the rarity, like the counts in the sheet) — no ★.
- * → [{ k: 'stat' | 'hidden' | 'perk' | 'star' }]
+ * The tile's quiet pip row, in order: a dot per extra stat, ✦ for a perk, then a ★ per dupe pip. LOCKED: NO pips at
+ * all (Andy oct9: the "?" per hidden substat "is so confusing, it wont work") — a locked tile is rarity · silhouette ·
+ * ??? · odds; the COUNT of what is hidden lives in the detail sheet only.
+ * → [{ k: 'stat' | 'perk' | 'star' }]
  */
 export function tilePips(c) {
   const out = [];
-  for (let i = 0; i < c.extras; i += 1) out.push({ k: c.locked ? 'hidden' : 'stat' });
+  if (c.locked) return out;
+  for (let i = 0; i < c.extras; i += 1) out.push({ k: 'stat' });
   for (let i = 0; i < (c.perks || 0); i += 1) out.push({ k: 'perk' });
-  if (!c.locked) for (let i = 0; i < (c.pips || 0); i += 1) out.push({ k: 'star' });
+  for (let i = 0; i < (c.pips || 0); i += 1) out.push({ k: 'star' });
   return out;
 }
 /** "2 EXTRA STATS · 1 PERK · ★3" — the pip row read aloud (stars: false → the counts only, the locked sheet's line). */

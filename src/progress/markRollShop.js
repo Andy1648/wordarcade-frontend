@@ -80,8 +80,8 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
   return { ...res, state: all[all.length - 1].state, spent: cost.gems, free: cost.free, decision, fromMain, toMain, lump, extra };
 }
 
-/** The tiers AUTO ROLL can stop on ("until [tier] or better"). */
-export const AUTO_ROLL_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
+/** The tiers AUTO ROLL can stop on ("until [tier] or better"). GEAR POOL v2: no RARE — RARE is the floor, every roll. */
+export const AUTO_ROLL_TIERS = ['epic', 'legendary', 'mythic', 'secret'];
 const AUTO_ROLL_CAP = 100000; // a hard stop so no loop can run away (the gems run out long before)
 
 /**

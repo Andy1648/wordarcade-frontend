@@ -33,7 +33,7 @@ import { SEASON2 } from './season.js';
 // The worn MAIN mark's XP boost by tier (base finish) — the SAME bonus wins get (MARKS via ROLLS: one MARK).
 // Read LAZILY (enumerable getters): wins.js imports this module, and marks.js → claims.js → wins.js → here is a
 // cycle, so MARK_TIERS may not be initialised yet while this module evaluates (marks.js loaded first).
-const MARK_TIER_IDS = ['common', 'rare', 'epic', 'legendary', 'mythic', 'secret'];
+const MARK_TIER_IDS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 export const MARK_XP_BOOST = Object.freeze(
   Object.defineProperties({}, Object.fromEntries(MARK_TIER_IDS.map((t) => [t, { enumerable: true, get: () => MARK_TIERS[t].bonus }]))),
 );

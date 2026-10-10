@@ -43,8 +43,10 @@ const STATES = [
   { k: 2, r: 3 },
   { k: 5, r: 10 },
 ];
-const MARKS = [null, 'mk-bomber', 'mk-sprinter', 'mk-sparky', 'mk-eclipse', 'mk-singularity'];
-const LIVE_TIER = { common: 1.1, rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
+// GEAR POOL v2: the RARE floor's +% WINS / +% XP / +BASE WINS, and the one-mode WINS gears (DETONATOR — WORD BOMB, RARE;
+// HEADMASTER — SAT RUSH, LEGENDARY), which must pay in their mode and nowhere else
+const MARKS = [null, 'mk-smith', 'mk-scholar', 'mk-cyclone', 'mk-eclipse', 'mk-singularity', 'mk-detonator', 'mk-headmaster'];
+const LIVE_TIER = { rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
 
 function seed({ k, r }, mark) {
   mem.clear();
@@ -56,12 +58,14 @@ function seed({ k, r }, mark) {
     localStorage.setItem(MARKS_EQUIPPED_KEY, mark);
   }
 }
-function liveMark(mark) {
+function liveMark(mark, mode = null) {
   const out = { wins: 1, xp: 1, winsBase: 0, xpBase: 0 };
   if (!mark) return out;
   const m = rollMarkById(mark);
   const f = LIVE_TIER[m.tier];
   if (m.stat.kind === 'winsPct') out.wins = f;
+  // a one-mode WINS gear: 2× the tier's percent, in its own mode only
+  if (mode && m.stat.kind === `${{ wordBomb: 'wb', blitz: 'blitz', satRush: 'sat', chain: 'chain', fuse: 'fuse', wordRace: 'race' }[mode]}WinsPct`) out.wins = 1 + 2 * (f - 1);
   if (m.stat.kind === 'xpPct') out.xp = f;
   if (m.stat.kind === 'baseWins') out.winsBase = (f - 1) * 10;
   if (m.stat.kind === 'baseXp') out.xpBase = (f - 1) * 10;
@@ -89,7 +93,7 @@ test('LIVE: BASE × every chip = TOTAL (exact AND as printed) = the payout = 10 
         assert.equal(by.mode, modeX, `${tag}: MODE`);
         assert.equal(by.rebirth, 5 ** st.r, `${tag}: REBIRTH 5^R`);
         assert.equal(by.ascend, undefined, `${tag}: no STARS chip with the flag off`);
-        const lm = liveMark(mark);
+        const lm = liveMark(mark, key);
         assert.ok(Math.abs(by.mark - lm.wins) < 1e-9, `${tag}: MARK ×${lm.wins} (was ${by.mark})`);
         relClose(c.chips.reduce((p, x) => p * x.mult, c.base), c.total, 0.05 / Math.max(1, c.total) + 1e-12, `${tag} exact`);
         const shown = c.chips.reduce((p, x) => p * shownNum(boardMult(x.mult)), shownNum(formatRate(c.base)));

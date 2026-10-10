@@ -10,6 +10,7 @@ import { ROLL_MARKS, PERMANENT_MARKS, oneInX, mainTag } from '../../progress/mar
 import { MARKS } from '../../progress/marks.js';
 import { cardModel, splitTag, pipNext, tilePips, pipsLabel, perkLines } from './cardModel.js';
 import { CARD_RAR } from './palette.js';
+import { pipPlateW } from './frameLayout.js';
 import { formatNum } from '../../format.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -30,7 +31,7 @@ test('every rollable mark: real odds, its stat numbers-first, ★ pips', () => {
   for (const m of ROLL_MARKS) {
     const c = cardModel({ id: m.id, tier: m.tier, name: m.name, state: null });
     assert.equal(c.odds, `1 IN ${formatNum(oneInX(m.id))}`); // the real per-mark odds, through formatNum
-    assert.match(c.statNum, /^[+×][\d.,]+s?$/, `${m.id} stat number`);
+    assert.match(c.statNum, /^(?:[+×][\d.,]+(?:s|%|×)?|EVERY [\d,]+(?:ST|ND|RD|TH))$/, `${m.id} stat number`);
     assert.ok(c.statKind.length > 0, `${m.id} stat kind`);
     assert.equal(`${c.statNum} ${c.statKind}`, mainTag(m.id, null));
     assert.equal(c.pips, 0);
@@ -52,9 +53,7 @@ test('locked is a HIDDEN design (Andy oct9): "???", the odds as the hero, NO sta
     assert.deepEqual(c.critLines, []);
     const owned = cardModel({ id: m.id, tier: m.tier, name: m.name, state: null });
     assert.equal(c.extras, owned.extras, `${m.id}: a locked card still knows HOW MANY extra stats it has`);
-    const pips = tilePips(c);
-    assert.equal(pips.filter((p) => p.k === 'hidden').length, c.extras);
-    assert.equal(pips.filter((p) => p.k === 'stat' || p.k === 'star').length, 0);
+    assert.deepEqual(tilePips(c), [], `${m.id}: a locked tile has NO pip row (Andy oct9: the "?" pips were confusing)`);
   }
   for (const p of PERMANENT_MARKS) {
     const c = cardModel({ id: p.id, kind: 'perm', tier: 'permanent', name: p.name, locked: true });
@@ -69,12 +68,12 @@ test('the tile pip row: a dot per extra stat, ✦ per perk, ★ per dupe pip (in
   const c = cardModel({ id: eclipse.id, tier: eclipse.tier, name: eclipse.name, state: st });
   assert.deepEqual(tilePips(c).map((p) => p.k), ['stat', 'stat', 'perk', 'star', 'star', 'star', 'star', 'star']);
   assert.equal(pipsLabel(c), '2 EXTRA STATS · 1 PERK · ★5');
-  const common = ROLL_MARKS.find((m) => m.tier === 'common');
-  assert.deepEqual(tilePips(cardModel({ id: common.id, tier: 'common', name: common.name, state: null })), []);
+  const rare = ROLL_MARKS.find((m) => m.tier === 'rare');
+  assert.deepEqual(tilePips(cardModel({ id: rare.id, tier: 'rare', name: rare.name, state: null })).map((p) => p.k), ['stat'], 'RARE (the floor): its +2% CRIT RATE');
   // the most any card carries fits the pip plate (frameLayout.pipPlateW caps at 9)
   for (const m of ROLL_MARKS) {
     const n = tilePips(cardModel({ id: m.id, tier: m.tier, name: m.name, state: { v: 2, marks: { [m.id]: { n: 9999 } } } })).length;
-    assert.ok(n <= 9, `${m.id}: ${n} pips`);
+    assert.ok(n <= 10 && pipPlateW(n) <= 164, `${m.id}: ${n} pips`);
   }
 });
 
@@ -94,6 +93,8 @@ test('earned gears (Andy oct8): drawn as LEGENDARY with the rest; locked = ACHIE
 test('helpers: the tag split and the "7/10 → ★3" line', () => {
   assert.deepEqual(splitTag('×1.5 WINS'), { num: '×1.5', kind: 'WINS' });
   assert.deepEqual(splitTag('+2.5 BASE WINS'), { num: '+2.5', kind: 'BASE WINS' });
+  assert.deepEqual(splitTag('×1.5 WINS IN WORD BOMB'), { num: '×1.5', kind: 'WINS IN WORD BOMB' });
+  assert.deepEqual(splitTag('EVERY 4TH KEY CRITS'), { num: 'EVERY 4TH', kind: 'KEY CRITS' });
   assert.equal(pipNext({ pips: 2, have: 7, need: 10 }), '7/10 → ★3');
   assert.equal(pipNext({ pips: 5, have: 0, need: 0 }), '');
 });

@@ -61,7 +61,7 @@ const reelAnims = (page) => page.evaluate(() => document.getAnimations().filter(
 const SPUN = 4600;
 // ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
 // A roll's tier is random, so any test that clicks after a roll taps through whatever reveal is still up (a no-op when
-// the roll landed COMMON/RARE): the reveal must be clear for 3 checks in a row (~450 ms) before the test goes on.
+// the roll landed RARE): the reveal must be clear for 3 checks in a row (~450 ms) before the test goes on.
 async function keepReveal(page) {
   const cut = page.getByTestId('roll-cutscene');
   let clear = 0;
@@ -181,7 +181,7 @@ test('4. AUTO stops cleanly when the gems run out: no negative balance, no stuck
   await seed(page, { 'taw.gems': gemsOf(35), 'taw.markRolls': STARTED({ skipBelow: 'secret' }) });
   await openRoll(page);
   const auto = page.getByTestId('roll-auto');
-  for (let i = 0; i < 3; i += 1) await auto.click(); // → LEGENDARY+ (gems run out long before one lands)
+  for (let i = 0; i < 2; i += 1) await auto.click(); // → LEGENDARY+ (gems run out long before one lands; GEAR POOL v2: OFF → EPIC+ → LEGENDARY+)
   await expect(auto).toHaveAttribute('aria-pressed', 'true');
   await expect(auto).toHaveAttribute('aria-pressed', 'false', { timeout: 30000 });
   await expect(auto).toHaveAttribute('data-target', 'off');
@@ -259,7 +259,7 @@ test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, cha
   expect(after.owned).toHaveLength(1);
   await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
-  await expect(page.getByTestId('roll-index')).toContainText('1/29');
+  await expect(page.getByTestId('roll-index')).toContainText('1/27'); // GEAR POOL v2: 27 gears (29 − 12 COMMON + 10 new)
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', '90');
 });
 
@@ -336,9 +336,9 @@ for (const [w, h] of [[390, 844], [360, 640]]) {
     await expect(page.locator('[data-testid="mark-roll-extra"]')).toHaveCount(1); // the double roll's "+EXTRA" chip
     await inside('.rs-win', '.rs-stage');
     await inside('[data-testid="mark-roll-result"]', '.rs-stage');
-    // AUTO → LEGENDARY+ (3 taps): the plate's text stays inside its plate, the plate inside the stepper, on screen
+    // AUTO → LEGENDARY+ (2 taps — GEAR POOL v2): the plate's text stays inside its plate, the plate inside the stepper
     const auto = page.getByTestId('roll-auto');
-    await auto.click(); await auto.click(); await auto.click();
+    await auto.click(); await auto.click();
     await expect(auto).toHaveText('AUTO → LEGENDARY+');
     const plate = page.locator('.rs-skip-v');
     expect(await plate.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);

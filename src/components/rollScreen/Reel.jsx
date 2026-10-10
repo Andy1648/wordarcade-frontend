@@ -7,7 +7,7 @@
 // reel rests at a random spot INSIDE the result cell, then settles to centre (reelPlan.restOffset). On the land the
 // other cards fade back so the result stands alone.
 // RARITY-SCALED REVEALS (reelPlan.revealKind): a SHORT land → the result LINE under the reel (RollScreen) only;
-// COMMON / RARE → the LITE reveal (closes by itself); EPIC → the DIM reveal ("1 IN X" slams); LEGENDARY+ → the FULL
+// RARE → the LITE reveal (closes by itself); EPIC → the DIM reveal ("1 IN X" slams); LEGENDARY+ → the FULL
 // reveal (rays, the rarity, "1 IN X" huge). ROLL REVEAL v2 (revealPlan.js): in every one the CARD BACK (asset) flips
 // and each rarity ADDS a layer — RARE a sheen pass + sparkles, EPIC a pre-flip shake + a burst, LEGENDARY the
 // telegraph (the back's edge in the rarity colour before the flip) + a slam + a small shake, MYTHIC a colour flash + a
@@ -35,6 +35,8 @@ import {
 } from '../../audio/rollSounds';
 import { formatNum } from '../../format';
 import RevealStats from './RevealStats';
+import GearFx from '../GearFx';
+import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
@@ -52,7 +54,7 @@ const CELLS = Array.from({ length: REEL_LEN }, (_, i) => i);
 const PARTS = Array.from({ length: BURST_POOL }, (_, i) => i);
 const VEC = burstVectors(BURST_POOL);
 const VEC_BIG = burstVectors(BURST_POOL, 2.6);
-const markOf = (id) => rollMarkById(id) || { id, tier: 'common', name: '' };
+const markOf = (id) => rollMarkById(id) || { id, tier: 'rare', name: '' };
 const lineOf = (tier) => CARD_RAR[cardTier(tier)].line;
 const SPIN_KEYS = 64; // keyframes the spin curve is sampled into (linear between: smooth at any refresh rate)
 const SPARK_SLOTS = Array.from({ length: SPARK_POOL }, (_, i) => i);
@@ -294,7 +296,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   }, [spin && spin.seq]);
 
   // ---- the REVEAL v2 (revealPlan.js): the card back flips, each rarity ADDS a layer; then the STATS EXTENSION ticks
-  // the gear's stats in. LITE (COMMON / RARE) closes by itself; EPIC (dim) closes by itself under AUTO; LEGENDARY+
+  // the gear's stats in. LITE (RARE) closes by itself; EPIC (dim) closes by itself under AUTO; LEGENDARY+
   // (full) rests on "TAP TO KEEP". A tap closes any of them at once (the result line already holds the result). ----
   const cutRes = cut && cut.res;
   const cutStats = cutRes ? revealStatsOf(cutRes, view) : null;
@@ -311,7 +313,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     const ext = extensionPlan({ extras: st ? st.crit.length : 0, perk: !!(st && st.perks.length), dupe: !!(st && st.dupe), stars: st ? st.pips : 0 });
     const xAt = extensionAt(tier);
     const ease = { in: 'cubic-bezier(.5,0,.9,.5)', out: 'cubic-bezier(.1,.6,.3,1)', pop: 'cubic-bezier(.2,1.4,.4,1)' };
-    anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: tier === 'common' ? 120 : 200 });
+    anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
     anim(n.dim, [{ opacity: dimFor(tier) }, { opacity: 0 }], { duration: 250 }); // the reveal brings its own backdrop
     if (full) {
       anim(n.cutRays, [
@@ -383,7 +385,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     else anim(n.cutStamp, SLAM, { duration: 460, delay: tl.stampAt, easing: 'cubic-bezier(.2,1.2,.4,1)' });
     if (full) anim(n.cutTier, SLAM, { duration: 460, delay: tl.land, easing: 'cubic-bezier(.2,1.2,.4,1)' });
     if (kind !== 'lite') later(() => sndCutStamp(tier), tl.stampAt);
-    if (tier !== 'common') later(() => sndRevealArp(tier), tl.land);
+    later(() => sndRevealArp(tier), tl.land);
     // EPIC+: the BURST — the jagged ring (tinted the rarity) + the shard pool; MYTHIC+ a second, wider ring
     if (tl.burst) {
       anim(n.rvRing0, [{ transform: 'scale(0.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.25)', opacity: 0 }], { duration: tl.burst.ms, delay: tl.burst.at, easing: ease.out });
@@ -418,6 +420,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     }
     // ---- the STATS EXTENSION: main slams in, extras + perk tick in ~120 ms apart, dupe ★ pips fill ----
     if (st) {
+      // EPIC+: the stats sit on their own glowing plate — it lands WITH the main stat (opacity only)
+      if (n.xPlate && GLOW_TIERS.has(tier)) anim(n.xPlate, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: xAt + ext.main.at });
       anim(n.xMain, [
         { opacity: 0, transform: 'scale(2.1) rotate(-5deg)' },
         { opacity: 1, transform: 'scale(0.92) rotate(1deg)', offset: 0.6 },
@@ -472,7 +476,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   useEffect(() => () => { stopAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const strip = spin ? spin.strip : idle;
-  const tier = spin ? spin.result.tier : 'common';
+  const tier = spin ? spin.result.tier : 'rare';
   const cr = cutRes;
   const crm = cr ? markOf(cr.markId) : null;
   const kind = cut ? cut.kind : 'full';
@@ -511,6 +515,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     <span className="rv-edge" ref={reg('rvEdge')} />
                   </div>
                   <div className="rv-face" ref={reg('rvFace')}>
+                    {cr && GLOW_TIERS.has(cr.tier) ? <GearFx key={`g${cut.seq}`} tier={cr.tier} /> : null}
                     {cr ? (
                       <MarkCard key={cut.seq} id={cr.markId} tier={crm.tier} name={crm.name} state={view} shiny={!!cr.shiny} fx sheen className="rs-cut-card" />
                     ) : null}
@@ -531,7 +536,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                 ))}
               </div>
             </div>
-            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} /> : null}
+            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} glow={GLOW_TIERS.has(cr.tier) ? cr.tier : null} /> : null}
           </div>
           <div className="rs-cut-keep" ref={reg('cutKeep')}>TAP TO KEEP</div>
         </div>
@@ -562,6 +567,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     data-tier={id ? m.tier : undefined}
                     data-mark={id || undefined}
                   >
+                    {/* EPIC+ cells wear the rare-gear glow (GearFx): the passing cells a still aura, the landing cell breathes */}
+                    {m && GLOW_TIERS.has(m.tier) ? <GearFx tier={m.tier} scale={0.6} live={i === LAND_AT} /> : null}
                     {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} still /> : null}
                   </div>
                 </div>

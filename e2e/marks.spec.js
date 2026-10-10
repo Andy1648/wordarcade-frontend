@@ -14,14 +14,14 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 12, into: 0 }));
-    localStorage.setItem('taw.achievements', JSON.stringify(['m-wb-5']));
+    localStorage.setItem('taw.achievements', JSON.stringify(['m-sat-5'])); // SAVANT (RARE) — the COMMON BOMBER is retired (GEAR POOL v2)
     localStorage.setItem('taw.marksOwned', '[]');
     localStorage.setItem('taw.tut.markRolls', '1'); // MARK ROLLS are LIVE: their one-step tutorial would cover the panel
   });
   await page.goto('/?portal=1');
   await menuReady(page);
   // Andy oct2 evening E4: marks and the MARKS system never sit in the claim inbox.
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('taw.marksOwned') || '[]'))).toContain('mk-bomber');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('taw.marksOwned') || '[]'))).toContain('mk-scholar');
   const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]').map((c) => c.id));
   expect(claims.filter((id) => id.startsWith('mark-') || id.startsWith('layer-'))).toEqual([]);
   const btn = page.locator('.menu-mark');
@@ -35,20 +35,20 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await page.locator('[data-testid="roll-index"]').click();
   // INDEX v2 (Andy oct5): card = name · rarity · 1 IN X · stat; tap → the detail sheet (flavour, owned, first roll)
   await page.locator('.mx-panel').waitFor();
-  const tile = page.locator('.mx-tile', { hasText: 'BOMBER' });
-  await expect(tile.locator('.mx-tile-tier')).toHaveText('COMMON');
+  const tile = page.locator('.mx-tile', { hasText: 'SAVANT' });
+  await expect(tile.locator('.mx-tile-tier')).toHaveText('RARE');
   // GEAR TILE v2 (Andy oct9): an OWNED tile's hero is its MAIN STAT; the odds moved to the detail sheet
   await expect(tile.locator('.mx-tile-odds')).toHaveCount(0);
-  await expect(tile.locator('.mx-tile-sub')).toHaveText('×1.1 WINS');
+  await expect(tile.locator('.mx-tile-sub')).toHaveText('×1.25 XP');
   await expect(tile.locator('.mark-pips')).toHaveCount(0); // NIGHT oct8 #4: no ★ row under a card
   await tile.click();
   const sheet = page.locator('.mx-sheet');
   await expect(sheet).toBeVisible();
-  await expect(sheet.locator('.mx-sheet-name')).toHaveText('BOMBER');
-  await expect(sheet.locator('.mx-sheet-tier')).toContainText('COMMON');
-  await expect(sheet.locator('.mx-sheet-stat')).toHaveText('×1.1 WINS');
+  await expect(sheet.locator('.mx-sheet-name')).toHaveText('SAVANT');
+  await expect(sheet.locator('.mx-sheet-tier')).toContainText('RARE');
+  await expect(sheet.locator('.mx-sheet-stat')).toHaveText('×1.25 XP');
   // GEAR SHEET v2 (Andy oct9): the MAIN STAT is the sheet's biggest line; the odds sit under it with the ★ progress
-  await expect(sheet.getByTestId('mark-main')).toHaveText(/^×1\.1\s*WINS$/);
+  await expect(sheet.getByTestId('mark-main')).toHaveText(/^×1\.25\s*XP$/);
   await expect(sheet.getByTestId('mark-odds')).toHaveText(/^1 IN \d+$/);
   const flavour = (await sheet.getByTestId('mark-flavour').innerText()).trim();
   expect(flavour.length).toBeGreaterThan(0);
@@ -86,8 +86,8 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await page.locator('.mx-tile.is-locked.is-perm').first().click();
   await expect(page.locator('.mx-howto')).not.toBeEmpty();
   await page.locator('.mx-sheet-close').click();
-  // per-rarity completion is colour + numbers: six tier chips
-  await expect(page.locator('[data-testid="marks-collected"] .mx-tierchip')).toHaveCount(6);
+  // per-rarity completion is colour + numbers: five tier chips (GEAR POOL v2: no COMMON)
+  await expect(page.locator('[data-testid="marks-collected"] .mx-tierchip')).toHaveCount(5);
   await page.locator('.mx-close').click(); // back to the ROLL screen
   await page.locator('.rs-close').click();
   // Andy oct5 (later): the menu chip shows ONLY the worn mark's name — no stat line
@@ -101,7 +101,7 @@ test('before LV 10 there is no marks layer at all', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 5, into: 0 }));
-    localStorage.setItem('taw.achievements', JSON.stringify(['m-wb-5']));
+    localStorage.setItem('taw.achievements', JSON.stringify(['m-sat-5'])); // SAVANT (RARE) — the COMMON BOMBER is retired (GEAR POOL v2)
     localStorage.setItem('taw.marksOwned', '[]');
   });
   await page.goto('/?portal=1');
@@ -114,7 +114,7 @@ test('before LV 10 there is no marks layer at all', async ({ page }) => {
 // only while a mark was worn OR a new one was unseen — open the picker without wearing one and it was
 // gone until the next unlock. Once MARKS is revealed it is ALWAYS there.
 for (const [label, seed] of [
-  ['owned, not worn, already seen', { 'taw.marksOwned': '["mk-bomber"]', 'taw.marksSeen': '["mk-bomber"]', 'taw.marksRevealed': '1' }],
+  ['owned, not worn, already seen', { 'taw.marksOwned': '["mk-scholar"]', 'taw.marksSeen': '["mk-scholar"]', 'taw.marksRevealed': '1' }],
   ['revealed, nothing owned yet', { 'taw.marksOwned': '[]', 'taw.marksRevealed': '1' }],
   ['old LV27 save with no marks keys', {}],
 ]) {

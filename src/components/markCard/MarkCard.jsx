@@ -16,7 +16,7 @@
 //            pip. The crit and perk VALUES and the odds are in the detail sheet (MarksIndex), not on the tile.
 // LOCKED — a HIDDEN design (Andy oct9: "including stats"): the rarity plate + frame keep their FULL tier colour, the
 //   glyph is a flat black silhouette, the name is "???", the HERO slot says the ODDS ("1 IN 90"; an EARNED gear: a
-//   lock + ACHIEVEMENT) and the pips are a "?" per hidden extra stat. No stat value anywhere (cardModel holds none).
+//   lock + ACHIEVEMENT) and NO pip row (Andy oct9: the "?" pips confused). No stat value anywhere (cardModel holds none).
 //
 // The face is drawn at 180×260 and SCALED (transform) to the host's --mc-w / --mc-s (or the `w` prop), so every
 // size is the same drawing. MOTION (MarkCard.css) — all finite one-shots, transform/opacity only: EPIC+ spins its
@@ -35,7 +35,7 @@ import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
 import { cardModel, tilePips, pipsLabel } from './cardModel.js';
-import { pipPlateW } from './frameLayout.js';
+import { pipPlateW, pipGap } from './frameLayout.js';
 import './MarkCard.css';
 
 const NONE = {};
@@ -48,13 +48,6 @@ function Pip({ k }) {
   return (
     <svg className={`mc-pip is-${k}`} viewBox="0 0 13 13" width="15" height="15" aria-hidden="true" focusable="false">
       {k === 'stat' ? <circle cx="6.5" cy="6.5" r="4.2" fill="#fff" stroke="#000" strokeWidth="1.6" /> : null}
-      {k === 'hidden' ? (
-        <>
-          <circle cx="6.5" cy="6.5" r="5.6" fill="#0d0618" stroke="currentColor" strokeWidth="1.4" />
-          <path d="M4.6 5.1 C4.6 2.9 8.4 2.9 8.4 5 C8.4 6.4 6.5 6.4 6.5 7.9" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
-          <circle cx="6.5" cy="10" r="0.95" fill="#fff" />
-        </>
-      ) : null}
       {k === 'perk' ? <path d={STAR4} fill="currentColor" stroke="#000" strokeWidth="1.3" strokeLinejoin="round" /> : null}
       {k === 'star' ? <path d={STAR5} fill="#FFE94A" stroke="#000" strokeWidth="1.3" strokeLinejoin="round" /> : null}
     </svg>
@@ -134,7 +127,7 @@ function MarkCard({
         <div className={`mc-name${nameFit}${locked ? ' is-q' : parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>
         {hero}
         {pips.length ? (
-          <div className="mc-pips" data-testid="mc-pips" data-n={pips.length} role="img" aria-label={pipsLabel(c)} style={{ width: `${pipPlateW(pips.length)}px` }}>
+          <div className="mc-pips" data-testid="mc-pips" data-n={pips.length} data-tight={pipGap(pips.length) ? undefined : ''} role="img" aria-label={pipsLabel(c)} style={{ width: `${pipPlateW(pips.length)}px` }}>
             {pips.map((p, i) => <Pip key={i} k={p.k} />)}
           </div>
         ) : null}

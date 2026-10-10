@@ -18,10 +18,7 @@ const INK = '#0d0618';
 const BODIES = {
   // ---- the legacy glyphs (MarkBadge.jsx) ----
   'mk-linguist': [<g><path d="M50 36 C42 31 32 31 25 34 L25 68 C32 65 42 65 50 70 Z" /><path d="M50 36 C58 31 68 31 75 34 L75 68 C68 65 58 65 50 70 Z" /></g>],
-  'mk-student': [<path d="M33 62 L45 48 L54 55 L70 36" fill="none" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />, 2],
-  'mk-magpie': [<ellipse cx="50" cy="52" rx="22" ry="21" />],
   'mk-eternal': [<path d="M50 51 C43 41 29 40 28 51 C29 62 43 61 50 51 C57 41 71 40 72 51 C71 62 57 61 50 51 Z" fill="none" strokeWidth="8" strokeLinejoin="round" />, 2.5],
-  'mk-veteran': [<g><path d="M38 24 L50 40 L62 24 L66 27 L54 46 L46 46 L34 27 Z" /><circle cx="50" cy="60" r="16" /></g>, 6],
   'mk-curator': [<rect x="26" y="34" width="48" height="36" rx="4" />],
   'mk-legend': [<path d="M24 66 L28 34 L40 48 L50 26 L60 48 L72 34 L76 66 Z" />],
   // ---- the rolled + permanent glyphs (markGlyphsRolled.jsx) ----
@@ -41,14 +38,14 @@ function hash(s) {
   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
 }
-/** The 29 ROLLABLE glyphs are drawn in the kit construction (markGlyphsRolled.jsx): their shade plane, one glint and
+/** The ROLLABLE glyphs are drawn in the kit construction (markGlyphsRolled.jsx): their shade plane, one glint and
  * asymmetric detail are part of the art, so the finish adds nothing to them (a second gleam + sparkle would break
  * the kit's "exactly one glint"). */
 export const KIT_DRAWN = new Set([
-  'mk-bomber', 'mk-sparky', 'mk-sprinter', 'mk-dasher', 'mk-crammer', 'mk-inkwell', 'mk-linker', 'mk-shackle',
-  'mk-wick', 'mk-matchstick', 'mk-pacer', 'mk-nitro', 'mk-detonator', 'mk-cyclone', 'mk-scholar', 'mk-ouroboros',
-  'mk-tinder', 'mk-slipstream', 'mk-smith', 'mk-phoenix', 'mk-metronome', 'mk-pyro', 'mk-nova', 'mk-golem',
-  'mk-leviathan', 'mk-eclipse', 'mk-singularity', 'mk-kraken', 'mk-origin',
+  'mk-detonator', 'mk-cyclone', 'mk-scholar', 'mk-ouroboros', 'mk-tinder', 'mk-slipstream', 'mk-smith', 'mk-phoenix',
+  'mk-metronome', 'mk-hotwire', 'mk-grapple', 'mk-sparkplug', 'mk-pyro', 'mk-nova', 'mk-golem', 'mk-brainstorm',
+  'mk-flashpoint', 'mk-voltage', 'mk-talisman', 'mk-leviathan', 'mk-eclipse', 'mk-headmaster', 'mk-thunderclap',
+  'mk-singularity', 'mk-kraken', 'mk-hydra', 'mk-origin',
 ]);
 /** Which glyph ids are finished — a body here, or kit-drawn (the unit test checks every mark id is covered). */
 export const FINISHED_IDS = [...Object.keys(BODIES), ...KIT_DRAWN];
