@@ -462,3 +462,40 @@
 .sp2-look-btn:disabled { background: var(--k-panel); color: var(--k-mute); cursor: not-allowed; }
 .sp2-codes { display: flex; flex-direction: column; gap: 12px; }
 .sp2-codes-what { margin: 0; font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k16); color: #fff; }
+
+/* ---- THE DAILY CHEST shelf item + its popup (Andy oct10) ---- */
+.sp2-chest-art { position: relative; flex: 0 0 auto; width: 60px; height: 60px; margin-top: 2px; display: block; }
+.sp2-chest-art img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
+.sp2-chest-lid { transform-origin: 8% 46%; transition: transform 200ms cubic-bezier(.3, 1.6, .5, 1); }
+@media (hover: hover) { .sp2-chest.is-ready:hover .sp2-chest-lid { transform: translate(-2%, -8%) rotate(-10deg); } } /* the lid peeks on hover */
+.sp2-chest.is-claimed .sp2-chest-lid { transform: translate(-4%, -10%) rotate(-24deg); }
+.sp2-chest .sp2-price { background: var(--k-yellow, #FFE94A); color: #000; }
+.sp2-dot { position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; background: #FF3D7F; border: 3px solid #000; pointer-events: none; z-index: 3; }
+@media (max-width: 699px) { .sp2-chest-art { width: 44px; height: 44px; } }
+
+.sp2-pop { position: fixed; inset: 0; z-index: 140; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .86); }
+.sp2-pop-in { position: relative; width: min(520px, 100%); animation: sp2-pop-in 240ms cubic-bezier(.3, 1.5, .5, 1) both; }
+@keyframes sp2-pop-in { from { transform: scale(.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.sp2-pop-x { position: absolute; z-index: 3; top: -18px; left: -12px; width: 48px; height: 48px; border-radius: 8px; border: 4px solid #000; background: var(--k-pink, #FF4FA3); color: #fff; font-family: var(--k-display); font-size: var(--fs-k22); line-height: 1; box-shadow: 4px 4px 0 #000; cursor: pointer; -webkit-text-stroke: 2px #000; paint-order: stroke fill; }
+.sp2-pop-x:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.sp2-pop-x:focus-visible { outline: 3px solid var(--k-cyan); outline-offset: 3px; }
+/* the drop, as a POPUP: one column — the chest big, then the tier name, the stamp, the tier row */
+.sp2-pop .dd { height: auto; }
+.sp2-pop .dd-tap {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'chest' 'head' 'stamp' 'row';
+  justify-items: center;
+  row-gap: 12px;
+  padding: 26px 18px 20px;
+  text-align: center;
+}
+.sp2-pop .dd-head { align-items: center; padding-right: 0; }
+.sp2-pop .dd-chest { width: 150px; height: 150px; }
+.sp2-pop .dd-burst { left: -59px; top: -64px; width: 268px; height: 268px; }
+.sp2-pop .dd-big { font-size: var(--fs-k34); }
+.sp2-pop .dd-stamp { justify-self: center; }
+.sp2-pop .dd-reward { justify-self: center; }
+.sp2-pop .dd-row { justify-content: center; width: 100%; }
+.sp2-pop .dd.is-odds .dd-tap { grid-template-areas: 'odds'; }
+.sp2-pop .dd.is-odds .dd-chest { display: none; }
+@media (prefers-reduced-motion: reduce) { .sp2-pop-in { animation: none; } .sp2-chest-lid { transition: none; } }

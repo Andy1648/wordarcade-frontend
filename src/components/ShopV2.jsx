@@ -71,6 +71,43 @@ function StockCard({ it, left, onBuy, floatRef }) {
   );
 }
 
+/**
+ * THE DAILY CHEST as a SHELF ITEM (Andy oct10: "make the daily chest an item (like the other boosts and it has another
+ * popup for the user to click)"): the first BOOSTS card — the chest art, FREE, ONCE A DAY — and a tap opens the chest
+ * POPUP (the DailyDrop tap-to-open flow, unchanged). Claimed today: the CLAIMED stamp + the countdown to midnight.
+ * A dot while it is ready (Andy: badges are a plain dot).
+ */
+function DailyChestCard({ now, onOpen }) {
+  const D = V3.drop;
+  const saved = D.readDrop(now);
+  const claimed = !!saved.claimed;
+  return (
+    <KitStampCard
+      stamped={claimed}
+      kind="claimed"
+      className={`sp2-card sp2-chest${claimed ? ' is-claimed' : ' is-ready'}`}
+      style={{ '--sp2-line': '#FFE94A', '--sp2-fill': '#3a2a08' }}
+      onClick={onOpen}
+      ariaLabel={claimed ? `Daily chest opened — next in ${D.formatCountdown(D.msToReset(now))}` : 'Daily chest — free, once a day. Open it'}
+    >
+      <span className="sp2-card-in" data-stock="daily-chest" data-testid="daily-chest-card">
+        <span className="sp2-band">
+          <span className="sp2-name">DAILY</span>
+          <span className="sp2-left">{claimed ? '×0 LEFT' : '×1 LEFT'}</span>
+        </span>
+        <span className="sp2-chest-art" aria-hidden="true">
+          <img className="sp2-chest-base" src="/art/drop/chest-base.svg" alt="" draggable="false" />
+          <img className="sp2-chest-lid" src="/art/drop/chest-lid.svg" alt="" draggable="false" />
+        </span>
+        <span className="sp2-big">CHEST</span>
+        <span className="sp2-what">ONCE A DAY</span>
+        <span className="sp2-price">{claimed ? D.formatCountdown(D.msToReset(now)) : 'FREE'}</span>
+      </span>
+      {!claimed ? <span className="sp2-dot" aria-hidden="true" /> : null}
+    </KitStampCard>
+  );
+}
+
 /** Big screens: the 1280×720 stage scales up to fit (measured on mount / resize only — never per frame). */
 function useStageScale(ref) {
   useEffect(() => {
@@ -96,6 +133,9 @@ export default function ShopV2({ onBack }) {
   const [note, setNote] = useState(null);
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
+  const [chest, setChest] = useState(false); // the DAILY CHEST popup
+  const chestRef = useRef(chest);
+  chestRef.current = chest;
   const rootRef = useRef(null);
   const winsPill = useRef(null);
   const gemsPill = useRef(null);
@@ -112,7 +152,9 @@ export default function ShopV2({ onBack }) {
     evShopOpened();
     rootRef.current?.focus();
     const onKey = (e) => {
-      if (e.key === 'Escape') onBackRef.current();
+      if (e.key !== 'Escape') return;
+      if (chestRef.current) setChest(false); // Esc closes the chest popup first
+      else onBackRef.current();
     };
     window.addEventListener('keydown', onKey);
     // the RESTOCK clock: one tick a second; a new 5-minute window refills the stock
@@ -178,6 +220,15 @@ export default function ShopV2({ onBack }) {
   return (
     <div className="sp2" role="dialog" aria-modal="true" aria-label="Upgrades" tabIndex={-1} ref={rootRef}>
       <div className="sp2-stripes" aria-hidden="true" />
+      {chest && V3.drop ? (
+        <div className="sp2-pop" role="dialog" aria-modal="true" aria-label="Daily chest" onClick={(e) => { if (e.target === e.currentTarget) setChest(false); }}>
+          <div className="sp2-pop-in">
+            <button type="button" className="sp2-pop-x" onClick={() => setChest(false)} aria-label="Close the daily chest">✕</button>
+            {/* the tap-to-open flow rides the RESTOCK clock's 1 s tick (`now`) */}
+            <DailyDrop now={now} />
+          </div>
+        </div>
+      ) : null}
       <div className="sp2-scale">
       <div className="sp2-stage">
         <header className="sp2-head">
@@ -235,8 +286,6 @@ export default function ShopV2({ onBack }) {
         </section>
 
         <section className="sp2-stock" aria-label="Boosts">
-          {/* THE DAILY FREE DROP — above the shelf tabs at every width; it rides the RESTOCK clock's 1 s tick (`now`) */}
-          {V3.drop ? <DailyDrop now={now} /> : null}
           <div className="sp2-stock-head">
             <div className="sp2-tabs" role="tablist" aria-label="Shop shelves">
               {[['boosts', 'BOOSTS'], ['looks', 'LOOKS'], ['codes', 'CODES']].map(([k, label]) => (
@@ -252,6 +301,11 @@ export default function ShopV2({ onBack }) {
           </div>
           {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
+            {V3.drop ? (
+              <div className="sp2-cell">
+                <DailyChestCard now={now} onOpen={() => { sndPurchase(); setChest(true); }} />
+              </div>
+            ) : null}
             {STOCK.map((it) => (
               <div key={it.id} className="sp2-cell" ref={(el) => { cards.current[it.id] = el; }}>
                 <StockCard it={it} left={left[it.id]} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />

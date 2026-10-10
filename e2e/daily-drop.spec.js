@@ -3,8 +3,8 @@
 //   1. a fresh day lights the UPGRADES dot; 4 taps open the chest, it pays the rolled tier (MYTHIC = ×10 OVERDRIVE
 //      through the STOCK's own path), the tile shows the reward + NEXT IN to local midnight, the dot clears;
 //   2. COMMON pays +15 gems through the gem door (the pill moves), and a claimed day never pays twice;
-//   3. the ⓘ shows the printed odds; the tile sits above the shelf tabs and the 6 cards still fit at 1366×657;
-//   4. the phone gets the same tile above the tabs, nothing wider than the screen.
+//   3. the ⓘ shows the printed odds; the drop is the DAILY CHEST shelf item (Andy oct10) whose popup holds the chest;
+//   4. the phone gets the same popup, nothing wider than the screen.
 // The clock is pinned to 12:00:00 UTC (timezone UTC), so the countdown reads exactly 12:00:00.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -44,6 +44,9 @@ async function boot(page, { gems = 100, drop = null, rng = null, open = true } =
   await navControl(page, 'shop').click();
   const shop = page.locator('.sp2');
   await shop.waitFor({ state: 'visible' });
+  // Andy oct10: the drop is a BOOSTS shelf item — its popup holds the tap-to-open chest
+  await shop.getByTestId('daily-chest-card').click();
+  await page.locator('.sp2-pop').waitFor({ state: 'visible' });
   return shop;
 }
 const stored = (page) => page.evaluate(() => ({
@@ -57,6 +60,7 @@ test('a fresh day: the UPGRADES dot is on; 4 taps climb to MYTHIC and pay ×10 O
   await boot(page, { rng: 0.999, open: false });
   await expect(navDot(page, 'shop')).toHaveCount(1);
   await navControl(page, 'shop').click();
+  await page.getByTestId('daily-chest-card').click(); // the DAILY CHEST shelf item opens the drop's popup (Andy oct10)
   const dd = page.getByTestId('daily-drop');
   await expect(dd).toHaveAttribute('data-phase', 'ready');
   await expect(dd.locator('.dd-stamp')).toHaveText('TAP TO OPEN');
@@ -78,6 +82,9 @@ test('a fresh day: the UPGRADES dot is on; 4 taps climb to MYTHIC and pay ×10 O
   expect(st.drop).toEqual({ day: TODAY, claimed: true, tier: 4 });
   expect(st.boost).toEqual({ until: NOON + 5 * 60_000, mult: 10 });
   expect(st.gems, 'MYTHIC pays no gems').toBe(100);
+  await page.keyboard.press('Escape'); // Esc closes the chest popup first, not the shop
+  await expect(page.locator('.sp2-pop')).toHaveCount(0);
+  await expect(page.locator('.sp2')).toHaveCount(1);
   await page.locator('.sp2-back').click();
   await expect(page.locator('.sp2')).toHaveCount(0);
   await expect(navDot(page, 'shop')).toHaveCount(0);
@@ -101,6 +108,7 @@ test('already claimed today: no dot, the tile shows the reward and NEXT IN; taps
   await expect(navControl(page, 'shop')).toBeVisible();
   await expect(navDot(page, 'shop')).toHaveCount(0);
   await navControl(page, 'shop').click();
+  await page.getByTestId('daily-chest-card').click(); // the DAILY CHEST shelf item opens the drop's popup (Andy oct10)
   const dd = page.getByTestId('daily-drop');
   await expect(dd).toHaveAttribute('data-phase', 'claimed');
   await expect(dd.locator('.dd-big')).toHaveText('EPIC');
@@ -116,7 +124,7 @@ test('yesterday\'s claim is a fresh drop today (local midnight reset)', async ({
   await expect(navDot(page, 'shop')).toHaveCount(1);
 });
 
-test('the ⓘ shows the printed odds; the tile sits above the tabs and the 6 cards still fit at 1366×657', async ({ page }) => {
+test('the ⓘ shows the printed odds; the DAILY CHEST is the first BOOSTS card, its popup sits on screen, every price inside its card at 1366×657', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
   const dd = page.getByTestId('daily-drop');
@@ -131,16 +139,21 @@ test('the ⓘ shows the printed odds; the tile sits above the tabs and the 6 car
     const r = (s) => document.querySelector(s).getBoundingClientRect();
     const g = document.querySelector('.sp2-grid');
     const cards = [...document.querySelectorAll('.sp2-cell')].map((c) => (c.querySelector('.kstc-card') || c).getBoundingClientRect().bottom - c.querySelector('.sp2-price').getBoundingClientRect().bottom);
-    return { dd: r('.dd').bottom, tabs: r('.sp2-tabs').top, gridScroll: g.scrollHeight - g.clientHeight, pageScroll: document.querySelector('.sp2').scrollHeight - document.querySelector('.sp2').clientHeight, minGap: Math.min(...cards) };
+    const p = r('.sp2-pop-in');
+    void g;
+    return { popTop: p.top - 18, popBottom: p.bottom, h: innerHeight, pageScroll: document.querySelector('.sp2').scrollHeight - document.querySelector('.sp2').clientHeight, minGap: Math.min(...cards), first: document.querySelector('.sp2-grid .sp2-cell [data-stock]').dataset.stock };
   });
-  expect(m.dd).toBeLessThan(m.tabs);
-  expect(m.gridScroll, 'the six cards fit without scrolling').toBeLessThanOrEqual(0);
+  expect(m.popTop, 'the popup (and its ✕) is on screen').toBeGreaterThanOrEqual(0);
+  expect(m.popBottom).toBeLessThanOrEqual(m.h);
   expect(m.pageScroll).toBeLessThanOrEqual(0);
-  expect(m.minGap, 'every gem price stays inside its card').toBeGreaterThanOrEqual(0);
-  await expect(shop.locator('.sp2-card')).toHaveCount(6);
+  expect(m.minGap, 'every price stays inside its card').toBeGreaterThanOrEqual(0);
+  expect(m.first, 'the DAILY CHEST is the first BOOSTS card').toBe('daily-chest');
+  await expect(shop.locator('.sp2-card')).toHaveCount(7); // the chest + the 6 boosts (the shelf scrolls for more)
+  await page.locator('.sp2-pop-x').click();
+  await expect(page.locator('.sp2-pop')).toHaveCount(0);
 });
 
-test('phone 390×844: the tile above the tabs, nothing wider than the screen', async ({ page }) => {
+test('phone 390×844: the chest popup, nothing wider than the screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await boot(page);
   const dd = page.getByTestId('daily-drop');
@@ -148,12 +161,13 @@ test('phone 390×844: the tile above the tabs, nothing wider than the screen', a
     if (odds) await dd.locator('.dd-info').click();
     const m = await page.evaluate(() => ({
       over: document.querySelector('.sp2').scrollWidth - document.querySelector('.sp2').clientWidth,
-      dd: document.querySelector('.dd').getBoundingClientRect().bottom,
-      tabs: document.querySelector('.sp2-tabs').getBoundingClientRect().top,
+      ddL: document.querySelector('.dd').getBoundingClientRect().left,
+      ddR: document.querySelector('.dd').getBoundingClientRect().right - innerWidth,
       right: Math.max(...[...document.querySelectorAll('.dd *')].filter((e) => !e.closest('.dd-chest')).map((e) => e.getBoundingClientRect().right)) - document.querySelector('.dd').getBoundingClientRect().right,
     }));
     expect(m.over).toBeLessThanOrEqual(0);
-    expect(m.dd).toBeLessThan(m.tabs);
+    expect(m.ddL, 'the popup sits on screen').toBeGreaterThanOrEqual(0);
+    expect(m.ddR).toBeLessThanOrEqual(0);
     expect(m.right, `nothing leaves the tile (odds ${odds})`).toBeLessThanOrEqual(0);
   }
 });
