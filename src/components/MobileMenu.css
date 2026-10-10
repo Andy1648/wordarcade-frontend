@@ -371,7 +371,7 @@
     content: 'GEAR';
     margin-right: 8px;
     font-size: var(--fs-k14);
-    color: #8f7bb3;
+    color: #fff;
   }
   .hp-m-per .hp-chip.is-empty { background: #1a0b2e; }
   .hp-m-per .hp-chip-edge { width: 8px; background: #B04BFF; border-right: 3px solid #000; }
@@ -386,7 +386,7 @@
   .hp-m-per .hp-chip:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { border-color: var(--gear-line); background: var(--gear-fill); box-shadow: 3px 3px 0 var(--gear-edge); }
   .hp-m-per .hp-chip:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: 4px 4px 0 var(--gear-line); }
   .hp-m-per .hp-chip:is([data-tier='epic'], [data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) .menu-mark-name { color: var(--gear-line); }
-  .hp-m-per .menu-mark-name { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; }
+  .hp-m-per .menu-mark-name { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; } /* gear UI v3: ink-stroked, never plain */
 
   /* ---- BACKDROP: drop the loose wall ornaments on the HOME view only ----
      27 discrete decorations: .wall-graffiti-tag (12), .wall-splatter (4), .wall-sticker (6),

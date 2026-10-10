@@ -159,6 +159,9 @@
   line-height: 1;
   letter-spacing: 0.02em;
   color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 1.5px 1.5px 0 #000;
 }
 /* LOCKED: the hero is the ODDS — "1 IN" small, the number big, both in the tier colour (Sol's RNG: the odds are the
    thing to want). An EARNED gear: a lock + ACHIEVEMENT. */

@@ -83,6 +83,7 @@ export default function EquipScreen({ equippedId = null, unlockedIds = [], earne
           <div className="mx-titlewrap">
             <h2 className="mx-title eq-title">YOUR GEAR</h2>
             <span className="mx-count">{formatNum(owned.length)}</span>
+            <span className="eq-count-k">OWNED</span>
           </div>
         </div>
         <div className="mx-grid eq-grid" role="list">
