@@ -758,6 +758,18 @@ export async function redeemCode(raw) {
   // none of these fields and this is exactly the old wins code. Floats are fine (no-caps).
   const wins = Math.max(0, Number(res.wins) || 0);
   const label = String(res.label || res.code).toUpperCase();
+  // Andy oct10 (migration 030): a GEMS code pays gems now; an OVERDRIVE code starts the ×10 OVERDRIVE (season 2's
+  // OVERDRIVE is the ×10 BOOST timer — the same door the shop's OVERDRIVE card uses) for boost_min minutes.
+  if (res.kind === 'gems') {
+    const gems = Math.max(0, Math.floor(Number(res.gems) || 0));
+    queueClaim({ id: `code:${res.code}`, kind: 'gemcode', label: `GEMS — ${label}`, amount: 0, meta: { gems } });
+    return { ok: true, code: res.code, kind: 'gems', gems, wins: 0, label: res.label || res.code };
+  }
+  if (res.kind === 'overdrive') {
+    const min = Number(res.boost_min) > 0 ? Number(res.boost_min) : 5;
+    queueClaim({ id: `code:${res.code}`, kind: 'boost', label: `OVERDRIVE — ${label}`, amount: 0, meta: { mult: 10, min } });
+    return { ok: true, code: res.code, kind: 'overdrive', mult: 10, min, wins: 0, label: res.label || res.code };
+  }
   if (res.kind === 'boost') {
     const mult = Number(res.boost_mult) > 1 ? Math.floor(Number(res.boost_mult)) : 3;
     const min = Number(res.boost_min) > 0 ? Number(res.boost_min) : 10;
