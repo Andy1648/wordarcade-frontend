@@ -76,7 +76,7 @@ for (const s of SETUPS) {
     const winsEl = card.locator('.game-card-payout').filter({ visible: true }).first();
     void perkEl; // Andy oct5: the card shows the REAL pay per word ("781K / WORD"); the same live rate rides data-rate
     await expect(winsEl).toContainText('10 / WORD');
-    await expect(winsEl).not.toContainText('BASE');
+    await expect(winsEl).toContainText('BASE 10 / WORD'); // Andy oct10: "BASE" is back — a word can pay more than the 5-letter rate
     await expect(winsEl).not.toContainText('XP');
     const cardWins = Number(await winsEl.getAttribute('data-rate'));
     // A fresh save (R0, no mark, no boost) at Word Bomb (MODE ×1): exactly BASE 10 WINS / WORD — the forge
