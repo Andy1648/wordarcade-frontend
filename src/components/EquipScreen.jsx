@@ -21,6 +21,7 @@ import { GLOW_TIERS } from './markCard/idleSheen.js';
 import { tierLabel } from './markCard/cardModel.js';
 import { buildEntries, ownsGear } from './gearEntries.js';
 import { formatNum } from '../format';
+import { V3 } from '../progress/season';
 import './MarksIndex.css';
 import './EquipScreen.css';
 
@@ -32,7 +33,9 @@ const rankOf = (id) => (markById(id) ? markProgress(id).rank : 1);
 // a full-screen layer: the menu beneath never reacts to the pointer (as the INDEX / ROLL screens)
 const stopPointer = (e) => e.stopPropagation();
 
-export default function EquipScreen({ equippedId = null, unlockedIds = [], earned = [], onEquip, onClose }) {
+// slot 2 (Andy oct10 "gear 2", season 2 R5): the same locker for the 2ND GEAR — rolled gears only (the slot holds a
+// rolled gear, v3/hooks equipMark2), never the one worn in slot 1 (`mainId`); EQUIP / UNEQUIP writes the 2nd slot.
+export default function EquipScreen({ slot = 1, mainId = null, equippedId = null, unlockedIds = [], earned = [], onEquip, onClose }) {
   const idsRef = useRef(unlockedIds);
   const [snap] = useState(() => {
     const ids = idsRef.current;
@@ -41,7 +44,7 @@ export default function EquipScreen({ equippedId = null, unlockedIds = [], earne
     const permOwned = new Set(permanentOwnedIds());
     const ctx = { view, unlocked, permOwned };
     // the locker: OWNED only, rarest first (the INDEX keeps the catalogue order)
-    const owned = buildEntries(unlocked).filter((e) => ownsGear(e, ctx));
+    const owned = buildEntries(unlocked).filter((e) => ownsGear(e, ctx) && (slot !== 2 || (e.kind !== 'perm' && e.id !== mainId)));
     owned.sort((a, b) => (TIER_ORDER[a.tier] ?? 9) - (TIER_ORDER[b.tier] ?? 9));
     return { view, owned };
   });
@@ -69,6 +72,13 @@ export default function EquipScreen({ equippedId = null, unlockedIds = [], earne
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   const set = (id) => {
+    if (slot === 2) {
+      const ok = V3.hooks && V3.hooks.equipMark2 ? V3.hooks.equipMark2(id) : false;
+      const w = ok ? id : worn;
+      setWorn(w);
+      if (onEquip) onEquip(w);
+      return;
+    }
     const w = wearMark(id, earned);
     setWorn(w);
     if (onEquip) onEquip(w);
@@ -76,12 +86,12 @@ export default function EquipScreen({ equippedId = null, unlockedIds = [], earne
   const selE = sel ? owned.find((e) => e.id === sel) : null;
 
   return (
-    <div className="marks-overlay mx-overlay eq-overlay" data-testid="equip-screen" role="dialog" aria-modal="true" aria-label="Your gear" onPointerMove={stopPointer} onMouseMove={stopPointer}>
+    <div className="marks-overlay mx-overlay eq-overlay" data-testid="equip-screen" role="dialog" aria-modal="true" aria-label={slot === 2 ? '2nd gear' : 'Your gear'} data-slot={slot} onPointerMove={stopPointer} onMouseMove={stopPointer}>
       <div className="mx-panel eq-panel">
         <div className="mx-head eq-head">
           <button type="button" className="mx-close marks-close mx-back" onClick={onClose} aria-label="Close" ref={closeRef}>← MENU</button>
           <div className="mx-titlewrap">
-            <h2 className="mx-title eq-title">YOUR GEAR</h2>
+            <h2 className="mx-title eq-title">{slot === 2 ? '2ND GEAR' : 'YOUR GEAR'}</h2>
             <span className="mx-count">{formatNum(owned.length)}</span>
             <span className="eq-count-k">OWNED</span>
           </div>

@@ -10,7 +10,7 @@
 //   * on ok: the stage SHAKES, the screen FLASHES, the AFTER numeral SLAMS in with the new count (kit FX one-shots).
 //   * PROGRESSION FINAL v2: a rebirth at LV 15 + 18·R → BACK TO LV 1 · KEY KEPT. YOU GET ×3 XP & WINS (3^R → 3^(R+1))
 //     forever (no gems — gems come from games).
-//   * UNLOCKS — the diamond track from v3/unlocks.js (START ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2ND MARK ·
+//   * UNLOCKS — the diamond track from v3/unlocks.js (START ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2ND GEAR ·
 //     R7 LUCK), lit by unlocked(feature, { rebirths, stars }).
 //   * AUTO REBIRTH (R2): a toggle here; Homepage runs it (one performRebirth per rebirth, server-checked).
 //   * ASCENSION is hidden in v2 (econ.canAscend is always false), so HOLD TO ASCEND never renders.

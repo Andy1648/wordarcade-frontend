@@ -11,6 +11,7 @@
 // focus-restore and the e2e specs use, at either width (React 18: the kit buttons take no ref).
 import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
 import FitText from './kit/FitText.jsx';
+import KitIcon from './kit/KitIcon.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
 import { lazy, Suspense, useEffect, useRef } from 'react';
@@ -268,6 +269,86 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
         </span>
       </span>
       {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
+    </button>
+  );
+}
+
+/**
+ * 2ND GEAR (Andy oct10: "have another (locked for users who havent unlocked rebirth 5) gear equipment below the
+ * current one"): the season-2 R5 slot as a COMPACT slot under YOUR GEAR — the badge, the stat's number + what it
+ * boosts, in the gear's tier frame. Below R5: a padlock + "R5" (a tap opens REBIRTH, where the unlock lives). Unlocked
+ * and empty: NONE / EQUIP ONE + a dot. A tap opens the EQUIP screen in slot-2 mode. Static (the showcase is slot 1's).
+ */
+export function MenuGearSlot2({ mark, locked = null, onClick, disabled }) {
+  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
+  const rar = tier ? CARD_RAR[tier] : null;
+  const stat = mark ? gearSplit(mainTag(mark.id) || mark.blurb || mark.name) : null;
+  const aria = locked
+    ? `2nd gear slot — locked, unlocks at rebirth ${locked.replace(/^R/, '')}`
+    : mark ? `2nd gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open your gear` : '2nd gear: none. Open your gear';
+  return (
+    <button
+      type="button"
+      className={`hp-gear hp-gear2 menu-mark2${mark ? ' is-worn' : ' is-empty'}${locked ? ' is-locked' : ''}`}
+      data-tier={tier || undefined}
+      style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
+      onClick={onClick}
+      disabled={disabled}
+      data-nav="gear2"
+      data-locked={locked ? '' : undefined}
+      aria-haspopup="dialog"
+      aria-label={aria}
+    >
+      <span className="hp-gear-label">2ND GEAR</span>
+      <span className="hp-gear-body">
+        {locked ? (
+          <KitIcon name="lock" size={30} shadow={2} extras={false} className="hp-gear2-lock" />
+        ) : mark ? (
+          <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
+            <MarkBadge mark={mark} size={44} className="hp-gear2-cog" />
+          </Suspense>
+        ) : <span className="hp-gear-hole" aria-hidden="true" />}
+        <span className="hp-gear-text">
+          {locked ? (
+            <FitText className="hp-gear-big hp-gear2-big">REBIRTH {locked.replace(/^R/, '')}</FitText>
+          ) : mark ? (
+            <>
+              <FitText className="hp-gear-big hp-gear2-big">{stat.big}</FitText>
+              {stat.unit ? <span className="hp-gear-unit">{stat.unit}</span> : null}
+            </>
+          ) : (
+            <>
+              <FitText className="hp-gear-big hp-gear2-big">NONE</FitText>
+              <span className="hp-gear-sub">EQUIP ONE</span>
+            </>
+          )}
+        </span>
+      </span>
+      {!locked && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
+    </button>
+  );
+}
+
+/** The phone's 2ND GEAR chip (beside the GEAR chip): the worn gear's NAME, or a padlock + R5, or EQUIP + a dot. */
+export function MenuGear2Chip({ mark, locked = null, onClick }) {
+  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
+  const rar = tier ? CARD_RAR[tier] : null;
+  return (
+    <button
+      type="button"
+      className={`menu-mark2 hp-chip${mark ? '' : ' is-empty'}${locked ? ' is-locked' : ''}`}
+      data-tier={tier || undefined}
+      style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
+      onClick={onClick}
+      data-nav="gear2"
+      data-locked={locked ? '' : undefined}
+      aria-label={locked ? `2nd gear slot — locked, unlocks at rebirth ${locked.replace(/^R/, '')}` : mark ? `2nd gear: ${mark.name}, ${tier}. Open your gear` : '2nd gear: none. Open your gear'}
+    >
+      <span className="hp-chip-edge" aria-hidden="true" />
+      <span className="hp-chip-k">2ND</span>
+      {locked ? <KitIcon name="lock" size={18} shadow={1} extras={false} className="hp-chip-lock" /> : null}
+      <span className="menu-mark-name">{locked ? locked : mark ? mark.name : 'EQUIP'}</span>
+      {!locked && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
     </button>
   );
 }

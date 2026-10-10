@@ -670,7 +670,7 @@ const LU_UNLOCKS = [
   { code: 'R0', label: 'ROLL + INDEX', id: 'rollScreen' },
   { code: 'R1', label: 'AUTO ROLL', id: 'autoRoll' },
   { code: 'R2', label: 'AUTO REBIRTH', id: 'autoRebirth' },
-  { code: 'R5', label: 'MARK SLOT', id: 'mark2' },
+  { code: 'R5', label: 'GEAR SLOT', id: 'mark2' },
   { code: 'R7', label: 'LUCK ×1.25', id: 'luck' },
   { code: 'R10', label: 'ASCEND', id: 'ascend' },
 ];

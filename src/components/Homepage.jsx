@@ -8,7 +8,7 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
-import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, focusNav } from './MenuNav';
+import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
@@ -1249,11 +1249,41 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     setShowMarks(false);
     requestAnimationFrame(() => focusNav(navRootRef.current, 'gear'));
   };
-  const markChip = markShown ? <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} /> : null;
+  // 2ND GEAR (Andy oct10): season 2's R5 slot, under YOUR GEAR — padlock + R5 below it (a tap opens REBIRTH, where the
+  // unlock lives), else the worn 2nd gear / EQUIP ONE; a tap opens the EQUIP screen in slot-2 mode ('gear2').
+  const gear2Gate = s2Unlocks ? s2Unlocks.unlockAt('mark2') : null;
+  const gear2Lock = s2Unlocks && gear2Gate != null && !s2Unlocks.unlocked('mark2', s2State) ? `R${gear2Gate}` : null;
+  const [gear2Id, setGear2Id] = useState(() => (SEASON2 && V3.store && V3.store.mark2Id ? V3.store.mark2Id() : null));
+  const wornGear2 = markShown && !gear2Lock && gear2Id && gear2Id !== equippedMark ? markEntry(gear2Id) : null;
+  const openGear2 = () => {
+    if (navigating) return;
+    if (gear2Lock) { handleRebirth(); return; }
+    if (!ownsAnyGear) { openMarks('roll'); return; }
+    sound.click();
+    setShowMarks('gear2');
+  };
+  const closeGear2 = () => {
+    setShowMarks(false);
+    requestAnimationFrame(() => focusNav(navRootRef.current, 'gear2'));
+  };
+  const showGear2 = SEASON2 && markShown && gear2Gate != null;
+  const markChip = markShown ? (
+    showGear2 ? (
+      <>
+        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
+        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} />
+      </>
+    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
+  ) : null;
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
-  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} /> : null;
+  const gearSlot = markShown && isPagedMenu ? (
+    <>
+      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
+      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} /> : null}
+    </>
+  ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
   // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
@@ -1492,7 +1522,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </Suspense>
         </ScreenBoundary>
       )}
-      {showMarks && showMarks !== 'gear' && (
+      {showMarks === 'gear2' && (
+        <ScreenBoundary name="equip2" onBack={closeGear2}>
+          <Suspense fallback={null}>
+            <EquipScreen
+              slot={2}
+              equippedId={gear2Id}
+              mainId={equippedMark}
+              unlockedIds={markIdList}
+              earned={earnedAch}
+              onEquip={(id) => setGear2Id(id)}
+              onClose={closeGear2}
+            />
+          </Suspense>
+        </ScreenBoundary>
+      )}
+      {showMarks && showMarks !== 'gear' && showMarks !== 'gear2' && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>
             <MarksIndex
