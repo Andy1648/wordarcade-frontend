@@ -89,12 +89,15 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 12px 6px 40px;
+  isolation: isolate; /* the owned EPIC+ tiles' GearFx glows sit behind EVERY card (a neighbour's glow never paints over a card) */
+  /* the scroller clips sideways: it reaches 18px past the panel's padding (same content width as the old 6px inset) so
+     an edge column's glow is not cut off at the card */
+  margin: 0 -18px;
+  padding: 12px 24px 40px;
 }
 .mx-cell { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; }
 .mx-tile {
   position: relative;
-  isolation: isolate; /* an owned EPIC+ card's GearFx glow sits behind the card, inside this box */
   display: block;
   padding: 0;
   border: 0;
@@ -148,7 +151,7 @@
   .mx-tiers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
   .mx-tierchip { width: auto; height: 44px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .mx-tierchip-num { font-size: var(--fs-body); }
-  .mx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 8px; row-gap: 20px; padding: 10px 2px 32px; }
+  .mx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 8px; row-gap: 20px; margin: 0 -12px; padding: 10px 14px 32px; } /* bleeds to the screen edge: room for the glow */
 }
 @media (max-width: 375px) {
   .mx-panel { --mc-w: 164px; --mc-s: 0.9111; } /* 360 wide: 164 + 8 + 164 = 336 */

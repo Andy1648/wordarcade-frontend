@@ -35,6 +35,8 @@ import {
 } from '../../audio/rollSounds';
 import { formatNum } from '../../format';
 import RevealStats from './RevealStats';
+import GearFx from '../GearFx';
+import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
@@ -418,6 +420,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     }
     // ---- the STATS EXTENSION: main slams in, extras + perk tick in ~120 ms apart, dupe ★ pips fill ----
     if (st) {
+      // EPIC+: the stats sit on their own glowing plate — it lands WITH the main stat (opacity only)
+      if (n.xPlate && GLOW_TIERS.has(tier)) anim(n.xPlate, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: xAt + ext.main.at });
       anim(n.xMain, [
         { opacity: 0, transform: 'scale(2.1) rotate(-5deg)' },
         { opacity: 1, transform: 'scale(0.92) rotate(1deg)', offset: 0.6 },
@@ -511,6 +515,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     <span className="rv-edge" ref={reg('rvEdge')} />
                   </div>
                   <div className="rv-face" ref={reg('rvFace')}>
+                    {cr && GLOW_TIERS.has(cr.tier) ? <GearFx key={`g${cut.seq}`} tier={cr.tier} /> : null}
                     {cr ? (
                       <MarkCard key={cut.seq} id={cr.markId} tier={crm.tier} name={crm.name} state={view} shiny={!!cr.shiny} fx sheen className="rs-cut-card" />
                     ) : null}
@@ -531,7 +536,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                 ))}
               </div>
             </div>
-            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} /> : null}
+            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} glow={GLOW_TIERS.has(cr.tier) ? cr.tier : null} /> : null}
           </div>
           <div className="rs-cut-keep" ref={reg('cutKeep')}>TAP TO KEEP</div>
         </div>
@@ -562,6 +567,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     data-tier={id ? m.tier : undefined}
                     data-mark={id || undefined}
                   >
+                    {/* EPIC+ cells wear the rare-gear glow (GearFx): the passing cells a still aura, the landing cell breathes */}
+                    {m && GLOW_TIERS.has(m.tier) ? <GearFx tier={m.tier} scale={0.6} live={i === LAND_AT} /> : null}
                     {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} still /> : null}
                   </div>
                 </div>

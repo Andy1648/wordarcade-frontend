@@ -7,7 +7,7 @@
 //          mark the save still owns. Nothing under a card (R2 oct8 #5: no ★ lines — rarity is COLOUR, dupes are the
 //          card's own small ×N; the "7/10 → ★3" progress lives in the detail sheet). The worn MAIN wears a sticker.
 //   LOCKED a HIDDEN design (GEAR TILE v2, Andy oct9): a black silhouette of the mark's own glyph in its tier-coloured
-//          cog, "???", its odds as the hero and a "?" pip per hidden extra stat — no stat value (an EARNED gear: a lock
+//          cog, "???", its odds as the hero and NO pip row (oct9: the "?" pips confused) — no stat value (an EARNED gear: a lock
 //          + ACHIEVEMENT; the task that earns it is in the detail sheet only).
 //   sheet  tap a card → the detail (GearSheet.jsx — the menu's YOUR GEAR slot opens the same one), GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel): the card, then the MAIN
 //          STAT biggest, the extra stats as a quiet list, the PERK in its own cyan panel, flavour, odds + ★ progress,
@@ -219,7 +219,7 @@ export default function MarksIndex({
                   data-earned={e.kind === 'perm' ? '' : undefined}
                   onClick={() => setSel(e.id)}
                 >
-                  {have && GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={0.6} /> : null}
+                  {have && GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={0.9} /> : null}
                   <MarkCard
                     id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
                     shiny={shiny} parts={TILE_PARTS} sheen={have && IDLE_SHEEN_TIERS.has(e.tier)}

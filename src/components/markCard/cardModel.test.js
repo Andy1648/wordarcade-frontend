@@ -52,9 +52,7 @@ test('locked is a HIDDEN design (Andy oct9): "???", the odds as the hero, NO sta
     assert.deepEqual(c.critLines, []);
     const owned = cardModel({ id: m.id, tier: m.tier, name: m.name, state: null });
     assert.equal(c.extras, owned.extras, `${m.id}: a locked card still knows HOW MANY extra stats it has`);
-    const pips = tilePips(c);
-    assert.equal(pips.filter((p) => p.k === 'hidden').length, c.extras);
-    assert.equal(pips.filter((p) => p.k === 'stat' || p.k === 'star').length, 0);
+    assert.deepEqual(tilePips(c), [], `${m.id}: a locked tile has NO pip row (Andy oct9: the "?" pips were confusing)`);
   }
   for (const p of PERMANENT_MARKS) {
     const c = cardModel({ id: p.id, kind: 'perm', tier: 'permanent', name: p.name, locked: true });

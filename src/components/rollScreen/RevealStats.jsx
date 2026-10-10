@@ -6,18 +6,27 @@
 // list (white number, lilac label), the PERK in its own cyan plate. Nothing else: the name / rarity are on the card,
 // the odds on the stamp above it. Every node is mounted once with the reveal and starts invisible (the WAAPI one-shots
 // in Reel.jsx bring them in; transform/opacity only). Reduced motion never mounts a reveal at all.
+// EPIC+ (`glow`): the stats sit on a panel plate wearing the rare-gear glow (GearFx) — the plate fades in with the
+// MAIN stat (Reel.jsx, opacity only), so the glow never shows before there is something on it.
 import { memo } from 'react';
 import { MAX_PIPS } from '../../progress/markRollsCore';
 import { formatNum } from '../../format';
+import GearFx from '../GearFx';
 
 
 const STAR5 = 'M6.5 0.6 L8.2 4.6 L12.5 4.9 L9.2 7.7 L10.2 12 L6.5 9.7 L2.8 12 L3.8 7.7 L0.5 4.9 L4.8 4.6 Z';
 const SLOTS = Array.from({ length: MAX_PIPS }, (_, i) => i);
 
-function RevealStats({ stats, reg }) {
+function RevealStats({ stats, reg, glow = null }) {
   if (!stats) return null;
   return (
-    <div className="rv-stats" data-testid="roll-reveal-stats">
+    <div className={`rv-stats${glow ? ' is-glow' : ''}`} data-testid="roll-reveal-stats" data-glow={glow || undefined}>
+      {glow ? (
+        <span className="rv-stats-bg" ref={reg('xPlate')} aria-hidden="true">
+          <GearFx tier={glow} scale={0.75} />
+          <span className="rv-stats-plate" />
+        </span>
+      ) : null}
       <div className="rv-main" ref={reg('xMain')}>
         <span className={`rv-main-num${stats.num.length >= 5 ? ' is-l' : ''}`}>{stats.num}</span>
         {stats.kind ? <span className="rv-main-kind">{stats.kind}</span> : null}

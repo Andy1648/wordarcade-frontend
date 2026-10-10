@@ -66,7 +66,7 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
   return {
     crit: !locked && extras ? crit : null,
     critLines: locked ? [] : critLines(crit), // the full lines (detail sheet): "+6% CRIT RATE" · "+0.5× CRIT POWER"
-    extras, // how many extra stats the gear has (a pip each on the tile — a "?" when locked)
+    extras, // how many extra stats the gear has (a pip each on an owned tile; a locked tile shows none)
     tier: t,
     rarityName: kind === 'perm' ? tierLabel('legendary') : tierLabel(t, kind),
     odds: kind === 'roll' ? `1 IN ${formatNum(oneInX(id))}` : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '',
@@ -85,15 +85,17 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
   };
 }
 /**
- * The tile's quiet pip row, in order: a dot per extra stat, ✦ for a perk, then a ★ per dupe pip. LOCKED: a "?" per
- * hidden extra stat and the ✦ (that a perk EXISTS is part of the rarity, like the counts in the sheet) — no ★.
- * → [{ k: 'stat' | 'hidden' | 'perk' | 'star' }]
+ * The tile's quiet pip row, in order: a dot per extra stat, ✦ for a perk, then a ★ per dupe pip. LOCKED: NO pips at
+ * all (Andy oct9: the "?" per hidden substat "is so confusing, it wont work") — a locked tile is rarity · silhouette ·
+ * ??? · odds; the COUNT of what is hidden lives in the detail sheet only.
+ * → [{ k: 'stat' | 'perk' | 'star' }]
  */
 export function tilePips(c) {
   const out = [];
-  for (let i = 0; i < c.extras; i += 1) out.push({ k: c.locked ? 'hidden' : 'stat' });
+  if (c.locked) return out;
+  for (let i = 0; i < c.extras; i += 1) out.push({ k: 'stat' });
   for (let i = 0; i < (c.perks || 0); i += 1) out.push({ k: 'perk' });
-  if (!c.locked) for (let i = 0; i < (c.pips || 0); i += 1) out.push({ k: 'star' });
+  for (let i = 0; i < (c.pips || 0); i += 1) out.push({ k: 'star' });
   return out;
 }
 /** "2 EXTRA STATS · 1 PERK · ★3" — the pip row read aloud (stars: false → the counts only, the locked sheet's line). */
