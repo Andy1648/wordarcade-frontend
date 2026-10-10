@@ -95,7 +95,11 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
         <span className="kb-shadow" aria-hidden="true" />
         <span ref={faceRef} className="kb-rface">
           <span className="kb-redge" aria-hidden="true" />
-          <KitIcon name={locked ? 'lock' : icon} size={28} shadow={2} extras={false} />
+          {/* .kb-rico: the icon's MOTION host (the menu's beat bounce + dot nudge animate it; hover/press animate the
+              svg inside), so the three never fight over one transform */}
+          <span className="kb-rico" aria-hidden="true">
+            <KitIcon name={locked ? 'lock' : icon} size={28} shadow={2} extras={false} />
+          </span>
           <span className="kb-rtext">
             <span className="kb-rlabel">{label}</span>
             {sub != null && sub !== '' && (

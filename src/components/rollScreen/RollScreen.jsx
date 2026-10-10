@@ -409,10 +409,10 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
       <div className="rs-top">
         {/* NIGHT oct8 #4 (RollV3 mockup): ← MENU · INDEX n/N · EQUIPPED <stat> … the GEMS pill */}
         <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>
-          <span aria-hidden="true">←</span> MENU
+          <span className="rs-close-arrow" aria-hidden="true">←</span> <span className="rs-close-t">MENU</span>
         </button>
         <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">
-          INDEX <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
+          <span className="rs-index-k">INDEX</span> <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
         </button>
         <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'}>
           <span className="rs-equipped-k">EQUIPPED</span>
@@ -498,9 +498,13 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             data-testid="roll-auto"
             data-target={target || 'off'}
           >
-            {!autoOpen ? `AUTO · R${(V3.unlocks && V3.unlocks.unlockAt('autoRoll')) || 1}` : target ? `AUTO → ${tierName(target)}+` : 'AUTO: OFF'}
+            {/* AUTO in the house style (Andy oct9 "auto roll … so boring and tiny"): the word, then its state on a plate —
+                OFF / → TIER+ in the tier colour / the R1 gate in gold. No caption line under it (no explaining sentences). */}
+            <span className="rs-auto-k">AUTO</span>
+            <span className={`rs-auto-v${!autoOpen ? ' is-gate' : target ? '' : ' is-off'}`}>
+              {!autoOpen ? ` · R${(V3.unlocks && V3.unlocks.unlockAt('autoRoll')) || 1}` : target ? ` → ${tierName(target)}+` : ': OFF'}
+            </span>
           </button>
-          <div className="rs-auto-cap" aria-hidden="true">{autoOpen ? 'TAP TO SET TARGET' : 'UNLOCKS AT REBIRTH 1'}</div>
           {/* SKIP (R4): a stepper in the house style, not the native <select> (its white drop-down was the one foreign
               control on the screen). ◀ ▶ step the tier; the plate reads "< EPIC" in the tier colour = reveals below
               EPIC are skipped (same getSkipBelow / setSkipBelow behaviour). 44px targets. */}

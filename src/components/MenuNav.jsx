@@ -89,9 +89,59 @@ function sayGate(g) {
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)
  */
+// THE DOT NUDGE (MENU MOTION LAW, Andy oct9 "the 4 icons in the menu … at least some animation"): a rail tile with an
+// actionable dot nudges its icon ONCE every NUDGE_EVERY_MS — one shared setTimeout for the whole rail (never a CSS loop,
+// never a timer per tile), a finite WAAPI transform on the icon's .kb-rico host, staggered when several tiles have a
+// dot. will-change only while it plays. Skipped on a hidden tab; REDUCE MOTION gets none.
+export const NUDGE_EVERY_MS = 8000;
+const NUDGE_FIRST_MS = 2600;
+const NUDGE = [
+  { transform: 'translateY(0) rotate(0) scale(1)' },
+  { transform: 'translateY(-7px) rotate(-12deg) scale(1.14)', offset: 0.22 },
+  { transform: 'translateY(0) rotate(9deg) scale(1)', offset: 0.46 },
+  { transform: 'translateY(-2px) rotate(-5deg) scale(1.04)', offset: 0.68 },
+  { transform: 'translateY(0) rotate(0) scale(1)' },
+];
+function useDotNudge(rootRef, enabled) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!enabled || !root || typeof root.animate !== 'function') return undefined;
+    let timer = null;
+    const runs = [];
+    const tick = () => {
+      timer = setTimeout(tick, NUDGE_EVERY_MS);
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const hosts = [...root.querySelectorAll('.kb-rwrap')]
+        .filter((w) => w.querySelector('.kb-rdot'))
+        .map((w) => w.querySelector('.kb-rico'))
+        .filter(Boolean);
+      hosts.forEach((el, i) => {
+        if (typeof el.animate !== 'function') return;
+        el.style.willChange = 'transform';
+        const a = el.animate(NUDGE, { duration: 560, delay: i * 160, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+        runs.push(a);
+        const off = () => {
+          el.style.willChange = '';
+          const at = runs.indexOf(a);
+          if (at >= 0) runs.splice(at, 1);
+        };
+        a.finished.then(off, off);
+      });
+    };
+    timer = setTimeout(tick, NUDGE_FIRST_MS);
+    return () => {
+      clearTimeout(timer);
+      runs.splice(0).forEach((a) => { try { a.cancel(); } catch { /* gone */ } });
+    };
+  }, [rootRef, enabled]);
+}
+
 export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, foot = null }) {
+  const navRef = useRef(null);
+  const reduced = useReduceMotion();
+  useDotNudge(navRef, !reduced);
   return (
-    <nav className={`homepage-corner-nav hp-rail ${className}`} aria-label="Menu">
+    <nav ref={navRef} className={`homepage-corner-nav hp-rail ${className}`} aria-label="Menu">
       <KitPill kind="wins" value={wins} className="menu-wins-chip" />
       {gems != null && <KitPill kind="gems" value={gems} className="menu-gems-chip" />}
       {extra}
