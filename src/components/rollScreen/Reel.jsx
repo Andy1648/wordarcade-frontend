@@ -28,7 +28,7 @@ import { createPortal } from 'react-dom';
 import MarkCard from '../markCard/MarkCard';
 import { CARD_RAR, cardTier } from '../markCard/palette.js';
 import { tierLabel } from '../markCard/cardModel.js';
-import { rollMarkById } from '../../progress/markRolls';
+import { rollMarkById, markLevel } from '../../progress/markRolls';
 import {
   sndReelTick, sndRollSting, sndRollSwell, sndCutStamp, sndRollTell, sndShardBurst, sndRevealFlip, sndRevealRise, sndRevealArp,
   sndStatTick,
@@ -56,6 +56,8 @@ const VEC = burstVectors(BURST_POOL);
 const VEC_BIG = burstVectors(BURST_POOL, 2.6);
 const markOf = (id) => rollMarkById(id) || { id, tier: 'rare', name: '' };
 const lineOf = (tier) => CARD_RAR[cardTier(tier)].line;
+// REEL SHOWCASE: a passing cell of a gear you don't own shows the INDEX's locked silhouette (tier frame, "???")
+const ownsIn = (view, id) => { try { return !view || markLevel(view, id).copies > 0; } catch { return true; } };
 const SPIN_KEYS = 64; // keyframes the spin curve is sampled into (linear between: smooth at any refresh rate)
 const SPARK_SLOTS = Array.from({ length: SPARK_POOL }, (_, i) => i);
 // the pointer KICK on each of the last NEAR_MISS_TICKS crossings (NIGHT oct8 #4) — transform only, ~110 ms
@@ -569,7 +571,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                   >
                     {/* EPIC+ cells wear the rare-gear glow (GearFx): the passing cells a still aura, the landing cell breathes */}
                     {m && GLOW_TIERS.has(m.tier) ? <GearFx tier={m.tier} scale={0.6} live={i === LAND_AT} /> : null}
-                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} still /> : null}
+                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} locked={i !== LAND_AT && !ownsIn(view, id)} still /> : null}
                   </div>
                 </div>
               );

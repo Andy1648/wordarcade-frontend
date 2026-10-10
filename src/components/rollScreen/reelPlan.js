@@ -7,6 +7,9 @@
 // real result. Nothing is inserted: the cells either side of the result are the same draws they would be for any
 // other result (drawStrip never reads the result to pick a filler), so a "LEGENDARY just above the line" happens
 // exactly as often as the odds say and never more.
+// REEL SHOWCASE (Andy oct9): the reel now plays drawShowcaseStrip — the far filler cells show EPIC+ gears more often
+// (decoration, a reminder of what's in the pool), while the ROLL itself, the landing cell, and the 3 cells either
+// side of it stay exactly as above.
 //
 // FEEL: the reel position is land × (1 − (1 − t/D)^k). D is 2.4 s for every tier (NIGHT oct8) and k grows with rarity
 // — a higher power spends a longer share of the spin crawling over the last few cells: rarer = longer slowdown.
@@ -47,6 +50,51 @@ export function drawStrip(probs, rng = Math.random, { resultId, len = REEL_LEN, 
   const entries = tableEntries(probs);
   const out = new Array(len);
   for (let i = 0; i < len; i += 1) out[i] = drawOne(entries, rng);
+  if (resultId != null && landAt >= 0 && landAt < len) out[landAt] = resultId;
+  return out;
+}
+
+// ---- REEL SHOWCASE (Andy oct9: "when rolling, show epics, legendarys, mythics, and secrets a bit more often in the
+// animation (still same probabilities) but to give user some hope and reminder of what they can get") ----
+/**
+ * VISUAL ONLY. The share of DECORATIVE filler cells that show an EPIC+ gear instead of a live-odds draw (~37.5% in
+ * all; SECRET ≈ 1 in 30 cells). This never touches the roll: the result is still markRolls.roll's pick from the real
+ * table (pity included) and is written into the landing cell. The SHOWCASE_GUARD cells either side of the landing
+ * cell stay plain live-odds draws, so no showcase gear is ever parked next to the stop (no faked near-miss).
+ */
+export const SHOWCASE = { epic: 0.15, legendary: 0.11, mythic: 0.082, secret: 0.033 };
+export const SHOWCASE_GUARD = 3;
+/**
+ * The showcase strip: like drawStrip, but each filler cell OUTSIDE landAt ± SHOWCASE_GUARD shows, with the SHOWCASE
+ * chance, a gear of that tier (uniform among the tier's marks that are on the table, p > 0). Every other cell is an
+ * independent live-odds draw. The fillers never read the result. `marks` is [{ id, tier }] (markRolls.ROLL_MARKS).
+ */
+export function drawShowcaseStrip(probs, rng = Math.random, { resultId, marks = [], len = REEL_LEN, landAt = LAND_AT, guard = SHOWCASE_GUARD, showcase = SHOWCASE } = {}) {
+  const entries = tableEntries(probs);
+  const onTable = new Set(entries.map((e) => e.id));
+  const byTier = {};
+  for (const m of marks) if (m && onTable.has(m.id) && showcase[m.tier] > 0) (byTier[m.tier] = byTier[m.tier] || []).push(m.id);
+  const tiers = Object.keys(showcase).filter((t) => byTier[t]);
+  const out = new Array(len);
+  for (let i = 0; i < len; i += 1) {
+    const near = Math.abs(i - landAt) <= guard;
+    let id = null;
+    if (!near && tiers.length) {
+      let u = rng();
+      if (!(u >= 0 && u < 1)) u = 1;
+      for (const t of tiers) {
+        if (u < showcase[t]) {
+          const ids = byTier[t];
+          let v = rng();
+          if (!(v >= 0 && v < 1)) v = 0;
+          id = ids[Math.floor(v * ids.length)];
+          break;
+        }
+        u -= showcase[t];
+      }
+    }
+    out[i] = id || drawOne(entries, rng);
+  }
   if (resultId != null && landAt >= 0 && landAt < len) out[landAt] = resultId;
   return out;
 }
