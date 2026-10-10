@@ -267,7 +267,7 @@ test('ACHIEVEMENTS pay GEMS (40–200), one tier per claim, from season-2 play o
   assert.equal(A.claimAchievementV3('chain').reason, 'maxed');
 });
 
-test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +18; +15 per player beaten; streak +4; LEVEL UP 3 a level, once a climb (Andy oct10)', () => {
+test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TAKES 30 × players; streak +4; LEVEL UP 3 a level, once a climb (Andy oct10)', () => {
   assert.equal(G.ROLL_PRICE_GEMS, 75);
   // the drop: under 1/10 drops, from 3 (v = 0) to 12 (v → 1); above it, nothing
   assert.equal(G.rollGemDrop(() => 0.099), 3);
@@ -276,9 +276,13 @@ test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +18; +15 per player bea
   const seq = [0.01, 0.999];
   assert.equal(G.rollGemDrop(() => seq.shift()), 12);
   const bot = GM.gameResultPayout({ iWon: true, rivals: [{ id: 'b', isBot: true }], streak: 5 });
-  assert.deepEqual(bot.lines, [{ reason: 'bot', amount: 18 }, { reason: 'streak', amount: 4 }]);
+  assert.deepEqual(bot.lines, [{ reason: 'bot', amount: 30 }, { reason: 'streak', amount: 4 }]);
   const mp = GM.gameResultPayout({ iWon: true, rivals: [{ id: 'p1' }, { id: 'p2' }] });
-  assert.deepEqual(mp.lines, [{ reason: 'placement', amount: 30 }]);
+  assert.deepEqual(mp.lines, [{ reason: 'placement', amount: 90 }], 'a 3-player win takes 30 × 3');
+  const lost = GM.gameResultPayout({ iWon: false, rivals: [{ id: 'p1', beaten: true }, { id: 'p2' }] });
+  assert.deepEqual(lost.lines, [], 'winner takes all: 2nd place gets nothing');
+  assert.equal(E.raceSpeedGems(30), 15);
+  assert.equal(E.raceSpeedGems(500), 40, 'capped');
   reset();
   G.stampGemsMigrated({ peak: 1 });
   X.saveProgress({ level: 1, frac: 0 });

@@ -8,37 +8,8 @@ import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
-import { masteryState, masteryNeed, MASTERY_MODES, MASTERY_MILESTONE_EVERY } from '../progress/mastery';
 import { reduceMotion } from '../lib/reduceMotion';
 
-// MASTERY (Job 2): a compact per-mode mastery readout — level, words to the next level, and the next
-// milestone bonus. Reads client state directly (cheap); shown in every mode dialog.
-function MasteryLine({ mode, accent, inPicker = false }) {
-  const st = masteryState(mode);
-  return (
-    // `--picker`: this is the pack-picker (blitz) dialog, the only one where the picker fights the
-    // mastery row for space. It is hidden on short-and-narrow phones (see ModeDialog.css) so the
-    // picker keeps a visible height; every other dialog / viewport keeps the mastery readout.
-    <div className={`mode-dialog-mastery${inPicker ? ' mode-dialog-mastery--picker' : ''}`} aria-label={`Mastery level ${st.level}`}>
-      <span className="mode-dialog-mastery-lv" style={{ color: accent, borderColor: accent }}>
-        M{st.level}
-      </span>
-      <span className="mode-dialog-mastery-txt">
-        {/* Rebirth Rush: mastery no longer multiplies wins (no "+N% WINS") — its milestone grant still pays. */}
-        MASTERY
-        {/* H6/L7: a count with its unit, not a bare "0/31". */}
-        {!st.maxed && (
-          <span className="mode-dialog-mastery-next"> · {Math.max(0, st.need - st.intoLevel)} WORDS TO M{st.level + 1}</span>
-        )}
-        {/* STEP 19: every 5th level pays a wins bonus — name the next one so the bar has a goal. */}
-        {!st.maxed && (
-          <span className="mode-dialog-mastery-next"> · BONUS AT M{Math.ceil((st.level + 1) / MASTERY_MILESTONE_EVERY) * MASTERY_MILESTONE_EVERY}</span>
-        )}
-        {st.maxed && <span className="mode-dialog-mastery-next"> · MAXED</span>}
-      </span>
-    </div>
-  );
-}
 
 // Open/close feel (fix/dialog-quality item 2): ONE transform+opacity transition on ONE element
 // (the shell), 200ms ease-out. No FLIP morph, no separate content transition, no canvas repaint
@@ -224,11 +195,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            {/* Only modes with a mastery track show one — a line promising progress a mode cannot
-                earn (WORD RACE has no track) would be a card number the game never pays. */}
-            {MASTERY_MODES.includes(game.id) && (
-              <MasteryLine mode={game.id} accent={accent} inPicker={modeKey === 'blitz'} />
-            )}
+            {/* No MASTERY line (Andy oct10: "no one has cared abt it"). */}
             {/* Real worked example (item 2): the actual mechanic shown, plus the per-word wins
                 rate and typical round length. Replaces the old prose "HOW IT WORKS" blurb. */}
             <ModeExample mode={game.id} accent={accent} />

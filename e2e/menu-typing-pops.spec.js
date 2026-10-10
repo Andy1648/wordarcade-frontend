@@ -22,7 +22,7 @@ test.use({ reducedMotion: 'no-preference' });
 const POP_POOL = 20; // MenuXp.jsx POP_POOL
 
 for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
-  test(`typing on the menu shows the restored letter pops and no centre text box @ ${vp.width}x${vp.height}`, async ({ page }) => {
+  test(`typing on the menu pops "+N XP" (no letter) and no centre text box @ ${vp.width}x${vp.height}`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
     await page.goto('/?portal=1');
@@ -63,12 +63,12 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
         })
         .filter((p) => p.running > 0)
     );
-    const letters = pops.map((p) => p.letter);
-    // the last keys are still mid-flight (POP_MS 600) — at least the latest letters are up
-    expect(letters).toContain('D');
-    expect(letters).toContain('R');
+    // Andy oct10 ("why are there neon letters … those arent explained"): a key pops what it PAID — "+N XP", no typed
+    // letter (a CRIT keeps its key: CRIT +N). The last keys are still mid-flight (POP_MS 600).
+    expect(pops.length).toBeGreaterThan(0);
     for (const p of pops) {
-      expect(p.plus).toMatch(/^(CRIT )?\+\d/); // a key can crit (1% base, Andy oct9) — its pop reads CRIT +N
+      expect(p.plus).toMatch(/^(CRIT \+\d.*|\+[\d,.]+[A-Z]* XP)$/);
+      if (!/^CRIT/.test(p.plus)) expect(p.letter, 'no typed letter on a plain pop').toBe('');
       expect(p.finite).toBe(true);
       expect(p.props.every((x) => x === 'transform' || x === 'opacity')).toBe(true);
     }

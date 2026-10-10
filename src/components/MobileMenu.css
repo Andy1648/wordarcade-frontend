@@ -479,3 +479,7 @@
   .hp-m-rail .kb-rface .kit-icon { width: 22px; height: 22px; }
   .hp-m-solo-btn { padding-top: 4px; padding-bottom: 4px; }
 }
+
+/* GEM FRIENDLY (Andy oct10): the row's 1–3 mini gems, before the chevron */
+.hp-m-gems { flex: 0 0 auto; display: flex; gap: 1px; margin-left: auto; margin-right: 6px; }
+.hp-m-gems .is-dim { opacity: 0.25; }

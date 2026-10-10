@@ -8,8 +8,10 @@
 // reads anywhere (the pop sits at a fixed spot inside an already-positioned slot). Nothing loops.
 import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../../format';
+import { V3 } from '../../progress/season';
 import { subscribeGemLedger, gemsLedgerMark, gemsLedgerSince, sumGems } from '../../progress/gems';
 import { GemIcon } from './GemChip';
+import '../kit/tokens.css';
 import './Gems.css';
 
 // The chip half (eager, in the menu's index chunk) — re-exported so the game screens keep one import.
@@ -45,6 +47,8 @@ export function useGemsRunMark(playing) {
  * "+N GEMS" — the round's gems, ALWAYS its own line (Andy: "never hidden"), live (a game-result grant that lands as
  * the card mounts still adds in). data-gems-total / data-gems-by are the gates' handle.
  */
+// WHERE THE GEMS CAME FROM (Andy oct10: "ABSOLUTELY know where the gems come from"): the game's gem sources, named
+const SOURCE = [['placement', 'WIN'], ['bot', 'BOT WIN'], ['speed', 'SPEED'], ['drop', 'WORDS'], ['streak', 'STREAK'], ['level', 'LEVEL']];
 export function GemsEarnedLine({ since = 0, className = '', print = false }) {
   const [entries, setEntries] = useState(() => gemsLedgerSince(since));
   useEffect(() => {
@@ -65,6 +69,13 @@ export function GemsEarnedLine({ since = 0, className = '', print = false }) {
       <GemIcon size={22} />
       <span className="gems-earned-num">+{formatNum(total)}</span>
       <span className="gems-earned-label">GEMS</span>
+      {SOURCE.some(([k]) => by && by[k] > 0) ? (
+        <span className="gems-earned-srcs">
+          {SOURCE.filter(([k]) => by && by[k] > 0).map(([k, label]) => (
+            <span key={k} className="gems-earned-src" data-src={k}>{k === 'placement' && !V3.econ ? 'BEAT' : label} +{formatNum(by[k])}</span>
+          ))}
+        </span>
+      ) : null}
     </div>
   );
 }

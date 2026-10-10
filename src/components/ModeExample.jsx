@@ -2,13 +2,28 @@
 // LockedPreviewDialog (locked). Shows the actual mechanic (not a description), the per-word
 // wins rate, and the typical round length. Newgrounds treatment (thick black border, hard
 // offset shadow, flat fill) lives in ModeExample.css. STATIC — no animation.
+import './kit/tokens.css';
 import './ModeExample.css';
-import { MODE_EXAMPLES, MODE_ROUND_LENGTH } from './modeExamples';
+import { MODE_EXAMPLES } from './modeExamples';
 import { perWordRateNow } from '../progress/wins';
-import { formatRate, formatMultExact } from '../format';
-import { modePower } from '../progress/xp';
+import { formatRate } from '../format';
 import { frenzyShort, formatFrenzy, frenzyMinutes } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
+import KitIcon from './kit/KitIcon.jsx';
+import { V3 } from '../progress/season';
+
+/** WHERE THIS MODE'S GEMS COME FROM (Andy oct10: "ABSOLUTELY know where the gems come from") — the season-2 gem
+ *  table (v3/econ), so every number here is the one the payout uses. [big, what] rows; [] outside season 2. */
+export function modeGemRows(mode) {
+  const E = V3.econ;
+  if (!E) return [];
+  const words = [`+${E.DROP_MIN}–${E.DROP_MAX}`, `1 IN ${Math.round(1 / E.DROP_CHANCE)} WORDS`];
+  const b = E.BOT_WIN_BY_DIFF;
+  const pot = [`${E.POT_PER_PLAYER} × PLAYERS`, 'WIN VS PEOPLE'];
+  if (mode === 'word-bomb' || mode === 'category-blitz') return [[`+${b.easy} / ${b.medium} / ${b.hard}`, 'BEAT A BOT'], pot, words];
+  if (mode === 'word-race') return [[`${E.POT_PER_PLAYER} × PLAYERS`, 'WIN'], [`+1 / ${Math.round(1 / E.RACE_GEMS_PER_WPM)} WPM`, 'SPEED'], words];
+  return [words];
+}
 
 // Highlight the first occurrence of `sub` within `word` in `color`.
 function hiSub(word, sub, color) {
@@ -37,11 +52,10 @@ function hiEnds(word, color) {
 
 export default function ModeExample({ mode, accent = '#2EFFE0' }) {
   const frenzy = useFrenzyClock();
-  const power = modePower(mode);
   const ex = MODE_EXAMPLES[mode];
   if (!ex) return null;
   const rateNow = perWordRateNow({ mode });
-  const round = MODE_ROUND_LENGTH[mode];
+  const gemRows = modeGemRows(mode);
 
   let body = null;
   if (ex.kind === 'chain') {
@@ -109,26 +123,24 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
     <div className="mode-ex">
       <div className="mode-ex-tag" style={{ color: accent, borderColor: accent }}>EXAMPLE</div>
       {body}
-      <div className="mode-ex-meta">
-        <span className="mode-ex-pay">
-          {/* The RESOLVED rate, like the mode card — not the base with a rebirth chip bolted on
-              for the player to multiply out (and momentum/level/mark missing from both). */}
-          <b style={{ color: accent }}>{formatRate(rateNow.rate)}</b> WINS / WORD
-          {Math.abs(rateNow.mult / (rateNow.factors.mode || 1) - 1) > 1e-9 && (
-            <span className="mode-ex-mult" title="YOUR BONUS: REBIRTH × MARK × BOOST"> (×{formatMultExact(((b) => (b >= 10 ? Math.round(b) : b))(rateNow.mult / (rateNow.factors.mode || 1)))} BONUS)</span>
-          )}
-        </span>
-        <span className="mode-ex-round">{round}</span>
+      {/* Andy oct10 ("the win gain … is so unclear (text is tiny and there's just too much)"): ONE big WINS line with
+          its icon, then the mode's GEM sources, each with the gem. No formula, no bonus tag, no round-length row. */}
+      <div className="mode-ex-pay2" data-testid="mode-ex-wins">
+        <KitIcon name="wins" size={36} shadow={2} extras={false} />
+        <b className="mode-ex-pay2-n">{formatRate(rateNow.rate)}</b>
+        <span className="mode-ex-pay2-u">{mode === 'fuse' ? 'WINS / WORD' : 'BASE WINS / WORD'}</span>
       </div>
-      {/* WHAT MAKES A WORD WORTH MORE (Andy oct2). The rate above is the BASE — a 5-letter word. */}
-      <div className="mode-ex-perks">
-        {power > 1 && (
-          <span className="mode-ex-power" style={{ color: accent }}>
-            POWER ×{formatMultExact(power)} <span className="mode-ex-power-vs">VS WORD BOMB</span>
-          </span>
-        )}
-        <span className="mode-ex-longer">BASE 10 WINS / WORD · BASE 10 XP/LETTER × POWER × REBIRTH</span>
-      </div>
+      {gemRows.length ? (
+        <ul className="mode-ex-gems" data-testid="mode-ex-gems">
+          {gemRows.map(([big, what]) => (
+            <li key={what} className="mode-ex-gem">
+              <KitIcon name="gems" size={30} shadow={2} extras={false} />
+              <b className="mode-ex-gem-n">{big}</b>
+              <span className="mode-ex-gem-u">{what}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {mode === 'fuse' && (
         <div className={`mode-ex-frenzy${frenzy.active ? ' is-live' : ''}`}>
           {frenzy.active ? (

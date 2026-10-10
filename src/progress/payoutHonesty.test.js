@@ -87,7 +87,8 @@ test('BUG 1: the in-game XP award carries DIFFICULTY exactly as the wins bank an
 test('BUG 2: mode cards + live panel print multipliers with the RECEIPT formatter (formatMultExact)', () => {
   const receipt = src('../components/PayoutBreakdown.jsx');
   assert.match(receipt, /formatMultExact/, 'the receipt formatter is formatMultExact');
-  for (const file of ['GameCard.jsx', 'ModeExample.jsx', 'LiveStack.jsx']) {
+  // (ModeExample.jsx prints no multiplier since Andy oct10 — one WINS number + the gem sources)
+  for (const file of ['GameCard.jsx', 'LiveStack.jsx']) {
     const text = src(`../components/${file}`);
     assert.ok(!/\bformatMult\(/.test(text), `${file} must not use the rounding formatMult`);
     assert.match(text, /formatMultExact\(/, `${file} must print × with formatMultExact`);

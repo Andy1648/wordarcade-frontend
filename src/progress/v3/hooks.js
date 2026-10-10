@@ -7,12 +7,12 @@ import { keyTierCost as keyTierCostV, doRebirth, getRebirths, getKeyTier, saveRe
 import { MARK_TIERS } from '../marks.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned } from '../shop.js';
 import { getWins } from '../wins.js';
-import { loadGemState, saveGemState, tellBalance, grantGems, PER_PLAYER_BEATEN as LIVE_PER_PLAYER } from '../gemsCore.js';
+import { loadGemState, saveGemState, tellBalance, grantGems } from '../gemsCore.js';
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue, statHits } from '../markRollsCore.js';
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
   rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, LEVEL_UP, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
-  PER_PLAYER_BEATEN, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
+  winnerPot, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
 } from './econ.js';
 import { needV3, creditXpV3 } from './curve.js';
 import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter, S2_PREFIX } from './store.js';
@@ -146,10 +146,16 @@ export const gemsSwap = {
 /** gems.gameResultPayout in season 2: the live payout re-priced on the v3 table. */
 export const flatStreak = (livePayout) => (o) => {
   const p = livePayout(o);
-  // the v3 table: bot win +18, +15 per player beaten, a FLAT +4 streak (the live lines carry 3 / 3 per player / +1×)
+  // the v3 table (Andy oct10): a bots-only win pays by the hardest bot (+15 / +30 / +60); a game with PEOPLE in it is
+  // WINNER TAKES ALL — 30 × the people playing (you included), nothing for a loss; a FLAT +4 streak.
   const hb = hardestBot(o && o.rivals);
-  const v3 = { bot: () => (hb && BOT_WIN_BY_DIFF[hb]) || BOT_WIN, placement: (l) => (l.amount / LIVE_PER_PLAYER) * PER_PLAYER_BEATEN, streak: () => STREAK_BONUS };
-  const lines = p.lines.map((l) => (v3[l.reason] ? { ...l, amount: v3[l.reason](l) } : l));
+  const self = new Set((o && o.selfIds) || []);
+  const people = ((o && o.rivals) || []).filter((r) => r && !r.isBot && !self.has(r.id)).length;
+  const v3 = { bot: () => (hb && BOT_WIN_BY_DIFF[hb]) || BOT_WIN, streak: () => STREAK_BONUS };
+  const lines = p.lines
+    .filter((l) => l.reason !== 'placement')
+    .map((l) => (v3[l.reason] ? { ...l, amount: v3[l.reason](l) } : l));
+  if (people > 0 && o && o.iWon) lines.unshift({ reason: 'placement', amount: winnerPot(people + 1) });
   return { ...p, lines, total: lines.reduce((t, l) => t + l.amount, 0) };
 };
 /** gems.payGameResult in season 2: the live pay + the BEAT BOTS / WIN MULTIPLAYER counters on a win. */

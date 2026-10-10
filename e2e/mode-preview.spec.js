@@ -20,14 +20,14 @@ async function menu(page, level) {
 const card = (page, id) => revealMode(page, id); // feat/menu-centre: flips to the card's page first
 
 test.describe('item 2 — worked examples', () => {
-  test('WORD BOMB dialog shows TRA → TRAIN, wins rate, and round length', async ({ page }) => {
+  test('WORD BOMB dialog shows TRA → TRAIN, the wins rate, and where its gems come from', async ({ page }) => {
     await menu(page);
     await (await card(page, 'word-bomb')).click();
     const ex = page.locator('.mode-dialog-shell .mode-ex');
     await expect(ex).toBeVisible();
     await expect(ex).toContainText('TRAIN');
-    await expect(ex.locator('.mode-ex-pay')).toContainText('WINS / WORD');
-    await expect(ex.locator('.mode-ex-round')).toContainText('TURN-BASED');
+    await expect(ex.locator('.mode-ex-pay2')).toContainText('WINS / WORD');
+    // Andy oct10: the round-length row is gone; season 1 (this spec) has no gem table, so no gem rows
   });
 
   test('CHAIN dialog shows the E → EAGLE → ELEPHANT → TIGER chain', async ({ page }) => {
@@ -36,7 +36,7 @@ test.describe('item 2 — worked examples', () => {
     const ex = page.locator('.mode-dialog-shell .mode-ex');
     await expect(ex).toBeVisible();
     for (const w of ['EAGLE', 'ELEPHANT', 'TIGER']) await expect(ex).toContainText(w);
-    await expect(ex.locator('.mode-ex-pay')).toContainText('WINS / WORD');
+    await expect(ex.locator('.mode-ex-pay2')).toContainText('WINS / WORD');
   });
 
   test('FUSE locked preview shows AIN → RAIN / AGAIN / MOUNTAIN', async ({ page }) => {

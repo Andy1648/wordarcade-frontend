@@ -32,7 +32,7 @@ test('the 5-word floor still holds in a bot room', () => {
   assert.equal(p.reason, 'my-words');
 });
 
-test('season 2 gems: a bot win pays 8 / 18 / 30 by the hardest bot; MEDIUM is the old flat', () => {
-  assert.deepEqual({ ...BOT_WIN_BY_DIFF }, { easy: 8, medium: 18, hard: 30 });
+test('season 2 gems: a bot win pays 15 / 30 / 60 by the hardest bot (Andy oct10); MEDIUM is the flat', () => {
+  assert.deepEqual({ ...BOT_WIN_BY_DIFF }, { easy: 15, medium: 30, hard: 60 });
   assert.equal(BOT_WIN_BY_DIFF.medium, BOT_WIN);
 });

@@ -104,6 +104,10 @@
   display: none;
 }
 .menu-xp-pop.is-tap .menu-xp-pop-plus {
+  font-family: 'Bungee', cursive; /* "+1 XP" (Andy oct10): one display word, not spaced mono */
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0;
   font-size: var(--fs-panel);
   -webkit-text-stroke: 3px #000;
 }

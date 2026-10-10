@@ -22,7 +22,7 @@ async function gotoMenuLive(page) {
 }
 
 test.describe('menu XP', () => {
-  test('combined pop shows the typed LETTER + "+N" in one element', async ({ page }) => {
+  test('a key pops "+N XP" — what it paid, no typed letter (Andy oct10)', async ({ page }) => {
     // Seed a very high XP so one keystroke nudges the fill fraction by only ~0.0006 — the
     // realistic case for the rAF-lerp rest check below. The lerp then converges in 1–2 frames
     // (frame-count-bound, so robust even when parallel test load throttles the frame rate); a
@@ -37,10 +37,9 @@ test.describe('menu XP', () => {
       letters: [...document.querySelectorAll('.menu-xp-pop-letter')].map((n) => n.textContent).filter(Boolean),
       plus: [...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter(Boolean),
     }));
-    expect(r.letters).toContain('Q');
-    expect(r.letters).toContain('7');
-    // v11 round 3: a MENU letter is a fifth of a game letter — 2 XP at a fresh profile → the "+N" span reads +2
-    expect(r.plus).toContain('+2');
+    expect(r.letters, 'no typed letters').toEqual([]);
+    // v11 round 3: a MENU letter is a fifth of a game letter — 2 XP at a fresh profile → the pop reads +2 XP
+    expect(r.plus).toContain('+2 XP');
 
     // The bar fill glides via a rAF LERP that MUST stop at rest — nothing scheduled once it
     // converges. The menu also runs a persistent beat-sync rAF, so we isolate the XP loop by
@@ -248,7 +247,7 @@ test.describe('splash XP', () => {
       leaving: document.querySelector('.splash-screen')?.classList.contains('leaving') ?? true,
       pips: document.querySelectorAll('.splash-pip').length,
       pipsOn: document.querySelectorAll('.splash-pip.is-on').length,
-      poppedA: [...document.querySelectorAll('.menu-xp-pop-letter')].some((n) => n.textContent === 'A'),
+      poppedA: [...document.querySelectorAll('.menu-xp-pop-plus')].some((n) => / XP$/.test(n.textContent)),
       // PV10: the XP number comes from the app's probe (taw.xp stores the fraction into the level).
       prog: (() => { const p = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 }; return { lv: p.level, into: Math.round(p.intoLevel) }; })(),
       audioContexts: window.__ac,
