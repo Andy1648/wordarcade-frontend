@@ -308,6 +308,8 @@ export default function StatsV2({ onBack, onMore }) {
   const totalText = xText(play.cur);
   const resultText = rateText(play.done ? b.total : b.base * play.cur);
   const gearOn = !!(b.parts && b.parts.gear > 0);
+  // the CRIT row's two figures, split from critSummary's sentence ("1 KEY IN 8 CRITS · +18% XP ON AVERAGE")
+  const critFigs = crit.on ? /^1 KEY IN (.+) CRITS · (\S+) XP ON AVERAGE$/.exec(crit.sub) : null;
   const compact = n > 4; // six chips or more: tighter gaps so the chain still fits one row
 
   const chips = [
@@ -440,7 +442,15 @@ export default function StatsV2({ onBack, onMore }) {
           <span className="st2-crit-head" data-testid="st2-crit-head">
             {crit.head}
           </span>
-          <span className="st2-crit-sub" data-testid="st2-crit-sub">{crit.on ? crit.sub : `— ${crit.sub}`}</span>
+          {/* no explaining sentence (Andy oct9): the odds and the average gain as two figures, in Bungee */}
+          <span className="st2-crit-sub" data-testid="st2-crit-sub">
+            {critFigs ? (
+              <>
+                <span className="st2-crit-fig is-odds"><i>1 IN</i> <b>{critFigs[1]}</b></span>
+                <span className="st2-crit-fig is-avg"><b>{critFigs[2]}</b> <i>AVG</i></span>
+              </>
+            ) : crit.sub}
+          </span>
         </div>
 
         <div className="st2-life" role="group" aria-label="All time">
@@ -450,7 +460,7 @@ export default function StatsV2({ onBack, onMore }) {
             <span className="st2-life-more">MORE ›</span>
           </button>
           {life.map((l) => (
-            <div className="st2-life-cell" key={l.k}>
+            <div className="st2-life-cell" key={l.k} style={{ '--life-c': l.c }}>
               <span className="st2-life-v" style={{ color: l.c }}>{fmt(l.v)}</span>
               <span className="st2-life-l">{l.k}</span>
             </div>

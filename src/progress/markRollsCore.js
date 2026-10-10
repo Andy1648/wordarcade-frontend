@@ -23,7 +23,7 @@
 //   critPower      +N× CRIT POWER (added to the ×2 a crit key pays)
 //   critEvery      EVERY Nth MENU KEY IS A GUARANTEED CRIT (★ pips / SHINY shorten N)
 // sized so the tier's effect on what it touches ≈ the old MAIN (RARE +25%, EPIC +50%, LEGENDARY +200%, MYTHIC +900%,
-// SECRET +2,400%; season 2 re-sizes them to +25 / +50 / +100 / +200 / +400 — v3/hooks.applyFinalMarkTiers). Only the
+// SECRET +2,400%; season 2 re-sizes them to +40 / +80 / +180 / +400 / +900 — v3/hooks.applyFinalMarkTiers, GEAR OP). Only the
 // WORN MAIN's stat applies. No two gears print the same MAIN stat (markRolls.test.js keeps it that way).
 // DUPES → ★ PIPS (replacing GOLD / RAINBOW): RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 dupes per pip, ★5
 // max; each pip +20% of the stat (★5 = ×2). SHINY ×2 on top. A save from before v2 keeps its GOLD (×2) / RAINBOW
@@ -699,15 +699,16 @@ export function markMult(opts = {}) {
 // MAIN stat and, from RARE up, carries EXTRA crit stats by tier — deterministic per gear (no save field, no migration),
 // scaled by the SAME ★ pips × SHINY factor statOf uses. EARNED (permanent) gears carry the LEGENDARY crit, as they pay
 // the LEGENDARY MAIN. A crit is a MENU KEY that pays × CRIT POWER (progress/crit.js rolls it, useXpCapture applies it).
-//   RARE +2% RATE · EPIC +4%, +0.25× POWER · LEGENDARY +6%, +0.5× · MYTHIC +9%, +1× · SECRET +12%, +1.5×
+//   RARE +3% RATE · EPIC +6%, +0.5× POWER · LEGENDARY +9%, +1× · MYTHIC +14%, +2× · SECRET +20%, +3×
+//   (GEAR OP, Andy oct9 "a bit more OP": was RARE +2% · EPIC +4%, +0.25× · LEGENDARY +6%, +0.5× · MYTHIC +9%, +1× · SECRET +12%, +1.5×)
 // Totals SUM over the worn gears (the MAIN + the season-2 2nd slot): RATE = min(50%, Σ rate) from a BASE of 0,
 // POWER = ×2 + Σ power. `rate` is a fraction (0.06 = 6%); `power` is the part ADDED to the base ×2.
 export const CRIT_BY_TIER = Object.freeze({
-  rare: Object.freeze({ rate: 0.02, power: 0 }),
-  epic: Object.freeze({ rate: 0.04, power: 0.25 }),
-  legendary: Object.freeze({ rate: 0.06, power: 0.5 }),
-  mythic: Object.freeze({ rate: 0.09, power: 1 }),
-  secret: Object.freeze({ rate: 0.12, power: 1.5 }),
+  rare: Object.freeze({ rate: 0.03, power: 0 }),
+  epic: Object.freeze({ rate: 0.06, power: 0.5 }),
+  legendary: Object.freeze({ rate: 0.09, power: 1 }),
+  mythic: Object.freeze({ rate: 0.14, power: 2 }),
+  secret: Object.freeze({ rate: 0.2, power: 3 }),
 });
 export const CRIT_BASE_RATE = 0.01; // Andy oct9: "people should have a 1% crit chance to start" (×2 power) — gear adds on top
 export const CRIT_BASE_POWER = 2;

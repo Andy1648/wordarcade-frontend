@@ -26,10 +26,10 @@ export const SERVER_FLAG_KEY = `${S2_PREFIX}server`; // the server hook's note (
 const fin = (v, d) => (Number.isFinite(v) ? v : d);
 const pos = (v, d) => (Number.isFinite(v) && v > 0 ? v : d);
 
-// MARKS (PROGRESSION FINAL): the MAIN multiplier by tier — RARE ×1.25 (the floor — GEAR POOL v2 removed COMMON) · EPIC ×1.5 · LEGENDARY ×2 ·
-// MYTHIC ×3 · SECRET ×5. marks.js MARK_TIERS holds the part above ×1 (the live season's LEGENDARY ×3 / MYTHIC ×10 /
+// MARKS (PROGRESSION FINAL): the MAIN multiplier by tier — RARE ×1.4 (the floor — GEAR POOL v2 removed COMMON) · EPIC ×1.8 · LEGENDARY ×2.8 ·
+// MYTHIC ×5 · SECRET ×10 (GEAR OP, Andy oct9 — was ×1.25 / 1.5 / 2 / 3 / 5). marks.js MARK_TIERS holds the part above ×1 (the live season's LEGENDARY ×3 / MYTHIC ×10 /
 // SECRET ×25); this lazy chunk loads only with the SEASON2 flag, so the live numbers are untouched with it off.
-// The roll stats read the same ladder as a percent (markRollsCore TIER_PCT: +25 / +50 / +100 / +200 / +400 %).
+// The roll stats read the same ladder as a percent (markRollsCore TIER_PCT: +40 / +80 / +180 / +400 / +900 %).
 // NUMBERS AUDIT (Andy item 5): every ROLLED mark's stat (markRollsCore ROLL_MARKS[].stat) was sized from TIER_PCT
 // when that module LOADED — before this chunk re-tiered it — so in season 2 a LEGENDARY +% WINS / XP mark still paid
 // +200% (×3, FINAL ×2), a SECRET +2,400% (×25, FINAL ×5) and a MYTHIC +90 BASE (×10, FINAL ×3), on the card AND in the

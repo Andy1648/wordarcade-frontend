@@ -32,13 +32,13 @@ function withStorage(seed, fn) {
   }
 }
 
-test('the tier table is Andy\'s (no COMMON — GEAR POOL v2): RARE +2% · EPIC +4% +0.25× · LEGENDARY +6% +0.5× · MYTHIC +9% +1× · SECRET +12% +1.5×', () => {
+test('the tier table is Andy\'s (no COMMON — GEAR POOL v2): RARE +3% · EPIC +6% +0.5× · LEGENDARY +9% +1× · MYTHIC +14% +2× · SECRET +20% +3× (GEAR OP)', () => {
   assert.equal(CRIT_BY_TIER.common, undefined);
-  assert.deepEqual({ ...CRIT_BY_TIER.rare }, { rate: 0.02, power: 0 });
-  assert.deepEqual({ ...CRIT_BY_TIER.epic }, { rate: 0.04, power: 0.25 });
-  assert.deepEqual({ ...CRIT_BY_TIER.legendary }, { rate: 0.06, power: 0.5 });
-  assert.deepEqual({ ...CRIT_BY_TIER.mythic }, { rate: 0.09, power: 1 });
-  assert.deepEqual({ ...CRIT_BY_TIER.secret }, { rate: 0.12, power: 1.5 });
+  assert.deepEqual({ ...CRIT_BY_TIER.rare }, { rate: 0.03, power: 0 });
+  assert.deepEqual({ ...CRIT_BY_TIER.epic }, { rate: 0.06, power: 0.5 });
+  assert.deepEqual({ ...CRIT_BY_TIER.legendary }, { rate: 0.09, power: 1 });
+  assert.deepEqual({ ...CRIT_BY_TIER.mythic }, { rate: 0.14, power: 2 });
+  assert.deepEqual({ ...CRIT_BY_TIER.secret }, { rate: 0.2, power: 3 });
   assert.equal(CRIT_BASE_POWER, 2);
   assert.equal(CRIT_RATE_CAP, 0.5);
   // every rollable gear reads its tier's row at ★0 (no state)
@@ -54,12 +54,12 @@ test('★ pips × SHINY scale the crit stats exactly as they scale the MAIN stat
   const n5 = 1 + DUPES_PER_PIP.legendary * MAX_PIPS; // ★5 = ×2
   const st = own({ [leg.id]: { n: n5 } });
   const c = critStatsOf(leg.id, st);
-  near(c.rate, 0.12, '★5 legendary rate');
-  near(c.power, 1, '★5 legendary power');
+  near(c.rate, 0.18, '★5 legendary rate');
+  near(c.power, 2, '★5 legendary power');
   const shiny = own({ [leg.id]: { n: n5, shiny: true } });
   const s = critStatsOf(leg.id, shiny);
-  near(s.rate, 0.06 * 2 * SHINY_MULT, '★5 shiny rate');
-  near(s.power, 0.5 * 2 * SHINY_MULT, '★5 shiny power');
+  near(s.rate, 0.09 * 2 * SHINY_MULT, '★5 shiny rate');
+  near(s.power, 1 * 2 * SHINY_MULT, '★5 shiny power');
 });
 
 test('critTotals: BASE 1% · ×2, SUMS the worn MAIN + the 2nd slot, caps the rate at 50%', () => {
@@ -68,20 +68,20 @@ test('critTotals: BASE 1% · ×2, SUMS the worn MAIN + the 2nd slot, caps the ra
   const leg = byTier('legendary');
   const myth = byTier('mythic');
   const one = critTotals({ markId: leg.id, mark2Id: null, state: st });
-  near(one.rate, 0.07, 'legendary alone (+ the 1% base)');
-  near(one.power, 2.5, 'legendary power ×2.5');
+  near(one.rate, 0.1, 'legendary alone (+ the 1% base)');
+  near(one.power, 3, 'legendary power ×3');
   const two = critTotals({ markId: leg.id, mark2Id: myth.id, state: st });
-  near(two.rate, 0.16, 'legendary + mythic rate (+1% base)');
-  near(two.power, 2 + 0.5 + 1, 'legendary + mythic power');
+  near(two.rate, 0.24, 'legendary + mythic rate (+1% base)');
+  near(two.power, 2 + 1 + 2, 'legendary + mythic power');
   // the same gear twice counts once
-  near(critTotals({ markId: leg.id, mark2Id: leg.id, state: st }).rate, 0.07, 'no double count');
-  // the cap: two ★5 shiny secrets = 2 × 12% × 4 = 96% → 50%
+  near(critTotals({ markId: leg.id, mark2Id: leg.id, state: st }).rate, 0.1, 'no double count');
+  // the cap: a ★5 shiny secret = 20% × 4 = 80% (+ an earned 9% + 1%) → 50%
   const sec = byTier('secret');
   const big = own({ [sec.id]: { n: 1 + DUPES_PER_PIP.secret * MAX_PIPS, shiny: true } });
   const capped = critTotals({ markId: sec.id, mark2Id: 'mk-ironhand', state: big });
   assert.equal(capped.rate, CRIT_RATE_CAP);
-  near(capped.rawRate, 0.12 * 4 + 0.06 + 0.01, 'uncapped sum kept');
-  near(capped.power, 2 + 1.5 * 4 + 0.5, 'power is never capped');
+  near(capped.rawRate, 0.2 * 4 + 0.09 + 0.01, 'uncapped sum kept');
+  near(capped.power, 2 + 3 * 4 + 1, 'power is never capped');
 });
 
 test('critTotals reads the worn MAIN from storage (season 1: no 2nd slot)', () => {
@@ -89,8 +89,8 @@ test('critTotals reads the worn MAIN from storage (season 1: no 2nd slot)', () =
   const st = own({ [leg.id]: { n: 1 } });
   withStorage({ [MARK_ROLLS_STORE_KEY]: JSON.stringify(st), [MARKS_EQUIPPED_KEY]: leg.id }, () => {
     const t = critTotals();
-    near(t.rate, 0.07, 'worn legendary (+1% base)');
-    near(t.power, 2.5, 'worn legendary power');
+    near(t.rate, 0.1, 'worn legendary (+1% base)');
+    near(t.power, 3, 'worn legendary power');
     assert.deepEqual(t.ids, [leg.id]);
   });
   withStorage({}, () => assert.deepEqual(critTotals(), { rate: CRIT_BASE_RATE, power: 2, rawRate: CRIT_BASE_RATE, every: 0, ids: [] }));

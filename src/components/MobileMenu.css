@@ -281,16 +281,46 @@
   .hp-m-rail .kb-rwrap.is-shop,
   .hp-m-rail .kb-rwrap.is-rebirth { margin-left: -14px; }
   .hp-m-rail .kb--rail { width: 100%; height: 52px; }
-  .hp-m-rail .kb-rface { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 6px 10px 0 14px; }
-  .hp-m-rail .kb-rface .kit-icon { display: none; } /* label + number only */
-  .hp-m-rail .kb-rtext { align-items: flex-start; width: 100%; max-width: 100%; }
-  .hp-m-rail .kb-rlabel { font-size: var(--fs-k14); letter-spacing: 0; }
-  /* THE NUMBER: 20px Space Mono under its label, never clipped — the slab's point */
-  .hp-m-rail .kb-rval { margin-top: 2px; max-width: 100%; font-size: var(--fs-k20); }
+  /* Andy oct9 ("the 4 icons in the menu … at least some animation"; "a lot of things are off center"): the phone slab is
+     the desktop TILE in miniature — the LABEL on the tone strip across the top, the ICON and its NUMBER as one centred
+     row under it. Everything on the slab's centre line (e2e/rail-centre.spec.js). */
+  .hp-m-rail .kb-rface { flex-direction: row; align-items: center; justify-content: center; gap: 8px; padding: 20px 8px 0; }
+  .hp-m-rail .kb-rface .kit-icon { width: 26px; height: 26px; }
+  /* the icon + number ROW is centred on its INK: these two icons carry ~2px of empty box on their left at 26px */
+  .hp-m-rail .kb-rico .kit-icon[data-icon='rebirth'],
+  .hp-m-rail .kb-rico .kit-icon[data-icon='lock'] { margin-left: -2px; }
+  .hp-m-rail .kb-rtext { display: contents; }
+  .hp-m-rail .kb-rlabel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 19px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--fs-k14);
+    letter-spacing: 0.02em;
+    color: var(--k-ink, #000);
+  }
+  .hp-m-rail .kb-rwrap.is-locked .kb-rlabel { color: var(--k-dim, #9c90b4); }
+  /* THE NUMBER: Bungee in the destination colour, black-stroked, beside its icon — never clipped */
+  .hp-m-rail .kb-rval {
+    margin: 0;
+    max-width: 100%;
+    font-family: 'Bungee', sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    font-size: var(--fs-k20);
+    line-height: 1;
+    -webkit-text-stroke: 4px #000;
+    paint-order: stroke fill;
+    text-shadow: 2px 2px 0 #000;
+  }
   /* the value keeps its unit when it is short ("3 LV", "×12", "FREE"); the long form ("55 ROLLS") would crowd the label */
   .hp-m-rail .kb-rval-full { display: none; }
   .hp-m-rail .kb-rval-short { display: inline; }
-  .hp-m-rail .kb-redge { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 6px; transform: none; border-right: 0; border-bottom: 3px solid #000; }
+  .hp-m-rail .kb-redge { left: -4px; right: -4px; top: -4px; bottom: auto; width: auto; height: 23px; transform: none; border-right: 0; border-bottom: 3px solid #000; }
   .hp-m-rail .kb-rdot { left: auto; right: -6px; top: -8px; width: 18px; height: 18px; }
   .hp-m-rail .kb--rail:disabled { opacity: 0.6; pointer-events: none; }
 
@@ -371,7 +401,7 @@
     content: 'GEAR';
     margin-right: 8px;
     font-size: var(--fs-k14);
-    color: #8f7bb3;
+    color: #fff;
   }
   .hp-m-per .hp-chip.is-empty { background: #1a0b2e; }
   .hp-m-per .hp-chip-edge { width: 8px; background: #B04BFF; border-right: 3px solid #000; }
@@ -386,7 +416,7 @@
   .hp-m-per .hp-chip:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { border-color: var(--gear-line); background: var(--gear-fill); box-shadow: 3px 3px 0 var(--gear-edge); }
   .hp-m-per .hp-chip:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: 4px 4px 0 var(--gear-line); }
   .hp-m-per .hp-chip:is([data-tier='epic'], [data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) .menu-mark-name { color: var(--gear-line); }
-  .hp-m-per .menu-mark-name { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; }
+  .hp-m-per .menu-mark-name { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; } /* gear UI v3: ink-stroked, never plain */
 
   /* ---- BACKDROP: drop the loose wall ornaments on the HOME view only ----
      27 discrete decorations: .wall-graffiti-tag (12), .wall-splatter (4), .wall-sticker (6),
@@ -443,6 +473,9 @@
   .hp-m-top .hp-icons .kb-iface { width: 44px; height: 44px; }
   .hp-m-rail { row-gap: 6px; }
   .hp-m-rail .kb--rail { height: 46px; }
-  .hp-m-rail .kb-rface { padding-top: 5px; }
+  .hp-m-rail .kb-rface { padding-top: 18px; }
+  .hp-m-rail .kb-rlabel { height: 17px; }
+  .hp-m-rail .kb-redge { height: 21px; }
+  .hp-m-rail .kb-rface .kit-icon { width: 22px; height: 22px; }
   .hp-m-solo-btn { padding-top: 4px; padding-bottom: 4px; }
 }

@@ -192,7 +192,7 @@ export function markBlurbAt(m, rank = 1) {
   // so both say "wins".
   // MARKS via ROLLS: the old per-mode wins / xp flavour is folded into the one MAIN (tier) — say what it pays.
   void where;
-  if (e.winsMult || e.xpMult) return `MAIN ×${+markMainMult(m).toFixed(2)} on XP per letter and wins.`;
+  if (e.winsMult || e.xpMult) return `×${+markMainMult(m).toFixed(2)} XP + WINS`;
   if (e.rarityStep) return `${pct(e.rarityStep)} chance a word counts one RARITY TIER higher.`;
   if (e.comboKeep) return `${pct(e.comboKeep)} chance a broken COMBO survives.`;
   return m.blurb;

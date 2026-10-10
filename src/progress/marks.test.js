@@ -186,10 +186,10 @@ test('only the WORN mark grows, one word at a time (the rank is a counter; the M
 
 test('the blurb prints the number the payout actually pays (the tier MAIN)', () => {
   const savant = MARKS.find((m) => m.id === 'mk-scholar');
-  assert.equal(markBlurbAt(savant, 1), 'MAIN ×1.25 on XP per letter and wins.');
-  assert.equal(markBlurbAt(savant, 5), 'MAIN ×1.25 on XP per letter and wins.');
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), 'MAIN ×1.5 on XP per letter and wins.');
-  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-eternal'), 1), 'MAIN ×3 on XP per letter and wins.');
+  assert.equal(markBlurbAt(savant, 1), '×1.25 XP + WINS');
+  assert.equal(markBlurbAt(savant, 5), '×1.25 XP + WINS');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), '×1.5 XP + WINS');
+  assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-eternal'), 1), '×3 XP + WINS');
   const metro = MARKS.find((m) => m.id === 'mk-metronome');
   assert.equal(markBlurbAt(metro, 5), '48% chance a broken COMBO survives.');
 });

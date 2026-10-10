@@ -16,7 +16,7 @@ import { formatNum } from '../format';
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { CARD_RAR } from './markCard/palette.js';
 import { mainTag, critTierOf } from '../progress/markRollsCore';
-import { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS, GLOW_TIERS } from './markCard/idleSheen.js';
+import { IDLE_SHEEN_TIERS, GLOW_TIERS } from './markCard/idleSheen.js';
 import { useReduceMotion } from '../lib/useReduceMotion';
 // The cog + glyph art is the INDEX chunk's (MarkBadge, ~11 KB): the gear slot loads it only once a mark is worn —
 // payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
@@ -89,9 +89,59 @@ function sayGate(g) {
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)
  */
+// THE DOT NUDGE (MENU MOTION LAW, Andy oct9 "the 4 icons in the menu … at least some animation"): a rail tile with an
+// actionable dot nudges its icon ONCE every NUDGE_EVERY_MS — one shared setTimeout for the whole rail (never a CSS loop,
+// never a timer per tile), a finite WAAPI transform on the icon's .kb-rico host, staggered when several tiles have a
+// dot. will-change only while it plays. Skipped on a hidden tab; REDUCE MOTION gets none.
+export const NUDGE_EVERY_MS = 8000;
+const NUDGE_FIRST_MS = 2600;
+const NUDGE = [
+  { transform: 'translateY(0) rotate(0) scale(1)' },
+  { transform: 'translateY(-7px) rotate(-12deg) scale(1.14)', offset: 0.22 },
+  { transform: 'translateY(0) rotate(9deg) scale(1)', offset: 0.46 },
+  { transform: 'translateY(-2px) rotate(-5deg) scale(1.04)', offset: 0.68 },
+  { transform: 'translateY(0) rotate(0) scale(1)' },
+];
+function useDotNudge(rootRef, enabled) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!enabled || !root || typeof root.animate !== 'function') return undefined;
+    let timer = null;
+    const runs = [];
+    const tick = () => {
+      timer = setTimeout(tick, NUDGE_EVERY_MS);
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const hosts = [...root.querySelectorAll('.kb-rwrap')]
+        .filter((w) => w.querySelector('.kb-rdot'))
+        .map((w) => w.querySelector('.kb-rico'))
+        .filter(Boolean);
+      hosts.forEach((el, i) => {
+        if (typeof el.animate !== 'function') return;
+        el.style.willChange = 'transform';
+        const a = el.animate(NUDGE, { duration: 560, delay: i * 160, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+        runs.push(a);
+        const off = () => {
+          el.style.willChange = '';
+          const at = runs.indexOf(a);
+          if (at >= 0) runs.splice(at, 1);
+        };
+        a.finished.then(off, off);
+      });
+    };
+    timer = setTimeout(tick, NUDGE_FIRST_MS);
+    return () => {
+      clearTimeout(timer);
+      runs.splice(0).forEach((a) => { try { a.cancel(); } catch { /* gone */ } });
+    };
+  }, [rootRef, enabled]);
+}
+
 export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, foot = null }) {
+  const navRef = useRef(null);
+  const reduced = useReduceMotion();
+  useDotNudge(navRef, !reduced);
   return (
-    <nav className={`homepage-corner-nav hp-rail ${className}`} aria-label="Menu">
+    <nav ref={navRef} className={`homepage-corner-nav hp-rail ${className}`} aria-label="Menu">
       <KitPill kind="wins" value={wins} className="menu-wins-chip" />
       {gems != null && <KitPill kind="gems" value={gems} className="menu-gems-chip" />}
       {extra}
@@ -134,8 +184,8 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
  * Andy oct9 ("add a glow or smthn to rarer gears … clicking the 'your gear' should show the gear stats"):
  *   - RARITY is the frame, not a glow (flat rule): the border and the hard offset shadow take the tier colour, rare
  *     quiet → mythic loud (Homepage.css `.hp-gear[data-tier]`); LEGENDARY+ also catch the INDEX's one-shot sheen.
- *   - a worn gear opens its GEAR SHEET (Homepage → GearSheetOverlay); nothing worn → NONE / ROLL FOR ONE + a dot,
- *     and the ROLL screen.
+ *   - a tap opens the EQUIP screen (Homepage → EquipScreen, Andy oct9 22:56); a save with no gear at all → NONE /
+ *     ROLL FOR ONE + a dot, and the ROLL screen; gears owned but none equipped → NONE / EQUIP ONE + a dot.
  */
 /** "+28 BASE WINS/WORD" → { big: "+28", unit: "BASE WINS/WORD" } — split at the first space, exactly as the GEAR
  *  SHEET's splitTag (markCard/cardModel.js), so the slot's number and words are the sheet's. */
@@ -148,34 +198,24 @@ export function gearSplit(text) {
 }
 
 /**
- * THE GEAR SHEEN (LEGENDARY+): the INDEX's idle sheen (MarksIndex useIdleSheen — the same band asset, cadence and
- * sweep): one finite WAAPI transform sweep every IDLE_SHEEN_EVERY_MS on a setTimeout, never a CSS loop. will-change is
- * on only for the sweep. A hidden tab or REDUCE MOTION gets none.
+ * THE YOUR GEAR SHOWCASE (gear UI v3, Andy oct9 22:56 "make the menu 'your gear' animation even more attractive (for
+ * legendary ones)"): EPIC+ worn gears perform once every ~6.5–8 s — aura flare + mote burst, glyph pop, sheen sweep,
+ * stat punch (gearShowcase.js, lazy: loaded only once such a gear is worn). Finite WAAPI one-shots on one setTimeout
+ * chain, never a CSS loop. REDUCE MOTION: never started — the slot is static.
  */
-function useGearSheen(bandRef, enabled) {
+function useGearShowcase(slotRef, tier, enabled) {
   useEffect(() => {
-    const band = bandRef.current;
-    if (!enabled || !band || typeof band.animate !== 'function') return undefined;
-    let timer = null;
-    let run = null;
-    const sweep = () => {
-      timer = setTimeout(sweep, IDLE_SHEEN_EVERY_MS);
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-      band.style.willChange = 'transform';
-      run = band.animate([{ transform: 'translateX(-110%)' }, { transform: 'translateX(110%)' }], { duration: IDLE_SHEEN_MS, easing: 'cubic-bezier(.45,0,.25,1)' });
-      const off = () => { band.style.willChange = ''; };
-      run.finished.then(off, off);
-    };
-    timer = setTimeout(sweep, 1200); // the first sweep soon after the menu lands
-    return () => {
-      clearTimeout(timer);
-      if (run) { try { run.cancel(); } catch { /* gone */ } }
-      band.style.willChange = '';
-    };
-  }, [bandRef, enabled]);
+    const el = slotRef.current;
+    if (!enabled || !el || !tier) return undefined;
+    let live = true;
+    let stop = null;
+    Promise.all([import('./gearShowcase.js'), import('./gearShowcase.css')])
+      .then(([m]) => { if (live) stop = m.startShowcase(el, tier); }, () => {});
+    return () => { live = false; if (stop) stop(); };
+  }, [slotRef, tier, enabled]);
 }
 
-export function MenuGearSlot({ mark, onClick, disabled }) {
+export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   // the stat as it PAYS (markRollsCore.mainTag — the payout's own statOf), never a legacy blurb sentence
@@ -184,10 +224,11 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
   const hasCrit = !!(crit && crit.rate > 0);
   const reduced = useReduceMotion();
   const sheen = !!mark && IDLE_SHEEN_TIERS.has(tier);
-  const bandRef = useRef(null);
-  useGearSheen(bandRef, sheen && !reduced);
+  const slotRef = useRef(null);
+  useGearShowcase(slotRef, mark && GLOW_TIERS.has(tier) ? tier : null, !reduced);
   return (
     <button
+      ref={slotRef}
       type="button"
       className={`hp-gear menu-mark${mark ? ' is-worn' : ' is-empty'}`}
       data-tier={tier || undefined}
@@ -196,16 +237,22 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
       disabled={disabled}
       data-nav="gear"
       aria-haspopup={mark ? 'dialog' : undefined}
-      aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open gear stats` : 'Your gear: none. Roll for one'}
+      aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open your gear` : 'Your gear: none. Open your gear'}
     >
       {mark && GLOW_TIERS.has(tier) ? <Suspense fallback={null}><GearFx tier={tier} /></Suspense> : null}
-      {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img ref={bandRef} className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
+      {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
+      {/* the SHOWCASE's one-shot layers (LEGENDARY+, gearShowcase.js): a tier-colour FLASH over the face and a burst
+          RING behind the glyph — opacity 0 at rest, nothing moves until a run */}
+      {sheen ? <span className="hp-gear-flash" aria-hidden="true" /> : null}
       <span className="hp-gear-label">YOUR GEAR</span>
       <span className="hp-gear-body">
         {mark ? (
-          <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
-            <MarkBadge mark={mark} size={56} className="hp-gear-cog" />
-          </Suspense>
+          <span className="hp-gear-art">
+            {sheen ? <span className="hp-gear-ring" aria-hidden="true" /> : null}
+            <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
+              <MarkBadge mark={mark} size={56} className="hp-gear-cog" />
+            </Suspense>
+          </span>
         ) : <span className="hp-gear-hole" aria-hidden="true" />}
         <span className="hp-gear-text">
           {/* the NUMBER big ("×3"), WHAT it boosts under it ("WINS") — the sheet's MAIN STAT, small; FitText is the
@@ -217,7 +264,7 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
               <GearSlotCrit id={mark.id} />
             </Suspense>
           ) : null}
-          <span className="hp-gear-sub">{mark ? mark.name : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
+          <FitText className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</FitText>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>
       {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
@@ -227,8 +274,8 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
 
 /** The worn mark, NAME ONLY — or, while nothing is worn, "ROLL" + a notification dot (it opens the ROLL screen). It
  *  wears the YOUR GEAR slot's TIER FRAME (Andy oct9): the edge stripe, border and shadow in the tier colour. */
-export function MenuMarkChip({ mark, onClick }) {
-  const name = mark ? mark.name : 'ROLL';
+export function MenuMarkChip({ mark, owns = false, onClick }) {
+  const name = mark ? mark.name : owns ? 'EQUIP' : 'ROLL';
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   return (
@@ -239,7 +286,8 @@ export function MenuMarkChip({ mark, onClick }) {
       style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
       onClick={onClick}
       aria-haspopup={mark ? 'dialog' : undefined}
-      aria-label={mark ? `Mark equipped: ${mark.name}, ${tier}. Open gear stats` : 'No mark worn. Roll for a mark'}
+      data-nav="gear"
+      aria-label={mark ? `Gear equipped: ${mark.name}, ${tier}. Open your gear` : 'No gear equipped. Open your gear'}
     >
       <span className="hp-chip-edge" aria-hidden="true" />
       <span className="menu-mark-name">{name}</span>

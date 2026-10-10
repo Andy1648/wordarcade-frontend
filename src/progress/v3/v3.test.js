@@ -182,10 +182,10 @@ test('AUTO REBIRTH: a toggle that opens at R2 (refused below); no 2nd boost slot
   assert.equal(BO.codeBoostMult(now + 1000), 3);
 });
 
-test('MARKS (FINAL, GEAR POOL v2 — no COMMON): RARE ×1.25 · EPIC ×1.5 · LEGENDARY ×2 · MYTHIC ×3 · SECRET ×5; pity EPIC+ 10, LEGENDARY+ 50', async () => {
+test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.4 · EPIC ×1.8 · LEGENDARY ×2.8 · MYTHIC ×5 · SECRET ×10; pity EPIC+ 10, LEGENDARY+ 50', async () => {
   const M = await import('../marks.js');
   const MRC = await import('../markRollsCore.js');
-  const want = { rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 };
+  const want = { rare: 1.4, epic: 1.8, legendary: 2.8, mythic: 5, secret: 10 };
   for (const [t, m] of Object.entries(want)) {
     near(1 + M.MARK_TIERS[t].bonus, m);
     near(MRC.TIER_MAIN[t], m);

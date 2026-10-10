@@ -1,9 +1,10 @@
-// GearSheet.jsx — the GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel), lifted out of MarksIndex.jsx so the
-// menu's YOUR GEAR slot opens the SAME sheet (GearSheetOverlay.jsx, lazy) the INDEX opens on a tap — one sheet, one
-// set of numbers. The card, then the MAIN STAT biggest, the extra stats as a quiet list, the PERK in its own cyan
-// panel, flavour, odds + ★ progress, owned ×N / first roll #, SET AS MAIN. LOCKED: rarity · LOCKED, the odds + ROLL TO
+// GearSheet.jsx — the GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel), shared by the INDEX (a tap on any
+// tile) and the EQUIP screen (EquipScreen.jsx, the menu's YOUR GEAR) — one sheet, one set of numbers. The card, then
+// the gear's stat biggest, the extra stats, the PERK in its own cyan panel, flavour, odds + ★ progress, owned ×N /
+// first roll #, and ONE big EQUIP / UNEQUIP button (Andy oct9 22:56: "instead of the word 'main' we'll just equip and
+// unequip … no need to bombard with sentences everywhere or define crit"). LOCKED: rarity · LOCKED, the odds + ROLL TO
 // UNLOCK (an EARNED gear: ACHIEVEMENT + its task) and only the COUNT of what is hidden ("2 EXTRA STATS · 1 PERK") —
-// no values.
+// no values, and no EQUIP.
 import { useEffect, useRef } from 'react';
 import { markProgress, markById } from '../progress/marks';
 import { indexEntry } from '../progress/markRolls';
@@ -11,6 +12,7 @@ import { flavourOf } from '../progress/markFlavour';
 import { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
 import MarkCard from './markCard/MarkCard';
+import TierBanner from './markCard/TierBanner.jsx';
 import { CARD_RAR } from './markCard/palette.js';
 import { cardModel, pipNext, pipsLabel, perkLines, tierLabel } from './markCard/cardModel.js';
 import { formatNum } from '../format';
@@ -25,8 +27,9 @@ const rankOf = (id) => (markById(id) ? markProgress(id).rank : 1);
 const lineOf = (e) => (CARD_RAR[e.tier] || CARD_RAR.rare).line;
 
 /**
- * e: { id, name, tier, kind: 'roll' | 'perm' | 'retired' } · have: owned · on: the worn MAIN · view: the roll state
- * (viewState) · howTo: a locked EARNED gear's task · onSet(id | null): SET AS MAIN / TAKE OFF (omit → no button).
+ * e: { id, name, tier, kind: 'roll' | 'perm' | 'retired' } · have: owned · on: equipped · view: the roll state
+ * (viewState) · howTo: a locked EARNED gear's task · onSet(id | null): EQUIP / UNEQUIP (omit → no button; a locked
+ * gear never shows one).
  */
 export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) {
   const closeRef = useRef(null);
@@ -52,16 +55,18 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
       >
         <button type="button" className="mx-close mx-sheet-close" onClick={onClose} aria-label="Close" ref={closeRef}>✕</button>
         <div className="mx-sheet-card">
-          {have && GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} /> : null}
+          {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} /> : null}
           <MarkCard
             id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
             shiny={!!(info && info.shiny)} fx={have} parts={SHEET_PARTS}
           />
         </div>
         {/* GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel): MAIN STAT biggest → the extra stats, quiet → the
-            PERK in its own panel → odds + ★ progress → EQUIP. LOCKED: the odds as the main line, how to get it, and
+            PERK in its own panel → odds + ★ progress → EQUIP / UNEQUIP. LOCKED: the odds as the main line, how to get it, and
             only the COUNT of what is hidden. */}
         <div className="mx-sheet-body">
+          {/* the RARITY as a banner (gear UI v3) — it climbs the ladder, MYTHIC / SECRET a different class */}
+          <TierBanner tier={e.tier} kind={e.kind} className="mx-sheet-banner" />
           {have ? (
             <div className="mx-main" data-testid="mark-main">
               <span className="mx-main-num">{c.statNum}</span>
@@ -69,13 +74,13 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
             </div>
           ) : rolled ? (
             <div className="mx-main is-locked" data-testid="mark-main">
-              <span className="mx-main-kick">{c.rarityName} · LOCKED</span>
+              <span className="mx-main-kick">LOCKED</span>
               <span className="mx-main-num">{c.odds}</span>
               <span className="mx-main-kind">ROLL TO UNLOCK</span>
             </div>
           ) : (
             <div className="mx-main is-locked is-word" data-testid="mark-main">
-              <span className="mx-main-kick">{c.rarityName} · LOCKED</span>
+              <span className="mx-main-kick">LOCKED</span>
               <span className="mx-main-num">ACHIEVEMENT</span>
               {howTo ? <span className="mx-main-kind mx-howto">{howTo}</span> : null}
             </div>
@@ -87,13 +92,12 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
                   <span className="mx-crit-num">{l.num}</span> <span className="mx-crit-kind">{l.kind}</span>
                 </span>
               ))}
-              <span className="mx-crit-what">A CRIT KEY PAYS ×2 XP — CRIT POWER ADDS TO THE ×2</span>
             </div>
           ) : null}
           {hidden ? <div className="mx-hidden" data-testid="mark-hidden">{hidden}</div> : null}
           {perks.length ? (
             <div className="mx-sheet-perk" data-testid="mark-perk">
-              <span className="mx-perk-kick">PERK{perks.length > 1 ? 'S' : ''} · WHILE MAIN</span>
+              <span className="mx-perk-kick">PERK{perks.length > 1 ? 'S' : ''}</span>
               {perks.map((p) => <span key={p} className="mx-perk-line">{p}</span>)}
             </div>
           ) : null}
@@ -122,8 +126,8 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
           ) : null}
           {have && onSet ? (
             <div className="mx-sheet-actions">
-              <button type="button" className={`mx-set${on ? ' is-on' : ''}`} onClick={() => onSet(on ? null : e.id)}>
-                {on ? 'YOUR MAIN — TAKE OFF' : 'SET AS MAIN'}
+              <button type="button" className={`mx-set${on ? ' is-on' : ''}`} data-testid="gear-equip" onClick={() => onSet(on ? null : e.id)}>
+                {on ? 'UNEQUIP' : 'EQUIP'}
               </button>
             </div>
           ) : null}

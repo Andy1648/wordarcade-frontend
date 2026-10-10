@@ -152,6 +152,7 @@
   transform: skewX(-14deg);
 }
 .kb-rface .kit-icon { position: relative; }
+.kb-rico { position: relative; flex: none; display: flex; align-items: center; justify-content: center; }
 .kb-rtext { position: relative; display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 1; }
 .kb-rlabel { position: relative; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); color: var(--k-white); white-space: nowrap; }
 /* the live value under the label (SEASON 2 #5) — the destination colour, Space Mono, never under 13px */

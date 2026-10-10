@@ -11,10 +11,14 @@
 //   pip plate    a small plate on the bottom band, as wide as its pips (`pipW`; none when the card has no pips)
 //   pins         LEGENDARY+ ONLY: diamond pins holding the ribbon (MYTHIC adds pins on the rarity plate; SECRET's are
 //                the rainbow) — the rare card is DRAWN differently, not just recoloured (Balatro's soul layer)
+//   TIER BANNER  (gear UI v3, Andy oct9 "mythic and secret should be even greater") the rarity plate climbs the ladder:
+//                RARE / EPIC a dark plate · LEGENDARY the plate in full gold · MYTHIC full pink over a cyan plate printed
+//                off-register (its second colour) · SECRET a rainbow-striped plate. MYTHIC / SECRET also wear a frame
+//                variant ASSET over the whole card (public/fx/frame-<tier>.svg — MarkCard).
 //
 // Pure geometry: no gradients, no filters. Colours come in as props (the tier's palette row) so one drawing serves
 // every tier; every card shares ONE layout (frameLayout.LAYOUT). The text is HTML over it (MarkCard).
-import { memo } from 'react';
+import { memo, useId } from 'react';
 import { RAINBOW_TEETH } from './palette.js';
 import { LAYOUT as L, PLATE_H } from './frameLayout.js';
 
@@ -27,6 +31,8 @@ function rosette(cx, cy, r, points = 12, inner = 0.86) {
   }
   return `M${pts.join(' L')} Z`;
 }
+const LOUD = new Set(['legendary', 'mythic', 'secret']);
+const MYTHIC_2 = '#2EFFE0'; // mythic's second colour (the cyan of its second aura)
 const banner = (x0, x1, y, h, notch) => `M${x0 + notch} ${y} L${x1 - notch} ${y} L${x1} ${y + h / 2} L${x1 - notch} ${y + h} L${x0 + notch} ${y + h} L${x0} ${y + h / 2} Z`;
 const Pin = ({ cx, cy, fill, edge }) => (
   <g>
@@ -36,6 +42,9 @@ const Pin = ({ cx, cy, fill, edge }) => (
 );
 
 function CardFrame({ line, edge, fill, tier = 'rare', locked = false, pipW = 0 }) {
+  // the TIER BANNER's loud plates: LEGENDARY+ (a locked card keeps them — the rarity is what you chase)
+  const loud = LOUD.has(tier) ? tier : null;
+  const clipId = `cf${useId().replace(/:/g, '')}`;
   const pins = !locked && (tier === 'legendary' || tier === 'mythic' || tier === 'secret');
   const headPins = !locked && (tier === 'mythic' || tier === 'secret');
   const pinFill = (i) => (tier === 'secret' ? RAINBOW_TEETH[i % RAINBOW_TEETH.length] : line);
@@ -50,9 +59,20 @@ function CardFrame({ line, edge, fill, tier = 'rare', locked = false, pipW = 0 }
       <rect x="2" y="2" width="176" height="256" rx="14" fill={line} stroke={edge} strokeWidth="5" />
       {/* the face: the dark tier wash */}
       <rect x="11" y="42" width="158" height="186" rx="8" fill={fill} stroke={edge} strokeWidth="3" />
-      {/* the rarity plate on the top band, with one drip off its right end (personality) */}
-      <path d={banner(9, 171, 9, 28, 7)} fill={edge} stroke={fill} strokeWidth="2.5" strokeLinejoin="round" />
-      <path d="M150 37 C150 44 148 48 151 52 C154 48 153 44 153 37 Z" fill={edge} />
+      {/* the rarity plate on the top band (the TIER BANNER — it climbs the ladder), with one drip off its right end */}
+      {loud === 'mythic' ? <path d={banner(9, 171, 9, 28, 7)} transform="translate(-4 4)" fill={MYTHIC_2} stroke="#128f7e" strokeWidth="2.5" strokeLinejoin="round" /> : null}
+      {loud === 'secret' ? (
+        <g>
+          <clipPath id={clipId}><path d={banner(9, 171, 9, 28, 7)} /></clipPath>
+          <g clipPath={`url(#${clipId})`}>
+            {RAINBOW_TEETH.map((c, i) => <rect key={c} x={9 + i * 32.4} y="9" width="32.6" height="28" fill={c} />)}
+          </g>
+          <path d={banner(9, 171, 9, 28, 7)} fill="none" stroke="#000" strokeWidth="3" strokeLinejoin="round" />
+        </g>
+      ) : (
+        <path d={banner(9, 171, 9, 28, 7)} fill={loud ? line : edge} stroke={loud ? edge : fill} strokeWidth={loud ? 3 : 2.5} strokeLinejoin="round" />
+      )}
+      <path d="M150 37 C150 44 148 48 151 52 C154 48 153 44 153 37 Z" fill={loud === 'secret' ? '#2EFFE0' : loud ? line : edge} />
       {/* the backing rosette behind the cog */}
       <path d={rosette(90, L.artC, L.artR)} fill={edge} stroke={fill} strokeWidth="3" strokeLinejoin="round" transform={`rotate(7 90 ${L.artC})`} />
       {/* the name ribbon: wings overhang the frame */}

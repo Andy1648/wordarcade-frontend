@@ -1,5 +1,5 @@
 /* GearFx.css — THE RARE-GEAR GLOW (GearFx.jsx). DOCUMENTED FLAT-RULE EXCEPTION (CLAUDE.md, Andy oct9 "clash royale
-   cards … they just feel so satisfying"): EPIC+ gears only, the YOUR GEAR slot + the INDEX / GEAR SHEET cards + the ROLL reel / reveal / stats.
+   cards … they just feel so satisfying"): every EPIC+ gear card, owned or locked — the YOUR GEAR slot, the EQUIP screen, the INDEX tiles, the GEAR SHEET, the ROLL reel / reveal / stats.
    The glow is a BAKED asset — public/fx/gear-aura-<tier>.png, a 128px 9-slice whose outer 56px is the pre-rendered
    falloff (a hot, near-white rim at the host's edge fading out to the tier colour — oct9 v2) — laid round the host as a border-image, so it is full strength at the host's edge and fades over
    --gfx-out px outside it whatever the host's size (no CSS filter, no blurred shadow). The layer sits BEHIND its
@@ -31,17 +31,44 @@
   border-image-width: calc(var(--gfx-out, 12px) * 0.55);
   border-image-source: url('/fx/gear-aura-mythic2.png');
 }
-/* SECRET: its own colour — the rainbow is baked into the asset */
+/* SECRET: its own colour — the rainbow is baked into the asset, in THREE colourings the breath swaps through (the
+   colours cycle), plus the GLITCH plate (the aura's alpha printed as an off-register cyan / pink split, scan-line torn) */
 .gfx[data-glow='secret'] .gfx-aura { border-image-source: url('/fx/gear-aura-secret.png'); }
+.gfx[data-glow='secret'] .gfx-aura.is-s2 { opacity: 0; border-image-source: url('/fx/gear-aura-secret2.png'); }
+.gfx[data-glow='secret'] .gfx-aura.is-s3 { opacity: 0; border-image-source: url('/fx/gear-aura-secret3.png'); }
+.gfx[data-glow='secret'] .gfx-aura.is-glitch { opacity: 0; border-image-source: url('/fx/gear-aura-secret-glitch.png'); }
 .gfx-mote {
   position: absolute;
   width: var(--gfx-ms, 26px);
   height: var(--gfx-ms, 26px);
   margin-top: calc(var(--gfx-ms, 26px) / -2);
   opacity: 0;
-  background: var(--gfx-m, #fff);
+  background: #fff;
   -webkit-mask: url('/fx/gear-mote.svg') center / contain no-repeat;
   mask: url('/fx/gear-mote.svg') center / contain no-repeat;
 }
 .gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }
 .gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }
+/* SECRET's ORBIT: a ring of rainbow motes round the card. The ring is a square as tall as the glow minus one --gfx-out,
+   squashed to the host's proportions by a STATIC scaleX (--gfx-osx, measured once on mount); the inner spin layer is
+   what the breath rotates (WAAPI transform + opacity). Each mote hangs off a static arm at its angle. */
+.gfx-orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: calc(100% - var(--gfx-out, 12px));
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) scaleX(var(--gfx-osx, 0.7));
+}
+.gfx-orbit-spin { position: absolute; inset: 0; opacity: 0; }
+.gfx-orbit-arm { position: absolute; inset: 0; }
+.gfx-orbit-mote {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: var(--gfx-ms, 26px);
+  height: var(--gfx-ms, 26px);
+  margin: calc(var(--gfx-ms, 26px) / -2) 0 0 calc(var(--gfx-ms, 26px) / -2);
+  -webkit-mask: url('/fx/gear-mote.svg') center / contain no-repeat;
+  mask: url('/fx/gear-mote.svg') center / contain no-repeat;
+}

@@ -1,0 +1,6 @@
+/* EquipScreen.css — YOUR GEAR → the EQUIP screen (EquipScreen.jsx). It wears the INDEX's overlay / grid / tile styles
+   (MarksIndex.css) — one look for both doors — and only says what differs: the title is YOUR GEAR in the tier-neutral
+   yellow, so the locker never reads as the catalogue. A full screen in the MARKS overlay slot, not a new fixed control. */
+.eq-title { color: #FFE94A; }
+.eq-head { justify-content: flex-start; gap: 28px; }
+.eq-count-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }

@@ -37,6 +37,8 @@
   --mc-y-name: 138px; --mc-y-hero: 172px; --mc-y-pips: 232px;
 }
 .mc-frame { position: absolute; left: 0; top: 0; width: 180px; height: 260px; display: block; pointer-events: none; }
+/* MYTHIC / SECRET frame variant (public/fx/frame-<tier>.svg, drawn on a 228×308 box round the 180×260 card) */
+.mc-frame-x { position: absolute; left: -24px; top: -24px; width: 228px; height: 308px; display: block; pointer-events: none; }
 
 /* RARITY on the rarity plate (y 9–37): the tier colour with an ink stroke */
 .mc-head {
@@ -52,13 +54,18 @@
   color: var(--mc-line);
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 18);
+  font-size: calc(var(--mc-u) * 19);
   letter-spacing: 0.06em;
   line-height: 1;
   white-space: nowrap;
-  -webkit-text-stroke: 3px #000;
+  -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
 }
+/* the TIER BANNER ladder (CardFrame draws the plate): LEGENDARY+ plates are the full tier colour, so the word goes
+   white, bigger, ink-stroked — SECRET's sits on the rainbow */
+.mc:is(.is-legendary, .is-mythic, .is-secret) .mc-head { color: #fff; font-size: calc(var(--mc-u) * 20); }
+.mc.is-secret .mc-head { letter-spacing: 0.12em; }
 
 /* the art: the cog + glyph (MarkBadge) over the frame's rosette, the EPIC+ glow behind it */
 .mc-art { position: absolute; top: var(--mc-y-art); left: calc(90px - var(--mc-art) / 2); width: var(--mc-art); height: var(--mc-art); }
@@ -152,6 +159,9 @@
   line-height: 1;
   letter-spacing: 0.02em;
   color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 1.5px 1.5px 0 #000;
 }
 /* LOCKED: the hero is the ODDS — "1 IN" small, the number big, both in the tier colour (Sol's RNG: the odds are the
    thing to want). An EARNED gear: a lock + ACHIEVEMENT. */

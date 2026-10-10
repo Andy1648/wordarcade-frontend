@@ -39,6 +39,7 @@ import { pipPlateW, pipGap } from './frameLayout.js';
 import './MarkCard.css';
 
 const NONE = {};
+const FRAME_X = { mythic: '/fx/frame-mythic.svg', secret: '/fx/frame-secret.svg' };
 const cls = (base, extra) => (extra ? `${base} ${extra}` : base);
 
 // the pip glyphs: small vector marks (drawn 13×13, shown at 15 card px — frameLayout.PIP_W), never text sized to the scale
@@ -109,6 +110,9 @@ function MarkCard({
       <div className="mc-face">
         {/* the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}
         <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} pipW={pipPlateW(pips.length)} />
+        {/* MYTHIC / SECRET: the frame VARIANT asset over the whole card (horns + crest / off-register glitch brackets +
+            crown) — a different class of card, owned or locked */}
+        {FRAME_X[c.tier] ? <img className="mc-frame-x" src={FRAME_X[c.tier]} alt="" draggable="false" /> : null}
         <div className={cls('mc-head', parts.head)}>
           <span className={cls('mc-tier', parts.tier)}>{c.rarityName}</span>
         </div>

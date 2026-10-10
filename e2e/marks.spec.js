@@ -1,11 +1,11 @@
 // e2e/marks.spec.js — STEP 49 (Andy oct2): ONE marks system. Marks unlock at LV 10 with a NEW SYSTEM
 // reveal; a new mark is CLAIMED (REWARDS badge until then); claiming reveals it and opens the picker;
-// the worn mark is the player's MAIN — its title chip shows the tier bonus, and the picker says it.
+// the worn mark is EQUIPPED (Andy oct9: EQUIP / UNEQUIP, never "MAIN") — its chip shows it, and the picker says it.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
-test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → wear it as MAIN (desktop)', async ({ page }) => {
+test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → EQUIP it (desktop)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await installBackendMock(page);
   await page.addInitScript(() => {
@@ -28,8 +28,15 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   // feat/menu-perrow: nothing worn → the YOUR GEAR slot says NONE with a notification dot (it opens the ROLL screen)
   await expect(btn.locator('.menu-mark-name')).toHaveText('NONE');
   await expect(btn.locator('.hp-chip-dot')).toHaveCount(1);
+  // Andy oct9 22:56: YOUR GEAR opens the EQUIP screen — the owned SAVANT is there, nothing EQUIPPED yet
   await btn.click();
-  // Andy oct5: MARKS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX
+  const equip = page.locator('[data-testid="equip-screen"]');
+  await expect(equip.locator('.mx-tile', { hasText: 'SAVANT' })).toBeVisible();
+  await expect(equip.locator('.mx-tile-main')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(equip).toHaveCount(0);
+  // GEARS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX (the catalogue)
+  await page.locator('[data-nav="gears"]').click();
   await page.locator('.rs-overlay').waitFor();
   await expect(page.locator('.rs-roll')).toBeVisible();
   await page.locator('[data-testid="roll-index"]').click();
@@ -54,9 +61,11 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   expect(flavour.length).toBeGreaterThan(0);
   expect(flavour.length).toBeLessThanOrEqual(32);
   await expect(sheet.getByTestId('mark-owned')).toHaveText(/^OWNED ×\d/);
-  await sheet.getByRole('button', { name: 'SET AS MAIN' }).click();
-  await expect(tile.locator('.mx-tile-main')).toHaveText('MAIN');
-  await expect(sheet.getByRole('button', { name: 'YOUR MAIN — TAKE OFF' })).toBeVisible();
+  // Andy oct9 22:56: EQUIP / UNEQUIP buttons — no "MAIN" anywhere, no crit explainer sentence
+  await expect(sheet).not.toContainText('MAIN');
+  await sheet.getByRole('button', { name: 'EQUIP', exact: true }).click();
+  await expect(tile.locator('.mx-tile-main')).toHaveText('EQUIPPED');
+  await expect(sheet.getByRole('button', { name: 'UNEQUIP', exact: true })).toBeVisible();
   await sheet.locator('.mx-sheet-close').click();
   await expect(sheet).toHaveCount(0);
   // a locked ROLLABLE mark (GEAR TILE v2 — a HIDDEN design): no name, a tier-coloured silhouette, its rarity, "1 IN X"
@@ -75,6 +84,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → w
   await expect(sheet).not.toContainText(/[×+]\d/);
   await expect(sheet.getByTestId('mark-flavour')).toHaveCount(0);
   await expect(page.locator('.mx-howto')).toHaveCount(0);
+  await expect(sheet.getByTestId('gear-equip')).toHaveCount(0); // a locked gear: nothing to equip
   await page.keyboard.press('Escape'); // the sheet closes first, the INDEX stays
   await expect(sheet).toHaveCount(0);
   await expect(page.locator('.mx-panel')).toBeVisible();
@@ -135,8 +145,10 @@ for (const [label, seed] of [
     const btn = page.locator('.menu-mark');
     await expect(btn).toBeVisible();
     await btn.click();
-    await page.locator('.rs-overlay').waitFor();
-    await page.locator('.rs-close').click();
+    // gear owned → the EQUIP screen; nothing owned yet → the ROLL screen
+    await page.locator('.rs-overlay, [data-testid="equip-screen"]').first().waitFor();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.rs-overlay, [data-testid="equip-screen"]')).toHaveCount(0);
     // still there after MARKS closes with nothing worn — the old disappearing act
     await expect(page.locator('.rs-overlay')).toHaveCount(0);
     await expect(btn).toBeVisible();

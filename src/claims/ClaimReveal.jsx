@@ -64,7 +64,7 @@ function ClaimRevealLive({ claim, onDone }) {
         name={m.name}
         /* C2: the MAIN bonus is in the one stack (wins AND XP), and the perk line already starts with its
            own sign — this read "+100% WINS ON EVERY WORD, + +20% wins & XP in every mode." */
-        blurb={`WEAR IT AS YOUR MAIN: +${pct}% ON EVERY WORD. PLUS ${markBlurbAt(m, 1).toUpperCase()}`}
+        blurb={`+${pct}% · ${markBlurbAt(m, 1).toUpperCase()}`}
         onDismiss={onDone}
       />
     );

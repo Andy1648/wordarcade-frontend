@@ -26,8 +26,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import MarkCard from '../markCard/MarkCard';
+import TierBanner from '../markCard/TierBanner.jsx';
 import { CARD_RAR, cardTier } from '../markCard/palette.js';
-import { tierLabel } from '../markCard/cardModel.js';
 import { rollMarkById, markLevel } from '../../progress/markRolls';
 import {
   sndReelTick, sndRollSting, sndRollSwell, sndCutStamp, sndRollTell, sndShardBurst, sndRevealFlip, sndRevealRise, sndRevealArp,
@@ -500,7 +500,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         {/* SECRET's lights-down (a flat black plate over the rays) and the MYTHIC+ colour flash (over everything) */}
         <div className="rv-dim" ref={reg('rvDim')} />
         <div className="rs-cut-shake" ref={reg('cutShake')}>
-          <div className="rs-cut-tier" ref={reg('cutTier')}>{cr ? tierLabel(cr.tier) : ''}</div>
+          <div className="rs-cut-tier" ref={reg('cutTier')}>{cr ? <TierBanner tier={cr.tier} size="lg" /> : null}</div>
           <div className="rs-cut-stamp" ref={reg('cutStamp')} data-testid="roll-cutscene-odds">
             {cr ? `1 IN ${formatNum(cr.oneInX)}` : ''}
           </div>

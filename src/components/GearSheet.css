@@ -1,8 +1,6 @@
-/* GearSheet.css — the GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel), split out of MarksIndex.css so the
-   menu's YOUR GEAR slot can open the SAME sheet (GearSheetOverlay.jsx, lazy) without the INDEX grid's styles.
-   Inside the INDEX it is a layer of that overlay; from the menu it sits in .gs-overlay (the MARKS overlay slot's
-   z-index — a modal layer, not a persistent fixed control). Motion: the sheet pops in ONCE (transform/opacity). */
-.gs-overlay { position: fixed; inset: 0; z-index: 120; color: #fff; font-family: 'Space Mono', monospace; font-weight: 700; }
+/* GearSheet.css — the GEAR SHEET v2 (Andy oct9 — the Genshin artifact panel), shared by the INDEX and the EQUIP
+   screen (EquipScreen.jsx). It is a layer of whichever overlay opened it (never its own fixed element).
+   Motion: the sheet pops in ONCE (transform/opacity). */
 /* ---- the detail sheet: a layer of THIS overlay (not its own fixed element) ---- */
 .mx-sheet-layer {
   position: absolute;
@@ -61,22 +59,26 @@
   color: #FFE94A;
   -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #000;
   white-space: nowrap;
 }
-.mx-main-kind { font-weight: 700; font-size: var(--fs-k18); letter-spacing: 0.04em; color: #fff; }
+/* EXPRESSIVE TEXT (gear UI v3, Andy oct9 "i dont want plain text anywhere"): every line is Bungee, ink-stroked, a
+   hard offset shadow — values big, labels ≥ 16px, the tier colour where it names the gear */
+.mx-main-kind { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k24); line-height: 1.05; letter-spacing: 0.02em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 /* LOCKED: the odds as the main line, in the tier colour; how to get it under it */
 .mx-main.is-locked .mx-main-num { color: var(--mx-tier); font-size: var(--fs-k44); }
 .mx-main.is-word .mx-main-num { font-size: var(--fs-panel); }
-.mx-main.is-locked .mx-main-kind { color: #c9b8e8; }
-.mx-main-kick { font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.08em; color: var(--mx-tier); margin-bottom: 4px; }
-.mx-main .mx-howto { color: #FF6B3D; line-height: 1.3; }
-.mx-hidden { font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.04em; color: #c9b8e8; padding: 4px 10px; border: 2px dashed #5d4a78; border-radius: 8px; }
+.mx-main.is-locked .mx-main-kind { color: #fff; }
+.mx-sheet-banner { margin: 0 0 2px 22px; }
+/* LOCKED: a red-ink stamp, knocked off square */
+.mx-main-kick { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); letter-spacing: 0.08em; color: #fff; background: #C8321E; border: 3px solid #000; box-shadow: 3px 3px 0 #000; padding: 2px 10px 1px; margin-bottom: 6px; transform: rotate(-3deg); -webkit-text-stroke: 2px #000; paint-order: stroke fill; }
+.mx-main .mx-howto { color: #FF6B3D; line-height: 1.15; }
+.mx-hidden { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); letter-spacing: 0.03em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; padding: 6px 12px; border: 3px dashed var(--mx-tier, #5d4a78); border-radius: 8px; }
 /* the extra stats: a quiet list — white numbers, one step down from the main */
 .mx-sheet-crit { display: grid; gap: 2px; justify-items: start; }
 .mx-crit-line { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
-.mx-crit-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.mx-crit-kind { font-weight: 700; font-size: var(--fs-k16); color: #c9b8e8; }
-.mx-crit-what { font-size: var(--fs-k14); color: #9a8ab8; }
+.mx-crit-num { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.mx-crit-kind { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); color: #FF4FA3; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 /* the PERK panel: flat cyan plate, its darker-cyan outline, a hard shadow */
 .mx-sheet-perk {
   display: grid;
@@ -91,35 +93,42 @@
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
 }
-.mx-perk-kick { font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.08em; color: #0b5d52; }
-.mx-perk-line { font-weight: 700; font-size: var(--fs-body); line-height: 1.25; }
-.mx-sheet-flavour { font-size: var(--fs-k16); color: #fff; line-height: 1.35; }
+.mx-perk-kick { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k16); letter-spacing: 0.1em; color: #2EFFE0; background: #0d0618; padding: 2px 8px 1px; margin: -2px 0 4px -2px; border-radius: 4px; transform: rotate(-2deg); }
+.mx-perk-line { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); line-height: 1.12; letter-spacing: 0.01em; color: #0d0618; }
+/* flavour: one tagline in the tier colour, inked (it names the gear, never explains a stat) */
+.mx-sheet-flavour { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k18); line-height: 1.15; color: var(--mx-tier, #fff); -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 /* odds + the ★ progress, side by side */
 .mx-sheet-odds { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 28px; }
 .mx-fact { display: grid; justify-items: start; gap: 2px; }
-.mx-fact-k { font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.08em; color: #9a8ab8; }
-.mx-odds { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: var(--mx-tier); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.mx-pips-text { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.mx-sheet-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-k14); letter-spacing: 0.06em; color: #c9b8e8; }
+.mx-fact-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k16); letter-spacing: 0.06em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
+.mx-odds { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: var(--mx-tier); -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.mx-pips-text { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+/* OWNED ×N / FIRST ROLL #N: two inked chips on dark plates */
+.mx-sheet-facts { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+.mx-sheet-facts > span { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k16); letter-spacing: 0.04em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; padding: 4px 10px 3px; background: #0d0618; border: 3px solid var(--mx-tier, #5c0fa3); border-radius: 6px; box-shadow: 3px 3px 0 #000; }
 .mx-sheet-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+/* EQUIP / UNEQUIP: the house button — big, Bungee, a thick ink border and a hard shadow (Andy oct9: buttons, no
+   sentences). EQUIP is the yellow call to action; UNEQUIP the pink "take it off". */
 .mx-set {
-  min-height: 48px;
-  padding: 0 18px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
+  min-height: 60px;
+  min-width: 200px;
+  padding: 0 28px;
+  font-family: 'Bungee', sans-serif;
+  font-size: var(--fs-panel);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #000;
   background: #FFE94A;
   border: 4px solid #000;
-  box-shadow: 5px 5px 0 #000;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
   cursor: pointer;
   transition: transform 80ms;
 }
-.mx-set.is-on { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #fff; background: #0d0618; }
+.mx-set.is-on { color: #fff; background: #FF4FA3; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+@media (hover: hover) { .mx-set:hover { transform: translate(-2px, -2px); } }
 .mx-set:active { transform: translate(3px, 3px); }
-.mx-howto { font-size: var(--fs-body); color: #FF6B3D; }
+.mx-howto { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); color: #FF6B3D; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 
 @keyframes mx-sheet-in {
   from { transform: scale(0.86) rotate(-2deg); opacity: 0; }
@@ -128,8 +137,9 @@
 
 @media (max-width: 560px) {
   /* GEAR SHEET v2 on a phone: the card on top, a step smaller (the main stat under it stays the biggest text) */
-  .mx-sheet { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 22px 14px 18px; gap: 12px; --mc-w: 158px; --mc-s: 0.8778; }
+  .mx-sheet { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 38px 14px 18px; gap: 12px; --mc-w: 158px; --mc-s: 0.8778; }
   .mx-sheet-body { padding-right: 0; justify-items: center; gap: 10px; }
+  .mx-sheet-banner { display: none; } /* the card right above already carries its tier plate — no double MYTHIC on a phone */
   .mx-main, .mx-sheet-perk, .mx-sheet-crit, .mx-fact { justify-items: center; }
   .mx-main-num { font-size: var(--fs-k44); }
   .mx-main.is-locked .mx-main-num { font-size: var(--fs-k38); }
