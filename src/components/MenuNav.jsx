@@ -16,7 +16,7 @@ import { formatNum } from '../format';
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { CARD_RAR } from './markCard/palette.js';
 import { mainTag, critTierOf } from '../progress/markRollsCore';
-import { IDLE_SHEEN_TIERS, IDLE_SHEEN_EVERY_MS, IDLE_SHEEN_MS, GLOW_TIERS } from './markCard/idleSheen.js';
+import { IDLE_SHEEN_TIERS, GLOW_TIERS } from './markCard/idleSheen.js';
 import { useReduceMotion } from '../lib/useReduceMotion';
 // The cog + glyph art is the INDEX chunk's (MarkBadge, ~11 KB): the gear slot loads it only once a mark is worn —
 // payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
@@ -148,31 +148,20 @@ export function gearSplit(text) {
 }
 
 /**
- * THE GEAR SHEEN (LEGENDARY+): the INDEX's idle sheen (MarksIndex useIdleSheen — the same band asset, cadence and
- * sweep): one finite WAAPI transform sweep every IDLE_SHEEN_EVERY_MS on a setTimeout, never a CSS loop. will-change is
- * on only for the sweep. A hidden tab or REDUCE MOTION gets none.
+ * THE YOUR GEAR SHOWCASE (gear UI v3, Andy oct9 22:56 "make the menu 'your gear' animation even more attractive (for
+ * legendary ones)"): EPIC+ worn gears perform once every ~6.5–8 s — aura flare + mote burst, glyph pop, sheen sweep,
+ * stat punch (gearShowcase.js, lazy: loaded only once such a gear is worn). Finite WAAPI one-shots on one setTimeout
+ * chain, never a CSS loop. REDUCE MOTION: never started — the slot is static.
  */
-function useGearSheen(bandRef, enabled) {
+function useGearShowcase(slotRef, tier, enabled) {
   useEffect(() => {
-    const band = bandRef.current;
-    if (!enabled || !band || typeof band.animate !== 'function') return undefined;
-    let timer = null;
-    let run = null;
-    const sweep = () => {
-      timer = setTimeout(sweep, IDLE_SHEEN_EVERY_MS);
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-      band.style.willChange = 'transform';
-      run = band.animate([{ transform: 'translateX(-110%)' }, { transform: 'translateX(110%)' }], { duration: IDLE_SHEEN_MS, easing: 'cubic-bezier(.45,0,.25,1)' });
-      const off = () => { band.style.willChange = ''; };
-      run.finished.then(off, off);
-    };
-    timer = setTimeout(sweep, 1200); // the first sweep soon after the menu lands
-    return () => {
-      clearTimeout(timer);
-      if (run) { try { run.cancel(); } catch { /* gone */ } }
-      band.style.willChange = '';
-    };
-  }, [bandRef, enabled]);
+    const el = slotRef.current;
+    if (!enabled || !el || !tier) return undefined;
+    let live = true;
+    let stop = null;
+    import('./gearShowcase.js').then((m) => { if (live) stop = m.startShowcase(el, tier); }, () => {});
+    return () => { live = false; if (stop) stop(); };
+  }, [slotRef, tier, enabled]);
 }
 
 export function MenuGearSlot({ mark, onClick, disabled }) {
@@ -184,10 +173,11 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
   const hasCrit = !!(crit && crit.rate > 0);
   const reduced = useReduceMotion();
   const sheen = !!mark && IDLE_SHEEN_TIERS.has(tier);
-  const bandRef = useRef(null);
-  useGearSheen(bandRef, sheen && !reduced);
+  const slotRef = useRef(null);
+  useGearShowcase(slotRef, mark && GLOW_TIERS.has(tier) ? tier : null, !reduced);
   return (
     <button
+      ref={slotRef}
       type="button"
       className={`hp-gear menu-mark${mark ? ' is-worn' : ' is-empty'}`}
       data-tier={tier || undefined}
@@ -199,13 +189,19 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
       aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open your gear` : 'Your gear: none. Open your gear'}
     >
       {mark && GLOW_TIERS.has(tier) ? <Suspense fallback={null}><GearFx tier={tier} /></Suspense> : null}
-      {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img ref={bandRef} className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
+      {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
+      {/* the SHOWCASE's one-shot layers (LEGENDARY+, gearShowcase.js): a tier-colour FLASH over the face and a burst
+          RING behind the glyph — opacity 0 at rest, nothing moves until a run */}
+      {sheen ? <span className="hp-gear-flash" aria-hidden="true" /> : null}
       <span className="hp-gear-label">YOUR GEAR</span>
       <span className="hp-gear-body">
         {mark ? (
-          <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
-            <MarkBadge mark={mark} size={56} className="hp-gear-cog" />
-          </Suspense>
+          <span className="hp-gear-art">
+            {sheen ? <span className="hp-gear-ring" aria-hidden="true" /> : null}
+            <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
+              <MarkBadge mark={mark} size={56} className="hp-gear-cog" />
+            </Suspense>
+          </span>
         ) : <span className="hp-gear-hole" aria-hidden="true" />}
         <span className="hp-gear-text">
           {/* the NUMBER big ("×3"), WHAT it boosts under it ("WINS") — the sheet's MAIN STAT, small; FitText is the

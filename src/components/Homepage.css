@@ -664,6 +664,20 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
    every ~6 s (finite WAAPI, transform only) */
 .hp-gear-sheen { position: absolute; inset: 0; z-index: 1; border-radius: 4px; overflow: hidden; pointer-events: none; }
 .hp-gear-sheen-band { position: absolute; left: 0; top: 0; width: 70%; height: 100%; display: block; transform: translateX(-110%); }
+/* the SHOWCASE layers (gearShowcase.js, LEGENDARY+): a flat tier-colour flash over the face, a burst ring (the reveal's
+   jagged asset as a mask, tier colour) behind the glyph — both opacity 0 at rest, finite WAAPI one-shots only */
+.hp-gear-flash { position: absolute; inset: 0; z-index: 1; border-radius: 4px; background: var(--gear-line); opacity: 0; pointer-events: none; }
+.hp-gear-art { position: relative; flex: 0 0 auto; display: grid; place-items: center; }
+.hp-gear-ring {
+  position: absolute;
+  inset: -20%;
+  opacity: 0;
+  background: var(--gear-line);
+  -webkit-mask: url('/fx/burst-ring.svg') center / contain no-repeat;
+  mask: url('/fx/burst-ring.svg') center / contain no-repeat;
+  pointer-events: none;
+}
+.hp-gear[data-tier='secret'] .hp-gear-ring { background: #2EFFE0; }
 .hp-gear-label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -676,11 +690,11 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 }
 .hp-gear.is-worn .hp-gear-label { color: var(--gear-line); }
 .hp-gear-body { display: flex; align-items: center; gap: calc(12 * var(--u)); padding: calc(6 * var(--u)) calc(12 * var(--u)) calc(10 * var(--u)); }
-.hp-gear-cog { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); }
+.hp-gear-cog { flex: 0 0 auto; width: calc(var(--hp-tile-ico) * 2); height: calc(var(--hp-tile-ico) * 2); } /* gear UI v3: the showcase glyph is the slot's hero — big enough for its pop to read */
 .hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
 .hp-gear-text { display: flex; flex-direction: column; gap: calc(3 * var(--u)); min-width: 0; }
 /* the NUMBER (the sheet's MAIN STAT colour), then WHAT it boosts, white, then the crit line, then the name */
-.hp-gear-big { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp30); line-height: 1; color: #FFE94A; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
+.hp-gear-big { transform-origin: 0 60%; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp30); line-height: 1; color: #FFE94A; -webkit-text-stroke: var(--b4) #000; paint-order: stroke fill; text-shadow: var(--b4) var(--b4) 0 #000; white-space: nowrap; }
 .hp-gear.is-empty .hp-gear-big { font-size: var(--fs-hp24); color: #fff; }
 .hp-gear-unit { font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp18); letter-spacing: 0.04em; color: #fff; line-height: 1.1; white-space: normal; overflow-wrap: break-word; } /* GEAR POOL v2: a one-mode stat ("WINS IN WORD BOMB") wraps inside the slot, never past it */
 .hp-gear-crit { display: flex; align-items: baseline; gap: calc(6 * var(--u)); font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-hp13); line-height: 1.2; color: #c9b8e8; white-space: nowrap; }
