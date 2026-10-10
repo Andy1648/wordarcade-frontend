@@ -11,7 +11,7 @@ import { loadGemState, saveGemState, tellBalance, grantGems, PER_PLAYER_BEATEN a
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue, statHits } from '../markRollsCore.js';
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
-  rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
+  rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, LEVEL_UP, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
   PER_PLAYER_BEATEN, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
 } from './econ.js';
 import { needV3, creditXpV3 } from './curve.js';
@@ -22,6 +22,7 @@ import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
 import { frenzyXpMult } from '../frenzy.js'; // FUSE FRENZY = ×5 XP per key for 5 min in season 2 (Andy oct8)
 
+export const LV_GEMS_KEY = `${S2_PREFIX}lvgems`; // { r, peak }: the climb whose levels have paid LEVEL_UP gems (Andy oct10)
 export const SERVER_FLAG_KEY = `${S2_PREFIX}server`; // the server hook's note (read at the NEXT boot)
 const fin = (v, d) => (Number.isFinite(v) ? v : d);
 const pos = (v, d) => (Number.isFinite(v) && v > 0 ? v : d);
@@ -123,7 +124,21 @@ export const gemsSwap = {
     const v = rng();
     return DROP_MIN + Math.floor((v >= 0 && v < 1 ? v : 0) * (DROP_MAX - DROP_MIN + 1));
   },
-  b: () => 0, // noteLevelReached: levels pay no gems in v3 (LEVEL_UP 0 — they reach millions)
+  /** noteLevelReached (Andy oct10 "more ways to get gems"): LEVEL_UP gems for each level above THIS CLIMB's peak — a
+   *  rebirth starts a new climb (levels pay again, bounded by the rebirth gate). The first sight of a climb (an
+   *  existing save at install, or a fresh rebirth) only records the level — nothing is back-paid. */
+  b(level) {
+    const L = Number.isFinite(level) ? Math.floor(level) : 0;
+    const rc = getRebirths();
+    let st = null;
+    try { st = JSON.parse(localStorage.getItem(LV_GEMS_KEY) || 'null'); } catch { st = null; }
+    const save = (o) => { try { localStorage.setItem(LV_GEMS_KEY, JSON.stringify(o)); } catch { /* blocked */ } };
+    if (!st || st.r !== rc) { save({ r: rc, peak: L }); return 0; } // a new climb: record, never back-pay
+    if (L <= st.peak) return 0;
+    const n = L - st.peak;
+    save({ r: rc, peak: L });
+    return LEVEL_UP > 0 ? grantGems(n * LEVEL_UP, 'level', { detail: `lv-${L}` }) : 0;
+  },
   c: ROLL_PRICE, // ROLL_PRICE_GEMS: 75
   // noteRebirth: FINAL — a rebirth pays no gems (games only)
   d: (rc) => (rebirthGems(rc) > 0 ? grantGems(rebirthGems(rc), 'rebirth', { detail: Number.isFinite(rc) ? `rb-${rc}` : null }) : 0),

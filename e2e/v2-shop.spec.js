@@ -1,7 +1,7 @@
 // e2e/v2-shop.spec.js — THE v2 SHOP (P3; claude/mockups/v2/Shop.dc.html) behind ?season2=1, with the season-2 board
 // mock. Wins buy only POWER (hold to buy, 1 s, one per hold); everything in the STOCK costs GEMS (v3/stock.js):
 //   1. KEY with wins: a tap does nothing, a full hold buys T0 → T1 for 150 wins (FINAL v2 150 × 5^T);
-//   2. a gem item: +25% XP for 45 gems, ×5 → ×4 LEFT, the effect is running;
+//   2. a gem item: +50% XP for 45 gems, ×5 → ×4 LEFT, the effect is running;
 //   3. SOLD OUT: ×10 OVERDRIVE ×2 → two buys → the stamp; a third try charges nothing;
 //   4. short on gems / the visual-only FREE EPIC+ ROLL charge nothing;
 //   5. the phone gets the same screen.
@@ -77,11 +77,11 @@ test('KEY is bought with WINS on a 1 s hold — a tap does nothing; 150 wins →
   await expect(buy).toContainText('NEED WINS');
 });
 
-test('a STOCK item costs GEMS: +25% XP · 10 MIN for 45, ×5 → ×4 LEFT, the effect runs', async ({ page }) => {
+test('a STOCK item costs GEMS: +50% XP · 10 MIN for 45, ×5 → ×4 LEFT, the effect runs', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
-  await expect(shop.locator('.sp2-card')).toHaveCount(6); // + the +25% WINS BOOST (Andy oct8); gems never scale
-  await expect(shop.locator('.sp2-price')).toHaveText(['45', '60', '120', '750', '150', 'SOON']);
+  await expect(shop.locator('.sp2-card')).toHaveCount(6); // + the +50% WINS BOOST (Andy oct8); gems never scale
+  await expect(shop.locator('.sp2-price')).toHaveText(['45', '60', '120', '300', '150', 'SOON']);
   // "boost what?" (Andy oct8): every card names the item, what it boosts and for how long
   await expect(card(shop, 'xp25').locator('.sp2-name')).toHaveText('XP BOOST');
   await expect(card(shop, 'xp25').locator('.sp2-what')).toHaveText('XP PER KEY');
@@ -95,22 +95,22 @@ test('a STOCK item costs GEMS: +25% XP · 10 MIN for 45, ×5 → ×4 LEFT, the e
   const st = await s2(page);
   expect(st.gems).toBe(595);
   expect(st.wins, 'the STOCK never costs wins').toBe(500);
-  expect(st.fx.xp - T, '10 minutes of +25% XP').toBe(10 * 60 * 1000);
+  expect(st.fx.xp - T, '10 minutes of +50% XP').toBe(10 * 60 * 1000);
 });
 
 test('SOLD OUT: two ×10 OVERDRIVEs empty it, the stamp lands, a third try charges nothing', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
-  const shop = await boot(page, { gems: 1640 }); // OVERDRIVE is 750 gems (Andy oct8: the premium boost costs more)
+  const shop = await boot(page, { gems: 640 }); // OVERDRIVE is 300 gems (Andy oct10: "much cheaper")
   const od = card(shop, 'overdrive');
   await od.click();
   await expect(od.locator('.sp2-left')).toHaveText('×1 LEFT');
   await od.click();
   await expect(od.locator('.sp2-left')).toHaveText('×0 LEFT');
   await expect(od.locator('.kst[aria-label="SOLD OUT"] .kst-sold-band')).toBeVisible();
-  expect((await s2(page)).gems).toBe(1640 - 1500);
+  expect((await s2(page)).gems).toBe(640 - 600);
   await od.click();
   await expect(shop.locator('.sp2-note')).toContainText('SOLD OUT');
-  expect((await s2(page)).gems, 'a sold-out card charges nothing').toBe(140);
+  expect((await s2(page)).gems, 'a sold-out card charges nothing').toBe(40);
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
   expect(boost.mult, 'OVERDRIVE runs as a ×10 boost').toBe(10);
 });

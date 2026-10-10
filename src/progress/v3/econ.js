@@ -50,7 +50,7 @@ export function modeMult(mode) {
 
 // GEMS (FINAL table)
 export const ROLL_PRICE = 75;
-export const DROP_CHANCE = 1 / 15;
+export const DROP_CHANCE = 1 / 10; // Andy oct10 "we need more ways for users to get gems": was 1 / 15
 export const DROP_MIN = 3;
 export const DROP_MAX = 12;
 export const BOT_WIN = 18;
@@ -58,7 +58,7 @@ export const BOT_WIN = 18;
 export const BOT_WIN_BY_DIFF = Object.freeze({ easy: 8, medium: 18, hard: 30 });
 export const PER_PLAYER_BEATEN = 15;
 export const STREAK_BONUS = 4; // flat, on every win that extends a streak (a win after a win)
-export const LEVEL_UP = 0; // levels pay no gems
+export const LEVEL_UP = 3; // Andy oct10: every level pays 3 gems — once per level per climb (v3/hooks gemsSwap.b), was 0
 export const ACH_MIN = 40;
 export const ACH_MAX = 200;
 

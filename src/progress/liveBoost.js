@@ -44,8 +44,8 @@ export function activeBoosts(now = Date.now()) {
   const st = V3 && V3.stock;
   if (st && typeof st.stockFxLeft === 'function') {
     const fx = [
-      { kind: 'xp', name: 'XP BOOST', mult: '+25%', what: 'XP PER KEY', icon: 'levels' },
-      { kind: 'wins', name: 'WINS BOOST', mult: '+25%', what: 'WINS PER WORD', icon: 'wins' },
+      { kind: 'xp', name: 'XP BOOST', mult: '+50%', what: 'XP PER KEY', icon: 'levels' },
+      { kind: 'wins', name: 'WINS BOOST', mult: '+50%', what: 'WINS PER WORD', icon: 'wins' },
       { kind: 'luck', name: 'LUCK BOOST', mult: '×2', what: 'ROLL LUCK', icon: 'luck' },
     ];
     for (const f of fx) {
