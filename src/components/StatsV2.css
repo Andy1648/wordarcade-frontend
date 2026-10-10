@@ -123,7 +123,7 @@
 }
 .st2-tab:hover { transform: translate(-2px, -2px); }
 .st2-tab:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
-.st2-tab-name { font-size: max(var(--fs-k13), calc(var(--fs-k18) * var(--st2-k))); }
+.st2-tab-name { font-size: max(var(--fs-k20), calc(var(--fs-k20) * var(--st2-k))); }
 .st2-tab-total { font-size: calc(var(--fs-k24) * var(--st2-k)); }
 
 /* ---- the hero: TOTAL ×N = the pay ---- */
@@ -148,9 +148,12 @@
   top: calc(-30px * var(--st2-k));
   font-family: var(--k-display, 'Bungee', sans-serif);
   font-weight: 400;
-  font-size: max(var(--fs-k13), calc(var(--fs-k18) * var(--st2-k)));
-  color: #c9b8e8;
+  font-size: max(var(--fs-k20), calc(var(--fs-k24) * var(--st2-k)));
+  color: var(--st2-c);
   text-transform: uppercase;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 #000;
 }
 .st2-big {
   display: block;
@@ -213,7 +216,7 @@
   pointer-events: none;
   text-transform: uppercase;
 }
-.st2-tick-name { font-size: max(var(--fs-k13), calc(var(--fs-k16) * var(--st2-k))); color: #fff; }
+.st2-tick-name { font-size: max(var(--fs-k16), calc(var(--fs-k18) * var(--st2-k))); color: #fff; }
 .st2-tick-v { font-size: calc(var(--fs-k24) * var(--st2-k)); color: var(--tick-c); -webkit-text-stroke: 4px #000; }
 .st2-eq {
   font-family: var(--k-display, 'Bungee', sans-serif);
@@ -251,7 +254,17 @@
   -webkit-text-stroke: 4px #000;
   text-transform: uppercase;
 }
-.st2-basex { font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--st2-k))); color: #c9b8e8; }
+.st2-basex {
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: max(var(--fs-k20), calc(var(--fs-k20) * var(--st2-k)));
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+  white-space: nowrap;
+}
 
 /* ---- the chain: BASE × chip × chip … ---- */
 .st2-chain {
@@ -374,18 +387,26 @@
 }
 .st2-chip-name {
   font-family: var(--k-display, 'Bungee', sans-serif);
-  font-size: calc(var(--fs-k100) * 0.19 * var(--st2-k));
+  font-size: max(var(--fs-k20), calc(var(--fs-k100) * 0.2 * var(--st2-k)));
   line-height: 1.1;
   color: #fff;
   text-transform: uppercase;
 }
 .st2-chip-tag {
-  font-size: max(var(--fs-k18), calc(var(--fs-k18) * var(--st2-k))); /* NIGHT oct8 #5: a tag can be a number (R2) */
-  color: #c9b8e8;
+  /* NIGHT oct8 #5: a tag can be a number (R2). Andy oct9 ("no small grey text"): Bungee in the chip's colour */
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: max(var(--fs-k20), calc(var(--fs-k20) * var(--st2-k)));
+  line-height: 1.05;
+  color: var(--chip-c);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
   white-space: nowrap; /* a long tag (SINGULARITY, WORD BOMB) SHRINKS to the chip (FitText), never "…" */
 }
 .st2-chip.is-off .st2-chip-name,
-.st2-chip.is-off .st2-chip-tag { color: #5d4a78; }
+.st2-chip.is-off .st2-chip-tag { color: #5d4a78; text-shadow: none; }
 .st2-chip-v {
   /* NUMBERS FIRST (R2 oct8 #4): the figure is the chip's first line; icon + name sit under it */
   order: -1;
@@ -427,19 +448,31 @@
   border-right: 4px solid #000;
   font-family: var(--k-display, 'Bungee', sans-serif);
   font-weight: 400;
-  font-size: max(var(--fs-k13), calc(var(--fs-k18) * var(--st2-k)));
-  line-height: 1.1;
-  color: #c9b8e8;
+  font-size: max(var(--fs-k20), calc(var(--fs-k20) * var(--st2-k)));
+  line-height: 1;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
   cursor: pointer;
   text-transform: uppercase;
 }
-.st2-life-k:hover { color: #FFE94A; }
+.st2-life-k:hover { color: #fff; }
+/* MORE › — a cyan sticker, not a grey caption */
 .st2-life-more {
-  margin-top: 4px;
+  margin-top: 6px;
+  padding: 1px 8px;
   font-family: var(--k-mono, 'Space Mono', monospace);
   font-weight: 700;
-  font-size: var(--fs-k14);
-  color: #fff;
+  font-size: var(--fs-k16);
+  line-height: 1.3;
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+  transform: rotate(-3deg);
 }
 .st2-life-cell {
   flex: 1;
@@ -458,8 +491,15 @@
   text-transform: uppercase;
 }
 .st2-life-l {
-  font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--st2-k)));
-  color: #c9b8e8;
+  /* the record's NAME on a sticker in its own colour (Andy oct9: no small grey text) */
+  padding: 1px 8px;
+  font-size: max(var(--fs-k16), calc(var(--fs-k16) * var(--st2-k)));
+  line-height: 1.3;
+  color: #0d0618;
+  background: var(--life-c, #fff);
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  transform: rotate(-2deg);
   white-space: nowrap;
 }
 
@@ -500,19 +540,19 @@
 .st2--narrow .st2-tab-total { font-size: var(--fs-k18); }
 .st2--narrow .st2-title { grid-area: title; font-size: calc(var(--fs-k100) * 0.4); }
 .st2--narrow .st2-hero { flex-direction: column; gap: 8px; padding-top: 22px; }
-.st2--narrow .st2-total-k { font-size: var(--fs-k15); top: -24px; }
+.st2--narrow .st2-total-k { font-size: var(--fs-k20); top: -26px; -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
 .st2--narrow .st2-box { height: 108px; min-width: 220px; padding: 0 24px; box-shadow: 8px 8px 0 #000; }
 .st2--narrow .st2-total { font-size: calc(var(--fs-k100) * 0.84 * min(1, 5 / var(--len))); }
 .st2--narrow .st2-tick { right: -12px; top: -22px; height: 36px; padding: 0 10px; border-left-width: 8px; }
-.st2--narrow .st2-tick-name { font-size: var(--fs-k13); }
+.st2--narrow .st2-tick-name { font-size: var(--fs-k14); }
 .st2--narrow .st2-tick-v { font-size: var(--fs-k18); }
 .st2--narrow .st2-eq { display: none; }
 .st2--narrow .st2-result { flex-direction: row; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .st2--narrow .st2-result-v { font-size: calc(var(--fs-k100) * 0.54 * min(1, 6 / var(--len))); -webkit-text-stroke: 6px #000; text-shadow: 4px 4px 0 #000; }
 .st2--narrow .st2-result-v::before { content: '= '; }
 .st2--narrow .st2-result-sub { flex-direction: column; align-items: flex-start; gap: 2px; }
-.st2--narrow .st2-unit { font-size: var(--fs-k16); -webkit-text-stroke: 3px #000; }
-.st2--narrow .st2-basex { font-size: var(--fs-k14); }
+.st2--narrow .st2-unit { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; }
+.st2--narrow .st2-basex { font-size: var(--fs-k20); }
 .st2--narrow .st2-chain {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -540,8 +580,9 @@
 .st2--narrow .st2-chip-tile { display: none; }
 .st2--narrow .st2-chip-tile::before { border-width: 3px; box-shadow: 2px 2px 0 #000; }
 .st2--narrow .st2-icon { left: 2px; top: 2px; width: 26px; height: 26px; }
-.st2--narrow .st2-chip-name { font-size: var(--fs-k14); }
-.st2--narrow .st2-chip-tag { font-size: var(--fs-k18); white-space: normal; line-height: 1.05; }
+.st2--narrow .st2-chip-name { font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k16); text-shadow: 2px 2px 0 #000; }
+.st2--narrow .st2-chip.is-off .st2-chip-name { text-shadow: none; }
+.st2--narrow .st2-chip-tag { font-size: var(--fs-k20); white-space: normal; }
 .st2--narrow .st2-chip-names { flex: 1 1 0; min-width: 0; }
 .st2--narrow .st2-chip-v,
 .st2--narrow .st2-chain.is-compact .st2-chip-v {
@@ -555,14 +596,14 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   box-shadow: 4px 4px 0 #000;
 }
-.st2--narrow .st2-life-k { width: auto; min-height: 64px; border-right: 0; font-size: var(--fs-k14); }
+.st2--narrow .st2-life-k { width: auto; min-height: 64px; border-right: 0; font-size: var(--fs-k20); }
 .st2--narrow .st2-life-cell { min-height: 64px; }
 .st2--narrow .st2-life-cell + .st2-life-cell { border-left: 0; }
 .st2--narrow .st2-life > :nth-child(3n + 1),
 .st2--narrow .st2-life > :nth-child(3n + 2) { border-right: 4px solid #000; }
 .st2--narrow .st2-life > :nth-child(-n + 3) { border-bottom: 4px solid #000; }
 .st2--narrow .st2-life-v { font-size: var(--fs-k26); -webkit-text-stroke: 4px #000; }
-.st2--narrow .st2-life-l { font-size: var(--fs-k14); }
+.st2--narrow .st2-life-l { font-size: var(--fs-k14); padding: 0 5px; max-width: calc(100% - 8px); box-sizing: border-box; white-space: normal; text-align: center; line-height: 1.15; }
 
 @media (prefers-reduced-motion: reduce) {
   .st2-rail-fill,
@@ -690,12 +731,33 @@
 .st2-crit.is-off .st2-crit-head { color: #c9b8e8; }
 .st2-crit-sub {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(18px * var(--st2-k));
   overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: max(var(--fs-k14), calc(var(--fs-k17) * var(--st2-k)));
-  color: #fff;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: max(var(--fs-k20), calc(var(--fs-k20) * var(--st2-k)));
+  line-height: 1;
+  color: #c79bff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
 }
-.st2-crit.is-off .st2-crit-sub { color: #c9b8e8; }
+/* the two figures: the number in Bungee + colour, its word as a mono tag beside it */
+.st2-crit-fig { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.st2-crit-fig b { font-weight: 400; font-size: max(var(--fs-k22), calc(var(--fs-k26) * var(--st2-k))); -webkit-text-stroke: 4px #000; text-shadow: 2px 2px 0 #000; }
+.st2-crit-fig.is-odds b { color: #FFE94A; }
+.st2-crit-fig.is-avg b { color: #2EFFE0; }
+.st2-crit-fig i {
+  font-style: normal;
+  font-family: var(--k-mono, 'Space Mono', monospace);
+  font-weight: 700;
+  font-size: var(--fs-k16);
+  color: #fff;
+  -webkit-text-stroke: 0;
+  text-shadow: 2px 2px 0 #000;
+}
 .st2--narrow .st2-crit {
   position: relative;
   left: auto;
@@ -716,4 +778,5 @@
 .st2--narrow .st2-crit-tile { grid-area: tile; padding-left: 8px; }
 .st2--narrow .st2-crit-burst { width: 52px; height: 52px; }
 .st2--narrow .st2-crit-head { grid-area: head; font-size: var(--fs-k24); }
-.st2--narrow .st2-crit-sub { grid-area: sub; font-size: var(--fs-k14); line-height: 1.25; }
+.st2--narrow .st2-crit-sub { grid-area: sub; font-size: var(--fs-k20); flex-wrap: wrap; gap: 4px 14px; }
+.st2--narrow .st2-crit-fig b { font-size: var(--fs-k22); }
