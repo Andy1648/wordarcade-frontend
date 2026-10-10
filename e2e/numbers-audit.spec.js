@@ -5,7 +5,7 @@
 //   MENU      LV 80 · need(80) = 100 × 1.15^79 · a key pops +108
 //   UPGRADES  KEY 2 → 3 · 108 → 216 XP / LETTER (×4 → ×8) · price 150 × 5² = 3,750 wins · wins 50K / gems 200
 //   REBIRTH   BACK TO LV 1 · KEY KEPT · YOU GET ×3 · ×27 → ×81 FOREVER · LV 80 → 1 · gate LV 15 + 18 × 3 = 69
-//   ROLL      75 gems a roll · pity EPIC+ / LEGENDARY+ counters on FINAL's 50 / 125 (oct8: was 500)
+//   ROLL      75 gems a roll · pity EPIC+ / LEGENDARY+ counters on GEAR POOL v2's 10 / 50 (Genshin-style; was 50 / 125)
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
@@ -91,7 +91,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await rb.locator('.rb2-back').click();
   await expect(rb).toHaveCount(0);
 
-  // ROLL: 75 gems, the 50 / 125 pity ladder
+  // ROLL: 75 gems, the 10 / 50 pity ladder (GEAR POOL v2)
   await navControl(page, 'gears').click(); // GEARS = ROLL + INDEX (NIGHT oct8 #2)
   const price = page.locator('.rs-roll-price');
   await price.waitFor({ state: 'visible' });
@@ -100,6 +100,6 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   const epic = Number(/EPIC\+ IN\s*([\d,]+)/.exec(pity)[1].replace(/,/g, ''));
   const leg = Number(/LEGENDARY\+ IN\s*([\d,]+)/.exec(pity)[1].replace(/,/g, ''));
   expect(epic).toBeGreaterThan(0);
-  expect(epic).toBeLessThanOrEqual(50);
-  expect(leg).toBe(125);
+  expect(epic).toBeLessThanOrEqual(10);
+  expect(leg).toBe(50);
 });

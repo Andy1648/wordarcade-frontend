@@ -404,7 +404,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn:active { transform: translate(6px, 6px); box-shadow: 0 0 0 #000; }
 .rs-auto-cap { font-size: var(--fs-body); color: #c9b8e8; }
 /* SKIP (R4): a stepper — SKIP · ◀ · "< EPIC" on a plate in the tier colour · ▶. Flat, thick purple outline (the
-   INDEX button's), hard ink shadow, 44px targets; a dead end (nothing below COMMON / above SECRET) hatches out. */
+   INDEX button's), hard ink shadow, 44px targets; a dead end (nothing below RARE / above SECRET) hatches out. */
 .rs-skip { display: inline-flex; align-items: center; gap: 8px; }
 .rs-skip-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #c9b8e8; letter-spacing: 0.06em; }
 .rs-skip-btn {
@@ -517,7 +517,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* ---- ROLL REVEAL v2 (Reel.jsx + revealPlan.js): the flip, its escalating layers, the stats extension ----
    Every piece of art is an asset in /public/fx (card-back, card-back-edge as a mask, sheen, sparkle, burst-ring as a
    mask); CSS only places them and the WAAPI one-shots move them (transform / opacity). Nothing loops; will-change is
-   set by the animation helper while a node plays and cleared when it stops. LITE (COMMON / RARE) is a lighter
+   set by the animation helper while a node plays and cleared when it stops. LITE (RARE) is a lighter
    backdrop that closes by itself. */
 .rs-cut.is-lite { background: rgba(5, 2, 10, 0.9); }
 .rs-cut.is-lite .rs-cut-rays,

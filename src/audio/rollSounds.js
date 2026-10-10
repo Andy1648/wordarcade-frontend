@@ -6,7 +6,7 @@ import { ready } from './gameSounds.js';
 
 // ---- ROLL SCREEN (Andy oct5) --------------------------------------------------------------
 // reel tick — one tiny click per mark passing the line. The reel slows, so the ticks slow with it.
-// `rank` is the passing mark's tier (0 COMMON … 5 SECRET): a rarer mark clicks a step higher, so the
+// `rank` is the passing mark's tier (0 RARE … 4 SECRET): a rarer mark clicks a step higher, so the
 // sound tells the same truth the strip shows. Very short + quiet: it fires up to ~30×/s at full speed.
 export function sndReelTick(rank = 0) {
   const ctx = ready();
@@ -88,21 +88,20 @@ export function sndCutStamp(tier = 'legendary') {
   if (tier === 'secret') tone(t + 0.06, { freq: pentFreq(NOTE.G5), type: 'triangle', dur: 0.3, gain: 0.1, attack: 0.003 });
 }
 
-// rarity sting — plays as the reel lands; scales with the tier. COMMON one soft note; RARE a two-note lift;
+// rarity sting — plays as the reel lands; scales with the tier. RARE a two-note lift;
 // EPIC a struck chord; LEGENDARY a run into a chord; MYTHIC adds a low swell under it; SECRET climbs two octaves.
 const STING = {
-  common: [[NOTE.C5]],
   rare: [[NOTE.G4], [NOTE.C5]],
   epic: [[NOTE.C4, NOTE.G4, NOTE.C5]],
   legendary: [[NOTE.G4], [NOTE.Bb4], [NOTE.C5, NOTE.G5]],
   mythic: [[NOTE.Eb4], [NOTE.G4], [NOTE.Bb4], [NOTE.C5, NOTE.G5, NOTE.C6]],
   secret: [[NOTE.C4], [NOTE.Eb4], [NOTE.G4], [NOTE.C5], [NOTE.Eb5], [NOTE.G5], [NOTE.C5, NOTE.G5, NOTE.C6]],
 };
-export function sndRollSting(tier = 'common') {
+export function sndRollSting(tier = 'rare') {
   const ctx = ready();
   if (!ctx) return;
   const t = ctx.currentTime;
-  const steps = STING[tier] || STING.common;
+  const steps = STING[tier] || STING.rare;
   const heavy = tier === 'legendary' || tier === 'mythic' || tier === 'secret';
   const gap = heavy ? 0.085 : 0.07;
   steps.forEach((chord, i) => {
@@ -123,7 +122,7 @@ export function sndRollSting(tier = 'common') {
 
 // ---- ROLL REVEAL v2 (the card flip + its escalation) -------------------------------------------
 // the flip — a short "thwip" as the card turns; a slam tier (LEGENDARY+) adds a low thump under it
-export function sndRevealFlip(tier = 'common') {
+export function sndRevealFlip(tier = 'rare') {
   const ctx = ready();
   if (!ctx) return;
   const t = ctx.currentTime;

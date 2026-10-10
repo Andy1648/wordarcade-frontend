@@ -15,6 +15,9 @@ export const HI_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret', 'perma
 /** "×1.5 WINS" → { num: '×1.5', kind: 'WINS' }; "+2.5 BASE WINS" → { num: '+2.5', kind: 'BASE WINS' }. */
 export function splitTag(tag) {
   const s = String(tag || '').trim();
+  // GEAR POOL v2: "EVERY 4TH KEY CRITS" — the number is the ordinal, so the big part is "EVERY 4TH"
+  const ev = /^(EVERY \S+) (.+)$/.exec(s);
+  if (ev) return { num: ev[1], kind: ev[2] };
   const i = s.indexOf(' ');
   return i < 0 ? { num: s, kind: '' } : { num: s.slice(0, i), kind: s.slice(i + 1) };
 }
@@ -57,7 +60,7 @@ export function tierLabel(tier, kind = 'roll') {
 export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, state = null }) {
   // EARNED gears (Andy oct8): they sit WITH the normal rarities — drawn as the LEGENDARY they pay (MAIN ×3), not a
   // tier of their own; a locked one says ACHIEVEMENT where a rolled card says its odds
-  const t = kind === 'perm' ? 'legendary' : tier || 'common';
+  const t = kind === 'perm' ? 'legendary' : tier || 'rare';
   const { num, kind: statKind } = locked ? { num: '', kind: '' } : splitTag(mainTag(id, state));
   const lv = kind === 'roll' && !locked ? markLevel(state, id) : null;
   // CRIT (Andy oct8): the gear's EXTRA stats. A locked card knows only HOW MANY it has (at ★0), never their values.

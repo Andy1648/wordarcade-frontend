@@ -52,7 +52,7 @@ const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filte
 const SPUN = 4600; // past the full spin (2.4 s every tier, NIGHT oct8) + its land beat, with room
 // ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
 // A roll's tier is random, so any test that clicks after a roll taps through whatever reveal is still up (a no-op when
-// the roll landed COMMON/RARE): the reveal must be clear for 3 checks in a row (~450 ms) before the test goes on.
+// the roll landed RARE): the reveal must be clear for 3 checks in a row (~450 ms) before the test goes on.
 async function keepReveal(page) {
   const cut = page.getByTestId('roll-cutscene');
   let clear = 0;
@@ -111,7 +111,7 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(roll).not.toContainText('WINS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
   // marks v2: the card says the mark's STAT ("×1.1 WINS", "+1 BASE WINS" …)
-  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^[+×][\d.,]+s? [A-Z]/);
+  await expect(card(page).locator('.rs-card-stat')).toHaveText(/^(?:[+×][\d.,]+(?:s|%|×)?|EVERY \S+) [A-Z]/);
   // finite: once landed nothing animates, nothing loops, will-change is off
   await page.waitForTimeout(3600);
   expect(await rollUiAnims(page)).toBe(0);
@@ -138,7 +138,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await page.setViewportSize({ width: 390, height: 844 });
   await seed(page, {
     'taw.tut.markRolls': '1',
-    'taw.markRolls': JSON.stringify({ v: 1, rolls: 600, sinceEpic: 3, sinceLegendary: 499, everEpic: true, starter: true, marks: {}, milestones: [] }),
+    'taw.markRolls': JSON.stringify({ v: 3, rolls: 600, sinceEpic: 3, sinceLegendary: 49, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
   await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 1');
@@ -156,7 +156,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await cut.click();
   await expect(cut).not.toHaveClass(/is-on/, { timeout: 2000 });
   await expect(card(page)).toHaveCount(1);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 125'); // oct8: the hard pity is 125 (was 500)
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 50'); // GEAR POOL v2: the hard pity is 50 (Genshin-style; was 125)
 });
 
 test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
@@ -164,11 +164,10 @@ test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
   await seed(page, {
     'taw.tut.markRolls': '1',
     // EPIC pity 3 rolls away: at most three spins (first-time marks still play the full reveal)
-    'taw.markRolls': JSON.stringify({ v: 1, rolls: 60, sinceEpic: 47, everEpic: true, starter: true, marks: {}, milestones: [] }),
+    'taw.markRolls': JSON.stringify({ v: 3, rolls: 60, sinceEpic: 7, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
-  // ROLL v1: one AUTO button cycles OFF → RARE+ → EPIC+ (the first tap starts rolling)
-  await page.getByTestId('roll-auto').click();
+  // one AUTO button cycles OFF → EPIC+ → LEGENDARY+ (GEAR POOL v2: no RARE+; the first tap starts rolling)
   await page.getByTestId('roll-auto').click();
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('data-target', 'epic');
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'true');
@@ -188,7 +187,7 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
   // reveals below SECRET skip, so the two rolls go fast; AUTO cycled to its highest target (LEGENDARY+)
   while (await page.getByTestId('roll-skip-up').isEnabled()) await page.getByTestId('roll-skip-up').click(); // → SECRET (the stepper's top hatches out)
   await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'secret');
-  for (let i = 0; i < 3; i += 1) await page.getByTestId('roll-auto').click();
+  for (let i = 0; i < 2; i += 1) await page.getByTestId('roll-auto').click(); // → LEGENDARY+ (OFF → EPIC+ → LEGENDARY+)
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '5');
   await expect(page.locator('.rs-need')).toHaveText('−5');
@@ -318,7 +317,7 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await page.locator('.mx-panel').waitFor();
   // nothing worn → the first mark AUTO-equipped; INDEX v2: the worn card says its stat
   await expect(page.locator('.mx-tile.is-on')).toHaveCount(1);
-  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^[+×][\d.,]+s? [A-Z]/);
+  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^(?:[+×][\d.,]+(?:s|%|×)?|EVERY \S+) [A-Z]/);
   await page.locator('.mx-close').click();
   await expect(page.locator('.rs-overlay')).toBeVisible();
   await page.locator('.rs-close').click();

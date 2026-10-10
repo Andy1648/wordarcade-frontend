@@ -93,19 +93,19 @@ test('STEP 50: the shop sells no themes — the WORLD is earned, not bought', as
 
 test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async ({ page }) => {
   await boot(page, {
-    'taw.achievements': JSON.stringify(['m-wb-5', 'm-blitz-5']),
-    'taw.mark': 'mk-bomber',
-    'taw.markWords': JSON.stringify({ 'mk-bomber': 320 }),
+    'taw.achievements': JSON.stringify(['m-sat-5', 'reb-1']), // SAVANT + PHOENIX (RARE) — the COMMONS are retired
+    'taw.mark': 'mk-scholar',
+    'taw.markWords': JSON.stringify({ 'mk-scholar': 320 }),
     'taw.tut.markRolls': '1', // MARK ROLLS are LIVE: their tutorial would cover the panel
   });
   const slot = page.locator('.menu-mark').first();
   // feat/menu-perrow: the YOUR GEAR slot — the stat big, the name · tier under it
-  await expect(slot.locator('.hp-gear-sub')).toContainText('BOMBER');
+  await expect(slot.locator('.hp-gear-sub')).toContainText('SAVANT');
   // Andy oct9: YOUR GEAR opens the worn gear's SHEET (the INDEX's), its number the slot's; Esc closes it
-  await expect(slot.locator('.hp-gear-big')).toHaveText('×1.1');
+  await expect(slot.locator('.hp-gear-big')).toHaveText('×1.25');
   await slot.click();
   const sheet = page.locator('[data-testid="gear-sheet"] .mx-sheet');
-  await expect(sheet.locator('.mx-main-num')).toHaveText('×1.1');
+  await expect(sheet.locator('.mx-main-num')).toHaveText('×1.25');
   await page.keyboard.press('Escape');
   await expect(sheet).toHaveCount(0);
   // GEARS opens the ROLL screen; INDEX opens the MARKS INDEX
@@ -114,9 +114,9 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   // INDEX v2: the worn mark's card — its art, MAIN tag and ONE stat line (no sentence explaining it)
   const worn = page.locator('.mx-tile.is-on');
   await expect(worn.locator('svg.mark-badge')).toBeVisible();
-  await expect(worn.locator('.mx-tile-name')).toHaveText('BOMBER');
+  await expect(worn.locator('.mx-tile-name')).toHaveText('SAVANT');
   await expect(worn.locator('.mx-tile-main')).toHaveText('MAIN');
-  await expect(worn.locator('.mx-tile-sub')).toHaveText('×1.1 WINS');
+  await expect(worn.locator('.mx-tile-sub')).toHaveText('×1.25 XP');
   // no emoji left in the index
   const text = await page.locator('.mx-panel').innerText();
   expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);

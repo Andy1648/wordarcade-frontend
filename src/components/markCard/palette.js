@@ -7,7 +7,6 @@
 // PERMANENT (earned, never rolled) gets its own cyan row. SECRET's teeth are the RAINBOW (static — a tooth per
 // colour, never an animated fill). Tiny on purpose: MarkBadge (the menu chip) reads it from the index chunk.
 export const CARD_RAR = {
-  common: { line: '#A9B4C8', edge: '#5f6b82', fill: '#262b38', inner: '#5d6678' },
   rare: { line: '#3D8BFF', edge: '#1a4fb3', fill: '#0f2350', inner: '#1f4fa8' },
   epic: { line: '#B04BFF', edge: '#6a1fb8', fill: '#2a0e4a', inner: '#6a20b0' },
   legendary: { line: '#FFC23D', edge: '#b07a10', fill: '#3d2a05', inner: '#b07a10' },
@@ -18,4 +17,4 @@ export const CARD_RAR = {
 export const RAINBOW_TEETH = ['#FF3D7F', '#FFC23D', '#2EFFE0', '#3D8BFF', '#B04BFF'];
 /** A locked card: the face and the inner disc go near-black; the cog keeps its tier colour. */
 export const LOCKED = { fill: '#120a1c', inner: '#0b0612' };
-export const cardTier = (t) => (CARD_RAR[t] ? t : 'common');
+export const cardTier = (t) => (CARD_RAR[t] ? t : 'rare');

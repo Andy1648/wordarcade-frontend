@@ -28,6 +28,21 @@ export function critKey(perKey, { rate = 0, power = 2 } = {}, rng = Math.random)
 }
 
 /**
+ * One key's XP when it is the `seq`-th MENU key of a session (1-based): EVERY `crit.every`-th key is a GUARANTEED crit
+ * (GEAR POOL v2 — METRONOME's EVERY 4TH KEY CRITS, THUNDERCLAP's DRUMROLL every 10th); any other key rolls as critKey.
+ * `every` 0 / absent = no guaranteed crits. { gain, crit, forced }.
+ */
+export function critKeyAt(seq, perKey, crit = {}, rng = Math.random) {
+  const every = Number.isFinite(crit.every) && crit.every >= 1 ? Math.floor(crit.every) : 0;
+  const n = Number.isFinite(seq) ? Math.floor(seq) : 0;
+  if (every && n > 0 && n % every === 0) {
+    const base = Number.isFinite(perKey) && perKey > 0 ? perKey : 0;
+    return { gain: base * powerOf(crit.power), crit: true, forced: true };
+  }
+  return { ...critKey(perKey, crit, rng), forced: false };
+}
+
+/**
  * `n` keys credited together (a batch): every key rolls on its own, and `total` is EXACTLY the sum of the n gains —
  * (n − crits) × perKey + crits × perKey × POWER. { total, crits }.
  */

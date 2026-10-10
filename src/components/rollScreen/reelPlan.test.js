@@ -21,7 +21,7 @@ function rng(seed) {
 const tierOf = (id) => rollMarkById(id).tier;
 const fresh = () => ({ ...freshState(), everEpic: true, rolls: 20, starter: true });
 
-test('the strip is drawn from the live odds: commons dominate, rares at their true rate', () => {
+test('the strip is drawn from the live odds: RARE (the floor) dominates, EPICs at their true rate', () => {
   const { probs } = rollTable(fresh(), { permanentOwned: 0, markLuck: 0 });
   const want = {};
   for (const m of ROLL_MARKS) want[m.tier] = (want[m.tier] || 0) + (probs.get(m.id) || 0);
@@ -29,16 +29,17 @@ test('the strip is drawn from the live odds: commons dominate, rares at their tr
   const n = {};
   let total = 0;
   for (let k = 0; k < 2000; k += 1) {
-    const strip = drawStrip(probs, r, { resultId: 'mk-bomber' });
+    const strip = drawStrip(probs, r, { resultId: 'mk-smith' });
     strip.forEach((id, i) => {
       if (i === LAND_AT) return;
       n[tierOf(id)] = (n[tierOf(id)] || 0) + 1;
       total += 1;
     });
   }
-  assert.ok(n.common / total > 0.8, `commons dominate (${(n.common / total).toFixed(3)})`);
-  // RARE share within 10% (relative) of the table's
-  assert.ok(Math.abs(n.rare / total - want.rare) / want.rare < 0.1, `rare ${n.rare / total} vs ${want.rare}`);
+  assert.ok(n.rare / total > 0.97, `RARE dominates (${(n.rare / total).toFixed(3)})`);
+  assert.equal(n.common, undefined, 'no COMMON exists');
+  // EPIC share within 10% (relative) of the table's
+  assert.ok(Math.abs(n.epic / total - want.epic) / want.epic < 0.1, `epic ${n.epic / total} vs ${want.epic}`);
   // every filler is a real, rollable mark with p > 0
   const ok = new Set(tableEntries(probs).map((e) => e.id));
   for (const id of drawStrip(probs, rng(3), { resultId: 'mk-eclipse' })) assert.ok(ok.has(id) || id === 'mk-eclipse');
@@ -47,23 +48,23 @@ test('the strip is drawn from the live odds: commons dominate, rares at their tr
 test('the landing cell is the result and the fillers never depend on it (no inserted near-miss)', () => {
   const { probs } = rollTable(fresh(), { permanentOwned: 0, markLuck: 0 });
   const a = drawStrip(probs, rng(42), { resultId: 'mk-origin' });
-  const b = drawStrip(probs, rng(42), { resultId: 'mk-bomber' });
+  const b = drawStrip(probs, rng(42), { resultId: 'mk-smith' });
   assert.equal(a.length, REEL_LEN);
   assert.equal(a[LAND_AT], 'mk-origin');
-  assert.equal(b[LAND_AT], 'mk-bomber');
+  assert.equal(b[LAND_AT], 'mk-smith');
   a.forEach((id, i) => { if (i !== LAND_AT) assert.equal(id, b[i], `cell ${i} must not change with the result`); });
 });
 
 test('a pity-forced roll draws its strip from the forced (EPIC+) table — still the real odds of that roll', () => {
-  const st = { ...fresh(), sinceEpic: 49 };
+  const st = { ...fresh(), sinceEpic: 9 };
   const t = rollTable(st, { permanentOwned: 0, markLuck: 0 });
   assert.equal(t.forced, 'epic');
   const strip = drawStrip(t.probs, rng(9), { resultId: 'mk-nova' });
-  for (const id of strip) assert.ok(TIER_LADDER.indexOf(tierOf(id)) >= 2);
+  for (const id of strip) assert.ok(TIER_LADDER.indexOf(tierOf(id)) >= TIER_LADDER.indexOf('epic'));
 });
 
 test('duration: 2.4 s for every tier (NIGHT oct8); the slowdown power still grows with rarity', () => {
-  assert.equal(spinMs('common'), 2400);
+  assert.equal(spinMs('rare'), 2400);
   assert.equal(spinMs('secret'), 2400);
   for (let i = 1; i < TIER_LADDER.length; i += 1) {
     assert.equal(SPIN_MS[TIER_LADDER[i]], 2400);
@@ -92,7 +93,7 @@ test('the reel lands exactly on the result and never overshoots; ticks slow down
     const tt = tickTimes({ dur: d, pow: easePow(tier) });
     return (d - tt[tt.length - 3]) / d;
   };
-  assert.ok(crawl('secret') > crawl('common'));
+  assert.ok(crawl('secret') > crawl('rare'));
   // a SHORT land starts near the result
   assert.equal(spinFrom('short'), LAND_AT - 6);
   assert.equal(spinFrom('full'), 0);
@@ -100,12 +101,11 @@ test('the reel lands exactly on the result and never overshoots; ticks slow down
 
 test('skip rules: below the setting → short; at/above → full; a first-time mark ALWAYS full; reduced → none', () => {
   const r = (tier, newMark = false) => ({ tier, newMark });
-  assert.equal(revealMode(r('common'), { skipBelow: 'epic' }), 'short');
   assert.equal(revealMode(r('rare'), { skipBelow: 'epic' }), 'short');
   assert.equal(revealMode(r('epic'), { skipBelow: 'epic' }), 'full');
   assert.equal(revealMode(r('legendary'), { skipBelow: 'mythic' }), 'short');
-  assert.equal(revealMode(r('common', true), { skipBelow: 'secret' }), 'full');
-  assert.equal(revealMode(r('common'), { skipBelow: 'common' }), 'full');
+  assert.equal(revealMode(r('rare', true), { skipBelow: 'secret' }), 'full');
+  assert.equal(revealMode(r('rare'), { skipBelow: 'rare' }), 'full', '< RARE skips nothing (RARE is the floor)');
   assert.equal(revealMode(r('secret', true), { reduced: true }), 'none');
 });
 
@@ -131,7 +131,7 @@ test('auto roll stops on the goal tier or better (incl. a double roll extra)', (
   assert.equal(autoShouldStop({ tier: 'rare' }, 'epic'), false);
   assert.equal(autoShouldStop({ tier: 'epic' }, 'epic'), true);
   assert.equal(autoShouldStop({ tier: 'mythic' }, 'epic'), true);
-  assert.equal(autoShouldStop({ tier: 'common', extra: [{ tier: 'legendary' }] }, 'legendary'), true);
+  assert.equal(autoShouldStop({ tier: 'rare', extra: [{ tier: 'legendary' }] }, 'legendary'), true);
   assert.equal(autoShouldStop({ tier: 'secret' }, 'secret'), true);
 });
 
@@ -159,15 +159,14 @@ test('tension: the result crosses the line at >= 85% of the spin, rests INSIDE i
 });
 
 test('full reveal: a first-time mark in a double roll extra, and the hit that stops AUTO ROLL', () => {
-  assert.equal(revealMode({ tier: 'common', extra: [{ tier: 'rare', newMark: true }] }, { skipBelow: 'epic' }), 'full');
-  assert.equal(revealMode({ tier: 'rare' }, { skipBelow: 'epic', autoUntil: 'rare' }), 'full');
-  assert.equal(revealMode({ tier: 'common' }, { skipBelow: 'epic', autoUntil: 'rare' }), 'short');
+  assert.equal(revealMode({ tier: 'rare', extra: [{ tier: 'rare', newMark: true }] }, { skipBelow: 'epic' }), 'full');
+  assert.equal(revealMode({ tier: 'epic' }, { skipBelow: 'legendary', autoUntil: 'epic' }), 'full');
+  assert.equal(revealMode({ tier: 'rare' }, { skipBelow: 'epic', autoUntil: 'epic' }), 'short');
   assert.equal(revealMode({ tier: 'rare' }, { skipBelow: 'epic', autoUntil: null }), 'short');
 });
 
 test('ROLL v1 reveals are rarity-scaled: lite < EPIC (REVEAL v2), dim at EPIC, full LEGENDARY+; short / none lands are a line', async () => {
   const { revealKind } = await import('./reelPlan.js');
-  assert.equal(revealKind('common'), 'lite');
   assert.equal(revealKind('rare'), 'lite');
   assert.equal(revealKind('epic'), 'dim');
   for (const t of ['legendary', 'mythic', 'secret']) assert.equal(revealKind(t), 'full');
@@ -175,14 +174,13 @@ test('ROLL v1 reveals are rarity-scaled: lite < EPIC (REVEAL v2), dim at EPIC, f
   assert.equal(revealKind('legendary', 'none'), 'line');
 });
 
-test('the AUTO cycle: OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF', async () => {
+test('the AUTO cycle: OFF → EPIC+ → LEGENDARY+ → OFF (GEAR POOL v2: RARE+ is every roll, so it is gone)', async () => {
   const { nextAutoTarget, AUTO_CYCLE } = await import('./reelPlan.js');
-  assert.deepEqual(AUTO_CYCLE, [null, 'rare', 'epic', 'legendary']);
-  assert.equal(nextAutoTarget(null), 'rare');
-  assert.equal(nextAutoTarget('rare'), 'epic');
+  assert.deepEqual(AUTO_CYCLE, [null, 'epic', 'legendary']);
+  assert.equal(nextAutoTarget(null), 'epic');
   assert.equal(nextAutoTarget('epic'), 'legendary');
   assert.equal(nextAutoTarget('legendary'), null);
-  assert.equal(nextAutoTarget('bogus'), 'rare');
+  assert.equal(nextAutoTarget('bogus'), 'epic');
 });
 
 test('R4 HOLD TO ROLL: the charge is 400–600 ms, the overhold fires on its own, the whole spin stays ≤ 3 s', async () => {
@@ -193,9 +191,8 @@ test('R4 HOLD TO ROLL: the charge is 400–600 ms, the overhold fires on its own
   for (const t of Object.keys(SPIN_MS)) assert.ok(SPIN_MS[t] + 320 <= 3000, `${t} spin + land ≤ 3 s`);
 });
 
-test('R4 THE TELL: EPIC+ only, honest (never for COMMON / RARE or a short land), intensity climbs with the tier', async () => {
+test('R4 THE TELL: EPIC+ only, honest (never for RARE or a short land), intensity climbs with the tier', async () => {
   const { tellFor, tellFrames, TELL } = await import('./reelPlan.js');
-  assert.equal(tellFor('common'), null);
   assert.equal(tellFor('rare'), null);
   assert.equal(tellFor('epic', 'short'), null);
   assert.equal(tellFor('legendary', 'none'), null);

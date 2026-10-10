@@ -62,7 +62,7 @@ test('nothing worn → the first mark is AUTO, but nothing is equipped until the
     const r = buyMarkRoll({ level: 1, rng: at(0) });
     assert.equal(r.decision, 'auto');
     assert.equal(r.fromMain, 1);
-    assert.ok(Math.abs(r.toMain - 1.1) < 1e-9, 'a COMMON MAIN is ×1.1');
+    assert.ok(Math.abs(r.toMain - 1.25) < 1e-9, 'a RARE MAIN (the floor) is ×1.25');
     assert.equal(m.get(MARKS_EQUIPPED_KEY), undefined, 'the tap writes no MAIN (no spoiler)');
     assert.equal(applyRollEquip(r), r.markId, 'the landing equips it');
     assert.equal(m.get(MARKS_EQUIPPED_KEY), r.markId);
@@ -71,7 +71,7 @@ test('nothing worn → the first mark is AUTO, but nothing is equipped until the
 
 test('the landing re-checks: a MAIN the player equipped meanwhile is never replaced by a lower one', () => {
   withStorage({ 'taw.wins': '0', [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: false, marks: { 'mk-kraken': { n: 1 } } }) }, (m) => {
-    const r = buyMarkRoll({ level: 1, rng: at(0) }); // a common
+    const r = buyMarkRoll({ level: 1, rng: at(0) }); // a rare
     m.set(MARKS_EQUIPPED_KEY, 'mk-kraken'); // a MYTHIC ×10 worn before the reveal lands
     assert.equal(applyRollEquip(r), null);
     assert.equal(m.get(MARKS_EQUIPPED_KEY), 'mk-kraken');
@@ -110,19 +110,19 @@ test('DOUBLE ROLLS (SINGULARITY worn): one price, two results; the rarer is show
 });
 
 // ---------------------------------------------------------------------------------------- MARKS v2
-test('no ×10: the batch API is gone; AUTO ROLL stops on RARE / EPIC / LEGENDARY / MYTHIC / SECRET', () => {
+test('no ×10: the batch API is gone; AUTO ROLL stops on EPIC / LEGENDARY / MYTHIC / SECRET (RARE is every roll)', () => {
   assert.equal(SHOP.buyMarkRolls, undefined);
-  assert.deepEqual(AUTO_ROLL_TIERS, ['rare', 'epic', 'legendary', 'mythic', 'secret']);
+  assert.deepEqual(AUTO_ROLL_TIERS, ['epic', 'legendary', 'mythic', 'secret']);
 });
 
-test('AUTO ROLL until EPIC: one at a time, stops on the hit (the first-EPIC guarantee lands it by roll 10)', () => {
-  const st = { v: 2, starter: true, marks: { 'mk-bomber': { n: 1 } } };
+test('AUTO ROLL until EPIC: one at a time, stops on the hit (the EPIC+ every-10 pity lands it by roll 10)', () => {
+  const st = { v: 2, starter: true, marks: { 'mk-detonator': { n: 1 } } };
   withStorage({ [GEMS_KEY]: gems(1000), [ROLL_STATE_KEY]: JSON.stringify(st) }, (m) => {
     const seen = [];
     const list = autoRoll({ until: 'epic', level: 1, rng: at(0), onEach: (r, i) => seen.push(i) });
     assert.equal(list.length, 10);
     assert.deepEqual(seen, [...Array(10).keys()], 'onEach after every roll');
-    assert.ok(list.slice(0, 9).every((r) => r.tier === 'common'));
+    assert.ok(list.slice(0, 9).every((r) => r.tier === 'rare'));
     assert.equal(list[9].tier, 'epic');
     assert.equal(list[9].pityHit, 'epic');
     assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 10);
@@ -131,10 +131,10 @@ test('AUTO ROLL until EPIC: one at a time, stops on the hit (the first-EPIC guar
 });
 
 test('AUTO ROLL stops when the GEMS run out (or the budget is spent); nothing rolls when short; wins never pay', () => {
-  const st = JSON.stringify({ v: 2, starter: true, everEpic: true, marks: { 'mk-bomber': { n: 1 } } });
+  const st = JSON.stringify({ v: 2, starter: true, everEpic: true, marks: { 'mk-detonator': { n: 1 } } });
   withStorage({ [ROLL_STATE_KEY]: st, 'taw.wins': '999999999' }, (m) => {
     m.set(GEMS_KEY, gems(price * 3 + 5));
-    const list = autoRoll({ until: 'secret', level: 1, rng: at(0) }); // BOMBER dupes: no reward, no pip yet
+    const list = autoRoll({ until: 'secret', level: 1, rng: at(0) }); // DETONATOR dupes: no reward, no pip yet
     assert.equal(list.length, 3);
     assert.equal(getGems(), 5);
     assert.equal(Number(m.get('taw.wins')), 999999999, 'the wins are never spent on a roll');
@@ -148,9 +148,9 @@ test('AUTO ROLL stops when the GEMS run out (or the budget is spent); nothing ro
 test('INDEX rewards: a NEW mark pays its words at your rate through the one grant; a dupe pays nothing', () => {
   withStorage({ 'taw.wins': '0', [ROLL_STATE_KEY]: JSON.stringify({ v: 2, starter: false, marks: {} }) }, (m) => {
     const rate = refWordWins();
-    const r = buyMarkRoll({ level: 1, rng: at(0) }); // the free starter → BOMBER, new
+    const r = buyMarkRoll({ level: 1, rng: at(0) }); // the free starter → DETONATOR, new
     assert.equal(r.newMark, true);
-    assert.equal(r.lump, Math.round(INDEX_NEW_WORDS.common * rate));
+    assert.equal(r.lump, Math.round(INDEX_NEW_WORDS.rare * rate));
     assert.equal(Number(m.get('taw.wins')), r.lump);
     m.set(GEMS_KEY, gems(price));
     const d = buyMarkRoll({ level: 1, rng: at(0) });
@@ -160,12 +160,12 @@ test('INDEX rewards: a NEW mark pays its words at your rate through the one gran
 });
 
 test('INDEX rewards: completing a tier pays its completion once', () => {
-  const commons = ROLL_MARKS.filter((x) => x.tier === 'common');
-  const marks = Object.fromEntries(commons.slice(1).map((x) => [x.id, { n: 1 }]));
+  const rares = ROLL_MARKS.filter((x) => x.tier === 'rare');
+  const marks = Object.fromEntries(rares.slice(1).map((x) => [x.id, { n: 1 }]));
   withStorage({ 'taw.wins': '0', [ROLL_STATE_KEY]: JSON.stringify({ v: 2, starter: false, everEpic: true, marks }) }, () => {
     const rate = refWordWins();
-    const r = buyMarkRoll({ level: 1, rng: at(0) }); // the missing first common
-    assert.equal(r.completed, 'common');
-    assert.equal(r.lump, Math.round((INDEX_NEW_WORDS.common + INDEX_COMPLETE_WORDS.common) * rate));
+    const r = buyMarkRoll({ level: 1, rng: at(0) }); // the missing first rare
+    assert.equal(r.completed, 'rare');
+    assert.equal(r.lump, Math.round((INDEX_NEW_WORDS.rare + INDEX_COMPLETE_WORDS.rare) * rate));
   });
 });

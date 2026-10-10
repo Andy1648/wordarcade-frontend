@@ -132,7 +132,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
  * SLOT at the foot of the rail — the cog, the stat's NUMBER big ("×3"), WHAT it boosts under it ("WINS"), the crit
  * rate as one compact line when the gear has one, the gear's name small in its tier colour.
  * Andy oct9 ("add a glow or smthn to rarer gears … clicking the 'your gear' should show the gear stats"):
- *   - RARITY is the frame, not a glow (flat rule): the border and the hard offset shadow take the tier colour, common
+ *   - RARITY is the frame, not a glow (flat rule): the border and the hard offset shadow take the tier colour, rare
  *     quiet → mythic loud (Homepage.css `.hp-gear[data-tier]`); LEGENDARY+ also catch the INDEX's one-shot sheen.
  *   - a worn gear opens its GEAR SHEET (Homepage → GearSheetOverlay); nothing worn → NONE / ROLL FOR ONE + a dot,
  *     and the ROLL screen.
@@ -141,6 +141,8 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
  *  SHEET's splitTag (markCard/cardModel.js), so the slot's number and words are the sheet's. */
 export function gearSplit(text) {
   const s = String(text || '').trim();
+  const ev = /^(EVERY \S+) (.+)$/.exec(s); // "EVERY 4TH KEY CRITS" → EVERY 4TH · KEY CRITS (as splitTag)
+  if (ev) return { big: ev[1], unit: ev[2] };
   const i = s.indexOf(' ');
   return i < 0 ? { big: s, unit: '' } : { big: s.slice(0, i), unit: s.slice(i + 1) };
 }
@@ -174,7 +176,7 @@ function useGearSheen(bandRef, enabled) {
 }
 
 export function MenuGearSlot({ mark, onClick, disabled }) {
-  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'common') : null;
+  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   // the stat as it PAYS (markRollsCore.mainTag — the payout's own statOf), never a legacy blurb sentence
   const stat = mark ? gearSplit(mainTag(mark.id) || mark.blurb || mark.name) : null;
@@ -227,7 +229,7 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
  *  wears the YOUR GEAR slot's TIER FRAME (Andy oct9): the edge stripe, border and shadow in the tier colour. */
 export function MenuMarkChip({ mark, onClick }) {
   const name = mark ? mark.name : 'ROLL';
-  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'common') : null;
+  const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   return (
     <button

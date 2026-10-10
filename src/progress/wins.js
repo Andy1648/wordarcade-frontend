@@ -260,7 +260,8 @@ export function perWordFactors({ mode, difficulty, rebirthCount, markId, mastery
   const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
   // The equipped MARK (MARKS v2): its +N% WINS stat (or a PERMANENT's MAIN) × the INDEX bonus (markWinsMult), and
   // its +N BASE WINS/WORD (`baseWins`, added to BASE 10 before every multiplier). `markId` undefined = the worn mark.
-  const mark = markWinsMult({ markId });
+  // GEAR POOL v2: `mode` lets a one-mode WINS gear ("×1.5 WINS IN WORD BOMB") pay here, and only here.
+  const mark = markWinsMult({ markId, mode: modeKey(mode) });
   const baseWins = markBaseWins({ markId });
   const mastery = Number.isFinite(masteryMult) && masteryMult > 0 ? masteryMult : masteryXpMult(id);
   const stm = Number.isFinite(streakMult) && streakMult > 0 ? streakMult : getStreakMult();

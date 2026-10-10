@@ -35,7 +35,7 @@ import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
 import { cardModel, tilePips, pipsLabel } from './cardModel.js';
-import { pipPlateW } from './frameLayout.js';
+import { pipPlateW, pipGap } from './frameLayout.js';
 import './MarkCard.css';
 
 const NONE = {};
@@ -127,7 +127,7 @@ function MarkCard({
         <div className={`mc-name${nameFit}${locked ? ' is-q' : parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>
         {hero}
         {pips.length ? (
-          <div className="mc-pips" data-testid="mc-pips" data-n={pips.length} role="img" aria-label={pipsLabel(c)} style={{ width: `${pipPlateW(pips.length)}px` }}>
+          <div className="mc-pips" data-testid="mc-pips" data-n={pips.length} data-tight={pipGap(pips.length) ? undefined : ''} role="img" aria-label={pipsLabel(c)} style={{ width: `${pipPlateW(pips.length)}px` }}>
             {pips.map((p, i) => <Pip key={i} k={p.k} />)}
           </div>
         ) : null}

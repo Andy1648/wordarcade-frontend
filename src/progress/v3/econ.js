@@ -63,7 +63,7 @@ export const ACH_MIN = 40;
 export const ACH_MAX = 200;
 
 // MARKS (FINAL): the MAIN multiplier by tier (the part above ×1 is marks.js MARK_TIERS[t].bonus in season 2)
-export const MARK_MULT = Object.freeze({ common: 1.1, rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 });
+export const MARK_MULT = Object.freeze({ rare: 1.25, epic: 1.5, legendary: 2, mythic: 3, secret: 5 });
 
 const CAP = 1e300; // every product stays finite (format.js reads it through the named-suffix ladder)
 const int0 = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);

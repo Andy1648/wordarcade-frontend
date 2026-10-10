@@ -35,9 +35,12 @@ export function critSummary(totals = {}) {
   const power = powerOf(totals.power);
   const value = `${pct(rate)} · ${critPowerText(power)}`;
   const head = `CRIT ${value}`;
-  if (!rate) return { on: false, head, value, sub: 'ROLL A RARE+ GEAR', rate, power, oneIn: null, avg: 0 };
-  const oneIn = critOneIn(rate);
-  const avg = critAvgGain({ rate, power });
+  // GEAR POOL v2: EVERY Nth KEY CRITS makes 1 key in N a sure crit; the others still roll `rate`
+  const every = Number.isFinite(totals.every) && totals.every >= 1 ? Math.floor(totals.every) : 0;
+  const eff = every ? 1 / every + (1 - 1 / every) * rate : rate;
+  if (!eff) return { on: false, head, value, sub: 'ROLL A RARE+ GEAR', rate, power, oneIn: null, avg: 0 };
+  const oneIn = critOneIn(eff);
+  const avg = critAvgGain({ rate: eff, power });
   return { on: true, head, value, sub: `1 KEY IN ${formatNum(oneIn)} CRITS · +${pct(avg)} XP ON AVERAGE`, rate, power, oneIn, avg };
 }
 // (GEAR TILE v2, Andy oct9: the card's one-line CRIT band is gone — the tile shows a pip per extra stat and the full

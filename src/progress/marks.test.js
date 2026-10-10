@@ -27,9 +27,10 @@ function withStorage(seed, fn) {
   }
 }
 
-test('STEP 49: a collection of 16 unique marks across the four legacy tiers (MYTHIC / SECRET are roll-only)', () => {
-  assert.equal(MARKS.length, 16);
-  for (const t of ['common', 'rare', 'epic', 'legendary']) assert.ok(MARKS.some((m) => m.tier === t), `no ${t} mark`);
+test('STEP 49 (− GEAR POOL v2\'s six COMMONS): 10 unique marks across three legacy tiers (MYTHIC / SECRET are roll-only)', () => {
+  assert.equal(MARKS.length, 10);
+  for (const t of ['rare', 'epic', 'legendary']) assert.ok(MARKS.some((m) => m.tier === t), `no ${t} mark`);
+  assert.ok(!MARKS.some((m) => m.tier === 'common'), 'COMMON is gone');
   for (const m of MARKS) assert.ok(MARK_TIERS[m.tier], `${m.id} tier ${m.tier}`);
   assert.equal(new Set(MARKS.map((m) => m.id)).size, MARKS.length);
   assert.equal(new Set(MARKS.map((m) => m.name)).size, MARKS.length);
@@ -70,13 +71,13 @@ test("a wins mark's contribution is a REAL payout row — rule 3, still enforced
 });
 
 test('ONE SLOT: equipping replaces, and an un-equip is allowed', () => {
-  const earned = ['m-wb-5', 'lv-15'];
+  const earned = ['m-sat-5', 'reb-1'];
   withStorage({}, () => {
     assert.equal(getEquippedMark(), null);
-    equipMark('mk-bomber', earned);
-    assert.equal(getEquippedMark(), 'mk-bomber');
-    equipMark('mk-student', earned);
-    assert.equal(getEquippedMark(), 'mk-student', 'the second equip REPLACES the first');
+    equipMark('mk-scholar', earned);
+    assert.equal(getEquippedMark(), 'mk-scholar');
+    equipMark('mk-phoenix', earned);
+    assert.equal(getEquippedMark(), 'mk-phoenix', 'the second equip REPLACES the first');
     equipMark(null, earned);
     assert.equal(getEquippedMark(), null, 'an empty slot is a legitimate choice');
   });
@@ -84,7 +85,7 @@ test('ONE SLOT: equipping replaces, and an un-equip is allowed', () => {
 
 test('a mark you have not earned cannot be equipped, even by hand-editing storage', () => {
   withStorage({}, () => {
-    equipMark('mk-eternal', ['m-wb-5']); // eternal comes from sec-eternal, not earned
+    equipMark('mk-eternal', ['m-sat-5']); // eternal comes from sec-eternal, not earned
     assert.equal(getEquippedMark(), null);
   });
   // A storage value for a mark that does not exist reads as nothing, never as a crash.
@@ -95,18 +96,17 @@ test('a mark you have not earned cannot be equipped, even by hand-editing storag
 
 test('unlockedMarks (a save never through the marks layer) lists only what the achievements earned', () => {
   assert.deepEqual(unlockedMarks([]).map((m) => m.id), []);
-  assert.deepEqual(unlockedMarks(['m-wb-5']).map((m) => m.id), ['mk-bomber']);
-  assert.deepEqual(unlockedMarks(new Set(['m-wb-5', 'dist-500'])).map((m) => m.id), ['mk-bomber', 'mk-magpie']);
+  assert.deepEqual(unlockedMarks(['m-sat-5']).map((m) => m.id), ['mk-scholar']);
+  assert.deepEqual(unlockedMarks(new Set(['m-sat-5', 'reb-1'])).map((m) => m.id), ['mk-scholar', 'mk-phoenix']);
+  assert.deepEqual(unlockedMarks(['m-wb-5', 'dist-500']).map((m) => m.id), [], 'the retired COMMONS (BOMBER, MAGPIE) award nothing');
 });
 
 test('MARKS via ROLLS: the WORN mark pays its tier MAIN in every mode (the flavour is folded into the tier)', () => {
-  assert.deepEqual(markWinsFactors({ markId: 'mk-bomber' }), { mark: 1.1 });
-  assert.deepEqual(markWinsFactors({ markId: 'mk-student' }), { mark: 1.1 });
+  assert.deepEqual(markWinsFactors({ markId: 'mk-scholar' }), { mark: 1.25 });
   assert.deepEqual(markWinsFactors({ markId: null }), {});
-  // COMMON ×1.1, RARE ×1.25, EPIC ×1.5, LEGENDARY ×3 — and the rank no longer scales it
-  assert.equal(markMainMult(markById('mk-bomber'), 1), 1.1);
-  assert.equal(markMainMult(markById('mk-bomber'), 5), 1.1);
+  // RARE ×1.25, EPIC ×1.5, LEGENDARY ×3 — and the rank no longer scales it
   assert.equal(markMainMult(markById('mk-scholar'), 1), 1.25);
+  assert.equal(markMainMult(markById('mk-scholar'), 5), 1.25);
   assert.equal(markMainMult(markById('mk-nova'), 1), 1.5);
   // permanent marks (LINGUIST, CURATOR, ETERNAL, LEGEND) pay the LEGENDARY ×3
   for (const id of ['mk-linguist', 'mk-curator', 'mk-eternal', 'mk-legend']) assert.equal(markMainMult(markById(id), 1), 3, id);
@@ -116,7 +116,7 @@ test('MARKS via ROLLS: the WORN mark pays its tier MAIN in every mode (the flavo
 
 test('the non-wins effects read as neutral when nothing relevant is equipped', () => {
   assert.equal(markRarityStep('mk-linguist'), 0.12);
-  assert.equal(markRarityStep('mk-bomber'), 0);
+  assert.equal(markRarityStep('mk-scholar'), 0);
   assert.equal(markComboKeep('mk-metronome'), 0.3);
   assert.equal(markComboKeep(null), 0);
 });
@@ -130,7 +130,7 @@ test('a blocked store never throws and simply never remembers', () => {
   };
   try {
     assert.equal(getEquippedMark(), null);
-    assert.doesNotThrow(() => equipMark('mk-bomber', ['m-wb-5']));
+    assert.doesNotThrow(() => equipMark('mk-scholar', ['m-sat-5']));
     assert.doesNotThrow(() => equipMark(null));
   } finally {
     if (saved === undefined) delete globalThis.localStorage;
@@ -139,7 +139,8 @@ test('a blocked store never throws and simply never remembers', () => {
 });
 
 test('markById is the only lookup, and it is guarded', () => {
-  assert.equal(markById('mk-bomber').name, 'BOMBER');
+  assert.equal(markById('mk-scholar').name, 'SAVANT');
+  assert.equal(markById('mk-bomber'), null, 'a retired COMMON (GEAR POOL v2) is gone');
   assert.equal(markById('nope'), null);
   assert.equal(markById(undefined), null);
 });
@@ -168,15 +169,15 @@ test('a rank scales the flavour perk, bounded', () => {
 });
 
 test('only the WORN mark grows, one word at a time (the rank is a counter; the MAIN stays the tier)', () => {
-  withStorage({ [MARKS_EQUIPPED_KEY]: 'mk-bomber' }, (map) => {
-    assert.equal(markRank('mk-bomber'), 1);
-    assert.equal(markWinsFactors().mark, 1.1);
-    map.set(MARK_WORDS_KEY, JSON.stringify({ 'mk-bomber': MARK_RANK_WORDS[1] - 1 }));
+  withStorage({ [MARKS_EQUIPPED_KEY]: 'mk-scholar' }, (map) => {
+    assert.equal(markRank('mk-scholar'), 1);
+    assert.equal(markWinsFactors().mark, 1.25);
+    map.set(MARK_WORDS_KEY, JSON.stringify({ 'mk-scholar': MARK_RANK_WORDS[1] - 1 }));
     const r = addMarkWord();
-    assert.deepEqual(r, { id: 'mk-bomber', rank: 2, rankedUp: true });
-    assert.equal(markRank('mk-sprinter'), 1, 'a mark you are not wearing does not grow');
-    assert.equal(markWinsFactors().mark, 1.1);
-    const p = markProgress('mk-bomber');
+    assert.deepEqual(r, { id: 'mk-scholar', rank: 2, rankedUp: true });
+    assert.equal(markRank('mk-phoenix'), 1, 'a mark you are not wearing does not grow');
+    assert.equal(markWinsFactors().mark, 1.25);
+    const p = markProgress('mk-scholar');
     assert.equal(p.rank, 2);
     assert.equal(p.into, 0);
     assert.equal(p.need, MARK_RANK_WORDS[2] - MARK_RANK_WORDS[1]);
@@ -184,9 +185,9 @@ test('only the WORN mark grows, one word at a time (the rank is a counter; the M
 });
 
 test('the blurb prints the number the payout actually pays (the tier MAIN)', () => {
-  const bomber = MARKS.find((m) => m.id === 'mk-bomber');
-  assert.equal(markBlurbAt(bomber, 1), 'MAIN ×1.1 on XP per letter and wins.');
-  assert.equal(markBlurbAt(bomber, 5), 'MAIN ×1.1 on XP per letter and wins.');
+  const savant = MARKS.find((m) => m.id === 'mk-scholar');
+  assert.equal(markBlurbAt(savant, 1), 'MAIN ×1.25 on XP per letter and wins.');
+  assert.equal(markBlurbAt(savant, 5), 'MAIN ×1.25 on XP per letter and wins.');
   assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-pyro'), 1), 'MAIN ×1.5 on XP per letter and wins.');
   assert.equal(markBlurbAt(MARKS.find((m) => m.id === 'mk-eternal'), 1), 'MAIN ×3 on XP per letter and wins.');
   const metro = MARKS.find((m) => m.id === 'mk-metronome');
@@ -213,20 +214,20 @@ test('nothing equipped → addMarkWord is a no-op', () => {
 
 test('STEP 49 + E4: marks unlock at LV 10; the system opens and a new mark is OWNED at once (no inbox)', () => {
   withStorage({ [MARKS_OWNED_KEY]: '[]' }, () => {
-    assert.deepEqual(checkMarkClaims({ level: 5, earned: ['m-wb-5'] }), [], 'not before LV 10');
+    assert.deepEqual(checkMarkClaims({ level: 5, earned: ['m-sat-5'] }), [], 'not before LV 10');
     assert.equal(listClaims().length, 0);
-    const q = checkMarkClaims({ level: 10, earned: ['m-wb-5'] });
-    assert.deepEqual(q.map((c) => c.detail), ['mk-bomber']);
+    const q = checkMarkClaims({ level: 10, earned: ['m-sat-5'] });
+    assert.deepEqual(q.map((c) => c.detail), ['mk-scholar']);
     assert.equal(listClaims().length, 0, 'E4: marks and the MARKS system never sit in the inbox');
-    assert.deepEqual(unlockedMarks([]).map((m) => m.id), ['mk-bomber']);
-    assert.deepEqual(checkMarkClaims({ level: 12, earned: ['m-wb-5'] }), [], 'no repeat claim');
+    assert.deepEqual(unlockedMarks([]).map((m) => m.id), ['mk-scholar']);
+    assert.deepEqual(checkMarkClaims({ level: 12, earned: ['m-sat-5'] }), [], 'no repeat claim');
   });
 });
 
 test('STEP 49: an existing save keeps the marks it had, with no claim flood', () => {
   withStorage({}, () => {
-    checkMarkClaims({ level: 40, earned: ['m-wb-5', 'dist-500'] });
-    assert.deepEqual(unlockedMarks([]).map((m) => m.id), ['mk-bomber', 'mk-magpie']);
+    checkMarkClaims({ level: 40, earned: ['m-sat-5', 'reb-1'] });
+    assert.deepEqual(unlockedMarks([]).map((m) => m.id), ['mk-scholar', 'mk-phoenix']);
     assert.equal(listClaims().filter((c) => c.kind === 'mark').length, 0);
   });
 });
