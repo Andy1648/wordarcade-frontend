@@ -135,7 +135,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
  *   - RARITY is the frame, not a glow (flat rule): the border and the hard offset shadow take the tier colour, rare
  *     quiet → mythic loud (Homepage.css `.hp-gear[data-tier]`); LEGENDARY+ also catch the INDEX's one-shot sheen.
  *   - a tap opens the EQUIP screen (Homepage → EquipScreen, Andy oct9 22:56); a save with no gear at all → NONE /
- *     ROLL FOR ONE + a dot, and the ROLL screen.
+ *     ROLL FOR ONE + a dot, and the ROLL screen; gears owned but none equipped → NONE / EQUIP ONE + a dot.
  */
 /** "+28 BASE WINS/WORD" → { big: "+28", unit: "BASE WINS/WORD" } — split at the first space, exactly as the GEAR
  *  SHEET's splitTag (markCard/cardModel.js), so the slot's number and words are the sheet's. */
@@ -164,7 +164,7 @@ function useGearShowcase(slotRef, tier, enabled) {
   }, [slotRef, tier, enabled]);
 }
 
-export function MenuGearSlot({ mark, onClick, disabled }) {
+export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   // the stat as it PAYS (markRollsCore.mainTag — the payout's own statOf), never a legacy blurb sentence
@@ -213,7 +213,7 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
               <GearSlotCrit id={mark.id} />
             </Suspense>
           ) : null}
-          <span className="hp-gear-sub">{mark ? mark.name : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
+          <span className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</span>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>
       {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
@@ -223,8 +223,8 @@ export function MenuGearSlot({ mark, onClick, disabled }) {
 
 /** The worn mark, NAME ONLY — or, while nothing is worn, "ROLL" + a notification dot (it opens the ROLL screen). It
  *  wears the YOUR GEAR slot's TIER FRAME (Andy oct9): the edge stripe, border and shadow in the tier colour. */
-export function MenuMarkChip({ mark, onClick }) {
-  const name = mark ? mark.name : 'ROLL';
+export function MenuMarkChip({ mark, owns = false, onClick }) {
+  const name = mark ? mark.name : owns ? 'EQUIP' : 'ROLL';
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   return (

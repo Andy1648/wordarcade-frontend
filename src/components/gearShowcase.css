@@ -1,0 +1,20 @@
+/* gearShowcase.css — the YOUR GEAR SHOWCASE's one-shot layers (gearShowcase.js, LEGENDARY+). LAZY: it loads with the
+   showcase module, so the menu's first paint carries none of it (payload ratchet); until then the two spans are empty,
+   unstyled and invisible. */
+/* a flat tier-colour flash over the face, a burst ring (the reveal's
+   jagged asset as a mask, tier colour) behind the glyph — both opacity 0 at rest, finite WAAPI one-shots only */
+.hp-gear-flash { position: absolute; inset: 0; z-index: 1; border-radius: 4px; background: var(--gear-line); opacity: 0; pointer-events: none; }
+.hp-gear-ring {
+  position: absolute;
+  inset: -20%;
+  opacity: 0;
+  background: var(--gear-line);
+  -webkit-mask: url('/fx/burst-ring.svg') center / contain no-repeat;
+  mask: url('/fx/burst-ring.svg') center / contain no-repeat;
+  pointer-events: none;
+}
+/* the ring + flash read against the face: LEGENDARY pale gold, MYTHIC its second colour (cyan), SECRET white/cyan */
+.hp-gear[data-tier='legendary'] .hp-gear-ring { background: #FFF3A6; }
+.hp-gear:is([data-tier='mythic'], [data-tier='secret']) .hp-gear-ring { background: #2EFFE0; }
+.hp-gear[data-tier='mythic'] .hp-gear-flash { background: #2EFFE0; }
+.hp-gear[data-tier='secret'] .hp-gear-flash { background: #fff; }

@@ -28,8 +28,15 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   // feat/menu-perrow: nothing worn → the YOUR GEAR slot says NONE with a notification dot (it opens the ROLL screen)
   await expect(btn.locator('.menu-mark-name')).toHaveText('NONE');
   await expect(btn.locator('.hp-chip-dot')).toHaveCount(1);
+  // Andy oct9 22:56: YOUR GEAR opens the EQUIP screen — the owned SAVANT is there, nothing EQUIPPED yet
   await btn.click();
-  // Andy oct5: MARKS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX
+  const equip = page.locator('[data-testid="equip-screen"]');
+  await expect(equip.locator('.mx-tile', { hasText: 'SAVANT' })).toBeVisible();
+  await expect(equip.locator('.mx-tile-main')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(equip).toHaveCount(0);
+  // GEARS opens the full-screen ROLL screen; its INDEX button opens the MARKS INDEX (the catalogue)
+  await page.locator('[data-nav="gears"]').click();
   await page.locator('.rs-overlay').waitFor();
   await expect(page.locator('.rs-roll')).toBeVisible();
   await page.locator('[data-testid="roll-index"]').click();
@@ -138,8 +145,10 @@ for (const [label, seed] of [
     const btn = page.locator('.menu-mark');
     await expect(btn).toBeVisible();
     await btn.click();
-    await page.locator('.rs-overlay').waitFor();
-    await page.locator('.rs-close').click();
+    // gear owned → the EQUIP screen; nothing owned yet → the ROLL screen
+    await page.locator('.rs-overlay, [data-testid="equip-screen"]').first().waitFor();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.rs-overlay, [data-testid="equip-screen"]')).toHaveCount(0);
     // still there after MARKS closes with nothing worn — the old disappearing act
     await expect(page.locator('.rs-overlay')).toHaveCount(0);
     await expect(btn).toBeVisible();

@@ -13,6 +13,8 @@
 // REDUCED MOTION: never started (MenuNav) — the slot stays static.
 // LAZY: MenuNav imports this only once an EPIC+ gear is worn (payload ratchet).
 
+import './gearShowcase.css';
+
 export const SHOWCASE_EVERY_MS = { epic: 8000, legendary: 7000, mythic: 7000, secret: 6500 };
 export const SHOWCASE_FIRST_MS = 1600;
 const HERO = new Set(['legendary', 'mythic', 'secret']);
