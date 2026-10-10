@@ -18,3 +18,5 @@
 .hp-gear:is([data-tier='mythic'], [data-tier='secret']) .hp-gear-ring { background: #2EFFE0; }
 .hp-gear[data-tier='mythic'] .hp-gear-flash { background: #2EFFE0; }
 .hp-gear[data-tier='secret'] .hp-gear-flash { background: #fff; }
+/* the glyph stays above its ring (the ring is positioned; the cog joins its stacking order) */
+.hp-gear-art > .hp-gear-cog { position: relative; }
