@@ -10,6 +10,7 @@
 //   7. the in-game REDUCE MOTION toggle (taw.reduceMotion, PR #207) is respected: straight to the result, no reel motion
 //   8. 1280x551 · 1366x657 · 1920x1080 · 390x844 · 360x640: nothing clipped, ROLL visible, no horizontal scroll
 import { test, expect } from '@playwright/test';
+import { DUPE_GEMS, rollMarkById } from '../src/progress/markRollsCore.js';
 import { holdRoll, tapRoll } from './support/roll.js'; // HOLD TO ROLL (R4): a hold + release is a roll; a tap is not
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -50,6 +51,7 @@ const store = (page) => page.evaluate(() => {
     rolls: r.rolls || 0,
     owned: Object.keys(r.marks || {}),
     copies: Object.values(r.marks || {}).reduce((s, m) => s + (m.n || 0), 0),
+    counts: Object.fromEntries(Object.entries(r.marks || {}).map(([id, m]) => [id, m.n || 0])),
     worn: localStorage.getItem('taw.mark'),
   };
 });
@@ -156,7 +158,14 @@ test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made
   expect(made).toBeLessThanOrEqual(8);
   // every roll made is a copy saved, and was paid exactly once
   expect(after.copies - before.copies).toBe(made);
-  if (after.worn !== 'mk-singularity') expect(before.gems - after.gems).toBe(10 * made);
+  // gear card v4: every DUPLICATE pays its tier's gems back (DUPE_GEMS) — the net spend is 10 a roll minus those
+  let paidBack = 0;
+  for (const [id, n] of Object.entries(after.counts)) {
+    const was = before.counts[id] || 0;
+    const dupes = was > 0 ? n - was : Math.max(0, n - was - 1);
+    paidBack += dupes * DUPE_GEMS[rollMarkById(id).tier];
+  }
+  if (after.worn !== 'mk-singularity') expect(before.gems - after.gems).toBe(10 * made - paidBack);
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', String(after.gems));
 });
 
@@ -259,7 +268,7 @@ test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, cha
   expect(after.owned).toHaveLength(1);
   await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
-  await expect(page.getByTestId('roll-index')).toContainText('1/27'); // GEAR POOL v2: 27 gears (29 − 12 COMMON + 10 new)
+  await expect(page.getByTestId('roll-index')).toContainText('1/28'); // GEAR POOL v2: 27 gears + JACKPOT (gear card v4)
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', '90');
 });
 

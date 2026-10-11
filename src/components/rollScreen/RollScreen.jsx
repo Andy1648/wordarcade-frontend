@@ -29,7 +29,7 @@ import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/re
 import { MARK_TIERS } from '../../progress/marks';
 import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
-  setSkipBelow, SKIP_TIERS, PITY, critStatsOf, ROLL_MARKS,
+  setSkipBelow, SKIP_TIERS, PITY, critStatsOf, ROLL_MARKS, substatsOf,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getGems, subscribeGems } from '../../progress/gems';
@@ -44,7 +44,7 @@ import { lazyWithReload } from '../../lib/chunkReload';
 import { holdBeats } from '../../hooks/useBeatSync';
 import { CARD_RAR, cardTier } from '../markCard/palette.js';
 import { splitTag } from '../markCard/cardModel.js';
-import { critLines } from '../../progress/critText';
+import { substatParts } from '../../progress/critText';
 import {
   drawShowcaseStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS, CHARGE_MS, OVERHOLD_MS,
 } from './reelPlan.js';
@@ -71,7 +71,7 @@ function ResultLine({ result, view, pop = true }) {
   const m = markEntry(result.markId);
   const { num, kind } = splitTag(mainTag(result.markId, view)); // "×1.1 WINS" → ×1.1 · WINS (numbers first)
   const extra = (result.extra || []).filter(Boolean);
-  const crit = critLines(critStatsOf(result.markId, view)); // CRIT (oct8): the gear's extra lines, under its MAIN
+  const crit = substatParts(substatsOf(result.markId, view)); // gear card v4: every substat line, under its MAIN
   return (
     <div
       className={`rs-result${pop ? '' : ' is-rest'}`}

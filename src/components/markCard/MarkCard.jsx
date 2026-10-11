@@ -35,26 +35,13 @@ import ShinyBadge from '../rollScreen/ShinyBadge';
 import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
-import { cardModel, tilePips, pipsLabel } from './cardModel.js';
-import { pipPlateW, pipGap } from './frameLayout.js';
+import { cardModel } from './cardModel.js';
 import './MarkCard.css';
 
 const NONE = {};
 const FRAME_X = { mythic: '/fx/frame-mythic.svg', secret: '/fx/frame-secret.svg' };
 const cls = (base, extra) => (extra ? `${base} ${extra}` : base);
 
-// the pip glyphs: small vector marks (drawn 13×13, shown at 15 card px — frameLayout.PIP_W), never text sized to the scale
-const STAR5 = 'M6.5 0.6 L8.2 4.6 L12.5 4.9 L9.2 7.7 L10.2 12 L6.5 9.7 L2.8 12 L3.8 7.7 L0.5 4.9 L4.8 4.6 Z';
-const STAR4 = 'M6.5 0.4 L8.1 4.9 L12.6 6.5 L8.1 8.1 L6.5 12.6 L4.9 8.1 L0.4 6.5 L4.9 4.9 Z';
-function Pip({ k }) {
-  return (
-    <svg className={`mc-pip is-${k}`} viewBox="0 0 13 13" width="15" height="15" aria-hidden="true" focusable="false">
-      {k === 'stat' ? <circle cx="6.5" cy="6.5" r="4.2" fill="#fff" stroke="#000" strokeWidth="1.6" /> : null}
-      {k === 'perk' ? <path d={STAR4} fill="currentColor" stroke="#000" strokeWidth="1.3" strokeLinejoin="round" /> : null}
-      {k === 'star' ? <path d={STAR5} fill="#FFE94A" stroke="#000" strokeWidth="1.3" strokeLinejoin="round" /> : null}
-    </svg>
-  );
-}
 const Lock = () => (
   <svg className="mc-lock" viewBox="0 0 16 18" width="22" height="25" aria-hidden="true" focusable="false">
     <path d="M4 8 V5.5 a4 4 0 0 1 8 0 V8" fill="none" stroke="currentColor" strokeWidth="2.4" />
@@ -76,8 +63,7 @@ function MarkCard({
   }
   const entry = markEntry(id) || (id ? { id, tier: c.tier } : null);
   const nameLen = String(c.name || '').length;
-  const nameFit = nameLen >= 10 ? ' is-xl' : nameLen >= 8 ? ' is-l' : '';
-  const pips = tilePips(c);
+  const nameFit = nameLen >= 13 ? ' is-xxl' : nameLen >= 10 ? ' is-xl' : nameLen >= 8 ? ' is-l' : '';
   const numFit = c.statNum.length >= 5 ? ' is-l' : '';
   let hero;
   if (!locked) {
@@ -110,7 +96,7 @@ function MarkCard({
     >
       <div className="mc-face">
         {/* the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}
-        <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} pipW={pipPlateW(pips.length)} />
+        <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} />
         {/* MYTHIC / SECRET: the frame VARIANT asset over the whole card (horns + crest / off-register glitch brackets +
             crown) — a different class of card, owned or locked */}
         {FRAME_X[c.tier] ? <img className="mc-frame-x" src={FRAME_X[c.tier]} alt="" draggable="false" /> : null}
@@ -128,17 +114,16 @@ function MarkCard({
               </svg>
             </span></span>
           </span>
-          <MarkBadge mark={entry} rank={rank} size={132} silhouette={locked} permanent={kind === 'perm'} cog={false} className="mc-badge" />
+          <MarkBadge mark={entry} rank={rank} size={132} permanent={kind === 'perm'} cog={false} className="mc-badge" />
           {shiny && !locked ? <ShinyBadge className="mc-shiny" /> : null}
           {c.copies > 1 && !locked ? <span className="mc-dupes" aria-label={`${c.copies} copies`}>×{c.copies}</span> : null}
         </div>
-        <div className={`mc-name${nameFit}${locked ? ' is-q' : parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>
+        <div className={`mc-name${nameFit}${parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>
         {hero}
-        {pips.length ? (
-          <div className="mc-pips" data-testid="mc-pips" data-n={pips.length} data-tight={pipGap(pips.length) ? undefined : ''} role="img" aria-label={pipsLabel(c)} style={{ width: `${pipPlateW(pips.length)}px` }}>
-            {pips.map((p, i) => <Pip key={i} k={p.k} />)}
-          </div>
-        ) : null}
+        {/* GEAR CARD v4: the SUBSTATS — 4 lines on the bottom plate ("?" hidden on a locked card, "—" unused) */}
+        <ul className="mc-subs" data-testid="mc-subs" aria-label={c.subs.filter((x) => x !== '—').join(', ') || 'No substats'}>
+          {c.subs.map((t, i) => <li key={i} className={`mc-sub${t === '—' ? ' is-none' : t === '?' ? ' is-q' : ''}`}>{t}</li>)}
+        </ul>
         {/* ROLL REVEAL v2: the wide sheen band (an asset, /fx/sheen.svg) parked off the card in a clip the size of the
             face; the reveal / the INDEX idle timer sweeps it across ONCE by transform (WAAPI). At rest it moves nothing. */}
         {sheen ? <span className="mc-sheen" aria-hidden="true"><img className="mc-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}

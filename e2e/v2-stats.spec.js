@@ -50,6 +50,9 @@ const chipIds = (st) => st.locator('.st2-chip').evaluateAll((els) => els.map((e)
 // a printed number back to a value: "×1,024" → 1024, "×15.63" → 15.63, "1.13K" → 1130
 const SUF = { '': 1, K: 1e3, M: 1e6, B: 1e9, T: 1e12 };
 const val = (t) => {
+  // gear card v4: a BASE with a gear's +N reads "10 + 10" — its value is the sum
+  const parts = String(t).split(' + ');
+  if (parts.length > 1) return parts.reduce((a, p) => a + val(p), 0);
   const m = /^×?([\d,]*\.?\d+)([KMBT]?)$/.exec(String(t).trim());
   if (!m) throw new Error(`not a number: ${t}`);
   return Number(m[1].replace(/,/g, '')) * SUF[m[2]];
@@ -125,7 +128,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
       expect(Math.abs(base * total - result) / result, `${tab}: BASE ${base} × ${total} vs ${result}`).toBeLessThan(0.006);
       if (tab === 'wins') {
         expect(ids).toEqual(['base', 'mode', 'rebirth', 'mark', 'index', 'boost']);
-        expect(vals.slice(0, 4)).toEqual([10, 1, 27, 2.8]); // BASE 10 · MODE 1 · 3^3 · LEGENDARY ×2.8 (FINAL, GEAR OP)
+        expect(vals.slice(0, 4)).toEqual([20, 1, 27, 2.8]); // BASE 10 + its LEGENDARY substat +10 (gear card v4) · MODE 1 · 3^3 · LEGENDARY ×2.8
       } else {
         expect(ids).toEqual(['base', 'power', 'rebirth', 'mark', 'index', 'boost']);
         expect(vals.slice(0, 3)).toEqual([1, 8, 27]); // BASE 1 · KEY 2^3 · 3^3 (FINAL v3)

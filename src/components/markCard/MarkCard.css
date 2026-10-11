@@ -11,7 +11,7 @@
   position: relative;
   flex: none;
   width: var(--mc-w, 180px);
-  height: calc(var(--mc-w, 180px) * 1.4444);
+  height: calc(var(--mc-w, 180px) * 1.6667); /* gear card v4: 180×300 (frameLayout.CARD_RATIO) */
 }
 /* R4 FRAME SYSTEM: the face is a transparent 180×260 box; CardFrame (inline SVG) draws the frame, plates, rosette and
    the hard shadow under it, and every text block sits at a fixed y over its plate (CardFrame.LAYOUT). No CSS border,
@@ -22,7 +22,7 @@
   left: 0;
   top: 0;
   width: 180px;
-  height: 260px;
+  height: 300px;
   box-sizing: border-box;
   transform: scale(var(--mc-s, 1));
   transform-origin: 0 0;
@@ -33,12 +33,13 @@
   text-transform: uppercase;
   --mc-u: 1px; /* ONE px of the 180x260 card drawing: every card text size is in these units (typeScale FIT-TO-SLOT) */
   /* GEAR TILE v2: ONE layout for every card (frameLayout.LAYOUT — art centre 89 r45, name 138, hero 172, pips 232) */
-  --mc-y-art: 46px; --mc-art: 86px;
-  --mc-y-name: 138px; --mc-y-hero: 172px; --mc-y-pips: 232px;
+  /* GEAR CARD v4 (frameLayout.LAYOUT — art centre 86 r42, name 128, hero 164, subs 214) */
+  --mc-y-art: 44px; --mc-art: 84px;
+  --mc-y-name: 128px; --mc-y-hero: 164px; --mc-y-subs: 214px;
 }
-.mc-frame { position: absolute; left: 0; top: 0; width: 180px; height: 260px; display: block; pointer-events: none; }
-/* MYTHIC / SECRET frame variant (public/fx/frame-<tier>.svg, drawn on a 228×308 box round the 180×260 card) */
-.mc-frame-x { position: absolute; left: -24px; top: -24px; width: 228px; height: 308px; display: block; pointer-events: none; }
+.mc-frame { position: absolute; left: 0; top: 0; width: 180px; height: 300px; display: block; pointer-events: none; }
+/* MYTHIC / SECRET frame variant (public/fx/frame-<tier>.svg, drawn on a 228×348 box round the 180×300 card) */
+.mc-frame-x { position: absolute; left: -24px; top: -24px; width: 228px; height: 348px; display: block; pointer-events: none; }
 
 /* RARITY on the rarity plate (y 9–37): the tier colour with an ink stroke */
 .mc-head {
@@ -125,6 +126,7 @@
 }
 .mc-name.is-l { font-size: calc(var(--mc-u) * 21); }
 .mc-name.is-xl { font-size: calc(var(--mc-u) * 18.5); }
+.mc-name.is-xxl { font-size: calc(var(--mc-u) * 15); } /* gear card v4 renames: "GAME CARTRIDGE", "JUMPER CABLES" */
 /* the HERO on the ink band (54px tall): the MAIN STAT — value huge in Bungee, its label under it in Space Mono
    (GEAR TILE v2, Andy oct9: numbers first, ≥18px values / ≥14px labels at every tile size the INDEX draws) */
 .mc-hero {
@@ -132,7 +134,7 @@
   top: var(--mc-y-hero);
   left: 5px;
   width: 170px;
-  height: 54px;
+  height: 44px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -145,18 +147,18 @@
 .mc-num {
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 34);
+  font-size: calc(var(--mc-u) * 28);
   line-height: 0.92;
   color: #FFE94A;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
 }
-.mc-hero.is-l .mc-num { font-size: calc(var(--mc-u) * 30); }
+.mc-hero.is-l .mc-num { font-size: calc(var(--mc-u) * 24); }
 .mc-kind {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: calc(var(--mc-u) * 16);
+  font-size: calc(var(--mc-u) * 14);
   line-height: 1;
   letter-spacing: 0.02em;
   color: #fff;
@@ -171,22 +173,40 @@
 .mc-pre { font-size: calc(var(--mc-u) * 19); }
 .mc-hero.is-ach { color: var(--mc-line); }
 .mc-hero.is-ach .mc-kind { font-size: calc(var(--mc-u) * 17); }
-/* the PIP row on the bottom band (20px tall plate, sized to its pips — CardFrame draws the plate): quiet marks */
-.mc-pips {
+/* GEAR CARD v4: the SUBSTATS on the bottom plate (80px tall, 4 lines of 19): the substat lines in white Space Mono,
+   ink-stroked; "—" an unused line (quiet); "?" a locked card's hidden one */
+.mc-subs {
   position: absolute;
-  top: var(--mc-y-pips);
-  left: 0;
-  right: 0;
-  height: 20px;
-  margin: 0 auto;
+  top: var(--mc-y-subs);
+  left: 5px;
+  width: 170px;
+  height: 80px;
+  margin: 0;
+  padding: 2px 8px;
+  box-sizing: border-box;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.mc-sub {
+  height: 19px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  color: #2EFFE0; /* the ✦ perk colour (the perk line's cyan) */
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: calc(var(--mc-u) * 14);
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
 }
-.mc-pips[data-tight] { gap: 0; } /* 10 pips (frameLayout.pipGap) */
-.mc-pip { flex: none; display: block; }
+.mc-sub + .mc-sub { border-top: 1px solid #2a1a44; }
+.mc-sub.is-none { color: #4a3a6a; }
+.mc-sub.is-q { color: var(--mc-line); }
 
 /* ROLL REVEAL v2 sheen: a clip the size of the face; the band asset waits off its left edge until a WAAPI sweep */
 .mc-sheen { position: absolute; left: 2px; top: 2px; width: 176px; height: 256px; border-radius: 14px; overflow: hidden; pointer-events: none; }

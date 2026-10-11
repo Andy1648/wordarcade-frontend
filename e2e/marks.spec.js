@@ -68,11 +68,12 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   await expect(sheet.getByRole('button', { name: 'UNEQUIP', exact: true })).toBeVisible();
   await sheet.locator('.mx-sheet-close').click();
   await expect(sheet).toHaveCount(0);
-  // a locked ROLLABLE mark (GEAR TILE v2 — a HIDDEN design): no name, a tier-coloured silhouette, its rarity, "1 IN X"
-  // as the hero and NO stat value
+  // a locked ROLLABLE mark (gear card v4, Andy oct11 "show the design for all the cards"): its art + name show, "1 IN X"
+  // is the hero, every substat is "?" and NO stat value prints
   const locked = page.locator('.mx-tile.is-locked:not(.is-perm)').first();
-  await expect(locked.locator('.mx-sil')).toHaveCount(1);
-  await expect(locked.locator('.mx-tile-name')).toHaveCount(0);
+  await expect(locked.locator('.mx-sil')).toHaveCount(0);
+  await expect(locked.locator('.mc-name')).not.toHaveText('???');
+  await expect(locked.locator('.mc-sub.is-q').first()).toHaveText('?');
   await expect(locked.locator('.mx-tile-odds')).toHaveText(/^1 IN [\d\s,K]+$/);
   await expect(locked.locator('.mx-tile-sub, .mc-kind')).toHaveCount(0);
   await expect(locked).not.toContainText(/[×+]\d/);
