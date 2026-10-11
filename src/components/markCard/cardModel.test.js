@@ -41,10 +41,12 @@ test('every rollable mark: real odds, its stat numbers-first, ★ pips', () => {
   }
 });
 
-test('locked is a HIDDEN design (Andy oct9): "???", the odds as the hero, NO stat value anywhere, "?" pips', () => {
+test('locked shows its DESIGN (Andy oct11) but hides its numbers: the odds as the hero, "?" substats, no stat value', () => {
   for (const m of ROLL_MARKS) {
     const c = cardModel({ id: m.id, tier: m.tier, name: m.name, locked: true, state: null });
-    assert.equal(c.name, '???');
+    assert.equal(c.name, m.name, 'gear card v4: a locked card shows its name + art');
+    assert.ok(c.subs.length === 4 && c.subs.every((x) => x === '?' || x === '—'), `${m.id}: substats hidden as "?"`);
+    assert.ok(!c.subs.some((x) => /\d/.test(x)), `${m.id}: no substat number`);
     assert.equal(c.pips, null);
     assert.equal(c.odds, `1 IN ${c.oddsNum}`);
     assert.equal(c.statNum, '', `${m.id}: no stat number`);

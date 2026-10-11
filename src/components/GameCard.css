@@ -937,7 +937,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   box-shadow: 3px 3px 0 #000;
 }
 .game-card-gems .is-dim { opacity: 0.25; }
-/* SAT RUSH's masthead owns the top edge: its badge sits under the masthead, on the panel's right */
-.game-card-magnet[data-game='sat-rush'] .game-card-gems { top: 23%; padding: 3px 4px; }
+/* SAT RUSH: the badge sits top-right like every other card (Andy oct11); the masthead's title row leaves it room */
+.game-card-magnet[data-game='sat-rush'] .game-card-gems { padding: 3px 4px; }
+.game-card-magnet[data-game='sat-rush'] .game-card-mh-row { padding-right: 30cqw; box-sizing: border-box; }
+.game-card-magnet[data-game='sat-rush'] .game-card-name { font-size: clamp(14px, 10.5cqw, 28px); white-space: nowrap; }
 .game-card-magnet[data-game='sat-rush'] .game-card-gems .kit-icon { width: 18px; height: 18px; }
 .game-card-foot .game-card-payout { display: flex; flex-wrap: nowrap; justify-content: center; }

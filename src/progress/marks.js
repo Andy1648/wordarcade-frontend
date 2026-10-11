@@ -62,7 +62,7 @@ export const MARKS = [
     tier: 'rare',
     // SAVANT, not SCHOLAR: the achievement that unlocks it is already called SCHOLAR, and a locked
     // card reading "SCHOLAR — unlocks with SCHOLAR" reads as a bug.
-    name: 'SAVANT',
+    name: 'PENCIL',
     icon: '🎓',
     from: 'm-sat-5',
     blurb: '+40% wins in SAT RUSH.',
@@ -82,7 +82,7 @@ export const MARKS = [
   {
     id: 'mk-metronome',
     tier: 'rare',
-    name: 'METRONOME',
+    name: 'EGG TIMER',
     icon: '🎯',
     from: 'wpm-70',
     blurb: '30% chance a broken COMBO survives.',
@@ -98,13 +98,13 @@ export const MARKS = [
     effect: { winsMult: 1.5 },
   },
   // ---- STEP 49: eight more, so the collection has a long tail and every tier has a few ----
-  { id: 'mk-phoenix', tier: 'rare', name: 'PHOENIX', icon: '🔥', from: 'reb-1', blurb: '+20% wins in every mode.', effect: { winsMult: 1.2 } },
-  { id: 'mk-smith', tier: 'rare', name: 'SMITH', icon: '🔨', from: 'forge-26', blurb: '+25% wins in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
+  { id: 'mk-phoenix', tier: 'rare', name: 'STAPLER', icon: '🔥', from: 'reb-1', blurb: '+20% wins in every mode.', effect: { winsMult: 1.2 } },
+  { id: 'mk-smith', tier: 'rare', name: 'COFFEE MUG', icon: '🔨', from: 'forge-26', blurb: '+25% wins in SAT RUSH and CHAIN.', effect: { winsMult: 1.25, modes: ['satRush', 'chain'] } },
   // PERMANENT (dist-2500) → MAIN ×4, the LEGENDARY bonus (Andy oct3, decision 4). Was EPIC ×3.
   { id: 'mk-curator', tier: 'legendary', name: 'ARCHIVIST', // H6/M8: not CURATOR — that is the achievement that unlocks it
     icon: '🗂', from: 'dist-2500', blurb: '15% chance a word counts one RARITY TIER higher.', effect: { rarityStep: 0.15 } },
-  { id: 'mk-pyro', tier: 'epic', name: 'PYRO', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
-  { id: 'mk-nova', tier: 'epic', name: 'NOVA', icon: '✴', from: 'reb-5', blurb: '+25% wins in every mode.', effect: { winsMult: 1.25 } },
+  { id: 'mk-pyro', tier: 'epic', name: 'CASH REGISTER', icon: '🧨', from: 'frenzy-1', blurb: '+40% wins in FUSE.', effect: { winsMult: 1.4, mode: 'fuse' } },
+  { id: 'mk-nova', tier: 'epic', name: 'BOOMBOX', icon: '✴', from: 'reb-5', blurb: '+25% wins in every mode.', effect: { winsMult: 1.25 } },
   { id: 'mk-legend', tier: 'legendary', name: 'LEGEND', icon: '👑', from: 'lv-300', blurb: '+40% wins in every mode.', effect: { xpMult: 1.4 } },
 ];
 

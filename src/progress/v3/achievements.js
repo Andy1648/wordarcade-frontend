@@ -19,7 +19,7 @@ import { grantGems } from '../gemsCore.js';
 import { ACH_MIN, ACH_MAX } from './econ.js';
 import { REMOVED_COMMON_IDS, RETIRED_COMMON_IDS } from '../markPerks.js';
 
-// GEAR POOL v2: a retired COMMON found before the change no longer counts toward FILL INDEX (27 = every gear now)
+// GEAR POOL v2: a retired COMMON found before the change no longer counts toward FILL INDEX (28 = every gear now — JACKPOT joined in gear card v4)
 const GONE = new Set([...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]);
 
 const R5 = [40, 60, 90, 130, 200];
@@ -31,7 +31,7 @@ export const ACHIEVEMENTS_V3 = [
   { id: 'roll', name: 'ROLL EPIC+', g: 'die', counter: 'epic', T: [3, 15, 75, 300, 1500], R: R5, what: 'EPIC+ GEAR ROLLS' },
   { id: 'win', name: 'WIN MULTIPLAYER', g: 'cup', counter: 'mp', T: [5, 25, 100, 500, 2000], R: [45, 70, 100, 150, 200] },
   { id: 'chain', name: 'CHAIN', g: 'chain', counter: 'chain', T: [5, 10, 20, 35, 50], R: R5, tagNum: true, what: 'WORDS IN A ROW' },
-  { id: 'index', name: 'FILL INDEX', g: 'cards', counter: 'marks', T: [3, 6, 27], R: [60, 120, 200], what: 'GEARS FOUND' },
+  { id: 'index', name: 'FILL INDEX', g: 'cards', counter: 'marks', T: [3, 6, 28], R: [60, 120, 200], what: 'GEARS FOUND' },
   { id: 'power', name: 'POWER LEVEL', g: 'chev', counter: 'power', T: [3, 6, 10, 25, 50], R: R5, what: 'POWER BOUGHT' },
 ];
 export const ROMAN = ['I', 'II', 'III', 'IV', 'V'];

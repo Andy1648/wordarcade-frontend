@@ -28,7 +28,7 @@ export let ROLL_PRICE_GEMS = 10;
 export const GEMS_KEY = 'taw.gems'; // (v3: taw.s2.gems — mapped at the storage layer, v3/install.js)
 
 // The reasons a gem can be granted (the ledger's `reason`; the sim's "by source").
-export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement', 'daily', 'refund', 'code', 'speed']; // 'code' = a GEMS redeem code (Andy oct10, migration 030); 'speed' = WORD RACE speed gems (Andy oct10); v3 ACHIEVEMENTS pay gems; 'daily' = the DAILY FREE DROP; 'refund' = GEAR POOL v2's retired COMMON gears (15 a copy)
+export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement', 'daily', 'refund', 'code', 'speed', 'dupe']; // 'code' = a GEMS redeem code (Andy oct10, migration 030); 'speed' = WORD RACE speed gems (Andy oct10); v3 ACHIEVEMENTS pay gems; 'daily' = the DAILY FREE DROP; 'refund' = GEAR POOL v2's retired COMMON gears (15 a copy)
 
 // ------------------------------------------------------------------------------------ state
 // taw.gems = { v: 1, bal, peak (highest level that has paid LEVEL_UP), streak (game wins in a row), mig (the
@@ -99,8 +99,29 @@ const ledgerSubs = new Set();
  * THE ONE DOOR. Credit `n` gems for `reason` (one of GEM_REASONS). <=0 is a no-op. Returns the amount credited.
  * meta: { mode, detail } — rides on the ledger entry.
  */
+// +N% GEMS (gear card v4 — JACKPOT's MAIN, the MYTHIC / SECRET substat): the gems a player EARNS by playing are
+// multiplied by the worn gear's bonus. Rewards (codes, refunds, achievements, the daily drop, rebirths, the start
+// grant) pay exactly what they say. The bonus reader is HOOKED in by markRollsCore (this module stays a leaf).
+export const EARNED_GEM_REASONS = Object.freeze(['drop', 'bot', 'placement', 'streak', 'speed', 'level']);
+let gemsPctHook = null;
+let dropTwiceHook = null;
+/** markRollsCore registers () => the worn +N% GEMS (a number; 200 = +200%), and () => JACKPOT's LUCKY DROP perk on. */
+export function setGemsPctHook(fn, twice) {
+  gemsPctHook = typeof fn === 'function' ? fn : null;
+  dropTwiceHook = typeof twice === 'function' ? twice : null;
+}
+/** × on an EARNED grant right now (1 + worn % / 100); ×1 for a reward reason or no gear. */
+export function gemsMultFor(reason) {
+  if (!EARNED_GEM_REASONS.includes(reason) || !gemsPctHook) return 1;
+  try {
+    const p = Number(gemsPctHook());
+    return Number.isFinite(p) && p > 0 ? 1 + p / 100 : 1;
+  } catch {
+    return 1;
+  }
+}
 export function grantGems(n, reason, meta = {}) {
-  const amt = Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  const amt = Number.isFinite(n) && n > 0 ? Math.floor(n * gemsMultFor(reason)) : 0;
   if (amt <= 0) return 0;
   const s = loadGemState();
   s.bal += amt;
@@ -151,7 +172,13 @@ export function rollGemDrop(rng = gemRng, chance = GEM_DROP_CHANCE) {
 /** An accepted GAME word (wins.awardWordXp calls this for every mode; menu typing never drops). Returns the drop. */
 export function dropGemsForWord({ mode, rng } = {}) {
   if (!mode || mode === 'menu') return 0;
-  const n = rollGemDrop(rng || gemRng);
+  let n = rollGemDrop(rng || gemRng);
+  // JACKPOT's LUCKY DROP perk: a word that missed its drop gets a SECOND roll (two chances at every drop)
+  if (n <= 0 && dropTwiceHook) {
+    let twice = false;
+    try { twice = !!dropTwiceHook(); } catch { twice = false; }
+    if (twice) n = rollGemDrop(rng || gemRng);
+  }
   return n > 0 ? grantGems(n, 'drop', { mode }) : 0;
 }
 

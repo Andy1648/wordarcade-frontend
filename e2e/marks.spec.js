@@ -31,7 +31,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   // Andy oct9 22:56: YOUR GEAR opens the EQUIP screen — the owned SAVANT is there, nothing EQUIPPED yet
   await btn.click();
   const equip = page.locator('[data-testid="equip-screen"]');
-  await expect(equip.locator('.mx-tile', { hasText: 'SAVANT' })).toBeVisible();
+  await expect(equip.locator('.mx-tile', { hasText: 'PENCIL' })).toBeVisible();
   await expect(equip.locator('.mx-tile-main')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(equip).toHaveCount(0);
@@ -42,7 +42,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   await page.locator('[data-testid="roll-index"]').click();
   // INDEX v2 (Andy oct5): card = name · rarity · 1 IN X · stat; tap → the detail sheet (flavour, owned, first roll)
   await page.locator('.mx-panel').waitFor();
-  const tile = page.locator('.mx-tile', { hasText: 'SAVANT' });
+  const tile = page.locator('.mx-tile', { hasText: 'PENCIL' });
   await expect(tile.locator('.mx-tile-tier')).toHaveText('RARE');
   // GEAR TILE v2 (Andy oct9): an OWNED tile's hero is its MAIN STAT; the odds moved to the detail sheet
   await expect(tile.locator('.mx-tile-odds')).toHaveCount(0);
@@ -51,7 +51,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   await tile.click();
   const sheet = page.locator('.mx-sheet');
   await expect(sheet).toBeVisible();
-  await expect(sheet.locator('.mx-sheet-name')).toHaveText('SAVANT');
+  await expect(sheet.locator('.mx-sheet-name')).toHaveText('PENCIL');
   await expect(sheet.locator('.mx-sheet-tier')).toContainText('RARE');
   await expect(sheet.locator('.mx-sheet-stat')).toHaveText('×1.25 XP');
   // GEAR SHEET v2 (Andy oct9): the MAIN STAT is the sheet's biggest line; the odds sit under it with the ★ progress
@@ -68,11 +68,12 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   await expect(sheet.getByRole('button', { name: 'UNEQUIP', exact: true })).toBeVisible();
   await sheet.locator('.mx-sheet-close').click();
   await expect(sheet).toHaveCount(0);
-  // a locked ROLLABLE mark (GEAR TILE v2 — a HIDDEN design): no name, a tier-coloured silhouette, its rarity, "1 IN X"
-  // as the hero and NO stat value
+  // a locked ROLLABLE mark (gear card v4, Andy oct11 "show the design for all the cards"): its art + name show, "1 IN X"
+  // is the hero, every substat is "?" and NO stat value prints
   const locked = page.locator('.mx-tile.is-locked:not(.is-perm)').first();
-  await expect(locked.locator('.mx-sil')).toHaveCount(1);
-  await expect(locked.locator('.mx-tile-name')).toHaveCount(0);
+  await expect(locked.locator('.mx-sil')).toHaveCount(0);
+  await expect(locked.locator('.mc-name')).not.toHaveText('???');
+  await expect(locked.locator('.mc-sub.is-q').first()).toHaveText('?');
   await expect(locked.locator('.mx-tile-odds')).toHaveText(/^1 IN [\d\s,K]+$/);
   await expect(locked.locator('.mx-tile-sub, .mc-kind')).toHaveCount(0);
   await expect(locked).not.toContainText(/[×+]\d/);

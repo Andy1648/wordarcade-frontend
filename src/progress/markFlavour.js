@@ -31,6 +31,7 @@ export const MARK_FLAVOUR = Object.freeze({
   'mk-eclipse': 'BLOTS OUT EVERY OTHER SCORE.',
   'mk-headmaster': 'GRADES ON A CURVE. YOURS.',
   'mk-thunderclap': 'YOU HEAR THE CRIT FIRST.',
+  'mk-jackpot': 'RIGGED. IN YOUR FAVOUR.',
   // ---- MYTHIC ----
   'mk-singularity': 'ALL WORDS FALL TOWARD IT.',
   'mk-kraken': 'PULLS THE ALPHABET UNDER.',

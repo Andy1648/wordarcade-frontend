@@ -16,6 +16,20 @@ export const critPowerText = (power) => `×${formatMultExact(powerOf(power))}`;
  * A gear's EXTRA lines, in the crit yellow under its MAIN stat: ["+6% CRIT RATE", "+0.5× CRIT POWER"] (each only when
  * the gear has it). `stats` = critStatsOf(id, state).
  */
+/**
+ * GEAR CARD v4: EVERY substat line of a gear, split for the side panels (reveal, sheet): [{ id, num, kind }] —
+ * "+9%" CRIT RATE · "+1×" CRIT POWER · "+10" BASE WINS · "+25%" GEMS · "+15%" ROLL LUCK. `subs` = substatsOf(id, state).
+ */
+export function substatParts(subs) {
+  const KIND = { critRatePct: 'CRIT RATE', critPower: 'CRIT POWER', baseWins: 'BASE WINS', gemsPct: 'GEMS', luckPct: 'ROLL LUCK' };
+  return (subs || []).map((x, i) => {
+    const num = x.kind === 'critRatePct' ? `+${pct(x.value / 100)}`
+      : x.kind === 'critPower' ? `+${formatMultExact(x.value)}×`
+      : x.kind === 'gemsPct' || x.kind === 'luckPct' ? `+${pct(x.value / 100)}`
+      : `+${formatMultExact(x.value)}`;
+    return { id: `${x.kind}-${i}`, num, kind: KIND[x.kind] || x.kind };
+  });
+}
 export function critLines(stats) {
   const out = [];
   if (!stats) return out;

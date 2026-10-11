@@ -100,7 +100,7 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   });
   const slot = page.locator('.menu-mark').first();
   // feat/menu-perrow: the YOUR GEAR slot — the stat big, the name · tier under it
-  await expect(slot.locator('.hp-gear-sub')).toContainText('SAVANT');
+  await expect(slot.locator('.hp-gear-sub')).toContainText('PENCIL');
   // Andy oct9 22:56: YOUR GEAR opens the EQUIP screen — OWNED gears only, the equipped one pinned first; a tap opens
   // the INDEX's sheet (its number the slot's) with EQUIP / UNEQUIP; Esc closes the sheet, then the screen
   await expect(slot.locator('.hp-gear-big')).toHaveText('×1.25');
@@ -109,7 +109,7 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   await expect(equip).toBeVisible();
   await expect(equip.locator('.mx-tile.is-locked')).toHaveCount(0);
   const first = equip.locator('.mx-tile').first();
-  await expect(first.locator('.mx-tile-name')).toHaveText('SAVANT');
+  await expect(first.locator('.mx-tile-name')).toHaveText('PENCIL');
   await expect(first.locator('.mx-tile-main')).toHaveText('EQUIPPED');
   await first.click();
   const sheet = equip.locator('.mx-sheet');
@@ -125,7 +125,7 @@ test('marks: drawn badge, rank, next-rank line and words-worn bar (A3)', async (
   // INDEX v2: the worn mark's card — its art, EQUIPPED tag and ONE stat line (no sentence explaining it)
   const worn = page.locator('.mx-tile.is-on');
   await expect(worn.locator('svg.mark-badge')).toBeVisible();
-  await expect(worn.locator('.mx-tile-name')).toHaveText('SAVANT');
+  await expect(worn.locator('.mx-tile-name')).toHaveText('PENCIL');
   await expect(worn.locator('.mx-tile-main')).toHaveText('EQUIPPED');
   await expect(worn.locator('.mx-tile-sub')).toHaveText('×1.25 XP');
   // no emoji left in the index

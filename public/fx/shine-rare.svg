@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" preserveAspectRatio="none">
+  <!-- CARD SHINE · RARE (Andy oct11 "the vertical lines … need something like that for the rest"): ONE thin band,
+       quiet — two flat white steps (no gradient, no blur), one chipped corner. Swept by transform (cardShine.js). -->
+  <path d="M112 0 L140 0 L88 320 L60 320 Z" fill="#fff" opacity="0.14"/>
+  <path d="M120 0 L132 0 L80 320 L68 320 Z" fill="#fff" opacity="0.3"/>
+  <path d="M132 0 L138 0 L135 14 Z" fill="#fff" opacity="0.2"/>
+</svg>

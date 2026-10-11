@@ -23,15 +23,15 @@
 //   critPower      +N× CRIT POWER (added to the ×2 a crit key pays)
 //   critEvery      EVERY Nth MENU KEY IS A GUARANTEED CRIT (★ pips / SHINY shorten N)
 // sized so the tier's effect on what it touches ≈ the old MAIN (RARE +25%, EPIC +50%, LEGENDARY +200%, MYTHIC +900%,
-// SECRET +2,400%; season 2 re-sizes them to +40 / +80 / +180 / +400 / +900 — v3/hooks.applyFinalMarkTiers, GEAR OP). Only the
+// SECRET +2,400%; season 2 re-sizes them to +40 / +80 / +200 / +900 / +2,400 — v3/hooks.applyFinalMarkTiers, GEAR OP). Only the
 // WORN MAIN's stat applies. No two gears print the same MAIN stat (markRolls.test.js keeps it that way).
 // DUPES → ★ PIPS (replacing GOLD / RAINBOW): RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 dupes per pip, ★5
 // max; each pip +20% of the stat (★5 = ×2). SHINY ×2 on top. A save from before v2 keeps its GOLD (×2) / RAINBOW
 // (×5) as a floor (`k`), so no mark ever got weaker. The INDEX (% collected) keeps its small bonus (+0.5% per %,
 // on wins AND XP).
 import { MARKS, MARK_TIERS, MARKS_EQUIPPED_KEY, MARKS_OWNED_KEY } from './marks.js';
-import { grantGems } from './gemsCore.js'; // a leaf: the COMMON refund goes through the one gem door
-import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY, CRIT_PERK_EVERY, REMOVED_COMMON_IDS, RETIRED_COMMON_IDS } from './markPerks.js';
+import { grantGems, setGemsPctHook } from './gemsCore.js'; // a leaf: the COMMON refund goes through the one gem door
+import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY, CRIT_PERK_EVERY, REMOVED_COMMON_IDS, RETIRED_COMMON_IDS, hasMarkPerk } from './markPerks.js';
 import { formatNum, formatRate, formatMultExact } from '../format.js';
 const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints as ×1.1
 // PROGRESSION v3 (SEASON2, default OFF): the R5 unlock "2nd MARK slot" — a second worn mark (v3/store mark2Id)
@@ -40,7 +40,7 @@ const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints 
 import { V3 } from './season.js'; // V3.m = the 2nd MARK slot (v3/hooks.js mark2Factor), installed in season 2 only
 
 export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
-export const ROLL_STATE_VERSION = 3; // v3 = GEAR POOL v2: COMMON removed (owned commons refunded — migrateRollSave)
+export const ROLL_STATE_VERSION = 4; // v4 = gear card v4: ★ pips FROZEN per mark (`p`), a dupe pays gems (DUPE_GEMS)
 
 // ---------------------------------------------------------------------------------------- tiers
 export const ROLL_TIER_ORDER = ['rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent'];
@@ -76,7 +76,7 @@ export const modeOfKind = (kind) => MODE_OF_KIND[kind] || null;
 export const MODE_NAMES = Object.freeze({ wordBomb: 'WORD BOMB', blitz: 'BLITZ', satRush: 'SAT RUSH', chain: 'CHAIN', fuse: 'FUSE', wordRace: 'RACE' });
 export const STAT_KINDS = [
   'winsPct', 'xpPct', 'baseWins', 'baseXp', 'luckPct', 'overdriveSec', ...Object.values(MODE_WINS_KINDS),
-  'critRatePct', 'critPower', 'critEvery',
+  'critRatePct', 'critPower', 'critEvery', 'gemsPct',
 ];
 export const BASE_WINS_PER_WORD = 10; // "BASE 10" wins on a 5-letter word (xp.js WINS_BASIS_PER_LETTER × 5 ÷ 10)
 export const BASE_XP_PER_LETTER = 10; // xp.js LEVEL_XP_PER_LETTER
@@ -84,6 +84,10 @@ export const OVERDRIVE_BASE_SEC = 300; // overdrive.js OVERDRIVE_MIN × 60
 export const BASE_WINS_SCALE = 2; // Andy oct11 "make the stats do more for the win base": +BASE WINS is 2× the tier's percent of BASE 10
 export const MODE_WINS_SCALE = 2; // a one-mode WINS stat is 2× the tier's all-mode percent (it only pays in one mode)
 export const CRIT_POWER_PER_PCT = 1 / 25; // +1× CRIT POWER per 25% of tier (RARE +1×, EPIC +2×, season-2 LEGENDARY +4×)
+// +N% GEMS (gear card v4, Andy oct11 "make jackpot a legendary and like 200% gems … it needs to be insane"): a FIXED
+// table, not TIER_PCT (season 2's GEAR OP resize must not shrink it). It multiplies the gems a player EARNS by playing
+// (gemsCore EARNED_GEM_REASONS — drops, bots, placements, streaks, speed, level-ups), never codes / refunds / rewards.
+export const GEMS_PCT_BY_TIER = Object.freeze({ rare: 25, epic: 50, legendary: 200, mythic: 400, secret: 800 });
 export const CRIT_EVERY_BASIS = 100; // EVERY Nth KEY: N = 100 ÷ tier % (RARE: every 4th key — ×2 on 1 key in 4 = +25%)
 /** A stat's ★0 value for a tier: the tier's percent on what it touches. */
 export function statBaseValue(kind, tier) {
@@ -94,6 +98,7 @@ export function statBaseValue(kind, tier) {
   if (MODE_OF_KIND[kind]) return MODE_WINS_SCALE * p;
   if (kind === 'critPower') return p * CRIT_POWER_PER_PCT;
   if (kind === 'critEvery') return p > 0 ? Math.max(1, Math.round(CRIT_EVERY_BASIS / p)) : 0;
+  if (kind === 'gemsPct') return GEMS_PCT_BY_TIER[tier] || 0;
   return p;
 }
 /**
@@ -116,31 +121,32 @@ const CRIT_RATE_CAP_PCT = 50; // = CRIT_RATE_CAP × 100 (below; a test keeps the
 // gear's (kind, ★0 value) is unique across the pool (markRolls.test.js).
 const RAW_POOL = [
   // ---- RARE (12): the floor ----
-  { id: 'mk-detonator', name: 'DETONATOR', tier: 'rare', mode: 'wordBomb', stat: 'wbWinsPct' },
-  { id: 'mk-cyclone', name: 'CYCLONE', tier: 'rare', mode: 'blitz', stat: 'baseWins' },
-  { id: 'mk-scholar', name: 'SAVANT', tier: 'rare', mode: 'satRush', legacy: true, stat: 'xpPct' },
-  { id: 'mk-ouroboros', name: 'OUROBOROS', tier: 'rare', mode: 'chain', stat: 'baseXp' },
-  { id: 'mk-tinder', name: 'TINDER', tier: 'rare', mode: 'fuse', stat: 'overdriveSec' },
-  { id: 'mk-slipstream', name: 'SLIPSTREAM', tier: 'rare', mode: 'wordRace', stat: 'luckPct' },
-  { id: 'mk-smith', name: 'SMITH', tier: 'rare', modes: ['satRush', 'chain'], legacy: true, stat: 'winsPct' },
-  { id: 'mk-phoenix', name: 'PHOENIX', tier: 'rare', mode: null, legacy: true, stat: 'critRatePct' },
-  { id: 'mk-metronome', name: 'METRONOME', tier: 'rare', mode: null, legacy: true, stat: 'critEvery' },
-  { id: 'mk-hotwire', name: 'HOTWIRE', tier: 'rare', mode: 'wordRace', stat: 'raceWinsPct' },
-  { id: 'mk-grapple', name: 'GRAPPLE', tier: 'rare', mode: 'chain', stat: 'chainWinsPct' },
-  { id: 'mk-sparkplug', name: 'SPARKPLUG', tier: 'rare', mode: null, stat: 'critPower' },
+  { id: 'mk-detonator', name: 'MATCHSTICK', tier: 'rare', mode: 'wordBomb', stat: 'wbWinsPct' },
+  { id: 'mk-cyclone', name: 'PIGGY BANK', tier: 'rare', mode: 'blitz', stat: 'baseWins' },
+  { id: 'mk-scholar', name: 'PENCIL', tier: 'rare', mode: 'satRush', legacy: true, stat: 'xpPct' },
+  { id: 'mk-ouroboros', name: 'STICKY NOTE', tier: 'rare', mode: 'chain', stat: 'baseXp' },
+  { id: 'mk-tinder', name: 'AA BATTERY', tier: 'rare', mode: 'fuse', stat: 'overdriveSec' },
+  { id: 'mk-slipstream', name: 'LUCKY SOCK', tier: 'rare', mode: 'wordRace', stat: 'luckPct' },
+  { id: 'mk-smith', name: 'COFFEE MUG', tier: 'rare', modes: ['satRush', 'chain'], legacy: true, stat: 'winsPct' },
+  { id: 'mk-phoenix', name: 'STAPLER', tier: 'rare', mode: null, legacy: true, stat: 'critRatePct' },
+  { id: 'mk-metronome', name: 'EGG TIMER', tier: 'rare', mode: null, legacy: true, stat: 'critEvery' },
+  { id: 'mk-hotwire', name: 'SNEAKER', tier: 'rare', mode: 'wordRace', stat: 'raceWinsPct' },
+  { id: 'mk-grapple', name: 'PAPERCLIP', tier: 'rare', mode: 'chain', stat: 'chainWinsPct' },
+  { id: 'mk-sparkplug', name: 'USB STICK', tier: 'rare', mode: null, stat: 'critPower' },
   // ---- EPIC (7) ----
-  { id: 'mk-pyro', name: 'PYRO', tier: 'epic', mode: 'fuse', legacy: true, stat: 'baseWins' },
-  { id: 'mk-nova', name: 'NOVA', tier: 'epic', mode: null, legacy: true, stat: 'winsPct' },
-  { id: 'mk-golem', name: 'GOLEM', tier: 'epic', mode: null, stat: 'baseXp' },
-  { id: 'mk-brainstorm', name: 'BRAINSTORM', tier: 'epic', mode: 'blitz', stat: 'blitzWinsPct' },
-  { id: 'mk-flashpoint', name: 'FLASHPOINT', tier: 'epic', mode: 'fuse', stat: 'fuseWinsPct' },
-  { id: 'mk-voltage', name: 'VOLTAGE', tier: 'epic', mode: null, stat: 'critPower' },
-  { id: 'mk-talisman', name: 'TALISMAN', tier: 'epic', mode: null, stat: 'luckPct' },
+  { id: 'mk-pyro', name: 'CASH REGISTER', tier: 'epic', mode: 'fuse', legacy: true, stat: 'baseWins' },
+  { id: 'mk-nova', name: 'BOOMBOX', tier: 'epic', mode: null, legacy: true, stat: 'winsPct' },
+  { id: 'mk-golem', name: 'GAME CARTRIDGE', tier: 'epic', mode: null, stat: 'baseXp' },
+  { id: 'mk-brainstorm', name: 'QUIZ BUZZER', tier: 'epic', mode: 'blitz', stat: 'blitzWinsPct' },
+  { id: 'mk-flashpoint', name: 'JUMPER CABLES', tier: 'epic', mode: 'fuse', stat: 'fuseWinsPct' },
+  { id: 'mk-voltage', name: 'TESLA COIL', tier: 'epic', mode: null, stat: 'critPower' },
+  { id: 'mk-talisman', name: 'MAGIC 8-BALL', tier: 'epic', mode: null, stat: 'luckPct' },
   // ---- LEGENDARY (4) + perk ----
   { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct' },
   { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct' },
   { id: 'mk-headmaster', name: 'HEADMASTER', tier: 'legendary', mode: 'satRush', stat: 'satWinsPct' },
   { id: 'mk-thunderclap', name: 'THUNDERCLAP', tier: 'legendary', mode: null, stat: 'critPower' },
+  { id: 'mk-jackpot', name: 'JACKPOT', tier: 'legendary', mode: null, stat: 'gemsPct' }, // gear card v4 (Andy oct11): +200% GEMS
   // ---- MYTHIC (3) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
   { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins' },
   { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp' },
@@ -213,6 +219,9 @@ export function permanentMarkById(id) {
 
 // ---------------------------------------------------------------------------------------- ★ pips
 /** Dupes per ★ pip, by tier (Andy oct5). */
+// DUPES → GEMS (gear card v4, Andy oct11: "no tiers/stars — duplicates pay gems"): a duplicate now pays its tier's gems
+// and never adds a ★. A save from before v4 keeps the ★ pips it had (frozen in the mark's `p`), so no gear ever got weaker.
+export const DUPE_GEMS = Object.freeze({ rare: 5, epic: 25, legendary: 100, mythic: 500, secret: 2500 });
 export const DUPES_PER_PIP = { rare: 5, epic: 3, legendary: 2, mythic: 1, secret: 1 };
 export const MAX_PIPS = 5;
 export const PIP_STEP = 0.2; // each pip +20% of the stat → ★5 = ×2
@@ -300,6 +309,9 @@ export function normalize(raw) {
       if (k >= LEGACY_GOLD_K) e.k = Math.min(k, LEGACY_RAINBOW_K);
       const first = num(o.first);
       if (first > 0) e.first = first;
+      // v4: the ★ pips are FROZEN — a pre-v4 save keeps what its dupes had earned; a v4 save keeps its stored `p`
+      const p = Number(raw.v) >= 4 ? Math.min(MAX_PIPS, num(o.p)) : earnedPips(id, n);
+      if (p > 0) e.p = p;
       s.marks[id] = e;
     }
   }
@@ -406,13 +418,25 @@ export function clearRollNote() {
  * One mark's copies and ★ pips. { copies, dupes, pips (0–5), have (dupes toward the next pip), need (dupes per pip;
  * 0 at ★5), k (the pre-v2 GOLD/RAINBOW floor, 0 = none), variant ('base' when owned, else null) }. Uncapped counts.
  */
+/** The ★ pips n copies earned under the pre-v4 rule (dupes ÷ the tier's dupes-per-pip, ★5 max) — the v4 freeze. */
+function earnedPips(id, n) {
+  const m = ROLL_BY_ID.get(id);
+  const per = (m && DUPES_PER_PIP[m.tier]) || DUPES_PER_PIP.rare;
+  return Math.min(MAX_PIPS, Math.floor(Math.max(0, num(n) - 1) / per));
+}
 export function markLevel(state, id) {
   const e = state && state.marks && state.marks[id];
   const n = num(e && e.n);
   const dupes = Math.max(0, n - 1);
   const m = ROLL_BY_ID.get(id);
   const per = (m && DUPES_PER_PIP[m.tier]) || DUPES_PER_PIP.rare;
-  const pips = Math.min(MAX_PIPS, Math.floor(dupes / per));
+  // v4: frozen (a dupe pays gems, never a ★); an older / hand-built state reads the pre-v4 rule
+  const v4 = !!state && Number(state.v) >= 4;
+  const pips = v4 ? Math.min(MAX_PIPS, num(e && e.p)) : Math.min(MAX_PIPS, Math.floor(dupes / per));
+  if (v4) {
+    const k4 = num(e && e.k);
+    return { copies: n, dupes, pips, have: 0, need: 0, k: k4 >= LEGACY_GOLD_K ? k4 : 0, variant: n > 0 ? 'base' : null };
+  }
   const max = pips >= MAX_PIPS;
   const k = num(e && e.k);
   return { copies: n, dupes, pips, have: max ? 0 : dupes - pips * per, need: max ? 0 : per, k: k >= LEGACY_GOLD_K ? k : 0, variant: n > 0 ? 'base' : null };
@@ -514,6 +538,7 @@ export function statText(stat) {
     case 'critRatePct': return `+${formatRate(v)}% CRIT RATE`;
     case 'critPower': return `+${formatMultExact(v)}× CRIT POWER`;
     case 'critEvery': return v <= 1 ? 'EVERY KEY CRITS' : `EVERY ${ordinal(v)} KEY CRITS`;
+    case 'gemsPct': return `+${formatRate(v)}% GEMS`;
     default: {
       const mode = MODE_OF_KIND[stat.kind];
       return mode ? `${x(v)} WINS IN ${MODE_NAMES[mode]}` : '';
@@ -669,13 +694,13 @@ export function markXpMult(opts = {}) {
 }
 const flat = (kind, opts) => guard(() => {
   const { s, id, stat } = worn(opts);
-  const own = stat && stat.kind === kind ? stat.value : 0;
+  const own = (stat && stat.kind === kind ? stat.value : 0) + substatSum(id, s, kind);
   // the 2ND GEAR slot (season 2, R5 — Andy oct10 "gear 2"): its flat stat (+N BASE WINS / XP, luck, overdrive) pays too,
   // through the same door as its % stats (V3.c2 = hooks.mark2For: R5+, owned, not the worn MAIN). Only for the live
   // worn pair — a caller asking about one gear (`markId`) gets that gear alone.
   const id2 = opts.markId === undefined && V3.c2 ? V3.c2(s, id) : null;
   const st2 = id2 ? statOf(id2, s) : null;
-  return own + (st2 && st2.kind === kind ? st2.value : 0);
+  return own + (st2 && st2.kind === kind ? st2.value : 0) + (id2 ? substatSum(id2, s, kind) : 0);
 }, 0);
 /** +N BASE WINS/WORD (added to BASE 10 before every multiplier). */
 export function markBaseWins(opts = {}) {
@@ -689,6 +714,11 @@ export function markBaseXp(opts = {}) {
 export function markLuck(opts = {}) {
   return flat('luckPct', opts) / 100;
 }
+/** +N% GEMS (JACKPOT's MAIN + the MYTHIC / SECRET substat) — gemsCore multiplies EARNED gems by 1 + this / 100. */
+export function markGemsPct(opts = {}) {
+  return flat('gemsPct', opts);
+}
+setGemsPctHook(() => markGemsPct(), () => hasMarkPerk('dropTwice'));
 /** + seconds of OVERDRIVE. */
 export function markOverdriveSec(opts = {}) {
   return flat('overdriveSec', opts);
@@ -717,6 +747,57 @@ export const CRIT_BY_TIER = Object.freeze({
   mythic: Object.freeze({ rate: 0.14, power: 2 }),
   secret: Object.freeze({ rate: 0.2, power: 3 }),
 });
+// SUBSTATS (gear card v4, Andy oct11: "add more substats to the gears (like genshin) … one main line on top and
+// substats below"; "make the stats/substats do more for the win base"). Deterministic by TIER (no save field, no
+// migration), scaled by the SAME ★ pips × SHINY factor as the MAIN and the crit rows. The crit rows above (CRIT_BY_TIER)
+// are the first substat lines; these are the rest. A card has 4 substat lines — the unused ones print a dash.
+export const SUBSTATS_BY_TIER = Object.freeze({
+  rare: Object.freeze([{ kind: 'baseWins', value: 2 }]),
+  epic: Object.freeze([{ kind: 'baseWins', value: 4 }]),
+  legendary: Object.freeze([{ kind: 'baseWins', value: 10 }, { kind: 'luckPct', value: 15 }]),
+  mythic: Object.freeze([{ kind: 'baseWins', value: 30 }, { kind: 'gemsPct', value: 25 }]),
+  secret: Object.freeze([{ kind: 'baseWins', value: 80 }, { kind: 'gemsPct', value: 50 }]),
+});
+export const SUBSTAT_LINES = 4;
+/**
+ * ONE gear's substat lines as they pay right now, crit first: [{ kind, value }] — CRIT RATE (%), CRIT POWER (×), then
+ * its tier's SUBSTATS_BY_TIER rows; × ★ pips × SHINY. [] for an unknown / retired id (a PERMANENT reads LEGENDARY).
+ */
+export function substatsOf(id, state) {
+  const r = ROLL_BY_ID.get(id);
+  const tier = r ? r.tier : PERM_BY_ID.has(id) ? 'legendary' : null;
+  if (!tier) return [];
+  let k = 1;
+  if (r) {
+    const s = resolve(state);
+    k = s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
+  }
+  const c = CRIT_BY_TIER[tier] || NO_CRIT;
+  const out = [];
+  if (c.rate) out.push({ kind: 'critRatePct', value: Math.min(c.rate * 100 * k, CRIT_RATE_CAP_PCT) });
+  if (c.power) out.push({ kind: 'critPower', value: c.power * k });
+  for (const row of SUBSTATS_BY_TIER[tier] || []) out.push({ kind: row.kind, value: row.value * k });
+  return out.slice(0, SUBSTAT_LINES);
+}
+/** Σ of one gear's NON-crit substats of `kind` (the crit rows pay through critTotals, never here). */
+function substatSum(id, s, kind) {
+  if (!id || kind === 'critRatePct' || kind === 'critPower') return 0;
+  let v = 0;
+  for (const x of substatsOf(id, s)) if (x.kind === kind) v += x.value;
+  return v;
+}
+/** A substat line as the card prints it: "+9% CRIT RATE", "+1× CRIT POWER", "+10 BASE WINS", "+25% GEMS", "+15% LUCK". */
+export function substatText(x) {
+  if (!x) return '';
+  switch (x.kind) {
+    case 'critRatePct': return `+${formatRate(x.value)}% CRIT RATE`;
+    case 'critPower': return `+${formatMultExact(x.value)}× CRIT POWER`;
+    case 'baseWins': return `+${formatMultExact(x.value)} BASE WINS`;
+    case 'gemsPct': return `+${formatRate(x.value)}% GEMS`;
+    case 'luckPct': return `+${formatRate(x.value)}% ROLL LUCK`;
+    default: return statText(x);
+  }
+}
 export const CRIT_BASE_RATE = 0.01; // Andy oct9: "people should have a 1% crit chance to start" (×2 power) — gear adds on top
 export const CRIT_BASE_POWER = 2;
 export const CRIT_RATE_CAP = 0.5;

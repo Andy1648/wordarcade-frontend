@@ -139,7 +139,7 @@ test('a blocked store never throws and simply never remembers', () => {
 });
 
 test('markById is the only lookup, and it is guarded', () => {
-  assert.equal(markById('mk-scholar').name, 'SAVANT');
+  assert.equal(markById('mk-scholar').name, 'PENCIL');
   assert.equal(markById('mk-bomber'), null, 'a retired COMMON (GEAR POOL v2) is gone');
   assert.equal(markById('nope'), null);
   assert.equal(markById(undefined), null);

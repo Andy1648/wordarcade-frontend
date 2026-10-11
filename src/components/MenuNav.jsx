@@ -14,16 +14,15 @@ import FitText from './kit/FitText.jsx';
 import KitIcon from './kit/KitIcon.jsx';
 import { KitPill } from './kit/KitPill.jsx';
 import { formatNum } from '../format';
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { CARD_RAR } from './markCard/palette.js';
-import { mainTag, critTierOf } from '../progress/markRollsCore';
+import { mainTag, substatsOf, substatText } from '../progress/markRollsCore';
 import { IDLE_SHEEN_TIERS, GLOW_TIERS } from './markCard/idleSheen.js';
 import { useReduceMotion } from '../lib/useReduceMotion';
 // The cog + glyph art is the INDEX chunk's (MarkBadge, ~11 KB): the gear slot loads it only once a mark is worn —
 // payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
 const MarkBadge = lazy(() => import('./MarkBadge.jsx'));
 // the crit line's WORDS (critText) stay lazy too — loaded only when the worn gear has a crit rate
-const GearSlotCrit = lazy(() => import('./GearSlotCrit.jsx'));
 // the EPIC+ glow (aura + motes, Andy oct9 "clash royale cards") — code and art load only when such a gear is worn
 const GearFx = lazy(() => import('./GearFx.jsx'));
 
@@ -198,6 +197,18 @@ export function gearSplit(text) {
   return i < 0 ? { big: s, unit: '' } : { big: s.slice(0, i), unit: s.slice(i + 1) };
 }
 
+/** LUCK is off the menu's first-paint icon set (kitIconsCore): load the full set only when a worn gear needs it. */
+function useKitIconFor(need) {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    if (!need || ok) return undefined;
+    let live = true;
+    import('./kit/kitIconData.js').then(() => { if (live) setOk(true); });
+    return () => { live = false; };
+  }, [need, ok]);
+  return ok;
+}
+
 /**
  * THE YOUR GEAR SHOWCASE (gear UI v3, Andy oct9 22:56 "make the menu 'your gear' animation even more attractive (for
  * legendary ones)"): EPIC+ worn gears perform once every ~6.5–8 s — aura flare + mote burst, glyph pop, sheen sweep,
@@ -216,13 +227,24 @@ function useGearShowcase(slotRef, tier, enabled) {
   }, [slotRef, tier, enabled]);
 }
 
+/** "+9% CRIT RATE" → "+9% CRIT", "+1× CRIT POWER" → "+1× CRIT PWR", "+10 BASE WINS" → "+10 BASE WINS" (the slot's width). */
+/** A substat as a menu CHIP (GEAR CARD v4): the number ("14%", "2×", "30") beside its icon — the slot is too narrow
+ * for the card's words, so the ICON says what it boosts and the full line rides the chip's label (and the sheet). */
+export function subChip(x) {
+  const t = substatText(x);
+  const n = t.split(' ')[0].replace(/^\+/, ''); // every substat ADDS — the chip drops the '+' to fit two a row
+  const icon = x.kind === 'baseWins' ? 'wins' : x.kind === 'gemsPct' ? 'gems' : x.kind === 'luckPct' ? 'luck' : 'crit';
+  return { n, icon, label: t };
+}
 export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   // the stat as it PAYS (markRollsCore.mainTag — the payout's own statOf), never a legacy blurb sentence
   const stat = mark ? gearSplit(mainTag(mark.id) || mark.blurb || mark.name) : null;
-  const crit = mark ? critTierOf(mark.id) : null;
-  const hasCrit = !!(crit && crit.rate > 0);
+  // GEAR CARD v4 (Andy oct11 "no need to have 'your gear' … include stat and substats … like the cards but
+  // horizontal"): the substat lines, as the card prints them, short ("+9% CRIT", "+10 BASE")
+  const subs = mark ? substatsOf(mark.id).map(subChip) : [];
+  const luck = useKitIconFor(subs.some((c) => c.icon === 'luck'));
   const reduced = useReduceMotion();
   const sheen = !!mark && IDLE_SHEEN_TIERS.has(tier);
   const slotRef = useRef(null);
@@ -245,7 +267,10 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
       {/* the SHOWCASE's one-shot layers (LEGENDARY+, gearShowcase.js): a tier-colour FLASH over the face and a burst
           RING behind the glyph — opacity 0 at rest, nothing moves until a run */}
       {sheen ? <span className="hp-gear-flash" aria-hidden="true" /> : null}
-      <span className="hp-gear-label">YOUR GEAR</span>
+      {/* the BACKDROP (Andy oct11 "its just plain rn"): a sunburst / halftone / drips asset as a mask, in the tier colour */}
+      <span className="hp-gear-bg" aria-hidden="true" />
+      {/* the NAME on a tier plate across the top — the card's ribbon, sideways (no "YOUR GEAR" label: Andy oct11) */}
+      <span className="hp-gear-plate"><FitText className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</FitText></span>
       <span className="hp-gear-body">
         {mark ? (
           <span className="hp-gear-art">
@@ -260,12 +285,18 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
               last guard against a long number */}
           <FitText className="hp-gear-big menu-mark-name">{mark ? stat.big : 'NONE'}</FitText>
           {mark && stat.unit ? <span className="hp-gear-unit">{stat.unit}</span> : null}
-          {hasCrit ? (
-            <Suspense fallback={<span className="hp-gear-crit" aria-hidden="true">&nbsp;</span>}>
-              <GearSlotCrit id={mark.id} />
-            </Suspense>
+          {/* the SUBSTATS as a 2×2 grid of icon chips under the main stat — the card's subs plate, compacted */}
+          {subs.length ? (
+            <span className="hp-gear-subs" data-testid="gear-subs">
+              {subs.map((c, i) => (
+                <span key={i} className={`hp-gear-subline is-${c.icon}`} title={c.label} aria-label={c.label}>
+                  {c.icon === 'crit' ? <img className="hp-gear-subico" src="/fx/crit-burst.svg" alt="" draggable="false" />
+                    : c.icon !== 'luck' || luck ? <KitIcon name={c.icon} size={18} shadow={1} extras={false} className="hp-gear-subico" /> : <span className="hp-gear-subico" />}
+                  {c.n}
+                </span>
+              ))}
+            </span>
           ) : null}
-          <FitText className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</FitText>{/* the tier is the colour (Andy: colour is for rarity) */}
         </span>
       </span>
       {!mark && <span className="hp-chip-dot" aria-hidden="true" />}

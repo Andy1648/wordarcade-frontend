@@ -3,8 +3,8 @@
 // formatNum. NUMBERS FIRST: the stat is split into its number ("×1.5", "+2.5", "+30s") printed big, and what it
 // touches ("WINS", "BASE WINS") printed small — the same text as markRolls.mainTag, so nothing new is claimed.
 import { MARK_TIERS } from '../../progress/marks.js';
-import { rollMarkById, oneInX, mainTag, markLevel, critStatsOf } from '../../progress/markRolls.js';
-import { critLines } from '../../progress/critText.js';
+import { rollMarkById, oneInX, mainTag, markLevel, critStatsOf, substatsOf, substatText, SUBSTAT_LINES } from '../../progress/markRolls.js';
+import { substatParts } from '../../progress/critText.js';
 import { PERKS } from '../../progress/markPerks.js';
 import { formatNum } from '../../format.js';
 
@@ -68,7 +68,7 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
   const extras = (crit.rate > 0 ? 1 : 0) + (crit.power > 0 ? 1 : 0);
   return {
     crit: !locked && extras ? crit : null,
-    critLines: locked ? [] : critLines(crit), // the full lines (detail sheet): "+6% CRIT RATE" · "+0.5× CRIT POWER"
+    critLines: locked ? [] : substatParts(substatsOf(id, state)), // gear card v4: EVERY substat line (detail sheet), crit first
     extras, // how many extra stats the gear has (a pip each on an owned tile; a locked tile shows none)
     tier: t,
     rarityName: kind === 'perm' ? tierLabel('legendary') : tierLabel(t, kind),
@@ -76,7 +76,7 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
     oddsNum: kind === 'roll' ? formatNum(oneInX(id)) : '', // a LOCKED rollable tile's hero: "1 IN" small + this big
     earned: kind === 'perm',
     locked,
-    name: locked && kind !== 'perm' ? '???' : name, // an EARNED gear is not a mystery roll: its name shows
+    name, // gear card v4 (Andy oct11 "show the design for all the cards"): a locked card shows its art + name; only its numbers stay hidden
     statNum: num,
     statKind,
     perk: perkText(id),
@@ -85,7 +85,18 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
     copies: lv ? lv.copies : 0, // dupes print as a small ×N on the art
     next: pipNext(lv),
     hi: HI_TIERS.has(t),
+    subs: subLines(id, kind, locked, state),
   };
+}
+/**
+ * GEAR CARD v4: the SUBSTATS plate — always SUBSTAT_LINES lines: each substat as it pays ("+9% CRIT RATE"), "?" for one a
+ * locked card hides (its count shows, never its value), "—" for an unused line. A retired mark has none.
+ */
+export function subLines(id, kind = 'roll', locked = false, state = null) {
+  const subs = kind === 'retired' ? [] : substatsOf(id, locked ? null : state);
+  const out = subs.map((x) => (locked ? '?' : substatText(x)));
+  while (out.length < SUBSTAT_LINES) out.push('—');
+  return out.slice(0, SUBSTAT_LINES);
 }
 /**
  * The tile's quiet pip row, in order: a dot per extra stat, ✦ for a perk, then a ★ per dupe pip. LOCKED: NO pips at

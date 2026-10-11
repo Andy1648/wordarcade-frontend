@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" preserveAspectRatio="none">
+  <!-- CARD SHINE · LEGENDARY (the approved concept: "two parallel bands (fat + thin)"): bright white, a hot core in the
+       fat band, the thin band trailing, a chipped notch on the fat band's top edge. -->
+  <path d="M80 0 L148 0 L96 320 L28 320 Z" fill="#fff" opacity="0.18"/>
+  <path d="M94 0 L134 0 L82 320 L42 320 Z" fill="#fff" opacity="0.3"/>
+  <path d="M104 0 L122 0 L70 320 L52 320 Z" fill="#fff" opacity="0.46"/>
+  <path d="M158 0 L172 0 L120 320 L106 320 Z" fill="#fff" opacity="0.4"/>
+  <path d="M136 0 L146 0 L141 20 Z" fill="#fff" opacity="0.25"/>
+</svg>

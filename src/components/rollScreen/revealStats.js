@@ -2,20 +2,21 @@
 // plan from it). The MAIN number comes from the SAME source as every other place a gear is drawn — markRolls.mainTag
 // (→ statText) with the live roll state — so the tile, the sheet, the reel, the reveal card and the extension can
 // never disagree (revealStats.test.js).
-import { mainTag, critStatsOf } from '../../progress/markRolls.js';
-import { MAX_PIPS } from '../../progress/markRollsCore.js';
-import { critLines } from '../../progress/critText.js';
-import { splitTag, perkLines, perkCount, pipNext } from '../markCard/cardModel.js';
+import { mainTag, substatsOf } from '../../progress/markRolls.js';
+import { formatNum } from '../../format.js';
+import { substatParts } from '../../progress/critText.js';
+import { splitTag, perkLines, perkCount } from '../markCard/cardModel.js';
 
 /** What the extension shows for a result (pure — also sizes its plan): { main, crit, perks, dupe, pips, next }. */
 export function revealStatsOf(res, view) {
   if (!res) return null;
   const { num, kind } = splitTag(mainTag(res.markId, view));
-  const crit = critLines(critStatsOf(res.markId, view));
+  const crit = substatParts(substatsOf(res.markId, view)); // gear card v4: every substat line, crit first
   const perks = perkCount(res.markId) ? perkLines(res.markId) : [];
   const dupe = !!res.dupe;
-  const pips = Math.max(0, Math.min(MAX_PIPS, Number(res.pips) || 0));
-  const next = dupe ? (pips >= MAX_PIPS ? '★5 MAX' : pipNext({ have: res.have, need: res.need, pips })) : '';
+  // gear card v4: no ★ any more — a duplicate pays its gems, and the line says so
+  const pips = 0;
+  const next = dupe && res.dupeGems > 0 ? `DUPLICATE +${formatNum(res.dupeGems)} GEMS` : '';
   return { num, kind, crit, perks, dupe, pips, pipUp: !!res.pipUp, copies: res.copies || 0, next };
 }
 

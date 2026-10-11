@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" preserveAspectRatio="none">
+  <!-- CARD SHINE · EPIC: the two parallel bands (fat + thin) of the LEGENDARY concept, tinted the tier's lavender and a
+       step softer. Flat steps only; the thin band sits off-parallel by a hair (hand-cut, not ruled). -->
+  <path d="M84 0 L144 0 L92 320 L32 320 Z" fill="#EAD4FF" opacity="0.14"/>
+  <path d="M98 0 L130 0 L78 320 L46 320 Z" fill="#EAD4FF" opacity="0.26"/>
+  <path d="M154 0 L166 0 L113 320 L102 320 Z" fill="#fff" opacity="0.3"/>
+  <path d="M128 0 L136 0 L133 18 Z" fill="#fff" opacity="0.2"/>
+</svg>

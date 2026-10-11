@@ -5,6 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  substatsOf, markGemsPct,
   ROLL_MARKS, statOf, statText, mainTag, markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec,
   indexMult, critTotals, critStatsOf, CRIT_BASE_RATE, CRIT_BASE_POWER, CRIT_RATE_CAP, MODE_WINS_KINDS, modeOfKind,
   freshState, normalize, roll, rollTable, PITY, ROLL_STATE_KEY, ROLL_STATE_VERSION, commonRefund, migrateRollSave,
@@ -36,8 +37,10 @@ function withStorage(seed, fn) {
   }
 }
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} ≠ ${b}`);
-const own = (id, n = 1, shiny = false) => ({ ...freshState(), marks: { [id]: shiny ? { n, shiny: true } : { n } } });
+const own = (id, n = 1, shiny = false) => ({ ...freshState(), v: 3, marks: { [id]: shiny ? { n, shiny: true } : { n } } }); // v3: ★ from dupes (pre-v4)
 /** The number a printed stat line carries: "×1.5 WINS IN WORD BOMB" → 1.5, "+25% CRIT RATE" → 25, "EVERY 4TH KEY" → 4. */
+/** Σ of a gear's substat rows of `kind` (gear card v4) — they pay on top of the MAIN through the same readers. */
+const subOf = (id, s, kind) => substatsOf(id, s).filter((x) => x.kind === kind).reduce((a, x) => a + x.value, 0);
 function printed(text) {
   if (/^EVERY KEY/.test(text)) return 1;
   const m = /^(?:EVERY )?[+×]?([\d,]*\.?\d+)/.exec(text);
@@ -45,8 +48,8 @@ function printed(text) {
   return Number(m[1].replace(/,/g, ''));
 }
 
-test('the pool: 27 gears, no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
-  assert.equal(ROLL_MARKS.length, 27);
+test('the pool: 28 gears (JACKPOT joined), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
+  assert.equal(ROLL_MARKS.length, 28);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
   for (const id of [...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]) assert.ok(!ROLL_MARKS.some((m) => m.id === id), id);
   const keys = ROLL_MARKS.map((m) => `${m.stat.kind}:${m.stat.value}`);
@@ -83,9 +86,10 @@ test('every gear PRINTS what it PAYS — at ★0, ★ pips and SHINY, read throu
       switch (st.kind) {
         case 'winsPct': near(markWinsMult(opts) / ix, shown, tag); break;
         case 'xpPct': near(markXpMult(opts) / ix, shown, tag); break;
-        case 'baseWins': near(markBaseWins(opts), shown, tag); break;
+        case 'baseWins': near(markBaseWins(opts) - subOf(m.id, s, 'baseWins'), shown, tag); break; // + the substat rows (gear card v4)
         case 'baseXp': near(markBaseXp(opts), shown, tag); break; // season 1 prints the raw +N (season 2: N/10, v3 test)
-        case 'luckPct': near(1 + markLuck(opts), shown, tag); break;
+        case 'luckPct': near(1 + markLuck(opts) - subOf(m.id, s, 'luckPct') / 100, shown, tag); break;
+        case 'gemsPct': near(markGemsPct(opts) - subOf(m.id, s, 'gemsPct'), shown, tag); break;
         case 'overdriveSec': near(markOverdriveSec(opts), shown, tag); break;
         case 'critRatePct': near(crit.rawRate, CRIT_BASE_RATE + sub.rate + shown / 100, tag); break;
         case 'critPower': near(crit.power, CRIT_BASE_POWER + sub.power + shown, tag); break;
@@ -272,7 +276,7 @@ test('migrateRollSave: commons deleted + refunded once, a worn COMMON unequipped
   });
 });
 
-test('ACHIEVEMENTS: FILL INDEX no longer counts a retired COMMON (its top tier, 27, is now every gear)', async () => {
+test('ACHIEVEMENTS: FILL INDEX no longer counts a retired COMMON (its top tier, 28, is now every gear)', async () => {
   const { achRows, ACHIEVEMENTS_V3 } = await import('./v3/achievements.js');
   const counters = { marks: ['mk-bomber', 'mk-wick', 'mk-student', 'mk-smith', 'mk-nova'] };
   const row = achRows(counters, {}).find((r) => r.id === 'index');

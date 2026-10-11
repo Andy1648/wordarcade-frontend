@@ -350,6 +350,7 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
   await expect(pc.locator('.pc-gear[data-slot="1"] .pc-gear-name')).toHaveText('KRAKEN');
   await expect(pc.locator('.pc-gear[data-slot="1"]')).toHaveAttribute('data-tier', 'mythic');
   await expect(pc.locator('.pc-gear[data-slot="2"]')).toHaveClass(/is-empty/);
+  await expect(pc.locator('.pc-gear[data-slot="2"] .pc-gear-name')).toHaveText('EMPTY'); // known: nothing in slot 2
   await expect(pc.locator('.pc-tile-v')).toHaveText(['190', '5,130', 'T6', '9/27']);
   // nothing overflows its tile, every target ≥ 44px
   const over = await pc.evaluate((el) => [...el.querySelectorAll('.pc-tile-v, .pc-tile-k, .pc-gear-name, .pc-name')].filter((n) => n.scrollWidth > n.clientWidth + 1).length);
@@ -359,10 +360,11 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
   await page.keyboard.press('Escape');
   await expect(pc).toHaveCount(0);
   await expect(lb).toBeVisible(); // the card closed, the board stayed
-  // a row with no showcase: every tile is a dash, never a made-up number
+  // a row with no showcase: every unknown is a "?" (Andy oct11), never a made-up number or a guessed "no gear"
   await lb.locator('.lb2-row[data-id="d"]').click();
   await expect(pc.locator('.pc-name')).toHaveText('DELTA');
-  await expect(pc.locator('.pc-tile-v')).toHaveText(['—', '—', '—', '—']);
+  await expect(pc.locator('.pc-tile-v')).toHaveText(['?', '?', '?', '?']);
+  await expect(pc.locator('.pc-gear[data-slot="1"] .pc-gear-name')).toHaveText('?');
   await pc.locator('.pc-x').click();
   await expect(pc).toHaveCount(0);
 });

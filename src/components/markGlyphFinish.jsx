@@ -44,7 +44,7 @@ function hash(s) {
 export const KIT_DRAWN = new Set([
   'mk-detonator', 'mk-cyclone', 'mk-scholar', 'mk-ouroboros', 'mk-tinder', 'mk-slipstream', 'mk-smith', 'mk-phoenix',
   'mk-metronome', 'mk-hotwire', 'mk-grapple', 'mk-sparkplug', 'mk-pyro', 'mk-nova', 'mk-golem', 'mk-brainstorm',
-  'mk-flashpoint', 'mk-voltage', 'mk-talisman', 'mk-leviathan', 'mk-eclipse', 'mk-headmaster', 'mk-thunderclap',
+  'mk-flashpoint', 'mk-voltage', 'mk-talisman', 'mk-leviathan', 'mk-eclipse', 'mk-headmaster', 'mk-thunderclap', 'mk-jackpot',
   'mk-singularity', 'mk-kraken', 'mk-hydra', 'mk-origin',
 ]);
 /** Which glyph ids are finished — a body here, or kit-drawn (the unit test checks every mark id is covered). */

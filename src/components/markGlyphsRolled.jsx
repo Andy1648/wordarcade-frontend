@@ -268,20 +268,19 @@ export const ROLLED_GLYPHS = {
       <G d="M28 38 C29 34 32 32 36 31" w="3" />
     </g>
   ),
-  'mk-hydra': (
+  // JACKPOT (gear card v4, Andy oct11 — +200% GEMS): a cyan gem bursting off a lopsided stack of gold coins. Vector
+  // stand-in until its painted PNG lands (then ART('jackpot')).
+  'mk-jackpot': (
     <g {...KS}>
-      <S d="M50 78 C48 62 50 46 50 30" f="#12A99A" s="#0A6E63" w="7" ink="16" />
-      <S d="M44 78 C34 66 26 54 22 40" f="#12A99A" s="#0A6E63" w="7" ink="16" />
-      <S d="M56 78 C66 68 74 58 80 46" f="#12A99A" s="#0A6E63" w="7" ink="16" />
-      <F d="M50 18 C58 18 60 26 56 32 L44 32 C40 26 42 18 50 18 Z" f="#2EFFE0" s="#12A99A" sd="M56 22 C59 26 58 30 56 32 L50 32 C54 30 56 26 56 22 Z" />
-      <F d="M16 30 C22 26 30 30 28 38 L18 42 C12 40 12 34 16 30 Z" f="#2EFFE0" s="#12A99A" sd="M28 34 L28 38 L18 42 C22 39 26 37 28 34 Z" />
-      <F d="M86 36 C90 42 86 48 80 50 L74 42 C74 36 80 32 86 36 Z" f="#2EFFE0" s="#12A99A" sd="M88 42 C87 46 84 49 80 50 L78 47 C82 46 86 44 88 42 Z" />
-      <path d="M30 80 L70 80 C72 86 64 90 50 90 C36 90 28 86 30 80 Z" fill="#3B2D5C" />
-      <path d="M47 24 h0.1 M53 24 h0.1" strokeWidth="3.5" />
-      <path d="M64 12 L67 18 L61 18 Z" fill="#FFE94A" strokeWidth="2.5" />
-      <G d="M45 22 L46 27" w="2.5" />
+      <F d="M18 74 C18 68 42 66 50 66 C60 66 82 68 82 74 L82 82 C82 88 60 90 50 90 C40 90 18 88 18 82 Z" f="#FFE94A" s="#F2A900" sd="M18 80 C24 86 40 88 50 88 C62 88 78 86 82 80 L82 82 C82 88 60 90 50 90 C40 90 18 88 18 82 Z" />
+      <F d="M24 62 C24 56 44 54 52 54 C62 54 78 56 78 62 L78 70 C78 75 62 77 52 77 C42 77 24 75 24 70 Z" f="#FFE94A" s="#F2A900" sd="M24 68 C30 74 42 76 52 76 C62 76 74 74 78 68 L78 70 C78 75 62 77 52 77 C42 77 24 75 24 70 Z" />
+      <F d="M36 14 L64 14 L78 32 L50 62 L22 32 Z" f="#2EFFE0" s="#12A99A" sd="M56 32 L78 32 L50 62 Z" />
+      <path d="M22 32 L78 32 M36 14 L44 32 L50 14 L56 32 L64 14" strokeWidth="3" fill="none" />
+      <path d="M12 22 L16 30 M88 20 L83 28 M10 46 L17 46" stroke="#FFE94A" strokeWidth="4" fill="none" />
+      <G d="M34 22 L30 28" w="3" />
     </g>
   ),
+  'mk-hydra': ART('hydra'), // Andy oct11: the painted PNG (public/gear/hydra.webp, background cut out)
   // ---- the 6 PERMANENT marks (finished by markGlyphFinish.jsx) ----
   'mk-ironhand': (
     <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round">

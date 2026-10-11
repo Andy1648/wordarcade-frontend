@@ -1,16 +1,16 @@
-// frameLayout.js — where the card's plates sit in the 180×260 drawing (CardFrame.jsx draws them, MarkCard.css puts the
+// frameLayout.js — where the card's plates sit in the 180×300 drawing (CardFrame.jsx draws them, MarkCard.css puts the
 // text on them). PURE numbers, unit-tested: every plate stays inside the face and none overlap.
 //
-// GEAR TILE v2 (Andy oct9 — "avoid overcrowding by having the main stat on display and have the user click for more
-// substats"; claude research gear-card-research.md §3, the Genshin / HSR / Diablo tile): ONE layout for every card.
-// The tile carries rarity → art → name → the MAIN STAT as the hero → a quiet pip row on the bottom band (a dot per
-// extra stat, ✦ for a perk, ★ for dupe pips). The crit / perk / odds lines left the tile for the detail sheet, so the
-// per-card layouts (plain / perk / crit / both) are gone: every tile in the grid lines up.
+// GEAR CARD v4 (Andy oct11 — "one main line on top and substats below … all cards the same size … can be bigger"):
+// ONE layout for every card, 40px taller than v2: rarity → art → name → the MAIN STAT as the hero → a SUBSTATS plate
+// of 4 lines on the bottom band (a dash for an unused line). The ★ pip row is gone (duplicates pay gems).
 export const CARD_W = 180;
-export const CARD_H = 260;
-export const FACE = { top: 42, bottom: 228 };
-export const PLATE_H = { head: 28, name: 30, hero: 54, pips: 20 };
-export const LAYOUT = { head: 9, artC: 89, artR: 45, name: 138, hero: 172, pips: 232 };
+export const CARD_H = 300;
+export const CARD_RATIO = CARD_H / CARD_W; // hosts size the card box by width × this (MarkCard.css .mc)
+export const FACE = { top: 42, bottom: 212 };
+export const PLATE_H = { head: 28, name: 30, hero: 44, subs: 80, pips: 20 };
+export const SUB_LINE_H = 19;
+export const LAYOUT = { head: 9, artC: 86, artR: 42, name: 128, hero: 164, subs: 214, pips: 232 };
 /** The pip plate's width for n pips (centred on the bottom band); 0 = no plate. */
 export const PIP_W = 15;
 export const PIP_GAP = 2;
@@ -30,6 +30,6 @@ export function plateSpans(L = LAYOUT) {
     ['art', L.artC - L.artR, L.artC + L.artR],
     ['name', L.name, L.name + PLATE_H.name],
     ['hero', L.hero, L.hero + PLATE_H.hero],
-    ['pips', L.pips, L.pips + PLATE_H.pips],
+    ['subs', L.subs, L.subs + PLATE_H.subs],
   ];
 }

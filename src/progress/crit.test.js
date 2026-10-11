@@ -14,7 +14,7 @@ import { mulberry32 } from './luck.js';
 
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} ≠ ${b}`);
 const byTier = (t) => ROLL_MARKS.find((m) => m.tier === t);
-const own = (marks) => ({ ...freshState(), marks });
+const own = (marks) => ({ ...freshState(), v: 3, marks }); // v3: the pre-v4 ★ rule (pips from dupes) — v4 freezes them
 
 function withStorage(seed, fn) {
   const map = new Map(Object.entries(seed || {}));

@@ -21,6 +21,7 @@ export const PERKS = {
   freeOd: { name: 'FREE OVERDRIVE', line: 'FREE 60s OVERDRIVE EVERY 15 MIN' }, // every MYTHIC+ gear (agreed with Andy)
   odLong: { name: 'AFTERBURN', line: 'OVERDRIVE LASTS ×2' },
   critKey10: { name: 'DRUMROLL', line: 'EVERY 10TH KEY CRITS' },
+  dropTwice: { name: 'LUCKY DROP', line: 'TWO CHANCES AT EVERY GEM DROP' }, // JACKPOT (gear card v4)
 };
 
 // GEAR POOL v2 (Andy oct9): the 12 rolled COMMON gears that were removed, and the three marks.js-only COMMONS (the
@@ -38,6 +39,7 @@ export const MARK_PERKS = {
   'mk-eclipse': ['winner2'], // LEGENDARY
   'mk-headmaster': ['odLong'], // LEGENDARY (GEAR POOL v2)
   'mk-thunderclap': ['critKey10'], // LEGENDARY (GEAR POOL v2)
+  'mk-jackpot': ['dropTwice'], // LEGENDARY (gear card v4)
   'mk-singularity': ['doubleRoll', 'freeOd'], // MYTHIC
   'mk-kraken': ['overdrive15', 'freeOd'], // MYTHIC
   'mk-hydra': ['freeOd'], // MYTHIC (GEAR POOL v2)
