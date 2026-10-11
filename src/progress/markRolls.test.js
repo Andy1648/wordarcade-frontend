@@ -12,7 +12,7 @@ import {
   markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec, STAT_KINDS,
   equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny,
 } from './markRolls.js';
-import { TIER_PCT } from './markRollsCore.js';
+import { TIER_PCT, GEMS_PCT_BY_TIER } from './markRollsCore.js';
 const DUPES_PER_GOLD = 10; // the v1 finish, for the migration tests
 const GOLDS_PER_RAINBOW = 10;
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY, MARK_TIERS } from './marks.js';
@@ -50,7 +50,7 @@ test('tiers: Andy\'s five tiers (no COMMON), odds and MAINs — and MARK_TIERS s
 test('pool: every tier has a mark, no COMMON; LEGENDARY+ carry a perk, nothing below does; MYTHIC+ get FREE OVERDRIVE', () => {
   for (const t of TIERS) assert.ok(ROLL_MARKS.some((m) => m.tier === t), t);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
-  assert.equal(ROLL_MARKS.length, 27, '29 − 12 commons + 10 new');
+  assert.equal(ROLL_MARKS.length, 28, '29 − 12 commons + 10 new + JACKPOT');
   for (const m of ROLL_MARKS) {
     const top = ['legendary', 'mythic', 'secret'].includes(m.tier);
     assert.equal(m.perks.length > 0, top, `${m.id} (${m.tier}) perk`);
@@ -74,7 +74,7 @@ test('odds: the table sums to 1; each rarer TIER is exactly 1 IN X; RARE (the fl
   }
   assert.ok(Math.abs(tierMass(t, 'rare') - (1 - 0.01411)) < 1e-9); // 1/100 + 1/250 + 1/10,000 + 1/100,000
   assert.equal(oneInX('mk-origin'), 100000);
-  assert.equal(oneInX('mk-leviathan'), 1000, 'four legendaries split 1 IN 250');
+  assert.equal(oneInX('mk-leviathan'), 1250, 'five legendaries (JACKPOT joined) split 1 IN 250');
   assert.equal(oneInX('mk-nova'), 700, 'seven epics split 1 IN 100');
   assert.equal(oneInX('mk-hydra'), 30000, 'three mythics split 1 IN 10,000');
   assert.equal(oneInX('mk-smith'), 12, 'twelve rares split 98.59%');
@@ -90,7 +90,7 @@ test('luck: scales every chance above the RARE floor, RARE absorbs, sums stay 1'
   const t2 = rollTable(s, { permanentOwned: 10 }); // luck 2
   assert.ok(Math.abs(t2.probs.get('mk-leviathan') / t1.probs.get('mk-leviathan') - 2) < 1e-9);
   assert.ok(Math.abs(t2.probs.get('mk-origin') / t1.probs.get('mk-origin') - 2) < 1e-9);
-  assert.equal(yourOneInX('mk-leviathan', 2), 500);
+  assert.equal(yourOneInX('mk-leviathan', 2), 625);
   assert.equal(yourOneInX('mk-smith', 2), 12, 'the floor is not luck-scaled');
   const big = rollTable(s, { permanentOwned: 1e6 });
   assert.equal(tierMass(big, 'rare'), 0);
@@ -292,16 +292,16 @@ test('THE MARK STATS: the worn stat pays only what it touches; the INDEX (+0.5% 
   let s = one('mk-eclipse');
   near(markWinsMult({ markId: 'mk-eclipse', state: s }), 3 * ix(s));
   near(markXpMult({ markId: 'mk-eclipse', state: s }), ix(s));
-  assert.equal(markBaseWins({ markId: 'mk-eclipse', state: s }), 0);
+  assert.equal(markBaseWins({ markId: 'mk-eclipse', state: s }), 10, 'LEGENDARY substat +10 BASE WINS (gear card v4)');
   // +180 BASE WINS/WORD (SINGULARITY, Andy oct11 ×2) — a BASE addend; markMult reads it as × (10 + 180) / 10
   s = one('mk-singularity');
-  near(markBaseWins({ markId: 'mk-singularity', state: s }), 180);
+  near(markBaseWins({ markId: 'mk-singularity', state: s }), 210, 'MAIN +180 + MYTHIC substat +30');
   near(markWinsMult({ markId: 'mk-singularity', state: s }), ix(s));
-  near(markMult({ markId: 'mk-singularity', state: s }), 19 * ix(s));
+  near(markMult({ markId: 'mk-singularity', state: s }), 22 * ix(s));
   // +90 BASE XP/LETTER (KRAKEN)
   s = one('mk-kraken');
   near(markBaseXp({ markId: 'mk-kraken', state: s }), 90);
-  assert.equal(markBaseWins({ markId: 'mk-kraken', state: s }), 0);
+  assert.equal(markBaseWins({ markId: 'mk-kraken', state: s }), 30, 'only its MYTHIC substat +30 BASE WINS');
   // ROLL LUCK / OVERDRIVE
   near(markLuck({ markId: 'mk-slipstream', state: one('mk-slipstream') }), 0.25);
   near(markOverdriveSec({ markId: 'mk-tinder', state: one('mk-tinder') }), 75);
@@ -314,7 +314,7 @@ test('THE MARK STATS: the worn stat pays only what it touches; the INDEX (+0.5% 
   assert.deepEqual(TIER_PCT, TP);
   for (const m of ROLL_MARKS) {
     if (m.stat.kind === 'critEvery') { assert.equal(m.stat.value, Math.max(1, Math.round(100 / TP[m.tier]))); continue; }
-    const per = { winsPct: 1, xpPct: 1, luckPct: 1, baseWins: 0.2 /* ×2, Andy oct11 */, baseXp: 0.1, overdriveSec: 3, critRatePct: 1, critPower: 1 / 25 }[m.stat.kind]
+    const per = { winsPct: 1, xpPct: 1, luckPct: 1, baseWins: 0.2 /* ×2, Andy oct11 */, baseXp: 0.1, overdriveSec: 3, critRatePct: 1, critPower: 1 / 25, gemsPct: GEMS_PCT_BY_TIER[m.tier] / TP[m.tier] }[m.stat.kind]
       || (m.stat.kind.endsWith('WinsPct') ? 2 : NaN);
     near(m.stat.value, TP[m.tier] * per);
   }
@@ -391,7 +391,7 @@ test('store: a save that never rolled with nothing worn pays ×1; the store migr
   withStorage({ [MARKS_OWNED_KEY]: JSON.stringify(['mk-smith', 'mk-eternal']) }, (map) => {
     assert.equal(markMult(), 1);
     map.set(MARKS_EQUIPPED_KEY, 'mk-eternal');
-    assert.equal(markMult(), 3, 'a worn legacy permanent pays ×3 before any roll');
+    assert.equal(markMult(), 6, 'a worn legacy permanent pays ×3 × (10 + its LEGENDARY substat +10) / 10 before any roll');
     assert.equal(loadRollState(), null);
     const s = ensureRollState();
     assert.equal(s.marks['mk-smith'].n, 1);

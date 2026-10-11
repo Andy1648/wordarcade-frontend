@@ -268,6 +268,18 @@ export const ROLLED_GLYPHS = {
       <G d="M28 38 C29 34 32 32 36 31" w="3" />
     </g>
   ),
+  // JACKPOT (gear card v4, Andy oct11 — +200% GEMS): a cyan gem bursting off a lopsided stack of gold coins. Vector
+  // stand-in until its painted PNG lands (then ART('jackpot')).
+  'mk-jackpot': (
+    <g {...KS}>
+      <F d="M18 74 C18 68 42 66 50 66 C60 66 82 68 82 74 L82 82 C82 88 60 90 50 90 C40 90 18 88 18 82 Z" f="#FFE94A" s="#F2A900" sd="M18 80 C24 86 40 88 50 88 C62 88 78 86 82 80 L82 82 C82 88 60 90 50 90 C40 90 18 88 18 82 Z" />
+      <F d="M24 62 C24 56 44 54 52 54 C62 54 78 56 78 62 L78 70 C78 75 62 77 52 77 C42 77 24 75 24 70 Z" f="#FFE94A" s="#F2A900" sd="M24 68 C30 74 42 76 52 76 C62 76 74 74 78 68 L78 70 C78 75 62 77 52 77 C42 77 24 75 24 70 Z" />
+      <F d="M36 14 L64 14 L78 32 L50 62 L22 32 Z" f="#2EFFE0" s="#12A99A" sd="M56 32 L78 32 L50 62 Z" />
+      <path d="M22 32 L78 32 M36 14 L44 32 L50 14 L56 32 L64 14" strokeWidth="3" fill="none" />
+      <path d="M12 22 L16 30 M88 20 L83 28 M10 46 L17 46" stroke="#FFE94A" strokeWidth="4" fill="none" />
+      <G d="M34 22 L30 28" w="3" />
+    </g>
+  ),
   'mk-hydra': (
     <g {...KS}>
       <S d="M50 78 C48 62 50 46 50 30" f="#12A99A" s="#0A6E63" w="7" ink="16" />

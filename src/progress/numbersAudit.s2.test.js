@@ -33,7 +33,7 @@ const { letterXpNow, creditLetterXp, resetLetterXp, markXpBoost } = await import
 const { roundWordXp, xpPerInput, keyTierCost } = await import('./xp.js');
 const { ROLL_STATE_KEY } = await import('./markRolls.js');
 const { MARKS_EQUIPPED_KEY } = await import('./marks.js');
-const { indexMult, loadRollState, rollMarkById } = await import('./markRollsCore.js');
+const { indexMult, loadRollState, rollMarkById, substatsOf } = await import('./markRollsCore.js');
 const { STARS_KEY } = await import('./v3/store.js');
 const { formatStatRate, SUFFIXES } = await import('../format.js');
 const E = V3.econ;
@@ -80,6 +80,8 @@ function finalMark(mark, mode = null) {
   if (m.stat.kind === 'xpPct') out.xp = f;
   if (m.stat.kind === 'baseWins') out.winsBase = 2 * (f - 1) * 10; // sized on BASE 10, ×2 (Andy oct11 BASE_WINS_SCALE)
   if (m.stat.kind === 'baseXp') out.xpBase = (f - 1) * 10;
+  // gear card v4: the tier's substat rows add BASE WINS on top of the MAIN (★0 here — the seeds own one copy)
+  for (const x of substatsOf(mark, null)) if (x.kind === 'baseWins') out.winsBase += x.value;
   return out;
 }
 /** A printed number back to a value: "×1,024" → 1024, "67.6K" → 67,600 (formatNum's named suffixes). */
@@ -192,6 +194,7 @@ test('v4 at T0 R0: a menu key pays +1 XP, a game letter 0; POWER doubles it at o
 // XP per key, the BASE addend (season 2 prints a +N BASE XP as its N/10 share of the 1 XP base), luck, OVERDRIVE, crit.
 test('GEAR POOL v2: every gear prints exactly what it pays (season 2 values, ★ pips, shiny)', async () => {
   const MR = await import('./markRolls.js');
+  const subSum = (id, s, kind) => substatsOf(id, s).filter((x) => x.kind === kind).reduce((a, x) => a + x.value, 0);
   const num = (t) => (/^EVERY KEY/.test(t) ? 1 : Number(/^(?:EVERY )?[+×]?([\d,]*\.?\d+)/.exec(t)[1].replace(/,/g, '')));
   for (const m of MR.ROLL_MARKS) {
     const per = MR.DUPES_PER_PIP[m.tier];
@@ -209,9 +212,10 @@ test('GEAR POOL v2: every gear prints exactly what it pays (season 2 values, ★
       const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${tag}: pays ${a}, prints ${b}`);
       if (k === 'winsPct') near(MR.markWinsMult() / ix, v);
       else if (k === 'xpPct') near(MR.markXpMult() / ix, v);
-      else if (k === 'baseWins') near(MR.markBaseWins(), v);
+      else if (k === 'baseWins') near(MR.markBaseWins() - subSum(m.id, s, 'baseWins'), v);
       else if (k === 'baseXp') near(MR.markBaseXp() / 10, v);
-      else if (k === 'luckPct') near(1 + MR.markLuck(), v);
+      else if (k === 'luckPct') near(1 + MR.markLuck() - subSum(m.id, s, 'luckPct') / 100, v);
+      else if (k === 'gemsPct') near(MR.markGemsPct() - subSum(m.id, s, 'gemsPct'), v);
       else if (k === 'overdriveSec') near(MR.markOverdriveSec(), v);
       else if (k === 'critRatePct') near(MR.critTotals().rawRate, 0.01 + MR.critStatsOf(m.id, s).rate + v / 100);
       else if (k === 'critPower') near(MR.critTotals().power, 2 + MR.critStatsOf(m.id, s).power + v);
@@ -223,7 +227,8 @@ test('GEAR POOL v2: every gear prints exactly what it pays (season 2 values, ★
         const worn = perWordRateNow({ mode }).rate;
         localStorage.removeItem(MARKS_EQUIPPED_KEY);
         const bare = perWordRateNow({ mode }).rate;
-        assert.ok(Math.abs(worn / bare - v) < 0.01 * v, `${tag}: ${mode} word ${worn} vs ${bare} (the INDEX rides on both)`);
+        const subBase = (10 + subSum(m.id, s, 'baseWins')) / 10; // its substat +N BASE WINS rides the worn word too
+        assert.ok(Math.abs(worn / subBase / bare - v) < 0.01 * v, `${tag}: ${mode} word ${worn} vs ${bare} (the INDEX rides on both)`);
       }
     }
   }
