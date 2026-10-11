@@ -701,7 +701,6 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 .hp-gear[data-tier='epic'] { box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
 .hp-gear:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { background: var(--gear-fill); box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
 .hp-gear:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: var(--b6) var(--b6) 0 var(--gear-line); }
-.hp-gear.is-worn:is([data-tier='mythic'], [data-tier='secret']) .hp-gear-label { align-self: flex-start; color: #fff; background: var(--gear-line); padding-bottom: calc(3 * var(--u)); border-radius: 0 0 6px 0; }
 .hp-gear:disabled { opacity: 0.5; pointer-events: none; }
 @media (hover: hover) { .hp-gear:hover { transform: translate(-3px, -3px); } }
 .hp-gear:active { transform: translate(3px, 3px); }
@@ -724,9 +723,9 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   padding: calc(6 * var(--u)) calc(12 * var(--u)) 0;
 }
 .hp-gear.is-worn .hp-gear-label { color: var(--gear-line); }
-.hp-gear-body { display: flex; align-items: center; gap: calc(12 * var(--u)); padding: calc(6 * var(--u)) calc(12 * var(--u)) calc(10 * var(--u)); }
+.hp-gear-body { display: flex; align-items: center; gap: calc(8 * var(--u)); padding: calc(4 * var(--u)) calc(10 * var(--u)) calc(6 * var(--u)); }
 .hp-gear-art { position: relative; flex: 0 0 auto; display: grid; place-items: center; }
-.hp-gear-cog { flex: 0 0 auto; width: calc(var(--hp-tile-ico) * 2); height: calc(var(--hp-tile-ico) * 2); } /* gear UI v3: the showcase glyph is the slot's hero — big enough for its pop to read */
+.hp-gear-cog { flex: 0 0 auto; width: calc(var(--hp-tile-ico) * 1.7); height: calc(var(--hp-tile-ico) * 1.7); } /* gear UI v3: the showcase glyph is the slot's hero — big enough for its pop to read */
 .hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
 .hp-gear-text { position: relative; z-index: 1; flex: 1 1 auto; display: flex; flex-direction: column; gap: calc(3 * var(--u)); min-width: 0; } /* above the showcase ring + flash */
 /* the NUMBER (the sheet's MAIN STAT colour), then WHAT it boosts, white, then the crit line, then the name */
@@ -737,6 +736,41 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 .hp-gear-crit-num { font-size: var(--fs-hpgearn); color: #fff; margin-right: calc(4 * var(--u)); }
 .hp-gear-sub { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp13); letter-spacing: 0.04em; color: #c9b8e8; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
 .hp-gear.is-worn .hp-gear-sub { color: var(--gear-line); }
+/* GEAR CARD v4 (Andy oct11 "no need to have 'your gear' … include stat and substats … like the cards but horizontal"):
+   the NAME rides a plate across the top (the card's ribbon, sideways — tier-coloured on a worn gear, its text white
+   on LEGENDARY+), then the art beside the MAIN stat with the SUBSTATS as a 2×2 grid of icon chips under it (the card's subs plate,
+   compacted — the words ride each chip's label + the GEAR SHEET). */
+.hp-gear-plate {
+  display: block;
+  min-width: 0;
+  padding: calc(3 * var(--u)) calc(10 * var(--u)) calc(2 * var(--u));
+  background: #0d0618;
+  border-bottom: var(--b4) solid #000;
+  border-radius: 4px 4px 0 0;
+}
+.hp-gear.is-worn .hp-gear-plate { background: var(--gear-edge); }
+.hp-gear.is-worn:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) .hp-gear-plate { background: var(--gear-line); }
+.hp-gear.is-worn:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) .hp-gear-plate .hp-gear-sub { color: #fff; }
+.hp-gear-plate .hp-gear-sub { display: block; font-size: var(--fs-hp18); letter-spacing: 0.02em; }
+.hp-gear-subs { display: flex; flex-wrap: wrap; gap: calc(3 * var(--u)) calc(6 * var(--u)); margin-top: calc(4 * var(--u)); }
+.hp-gear-subline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hp13);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+  white-space: nowrap;
+}
+.hp-gear-subline.is-crit { color: #FF4FA3; }
+.hp-gear-subline.is-wins { color: #FFE94A; }
+.hp-gear-subline.is-gems, .hp-gear-subline.is-luck { color: #2EFFE0; }
+.hp-gear-subico { flex: 0 0 auto; width: 18px; height: 18px; display: block; }
 .hp-gear .hp-chip-dot { top: -8px; right: -8px; }
 
 /* Under 1200px the page-centred column starves the cards (1024x768: a 150px card hides "/ WORD"), so the right column
