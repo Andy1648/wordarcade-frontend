@@ -31,7 +31,8 @@ test('the boost keys match boost.js / hooks.js', () => {
 
 test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands, counts; a 5:00 restock window', () => {
   mem.clear();
-  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 750, 150, 495]);
+  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 300, 150, 495]); // OVERDRIVE 300 (Andy oct10)
+  assert.deepEqual(ST.STOCK.filter((i) => i.fx === 'xp' || i.fx === 'wins').map((i) => i.mult), [1.5, 1.5]);
   assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'common', 'rare', 'epic', 'rare', 'legendary']);
   assert.deepEqual(ST.stockLeft(T0), { xp25: 5, wins25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 1 });
   // Andy oct8 "boost what?": every item says what it boosts and for how long
@@ -45,8 +46,8 @@ test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks'
   setGems(2000);
   let r = ST.buyStock('overdrive', T0);
   assert.equal(r.ok, true);
-  assert.equal(r.gems, 1250);
-  assert.equal(G.getGems(), 1250);
+  assert.equal(r.gems, 1700);
+  assert.equal(G.getGems(), 1700);
   assert.equal(r.left.overdrive, 1);
   assert.equal(BO.codeBoostMult(T0 + 1000), 10, '×10 OVERDRIVE is a ×10 boost');
   assert.ok(BO.boostRemaining(T0) <= 5 * 60000 && BO.boostRemaining(T0) > 4 * 60000);
@@ -54,7 +55,7 @@ test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks'
   assert.equal(r.ok, true);
   r = ST.buyStock('overdrive', T0 + 2000);
   assert.deepEqual([r.ok, r.reason], [false, 'sold_out']);
-  assert.equal(G.getGems(), 500, 'a sold-out try charges nothing');
+  assert.equal(G.getGems(), 1400, 'a sold-out try charges nothing');
   assert.equal(ST.stockLeft(T0 + ST.RESTOCK_MS).overdrive, 2, 'restocked in the next window');
 });
 

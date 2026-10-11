@@ -383,7 +383,9 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             <span className="rs2-gems-k">GEMS</span>
           </div>
           <div className="rs2-total" data-rv="rise" data-at={tTotal}>
-            <span className="rs2-total-k">WINS<br />EARNED</span>
+            {/* Andy oct10: the WINS icon is the label (as the gem is on the gems box) — the room goes to the gem sources */}
+            <KitIcon name="wins" size={40} shadow={2} extras={false} className="rs2-total-ico" />
+            <span className="rs2-sr">WINS EARNED</span>
             <span className="rs2-total-num" data-wins-total={total}><N to={total} at={tTotal + 80} prefix="+" /></span>
           </div>
         </div>

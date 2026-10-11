@@ -7,7 +7,10 @@ import { modePower } from '../progress/xp';
 import { frenzyShort, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
 import { formatRate, formatMultExact } from '../format';
+import KitIcon from './kit/KitIcon.jsx';
 import './GameCard.css';
+
+import { GEM_RATING } from './gemRating.js';
 import { reduceMotion, onReduceMotionChange } from '../lib/reduceMotion';
 
 // Per-mode neon accent, consumed as the --card-glow CSS var by the beat-glow
@@ -315,6 +318,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     <>
       {/* Andy oct10: "BASE" — the 5-letter rate before a word's own bonuses (length, crits), so the player knows a word
           can pay MORE. FUSE has no BASE tag: its FRENZY line already says how it pays more. */}
+      {/* Andy oct10: the WINS icon + a bigger number ("we need bigger text but also the icon as well") */}
+      <KitIcon name="wins" size={28} shadow={1} extras={false} className="game-card-payout-ico" />
       {!isFuse && <span className="game-card-payout-base">BASE </span>}
       <span className="game-card-payout-num">{formatRate(rateNow.rate)}</span>
       <span className="game-card-payout-per"> / WORD</span>
@@ -322,6 +327,14 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
     </>
   );
   void multTag; // the built-bonus tag is no longer printed on the card (kept for the receipt's wording)
+  // GEM FRIENDLY (Andy oct10: "on each game card include like the gem icon (but mini) to show how gem friendly it is
+  // from 1-3 gems"): lit gems = how many ways this mode pays gems (ModeExample modeGemRows — the dialog says which).
+  const gemsLit = GEM_RATING[game.id] || 0;
+  const gemRating = gemsLit && game.enabled && !locked ? (
+    <span className="game-card-gems" data-gems={gemsLit} aria-label={`Gem friendly: ${gemsLit} of 3`} title={`GEMS ${gemsLit}/3`}>
+      {[1, 2, 3].map((i) => <KitIcon key={i} name="gems" size={24} shadow={1} extras={false} className={i <= gemsLit ? 'is-lit' : 'is-dim'} />)}
+    </span>
+  ) : null;
   // The badge carries its data-driven fill (game.badgeBg / badgeColor) so themes and
   // gameData stay the source of truth; menu.spec asserts its text === game.badgeText.
   const badge = (
@@ -385,6 +398,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
               the viewport-integrity clip walk). */}
           {game.featured && <div className="game-card-ribbon is-featured" aria-hidden="true">FEATURED</div>}
           {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI JUDGED</div>}
+          {gemRating}
 
 
           {game.id === 'sat-rush' ? (

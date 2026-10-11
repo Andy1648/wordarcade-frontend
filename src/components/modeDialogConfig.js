@@ -18,8 +18,8 @@ export const MODES = {
     accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',
     chip: 'SOLO/MULTI', t1: 'CATEGORY', t2: 'BLITZ',
     liner: 'IF IT’S ON THE LIST, IT SCORES.',
-    // PLAY (not CREATE) — see the note on bomb above.
-    create: 'PLAY',
+    // Andy oct10: CREATE ROOM + JOIN, the same two buttons as every room mode.
+    create: 'CREATE ROOM',
   },
   // Solo modes (CHAIN / FUSE). `solo: true` flips ModeDialog to a single PLAY
   // button. `name` is the whole-word title (these aren't a two-word split).

@@ -10,7 +10,8 @@ import { resolvePlayerColor } from '../playerColors';
 import { inviteLink } from '../share/links.js';
 import { track } from '../lib/analytics';
 import { DIFFICULTIES, difficultyDesc, difficultyReadout } from '../difficulty';
-import { SEASON2 } from '../progress/season';
+import { SEASON2, V3 } from '../progress/season';
+import KitIcon from './kit/KitIcon.jsx';
 import './RoomScreen.css';
 import './kit/tokens.css';
 import './RoomScreenV2.css';
@@ -377,7 +378,16 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                       onClick={() => handleAddBot(d.key)}
                     >
                       <span className="room-addbot-name">{d.label}</span>
-                      <span className="room-addbot-desc">{d.desc}</span>
+                      {/* Andy oct10: say what beating it PAYS in gems (season 2's table — v3/econ BOT_WIN_BY_DIFF) */}
+                      {V3.econ && V3.econ.BOT_WIN_BY_DIFF[d.key] ? (
+                        <span className="room-addbot-gems" data-gems={V3.econ.BOT_WIN_BY_DIFF[d.key]}>
+                          <KitIcon name="gems" size={24} shadow={1} extras={false} />
+                          <b>+{V3.econ.BOT_WIN_BY_DIFF[d.key]}</b>
+                          <span className="room-addbot-gems-u">WIN</span>
+                        </span>
+                      ) : (
+                        <span className="room-addbot-desc">{d.desc}</span>
+                      )}
                     </button>
                   ))}
                 </div>

@@ -335,8 +335,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         // narrow or short card (then it measures 0), so it never sets the minimum card width; the
         // slot is sized to the WIDER of the two lines, not their sum.
         const tail = textEm(el.querySelector('.game-card-perk-tail'));
-        whole = Math.max(whole, all - tail, tail);
-        chunk = Math.max(chunk, all - per - mult - tail, perMax, mult);
+        // the WINS icon (Andy oct10) is no text — its box + gap, in em of the line (KitIcon 22px at the line's size)
+        const ico = el.querySelector('.game-card-payout-ico') ? 1.85 : 0;
+        whole = Math.max(whole, all - tail + ico, tail);
+        chunk = Math.max(chunk, all - per - mult - tail + ico, perMax, mult);
       }
       return { whole, chunk };
     };
@@ -952,33 +954,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     runWhenConnected('create', () => onSelectGame && onSelectGame(gameId));
   }
 
-  // Dialog PLAY SOLO (Word Bomb): straight into a round vs a medium bot - App's handlePlaySolo sends
-  // the create/add_bot frames and starts once the bot is seated. Through runWhenConnected like
-  // CREATE, so a cold socket shows WAKING THE SERVER… on the button and fires on open.
-  function handleDialogSolo() {
-    if (navigating || !dialog) return;
-    sound.click();
-    setNavigating(true);
-    runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
-  }
-
   // Phone hook PLAY SOLO: the first-timer typed a word on the menu and took the one-tap offer.
-  // The same path as the dialog's PLAY SOLO, without a dialog to open first.
+  // Straight into a round vs a medium bot (App's handlePlaySolo), no dialog.
   function handleHookSolo() {
     if (navigating) return;
     sound.click();
     setNavigating(true);
     runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
-  }
-
-  // Dialog QUICK MATCH (WORD RACE): straight into the race queue - App sends race_quick_match and
-  // the server seats us in the fullest waiting race (or opens one; bots fill after 10s). Same
-  // runWhenConnected path as PLAY SOLO, so a cold socket shows WAKING THE SERVER… on the button.
-  function handleDialogQuickMatch() {
-    if (navigating || !dialog) return;
-    sound.click();
-    setNavigating(true);
-    runWhenConnected('solo', () => onRaceQuickMatch && onRaceQuickMatch());
   }
 
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
@@ -1423,13 +1405,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onCreate={handleDialogCreate}
             onJoin={handleDialogJoin}
             onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' || dialog.game.id === 'sat-rush' ? handleDialogPlay : undefined}
-            onPlaySolo={
-              dialog.game.id === 'word-bomb' && onPlaySolo
-                ? handleDialogSolo
-                : dialog.game.id === 'word-race' && onRaceQuickMatch
-                  ? handleDialogQuickMatch
-                  : undefined
-            }
+            // Andy oct10: "for all game modes besides sat rush, just 2 buttons - create room and join" — no SOLO /
+            // QUICK MATCH lead (a room adds bots on the room screen).
+            onPlaySolo={undefined}
             connecting={connecting}
             coldStart={coldStart}
             blitzPacks={blitzPacks}

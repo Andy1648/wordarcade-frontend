@@ -22,6 +22,10 @@
   font-size: var(--fs-body);
   line-height: 1;
 }
+.gems-earned { flex-wrap: wrap; row-gap: 4px; }
+.gems-earned-srcs { display: flex; flex-wrap: wrap; gap: 4px; }
+/* the source chips: WIN +90 · WORDS +12 — where every gem came from (Andy oct10) */
+.gems-earned-src { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k14); color: #fff; background: #0d0618; border: 2px solid #0e8f80; border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
 .gems-earned-label {
   font-size: var(--fs-label);
   letter-spacing: 0.06em;

@@ -29,6 +29,8 @@ import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
 import { frenzyShort, formatFrenzy } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
+import KitIcon from './kit/KitIcon.jsx';
+import { GEM_RATING } from './gemRating.js';
 
 // The one thing that sets each solo mode apart, in the half-band's sub line (Andy oct2: FUSE's
 // FRENZY must be obvious on the card; CHAIN's POWER is real money per word).
@@ -234,6 +236,11 @@ export default function MobileMenu({
                   )}
                 </span>
               </span>
+              {GEM_RATING[game.id] ? (
+                <span className="hp-m-gems" aria-label={`Gem friendly: ${GEM_RATING[game.id]} of 3`}>
+                  {[1, 2, 3].map((i) => <KitIcon key={i} name="gems" size={20} shadow={1} extras={false} className={i <= GEM_RATING[game.id] ? 'is-lit' : 'is-dim'} />)}
+                </span>
+              ) : null}
               <Chevron />
             </a>
           );

@@ -48,6 +48,7 @@ import { critLines } from '../../progress/critText';
 import {
   drawShowcaseStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS, CHARGE_MS, OVERHOLD_MS,
 } from './reelPlan.js';
+import '../kit/tokens.css';
 import './RollScreen.css';
 import { useReduceMotion } from '../../lib/useReduceMotion';
 import { SEASON2, V3 } from '../../progress/season';

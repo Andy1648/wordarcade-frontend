@@ -33,7 +33,7 @@ for (const mode of [
     await expect(dialog.locator('.mode-dialog-title')).toContainText(mode.name);
     await expect(dialog.locator('.mode-dialog-liner')).toContainText(mode.rule, { ignoreCase: true });
     await expect(dialog.locator('.mode-ex')).toBeVisible();
-    await expect(dialog.locator('.mode-ex-pay')).toContainText('WINS / WORD');
+    await expect(dialog.locator('.mode-ex-pay2')).toContainText('WINS / WORD');
     const play = dialog.locator('.mode-dialog-btn', { hasText: 'PLAY' });
     await expect(play).toBeVisible();
     // Solo dialog shows no CREATE/JOIN.

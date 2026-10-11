@@ -7,15 +7,16 @@
 // mid-game (and "HELL"→"HARD", "HARD"→"EASY"). Both screens now read `difficultyLabel`.
 //
 // `desc` is the Word Bomb per-turn timer + lives, mirroring the backend DIFFICULTY_PRESETS
-// in gameLogic.js (chill 20s/3, HARD 15s/2, CRAZY 10s/2, HELL 7s/2). Category Blitz has no
+// in gameLogic.js (chill 15s/3, HARD 15s/3, CRAZY 10s/3, HELL 7s/3). Category Blitz has no
 // difficulty control (its timer is a fixed 20s and rerolls come from a separate prop), so
 // there is deliberately no CB variant here.
 
 export const DIFFICULTIES = [
-  { key: 'chill', label: 'CHILL', desc: '20s · 3 lives' },
-  { key: 'easy', label: 'HARD', desc: '15s · 2 lives' },
-  { key: 'medium', label: 'CRAZY', desc: '10s · 2 lives' },
-  { key: 'hard', label: 'HELL', desc: '7s · 2 lives' },
+  // Andy oct10: every tier 3 lives (backend claude/equal-lives — SHIP TOGETHER); CHILL is 15s (BA1 oct2, the copy said 20s)
+  { key: 'chill', label: 'CHILL', desc: '15s · 3 lives' },
+  { key: 'easy', label: 'HARD', desc: '15s · 3 lives' },
+  { key: 'medium', label: 'CRAZY', desc: '10s · 3 lives' },
+  { key: 'hard', label: 'HELL', desc: '7s · 3 lives' },
 ];
 
 const BY_KEY = Object.fromEntries(DIFFICULTIES.map((d) => [d.key, d]));
@@ -39,7 +40,7 @@ export function difficultyPay(key) {
   return '';
 }
 
-// Read-only readout for non-hosts: "CRAZY — 10s · 2 lives" (falls back to the bare key).
+// Read-only readout for non-hosts: "CRAZY — 10s · 3 lives" (falls back to the bare key).
 export function difficultyReadout(key) {
   const m = BY_KEY[key];
   return m ? `${m.label} — ${m.desc}` : String(key || '').toUpperCase();

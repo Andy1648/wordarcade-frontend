@@ -132,7 +132,7 @@
 .rs2-tally { grid-area: tally; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: calc(10px * var(--u)); }
 .rs2-sum { display: flex; gap: calc(14px * var(--u)); min-width: 0; }
 .rs2-sum > * { flex: 1 1 0; min-width: 0; }
-.rs2-sum > .rs2-gems { flex: 0 0 32%; }
+.rs2-sum > .rs2-gems { flex: 0 0 50%; } /* Andy oct10: room for WHERE the gems came from */
 .rs2-sum > .rs2-total { flex: 1 1 auto; }
 .rs2-stats { display: flex; gap: 12px; }
 .rs2-stat { height: calc(48px * var(--u)); min-height: 36px; padding: 0 14px; display: flex; align-items: center; gap: 10px; background: #1a0b2e; border: 4px solid #000; border-bottom: 7px solid var(--c, #FFE94A); box-shadow: 5px 5px 0 #000; font-family: var(--k-display); text-transform: uppercase; }
@@ -174,12 +174,20 @@
 .rs2-line-n { margin-left: auto; font-size: max(var(--fs-k18), calc(var(--fs-k28) * var(--u))); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
 .rs2-line-note { flex-basis: 100%; font-family: var(--k-mono); text-transform: uppercase; font-size: var(--fs-k14); color: #c9b8e8; }
 .rs2-gems { --c: #2EFFE0; display: flex; align-items: center; gap: 10px; height: calc(60px * var(--u)); min-height: 44px; padding: 0 12px; }
-.rs2-gems .gems-earned { display: flex; align-items: center; gap: 10px; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+.rs2-gems .gems-earned { display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; min-width: 0; }
+/* the sources stack beside the total (two fit the box's height; the card never grows) */
+.rs2-gems .gems-earned-srcs { flex-direction: column; flex-wrap: nowrap; gap: 2px; flex: 0 0 auto; align-items: flex-start; }
+.rs2-gems .gems-earned-src { padding: 0 5px; line-height: 1.25; flex: 0 0 auto; width: max-content; }
+.rs2-gems .gems-earned-num { font-size: max(var(--fs-k22), calc(var(--fs-k28) * var(--u))); }
+.rs2-gems .gems-earned img { width: calc(32px * var(--u)); }
+.rs2-gems { gap: 8px; padding: 0 10px; }
 .rs2-gems .gems-earned img { width: calc(42px * var(--u)); height: auto; min-width: 26px; transform: rotate(-8deg); }
 .rs2-gems .gems-earned-num { font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k24), calc(var(--fs-k32) * var(--u))); line-height: 1; color: #2EFFE0; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
 .rs2-gems .gems-earned-label { display: none; } /* the gem IS the label (the TOTAL beside it is the one big number) */
 .rs2-gems-k { display: none; margin-left: auto; font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--u))); color: #c9b8e8; white-space: nowrap; }
 .rs2-total { --c: #FFE94A; display: flex; align-items: center; gap: 10px; height: calc(68px * var(--u)); min-height: 52px; padding: 0 12px; background: #FFE94A; border-left-color: #F2A900; font-family: var(--k-display); text-transform: uppercase; color: #000; }
+.rs2-total-ico { flex: 0 0 auto; width: calc(40px * var(--u)); height: calc(40px * var(--u)); min-width: 28px; min-height: 28px; }
+.rs2-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .rs2-total-k { font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--u))); line-height: 1.05; }
 /* THE one big number on the card (R2 oct8 #2): 44px at the sheet size (42 on the 1366×657 Chromebook, ≥ 40), bigger
    than the WORDS line (38) and every bonus (28) — TOTAL > WORDS > bonus */

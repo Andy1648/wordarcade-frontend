@@ -38,6 +38,8 @@ import { noteTypedLetters } from '../progress/letterXp.js';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
 import { payGameResult } from '../progress/gems';
+import { grantGems } from '../progress/gemsCore';
+import { V3 } from '../progress/season';
 import { otherSeatIds } from '../progress/seats';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
@@ -200,12 +202,23 @@ export default function WordRaceScreen({
   // GEMS (Andy oct5): this race's ledger mark (taken as each race goes live) and ONE payout at race over — the
   // standings rank everyone, a racer placed below me is beaten. READ-ONLY on the race (gems.payGameResult dedupes).
   const gemsSince = useGemsRunMark(live);
+  const speedPaid = useRef(new Set());
   useEffect(() => {
     if (!over) return;
     const mine = standings.find((s) => s.id === myId);
     const myPl = mine ? mine.place : Infinity;
     const rivals = standings.filter((s) => s.id !== myId).map((s) => ({ id: s.id, isBot: !!s.isBot, beaten: Number.isFinite(s.place) && s.place > myPl }));
-    payGameResult({ key: `race-${seed || ''}-${over.winnerId || ''}`, iWon, rivals, selfIds: otherSeatIds(), mode: 'word-race' });
+    const key = `race-${seed || ''}-${over.winnerId || ''}`;
+    payGameResult({ key, iWon, rivals, selfIds: otherSeatIds(), mode: 'word-race' });
+    // SPEED GEMS (season 2, Andy oct10 "for the word race it can be based on speed"): every racer, 1 gem per 2 words a
+    // minute (v3/econ raceSpeedGems), timed from GO to the race's end. Once per race (the same key payGameResult dedupes).
+    const E = V3.econ;
+    if (E && E.raceSpeedGems && race?.goAt && !speedPaid.current.has(key)) {
+      speedPaid.current.add(key);
+      const min = Math.max(1 / 6, (Date.now() - race.goAt) / 60000); // never below 10 s (a dropped clock can't pay ×∞)
+      const n = E.raceSpeedGems(((race.myWords || []).length) / min);
+      if (n > 0) grantGems(n, 'speed', { mode: 'word-race' });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [over]);
 

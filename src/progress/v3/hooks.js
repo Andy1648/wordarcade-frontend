@@ -7,12 +7,12 @@ import { keyTierCost as keyTierCostV, doRebirth, getRebirths, getKeyTier, saveRe
 import { MARK_TIERS } from '../marks.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned } from '../shop.js';
 import { getWins } from '../wins.js';
-import { loadGemState, saveGemState, tellBalance, grantGems, PER_PLAYER_BEATEN as LIVE_PER_PLAYER } from '../gemsCore.js';
+import { loadGemState, saveGemState, tellBalance, grantGems } from '../gemsCore.js';
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue, statHits } from '../markRollsCore.js';
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
-  rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
-  PER_PLAYER_BEATEN, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
+  rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, LEVEL_UP, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
+  winnerPot, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
 } from './econ.js';
 import { needV3, creditXpV3 } from './curve.js';
 import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter, S2_PREFIX } from './store.js';
@@ -22,6 +22,7 @@ import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
 import { frenzyXpMult } from '../frenzy.js'; // FUSE FRENZY = ×5 XP per key for 5 min in season 2 (Andy oct8)
 
+export const LV_GEMS_KEY = `${S2_PREFIX}lvgems`; // { r, peak }: the climb whose levels have paid LEVEL_UP gems (Andy oct10)
 export const SERVER_FLAG_KEY = `${S2_PREFIX}server`; // the server hook's note (read at the NEXT boot)
 const fin = (v, d) => (Number.isFinite(v) ? v : d);
 const pos = (v, d) => (Number.isFinite(v) && v > 0 ? v : d);
@@ -123,7 +124,21 @@ export const gemsSwap = {
     const v = rng();
     return DROP_MIN + Math.floor((v >= 0 && v < 1 ? v : 0) * (DROP_MAX - DROP_MIN + 1));
   },
-  b: () => 0, // noteLevelReached: levels pay no gems in v3 (LEVEL_UP 0 — they reach millions)
+  /** noteLevelReached (Andy oct10 "more ways to get gems"): LEVEL_UP gems for each level above THIS CLIMB's peak — a
+   *  rebirth starts a new climb (levels pay again, bounded by the rebirth gate). The first sight of a climb (an
+   *  existing save at install, or a fresh rebirth) only records the level — nothing is back-paid. */
+  b(level) {
+    const L = Number.isFinite(level) ? Math.floor(level) : 0;
+    const rc = getRebirths();
+    let st = null;
+    try { st = JSON.parse(localStorage.getItem(LV_GEMS_KEY) || 'null'); } catch { st = null; }
+    const save = (o) => { try { localStorage.setItem(LV_GEMS_KEY, JSON.stringify(o)); } catch { /* blocked */ } };
+    if (!st || st.r !== rc) { save({ r: rc, peak: L }); return 0; } // a new climb: record, never back-pay
+    if (L <= st.peak) return 0;
+    const n = L - st.peak;
+    save({ r: rc, peak: L });
+    return LEVEL_UP > 0 ? grantGems(n * LEVEL_UP, 'level', { detail: `lv-${L}` }) : 0;
+  },
   c: ROLL_PRICE, // ROLL_PRICE_GEMS: 75
   // noteRebirth: FINAL — a rebirth pays no gems (games only)
   d: (rc) => (rebirthGems(rc) > 0 ? grantGems(rebirthGems(rc), 'rebirth', { detail: Number.isFinite(rc) ? `rb-${rc}` : null }) : 0),
@@ -131,10 +146,16 @@ export const gemsSwap = {
 /** gems.gameResultPayout in season 2: the live payout re-priced on the v3 table. */
 export const flatStreak = (livePayout) => (o) => {
   const p = livePayout(o);
-  // the v3 table: bot win +18, +15 per player beaten, a FLAT +4 streak (the live lines carry 3 / 3 per player / +1×)
+  // the v3 table (Andy oct10): a bots-only win pays by the hardest bot (+15 / +30 / +60); a game with PEOPLE in it is
+  // WINNER TAKES ALL — 30 × the people playing (you included), nothing for a loss; a FLAT +4 streak.
   const hb = hardestBot(o && o.rivals);
-  const v3 = { bot: () => (hb && BOT_WIN_BY_DIFF[hb]) || BOT_WIN, placement: (l) => (l.amount / LIVE_PER_PLAYER) * PER_PLAYER_BEATEN, streak: () => STREAK_BONUS };
-  const lines = p.lines.map((l) => (v3[l.reason] ? { ...l, amount: v3[l.reason](l) } : l));
+  const self = new Set((o && o.selfIds) || []);
+  const people = ((o && o.rivals) || []).filter((r) => r && !r.isBot && !self.has(r.id)).length;
+  const v3 = { bot: () => (hb && BOT_WIN_BY_DIFF[hb]) || BOT_WIN, streak: () => STREAK_BONUS };
+  const lines = p.lines
+    .filter((l) => l.reason !== 'placement')
+    .map((l) => (v3[l.reason] ? { ...l, amount: v3[l.reason](l) } : l));
+  if (people > 0 && o && o.iWon) lines.unshift({ reason: 'placement', amount: winnerPot(people + 1) });
   return { ...p, lines, total: lines.reduce((t, l) => t + l.amount, 0) };
 };
 /** gems.payGameResult in season 2: the live pay + the BEAT BOTS / WIN MULTIPLAYER counters on a win. */
