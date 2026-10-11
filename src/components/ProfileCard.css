@@ -80,7 +80,7 @@
 }
 .pc-gear.is-empty { background: #0d0618; border: 4px dashed #4a3a6a; box-shadow: none; }
 .pc-gear-art { display: block; }
-.pc-gear-hole { width: 72px; height: 72px; border-radius: 50%; border: 4px dashed #4a3a6a; box-sizing: border-box; }
+.pc-gear-hole { width: 72px; height: 72px; border-radius: 50%; border: 4px dashed #4a3a6a; box-sizing: border-box; display: grid; place-items: center; font-size: var(--fs-k38); color: #c9b8e8; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
 .pc-gear-name {
   max-width: 100%;
   overflow: hidden;

@@ -2,7 +2,8 @@
 // like gear(s), base, etc.)"). Tap a row or a podium spot → this card: the name + rank plate, the worn gear(s) as their
 // cog + glyph on a tier plate, then four stat tiles — BASE WINS / WORD, WINS / WORD, POWER, GEARS FOUND (with a bar).
 // Data: the board row (rank / rebirths / level) + public.profile_showcase (031, showcase.fetchShowcase). Before
-// 031 runs, or for a player whose game has not sent one yet, every tile shows a dash — never a made-up number.
+// 031 runs, or for a player whose game has not sent one yet, every unknown shows a "?" (Andy oct11) — never a made-up
+// number or a guessed "no gear".
 // LAZY with the board (LeaderboardV2's chunk). Motion: the card pops in once (kit one-shot), 
 // nothing else moves; nothing loops.
 import { useEffect, useRef, useState } from 'react';
@@ -21,16 +22,17 @@ import { formatNum } from '../format';
 
 const POP = [{ transform: 'scale(.86) rotate(-2deg)', opacity: 0 }, { transform: 'scale(1.03) rotate(1deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 const has = (v) => v != null && Number.isFinite(Number(v));
-const dash = '—';
+const UNKNOWN = '?'; // Andy oct11: "for anything thats not known … just put a question mark"
 
-function Gear({ id, slot }) {
+function Gear({ id, slot, known }) {
   const m = id ? rollMarkById(id) : null;
   if (!m) {
+    // unknown (no showcase sent yet) → "?"; known and nothing worn there → an empty slot
     return (
-      <div className="pc-gear is-empty" data-slot={slot}>
-        <span className="pc-gear-hole" aria-hidden="true" />
-        <span className="pc-gear-name">{slot === 2 ? '2ND GEAR' : 'NO GEAR'}</span>
-        <span className="pc-gear-tier">{dash}</span>
+      <div className={`pc-gear is-empty${known ? '' : ' is-unknown'}`} data-slot={slot}>
+        <span className="pc-gear-hole" aria-hidden="true">{known ? null : UNKNOWN}</span>
+        <span className="pc-gear-name">{known ? 'EMPTY' : UNKNOWN}</span>
+        <span className="pc-gear-tier">{slot === 2 ? '2ND GEAR' : 'GEAR'}</span>
       </div>
     );
   }
@@ -96,14 +98,14 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <span className="pc-sub-c"><KitIcon name="levels" size={26} shadow={1} extras={false} /> LV {formatNum(Number(row.level) || 1)}</span>
         </div>
         <div className="pc-gears" data-testid="profile-gears">
-          <Gear id={s.gear1} slot={1} />
-          <Gear id={s.gear2} slot={2} />
+          <Gear id={s.gear1} slot={1} known={!!show} />
+          <Gear id={s.gear2} slot={2} known={!!show} />
         </div>
         <div className="pc-tiles" data-loading={loading ? '' : undefined}>
-          <Tile icon="wins" tone="#FFE94A" value={has(s.base_wins) ? formatNum(Number(s.base_wins)) : dash} label="BASE / WORD" />
-          <Tile icon="boost" tone="#FF6B3D" value={has(s.wins_per_word) ? formatNum(Number(s.wins_per_word)) : dash} label="WINS / WORD" />
-          <Tile icon="power" tone="#2EFFE0" value={has(s.power) ? `T${formatNum(Number(s.power))}` : dash} label="POWER" />
-          <Tile icon="index" tone="#FF4FA3" value={found != null ? `${formatNum(Number(s.gears_found))}/${formatNum(Number(s.gears_total))}` : dash} label="GEARS FOUND">
+          <Tile icon="wins" tone="#FFE94A" value={has(s.base_wins) ? formatNum(Number(s.base_wins)) : UNKNOWN} label="BASE / WORD" />
+          <Tile icon="boost" tone="#FF6B3D" value={has(s.wins_per_word) ? formatNum(Number(s.wins_per_word)) : UNKNOWN} label="WINS / WORD" />
+          <Tile icon="power" tone="#2EFFE0" value={has(s.power) ? `T${formatNum(Number(s.power))}` : UNKNOWN} label="POWER" />
+          <Tile icon="index" tone="#FF4FA3" value={found != null ? `${formatNum(Number(s.gears_found))}/${formatNum(Number(s.gears_total))}` : UNKNOWN} label="GEARS FOUND">
             <span className="pc-bar" aria-hidden="true"><span className="pc-bar-fill" style={{ transform: `scaleX(${found != null ? Math.min(1, found) : 0})` }} /></span>
           </Tile>
         </div>
