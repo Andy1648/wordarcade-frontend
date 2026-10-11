@@ -13,7 +13,7 @@
 //   * CHASE (what passes the player above, in the board's order) and CLIMB (what reaches your next rank).
 // Motion: kit one-shots (transform / opacity; will-change only while playing); NOTHING loops at rest (the mockup's
 // crown wobble / ▲ bob / ▼ sink / own-row pulse play once on arrival); REDUCE MOTION plays none of it.
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
@@ -43,6 +43,16 @@ import { formatNum } from '../format';
 import { BLOCKS } from './PodiumBlocks.jsx';
 
 const fmt = (n) => formatNum(Number(n) || 0);
+// 031 LEADERBOARD PROFILES (Andy oct10): tap a row / a podium spot → that player's card (gear, BASE, POWER …). Lazy.
+const ProfileCard = lazy(() => import('./ProfileCard.jsx'));
+/** Row / podium props that open a profile: a button by role, Enter / Space too. */
+const peekProps = (row, open) => (row ? {
+  role: 'button',
+  tabIndex: 0,
+  'aria-label': `${row.username}, rank ${row.rank}. Open profile`,
+  onClick: () => open(row),
+  onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(row); } },
+} : {});
 const SEEN_KEY = 'taw.s2.lbseen'; // { all: { id: rank }, week: { id: rank } } — the last look, per tab
 const WEEK_COLS = 'rank,id,username,level,rebirths,stars,week_stars,week_rebirths,week_levels,week_words';
 
@@ -257,6 +267,9 @@ export default function LeaderboardV2({ onBack }) {
   const [renaming, setRenaming] = useState(() => !getMyProfile());
   const [caps, setCaps] = useState({ weekly: false });
   const [tab, setTab] = useState('all');
+  const [peek, setPeek] = useState(null); // the row whose profile card is open
+  const peekRef = useRef(null);
+  peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
   const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false, moves: {}, gains: true });
 
@@ -295,7 +308,7 @@ export default function LeaderboardV2({ onBack }) {
     loadAll();
     rootRef.current?.focus();
     const onKey = (e) => {
-      if (e.key === 'Escape') onBackRef.current();
+      if (e.key === 'Escape') { if (peekRef.current) setPeek(null); else onBackRef.current(); } // the card closes first
     };
     window.addEventListener('keydown', onKey);
     return () => {
@@ -413,7 +426,7 @@ export default function LeaderboardV2({ onBack }) {
             const mine = !!(p && myId && p.id === myId);
             const n = p ? nums(p, tab, gains) : null;
             return (
-              <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}`} data-place={place} data-id={p ? p.id : ''}>
+              <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ''}`} data-place={place} data-id={p ? p.id : ''} {...peekProps(p, setPeek)}>
                 {place === 1 && <Crown crownRef={crownRef} />}
                 <div className="lb2-who">
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
@@ -446,7 +459,7 @@ export default function LeaderboardV2({ onBack }) {
             const mine = !!(myId && r.id === myId);
             const n = nums(r, tab, gains);
             return (
-              <div key={r.id} className={`lb2-row${mine ? ' is-me' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-id={r.id}>
+              <div key={r.id} className={`lb2-row is-peek${mine ? ' is-me' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-id={r.id} {...peekProps(r, setPeek)}>
                 <span className="lb2-rk">{fmt(r.rank)}</span>
                 <span className="lb2-who-cell">
                   <span className="lb2-name-line">
@@ -498,6 +511,7 @@ export default function LeaderboardV2({ onBack }) {
           </div>
         </div>
       </div>
+      {peek ? <Suspense fallback={null}><ProfileCard row={peek} mine={!!(myId && peek.id === myId)} onClose={() => setPeek(null)} /></Suspense> : null}
     </div>
   );
 }

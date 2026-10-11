@@ -1,0 +1,140 @@
+/* ProfileCard.css — the leaderboard's tap-a-name card (ProfileCard.jsx). House sticker look: flat panel, thick ink,
+   hard offset shadow, Bungee numbers with a black stroke. Sized in px with a phone fallback; nothing scrolls. */
+.pc-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(13, 6, 24, 0.82);
+}
+.pc {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 18px 20px;
+  background: #1a0b2e;
+  border: 5px solid #000;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+  color: #fff;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+}
+.pc.is-me { border-color: #FFE94A; }
+.pc-x {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: #FF4FA3;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  color: #000;
+  font-family: var(--k-display);
+  font-size: var(--fs-k20);
+  cursor: pointer;
+}
+.pc-x:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.pc-head { display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 24px; }
+.pc-rank { flex: none; font-size: var(--fs-k24); color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.pc-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-k28); -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.pc-plate { flex: none; height: 34px; }
+.pc-sub { display: flex; gap: 10px; }
+.pc-sub-c {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  background: #0d0618;
+  border: 3px solid #000;
+  border-radius: 8px;
+  font-size: var(--fs-k18);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* the worn gear(s): the cog + glyph on a tier-colour plate, the name under it */
+.pc-gears { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pc-gear {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px 8px;
+  background: var(--pc-fill, #0d0618);
+  border: 4px solid var(--pc-edge, #000);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.pc-gear.is-empty { background: #0d0618; border: 4px dashed #4a3a6a; box-shadow: none; }
+.pc-gear-art { display: block; }
+.pc-gear-hole { width: 72px; height: 72px; border-radius: 50%; border: 4px dashed #4a3a6a; box-sizing: border-box; }
+.pc-gear-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-k18);
+  color: #fff;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+}
+.pc-gear-tier { font-size: var(--fs-k14); color: var(--pc-line, #c9b8e8); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.pc-gear.is-empty .pc-gear-name, .pc-gear.is-empty .pc-gear-tier { color: #c9b8e8; }
+
+/* the four stat tiles: icon, the number BIG, what it is */
+.pc-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pc-tiles[data-loading] { opacity: 0.6; }
+.pc-tile {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 8px 10px 10px;
+  background: #0d0618;
+  border: 4px solid #000;
+  border-bottom: 7px solid var(--pc-tone, #FFE94A);
+  border-radius: 8px;
+}
+.pc-tile-ico { grid-column: 1; grid-row: 1 / span 2; }
+.pc-tile-v {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-k26);
+  line-height: 1.05;
+  color: var(--pc-tone, #FFE94A);
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+  grid-column: 2;
+  grid-row: 1;
+}
+.pc-tile-k { grid-column: 2; grid-row: 2; min-width: 0; font-size: var(--fs-k14); line-height: 1.15; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; white-space: normal; overflow-wrap: anywhere; } /* wraps, never clips (Andy: nothing overflows) */
+.pc-bar { grid-column: 1 / -1; grid-row: 3; margin-top: 6px; height: 10px; background: #1a0b2e; border: 3px solid #000; border-radius: 4px; overflow: hidden; }
+.pc-bar-fill { display: block; height: 100%; background: var(--pc-tone, #FF4FA3); transform-origin: 0 50%; }
+
+@media (max-width: 420px) {
+  .pc { padding: 14px 12px 16px; gap: 10px; }
+  .pc-x { top: -12px; right: -8px; }
+  .pc-name { font-size: var(--fs-k22); }
+  .pc-tile-v { font-size: var(--fs-k22); }
+  .pc-gear-name { font-size: var(--fs-k16); }
+}

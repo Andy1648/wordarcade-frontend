@@ -257,6 +257,8 @@ export async function submitStats(force = false, { internal = false } = {}) {
     pushMeta.last = { at: Date.now(), level: s.level, rebirths: s.rebirths, words: s.lifetimeWords, likely: !p || now - p.at > 5000 };
     // STEP 52: the cloud save rides the same push (throttled to once a minute; never lowers).
     if (caps.cloud) backupNow({ rpc, secret: getSecret(), econ: caps.econ });
+    // 031 PROFILES: the card's gear / BASE / POWER ride the push (lazy; only when changed)
+    if (SEASON2) import('./showcase.js').then((m) => m.pushShowcase({ rpc, secret: getSecret() })).catch(() => {});
     return true;
   } catch {
     return false;
