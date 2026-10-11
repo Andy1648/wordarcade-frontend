@@ -286,8 +286,9 @@
      row under it. Everything on the slab's centre line (e2e/rail-centre.spec.js). */
   .hp-m-rail .kb-rface { flex-direction: row; align-items: center; justify-content: center; gap: 8px; padding: 20px 8px 0; }
   .hp-m-rail .kb-rface .kit-icon { width: 26px; height: 26px; }
-  /* the icon + number ROW is centred on its INK: these two icons carry ~2px of empty box on their left at 26px */
-  .hp-m-rail .kb-rico .kit-icon[data-icon='lock'] { margin-left: -2px; }
+  /* the icon + number ROW is centred on its INK: the painted LOCK's ink sits right of its box centre at 26px (measured 1.58px
+     off; -3px margin → 0.08px — e2e/rail-centre.spec.js) */
+  .hp-m-rail .kb-rico .kit-icon[data-icon='lock'] { margin-left: -3px; }
   .hp-m-rail .kb-rtext { display: contents; }
   .hp-m-rail .kb-rlabel {
     position: absolute;

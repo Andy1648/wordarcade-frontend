@@ -1,9 +1,11 @@
 # cutout-art.py — cut the baked white / checker background out of a ChatGPT gear image (flood fill from the edges,
-# stopped by the ink outline), crop, square, 256px RGBA webp. Usage: python3 -I scripts/cutout-art.py in.png public/gear/name.webp
+# stopped by the ink outline), crop, square, 256px RGBA webp. Usage: python3 -I scripts/cutout-art.py in.png public/gear/name.webp [size]
+# (size: the square's px — 256 default for gears; 128 icons, 512 big bursts, 64 hearts)
 import sys
 from collections import deque
 from PIL import Image, ImageFilter
 src, out = sys.argv[1], sys.argv[2]
+size = int(sys.argv[3]) if len(sys.argv) > 3 else 256
 im = Image.open(src).convert('RGBA')
 w, h = im.size
 px = im.load()
@@ -37,6 +39,6 @@ side = max(im.size)
 pad = int(side * 0.04)
 canvas = Image.new('RGBA', (side + 2 * pad, side + 2 * pad), (0, 0, 0, 0))
 canvas.paste(im, ((side - im.size[0]) // 2 + pad, (side - im.size[1]) // 2 + pad))
-canvas = canvas.resize((256, 256), Image.LANCZOS)
+canvas = canvas.resize((size, size), Image.LANCZOS)
 canvas.save(out, 'WEBP', quality=88, method=6)
 print('bbox', bbox, 'removed', sum(seen), 'of', w * h)
