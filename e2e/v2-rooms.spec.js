@@ -90,7 +90,7 @@ test('SETTINGS (trimmed, Andy oct9): SOUND · MUSIC · REDUCE MOTION + RANK PLAT
   await btn.click();
   const panel = page.locator('.sp');
   await expect(panel).toBeVisible();
-  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'RANK PLATE', 'SAVE PROGRESS']);
+  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'RANK PLATE', 'SAVE PROGRESS', 'RESET ACCOUNT']);
   await expect(panel.getByRole('radio', { name: '1,200,000' })).toHaveCount(0);
   await expect(panel.getByRole('switch', { name: 'Keyboard sounds' })).toHaveCount(0);
   // REDUCE MOTION, live
@@ -117,6 +117,24 @@ test('SETTINGS (trimmed, Andy oct9): SOUND · MUSIC · REDUCE MOTION + RANK PLAT
   const winsPill = page.locator('.menu-wins-chip:visible').first();
   await expect(winsPill.locator('.kp-num')).toHaveText('1.23M');
   await expect(winsPill).toHaveAttribute('aria-label', /1,234,567/);
+});
+
+test('SETTINGS → RESET ACCOUNT (Andy oct11): two steps — CANCEL keeps everything, YES wipes the progress and reloads; settings stay', async ({ page }) => {
+  await boot(page, { seed: { 'taw.s2.wins': '1234567', 'taw.s2.xp': JSON.stringify({ lv: 40, f: 0.5, rc: 2, v: 10 }), 'taw.s2.rebirths': '2', 'taw.reduceMotion': '1' } });
+  await page.locator('.hp-icons [data-nav="settings"]:visible').first().click();
+  const panel = page.locator('.sp');
+  await panel.getByTestId('sp-reset-open').click();
+  await expect(panel.getByRole('alertdialog', { name: 'Confirm account reset' })).toContainText('CANNOT BE UNDONE');
+  await panel.getByRole('button', { name: 'CANCEL' }).click();
+  await expect(panel.getByTestId('sp-reset-yes')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('taw.s2.wins'))).toBe('1234567');
+  await panel.getByTestId('sp-reset-open').click();
+  await Promise.all([page.waitForEvent('load'), panel.getByTestId('sp-reset-yes').click()]);
+  await menuReady(page);
+  const st = await page.evaluate(() => ({ wins: localStorage.getItem('taw.s2.wins'), rb: localStorage.getItem('taw.s2.rebirths'), rm: localStorage.getItem('taw.reduceMotion') }));
+  expect(st.wins === null || st.wins === '0', `wins wiped (${st.wins})`).toBe(true);
+  expect(st.rb === null || st.rb === '0', `rebirths wiped (${st.rb})`).toBe(true);
+  expect(st.rm, 'the REDUCE MOTION setting survives a progress reset').toBe('1');
 });
 
 test('no JOIN ROOM button on the menu — joining is JOIN WITH CODE in a mode dialog', async ({ page }) => {

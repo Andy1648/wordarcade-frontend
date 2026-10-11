@@ -93,6 +93,38 @@ function SaveRow() {
   );
 }
 
+// RESET ACCOUNT (Andy oct11 "settings needs a reset function (for account)"): wipes every progress key on this device
+// AND (with a claimed name) the board row + the cloud save — progress/resetAll.js, the same path the season-1 Stats
+// panel used. Two steps so it is never a mis-tap: the button opens a confirm that names what goes and what stays.
+function ResetRow() {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const go = () => {
+    if (busy) return;
+    setBusy(true);
+    import('../progress/resetAll').then((m) => m.resetAllProgress(), () => setBusy(false));
+  };
+  return (
+    <div className="sp-save sp-reset" style={{ '--sp-c': '#FF5C5C' }} data-testid="sp-reset">
+      <div className="sp-text">
+        <span className="sp-label">RESET ACCOUNT</span>
+        <span className="sp-sub">START OVER FROM LV 1 · YOUR NAME STAYS</span>
+      </div>
+      {confirming ? (
+        <div className="sp-reset-confirm" role="alertdialog" aria-label="Confirm account reset">
+          <p className="sp-msg sp-reset-warn">THIS WIPES YOUR LEVEL, REBIRTHS, GEARS, GEMS AND STATS — ON THIS DEVICE AND THE LEADERBOARD. IT CANNOT BE UNDONE.</p>
+          <div className="sp-restore">
+            <button type="button" className="sp-btn sp-btn--danger" onClick={go} disabled={busy} data-testid="sp-reset-yes">{busy ? 'RESETTING…' : 'YES, RESET'}</button>
+            <button type="button" className="sp-btn sp-btn--ghost" onClick={() => setConfirming(false)} disabled={busy}>CANCEL</button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" className="sp-btn sp-btn--danger" onClick={() => setConfirming(true)} data-testid="sp-reset-open">RESET ACCOUNT</button>
+      )}
+    </div>
+  );
+}
+
 // RANK PLATE (Andy oct8: "choose which rank plate shows next to your name"): any rank already reached.
 function PlateRow() {
   const R = V3.ranks;
@@ -180,6 +212,7 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
       </Row>
       <PlateRow />
       <SaveRow />
+      <ResetRow />
     </div>
   );
   if (!sheet || typeof document === 'undefined') return rows;
