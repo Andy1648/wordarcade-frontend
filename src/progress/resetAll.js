@@ -3,7 +3,7 @@
 // and hard-reloads so every screen re-reads zeros. With a claimed name it also resets the BOARD ROW and the CLOUD SAVE
 // (client.selfReset → 014 lb_self_reset, the admin reset path) and keeps the name. Never throws; the reload always fires.
 import { selfReset } from '../leaderboard/client';
-import { keepKey } from './v3/season2Boot.js';
+import { keepKey } from './keepKeys.js'; // NOT v3/season2Boot.js — that lazy module re-prices the economy on import
 
 // SETTINGS SURVIVE a reset (sound, music, REDUCE MOTION, theme, feature flags, tutorial / "seen" marks — season2Boot's
 // keep list): the reset is for PROGRESS. The name + device secret stay selfReset's call (it drops them on purpose when
