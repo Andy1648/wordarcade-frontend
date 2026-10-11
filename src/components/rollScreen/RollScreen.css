@@ -686,7 +686,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 
 /* ---- phones ---- */
 @media (max-width: 480px) {
-  .rs-overlay { gap: 8px; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); --gut: 12px; --cw: 156px; --cs: 0.8667; --band: calc(var(--cw) * 1.6667 + 12px); }
+  .rs-overlay { gap: 8px; padding: 10px 12px max(12px, env(safe-area-inset-bottom)); --gut: 12px; --cw: 146px; --cs: 0.8111; --band: calc(var(--cw) * 1.6667 + 12px); }
   .rs-top { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px; }
   /* NO GEMS on a phone: the −N chip HANGS under the gems pill as a badge (beside it, it ran into INDEX at 360 wide; as a
      second row it pushed the band out of the stage — LAYOUT PASS R4b). It is only ever up with no spin running (a paid

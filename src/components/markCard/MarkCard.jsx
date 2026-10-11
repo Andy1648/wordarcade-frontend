@@ -29,13 +29,15 @@
 // `parts` adds a screen's own class names to the header / tier / odds / name / stat nodes (the INDEX's .mx-tile-*
 // hooks), so one card serves every screen's tests and styles. `odds` lands on the locked hero (the only odds a tile
 // prints).
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import MarkBadge, { CogRing, RANK_RIMS } from '../MarkBadge';
 import ShinyBadge from '../rollScreen/ShinyBadge';
 import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
 import { cardModel } from './cardModel.js';
+import { shineHost, shineSrc } from './cardShine.js';
+import { useReduceMotion } from '../../lib/useReduceMotion';
 import './MarkCard.css';
 
 const NONE = {};
@@ -51,9 +53,20 @@ const Lock = () => (
 
 function MarkCard({
   id, kind = 'roll', tier, name, locked = false, state = null, rank = 1, shiny = false, fx = false, w = null,
-  parts = NONE, className = '', still = false, sheen = false,
+  parts = NONE, className = '', still = false, sheen,
 }) {
   const c = cardModel({ id, kind, tier, name, locked, state });
+  // THE CARD SHINE (Andy oct11): every live card carries its tier's shine band unless told otherwise (`sheen={false}`);
+  // a still card (a reel cell passing by) carries none. The shared scheduler (cardShine.js) sweeps it.
+  const shine = sheen === undefined ? !still : !!sheen;
+  const shineTier = cardTier(c.tier);
+  const clipRef = useRef(null);
+  const bandRef = useRef(null);
+  const reduced = useReduceMotion();
+  useEffect(() => {
+    if (!shine || still || reduced) return undefined;
+    return shineHost(clipRef.current, bandRef.current, shineTier);
+  }, [shine, still, reduced, shineTier]);
   const pal = CARD_RAR[cardTier(c.tier)];
   const hi = c.hi && !locked;
   const style = { '--mc-line': pal.line, '--mc-edge': pal.edge, '--mc-fill': locked ? LOCKED.fill : pal.fill };
@@ -124,9 +137,9 @@ function MarkCard({
         <ul className="mc-subs" data-testid="mc-subs" aria-label={c.subs.filter((x) => x !== '—').join(', ') || 'No substats'}>
           {c.subs.map((t, i) => <li key={i} className={`mc-sub${t === '—' ? ' is-none' : t === '?' ? ' is-q' : ''}`}>{t}</li>)}
         </ul>
-        {/* ROLL REVEAL v2: the wide sheen band (an asset, /fx/sheen.svg) parked off the card in a clip the size of the
-            face; the reveal / the INDEX idle timer sweeps it across ONCE by transform (WAAPI). At rest it moves nothing. */}
-        {sheen ? <span className="mc-sheen" aria-hidden="true"><img className="mc-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
+        {/* THE CARD SHINE: the tier's shine band (an asset, /fx/shine-<tier>.svg) parked off the card in a clip the size
+            of the face; the reveal and the shared shine scheduler sweep it across ONCE at a time by transform (WAAPI). */}
+        {shine ? <span className="mc-sheen" aria-hidden="true" ref={clipRef}><img className="mc-sheen-band" ref={bandRef} src={shineSrc(shineTier)} alt="" draggable="false" /></span> : null}
       </div>
     </div>
   );

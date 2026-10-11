@@ -724,7 +724,7 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 }
 .hp-gear.is-worn .hp-gear-label { color: var(--gear-line); }
 .hp-gear-body { display: flex; align-items: center; gap: calc(8 * var(--u)); padding: calc(4 * var(--u)) calc(10 * var(--u)) calc(6 * var(--u)); }
-.hp-gear-art { position: relative; flex: 0 0 auto; display: grid; place-items: center; }
+.hp-gear-art { position: relative; z-index: 1; flex: 0 0 auto; display: grid; place-items: center; }
 .hp-gear-cog { flex: 0 0 auto; width: calc(var(--hp-tile-ico) * 1.7); height: calc(var(--hp-tile-ico) * 1.7); } /* gear UI v3: the showcase glyph is the slot's hero — big enough for its pop to read */
 .hp-gear-hole { flex: 0 0 auto; width: var(--hp-tile-ico); height: var(--hp-tile-ico); border-radius: 50%; background: #0d0618; border: var(--b4) dashed #4a3a6a; box-sizing: border-box; }
 .hp-gear-text { position: relative; z-index: 1; flex: 1 1 auto; display: flex; flex-direction: column; gap: calc(3 * var(--u)); min-width: 0; } /* above the showcase ring + flash */
@@ -740,7 +740,21 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
    the NAME rides a plate across the top (the card's ribbon, sideways — tier-coloured on a worn gear, its text white
    on LEGENDARY+), then the art beside the MAIN stat with the SUBSTATS as a 2×2 grid of icon chips under it (the card's subs plate,
    compacted — the words ride each chip's label + the GEAR SHEET). */
+.hp-gear-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 4px;
+  pointer-events: none;
+  background: var(--gear-line, #3d3150);
+  opacity: 0.16;
+  -webkit-mask: url('/fx/gear-slot-bg.svg') left center / cover no-repeat;
+  mask: url('/fx/gear-slot-bg.svg') left center / cover no-repeat;
+}
+.hp-gear:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) .hp-gear-bg { background: var(--gear-edge); opacity: 0.3; }
 .hp-gear-plate {
+  position: relative;
+  z-index: 1;
   display: block;
   min-width: 0;
   padding: calc(3 * var(--u)) calc(10 * var(--u)) calc(2 * var(--u));

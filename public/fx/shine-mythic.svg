@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" preserveAspectRatio="none">
+  <!-- CARD SHINE · MYTHIC: the two-band shine split into the tier's pink and cyan plates (off-register, like the mythic
+       aura) with a white core — flat steps, no gradient. -->
+  <path d="M74 0 L142 0 L90 320 L22 320 Z" fill="#FF9AD0" opacity="0.2"/>
+  <path d="M92 0 L130 0 L78 320 L40 320 Z" fill="#fff" opacity="0.32"/>
+  <path d="M102 0 L118 0 L66 320 L50 320 Z" fill="#fff" opacity="0.5"/>
+  <path d="M152 0 L170 0 L118 320 L100 320 Z" fill="#9FFFF2" opacity="0.42"/>
+  <path d="M176 0 L182 0 L130 320 L124 320 Z" fill="#fff" opacity="0.36"/>
+  <path d="M132 0 L142 0 L138 22 Z" fill="#fff" opacity="0.28"/>
+</svg>

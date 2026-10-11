@@ -118,6 +118,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   const cbs = useRef({});
   cbs.current = { onLand, onDone, auto };
   const [cut, setCut] = useState(null); // { res, kind: 'dim' | 'full', seq } — the reveal that is up
+  // AT REST (Andy oct11 "i want the animations to show on the roll screen as well (when its stopped)"): once the reel
+  // has stopped, the landed card runs its live gear turn + shine like every other card; spinning, every cell is still
+  const [atRest, setAtRest] = useState(true);
   const reg = (name) => (el) => { if (el) nodes.current[name] = el; };
 
   const anim = (el, frames, opts) => {
@@ -218,6 +221,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   function finishCut() {
     if (phase.current === 'done' || phase.current === 'idle') return;
     phase.current = 'done';
+    setAtRest(true);
     setCut((c) => (c ? { ...c, res: null } : c));
     cbs.current.onDone && cbs.current.onDone();
   }
@@ -230,10 +234,12 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       place(LAND_AT);
       shade(SHADE.landed, { instant: true });
       phase.current = 'done';
+      setAtRest(true);
       return undefined;
     }
     if (played) played.current = spin.seq;
     stopAll();
+    setAtRest(false);
     setCut((c) => (c ? { ...c, res: null } : c));
     shade(0);
     const { result: res, mode, strip } = spin;
@@ -573,7 +579,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                   >
                     {/* EPIC+ cells wear the rare-gear glow (GearFx): the passing cells a still aura, the landing cell breathes */}
                     {m && GLOW_TIERS.has(m.tier) ? <GearFx tier={m.tier} scale={0.6} live={i === LAND_AT} /> : null}
-                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} locked={i !== LAND_AT && !ownsIn(view, id)} still /> : null}
+                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} locked={i !== LAND_AT && !ownsIn(view, id)} still={!(atRest && i === LAND_AT)} sheen={atRest && i === LAND_AT} /> : null}
                   </div>
                 </div>
               );

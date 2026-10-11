@@ -30,7 +30,7 @@ import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/re
 import { MARK_TIERS } from '../../progress/marks';
 import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
-  setSkipBelow, SKIP_TIERS, PITY, critStatsOf, ROLL_MARKS, substatsOf,
+  setSkipBelow, SKIP_TIERS, PITY, ROLL_MARKS, substatsOf,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getGems, subscribeGems } from '../../progress/gems';

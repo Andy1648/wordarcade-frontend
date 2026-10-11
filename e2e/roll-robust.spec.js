@@ -56,9 +56,11 @@ const store = (page) => page.evaluate(() => {
   };
 });
 const result = (page) => page.locator('[data-testid="mark-roll-result"]');
+// the LANDED card's own gear turn + shine are sanctioned at rest (Andy oct11 "i want the animations to show on the roll
+// screen as well (when its stopped)") — everything else on the stage must be done
 const reelAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
-  return el && el.closest && el.closest('.rs-stage') && a.playState === 'running';
+  return el && el.closest && el.closest('.rs-stage') && !el.closest('.rs-cell.is-land .mc') && a.playState === 'running';
 }).length);
 const SPUN = 4600;
 // ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.

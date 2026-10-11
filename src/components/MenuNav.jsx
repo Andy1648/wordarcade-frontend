@@ -267,6 +267,8 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
       {/* the SHOWCASE's one-shot layers (LEGENDARY+, gearShowcase.js): a tier-colour FLASH over the face and a burst
           RING behind the glyph — opacity 0 at rest, nothing moves until a run */}
       {sheen ? <span className="hp-gear-flash" aria-hidden="true" /> : null}
+      {/* the BACKDROP (Andy oct11 "its just plain rn"): a sunburst / halftone / drips asset as a mask, in the tier colour */}
+      <span className="hp-gear-bg" aria-hidden="true" />
       {/* the NAME on a tier plate across the top — the card's ribbon, sideways (no "YOUR GEAR" label: Andy oct11) */}
       <span className="hp-gear-plate"><FitText className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</FitText></span>
       <span className="hp-gear-body">
