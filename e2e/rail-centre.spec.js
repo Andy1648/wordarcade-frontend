@@ -24,14 +24,23 @@ async function measure(page) {
       c.setAttribute('viewBox', '-25 -25 150 150');
       c.removeAttribute('style');
       c.querySelectorAll('.x').forEach((n) => n.remove()); // the rail hides the extras (KitIcon extras={false})
-      const img = new Image();
-      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(c))}`;
-      await img.decode();
       const cv = document.createElement('canvas');
       cv.width = 600;
       cv.height = 600;
       const ctx = cv.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+      // a PAINTED icon (KitIcon ICON_ART) is an <image> filling the 100-unit box: a data-URL svg can't load it, so
+      // draw the bitmap itself into the box's place on the canvas (100..500 px)
+      const art = svg.querySelector('image');
+      const img = new Image();
+      if (art) {
+        img.src = art.getAttribute('href');
+        await img.decode();
+        ctx.drawImage(img, 100, 100, 400, 400);
+      } else {
+        img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(c))}`;
+        await img.decode();
+        ctx.drawImage(img, 0, 0);
+      }
       const d = ctx.getImageData(0, 0, 600, 600).data;
       let L = 600, R = -1;
       for (let y = 0; y < 600; y += 1) {

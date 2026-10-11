@@ -638,10 +638,6 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
      beat   html[data-beat] — a small icon bounce, staggered UPGRADES → GEARS → REBIRTH → STATS, inside the beat's
             120 ms window (delay + duration ≤ 120 ms) like the title-beat-pop
      nudge  a tile with an actionable dot nudges its icon once every ~8 s (MenuNav.jsx: one shared setTimeout, WAAPI) */
-.hp-rail .kb-rico .kit-icon[data-icon='shop'] { translate: -4.4% 2.6%; }
-.hp-rail .kb-rico .kit-icon[data-icon='gears'] { translate: -4.8% -8.8%; }
-.hp-rail .kb-rico .kit-icon[data-icon='rebirth'] { translate: 0.6% -2.1%; }
-.hp-rail .kb-rico .kit-icon[data-icon='stats'] { translate: -2.8% -1.9%; }
 .hp-rail .kb-rico .kit-icon[data-icon='lock'] { translate: 1.7% 0; }
 .hp-rail .kb-rico .kit-icon { transition: transform 180ms cubic-bezier(.2, 1.6, .4, 1); }
 @media (hover: hover) {

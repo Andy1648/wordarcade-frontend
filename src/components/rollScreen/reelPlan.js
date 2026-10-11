@@ -22,7 +22,7 @@ export const tierIndex = (t) => Math.max(0, TIER_LADDER.indexOf(t));
 // ---- the strip ----
 export const REEL_LEN = 44; // cells in the pool (fixed: the DOM pool never grows)
 export const LAND_AT = 38; // the landing cell — six real draws stay visible past it
-export const SHORT_FROM = 6; // a SHORT land starts this many cells before the result
+export const SHORT_FROM = 14; // a SHORT land starts this many cells before the result
 
 /** The table as [{ id, p }] in table order, only p > 0. Accepts a Map (rollTable().probs) or an array. */
 export function tableEntries(probs) {
@@ -122,9 +122,10 @@ export function restOffset(rng = Math.random) {
   if (!(u >= 0 && u < 1)) u = 0.5;
   return (u * 2 - 1) * REST_MAX;
 }
-/** A SHORT land (a reveal below the skip setting): a quick snap over the last SHORT_FROM cells. */
-export const SHORT_MS = 520;
-export const SHORT_POW = 2;
+/** A SHORT land (a reveal below the skip setting — RARE by default, so MOST rolls): a real little spin over the last
+ *  SHORT_FROM cells (Andy oct11 "some rolls stop a bit too early" — it was a 520 ms snap over 6 cells). */
+export const SHORT_MS = 1500;
+export const SHORT_POW = 2.2;
 /** LEGENDARY+ cutscene hold after the land (a tap skips it). */
 export const CUTSCENE_MS = { legendary: 2200, mythic: 2600, secret: 3200 };
 /** A tap mid-spin jumps to the land but still plays a SHORT cutscene ("1 IN X" huge); a second tap skips it. */
