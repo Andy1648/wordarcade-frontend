@@ -59,6 +59,9 @@ const lineOf = (tier) => CARD_RAR[cardTier(tier)].line;
 // REEL SHOWCASE: a passing cell of a gear you don't own shows the INDEX's locked silhouette (tier frame, "???")
 const ownsIn = (view, id) => { try { return !view || markLevel(view, id).copies > 0; } catch { return true; } };
 const SPIN_KEYS = 64; // keyframes the spin curve is sampled into (linear between: smooth at any refresh rate)
+// the cells around the landing one that come ALIVE once the reel stops (Andy oct11 "hover animations and idle ones as well on the
+// roll screen"): the visible neighbours idle (cog turn, glyph bob) and take the hover; the 30+ off-screen cells stay still
+const LIVE_CELLS = 4;
 const SPARK_SLOTS = Array.from({ length: SPARK_POOL }, (_, i) => i);
 // the pointer KICK on each of the last NEAR_MISS_TICKS crossings (NIGHT oct8 #4) — transform only, ~110 ms
 const KICK = [{ transform: 'translateX(0) rotate(0deg)' }, { transform: 'translateX(5px) rotate(4deg)', offset: 0.35 }, { transform: 'translateX(0) rotate(0deg)' }];
@@ -579,7 +582,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                   >
                     {/* EPIC+ cells wear the rare-gear glow (GearFx): the passing cells a still aura, the landing cell breathes */}
                     {m && GLOW_TIERS.has(m.tier) ? <GearFx tier={m.tier} scale={0.6} live={i === LAND_AT} /> : null}
-                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} locked={i !== LAND_AT && !ownsIn(view, id)} still={!(atRest && i === LAND_AT)} sheen={atRest && i === LAND_AT} /> : null}
+                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} locked={i !== LAND_AT && !ownsIn(view, id)} still={!(atRest && Math.abs(i - LAND_AT) <= LIVE_CELLS)} sheen={atRest && i === LAND_AT} /> : null}
                   </div>
                 </div>
               );

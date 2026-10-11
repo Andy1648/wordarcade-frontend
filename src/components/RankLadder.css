@@ -1,0 +1,66 @@
+/* RankLadder.css — the ALL RANKS popup (lazy). Flat panel, coloured outline, hard black shadow; the plates are the kit's
+   SVG art. Motion: the panel pops in, the plates rise once (staggered), a hovered / focused plate pops + tilts —
+   transform/opacity only, nothing loops. */
+.rl {
+  position: fixed; inset: 0; z-index: 9000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px; box-sizing: border-box; overflow-y: auto;
+  background: rgba(13, 6, 24, 0.86);
+  font-family: 'Bungee', system-ui, sans-serif; text-transform: uppercase;
+}
+.rl-panel {
+  position: relative; width: 100%; max-width: 860px; box-sizing: border-box; margin: auto;
+  padding: 14px 18px 18px;
+  background: #1a0b2e; border: 5px solid #9A1AFF; border-radius: 8px; box-shadow: 8px 8px 0 #000;
+  animation: rl-in 280ms cubic-bezier(0.2, 1.4, 0.4, 1) 1 both;
+}
+.rl-x {
+  position: absolute; z-index: 2; right: 10px; top: 10px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer;
+  font: var(--fs-k22)/1 'Bungee', system-ui, sans-serif; color: #fff;
+  background: #2a1546; border: 3px solid #5a2a8a; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  transition: transform 120ms ease-out;
+}
+.rl-x:hover { transform: translate(-1px, -1px) rotate(-6deg); }
+.rl-x:active { transform: translate(3px, 3px); box-shadow: none; }
+.rl-title {
+  margin: 0; text-align: center; font-family: 'Bungee Shade', 'Bungee', system-ui, sans-serif; font-weight: 400; text-transform: uppercase;
+  font-size: var(--fs-k44); line-height: 1; color: #FFE94A;
+  -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000;
+  transform: rotate(-2deg) skewX(-4deg);
+}
+.rl-sub { margin: 6px 0 12px; text-align: center; font-size: var(--fs-k14); color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rl-list {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;
+}
+.rl-item {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px 8px; min-height: 44px; box-sizing: border-box;
+  background: #251040; border: 3px solid #3d1d66; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  outline: none; cursor: default;
+  animation: rl-rise 260ms cubic-bezier(0.2, 1.2, 0.4, 1) var(--rl-d, 0ms) 1 both;
+}
+.rl-plate { display: block; transition: transform 180ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+.rl-item:is(:hover, :focus-visible) .rl-plate { transform: scale(1.1) rotate(-4deg); will-change: transform; }
+.rl-item.is-locked .rl-plate { opacity: 0.45; }
+.rl-item.is-you { border-color: #FFE94A; background: #33204a; }
+.rl-how { font-size: var(--fs-k14); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rl-item.is-locked .rl-how { color: #b9a6dc; }
+.rl-you {
+  position: absolute; top: -10px; right: -6px; font-size: var(--fs-k14); color: #0d0618;
+  background: #FFE94A; border: 3px solid #b8a520; border-radius: 6px; padding: 1px 6px; box-shadow: 2px 2px 0 #000;
+  transform: rotate(6deg);
+}
+@keyframes rl-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+@keyframes rl-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 480px) {
+  .rl { align-items: flex-start; }
+  .rl-panel { padding: 12px 10px 14px; }
+  .rl-title { font-size: var(--fs-k32); margin-right: 40px; }
+  .rl-sub { margin-right: 40px; }
+  .rl-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rl-panel, .rl-item { animation: none; }
+  .rl-plate { transition: none; }
+}

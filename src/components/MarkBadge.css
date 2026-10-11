@@ -1,13 +1,13 @@
 /* MarkBadge.css — loads with the lazy MarkBadge chunk (never in the menu's first paint: payload ratchet). */
-/* GEAR TURN on the menu (Andy oct11, same exception as MarkCard.css): the worn gear's cog turns slowly; hovered, ONE
-   quick extra turn (Andy oct11 "a turn is enough … doesnt need to constantly be turning"); its glyph bobs + tilts a
-   little at rest and rocks ONCE on hover */
+/* GEAR TURN on the menu (Andy oct11, same exception as MarkCard.css): the worn gear's cog turns slowly; hovered, the
+   teeth spin fast for as long as the pointer stays; its glyph bobs + tilts a little at rest */
 .hp-gear-cog :is(.mb-cog, .mb-cog > g, .mb-glyph) { transform-box: view-box; transform-origin: 60px 60px; }
 .hp-gear-cog .mb-cog { animation: hp-gear-turn 16s linear infinite; }
 .hp-gear-cog .mb-glyph { animation: hp-gear-bob 2400ms ease-in-out infinite; }
-.hp-gear:is(:hover, :focus-visible) .hp-gear-cog .mb-cog > g { animation: hp-gear-turn 800ms cubic-bezier(0.3, 0.7, 0.3, 1) 1; }
-.hp-gear:is(:hover, :focus-visible) .hp-gear-cog .mb-glyph { animation: hp-gear-rock 700ms ease-in-out 1; }
+/* HOVER v2 (Andy oct11): hovered, the teeth KEEP turning fast (hover-only, stops on leave); the glyph eases to a held tilt + enlarge */
+.hp-gear-cog .mb-glyph { transition: transform 260ms cubic-bezier(0.3, 0.7, 0.3, 1); }
+.hp-gear:is(:hover, :focus-visible) .hp-gear-cog .mb-cog > g { animation: hp-gear-turn 1100ms linear infinite; }
+.hp-gear:is(:hover, :focus-visible) .hp-gear-cog .mb-glyph { animation: none; transform: scale(1.14) rotate(-12deg); }
 @keyframes hp-gear-turn { to { transform: rotate(360deg); } }
 @keyframes hp-gear-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-3px) rotate(2deg); } }
-@keyframes hp-gear-rock { 0%, 100% { transform: scale(1.04) rotate(0deg); } 30% { transform: scale(1.04) rotate(-7deg); } 70% { transform: scale(1.04) rotate(7deg); } }
 @media (prefers-reduced-motion: reduce) { .hp-gear-cog :is(.mb-cog, .mb-cog > g, .mb-glyph) { animation: none; } }

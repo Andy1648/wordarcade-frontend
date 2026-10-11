@@ -70,7 +70,7 @@ test('duration: 2.4 s for every tier (NIGHT oct8); the slowdown power still grow
     assert.equal(SPIN_MS[TIER_LADDER[i]], 2400);
     assert.ok(easePow(TIER_LADDER[i]) > easePow(TIER_LADDER[i - 1]));
   }
-  assert.ok(spinMs('secret', 'short') < 700);
+  assert.ok(spinMs('secret', 'short') >= 1200 && spinMs('secret', 'short') < spinMs('secret')); // a real spin, still quicker than a full one
   assert.equal(spinMs('secret', 'none'), 0);
 });
 
@@ -95,7 +95,7 @@ test('the reel lands exactly on the result and never overshoots; ticks slow down
   };
   assert.ok(crawl('secret') > crawl('rare'));
   // a SHORT land starts near the result
-  assert.equal(spinFrom('short'), LAND_AT - 6);
+  assert.equal(spinFrom('short'), LAND_AT - 14);
   assert.equal(spinFrom('full'), 0);
 });
 

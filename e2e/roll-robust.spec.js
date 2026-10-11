@@ -60,6 +60,9 @@ const result = (page) => page.locator('[data-testid="mark-roll-result"]');
 // screen as well (when its stopped)") — everything else on the stage must be done
 const reelAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
+  // the cards' sanctioned at-rest idle (MarkCard.css: the cog turn + the glyph bob — on the landed card AND, since Andy oct11,
+  // its visible neighbours) is not reel motion; anything else still running is
+  if (a.animationName === 'mc-spin' || a.animationName === 'mc-bob') return false;
   return el && el.closest && el.closest('.rs-stage') && !el.closest('.rs-cell.is-land .mc') && a.playState === 'running';
 }).length);
 const SPUN = 4600;

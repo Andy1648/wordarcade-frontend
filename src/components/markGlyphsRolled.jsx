@@ -224,23 +224,8 @@ export const ROLLED_GLYPHS = {
       <G d="M30 40 C31 36 34 34 38 34" w="3" />
     </g>
   ),
-  'mk-flashpoint': (
-    <g {...KS}>
-      <S d="M30 84 L56 50" f="#C98A4B" s="#8A5A2B" w="6" ink="14" />
-      <F d="M58 20 C70 32 78 42 74 54 C70 64 56 66 50 58 C44 50 48 40 54 36 C54 42 58 44 60 40 C62 34 58 28 58 20 Z" f="#FF6B3D" s="#D9381E" sd="M74 38 C78 46 77 50 74 54 C70 64 58 66 52 60 C64 58 72 50 74 38 Z" />
-      <path d="M60 58 C55 54 55 48 59 44 C60 48 63 48 64 45 C67 50 65 56 60 58 Z" fill="#FFE94A" strokeWidth="2.5" />
-      <path d="M22 30 L30 34 M18 44 L27 44 M80 72 L86 78 M86 62 L94 62" stroke="#FFE94A" strokeWidth="4" />
-      <G d="M56 30 C58 34 58 38 56 42" w="3" />
-    </g>
-  ),
-  'mk-voltage': (
-    <g {...KS}>
-      <F d="M50 14 L86 78 L14 78 Z" f="#FFE94A" s="#F2A900" sd="M50 14 L86 78 L66 78 Z" />
-      <g strokeWidth="3"><path d="M54 30 L38 58 L50 58 L44 74 L64 48 L52 48 L60 30 Z" fill={INK} /></g>
-      <path d="M86 40 L92 34 M88 52 L96 52" stroke="#2EFFE0" strokeWidth="4" />
-      <G d="M42 34 L32 52" w="3.5" />
-    </g>
-  ),
+  'mk-flashpoint': ART('flashpoint'), // Andy oct11: painted PNG (public/gear/flashpoint.webp)
+  'mk-voltage': ART('voltage'), // Andy oct11: painted PNG (public/gear/voltage.webp)
   'mk-talisman': (
     <g {...KS}>
       <S d="M24 14 C30 30 40 38 50 40 C60 38 70 30 76 14" f="#C98A4B" s="#8A5A2B" w="4" ink="11" />
@@ -250,36 +235,9 @@ export const ROLLED_GLYPHS = {
       <G d="M42 48 L47 43" w="3" />
     </g>
   ),
-  'mk-headmaster': (
-    <g {...KS}>
-      <path d="M46 16 L54 16 L54 24 L46 24 Z" fill="#5F6F84" />
-      <F d="M50 22 C64 22 70 34 70 48 C70 58 74 64 80 70 L20 70 C26 64 30 58 30 48 C30 34 36 22 50 22 Z" f="#FFC23D" s="#B07A10" sd="M62 26 C68 32 70 40 70 48 C70 58 74 64 80 70 L64 70 C66 58 66 40 62 26 Z" />
-      <path d="M18 70 L82 70 L82 76 L18 76 Z" fill="#B07A10" />
-      <circle cx="50" cy="82" r="6" fill="#CFD8E3" strokeWidth="3.5" />
-      <path d="M84 36 C88 40 89 44 88 48 M14 38 C11 42 11 46 12 50" stroke="#2EFFE0" strokeWidth="3.5" fill="none" />
-      <G d="M38 34 C36 40 36 46 36 52" w="3.5" />
-    </g>
-  ),
-  'mk-thunderclap': (
-    <g {...KS}>
-      <F d="M22 48 C14 46 14 32 26 32 C26 22 40 18 46 26 C52 16 70 18 72 30 C84 28 88 44 78 48 Z" f="#3B2D5C" s="#1F1438" sd="M72 30 C84 28 88 44 78 48 L60 48 C70 44 74 38 72 30 Z" />
-      <g strokeWidth="3"><F d="M50 44 L36 70 L48 70 L40 92 L66 60 L54 60 L62 44 Z" f="#FFE94A" s="#F2A900" sd="M62 44 L54 60 L66 60 L46 84 L58 60 Z" /></g>
-      <path d="M20 62 C16 66 15 70 16 74 M80 60 C85 63 87 67 87 72" stroke="#2EFFE0" strokeWidth="3.5" fill="none" />
-      <G d="M28 38 C29 34 32 32 36 31" w="3" />
-    </g>
-  ),
-  // JACKPOT (gear card v4, Andy oct11 — +200% GEMS): a cyan gem bursting off a lopsided stack of gold coins. Vector
-  // stand-in until its painted PNG lands (then ART('jackpot')).
-  'mk-jackpot': (
-    <g {...KS}>
-      <F d="M18 74 C18 68 42 66 50 66 C60 66 82 68 82 74 L82 82 C82 88 60 90 50 90 C40 90 18 88 18 82 Z" f="#FFE94A" s="#F2A900" sd="M18 80 C24 86 40 88 50 88 C62 88 78 86 82 80 L82 82 C82 88 60 90 50 90 C40 90 18 88 18 82 Z" />
-      <F d="M24 62 C24 56 44 54 52 54 C62 54 78 56 78 62 L78 70 C78 75 62 77 52 77 C42 77 24 75 24 70 Z" f="#FFE94A" s="#F2A900" sd="M24 68 C30 74 42 76 52 76 C62 76 74 74 78 68 L78 70 C78 75 62 77 52 77 C42 77 24 75 24 70 Z" />
-      <F d="M36 14 L64 14 L78 32 L50 62 L22 32 Z" f="#2EFFE0" s="#12A99A" sd="M56 32 L78 32 L50 62 Z" />
-      <path d="M22 32 L78 32 M36 14 L44 32 L50 14 L56 32 L64 14" strokeWidth="3" fill="none" />
-      <path d="M12 22 L16 30 M88 20 L83 28 M10 46 L17 46" stroke="#FFE94A" strokeWidth="4" fill="none" />
-      <G d="M34 22 L30 28" w="3" />
-    </g>
-  ),
+  'mk-headmaster': ART('headmaster'), // Andy oct11: painted PNG (public/gear/headmaster.webp)
+  'mk-thunderclap': ART('thunderclap'), // Andy oct11: painted PNG (public/gear/thunderclap.webp)
+  'mk-jackpot': ART('jackpot'), // Andy oct11: painted PNG (public/gear/jackpot.webp)
   'mk-hydra': ART('hydra'), // Andy oct11: the painted PNG (public/gear/hydra.webp, background cut out)
   // ---- the 6 PERMANENT marks (finished by markGlyphFinish.jsx) ----
   'mk-ironhand': (

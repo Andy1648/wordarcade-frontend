@@ -18,7 +18,7 @@
 import { SEASON2, V3 } from '../season.js';
 import { LEADERBOARD_ENABLED, boardCaps, rpc as boardRpc, peekSecret, getMyProfile } from '../../leaderboard/client.js';
 import { wipeProgressKeys } from '../../save/cloudSave.js';
-import { grantGems, getGems } from '../gemsCore.js';
+import { grantGems } from '../gemsCore.js';
 import { season2Gems, SEASON2_ECON } from '../../leaderboard/season2Rules.js';
 import { rawStorage } from './hooks.js';
 
@@ -178,11 +178,11 @@ export async function collectWelcome(plan, { rpc = boardRpc, secret, storage = g
 
 /**
  * THE BOOT CHECK. Resolves true when the menu may carry on (board pushes allowed), false when it is reloading into the
- * wiped save. Never throws. `show(plan)` mounts the welcome (lazy — default: ../../components/Season2Welcome.jsx).
+ * wiped save. Never throws. `show(plan)` settles a pending gift (default: collectSilently — no screen).
  */
 export async function bootSeason2({
   season2 = SEASON2, enabled = LEADERBOARD_ENABLED, caps = boardCaps, storage = globalThis.localStorage,
-  raw = null, reload = () => window.location.reload(), show = showWelcome, rpc = boardRpc,
+  raw = null, reload = () => window.location.reload(), show = collectSilently, rpc = boardRpc,
 } = {}) {
   if (!season2 || !enabled) return true;
   try {
@@ -206,32 +206,10 @@ export async function bootSeason2({
   return true;
 }
 
-let mounted = false;
-/** Mount the welcome in its own root (a full-screen moment over the app; unmounts itself on PLAY). */
-export function showWelcome(plan, ctx) {
-  if (mounted || typeof document === 'undefined') return;
-  mounted = true;
-  Promise.all([import('react-dom/client'), import('react'), import('../../components/Season2Welcome.jsx')])
-    .then(([RD, React, M]) => {
-      const host = document.createElement('div');
-      host.id = 's2-welcome-root';
-      document.body.appendChild(host);
-      const root = RD.createRoot(host);
-      const close = () => {
-        root.unmount();
-        host.remove();
-        mounted = false;
-      };
-      root.render(React.createElement(M.default, {
-        plan,
-        startWallet: getGems(),
-        collect: () => collectWelcome(plan, ctx),
-        onClose: close,
-      }));
-    })
-    .catch(() => {
-      mounted = false;
-    });
+/** THE COMPENSATION PAGE IS GONE (Andy oct11 "remove the compensation page now"). A still-pending gift is credited
+ *  SILENTLY on boot (same claim path, same once-only flags) so nobody who never saw the page loses their gems. */
+export function collectSilently(plan, ctx) {
+  return collectWelcome(plan, ctx).catch(() => ({ ok: false, retry: true, gems: 0 }));
 }
 
 // the boot handle client.js waits on (set by installUi.jsx)

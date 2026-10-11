@@ -286,7 +286,16 @@ html[data-beat='true'] .homepage-logo {
   box-shadow: var(--b4) var(--b4) 0 #000;
   line-height: 1;
   white-space: nowrap;
+  /* a BUTTON now (Andy oct11: tap → ALL RANKS): pops + tilts on hover, sinks on press — transform only */
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  transition: transform 180ms cubic-bezier(.2, 1.6, .4, 1);
 }
+@media (hover: hover) {
+  .hp-rankplate:not(:disabled):hover { transform: scale(1.06) rotate(-3deg); will-change: transform; }
+}
+.hp-rankplate:not(:disabled):active { transform: translate(var(--b4), var(--b4)); box-shadow: none; }
+.hp-rankplate:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .hp-rankplate { transition: none; } }
 .hp-rankplate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-hprankk); letter-spacing: 0.12em; color: #c9b8e8; }
 .hp-rankplate-n {
   font-family: 'Bungee', sans-serif;
@@ -638,10 +647,6 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
      beat   html[data-beat] — a small icon bounce, staggered UPGRADES → GEARS → REBIRTH → STATS, inside the beat's
             120 ms window (delay + duration ≤ 120 ms) like the title-beat-pop
      nudge  a tile with an actionable dot nudges its icon once every ~8 s (MenuNav.jsx: one shared setTimeout, WAAPI) */
-.hp-rail .kb-rico .kit-icon[data-icon='shop'] { translate: -4.4% 2.6%; }
-.hp-rail .kb-rico .kit-icon[data-icon='gears'] { translate: -4.8% -8.8%; }
-.hp-rail .kb-rico .kit-icon[data-icon='rebirth'] { translate: 0.6% -2.1%; }
-.hp-rail .kb-rico .kit-icon[data-icon='stats'] { translate: -2.8% -1.9%; }
 .hp-rail .kb-rico .kit-icon[data-icon='lock'] { translate: 1.7% 0; }
 .hp-rail .kb-rico .kit-icon { transition: transform 180ms cubic-bezier(.2, 1.6, .4, 1); }
 @media (hover: hover) {
