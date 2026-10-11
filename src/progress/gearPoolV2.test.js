@@ -37,7 +37,7 @@ function withStorage(seed, fn) {
   }
 }
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} ≠ ${b}`);
-const own = (id, n = 1, shiny = false) => ({ ...freshState(), marks: { [id]: shiny ? { n, shiny: true } : { n } } });
+const own = (id, n = 1, shiny = false) => ({ ...freshState(), v: 3, marks: { [id]: shiny ? { n, shiny: true } : { n } } }); // v3: ★ from dupes (pre-v4)
 /** The number a printed stat line carries: "×1.5 WINS IN WORD BOMB" → 1.5, "+25% CRIT RATE" → 25, "EVERY 4TH KEY" → 4. */
 /** Σ of a gear's substat rows of `kind` (gear card v4) — they pay on top of the MAIN through the same readers. */
 const subOf = (id, s, kind) => substatsOf(id, s).filter((x) => x.kind === kind).reduce((a, x) => a + x.value, 0);

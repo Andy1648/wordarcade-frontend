@@ -5,6 +5,7 @@
 // MARKS v2 (Andy oct5): no ×10 — AUTO ROLL "until [tier] or better" (autoRoll) rolls one at a time instead.
 import { grantWins } from './wins.js';
 import { getGems, spendGems, ROLL_PRICE_GEMS } from './gems.js';
+import { grantGems } from './gemsCore.js';
 import { getEquippedMark, equipMark } from './marks.js';
 import {
   ensureRollState, loadRollState, saveRollState, rollAndSave, refWordWins,
@@ -73,11 +74,15 @@ export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
       lump += w;
     }
   }
+  // gear card v4: every duplicate in this roll pays its tier's gems (DUPE_GEMS), one grant per roll
+  let dupeGems = 0;
+  for (const r of all) dupeGems += r.dupeGems || 0;
+  if (dupeGems > 0) grantGems(dupeGems, 'dupe', { detail: res.markId });
   const worn = currentMain();
   const decision = equipDecision(res.markId, worn.id, worn.main);
   const fromMain = worn.id ? worn.main : wornMainOf(null);
   const toMain = mainMultOf(res.markId);
-  return { ...res, state: all[all.length - 1].state, spent: cost.gems, free: cost.free, decision, fromMain, toMain, lump, extra };
+  return { ...res, state: all[all.length - 1].state, spent: cost.gems, free: cost.free, decision, fromMain, toMain, lump, extra, dupeGemsPaid: dupeGems };
 }
 
 /** The tiers AUTO ROLL can stop on ("until [tier] or better"). GEAR POOL v2: no RARE — RARE is the floor, every roll. */

@@ -101,7 +101,7 @@ test('DOUBLE ROLLS (SINGULARITY worn): one price, two results; the rarer is show
     assert.equal(r.extra.length, 1, 'a second result rides along');
     assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 2, 'both rolls are saved');
     assert.equal(r.spent, price, 'one price');
-    assert.equal(getGems(), 1000 - price);
+    assert.equal(getGems(), 1000 - price + r.dupeGemsPaid, 'one price; a duplicate pays its gems back (gear card v4)');
   });
   withStorage({ [GEMS_KEY]: gems(1000), [ROLL_STATE_KEY]: JSON.stringify({ v: 1, starter: true, marks: {} }) }, () => {
     const r = buyMarkRoll({ level: 1, rng: at(0) });
@@ -126,7 +126,7 @@ test('AUTO ROLL until EPIC: one at a time, stops on the hit (the EPIC+ every-10 
     assert.equal(list[9].tier, 'epic');
     assert.equal(list[9].pityHit, 'epic');
     assert.equal(JSON.parse(m.get(ROLL_STATE_KEY)).rolls, 10);
-    assert.equal(getGems(), 1000 - 10 * price);
+    assert.equal(getGems(), 1000 - 10 * price + list.reduce((t, r) => t + r.dupeGemsPaid, 0), 'gear card v4: each duplicate pays its gems');
   });
 });
 
@@ -134,9 +134,11 @@ test('AUTO ROLL stops when the GEMS run out (or the budget is spent); nothing ro
   const st = JSON.stringify({ v: 2, starter: true, everEpic: true, marks: { 'mk-detonator': { n: 1 } } });
   withStorage({ [ROLL_STATE_KEY]: st, 'taw.wins': '999999999' }, (m) => {
     m.set(GEMS_KEY, gems(price * 3 + 5));
-    const list = autoRoll({ until: 'secret', level: 1, rng: at(0) }); // DETONATOR dupes: no reward, no pip yet
-    assert.equal(list.length, 3);
-    assert.equal(getGems(), 5);
+    const list = autoRoll({ until: 'secret', level: 1, rng: at(0) }); // MATCHSTICK dupes: each pays DUPE_GEMS (gear card v4)
+    const paid = list.reduce((t, r) => t + r.dupeGemsPaid, 0);
+    assert.ok(list.length >= 3 && paid > 0, 'the duplicates\' gems buy more rolls');
+    assert.equal(getGems(), price * 3 + 5 - list.length * price + paid);
+    assert.ok(getGems() < price, 'it stops when the next roll is out of reach');
     assert.equal(Number(m.get('taw.wins')), 999999999, 'the wins are never spent on a roll');
     assert.deepEqual(autoRoll({ until: 'secret', level: 1, rng: at(0) }), [], 'short → []');
     m.set(GEMS_KEY, gems(price * 10));

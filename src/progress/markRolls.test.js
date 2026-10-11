@@ -12,7 +12,7 @@ import {
   markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec, STAT_KINDS,
   equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny,
 } from './markRolls.js';
-import { TIER_PCT, GEMS_PCT_BY_TIER } from './markRollsCore.js';
+import { TIER_PCT, GEMS_PCT_BY_TIER, DUPE_GEMS } from './markRollsCore.js';
 const DUPES_PER_GOLD = 10; // the v1 finish, for the migration tests
 const GOLDS_PER_RAINBOW = 10;
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY, MARK_TIERS } from './marks.js';
@@ -168,13 +168,18 @@ test('the card line "7/10 → ★3": pipProgress(id) — dupes toward the next p
   assert.deepEqual(pipProgress('mk-smith', { v: 2, marks: {} }), { pips: 0, have: 0, need: 5 });
   assert.deepEqual(pipProgress('mk-smith', { v: 2, marks: { 'mk-smith': { n: 99 } } }), { pips: 5, have: 0, need: 0 });
   assert.equal(pipProgress('nope', st), null);
+  // gear card v4: a duplicate never earns a ★ any more — it pays its tier's gems (DUPE_GEMS); the ★ a save had is kept
   const at5 = { ...freshState(), everEpic: true, marks: { 'mk-detonator': { n: 5 } } };
-  const out = roll(() => 0, at5); // u=0 → the first mark in the table = DETONATOR
+  const out = roll(() => 0, at5); // u=0 → the first mark in the table
   assert.equal(out.result.markId, 'mk-detonator');
-  assert.equal(out.result.pipUp, true);
-  assert.equal(out.result.pips, 1);
-  assert.deepEqual(out.result.rewards.map((r) => r.kind), ['pip']);
-  assert.equal(out.result.rewardWords, INDEX_PIP_WORDS.rare);
+  assert.equal(out.result.pipUp, false);
+  assert.equal(out.result.dupeGems, DUPE_GEMS.rare);
+  assert.deepEqual(out.result.rewards, []);
+  const kept = normalize({ v: 3, marks: { 'mk-smith': { n: 1 + 10 + 3 } } }); // pre-v4: ★2 earned
+  assert.equal(markLevel(kept, 'mk-smith').pips, 2, 'the ★ a pre-v4 save earned is frozen, never lost');
+  const more = roll(() => 0.0000001, { ...kept, everEpic: true });
+  assert.equal(markLevel(more.state, 'mk-smith').pips, 2, 'and never grows');
+  void INDEX_PIP_WORDS;
 });
 
 test('migration (never hurt): a v1 GOLD / RAINBOW keeps its ×2 / ×5 as a floor; a v1 save is not re-paid', () => {
@@ -273,7 +278,7 @@ test('markTag (Andy oct5): the COMPACT line — named stat, PERK: … on LEGENDA
   assert.equal(markTag('mk-eternal', null), '×3 WINS + XP');
   let n = 1;
   while (markLevel({ marks: { 'mk-cyclone': { n } } }, 'mk-cyclone').pips < 2) n++;
-  const st = { ...freshState(), marks: { 'mk-cyclone': { n } } };
+  const st = { ...freshState(), v: 3, marks: { 'mk-cyclone': { n } } };
   assert.match(markTag('mk-cyclone', st), /^\+[\d.,]+ BASE WINS · ★2$/);
   assert.ok(!/MAIN|%/.test(markTag('mk-origin', null)), 'never a bare MAIN, never a %');
 });

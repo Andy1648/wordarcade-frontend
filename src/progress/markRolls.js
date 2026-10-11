@@ -30,7 +30,7 @@ import { xpPerWord } from './xp.js';
 import {
   ROLL_MARKS, rollMarkById, permanentMarkById, PERMANENT_MARKS, tierRank, mainBonus, oneInX, COLLECTION_MILESTONES,
   freshState, normalize, markLevel, mainMultOf, loadRollState, saveRollState, num, collection, SHINY_CHANCE, isShiny,
-  LEGENDARY_PITY_HARD, EPIC_PITY_HARD, FLOOR_TIER, LEGACY_GOLD_K, LEGACY_RAINBOW_K, markLuck, INDEX_NEW_WORDS, INDEX_PIP_WORDS, INDEX_COMPLETE_WORDS,
+  LEGENDARY_PITY_HARD, EPIC_PITY_HARD, FLOOR_TIER, LEGACY_GOLD_K, LEGACY_RAINBOW_K, markLuck, INDEX_NEW_WORDS, INDEX_PIP_WORDS, INDEX_COMPLETE_WORDS, DUPE_GEMS,
   ROLLABLE_TIERS, SKIP_TIERS, DEFAULT_SKIP_BELOW, statOf, statLine, perkLine,
 } from './markRollsCore.js';
 
@@ -217,7 +217,7 @@ export function roll(rng, state, ctx = {}) {
   // INDEX REWARDS: a NEW mark, a ★ level-up, the tier's completion (once)
   const rewards = [];
   if (before.copies === 0) rewards.push({ kind: 'new', tier: pick.tier, words: INDEX_NEW_WORDS[pick.tier] || 0 });
-  if (after.pips > before.pips) rewards.push({ kind: 'pip', tier: pick.tier, words: INDEX_PIP_WORDS[pick.tier] || 0 });
+  if (after.pips > before.pips) rewards.push({ kind: 'pip', tier: pick.tier, words: INDEX_PIP_WORDS[pick.tier] || 0 }); // pre-v4 states only
   let completed = null;
   if (!s.done.includes(pick.tier) && ROLL_MARKS.filter((m) => m.tier === pick.tier).every((m) => s.marks[m.id])) {
     s.done.push(pick.tier);
@@ -231,6 +231,7 @@ export function roll(rng, state, ctx = {}) {
       tier: pick.tier,
       oneInX: oneInX(pick.id),
       dupe: before.copies > 0,
+      dupeGems: before.copies > 0 ? DUPE_GEMS[pick.tier] || 0 : 0, // gear card v4: a duplicate pays gems (the caller grants them)
       newMark: before.copies === 0,
       copies: after.copies,
       pips: after.pips,

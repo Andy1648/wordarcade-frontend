@@ -40,7 +40,7 @@ const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints 
 import { V3 } from './season.js'; // V3.m = the 2nd MARK slot (v3/hooks.js mark2Factor), installed in season 2 only
 
 export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
-export const ROLL_STATE_VERSION = 3; // v3 = GEAR POOL v2: COMMON removed (owned commons refunded — migrateRollSave)
+export const ROLL_STATE_VERSION = 4; // v4 = gear card v4: ★ pips FROZEN per mark (`p`), a dupe pays gems (DUPE_GEMS)
 
 // ---------------------------------------------------------------------------------------- tiers
 export const ROLL_TIER_ORDER = ['rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent'];
@@ -219,6 +219,9 @@ export function permanentMarkById(id) {
 
 // ---------------------------------------------------------------------------------------- ★ pips
 /** Dupes per ★ pip, by tier (Andy oct5). */
+// DUPES → GEMS (gear card v4, Andy oct11: "no tiers/stars — duplicates pay gems"): a duplicate now pays its tier's gems
+// and never adds a ★. A save from before v4 keeps the ★ pips it had (frozen in the mark's `p`), so no gear ever got weaker.
+export const DUPE_GEMS = Object.freeze({ rare: 5, epic: 25, legendary: 100, mythic: 500, secret: 2500 });
 export const DUPES_PER_PIP = { rare: 5, epic: 3, legendary: 2, mythic: 1, secret: 1 };
 export const MAX_PIPS = 5;
 export const PIP_STEP = 0.2; // each pip +20% of the stat → ★5 = ×2
@@ -306,6 +309,9 @@ export function normalize(raw) {
       if (k >= LEGACY_GOLD_K) e.k = Math.min(k, LEGACY_RAINBOW_K);
       const first = num(o.first);
       if (first > 0) e.first = first;
+      // v4: the ★ pips are FROZEN — a pre-v4 save keeps what its dupes had earned; a v4 save keeps its stored `p`
+      const p = Number(raw.v) >= 4 ? Math.min(MAX_PIPS, num(o.p)) : earnedPips(id, n);
+      if (p > 0) e.p = p;
       s.marks[id] = e;
     }
   }
@@ -412,13 +418,25 @@ export function clearRollNote() {
  * One mark's copies and ★ pips. { copies, dupes, pips (0–5), have (dupes toward the next pip), need (dupes per pip;
  * 0 at ★5), k (the pre-v2 GOLD/RAINBOW floor, 0 = none), variant ('base' when owned, else null) }. Uncapped counts.
  */
+/** The ★ pips n copies earned under the pre-v4 rule (dupes ÷ the tier's dupes-per-pip, ★5 max) — the v4 freeze. */
+function earnedPips(id, n) {
+  const m = ROLL_BY_ID.get(id);
+  const per = (m && DUPES_PER_PIP[m.tier]) || DUPES_PER_PIP.rare;
+  return Math.min(MAX_PIPS, Math.floor(Math.max(0, num(n) - 1) / per));
+}
 export function markLevel(state, id) {
   const e = state && state.marks && state.marks[id];
   const n = num(e && e.n);
   const dupes = Math.max(0, n - 1);
   const m = ROLL_BY_ID.get(id);
   const per = (m && DUPES_PER_PIP[m.tier]) || DUPES_PER_PIP.rare;
-  const pips = Math.min(MAX_PIPS, Math.floor(dupes / per));
+  // v4: frozen (a dupe pays gems, never a ★); an older / hand-built state reads the pre-v4 rule
+  const v4 = !!state && Number(state.v) >= 4;
+  const pips = v4 ? Math.min(MAX_PIPS, num(e && e.p)) : Math.min(MAX_PIPS, Math.floor(dupes / per));
+  if (v4) {
+    const k4 = num(e && e.k);
+    return { copies: n, dupes, pips, have: 0, need: 0, k: k4 >= LEGACY_GOLD_K ? k4 : 0, variant: n > 0 ? 'base' : null };
+  }
   const max = pips >= MAX_PIPS;
   const k = num(e && e.k);
   return { copies: n, dupes, pips, have: max ? 0 : dupes - pips * per, need: max ? 0 : per, k: k >= LEGACY_GOLD_K ? k : 0, variant: n > 0 ? 'base' : null };
