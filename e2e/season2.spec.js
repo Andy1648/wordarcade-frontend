@@ -4,7 +4,7 @@
 //   * no rate line under the bar (Andy oct9); a key pays +1 at T0 R0 (v4: the menu is the only XP source);
 //   * MASHES the menu and LEVELS (ANY key, the full 1 XP at T0 R0; need(14) = 100 × 1.15^13);
 //   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 15 → LV 1, ×3)
-//     — one request, no gems, R1, LV15 → LV1;
+//     — one request, +25 gems (25 × R, Andy oct11), R1, LV15 → LV1;
 //   * BUYS KEY with wins (150 wins, ×2 XP a key — a key pops +6 at T1 R1);
 //   * sees the v3 RANKS (INKLING → TYPO — by rebirths, not by level);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
@@ -101,7 +101,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect(st.rebirths).toBe('1');
     expect(st.level, 'back to LV 1').toBe(1);
     expect(shared.rows[0].level, 'the server sent the row to LV 1 too (029)').toBe(1);
-    expect(st.gems, 'levels pay no gems (Andy oct11) and the rebirth itself pays none').toBe(0);
+    expect(st.gems, 'levels pay no gems; the rebirth to R1 pays 25 (Andy oct11)').toBe(25);
     await rb.locator('.rb2-back').click();
     await expect(rb).toHaveCount(0);
     await noClaimPopups(page);
@@ -128,13 +128,13 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.locator(phone ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();
     const ach = page.locator('.av3-overlay');
     await ach.waitFor({ state: 'visible' });
-    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('0');
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('25');
     const type = ach.locator('[data-ach="type"]');
     await expect(type.locator('.av3-strip')).toContainText('READY!');
     await type.locator('.av3-claim').click();
-    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('40'); // the gems fly in, then the pill lands
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('65'); // the gems fly in, then the pill lands
     st = await s2(page);
-    expect(st.gems).toBe(40);
+    expect(st.gems).toBe(65);
     expect(await page.evaluate(() => localStorage.getItem('taw.s2.ach'))).toBe('{"type":1}');
     await ach.locator('.av3-back').click();
     await expect(ach).toHaveCount(0);

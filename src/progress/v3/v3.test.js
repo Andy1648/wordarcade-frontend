@@ -108,7 +108,7 @@ test('KEY: T → T+1 costs 150 × 5^T wins, ×2^T on XP, one at a time', () => {
   assert.equal(ST3.readCounters().power, 2);
 });
 
-test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
+test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, +25 × R gems (Andy oct11), no ★', () => {
   assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [15, 33, 87, 177]);
   assert.equal(E.rebirthGate(4), 15 + 18 * 4);
   reset();
@@ -116,12 +116,12 @@ test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () =>
   X.saveProgress({ level: 14, frac: 0 });
   assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV14 is below the R1 gate');
   X.saveProgress({ level: 40, frac: 0.6 });
-  const gBefore = G.getGems(); // LV14 → LV40 paid LEVEL UP gems (Andy oct10); the REBIRTH itself pays none
+  const gBefore = G.getGems(); // levels pay no gems (Andy oct11); the REBIRTH pays 25 × the new R
   let r = STARS.rebirthWithStars();
   assert.deepEqual(r, { rc: 1, stars: 0 });
   assert.equal(X.loadProgress().level, 1, 'back to LV 1');
   assert.equal(X.getKeyTier(), 4, 'KEY is kept through a rebirth');
-  assert.equal(G.getGems(), gBefore, 'a rebirth pays no gems');
+  assert.equal(G.getGems() - gBefore, 25, 'R0 → R1 pays 25 gems');
   assert.equal(X.rebirthMult(1), 3);
   assert.equal(X.rebirthMult(2), 9);
   X.saveProgress({ level: 38, frac: 0 });

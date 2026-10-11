@@ -296,6 +296,7 @@ export default function RebirthV2({ onBack }) {
           <div className="rb2-get-head">YOU GET</div>
           <GetRow icon="boost" label="WINS + XP" tone="lilac" value={`×${formatNum(econ ? econ.REBIRTH_STEP : 3)}`} />
           <div className="rb2-get-sub">{`×${formatMult(rebirthMult(rebirths))} → ×${formatMult(rebirthMult(rebirths + 1))} FOREVER`}</div>
+          {econ && econ.rebirthGems(rebirths + 1) > 0 ? <GetRow icon="gems" label="GEMS" tone="cyan" value={`+${formatNum(econ.rebirthGems(rebirths + 1))}`} /> : null}
           <GetRow icon="power" label="POWER" tone="gold" value="KEPT" />
           <GetRow icon="levels" label="LEVELS" tone="hot" value="→ LV 1" />
           {stars > 0 && <div className="rb2-stars">★{formatNum(stars)} · ×{formatNum(1 + stars)} ON EVERYTHING</div>}
