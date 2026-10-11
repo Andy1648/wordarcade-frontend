@@ -88,11 +88,12 @@ export const starsSwap = {
   a: () => 0, // starsForRebirth
   b: (level, rc) => ({ stars: 0, nextIn: Math.max(0, rebirthThreshold(rc) - level), badTime: false }), // rebirthAdvice
   c: () => ({ ok: false, locked: true }), // buyPerk: no star perks — ★ multiply XP and wins instead
-  /** rebirthWithStars: ONE rebirth — back to LV 1, R + 1 (×3 forever), KEY kept. No gems, no ★, no layer claim.
+  /** rebirthWithStars: ONE rebirth — back to LV 1, R + 1 (×3 forever), KEY kept, +rebirthGems(R) gems. No ★, no layer claim.
    *  (The server's lb_rebirth does the same on the stored row — 027.) */
   d() {
     const rc = doRebirth(); // R + 1 (and the run's peak into records); LV1
     bumpCounter('reb'); // ACHIEVEMENTS: REBIRTH (every climb)
+    gemsSwap.d(rc); // GEMS: 25 × the new R (Andy oct11 — levels no longer pay)
     return { rc, stars: 0 };
   },
   e: () => ({ keys: 0, forges: 0 }), // runAutomation: no AUTO-KEY / AUTO-FORGE (R2 unlocks AUTO ROLL)
@@ -140,7 +141,7 @@ export const gemsSwap = {
     return LEVEL_UP > 0 ? grantGems(n * LEVEL_UP, 'level', { detail: `lv-${L}` }) : 0;
   },
   c: ROLL_PRICE, // ROLL_PRICE_GEMS: 75
-  // noteRebirth: FINAL — a rebirth pays no gems (games only)
+  // noteRebirth: rebirthGems(rc) — 25 × R (Andy oct11); rebirthWithStars (xpSwap above) calls it
   d: (rc) => (rebirthGems(rc) > 0 ? grantGems(rebirthGems(rc), 'rebirth', { detail: Number.isFinite(rc) ? `rb-${rc}` : null }) : 0),
 };
 /** gems.gameResultPayout in season 2: the live payout re-priced on the v3 table. */

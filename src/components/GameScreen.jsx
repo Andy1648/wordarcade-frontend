@@ -80,27 +80,19 @@ function vibrate(pattern) {
 // Exact heart path supplied by the design - filled pink while the life is
 // intact, dark gray once it's been lost. Stroke stays black to match the
 // thick-outline cel style used everywhere else.
-const HEART_PATH =
-  'M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 0 1 8 4.5 3.5 3.5 0 0 1 13.5 7C13.5 10.5 8 14 8 14z';
-
+// LIVES: painted hearts (ART PIPELINE, Andy oct11) — public/fx/heart.webp (live, and while it shatters: it bursts, not
+// yet lost) / heart-empty.webp (the cracked, lost one). The shatter motion is CSS on the element (.heart-shatter).
 function Heart({ filled, shatter }) {
   return (
-    <svg
+    <img
       className={shatter ? 'heart heart-shatter' : 'heart'}
-      viewBox="0 0 16 16"
+      src={filled || shatter ? '/fx/heart.webp' : '/fx/heart-empty.webp'}
       width="16"
       height="16"
+      alt=""
+      draggable="false"
       aria-hidden="true"
-    >
-      <path
-        d={HEART_PATH}
-        // While shattering, keep the heart pink (it's bursting, not yet lost);
-        // once the animation clears it falls back to the gray "lost" fill.
-        fill={filled || shatter ? '#ff4fa3' : '#555'}
-        stroke="#000"
-        strokeWidth="1.5"
-      />
-    </svg>
+    />
   );
 }
 
@@ -631,9 +623,8 @@ function KOOverlay() {
   return (
     <div className="ko-overlay" aria-hidden="true">
       <div className="ko-impact-flash" />
-      <svg className="ko-burst" viewBox="-100 -100 200 200">
-        <polygon points={KO_BURST_POINTS} fill="#FFE94A" />
-      </svg>
+      {/* painted burst (public/fx/burst-ko.webp); its pop / twist / fade is CSS on the element */}
+      <img className="ko-burst" src="/fx/burst-ko.webp" alt="" draggable="false" />
       <div className="ko-text">K.O.</div>
     </div>
   );
@@ -782,20 +773,8 @@ export function ConfettiEffect() {
 function WinBurst() {
   return (
     <div className="go-win-burst" aria-hidden="true">
-      <svg className="go-win-burst-svg" viewBox="-112 -112 224 224">
-        {/* Hard offset shadow: a flat black copy nudged down-right (no blur). */}
-        <polygon points={KO_BURST_POINTS} fill="#000" transform="translate(7 9)" />
-        {/* Big yellow burst. */}
-        <polygon points={KO_BURST_POINTS} fill="#FFE94A" stroke="#000" strokeWidth="5" />
-        {/* A smaller pink burst on top, rotated, for layered depth. */}
-        <polygon
-          points={KO_BURST_POINTS}
-          fill="#ff4fa3"
-          stroke="#000"
-          strokeWidth="6"
-          transform="scale(0.6) rotate(12)"
-        />
-      </svg>
+      {/* painted burst (public/fx/burst-win.webp); the pop-in lives on the wrapper, the one slow turn on this */}
+      <img className="go-win-burst-svg" src="/fx/burst-win.webp" alt="" draggable="false" />
     </div>
   );
 }

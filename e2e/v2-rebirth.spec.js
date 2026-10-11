@@ -2,7 +2,7 @@
 // season-2 board mock (boardMock `season2` — 029's real write rule + lb_rebirth / lb_ascend season 2, PROGRESSION FINAL v2).
 //   1. a hold released before 1 s sends NOTHING; a full 1 s hold sends ONE lb_rebirth; while it is pending the
 //      button is disabled (a second full hold does nothing); the server's answer lands R1 once — back to LV 1, KEY kept,
-//      no gems;
+//      +25 × R gems (Andy oct11);
 //   2. the server's stored level is below the gate (LV 15 at R0) → refused with "LV 10 / 15", nothing applied;
 //   3. at R10 there is no ASCEND (hidden in v2); the AUTO REBIRTH toggle (R2+) persists;
 //   4. the phone (390×844) gets the same screen and the same hold.
@@ -62,11 +62,11 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   await expect(screen.locator('[data-testid="rb2-now"]')).toHaveText('R0');
   await expect(screen.locator('.rb2-r-after')).toHaveText('R1');
   await expect(btn).toContainText('HOLD TO REBIRTH');
-  // YOU GET (FINAL v2): ×3 per rebirth, KEY kept, LEVELS → LV 1 (BACK TO LV 1 · KEY KEPT), no gems
+  // YOU GET (FINAL v2): ×3 per rebirth, KEY kept, LEVELS → LV 1 (BACK TO LV 1 · KEY KEPT), +25 × R gems (Andy oct11)
   await expect(screen.locator('.rb2-get')).toContainText('×1 → ×3');
   await expect(screen.locator('.rb2-get')).toContainText('KEPT');
   await expect(screen.locator('.rb2-get')).toContainText('→ LV 1');
-  await expect(screen.locator('.rb2-get')).not.toContainText('GEMS');
+  await expect(screen.locator('.rb2-get')).toContainText('GEMS+25'); // R0 → R1 pays 25
   await expect(screen.locator('[data-testid="rb2-cost"]')).toHaveText('BACK TO LV 1 · KEY KEPT');
   await expect(btn).toContainText('LV 60 → 1');
   // the UNLOCKS track (v3/unlocks.js): five diamonds (no ASCEND in v2); ROLL + INDEX is lit from the start
@@ -93,7 +93,7 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   expect(shared.rows[0].rebirths).toBe(1);
   const st = await s2(page);
   expect(st.rebirths).toBe(1);
-  expect(st.gems, 'a rebirth pays no gems (FINAL)').toBe(0);
+  expect(st.gems, 'the rebirth to R1 pays 25 gems (25 × R, Andy oct11)').toBe(25);
   expect(st.level, 'back to LV 1').toBe(1);
   expect(shared.rows[0].level, 'the server sent the row to LV 1 too').toBe(1);
   expect(st.pending, 'the answered request id is cleared').toBeNull();

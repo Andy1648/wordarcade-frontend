@@ -108,7 +108,7 @@ test('KEY: T → T+1 costs 150 × 5^T wins, ×2^T on XP, one at a time', () => {
   assert.equal(ST3.readCounters().power, 2);
 });
 
-test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () => {
+test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, +25 × R gems (Andy oct11), no ★', () => {
   assert.deepEqual([0, 1, 4, 9].map((r) => X.rebirthThreshold(r)), [15, 33, 87, 177]);
   assert.equal(E.rebirthGate(4), 15 + 18 * 4);
   reset();
@@ -116,12 +116,12 @@ test('REBIRTH: at LV 15 + 18·R → LV 1, ×3, KEY kept, no gems, no ★', () =>
   X.saveProgress({ level: 14, frac: 0 });
   assert.equal(X.loadProgress().level < X.rebirthThreshold(0), true, 'LV14 is below the R1 gate');
   X.saveProgress({ level: 40, frac: 0.6 });
-  const gBefore = G.getGems(); // LV14 → LV40 paid LEVEL UP gems (Andy oct10); the REBIRTH itself pays none
+  const gBefore = G.getGems(); // levels pay no gems (Andy oct11); the REBIRTH pays 25 × the new R
   let r = STARS.rebirthWithStars();
   assert.deepEqual(r, { rc: 1, stars: 0 });
   assert.equal(X.loadProgress().level, 1, 'back to LV 1');
   assert.equal(X.getKeyTier(), 4, 'KEY is kept through a rebirth');
-  assert.equal(G.getGems(), gBefore, 'a rebirth pays no gems');
+  assert.equal(G.getGems() - gBefore, 25, 'R0 → R1 pays 25 gems');
   assert.equal(X.rebirthMult(1), 3);
   assert.equal(X.rebirthMult(2), 9);
   X.saveProgress({ level: 38, frac: 0 });
@@ -267,7 +267,7 @@ test('ACHIEVEMENTS pay GEMS (40–200), one tier per claim, from season-2 play o
   assert.equal(A.claimAchievementV3('chain').reason, 'maxed');
 });
 
-test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TAKES 30 × players; streak +4; LEVEL UP 3 a level, once a climb (Andy oct10)', () => {
+test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TAKES 30 × players; streak +4; LEVELS PAY NO GEMS (Andy oct11 — was 3 a level, oct10)', () => {
   assert.equal(G.ROLL_PRICE_GEMS, 75);
   // the drop: under 1/10 drops, from 3 (v = 0) to 12 (v → 1); above it, nothing
   assert.equal(G.rollGemDrop(() => 0.099), 3);
@@ -288,14 +288,11 @@ test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TA
   X.saveProgress({ level: 1, frac: 0 });
   const g0 = G.getGems();
   X.saveProgress({ level: 5, frac: 0 });
-  assert.equal(G.getGems() - g0, 12, 'LV1 → LV5: 4 levels × 3 gems');
-  X.saveProgress({ level: 3, frac: 0 });
-  X.saveProgress({ level: 5, frac: 0 });
-  assert.equal(G.getGems() - g0, 12, 'a level pays once a climb');
+  assert.equal(G.getGems() - g0, 0, 'LV1 → LV5: no gems (Andy oct11 "dont give gems for leveling up")');
   X.saveRebirths(1);
   X.saveProgress({ level: 1, frac: 0 });
   X.saveProgress({ level: 3, frac: 0 });
-  assert.equal(G.getGems() - g0, 18, 'a rebirth starts a new climb: LV1 → LV3 pays 6');
+  assert.equal(G.getGems() - g0, 0, 'a new climb pays nothing either');
   assert.equal(G.dropGemsForWord({ mode: 'menu', rng: () => 0 }), 0, 'menu typing gives no gems');
 });
 

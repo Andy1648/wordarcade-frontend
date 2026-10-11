@@ -174,6 +174,7 @@ test.describe('menu XP', () => {
       await sleep(1800);
       for (let t = 0; t < 60 && runningFinite().length > 0; t++) await sleep(50);
       const idleBaseline = runningFinite().length;
+      const before = window.__tawXp ? window.__tawXp() : null;
       let peak = 0;
       let peakNames = [];
       // ~120 keystrokes at ~33ms (≈30/sec) over ~4s. Crosses several levels so the
@@ -192,7 +193,17 @@ test.describe('menu XP', () => {
       }
       // PV10: taw.xp stores the FRACTION into the level; the XP number comes from the app's probe.
       const prog = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 };
-      return { idleBaseline, peak, peakNames, lv: Number(prog.level) || 1, into: Math.round(Number(prog.intoLevel) || 0) };
+      // DIAGNOSTICS for the rare CI run where the burst credits nothing (2 runs on oct11, never locally): what had focus
+      // and which overlay was up — so a failure names its cause instead of only "0"
+      const ae = document.activeElement;
+      const diag = {
+        before: before && { level: before.level, into: Math.round(Number(before.intoLevel) || 0) },
+        focus: ae ? `${ae.tagName}.${String(ae.className || '').slice(0, 60)}` : null,
+        overlays: ['.pn', '.rl', '.ut-overlay', '.spotlight', '[role="dialog"]', '.claim-pop', '.ks-cover', '.knife-split']
+          .filter((sel) => document.querySelector(sel)),
+        plusPops: [...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter(Boolean).length,
+      };
+      return { idleBaseline, peak, peakNames, lv: Number(prog.level) || 1, into: Math.round(Number(prog.intoLevel) || 0), diag };
     });
 
     // Concurrent FINITE-animation count is now ADVISORY (CLAUDE.md → ANIMATION BUDGET;
@@ -209,7 +220,7 @@ test.describe('menu XP', () => {
     // lane. The invariant this test is really for - that the keystrokes were credited at all, and
     // credited in clean multiples of 10 - is unchanged and is what it now asserts.
     expect(result.lv).toBeGreaterThanOrEqual(1);
-    expect(result.into).toBeGreaterThan(0);
+    expect(result.into, `the burst credited no XP — ${JSON.stringify(result.diag)}`).toBeGreaterThan(0);
     // v11: credits are WHOLE XP (menu letters of 2 XP at a fresh profile); no divisibility assumption — the
     // price is a tuning constant (MENU_LETTER_SHARE) and level carries leave any remainder.
     expect(Number.isInteger(result.into)).toBe(true);
