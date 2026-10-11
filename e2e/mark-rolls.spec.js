@@ -184,12 +184,11 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
     'taw.tut.markRolls': '1',
     // 25 gems = two paid rolls; EPIC pity far away and "until SECRET" so only the gems can stop it
     'taw.gems': JSON.stringify({ v: 1, bal: 25, peak: 12, streak: 0, mig: 1 }),
-    'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, sinceEpic: 0, everEpic: true, starter: true, marks: {}, milestones: [] }),
+    // skipBelow SECRET (stored — no stepper since the ONE auto control, Andy oct11) so the two rolls go fast
+    'taw.markRolls': JSON.stringify({ v: 1, rolls: 1, sinceEpic: 0, everEpic: true, starter: true, marks: {}, milestones: [], skipBelow: 'secret' }),
   });
   await openRoll(page);
-  // reveals below SECRET skip, so the two rolls go fast; AUTO cycled to its highest target (LEGENDARY+)
-  while (await page.getByTestId('roll-skip-up').isEnabled()) await page.getByTestId('roll-skip-up').click(); // → SECRET (the stepper's top hatches out)
-  await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'secret');
+  // AUTO cycled to its highest target (LEGENDARY+)
   for (let i = 0; i < 2; i += 1) await page.getByTestId('roll-auto').click(); // → LEGENDARY+ (OFF → EPIC+ → LEGENDARY+)
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
   const after = await page.evaluate(() => ({
@@ -213,17 +212,14 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', String(after.gems));
 });
 
-test('skip reveals below [tier]: default EPIC, the pick is stored', async ({ page }) => {
+test('ONE auto control: AUTO is the only option on the roll screen (no SKIP stepper), 44px', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.tut.markRolls': '1' });
   await openRoll(page);
-  await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'epic');
-  await expect(page.getByTestId('roll-skip')).toContainText('< EPIC');
-  for (const b of ['roll-skip-up', 'roll-skip-down']) { const r = await page.getByTestId(b).boundingBox(); expect(Math.min(r.width, r.height)).toBeGreaterThanOrEqual(44); } // 44px targets (measured at rest — a press squashes)
-  await page.getByTestId('roll-skip-up').click(); // R4: a stepper — ▶ skips one tier more (EPIC → LEGENDARY)
-  await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'legendary');
-  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.markRolls') || '{}').skipBelow);
-  expect(stored).toBe('legendary');
+  await expect(page.getByTestId('roll-auto')).toBeVisible();
+  await expect(page.getByTestId('roll-skip')).toHaveCount(0);
+  const r = await page.getByTestId('roll-auto').boundingBox();
+  expect(Math.min(r.width, r.height)).toBeGreaterThanOrEqual(44);
 });
 
 test('short balance: the press shows −X + gem (never a silent grey button) — a huge wins balance never buys a roll', async ({ page }) => {
