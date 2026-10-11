@@ -362,6 +362,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-roll-lbl { font-size: var(--fs-h2); line-height: 1; white-space: nowrap; } /* R4: "HOLD TO ROLL" (12 chars) fits the 380 slab at h2 */
 .rs-roll-price { display: inline-flex; align-items: center; gap: 8px; padding: 2px 16px; border-radius: 999px; background: #000; color: #2EFFE0; font-size: var(--fs-k22); line-height: 1.2; }
 .rs-roll-gem { flex: none; }
+.rs-roll-price.is-free { color: #FFE94A; letter-spacing: 0.04em; }
 .rs-roll.is-rolling { background: #c9b84a; }
 /* HOLD TO ROLL (NIGHT oct8 R4): the charge fill is ONE rectangle crossing the face (transform only — the same
    hard-stop stripe the kit's HOLD TO BUY uses); it drains on an early release. CHARGED: the face flips cyan with
