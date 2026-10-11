@@ -72,7 +72,7 @@
 .mc-art { position: absolute; top: var(--mc-y-art); left: calc(90px - var(--mc-art) / 2); width: var(--mc-art); height: var(--mc-art); }
 .mc-cog { position: absolute; inset: 0; display: block; }
 .mc-cog-idle, .mc-cog-fast { position: absolute; inset: 0; display: block; }
-.mc-cog svg { display: block; transform: scale(1.12); } /* oct11: the cog + glyph a size up over the rosette */
+.mc-cog svg { display: block; transform: scale(1.3); } /* oct11: the cog a size up — the glyph sits INSIDE it, never over its teeth (Andy oct11 "the cog needs to be larger") */
 .mc-badge { position: relative; display: block; width: 100%; height: 100%; transform: scale(1.1); }
 .mc-badge.is-sil .mx-sil { filter: brightness(0) opacity(0.9); }
 .mc-glow {
