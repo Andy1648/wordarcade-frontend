@@ -10,6 +10,9 @@
 // History: feat/feel-ladder converted ComboMeter's two loops (combo-shake, combo-spark) to finite
 // 3-iteration tier-entry bursts — 53 -> 51. perf/initial-payload-trim deleted the dead splash mascot-sway +
 // fuse-spark rules (their classes were rendered nowhere) — 51 -> 49.
+// preview/gear-cog-spin: Andy oct11 EXPLICITLY asked for the gear cogs to turn at rest and faster on hover, and the
+// glyphs to bob/tilt — the one sanctioned raise: MarkCard.css (cog idle, cog fast, glyph bob, glyph rock) + the menu
+// YOUR GEAR slot in MarkBadge.css (cog turn, teeth fast turn, glyph bob, glyph rock) — 49 -> 57. Do not use this as precedent.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -19,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..');
 const norm = (p) => p.split('\\').join('/');
 
-export const INFINITE_BUDGET = 49;
+export const INFINITE_BUDGET = 57;
 
 function files(dir, pred) {
   const out = [];

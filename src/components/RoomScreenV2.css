@@ -177,3 +177,16 @@
 @media (prefers-reduced-motion: reduce) {
   .room-wrap[data-skin="v2"] .room-player-chip { animation: none; }
 }
+
+/* the bot's GEM reward (Andy oct10 "include how many gems winning one gets"): gem + "+30" + WIN, one row */
+.room-addbot-gems { display: inline-flex; align-items: center; gap: 4px; }
+.room-addbot-gems b { font-family: 'Bungee', cursive; text-transform: uppercase; font-weight: 400; font-size: var(--fs-k20); color: #0e8f80; line-height: 1; }
+.room-addbot-gems-u { font-family: 'Bungee', cursive; text-transform: uppercase; font-size: var(--fs-k14); color: #1a0b2e; }
+/* the three bot buttons share the row and never leave it: a narrow row stacks the gem line under the name and the
+   "WIN" word drops first (the gem + "+30" is the point) */
+.room-addbot-diff { min-width: 0; }
+@media (max-width: 520px) {
+  .room-addbot-gems-u { display: none; }
+  .room-addbot-gems b { font-size: var(--fs-k18); }
+  .room-addbot-gems .kit-icon { width: 20px; height: 20px; }
+}

@@ -29,7 +29,7 @@ test('unknown / blank keys fall back to the uppercased key, never throw', () => 
 });
 
 test('the readout pairs the label with the desc', () => {
-  assert.equal(difficultyReadout('medium'), 'CRAZY — 10s · 2 lives');
+  assert.equal(difficultyReadout('medium'), 'CRAZY — 10s · 3 lives');
 });
 
 test('Rebirth Rush: difficulty is not in the wins formula, so the picker quotes no "×N WINS"', () => {

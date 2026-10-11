@@ -362,6 +362,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-roll-lbl { font-size: var(--fs-h2); line-height: 1; white-space: nowrap; } /* R4: "HOLD TO ROLL" (12 chars) fits the 380 slab at h2 */
 .rs-roll-price { display: inline-flex; align-items: center; gap: 8px; padding: 2px 16px; border-radius: 999px; background: #000; color: #2EFFE0; font-size: var(--fs-k22); line-height: 1.2; }
 .rs-roll-gem { flex: none; }
+.rs-roll-price.is-free { color: #FFE94A; letter-spacing: 0.04em; }
 .rs-roll.is-rolling { background: #c9b84a; }
 /* HOLD TO ROLL (NIGHT oct8 R4): the charge fill is ONE rectangle crossing the face (transform only — the same
    hard-stop stripe the kit's HOLD TO BUY uses); it drains on an early release. CHARGED: the face flips cyan with
@@ -507,8 +508,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   opacity: 0;
 }
 .rs-cut.is-dim .rs-cut-rays,
-.rs-cut.is-dim .rs-cut-tier,
-.rs-cut.is-dim .rs-cut-keep { display: none; }
+.rs-cut.is-dim .rs-cut-tier { display: none; }
 .rs-cut-shake { position: relative; display: grid; justify-items: center; gap: 14px; padding: 16px; text-align: center; }
 .rs-cut.is-dim .rs-cut-shake { gap: 18px; }
 /* the tier line is a TierBanner (markCard/TierBanner.jsx, gear UI v3) — the reveal slams it once */
@@ -526,7 +526,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 .rs-cut.is-full .rs-cut-stamp { font-size: min(11cqw, 92px); -webkit-text-stroke: 8px #000; }
 .rs-cut-mark { display: grid; justify-items: center; }
-.rs-cut-keep { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #fff; opacity: 0; }
+.rs-cut-keep { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; opacity: 0; }
 .rs-parts.is-cut { top: 50%; }
 .rs-cut .rs-part { width: 34px; height: 34px; left: -17px; top: -17px; }
 
@@ -537,8 +537,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
    backdrop that closes by itself. */
 .rs-cut.is-lite { background: rgba(5, 2, 10, 0.9); }
 .rs-cut.is-lite .rs-cut-rays,
-.rs-cut.is-lite .rs-cut-tier,
-.rs-cut.is-lite .rs-cut-keep { display: none; }
+.rs-cut.is-lite .rs-cut-tier { display: none; }
 .rs-cut.is-lite .rs-cut-stamp { font-size: min(7cqw, 40px); -webkit-text-stroke: 5px #000; }
 .rv-dim { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
 .rv-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }

@@ -50,15 +50,28 @@ export function modeMult(mode) {
 
 // GEMS (FINAL table)
 export const ROLL_PRICE = 75;
-export const DROP_CHANCE = 1 / 15;
+export const DROP_CHANCE = 1 / 10; // Andy oct10 "we need more ways for users to get gems": was 1 / 15
 export const DROP_MIN = 3;
 export const DROP_MAX = 12;
-export const BOT_WIN = 18;
+export const BOT_WIN = 30; // Andy oct10 "make game modes give more gems": was 18
 // Andy oct8: a bots-only win pays by the HARDEST bot beaten (MEDIUM stays the old flat 18).
-export const BOT_WIN_BY_DIFF = Object.freeze({ easy: 8, medium: 18, hard: 30 });
-export const PER_PLAYER_BEATEN = 15;
+export const BOT_WIN_BY_DIFF = Object.freeze({ easy: 15, medium: 30, hard: 60 }); // Andy oct10: was 8 / 18 / 30
+export const PER_PLAYER_BEATEN = 15; // (season 1's table; season 2 pays the WINNER-TAKES-ALL pot below)
+// Andy oct10 "a lot more for multiplayer … n × how many people playing for the winner to take all gems": a game with
+// people in it pays its WINNER POT_PER_PLAYER × the people playing (you included); everyone else gets the pot's 0.
+export const POT_PER_PLAYER = 30;
+export function winnerPot(people) {
+  const n = int0(people);
+  return n >= 2 ? POT_PER_PLAYER * n : 0;
+}
+// WORD RACE pays SPEED (Andy oct10): 1 gem per 2 words a minute, every racer, capped.
+export const RACE_GEMS_PER_WPM = 0.5;
+export const RACE_SPEED_CAP = 40;
+export function raceSpeedGems(wpm) {
+  return Number.isFinite(wpm) && wpm > 0 ? Math.min(RACE_SPEED_CAP, Math.floor(wpm * RACE_GEMS_PER_WPM)) : 0;
+}
 export const STREAK_BONUS = 4; // flat, on every win that extends a streak (a win after a win)
-export const LEVEL_UP = 0; // levels pay no gems
+export const LEVEL_UP = 3; // Andy oct10: every level pays 3 gems — once per level per climb (v3/hooks gemsSwap.b), was 0
 export const ACH_MIN = 40;
 export const ACH_MAX = 200;
 

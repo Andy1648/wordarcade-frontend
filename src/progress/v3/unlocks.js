@@ -13,7 +13,7 @@ export const UNLOCKS = [
   { id: 'rollScreen', at: 0, label: 'ROLL + INDEX' },
   { id: 'autoRoll', at: 1, label: 'AUTO ROLL' },
   { id: 'autoRebirth', at: 2, label: 'AUTO REBIRTH' },
-  { id: 'mark2', at: 5, label: '2ND MARK SLOT' },
+  { id: 'mark2', at: 5, label: '2ND GEAR SLOT' },
   { id: 'luck', at: 7, label: 'LUCK ×1.25' },
 ];
 export const LUCK_UNLOCK_MULT = 1.25;

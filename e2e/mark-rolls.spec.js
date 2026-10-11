@@ -47,7 +47,9 @@ const card = (page) => page.locator('[data-testid="mark-roll-result"]');
 const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filter((a) => {
   const el = a.effect && a.effect.target;
   // RUNNING only: a finished one-shot (the rarity sweep's fill-mode both) stays in getAnimations() but moves nothing
-  return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running';
+  // GEAR TURN (Andy oct11): a shown card's cog turn + glyph bob are the sanctioned rest loop, not roll-UI motion
+  return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running'
+    && !(/^(mc-spin|mc-bob|mc-rock)$/.test(a.animationName || '') && a.effect.getTiming().iterations === Infinity);
 }).length);
 const SPUN = 4600; // past the full spin (2.4 s every tier, NIGHT oct8) + its land beat, with room
 // ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
@@ -117,7 +119,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   expect(await rollUiAnims(page)).toBe(0);
   const infinite = await page.evaluate(() => document.getAnimations().filter((a) => {
     const t = a.effect && a.effect.getTiming && a.effect.getTiming();
-    return t && t.iterations === Infinity;
+    // GEAR TURN (Andy oct11): the cog's turn + the glyph's bob are the one sanctioned rest loop on a gear
+    return t && t.iterations === Infinity && !/^(mc-spin|mc-bob|mc-rock|hp-gear-)/.test(a.animationName || '');
   }).length);
   expect(infinite).toBeLessThanOrEqual(1); // the menu's single pre-existing loop, nothing new
   const wc = await page.evaluate(() => [...document.querySelectorAll('.rs-overlay, .rs-overlay *')].filter((n) => n.style && n.style.willChange).length);

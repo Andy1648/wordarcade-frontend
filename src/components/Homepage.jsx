@@ -8,7 +8,7 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
-import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, focusNav } from './MenuNav';
+import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
@@ -335,8 +335,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         // narrow or short card (then it measures 0), so it never sets the minimum card width; the
         // slot is sized to the WIDER of the two lines, not their sum.
         const tail = textEm(el.querySelector('.game-card-perk-tail'));
-        whole = Math.max(whole, all - tail, tail);
-        chunk = Math.max(chunk, all - per - mult - tail, perMax, mult);
+        // the WINS icon (Andy oct10) is no text — its box + gap, in em of the line (KitIcon 22px at the line's size)
+        const ico = el.querySelector('.game-card-payout-ico') ? 1.85 : 0;
+        whole = Math.max(whole, all - tail + ico, tail);
+        chunk = Math.max(chunk, all - per - mult - tail + ico, perMax, mult);
       }
       return { whole, chunk };
     };
@@ -952,33 +954,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     runWhenConnected('create', () => onSelectGame && onSelectGame(gameId));
   }
 
-  // Dialog PLAY SOLO (Word Bomb): straight into a round vs a medium bot - App's handlePlaySolo sends
-  // the create/add_bot frames and starts once the bot is seated. Through runWhenConnected like
-  // CREATE, so a cold socket shows WAKING THE SERVER… on the button and fires on open.
-  function handleDialogSolo() {
-    if (navigating || !dialog) return;
-    sound.click();
-    setNavigating(true);
-    runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
-  }
-
   // Phone hook PLAY SOLO: the first-timer typed a word on the menu and took the one-tap offer.
-  // The same path as the dialog's PLAY SOLO, without a dialog to open first.
+  // Straight into a round vs a medium bot (App's handlePlaySolo), no dialog.
   function handleHookSolo() {
     if (navigating) return;
     sound.click();
     setNavigating(true);
     runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
-  }
-
-  // Dialog QUICK MATCH (WORD RACE): straight into the race queue - App sends race_quick_match and
-  // the server seats us in the fullest waiting race (or opens one; bots fill after 10s). Same
-  // runWhenConnected path as PLAY SOLO, so a cold socket shows WAKING THE SERVER… on the button.
-  function handleDialogQuickMatch() {
-    if (navigating || !dialog) return;
-    sound.click();
-    setNavigating(true);
-    runWhenConnected('solo', () => onRaceQuickMatch && onRaceQuickMatch());
   }
 
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
@@ -1249,11 +1231,41 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     setShowMarks(false);
     requestAnimationFrame(() => focusNav(navRootRef.current, 'gear'));
   };
-  const markChip = markShown ? <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} /> : null;
+  // 2ND GEAR (Andy oct10): season 2's R5 slot, under YOUR GEAR — padlock + R5 below it (a tap opens REBIRTH, where the
+  // unlock lives), else the worn 2nd gear / EQUIP ONE; a tap opens the EQUIP screen in slot-2 mode ('gear2').
+  const gear2Gate = s2Unlocks ? s2Unlocks.unlockAt('mark2') : null;
+  const gear2Lock = s2Unlocks && gear2Gate != null && !s2Unlocks.unlocked('mark2', s2State) ? `R${gear2Gate}` : null;
+  const [gear2Id, setGear2Id] = useState(() => (SEASON2 && V3.store && V3.store.mark2Id ? V3.store.mark2Id() : null));
+  const wornGear2 = markShown && !gear2Lock && gear2Id && gear2Id !== equippedMark ? markEntry(gear2Id) : null;
+  const openGear2 = () => {
+    if (navigating) return;
+    if (gear2Lock) { handleRebirth(); return; }
+    if (!ownsAnyGear) { openMarks('roll'); return; }
+    sound.click();
+    setShowMarks('gear2');
+  };
+  const closeGear2 = () => {
+    setShowMarks(false);
+    requestAnimationFrame(() => focusNav(navRootRef.current, 'gear2'));
+  };
+  const showGear2 = SEASON2 && markShown && gear2Gate != null;
+  const markChip = markShown ? (
+    showGear2 ? (
+      <>
+        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
+        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} />
+      </>
+    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
+  ) : null;
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
-  const gearSlot = markShown && isPagedMenu ? <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} /> : null;
+  const gearSlot = markShown && isPagedMenu ? (
+    <>
+      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
+      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} /> : null}
+    </>
+  ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
   // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
@@ -1423,13 +1435,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onCreate={handleDialogCreate}
             onJoin={handleDialogJoin}
             onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' || dialog.game.id === 'sat-rush' ? handleDialogPlay : undefined}
-            onPlaySolo={
-              dialog.game.id === 'word-bomb' && onPlaySolo
-                ? handleDialogSolo
-                : dialog.game.id === 'word-race' && onRaceQuickMatch
-                  ? handleDialogQuickMatch
-                  : undefined
-            }
+            // Andy oct10: "for all game modes besides sat rush, just 2 buttons - create room and join" — no SOLO /
+            // QUICK MATCH lead (a room adds bots on the room screen).
+            onPlaySolo={undefined}
             connecting={connecting}
             coldStart={coldStart}
             blitzPacks={blitzPacks}
@@ -1492,7 +1500,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </Suspense>
         </ScreenBoundary>
       )}
-      {showMarks && showMarks !== 'gear' && (
+      {showMarks === 'gear2' && (
+        <ScreenBoundary name="equip2" onBack={closeGear2}>
+          <Suspense fallback={null}>
+            <EquipScreen
+              slot={2}
+              equippedId={gear2Id}
+              mainId={equippedMark}
+              unlockedIds={markIdList}
+              earned={earnedAch}
+              onEquip={(id) => setGear2Id(id)}
+              onClose={closeGear2}
+            />
+          </Suspense>
+        </ScreenBoundary>
+      )}
+      {showMarks && showMarks !== 'gear' && showMarks !== 'gear2' && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
           <Suspense fallback={null}>
             <MarksIndex

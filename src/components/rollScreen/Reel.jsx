@@ -451,11 +451,13 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       }
     }
     const done = revealDoneMs(tier, ext);
-    if (full) {
+    // Andy oct10 ("let user like click anywhere to continue so they can see the stats of the cards instead of just
+    // skipping through after like 2 seconds"): EVERY reveal now rests until a tap — only AUTO ROLL closes by itself.
+    if (!cbs.current.auto) {
       // the card, the odds, the stats are all in before it asks for the tap
       anim(n.cutKeep, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0.35, offset: 0.45 }, { opacity: 1, offset: 0.7 }, { opacity: 0.35, offset: 0.85 }, { opacity: 1 }], { duration: 2000, delay: Math.max(KEEP_HOLD_MS, done + 150), easing: 'ease-in-out' });
-    } else if (kind === 'lite' || cbs.current.auto) {
-      later(finishCut, selfCloseMs(tier, ext, { auto: !!cbs.current.auto }));
+    } else {
+      later(finishCut, selfCloseMs(tier, ext, { auto: true }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cutRes]);
@@ -540,7 +542,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
             </div>
             {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} glow={GLOW_TIERS.has(cr.tier) ? cr.tier : null} /> : null}
           </div>
-          <div className="rs-cut-keep" ref={reg('cutKeep')}>TAP TO KEEP</div>
+          <div className="rs-cut-keep" ref={reg('cutKeep')}>TAP TO CONTINUE</div>
         </div>
         <div className="rv-flash" ref={reg('rvFlash')} style={cr ? { background: cr.tier === 'secret' ? '#fff' : lineOf(cr.tier) } : undefined} />
         <div className="rs-parts is-cut">

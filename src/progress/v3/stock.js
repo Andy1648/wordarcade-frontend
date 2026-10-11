@@ -34,10 +34,10 @@ export const EXTEND_MS = 5 * 60 * 1000;
 
 export const STOCK = [
   // `name` = what it is, `big` = the effect, `what` = WHAT it boosts (Andy oct8: "boost what?"), `time` = how long.
-  { id: 'xp25', rarity: 'common', icon: 'levels', name: 'XP BOOST', big: '+25%', what: 'XP PER KEY', time: '10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.25, min: 10 },
-  { id: 'wins25', rarity: 'common', icon: 'wins', name: 'WINS BOOST', big: '+25%', what: 'WINS PER WORD', time: '10 MIN', price: 60, max: 5, fx: 'wins', mult: 1.25, min: 10 },
+  { id: 'xp25', rarity: 'common', icon: 'levels', name: 'XP BOOST', big: '+50%', what: 'XP PER KEY', time: '10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50% (id kept: saves)
+  { id: 'wins25', rarity: 'common', icon: 'wins', name: 'WINS BOOST', big: '+50%', what: 'WINS PER WORD', time: '10 MIN', price: 60, max: 5, fx: 'wins', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50%
   { id: 'luck2', rarity: 'rare', icon: 'luck', name: 'LUCK BOOST', big: '×2', what: 'ROLL LUCK', time: '15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
-  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×10', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 750, max: 2, boost: { mult: 10, min: 5 } },
+  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×10', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 300, max: 2, boost: { mult: 10, min: 5 } },
   { id: 'extend', rarity: 'rare', icon: 'clock', name: 'TIME BOOST', big: '+5 MIN', what: 'XP · WINS · LUCK BOOSTS', time: 'NOT OVERDRIVE', price: 150, max: 2, extend: true },
   { id: 'epicroll', rarity: 'legendary', icon: 'roll', name: 'EPIC+ ROLL', big: '1', what: 'FREE EPIC+ ROLL', time: 'COMING SOON', price: 495, max: 1, buyable: false },
 ];

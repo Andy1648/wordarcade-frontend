@@ -147,3 +147,13 @@
   border-color: #a8381a;
   color: #0d0618;
 }
+
+/* ---- Andy oct10: the WINS line big, with its icon; the GEM sources under it (Bungee, ink stroke, hard shadow) ---- */
+.mode-ex-pay2 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 12px; padding-top: 10px; border-top: 2px dashed #2a1b3f; }
+.mode-ex-pay2-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-weight: 400; font-size: var(--fs-k30); line-height: 1; color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.mode-ex-pay2-u,
+.mode-ex-gem-u { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k16); letter-spacing: 0.03em; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
+.mode-ex-gems { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mode-ex-gem { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 8px; }
+.mode-ex-gem .kit-icon { flex: 0 0 auto; }
+.mode-ex-gem-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-weight: 400; font-size: var(--fs-k22); line-height: 1.1; color: #2EFFE0; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; white-space: nowrap; }

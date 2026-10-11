@@ -443,17 +443,20 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const anim = anims[i];
       if (!el || !anim) return;
       const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
-      el.classList.remove('is-tap', 'is-crit'); // reset if this node was last used for a tap / a crit
+      el.classList.remove('is-crit'); // reset if this node was last used for a crit
+      // Andy oct10 ("why are there neon letters … those arent explained"): a key pops what it PAID — "+N XP", in the
+      // tap pop's dress (no typed letter). The CRIT keeps its key: CRIT +N says what happened.
+      el.classList.add('is-tap');
       // KEY TIER tier (item 1) drives the visible/audible escalation the player BOUGHT:
       // T1-T4 teal, T5+ gold (overrides the streak colour); T3+ a hard offset shadow;
       // T2+ particle shards. All finite/pooled; particles skip under reduced motion.
       const tierColour = feelTier >= 5 ? TIER_GOLD : feelTier >= 1 ? TIER_TEAL : colour;
-      // children: [0] = letter (tier colour), [1] = "+N" (always yellow, via CSS)
-      el.children[0].textContent = letter;
-      el.children[0].style.color = tierColour;
-      el.children[0].style.textShadow = feelTier >= 3 ? '2px 2px 0 #000' : '';
-      el.children[1].textContent = plusText;
-      el.children[1].style.color = ''; // back to CSS yellow
+      // children: [0] = (empty — the typed letter is not shown), [1] = "+N XP" in the tier colour
+      el.children[0].textContent = '';
+      // a band-only pop (useXpCapture: a menu WORD's rarity band, no +N) still shows its band word
+      el.children[1].textContent = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
+      el.children[1].style.color = tierColour;
+      el.children[1].style.textShadow = feelTier >= 3 ? '2px 2px 0 #000' : '';
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
@@ -519,6 +522,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[0].style.textShadow = '';
       el.children[1].textContent = critText;
       el.children[1].style.color = '';
+      el.children[1].style.textShadow = '';
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       const still = prefersReducedMotion();
