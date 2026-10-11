@@ -156,6 +156,11 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     expect(a.small).toEqual([]);
     await page.getByRole('button', { name: /^Settings/ }).first().click();
     await expect(page.locator('.sp')).toBeVisible();
+    // the popover scales in: measure once its entrance has finished (mid-pop a 44px switch reads 19px — a CI flake)
+    await page.waitForFunction(() => document.getAnimations().every((a) => {
+      const t = a.effect && a.effect.getComputedTiming && a.effect.getComputedTiming();
+      return a.playState !== 'running' || !t || t.iterations === Infinity;
+    }));
     const s = await audit('.sp');
     expect(s.h).toBe(false);
     expect(s.small).toEqual([]);
