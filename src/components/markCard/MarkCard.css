@@ -227,7 +227,10 @@
    eases to a held tilt + enlarge and eases back on leave. Also on the roll screen's landed card (a bare .mc:hover). */
 .mc:not(.is-still) .mc-badge { transition: transform 260ms cubic-bezier(0.3, 0.7, 0.3, 1); }
 :is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-cog-fast { animation: mc-spin 1100ms linear infinite; }
-:is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-badge { animation: none; transform: scale(1.22) rotate(-12deg); }
+:is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-badge { animation: mc-tilt 380ms cubic-bezier(0.25, 0.8, 0.3, 1) forwards; }
+/* the hover tilt is a finite ANIMATION, not a transition (Andy oct11 "more smoother (not instant)"): swapping the idle bob
+   for a transform transition snapped in one frame (measured -1.6° → -12° in < 35 ms); an animation always plays its 380 ms */
+@keyframes mc-tilt { to { transform: scale(1.22) rotate(-12deg); } }
 
 @keyframes mc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes mc-bob {

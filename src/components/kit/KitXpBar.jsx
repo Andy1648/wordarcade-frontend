@@ -23,7 +23,7 @@
 //
 // NIGHT oct8 #3 (with `lvInside` — the season-2 menu): a GHOST fill (a pale layer under the real fill) JUMPS to the
 // target the instant XP lands, and the real fill follows on the 600 ms glide. A ONE-level wrap is a beat of its own:
-// the fill runs to 100 %, HOLDS 200 ms, the LV plate POPS, the fill snaps to 0 and carries on to the target (keys that
+// the fill runs to 100 % fast (WRAP_FILL_MS), the LV plate POPS, the fill snaps to 0 and carries on to the target (keys that
 // land during the hold queue; a bigger climb keeps the compressed sweep). Writes only (no layout reads), finite.
 import { useEffect, useRef } from 'react';
 import { createClimbPlayer } from './climb.js';
@@ -34,7 +34,11 @@ import './tokens.css';
 import './KitXpBar.css';
 
 export const GAIN_HIDE_MS = 1400;
-export const WRAP_HOLD_MS = 200;
+// NO WAIT AT A LEVEL-UP (Andy oct11: "when the first bar reaches the end, it waits for the actual bar to follow. there
+// cant be a delay"): the ghost jumps to full at once, so the real fill now runs there in WRAP_FILL_MS (was the 600 ms
+// glide) and snaps straight to the next level (was a 200 ms hold).
+export const WRAP_FILL_MS = 180;
+export const WRAP_HOLD_MS = 0;
 // the plate's content rests counter-skewed (skewX 12deg — KitXpBar.css), so the pop keeps the skew in every frame
 const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
 const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
@@ -166,7 +170,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       climbN.current = 0;
       if (root) root.dataset.state = 'climb';
       promote(true);
-      p.to(p.level, 1);
+      p.to(p.level, 1, { maxMs: Math.max(40, WRAP_FILL_MS * (1 - p.frac)) }); // the run to full scales with the distance left
       return;
     }
     const climbing = tl > p.level || (tl === p.level && tf > p.frac);

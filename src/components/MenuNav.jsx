@@ -236,7 +236,8 @@ export function subChip(x) {
   const icon = x.kind === 'baseWins' ? 'wins' : x.kind === 'gemsPct' ? 'gems' : x.kind === 'luckPct' ? 'luck' : 'crit';
   return { n, icon, label: t };
 }
-export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
+export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }) {
+  const two = slot === 2; // the 2ND GEAR, unlocked (Andy oct11 "i want it to be the same as the first gear")
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   // the stat as it PAYS (markRollsCore.mainTag — the payout's own statOf), never a legacy blurb sentence
@@ -253,14 +254,14 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
     <button
       ref={slotRef}
       type="button"
-      className={`hp-gear menu-mark${mark ? ' is-worn' : ' is-empty'}`}
+      className={`hp-gear ${two ? 'menu-mark2 hp-gear--2' : 'menu-mark'}${mark ? ' is-worn' : ' is-empty'}`}
       data-tier={tier || undefined}
       style={rar ? { '--gear-line': rar.line, '--gear-edge': rar.edge, '--gear-fill': rar.fill } : undefined}
       onClick={onClick}
       disabled={disabled}
-      data-nav="gear"
-      aria-haspopup={mark ? 'dialog' : undefined}
-      aria-label={mark ? `Your gear: ${mark.name}, ${tier}, ${stat.big} ${stat.unit}. Open your gear` : 'Your gear: none. Open your gear'}
+      data-nav={two ? 'gear2' : 'gear'}
+      aria-haspopup={mark || two ? 'dialog' : undefined}
+      aria-label={`${two ? '2nd gear' : 'Your gear'}: ${mark ? `${mark.name}, ${tier}, ${stat.big} ${stat.unit}` : 'none'}. Open your gear`}
     >
       {mark && GLOW_TIERS.has(tier) ? <Suspense fallback={null}><GearFx tier={tier} /></Suspense> : null}
       {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
@@ -270,7 +271,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
       {/* the BACKDROP (Andy oct11 "its just plain rn"): a sunburst / halftone / drips asset as a mask, in the tier colour */}
       <span className="hp-gear-bg" aria-hidden="true" />
       {/* the NAME on a tier plate across the top — the card's ribbon, sideways (no "YOUR GEAR" label: Andy oct11) */}
-      <span className="hp-gear-plate"><FitText className="hp-gear-sub">{mark ? mark.name : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</FitText></span>
+      <span className="hp-gear-plate"><FitText className="hp-gear-sub">{mark ? mark.name : two ? '2ND GEAR · EQUIP ONE' : owns ? 'EQUIP ONE' : 'ROLL FOR ONE'}</FitText></span>
       <span className="hp-gear-body">
         {mark ? (
           <span className="hp-gear-art">
@@ -287,7 +288,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
           {mark && stat.unit ? <span className="hp-gear-unit">{stat.unit}</span> : null}
           {/* the SUBSTATS as a 2×2 grid of icon chips under the main stat — the card's subs plate, compacted */}
           {subs.length ? (
-            <span className="hp-gear-subs" data-testid="gear-subs">
+            <span className="hp-gear-subs" data-testid={two ? 'gear2-subs' : 'gear-subs'}>
               {subs.map((c, i) => (
                 <span key={i} className={`hp-gear-subline is-${c.icon}`} title={c.label} aria-label={c.label}>
                   {c.icon === 'crit' ? <img className="hp-gear-subico" src="/fx/crit-burst.svg" alt="" draggable="false" />
@@ -311,6 +312,8 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled }) {
  * and empty: NONE / EQUIP ONE + a dot. A tap opens the EQUIP screen in slot-2 mode. Static (the showcase is slot 1's).
  */
 export function MenuGearSlot2({ mark, locked = null, onClick, disabled }) {
+  // UNLOCKED: the same full slot as YOUR GEAR (name plate, big stat, substat chips, glow, showcase) — Andy oct11
+  if (!locked) return <MenuGearSlot mark={mark} owns onClick={onClick} disabled={disabled} slot={2} />;
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   const stat = mark ? gearSplit(mainTag(mark.id) || mark.blurb || mark.name) : null;

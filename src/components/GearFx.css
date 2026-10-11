@@ -11,6 +11,13 @@
   z-index: -2;
   pointer-events: none;
 }
+/* HOVER (Andy oct11 "make the glow bigger when hovering over a gear"): the host's glow swells while it is hovered and
+   eases back on leave — one transform transition on the aura box, no loop, nothing at rest */
+.gfx { transition: transform 280ms cubic-bezier(0.3, 0.7, 0.3, 1); }
+@media (hover: hover) {
+  :hover > .gfx { transform: scale(1.2); }
+}
+@media (prefers-reduced-motion: reduce) { .gfx { transition: none; } :hover > .gfx { transform: none; } }
 .gfx-aura {
   position: absolute;
   inset: 0;
