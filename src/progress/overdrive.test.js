@@ -1,4 +1,4 @@
-// node --test — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush"): ×10 on XP and wins for 5 minutes, triggered by
+// node --test — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush"): ×5 (Andy oct11; was ×10) on XP and wins for 5 minutes, triggered by
 // 30–60 minutes of PLAY (typing time, idle gaps capped). It is a BOOST source: boostMult = code boost × OVERDRIVE,
 // and XP per letter = 10 × KEY × 5^R × MARK × BOOST.
 import test from 'node:test';
@@ -43,7 +43,7 @@ test('OVERDRIVE never triggers before 30 minutes of play (earliest roll)', () =>
     assert.equal(overdriveMult(T0 + 30 * MIN), 1);
     assert.equal(notePlay(4999, T0 + 30 * MIN, () => 0), false, 'one ms short of 30:00');
     assert.equal(notePlay(1, T0 + 30 * MIN + 1, () => 0), true, 'starts at exactly 30:00 of play');
-    assert.equal(overdriveMult(T0 + 30 * MIN + 1), 10);
+    assert.equal(overdriveMult(T0 + 30 * MIN + 1), 5);
   });
 });
 
@@ -68,14 +68,14 @@ test('OVERDRIVE always triggers by 60 minutes of play (latest roll), and in [30,
   }
 });
 
-test('OVERDRIVE is ×10 for exactly 5 wall-clock minutes, then off', () => {
+test('OVERDRIVE is ×5 (Andy oct11) for exactly 5 wall-clock minutes, then off', () => {
   withStorage({}, () => {
     const r = playFor(31, () => 0);
     assert.ok(r);
     assert.equal(isOverdriveActive(r.now), true);
-    assert.equal(overdriveMult(r.now), 10);
+    assert.equal(overdriveMult(r.now), 5);
     assert.equal(overdriveRemaining(r.now), 5 * MIN);
-    assert.equal(overdriveMult(r.now + 5 * MIN - 1), 10);
+    assert.equal(overdriveMult(r.now + 5 * MIN - 1), 5);
     assert.equal(overdriveMult(r.now + 5 * MIN), 1);
     assert.equal(overdriveRemaining(r.now + 6 * MIN), 0);
   });
@@ -122,7 +122,7 @@ test('storage blocked: no OVERDRIVE, never throws', () => {
   }
 });
 
-test('boostMult = code boost × OVERDRIVE (×3 × ×10 = ×30)', () => {
+test('boostMult = code boost × OVERDRIVE (×3 × ×5 = ×15)', () => {
   withStorage({}, () => {
     const now = Date.now();
     assert.equal(boostMult(now), 1);
@@ -130,8 +130,8 @@ test('boostMult = code boost × OVERDRIVE (×3 × ×10 = ×30)', () => {
     assert.equal(codeBoostMult(now), 3);
     assert.equal(boostMult(now), 3);
     localStorage.setItem(OVERDRIVE_KEY, JSON.stringify({ playMs: 0, nextMs: 30 * MIN, until: now + 5 * MIN }));
-    assert.equal(overdriveMult(now), 10);
-    assert.equal(boostMult(now), 30);
+    assert.equal(overdriveMult(now), 5);
+    assert.equal(boostMult(now), 15);
     assert.equal(boostMult(now + 5 * MIN), 3, 'OVERDRIVE over, the code boost still runs');
     assert.equal(boostMult(now + 10 * MIN), 1);
   });
@@ -142,9 +142,9 @@ test('XP per letter = 10 × KEY × 5^R × MARK × BOOST (OVERDRIVE included)', (
     assert.equal(letterXpNow(), 250); // 10 × 5 × 5
     const until = Date.now() + 5 * MIN;
     localStorage.setItem(OVERDRIVE_KEY, JSON.stringify({ playMs: 0, nextMs: 30 * MIN, until }));
-    assert.equal(letterXpNow(), 2500); // × OVERDRIVE 10
+    assert.equal(letterXpNow(), 1250); // × OVERDRIVE 5
     startBoost(3, 10);
-    assert.equal(letterXpNow(), 7500); // × code boost 3
+    assert.equal(letterXpNow(), 3750); // × code boost 3
   });
   withStorage({ 'taw.keytier': '9', 'taw.rebirths': '2' }, () => {
     assert.equal(letterXpNow(), 250000); // 10 × 1000 × 25
@@ -156,8 +156,8 @@ test('OVERDRIVE multiplies WINS too (it is in the BOOST row of the frozen formul
     const o = { mode: 'wordBomb', rebirthCount: 0, keyTier: 0, wordLength: 5 };
     assert.equal(perWordWins(o), 10);
     localStorage.setItem(OVERDRIVE_KEY, JSON.stringify({ playMs: 0, nextMs: 30 * MIN, until: Date.now() + 5 * MIN }));
-    assert.equal(perWordWins(o), 100);
-    assert.equal(perWordWins({ ...o, mode: 'satRush', rebirthCount: 2 }), 12500); // 10 × 5 × 25 × 10
+    assert.equal(perWordWins(o), 50);
+    assert.equal(perWordWins({ ...o, mode: 'satRush', rebirthCount: 2 }), 6250); // 10 × 5 × 25 × 5
   });
 });
 

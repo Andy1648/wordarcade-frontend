@@ -15,7 +15,7 @@ import { markOverdriveSec } from './markRollsCore.js';
 // here, its state under the season's own key (v3/hooks.js S2_KEYS maps taw.overdrive → taw.s2.overdrive).
 
 export const OVERDRIVE_KEY = 'taw.overdrive';
-export const OVERDRIVE_MULT = 10;
+export const OVERDRIVE_MULT = 5; // Andy oct11: ×5 (was ×10) — every OVERDRIVE (random, MYTHIC+ free, shop, codes, daily drop)
 export const OVERDRIVE_MIN = 5;
 export const OVERDRIVE_EVERY_MIN = [30, 60]; // minutes of PLAY between OVERDRIVEs (uniform)
 export const PLAY_GAP_CAP_MS = 5000; // one flush gap never counts more than 5 s of play

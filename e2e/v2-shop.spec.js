@@ -2,7 +2,7 @@
 // mock. Wins buy only POWER (hold to buy, 1 s, one per hold); everything in the STOCK costs GEMS (v3/stock.js):
 //   1. KEY with wins: a tap does nothing, a full hold buys T0 → T1 for 150 wins (FINAL v2 150 × 5^T);
 //   2. a gem item: +50% XP for 45 gems, ×5 → ×4 LEFT, the effect is running;
-//   3. SOLD OUT: ×10 OVERDRIVE ×2 → two buys → the stamp; a third try charges nothing;
+//   3. SOLD OUT: ×5 OVERDRIVE ×2 → two buys → the stamp; a third try charges nothing;
 //   4. short on gems / the visual-only FREE EPIC+ ROLL charge nothing;
 //   5. the phone gets the same screen.
 // Date is pinned 60 s into a 5-minute restock window, so a restock never lands mid-test.
@@ -98,7 +98,7 @@ test('a STOCK item costs GEMS: +50% XP · 10 MIN for 45, ×5 → ×4 LEFT, the e
   expect(st.fx.xp - T, '10 minutes of +50% XP').toBe(10 * 60 * 1000);
 });
 
-test('SOLD OUT: two ×10 OVERDRIVEs empty it, the stamp lands, a third try charges nothing', async ({ page }) => {
+test('SOLD OUT: two ×5 OVERDRIVEs empty it, the stamp lands, a third try charges nothing', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   const shop = await boot(page, { gems: 640 }); // OVERDRIVE is 300 gems (Andy oct10: "much cheaper")
   const od = card(shop, 'overdrive');
@@ -112,7 +112,7 @@ test('SOLD OUT: two ×10 OVERDRIVEs empty it, the stamp lands, a third try charg
   await expect(shop.locator('.sp2-note')).toContainText('SOLD OUT');
   expect((await s2(page)).gems, 'a sold-out card charges nothing').toBe(40);
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
-  expect(boost.mult, 'OVERDRIVE runs as a ×10 boost').toBe(10);
+  expect(boost.mult, 'OVERDRIVE runs as a ×5 boost').toBe(5);
 });
 
 test('short on gems, and the visual-only FREE EPIC+ ROLL: nothing charged, nothing taken', async ({ page }) => {

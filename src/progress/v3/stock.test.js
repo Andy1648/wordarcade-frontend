@@ -49,7 +49,7 @@ test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks'
   assert.equal(r.gems, 1700);
   assert.equal(G.getGems(), 1700);
   assert.equal(r.left.overdrive, 1);
-  assert.equal(BO.codeBoostMult(T0 + 1000), 10, '×10 OVERDRIVE is a ×10 boost');
+  assert.equal(BO.codeBoostMult(T0 + 1000), 5, '×5 OVERDRIVE is a ×5 boost (Andy oct11)');
   assert.ok(BO.boostRemaining(T0) <= 5 * 60000 && BO.boostRemaining(T0) > 4 * 60000);
   r = ST.buyStock('overdrive', T0 + 1000);
   assert.equal(r.ok, true);
@@ -114,14 +114,14 @@ test('+5 MIN: needs an XP / WINS / LUCK boost running; extends those, NEVER OVER
   assert.equal(ST.stockFxLeft('wins', T0) - w0, ST.EXTEND_MS);
 });
 
-test('OVERDRIVE: ×10, a 2nd buy ADDS 5 MIN and stays ×10 — time stacks, the multiplier never does (Andy oct8)', () => {
+test('OVERDRIVE: ×5, a 2nd buy ADDS 5 MIN and stays ×5 — time stacks, the multiplier never does (Andy oct8)', () => {
   mem.clear();
   setGems(2000);
   ST.buyStock('overdrive', T0);
-  assert.equal(BO.codeBoostMult(T0 + 1000), 10);
+  assert.equal(BO.codeBoostMult(T0 + 1000), 5);
   assert.equal(BO.boostRemaining(T0), 5 * 60_000);
   ST.buyStock('overdrive', T0 + 60_000);
-  assert.equal(BO.codeBoostMult(T0 + 61_000), 10, 'still ×10, never ×100');
+  assert.equal(BO.codeBoostMult(T0 + 61_000), 5, 'still ×5, never ×25');
   assert.equal(BO.boostRemaining(T0), 10 * 60_000, '5 + 5 minutes');
 });
 

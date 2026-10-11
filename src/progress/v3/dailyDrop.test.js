@@ -104,7 +104,7 @@ test('a new local day resets it (midnight, not 24 h after the claim)', () => {
   assert.equal(D.dropReady(NOON + DAY), true);
 });
 
-test('the payouts: COMMON 15 / RARE 30 / EPIC 60 / LEGENDARY 150 gems; MYTHIC = ×10 OVERDRIVE for 5 min (the STOCK path)', () => {
+test('the payouts: COMMON 15 / RARE 30 / EPIC 60 / LEGENDARY 150 gems; MYTHIC = ×5 OVERDRIVE for 5 min (the STOCK path)', () => {
   const pays = [];
   for (let tier = 0; tier < 4; tier += 1) {
     mem.clear();
@@ -114,17 +114,17 @@ test('the payouts: COMMON 15 / RARE 30 / EPIC 60 / LEGENDARY 150 gems; MYTHIC = 
     pays.push(gems());
   }
   assert.deepEqual(pays, [15, 30, 60, 150]);
-  assert.deepEqual([0, 1, 2, 3, 4].map(D.payText), ['+15 GEMS', '+30 GEMS', '+60 GEMS', '+150 GEMS', 'OVERDRIVE ×10 · 5 MIN']);
+  assert.deepEqual([0, 1, 2, 3, 4].map(D.payText), ['+15 GEMS', '+30 GEMS', '+60 GEMS', '+150 GEMS', 'OVERDRIVE ×5 · 5 MIN']);
   mem.clear();
   G.saveGemState({ ...G.loadGemState(), bal: 0 });
   mem.set('taw.s2.drop', JSON.stringify({ day: D.dayKey(NOON), claimed: false, tier: 4 }));
-  assert.deepEqual(D.claimDrop(NOON), { ok: true, tier: 4, overdrive: { mult: 10, min: 5 } });
+  assert.deepEqual(D.claimDrop(NOON), { ok: true, tier: 4, overdrive: { mult: 5, min: 5 } });
   assert.equal(gems(), 0, 'MYTHIC pays no gems');
   const b = JSON.parse(mem.get(ST.BOOST1_KEY));
-  assert.deepEqual(b, { until: NOON + 5 * 60_000, mult: 10 });
+  assert.deepEqual(b, { until: NOON + 5 * 60_000, mult: 5 });
   // time stacks, the multiplier never does — exactly like a 2nd STOCK buy
-  ST.grantOverdrive(10, 5, NOON + 60_000);
-  assert.deepEqual(JSON.parse(mem.get(ST.BOOST1_KEY)), { until: NOON + 10 * 60_000, mult: 10 });
+  ST.grantOverdrive(5, 5, NOON + 60_000);
+  assert.deepEqual(JSON.parse(mem.get(ST.BOOST1_KEY)), { until: NOON + 10 * 60_000, mult: 5 });
 });
 
 test('a corrupt / foreign row reads as today\'s fresh drop', () => {
