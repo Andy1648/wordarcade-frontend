@@ -404,7 +404,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   }
 
   // the label says what the hand must do: HOLD TO ROLL at rest, HOLD… while the fill crosses, RELEASE! once charged
-  const rollLabel = holdPhase === 2 ? 'RELEASE!' : holdPhase === 1 ? 'HOLD\u2026' : rolling ? '...' : canAfford || cost.free ? 'HOLD TO ROLL' : 'NO GEMS';
+  const rollLabel = holdPhase === 2 ? 'RELEASE!' : holdPhase === 1 ? 'HOLD\u2026' : cost.free ? 'HOLD TO ROLL' : rolling ? '...' : canAfford ? 'HOLD TO ROLL' : 'NO GEMS';
   return (
     <div className={`marks-overlay rs-overlay${reduced ? ' is-reduced' : ''}`} role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="rs-top">
