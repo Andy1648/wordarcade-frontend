@@ -18,6 +18,10 @@ export const ICON_ART = Object.freeze({
   stats: '/icons/stats.webp',
   rebirth: '/icons/rebirth.webp',
   gears: '/icons/gears.webp',
+  gems: '/icons/gems.webp',
+  leaderboard: '/icons/leaderboard.webp',
+  achievements: '/icons/achievements.webp',
+  settings: '/icons/settings.webp',
 });
 
 export function dropFor(size) {
