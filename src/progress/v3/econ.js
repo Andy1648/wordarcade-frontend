@@ -71,7 +71,7 @@ export function raceSpeedGems(wpm) {
   return Number.isFinite(wpm) && wpm > 0 ? Math.min(RACE_SPEED_CAP, Math.floor(wpm * RACE_GEMS_PER_WPM)) : 0;
 }
 export const STREAK_BONUS = 4; // flat, on every win that extends a streak (a win after a win)
-export const LEVEL_UP = 3; // Andy oct10: every level pays 3 gems — once per level per climb (v3/hooks gemsSwap.b), was 0
+export const LEVEL_UP = 0; // Andy oct11 "dont give gems for leveling up … the gems are coming in way too quickly" (was 3, Andy oct10) — the hook (v3/hooks gemsSwap.b) still tracks the climb's peak, pays nothing at 0
 export const ACH_MIN = 40;
 export const ACH_MAX = 200;
 

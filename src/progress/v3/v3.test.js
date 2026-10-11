@@ -267,7 +267,7 @@ test('ACHIEVEMENTS pay GEMS (40–200), one tier per claim, from season-2 play o
   assert.equal(A.claimAchievementV3('chain').reason, 'maxed');
 });
 
-test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TAKES 30 × players; streak +4; LEVEL UP 3 a level, once a climb (Andy oct10)', () => {
+test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TAKES 30 × players; streak +4; LEVELS PAY NO GEMS (Andy oct11 — was 3 a level, oct10)', () => {
   assert.equal(G.ROLL_PRICE_GEMS, 75);
   // the drop: under 1/10 drops, from 3 (v = 0) to 12 (v → 1); above it, nothing
   assert.equal(G.rollGemDrop(() => 0.099), 3);
@@ -288,14 +288,11 @@ test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TA
   X.saveProgress({ level: 1, frac: 0 });
   const g0 = G.getGems();
   X.saveProgress({ level: 5, frac: 0 });
-  assert.equal(G.getGems() - g0, 12, 'LV1 → LV5: 4 levels × 3 gems');
-  X.saveProgress({ level: 3, frac: 0 });
-  X.saveProgress({ level: 5, frac: 0 });
-  assert.equal(G.getGems() - g0, 12, 'a level pays once a climb');
+  assert.equal(G.getGems() - g0, 0, 'LV1 → LV5: no gems (Andy oct11 "dont give gems for leveling up")');
   X.saveRebirths(1);
   X.saveProgress({ level: 1, frac: 0 });
   X.saveProgress({ level: 3, frac: 0 });
-  assert.equal(G.getGems() - g0, 18, 'a rebirth starts a new climb: LV1 → LV3 pays 6');
+  assert.equal(G.getGems() - g0, 0, 'a new climb pays nothing either');
   assert.equal(G.dropGemsForWord({ mode: 'menu', rng: () => 0 }), 0, 'menu typing gives no gems');
 });
 
