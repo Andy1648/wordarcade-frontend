@@ -4,7 +4,7 @@
 // no mark (so XP / KEY = 1 × 2² × 3³ = 108 — v4: the menu is the only XP source).
 //   MENU      LV 80 · need(80) = 100 × 1.15^79 · a key pops +108
 //   UPGRADES  KEY 2 → 3 · 108 → 216 XP / LETTER (×4 → ×8) · price 150 × 5² = 3,750 wins · wins 50K / gems 200
-//   REBIRTH   BACK TO LV 1 · KEY KEPT · YOU GET ×3 · ×27 → ×81 FOREVER · LV 80 → 1 · gate LV 18 + 20 × 3 = 78 (Andy oct10 econ)
+//   REBIRTH   BACK TO LV 1 · KEY KEPT · YOU GET ×3 · ×27 → ×81 FOREVER · LV 80 → 1 · gate LV 15 + 18 × 3 = 69
 //   ROLL      75 gems a roll · pity EPIC+ / LEGENDARY+ counters on GEAR POOL v2's 10 / 50 (Genshin-style; was 50 / 125)
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -66,7 +66,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   for (const k of 'qwe') { await page.keyboard.press(k); await page.waitForTimeout(80); } // 3 keys: a 1% CRIT pop is filtered out
   await expect.poll(() => page.evaluate(() => Number(([...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter((t) => t && !/CRIT/.test(t)).pop() || '').replace(/[^\d.]/g, '')))).toBe(108);
 
-  // UPGRADES (KEY): 2 → 3, ×4 → ×8 (2^T), 150 × 4^2 wins (Andy oct10 econ); POWER doubles a word's wins too
+  // UPGRADES (KEY): 2 → 3, ×4 → ×8 (2^T), 150 × 5^2 wins; POWER doubles a word's wins too
   await navControl(page, 'shop').click();
   const sp = page.locator('.sp2');
   await sp.waitFor({ state: 'visible' });
@@ -77,7 +77,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   // WINS / WORD (Word Bomb, 5 letters): 10 × 2^2 × 3^3 = 1,080 → 2,160
   await expect(sp.locator('.sp2-per-wins .sp2-per-now')).toHaveText('1,080');
   await expect(sp.locator('.sp2-per-wins .sp2-per-next')).toHaveText('2,160');
-  await expect(sp.locator('.sp2-buy')).toContainText(fmt(150 * 4 ** 2));
+  await expect(sp.locator('.sp2-buy')).toContainText(fmt(150 * 5 ** 2));
   await page.keyboard.press('Escape');
   await expect(sp).toHaveCount(0);
 
@@ -90,7 +90,7 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   await expect(rb.locator('.rb2-get-sub')).toHaveText('×27 → ×81 FOREVER');
   await expect(rb.locator('.rb2-get')).toContainText('→ LV 1');
   await expect(rb.locator('.rb2-hold')).toContainText('LV 80 → 1');
-  await expect(rb.locator('.rb2-gate-txt')).toHaveText('GATE LV 78 — READY');
+  await expect(rb.locator('.rb2-gate-txt')).toHaveText('GATE LV 69 — READY');
   await rb.locator('.rb2-back').click();
   await expect(rb).toHaveCount(0);
 

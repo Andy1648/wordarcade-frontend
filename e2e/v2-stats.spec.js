@@ -81,7 +81,7 @@ test('the TOTAL first: ×15.6K WINS / WORD, then BASE · MODE · POWER · REBIRT
     return !!(t.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING);
   });
   expect(order, 'TOTAL precedes the chain').toBe(true);
-  expect(await chipIds(st)).toEqual(['base', 'mode', 'power', 'rebirth', 'mark', 'boost']); // POWER on wins (Andy oct10 econ)
+  expect(await chipIds(st)).toEqual(['base', 'mode', 'power', 'rebirth', 'mark', 'boost']); // POWER on wins (Andy oct11)
   expect(await chipVals(st)).toEqual(['10', '×1', '×64', '×243', '×1', '×1']);
   await expect(st.locator('[data-chip="mode"] .st2-chip-tag')).toHaveText('WORD BOMB');
   await expect(st.locator('[data-chip="rebirth"] .st2-chip-tag')).toHaveText('R5');
@@ -125,7 +125,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
       expect(Math.abs(base * total - result) / result, `${tab}: BASE ${base} × ${total} vs ${result}`).toBeLessThan(0.006);
       if (tab === 'wins') {
         expect(ids).toEqual(['base', 'mode', 'power', 'rebirth', 'mark', 'index', 'boost']);
-        expect(vals.slice(0, 5)).toEqual([10, 1, 8, 27, 3.6]); // BASE 10 · MODE 1 · POWER 2^3 · 3^3 · LEGENDARY ×3.6 (Andy oct10)
+        expect(vals.slice(0, 5)).toEqual([10, 1, 8, 27, 2.8]); // BASE 10 · MODE 1 · POWER 2^3 · 3^3 · LEGENDARY ×2.8 (GEAR OP)
       } else {
         expect(ids).toEqual(['base', 'power', 'rebirth', 'mark', 'index', 'boost']);
         expect(vals.slice(0, 3)).toEqual([1, 8, 27]); // BASE 1 · KEY 2^3 · 3^3 (FINAL v3)

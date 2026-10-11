@@ -37,7 +37,7 @@ test('SEASON2 (FINAL v2): REBIRTH 3^R, no STARS chip (ascension hidden); BASE ×
     const w = statChain(b.wins, { v3: V3, stars });
     const x = statChain(b.xp, { v3: V3, stars });
     assert.deepEqual(w.chips.map((c) => c.label), ['MODE', 'POWER', 'REBIRTH', 'MARK', 'BOOST']);
-    assert.equal(w.chips[1].mult, 2 ** kt, 'POWER is 2^T on wins too (Andy oct10 econ)');
+    assert.equal(w.chips[1].mult, 2 ** kt, 'POWER is 2^T on wins too (Andy oct11)');
     assert.deepEqual(x.chips.map((c) => c.label), ['POWER', 'REBIRTH', 'MARK', 'BOOST']);
     assert.equal(w.chips[2].mult, 3 ** rc, 'REBIRTH is 3^R');
     assert.equal(w.base, V3.econ.WINS_BASE, 'FINAL v2 WINS base: 10 a 5-letter word');

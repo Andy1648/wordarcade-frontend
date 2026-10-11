@@ -55,7 +55,7 @@ const STATES = [
 // GEAR POOL v2: the RARE floor's +% WINS / +% XP / +BASE WINS, and the one-mode WINS gears (DETONATOR — WORD BOMB, RARE;
 // HEADMASTER — SAT RUSH, LEGENDARY), which must pay in their mode and nowhere else
 const MARKS = [null, 'mk-smith', 'mk-scholar', 'mk-cyclone', 'mk-eclipse', 'mk-singularity', 'mk-detonator', 'mk-headmaster'];
-const FINAL_TIER = { rare: 1.6, epic: 2.2, legendary: 3.6, mythic: 6, secret: 15 }; // GEARS MORE LUCRATIVE (Andy oct10)
+const FINAL_TIER = { rare: 1.4, epic: 1.8, legendary: 2.8, mythic: 5, secret: 10 }; // GEAR OP (Andy oct9)
 
 function seed({ p, r, s }, mark) {
   mem.clear();
@@ -161,10 +161,10 @@ test('FINAL v3: XP / LETTER chain — BASE 1 × (10 + N)/10 × KEY 2^T × REBIRT
   assert.equal(n, STATES.length * MARKS.length);
 });
 
-test('FINAL mark tiers reach the rolled pool: LEGENDARY ×3.6, MYTHIC +50 BASE (×6), SECRET ×15 — not the season-1 ×3 / +90 / ×25', () => {
-  assert.equal(rollMarkById('mk-eclipse').stat.value, 260);
-  assert.equal(rollMarkById('mk-singularity').stat.value, 50);
-  assert.equal(rollMarkById('mk-origin').stat.value, 1400);
+test('FINAL mark tiers reach the rolled pool: LEGENDARY ×2.8, MYTHIC +40 BASE (×5), SECRET ×10 — not the season-1 ×3 / +90 / ×25', () => {
+  assert.equal(rollMarkById('mk-eclipse').stat.value, 180);
+  assert.equal(rollMarkById('mk-singularity').stat.value, 40);
+  assert.equal(rollMarkById('mk-origin').stat.value, 900);
 });
 
 // The menu's rate line and the rail's UPGRADES tile at the very start (T0 R0, nothing worn): "+1 XP / KEY" (v4: one
@@ -176,7 +176,7 @@ test('v4 at T0 R0: a menu key pays +1 XP, a game letter 0; POWER doubles it at o
   resetLetterXp();
   assert.equal(creditLetterXp(1, { mode: 'chain' }), null, 'a game letter credits nothing');
   assert.equal(keyTierCost(0), 150, 'UPGRADES: the T1 price');
-  assert.deepEqual([1, 2, 3].map((t) => keyTierCost(t)), [600, 2400, 9600]); // 150 × 4^T (Andy oct10 econ)
+  assert.deepEqual([1, 2, 3].map((t) => keyTierCost(t)), [750, 3750, 18750]);
   // no ×0.2 share, no rounding, no floor: every POWER tier shows on the very next key
   for (const [t, xp] of [[1, 2], [2, 4], [3, 8]]) {
     localStorage.setItem('taw.keytier', String(t));

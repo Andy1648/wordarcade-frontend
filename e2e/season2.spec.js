@@ -4,7 +4,7 @@
 //   * no rate line under the bar (Andy oct9); a key pays +1 at T0 R0 (v4: the menu is the only XP source);
 //   * MASHES the menu and LEVELS (ANY key, the full 1 XP at T0 R0; need(14) = 100 × 1.15^13);
 //   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 15 → LV 1, ×3)
-//     — one request, no gems, R1, LV18 → LV1;
+//     — one request, no gems, R1, LV15 → LV1;
 //   * BUYS KEY with wins (150 wins, ×2 XP a key — a key pops +6 at T1 R1);
 //   * sees the v3 RANKS (INKLING → TYPO — by rebirths, not by level);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
@@ -37,8 +37,8 @@ async function boot(page) {
     localStorage.setItem('taw.xp', JSON.stringify({ lv: 30, f: 0.5, rc: 7, v: 10 }));
     // a season-1 claim waiting in the inbox — season 2 must not pop it
     localStorage.setItem('taw.claims', JSON.stringify([{ id: 'ach-vol-1', kind: 'achievement', label: 'ACHIEVEMENT — FIRST BLOOD', amount: 50, detail: 'vol-1', ts: 1 }]));
-    // the SEASON-2 save: LV17, almost through it (the R1 gate is LV18 — Andy oct10 econ); 500 wins; 150 season-2 words (TYPE WORDS I is ready)
-    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 17, f: 0.99, rc: 0, v: 10 }));
+    // the SEASON-2 save: LV14, almost through it (the R1 gate is LV15); 500 wins; 150 season-2 words (TYPE WORDS I is ready)
+    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 14, f: 0.985, rc: 0, v: 10 }));
     localStorage.setItem('taw.s2.wins', '500');
     localStorage.setItem('taw.s2.count', JSON.stringify({ words: 150 }));
   }, { secret: SECRET, id: row.id });
@@ -72,12 +72,12 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     // NO RATE LINE under the bar (Andy oct9) — what a key pays shows as its pop (+1 at T0 R0, below)
     await expect(page.locator('.hp-per, .hp-rate')).toHaveCount(0);
 
-    // MASH → LEVEL (v4: ANY key counts, no rate cap, the full rate): LV17 → LV18 (need(17) = 100 × 1.15^16 ≈ 936 XP,
-    // 1% left ≈ 9 XP; a menu key pays 1 XP at KEY T0 R0) — gibberish, typed fast
+    // MASH → LEVEL (v4: ANY key counts, no rate cap, the full rate): LV14 → LV15 (need(14) = 100 × 1.15^13 ≈ 614 XP,
+    // 1.5% left ≈ 10 XP; a menu key pays 1 XP at KEY T0 R0) — gibberish, typed fast
     await expect.poll(async () => {
       await page.keyboard.type('qwrtzxpvqwrtzxpv', { delay: 20 });
       return (await s2(page)).level;
-    }, { timeout: 30_000 }).toBeGreaterThanOrEqual(18);
+    }, { timeout: 30_000 }).toBeGreaterThanOrEqual(15);
 
     // REBIRTH (season 2) through the mocked lb_rebirth: LV ≥ 15 on the stored row → LV 1 — the v2 REBIRTH screen (P3):
     // HOLD TO REBIRTH (1 s), one request, R0 → R1 in place
