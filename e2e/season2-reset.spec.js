@@ -43,7 +43,10 @@ async function boot(page, { grant }) {
   return { board, shared, id: row.id };
 }
 // every taw.* key, RAW (named access: season 2 maps getItem('taw.wins') to taw.s2.wins at the storage layer)
-const store = (page) => page.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter((k) => k.startsWith('taw.')).map((k) => [k, localStorage[k]])));
+// The wipe RELOADS the page: a read that lands mid-navigation throws "Execution context was destroyed" — inside a poll
+// that is just "not yet" (an empty read; the poll tries again on the new page).
+const store = (page) => page.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter((k) => k.startsWith('taw.')).map((k) => [k, localStorage[k]])))
+  .catch((e) => { if (/Execution context was destroyed|navigation/i.test(String(e && e.message))) return {}; throw e; });
 const s2Gems = async (page) => (JSON.parse((await store(page))['taw.s2.gems'] || '{}').bal) || 0;
 /** The boot check has settled once a season-2 board push lands (submitStats waits on it). */
 const settled = (board, after = 0) => expect.poll(() => board.calls.submitS2 || 0, { timeout: 15_000 }).toBeGreaterThan(after);
