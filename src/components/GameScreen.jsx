@@ -598,14 +598,6 @@ function FloatingReaction({ emoji, name }) {
   );
 }
 
-// Jagged comic starburst behind the K.O. slam (same construction as the homepage
-// burst): alternating outer/inner radii, computed once.
-const KO_BURST_POINTS = Array.from({ length: 28 }, (_, i) => {
-  const r = i % 2 === 0 ? 100 : 62;
-  const a = (Math.PI * i) / 14 - Math.PI / 2;
-  return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
-}).join(' ');
-
 /**
  * Fighting-game K.O. slam, played when a player is eliminated. Mounts (re-keyed)
  * after the explosion; its CSS sequences itself: a 400ms freeze (nothing
@@ -789,26 +781,8 @@ function WinBurst() {
 function LossImpact() {
   return (
     <div className="go-loss-impact" aria-hidden="true">
-      <svg className="go-loss-burst-svg" viewBox="-112 -112 224 224">
-        {/* Hard offset shadow: flat black copy nudged down-right (no blur). */}
-        <polygon points={KO_BURST_POINTS} fill="#000" transform="translate(7 9)" />
-        {/* Big red spike burst, tilted so it reads as a violent hit. */}
-        <polygon
-          points={KO_BURST_POINTS}
-          fill="#FF5C5C"
-          stroke="#000"
-          strokeWidth="5"
-          transform="rotate(8)"
-        />
-        {/* A smaller dark-blood burst on top for layered depth. */}
-        <polygon
-          points={KO_BURST_POINTS}
-          fill="#7A1226"
-          stroke="#000"
-          strokeWidth="6"
-          transform="scale(0.6) rotate(-7)"
-        />
-      </svg>
+      {/* painted burst (public/fx/burst-loss.webp); its slam-in is CSS on the element */}
+      <img className="go-loss-burst-svg" src="/fx/burst-loss.webp" alt="" draggable="false" />
       {/* Hard flat shockwave rings (stroke only, no blur) — one red, one white. */}
       <div className="go-shockwave" />
       <div className="go-shockwave white" />
