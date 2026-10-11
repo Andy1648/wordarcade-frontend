@@ -1,0 +1,113 @@
+/* PatchNotes.css — the PATCH NOTES popup (lazy chunk). Flat fills, coloured outlines (a darker shade of the fill), hard
+   black offset shadows, Bungee + stroke on every label. Motion: the title slams, the rows rise, the cards fan in — each a
+   FINITE transform/opacity one-shot on mount; nothing loops at rest. */
+.pn {
+  position: fixed; inset: 0; z-index: 9000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; box-sizing: border-box;
+  background: rgba(13, 6, 24, 0.86);
+  overflow-y: auto;
+  font-family: 'Bungee', system-ui, sans-serif; text-transform: uppercase;
+}
+.pn-panel {
+  position: relative; width: 100%; max-width: 520px; box-sizing: border-box;
+  margin: auto; padding: 20px 20px 22px;
+  background: #1a0b2e; border: 5px solid #9A1AFF; border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  animation: pn-in 300ms cubic-bezier(0.2, 1.4, 0.4, 1) 1 both;
+}
+.pn-wallet { position: absolute; left: 16px; top: 16px; z-index: 2; }
+.pn-x {
+  position: absolute; right: 10px; top: 10px; width: 44px; height: 44px;
+  display: grid; place-items: center; cursor: pointer;
+  font: 22px/1 'Bungee', system-ui, sans-serif; color: #fff;
+  background: #2a1546; border: 3px solid #5a2a8a; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  transition: transform 120ms ease-out;
+}
+.pn-x:hover { transform: translate(-1px, -1px) rotate(-6deg); }
+.pn-x:active { transform: translate(3px, 3px); box-shadow: none; }
+
+.pn-head { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 4px; }
+.pn-body { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.pn-ver {
+  font-size: var(--fs-k14); letter-spacing: 1px; color: #0d0618;
+  background: #2EFFE0; border: 3px solid #12a896; border-radius: 8px; padding: 2px 10px;
+  box-shadow: 3px 3px 0 #000; transform: rotate(-2deg);
+}
+.pn-title {
+  margin: 0; font-family: 'Bungee Shade', 'Bungee', system-ui, sans-serif; font-weight: 400; text-transform: uppercase;
+  font-size: var(--fs-k44); line-height: 1; color: #FFE94A;
+  -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000;
+  transform: rotate(-2deg) skewX(-4deg);
+}
+
+/* the showcase: two cards fanned */
+.pn-cards { position: relative; display: flex; justify-content: center; gap: 0; height: 236px; width: 100%; }
+.pn-card { position: relative; width: 132px; }
+.pn-card .gfx { pointer-events: none; }
+.pn-card-0 { transform: rotate(-8deg) translate(10px, 8px); animation: pn-fan-l 420ms cubic-bezier(0.2, 1.3, 0.4, 1) 120ms 1 both; }
+.pn-card-1 { transform: rotate(7deg) translate(-10px, 0); z-index: 1; animation: pn-fan-r 420ms cubic-bezier(0.2, 1.3, 0.4, 1) 200ms 1 both; }
+
+.pn-list { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 7px; }
+.pn-item, .pn-gift {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; box-sizing: border-box;
+  padding: 6px 10px; background: #251040; border: 3px solid #3d1d66; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+}
+.pn-tag {
+  flex: none; min-width: 58px; text-align: center; font-size: var(--fs-k14); color: #0d0618;
+  padding: 3px 6px; border-radius: 6px; border: 3px solid; box-shadow: 2px 2px 0 #000;
+}
+.pn-tag.is-cyan { background: #2EFFE0; border-color: #12a896; }
+.pn-tag.is-yellow { background: #FFE94A; border-color: #b8a520; }
+.pn-tag.is-pink { background: #FF4FA3; border-color: #b0306f; }
+.pn-line {
+  font-size: var(--fs-k15); line-height: 1.2; color: #fff;
+  -webkit-text-stroke: 3px #000; paint-order: stroke fill;
+}
+.pn-num { font-size: var(--fs-k20); color: #FFE94A; font-weight: 400; }
+.pn-gift { width: 100%; justify-content: flex-start; border-color: #b0306f; background: #3a0f2c; }
+.pn-gem { display: inline-flex; align-items: center; gap: 6px; }
+.pn-gift-num { font-size: var(--fs-k28); -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.pn-rolls { font-size: var(--fs-k15); color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.pn-foot { display: flex; justify-content: center; width: 100%; }
+
+/* one-shots */
+.pn-slam { animation: pn-slam 360ms cubic-bezier(0.2, 1.5, 0.4, 1) 80ms 1 both; }
+.pn-rise { animation: pn-rise 280ms cubic-bezier(0.2, 1.2, 0.4, 1) var(--pn-d, 0ms) 1 both; }
+@keyframes pn-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes pn-slam { 0% { opacity: 0; transform: rotate(-2deg) skewX(-4deg) scale(1.6); } 100% { opacity: 1; transform: rotate(-2deg) skewX(-4deg) scale(1); } }
+@keyframes pn-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pn-fan-l { from { opacity: 0; transform: rotate(0deg) translate(70px, 30px) scale(0.8); } to { opacity: 1; transform: rotate(-8deg) translate(10px, 8px); } }
+@keyframes pn-fan-r { from { opacity: 0; transform: rotate(0deg) translate(-70px, 30px) scale(0.8); } to { opacity: 1; transform: rotate(7deg) translate(-10px, 0); } }
+
+/* desktop / tablet: two columns — the cards on the left, the notes on the right (fits a 1280×600 screen) */
+@media (min-width: 760px) {
+  .pn-panel {
+    max-width: 840px; display: grid; grid-template-columns: 300px 1fr; grid-template-areas: 'head head' 'cards body';
+    column-gap: 18px; row-gap: 6px; align-items: center; padding: 12px 22px 16px;
+  }
+  .pn-head { grid-area: head; }
+  .pn-cards { grid-area: cards; height: 250px; }
+  .pn { padding: 12px; }
+  .pn-body { grid-area: body; }
+}
+@media (max-width: 759px) {
+  .pn { padding-top: 112px; }
+  /* the button never falls below the fold: it sticks to the bottom of the scrolling sheet */
+  .pn-foot { position: sticky; bottom: 0; padding: 8px 0 2px; background: #1a0b2e; z-index: 2; }
+}
+@media (max-width: 420px) {
+  .pn { padding: 112px 10px 10px; align-items: flex-start; }
+  .pn-cards { height: 190px; }
+  .pn-card { transform-origin: 50% 0; }
+  .pn-cards > .pn-card-0 { translate: -4px 0; scale: 0.84; }
+  .pn-cards > .pn-card-1 { translate: 4px 0; scale: 0.84; }
+  .pn-title { font-size: var(--fs-k32); }
+  .pn-item { padding: 4px 8px; min-height: 44px; }
+  .pn-panel { padding: 14px 12px 16px; gap: 10px; }
+  .pn-line { font-size: var(--fs-k14); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pn-panel, .pn-slam, .pn-rise, .pn-card-0, .pn-card-1 { animation: none; }
+}

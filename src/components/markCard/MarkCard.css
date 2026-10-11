@@ -219,21 +219,20 @@
 /* GEAR TURN (Andy oct11 "the gears should rotate quicker when hovered upon … the icons … move a little … tilt but
    just not as much as the cog"). An EXPLICIT exception to "nothing loops at rest" (infiniteAnimations.test history):
    the cog turns once per 16 s; hovered / focused, a second nested layer adds ONE quick turn (Andy oct11 "a turn is
-   enough … doesnt need to constantly be turning"). The glyph bobs ±2°; hovered it rocks ±7° once. Compositor transforms on HTML layers only. */
+   enough … doesnt need to constantly be turning"). The glyph bobs ±2° (hover v2 below supersedes the one-turn hover). Compositor transforms on HTML layers only. */
 .mc:not(.is-still) .mc-cog-idle { animation: mc-spin 16s linear infinite; }
 .mc:not(.is-still) .mc-badge { animation: mc-bob 2400ms ease-in-out infinite; }
-:is(button, a):is(:hover, :focus-visible, :active) > .mc:not(.is-still) .mc-cog-fast { animation: mc-spin 800ms cubic-bezier(0.3, 0.7, 0.3, 1) 1; }
-:is(button, a):is(:hover, :focus-visible, :active) > .mc:not(.is-still) .mc-badge { animation: mc-rock 700ms ease-in-out 1; }
+/* HOVER v2 (Andy oct11 "the cog should continue turning and the image should turn (but not turn back until I move my
+   cursor away)"): hovered, the fast layer KEEPS turning (stops the moment the pointer leaves — never at rest); the glyph
+   eases to a held tilt + enlarge and eases back on leave. Also on the roll screen's landed card (a bare .mc:hover). */
+.mc:not(.is-still) .mc-badge { transition: transform 260ms cubic-bezier(0.3, 0.7, 0.3, 1); }
+:is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-cog-fast { animation: mc-spin 1100ms linear infinite; }
+:is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-badge { animation: none; transform: scale(1.22) rotate(-12deg); }
 
 @keyframes mc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes mc-bob {
   0%, 100% { transform: scale(1.1) translateY(0) rotate(-2deg); }
   50% { transform: scale(1.1) translateY(-3px) rotate(2deg); }
-}
-@keyframes mc-rock {
-  0%, 100% { transform: scale(1.14) rotate(0deg); }
-  30% { transform: scale(1.14) rotate(-7deg); }
-  70% { transform: scale(1.14) rotate(7deg); }
 }
 @keyframes mc-glow { 0% { opacity: 0.2; } 45% { opacity: 1; } 100% { opacity: 0.6; } }
 

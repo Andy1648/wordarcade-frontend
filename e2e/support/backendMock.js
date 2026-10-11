@@ -1,4 +1,5 @@
 import { menuReady } from './menu.js';
+import { PATCH_ID } from '../../src/components/patchNotes/patchSeen.js';
 // e2e/support/backendMock.js
 //
 // The app opens ONE hardcoded WebSocket to the live Render backend
@@ -122,7 +123,7 @@ export async function mirrorReduceMotion(page) {
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true } = opts;
+  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true, patchNotes = false } = opts;
 
   // Mirror the emulated prefers-reduced-motion into the in-game REDUCE MOTION toggle (see above).
   if (seedReduceMotion) await mirrorReduceMotion(page);
@@ -134,10 +135,13 @@ export async function installBackendMock(page, opts = {}) {
   // A spec that wipes storage in its OWN init script (`localStorage.clear()` before seeding — menu-no-free-wins,
   // claims-via-stats, wins-live …) runs AFTER this one and used to wipe these flags too: the GEMS spotlight then
   // covered the menu and swallowed the spec's first click. So the flags are re-applied after every clear().
+  // PATCH NOTES (Andy oct11): a returning player meets the release's popup once — it would cover every menu spec, so
+  // this release's notes are marked seen unless a spec asks for them (opts.patchNotes).
   if (!newTutorials) {
-    await page.addInitScript(() => {
+    await page.addInitScript(({ patchId }) => {
       const seen = () => {
         try {
+          if (patchId) localStorage.setItem('taw.seen.patch', patchId);
           localStorage.setItem('taw.tut.pv10', '1');
           localStorage.setItem('taw.tut.keyTier', '1');
           localStorage.setItem('taw.tut.gems', '1');
@@ -156,7 +160,7 @@ export async function installBackendMock(page, opts = {}) {
       } catch {
         /* no Storage */
       }
-    });
+    }, { patchId: patchNotes ? null : PATCH_ID });
   }
 
   const state = {

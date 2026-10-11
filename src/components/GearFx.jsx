@@ -150,7 +150,7 @@ export default function GearFx({ tier, scale = 1, live = true }) {
           { opacity: 0, transform: 'translateX(0)' },
         ], { duration: GLITCH_MS, easing: 'steps(6, end)' }, 'transform, opacity');
       }
-      if (spin) {
+      if (spin && burst) { // Andy oct11: the ring is a HOVER effect now — a breath leaves it alone; a flare still laps once
         play(spin, [
           { opacity: 0, transform: 'rotate(0deg)' },
           { opacity: 1, transform: 'rotate(60deg)', offset: 0.18 },
@@ -187,9 +187,63 @@ export default function GearFx({ tier, scale = 1, live = true }) {
       breathe(true);
     };
     el.addEventListener('gfx:flare', onFlare);
+    // SECRET ORBIT ON HOVER (Andy oct11 "the stars revolving … can be a hover animation instead (continuously)"): while
+    // the card's host is hovered the ring laps, one FINITE linear lap chained to the next (no Infinity); leaving fades
+    // the ring out, then drops the lap.
+    const host = orbit && spin ? el.parentElement : null;
+    let hov = false;
+    let lap = null;
+    let fade = null;
+    const runLap = (first) => {
+      if (!hov) return;
+      const prev = lap;
+      spin.style.willChange = 'transform, opacity';
+      lap = spin.animate(
+        first
+          ? [{ opacity: 0, transform: 'rotate(0deg)' }, { opacity: 1, transform: 'rotate(40deg)', offset: 0.12 }, { opacity: 1, transform: 'rotate(360deg)' }]
+          : [{ opacity: 1, transform: 'rotate(0deg)' }, { opacity: 1, transform: 'rotate(360deg)' }],
+        { duration: first ? ORBIT_MS : ORBIT_MS * 0.8, easing: first ? 'cubic-bezier(.35,.1,.6,1)' : 'linear', fill: 'forwards' },
+      );
+      if (prev) prev.cancel();
+      lap.onfinish = () => runLap(false);
+    };
+    const enter = () => {
+      if (hov) return;
+      hov = true;
+      if (fade) { fade.cancel(); fade = null; }
+      if (!lap) runLap(true);
+    };
+    const leave = () => {
+      if (!hov) return;
+      hov = false;
+      if (!lap) return;
+      fade = orbit.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-out' });
+      const end = () => {
+        if (hov) return;
+        if (lap) { lap.onfinish = null; lap.cancel(); lap = null; }
+        spin.style.willChange = '';
+        fade = null;
+      };
+      fade.finished.then(end, () => {});
+    };
+    if (host) {
+      host.addEventListener('pointerenter', enter);
+      host.addEventListener('pointerleave', leave);
+      host.addEventListener('focusin', enter);
+      host.addEventListener('focusout', leave);
+    }
     return () => {
       unsub();
       el.removeEventListener('gfx:flare', onFlare);
+      if (host) {
+        host.removeEventListener('pointerenter', enter);
+        host.removeEventListener('pointerleave', leave);
+        host.removeEventListener('focusin', enter);
+        host.removeEventListener('focusout', leave);
+      }
+      hov = false;
+      if (lap) { lap.onfinish = null; lap.cancel(); }
+      if (fade) fade.cancel();
       if (io) io.disconnect();
       runs.forEach((a) => { try { a.cancel(); } catch { /* gone */ } });
     };

@@ -39,6 +39,8 @@ export const MENU_MOMENTS = {
   'mark-up': { priority: PRIORITY.INFO, ms: CARD_MS, maxMs: CARD_MS + 1000 },
   automation: { priority: PRIORITY.INFO, ms: CARD_MS, maxMs: CARD_MS + 1000 },
   tutorial: { priority: PRIORITY.TUTORIAL, ms: TUTORIAL_MAX_MS, maxMs: TUTORIAL_MAX_MS },
+  // PATCH NOTES (Andy oct11): once per release, after the knife-split; player-paced (COLLECT → PLAY), so a long safety release
+  patch: { priority: PRIORITY.REWARD, ms: TUTORIAL_MAX_MS, maxMs: TUTORIAL_MAX_MS },
 };
 
 /** The announce() options for one menu moment (id may carry a suffix, e.g. `tutorial:fuse`). */

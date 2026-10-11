@@ -1,0 +1,64 @@
+// e2e/patch-notes.spec.js — THE PATCH NOTES popup (Andy oct11): a RETURNING player meets it once per release, after the
+// knife-split; COLLECT pays exactly the "= N FREE ROLLS" it shows (N × the live roll price) into the wallet; PLAY closes;
+// a reload never shows it again. A first-time visitor never sees it. Nothing overflows at 1280×600 or 360×740.
+import { test, expect } from '@playwright/test';
+import { installBackendMock } from './support/backendMock.js';
+import { PATCH_GIFT_ROLLS } from '../src/components/patchNotes/patchNotesData.js';
+
+const S2_ROLL_PRICE = 75; // v3/econ.js ROLL_PRICE
+
+async function boot(page, w, h, returning = true) {
+  await page.setViewportSize({ width: w, height: h });
+  await installBackendMock(page, { patchNotes: true });
+  await page.addInitScript((ret) => {
+    if (sessionStorage.getItem('pn.seeded')) return;
+    sessionStorage.setItem('pn.seeded', '1');
+    if (ret) {
+      localStorage.setItem('taw.seenMenu', '1');
+      localStorage.setItem('taw.seenMenuSpotlight', '1');
+    }
+  }, returning);
+  await page.goto('/?portal=1&season2=1');
+}
+const wallet = (page) => page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0);
+
+for (const [w, h] of [[1280, 600], [360, 740]]) {
+  test(`PATCH NOTES at ${w}x${h}: once, pays what it shows, fits`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await boot(page, w, h);
+    const pn = page.getByTestId('patch-notes');
+    await expect(pn).toBeVisible({ timeout: 15_000 });
+    const gift = PATCH_GIFT_ROLLS * S2_ROLL_PRICE;
+    await expect(page.getByTestId('patch-notes-gems')).toHaveText(String(gift));
+    await expect(pn).toContainText(`= ${PATCH_GIFT_ROLLS} FREE ROLLS`);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no sideways scroll').toBe(true);
+    const btn = await page.getByTestId('patch-notes-collect').boundingBox();
+    expect(btn.y + btn.height, 'COLLECT is on screen').toBeLessThanOrEqual(h);
+    const before = await wallet(page);
+    await page.getByTestId('patch-notes-collect').click();
+    await expect(pn).toHaveAttribute('data-phase', 'done', { timeout: 10_000 });
+    expect(await wallet(page)).toBe(before + gift);
+    await page.getByTestId('patch-notes-collect').click();
+    await expect(pn).toHaveCount(0);
+    await page.reload();
+    await page.waitForTimeout(4000);
+    await expect(pn).toHaveCount(0);
+    expect(await wallet(page)).toBe(before + gift);
+  });
+}
+
+test('PATCH NOTES: ✕ still pays the gift; a first-time visitor never sees it', async ({ page }) => {
+  test.setTimeout(60_000);
+  await boot(page, 1280, 720);
+  await expect(page.getByTestId('patch-notes')).toBeVisible({ timeout: 15_000 });
+  const before = await wallet(page);
+  await page.getByTestId('patch-notes-close').click();
+  await expect(page.getByTestId('patch-notes')).toHaveCount(0);
+  expect(await wallet(page)).toBe(before + PATCH_GIFT_ROLLS * S2_ROLL_PRICE);
+});
+
+test('PATCH NOTES: never for a first-time visitor', async ({ page }) => {
+  await boot(page, 1280, 720, false);
+  await page.waitForTimeout(5000);
+  await expect(page.getByTestId('patch-notes')).toHaveCount(0);
+});
