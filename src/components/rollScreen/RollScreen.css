@@ -788,3 +788,63 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-result { animation: none; }
   .rs-pity-fill { transition: none; }
 }
+
+/* RATES (gear card v4, Andy oct11 "have a rate icon … popup"): a small button beside INDEX; the popup lists YOUR NEXT
+   ROLL's odds per tier (RatesPop.jsx reads the roll's own table). Flat panel, ink, hard shadow; nothing loops. */
+.rs-top-pair { display: inline-flex; align-items: center; gap: 10px; justify-self: start; min-width: 0; }
+.rs-rates-btn {
+  min-height: 56px;
+  min-width: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k15);
+  color: #fff;
+  background: #1a0b2e;
+  border: 4px solid #5c0fa3;
+  box-shadow: 6px 6px 0 #000;
+  cursor: pointer;
+}
+.rs-rates-btn:active { transform: translate(3px, 3px); box-shadow: 3px 3px 0 #000; }
+.rs-rates-k { -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs-rates-scrim { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(5, 2, 10, 0.8); }
+.rs-rates {
+  position: relative;
+  width: min(380px, 100%);
+  box-sizing: border-box;
+  padding: 18px 18px 16px;
+  background: #1a0b2e;
+  border: 5px solid #000;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+}
+.rs-rates-x {
+  position: absolute; top: -18px; right: -14px; width: 48px; height: 48px;
+  font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); color: #000;
+  background: #FF4FA3; border: 4px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000; cursor: pointer;
+}
+.rs-rates-head {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 12px;
+  font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A;
+  -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000;
+}
+.rs-rates-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rs-rates-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 0 12px;
+  background: #0d0618; border: 3px solid #000; border-left: 8px solid var(--rs-tier); border-radius: 6px;
+}
+.rs-rates-tier, .rs-rates-odds { font-family: 'Bungee', sans-serif; text-transform: uppercase; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs-rates-tier { font-size: var(--fs-k17); color: var(--rs-tier); }
+.rs-rates-odds { font-size: var(--fs-k20); color: #fff; white-space: nowrap; }
+.rs-rates-pre { font-size: var(--fs-k14); color: #c9b8e8; }
+.rs-rates-pity {
+  margin-top: 10px; text-align: center; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k17);
+  color: var(--rs-tier); -webkit-text-stroke: 3px #000; paint-order: stroke fill;
+}
+@media (max-width: 520px) {
+  .rs-rates-btn { padding: 0 8px; }
+  .rs-rates-k { display: none; } /* the luck icon carries it on a phone top bar */
+}

@@ -416,3 +416,20 @@ test('SEASON2 at R1+: AUTO ROLL spends 75 a roll and stops when the season-2 gem
   expect(st.live).toBe(1000);
   expect(st.rolls).toBe(3 + (160 - st.s2) / 75);
 });
+
+// gear card v4 (Andy oct11 "have a rate icon … popup"): the odds are behind RATES, read from the roll's own table
+test('RATES opens your next roll\'s odds per tier; Esc closes it and leaves the ROLL screen up', async ({ page }) => {
+  await seed(page, { 'taw.tut.markRolls': '1' });
+  await openRoll(page);
+  await page.getByTestId('roll-rates').click();
+  const pop = page.getByTestId('roll-rates-pop');
+  await expect(pop).toBeVisible();
+  await expect(pop.locator('.rs-rates-row')).toHaveCount(5);
+  await expect(pop.locator('.rs-rates-row[data-tier="secret"] .rs-rates-odds')).toHaveText(/^1 IN [\d,.KM]+$/);
+  await expect(pop.locator('.rs-rates-row[data-tier="rare"] .rs-rates-odds')).toHaveText(/^[\d.]+%$/); // never "1 IN 1"
+  const box = await pop.locator('.rs-rates-x').boundingBox();
+  expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+  await page.keyboard.press('Escape');
+  await expect(pop).toHaveCount(0);
+  await expect(page.locator('.rs-overlay')).toBeVisible();
+});

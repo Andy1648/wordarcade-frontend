@@ -24,6 +24,7 @@ import { registerMarkGlyphs } from '../MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from '../markGlyphsRolled.jsx';
 import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
+import RatesPop from './RatesPop.jsx';
 import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/registry.js';
 import { MARK_TIERS } from '../../progress/marks';
@@ -412,9 +413,13 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
         <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>
           <span className="rs-close-arrow" aria-hidden="true">←</span> <span className="rs-close-t">MENU</span>
         </button>
-        <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">
-          <span className="rs-index-k">INDEX</span> <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
-        </button>
+        {/* INDEX + RATES share one grid cell (gear card v4: the odds live behind the RATES button, never on the screen) */}
+        <span className="rs-top-pair">
+          <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">
+            <span className="rs-index-k">INDEX</span> <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
+          </button>
+          <RatesPop />
+        </span>
         <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'}>
           <span className="rs-equipped-k">EQUIPPED</span>
           <span className="rs-equipped-v" style={worn ? { '--rs-tier': CARD_RAR[cardTier(worn.tier)].line } : undefined}>{worn ? worn.tag : 'NONE'}</span>
