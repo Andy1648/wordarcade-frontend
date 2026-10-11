@@ -81,13 +81,14 @@ export const STAT_KINDS = [
 export const BASE_WINS_PER_WORD = 10; // "BASE 10" wins on a 5-letter word (xp.js WINS_BASIS_PER_LETTER × 5 ÷ 10)
 export const BASE_XP_PER_LETTER = 10; // xp.js LEVEL_XP_PER_LETTER
 export const OVERDRIVE_BASE_SEC = 300; // overdrive.js OVERDRIVE_MIN × 60
+export const BASE_WINS_SCALE = 2; // Andy oct11 "make the stats do more for the win base": +BASE WINS is 2× the tier's percent of BASE 10
 export const MODE_WINS_SCALE = 2; // a one-mode WINS stat is 2× the tier's all-mode percent (it only pays in one mode)
 export const CRIT_POWER_PER_PCT = 1 / 25; // +1× CRIT POWER per 25% of tier (RARE +1×, EPIC +2×, season-2 LEGENDARY +4×)
 export const CRIT_EVERY_BASIS = 100; // EVERY Nth KEY: N = 100 ÷ tier % (RARE: every 4th key — ×2 on 1 key in 4 = +25%)
 /** A stat's ★0 value for a tier: the tier's percent on what it touches. */
 export function statBaseValue(kind, tier) {
   const p = TIER_PCT[tier] || 0;
-  if (kind === 'baseWins') return (BASE_WINS_PER_WORD * p) / 100;
+  if (kind === 'baseWins') return (BASE_WINS_SCALE * BASE_WINS_PER_WORD * p) / 100;
   if (kind === 'baseXp') return (BASE_XP_PER_LETTER * p) / 100;
   if (kind === 'overdriveSec') return (OVERDRIVE_BASE_SEC * p) / 100;
   if (MODE_OF_KIND[kind]) return MODE_WINS_SCALE * p;

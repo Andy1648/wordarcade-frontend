@@ -155,7 +155,7 @@ test('dupes → ★ pips: RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 a pip, ★5 
   close(mainMultOf('mk-smith', v2('mk-smith', 6)), 1.3); // ★1: +20% of +25%
   close(mainMultOf('mk-smith', v2('mk-smith', 26)), 1.5); // ★5: ×2
   close(mainMultOf('mk-origin', v2('mk-origin', 6)), 49); // SECRET ★5: +2,400% → +4,800%
-  close(statOf('mk-cyclone', v2('mk-cyclone', 26)).value, 5); // +2.5 BASE WINS → +5 at ★5
+  close(statOf('mk-cyclone', v2('mk-cyclone', 26)).value, 10); // +5 BASE WINS (Andy oct11 ×2) → +10 at ★5
   // EVERY Nth KEY is a GAP: the pips shorten it (4 → 4 ÷ 1.2 = 3 at ★1 → 2 at ★5), whole keys
   assert.equal(statOf('mk-metronome', v2('mk-metronome', 1)).value, 4);
   assert.equal(statOf('mk-metronome', v2('mk-metronome', 6)).value, 3);
@@ -250,7 +250,7 @@ test('GEMS: the wins price is gone from the roll engine (a roll costs gems — m
 test('tags: ONE short tag — the stat line, ×N WINS + XP for a PERMANENT, or the perk line for LEGENDARY+', () => {
   assert.equal(mainTag('mk-smith', null), '×1.25 WINS');
   assert.equal(mainTag('mk-detonator', null), '×1.5 WINS IN WORD BOMB');
-  assert.equal(mainTag('mk-cyclone', null), '+2.5 BASE WINS');
+  assert.equal(mainTag('mk-cyclone', null), '+5 BASE WINS');
   assert.equal(mainTag('mk-leviathan', null), '×3 XP');
   assert.equal(mainTag('mk-kraken', null), '+90 BASE XP');
   assert.equal(mainTag('mk-origin', null), '×25 WINS');
@@ -266,7 +266,7 @@ test('tags: ONE short tag — the stat line, ×N WINS + XP for a PERMANENT, or t
 });
 
 test('markTag (Andy oct5): the COMPACT line — named stat, PERK: … on LEGENDARY+, ★N once it has pips', () => {
-  assert.equal(markTag('mk-cyclone', null), '+2.5 BASE WINS');
+  assert.equal(markTag('mk-cyclone', null), '+5 BASE WINS');
   assert.equal(markTag('mk-smith', null), '×1.25 WINS');
   assert.equal(markTag('mk-leviathan', null), '×3 XP · PERK: LETTERS COUNT ×2');
   assert.equal(markTag('mk-leviathan', null, { perk: false }), '×3 XP');
@@ -293,11 +293,11 @@ test('THE MARK STATS: the worn stat pays only what it touches; the INDEX (+0.5% 
   near(markWinsMult({ markId: 'mk-eclipse', state: s }), 3 * ix(s));
   near(markXpMult({ markId: 'mk-eclipse', state: s }), ix(s));
   assert.equal(markBaseWins({ markId: 'mk-eclipse', state: s }), 0);
-  // +90 BASE WINS/WORD (SINGULARITY) — a BASE addend; markMult reads it as × (10 + 90) / 10
+  // +180 BASE WINS/WORD (SINGULARITY, Andy oct11 ×2) — a BASE addend; markMult reads it as × (10 + 180) / 10
   s = one('mk-singularity');
-  near(markBaseWins({ markId: 'mk-singularity', state: s }), 90);
+  near(markBaseWins({ markId: 'mk-singularity', state: s }), 180);
   near(markWinsMult({ markId: 'mk-singularity', state: s }), ix(s));
-  near(markMult({ markId: 'mk-singularity', state: s }), 10 * ix(s));
+  near(markMult({ markId: 'mk-singularity', state: s }), 19 * ix(s));
   // +90 BASE XP/LETTER (KRAKEN)
   s = one('mk-kraken');
   near(markBaseXp({ markId: 'mk-kraken', state: s }), 90);
@@ -314,7 +314,7 @@ test('THE MARK STATS: the worn stat pays only what it touches; the INDEX (+0.5% 
   assert.deepEqual(TIER_PCT, TP);
   for (const m of ROLL_MARKS) {
     if (m.stat.kind === 'critEvery') { assert.equal(m.stat.value, Math.max(1, Math.round(100 / TP[m.tier]))); continue; }
-    const per = { winsPct: 1, xpPct: 1, luckPct: 1, baseWins: 0.1, baseXp: 0.1, overdriveSec: 3, critRatePct: 1, critPower: 1 / 25 }[m.stat.kind]
+    const per = { winsPct: 1, xpPct: 1, luckPct: 1, baseWins: 0.2 /* ×2, Andy oct11 */, baseXp: 0.1, overdriveSec: 3, critRatePct: 1, critPower: 1 / 25 }[m.stat.kind]
       || (m.stat.kind.endsWith('WinsPct') ? 2 : NaN);
     near(m.stat.value, TP[m.tier] * per);
   }

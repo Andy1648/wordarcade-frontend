@@ -139,7 +139,7 @@ test('a fresh LV1 profile at 1280x551 shows no boost pill and pays as before', a
 });
 
 // ---- Andy oct10 (migration 030): GEMS + OVERDRIVE codes — applied at redeem (season 2: UPGRADES → CODES shelf) ----
-test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×10 for its minutes', async ({ page }) => {
+test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×5 for its minutes', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await boot(page);
   await page.goto('/?portal=1&season2=1');
@@ -150,9 +150,9 @@ test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts �
   const g0 = await gems();
   await expect(await redeem(page, 'gemrain')).toHaveText('+150 GEMS — ADDED');
   await expect.poll(gems).toBe(g0 + 150);
-  await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×10 · 5 MIN — STARTED');
+  await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×5 · 5 MIN — STARTED');
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
-  expect(boost && boost.mult).toBe(10);
+  expect(boost && boost.mult).toBe(5);
   expect(boost.until - Date.now()).toBeGreaterThan(4 * 60_000);
   await expect(await redeem(page, 'GEMRAIN')).toHaveText('YOU ALREADY REDEEMED THAT CODE');
   expect(await gems(), 'never twice').toBe(g0 + 150);
