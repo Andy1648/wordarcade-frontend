@@ -48,6 +48,10 @@ function S({ d, f, s, w = 6, ink = 14 }) {
     </>
   );
 }
+/** GEAR ART v1 (Andy oct10): a painted sticker (public/gear/<name>.webp, 256px, background cut) in place of the kit
+ * glyph. Its ink outline + highlights are in the art, so it fills the whole 100 box (it overhangs the cog's face, like
+ * the kit glyphs do). */
+const ART = (name) => <image href={`/gear/${name}.webp`} x="-4" y="-4" width="108" height="108" />;
 const G = ({ d, w = 4 }) => <path d={d} stroke={W} strokeWidth={w} fill="none" />;
 
 export const ROLLED_GLYPHS = {
@@ -173,59 +177,11 @@ export const ROLLED_GLYPHS = {
       <G d="M31 37 L28 48" w="3.5" />
     </g>
   ),
-  'mk-leviathan': (
-    <g {...KS}>
-      <path d="M37 52 L27 48 L37 42 Z M42 38 L34 30 L46 30 Z" fill="#FF4FA3" strokeWidth="3.5" />
-      <F d="M36 66 C34 46 44 26 62 24 C70 24 76 30 72 36 L60 38 C54 42 52 52 54 66 Z" f="#9A1AFF" s="#6A0FC0" sd="M60 38 C54 42 52 52 54 66 L47 66 C47 54 50 43 60 38 Z" />
-      <circle cx="64" cy="30" r="3" fill="#FFE94A" strokeWidth="2.5" />
-      <F d="M16 70 C26 62 32 74 42 66 C52 58 58 72 68 64 C74 60 80 64 86 62 L86 80 L16 80 Z" f="#2EFFE0" s="#12A99A" sd="M54 80 C64 74 76 72 86 70 L86 80 Z" />
-      <path d="M80 46 C78 50 78 52 80 53 C82 52 82 50 80 46 Z" fill="#2EFFE0" strokeWidth="2.5" />
-      <G d="M41 48 C42 42 45 36 49 32" w="3.5" />
-    </g>
-  ),
-  'mk-eclipse': (
-    <g {...KS}>
-      <circle cx="46" cy="54" r="24" fill="#FFE94A" />
-      <F d={disc(56, 49, 21)} f="#3B2D5C" s="#1F1438" sd={moon(56, 49, 21)} />
-      <path d="M14 36 L20 40 M10 56 L17 56 M16 76 L21 71" stroke="#FFE94A" strokeWidth="4" />
-      <G d="M27 50 C27 45 30 41 33 38" />
-    </g>
-  ),
-  'mk-singularity': (
-    <g {...KS}>
-      <g transform="rotate(-14 50 52)">
-        <path d="M16 52 A34 11 0 0 1 84 52" strokeWidth="11" fill="none" />
-        <path d="M16 52 A34 11 0 0 1 84 52" stroke="#FF6B3D" strokeWidth="5" fill="none" />
-      </g>
-      <circle cx="49" cy="51" r="15" fill={INK} stroke="#FFE94A" strokeWidth="3" />
-      <g transform="rotate(-14 50 52)">
-        <path d="M16 52 A34 11 0 0 0 84 52" strokeWidth="12" fill="none" />
-        <path d="M16 52 A34 11 0 0 0 84 52" stroke="#D9381E" strokeWidth="5" fill="none" />
-        <path d="M16 52 A34 11 0 0 0 84 52" stroke="#FF6B3D" strokeWidth="5" fill="none" transform="translate(-1 -1.5)" />
-        <G d="M22 47 A34 11 0 0 1 32 43" w="2.5" />
-      </g>
-      <path d="M75 32 L79 28 M81 42 L86 41" stroke="#FFE94A" strokeWidth="3.5" />
-    </g>
-  ),
-  'mk-kraken': (
-    <g {...KS}>
-      <path d="M36 51 C24 64 22 66 20 74 C30 72 34 66 42 56 Z M46 53 C44 64 40 70 43 80 C49 74 51 64 53 55 Z M58 53 C61 64 66 70 75 71 C70 63 67 58 65 51 Z" fill="#C72E7E" strokeWidth="3.5" />
-      <path d="M64 46 C76 44 82 36 78 28 C76 24 71 26 73 30 C75 34 72 40 62 40 Z" fill="#FF4FA3" strokeWidth="3.5" />
-      <F d="M32 54 C28 30 70 24 68 52 C60 56 40 58 32 54 Z" f="#FF4FA3" s="#C72E7E" sd="M58 30 C66 34 70 42 68 52 C62 55 54 56 48 56 C58 50 62 42 58 30 Z" />
-      <circle cx="44" cy="44" r="4.5" fill={W} strokeWidth="3" />
-      <circle cx="57" cy="43" r="3.5" fill={W} strokeWidth="3" />
-      <path d="M45 45 h0.1 M58 44 h0.1" strokeWidth="3.5" />
-      <G d="M36 44 C36 38 39 34 44 31" w="3.5" />
-    </g>
-  ),
-  'mk-origin': (
-    <g {...KS}>
-      <F d="M50 16 C64 36 74 50 70 64 C66 78 36 80 31 64 C27 52 38 36 50 16 Z" f="#2EFFE0" s="#12A99A" sd="M64 42 C70 52 72 58 70 64 C67 75 52 79 42 77 C58 73 66 60 64 42 Z" />
-      <path d="M50 44 L54 54 L64 55 L56 61 L59 71 L50 65 L42 70 L44 61 L37 55 L47 54 Z" fill="#FFE94A" strokeWidth="3" />
-      <path d="M77 64 C73 70 73 74 77 76 C81 74 81 70 77 64 Z" fill="#2EFFE0" strokeWidth="2.5" />
-      <G d="M38 48 C40 42 43 36 47 30" />
-    </g>
-  ),
+  'mk-leviathan': ART('leviathan'),
+  'mk-eclipse': ART('eclipse'),
+  'mk-singularity': ART('singularity'),
+  'mk-kraken': ART('kraken'),
+  'mk-origin': ART('origin'),
   // ---- GEAR POOL v2 (Andy oct9): the 10 new gears, same kit construction (base + ONE shade plane, ink outline, ONE
   // glint upper-left, ONE asymmetric detail). Placeholder-grade: flagged for a real art pass in the PR. ----
   'mk-hotwire': (

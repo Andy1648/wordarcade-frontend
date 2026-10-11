@@ -313,6 +313,9 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
   const fusePerk = isFuse ? perkHead : null;
   const payout = rateNow && (
     <>
+      {/* Andy oct10: "BASE" — the 5-letter rate before a word's own bonuses (length, crits), so the player knows a word
+          can pay MORE. FUSE has no BASE tag: its FRENZY line already says how it pays more. */}
+      {!isFuse && <span className="game-card-payout-base">BASE </span>}
       <span className="game-card-payout-num">{formatRate(rateNow.rate)}</span>
       <span className="game-card-payout-per"> / WORD</span>
       {fusePerk && <span className={`game-card-payout-per game-card-perk${frenzy.active ? ' is-live' : ''}`}> · {fusePerk}</span>}
@@ -381,7 +384,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
               aria-label; the ribbon bleeds off the corner, so aria-hidden keeps it out of
               the viewport-integrity clip walk). */}
           {game.featured && <div className="game-card-ribbon is-featured" aria-hidden="true">FEATURED</div>}
-          {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI BUILT</div>}
+          {game.aiJudged && <div className="game-card-ribbon is-ai" aria-hidden="true">AI JUDGED</div>}
 
 
           {game.id === 'sat-rush' ? (

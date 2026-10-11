@@ -21,6 +21,7 @@
 import { grantWins } from './wins.js';
 import { storedLevel } from './xp.js';
 import { startBoost } from './boost.js';
+import { grantGems } from './gemsCore.js';
 // PROGRESSION v3 (SEASON2, default OFF — Andy phase 3: "no wins for ranking up, and remove ALL menu claim
 // notifications. Every claim lives in ACHIEVEMENTS and pays gems"): with the flag ON nothing enters this inbox —
 // achievement / rank / layer / collection / welcome claims are CUT (v3/achievements.js pays gems for play
@@ -60,6 +61,7 @@ export const CLAIM_KINDS = {
   layer: 'NEW SYSTEM',
   code: 'CODE',
   boost: 'BOOST',
+  gemcode: 'GEMS',
 };
 
 // Per-kind side effects of claiming (a NEW MARK becomes owned, …). Registered by the owning module.
@@ -219,6 +221,12 @@ export function claimAll() {
 registerClaimHandler('boost', (c) => {
   const m = (c && c.meta) || {};
   startBoost(m.mult, m.min);
+});
+
+// ---- GEMS codes (Andy oct10, migration 030): pay through the one gem door ------------------------------------------
+registerClaimHandler('gemcode', (c) => {
+  const m = (c && c.meta) || {};
+  grantGems(m.gems, 'code', { detail: c && c.id });
 });
 
 // ---- NEW SYSTEM layers (STEP 49 reveal moments) -------------------------------------------------

@@ -19,6 +19,8 @@ async function boot(page, { live = true, level = 20 } = {}) {
       'GIFT-2026': { code: 'GIFT-2026', wins: 25000, label: 'Launch gift' }, // a pre-010 response: no kind fields
       LEVELUP: { code: 'LEVELUP', wins: 1000, label: 'Level up', kind: 'wins', per_level: true, boost_mult: 3, boost_min: 10 },
       TRIPLE: { code: 'TRIPLE', wins: 0, label: 'Triple', kind: 'boost', per_level: false, boost_mult: 3, boost_min: 10 },
+      GEMRAIN: { code: 'GEMRAIN', wins: 0, label: 'GEM RAIN', kind: 'gems', per_level: false, boost_mult: 3, boost_min: 10, gems: 150 }, // 030
+      OVERDRIVE: { code: 'OVERDRIVE', wins: 0, label: 'OVERDRIVE', kind: 'overdrive', per_level: false, boost_mult: 10, boost_min: 5, gems: 0 }, // 030
     };
     if (!CODES[code]) return json({ error: 'bad_code' });
     if (used.has(code)) return json({ error: 'already_redeemed' });
@@ -134,4 +136,24 @@ test('a fresh LV1 profile at 1280x551 shows no boost pill and pays as before', a
   await boot(page, { level: 1 });
   await expect(page.locator('.bd-tile')).toHaveCount(0);
   await expect(page.locator('.tover')).toHaveCount(0);
+});
+
+// ---- Andy oct10 (migration 030): GEMS + OVERDRIVE codes — applied at redeem (season 2: UPGRADES → CODES shelf) ----
+test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×10 for its minutes', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await boot(page);
+  await page.goto('/?portal=1&season2=1');
+  await menuReady(page);
+  await navControl(page, 'shop').click();
+  await page.locator('.sp2-tab[data-shelf="codes"]').click();
+  const gems = () => page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0);
+  const g0 = await gems();
+  await expect(await redeem(page, 'gemrain')).toHaveText('+150 GEMS — ADDED');
+  await expect.poll(gems).toBe(g0 + 150);
+  await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×10 · 5 MIN — STARTED');
+  const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
+  expect(boost && boost.mult).toBe(10);
+  expect(boost.until - Date.now()).toBeGreaterThan(4 * 60_000);
+  await expect(await redeem(page, 'GEMRAIN')).toHaveText('YOU ALREADY REDEEMED THAT CODE');
+  expect(await gems(), 'never twice').toBe(g0 + 150);
 });
