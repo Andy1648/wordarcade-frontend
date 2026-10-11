@@ -192,19 +192,25 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
   await expect(page.getByTestId('roll-skip')).toHaveAttribute('data-value', 'secret');
   for (let i = 0; i < 2; i += 1) await page.getByTestId('roll-auto').click(); // → LEGENDARY+ (OFF → EPIC+ → LEGENDARY+)
   await expect(page.getByTestId('roll-auto')).toHaveAttribute('aria-pressed', 'false', { timeout: 20000 });
-  await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '5');
-  await expect(page.locator('.rs-need')).toHaveText('−5');
   const after = await page.evaluate(() => ({
     gems: JSON.parse(localStorage.getItem('taw.gems')).bal,
     wins: localStorage.getItem('taw.wins'),
     rolls: JSON.parse(localStorage.getItem('taw.markRolls')).rolls,
   }));
-  expect(after.gems).toBe(5);
+  // The roll is random, so AUTO stops for one of two honest reasons: the gems ran out, or a LEGENDARY+ landed (AUTO's
+  // top target). A duplicate also pays gems back (gear v4 DUPE_GEMS: rare 5), so the end balance varies with the draw.
+  // What must ALWAYS hold: never negative, never wins — and when it stopped short, the shortfall shown is the real one.
+  expect(after.gems).toBeGreaterThanOrEqual(0);
+  if (after.gems < 10) {
+    const need = String(10 - after.gems);
+    await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', need);
+    await expect(page.locator('.rs-need')).toHaveText(`−${need}`);
+  }
   // the wins only ever GAIN here (the INDEX rewards pay wins) — they never paid for a roll
   expect(Number(after.wins)).toBeGreaterThanOrEqual(50000000);
-  // two paid rolls (a worn double-roll perk can add a free extra each)
-  expect(after.rolls).toBeGreaterThanOrEqual(3);
-  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '5');
+  // at least one paid roll happened (25 gems, 10 a roll; a worn double-roll perk can add a free extra each)
+  expect(after.rolls).toBeGreaterThanOrEqual(2);
+  await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', String(after.gems));
 });
 
 test('skip reveals below [tier]: default EPIC, the pick is stored', async ({ page }) => {
