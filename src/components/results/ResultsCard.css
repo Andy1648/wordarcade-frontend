@@ -176,8 +176,9 @@
 .rs2-gems { --c: #2EFFE0; display: flex; align-items: center; gap: 10px; height: calc(60px * var(--u)); min-height: 44px; padding: 0 12px; }
 .rs2-gems .gems-earned { display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; min-width: 0; }
 /* the sources stack beside the total (two fit the box's height; the card never grows) */
-.rs2-gems .gems-earned-srcs { flex-direction: column; flex-wrap: nowrap; gap: 2px; flex: 0 0 auto; align-items: flex-start; }
-.rs2-gems .gems-earned-src { padding: 0 5px; line-height: 1.25; flex: 0 0 auto; width: max-content; }
+.rs2-gems .gems-earned-srcs { flex-direction: column; flex-wrap: nowrap; gap: 1px; flex: 0 0 auto; align-items: flex-start; }
+/* two chips stack inside the box's 44px phone floor: 2 × (14 × 1.1 + 4 border) + 1 = 40 (was 1.25 → 45: the card scrolled 4px on CI) */
+.rs2-gems .gems-earned-src { padding: 0 5px; line-height: 1.1; flex: 0 0 auto; width: max-content; }
 .rs2-gems .gems-earned-num { font-size: max(var(--fs-k22), calc(var(--fs-k28) * var(--u))); }
 .rs2-gems .gems-earned img { width: calc(32px * var(--u)); }
 .rs2-gems { gap: 8px; padding: 0 10px; }
