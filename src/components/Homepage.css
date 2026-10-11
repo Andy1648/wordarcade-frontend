@@ -774,3 +774,25 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 @media (max-width: 1199px) {
   .homepage-stage[data-paged] .hp-dock--extras { display: flex; justify-content: flex-start; }
 }
+
+/* ---- 2ND GEAR (Andy oct10: "another … gear equipment below the current one", season 2 R5) ----
+   The compact slot under YOUR GEAR: the same frame rules (tier border + hard shadow), one row — badge, number, unit.
+   LOCKED (below R5): the padlock + REBIRTH 5 in a dimmed frame. Static at rest (the showcase stays slot 1's). */
+.hp-gear2 .hp-gear-body { padding-top: calc(4 * var(--u)); padding-bottom: calc(8 * var(--u)); gap: calc(10 * var(--u)); }
+.hp-gear2-cog { flex: 0 0 auto; width: calc(var(--hp-tile-ico) * 1.25); height: calc(var(--hp-tile-ico) * 1.25); }
+.hp-gear2 .hp-gear-hole { width: calc(var(--hp-tile-ico) * 0.9); height: calc(var(--hp-tile-ico) * 0.9); }
+.hp-gear2 .hp-gear2-big { font-size: var(--fs-hp24); }
+.hp-gear2.is-locked { background: #120822; border-color: #3d3150; border-style: dashed; }
+.hp-gear2.is-locked .hp-gear-label { color: #8f7fb0; }
+.hp-gear2.is-locked .hp-gear2-big { color: #FFC23D; font-size: max(18px, var(--fs-hp18)); }
+.hp-gear2-lock { flex: 0 0 auto; }
+/* the phone chip pair: GEAR + 2ND side by side, the "2ND" key in the chip's label voice */
+.hp-chip-k { display: flex; align-items: center; padding-left: calc(10 * var(--u)); font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-hp13); color: #c9b8e8; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.hp-chip.is-locked { border-style: dashed; border-color: #3d3150; background: #120822; }
+.hp-chip.is-locked .hp-chip-edge { background: #3d3150; }
+.hp-chip.is-locked .menu-mark-name { color: #FFC23D; padding-left: calc(6 * var(--u)); }
+.hp-chip-lock { align-self: center; margin-left: calc(8 * var(--u)); }
+/* worn: ONE row (number + unit inline) so the slot is no taller than the locked one — it sat on CREDITS at 1366x657 */
+.hp-gear2 .hp-gear-text { flex-direction: row; align-items: baseline; flex-wrap: wrap; column-gap: calc(8 * var(--u)); row-gap: 0; }
+.hp-gear2-cog { width: var(--hp-tile-ico); height: var(--hp-tile-ico); }
+.hp-gear2.is-worn .hp-gear2-big { font-size: max(18px, var(--fs-hp18)); } /* numbers ≥ 18px (Andy) */

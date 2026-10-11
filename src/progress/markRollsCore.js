@@ -667,8 +667,14 @@ export function markXpMult(opts = {}) {
   return guard(() => pctMult('xpPct', opts), 1);
 }
 const flat = (kind, opts) => guard(() => {
-  const { stat } = worn(opts);
-  return stat && stat.kind === kind ? stat.value : 0;
+  const { s, id, stat } = worn(opts);
+  const own = stat && stat.kind === kind ? stat.value : 0;
+  // the 2ND GEAR slot (season 2, R5 — Andy oct10 "gear 2"): its flat stat (+N BASE WINS / XP, luck, overdrive) pays too,
+  // through the same door as its % stats (V3.c2 = hooks.mark2For: R5+, owned, not the worn MAIN). Only for the live
+  // worn pair — a caller asking about one gear (`markId`) gets that gear alone.
+  const id2 = opts.markId === undefined && V3.c2 ? V3.c2(s, id) : null;
+  const st2 = id2 ? statOf(id2, s) : null;
+  return own + (st2 && st2.kind === kind ? st2.value : 0);
 }, 0);
 /** +N BASE WINS/WORD (added to BASE 10 before every multiplier). */
 export function markBaseWins(opts = {}) {
