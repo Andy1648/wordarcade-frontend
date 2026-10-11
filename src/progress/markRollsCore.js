@@ -23,7 +23,7 @@
 //   critPower      +N× CRIT POWER (added to the ×2 a crit key pays)
 //   critEvery      EVERY Nth MENU KEY IS A GUARANTEED CRIT (★ pips / SHINY shorten N)
 // sized so the tier's effect on what it touches ≈ the old MAIN (RARE +25%, EPIC +50%, LEGENDARY +200%, MYTHIC +900%,
-// SECRET +2,400%; season 2 re-sizes them to +40 / +80 / +180 / +400 / +900 — v3/hooks.applyFinalMarkTiers, GEAR OP). Only the
+// SECRET +2,400%; season 2 re-sizes them to +40 / +80 / +200 / +900 / +2,400 — v3/hooks.applyFinalMarkTiers, GEAR OP). Only the
 // WORN MAIN's stat applies. No two gears print the same MAIN stat (markRolls.test.js keeps it that way).
 // DUPES → ★ PIPS (replacing GOLD / RAINBOW): RARE 5 / EPIC 3 / LEGENDARY 2 / MYTHIC+ 1 dupes per pip, ★5
 // max; each pip +20% of the stat (★5 = ×2). SHINY ×2 on top. A save from before v2 keeps its GOLD (×2) / RAINBOW
