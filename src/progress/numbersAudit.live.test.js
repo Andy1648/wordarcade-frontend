@@ -67,7 +67,7 @@ function liveMark(mark, mode = null) {
   // a one-mode WINS gear: 2× the tier's percent, in its own mode only
   if (mode && m.stat.kind === `${{ wordBomb: 'wb', blitz: 'blitz', satRush: 'sat', chain: 'chain', fuse: 'fuse', wordRace: 'race' }[mode]}WinsPct`) out.wins = 1 + 2 * (f - 1);
   if (m.stat.kind === 'xpPct') out.xp = f;
-  if (m.stat.kind === 'baseWins') out.winsBase = (f - 1) * 10;
+  if (m.stat.kind === 'baseWins') out.winsBase = 2 * (f - 1) * 10; // ×2 (Andy oct11 BASE_WINS_SCALE)
   if (m.stat.kind === 'baseXp') out.xpBase = (f - 1) * 10;
   return out;
 }

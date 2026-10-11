@@ -37,7 +37,7 @@ export const STOCK = [
   { id: 'xp25', rarity: 'common', icon: 'levels', name: 'XP BOOST', big: '+50%', what: 'XP PER KEY', time: '10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50% (id kept: saves)
   { id: 'wins25', rarity: 'common', icon: 'wins', name: 'WINS BOOST', big: '+50%', what: 'WINS PER WORD', time: '10 MIN', price: 60, max: 5, fx: 'wins', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50%
   { id: 'luck2', rarity: 'rare', icon: 'luck', name: 'LUCK BOOST', big: '×2', what: 'ROLL LUCK', time: '15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
-  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×10', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 300, max: 2, boost: { mult: 10, min: 5 } },
+  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×5', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 300, max: 2, boost: { mult: 5, min: 5 } } /* Andy oct11: ×5 (overdrive.js OVERDRIVE_MULT) */,
   { id: 'extend', rarity: 'rare', icon: 'clock', name: 'TIME BOOST', big: '+5 MIN', what: 'XP · WINS · LUCK BOOSTS', time: 'NOT OVERDRIVE', price: 150, max: 2, extend: true },
   { id: 'epicroll', rarity: 'legendary', icon: 'roll', name: 'EPIC+ ROLL', big: '1', what: 'FREE EPIC+ ROLL', time: 'COMING SOON', price: 495, max: 1, buyable: false },
 ];
@@ -111,7 +111,7 @@ function liveTimers(now) {
 /** Is an XP / WINS / LUCK boost running (the +5 MIN item needs one)? */
 export const anyTimerLive = (now = Date.now()) => liveTimers(now).length > 0;
 
-/** OVERDRIVE: ×10 in boost slot 1. A buy while it runs ADDS its minutes and stays ×10 — time stacks, the multiplier
+/** OVERDRIVE: ×5 (Andy oct11) in boost slot 1. A buy while it runs ADDS its minutes and stays ×5 — time stacks, the multiplier
  *  never does (the R3 2nd slot is for code boosts; an OVERDRIVE there multiplied ×10 × ×10). */
 function startOverdrive(mult, min, now) {
   const cur = readJson(BOOST1_KEY);
@@ -123,7 +123,7 @@ function startOverdrive(mult, min, now) {
 }
 
 /** The OVERDRIVE grant itself — the SAME path a STOCK buy takes (the DAILY FREE DROP's MYTHIC pays through it). */
-export function grantOverdrive(mult = 10, min = 5, now = Date.now()) {
+export function grantOverdrive(mult = 5, min = 5, now = Date.now()) {
   return startOverdrive(mult, min, now);
 }
 

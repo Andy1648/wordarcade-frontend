@@ -332,3 +332,37 @@ test('@1366: a NAMED player keeps the v2 board with the YOU / CHANGE button, no 
   await page.waitForTimeout(900);
   if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/lb-named-1366x657.png` });
 });
+
+// 031 LEADERBOARD PROFILES (Andy oct10 "click anyone on leaderboard to see their stats"): a row / a podium spot opens
+// that player's card — worn gear(s), BASE / WINS per word, POWER, gears found; a player with no showcase shows dashes.
+test('tap a name: the profile card shows their gear, BASE, POWER and gears found; Esc closes it first', async ({ page }) => {
+  const SHOW = { b: { gear1: 'mk-kraken', gear2: null, base_wins: 190, wins_per_word: 5130, gears_found: 9, gears_total: 27, power: 6 } };
+  const { lb } = await boot(page, { me: { rebirths: 0, level: 60 } });
+  // registered AFTER the board mock: the newest route wins
+  await page.route('**/rest/v1/profile_showcase*', (route) => {
+    const id = decodeURIComponent((route.request().url().match(/profile_id=eq\.([^&]+)/) || [])[1] || '');
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SHOW[id] ? [SHOW[id]] : []) });
+  });
+  await lb.locator('.lb2-col--2').click(); // BRAVO
+  const pc = page.getByTestId('profile-card');
+  await expect(pc).toBeVisible();
+  await expect(pc.locator('.pc-name')).toHaveText('BRAVO');
+  await expect(pc.locator('.pc-gear[data-slot="1"] .pc-gear-name')).toHaveText('KRAKEN');
+  await expect(pc.locator('.pc-gear[data-slot="1"]')).toHaveAttribute('data-tier', 'mythic');
+  await expect(pc.locator('.pc-gear[data-slot="2"]')).toHaveClass(/is-empty/);
+  await expect(pc.locator('.pc-tile-v')).toHaveText(['190', '5,130', 'T6', '9/27']);
+  // nothing overflows its tile, every target ≥ 44px
+  const over = await pc.evaluate((el) => [...el.querySelectorAll('.pc-tile-v, .pc-tile-k, .pc-gear-name, .pc-name')].filter((n) => n.scrollWidth > n.clientWidth + 1).length);
+  expect(over).toBe(0);
+  const x = await pc.locator('.pc-x').boundingBox();
+  expect(Math.min(x.width, x.height)).toBeGreaterThanOrEqual(44);
+  await page.keyboard.press('Escape');
+  await expect(pc).toHaveCount(0);
+  await expect(lb).toBeVisible(); // the card closed, the board stayed
+  // a row with no showcase: every tile is a dash, never a made-up number
+  await lb.locator('.lb2-row[data-id="d"]').click();
+  await expect(pc.locator('.pc-name')).toHaveText('DELTA');
+  await expect(pc.locator('.pc-tile-v')).toHaveText(['—', '—', '—', '—']);
+  await pc.locator('.pc-x').click();
+  await expect(pc).toHaveCount(0);
+});

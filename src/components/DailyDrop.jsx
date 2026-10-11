@@ -40,7 +40,7 @@ function sndOpen(tier) {
   [0, 1, 2].forEach((k) => tone(t + k * 0.09, { freq: pentFreq(NOTE.C5 + tier + k * 2), type: 'triangle', dur: 0.16, gain: 0.16, attack: 0.005 }));
 }
 
-/** What tier `i` pays: the gem icon + "+15 GEMS", or the OVERDRIVE icon + "OVERDRIVE ×10 · 5 MIN" (`full`) / "×10 · 5 MIN". */
+/** What tier `i` pays: the gem icon + "+15 GEMS", or the OVERDRIVE icon + "OVERDRIVE ×5 · 5 MIN" (`full`) / "×5 · 5 MIN". */
 function PayLine({ i, full = false, size = 20 }) {
   const t = V3.drop.DROP_TIERS[i];
   if (t.pay.gems) {

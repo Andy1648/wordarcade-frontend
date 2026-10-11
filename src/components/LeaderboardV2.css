@@ -697,3 +697,8 @@
 .lb2 .lb2-col--1 .lb2-pod-name-t { font-size: min(max(var(--fs-k14), calc(var(--fs-k20) * var(--pk))), max(13px, calc(92cqw / var(--nl, 8)))); }
 /* a phone's podium column is ~85px: a long name WRAPS to a second line rather than being cut */
 .lb2--narrow .lb2-col .lb2-pod-name-t { white-space: normal; word-break: break-all; text-wrap: balance; text-overflow: clip; line-height: 1.05; text-align: center; }
+
+/* 031 LEADERBOARD PROFILES: every name opens its card (ProfileCard.jsx) — a pointer + a press, no hover motion at rest */
+.lb2 .is-peek { cursor: pointer; }
+.lb2 .is-peek:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; }
+.lb2-row.is-peek:active { transform: translate(2px, 2px); }

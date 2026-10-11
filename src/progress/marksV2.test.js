@@ -35,9 +35,9 @@ test('+N BASE WINS/WORD reaches the payout: BASE 10 → 10 + N before every mult
   const bare = withStorage({ [ROLL_STATE_KEY]: owning('mk-singularity') }, () => perWordRateNow({ mode: 'wordBomb' }));
   withStorage({ [ROLL_STATE_KEY]: owning('mk-singularity'), [MARKS_EQUIPPED_KEY]: 'mk-singularity' }, () => {
     const r = perWordRateNow({ mode: 'wordBomb' });
-    assert.ok(Math.abs(r.rate / bare.rate - 10) < 0.05, 'MYTHIC +90 BASE: 10 → 100 (whole-XP grid)');
-    near(r.factors.baseWins, 90);
-    near(wordWinsBase({}), 100, 'the receipt BASE row carries the +90');
+    assert.ok(Math.abs(r.rate / bare.rate - 19) < 0.05, 'MYTHIC +180 BASE (Andy oct11 ×2): 10 → 190 (whole-XP grid)');
+    near(r.factors.baseWins, 180);
+    near(wordWinsBase({}), 190, 'the receipt BASE row carries the +180');
     assert.equal(Math.round(r.base * r.factors.bonus * 10) / 10, r.rate, 'base × the multipliers = the rate (to the tenth)');
   });
   // pure: xpPerWord's addend

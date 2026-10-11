@@ -78,7 +78,7 @@ function finalMark(mark, mode = null) {
   // a one-mode WINS gear: 2× the tier's percent, in its own mode only
   if (mode && m.stat.kind === `${{ wordBomb: 'wb', blitz: 'blitz', satRush: 'sat', chain: 'chain', fuse: 'fuse', wordRace: 'race' }[mode]}WinsPct`) out.wins = 1 + 2 * (f - 1);
   if (m.stat.kind === 'xpPct') out.xp = f;
-  if (m.stat.kind === 'baseWins') out.winsBase = (f - 1) * 10; // sized on BASE 10: a +N BASE is worth ×(1 + N/10)
+  if (m.stat.kind === 'baseWins') out.winsBase = 2 * (f - 1) * 10; // sized on BASE 10, ×2 (Andy oct11 BASE_WINS_SCALE)
   if (m.stat.kind === 'baseXp') out.xpBase = (f - 1) * 10;
   return out;
 }
@@ -161,9 +161,9 @@ test('FINAL v3: XP / LETTER chain — BASE 1 × (10 + N)/10 × KEY 2^T × REBIRT
   assert.equal(n, STATES.length * MARKS.length);
 });
 
-test('FINAL mark tiers reach the rolled pool: LEGENDARY ×2.8, MYTHIC +40 BASE (×5), SECRET ×10 — not the season-1 ×3 / +90 / ×25', () => {
+test('FINAL mark tiers reach the rolled pool: LEGENDARY ×2.8, MYTHIC +80 BASE (×9, Andy oct11 ×2), SECRET ×10 — not the season-1 ×3 / +90 / ×25', () => {
   assert.equal(rollMarkById('mk-eclipse').stat.value, 180);
-  assert.equal(rollMarkById('mk-singularity').stat.value, 40);
+  assert.equal(rollMarkById('mk-singularity').stat.value, 80);
   assert.equal(rollMarkById('mk-origin').stat.value, 900);
 });
 

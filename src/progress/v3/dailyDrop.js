@@ -11,7 +11,7 @@
 //     EPIC       12%   +60 GEMS
 //     LEGENDARY   4%   +150 GEMS  — the prototype's "1 FREE EPIC+ ROLL" has no grant path yet (the STOCK 'epicroll' is
 //                                    buyable:false and markRolls has no banked/forced roll), so it pays the gem fallback
-//     MYTHIC      1%   ×10 OVERDRIVE · 5 MIN — the STOCK overdrive's own code path (stock.js grantOverdrive: slot 1,
+//     MYTHIC      1%   ×5 OVERDRIVE · 5 MIN — the STOCK overdrive's own code path (stock.js grantOverdrive: slot 1,
 //                                    time stacks, the multiplier never does)
 //
 // Store: taw.s2.drop = { day: 'YYYY-MM-DD' (local), claimed: bool, tier: index | null }. Every write is a no-op with
@@ -33,7 +33,7 @@ export const DROP_TIERS = [
   { id: 'rare', name: 'RARE', p: 28, color: '#3D8BFF', line: '#1d4fa8', pay: { gems: 30 } },
   { id: 'epic', name: 'EPIC', p: 12, color: '#B04BFF', line: '#6a1aa8', pay: { gems: 60 } },
   { id: 'legendary', name: 'LEGENDARY', p: 4, color: '#FFC23D', line: '#a87400', pay: { gems: 150 } },
-  { id: 'mythic', name: 'MYTHIC', p: 1, color: '#FF4FA3', line: '#b0186a', pay: { overdrive: { mult: 10, min: 5 } } },
+  { id: 'mythic', name: 'MYTHIC', p: 1, color: '#FF4FA3', line: '#b0186a', pay: { overdrive: { mult: 5, min: 5 } } },
 ];
 
 /** What a tier pays, as the tile prints it. */
