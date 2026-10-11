@@ -70,8 +70,9 @@
 /* the art: the cog + glyph (MarkBadge) over the frame's rosette, the EPIC+ glow behind it */
 .mc-art { position: absolute; top: var(--mc-y-art); left: calc(90px - var(--mc-art) / 2); width: var(--mc-art); height: var(--mc-art); }
 .mc-cog { position: absolute; inset: 0; display: block; }
-.mc-cog svg { display: block; }
-.mc-badge { position: relative; display: block; width: 100%; height: 100%; }
+.mc-cog-idle, .mc-cog-fast { position: absolute; inset: 0; display: block; }
+.mc-cog svg { display: block; transform: scale(1.12); } /* oct11: the cog + glyph a size up over the rosette */
+.mc-badge { position: relative; display: block; width: 100%; height: 100%; transform: scale(1.1); }
 .mc-badge.is-sil .mx-sil { filter: brightness(0) opacity(0.9); }
 .mc-glow {
   position: absolute;
@@ -194,15 +195,33 @@
 /* ---- one-shots: a REVEAL (.is-fx) and hover / press ---- */
 .mc.is-fx.is-hi .mc-cog { animation: mc-spin 1400ms cubic-bezier(0.2, 0.7, 0.3, 1) 1; }
 .mc.is-fx.is-hi .mc-glow { animation: mc-glow 900ms ease-out 1; }
-:is(button, a):hover > .mc.is-hi .mc-cog,
-:is(button, a):active > .mc.is-hi .mc-cog { will-change: transform; animation: mc-spin-h 900ms cubic-bezier(0.2, 0.7, 0.3, 1) 1; }
+
+/* GEAR TURN (Andy oct11 "the gears should rotate quicker when hovered upon … the icons … move a little … tilt but
+   just not as much as the cog"). An EXPLICIT exception to "nothing loops at rest" (infiniteAnimations.test history):
+   the cog turns once per 16 s; hovered / focused, a second nested turn runs at 1.6 s a lap (paused, so it resumes
+   where it stopped — no jump). The glyph bobs ±2°; hovered it rocks ±7°. Compositor transforms on HTML layers only. */
+.mc:not(.is-still) .mc-cog-idle { animation: mc-spin 16s linear infinite; }
+.mc:not(.is-still) .mc-cog-fast { animation: mc-spin 1600ms linear infinite paused; }
+.mc:not(.is-still) .mc-badge { animation: mc-bob 2400ms ease-in-out infinite; }
+:is(button, a):is(:hover, :focus-visible, :active) > .mc:not(.is-still) .mc-cog-fast { animation-play-state: running; }
+:is(button, a):is(:hover, :focus-visible, :active) > .mc:not(.is-still) .mc-badge { animation: mc-rock 700ms ease-in-out infinite; }
 
 @keyframes mc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes mc-spin-h { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes mc-bob {
+  0%, 100% { transform: scale(1.1) translateY(0) rotate(-2deg); }
+  50% { transform: scale(1.1) translateY(-3px) rotate(2deg); }
+}
+@keyframes mc-rock {
+  0%, 100% { transform: scale(1.14) rotate(-7deg); }
+  50% { transform: scale(1.14) rotate(7deg); }
+}
 @keyframes mc-glow { 0% { opacity: 0.2; } 45% { opacity: 1; } 100% { opacity: 0.6; } }
 
 @media (prefers-reduced-motion: reduce) {
   .mc .mc-cog,
+  .mc .mc-cog-idle,
+  .mc .mc-cog-fast,
+  .mc .mc-badge,
   .mc .mc-glow { animation: none !important; }
 }
 
