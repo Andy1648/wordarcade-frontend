@@ -286,7 +286,16 @@ html[data-beat='true'] .homepage-logo {
   box-shadow: var(--b4) var(--b4) 0 #000;
   line-height: 1;
   white-space: nowrap;
+  /* a BUTTON now (Andy oct11: tap → ALL RANKS): pops + tilts on hover, sinks on press — transform only */
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  transition: transform 180ms cubic-bezier(.2, 1.6, .4, 1);
 }
+@media (hover: hover) {
+  .hp-rankplate:not(:disabled):hover { transform: scale(1.06) rotate(-3deg); will-change: transform; }
+}
+.hp-rankplate:not(:disabled):active { transform: translate(var(--b4), var(--b4)); box-shadow: none; }
+.hp-rankplate:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .hp-rankplate { transition: none; } }
 .hp-rankplate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-hprankk); letter-spacing: 0.12em; color: #c9b8e8; }
 .hp-rankplate-n {
   font-family: 'Bungee', sans-serif;

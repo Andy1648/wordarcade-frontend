@@ -90,6 +90,7 @@ const warmModeDialog = () => {
 const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'ClaimReveal');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
+const RankLadder = lazyWithReload(() => import('./RankLadder.jsx'), 'RankLadder');
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
 const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
@@ -259,6 +260,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // counts). Init from the persisted flag so it never flashes for a returning player.
   const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
   // PATCH NOTES: returning = had already seen the menu spotlight when this menu mounted (fixed for the mount)
+  // ALL RANKS popup (Andy oct11): the RANK plate opens it
+  const [showRanks, setShowRanks] = useState(false);
   const [patchReturning] = useState(() => hasSeenMenuSpotlight());
   // a first-time visitor's copy is marked seen here (no chunk loads); only a returning player's unseen release loads the host
   const [patchDue] = useState(() => {
@@ -1286,10 +1289,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
   };
   const rankPlate = SEASON2 ? (
-    <div className="menu-xp-rank hp-rankplate">
+    <button type="button" className="menu-xp-rank hp-rankplate" onClick={() => setShowRanks(true)} disabled={navigating} aria-label="Rank — see all ranks" data-testid="rank-plate">
       <span className="hp-rankplate-k">RANK</span>
       <span className="hp-rankplate-n">{shownRankName(rankTitle(xpProgress.level))}</span>
-    </div>
+    </button>
   ) : null;
   const xpBar = (
     <KitXpBar
@@ -1488,7 +1491,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </Suspense>
         </ScreenBoundary>
       )}
-      {patchDue && <Suspense fallback={null}><PatchNotesHost returning={patchReturning} blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview)} /></Suspense>}
+      {showRanks && <Suspense fallback={null}><RankLadder onClose={() => setShowRanks(false)} /></Suspense>}
+      {patchDue && <Suspense fallback={null}><PatchNotesHost returning={patchReturning} blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showRanks)} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost level={xpProgress.level} rebirths={rebirths} />
