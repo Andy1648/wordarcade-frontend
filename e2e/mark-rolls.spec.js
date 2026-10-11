@@ -117,7 +117,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   expect(await rollUiAnims(page)).toBe(0);
   const infinite = await page.evaluate(() => document.getAnimations().filter((a) => {
     const t = a.effect && a.effect.getTiming && a.effect.getTiming();
-    return t && t.iterations === Infinity;
+    // GEAR TURN (Andy oct11): the cog's turn + the glyph's bob are the one sanctioned rest loop on a gear
+    return t && t.iterations === Infinity && !/^(mc-spin|mc-bob|mc-rock|hp-gear-)/.test(a.animationName || '');
   }).length);
   expect(infinite).toBeLessThanOrEqual(1); // the menu's single pre-existing loop, nothing new
   const wc = await page.evaluate(() => [...document.querySelectorAll('.rs-overlay, .rs-overlay *')].filter((n) => n.style && n.style.willChange).length);

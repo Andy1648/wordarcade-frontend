@@ -8,6 +8,7 @@
 // Kept small on purpose: this file rides the menu's index chunk (the worn-mark chip). Payload ratchet.
 import { memo, useEffect, useId, useState } from 'react';
 import { CARD_RAR, RAINBOW_TEETH, LOCKED, cardTier } from './markCard/palette.js';
+import './MarkBadge.css';
 
 // Rank rims (legacy marks, ranks II–V): the cog's colour once a legacy mark ranks up.
 export const RANK_RIMS = [

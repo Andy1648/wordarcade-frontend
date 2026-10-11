@@ -19,9 +19,10 @@
 //   lock + ACHIEVEMENT) and NO pip row (Andy oct9: the "?" pips confused). No stat value anywhere (cardModel holds none).
 //
 // The face is drawn at 180×260 and SCALED (transform) to the host's --mc-w / --mc-s (or the `w` prop), so every
-// size is the same drawing. MOTION (MarkCard.css) — all finite one-shots, transform/opacity only: EPIC+ spins its
-// cog once and pulses its glow once when the card is REVEALED (`fx`) and again on hover / press; nothing loops at
-// rest. The ONLY sheen is the `sheen` slot (the wide band asset, swept by the roll reveal / the INDEX's one shared
+// size is the same drawing. MOTION (MarkCard.css), transform/opacity only: EPIC+ spins its cog once and pulses its
+// glow once when the card is REVEALED (`fx`). GEAR TURN (Andy oct11, an explicit exception to "nothing loops at
+// rest"): every live card's cog turns slowly and its glyph bobs + tilts a little; hovered, the cog turns fast and the
+// glyph rocks (less than the cog). Reel cells passing by (`still`) stay still. The ONLY sheen is the `sheen` slot (the wide band asset, swept by the roll reveal / the INDEX's one shared
 // timer) — the old CSS shine stripe is gone (its skewed rest position leaked a thin line onto every EPIC+ card).
 // Reduced motion: nothing moves.
 //
@@ -120,9 +121,12 @@ function MarkCard({
           {hi ? <span className="mc-glow" aria-hidden="true" /> : null}
           {/* the cog is its own HTML layer so its one-shot spin is a compositor transform, not an SVG repaint */}
           <span className="mc-cog" aria-hidden="true">
-            <svg viewBox="0 0 120 120" width="100%" height="100%" style={{ overflow: 'visible' }}>
-              <CogRing line={rank > 1 ? RANK_RIMS[Math.min(5, rank) - 1].fill : pal.line} rainbow={c.tier === 'secret' && rank <= 1} />
-            </svg>
+            {/* GEAR TURN (Andy oct11): -idle turns the cog slowly at rest, -fast adds a quick turn while hovered */}
+            <span className="mc-cog-idle"><span className="mc-cog-fast">
+              <svg viewBox="0 0 120 120" width="100%" height="100%" style={{ overflow: 'visible' }}>
+                <CogRing line={rank > 1 ? RANK_RIMS[Math.min(5, rank) - 1].fill : pal.line} rainbow={c.tier === 'secret' && rank <= 1} />
+              </svg>
+            </span></span>
           </span>
           <MarkBadge mark={entry} rank={rank} size={132} silhouette={locked} permanent={kind === 'perm'} cog={false} className="mc-badge" />
           {shiny && !locked ? <ShinyBadge className="mc-shiny" /> : null}
