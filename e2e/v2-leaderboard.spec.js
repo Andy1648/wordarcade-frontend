@@ -200,6 +200,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
         const rc = el.getBoundingClientRect();
         if (rc.width === 0 || rc.height === 0) continue;
         if (el.closest('svg') && el.tagName.toLowerCase() !== 'svg') continue;
+        if (el.closest('.lb2-fx')) continue; // the top-3 celebration (aria-hidden, one-shot) may fly past the edge mid-burst
         if (rc.left < -1 || rc.top < -1 || rc.right > W + 1 || rc.bottom > H + 1) off.push(String(el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className));
         const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
         if (hasText && parseFloat(getComputedStyle(el).fontSize) < 12.99) small.push(`${el.className}:${getComputedStyle(el).fontSize}`);

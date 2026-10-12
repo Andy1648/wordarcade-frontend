@@ -169,6 +169,41 @@ const SLIDE = [{ transform: 'translateX(40px)', opacity: 0 }, { transform: 'tran
 const FILL = [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }];
 const WOBBLE = [{ transform: 'rotate(-7deg)' }, { transform: 'rotate(7deg) translateY(-3px)', offset: 0.5 }, { transform: 'rotate(-7deg)' }];
 const BOB = [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', offset: 0.5 }, { transform: 'translateY(0)' }];
+// TOP 3 CELEBRATION (Andy oct12 "make the people feel good for being top 3"): one-shots on arrival, motion only on
+// existing art — a medal-tinted burst ring behind each place, the painted win burst behind #1, pooled confetti from #1
+// (and from YOUR place when you are top 3), the name slams in, the place number pops. Nothing loops.
+const RING = [{ transform: 'scale(.25) rotate(-30deg)', opacity: 0 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: 0.35 }, { transform: 'scale(1.7) rotate(14deg)', opacity: 0 }];
+const RAYS = [{ transform: 'scale(.2) rotate(-50deg)', opacity: 0 }, { transform: 'scale(1.12) rotate(6deg)', opacity: 1, offset: 0.3 }, { transform: 'scale(1) rotate(0deg)', opacity: 0.95, offset: 0.62 }, { transform: 'scale(1.25) rotate(18deg)', opacity: 0 }];
+const SLAM = [{ transform: 'scale(1.9) rotate(-6deg)', opacity: 0 }, { transform: 'scale(.92) rotate(1deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
+const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)', opacity: 1, offset: 0.55 }, { transform: 'scale(1)', opacity: 1 }];
+const CONFETTI_N = 18;
+const CONFETTI_FILL = ['#FFE94A', '#2EFFE0', '#FF4FA3', '#FFFFFF', '#9A1AFF', '#FF6B3D'];
+// a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
+const CONFETTI = Array.from({ length: CONFETTI_N }, (_, i) => {
+  const a = (-90 + ((i * 47) % 150) - 75) * (Math.PI / 180); // −165° … −15°: upward fan
+  const r = 90 + ((i * 37) % 80);
+  return { dx: Math.cos(a) * r, dy: Math.sin(a) * r, fall: 120 + ((i * 29) % 90), spin: (i % 2 ? 1 : -1) * (240 + ((i * 53) % 300)), fill: CONFETTI_FILL[i % CONFETTI_FILL.length], wide: i % 3 === 0 };
+});
+function confettiFrames(c, k) {
+  return [
+    { transform: 'translate(0, 0) rotate(0deg) scale(.6)', opacity: 1 },
+    { transform: `translate(${c.dx * k}px, ${c.dy * k}px) rotate(${c.spin * 0.5}deg) scale(1)`, opacity: 1, offset: 0.4 },
+    { transform: `translate(${c.dx * 1.25 * k}px, ${(c.dy + c.fall) * k}px) rotate(${c.spin}deg) scale(.9)`, opacity: 0 },
+  ];
+}
+function PodiumFx({ place, party }) {
+  return (
+    <span className="lb2-fx" aria-hidden="true">
+      <span className={`lb2-ring is-${place}`} />
+      {place === 1 && <img className="lb2-rays" src="/fx/burst-win.webp" alt="" draggable="false" />}
+      {party && (
+        <span className="lb2-confetti">
+          {CONFETTI.map((c, i) => <span key={i} className={`lb2-cf${c.wide ? ' is-wide' : ''}`} style={{ background: c.fill }} />)}
+        </span>
+      )}
+    </span>
+  );
+}
 const SINK = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 const pulse = (base) => [{ transform: `${base} scale(1)` }, { transform: `${base} scale(1.018)`, offset: 0.5 }, { transform: `${base} scale(1)` }];
 
@@ -361,6 +396,18 @@ export default function LeaderboardV2({ onBack }) {
     root.querySelectorAll('.lb2-slide').forEach((el, i) => kitPlay(el, SLIDE, { duration: 350, delay: i * 100, easing: 'ease-out', fill: 'backwards' }));
     root.querySelectorAll('.lb2-fill').forEach((el) => kitPlay(el, FILL, { duration: 800, delay: 200, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' }));
     if (crownRef.current) kitPlay(crownRef.current, WOBBLE, { duration: 2200, iterations: 1, easing: 'ease-in-out' });
+    // TOP 3: after the blocks land (~500 ms) — the ring, #1's burst, the name slam, the number pop, the confetti
+    root.querySelectorAll('.lb2-col').forEach((col) => {
+      const place = Number(col.dataset.place) || 0;
+      const at = 380 + [0, 0, 140, 260][place];
+      const q = (s) => col.querySelector(s);
+      kitPlay(q('.lb2-ring'), RING, { duration: 700, delay: at, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
+      kitPlay(q('.lb2-rays'), RAYS, { duration: 1500, delay: at - 60, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
+      kitPlay(q('.lb2-pod-name'), SLAM, { duration: 380, delay: at + 60, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'backwards' });
+      kitPlay(q('.lb2-place'), POPN, { duration: 360, delay: at - 120, easing: 'cubic-bezier(.2,1.4,.4,1)', fill: 'backwards' });
+      const k = place === 1 ? 1.15 : 0.9;
+      col.querySelectorAll('.lb2-cf').forEach((el, i) => kitPlay(el, confettiFrames(CONFETTI[i], k), { duration: 1300 + (i % 4) * 90, delay: at + 40 + (i % 5) * 25, easing: 'cubic-bezier(.15,.7,.4,1)', fill: 'backwards' }));
+    });
     root.querySelectorAll('.lb2-mv.is-up .lb2-mv-ico').forEach((el) => kitPlay(el, BOB, { duration: 900, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-mv.is-down .lb2-mv-ico').forEach((el) => kitPlay(el, SINK, { duration: 1300, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-row.is-me').forEach((el) => kitPlay(el, pulse('rotate(-1deg)'), { duration: 750, iterations: 2, delay: 500, easing: 'ease-in-out' }));
@@ -427,6 +474,7 @@ export default function LeaderboardV2({ onBack }) {
             const n = p ? nums(p, tab, gains) : null;
             return (
               <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ''}`} data-place={place} data-id={p ? p.id : ''} {...peekProps(p, setPeek)}>
+                {p ? <PodiumFx place={place} party={place === 1 || mine} /> : null}
                 {place === 1 && <Crown crownRef={crownRef} />}
                 <div className="lb2-who">
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}

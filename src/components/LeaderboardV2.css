@@ -712,3 +712,30 @@
 }
 @media (prefers-reduced-motion: reduce) { .lb2-row.is-peek, .lb2-col.is-peek .lb2-who { transition: none; } }
 .lb2-row.is-peek:active { translate: 2px 2px; }
+
+/* ---- TOP 3 CELEBRATION (Andy oct12) — arrival one-shots only (LeaderboardV2.jsx RING / RAYS / SLAM / POPN / confetti).
+   Every fx node rests INVISIBLE (opacity 0); its WAAPI one-shot plays it and lets it go. Art = existing assets: the
+   burst ring (/fx/burst-ring.svg, a mask tinted the medal colour — a flat fill) and the painted win burst. ---- */
+.lb2-col { isolation: isolate; }
+.lb2-who { position: relative; z-index: 1; }
+.lb2-fx { position: absolute; left: 50%; top: calc(40px * var(--pk)); width: 0; height: 0; z-index: 0; pointer-events: none; }
+.lb2-col--1 .lb2-fx { top: calc(70px * var(--pk)); }
+.lb2-ring, .lb2-rays { position: absolute; opacity: 0; transform: scale(.2); } /* rest = the first keyframe: invisible AND small, so a resting ring never pokes past the screen edge */
+.lb2-ring {
+  left: calc(-110px * var(--pk)); top: calc(-110px * var(--pk)); width: calc(220px * var(--pk)); height: calc(220px * var(--pk));
+  -webkit-mask: url('/fx/burst-ring.svg') center / contain no-repeat; mask: url('/fx/burst-ring.svg') center / contain no-repeat;
+  background: #C9C4DC;
+}
+.lb2-ring.is-1 { background: #FFC23D; }
+.lb2-ring.is-3 { background: #FF6B3D; }
+.lb2-col--1 .lb2-ring { left: calc(-140px * var(--pk)); top: calc(-140px * var(--pk)); width: calc(280px * var(--pk)); height: calc(280px * var(--pk)); }
+.lb2-rays { left: calc(-120px * var(--pk)); top: calc(-120px * var(--pk)); width: calc(240px * var(--pk)); height: calc(240px * var(--pk)); }
+.lb2-confetti { position: absolute; left: 0; top: 0; }
+.lb2-cf { position: absolute; left: -4px; top: -6px; width: 8px; height: 12px; border: 2px solid #000; border-radius: 2px; opacity: 0; }
+.lb2-cf.is-wide { width: 14px; height: 7px; left: -7px; top: -3px; }
+/* medal-coloured numbers: #1 is already gold; #2 silver, #3 bronze */
+.lb2-col--2 .lb2-pod-r { color: #E6E1F5; }
+.lb2-col--3 .lb2-pod-r { color: #FF8A4D; }
+.lb2--narrow .lb2-fx { top: 26px; }
+.lb2--narrow .lb2-podium { overflow-x: clip; } /* the burst never opens a sideways scroll on a phone */
+@media (prefers-reduced-motion: reduce) { .lb2-fx { display: none; } }
