@@ -1,6 +1,6 @@
 // e2e/patch-notes.spec.js — THE PATCH NOTES popup (Andy oct11): a RETURNING player meets it once per release, after the
 // knife-split; COLLECT pays exactly the "= N FREE ROLLS" it shows (N × the live roll price) into the wallet; PLAY closes;
-// a reload never shows it again. A first-time visitor never sees it. Nothing overflows at 1280×600 or 360×740.
+// a reload never shows it again. A first-time visitor sees it too, once the menu spotlight is done (Andy oct12). Nothing overflows at 1280×600 or 360×740.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { PATCH_GIFT_ROLLS } from '../src/components/patchNotes/patchNotesData.js';
@@ -47,18 +47,30 @@ for (const [w, h] of [[1280, 600], [360, 740]]) {
   });
 }
 
-test('PATCH NOTES: ✕ still pays the gift; a first-time visitor never sees it', async ({ page }) => {
+test('PATCH NOTES: ✕ still pays the gift; the UPDATE LOG tile re-opens it without paying again', async ({ page }) => {
   test.setTimeout(60_000);
   await boot(page, 1280, 720);
   await expect(page.getByTestId('patch-notes')).toBeVisible({ timeout: 15_000 });
   const before = await wallet(page);
   await page.getByTestId('patch-notes-close').click();
   await expect(page.getByTestId('patch-notes')).toHaveCount(0);
-  expect(await wallet(page)).toBe(before + PATCH_GIFT_ROLLS * S2_ROLL_PRICE);
+  const paid = before + PATCH_GIFT_ROLLS * S2_ROLL_PRICE;
+  expect(await wallet(page)).toBe(paid);
+  // Andy oct12: the top-right UPDATE LOG tile shows the notes again — the gift reads COLLECTED, the button CLOSE
+  await page.locator('[data-nav="news"]').click();
+  const pn = page.getByTestId('patch-notes');
+  await expect(pn).toBeVisible();
+  await expect(pn).toContainText('COLLECTED');
+  await page.getByTestId('patch-notes-collect').click();
+  await expect(pn).toHaveCount(0);
+  expect(await wallet(page)).toBe(paid);
 });
 
-test('PATCH NOTES: never for a first-time visitor', async ({ page }) => {
+test('PATCH NOTES: a first-time visitor gets it too — after the menu spotlight', async ({ page }) => {
+  test.setTimeout(60_000);
   await boot(page, 1280, 720, false);
-  await page.waitForTimeout(5000);
-  await expect(page.getByTestId('patch-notes')).toHaveCount(0);
+  await page.waitForTimeout(3500);
+  await expect(page.getByTestId('patch-notes')).toHaveCount(0); // never over the first-run spotlight
+  await page.keyboard.press('a'); // TYPE ANYWHERE dismisses the spotlight
+  await expect(page.getByTestId('patch-notes')).toBeVisible({ timeout: 15_000 });
 });
