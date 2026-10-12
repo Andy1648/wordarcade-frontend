@@ -33,6 +33,10 @@ import {
   PITY, ROLL_MARKS, substatsOf,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
+import { luck as rollLuck } from '../../progress/markRolls';
+import { rollsPerRoll } from '../../progress/markPerks';
+// 036 SERVER-CHECKED ROLLS: a named season-2 player's roll is picked by the server (asked at the HOLD start)
+import { serverRollOn, prepare as prepareServerRoll, take as takeServerRoll, claim as claimServerRoll } from '../../leaderboard/serverRoll';
 import { getGems, subscribeGems } from '../../progress/gems';
 import { GemIcon, GemCount } from '../gems/Gems';
 import { isBoostActive } from '../../progress/boost';
@@ -205,19 +209,50 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     setFresh(true);
     setLanded((n) => n + 1);
     if (auto.current.on && autoShouldStop(res, auto.current.until)) stopAuto();
+    if (auto.current.on) askServer(); // AUTO's next roll: ask while this reveal plays
     announceRolls([res, ...(res.extra || [])]); // MYTHIC+ → one ticker line each
     const wornNow = res.decision === 'auto' ? applyRollEquip(res, earned) : null;
     if (wornNow && onEquip) onEquip(wornNow);
   };
 
+  // 036: the server's pick for the next roll — asked when the HOLD starts (and after each AUTO landing) so it is back
+  // before the release; luck is the save's own (the server clamps it). Falls back to the local roll when null.
+  const srv = useRef({ waiting: false, fallback: false });
+  const askServer = () => {
+    if (!serverRollOn()) return;
+    const st = ensureRollState();
+    prepareServerRoll(rollLuck(st, { permanentOwned: permanentOwnedCount(), boost: isBoostActive() }), rollsPerRoll());
+  };
   const doRoll = () => {
     if (ctl.current && ctl.current.busy()) { ctl.current.finish(true); return null; }
     if (pending.current) commit(pending.current);
+    let picks = null;
+    let seq = 0;
+    if (serverRollOn() && !srv.current.fallback) {
+      const sr = takeServerRoll();
+      if (!sr) {
+        // not back yet (a tap without a hold, AUTO's first roll): wait for it, then roll — never a local pick instead
+        if (!srv.current.waiting) {
+          srv.current.waiting = true;
+          const st = ensureRollState();
+          prepareServerRoll(rollLuck(st, { permanentOwned: permanentOwnedCount(), boost: isBoostActive() }), rollsPerRoll()).then((r) => {
+            srv.current.waiting = false;
+            if (!r) srv.current.fallback = true; // the server can't roll for us (offline / pre-036): the local roll, once
+            live.current.doRoll();
+          });
+        }
+        return null;
+      }
+      picks = sr.picks;
+      seq = sr.seq;
+    }
+    srv.current.fallback = false;
     // the LIVE table of the roll about to be paid for — the strip is drawn from exactly these odds
     const before = ensureRollState();
     const table = rollTable(before, { permanentOwned: permanentOwnedCount(), boost: isBoostActive() });
-    const res = buyMarkRoll({ level });
+    const res = buyMarkRoll({ level, picks });
     if (!res) { short(); stopAuto(); return null; }
+    if (seq) claimServerRoll(seq); // the release commits the server's pick (retried later if this fails)
     setNeed(0);
     sndPurchase();
     // the hit that stops AUTO always gets the full reveal
@@ -288,7 +323,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const holdStart = () => {
     if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return; }
     if (!canAfford) { short(); return; }
-    if (holdRef.current.start()) sndRollCharge(CHARGE_MS);
+    if (holdRef.current.start()) { sndRollCharge(CHARGE_MS); askServer(); }
   };
   const holdEnd = () => { if (holdRef.current) holdRef.current.end(); };
   const holdKeyDown = (e) => {

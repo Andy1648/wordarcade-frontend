@@ -1083,7 +1083,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // owes this player a prize — it lands in the claims inbox (lazy: the menu chunk carries none of it)
   useEffect(() => {
     if (!SEASON2 || !LEADERBOARD_ENABLED) return undefined;
-    const t = setTimeout(() => { import('../leaderboard/weeklyPrize.js').then((m) => m.claimWeekPrizes()).catch(() => {}); }, 3000);
+    const t = setTimeout(() => {
+      import('../leaderboard/weeklyPrize.js').then((m) => m.claimWeekPrizes()).catch(() => {});
+      // 036: a gear the server's audit refused leaves this browser's save too
+      import('../leaderboard/serverRoll.js').then((m) => m.syncRefusedGears()).catch(() => {});
+    }, 3000);
     return () => clearTimeout(t);
   }, []);
   useEffect(() => {
