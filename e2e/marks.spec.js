@@ -46,16 +46,16 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   await expect(tile.locator('.mx-tile-tier')).toHaveText('RARE');
   // GEAR TILE v2 (Andy oct9): an OWNED tile's hero is its MAIN STAT; the odds moved to the detail sheet
   await expect(tile.locator('.mx-tile-odds')).toHaveCount(0);
-  await expect(tile.locator('.mx-tile-sub')).toHaveText('×1.25 XP');
+  await expect(tile.locator('.mx-tile-sub')).toHaveText('+25% XP');
   await expect(tile.locator('.mark-pips')).toHaveCount(0); // NIGHT oct8 #4: no ★ row under a card
   await tile.click();
   const sheet = page.locator('.mx-sheet');
   await expect(sheet).toBeVisible();
   await expect(sheet.locator('.mx-sheet-name')).toHaveText('PENCIL');
   await expect(sheet.locator('.mx-sheet-tier')).toContainText('RARE');
-  await expect(sheet.locator('.mx-sheet-stat')).toHaveText('×1.25 XP');
+  await expect(sheet.locator('.mx-sheet-stat')).toHaveText('+25% XP');
   // GEAR SHEET v2 (Andy oct9): the MAIN STAT is the sheet's biggest line; the odds sit under it with the ★ progress
-  await expect(sheet.getByTestId('mark-main')).toHaveText(/^×1\.25\s*XP$/);
+  await expect(sheet.getByTestId('mark-main')).toHaveText(/^\+25%\s*XP$/);
   await expect(sheet.getByTestId('mark-odds')).toHaveText(/^1 IN \d+$/);
   const flavour = (await sheet.getByTestId('mark-flavour').innerText()).trim();
   expect(flavour.length).toBeGreaterThan(0);

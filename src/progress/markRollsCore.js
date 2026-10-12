@@ -522,7 +522,8 @@ export function ordinal(n) {
 export function statText(stat) {
   if (!stat) return '';
   const v = stat.value;
-  const x = (pct) => xMult(1 + pct / 100);
+  // oct12 (Andy "instead of x do like percents for the gear cards"): a % stat prints as its percent — "+1,800% WINS", not "×19"
+  const x = (pct) => `+${formatRate(pct)}%`;
   switch (stat.kind) {
     case 'winsPct': return `${x(v)} WINS`;
     case 'xpPct': return `${x(v)} XP`;
@@ -536,7 +537,7 @@ export function statText(stat) {
     case 'overdriveSec': return `+${formatNum(v)}s OVERDRIVE`;
     // GEAR POOL v2: the one-mode WINS, the crit MAIN stats, the EVERY Nth KEY crit
     case 'critRatePct': return `+${formatRate(v)}% CRIT RATE`;
-    case 'critPower': return `+${formatMultExact(v)}× CRIT POWER`;
+    case 'critPower': return `+${formatRate(v * 100)}% CRIT POWER`;
     case 'critEvery': return v <= 1 ? 'EVERY KEY CRITS' : `EVERY ${ordinal(v)} KEY CRITS`;
     case 'gemsPct': return `+${formatRate(v)}% GEMS`;
     default: {
@@ -563,7 +564,7 @@ export function mainMultOf(id, state) {
 /** ONE tag for a mark: its stat line (a rolled mark), or "×N WINS + XP" (a PERMANENT / retired mark pays both). */
 export function mainTag(id, state) {
   if (ROLL_BY_ID.has(id)) return statLine(id, state);
-  return `${xMult(mainMultOf(id, state))} WINS + XP`;
+  return `+${formatRate((mainMultOf(id, state) - 1) * 100)}% WINS + XP`;
 }
 /** The perk line(s) of a mark ("LETTERS COUNT ×2"), or '' when it has none. */
 export function perkLine(id) {
@@ -791,7 +792,7 @@ export function substatText(x) {
   if (!x) return '';
   switch (x.kind) {
     case 'critRatePct': return `+${formatRate(x.value)}% CRIT RATE`;
-    case 'critPower': return `+${formatMultExact(x.value)}× CRIT POWER`;
+    case 'critPower': return `+${formatRate(x.value * 100)}% CRIT POWER`;
     case 'baseWins': return `+${formatMultExact(x.value)} BASE WINS`;
     case 'gemsPct': return `+${formatRate(x.value)}% GEMS`;
     case 'luckPct': return `+${formatRate(x.value)}% ROLL LUCK`;

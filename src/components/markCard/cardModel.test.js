@@ -93,9 +93,9 @@ test('earned gears (Andy oct8): drawn as LEGENDARY with the rest; locked = ACHIE
 });
 
 test('helpers: the tag split and the "7/10 → ★3" line', () => {
-  assert.deepEqual(splitTag('×1.5 WINS'), { num: '×1.5', kind: 'WINS' });
+  assert.deepEqual(splitTag('+50% WINS'), { num: '+50%', kind: 'WINS' });
   assert.deepEqual(splitTag('+2.5 BASE WINS'), { num: '+2.5', kind: 'BASE WINS' });
-  assert.deepEqual(splitTag('×1.5 WINS IN WORD BOMB'), { num: '×1.5', kind: 'WINS IN WORD BOMB' });
+  assert.deepEqual(splitTag('+50% WINS IN WORD BOMB'), { num: '+50%', kind: 'WINS IN WORD BOMB' });
   assert.deepEqual(splitTag('EVERY 4TH KEY CRITS'), { num: 'EVERY 4TH', kind: 'KEY CRITS' });
   assert.equal(pipNext({ pips: 2, have: 7, need: 10 }), '7/10 → ★3');
   assert.equal(pipNext({ pips: 5, have: 0, need: 0 }), '');
