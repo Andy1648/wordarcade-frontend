@@ -25,16 +25,9 @@ import { rawStorage } from './hooks.js';
 export const ECON_KEY = 'taw.econ';
 export const WELCOME_KEY = 'taw.s2.welcome'; // { st: 'pending' | 'done', r, req }
 export const WELCOME_COOKIE = 'taw_s2w';
-/** Exact keys a season-2 wipe keeps: the board identity + the settings. */
-export const KEEP_KEYS = [
-  'taw.lb.secret', 'taw.lb.profile', // the claimed name + device secret
-  'taw.reduceMotion', 'taw.theme', 'taw.themesRetired', // REDUCE MOTION, the equipped theme (and its one-time retire)
-  'taw.audioVolume', 'taw.musicMuted', 'taw.sfxEvents', 'taw.clack', // sound
-  'taw.chunkReload', // the stale-chunk reload guard (operational)
-];
-/** Key prefixes a wipe keeps: feature flags + the tutorial / "seen" marks (UI state, not progress). */
-export const KEEP_PREFIXES = ['taw.flag.', 'taw.tut.', 'taw.seen'];
-export const keepKey = (k) => KEEP_KEYS.includes(k) || KEEP_PREFIXES.some((p) => k.startsWith(p));
+// the keep list lives in keepKeys.js (side-effect free — resetAll.js imports it eagerly); re-exported for callers here
+export { KEEP_KEYS, KEEP_PREFIXES, keepKey } from '../keepKeys.js';
+import { keepKey } from '../keepKeys.js';
 
 const int0 = (v) => {
   const n = Number(v);

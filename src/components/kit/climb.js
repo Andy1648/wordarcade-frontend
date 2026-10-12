@@ -163,13 +163,14 @@ export function createClimbPlayer({
       show(target.level, target.frac, 'rest');
       onDone(target.level, target.frac, 0);
     },
-    to(l, f) {
+    // `o.maxMs` caps THIS glide (the XP bar's one-level wrap runs to full fast — Andy oct11 "there cant be a delay")
+    to(l, f, o = {}) {
       const next = { level: lvOf(l), frac: clamp01(f) };
       if (next.level === target.level && next.frac === target.frac && (id || (shownLevel === next.level && shownFrac === next.frac))) return null;
       const t = now();
       const running = !!id && !!g;
       const v = running ? speedAt(Math.max(t, lastT)) : 0;
-      const plan = planClimb({ level: shownLevel, frac: shownFrac }, next, { v, fresh: !running, maxMs });
+      const plan = planClimb({ level: shownLevel, frac: shownFrac }, next, { v, fresh: !running, maxMs: Number.isFinite(o.maxMs) ? Math.min(maxMs, o.maxMs) : maxMs });
       if (plan.drop || reduced() || plan.levels === 0) {
         api.set(next.level, next.frac);
         return plan;

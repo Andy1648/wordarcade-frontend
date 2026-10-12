@@ -50,6 +50,17 @@ function tick() {
   for (const h of dueHosts(list, t, (x) => visible.has(x.clip))) sweep(h.clip, h, t);
 }
 
+/** HOVER SHINE (Andy oct11 "i dont see the vertical lines concept animation when hovering over legendary cards"): sweep
+ *  this card's band NOW — a hovered card answers at once instead of waiting its turn. One run at a time per card (a
+ *  sweep still in flight is left to finish); the scheduler's next turn is pushed back as for a normal sweep. */
+export function shineNow(clip) {
+  const h = clip ? hosts.get(clip) : null;
+  if (!h || h.run) return false;
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return false;
+  sweep(clip, h, now());
+  return true;
+}
+
 /** Register a card's shine clip + band; returns the unregister. */
 export function shineHost(clip, band, tier) {
   if (!clip || !band) return () => {};

@@ -7,7 +7,8 @@
 /* HOVER v2 (Andy oct11): hovered, the teeth KEEP turning fast (hover-only, stops on leave); the glyph eases to a held tilt + enlarge */
 .hp-gear-cog .mb-glyph { transition: transform 260ms cubic-bezier(0.3, 0.7, 0.3, 1); }
 .hp-gear:is(:hover, :focus-visible) .hp-gear-cog .mb-cog > g { animation: hp-gear-turn 1100ms linear infinite; }
-.hp-gear:is(:hover, :focus-visible) .hp-gear-cog .mb-glyph { animation: none; transform: scale(1.14) rotate(-12deg); }
+.hp-gear:is(:hover, :focus-visible) .hp-gear-cog .mb-glyph { animation: hp-gear-tilt 380ms cubic-bezier(0.25, 0.8, 0.3, 1) forwards; }
+@keyframes hp-gear-tilt { to { transform: scale(1.14) rotate(-12deg); } }
 @keyframes hp-gear-turn { to { transform: rotate(360deg); } }
 @keyframes hp-gear-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-3px) rotate(2deg); } }
 @media (prefers-reduced-motion: reduce) { .hp-gear-cog :is(.mb-cog, .mb-cog > g, .mb-glyph) { animation: none; } }

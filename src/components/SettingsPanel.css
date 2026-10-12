@@ -156,6 +156,10 @@
 .sp-btn:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 0 0 0 #000; }
 .sp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .sp-btn--ghost { background: #12071f; color: #2EFFE0; border-color: #2EFFE0; }
+/* RESET ACCOUNT (Andy oct11): the danger tone — flat red fill, darker red outline */
+.sp-btn--danger { background: #FF5C5C; color: #0d0618; border-color: #b02a2a; }
+.sp-reset-confirm { display: flex; flex-direction: column; gap: 8px; }
+.sp-reset-warn { color: #FF8A8A; }
 .sp-code, .sp-input {
   width: 100%;
   box-sizing: border-box;

@@ -200,13 +200,15 @@ test('4. AUTO stops cleanly when the gems run out: no negative balance, no stuck
   await expect(auto).toHaveAttribute('aria-pressed', 'false', { timeout: 30000 });
   await expect(auto).toHaveAttribute('data-target', 'off');
   await expect(auto).toHaveText('AUTO: OFF');
+  // the end balance depends on the draw: a DUPLICATE pays gems back (gear v4 DUPE_GEMS: rare 5), so 35 can stretch to a
+  // 4th roll and end on 0 instead of 5. What must ALWAYS hold: never negative, short of one roll, the shortfall exact.
   const s = await store(page);
   expect(s.gems).toBeGreaterThanOrEqual(0);
-  expect(s.gems).toBe(5);
+  expect(s.gems).toBeLessThan(10);
   const roll = page.locator('.rs-roll');
   await expect(roll).not.toHaveClass(/is-rolling/);
   await expect(roll.locator('.rs-roll-lbl')).toHaveText('NO GEMS');
-  await expect(page.locator('.rs-need')).toHaveText('−5');
+  await expect(page.locator('.rs-need')).toHaveText(`−${10 - s.gems}`);
   await page.waitForTimeout(1200);
   expect(await reelAnims(page)).toBe(0);
 });
@@ -301,7 +303,7 @@ for (const [w, h] of [[1280, 551], [1366, 657], [1920, 1080], [390, 844], [360, 
       expect(b.y + b.height, `${sel} bottom`).toBeLessThanOrEqual(h + 1);
       return b;
     };
-    for (const sel of ['.rs-index-btn', '.rs-gems-bal', '.rs-close', '.rs-pity', '.rs-roll', '.rs-auto-btn', '.rs-skip']) await inView(sel);
+    for (const sel of ['.rs-index-btn', '.rs-gems-bal', '.rs-close', '.rs-pity', '.rs-roll', '.rs-auto-btn']) await inView(sel);
     const band = await page.locator('.rs-win').boundingBox();
     expect(band.y).toBeGreaterThanOrEqual(0);
     expect(band.y + band.height).toBeLessThanOrEqual(h);
@@ -324,9 +326,9 @@ for (const [w, h] of [[1280, 551], [1366, 657], [1920, 1080], [390, 844], [360, 
 
 // LAYOUT PASS (R4b): the result line is TWO rows on a phone once a DOUBLE ROLL adds its "+EXTRA" chip (SINGULARITY
 // worn) — the band must stay inside the stage (its top was pushed out under the frame), and with AUTO on the long
-// "AUTO → LEGENDARY+" label must never squeeze the SKIP plate's text out of its plate.
+// "AUTO → LEGENDARY+" label must fit its button.
 for (const [w, h] of [[390, 844], [360, 640]]) {
-  test(`8b. ${w}x${h}: a two-row result line keeps the band inside the stage; AUTO on keeps SKIP in its plate`, async ({ page }) => {
+  test(`8b. ${w}x${h}: a two-row result line keeps the band inside the stage; AUTO on fits its button`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await seed(page, {
       'taw.markRolls': STARTED({ marks: { 'mk-singularity': { n: 1, first: 1 } }, skipBelow: 'legendary' }),
@@ -354,10 +356,10 @@ for (const [w, h] of [[390, 844], [360, 640]]) {
     const auto = page.getByTestId('roll-auto');
     await auto.click(); await auto.click();
     await expect(auto).toHaveText('AUTO → LEGENDARY+');
-    const plate = page.locator('.rs-skip-v');
-    expect(await plate.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
-    await inside('.rs-skip-v', '.rs-skip', -1);
-    const sk = await page.locator('.rs-skip').boundingBox();
+    // the ONE auto control (Andy oct11): the long label fits its button, the button fits the screen
+    expect(await auto.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await page.mouse.move(0, 0); await page.waitForTimeout(400); // measured at rest: the hover lift / press pop are transforms
+    const sk = await auto.boundingBox();
     expect(sk.x + sk.width).toBeLessThanOrEqual(w + 1);
     expect(sk.y + sk.height).toBeLessThanOrEqual(h + 1);
     await auto.click(); // → OFF

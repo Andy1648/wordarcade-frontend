@@ -30,7 +30,7 @@ import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/re
 import { MARK_TIERS } from '../../progress/marks';
 import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
-  setSkipBelow, SKIP_TIERS, PITY, ROLL_MARKS, substatsOf,
+  PITY, ROLL_MARKS, substatsOf,
 } from '../../progress/markRolls';
 import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
 import { getGems, subscribeGems } from '../../progress/gems';
@@ -133,7 +133,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   });
   const [shown, setShown] = useState(null);
   const [need, setNeed] = useState(0); // short balance: the gems missing — a number + gem, never a sentence
-  const [skipBelow, setSkip] = useState(() => getSkipBelow());
+  const [skipBelow] = useState(() => getSkipBelow()); // ONE auto control (Andy oct11): no SKIP stepper — the stored value (default EPIC) still sets which reveals are short
   const [target, setTarget] = useState(null); // the AUTO target (null = OFF) — the one button cycles it
   const [showIndex, setShowIndex] = useState(!!startIndex);
   const [fresh, setFresh] = useState(false); // the result line pops only for a roll that just landed
@@ -317,9 +317,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (ctl.current && ctl.current.busy()) return; // the land in flight hands over (onDone) — never a double roll
     if (!doRoll()) stopAuto();
   };
-  const pickSkip = (t) => setSkip(setSkipBelow(t));
-  const skipIdx = Math.max(0, SKIP_TIERS.indexOf(skipBelow));
-  const stepSkip = (d) => { const t = SKIP_TIERS[Math.max(0, Math.min(SKIP_TIERS.length - 1, skipIdx + d))]; if (t && t !== skipBelow) pickSkip(t); };
   // leaving for the INDEX: a running reveal lands at once (no effects) so nothing is left half-played
   const openIndex = () => {
     stopAuto();
@@ -512,19 +509,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
               {!autoOpen ? ` · R${(V3.unlocks && V3.unlocks.unlockAt('autoRoll')) || 1}` : target ? ` → ${tierName(target)}+` : ': OFF'}
             </span>
           </button>
-          {/* SKIP (R4): a stepper in the house style, not the native <select> (its white drop-down was the one foreign
-              control on the screen). ◀ ▶ step the tier; the plate reads "< EPIC" in the tier colour = reveals below
-              EPIC are skipped (same getSkipBelow / setSkipBelow behaviour). 44px targets. */}
-          <div className="rs-skip" role="group" aria-label="Skip reveals below this tier" data-testid="roll-skip" data-value={skipBelow}>
-            <span className="rs-skip-k" aria-hidden="true">SKIP</span>
-            <button type="button" className="rs-skip-btn is-dn" onClick={() => stepSkip(-1)} disabled={skipIdx <= 0} aria-label="Skip fewer reveals" data-testid="roll-skip-down">
-              <svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2 L2 9 L12 16 Z" fill="currentColor" /></svg>
-            </button>
-            <span className="rs-skip-v" style={{ '--rs-tier': CARD_RAR[cardTier(skipBelow)].line }} aria-live="polite">&lt; {tierName(skipBelow)}</span>
-            <button type="button" className="rs-skip-btn is-up" onClick={() => stepSkip(1)} disabled={skipIdx >= SKIP_TIERS.length - 1} aria-label="Skip more reveals" data-testid="roll-skip-up">
-              <svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2 L12 9 L2 16 Z" fill="currentColor" /></svg>
-            </button>
-          </div>
         </div>
       </div>
 

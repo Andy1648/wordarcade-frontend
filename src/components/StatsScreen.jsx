@@ -26,7 +26,8 @@ import { AchievementsBody } from './AchievementsScreen';
 import { SEASON2 } from '../progress/season';
 import { exportSave, importSave } from '../save/saveBackup';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
-import { getMyProfile, selfReset } from '../leaderboard/client';
+import { getMyProfile } from '../leaderboard/client';
+import { resetAllProgress } from '../progress/resetAll';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { flagOn } from '../lib/featureFlags';
 import { rebirthLadder } from '../progress/rebirthLadder';
@@ -113,31 +114,7 @@ function buildRecordCells(rec, streakNow, rebirths, highestLevel) {
   ];
 }
 
-// RESET ALL PROGRESS: wipe every taw.* key (xp, level, wins, purchases, rebirths, lifetime stats — all
-// live under the taw. namespace) and hard-reload so every screen re-reads zeros. N2 (Andy oct2): with a
-// claimed name it also resets the BOARD ROW and the CLOUD SAVE (client.selfReset → 014 lb_self_reset,
-// the admin reset path) and keeps the name. Never throws; the reload always fires.
-async function resetAllProgress() {
-  try {
-    await selfReset();
-  } catch {
-    try {
-      const doomed = [];
-      for (let i = 0; i < localStorage.length; i += 1) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('taw.')) doomed.push(k);
-      }
-      doomed.forEach((k) => localStorage.removeItem(k));
-    } catch {
-      /* storage blocked — nothing to clear */
-    }
-  }
-  try {
-    window.location.reload();
-  } catch {
-    /* non-browser env — no-op */
-  }
-}
+// RESET ALL PROGRESS lives in progress/resetAll.js (shared with SETTINGS — Andy oct11).
 
 function StatsScreenLive({ onBack, initialTab }) {
   useMomentHold(true); // H5: no queued moment (rank-up, claim popup, tutorial…) starts under this panel

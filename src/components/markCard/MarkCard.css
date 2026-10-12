@@ -72,7 +72,7 @@
 .mc-art { position: absolute; top: var(--mc-y-art); left: calc(90px - var(--mc-art) / 2); width: var(--mc-art); height: var(--mc-art); }
 .mc-cog { position: absolute; inset: 0; display: block; }
 .mc-cog-idle, .mc-cog-fast { position: absolute; inset: 0; display: block; }
-.mc-cog svg { display: block; transform: scale(1.12); } /* oct11: the cog + glyph a size up over the rosette */
+.mc-cog svg { display: block; transform: scale(1.3); } /* oct11: the cog a size up — the glyph sits INSIDE it, never over its teeth (Andy oct11 "the cog needs to be larger") */
 .mc-badge { position: relative; display: block; width: 100%; height: 100%; transform: scale(1.1); }
 .mc-badge.is-sil .mx-sil { filter: brightness(0) opacity(0.9); }
 .mc-glow {
@@ -227,7 +227,10 @@
    eases to a held tilt + enlarge and eases back on leave. Also on the roll screen's landed card (a bare .mc:hover). */
 .mc:not(.is-still) .mc-badge { transition: transform 260ms cubic-bezier(0.3, 0.7, 0.3, 1); }
 :is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-cog-fast { animation: mc-spin 1100ms linear infinite; }
-:is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-badge { animation: none; transform: scale(1.22) rotate(-12deg); }
+:is(:is(button, a):is(:hover, :focus-visible, :active) > .mc, .mc:hover):not(.is-still) .mc-badge { animation: mc-tilt 380ms cubic-bezier(0.25, 0.8, 0.3, 1) forwards; }
+/* the hover tilt is a finite ANIMATION, not a transition (Andy oct11 "more smoother (not instant)"): swapping the idle bob
+   for a transform transition snapped in one frame (measured -1.6° → -12° in < 35 ms); an animation always plays its 380 ms */
+@keyframes mc-tilt { to { transform: scale(1.22) rotate(-12deg); } }
 
 @keyframes mc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes mc-bob {

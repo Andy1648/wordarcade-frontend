@@ -36,7 +36,7 @@ import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
 import { cardModel } from './cardModel.js';
-import { shineHost, shineSrc } from './cardShine.js';
+import { shineNow, shineHost, shineSrc } from './cardShine.js';
 import { useReduceMotion } from '../../lib/useReduceMotion';
 import './MarkCard.css';
 
@@ -106,6 +106,7 @@ function MarkCard({
       className={`mc is-${c.tier}${locked ? ' is-locked' : ''}${hi ? ' is-hi' : ''}${fx ? ' is-fx' : ''}${still ? ' is-still' : ''}${className ? ` ${className}` : ''}`}
       style={style}
       data-tier={c.tier}
+      onPointerEnter={shine && !still && !reduced ? () => shineNow(clipRef.current) : undefined}
     >
       <div className="mc-face">
         {/* the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}

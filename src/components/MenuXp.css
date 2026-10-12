@@ -121,7 +121,7 @@
   gap: 4px;
 }
 /* Andy oct9 "C · RGB IMPACT": no background behind the key — the key itself is the hit: big CRIT YELLOW, thick black
-   stroke, the house hard offset shadow. Its pink + cyan copies (.menu-xp-critghost) split out from under it. */
+   stroke, the house hard offset shadow. */
 .menu-xp-pop.is-crit .menu-xp-pop-letter {
   font-size: var(--fs-h1);
   color: #ffe94a;
@@ -138,23 +138,6 @@
   -webkit-text-stroke: 3px #000;
   text-shadow: 3px 3px 0 #000;
 }
-/* the CRIT RGB copies: the key's letter in flat PINK / CYAN (no stroke), pooled, idle at opacity 0, BEHIND the pops in
-   the DOM. A crit sets left/top + a finite WAAPI translate/scale/opacity (MenuXp.jsx critPop). */
-.menu-xp-critghost {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  font-family: 'Bungee', cursive;
-  text-transform: uppercase;
-  font-size: var(--fs-h1);
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
-  opacity: 0;
-  white-space: nowrap;
-}
-.menu-xp-critghost.is-pink { color: #ff4fa3; }
-.menu-xp-critghost.is-cyan { color: #2effe0; }
 
 /* Screen-edge pulse (streak-tier crossing). Inset box-shadow (tier colour set inline);
    only opacity animates. position:absolute inset:0 so it never affects layout. */

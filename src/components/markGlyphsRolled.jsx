@@ -51,7 +51,7 @@ function S({ d, f, s, w = 6, ink = 14 }) {
 /** GEAR ART v1 (Andy oct10): a painted sticker (public/gear/<name>.webp, 256px, background cut) in place of the kit
  * glyph. Its ink outline + highlights are in the art, so it fills the whole 100 box (it overhangs the cog's face, like
  * the kit glyphs do). */
-const ART = (name) => <image href={`/gear/${name}.webp`} x="-4" y="-4" width="108" height="108" />;
+const ART = (name) => <image href={`/gear/${name}.webp`} x="6" y="6" width="88" height="88" />; // inside the cog ring (Andy oct11: the painted gear sat over the cog)
 const G = ({ d, w = 4 }) => <path d={d} stroke={W} strokeWidth={w} fill="none" />;
 
 export const ROLLED_GLYPHS = {

@@ -65,15 +65,11 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // shapes). The bursts are a FIXED POOL reused round-robin: WAAPI scale / rotate / opacity, finite, will-change on for
 // the flight only. Placement reuses the pop's cached-size random position — no layout read per key.
 const CRIT_BURST_MS = 1300; // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
-const CRIT_BURST_POOL = 6;
-const CRIT_GHOST_MS = 380; // the pink/cyan copies split out and snap back into the key
-const CRIT_SPLIT_PX = 22; // how far apart the RGB copies start
 const CRIT_SHAKE_MS = 200;
 const CRIT_SHAKE_PX = 7;
 const CRIT_PUNCH_MS = 140; // Andy oct9 "cleaner": ONE slam 1.5 → 1, no wobble (was 380: 1.6 → 0.88 → 1.08 → 1)
 const CRIT_SAFE = 90; // px: a crit's burst stays this far inside the layer edges
 const CRIT_TOP = 120; // px: and below the header band (the coin/gem pills and corner tiles)
-const CRIT_BURST_LIFT = 14; // px: the crit pop stacks KEY over "CRIT +N" (4px apart), so the key centre sits ~14px above the pop centre — the RGB copies sit on it
 
 // Level-up: 1500ms total — scale 1.7→1 over 260ms (overshoot to 1.06 at 200ms, settle by
 // 320ms), hold 900ms, fade 280ms. Offsets below are ÷1500.
@@ -215,9 +211,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   const shardAnimsRef = useRef([]);
   const shardNextRef = useRef(0);
   // CRIT starbursts (pooled, round-robin)
-  const critElsRef = useRef([]);
-  const critAnimsRef = useRef([]);
-  const critNextRef = useRef(0);
   const critShakeRef = useRef(null);
   const layerRectRef = useRef({ left: 0, top: 0 }); // for converting tap client coords
   const barBoxRef = useRef(null); // XP bar box (layer-local) — taps must not cover it
@@ -298,21 +291,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       return a;
     });
 
-    // CRIT RGB ghosts — keyframes re-set per spawn (each splits in its own direction), so create them idle.
-    critAnimsRef.current = critElsRef.current.map((el) => {
-      const a = el.animate(
-        [
-          { transform: `${CENTER}scale(1)`, opacity: 0, offset: 0 },
-          { transform: `${CENTER}scale(1)`, opacity: 0, offset: 1 },
-        ],
-        { duration: CRIT_GHOST_MS, easing: 'linear', fill: 'both' }
-      );
-      a.cancel();
-      a.onfinish = () => {
-        el.style.willChange = ''; // the hint lives only for the split, never on the idle pool
-      };
-      return a;
-    });
     // the whole fx layer JOLTS on a crit (the key "hits" the screen) — one finite transform shake
     const fxLayer = layerRef.current;
     critShakeRef.current = fxLayer
@@ -526,33 +504,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       const still = prefersReducedMotion();
-      // C · RGB IMPACT (Andy oct9): the key lands so hard it splits into a PINK and a CYAN copy that snap back into it,
-      // and the fx layer jolts. No background behind the key.
-      const gAnims = critAnimsRef.current;
-      if (!still && gAnims.length) {
-        const b = (critNextRef.current % CRIT_BURST_POOL) * 2;
-        critNextRef.current = (critNextRef.current + 1) % CRIT_BURST_POOL;
-        const ang = Math.random() * Math.PI * 2; // the split runs along a random axis
-        const dx = Math.cos(ang) * CRIT_SPLIT_PX;
-        const dy = Math.sin(ang) * CRIT_SPLIT_PX;
-        for (let g = 0; g < 2; g++) {
-          const gEl = critElsRef.current[b + g];
-          const gAnim = gAnims[b + g];
-          if (!gEl || !gAnim) continue;
-          const sx = g ? -dx : dx;
-          const sy = g ? -dy : dy;
-          gEl.textContent = letter;
-          gEl.style.left = `${pos.x}px`;
-          gEl.style.top = `${pos.y - CRIT_BURST_LIFT}px`; // on the KEY (the top of the stacked pop)
-          gEl.style.willChange = 'transform, opacity';
-          gAnim.effect.setKeyframes([
-            { transform: `${CENTER}translate(${sx}px, ${sy}px) scale(${scale * 1.3})`, opacity: 0.95, offset: 0 },
-            { transform: `${CENTER}translate(${sx * 0.45}px, ${sy * 0.45}px) scale(${scale * 1.06})`, opacity: 0.85, offset: 0.35, easing: 'ease-in' },
-            { transform: `${CENTER}translate(0px, 0px) scale(${scale})`, opacity: 0, offset: 1 },
-          ]);
-          gAnim.cancel();
-          gAnim.play();
-        }
+      // the fx layer jolts on a crit (the pink/cyan RGB copies are gone — Andy oct11: they doubled the crit animation)
+      if (!still) {
         const sh = critShakeRef.current;
         if (sh && sh.effect) {
           const k = CRIT_SHAKE_PX;
@@ -756,17 +709,6 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
 
   return (
     <div className="menu-xp-fx" ref={layerRef} aria-hidden="true">
-      {/* CRIT RGB ghosts (Andy oct9 "C"): a pink + a cyan copy of the crit key, BEHIND the pops in the DOM, so they
-          split out from under the key and snap back into it */}
-      {Array.from({ length: CRIT_BURST_POOL * 2 }, (_, i) => (
-        <span
-          key={`c${i}`}
-          className={`menu-xp-critghost ${i % 2 ? 'is-cyan' : 'is-pink'}`}
-          ref={(n) => {
-            critElsRef.current[i] = n;
-          }}
-        />
-      ))}
       {Array.from({ length: POP_POOL }, (_, i) => (
         <span
           key={`p${i}`}
