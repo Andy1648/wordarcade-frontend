@@ -133,12 +133,15 @@ test('▲▼ from the last look; the look is remembered for next time', async ({
   await expect(lb.locator('.lb2-row[data-id="f"] .lb2-mv')).toHaveClass(/is-flat/);
   const seen = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.lbseen')));
   expect(seen.all).toMatchObject({ a: 1, b: 2, c: 3, d: 4, e: 5, me: 13 });
-  // nothing on the board loops; the arrival one-shots finish
+  // nothing on the board loops; the arrival one-shots finish. The TOP 3 IDLE (Andy oct12) is the one sanctioned
+  // motion after that: a FINITE beat on a podium name / its glint / #1's crown — never infinite, never anything else.
   await page.waitForTimeout(2600);
-  const loops = await page.evaluate(() => document.getAnimations()
+  const anims = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.lb2'))
-    .filter((a) => a.effect.getTiming().iterations === Infinity || a.playState === 'running').length);
-  expect(loops, 'no looping / still-running animation on the board at rest').toBe(0);
+    .map((a) => ({ inf: a.effect.getTiming().iterations === Infinity, running: a.playState === 'running',
+      idle: !!a.effect.target.closest('.lb2-pod-name, .lb2-glint, .lb2-crown') })));
+  expect(anims.filter((a) => a.inf).length, 'nothing infinite on the board').toBe(0);
+  expect(anims.filter((a) => a.running && !a.idle).length, 'no still-running animation at rest but the top-3 idle beat').toBe(0);
 });
 
 test('THIS WEEK reads leaderboard_s2_weekly: ★ / R / LV gained, in that order', async ({ page }) => {

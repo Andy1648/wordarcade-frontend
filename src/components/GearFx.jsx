@@ -54,14 +54,14 @@ export const STREAK_MS = 900;
 export const WAVE_MS = 1150;
 // a streak per slot: side, x across the glow band (0 = outer edge, 1 = the card), width px, height % of the host, colour
 const STREAKS = [
-  { side: 'left', x: 0.55, w: 4, h: 34, c: '#FFF3A6' },
-  { side: 'right', x: 0.4, w: 6, h: 26, c: '#FFFFFF' },
-  { side: 'left', x: 0.25, w: 3, h: 22, c: '#FFFFFF' },
-  { side: 'right', x: 0.7, w: 3, h: 38, c: '#FFC23D' },
-  { side: 'left', x: 0.8, w: 5, h: 28, c: '#FFC23D' },
-  { side: 'right', x: 0.2, w: 4, h: 20, c: '#FFF3A6' },
-  { side: 'left', x: 0.4, w: 2, h: 40, c: '#FFF3A6' },
-  { side: 'right', x: 0.55, w: 2, h: 30, c: '#FFFFFF' },
+  { side: 'left', x: 0.5, w: 7, h: 42, c: '#FFF3A6' },
+  { side: 'right', x: 0.4, w: 9, h: 34, c: '#FFFFFF' },
+  { side: 'left', x: 0.2, w: 5, h: 28, c: '#FFFFFF' },
+  { side: 'right', x: 0.65, w: 5, h: 46, c: '#FFC23D' },
+  { side: 'left', x: 0.75, w: 8, h: 36, c: '#FFC23D' },
+  { side: 'right', x: 0.15, w: 6, h: 26, c: '#FFF3A6' },
+  { side: 'left', x: 0.35, w: 4, h: 50, c: '#FFF3A6' },
+  { side: 'right', x: 0.85, w: 4, h: 38, c: '#FFFFFF' },
 ];
 // rim spots (round the frame, staggered sides) — a mote rises from its spot
 const SPOTS = [

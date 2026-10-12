@@ -89,7 +89,7 @@
   top: 0;
   opacity: 0;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(122, 74, 0, 0.55);
+  box-shadow: 0 0 0 2px #7A4A00; /* a coloured outline (house rule) so a pale streak reads over the hot aura rim */
 }
 .gfx-streak.is-left { left: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
 .gfx-streak.is-right { right: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
@@ -103,5 +103,6 @@
   border-image-width: var(--gfx-out, 12px);
   border-image-repeat: stretch;
   border-image-source: url('/fx/gear-aura-mythic.png');
+  border-image-slice: 56; /* the RING only — no fill: a filled wave scaled past the card read as a solid slab */
 }
 .gfx-wave.is-2 { border-image-source: url('/fx/gear-aura-mythic2.png'); }
