@@ -30,6 +30,7 @@ async function boot(page) {
     localStorage.setItem('taw.reduceMotion', '1');
     localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 80, f: 0.3, rc: 3, v: 10 }));
     localStorage.setItem('taw.s2.rebirths', '3');
+    localStorage.setItem('taw.mastery', JSON.stringify({ 'word-bomb': 30 })); // 035: 25 game words since the last rebirth
     localStorage.setItem('taw.s2.keytier', '2');
     localStorage.setItem('taw.s2.wins', '50000');
     localStorage.setItem('taw.s2.gems', JSON.stringify({ v: 1, bal: 200, peak: 120, streak: 0, mig: 1 }));

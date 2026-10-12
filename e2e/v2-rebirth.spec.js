@@ -29,6 +29,7 @@ async function boot(page, { row, local, delayMs = 0 }) {
     localStorage.setItem('taw.econ', '12');
     localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: local.level, f: 0, rc: local.rebirths, v: 10 }));
     localStorage.setItem('taw.s2.rebirths', String(local.rebirths));
+    localStorage.setItem('taw.mastery', JSON.stringify({ 'word-bomb': 30 })); // 035: 25 game words since the last rebirth
     if (local.stars) localStorage.setItem('taw.s2.stars', String(local.stars));
   }, { secret: SECRET, id: row.id, local });
   await page.goto('/?portal=1&season2=1');
