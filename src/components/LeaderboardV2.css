@@ -739,3 +739,19 @@
 .lb2--narrow .lb2-fx { top: 26px; }
 .lb2--narrow .lb2-podium { overflow-x: clip; } /* the burst never opens a sideways scroll on a phone */
 @media (prefers-reduced-motion: reduce) { .lb2-fx { display: none; } }
+
+/* ---- WEEKLY TOP 10 PRIZES (Andy oct12, migration 034) — THIS WEEK only: a gem chip on every top-10 place ---- */
+.lb2-prize {
+  flex: none; display: inline-flex; align-items: center; gap: 3px; margin-left: auto;
+  padding: 1px 7px 1px 4px; border-radius: 8px; background: #0d0618; border: 2px solid #12A99A; box-shadow: 2px 2px 0 #000;
+  font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--lb2-k))); line-height: 1.2;
+  color: #2EFFE0; -webkit-text-stroke: 0; white-space: nowrap;
+}
+.lb2-prize.is-pod { margin: calc(4px * var(--pk)) 0 0; font-size: max(var(--fs-k14), calc(var(--fs-k17) * var(--pk))); }
+.lb2-col--1 .lb2-prize.is-pod { border-color: #b8a520; color: #FFE94A; }
+.lb2-tab-l { white-space: nowrap; }
+.lb2-tab .lb2-tab-gem { display: inline-block; vertical-align: -3px; margin-right: 3px; width: 0.95em; height: 0.95em; }
+.lb2-cols-prize { color: #2EFFE0; }
+.lb2--narrow .lb2-prize { padding: 0 5px 0 2px; gap: 2px; }
+.lb2--narrow .lb2-prize svg { width: 14px; height: 14px; }
+.lb2--narrow .lb2-cols-prize { display: none; }

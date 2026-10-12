@@ -41,6 +41,8 @@ import { getRebirths } from '../progress/xp';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import { BLOCKS } from './PodiumBlocks.jsx';
+import KitIcon from './kit/KitIcon.jsx';
+import { weekPrize } from '../leaderboard/weekPrizes.js';
 
 const fmt = (n) => formatNum(Number(n) || 0);
 // 031 LEADERBOARD PROFILES (Andy oct10): tap a row / a podium spot → that player's card (gear, BASE, POWER …). Lazy.
@@ -94,6 +96,18 @@ function Crown({ crownRef }) {
       <path d="M10 36 L64 36" stroke="#000" strokeWidth="4" />
       <path d="M14 22 L18 32" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
     </svg>
+  );
+}
+
+// WEEKLY TOP 10 (Andy oct12, migration 034): THIS WEEK's top-10 places show the gems the place pays when the week ends
+function Prize({ rank, pod = false }) {
+  const g = weekPrize(rank);
+  if (!g) return null;
+  return (
+    <span className={`lb2-prize${pod ? ' is-pod' : ''}`} title={`Finish the week #${fmt(rank)}: +${fmt(g)} gems`} aria-label={`Wins ${fmt(g)} gems`}>
+      <KitIcon name="gems" size={pod ? 22 : 18} shadow={1} extras={false} />
+      +{fmt(g)}
+    </span>
   );
 }
 
@@ -458,7 +472,7 @@ export default function LeaderboardV2({ onBack }) {
           <div className="lb2-tabs" role="tablist" aria-label="Board">
             {tabs.map((t) => (
               <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} data-tab={t.key} className={`lb2-tab${tab === t.key ? ' is-on' : ''}`} onClick={() => pick(t.key)}>
-                <span className="lb2-tab-l">{t.label}</span>
+                <span className="lb2-tab-l">{t.key === 'week' ? <KitIcon name="gems" size={22} shadow={1} extras={false} className="lb2-tab-gem" /> : null}{t.label}</span>
                 <span className="lb2-tab-s">{t.sub}</span>
               </button>
             ))}
@@ -484,6 +498,7 @@ export default function LeaderboardV2({ onBack }) {
                   </span>
                   <span className="lb2-pod-r">{n ? n.r : '—'}</span>
                   <span className="lb2-pod-lv">{n ? n.lv : ''} {n ? <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span> : null}</span>
+                  {wk ? <Prize rank={place} pod /> : null}
                 </div>
                 <div className="lb2-blockwrap">
                   <B />
@@ -495,7 +510,7 @@ export default function LeaderboardV2({ onBack }) {
         </div>
 
         <div className="lb2-cols" aria-hidden="true">
-          <span>#</span><span>PLAYER</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>
+          <span>#</span><span>PLAYER{wk ? <span className="lb2-cols-prize"> · TOP 10 WIN GEMS</span> : null}</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>
         </div>
         <div className="lb2-list lb2-slide">
           {!data.loaded && <p className="lb2-note">LOADING THE BOARD…</p>}
@@ -513,6 +528,7 @@ export default function LeaderboardV2({ onBack }) {
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
                     <span className="lb2-name" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
+                    {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
                 </span>

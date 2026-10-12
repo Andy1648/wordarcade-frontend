@@ -8,4 +8,5 @@ export const KIND_COLOUR = {
   layer: '#FF6B3D',
   code: '#FFE94A',
   boost: '#FFE94A',
+  weekprize: '#2EFFE0',
 };
