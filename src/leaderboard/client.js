@@ -735,6 +735,7 @@ export const REDEEM_REASONS = {
   rate_limited: 'TOO MANY TRIES — WAIT AN HOUR',
   not_ready: 'CODES AREN’T SWITCHED ON YET',
   offline: 'COULDN’T REACH THE SERVER — TRY AGAIN',
+  need_name: 'CLAIM A NAME ON THE LEADERBOARD FIRST', // 035: a TESTER code flags a named player
 };
 export function normaliseCode(raw) {
   return String(raw || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 32);
@@ -767,6 +768,9 @@ export async function redeemCode(raw) {
     queueClaim({ id: `code:${res.code}`, kind: 'gemcode', label: `GEMS — ${label}`, amount: 0, meta: { gems } });
     return { ok: true, code: res.code, kind: 'gems', gems, wins: 0, label: res.label || res.code };
   }
+  // 035: a TESTER code (the op code — it lives only in the redeem_codes table, never in this bundle) flagged this
+  // player is_tester on the server; nothing to grant here
+  if (res.kind === 'tester') return { ok: true, code: res.code, kind: 'tester', wins: 0, label: res.label || res.code };
   if (res.kind === 'overdrive') {
     const min = Number(res.boost_min) > 0 ? Number(res.boost_min) : 5;
     queueClaim({ id: `code:${res.code}`, kind: 'boost', label: `OVERDRIVE — ${label}`, amount: 0, meta: { mult: 5, min } }); // OVERDRIVE ×5 (Andy oct11; overdrive.js OVERDRIVE_MULT)

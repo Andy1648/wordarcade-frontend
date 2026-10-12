@@ -11,13 +11,14 @@
 import { loadProgress, getRebirths, rebirthThreshold, REBIRTH_POWER } from './xp.js';
 import { formatNum } from '../format.js';
 import { SEASON2 } from './season.js';
+import { rebirthWordsShort } from './rebirthWords.js';
 
 let intent = false;
 
 /** True when the player's CURRENT level is at or past the next rebirth gate. Never throws. */
 export function isRebirthReadyNow() {
   try {
-    return loadProgress().level >= rebirthThreshold(getRebirths());
+    return loadProgress().level >= rebirthThreshold(getRebirths()) && rebirthWordsShort() === 0; // 035: + game words
   } catch {
     return false;
   }

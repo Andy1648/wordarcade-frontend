@@ -4,6 +4,7 @@
 // eager client.js only `import()`s it when an unanswered request id is in storage (settle before a board submit).
 import { getRebirths, saveRebirths } from '../progress/xp.js';
 import { rebirthWithStars } from '../progress/stars.js';
+import { markRebirthWords } from '../progress/rebirthWords.js';
 // PROGRESSION v3 (SEASON2, default OFF): rebirths name season 2 (gate ⌈100 × 2.5^R⌉ on an econ-13 row, 022), and
 // performAscend (R10 → ★) goes through lb_ascend the same way. OFF = season 0, exactly as before.
 import { SEASON2, V3 } from '../progress/season.js';
@@ -40,6 +41,7 @@ async function serverRebirthEnabled() {
 function applyLocalRebirth(target) {
   if (Number.isFinite(target) && target >= 1) saveRebirths(target - 1);
   const { rc, stars } = rebirthWithStars();
+  markRebirthWords(); // 035: the game-word count restarts at this rebirth (the server's rb_words0)
   return { rc, stars };
 }
 const flow = makeRebirthFlow({

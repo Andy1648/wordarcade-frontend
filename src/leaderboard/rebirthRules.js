@@ -28,6 +28,7 @@
 export const RATE_PER_SEC = 2; // logged calls per profile per rolling second
 export const RB_WINDOW_SECS = 3600; // the pace window (020: 1 token / 5 min, 12 banked ⇒ ≤ 12 an hour)
 export const RB_PER_WINDOW = 12; // granted rebirths allowed inside one window
+export const WORDS_PER_RB = 25; // 035: season-2 game words since the last rebirth (= rebirthWords.js WORDS_PER_REBIRTH)
 export const ASCEND_AT = 10; // season 2 (hidden in FINAL v2 — lb_ascend refuses while ASCEND_ON is false): R ≥ 10 + 5 × ★ …
 export const ASCEND_STEP = 5; // … would add ONE ★
 export const ASCEND_ON = false; // FINAL v2: no ascension for now
@@ -93,6 +94,14 @@ function prelude(row, requestId, action, log, now) {
  * @returns {{result: object, row: object, entry: object|null}}  `row` = the row after the call; `entry` = the log row
  *   to append (null = nothing logged: bad id, replay, rate)
  */
+// 035: game words since the last rebirth — after a reset (lifetime_words below the mark) every word since counts. A row with no
+// `lifetime_words` field (a pre-035 caller / a test row) is not checked, like the econ guard above.
+const wordsChecked = (row) => !!row && Object.prototype.hasOwnProperty.call(row, 'lifetime_words');
+function wordsSince(row) {
+  const w = int(row.lifetime_words, 0);
+  const w0 = int(row.rb_words0, 0);
+  return w < w0 ? w : w - w0; // a reset (words below the mark) counts every word since it
+}
 export function decideRebirth(row, { requestId, season = 0 } = {}, log = [], now = Date.now()) {
   const pre = prelude(row, requestId, 'rebirth', log, now);
   if (pre) return pre.done;
@@ -105,6 +114,9 @@ export function decideRebirth(row, { requestId, season = 0 } = {}, log = [], now
     result = { ok: false, reason: 'season' };
   } else if (lv < gate) {
     result = { ok: false, reason: 'gate', gate, level: lv, rebirths: rb };
+  } else if (season === 2 && wordsChecked(row) && wordsSince(row) < WORDS_PER_RB && !row.is_tester) {
+    // 035: a season-2 rebirth needs WORDS_PER_RB game words since the last one (testers skip it)
+    result = { ok: false, reason: 'words', need: WORDS_PER_RB, have: wordsSince(row), rebirths: rb };
   } else {
     const granted = within(log, now, RB_WINDOW_SECS).filter((e) => e.action === 'rebirth' && e.result && e.result.ok === true);
     if (granted.length >= RB_PER_WINDOW && !row.is_tester) { // 033: testers skip PACE
@@ -112,7 +124,7 @@ export function decideRebirth(row, { requestId, season = 0 } = {}, log = [], now
       result = { ok: false, reason: 'wait', retry_in: Math.max(1, Math.ceil((oldest + RB_WINDOW_SECS * 1000 - now) / 1000)), rebirths: rb };
     } else {
       // both seasons: rebirths + 1, level → 1
-      next = { ...row, rebirths: rb + 1, level: 1 };
+      next = { ...row, rebirths: rb + 1, level: 1, ...(wordsChecked(row) ? { rb_words0: int(row.lifetime_words, 0) } : {}) };
       result = { ok: true, rebirths: rb + 1, level: 1 };
     }
   }

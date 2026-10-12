@@ -26,6 +26,7 @@ const HEX_SLAM = [{ transform: 'rotate(-4deg) scale(1)' }, { transform: 'rotate(
 import { V3 } from '../progress/season';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult } from '../progress/xp';
 import { takeRebirthNow } from '../progress/rebirthNow';
+import { rebirthWordsShort } from '../progress/rebirthWords';
 import { performRebirth, performAscend } from '../leaderboard/serverRebirth';
 import { rebirthRefusalText } from '../leaderboard/rebirthFlow';
 import { rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
@@ -40,7 +41,8 @@ function readState() {
   const stars = V3.store ? V3.store.getStarsV3() : 0;
   const gate = rebirthThreshold(rebirths);
   const auto = !!(V3.hooks && V3.hooks.autoRebirthOn());
-  return { level, rebirths, stars, gate, auto, ready: level >= gate };
+  const wordsShort = rebirthWordsShort(); // 035: game words since the last rebirth (menu keys never count)
+  return { level, rebirths, stars, gate, auto, wordsShort, levelReady: level >= gate, ready: level >= gate && wordsShort === 0 };
 }
 
 /** The hexagon emblem plate (vector art; the kit's REBIRTH icon on it). */
@@ -175,7 +177,7 @@ export default function RebirthV2({ onBack }) {
     boom();
   };
 
-  const { level, rebirths, stars, gate, auto, ready } = s;
+  const { level, rebirths, stars, gate, auto, ready, levelReady, wordsShort } = s;
   const econ = V3.econ;
   const canAscend = !!(econ && econ.canAscend(rebirths, stars));
   const autoOpen = !!(V3.unlocks && V3.unlocks.unlocked('autoRebirth', { rebirths, stars }));
@@ -190,8 +192,9 @@ export default function RebirthV2({ onBack }) {
   const trackF = reached === 0 ? 0 : Math.min(1, (reached - 1 + partial) / slots);
   const gateF = gate > 0 ? Math.max(0, Math.min(1, level / gate)) : 1;
 
-  const holdLabel = busy ? 'REBIRTHING…' : ready ? 'HOLD TO REBIRTH' : 'NEED LEVELS';
-  const holdSub = ready ? `LV ${formatNum(level)} → 1` : `LV ${formatNum(level)} / ${formatNum(gate)}`;
+  const needWords = levelReady && wordsShort > 0; // 035: the level is there, the game words are not
+  const holdLabel = busy ? 'REBIRTHING…' : ready ? 'HOLD TO REBIRTH' : needWords ? 'PLAY A GAME' : 'NEED LEVELS';
+  const holdSub = ready ? `LV ${formatNum(level)} → 1` : needWords ? `${formatNum(wordsShort)} MORE ${wordsShort === 1 ? 'WORD' : 'WORDS'}` : `LV ${formatNum(level)} / ${formatNum(gate)}`;
 
   return (
     <div className="rb2" role="dialog" aria-modal="true" aria-label="Rebirth" tabIndex={-1} ref={rootRef}>
@@ -270,7 +273,7 @@ export default function RebirthV2({ onBack }) {
             <div className="rb2-gate-bar">
               <div className="rb2-gate-fill" style={{ transform: `scaleX(${gateF.toFixed(3)})` }} />
             </div>
-            <span className="rb2-gate-txt">{ready ? `GATE LV ${formatNum(gate)} — READY` : `${formatNum(gate - level)} LEVELS TO GO`}</span>
+            <span className="rb2-gate-txt">{ready ? `GATE LV ${formatNum(gate)} — READY` : needWords ? `PLAY ${formatNum(wordsShort)} MORE ${wordsShort === 1 ? 'WORD' : 'WORDS'} IN A GAME` : `${formatNum(gate - level)} LEVELS TO GO`}</span>
           </div>
           <div className="rb2-cost" data-testid="rb2-cost">BACK TO LV 1 · KEY KEPT</div>
           {autoOpen && (

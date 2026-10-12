@@ -234,3 +234,36 @@ test('021 SQL mirrors rebirthRules.js: order, constants, idempotency, grants, th
   assert.match(sql, /wins_per_word, econ, stars\n/);
   assert.match(sql, /add column if not exists stars integer not null default 0/);
 });
+
+test('035 WORDS: a season-2 rebirth needs 25 game words since the last one; testers skip it; a reset never goes negative', () => {
+  const row = { level: 15, rebirths: 0, econ: 13, lifetime_words: 2 };
+  let r = decideRebirth(row, { requestId: id(), season: 2 }, [], T0);
+  assert.deepEqual([r.result.ok, r.result.reason, r.result.need, r.result.have], [false, 'words', 25, 2], 'SKUF: 2 words is not enough');
+  r = decideRebirth({ ...row, is_tester: true }, { requestId: id(), season: 2 }, [], T0);
+  assert.equal(r.result.ok, true, 'a tester skips the words gate');
+  r = decideRebirth({ ...row, lifetime_words: 25 }, { requestId: id(), season: 2 }, [], T0);
+  assert.equal(r.result.ok, true);
+  assert.equal(r.row.rb_words0, 25, 'the count restarts at the granted rebirth');
+  // the next one needs 25 MORE (gate met at LV 33 for R1)
+  const after = { ...r.row, level: 33, lifetime_words: 40 };
+  assert.equal(decideRebirth(after, { requestId: id(), season: 2 }, [], T0).result.reason, 'words');
+  assert.equal(decideRebirth({ ...after, lifetime_words: 50 }, { requestId: id(), season: 2 }, [], T0).result.ok, true);
+  // a reset dropped lifetime_words below rb_words0: counts from 0
+  assert.equal(decideRebirth({ ...after, lifetime_words: 10 }, { requestId: id(), season: 2 }, [], T0).result.have, 10);
+  // season 0 is unchanged; the gate comes first
+  assert.equal(decideRebirth({ level: 25, rebirths: 0, lifetime_words: 0 }, { requestId: id(), season: 0 }, [], T0).result.ok, true);
+  assert.equal(decideRebirth({ ...row, level: 14 }, { requestId: id(), season: 2 }, [], T0).result.reason, 'gate');
+});
+
+test('035 is the newest lb_rebirth (033 + the words gate) and adds the tester op code to lb_redeem', () => {
+  const dir = join(process.cwd(), 'supabase', 'migrations');
+  const s = readFileSync(join(dir, '035_rebirth_words_and_tester_code.sql'), 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(s.includes('WORDS_PER_RB constant integer := 25;'));
+  assert.ok(s.includes("elsif p_season = 2 and since < WORDS_PER_RB and not coalesce(old.is_tester, false) then"));
+  assert.ok(s.includes('rb_words0 = coalesce(old.lifetime_words, 0)'));
+  assert.ok(s.includes('if granted >= RB_PER_WINDOW and not coalesce(old.is_tester, false) then'), 'keeps 033');
+  assert.ok(s.includes("check (kind in ('wins', 'boost', 'gems', 'overdrive', 'tester'))"));
+  assert.ok(s.includes("if r.kind = 'tester' and pid is null then return json_build_object('error', 'need_name'); end if;"));
+  assert.ok(s.includes('update public.profiles set is_tester = true where id = pid;'));
+  assert.ok(s.includes('WRITE-ONLY: Claude never runs migrations'));
+});

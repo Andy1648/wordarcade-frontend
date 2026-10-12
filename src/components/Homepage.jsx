@@ -15,6 +15,7 @@ import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
+import { rebirthWordsShort } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -649,10 +650,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     if (!SEASON2 || !V3.hooks || !V3.hooks.autoRebirthOn() || autoRbRef.current) return;
     if (xpProgress.level < rebirthThreshold(getRebirths())) return;
+    if (rebirthWordsShort() > 0) return; // 035: the next rebirth needs game words first (menu keys never count)
     autoRbRef.current = true;
     import('../leaderboard/serverRebirth.js')
       .then(async (m) => {
-        for (let i = 0; i < 12 && loadProgress().level >= rebirthThreshold(getRebirths()); i++) {
+        for (let i = 0; i < 12 && loadProgress().level >= rebirthThreshold(getRebirths()) && rebirthWordsShort() === 0; i++) {
           const r = await m.performRebirth();
           if (!r || !r.ok) break;
         }
@@ -1180,7 +1182,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // included: at LV1 it says how many levels to go, which is what a newcomer needs to know about it.
   const rebirthGate = useMemo(() => rebirthThreshold(rebirths), [rebirths]);
   // STEP 21: REBIRTH badges itself the moment it's available — it IS an upgrade, the biggest one.
-  const rebirthReady = xpProgress.level >= rebirthGate;
+  // 035: game words since the last rebirth — they only move in a game, so read once per mount / rebirth, never per key
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- re-read when a rebirth lands (the mark moves), not per key
+  const wordsShort = useMemo(() => rebirthWordsShort(), [rebirths]);
+  const rebirthReady = xpProgress.level >= rebirthGate && wordsShort === 0;
 
   // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
@@ -1212,8 +1217,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // reads: the rebirth line follows the LEVEL). REBIRTH reads "IN 21 LV" (fits the phone slab). UPGRADES / GEARS: no count (below).
   // tile figures are ALWAYS abbreviated (formatShort — NIGHT oct8 #1a: "1,185,…" clipped in the FULL style)
   const toRebirth = Math.max(0, rebirthGate - xpProgress.level);
-  const rebirthValue = toRebirth > 0 ? `IN ${formatShort(toRebirth)} LV` : 'READY';
-  const rebirthShort = toRebirth > 0 ? `${formatShort(toRebirth)} LV` : 'READY';
+  const needWords = toRebirth === 0 && wordsShort > 0; // the level is there; the game words are not (035)
+  const rebirthValue = toRebirth > 0 ? `IN ${formatShort(toRebirth)} LV` : needWords ? `PLAY ${formatShort(wordsShort)} WORDS` : 'READY';
+  const rebirthShort = toRebirth > 0 ? `${formatShort(toRebirth)} LV` : needWords ? `${formatShort(wordsShort)} WORDS` : 'READY';
   const statsMult = letterXpNow(); // read on render only (the menu re-renders on its own state), never per key
   const railItems = {
     // TILE values (feat/menu-rail-2col, the 2-column desktop rail): the NUMBER big, the unit small — numbers first.
@@ -1225,7 +1231,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: null, locked: rollLock },
-    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : 'ready', locked: rebirthLock },
+    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : needWords ? formatShort(wordsShort) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : needWords ? 'GAME WORDS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : needWords ? `play ${formatNum(wordsShort)} more words in a game` : 'ready', locked: rebirthLock },
     // STATS (moved down from the top-right): its number is the TOTAL multiplier on a key (v4: BASE 1 XP, so the rate IS it)
     stats: { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };
