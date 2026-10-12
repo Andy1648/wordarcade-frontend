@@ -107,7 +107,7 @@ export function decideRebirth(row, { requestId, season = 0 } = {}, log = [], now
     result = { ok: false, reason: 'gate', gate, level: lv, rebirths: rb };
   } else {
     const granted = within(log, now, RB_WINDOW_SECS).filter((e) => e.action === 'rebirth' && e.result && e.result.ok === true);
-    if (granted.length >= RB_PER_WINDOW) {
+    if (granted.length >= RB_PER_WINDOW && !row.is_tester) { // 033: testers skip PACE
       const oldest = Math.min(...granted.map((e) => e.created_at));
       result = { ok: false, reason: 'wait', retry_in: Math.max(1, Math.ceil((oldest + RB_WINDOW_SECS * 1000 - now) / 1000)), rebirths: rb };
     } else {
