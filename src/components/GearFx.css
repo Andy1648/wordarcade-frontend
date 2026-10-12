@@ -79,3 +79,29 @@
   -webkit-mask: url('/fx/gear-mote.svg') center / contain no-repeat;
   mask: url('/fx/gear-mote.svg') center / contain no-repeat;
 }
+
+/* ---- HOVER CONCEPTS (Andy oct12) — rest INVISIBLE; GearFx.jsx chains finite runs only while the card is hovered ----
+   LEGENDARY: light STREAKS (flat bars — rectangles, not drawn art) rising through the glow band on both sides, behind
+   the card (this layer is z-index -2), so they never cross the stats. MYTHIC: SHOCKWAVES — copies of its own baked aura
+   (the asset) pulsing out from the card edge. */
+.gfx-streak {
+  position: absolute;
+  top: 0;
+  opacity: 0;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(122, 74, 0, 0.55);
+}
+.gfx-streak.is-left { left: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
+.gfx-streak.is-right { right: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
+.gfx-wave {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  opacity: 0;
+  border: var(--gfx-out, 12px) solid transparent;
+  border-image-slice: 56 fill;
+  border-image-width: var(--gfx-out, 12px);
+  border-image-repeat: stretch;
+  border-image-source: url('/fx/gear-aura-mythic.png');
+}
+.gfx-wave.is-2 { border-image-source: url('/fx/gear-aura-mythic2.png'); }

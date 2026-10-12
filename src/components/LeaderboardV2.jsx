@@ -190,6 +190,13 @@ const RING = [{ transform: 'scale(.25) rotate(-30deg)', opacity: 0 }, { transfor
 const RAYS = [{ transform: 'scale(.2) rotate(-50deg)', opacity: 0 }, { transform: 'scale(1.12) rotate(6deg)', opacity: 1, offset: 0.3 }, { transform: 'scale(1) rotate(0deg)', opacity: 0.95, offset: 0.62 }, { transform: 'scale(1.25) rotate(18deg)', opacity: 0 }];
 const SLAM = [{ transform: 'scale(1.9) rotate(-6deg)', opacity: 0 }, { transform: 'scale(.92) rotate(1deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
 const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)', opacity: 1, offset: 0.55 }, { transform: 'scale(1)', opacity: 1 }];
+// TOP 3 IDLE (Andy oct12 "at least give some idle animation for the top 3"): ONE setTimeout chain for the podium — every
+// IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its name hops, a sparkle glints, #1's crown bobs.
+// Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
+const IDLE_EVERY_MS = 2200;
+const HOP = [{ transform: 'translateY(0)' }, { transform: 'translateY(-7px) rotate(-1.5deg)', offset: 0.35 }, { transform: 'translateY(1px)', offset: 0.7 }, { transform: 'translateY(0)' }];
+const GLINT = [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(60deg)', opacity: 1, offset: 0.35 }, { transform: 'scale(0.4) rotate(140deg)', opacity: 0 }];
+const CROWN_BOB = [{ transform: 'rotate(-7deg)' }, { transform: 'rotate(-12deg) translateY(-6px)', offset: 0.4 }, { transform: 'rotate(-4deg) translateY(1px)', offset: 0.75 }, { transform: 'rotate(-7deg)' }];
 const CONFETTI_N = 18;
 const CONFETTI_FILL = ['#FFE94A', '#2EFFE0', '#FF4FA3', '#FFFFFF', '#9A1AFF', '#FF6B3D'];
 // a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
@@ -210,6 +217,7 @@ function PodiumFx({ place, party }) {
     <span className="lb2-fx" aria-hidden="true">
       <span className={`lb2-ring is-${place}`} />
       {place === 1 && <img className="lb2-rays" src="/fx/burst-win.webp" alt="" draggable="false" />}
+      <img className="lb2-glint" src="/fx/sparkle.svg" alt="" draggable="false" />
       {party && (
         <span className="lb2-confetti">
           {CONFETTI.map((c, i) => <span key={i} className={`lb2-cf${c.wide ? ' is-wide' : ''}`} style={{ background: c.fill }} />)}
@@ -429,6 +437,25 @@ export default function LeaderboardV2({ onBack }) {
     // shown is the trigger; data.loaded guards it
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown]);
+
+  // TOP 3 IDLE: starts after the arrival lands; one timer for the podium, a finite beat per place in turn
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !data.loaded) return undefined;
+    let i = 0;
+    let timer = setTimeout(function beat() {
+      timer = setTimeout(beat, IDLE_EVERY_MS);
+      if (document.visibilityState === 'hidden') return;
+      const place = [1, 2, 3][i % 3];
+      i += 1;
+      const col = root.querySelector(`.lb2-col--${place}`);
+      if (!col || !col.dataset.id) return;
+      kitPlay(col.querySelector('.lb2-pod-name'), HOP, { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      kitPlay(col.querySelector('.lb2-glint'), GLINT, { duration: 640, delay: 80, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      if (place === 1 && crownRef.current) kitPlay(crownRef.current, CROWN_BOB, { duration: 700, easing: 'cubic-bezier(.3,.7,.3,1)' });
+    }, 2600);
+    return () => clearTimeout(timer);
+  }, [shown, data.loaded]);
 
   const tabs = [
     { key: 'all', label: 'ALL TIME', sub: '★ → R → LV' },

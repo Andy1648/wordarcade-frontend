@@ -755,3 +755,7 @@
 .lb2--narrow .lb2-prize { padding: 0 5px 0 2px; gap: 2px; }
 .lb2--narrow .lb2-prize svg { width: 14px; height: 14px; }
 .lb2--narrow .lb2-cols-prize { display: none; }
+
+/* TOP 3 IDLE glint (Andy oct12): the house sparkle asset, resting invisible at the place's top-right; one beat at a time */
+.lb2-glint { position: absolute; left: calc(54px * var(--pk)); top: calc(-46px * var(--pk)); width: calc(30px * var(--pk)); height: calc(30px * var(--pk)); opacity: 0; transform: scale(0); pointer-events: none; }
+.lb2-col--1 .lb2-glint { left: calc(40px * var(--pk)); top: calc(-118px * var(--pk)); width: calc(40px * var(--pk)); height: calc(40px * var(--pk)); }
