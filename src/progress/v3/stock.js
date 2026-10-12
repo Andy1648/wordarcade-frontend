@@ -38,7 +38,9 @@ export const STOCK = [
   { id: 'wins25', rarity: 'common', icon: 'wins', name: 'WINS BOOST', big: '+50%', what: 'WINS PER WORD', time: '10 MIN', price: 60, max: 5, fx: 'wins', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50%
   { id: 'luck2', rarity: 'rare', icon: 'luck', name: 'LUCK BOOST', big: '×2', what: 'ROLL LUCK', time: '15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
   { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×5', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 300, max: 2, boost: { mult: 5, min: 5 } } /* Andy oct11: ×5 (overdrive.js OVERDRIVE_MULT) */,
-  { id: 'extend', rarity: 'rare', icon: 'clock', name: 'TIME BOOST', big: '+5 MIN', what: 'XP · WINS · LUCK BOOSTS', time: 'NOT OVERDRIVE', price: 150, max: 2, extend: true },
+  // Andy oct12: EVERYTHING BOOST — was TIME BOOST (+5 MIN on a running boost, useless with none). Now it STARTS the XP,
+  // WINS and LUCK boosts together for 5 min (a running one gains 5 min). Never OVERDRIVE. id kept (saves' stock counts).
+  { id: 'extend', rarity: 'rare', icon: 'clock', name: 'EVERYTHING BOOST', big: 'ALL 3', what: 'XP +50% · WINS +50% · LUCK ×2', time: '5 MIN · NOT OVERDRIVE', price: 150, max: 2, all: 5 },
   { id: 'epicroll', rarity: 'legendary', icon: 'roll', name: 'EPIC+ ROLL', big: '1', what: 'FREE EPIC+ ROLL', time: 'COMING SOON', price: 495, max: 1, buyable: false },
 ];
 export const RARITY = {
@@ -136,11 +138,10 @@ function applyEffect(it, now) {
     return ok;
   }
   if (it.boost) return startOverdrive(it.boost.mult, it.boost.min, now);
-  if (it.extend) {
-    const timers = liveTimers(now);
-    if (!timers.length) return false;
+  if (it.all) {
+    // EVERYTHING BOOST: every simple boost on (or +N min on a running one) — no running boost needed
     const f = readFx();
-    for (const t of timers) f[t.kind] += EXTEND_MS;
+    for (const kind of EXTENDABLE_FX) f[kind] = Math.max(f[kind], now) + it.all * 60000;
     const ok = writeJson(STOCK_FX_KEY, f);
     if (ok) announceTimers();
     return ok;
@@ -150,8 +151,7 @@ function applyEffect(it, now) {
 
 /**
  * BUY one unit of `id` for GEMS. Returns { ok, reason?, gems, left } — reasons: 'season' (flag OFF), 'unknown',
- * 'soon' (visual-only item), 'sold_out', 'gems' (short; `short` = how many more), 'nothing' (+5 MIN with no timer
- * running). Nothing is charged unless the effect applied.
+ * 'soon' (visual-only item), 'sold_out', 'gems' (short; `short` = how many more). Nothing is charged unless the effect applied.
  */
 export function buyStock(id, now = Date.now()) {
   const it = STOCK.find((x) => x.id === id);
@@ -162,7 +162,6 @@ export function buyStock(id, now = Date.now()) {
   if (it.buyable === false) return { ok: false, reason: 'soon', gems: g.bal, left };
   if (left[id] <= 0) return { ok: false, reason: 'sold_out', gems: g.bal, left };
   if (g.bal < it.price) return { ok: false, reason: 'gems', short: it.price - g.bal, gems: g.bal, left };
-  if (it.extend && !anyTimerLive(now)) return { ok: false, reason: 'nothing', gems: g.bal, left };
   if (!applyEffect(it, now)) return { ok: false, reason: 'storage', gems: g.bal, left };
   g.bal -= it.price;
   saveGemState(g);
