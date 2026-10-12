@@ -2,6 +2,8 @@
 /* GEAR TURN on the menu (Andy oct11, same exception as MarkCard.css): the worn gear's cog turns slowly; hovered, the
    teeth spin fast for as long as the pointer stays; its glyph bobs + tilts a little at rest */
 .hp-gear-cog :is(.mb-cog, .mb-cog > g, .mb-glyph) { transform-box: view-box; transform-origin: 60px 60px; }
+/* oct12: the menu cog matches the gear cards (MarkCard .mc-cog svg scale 1.3) — the painted art sits inside the ring */
+.hp-gear-cog > svg { transform: scale(1.3); }
 .hp-gear-cog .mb-cog { animation: hp-gear-turn 16s linear infinite; }
 .hp-gear-cog .mb-glyph { animation: hp-gear-bob 2400ms ease-in-out infinite; }
 /* HOVER v2 (Andy oct11): hovered, the teeth KEEP turning fast (hover-only, stops on leave); the glyph eases to a held tilt + enlarge */
