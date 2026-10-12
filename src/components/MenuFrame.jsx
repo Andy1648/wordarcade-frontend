@@ -7,7 +7,7 @@
 // does motion: a one-shot slam when a NEW tier is first seen, and a one-shot punch on level-up
 // (both transform/opacity, finite). Nothing loops at rest.
 //
-// Rebirths also hang one star per rebirth from the top edge (up to 5, then a count).
+// (Rebirths used to hang one star per rebirth from the top edge — removed, Andy oct12.)
 import { memo } from 'react';
 import { TIER_COLORS } from '../progress/menuTier';
 import './MenuFrame.css';
@@ -70,18 +70,9 @@ function Plate({ tier }) {
   );
 }
 
-function Star() {
-  return (
-    <svg viewBox="0 0 120 120" className="menu-frame-star" aria-hidden="true">
-      <path d="M58 14 L68.6 45.4 L101.8 45.8 L75.1 65.6 L85 97.2 L58 78 L31 97.2 L40.9 65.6 L14.2 45.8 L47.4 45.4 Z" transform="translate(6,6)" fill="#000" />
-      <path d="M58 14 L68.6 45.4 L101.8 45.8 L75.1 65.6 L85 97.2 L58 78 L31 97.2 L40.9 65.6 L14.2 45.8 L47.4 45.4 Z" fill="#FFE94A" stroke="#a8800f" strokeWidth="7" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /**
  * @param tier      menu tier 0..7
- * @param rebirths  rebirth count (stars on the top edge)
+ * @param rebirths  rebirth count (a rebirthed player keeps the frame; the per-rebirth stars were removed — Andy oct12)
  * @param fresh     true for the first render after crossing into a new tier → one-shot slam
  * @param punchKey  bump to replay the level-up punch
  *
@@ -92,7 +83,6 @@ function Star() {
 function MenuFrame({ tier, rebirths = 0, fresh = false, punchKey = 0 }) {
   if (tier <= 0 && rebirths <= 0) return null;
   const Art = Plate;
-  const stars = Math.min(5, rebirths);
   return (
     <div className={`menu-frame tier-${tier}${fresh ? ' is-fresh' : ''}`} data-tier={tier} aria-hidden="true">
       {/* The RAILS: a plain rectangle border in the tier colour, thicker per tier. */}
@@ -102,12 +92,6 @@ function MenuFrame({ tier, rebirths = 0, fresh = false, punchKey = 0 }) {
           <Art tier={tier} />
         </div>
       ))}
-      {rebirths > 0 && (
-        <div className="menu-frame-stars">
-          {Array.from({ length: stars }, (_, i) => <Star key={i} />)}
-          {rebirths > 5 && <span className="menu-frame-starcount">×{rebirths}</span>}
-        </div>
-      )}
     </div>
   );
 }

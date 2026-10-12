@@ -145,6 +145,14 @@ green suite can catch; the only proof of shipped is a marker grep against the li
   RULE: useWebSocket must buffer messages in a FIFO QUEUE (append every parsed frame). The App consumer must drain and process EVERY queued message in arrival order, never just the latest. No frame may be skipped on batched delivery.
 
 ## Established patterns
+- WHAT A GREAT FIRST TRY LOOKS LIKE — THE PATCH NOTES POPUP (Andy oct12: "genuinely one of the best i've seen you do first try … love how you tilted and put the two amazing looking cards together — an emotional reaction from me"). `src/components/patchNotes/`. Use it as the reference for any "moment" screen. Why it landed:
+  - SHOW, DON'T LIST: the two best new things are on screen as the REAL components (two `MarkCard`s with their `GearFx` rarity glow — MYTHIC + SECRET), not described in text. The player sees the reward before reading a word.
+  - COMPOSITION: the cards are FANNED — tilted −8° / +7°, overlapping, the right one on top — like a hand of cards just dealt. Asymmetry and overlap read as crafted; a straight row reads as a table.
+  - ONE-SHOT ENTRANCE, SEQUENCED: the title SLAMS (scale 1.6 → 1), the cards fan in from the middle (pop, 420 ms, staggered 120 / 200 ms), the rows RISE one by one (70 ms apart). Finite transform/opacity only — nothing loops at rest.
+  - SHORT, PUNCHY ROWS: a coloured tag (NEW / BUFF) + one line + the NUMBER in yellow. No paragraphs.
+  - A GIFT WITH A PAYOFF: "150 = 2 FREE ROLLS" in real currency, and COLLECT flies the gems into the wallet pill (GainLayer) — the reward is felt, not stated. It can never be lost (✕ still pays) or paid twice.
+  - THE HOUSE LOOK, STRICTLY: flat fills, coloured outlines, hard black shadows, Bungee with stroke — it looks like the rest of the game, only more.
+  - TIMING: it waits for the intro knife-split, then takes its turn in the menu moments queue — never on top of something else.
 - WORD BOMB INSTANT LOCAL-REJECT (feel/gameplay-smoothness; validated 2-device 2026-07-30, both parked Tier-1 items — the 6d66a1a reconnect-drop test and the WB combo pool-weighting test — passed and are now closed). The three Word Bomb rejects the client can determine from its OWN state — length<3 (`too_short`), word doesn't contain the fragment (`missing_combo`), word already used (`already_used`) — are surfaced SAME-FRAME through the normal `lastWordResult` path (identical buzz/shake/toast) and are NOT sent to the server. The client checks mirror the server's exactly (same trim/lowercase, same fragment, same used-words set), so there is zero client/server disagreement, and a rejected word never consumes the turn server-side (so not sending is equivalent). The DICTIONARY check (`not_a_word`) still round-trips — only the client can't know it. Category Blitz stays server-judged (no local accept-list). See `GameScreen.jsx` `submit()` + `App.jsx` `onLocalWordResult`.
 
 ## SAT RUSH (src/satRush/) — solo vocab mode

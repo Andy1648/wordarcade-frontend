@@ -24,7 +24,7 @@ export function substatParts(subs) {
   const KIND = { critRatePct: 'CRIT RATE', critPower: 'CRIT POWER', baseWins: 'BASE WINS', gemsPct: 'GEMS', luckPct: 'ROLL LUCK' };
   return (subs || []).map((x, i) => {
     const num = x.kind === 'critRatePct' ? `+${pct(x.value / 100)}`
-      : x.kind === 'critPower' ? `+${formatMultExact(x.value)}×`
+      : x.kind === 'critPower' ? `+${pct(x.value)}`
       : x.kind === 'gemsPct' || x.kind === 'luckPct' ? `+${pct(x.value / 100)}`
       : `+${formatMultExact(x.value)}`;
     return { id: `${x.kind}-${i}`, num, kind: KIND[x.kind] || x.kind };
@@ -34,7 +34,7 @@ export function critLines(stats) {
   const out = [];
   if (!stats) return out;
   if (stats.rate > 0) out.push({ id: 'rate', num: `+${pct(stats.rate)}`, kind: 'CRIT RATE' });
-  if (stats.power > 0) out.push({ id: 'power', num: `+${formatMultExact(stats.power)}×`, kind: 'CRIT POWER' });
+  if (stats.power > 0) out.push({ id: 'power', num: `+${pct(stats.power)}`, kind: 'CRIT POWER' });
   return out;
 }
 

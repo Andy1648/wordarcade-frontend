@@ -123,6 +123,28 @@ test(`PACE (020 carried over): ≤ ${RB_PER_WINDOW} granted rebirths in any roll
   assert.equal(srv.rebirth({ requestId: id() }, first + RB_WINDOW_SECS * SEC + 1).ok, true);
 });
 
+test('PACE: a tester (033, profiles.is_tester) skips it — the gate still applies', () => {
+  const srv = makeRebirthServer({ level: 1, rebirths: 0, is_tester: true });
+  let t = T0;
+  let granted = 0;
+  for (let i = 0; i < 40; i++) {
+    srv.db.row.level = serverGate(srv.db.row.rebirths, 0) + 50;
+    if (srv.rebirth({ requestId: id() }, (t += 10 * SEC)).ok) granted += 1;
+  }
+  assert.equal(granted, 40);
+  srv.db.row.level = 1;
+  assert.equal(srv.rebirth({ requestId: id() }, (t += 10 * SEC)).reason, 'gate');
+});
+
+test('033 is the newest lb_rebirth: 029 body + the tester guard on PACE only', () => {
+  const dir = join(process.cwd(), 'supabase', 'migrations');
+  const s = readFileSync(join(dir, '033_tester_rebirth_pace.sql'), 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(s.includes('if granted >= RB_PER_WINDOW and not coalesce(old.is_tester, false) then'));
+  assert.ok(s.includes(`RB_PER_WINDOW constant integer := ${RB_PER_WINDOW};`));
+  assert.ok(s.includes('grant execute on function public.lb_rebirth(text, uuid, smallint) to anon, authenticated;'));
+  assert.ok(s.includes('WRITE-ONLY: Claude never runs migrations'));
+});
+
 test('1,000 calls → at most the number of times the gate was legitimately met', () => {
   // a spammer replays, double-fires and hammers; an honest climb meets the gate 3 times over the session
   const srv = makeRebirthServer({ level: 1, rebirths: 0 });

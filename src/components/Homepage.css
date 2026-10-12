@@ -848,8 +848,11 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 
 /* TWO FULL GEAR SLOTS (Andy oct11 "i want it to be the same as the first gear"): when the 2nd slot is unlocked both are the
    full YOUR GEAR slot. On a short screen two full slots overrun the rail (1366x657: +84px; 1280x720 fits), so at ≤ 690px tall BOTH compact the same way
-   — the substat chip row folds away (the GEAR SHEET still lists every substat) and the glyph steps down a size. */
-@media (max-height: 690px) {
+   — the substat chip row folds away (the GEAR SHEET still lists every substat) and the glyph steps down a size.
+   oct12 (Andy "the 2nd gear slot is getting off the screen"): ALSO on any screen wider than 9:5 — there the rail scales
+   with the HEIGHT and the two full slots overran it at every height (measured: 1366x700 −42px, 1536x720 −87px,
+   1920x900 −104px); at ≤ 9:5 they fit (1366x760 +16px, 1536x840 +15px, 1280x720 +15px). */
+@media (max-height: 690px), (min-aspect-ratio: 9/5) {
   .hp-rail:has(.hp-gear--2) .hp-gear-subs { display: none; }
   .hp-rail:has(.hp-gear--2) .hp-gear-cog { width: calc(var(--hp-tile-ico) * 1.35); height: calc(var(--hp-tile-ico) * 1.35); }
 }
@@ -874,3 +877,6 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 .hp-gear2 .hp-gear-text { flex-direction: row; align-items: baseline; flex-wrap: wrap; column-gap: calc(8 * var(--u)); row-gap: 0; }
 .hp-gear2-cog { width: var(--hp-tile-ico); height: var(--hp-tile-ico); }
 .hp-gear2.is-worn .hp-gear2-big { font-size: max(18px, var(--fs-hp18)); } /* numbers ≥ 18px (Andy) */
+
+/* the crit chips' key (oct12): RATE / PWR beside the % — both chips wear the same burst icon */
+.hp-gear-subkey { margin-left: 0.25em; font-size: var(--fs-hpunit); color: #fff; }

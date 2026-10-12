@@ -195,7 +195,9 @@ test('v4 at T0 R0: a menu key pays +1 XP, a game letter 0; POWER doubles it at o
 test('GEAR POOL v2: every gear prints exactly what it pays (season 2 values, ★ pips, shiny)', async () => {
   const MR = await import('./markRolls.js');
   const subSum = (id, s, kind) => substatsOf(id, s).filter((x) => x.kind === kind).reduce((a, x) => a + x.value, 0);
-  const num = (t) => (/^EVERY KEY/.test(t) ? 1 : Number(/^(?:EVERY )?[+×]?([\d,]*\.?\d+)/.exec(t)[1].replace(/,/g, '')));
+  const raw = (t) => (/^EVERY KEY/.test(t) ? 1 : Number(/^(?:EVERY )?[+×]?([\d,]*\.?\d+)/.exec(t)[1].replace(/,/g, '')));
+  // oct12: a multiplier stat prints as its percent ("+50% WINS" = ×1.5); "+100% CRIT POWER" = +1 power
+  const num = (t) => (/% (WINS|XP|ROLL LUCK)/.test(t) ? 1 + raw(t) / 100 : /% CRIT POWER/.test(t) ? raw(t) / 100 : raw(t));
   for (const m of MR.ROLL_MARKS) {
     const per = MR.DUPES_PER_PIP[m.tier];
     for (const [n, shiny] of [[1, false], [1 + 2 * per, false], [1 + 5 * per, true]]) {

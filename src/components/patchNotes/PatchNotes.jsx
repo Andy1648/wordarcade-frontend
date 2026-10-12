@@ -14,7 +14,7 @@ import GearFx from '../GearFx.jsx';
 import { grantGems, getGems, ROLL_PRICE_GEMS } from '../../progress/gemsCore.js';
 import { formatNum } from '../../format.js';
 import { PATCH_ITEMS, PATCH_CARDS, PATCH_GIFT_ROLLS, PATCH_LABEL, PATCH_ID } from './patchNotesData.js';
-import { markPatchSeen } from './patchSeen.js';
+import { markPatchSeen, patchSeen } from './patchSeen.js';
 import './PatchNotes.css';
 
 const TAG_TONE = { NEW: 'cyan', BUFF: 'yellow', GIFT: 'pink' };
@@ -27,7 +27,9 @@ export default function PatchNotes({ onClose }) {
   const fly = useRef(null);
   const giftRef = useRef(null);
   const btnRef = useRef(null);
-  const paid = useRef(false);
+  // re-opened from the UPDATE LOG tile after the gift was collected: the notes only — the gift reads COLLECTED, never pays twice
+  const [already] = useState(() => patchSeen());
+  const paid = useRef(already);
   const from = useCachedCenter(giftRef);
 
   const giftGems = PATCH_GIFT_ROLLS * ROLL_PRICE_GEMS; // the live price (a `let` binding — season 2 swaps it)
@@ -61,7 +63,7 @@ export default function PatchNotes({ onClose }) {
 
   const onCollect = () => {
     if (phase === 'flying') return;
-    if (phase === 'done') {
+    if (phase === 'done' || already) {
       onClose();
       return;
     }
@@ -90,9 +92,9 @@ export default function PatchNotes({ onClose }) {
   };
 
   const rolls = PATCH_GIFT_ROLLS;
-  const label = phase === 'done' ? 'PLAY' : phase === 'flying' ? 'COLLECTING' : 'COLLECT';
+  const label = already ? 'CLOSE' : phase === 'done' ? 'PLAY' : phase === 'flying' ? 'COLLECTING' : 'COLLECT';
   return (
-    <div className="pn" role="dialog" aria-modal="true" aria-labelledby="pn-title" data-testid="patch-notes" data-phase={phase}>
+    <div className="pn" role="dialog" aria-modal="true" aria-labelledby="pn-title" data-testid="patch-notes" data-phase={already ? 'done' : phase}>
       <div className="pn-wallet">
         <KitPill ref={pill} kind="gems" value={wallet} ariaLabel={`Gems: ${formatNum(wallet)}`} />
       </div>
@@ -131,7 +133,7 @@ export default function PatchNotes({ onClose }) {
             <KitIcon name="gems" size={40} />
             <b className="pn-num pn-gift-num" data-testid="patch-notes-gems">{formatNum(giftGems)}</b>
           </span>
-          <span className="pn-rolls">= {rolls} FREE {rolls === 1 ? 'ROLL' : 'ROLLS'}</span>
+          <span className="pn-rolls">{already ? 'COLLECTED ✓' : `= ${rolls} FREE ${rolls === 1 ? 'ROLL' : 'ROLLS'}`}</span>
         </div>
         <div className="pn-foot">
           <KitButton ref={btnRef} tone={phase === 'done' ? 'yellow' : 'cyan'} label={label} labelSize={32} width={280} disabled={phase === 'flying'} onClick={onCollect} data-testid="patch-notes-collect" />

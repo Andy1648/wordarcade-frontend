@@ -253,34 +253,34 @@ test('GEMS: the wins price is gone from the roll engine (a roll costs gems — m
 });
 
 test('tags: ONE short tag — the stat line, ×N WINS + XP for a PERMANENT, or the perk line for LEGENDARY+', () => {
-  assert.equal(mainTag('mk-smith', null), '×1.25 WINS');
-  assert.equal(mainTag('mk-detonator', null), '×1.5 WINS IN WORD BOMB');
+  assert.equal(mainTag('mk-smith', null), '+25% WINS');
+  assert.equal(mainTag('mk-detonator', null), '+50% WINS IN WORD BOMB');
   assert.equal(mainTag('mk-cyclone', null), '+5 BASE WINS');
-  assert.equal(mainTag('mk-leviathan', null), '×3 XP');
+  assert.equal(mainTag('mk-leviathan', null), '+200% XP');
   assert.equal(mainTag('mk-kraken', null), '+90 BASE XP');
-  assert.equal(mainTag('mk-origin', null), '×25 WINS');
-  assert.equal(mainTag('mk-slipstream', null), '×1.25 ROLL LUCK');
+  assert.equal(mainTag('mk-origin', null), '+2,400% WINS');
+  assert.equal(mainTag('mk-slipstream', null), '+25% ROLL LUCK');
   assert.equal(mainTag('mk-tinder', null), '+75s OVERDRIVE');
   assert.equal(mainTag('mk-phoenix', null), '+25% CRIT RATE');
-  assert.equal(mainTag('mk-sparkplug', null), '+1× CRIT POWER');
+  assert.equal(mainTag('mk-sparkplug', null), '+100% CRIT POWER');
   assert.equal(mainTag('mk-metronome', null), 'EVERY 4TH KEY CRITS');
-  assert.equal(mainTag('mk-eternal', null), '×3 WINS + XP', 'a PERMANENT pays the LEGENDARY MAIN');
-  assert.equal(perkTag(freshState(), 'mk-smith'), '×1.25 WINS');
+  assert.equal(mainTag('mk-eternal', null), '+200% WINS + XP', 'a PERMANENT pays the LEGENDARY MAIN');
+  assert.equal(perkTag(freshState(), 'mk-smith'), '+25% WINS');
   assert.equal(perkTag(freshState(), 'mk-leviathan'), 'WEAR: LETTERS COUNT ×2', 'a perk runs only while worn');
   assert.equal(perkTag(freshState(), 'mk-origin'), 'WEAR: FRENZY IN EVERY MODE + REBIRTH KEEPS 3 POWER TIERS + FREE 60s OVERDRIVE EVERY 15 MIN');
 });
 
 test('markTag (Andy oct5): the COMPACT line — named stat, PERK: … on LEGENDARY+, ★N once it has pips', () => {
   assert.equal(markTag('mk-cyclone', null), '+5 BASE WINS');
-  assert.equal(markTag('mk-smith', null), '×1.25 WINS');
-  assert.equal(markTag('mk-leviathan', null), '×3 XP · PERK: LETTERS COUNT ×2');
-  assert.equal(markTag('mk-leviathan', null, { perk: false }), '×3 XP');
-  assert.equal(markTag('mk-eternal', null), '×3 WINS + XP');
+  assert.equal(markTag('mk-smith', null), '+25% WINS');
+  assert.equal(markTag('mk-leviathan', null), '+200% XP · PERK: LETTERS COUNT ×2');
+  assert.equal(markTag('mk-leviathan', null, { perk: false }), '+200% XP');
+  assert.equal(markTag('mk-eternal', null), '+200% WINS + XP');
   let n = 1;
   while (markLevel({ marks: { 'mk-cyclone': { n } } }, 'mk-cyclone').pips < 2) n++;
   const st = { ...freshState(), v: 3, marks: { 'mk-cyclone': { n } } };
   assert.match(markTag('mk-cyclone', st), /^\+[\d.,]+ BASE WINS · ★2$/);
-  assert.ok(!/MAIN|%/.test(markTag('mk-origin', null)), 'never a bare MAIN, never a %');
+  assert.ok(!/MAIN/.test(markTag('mk-origin', null)), 'never a bare MAIN'); // oct12: a % is now how a multiplier prints
 });
 
 test('THE MARK STATS: the worn stat pays only what it touches; the INDEX (+0.5% per %) rides on wins AND XP', () => {
@@ -476,7 +476,7 @@ test('shiny ×2 the stat, stacking with the ★ pips (and a v1 GOLD / RAINBOW fl
   const s1 = st('mk-eclipse', 1, true);
   near(markWinsMult({ markId: 'mk-eclipse', state: s1 }), 5 * indexMult(s1));
   near(markWinsMult({ markId: 'mk-eclipse', state: st('mk-eclipse', 1, false) }), 3 * indexMult(s1));
-  assert.equal(mainTag('mk-eclipse', s1), '×5 WINS');
+  assert.equal(mainTag('mk-eclipse', s1), '+400% WINS');
 });
 
 test('shiny: persistence + migration — old states read not-shiny; the flag survives normalize, migrate and the store', () => {

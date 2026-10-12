@@ -32,7 +32,7 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
       {board && (
@@ -60,6 +60,19 @@ export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, nav
         ariaLabel={ach.count > 0 ? `Open achievements — ${formatNum(ach.count)} to claim` : 'Open achievements'}
         title="Achievements"
       />}
+      {/* UPDATE LOG (Andy oct12): re-opens this release's PATCH NOTES — joins the cluster, never its own fixed spot */}
+      {news && (
+        <KitIconButton
+          icon="news"
+          tone="pink"
+          className="hp-ico is-news"
+          data-nav="news"
+          disabled={navigating}
+          onClick={news.onClick}
+          ariaLabel="Open the update log"
+          title="Update log"
+        />
+      )}
       {/* SETTINGS (Andy oct9 "top right placement instead"): the cog joins this cluster as its last tile */}
       {settingsSlot}
     </div>
@@ -234,7 +247,9 @@ export function subChip(x) {
   const t = substatText(x);
   const n = t.split(' ')[0].replace(/^\+/, ''); // every substat ADDS — the chip drops the '+' to fit two a row
   const icon = x.kind === 'baseWins' ? 'wins' : x.kind === 'gemsPct' ? 'gems' : x.kind === 'luckPct' ? 'luck' : 'crit';
-  return { n, icon, label: t };
+  // both crit chips share the burst icon and both read as a % (Andy oct12) — a small key tells RATE from PWR
+  const key = x.kind === 'critRatePct' ? 'RATE' : x.kind === 'critPower' ? 'PWR' : '';
+  return { n, icon, key, label: t };
 }
 export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }) {
   const two = slot === 2; // the 2ND GEAR, unlocked (Andy oct11 "i want it to be the same as the first gear")
@@ -294,6 +309,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
                   {c.icon === 'crit' ? <img className="hp-gear-subico" src="/fx/crit-burst.svg" alt="" draggable="false" />
                     : c.icon !== 'luck' || luck ? <KitIcon name={c.icon} size={18} shadow={1} extras={false} className="hp-gear-subico" /> : <span className="hp-gear-subico" />}
                   {c.n}
+                  {c.key ? <span className="hp-gear-subkey">{c.key}</span> : null}
                 </span>
               ))}
             </span>

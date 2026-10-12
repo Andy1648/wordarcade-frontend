@@ -35,8 +35,8 @@ import './GearFx.css';
 const RAINBOW = ['#FF3D7F', '#FFC23D', '#2EFFE0', '#3D8BFF', '#B04BFF'];
 const FX = {
   epic: { lo: 0.8, out: 26, motes: 2, m: ['#F3D2FF'] },
-  legendary: { lo: 0.86, out: 34, motes: 4, m: ['#FFF3A6', '#FFFFFF'] },
-  mythic: { two: true, lo: 0.9, out: 42, motes: 8, big: 1.35, m: ['#FFFFFF', '#2EFFE0', '#FF3D7F'] },
+  legendary: { lo: 0.86, out: 34, motes: 4, m: ['#FFF3A6', '#FFFFFF'], streaks: 8 },
+  mythic: { two: true, lo: 0.9, out: 42, motes: 8, big: 1.35, m: ['#FFFFFF', '#2EFFE0', '#FF3D7F'], waves: 2 },
   secret: { swap: 3, glitch: true, orbit: 8, lo: 0.9, out: 42, motes: 4, big: 1.15, m: RAINBOW },
 };
 export const TICK_MS = 700;
@@ -47,6 +47,22 @@ export const MOTE_MS = 1700;
 export const SWAP_MS = 3900; // SECRET: one full trip through its three colourings
 export const ORBIT_MS = 3400; // SECRET: one lap of the mote ring
 export const GLITCH_MS = 420;
+// HOVER CONCEPTS (Andy oct12): LEGENDARY — light STREAKS rise up both sides of the card, in the glow band (never over the
+// stats); MYTHIC — SHOCKWAVES of its own glow pulse out through the aura. While hovered only: each node chains one
+// FINITE run to the next (no Infinity, like the SECRET orbit); leaving lets the current run finish and stops.
+export const STREAK_MS = 900;
+export const WAVE_MS = 1150;
+// a streak per slot: side, x across the glow band (0 = outer edge, 1 = the card), width px, height % of the host, colour
+const STREAKS = [
+  { side: 'left', x: 0.5, w: 7, h: 42, c: '#FFF3A6' },
+  { side: 'right', x: 0.4, w: 9, h: 34, c: '#FFFFFF' },
+  { side: 'left', x: 0.2, w: 5, h: 28, c: '#FFFFFF' },
+  { side: 'right', x: 0.65, w: 5, h: 46, c: '#FFC23D' },
+  { side: 'left', x: 0.75, w: 8, h: 36, c: '#FFC23D' },
+  { side: 'right', x: 0.15, w: 6, h: 26, c: '#FFF3A6' },
+  { side: 'left', x: 0.35, w: 4, h: 50, c: '#FFF3A6' },
+  { side: 'right', x: 0.85, w: 4, h: 38, c: '#FFFFFF' },
+];
 // rim spots (round the frame, staggered sides) — a mote rises from its spot
 const SPOTS = [
   { side: 'left', top: '68%' },
@@ -232,7 +248,52 @@ export default function GearFx({ tier, scale = 1, live = true }) {
       host.addEventListener('focusin', enter);
       host.addEventListener('focusout', leave);
     }
+    // LEGENDARY streaks / MYTHIC shockwaves — hover-only, each node a finite run chained while the host is hovered
+    const streaks = [...el.querySelectorAll('.gfx-streak')];
+    const waves = [...el.querySelectorAll('.gfx-wave')];
+    const fxHost = streaks.length || waves.length ? el.parentElement : null;
+    let hov2 = false;
+    const chain = (node, frames, opts, gap) => {
+      if (!hov2) return;
+      node.style.willChange = 'transform, opacity';
+      const a = node.animate(frames, opts);
+      runs.add(a);
+      a.onfinish = () => {
+        runs.delete(a);
+        if (hov2) chain(node, frames, { ...opts, delay: gap }, gap);
+        else node.style.willChange = '';
+      };
+    };
+    const enter2 = () => {
+      if (hov2) return;
+      hov2 = true;
+      streaks.forEach((n, k) => chain(n, [
+        { opacity: 0, transform: 'translateY(320%) scaleY(0.5)' },
+        { opacity: 1, transform: 'translateY(220%) scaleY(1)', offset: 0.22 },
+        { opacity: 1, transform: 'translateY(40%) scaleY(1)', offset: 0.72 },
+        { opacity: 0, transform: 'translateY(-60%) scaleY(0.6)' },
+      ], { duration: STREAK_MS + (k % 3) * 160, delay: k * 110, easing: 'cubic-bezier(.45,.05,.55,.95)' }, 80 + (k % 4) * 90));
+      waves.forEach((n, k) => chain(n, [
+        { opacity: 0, transform: 'scale(0.9)' },
+        { opacity: 1, transform: 'scale(1.02)', offset: 0.22 },
+        { opacity: 0, transform: 'scale(1.34)' },
+      ], { duration: WAVE_MS, delay: k * (WAVE_MS / 2), easing: 'cubic-bezier(.2,.7,.35,1)' }, 120));
+    };
+    const leave2 = () => { hov2 = false; };
+    if (fxHost) {
+      fxHost.addEventListener('pointerenter', enter2);
+      fxHost.addEventListener('pointerleave', leave2);
+      fxHost.addEventListener('focusin', enter2);
+      fxHost.addEventListener('focusout', leave2);
+    }
     return () => {
+      if (fxHost) {
+        fxHost.removeEventListener('pointerenter', enter2);
+        fxHost.removeEventListener('pointerleave', leave2);
+        fxHost.removeEventListener('focusin', enter2);
+        fxHost.removeEventListener('focusout', leave2);
+      }
+      hov2 = false;
       unsub();
       el.removeEventListener('gfx:flare', onFlare);
       if (host) {
@@ -272,6 +333,10 @@ export default function GearFx({ tier, scale = 1, live = true }) {
           </span>
         </span>
       ) : null}
+      {fx.waves && !still ? Array.from({ length: fx.waves }, (_, k) => <span key={`w${k}`} className={`gfx-wave${k % 2 ? ' is-2' : ''}`} />) : null}
+      {fx.streaks && !still ? STREAKS.slice(0, fx.streaks).map((s, k) => (
+        <span key={`s${k}`} className={`gfx-streak is-${s.side}`} style={{ '--gfx-sx': s.x, width: `${s.w}px`, height: `${s.h}%`, background: s.c }} />
+      )) : null}
       {!still && SPOTS.slice(0, fx.motes).map((s, k) => (
         <span key={k} className={`gfx-mote is-${s.side}`} style={{ top: s.top, background: fx.m[k % fx.m.length] }} />
       ))}

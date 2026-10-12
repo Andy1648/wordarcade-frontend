@@ -32,7 +32,7 @@ export const CLAIMS_KEY = 'taw.claims';
 
 // E4 (Andy oct2 evening: "TOO MANY REWARDS"). Only ACHIEVEMENTS and STATS milestones (rank-ups) go
 // through the claim inbox. Everything else either applies at once, silently, or is cut:
-//   inbox    achievement, rank                   — the rewards worth a moment
+//   inbox    achievement, rank, weekprize        — the rewards worth a moment
 //   instant  code, boost                         — typing the code IS the claim (BOOST starts now)
 //            mark                                — owned on unlock; the MARKS button's NEW dot says so
 //            layer (forge / stars / auto / marks) — the system simply opens
@@ -41,7 +41,7 @@ export const CLAIMS_KEY = 'taw.claims';
 //                                                   crossed, itemised on that run's receipt like any bonus,
 //                                                   and the COLLECTION tab's "+N WINS" stays true
 //   cut      welcome back                        — a gift for being away; wins come only from playing (O9)
-const INBOX_KINDS = new Set(['achievement', 'rank']);
+const INBOX_KINDS = new Set(['achievement', 'rank', 'weekprize']); // weekprize (Andy oct12): a top-10 week is worth a moment
 const CUT_KINDS = new Set(['welcome']);
 export function claimPolicy(kind, id) {
   if (INBOX_KINDS.has(kind)) return 'inbox';
@@ -62,6 +62,7 @@ export const CLAIM_KINDS = {
   code: 'CODE',
   boost: 'BOOST',
   gemcode: 'GEMS',
+  weekprize: 'WEEKLY TOP 10',
 };
 
 // Per-kind side effects of claiming (a NEW MARK becomes owned, …). Registered by the owning module.
@@ -227,6 +228,12 @@ registerClaimHandler('boost', (c) => {
 registerClaimHandler('gemcode', (c) => {
   const m = (c && c.meta) || {};
   grantGems(m.gems, 'code', { detail: c && c.id });
+});
+
+// ---- WEEKLY TOP 10 (Andy oct12, migration 034): the server paid the place once; claiming it banks the gems -------------
+registerClaimHandler('weekprize', (c) => {
+  const m = (c && c.meta) || {};
+  grantGems(m.gems, 'weekly', { detail: c && c.id });
 });
 
 // ---- NEW SYSTEM layers (STEP 49 reveal moments) -------------------------------------------------

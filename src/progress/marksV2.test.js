@@ -130,7 +130,7 @@ test('INDEX entry: owned count, first roll #, ★ line, the stat as it pays, 1 I
   assert.equal(e.firstRoll, 42);
   assert.deepEqual([e.pips, e.have, e.need], [0, 0, 0]); // gear card v4: a dupe pays gems, never works toward a ★
   assert.deepEqual(e.stat, statOf('mk-detonator', b.state));
-  assert.equal(e.statLine, '×1.5 WINS IN WORD BOMB');
+  assert.equal(e.statLine, '+50% WINS IN WORD BOMB');
   assert.equal(e.oneInX, Math.round(ROLL_MARKS[0].x));
   assert.equal(indexEntry('mk-origin', b.state).owned, 0);
   assert.equal(indexEntry('mk-origin', b.state).firstRoll, null);

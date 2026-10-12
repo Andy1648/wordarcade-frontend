@@ -1,5 +1,5 @@
 // stock.test.js — the SHOP's STOCK (season 2, P3): 6 gem-priced items, ×N LEFT per 5-minute window, SOLD OUT, the
-// timed effects (+25% XP, ×2 LUCK), ×10 OVERDRIVE (a boost), +5 MIN EVERY BOOST, and the visual-only
+// timed effects (+25% XP, ×2 LUCK), ×10 OVERDRIVE (a boost), the EVERYTHING BOOST (XP + WINS + LUCK), and the visual-only
 // FREE EPIC+ ROLL. The flag is set before any import (node --test runs each file in its own process).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -93,25 +93,24 @@ test('timed effects: +25% XP on XP / LETTER, ×2 LUCK — for their minutes only
   assert.equal(ST.STOCK.some((i) => i.fx === 'gems'), false, 'no STOCK item touches gems');
 });
 
-test('+5 MIN: needs an XP / WINS / LUCK boost running; extends those, NEVER OVERDRIVE (Andy oct8)', () => {
+test('EVERYTHING BOOST (Andy oct12): no running boost needed — starts XP + WINS + LUCK for 5 min, a running one gains 5 min, NEVER OVERDRIVE', () => {
   mem.clear();
   setGems(2000);
+  const it = ST.STOCK.find((i) => i.id === 'extend');
+  assert.equal(it.name, 'EVERYTHING BOOST');
+  // nothing running: it starts all three
   let r = ST.buyStock('extend', T0);
-  assert.deepEqual([r.ok, r.reason], [false, 'nothing']);
-  assert.equal(G.getGems(), 2000);
+  assert.equal(r.ok, true);
+  assert.equal(G.getGems(), 2000 - it.price);
+  for (const k of ['xp', 'wins', 'luck']) assert.equal(ST.stockFxLeft(k, T0), 5 * 60_000, k);
+  assert.ok(ST.stockXpMult(T0 + 1000) > 1 && ST.stockWinsMult(T0 + 1000) > 1 && ST.stockLuckMult(T0 + 1000) > 1);
+  // OVERDRIVE untouched; a 2nd buy stacks 5 more minutes on each
   ST.buyStock('overdrive', T0);
-  r = ST.buyStock('extend', T0);
-  assert.deepEqual([r.ok, r.reason], [false, 'nothing'], 'OVERDRIVE alone is not extendable');
-  ST.buyStock('xp25', T0);
-  ST.buyStock('wins25', T0);
   const b0 = BO.boostRemaining(T0);
-  const x0 = ST.stockFxLeft('xp', T0);
-  const w0 = ST.stockFxLeft('wins', T0);
   r = ST.buyStock('extend', T0);
   assert.equal(r.ok, true);
   assert.equal(BO.boostRemaining(T0) - b0, 0, 'OVERDRIVE untouched');
-  assert.equal(ST.stockFxLeft('xp', T0) - x0, ST.EXTEND_MS);
-  assert.equal(ST.stockFxLeft('wins', T0) - w0, ST.EXTEND_MS);
+  for (const k of ['xp', 'wins', 'luck']) assert.equal(ST.stockFxLeft(k, T0), 10 * 60_000, k);
 });
 
 test('OVERDRIVE: ×5, a 2nd buy ADDS 5 MIN and stays ×5 — time stacks, the multiplier never does (Andy oct8)', () => {

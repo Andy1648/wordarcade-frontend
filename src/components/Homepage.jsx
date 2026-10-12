@@ -56,7 +56,7 @@ import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
-import { patchSeen, markPatchSeen } from './patchNotes/patchSeen.js';
+import { patchSeen } from './patchNotes/patchSeen.js';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { moments } from '../lib/moments';
@@ -90,6 +90,7 @@ const warmModeDialog = () => {
 const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'ClaimReveal');
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
+const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
 const RankLadder = lazyWithReload(() => import('./RankLadder.jsx'), 'RankLadder');
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
 const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
@@ -262,13 +263,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // PATCH NOTES: returning = had already seen the menu spotlight when this menu mounted (fixed for the mount)
   // ALL RANKS popup (Andy oct11): the RANK plate opens it
   const [showRanks, setShowRanks] = useState(false);
-  const [patchReturning] = useState(() => hasSeenMenuSpotlight());
-  // a first-time visitor's copy is marked seen here (no chunk loads); only a returning player's unseen release loads the host
-  const [patchDue] = useState(() => {
-    if (patchSeen()) return false;
-    if (!patchReturning) { markPatchSeen(); return false; }
-    return true;
-  });
+  // Andy oct12 "make sure it does show up on everyone's screen": EVERY player with this release unseen gets it after
+  // the knife-split — a first-timer too, once the menu spotlight is done (it blocks the host until then)
+  const [patchDue] = useState(() => !patchSeen());
+  // the UPDATE LOG tile (top-right cluster) re-opens the notes any time; the gift still pays only once
+  const [showPatch, setShowPatch] = useState(false);
   // T: unlock tutorials mount once the menu has settled (the arrival wipe) and the mount-time moments — a
   // rank-up waits on the network — have announced themselves; from there the queue orders them (H5)
   const [tutReady, setTutReady] = useState(false);
@@ -285,6 +284,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // a level-gated CHAIN/FUSE card; closes on scrim/Escape/✕. No play button.
   const [lockedPreview, setLockedPreview] = useState(null);
   const { sound, muted } = useSound();
+  const news = useMemo(() => ({ onClick: () => { sound.click(); setShowPatch(true); } }), [sound]);
 
 
   // ---- Cards peek-scroll region (presentational) -------------------------------
@@ -1077,6 +1077,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       .catch(() => {});
     return undefined;
   }, []);
+  // WEEKLY TOP 10 (Andy oct12, migration 034): once a page load, after the arrival settles, ask whether a finished week
+  // owes this player a prize — it lands in the claims inbox (lazy: the menu chunk carries none of it)
+  useEffect(() => {
+    if (!SEASON2 || !LEADERBOARD_ENABLED) return undefined;
+    const t = setTimeout(() => { import('../leaderboard/weeklyPrize.js').then((m) => m.claimWeekPrizes()).catch(() => {}); }, 3000);
+    return () => clearTimeout(t);
+  }, []);
   useEffect(() => {
     let live = true;
     // H2a: the epoch is taken NOW, before the push — if the board is opened while this chain is in
@@ -1338,6 +1345,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             board={board}
             ach={ach}
             achSlot={trophy}
+            news={news}
             railItems={railItems}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
@@ -1362,7 +1370,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} settingsSlot={settingsSlot} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} settingsSlot={settingsSlot} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
@@ -1492,7 +1500,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </ScreenBoundary>
       )}
       {showRanks && <Suspense fallback={null}><RankLadder onClose={() => setShowRanks(false)} /></Suspense>}
-      {patchDue && <Suspense fallback={null}><PatchNotesHost returning={patchReturning} blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showRanks)} /></Suspense>}
+      {patchDue && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showRanks || showMenuSpot)} /></Suspense>}
+      {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost level={xpProgress.level} rebirths={rebirths} />

@@ -21,7 +21,7 @@ const ALL_IDS = [...new Set([...ROLL_MARKS.map((m) => m.id), ...PERMANENT_MARKS.
 
 test('every mark id has a glyph and a finish body (shade + highlight)', () => {
   for (const id of ALL_IDS) {
-    assert.ok(glyphSrc.includes(`'${id}': (`) || glyphSrc.includes(`'${id}': ART(`), `${id} has no glyph`); // ART(): a painted sticker (Andy oct10)
+    assert.ok(glyphSrc.includes(`'${id}': (`) || glyphSrc.includes(`'${id}': ART(`) || glyphSrc.includes(`'${id}': FILL(`), `${id} has no glyph`); // ART(): a painted sticker (Andy oct10); FILL(): an oct12 filler sticker
     // a finish body, or kit-drawn (markGlyphFinish.jsx KIT_DRAWN — the shade + glint are in the art itself)
     assert.ok(finishSrc.includes(`'${id}': [`) || finishSrc.includes(`'${id}',`), `${id} has no finish body`);
   }
@@ -93,9 +93,9 @@ test('earned gears (Andy oct8): drawn as LEGENDARY with the rest; locked = ACHIE
 });
 
 test('helpers: the tag split and the "7/10 → ★3" line', () => {
-  assert.deepEqual(splitTag('×1.5 WINS'), { num: '×1.5', kind: 'WINS' });
+  assert.deepEqual(splitTag('+50% WINS'), { num: '+50%', kind: 'WINS' });
   assert.deepEqual(splitTag('+2.5 BASE WINS'), { num: '+2.5', kind: 'BASE WINS' });
-  assert.deepEqual(splitTag('×1.5 WINS IN WORD BOMB'), { num: '×1.5', kind: 'WINS IN WORD BOMB' });
+  assert.deepEqual(splitTag('+50% WINS IN WORD BOMB'), { num: '+50%', kind: 'WINS IN WORD BOMB' });
   assert.deepEqual(splitTag('EVERY 4TH KEY CRITS'), { num: 'EVERY 4TH', kind: 'KEY CRITS' });
   assert.equal(pipNext({ pips: 2, have: 7, need: 10 }), '7/10 → ★3');
   assert.equal(pipNext({ pips: 5, have: 0, need: 0 }), '');

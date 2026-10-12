@@ -38,14 +38,18 @@ function withStorage(seed, fn) {
 }
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} ≠ ${b}`);
 const own = (id, n = 1, shiny = false) => ({ ...freshState(), v: 3, marks: { [id]: shiny ? { n, shiny: true } : { n } } }); // v3: ★ from dupes (pre-v4)
-/** The number a printed stat line carries: "×1.5 WINS IN WORD BOMB" → 1.5, "+25% CRIT RATE" → 25, "EVERY 4TH KEY" → 4. */
+/** The number a printed stat line carries: "+50% WINS IN WORD BOMB" → 1.5 (a multiplier), "+25% CRIT RATE" → 25, "EVERY 4TH KEY" → 4. */
 /** Σ of a gear's substat rows of `kind` (gear card v4) — they pay on top of the MAIN through the same readers. */
 const subOf = (id, s, kind) => substatsOf(id, s).filter((x) => x.kind === kind).reduce((a, x) => a + x.value, 0);
 function printed(text) {
   if (/^EVERY KEY/.test(text)) return 1;
   const m = /^(?:EVERY )?[+×]?([\d,]*\.?\d+)/.exec(text);
   assert.ok(m, `no number in "${text}"`);
-  return Number(m[1].replace(/,/g, ''));
+  const n = Number(m[1].replace(/,/g, ''));
+  // oct12: a multiplier stat prints as its percent ("+50% WINS" = ×1.5); "+100% CRIT POWER" = +1 power
+  if (/% (WINS|XP|ROLL LUCK)/.test(text)) return 1 + n / 100;
+  if (/% CRIT POWER/.test(text)) return n / 100;
+  return n;
 }
 
 test('the pool: 28 gears (JACKPOT joined), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
@@ -143,8 +147,8 @@ test('critKeyAt: EVERY Nth key is a sure crit paying × POWER; the rest roll the
 test('one-mode WINS: every mode has its gear; HEADMASTER ×5 in SAT RUSH (season 1 = 2 × LEGENDARY +200%)', () => {
   const s = own('mk-headmaster');
   near(markWinsMult({ markId: 'mk-headmaster', state: s, mode: 'satRush' }) / indexMult(s), 5, 'SAT');
-  assert.equal(mainTag('mk-headmaster', null), '×5 WINS IN SAT RUSH');
-  assert.equal(mainTag('mk-hydra', null), '×19 WINS IN WORD BOMB');
+  assert.equal(mainTag('mk-headmaster', null), '+400% WINS IN SAT RUSH');
+  assert.equal(mainTag('mk-hydra', null), '+1,800% WINS IN WORD BOMB');
   for (const mode of Object.keys(MODE_WINS_KINDS)) assert.ok(ROLL_MARKS.some((m) => m.stat.kind === MODE_WINS_KINDS[mode]), mode);
 });
 
