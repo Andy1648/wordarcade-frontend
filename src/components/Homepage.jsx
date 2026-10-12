@@ -1208,7 +1208,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const rollLock = markShown ? null : s2Unlocks ? `R${rollGateAt}` : `LV${MARKS_UNLOCK_LEVEL}`;
   // REBIRTH (season 2): LOCKED until it is first reachable — padlock + the gate level ("LV26") while this climb has
   // never rebirthed (R0, ★0) and the level is under the gate. Season 1 keeps it open with its "IN N LV" line.
-  const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && !rebirthReady ? `LV${formatNum(rebirthGate)}` : null;
+  // the lock is the LEVEL gate only — at the gate it opens and says "PLAY N WORDS" if game words are short (035)
+  const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && xpProgress.level < rebirthGate ? `LV${formatNum(rebirthGate)}` : null;
   const openMarks = (view) => {
     if (navigating) return;
     sound.click();

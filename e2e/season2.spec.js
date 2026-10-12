@@ -41,6 +41,8 @@ async function boot(page) {
     localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 14, f: 0.985, rc: 0, v: 10 }));
     localStorage.setItem('taw.s2.wins', '500');
     localStorage.setItem('taw.s2.count', JSON.stringify({ words: 150 }));
+    // 035: a season-2 rebirth needs 25 GAME words since the last one (menu keys never count) — this player has played
+    if (!window.__S2_NO_GAME_WORDS) localStorage.setItem('taw.mastery', JSON.stringify({ 'word-bomb': 30 }));
   }, { secret: SECRET, id: row.id });
   await page.goto('/?portal=1&season2=1');
   return { board, shared };
@@ -145,3 +147,26 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect(await page.evaluate(() => JSON.parse(localStorage['taw.claims']).length)).toBe(1);
   });
 }
+
+// 035 (Andy oct12): menu typing alone never rebirths — at the LV gate with no GAME words the REBIRTH tile opens (never
+// "locked at LV15" while at LV15) and says how many words to play; the REBIRTH screen asks for them instead of a hold.
+test('SEASON2: at the gate with 0 game words the rebirth asks for 25 words played in a game', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.addInitScript(() => { window.__S2_NO_GAME_WORDS = true; });
+  await boot(page);
+  await navControl(page, 'stats').waitFor({ state: 'visible' });
+  await expect.poll(async () => {
+    await page.keyboard.type('qwrtzxpvqwrtzxpv', { delay: 20 });
+    return (await s2(page)).level;
+  }, { timeout: 30_000 }).toBeGreaterThanOrEqual(15);
+  const tile = navControl(page, 'rebirth');
+  await expect(tile).not.toHaveAttribute('data-locked', '');
+  await expect(tile).toContainText('25');
+  await tile.click();
+  const rb = page.locator('.rb2');
+  await rb.waitFor({ state: 'visible' });
+  await expect(rb.locator('.rb2-gate-txt')).toHaveText('PLAY 25 MORE WORDS IN A GAME');
+  await expect(rb.locator('.rb2-hold .kb')).toBeDisabled();
+});
+

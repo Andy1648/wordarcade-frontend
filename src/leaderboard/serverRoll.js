@@ -77,16 +77,17 @@ export function isPreparing() {
 
 let synced = false;
 /**
- * 036 AUDIT: drop every gear the server refused (a gear it never handed out that the audit could not believe) from this
- * browser's save — the roll state, the worn MAIN and the 2nd gear. Once a page load; quiet on any failure.
- * Returns the removed ids.
+ * 036 AUDIT: drop every gear the server REVERTS from this browser's save — the roll state, the worn MAIN and the 2nd gear.
+ * Only a gear the audit found practically impossible (< 0.01% for that account's whole gem budget) is reverted; one that
+ * is merely unlikely is only hidden from the profile card + flagged for Andy (NO HARM to a real lucky player).
+ * Once a page load; quiet on any failure. Returns the removed ids.
  */
 export async function syncRefusedGears() {
   if (synced || !serverRollOn()) return [];
   synced = true;
   let res;
   try { res = await rpc('lb_gears', { p_secret: getSecret() }); } catch { return []; }
-  const refused = res && Array.isArray(res.refused) ? res.refused.filter((id) => typeof id === 'string') : [];
+  const refused = res && Array.isArray(res.revert) ? res.revert.filter((id) => typeof id === 'string') : [];
   if (!refused.length) return [];
   const { loadRollState, saveRollState } = await import('../progress/markRollsCore.js');
   const { MARKS_EQUIPPED_KEY } = await import('../progress/marks.js');

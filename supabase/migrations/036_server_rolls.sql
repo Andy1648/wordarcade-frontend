@@ -18,8 +18,11 @@
 --     player. AUDIT, THEN GRANDFATHER (Andy oct12): a gear the server has no record of is accepted ONCE — and recorded
 --     as 'grandfather' — only for an account created before ROLL_CUTOFF whose gem budget could plausibly have rolled it
 --     (≥ 1% chance at a generous luck); otherwise it is shown as empty and flagged (private.cheat_flags 'gear').
---   * public.lb_gears(secret) returns what the server owns for the caller + any gear the audit refused, so the
---     browser can drop a refused gear from its own save.
+--   * public.lb_gears(secret) returns what the server owns for the caller, what the audit refused (hidden from the card),
+--     and what it REVERTS — only a gear under a 0.01% chance, which the browser then drops from its own save.
+--   * NO HARM TO A REAL PLAYER (Andy oct12): the budget is far above anything earned by playing (it counts every gem
+--     source, generously); over it, the roll simply happens locally as it always did. A refused gear is only HIDDEN
+--     and flagged for review unless it is practically impossible. The TESTER code (032 is_tester) skips all of it.
 --
 -- ORDER: after 031 (showcase), 032 (cheat_flags), 034 (weekly prizes — the budget reads them), 035. Then
 -- notify pgrst, 'reload schema';  The client falls back to the old local roll until this file runs (lb_roll 404).
@@ -101,9 +104,11 @@ revoke all on private.roll_log from anon, authenticated;
 create table if not exists private.gear_refused (
   profile_id uuid not null references public.profiles (id) on delete cascade,
   mark_id text not null,
+  revert boolean not null default false, -- true = practically impossible (< 0.01%): the browser drops it from the save too
   at timestamptz not null default now(),
   primary key (profile_id, mark_id)
 );
+alter table private.gear_refused add column if not exists revert boolean not null default false;
 revoke all on private.gear_refused from public;
 revoke all on private.gear_refused from anon, authenticated;
 
@@ -122,8 +127,8 @@ create or replace function private.gem_budget(p_pid uuid)
 returns bigint language plpgsql stable security definer set search_path = public, private, pg_temp as $$
 declare p public.profiles; r bigint; days numeric; codes bigint := 0; weekly bigint := 0; dupes bigint := 0;
         REBIRTH_GEMS_PER_R constant integer := 25;   -- v3/econ.js
-        PER_WORD constant integer := 40;             -- drop 1/10 × ≤12 + game pay, × the +800% gem gear — generous
-        DAILY_MAX constant integer := 150;           -- dailyDrop.js best tier
+        PER_WORD constant integer := 250;            -- drops + an 8-player winner's pot every ~10 words, × the +800% gem gear — never short for a real player
+        DAILY_MAX constant integer := 3150;          -- the best daily drop (150) + WORD RACE speed gems (not in lifetime_words): 75 races × 40 a day
         ACH_TOTAL constant integer := 4130;          -- every v3 achievement tier (achievements.js)
         START_AND_GIFTS constant integer := 2000;    -- the starter grant + patch-note gifts
         SLACK constant numeric := 1.5;
@@ -212,9 +217,11 @@ begin
     return json_build_object('ok', true, 'seq', v_seq, 'picks', out, 'again', true);
   end if;
   select count(*) into recent from private.roll_log where profile_id = pid and created_at > now() - interval '1 second';
-  if recent >= RATE_PER_SEC then return json_build_object('ok', false, 'reason', 'rate'); end if;
+  if recent >= RATE_PER_SEC and not coalesce(p.is_tester, false) then return json_build_object('ok', false, 'reason', 'rate'); end if;
   budget := private.gem_budget(pid);
-  if p.s2_roll_spent + ROLL_PRICE > budget then
+  -- over budget: refused — the browser then rolls LOCALLY as before (the player never loses a roll; that gear just
+  -- can't go on the card). The TESTER code has no budget.
+  if p.s2_roll_spent + ROLL_PRICE > budget and not coalesce(p.is_tester, false) then
     return json_build_object('ok', false, 'reason', 'budget', 'budget', budget, 'spent', p.s2_roll_spent);
   end if;
   n := least(2, greatest(1, coalesce(p_n, 1)));        -- SINGULARITY's double roll: one price, two picks
@@ -272,28 +279,37 @@ grant execute on function public.lb_roll_claim(text, integer) to anon, authentic
 -- ---- the audit: could this account plausibly have rolled `mark`? -----------------------------------------------------
 -- RARE / EPIC / LEGENDARY: always (cheap, common). MYTHIC / SECRET: the rolls its gem budget buys, at a GENEROUS luck,
 -- must give ≥ 1% chance of that exact gear. Not proof either way — a filter on the impossible.
-create or replace function private.gear_plausible(p_pid uuid, p_mark text)
-returns boolean language plpgsql stable security definer set search_path = public, private, pg_temp as $$
+create or replace function private.gear_chance(p_pid uuid, p_mark text)
+returns double precision language plpgsql stable security definer set search_path = public, private, pg_temp as $$
 declare g private.gear_pool; rolls numeric;
-        AUDIT_LUCK constant numeric := 4; ROLL_PRICE constant integer := 75; MIN_CHANCE constant numeric := 0.01;
+        AUDIT_LUCK constant numeric := 4; ROLL_PRICE constant integer := 75;
 begin
   select * into g from private.gear_pool where mark_id = p_mark;
-  if not found then return true; end if;                 -- not a rollable gear (a PERMANENT / legacy mark)
-  if private.tier_rank(g.tier) <= 2 then return true; end if;
+  if not found then return 1; end if;                    -- not a rollable gear (a PERMANENT / legacy mark)
+  if private.tier_rank(g.tier) <= 2 then return 1; end if; -- RARE / EPIC / LEGENDARY: always believable
   rolls := private.gem_budget(p_pid) / 1.5 / ROLL_PRICE; -- the budget WITHOUT its slack
-  return 1 - power(1 - least(1, AUDIT_LUCK / g.x), rolls) >= MIN_CHANCE;
+  return 1 - power(1 - least(1, AUDIT_LUCK / g.x), rolls);
 end $$;
+revoke all on function private.gear_chance(uuid, text) from public;
+revoke all on function private.gear_chance(uuid, text) from anon, authenticated;
+create or replace function private.gear_plausible(p_pid uuid, p_mark text)
+returns boolean language sql stable security definer set search_path = public, private, pg_temp as $$
+  select private.gear_chance(p_pid, p_mark) >= 0.01;
+$$;
 revoke all on function private.gear_plausible(uuid, text) from public;
 revoke all on function private.gear_plausible(uuid, text) from anon, authenticated;
 
 -- a showcased gear: owned by the server, or (once) grandfathered by the audit for an old account, else refused
 create or replace function private.gear_check(p_pid uuid, p_mark text)
 returns text language plpgsql security definer set search_path = public, private, pg_temp as $$
-declare created timestamptz;
+declare created timestamptz; tester boolean;
         ROLL_CUTOFF constant timestamptz := timestamptz '2026-10-13 00:00:00+00'; -- accounts made after this roll on the server only
+        REVERT_BELOW constant double precision := 0.0001; -- under 0.01%: practically impossible → dropped from the save too
 begin
   if p_mark is null then return null; end if;
   if not exists (select 1 from private.gear_pool where mark_id = p_mark) then return p_mark; end if; -- PERMANENT / legacy
+  select coalesce(is_tester, false) into tester from public.profiles where id = p_pid;
+  if tester then return p_mark; end if; -- the TESTER code skips every check
   if exists (select 1 from private.gear_owned where profile_id = p_pid and mark_id = p_mark) then return p_mark; end if;
   if exists (select 1 from private.gear_refused where profile_id = p_pid and mark_id = p_mark) then return null; end if;
   select created_at into created from public.profiles where id = p_pid;
@@ -301,7 +317,10 @@ begin
     insert into private.gear_owned (profile_id, mark_id, source) values (p_pid, p_mark, 'grandfather') on conflict do nothing;
     return p_mark;
   end if;
-  insert into private.gear_refused (profile_id, mark_id) values (p_pid, p_mark) on conflict do nothing;
+  -- refused: hidden from the card + flagged for Andy. Dropped from the player's own save ONLY when practically impossible
+  insert into private.gear_refused (profile_id, mark_id, revert)
+  values (p_pid, p_mark, created < ROLL_CUTOFF and private.gear_chance(p_pid, p_mark) < REVERT_BELOW)
+  on conflict do nothing;
   begin
     insert into private.cheat_flags (profile_id, reason, detail)
     values (p_pid, 'gear', jsonb_build_object('mark', p_mark, 'budget', private.gem_budget(p_pid)));
@@ -358,7 +377,8 @@ begin
   return json_build_object(
     'owned', (select coalesce(json_agg(json_build_object('mark', mark_id, 'copies', copies, 'shiny', shiny, 'source', source)), '[]'::json)
                 from private.gear_owned where profile_id = pid),
-    'refused', (select coalesce(json_agg(mark_id), '[]'::json) from private.gear_refused where profile_id = pid));
+    'refused', (select coalesce(json_agg(mark_id), '[]'::json) from private.gear_refused where profile_id = pid),
+    'revert', (select coalesce(json_agg(mark_id), '[]'::json) from private.gear_refused where profile_id = pid and revert));
 end $$;
 revoke all on function public.lb_gears(text) from public;
 grant execute on function public.lb_gears(text) to anon, authenticated;
