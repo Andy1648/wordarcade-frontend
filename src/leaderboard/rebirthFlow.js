@@ -253,6 +253,11 @@ export function rebirthRefusalText(res) {
     const s = Math.max(1, Math.ceil(Number(res.retry_in) || 0));
     return `NEXT REBIRTH IN ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
+  if (res.reason === 'words') {
+    // 035: game words since the last rebirth (menu typing never counts)
+    const n = Math.max(1, Number(res.need) - Number(res.have) || 1);
+    return `PLAY ${formatNum(n)} MORE ${n === 1 ? 'WORD' : 'WORDS'} IN A GAME FIRST`;
+  }
   if (res.reason === 'rate') return 'TOO FAST — TRY AGAIN';
   if (res.reason === 'offline') return 'COULDN’T REACH THE SERVER — TRY AGAIN';
   return 'REBIRTH DIDN’T GO THROUGH — TRY AGAIN';

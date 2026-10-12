@@ -195,8 +195,11 @@ export function roll(rng, state, ctx = {}) {
     u -= p;
   }
   pick = pick || last; // float dust at the very end of the table
+  // 036 SERVER ROLL: the server already picked (lb_roll) — land exactly on its mark and its shiny draw
+  const forcedPick = ctx.pickId ? ROLL_MARKS.find((m) => m.id === ctx.pickId) : null;
+  if (forcedPick) pick = forcedPick;
   const sh = rng();
-  const shiny = sh >= 0 && sh < SHINY_CHANCE;
+  const shiny = typeof ctx.shiny === 'boolean' ? ctx.shiny : sh >= 0 && sh < SHINY_CHANCE;
   const wasShiny = isShiny(pick.id, s0);
   const before = markLevel(s0, pick.id);
   const s = { ...s0, marks: { ...s0.marks }, milestones: [...s0.milestones], done: [...(s0.done || [])] };

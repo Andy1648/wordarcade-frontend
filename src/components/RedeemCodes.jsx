@@ -33,7 +33,9 @@ export default function RedeemCodes() {
     if (r.ok) {
       setValue('');
       // E4 (Andy oct2 evening): a code applies the moment it is redeemed — no inbox, no second step.
-      const text = r.kind === 'gems'
+      const text = r.kind === 'tester'
+        ? 'TESTER MODE ON — NO CAPS FOR THIS ACCOUNT'
+        : r.kind === 'gems'
         ? `+${formatNum(r.gems)} GEMS — ADDED`
         : r.kind === 'overdrive'
           ? `OVERDRIVE ×${r.mult || 5} · ${r.min} MIN — STARTED`

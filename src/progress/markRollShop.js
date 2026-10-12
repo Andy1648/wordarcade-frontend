@@ -47,13 +47,17 @@ export function wearMark(id, earned = []) {
  * It does NOT equip: the UI applies an 'auto' decision (applyRollEquip) when the reveal LANDS, so the
  * hero and the menu chip never change before the player has seen the result.
  */
-export function buyMarkRoll({ level = 1, rng = Math.random } = {}) {
+export function buyMarkRoll({ level = 1, rng = Math.random, picks = null } = {}) {
   const st = ensureRollState();
   const cost = nextRollCost(level, st);
   if (!cost.free && !spendGems(cost.gems)) return null; // short: nothing spent, nothing rolls
-  const n = rollsPerRoll();
+  // 036 SERVER ROLL: `picks` = the server's results ([{ mark, shiny }], lb_roll) — the roll lands on them exactly
+  const n = picks && picks.length ? picks.length : rollsPerRoll();
   const all = [];
-  for (let i = 0; i < n; i += 1) all.push(rollAndSave(rng, { boost: isBoostActive() }));
+  for (let i = 0; i < n; i += 1) {
+    const p = picks && picks[i];
+    all.push(rollAndSave(rng, { boost: isBoostActive(), ...(p ? { pickId: p.mark, shiny: !!p.shiny } : {}) }));
+  }
   if (cost.free) saveRollState({ ...loadRollState(), starter: true });
   let res = all[0];
   for (const r of all) if (tierRank(r.tier) >= tierRank(res.tier)) res = r;
