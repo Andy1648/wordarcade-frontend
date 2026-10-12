@@ -357,6 +357,15 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
   expect(over).toBe(0);
   const x = await pc.locator('.pc-x').boundingBox();
   expect(Math.min(x.width, x.height)).toBeGreaterThanOrEqual(44);
+  // tap their gear (Andy oct12): its GEAR SHEET opens over the card at ★0 — no owned / dupes lines (not ours to know)
+  await page.getByTestId('profile-gear-1').click();
+  const sheet = page.locator('.mx-sheet[data-mark="mk-kraken"]');
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByTestId('mark-main')).toBeVisible();
+  await expect(sheet.getByTestId('mark-owned')).toHaveCount(0);
+  await sheet.locator('.mx-sheet-close').click();
+  await expect(sheet).toHaveCount(0);
+  await expect(pc).toBeVisible(); // closing the sheet keeps the profile
   await page.keyboard.press('Escape');
   await expect(pc).toHaveCount(0);
   await expect(lb).toBeVisible(); // the card closed, the board stayed

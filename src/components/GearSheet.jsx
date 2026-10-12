@@ -29,16 +29,16 @@ const lineOf = (e) => (CARD_RAR[e.tier] || CARD_RAR.rare).line;
 /**
  * e: { id, name, tier, kind: 'roll' | 'perm' | 'retired' } · have: owned · on: equipped · view: the roll state
  * (viewState) · howTo: a locked EARNED gear's task · onSet(id | null): EQUIP / UNEQUIP (omit → no button; a locked
- * gear never shows one).
+ * gear never shows one) · peek: someone ELSE's gear (the leaderboard profile) — the gear at ★0, no owned / dupes lines.
  */
-export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) {
+export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, peek = false }) {
   const closeRef = useRef(null);
   useEffect(() => { closeRef.current?.focus(); }, [e.id]);
   const rolled = e.kind === 'roll';
   const info = rolled ? indexEntry(e.id, view) : null;
   // the same model the card draws from: a LOCKED one carries no stat value at all (GEAR TILE v2)
   const c = cardModel({ id: e.id, kind: e.kind, tier: e.tier, name: e.name, locked: !have, state: view });
-  const next = rolled && have ? pipNext(info) || (info && info.pips >= 5 ? '★5 MAX' : '') : '';
+  const next = rolled && have && !peek ? pipNext(info) || (info && info.pips >= 5 ? '★5 MAX' : '') : '';
   const perks = have ? perkLines(e.id) : [];
   const flavour = have ? flavourOf(e.id) : '';
   const hidden = have ? '' : pipsLabel(c, { stars: false }); // "2 EXTRA STATS · 1 PERK" — counts, never values
@@ -118,7 +118,7 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose }) 
               ) : null}
             </div>
           ) : null}
-          {rolled && have ? (
+          {rolled && have && !peek ? (
             <div className="mx-sheet-facts">
               <span data-testid="mark-owned">OWNED ×{formatNum(info.owned)}</span>
               {info.firstRoll ? <span data-testid="mark-first-roll">FIRST ROLL #{formatNum(info.firstRoll)}</span> : null}

@@ -6,7 +6,7 @@
 // number or a guessed "no gear".
 // LAZY with the board (LeaderboardV2's chunk). Motion: the card pops in once (kit one-shot), 
 // nothing else moves; nothing loops.
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './ProfileCard.css';
 import KitIcon from './kit/KitIcon.jsx';
@@ -20,11 +20,14 @@ import { rankPlate } from '../leaderboard/s2Board.js';
 import { fetchShowcase } from '../leaderboard/showcase.js';
 import { formatNum } from '../format';
 
+// a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small
+const GearSheet = lazy(() => import('./GearSheet.jsx'));
+
 const POP = [{ transform: 'scale(.86) rotate(-2deg)', opacity: 0 }, { transform: 'scale(1.03) rotate(1deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 const has = (v) => v != null && Number.isFinite(Number(v));
 const UNKNOWN = '?'; // Andy oct11: "for anything thats not known … just put a question mark"
 
-function Gear({ id, slot, known }) {
+function Gear({ id, slot, known, onOpen }) {
   const m = id ? rollMarkById(id) : null;
   if (!m) {
     // unknown (no showcase sent yet) → "?"; known and nothing worn there → an empty slot
@@ -39,11 +42,20 @@ function Gear({ id, slot, known }) {
   const tier = cardTier(m.tier);
   const pal = CARD_RAR[tier] || CARD_RAR.rare;
   return (
-    <div className="pc-gear" data-slot={slot} data-tier={tier} style={{ '--pc-line': pal.line, '--pc-edge': pal.edge, '--pc-fill': pal.fill }}>
+    <button
+      type="button"
+      className="pc-gear is-tap"
+      data-slot={slot}
+      data-tier={tier}
+      data-testid={`profile-gear-${slot}`}
+      aria-label={`${m.name} — see the gear`}
+      style={{ '--pc-line': pal.line, '--pc-edge': pal.edge, '--pc-fill': pal.fill }}
+      onClick={() => onOpen(m)}
+    >
       <MarkBadge mark={{ id: m.id, tier: m.tier }} size={72} className="pc-gear-art" />
       <span className="pc-gear-name">{m.name}</span>
       <span className="pc-gear-tier">{tier.toUpperCase()}</span>
-    </div>
+    </button>
   );
 }
 
@@ -61,6 +73,7 @@ function Tile({ icon, value, label, tone, children }) {
 /** @param row a board row ({ id, username, rank, rebirths, level, stars }) · @param onClose */
 export default function ProfileCard({ row, mine = false, onClose }) {
   const [show, setShow] = useState(undefined); // undefined = loading, null = none
+  const [gear, setGear] = useState(null); // the gear whose sheet is open
   const cardRef = useRef(null);
   const closeRef = useRef(null);
   useEffect(() => {
@@ -98,8 +111,8 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <span className="pc-sub-c"><KitIcon name="levels" size={26} shadow={1} extras={false} /> LV {formatNum(Number(row.level) || 1)}</span>
         </div>
         <div className="pc-gears" data-testid="profile-gears">
-          <Gear id={s.gear1} slot={1} known={!!show} />
-          <Gear id={s.gear2} slot={2} known={!!show} />
+          <Gear id={s.gear1} slot={1} known={!!show} onOpen={setGear} />
+          <Gear id={s.gear2} slot={2} known={!!show} onOpen={setGear} />
         </div>
         <div className="pc-tiles" data-loading={loading ? '' : undefined}>
           <Tile icon="wins" tone="#FFE94A" value={has(s.base_wins) ? formatNum(Number(s.base_wins)) : UNKNOWN} label="BASE / WORD" />
@@ -110,6 +123,21 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           </Tile>
         </div>
       </div>
+      {gear ? (
+        // a layer of this scrim (GearSheet's .mx-sheet-layer is absolute) — a tap inside never closes the profile
+        <div role="presentation" onClick={(e) => e.stopPropagation()}>
+          <Suspense fallback={null}>
+            <GearSheet
+              key={gear.id}
+              e={{ id: gear.id, name: gear.name, tier: gear.tier, kind: 'roll' }}
+              have
+              view={null}
+              peek
+              onClose={() => setGear(null)}
+            />
+          </Suspense>
+        </div>
+      ) : null}
     </div>
   );
 }
