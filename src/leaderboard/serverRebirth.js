@@ -16,23 +16,36 @@ import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, getSecret, myStats, subm
 const DB_THROTTLE_MS = 5000; // the board write's 5 s throttle (021 / 017)
 
 /** The flow needs the CURRENT level on the server: push unless the last push already carried it and the DB will
- *  have taken it; if the last push is under 5 s old, wait it out first (the DB would drop it silently). */
+ *  have taken it; if the last push is under 5 s old, wait it out first (the DB would drop it silently).
+ *  Single-flight: a push already running (warmRebirth) is awaited, then re-checked — usually nothing is left to send. */
+let pushing = null;
 async function pushForRebirth() {
+  if (pushing) await pushing.catch(() => {});
   const s = myStats();
   const last = pushMeta.last;
   if (last && last.likely && last.level === s.level && last.rebirths === s.rebirths && last.words === s.lifetimeWords) return true;
   const wait = last ? last.at + DB_THROTTLE_MS + 250 - Date.now() : 0;
-  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-  return submitStats(true, { internal: true });
+  pushing = (async () => {
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    return submitStats(true, { internal: true });
+  })();
+  try {
+    return await pushing;
+  } finally {
+    pushing = null;
+  }
 }
-/** Fresh (uncached) caps probe: a session that started before Andy ran 021 still finds lb_rebirth. */
+/** Caps probe: a session that started before Andy ran 021 still finds lb_rebirth (a NO is re-asked every time; a YES
+ *  is kept for the session — the RPC never goes away, and the hold no longer pays a round trip for it). */
+let capsYes = false;
 async function serverRebirthEnabled() {
   if (!LEADERBOARD_ENABLED || !getMyProfile() || !peekSecret()) return false;
+  if (capsYes) return true;
   try {
     const c = await rpc('lb_caps', {});
     // v3: the season-2 rebirth checks a season-2 row, which only exists once 022 runs
-    if (SEASON2) return !!(c && c.rebirth_rpc && c.season2);
-    return !!(c && c.rebirth_rpc);
+    capsYes = SEASON2 ? !!(c && c.rebirth_rpc && c.season2) : !!(c && c.rebirth_rpc);
+    return capsYes;
   } catch {
     return false;
   }
@@ -95,6 +108,26 @@ export function requestAscend() {
  */
 export function performAscend() {
   return flow.performAscend();
+}
+/**
+ * WARM-UP (Andy oct13 "the rebirth has a huge delay when i hold"): the REBIRTH screen calls this when it opens ready
+ * and when a hold starts, so the caps probe and the level push (which may have to wait out the board's 5 s throttle)
+ * run WHILE the player reads / holds. By the time the 1 s hold completes, the rebirth is one round trip. Pushes nothing
+ * new to the server rules — it is the same push performRebirth would make, just earlier. Never throws.
+ */
+let warming = null;
+export function warmRebirth() {
+  if (warming || flow.isBusy()) return warming || Promise.resolve();
+  warming = (async () => {
+    try {
+      if (await serverRebirthEnabled()) await pushForRebirth();
+    } catch {
+      /* performRebirth retries both */
+    }
+  })().finally(() => {
+    warming = null;
+  });
+  return warming;
 }
 /** Is a server rebirth in flight? */
 export function rebirthPending() {

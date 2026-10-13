@@ -1,5 +1,6 @@
 /* BoostDock — the bottom-right boost timers, stacked above the corner 🔊 button (inside .audio-ctrl). Flat panel,
-   thick coloured outline (darker shade of the fill), hard black offset shadow — the house look. */
+   thick coloured outline (darker shade of the fill), hard black offset shadow — the house look.
+   v2 (Andy oct13): icon badge · NAME ×N / what · big clock · a drain bar along the bottom. */
 .boost-dock {
   list-style: none;
   margin: 0 0 10px;
@@ -7,65 +8,94 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 10px;
   pointer-events: none; /* the tiles inform; the button under them stays the only control */
 }
 .bd-tile {
   --bd-tone: #FFE94A;
   --bd-line: #B8A215;
-  /* [×10 ] OVERDRIVE
-     [4:46] XP + WINS      — the number first, then what it is, then what it boosts */
+  /* [icon] OVERDRIVE ×5     4:46
+     [    ] XP + WINS
+     [=========drain========      ] */
+  position: relative;
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  grid-template-areas: 'mult name' 'clock what';
-  column-gap: 10px;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  grid-template-areas: 'badge name clock' 'badge sub clock';
+  column-gap: 9px;
   row-gap: 2px;
   align-items: center;
-  width: 236px;
+  width: 260px;
   max-width: 100%;
-  padding: 6px 10px 6px 6px;
+  padding: 7px 12px 15px 7px;
   box-sizing: border-box;
+  overflow: hidden;
   background: #1a0b2e;
   border: 3px solid var(--bd-line);
   border-radius: 8px;
   box-shadow: 4px 4px 0 #000;
   color: #fff;
-  animation: bd-in 260ms cubic-bezier(.2, 1.4, .4, 1) both;
+  transform-origin: 100% 50%;
+  animation: bd-in 300ms cubic-bezier(.2, 1.5, .4, 1) both;
 }
 @keyframes bd-in {
-  from { transform: translateX(24px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  0% { transform: translateX(40px) rotate(4deg); opacity: 0; }
+  70% { transform: translateX(-4px) rotate(-1deg); opacity: 1; }
+  100% { transform: none; opacity: 1; }
 }
 .bd-boost1.bd-tile, .bd-rush.bd-tile { --bd-tone: #FF4FA3; --bd-line: #B8226E; }
 .bd-frenzy.bd-tile { --bd-tone: #FF6B3D; --bd-line: #B8401C; }
 .bd-xp.bd-tile { --bd-tone: #2EFFE0; --bd-line: #12A99A; }
 .bd-wins.bd-tile { --bd-tone: #FFE94A; --bd-line: #B8A215; }
 .bd-luck.bd-tile, .bd-boost2.bd-tile { --bd-tone: #9A1AFF; --bd-line: #5E0FA0; }
-.bd-mult {
-  grid-area: mult;
-  height: 32px;
-  padding: 0 6px;
-  box-sizing: border-box;
+.bd-badge {
+  grid-area: badge;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bd-tone);
   border: 3px solid #000;
-  border-radius: 6px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transform: rotate(-6deg);
+}
+.bd-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.1; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k15); color: var(--bd-tone); }
+/* ×N then what it boosts — the number in a small tone chip */
+.bd-sub { grid-area: sub; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bd-mult { flex: none; padding: 0 5px; background: var(--bd-tone); border: 2px solid #000; border-radius: 5px; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k13); line-height: 1.25; color: #0d0618; }
+/* the full 'what it boosts' line: it wraps rather than clips */
+.bd-what { min-width: 0; line-height: 1.15; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k13); color: #c9b8e8; }
+.bd-clock {
+  grid-area: clock;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: var(--fs-k18);
-  color: #0d0618;
+  font-size: var(--fs-k22);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
 }
-.bd-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k15); color: var(--bd-tone); white-space: nowrap; }
-/* the full 'what it boosts' line: it wraps rather than clips */
-.bd-what { grid-area: what; min-width: 0; line-height: 1.15; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); color: #c9b8e8; }
-.bd-clock { grid-area: clock; text-align: center; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k18); font-variant-numeric: tabular-nums; }
+/* the drain bar: a flat track along the bottom edge, the tone fill shrinks to the left one tick at a time */
+.bd-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: #0d0618; border-top: 2px solid var(--bd-line); }
+.bd-fill { display: block; height: 100%; background: var(--bd-tone); transform-origin: 0 50%; transition: transform 1s linear; }
+/* OVERDRIVE — the hero tile: same box (the dock cell is narrow), louder clock, thicker bar, a bigger tilt */
+.bd-tile.bd-hero { padding-bottom: 17px; }
+.bd-hero .bd-badge { transform: rotate(-10deg) scale(1.08); }
+.bd-hero .bd-clock { font-size: var(--fs-k24); }
+.bd-hero .bd-bar { height: 10px; }
+/* +5 MIN: the tile re-enters with a squash-pop (the key changes, so it remounts) */
+.bd-tile.is-bumped { animation: bd-bump 380ms cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes bd-bump {
+  0% { transform: scale(1.12, .86); }
+  55% { transform: scale(.96, 1.06); }
+  100% { transform: none; }
+}
 .bd-tile.is-ending .bd-clock { color: #FF3D7F; }
-.bd-tile.is-ending { animation: bd-in 260ms cubic-bezier(.2, 1.4, .4, 1) both, bd-pulse 1s ease-in-out 10; }
+.bd-tile.is-ending { animation: bd-in 300ms cubic-bezier(.2, 1.5, .4, 1) both, bd-pulse 1s ease-in-out 10; }
 @keyframes bd-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
 }
 @media (max-width: 760px) { .boost-dock { display: none; } }
-@media (prefers-reduced-motion: reduce) { .bd-tile, .bd-tile.is-ending { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .bd-tile, .bd-tile.is-ending, .bd-tile.is-bumped { animation: none; } .bd-fill { transition: none; } }

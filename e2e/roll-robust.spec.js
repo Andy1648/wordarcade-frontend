@@ -11,7 +11,7 @@
 //   8. 1280x551 · 1366x657 · 1920x1080 · 390x844 · 360x640: nothing clipped, ROLL visible, no horizontal scroll
 import { test, expect } from '@playwright/test';
 import { DUPE_GEMS, rollMarkById } from '../src/progress/markRollsCore.js';
-import { holdRoll, tapRoll } from './support/roll.js'; // HOLD TO ROLL (R4): a hold + release is a roll; a tap is not
+import { holdRoll } from './support/roll.js'; // oct13 TAP TO ROLL: a press + release (any length) is a roll
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
@@ -141,18 +141,8 @@ test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made
   // ROLL, so locator.click() waited 30 s on an element that was never coming back (main E2E red, run 37388543708). A
   // real spammer's taps land on whatever is on top: the reveal takes one, and RollScreen swallows the next 800 ms.
   const box = await roll.boundingBox();
-  // R4 HOLD TO ROLL: 20 raw TAPS are 20 holds released early — not one roll, not one gem (a tap is never a roll)
+  // oct13 TAP TO ROLL: 20 raw TAPS as fast as a thumb can — a tap mid-spin lands the reel, the next one rolls again
   for (let i = 0; i < 20; i += 1) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await page.waitForTimeout(400);
-  expect((await store(page)).rolls).toBe(before.rolls);
-  expect((await store(page)).gems).toBe(before.gems);
-  // ...then 8 HOLDS as fast as a thumb can (a hold mid-spin lands the reel, the next one rolls again)
-  for (let i = 0; i < 8; i += 1) {
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.waitForTimeout(640);
-    await page.mouse.up();
-  }
   // let the last one settle, tapping away any EPIC+ reveal still up
   await page.waitForTimeout(SPUN);
   await keepReveal(page);
@@ -160,7 +150,7 @@ test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made
   const after = await store(page);
   const made = after.rolls - before.rolls;
   expect(made).toBeGreaterThanOrEqual(1);
-  expect(made).toBeLessThanOrEqual(8);
+  expect(made).toBeLessThanOrEqual(20);
   // every roll made is a copy saved, and was paid exactly once
   expect(after.copies - before.copies).toBe(made);
   // gear card v4: every DUPLICATE pays its tier's gems back (DUPE_GEMS) — the net spend is 10 a roll minus those

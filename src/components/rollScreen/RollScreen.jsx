@@ -41,8 +41,7 @@ import { getGems, subscribeGems } from '../../progress/gems';
 import { GemIcon, GemCount } from '../gems/Gems';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndWordRejected } from '../../audio/gameSounds';
-import { sndRollCharge, sndRollCancel, sndRollRelease, sndRollReady } from '../../audio/rollSounds';
-import { createHoldConfirm } from '../kit/holdConfirm.js';
+import { sndRollRelease, sndRollReady } from '../../audio/rollSounds';
 import { announceRolls } from '../../leaderboard/live';
 import { formatNum } from '../../format';
 import { lazyWithReload } from '../../lib/chunkReload';
@@ -51,7 +50,7 @@ import { CARD_RAR, cardTier } from '../markCard/palette.js';
 import { splitTag } from '../markCard/cardModel.js';
 import { substatParts } from '../../progress/critText';
 import {
-  drawShowcaseStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS, CHARGE_MS, OVERHOLD_MS,
+  drawShowcaseStrip, revealMode, restOffset, autoShouldStop, needMoreText, nextAutoTarget, AUTO_GAP_MS,
 } from './reelPlan.js';
 import '../kit/tokens.css';
 import './RollScreen.css';
@@ -209,7 +208,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     setFresh(true);
     setLanded((n) => n + 1);
     if (auto.current.on && autoShouldStop(res, auto.current.until)) stopAuto();
-    if (auto.current.on) askServer(); // AUTO's next roll: ask while this reveal plays
+    askServer(); // the next roll's pick: asked while this reveal plays (AUTO or a tap)
     announceRolls([res, ...(res.extra || [])]); // MYTHIC+ → one ticker line each
     const wornNow = res.decision === 'auto' ? applyRollEquip(res, earned) : null;
     if (wornNow && onEquip) onEquip(wornNow);
@@ -290,52 +289,23 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     }, AUTO_GAP_MS);
   };
 
-  // HOLD TO ROLL (NIGHT oct8 R4 — Andy: "I liked hold-to-buy — greater satisfaction"). The kit's hold clock, re-timed:
-  // phase 1 (light rattle, the fill crosses) → at CHARGE_MS the button is CHARGED (phase 2: hard rattle, "RELEASE!")
-  // → the RELEASE is the spin (a slingshot). Released before full charge = cancel (the fill drains, nothing is paid).
-  // Held past OVERHOLD_MS after the charge → fires by itself (never stuck). Mid-spin the overlay's capture handler
-  // takes the pointer-down (jump to the result), so a hold can never start over a running reel. NO GEMS: the press
-  // shows the shortfall at once (no hold to find out).
-  const [holdPhase, setHoldPhase] = useState(0); // 0 idle · 1 charging · 2 charged
-  const holdRef = useRef(null);
-  if (!holdRef.current) {
-    holdRef.current = createHoldConfirm({
-      holdMs: CHARGE_MS + OVERHOLD_MS,
-      shakeAt: CHARGE_MS,
-      onPhase: (p) => {
-        setHoldPhase(p);
-        if (ctl.current && ctl.current.charge) ctl.current.charge(live.current.reduced ? 0 : p);
-      },
-      onCommit: () => { live.current.fire(); }, // the overhold: fires on its own
-      onCancel: (ms) => {
-        if (ms >= CHARGE_MS) { live.current.fire(); return; } // charged + released = THE SPIN
-        sndRollCancel();
-      },
-    });
-  }
-  useEffect(() => () => holdRef.current && holdRef.current.dispose(), []);
-  const fire = () => {
+  // TAP TO ROLL (Andy oct13 "no need to hold to roll gears"; was HOLD TO ROLL, NIGHT oct8 R4). One tap pays and spins.
+  // The server's pick (036) is asked AHEAD — when the screen opens, on the press itself and after every landing — so the
+  // tap almost never waits for it. Mid-spin a tap jumps to the result. NO GEMS: the tap shows the shortfall.
+  const tap = () => {
+    if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return; }
+    if (!canAfford) { short(); return; }
     sndRollRelease();
     doRoll();
   };
-  live.current.fire = fire;
-  live.current.reduced = reduced;
-  const holdStart = () => {
-    if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return; }
-    if (!canAfford) { short(); return; }
-    if (holdRef.current.start()) { sndRollCharge(CHARGE_MS); askServer(); }
+  const pressStart = () => {
+    if (canAfford && !(ctl.current && ctl.current.busy())) askServer();
   };
-  const holdEnd = () => { if (holdRef.current) holdRef.current.end(); };
-  const holdKeyDown = (e) => {
-    if (e.key !== ' ' && e.key !== 'Enter') return;
-    e.preventDefault();
-    if (!e.repeat) holdStart();
-  };
-  const holdKeyUp = (e) => {
-    if (e.key !== ' ' && e.key !== 'Enter') return;
-    e.preventDefault();
-    holdEnd();
-  };
+  useEffect(() => {
+    if (canAfford) askServer(); // the first roll's pick is back before the thumb lands
+    // once, on open (askServer is single-flight and re-asks after each landing)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // AUTO (mockup): one button cycles OFF → RARE+ → EPIC+ → LEGENDARY+ → OFF. From OFF it starts rolling; while on, a
   // tap only moves the target (the spin in flight is judged against the new one when it lands).
   // v3 (SEASON2): AUTO ROLL is the R2 unlock (progression-v3.md; markRollShop.autoRoll gates the same door). Flag OFF:
@@ -436,8 +406,8 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     );
   }
 
-  // the label says what the hand must do: HOLD TO ROLL at rest, HOLD… while the fill crosses, RELEASE! once charged
-  const rollLabel = holdPhase === 2 ? 'RELEASE!' : holdPhase === 1 ? 'HOLD\u2026' : cost.free ? 'HOLD TO ROLL' : rolling ? '...' : canAfford ? 'HOLD TO ROLL' : 'NO GEMS';
+  // the label says what the hand must do: ROLL (NO GEMS when short; '...' mid-spin)
+  const rollLabel = cost.free ? 'ROLL' : rolling ? '...' : canAfford ? 'ROLL' : 'NO GEMS';
   return (
     <div className={`marks-overlay rs-overlay${reduced ? ' is-reduced' : ''}`} role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="rs-top">
@@ -498,25 +468,14 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           <button
             type="button"
             ref={btn}
-            className={`rs-roll rs-hold${canAfford ? '' : ' is-short'}${cost.free ? ' is-free' : ''}${rolling ? ' is-rolling' : ''}${holdPhase === 1 ? ' is-holding' : ''}${holdPhase === 2 ? ' is-charged' : ''}`}
-            style={{ '--rs-hold-ms': `${CHARGE_MS}ms` }}
-            onPointerDown={(e) => { if (e.button === 0) holdStart(); }}
-            onPointerUp={holdEnd}
-            onPointerLeave={holdEnd}
-            onPointerCancel={holdEnd}
-            onKeyDown={holdKeyDown}
-            onKeyUp={holdKeyUp}
-            onBlur={holdEnd}
-            onClick={(e) => e.preventDefault()}
+            className={`rs-roll rs-hold${canAfford ? '' : ' is-short'}${cost.free ? ' is-free' : ''}${rolling ? ' is-rolling' : ''}`}
+            onPointerDown={(e) => { if (e.button === 0) pressStart(); }}
+            onClick={tap}
             onContextMenu={(e) => e.preventDefault()}
-            aria-pressed={holdPhase > 0}
-            data-hold={holdPhase || undefined}
-            aria-label={cost.free ? 'HOLD TO ROLL · FREE ROLL' : `HOLD TO ROLL · ${formatNum(cost.gems)} GEMS`}
+            aria-label={cost.free ? 'ROLL · FREE ROLL' : `ROLL · ${formatNum(cost.gems)} GEMS`}
           >
-            {/* the charge fill: one rectangle crossing the face (transform only), drains on an early release */}
-            <span className="rs-hold-clip" aria-hidden="true"><span className="rs-hold-fill" /></span>
             <span className="rs-roll-lbl">{rollLabel}</span>
-            {/* a free roll keeps HOLD TO ROLL (the longer "HOLD · FREE ROLL" ran off the slab) — FREE sits in the price pill */}
+            {/* a free roll keeps ROLL — FREE sits in the price pill */}
             {cost.free ? <span className="rs-roll-price is-free">FREE ROLL</span> : (
               <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{formatNum(cost.gems)}</span>
             )}

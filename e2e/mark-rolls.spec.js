@@ -10,7 +10,7 @@
 // DIM / FULL reveal stays up until a tap ("TAP TO KEEP"); the reel fits 360x640 → 1366x657; INDEX opens the
 // MARKS INDEX (the collection only: no REPLAY, no roll, no pity, no gems); the ROLL screen has no prose; nothing loops after.
 import { test, expect } from '@playwright/test';
-import { holdRoll, tapRoll } from './support/roll.js'; // HOLD TO ROLL (R4): a hold + release is a roll; a tap is not
+import { holdRoll } from './support/roll.js'; // oct13 TAP TO ROLL: a press + release (any length) is a roll
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
@@ -107,8 +107,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   expect(Math.abs(boxAfter.y - boxBefore.y)).toBeLessThan(1);
   // price in ONE unit: GEMS (wins never buy rolls) — the gem icon + 10 — and the balance it is paid from shows
   // as icon + count right under it
-  await expect(roll).toHaveText(/^HOLD TO ROLL\s*10$/); // ROLL v1: the gem price is stacked under the label (R4: the label says HOLD)
-  await expect(roll).toHaveAttribute('aria-label', 'HOLD TO ROLL · 10 GEMS');
+  await expect(roll).toHaveText(/^ROLL\s*10$/); // ROLL v1: the gem price is stacked under the label (oct13: a tap rolls)
+  await expect(roll).toHaveAttribute('aria-label', 'ROLL · 10 GEMS');
   await expect(roll.locator('img.gem-icon')).toHaveAttribute('src', '/art/gems/gem.svg');
   await expect(roll).not.toContainText('WINS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '1000');
@@ -370,8 +370,8 @@ test('SEASON2: a roll costs 75 gems — charged once from the season-2 wallet, t
   await seed(page, { 'taw.tut.markRolls': '1', 'taw.s2.gems': S2_GEMS(100), 'taw.s2.rebirths': '2', 'taw.markRolls': S2_STARTED });
   await openRoll(page, '&season2=1');
   const roll = page.locator('.rs-roll');
-  await expect(roll).toHaveText(/^HOLD TO ROLL\s*75$/);
-  await expect(roll).toHaveAttribute('aria-label', 'HOLD TO ROLL · 75 GEMS');
+  await expect(roll).toHaveText(/^ROLL\s*75$/);
+  await expect(roll).toHaveAttribute('aria-label', 'ROLL · 75 GEMS');
   await expect(page.locator('.rs-sub .gem-count')).toHaveAttribute('data-gems', '100');
   await holdRoll(page);
   await page.waitForTimeout(SPUN);

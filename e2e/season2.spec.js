@@ -166,7 +166,7 @@ test('SEASON2: at the gate with 0 game words the rebirth asks for 25 words playe
   await tile.click();
   const rb = page.locator('.rb2');
   await rb.waitFor({ state: 'visible' });
-  await expect(rb.locator('.rb2-gate-txt')).toHaveText('PLAY 25 MORE WORDS IN A GAME');
+  await expect(rb.locator('.rb2-gate-txt')).toHaveText('QUEST: PLAY 25 WORDS IN A GAME · 0/25');
   await expect(rb.locator('.rb2-hold .kb')).toBeDisabled();
 });
 

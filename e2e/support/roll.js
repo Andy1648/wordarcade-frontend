@@ -1,5 +1,5 @@
-// e2e/support/roll.js — HOLD TO ROLL (NIGHT oct8 R4): the ROLL slab is HELD for CHARGE_MS, then RELEASED — the release
-// is the spin (RollScreen.jsx / reelPlan.CHARGE_MS). A plain click is a hold released early = a cancel, nothing paid.
+// e2e/support/roll.js — TAP TO ROLL (Andy oct13; was HOLD TO ROLL, NIGHT oct8 R4): a press + release on ROLL is a roll,
+// whatever its length (holdRoll keeps its old timing so every spec still drives a real pointer).
 // Raw mouse events on ROLL's centre (not locator.click(): a reveal on top of ROLL would make click() wait forever —
 // a real thumb lands on whatever is on top, see roll-robust).
 export const CHARGE_MS = 500;
@@ -15,7 +15,7 @@ export async function holdRoll(page, sel = '.rs-roll', { ms = HOLD_MS } = {}) {
   await page.waitForTimeout(ms);
   await page.mouse.up();
 }
-/** A tap that is NOT a roll (released long before the charge). */
+/** A quick tap — also a roll. */
 export async function tapRoll(page, sel = '.rs-roll') {
   const box = await page.locator(sel).boundingBox();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

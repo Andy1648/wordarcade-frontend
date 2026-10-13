@@ -26,8 +26,8 @@ const HEX_SLAM = [{ transform: 'rotate(-4deg) scale(1)' }, { transform: 'rotate(
 import { V3 } from '../progress/season';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult } from '../progress/xp';
 import { takeRebirthNow } from '../progress/rebirthNow';
-import { rebirthWordsShort } from '../progress/rebirthWords';
-import { performRebirth, performAscend } from '../leaderboard/serverRebirth';
+import { rebirthWordsShort, WORDS_PER_REBIRTH } from '../progress/rebirthWords';
+import { performRebirth, performAscend, warmRebirth } from '../leaderboard/serverRebirth';
 import { rebirthRefusalText } from '../leaderboard/rebirthFlow';
 import { rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { sndRebirth } from '../audio/gameSounds';
@@ -115,6 +115,10 @@ export default function RebirthV2({ onBack }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+  // warm the server side as soon as a rebirth is possible (on open, and again after each rebirth if the next is ready)
+  useEffect(() => {
+    if (s.ready) warmRebirth();
+  }, [s.ready, s.rebirths]);
 
   // THE ×3 MOMENT (NIGHT oct8 #3): one 600 ms one-shot — the hex plate SLAMS and a burst of shards flies out of it.
   // No popup, no text box: the numbers on the screen are the message.
@@ -190,9 +194,11 @@ export default function RebirthV2({ onBack }) {
   const partial = nextU ? Math.max(0, Math.min(1, (rebirths - prevAt) / (nextU.at - prevAt))) : 0;
   const slots = Math.max(1, unlocks.length - 1);
   const trackF = reached === 0 ? 0 : Math.min(1, (reached - 1 + partial) / slots);
-  const gateF = gate > 0 ? Math.max(0, Math.min(1, level / gate)) : 1;
 
   const needWords = levelReady && wordsShort > 0; // 035: the level is there, the game words are not
+  // 035 as a QUEST (Andy oct13 "like a quest requirement"): once the level is there, the bar tracks the game words
+  const gateF = needWords ? Math.max(0, Math.min(1, (WORDS_PER_REBIRTH - wordsShort) / WORDS_PER_REBIRTH))
+    : gate > 0 ? Math.max(0, Math.min(1, level / gate)) : 1;
   const holdLabel = busy ? 'REBIRTHING…' : ready ? 'HOLD TO REBIRTH' : needWords ? 'PLAY A GAME' : 'NEED LEVELS';
   const holdSub = ready ? `LV ${formatNum(level)} → 1` : needWords ? `${formatNum(wordsShort)} MORE ${wordsShort === 1 ? 'WORD' : 'WORDS'}` : `LV ${formatNum(level)} / ${formatNum(gate)}`;
 
@@ -227,7 +233,10 @@ export default function RebirthV2({ onBack }) {
 
           <div
             className="rb2-actions"
-            onPointerDownCapture={() => setCharging(ready && !busy)}
+            onPointerDownCapture={() => {
+              setCharging(ready && !busy);
+              if (ready && !busy) warmRebirth(); // the push rides the 1 s hold
+            }}
             onPointerUpCapture={() => setCharging(false)}
             onPointerLeave={() => setCharging(false)}
             onPointerCancelCapture={() => setCharging(false)}
@@ -273,7 +282,7 @@ export default function RebirthV2({ onBack }) {
             <div className="rb2-gate-bar">
               <div className="rb2-gate-fill" style={{ transform: `scaleX(${gateF.toFixed(3)})` }} />
             </div>
-            <span className="rb2-gate-txt">{ready ? `GATE LV ${formatNum(gate)} — READY` : needWords ? `PLAY ${formatNum(wordsShort)} MORE ${wordsShort === 1 ? 'WORD' : 'WORDS'} IN A GAME` : `${formatNum(gate - level)} LEVELS TO GO`}</span>
+            <span className="rb2-gate-txt">{ready ? `GATE LV ${formatNum(gate)} — READY` : needWords ? `QUEST: PLAY ${formatNum(WORDS_PER_REBIRTH)} WORDS IN A GAME · ${formatNum(WORDS_PER_REBIRTH - wordsShort)}/${formatNum(WORDS_PER_REBIRTH)}` : `${formatNum(gate - level)} LEVELS TO GO`}</span>
           </div>
           <div className="rb2-cost" data-testid="rb2-cost">BACK TO LV 1 · KEY KEPT</div>
           {autoOpen && (

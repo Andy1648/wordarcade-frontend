@@ -30,7 +30,7 @@ export const TUTORIALS = [
     isNew: true,
     when: (s) => s.marksRevealed && rollsEnabled(),
     target: '.rs-roll',
-    line: 'HOLD TO ROLL FOR MARKS. YOUR FIRST ROLL IS FREE.',
+    line: 'TAP ROLL FOR MARKS. YOUR FIRST ROLL IS FREE.',
   },
   {
     // GEMS: the roll currency's count on the menu. No-ops until the count is actually on screen (the gems
