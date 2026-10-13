@@ -415,7 +415,7 @@
   font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--lb2-k)));
   text-transform: uppercase;
 }
-.lb2-mv svg { flex: none; width: calc(18px * var(--lb2-k)); height: calc(16px * var(--lb2-k)); }
+.lb2-mv svg, .lb2-mv img { flex: none; width: calc(20px * var(--lb2-k)); height: calc(20px * var(--lb2-k)); object-fit: contain; }
 .lb2-mv.is-up { color: #2EFFE0; }
 .lb2-mv.is-down { color: #FF3D7F; }
 .lb2-row.is-me .lb2-mv { color: #000; }
@@ -569,7 +569,7 @@
 .lb2--narrow .lb2-row.is-me .lb2-name { font-size: var(--fs-k15); }
 .lb2--narrow .lb2-who-cell { gap: 1px; }
 .lb2--narrow .lb2-row-plate { padding: 0 4px; line-height: 1.1; }
-.lb2--narrow .lb2-mv svg { width: 14px; height: 13px; }
+.lb2--narrow .lb2-mv svg, .lb2--narrow .lb2-mv img { width: 16px; height: 16px; }
 .lb2--narrow .lb2-r { font-size: var(--fs-k18); -webkit-text-stroke-width: 3px; }
 .lb2--narrow .lb2-row.is-me .lb2-r { font-size: var(--fs-k18); -webkit-text-stroke-width: 3px; }
 .lb2--narrow .lb2-lv,

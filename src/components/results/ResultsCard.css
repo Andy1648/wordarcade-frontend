@@ -92,7 +92,8 @@
 .rs2-hero--ko { --rs-edge: #FF3D7F; }
 .rs2-hero-in { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(6px * var(--u)); }
 .rs2-icon { width: calc(118px * var(--u)); height: calc(118px * var(--u)); flex: none; }
-.rs2-icon svg { width: 100%; height: 100%; filter: drop-shadow(6px 6px 0 #000); }
+.rs2-icon svg, .rs2-icon img { width: 100%; height: 100%; filter: drop-shadow(6px 6px 0 #000); }
+.rs2-icon img, img.rs2-xphex { display: block; object-fit: contain; }
 .rs2-place { display: flex; align-items: baseline; gap: 6px; line-height: .9; transform: rotate(-3deg); }
 .rs2-place-n {
   font-family: var(--k-display);

@@ -123,7 +123,7 @@ function Move({ n }) {
   if (n > 0) {
     return (
       <span className="lb2-mv is-up" aria-label={`up ${n}`}>
-        <svg className="lb2-mv-ico" viewBox="0 0 18 16" width="18" height="16" aria-hidden="true"><path d="M9 2 L16 14 L2 14 Z" fill="#2EFFE0" stroke="#000" strokeWidth="3" strokeLinejoin="round" /></svg>
+        <img className="lb2-mv-ico" src="/lb/arrow-up.webp" width="18" height="18" alt="" aria-hidden="true" draggable="false" />
         <span>{fmt(n)}</span>
       </span>
     );
@@ -131,7 +131,7 @@ function Move({ n }) {
   if (n < 0) {
     return (
       <span className="lb2-mv is-down" aria-label={`down ${-n}`}>
-        <svg className="lb2-mv-ico" viewBox="0 0 18 16" width="18" height="16" aria-hidden="true"><path d="M2 2 L16 2 L9 14 Z" fill="#FF3D7F" stroke="#000" strokeWidth="3" strokeLinejoin="round" /></svg>
+        <img className="lb2-mv-ico" src="/lb/arrow-down.webp" width="18" height="18" alt="" aria-hidden="true" draggable="false" />
         <span>{fmt(-n)}</span>
       </span>
     );

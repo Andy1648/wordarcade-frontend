@@ -47,23 +47,9 @@ const SLIDE = [{ transform: 'translateX(-40px)', opacity: 0 }, { transform: 'tra
 const eo = (k) => 1 - Math.pow(1 - k, 3);
 const BUMP = [{ transform: 'scale(1)' }, { transform: `scale(${BUMP_SCALE})`, offset: 0.4 }, { transform: 'scale(1)' }];
 
+// ART PIPELINE (Andy oct13): the trophy + XP hex are ChatGPT art cut by scripts/cutout-art.py (public/results/).
 function Trophy() {
-  return (
-    <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-      <path d="M30 26 C6 26 6 64 36 66" fill="none" stroke="#000" strokeWidth="13" strokeLinecap="round" />
-      <path d="M90 26 C114 26 114 64 84 66" fill="none" stroke="#000" strokeWidth="13" strokeLinecap="round" />
-      <path d="M30 26 C6 26 6 64 36 66" fill="none" stroke="#F2A900" strokeWidth="5" strokeLinecap="round" />
-      <path d="M90 26 C114 26 114 64 84 66" fill="none" stroke="#F2A900" strokeWidth="5" strokeLinecap="round" />
-      <path d="M54 76 H66 L70 92 H50 Z" fill="#F2A900" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M28 18 H92 V42 C92 64 78 78 60 78 C42 78 28 64 28 42 Z" fill="#FFC23D" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M76 21 H89 V42 C89 60 80 72 68 75 C76 64 80 54 80 42 Z" fill="#F2A900" />
-      <rect x="20" y="10" width="80" height="12" fill="#FFE94A" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M60 33 L64.5 42 L74 43 L67 49.5 L69 59 L60 54 L51 59 L53 49.5 L46 43 L55.5 42 Z" fill="#FFE94A" stroke="#000" strokeWidth="3.5" strokeLinejoin="round" />
-      <path d="M36 28 V42 C36 50 39 57 44 62" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" />
-      <rect x="34" y="92" width="52" height="18" fill="#FFC23D" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      <rect x="46" y="97" width="28" height="7" fill="#000" />
-    </svg>
-  );
+  return <img src="/results/trophy.webp" alt="" aria-hidden="true" draggable="false" />;
 }
 function Medal({ place }) {
   return (
@@ -96,14 +82,7 @@ function Skull() {
   );
 }
 function XpHex() {
-  return (
-    <svg viewBox="0 0 44 44" className="rs2-xphex" aria-hidden="true" focusable="false">
-      <path d="M22 3 L39 12.5 V31.5 L22 41 L5 31.5 V12.5 Z" fill="#B04BFF" stroke="#000" strokeWidth="4" strokeLinejoin="round" />
-      <path d="M22 3 L39 12.5 V31.5 L22 41 Z" fill="#8a2fd6" />
-      <text x="22" y="28" textAnchor="middle" fontFamily="Bungee, sans-serif" fontSize="14" fill="#fff" stroke="#000" strokeWidth="3" paintOrder="stroke">XP</text>
-      <path d="M10 15 L18 10.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
+  return <img src="/results/xp-hex.webp" className="rs2-xphex" alt="" aria-hidden="true" draggable="false" />;
 }
 
 /** A number the tally counts up to: data-to / data-at / data-ms drive the loop; the text starts at the final value
