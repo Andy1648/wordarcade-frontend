@@ -1,6 +1,7 @@
 // KitNavButton.jsx — the v2 02 ICON tile + 03 LEFT RAIL buttons (claude/mockups/v2/KitButtons.dc.html),
 // split from KitButton.jsx (which re-exports both) so a screen that needs only these — the menu — loads
 // only these and the shared button base (KitNavButton.css). Real <button>s, ≥ 44px, transform/opacity only.
+import LockChains from '../lockChains/LockChains.jsx';
 import { useEffect, useRef } from 'react';
 import FitText from './FitText.jsx';
 import KitIcon from './KitIcon.jsx';
@@ -95,10 +96,11 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
         <span className="kb-shadow" aria-hidden="true" />
         <span ref={faceRef} className="kb-rface">
           <span className="kb-redge" aria-hidden="true" />
+          {locked ? <LockChains wide className="kb-chains" /> : null}
           {/* .kb-rico: the icon's MOTION host (the menu's beat bounce + dot nudge animate it; hover/press animate the
               svg inside), so the three never fight over one transform */}
           <span className="kb-rico" aria-hidden="true">
-            <KitIcon name={locked ? 'lock' : icon} size={28} shadow={2} extras={false} />
+            <KitIcon name={icon} size={28} shadow={2} extras={false} />
           </span>
           <span className="kb-rtext">
             <span className="kb-rlabel">{label}</span>

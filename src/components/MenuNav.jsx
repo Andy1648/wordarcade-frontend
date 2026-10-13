@@ -9,6 +9,7 @@
 // Kit components only, imported file by file (the kit barrel would drag every kit stylesheet into the
 // homepage chunk). Each control is a real <button> (≥ 44px) carrying data-nav="<id>" — the one hook
 // focus-restore and the e2e specs use, at either width (React 18: the kit buttons take no ref).
+import LockChains from './lockChains/LockChains.jsx';
 import { KitIconButton, KitRailButton } from './kit/KitNavButton.jsx';
 import FitText from './kit/FitText.jsx';
 import KitIcon from './kit/KitIcon.jsx';
@@ -352,7 +353,7 @@ export function MenuGearSlot2({ mark, locked = null, onClick, disabled }) {
       <span className="hp-gear-label">2ND GEAR</span>
       <span className="hp-gear-body">
         {locked ? (
-          <KitIcon name="lock" size={30} shadow={2} extras={false} className="hp-gear2-lock" />
+          <LockChains wide className="hp-gear2-chains" />
         ) : mark ? (
           <Suspense fallback={<span className="hp-gear-hole" aria-hidden="true" />}>
             <MarkBadge mark={mark} size={44} className="hp-gear2-cog" />

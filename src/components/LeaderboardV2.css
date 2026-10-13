@@ -179,8 +179,11 @@
 .lb2-col--1 { left: calc(236px * var(--pk)); width: calc(214px * var(--pk)); }
 .lb2-col--3 { left: calc(456px * var(--pk)); width: calc(210px * var(--pk)); }
 .lb2-crown {
-  width: calc(74px * var(--pk));
-  height: calc(50px * var(--pk));
+  width: calc(64px * var(--pk));
+  height: calc(56px * var(--pk));
+  margin-bottom: calc(-6px * var(--pk)); /* the art is taller than the old 50px crown: it sinks onto the plate, the layout keeps its height */
+  object-fit: contain;
+  filter: drop-shadow(3px 3px 0 #000);
   overflow: visible;
   transform-origin: 50% 90%;
   transform: rotate(-7deg);

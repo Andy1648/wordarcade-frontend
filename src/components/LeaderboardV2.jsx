@@ -89,14 +89,8 @@ async function loadWeek() {
 
 // ---- the podium blocks: real vector solids, gold / silver / bronze (R5 oct8 #2 — PodiumBlocks.jsx, imported above) ----
 function Crown({ crownRef }) {
-  return (
-    <svg ref={crownRef} className="lb2-crown" viewBox="0 0 74 50" width="74" height="50" aria-hidden="true" focusable="false">
-      <path d="M8 44 L4 12 L22 26 L37 4 L52 26 L70 12 L66 44 Z" fill="#000" transform="translate(4 4)" />
-      <path d="M8 44 L4 12 L22 26 L37 4 L52 26 L70 12 L66 44 Z" fill="#FFC23D" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M10 36 L64 36" stroke="#000" strokeWidth="4" />
-      <path d="M14 22 L18 32" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
-    </svg>
-  );
+  // ART PIPELINE (Andy oct13): ChatGPT crown, cut by scripts/cutout-art.py (public/lb/crown.webp)
+  return <img ref={crownRef} className="lb2-crown" src="/lb/crown.webp" width="74" height="70" alt="" aria-hidden="true" draggable="false" />;
 }
 
 // WEEKLY TOP 10 (Andy oct12, migration 034): THIS WEEK's top-10 places show the gems the place pays when the week ends

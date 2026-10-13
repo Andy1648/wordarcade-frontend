@@ -23,6 +23,7 @@ export const ICON_ART = Object.freeze({
   achievements: '/icons/achievements.webp',
   settings: '/icons/settings.webp',
   lock: '/icons/lock.webp',
+  news: '/icons/news.webp',
 });
 
 export function dropFor(size) {

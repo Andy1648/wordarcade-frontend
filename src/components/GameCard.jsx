@@ -1,4 +1,5 @@
 // GameCard.jsx
+import LockChains from './lockChains/LockChains.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { GAME_ART_COMPONENTS } from './GameArt';
 import { useMagneticPull } from '../lib/magneticPull';
@@ -441,13 +442,8 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
             doesn't navigate. */}
         {locked && (
           <div className="game-card-lock">
+            <LockChains className="game-card-chains" />
             <div className="game-card-lock-plaque">
-              <svg className="game-card-lock-icon" viewBox="0 0 48 48" aria-hidden="true">
-                <path d="M14 22 v-5 a10 10 0 0 1 20 0 v5" fill="none" stroke="#000" strokeWidth="4.5" />
-                <rect x="9" y="21" width="30" height="22" rx="4" fill="#FFE94A" stroke="#000" strokeWidth="4" />
-                <circle cx="24" cy="30" r="3.4" fill="#000" />
-                <rect x="22.3" y="30" width="3.4" height="8" fill="#000" />
-              </svg>
               {/* Show the PATH, not just the gate: unlock level + how many to go, so
                   "locked" reads as reachable rather than a dead end. */}
               <div className="game-card-lock-label">

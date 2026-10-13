@@ -1,0 +1,61 @@
+/* SHACKLES: the chains sit over the box's face, under its text. Hosts: .kb-rwrap.is-locked (menu rail),
+   .hp-gear2.is-locked (2nd gear), .game-card-lock (locked mode cards). */
+.lock-chains {
+  position: absolute;
+  inset: 4%;
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  filter: drop-shadow(3px 3px 0 #000);
+}
+@keyframes lock-chains-rattle {
+  0% { transform: rotate(0) translateX(0); }
+  20% { transform: rotate(-3deg) translateX(-2px); }
+  45% { transform: rotate(2.5deg) translateX(2px); }
+  70% { transform: rotate(-1.5deg) translateX(-1px); }
+  100% { transform: rotate(0) translateX(0); }
+}
+/* one finite rattle on hover / press — will-change only while it plays */
+.kb-rwrap.is-locked:hover .lock-chains,
+.kb-rwrap.is-locked:active .lock-chains,
+.hp-gear2.is-locked:hover .lock-chains,
+.hp-gear2.is-locked:active .lock-chains,
+.game-card.locked:hover .lock-chains,
+.game-card.locked:active .lock-chains {
+  animation: lock-chains-rattle 320ms cubic-bezier(.3, .7, .3, 1) 1;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lock-chains { animation: none !important; }
+}
+/* the box's own text / icon / plaque stay ON TOP of the chains */
+.kb-rwrap.is-locked .kb-rico,
+.kb-rwrap.is-locked .kb-rtext,
+.hp-gear2.is-locked .hp-gear-label,
+.hp-gear2.is-locked .hp-gear-text,
+.game-card-lock .game-card-lock-plaque { position: relative; z-index: 1; }
+/* the locked tile's own icon dims under the chains (what's locked, chained shut) */
+.kb-rwrap.is-locked .kb-rico { opacity: 0.45; }
+/* the 2nd gear's chains span the whole slot, not just the icon hole */
+.hp-gear2-chains.lock-chains { inset: 2% 3%; width: 94%; height: 96%; }
+/* the 2nd gear's gate text sits on a SOLID plaque over the chains (like the locked game cards' plaque) */
+.hp-gear2.is-locked .hp-gear-body { justify-content: center; }
+.hp-gear2.is-locked .hp-gear-text {
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  background: #160a28;
+  border: 3px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+/* the padlock stays visible: the card's plaque drops below it, the 2nd gear's plaque moves to the right end,
+   and the 2nd gear's chains run edge to edge (cover) across its short, wide slot */
+.game-card-lock:has(.lock-chains) { align-items: flex-end; }
+.hp-gear2-chains.lock-chains { inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+.hp-gear2.is-locked .hp-gear-body { justify-content: flex-end; padding-right: calc(8 * var(--u, 1px)); }
+/* 2nd gear: shift the padlock left of the plaque (`translate`, so it composes with the rattle's transform) */
+.hp-gear2.is-locked { overflow: clip; }
+.hp-gear2-chains.lock-chains { translate: -30% 0; }
