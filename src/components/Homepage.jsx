@@ -198,6 +198,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // do NOT clear `connecting` here: the socket opening is only the FIRST half of
   // the wait — quickplay/daily then round-trip create+start before the view flips
   // on game_started. The pending state is cleared on the serverEventId bump below.
+  // EVERY VISITOR GETS A NAME (Andy oct13): on the first key / tap, a browser with no board name claims a generated
+  // one (leaderboard/autoName.js — lazy, once per load, never in the way). No sign-up step in front of the board.
+  useEffect(() => {
+    if (!LEADERBOARD_ENABLED) return undefined;
+    const go = () => {
+      window.removeEventListener('keydown', go, true);
+      window.removeEventListener('pointerdown', go, true);
+      import('../leaderboard/autoName.js').then((m) => m.autoName()).catch(() => {});
+    };
+    window.addEventListener('keydown', go, true);
+    window.addEventListener('pointerdown', go, true);
+    return () => {
+      window.removeEventListener('keydown', go, true);
+      window.removeEventListener('pointerdown', go, true);
+    };
+  }, []);
+
   useEffect(() => {
     if (wsStatus === 'open' && pendingActionRef.current) {
       const action = pendingActionRef.current;

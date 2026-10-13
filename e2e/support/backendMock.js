@@ -123,7 +123,12 @@ export async function mirrorReduceMotion(page) {
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true, patchNotes = false } = opts;
+  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true, patchNotes = false, autoName = false } = opts;
+
+  // EVERY VISITOR GETS A NAME (Andy oct13): the menu claims a generated board name on the first key / tap. Every spec
+  // written before it expects an UNCLAIMED browser (the CLAIM prompt, "named: false" boards), so it is off unless a
+  // spec asks for it (opts.autoName).
+  if (!autoName) await page.addInitScript(() => { window.__TAW_NO_AUTONAME = true; });
 
   // Mirror the emulated prefers-reduced-motion into the in-game REDUCE MOTION toggle (see above).
   if (seedReduceMotion) await mirrorReduceMotion(page);
