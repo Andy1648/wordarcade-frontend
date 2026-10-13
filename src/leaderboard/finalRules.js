@@ -22,7 +22,7 @@ export const F_LEVEL_BANK_SECS = 1200; // … banking 20 min
 export const F_WORDS_PER_RB = 100; // a first season-2 write: rebirths ≤ lifetime words / 100
 export const F_LV_MAX = 2147483647; // the int column
 export const THROTTLE_MS = 5000;
-export const WORDS_PER_SEC = 20;
+export const WORDS_PER_SEC = 4; // 039 (was 20 in 029)
 export const LETTERS_PER_SEC = 150;
 
 const int = (v, min, d) => {

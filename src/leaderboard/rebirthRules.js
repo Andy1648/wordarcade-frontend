@@ -28,6 +28,7 @@
 export const RATE_PER_SEC = 2; // logged calls per profile per rolling second
 export const RB_WINDOW_SECS = 3600; // the pace window (020: 1 token / 5 min, 12 banked ⇒ ≤ 12 an hour)
 export const RB_PER_WINDOW = 12; // granted rebirths allowed inside one window
+export const RB_PER_DAY = 40; // 039: granted rebirths allowed in any rolling 24 h
 export const WORDS_PER_RB = 25; // 035: season-2 game words since the last rebirth (= rebirthWords.js WORDS_PER_REBIRTH)
 export const ASCEND_AT = 10; // season 2 (hidden in FINAL v2 — lb_ascend refuses while ASCEND_ON is false): R ≥ 10 + 5 × ★ …
 export const ASCEND_STEP = 5; // … would add ONE ★
@@ -119,7 +120,11 @@ export function decideRebirth(row, { requestId, season = 0 } = {}, log = [], now
     result = { ok: false, reason: 'words', need: WORDS_PER_RB, have: wordsSince(row), rebirths: rb };
   } else {
     const granted = within(log, now, RB_WINDOW_SECS).filter((e) => e.action === 'rebirth' && e.result && e.result.ok === true);
-    if (granted.length >= RB_PER_WINDOW && !row.is_tester) { // 033: testers skip PACE
+    const day = within(log, now, 24 * 3600).filter((e) => e.action === 'rebirth' && e.result && e.result.ok === true);
+    if (day.length >= RB_PER_DAY && !row.is_tester) { // 039: ≤ 40 a day (testers skip)
+      const oldest = Math.min(...day.map((e) => e.created_at));
+      result = { ok: false, reason: 'wait', retry_in: Math.max(1, Math.ceil((oldest + 24 * 3600 * 1000 - now) / 1000)), rebirths: rb };
+    } else if (granted.length >= RB_PER_WINDOW && !row.is_tester) { // 033: testers skip PACE
       const oldest = Math.min(...granted.map((e) => e.created_at));
       result = { ok: false, reason: 'wait', retry_in: Math.max(1, Math.ceil((oldest + RB_WINDOW_SECS * 1000 - now) / 1000)), rebirths: rb };
     } else {

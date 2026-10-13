@@ -251,6 +251,8 @@ export function rebirthRefusalText(res) {
   }
   if (res.reason === 'wait') {
     const s = Math.max(1, Math.ceil(Number(res.retry_in) || 0));
+    // 039: the daily cap can be hours away — say hours then
+    if (s >= 3600) return `DAILY LIMIT — NEXT REBIRTH IN ${Math.floor(s / 3600)}H ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}M`;
     return `NEXT REBIRTH IN ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
   if (res.reason === 'words') {
