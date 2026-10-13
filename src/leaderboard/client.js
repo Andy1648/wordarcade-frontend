@@ -33,7 +33,7 @@ export const LEADERBOARD_ENABLED = !!(BASE && KEY);
 
 const SECRET_KEY = 'taw.lb.secret';
 const PROFILE_KEY = 'taw.lb.profile';
-export const BOARD_SIZE = 10; // Andy oct2 LB10: the board shows the TOP 10; anyone below gets a pinned row with their real rank
+export const BOARD_SIZE = 20; // Andy oct13: the TOP 20 (was 10, oct2 LB10); anyone below gets a pinned row with their real rank
 const SUBMIT_EVERY_MS = 30 * 1000;
 // The board view this client reads: the season-2 board (022 — ★ → R → level, econ-13 rows) with the SEASON2 flag.
 const BOARD_VIEW = SEASON2 ? 'leaderboard_s2' : 'leaderboard';

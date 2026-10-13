@@ -33,6 +33,7 @@ import {
   formatResetIn,
   claimName,
   nameStatus,
+  BOARD_SIZE,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import { rankPlate, boardMoves, boardSnapshot, chaseTarget, climbTarget, hasEarned } from '../leaderboard/s2Board.js';
@@ -308,6 +309,7 @@ export default function LeaderboardV2({ onBack }) {
   useMomentHold(true); // no queued moment starts under the board
   const rootRef = useRef(null);
   const crownRef = useRef(null);
+  const scrollRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const narrow = useStageScale(rootRef);
@@ -381,9 +383,10 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
-  // ranks 4 … 10; past #10 your own row takes the last place, with your real rank
-  let list = rows.slice(3, 10);
-  if (meRow && !meOnBoard) list = [...rows.slice(3, 9), meRow];
+  // ranks 4 … 20 (Andy oct13 "push the leaderboard to top 20"); past #20 your own row takes the last place, with your
+  // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
+  let list = rows.slice(3, BOARD_SIZE);
+  if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
   const allMe = myId ? all.rows.find((r) => r.id === myId) || all.me : null;
   const above = meRow ? rows.filter((r) => Number(r.rank) < Number(meRow.rank)).sort((a, b) => b.rank - a.rank)[0] : null;
   const chase = meRow ? chaseTarget(chaseRow(meRow, tab, gains), chaseRow(above, tab, gains)) : null;
@@ -428,6 +431,10 @@ export default function LeaderboardV2({ onBack }) {
     root.querySelectorAll('.lb2-mv.is-down .lb2-mv-ico').forEach((el) => kitPlay(el, SINK, { duration: 1300, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-row.is-me').forEach((el) => kitPlay(el, pulse('rotate(-1deg)'), { duration: 750, iterations: 2, delay: 500, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-col.is-me .lb2-who').forEach((el) => kitPlay(el, pulse(''), { duration: 750, iterations: 2, delay: 600, easing: 'ease-in-out' }));
+    // TOP 20: open the scroll list on YOUR row (one layout read when the data lands — never per frame)
+    const sc = scrollRef.current;
+    const meEl = sc && sc.querySelector('.lb2-row.is-me');
+    if (sc && meEl) sc.scrollTop = Math.max(0, meEl.offsetTop - (sc.clientHeight - meEl.offsetHeight) / 2);
     // shown is the trigger; data.loaded guards it
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown]);
@@ -533,7 +540,7 @@ export default function LeaderboardV2({ onBack }) {
         <div className="lb2-cols" aria-hidden="true">
           <span>#</span><span>PLAYER{wk ? <span className="lb2-cols-prize"> · TOP 10 WIN GEMS</span> : null}</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>
         </div>
-        <div className="lb2-list lb2-slide">
+        <div className="lb2-list lb2-slide"><div className="lb2-scroll" ref={scrollRef}>
           {!data.loaded && <p className="lb2-note">LOADING THE BOARD…</p>}
           {data.loaded && data.error && (
             <p className="lb2-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb2-retry" onClick={tab === 'week' ? loadWeekTab : loadAll}>RETRY</button></p>
@@ -559,7 +566,7 @@ export default function LeaderboardV2({ onBack }) {
               </div>
             );
           })}
-        </div>
+        </div></div>
 
         <div className="lb2-panels lb2-slide">
           <div className="lb2-panel lb2-chase">

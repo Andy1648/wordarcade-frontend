@@ -762,3 +762,15 @@
 /* TOP 3 IDLE glint (Andy oct12): the house sparkle asset, resting invisible at the place's top-right; one beat at a time */
 .lb2-glint { position: absolute; left: calc(54px * var(--pk)); top: calc(-46px * var(--pk)); width: calc(30px * var(--pk)); height: calc(30px * var(--pk)); opacity: 0; transform: scale(0); pointer-events: none; }
 .lb2-col--1 .lb2-glint { left: calc(40px * var(--pk)); top: calc(-118px * var(--pk)); width: calc(40px * var(--pk)); height: calc(40px * var(--pk)); }
+
+/* TOP 20 (Andy oct13): ranks 4–20 scroll inside the list panel — 7 rows show, like the old top 10 */
+.lb2-scroll {
+  position: relative;
+  max-height: calc(357px * var(--lb2-k));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #FFE94A #0d0618;
+}
+.lb2-scroll .lb2-row.is-me { margin-left: 0; margin-right: 0; } /* the lifted row stays inside the scroll box */
+.lb2--narrow .lb2-scroll { max-height: 280px; }

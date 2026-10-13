@@ -74,7 +74,7 @@ test('★ → R → level: the podium is the top 3, ranks 4 … 10 below; v3 ran
   const { lb } = await boot(page, { me: { rebirths: 0, level: 60 } });
   expect(await podiumIds(lb)).toEqual(['a', 'b', 'c']);
   // the list: D (R2), E, F (R1), then the R0s by level — ME (R0 LV60) is #13, so pinned last with the real rank
-  expect(await rowIds(lb)).toEqual(['d', 'e', 'f', 'g', 'h', 'i', 'me']);
+  expect(await rowIds(lb)).toEqual(['d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'me']); // TOP 20 (oct13): #13 is on the board, not pinned
   await expect(lb.locator('.lb2-row[data-id="me"] .lb2-rk')).toHaveText('13');
   await expect(lb.locator('[data-id="s1"]')).toHaveCount(0);
   // v3 rank plates — by rebirths, then ★ (never the level)
@@ -87,10 +87,10 @@ test('★ → R → level: the podium is the top 3, ranks 4 … 10 below; v3 ran
   // one YOU on the screen, on your own row; it is lifted (is-me)
   await expect(lb.locator('.lb2-you')).toHaveCount(1);
   await expect(lb.locator('.lb2-row.is-me')).toHaveCount(1);
-  // CHASE: the nearest loaded row above you is #10 (JULIET R0 LV90) → 31 LV → #10; CLIMB: R0 → 1 R to TYPO
-  await expect(lb.locator('.lb2-chase .lb2-need')).toHaveText('31');
+  // CHASE: the nearest row above you is #12 (LIMA R0 LV70 — TOP 20 loads it now) → 11 LV → #12; CLIMB: R0 → 1 R to TYPO
+  await expect(lb.locator('.lb2-chase .lb2-need')).toHaveText('11');
   await expect(lb.locator('.lb2-chase .lb2-unit')).toHaveAttribute('data-unit', 'LV');
-  await expect(lb.locator('.lb2-chase .lb2-target')).toHaveText('#10');
+  await expect(lb.locator('.lb2-chase .lb2-target')).toHaveText('#12');
   await expect(lb.locator('.lb2-climb .lb2-next')).toHaveAttribute('data-rank-title', 'TYPO');
 });
 
@@ -103,7 +103,7 @@ test('YOU IN THE TOP 3: your podium place says YOU (once), no list row is yours,
   await expect(lb.locator('.lb2-col--3 .lb2-you')).toHaveText('YOU');
   await expect(lb.locator('.lb2-you')).toHaveCount(1);
   await expect(lb.locator('.lb2-row.is-me')).toHaveCount(0);
-  expect(await rowIds(lb)).toEqual(['c', 'd', 'e', 'f', 'g', 'h', 'i']);
+  expect(await rowIds(lb)).toEqual(['c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']);
   await expect(lb.locator('.lb2-col--3 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'GLYPHLORD');
   // CHASE: BRAVO (#2) is R9 LV900 → same ★ and R → 401 LV → #2
   await expect(lb.locator('.lb2-chase .lb2-unit')).toHaveAttribute('data-unit', 'LV');
@@ -191,7 +191,7 @@ test('THIS WEEK before 024 runs: the live weekly view, season-2 rows only, words
 for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { width: 1920, height: 1080 }, { width: 390, height: 844 }]) {
   test(`@${vp.width}×${vp.height}: no scrollbars, nothing off-screen, no text under 13px; ← MENU closes`, async ({ page }) => {
     const { lb } = await boot(page, { me: { rebirths: 9, level: 500 }, vp });
-    await expect(lb.locator('.lb2-row')).toHaveCount(7);
+    await expect(lb.locator('.lb2-row')).toHaveCount(10); // TOP 20 (oct13): ranks 4–13 of a 13-row board, scrolling in the list
     await page.waitForTimeout(900); // the podium rise / list slide land
     const m = await page.evaluate(() => {
       const root = document.querySelector('.lb2');
@@ -204,6 +204,8 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
         if (rc.width === 0 || rc.height === 0) continue;
         if (el.closest('svg') && el.tagName.toLowerCase() !== 'svg') continue;
         if (el.closest('.lb2-fx')) continue; // the top-3 celebration (aria-hidden, one-shot) may fly past the edge mid-burst
+        const sc = el.closest('.lb2-scroll'); // TOP 20: a row scrolled out of the list's box is clipped, not off-screen
+        if (sc && sc !== el) { const b = sc.getBoundingClientRect(); if (rc.bottom <= b.top + 1 || rc.top >= b.bottom - 1) continue; }
         if (rc.left < -1 || rc.top < -1 || rc.right > W + 1 || rc.bottom > H + 1) off.push(String(el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className));
         const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
         if (hasText && parseFloat(getComputedStyle(el).fontSize) < 12.99) small.push(`${el.className}:${getComputedStyle(el).fontSize}`);
