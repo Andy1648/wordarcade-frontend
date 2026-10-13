@@ -12,9 +12,9 @@ function withStorage(seed, fn) {
   try { return fn(m); } finally { globalThis.localStorage = prev; }
 }
 
-test('WORDS_PER_REBIRTH matches the server rule (035 / rebirthRules.js)', () => {
+test('WORDS_PER_REBIRTH matches the server rule (037 / rebirthRules.js)', () => {
   assert.equal(WORDS_PER_REBIRTH, WORDS_PER_RB);
-  assert.equal(WORDS_PER_REBIRTH, 25);
+  assert.equal(WORDS_PER_REBIRTH, 10); // 037
 });
 
 test('words since the last rebirth: marked at a rebirth; a reset counts every word since; never negative', () => {

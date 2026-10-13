@@ -1,7 +1,7 @@
 // 021_server_rebirth.sql's lb_rebirth / lb_ascend, modelled in rebirthRules.js (kept in sync with the SQL).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   decideRebirth, decideAscend, makeRebirthServer, serverGate,
@@ -235,24 +235,42 @@ test('021 SQL mirrors rebirthRules.js: order, constants, idempotency, grants, th
   assert.match(sql, /add column if not exists stars integer not null default 0/);
 });
 
-test('035 WORDS: a season-2 rebirth needs 25 game words since the last one; testers skip it; a reset never goes negative', () => {
+test('037 WORDS: a season-2 rebirth needs 10 game words since the last one (035 had 25); testers skip it; a reset never goes negative', () => {
   const row = { level: 15, rebirths: 0, econ: 13, lifetime_words: 2 };
   let r = decideRebirth(row, { requestId: id(), season: 2 }, [], T0);
-  assert.deepEqual([r.result.ok, r.result.reason, r.result.need, r.result.have], [false, 'words', 25, 2], 'SKUF: 2 words is not enough');
+  assert.deepEqual([r.result.ok, r.result.reason, r.result.need, r.result.have], [false, 'words', 10, 2], 'SKUF: 2 words is not enough');
   r = decideRebirth({ ...row, is_tester: true }, { requestId: id(), season: 2 }, [], T0);
   assert.equal(r.result.ok, true, 'a tester skips the words gate');
-  r = decideRebirth({ ...row, lifetime_words: 25 }, { requestId: id(), season: 2 }, [], T0);
+  r = decideRebirth({ ...row, lifetime_words: 10 }, { requestId: id(), season: 2 }, [], T0);
   assert.equal(r.result.ok, true);
-  assert.equal(r.row.rb_words0, 25, 'the count restarts at the granted rebirth');
-  // the next one needs 25 MORE (gate met at LV 33 for R1)
-  const after = { ...r.row, level: 33, lifetime_words: 40 };
+  assert.equal(r.row.rb_words0, 10, 'the count restarts at the granted rebirth');
+  // the next one needs 10 MORE (gate met at LV 33 for R1)
+  const after = { ...r.row, level: 33, lifetime_words: 15 };
   assert.equal(decideRebirth(after, { requestId: id(), season: 2 }, [], T0).result.reason, 'words');
-  assert.equal(decideRebirth({ ...after, lifetime_words: 50 }, { requestId: id(), season: 2 }, [], T0).result.ok, true);
+  assert.equal(decideRebirth({ ...after, lifetime_words: 20 }, { requestId: id(), season: 2 }, [], T0).result.ok, true);
   // a reset dropped lifetime_words below rb_words0: counts from 0
-  assert.equal(decideRebirth({ ...after, lifetime_words: 10 }, { requestId: id(), season: 2 }, [], T0).result.have, 10);
+  assert.equal(decideRebirth({ ...after, lifetime_words: 5 }, { requestId: id(), season: 2 }, [], T0).result.have, 5);
   // season 0 is unchanged; the gate comes first
   assert.equal(decideRebirth({ level: 25, rebirths: 0, lifetime_words: 0 }, { requestId: id(), season: 0 }, [], T0).result.ok, true);
   assert.equal(decideRebirth({ ...row, level: 14 }, { requestId: id(), season: 2 }, [], T0).result.reason, 'gate');
+});
+
+test('037 is the newest lb_rebirth = 035 with WORDS_PER_RB 10; gear_check flags but never hides; nothing reverts', () => {
+  const dir = join(process.cwd(), 'supabase', 'migrations');
+  const body = (f) => { const t = readFileSync(join(dir, f), 'utf8').replace(/\r\n/g, '\n'); const a = t.indexOf('create or replace function public.lb_rebirth('); return t.slice(a, t.indexOf('end $$;', a)); };
+  const b35 = body('035_rebirth_words_and_tester_code.sql');
+  const b37 = body('037_softer_anticheat.sql');
+  assert.ok(b37.includes('WORDS_PER_RB constant integer := 10;'));
+  assert.equal(b37.replace(/WORDS_PER_RB constant integer := 10;.*\n/, ''), b35.replace(/WORDS_PER_RB constant integer := 25;.*\n/, ''), '037 changes only the constant');
+  const last = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort().filter((f) => readFileSync(join(dir, f), 'utf8').includes('create or replace function public.lb_rebirth(')).pop();
+  assert.equal(last, '037_softer_anticheat.sql');
+  const s = readFileSync(join(dir, '037_softer_anticheat.sql'), 'utf8');
+  const gc = s.slice(s.indexOf('create or replace function private.gear_check('), s.indexOf('end $$;', s.indexOf('create or replace function private.gear_check(')));
+  assert.equal(gc.split('return null;').length - 1, 1, 'the only null is a null input — a gear is never hidden');
+  assert.ok(gc.trimEnd().endsWith('return p_mark;'), 'an unknown gear is still shown');
+  assert.ok(gc.includes("values (p_pid, p_mark, false) on conflict do nothing;"));
+  assert.ok(s.includes('update private.gear_refused set revert = false where revert;'));
+  assert.ok(s.includes('WRITE-ONLY: Claude never runs migrations'));
 });
 
 test('035 is the newest lb_rebirth (033 + the words gate) and adds the tester op code to lb_redeem', () => {
