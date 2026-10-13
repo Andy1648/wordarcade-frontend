@@ -43,9 +43,9 @@ const MODES = [
   ['wordBomb', 'word-bomb', 1],
   ['blitz', 'category-blitz', 1],
   ['wordRace', 'word-race', 1.5],
-  ['chain', 'chain', 2],
+  ['chain', 'chain', 4], // Andy oct13: the locked modes pay for the lock
   ['satRush', 'sat-rush', 5],
-  ['fuse', 'fuse', 1],
+  ['fuse', 'fuse', 6],
 ];
 const STATES = [
   { p: 0, r: 0, s: 0 },
@@ -55,7 +55,7 @@ const STATES = [
 // GEAR POOL v2: the RARE floor's +% WINS / +% XP / +BASE WINS, and the one-mode WINS gears (DETONATOR — WORD BOMB, RARE;
 // HEADMASTER — SAT RUSH, LEGENDARY), which must pay in their mode and nowhere else
 const MARKS = [null, 'mk-smith', 'mk-scholar', 'mk-cyclone', 'mk-eclipse', 'mk-singularity', 'mk-detonator', 'mk-headmaster'];
-const FINAL_TIER = { rare: 1.4, epic: 1.8, legendary: 3, mythic: 10, secret: 25 }; // GEAR OP (Andy oct9), LEGENDARY+ up to the live season (Andy oct11)
+const FINAL_TIER = { rare: 1.5, epic: 2.5, legendary: 5, mythic: 15, secret: 40 }; // GEAR OP 2 (Andy oct13)
 
 function seed({ p, r, s }, mark) {
   mem.clear();
@@ -91,6 +91,8 @@ function shownNum(t) {
   assert.ok(i >= 0, `unknown suffix in ${t}`);
   return Number(m[1].replace(/,/g, '')) * 1000 ** i;
 }
+// A chip ≥ ×1M prints 3 sig. figs with a suffix ("×1.27M" — the late rebirths, ×5 from R5): ±0.5% per such chip.
+const sfx = (c) => 0.002 + 0.005 * c.chips.filter((k) => k.mult >= 1e6).length;
 const relClose = (a, b, rel, msg) => assert.ok(Math.abs(a - b) <= Math.max(1e-9, Math.abs(b) * rel), `${msg}: ${a} vs ${b}`);
 
 test('FINAL v2: BASE × every chip = TOTAL (exact AND as printed) = the payout = 10 × len/5 × MODE × 3^R × MARK', () => {
@@ -104,7 +106,7 @@ test('FINAL v2: BASE × every chip = TOTAL (exact AND as printed) = the payout =
         // the chain names FINAL's factors, in FINAL's order
         const by = Object.fromEntries(c.chips.map((k) => [k.id, k.mult]));
         assert.equal(by.mode, modeX, `${tag}: MODE`);
-        assert.equal(by.rebirth, 3 ** st.r, `${tag}: REBIRTH 3^R`);
+        assert.equal(by.rebirth, E.rebirthMult(st.r), `${tag}: REBIRTH 3^R (×5 from R5)`);
         assert.equal(by.ascend, undefined, `${tag}: no STARS chip (ascension hidden)`);
         const fm = finalMark(mark, key);
         const idx = indexMult(loadRollState());
@@ -113,8 +115,8 @@ test('FINAL v2: BASE × every chip = TOTAL (exact AND as printed) = the payout =
         relClose(c.chips.reduce((p, k) => p * k.mult, c.base), c.total, 0.05 / Math.max(1, c.total) + 1e-12, `${tag} exact`);
         // 1. as printed (base and result through formatStatRate — StatsV2's — chips through boardMult)
         const shown = c.chips.reduce((p, k) => p * shownNum(boardMult(k.mult)), shownNum(formatStatRate(c.base)));
-        relClose(shown, c.total, 0.002 + 0.05 / c.total, `${tag} printed chips vs TOTAL`); // + the payout's tenth-of-a-win grid // chips print to 3 decimals (<×10) / 2 (<×10,000)
-        relClose(shownNum(formatStatRate(c.total)), shown, 0.006, `${tag} as printed`); // the printed TOTAL is 3 sig. figs from 10,000
+        relClose(shown, c.total, sfx(c) + 0.05 / c.total, `${tag} printed chips vs TOTAL`); // + the payout's tenth-of-a-win grid // chips print to 3 decimals (<×10) / 2 (<×10,000)
+        relClose(shownNum(formatStatRate(c.total)), shown, sfx(c) + 0.004, `${tag} as printed`); // the printed TOTAL is 3 sig. figs from 10,000
         // 3. the payout
         assert.equal(c.total, perWordRateNow({ mode: key }).rate, `${tag}: TOTAL is the payout`);
         // 4. FINAL's formula (whole-XP grid: a word is whole tenths of a win)
@@ -143,13 +145,13 @@ test('FINAL v3: XP / LETTER chain — BASE 1 × (10 + N)/10 × KEY 2^T × REBIRT
       const by = Object.fromEntries(c.chips.map((k) => [k.id, k.mult]));
       assert.equal(c.base, (10 + fm.xpBase) / 10, `${tag}: BASE (1, a +N BASE mark sized against 10)`);
       assert.equal(by.power, 2 ** st.p, `${tag}: KEY 2^T`);
-      assert.equal(by.rebirth, 3 ** st.r, `${tag}: REBIRTH 3^R`);
+      assert.equal(by.rebirth, E.rebirthMult(st.r), `${tag}: REBIRTH 3^R (×5 from R5)`);
       assert.equal(by.ascend, undefined, `${tag}: no STARS chip`);
       assert.ok(Math.abs(by.mark - fm.xp) < 1e-9, `${tag}: MARK is FINAL's tier ×${fm.xp} (was ${by.mark})`);
       relClose(c.chips.reduce((p, k) => p * k.mult, c.base), c.total, 1e-9, `${tag} exact`);
       const shown = c.chips.reduce((p, k) => p * shownNum(boardMult(k.mult)), shownNum(formatStatRate(c.base)));
-      relClose(shown, c.total, 0.002, `${tag} printed chips vs TOTAL`); // chips print to 3 decimals (<×10) / 2 (<×10,000)
-      relClose(shownNum(formatStatRate(c.total)), shown, 0.006, `${tag} as printed`); // the printed TOTAL is 3 sig. figs from 10,000
+      relClose(shown, c.total, sfx(c), `${tag} printed chips vs TOTAL`); // chips print to 3 decimals (<×10) / 2 (<×10,000)
+      relClose(shownNum(formatStatRate(c.total)), shown, sfx(c) + 0.004, `${tag} as printed`); // the printed TOTAL is 3 sig. figs from 10,000
       assert.equal(c.total, letterXpNow(), `${tag}: TOTAL is letterXpNow`);
       const idx = indexMult(loadRollState());
       const final = E.xpPerLetter({ power: st.p, rebirths: st.r, stars: st.s, mark: fm.xp * idx, markBase: fm.xpBase });
@@ -163,10 +165,10 @@ test('FINAL v3: XP / LETTER chain — BASE 1 × (10 + N)/10 × KEY 2^T × REBIRT
   assert.equal(n, STATES.length * MARKS.length);
 });
 
-test('FINAL mark tiers reach the rolled pool: LEGENDARY ×3, MYTHIC +180 BASE (+900% of BASE 10, Andy oct11 ×2), SECRET ×25 (Andy oct11: LEGENDARY+ at the live season\'s size)', () => {
-  assert.equal(rollMarkById('mk-eclipse').stat.value, 200);
-  assert.equal(rollMarkById('mk-singularity').stat.value, 180);
-  assert.equal(rollMarkById('mk-origin').stat.value, 2400);
+test('FINAL mark tiers reach the rolled pool: LEGENDARY ×5, MYTHIC +280 BASE (+1,400% of BASE 10 ×2), SECRET ×40 (GEAR OP 2, Andy oct13)', () => {
+  assert.equal(rollMarkById('mk-eclipse').stat.value, 400);
+  assert.equal(rollMarkById('mk-singularity').stat.value, 280);
+  assert.equal(rollMarkById('mk-origin').stat.value, 3900);
 });
 
 // The menu's rate line and the rail's UPGRADES tile at the very start (T0 R0, nothing worn): "+1 XP / KEY" (v4: one
@@ -195,7 +197,7 @@ test('v4 at T0 R0: a menu key pays +1 XP, a game letter 0; POWER doubles it at o
 test('GEAR POOL v2: every gear prints exactly what it pays (season 2 values, ★ pips, shiny)', async () => {
   const MR = await import('./markRolls.js');
   const subSum = (id, s, kind) => substatsOf(id, s).filter((x) => x.kind === kind).reduce((a, x) => a + x.value, 0);
-  const raw = (t) => (/^EVERY KEY/.test(t) ? 1 : Number(/^(?:EVERY )?[+×]?([\d,]*\.?\d+)/.exec(t)[1].replace(/,/g, '')));
+  const raw = (t) => { if (/^EVERY KEY/.test(t)) return 1; const m = /^(?:EVERY )?[+×]?([\d,]*\.?\d+)(K?)/.exec(t); return Number(m[1].replace(/,/g, '')) * (m[2] ? 1000 : 1); }; // "+11.2K%"
   // oct12: a multiplier stat prints as its percent ("+50% WINS" = ×1.5); "+100% CRIT POWER" = +1 power
   const num = (t) => (/% (WINS|XP|ROLL LUCK)/.test(t) ? 1 + raw(t) / 100 : /% CRIT POWER/.test(t) ? raw(t) / 100 : raw(t));
   for (const m of MR.ROLL_MARKS) {

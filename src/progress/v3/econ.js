@@ -7,9 +7,9 @@
 //   XP per MENU KEY   1 × KEY × 3^R × MARK × OVERDRIVE                  v4 "SIMPLE" (Andy Oct 7 23:20): the menu is the
 //                                                                       ONLY XP source; game letters pay NO XP
 //   WINS per word     10 × length/5 × MODE × 3^R × MARK × OVERDRIVE     games only. MODE: WB/Blitz 1 · RACE 1.5 ·
-//                                                                       CHAIN 2 · SAT 5 · FUSE 1 (+ FRENZY ×5)
+//                                                                       CHAIN 4 · SAT 5 · FUSE 6 (+ FRENZY ×5)
 //   KEY (POWER)       DOUBLES: tier T is ×2^T (×1, ×2, ×4, ×8 …); T → T+1 costs 150 × 5^T wins; KEPT through rebirth
-//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth, forever (no gems)
+//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth (×5 from the 5th on), forever
 //   ASCENSION         none for now (hidden: canAscend is always false; lb_ascend refuses — 027)
 //   GEMS              game-only: 1 in 15 game words drops 3–12 · bot win +18 · +15 per player beaten · streak +4 ·
 //                     achievements 40–200 · 75 a roll. Menu typing gives no gems.
@@ -19,7 +19,13 @@
 export const XP_BASE = 1; // XP per letter at KEY T0 R0, no mark (v3: was 10)
 export const KEY_STEP = 2; // × XP per KEY tier: tier T is ×2^T (v3: replaces v2's ×1, 2, 5 … 1000, ×2.15 ladder)
 export const MARK_BASE_REF = 10; // a worn +N BASE XP mark is sized against BASE 10: ×(10 + N) / 10 (MYTHIC +20 = ×3)
-export const REBIRTH_STEP = 3; // × XP and wins per rebirth
+export const REBIRTH_STEP = 3; // × XP and wins per rebirth (the first REBIRTH_LATE_FROM − 1 rebirths)
+// LATE REBIRTHS (Andy oct13 "progression slows too much after later rebirths"): from the 5th rebirth on, each one pays
+// ×5, not ×3. The gate grows ×1.15^18 ≈ ×12.4 XP a rebirth; at ×3 every rebirth took ~1.9× the last (final-sim
+// --ladder, FAST bot: R8→R9 27 h, R10 ≈ 110 h in). At ×5 the gap grows ~1.15× a rebirth (FAST R10 ≈ 31 h). R1–R5
+// arrive exactly as before (the CI table cells are untouched).
+export const REBIRTH_STEP_LATE = 5;
+export const REBIRTH_LATE_FROM = 5; // the rebirth number that first pays REBIRTH_STEP_LATE
 export const CURVE_BASE = 100; // need(1)
 export const CURVE_GROWTH = 1.15; // × need per level — each level 15% harder than the last (Andy Oct 7 22:31; v3 had 1.131)
 export const WINS_BASE = 10; // wins for a 5-letter word at R0, MODE ×1, no mark
@@ -39,9 +45,12 @@ export const MODE_MULT = Object.freeze({
   'word-bomb': 1,
   'category-blitz': 1,
   'word-race': 1.5,
-  chain: 2,
+  // THE LOCKED MODES PAY FOR THE LOCK (Andy oct13 "higher reward for the locked games needing level"): CHAIN (LV25)
+  // was ×2, FUSE (LV50) was ×1 — the same as Word Bomb, so the harder gate paid nothing. Now ×4 / ×6 (FUSE's FRENZY ×5
+  // still stacks on top).
+  chain: 4,
   'sat-rush': 5,
-  fuse: 1,
+  fuse: 6,
 });
 export function modeMult(mode) {
   const m = MODE_MULT[mode];
@@ -78,7 +87,9 @@ export const ACH_MAX = 200;
 // MARKS (FINAL): the MAIN multiplier by tier (the part above ×1 is marks.js MARK_TIERS[t].bonus in season 2).
 // GEAR OP (Andy oct9: "make the gear stats a bit more OP"): was ×1.25 / 1.5 / 2 / 3 / 5 — every tier's uplift ×1.6–2.25,
 // steeper at the top (RARE +40% · EPIC +80% · LEGENDARY +180% · MYTHIC +400% · SECRET +900%).
-export const MARK_MULT = Object.freeze({ rare: 1.4, epic: 1.8, legendary: 3, mythic: 10, secret: 25 }); // Andy oct11 "its fine if gear stats are op": LEGENDARY+ back up to (at least) the live season's ×3 / ×10 / ×25 (GEAR OP oct9 had 2.8 / 5 / 10)
+// GEAR OP 2 (Andy oct13 "make gears more OP"): RARE ×1.5 · EPIC ×2.5 · LEGENDARY ×5 · MYTHIC ×15 · SECRET ×40 (was
+// 1.4 / 1.8 / 3 / 10 / 25). RARE stops at +50% so the STAPLER's crit rate lands exactly on the 50% crit cap.
+export const MARK_MULT = Object.freeze({ rare: 1.5, epic: 2.5, legendary: 5, mythic: 15, secret: 40 }); // Andy oct11 "its fine if gear stats are op": LEGENDARY+ back up to (at least) the live season's ×3 / ×10 / ×25 (GEAR OP oct9 had 2.8 / 5 / 10)
 
 const CAP = 1e300; // every product stays finite (format.js reads it through the named-suffix ladder)
 const int0 = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
@@ -97,9 +108,15 @@ export function powerCostAt(tier) {
   const t = int0(tier);
   return t === 0 ? 0 : powerCost(t - 1);
 }
-/** ×3 per rebirth: 3^R. */
+/** The factor the r-th rebirth adds (r ≥ 1): ×3, then ×5 from REBIRTH_LATE_FROM on. */
+export function rebirthStep(r) {
+  return int0(r) >= REBIRTH_LATE_FROM ? REBIRTH_STEP_LATE : REBIRTH_STEP;
+}
+/** The product of every rebirth's step: 3^R up to R4, then × 5 a rebirth (R5 = 3^4 × 5). */
 export function rebirthMult(rebirths) {
-  return fin(Math.pow(REBIRTH_STEP, int0(rebirths)));
+  const r = int0(rebirths);
+  const early = Math.min(r, REBIRTH_LATE_FROM - 1);
+  return fin(Math.pow(REBIRTH_STEP, early) * Math.pow(REBIRTH_STEP_LATE, r - early));
 }
 /** ★ multiply nothing in FINAL v2 (ascension is hidden) — kept for the callers that still show it. */
 export function starMult() {

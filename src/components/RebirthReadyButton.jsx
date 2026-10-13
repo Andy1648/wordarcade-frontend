@@ -8,7 +8,7 @@
 // Motion: ONE finite attention pop on appear (transform/opacity, 360ms) — no infinite animation.
 // Reduced motion shows it static. Renders nothing when the gate is not reached.
 import { useEffect, useState } from 'react';
-import { isRebirthReadyNow, requestRebirthNow, REBIRTH_READY_COPY } from '../progress/rebirthNow';
+import { isRebirthReadyNow, requestRebirthNow, rebirthReadyCopy } from '../progress/rebirthNow';
 import { onMidGameLevelUp } from '../progress/levelUpSignal';
 import './RebirthReadyButton.css';
 
@@ -34,7 +34,7 @@ export default function RebirthReadyButton({ onGo, className = '', ready: readyP
       onClick={go}
       data-rr-ready="1"
     >
-      {REBIRTH_READY_COPY}
+      {rebirthReadyCopy()}
     </button>
   );
 }

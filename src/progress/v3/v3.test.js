@@ -183,10 +183,10 @@ test('AUTO REBIRTH: a toggle that opens at R2 (refused below); no 2nd boost slot
   assert.equal(BO.codeBoostMult(now + 1000), 3);
 });
 
-test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.4 · EPIC ×1.8 · LEGENDARY ×3 · MYTHIC ×10 · SECRET ×25; pity EPIC+ 10, LEGENDARY+ 50', async () => {
+test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.5 · EPIC ×2.5 · LEGENDARY ×5 · MYTHIC ×15 · SECRET ×40 (GEAR OP 2); pity EPIC+ 10, LEGENDARY+ 50', async () => {
   const M = await import('../marks.js');
   const MRC = await import('../markRollsCore.js');
-  const want = { rare: 1.4, epic: 1.8, legendary: 3, mythic: 10, secret: 25 };
+  const want = { rare: 1.5, epic: 2.5, legendary: 5, mythic: 15, secret: 40 };
   for (const [t, m] of Object.entries(want)) {
     near(1 + M.MARK_TIERS[t].bonus, m);
     near(MRC.TIER_MAIN[t], m);
@@ -317,4 +317,10 @@ test('the eager modules carry v3 values as literals (v3/econ.js is lazy) — eve
   assert.equal(X.keyTierXp(), (E.WINS_BASE * 10) / E.WORD_REF);
   assert.equal(W.wordWinsBase({ wordLength: 5, markId: null }), E.WINS_BASE);
   assert.match(RN.REBIRTH_READY_COPY, new RegExp(`×${E.REBIRTH_STEP} FOREVER`));
+  // the live copy names the NEXT rebirth's step: ×3 through R4, ×5 from the 5th rebirth on (Andy oct13)
+  assert.equal(RN.rebirthReadyCopy(0), `REBIRTH READY → ×${E.REBIRTH_STEP} FOREVER`);
+  assert.equal(RN.rebirthReadyCopy(3), 'REBIRTH READY → ×3 FOREVER');
+  assert.equal(RN.rebirthReadyCopy(4), 'REBIRTH READY → ×5 FOREVER');
+  assert.equal(RN.rebirthReadyCopy(12), 'REBIRTH READY → ×5 FOREVER');
+  assert.deepEqual([0, 1, 4, 5, 6].map((r) => E.rebirthMult(r)), [1, 3, 81, 405, 2025]);
 });

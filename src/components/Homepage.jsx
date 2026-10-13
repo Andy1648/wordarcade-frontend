@@ -14,7 +14,7 @@ import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress } from '../progress/xp';
-import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
+import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
 import { rebirthWordsShort } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
@@ -1236,7 +1236,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: null, locked: rollLock },
-    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : needWords ? formatShort(wordsShort) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : needWords ? 'GAME WORDS TO GO' : `×3 XP · ×3 WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : needWords ? `play ${formatNum(wordsShort)} more words in a game` : 'ready', locked: rebirthLock },
+    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : needWords ? formatShort(wordsShort) : 'READY', unit: toRebirth > 0 ? 'LEVELS TO GO' : needWords ? 'GAME WORDS TO GO' : `×${nextRebirthStep(rebirths)} XP · ×${nextRebirthStep(rebirths)} WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : needWords ? `play ${formatNum(wordsShort)} more words in a game` : 'ready', locked: rebirthLock },
     // STATS (moved down from the top-right): its number is the TOTAL multiplier on a key (v4: BASE 1 XP, so the rate IS it)
     stats: { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };

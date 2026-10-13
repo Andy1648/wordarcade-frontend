@@ -383,7 +383,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
             <div className={`shop-rb-hero${advice.badTime ? ' is-bad' : ''}`}>
               {/* REBIRTH RUSH: every rebirth is ×5 XP & WINS, forever — the line names the step, then the
                   total it moves (×5^R → ×5^(R+1)). */}
-              <div className="shop-rb-hero-label">REBIRTH: ×{formatNum(SEASON2 ? V3.econ.REBIRTH_STEP : REBIRTH_POWER)} XP &amp; WINS</div>
+              <div className="shop-rb-hero-label">REBIRTH: ×{formatNum(SEASON2 ? V3.econ.rebirthStep(rebirths + 1) : REBIRTH_POWER)} XP &amp; WINS</div>
               <div className="shop-rb-hero-val">
                 ×{formatMult(rebirthMult(rebirths))} → ×{formatMult(nextMult)}
                 {rebirthReady && !SEASON2 && (

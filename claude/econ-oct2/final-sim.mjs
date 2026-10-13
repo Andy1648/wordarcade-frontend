@@ -44,6 +44,9 @@ const SRC = path.resolve(process.env.SIM_SRC || args.src || path.join(HERE, '..'
 const HOURS = Number(args.hours) || 10;
 const TAG = typeof args.tag === 'string' ? args.tag : 'final';
 const GATE = !args['no-gate'];
+// The mode every game word is played in. The table was cut on FUSE at MODE ×1; FUSE pays ×6 since Andy oct13 (the
+// LV50 lock pays), so the baseline is now an UNGATED ×1 mode — the same numbers the table was cut on. --mode=fuse etc.
+const SIM_MODE = typeof args.mode === 'string' ? args.mode : 'category-blitz';
 
 // ----------------------------------------------------------------------------- STORAGE SHIM + CLOCK
 function makeStore() {
@@ -223,17 +226,17 @@ async function simulate(bot, hours = HOURS) {
     gameCarry -= n;
     for (let i = 0; i < n; i++) {
       const word = sampleWord();
-      WINS.awardWordXp({ mode: 'fuse', wordLength: word.length, word });
+      WINS.awardWordXp({ mode: SIM_MODE, wordLength: word.length, word });
       const prev = runWords;
       runWords += 1;
-      WINS.bankWordWins({ mode: 'fuse', wordLength: word.length, prevWords: prev, nowWords: runWords, prevWeight: runWeight, nowWeight: (runWeight += 1) });
+      WINS.bankWordWins({ mode: SIM_MODE, wordLength: word.length, prevWords: prev, nowWords: runWords, prevWeight: runWeight, nowWeight: (runWeight += 1) });
       if (runWords >= RUN_WORDS) { runWords = 0; runWeight = 0; }
       words += 1;
     }
     letterCarry += bot.lpm * bot.game * DT;
     const typed = Math.floor(letterCarry);
     letterCarry -= typed;
-    if (typed) LX.creditLetterXp(typed, { mode: 'fuse' }); // v4: 0 XP (OVERDRIVE's play clock only)
+    if (typed) LX.creditLetterXp(typed, { mode: SIM_MODE }); // v4: 0 XP (OVERDRIVE's play clock only)
     letters += typed;
     const xpAfter = XP.loadProgress();
     if (xpAfter.level !== xpBefore.level || xpAfter.intoLevel !== xpBefore.intoLevel) gameXp += 1;
@@ -275,7 +278,7 @@ async function simulate(bot, hours = HOURS) {
     bot: bot.id, hours,
     times: { R1: first.R1 ?? null, R3: first.R3 ?? null, R5: first.R5 ?? null, R6: first.R6 ?? null, R7: first.R7 ?? null },
     final: { level: lv(), rebirths: XP.getRebirths(), stars: STORE.getStarsV3(), power: XP.getKeyTier(), wins: WINS.getWins() },
-    words, letters, menuXp, gameXp,
+    all: first, words, letters, menuXp, gameXp,
     server: { calls: srv.calls, grants: srv.grants, ascends: srv.ascends, replays: srv.replays, refusals: srv.refusals, violations: srv.violations.slice(0, 10), violationCount: srv.violations.length, stored: { rebirths: srv.row.rebirths, stars: srv.row.stars, level: srv.row.level } },
     spam: bot.spam ? spam : null,
   };
@@ -292,6 +295,11 @@ for (const b of BOTS.filter((x) => want.includes(x.id))) {
   console.log(`=== FINAL ${b.id.toUpperCase()} (${b.lpm}/${b.wpm} game · ${b.mkpm} menu keys/min · ${Math.round(b.game * 100)}% games) ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
   console.log(`  first: ${Object.entries(r.times).map(([k, v]) => `${k} ${fmt(v)}`).join(' · ')}`);
   console.log(`  at ${HOURS} h: R${r.final.rebirths} ★${r.final.stars} KEY T${r.final.power} LV${r.final.level} · ${r.words} game words · menu XP ${Math.round(r.menuXp)} · server ${r.server.grants} grants / ${r.server.ascends} ascends, refused ${JSON.stringify(r.server.refusals)}, violations ${r.server.violationCount}${r.spam ? ` · spam ${r.spam.calls} calls → ${r.spam.ok} ok, ${r.spam.replaysSent} replays` : ''}`);
+  if (args.ladder) { // --ladder: every rebirth's arrival + the gap since the last one (the late-R wall)
+    let prev = 0;
+    const rows = Object.entries(r.all).filter(([k]) => /^R\d+$/.test(k)).sort((a, b) => a[1] - b[1]);
+    console.log(`  ladder: ${rows.map(([k, v]) => { const g = v - prev; prev = v; return `${k} ${fmt(v)} (+${fmt(g)})`; }).join(' · ')}`);
+  }
 }
 
 // ---- THE TABLE vs FINAL v3 (markdown rows start with '|': the CI job copies them into the summary) -------------------

@@ -8,7 +8,7 @@
 //
 // Module-scoped like xp.js's pendingRebirth: a page reload drops it, which is the safe failure (the
 // player is simply on the menu with the CTA still showing).
-import { loadProgress, getRebirths, rebirthThreshold, REBIRTH_POWER } from './xp.js';
+import { loadProgress, getRebirths, rebirthThreshold, rebirthMult, REBIRTH_POWER } from './xp.js';
 import { formatNum } from '../format.js';
 import { SEASON2 } from './season.js';
 import { rebirthWordsShort } from './rebirthWords.js';
@@ -44,3 +44,13 @@ export function takeRebirthNow() {
 // The button copy — exactly "REBIRTH READY → ×5 FOREVER"; the 5 is REBIRTH_POWER through formatNum.
 // v3 (SEASON2, PROGRESSION FINAL v2): ×3 a rebirth
 export const REBIRTH_READY_COPY = `REBIRTH READY → ×${formatNum(SEASON2 ? 3 : REBIRTH_POWER)} FOREVER`;
+/** The factor the NEXT rebirth adds (season 2: ×3, then ×5 from the 5th — v3/econ rebirthStep), read off the live
+ *  rebirthMult so it can never disagree with the shop's ×N → ×N. */
+export function nextRebirthStep(rc = getRebirths()) {
+  const now = rebirthMult(rc);
+  const step = now > 0 ? rebirthMult(rc + 1) / now : 0;
+  return Number.isFinite(step) && step > 0 ? Math.round(step) : SEASON2 ? 3 : REBIRTH_POWER;
+}
+export function rebirthReadyCopy(rc = getRebirths()) {
+  return `REBIRTH READY → ×${formatNum(nextRebirthStep(rc))} FOREVER`;
+}
