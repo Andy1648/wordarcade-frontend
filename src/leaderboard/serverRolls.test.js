@@ -45,3 +45,12 @@ test('a roll handed the server pick lands on it exactly (mark + shiny), whatever
   assert.equal(plain.result.markId, ROLL_MARKS[0].id);
   assert.equal(plain.result.shiny, false);
 });
+
+test('037: a showcased gear is never grandfathered after the audit; late grandfathers are undone; the double roll is checked', () => {
+  const s37 = readFileSync(join(process.cwd(), 'supabase', 'migrations', '037_gear_grandfather_fix.sql'), 'utf8').replace(/\r\n/g, '\n');
+  const check = s37.slice(s37.indexOf('create or replace function private.gear_check'), s37.indexOf('-- ---- 3.'));
+  assert.ok(!check.includes("'grandfather'"), 'gear_check must not grandfather any more');
+  assert.ok(check.includes('values (p_pid, p_mark, false)'), 'a refusal hides, never reverts');
+  assert.ok(s37.includes("delete from private.gear_owned where source = 'grandfather' and first_at > audit_at + interval '5 seconds';"));
+  assert.ok(s37.includes("if p.created_at >= ROLL_CUTOFF then\n        n := 1;"));
+});
