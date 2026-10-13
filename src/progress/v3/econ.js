@@ -9,7 +9,7 @@
 //   WINS per word     10 × length/5 × MODE × 3^R × MARK × OVERDRIVE     games only. MODE: WB/Blitz 1 · RACE 1.5 ·
 //                                                                       CHAIN 4 · SAT 5 · FUSE 6 (+ FRENZY ×5)
 //   KEY (POWER)       DOUBLES: tier T is ×2^T (×1, ×2, ×4, ×8 …); T → T+1 costs 150 × 5^T wins; KEPT through rebirth
-//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth (×5 from the 5th on), forever
+//   REBIRTH           at LV 15 + 18·R → LV 1; ×3 XP & wins per rebirth, then ×4 (×15 every 5th), forever
 //   ASCENSION         none for now (hidden: canAscend is always false; lb_ascend refuses — 027)
 //   GEMS              game-only: 1 in 15 game words drops 3–12 · bot win +18 · +15 per player beaten · streak +4 ·
 //                     achievements 40–200 · 75 a roll. Menu typing gives no gems.
@@ -20,12 +20,16 @@ export const XP_BASE = 1; // XP per letter at KEY T0 R0, no mark (v3: was 10)
 export const KEY_STEP = 2; // × XP per KEY tier: tier T is ×2^T (v3: replaces v2's ×1, 2, 5 … 1000, ×2.15 ladder)
 export const MARK_BASE_REF = 10; // a worn +N BASE XP mark is sized against BASE 10: ×(10 + N) / 10 (MYTHIC +20 = ×3)
 export const REBIRTH_STEP = 3; // × XP and wins per rebirth (the first REBIRTH_LATE_FROM − 1 rebirths)
-// LATE REBIRTHS (Andy oct13 "progression slows too much after later rebirths"): from the 5th rebirth on, each one pays
-// ×5, not ×3. The gate grows ×1.15^18 ≈ ×12.4 XP a rebirth; at ×3 every rebirth took ~1.9× the last (final-sim
-// --ladder, FAST bot: R8→R9 27 h, R10 ≈ 110 h in). At ×5 the gap grows ~1.15× a rebirth (FAST R10 ≈ 31 h). R1–R5
-// arrive exactly as before (the CI table cells are untouched).
-export const REBIRTH_STEP_LATE = 5;
-export const REBIRTH_LATE_FROM = 5; // the rebirth number that first pays REBIRTH_STEP_LATE
+// LATE REBIRTHS (Andy oct13 "progression slows too much after later rebirths" … "not everything needs to give constant
+// returns"): from the 5th rebirth on each one pays ×4, and every 5th (R5, R10, R15 …) is a JACKPOT ×15 — the Roblox
+// milestone shape (a big rebirth resets the climb, then it grinds harder until the next one). The gate grows ×1.15^18
+// ≈ ×12.4 XP a rebirth; at a flat ×3 every rebirth took ~1.9× the last (final-sim --ladder, FAST: R10 ≈ 110 h in).
+// Measured (final-sim --ladder --mode=chain, MEDIAN): R10→R11 2.0 h after the jackpot vs 7.5 h at a flat ×5; R14 at
+// 37 h vs 70 h. R1–R5 arrive exactly as before (the CI table cells are untouched).
+export const REBIRTH_STEP_LATE = 4;
+export const REBIRTH_JACKPOT = 15;
+export const REBIRTH_JACKPOT_EVERY = 5;
+export const REBIRTH_LATE_FROM = 5; // the rebirth number that first pays the late steps
 export const CURVE_BASE = 100; // need(1)
 export const CURVE_GROWTH = 1.15; // × need per level — each level 15% harder than the last (Andy Oct 7 22:31; v3 had 1.131)
 export const WINS_BASE = 10; // wins for a 5-letter word at R0, MODE ×1, no mark
@@ -108,15 +112,24 @@ export function powerCostAt(tier) {
   const t = int0(tier);
   return t === 0 ? 0 : powerCost(t - 1);
 }
-/** The factor the r-th rebirth adds (r ≥ 1): ×3, then ×5 from REBIRTH_LATE_FROM on. */
-export function rebirthStep(r) {
-  return int0(r) >= REBIRTH_LATE_FROM ? REBIRTH_STEP_LATE : REBIRTH_STEP;
+/** Is the r-th rebirth a JACKPOT (R5, R10, R15 …)? */
+export function isJackpotRebirth(r) {
+  const n = int0(r);
+  return n >= REBIRTH_LATE_FROM && n % REBIRTH_JACKPOT_EVERY === 0;
 }
-/** The product of every rebirth's step: 3^R up to R4, then × 5 a rebirth (R5 = 3^4 × 5). */
+/** The factor the r-th rebirth adds (r ≥ 1): ×3 to R4, then ×4 — ×15 on a JACKPOT rebirth. */
+export function rebirthStep(r) {
+  const n = int0(r);
+  if (n < REBIRTH_LATE_FROM) return REBIRTH_STEP;
+  return isJackpotRebirth(n) ? REBIRTH_JACKPOT : REBIRTH_STEP_LATE;
+}
+/** The product of every rebirth's step (R4 = 81, R5 = 81 × 15, R6 = × 4 …). Closed form, finite at any R. */
 export function rebirthMult(rebirths) {
   const r = int0(rebirths);
   const early = Math.min(r, REBIRTH_LATE_FROM - 1);
-  return fin(Math.pow(REBIRTH_STEP, early) * Math.pow(REBIRTH_STEP_LATE, r - early));
+  const jackpots = r >= REBIRTH_LATE_FROM ? Math.floor(r / REBIRTH_JACKPOT_EVERY) - Math.floor((REBIRTH_LATE_FROM - 1) / REBIRTH_JACKPOT_EVERY) : 0;
+  const plain = r - early - jackpots;
+  return fin(Math.pow(REBIRTH_STEP, early) * Math.pow(REBIRTH_JACKPOT, jackpots) * Math.pow(REBIRTH_STEP_LATE, plain));
 }
 /** ★ multiply nothing in FINAL v2 (ascension is hidden) — kept for the callers that still show it. */
 export function starMult() {

@@ -100,7 +100,7 @@ const H = 60;
 const FINAL = {
   casual: { R1: 60, R3: 5.81 * H, R5: null, END: 3 },
   median: { R1: 21.5, R3: 137.3, R5: 8.91 * H, END: 5 }, // R1 held at 18–25 min (Andy 22:31 / 23:20)
-  fast: { R1: 9.3, R3: 62.8, R5: 3.75 * H, END: 6 },
+  fast: { R1: 9.3, R3: 62.8, R5: 3.75 * H, END: 8 }, // END 6 → 8 (Andy oct13): the R5 JACKPOT ×15 speeds R6+ on purpose
   // 035 (Andy oct12, SKUF): a rebirth needs 25 GAME words since the last one — the 0-game menu masher never rebirths
   menu: { R1: null, R3: null, R5: null, END: 0 },
 };

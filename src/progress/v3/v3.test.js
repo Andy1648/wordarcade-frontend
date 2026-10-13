@@ -317,10 +317,18 @@ test('the eager modules carry v3 values as literals (v3/econ.js is lazy) — eve
   assert.equal(X.keyTierXp(), (E.WINS_BASE * 10) / E.WORD_REF);
   assert.equal(W.wordWinsBase({ wordLength: 5, markId: null }), E.WINS_BASE);
   assert.match(RN.REBIRTH_READY_COPY, new RegExp(`×${E.REBIRTH_STEP} FOREVER`));
-  // the live copy names the NEXT rebirth's step: ×3 through R4, ×5 from the 5th rebirth on (Andy oct13)
+  // the live copy names the NEXT rebirth's step: ×3 through R4, then ×4 — ×15 on every 5th (Andy oct13)
   assert.equal(RN.rebirthReadyCopy(0), `REBIRTH READY → ×${E.REBIRTH_STEP} FOREVER`);
   assert.equal(RN.rebirthReadyCopy(3), 'REBIRTH READY → ×3 FOREVER');
-  assert.equal(RN.rebirthReadyCopy(4), 'REBIRTH READY → ×5 FOREVER');
-  assert.equal(RN.rebirthReadyCopy(12), 'REBIRTH READY → ×5 FOREVER');
-  assert.deepEqual([0, 1, 4, 5, 6].map((r) => E.rebirthMult(r)), [1, 3, 81, 405, 2025]);
+  assert.equal(RN.rebirthReadyCopy(4), 'REBIRTH READY → ×15 FOREVER');
+  assert.equal(RN.rebirthReadyCopy(5), 'REBIRTH READY → ×4 FOREVER');
+  assert.equal(RN.rebirthReadyCopy(9), 'REBIRTH READY → ×15 FOREVER');
+  assert.deepEqual([0, 1, 4, 5, 6, 9, 10, 11].map((r) => E.rebirthMult(r)), [1, 3, 81, 1215, 4860, 311040, 4665600, 18662400]);
+  // the closed form = the product of every step, at any R
+  for (const R of [0, 3, 7, 15, 22, 40]) {
+    let m = 1;
+    for (let i = 1; i <= R; i++) m *= E.rebirthStep(i);
+    assert.ok(Math.abs(E.rebirthMult(R) / m - 1) < 1e-12, `R${R}`);
+  }
+  assert.ok(Number.isFinite(E.rebirthMult(1e6)));
 });
