@@ -175,7 +175,7 @@ test('no MARKS chip before the system is revealed (LV5) — GEARS shows LOCKED a
     await expect(b).toHaveAttribute('data-locked', '');
     await expect(b).toHaveAttribute('aria-disabled', 'true');
     await expect(b.locator('.kb-rval')).toHaveText('LV10');
-    await expect(b.locator('svg[data-icon="lock"]')).toHaveCount(1);
+    await expect(b.locator('img.lock-chains')).toHaveCount(1); // SHACKLES (oct13): chained shut, not a padlock icon
   }
   // a locked tap opens nothing
   await page.locator('.hp-nav.is-gears > button').click({ force: true }); // aria-disabled

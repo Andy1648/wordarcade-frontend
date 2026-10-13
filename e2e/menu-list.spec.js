@@ -45,7 +45,7 @@ test('a fresh LV1 player sees all four rail buttons: UPGRADES + REBIRTH + STATS 
     await expect(b).toHaveAttribute('data-locked', '');
     await expect(b).toHaveAttribute('aria-disabled', 'true');
     await expect(b.locator('.kb-rval')).toHaveText('LV10');
-    await expect(b.locator('svg[data-icon="lock"]')).toHaveCount(1);
+    await expect(b.locator('img.lock-chains')).toHaveCount(1); // SHACKLES (oct13): chained shut, not a padlock icon
     await expect(b).toHaveAttribute('aria-label', /locked, unlocks at level 10/);
   }
   // a locked tap opens nothing; an open one does
