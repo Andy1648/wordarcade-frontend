@@ -12,6 +12,20 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct13 content batch (curated, closed lists)
+  'Zodiac signs': 'Leo',
+  'Chinese zodiac animals': 'Dragon',
+  'Planets & dwarf planets': 'Pluto',
+  'Phases of the Moon': 'waxing crescent',
+  'Polygons with 3 to 12 sides': 'hexagon',
+  'Canadian provinces & territories': 'Ontario',
+  'Australian states & territories': 'Queensland',
+  'Mexican states': 'Jalisco',
+  'Pokémon types': 'Fire',
+  'Months in Spanish': 'enero',
+  'South American countries': 'Peru',
+  'Countries of Oceania': 'Fiji',
+  'The Thirteen Colonies': 'Virginia',
   // Oddly specific
   'Things in your junk drawer': 'rubber bands',
   'Gas station purchases at 2am': 'energy drink',
