@@ -226,7 +226,7 @@
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--rb2-n, 6), minmax(0, 1fr));
 }
 .rb2-ms { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .rb2-ms-dia {
@@ -255,7 +255,10 @@
   color: var(--k-faint);
   text-align: center;
   white-space: nowrap;
+  max-width: 100%;
 }
+/* REBIRTH ROAD: 8 milestones share the track — the labels step down a size so the row never wraps */
+.rb2-track-list.is-long .rb2-ms-what { font-size: var(--fs-k16); }
 .rb2-ms.is-got .rb2-ms-dia { background: var(--k-purple); }
 .rb2-ms.is-got .rb2-ms-r { color: var(--k-ink); }
 /* NIGHT oct8 #5: the hold's sub line is a NUMBER (LV 12 / 51) — 18 px, not the kit's 16 */
@@ -345,4 +348,60 @@
   .rb2-ms-dia { width: 40px; height: 40px; border-width: var(--k-ink-m); }
   .rb2-ms-r { font-size: var(--fs-k18); }
   .rb2-ms-what { font-size: var(--fs-k18); white-space: normal; }
+}
+
+/* ---- REBIRTH ROAD (Andy oct13): JACKPOT rebirths (R5, R10, R15 …) ---------------------------------------------- */
+.rb2-r--after.is-jackpot .rb2-r-after { color: #FFE94A; }
+.rb2-jack-tag {
+  display: inline-block;
+  margin-bottom: 2px;
+  transform: rotate(-6deg);
+  padding: 2px 8px;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k16);
+  letter-spacing: .04em;
+  color: #000;
+  background: #FFE94A;
+  border: 3px solid #A87400;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+}
+.rb2-r--after { position: relative; }
+.rb2-ms.is-jackpot .rb2-ms-r { color: #FFE94A; }
+/* the stamp: invisible at rest, ONE finite slam on a jackpot rebirth (RebirthV2 JACKPOT_SLAM) */
+.rb2-jack {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 30px 12px;
+  background: #FFE94A;
+  border: 5px solid #A87400;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  pointer-events: none;
+}
+.rb2-jack-t {
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-hero);
+  line-height: 1;
+  color: #FF4FA3;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  text-shadow: 5px 5px 0 #000;
+}
+.rb2-jack-s {
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k28);
+  color: #000;
 }

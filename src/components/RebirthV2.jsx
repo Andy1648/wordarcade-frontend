@@ -22,6 +22,15 @@ import { KitBackButton, KitHoldButton, KitPill, KitIcon, FX, fx } from './kit/in
 import { kitPlay } from './kit/motion.js';
 import ShardBurst from './gains/ShardBurst.jsx';
 // the hex plate rests at rotate(-4deg) (RebirthV2.css): the slam keeps the tilt in every frame
+// THE JACKPOT MOMENT (REBIRTH ROAD, Andy oct13): R5, R10, R15 … — a gold stamp SLAMS over the stage, holds, and lifts
+// away. One finite transform/opacity one-shot on a node that rests invisible.
+const JACKPOT_SLAM = [
+  { transform: 'translate(-50%, -50%) rotate(-14deg) scale(2.4)', opacity: 0 },
+  { transform: 'translate(-50%, -50%) rotate(-6deg) scale(.9)', opacity: 1, offset: 0.12 },
+  { transform: 'translate(-50%, -50%) rotate(-8deg) scale(1.05)', opacity: 1, offset: 0.2 },
+  { transform: 'translate(-50%, -50%) rotate(-8deg) scale(1)', opacity: 1, offset: 0.82 },
+  { transform: 'translate(-50%, -62%) rotate(-8deg) scale(.96)', opacity: 0 },
+];
 const HEX_SLAM = [{ transform: 'rotate(-4deg) scale(1)' }, { transform: 'rotate(-10deg) scale(1.55)', offset: 0.18 }, { transform: 'rotate(2deg) scale(.86)', offset: 0.45 }, { transform: 'rotate(-5deg) scale(1.06)', offset: 0.7 }, { transform: 'rotate(-4deg) scale(1)' }];
 import { V3 } from '../progress/season';
 import { loadProgress, getRebirths, rebirthThreshold, rebirthMult } from '../progress/xp';
@@ -100,6 +109,7 @@ export default function RebirthV2({ onBack }) {
   const flashRef = useRef(null);
   const afterRef = useRef(null);
   const shardsRef = useRef(null);
+  const jackRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const narrow = useStageScale(rootRef);
@@ -122,7 +132,11 @@ export default function RebirthV2({ onBack }) {
 
   // THE ×3 MOMENT (NIGHT oct8 #3): one 600 ms one-shot — the hex plate SLAMS and a burst of shards flies out of it.
   // No popup, no text box: the numbers on the screen are the message.
-  const boom = () => {
+  const boom = (jackpot = false) => {
+    if (jackpot && jackRef.current) {
+      kitPlay(jackRef.current, JACKPOT_SLAM, { duration: 2400, easing: 'cubic-bezier(.2,1.2,.4,1)' });
+      if (shardsRef.current) shardsRef.current.burst({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    }
     fx(stageRef.current, FX.shake);
     fx(flashRef.current, FX.flash);
     fx(afterRef.current, FX.slamBig);
@@ -156,7 +170,10 @@ export default function RebirthV2({ onBack }) {
     sndRebirth();
     evRebirth(next.rebirths);
     refreshSessionProps({ rebirths: next.rebirths });
-    boom();
+    const jack = !!(V3.econ && V3.econ.isJackpotRebirth(next.rebirths));
+    // the line says it too (screen readers, REDUCE MOTION — where the stamp never plays)
+    if (jack) setMsg(`JACKPOT REBIRTH — ×${formatNum(V3.econ.rebirthStep(next.rebirths))} · +${formatNum(V3.econ.rebirthGems(next.rebirths))} GEMS`);
+    boom(jack);
   };
 
   const doAscend = async () => {
@@ -184,6 +201,9 @@ export default function RebirthV2({ onBack }) {
   const { level, rebirths, stars, gate, auto, ready, levelReady, wordsShort } = s;
   const econ = V3.econ;
   const canAscend = !!(econ && econ.canAscend(rebirths, stars));
+  const jackpot = !!(econ && econ.isJackpotRebirth && econ.isJackpotRebirth(rebirths + 1)); // the NEXT rebirth is a JACKPOT
+  // the JACKPOT the last rebirth landed on (for the stamp's text — it plays right after the rebirth)
+  const landed = econ && econ.isJackpotRebirth && econ.isJackpotRebirth(rebirths) ? rebirths : null;
   const autoOpen = !!(V3.unlocks && V3.unlocks.unlocked('autoRebirth', { rebirths, stars }));
   const unlocks = V3.unlocks ? V3.unlocks.UNLOCKS : [];
   const lastAt = unlocks.length ? unlocks[unlocks.length - 1].at : 10;
@@ -225,8 +245,8 @@ export default function RebirthV2({ onBack }) {
             <svg className="rb2-arrow" width="70" height="44" viewBox="0 0 70 44" aria-hidden="true" focusable="false">
               <path d="M4 16 L44 16 L44 4 L66 22 L44 40 L44 28 L4 28 Z" fill="#B04BFF" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
             </svg>
-            <div className="rb2-r rb2-r--after" ref={afterRef}>
-              <span className="rb2-cap">AFTER</span>
+            <div className={`rb2-r rb2-r--after${jackpot ? ' is-jackpot' : ''}`} ref={afterRef}>
+              {jackpot ? <span className="rb2-jack-tag" data-testid="rb2-jackpot">JACKPOT</span> : <span className="rb2-cap">AFTER</span>}
               <span className="rb2-r-after">R{formatNum(rebirths + 1)}</span>
             </div>
           </div>
@@ -306,7 +326,7 @@ export default function RebirthV2({ onBack }) {
 
         <section className="rb2-get" aria-label="You get">
           <div className="rb2-get-head">YOU GET</div>
-          <GetRow icon="boost" label="WINS + XP" tone="lilac" value={`×${formatNum(econ ? econ.rebirthStep(rebirths + 1) : 3)}`} />
+          <GetRow icon="boost" label={jackpot ? 'JACKPOT' : 'WINS + XP'} tone={jackpot ? 'gold' : 'lilac'} value={`×${formatNum(econ ? econ.rebirthStep(rebirths + 1) : 3)}`} />
           <div className="rb2-get-sub">{`×${formatMult(rebirthMult(rebirths))} → ×${formatMult(rebirthMult(rebirths + 1))} FOREVER`}</div>
           {econ && econ.rebirthGems(rebirths + 1) > 0 ? <GetRow icon="gems" label="GEMS" tone="cyan" value={`+${formatNum(econ.rebirthGems(rebirths + 1))}`} /> : null}
           <GetRow icon="power" label="POWER" tone="gold" value="KEPT" />
@@ -319,11 +339,11 @@ export default function RebirthV2({ onBack }) {
           <div className="rb2-track-rail" aria-hidden="true">
             <div className="rb2-track-fill" style={{ transform: `scaleX(${trackF.toFixed(3)})` }} />
           </div>
-          <ol className="rb2-track-list">
+          <ol className={`rb2-track-list${unlocks.length > 6 ? ' is-long' : ''}`} style={{ '--rb2-n': unlocks.length }}>
             {unlocks.map((u) => {
               const got = V3.unlocks.unlocked(u.id, { rebirths, stars });
               return (
-                <li key={u.id} className={`rb2-ms${got ? ' is-got' : ''}`} data-unlock={u.id} data-at={u.at}>
+                <li key={u.id} className={`rb2-ms${got ? ' is-got' : ''}${econ && econ.isJackpotRebirth && econ.isJackpotRebirth(u.at) ? ' is-jackpot' : ''}`} data-unlock={u.id} data-at={u.at}>
                   <span className="rb2-ms-dia" aria-hidden="true">
                     <span className="rb2-ms-r">{u.at === 0 ? 'GO' : `R${u.at}`}</span>
                   </span>
@@ -340,6 +360,10 @@ export default function RebirthV2({ onBack }) {
       </div>
       </div>
       <div className="rb2-flash" ref={flashRef} aria-hidden="true" />
+      <div className="rb2-jack" ref={jackRef} aria-hidden="true">
+        <span className="rb2-jack-t">JACKPOT</span>
+        <span className="rb2-jack-s">{landed && econ ? `×${formatNum(econ.rebirthStep(landed))} · +${formatNum(econ.rebirthGems(landed))} GEMS` : ''}</span>
+      </div>
       <ShardBurst ref={shardsRef} />
     </div>
   );

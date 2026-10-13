@@ -149,7 +149,7 @@ test('ASCENSION is HIDDEN (FINAL v2): no save can ascend locally, at any R', () 
 
 test('UNLOCKS: start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd MARK · R7 LUCK ×1.25 (no ASCEND) (pure + live)', () => {
   const at = Object.fromEntries(U.UNLOCKS.map((u) => [u.id, u.at]));
-  assert.deepEqual(at, { rollScreen: 0, autoRoll: 1, autoRebirth: 2, mark2: 5, luck: 7 });
+  assert.deepEqual(at, { rollScreen: 0, autoRoll: 1, autoRebirth: 2, mark2: 5, luck: 7, odLong: 10, powerSale: 15, drop2: 20 });
   assert.equal(U.unlocked('rollScreen', { rebirths: 0 }), true, 'ROLL + INDEX from the start');
   assert.equal(U.unlocked('autoRoll', { rebirths: 0 }), false);
   assert.equal(U.unlocked('autoRoll', { rebirths: 1 }), true);
@@ -165,6 +165,27 @@ test('UNLOCKS: start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd M
   assert.equal(U.unlockLuckMult(), 1.25);
   const st = MR.normalize(null);
   near(MR.luck(st, { permanentOwned: 0, markLuck: 0 }), 1.25);
+});
+
+test('REBIRTH ROAD (Andy oct13): jackpot gems, R10 OVERDRIVE ×2 LONG, R15 POWER −25%, R20 DAILY DROP ×2', async () => {
+  const OD = await import('../overdrive.js');
+  const DD = await import('./dailyDrop.js');
+  // a JACKPOT rebirth pays +150 on top of 25 × R
+  assert.deepEqual([4, 5, 6, 10].map((r) => E.rebirthGems(r)), [100, 125 + 150, 150, 250 + 150]);
+  reset();
+  X.saveRebirths(9);
+  const od9 = OD.overdriveLengthMs();
+  const cost9 = X.keyTierCost(3);
+  const drop9 = DD.payText(0);
+  X.saveRebirths(10);
+  assert.equal(OD.overdriveLengthMs(), od9 * 2, 'R10: OVERDRIVE runs twice as long');
+  assert.equal(X.keyTierCost(3), cost9, 'POWER full price before R15');
+  X.saveRebirths(15);
+  assert.equal(X.keyTierCost(3), Math.round(cost9 * 0.75), 'R15: POWER −25%');
+  assert.equal(DD.payText(0), drop9, 'the drop pays its table before R20');
+  X.saveRebirths(20);
+  assert.equal(DD.payText(0), `+${DD.DROP_TIERS[0].pay.gems * 2} GEMS`, 'R20: the drop pays double');
+  reset();
 });
 
 test('AUTO REBIRTH: a toggle that opens at R2 (refused below); no 2nd boost slot', () => {

@@ -47,7 +47,7 @@ test('unlockNews: every rebirth unlock open and not yet said, in ladder order, w
   assert.ok(r3.every((u) => u.tile && u.icon), 'each toast has a tile colour and a kit icon');
   assert.deepEqual(N.unlockNews(['autoRoll'], { rebirths: 3, stars: 0 }).map((u) => u.id), ['autoRebirth']);
   // ASCEND needs the climb; the others are kept by ★
-  assert.deepEqual(N.unlockNews([], { rebirths: 0, stars: 1 }).map((u) => u.id), ['autoRoll', 'autoRebirth', 'mark2', 'luck']);
+  assert.deepEqual(N.unlockNews([], { rebirths: 0, stars: 1 }).map((u) => u.id), ['autoRoll', 'autoRebirth', 'mark2', 'luck', 'odLong', 'powerSale', 'drop2']);
 });
 
 test('checkNews: the first look is silent; a rebirth then says RANK UP + its unlock ONCE; nothing pays', () => {

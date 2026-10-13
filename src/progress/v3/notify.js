@@ -27,6 +27,9 @@ export const UNLOCK_TOAST = {
   mark2: { tile: '#B04BFF', icon: 'index', badge: '2' },
   luck: { tile: '#12A99A', icon: 'luck' },
   ascend: { tile: '#FFE94A', icon: 'ascend' },
+  odLong: { tile: '#FF6B3D', icon: 'overdrive' },
+  powerSale: { tile: '#FFE94A', icon: 'power' },
+  drop2: { tile: '#FF4FA3', icon: 'gems' },
 };
 
 /** PURE: the banner payload when the rank rose from index `seen` to `now` (null otherwise — ranks never drop). */

@@ -22,6 +22,7 @@ import { SEASON2 } from '../season.js';
 import { S2_PREFIX } from './store.js';
 import { grantGems } from '../gemsCore.js';
 import { grantOverdrive } from './stock.js';
+import { dropUnlockMult } from './unlocks.js'; // R20 DAILY DROP ×2 (REBIRTH ROAD)
 
 export const DROP_KEY = `${S2_PREFIX}drop`;
 /** Fired on window whenever the drop is written — the menu's UPGRADES dot re-reads on it. */
@@ -40,9 +41,10 @@ export const DROP_TIERS = [
 export function payText(i) {
   const t = DROP_TIERS[i];
   if (!t) return '';
-  if (t.pay.gems) return `+${t.pay.gems} GEMS`;
+  const k = dropUnlockMult();
+  if (t.pay.gems) return `+${t.pay.gems * k} GEMS`;
   const o = t.pay.overdrive;
-  return `OVERDRIVE ×${o.mult} · ${o.min} MIN`;
+  return `OVERDRIVE ×${o.mult} · ${o.min * k} MIN`;
 }
 
 /** The LOCAL calendar day of `now` ('YYYY-MM-DD'). */
@@ -155,10 +157,12 @@ export function claimDrop(now = Date.now(), rng = Math.random) {
   const tier = d.tier != null ? d.tier : rollTier(rng);
   if (!write({ day: d.day, claimed: true, tier })) return { ok: false, reason: 'season', tier };
   const pay = DROP_TIERS[tier].pay;
+  const k = dropUnlockMult();
   if (pay.gems) {
-    grantGems(pay.gems, 'daily', { detail: 'daily drop' });
-    return { ok: true, tier, gems: pay.gems };
+    grantGems(pay.gems * k, 'daily', { detail: 'daily drop' });
+    return { ok: true, tier, gems: pay.gems * k };
   }
-  grantOverdrive(pay.overdrive.mult, pay.overdrive.min, now);
-  return { ok: true, tier, overdrive: pay.overdrive };
+  const od = { mult: pay.overdrive.mult, min: pay.overdrive.min * k };
+  grantOverdrive(od.mult, od.min, now);
+  return { ok: true, tier, overdrive: od };
 }

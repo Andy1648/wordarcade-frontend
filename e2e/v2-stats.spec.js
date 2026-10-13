@@ -1,7 +1,7 @@
 // e2e/v2-stats.spec.js — THE v2 STATS SCREEN (P8; claude/mockups/v2/Stats.dc.html) behind ?season2=1. A season-2 save
 // at R5 KEY 6 (no mark, no boost; a leftover ★1 that FINAL v2 ignores — ascension is hidden):
-//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×243 = 2,430 WINS / WORD, then the chain in FINAL v2's order
-//      BASE 10 · MODE ×1 · REBIRTH ×243 (3^R) · MARK ×1 · BOOST ×1 — no STARS chip; the XP tab is KEY-first; the PRINTED
+//   1. the TOTAL multiplier comes FIRST (Balatro-style): ×1,215 = 12,150 WINS / WORD, then the chain in FINAL v2's order
+//      BASE 10 · MODE ×1 · REBIRTH ×1,215 (3^4 × the R5 JACKPOT ×15) · MARK ×1 · BOOST ×1 — no STARS chip; the XP tab is KEY-first; the PRINTED
 //      chips multiply out to the PRINTED total (numbers audit, Andy item 5);
 //   2. REPLAY (tap the TOTAL) runs the chain again from ×1 and lands on the same total — and every animation it plays
 //      is FINITE (nothing on the screen loops at rest);
@@ -64,7 +64,7 @@ const toWins = async (st) => {
   await expect(st.locator('.st2-tab[data-tab="wins"]')).toHaveAttribute('aria-selected', 'true');
 };
 
-test('the TOTAL first: ×243 = 2,430 WINS / WORD, then BASE · MODE · REBIRTH · MARK · BOOST; XP is KEY-first', async ({ page }) => {
+test('the TOTAL first: ×1,215 = 12,150 WINS / WORD, then BASE · MODE · REBIRTH · MARK · BOOST; XP is KEY-first', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
@@ -73,10 +73,10 @@ test('the TOTAL first: ×243 = 2,430 WINS / WORD, then BASE · MODE · REBIRTH �
   await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
   await expect(st.locator('.st2-unit')).toHaveText('XP / KEY');
   await toWins(st);
-  await expect(total).toHaveText('×243', { timeout: 8000 });
-  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('2,430');
+  await expect(total).toHaveText('×1,215', { timeout: 8000 });
+  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('12.2K');
   await expect(st.locator('.st2-unit')).toHaveText('WINS / WORD');
-  await expect(st.locator('.st2-basex')).toHaveText('BASE 10 × 243');
+  await expect(st.locator('.st2-basex')).toHaveText('BASE 10 × 1,215');
   // the TOTAL is the first number on the screen (before the chain)
   const order = await st.evaluate((root) => {
     const t = root.querySelector('[data-testid="st2-total"]');
@@ -85,11 +85,11 @@ test('the TOTAL first: ×243 = 2,430 WINS / WORD, then BASE · MODE · REBIRTH �
   });
   expect(order, 'TOTAL precedes the chain').toBe(true);
   expect(await chipIds(st)).toEqual(['base', 'mode', 'rebirth', 'mark', 'boost']);
-  expect(await chipVals(st)).toEqual(['10', '×1', '×243', '×1', '×1']);
+  expect(await chipVals(st)).toEqual(['10', '×1', '×1,215', '×1', '×1']);
   await expect(st.locator('[data-chip="mode"] .st2-chip-tag')).toHaveText('WORD BOMB');
   await expect(st.locator('[data-chip="rebirth"] .st2-chip-tag')).toHaveText('R5');
   // the tabs carry their own totals
-  await expect(st.locator('.st2-tab[data-tab="wins"] .st2-tab-total')).toHaveText('×243');
+  await expect(st.locator('.st2-tab[data-tab="wins"] .st2-tab-total')).toHaveText('×1,215');
   // XP / LETTER: KEY 2^6 (×64) · REBIRTH 3^5 · MARK · BOOST
   await st.locator('.st2-tab[data-tab="xp"]').click();
   await expect(st.locator('.st2-tab[data-tab="xp"]')).toHaveAttribute('aria-selected', 'true');
@@ -128,7 +128,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
       expect(Math.abs(base * total - result) / result, `${tab}: BASE ${base} × ${total} vs ${result}`).toBeLessThan(0.006);
       if (tab === 'wins') {
         expect(ids).toEqual(['base', 'mode', 'rebirth', 'mark', 'index', 'boost']);
-        expect(vals.slice(0, 4)).toEqual([20, 1, 27, 3]); // BASE 10 + its LEGENDARY substat +10 (gear card v4) · MODE 1 · 3^3 · LEGENDARY ×3 (Andy oct11)
+        expect(vals.slice(0, 4)).toEqual([20, 1, 27, 5]); // BASE 10 + its LEGENDARY substat +10 (gear card v4) · MODE 1 · 3^3 · LEGENDARY ×5 (GEAR OP 2, Andy oct13)
       } else {
         expect(ids).toEqual(['base', 'power', 'rebirth', 'mark', 'index', 'boost']);
         expect(vals.slice(0, 3)).toEqual([1, 8, 27]); // BASE 1 · KEY 2^3 · 3^3 (FINAL v3)
@@ -148,13 +148,13 @@ test('REPLAY runs the chain again from ×1 to the same total — every animation
   const st = await boot(page);
   const total = st.locator('[data-testid="st2-total"]');
   await toWins(st);
-  await expect(total).toHaveText('×243', { timeout: 8000 });
+  await expect(total).toHaveText('×1,215', { timeout: 8000 });
   await st.locator('.st2-big').click();
   await expect(total).toHaveText('×1');
   // mid-chain: a running total between ×1 and ×64 (the REBIRTH chip counts up)
   await expect(total).not.toHaveText('×1', { timeout: 3000 });
-  await expect(total).toHaveText('×243', { timeout: 8000 });
-  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('2,430');
+  await expect(total).toHaveText('×1,215', { timeout: 8000 });
+  await expect(st.locator('[data-testid="st2-result"]')).toHaveText('12.2K');
   const loops = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.st2'))
     .filter((a) => a.effect.getTiming().iterations === Infinity).length);
@@ -165,11 +165,11 @@ test('REDUCE MOTION: the finished chain at once, nothing plays', async ({ page }
   await page.setViewportSize({ width: 1366, height: 657 });
   const st = await boot(page, { reduce: true });
   await toWins(st);
-  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243', { timeout: 1500 });
+  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×1,215', { timeout: 1500 });
   // the tab click's own (softened) press squash is app-wide button feedback, not the chain — let it end first
   await page.waitForFunction(() => !document.getAnimations().some((a) => a.playState === 'running' && a.effect?.target?.closest?.('.st2')));
   await st.locator('.st2-big').click();
-  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243');
+  await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×1,215');
   const running = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.st2'))
     .map((a) => `${a.constructor.name}:${a.transitionProperty || a.animationName || ''}:${a.effect.target.className}`));
@@ -196,7 +196,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     await page.setViewportSize(vp);
     const st = await boot(page);
     await toWins(st);
-    await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×243', { timeout: 8000 });
+    await expect(st.locator('[data-testid="st2-total"]')).toHaveText('×1,215', { timeout: 8000 });
     const m = await page.evaluate(() => {
       const root = document.querySelector('.st2');
       const W = window.innerWidth;

@@ -3,6 +3,7 @@
 // live game's eager chunk carries no v3 logic at all (payload ratchet, e2e/payload-budget.spec.js). The setters take
 // one-letter keys (that is what keeps them small); each swap object below names what it replaces. Imports the live
 // modules it extends — this chunk loads after them, so there is no cycle at evaluation time.
+import { powerPriceUnlockMult } from './unlocks.js';
 import { keyTierCost as keyTierCostV, doRebirth, getRebirths, getKeyTier, saveRebirths, saveKeyTier, saveProgress, rebirthThreshold, rebirthMult, roundWordXp, finiteCap } from '../xp.js';
 import { MARK_TIERS } from '../marks.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned } from '../shop.js';
@@ -69,7 +70,7 @@ export const xpSwap = {
   j: (mode) => modeMult(mode),
   e: rebirthGate, // tableRebirthThreshold: LV ≥ 15 + 18·R (no grandfathering)
   f: () => (WINS_BASE * 10) / WORD_REF, // keyTierXp: 10 wins a 5-letter word = 20 a letter in the receipt's ×10 units
-  g: powerCostAt, // keyTierCostAt: T → T+1 costs 150 × 5^T wins
+  g: (t) => { const c = powerCostAt(t); const k = powerPriceUnlockMult(); return k === 1 ? c : Math.round(c * k); }, // keyTierCostAt: T → T+1 costs 150 × 5^T wins (× 0.75 from R15 — REBIRTH ROAD)
   h: (state, gain) => creditXpV3(state, gain), // creditXp: O(1) carry
   /** xpPerInput (v4 "SIMPLE"): a MENU key pays the FULL rate — 1 × 2^T × 3^R × MARK (× BOOST / OVERDRIVE through the
    *  caller's markMult). No ×0.2 share, no rounding, no floor: T1 = 2 a key, T2 = 4. The ONLY source of XP. */

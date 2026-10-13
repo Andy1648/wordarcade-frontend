@@ -11,6 +11,7 @@
 import { announceTimers } from './boost.js';
 import { overdrivePerkMinutes, freeOverdriveOn, overdriveLengthMult, FREE_OD_SEC, FREE_OD_EVERY_MIN } from './markPerks.js';
 import { markOverdriveSec } from './markRollsCore.js';
+import { V3 } from './season.js'; // V3.unlocks: the R10 OVERDRIVE ×2 LONG unlock (season 2 only — installed lazily)
 // SEASON 2 (PROGRESSION FINAL v2): OVERDRIVE is IN the formulas (× OVERDRIVE on XP and wins) — the same rule as
 // here, its state under the season's own key (v3/hooks.js S2_KEYS maps taw.overdrive → taw.s2.overdrive).
 
@@ -67,7 +68,13 @@ export function overdriveLengthMs() {
   } catch {
     add = 0;
   }
-  return (OVERDRIVE_MIN * 60000 + (Number.isFinite(add) && add > 0 ? add * 1000 : 0)) * overdriveLengthMult();
+  let rb = 1;
+  try {
+    rb = V3.unlocks ? V3.unlocks.odLengthUnlockMult() : 1;
+  } catch {
+    rb = 1;
+  }
+  return (OVERDRIVE_MIN * 60000 + (Number.isFinite(add) && add > 0 ? add * 1000 : 0)) * overdriveLengthMult() * rb;
 }
 export const FREE_OD_EVERY_MS = FREE_OD_EVERY_MIN * 60000;
 export const FREE_OD_MS = FREE_OD_SEC * 1000;

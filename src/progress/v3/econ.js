@@ -41,6 +41,7 @@ export const REBIRTH_GATE_STEP = 18; // … then +18 levels a rebirth (R2 LV33, 
 export const ASCENSION_ON = false; // FINAL v2: no ascension for now (hidden)
 export const ASCEND_AT = 10; // kept for the hidden ascension (lb_ascend refuses while ASCENSION_ON is false)
 export const ASCEND_STEP = 5;
+export const JACKPOT_GEMS = 150; // REBIRTH ROAD (Andy oct13): a JACKPOT rebirth (R5, R10 …) pays +150 on top — 2 rolls. 036's gem budget (250 a game word, 25 words a rebirth) covers it many times over
 export const REBIRTH_GEMS_PER_R = 25; // Andy oct11: a rebirth pays 25 × the new R (R1 25 · R3 75 = a roll · R10 250) — levels pay none now
 export const MENU_SHARE = 0.2; // a menu letter = a fifth of a game letter
 
@@ -159,7 +160,7 @@ export function rebirthGate(rebirths) {
 }
 /** Gems a rebirth pays: REBIRTH_GEMS_PER_R × the R it lands on (Andy oct11). */
 export function rebirthGems(rcAfter) {
-  return REBIRTH_GEMS_PER_R * int0(rcAfter);
+  return REBIRTH_GEMS_PER_R * int0(rcAfter) + (isJackpotRebirth(rcAfter) ? JACKPOT_GEMS : 0);
 }
 /** The rebirth count an ascension would need at `stars` (hidden — see ASCENSION_ON). */
 export function ascendAt(stars = 0) {

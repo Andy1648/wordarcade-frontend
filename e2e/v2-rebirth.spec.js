@@ -70,8 +70,8 @@ test('hold < 1 s sends nothing; a full hold sends ONE lb_rebirth; disabled while
   await expect(screen.locator('.rb2-get')).toContainText('GEMS+25'); // R0 → R1 pays 25
   await expect(screen.locator('[data-testid="rb2-cost"]')).toHaveText('BACK TO LV 1 · KEY KEPT');
   await expect(btn).toContainText('LV 60 → 1');
-  // the UNLOCKS track (v3/unlocks.js): five diamonds (no ASCEND in v2); ROLL + INDEX is lit from the start
-  await expect(screen.locator('.rb2-ms')).toHaveCount(5);
+  // the UNLOCKS track (v3/unlocks.js): eight diamonds (no ASCEND in v2; REBIRTH ROAD R10 / R15 / R20); ROLL + INDEX lit
+  await expect(screen.locator('.rb2-ms')).toHaveCount(8);
   await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(1);
   await expect(screen.locator('.rb2-ms[data-unlock="rollScreen"]')).toHaveClass(/is-got/);
   await expect(screen.locator('[data-testid="rb2-auto"]'), 'AUTO REBIRTH opens at R2').toHaveCount(0);
@@ -129,8 +129,8 @@ test('R10: no ASCEND (hidden in v2) — every unlock lit; AUTO REBIRTH toggles',
   // an established season-2 row (submitted a minute ago) — a first submit would clamp R to the word count
   const row = { id: 'me-rb2', username: 'Holder', level: 1, rebirths: 10, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 13, submitted_at: Date.now() - 60_000 };
   const { board, screen } = await boot(page, { row, local: { level: 1, rebirths: 10 } });
-  await expect(screen.locator('.rb2-ms')).toHaveCount(5);
-  await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(5);
+  await expect(screen.locator('.rb2-ms')).toHaveCount(8);
+  await expect(screen.locator('.rb2-ms.is-got')).toHaveCount(6); // R10: everything up to OVERDRIVE ×2 (R15 / R20 still ahead)
   await expect(screen.locator('.rb2-ms[data-unlock="ascend"]')).toHaveCount(0);
   await expect(screen.locator('.rb2-ascend')).toHaveCount(0);
   // AUTO REBIRTH (R2+): a toggle on this screen, kept in taw.s2.autoRebirth
@@ -155,4 +155,25 @@ test('phone 390×844: the same screen, the same hold, no horizontal overflow', a
   await hold(page, btn, 1150);
   await expect(screen.locator('[data-testid="rb2-now"]')).toHaveText('R1', { timeout: 15_000 });
   expect(board.calls.rebirth).toBe(1);
+});
+
+test('REBIRTH ROAD: R4 → R5 is a JACKPOT — tagged before, ×15 + 25 × 5 + 150 gems, the stamp line after', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const row = { id: 'me-jack', username: 'Holder', level: 120, rebirths: 4, lifetime_words: 2000, lifetime_letters: 9000, wins_per_word: 0, econ: 13, submitted_at: Date.now() - 60_000 };
+  const { screen } = await boot(page, { row, local: { level: 120, rebirths: 4 } });
+  await expect(screen.locator('[data-testid="rb2-jackpot"]')).toHaveText('JACKPOT');
+  await expect(screen.locator('.rb2-get')).toContainText('JACKPOT×15');
+  await expect(screen.locator('.rb2-get')).toContainText('GEMS+275');
+  await expect(screen.locator('.rb2-ms[data-unlock="odLong"]')).toHaveClass(/is-jackpot/);
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/rb-before.png` });
+  const before = await s2(page);
+  await hold(page, screen.locator('.rb2-hold .kb'), 1300);
+  await expect(screen.locator('.rb2-msg')).toContainText('JACKPOT REBIRTH — ×15 · +275 GEMS', { timeout: 10_000 });
+  if (process.env.SHOT_DIR) { await page.waitForTimeout(450); await page.screenshot({ path: `${process.env.SHOT_DIR}/rb-jack.png` }); }
+  const after = await s2(page);
+  expect(after.rebirths).toBe(5);
+  expect(after.gems - before.gems).toBe(275);
+  // the next one is a plain ×4
+  await expect(screen.locator('[data-testid="rb2-jackpot"]')).toHaveCount(0);
 });
