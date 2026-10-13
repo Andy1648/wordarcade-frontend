@@ -11,7 +11,7 @@
 // The UI renders it from a fixed template. Presence can be inflated by a script; it's a vibe number.
 //
 // COST: one socket per open menu, heartbeat every 25 s, dropped after 60 s in a hidden tab.
-import { LEADERBOARD_ENABLED, getMyProfile } from './client.js';
+import { LEADERBOARD_ENABLED, getMyProfile, rpc } from './client.js';
 import { nameVerdict } from './nameFilter.js';
 import { ROLL_TICK_TIERS } from './tickText.js';
 
@@ -59,6 +59,30 @@ export function cleanTick(p) {
   return { k, n, v };
 }
 
+// 038 (Andy oct13 — a friend "used commands"): a public channel takes anyone's broadcast, so a console can post
+// "NAME ROLLED SECRET" with no roll at all. Every received tick is checked against the SERVER first (lb_tick_ok: a
+// claimed server roll of that tier in the last minutes, the level / rebirths on the row, the board rank) and shown only
+// if it holds. Until 038 runs (the RPC 404s) ticks show as before; a network error drops the tick (never a fake line).
+let tickCheck = 'unknown'; // 'unknown' | 'on' | 'off' (pre-038)
+export async function verifyTick(t, call = rpc) {
+  if (tickCheck === 'off') return true;
+  try {
+    const ok = await call('lb_tick_ok', { p_k: t.k, p_n: t.n, p_v: t.v });
+    tickCheck = 'on';
+    return ok === true;
+  } catch (e) {
+    const m = String((e && (e.code || e.message)) || '');
+    if (/lb_tick_ok|PGRST202|http_404|Could not find the function/i.test(m)) {
+      tickCheck = 'off';
+      return true;
+    }
+    return false;
+  }
+}
+export function resetTickCheck() {
+  tickCheck = 'unknown';
+}
+
 function countPresence(state) {
   return state && typeof state === 'object' ? Object.keys(state).length : 0;
 }
@@ -102,7 +126,7 @@ function connect() {
       emit({ type: 'online', online });
     } else if (d.event === 'broadcast' && d.payload && d.payload.event === 'tick') {
       const t = cleanTick(d.payload.payload);
-      if (t) emit({ type: 'tick', tick: t });
+      if (t) verifyTick(t).then((ok) => { if (ok) emit({ type: 'tick', tick: t }); });
     }
   };
   const drop = () => {

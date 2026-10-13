@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanTick, isLevelMilestone, announceRolls, rollTickCode } from './live.js';
+import { cleanTick, isLevelMilestone, announceRolls, rollTickCode, verifyTick, resetTickCheck } from './live.js';
 import { tickText, tickParts } from './tickText.js';
 
 test('the ticker renders only well-formed, clean {kind, name, number} messages', () => {
@@ -62,4 +62,16 @@ test('TIER IDENTITY: level and rebirth ticks carry their rung, the text is uncha
   assert.deepEqual(tickParts({ k: 'lv', n: 'ZED', v: 50 }), { lead: 'ZED just hit ', tag: 'LV 50', rarity: 'legendary' });
   assert.deepEqual(tickParts({ k: 'rb', n: 'ZED', v: 5 }), { lead: 'ZED reached ', tag: 'REBIRTH 5', rarity: 'legendary' });
   assert.deepEqual(tickParts({ k: 'rank', n: 'ZED', v: 3 }), { lead: 'ZED took #3', tag: '', rarity: null });
+});
+
+test('038: a received tick shows only when the server backs it; pre-038 it shows; a network error drops it', async () => {
+  const t = { k: 'roll', n: 'ZED', v: 5 };
+  resetTickCheck();
+  assert.equal(await verifyTick(t, async () => false), false, 'a forged ROLLED SECRET is dropped');
+  assert.equal(await verifyTick(t, async () => true), true);
+  resetTickCheck();
+  assert.equal(await verifyTick(t, async () => { throw Object.assign(new Error('x'), { code: 'network' }); }), false);
+  assert.equal(await verifyTick(t, async () => { throw Object.assign(new Error('x'), { code: 'PGRST202' }); }), true, 'pre-038: as before');
+  assert.equal(await verifyTick(t, async () => false), true, 'and stays off for the page load');
+  resetTickCheck();
 });
