@@ -17,6 +17,8 @@ const BASE_GAMES = [
   {
     id: 'word-bomb',
     artKey: 'WordBombArt',
+    // Andy oct14 art run: the painted card (public/cards/wb-*.webp) replaces the code-drawn scene
+    artLayers: { bg: '/cards/wb-bg.webp', hero: '/cards/wb-hero.webp', fx: '/cards/wb-fx.webp' },
     name: 'WORD\nBOMB',
     description: 'USE THE LETTERS BEFORE TIME RUNS OUT.',
     baseColor: '#FF6B3D',
@@ -34,6 +36,8 @@ const BASE_GAMES = [
   {
     id: 'category-blitz',
     artKey: 'CategoryBlitzArt',
+    // Andy oct14 art run: the painted card — the brain + buzzer stand higher (the buzzer is at the art's bottom)
+    artLayers: { bg: '/cards/cb-bg.webp', hero: '/cards/cb-hero.webp', fx: '/cards/cb-fx.webp', heroY: '-19%', heroScale: 0.7 },
     name: 'CATEGORY\nBLITZ',
     // THE CARD SAYS "BLITZ". `name` stays the full title — it is what the mode dialog shows
     // and what the card's aria-label reads out, and neither is width-constrained. The CARD is:

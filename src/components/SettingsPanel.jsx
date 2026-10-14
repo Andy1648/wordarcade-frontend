@@ -5,6 +5,7 @@
 //   SOUND            MUTE + a 10-step bar = the master volume (0 = sound off)     audio/audioCore + gameSounds + clack
 //   MUSIC            ON / OFF (App owns the music; it ducks it per screen)        onToggleMusic
 //   REDUCE MOTION    ON / OFF, live (<html data-reduce-motion>) — accessibility    lib/reduceMotion
+//   BEAT SYNC        ON / OFF — the menu bouncing to the music (oct14)            lib/beatSync
 //
 // NUMBER STYLE and KEYBOARD SOUNDS have no UI any more; their stored values (format.js taw.numStyle, clack taw.clack)
 // still apply exactly as saved. MUTE silences the keyboard clack too, so a save that had it on is never stuck with it.
@@ -21,10 +22,9 @@ import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum } from '../format';
 import { exportSave, importSave } from '../save/saveBackup';
-import { V3 } from '../progress/season';
-import { getPlatePick, setPlatePick } from '../progress/platePick';
 import './kit/tokens.css';
 import './SettingsPanel.css';
+import { beatSyncOn, setBeatSync } from '../lib/beatSync';
 
 const STEPS = 10;
 
@@ -125,41 +125,12 @@ function ResetRow() {
   );
 }
 
-// RANK PLATE (Andy oct8: "choose which rank plate shows next to your name"): any rank already reached.
-function PlateRow() {
-  const R = V3.ranks;
-  const [pick, setPick] = useState(() => getPlatePick());
-  if (!R || !R.RANKS_V3 || typeof R.liveRankV3 !== 'function') return null;
-  const reached = R.RANKS_V3.indexOf(R.liveRankV3());
-  const opts = R.RANKS_V3.slice(0, Math.max(0, reached) + 1);
-  const shown = pick != null && pick <= reached ? pick : reached;
-  const choose = (i) => {
-    const v = i === reached ? null : i; // the current rank = "no pick" (it moves up with you)
-    setPlatePick(v);
-    setPick(v);
-  };
-  return (
-    <div className="sp-plates" style={{ '--sp-c': '#FFC23D' }}>
-      <div className="sp-text">
-        <span className="sp-label">RANK PLATE</span>
-        <span className="sp-sub">WHICH RANK SHOWS NEXT TO YOUR NAME · HIGHEST = DEFAULT</span>
-      </div>
-      <div className="sp-plate-list" role="radiogroup" aria-label="Rank plate">
-        {opts.map((r, i) => (
-          <button key={r.name} type="button" role="radio" aria-checked={shown === i} className={`sp-plate${shown === i ? ' is-on' : ''}`} onClick={() => choose(i)}>
-            {r.name}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet = false, sfxMuted = false, onToggleSfx = null, onClose, onChange }) {
   const [vol, setVol] = useState(() => (isEventSoundsEnabled() ? Math.round(getMasterVolume() * STEPS) : 0));
   // the level MUTE returns to (the last one heard; a fresh save un-mutes to the stored master volume)
   const [back, setBack] = useState(() => Math.max(1, Math.round(getMasterVolume() * STEPS)) || STEPS);
   const reduceOn = useReduceMotion();
+  const [beatOn, setBeatOn] = useState(() => beatSyncOn());
 
   const setLevel = (n) => {
     ensureCtx(); // a user gesture: safe to warm the context so the change is audible
@@ -210,7 +181,10 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
       <Row tone="#2EFFE0" label="REDUCE MOTION" sub="ON = CALMER">
         <OnOff on={reduceOn} onClick={() => setReduceMotion(!reduceOn)} label="Reduce motion" />
       </Row>
-      <PlateRow />
+      {/* Andy oct14: the music bounce (cards, title, tiles) is its own switch, separate from REDUCE MOTION */}
+      <Row tone="#FF4FA3" label="BEAT SYNC" sub="MENU BOUNCES TO THE MUSIC">
+        <OnOff on={beatOn} onClick={() => { setBeatSync(!beatOn); setBeatOn(!beatOn); }} label="Beat sync" />
+      </Row>
       <SaveRow />
       <ResetRow />
     </div>
@@ -219,13 +193,14 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
   // the SHEET: season 2's sound-control popover (AudioControls opens/closes it; it never opens on its own)
   return createPortal(
     <div className="audio-panel--v2 sp-sheet" role="group" aria-label="Sound settings">
+      {/* Andy oct14: CLOSE sits on TOP (was bottom-right, under every row) */}
+      <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
       {rows}
       {onToggleSfx ? (
         <Row tone="#FF6B3D" label="GAME SFX" sub="THIS MATCH">
           <OnOff on={!sfxMuted} onClick={onToggleSfx} label="Game sound effects" />
         </Row>
       ) : null}
-      <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
     </div>,
     document.body,
   );

@@ -6821,3 +6821,77 @@ html[data-beat='true'] .wb-belly {
   opacity: 0;
   pointer-events: none;
 }
+
+/* ===== WORD BOMB PLAYER ICONS (Andy oct14 art run P1 — "the player icons in word bomb"). The seat's code-drawn
+   circle + colour dot become the PAINTED bomb buddy in the player's colour (public/wb/player-*.webp). The card keeps
+   its box (the ring maths is unchanged); the art overhangs it, feet on the card's bottom edge, hearts at the feet.
+   TURN CUE (Andy "your character can like undarken"): every seat that is not up steps BACK (opacity 0.5); the one on
+   the clock is full strength and hops ONCE as the turn lands (a finite transform keyframe, run by the class change).
+   Opacity / transform only; nothing loops; reduced motion = no hop. ===== */
+.wb-seat .game-player-card.has-char {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.wb-seat .game-player-card.has-char.current { background: none; }
+.wb-seat-char {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 135%;
+  height: auto;
+  aspect-ratio: 1;
+  transform: translate(-50%, -66%);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.5;
+  transition: opacity 220ms ease-out;
+  z-index: -1; /* behind the hearts; the card (rotated) is its own stacking context, so it stays inside the seat */
+}
+.wb-seat .game-player-card.current .wb-seat-char {
+  opacity: 1;
+  animation: wb-char-hop 380ms cubic-bezier(0.2, 1.4, 0.4, 1) 1;
+}
+.wb-seat .game-player-card.eliminated .wb-seat-char { opacity: 0.22; }
+@keyframes wb-char-hop {
+  0% { transform: translate(-50%, -66%) scale(1); }
+  40% { transform: translate(-50%, -80%) scale(1.06, 0.96); }
+  100% { transform: translate(-50%, -66%) scale(1); }
+}
+/* the colour dot is redundant now — the whole character is the colour */
+.wb-seat .game-player-card.has-char .player-dot,
+.wb-seat .game-player-card.has-char .game-player-dot { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .wb-seat .game-player-card.current .wb-seat-char { animation: none; }
+}
+/* the art overhangs the old circle by ~0.2 of a seat at the top: what hangs ABOVE a seat (the YOUR TURN flag, a top
+   seat's name and its typing line) moves up by that much so nothing sits on the character's head */
+.wb-ring { --wb-char-up: calc(var(--wb-seat-h) * 0.36); }
+.wb-seat .game-your-turn { top: calc(-26px - var(--wb-char-up)); }
+/* a TOP seat's flag takes its NAME's place (the flag only ever shows on YOUR seat, whose name is you) — stacked
+   above the name it reached the prompt plaque at 1366x768 */
+.wb-seat--name-out-up .game-your-turn { top: auto; bottom: calc(100% + var(--wb-name-gap) + var(--wb-char-up) - 4px); }
+.wb-seat--name-out-up:has(.game-your-turn) .game-player-name-text { visibility: hidden; }
+.wb-seat--name-out-up .game-player-name-text { bottom: calc(100% + var(--wb-name-gap) + var(--wb-char-up)); }
+.wb-seat--name-out-up .player-typing,
+.wb-seat--name-out-up .player-status { bottom: calc(100% + var(--wb-name-gap) + var(--wb-name-h) + var(--wb-char-up)); }
+/* LAST LIFE keeps its badge; the old red ring round the circle drew a box round the feet; the card's top colour
+   stripe drew a band across the character's head */
+.wb-seat .game-player-card.has-char.last-life::after,
+.wb-seat .game-player-card.has-char::before { display: none; }
+/* the hearts sit INSIDE the seat at its bottom edge, over the character's feet (the art rides high, so they never
+   reach the face) — every name / typing line keeps the place the ring maths gave it */
+.wb-seat .game-player-card.has-char { align-items: flex-end; padding-bottom: 0; }
+.wb-seat .game-player-card.has-char .game-player-hearts {
+  background: var(--v-panel, #1a0b2e);
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 0 3px;
+  /* smaller, and hung half below the feet: on a 50px seat the full pill hid most of the character */
+  transform: translateY(45%) scale(0.8);
+}
+@media (max-width: 700px) and (max-height: 760px) {
+  /* a ~22px seat: the hearts go smaller and lower still, so the character shows above them */
+  .wb-seat .game-player-card.has-char .game-player-hearts { transform: translateY(75%) scale(0.62); border-width: 1.5px; }
+}

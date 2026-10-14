@@ -81,7 +81,7 @@ test('LOBBY: code tiles, 8 seats (3 players + 5 open), YOU + YOU ARE HOST, a big
   await mock.waitForSent('start_game');
 });
 
-test('SETTINGS (trimmed, Andy oct9): SOUND · MUSIC · REDUCE MOTION + RANK PLATE + SAVE PROGRESS; MUTE + the bars; REDUCE MOTION flips live; a stored NUMBER STYLE / KEYBOARD SOUNDS still applies with no UI', async ({ page }) => {
+test('SETTINGS (trimmed, Andy oct9; oct14 BEAT SYNC in, RANK PLATE out to the rank menu): SOUND · MUSIC · REDUCE MOTION + BEAT SYNC + SAVE PROGRESS; MUTE + the bars; REDUCE MOTION flips live; a stored NUMBER STYLE / KEYBOARD SOUNDS still applies with no UI', async ({ page }) => {
   // a save that picked FULL numbers and the keyboard clack before those rows were cut
   await boot(page, { seed: { 'taw.s2.wins': '1234567', 'taw.numStyle': 'full', 'taw.clack': JSON.stringify({ enabled: true }) } });
   // the cog is the top-right cluster's tile now (no longer under it / bottom corner)
@@ -90,7 +90,14 @@ test('SETTINGS (trimmed, Andy oct9): SOUND · MUSIC · REDUCE MOTION + RANK PLAT
   await btn.click();
   const panel = page.locator('.sp');
   await expect(panel).toBeVisible();
-  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'RANK PLATE', 'SAVE PROGRESS', 'RESET ACCOUNT']);
+  await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'BEAT SYNC', 'SAVE PROGRESS', 'RESET ACCOUNT']);
+  // BEAT SYNC (Andy oct14): its own switch, stored, separate from REDUCE MOTION
+  const bs = panel.getByRole('switch', { name: 'Beat sync' });
+  await expect(bs).toHaveAttribute('aria-checked', 'true');
+  await bs.click();
+  await expect(bs).toHaveAttribute('aria-checked', 'false');
+  expect(await page.evaluate(() => localStorage.getItem('taw.beatSync'))).toBe('0');
+  await bs.click();
   await expect(panel.getByRole('radio', { name: '1,200,000' })).toHaveCount(0);
   await expect(panel.getByRole('switch', { name: 'Keyboard sounds' })).toHaveCount(0);
   // REDUCE MOTION, live
