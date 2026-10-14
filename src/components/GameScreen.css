@@ -6772,3 +6772,40 @@ html[data-beat='true'] .wb-belly {
     height: calc(360px * var(--wb-k, 1));
   }
 }
+
+/* ===== SHORT PHONES (Andy oct14 "word bomb … things seem a bit cramped"). Measured at 360x640 with 4 players: the
+   prompt + clock + room line took 180px and the used-word strip wrapped to 2 lines, leaving the RING 70px — every seat
+   and caption piled onto the bomb. The ring is sized from what the stacks leave (wbRingSize.js), so these give it room
+   back. Phone stack only, on a short screen; nothing moves at rest (no new motion). ===== */
+@media (max-width: 700px) and (max-height: 760px) {
+  /* the strip keeps the NEWEST 3 (one line); older chips drop whole, the label still counts them all */
+  .game-stage--wb .game-used-list .game-used-chip:nth-last-child(n + 4) { display: none; }
+  /* a tighter prompt plaque: the fragment is still the brightest, largest text on the board */
+  .game-stage--wb .game-combo { font-size: 44px; }
+  .game-stage--wb .game-combo-box { padding: 4px 20px 6px; }
+  /* the clock + room code share one line under the prompt */
+  .game-stage--wb .wb-top { gap: 6px; row-gap: 6px; }
+  .wb-timer { padding: 4px 8px; gap: 4px; }
+  .wb-timer-bar { width: 36px; }
+  /* the opponent's THEIR TURN line at the label step: on a small ring it was wider than the seat gap */
+  .wb-seat .player-status { font-size: var(--fs-label); letter-spacing: 1px; }
+}
+/* LAST LIFE on the phone ring: the badge is wider than the seat's ~40px card, so pinned to its corner it covered the
+   whole avatar. It sits ABOVE the card instead (BELOW for a top seat, whose name is above). */
+@media (max-width: 700px) {
+  .game-stage--wb .wb-seat .game-player-lastlife {
+    top: -6px;
+    right: auto;
+    left: 50%;
+    transform: translate(-50%, -100%) rotate(-3deg);
+  }
+  .game-stage--wb .wb-seat--name-out-up .game-player-lastlife {
+    top: auto;
+    bottom: -6px;
+    transform: translate(-50%, 100%) rotate(-3deg);
+  }
+}
+@media (max-width: 380px) and (max-height: 760px) {
+  /* a 360px strip fits two 7-letter chips, not three: the newest 2 */
+  .game-stage--wb .game-used-list .game-used-chip:nth-last-child(n + 3) { display: none; }
+}
