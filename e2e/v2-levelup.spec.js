@@ -160,7 +160,6 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
       expect(await where.locator('svg path').count(), `${title} is the shaped SVG plate`).toBeGreaterThanOrEqual(4);
       await expect(where.locator('.krp-name')).toHaveText(title);
     }
-    await expect(lb.locator('.lb2-climb .lb2-next')).toHaveAttribute('data-rank-title', 'INKSTORM');
     const sizes = await lb.locator('.krp-name').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
     expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);
     // each row plate stays inside its row (no spill onto the neighbours)

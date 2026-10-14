@@ -34,11 +34,10 @@ import {
   claimName,
   nameStatus,
   BOARD_SIZE,
+  fetchAround,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
-import { rankPlate, boardMoves, boardSnapshot, chaseTarget, climbTarget, hasEarned } from '../leaderboard/s2Board.js';
-import { V3 } from '../progress/season';
-import { getRebirths } from '../progress/xp';
+import { rankPlate, boardMoves, boardSnapshot, chaseTarget, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import { BLOCKS } from './PodiumBlocks.jsx';
@@ -324,6 +323,7 @@ export default function LeaderboardV2({ onBack }) {
   const peekRef = useRef(null);
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
+  const [around, setAround] = useState([]); // AROUND YOU past the top 20 (all-time tab)
   const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false, moves: {}, gains: true });
 
   const loadAll = useCallback(async () => {
@@ -339,6 +339,8 @@ export default function LeaderboardV2({ onBack }) {
       setRankNews(false);
       clearRankFrom();
       if (meNow) setLastRank(Number(meNow.rank));
+      // AROUND YOU: past the top 20 the neighbours are not in the loaded rows — read them
+      if (meNow && Number(meNow.rank) > BOARD_SIZE) fetchAround(meNow.rank).then(setAround).catch(() => {});
     } catch {
       setAll((s) => ({ ...s, loaded: true, error: true }));
     }
@@ -387,22 +389,27 @@ export default function LeaderboardV2({ onBack }) {
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
   if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
-  const allMe = myId ? all.rows.find((r) => r.id === myId) || all.me : null;
-  const above = meRow ? rows.filter((r) => Number(r.rank) < Number(meRow.rank)).sort((a, b) => b.rank - a.rank)[0] : null;
-  const chase = meRow ? chaseTarget(chaseRow(meRow, tab, gains), chaseRow(above, tab, gains)) : null;
-  const climb = climbTarget(allMe || { rebirths: getRebirths() || 0, stars: V3.store ? V3.store.getStarsV3() : 0 });
+  // AROUND YOU (Andy oct14 "those 2 boxes seem pretty useless"; research: a board motivates the players near the top and
+  // loses everyone else — show each player the people they can actually catch): 2 above you, you, 2 below, and what
+  // it takes to pass each one above. From the loaded rows, or (all-time, past #20) the neighbours read for it.
+  const nearRows = (() => {
+    if (!meRow) return [];
+    const pool = meOnBoard ? rows : tab === 'all' && around.length ? around : [meRow];
+    const at = pool.findIndex((r) => r.id === myId);
+    if (at < 0) return [meRow];
+    const from = Math.max(0, Math.min(at - 2, pool.length - 5));
+    return pool.slice(from, from + 5);
+  })();
   const wk = tab === 'week';
   const hR = wk ? (gains ? '+REBIRTHS' : 'REBIRTHS') : 'REBIRTHS';
   const hL = wk ? (gains ? '+LEVELS' : 'WORDS') : 'LEVELS';
-  const chaseUnit = chase && chase.unit === 'LV' && wk && !gains ? 'WORDS' : chase && chase.unit;
-  const fromTo = (u, v) => (u === '★' ? `★${fmt(v)}` : u === 'R' ? `R${fmt(v)}` : fmt(v));
-  // the unit in WORDS (Andy oct8: things must explain themselves) — "2 REBIRTHS → #10", "1 REBIRTH → HOTKEY"
-  const unitWord = (u, n) => {
-    const one = Number(n) === 1;
-    if (u === 'R') return one ? 'REBIRTH' : 'REBIRTHS';
-    if (u === 'LV') return one ? 'LEVEL' : 'LEVELS';
-    if (u === 'WORDS') return one ? 'WORD' : 'WORDS';
-    return u; // ★
+  // what it takes to pass a row above you, in the board's own currency ("+3 LV", "+1 R", "+40 WORDS")
+  const gapTo = (row) => {
+    if (!meRow || !row || Number(row.rank) >= Number(meRow.rank)) return '';
+    const c = chaseTarget(chaseRow(meRow, tab, gains), chaseRow(row, tab, gains));
+    if (!c) return '';
+    const unit = c.unit === 'LV' && wk && !gains ? 'WORDS' : c.unit;
+    return `+${fmt(c.need)} ${unit}`;
   };
 
   // ARRIVAL: the podium rises, the list + panels slide in, the bars fill, the crown wobbles once, ▲ / ▼ bob once and
@@ -595,39 +602,25 @@ export default function LeaderboardV2({ onBack }) {
           })}
         </div></div>
 
-        <div className="lb2-panels lb2-slide">
-          <div className="lb2-panel lb2-chase">
-            {chase ? (
-              <>
-                <div className="lb2-panel-top">
-                  <span className="lb2-need" style={{ color: '#2EFFE0' }}>{fmt(chase.need)}</span>
-                  <span className="lb2-unit" data-unit={chaseUnit}>{unitWord(chaseUnit, chase.need)}</span>
-                  <span className="lb2-arrow">→</span>
-                  <span className="lb2-target">#{fmt(chase.target)}</span>
-                </div>
-                <div className="lb2-bar"><span className="lb2-fill" style={{ background: '#2EFFE0', width: `${chase.pct}%` }} /><span className="lb2-mark" style={{ left: `${chase.pct}%` }} /></div>
-                <div className="lb2-ends"><span>YOU {fromTo(chase.unit, chase.from)}</span><span>#{fmt(chase.target)} {fromTo(chase.unit, chase.to)}</span></div>
-              </>
-            ) : (
-              <div className="lb2-panel-msg">{meRow ? (Number(meRow.rank) === 1 ? 'YOU’RE #1 — HOLD IT' : 'CLIMB TO CHASE') : profile ? 'TYPE TO GET ON THE BOARD' : 'CLAIM A NAME TO GET ON THE BOARD'}</div>
-            )}
-          </div>
-          <div className="lb2-panel lb2-climb">
-            {climb ? (
-              <>
-                <div className="lb2-panel-top">
-                  <span className="lb2-need" style={{ color: '#FFE94A' }}>{fmt(climb.need)}</span>
-                  <span className="lb2-unit" data-unit={climb.unit}>{unitWord(climb.unit, climb.need)}</span>
-                  <span className="lb2-arrow">→</span>
-                  <KitRankPlate rank={climb.next.i} fit shine={false} className="lb2-plate lb2-next" />
-                </div>
-                <div className="lb2-bar"><span className="lb2-fill" style={{ background: '#FFE94A', width: `${climb.pct}%` }} /><span className="lb2-mark" style={{ left: `${climb.pct}%` }} /></div>
-                <div className="lb2-ends"><span>YOU {fromTo(climb.unit, climb.from)}</span><span>{fromTo(climb.unit, climb.to)}</span></div>
-              </>
-            ) : (
-              <div className="lb2-panel-msg">ENDGAME — THE TOP RANK</div>
-            )}
-          </div>
+        <div className="lb2-panels lb2-around lb2-slide" aria-label="Around you">
+          <div className="lb2-around-h">AROUND YOU</div>
+          {nearRows.length ? (
+            <div className="lb2-around-row">
+              {nearRows.map((r) => {
+                const mine = !!(myId && r.id === myId);
+                const gap = gapTo(r);
+                return (
+                  <div key={r.id} className={`lb2-ar${mine ? ' is-me' : ''}`} data-id={r.id} {...peekProps(r, setPeek)}>
+                    <span className="lb2-ar-rk">#{fmt(r.rank)}</span>
+                    <span className="lb2-ar-name">{mine ? 'YOU' : r.username}</span>
+                    <span className={`lb2-ar-gap${gap ? '' : ' is-quiet'}`}>{gap || nums(r, tab, gains).lv + (wk && !gains ? ' W' : ' LV')}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="lb2-panel-msg">{profile ? 'TYPE TO GET ON THE BOARD' : 'CLAIM A NAME TO GET ON THE BOARD'}</div>
+          )}
         </div>
       </div>
       {peek ? <Suspense fallback={null}><ProfileCard row={peek} mine={!!(myId && peek.id === myId)} onClose={() => setPeek(null)} /></Suspense> : null}

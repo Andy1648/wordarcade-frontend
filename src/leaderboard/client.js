@@ -422,6 +422,20 @@ export async function fetchBoard(limit = BOARD_SIZE) {
   return { rows, me };
 }
 
+/** AROUND YOU (Andy oct14): the rows ranked `span` above and below `rank` on the all-time board — for a player past
+ *  the top 20, who is otherwise only ever shown the top. [] when offline / off. */
+export async function fetchAround(rank, span = 2) {
+  const r0 = Math.floor(Number(rank) || 0);
+  if (!LEADERBOARD_ENABLED || r0 < 1) return [];
+  const cols = `rank,id,username,level,rebirths,lifetime_words${SEASON2 ? ',stars' : ''}`;
+  try {
+    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&rank=gte.${Math.max(1, r0 - span)}&rank=lte.${r0 + span}&order=rank.asc`, { headers: headers() });
+    return r.ok ? await r.json() : [];
+  } catch {
+    return [];
+  }
+}
+
 // ---- BB3: THIS WEEK (013_weekly_board.sql) ------------------------------------------------------
 /**
  * A rank-ordered board view + my own row when I am past `limit`. `filter` is extra PostgREST query (e.g. "&econ=eq.13").

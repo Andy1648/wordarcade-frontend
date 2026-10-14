@@ -774,3 +774,20 @@
 }
 .lb2-scroll .lb2-row.is-me { margin-left: 0; margin-right: 0; } /* the lifted row stays inside the scroll box */
 .lb2--narrow .lb2-scroll { max-height: 280px; }
+
+/* AROUND YOU (Andy oct14): the two old panels → one strip of 5 chips — 2 above you, you, 2 below; the ones above say
+   what it takes to pass them */
+.lb2-panels.lb2-around { display: flex; flex-direction: column; gap: calc(4px * var(--lb2-k)); padding: calc(6px * var(--lb2-k)) calc(8px * var(--lb2-k)); box-sizing: border-box; }
+.lb2-around-h { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k14); color: #c9b8e8; letter-spacing: .04em; line-height: 1; }
+.lb2-around-row { flex: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(6px * var(--lb2-k)); }
+.lb2-ar { min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; padding: 2px 4px; background: #1a0b2e; border: 3px solid #000; border-radius: 6px; cursor: pointer; }
+.lb2-ar.is-me { background: #FFE94A; transform: rotate(-2deg); box-shadow: 3px 3px 0 #000; }
+.lb2-ar-rk { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); color: #FFE94A; line-height: 1; }
+.lb2-ar.is-me .lb2-ar-rk, .lb2-ar.is-me .lb2-ar-name { color: #000; }
+.lb2-ar-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-k13); color: #fff; line-height: 1.1; }
+.lb2-ar-gap { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k13); color: #2EFFE0; line-height: 1; white-space: nowrap; }
+.lb2-ar-gap.is-quiet { color: #8f7fb0; }
+.lb2-ar.is-me .lb2-ar-gap { color: #000; }
+.lb2--narrow .lb2-around-row { gap: 4px; }
+.lb2--narrow .lb2-ar { padding: 4px 2px; }
+.lb2--narrow .lb2-around { margin-bottom: 64px; } /* clear the corner settings cog on a phone */
