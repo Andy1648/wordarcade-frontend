@@ -21,7 +21,7 @@ import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION_V10, econRpcArg } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
 import { queueClaim } from '../progress/claims.js';
-import { flagOn } from '../lib/featureFlags.js';
+import { flagOn, flagDefaultOn } from '../lib/featureFlags.js';
 import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
@@ -695,7 +695,7 @@ export async function fetchRowAbove(rank) {
 }
 /** { kind: 'passed', name, from, to, levels } when a rival ping should show, else null. Records it. */
 export async function rivalCheck({ before, now, prev, cur, epoch = boardSeenEpoch }) {
-  if (!flagOn('rival')) return null;
+  if (!flagDefaultOn('rival')) return null; // Andy oct14: ON for everyone (real players only — static bots never pass you)
   // cheap guards first: no board read unless this drop could ping
   if (rankChange(before, now) !== 'drop' || ownDropSince(prev, cur) || now > RIVAL_MAX_RANK) return null;
   const passer = await fetchRowAbove(now);

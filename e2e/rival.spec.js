@@ -68,10 +68,10 @@ test('?rival=1: one ping per visit — a reload with no new pass shows nothing',
   await expect(page.locator('.lb-rankup')).toHaveCount(0);
 });
 
-test('no flag: the same drop shows nothing', async ({ page }) => {
+test('?rival=0: the same drop shows nothing (the ping ships ON since oct14)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await setup(page);
-  await page.goto('/?portal=1');
+  await page.goto('/?portal=1&rival=0');
   await menuReady(page);
   // the rank check has run once lastRank moves to the live #5
   await expect.poll(() => page.evaluate(() => localStorage.getItem('taw.lb.lastRank')), { timeout: 10000 }).toBe('5');

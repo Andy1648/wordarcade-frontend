@@ -30,3 +30,17 @@ export function flagOn(name, { legacyKey } = {}) {
     return false;
   }
 }
+
+/** A feature that ships ON (Andy oct14: the rival ping): off only by `?<name>=0` or storage `taw.flag.<name>` = '0'.
+ *  Guarded like flagOn — a broken read counts as ON. */
+export function flagDefaultOn(name) {
+  if (!name) return false;
+  try {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get(name) === '0') return false;
+    if (BOOT_SEARCH && new URLSearchParams(BOOT_SEARCH).get(name) === '0') return false;
+  } catch { /* no window */ }
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(FLAG_PREFIX + name) === '0') return false;
+  } catch { /* blocked */ }
+  return true;
+}

@@ -435,6 +435,33 @@ export default function LeaderboardV2({ onBack }) {
     const sc = scrollRef.current;
     const meEl = sc && sc.querySelector('.lb2-row.is-me');
     if (sc && meEl) sc.scrollTop = Math.max(0, meEl.offsetTop - (sc.clientHeight - meEl.offsetHeight) / 2);
+    // THE CLIMB (Andy oct14 "climb animation when passing someone"): you moved up N since your last look → your row
+    // starts where you WERE (N rows lower) and slides up past the players you overtook, who each drop one slot. One
+    // finite transform one-shot after the list lands; rows measured once here (not per frame). Podium climbs keep
+    // the podium's own celebration.
+    const myRow = meEl && meEl.dataset.id;
+    const up = myRow ? Number(data.moves[myRow] || 0) : 0;
+    if (meEl && up > 0) {
+      const rowsEls = [...sc.querySelectorAll('.lb2-row')];
+      const at = rowsEls.indexOf(meEl);
+      const passed = rowsEls.slice(at + 1, at + 1 + up); // they were above you; now just below
+      const step = passed.length ? passed[0].offsetHeight : meEl.offsetHeight;
+      if (passed.length) {
+        const dy = step * passed.length;
+        kitPlay(meEl, [
+          { transform: `translateY(${dy}px) rotate(-1deg) scale(1)` },
+          { transform: `translateY(${dy}px) rotate(-1deg) scale(1.06)`, offset: 0.15 },
+          { transform: 'translateY(-6px) rotate(-1deg) scale(1.06)', offset: 0.75 },
+          { transform: 'translateY(0) rotate(-1deg) scale(1)' },
+        ], { duration: 900 + 120 * passed.length, delay: 650, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'backwards' });
+        passed.forEach((el, i) => kitPlay(el, [
+          { transform: `translateY(${-meEl.offsetHeight}px)`, opacity: 1 },
+          { transform: `translateY(${-meEl.offsetHeight}px)`, opacity: 1, offset: 0.2 + (0.5 * (passed.length - 1 - i)) / Math.max(1, passed.length) },
+          { transform: 'translateY(0)', opacity: 0.55, offset: 0.8 },
+          { transform: 'translateY(0)', opacity: 1 },
+        ], { duration: 900 + 120 * passed.length, delay: 650, easing: 'ease-in-out', fill: 'backwards' }));
+      }
+    }
     // shown is the trigger; data.loaded guards it
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown]);

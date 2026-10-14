@@ -135,7 +135,8 @@ beforeEach(() => {
 });
 afterEach(() => { delete globalThis.localStorage; });
 
-test('rivalCheck: flag off → null, no log written', async () => {
+test('rivalCheck: switched off (taw.flag.rival = 0) → null, no log written', async () => {
+  mem.set('taw.flag.rival', '0'); // oct14: the ping ships ON; '0' is the off switch
   const r = await rivalCheck({ before: 5, now: 6, prev: { rb: 0, lv: 40 }, cur: { rb: 0, lv: 40 } });
   assert.equal(r, null);
   assert.equal(mem.has('taw.lb.rival'), false);
