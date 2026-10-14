@@ -432,7 +432,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // ---- the STATS EXTENSION: main slams in, extras + perk tick in ~120 ms apart, dupe ★ pips fill ----
     if (st) {
       // EPIC+: the stats sit on their own glowing plate — it lands WITH the main stat (opacity only)
-      if (n.xPlate && GLOW_TIERS.has(tier)) anim(n.xPlate, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: xAt + ext.main.at });
+      if (n.xPlate) anim(n.xPlate, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: xAt + ext.main.at });
       anim(n.xMain, [
         { opacity: 0, transform: 'scale(2.1) rotate(-5deg)' },
         { opacity: 1, transform: 'scale(0.92) rotate(1deg)', offset: 0.6 },

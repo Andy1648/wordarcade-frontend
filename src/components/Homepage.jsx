@@ -1538,6 +1538,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             powerReady={winsAffordable && (getKeyTier() || 0) === 0}
             gearsReady={!rollLock && starterWaiting}
             onBoard={!!getMyProfile()}
+            rebirthReady={rebirthReady}
           />
         </Suspense>
       )}
@@ -1602,6 +1603,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           // Never over the wordmark or a card title (fine-tune oct2, loop C): the caption picks a
           // clear slot, drops to its compact headline, or hides and lets the ring teach.
           avoidTextIn=".homepage-stage"
+          plateWhenCrowded
           avoidSelector=".homepage-logo-wrap, .homepage-cards-region, .homepage-corner-nav, .hp-icons"
           // No wash (fine-tune oct2): a first-time player's first screen was ~70% dimmed behind a
           // ring; the ring + the bar's own TYPE ANYWHERE line teach without hiding the modes.

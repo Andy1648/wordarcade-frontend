@@ -20,13 +20,13 @@ const SLOTS = Array.from({ length: MAX_PIPS }, (_, i) => i);
 function RevealStats({ stats, reg, glow = null }) {
   if (!stats) return null;
   return (
-    <div className={`rv-stats${glow ? ' is-glow' : ''}`} data-testid="roll-reveal-stats" data-glow={glow || undefined}>
-      {glow ? (
-        <span className="rv-stats-bg" ref={reg('xPlate')} aria-hidden="true">
-          <GearFx tier={glow} scale={0.75} />
-          <span className="rv-stats-plate" />
-        </span>
-      ) : null}
+    <div className={`rv-stats is-plated${glow ? ' is-glow' : ''}`} data-testid="roll-reveal-stats" data-glow={glow || undefined}>
+      {/* EVERY reveal sits its stats on the plate (Andy oct14 "larger stat reveals on rolls"): a RARE's column used to
+          float over the dimmed reel, whose own stat lines read through it. EPIC+ adds the rare-gear glow on it. */}
+      <span className="rv-stats-bg" ref={reg('xPlate')} aria-hidden="true">
+        {glow ? <GearFx tier={glow} scale={0.75} /> : null}
+        <span className="rv-stats-plate" />
+      </span>
       <div className="rv-main" ref={reg('xMain')}>
         <span className={`rv-main-num${stats.num.length >= 5 ? ' is-l' : ''}`}>{stats.num}</span>
         {stats.kind ? <span className="rv-main-kind">{stats.kind}</span> : null}

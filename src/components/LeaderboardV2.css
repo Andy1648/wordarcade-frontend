@@ -774,8 +774,39 @@
   scrollbar-color: #FFE94A #0d0618;
 }
 .lb2-scroll .lb2-row.is-me { margin-left: 0; margin-right: 0; } /* the lifted row stays inside the scroll box */
-.lb2--narrow .lb2-scroll { max-height: 380px; }
-.lb2--narrow .lb2-list { margin-bottom: 64px; } /* clear the corner settings cog on a phone */
+/* PHONE: the list takes exactly the room left under the podium (the stage is a 100%-tall flex column whose 68px foot
+   already clears the corner settings cog) and scrolls inside it — never a fixed height that runs off the screen or
+   under the cog (TOP 50 + band dividers made the old 380px box spill one row past the bottom). */
+.lb2--narrow .lb2-list { flex: 1 1 auto; min-height: 140px; display: flex; flex-direction: column; }
+.lb2--narrow .lb2-scroll { flex: 1 1 auto; min-height: 0; max-height: none; }
 
 /* AROUND YOU (Andy oct14): the two old panels → one strip of 5 chips — 2 above you, you, 2 below; the ones above say
    what it takes to pass them */
+
+/* ---- BANDS (Andy oct14 TOP 50: "separators … so people feel special") ----
+   A slim divider where a band starts (TOP 10 / TOP 25 / TOP 50, and YOUR RANK for the pinned row past #50), and the
+   rank number wears its band's colour. Flat fills, black rules, nothing animates. */
+.lb2-sep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(4px * var(--lb2-k)) calc(12px * var(--lb2-k));
+  background: #0d0618;
+  border-top: 3px solid #000;
+}
+.lb2-sep:first-child { border-top: 0; }
+.lb2-sep::after { content: ''; flex: 1; height: 3px; background: currentColor; opacity: 0.55; }
+.lb2-sep span {
+  font-family: var(--k-display); text-transform: uppercase;
+  font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--lb2-k)));
+  letter-spacing: 0.06em;
+  -webkit-text-stroke: 3px #000; paint-order: stroke fill;
+}
+.lb2-sep[data-band='gold'] { color: #FFE94A; }
+.lb2-sep[data-band='cyan'] { color: #2EFFE0; }
+.lb2-sep[data-band='violet'] { color: #c08bff; }
+.lb2-sep[data-band='you'] { color: #FF4FA3; }
+.lb2-row[data-band='gold'] .lb2-rk { color: #FFE94A; }
+.lb2-row[data-band='cyan'] .lb2-rk { color: #2EFFE0; }
+.lb2-row[data-band='violet'] .lb2-rk { color: #c08bff; }
+.lb2-row.is-me .lb2-rk { color: #FFE94A; }

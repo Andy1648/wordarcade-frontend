@@ -243,6 +243,9 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  /* SHRINK-TO-FIT (Andy oct14 proportions): the play column is the size container the race word fits into */
+  width: 100%;
+  container-type: inline-size;
 }
 .wr-hero {
   position: relative; /* hosts the absolute MatchWinBanner slot during the countdown */
@@ -271,7 +274,9 @@
   display: inline-flex;
   font-family: 'Bungee', sans-serif;
   text-transform: uppercase;
-  font-size: var(--fs-hero);
+  /* a long word (EXTRAORDINARILY) ran past both edges of the panel at 1024 — the word now shrinks with its length
+     (--ch, a Bungee glyph + the 0.04em tracking ~ 0.8em) to the play column, capped at the hero size */
+  font-size: min(var(--fs-hero), calc(96cqw / (var(--ch, 6) * 0.8)));
   line-height: 1;
   letter-spacing: 0.04em;
   color: #f4ecff;
@@ -564,6 +569,6 @@
   .wr-root:not([data-race-status='over']) .wr-lanes { gap: 3px; }
   .wr-root:not([data-race-status='over']) .wr-track { height: 38px; }
   .wr-root:not([data-race-status='over']) .wr-hero { min-height: 0; }
-  .wr-root:not([data-race-status='over']) .wr-hero-word,
-  .wr-root:not([data-race-status='over']) .wr-typeword { font-size: var(--fs-h1); }
+  .wr-root:not([data-race-status='over']) .wr-hero-word { font-size: var(--fs-h1); }
+  .wr-root:not([data-race-status='over']) .wr-typeword { font-size: min(var(--fs-h1), calc(96cqw / (var(--ch, 6) * 0.8))); }
 }

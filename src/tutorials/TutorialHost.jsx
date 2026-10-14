@@ -27,7 +27,9 @@ function snapshotFor(level, rebirths, extra = {}) {
     level,
     rebirths,
     marksRevealed: !!marksRevealed(),
-    rebirthReady: level >= rebirthThreshold(rebirths),
+    // the menu's OWN ready (Homepage: the season's level gate AND the game words since the last rebirth, 035/037) when it
+    // passes one — the bare level check said "REBIRTH READY" over a REBIRTH tile still reading "10 WORDS" (Andy oct14)
+    rebirthReady: extra.rebirthReady != null ? !!extra.rebirthReady : level >= rebirthThreshold(rebirths),
     powerReady: !!extra.powerReady,
     gearsReady: !!extra.gearsReady,
     onBoard: !!extra.onBoard,
@@ -36,8 +38,8 @@ function snapshotFor(level, rebirths, extra = {}) {
 // how many menu spotlights this page load has shown (registry MENU_TUTS_PER_LOAD caps it)
 let shownThisLoad = 0;
 
-export default function TutorialHost({ level, rebirths, powerReady = false, gearsReady = false, onBoard = false }) {
-  const snapshot = useMemo(() => snapshotFor(level, rebirths, { powerReady, gearsReady, onBoard }), [level, rebirths, powerReady, gearsReady, onBoard]);
+export default function TutorialHost({ level, rebirths, powerReady = false, gearsReady = false, onBoard = false, rebirthReady = null }) {
+  const snapshot = useMemo(() => snapshotFor(level, rebirths, { powerReady, gearsReady, onBoard, rebirthReady }), [level, rebirths, powerReady, gearsReady, onBoard, rebirthReady]);
   const [tick, setTick] = useState(0); // re-pick after one is done
   // init FIRST (synchronously, before the first pick): an existing player's already-reached features are
   // marked seen before anything can be chosen

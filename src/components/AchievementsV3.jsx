@@ -204,7 +204,7 @@ export default function AchievementsV3({ onClose }) {
                     <div className="av3-hero-bar">
                       <Bar pct={hero.pct} ready={false} maxed={hero.maxed} />
                       <span className="av3-hero-pct">
-                        {heroStamped ? `NEXT ${stamp.next}` : `${Math.floor(hero.pct)}%${hero.maxed ? '' : ` −${formatNum(Math.max(0, hero.need - hero.have))}`}`}
+                        {heroStamped ? `NEXT ${stamp.next}` : `${Math.floor(hero.pct)}%${hero.maxed ? '' : ` · ${formatNum(Math.max(0, hero.need - hero.have))} TO GO`}`}
                       </span>
                     </div>
                   )}

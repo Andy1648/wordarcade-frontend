@@ -10,10 +10,12 @@ import { ROLL_PRICE } from '../progress/v3/econ.js';
 
 const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '036_server_rolls.sql'), 'utf8').replace(/\r\n/g, '\n');
 const has = (s) => assert.ok(sql.includes(s), `036 is missing: ${s}`);
+// 044_easier_rolls.sql re-seeds the pool (Andy oct14 easier odds): the LATEST pool must be the game's pool
+const pool = readFileSync(join(process.cwd(), 'supabase', 'migrations', '044_easier_rolls.sql'), 'utf8').replace(/\r\n/g, '\n');
 
-test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order', () => {
-  ROLL_MARKS.forEach((m, i) => has(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`));
-  const rows = sql.match(/\('mk-[a-z0-9-]+', '[a-z]+', [\d.]+, \d+\)/g) || [];
+test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order (044 re-seeds 036)', () => {
+  ROLL_MARKS.forEach((m, i) => assert.ok(pool.includes(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`), `044 is missing ${m.id}`));
+  const rows = pool.match(/\('mk-[a-z0-9-]+', '[a-z]+', [\d.]+, \d+\)/g) || [];
   assert.equal(rows.length, ROLL_MARKS.length, 'no extra gear on the server');
 });
 

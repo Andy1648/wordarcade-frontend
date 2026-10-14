@@ -780,3 +780,18 @@
 .st2--narrow .st2-crit-head { grid-area: head; font-size: var(--fs-k24); }
 .st2--narrow .st2-crit-sub { grid-area: sub; font-size: var(--fs-k20); flex-wrap: wrap; gap: 4px 14px; }
 .st2--narrow .st2-crit-fig b { font-size: var(--fs-k22); }
+
+/* ---- ENTRANCE (Andy oct14 "simplistic animation (and transitions?) … ensure too many dont get bombarded"): the screen
+   arrives the way the patch notes do — the title SLAMS, then each panel RISES once, staggered. One finite one-shot per
+   element on open, the `scale` / `translate` properties only (they compose with any resting transform), nothing at
+   rest, none under reduced motion. */
+.st2-title { animation: st2-enter-slam 300ms cubic-bezier(0.2, 1.5, 0.4, 1) 1 both; }
+.st2-hero { animation: st2-enter-rise 300ms cubic-bezier(0.2, 1.2, 0.4, 1) 60ms 1 both; }
+.st2-chain { animation: st2-enter-rise 300ms cubic-bezier(0.2, 1.2, 0.4, 1) 120ms 1 both; }
+.st2-crit { animation: st2-enter-rise 300ms cubic-bezier(0.2, 1.2, 0.4, 1) 180ms 1 both; }
+.st2-life { animation: st2-enter-rise 300ms cubic-bezier(0.2, 1.2, 0.4, 1) 240ms 1 both; }
+@keyframes st2-enter-slam { 0% { scale: 1.3; opacity: 0; } 100% { scale: 1; opacity: 1; } }
+@keyframes st2-enter-rise { 0% { translate: 0 18px; opacity: 0; } 100% { translate: 0 0; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .st2-title, .st2-hero, .st2-chain, .st2-crit, .st2-life { animation: none; }
+}

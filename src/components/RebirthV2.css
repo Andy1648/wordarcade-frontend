@@ -282,7 +282,7 @@
 }
 
 /* ---- short laptops (1280×551, 1366×657): the same screen, packed tighter ---- */
-@media (min-width: 700px) and (max-height: 680px) {
+@media (min-width: 1000px) and (max-height: 680px) {
   .rb2-stage { padding: 10px 36px 12px; row-gap: 8px; }
   .rb2-head { min-height: 76px; }
   .rb2-title { font-size: var(--fs-k44); }
@@ -302,13 +302,13 @@
   .rb2-ms { gap: 8px; }
   .rb2-ms-dia { width: 50px; height: 50px; }
 }
-@media (min-width: 700px) and (max-height: 580px) {
+@media (min-width: 1000px) and (max-height: 580px) {
   .rb2-cap { display: none; }
   .rb2-msg { min-height: 0; }
 }
 
 /* ---- phones: one column; the track is a 3 × 2 grid of diamonds; the LEVELS pill moves into the gate line ---- */
-@media (max-width: 699px) {
+@media (max-width: 999px) {
   .rb2 { align-items: flex-start; overflow-y: auto; }
   .rb2-scale { width: 100%; height: auto; max-height: none; transform: none; }
   .rb2-stage {
@@ -404,4 +404,24 @@
   text-transform: uppercase;
   font-size: var(--fs-k28);
   color: #000;
+}
+
+/* PROPORTIONS (Andy oct14): at 1000–1279px the eight unlock labels ran into each other ("AUTO REBIRTH2ND GEAR SLOT").
+   They may take two lines there — the track has the height. */
+@media (min-width: 1000px) and (max-width: 1279px) {
+  .rb2-track-list.is-long .rb2-ms-what { white-space: normal; font-size: var(--fs-k14); line-height: 1.05; padding: 0 2px; }
+}
+
+/* ---- ENTRANCE (Andy oct14 "simplistic animation (and transitions?) … ensure too many dont get bombarded"): the screen
+   arrives the way the patch notes do — the title SLAMS, then each panel RISES once, staggered. One finite one-shot per
+   element on open, the `scale` / `translate` properties only (they compose with any resting transform), nothing at
+   rest, none under reduced motion. */
+.rb2-title { animation: rb2-enter-slam 300ms cubic-bezier(0.2, 1.5, 0.4, 1) 1 both; }
+.rb2-left { animation: rb2-enter-rise 300ms cubic-bezier(0.2, 1.2, 0.4, 1) 60ms 1 both; }
+.rb2-get { animation: rb2-enter-rise 300ms cubic-bezier(0.2, 1.2, 0.4, 1) 120ms 1 both; }
+.rb2-track { animation: rb2-enter-rise 300ms cubic-bezier(0.2, 1.2, 0.4, 1) 180ms 1 both; }
+@keyframes rb2-enter-slam { 0% { scale: 1.3; opacity: 0; } 100% { scale: 1; opacity: 1; } }
+@keyframes rb2-enter-rise { 0% { translate: 0 18px; opacity: 0; } 100% { translate: 0 0; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .rb2-title, .rb2-left, .rb2-get, .rb2-track { animation: none; }
 }

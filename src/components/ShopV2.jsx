@@ -53,7 +53,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
       <span className="sp2-card-in" data-stock={it.id}>
         <span className="sp2-band" title={R.name}>
           <span className="sp2-name">{it.name || R.name}</span>
-          <span className="sp2-left">×{formatNum(left)} LEFT</span>
+          <span className="sp2-left">×{formatNum(left)}<span className="sp2-left-w"> LEFT</span></span>
         </span>
         <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />
         <span className="sp2-big">{it.big}</span>
@@ -93,7 +93,7 @@ function DailyChestCard({ now, onOpen }) {
       <span className="sp2-card-in" data-stock="daily-chest" data-testid="daily-chest-card">
         <span className="sp2-band">
           <span className="sp2-name">DAILY</span>
-          <span className="sp2-left">{claimed ? '×0 LEFT' : '×1 LEFT'}</span>
+          <span className="sp2-left">{claimed ? '×0' : '×1'}<span className="sp2-left-w"> LEFT</span></span>
         </span>
         <span className="sp2-chest-art" aria-hidden="true">
           <img className="sp2-chest-base" src="/art/drop/chest-base.svg" alt="" draggable="false" />
@@ -113,7 +113,7 @@ function useStageScale(ref) {
   useEffect(() => {
     const set = () => {
       const w = window.innerWidth;
-      const k = w >= 700 ? Math.max(1, Math.min(w / 1280, window.innerHeight / 720)) : 1;
+      const k = w >= 1000 ? Math.max(1, Math.min(w / 1280, window.innerHeight / 720)) : 1; // under 1000 the stacked (phone) layout takes over
       if (ref.current) ref.current.style.setProperty('--sp2-k', k.toFixed(4));
     };
     set();

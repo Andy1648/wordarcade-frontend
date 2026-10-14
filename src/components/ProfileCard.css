@@ -134,10 +134,90 @@
 .pc-bar { grid-column: 1 / -1; grid-row: 3; margin-top: 6px; height: 10px; background: #1a0b2e; border: 3px solid #000; border-radius: 4px; overflow: hidden; }
 .pc-bar-fill { display: block; height: 100%; background: var(--pc-tone, #FF4FA3); transform-origin: 0 50%; }
 
+/* ---- 046 PROFILE FLEX: the SIGNATURE WORD plate, the CHAIN pill, the BADGE ROW (all static; the card's one pop is the only motion) */
+.pc-sub { flex-wrap: wrap; }
+.pc-sub-c.is-chain img { width: 26px; height: 26px; }
+.pc-sig {
+  container-type: inline-size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px 10px;
+  background: #0d0618;
+  border: 4px solid var(--pc-band);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  transform: rotate(-1deg);
+}
+.pc-sig-k { font-size: var(--fs-k13); color: var(--pc-band); letter-spacing: 0.08em; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+/* the word never wraps or clips: Bungee runs ~0.8em a letter, so it shrinks to fit its plate by its own length */
+.pc-sig-w {
+  max-width: 100%;
+  white-space: nowrap;
+  font-size: min(var(--fs-k38), calc(92cqw / (var(--ch, 8) * 0.8)));
+  line-height: 1.1;
+  color: #fff;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 #000;
+}
+.pc-sig-head { display: flex; align-items: center; gap: 8px; }
+.pc-sig-band {
+  padding: 0 6px;
+  background: var(--pc-band);
+  border: 2px solid #000;
+  border-radius: 6px;
+  color: #000;
+  font-size: var(--fs-k13);
+  line-height: 18px;
+  transform: rotate(3deg);
+}
+.pc-badges { list-style: none; margin: 0; padding: 0 5px 5px 0; display: grid; grid-template-columns: repeat(8, minmax(0, 46px)); justify-content: center; gap: 6px; } /* one row of ≤ 8, any width */
+.pc-badge { position: relative; aspect-ratio: 1; }
+.pc-badge:nth-child(odd) { transform: rotate(-3deg); }
+.pc-badge:nth-child(even) { transform: rotate(2deg); }
+.pc-badge-plate {
+  position: absolute;
+  inset: 6%;
+  background: var(--tf);
+  border: 3px solid #000;
+  box-shadow: inset 0 0 0 3px var(--tc), 3px 3px 0 #000;
+  transform: rotate(-6deg);
+}
+.pc-badge-glyph { position: absolute; left: 50%; top: 50%; width: 78%; height: 78%; transform: translate(-50%, -50%); }
+.pc-badge-roman {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  padding: 0 4px;
+  background: #000;
+  color: var(--tc);
+  font-size: var(--fs-k13);
+  line-height: 17px;
+}
+.pc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
 @media (max-width: 420px) {
   .pc { padding: 14px 12px 16px; gap: 10px; }
   .pc-x { top: -12px; right: -8px; }
   .pc-name { font-size: var(--fs-k22); }
   .pc-tile-v { font-size: var(--fs-k22); }
   .pc-gear-name { font-size: var(--fs-k16); }
+  .pc-sub-c { font-size: var(--fs-k16); }
+}
+
+/* SHORT SCREENS (046: the flex sections made a 360×640 card 73px too tall): tighter gaps, smaller gear art, slimmer tiles — and the card scrolls inside itself as the last resort, never off-screen */
+@media (max-height: 720px) {
+  .pc { gap: 6px; padding-top: 12px; padding-bottom: 12px; overflow-y: auto; }
+  .pc-gear { gap: 2px; padding: 6px 6px 5px; }
+  .pc-gear-art, .pc-gear-hole { width: 48px; height: 48px; }
+  .pc-gear-hole { font-size: var(--fs-k24); }
+  .pc-tile { padding: 5px 8px 6px; }
+  .pc-tile-v { font-size: var(--fs-k22); }
+  .pc-sig { padding: 6px 8px 6px; }
+  .pc-sub-c { padding: 2px 8px 2px 4px; }
+  .pc-sig-w { font-size: min(var(--fs-k30), calc(92cqw / (var(--ch, 8) * 0.8))); }
+  .pc-badges { gap: 4px; }
 }
