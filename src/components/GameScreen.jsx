@@ -1115,7 +1115,7 @@ function KillFeed({ events, playerColors = {}, maxRows }) {
       <div className="kill-feed-title">LIVE FEED</div>
       <div className="kill-feed-list">
         {visible.length === 0 ? (
-          <div className="kill-feed-empty">WAITING FOR ACTION...</div>
+          <div className="kill-feed-empty">NO WORDS YET</div>
         ) : (
           visible.map(({ ev, idx }) => {
             // The row is identified by its actor's session colour (a left accent
@@ -1523,6 +1523,27 @@ export default function GameScreen({
     if (inputEnabled && inputRef.current) {
       inputRef.current.focus();
     }
+  }, [inputEnabled]);
+
+  // YOUR TURN, FELT (Andy oct14 "better visual cues when players turn"): the moment the turn swings to us the board's
+  // frame flashes once in yellow and the input row pops — two finite WAAPI one-shots (opacity / transform) on nodes that
+  // are always there (one pooled frame), will-change only for the run, nothing under reduced motion.
+  const turnFlashRef = useRef(null);
+  const inputRowRef = useRef(null);
+  const turnFxPrev = useRef(false);
+  useEffect(() => {
+    const was = turnFxPrev.current;
+    turnFxPrev.current = inputEnabled;
+    if (!inputEnabled || was || reducedMotion()) return;
+    const play = (el, prop, kf, opts) => {
+      if (!el || typeof el.animate !== 'function') return;
+      el.style.willChange = prop;
+      const a = el.animate(kf, opts);
+      const off = () => { el.style.willChange = ''; };
+      a.finished.then(off, off);
+    };
+    play(turnFlashRef.current, 'opacity', [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0 }], { duration: 560, easing: 'ease-out' });
+    play(inputRowRef.current, 'transform', [{ transform: 'scale(1)' }, { transform: 'scale(1.045)', offset: 0.35 }, { transform: 'scale(1)' }], { duration: 300, easing: 'cubic-bezier(.2,1.4,.4,1)' });
   }, [inputEnabled]);
 
   // Whenever it stops being our turn (we submitted, timed out, or the turn moved
@@ -3087,6 +3108,8 @@ export default function GameScreen({
             : { '--drain-sat': drainSat }
         }
       >
+        {/* YOUR TURN frame flash (one pooled node, opacity 0 at rest — see the turnFlashRef effect) */}
+        <div className="wb-turn-flash" ref={turnFlashRef} aria-hidden="true" />
         {/* POSTERISED VALUE BAND — the solo vocabulary carried over: an off-axis band across
             the board, a violet facet above it, an accent rule and the pink brand rule. Four
             inert divs, no animation, no pointer events, behind everything. */}
@@ -3595,7 +3618,7 @@ export default function GameScreen({
             ))}
           </div>
         ) : (
-          <div className="game-input-row drain-exempt">
+          <div className="game-input-row drain-exempt" ref={inputRowRef}>
             {/* Personal hype streak, floats above the input (pointer-events:none). */}
             <ComboMeter count={streak.count} brk={streak.brk} />
             {/* THE RECEIPT for the word just accepted: base × every live multiplier = what you

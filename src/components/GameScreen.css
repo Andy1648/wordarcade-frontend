@@ -6809,3 +6809,15 @@ html[data-beat='true'] .wb-belly {
   /* a 360px strip fits two 7-letter chips, not three: the newest 2 */
   .game-stage--wb .game-used-list .game-used-chip:nth-last-child(n + 3) { display: none; }
 }
+
+/* YOUR TURN frame flash (Andy oct14 "better visual cues when players turn"): a flat yellow inner frame on the board,
+   opacity 0 at rest; GameScreen plays ONE opacity one-shot when the turn swings to you. Not interactive. */
+.game-stage.game-stage--wb > .wb-turn-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border: 6px solid #FFE94A;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+}
