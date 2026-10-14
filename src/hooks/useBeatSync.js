@@ -19,6 +19,7 @@
 // everything resets to neutral.
 
 import { useEffect, useRef, useState } from 'react';
+import { beatSyncOn } from '../lib/beatSync'; // Andy oct14: BEAT SYNC is its own setting
 
 // Onset tuning.
 const HISTORY_FRAMES = 43; // ~0.7s local window for the adaptive threshold
@@ -109,7 +110,7 @@ export function useBeatSync(getFrequencyData, active, onBeatRef = null) {
 
       const now = performance.now();
       const isOnset = flux > MIN_FLUX && flux > avg * SENSITIVITY;
-      if (isOnset && beatHolds === 0 && now - lastBeatRef.current > COOLDOWN_MS) {
+      if (isOnset && beatHolds === 0 && beatSyncOn() && now - lastBeatRef.current > COOLDOWN_MS) {
         lastBeatRef.current = now;
 
         // Flip data-beat on for BEAT_HOLD_MS so CSS one-shot pops fire. Removing

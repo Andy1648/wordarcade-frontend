@@ -43,7 +43,10 @@
 .rl-plate { display: block; transition: transform 180ms cubic-bezier(0.2, 1.6, 0.4, 1); }
 .rl-item:is(:hover, :focus-visible) .rl-plate { transform: scale(1.1) rotate(-4deg); will-change: transform; }
 .rl-item.is-locked .rl-plate { opacity: 0.45; }
-.rl-item.is-you { border-color: #FFE94A; background: #33204a; }
+.rl-item.is-you { background: #33204a; }
+.rl-item.is-wearing { border-color: #FFE94A; }
+.rl-item:not(.is-locked) { cursor: pointer; }
+.rl-you.is-dim { background: #33204a; color: #FFE94A; border-color: #000; }
 .rl-how { font-size: var(--fs-k14); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .rl-item.is-locked .rl-how { color: #b9a6dc; }
 .rl-you {

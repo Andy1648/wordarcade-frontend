@@ -334,9 +334,16 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
    viewport-integrity clip walk skips its intentional off-corner overhang). */
 .game-card-ribbon {
   position: absolute;
-  top: clamp(14px, 4.4cqw, 22px);
-  left: -46px;
-  transform: rotate(-45deg);
+  /* CENTRED ON THE CORNER DIAGONAL (Andy oct14 "the left end of those are cut off"): the band's middle sits at
+     (19cqw, 19cqw) and it is 80cqw long, so BOTH ends always run off the card edges (clipped clean by the card) and
+     the text sits in the visible middle at every card size — the old fixed left:-46px left the text crowding the
+     clipped edge on some sizes. */
+  top: 19cqw;
+  left: 19cqw;
+  width: 80cqw;
+  box-sizing: border-box;
+  text-align: center;
+  transform: translate(-50%, -50%) rotate(-45deg);
   /* DISPLAY FACE + STAMP WEIGHT (fix/card-polish): the badge now reads as a bold
      banner slapped on the card, not a hairline mono strip. Bungee, bigger, thick
      black rules top+bottom, and a hard offset shadow so it lifts off the corner. */
@@ -346,7 +353,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   font-weight: 400;
   font-size: clamp(13px, 4.4cqw, 17px);
   letter-spacing: 0.02em;
-  padding: 8px 52px;
+  padding: 8px 0;
   border-top: 3px solid #000;
   border-bottom: 3px solid #000;
   /* Hard offset shadow (no blur — house rule) so the banner reads as a stamp lifted
@@ -355,6 +362,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   text-shadow: 1.5px 1.5px 0 rgba(0, 0, 0, 0.22);
   white-space: nowrap;
 }
+.game-card .game-card-ribbon { position: absolute; } /* theme/arcane.css (unscoped) sets position:relative on it */
 .game-card-ribbon.is-featured { background: var(--theme-accent, #FFE94A); color: #000; }
 .game-card-ribbon.is-ai { background: #3DA8FF; color: #001a33; }
 
@@ -660,7 +668,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
   .game-card-foot .game-card-payout { font-size: clamp(13px, 11cqw, 15px); line-height: 1.5; }
   .game-card-limited-tag { display: none; }
   .game-card-payout { font-size: clamp(13px, 18cqw, 20px); }
-  .game-card-ribbon { font-size: clamp(13px, 3.6cqw, 14px); padding: 6px 46px; }
+  .game-card-ribbon { font-size: clamp(13px, 3.6cqw, 14px); padding: 6px 0; }
   /* The LABEL stays — "UNLOCKS AT LV 2" is the whole answer, and it is the one thing a locked
      card must say. The SUB ("YOU'RE LV 1 · 1 TO GO") goes: at 12px it wraps to three lines and
      the plaque then covers the card's own name, and the half it adds — your current level — is
@@ -879,9 +887,7 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
     .game-card-name { font-size: clamp(22px, min(22cqw, 20cqh), calc(40px * var(--card-k, 1))); }
     [data-game='sat-rush'] .game-card-name { font-size: clamp(22px, 18cqw, calc(34px * var(--card-k, 1))); }
     .game-card-ribbon {
-      top: clamp(14px, 4.4cqw, calc(22px * var(--card-k, 1)));
-      left: calc(-46px * var(--card-k, 1));
-      padding: calc(8px * var(--card-k, 1)) calc(52px * var(--card-k, 1));
+      padding: calc(8px * var(--card-k, 1)) 0;
       font-size: clamp(13px, 4.4cqw, calc(17px * var(--card-k, 1)));
     }
     .game-card-badge { font-size: clamp(13px, 3.4cqw, calc(14px * var(--card-k, 1))); }

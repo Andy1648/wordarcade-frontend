@@ -2,10 +2,13 @@
 // RANK plate opens it. The 16 v3 ranks as their real plates (KitRankPlate — the art the leaderboard wears), each with
 // what earns it; yours wears YOU, the ones above it are dimmed. Hover / focus a plate: it pops + tilts (transform only).
 // Esc, the ✕ or a tap on the scrim closes it; the menu moments queue is held while it is up.
-import { useEffect, useRef } from 'react';
+// PICK A PLATE (Andy oct14 "remove rank plate [from settings] (people can choose from the rank menu)"): tap any rank
+// you have REACHED to wear it next to your name (platePick); your current rank = the default. WEARING marks it.
+import { useEffect, useRef, useState } from 'react';
 import { KitRankPlate } from './kit/KitRankPlate.jsx';
 import { RANKS_V3, liveRankV3 } from '../progress/v3/ranks.js';
 import { useMomentHold } from '../lib/useMomentSlot';
+import { getPlatePick, setPlatePick } from '../progress/platePick';
 import './RankLadder.css';
 
 const how = (x) => (x.s != null ? `${x.s} ★ STAR${x.s === 1 ? '' : 'S'}` : x.r === 0 ? 'START' : `REBIRTH ${x.r}`);
@@ -16,6 +19,14 @@ export default function RankLadder({ onClose }) {
   const you = (() => {
     try { return RANKS_V3.indexOf(liveRankV3()); } catch { return 0; }
   })();
+  const [pick, setPick] = useState(() => getPlatePick());
+  const wearing = pick != null && pick <= you ? pick : you;
+  const wear = (i) => {
+    if (i > you) return;
+    const v = i === you ? null : i; // the current rank = no pick (it moves up with you)
+    setPlatePick(v);
+    setPick(v);
+  };
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') { e.preventDefault(); onClose(); }
@@ -30,13 +41,24 @@ export default function RankLadder({ onClose }) {
       <div className="rl-panel">
         <button type="button" className="rl-x" aria-label="Close" onClick={onClose} ref={closeRef}>✕</button>
         <h2 id="rl-title" className="rl-title">ALL RANKS</h2>
-        <p className="rl-sub">REBIRTH TO CLIMB · STARS FOR THE TOP</p>
+        <p className="rl-sub">REBIRTH TO CLIMB · TAP A RANK YOU'VE REACHED TO WEAR IT</p>
         <ol className="rl-list">
           {RANKS_V3.map((x, i) => (
-            <li key={x.req} className={`rl-item${i === you ? ' is-you' : ''}${i > you ? ' is-locked' : ''}`} tabIndex={0} style={{ '--rl-d': `${Math.min(i, 12) * 25}ms` }} data-rank={x.req}>
+            <li
+              key={x.req}
+              className={`rl-item${i === you ? ' is-you' : ''}${i > you ? ' is-locked' : ''}${i === wearing ? ' is-wearing' : ''}`}
+              tabIndex={0}
+              style={{ '--rl-d': `${Math.min(i, 12) * 25}ms` }}
+              data-rank={x.req}
+              role={i <= you ? 'button' : undefined}
+              aria-pressed={i <= you ? i === wearing : undefined}
+              aria-label={i <= you ? `${x.name} — ${i === wearing ? 'wearing' : 'tap to wear'}` : undefined}
+              onClick={() => wear(i)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); wear(i); } }}
+            >
               <span className="rl-plate"><KitRankPlate rank={x.req} w={132} shine={i === you} /></span>
               <span className="rl-how">{how(x)}</span>
-              {i === you ? <span className="rl-you">YOU</span> : null}
+              {i === wearing ? <span className="rl-you">WEARING</span> : i === you ? <span className="rl-you is-dim">YOU</span> : null}
             </li>
           ))}
         </ol>

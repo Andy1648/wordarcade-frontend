@@ -24,6 +24,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './PackPicker.css';
 import { reduceMotion } from '../lib/reduceMotion';
+import { beatSyncOn } from '../lib/beatSync';
 
 function prefersReduced() {
   return reduceMotion();
@@ -60,7 +61,7 @@ export default function PackPicker({ packs, selected, onToggle, onSetAll, rounds
     const host = stageRef.current;
     let offTimer = 0;
     const id = window.setInterval(() => {
-      if (!host) return;
+      if (!host || !beatSyncOn()) return; // Andy oct14: BEAT SYNC off = no pulsing
       host.setAttribute('data-beat', '');
       window.clearTimeout(offTimer);
       offTimer = window.setTimeout(() => host && host.removeAttribute('data-beat'), 210);
