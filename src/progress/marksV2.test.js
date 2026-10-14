@@ -86,7 +86,7 @@ test('pity ladder (GEAR POOL v2, Genshin): EPIC+ in 10 AND LEGENDARY+ in 50 — 
   let last = 0;
   let maxGap = 0;
   for (let i = 1; i <= 2600; i++) {
-    const o = roll(() => 0.985, st);
+    const o = roll(() => 0.5, st); // a RARE, or the lowest EPIC on a forced roll (0.985 hit a LEGENDARY there once LEGENDARY+ became 1 IN ~94)
     st = o.state;
     if (['legendary', 'mythic', 'secret'].includes(o.result.tier)) {
       maxGap = Math.max(maxGap, i - last);

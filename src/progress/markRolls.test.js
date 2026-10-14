@@ -40,7 +40,7 @@ const tierMass = (t, tier) => ROLL_MARKS.filter((m) => m.tier === tier).reduce((
 const TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 
 test('tiers: Andy\'s five tiers (no COMMON), odds and MAINs — and MARK_TIERS says the same MAIN', () => {
-  assert.deepEqual(TIER_ODDS, { epic: 60, legendary: 150, mythic: 4000, secret: 40000 }); // RARE = the remainder; Andy oct14 easier rolls (was 100 / 250 / 10,000 / 100,000)
+  assert.deepEqual(TIER_ODDS, { epic: 60, legendary: 100, mythic: 2000, secret: 15000 }); // RARE = the remainder; Andy oct14 (2) friendlier rare gear (was 60 / 150 / 4,000 / 40,000)
   assert.deepEqual(TIER_MAIN, { rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 });
   assert.equal(MARK_TIERS.common, undefined, 'COMMON is gone (GEAR POOL v2)');
   for (const t of TIERS) assert.ok(Math.abs(1 + MARK_TIERS[t].bonus - TIER_MAIN[t]) < 1e-12, t);
@@ -72,11 +72,11 @@ test('odds: the table sums to 1; each rarer TIER is exactly 1 IN X; RARE (the fl
   for (const tier of ['epic', 'legendary', 'mythic', 'secret']) {
     assert.ok(Math.abs(tierMass(t, tier) - 1 / TIER_ODDS[tier]) < 1e-12, tier);
   }
-  assert.ok(Math.abs(tierMass(t, 'rare') - (1 - (1 / 60 + 1 / 150 + 1 / 4000 + 1 / 40000))) < 1e-9);
-  assert.equal(oneInX('mk-origin'), 40000);
-  assert.equal(oneInX('mk-leviathan'), 750, 'five legendaries (JACKPOT joined) split 1 IN 150');
+  assert.ok(Math.abs(tierMass(t, 'rare') - (1 - (1 / 60 + 1 / 100 + 1 / 2000 + 1 / 15000))) < 1e-9);
+  assert.equal(oneInX('mk-origin'), 15000);
+  assert.equal(oneInX('mk-leviathan'), 500, 'five legendaries (JACKPOT joined) split 1 IN 100');
   assert.equal(oneInX('mk-nova'), 420, 'seven epics split 1 IN 60');
-  assert.equal(oneInX('mk-hydra'), 12000, 'three mythics split 1 IN 4,000');
+  assert.equal(oneInX('mk-hydra'), 6000, 'three mythics split 1 IN 2,000');
   assert.equal(oneInX('mk-smith'), 12, 'twelve rares split 97.64%');
 });
 
@@ -90,7 +90,7 @@ test('luck: scales every chance above the RARE floor, RARE absorbs, sums stay 1'
   const t2 = rollTable(s, { permanentOwned: 10 }); // luck 2
   assert.ok(Math.abs(t2.probs.get('mk-leviathan') / t1.probs.get('mk-leviathan') - 2) < 1e-9);
   assert.ok(Math.abs(t2.probs.get('mk-origin') / t1.probs.get('mk-origin') - 2) < 1e-9);
-  assert.equal(yourOneInX('mk-leviathan', 2), 375);
+  assert.equal(yourOneInX('mk-leviathan', 2), 250);
   assert.equal(yourOneInX('mk-smith', 2), 12, 'the floor is not luck-scaled');
   const big = rollTable(s, { permanentOwned: 1e6 });
   assert.equal(tierMass(big, 'rare'), 0);
@@ -242,9 +242,9 @@ test('distribution: 60k seeded rolls land on the published tier odds (pity off)'
   const counts = { rare: 0, epic: 0, legendary: 0, mythic: 0, secret: 0 };
   const N = 60000;
   for (let i = 0; i < N; i++) counts[roll(rng, { ...freshState(), everEpic: true, rolls: 1 }).result.tier]++;
-  assert.ok(Math.abs(counts.rare / N - (1 - (1 / 60 + 1 / 150 + 1 / 4000 + 1 / 40000))) < 0.003);
+  assert.ok(Math.abs(counts.rare / N - (1 - (1 / 60 + 1 / 100 + 1 / 2000 + 1 / 15000))) < 0.003);
   assert.ok(Math.abs(counts.epic / N - 1 / 60) < 0.002);
-  assert.ok(Math.abs(counts.legendary / N - 1 / 150) < 0.0015);
+  assert.ok(Math.abs(counts.legendary / N - 1 / 100) < 0.0015);
 });
 
 test('GEMS: the wins price is gone from the roll engine (a roll costs gems — markRollShop)', async () => {

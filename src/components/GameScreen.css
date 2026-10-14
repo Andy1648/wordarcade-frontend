@@ -6781,7 +6781,7 @@ html[data-beat='true'] .wb-belly {
   /* the strip keeps the NEWEST 3 (one line); older chips drop whole, the label still counts them all */
   .game-stage--wb .game-used-list .game-used-chip:nth-last-child(n + 4) { display: none; }
   /* a tighter prompt plaque: the fragment is still the brightest, largest text on the board */
-  .game-stage--wb .game-combo { font-size: 44px; }
+  .game-stage--wb .game-combo { font-size: min(var(--fs-hero), 44px); }
   .game-stage--wb .game-combo-box { padding: 4px 20px 6px; }
   /* the clock + room code share one line under the prompt */
   .game-stage--wb .wb-top { gap: 6px; row-gap: 6px; }
@@ -6808,4 +6808,16 @@ html[data-beat='true'] .wb-belly {
 @media (max-width: 380px) and (max-height: 760px) {
   /* a 360px strip fits two 7-letter chips, not three: the newest 2 */
   .game-stage--wb .game-used-list .game-used-chip:nth-last-child(n + 3) { display: none; }
+}
+
+/* YOUR TURN frame flash (Andy oct14 "better visual cues when players turn"): a flat yellow inner frame on the board,
+   opacity 0 at rest; GameScreen plays ONE opacity one-shot when the turn swings to you. Not interactive. */
+.game-stage.game-stage--wb > .wb-turn-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border: 6px solid #FFE94A;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
 }
