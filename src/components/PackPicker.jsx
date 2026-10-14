@@ -20,6 +20,7 @@
 //   selected  : Set | array of selected pack ids
 //   onToggle  : (id) => void — parent flips selection
 //   onSetAll  : (all: boolean) => void — SELECT ALL / CLEAR
+//   rounds / onSetRounds : the game length (3 / 5 / 10); the row is hidden without onSetRounds
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './PackPicker.css';
 import { reduceMotion } from '../lib/reduceMotion';
@@ -28,7 +29,9 @@ function prefersReduced() {
   return reduceMotion();
 }
 
-export default function PackPicker({ packs, selected, onToggle, onSetAll }) {
+const ROUND_OPTIONS = [3, 5, 10];
+
+export default function PackPicker({ packs, selected, onToggle, onSetAll, rounds = 3, onSetRounds }) {
   // Selection comes from props (controlled). Normalise Set|array to a Set for O(1) lookups.
   const selectedSet = useMemo(
     () => (selected instanceof Set ? selected : new Set(selected || [])),
@@ -118,6 +121,19 @@ export default function PackPicker({ packs, selected, onToggle, onSetAll }) {
           </div>
         </div>
       </div>
+
+      {onSetRounds && (
+        <div className="ppp-rounds" role="radiogroup" aria-label="Rounds">
+          <span className="ppp-rounds-label">ROUNDS</span>
+          {ROUND_OPTIONS.map((n) => (
+            <button key={n} type="button" role="radio" aria-checked={rounds === n}
+              className={`ppp-round${rounds === n ? ' is-on' : ''}`}
+              onClick={() => onSetRounds(n)}>
+              {n}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="ppp-count">
         <span className="ppp-count-num" key={`${count}-${cats}`}>

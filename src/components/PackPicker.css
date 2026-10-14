@@ -125,3 +125,19 @@
 /* On very short viewports let the pack list shrink further (still comfortably
    scrollable) so the whole picker fits without the dialog scrolling. */
 @media (max-height: 560px) { .ppp-window-scroll { min-height: 72px; } }
+
+/* ============================ ROUNDS (3 / 5 / 10) ============================ */
+/* Game length beside the packs. Same tile language as the pack pills: flat fill,
+   black outline, hard shadow, colour = state. Press sinks onto the shadow. */
+.ppp-rounds { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 12px; }
+.ppp-rounds-label { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); letter-spacing: 0.1em; color: #c8d6ec; margin-right: 4px; }
+.ppp-round {
+  min-width: var(--tap-min); min-height: var(--tap-min); padding: 0 12px; cursor: pointer;
+  font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); color: #7f9dc9;
+  background: #152744; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  transition: transform 0.12s cubic-bezier(0.34, 1.6, 0.5, 1), background 0.12s ease;
+}
+.ppp-round:hover { transform: translateY(-2px); }
+.ppp-round:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #000; }
+.ppp-round.is-on { background: #3DA8FF; color: #000; }
+@media (prefers-reduced-motion: reduce) { .ppp-round { transition: none; } }

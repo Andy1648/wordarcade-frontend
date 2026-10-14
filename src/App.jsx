@@ -368,6 +368,9 @@ function App() {
   }, []);
   // SELECT ALL / CLEAR for the Blitz pack-picker. CLEAR intentionally leaves ONE
   // pack (not zero), preserving the "keep ≥1" invariant the toggle also enforces.
+  // Category Blitz game length (3 / 5 / 10 rounds), chosen beside the packs and sent
+  // as set_rounds on the same create/host paths. The server never repeats a category.
+  const [blitzRounds, setBlitzRounds] = useState(3);
   const handleSetAllBlitzPacks = useCallback((all) => {
     setBlitzPacks(all ? PACKS.map((p) => p.id) : PACKS.slice(0, 1).map((p) => p.id));
   }, []);
@@ -2082,6 +2085,7 @@ function App() {
     } else {
       // Blitz: the host's pack selection, ordered after set_game_type on the same socket.
       send('set_packs', { packs: blitzPacks });
+      send('set_rounds', { rounds: blitzRounds });
     }
     send('add_bot', { difficulty: 'medium' });
     // setPlayerName is stable-enough; this effect fires once (guarded by the ref).
@@ -2327,6 +2331,7 @@ function App() {
         // Blitz when set_packs lands. Never sent on join (that branch is above).
         if (mode === 'category-blitz') {
           send('set_packs', { packs: blitzPacks });
+          send('set_rounds', { rounds: blitzRounds });
         }
       }
     }
@@ -2729,6 +2734,8 @@ function App() {
         blitzPacks={blitzPacks}
         onToggleBlitzPack={handleToggleBlitzPack}
         onSetAllBlitzPacks={handleSetAllBlitzPacks}
+        blitzRounds={blitzRounds}
+        onSetBlitzRounds={setBlitzRounds}
         musicMuted={music.isMuted}
         onToggleMusic={music.toggleMute}
         onDaily={handleStartDaily}

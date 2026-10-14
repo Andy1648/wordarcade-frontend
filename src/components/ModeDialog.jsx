@@ -48,7 +48,7 @@ function darken(hex, f) {
  * CREATE/JOIN call back into App's existing room/join flow via onCreate/onJoin. Behind the
  * content sits a STATIC per-mode background (ModeDialogBackground — no canvas, no rAF).
  */
-export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, onPlaySolo, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks }) {
+export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, onPlay, onPlaySolo, connecting, coldStart, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds }) {
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
@@ -206,6 +206,8 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
                 selected={blitzPacks}
                 onToggle={onToggleBlitzPack}
                 onSetAll={onSetAllBlitzPacks}
+                rounds={blitzRounds}
+                onSetRounds={onSetBlitzRounds}
               />
             )}
 

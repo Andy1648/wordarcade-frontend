@@ -117,9 +117,8 @@ const REJECTION_MESSAGES = {
   not_on_list: 'NOT ON THE LIST',
 };
 
-// Category Blitz is always a fixed 3 rounds (mirrors the backend's
-// TOTAL_ROUNDS); the round_start payload reports the current round but not
-// the total, so the total lives here.
+// Category Blitz length: the host picks 3 / 5 / 10 (set_rounds) and round_start /
+// round_end carry `totalRounds`. 3 is the fallback for an older server.
 const TOTAL_CATEGORY_ROUNDS = 3;
 
 // ---- Solo Category Blitz personal bests (localStorage) ----
@@ -4778,7 +4777,7 @@ function CategoryBlitzScreen({
                   <span className="game-meta-round">SOLO</span>
                 ) : (
                   <span className="game-meta-round">
-                    ROUND {categoryRound.round}/{TOTAL_CATEGORY_ROUNDS}
+                    ROUND {categoryRound.round}/{categoryRound.totalRounds || TOTAL_CATEGORY_ROUNDS}
                   </span>
                 )}
               </div>
@@ -5107,7 +5106,7 @@ function CategoryBlitzScreen({
           </div>
 
           <div className="cb-next-round">
-            {roundResults.round >= TOTAL_CATEGORY_ROUNDS
+            {roundResults.round >= (roundResults.totalRounds || TOTAL_CATEGORY_ROUNDS)
               ? 'FINAL SCORES IN 5 SECONDS...'
               : 'NEXT ROUND IN 5 SECONDS...'}
           </div>

@@ -152,7 +152,7 @@ const barSeen = { level: null, frac: 0 };
 // One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
 let cloudBootChecked = false;
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -1490,6 +1490,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             blitzPacks={blitzPacks}
             onToggleBlitzPack={onToggleBlitzPack}
             onSetAllBlitzPacks={onSetAllBlitzPacks}
+            blitzRounds={blitzRounds}
+            onSetBlitzRounds={onSetBlitzRounds}
           />
           </Suspense>
         </ScreenBoundary>

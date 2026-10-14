@@ -84,4 +84,14 @@ test.describe('Category Blitz pack picker', () => {
     await expect(page.locator('.ppp-pill.is-on')).toHaveCount(1);
     await expect(page.locator('.ppp-count-num')).toHaveText(loaded(1, CLEAR_PACK.count));
   });
+
+  test('ROUNDS 3 / 5 / 10: defaults to 3, one choice at a time', async ({ page }) => {
+    const radios = page.locator('.ppp-round');
+    await expect(radios).toHaveText(['3', '5', '10']);
+    await expect(page.locator('.ppp-round.is-on')).toHaveText('3');
+    await radios.nth(2).click();
+    await expect(page.locator('.ppp-round.is-on')).toHaveText('10');
+    await expect(page.locator('.ppp-round[aria-checked="true"]')).toHaveCount(1);
+    if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
+  });
 });
