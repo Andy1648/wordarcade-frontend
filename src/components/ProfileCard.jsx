@@ -27,6 +27,54 @@ const POP = [{ transform: 'scale(.86) rotate(-2deg)', opacity: 0 }, { transform:
 const has = (v) => v != null && Number.isFinite(Number(v));
 const UNKNOWN = '?'; // Andy oct11: "for anything thats not known … just put a question mark"
 
+// 046 PROFILE FLEX (Andy oct14 "ways profiles can be shown off (not avatars)"): things the player EARNED, never bought —
+// the SIGNATURE WORD (the rarest word they ever got accepted), the best CHAIN, and a BADGE ROW (the top claimed tier of
+// each achievement ladder, the Achievements screen's own glyph + tier colour). Rows from before 046 have none of these
+// fields → the sections are simply absent (no row of "?").
+const BADGES = [
+  ['type', 'key', 'TYPE WORDS'], ['bots', 'bot', 'BEAT BOTS'], ['reb', 'loop', 'REBIRTH'], ['roll', 'die', 'ROLL EPIC+'],
+  ['win', 'cup', 'WIN MULTIPLAYER'], ['chain', 'chain', 'CHAIN'], ['index', 'cards', 'FILL INDEX'], ['power', 'chev', 'POWER LEVEL'],
+];
+const MAX_TIER = { index: 3 };
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+const TC = ['#A9B4C8', '#3D8BFF', '#B04BFF', '#FFC23D', '#FF3D7F']; // AchievementsV3's tier colours
+const TF = ['#262b38', '#0f2350', '#2a0e4a', '#3d2a05', '#4a0a22'];
+const BAND = { COMMON: '#F0EAD9', UNCOMMON: '#2EFFE0', RARE: '#9A1AFF', OBSCURE: '#FFE94A' }; // rarity.js band colours
+
+function Signature({ word, band }) {
+  const tone = BAND[band] || BAND.COMMON;
+  return (
+    <div className="pc-sig" style={{ '--pc-band': tone, '--ch': word.length }} data-testid="profile-sig">
+      <span className="pc-sig-head">
+        <span className="pc-sig-k">SIGNATURE WORD</span>
+        {band ? <span className="pc-sig-band">{band}</span> : null}
+      </span>
+      <span className="pc-sig-w">{word}</span>
+    </div>
+  );
+}
+
+function BadgeRow({ badges }) {
+  const got = BADGES.filter(([id]) => badges[id] > 0);
+  if (!got.length) return null;
+  return (
+    <ul className="pc-badges" data-testid="profile-badges" aria-label="Achievement badges">
+      {got.map(([id, g, name]) => {
+        const t = Math.min(badges[id], MAX_TIER[id] || 5) - 1;
+        const max = t + 1 >= (MAX_TIER[id] || 5);
+        return (
+          <li key={id} className="pc-badge" style={{ '--tc': TC[t], '--tf': TF[t] }} title={`${name} ${max ? 'MAX' : ROMAN[t]}`}>
+            <span className="pc-badge-plate" aria-hidden="true" />
+            <img className="pc-badge-glyph" src={`/ach/${g}.svg`} alt="" aria-hidden="true" />
+            <span className="pc-badge-roman">{max ? 'MAX' : ROMAN[t]}</span>
+            <span className="pc-sr">{`${name} ${max ? 'MAX' : ROMAN[t]}`}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function Gear({ id, slot, known, onOpen }) {
   const m = id ? rollMarkById(id) : null;
   if (!m) {
@@ -109,7 +157,11 @@ export default function ProfileCard({ row, mine = false, onClose }) {
         <div className="pc-sub">
           <span className="pc-sub-c"><KitIcon name="rebirth" size={26} shadow={1} extras={false} /> R{formatNum(Number(row.rebirths) || 0)}</span>
           <span className="pc-sub-c"><KitIcon name="levels" size={26} shadow={1} extras={false} /> LV {formatNum(Number(row.level) || 1)}</span>
+          {has(s.best_chain) && Number(s.best_chain) > 0 ? (
+            <span className="pc-sub-c is-chain" data-testid="profile-chain"><img src="/ach/chain.svg" alt="" aria-hidden="true" /> CHAIN {formatNum(Number(s.best_chain))}</span>
+          ) : null}
         </div>
+        {typeof s.sig_word === 'string' && /^[a-z]{3,24}$/.test(s.sig_word) ? <Signature word={s.sig_word} band={s.sig_band} /> : null}
         <div className="pc-gears" data-testid="profile-gears">
           <Gear id={s.gear1} slot={1} known={!!show} onOpen={setGear} />
           <Gear id={s.gear2} slot={2} known={!!show} onOpen={setGear} />
@@ -122,6 +174,7 @@ export default function ProfileCard({ row, mine = false, onClose }) {
             <span className="pc-bar" aria-hidden="true"><span className="pc-bar-fill" style={{ transform: `scaleX(${found != null ? Math.min(1, found) : 0})` }} /></span>
           </Tile>
         </div>
+        {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
       </div>
       {gear ? (
         // a layer of this scrim (GearSheet's .mx-sheet-layer is absolute) — a tap inside never closes the profile

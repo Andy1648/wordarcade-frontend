@@ -369,3 +369,44 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
   await pc.locator('.pc-x').click();
   await expect(pc).toHaveCount(0);
 });
+
+// 046 PROFILE FLEX (Andy oct14 "ways profiles can be shown off (not avatars)"): the SIGNATURE WORD (rarest accepted word),
+// the best CHAIN and a BADGE ROW (top claimed achievement tiers). A pre-046 row has none → the sections are absent.
+for (const vp of [{ width: 1366, height: 657 }, { width: 360, height: 640 }]) {
+  test(`@${vp.width}x${vp.height}: the profile card shows the signature word, best chain and badges — nothing clips, the card fits`, async ({ page }) => {
+    const SHOW = {
+      b: {
+        gear1: 'mk-kraken', gear2: 'mk-hydra', base_wins: 190, wins_per_word: 5130, gears_found: 9, gears_total: 27, power: 6,
+        badges: { type: 5, bots: 3, reb: 2, roll: 4, win: 1, chain: 2, index: 3, power: 5 },
+        sig_word: 'incomprehensibilities', sig_band: 'OBSCURE', best_chain: 23,
+      },
+    };
+    const { lb } = await boot(page, { me: { rebirths: 0, level: 60 }, vp });
+    await page.route('**/rest/v1/profile_showcase*', (route) => {
+      const id = decodeURIComponent((route.request().url().match(/profile_id=eq\.([^&]+)/) || [])[1] || '');
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SHOW[id] ? [SHOW[id]] : []) });
+    });
+    await lb.locator('.lb2-row[data-id="b"], .lb2-col--2').first().click();
+    const pc = page.getByTestId('profile-card');
+    await expect(pc.getByTestId('profile-sig')).toBeVisible();
+    await expect(pc.locator('.pc-sig-w')).toHaveText('incomprehensibilities');
+    await expect(pc.locator('.pc-sig-band')).toHaveText('OBSCURE');
+    await expect(pc.getByTestId('profile-chain')).toHaveText(/CHAIN 23/);
+    await expect(pc.locator('.pc-badge')).toHaveCount(8);
+    await expect(pc.locator('.pc-badge-roman')).toHaveText(['MAX', 'III', 'II', 'IV', 'I', 'II', 'MAX', 'MAX']);
+    await page.waitForTimeout(400); // the card's pop
+    const m = await pc.evaluate((el) => {
+      const sig = el.querySelector('.pc-sig').getBoundingClientRect();
+      const w = el.querySelector('.pc-sig-w').getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const clippedEls = [...el.querySelectorAll('.pc-tile-v, .pc-tile-k, .pc-gear-name, .pc-name, .pc-sig-w')].filter((n) => n.scrollWidth > n.clientWidth + 1); const clipped = clippedEls.length;
+      const lastB = el.querySelector('.pc-badges').getBoundingClientRect();
+      return { clipped, wordInside: w.left >= sig.left - 1 && w.right <= sig.right + 1, cardBottom: r.bottom, badgesBottom: lastB.bottom, vh: innerHeight, overflow: el.scrollHeight - el.clientHeight };
+    });
+    expect(m.clipped).toBe(0);
+    expect(m.wordInside).toBe(true);
+    expect(m.cardBottom).toBeLessThanOrEqual(m.vh);
+    expect(m.overflow).toBeLessThanOrEqual(1);
+    if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/profile-flex-${vp.width}x${vp.height}.png` });
+  });
+}
