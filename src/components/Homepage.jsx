@@ -13,7 +13,7 @@ import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier } from '../progress/xp';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
 import { rebirthWordsShort } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
@@ -63,7 +63,7 @@ import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { moments } from '../lib/moments';
 import { momentOpts, MENU_MOMENTS, CARD_MS, WALL_SETTLE_MS } from '../lib/menuMoments';
 import { useMomentHold } from '../lib/useMomentSlot';
-import { LEADERBOARD_ENABLED, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
+import { LEADERBOARD_ENABLED, getMyProfile, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 // CARD PAGES controls (arrows, dots, keys, swipe): only a short-wide desktop ever fetches these.
@@ -1530,7 +1530,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
-          <TutorialHost level={xpProgress.level} rebirths={rebirths} />
+          <TutorialHost
+            level={xpProgress.level}
+            rebirths={rebirths}
+            powerReady={winsAffordable && (getKeyTier() || 0) === 0}
+            gearsReady={!rollLock && starterWaiting}
+            onBoard={!!getMyProfile()}
+          />
         </Suspense>
       )}
       {claimReveal && <Suspense fallback={null}><ClaimReveal claim={claimReveal} onDone={() => { const wasMark = claimReveal.kind === 'mark'; setClaimReveal(null); if (wasMark) setShowMarks('roll'); }} /></Suspense>}
@@ -1597,7 +1603,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           avoidSelector=".homepage-logo-wrap, .homepage-cards-region, .homepage-corner-nav, .hp-icons"
           // No wash (fine-tune oct2): a first-time player's first screen was ~70% dimmed behind a
           // ring; the ring + the bar's own TYPE ANYWHERE line teach without hiding the modes.
-          dim={false}
+          // Andy oct14 "the tutorial darkenings are gone": the wash is back (oct2 had dropped it)
+          dim
           onDismiss={dismissMenuSpot}
         />
       )}

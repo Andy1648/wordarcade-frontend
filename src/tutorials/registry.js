@@ -24,15 +24,6 @@ export const TUT_INIT_KEY = 'taw.tut.init';
  *  panel, not the menu), needsTarget (not due until its target is on screen — no target, no tutorial). */
 export const TUTORIALS = [
   {
-    // MARK ROLLS: hosted by the ROLL screen (rollScreen/RollScreen.jsx shows it the first time it opens).
-    id: 'markRolls',
-    host: 'marks',
-    isNew: true,
-    when: (s) => s.marksRevealed && rollsEnabled(),
-    target: '.rs-roll',
-    line: 'TAP ROLL FOR MARKS. YOUR FIRST ROLL IS FREE.',
-  },
-  {
     // GEMS: the roll currency's count on the menu. No-ops until the count is actually on screen (the gems
     // chip may not be on this build yet; when it is, this lights it the first time it shows).
     id: 'gems',
@@ -42,12 +33,49 @@ export const TUTORIALS = [
     target: '.gems-count, .menu-gems-chip',
     line: 'GEMS PAY FOR ROLLS.',
   },
+  // GUIDED MENU SPOTLIGHTS (Andy oct14 "so many things that the user wouldnt know and wouldnt care to check … dont
+  // bombard … 2 or so is enough"): each lights the one menu tile that opens the thing, once, when it first matters.
+  // TutorialHost shows at most MENU_TUTS_PER_LOAD of them a visit.
+  {
+    id: 'power',
+    isNew: true,
+    needsTarget: true,
+    when: (s) => !!s.powerReady && s.rebirths === 0 && s.level <= 40, // NEW players only
+    target: '.hp-nav.is-shop',
+    line: 'BUY POWER: MORE XP ON EVERY KEY.',
+  },
+  {
+    id: 'gears',
+    isNew: true,
+    needsTarget: true,
+    when: (s) => !!s.gearsReady && s.rebirths === 0 && s.level <= 60,
+    target: '.hp-nav.is-gears',
+    line: 'FIRST GEAR ROLL READY — GEARS BOOST ALL.',
+  },
+  {
+    // MARK ROLLS: hosted by the ROLL screen (rollScreen/RollScreen.jsx shows it the first time it opens).
+    id: 'markRolls',
+    host: 'marks',
+    isNew: true,
+    when: (s) => s.marksRevealed && rollsEnabled(),
+    target: '.rs-roll',
+    line: 'TAP ROLL FOR MARKS. YOUR FIRST ROLL IS FREE.',
+  },
+
   {
     id: 'rebirth',
     when: (s) => s.rebirthReady && s.rebirths === 0,
     target: '.hp-nav.is-rebirth',
     // NUMBERS AUDIT: season 2 says this as an edge toast, and a FINAL rebirth is ×2 (the live Rebirth Rush ×5)
     line: `REBIRTH READY: ×${SEASON2 ? 3 : 5} XP & WINS, FOR GOOD.`,
+  },
+  {
+    id: 'board',
+    isNew: true,
+    needsTarget: true,
+    when: (s) => !!s.onBoard && s.rebirths === 0 && s.level >= 3 && s.level <= 60,
+    target: '[data-nav="leaderboard"]',
+    line: "YOU'RE ON THE LEADERBOARD — CLIMB IT.",
   },
   {
     // KEY TIER: the first time a KEY tier is affordable (T0, before any rebirth). Hosted by the SHOP.
@@ -64,7 +92,9 @@ const isDue = (t, snapshot) => { try { return !!t.when(snapshot); } catch { retu
 
 /** The first MENU tutorial that is due and not yet seen, or null. `seen(id)` reads the stored flag;
  *  `hasTarget(selector)` says whether a target is on screen (only asked of `needsTarget` tutorials). */
-export function dueTutorial(snapshot, seen, hasTarget = () => true) {
+export const MENU_TUTS_PER_LOAD = 2;
+export function dueTutorial(snapshot, seen, hasTarget = () => true, shownThisLoad = 0) {
+  if (shownThisLoad >= MENU_TUTS_PER_LOAD) return null; // never a bombardment — the rest wait for a later visit
   for (const t of TUTORIALS) {
     if (t.host) continue; // shown by its own panel (MARKS / SHOP), not the menu
     if (seen(t.id)) continue;

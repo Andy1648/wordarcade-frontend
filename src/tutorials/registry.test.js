@@ -12,8 +12,8 @@ const fresh = { level: 1, rebirths: 0, marksRevealed: false, rebirthReady: false
 const noTarget = () => false;
 const anyTarget = () => true;
 
-test('ONLY the four that matter: roll, gems, rebirth, KEY TIER (Andy oct5)', () => {
-  assert.deepEqual(TUTORIALS.map((t) => t.id), ['markRolls', 'gems', 'rebirth', 'keyTier']);
+test('ONLY the ones that matter: power, gears, roll, gems, rebirth, board, KEY TIER (Andy oct5 + oct14 guided tiles)', () => {
+  assert.deepEqual(TUTORIALS.map((t) => t.id), ['gems', 'power', 'gears', 'markRolls', 'rebirth', 'board', 'keyTier']);
   for (const cut of ['pv10', 'marks', 'frenzy', 'boost', 'weekly', 'chain', 'fuse', 'wall']) {
     assert.ok(!TUTORIALS.some((t) => t.id === cut), `${cut} is cut`);
   }
@@ -116,4 +116,14 @@ test('a throwing when() never shows a tutorial; blocked storage never nags', () 
   } finally {
     globalThis.localStorage = prev;
   }
+});
+
+test('never a bombardment: at most MENU_TUTS_PER_LOAD (2) menu spotlights a visit (Andy oct14)', async () => {
+  const { dueTutorial, MENU_TUTS_PER_LOAD } = await import('./registry.js');
+  const s = { level: 30, rebirths: 0, powerReady: true, gearsReady: true, onBoard: true, marksRevealed: false, rebirthReady: true };
+  assert.equal(MENU_TUTS_PER_LOAD, 2);
+  assert.equal(dueTutorial(s, () => false, () => true, 0).id, 'power');
+  assert.equal(dueTutorial(s, (id) => id === 'power', () => true, 1).id, 'gears');
+  assert.equal(dueTutorial({ ...s, rebirths: 1 }, () => false, () => true, 0), null, 'the new-player spotlights skip a rebirthed save');
+  assert.equal(dueTutorial(s, () => false, () => true, 2), null, 'the third waits for a later visit');
 });

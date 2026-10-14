@@ -60,7 +60,8 @@ const GATES = [
   ['leaderboard/RankUpMoment.jsx', /if \(SEASON2\) \{[\s\S]*?return undefined;\s*\}\s*const a = setTimeout/, /className="lb-rankup"/],
   ['leaderboard/RankUpMoment.jsx', /if \(SEASON2\) return null;/, /className="lb-rankup-layer"/],
   ['leaderboard/DevResetNotice.jsx', /if \(SEASON2\) \{[\s\S]*?return undefined;\s*\}\s*const t = setTimeout/, /YOUR PROGRESS WAS RESET BY THE DEV\.<\/p>/],
-  ['tutorials/TutorialHost.jsx', /if \(!SEASON2 \|\| !due \|\| !on\) return;/, /if \(SEASON2 \|\| !due \|\| !on\) return null;\s*return \(\s*<SpotlightTutorial/],
+  // oct14: the spotlight is back in BOTH seasons (Andy "the tutorial darkenings are gone"); only GEMS is a season-2 toast
+  ['tutorials/TutorialHost.jsx', /const asToast = SEASON2 && due && due\.id === 'gems';/, /if \(!due \|\| !on \|\| asToast\) return null;\s*return \(\s*<SpotlightTutorial/],
   ['components/WinsCreditToast.jsx', /if \(SEASON2 \|\| !entry \|\| entry\.kind !== 'bonus' \|\| entry\.amount <= 0\) return;/, /className="wct"/],
   ['components/wallFx.jsx', /if \(!fx \|\| SEASON2\) return null;/, /<div className="wall-stamp-sub">NEW WALL<\/div>/],
   ['components/ShopScreen.jsx', /\{reveal && \(SEASON2 \? <S2BuyToast reveal=\{reveal\} onDone=\{\(\) => setReveal\(null\)\} \/> : <ShopReveal reveal=\{reveal\} onDone=\{\(\) => setReveal\(null\)\} \/>\)\}/, /return <ShopSticker reveal=\{reveal\}/],
@@ -79,7 +80,7 @@ test('OFF: the purge never reaches for a V3.* hook outside a SEASON2 gate', () =
   // the lazy chunks call V3.toast / V3.rankUp only inside a branch that SEASON2 already chose
   const uses = [
     ['claims/ClaimReveal.jsx', /function S2Reveal[\s\S]*V3\.toast\(/],
-    ['tutorials/TutorialHost.jsx', /if \(!SEASON2 \|\| !due \|\| !on\) return;\s*V3\.toast\(/],
+    ['tutorials/TutorialHost.jsx', /if \(!asToast \|\| !on\) return;\s*V3\.toast\(/],
     ['leaderboard/RankUpMoment.jsx', /if \(SEASON2\) \{[\s\S]*V3\.rankUp\(/],
     ['leaderboard/DevResetNotice.jsx', /if \(SEASON2\) \{[\s\S]*V3\.toast\(/],
     ['components/ShopScreen.jsx', /function S2BuyToast[\s\S]*V3\.toast\(/],

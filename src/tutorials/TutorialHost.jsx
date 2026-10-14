@@ -22,17 +22,22 @@ const S2_TIP = {
   gems: { head: 'NEW', label: 'GEMS PAY FOR ROLLS', icon: 'gems', tile: '#2EFFE0' },
 };
 
-function snapshotFor(level, rebirths) {
+function snapshotFor(level, rebirths, extra = {}) {
   return {
     level,
     rebirths,
     marksRevealed: !!marksRevealed(),
     rebirthReady: level >= rebirthThreshold(rebirths),
+    powerReady: !!extra.powerReady,
+    gearsReady: !!extra.gearsReady,
+    onBoard: !!extra.onBoard,
   };
 }
+// how many menu spotlights this page load has shown (registry MENU_TUTS_PER_LOAD caps it)
+let shownThisLoad = 0;
 
-export default function TutorialHost({ level, rebirths }) {
-  const snapshot = useMemo(() => snapshotFor(level, rebirths), [level, rebirths]);
+export default function TutorialHost({ level, rebirths, powerReady = false, gearsReady = false, onBoard = false }) {
+  const snapshot = useMemo(() => snapshotFor(level, rebirths, { powerReady, gearsReady, onBoard }), [level, rebirths, powerReady, gearsReady, onBoard]);
   const [tick, setTick] = useState(0); // re-pick after one is done
   // init FIRST (synchronously, before the first pick): an existing player's already-reached features are
   // marked seen before anything can be chosen
@@ -40,24 +45,29 @@ export default function TutorialHost({ level, rebirths }) {
   // tick re-picks after a tutorial is marked seen (the seen flags live in storage, not in state). A
   // `needsTarget` tutorial (gems) is only picked when its target is on screen — one DOM query per pick.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const due = useMemo(() => dueTutorial(snapshot, hasSeenTutorial, hasVisibleTarget), [snapshot, tick]);
+  const due = useMemo(() => dueTutorial(snapshot, hasSeenTutorial, hasVisibleTarget, shownThisLoad), [snapshot, tick]);
   // its turn on the queue: one tutorial at a time, after every heavier moment (the id changes per tutorial,
   // so the next due one queues afresh once this one is marked seen)
   const opts = useMemo(() => momentOpts('tutorial', due ? `tutorial:${due.id}` : 'tutorial'), [due]);
   const [on, release] = useMomentSlot(!!due, opts);
+  // Andy oct14 "the tutorial darkenings are gone": season 2's P7 purge had turned every menu tutorial into an edge
+  // toast. The real SPOTLIGHT (dim + ring + one line) is back in both seasons; only GEMS stays a toast in season 2
+  // (its target is a small count, a full dim for it is too much).
+  const asToast = SEASON2 && due && due.id === 'gems';
   useEffect(() => {
-    if (!SEASON2 || !due || !on) return;
+    if (!asToast || !on) return;
     V3.toast(S2_TIP[due.id] || { head: 'NEW', label: due.line, icon: 'levels', tile: '#FFE94A' });
     markTutorialSeen(due.id);
+    shownThisLoad += 1;
     release();
     setTick((n) => n + 1);
-  }, [due, on, release]);
-  if (SEASON2 || !due || !on) return null;
+  }, [asToast, due, on, release]);
+  if (!due || !on || asToast) return null;
   return (
     <SpotlightTutorial
       key={due.id}
       tutorial={due}
-      onDone={() => { markTutorialSeen(due.id); release(); setTick((n) => n + 1); }}
+      onDone={() => { markTutorialSeen(due.id); shownThisLoad += 1; release(); setTick((n) => n + 1); }}
     />
   );
 }
