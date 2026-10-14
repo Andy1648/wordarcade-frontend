@@ -36,7 +36,7 @@ import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRo
 import { luck as rollLuck } from '../../progress/markRolls';
 import { rollsPerRoll } from '../../progress/markPerks';
 // 036 SERVER-CHECKED ROLLS: a named season-2 player's roll is picked by the server (asked at the HOLD start)
-import { serverRollOn, prepare as prepareServerRoll, take as takeServerRoll, claim as claimServerRoll } from '../../leaderboard/serverRoll';
+import { serverRollOn, prepare as prepareServerRoll, take as takeServerRoll, claim as claimServerRoll, syncPity } from '../../leaderboard/serverRoll';
 import { getGems, subscribeGems } from '../../progress/gems';
 import { GemIcon, GemCount } from '../gems/Gems';
 import { isBoostActive } from '../../progress/boost';
@@ -124,7 +124,10 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const idsRef = useRef(unlockedIds);
   idsRef.current = unlockedIds;
   // NO SPOILERS: storage is re-read ONLY when a reel lands
-  const view = useMemo(() => viewState(idsRef.current), [landed]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 047: the pity countdown is the server's — synced once on open (pitySync re-reads the view when it changed)
+  const [pitySync, setPitySync] = useState(0);
+  useEffect(() => { let live = true; syncPity().then((changed) => { if (live && changed) setPitySync((n) => n + 1); }); return () => { live = false; }; }, []);
+  const view = useMemo(() => viewState(idsRef.current), [landed, pitySync]); // eslint-disable-line react-hooks/exhaustive-deps
   const reduced = useReducedMotion();
   const [gems, setGems] = useState(() => getGems()); // GEMS buy rolls (Andy oct5) — wins never do
   const [spin, setSpin] = useState(null);
