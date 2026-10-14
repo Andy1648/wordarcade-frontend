@@ -94,7 +94,8 @@ export default function PatchNotes({ onClose }) {
   const rolls = PATCH_GIFT_ROLLS;
   const label = already ? 'CLOSE' : phase === 'done' ? 'PLAY' : phase === 'flying' ? 'COLLECTING' : 'COLLECT';
   return (
-    <div className="pn" role="dialog" aria-modal="true" aria-labelledby="pn-title" data-testid="patch-notes" data-phase={already ? 'done' : phase}>
+    <div className="pn" role="dialog" aria-modal="true" aria-labelledby="pn-title" data-testid="patch-notes" data-phase={already ? 'done' : phase}
+      onClick={(e) => { if (e.target === e.currentTarget && phase !== 'flying') close(); }}>
       <div className="pn-wallet">
         <KitPill ref={pill} kind="gems" value={wallet} ariaLabel={`Gems: ${formatNum(wallet)}`} />
       </div>

@@ -37,14 +37,14 @@
   left: 16px;
   right: 16px;
   margin: 0 auto;
-  max-width: 560px;
+  max-width: 760px;
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  font-size: var(--fs-panel);
+  font-size: var(--fs-h1); /* Andy oct14 "make tutorial text much larger" (was --fs-panel, 20-28px) */
   line-height: 1.05;
   text-align: center;
   color: #FFE94A;
-  -webkit-text-stroke: 3px #000;
+  -webkit-text-stroke: 5px #000;
   paint-order: stroke fill;
 }
 .ut-line.is-centered {

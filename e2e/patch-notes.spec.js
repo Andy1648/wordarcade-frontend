@@ -66,6 +66,16 @@ test('PATCH NOTES: ✕ still pays the gift; the UPDATE LOG tile re-opens it with
   expect(await wallet(page)).toBe(paid);
 });
 
+test('PATCH NOTES: a click OUTSIDE the panel closes it (and still pays, once)', async ({ page }) => {
+  test.setTimeout(60_000);
+  await boot(page, 1280, 720);
+  await expect(page.getByTestId('patch-notes')).toBeVisible({ timeout: 15_000 });
+  const before = await wallet(page);
+  await page.getByTestId('patch-notes').click({ position: { x: 1260, y: 700 } }); // the scrim corner
+  await expect(page.getByTestId('patch-notes')).toHaveCount(0);
+  expect(await wallet(page)).toBe(before + PATCH_GIFT_ROLLS * S2_ROLL_PRICE);
+});
+
 test('PATCH NOTES: a first-time visitor gets it too — after the menu spotlight', async ({ page }) => {
   test.setTimeout(60_000);
   await boot(page, 1280, 720, false);

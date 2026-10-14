@@ -87,13 +87,9 @@ test('★ → R → level: the podium is the top 3, ranks 4 … 10 below; v3 ran
   // one YOU on the screen, on your own row; it is lifted (is-me)
   await expect(lb.locator('.lb2-you')).toHaveCount(1);
   await expect(lb.locator('.lb2-row.is-me')).toHaveCount(1);
-  // AROUND YOU (oct14): #11 KILO, #12 LIMA, YOU #13 — the chips above you say what passing them takes
-  await expect(lb.locator('.lb2-ar.is-me .lb2-ar-rk')).toHaveText('#13');
-  await expect(lb.locator('.lb2-ar[data-id="l"] .lb2-ar-gap')).toHaveText('+11 LV'); // LIMA R0 LV70 vs YOU R0 LV60
-  await expect(lb.locator('.lb2-ar[data-id="k"] .lb2-ar-gap')).toHaveText('+21 LV');
 });
 
-test('YOU IN THE TOP 3: your podium place says YOU (once), no list row is yours, CHASE targets #1', async ({ page }) => {
+test('YOU IN THE TOP 3: your podium place says YOU (once), no list row is yours', async ({ page }) => {
   // R9 LV500: ALPHA (★1) #1, BRAVO (R9 LV900) #2, ME #3, CHARLIE (R9 LV100) #4
   const { lb } = await boot(page, { me: { rebirths: 9, level: 500 } });
   expect(await podiumIds(lb)).toEqual(['a', 'b', 'me']);
@@ -104,18 +100,13 @@ test('YOU IN THE TOP 3: your podium place says YOU (once), no list row is yours,
   await expect(lb.locator('.lb2-row.is-me')).toHaveCount(0);
   expect(await rowIds(lb)).toEqual(['c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']);
   await expect(lb.locator('.lb2-col--3 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'GLYPHLORD');
-  // AROUND YOU: BRAVO (#2) is R9 LV900 → same ★ and R → +401 LV to pass
-  await expect(lb.locator('.lb2-ar[data-id="b"] .lb2-ar-gap')).toHaveText('+401 LV');
-  await expect(lb.locator('.lb2-ar.is-me .lb2-ar-rk')).toHaveText('#3');
 });
 
-test('YOU ARE #1: the gold place is yours; AROUND YOU starts with you', async ({ page }) => {
+test('YOU ARE #1: the gold place is yours', async ({ page }) => {
   const { lb } = await boot(page, { me: { stars: 3, rebirths: 1, level: 20 } });
   expect(await podiumIds(lb)).toEqual(['me', 'a', 'b']);
   await expect(lb.locator('.lb2-col--1')).toHaveClass(/is-me/);
   await expect(lb.locator('.lb2-you')).toHaveCount(1);
-  await expect(lb.locator('.lb2-ar').first()).toHaveClass(/is-me/);
-  await expect(lb.locator('.lb2-ar.is-me .lb2-ar-rk')).toHaveText('#1');
   await expect(lb.locator('.lb2-col--1 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'ASCENDANT');
 });
 
@@ -282,7 +273,6 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
     await expect(box.locator('.lb2-rename-l')).toHaveText('CLAIM YOUR NAME');
     await expect(box.locator('.lb2-rename-msg')).toHaveText('NO SIGN-IN. JUST A NAME.');
     await expect(lb.locator('.lb2-me-btn.is-claim')).toContainText('CLAIM');
-    await expect(lb.locator('.lb2-around')).toContainText('CLAIM A NAME TO GET ON THE BOARD');
     await page.waitForTimeout(900);
     if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/lb-fresh-${vp.width}x${vp.height}.png` });
     // nothing overflows the viewport, labels ≥ 14px, 44px targets

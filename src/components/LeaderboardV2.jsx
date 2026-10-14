@@ -34,10 +34,9 @@ import {
   claimName,
   nameStatus,
   BOARD_SIZE,
-  fetchAround,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
-import { rankPlate, boardMoves, boardSnapshot, chaseTarget, hasEarned } from '../leaderboard/s2Board.js';
+import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import { BLOCKS } from './PodiumBlocks.jsx';
@@ -146,14 +145,6 @@ function nums(row, tab, gains) {
   const st = Number(row.stars) || 0;
   return { r: `${st > 0 ? `★${fmt(st)} ` : ''}R${fmt(row.rebirths)}`, lv: fmt(row.level) };
 }
-/** A row's values in the board's own currency for the CHASE (the week's gains on THIS WEEK). */
-function chaseRow(row, tab, gains) {
-  if (!row) return null;
-  if (tab === 'week' && gains) return { rank: row.rank, stars: row.week_stars, rebirths: row.week_rebirths, level: row.week_levels };
-  if (tab === 'week') return { rank: row.rank, stars: 0, rebirths: 0, level: row.week_words };
-  return row;
-}
-
 /** The 1366×657 mockup fit to the window (measured on mount / resize only). */
 function useStageScale(ref) {
   const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
@@ -323,7 +314,6 @@ export default function LeaderboardV2({ onBack }) {
   const peekRef = useRef(null);
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
-  const [around, setAround] = useState([]); // AROUND YOU past the top 20 (all-time tab)
   const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false, moves: {}, gains: true });
 
   const loadAll = useCallback(async () => {
@@ -339,8 +329,6 @@ export default function LeaderboardV2({ onBack }) {
       setRankNews(false);
       clearRankFrom();
       if (meNow) setLastRank(Number(meNow.rank));
-      // AROUND YOU: past the top 20 the neighbours are not in the loaded rows — read them
-      if (meNow && Number(meNow.rank) > BOARD_SIZE) fetchAround(meNow.rank).then(setAround).catch(() => {});
     } catch {
       setAll((s) => ({ ...s, loaded: true, error: true }));
     }
@@ -389,28 +377,10 @@ export default function LeaderboardV2({ onBack }) {
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
   if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
-  // AROUND YOU (Andy oct14 "those 2 boxes seem pretty useless"; research: a board motivates the players near the top and
-  // loses everyone else — show each player the people they can actually catch): 2 above you, you, 2 below, and what
-  // it takes to pass each one above. From the loaded rows, or (all-time, past #20) the neighbours read for it.
-  const nearRows = (() => {
-    if (!meRow) return [];
-    const pool = meOnBoard ? rows : tab === 'all' && around.length ? around : [meRow];
-    const at = pool.findIndex((r) => r.id === myId);
-    if (at < 0) return [meRow];
-    const from = Math.max(0, Math.min(at - 2, pool.length - 5));
-    return pool.slice(from, from + 5);
-  })();
   const wk = tab === 'week';
   const hR = wk ? (gains ? '+REBIRTHS' : 'REBIRTHS') : 'REBIRTHS';
   const hL = wk ? (gains ? '+LEVELS' : 'WORDS') : 'LEVELS';
-  // what it takes to pass a row above you, in the board's own currency ("+3 LV", "+1 R", "+40 WORDS")
-  const gapTo = (row) => {
-    if (!meRow || !row || Number(row.rank) >= Number(meRow.rank)) return '';
-    const c = chaseTarget(chaseRow(meRow, tab, gains), chaseRow(row, tab, gains));
-    if (!c) return '';
-    const unit = c.unit === 'LV' && wk && !gains ? 'WORDS' : c.unit;
-    return `+${fmt(c.need)} ${unit}`;
-  };
+
 
   // ARRIVAL: the podium rises, the list + panels slide in, the bars fill, the crown wobbles once, ▲ / ▼ bob once and
   // YOUR row pulses (twice — finite). Re-played when the tab's data lands. No layout reads; nodes are the pool.
@@ -602,26 +572,6 @@ export default function LeaderboardV2({ onBack }) {
           })}
         </div></div>
 
-        <div className="lb2-panels lb2-around lb2-slide" aria-label="Around you">
-          <div className="lb2-around-h">AROUND YOU</div>
-          {nearRows.length ? (
-            <div className="lb2-around-row">
-              {nearRows.map((r) => {
-                const mine = !!(myId && r.id === myId);
-                const gap = gapTo(r);
-                return (
-                  <div key={r.id} className={`lb2-ar${mine ? ' is-me' : ''}`} data-id={r.id} {...peekProps(r, setPeek)}>
-                    <span className="lb2-ar-rk">#{fmt(r.rank)}</span>
-                    <span className="lb2-ar-name">{mine ? 'YOU' : r.username}</span>
-                    <span className={`lb2-ar-gap${gap ? '' : ' is-quiet'}`}>{gap || nums(r, tab, gains).lv + (wk && !gains ? ' W' : ' LV')}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="lb2-panel-msg">{profile ? 'TYPE TO GET ON THE BOARD' : 'CLAIM A NAME TO GET ON THE BOARD'}</div>
-          )}
-        </div>
       </div>
       {peek ? <Suspense fallback={null}><ProfileCard row={peek} mine={!!(myId && peek.id === myId)} onClose={() => setPeek(null)} /></Suspense> : null}
     </div>
