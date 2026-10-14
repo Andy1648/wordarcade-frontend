@@ -13,7 +13,7 @@
 //   * CHASE (what passes the player above, in the board's order) and CLIMB (what reaches your next rank).
 // Motion: kit one-shots (transform / opacity; will-change only while playing); NOTHING loops at rest (the mockup's
 // crown wobble / ▲ bob / ▼ sink / own-row pulse play once on arrival); REDUCE MOTION plays none of it.
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
@@ -34,6 +34,7 @@ import {
   claimName,
   nameStatus,
   BOARD_SIZE,
+  rankBand,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
 import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
@@ -373,7 +374,7 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
-  // ranks 4 … 20 (Andy oct13 "push the leaderboard to top 20"); past #20 your own row takes the last place, with your
+  // ranks 4 … 50 (Andy oct14 "make the leaderboard top 50"; was 20 oct13); past #50 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
   if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
@@ -553,8 +554,15 @@ export default function LeaderboardV2({ onBack }) {
           {data.loaded && !data.error && list.map((r, k) => {
             const mine = !!(myId && r.id === myId);
             const n = nums(r, tab, gains);
+            // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
+            // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
+            const band = rankBand(r.rank);
+            const prevBand = k > 0 ? rankBand(list[k - 1].rank) : null;
+            const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
             return (
-              <div key={r.id} className={`lb2-row is-peek${mine ? ' is-me' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-id={r.id} {...peekProps(r, setPeek)}>
+              <Fragment key={r.id}>
+              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span>{sep}</span></div>}
+              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 <span className="lb2-rk">{fmt(r.rank)}</span>
                 <span className="lb2-who-cell">
                   <span className="lb2-name-line">
@@ -568,6 +576,7 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-r">{n.r}</span>
                 <span className="lb2-lv">{n.lv}</span>
               </div>
+              </Fragment>
             );
           })}
         </div></div>

@@ -33,7 +33,13 @@ export const LEADERBOARD_ENABLED = !!(BASE && KEY);
 
 const SECRET_KEY = 'taw.lb.secret';
 const PROFILE_KEY = 'taw.lb.profile';
-export const BOARD_SIZE = 20; // Andy oct13: the TOP 20 (was 10, oct2 LB10); anyone below gets a pinned row with their real rank
+export const BOARD_SIZE = 50; // Andy oct14: the TOP 50 (was 20 oct13, 10 oct2); anyone below gets a pinned row with their real rank
+/** The board's BANDS (Andy oct14 "separators … so people feel special"): a rank's band, or null past the board. */
+export const BOARD_BANDS = [{ top: 10, tone: 'gold' }, { top: 25, tone: 'cyan' }, { top: 50, tone: 'violet' }];
+export function rankBand(rank) {
+  const r = Number(rank);
+  return BOARD_BANDS.find((b) => r >= 1 && r <= b.top) || null;
+}
 const SUBMIT_EVERY_MS = 30 * 1000;
 // The board view this client reads: the season-2 board (022 — ★ → R → level, econ-13 rows) with the SEASON2 flag.
 const BOARD_VIEW = SEASON2 ? 'leaderboard_s2' : 'leaderboard';
