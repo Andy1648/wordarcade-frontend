@@ -42,7 +42,7 @@ export const TUTORIALS = [
     needsTarget: true,
     when: (s) => !!s.powerReady && s.rebirths === 0 && s.level <= 40, // NEW players only
     target: '.hp-nav.is-shop',
-    line: 'BUY POWER — MORE XP ON EVERY KEY.',
+    line: 'SPEND WINS ON POWER — YOUR MULTIPLIER.', // Andy oct14 "wins for multipliers"
   },
   {
     id: 'gears',

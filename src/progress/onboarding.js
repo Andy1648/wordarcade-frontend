@@ -32,6 +32,15 @@ export const hasSeenMenuSpotlight = () => read(MENU_KEY);
 export const markMenuSpotlightSeen = () => mark(MENU_KEY);
 export const hasSeenMenu = () => read(MENU_SEEN_KEY);
 export const markMenuSeen = () => mark(MENU_SEEN_KEY);
+// FIRST-RUN TOUR step 2 (PLAY GAMES = WINS, Andy oct14): DUE only once step 1 is dismissed on THIS version, so a player
+// who saw the old one-step spotlight never gets it, and a reload between the steps still shows it.
+const TOUR_GAMES_KEY = 'taw.tourGamesDue';
+export const isGamesTourDue = () => {
+  try { return localStorage.getItem(TOUR_GAMES_KEY) === '1'; } catch { return false; }
+};
+export const setGamesTourDue = (due) => {
+  try { if (due) localStorage.setItem(TOUR_GAMES_KEY, '1'); else localStorage.removeItem(TOUR_GAMES_KEY); } catch { /* blocked */ }
+};
 export const hasSeenGameSpotlight = () => read(GAME_KEY);
 export const markGameSpotlightSeen = () => mark(GAME_KEY);
 

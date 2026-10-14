@@ -23,6 +23,7 @@
 //   avoidSelector  : extra, NON-interactive elements the caption must not print over
 //   avoidTextIn    : a root whose VISIBLE TEXT the caption must never cover (see below)
 //   onDismiss      : called once, on the first key/pointer (caller persists the "seen" flag)
+//   holdMs         : ignore input for this long after mount · letterKeysDismiss: false = only tap / Enter / Esc / Space
 //
 // WHY `dim` IS OPTIONAL. The wash is a 100vmax box-shadow at rgba(6,3,12,0.76) — it takes the whole
 // screen down to about a quarter brightness. On the MENU that is right: it is picking one bar out of
@@ -89,7 +90,7 @@ function textRects(root, skip) {
   return out;
 }
 
-export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null, avoidTextIn = null, plateWhenCrowded = false }) {
+export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null, avoidTextIn = null, plateWhenCrowded = false, holdMs = 0, letterKeysDismiss = true }) {
   const [rect, setRect] = useState(null); // {left,top,width,height,right,bottom} of the target, or null
   const [place, setPlace] = useState(null); // {top,left[,compact,hidden]} px for the caption (anchored to the ring)
   const capRef = useRef(null);
@@ -270,9 +271,15 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
   }, [targetSelector, caption, sub, avoidSelector, avoidTextIn, plateWhenCrowded]);
 
   // Dismiss on the FIRST key/pointer — without ever swallowing it (no preventDefault).
+  // holdMs: input in the first holdMs is not for this step (a tap still in flight from the intro / the step before).
+  // letterKeysDismiss={false}: typing letters keeps it up (the menu tour's step 2 lands while the player is still
+  // typing for XP) — a tap, Enter, Escape or Space dismisses it.
   useEffect(() => {
-    const fire = () => {
+    const t0 = performance.now();
+    const fire = (e) => {
       if (doneRef.current) return;
+      if (holdMs && performance.now() - t0 < holdMs) return;
+      if (!letterKeysDismiss && e.type === 'keydown' && !['Enter', 'Escape', ' '].includes(e.key)) return;
       doneRef.current = true;
       onDismiss?.();
     };
@@ -284,7 +291,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
       window.removeEventListener('keydown', fire, { capture: true });
       window.removeEventListener('pointerdown', fire, { capture: true });
     };
-  }, [onDismiss]);
+  }, [onDismiss, holdMs, letterKeysDismiss]);
 
   const holeStyle = rect
     ? {

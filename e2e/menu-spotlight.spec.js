@@ -30,8 +30,8 @@ test.describe('first-run menu spotlight', () => {
     await page.goto('/?portal=1');
 
     await page.locator('.menu-xp-bar').first().waitFor({ state: 'visible' });
-    // The spotlight is up and nothing has been credited yet.
-    await expect(page.locator('.spotlight-overlay')).toHaveCount(1);
+    // The spotlight is up (once the intro is over, ~2.6 s) and nothing has been credited yet.
+    await expect(page.locator('.spotlight-overlay')).toHaveCount(1, { timeout: 8_000 });
     expect(await intoLevel(page)).toBe(0);
 
     // A single REAL keystroke (trusted key event), the way a first-time player starts typing.
@@ -41,5 +41,15 @@ test.describe('first-run menu spotlight', () => {
     await expect(page.locator('.spotlight-overlay')).toHaveCount(0);
     // …and the same keystroke must have credited XP (the spotlight never swallowed it).
     await expect.poll(() => intoLevel(page)).toBeGreaterThan(0);
+    // FIRST-RUN TOUR step 2 (Andy oct14): PLAY GAMES = WINS on the Word Bomb card; typing keeps it up, a tap ends it
+    await expect(page.locator('.spotlight-caption-text')).toHaveText('PLAY GAMES = WINS', { timeout: 5_000 });
+    await page.waitForTimeout(800); // past its hold
+    await page.keyboard.type('abc');
+    await expect(page.locator('.spotlight-overlay')).toHaveCount(1);
+    await page.mouse.click(5, 300);
+    await expect(page.locator('.spotlight-overlay')).toHaveCount(0);
+    await page.reload();
+    await page.waitForTimeout(3500);
+    await expect(page.locator('.spotlight-overlay')).toHaveCount(0); // once ever
   });
 });

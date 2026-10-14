@@ -1,5 +1,5 @@
 // Homepage.jsx
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
@@ -50,7 +50,14 @@ import { ACHIEVEMENTS, loadEarned } from '../progress/achievements';
 // than showing a silhouette, because a mark you cannot have is only interesting if it is a goal.
 const ACH_NAME = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a.secret ? 'A SECRET' : a.name]));
 import Spotlight from './Spotlight';
-import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen } from '../progress/onboarding';
+import { hasSeenMenuSpotlight, markMenuSpotlightSeen, markMenuSeen, isGamesTourDue, setGamesTourDue } from '../progress/onboarding';
+
+// FIRST-RUN TOUR timing: wait out the intro (the READY? sweep + knife-split, as PatchNotesHost's SLICE_WAIT_MS), a beat
+// between the steps, and a short hold on step 2 so a tap still in flight from step 1 cannot dismiss it
+const TOUR_WAIT_MS = 2600;
+const TOUR_GAP_MS = 1200;
+const TOUR_HOLD_MS = 700;
+let tourWaited = false; // the intro plays on the first menu of a page load only
 import BoostDock from '../frenzy/LazyBoostDock';
 import { shownPlateIndex } from '../progress/platePick';
 import AudioControls from './AudioControls';
@@ -275,9 +282,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => {
     if (hasUnseenMarks(markIdsKey ? markIdsKey.split(',') : [])) setMarksNew(true);
   }, [markIdsKey, claims]);
-  // First-run MENU spotlight: shown once ever, dismissed by the first key/click (which still
-  // counts). Init from the persisted flag so it never flashes for a returning player.
-  const [showMenuSpot, setShowMenuSpot] = useState(() => !hasSeenMenuSpotlight());
+  // FIRST-RUN TOUR (Andy oct14 "people dk how to play … type for xp, games for wins … should instantly show for new
+  // accts"): TWO spotlights, phone and desktop — 1 TYPE = XP (the level bar), then 2 GAMES = WINS (the Word Bomb
+  // card / row; wins buy POWER, the multiplier). Step 1 is the old once-ever menu spotlight (same seen flag), so a
+  // returning player never sees either. It waits for the intro (the READY? sweep + knife-split): mounted behind it,
+  // the key/tap that skipped the intro used to dismiss it unseen. 0 = none · 1 = TYPE · 2 = GAMES.
+  const [tourStep, setTourStep] = useState(() => (!hasSeenMenuSpotlight() ? 1 : isGamesTourDue() ? 2 : 0));
+  const [tourReady, setTourReady] = useState(tourWaited);
+  useEffect(() => {
+    if (tourReady || !tourStep) return undefined;
+    const t = setTimeout(() => { tourWaited = true; setTourReady(true); }, TOUR_WAIT_MS);
+    return () => clearTimeout(t);
+  }, [tourReady, tourStep]);
+  const showMenuSpot = tourStep !== 0; // blocks the tutorials / patch notes for the whole tour, gap included
   // PATCH NOTES: returning = had already seen the menu spotlight when this menu mounted (fixed for the mount)
   // ALL RANKS popup (Andy oct11): the RANK plate opens it
   const [showRanks, setShowRanks] = useState(false);
@@ -290,7 +307,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // rank-up waits on the network — have announced themselves; from there the queue orders them (H5)
   const [tutReady, setTutReady] = useState(false);
   useEffect(() => { const t = setTimeout(() => setTutReady(true), 4500); return () => clearTimeout(t); }, []);
-  const dismissMenuSpot = () => { markMenuSpotlightSeen(); setShowMenuSpot(false); };
+  const tourNextRef = useRef(0);
+  useEffect(() => () => clearTimeout(tourNextRef.current), []);
+  // step 1 → (a beat, so the first XP lands where they are looking) → step 2 → done
+  const dismissMenuSpot = useCallback(() => {
+    if (tourStep === 1) {
+      markMenuSpotlightSeen();
+      setGamesTourDue(true);
+      setTourStep(-1); // between steps: nothing drawn, the tutorials / patch notes still wait
+      tourNextRef.current = setTimeout(() => setTourStep(2), TOUR_GAP_MS);
+    } else {
+      setGamesTourDue(false);
+      setTourStep(0);
+    }
+  }, [tourStep]);
   // "This browser has seen the menu" — recorded on MOUNT (not on any interaction), because the
   // only reader is the solo run-over offer, which exists to pitch the rest of the game to a
   // stranger who has never been here. Seeing the menu at all disqualifies you from that pitch.
@@ -1593,13 +1623,27 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* FIRST-RUN spotlight (once ever): dim the menu, ring the XP bar, tell the player it
           responds to typing/clicks. pointer-events:none — the dismissing key/click still counts. */}
-      {/* The spotlight rings the XP bar, which the phone branch does not render — with no
-          target it would dim the menu and point at nothing, so it is desktop/tablet only. */}
-      {showMenuSpot && !isPhoneMenu && (
+      {tourStep === 2 && tourReady && (
         <Spotlight
+          key="tour-games"
+          targetSelector={isPhoneMenu ? '.hp-m-row--word-bomb' : '.game-card-magnet[data-game="word-bomb"]'}
+          caption="PLAY GAMES = WINS"
+          sub="WINS BUY POWER — YOUR MULTIPLIER"
+          avoidTextIn=".homepage-stage"
+          plateWhenCrowded
+          avoidSelector=".homepage-logo-wrap, .homepage-corner-nav, .hp-icons"
+          dim
+          holdMs={TOUR_HOLD_MS}
+          letterKeysDismiss={false}
+          onDismiss={dismissMenuSpot}
+        />
+      )}
+      {tourStep === 1 && tourReady && (
+        <Spotlight
+          key="tour-type"
           targetSelector=".menu-xp-bar"
-          caption="TYPE OR CLICK ANYWHERE"
-          sub="IT FILLS YOUR LEVEL BAR"
+          caption="TYPE ANYTHING = XP"
+          sub="EVERY KEY OR TAP FILLS YOUR LEVEL BAR"
           // Never over the wordmark or a card title (fine-tune oct2, loop C): the caption picks a
           // clear slot, drops to its compact headline, or hides and lets the ring teach.
           avoidTextIn=".homepage-stage"

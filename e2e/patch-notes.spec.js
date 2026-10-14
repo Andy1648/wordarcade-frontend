@@ -81,6 +81,11 @@ test('PATCH NOTES: a first-time visitor gets it too — after the menu spotlight
   await boot(page, 1280, 720, false);
   await page.waitForTimeout(3500);
   await expect(page.getByTestId('patch-notes')).toHaveCount(0); // never over the first-run spotlight
-  await page.keyboard.press('a'); // TYPE ANYWHERE dismisses the spotlight
+  await page.keyboard.press('a'); // TYPE ANYTHING = XP: the first key dismisses tour step 1
+  // tour step 2 (PLAY GAMES = WINS, Andy oct14) follows; the notes still wait for it
+  await expect(page.locator('.spotlight-caption-text')).toHaveText('PLAY GAMES = WINS', { timeout: 5_000 });
+  await expect(page.getByTestId('patch-notes')).toHaveCount(0);
+  await page.waitForTimeout(800); // past step 2's input hold
+  await page.keyboard.press('Escape');
   await expect(page.getByTestId('patch-notes')).toBeVisible({ timeout: 15_000 });
 });
