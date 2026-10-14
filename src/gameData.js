@@ -41,7 +41,8 @@ const BASE_GAMES = [
     // name gets, so this one card was set 8px smaller than the rest at every width (14.2 vs
     // 22.3 at 390, 12 vs 16 at 360) purely because its longest word is longer. Shorter word,
     // same size as its neighbours. Nothing else reads cardName; id/routes/SEO are untouched.
-    cardName: 'BLITZ',
+    // Andy oct14 "category blitz only says blitz on game card": the card shows the full CATEGORY / BLITZ again (the
+    // card's name fit shrinks the longer word to fit, like any long name)
     description: 'NAME AS MANY AS YOU CAN. IF IT’S ON THE LIST, IT SCORES.',
     baseColor: '#3DA8FF',
     iconBg: '#fff',

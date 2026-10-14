@@ -943,3 +943,9 @@ html[data-beat='true'] [data-game='sat-rush'] .game-card::after {
 .game-card-magnet[data-game='sat-rush'] .game-card-name { font-size: clamp(14px, 10.5cqw, 28px); white-space: nowrap; }
 .game-card-magnet[data-game='sat-rush'] .game-card-gems .kit-icon { width: 18px; height: 18px; }
 .game-card-foot .game-card-payout { display: flex; flex-wrap: nowrap; justify-content: center; }
+
+/* Andy oct14 "category blitz only says blitz on game card": the card says CATEGORY / BLITZ again. CATEGORY is 8 letters
+   (every other card's longest word is <= 5), so its name is sized for the long word — ~14cqw fits it inside the bar at
+   every column width (card-fit gate). Placed last + data-game specificity so it wins every breakpoint's rule. */
+.game-card-magnet[data-game='category-blitz'] .game-card-name,
+[data-game='category-blitz'] .game-card .game-card-name { font-size: clamp(14px, min(13.5cqw, 12cqh), 30px); }
