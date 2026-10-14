@@ -59,7 +59,7 @@ export const TUTORIALS = [
     isNew: true,
     when: (s) => s.marksRevealed && rollsEnabled(),
     target: '.rs-roll',
-    line: 'TAP ROLL FOR MARKS. YOUR FIRST ROLL IS FREE.',
+    line: 'TAP ROLL — YOUR FIRST GEAR IS FREE.', // oct14: they are GEARS everywhere else now
   },
 
   {
