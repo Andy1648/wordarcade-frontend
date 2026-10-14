@@ -2085,7 +2085,7 @@ function App() {
     } else {
       // Blitz: the host's pack selection, ordered after set_game_type on the same socket.
       send('set_packs', { packs: blitzPacks });
-      send('set_rounds', { rounds: blitzRounds });
+      if (blitzRounds !== 3) send('set_rounds', { rounds: blitzRounds }); // 3 = the server default (an older server never sees it)
     }
     send('add_bot', { difficulty: 'medium' });
     // setPlayerName is stable-enough; this effect fires once (guarded by the ref).
@@ -2331,7 +2331,7 @@ function App() {
         // Blitz when set_packs lands. Never sent on join (that branch is above).
         if (mode === 'category-blitz') {
           send('set_packs', { packs: blitzPacks });
-          send('set_rounds', { rounds: blitzRounds });
+          if (blitzRounds !== 3) send('set_rounds', { rounds: blitzRounds }); // 3 = the server default (an older server never sees it)
         }
       }
     }
