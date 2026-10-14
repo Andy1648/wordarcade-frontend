@@ -11,7 +11,7 @@ import { wordWinsBase, perWordRateNow } from '../progress/wins.js';
 import { getKeyTier } from '../progress/xp.js';
 import { mark2Id } from '../progress/v3/store.js';
 
-const SENT_KEY = 'taw.s2.showcase'; // the JSON last sent, so an unchanged showcase is never re-sent
+const SENT_KEY = 'taw.s2.showcase2'; // the JSON last sent, so an unchanged showcase is never re-sent. '2' (042, oct13): every browser re-sends ONCE so a card an old audit blanked comes back
 const num = (v) => (Number.isFinite(v) ? v : null);
 
 export function myShowcase() {

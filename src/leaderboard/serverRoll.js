@@ -75,32 +75,5 @@ export function isPreparing() {
   return !!pending;
 }
 
-let synced = false;
-/**
- * 036 AUDIT: drop every gear the server REVERTS from this browser's save — the roll state, the worn MAIN and the 2nd gear.
- * Only a gear the audit found practically impossible (< 0.01% for that account's whole gem budget) is reverted; one that
- * is merely unlikely is only hidden from the profile card + flagged for Andy (NO HARM to a real lucky player).
- * Once a page load; quiet on any failure. Returns the removed ids.
- */
-export async function syncRefusedGears() {
-  if (synced || !serverRollOn()) return [];
-  synced = true;
-  let res;
-  try { res = await rpc('lb_gears', { p_secret: getSecret() }); } catch { return []; }
-  const refused = res && Array.isArray(res.revert) ? res.revert.filter((id) => typeof id === 'string') : [];
-  if (!refused.length) return [];
-  const { loadRollState, saveRollState } = await import('../progress/markRollsCore.js');
-  const { MARKS_EQUIPPED_KEY } = await import('../progress/marks.js');
-  const s = loadRollState();
-  const removed = [];
-  if (s && s.marks) {
-    const marks = { ...s.marks };
-    for (const id of refused) if (marks[id]) { delete marks[id]; removed.push(id); }
-    if (removed.length) saveRollState({ ...s, marks });
-  }
-  try {
-    if (refused.includes(localStorage.getItem(MARKS_EQUIPPED_KEY))) localStorage.removeItem(MARKS_EQUIPPED_KEY);
-    if (refused.includes(localStorage.getItem('taw.s2.mark2'))) localStorage.removeItem('taw.s2.mark2'); // v3/store.js MARK2_KEY
-  } catch { /* blocked */ }
-  return removed;
-}
+// NO GEAR IS EVER HIDDEN OR REVERTED (Andy oct13 "dont ever hide gears"): the 036 client half that dropped a gear
+// the server 'reverted' from this browser's save is gone — the server only FLAGS (037). A bad actor is removed, not their gear.

@@ -29,7 +29,7 @@ export const RATE_PER_SEC = 2; // logged calls per profile per rolling second
 export const RB_WINDOW_SECS = 3600; // the pace window (020: 1 token / 5 min, 12 banked ⇒ ≤ 12 an hour)
 export const RB_PER_WINDOW = 12; // granted rebirths allowed inside one window
 export const RB_PER_DAY = 40; // 039: granted rebirths allowed in any rolling 24 h
-export const WORDS_PER_RB = 25; // 035: season-2 game words since the last rebirth (= rebirthWords.js WORDS_PER_REBIRTH)
+export const WORDS_PER_RB = 10; // 037 (was 25 in 035, Andy oct13): season-2 game words since the last rebirth (= rebirthWords.js WORDS_PER_REBIRTH)
 export const ASCEND_AT = 10; // season 2 (hidden in FINAL v2 — lb_ascend refuses while ASCEND_ON is false): R ≥ 10 + 5 × ★ …
 export const ASCEND_STEP = 5; // … would add ONE ★
 export const ASCEND_ON = false; // FINAL v2: no ascension for now
