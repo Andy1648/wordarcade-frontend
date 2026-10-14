@@ -15,7 +15,7 @@ import { getRebirths, storedLevel } from '../progress/xp.js';
 // skips the cloud save (it backs up the season-1 keys; season 2's is phase 4). lb_rebirth / lb_ascend name season 2
 // in the lazy serverRebirth.js.
 import { SEASON2, V3 } from '../progress/season.js';
-import { MASTERY_MODES, masteryWords } from '../progress/mastery.js';
+import { GAME_WORD_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION_V10, econRpcArg } from '../save/cloudSave.js';
@@ -147,7 +147,7 @@ function readLevel() {
 /** The numbers this browser reports: level, rebirths, lifetime words + LETTERS (STEP 51), WINS/WORD. */
 export function myStats() {
   let words = 0;
-  for (const m of MASTERY_MODES) words += masteryWords(m) || 0;
+  for (const m of GAME_WORD_MODES) words += masteryWords(m) || 0; // WORD RACE included (oct14) — the server's rebirth gate counts these
   let wpw = 0;
   try { wpw = perWordRateNow({ mode: 'word-bomb' }).rate || 0; } catch { wpw = 0; }
   let letters = 0;

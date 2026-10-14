@@ -117,7 +117,8 @@ test('PROGRESS_KEYS excludes the five device/UX keys', () => {
   for (const dev of ['taw.seenWinsHint', 'taw.sfxEvents', 'taw.clack', 'taw.audioVolume', 'taw.musicMuted']) {
     assert.ok(!PROGRESS_KEYS.includes(dev), `${dev} must not be a progress key`);
   }
-  assert.equal(PROGRESS_KEYS.length, 53); // +taw.gems (GEMS)
+  assert.equal(PROGRESS_KEYS.length, 54); // +taw.gems (GEMS), +taw.raceWords (oct14)
+  assert.ok(PROGRESS_KEYS.includes('taw.raceWords'));
   assert.ok(PROGRESS_KEYS.includes('taw.gems'));
   // earlier: +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2); +wallTierSeen (N4); +xpv10, rbgate, pv10notice (PV10); +markRolls, permanentMarks, winsCarry, overdrive, rrnotice (RR)
   for (const k of ['taw.xpv10', 'taw.rbgate', 'taw.pv10notice', 'taw.econ']) assert.ok(PROGRESS_KEYS.includes(k), k);

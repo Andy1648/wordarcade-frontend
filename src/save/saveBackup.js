@@ -43,6 +43,7 @@ export const PROGRESS_KEYS = [
   'taw.layer.auto',
   'wa_words',
   'taw.mastery',
+  'taw.raceWords', // oct14: WORD RACE game words (count toward the rebirth gate + lifetime words)
   'taw.collection',
   'taw.achievements',
   'taw.records',

@@ -28,3 +28,19 @@ test('words since the last rebirth: marked at a rebirth; a reset counts every wo
     assert.equal(wordsSinceRebirth(), total);
   });
 });
+
+// Andy oct14 "make word race count to rebirth word ct": a WORD RACE word is a game word (no mastery bar of its own)
+test('WORD RACE words count toward the rebirth gate and lifetime game words; no mastery bar', async () => {
+  const { addMasteryWord, masteryWords, MASTERY_MODES } = await import('./mastery.js');
+  withStorage({}, () => {
+    const before = lifetimeGameWords();
+    for (let i = 0; i < 4; i++) assert.deepEqual(addMasteryWord('word-race'), { level: 1, leveledUp: false });
+    assert.equal(masteryWords('word-race'), 4);
+    assert.equal(lifetimeGameWords(), before + 4);
+    assert.equal(wordsSinceRebirth(), before + 4);
+    assert.ok(!MASTERY_MODES.includes('word-race'), 'word race stays out of the mastery bars');
+    addMasteryWord('word-bomb');
+    assert.equal(lifetimeGameWords(), before + 5, 'a mastery word still counts and does not wipe the race count');
+    assert.equal(masteryWords('word-race'), 4);
+  });
+});
