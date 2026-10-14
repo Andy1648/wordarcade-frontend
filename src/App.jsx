@@ -757,7 +757,7 @@ function App() {
     goToSatRush,
     goToChain,
     goToFuse,
-  } = useOverlays({ view, setView, sound });
+  } = useOverlays({ view, setView, sound, gameType });
 
   // Room/lobby concern (refactor/app-split step 2). App keeps `room` (read by playerColors above),
   // `serverEventId` (feeds the guards above) and `linkJoinPending` (LAUNCH_INTENT-coupled); this hook

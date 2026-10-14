@@ -34,7 +34,9 @@ const NAV_DEPTH = {
   [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2,
 };
 
-export function useOverlays({ view, setView, sound }) {
+const COALESCE_MS = 900;
+
+export function useOverlays({ view, setView, sound, gameType }) {
   // The COSMETIC diagonal-bar wipe overlay. `transition` is the active overlay ({ word, key, dir })
   // or null; the key re-keys the overlay so each wipe replays.
   const [transition, setTransition] = useState(null);
@@ -51,8 +53,16 @@ export function useOverlays({ view, setView, sound }) {
   // Every transition is fired through this single helper, so they all look and sound identical (same
   // five bars, same whoosh, same <=250ms). The overlay is purely cosmetic — the screen has already
   // swapped underneath — so this only lays the bars on top and clears them.
+  // ONE WIPE PER JOURNEY (Andy oct14 "word race has this weird yellow column at the start"): a quick match
+  // changes view three times in ~2 s (READY? → SQUAD UP → LET'S GO!), and the last wipe ran while the race
+  // mounted — on a busy phone the panel stalled mid-screen as a bright column over the countdown. A view
+  // change within COALESCE_MS of the last wipe now swaps without one (the screen still swaps instantly).
+  const lastWipeAtRef = useRef(-Infinity);
   const runTransition = useCallback(
     (word, dir = 'forward') => {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - lastWipeAtRef.current < COALESCE_MS) return;
+      lastWipeAtRef.current = now;
       transitionKeyRef.current += 1;
       setTransition({ word, key: transitionKeyRef.current, dir });
       sound.whoosh(); // the wipe sweeps across
@@ -77,7 +87,12 @@ export function useOverlays({ view, setView, sound }) {
     // Nav DIRECTION (Job 12): deeper view = "forward" (enter); toward home = "back". Equal = forward.
     const dir = (NAV_DEPTH[view] ?? 1) >= (NAV_DEPTH[lastNavViewRef.current] ?? 1) ? 'forward' : 'back';
     lastNavViewRef.current = view;
+    // WORD RACE starts its own countdown the instant the race mounts — a LET'S GO! wipe on top of it was
+    // the "yellow column" (the panel stalling mid-screen over the 3-2-1). The race enters clean.
+    if (view === 'game' && gameType === 'word-race') return;
     runTransition(TRANSITION_WORDS[view] || 'GO!', dir);
+    // gameType is read at the moment the view changes (set in the same game_started batch); it is not a trigger
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, runTransition]);
 
   // Overlay / mode nav helpers — pure `view` navigations (+ the focus/sub-view refs). No room/game
