@@ -22,6 +22,8 @@ async function session(page, seed) {
     sessionStorage.setItem('mnfw.seeded', '1');
     localStorage.clear();
     for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
+    // the menu tutorials are a separate spec's subject (an LV15 save is due the GEARS one, whose overlay would eat the clicks)
+    for (const id of ['init', 'gems', 'power', 'gears', 'markRolls', 'rebirth', 'board', 'keyTier']) localStorage.setItem(`taw.tut.${id}`, '1');
   }, seed);
   // Every wins write, with what reward toasts were on screen when it landed (after one frame, so
   // a toast rendered by the same grant counts), and every XP write with whether a "+N" pop showed.
