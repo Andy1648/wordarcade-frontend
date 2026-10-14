@@ -6781,7 +6781,7 @@ html[data-beat='true'] .wb-belly {
   /* the strip keeps the NEWEST 3 (one line); older chips drop whole, the label still counts them all */
   .game-stage--wb .game-used-list .game-used-chip:nth-last-child(n + 4) { display: none; }
   /* a tighter prompt plaque: the fragment is still the brightest, largest text on the board */
-  .game-stage--wb .game-combo { font-size: 44px; }
+  .game-stage--wb .game-combo { font-size: min(var(--fs-hero), 44px); }
   .game-stage--wb .game-combo-box { padding: 4px 20px 6px; }
   /* the clock + room code share one line under the prompt */
   .game-stage--wb .wb-top { gap: 6px; row-gap: 6px; }

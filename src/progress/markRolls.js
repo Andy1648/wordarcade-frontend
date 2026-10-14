@@ -4,7 +4,7 @@
 //
 // THE SHAPE
 //   - Five tiers (GEAR POOL v2, Andy oct9 — COMMON is gone, RARE is the floor): RARE = the remainder (98.59%),
-//     EPIC 1 IN 60, LEGENDARY 1 IN 150, MYTHIC 1 IN 4,000, SECRET 1 IN 40,000 (the tier's chance; its marks split
+//     EPIC 1 IN 60, LEGENDARY 1 IN 100, MYTHIC 1 IN 2,000, SECRET 1 IN 15,000 (the tier's chance; its marks split
 //     it evenly). The pool, the MAIN math and markMult() live in markRollsCore.js.
 //   - LUCK multiplies every chance above the floor (Sol's shape). RARE takes what is left, so luck removes the floor
 //     rather than breaking the table.

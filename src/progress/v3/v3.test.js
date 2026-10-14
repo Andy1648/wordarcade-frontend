@@ -213,7 +213,7 @@ test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.5 · EPIC ×2
     near(MRC.TIER_MAIN[t], m);
     assert.equal(MRC.TIER_PCT[t], Math.round((m - 1) * 100));
   }
-  assert.deepEqual(MRC.TIER_ODDS, { epic: 60, legendary: 150, mythic: 4000, secret: 40000 }); // RARE = the remainder; Andy oct14 easier rolls
+  assert.deepEqual(MRC.TIER_ODDS, { epic: 60, legendary: 100, mythic: 2000, secret: 15000 }); // RARE = the remainder; Andy oct14 (2) friendlier rare gear
   assert.equal(M.MARK_TIERS.common, undefined);
   assert.equal(MR.PITY.epic.hard, 10);
   assert.equal(MR.PITY.legendary.hard, 50);
