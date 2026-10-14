@@ -202,9 +202,12 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
 
   // Mouse hover drives both the existing hover reaction (via onHover) and the
   // magnet's lift. Keyboard focus keeps the onHover reaction but doesn't lift.
+  // PAINTED CARD (Andy oct14 art run): the FX layer loads on the first hover only — it is only ever SEEN on hover
+  const [fxOn, setFxOn] = useState(false);
   function handleEnter() {
     if (onHover) onHover(game.id);
     if (cardRef.current) cardRef.current.hovered = true;
+    if (game.artLayers && game.artLayers.fx && !fxOn) setFxOn(true);
   }
   function handleLeave() {
     if (onHover) onHover(null);
@@ -384,7 +387,16 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
         }
       >
         {/* FULL-BLEED SCENE — the ART-LED v2 poster (GameArt.jsx), sliced to cover. */}
-        {ArtComponent && (
+        {game.artLayers ? (
+          // PAINTED CARD (Andy oct14 "the biggest images out there"): BACKDROP + HERO (+ an FX burst on hover), all one
+          // 2:3 frame so they line up. Motion is GameCard.css (.gc-l-*): hover lifts the hero and bursts the FX, the
+          // hero pops in once — finite, transform/opacity only, nothing at rest.
+          <div className="game-card-art gc-layers">
+            <img className="gc-l gc-l-bg" src={game.artLayers.bg} alt="" aria-hidden="true" draggable="false" decoding="async" />
+            {fxOn && game.artLayers.fx ? <img className="gc-l gc-l-fx" src={game.artLayers.fx} alt="" aria-hidden="true" draggable="false" decoding="async" /> : null}
+            <img className="gc-l gc-l-hero" src={game.artLayers.hero} alt="" aria-hidden="true" draggable="false" decoding="async" />
+          </div>
+        ) : ArtComponent && (
           <div className="game-card-art">
             <ArtComponent />
           </div>

@@ -17,6 +17,8 @@ const BASE_GAMES = [
   {
     id: 'word-bomb',
     artKey: 'WordBombArt',
+    // Andy oct14 art run: the painted card (public/cards/wb-*.webp) replaces the code-drawn scene
+    artLayers: { bg: '/cards/wb-bg.webp', hero: '/cards/wb-hero.webp', fx: '/cards/wb-fx.webp' },
     name: 'WORD\nBOMB',
     description: 'USE THE LETTERS BEFORE TIME RUNS OUT.',
     baseColor: '#FF6B3D',
