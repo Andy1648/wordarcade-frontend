@@ -63,7 +63,7 @@
 }
 .lb2-me-btn:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #000; }
 .lb2-me-btn:active { transform: translate(5px, 5px); box-shadow: 0 0 0 #000; }
-.lb2-me-k { color: #FFE94A; font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; text-transform: uppercase; }
+.lb2-me-k { color: #FFE94A; font-family: var(--k-display); text-transform: uppercase; font-weight: 400; text-transform: uppercase; }
 .lb2-me-v { overflow: hidden; text-overflow: ellipsis; max-width: calc(100px * var(--lb2-k, 1) + 24px); font-size: min(1em, max(var(--fs-k14), calc((100px * var(--lb2-k, 1) + 24px) / var(--nl, 8)))); } /* the full name, shrunk to its slot (Andy oct8) */
 .lb2-me-a { color: #2EFFE0; text-decoration: underline; text-underline-offset: 3px; }
 
@@ -88,7 +88,7 @@
   color: #fff;
   border: 4px solid #000;
   box-shadow: 5px 5px 0 #000;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: calc(var(--fs-k22) * var(--lb2-k));
   text-transform: uppercase;
@@ -128,7 +128,7 @@
   border: 0;
   background: #1a0b2e;
   color: #fff;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k14), calc(var(--fs-k18) * var(--lb2-k)));
   text-transform: uppercase;
@@ -202,7 +202,7 @@
   background: var(--pl-bg);
   border: 3px solid var(--pl-line);
   box-shadow: 3px 3px 0 #000;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--pk)));
   color: var(--pl-ink);
@@ -232,7 +232,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k14), calc(var(--fs-k18) * var(--pk)));
   text-transform: uppercase;
@@ -242,7 +242,7 @@
 }
 .lb2-col--1 .lb2-pod-name-t { font-size: max(var(--fs-k14), calc(var(--fs-k20) * var(--pk))); }
 .lb2-pod-r {
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: calc(var(--fs-k100) * 0.42 * var(--pk));
   line-height: 1.05;
@@ -256,7 +256,7 @@
 .lb2-col--3 .lb2-pod-r { font-size: calc(var(--fs-k38) * var(--pk)); }
 .lb2-pod-lv {
   margin-bottom: calc(8px * var(--pk));
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k18), calc(var(--fs-k16) * var(--pk)));
   color: #FFE94A;
@@ -273,7 +273,7 @@
 .lb2-place {
   position: absolute;
   text-align: center;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   line-height: 1;
   paint-order: stroke fill;
@@ -289,7 +289,7 @@
   padding: 1px 6px;
   background: #000;
   color: #FFE94A;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k14), calc(var(--fs-k13) * var(--lb2-k)));
   text-transform: uppercase;
@@ -320,7 +320,7 @@
   top: calc(94px * var(--lb2-k));
   height: calc(20px * var(--lb2-k));
   align-items: end;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k14), calc(var(--fs-k13) * var(--lb2-k)));
   color: #c9b8e8;
@@ -372,7 +372,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: calc(var(--fs-k22) * var(--lb2-k));
   color: #fff;
@@ -392,7 +392,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k)));
   color: #fff;
@@ -413,7 +413,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--lb2-k)));
   text-transform: uppercase;
@@ -425,7 +425,7 @@
 .lb2-r {
   text-align: right;
   white-space: nowrap;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: calc(var(--fs-k22) * var(--lb2-k));
   color: #D88BFF;
@@ -437,7 +437,7 @@
 .lb2-lv {
   text-align: right;
   white-space: nowrap;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k18), calc(var(--fs-k17) * var(--lb2-k)));
   color: #FFE94A;
@@ -472,7 +472,7 @@
   align-items: baseline;
   gap: 8px;
   min-width: 0;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   text-transform: uppercase;
   white-space: nowrap;
@@ -499,7 +499,7 @@
 .lb2-ends {
   display: flex;
   justify-content: space-between;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k18), calc(var(--fs-k13) * var(--lb2-k)));
   color: #c9b8e8;
@@ -507,7 +507,7 @@
 }
 .lb2-panel-msg {
   margin: auto 0;
-  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-family: var(--k-display); text-transform: uppercase;
   font-weight: 400;
   font-size: max(var(--fs-k14), calc(var(--fs-k18) * var(--lb2-k)));
   color: #FFE94A;
@@ -778,14 +778,14 @@
 /* AROUND YOU (Andy oct14): the two old panels → one strip of 5 chips — 2 above you, you, 2 below; the ones above say
    what it takes to pass them */
 .lb2-panels.lb2-around { display: flex; flex-direction: column; gap: calc(4px * var(--lb2-k)); padding: calc(6px * var(--lb2-k)) calc(8px * var(--lb2-k)); box-sizing: border-box; }
-.lb2-around-h { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k14); color: #c9b8e8; letter-spacing: .04em; line-height: 1; }
+.lb2-around-h { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k14); color: #c9b8e8; letter-spacing: .04em; line-height: 1; }
 .lb2-around-row { flex: 1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(6px * var(--lb2-k)); }
 .lb2-ar { min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; padding: 2px 4px; background: #1a0b2e; border: 3px solid #000; border-radius: 6px; cursor: pointer; }
 .lb2-ar.is-me { background: #FFE94A; transform: rotate(-2deg); box-shadow: 3px 3px 0 #000; }
-.lb2-ar-rk { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); color: #FFE94A; line-height: 1; }
+.lb2-ar-rk { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k16); color: #FFE94A; line-height: 1; }
 .lb2-ar.is-me .lb2-ar-rk, .lb2-ar.is-me .lb2-ar-name { color: #000; }
 .lb2-ar-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-k13); color: #fff; line-height: 1.1; }
-.lb2-ar-gap { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k13); color: #2EFFE0; line-height: 1; white-space: nowrap; }
+.lb2-ar-gap { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k13); color: #2EFFE0; line-height: 1; white-space: nowrap; }
 .lb2-ar-gap.is-quiet { color: #8f7fb0; }
 .lb2-ar.is-me .lb2-ar-gap { color: #000; }
 .lb2--narrow .lb2-around-row { gap: 4px; }
