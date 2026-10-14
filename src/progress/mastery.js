@@ -13,6 +13,15 @@
 export const MASTERY_KEY = 'taw.mastery';
 // Menu/XP-style mode ids (the ones passed to awardWordXp) — one mastery track per playable mode.
 export const MASTERY_MODES = ['word-bomb', 'category-blitz', 'sat-rush', 'chain', 'fuse'];
+// COUNT-ONLY (Andy oct14 "make word race count to rebirth word ct"): WORD RACE words are GAME words — they count
+// toward the rebirth gate and the board's lifetime words — but the mode has no mastery bar / perk. Kept in its own
+// key so the mastery blob (and every MASTERY_MODES reader) is untouched.
+export const COUNT_ONLY_MODES = ['word-race'];
+export const GAME_WORD_MODES = [...MASTERY_MODES, ...COUNT_ONLY_MODES];
+const RACE_WORDS_KEY = 'taw.raceWords';
+function countOnlyWords() {
+  try { const v = Math.floor(Number(localStorage.getItem(RACE_WORDS_KEY))); return Number.isFinite(v) && v > 0 ? v : 0; } catch { return 0; }
+}
 // ECONOMY v9 (STEP 19 / Andy A6: "CHAIN and FUSE bars go MUCH higher with better rewards"): the bar
 // runs to M50 (was M20) on a QUADRATIC per-level cost (was ×1.4 a level, whose late levels were 16 h+
 // apart), and every 5th level pays a wins MILESTONE (wins.js awardWordXp → grantWins, so it shows).
@@ -87,6 +96,7 @@ function saveAll(all) {
 
 // Raw cumulative words accepted in a mode.
 export function masteryWords(mode) {
+  if (COUNT_ONLY_MODES.includes(mode)) return countOnlyWords();
   return loadAll()[mode] || 0;
 }
 // The full mastery state for a mode.
@@ -103,6 +113,10 @@ export function allMasteryStates() {
 
 // Credit one accepted word to a mode's mastery. Returns { level, leveledUp }. Unknown mode → no-op.
 export function addMasteryWord(mode) {
+  if (COUNT_ONLY_MODES.includes(mode)) {
+    try { localStorage.setItem(RACE_WORDS_KEY, String(countOnlyWords() + 1)); } catch { /* storage blocked */ }
+    return { level: 1, leveledUp: false };
+  }
   if (!MASTERY_MODES.includes(mode)) return { level: 1, leveledUp: false };
   const all = loadAll();
   const before = masteryFromWords(all[mode]).level;

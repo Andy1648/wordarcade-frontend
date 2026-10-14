@@ -2,7 +2,7 @@
 // played IN GAMES since the last rebirth (the per-mode mastery words — menu keys never count), so menu typing alone
 // can't climb the board. The server is the judge (lb_rebirth refuses with reason 'words'); this mirrors it so the
 // REBIRTH screen, the menu tile and AUTO REBIRTH say "PLAY N MORE WORDS" instead of offering a rebirth it would refuse.
-import { MASTERY_MODES, masteryWords } from './mastery.js';
+import { GAME_WORD_MODES, masteryWords } from './mastery.js';
 import { SEASON2 } from './season.js';
 
 export const WORDS_PER_REBIRTH = 10; // = 037 WORDS_PER_RB (was 25 in 035; Andy oct13) (rebirthRules.js WORDS_PER_RB; rebirthWords.test.js pins it)
@@ -11,7 +11,7 @@ export const RB_WORDS_KEY = 'taw.s2.rbw0'; // lifetime game words at the last re
 /** Every word played in a game, all modes (the board's lifetime_words). */
 export function lifetimeGameWords() {
   let w = 0;
-  for (const m of MASTERY_MODES) w += masteryWords(m) || 0;
+  for (const m of GAME_WORD_MODES) w += masteryWords(m) || 0; // WORD RACE included (oct14)
   return w;
 }
 /** Game words since the last rebirth — after a reset (fewer words than the mark) every word since counts. */
