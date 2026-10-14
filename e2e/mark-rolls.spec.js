@@ -287,6 +287,9 @@ for (const [w, h] of [[360, 640], [390, 844], [1366, 657]]) {
     await expect(card(page)).toHaveCount(1, { timeout: SPUN });
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(sw).toBeLessThanOrEqual(w);
+    // measure the RESTING layout: the result line pops in with a 550 ms overshoot (rs-pop), and a box read mid-pop
+    // under load was ~10px taller than the card ever is at rest (a flake, not a layout bug)
+    await card(page).evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished.catch(() => {}))));
     const c = await card(page).boundingBox();
     const r = await page.locator('.rs-roll').boundingBox();
     expect(c.y + c.height).toBeLessThanOrEqual(r.y + 1);
