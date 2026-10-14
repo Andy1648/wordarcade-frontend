@@ -81,14 +81,14 @@ function GetRow({ icon, label, value, tone }) {
 
 /** Big screens: the 1280×720 stage scales up to fit (measured on mount / resize only — never per frame). */
 function useStageScale(ref) {
-  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1000); // Andy oct14: tablets + narrow laptops take the stacked layout (was < 700 — a 1280/1366 stage squeezed or shrunk to 0.6)
   useEffect(() => {
     const set = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const k = w >= 700 ? Math.max(1, Math.min(w / 1280, h / 720)) : 1;
+      const k = w >= 1000 ? Math.max(1, Math.min(w / 1280, h / 720)) : 1;
       if (ref.current) ref.current.style.setProperty('--rb2-k', k.toFixed(4));
-      setNarrow(w < 700);
+      setNarrow(w < 1000);
     };
     set();
     window.addEventListener('resize', set);

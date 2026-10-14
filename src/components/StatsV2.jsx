@@ -203,14 +203,14 @@ const SHAKE_L = [
 
 /** The stage scale: the 1366×657 mockup, fit to the window (measured on mount / resize only — never per frame). */
 function useStageScale(ref) {
-  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1000); // Andy oct14: tablets + narrow laptops take the stacked layout (was < 700 — a 1280/1366 stage squeezed or shrunk to 0.6)
   useLayoutEffect(() => {
     const set = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const k = w >= 700 ? Math.max(0.6, Math.min(1.7, Math.min((w - 8) / 1366, h / 657))) : 1;
+      const k = w >= 1000 ? Math.max(0.6, Math.min(1.7, Math.min((w - 8) / 1366, h / 657))) : 1;
       if (ref.current) ref.current.style.setProperty('--st2-k', k.toFixed(4));
-      setNarrow(w < 700);
+      setNarrow(w < 1000);
     };
     set();
     window.addEventListener('resize', set);
