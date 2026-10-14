@@ -36,6 +36,8 @@ const BASE_GAMES = [
   {
     id: 'category-blitz',
     artKey: 'CategoryBlitzArt',
+    // Andy oct14 art run: the painted card — the brain + buzzer stand higher (the buzzer is at the art's bottom)
+    artLayers: { bg: '/cards/cb-bg.webp', hero: '/cards/cb-hero.webp', fx: '/cards/cb-fx.webp', heroY: '-19%', heroScale: 0.7 },
     name: 'CATEGORY\nBLITZ',
     // THE CARD SAYS "BLITZ". `name` stays the full title — it is what the mode dialog shows
     // and what the card's aria-label reads out, and neither is width-constrained. The CARD is:

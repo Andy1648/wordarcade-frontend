@@ -391,7 +391,10 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           // PAINTED CARD (Andy oct14 "the biggest images out there"): BACKDROP + HERO (+ an FX burst on hover), all one
           // 2:3 frame so they line up. Motion is GameCard.css (.gc-l-*): hover lifts the hero and bursts the FX, the
           // hero pops in once — finite, transform/opacity only, nothing at rest.
-          <div className="game-card-art gc-layers">
+          <div
+            className="game-card-art gc-layers"
+            style={{ '--gc-hy': game.artLayers.heroY || '-11%', '--gc-hs': game.artLayers.heroScale || 0.76 }}
+          >
             <img className="gc-l gc-l-bg" src={game.artLayers.bg} alt="" aria-hidden="true" draggable="false" decoding="async" />
             {fxOn && game.artLayers.fx ? <img className="gc-l gc-l-fx" src={game.artLayers.fx} alt="" aria-hidden="true" draggable="false" decoding="async" /> : null}
             <img className="gc-l gc-l-hero" src={game.artLayers.hero} alt="" aria-hidden="true" draggable="false" decoding="async" />
