@@ -11,11 +11,39 @@
 // Before 036 runs (lb_roll 404), with no name, offline, or in season 1: null → the old local roll, unchanged.
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, getSecret, rpc } from './client.js';
 import { SEASON2 } from '../progress/season.js';
+import { loadRollState, saveRollState, EPIC_PITY_HARD, LEGENDARY_PITY_HARD } from '../progress/markRollsCore.js';
 
 const CLAIM_KEY = 'taw.s2.rollclaim'; // an unanswered claim's seq (retried before the next roll)
 let off = false; // lb_roll is not there (pre-036): stop asking this page load
 let pending = null; // Promise of the reservation being fetched
-let ready = null; // { seq, picks }
+let ready = null; // { seq, picks, pity }
+
+// 047 PITY SYNC (Andy oct14 "it said epic+ in 1 ... but i got no epic"): the server picks with ITS OWN pity counters, so the
+// EPIC+ / LEGENDARY+ countdown this browser shows (and rolls from) is set to the server's. They drifted after any roll the
+// server did not see (a budget refusal or offline falls back to a local roll). Pre-047 the replies carry no counters: no-op.
+function applyPity(r) {
+  const e = Number(r && r.since_epic);
+  const l = Number(r && r.since_leg);
+  if (!Number.isInteger(e) || !Number.isInteger(l) || e < 0 || l < 0) return false;
+  const st = loadRollState();
+  if (!st) return false; // never rolled here: nothing shown yet, the first roll brings the counters
+  const se = Math.min(e, EPIC_PITY_HARD - 1);
+  const sl = Math.min(l, LEGENDARY_PITY_HARD - 1);
+  if (st.sinceEpic === se && st.sinceLegendary === sl) return false;
+  saveRollState({ ...st, sinceEpic: se, sinceLegendary: sl });
+  return true;
+}
+
+/** Set this browser's pity countdown to the server's (the ROLL screen calls it on open). Resolves true if it changed. */
+export async function syncPity() {
+  if (!serverRollOn()) return false;
+  try {
+    const r = await rpc('lb_pity', { p_secret: getSecret() });
+    return !!(r && r.ok && applyPity(r));
+  } catch {
+    return false; // pre-047, offline: the local countdown, as before
+  }
+}
 
 /** Can this player roll on the server right now? */
 export function serverRollOn() {
@@ -50,7 +78,7 @@ export function prepare(luck = 1, n = 1) {
     if (owed) await claim(owed);
     try {
       const r = await rpc('lb_roll', { p_secret: getSecret(), p_luck: Number.isFinite(luck) ? luck : 1, p_n: n });
-      if (r && r.ok && Array.isArray(r.picks) && r.picks.length) { ready = { seq: r.seq, picks: r.picks }; return ready; }
+      if (r && r.ok && Array.isArray(r.picks) && r.picks.length) { ready = { seq: r.seq, picks: r.picks, pity: r }; return ready; }
       return null;
     } catch (e) {
       const m = String((e && e.code) || (e && e.message) || '');
@@ -67,6 +95,7 @@ export function prepare(luck = 1, n = 1) {
 export function take() {
   const r = ready;
   ready = null;
+  if (r && r.pity) applyPity(r.pity); // the roll about to land counts from the server's pity, like the server's pick did
   return r;
 }
 
