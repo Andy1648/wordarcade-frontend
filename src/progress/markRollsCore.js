@@ -8,8 +8,8 @@
 // MARKS v2 (Andy oct5 — Genshin stats, ★ pips). GEAR POOL v2 (Andy oct9: "remove the common ones entirely … make epic a
 // 1 in 10 pity and legendary a 1 in 50"): FIVE tiers, RARE is the floor (Genshin's 3★ floor — a roll never lands on
 // trash). The tier odds:
-//   RARE = the remainder (98.59%) · EPIC 1 IN 100 · LEGENDARY 1 IN 250 (+ perk) · MYTHIC 1 IN 10,000 (+ perk) ·
-//   SECRET 1 IN 100,000 (+ game-changing perks).
+//   RARE = the remainder (97.64%) · EPIC 1 IN 60 · LEGENDARY 1 IN 150 (+ perk) · MYTHIC 1 IN 4,000 (+ perk) ·
+//   SECRET 1 IN 40,000 (+ game-changing perks). (Andy oct14: was 100 / 250 / 10,000 / 100,000.)
 // RARE absorbed the old COMMON share; EPIC / LEGENDARY / MYTHIC / SECRET keep their exact 1-IN-X (and so their odds
 // relative to each other). The "1 IN X" is the TIER's chance; each mark in a tier splits it evenly. PITY (markRolls):
 // EPIC+ at least every 10 rolls, LEGENDARY+ at least every 50.
@@ -48,7 +48,7 @@ export const ROLLABLE_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 /** The FLOOR tier: it takes whatever the rarer tiers leave, and LUCK never scales it (luck removes it). */
 export const FLOOR_TIER = 'rare';
 /** The rarer tiers' "1 IN X" (Andy's table). RARE (the floor) is the remainder — see the header. */
-export const TIER_ODDS = { epic: 100, legendary: 250, mythic: 10000, secret: 100000 }; // LEGENDARY 1,000 → 250 (Andy oct8: "legendary should land more often")
+export const TIER_ODDS = { epic: 60, legendary: 150, mythic: 4000, secret: 40000 }; // Andy oct14 "make rolling rates easier — noticeable, nothing crazy": was 100 / 250 / 10,000 / 100,000 (LEGENDARY 1,000 → 250 oct8). Server mirror: 044_easier_rolls.sql
 /** The tier's equivalent multiplier ("strength") at ★0. Mirrors marks.js MARK_TIERS (1 + bonus). */
 export const TIER_MAIN = { rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
 /** The same, as the stat's percent (the part above ×1) — kept exact (1.1 − 1 is not 0.1 in floats). */
