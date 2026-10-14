@@ -42,7 +42,7 @@ export const TUTORIALS = [
     needsTarget: true,
     when: (s) => !!s.powerReady && s.rebirths === 0 && s.level <= 40, // NEW players only
     target: '.hp-nav.is-shop',
-    line: 'BUY POWER: MORE XP ON EVERY KEY.',
+    line: 'BUY POWER — MORE XP ON EVERY KEY.',
   },
   {
     id: 'gears',
@@ -50,7 +50,7 @@ export const TUTORIALS = [
     needsTarget: true,
     when: (s) => !!s.gearsReady && s.rebirths === 0 && s.level <= 60,
     target: '.hp-nav.is-gears',
-    line: 'FIRST GEAR ROLL READY — GEARS BOOST ALL.',
+    line: 'YOUR FIRST GEAR ROLL IS READY.',
   },
   {
     // MARK ROLLS: hosted by the ROLL screen (rollScreen/RollScreen.jsx shows it the first time it opens).
@@ -75,7 +75,7 @@ export const TUTORIALS = [
     needsTarget: true,
     when: (s) => !!s.onBoard && s.rebirths === 0 && s.level >= 3 && s.level <= 60,
     target: '[data-nav="leaderboard"]',
-    line: "YOU'RE ON THE LEADERBOARD — CLIMB IT.",
+    line: "YOU'RE ON THE BOARD — CLIMB IT.",
   },
   {
     // KEY TIER: the first time a KEY tier is affordable (T0, before any rebirth). Hosted by the SHOP.

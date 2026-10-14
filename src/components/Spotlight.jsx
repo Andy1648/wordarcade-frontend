@@ -89,7 +89,7 @@ function textRects(root, skip) {
   return out;
 }
 
-export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null, avoidTextIn = null }) {
+export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null, avoidTextIn = null, plateWhenCrowded = false }) {
   const [rect, setRect] = useState(null); // {left,top,width,height,right,bottom} of the target, or null
   const [place, setPlace] = useState(null); // {top,left[,compact,hidden]} px for the caption (anchored to the ring)
   const capRef = useRef(null);
@@ -208,7 +208,16 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
             return;
           }
         }
-        setPlace({ top: 0, left: 0, hidden: true });
+        // NO CLEAR SLOT. In a GAME the ring alone teaches (its caption would sit on live game text). On the MENU
+        // (`plateWhenCrowded`) the caption still TEACHES — Andy oct14: on a 1366x768 first visit the ring lit the
+        // level bar with no words at all. It sits right under the ring on its own plate over the dimmed menu.
+        if (!plateWhenCrowded) { setPlace({ top: 0, left: 0, hidden: true }); return; }
+        const pw = Math.min(fullW, vw - EDGE * 2);
+        setPlace({
+          top: Math.max(EDGE, Math.min(ringBottom + GAP, vh - EDGE - fullH)),
+          left: Math.max(EDGE + pw / 2, Math.min(cx, vw - EDGE - pw / 2)),
+          plated: true,
+        });
         return;
       }
 
@@ -258,7 +267,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measure);
     };
-  }, [targetSelector, caption, sub, avoidSelector, avoidTextIn]);
+  }, [targetSelector, caption, sub, avoidSelector, avoidTextIn, plateWhenCrowded]);
 
   // Dismiss on the FIRST key/pointer — without ever swallowing it (no preventDefault).
   useEffect(() => {
@@ -287,7 +296,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
     : null;
   const capStyle = rect && place ? { top: `${place.top}px`, left: `${place.left}px` } : {}; // no target → caption centres via CSS
   // No clear slot (avoidTextIn): the ring alone. Still MOUNTED (hidden) so a resize can re-measure it.
-  const capClass = `spotlight-caption${rect ? '' : ' is-centered'}${place && place.compact ? ' is-compact' : ''}${place && place.hidden ? ' is-hidden' : ''}`;
+  const capClass = `spotlight-caption${rect ? '' : ' is-centered'}${place && place.compact ? ' is-compact' : ''}${place && place.hidden ? ' is-hidden' : ''}${place && place.plated ? ' is-plated' : ''}`;
 
   return (
     <div className="spotlight-overlay" aria-hidden="true">
