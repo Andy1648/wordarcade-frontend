@@ -65,3 +65,12 @@ export function fallbackColor(id) {
 export function resolvePlayerColor(map, id) {
   return (map && map[id]) || fallbackColor(id);
 }
+
+// WORD BOMB PLAYER ICONS (Andy oct14, ChatGPT art run P1): one bomb buddy per palette colour, index-matched to
+// PLAYER_PALETTE. public/wb/player-<name>.webp (cut with scripts/cutout-art.py).
+export const PLAYER_CHAR = ['pink', 'cyan', 'yellow', 'orange', 'purple'];
+/** The bomb-buddy image for a player's colour (falls back to the first). */
+export function playerCharSrc(color) {
+  const i = PLAYER_PALETTE.findIndex((c) => c.toLowerCase() === String(color || '').toLowerCase());
+  return `/wb/player-${PLAYER_CHAR[i >= 0 ? i : 0]}.webp`;
+}

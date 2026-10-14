@@ -6,7 +6,7 @@ import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
-import { resolvePlayerColor } from '../playerColors';
+import { resolvePlayerColor, playerCharSrc } from '../playerColors';
 import { MORE_MODES } from '../gameData';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
@@ -3323,6 +3323,7 @@ export default function GameScreen({
               eliminated ? 'eliminated' : '',
               isEliminating ? 'eliminating' : '',
               lastLife ? 'last-life' : '',
+              'has-char',
             ]
               .filter(Boolean)
               .join(' ');
@@ -3368,6 +3369,8 @@ export default function GameScreen({
                   )}
                   {/* Panic sweat flinging off your own card when time is dire. */}
                   {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
+                  {/* THE PLAYER ICON (Andy oct14 art run): the bomb buddy in this player's colour IS the avatar */}
+                  <img className="wb-seat-char" src={playerCharSrc(pc.color)} alt="" aria-hidden="true" draggable="false" />
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                     <span className="game-player-name-text" translate="no">{player.name}</span>
