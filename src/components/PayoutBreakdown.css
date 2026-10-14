@@ -273,6 +273,12 @@
    under the number so the figure fits the 152px column instead of pushing the receipt leftward
    onto SKIP (word-landing.spec "the receipt clears the input row"). */
 .payout--compact .payout-headline-wins .payout-headline-unit { display: block; }
+/* The figure never breaks (Andy oct14: "+9,62" / "0" split across lines) and, docked, shrinks to the column: a
+   Bungee glyph is ~0.72em wide, so N characters need N x 0.72em; capped at the figure's normal --fs-h2. */
+.payout-headline-num { white-space: nowrap; }
+.payout--compact .payout-headline-num {
+  font-size: min(var(--fs-h2), calc(146px / (var(--ch, 6) * 0.72)));
+}
 .payout--compact .payout-math {
   margin-top: 5px;
   padding-top: 5px;

@@ -5690,6 +5690,19 @@ html[data-beat='true'] .cb-answer-chip {
 .game-stage--wb .game-used-list .game-used-chip:nth-child(even) {
   transform: rotate(1deg);
 }
+/* SHRINK-TO-FIT (Andy oct14: "words get cut off" — BREATHTAKING ran out of its chip at 1080x1016). The list is a
+   size container (its width comes from the rail, never from the chips), and a chip sets its type from its own
+   length (--ch): Space Mono is 0.6em a glyph + the 0.08em tracking. Never above --fs-body, never under the 13px
+   --fs-label floor; a 10+ letter word also tightens its tracking first. */
+.game-stage--wb .game-used-list { container-type: inline-size; }
+.game-stage--wb .game-used-list .game-used-chip {
+  white-space: nowrap;
+  font-size: max(var(--fs-label), min(var(--fs-body), calc((100cqw - 22px) / (var(--ch, 6) * 0.68))));
+}
+.game-stage--wb .game-used-list .game-used-chip[data-long] {
+  letter-spacing: 0.02em;
+  font-size: max(var(--fs-label), min(var(--fs-body), calc((100cqw - 22px) / (var(--ch, 6) * 0.62))));
+}
 /* Newest word = last in the DOM = first in the reversed column = the bright one. */
 .game-stage--wb .game-used-list .game-used-chip:last-child {
   background: #FFE94A;

@@ -3563,7 +3563,12 @@ export default function GameScreen({
                   botReveal.shown < botReveal.word.length &&
                   String(item).toUpperCase() === botReveal.word;
                 return (
-                  <span key={item} className={pending ? 'game-used-chip is-pending' : 'game-used-chip'}>
+                  <span
+                    key={item}
+                    className={pending ? 'game-used-chip is-pending' : 'game-used-chip'}
+                    style={{ '--ch': String(item).length }}
+                    data-long={String(item).length >= 10 ? '' : undefined}
+                  >
                     {item.toUpperCase()}
                   </span>
                 );

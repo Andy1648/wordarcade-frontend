@@ -89,7 +89,12 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
           typed (BASE 10 XP / LETTER), so the receipt has no XP line. The headline is the wins the
           math below multiplies out to. */}
       <div className="payout-headline">
-        <span className="payout-headline-wins">+{formatRate(payout.paid)}<span className="payout-headline-unit"> WINS</span></span>
+        {/* Andy oct14 "numbers get cut off": the figure is ONE unbreakable run (+9,620.5 used to wrap after
+            the comma) and, docked, shrinks with its length to fit the 152px column (--ch, PayoutBreakdown.css). */}
+        <span className="payout-headline-wins">
+          <span className="payout-headline-num" style={{ '--ch': `+${formatRate(payout.paid)}`.length }}>+{formatRate(payout.paid)}</span>
+          <span className="payout-headline-unit"> WINS</span>
+        </span>
       </div>
       {/* EVERY TERM, IN ORDER, ON ONE LINE. A vertical list of label/value pairs read as a table
           of unrelated facts; the product is a single sentence and now looks like one. */}
