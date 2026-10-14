@@ -355,7 +355,7 @@ export default function WordRaceScreen({
               <>
                 <span className="wr-sr">Type the word {fragment}</span>
                 {/* The word, lit as you type it: typed-right letters in the accent, a wrong letter red. */}
-                <span className="wr-typeword" aria-hidden="true">
+                <span className="wr-typeword" aria-hidden="true" style={{ '--ch': Math.max(fragment.length, text.length) }}>
                   {fragment.split('').map((ch, i) => {
                     const t = text[i] ? text[i].toLowerCase() : null;
                     const cls = t == null ? '' : t === ch ? ' is-ok' : ' is-bad';
