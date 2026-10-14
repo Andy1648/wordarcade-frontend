@@ -292,7 +292,7 @@
 .sp2-note { position: absolute; left: 0; right: 0; bottom: -22px; min-height: 20px; text-align: center; font-size: var(--fs-k15); color: var(--k-yellow); }
 
 /* ---- short laptops (1280×551, 1366×657) ---- */
-@media (min-width: 700px) and (max-height: 680px) {
+@media (min-width: 1000px) and (max-height: 680px) {
   .sp2-stage { padding: 8px 32px 24px; row-gap: 6px; grid-template-columns: 350px minmax(0, 1fr); column-gap: 30px; }
   .sp2-head { min-height: 80px; }
   .sp2-title { font-size: var(--fs-k44); }
@@ -316,7 +316,7 @@
   .sp2-what { font-size: var(--fs-k14); margin-top: 2px; }
   .sp2-price { height: 30px; margin: auto 8px 8px; font-size: var(--fs-k18); }
 }
-@media (min-width: 700px) and (max-height: 580px) {
+@media (min-width: 1000px) and (max-height: 580px) {
   .sp2-forever { display: none; }
   .sp2-ico { width: 40px; height: 40px; }
   .sp2-grid { --sp2-row-min: 172px; }
@@ -326,7 +326,7 @@
 }
 
 /* ---- phones: one column; POWER is a compact row; the stock is a 3 × 2 grid of small cards ---- */
-@media (max-width: 699px) {
+@media (max-width: 999px) { /* Andy oct14: tablets + narrow laptops take the stacked layout (the 1280 stage squeezed under 1000) */
   .sp2 { align-items: flex-start; overflow-y: auto; }
   .sp2-scale { width: 100%; height: auto; max-height: none; transform: none; }
   .sp2-stage {
@@ -471,7 +471,7 @@
 .sp2-chest.is-claimed .sp2-chest-lid { transform: translate(-4%, -10%) rotate(-24deg); }
 .sp2-chest .sp2-price { background: var(--k-yellow, #FFE94A); color: #000; }
 .sp2-dot { position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; background: #FF3D7F; border: 3px solid #000; pointer-events: none; z-index: 3; }
-@media (max-width: 699px) { .sp2-chest-art { width: 44px; height: 44px; } }
+@media (max-width: 999px) { .sp2-chest-art { width: 44px; height: 44px; } }
 
 .sp2-pop { position: fixed; inset: 0; z-index: 140; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .86); }
 .sp2-pop-in { position: relative; width: min(520px, 100%); animation: sp2-pop-in 240ms cubic-bezier(.3, 1.5, .5, 1) both; }
@@ -499,3 +499,17 @@
 .sp2-pop .dd.is-odds .dd-tap { grid-template-areas: 'odds'; }
 .sp2-pop .dd.is-odds .dd-chest { display: none; }
 @media (prefers-reduced-motion: reduce) { .sp2-pop-in { animation: none; } .sp2-chest-lid { transition: none; } }
+
+/* ---- PROPORTIONS (Andy oct14 "numbers going off line"): 700–1279px. The 1280×720 stage only ever scales UP, so
+   below 1280 it was squeezed — the GEMS pill ran off the right edge, CODES dropped to a second row and every boost name
+   read "LUCK BO…". The columns + header tighten here instead of scaling the type under the 13px floor, and a card's
+   stock reads "×3" (the word LEFT goes) so its name keeps the room. */
+@media (min-width: 1000px) and (max-width: 1279px) {
+  .sp2-stage { padding: 16px 20px 24px; grid-template-columns: 300px minmax(0, 1fr); column-gap: 20px; }
+  .sp2-head { gap: 10px; }
+  .sp2-title { font-size: var(--fs-k44); }
+  .sp2-pills { gap: 14px; }
+  .sp2-pills .kp-name { display: none; }
+  .sp2-tabs { flex-wrap: nowrap; gap: 8px; }
+  .sp2-left-w { display: none; }
+}
