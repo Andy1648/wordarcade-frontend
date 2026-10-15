@@ -99,6 +99,9 @@
   .pn-list { gap: 5px; }
   .pn-item, .pn-gift { padding-top: 3px; padding-bottom: 3px; }
   .pn-body { gap: 6px; }
+  /* COLLECT never falls below the fold, whatever the font metrics (CI rendered it 11px under 600): it sticks to the
+     bottom of the scrolling overlay, like the phone layout */
+  .pn-foot { position: sticky; bottom: 0; padding: 6px 0 2px; background: #1a0b2e; z-index: 2; }
 }
 @media (max-width: 759px) {
   .pn { padding-top: 112px; }
