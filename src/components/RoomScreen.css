@@ -125,6 +125,7 @@
   border: 0;
   padding: 0;
   min-height: 44px;
+  margin-block: -9px; /* the 44px target overhangs the name line instead of growing the seat card (a taller card scaled the whole lobby down at 1280x551) */
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -132,7 +133,7 @@
 }
 .room-rename-btn:hover { text-decoration: underline dashed 2px; text-underline-offset: 4px; }
 .room-rename-hint {
-  font-size: var(--fs-micro);
+  font-size: var(--fs-k14);
   letter-spacing: 1px;
   color: #fff;
   background: var(--pc-dark, #6b5a86);
