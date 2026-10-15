@@ -147,6 +147,22 @@ export const CATEGORY_EMOJI = {
   "DreamWorks animated films": "🌙",
   "Popular Roblox games": "🧱",
   "Italian brainrot characters": "🦈",
+  // oct15 night batch E
+  "Words ending in -MAN": "🦸‍♂️",
+  "Rhymes with SNACK (-ACK)": "🦆",
+  "Rhymes with CLOCK (-OCK)": "⏰",
+  "Rhymes with HOUSE (-OUSE)": "🐭",
+  "Superpowers": "⚡",
+  "Mythical creatures": "🐉",
+  "Pizza toppings": "🍕",
+  "Ice cream flavors": "🍦",
+  "Sandwiches": "🥪",
+  "Insects": "🐞",
+  "Music genres": "🎧",
+  "Thanksgiving dinner foods": "🦃",
+  "Christmas decorations": "🎄",
+  "Valentine's Day things": "💘",
+  "Easter things": "🐰",
 };
 
 export function emojiFor(category) {

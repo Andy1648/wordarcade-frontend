@@ -12,6 +12,20 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct15 night batch E
+  "Words ending in -MAN": "Snowman",
+  "Rhymes with SNACK (-ACK)": "Backpack",
+  "Rhymes with CLOCK (-OCK)": "Sock",
+  "Rhymes with HOUSE (-OUSE)": "Mouse",
+  "Superpowers": "Invisibility",
+  "Mythical creatures": "Phoenix",
+  "Sandwiches": "Grilled cheese",
+  "Insects": "Grasshopper",
+  "Music genres": "Reggae",
+  "Thanksgiving dinner foods": "Stuffing",
+  "Christmas decorations": "Tinsel",
+  "Valentine's Day things": "Teddy bear",
+  "Easter things": "Peeps",
   // oct15 night batch D
   "Words ending in -BALL": "Dodgeball",
   "Words ending in -FISH": "Jellyfish",
