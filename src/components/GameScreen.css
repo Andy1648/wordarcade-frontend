@@ -7017,3 +7017,9 @@ html[data-beat='true'] .wb-belly {
 }
 @keyframes cb-count-pop { from { transform: scale(1.35); } to { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .cb-my-count { animation: none; } }
+@media (min-width: 900px) {
+  /* a long name ellipsises instead of running into its count */
+  .cb-round .cb-progress-name { min-width: 0; flex: 1 1 auto; }
+  .cb-round .cb-progress-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .cb-round .cb-progress-count { white-space: nowrap; }
+}
