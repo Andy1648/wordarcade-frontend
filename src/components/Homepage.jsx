@@ -1635,6 +1635,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           dim
           holdMs={TOUR_HOLD_MS}
           letterKeysDismiss={false}
+          // Andy oct15: room for the card's hover tilt + magnetic lean (it no longer lifts or grows)
+          pad={isPhoneMenu ? 8 : 16}
           onDismiss={dismissMenuSpot}
         />
       )}

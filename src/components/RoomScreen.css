@@ -527,7 +527,7 @@ html[data-beat='true'] .room-leave-btn {
 
 @keyframes room-btn-kick {
   0% { transform: translateY(0); }
-  35% { transform: translateY(-3px); }
+  35% { transform: translateY(-1.5px); } /* oct15: halved */
   100% { transform: translateY(0); }
 }
 

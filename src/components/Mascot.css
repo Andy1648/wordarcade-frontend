@@ -16,7 +16,7 @@ html[data-beat='true'] .mascot-container {
 
 @keyframes mascot-beat {
   0% { transform: scale(1); }
-  40% { transform: scale(1.08); }
+  40% { transform: scale(1.04); } /* oct15: halved */
   100% { transform: scale(1); }
 }
 

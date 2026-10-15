@@ -11,6 +11,7 @@ import { MORE_MODES } from '../gameData';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { emojiFor } from '../data/categoryEmoji';
+import { splitTyped } from './wbTyped/splitTyped';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
@@ -1394,11 +1395,53 @@ function DraftInput({ store, inputRef, onDraftChange, ...rest }) {
   const value = useDraft(store);
   return <input ref={inputRef} value={value} onChange={(event) => onDraftChange(event.target.value)} {...rest} />;
 }
-/** My own seat's live typing line, subscribed to the same store. */
-function MyDraftMirror({ store }) {
+/**
+ * THE LIVE PROMPT (Andy oct15, "JUST LIKE word bomb from roblox"): the letters the player on the clock is typing
+ * gather around the fragment, big, instead of in a small line under their seat. Letters that start the fragment
+ * light it up letter by letter; once the word contains it, the whole fragment lights and pops once; letters that
+ * don't continue it slide in front (splitTyped). Ours comes from the draft store (one node re-renders per key);
+ * an opponent's from their relayed typing_update.
+ */
+function ComboLive({ combo, store, mine, other }) {
   const draft = useDraft(store);
-  return draft ? <LiveTypeText text={draft} /> : <span className="player-typing-empty">...</span>;
+  const text = mine ? draft : other || '';
+  const { pre, lit, post, hit } = splitTyped(text, combo);
+  const len = text.length;
+  const prevLenRef = useRef(0);
+  const grew = len > prevLenRef.current;
+  useEffect(() => {
+    prevLenRef.current = len;
+  }, [len]);
+  const last = len - 1;
+  const cls = (base, i) => (i === last && grew ? `${base} keystrike` : base);
+  const key = (i) => (i === last && grew ? `k${len}` : i);
+  const c = combo.toUpperCase();
+  return (
+    <span
+      className={`wbl${len ? ' is-typing' : ''}${hit ? ' is-hit' : ''}`}
+      style={{ '--wbl-n': pre.length + c.length + post.length }}
+    >
+      <span className="wbl-side wbl-pre">
+        {pre.split('').map((ch, i) => <span key={key(i)} className={cls('g', i)}>{ch}</span>)}
+      </span>
+      <span className="wbl-combo" key={hit ? 'hit' : 'open'}>
+        {c.split('').map((ch, j) => {
+          const i = pre.length + j;
+          return j < lit
+            ? <span key={key(i)} className={cls('g lit', i)}>{ch}</span>
+            : <span key={`o${j}`} className="g">{ch}</span>;
+        })}
+      </span>
+      <span className="wbl-side wbl-post">
+        {post.split('').map((ch, k) => {
+          const i = pre.length + c.length + k;
+          return <span key={key(i)} className={cls('g', i)}>{ch}</span>;
+        })}
+      </span>
+    </span>
+  );
 }
+
 
 export default function GameScreen({
   // The app's sound control, handed down as an element so this screen can host it in its header
@@ -3221,7 +3264,14 @@ export default function GameScreen({
           >
             <div className="game-combo-label">{promptLabel}</div>
             <div className={`game-combo${isCategory ? ' category' : ''}`} translate="no">
-              {promptValue}
+              {isCategory || !combo ? promptValue : (
+                <ComboLive
+                  combo={combo}
+                  store={draftStore}
+                  mine={isMyTurn}
+                  other={typingText[gameState.currentPlayerId] || ''}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -3401,28 +3451,20 @@ export default function GameScreen({
                     const revealing =
                       !!botReveal && botReveal.playerId === player.id && !eliminated && !gameOver;
                     if (!live && !revealing) return null;
-                    if (isMe) {
-                      return (
-                        <div className="player-typing">
-                          <MyDraftMirror store={draftStore} />
-                        </div>
-                      );
-                    }
+                    // oct15: the live letters moved INTO the prompt (ComboLive) — only the bot's word reveal
+                    // and the opponent status line stay under the seat.
+                    if (isMe) return null;
                     const isBot = !!(roomPlayers || []).find((p) => p.id === player.id && p.isBot);
                     const typed = typingText[player.id] || '';
                     const status = revealing ? 'typing' : isBot ? 'thinking' : typed ? 'typing' : 'turn';
                     return (
                       <>
                         <OpponentStatus kind={status} />
-                        <div className="player-typing">
-                          {revealing ? (
+                        {revealing && (
+                          <div className="player-typing">
                             <LiveTypeText text={botReveal.word.slice(0, botReveal.shown)} caret={false} />
-                          ) : typed ? (
-                            <LiveTypeText text={typed} />
-                          ) : isBot ? null : (
-                            <span className="player-typing-empty">...</span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </>
                     );
                   })()}

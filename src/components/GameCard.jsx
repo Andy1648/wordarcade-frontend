@@ -37,7 +37,7 @@ const CARD_NEON = {
 const MAXTILT = 22; // deg - peak lean at the card edge nearest the cursor
 const RANGE = 560; // px - magnetic falloff radius from each card's centre
 const SMOOTH = 0.16; // lerp factor toward the target each frame
-const LIFT = 18; // px - extra upward translate while hovered
+const LIFT = 0; // px - extra upward translate while hovered (Andy oct15: "they can tilt but they dont need to jump out" — was 18)
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 

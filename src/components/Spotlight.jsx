@@ -90,7 +90,7 @@ function textRects(root, skip) {
   return out;
 }
 
-export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null, avoidTextIn = null, plateWhenCrowded = false, holdMs = 0, letterKeysDismiss = true }) {
+export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim = true, avoidSelector = null, avoidTextIn = null, plateWhenCrowded = false, holdMs = 0, letterKeysDismiss = true, pad: PADX = PAD }) {
   const [rect, setRect] = useState(null); // {left,top,width,height,right,bottom} of the target, or null
   const [place, setPlace] = useState(null); // {top,left[,compact,hidden]} px for the caption (anchored to the ring)
   const capRef = useRef(null);
@@ -122,8 +122,8 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
       const vh = window.innerHeight;
 
       // The ring edges (the bright hole extends PAD beyond the target on every side).
-      const ringTop = target.top - PAD;
-      const ringBottom = target.bottom + PAD;
+      const ringTop = target.top - PADX;
+      const ringBottom = target.bottom + PADX;
       const cx = target.left + target.width / 2;
 
       const rects = [];
@@ -268,7 +268,7 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', measure);
     };
-  }, [targetSelector, caption, sub, avoidSelector, avoidTextIn, plateWhenCrowded]);
+  }, [targetSelector, caption, sub, avoidSelector, avoidTextIn, plateWhenCrowded, PADX]);
 
   // Dismiss on the FIRST key/pointer — without ever swallowing it (no preventDefault).
   // holdMs: input in the first holdMs is not for this step (a tap still in flight from the intro / the step before).
@@ -295,10 +295,10 @@ export default function Spotlight({ targetSelector, caption, sub, onDismiss, dim
 
   const holeStyle = rect
     ? {
-        left: `${rect.left - PAD}px`,
-        top: `${rect.top - PAD}px`,
-        width: `${rect.width + PAD * 2}px`,
-        height: `${rect.height + PAD * 2}px`,
+        left: `${rect.left - PADX}px`,
+        top: `${rect.top - PADX}px`,
+        width: `${rect.width + PADX * 2}px`,
+        height: `${rect.height + PADX * 2}px`,
       }
     : null;
   const capStyle = rect && place ? { top: `${place.top}px`, left: `${place.left}px` } : {}; // no target → caption centres via CSS

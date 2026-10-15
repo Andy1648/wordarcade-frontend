@@ -132,16 +132,18 @@ test('2-human room: opponent card reads THEIR TURN, then TYPING… on a typing s
   await page.waitForTimeout(4600);
   mock.pushToClient({ type: 'typing_update', payload: { playerId: 'p2', text: 'stro' } });
   await expect(rival).toContainText('TYPING');
-  await expect(rival.locator('.player-typing-text')).toContainText('STRO');
+  // oct15: the live letters ride the PROMPT now (ComboLive), not the seat
+  await expect(page.locator('.wbl')).toContainText('STRO');
+  await expect(rival.locator('.player-typing-text')).toHaveCount(0);
   await expect(rival).not.toContainText('THEIR TURN');
   const anims = await infiniteAnims(page);
   expect(anims.filter((a) => a.inNew && a.name !== 'blink'), 'status line adds no infinite animation').toHaveLength(0);
 
-  // My turn: my own card keeps the draft mirror + "..." placeholder, no status line.
+  // My turn: no status line on my card; my letters ride the prompt (oct15), not the seat.
   turn(mock, players, ME, []);
   const me = page.locator('.game-player-card').nth(0);
   await expect(page.locator('.game-your-turn')).toBeVisible();
   await expect(me.locator('.player-status')).toHaveCount(0);
-  await expect(me.locator('.player-typing-empty')).toHaveText('...');
+  await expect(me.locator('.player-typing')).toHaveCount(0);
   await expect(rival.locator('.player-status')).toHaveCount(0);
 });
