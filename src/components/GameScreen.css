@@ -4142,13 +4142,7 @@ html[data-beat='true'] .cb-category-display {
 }
 
 /* ---- Category Blitz: answer chips - light outline flash ---- */
-html[data-beat='true'] .cb-answer-chip {
-  animation: cb-chip-outline-flash 120ms ease-out;
-}
-
-@keyframes cb-chip-outline-flash {
-  30% { border-color: #fff; }
-}
+/* (beat outline flash removed oct15 — no beat flashing) */
 
 @media (prefers-reduced-motion: reduce) {
   html[data-beat='true'] .game-combo,

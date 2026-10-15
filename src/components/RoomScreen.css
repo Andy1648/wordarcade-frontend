@@ -511,15 +511,7 @@
    rendered as per-letter WaveText spans, so a pseudo-element/clone split won't
    line up - instead we flash offset cyan/pink drop shadows for the same effect
    without disturbing the per-letter bounce. ---- */
-html[data-beat='true'] .room-code {
-  animation: room-code-rgb 120ms ease-out;
-}
-
-@keyframes room-code-rgb {
-  0% { text-shadow: -2px 1px 0 #2EFFE0, 2px -1px 0 #ff4fa3; }
-  60% { text-shadow: -2px 1px 0 #2EFFE0, 2px -1px 0 #ff4fa3; }
-  100% { text-shadow: 0 0 0 rgba(0, 0, 0, 0); }
-}
+/* (beat RGB split removed oct15 — no beat flashing; the code keeps its own bounce) */
 
 /* ---- Player chips: shadow slam (3px -> 6px) via the box-shadow transition on
    .room-player-chip, so the idle chip-rock keeps running. ---- */
@@ -530,17 +522,13 @@ html[data-beat='true'] .room-player-chip {
 /* ---- Primary buttons: a small upward kick + white outline flash. ---- */
 html[data-beat='true'] .room-start-btn,
 html[data-beat='true'] .room-leave-btn {
-  animation: room-btn-kick 120ms ease-out, room-outline-flash 120ms ease-out;
+  animation: room-btn-kick 120ms ease-out;
 }
 
 @keyframes room-btn-kick {
   0% { transform: translateY(0); }
   35% { transform: translateY(-3px); }
   100% { transform: translateY(0); }
-}
-
-@keyframes room-outline-flash {
-  30% { border-color: #fff; }
 }
 
 @media (prefers-reduced-motion: reduce) {
