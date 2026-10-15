@@ -1419,7 +1419,7 @@ function ComboLive({ combo, store, mine, other }) {
   return (
     <span
       className={`wbl${len ? ' is-typing' : ''}${hit ? ' is-hit' : ''}`}
-      style={{ '--wbl-n': Math.max(1, pre.length + post.length) }}
+      style={{ '--wbl-n': pre.length + c.length + post.length }}
     >
       <span className="wbl-side wbl-pre">
         {pre.split('').map((ch, i) => <span key={key(i)} className={cls('g', i)}>{ch}</span>)}

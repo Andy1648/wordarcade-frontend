@@ -12,15 +12,17 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
  * @param rect   the target's getBoundingClientRect() (or null when there is no target)
  * @param vw,vh  the viewport size
  * @param capH   the line's laid-out height (0 when unknown)
+ * @param pad    the hole's margin round the target (a target that GROWS on hover — a rail tile — gets more, so it
+ *               never pops out past the ring)
  * @returns { hole: {left,top,width,height} | null, caption: { top: number|null, side: 'below'|'above'|'bottom'|'center' } }
  */
-export function spotlightLayout(rect, vw, vh, capH = 0) {
+export function spotlightLayout(rect, vw, vh, capH = 0, pad = SPOT_PAD) {
   const center = { hole: null, caption: { top: null, side: 'center' } };
   if (!rect || !(rect.width > 0) || !(rect.height > 0) || !(vw > 0) || !(vh > 0)) return center;
-  const left = clamp(rect.left - SPOT_PAD, 0, vw);
-  const top = clamp(rect.top - SPOT_PAD, 0, vh);
-  const right = clamp(rect.left + rect.width + SPOT_PAD, 0, vw);
-  const bottom = clamp(rect.top + rect.height + SPOT_PAD, 0, vh);
+  const left = clamp(rect.left - pad, 0, vw);
+  const top = clamp(rect.top - pad, 0, vh);
+  const right = clamp(rect.left + rect.width + pad, 0, vw);
+  const bottom = clamp(rect.top + rect.height + pad, 0, vh);
   if (right - left < 1 || bottom - top < 1) return center; // scrolled fully off screen: no hole to cut
   const hole = { left, top, width: right - left, height: bottom - top };
   const h = Math.max(0, capH);

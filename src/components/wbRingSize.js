@@ -155,5 +155,6 @@ export function applyRingSize(stage, { head, top, bottomBar, bottom } = {}) {
     ringMax: WB_RING_MAX * k,
   });
   stage.style.setProperty('--wb-size', `${d}px`);
+  stage.style.setProperty('--wb-sizen', String(Math.round(d))); // unitless twin: lets CSS scale by ring size
   return d;
 }

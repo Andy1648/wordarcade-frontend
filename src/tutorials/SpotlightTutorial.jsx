@@ -34,12 +34,12 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
       const el = findTarget(tutorial.target);
       const r = el ? el.getBoundingClientRect() : null;
       const capH = lineRef.current ? lineRef.current.offsetHeight : 0;
-      setLayout(spotlightLayout(r, window.innerWidth, window.innerHeight, capH));
+      setLayout(spotlightLayout(r, window.innerWidth, window.innerHeight, capH, tutorial.pad));
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, [tutorial.target]);
+  }, [tutorial.target, tutorial.pad]);
 
   // focus in, and back out to whatever had it
   useEffect(() => {

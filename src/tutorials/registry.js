@@ -42,6 +42,7 @@ export const TUTORIALS = [
     needsTarget: true,
     when: (s) => !!s.powerReady && s.rebirths === 0 && s.level <= 40, // NEW players only
     target: '.hp-nav.is-shop',
+    pad: 16, // the rail tile pops + tilts on hover: room so it never leaves the ring (Andy oct15)
     line: 'SPEND WINS ON POWER — YOUR MULTIPLIER.', // Andy oct14 "wins for multipliers"
   },
   {
@@ -50,6 +51,7 @@ export const TUTORIALS = [
     needsTarget: true,
     when: (s) => !!s.gearsReady && s.rebirths === 0 && s.level <= 60,
     target: '.hp-nav.is-gears',
+    pad: 16, // the rail tile pops + tilts on hover: room so it never leaves the ring (Andy oct15)
     line: 'YOUR FIRST GEAR ROLL IS READY.',
   },
   {
@@ -59,6 +61,7 @@ export const TUTORIALS = [
     isNew: true,
     when: (s) => s.marksRevealed && rollsEnabled(),
     target: '.rs-roll',
+    pad: 14, // the ROLL button presses / pops: a little room round it
     line: 'TAP ROLL — YOUR FIRST GEAR IS FREE.', // oct14: they are GEARS everywhere else now
   },
 
@@ -66,6 +69,7 @@ export const TUTORIALS = [
     id: 'rebirth',
     when: (s) => s.rebirthReady && s.rebirths === 0,
     target: '.hp-nav.is-rebirth',
+    pad: 16, // the rail tile pops + tilts on hover: room so it never leaves the ring (Andy oct15)
     // NUMBERS AUDIT: season 2 says this as an edge toast, and a FINAL rebirth is ×2 (the live Rebirth Rush ×5)
     line: `REBIRTH READY: ×${SEASON2 ? 3 : 5} XP & WINS, FOR GOOD.`,
   },
