@@ -11,6 +11,8 @@ import { s2Rebirths, getStarsV3 } from '../progress/v3/store.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { getPlatePick, setPlatePick } from '../progress/platePick';
 import './RankLadder.css';
+import { loadProgress, getRebirths, rebirthThreshold } from '../progress/xp.js';
+import { formatNum } from '../format.js';
 
 // RANK ROAD (Andy oct15 night "make ranks more appeasing visually … coolness and addicting, funny"; research: the joke
 // lives in a deadpan line under a straight-faced plate (TF2 strange ranks / Clash arenas), the NEXT rank is spotlit with
@@ -41,7 +43,15 @@ const togo = (x) => {
 const pctTo = (x, prev) => {
   if (x.s != null) return Math.max(0, Math.min(1, getStarsV3() / x.s));
   const from = prev && prev.r != null ? prev.r : 0;
-  return Math.max(0, Math.min(1, (s2Rebirths() - from) / Math.max(1, x.r - from)));
+  // Rebirth-gated ranks are usually ONE rebirth apart, so counting rebirths alone left the bar empty
+  // the whole way. The level climb toward the next rebirth gate fills the current step.
+  return Math.max(0, Math.min(1, (s2Rebirths() - from + gateFrac()) / Math.max(1, x.r - from)));
+};
+const gateFrac = () => {
+  try { return Math.max(0, Math.min(1, loadProgress().level / Math.max(1, rebirthThreshold(getRebirths())))); } catch { return 0; }
+};
+const gateLine = () => {
+  try { return `LV ${formatNum(loadProgress().level)} / ${formatNum(rebirthThreshold(getRebirths()))} TO THE NEXT REBIRTH`; } catch { return ''; }
 };
 const how = (x) => (x.s != null ? `${x.s} ★ STAR${x.s === 1 ? '' : 'S'}` : x.r === 0 ? 'START' : `REBIRTH ${x.r}`);
 
@@ -82,6 +92,7 @@ export default function RankLadder({ onClose }) {
             <span className="rl-next-quip">{QUIP[next.name]}</span>
             <span className="rl-next-bar"><span style={{ transform: `scaleX(${pctTo(next, RANKS_V3[you])})` }} /></span>
             <span className="rl-next-go">{togo(next)}</span>
+            {next.s == null && <span className="rl-next-lv">{gateLine()}</span>}
           </div>
         ) : (
           <div className="rl-next is-max"><span className="rl-next-k">MAX RANK</span><span className="rl-next-quip">{QUIP.ENDGAME}</span></div>
