@@ -5499,6 +5499,56 @@ html[data-beat='true'] .cb-category-display {
      screen's one accent free for turn ownership. */
   color: var(--v-ink);
 }
+
+/* ===== THE LIVE PROMPT (Andy oct15, "JUST LIKE word bomb from roblox") =====
+   No plaque frame any more: the fragment floats free over the bomb and the letters the player on the clock types
+   gather AROUND it (ComboLive / splitTyped) — cyan typed letters, the fragment lighting yellow letter by letter as
+   it is typed and popping once when the word contains it. The side letters are smaller than the fragment and
+   SHRINK with the word (--wbl-n letters into the room the row has left), so a long word never pushes the clock
+   plaque onto a second line (that would cost the ring its height twice). */
+.game-stage--wb .game-combo-box {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding-block: 0;
+  max-width: 100%;
+  /* a FIXED width (not the word's): the clock plaque beside it never slides as letters arrive */
+  flex: 0 0 auto;
+  width: clamp(240px, calc(100vw - 260px), 620px);
+  padding-inline: 0;
+}
+.wbl {
+  --wbl-room: max(130px, calc(100vw - 420px));
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.wbl-side {
+  color: #2EFFE0;
+  letter-spacing: 1px;
+  -webkit-text-stroke: 3px #000;
+  font-size: max(var(--fs-micro), min(40px, calc(var(--wbl-room) / (var(--wbl-n, 1) * 0.86))));
+}
+.wbl-combo { display: inline-block; }
+.wbl .g { display: inline-block; }
+.wbl .g.lit { color: #FFE94A; }
+.wbl .g.keystrike { animation: keystrike 190ms cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+/* the word now holds the fragment: it pops ONCE (re-keyed on the hit) */
+.wbl.is-hit .wbl-combo { animation: wbl-hit 300ms cubic-bezier(0.3, 1.7, 0.5, 1); }
+@keyframes wbl-hit {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.22) rotate(-3deg); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wbl .g.keystrike, .wbl.is-hit .wbl-combo { animation: none; }
+}
+@media (max-width: 700px) {
+  .wbl { --wbl-room: max(130px, calc(100vw - 230px)); }
+  .wbl-side { -webkit-text-stroke: 2px #000; }
+}
 /* ---- THE HEADER runs as ONE SHORT row on the board. It is chrome: the title, the
    sound toggle and LEAVE, on one line, sized down from the app-wide steps. It is taken
    off the top of the board once (not reserved twice like the prompt below it), but it
