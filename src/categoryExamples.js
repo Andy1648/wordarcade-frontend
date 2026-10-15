@@ -58,6 +58,17 @@ export const CATEGORY_EXAMPLES = {
   "Birds": "Flamingo",
   "Things at a birthday party": "Piñata",
   "Things that are sticky": "Honey",
+  // oct15 night batch J
+  "Superheroes": "Spider-Man",
+  "Famous robots": "WALL-E",
+  "Video game characters": "Kirby",
+  "Things that are round": "Donut",
+  "Things in space": "Black hole",
+  "Things with buttons": "Elevator",
+  "Things people are scared of": "Clowns",
+  "Flowers": "Sunflower",
+  "Snack foods": "Pretzels",
+  "Comic book sound effects": "KAPOW",
   // oct15 night batch E
   "Words ending in -MAN": "Snowman",
   "Rhymes with SNACK (-ACK)": "Backpack",

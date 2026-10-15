@@ -210,6 +210,17 @@ export const CATEGORY_EMOJI = {
   "Birds": "🐦",
   "Things at a birthday party": "🎂",
   "Things that are sticky": "🍯",
+  // oct15 night batch J
+  "Superheroes": "🦸",
+  "Famous robots": "🤖",
+  "Video game characters": "🕹️",
+  "Things that are round": "⚪",
+  "Things in space": "🪐",
+  "Things with buttons": "🔘",
+  "Things people are scared of": "😱",
+  "Flowers": "🌷",
+  "Snack foods": "🍿",
+  "Comic book sound effects": "💥",
 };
 
 export function emojiFor(category) {
