@@ -25,7 +25,30 @@ export const ROOTS = [
   'fuck', 'fuk', 'shit', 'cunt', 'nigg', 'fagg', 'faggot', 'bitch', 'whore', 'slut', 'pussy',
   'porn', 'penis', 'vagina', 'dildo', 'rapist', 'nazi', 'hitler', 'retard', 'tranny', 'kike',
   'wank', 'twat', 'jizz', 'asshole', 'motherf', 'pedophile', 'molest', 'kkk', 'heilh',
+  // STRICTER (Andy oct15: "dick gets flagged but bigdick doesnt"): the roots once left out because innocent words contain
+  // them are now IN, and those innocent words are carved out by ALLOW (below) instead.
+  'dick', 'cock', 'cum', 'sex', 'anal', 'rape', 'tits', 'boob', 'horny', 'nude', 'semen', 'clit', 'milf', 'hentai',
+  'orgasm', 'boner', 'nutsack', 'ballsack', 'scrotum', 'butthole', 'nsfw',
 ];
+
+// ALLOW: innocent words that CONTAIN a root. Each one is cut out of the leet-decoded name before the root check, so
+// "Dickens", "Peacock" and "therapist" stay clean while "BigDick" and "DickensDick" don't. Keep entries lowercase a-z.
+export const ALLOW = [
+  'dickens', 'dickinson', 'dickson', 'benedick',
+  'peacock', 'hancock', 'cockpit', 'cocktail', 'cockatoo', 'cockroach', 'cockney', 'cocky', 'cockle', 'hitchcock',
+  'woodcock', 'shuttlecock', 'babcock', 'gamecock',
+  'document', 'cucumber', 'circumstance', 'accumulat', 'cumulus', 'cumbria', 'cumberland', 'incumbent', 'succumb',
+  'essex', 'sussex', 'wessex', 'middlesex', 'sextant', 'sextet', 'sexton', 'unisex',
+  'canal', 'banal', 'analy', 'analog',
+  'grape', 'drape', 'scrape', 'trapeze', 'rapeseed', 'parapet', 'therapist',
+  'thorny',
+];
+const ALLOW_SORTED = [...ALLOW].sort();
+function stripAllowed(t) {
+  let out = t;
+  for (const a of ALLOW_SORTED) out = out.split(a).join(''); // alphabetical — the DB cuts in the same order
+  return out;
+}
 
 const LEET_FROM = '0134578@$!9';
 const LEET_TO = 'oieastbasig';
@@ -67,9 +90,11 @@ export function isNameBlocked(name) {
   if (CJK_TERMS.some((t) => raw.includes(t))) return true;
   const plain = String(name || '').toLowerCase().replace(/[^a-z]/g, '');
   const leet = nameLeet(name);
-  const squash = nameSquash(name);
   if (EXACT.has(plain) || EXACT.has(leet)) return true;
-  return ROOTS.some((r) => leet.includes(r) || squash.includes(r));
+  // roots: on the leet form with the ALLOW words cut out, and on that form's squash
+  const cut = stripAllowed(leet);
+  const cutSquash = cut.replace(/(.)\1+/g, '$1');
+  return ROOTS.some((r) => cut.includes(r) || cutSquash.includes(r));
 }
 
 /** 'ok' | 'shape' | 'blocked' — the client's instant verdict (the DB adds 'taken'). */

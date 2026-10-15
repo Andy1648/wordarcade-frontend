@@ -24,6 +24,7 @@
 // {maxLen} — the longest word in the full accept set, written by
 // scripts/clean-accept-artifacts.mjs (tiny; static so it is known before any chunk loads).
 import acceptMaxLen from './acceptMaxLen.json';
+import { SLURS } from '../moderation/blockedTerms.js';
 
 // CHAIN reads the top-N most frequent RECALL words as its "common" continuations
 // (dead-end rescue + the live supply readout). 3000 per the spec.
@@ -41,6 +42,10 @@ export async function loadSoloWords() {
   for (const w of famousRaw.split(/\s+/)) if (w) accept.add(w.toLowerCase());
   // STEP 55: common proper-noun words (october, london, france…) + mild insults — see wordsData.js.
   for (const w of (commonRaw || '').split(/\s+/)) if (w) accept.add(w.toLowerCase());
+  // NO WORD CENSORSHIP (Andy oct15 "remove all restrictions and all words should work"): the build dropped slurs from
+  // the accept lists; they are ACCEPTED again when typed (the game never generates or displays them — generation reads
+  // RECALL, which stays clean). Mirrors the backend's Word Bomb validator (dictionary.js).
+  for (const w of SLURS) if (/^[a-z]+$/.test(w)) accept.add(w);
   // Floor at the generated whole-set length (base + the lazy extension), so a long ext word
   // can be TYPED on the first run too, before the extension chunk lands.
   let maxAcceptLen = acceptMaxLen.maxLen;
