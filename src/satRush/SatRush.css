@@ -2853,3 +2853,12 @@ body:has(.sr-app) .wpm-hud {
 @media (max-width: 520px) and (max-height: 440px) {
   .sr-cardframe:has(.sr-lineup) .sr-lineup { min-height: 52px; } /* keyboard up: one row, no caption */
 }
+
+/* oct15 afternoon (Andy "for sat rush briefing (and for the rest of all scroll screens) - i dont want the stupid side
+   bar to scroll up and down the ENTIRE screen, keep the scroll within"): the page fits the window; its head and the
+   Start button stay put and only the card LIST scrolls, inside the paper. */
+.sr-brief-screen { overflow: hidden; align-items: center; }
+.sr-brief-page { max-height: calc(100dvh - 2 * clamp(12px, 2.5vh, 32px)); box-sizing: border-box; min-height: 0; }
+.sr-brief-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }
+.sr-brief-head, .sr-brief-actions { flex: none; }
+.sr-brief-page > .sr-brief-exit { position: absolute; width: auto; }
