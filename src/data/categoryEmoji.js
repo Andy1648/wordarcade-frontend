@@ -199,6 +199,17 @@ export const CATEGORY_EMOJI = {
   "Things with wheels": "🛞",
   "Words starting with RAIN": "🌈",
   "Words starting with PAN": "🥞",
+  // oct15 night batch I
+  "Desserts": "🍰",
+  "Breakfast foods": "🥞",
+  "Things in a fridge": "🧊",
+  "Camping gear": "⛺",
+  "Pets": "🐹",
+  "Jobs": "👷",
+  "Clothing": "👕",
+  "Birds": "🐦",
+  "Things at a birthday party": "🎂",
+  "Things that are sticky": "🍯",
 };
 
 export function emojiFor(category) {

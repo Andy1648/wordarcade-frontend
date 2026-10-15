@@ -47,6 +47,17 @@ export const CATEGORY_EXAMPLES = {
   "Things with wheels": "Shopping cart",
   "Words starting with RAIN": "Rainbow",
   "Words starting with PAN": "Pancake",
+  // oct15 night batch I
+  "Desserts": "Cheesecake",
+  "Breakfast foods": "Waffles",
+  "Things in a fridge": "Leftovers",
+  "Camping gear": "Sleeping bag",
+  "Pets": "Hamster",
+  "Jobs": "Firefighter",
+  "Clothing": "Hoodie",
+  "Birds": "Flamingo",
+  "Things at a birthday party": "Piñata",
+  "Things that are sticky": "Honey",
   // oct15 night batch E
   "Words ending in -MAN": "Snowman",
   "Rhymes with SNACK (-ACK)": "Backpack",
