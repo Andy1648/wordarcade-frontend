@@ -572,3 +572,19 @@
   .wr-root:not([data-race-status='over']) .wr-hero-word { font-size: var(--fs-h1); }
   .wr-root:not([data-race-status='over']) .wr-typeword { font-size: min(var(--fs-h1), calc(96cqw / (var(--ch, 6) * 0.8))); }
 }
+
+/* ===== DESKTOP PROPORTIONS (Andy oct15 night "make proportions bigger everywhere … space isnt used adequately") =====
+   On a laptop / monitor the race read like a phone layout scaled up: a 520px input, a body-size next-words line,
+   thin lanes with a 36px runner. Big screens get a wider field, a next-words line you can read at a glance, taller
+   lanes with a bigger runner, and a readable WINS counter. Phones are untouched. */
+@media (min-width: 1100px) and (min-height: 760px) {
+  .wr-lane { padding: 6px 12px; grid-template-columns: minmax(112px, 32%) 1fr auto; }
+  .wr-lane-name { font-size: var(--fs-panel); }
+  .wr-lane-count { font-size: var(--fs-panel); }
+  .wr-track { --runner: 48px; height: 56px; }
+  .wr-tick { height: 12px; }
+  .wr-upcoming { font-size: var(--fs-panel); gap: 22px; }
+  .wr-form { width: min(760px, 100%); }
+  .wr-input { min-height: 64px; font-size: var(--fs-panel); }
+  .wr-earn { font-size: var(--fs-panel); }
+}
