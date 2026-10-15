@@ -22,12 +22,12 @@
          void background (#0d0618) and the manifest theme_color. -->
     <meta name="theme-color" content="#0d0618" />
     <title>TYPE A WORD — Free Multiplayer Word Games Online</title>
-    <meta name="description" content="Browser word games: Word Bomb and AI Category Blitz - fast, chaotic, multiplayer - plus SAT Rush, solo SAT vocab as an arcade run. Free, no download. Type fast, die slow." />
+    <meta name="description" content="TYPE A WORD is a free multiplayer word game in your browser: Word Bomb, AI Category Blitz, SAT Rush, CHAIN and FUSE. No download, no account. Type fast, die slow." />
     <link rel="canonical" href="https://typeaword.com/" />
     <!-- Open Graph / social share -->
     <meta property="og:site_name" content="Type a Word" />
-    <meta property="og:title" content="Type a Word" />
-    <meta property="og:description" content="Fast, chaotic multiplayer word games - Word Bomb and AI Category Blitz - plus SAT Rush, solo SAT vocab as an arcade run. Type fast, die slow." />
+    <meta property="og:title" content="TYPE A WORD" />
+    <meta property="og:description" content="TYPE A WORD is a free multiplayer word game in your browser: Word Bomb, AI Category Blitz, SAT Rush, CHAIN and FUSE. No download, no account. Type fast, die slow." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://typeaword.com/" />
     <meta property="og:image" content="https://typeaword.com/og-image.png" />
@@ -75,16 +75,34 @@
       "@graph": [
         {
           "@type": "WebSite",
-          "name": "Type a Word",
+          "name": "TYPE A WORD",
+          "alternateName": [
+            "typeaword",
+            "Type a Word",
+            "typeaword.com"
+          ],
           "url": "https://typeaword.com/",
-          "description": "Browser word games: Word Bomb and AI Category Blitz - fast, chaotic, multiplayer - plus SAT Rush, solo SAT vocab as an arcade run. Free, no download. Type fast, die slow."
+          "description": "TYPE A WORD is a free multiplayer word game in your browser: Word Bomb, AI Category Blitz, SAT Rush, CHAIN and FUSE. No download, no account. Type fast, die slow."
+        },
+        {
+          "@type": "Organization",
+          "name": "TYPE A WORD",
+          "url": "https://typeaword.com/",
+          "logo": "https://typeaword.com/icons/news.webp",
+          "sameAs": [
+            "https://www.instagram.com/typeaword/"
+          ]
         },
         {
           "@type": "VideoGame",
           "name": "Word Bomb",
           "url": "https://typeaword.com/word-bomb/",
+          "description": "Word Bomb is a fast, chaotic multiplayer word game.",
           "genre": "Word game",
-          "playMode": ["MultiPlayer", "SinglePlayer"],
+          "playMode": [
+            "MultiPlayer",
+            "SinglePlayer"
+          ],
           "gamePlatform": "Web browser",
           "isAccessibleForFree": true
         },
@@ -93,8 +111,12 @@
           "name": "Category Blitz",
           "alternateName": "AI Category Blitz",
           "url": "https://typeaword.com/category-blitz/",
+          "description": "Category Blitz is a simultaneous, round-based category game — think Scattergories crossed with a typing race.",
           "genre": "Word game",
-          "playMode": ["MultiPlayer", "SinglePlayer"],
+          "playMode": [
+            "MultiPlayer",
+            "SinglePlayer"
+          ],
           "gamePlatform": "Web browser",
           "isAccessibleForFree": true
         },
@@ -102,10 +124,34 @@
           "@type": "VideoGame",
           "name": "SAT Rush",
           "url": "https://typeaword.com/sat-rush/",
-          "genre": ["Educational game", "Word game"],
+          "description": "SAT Rush is a solo vocabulary game that turns test-prep words into an arcade run.",
+          "genre": [
+            "Educational game",
+            "Word game"
+          ],
           "playMode": "SinglePlayer",
           "gamePlatform": "Web browser",
           "applicationCategory": "EducationalApplication",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "VideoGame",
+          "name": "Chain",
+          "url": "https://typeaword.com/chain/",
+          "description": "Chain is a solo word game built on one rule everybody already knows: your next word must begin with the last letter of your previous word.",
+          "genre": "Word game",
+          "playMode": "SinglePlayer",
+          "gamePlatform": "Web browser",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "VideoGame",
+          "name": "Fuse",
+          "url": "https://typeaword.com/fuse/",
+          "description": "Fuse gives you a short run of letters — something like ORT or NCH — and one instruction: type a real word that contains it.",
+          "genre": "Word game",
+          "playMode": "SinglePlayer",
+          "gamePlatform": "Web browser",
           "isAccessibleForFree": true
         }
       ]
