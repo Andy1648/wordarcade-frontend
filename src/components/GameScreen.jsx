@@ -10,6 +10,7 @@ import { resolvePlayerColor, playerCharSrc } from '../playerColors';
 import { MORE_MODES } from '../gameData';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
+import { emojiFor } from '../data/categoryEmoji';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
@@ -4842,6 +4843,13 @@ function CategoryBlitzScreen({
             {/* Sprays the category name on each new round/reroll (re-keyed by the
                 category text so the reveal replays). The box itself appears
                 normally - only the paint sweeps on. */}
+            {/* The category's emoji sticker (display-only, data/categoryEmoji.js) slapped on the
+                box's top-left corner — re-keyed so it pops in again on each new category. */}
+            {emojiFor(categoryRound.category) && (
+              <span key={`e-${categoryRound.category}`} className="cb-cat-emoji" aria-hidden="true">
+                {emojiFor(categoryRound.category)}
+              </span>
+            )}
             <SprayReveal key={categoryRound.category} duration={780}>
               {(categoryRound.category || '').toUpperCase()}
             </SprayReveal>
