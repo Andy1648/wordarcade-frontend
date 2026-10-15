@@ -186,6 +186,19 @@ export const CATEGORY_EMOJI = {
   "School supplies": "✏️",
   "Things in a bathroom": "🛁",
   "Car parts": "🚗",
+  // oct15 night batch H
+  "Famous cartoon dogs": "🐶",
+  "Famous cartoon cats": "🐱",
+  "Famous bears": "🐻",
+  "Famous people named Chris": "🧑",
+  "Farm animals": "🐄",
+  "Sea creatures": "🐙",
+  "Vegetables": "🥕",
+  "Tropical fruits": "🍍",
+  "Things you find at the beach": "🏖️",
+  "Things with wheels": "🛞",
+  "Words starting with RAIN": "🌈",
+  "Words starting with PAN": "🥞",
 };
 
 export function emojiFor(category) {
