@@ -302,8 +302,8 @@ test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TA
   assert.deepEqual(mp.lines, [{ reason: 'placement', amount: 90 }], 'a 3-player win takes 30 × 3');
   const lost = GM.gameResultPayout({ iWon: false, rivals: [{ id: 'p1', beaten: true }, { id: 'p2' }] });
   assert.deepEqual(lost.lines, [], 'winner takes all: 2nd place gets nothing');
-  assert.equal(E.raceSpeedGems(30), 15);
-  assert.equal(E.raceSpeedGems(500), 40, 'capped');
+  assert.equal(E.raceSpeedGems(30), 12);
+  assert.equal(E.raceSpeedGems(500), 30, 'capped');
   reset();
   G.stampGemsMigrated({ peak: 1 });
   X.saveProgress({ level: 1, frac: 0 });

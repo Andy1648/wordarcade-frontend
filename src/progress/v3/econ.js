@@ -78,9 +78,9 @@ export function winnerPot(people) {
   const n = int0(people);
   return n >= 2 ? POT_PER_PLAYER * n : 0;
 }
-// WORD RACE pays SPEED (Andy oct10): 1 gem per 2 words a minute, every racer, capped.
-export const RACE_GEMS_PER_WPM = 0.5;
-export const RACE_SPEED_CAP = 40;
+// WORD RACE pays SPEED (Andy oct10): 0.4 gem per word a minute, every racer, capped (Andy oct15 "slightly less gems": was 0.5 / cap 40).
+export const RACE_GEMS_PER_WPM = 0.4;
+export const RACE_SPEED_CAP = 30;
 export function raceSpeedGems(wpm) {
   return Number.isFinite(wpm) && wpm > 0 ? Math.min(RACE_SPEED_CAP, Math.floor(wpm * RACE_GEMS_PER_WPM)) : 0;
 }
