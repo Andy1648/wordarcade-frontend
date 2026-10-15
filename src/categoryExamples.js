@@ -12,6 +12,31 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct15 night batch C
+  "Rhymes with CAKE (-AKE)": "Snake",
+  "Rhymes with BEE (-EE)": "Tree",
+  "Rhymes with BUG (-UG)": "Hug",
+  "Rhymes with DOG (-OG)": "Frog",
+  "Palindromes (same backwards)": "Kayak",
+  "Words with no vowels (Y is fine)": "Rhythm",
+  "Words starting with SNOW": "Snowman",
+  "Words starting with FIRE": "Fireworks",
+  "Words starting with SUN": "Sunflower",
+  "Candy brands": "Skittles",
+  "Breakfast cereals": "Froot Loops",
+  "Social media apps": "Snapchat",
+  "Streaming services": "Hulu",
+  "Rooms in a house": "Attic",
+  "Types of weather": "Hail",
+  "Kitchen appliances": "Air fryer",
+  "Justice League members": "Aquaman",
+  "Faces on US money": "Lincoln",
+  "Directions on a compass": "Northeast",
+  "US coins": "Dime",
+  "FIFA & EA FC games": "FIFA 18",
+  "Apollo missions": "Apollo 11",
+  "Scream films": "Scream 3",
+  "Final Destination films": "Final Destination 2",
   // oct15 night batch
   "Rhymes with JUMP (-UMP)": "Bump",
   "Rhymes with THINK (-INK)": "Pink",
