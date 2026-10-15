@@ -14,8 +14,6 @@ import { SEASON2, V3 } from '../progress/season';
 import KitIcon from './kit/KitIcon.jsx';
 import './RoomScreen.css';
 import './kit/tokens.css';
-
-const MAX_NAME_LENGTH = 20; // same cap as the lobby / browser name fields
 import './RoomScreenV2.css';
 
 // P9c/9d (claude/mockups/v2/RoomSettings.dc.html LOBBY): the SEASON2 skin — the code as LETTER TILES, an 8-SEAT grid
@@ -75,58 +73,7 @@ function botDifficultyLabel(key) {
  * players instead see the current difficulty as read-only text and a
  * "waiting for host" message.
  */
-/**
- * YOUR name in the roster is editable (Andy oct15 "change your name even after you join a multiplayer lobby"): tap it,
- * type, Enter / tap away saves (set_name — the server only takes it between games), Escape cancels.
- */
-function RenameName({ name, onRename }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(name);
-  const inputRef = useRef(null);
-  useEffect(() => {
-    if (editing && inputRef.current) inputRef.current.select();
-  }, [editing]);
-  const save = () => {
-    const next = draft.trim();
-    setEditing(false);
-    if (next && next !== name) onRename(next);
-  };
-  if (!editing) {
-    return (
-      <button
-        type="button"
-        className="room-player-name room-rename-btn"
-        translate="no"
-        onClick={() => { setDraft(name); setEditing(true); }}
-        aria-label="Change your name"
-        title="Change your name"
-      >
-        {name}
-        <span className="room-rename-hint" aria-hidden="true">EDIT</span>
-      </button>
-    );
-  }
-  return (
-    <input
-      ref={inputRef}
-      className="room-player-name room-rename-input"
-      value={draft}
-      maxLength={MAX_NAME_LENGTH}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={save}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-        if (e.key === 'Enter') save();
-        if (e.key === 'Escape') { setDraft(name); setEditing(false); }
-      }}
-      aria-label="Your name"
-      autoComplete="off"
-      spellCheck={false}
-    />
-  );
-}
-
-export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, startPending, diffPending, botPending, onLeave, onSetGameType, onSetDifficulty, onStartGame, onAddBot, onRemoveBot, onRename }) {
+export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, startPending, diffPending, botPending, onLeave, onSetGameType, onSetDifficulty, onStartGame, onAddBot, onRemoveBot }) {
   // Start / difficulty / bot are one-shot, server-acked actions: their guards
   // (disable-on-click + recover-on-ack/error) live in App via useOneShotAction
   // and arrive here as the *Pending booleans, so a repeated identical error can
@@ -352,11 +299,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
                   <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                  {player.id === myId && onRename ? (
-                    <RenameName name={player.name} onRename={onRename} />
-                  ) : (
-                    <span className="room-player-name" translate="no">{player.name}</span>
-                  )}
+                  <span className="room-player-name" translate="no">{player.name}</span>
                   {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
                   {SEASON2 && player.id === myId ? <span className="room-you-badge">YOU</span> : null}
                   {player.isBot && (

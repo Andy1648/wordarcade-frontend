@@ -49,21 +49,3 @@ export async function autoName({ claim = claimName, gen = randomPlayerName } = {
 export function __resetAutoName() {
   started = false;
 }
-
-/**
- * A name chosen in a game mode (lobby, room roster, browser) follows the player onto the board (Andy oct15). Only
- * when they already HAVE a board row, the name fits the board's shape and actually differs (case-insensitively).
- * Fire-and-forget through claimName (taken / blocked / cooldown / offline → the board keeps its name). Never throws.
- */
-export function syncBoardName(name, { claim = claimName, profile = getMyProfile, enabled = LEADERBOARD_ENABLED } = {}) {
-  try {
-    const n = String(name || '').trim();
-    if (!enabled || !SHAPE.test(n)) return false;
-    const row = profile();
-    if (!row || !row.username || row.username.toLowerCase() === n.toLowerCase()) return false;
-    Promise.resolve(claim(n)).catch(() => {});
-    return true;
-  } catch {
-    return false;
-  }
-}
