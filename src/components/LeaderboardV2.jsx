@@ -553,6 +553,11 @@ export default function LeaderboardV2({ onBack }) {
           {data.loaded && !data.error && rows.length === 0 && <p className="lb2-note">{wk ? 'NOBODY HAS CLIMBED THIS WEEK YET. BE FIRST.' : 'NOBODY IS ON THE BOARD YET.'}</p>}
           {data.loaded && !data.error && list.map((r, k) => {
             const mine = !!(myId && r.id === myId);
+            // RIVAL + CHASE (Andy oct15 night "ways for people on leaderboard to feel even more addicted"; research: the
+            // player right above you is the strongest pull a board has — a near, beatable target beats a distant top 10)
+            const meK = myId ? list.findIndex((x) => x.id === myId) : -1;
+            const rival = meK > 0 && list[meK - 1].rank === list[meK].rank - 1 ? list[meK - 1] : null;
+            const isRival = !!(rival && r.id === rival.id);
             const n = nums(r, tab, gains);
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
             // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
@@ -562,14 +567,22 @@ export default function LeaderboardV2({ onBack }) {
             return (
               <Fragment key={r.id}>
               {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span>{sep}</span></div>}
-              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
+              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 <span className="lb2-rk">{fmt(r.rank)}</span>
                 <span className="lb2-who-cell">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
                     <span className="lb2-name" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
+                    {isRival && <span className="lb2-rival">RIVAL</span>}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
+                  {mine && (rival || r.rank > 10) ? (
+                    <span className="lb2-chase">
+                      {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}
+                      {rival && r.rank > 10 ? ' · ' : null}
+                      {r.rank > 10 ? <><b>{fmt(r.rank - 10)}</b> TO TOP 10</> : null}
+                    </span>
+                  ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
                 </span>
                 <Move n={data.moves[r.id] || 0} />
