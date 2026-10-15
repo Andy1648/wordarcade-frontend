@@ -4108,7 +4108,7 @@ html[data-beat='true'] .game-combo {
 
 @keyframes combo-beat-pop {
   0% { transform: skewX(-3deg) scale(1); }
-  35% { transform: skewX(-3deg) scale(calc(1 + 0.08 * var(--beat-intensity, 1))); }
+  35% { transform: skewX(-3deg) scale(calc(1 + 0.04 * var(--beat-intensity, 1))); } /* oct15: halved */
   100% { transform: skewX(-3deg) scale(1); }
 }
 
@@ -4154,7 +4154,7 @@ html[data-beat='true'] .cb-category-display {
 
 @keyframes cb-category-pop {
   0% { transform: rotate(-1deg) skewX(-2deg) scale(1); }
-  35% { transform: rotate(-1deg) skewX(-2deg) scale(calc(1 + 0.06 * var(--beat-intensity, 1))); }
+  35% { transform: rotate(-1deg) skewX(-2deg) scale(calc(1 + 0.03 * var(--beat-intensity, 1))); } /* oct15: halved */
   100% { transform: rotate(-1deg) skewX(-2deg) scale(1); }
 }
 
@@ -6133,7 +6133,7 @@ html[data-beat='true'] .wb-seat .game-player-card.current {
 }
 @keyframes wb-beat-seat {
   0% { transform: rotate(0deg) scale(1.3); }
-  40% { transform: rotate(0deg) scale(calc(1.3 + 0.07 * var(--beat-intensity, 1))); }
+  40% { transform: rotate(0deg) scale(calc(1.3 + 0.035 * var(--beat-intensity, 1))); } /* oct15: halved */
   100% { transform: rotate(0deg) scale(1.3); }
 }
 html[data-beat='true'] .wb-belly {
@@ -6141,7 +6141,7 @@ html[data-beat='true'] .wb-belly {
 }
 @keyframes wb-beat-belly {
   0% { transform: translate(-50%, -50%) rotate(-2deg) scale(1); }
-  40% { transform: translate(-50%, -50%) rotate(-2deg) scale(calc(1 + 0.06 * var(--beat-intensity, 1))); }
+  40% { transform: translate(-50%, -50%) rotate(-2deg) scale(calc(1 + 0.03 * var(--beat-intensity, 1))); } /* oct15: halved */
   100% { transform: translate(-50%, -50%) rotate(-2deg) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {

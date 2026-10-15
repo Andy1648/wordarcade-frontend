@@ -124,10 +124,10 @@ html[data-beat='true'] .game-card {
    by the kick strength so soft beats barely move. No new animation: it just retargets
    --card-beat and the face's existing 120ms transform transition eases in and back out. */
 html[data-beat='true'] .game-card {
-  --card-beat: calc(1 + 0.02 * var(--beat-intensity, 1));
+  --card-beat: calc(1 + 0.01 * var(--beat-intensity, 1)); /* oct15: halved */
 }
 html[data-beat='true'] .game-card.featured {
-  --card-beat: calc(1 + 0.03 * var(--beat-intensity, 1)); /* the flagship pulses harder */
+  --card-beat: calc(1 + 0.015 * var(--beat-intensity, 1)); /* the flagship pulses harder (oct15: halved) */
 }
 
 .game-card.dashed-border {
@@ -140,7 +140,7 @@ html[data-beat='true'] .game-card.featured {
 .game-card:hover {
   /* Speed every background animation up ~40% (see GameCardArt.css). */
   --spd: 0.6;
-  --card-hover: 1; /* Andy oct15: tilt, no jump-out (was 1.06) */
+  --card-hover: 1.06;
   --card-tilt: -1.6deg;
   box-shadow:
     inset 0 0 0 3px rgba(255, 255, 255, 0.62),
@@ -955,23 +955,18 @@ html[data-beat='true'] .game-card.featured {
   /* per card (gameData artLayers.heroY / heroScale): where the hero stands so the title bar keeps the bottom */
   transform: translate(0, var(--gc-hy, -11%)) scale(var(--gc-hs, 0.76));
   transform-origin: 50% 40%;
-  transition: transform 220ms cubic-bezier(0.2, 1.3, 0.4, 1), rotate 220ms ease-out;
+  transition: transform 220ms cubic-bezier(0.2, 1.3, 0.4, 1);
   /* fill BACKWARDS only: a `both` fill held the entrance's end transform for good, which silently overrode the
      hover lift below (an animation beats a declaration) */
   animation: gc-hero-in 520ms cubic-bezier(0.2, 1.4, 0.4, 1) 1 backwards;
-  /* which way "forward" is for this hero (Andy oct15 "tilting forward as if it was running"): the bomb sprints at
-     you down-left, the brain leans right into its buzzer */
-  --gc-lean: -4deg;
 }
-[data-game='category-blitz'] .gc-l-hero { --gc-lean: 4deg; }
 .gc-l-fx {
   opacity: 0;
   transform: scale(0.9);
   transition: opacity 200ms ease-out, transform 360ms cubic-bezier(0.2, 1, 0.3, 1);
 }
-/* HOVER (Andy oct15 "the hero doesnt need to jiggle, just a subtle tilt is enough"): the hero only LEANS forward —
-   the separate `rotate` property, eased in and back out by the transition above. No lift, no grow, no run. */
-.game-card:hover .gc-l-hero { rotate: var(--gc-lean); }
+/* HOVER (Andy oct15 "i really just wanted what we had like this morning"): the HERO stays still — the card's own
+   tilt carries the motion; only the FX burst joins it. */
 .game-card:hover .gc-l-fx { opacity: 0.9; transform: scale(1.08); }
 @keyframes gc-hero-in {
   from { opacity: 0; transform: translate(0, calc(var(--gc-hy, -11%) + 13%)) scale(calc(var(--gc-hs, 0.76) - 0.16)); }
@@ -979,6 +974,5 @@ html[data-beat='true'] .game-card.featured {
 }
 @media (prefers-reduced-motion: reduce) {
   .gc-l-hero { animation: none; transition: none; }
-  .game-card:hover .gc-l-hero { rotate: none; }
   .gc-l-fx { transition: none; }
 }
