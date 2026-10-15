@@ -3054,6 +3054,29 @@
 
 /* Mascot sitting on the top-right edge of the category box, legs dangling over
    the border. translateY(-55%) straddles the box's top edge. */
+/* The category's emoji sticker (oct15) on the box's top-left corner, opposite the mascot.
+   One finite pop-in per category (transform/opacity); still at rest. */
+.cb-cat-emoji {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  z-index: 6;
+  pointer-events: none;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: clamp(32px, var(--fs-h2), 44px);
+  line-height: 1;
+  -webkit-text-stroke: 0;
+  transform: translateY(-55%) rotate(-10deg);
+  animation: cb-emoji-in 320ms cubic-bezier(.3, 1.6, .5, 1) both;
+}
+@keyframes cb-emoji-in {
+  0% { opacity: 0; transform: translateY(-55%) rotate(-30deg) scale(.3); }
+  100% { opacity: 1; transform: translateY(-55%) rotate(-10deg) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-cat-emoji { animation: none; }
+}
+
 .cb-cat-mascot {
   position: absolute;
   top: 0;
