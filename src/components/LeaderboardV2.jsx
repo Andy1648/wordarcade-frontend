@@ -297,6 +297,9 @@ function RenameBox({ current, cjk, onDone, claim = false }) {
   );
 }
 
+/** The closest board band above a rank: past #50 → TOP 50, #26–50 → TOP 25, #11–25 → TOP 10. */
+const nearestBand = (rank) => (rank > 50 ? 50 : rank > 25 ? 25 : 10);
+
 export default function LeaderboardV2({ onBack }) {
   useMomentHold(true); // no queued moment starts under the board
   const rootRef = useRef(null);
@@ -589,8 +592,13 @@ export default function LeaderboardV2({ onBack }) {
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {titleOf(r) && !mine ? <span className="lb2-title-tag">{titleOf(r)}</span> : null}
-                  {mine && rival ? (
-                    <span className="lb2-chase">PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</span>
+                  {mine && (rival || r.rank > 10) ? (
+                    <span className="lb2-chase">
+                      {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}
+                      {rival && r.rank > 10 ? ' · ' : null}
+                      {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach) */}
+                      {r.rank > 10 ? <><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</> : null}
+                    </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
                 </span>
