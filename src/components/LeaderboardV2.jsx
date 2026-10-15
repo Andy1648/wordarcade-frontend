@@ -589,12 +589,8 @@ export default function LeaderboardV2({ onBack }) {
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {titleOf(r) && !mine ? <span className="lb2-title-tag">{titleOf(r)}</span> : null}
-                  {mine && (rival || r.rank > 10) ? (
-                    <span className="lb2-chase">
-                      {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}
-                      {rival && r.rank > 10 ? ' · ' : null}
-                      {r.rank > 10 ? <><b>{fmt(r.rank - 10)}</b> TO TOP 10</> : null}
-                    </span>
+                  {mine && rival ? (
+                    <span className="lb2-chase">PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
                 </span>
