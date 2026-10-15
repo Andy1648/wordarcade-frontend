@@ -105,3 +105,33 @@ export function nameVerdict(name, { cjk = false } = {}) {
   if (isNameBlocked(name)) return 'blocked';
   return 'ok';
 }
+
+// PROFILE DESCRIPTION (Andy oct15 "a profile description that the user can type in but censorship is needed there").
+// Free text, so the NAME rule runs per WORD — on the whole run of letters it would read "this exam" as "sex". Single
+// letters in a row are joined back into one word first ("f u c k"). Links are refused outright (spam). The DB mirror is
+// public.bio_is_clean (supabase/migrations/051_profile_bio.sql) — same split, same per-word username_is_clean.
+export const BIO_MAX = 100;
+// whole WORDS refused only in a description (inside a name they are innocent: class, shoe, title, spicy, torpedo)
+export const BIO_EXACT = ['ass', 'asses', 'arse', 'hoe', 'hoes', 'tit', 'titty', 'titties', 'nig', 'spic', 'pedo', 'thot', 'stfu', 'gtfo', 'kys'];
+const BIO_LINK = /(https?:|www\.|\.(com|net|org|gg|io|tv|ly|xyz|co)\b|discord\s*\.?\s*gg)/i;
+export function bioWords(text) {
+  const toks = String(text || '').toLowerCase().split(/[^a-z0-9@$!]+/).filter(Boolean);
+  const out = [];
+  let run = '';
+  for (const t of toks) {
+    if (t.length === 1) { run += t; continue; }
+    if (run) { out.push(run); run = ''; }
+    out.push(t);
+  }
+  if (run) out.push(run);
+  return out;
+}
+/** 'ok' | 'empty' | 'long' | 'link' | 'blocked' */
+export function bioVerdict(text) {
+  const t = String(text || '').trim();
+  if (!t) return 'empty';
+  if (t.length > BIO_MAX) return 'long';
+  if (BIO_LINK.test(t)) return 'link';
+  if (CJK_TERMS.some((x) => t.includes(x))) return 'blocked';
+  return bioWords(t).some((w) => BIO_EXACT.includes(nameLeet(w)) || isNameBlocked(w)) ? 'blocked' : 'ok';
+}

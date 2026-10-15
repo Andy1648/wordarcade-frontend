@@ -137,43 +137,6 @@
 /* ---- 046 PROFILE FLEX: the SIGNATURE WORD plate, the CHAIN pill, the BADGE ROW (all static; the card's one pop is the only motion) */
 .pc-sub { flex-wrap: wrap; }
 .pc-sub-c.is-chain img { width: 26px; height: 26px; }
-.pc-sig {
-  container-type: inline-size;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 10px 10px;
-  background: #0d0618;
-  border: 4px solid var(--pc-band);
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  transform: rotate(-1deg);
-}
-.pc-sig-k { font-size: var(--fs-k13); color: var(--pc-band); letter-spacing: 0.08em; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-/* the word never wraps or clips: Bungee runs ~0.8em a letter, so it shrinks to fit its plate by its own length */
-.pc-sig-w {
-  max-width: 100%;
-  white-space: nowrap;
-  font-size: min(var(--fs-k38), calc(92cqw / (var(--ch, 8) * 0.8)));
-  line-height: 1.1;
-  color: #fff;
-  -webkit-text-stroke: 5px #000;
-  paint-order: stroke fill;
-  text-shadow: 3px 3px 0 #000;
-}
-.pc-sig-head { display: flex; align-items: center; gap: 8px; }
-.pc-sig-band {
-  padding: 0 6px;
-  background: var(--pc-band);
-  border: 2px solid #000;
-  border-radius: 6px;
-  color: #000;
-  font-size: var(--fs-k13);
-  line-height: 18px;
-  transform: rotate(3deg);
-}
 .pc-badges { list-style: none; margin: 0; padding: 0 5px 5px 0; display: grid; grid-template-columns: repeat(8, minmax(0, 46px)); justify-content: center; gap: 6px; } /* one row of ≤ 8, any width */
 .pc-badge { position: relative; aspect-ratio: 1; }
 .pc-badge:nth-child(odd) { transform: rotate(-3deg); }
@@ -216,9 +179,7 @@
   .pc-gear-hole { font-size: var(--fs-k24); }
   .pc-tile { padding: 5px 8px 6px; }
   .pc-tile-v { font-size: var(--fs-k22); }
-  .pc-sig { padding: 6px 8px 6px; }
   .pc-sub-c { padding: 2px 8px 2px 4px; }
-  .pc-sig-w { font-size: min(var(--fs-k30), calc(92cqw / (var(--ch, 8) * 0.8))); }
   .pc-badges { gap: 4px; }
 }
 
@@ -252,3 +213,94 @@
 .pc-ttl-h { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k13); color: #c9b8ff; letter-spacing: 0.5px; }
 .pc-ttl.is-on .pc-ttl-h { color: #5c4a10; }
 @media (prefers-reduced-motion: reduce) { .pc-ttl { transition: none; } }
+
+/* ===== 051 PROFILE DESCRIPTION ===== where the signature word was: a paper-ish quote slab, the player's own words */
+.pc-bio {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  background: #2a1450;
+  border: 4px solid #6b2fb8;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  transform: rotate(-0.6deg);
+}
+.pc-bio-k { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-k13); letter-spacing: 0.08em; color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.pc-bio-n { font-family: 'Space Mono', monospace; font-weight: 700; color: #c9b8ff; -webkit-text-stroke: 0; }
+.pc-bio-t {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: none;
+  font-size: var(--fs-k18);
+  line-height: 1.35;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+.pc-bio-t.is-empty { color: #c9b8ff; font-size: var(--fs-k16); }
+.pc-bio.is-mine:not(.is-editing) { padding-right: 96px; }
+.pc-bio.is-mine:not(.is-editing) .pc-bio-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.pc-bio-in {
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  padding: 8px 10px;
+  font: 700 16px/1.35 'Space Mono', monospace; /* ≥16px: no iOS zoom */
+  color: #0d0618;
+  background: #fff;
+  border: 4px solid #000;
+  border-radius: 8px;
+}
+.pc-bio-in:focus { outline: 3px solid #FFE94A; outline-offset: 1px; }
+.pc-bio-say { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); color: #FF6B3D; }
+.pc-bio-row { display: flex; justify-content: flex-end; gap: 8px; }
+.pc-bio-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: var(--fs-k16);
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 4px solid #1a9e8c;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+.pc-bio-btn:hover { transform: translate(-1px, -1px); }
+.pc-bio-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.pc-bio.is-mine:not(.is-editing) .pc-bio-btn:hover { transform: translate(-1px, calc(-50% - 1px)); }
+.pc-bio.is-mine:not(.is-editing) .pc-bio-btn:active { transform: translate(2px, calc(-50% + 2px)); }
+.pc-bio-btn.is-ghost { background: #1a0b2e; color: #fff; border-color: #4a3a6a; }
+.pc-bio-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* BIGGER CARD (Andy oct15 "that popup needs to be bigger"): on a real desktop the card grows to 640px and its
+   contents step up with it — gear art, numbers, the name. Short/phone screens keep the compact rules above. */
+@media (min-width: 760px) and (min-height: 760px) {
+  .pc { width: min(640px, 100%); gap: 18px; padding: 24px 26px 26px; }
+  .pc-name { font-size: var(--fs-k38); }
+  .pc-rank { font-size: var(--fs-k30); }
+  .pc-plate { height: 42px; }
+  .pc-sub-c { font-size: var(--fs-k20); }
+  .pc-gears { gap: 16px; }
+  .pc-gear-art, .pc-gear-hole { width: 104px; height: 104px; }
+  .pc-gear-name { font-size: var(--fs-k22); }
+  .pc-gear-tier { font-size: var(--fs-k16); }
+  .pc-tiles { gap: 14px; }
+  .pc-tile-v { font-size: var(--fs-k32); }
+  .pc-tile-k { font-size: var(--fs-k16); }
+  .pc-bio-t { font-size: var(--fs-k20); }
+  .pc-badges { grid-template-columns: repeat(8, minmax(0, 60px)); gap: 8px; }
+}
+
+/* SHORT SCREENS + the description (051): measured 69px too tall at 360×640 — the slab drops its label and steps its text
+   down, the R / LV / CHAIN chips keep one line. Nothing scrolls. */
+@media (max-height: 720px) {
+  .pc-bio { padding: 6px 10px 8px; gap: 2px; }
+  .pc-bio:not(.is-mine) .pc-bio-k { display: none; }
+  .pc-bio-t { font-size: var(--fs-k14); line-height: 1.3; }
+  .pc-sub { flex-wrap: nowrap; gap: 6px; }
+  .pc-sub-c { font-size: var(--fs-k14); padding: 2px 6px 2px 3px; white-space: nowrap; }
+  .pc-sub-c svg, .pc-sub-c img, .pc-sub-c.is-chain img { width: 20px; height: 20px; }
+}
