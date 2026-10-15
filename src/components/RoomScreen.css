@@ -116,6 +116,42 @@
   overflow-wrap: anywhere;
 }
 
+/* YOUR name is a button (Andy oct15: rename in the lobby): same text, a small EDIT tag, a dashed underline on hover. */
+.room-rename-btn {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: 44px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.room-rename-btn:hover { text-decoration: underline dashed 2px; text-underline-offset: 4px; }
+.room-rename-hint {
+  font-size: var(--fs-micro);
+  letter-spacing: 1px;
+  color: #fff;
+  background: var(--pc-dark, #6b5a86);
+  border: 2px solid #000;
+  border-radius: 6px;
+  padding: 2px 5px;
+}
+.room-rename-input {
+  font: inherit;
+  font-size: max(16px, var(--fs-body));
+  color: #1a0b2e;
+  background: #fff7c2;
+  border: 2px solid #000;
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-height: 44px;
+  width: 100%;
+}
+
 .room-host-badge {
   /* was Bungee, below the 28px display floor: small UI text is a mono label */
   font-family: 'Space Mono', monospace;
