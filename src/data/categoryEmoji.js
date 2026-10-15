@@ -175,6 +175,17 @@ export const CATEGORY_EMOJI = {
   "Types of hats": "🎩",
   "Types of shoes": "👟",
   "Shades of blue": "🔵",
+  // oct15 night batch G
+  "Horror movie villains": "🔪",
+  "McDonald's menu items": "🍟",
+  "Taco Bell menu items": "🌮",
+  "Kitchen utensils": "🥄",
+  "Types of bread": "🍞",
+  "Types of cheese": "🧀",
+  "Dance styles": "💃",
+  "School supplies": "✏️",
+  "Things in a bathroom": "🛁",
+  "Car parts": "🚗",
 };
 
 export function emojiFor(category) {

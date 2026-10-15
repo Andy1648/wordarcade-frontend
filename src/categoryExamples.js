@@ -24,6 +24,16 @@ export const CATEGORY_EXAMPLES = {
   "Types of hats": "Sombrero",
   "Types of shoes": "Crocs",
   "Shades of blue": "Turquoise",
+  // oct15 night batch G
+  "Horror movie villains": "Freddy Krueger",
+  "Taco Bell menu items": "Crunchwrap",
+  "Kitchen utensils": "Spatula",
+  "Types of bread": "Sourdough",
+  "Types of cheese": "Cheddar",
+  "Dance styles": "Salsa",
+  "School supplies": "Glue stick",
+  "Things in a bathroom": "Toothbrush",
+  "Car parts": "Steering wheel",
   // oct15 night batch E
   "Words ending in -MAN": "Snowman",
   "Rhymes with SNACK (-ACK)": "Backpack",
