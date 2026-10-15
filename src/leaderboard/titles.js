@@ -1,7 +1,7 @@
 // titles.js — LEADERBOARD TITLES (Andy oct15 night "ways for people on leaderboard to feel even more addicted … cosmetics
 // or smthn so people can see more of you"). Research (Brawl Stars mastery titles, Fall Guys nicknames): a TEXT title under
 // your name, EARNED by doing things and PICKED by you — zero art, zero moderation (a fixed list, never typed). Earned
-// checks read this save's own stats (the same ones the profile card already shows); the pick rides lb_showcase_set (049)
+// checks read this save's own stats (the same ones the profile card already shows); the pick rides lb_showcase_set (050)
 // and every board row shows it. Pure data + small storage helpers — no React.
 import { readClaimed, readCounters, s2Rebirths, getStarsV3 } from '../progress/v3/store.js';
 import { loadRollState, collection, ROLL_MARKS, markLevel } from '../progress/markRollsCore.js';
@@ -10,7 +10,7 @@ import { readRecords } from '../progress/records.js';
 const PICK_KEY = 'taw.title';
 
 // id → { t: the title, how: what earns it, ok(stats) }. Order = how they list (easiest first). Ids are the wire format
-// (049 accepts ^[a-z0-9-]{1,24}$) — never rename one, only add.
+// (050 accepts ^[a-z0-9-]{1,24}$) — never rename one, only add.
 export const TITLES = [
   { id: 'fresh-ink', t: 'FRESH INK', how: 'EVERYONE STARTS HERE', ok: () => true },
   { id: 'word-hoarder', t: 'WORD HOARDER', how: 'TYPE WORDS · TIER II', ok: (s) => s.claimed.type >= 2 },

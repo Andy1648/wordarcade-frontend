@@ -380,7 +380,7 @@ export default function LeaderboardV2({ onBack }) {
   let list = rows.slice(3, BOARD_SIZE);
   if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
   const wk = tab === 'week';
-  // 049 TITLES: every visible row's picked title in ONE read (lazy; empty until 049 runs). Your own shows at once.
+  // 050 TITLES: every visible row's picked title in ONE read (lazy; empty until 050 runs). Your own shows at once.
   const [titles, setTitles] = useState({});
   const idsKey = [...podium, ...list].filter(Boolean).map((r) => r.id).join(',');
   useEffect(() => {

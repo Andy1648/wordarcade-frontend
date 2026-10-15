@@ -120,7 +120,7 @@ function Tile({ icon, value, label, tone, children }) {
   );
 }
 
-/** 049 TITLES: your card lists every title — the earned ones are tappable (wear it), the rest show what earns them. */
+/** 050 TITLES: your card lists every title — the earned ones are tappable (wear it), the rest show what earns them. */
 function TitlePicker({ worn, onPick }) {
   const list = myTitles();
   const have = list.filter((x) => x.earned).length;
@@ -150,7 +150,7 @@ function TitlePicker({ worn, onPick }) {
 export default function ProfileCard({ row, mine = false, onClose }) {
   const [show, setShow] = useState(undefined); // undefined = loading, null = none
   const [gear, setGear] = useState(null); // the gear whose sheet is open
-  const [worn, setWorn] = useState(() => (mine ? wornTitle() : null)); // 049: your own title (instant, before the DB has it)
+  const [worn, setWorn] = useState(() => (mine ? wornTitle() : null)); // 050: your own title (instant, before the DB has it)
   const cardRef = useRef(null);
   const closeRef = useRef(null);
   useEffect(() => {

@@ -807,7 +807,7 @@ export async function redeemCode(raw) {
   return { ok: true, code: res.code, wins, perLevel, label: res.label || res.code };
 }
 
-/** 049 TITLES: re-send the showcase now (the player just picked a title on their profile card). Lazy, best-effort. */
+/** 050 TITLES: re-send the showcase now (the player just picked a title on their profile card). Lazy, best-effort. */
 export function pushShowcaseNow() {
   if (!SEASON2) return;
   import('./showcase.js').then((m) => m.pushShowcase({ rpc, secret: getSecret() })).catch(() => {});

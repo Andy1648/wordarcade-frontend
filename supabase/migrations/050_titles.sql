@@ -1,8 +1,8 @@
--- 049_titles.sql - LEADERBOARD TITLES (Andy oct15 night "ways for people on leaderboard to feel even more addicted ...
+-- 050_titles.sql - LEADERBOARD TITLES (Andy oct15 night "ways for people on leaderboard to feel even more addicted ...
 -- cosmetics or smthn so people can see more of you"). A TEXT title under a player's name on every board row, EARNED in
 -- play and PICKED by the player (client titles.js: a fixed id list - never free text, nothing to moderate).
 --   title   the picked title's id, ^[a-z0-9-]{1,24}$ (anything else stores null)
--- Same function as 046 otherwise; it now answers v = 49 so the client knows the title was stored. Safe to re-run. ASCII only.
+-- Same function as 046 otherwise; it now answers v = 50 so the client knows the title was stored. Safe to re-run. ASCII only.
 
 alter table public.profile_showcase add column if not exists title text;
 
@@ -44,7 +44,7 @@ begin
   sb := p_show->>'sig_band'; if sb is null or sb not in ('COMMON', 'UNCOMMON', 'RARE', 'OBSCURE') or sw is null then sb := null; end if;
   begin bc := (p_show->>'best_chain')::integer; exception when others then bc := null; end;
   if bc is not null and (bc < 0 or bc > 100000) then bc := null; end if;
-  -- 049 TITLES: an id from the client's fixed list (titles.js), never free text
+  -- 050 TITLES: an id from the client's fixed list (titles.js), never free text
   ti := lower(p_show->>'title'); if ti is not null and ti !~ '^[a-z0-9-]{1,24}$' then ti := null; end if;
   insert into public.profile_showcase as s (profile_id, gear1, gear2, base_wins, wins_per_word, gears_found, gears_total, power, badges, sig_word, sig_band, best_chain, title, updated_at)
   values (pid, g1, g2, bw, wpw, gf, gt, pw, bd, sw, sb, bc, ti, now())
@@ -53,7 +53,7 @@ begin
     gears_found = excluded.gears_found, gears_total = excluded.gears_total, power = excluded.power,
     badges = excluded.badges, sig_word = excluded.sig_word, sig_band = excluded.sig_band, best_chain = excluded.best_chain, title = excluded.title, updated_at = now()
   where s.updated_at < now() - interval '20 seconds';
-  return json_build_object('ok', true, 'v', 49);
+  return json_build_object('ok', true, 'v', 50);
 end $$;
 
 revoke all on function public.lb_showcase_set(text, jsonb) from public;

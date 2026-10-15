@@ -839,7 +839,7 @@
 /* your row is the YELLOW one — the chase line reads in ink there */
 .lb2-row.is-me .lb2-chase { color: #3a2160; }
 .lb2-row.is-me .lb2-chase b { color: #a8164e; }
-/* 049 TITLES: the player's picked title under their name (fixed list, earned) — a quiet mono tag, yellow on the podium */
+/* 050 TITLES: the player's picked title under their name (fixed list, earned) — a quiet mono tag, yellow on the podium */
 .lb2-title-tag {
   display: block;
   margin-top: 1px;

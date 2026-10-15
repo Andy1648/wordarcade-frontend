@@ -32,7 +32,7 @@ export function myShowcase() {
     gears_total: c.total,
     power: num(getKeyTier()),
     ...flex(),
-    title: wornTitle(), // 049: the picked leaderboard TITLE (titles.js) — older functions just ignore the key
+    title: wornTitle(), // 050: the picked leaderboard TITLE (titles.js) — older functions just ignore the key
   };
 }
 
@@ -60,8 +60,8 @@ export async function pushShowcase({ rpc, secret }) {
     const r = await rpc('lb_showcase_set', { p_secret: secret, p_show: show });
     if (r && r.ok) {
       // stored for good once 046 answers; before that, stamped so it re-sends after PRE46_RESEND_MS
-      // 049 (oct15 night): stored for good only once the DB knows the TITLE column — before that, re-send now and then
-      try { localStorage.setItem(SENT_KEY, r.v >= 49 ? json : `${json}\n${Date.now()}`); } catch { /* blocked */ }
+      // 050 (oct15 night): stored for good only once the DB knows the TITLE column — before that, re-send now and then
+      try { localStorage.setItem(SENT_KEY, r.v >= 50 ? json : `${json}\n${Date.now()}`); } catch { /* blocked */ }
       return true;
     }
   } catch {
@@ -89,7 +89,7 @@ export async function fetchShowcase(id) {
   }
 }
 
-/** 049: the TITLE of each board row in one read — { profile_id: title } (empty when 049 is not run, offline …). */
+/** 050: the TITLE of each board row in one read — { profile_id: title } (empty when 049 is not run, offline …). */
 export async function fetchTitles(ids) {
   const list = (ids || []).filter((x) => typeof x === 'string' && /^[0-9a-f-]{8,64}$/i.test(x)).slice(0, 80);
   if (!BASE || !KEY || !list.length) return {};
