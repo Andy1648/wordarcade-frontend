@@ -7062,3 +7062,7 @@ html[data-beat='true'] .wb-belly {
   .cb-round .cb-progress-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cb-round .cb-progress-unit { display: none; }
 }
+
+/* Blitz: the HITS badge's host fills the input row (no flex slot, no gap) so ComboMeter keeps its
+   own absolute coordinates; the host only exists to be faded while a landing is up. */
+.game-stage--blitz .cb-combo-host { position: absolute; inset: 0; pointer-events: none; z-index: 16; }
