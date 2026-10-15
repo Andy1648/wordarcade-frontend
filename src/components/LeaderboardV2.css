@@ -839,3 +839,14 @@
 /* your row is the YELLOW one — the chase line reads in ink there */
 .lb2-row.is-me .lb2-chase { color: #3a2160; }
 .lb2-row.is-me .lb2-chase b { color: #a8164e; }
+/* 049 TITLES: the player's picked title under their name (fixed list, earned) — a quiet mono tag, yellow on the podium */
+.lb2-title-tag {
+  display: block;
+  margin-top: 1px;
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase;
+  font-size: var(--fs-k14);
+  letter-spacing: 1px;
+  color: #c9b8ff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lb2-title-tag.is-pod { text-align: center; color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }

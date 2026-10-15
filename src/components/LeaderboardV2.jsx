@@ -43,6 +43,7 @@ import { formatNum } from '../format';
 import { BLOCKS } from './PodiumBlocks.jsx';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
+import { titleText, wornTitle } from '../leaderboard/titles.js';
 
 const fmt = (n) => formatNum(Number(n) || 0);
 // 031 LEADERBOARD PROFILES (Andy oct10): tap a row / a podium spot → that player's card (gear, BASE, POWER …). Lazy.
@@ -379,6 +380,16 @@ export default function LeaderboardV2({ onBack }) {
   let list = rows.slice(3, BOARD_SIZE);
   if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
   const wk = tab === 'week';
+  // 049 TITLES: every visible row's picked title in ONE read (lazy; empty until 049 runs). Your own shows at once.
+  const [titles, setTitles] = useState({});
+  const idsKey = [...podium, ...list].filter(Boolean).map((r) => r.id).join(',');
+  useEffect(() => {
+    if (!idsKey) return undefined;
+    let live = true;
+    import('../leaderboard/showcase.js').then((m) => m.fetchTitles(idsKey.split(','))).then((t) => { if (live) setTitles(t || {}); }).catch(() => {});
+    return () => { live = false; };
+  }, [idsKey]);
+  const titleOf = (r) => titleText(r && myId && r.id === myId ? wornTitle() : r && titles[r.id]);
   const hR = wk ? (gains ? '+REBIRTHS' : 'REBIRTHS') : 'REBIRTHS';
   const hL = wk ? (gains ? '+LEVELS' : 'WORDS') : 'LEVELS';
 
@@ -529,6 +540,7 @@ export default function LeaderboardV2({ onBack }) {
                     {mine && <span className="lb2-you">YOU</span>}
                     <span className="lb2-pod-name-t" style={{ '--nl': nameEms(p ? p.username : 'YOUR NAME HERE?') }}>{p ? p.username : 'YOUR NAME HERE?'}</span>
                   </span>
+                  {p && titleOf(p) ? <span className="lb2-title-tag is-pod">{titleOf(p)}</span> : null}
                   <span className="lb2-pod-r">{n ? n.r : '—'}</span>
                   <span className="lb2-pod-lv">{n ? n.lv : ''} {n ? <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span> : null}</span>
                   {wk ? <Prize rank={place} pod /> : null}
@@ -576,6 +588,7 @@ export default function LeaderboardV2({ onBack }) {
                     {isRival && <span className="lb2-rival">RIVAL</span>}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
+                  {titleOf(r) && !mine ? <span className="lb2-title-tag">{titleOf(r)}</span> : null}
                   {mine && (rival || r.rank > 10) ? (
                     <span className="lb2-chase">
                       {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}

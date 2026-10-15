@@ -18,6 +18,8 @@ import { CARD_RAR, cardTier } from './markCard/palette.js';
 import { rollMarkById } from '../progress/markRollsCore.js';
 import { rankPlate } from '../leaderboard/s2Board.js';
 import { fetchShowcase } from '../leaderboard/showcase.js';
+import { titleText, myTitles, wornTitle, setTitlePick } from '../leaderboard/titles.js';
+import { pushShowcaseNow } from '../leaderboard/client.js';
 import { formatNum } from '../format';
 
 // a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small
@@ -118,10 +120,37 @@ function Tile({ icon, value, label, tone, children }) {
   );
 }
 
+/** 049 TITLES: your card lists every title — the earned ones are tappable (wear it), the rest show what earns them. */
+function TitlePicker({ worn, onPick }) {
+  const list = myTitles();
+  const have = list.filter((x) => x.earned).length;
+  return (
+    <div className="pc-titles" data-testid="profile-titles">
+      <span className="pc-titles-k">TITLES · {have}/{list.length}</span>
+      <div className="pc-titles-list">
+        {list.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            className={`pc-ttl${x.earned ? '' : ' is-locked'}${x.id === worn ? ' is-on' : ''}`}
+            disabled={!x.earned}
+            onClick={() => onPick(x.id)}
+            title={x.how}
+          >
+            <span className="pc-ttl-t">{x.earned ? x.t : '???'}</span>
+            <span className="pc-ttl-h">{x.id === worn ? 'WEARING' : x.how}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** @param row a board row ({ id, username, rank, rebirths, level, stars }) · @param onClose */
 export default function ProfileCard({ row, mine = false, onClose }) {
   const [show, setShow] = useState(undefined); // undefined = loading, null = none
   const [gear, setGear] = useState(null); // the gear whose sheet is open
+  const [worn, setWorn] = useState(() => (mine ? wornTitle() : null)); // 049: your own title (instant, before the DB has it)
   const cardRef = useRef(null);
   const closeRef = useRef(null);
   useEffect(() => {
@@ -154,6 +183,9 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <span className="pc-name">{row.username}</span>
           <KitRankPlate rank={plate.i} fit shine={false} className="pc-plate" />
         </div>
+        {(mine ? titleText(worn) : titleText(s.title)) ? (
+          <div className="pc-title-line" data-testid="profile-title">{mine ? titleText(worn) : titleText(s.title)}</div>
+        ) : null}
         <div className="pc-sub">
           <span className="pc-sub-c"><KitIcon name="rebirth" size={26} shadow={1} extras={false} /> R{formatNum(Number(row.rebirths) || 0)}</span>
           <span className="pc-sub-c"><KitIcon name="levels" size={26} shadow={1} extras={false} /> LV {formatNum(Number(row.level) || 1)}</span>
@@ -175,6 +207,7 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           </Tile>
         </div>
         {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
+        {mine ? <TitlePicker worn={worn} onPick={(id) => { setTitlePick(id); setWorn(id); pushShowcaseNow(); }} /> : null}
       </div>
       {gear ? (
         // a layer of this scrim (GearSheet's .mx-sheet-layer is absolute) — a tap inside never closes the profile
