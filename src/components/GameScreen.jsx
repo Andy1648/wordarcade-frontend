@@ -5066,6 +5066,8 @@ function CategoryBlitzScreen({
 
           <div className="cb-my-answers">
             <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
+            {/* the round's running total, BIG (oct15 night proportions pass: the rail was a tiny label over empty space) */}
+            <div className="cb-my-count" aria-hidden="true" key={`n${myAnswers.length}`}>{myAnswers.length}</div>
             <div className="cb-answers-list" translate="no">
               {myAnswers.length === 0 ? (
                 <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>

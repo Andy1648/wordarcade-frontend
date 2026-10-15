@@ -134,6 +134,10 @@
     --fs-label: 16px;
     --fs-micro: 13px;
   }
+  /* Andy oct15 "make proportions bigger everywhere": at 1920x1080 the solo game was a 1270px panel
+     with a 322px dial in an empty screen. The solo screens join the 1.2x box tier the type above is
+     already on (same ratio as --sr-k / --ov-k). */
+  .solo-root { --solo-k: 1.2; }
   /* ...and the panels widen with their type (:root-prefixed so they beat the components' own
      rules, which load later). */
   :root .shop-panel { width: min(92vw, 1120px); }

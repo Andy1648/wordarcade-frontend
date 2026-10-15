@@ -11,6 +11,7 @@ import { wordWinsBase, perWordRateNow } from '../progress/wins.js';
 import { getKeyTier } from '../progress/xp.js';
 import { mark2Id, readClaimed, readCounters } from '../progress/v3/store.js';
 import { readRecords } from '../progress/records.js';
+import { wornTitle } from './titles.js';
 
 const SENT_KEY = 'taw.s2.showcase2'; // the JSON last sent, so an unchanged showcase is never re-sent. '2' (042, oct13): every browser re-sends ONCE so a card an old audit blanked comes back
 // 046 PROFILE FLEX: a send counts as STORED only when the DB answers v >= 46 (it knows the badge / word columns). Before
@@ -31,6 +32,7 @@ export function myShowcase() {
     gears_total: c.total,
     power: num(getKeyTier()),
     ...flex(),
+    title: wornTitle(), // 050: the picked leaderboard TITLE (titles.js) — older functions just ignore the key
   };
 }
 
@@ -58,7 +60,8 @@ export async function pushShowcase({ rpc, secret }) {
     const r = await rpc('lb_showcase_set', { p_secret: secret, p_show: show });
     if (r && r.ok) {
       // stored for good once 046 answers; before that, stamped so it re-sends after PRE46_RESEND_MS
-      try { localStorage.setItem(SENT_KEY, r.v >= 46 ? json : `${json}\n${Date.now()}`); } catch { /* blocked */ }
+      // 050 (oct15 night): stored for good only once the DB knows the TITLE column — before that, re-send now and then
+      try { localStorage.setItem(SENT_KEY, r.v >= 50 ? json : `${json}\n${Date.now()}`); } catch { /* blocked */ }
       return true;
     }
   } catch {
@@ -83,5 +86,22 @@ export async function fetchShowcase(id) {
     return rows[0] || null;
   } catch {
     return null;
+  }
+}
+
+/** 050: the TITLE of each board row in one read — { profile_id: title } (empty when 049 is not run, offline …). */
+export async function fetchTitles(ids) {
+  const list = (ids || []).filter((x) => typeof x === 'string' && /^[0-9a-f-]{8,64}$/i.test(x)).slice(0, 80);
+  if (!BASE || !KEY || !list.length) return {};
+  try {
+    const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
+    const r = await fetch(`${BASE}/rest/v1/profile_showcase?select=profile_id,title&profile_id=in.(${list.map(encodeURIComponent).join(',')})`, { headers });
+    if (!r.ok) return {};
+    const rows = await r.json();
+    const out = {};
+    for (const row of rows || []) if (row && row.profile_id && row.title) out[row.profile_id] = row.title;
+    return out;
+  } catch {
+    return {};
   }
 }

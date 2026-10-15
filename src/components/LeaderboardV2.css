@@ -810,3 +810,43 @@
 .lb2-row[data-band='cyan'] .lb2-rk { color: #2EFFE0; }
 .lb2-row[data-band='violet'] .lb2-rk { color: #c08bff; }
 .lb2-row.is-me .lb2-rk { color: #FFE94A; }
+
+/* RIVAL + CHASE (oct15 night): the player right above you wears a red RIVAL chip and a red edge; your row says what
+   it takes to pass them, and how far the TOP 10 is. Flat, static — no loops. */
+.lb2-row.is-rival { box-shadow: inset 4px 0 0 #FF3D7F; }
+.lb2-rival {
+  flex: none;
+  padding: 1px 6px;
+  background: #FF3D7F;
+  color: #0d0618;
+  border: 2px solid #a8164e;
+  border-radius: 4px;
+  font-family: var(--k-display); text-transform: uppercase;
+  font-size: max(var(--fs-k14), calc(var(--fs-k13) * var(--lb2-k)));
+  line-height: 1.1;
+  transform: rotate(-3deg);
+}
+.lb2-chase {
+  display: block;
+  margin-top: 2px;
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase;
+  font-size: var(--fs-k14);
+  letter-spacing: 0.5px;
+  color: #2EFFE0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lb2-chase b { color: #FFE94A; font-weight: 700; }
+/* your row is the YELLOW one — the chase line reads in ink there */
+.lb2-row.is-me .lb2-chase { color: #3a2160; }
+.lb2-row.is-me .lb2-chase b { color: #a8164e; }
+/* 050 TITLES: the player's picked title under their name (fixed list, earned) — a quiet mono tag, yellow on the podium */
+.lb2-title-tag {
+  display: block;
+  margin-top: 1px;
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase;
+  font-size: var(--fs-k14);
+  letter-spacing: 1px;
+  color: #c9b8ff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lb2-title-tag.is-pod { text-align: center; color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
