@@ -163,6 +163,18 @@ export const CATEGORY_EMOJI = {
   "Christmas decorations": "🎄",
   "Valentine's Day things": "💘",
   "Easter things": "🐰",
+  // oct15 night batch F
+  "Rhymes with CAT (-AT)": "🐱",
+  "Rhymes with FUN (-UN)": "🎉",
+  "Disney Channel shows": "📺",
+  "Nickelodeon shows": "🟠",
+  "Cartoon Network shows": "📺",
+  "Playground equipment": "🛝",
+  "Amusement park rides": "🎢",
+  "Classic toys": "🪀",
+  "Types of hats": "🎩",
+  "Types of shoes": "👟",
+  "Shades of blue": "🔵",
 };
 
 export function emojiFor(category) {

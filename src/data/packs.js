@@ -10,11 +10,11 @@
 // matching ids so the look is unchanged. `geography` is the new 2-category pack —
 // a neutral colour for now (we'll decide later whether to surface such a tiny pack).
 const packs = [
-  { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#ff4fa3', rot: -3,   sticker: 'star', count: 52 },
-  { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null,   count: 38 },
+  { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#ff4fa3', rot: -3,   sticker: 'star', count: 55 },
+  { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null,   count: 39 },
   { id: 'sports',     label: 'SPORTS',     emoji: '⚽', color: '#3DFF77', rot: -2.5, sticker: 'dots', count: 20 },
   { id: 'world',      label: 'WORLD',      emoji: '🌍', color: '#3DA8FF', rot: 1.5,  sticker: null,   count: 21 },
-  { id: 'science',    label: 'SCIENCE',    emoji: '🔬', color: '#2ED6FF', rot: 2,    sticker: null,   count: 28 },
+  { id: 'science',    label: 'SCIENCE',    emoji: '🔬', color: '#2ED6FF', rot: 2,    sticker: null,   count: 33 },
   { id: 'history',    label: 'HISTORY',    emoji: '🏛️', color: '#FF9F1C', rot: -3,   sticker: null,   count: 6 },
   { id: 'mythology',  label: 'MYTHOLOGY',  emoji: '⚡', color: '#B14DFF', rot: 1,    sticker: 'drip', count: 9 },
   // oct14 (Andy "more categories … all easy"): Taylor Swift albums + the 12 Days of Christmas joined the two music lists,
@@ -30,7 +30,7 @@ const packs = [
   { id: 'food',       label: 'FOOD',       emoji: '🍕', color: '#FF4FA3', rot: -2,   sticker: null,   count: 23 },
   // oct15 night (Andy "A LOT ... easy ... FUN"): WORDPLAY = rhyme / pattern lists straight from the dictionary, animal
   // sounds, baby animals, Spanish basics — a typing game's home turf. TECH = iPhone models, Windows versions, keyboard keys.
-  { id: 'wordplay',   label: 'WORDPLAY',   emoji: '🔤', color: '#2EFFE0', rot: 1.5,  sticker: null,   count: 35 },
+  { id: 'wordplay',   label: 'WORDPLAY',   emoji: '🔤', color: '#2EFFE0', rot: 1.5,  sticker: null,   count: 37 },
   { id: 'tech',       label: 'TECH',       emoji: '💻', color: '#9A1AFF', rot: -1,   sticker: null,   count: 6 },
 ];
 

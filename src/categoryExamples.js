@@ -12,6 +12,18 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct15 night batch F
+  "Rhymes with CAT (-AT)": "Splat",
+  "Rhymes with FUN (-UN)": "Bun",
+  "Disney Channel shows": "Hannah Montana",
+  "Nickelodeon shows": "iCarly",
+  "Cartoon Network shows": "Adventure Time",
+  "Playground equipment": "Monkey bars",
+  "Amusement park rides": "Bumper cars",
+  "Classic toys": "Slinky",
+  "Types of hats": "Sombrero",
+  "Types of shoes": "Crocs",
+  "Shades of blue": "Turquoise",
   // oct15 night batch E
   "Words ending in -MAN": "Snowman",
   "Rhymes with SNACK (-ACK)": "Backpack",
