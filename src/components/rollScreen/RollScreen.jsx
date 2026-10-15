@@ -25,6 +25,7 @@ import { ROLLED_GLYPHS, GLYPH_FINISH } from '../markGlyphsRolled.jsx';
 import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
 import RatesPop from './RatesPop.jsx';
+import { ChaseFan, CollectionStrip } from './RollShowcase.jsx';
 import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
 import { TUTORIALS, hasSeenTutorial, markTutorialSeen } from '../../tutorials/registry.js';
 import { MARK_TIERS } from '../../progress/marks';
@@ -447,11 +448,13 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
       </div>
 
       <div className="rs-stage" data-tier={spin ? spin.result.tier : undefined} data-mode={spin ? spin.mode : undefined}>
+        <ChaseFan view={view} />
         <Reel spin={spin} idle={idle} view={view} auto={target != null} coverHost={coverHost} ctl={ctl} played={played} onLand={onLand} onDone={onDone}>
           <div className="rs-result-slot">
             <ResultLine key={spin ? spin.seq : 0} result={shown} view={view} pop={fresh} />
           </div>
         </Reel>
+        <CollectionStrip view={view} />
       </div>
 
       {/* the pity numbers live in TWO places (the EPIC+ headline under ROLL, the bars on the left): the testid wraps both */}
