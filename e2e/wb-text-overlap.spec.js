@@ -71,7 +71,9 @@ function textOverlaps() {
     return true;
   };
   // One group per word: the belly's stacked chromatic layers share their parent.
-  const groupOf = (el) => (el.classList.contains('wb-belly-l') ? el.parentElement : el);
+  // …and the live prompt's per-letter spans (ComboLive, oct15) are ONE word: under the fragment's skew each letter's
+  // box leans ~3px into its neighbour, which is the same word, not a collision.
+  const groupOf = (el) => (el.classList.contains('wb-belly-l') ? el.parentElement : el.closest('.wbl') || el);
   const lineBoxOf = (el) => {
     let e = el;
     while (e && e !== root && getComputedStyle(e).display.startsWith('inline') && getComputedStyle(e).display !== 'inline-block') e = e.parentElement;

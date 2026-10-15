@@ -5530,9 +5530,9 @@ html[data-beat='true'] .cb-category-display {
 }
 .wbl-side { color: #2EFFE0; }
 .wbl-combo { display: inline-block; }
-.wbl .g { display: inline-block; }
+/* plain inline letters (their boxes never overlap a neighbour's); only the letter POPPING needs a transform box */
 .wbl .g.lit { color: #FFE94A; }
-.wbl .g.keystrike { animation: keystrike 190ms cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+.wbl .g.keystrike { display: inline-block; animation: keystrike 190ms cubic-bezier(0.2, 0.85, 0.25, 1) both; }
 /* the word now holds the fragment: it pops ONCE (re-keyed on the hit) */
 .wbl.is-hit .wbl-combo { animation: wbl-hit 300ms cubic-bezier(0.3, 1.7, 0.5, 1); }
 @keyframes wbl-hit {
