@@ -384,6 +384,16 @@ function App() {
   function setPlayerName(next) {
     setPlayerNameState(next);
     rememberName(next);
+    // Andy oct15 "a name change in the game modes should also change on leaderboard too": a NEW name follows you
+    // onto the board (same lb_claim door as CHANGE; a board-incompatible name or a cooldown just leaves it as is).
+    import('./leaderboard/autoName.js').then((m) => m.syncBoardName(next)).catch(() => {}); // lazy: the board client stays out of the boot bundle
+  }
+  // Rename yourself from the room's roster (set_name; the server only takes it between games).
+  function handleRenameSelf(next) {
+    const name = String(next || '').trim();
+    if (!name) return;
+    setPlayerName(name);
+    send('set_name', { name });
   }
   // Per-player session colours, derived from the room roster's join order and
   // keyed by stable player id. Built once per roster change and passed to every
@@ -2625,6 +2635,7 @@ function App() {
         onStartGame={handleStartGame}
         onAddBot={handleAddBot}
         onRemoveBot={handleRemoveBot}
+        onRename={handleRenameSelf}
       />
     );
   } else if (view === 'lobby') {
