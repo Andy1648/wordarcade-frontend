@@ -7052,13 +7052,13 @@ html[data-beat='true'] .wb-belly {
 }
 
 /* BLITZ PHONE: OTHER PLAYERS AS ONE STRIP. Stacked rows put the rivals ~170px below the fold at
-   390x844 — the page scrolled to see who was winning. One swipeable row of name+count chips
-   (scrollbar hidden; it is a list, so it may scroll sideways), the section label goes. */
+   390x844 — the page scrolled to see who was winning. The chips share one row (wrapping past 3
+   rivals, never scrolling sideways), the count drops its word and the section label goes. */
 @media (max-width: 480px) {
-  .cb-round .cb-progress { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 0 4px 4px 0; }
-  .cb-round .cb-progress::-webkit-scrollbar { display: none; }
+  .cb-round .cb-progress { display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 0 4px 4px 0; }
   .cb-round .cb-progress > .cb-section-label { display: none; }
-  .cb-round .cb-progress-row { flex: 0 0 auto; margin-bottom: 0; padding: 6px 10px; }
-  .cb-round .cb-progress-name { flex: 0 1 auto; }
-  .cb-round .cb-progress-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 9ch; }
+  .cb-round .cb-progress-row { flex: 1 1 0; min-width: 88px; margin-bottom: 0; padding: 6px 8px; gap: 6px; }
+  .cb-round .cb-progress-name { flex: 1 1 auto; min-width: 0; }
+  .cb-round .cb-progress-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cb-round .cb-progress-unit { display: none; }
 }

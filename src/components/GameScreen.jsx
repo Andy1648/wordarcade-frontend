@@ -52,7 +52,7 @@ import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
-import { plural, formatNum, formatMult } from '../format';
+import { formatNum, formatMult } from '../format';
 import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
@@ -5101,7 +5101,10 @@ function CategoryBlitzScreen({
                       <span className="cb-progress-name-text" translate="no">{p.name}</span>
                     </span>
                     <span className="cb-progress-count">
-                      {plural(playerProgress[p.id] || 0, 'answer')}
+                      {playerProgress[p.id] || 0}
+                      <span className="cb-progress-unit">
+                        {' '}{(playerProgress[p.id] || 0) === 1 ? 'answer' : 'answers'}
+                      </span>
                     </span>
                   </div>
                   );
