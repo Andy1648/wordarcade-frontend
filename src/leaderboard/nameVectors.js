@@ -14,4 +14,9 @@ export const NAME_VECTORS = [
   ['Nigeria_fan', false], ['nightowl', false], ['torpedo', false], ['title', false], ['shoes', false],
   ['Scunthorpe', true] /* the classic false positive: accepted for a username */, ['Andy', false], ['word_wizard', false], ['Pixel99', false], ['xx_Bob_xx', false],
   ['assassin', false], ['passport', false], ['cocktail', false], ['analyst', false], ['bass', false],
+  // STRICTER (Andy oct15): compound names with a root inside are blocked; the ALLOW words still pass
+  ['bigdick', true], ['BigD1ck_69', true], ['DickensDick', true], ['cocklord', true], ['cumlord', true],
+  ['sexyboi', true], ['analking', true], ['titsmcgee', true], ['boobsfan', true], ['hornyguy', true],
+  ['Dickinson', false], ['therapist', false], ['thornyrose', false], ['drapes', false], ['unisex_fan', false],
+  ['Cumberland', false], ['sextant', false], ['cocky_kid', false], ['analog_dude', false], ['bob', false],
 ];
