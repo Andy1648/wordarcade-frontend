@@ -12,6 +12,25 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct15 night batch D
+  "Words ending in -BALL": "Dodgeball",
+  "Words ending in -FISH": "Jellyfish",
+  "Words ending in -BOARD": "Skateboard",
+  "Words ending in -PHONE": "Saxophone",
+  "Words ending in -CAKE": "Cupcake",
+  "Words ending in -DOG": "Underdog",
+  "Sharks": "Hammerhead",
+  "Dinosaurs": "Stegosaurus",
+  "Berries": "Raspberry",
+  "Citrus fruits": "Kumquat",
+  "Nuts": "Pistachio",
+  "3D shapes": "Cylinder",
+  "Body parts you have two of": "Elbows",
+  "Harry Potter spells": "Accio",
+  "Phineas and Ferb characters": "Perry",
+  "DreamWorks animated films": "Megamind",
+  "Popular Roblox games": "Adopt Me",
+  "Italian brainrot characters": "Tung Tung Tung Sahur",
   // oct15 night batch C
   "Rhymes with CAKE (-AKE)": "Snake",
   "Rhymes with BEE (-EE)": "Tree",

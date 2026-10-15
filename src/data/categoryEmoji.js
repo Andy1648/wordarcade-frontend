@@ -127,6 +127,26 @@ export const CATEGORY_EMOJI = {
   "Apollo missions": "🚀",
   "Scream films": "🔪",
   "Final Destination films": "💀",
+  // oct15 night batch D
+  "Words ending in -BALL": "⚾",
+  "Words ending in -FISH": "🐟",
+  "Words ending in -BOARD": "🛹",
+  "Words ending in -PHONE": "🎤",
+  "Words ending in -CAKE": "🧁",
+  "Words ending in -DOG": "🌭",
+  "Dog breeds": "🐕",
+  "Sharks": "🦈",
+  "Dinosaurs": "🦕",
+  "Berries": "🍓",
+  "Citrus fruits": "🍋",
+  "Nuts": "🥜",
+  "3D shapes": "🧊",
+  "Body parts you have two of": "👐",
+  "Harry Potter spells": "🪄",
+  "Phineas and Ferb characters": "🦆",
+  "DreamWorks animated films": "🌙",
+  "Popular Roblox games": "🧱",
+  "Italian brainrot characters": "🦈",
 };
 
 export function emojiFor(category) {
