@@ -10,10 +10,10 @@
 // matching ids so the look is unchanged. `geography` is the new 2-category pack —
 // a neutral colour for now (we'll decide later whether to surface such a tiny pack).
 const packs = [
-  { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#ff4fa3', rot: -3,   sticker: 'star', count: 15 },
-  { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null,   count: 7 },
+  { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#ff4fa3', rot: -3,   sticker: 'star', count: 22 },
+  { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null,   count: 9 },
   { id: 'sports',     label: 'SPORTS',     emoji: '⚽', color: '#3DFF77', rot: -2.5, sticker: 'dots', count: 5 },
-  { id: 'world',      label: 'WORLD',      emoji: '🌍', color: '#3DA8FF', rot: 1.5,  sticker: null,   count: 72 },
+  { id: 'world',      label: 'WORLD',      emoji: '🌍', color: '#3DA8FF', rot: 1.5,  sticker: null,   count: 93 },
   { id: 'science',    label: 'SCIENCE',    emoji: '🔬', color: '#2ED6FF', rot: 2,    sticker: null,   count: 41 },
   // oct14 (Andy "more categories … all easy"): Taylor Swift albums + the 12 Days of Christmas joined the two music lists,
   // and the Weasleys the two literature ones — 3+ each, so the backend offers both packs again
@@ -22,8 +22,8 @@ const packs = [
   // the backend now offers the pack (PACK_IDS needs >= 3)
   // oct15 (Andy "fun categories (like holiday etc.)"): HOLIDAYS is new (Halloween + Christmas lists, federal holidays);
   // FOOD is back now it has 9 closed lists (M&M colors, steak doneness, Starbucks sizes …)
-  { id: 'holidays',   label: 'HOLIDAYS',   emoji: '🎃', color: '#FF6B3D', rot: 2,    sticker: null,   count: 12 },
-  { id: 'food',       label: 'FOOD',       emoji: '🍕', color: '#FF4FA3', rot: -2,   sticker: null,   count: 50 },
+  { id: 'holidays',   label: 'HOLIDAYS',   emoji: '🎃', color: '#FF6B3D', rot: 2,    sticker: null,   count: 15 },
+  { id: 'food',       label: 'FOOD',       emoji: '🍕', color: '#FF4FA3', rot: -2,   sticker: null,   count: 54 },
   // oct15 night (Andy "A LOT ... easy ... FUN"): WORDPLAY = rhyme / pattern lists straight from the dictionary, animal
   // sounds, baby animals, Spanish basics — a typing game's home turf. TECH = iPhone models, Windows versions, keyboard keys.
   { id: 'wordplay',   label: 'WORDPLAY',   emoji: '🔤', color: '#2EFFE0', rot: 1.5,  sticker: null,   count: 26 },
