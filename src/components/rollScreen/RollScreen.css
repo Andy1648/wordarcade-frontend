@@ -193,8 +193,10 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   content: '';
   position: absolute;
   z-index: 2;
-  top: 0;
-  bottom: 0;
+  /* oct15 afternoon (Andy "the cover is not covering the cards"): the band clips sideways only, so cards + auras poke
+     above / below it — the fades reach that far too */
+  top: calc(-1 * var(--rs-spill, 48px));
+  bottom: calc(-1 * var(--rs-spill, 48px));
   width: min(360px, 28%);
   pointer-events: none;
 }
@@ -212,7 +214,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cell.is-blank { width: var(--cw); height: calc(var(--cw) * 1.6667); background: #1a0b2e; border: 5px solid #000; border-radius: 10px; box-sizing: border-box; }
 /* the two SHADES (Reel.jsx): band-coloured plates left / right of the landing slot; their opacity (one animation each)
    fades the other cards — 22% during the slowdown, 35% once landed */
-.rs-shade { position: absolute; z-index: 1; top: 0; bottom: 0; background: #08030f; opacity: 0; pointer-events: none; }
+.rs-shade { position: absolute; z-index: 1; top: calc(-1 * var(--rs-spill, 48px)); bottom: calc(-1 * var(--rs-spill, 48px)); background: #08030f; opacity: 0; pointer-events: none; }
 .rs-shade.is-l { left: 0; right: calc(50% + var(--cw) / 2 + 6px); }
 .rs-shade.is-r { left: calc(50% + var(--cw) / 2 + 6px); right: 0; }
 /* the pointer: a yellow bar (a rectangle) between two triangles (inline SVG) */
@@ -838,3 +840,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* only where the stage has the room — the reel's own height is never traded for it */
 @media (min-width: 900px) and (min-height: 760px) { .rsx-coll { display: flex; } }
 @media (min-width: 1600px) and (min-height: 1000px) { .rsx-chase { display: grid; } }
+
+/* oct15 afternoon (Andy "cover is not covering the cards"): while the reveal cut-scene is up, the landed card's result
+   line under the reel (stats, NEW chip) sits ABOVE the dim and showed through beside the reveal card — hide it then */
+body:has(.rs-cut.is-on) .rs-overlay .rs-result-slot { opacity: 0; transition: opacity 120ms ease-out; }
+body:has(.rs-cut.is-on) .rs-overlay .rs-track { opacity: 0.18; transition: opacity 160ms ease-out; }
