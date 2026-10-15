@@ -194,3 +194,15 @@
   .room-addbot-gems b { font-size: var(--fs-k18); }
   .room-addbot-gems .kit-icon { width: 20px; height: 20px; }
 }
+
+/* oct15 afternoon (Andy "no one should ever scroll unless actually a list"): on a phone the 8-seat grid spent most of
+   the screen on empty "+" seats and pushed DIFFICULTY under the START bar — keep ONE open seat, hide the rest */
+@media (max-width: 899px) {
+  .room-wrap[data-skin="v2"] .room-seat-open ~ .room-seat-open { display: none; }
+}
+@media (max-width: 899px) {
+  /* the 4 difficulties sit in ONE row on a phone (name only — the timer/lives line returns on wider screens) */
+  .room-wrap[data-skin="v2"] .room-difficulty-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .room-wrap[data-skin="v2"] .room-difficulty-row > .room-difficulty-btn { width: auto; min-width: 0; min-height: 44px; padding: 6px 2px; }
+  .room-wrap[data-skin="v2"] .room-difficulty-desc { display: none; }
+}
