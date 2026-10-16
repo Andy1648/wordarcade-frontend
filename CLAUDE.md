@@ -71,6 +71,7 @@ ADVISORY (a smell to investigate), not build-failing.
 - After pushing, give the Vercel preview URL on its own line. User tests on preview, not localhost. Get it via `npx vercel ls wordarcade-frontend` (newest Preview row that's ● Ready).
 - End every task with a one-line status: what's committed + the preview URL. No open questions.
 - Keep responses short.
+- SQL GOES RIGHT IN FRONT OF ANDY (oct16 "you need to put the sqls RIGHT IN FRONT OF ME"): whenever a change needs a migration run, paste the FULL SQL in a ```sql block in the reply — never just a file path.
 
 ## Backend
 - Located at: C:\Users\andyw_tnc0kix\Downloads\chain-reaction-backend\

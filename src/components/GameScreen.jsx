@@ -52,7 +52,7 @@ import { inviteLink, dailyLink } from '../share/links.js';
 import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
-import { plural, formatNum, formatMult } from '../format';
+import { formatNum, formatMult } from '../format';
 import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
@@ -4493,6 +4493,22 @@ function CategoryBlitzScreen({
   // the ClutchCallout by the field).
   const cbLanding = lastLanding && !gameOver ? lastLanding : null;
   const cbSlot = useLatched(cbLanding ? cbLanding.key : null, () => wordSlot(cbLanding, false));
+  // The HITS badge yields to a rare word's landing for its 1.5s (wl-land), then comes back.
+  const cbComboHostRef = useRef(null);
+  const cbShowsLanding = !!(cbLanding && cbSlot.showLanding);
+  useEffect(() => {
+    const el = cbComboHostRef.current;
+    if (!el || !cbShowsLanding || goReduce) return undefined;
+    el.style.willChange = 'opacity';
+    const a = el.animate(
+      [{ opacity: 0, offset: 0 }, { opacity: 0, offset: 0.85 }, { opacity: 1, offset: 1 }],
+      { duration: 1500, easing: 'linear' }
+    );
+    const clear = () => { el.style.willChange = ''; };
+    a.onfinish = clear;
+    a.oncancel = clear;
+    return () => a.cancel();
+  }, [cbLanding && cbLanding.key, cbShowsLanding, goReduce]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function submit() {
     const answer = draft.trim();
@@ -4946,7 +4962,11 @@ function CategoryBlitzScreen({
 
           <div className="game-input-row">
             {/* Personal hype streak, floats above the input (pointer-events:none). */}
-            <ComboMeter count={streak.count} brk={streak.brk} />
+            {/* The HITS badge steps aside while a rare word's landing is up (they share the strip
+                above the field) — one finite WAAPI fade, see cbComboHostRef. */}
+            <div className="cb-combo-host" ref={cbComboHostRef}>
+              <ComboMeter count={streak.count} brk={streak.brk} />
+            </div>
             {/* THE ANSWER ITSELF REACTS — the same landing Word Bomb uses, in the same place
                 relative to the field. Rarity is an event wherever a word lands, not a Word Bomb
                 feature. */}
@@ -4968,9 +4988,7 @@ function CategoryBlitzScreen({
                   reduced={goReduce}
                 />
               )}
-              {cbLanding && cbSlot.labels.length > 0 && (
-                <SlotTags key={`tags-${cbLanding.key}`} labels={cbSlot.labels} />
-              )}
+              {/* No SlotTags line in Blitz: one reaction per answer, nothing stacked under it. */}
               <TierSlam count={streak.count} outranked={cbSlot.main !== 'hype'} />
               <GemPop reduced={goReduce} />
             </div>
@@ -5047,15 +5065,11 @@ function CategoryBlitzScreen({
               </span>
             </div>
           ) : (
-            lastWordResult && (
-              <div
-                className={`game-toast ${
-                  lastWordResult.accepted ? 'accepted' : 'rejected'
-                }`}
-              >
-                {lastWordResult.accepted
-                  ? `NICE! "${(lastWordResult.answer || '').toUpperCase()}"`
-                  : rejectionMessage(lastWordResult.reason, { isCategory: true })}
+            // Rejects only (Andy oct15 "dont overcrowd it"): an accepted answer already lands on the
+            // field and joins YOUR ANSWERS, so a third "NICE!" telling of it was clutter.
+            lastWordResult && !lastWordResult.accepted && (
+              <div className="game-toast rejected">
+                {rejectionMessage(lastWordResult.reason, { isCategory: true })}
               </div>
             )
           )}
@@ -5101,7 +5115,10 @@ function CategoryBlitzScreen({
                       <span className="cb-progress-name-text" translate="no">{p.name}</span>
                     </span>
                     <span className="cb-progress-count">
-                      {plural(playerProgress[p.id] || 0, 'answer')}
+                      {playerProgress[p.id] || 0}
+                      <span className="cb-progress-unit">
+                        {' '}{(playerProgress[p.id] || 0) === 1 ? 'answer' : 'answers'}
+                      </span>
                     </span>
                   </div>
                   );

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isNameBlocked, nameVerdict, nameLeet, nameSquash } from './nameFilter.js';
+import { isNameBlocked, nameVerdict, nameLeet, nameSquash, bioVerdict, BIO_MAX } from './nameFilter.js';
 import { NAME_VECTORS } from './nameVectors.js';
 
 test('the shared truth table', () => {
@@ -34,4 +34,16 @@ test('CJK names are allowed only when the DB supports them, and the Chinese bloc
   assert.equal(_nv('xx草泥马', { cjk: true }), 'blocked');
   assert.ok(_cjk.length >= 40);
   assert.equal(_nv('abc', { cjk: true }), 'ok', 'ASCII still works');
+});
+
+// 051 PROFILE DESCRIPTION: per-word, so innocent text that spans a root ("this exam" → "sex") is fine.
+test('bioVerdict: per-word filter, spaced-out letters, links, length', () => {
+  const ok = ['this exam is killing me', 'classic word bomb enjoyer', 'Charles Dickens fan', 'grape soda > water', 'top 10 essex player', ''];
+  const blocked = ['f u c k this', 'sh1t lobby', 'bigdick energy', 'ass', 'a s s', 'kys noob', 'this exam is a b1tch'];
+  for (const t of ok.filter(Boolean)) assert.equal(bioVerdict(t), 'ok', t);
+  assert.equal(bioVerdict(''), 'empty');
+  for (const t of blocked) assert.equal(bioVerdict(t), 'blocked', t);
+  assert.equal(bioVerdict('join me at www.spam.com'), 'link');
+  assert.equal(bioVerdict('discord.gg/abc'), 'link');
+  assert.equal(bioVerdict('x'.repeat(BIO_MAX + 1)), 'long');
 });

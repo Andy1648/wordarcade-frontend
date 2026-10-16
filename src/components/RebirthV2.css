@@ -425,3 +425,23 @@
 @media (prefers-reduced-motion: reduce) {
   .rb2-title, .rb2-left, .rb2-get, .rb2-track { animation: none; }
 }
+
+/* oct15 afternoon (Andy "no one should ever scroll unless actually a list"): on a phone the UNLOCKS diamonds are ONE
+   row that swipes sideways (a list) instead of a 3 × 2 grid that pushed the whole screen into a scroll */
+@media (max-width: 999px) {
+  .rb2-track-list {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    overscroll-behavior: contain;
+    scroll-snap-type: x proximity;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+  .rb2-track-list::-webkit-scrollbar { display: none; }
+  .rb2-track, .rb2-track-list { min-width: 0; max-width: 100%; }
+  .rb2-track-list { position: relative; } /* its absolute "(unlocked)" labels scroll inside it, not out past the screen */
+  .rb2-track-list > * { flex: 0 0 84px; scroll-snap-align: start; }
+  .rb2-ms-what { font-size: var(--fs-k14); }
+  .rb2-stage { row-gap: 8px; }
+}

@@ -370,15 +370,16 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
   await expect(pc).toHaveCount(0);
 });
 
-// 046 PROFILE FLEX (Andy oct14 "ways profiles can be shown off (not avatars)"): the SIGNATURE WORD (rarest accepted word),
-// the best CHAIN and a BADGE ROW (top claimed achievement tiers). A pre-046 row has none → the sections are absent.
-for (const vp of [{ width: 1366, height: 657 }, { width: 360, height: 640 }]) {
-  test(`@${vp.width}x${vp.height}: the profile card shows the signature word, best chain and badges — nothing clips, the card fits`, async ({ page }) => {
+// 046 PROFILE FLEX (Andy oct14 "ways profiles can be shown off (not avatars)"): the best CHAIN and a BADGE ROW (top claimed
+// achievement tiers); 051 (oct15): the player's DESCRIPTION where the signature word was. A pre-046 row has none → absent.
+for (const vp of [{ width: 1366, height: 657 }, { width: 1920, height: 1080 }, { width: 360, height: 640 }]) {
+  test(`@${vp.width}x${vp.height}: the profile card shows the description, best chain and badges — nothing clips, the card fits`, async ({ page }) => {
     const SHOW = {
       b: {
         gear1: 'mk-kraken', gear2: 'mk-hydra', base_wins: 190, wins_per_word: 5130, gears_found: 9, gears_total: 27, power: 6,
         badges: { type: 5, bots: 3, reb: 2, roll: 4, win: 1, chain: 2, index: 3, power: 5 },
         sig_word: 'incomprehensibilities', sig_band: 'OBSCURE', best_chain: 23,
+        bio: 'longest word in the lobby is always mine. catch me in word bomb every night, bring snacks pls',
       },
     };
     const { lb } = await boot(page, { me: { rebirths: 0, level: 60 }, vp });
@@ -388,18 +389,18 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 360, height: 640 }]) {
     });
     await lb.locator('.lb2-row[data-id="b"], .lb2-col--2').first().click();
     const pc = page.getByTestId('profile-card');
-    await expect(pc.getByTestId('profile-sig')).toBeVisible();
-    await expect(pc.locator('.pc-sig-w')).toHaveText('incomprehensibilities');
-    await expect(pc.locator('.pc-sig-band')).toHaveText('OBSCURE');
+    await expect(pc.getByTestId('profile-bio')).toContainText('bring snacks pls');
+    await expect(pc.locator('.pc-sig')).toHaveCount(0); // the signature word is gone (Andy oct15)
+    await expect(pc.getByTestId('profile-bio-edit')).toHaveCount(0); // someone else's card: read only
     await expect(pc.getByTestId('profile-chain')).toHaveText(/CHAIN 23/);
     await expect(pc.locator('.pc-badge')).toHaveCount(8);
     await expect(pc.locator('.pc-badge-roman')).toHaveText(['MAX', 'III', 'II', 'IV', 'I', 'II', 'MAX', 'MAX']);
     await page.waitForTimeout(400); // the card's pop
     const m = await pc.evaluate((el) => {
-      const sig = el.querySelector('.pc-sig').getBoundingClientRect();
-      const w = el.querySelector('.pc-sig-w').getBoundingClientRect();
+      const sig = el.querySelector('.pc-bio').getBoundingClientRect();
+      const w = el.querySelector('.pc-bio-t').getBoundingClientRect();
       const r = el.getBoundingClientRect();
-      const clippedEls = [...el.querySelectorAll('.pc-tile-v, .pc-tile-k, .pc-gear-name, .pc-name, .pc-sig-w')].filter((n) => n.scrollWidth > n.clientWidth + 1); const clipped = clippedEls.length;
+      const clippedEls = [...el.querySelectorAll('.pc-tile-v, .pc-tile-k, .pc-gear-name, .pc-name, .pc-bio-t')].filter((n) => n.scrollWidth > n.clientWidth + 1); const clipped = clippedEls.length;
       const lastB = el.querySelector('.pc-badges').getBoundingClientRect();
       return { clipped, wordInside: w.left >= sig.left - 1 && w.right <= sig.right + 1, cardBottom: r.bottom, badgesBottom: lastB.bottom, vh: innerHeight, overflow: el.scrollHeight - el.clientHeight };
     });
@@ -410,3 +411,29 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 360, height: 640 }]) {
     if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/profile-flex-${vp.width}x${vp.height}.png` });
   });
 }
+
+// 051 PROFILE DESCRIPTION: your own card edits it. A dirty one is refused on the spot (never sent); a clean one saves.
+test('your own profile card: write a description — a dirty one is refused before it is sent, a clean one saves', async ({ page }) => {
+  const { lb } = await boot(page, { me: { rebirths: 0, level: 60 } });
+  const sent = [];
+  await page.route('**/rpc/lb_bio_set', async (route) => {
+    sent.push(JSON.parse(route.request().postData() || '{}').p_bio);
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, v: 51 }) });
+  });
+  await lb.locator('.lb2-row[data-id="me"], .is-me').first().click();
+  const pc = page.getByTestId('profile-card');
+  await expect(pc).toBeVisible();
+  await pc.getByTestId('profile-bio-edit').click();
+  const box = pc.getByTestId('profile-bio-input');
+  await box.fill('this exam is a b1tch');
+  await pc.getByTestId('profile-bio-save').click();
+  await expect(pc.getByTestId('profile-bio-say')).toHaveText(/KEEP IT CLEAN/);
+  await box.fill('join my lobby at www.spam.com');
+  await pc.getByTestId('profile-bio-save').click();
+  await expect(pc.getByTestId('profile-bio-say')).toHaveText('NO LINKS');
+  expect(sent).toEqual([]);
+  await box.fill('this exam is killing me, word bomb > homework');
+  await box.press('Enter');
+  await expect(pc.locator('.pc-bio-t')).toHaveText('this exam is killing me, word bomb > homework');
+  expect(sent).toEqual(['this exam is killing me, word bomb > homework']);
+});

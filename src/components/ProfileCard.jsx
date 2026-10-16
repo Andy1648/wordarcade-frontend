@@ -17,9 +17,10 @@ import { kitPlay } from './kit/motion.js';
 import { CARD_RAR, cardTier } from './markCard/palette.js';
 import { rollMarkById } from '../progress/markRollsCore.js';
 import { rankPlate } from '../leaderboard/s2Board.js';
-import { fetchShowcase } from '../leaderboard/showcase.js';
+import { fetchShowcase, saveBio, myBio } from '../leaderboard/showcase.js';
 import { titleText, myTitles, wornTitle, setTitlePick } from '../leaderboard/titles.js';
 import { pushShowcaseNow } from '../leaderboard/client.js';
+import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
 
 // a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small
@@ -30,7 +31,7 @@ const has = (v) => v != null && Number.isFinite(Number(v));
 const UNKNOWN = '?'; // Andy oct11: "for anything thats not known … just put a question mark"
 
 // 046 PROFILE FLEX (Andy oct14 "ways profiles can be shown off (not avatars)"): things the player EARNED, never bought —
-// the SIGNATURE WORD (the rarest word they ever got accepted), the best CHAIN, and a BADGE ROW (the top claimed tier of
+// the best CHAIN and a BADGE ROW (the top claimed tier of
 // each achievement ladder, the Achievements screen's own glyph + tier colour). Rows from before 046 have none of these
 // fields → the sections are simply absent (no row of "?").
 const BADGES = [
@@ -41,17 +42,67 @@ const MAX_TIER = { index: 3 };
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 const TC = ['#A9B4C8', '#3D8BFF', '#B04BFF', '#FFC23D', '#FF3D7F']; // AchievementsV3's tier colours
 const TF = ['#262b38', '#0f2350', '#2a0e4a', '#3d2a05', '#4a0a22'];
-const BAND = { COMMON: '#F0EAD9', UNCOMMON: '#2EFFE0', RARE: '#9A1AFF', OBSCURE: '#FFE94A' }; // rarity.js band colours
+const BIO_SAY = {
+  blocked: 'NOT ALLOWED — KEEP IT CLEAN', link: 'NO LINKS', long: `${BIO_MAX} LETTERS MAX`, slow_down: 'WAIT A SEC',
+  not_ready: 'DESCRIPTIONS ARE COMING SOON', fail: "COULDN'T SAVE — TRY AGAIN",
+};
 
-function Signature({ word, band }) {
-  const tone = BAND[band] || BAND.COMMON;
+// 051 PROFILE DESCRIPTION (Andy oct15: "a profile description that the user can type in but censorship is needed there"
+// / "no need for signature word … that space can be used for the profile description"). Everyone sees it; on your own
+// card it is a tap-to-edit box. Filtered twice: bioVerdict here for the instant answer, public.bio_is_clean in the DB.
+function Bio({ text, mine }) {
+  const [bio, setBio] = useState(text || '');
+  const [draft, setDraft] = useState(null); // null = not editing
+  const [say, setSay] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setBio(text || ''); }, [text]);
+  if (!mine) {
+    return bio ? (
+      <div className="pc-bio" data-testid="profile-bio">
+        <span className="pc-bio-k">ABOUT</span>
+        <p className="pc-bio-t">{bio}</p>
+      </div>
+    ) : null;
+  }
+  async function save() {
+    const t = draft.trim();
+    const v = t ? bioVerdict(t) : 'ok';
+    if (v !== 'ok') { setSay(BIO_SAY[v] || BIO_SAY.fail); return; }
+    setBusy(true);
+    const r = await saveBio(t);
+    setBusy(false);
+    if (r.ok) { setBio(t); setDraft(null); setSay(''); } else setSay(BIO_SAY[r.error] || BIO_SAY.fail);
+  }
+  if (draft == null) {
+    return (
+      <div className="pc-bio is-mine" data-testid="profile-bio">
+        <span className="pc-bio-k">ABOUT YOU</span>
+        {bio ? <p className="pc-bio-t">{bio}</p> : <p className="pc-bio-t is-empty">Say something — everyone on the board can see it.</p>}
+        <button type="button" className="pc-bio-btn" data-testid="profile-bio-edit" onClick={() => { setDraft(bio); setSay(''); }}>
+          {bio ? 'EDIT' : 'WRITE ONE'}
+        </button>
+      </div>
+    );
+  }
   return (
-    <div className="pc-sig" style={{ '--pc-band': tone, '--ch': word.length }} data-testid="profile-sig">
-      <span className="pc-sig-head">
-        <span className="pc-sig-k">SIGNATURE WORD</span>
-        {band ? <span className="pc-sig-band">{band}</span> : null}
+    <div className="pc-bio is-mine is-editing" data-testid="profile-bio">
+      <span className="pc-bio-k">ABOUT YOU <span className="pc-bio-n">{draft.length}/{BIO_MAX}</span></span>
+      <textarea
+        className="pc-bio-in"
+        data-testid="profile-bio-input"
+        value={draft}
+        maxLength={BIO_MAX}
+        rows={2}
+        autoFocus
+        aria-label="Profile description"
+        onChange={(e) => { setDraft(e.target.value.replace(/\s*\n\s*/g, ' ')); setSay(''); }}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') { e.stopPropagation(); setDraft(null); } }}
+      />
+      {say ? <span className="pc-bio-say" role="alert" data-testid="profile-bio-say">{say}</span> : null}
+      <span className="pc-bio-row">
+        <button type="button" className="pc-bio-btn is-ghost" onClick={() => { setDraft(null); setSay(''); }}>CANCEL</button>
+        <button type="button" className="pc-bio-btn" data-testid="profile-bio-save" disabled={busy} onClick={save}>{busy ? 'SAVING' : 'SAVE'}</button>
       </span>
-      <span className="pc-sig-w">{word}</span>
     </div>
   );
 }
@@ -193,7 +244,7 @@ export default function ProfileCard({ row, mine = false, onClose }) {
             <span className="pc-sub-c is-chain" data-testid="profile-chain"><img src="/ach/chain.svg" alt="" aria-hidden="true" /> CHAIN {formatNum(Number(s.best_chain))}</span>
           ) : null}
         </div>
-        {typeof s.sig_word === 'string' && /^[a-z]{3,24}$/.test(s.sig_word) ? <Signature word={s.sig_word} band={s.sig_band} /> : null}
+        {loading && !mine ? null : <Bio text={typeof s.bio === 'string' ? s.bio : mine ? myBio() : ''} mine={mine} />}
         <div className="pc-gears" data-testid="profile-gears">
           <Gear id={s.gear1} slot={1} known={!!show} onOpen={setGear} />
           <Gear id={s.gear2} slot={2} known={!!show} onOpen={setGear} />
