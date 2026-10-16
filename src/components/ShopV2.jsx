@@ -33,8 +33,8 @@ import DailyDrop from './DailyDrop';
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
 // each cut file lands in public/shop/ (never a path that is not there: no 404s, no broken-image frame).
 const SHOP_ART = {
-  // xp25: '/shop/xp.webp', wins25: '/shop/wins.webp', luck2: '/shop/luck.webp',
-  // overdrive: '/shop/overdrive.webp', extend: '/shop/everything.webp',
+  xp25: '/shop/xp.webp', wins25: '/shop/wins.webp', luck2: '/shop/luck.webp',
+  overdrive: '/shop/overdrive.webp', extend: '/shop/everything.webp',
 };
 
 const NOTE = {
@@ -253,7 +253,8 @@ export default function ShopV2({ onBack }) {
           <div className="sp2-plate" ref={plateRef} aria-hidden="true">
             <span className="sp2-plate-a" />
             <span className="sp2-plate-b" />
-            <KitIcon name="power" size={104} shadow={3} className="sp2-plate-ico" />
+            {/* the POWER plate: the painted battery (art run oct16) */}
+            <img className="sp2-plate-ico sp2-plate-art" src="/shop/power.webp" width="256" height="256" alt="" aria-hidden="true" draggable="false" />
           </div>
           <div className="sp2-pw">
             <span className="sp2-pw-lab">POWER</span>
