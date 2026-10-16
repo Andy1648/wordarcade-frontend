@@ -25,7 +25,8 @@ import { GemIcon, GemsEarnedLine, useGems } from '../gems/Gems';
 import { tallyLines, chainOf, stampFor } from './resultsModel.js';
 import '../kit/tokens.css';
 import './ResultsCard.css';
-import { resolvePlayerColor, playerCharSrc } from '../../playerColors';
+import { resolvePlayerColor } from '../../playerColors';
+import { castFor, castByColor, castSrc, hasPose } from '../../cast/cast.js';
 
 const mx = (m) => `×${formatMultExact(m)}`;
 const CHIP_TONES = ['#D88BFF', '#FFC23D', '#2EFFE0', '#FF3D7F', '#FFE94A', '#B04BFF'];
@@ -47,6 +48,22 @@ const PULSE = [{ transform: 'scale(1)' }, { transform: 'scale(1.05)', offset: 0.
 const SLIDE = [{ transform: 'translateX(-40px)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }];
 const eo = (k) => 1 - Math.pow(1 - k, 3);
 const BUMP = [{ transform: 'scale(1)' }, { transform: `scale(${BUMP_SCALE})`, offset: 0.4 }, { transform: 'scale(1)' }];
+// THE END (art run oct16, Andy: "END on the best-word slam (I love that)"): once the tally has landed, the best word
+// slams down last — the final beat of the card.
+const BEST_SLAM = [{ transform: 'scale(2.6) rotate(-9deg)', opacity: 0 }, { transform: 'scale(.86) rotate(1deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.07) rotate(-1deg)', offset: 0.78 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
+// YOUR CHARACTER's moment: painted confetti thrown from a win, dizzy stars popping round a K.O. (finite one-shots;
+// the confetti rests invisible, the stars rest where they land)
+const CHAR_CONFETTI = Array.from({ length: 12 }, (_, i) => {
+  const a = (-90 + ((i * 53) % 170) - 85) * (Math.PI / 180);
+  const r = 70 + ((i * 41) % 60);
+  return { dx: Math.cos(a) * r, dy: Math.sin(a) * r, fall: 70 + ((i * 31) % 60), spin: (i % 2 ? 1 : -1) * (200 + ((i * 47) % 260)), art: (i * 5) % 16 };
+});
+const confettiThrow = (c) => [
+  { transform: 'translate(0, 0) rotate(0deg) scale(.5)', opacity: 1 },
+  { transform: `translate(${c.dx}px, ${c.dy}px) rotate(${c.spin * 0.5}deg) scale(1)`, opacity: 1, offset: 0.45 },
+  { transform: `translate(${c.dx * 1.2}px, ${c.dy + c.fall}px) rotate(${c.spin}deg) scale(.9)`, opacity: 0 },
+];
+const DIZZY = [{ transform: 'scale(0) rotate(-120deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(20deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
 
 // ART PIPELINE (Andy oct13): the trophy + XP hex are ChatGPT art cut by scripts/cutout-art.py (public/results/).
 function Trophy() {
@@ -182,11 +199,14 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       done.add(node);
       node.classList.remove('rs2-pending');
       const k = node.dataset.rv;
-      const frames = k === 'slam' ? SLAM : k === 'stamp' ? STAMP : k === 'drop' ? DROP : k === 'chip' ? CHIP : k === 'pop' ? POP : k === 'slide' ? SLIDE : RISE;
-      const dur = k === 'slam' || k === 'drop' ? 550 : k === 'chip' ? 300 : k === 'pop' ? 500 : k === 'stamp' ? 400 : 350;
+      const frames = k === 'best' ? BEST_SLAM : k === 'slam' ? SLAM : k === 'stamp' ? STAMP : k === 'drop' ? DROP : k === 'chip' ? CHIP : k === 'pop' ? POP : k === 'slide' ? SLIDE : RISE;
+      const dur = k === 'best' ? 520 : k === 'slam' || k === 'drop' ? 550 : k === 'chip' ? 300 : k === 'pop' ? 500 : k === 'stamp' ? 400 : 350;
       kitPlay(node, frames, { duration: dur, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' });
     };
     for (const r of reveals) timers.push(setTimeout(() => fire(r), Number(r.dataset.at) || 0));
+    // the character lands (~150 + 550 ms): throw the confetti / pop the dizzy stars
+    el.querySelectorAll('.rs2-char-cf').forEach((n, i) => kitPlay(n, confettiThrow(CHAR_CONFETTI[i]), { duration: 900 + (i % 4) * 70, delay: 640 + (i % 5) * 25, easing: 'cubic-bezier(.15,.7,.4,1)', fill: 'backwards' }));
+    el.querySelectorAll('.rs2-dizzy-s').forEach((n, i) => kitPlay(n, DIZZY, { duration: 420, delay: 720 + i * 110, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'backwards' }));
     const land = (sel, at) => timers.push(setTimeout(() => { const n = el.querySelector(sel); if (n) kitPlay(n, LAND, { duration: 320, easing: 'cubic-bezier(.2,1.5,.4,1)' }); }, at));
     land('.rs2-xp', T.xp + 200 + T.count * 2);
     land('.rs2-wins', tWords + T.count);
@@ -253,7 +273,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       if (e.target && e.target.closest && e.target.closest('button, a')) return;
       cancelAnimationFrame(raf);
       for (const id of timers) clearTimeout(id);
-      for (const r of reveals) { if (r.__kitAnim) { try { r.__kitAnim.finish(); } catch { /* gone */ } } }
+      for (const r of [...reveals, ...el.querySelectorAll('.rs2-char-cf, .rs2-dizzy-s')]) { if (r.__kitAnim) { try { r.__kitAnim.finish(); } catch { /* gone */ } } }
       finish();
       cancelAnimationFrame(winsRaf);
       winsFinal();
@@ -274,6 +294,10 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     : `Knocked out. ${winnerName ? `${String(winnerName).toUpperCase()} WINS` : 'NO WINNER'}. You placed #${place} of ${of}.`;
   const rows = table;
   const meRowId = (table.find((r) => r.me) || {}).id;
+  // you play as your MAIN (menu picker); everyone else shows the cast member of their seat colour
+  const myCast = meRowId != null ? castFor(meRowId, true) : null;
+  const pose = iWon ? 'win' : stamp.tone === 'top' ? 'hero' : 'ko';
+  const rowCast = (p) => (p.me ? myCast || castFor(p.id, true) : castByColor(resolvePlayerColor(playerColors, p.id).color));
   return (
     <div ref={root} className={`game-over-card rs2${narrow ? ' rs2--narrow' : ''}${learn ? ' has-learn' : ''} ${iWon ? 'go-card-win' : 'go-card-loss'}`} data-place={place} data-outcome={iWon ? 'win' : 'loss'} data-stamp={stamp.tone}>
       <div className="rs2-top">
@@ -295,7 +319,22 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       <section className={`rs2-hero rs2-hero--${stamp.tone}`} role="heading" aria-level={2} aria-label={heroLabel}>
         <div className="rs2-hero-plate" aria-hidden="true" />
         <div className="rs2-hero-in" aria-hidden="true">
-          <div className="rs2-icon" data-rv="drop" data-at="150">{iWon ? <Trophy /> : stamp.tone === 'top' ? <Medal place={place} /> : <Skull />}</div>
+          {myCast ? (
+            // YOUR CHARACTER is the placement art (art run oct16, Andy: WIN pose + confetti · top 3 = HERO on its medal
+            // emblem · K.O. pose + dizzy stars). Until a WIN / KO pose is painted the HERO stands in (tipped over on a K.O.).
+            <div className={`rs2-icon rs2-char rs2-char--${pose}`} data-rv="drop" data-at="150" data-cast={myCast.id}>
+              {pose === 'hero' ? <img className="rs2-char-emblem" src={`/stage/emblem-${Math.min(3, Math.max(1, place))}.webp`} width="256" height="256" alt="" draggable="false" /> : null}
+              <img className={`rs2-char-img${pose !== 'hero' && !hasPose(myCast.id, pose) ? ` is-stand-in is-${pose}` : ''}`} src={castSrc(myCast.id, pose)} width="512" height="512" alt="" draggable="false" />
+              {pose === 'win' ? (
+                <span className="rs2-char-fx">{CHAR_CONFETTI.map((c, i) => <img key={i} className="rs2-char-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
+              ) : null}
+              {pose === 'ko' ? (
+                <span className="rs2-dizzy">{[0, 1, 2].map((i) => <img key={i} className={`rs2-dizzy-s is-${i}`} src={`/stage/fx/dizzy-${i}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
+              ) : null}
+            </div>
+          ) : (
+            <div className="rs2-icon" data-rv="drop" data-at="150">{iWon ? <Trophy /> : stamp.tone === 'top' ? <Medal place={place} /> : <Skull />}</div>
+          )}
           <div className="rs2-place" data-rv="slam" data-at="0">
             <span className="rs2-place-n">#{formatNum(place)}</span>
             {place > 1 ? <span className="rs2-place-of">/{formatNum(of)}</span> : null}
@@ -304,20 +343,13 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             <span>{stamp.text}</span>
           </div>
           {me.best ? (
-            <div className="rs2-best" data-rv="rise" data-at="700">
+            <div className="rs2-best" data-rv="best" data-at={tEnd + 160}>
               <span className="rs2-best-k">BEST<br />WORD</span>
               <span className="rs2-best-w" translate="no">{bestWord}</span>
               <span className="rs2-best-n">{formatNum(bestWord.length)}</span>
             </div>
           ) : null}
         </div>
-        {/* YOUR BOMB BUDDY in the placement box (oct16, Andy "the win screen … take our direction"): the seat avatar you
-            played as — on its feet cheering when you won or placed top 3, knocked flat on its back otherwise. */}
-        {meRowId != null ? (
-          <span className="rs2-buddy-wrap" data-rv="drop" data-at="260" aria-hidden="true">
-            <img className={`rs2-buddy rs2-buddy--${iWon ? 'win' : stamp.tone === 'top' ? 'top' : 'down'}`} src={playerCharSrc(resolvePlayerColor(playerColors, meRowId).color)} width="256" height="256" alt="" draggable="false" />
-          </span>
-        ) : null}
         {!iWon && winnerName ? <div className="rs2-winner" aria-hidden="true"><span translate="no">{String(winnerName).toUpperCase()}</span> WINS</div> : null}
       </section>
       {learn ? <div className="rs2-learn">{learn}</div> : null}
@@ -386,7 +418,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
           {rows.map((p, i) => (
             <li key={p.id} className={`rs2-prow${p.me ? ' is-me' : ''}`} data-place={p.place} data-rv="slide" data-at={300 + i * 70}>
               <span className={`rs2-prk rs2-prk--${p.place <= 3 ? p.place : 'n'}`}>{formatNum(p.place)}</span>
-              <img className="rs2-pav" src={playerCharSrc(resolvePlayerColor(playerColors, p.id).color)} width="64" height="64" alt="" aria-hidden="true" draggable="false" />
+              <img className="rs2-pav" src={castSrc(rowCast(p).id, 'hero')} width="64" height="64" alt="" aria-hidden="true" draggable="false" />
               <span className="rs2-pname" translate="no">{p.name}</span>
               {p.me ? <span className="rs2-you">YOU</span> : null}
               <span className="rs2-pw">{formatNum(p.words)}</span>

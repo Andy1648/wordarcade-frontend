@@ -13,7 +13,9 @@ const PAINTED = new Set(['riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
   const c = CAST.find((x) => x.id === id) || CAST[0];
-  return PAINTED.has(`${c.id}-${pose}`) ? `/cast/${c.id}-${pose}.webp` : `/wb/player-${c.seat}.webp`;
+  if (PAINTED.has(`${c.id}-${pose}`)) return `/cast/${c.id}-${pose}.webp`;
+  // a pose not painted yet → the HERO (the caller may tip it over for a K.O.), then the seat bomb buddy
+  return PAINTED.has(`${c.id}-hero`) ? `/cast/${c.id}-hero.webp` : `/wb/player-${c.seat}.webp`;
 }
 const KEY = 'taw.main';
 export function readMain() {
@@ -31,3 +33,13 @@ export function castFor(id, mine = false) {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return CAST[h % CAST.length];
 }
+/** Is a painted pose on disk? (castSrc falls back to HERO otherwise — a caller can tip the HERO over for a KO.) */
+export function hasPose(id, pose) {
+  return PAINTED.has(`${id}-${pose}`);
+}
+/** The cast member wearing a seat colour (the in-game palette order = CAST order: pink, cyan, yellow, orange, purple). */
+export function castByColor(hex) {
+  const h = String(hex || '').toLowerCase();
+  return CAST.find((c) => c.color.toLowerCase() === h) || CAST.find((c) => c.seat === SEAT_BY_HEX[h]) || CAST[0];
+}
+const SEAT_BY_HEX = { '#ff4fa3': 'pink', '#2effe0': 'cyan', '#ffe94a': 'yellow', '#ff6b3d': 'orange', '#9a1aff': 'purple' };
