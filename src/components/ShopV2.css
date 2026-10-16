@@ -605,3 +605,28 @@
   .sp2-big { font-size: var(--fs-k24); }
   .sp2-price { height: 30px; margin: auto 8px 8px; font-size: var(--fs-k16); }
 }
+
+/* ===== POP STYLE ART (oct16): the painted burst swatch tops each pop-style card; hover pops it (transform only, no
+   loop); a style you can't afford yet keeps its art (something to chase), just dimmed; LEGEND wears a gold frame ===== */
+.sp2-look.has-art { align-items: center; text-align: center; padding-top: 6px; }
+.sp2-look.has-art .sp2-look-name,
+.sp2-look.has-art .sp2-look-what { max-width: 100%; }
+.sp2-look.has-art .sp2-look-act { align-self: stretch; }
+.sp2-look-art {
+  display: block; width: 96px; height: 96px; margin: 0 auto -2px; object-fit: contain;
+  filter: drop-shadow(3px 3px 0 #000);
+  transform: rotate(-4deg); transition: transform 180ms cubic-bezier(.2, 1.4, .4, 1);
+}
+.sp2-look:nth-child(even) .sp2-look-art { transform: rotate(3deg); }
+@media (hover: hover) {
+  .sp2-look.has-art:hover .sp2-look-art { transform: scale(1.14) rotate(-8deg); }
+}
+.sp2-look.is-locked .sp2-look-art { opacity: 0.55; }
+.sp2-look.is-legend { border-color: #FFC23D; background: #2a1604; }
+.sp2-look.is-legend .sp2-look-art { width: 112px; height: 112px; }
+.sp2-look.is-legend .sp2-look-name { color: #FFE94A; }
+@media (prefers-reduced-motion: reduce) { .sp2-look-art { transition: none; } }
+@media (min-width: 1000px) and (max-height: 580px) { .sp2-look-art { width: 72px; height: 72px; } .sp2-look.is-legend .sp2-look-art { width: 84px; height: 84px; } }
+@media (max-width: 999px) { .sp2-look-art { width: 80px; height: 80px; } }
+.sp2-look.is-legend.is-locked .sp2-look-art { opacity: 1; } /* the rarest stays in full colour — it is the thing to chase */
+.sp2-look.has-art .sp2-look-act { margin-top: auto; } /* price buttons line up across a row */
