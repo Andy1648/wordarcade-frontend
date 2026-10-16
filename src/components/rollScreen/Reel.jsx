@@ -34,7 +34,7 @@ import {
   sndStatTick,
 } from '../../audio/rollSounds';
 import { formatNum } from '../../format';
-import RevealStats from './RevealStats';
+import RevealStats from './RevealStats.jsx';
 import GearFx from '../GearFx';
 import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
