@@ -174,12 +174,22 @@ const BOB = [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', of
 // (and from YOUR place when you are top 3), the name slams in, the place number pops. Nothing loops.
 const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)', opacity: 1, offset: 0.55 }, { transform: 'scale(1)', opacity: 1 }];
 // TOP 3 IDLE (Andy oct12 "at least give some idle animation for the top 3"): ONE setTimeout chain for the podium — every
-// IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its name hops, a sparkle glints, #1's crown bobs.
+// IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its character moves (BEATS), a sparkle glints.
 // Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
-const IDLE_EVERY_MS = 2200;
-const HOP = [{ transform: 'translateY(0)' }, { transform: 'translateY(-7px) rotate(-1.5deg)', offset: 0.35 }, { transform: 'translateY(1px)', offset: 0.7 }, { transform: 'translateY(0)' }];
+const IDLE_EVERY_MS = 1300;
+// PER-CHARACTER IDLE BEATS (Andy oct16 "make the heros on the leaderboard have an animation (like movement a bit)"): each
+// cast member moves in its own way — one finite beat at a time, chained by the single idle timer below. Keys are
+// [offset, translateY %, rotate deg, scaleX, scaleY]; #1's crown rides the same beat (its y in crown-heights).
+const BEATS = {
+  riot: { ms: 820, k: [[0, 0, 0, 1, 1], [0.15, -3, -5, 1, 1], [0.32, -3, 5, 1, 1], [0.5, -2, -4, 1, 1], [0.68, -1, 3, 1, 1], [1, 0, 0, 1, 1]] }, // a punk shake
+  glitch: { ms: 1300, k: [[0, 0, 0, 1, 1], [0.3, 0, -7, 0.98, 1.01], [0.75, 0, -7, 0.98, 1.01], [1, 0, 0, 1, 1]] }, // leans back, bored
+  hype: { ms: 900, k: [[0, 0, 0, 1, 1], [0.18, 2, 0, 1.08, 0.9], [0.45, -16, -3, 0.95, 1.07], [0.72, 0, 0, 1.1, 0.88], [0.86, -2, 0, 0.98, 1.03], [1, 0, 0, 1, 1]] }, // jumps
+  brawl: { ms: 1000, k: [[0, 0, 0, 1, 1], [0.2, -5, 4, 1, 1.03], [0.4, 0, 0, 1.04, 0.96], [0.6, -5, 4, 1, 1.03], [0.8, 0, 0, 1.04, 0.96], [1, 0, 0, 1, 1]] }, // bounces on its toes
+  hex: { ms: 1500, k: [[0, 0, 0, 1, 1], [0.5, -8, 3, 1, 1], [1, 0, 0, 1, 1]] }, // floats
+};
+const beatFrames = (b) => b.k.map(([offset, y, r, sx, sy]) => ({ offset, transform: `translateY(${y}%) rotate(${r}deg) scale(${sx}, ${sy})` }));
+const crownFrames = (b) => b.k.map(([offset, y, r]) => ({ offset, transform: `translateY(${y * 3.4}%) rotate(${-7 + r * 0.6}deg)` }));
 const GLINT = [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(60deg)', opacity: 1, offset: 0.35 }, { transform: 'scale(0.4) rotate(140deg)', opacity: 0 }];
-const CROWN_BOB = [{ transform: 'rotate(-7deg)' }, { transform: 'rotate(-12deg) translateY(-6px)', offset: 0.4 }, { transform: 'rotate(-4deg) translateY(1px)', offset: 0.75 }, { transform: 'rotate(-7deg)' }];
 const CONFETTI_N = 18;
 const CONFETTI_ART = 16; // public/stage/fx/confetti-0 … 15.webp (painted pieces, one sheet)
 // a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
@@ -498,9 +508,10 @@ export default function LeaderboardV2({ onBack }) {
       i += 1;
       const col = root.querySelector(`.lb2-col--${place}`);
       if (!col || !col.dataset.id) return;
-      kitPlay(col.querySelector('.lb2-buddy'), HOP, { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      const beat = BEATS[col.dataset.cast] || BEATS.hype;
+      kitPlay(col.querySelector('.lb2-buddy'), beatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
       kitPlay(col.querySelector('.lb2-glint'), GLINT, { duration: 640, delay: 80, easing: 'cubic-bezier(.2,.8,.3,1)' });
-      if (place === 1 && crownRef.current) kitPlay(crownRef.current, CROWN_BOB, { duration: 700, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      if (place === 1 && crownRef.current) kitPlay(crownRef.current, crownFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
     }, 2600);
     return () => clearTimeout(timer);
   }, [shown, data.loaded]);

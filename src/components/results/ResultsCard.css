@@ -419,5 +419,15 @@
    WIN tally (4 chips + a bonus line) ran under the old right-hand MENU and hid the total. Phone keeps its stack. */
 .rs2:not(.rs2--narrow) .rs2-foot > .game-over-actions { display: contents; }
 .rs2:not(.rs2--narrow) .rs2-foot > .game-over-actions > :not(.game-over-rematch) { order: -1; flex: none; }
-.rs2:not(.rs2--narrow) .rs2-foot .rs2-extras { order: 0; max-width: calc(330px * var(--u)); }
+.rs2:not(.rs2--narrow) .rs2-foot .rs2-extras { order: 0; flex: 0 1 auto; flex-wrap: nowrap; white-space: nowrap; }
+/* a card already too tight (GameScreen's fit check) drops the flavour from the foot + the bonus hint line, so the
+   foot stays one PLAY AGAIN tall and the tally keeps its total on screen (1163×450 WIN ran 9px over) */
+.rs2:not(.rs2--narrow)[data-ko-tight] .rs2-extras,
+.rs2[data-ko-tight] .rs2-line-note { display: none; }
 .rs2:not(.rs2--narrow) .rs2-foot .game-over-rematch { order: 1; margin-left: auto; }
+/* THE IMPACT FRAME (oct16): a flat flash over the hero box (its skew + inset match the plate) and the painted burst behind
+   the character — both rest invisible; the one-shots in ResultsCard play them on the landing frame */
+.rs2-impact { position: absolute; z-index: 1; inset: 0; transform: skewX(-5deg); background: #fff; opacity: 0; pointer-events: none; }
+.rs2-impact.is-ko { background: #FF3D7F; }
+.rs2-char .rs2-impact-burst { position: absolute; z-index: 0; left: -22%; top: -22%; width: 144%; height: 144%; object-fit: contain; opacity: 0; filter: none; pointer-events: none; }
+.rs2-hero-in { z-index: 2; } /* the character + #N stay ON TOP of the impact flash (the classic impact frame) */

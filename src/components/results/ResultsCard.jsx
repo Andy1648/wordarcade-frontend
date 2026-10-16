@@ -63,6 +63,12 @@ const confettiThrow = (c) => [
   { transform: `translate(${c.dx}px, ${c.dy}px) rotate(${c.spin * 0.5}deg) scale(1)`, opacity: 1, offset: 0.45 },
   { transform: `translate(${c.dx * 1.2}px, ${c.dy + c.fall}px) rotate(${c.spin}deg) scale(.9)`, opacity: 0 },
 ];
+// THE IMPACT FRAME (Andy oct16 "the KO and win can maybe have an impact frame (like a flash)"): the frame the character
+// lands, the hero box hard-flashes (on → hold → fade), the painted burst pops behind it, the box jolts once
+const IMPACT_AT = 480; // the DROP reveal (data-at 150, 550 ms) touches down at its 60% key
+const FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.03 }, { opacity: 1, offset: 0.34 }, { opacity: 0.45, offset: 0.4 }, { opacity: 0.3, offset: 0.55 }, { opacity: 0 }];
+const BURST = [{ transform: 'scale(.3) rotate(-25deg)', opacity: 1 }, { transform: 'scale(1.2) rotate(6deg)', opacity: 1, offset: 0.3 }, { transform: 'scale(1.25) rotate(9deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1.5) rotate(14deg)', opacity: 0 }];
+const JOLT = [{ transform: 'translate(0, 0)' }, { transform: 'translate(-6px, 4px)', offset: 0.2 }, { transform: 'translate(5px, -3px)', offset: 0.45 }, { transform: 'translate(-2px, 1px)', offset: 0.7 }, { transform: 'translate(0, 0)' }];
 const DIZZY = [{ transform: 'scale(0) rotate(-120deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(20deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
 
 // ART PIPELINE (Andy oct13): the trophy + XP hex are ChatGPT art cut by scripts/cutout-art.py (public/results/).
@@ -206,6 +212,9 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     for (const r of reveals) timers.push(setTimeout(() => fire(r), Number(r.dataset.at) || 0));
     // the character lands (~150 + 550 ms): throw the confetti / pop the dizzy stars
     el.querySelectorAll('.rs2-char-cf').forEach((n, i) => kitPlay(n, confettiThrow(CHAR_CONFETTI[i]), { duration: 900 + (i % 4) * 70, delay: 640 + (i % 5) * 25, easing: 'cubic-bezier(.15,.7,.4,1)', fill: 'backwards' }));
+    kitPlay(el.querySelector('.rs2-impact'), FLASH, { duration: 360, delay: IMPACT_AT, easing: 'linear', fill: 'backwards' });
+    kitPlay(el.querySelector('.rs2-impact-burst'), BURST, { duration: 700, delay: IMPACT_AT - 20, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
+    kitPlay(el.querySelector('.rs2-hero-in'), JOLT, { duration: 200, delay: IMPACT_AT, easing: 'linear' });
     el.querySelectorAll('.rs2-dizzy-s').forEach((n, i) => kitPlay(n, DIZZY, { duration: 420, delay: 720 + i * 110, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'backwards' }));
     const land = (sel, at) => timers.push(setTimeout(() => { const n = el.querySelector(sel); if (n) kitPlay(n, LAND, { duration: 320, easing: 'cubic-bezier(.2,1.5,.4,1)' }); }, at));
     land('.rs2-xp', T.xp + 200 + T.count * 2);
@@ -273,7 +282,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       if (e.target && e.target.closest && e.target.closest('button, a')) return;
       cancelAnimationFrame(raf);
       for (const id of timers) clearTimeout(id);
-      for (const r of [...reveals, ...el.querySelectorAll('.rs2-char-cf, .rs2-dizzy-s')]) { if (r.__kitAnim) { try { r.__kitAnim.finish(); } catch { /* gone */ } } }
+      for (const r of [...reveals, ...el.querySelectorAll('.rs2-char-cf, .rs2-dizzy-s, .rs2-impact, .rs2-impact-burst, .rs2-hero-in')]) { if (r.__kitAnim) { try { r.__kitAnim.finish(); } catch { /* gone */ } } }
       finish();
       cancelAnimationFrame(winsRaf);
       winsFinal();
@@ -318,11 +327,13 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       {/* ===== HERO: the placement ===== */}
       <section className={`rs2-hero rs2-hero--${stamp.tone}`} role="heading" aria-level={2} aria-label={heroLabel}>
         <div className="rs2-hero-plate" aria-hidden="true" />
+        {myCast && pose !== 'hero' ? <div className={`rs2-impact is-${pose}`} aria-hidden="true" /> : null}
         <div className="rs2-hero-in" aria-hidden="true">
           {myCast ? (
             // YOUR CHARACTER is the placement art (art run oct16, Andy: WIN pose + confetti · top 3 = HERO on its medal
             // emblem · K.O. pose + dizzy stars). Until a WIN / KO pose is painted the HERO stands in (tipped over on a K.O.).
             <div className={`rs2-icon rs2-char rs2-char--${pose}`} data-rv="drop" data-at="150" data-cast={myCast.id}>
+              {pose !== 'hero' ? <img className="rs2-impact-burst" src={pose === 'win' ? '/fx/burst-win.webp' : '/fx/burst-ko.webp'} width="256" height="256" alt="" draggable="false" /> : null}
               {pose === 'hero' ? <img className="rs2-char-emblem" src={`/stage/emblem-${Math.min(3, Math.max(1, place))}.webp`} width="256" height="256" alt="" draggable="false" /> : null}
               <img className={`rs2-char-img${pose !== 'hero' && !hasPose(myCast.id, pose) ? ` is-stand-in is-${pose}` : ''}`} src={castSrc(myCast.id, pose)} width="512" height="512" alt="" draggable="false" />
               {pose === 'win' ? (
