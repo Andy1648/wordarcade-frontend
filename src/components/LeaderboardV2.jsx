@@ -41,7 +41,6 @@ import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import { BLOCKS } from './PodiumBlocks.jsx';
-import { playerCharSrc, fallbackColor } from '../playerColors.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 
@@ -460,7 +459,7 @@ export default function LeaderboardV2({ onBack }) {
       i += 1;
       const col = root.querySelector(`.lb2-col--${place}`);
       if (!col || !col.dataset.id) return;
-      kitPlay(col.querySelector('.lb2-buddy'), HOP, { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      kitPlay(col.querySelector('.lb2-pod-name'), HOP, { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)' });
       kitPlay(col.querySelector('.lb2-glint'), GLINT, { duration: 640, delay: 80, easing: 'cubic-bezier(.2,.8,.3,1)' });
       if (place === 1 && crownRef.current) kitPlay(crownRef.current, CROWN_BOB, { duration: 700, easing: 'cubic-bezier(.3,.7,.3,1)' });
     }, 2600);
@@ -526,30 +525,20 @@ export default function LeaderboardV2({ onBack }) {
             return (
               <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ''}`} data-place={place} data-id={p ? p.id : ''} {...peekProps(p, setPeek)}>
                 {p ? <PodiumFx place={place} party={place === 1 || mine} /> : null}
+                {place === 1 && <Crown crownRef={crownRef} />}
                 <div className="lb2-who">
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
-                  {/* PODIUM FRONTS (Andy oct16 "better fronts for top 3 in addition to podium"): the player's own bomb buddy
-                      (the seat-avatar art, colour hashed from their id so it is the same everywhere) STANDS on the block,
-                      #1 wearing the crown; the name + numbers ride the block's front face like a trophy plaque. */}
-                  <span className={`lb2-buddy-wrap${p ? '' : ' is-open'}`}>
-                    {place === 1 && <Crown crownRef={crownRef} />}
-                    <img className="lb2-buddy" src={playerCharSrc(fallbackColor(p ? p.id : `open-${place}`).color)} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
+                  <span className="lb2-pod-name">
+                    {mine && <span className="lb2-you">YOU</span>}
+                    <span className="lb2-pod-name-t" style={{ '--nl': nameEms(p ? p.username : 'YOUR NAME HERE?') }}>{p ? p.username : 'YOUR NAME HERE?'}</span>
                   </span>
+                  <span className="lb2-pod-r">{n ? n.r : '—'}</span>
+                  <span className="lb2-pod-lv">{n ? n.lv : ''} {n ? <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span> : null}</span>
                   {wk ? <Prize rank={place} pod /> : null}
                 </div>
                 <div className="lb2-blockwrap">
                   <B />
                   <span className="lb2-place">{place}</span>
-                  <span className="lb2-front">
-                    <span className="lb2-pod-name">
-                      {mine && <span className="lb2-you">YOU</span>}
-                      <span className="lb2-pod-name-t" style={{ '--nl': nameEms(p ? p.username : 'YOUR NAME HERE?') }}>{p ? p.username : 'YOUR NAME HERE?'}</span>
-                    </span>
-                    <span className="lb2-pod-stats">
-                      <span className="lb2-pod-r">{n ? n.r : '—'}</span>
-                      {n ? <span className="lb2-pod-lv">{n.lv} <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span></span> : null}
-                    </span>
-                  </span>
                 </div>
               </div>
             );

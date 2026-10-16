@@ -121,12 +121,12 @@ test('▲▼ from the last look; the look is remembered for next time', async ({
   const seen = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.lbseen')));
   expect(seen.all).toMatchObject({ a: 1, b: 2, c: 3, d: 4, e: 5, me: 13 });
   // nothing on the board loops; the arrival one-shots finish. The TOP 3 IDLE (Andy oct12) is the one sanctioned
-  // motion after that: a FINITE beat on a podium buddy (oct16: the hop moved from the name to the bomb buddy) / its glint / #1's crown — never infinite, never anything else.
+  // motion after that: a FINITE beat on a podium name / its glint / #1's crown — never infinite, never anything else.
   await page.waitForTimeout(2600);
   const anims = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.lb2'))
     .map((a) => ({ inf: a.effect.getTiming().iterations === Infinity, running: a.playState === 'running',
-      idle: !!a.effect.target.closest('.lb2-pod-name, .lb2-buddy, .lb2-glint, .lb2-crown') })));
+      idle: !!a.effect.target.closest('.lb2-pod-name, .lb2-glint, .lb2-crown') })));
   expect(anims.filter((a) => a.inf).length, 'nothing infinite on the board').toBe(0);
   expect(anims.filter((a) => a.running && !a.idle).length, 'no still-running animation at rest but the top-3 idle beat').toBe(0);
 });
