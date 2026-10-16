@@ -22,3 +22,12 @@ export function readMain() {
 export function writeMain(id) {
   try { localStorage.setItem(KEY, id); } catch { /* blocked storage */ }
 }
+/** Which cast member a player shows: YOU = your MAIN; anyone else = the member of their hashed seat colour (the same
+ *  colour their seat / avatar uses everywhere, playerColors.fallbackColor), so a player keeps one character. */
+export function castFor(id, mine = false) {
+  if (mine) return CAST.find((c) => c.id === readMain()) || CAST[0];
+  const s = String(id == null ? '' : id);
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return CAST[h % CAST.length];
+}
