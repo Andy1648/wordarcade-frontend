@@ -6,7 +6,8 @@ import Mascot from './Mascot';
 import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
-import { resolvePlayerColor, playerCharSrc } from '../playerColors';
+import { resolvePlayerColor } from '../playerColors';
+import { castByColor, castSrc } from '../cast/cast.js';
 import { MORE_MODES } from '../gameData';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
@@ -3421,7 +3422,9 @@ export default function GameScreen({
                   {/* Panic sweat flinging off your own card when time is dire. */}
                   {isCurrent && isMe && !eliminated && panicking && <SweatDrops />}
                   {/* THE PLAYER ICON (Andy oct14 art run): the bomb buddy in this player's colour IS the avatar */}
-                  <img className="wb-seat-char" src={playerCharSrc(pc.color)} alt="" aria-hidden="true" draggable="false" />
+                  {/* oct16 art run: the painted CAST member of this seat's colour (RIOT pink · GLITCH cyan · HYPE yellow ·
+                      BRAWL orange · HEX purple); falls back to the bomb buddy until its HERO is painted */}
+                  <img className="wb-seat-char" src={castSrc(castByColor(pc.color).id, 'hero')} alt="" aria-hidden="true" draggable="false" />
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                     <span className="game-player-name-text" translate="no">{player.name}</span>
