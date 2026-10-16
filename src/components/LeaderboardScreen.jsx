@@ -6,7 +6,7 @@
 // instantly and asks the server (lb_name_status) for "taken" after a 350 ms pause; the server is
 // what actually refuses a name (DB trigger + lb_claim), so a bypassed client can't put one on the
 // board. Moderation beyond that is Andy editing rows in the Supabase Table Editor.
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import {
   LEADERBOARD_ENABLED,
   claimName,
@@ -40,11 +40,12 @@ import './rarity/RarityFin.css';
 import { reduceMotion } from '../lib/reduceMotion';
 import { SEASON2 } from '../progress/season';
 import OverlaySkeleton from './OverlaySkeleton';
+import { lazyWithReload } from '../lib/chunkReload';
 
 // P8 (SEASON2 only): the v2 LEADERBOARD (Leaderboard.dc.html — white podium, v3 rank plates, ▲▼, ALL TIME / THIS
 // WEEK), its own lazy chunk — for EVERY season-2 player, named or not (claiming a name is V2's inline box). Flag OFF:
 // the live board below, untouched.
-const LeaderboardV2 = lazy(() => import('./LeaderboardV2.jsx'));
+const LeaderboardV2 = lazyWithReload(() => import('./LeaderboardV2.jsx'), 'LeaderboardV2');
 
 export default function LeaderboardScreen({ onBack }) {
   // Andy oct8 ("where are the functions before, like change name"): the season-2 board (V2) had NO way back to the

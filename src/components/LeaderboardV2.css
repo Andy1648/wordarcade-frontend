@@ -934,16 +934,16 @@
 .lb2--narrow .lb2-rays { width: 170px; height: 170px; margin: -85px 0 0 -85px; }
 .lb2--narrow .lb2-banner,
 .lb2--narrow .lb2-col--1 .lb2-banner { width: 100%; max-width: 132px; height: auto; aspect-ratio: 640 / 178; }
-.lb2--narrow .lb2-banner .lb2-pod-name-t { font-size: max(12px, min(15px, calc(110px / var(--nl, 8)))); -webkit-text-stroke-width: 3px; }
+.lb2--narrow .lb2-banner .lb2-pod-name-t { font-size: max(var(--fs-k13), min(var(--fs-k15), calc(110px / var(--nl, 8)))); -webkit-text-stroke-width: 3px; }
 .lb2--narrow .lb2-banner .lb2-you { display: none; } /* YOU is the yellow row + the gold ribbon text below */
 .lb2--narrow .lb2-pod-stats { gap: 4px; margin: 2px 0 4px; }
-.lb2--narrow .lb2-pod-stats .lb2-pod-r { font-size: 14px; -webkit-text-stroke-width: 3px; text-shadow: 2px 2px 0 #000; }
-.lb2--narrow .lb2-pod-stats .lb2-pod-lv { font-size: 13px; }
+.lb2--narrow .lb2-pod-stats .lb2-pod-r { font-size: var(--fs-k14); -webkit-text-stroke-width: 3px; text-shadow: 2px 2px 0 #000; }
+.lb2--narrow .lb2-pod-stats .lb2-pod-lv { font-size: var(--fs-k13); }
 .lb2--narrow .lb2-pod-stats .lb2-pod-lvk { display: none; }
 .lb2--narrow .lb2-block { width: 82px; }
-.lb2--narrow .lb2-col .lb2-place { font-size: 30px; -webkit-text-stroke-width: 4px; text-shadow: 2px 2px 0 #000; }
-.lb2--narrow .lb2-col--1 .lb2-place { font-size: 36px; }
-.lb2--narrow .lb2-col--3 .lb2-place { font-size: 24px; }
+.lb2--narrow .lb2-col .lb2-place { font-size: var(--fs-k30); -webkit-text-stroke-width: 4px; text-shadow: 2px 2px 0 #000; }
+.lb2--narrow .lb2-col--1 .lb2-place { font-size: var(--fs-k38); }
+.lb2--narrow .lb2-col--3 .lb2-place { font-size: var(--fs-k24); }
 .lb2--narrow .lb2-col.is-me .lb2-banner .lb2-pod-name-t { color: #FFE94A; }
 /* a long YOU name ran under the centred LEADERBOARD title once the stage scales down (1280×495: "EADERBOARD") — at
    those sizes the button drops its CHANGE word (it is still the button; its aria-label says "Change name") */
@@ -956,7 +956,7 @@
 /* small phone (360 wide): the ALL TIME tab wrapped to three lines and its top was clipped; your row's chase ran under R0 */
 .lb2--narrow .lb2-tab-l,
 .lb2--narrow .lb2-tab-s { white-space: nowrap; }
-.lb2--narrow .lb2-tab-s { font-size: 13px; }
+.lb2--narrow .lb2-tab-s { font-size: var(--fs-k13); }
 .lb2--narrow .lb2-row.is-me .lb2-chase { max-width: calc(100% + 40px); position: relative; z-index: 0; } /* may borrow the ▲▼ column, never REBIRTHS */
 .lb2--narrow .lb2-row.is-me .lb2-r { position: relative; z-index: 1; }
 /* the band tag beside YOUR name (the chase line below holds the rival): a quiet mono pill in ink on your yellow row */

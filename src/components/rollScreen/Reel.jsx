@@ -62,6 +62,7 @@ const SPIN_KEYS = 64; // keyframes the spin curve is sampled into (linear betwee
 // the cells around the landing one that come ALIVE once the reel stops (Andy oct11 "hover animations and idle ones as well on the
 // roll screen"): the visible neighbours idle (cog turn, glyph bob) and take the hover; the 30+ off-screen cells stay still
 const LIVE_CELLS = 4;
+const VISIBLE_CELLS = 5; // the window shows ~7 cells around the landing one; ±5 covers any viewport (first-paint pool)
 const SPARK_SLOTS = Array.from({ length: SPARK_POOL }, (_, i) => i);
 // the pointer KICK on each of the last NEAR_MISS_TICKS crossings (NIGHT oct8 #4) — transform only, ~110 ms
 const KICK = [{ transform: 'translateX(0) rotate(0deg)' }, { transform: 'translateX(5px) rotate(4deg)', offset: 0.35 }, { transform: 'translateX(0) rotate(0deg)' }];
@@ -124,6 +125,17 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   // AT REST (Andy oct11 "i want the animations to show on the roll screen as well (when its stopped)"): once the reel
   // has stopped, the landed card runs its live gear turn + shine like every other card; spinning, every cell is still
   const [atRest, setAtRest] = useState(true);
+  // FIRST PAINT FAST (Andy oct16 "lag … as people press buttons like gear … IT CANT DELAY"): the pool is REEL_LEN (44)
+  // full MarkCards, but only ~7 are in the window at rest. Mounting all 44 on open was the GEARS button's 914 ms freeze
+  // (4x CPU). The first frame now renders the cards within VISIBLE_CELLS of the landing cell; the rest fill in right
+  // after that frame paints — long before a ROLL can be pressed — and a spin always gets the full pool at once.
+  const [poolFull, setPoolFull] = useState(false);
+  useEffect(() => {
+    let t = 0;
+    const r = requestAnimationFrame(() => { t = setTimeout(() => setPoolFull(true), 0); }); // after the first paint
+    return () => { cancelAnimationFrame(r); clearTimeout(t); };
+  }, []);
+  const fullPool = poolFull || spin != null;
   const reg = (name) => (el) => { if (el) nodes.current[name] = el; };
 
   const anim = (el, frames, opts) => {
@@ -581,8 +593,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     data-mark={id || undefined}
                   >
                     {/* EPIC+ cells wear the rare-gear glow (GearFx): the passing cells a still aura, the landing cell breathes */}
-                    {m && GLOW_TIERS.has(m.tier) ? <GearFx tier={m.tier} scale={0.6} live={i === LAND_AT} /> : null}
-                    {m ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} locked={i !== LAND_AT && !ownsIn(view, id)} still={!(atRest && Math.abs(i - LAND_AT) <= LIVE_CELLS)} sheen={atRest && i === LAND_AT} /> : null}
+                    {m && !fullPool && Math.abs(i - LAND_AT) > VISIBLE_CELLS ? null : m && GLOW_TIERS.has(m.tier) ? <GearFx tier={m.tier} scale={0.6} live={i === LAND_AT} /> : null}
+                    {m && (fullPool || Math.abs(i - LAND_AT) <= VISIBLE_CELLS) ? <MarkCard id={id} tier={m.tier} name={m.name} state={view} locked={i !== LAND_AT && !ownsIn(view, id)} still={!(atRest && Math.abs(i - LAND_AT) <= LIVE_CELLS)} sheen={atRest && i === LAND_AT} /> : null}
                   </div>
                 </div>
               );

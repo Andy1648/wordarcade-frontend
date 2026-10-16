@@ -13,7 +13,7 @@
 //   * CHASE (what passes the player above, in the board's order) and CLIMB (what reaches your next rank).
 // Motion: kit one-shots (transform / opacity; will-change only while playing); NOTHING loops at rest (the mockup's
 // crown wobble / ▲ bob / ▼ sink / own-row pulse play once on arrival); REDUCE MOTION plays none of it.
-import { Fragment, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
@@ -43,10 +43,11 @@ import { formatNum } from '../format';
 import { CAST, castFor, castSrc } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
+import { lazyWithReload } from '../lib/chunkReload';
 
 const fmt = (n) => formatNum(Number(n) || 0);
 // 031 LEADERBOARD PROFILES (Andy oct10): tap a row / a podium spot → that player's card (gear, BASE, POWER …). Lazy.
-const ProfileCard = lazy(() => import('./ProfileCard.jsx'));
+const ProfileCard = lazyWithReload(() => import('./ProfileCard.jsx'), 'ProfileCard');
 /** Row / podium props that open a profile: a button by role, Enter / Space too. */
 const peekProps = (row, open) => (row ? {
   role: 'button',
