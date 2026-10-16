@@ -29,6 +29,14 @@ import { formatNum, formatRate, formatMultExact } from '../format';
 import ShopV2Looks from './ShopV2Looks';
 import DailyDrop from './DailyDrop';
 
+// PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
+// SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
+// each cut file lands in public/shop/ (never a path that is not there: no 404s, no broken-image frame).
+const SHOP_ART = {
+  // xp25: '/shop/xp.webp', wins25: '/shop/wins.webp', luck2: '/shop/luck.webp',
+  // overdrive: '/shop/overdrive.webp', extend: '/shop/everything.webp',
+};
+
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
   soon: 'FREE EPIC+ ROLL — COMES WITH THE ROLL SCREEN',
@@ -55,7 +63,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
           <span className="sp2-name">{it.name || R.name}</span>
           <span className="sp2-left">×{formatNum(left)}<span className="sp2-left-w"> LEFT</span></span>
         </span>
-        <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />
+        {SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
         <span className="sp2-big">{it.big}</span>
         <span className="sp2-what">{it.what}</span>
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
