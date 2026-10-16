@@ -23,6 +23,8 @@ import {
   saveWinsLifetime,
   getRounds,
   getWinsCarry,
+  MIN_WORDS,
+  minWordsFor,
 } from './wins.js';
 import { POP_STYLES, SOUND_PACKS } from './shop.js';
 import { keyTierCostAt } from './xp.js';
@@ -468,4 +470,30 @@ test('perWordRateNow returns the XP and the WINS for the same word, and xp === r
       assert.ok(Math.abs(now.mult - now.xp / now.xpBase) < 1e-9, `${mode}/${difficulty} mult`);
     }
   }
+});
+
+// REBIRTH-SCALED GATE (Andy oct16): 3 words at R0-4, +1 per 5 rebirths, capped at +5 (8 words from R25).
+test('minWordsFor: 3 at R0-4, +1 per 5 rebirths, capped at 8', () => {
+  assert.equal(MIN_WORDS, 3);
+  const want = [[0, 3], [4, 3], [5, 4], [9, 4], [10, 5], [14, 5], [20, 7], [24, 7], [25, 8], [60, 8], [999, 8], [-3, 3]];
+  for (const [rc, n] of want) assert.equal(minWordsFor(rc), n, `R${rc}`);
+  // no argument = the player's own rebirths (taw.rebirths)
+  withStorage((map) => {
+    map.set('taw.rebirths', '12');
+    assert.equal(minWordsFor(), 5);
+  });
+});
+
+test('the gate rises with rebirths: at R10 words 1-4 bank nothing, word 5 releases all five, then 1× each', () => {
+  withStorage(() => {
+    const rc = 10;
+    for (let n = 1; n < 5; n++) assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: n - 1, nowWords: n, rebirthCount: rc }), 0, `word ${n}`);
+    assert.equal(getWins(), 0);
+    const per = perWordWins({ mode: 'wordBomb', rebirthCount: rc, level: 1 });
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 4, nowWords: 5, rebirthCount: rc }), 5 * per);
+    assert.equal(bankWordWins({ mode: 'wordBomb', prevWords: 5, nowWords: 6, rebirthCount: rc }), per);
+    // the round pure reference agrees: under the gate 0, at it the full count
+    assert.equal(awardWins({ mode: 'wordBomb', wordsAccepted: 4, rebirthCount: rc }), 0);
+    assert.ok(awardWins({ mode: 'wordBomb', wordsAccepted: 5, rebirthCount: rc }) > 0);
+  });
 });

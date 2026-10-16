@@ -20,7 +20,10 @@ function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip }) {
   const can = gems >= price;
   const state = isOn ? 'on' : isOwned ? 'owned' : can ? 'buy' : 'locked';
   return (
-    <div className={`sp2-look is-${state}`} data-look={it.id}>
+    <div className={`sp2-look is-${state}${type === 'popStyle' ? ' has-art' : ''}${it.id === 'legend' ? ' is-legend' : ''}`} data-look={it.id}>
+      {/* POP STYLE ART (Andy oct16 "make cosmetics the best they can be" — the pop styles were text-only cards): a painted
+          swatch of the burst, one per style (ChatGPT, one consistent letterform across the set; public/shop/pop/) */}
+      {type === 'popStyle' ? <img className="sp2-look-art" src={`/shop/pop/${it.id}.webp`} width="256" height="256" alt="" aria-hidden="true" draggable="false" /> : null}
       <span className="sp2-look-name">{it.name}</span>
       <span className="sp2-look-what">{it.blurb}</span>
       {isOn ? (

@@ -47,7 +47,17 @@ export const ROUNDS_KEY = 'taw.rounds';
 export const ROUND_MODES = ['wordBomb', 'blitz', 'satRush'];
 // The payout gate: a round pays nothing until this many words are accepted. Exported
 // so the in-game HUD pill can show the gate ("3 WORDS TO EARN") before it's crossed.
+// MIN_WORDS is the BASE (rebirth 0). REBIRTH-SCALED GATE (Andy oct16 "make the required number of words scale up
+// with rebirths"): +1 word per MIN_WORDS_EVERY rebirths, at most +MIN_WORDS_EXTRA_CAP — 3 at R0-4, 4 at R5, 5 at
+// R10 … 8 from R25. Read the live gate through minWordsFor(), never MIN_WORDS directly.
 export const MIN_WORDS = 3;
+export const MIN_WORDS_EVERY = 5;
+export const MIN_WORDS_EXTRA_CAP = 5;
+/** The words a round needs before it pays, at `rebirthCount` (default: the player's own). */
+export function minWordsFor(rebirthCount) {
+  const rc = Number.isFinite(rebirthCount) ? rebirthCount : getRebirths();
+  return MIN_WORDS + Math.min(MIN_WORDS_EXTRA_CAP, Math.floor(Math.max(0, rc) / MIN_WORDS_EVERY));
+}
 
 function readInt(key) {
   try {
@@ -342,7 +352,7 @@ export function perWordWins(opts = {}) {
 // param is retained for the pure recordRound reference + its unit tests.
 export function awardWins({ wordsAccepted, mode, difficulty, rebirthCount, weightedWords, wordLength } = {}) {
   const w = Number.isFinite(wordsAccepted) ? Math.floor(wordsAccepted) : 0;
-  if (w < MIN_WORDS) return 0;
+  if (w < minWordsFor(rebirthCount)) return 0;
   const weight = Number.isFinite(weightedWords) && weightedWords > 0 ? weightedWords : w;
   // Math.round, not round10: wins are XP÷10 and no longer land on a multiple of ten, so snapping
   // the TOTAL to one would quietly disagree with the sum of the words that produced it.
@@ -581,8 +591,9 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   const weighted = WEIGHTED_MODES.has(modeKey(mode));
   const prevW = weighted && Number.isFinite(prevWeight) ? prevWeight : prevN;
   const nowW = weighted && Number.isFinite(nowWeight) ? nowWeight : nowN;
-  const paidPrev = prevN >= MIN_WORDS ? prevW : 0;
-  const paidNow = nowN >= MIN_WORDS ? nowW : 0;
+  const gate = minWordsFor(rebirthCount);
+  const paidPrev = prevN >= gate ? prevW : 0;
+  const paidNow = nowN >= gate ? nowW : 0;
   const deltaWeight = paidNow - paidPrev;
   if (deltaWeight <= 0) return 0;
   // `wordLength` is THIS word's letters — the same count the XP award used, so the two readouts
@@ -605,7 +616,7 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   // summable by the same test and renderable by the same component.
   credit(granted, 'WORDS', { kind: 'word', mode });
   // First time this round crosses the gate → count the round (mode counters only).
-  if (prevN < MIN_WORDS && nowN >= MIN_WORDS && mode && ROUND_MODES.includes(mode)) {
+  if (prevN < gate && nowN >= gate && mode && ROUND_MODES.includes(mode)) {
     const r = getRounds();
     r[mode] += 1;
     saveRounds(r);
@@ -660,7 +671,7 @@ export function awardWordXp(opts = {}) {
 // reference for the total a full round pays). Do NOT call this AND bankWordWins for one round.
 export function recordRound({ mode, wordsAccepted, difficulty } = {}) {
   const granted = awardWins({ wordsAccepted, mode, difficulty });
-  const counts = (Number.isFinite(wordsAccepted) ? wordsAccepted : 0) >= MIN_WORDS;
+  const counts = (Number.isFinite(wordsAccepted) ? wordsAccepted : 0) >= minWordsFor();
   if (counts) {
     credit(granted, 'WORDS', { kind: 'word', mode });
     if (mode && ROUND_MODES.includes(mode)) {

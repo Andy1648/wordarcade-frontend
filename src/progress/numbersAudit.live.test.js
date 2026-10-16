@@ -22,7 +22,7 @@ globalThis.localStorage = {
 
 const { SEASON2 } = await import('./season.js');
 const { statBoard, statChain, boardMult } = await import('./statBoard.js');
-const { perWordRateNow, bankWordWins, getWins } = await import('./wins.js');
+const { perWordRateNow, bankWordWins, getWins, minWordsFor } = await import('./wins.js');
 const { letterXpNow, creditLetterXp, resetLetterXp } = await import('./letterXp.js');
 const { roundWordXp, KEY_LADDER } = await import('./xp.js');
 const { ROLL_STATE_KEY } = await import('./markRolls.js');
@@ -107,8 +107,9 @@ test('LIVE: BASE × every chip = TOTAL (exact AND as printed) = the payout = 10 
         const formula = 10 * ((10 + lm.winsBase) / 10) * modeX * 5 ** st.r * lm.wins * idx;
         assert.equal(c.total, roundWordXp(formula * 10) / 10, `${tag}: TOTAL is the live formula`);
         const before = getWins();
-        const paid = bankWordWins({ mode: key, prevWords: 0, nowWords: 3, wordLength: 5 });
-        assert.equal(paid, Math.floor(roundWordXp(3 * c.total * 10) / 10), `${tag}: the bank paid 3 × TOTAL`);
+        const gate = minWordsFor(); // the rebirth-scaled gate (3 + 1 per 5 rebirths, Andy oct16)
+        const paid = bankWordWins({ mode: key, prevWords: 0, nowWords: gate, wordLength: 5 });
+        assert.equal(paid, Math.floor(roundWordXp(gate * c.total * 10) / 10), `${tag}: the bank paid ${gate} × TOTAL`);
         assert.equal(getWins() - before, paid);
         n += 1;
       }
