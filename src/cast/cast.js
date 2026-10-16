@@ -9,7 +9,7 @@ export const CAST = [
   { id: 'hex', name: 'HEX', tag: 'KNOWS SOMETHING', color: '#B04BFF', dark: '#5E0F9E', seat: 'purple' },
 ];
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
-const PAINTED = new Set([]);
+const PAINTED = new Set(['riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 'hex-hero']);
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
   const c = CAST.find((x) => x.id === id) || CAST[0];
