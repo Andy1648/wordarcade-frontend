@@ -43,7 +43,11 @@
   background: #1a0b2e; border: 3px solid var(--f-d); border-radius: 8px; box-shadow: 3px 3px 0 #000;
   transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1);
 }
-.mp-face img { display: block; width: 150%; height: 150%; margin: -6% 0 0 -25%; object-fit: contain; } /* the face + fuse, cropped from the HERO */
+.mp-face img {
+  /* the face + fuse, cropped INSIDE the image (object-view-box) — the img never overflows its button (the viewport-
+     integrity gate flags clipped children); browsers without object-view-box show the whole HERO, still fine */
+  display: block; width: 100%; height: 100%; object-fit: contain; object-view-box: inset(4% 18% 30% 16%);
+}
 .mp-face.is-on { background: var(--f-c); border-color: #000; transform: translateY(-4px); }
 @media (hover: hover) { .mp-face:not(.is-on):hover { transform: translateY(-3px) rotate(-4deg); } }
 .mp-face:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
