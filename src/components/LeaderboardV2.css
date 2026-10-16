@@ -895,12 +895,13 @@
 .lb2-col.is-me .lb2-banner .lb2-pod-name { padding: 0; background: none; border: 0; box-shadow: none; }
 .lb2-col.is-me .lb2-banner .lb2-pod-name-t { color: #fff; -webkit-text-stroke: calc(4px * var(--pk) + 1px) #000; }
 .lb2-banner .lb2-you { font-size: max(11px, calc(var(--fs-k13) * var(--pk))); padding: 0 4px; }
-/* one compact stats line under the ribbon: rank plate · ★R · LV */
+/* under the ribbon: the rank plate, then one short numbers line (★R · LV) — two lines, so #1's never spills into #3 */
+.lb2-who > .lb2-pod-plate { margin: calc(2px * var(--pk)) 0 0; font-size: max(14px, calc(var(--fs-k14) * var(--pk))); max-width: 100%; }
+.lb2--narrow .lb2-who > .lb2-pod-plate { display: none; }
 .lb2-pod-stats {
   display: flex; align-items: center; justify-content: center; gap: calc(8px * var(--pk));
   margin: calc(2px * var(--pk)) 0 calc(6px * var(--pk)); white-space: nowrap; max-width: 100%;
 }
-.lb2-pod-stats .lb2-pod-plate { margin: 0; font-size: max(14px, calc(var(--fs-k14) * var(--pk))); }
 .lb2-pod-stats .lb2-pod-r,
 .lb2-col--1 .lb2-pod-stats .lb2-pod-r,
 .lb2-col--3 .lb2-pod-stats .lb2-pod-r {
@@ -935,7 +936,6 @@
 .lb2--narrow .lb2-col--1 .lb2-banner { width: 100%; max-width: 132px; height: auto; aspect-ratio: 640 / 178; }
 .lb2--narrow .lb2-banner .lb2-pod-name-t { font-size: max(12px, min(15px, calc(110px / var(--nl, 8)))); -webkit-text-stroke-width: 3px; }
 .lb2--narrow .lb2-banner .lb2-you { display: none; } /* YOU is the yellow row + the gold ribbon text below */
-.lb2--narrow .lb2-pod-stats .lb2-pod-plate { display: none; }
 .lb2--narrow .lb2-pod-stats { gap: 4px; margin: 2px 0 4px; }
 .lb2--narrow .lb2-pod-stats .lb2-pod-r { font-size: 14px; -webkit-text-stroke-width: 3px; text-shadow: 2px 2px 0 #000; }
 .lb2--narrow .lb2-pod-stats .lb2-pod-lv { font-size: 13px; }

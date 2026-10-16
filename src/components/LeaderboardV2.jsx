@@ -40,7 +40,7 @@ import { nameVerdict } from '../leaderboard/nameFilter.js';
 import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
-import { castFor, castSrc } from '../cast/cast.js';
+import { CAST, castFor, castSrc } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 
@@ -396,6 +396,22 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
+  // three DIFFERENT characters on the podium (5 cast, 3 spots — a hash collision put two HEXes up there): YOUR main
+  // keeps its pick, then #1 → #2 → #3 take their own member, or the next free one
+  const podCast = (() => {
+    const out = [null, null, null];
+    const used = new Set();
+    const mineAt = podium.findIndex((p) => p && myId && p.id === myId);
+    if (mineAt >= 0) { out[mineAt] = castFor(myId, true); used.add(out[mineAt].id); }
+    for (let i = 0; i < 3; i++) {
+      if (out[i]) continue;
+      let c = castFor(podium[i] ? podium[i].id : `open-${i + 1}`);
+      for (let k = 0; used.has(c.id) && k < CAST.length; k++) c = CAST[(CAST.indexOf(c) + 1) % CAST.length];
+      out[i] = c;
+      used.add(c.id);
+    }
+    return out;
+  })();
   // ranks 4 … 50 (Andy oct14 "make the leaderboard top 50"; was 20 oct13); past #50 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
@@ -544,7 +560,7 @@ export default function LeaderboardV2({ onBack }) {
             const p = podium[place - 1];
             const mine = !!(p && myId && p.id === myId);
             const n = p ? nums(p, tab, gains) : null;
-            const who = castFor(p ? p.id : `open-${place}`, mine);
+            const who = podCast[place - 1];
             const name = p ? p.username : 'YOUR NAME HERE?';
             return (
               <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
@@ -566,8 +582,8 @@ export default function LeaderboardV2({ onBack }) {
                       <span className="lb2-pod-name-t" style={{ '--nl': nameEms(name) }}>{name}</span>
                     </span>
                   </span>
+                  {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-stats">
-                    {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                     <span className="lb2-pod-r">{n ? n.r : '—'}</span>
                     {n ? <span className="lb2-pod-lv">{n.lv} <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span></span> : null}
                   </span>
