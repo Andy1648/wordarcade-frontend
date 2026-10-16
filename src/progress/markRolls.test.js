@@ -10,8 +10,7 @@ import {
   mainMultOf, mainTag, markTag, perkTag, luck, pityLeft, collection, migrate,
   shouldAutoEquip, rollAndSave, ensureRollState, equipRolled, loadRollState, statOf, pipProgress, INDEX_PIP_WORDS,
   markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec, STAT_KINDS,
-  equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny,
-} from './markRolls.js';
+  equipDecision, wornMainOf, SHINY_CHANCE, SHINY_MULT, isShiny, isUpgrade } from './markRolls.js';
 import { TIER_PCT, GEMS_PCT_BY_TIER, DUPE_GEMS } from './markRollsCore.js';
 const DUPES_PER_GOLD = 10; // the v1 finish, for the migration tests
 const GOLDS_PER_RAINBOW = 10;
@@ -336,23 +335,20 @@ test('THE MARK STATS: the worn stat pays only what it touches; the INDEX (+0.5% 
   }
 });
 
-test('auto-equip: ANY higher MAIN equips, always when nothing is worn; never asks', () => {
+test('NO auto-equip (Andy oct16): a roll never equips — not over a weaker gear, not into an empty slot', () => {
   withStorage({}, () => {
-    assert.equal(equipDecision('mk-nova', 'mk-smith'), 'auto');
-    assert.equal(equipDecision('mk-kraken', 'mk-smith'), 'auto');
-    assert.equal(equipDecision('mk-origin', 'mk-kraken'), 'auto', '×10 → ×25');
-    assert.equal(equipDecision('mk-singularity', 'mk-eclipse'), 'auto', '×3 → ×10');
-    assert.equal(shouldAutoEquip('mk-leviathan', 'mk-smith'), true);
-    assert.equal(equipDecision('mk-smith', null), 'auto');
     for (const m of ROLL_MARKS) for (const w of [null, 'mk-smith', 'mk-kraken', 'mk-eternal']) {
-      assert.ok(['auto', 'none'].includes(equipDecision(m.id, w)), `${m.id} over ${w}`);
+      assert.equal(equipDecision(m.id, w), 'none', `${m.id} over ${w}`);
+      assert.equal(shouldAutoEquip(m.id, w), false);
     }
-    assert.equal(equipDecision('mk-cyclone', 'mk-smith'), 'none', 'same tier, same ×1.25');
-    assert.equal(equipDecision('mk-smith', 'mk-kraken'), 'none');
-    assert.equal(equipDecision('mk-leviathan', 'mk-eternal'), 'none', 'a permanent (×3) is not displaced by an equal ×3');
-    assert.equal(equipDecision('mk-kraken', 'mk-eternal'), 'auto', 'a MYTHIC (×10) beats a permanent');
-    assert.equal(equipDecision('mk-detonator', 'mk-smith', 1.3), 'none', 'a ×1.25 never displaces a ×1.3');
-    assert.equal(equipDecision('mk-nope', 'mk-smith'), 'none');
+    // the strength comparison survives for copy only
+    assert.equal(isUpgrade('mk-nova', 'mk-smith'), true);
+    assert.equal(isUpgrade('mk-origin', 'mk-kraken'), true, '×10 → ×25');
+    assert.equal(isUpgrade('mk-smith', null), true);
+    assert.equal(isUpgrade('mk-cyclone', 'mk-smith'), false, 'same tier, same ×1.25');
+    assert.equal(isUpgrade('mk-leviathan', 'mk-eternal'), false, 'a permanent (×3) is not beaten by an equal ×3');
+    assert.equal(isUpgrade('mk-detonator', 'mk-smith', 1.3), false, 'a ×1.25 never beats a ×1.3');
+    assert.equal(isUpgrade('mk-nope', 'mk-smith'), false);
     assert.equal(wornMainOf(null), 1);
     assert.equal(wornMainOf('mk-curator'), 3, 'permanent MAIN = LEGENDARY ×3');
   });
