@@ -47,3 +47,14 @@ export function castByColor(hex) {
   return CAST.find((c) => c.color.toLowerCase() === h) || CAST.find((c) => c.seat === SEAT_BY_HEX[h]) || CAST[0];
 }
 const SEAT_BY_HEX = { '#ff4fa3': 'pink', '#2effe0': 'cyan', '#ffe94a': 'yellow', '#ff6b3d': 'orange', '#9a1aff': 'purple' };
+/** Each member's idle beat — a finite one-shot the caller re-arms on a timer (nothing infinite). Keys are
+ *  [offset, translateY %, rotate deg, scaleX, scaleY]: RIOT shakes, GLITCH leans back bored, HYPE jumps, BRAWL bounces
+ *  on its toes, HEX floats. Used by the menu showcase (MainPick). */
+export const CAST_BEATS = {
+  riot: { ms: 820, k: [[0, 0, 0, 1, 1], [0.15, -3, -5, 1, 1], [0.32, -3, 5, 1, 1], [0.5, -2, -4, 1, 1], [0.68, -1, 3, 1, 1], [1, 0, 0, 1, 1]] },
+  glitch: { ms: 1300, k: [[0, 0, 0, 1, 1], [0.3, 0, -7, 0.98, 1.01], [0.75, 0, -7, 0.98, 1.01], [1, 0, 0, 1, 1]] },
+  hype: { ms: 900, k: [[0, 0, 0, 1, 1], [0.18, 2, 0, 1.08, 0.9], [0.45, -16, -3, 0.95, 1.07], [0.72, 0, 0, 1.1, 0.88], [0.86, -2, 0, 0.98, 1.03], [1, 0, 0, 1, 1]] },
+  brawl: { ms: 1000, k: [[0, 0, 0, 1, 1], [0.2, -5, 4, 1, 1.03], [0.4, 0, 0, 1.04, 0.96], [0.6, -5, 4, 1, 1.03], [0.8, 0, 0, 1.04, 0.96], [1, 0, 0, 1, 1]] },
+  hex: { ms: 1500, k: [[0, 0, 0, 1, 1], [0.5, -8, 3, 1, 1], [1, 0, 0, 1, 1]] },
+};
+export const castBeatFrames = (b) => b.k.map(([offset, y, r, sx, sy]) => ({ offset, transform: `translateY(${y}%) rotate(${r}deg) scale(${sx}, ${sy})` }));
