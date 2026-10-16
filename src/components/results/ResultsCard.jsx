@@ -25,6 +25,7 @@ import { GemIcon, GemsEarnedLine, useGems } from '../gems/Gems';
 import { tallyLines, chainOf, stampFor } from './resultsModel.js';
 import '../kit/tokens.css';
 import './ResultsCard.css';
+import { resolvePlayerColor, playerCharSrc } from '../../playerColors';
 
 const mx = (m) => `×${formatMultExact(m)}`;
 const CHIP_TONES = ['#D88BFF', '#FFC23D', '#2EFFE0', '#FF3D7F', '#FFE94A', '#B04BFF'];
@@ -113,7 +114,7 @@ function N({ to, at, ms = T.count, prefix = '', className = '' }) {
  * @param {React.ReactNode} p.actions the exits row (PLAY AGAIN / MENU / offer)
  * @param {React.ReactNode} p.extras  rebirth-ready, claim prompt, near miss, try-a-mode
  */
-export default function ResultsCard({ cardRef, split = null, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null }) {
+export default function ResultsCard({ cardRef, split = null, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null, playerColors = null }) {
   const local = useRef(null);
   const root = cardRef || local;
   // ONE drawing (the mockup's 1366×657 sheet) scaled by --rs-k to the window; a phone gets its own stack.
@@ -272,6 +273,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     ? `You win. Placed #${place} of ${of}.`
     : `Knocked out. ${winnerName ? `${String(winnerName).toUpperCase()} WINS` : 'NO WINNER'}. You placed #${place} of ${of}.`;
   const rows = table;
+  const meRowId = (table.find((r) => r.me) || {}).id;
   return (
     <div ref={root} className={`game-over-card rs2${narrow ? ' rs2--narrow' : ''}${learn ? ' has-learn' : ''} ${iWon ? 'go-card-win' : 'go-card-loss'}`} data-place={place} data-outcome={iWon ? 'win' : 'loss'} data-stamp={stamp.tone}>
       <div className="rs2-top">
@@ -309,6 +311,13 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             </div>
           ) : null}
         </div>
+        {/* YOUR BOMB BUDDY in the placement box (oct16, Andy "the win screen … take our direction"): the seat avatar you
+            played as — on its feet cheering when you won or placed top 3, knocked flat on its back otherwise. */}
+        {meRowId != null ? (
+          <span className="rs2-buddy-wrap" data-rv="drop" data-at="260" aria-hidden="true">
+            <img className={`rs2-buddy rs2-buddy--${iWon ? 'win' : stamp.tone === 'top' ? 'top' : 'down'}`} src={playerCharSrc(resolvePlayerColor(playerColors, meRowId).color)} width="256" height="256" alt="" draggable="false" />
+          </span>
+        ) : null}
         {!iWon && winnerName ? <div className="rs2-winner" aria-hidden="true"><span translate="no">{String(winnerName).toUpperCase()}</span> WINS</div> : null}
       </section>
       {learn ? <div className="rs2-learn">{learn}</div> : null}
@@ -377,6 +386,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
           {rows.map((p, i) => (
             <li key={p.id} className={`rs2-prow${p.me ? ' is-me' : ''}`} data-place={p.place} data-rv="slide" data-at={300 + i * 70}>
               <span className={`rs2-prk rs2-prk--${p.place <= 3 ? p.place : 'n'}`}>{formatNum(p.place)}</span>
+              <img className="rs2-pav" src={playerCharSrc(resolvePlayerColor(playerColors, p.id).color)} width="64" height="64" alt="" aria-hidden="true" draggable="false" />
               <span className="rs2-pname" translate="no">{p.name}</span>
               {p.me ? <span className="rs2-you">YOU</span> : null}
               <span className="rs2-pw">{formatNum(p.words)}</span>

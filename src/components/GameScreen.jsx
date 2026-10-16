@@ -3954,6 +3954,7 @@ export default function GameScreen({
                 bonusLines={winsBonusLines}
                 gemsSince={gemsSince}
                 table={table}
+                playerColors={playerColors}
                 learn={!iWon && missedWord ? (
                   // PAUSE TO LEARN (loss only): a word that WOULD have worked for the fragment you could not fill.
                   <MissedWordHold key={`wb-miss-${missedWord}`} word={missedWord} gloss={glossFor(missedWord)} prompt={missCombo} promptLabel="A WORD CONTAINING" />

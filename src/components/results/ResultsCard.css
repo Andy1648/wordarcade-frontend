@@ -389,3 +389,15 @@
   .rs2 .rs2-gems,
   .rs2 .rs2-total { min-height: 40px; }
 }
+
+/* ===== BOMB BUDDIES (oct16) — the seat avatars on the results: yours in the placement box, one on every player row ===== */
+.rs2-buddy-wrap { position: absolute; z-index: 2; left: calc(14px * var(--u)); bottom: calc(10px * var(--u)); width: calc(124px * var(--u)); height: calc(124px * var(--u)); pointer-events: none; }
+.rs2-buddy { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(4px 4px 0 #000); transform-origin: 50% 85%; }
+.rs2-buddy--win { transform: rotate(-9deg); }
+.rs2-buddy--top { transform: rotate(-5deg) scale(0.92); }
+.rs2-buddy--down { transform: translateY(18%) rotate(-96deg); }
+.rs2-hero:has(.rs2-buddy--win) .rs2-buddy-wrap { left: auto; bottom: auto; right: calc(26px * var(--u)); top: calc(34px * var(--u)); }
+.rs2-pav { flex: none; width: calc(38px * var(--u)); height: calc(38px * var(--u)); min-width: 26px; min-height: 26px; margin-left: -4px; object-fit: contain; filter: drop-shadow(2px 2px 0 #000); }
+.rs2-prow:not(.is-me) .rs2-pav { opacity: 0.85; }
+.rs2--narrow .rs2-buddy-wrap { display: none; } /* the phone hero is one tight row (icon · #N · stamp): no room, the row avatars carry it */
+.rs2--narrow .rs2-pav { width: 26px; height: 26px; }
