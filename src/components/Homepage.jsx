@@ -75,6 +75,7 @@ import { LEADERBOARD_ENABLED, getMyProfile, submitStats as submitBoardStats, che
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 // CARD PAGES controls (arrows, dots, keys, swipe): only a short-wide desktop ever fetches these.
 const CardPager = lazyWithReload(() => import('./CardPager.jsx'), 'CardPager');
+const MainPick = lazyWithReload(() => import('./mainPick/MainPick.jsx'), 'MainPick');
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
@@ -1442,6 +1443,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* BOTTOM RIGHT (Andy oct8 "a timer at the bottom right … like bee swarm sim"): the paged desktop's empty right
             column, below the icons — a grid cell, not a fixed orphan. */}
         <div className="hp-dock hp-dock--grid"><BoostDock /></div>
+
+        {/* YOUR MAIN (oct16, Andy "the customizable section … on the right side of the screen (with the empty space there)"):
+            the paged desktop's right column, under the icons — a grid cell, lazy (its own chunk, off the first paint). */}
+        {isPagedMenu && <div className="hp-main"><Suspense fallback={null}><MainPick /></Suspense></div>}
 
         {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
