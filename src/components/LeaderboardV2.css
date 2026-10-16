@@ -954,3 +954,10 @@
 /* YOUR row's chase line may borrow the ▲▼ column, never the REBIRTHS one (at 1280×495 "…3 TO TOP 10" ran under R0) */
 .lb2:not(.lb2--narrow) .lb2-row.is-me .lb2-chase { max-width: calc(100% + 58px * var(--lb2-k)); position: relative; z-index: 0; }
 .lb2:not(.lb2--narrow) .lb2-row.is-me .lb2-r { position: relative; z-index: 1; }
+/* small phone (360 wide): the ALL TIME tab wrapped to three lines and its top was clipped; your row's chase ran under R0 */
+.lb2--narrow .lb2-tab-l,
+.lb2--narrow .lb2-tab-s { white-space: nowrap; }
+.lb2--narrow .lb2-tab-s { font-size: 13px; }
+.lb2--narrow .lb2-chase.has-rival .lb2-chase-band { display: none; }
+.lb2--narrow .lb2-row.is-me .lb2-chase { max-width: calc(100% + 40px); position: relative; z-index: 0; } /* may borrow the ▲▼ column, never REBIRTHS */
+.lb2--narrow .lb2-row.is-me .lb2-r { position: relative; z-index: 1; }
