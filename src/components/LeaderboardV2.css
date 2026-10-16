@@ -700,14 +700,14 @@
 .lb2 .is-peek:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; }
 /* Andy oct11: a simple hover so a name reads as clickable — the row slides right a touch and its name lights cyan; a podium
    spot lifts. The `translate` property (not `transform`) so it never fights the arrival / YOU pulse animations. */
-.lb2-row.is-peek, .lb2-col.is-peek .lb2-who { transition: translate 160ms cubic-bezier(.2, 1.3, .4, 1); }
+.lb2-row.is-peek, .lb2-col.is-peek .lb2-buddy-wrap { transition: translate 160ms cubic-bezier(.2, 1.3, .4, 1); }
 @media (hover: hover) {
   .lb2-row.is-peek:hover { translate: 8px 0; }
   .lb2-row.is-peek:not(.is-me):hover .lb2-name { color: #2EFFE0; }
-  .lb2-col.is-peek:hover .lb2-who { translate: 0 -6px; }
+  .lb2-col.is-peek:hover .lb2-buddy-wrap { translate: 0 -6px; } /* oct16: only the CHARACTER lifts on hover, never the name / plate / numbers */
   .lb2-col.is-peek:hover .lb2-pod-name-t { color: #2EFFE0; }
 }
-@media (prefers-reduced-motion: reduce) { .lb2-row.is-peek, .lb2-col.is-peek .lb2-who { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .lb2-row.is-peek, .lb2-col.is-peek .lb2-buddy-wrap { transition: none; } }
 .lb2-row.is-peek:active { translate: 2px 2px; }
 
 /* ---- TOP 3 CELEBRATION (Andy oct12) — arrival one-shots only (LeaderboardV2.jsx RING / RAYS / SLAM / POPN / confetti).
@@ -967,3 +967,28 @@
 }
 .lb2-band-tag b { color: #a8164e; }
 .lb2--narrow .lb2-band-tag { display: none; } /* the phone row is too tight for name + tag + R; it keeps the rival line */
+
+/* ===== SIMPLE PODIUM (Andy oct16: "quality but with simplicity" — the medal emblems + name ribbons read as poorly-cut
+   AI slop; the characters stay). Character → NAME in plain Bungee type → plate → numbers → painted block. ===== */
+.lb2-stand { margin-bottom: calc(4px * var(--pk)); }
+.lb2-col--1 .lb2-stand { margin-top: calc(34px * var(--pk)); }
+.lb2-who > .lb2-pod-name {
+  position: static; display: flex; align-items: center; justify-content: center; gap: 6px;
+  max-width: 100%; margin: 0; padding: 0; background: none; border: 0; box-shadow: none;
+}
+.lb2-who > .lb2-pod-name .lb2-pod-name-t {
+  font-size: max(var(--fs-k15), min(calc(var(--fs-k22) * var(--pk)), calc(190px * var(--pk) / var(--nl, 8))));
+  color: #fff; -webkit-text-stroke: calc(4px * var(--pk) + 1px) #000; paint-order: stroke fill;
+  text-shadow: calc(3px * var(--pk)) calc(3px * var(--pk)) 0 #000; line-height: 1.1;
+  overflow: visible; text-overflow: clip;
+}
+.lb2-col--1 .lb2-who > .lb2-pod-name .lb2-pod-name-t { color: #FFE94A; }
+.lb2-col.is-me .lb2-who > .lb2-pod-name { padding: 0; background: none; border: 0; box-shadow: none; }
+.lb2-col.is-me .lb2-who > .lb2-pod-name .lb2-pod-name-t { color: #2EFFE0; -webkit-text-stroke: calc(4px * var(--pk) + 1px) #000; }
+.lb2--narrow .lb2-who > .lb2-pod-name .lb2-pod-name-t { font-size: max(var(--fs-k13), min(var(--fs-k15), calc(110px / var(--nl, 8)))); -webkit-text-stroke-width: 3px; text-shadow: 2px 2px 0 #000; }
+.lb2--narrow .lb2-who > .lb2-pod-name .lb2-you { display: none; }
+.lb2--narrow .lb2-stand { margin-bottom: 2px; } /* the old ribbon tucked under the feet; the plain name must not */
+.lb2--narrow .lb2-col--1 .lb2-stand { margin-top: 14px; }
+/* #1's crown SITS on the head (it floated ~30px above it once the emblem behind was gone) */
+.lb2-stand .lb2-crown { top: calc(4px * var(--pk)); }
+.lb2--narrow .lb2-stand .lb2-crown { top: 0; width: 38px; height: 30px; margin-left: -15px; }
