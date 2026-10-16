@@ -21,6 +21,11 @@ async function openMenu(context, seed) {
   if (seed) { await save(p, seed); await p.reload(); await menuReady(p); }
   return p;
 }
+// localStorage reaches another tab a few ms later (Chromium syncs it between renderers), and a person switches tabs
+// in seconds — so wait until the stale tab SEES the other tab's write before its key (CI pressed inside that window)
+async function seen(p, o) {
+  await expect.poll(() => p.evaluate(() => ({ lv: JSON.parse(localStorage.getItem('taw.xp')).lv, rc: Number(localStorage.getItem('taw.rebirths')) })), { timeout: 5000 }).toEqual(o);
+}
 async function key(p) {
   await p.bringToFront();
   await p.keyboard.press('k');
@@ -31,6 +36,7 @@ test('a stale menu tab never writes a LOWER level over the save (160 vs 178)', a
   const a = await openMenu(context, { lv: 160, rc: 9 });
   const b = await openMenu(context);
   await save(b, { lv: 178, f: 0.2, rc: 9 }); // the other tab climbed
+  await seen(a, { lv: 178, rc: 9 });
   await key(a);
   const s = await saved(a);
   expect(s.rc).toBe(9);
@@ -41,6 +47,7 @@ test('a rebirth in the other tab is never undone by the stale tab', async ({ con
   const a = await openMenu(context, { lv: 178, f: 0.5, rc: 9 });
   const b = await openMenu(context);
   await save(b, { lv: 1, f: 0, rc: 10 }); // the other tab rebirthed
+  await seen(a, { lv: 1, rc: 10 });
   await key(a);
   const s = await saved(a);
   expect(s.rc).toBe(10);

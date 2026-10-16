@@ -8,7 +8,7 @@
 import './WinsHud.css';
 import { formatNum } from '../format';
 import { useCountUp } from '../hooks/useCountUp';
-import { MIN_WORDS } from '../progress/wins';
+import { minWordsFor } from '../progress/wins';
 import LiveWpm from './LiveWpm';
 
 // showWpm: the live typing-speed readout only rides along in modes where it MEANS something —
@@ -16,7 +16,8 @@ import LiveWpm from './LiveWpm';
 // turn-based (you spend the round waiting for your turn), so wall-clock-free WPM there is noise;
 // they pass showWpm={false} and get the wins pill without it (§2).
 export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
-  const earning = words >= MIN_WORDS && amount > 0;
+  const gate = minWordsFor(); // rises with rebirths (wins.js)
+  const earning = words >= gate && amount > 0;
   // THE one count-up (Andy oct3 #4): each word's wins climb into the tally over 1.2–2 s, a word
   // landing mid-count retargets it, reduced motion is instant. The count is aria-hidden so the live
   // region announces the label (the real total), never every frame.
@@ -33,9 +34,9 @@ export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
         <div
           className="wins-hud wins-hud--gate"
           aria-live="polite"
-          aria-label={`${MIN_WORDS} words to start earning wins`}
+          aria-label={`${gate} words to start earning wins`}
         >
-          <span className="wins-hud-plus">{MIN_WORDS}</span>
+          <span className="wins-hud-plus">{gate}</span>
           <span className="wins-hud-label">WORDS TO EARN</span>
         </div>
       )}
