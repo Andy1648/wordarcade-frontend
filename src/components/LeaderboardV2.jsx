@@ -177,7 +177,7 @@ const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)'
 // TOP 3 IDLE (Andy oct12 "at least give some idle animation for the top 3"): ONE setTimeout chain for the podium — every
 // IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its character moves (BEATS), a sparkle glints.
 // Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
-const IDLE_EVERY_MS = 1300;
+const IDLE_REST_MS = 260; // the pause between one idle beat and the next
 // PER-CHARACTER IDLE BEATS (Andy oct16 "make the heros on the leaderboard have an animation (like movement a bit)"): each
 // cast member moves in its own way — one finite beat at a time, chained by the single idle timer below. Keys are
 // [offset, translateY %, rotate deg, scaleX, scaleY]; #1's crown rides the same beat (its y in crown-heights).
@@ -190,7 +190,6 @@ const BEATS = {
 };
 const beatFrames = (b) => b.k.map(([offset, y, r, sx, sy]) => ({ offset, transform: `translateY(${y}%) rotate(${r}deg) scale(${sx}, ${sy})` }));
 const crownFrames = (b) => b.k.map(([offset, y, r]) => ({ offset, transform: `translateY(${y * 3.4}%) rotate(${-7 + r * 0.6}deg)` }));
-const GLINT = [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(60deg)', opacity: 1, offset: 0.35 }, { transform: 'scale(0.4) rotate(140deg)', opacity: 0 }];
 const CONFETTI_N = 18;
 const CONFETTI_ART = 16; // public/stage/fx/confetti-0 … 15.webp (painted pieces, one sheet)
 // a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
@@ -206,7 +205,6 @@ const CONFETTI = Array.from({ length: CONFETTI_N }, (_, i) => {
 // window, and CI's slower runner measured it mid-drop at -38% above the viewport (the e2e measures mid-entrance too).
 const BLOCK_AT = { 2: 0, 1: 140, 3: 280 }; // ms: rise order 2-1-3
 const BLOCK_RISE = [{ transform: 'translateY(70%) scaleY(.7)', opacity: 0 }, { transform: 'translateY(-4%) scaleY(1.04)', opacity: 1, offset: 0.7 }, { transform: 'translateY(0) scaleY(1)', opacity: 1 }];
-const EMBLEM_IN = [{ transform: 'scale(0) rotate(-200deg)', opacity: 0 }, { transform: 'scale(1.14) rotate(12deg)', opacity: 1, offset: 0.7 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
 const DROP = [
   { transform: 'translateY(-18%) scale(.9, 1.1)', opacity: 0 },
   { transform: 'translateY(-16%) scale(.94, 1.08)', opacity: 1, offset: 0.12 },
@@ -215,7 +213,6 @@ const DROP = [
   { transform: 'translateY(-4%) scale(.95, 1.06)', opacity: 1, offset: 0.84 },
   { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
 ];
-const UNROLL = [{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1.08)', opacity: 1, offset: 0.7 }, { transform: 'scaleX(1)', opacity: 1 }];
 const CROWN_DROP = [
   { transform: 'translateY(-50%) rotate(-40deg)', opacity: 0 },
   { transform: 'translateY(-42%) rotate(-34deg)', opacity: 1, offset: 0.1 },
@@ -223,7 +220,6 @@ const CROWN_DROP = [
   { transform: 'translateY(-12%) rotate(-12deg)', opacity: 1, offset: 0.82 },
   { transform: 'translateY(0) rotate(-7deg)', opacity: 1 },
 ];
-const RAYS_IN = [{ transform: 'scale(.2) rotate(-70deg)', opacity: 0 }, { transform: 'scale(1.08) rotate(5deg)', opacity: 0.85, offset: 0.7 }, { transform: 'scale(1) rotate(0deg)', opacity: 0.85 }]; // ends on the CSS rest (.85)
 function confettiFrames(c, k) {
   return [
     { transform: 'translate(0, 0) rotate(0deg) scale(.6)', opacity: 1 },
@@ -234,7 +230,6 @@ function confettiFrames(c, k) {
 function PodiumFx({ party }) {
   return (
     <span className="lb2-fx" aria-hidden="true">
-      <img className="lb2-glint" src="/fx/sparkle.svg" alt="" draggable="false" />
       {party && (
         <span className="lb2-confetti">
           {CONFETTI.map((c, i) => <img key={i} className="lb2-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}
@@ -450,10 +445,8 @@ export default function LeaderboardV2({ onBack }) {
       const bf = { fill: 'backwards' };
       kitPlay(q('.lb2-blockwrap'), BLOCK_RISE, { ...bf, duration: 420, delay: rise, easing: 'cubic-bezier(.2,1.1,.4,1)' });
       kitPlay(q('.lb2-place'), POPN, { ...bf, duration: 340, delay: land - 40, easing: 'cubic-bezier(.2,1.4,.4,1)' });
-      kitPlay(q('.lb2-rays'), RAYS_IN, { ...bf, duration: 700, delay: land, easing: 'cubic-bezier(.2,.9,.3,1)' });
-      kitPlay(q('.lb2-emblem'), EMBLEM_IN, { ...bf, duration: 460, delay: land + 40, easing: 'cubic-bezier(.2,1.1,.4,1)' });
       kitPlay(q('.lb2-buddy'), DROP, { ...bf, duration: 620, delay: land + 160, easing: 'ease-in' });
-      kitPlay(q('.lb2-banner'), UNROLL, { ...bf, duration: 320, delay: land + 700, easing: 'cubic-bezier(.2,1.2,.4,1)' });
+      kitPlay(q('.lb2-pod-name'), POPN, { ...bf, duration: 300, delay: land + 640, easing: 'cubic-bezier(.2,1.4,.4,1)' });
       if (place === 1) kitPlay(crownRef.current, CROWN_DROP, { ...bf, duration: 520, delay: land + 860, easing: 'ease-in' });
       const k = place === 1 ? 1.15 : 0.9;
       const cAt = land + (place === 1 ? 880 : 760);
@@ -498,24 +491,27 @@ export default function LeaderboardV2({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown]);
 
-  // TOP 3 IDLE: starts after the arrival lands; one timer for the podium, a finite beat per place in turn
+  // TOP 3 IDLE (Andy oct16 "add idle animations for the heros (like bouncing or rotating)"): EACH podium character keeps
+  // moving in its own way — its BEATS one-shot, re-armed by its own timer after a short rest, staggered so the three
+  // never move in lockstep. Only the character (+ #1's crown riding it) moves; the name / plate / numbers / block stay
+  // still. Finite WAAPI one-shots on a timer — nothing infinite; hidden tab skipped; reduced motion: kitPlay no-ops.
   useEffect(() => {
     const root = rootRef.current;
     if (!root || !data.loaded) return undefined;
-    let i = 0;
-    let timer = setTimeout(function beat() {
-      timer = setTimeout(beat, IDLE_EVERY_MS);
-      if (document.visibilityState === 'hidden') return;
-      const place = [1, 2, 3][i % 3];
-      i += 1;
-      const col = root.querySelector(`.lb2-col--${place}`);
-      if (!col || !col.dataset.id) return;
-      const beat = BEATS[col.dataset.cast] || BEATS.hype;
-      kitPlay(col.querySelector('.lb2-buddy'), beatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
-      kitPlay(col.querySelector('.lb2-glint'), GLINT, { duration: 640, delay: 80, easing: 'cubic-bezier(.2,.8,.3,1)' });
-      if (place === 1 && crownRef.current) kitPlay(crownRef.current, crownFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
-    }, 2600);
-    return () => clearTimeout(timer);
+    const timers = [];
+    [1, 2, 3].forEach((place, k) => {
+      const loop = () => {
+        const col = root.querySelector(`.lb2-col--${place}`);
+        const beat = (col && BEATS[col.dataset.cast]) || BEATS.hype;
+        if (col && col.dataset.id && document.visibilityState !== 'hidden') {
+          kitPlay(col.querySelector('.lb2-buddy'), beatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
+          if (place === 1 && crownRef.current) kitPlay(crownRef.current, crownFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
+        }
+        timers[k] = setTimeout(loop, beat.ms + IDLE_REST_MS + k * 90);
+      };
+      timers[k] = setTimeout(loop, 2400 + k * 420); // after the entrance lands
+    });
+    return () => timers.forEach(clearTimeout);
   }, [shown, data.loaded]);
 
   const tabs = [
@@ -579,21 +575,17 @@ export default function LeaderboardV2({ onBack }) {
               <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
                 {p ? <PodiumFx party={place === 1 || mine} /> : null}
                 <div className="lb2-who">
-                  {/* THE STAND: rays (#1) → emblem → the cast member (HERO) → the crown (#1) → the name ribbon */}
+                  {/* SIMPLE (Andy oct16: the emblem + ribbon read as poorly cut AI slop, "quality but with simplicity"): the
+                      cast member alone (#1 crowned), the name in plain type under it, then the plate + numbers */}
                   <span className="lb2-stand" aria-hidden="true">
-                    {place === 1 && p ? <img className="lb2-rays" src="/stage/rays.svg" width="512" height="512" alt="" draggable="false" /> : null}
-                    <img className="lb2-emblem" src={`/stage/emblem-${place}.webp`} width="256" height="256" alt="" draggable="false" />
                     <span className="lb2-buddy-wrap">
                       <img className="lb2-buddy" src={castSrc(who.id, 'hero')} width="512" height="512" alt="" draggable="false" />
                     </span>
                     {place === 1 && <Crown crownRef={crownRef} />}
                   </span>
-                  <span className="lb2-banner">
-                    <img className="lb2-banner-art" src={`/stage/banner-${who.id}.webp`} width="640" height="178" alt="" aria-hidden="true" draggable="false" />
-                    <span className="lb2-pod-name">
-                      {mine && <span className="lb2-you">YOU</span>}
-                      <span className="lb2-pod-name-t" style={{ '--nl': nameEms(name) }}>{name}</span>
-                    </span>
+                  <span className="lb2-pod-name">
+                    {mine && <span className="lb2-you">YOU</span>}
+                    <span className="lb2-pod-name-t" style={{ '--nl': nameEms(name) }}>{name}</span>
                   </span>
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-stats">
