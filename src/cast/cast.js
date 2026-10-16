@@ -9,7 +9,11 @@ export const CAST = [
   { id: 'hex', name: 'HEX', tag: 'KNOWS SOMETHING', color: '#B04BFF', dark: '#5E0F9E', seat: 'purple' },
 ];
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
-const PAINTED = new Set(['riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 'hex-hero']);
+const PAINTED = new Set([
+  'riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 'hex-hero',
+  // WIN / KO (oct16, ChatGPT with each HERO attached as the reference — one 2-pose sheet per member, split + cut)
+  'riot-win', 'riot-ko', 'glitch-win', 'glitch-ko', 'hype-win', 'hype-ko', 'brawl-win', 'brawl-ko', 'hex-win', 'hex-ko',
+]);
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
   const c = CAST.find((x) => x.id === id) || CAST[0];
