@@ -641,6 +641,8 @@ export default function LeaderboardV2({ onBack }) {
                     {mine && <span className="lb2-you">YOU</span>}
                     <span className="lb2-name" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
                     {isRival && <span className="lb2-rival">RIVAL</span>}
+                    {/* YOUR distance to the NEAREST band rides beside your name when a rival owns the line below */}
+                    {mine && rival && r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {mine && (rival || r.rank > 10) ? (
@@ -648,7 +650,7 @@ export default function LeaderboardV2({ onBack }) {
                       {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}
                       {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a
                           small stage with a rival it steps aside so neither is cut */}
-                      {r.rank > 10 ? <span className="lb2-chase-band">{rival ? ' · ' : null}<b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
+                      {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
