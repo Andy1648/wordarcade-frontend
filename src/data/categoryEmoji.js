@@ -2,6 +2,31 @@
 // ideas in for themes or fun categories"). DISPLAY-ONLY: shown on the category box, never sent or scored. Keys are the
 // EXACT category strings the server broadcasts (backend blitzLists.json); a missing key just shows no sticker.
 export const CATEGORY_EMOJI = {
+  // oct16 UNHINGED pack (Andy "go for funnier ... dark humor")
+  "Excuses for not doing your homework": "🐶",
+  "Lies adults tell kids": "🎅",
+  "Red flags on a first date": "🚩",
+  "Suspicious things to buy at 3am": "🛒",
+  "Things in a gas station bathroom": "🚽",
+  "Things people pretend to understand": "🤔",
+  "Things that are a scam": "💸",
+  "Things that are always broken": "🔧",
+  "Things that are dead now": "🪦",
+  "Things that are just a phase": "🖤",
+  "Things that are toxic": "☠️",
+  "Things that betray you": "🗡️",
+  "Things that can ruin a friendship": "💔",
+  "Things that cause emotional damage": "😭",
+  "Things that could end the world": "☄️",
+  "Things that get confiscated at school": "📵",
+  "Things that get you sent to the principal's office": "🏫",
+  "Things that hurt more than a breakup": "😖",
+  "Things that will outlive you": "🐢",
+  "Things you'd blame on the dog": "💨",
+  "Things your parents say will rot your brain": "🧠",
+  "Ways to end up in the ER": "🚑",
+  "Worst gifts to get": "🎁",
+  "Worst places to fall asleep": "😴",
   // oct15 afternoon batches V / W / X
   "Things your mom tells you to do": "🧹",
   "Things in a dad's toolbox": "🔨",
