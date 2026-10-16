@@ -633,11 +633,11 @@ export default function LeaderboardV2({ onBack }) {
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {mine && (rival || r.rank > 10) ? (
-                    <span className="lb2-chase">
+                    <span className={`lb2-chase${rival ? ' has-rival' : ''}`}>
                       {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}
-                      {rival && r.rank > 10 ? ' · ' : null}
-                      {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach) */}
-                      {r.rank > 10 ? <><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</> : null}
+                      {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a
+                          small stage with a rival it steps aside so neither is cut */}
+                      {r.rank > 10 ? <span className="lb2-chase-band">{rival ? ' · ' : null}<b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
