@@ -1,6 +1,6 @@
 // App.jsx
 import { useState, useEffect, useRef, useMemo, useCallback, useReducer, Suspense } from 'react';
-import { lazyWithReload } from './lib/chunkReload';
+import { lazyWithReload, preloadersFor } from './lib/chunkReload';
 import Homepage from './components/Homepage';
 // Deferred screens: none are on the first-paint path (splash -> menu). Lazy-loading
 // them (esp. the 4k-line GameScreen, which drags the whole share/result-card render
@@ -346,6 +346,8 @@ function App() {
   // they had still never looked at the menu. Booting to the real view removes both the flash and
   // the false flag. The launch effect below still runs and is idempotent (goTo* is a bare setView).
   const [view, setView] = useState(INITIAL_VIEW);
+  const warmViewRef = useRef(view); // the idle warm reads the live view (it pauses during a game)
+  warmViewRef.current = view;
   // The screen always renders off the live `view` (no lagging copy), so a view
   // change shows immediately and can never be stranded behind a timer. The
   // diagonal-bar wipe is a PURELY COSMETIC overlay that animates on top during
@@ -2465,16 +2467,43 @@ function App() {
     // so its rejection is caught here instead of surfacing as an uncaught error ("Unable to preload
     // CSS …" in the failure-states OFFLINE run).
     const quiet = (p) => p.catch(() => {});
+    // NO DELAY ON A PRESS (Andy oct16 "Im starting to see lag … as people press buttons like gear and shop … IT CANT
+    // DELAY"). Measured at 4x CPU: a cold GEARS press fetched + parsed 16 files and changed nothing on screen for 1.77 s;
+    // the same press with its code already loaded responded in 38 ms (settings 1.9 s, achievements 0.8 s cold). The old
+    // warm only covered the route screens + the Stats/Shop SHELLS — not the v2 screens inside them, the roll screen,
+    // settings or achievements. Now EVERY menu overlay is warmed too: one module per idle slot (an import evaluates
+    // its module on the main thread — doing them all at once would hitch the menu), overlays first, then the routes.
+    const WARM = [
+      () => import('./components/rollScreen/RollScreen'), // GEARS + the gear slot
+      () => import('./components/ShopScreen'),
+      () => import('./components/ShopV2.jsx'),
+      () => import('./components/AudioPanel.jsx'), // settings
+      () => import('./components/RebirthV2.jsx'),
+      () => import('./components/StatsScreen'),
+      () => import('./components/StatsV2.jsx'),
+      () => import('./components/LeaderboardScreen'),
+      () => import('./components/LeaderboardV2.jsx'),
+      () => import('./components/AchievementsV3.jsx'),
+      () => import('./components/EquipScreen.jsx'),
+      () => import('./components/MarksIndex'),
+      () => import('./components/ProfileCard.jsx'),
+      () => import('./components/GameScreen'),
+      () => import('./components/RoomScreen'),
+      () => import('./components/LobbyScreen'),
+      () => import('./components/PublicRoomsScreen'),
+    ];
+    const OVERLAYS = ['RollScreen', 'MarksIndex', 'EquipScreen', 'ShopScreen', 'ShopV2', 'RebirthV2', 'StatsScreen', 'StatsV2', 'LeaderboardScreen', 'LeaderboardV2', 'AchievementsV3', 'AudioPanel', 'ProfileCard'];
+    const idle = (fn) => (typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(fn, { timeout: 600 }) : setTimeout(fn, 60));
     const warm = () => {
-      quiet(import('./components/GameScreen'));
-      quiet(import('./components/RoomScreen'));
-      quiet(import('./components/LobbyScreen'));
-      quiet(import('./components/PublicRoomsScreen'));
-      // Overlays too: Stats/Shop open OVER the menu, so a cold chunk fetch there reads as a
-      // blank box (the shared Suspense fallback is null). Warming them makes the common open
-      // instant; the OverlaySkeleton below covers the rare still-cold open.
-      quiet(import('./components/StatsScreen'));
-      quiet(import('./components/ShopScreen'));
+      let pre = null; // pass 2: the menu OVERLAYS' own preloads (registered as pass 1 evaluated their parents), so the
+      // FIRST open of each renders directly instead of suspending (chunkReload.js PRELOADABLE). Named, never "all".
+      const next = () => {
+        // never parse a screen's code while a game is on screen (typing latency) — resume once back out
+        if (warmViewRef.current === 'game') { setTimeout(next, 2000); return; }
+        const load = WARM.shift() || (pre || (pre = preloadersFor(OVERLAYS))).shift();
+        if (load) quiet(Promise.resolve().then(load)).finally(() => idle(next));
+      };
+      idle(next);
     };
     // FIRST GESTURE, not idle (oct3, payload ratchet): a cold, gesture-free load no longer pulls the ~6 route
     // chunks it may never use. Any pointer move / key / touch / focus warms them — a visitor always moves the

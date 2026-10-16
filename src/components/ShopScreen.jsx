@@ -4,7 +4,7 @@
 // (OWNED / EQUIPPED state; unaffordable items visible-but-dimmed). REBIRTH: count, multiplier,
 // next threshold, what's lost/kept, and the action (disabled with the requirement shown when
 // not eligible). Mode-dialog styling; static — no animation beyond the buttons' hover/press.
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './ShopScreen.css';
 import { takeRebirthNow, peekRebirthNow, isRebirthReadyNow } from '../progress/rebirthNow';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, buyKeyPower } from '../progress/shop';
@@ -44,14 +44,15 @@ import { rarityClass, keyRarity } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
 import SpotlightTutorial from '../tutorials/SpotlightTutorial.jsx';
 import { dueHosted, hasSeenTutorial, markTutorialSeen } from '../tutorials/registry.js';
+import { lazyWithReload } from '../lib/chunkReload';
 
 
 const itemPrice = (id) => (SEASON2 ? V3.hooks.itemGemPrice(id) : (POP_STYLES.find((i) => i.id === id) || SOUND_PACKS.find((i) => i.id === id) || { price: Infinity }).price);
 
 // P3 (SEASON2 only): the v2 SHOP (Shop.dc.html — POWER + the gem STOCK) and the v2 REBIRTH screen (Rebirth.dc.html),
 // each its own lazy chunk. With the flag OFF the live SHOP / REBIRTH views below are untouched.
-const ShopV2 = lazy(() => import('./ShopV2.jsx'));
-const RebirthV2 = lazy(() => import('./RebirthV2.jsx'));
+const ShopV2 = lazyWithReload(() => import('./ShopV2.jsx'), 'ShopV2');
+const RebirthV2 = lazyWithReload(() => import('./RebirthV2.jsx'), 'RebirthV2');
 
 export default function ShopScreen(props) {
   if (SEASON2 && props.initialView === 'rebirth') {

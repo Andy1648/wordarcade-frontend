@@ -57,15 +57,14 @@ test('a paid roll charges exactly 10 GEMS; the wins balance only ever GAINS (the
   });
 });
 
-test('nothing worn → the first mark is AUTO, but nothing is equipped until the reveal lands', () => {
+test('NO auto-equip (Andy oct16): nothing worn → the first gear is still NOT equipped, at the tap or the landing', () => {
   withStorage({ 'taw.wins': '0' }, (m) => {
     const r = buyMarkRoll({ level: 1, rng: at(0) });
-    assert.equal(r.decision, 'auto');
+    assert.equal(r.decision, 'none');
     assert.equal(r.fromMain, 1);
-    assert.ok(Math.abs(r.toMain - 1.25) < 1e-9, 'a RARE MAIN (the floor) is ×1.25');
-    assert.equal(m.get(MARKS_EQUIPPED_KEY), undefined, 'the tap writes no MAIN (no spoiler)');
-    assert.equal(applyRollEquip(r), r.markId, 'the landing equips it');
-    assert.equal(m.get(MARKS_EQUIPPED_KEY), r.markId);
+    assert.equal(m.get(MARKS_EQUIPPED_KEY), undefined, 'the tap writes no MAIN');
+    assert.equal(applyRollEquip(r), null, 'the landing equips nothing');
+    assert.equal(m.get(MARKS_EQUIPPED_KEY), undefined);
   });
 });
 

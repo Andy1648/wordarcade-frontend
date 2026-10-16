@@ -136,7 +136,7 @@ function measure() {
 }
 
 for (const { w, h } of VIEWPORTS) {
-  test(`WB short layout @ ${w}x${h}: ring >=45% of the board, bomb 0.34 of it, row centred, placeholder unclipped, seats even`, async ({ page }) => {
+  test(`WB short layout @ ${w}x${h}: ring >=45% of the board, bomb 0.32 of it, row centred, placeholder unclipped, seats even`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await enterWordBombTurn(page);
     const m = await page.evaluate(measure);
@@ -145,8 +145,9 @@ for (const { w, h } of VIEWPORTS) {
     expect(m.err).toBeUndefined();
     // The designed share, 0.34 of the ring. Below the band the bomb is shrinking into the ring;
     // above it the bomb is growing into the seats (wb-ring.spec.js owns the overlap itself).
-    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeGreaterThanOrEqual(33);
-    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeLessThanOrEqual(35);
+    // oct16: the designed share is 0.32 (was 0.34) — the seats grew to 0.18 of the ring for bigger characters
+    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeGreaterThanOrEqual(31);
+    expect(m.bombW, `bomb % of the ring cell (${m.bombPx})`).toBeLessThanOrEqual(33);
     expect(m.ringOfStage, 'ring % of the board short side').toBeGreaterThanOrEqual(45);
     expect(m.rowOffCentrePct, `input row off the board centre (${m.rowPx})`).toBeLessThanOrEqual(2);
     expect(m.fieldFill, `field % of row width after buttons (${m.fieldPx})`).toBeGreaterThanOrEqual(90);

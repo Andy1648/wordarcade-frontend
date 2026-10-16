@@ -267,9 +267,6 @@
 .lb2-pod-lvk { color: #c9b8e8; font-size: max(var(--fs-k14), calc(var(--fs-k13) * var(--lb2-k))); }
 .lb2-blockwrap { position: relative; }
 .lb2-block { display: block; overflow: visible; }
-.lb2-col--1 .lb2-block { width: calc(214px * var(--pk)); height: calc(262px * var(--pk)); }
-.lb2-col--2 .lb2-block { width: calc(210px * var(--pk)); height: calc(190px * var(--pk)); }
-.lb2-col--3 .lb2-block { width: calc(210px * var(--pk)); height: calc(138px * var(--pk)); }
 .lb2-place {
   position: absolute;
   text-align: center;
@@ -281,9 +278,6 @@
 }
 /* the rank numerals ride the coloured FRONT face (PodiumBlocks.jsx: gold / silver / bronze) — WHITE with the black stroke
    + hard shadow so they are the first thing read on every block (R5 oct8 #2); ≥ 18px at the phone's 0.5 scale */
-.lb2-col--1 .lb2-place { left: calc(4px * var(--pk)); top: calc(62px * var(--pk)); width: calc(186px * var(--pk)); font-size: calc(var(--fs-k100) * 1.32 * var(--pk)); color: #fff; -webkit-text-stroke: 9px #000; text-shadow: 6px 6px 0 #000; }
-.lb2-col--2 .lb2-place { left: calc(4px * var(--pk)); top: calc(50px * var(--pk)); width: calc(184px * var(--pk)); font-size: calc(var(--fs-k96) * var(--pk)); color: #fff; -webkit-text-stroke: 8px #000; text-shadow: 5px 5px 0 #000; }
-.lb2-col--3 .lb2-place { left: calc(4px * var(--pk)); top: calc(36px * var(--pk)); width: calc(184px * var(--pk)); font-size: calc(var(--fs-k76) * var(--pk)); color: #fff; -webkit-text-stroke: 7px #000; text-shadow: 4px 4px 0 #000; }
 .lb2-you {
   flex: none;
   padding: 1px 6px;
@@ -723,19 +717,7 @@
 .lb2-who { position: relative; z-index: 1; }
 .lb2-fx { position: absolute; left: 50%; top: calc(40px * var(--pk)); width: 0; height: 0; z-index: 0; pointer-events: none; }
 .lb2-col--1 .lb2-fx { top: calc(70px * var(--pk)); }
-.lb2-ring, .lb2-rays { position: absolute; opacity: 0; transform: scale(.2); } /* rest = the first keyframe: invisible AND small, so a resting ring never pokes past the screen edge */
-.lb2-ring {
-  left: calc(-110px * var(--pk)); top: calc(-110px * var(--pk)); width: calc(220px * var(--pk)); height: calc(220px * var(--pk));
-  -webkit-mask: url('/fx/burst-ring.svg') center / contain no-repeat; mask: url('/fx/burst-ring.svg') center / contain no-repeat;
-  background: #C9C4DC;
-}
-.lb2-ring.is-1 { background: #FFC23D; }
-.lb2-ring.is-3 { background: #FF6B3D; }
-.lb2-col--1 .lb2-ring { left: calc(-140px * var(--pk)); top: calc(-140px * var(--pk)); width: calc(280px * var(--pk)); height: calc(280px * var(--pk)); }
-.lb2-rays { left: calc(-120px * var(--pk)); top: calc(-120px * var(--pk)); width: calc(240px * var(--pk)); height: calc(240px * var(--pk)); }
 .lb2-confetti { position: absolute; left: 0; top: 0; }
-.lb2-cf { position: absolute; left: -4px; top: -6px; width: 8px; height: 12px; border: 2px solid #000; border-radius: 2px; opacity: 0; }
-.lb2-cf.is-wide { width: 14px; height: 7px; left: -7px; top: -3px; }
 /* medal-coloured numbers: #1 is already gold; #2 silver, #3 bronze */
 .lb2-col--2 .lb2-pod-r { color: #E6E1F5; }
 .lb2-col--3 .lb2-pod-r { color: #FF8A4D; }
@@ -850,3 +832,138 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .lb2-title-tag.is-pod { text-align: center; color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+
+/* ===== THE PODIUM AS LAYERS (art run oct16 — Andy: the old podium "DEFINITELY does not work"; names go WITH the
+   characters on a ribbon, NOT on the blocks). Every visual is a painted asset in public/stage/ (+ the cast HERO in
+   public/cast/); CSS only places and moves them. Back → front inside a column: #1's sunburst → the medal emblem →
+   the cast member → #1's crown → the name ribbon → the stats line → the painted block (rank numeral on its laurel).
+   All sizes are stage px × --pk (1 on the 1366 stage, 0.46 on a phone). ===== */
+.lb2-col { justify-content: flex-end; }
+.lb2-who { width: 100%; }
+.lb2-stand {
+  position: relative; display: block;
+  width: calc(178px * var(--pk)); height: calc(178px * var(--pk));
+  margin-bottom: calc(-36px * var(--pk)); /* the ribbon overlaps the feet */
+}
+.lb2-col--1 .lb2-stand { width: calc(214px * var(--pk)); height: calc(214px * var(--pk)); margin-top: calc(30px * var(--pk)); }
+.lb2-rays {
+  position: absolute; z-index: 0; left: 50%; top: 46%;
+  width: calc(300px * var(--pk)); height: calc(300px * var(--pk));
+  margin: calc(-150px * var(--pk)) 0 0 calc(-150px * var(--pk));
+  opacity: .5; pointer-events: none;
+}
+.lb2-emblem {
+  position: absolute; z-index: 1; left: 50%; top: 44%;
+  width: 112%; height: 112%;
+  translate: -50% -50%; /* centring via `translate`, so the EMBLEM_IN transform one-shot never knocks it off-centre */
+  object-fit: contain; pointer-events: none;
+}
+.lb2-buddy-wrap { position: absolute; z-index: 2; inset: 0; margin: 0; display: block; }
+.lb2-buddy {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  transform-origin: 50% 92%;
+  filter: drop-shadow(calc(4px * var(--pk)) calc(4px * var(--pk)) 0 #000);
+}
+/* #2 / #3 face inward toward #1 (a mirror on the wrapper, so the drop / hop keyframes on the image keep it) */
+.lb2-col--3 .lb2-buddy-wrap { transform: scaleX(-1); }
+.lb2-col.is-open .lb2-buddy { opacity: .16; filter: none; }
+.lb2-col.is-open .lb2-emblem { opacity: .35; }
+.lb2-stand .lb2-crown {
+  position: absolute; z-index: 3; left: 50%; top: calc(-30px * var(--pk));
+  width: calc(78px * var(--pk)); height: calc(60px * var(--pk));
+  margin: 0 0 0 calc(-30px * var(--pk));
+  transform-origin: 50% 100%; transform: rotate(-7deg);
+  filter: none;
+}
+/* the NAME RIBBON — the painted banner of the player's cast colour, the name riding its flat centre band */
+.lb2-banner {
+  position: relative; z-index: 3; display: block;
+  width: calc(206px * var(--pk)); height: calc(57px * var(--pk));
+  transform-origin: 50% 50%;
+}
+.lb2-col--1 .lb2-banner { width: calc(222px * var(--pk)); height: calc(62px * var(--pk)); }
+.lb2-banner-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; filter: drop-shadow(calc(3px * var(--pk)) calc(3px * var(--pk)) 0 #000); }
+.lb2-banner .lb2-pod-name {
+  position: absolute; left: 6%; right: 6%; top: 12%; bottom: 30%;
+  margin: 0; display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.lb2-banner .lb2-pod-name-t {
+  font-size: max(14px, min(calc(var(--fs-k20) * var(--pk)), calc(176px * var(--pk) / var(--nl, 8))));
+  overflow: visible; text-overflow: clip; /* full names, never "…" (Andy oct8) — a very long one may ride onto the tails */
+  color: #fff; -webkit-text-stroke: calc(4px * var(--pk) + 1px) #000; paint-order: stroke fill; line-height: 1;
+}
+.lb2-col.is-me .lb2-banner .lb2-pod-name { padding: 0; background: none; border: 0; box-shadow: none; }
+.lb2-col.is-me .lb2-banner .lb2-pod-name-t { color: #fff; -webkit-text-stroke: calc(4px * var(--pk) + 1px) #000; }
+.lb2-banner .lb2-you { font-size: max(11px, calc(var(--fs-k13) * var(--pk))); padding: 0 4px; }
+/* under the ribbon: the rank plate, then one short numbers line (★R · LV) — two lines, so #1's never spills into #3 */
+.lb2-who > .lb2-pod-plate { margin: calc(2px * var(--pk)) 0 0; font-size: max(14px, calc(var(--fs-k14) * var(--pk))); max-width: 100%; }
+.lb2--narrow .lb2-who > .lb2-pod-plate { display: none; }
+.lb2-pod-stats {
+  display: flex; align-items: center; justify-content: center; gap: calc(8px * var(--pk));
+  margin: calc(2px * var(--pk)) 0 calc(6px * var(--pk)); white-space: nowrap; max-width: 100%;
+}
+.lb2-pod-stats .lb2-pod-r,
+.lb2-col--1 .lb2-pod-stats .lb2-pod-r,
+.lb2-col--3 .lb2-pod-stats .lb2-pod-r {
+  font-size: max(var(--fs-k14), calc(var(--fs-k24) * var(--pk))); line-height: 1;
+  -webkit-text-stroke-width: calc(4px * var(--pk) + 1px); text-shadow: calc(2px * var(--pk) + 1px) calc(2px * var(--pk) + 1px) 0 #000;
+}
+.lb2-pod-stats .lb2-pod-lv { margin: 0; font-size: max(var(--fs-k13), calc(var(--fs-k17) * var(--pk))); }
+/* the painted BLOCK — one width for all three (the art's own heights keep the 1-2-3 steps) */
+.lb2-blockwrap { position: relative; transform-origin: 50% 100%; }
+.lb2-block { display: block; width: calc(158px * var(--pk)); height: auto; filter: drop-shadow(calc(6px * var(--pk)) calc(6px * var(--pk)) 0 #000); }
+/* the rank numeral sits on the laurel's star (measured on each painted block's front face) */
+.lb2-col .lb2-place {
+  width: auto; translate: -50% -50%; transform: none; /* `translate` centres it; the POPN one-shot owns `transform` */
+  font-size: calc(var(--fs-k60) * var(--pk)); color: #fff;
+  -webkit-text-stroke: calc(7px * var(--pk) + 1px) #000; text-shadow: calc(4px * var(--pk)) calc(4px * var(--pk)) 0 #000;
+  z-index: 2; text-align: center; pointer-events: none;
+}
+.lb2-col--1 .lb2-place { left: 49%; top: 46%; width: auto; font-size: calc(var(--fs-k76) * var(--pk)); color: #FFE94A; }
+.lb2-col--2 .lb2-place { left: 47%; top: 50%; width: auto; }
+.lb2-col--3 .lb2-place { left: 52%; top: 55%; width: auto; font-size: calc(var(--fs-k44) * var(--pk)); }
+/* confetti: the painted pieces, resting invisible at #1's stand; the one-shot throws them */
+.lb2-cf { position: absolute; left: calc(-14px * var(--pk)); top: calc(-14px * var(--pk)); width: calc(28px * var(--pk)); height: calc(28px * var(--pk)); opacity: 0; pointer-events: none; }
+.lb2--narrow .lb2-cf { width: 16px; height: 16px; left: -8px; top: -8px; }
+.lb2-fx { top: calc(90px * var(--pk)); z-index: 4; }
+.lb2-col--1 .lb2-fx { top: calc(110px * var(--pk)); }
+/* PHONE podium (--pk 0.46, each column a third of the screen): the characters keep a readable size of their own, the
+   ribbon spans the column, the stats line drops the rank plate (it is on the profile card) so nothing clips */
+.lb2--narrow .lb2-stand { width: 92px; height: 92px; margin-bottom: -14px; }
+.lb2--narrow .lb2-col--1 .lb2-stand { width: 112px; height: 112px; margin-top: 10px; }
+.lb2--narrow .lb2-rays { width: 170px; height: 170px; margin: -85px 0 0 -85px; }
+.lb2--narrow .lb2-banner,
+.lb2--narrow .lb2-col--1 .lb2-banner { width: 100%; max-width: 132px; height: auto; aspect-ratio: 640 / 178; }
+.lb2--narrow .lb2-banner .lb2-pod-name-t { font-size: max(var(--fs-k13), min(var(--fs-k15), calc(110px / var(--nl, 8)))); -webkit-text-stroke-width: 3px; }
+.lb2--narrow .lb2-banner .lb2-you { display: none; } /* YOU is the yellow row + the gold ribbon text below */
+.lb2--narrow .lb2-pod-stats { gap: 4px; margin: 2px 0 4px; }
+.lb2--narrow .lb2-pod-stats .lb2-pod-r { font-size: var(--fs-k14); -webkit-text-stroke-width: 3px; text-shadow: 2px 2px 0 #000; }
+.lb2--narrow .lb2-pod-stats .lb2-pod-lv { font-size: var(--fs-k13); }
+.lb2--narrow .lb2-pod-stats .lb2-pod-lvk { display: none; }
+.lb2--narrow .lb2-block { width: 82px; }
+.lb2--narrow .lb2-col .lb2-place { font-size: var(--fs-k30); -webkit-text-stroke-width: 4px; text-shadow: 2px 2px 0 #000; }
+.lb2--narrow .lb2-col--1 .lb2-place { font-size: var(--fs-k38); }
+.lb2--narrow .lb2-col--3 .lb2-place { font-size: var(--fs-k24); }
+.lb2--narrow .lb2-col.is-me .lb2-banner .lb2-pod-name-t { color: #FFE94A; }
+/* a long YOU name ran under the centred LEADERBOARD title once the stage scales down (1280×495: "EADERBOARD") — at
+   those sizes the button drops its CHANGE word (it is still the button; its aria-label says "Change name") */
+@media (min-width: 1000px) and (max-height: 560px), (min-width: 1000px) and (max-width: 1170px) {
+  .lb2:not(.lb2--narrow) .lb2-me-a { display: none; }
+}
+/* YOUR row's chase line may borrow the ▲▼ column, never the REBIRTHS one (at 1280×495 "…3 TO TOP 10" ran under R0) */
+.lb2:not(.lb2--narrow) .lb2-row.is-me .lb2-chase { max-width: calc(100% + 58px * var(--lb2-k)); position: relative; z-index: 0; }
+.lb2:not(.lb2--narrow) .lb2-row.is-me .lb2-r { position: relative; z-index: 1; }
+/* small phone (360 wide): the ALL TIME tab wrapped to three lines and its top was clipped; your row's chase ran under R0 */
+.lb2--narrow .lb2-tab-l,
+.lb2--narrow .lb2-tab-s { white-space: nowrap; }
+.lb2--narrow .lb2-tab-s { font-size: var(--fs-k13); }
+.lb2--narrow .lb2-row.is-me .lb2-chase { max-width: calc(100% + 40px); position: relative; z-index: 0; } /* may borrow the ▲▼ column, never REBIRTHS */
+.lb2--narrow .lb2-row.is-me .lb2-r { position: relative; z-index: 1; }
+/* the band tag beside YOUR name (the chase line below holds the rival): a quiet mono pill in ink on your yellow row */
+.lb2-band-tag {
+  flex: none; padding: 0 6px; border: 2px solid #3a2160; border-radius: 6px;
+  font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(13px, calc(var(--fs-k14) * var(--lb2-k))); line-height: 1.3;
+  color: #3a2160; white-space: nowrap;
+}
+.lb2-band-tag b { color: #a8164e; }
+.lb2--narrow .lb2-band-tag { display: none; } /* the phone row is too tight for name + tag + R; it keeps the rival line */

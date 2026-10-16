@@ -5063,6 +5063,9 @@ html[data-beat='true'] .cb-category-display {
      with a box of side s the bomb is about S - 1.3*(s + s*sqrt(2)), so s must be near
      0.143*S. A name INSIDE the box forced s past 90px and capped the bomb at ~40%.
      The second term keeps a very full table (17+) from wrapping seats into each other. */
+  /* oct16 (Andy "adequate hero size in word bomb on chromebook screens"): 0.143 → 0.18. On a Chromebook the ring is
+     height-bound (~310px at 1366x657) and the characters rendered at 44px. 0.18 with the bomb at 0.32 keeps the
+     active seat's 1.3x inner edge (r − 0.65·s = 0.271d) outside the bomb's box corners (0.245d). */
   --wb-seat-w: min(calc(var(--wb-size) * 0.143), calc(var(--wb-size) * 2.5 / var(--n, 4)));
   /* Seats sit on this radius: half the box minus half a seat, so NO seat can hang
      outside the square. That is what guarantees "no overflow at 8 players". */
@@ -5080,7 +5083,7 @@ html[data-beat='true'] .cb-category-display {
      CORNERS sit at 0.32d while the seats' inner edge sat at 0.314d — the diagonal seats and the
      bomb's box were touching at every count. The art is not a rectangle, but a gate that
      measures rectangles is the only kind that can run, and "nearly touching" is not a margin. */
-  --wb-bomb-w: calc(var(--wb-size) * 0.34);
+  --wb-bomb-w: calc(var(--wb-size) * 0.32); /* oct16: 0.34 → 0.32 to give the seats (the characters) more of the ring */
   /* The band under a seat that belongs to its NAME, and the gap before it starts. The
      pointer is kept outboard of this, which is what stops the arrow crossing the label. */
   --wb-name-gap: 6px;
@@ -6790,7 +6793,7 @@ html[data-beat='true'] .wb-belly {
      a longer radius) so the active seat's 1.3x inner edge stays clear of the turn pointer's
      tip (0.72 x bomb + the arrow). */
   .wb-ring.wb-ring--pair {
-    --wb-bomb-w: calc(var(--wb-size) * 0.34 * var(--wb-k, 1));
+    --wb-bomb-w: calc(var(--wb-size) * 0.32 * var(--wb-k, 1));
     --wb-r: calc(var(--wb-size) * 0.65 - var(--wb-seat-w) * 0.62 - 2px);
     width: calc(var(--wb-size) * 1.3);
   }
@@ -6911,7 +6914,7 @@ html[data-beat='true'] .wb-belly {
   transform: translate(-50%, -66%);
   pointer-events: none;
   user-select: none;
-  opacity: 0.5;
+  opacity: 0.78; /* oct16: 0.5 → 0.78 — a waiting player is still a character, not a ghost; the lit seat is 1 + 1.3x */
   transition: opacity 220ms ease-out;
   z-index: -1; /* behind the hearts; the card (rotated) is its own stacking context, so it stays inside the seat */
 }
@@ -6933,11 +6936,11 @@ html[data-beat='true'] .wb-belly {
 }
 /* the art overhangs the old circle by ~0.2 of a seat at the top: what hangs ABOVE a seat (the YOUR TURN flag, a top
    seat's name and its typing line) moves up by that much so nothing sits on the character's head */
-.wb-ring { --wb-char-up: calc(var(--wb-seat-h) * 0.36); }
-.wb-seat .game-your-turn { top: calc(-26px - var(--wb-char-up)); }
+.wb-ring { --wb-char-up: calc(var(--wb-seat-h) * 0.36); --wb-flag-up: calc(var(--wb-seat-h) * 0.36); }
+.wb-seat .game-your-turn { top: calc(-26px - var(--wb-flag-up)); }
 /* a TOP seat's flag takes its NAME's place (the flag only ever shows on YOUR seat, whose name is you) — stacked
    above the name it reached the prompt plaque at 1366x768 */
-.wb-seat--name-out-up .game-your-turn { top: auto; bottom: calc(100% + var(--wb-name-gap) + var(--wb-char-up) - 4px); }
+.wb-seat--name-out-up .game-your-turn { top: auto; bottom: calc(100% + var(--wb-name-gap) + var(--wb-flag-up) - 4px); }
 .wb-seat--name-out-up:has(.game-your-turn) .game-player-name-text { visibility: hidden; }
 .wb-seat--name-out-up .game-player-name-text { bottom: calc(100% + var(--wb-name-gap) + var(--wb-char-up)); }
 .wb-seat--name-out-up .player-typing,
@@ -7066,3 +7069,13 @@ html[data-beat='true'] .wb-belly {
 /* Blitz: the HITS badge's host fills the input row (no flex slot, no gap) so ComboMeter keeps its
    own absolute coordinates; the host only exists to be faded while a landing is up. */
 .game-stage--blitz .cb-combo-host { position: absolute; inset: 0; pointer-events: none; z-index: 16; }
+
+/* CHROMEBOOK-SIZE HEROES (Andy oct16 "adequate hero size in word bomb on chromebook screens"). On the wide board the ring
+   is height-bound (~310px at 1366x657) and the characters drew at 44px. Here: seats 0.143 → 0.16 of the ring, the art
+   135% → 150% of its seat (it overhangs ~0.43 of a seat, so names / typing lines above a seat lift by that much; the
+   YOUR TURN flag keeps its old lift, --wb-flag-up, so it never reaches the prompt). Every WB gate (ring, text-overlap,
+   short-layout, fit) holds at these numbers; the phone and the huge 2200x1250+ tier keep their own tuned geometry. */
+@media (min-width: 1000px) and (max-height: 1249px) {
+  .wb-ring { --wb-seat-w: min(calc(var(--wb-size) * 0.16), calc(var(--wb-size) * 2.5 / var(--n, 4))); --wb-char-up: calc(var(--wb-seat-h) * 0.43); }
+  .wb-seat-char { width: 150%; }
+}

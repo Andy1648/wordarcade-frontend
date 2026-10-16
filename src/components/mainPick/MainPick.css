@@ -1,0 +1,24 @@
+/* MainPick — the menu's right column (paged desktop ≥ 1200px only; Homepage places it). House look: flat panel, coloured
+   outline in the character's darker shade, hard black shadow, Bungee with stroke. */
+.mp {
+  display: flex; flex-direction: column; align-items: center; gap: max(6px, calc(8 * var(--u, 1px)));
+  padding: max(10px, calc(14 * var(--u, 1px))) max(8px, calc(10 * var(--u, 1px)));
+  background: #1a0b2e; border: 4px solid var(--mp-d); border-radius: 8px; box-shadow: 6px 6px 0 #000;
+  transform: rotate(1.2deg);
+}
+.mp-k { font: 400 var(--fs-k14, 14px) 'Space Mono', monospace; font-weight: 700; letter-spacing: 0.12em; color: #c9b8e8; }
+.mp-stage { position: relative; width: 100%; display: grid; justify-items: center; }
+.mp-art { position: relative; z-index: 1; width: min(100%, max(120px, calc(170 * var(--u, 1px)))); height: auto; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(4px 4px 0 #000); transition: transform 180ms cubic-bezier(.3,.7,.3,1); }
+@media (hover: hover) { .mp-stage:hover .mp-art { transform: rotate(-5deg) translateY(-3px); } }
+.mp-plate { display: block; width: 78%; height: max(12px, calc(16 * var(--u, 1px))); margin-top: max(-14px, calc(-18 * var(--u, 1px))); background: var(--mp-c); border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; }
+.mp-row { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: space-between; }
+.mp-name { font: 400 max(var(--fs-k20, 20px), calc(var(--fs-k26, 26px) * 1)) 'Bungee', sans-serif; color: var(--mp-c); -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; transform: rotate(-2deg); }
+.mp-arrow { flex: none; width: 44px; height: 44px; display: grid; place-items: center; font: 400 18px 'Bungee', sans-serif; color: #000; background: var(--mp-c); border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000; cursor: pointer; transition: transform 120ms; }
+.mp-arrow:hover { transform: translate(-1px, -1px); }
+.mp-arrow:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.mp-arrow:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+.mp-tag { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; letter-spacing: 0.06em; color: #fff; text-align: center; }
+.mp-dots { display: flex; gap: 6px; }
+.mp-dots i { width: 8px; height: 8px; border-radius: 50%; background: #3a2160; border: 2px solid #000; }
+.mp-dots i.is-on { background: var(--mp-c); }
+@media (prefers-reduced-motion: reduce) { .mp-art, .mp-arrow { transition: none; } }

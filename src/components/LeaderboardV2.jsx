@@ -13,7 +13,7 @@
 //   * CHASE (what passes the player above, in the board's order) and CLIMB (what reaches your next rank).
 // Motion: kit one-shots (transform / opacity; will-change only while playing); NOTHING loops at rest (the mockup's
 // crown wobble / ▲ bob / ▼ sink / own-row pulse play once on arrival); REDUCE MOTION plays none of it.
-import { Fragment, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
@@ -40,13 +40,14 @@ import { nameVerdict } from '../leaderboard/nameFilter.js';
 import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
-import { BLOCKS } from './PodiumBlocks.jsx';
+import { CAST, castFor, castSrc } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
+import { lazyWithReload } from '../lib/chunkReload';
 
 const fmt = (n) => formatNum(Number(n) || 0);
 // 031 LEADERBOARD PROFILES (Andy oct10): tap a row / a podium spot → that player's card (gear, BASE, POWER …). Lazy.
-const ProfileCard = lazy(() => import('./ProfileCard.jsx'));
+const ProfileCard = lazyWithReload(() => import('./ProfileCard.jsx'), 'ProfileCard');
 /** Row / podium props that open a profile: a button by role, Enter / Space too. */
 const peekProps = (row, open) => (row ? {
   role: 'button',
@@ -87,10 +88,12 @@ async function loadWeek() {
   }
 }
 
-// ---- the podium blocks: real vector solids, gold / silver / bronze (R5 oct8 #2 — PodiumBlocks.jsx, imported above) ----
+// ---- THE PODIUM AS LAYERS (art run oct16 — Andy: the old podium "DEFINITELY does not work"; names go WITH the
+// characters on a ribbon, not on the blocks). Back to front: #1's sunburst → the medal EMBLEM → the player's CAST
+// member (HERO pose) → their name RIBBON → the painted BLOCK (the rank numeral sits on its laurel) → fx. All painted
+// assets in public/stage/ (Gemini / ChatGPT, cut by scripts/split-sheet.py + cutout-art.py); CSS only moves them.
 function Crown({ crownRef }) {
-  // ART PIPELINE (Andy oct13): ChatGPT crown, cut by scripts/cutout-art.py (public/lb/crown.webp)
-  return <img ref={crownRef} className="lb2-crown" src="/lb/crown.webp" width="74" height="70" alt="" aria-hidden="true" draggable="false" />;
+  return <img ref={crownRef} className="lb2-crown" src="/stage/crown.webp" width="74" height="70" alt="" aria-hidden="true" draggable="false" />;
 }
 
 // WEEKLY TOP 10 (Andy oct12, migration 034): THIS WEEK's top-10 places show the gems the place pays when the week ends
@@ -164,33 +167,63 @@ function useStageScale(ref) {
   return narrow;
 }
 
-const RISE = [{ transform: 'translateY(46px)', opacity: 0 }, { transform: 'translateY(-5px)', opacity: 1, offset: 0.7 }, { transform: 'translateY(0)', opacity: 1 }];
 const SLIDE = [{ transform: 'translateX(40px)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }];
 const FILL = [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }];
-const WOBBLE = [{ transform: 'rotate(-7deg)' }, { transform: 'rotate(7deg) translateY(-3px)', offset: 0.5 }, { transform: 'rotate(-7deg)' }];
 const BOB = [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 // TOP 3 CELEBRATION (Andy oct12 "make the people feel good for being top 3"): one-shots on arrival, motion only on
 // existing art — a medal-tinted burst ring behind each place, the painted win burst behind #1, pooled confetti from #1
 // (and from YOUR place when you are top 3), the name slams in, the place number pops. Nothing loops.
-const RING = [{ transform: 'scale(.25) rotate(-30deg)', opacity: 0 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: 0.35 }, { transform: 'scale(1.7) rotate(14deg)', opacity: 0 }];
-const RAYS = [{ transform: 'scale(.2) rotate(-50deg)', opacity: 0 }, { transform: 'scale(1.12) rotate(6deg)', opacity: 1, offset: 0.3 }, { transform: 'scale(1) rotate(0deg)', opacity: 0.95, offset: 0.62 }, { transform: 'scale(1.25) rotate(18deg)', opacity: 0 }];
-const SLAM = [{ transform: 'scale(1.9) rotate(-6deg)', opacity: 0 }, { transform: 'scale(.92) rotate(1deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
 const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)', opacity: 1, offset: 0.55 }, { transform: 'scale(1)', opacity: 1 }];
 // TOP 3 IDLE (Andy oct12 "at least give some idle animation for the top 3"): ONE setTimeout chain for the podium — every
-// IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its name hops, a sparkle glints, #1's crown bobs.
+// IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its character moves (BEATS), a sparkle glints.
 // Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
-const IDLE_EVERY_MS = 2200;
-const HOP = [{ transform: 'translateY(0)' }, { transform: 'translateY(-7px) rotate(-1.5deg)', offset: 0.35 }, { transform: 'translateY(1px)', offset: 0.7 }, { transform: 'translateY(0)' }];
+const IDLE_EVERY_MS = 1300;
+// PER-CHARACTER IDLE BEATS (Andy oct16 "make the heros on the leaderboard have an animation (like movement a bit)"): each
+// cast member moves in its own way — one finite beat at a time, chained by the single idle timer below. Keys are
+// [offset, translateY %, rotate deg, scaleX, scaleY]; #1's crown rides the same beat (its y in crown-heights).
+const BEATS = {
+  riot: { ms: 820, k: [[0, 0, 0, 1, 1], [0.15, -3, -5, 1, 1], [0.32, -3, 5, 1, 1], [0.5, -2, -4, 1, 1], [0.68, -1, 3, 1, 1], [1, 0, 0, 1, 1]] }, // a punk shake
+  glitch: { ms: 1300, k: [[0, 0, 0, 1, 1], [0.3, 0, -7, 0.98, 1.01], [0.75, 0, -7, 0.98, 1.01], [1, 0, 0, 1, 1]] }, // leans back, bored
+  hype: { ms: 900, k: [[0, 0, 0, 1, 1], [0.18, 2, 0, 1.08, 0.9], [0.45, -16, -3, 0.95, 1.07], [0.72, 0, 0, 1.1, 0.88], [0.86, -2, 0, 0.98, 1.03], [1, 0, 0, 1, 1]] }, // jumps
+  brawl: { ms: 1000, k: [[0, 0, 0, 1, 1], [0.2, -5, 4, 1, 1.03], [0.4, 0, 0, 1.04, 0.96], [0.6, -5, 4, 1, 1.03], [0.8, 0, 0, 1.04, 0.96], [1, 0, 0, 1, 1]] }, // bounces on its toes
+  hex: { ms: 1500, k: [[0, 0, 0, 1, 1], [0.5, -8, 3, 1, 1], [1, 0, 0, 1, 1]] }, // floats
+};
+const beatFrames = (b) => b.k.map(([offset, y, r, sx, sy]) => ({ offset, transform: `translateY(${y}%) rotate(${r}deg) scale(${sx}, ${sy})` }));
+const crownFrames = (b) => b.k.map(([offset, y, r]) => ({ offset, transform: `translateY(${y * 3.4}%) rotate(${-7 + r * 0.6}deg)` }));
 const GLINT = [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(60deg)', opacity: 1, offset: 0.35 }, { transform: 'scale(0.4) rotate(140deg)', opacity: 0 }];
-const CROWN_BOB = [{ transform: 'rotate(-7deg)' }, { transform: 'rotate(-12deg) translateY(-6px)', offset: 0.4 }, { transform: 'rotate(-4deg) translateY(1px)', offset: 0.75 }, { transform: 'rotate(-7deg)' }];
 const CONFETTI_N = 18;
-const CONFETTI_FILL = ['#FFE94A', '#2EFFE0', '#FF4FA3', '#FFFFFF', '#9A1AFF', '#FF6B3D'];
+const CONFETTI_ART = 16; // public/stage/fx/confetti-0 … 15.webp (painted pieces, one sheet)
 // a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
 const CONFETTI = Array.from({ length: CONFETTI_N }, (_, i) => {
   const a = (-90 + ((i * 47) % 150) - 75) * (Math.PI / 180); // −165° … −15°: upward fan
   const r = 90 + ((i * 37) % 80);
-  return { dx: Math.cos(a) * r, dy: Math.sin(a) * r, fall: 120 + ((i * 29) % 90), spin: (i % 2 ? 1 : -1) * (240 + ((i * 53) % 300)), fill: CONFETTI_FILL[i % CONFETTI_FILL.length], wide: i % 3 === 0 };
+  return { dx: Math.cos(a) * r, dy: Math.sin(a) * r, fall: 120 + ((i * 29) % 90), spin: (i % 2 ? 1 : -1) * (240 + ((i * 53) % 300)), art: (i * 7) % CONFETTI_ART };
 });
+// THE ENTRANCE (art run oct16), one sequenced one-shot per column: the blocks rise 2 → 1 → 3, each emblem spins in
+// on its block, the character drops and squash-lands, the ribbon unrolls, the crown drops onto #1, confetti. Every
+// effect is transform / opacity and ends before 2.5 s (the e2e asserts nothing but the idle beat runs at 2.6 s); the
+// drops start only a short way up (-18%) so no frame ever leaves the screen — #1 stands near the top on a short
+// window, and CI's slower runner measured it mid-drop at -38% above the viewport (the e2e measures mid-entrance too).
+const BLOCK_AT = { 2: 0, 1: 140, 3: 280 }; // ms: rise order 2-1-3
+const BLOCK_RISE = [{ transform: 'translateY(70%) scaleY(.7)', opacity: 0 }, { transform: 'translateY(-4%) scaleY(1.04)', opacity: 1, offset: 0.7 }, { transform: 'translateY(0) scaleY(1)', opacity: 1 }];
+const EMBLEM_IN = [{ transform: 'scale(0) rotate(-200deg)', opacity: 0 }, { transform: 'scale(1.14) rotate(12deg)', opacity: 1, offset: 0.7 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
+const DROP = [
+  { transform: 'translateY(-18%) scale(.9, 1.1)', opacity: 0 },
+  { transform: 'translateY(-16%) scale(.94, 1.08)', opacity: 1, offset: 0.12 },
+  { transform: 'translateY(0) scale(.94, 1.08)', opacity: 1, offset: 0.55, easing: 'ease-out' },
+  { transform: 'translateY(0) scale(1.2, .78)', opacity: 1, offset: 0.68 },
+  { transform: 'translateY(-4%) scale(.95, 1.06)', opacity: 1, offset: 0.84 },
+  { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
+];
+const UNROLL = [{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1.08)', opacity: 1, offset: 0.7 }, { transform: 'scaleX(1)', opacity: 1 }];
+const CROWN_DROP = [
+  { transform: 'translateY(-50%) rotate(-40deg)', opacity: 0 },
+  { transform: 'translateY(-42%) rotate(-34deg)', opacity: 1, offset: 0.1 },
+  { transform: 'translateY(0) rotate(-7deg)', opacity: 1, offset: 0.62, easing: 'ease-out' },
+  { transform: 'translateY(-12%) rotate(-12deg)', opacity: 1, offset: 0.82 },
+  { transform: 'translateY(0) rotate(-7deg)', opacity: 1 },
+];
+const RAYS_IN = [{ transform: 'scale(.2) rotate(-70deg)', opacity: 0 }, { transform: 'scale(1.08) rotate(5deg)', opacity: 0.85, offset: 0.7 }, { transform: 'scale(1) rotate(0deg)', opacity: 0.85 }]; // ends on the CSS rest (.85)
 function confettiFrames(c, k) {
   return [
     { transform: 'translate(0, 0) rotate(0deg) scale(.6)', opacity: 1 },
@@ -198,15 +231,13 @@ function confettiFrames(c, k) {
     { transform: `translate(${c.dx * 1.25 * k}px, ${(c.dy + c.fall) * k}px) rotate(${c.spin}deg) scale(.9)`, opacity: 0 },
   ];
 }
-function PodiumFx({ place, party }) {
+function PodiumFx({ party }) {
   return (
     <span className="lb2-fx" aria-hidden="true">
-      <span className={`lb2-ring is-${place}`} />
-      {place === 1 && <img className="lb2-rays" src="/fx/burst-win.webp" alt="" draggable="false" />}
       <img className="lb2-glint" src="/fx/sparkle.svg" alt="" draggable="false" />
       {party && (
         <span className="lb2-confetti">
-          {CONFETTI.map((c, i) => <span key={i} className={`lb2-cf${c.wide ? ' is-wide' : ''}`} style={{ background: c.fill }} />)}
+          {CONFETTI.map((c, i) => <img key={i} className="lb2-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}
         </span>
       )}
     </span>
@@ -377,6 +408,22 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
+  // three DIFFERENT characters on the podium (5 cast, 3 spots — a hash collision put two HEXes up there): YOUR main
+  // keeps its pick, then #1 → #2 → #3 take their own member, or the next free one
+  const podCast = (() => {
+    const out = [null, null, null];
+    const used = new Set();
+    const mineAt = podium.findIndex((p) => p && myId && p.id === myId);
+    if (mineAt >= 0) { out[mineAt] = castFor(myId, true); used.add(out[mineAt].id); }
+    for (let i = 0; i < 3; i++) {
+      if (out[i]) continue;
+      let c = castFor(podium[i] ? podium[i].id : `open-${i + 1}`);
+      for (let k = 0; used.has(c.id) && k < CAST.length; k++) c = CAST[(CAST.indexOf(c) + 1) % CAST.length];
+      out[i] = c;
+      used.add(c.id);
+    }
+    return out;
+  })();
   // ranks 4 … 50 (Andy oct14 "make the leaderboard top 50"; was 20 oct13); past #50 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
@@ -392,21 +439,25 @@ export default function LeaderboardV2({ onBack }) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root || !data.loaded) return;
-    root.querySelectorAll('.lb2-col').forEach((el, i) => kitPlay(el, RISE, { duration: 500, delay: [80, 0, 160][i] || 0, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' }));
     root.querySelectorAll('.lb2-slide').forEach((el, i) => kitPlay(el, SLIDE, { duration: 350, delay: i * 100, easing: 'ease-out', fill: 'backwards' }));
     root.querySelectorAll('.lb2-fill').forEach((el) => kitPlay(el, FILL, { duration: 800, delay: 200, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' }));
-    if (crownRef.current) kitPlay(crownRef.current, WOBBLE, { duration: 2200, iterations: 1, easing: 'ease-in-out' });
-    // TOP 3: after the blocks land (~500 ms) — the ring, #1's burst, the name slam, the number pop, the confetti
+    // THE PODIUM ENTRANCE: per column, keyed off its block's landing
     root.querySelectorAll('.lb2-col').forEach((col) => {
       const place = Number(col.dataset.place) || 0;
-      const at = 380 + [0, 0, 140, 260][place];
+      const rise = BLOCK_AT[place] || 0;
+      const land = rise + 420;
       const q = (s) => col.querySelector(s);
-      kitPlay(q('.lb2-ring'), RING, { duration: 700, delay: at, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
-      kitPlay(q('.lb2-rays'), RAYS, { duration: 1500, delay: at - 60, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
-      kitPlay(q('.lb2-pod-name'), SLAM, { duration: 380, delay: at + 60, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'backwards' });
-      kitPlay(q('.lb2-place'), POPN, { duration: 360, delay: at - 120, easing: 'cubic-bezier(.2,1.4,.4,1)', fill: 'backwards' });
+      const bf = { fill: 'backwards' };
+      kitPlay(q('.lb2-blockwrap'), BLOCK_RISE, { ...bf, duration: 420, delay: rise, easing: 'cubic-bezier(.2,1.1,.4,1)' });
+      kitPlay(q('.lb2-place'), POPN, { ...bf, duration: 340, delay: land - 40, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+      kitPlay(q('.lb2-rays'), RAYS_IN, { ...bf, duration: 700, delay: land, easing: 'cubic-bezier(.2,.9,.3,1)' });
+      kitPlay(q('.lb2-emblem'), EMBLEM_IN, { ...bf, duration: 460, delay: land + 40, easing: 'cubic-bezier(.2,1.1,.4,1)' });
+      kitPlay(q('.lb2-buddy'), DROP, { ...bf, duration: 620, delay: land + 160, easing: 'ease-in' });
+      kitPlay(q('.lb2-banner'), UNROLL, { ...bf, duration: 320, delay: land + 700, easing: 'cubic-bezier(.2,1.2,.4,1)' });
+      if (place === 1) kitPlay(crownRef.current, CROWN_DROP, { ...bf, duration: 520, delay: land + 860, easing: 'ease-in' });
       const k = place === 1 ? 1.15 : 0.9;
-      col.querySelectorAll('.lb2-cf').forEach((el, i) => kitPlay(el, confettiFrames(CONFETTI[i], k), { duration: 1300 + (i % 4) * 90, delay: at + 40 + (i % 5) * 25, easing: 'cubic-bezier(.15,.7,.4,1)', fill: 'backwards' }));
+      const cAt = land + (place === 1 ? 880 : 760);
+      col.querySelectorAll('.lb2-cf').forEach((el, i) => kitPlay(el, confettiFrames(CONFETTI[i], k), { ...bf, duration: 860 + (i % 4) * 60, delay: cAt + (i % 5) * 20, easing: 'cubic-bezier(.15,.7,.4,1)' }));
     });
     root.querySelectorAll('.lb2-mv.is-up .lb2-mv-ico').forEach((el) => kitPlay(el, BOB, { duration: 900, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-mv.is-down .lb2-mv-ico').forEach((el) => kitPlay(el, SINK, { duration: 1300, delay: 400, easing: 'ease-in-out' }));
@@ -459,9 +510,10 @@ export default function LeaderboardV2({ onBack }) {
       i += 1;
       const col = root.querySelector(`.lb2-col--${place}`);
       if (!col || !col.dataset.id) return;
-      kitPlay(col.querySelector('.lb2-pod-name'), HOP, { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      const beat = BEATS[col.dataset.cast] || BEATS.hype;
+      kitPlay(col.querySelector('.lb2-buddy'), beatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
       kitPlay(col.querySelector('.lb2-glint'), GLINT, { duration: 640, delay: 80, easing: 'cubic-bezier(.2,.8,.3,1)' });
-      if (place === 1 && crownRef.current) kitPlay(crownRef.current, CROWN_BOB, { duration: 700, easing: 'cubic-bezier(.3,.7,.3,1)' });
+      if (place === 1 && crownRef.current) kitPlay(crownRef.current, crownFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
     }, 2600);
     return () => clearTimeout(timer);
   }, [shown, data.loaded]);
@@ -519,25 +571,39 @@ export default function LeaderboardV2({ onBack }) {
           <div className="lb2-floor" aria-hidden="true" />
           {[2, 1, 3].map((place) => {
             const p = podium[place - 1];
-            const B = BLOCKS[place];
             const mine = !!(p && myId && p.id === myId);
             const n = p ? nums(p, tab, gains) : null;
+            const who = podCast[place - 1];
+            const name = p ? p.username : 'YOUR NAME HERE?';
             return (
-              <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ''}`} data-place={place} data-id={p ? p.id : ''} {...peekProps(p, setPeek)}>
-                {p ? <PodiumFx place={place} party={place === 1 || mine} /> : null}
-                {place === 1 && <Crown crownRef={crownRef} />}
+              <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
+                {p ? <PodiumFx party={place === 1 || mine} /> : null}
                 <div className="lb2-who">
-                  {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
-                  <span className="lb2-pod-name">
-                    {mine && <span className="lb2-you">YOU</span>}
-                    <span className="lb2-pod-name-t" style={{ '--nl': nameEms(p ? p.username : 'YOUR NAME HERE?') }}>{p ? p.username : 'YOUR NAME HERE?'}</span>
+                  {/* THE STAND: rays (#1) → emblem → the cast member (HERO) → the crown (#1) → the name ribbon */}
+                  <span className="lb2-stand" aria-hidden="true">
+                    {place === 1 && p ? <img className="lb2-rays" src="/stage/rays.svg" width="512" height="512" alt="" draggable="false" /> : null}
+                    <img className="lb2-emblem" src={`/stage/emblem-${place}.webp`} width="256" height="256" alt="" draggable="false" />
+                    <span className="lb2-buddy-wrap">
+                      <img className="lb2-buddy" src={castSrc(who.id, 'hero')} width="512" height="512" alt="" draggable="false" />
+                    </span>
+                    {place === 1 && <Crown crownRef={crownRef} />}
                   </span>
-                  <span className="lb2-pod-r">{n ? n.r : '—'}</span>
-                  <span className="lb2-pod-lv">{n ? n.lv : ''} {n ? <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span> : null}</span>
+                  <span className="lb2-banner">
+                    <img className="lb2-banner-art" src={`/stage/banner-${who.id}.webp`} width="640" height="178" alt="" aria-hidden="true" draggable="false" />
+                    <span className="lb2-pod-name">
+                      {mine && <span className="lb2-you">YOU</span>}
+                      <span className="lb2-pod-name-t" style={{ '--nl': nameEms(name) }}>{name}</span>
+                    </span>
+                  </span>
+                  {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
+                  <span className="lb2-pod-stats">
+                    <span className="lb2-pod-r">{n ? n.r : '—'}</span>
+                    {n ? <span className="lb2-pod-lv">{n.lv} <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span></span> : null}
+                  </span>
                   {wk ? <Prize rank={place} pod /> : null}
                 </div>
                 <div className="lb2-blockwrap">
-                  <B />
+                  <img className="lb2-block" src={`/stage/podium-${place}.webp`} width={[0, 296, 308, 309][place]} height={[0, 431, 349, 278][place]} alt="" aria-hidden="true" draggable="false" />
                   <span className="lb2-place">{place}</span>
                 </div>
               </div>
@@ -577,14 +643,16 @@ export default function LeaderboardV2({ onBack }) {
                     {mine && <span className="lb2-you">YOU</span>}
                     <span className="lb2-name" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
                     {isRival && <span className="lb2-rival">RIVAL</span>}
+                    {/* YOUR distance to the NEAREST band rides beside your name when a rival owns the line below */}
+                    {mine && rival && r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {mine && (rival || r.rank > 10) ? (
-                    <span className="lb2-chase">
+                    <span className={`lb2-chase${rival ? ' has-rival' : ''}`}>
                       {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}
-                      {rival && r.rank > 10 ? ' · ' : null}
-                      {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach) */}
-                      {r.rank > 10 ? <><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</> : null}
+                      {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a
+                          small stage with a rival it steps aside so neither is cut */}
+                      {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}

@@ -13,6 +13,7 @@ import {
   progressOf,
   xpPerInput,
   getKeyTier,
+  getRebirths,
 } from './xp';
 // SEASON 2 (PROGRESSION FINAL v2): ANY key counts at ×0.2 with no rate cap (letterXp.tryLetterCredit) — mashing is the game.
 import { markXpBoost, tryLetterCredit } from './letterXp';
@@ -44,8 +45,33 @@ const TAP_MOVE_TOLERANCE = 10; // px — beyond this the pointerdown was a scrol
 
 export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {}) {
   const xpRef = useRef(null);
-  if (xpRef.current === null) xpRef.current = loadProgress();
+  const rcRef = useRef(null); // the rebirth count the cached level belongs to
+  if (xpRef.current === null) { xpRef.current = loadProgress(); rcRef.current = getRebirths(); }
   const [progress, setProgress] = useState(() => progressOf(xpRef.current));
+  // NO LOST LEVELS (Andy oct16: "someone at lvl 178 can't rebirth to 10 bc it says they're lvl 160 /178"). The menu
+  // credited every key onto its OWN cached state and saved that — so a menu tab opened at LV160, left open while
+  // another tab (or the app in another window) climbed to 178, wrote 160 back over 178 on its next key (reproduced:
+  // e2e/xp-stale-tab.spec.js). The board kept 178; the REBIRTH screen read the save: "LV 160 / 178". Now the cache is
+  // reconciled with the SAVE before every credit: a different rebirth count = a rebirth happened (adopt the save — never
+  // undo a rebirth); the same count = keep whichever is further along.
+  const fresher = () => {
+    const saved = loadProgress();
+    const rc = getRebirths();
+    const c = xpRef.current;
+    if (rc !== rcRef.current) { rcRef.current = rc; return saved; }
+    return saved.level > c.level || (saved.level === c.level && saved.frac > c.frac) ? saved : c;
+  };
+  // another tab's save shows here at once (the 'storage' event only fires for OTHER tabs' writes)
+  useEffect(() => {
+    const onStorage = () => {
+      const next = fresher();
+      if (next !== xpRef.current) { xpRef.current = next; setProgress(progressOf(next)); }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+    // fresher reads refs + storage only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const streakRef = useRef({ count: 0, lastTime: 0, tier: 0 });
   const blockedRef = useRef(isBlocked);
   const creditRef = useRef(onCredit);
@@ -118,6 +144,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       const hit = isTap ? { gain: menuGain, crit: false } : critKeyAt(critKeySeq, menuGain, crit);
       // creates/resumes the AudioContext inside this gesture; a crit clacks an octave up (+5 pentatonic steps)
       playClack(st.count - 1 + (hit.crit ? 5 : 0));
+      xpRef.current = fresher(); // never credit onto a stale cache (a few-byte storage read, no layout)
       const fromLevel = xpRef.current.level;
       const res = creditXp(xpRef.current, hit.gain);
       xpRef.current = res.state;
@@ -229,6 +256,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
   // Re-read the stored level (an AUTO REBIRTH on the menu — Homepage — changed it under this hook's cached state).
   const refresh = () => {
     xpRef.current = loadProgress();
+    rcRef.current = getRebirths();
     setProgress(progressOf(xpRef.current));
   };
   return { progress, refresh };

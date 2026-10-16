@@ -12,15 +12,16 @@
 // panel, or season 2's five-row SETTINGS sheet — live in AudioPanel.jsx, fetched the first time a pointer or focus
 // reaches the button (and on the click), so the panel is ready by the time it opens. The button's struck-through
 // "all quiet" glyph still reads the live sound state here (the panel reports every switch it flips).
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import './AudioControls.css';
 import { KitIconButton } from './kit/KitNavButton.jsx';
 import { isEventSoundsEnabled } from '../audio/gameSounds';
 import { isClackEnabled } from '../progress/clack';
+import { lazyWithReload } from '../lib/chunkReload';
 
 const loadPanel = () => import('./AudioPanel.jsx');
-const AudioPanel = lazy(loadPanel);
-const warm = () => { loadPanel().catch(() => {}); };
+const AudioPanel = lazyWithReload(loadPanel, 'AudioPanel');
+const warm = () => { AudioPanel.preload(); };
 
 // `variant` — 'fixed' (default) is the app-wide bottom-right corner control; 'inline' drops the
 // fixed positioning so it can sit INSIDE a header cluster (the game boards), with its popover opening
