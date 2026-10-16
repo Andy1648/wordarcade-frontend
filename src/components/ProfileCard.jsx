@@ -17,9 +17,9 @@ import { kitPlay } from './kit/motion.js';
 import { CARD_RAR, cardTier } from './markCard/palette.js';
 import { rollMarkById } from '../progress/markRollsCore.js';
 import { rankPlate } from '../leaderboard/s2Board.js';
-import { fetchShowcase } from '../leaderboard/showcase.js';
+import { fetchShowcase, saveBio, myBio } from '../leaderboard/showcase.js';
 import { titleText, myTitles, wornTitle, setTitlePick } from '../leaderboard/titles.js';
-import { pushShowcaseNow, saveBio, myBio } from '../leaderboard/client.js';
+import { pushShowcaseNow } from '../leaderboard/client.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
 

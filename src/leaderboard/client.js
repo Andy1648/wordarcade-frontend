@@ -813,22 +813,3 @@ export function pushShowcaseNow() {
   import('./showcase.js').then((m) => m.pushShowcase({ rpc, secret: getSecret() })).catch(() => {});
 }
 
-// 051 PROFILE DESCRIPTION: saved straight away (not with the 20 s showcase push). The DB filters it again
-// (public.bio_is_clean) — the client's bioVerdict is only the instant answer. → { ok } | { error }.
-const BIO_KEY = 'taw.bio';
-export function myBio() {
-  try { return localStorage.getItem(BIO_KEY) || ''; } catch { return ''; }
-}
-export async function saveBio(text) {
-  const t = String(text || '').trim();
-  try {
-    const r = await rpc('lb_bio_set', { p_secret: getSecret(), p_bio: t });
-    if (r && r.ok) {
-      try { localStorage.setItem(BIO_KEY, t); } catch { /* blocked storage */ }
-      return { ok: true };
-    }
-    return { error: (r && r.error) || 'fail' };
-  } catch (e) {
-    return { error: /lb_bio_set|PGRST202|http_404/.test(String(e && e.code)) ? 'not_ready' : 'fail' };
-  }
-}
