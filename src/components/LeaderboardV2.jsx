@@ -202,13 +202,14 @@ const CONFETTI = Array.from({ length: CONFETTI_N }, (_, i) => {
 // THE ENTRANCE (art run oct16), one sequenced one-shot per column: the blocks rise 2 → 1 → 3, each emblem spins in
 // on its block, the character drops and squash-lands, the ribbon unrolls, the crown drops onto #1, confetti. Every
 // effect is transform / opacity and ends before 2.5 s (the e2e asserts nothing but the idle beat runs at 2.6 s); the
-// drops start only a short way up so no frame ever leaves the screen (the e2e measures mid-entrance too).
+// drops start only a short way up (-18%) so no frame ever leaves the screen — #1 stands near the top on a short
+// window, and CI's slower runner measured it mid-drop at -38% above the viewport (the e2e measures mid-entrance too).
 const BLOCK_AT = { 2: 0, 1: 140, 3: 280 }; // ms: rise order 2-1-3
 const BLOCK_RISE = [{ transform: 'translateY(70%) scaleY(.7)', opacity: 0 }, { transform: 'translateY(-4%) scaleY(1.04)', opacity: 1, offset: 0.7 }, { transform: 'translateY(0) scaleY(1)', opacity: 1 }];
 const EMBLEM_IN = [{ transform: 'scale(0) rotate(-200deg)', opacity: 0 }, { transform: 'scale(1.14) rotate(12deg)', opacity: 1, offset: 0.7 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
 const DROP = [
-  { transform: 'translateY(-38%) scale(.9, 1.1)', opacity: 0 },
-  { transform: 'translateY(-34%) scale(.94, 1.08)', opacity: 1, offset: 0.12 },
+  { transform: 'translateY(-18%) scale(.9, 1.1)', opacity: 0 },
+  { transform: 'translateY(-16%) scale(.94, 1.08)', opacity: 1, offset: 0.12 },
   { transform: 'translateY(0) scale(.94, 1.08)', opacity: 1, offset: 0.55, easing: 'ease-out' },
   { transform: 'translateY(0) scale(1.2, .78)', opacity: 1, offset: 0.68 },
   { transform: 'translateY(-4%) scale(.95, 1.06)', opacity: 1, offset: 0.84 },
@@ -216,8 +217,8 @@ const DROP = [
 ];
 const UNROLL = [{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1.08)', opacity: 1, offset: 0.7 }, { transform: 'scaleX(1)', opacity: 1 }];
 const CROWN_DROP = [
-  { transform: 'translateY(-70%) rotate(-40deg)', opacity: 0 },
-  { transform: 'translateY(-60%) rotate(-34deg)', opacity: 1, offset: 0.1 },
+  { transform: 'translateY(-50%) rotate(-40deg)', opacity: 0 },
+  { transform: 'translateY(-42%) rotate(-34deg)', opacity: 1, offset: 0.1 },
   { transform: 'translateY(0) rotate(-7deg)', opacity: 1, offset: 0.62, easing: 'ease-out' },
   { transform: 'translateY(-12%) rotate(-12deg)', opacity: 1, offset: 0.82 },
   { transform: 'translateY(0) rotate(-7deg)', opacity: 1 },
