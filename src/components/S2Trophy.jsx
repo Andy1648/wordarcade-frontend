@@ -8,12 +8,13 @@
 // P7: it also carries the menu's EDGE notification layer (S2Notify — rank-up banner, unlock toasts, board news), so
 // the purge needs no new eager code on the menu.
 // v2 MENU: it is the ACHIEVEMENTS tile of the top-right cluster (KitIconButton), in the tile's place — both trees.
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { KitIconButton } from './kit/KitNavButton.jsx';
 import { V3 } from '../progress/season';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { readyCountV3 } from '../progress/v3/achievements.js';
 import { ACH_CHANGE } from '../progress/v3/store.js';
+import { lazyWithReload } from '../lib/chunkReload';
 
 const readyNow = () => {
   try {
@@ -24,7 +25,7 @@ const readyNow = () => {
 };
 
 // the ACHIEVEMENTS screen (P3, v2 kit) — THE ONLY CLAIM PLACE — is its own lazy chunk: downloaded on the first open
-const AchievementsV3 = lazy(() => import('./AchievementsV3.jsx'));
+const AchievementsV3 = lazyWithReload(() => import('./AchievementsV3.jsx'), 'AchievementsV3');
 
 export default function S2Trophy({ variant = 'desk', disabled = false }) {
   const [open, setOpen] = useState(false);

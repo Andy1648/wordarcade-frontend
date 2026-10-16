@@ -280,10 +280,7 @@ export function indexRewardWins(result, rate = 0) {
   const w = result && Number.isFinite(result.rewardWords) ? result.rewardWords : 0;
   return w > 0 && rate > 0 ? Math.round(w * rate) : 0;
 }
-// AUTO-EQUIP: a roll auto-equips WHENEVER its STRENGTH (mainMultOf — the stat's equivalent multiplier, so kinds
-// compare) is HIGHER than the worn MAIN's — always when nothing is worn
-// (×1). A sidegrade or downgrade never equips and never asks (the player can SET AS MAIN by hand). No prompt,
-// so nothing ever stalls a hold.
+// (was AUTO-EQUIP on a stronger roll — removed oct16, see equipDecision)
 /** The MAIN a worn id pays (rolled / permanent / legacy / retired, with its finish). No id → ×1. */
 export function wornMainOf(wornId) {
   if (!wornId) return 1;
@@ -291,14 +288,21 @@ export function wornMainOf(wornId) {
   return r ? mainMultOf(wornId) : 1;
 }
 /**
- * 'auto' (the new MAIN is higher: equip it) or 'none' (equal / lower: leave the worn one).
- * `wornMain` overrides the worn id's MAIN.
+ * Always 'none' since oct16 (no auto-equip). `wornMain` overrides the worn id's MAIN in isUpgrade.
  */
-export function equipDecision(newId, wornId, wornMain) {
+// NO AUTO-EQUIP (Andy oct16 "don't automatically equip gears"): a roll never changes what is worn — not even into an
+// empty slot. The player equips by hand (the GEAR SHEET's SET AS MAIN / the EQUIP screen); the menu's gear slot says
+// EQUIP ONE with a dot while gear is owned and none is worn. Kept as a function so every caller's 'none' path is the
+// one path; `isUpgrade` below still answers "would this be stronger" for copy.
+export function equipDecision(newId, wornId, wornMain) { // eslint-disable-line no-unused-vars
+  return 'none';
+}
+/** Would `newId` be a stronger MAIN than the worn one? (copy only — nothing equips on it) */
+export function isUpgrade(newId, wornId, wornMain) {
   const n = ROLL_BY_ID.get(newId);
-  if (!n || wornId === newId) return 'none';
+  if (!n || wornId === newId) return false;
   const cur = Number.isFinite(wornMain) && wornMain > 0 ? wornMain : wornMainOf(wornId);
-  return mainMultOf(newId) > cur + 1e-9 ? 'auto' : 'none';
+  return mainMultOf(newId) > cur + 1e-9;
 }
 export function shouldAutoEquip(newId, wornId, wornMain) {
   return equipDecision(newId, wornId, wornMain) === 'auto';

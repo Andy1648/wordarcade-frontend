@@ -880,3 +880,19 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 
 /* the crit chips' key (oct12): RATE / PWR beside the % — both chips wear the same burst icon */
 .hp-gear-subkey { margin-left: 0.25em; font-size: var(--fs-hpunit); color: #fff; }
+
+/* YOUR MAIN (oct16): the paged desktop's empty right column, under the icons. Only ≥ 1200px — under that the right column
+   collapses to the icon cluster (above) and there is no room. */
+.hp-main { display: none; }
+@media (min-width: 1200px) {
+  .homepage-stage[data-paged] .hp-main {
+    display: block;
+    grid-column: 3;
+    grid-row: 2 / 4;
+    align-self: start;
+    justify-self: stretch;
+    position: relative;
+    z-index: 1;
+    margin-top: max(10px, calc(14 * var(--u)));
+  }
+}

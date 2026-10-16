@@ -323,9 +323,8 @@ test('INDEX opens the MARKS INDEX and closes back to the ROLL screen', async ({ 
   await keepReveal(page);
   await page.getByTestId('roll-index').click();
   await page.locator('.mx-panel').waitFor();
-  // nothing worn → the first mark AUTO-equipped; INDEX v2: the worn card says its stat
-  await expect(page.locator('.mx-tile.is-on')).toHaveCount(1);
-  await expect(page.locator('.mx-tile.is-on .mx-tile-sub')).toHaveText(/^(?:[+×][\d.,]+(?:s|%|×)?|EVERY \S+) [A-Z]/);
+  // NO AUTO-EQUIP (Andy oct16): nothing worn → the rolled gear is collected but NOT worn
+  await expect(page.locator('.mx-tile.is-on')).toHaveCount(0);
   await page.locator('.mx-close').click();
   await expect(page.locator('.rs-overlay')).toBeVisible();
   await page.locator('.rs-close').click();

@@ -28,6 +28,27 @@ const cursor = { x: -1e6, y: -1e6, seen: false };
 let raf = 0;
 let bound = false;
 
+// NO LAYOUT READS PER FRAME (CLAUDE.md; Andy oct16 "lag … as people press buttons like gear and shop"). frame() used
+// to call getBoundingClientRect() on EVERY registered element EVERY frame, right after writing their transforms — a
+// forced synchronous layout of the whole page per frame (read-after-write), and it kept running under an overlay
+// while the pointer moved, so opening GEARS / SHOP paid a full relayout per frame (measured 281 ms of forced layout
+// in the GEARS open at 4x CPU). Now each element's UNTRANSFORMED centre + half-diagonal is measured ONCE (on register)
+// and refreshed only on resize / scroll and when the pointer enters that element; frames are pure maths + writes.
+function measure(it) {
+  const r = it.el.getBoundingClientRect();
+  it.cx = r.left + r.width / 2 - it.ox; // subtract our own translate so the pull never feeds back on itself
+  it.cy = r.top + r.height / 2 - it.oy;
+  it.half = Math.hypot(r.width, r.height) / 2;
+}
+let remeasureRaf = 0;
+function remeasureAll() {
+  if (remeasureRaf) return;
+  remeasureRaf = requestAnimationFrame(() => {
+    remeasureRaf = 0;
+    for (const it of items) measure(it); // once per resize / scroll burst, never per pointer frame
+  });
+}
+
 function onMove(e) {
   cursor.x = e.clientX;
   cursor.y = e.clientY;
@@ -44,6 +65,8 @@ function bind() {
   window.addEventListener('pointermove', onMove, { passive: true });
   window.addEventListener('blur', onLeave);
   document.addEventListener('mouseleave', onLeave);
+  window.addEventListener('resize', remeasureAll, { passive: true });
+  window.addEventListener('scroll', remeasureAll, { passive: true, capture: true });
   bound = true;
 }
 function unbind() {
@@ -51,6 +74,10 @@ function unbind() {
   window.removeEventListener('pointermove', onMove);
   window.removeEventListener('blur', onLeave);
   document.removeEventListener('mouseleave', onLeave);
+  window.removeEventListener('resize', remeasureAll);
+  window.removeEventListener('scroll', remeasureAll, true);
+  if (remeasureRaf) cancelAnimationFrame(remeasureRaf);
+  remeasureRaf = 0;
   bound = false;
 }
 
@@ -87,12 +114,11 @@ function frame() {
   raf = 0;
   let busy = false;
   for (const it of items) {
-    const r = it.el.getBoundingClientRect();
-    // True (untransformed) center: subtract our own translate so the pull never
-    // feeds back on itself. Scale is centered, so it doesn't move the center.
-    const cx = r.left + r.width / 2 - it.ox;
-    const cy = r.top + r.height / 2 - it.oy;
-    const halfDiag = Math.hypot(r.width, r.height) / 2;
+    if (it.cx == null) continue; // not measured yet (its first measure is queued on register)
+    // the CACHED untransformed centre (measure() above) — no layout read here
+    const cx = it.cx;
+    const cy = it.cy;
+    const halfDiag = it.half;
     let tx = 0;
     let ty = 0;
     let prox = 0;
@@ -138,9 +164,14 @@ function frame() {
 
 export function registerMagnet(el, { max, base = 6 }) {
   if (!el) return null;
-  const it = { el, max, base, ox: 0, oy: 0, vx: 0, vy: 0, glow: 0, shadowOn: false };
+  const it = { el, max, base, ox: 0, oy: 0, vx: 0, vy: 0, glow: 0, shadowOn: false, cx: null, cy: null, half: 0 };
+  // refresh this element's rect when the pointer actually enters it (it may have moved since mount: a pager slide,
+  // late content) — one read per enter, never per frame
+  it.onEnter = () => measure(it);
+  el.addEventListener('pointerenter', it.onEnter, { passive: true });
   items.add(it);
   bind();
+  remeasureAll(); // the first measure, once, on the next frame
   ensure();
   return it;
 }
@@ -148,6 +179,7 @@ export function registerMagnet(el, { max, base = 6 }) {
 export function unregisterMagnet(it) {
   if (!it) return;
   items.delete(it);
+  it.el.removeEventListener('pointerenter', it.onEnter);
   it.el.style.transform = '';
   it.el.style.boxShadow = '';
   it.el.style.willChange = '';

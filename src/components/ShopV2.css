@@ -94,6 +94,7 @@
   transform: rotate(-6deg);
 }
 .sp2-plate-ico { position: absolute; left: 23px; top: 23px; }
+.sp2-plate-art { width: 104px; height: 104px; object-fit: contain; filter: drop-shadow(3px 3px 0 #000); } /* the painted battery (sized like the 104 kit icon it replaced; the phone rules below shrink it) */
 /* POWER SURGE (R5 oct8 #1): while HOLD TO BUY is held the plate squashes and charges and the bolt flickers + swells —
    ONE finite 1 s run (= the hold), transform/opacity only, will-change only for its life (`.is-held` drops it). Release
    early → the hold cancels and both snap to rest; complete → onPower bumps the plate and lands the NOW number. */
@@ -525,4 +526,82 @@
 @keyframes sp2-enter-rise { 0% { translate: 0 18px; opacity: 0; } 100% { translate: 0 0; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .sp2-title, .sp2-power, .sp2-stock { animation: none; }
+}
+
+/* ===== PRODUCT CARDS (oct16, Andy "items in shop have horrendous design … everything just looks so basic — nothing
+   themed to what the main page looks like") — the menu's game-card language on the shelf: each card dealt at a small
+   tilt (alternating, like a hand of cards), the stock as a round sticker slapped on the corner, the art big, the
+   effect number loud in the item's rarity colour with a hard shadow, the price a chunky tag that sits on its shadow. */
+.sp2-cell:nth-child(3n+1) .sp2-card { transform: rotate(-1.4deg); }
+.sp2-cell:nth-child(3n+2) .sp2-card { transform: rotate(0.9deg); }
+.sp2-cell:nth-child(3n) .sp2-card { transform: rotate(-0.5deg); }
+.sp2-card .kstc-card { border-color: var(--sp2-line); border-width: 5px; box-shadow: 7px 7px 0 var(--k-ink); }
+.sp2-band { justify-content: center; border-bottom-color: var(--k-ink); }
+.sp2-name { font-size: var(--fs-k16); letter-spacing: 0.04em; }
+.sp2-left {
+  position: absolute; z-index: 2; top: 36px; right: 8px; margin: 0;
+  width: 50px; height: 50px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;
+  background: var(--k-yellow, #FFE94A); border: 3px solid var(--k-ink); box-shadow: 3px 3px 0 var(--k-ink);
+  font-family: var(--k-display); font-size: var(--fs-k18); color: var(--k-ink);
+  transform: rotate(12deg);
+}
+.sp2-left-w { font-size: var(--fs-k13); }
+.sp2-card.is-common .sp2-left { background: #fff; }
+.sp2-ico { width: 56px; height: 56px; margin-top: 8px; }
+.sp2-art { width: 96px; height: 96px; margin-top: 2px; object-fit: contain; filter: drop-shadow(3px 3px 0 #000); }
+.sp2-big {
+  margin-top: 2px; font-size: var(--fs-k34);
+  color: var(--sp2-line); -webkit-text-stroke: 6px var(--k-ink); text-shadow: 4px 4px 0 var(--k-ink);
+}
+.sp2-card.is-common .sp2-big { color: #fff; }
+.sp2-price {
+  height: 38px; margin: auto 12px 12px; font-size: var(--fs-k22);
+  border-width: 4px; box-shadow: 4px 4px 0 var(--k-ink); transform: rotate(-1deg);
+  border-radius: 8px;
+}
+@media (hover: hover) {
+  .sp2-card.kstc:hover .sp2-price { transform: rotate(-1deg) translate(-1px, -2px); transition: transform .1s; }
+}
+.sp2-card.kstc:active .sp2-price { transform: rotate(-1deg) translate(3px, 3px); box-shadow: 1px 1px 0 var(--k-ink); }
+/* the chest keeps its yellow face; its ×1 sticker matches */
+.sp2-chest .sp2-left { background: #fff; }
+/* short desktop + phone: the same card, tighter */
+@media (max-height: 760px) and (min-width: 1000px) {
+  .sp2-left { top: 32px; width: 44px; height: 44px; font-size: var(--fs-k16); }
+  .sp2-ico { width: 52px; height: 52px; margin-top: 6px; }
+  .sp2-art { width: 76px; height: 76px; }
+  .sp2-big { font-size: var(--fs-k30); }
+  .sp2-price { height: 34px; margin: auto 10px 10px; font-size: var(--fs-k18); }
+}
+@media (max-width: 999px) {
+  .sp2-cell .sp2-card { transform: none; }
+  .sp2-cell:nth-child(odd) .sp2-card { transform: rotate(-1deg); }
+  .sp2-cell:nth-child(even) .sp2-card { transform: rotate(0.8deg); }
+  .sp2-left { top: 40px; right: 4px; width: 38px; height: 38px; font-size: var(--fs-k14); border-width: 2px; }
+  .sp2-big { font-size: var(--fs-k26); -webkit-text-stroke-width: 4px; text-shadow: 2px 2px 0 var(--k-ink); }
+  .sp2-ico { width: 44px; height: 44px; }
+  .sp2-art { width: 64px; height: 64px; }
+  .sp2-price { height: 32px; margin: auto 6px 6px; font-size: var(--fs-k16); border-width: 3px; box-shadow: 3px 3px 0 var(--k-ink); }
+}
+/* the busiest card (EVERYTHING BOOST: two-line WHAT + a long TIME) keeps its price inside the card */
+.sp2-card-in[data-stock="extend"] .sp2-what { line-height: 1.05; }
+.sp2-card-in[data-stock="extend"] .sp2-big { font-size: var(--fs-k30); }
+/* painted art fit (art run oct16): the art is bigger than the kit icon it replaces but must not push the gem price onto
+   the card's bottom edge — it overlaps its own transparent margin instead of taking height */
+.sp2-art { margin: -6px 0 -10px; }
+@media (max-height: 760px) and (min-width: 1000px) { .sp2-art { width: 80px; height: 80px; margin: -10px 0 -7px; } }
+/* the phone: two wide cards a row, not three 110px slivers ("WINS BOOST" was clipped to "VINS BOOS") */
+@media (max-width: 999px) {
+  .sp2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 214px; }
+  .sp2-art { width: 76px; height: 76px; margin: -4px 0 -8px; }
+}
+/* VERY SHORT desktop (≤ 580 tall, e.g. a 1280×495 window): the product-card rules above re-grew every card past its
+   172px row and clipped the gem price (even the chest's FREE) — the tight sizes win again here, art included */
+@media (min-width: 1000px) and (max-height: 580px) {
+  .sp2-left { top: 30px; width: 40px; height: 40px; font-size: var(--fs-k14); }
+  .sp2-art { width: 58px; height: 58px; margin: -6px 0 -6px; }
+  .sp2-ico { width: 40px; height: 40px; margin-top: 2px; }
+  .sp2-big { font-size: var(--fs-k24); }
+  .sp2-price { height: 30px; margin: auto 8px 8px; font-size: var(--fs-k16); }
 }

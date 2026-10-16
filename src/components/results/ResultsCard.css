@@ -389,3 +389,45 @@
   .rs2 .rs2-gems,
   .rs2 .rs2-total { min-height: 40px; }
 }
+
+/* ===== YOUR CHARACTER (art run oct16) — your MAIN is the placement art: WIN pose + painted confetti · top 3 = the HERO on
+   its medal emblem · K.O. pose + dizzy stars (the HERO tipped over stands in until the KO pose is painted). Every
+   visual is a painted asset (public/cast, public/stage); CSS places it, ResultsCard's one-shots move it. ===== */
+.rs2-icon.rs2-char { position: relative; width: calc(196px * var(--u)); height: calc(196px * var(--u)); margin-bottom: calc(-18px * var(--u)); }
+.rs2.has-learn .rs2-icon.rs2-char { width: calc(124px * var(--u)); height: calc(124px * var(--u)); margin: calc(10px * var(--u)) 0 calc(4px * var(--u)); }
+.rs2-char .rs2-char-img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(calc(5px * var(--u)) calc(5px * var(--u)) 0 #000); transform-origin: 50% 85%; }
+.rs2-char .rs2-char-img.is-stand-in.is-win { transform: rotate(-8deg); }
+.rs2-char .rs2-char-img.is-stand-in.is-ko { transform: translateY(-2%) rotate(-82deg) scale(.92); }
+/* the tipped HERO's head points LEFT: the stars ring it there (a painted KO pose keeps the arc over its top) */
+.rs2-char-img.is-stand-in.is-ko ~ .rs2-dizzy .rs2-dizzy-s.is-0 { left: -6%; top: 24%; }
+.rs2-char-img.is-stand-in.is-ko ~ .rs2-dizzy .rs2-dizzy-s.is-1 { left: 6%; top: 4%; }
+.rs2-char-img.is-stand-in.is-ko ~ .rs2-dizzy .rs2-dizzy-s.is-2 { left: 24%; top: 14%; width: 18%; height: 18%; }
+.rs2-char .rs2-char-emblem { position: absolute; z-index: 0; left: -10%; top: -12%; width: 120%; height: 120%; object-fit: contain; filter: drop-shadow(calc(4px * var(--u)) calc(4px * var(--u)) 0 #000); }
+.rs2-char-fx { position: absolute; z-index: 2; left: 50%; top: 38%; width: 0; height: 0; pointer-events: none; }
+.rs2-char .rs2-char-cf { position: absolute; left: calc(-13px * var(--u)); top: calc(-13px * var(--u)); width: calc(26px * var(--u)); height: calc(26px * var(--u)); opacity: 0; filter: none; }
+.rs2-dizzy { position: absolute; z-index: 2; inset: 0; pointer-events: none; }
+.rs2-char .rs2-dizzy-s { position: absolute; width: 22%; height: 22%; filter: drop-shadow(2px 2px 0 #000); }
+.rs2-dizzy-s.is-0 { left: 12%; top: 14%; }
+.rs2-dizzy-s.is-1 { left: 40%; top: 2%; width: 26%; height: 26%; }
+.rs2-dizzy-s.is-2 { left: 70%; top: 12%; }
+.rs2-pav { flex: none; width: calc(40px * var(--u)); height: calc(40px * var(--u)); min-width: 28px; min-height: 28px; margin-left: -4px; object-fit: contain; filter: drop-shadow(2px 2px 0 #000); }
+/* phone: the hero is one tight row (character · #N · stamp) */
+.rs2--narrow .rs2-icon.rs2-char { width: 84px; height: 84px; margin-bottom: 0; }
+.rs2--narrow.has-learn .rs2-icon.rs2-char { width: 64px; height: 64px; }
+.rs2--narrow .rs2-pav { width: 28px; height: 28px; }
+/* THE FOOT (oct16 fit): MENU sits bottom-LEFT with the extras, PLAY AGAIN alone bottom-right under the players — a long
+   WIN tally (4 chips + a bonus line) ran under the old right-hand MENU and hid the total. Phone keeps its stack. */
+.rs2:not(.rs2--narrow) .rs2-foot > .game-over-actions { display: contents; }
+.rs2:not(.rs2--narrow) .rs2-foot > .game-over-actions > :not(.game-over-rematch) { order: -1; flex: none; }
+.rs2:not(.rs2--narrow) .rs2-foot .rs2-extras { order: 0; flex: 0 1 auto; flex-wrap: nowrap; white-space: nowrap; }
+/* a card already too tight (GameScreen's fit check) drops the flavour from the foot + the bonus hint line, so the
+   foot stays one PLAY AGAIN tall and the tally keeps its total on screen (1163×450 WIN ran 9px over) */
+.rs2:not(.rs2--narrow)[data-ko-tight] .rs2-extras,
+.rs2[data-ko-tight] .rs2-line-note { display: none; }
+.rs2:not(.rs2--narrow) .rs2-foot .game-over-rematch { order: 1; margin-left: auto; }
+/* THE IMPACT FRAME (oct16): a flat flash over the hero box (its skew + inset match the plate) and the painted burst behind
+   the character — both rest invisible; the one-shots in ResultsCard play them on the landing frame */
+.rs2-impact { position: absolute; z-index: 1; inset: 0; transform: skewX(-5deg); background: #fff; opacity: 0; pointer-events: none; }
+.rs2-impact.is-ko { background: #FF3D7F; }
+.rs2-char .rs2-impact-burst { position: absolute; z-index: 0; left: -22%; top: -22%; width: 144%; height: 144%; object-fit: contain; opacity: 0; filter: none; pointer-events: none; }
+.rs2-hero-in { z-index: 2; } /* the character + #N stay ON TOP of the impact flash (the classic impact frame) */

@@ -19,7 +19,7 @@
 // resets it, and a blocked/absent store means we never reload at all (we cannot prove
 // we haven't already tried, and an unguarded reload is worse than the error).
 
-import { lazy } from 'react';
+import { createElement, forwardRef, lazy, useState } from 'react';
 
 // Bumping this key would re-arm the reload for every open tab — treat it as permanent.
 const RELOAD_FLAG_KEY = 'taw.chunkReload';
@@ -112,19 +112,47 @@ export class StaleChunkError extends Error {
  * fallback shows as "NEW VERSION — RELOAD".
  */
 export function lazyWithReload(factory, what = 'screen') {
-  return lazy(() =>
-    Promise.resolve()
-      .then(factory)
-      .then((m) => {
-        if (!m || m.default === undefined) throw new StaleChunkError(what);
-        return m;
-      })
-      .catch((err) => {
-        const stale = err instanceof StaleChunkError || isStaleChunkError(err);
-        if (stale && (isReloadingForStaleChunk() || reloadOnceForStaleChunk())) return new Promise(() => {});
-        throw stale && !(err instanceof StaleChunkError) ? new StaleChunkError(what) : err;
-      }),
-  );
+  // PRELOADABLE (Andy oct16 "IT CANT DELAY"): React.lazy suspends on its FIRST render even when the module is already
+  // downloaded, and React 18 then holds the fallback ~300 ms before it commits the content — so GEARS / settings /
+  // achievements sat ~400 ms on the menu after a press, code warm or not. `load` keeps the resolved component; a
+  // mount that starts after it resolved renders it DIRECTLY (no Suspense round-trip). Each mount keeps the type it
+  // started with, so a screen opened while still loading is never remounted when the module lands.
+  let Loaded = null;
+  let pending = null;
+  const load = () => {
+    if (!pending) {
+      pending = Promise.resolve()
+        .then(factory)
+        .then((m) => {
+          if (!m || m.default === undefined) throw new StaleChunkError(what);
+          Loaded = m.default;
+          return m;
+        })
+        .catch((err) => {
+          pending = null; // a later open (or warm) may retry
+          const stale = err instanceof StaleChunkError || isStaleChunkError(err);
+          if (stale && (isReloadingForStaleChunk() || reloadOnceForStaleChunk())) return new Promise(() => {});
+          throw stale && !(err instanceof StaleChunkError) ? new StaleChunkError(what) : err;
+        });
+    }
+    return pending;
+  };
+  const Lazy = lazy(load);
+  const Preloadable = forwardRef(function Preloadable(props, ref) {
+    const [Comp] = useState(() => Loaded || Lazy); // fixed for this mount's life
+    return createElement(Comp, { ...props, ref });
+  });
+  Preloadable.preload = () => load().then(() => {}, () => {});
+  PRELOADERS.set(what, Preloadable.preload);
+  return Preloadable;
+}
+
+// every lazyWithReload component's preload, by name — App's idle warm runs the NAMED overlay ones so the first open
+// of a menu screen skips Suspense. Never "all": that would parse the game modes' word lists mid-typing.
+const PRELOADERS = new Map();
+/** The registered preloads for these screen names (only those whose parent module has evaluated). */
+export function preloadersFor(names) {
+  return names.map((n) => PRELOADERS.get(n)).filter(Boolean);
 }
 
 /**

@@ -6,7 +6,7 @@
 // tab bar. COLLECTION and ACHIEVEMENTS used to be their own menu footer links + views; they were
 // consolidated in here (same kind of thing as records/progression/danger-zone) so the menu footer is
 // CREDITS-only again. The tab bodies live in CollectionScreen.jsx / AchievementsScreen.jsx.
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import './StatsScreen.css';
 import './rarity/RarityFin.css';
 import { loadProgress, getRebirths, need } from '../progress/xp';
@@ -34,11 +34,12 @@ import { rebirthLadder } from '../progress/rebirthLadder';
 import { rarityClass, rebirthRarity, levelRarity } from '../lib/rarityStyle.js';
 import { peekStatsTab, clearStatsTab } from '../lib/statsTab';
 import OverlaySkeleton from './OverlaySkeleton';
+import { lazyWithReload } from '../lib/chunkReload';
 
 // P8 (SEASON2 only): the v2 STATS screen (Stats.dc.html — the TOTAL multiplier first, the chain, REPLAY), its own lazy
 // chunk. Its ALL TIME cell opens this live panel (records, collection, backup, reset) — and a deep link to a tab
 // (setStatsTab) opens the panel straight away. With the flag OFF the live panel below is untouched.
-const StatsV2 = lazy(() => import('./StatsV2.jsx'));
+const StatsV2 = lazyWithReload(() => import('./StatsV2.jsx'), 'StatsV2');
 
 export default function StatsScreen({ onBack }) {
   // peek, not take: a discarded (interrupted) render must not eat the deep-linked tab — see lib/statsTab.js

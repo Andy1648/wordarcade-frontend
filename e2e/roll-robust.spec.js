@@ -236,7 +236,7 @@ test('5. hidden tab / leaving mid-roll still lands and saves the result', async 
   for (const id of after.owned) await expect(page.locator(`.mx-tile[data-mark="${id}"]`)).not.toHaveClass(/is-locked/);
   await page.locator('.mx-close').click();
   await keepReveal(page);
-  // (c) ✕ mid-spin → back on the menu, the roll saved and (nothing better worn) auto-equipped
+  // (c) ✕ mid-spin → back on the menu, the roll saved; what is worn never changes (no auto-equip, Andy oct16)
   before = await store(page);
   await holdRoll(page);
   await page.waitForTimeout(300);
@@ -244,7 +244,7 @@ test('5. hidden tab / leaving mid-roll still lands and saves the result', async 
   await expect(page.locator('.rs-overlay')).toHaveCount(0);
   after = await store(page);
   expect(after.rolls).toBe(before.rolls + 1);
-  expect(after.worn).toBeTruthy();
+  expect(after.worn).toBe(before.worn);
 });
 
 test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, charged once', async ({ page }) => {
