@@ -18,7 +18,7 @@ import { formatNum, formatMultExact, formatShort } from '../../format';
 import KitIcon from '../kit/KitIcon.jsx';
 import GainLayer from '../gains/GainLayer.jsx';
 import { countMs, BUMP_MS, BUMP_SCALE } from '../gains/gainPlan.js';
-import { getWins } from '../../progress/wins';
+import { getWins, minWordsFor } from '../../progress/wins';
 import { kitPlay } from '../kit/motion.js';
 import { reduceMotion } from '../../lib/reduceMotion';
 import { GemIcon, GemsEarnedLine, useGems } from '../gems/Gems';
@@ -345,7 +345,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
               <span key={c.key} className="rs2-chip" style={{ '--c': CHIP_TONES[i % CHIP_TONES.length] }} data-rv="chip" data-at={T.wins + 220 + i * 220}>
                 <b>{mx(c.mult)}</b>{c.label}
               </span>
-            )) : <span className="rs2-chip rs2-chip--none">{lines[0].amount > 0 ? 'NO MULTIPLIERS' : '3 WORDS TO START EARNING'}</span>}
+            )) : <span className="rs2-chip rs2-chip--none">{lines[0].amount > 0 ? 'NO MULTIPLIERS' : `${minWordsFor()} WORDS TO START EARNING`}</span>}
           </div>
         </div>
         {lines.slice(1).map((l, i) => (

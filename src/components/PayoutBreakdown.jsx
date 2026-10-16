@@ -16,6 +16,7 @@ import './PayoutBreakdown.css';
 import { wornMarkId, markEntry } from '../progress/markRollsCore';
 import { rarityClass } from '../lib/rarityStyle.js';
 import RarityFx from './rarity/RarityFx';
+import { minWordsFor } from '../progress/wins';
 
 // RARITY IDENTITY (Andy oct5): the receipt's MARK term wears the worn mark's tier (fill + glow; shimmer /
 // sparks on the end-screen receipt only — the mid-game compact receipt mounts per word, so it stays CSS-only).
@@ -114,7 +115,7 @@ export function WordPayout({ payout, inactive = [], compact = false, limit = 4 }
         )}
       </div>
       {payout.held && (
-        <div className="payout-held">HELD — BANKS AT 3 WORDS</div>
+        <div className="payout-held">HELD — BANKS AT {minWordsFor()} WORDS</div>
       )}
       {inactive.length > 0 && !compact && (
         <div className="payout-off">

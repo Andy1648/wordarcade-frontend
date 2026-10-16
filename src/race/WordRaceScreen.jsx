@@ -41,6 +41,7 @@ import { payGameResult } from '../progress/gems';
 import { grantGems } from '../progress/gemsCore';
 import { V3 } from '../progress/season';
 import { otherSeatIds } from '../progress/seats';
+import { minWordsFor } from '../progress/wins';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -455,7 +456,7 @@ export default function WordRaceScreen({
           <p className="wr-earn wr-earn-final">
             {(earned?.wins || 0) > 0
               ? <>YOU BANKED +{formatNum(earned?.wins || 0)} WINS</>
-              : <>NO WINS THIS RACE — 3 WORDS START THE BANK</>}
+              : <>NO WINS THIS RACE — {minWordsFor()} WORDS START THE BANK</>}
           </p>
           {/* GEMS earned this race — always its own line, never hidden (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
