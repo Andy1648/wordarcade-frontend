@@ -41,7 +41,7 @@ import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
-import { CAST, castFor, CAST_BEATS, castBeatFrames } from '../cast/cast.js';
+import { CAST, castFor, CAST_BEATS, castBreathFrames } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -175,7 +175,6 @@ const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)'
 // TOP 3 IDLE (Andy oct12 "at least give some idle animation for the top 3"): ONE setTimeout chain for the podium — every
 // IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its character moves (BEATS), a sparkle glints.
 // Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
-const IDLE_REST_MS = 260; // the pause between one idle beat and the next
 // PER-CHARACTER IDLE: each cast member's squash-and-stretch breath (cast.js CAST_BEATS — shared with the menu showcase);
 // (oct17: #1's crown removed — Andy: it "doesn't match well at all" with the painted cast.)
 const CONFETTI_N = 18;
@@ -483,9 +482,9 @@ export default function LeaderboardV2({ onBack }) {
         const col = root.querySelector(`.lb2-col--${place}`);
         const beat = (col && CAST_BEATS[col.dataset.cast]) || CAST_BEATS.hype;
         if (col && col.dataset.id && document.visibilityState !== 'hidden') {
-          kitPlay(col.querySelector('.lb2-buddy'), castBeatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
+          kitPlay(col.querySelector('.lb2-buddy'), castBreathFrames(beat, 0.5), { duration: beat.ms * 1.3, easing: 'ease-in-out' });
         }
-        timers[k] = setTimeout(loop, beat.ms + IDLE_REST_MS + k * 90);
+        timers[k] = setTimeout(loop, beat.ms * 1.3 + 1800 + Math.random() * 2200); // oct17: a quiet, irregular breath — the showcase owns the big signature moves
       };
       timers[k] = setTimeout(loop, 2400 + k * 420); // after the entrance lands
     });

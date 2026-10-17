@@ -192,3 +192,6 @@
     transition: none !important;
   }
 }
+/* `art` (oct17 PROFILE): a painted face in place of the vector icon — your hero's head, cropped from its HERO pose */
+.kb-art { position: relative; display: block; width: 48px; height: 48px; overflow: hidden; border-radius: 6px; }
+.kb-art img { position: absolute; left: 50%; top: -6px; width: 100px; height: auto; translate: -50% 0; }

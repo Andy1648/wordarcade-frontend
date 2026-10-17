@@ -27,6 +27,7 @@ import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
+import { usePlayClock } from '../progress/playClock.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
 // tile elsewhere on the card. Progress is driven by React state every frame (not a CSS
@@ -121,6 +122,7 @@ export default function SoloShell({
   // below. Everyone who arrived via the menu gets the card exactly as before.
   offerMenu = false,
 }) {
+  usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
   const inputRef = useRef(null);
 
   // LONG WORDS WRAP (fix/famous-long-words). The input shrinks its type to fit a long word on one

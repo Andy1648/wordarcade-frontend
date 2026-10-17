@@ -65,6 +65,7 @@ import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import { patchSeen } from './patchNotes/patchSeen.js';
+import { mainFaceSrc } from '../cast/mainFace.js';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { moments } from '../lib/moments';
@@ -75,7 +76,8 @@ import { LEADERBOARD_ENABLED, getMyProfile, submitStats as submitBoardStats, che
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 // CARD PAGES controls (arrows, dots, keys, swipe): only a short-wide desktop ever fetches these.
 const CardPager = lazyWithReload(() => import('./CardPager.jsx'), 'CardPager');
-const MainPick = lazyWithReload(() => import('./mainPick/MainPick.jsx'), 'MainPick');
+const ProfileTile = lazyWithReload(() => import('./profile/ProfileTile.jsx'), 'ProfileTile');
+const ProfilePopup = lazyWithReload(() => import('./profile/ProfilePopup.jsx'), 'ProfilePopup');
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
 // T (Andy oct2): the unlock tutorials — lazy, mounted only on a settled menu past LV1 (see below)
@@ -304,6 +306,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [patchDue] = useState(() => !patchSeen());
   // the UPDATE LOG tile (top-right cluster) re-opens the notes any time; the gift still pays only once
   const [showPatch, setShowPatch] = useState(false);
+  // PROFILE (oct17): your hero + stats + description, a popup off the right column (paged) or the icon cluster (else)
+  const [showProfile, setShowProfile] = useState(false);
+  const [mainId, setMainId] = useState(null); // null = read from storage (mainFaceSrc); the popup reports a change
+  const openProfile = useCallback(() => setShowProfile(true), []);
+  const profileNav = useMemo(() => ({ onClick: openProfile, art: mainFaceSrc(mainId) }), [openProfile, mainId]);
   // T: unlock tutorials mount once the menu has settled (the arrival wipe) and the mount-time moments — a
   // rank-up waits on the network — have announced themselves; from there the queue orders them (H5)
   const [tutReady, setTutReady] = useState(false);
@@ -1403,6 +1410,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             ach={ach}
             achSlot={trophy}
             news={news}
+            profile={profileNav}
             railItems={railItems}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
@@ -1427,7 +1435,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} settingsSlot={settingsSlot} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} profile={isPagedMenu ? null : profileNav} settingsSlot={settingsSlot} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
@@ -1446,7 +1454,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
         {/* YOUR MAIN (oct16, Andy "the customizable section … on the right side of the screen (with the empty space there)"):
             the paged desktop's right column, under the icons — a grid cell, lazy (its own chunk, off the first paint). */}
-        {isPagedMenu && <div className="hp-main"><Suspense fallback={null}><MainPick /></Suspense></div>}
+        {isPagedMenu && <div className="hp-main"><Suspense fallback={null}><ProfileTile heroId={mainId} onOpen={openProfile} /></Suspense></div>}
 
         {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
@@ -1565,6 +1573,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {showRanks && <Suspense fallback={null}><RankLadder onClose={() => setShowRanks(false)} /></Suspense>}
       {patchDue && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showRanks || showMenuSpot)} /></Suspense>}
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
+      {showProfile && <Suspense fallback={null}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost

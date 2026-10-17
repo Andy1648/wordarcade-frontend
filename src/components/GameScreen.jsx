@@ -64,6 +64,7 @@ import { GemPop, GemsEarnedLine, useGemsRound } from './gems/Gems';
 import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
+import { usePlayClock } from '../progress/playClock.js';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -1503,6 +1504,7 @@ export default function GameScreen({
   winnerPay = null,
   lastLanding = null,
 }) {
+  usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
   const draftStoreRef = useRef(null);
   if (!draftStoreRef.current) draftStoreRef.current = createDraftStore();
   const draftStore = draftStoreRef.current;

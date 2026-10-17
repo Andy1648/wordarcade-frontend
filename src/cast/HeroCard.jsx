@@ -27,12 +27,14 @@ export default function HeroCard({ hero, locked = false, on = false, sel = false
     return () => clearTimeout(t);
   }, [hero.elite, delay]);
   const cls = `hc${hero.elite ? ' is-elite' : ''}${locked ? ' is-locked' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
+  // a card can sit inside a bigger button (the menu's PROFILE tile) — then it is a plain span, not a nested button
+  const Tag = onClick ? 'button' : 'span';
+  const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };
   return (
-    <button type="button" className={cls} style={{ '--hc-c': hero.color, '--hc-d': hero.dark }} onClick={onClick} aria-pressed={on}
-      aria-label={`${hero.name}${hero.elite ? ', elite' : ''}${locked ? ', locked' : on ? ', equipped' : ''}`} data-hero={hero.id}>
+    <Tag className={cls} style={{ '--hc-c': hero.color, '--hc-d': hero.dark }} {...btn} data-hero={hero.id}>
       <span className="hc-card">
         <span className="hc-art">
-          <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" draggable="false" />
+          <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
           {hero.elite ? <span ref={shineRef} className="hc-shine" aria-hidden="true" /> : null}
         </span>
         <span className="hc-plate" aria-hidden="true" />
@@ -40,6 +42,6 @@ export default function HeroCard({ hero, locked = false, on = false, sel = false
         <FitText className="hc-name fit-center">{hero.name}</FitText>
       </span>
       {children}
-    </button>
+    </Tag>
   );
 }
