@@ -30,6 +30,8 @@ import { formatNum, formatMultExact } from '../format';
 import { noteLetters } from '../progress/letterXp.js';
 
 const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
+// the poster's case id on a phone: dictionary short forms (noun / verb are already short)
+const POS_SHORT = { adj: 'adj.', n: 'noun', v: 'verb', adv: 'adv.' };
 const CLEAR_PAUSE_MS = 850;
 // THE MISS TEACHES, SO IT HAS TO BE READABLE. The re-encode card carries four things — the
 // word, the sentence with the answer filled in, the definition, and a root cousin. 1800ms was
@@ -712,7 +714,15 @@ export function useSatRushGame() {
   // so nothing here is a rule shortcut — it's just fast-forwarded real play) ----
   const scene = useCallback(
     (which) => {
-      freshEngine();
+      // ?scenemode=lineup shoots the scene in a LINEUP run (suspects + no spell-along); the
+      // default is a BRIEFING run. The mode is set explicitly so a remembered pick never leaks in.
+      const sceneMode =
+        typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('scenemode') === 'lineup'
+          ? 'lineup'
+          : 'briefing';
+      modeRef.current = sceneMode;
+      freshEngine([], sceneMode);
       phaseRef.current = 'playing';
       const eng = engineRef.current;
 
@@ -919,6 +929,9 @@ function buildView(state, cur, eng, input, extra) {
     interval,
     graceMs: extra.graceMs, // full spell-along window (fixed at final-stage entry)
     meta: `${POS_LABEL[cur.pos] || cur.pos} · ${cur.length} letters · tier ${cur.tier}`,
+    pos: POS_LABEL[cur.pos] || cur.pos,
+    posShort: POS_SHORT[cur.pos] || cur.pos,
+    tier: cur.tier,
     reveals: cur.reveals.map((r) => ({ type: r.type, stage: r.stage, visible: r.stage <= cur.stage })),
     context: cur.context,
     gloss: cur.gloss,

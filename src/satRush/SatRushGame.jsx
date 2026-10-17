@@ -339,7 +339,7 @@ function StartScreen({ onPlay, onExit }) {
         {/* Worked example — the mechanic, in one clue → answer beat. */}
         <div className="sr-cover-example">
           <div className="sr-cover-ex-label">EXAMPLE</div>
-          <div className="sr-cover-ex-clue">“lasting only a very short time”</div>
+          <div className="sr-cover-ex-clue">lasting only a very short time</div>
           <div className="sr-cover-ex-arrow" aria-hidden="true">▼</div>
           <div className="sr-cover-ex-answer">EPHEMERAL</div>
         </div>
