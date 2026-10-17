@@ -11,6 +11,7 @@ import { wordWinsBase, perWordRateNow } from '../progress/wins.js';
 import { getKeyTier } from '../progress/xp.js';
 import { mark2Id, readClaimed, readCounters } from '../progress/v3/store.js';
 import { readRecords } from '../progress/records.js';
+import { readMain } from '../cast/cast.js';
 
 const SENT_KEY = 'taw.s2.showcase2'; // the JSON last sent, so an unchanged showcase is never re-sent. '2' (042, oct13): every browser re-sends ONCE so a card an old audit blanked comes back
 // 046 PROFILE FLEX: a send counts as STORED only when the DB answers v >= 46 (it knows the badge / word columns). Before
@@ -32,6 +33,7 @@ export function myShowcase() {
     power: num(getKeyTier()),
     ...flex(),
     title: null, // 050's TITLE slot — titles were removed (Andy oct17); null clears any title already stored
+    hero: readMain(), // 053: the equipped hero, so the board shows YOUR pick to everyone (an older DB just ignores the key)
   };
 }
 
@@ -88,17 +90,17 @@ export async function fetchShowcase(id) {
   }
 }
 
-/** 050: the TITLE of each board row in one read — { profile_id: title } (empty when 049 is not run, offline …). */
-export async function fetchTitles(ids) {
-  const list = (ids || []).filter((x) => typeof x === 'string' && /^[0-9a-f-]{8,64}$/i.test(x)).slice(0, 80);
+/** 053: the equipped HERO of each board row in one read — { profile_id: hero id } ({} when 053 is not run, offline …). */
+export async function fetchHeroes(ids) {
+  const list = (ids || []).filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)).slice(0, 80);
   if (!BASE || !KEY || !list.length) return {};
   try {
     const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
-    const r = await fetch(`${BASE}/rest/v1/profile_showcase?select=profile_id,title&profile_id=in.(${list.map(encodeURIComponent).join(',')})`, { headers });
+    const r = await fetch(`${BASE}/rest/v1/profile_showcase?select=profile_id,hero&profile_id=in.(${list.map(encodeURIComponent).join(',')})`, { headers });
     if (!r.ok) return {};
     const rows = await r.json();
     const out = {};
-    for (const row of rows || []) if (row && row.profile_id && row.title) out[row.profile_id] = row.title;
+    for (const row of rows || []) if (row && row.profile_id && typeof row.hero === 'string') out[row.profile_id] = row.hero;
     return out;
   } catch {
     return {};
