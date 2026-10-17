@@ -19,9 +19,9 @@ function FilledSentence({ context, word }) {
   const [before, after] = context.split(/_+/);
   return (
     <p className="sr-brief-sentence">
-      {before}
+      “{before}
       <mark className="sr-brief-fill">{word}</mark>
-      {after}
+      {after}”
     </p>
   );
 }
@@ -44,9 +44,10 @@ function BriefCard({ card }) {
       </div>
 
       {/* definition first — the meaning lands directly under the word */}
-      <p className="sr-brief-def">“{gloss}”</p>
+      <p className="sr-brief-def">{gloss}</p>
 
-      {/* then the word in use — the example sentence, filled in and highlighted */}
+      {/* then the word in use — the example sentence, QUOTED, filled in and highlighted (oct17, Andy:
+          the example is the quotation, the definition is plain) */}
       <FilledSentence context={context} word={word} />
 
       {root && (

@@ -30,12 +30,13 @@ function ReEncode({ data }) {
     <div className={`sr-reencode ${kind}`} role="status">
       <div className="sr-reencode-tag">{kind === 'miss' ? 'IT WAS' : 'BARELY — REMEMBER IT'}</div>
       <div className="sr-reencode-word">{word}</div>
+      {/* oct17 (Andy): the DEFINITION is plain text; the EXAMPLE is the quote. */}
+      <p className="sr-reencode-def">{gloss}</p>
       <p className="sr-reencode-sentence">
-        {before}
+        “{before}
         <mark className="sr-brief-fill">{word}</mark>
-        {after}
+        {after}”
       </p>
-      <p className="sr-reencode-def">“{gloss}”</p>
       {cousin && (
         <p className="sr-reencode-cousin">
           same root as <b>{cousin}</b>
@@ -67,7 +68,11 @@ function SuspectLineup({ suspects }) {
       </div>
       <ul className="sr-lineup-grid" style={{ '--cols': cols }}>
         {lineup.map((s) => (
-          <li key={s.word} className={`sr-suspect${s.eliminated ? ' cleared' : ''}`}>
+          <li
+            key={s.word}
+            className={`sr-suspect${s.eliminated ? ' cleared' : ''}`}
+            style={{ '--len': s.word.length }}
+          >
             <span className="sr-suspect-word">{s.word.toUpperCase()}</span>
             {s.eliminated && (
               <span className="sr-suspect-alibi" aria-hidden="true">CLEARED</span>
@@ -102,9 +107,9 @@ function FieldRow({ type, visible, view }) {
       <div className={cls}>
         <span className="sr-fieldlabel" aria-hidden="true">Last seen</span>
         <div className="sr-fieldbody sr-sentence">
-          {before}
+          “{before}
           <Blank length={view.wordLength} />
-          {after}
+          {after}”
         </div>
       </div>
     );
@@ -113,7 +118,7 @@ function FieldRow({ type, visible, view }) {
     return (
       <div className={cls}>
         <span className="sr-fieldlabel" aria-hidden="true">Description</span>
-        <div className="sr-fieldbody sr-gloss">{visible ? `“${view.gloss}”` : ''}</div>
+        <div className="sr-fieldbody sr-gloss">{visible ? view.gloss : ''}</div>
       </div>
     );
   }
@@ -121,12 +126,21 @@ function FieldRow({ type, visible, view }) {
     if (!view.root) return null; // no shared root -> the fugitive has no known aliases
     return (
       <div className={cls}>
-        <span className="sr-fieldlabel" aria-hidden="true">Known aliases</span>
+        <span className="sr-fieldlabel" aria-hidden="true">
+          <span className="sr-known">Known </span>aliases
+        </span>
         <div className="sr-fieldbody sr-root">
           {visible ? (
             <>
               <b>{view.root.morpheme}</b> — {view.root.meaning}{' '}
-              <span className="cz">· {view.root.cousins.join(' · ')}</span>
+              <span className="cz">
+                {view.root.cousins.map((c) => (
+                  <span key={c} className="cz-i">
+                    {' · '}
+                    {c}
+                  </span>
+                ))}
+              </span>
             </>
           ) : (
             ''
@@ -152,6 +166,20 @@ export default function WordCard({ view }) {
   // key or frame), so the one layout read here is fine.
   const fieldsRef = useRef(null);
   const stage = view.stage;
+  // FIT LADDER (oct17, Andy: no scrollbar at 360x640 either). When a reveal lands and the fields
+  // overflow, step down one cut at a time until they fit: fit-1 drops the root's cousins, fit-2
+  // tightens the leading, fit-3 drops the inline field chips. Same event-only cadence as below (one
+  // read per step, a handful of steps per word at most). Reset on every new word.
+  const wordNumber = view.wordNumber;
+  useEffect(() => {
+    const box = fieldsRef.current;
+    if (!box) return;
+    box.classList.remove('fit-1', 'fit-2', 'fit-3');
+    for (let level = 1; level <= 3 && box.scrollHeight > box.clientHeight + 1; level++) {
+      box.classList.add(`fit-${level}`);
+    }
+  }, [shown, stage, atFinal, wordNumber]);
+
   useEffect(() => {
     const box = fieldsRef.current;
     if (!box || shown < 2 || box.scrollHeight <= box.clientHeight) return;
@@ -171,7 +199,7 @@ export default function WordCard({ view }) {
     // bearing (juice centres bursts on it; the wrong-key shake keys off .sr-card.shake).
     // key on the shake counter so the shake animation restarts on each wrong key.
     <div
-      className={`sr-card sr-poster${deepCut ? ' deep' : ''}${revenant ? ' revenant' : ''}${
+      className={`sr-card sr-poster${isLineup ? ' lineup' : ' briefing'}${deepCut ? ' deep' : ''}${revenant ? ' revenant' : ''}${
         atFinal ? ' atfinal' : ''
       }${fx.shake ? ' shake' : ''}`}
       key={`card-${fx.shake}`}
@@ -188,22 +216,32 @@ export default function WordCard({ view }) {
       {/* The visible panel: the manga PANEL whose EDGE reads the state (narrator
           rectangle → deep-cut starburst → revenant wavy break → tightened final). */}
       <div className="sr-cardframe">
-      {/* WANTED header; MOST WANTED on a deep cut. */}
-      <div className="sr-wanted-wrap">
-        <div className="sr-wanted sr-print" data-v={deepCut ? 'MOST WANTED' : 'WANTED'}>
-          {deepCut ? 'MOST WANTED' : 'WANTED'}
+      {/* MASTHEAD (oct17, Andy: "you spend so much space on WANTED and part of speech that there's a
+          whole scroll bar when it gets to the definition"): the WANTED banner and the case id share
+          ONE row, so the clue + definition get the height back. */}
+      <div className="sr-masthead">
+        <div className="sr-wanted-wrap">
+          <div className="sr-wanted sr-print" data-v={deepCut ? 'MOST WANTED' : 'WANTED'}>
+            {deepCut ? 'MOST WANTED' : 'WANTED'}
+          </div>
         </div>
-        {/* Revenant = an ESCAPED overprint: a red double-ruled stamp across the
-            header at a slight tilt, held for the whole word. */}
+        {/* Case id: part of speech · tier. The letter count is the slot row itself, so the case id
+            no longer repeats it. */}
+        <div className="sr-caseid" aria-label={view.meta}>
+          <span className="sr-case-pos">
+            <span className="sr-case-long">{view.pos}</span>
+            <span className="sr-case-short">{view.posShort}</span>
+          </span>
+          <span className="sr-case-tier">tier {view.tier}</span>
+        </div>
+        {/* Revenant = an ESCAPED overprint: a double-ruled stamp across the masthead at a slight
+            tilt, held for the whole word. */}
         {revenant && (
           <div className="sr-escaped" aria-label={`escaped ${missCount} times — reward doubled`}>
-            ESCAPED ×{missCount} — REWARD DOUBLED
+            ESCAPED ×{missCount} — REWARD ×2
           </div>
         )}
       </div>
-
-      {/* Case id: the existing meta, in a double-ruled band. */}
-      <div className="sr-caseid">{view.meta}</div>
 
       {/* Fields scroll inside this region on a small screen; the mugshot slots
           below stay pinned and always visible. */}
