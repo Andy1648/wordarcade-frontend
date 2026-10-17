@@ -2862,3 +2862,204 @@ body:has(.sr-app) .wpm-hud {
 .sr-brief-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 4px 6px 4px; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }
 .sr-brief-head, .sr-brief-actions { flex: none; }
 .sr-brief-page > .sr-brief-exit { position: absolute; width: auto; }
+
+/* =====================================================================================================
+   DENSER POSTER (oct17, Andy: "for sat rush you spend so much space on 'WANTED' and part of speech that
+   there's a whole scroll bar when it gets to the definition, you have to use the space better").
+   - MASTHEAD: the WANTED banner and the case id share ONE row (banner left, case id right, one double
+     rule under both). Was a ~50-65px banner row + a ~37px case-id band stacked.
+   - The case id drops "N LETTERS" (the mugshot slot row IS the letter count) and is never cut any more.
+   - LAST SEEN runs INLINE with its chip, the way DESCRIPTION / ALIASES already did on the spread.
+   - BRIEFING on the desktop spread: the clue fields span the whole poster (the right column was empty
+     until the final stage); the spell-along sits above the REWARD instead.
+   Same DOM order, same retro-print treatment, nothing new animates.
+   ===================================================================================================== */
+.sr-masthead {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2vw, 20px);
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ink);
+  box-shadow: 0 3px 0 -1px var(--paper), 0 4px 0 -1px var(--ink); /* the double rule */
+  margin-bottom: 4px;
+}
+.sr-masthead .sr-wanted-wrap {
+  flex: 0 0 auto;
+  margin: 0;
+  justify-content: flex-start;
+}
+.sr-masthead .sr-wanted-wrap::before {
+  width: 180px;
+  height: 180px;
+}
+.sr-card .sr-masthead .sr-wanted {
+  font-size: clamp(22px, min(4.6vh, 6.4vw), 34px);
+  padding: 3px clamp(10px, 1.6vw, 18px) 5px;
+}
+/* the case id: right-hand side of the masthead, two short lines max, never hidden */
+.sr-card .sr-masthead .sr-caseid {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  column-gap: 0.9em;
+  row-gap: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  text-align: right;
+  line-height: 1.25;
+  letter-spacing: 0.1em;
+  white-space: normal;
+}
+.sr-case-pos,
+.sr-case-tier {
+  white-space: nowrap;
+}
+/* ESCAPED overprint now slaps across the masthead's banner, anchored left so the case id still reads */
+.sr-card .sr-masthead .sr-escaped {
+  left: 0;
+  transform: translate(0, -50%) rotate(-4deg);
+  font-size: max(16px, var(--fs-label));
+}
+
+/* LAST SEEN inline with its chip: the chip floats, the clue wraps under it at full width */
+.sr-field--sentence {
+  display: block;
+}
+.sr-field--sentence .sr-fieldlabel {
+  float: left;
+  margin: 0.25em 10px 0 0;
+  padding: 0 6px;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+}
+.sr-field--gloss,
+.sr-field--root {
+  display: block;
+}
+.sr-field--gloss .sr-fieldlabel,
+.sr-field--root .sr-fieldlabel {
+  float: left;
+  margin: 2px 10px 0 0;
+  padding: 0 6px;
+  letter-spacing: 0.12em;
+}
+.sr-fields {
+  gap: clamp(6px, 1.1vh, 12px);
+  padding-block: clamp(6px, 1.2vh, 12px);
+}
+
+/* the DESKTOP SPREAD, regridded for the one-row masthead */
+@media (min-width: 900px) and (max-height: 820px) {
+  .sr-cardframe {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+  .sr-masthead { grid-column: 1 / -1; grid-row: 1; }
+  .sr-fields { grid-column: 1; grid-row: 2; }
+  .sr-slotwrap { grid-column: 1; grid-row: 3; }
+  .sr-msg { grid-column: 1; grid-row: 4; }
+  .sr-lineup { grid-column: 2; grid-row: 2; }
+  .sr-reward { grid-column: 2; grid-row: 3 / 5; }
+  /* BRIEFING: nothing lives in the right column until the final stage — the clue gets the full width */
+  .sr-card.briefing .sr-fields { grid-column: 1 / -1; }
+  .sr-card.briefing .sr-spell { grid-column: 2; grid-row: 3; align-self: start; }
+  .sr-card.briefing .sr-reward { grid-row: 4; }
+  .sr-card.briefing .sr-cardframe:has(.sr-spell) .sr-reward { grid-row: 4; }
+}
+.sr-case-short { display: none; }
+
+/* PHONES: the poster is one column, so every row costs the clue height */
+@media (max-width: 520px) {
+  .sr-case-long { display: none; }
+  .sr-case-short { display: inline; }
+  .sr-card .sr-masthead .sr-wanted { font-size: clamp(18px, 6.2vw, 26px); }
+  .sr-card.deep .sr-masthead .sr-wanted { font-size: clamp(17px, 5.2vw, 22px); }
+  .sr-card .sr-masthead .sr-caseid { letter-spacing: 0.04em; }
+  .sr-card .sr-masthead .sr-escaped { font-size: var(--fs-label); }
+  /* the spell-along bar repeated the REWARD footer's own drain (both run the same grace window and
+     the footer already says LAST CALL — IT'S PRINTING); on a phone the footer keeps the job */
+  .sr-card .sr-spell { display: none; }
+  /* "KNOWN ALIASES" → "ALIASES" and two cousins: the chip and a third cousin wrapped the root line
+     to three rows in a 260px column */
+  .sr-known { display: none; }
+  .sr-root .cz-i:nth-child(n + 3) { display: none; }
+}
+@media (max-width: 520px) {
+  /* the spiked / wavy frames padded for the spikes on every side; on a phone the spikes are small */
+  .sr-card.deep .sr-cardframe,
+  .sr-card.revenant .sr-cardframe { padding: 16px 20px 12px; }
+}
+/* short phones (<=700 tall, keyboard down): the chips say who is standing, so the caption row goes and
+   the lineup keeps one row of chips on screen (the rest scroll inside it — it is a list) */
+@media (max-width: 520px) and (max-height: 700px) {
+  .sr-cardframe:has(.sr-lineup) .sr-lineup-head { display: none; }
+  .sr-cardframe:has(.sr-lineup) .sr-lineup { min-height: 52px; }
+}
+/* the message line reserved 20px + a 6-14px margin under every word, empty almost all the time */
+.sr-msg:empty { display: none; }
+@media (max-width: 520px) {
+  /* ~30px of side padding back for the clue column (stage gutter, body, frame): a 7-line clue at 250px
+     is a 6-line clue at 280px */
+  .sr-stage { width: calc(100vw - 16px); }
+  .sr-body { padding-inline: 8px; }
+  .sr-cardframe { padding-inline: 12px; }
+  .sr-card.deep .sr-cardframe,
+  .sr-card.revenant .sr-cardframe { padding: 14px 16px 12px; }
+  .sr-fields:has(.sr-field--gloss.in) .sr-sentence { font-size: var(--fs-body); }
+}
+/* SHORT PHONES (<=700 tall, keyboard down — 360x640 / 375x667): the fixed rows give the clue their
+   spare pixels. Nothing here goes under the 14px label floor or the 16px field floor. */
+@media (max-width: 520px) and (max-height: 700px) {
+  .sr-hcell { padding-block: 5px; }
+  .sr-body { gap: 4px; padding-top: 6px; padding-bottom: 6px; }
+  .sr-cardframe,
+  .sr-card.deep .sr-cardframe,
+  .sr-card.revenant .sr-cardframe { padding-top: 10px; padding-bottom: 8px; }
+  .sr-fields { padding-block: 4px; gap: 5px; }
+  .sr-slotwrap { margin-top: 4px; }
+  .sr-slots { margin-top: 0; }
+  .sr-cardframe:has(.sr-lineup) .sr-lineup { margin-top: 4px; }
+  .sr-reward { margin-top: 4px; padding-top: 4px; }
+  .sr-keyhint { margin-top: 2px; }
+}
+/* the FIT LADDER (WordCard.jsx): classes are cumulative (fit-2 keeps fit-1's cut) */
+.sr-fields.fit-1 .sr-root .cz { display: none; }
+.sr-fields.fit-2 .sr-sentence { line-height: 1.22; }
+.sr-fields.fit-2 .sr-gloss,
+.sr-fields.fit-2 .sr-root { line-height: 1.18; }
+.sr-fields.fit-2 { gap: 3px; }
+.sr-fields.fit-3 .sr-fieldlabel { display: none; }
+/* REVENANT: the ESCAPED stamp IS the header — the banner keeps its ink slash under it but drops its
+   own letters (one stray "D" poked out past the stamp) */
+.sr-card.revenant .sr-masthead .sr-wanted { color: transparent; }
+/* a suspect's name sizes to its chip: an 11-letter HAGIOGRAPHY clipped at both edges on a 360 phone */
+.sr-suspect { container-type: inline-size; }
+.sr-suspect-word {
+  font-size: max(14px, min(var(--fs-body), calc(100cqi / (var(--len, 8) * 0.9))));
+}
+/* <=400px the chips are ~130px: Bungee cannot fit an 11-letter name above 14px, so the cards are TYPED
+   (Space Mono 700 — the case file's own typewriter face), 16px with room to spare */
+@media (max-width: 400px) {
+  .sr-suspect-word {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0;
+    font-size: var(--fs-body);
+  }
+}
+/* short phones: a long word's mugshots stay on ONE row (two rows pushed the REWARD footer off the
+   poster foot); letters keep the 14px floor */
+@media (max-width: 520px) and (max-height: 700px) {
+  .sr-slots { --gap: 3px; --slot-min: 21px; }
+  .sr-slot { font-size: max(14px, calc(var(--slot-size) * 0.5)); }
+}
+/* PHONES: THE BRIEFING title ran under the EXIT tab (both centred/right in a ~300px page). The head
+   reads left on a phone and leaves EXIT its own lane. */
+@media (max-width: 520px) {
+  .sr-brief-head { align-items: flex-start; text-align: left; padding-right: 76px; }
+  .sr-brief-title { font-size: min(var(--fs-h2), 6vw); }
+}
