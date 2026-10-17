@@ -40,7 +40,8 @@ import { nameVerdict } from '../leaderboard/nameFilter.js';
 import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
-import { CAST, castFor, castSrc, CAST_BEATS, castBeatFrames, castCrownFrames } from '../cast/cast.js';
+import CastArt from '../cast/CastArt.jsx';
+import { CAST, castFor, CAST_BEATS, castBeatFrames, castCrownFrames } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -569,7 +570,7 @@ export default function LeaderboardV2({ onBack }) {
                       cast member alone (#1 crowned), the name in plain type under it, then the plate + numbers */}
                   <span className="lb2-stand" aria-hidden="true">
                     <span className="lb2-buddy-wrap">
-                      <img className="lb2-buddy" src={castSrc(who.id, 'hero')} width="512" height="512" alt="" draggable="false" />
+                      <CastArt className="lb2-buddy" id={who.id} live={!!p} />
                     </span>
                     {place === 1 && <Crown crownRef={crownRef} />}
                   </span>

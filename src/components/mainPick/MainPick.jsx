@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CAST, castSrc, readMain, writeMain, CAST_BEATS, castBeatFrames } from '../../cast/cast.js';
+import CastArt from '../../cast/CastArt.jsx';
 import './MainPick.css';
 
 const LAND = [
@@ -94,7 +95,7 @@ export default function MainPick() {
       <div className="mp-stage">
         <img className="mp-pedestal" src="/showcase/pedestal.webp" width="1234" height="590" alt="" aria-hidden="true" draggable="false" />
         <button type="button" className="mp-hero" onClick={() => setCheering(true)} aria-label={`${c.name}: tap to cheer`}>
-          <img ref={artRef} key={c.id} className="mp-art" src={castSrc(c.id, cheering ? 'win' : 'hero')} width="512" height="512" alt={c.name} draggable="false" />
+          <CastArt artRef={artRef} key={c.id} className="mp-art" id={c.id} pose={cheering ? 'win' : 'hero'} alt={c.name} />
         </button>
       </div>
       <span className="mp-name">{c.name}</span>
