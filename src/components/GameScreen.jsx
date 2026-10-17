@@ -119,6 +119,9 @@ const REJECTION_MESSAGES = {
   not_in_category: "DOESN'T FIT THE CATEGORY",
   // STEP 9 (list-only Blitz): the server's only reject for a well-formed answer.
   not_on_list: 'NOT ON THE LIST',
+  // NOT categories ("Things you shouldn't microwave"): the answer fits the POSITIVE prompt. The server sends the
+  // list's own line ("YOU CAN MICROWAVE THAT 🙄") as result.message; this is only the fallback.
+  safe_item: "THAT ONE'S TOTALLY FINE 🙄",
 };
 
 // Category Blitz length: the host picks 3 / 5 / 10 (set_rounds) and round_start /
@@ -164,7 +167,8 @@ function savePersonalBest(category, score) {
 // under -> localStorage key "typeaword-pb-category-blitz-solo".
 const SOLO_PB_KEY = 'category blitz solo';
 
-function rejectionMessage(reason, { combo = '', isCategory = false } = {}) {
+function rejectionMessage(reason, { combo = '', isCategory = false, message = '' } = {}) {
+  if (reason === 'safe_item' && message) return String(message).toUpperCase();
   // Category answers have a lower length floor, so reuse a mode-specific
   // string for the same reason code.
   const key = reason === 'too_short' && isCategory ? 'too_short_category' : reason;
@@ -3899,7 +3903,7 @@ export default function GameScreen({
 
         {lastWordResult && !lastWordResult.accepted && lastWordResult !== dismissedResultRef.current && (
           <div className="game-toast rejected">
-            {rejectionMessage(lastWordResult.reason, { combo, isCategory })}
+            {rejectionMessage(lastWordResult.reason, { combo, isCategory, message: lastWordResult.message })}
           </div>
         )}
         </div>
@@ -5075,7 +5079,7 @@ function CategoryBlitzScreen({
             // field and joins YOUR ANSWERS, so a third "NICE!" telling of it was clutter.
             lastWordResult && !lastWordResult.accepted && (
               <div className="game-toast rejected">
-                {rejectionMessage(lastWordResult.reason, { isCategory: true })}
+                {rejectionMessage(lastWordResult.reason, { isCategory: true, message: lastWordResult.message })}
               </div>
             )
           )}

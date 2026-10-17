@@ -2,6 +2,8 @@
 // ideas in for themes or fun categories"). DISPLAY-ONLY: shown on the category box, never sent or scored. Keys are the
 // EXACT category strings the server broadcasts (backend blitzLists.json); a missing key just shows no sticker.
 export const CATEGORY_EMOJI = {
+  // oct17 NOT categories (any real noun scores — blitzNot.js)
+  "Things you shouldn't flush down the toilet": "🚽",
   // oct17 UNHINGED round 2 (Andy: noun answers only, darker, fewer misses)
   "Things in a horror movie basement": "🕯️",
   "Things that are probably cursed": "🔮",
