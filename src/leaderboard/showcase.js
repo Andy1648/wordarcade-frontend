@@ -127,3 +127,18 @@ export async function saveBio(text) {
     return { error: /lb_bio_set|PGRST202|http_404/.test(String(e && e.code)) ? 'not_ready' : 'fail' };
   }
 }
+
+// 052 THE UNLISTED: the found gears + serials the SERVER recorded for a player (public.unlisted_finds) — [] when none,
+// 052 not run, offline. The profile card's UNLISTED shelf reads this, never the other player's device.
+export async function fetchUnlistedFinds(id) {
+  if (!BASE || !KEY || !id || !/^[A-Za-z0-9-]{1,64}$/.test(String(id))) return [];
+  try {
+    const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
+    const r = await fetch(`${BASE}/rest/v1/unlisted_finds?select=gear_id,serial&profile_id=eq.${encodeURIComponent(id)}`, { headers });
+    if (!r.ok) return [];
+    const rows = await r.json();
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}

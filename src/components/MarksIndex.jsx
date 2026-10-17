@@ -40,9 +40,10 @@ import GearFx from './GearFx';
 import { useIndexGlowScale } from './indexGlow';
 import { GLOW_TIERS } from './markCard/idleSheen.js';
 import { CARD_RAR } from './markCard/palette.js';
-import { tierLabel } from './markCard/cardModel.js';
+import { tierLabel, hideOdds } from './markCard/cardModel.js';
 import { formatNum } from '../format';
 import FitText from './kit/FitText.jsx';
+import UnlistedStrip from '../unlisted/UnlistedStrip.jsx';
 import './MarksIndex.css';
 
 registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
@@ -149,7 +150,7 @@ export default function MarksIndex({
             const have = owns(e);
             const on = worn === e.id;
             const rolled = e.kind === 'roll';
-            const odds = rolled ? `1 IN ${formatNum(oneInX(e.id))}` : '';
+            const odds = rolled && !hideOdds(e.tier) ? `1 IN ${formatNum(oneInX(e.id))}` : ''; // SECRET: never its odds
             const shiny = !!(have && view && view.marks && view.marks[e.id] && view.marks[e.id].shiny);
             return (
               <div key={e.id} className="mx-cell" role="listitem">
@@ -173,6 +174,10 @@ export default function MarksIndex({
               </div>
             );
           })}
+          {/* THE UNLISTED (oct17): the found-never-rolled tier, last — riddles, never odds */}
+          <div className="mx-cell mx-cell--unlisted" role="listitem">
+            <UnlistedStrip worn={worn} onWear={set} />
+          </div>
         </div>
       </div>
       {selE ? (
