@@ -20,35 +20,42 @@
   display: block; width: 100%; height: 100%; object-fit: contain; transform-origin: 50% 92%;
   filter: drop-shadow(5px 5px 0 #000);
 }
-.mp-row { display: flex; align-items: center; justify-content: center; gap: max(4px, calc(8 * var(--u, 1px))); width: 100%; margin-top: max(-6px, calc(-8 * var(--u, 1px))); }
-.mp-arrow {
-  flex: none; width: 44px; height: 44px; padding: 0; margin: 0; background: none; border: 0; cursor: pointer;
-  transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1);
-}
-.mp-arrow img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(3px 3px 0 #000); }
-@media (hover: hover) {
-  .mp-arrow.is-l:hover { transform: translateX(-3px) rotate(-6deg); }
-  .mp-arrow.is-r:hover { transform: translateX(3px) rotate(6deg); }
-}
-.mp-arrow:active { transform: scale(.9); }
-.mp-arrow:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; border-radius: 8px; }
 .mp-name {
   font: 400 var(--fs-k30, 30px) 'Bungee', sans-serif; line-height: 1; color: var(--mp-c);
   -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; transform: rotate(-2deg);
 }
-.mp-tag { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; letter-spacing: 0.06em; color: #fff; text-align: center; }
-.mp-cast { display: flex; gap: max(4px, calc(6 * var(--u, 1px))); margin-top: max(2px, calc(4 * var(--u, 1px))); }
-.mp-face {
-  width: 46px; height: 46px; padding: 0; overflow: hidden; cursor: pointer;
-  background: #1a0b2e; border: 3px solid var(--f-d); border-radius: 8px; box-shadow: 3px 3px 0 #000;
+.mp-change {
+  min-height: 44px; padding: 0 18px; margin-top: 2px; cursor: pointer;
+  font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #000; background: var(--mp-c);
+  border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; transition: transform 120ms;
+}
+.mp-change:hover { transform: translate(-1px, -1px); }
+.mp-change:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.mp-change:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+/* ===== the picker popup (like the gear equip): five hero cards, tap to equip ===== */
+.mpp { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .82); }
+.mpp-card {
+  width: min(920px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 18px;
+  background: #1a0b2e; border: 5px solid #000; border-radius: 8px; box-shadow: 10px 10px 0 #000;
+  animation: mpp-in 260ms cubic-bezier(.2, 1.3, .4, 1);
+}
+@keyframes mpp-in { from { transform: scale(.88) translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+.mpp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.mpp-title { font: 400 var(--fs-k28, 28px) 'Bungee', sans-serif; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.mpp-x { width: 44px; height: 44px; cursor: pointer; font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #fff; background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000; }
+.mpp-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.mpp-hero {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px 10px; cursor: pointer; min-width: 0;
+  background: #24123d; border: 4px solid var(--f-d); border-radius: 8px; box-shadow: 5px 5px 0 #000;
   transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1);
 }
-.mp-face img {
-  /* the face + fuse, cropped INSIDE the image (object-view-box) — the img never overflows its button (the viewport-
-     integrity gate flags clipped children); browsers without object-view-box show the whole HERO, still fine */
-  display: block; width: 100%; height: 100%; object-fit: contain; object-view-box: inset(4% 18% 30% 16%);
-}
-.mp-face.is-on { background: var(--f-c); border-color: #000; transform: translateY(-4px); }
-@media (hover: hover) { .mp-face:not(.is-on):hover { transform: translateY(-3px) rotate(-4deg); } }
-.mp-face:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .mp-arrow, .mp-face { transition: none; } }
+.mpp-hero img { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(3px 3px 0 #000); }
+.mpp-name { font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; color: var(--f-c); -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.mpp-tag { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; color: #c9b8e8; text-align: center; min-height: 2.4em; }
+.mpp-act { width: 100%; padding: 6px 0; font: 400 var(--fs-k14, 14px) 'Bungee', sans-serif; color: #000; background: var(--f-c); border: 3px solid #000; border-radius: 6px; }
+.mpp-hero.is-on { border-color: #FFE94A; transform: translateY(-4px); }
+.mpp-hero.is-on .mpp-act { background: #FFE94A; }
+@media (hover: hover) { .mpp-hero:not(.is-on):hover { transform: translateY(-4px) rotate(-1deg); } }
+.mpp-hero:focus-visible, .mpp-x:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+@media (max-width: 760px) { .mpp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .mpp-card { animation: none; } .mpp-hero, .mp-change { transition: none; } }

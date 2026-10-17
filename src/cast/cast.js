@@ -47,14 +47,17 @@ export function castByColor(hex) {
   return CAST.find((c) => c.color.toLowerCase() === h) || CAST.find((c) => c.seat === SEAT_BY_HEX[h]) || CAST[0];
 }
 const SEAT_BY_HEX = { '#ff4fa3': 'pink', '#2effe0': 'cyan', '#ffe94a': 'yellow', '#ff6b3d': 'orange', '#9a1aff': 'purple' };
-/** Each member's idle beat — a finite one-shot the caller re-arms on a timer (nothing infinite). Keys are
- *  [offset, translateY %, rotate deg, scaleX, scaleY]: RIOT shakes, GLITCH leans back bored, HYPE jumps, BRAWL bounces
- *  on its toes, HEX floats. Used by the menu showcase (MainPick). */
+/** Each member's idle beat — a SQUASH-AND-STRETCH breath (Andy oct16: the tilts "look so unnatural" — "expand up and
+ *  down"): the body squashes wide, stretches tall, settles, anchored at the feet (transform-origin at the bottom), never
+ *  leaving the ground and never rotating. Each member keeps its own tempo / bounciness so the cast reads as five
+ *  personalities. A finite one-shot the caller re-arms on a timer (nothing infinite). Keys: [offset, scaleX, scaleY]. */
 export const CAST_BEATS = {
-  riot: { ms: 820, k: [[0, 0, 0, 1, 1], [0.15, -3, -5, 1, 1], [0.32, -3, 5, 1, 1], [0.5, -2, -4, 1, 1], [0.68, -1, 3, 1, 1], [1, 0, 0, 1, 1]] },
-  glitch: { ms: 1300, k: [[0, 0, 0, 1, 1], [0.3, 0, -7, 0.98, 1.01], [0.75, 0, -7, 0.98, 1.01], [1, 0, 0, 1, 1]] },
-  hype: { ms: 900, k: [[0, 0, 0, 1, 1], [0.18, 2, 0, 1.08, 0.9], [0.45, -16, -3, 0.95, 1.07], [0.72, 0, 0, 1.1, 0.88], [0.86, -2, 0, 0.98, 1.03], [1, 0, 0, 1, 1]] },
-  brawl: { ms: 1000, k: [[0, 0, 0, 1, 1], [0.2, -5, 4, 1, 1.03], [0.4, 0, 0, 1.04, 0.96], [0.6, -5, 4, 1, 1.03], [0.8, 0, 0, 1.04, 0.96], [1, 0, 0, 1, 1]] },
-  hex: { ms: 1500, k: [[0, 0, 0, 1, 1], [0.5, -8, 3, 1, 1], [1, 0, 0, 1, 1]] },
+  riot: { ms: 760, k: [[0, 1, 1], [0.3, 1.07, 0.92], [0.62, 0.95, 1.07], [0.84, 1.02, 0.98], [1, 1, 1]] }, // punchy
+  glitch: { ms: 1500, k: [[0, 1, 1], [0.45, 1.03, 0.97], [0.8, 0.99, 1.02], [1, 1, 1]] }, // lazy, barely bothered
+  hype: { ms: 700, k: [[0, 1, 1], [0.25, 1.09, 0.9], [0.55, 0.93, 1.09], [0.8, 1.03, 0.97], [1, 1, 1]] }, // hyper
+  brawl: { ms: 900, k: [[0, 1, 1], [0.3, 1.06, 0.93], [0.6, 0.96, 1.06], [0.85, 1.02, 0.98], [1, 1, 1]] }, // on its toes
+  hex: { ms: 1700, k: [[0, 1, 1], [0.5, 0.98, 1.04], [1, 1, 1]] }, // slow, smug breath
 };
-export const castBeatFrames = (b) => b.k.map(([offset, y, r, sx, sy]) => ({ offset, transform: `translateY(${y}%) rotate(${r}deg) scale(${sx}, ${sy})` }));
+export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
+/** A crown riding the head follows the stretch (its y in crown-heights ≈ the head's travel). */
+export const castCrownFrames = (b) => b.k.map(([offset, , sy]) => ({ offset, transform: `translateY(${((1 - sy) * 350).toFixed(1)}%) rotate(-7deg)` }));

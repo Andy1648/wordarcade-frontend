@@ -40,7 +40,7 @@ import { nameVerdict } from '../leaderboard/nameFilter.js';
 import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
-import { CAST, castFor, castSrc } from '../cast/cast.js';
+import { CAST, castFor, castSrc, CAST_BEATS, castBeatFrames, castCrownFrames } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -178,18 +178,8 @@ const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)'
 // IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its character moves (BEATS), a sparkle glints.
 // Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
 const IDLE_REST_MS = 260; // the pause between one idle beat and the next
-// PER-CHARACTER IDLE BEATS (Andy oct16 "make the heros on the leaderboard have an animation (like movement a bit)"): each
-// cast member moves in its own way — one finite beat at a time, chained by the single idle timer below. Keys are
-// [offset, translateY %, rotate deg, scaleX, scaleY]; #1's crown rides the same beat (its y in crown-heights).
-const BEATS = {
-  riot: { ms: 820, k: [[0, 0, 0, 1, 1], [0.15, -3, -5, 1, 1], [0.32, -3, 5, 1, 1], [0.5, -2, -4, 1, 1], [0.68, -1, 3, 1, 1], [1, 0, 0, 1, 1]] }, // a punk shake
-  glitch: { ms: 1300, k: [[0, 0, 0, 1, 1], [0.3, 0, -7, 0.98, 1.01], [0.75, 0, -7, 0.98, 1.01], [1, 0, 0, 1, 1]] }, // leans back, bored
-  hype: { ms: 900, k: [[0, 0, 0, 1, 1], [0.18, 2, 0, 1.08, 0.9], [0.45, -16, -3, 0.95, 1.07], [0.72, 0, 0, 1.1, 0.88], [0.86, -2, 0, 0.98, 1.03], [1, 0, 0, 1, 1]] }, // jumps
-  brawl: { ms: 1000, k: [[0, 0, 0, 1, 1], [0.2, -5, 4, 1, 1.03], [0.4, 0, 0, 1.04, 0.96], [0.6, -5, 4, 1, 1.03], [0.8, 0, 0, 1.04, 0.96], [1, 0, 0, 1, 1]] }, // bounces on its toes
-  hex: { ms: 1500, k: [[0, 0, 0, 1, 1], [0.5, -8, 3, 1, 1], [1, 0, 0, 1, 1]] }, // floats
-};
-const beatFrames = (b) => b.k.map(([offset, y, r, sx, sy]) => ({ offset, transform: `translateY(${y}%) rotate(${r}deg) scale(${sx}, ${sy})` }));
-const crownFrames = (b) => b.k.map(([offset, y, r]) => ({ offset, transform: `translateY(${y * 3.4}%) rotate(${-7 + r * 0.6}deg)` }));
+// PER-CHARACTER IDLE: each cast member's squash-and-stretch breath (cast.js CAST_BEATS — shared with the menu showcase);
+// #1's crown rides the stretch (castCrownFrames).
 const CONFETTI_N = 18;
 const CONFETTI_ART = 16; // public/stage/fx/confetti-0 … 15.webp (painted pieces, one sheet)
 // a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
@@ -502,10 +492,10 @@ export default function LeaderboardV2({ onBack }) {
     [1, 2, 3].forEach((place, k) => {
       const loop = () => {
         const col = root.querySelector(`.lb2-col--${place}`);
-        const beat = (col && BEATS[col.dataset.cast]) || BEATS.hype;
+        const beat = (col && CAST_BEATS[col.dataset.cast]) || CAST_BEATS.hype;
         if (col && col.dataset.id && document.visibilityState !== 'hidden') {
-          kitPlay(col.querySelector('.lb2-buddy'), beatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
-          if (place === 1 && crownRef.current) kitPlay(crownRef.current, crownFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
+          kitPlay(col.querySelector('.lb2-buddy'), castBeatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
+          if (place === 1 && crownRef.current) kitPlay(crownRef.current, castCrownFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
         }
         timers[k] = setTimeout(loop, beat.ms + IDLE_REST_MS + k * 90);
       };

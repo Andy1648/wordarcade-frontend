@@ -5,6 +5,7 @@
 // visual is a painted asset (public/showcase, public/cast); CSS only places them; motion is finite WAAPI one-shots
 // re-armed on a timer (CLAUDE.md: nothing infinite; transform / opacity only).
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CAST, castSrc, readMain, writeMain, CAST_BEATS, castBeatFrames } from '../../cast/cast.js';
 import './MainPick.css';
 
@@ -72,13 +73,20 @@ export default function MainPick() {
     return () => clearTimeout(t);
   }, [cheering]);
 
-  const pick = (next) => {
-    if (next === id) { setCheering(true); return; }
+  const [open, setOpen] = useState(false);
+  const equip = (next) => {
+    setOpen(false);
+    if (next === id) return;
     writeMain(next);
     setCheering(false);
     setId(next);
   };
-  const go = (d) => pick(CAST[(i + d + CAST.length) % CAST.length].id);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [open]);
 
   return (
     <section className="mp" style={{ '--mp-c': c.color, '--mp-d': c.dark }} aria-label="Your main character" data-testid="main-pick">
@@ -89,23 +97,30 @@ export default function MainPick() {
           <img ref={artRef} key={c.id} className="mp-art" src={castSrc(c.id, cheering ? 'win' : 'hero')} width="512" height="512" alt={c.name} draggable="false" />
         </button>
       </div>
-      <div className="mp-row">
-        <button type="button" className="mp-arrow is-l" onClick={() => go(-1)} aria-label="Previous character">
-          <img src="/showcase/arrow-left.webp" width="160" height="160" alt="" draggable="false" />
-        </button>
-        <span className="mp-name">{c.name}</span>
-        <button type="button" className="mp-arrow is-r" onClick={() => go(1)} aria-label="Next character">
-          <img src="/showcase/arrow-right.webp" width="160" height="160" alt="" draggable="false" />
-        </button>
-      </div>
-      <span className="mp-tag">{c.tag}</span>
-      <div className="mp-cast" role="group" aria-label="Pick a character">
-        {CAST.map((x) => (
-          <button key={x.id} type="button" className={`mp-face${x.id === id ? ' is-on' : ''}`} style={{ '--f-c': x.color, '--f-d': x.dark }} onClick={() => pick(x.id)} aria-label={x.name} aria-pressed={x.id === id}>
-            <img src={castSrc(x.id, 'hero')} width="512" height="512" alt="" draggable="false" />
-          </button>
-        ))}
-      </div>
+      <span className="mp-name">{c.name}</span>
+      {/* the roster lives in a POPUP (Andy oct16 "a popup that can include all of that (kind of like equipping gear)") */}
+      <button type="button" className="mp-change" onClick={() => setOpen(true)} aria-haspopup="dialog">CHANGE</button>
+      {open ? createPortal(
+        <div className="mpp" role="dialog" aria-modal="true" aria-label="Choose your main" onClick={() => setOpen(false)}>
+          <div className="mpp-card" onClick={(e) => e.stopPropagation()}>
+            <div className="mpp-head">
+              <span className="mpp-title">CHOOSE YOUR MAIN</span>
+              <button type="button" className="mpp-x" onClick={() => setOpen(false)} aria-label="Close">✕</button>
+            </div>
+            <div className="mpp-grid">
+              {CAST.map((x) => (
+                <button key={x.id} type="button" className={`mpp-hero${x.id === id ? ' is-on' : ''}`} style={{ '--f-c': x.color, '--f-d': x.dark }} onClick={() => equip(x.id)} aria-pressed={x.id === id}>
+                  <img src={castSrc(x.id, 'hero')} width="512" height="512" alt="" draggable="false" />
+                  <span className="mpp-name">{x.name}</span>
+                  <span className="mpp-tag">{x.tag}</span>
+                  <span className="mpp-act">{x.id === id ? 'EQUIPPED' : 'EQUIP'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      ) : null}
     </section>
   );
 }
