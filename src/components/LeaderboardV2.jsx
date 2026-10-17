@@ -484,9 +484,9 @@ export default function LeaderboardV2({ onBack }) {
         const col = root.querySelector(`.lb2-col--${place}`);
         const beat = (col && CAST_BEATS[col.dataset.cast]) || CAST_BEATS.hype;
         if (col && col.dataset.id && document.visibilityState !== 'hidden') {
-          kitPlay(col.querySelector('.lb2-buddy'), castBreathFrames(beat, 0.5), { duration: beat.ms * 1.3, easing: 'ease-in-out' });
+          kitPlay(col.querySelector('.lb2-buddy'), castBreathFrames(beat, 0.5), { duration: beat.ms * 1.6, easing: 'ease-in-out' });
         }
-        timers[k] = setTimeout(loop, beat.ms * 1.3 + 1800 + Math.random() * 2200); // oct17: a quiet, irregular breath — the showcase owns the big signature moves
+        timers[k] = setTimeout(loop, beat.ms * 1.6 + 700 + Math.random() * 900); // oct17: a quiet, irregular breath — the showcase owns the big signature moves
       };
       timers[k] = setTimeout(loop, 2400 + k * 420); // after the entrance lands
     });

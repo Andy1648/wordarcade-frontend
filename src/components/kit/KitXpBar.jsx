@@ -166,6 +166,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     const ghost = ghostRef.current;
     if (ghost && lvInside) ghost.style.transform = `scaleX(${tl > p.level ? 1 : tf})`;
     const seg = critRef.current;
+    let critSnap = false; // Andy oct17: on a crit the real fill "instantly follows up to the orange part"
     if (seg && lvInside) {
       const from = lastGhost.current;
       if (critArm.current && Date.now() - critArm.current < 400 && tl === p.level && tf > from) {
@@ -173,6 +174,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         seg.style.opacity = '1';
         clearTimeout(critT.current);
         critT.current = setTimeout(() => { seg.style.opacity = '0'; }, CRIT_TINT_MS);
+        critSnap = true;
       } else if (tl > p.level) {
         seg.style.opacity = '0'; // a new level: the old piece is gone with the old bar
       }
@@ -199,7 +201,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     climbN.current = tl > p.level ? tl - p.level + gain.current.n : 0;
     if (root && climbing) root.dataset.state = 'climb';
     if (climbing) promote(true);
-    p.to(level, frac);
+    p.to(level, frac, critSnap ? { maxMs: 70 } : undefined); // a crit: the fill catches the orange piece at once
   }, [level, frac, lvInside]);
 
   useEffect(() => {
