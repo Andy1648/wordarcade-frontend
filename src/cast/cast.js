@@ -1,3 +1,4 @@
+import { getRebirths, storedLevel } from '../progress/xp.js';
 // cast.js — THE CAST (Andy oct16 "spend like 25 images … those avatars by themselves are SO plain"): five bomb buddies,
 // one per player colour, each with its own look and attitude, in HERO / WIN / KO poses (art run P0, art-run/ART-RUN.md).
 // Until a pose is painted it falls back to the existing seat bomb buddy of the same colour (public/wb/player-*.webp).
@@ -22,7 +23,21 @@ export const ELITE = [
 // INTERMEDIATE (Andy oct17: "picking 1 or 2 of the 5 to cost gems as well"): two of the crew cost gems — HEX (the
 // mystic) and GLITCH (the layered-props showcase); RIOT / HYPE / BRAWL stay free. Anyone already playing one keeps it
 // (grandfathered once, readMain).
-export const HERO_PRICE = { hex: 750, glitch: 750 };
+// oct17 (Andy "we'll def need some more free tiers" … "sure (the 1 rebirth) … 750 is a lot for 1 rebirth"): the two
+// priced crew members are EARNED for free — GLITCH at your first rebirth, HEX at level 20 — and the gem price is only a
+// shortcut to skip the wait (300). The card shows the requirement over the art (lock + REBIRTH 1 / LEVEL 20).
+export const HERO_PRICE = { hex: 300, glitch: 300 };
+export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' } };
+/** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. */
+export function heroEarned(id) {
+  const u = HERO_UNLOCK[id];
+  if (!u) return false;
+  try {
+    if (u.reb != null && (getRebirths() || 0) >= u.reb) return true;
+    if (u.lv != null && (storedLevel() || 1) >= u.lv) return true;
+  } catch { /* a broken store reads as not yet */ }
+  return false;
+}
 for (const c of CAST) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
 export const ALL_HEROES = [...CAST, ...ELITE];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
@@ -37,7 +52,7 @@ export function ownedHeroes() {
 }
 export const ownsHero = (id) => {
   const h = ALL_HEROES.find((x) => x.id === id);
-  return !!h && (!h.price || ownedHeroes().includes(id));
+  return !!h && (!h.price || heroEarned(id) || ownedHeroes().includes(id));
 };
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
 const PAINTED = new Set([

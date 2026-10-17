@@ -4,6 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ELITE, ELITE_PRICE, CAST_BEATS, ownsHero, readMain, castFor, castSrc, HEROES_KEY } from './cast.js';
 import { buyHero } from './heroShop.js';
+import { heroEarned } from './cast.js';
+import { REBIRTH_KEY as REBIRTH_KEY_FOR_TEST } from '../progress/xp.js';
 import * as G from '../progress/gems.js';
 
 function withStorage(seed, fn) {
@@ -62,8 +64,15 @@ test('grandfathered: already playing HEX when it became priced → it is yours (
   assert.equal(readMain(), 'riot');
 }));
 
-test('buying a priced crew member: 750 gems, owned, equipped', () => withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(800) }, () => {
+test('skipping the wait on a crew member: 300 gems, owned, equipped', () => withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(350) }, () => {
   assert.deepEqual(buyHero('glitch'), { ok: true });
   assert.equal(G.getGems(), 50);
   assert.equal(readMain(), 'glitch');
+}));
+
+test('earned free: GLITCH at the first rebirth, HEX at level 20 (no gems)', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
+  assert.equal(ownsHero('glitch'), false);
+  map.set(REBIRTH_KEY_FOR_TEST, '1');
+  assert.equal(ownsHero('glitch'), true, 'a rebirth earns GLITCH');
+  assert.equal(heroEarned('hex'), false);
 }));
