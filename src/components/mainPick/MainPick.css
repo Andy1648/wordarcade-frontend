@@ -21,6 +21,7 @@
   filter: drop-shadow(5px 5px 0 #000);
 }
 .mp-name {
+  width: 100%; text-align: center;
   font: 400 var(--fs-k30, 30px) 'Bungee', sans-serif; line-height: 1; color: var(--mp-c);
   -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; transform: rotate(-2deg);
 }
@@ -43,19 +44,28 @@
 .mpp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .mpp-title { font: 400 var(--fs-k28, 28px) 'Bungee', sans-serif; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .mpp-x { width: 44px; height: 44px; cursor: pointer; font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #fff; background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000; }
-.mpp-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.mpp-hero {
-  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px 10px; cursor: pointer; min-width: 0;
-  background: #24123d; border: 4px solid var(--f-d); border-radius: 8px; box-shadow: 5px 5px 0 #000;
-  transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1);
+.mpp-gems {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 4px 12px;
+  font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #fff; background: #0d0618; border: 3px solid #000; border-radius: 8px;
 }
-.mpp-hero img { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(3px 3px 0 #000); }
-.mpp-name { font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; color: var(--f-c); -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
-.mpp-tag { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; color: #c9b8e8; text-align: center; min-height: 2.4em; }
-.mpp-act { width: 100%; padding: 6px 0; font: 400 var(--fs-k14, 14px) 'Bungee', sans-serif; color: #000; background: var(--f-c); border: 3px solid #000; border-radius: 6px; }
-.mpp-hero.is-on { border-color: #FFE94A; transform: translateY(-4px); }
-.mpp-hero.is-on .mpp-act { background: #FFE94A; }
-@media (hover: hover) { .mpp-hero:not(.is-on):hover { transform: translateY(-4px) rotate(-1deg); } }
-.mpp-hero:focus-visible, .mpp-x:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
-@media (max-width: 760px) { .mpp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (prefers-reduced-motion: reduce) { .mpp-card { animation: none; } .mpp-hero, .mp-change { transition: none; } }
+.mpp-sec {
+  display: block; margin: 4px 0 10px; font: 700 var(--fs-k14, 14px) 'Space Mono', monospace; letter-spacing: .14em; color: #c9b8e8;
+}
+.mpp-sec.is-elite { margin-top: 22px; color: #FFC83D; }
+.mpp-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: start; }
+/* under each card: the one-line attitude + the action chip */
+.mpp-tag { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; color: #c9b8e8; text-align: center; min-height: 2.4em; line-height: 1.2; }
+.mpp-act {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 6px;
+  font: 400 var(--fs-k14, 14px) 'Bungee', sans-serif; color: #000; background: var(--hc-c); border: 3px solid #000; border-radius: 6px;
+}
+.mpp-act.is-on { background: #FFE94A; }
+.mpp-act.is-price { color: #fff; background: #3a2160; }
+/* the hold-to-buy bar for a tapped LOCKED elite (sticky at the popup's foot so it never scrolls away) */
+.mpp-buy {
+  position: sticky; bottom: -18px; z-index: 2; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px;
+  margin: 16px -18px -18px; padding: 12px 18px 16px; background: #1a0b2e; border-top: 4px solid #000;
+}
+.mpp-buy-t { font: 400 var(--fs-k22, 22px) 'Bungee', sans-serif; color: #FFC83D; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+@media (max-width: 760px) { .mpp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mpp-title { font-size: var(--fs-k20); } }
+@media (prefers-reduced-motion: reduce) { .mpp-card { animation: none; } .mp-change { transition: none; } }
