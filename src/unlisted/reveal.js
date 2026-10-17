@@ -5,8 +5,8 @@
 import { grantUnlisted } from './unlisted.js';
 import { emitReveal } from './revealBus.js';
 import { claimSerial } from './serial.js';
-import { isTripleDouble } from './seasonSecret.js';
-import { TRIPLE_DOUBLE_ID } from './unlistedIds.js';
+import { isTripleDouble } from './tripleDouble.js';
+import { TRIPLE_DOUBLE_ID, gearIdForSecret } from './unlistedIds.js';
 
 export function revealUnlisted(gearId, word) {
   if (gearId === TRIPLE_DOUBLE_ID && !isTripleDouble(word)) return null;
@@ -16,4 +16,9 @@ export function revealUnlisted(gearId, word) {
   emitReveal(got);
   claimSerial(gearId).catch(() => { /* stays pending */ });
   return got;
+}
+/** A secrets.js find → its gear's reveal (every word-secret has one). */
+export function revealForSecret(secretId, word) {
+  const id = gearIdForSecret(secretId);
+  return id ? revealUnlisted(id, word) : null;
 }
