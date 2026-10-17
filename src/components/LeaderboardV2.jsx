@@ -43,7 +43,7 @@ import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
-import { CAST, castFor, CAST_BEATS, castBreathFrames } from '../cast/cast.js';
+import { CAST, castFor, heroById, CAST_BEATS, castBreathFrames } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -322,6 +322,7 @@ export default function LeaderboardV2({ onBack }) {
   const [caps, setCaps] = useState({ weekly: false });
   const [tab, setTab] = useState('all');
   const [peek, setPeek] = useState(null); // the row whose profile card is open
+  const [heroes, setHeroes] = useState({}); // 053: { profile_id: equipped hero id } for the podium
   const peekRef = useRef(null);
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
@@ -384,13 +385,19 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
-  // three DIFFERENT characters on the podium (5 cast, 3 spots — a hash collision put two HEXes up there): YOUR main
-  // keeps its pick, then #1 → #2 → #3 take their own member, or the next free one
+  const podIds = podium.map((p) => (p ? p.id : '')).join(',');
+  // HEROES (053, Andy oct17 "make sure the heros shown on the leaderboard correspond to what the user actually equips"):
+  // a podium player who has sent their equipped hero shows THAT hero (duplicates allowed — it's their pick). Only a player
+  // with no hero on file (053 not run / an old client) falls back to three DIFFERENT id-hashed members.
   const podCast = (() => {
     const out = [null, null, null];
     const used = new Set();
     const mineAt = podium.findIndex((p) => p && myId && p.id === myId);
     if (mineAt >= 0) { out[mineAt] = castFor(myId, true); used.add(out[mineAt].id); }
+    for (let i = 0; i < 3; i++) {
+      const picked = !out[i] && podium[i] && heroById(heroes[podium[i].id]);
+      if (picked) { out[i] = picked; used.add(picked.id); }
+    }
     for (let i = 0; i < 3; i++) {
       if (out[i]) continue;
       let c = castFor(podium[i] ? podium[i].id : `open-${i + 1}`);
@@ -400,6 +407,13 @@ export default function LeaderboardV2({ onBack }) {
     }
     return out;
   })();
+  useEffect(() => {
+    const ids = podIds.split(',').filter(Boolean);
+    if (!ids.length) return undefined;
+    let live = true;
+    import('../leaderboard/showcase.js').then((m) => m.fetchHeroes(ids)).then((h) => { if (live) setHeroes(h || {}); }).catch(() => {});
+    return () => { live = false; };
+  }, [podIds]);
   // ranks 4 … 50 (Andy oct14 "make the leaderboard top 50"; was 20 oct13); past #50 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
