@@ -91,7 +91,8 @@ import { claimReturnBonus } from './progress/returnBonus';
 // EVERY BONUS WIN, ANNOUNCED WHEN IT LANDS. Mounted once at app level rather than per mode, so a
 // credit that fires in CHAIN, SAT Rush or on the menu is as visible as one in Word Bomb — the
 // hidden 5,000 Andy reported was a collection milestone, which can fire in any mode.
-import WinsCreditToast from './components/WinsCreditToast';
+import WinsCreditToast, { announceUnlistedFind } from './components/WinsCreditToast';
+import { subscribeReveal } from './unlisted/revealBus';
 import { checkAchievements } from './progress/achievements';
 import ScreenBoundary from './components/ScreenBoundary';
 import { secretFound as evSecretFound } from './lib/events.js';
@@ -1071,6 +1072,19 @@ function App() {
     rosterIdsRef.current = (room?.players || []).map((p) => p.id);
     (room?.players || []).forEach((p) => { if (p.isBot) { botIdsRef.current.add(p.id); if (p.botDifficulty) botDiffRef.current.set(p.id, p.botDifficulty); } });
   }, [room]);
+  // THE UNLISTED → the room: a first-time find (revealBus fires ONLY on a real grant) tells the server,
+  // which shows "<NAME> FOUND AN UNLISTED GEAR" to everyone in the room. Fire-and-forget: no payload
+  // (never which gear / how), no state, never touches the view. Only while seated in a room.
+  const roomCode = room?.code || null;
+  const ulSentKeyRef = useRef(null); // the serial patch re-emits the SAME reveal key — announce once
+  useEffect(() => {
+    if (!roomCode) return undefined;
+    return subscribeReveal((rv) => {
+      if (!rv || rv.key === ulSentKeyRef.current) return;
+      ulSentKeyRef.current = rv.key;
+      send('unlisted_found', {});
+    });
+  }, [roomCode, send]);
   // H4 anti-farm: register this tab's live player id, so another tab of this browser in the same
   // room is recognised as the player themself (progress/seats.js), never as a rival.
   useEffect(() => { if (myId) noteSeat(myId); }, [myId]);
@@ -1298,6 +1312,13 @@ function App() {
       setTimeout(() => {
         setReactions((prev) => prev.filter((r) => r.id !== id));
       }, 2000);
+    }
+
+    // THE UNLISTED: someone ELSE in the room found a secret gear. Purely cosmetic — a toast row in the
+    // wins column (WinsCreditToast); the finder already has their own stamp, so skip my own id.
+    if (lastMessage.type === 'unlisted_found') {
+      const { playerId, playerName: finder } = lastMessage.payload || {};
+      if (playerId && playerId !== myIdRef.current) announceUnlistedFind(finder);
     }
 
     if (lastMessage.type === 'turn_update') {
