@@ -16,6 +16,11 @@ export const NEW_CREW = [
   { id: 'dud', name: 'DUD', tag: 'FUSE ALWAYS OUT', color: '#B8F632', dark: '#6E9A12' },
   { id: 'lexi', name: 'LEXI', tag: "ACTUALLY, IT'S A WORD", color: '#3BA4F9', dark: '#1B5FA8' },
 ];
+// LEGEND (oct17 night): the rarest tier — a cast member nobody else has, in its own painted LEGEND frame. BOO (the ghost
+// of a bomb that already went off) is earned free at REBIRTH 5, or 5,000 gems skips the wait.
+export const LEGEND = [
+  { id: 'boo', name: 'BOO', tag: 'ALREADY WENT OFF', color: '#14B8A6', dark: '#0B5F57', legend: true },
+];
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
 // of each member (ChatGPT, the HERO as the reference), bought once with gems and kept. Same colour / seat / idle beat as
 // its base member; only the HERO pose is painted (castSrc falls every other pose back to it).
@@ -33,9 +38,9 @@ export const ELITE = [
 // oct17 (Andy "we'll def need some more free tiers" … "sure (the 1 rebirth) … 750 is a lot for 1 rebirth"): the two
 // priced crew members are EARNED for free — GLITCH at your first rebirth, HEX at level 20 — and the gem price is only a
 // shortcut to skip the wait (300). The card shows the requirement over the art (lock + REBIRTH 1 / LEVEL 20).
-export const HERO_PRICE = { hex: 300, glitch: 300, dud: 300, lexi: 750 };
+export const HERO_PRICE = { hex: 300, glitch: 300, dud: 300, lexi: 750, boo: 5000 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
-  dud: { lv: 35, label: 'LEVEL 35', icon: 'levels' } };
+  dud: { lv: 35, label: 'LEVEL 35', icon: 'levels' }, boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth' } };
 /** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. */
 export function heroEarned(id) {
   const u = HERO_UNLOCK[id];
@@ -46,8 +51,8 @@ export function heroEarned(id) {
   } catch { /* a broken store reads as not yet */ }
   return false;
 }
-for (const c of [...CAST, ...NEW_CREW]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
-export const ALL_HEROES = [...CAST, ...NEW_CREW, ...ELITE];
+for (const c of [...CAST, ...NEW_CREW, ...LEGEND]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
+export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...ELITE];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 // owned ELITE ids — a season-2 progress key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
 export const HEROES_KEY = 'taw.s2.heroes';
@@ -72,7 +77,7 @@ const PAINTED = new Set([
   'riot-elite-win', 'riot-elite-ko', 'glitch-elite-win', 'glitch-elite-ko', 'hype-elite-win', 'hype-elite-ko', 'brawl-elite-win', 'brawl-elite-ko',
   'hex-elite-win', 'hex-elite-ko',
   // NEW FACES (oct17 night, ChatGPT with RIOT's HERO attached as the style reference)
-  'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero',
+  'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero', 'lexi-win', 'lexi-ko', 'boo-hero', 'boo-win', 'boo-ko',
 ]);
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
@@ -129,6 +134,7 @@ export const CAST_BEATS = {
   hex: { ms: 1700, k: [[0, 1, 1], [0.5, 0.98, 1.04], [1, 1, 1]] }, // slow, smug breath
   dud: { ms: 2600, k: [[0, 1, 1], [0.45, 0.97, 1.04], [0.8, 1.04, 0.96], [1, 1, 1]] }, // one deep, sleepy breath
   lexi: { ms: 1000, k: [[0, 1, 1], [0.35, 0.96, 1.05], [0.65, 1.02, 0.98], [1, 1, 1]] }, // a prim little rise
+  boo: { ms: 2200, k: [[0, 1, 1], [0.5, 0.97, 1.04], [1, 1, 1]] }, // a ghost's slow swell (it has no feet to bounce on)
 };
 for (const e of ELITE) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE keeps its member's tempo
 export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
@@ -208,6 +214,13 @@ export const CAST_LAYERS = {
     { src: '/cast/props/bulb.webp', x: 70, y: 6, w: 22, o: '50% 100%' },
     { src: '/cast/props/page.webp', x: 2, y: 33, w: 16 },
   ] } },
+  // BOO haunts: ghost-smoke wisps curl off its tail, teal ghost-fire embers lift off the fuse
+  boo: { hero: { act: 'haunt', sprites: [
+    { src: '/cast/props/ghost-wisp.webp', x: 57, y: 69, w: 18, o: '0% 60%' },
+    { src: '/cast/props/ghost-wisp.webp', x: 20, y: 61, w: 14, o: '100% 60%' },
+    { src: '/cast/props/ghost-ember.webp', x: 71, y: 0, w: 7 },
+    { src: '/cast/props/ghost-ember.webp', x: 62, y: 5, w: 5.5 },
+  ] } },
   glitch: {
     hero: {
       base: '/cast/glitch-hero-base.webp',
@@ -230,6 +243,8 @@ export const CAST_IDLE = {
   // DUD nods off — a slow sag forward and down, then a snap awake (the jolt), and it settles back
   dud: { ms: 3600, rest: 350, k: [[0, 1, 1, 0, 0], [0.5, 1.05, 0.94, 1.5, 3], [0.62, 1.06, 0.93, 2, 4], [0.66, 0.94, 1.08, 0, -4], [0.76, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
   // LEXI clears its throat — up on its toes ("well, ACTUALLY"), two short prim nods
+  // BOO hovers, then JUMP-SCARES: shrinks back and down, lunges big at you, and drifts back to its hover
+  boo: { ms: 3000, rest: 200, k: [[0, 1, 1, 0, 0], [0.3, 1, 1, 0, -5], [0.55, 1, 1, 0, 0], [0.66, 0.9, 0.9, 0, 3], [0.72, 1.14, 1.14, 0, -3], [0.8, 1.1, 1.1, 0, -3], [1, 1, 1, 0, 0]] },
   lexi: { ms: 1900, rest: 350, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
 };
 for (const e of ELITE) CAST_IDLE[e.id] = CAST_IDLE[e.base];

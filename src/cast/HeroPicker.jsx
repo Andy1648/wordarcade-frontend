@@ -1,8 +1,8 @@
 // HeroPicker.jsx — CHOOSE YOUR MAIN as collectible cards (oct17): THE CREW (three free, HEX + GLITCH for gems) and the
-// NEW FACES (DUD earned at LEVEL 35, LEXI for gems), the ELITE row (2,500 gems each, silhouettes until bought). Tap an owned card → equip; tap a priced one → the HOLD TO BUY
+// NEW FACES (DUD earned at LEVEL 35, LEXI for gems), LEGEND (BOO: REBIRTH 5 or 5,000 gems), the ELITE row (2,500 gems each, silhouettes until bought). Tap an owned card → equip; tap a priced one → the HOLD TO BUY
 // bar (KitHoldButton) → bought + equipped. Reusable anywhere a hero is picked (the profile today, the lobby later).
 import { useEffect, useState } from 'react';
-import { CAST, NEW_CREW, ELITE, HERO_UNLOCK, heroById, ownsHero } from './cast.js';
+import { CAST, NEW_CREW, LEGEND, ELITE, HERO_UNLOCK, heroById, ownsHero } from './cast.js';
 import { buyHero } from './heroShop.js';
 import HeroCard from './HeroCard.jsx';
 import { KitHoldButton, KitIcon } from '../components/kit/index.js';
@@ -50,6 +50,15 @@ export default function HeroPicker({ current, onEquip, onBought }) {
       <div className="hp2-grid">
         {NEW_CREW.map((x) => (
           <HeroCard key={x.id} hero={x} req={!ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null} on={x.id === current} sel={x.id === buying} onClick={() => pick(x)}>
+            <span className="hp2-tag">{x.tag}</span>
+            <Act h={x} current={current} />
+          </HeroCard>
+        ))}
+      </div>
+      <span className="hp2-sec is-legend">LEGEND · {LEGEND.filter((x) => ownsHero(x.id)).length}/{LEGEND.length} OWNED</span>
+      <div className="hp2-grid">
+        {LEGEND.map((x) => (
+          <HeroCard key={x.id} hero={x} req={!ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null} on={x.id === current} sel={x.id === buying} delay={260} onClick={() => pick(x)}>
             <span className="hp2-tag">{x.tag}</span>
             <Act h={x} current={current} />
           </HeroCard>
