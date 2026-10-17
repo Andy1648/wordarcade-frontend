@@ -10,7 +10,7 @@ import { castSrc, castLayers } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
 import './CastArt.css';
 
-const REST = 0.32; // the resting bubble (also the .cast-gum-b CSS scale)
+const REST = 0.42; // the resting bubble (also the .cast-gum-b CSS scale)
 const INFLATE = [
   { transform: `scale(${REST})` },
   { transform: 'scale(.62, .58)', offset: 0.35 },
