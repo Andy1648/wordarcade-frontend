@@ -51,8 +51,10 @@ import DevTuner from './DevTuner';
 import SatKeyInput from './SatKeyInput';
 import { LevelUpChip } from '../components/FeelLadder';
 import { GemPop, useGemsRunMark } from '../components/gems/Gems';
+import { usePlayClock } from '../progress/playClock.js';
 
 export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false, startMode = null }) {
+  usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
   const game = useSatRushGame();
   const { view } = game;
   const appRef = useRef(null);
