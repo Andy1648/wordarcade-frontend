@@ -30,6 +30,7 @@ import { milestoneCrossed, MILESTONE_FX } from './menuTier.js';
 // CRIT (Andy oct8): the worn gears' CRIT RATE / POWER — each credited menu KEY rolls on its own (crit.js)
 import { critTotals, CRIT_BASE_RATE } from './markRollsCore.js';
 import { critKeyAt } from './crit.js';
+import { CRIT_EVENT } from '../components/kit/KitXpBar.jsx';
 // EVERY Nth KEY CRITS (GEAR POOL v2): the menu KEY count the guaranteed crit counts on — module-wide, so leaving the
 // menu and coming back never resets the count toward the next guaranteed crit.
 let critKeySeq = 0;
@@ -164,7 +165,11 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
           refreshSessionProps({ level: res.level });
         } else if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
         if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
-        else if (hit.crit && fx.critPop) fx.critPop(opts.letter, `CRIT +${formatNum(hit.gain)}`, TIER_SCALES[tier]);
+        else if (hit.crit && fx.critPop) {
+          fx.critPop(opts.letter, `CRIT +${formatNum(hit.gain)}`, TIER_SCALES[tier]);
+          // the XP bar paints this gain's ghost segment CRIT ORANGE (Andy oct17) — one event, the bar toggles an attribute
+          try { window.dispatchEvent(new Event(CRIT_EVENT)); } catch { /* no window */ }
+        }
         else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
         // T4's per-accepted-word edge glow lives in-game). Gold at KEY TIER T5+.

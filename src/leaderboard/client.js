@@ -428,6 +428,26 @@ export async function fetchBoard(limit = BOARD_SIZE) {
   return { rows, me };
 }
 
+/** How many players the all-time board holds (a HEAD count, no rows) — for YOUR row's "TOP n%" (Andy oct17). null when
+ *  offline / off / the count fails; never throws. */
+export async function fetchBoardCount() {
+  if (!LEADERBOARD_ENABLED) return null;
+  try {
+    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=id`, { method: 'HEAD', headers: { ...headers(), Prefer: 'count=exact' } });
+    if (!r.ok) return null;
+    const n = Number(String(r.headers.get('content-range') || '').split('/')[1]);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
+/** "TOP n%" for a rank among `total` players: rounded UP, never below 1% (a #1 of 4,000 reads TOP 1%). */
+export function topPercent(rank, total) {
+  const r = Number(rank); const t = Number(total);
+  if (!(r >= 1) || !(t >= 1) || r > t) return null;
+  return Math.max(1, Math.ceil((r / t) * 100));
+}
+
 /** AROUND YOU (Andy oct14): the rows ranked `span` above and below `rank` on the all-time board — for a player past
  *  the top 20, who is otherwise only ever shown the top. [] when offline / off. */
 export async function fetchAround(rank, span = 2) {

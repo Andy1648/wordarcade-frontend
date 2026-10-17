@@ -949,7 +949,13 @@
   color: #3a2160; white-space: nowrap;
 }
 .lb2-band-tag b { color: #a8164e; }
-.lb2--narrow .lb2-band-tag { display: none; } /* the phone row is too tight for name + tag + R; it keeps the rival line */
+.lb2--narrow .lb2-band-tag { display: none; }
+/* TOP n% (Andy oct17): YOUR standing among every player, at the end of your name line — just before REBIRTHS */
+.lb2-pct {
+  flex: none; margin-left: auto; padding: 0 7px; border: 2px solid #000; border-radius: 6px; background: #3a2160;
+  font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(13px, calc(var(--fs-k14) * var(--lb2-k))); line-height: 1.35;
+  color: #FFE94A; white-space: nowrap;
+} /* the phone row is too tight for name + tag + R; it keeps the rival line */
 
 /* ===== SIMPLE PODIUM (Andy oct16: "quality but with simplicity" — the medal emblems + name ribbons read as poorly-cut
    AI slop; the characters stay). Character → NAME in plain Bungee type → plate → numbers → painted block. ===== */

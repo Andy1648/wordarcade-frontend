@@ -38,6 +38,10 @@ export const GAIN_HIDE_MS = 1400;
 // cant be a delay"): the ghost jumps to full at once, so the real fill now runs there in WRAP_FILL_MS (was the 600 ms
 // glide) and snaps straight to the next level (was a 200 ms hold).
 export const WRAP_FILL_MS = 180;
+// CRIT (Andy oct17 "make the … additive bar like an orange increment"): a crit key fires this; the bar paints its
+// GHOST (the segment that jumps ahead of the fill = the gain) crit orange until the fill has caught up
+export const CRIT_EVENT = 'taw:xp-crit';
+const CRIT_TINT_MS = 1100;
 export const WRAP_HOLD_MS = 0;
 // the plate's content rests counter-skewed (skewX 12deg — KitXpBar.css), so the pop keeps the skew in every frame
 const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
@@ -194,6 +198,20 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       clearTimeout(w.t);
     };
   }, []);
+
+  useEffect(() => {
+    if (!lvInside) return undefined;
+    let t = 0;
+    const onCrit = () => {
+      const root = rootRef.current;
+      if (!root) return;
+      root.setAttribute('data-crit', '');
+      clearTimeout(t);
+      t = setTimeout(() => root.removeAttribute('data-crit'), CRIT_TINT_MS);
+    };
+    window.addEventListener(CRIT_EVENT, onCrit);
+    return () => { clearTimeout(t); window.removeEventListener(CRIT_EVENT, onCrit); };
+  }, [lvInside]);
 
   const lvText = (
     <>
