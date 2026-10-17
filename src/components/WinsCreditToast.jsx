@@ -27,6 +27,22 @@ import './WinsCreditToast.css';
 
 const MAX_ON_SCREEN = 3;
 const HOLD_MS = 2600;
+const UL_HOLD_MS = 3400;
+
+// THE UNLISTED room announcement — "<NAME> FOUND AN UNLISTED GEAR". App's WS drain calls this for an
+// `unlisted_found` frame (another player in my room found one). It rides this column for the same
+// NO-ORPHAN reason as the wins rows, in every game mode and the room. Names the TIER only — the frame
+// never carries which gear or how it was found. Not a wins popup, so the SEASON2 purge doesn't apply.
+const ulSubs = new Set();
+let ulSeq = 0;
+export function announceUnlistedFind(name) {
+  const who = String(name || 'SOMEONE').slice(0, 24);
+  ulSeq += 1;
+  const entry = { id: `ul-${ulSeq}`, unlisted: true, label: `${who} FOUND AN UNLISTED GEAR` };
+  for (const fn of ulSubs) {
+    try { fn(entry); } catch { /* ignore */ }
+  }
+}
 
 export default function WinsCreditToast() {
   const [items, setItems] = useState([]);
@@ -42,13 +58,25 @@ export default function WinsCreditToast() {
       const id = entry.id;
       setTimeout(() => setItems((prev) => prev.filter((e) => e.id !== id)), HOLD_MS);
     });
-    return off;
+    const onFind = (entry) => {
+      setItems((prev) => [...prev, entry].slice(-MAX_ON_SCREEN));
+      setTimeout(() => setItems((prev) => prev.filter((e) => e.id !== entry.id)), UL_HOLD_MS);
+    };
+    ulSubs.add(onFind);
+    return () => {
+      off();
+      ulSubs.delete(onFind);
+    };
   }, []);
 
   if (!items.length) return null;
   return (
     <div className="wct" aria-live="polite">
-      {items.map((e) => (
+      {items.map((e) => e.unlisted ? (
+        <div className="wct-row wct-row--ul" key={e.id}>
+          <span className="wct-label" translate="no">{e.label}</span>
+        </div>
+      ) : (
         <div className="wct-row" key={e.id}>
           <span className="wct-label">{e.label}</span>
           <span className="wct-amt">+{formatNum(e.amount)}</span>

@@ -51,6 +51,16 @@
   white-space: nowrap;
 }
 
+/* THE UNLISTED find announcement: the tier's own plate (markCard/palette.js unlisted — black fill,
+   cream line, static hard offset), so it reads as a different CLASS, not another wins toast. */
+.wct-row--ul {
+  background: #000;
+  border-color: #f2ecdd;
+  color: #f2ecdd;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 @keyframes wct-in {
   0%   { transform: translateX(40px) scale(0.7); opacity: 0; }
   55%  { transform: translateX(-4px) scale(1.12); opacity: 1; }
