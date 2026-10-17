@@ -5,14 +5,14 @@
 //   3. SOLD OUT: ×5 OVERDRIVE ×2 → two buys → the stamp; a third try charges nothing;
 //   4. short on gems / the visual-only FREE EPIC+ ROLL charge nothing;
 //   5. the phone gets the same screen.
-// Date is pinned 60 s into a 5-minute restock window, so a restock never lands mid-test.
+// Date is pinned 60 s into an hourly restock window, so a restock never lands mid-test.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
 import { navControl } from './support/menu.js';
 
 const SECRET = 'f'.repeat(48);
-const WINDOW_MS = 5 * 60 * 1000;
+const WINDOW_MS = 60 * 60 * 1000;
 const T = (Math.floor(Date.now() / WINDOW_MS) + 1) * WINDOW_MS + 60_000;
 
 async function boot(page, { wins = 500, gems = 640, power = 0 } = {}) {
@@ -87,7 +87,7 @@ test('a STOCK item costs GEMS: +50% XP · 10 MIN for 45, ×5 → ×4 LEFT, the e
   await expect(card(shop, 'xp25').locator('.sp2-what')).toHaveText('XP PER KEY');
   await expect(card(shop, 'xp25').locator('.sp2-time')).toHaveText('10 MIN');
   await expect(card(shop, 'overdrive').locator('.sp2-what')).toContainText('XP + WINS');
-  await expect(shop.locator('.ktc')).toContainText('4:00'); // pinned 60 s into the window
+  await expect(shop.locator('.ktc')).toContainText('59:00'); // pinned 60 s into the hour window
   const xp = card(shop, 'xp25');
   await expect(xp.locator('.sp2-left')).toHaveText('×5 LEFT');
   await xp.click();

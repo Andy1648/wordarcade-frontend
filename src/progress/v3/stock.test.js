@@ -29,7 +29,7 @@ test('the boost keys match boost.js / hooks.js', () => {
   assert.equal(ST.BOOST2_KEY, 'taw.s2.boost2');
 });
 
-test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands, counts; a 5:00 restock window', () => {
+test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands, counts; an hourly restock window', () => {
   mem.clear();
   assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 300, 150, 495]); // OVERDRIVE 300 (Andy oct10)
   assert.deepEqual(ST.STOCK.filter((i) => i.fx === 'xp' || i.fx === 'wins').map((i) => i.mult), [1.5, 1.5]);
@@ -37,8 +37,9 @@ test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands,
   assert.deepEqual(ST.stockLeft(T0), { xp25: 5, wins25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 1 });
   // Andy oct8 "boost what?": every item says what it boosts and for how long
   for (const it of ST.STOCK) assert.ok(it.name && it.what && (it.time || it.buyable === false), `${it.id} names what it boosts`);
-  assert.equal(ST.restockIn(T0), 300 - 37);
-  assert.equal(ST.restockIn(T0 + 262_500), 1);
+  assert.equal(ST.restockIn(T0), 3600 - 37);
+  assert.equal(ST.restockIn(T0 + 3_562_500), 1);
+  assert.equal(ST.RESTOCK_MS, 60 * 60 * 1000, 'the stock restocks every hour (Andy oct16)');
 });
 
 test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks', () => {

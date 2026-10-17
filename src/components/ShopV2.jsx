@@ -8,7 +8,7 @@
 //     per hold). The plate is a tilted square carrying the kit POWER key.
 //   * DAILY FREE DROP (top of the right column, DailyDrop.jsx / v3/dailyDrop.js) — one free chest a local day.
 //   * STOCK (right) — six GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,
-//     ×N LEFT, a 5:00 RESTOCK chip on the wall clock, the kit SOLD OUT stamp. FREE EPIC+ ROLL is shown but not sold
+//     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. FREE EPIC+ ROLL is shown but not sold
 //     yet (its reveal is the ROLL screen's, P6).
 // Motion: kit one-shots only (pill count / deny, stamp slam, BOUGHT! float, plate bump); nothing loops at rest.
 import { useEffect, useRef, useState } from 'react';
@@ -165,7 +165,7 @@ export default function ShopV2({ onBack }) {
       else onBackRef.current();
     };
     window.addEventListener('keydown', onKey);
-    // the RESTOCK clock: one tick a second; a new 5-minute window refills the stock
+    // the RESTOCK clock: one tick a second; a new hour window refills the stock
     const S = V3.stock;
     let w = S.windowOf();
     const iv = setInterval(() => {
@@ -306,7 +306,7 @@ export default function ShopV2({ onBack }) {
             {shelf === 'boosts' && <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />}
           </div>
           <div className="sp2-stock-sub sp2-shelf-sub">
-            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY 5 MIN · SCROLL FOR MORE' : shelf === 'looks' ? 'COSMETICS — LOOKS ONLY, BOUGHT ONCE, KEPT FOREVER' : 'REDEEM A CODE'}
+            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR · SCROLL FOR MORE' : shelf === 'looks' ? 'COSMETICS — LOOKS ONLY, BOUGHT ONCE, KEPT FOREVER' : 'REDEEM A CODE'}
           </div>
           {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>

@@ -1,7 +1,7 @@
 // v3/stock.js — the SHOP's STOCK (season 2 only; claude/mockups/v2/Shop.dc.html, P3). "Wins buy only POWER;
 // everything else costs gems" (progression-v3.md): five gem-priced items at the mockup's odd prices (the mockup's ×2 GEM DROPS is out: gems never scale), each with a
-// limited count that RESTOCKS every 5:00 (a shared wall-clock window — every player's restock lands on the same
-// :00 / :05 boundary, so the timer is the clock, not a per-save countdown).
+// limited count that RESTOCKS every hour (Andy oct16; was 5:00 — a shared wall-clock window: every player's restock lands
+// on the same top-of-the-hour boundary, so the timer is the clock, not a per-save countdown).
 //
 //   COMMON     +25% XP · 10 MIN        45   ×5   → stockXpMult() ×1.25 on XP / KEY (v3/hooks.js xpSwap.d)
 //   COMMON     +25% WINS · 10 MIN      60   ×5   → stockWinsMult() ×1.25 on WINS / WORD (wins.js perWordFactors.boost)
@@ -29,7 +29,7 @@ export const BOOST2_KEY = `${S2_PREFIX}boost2`; // = hooks.js BOOST2_KEY (the R3
 // = boost.js BOOST_KEY — a literal, so the eager index exports no extra binding to this chunk (payload ratchet);
 // stock.test.js pins it
 export const BOOST1_KEY = 'taw.boost';
-export const RESTOCK_MS = 5 * 60 * 1000;
+export const RESTOCK_MS = 60 * 60 * 1000; // hourly (Andy oct16: "make restock every hour"; was 5 min)
 export const EXTEND_MS = 5 * 60 * 1000;
 
 export const STOCK = [
@@ -72,9 +72,9 @@ function writeJson(k, o) {
   }
 }
 
-/** The 5-minute window `now` is in (shared by everyone: the restock lands on the wall clock's :00 / :05). */
+/** The hour window `now` is in (shared by everyone: the restock lands on the wall clock's top of the hour). */
 export const windowOf = (now = Date.now()) => Math.floor(now / RESTOCK_MS);
-/** Seconds until the next restock (1 … 300). */
+/** Seconds until the next restock (1 … 3600). */
 export function restockIn(now = Date.now()) {
   return Math.max(1, Math.ceil((RESTOCK_MS - (now - windowOf(now) * RESTOCK_MS)) / 1000));
 }
