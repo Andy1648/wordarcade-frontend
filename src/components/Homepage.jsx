@@ -65,7 +65,7 @@ import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import { patchSeen } from './patchNotes/patchSeen.js';
-import { readMain, castSrc } from '../cast/cast.js';
+import { mainFaceSrc } from '../cast/mainFace.js';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { moments } from '../lib/moments';
@@ -308,9 +308,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [showPatch, setShowPatch] = useState(false);
   // PROFILE (oct17): your hero + stats + description, a popup off the right column (paged) or the icon cluster (else)
   const [showProfile, setShowProfile] = useState(false);
-  const [mainId, setMainId] = useState(readMain);
+  const [mainId, setMainId] = useState(null); // null = read from storage (mainFaceSrc); the popup reports a change
   const openProfile = useCallback(() => setShowProfile(true), []);
-  const profileNav = useMemo(() => ({ onClick: openProfile, art: castSrc(mainId, 'hero') }), [openProfile, mainId]);
+  const profileNav = useMemo(() => ({ onClick: openProfile, art: mainFaceSrc(mainId) }), [openProfile, mainId]);
   // T: unlock tutorials mount once the menu has settled (the arrival wipe) and the mount-time moments — a
   // rank-up waits on the network — have announced themselves; from there the queue orders them (H5)
   const [tutReady, setTutReady] = useState(false);

@@ -44,7 +44,7 @@ export function KitIconButton({ icon, art, tone = 'yellow', rot = 0, tag, tagTon
       <span className="kb-lip" aria-hidden="true" />
       <span className="kb-iface">
         <span className="kb-ibar" aria-hidden="true" />
-        {art ? <span className="kb-art" aria-hidden="true"><img src={art} alt="" draggable="false" /></span> : <KitIcon name={icon} size={44} shadow={2} extras={false} />}
+        {art ? <span className="kb-art" aria-hidden="true"><img src={art} alt="" aria-hidden="true" draggable="false" /></span> : <KitIcon name={icon} size={44} shadow={2} extras={false} />}
       </span>
       {tag != null && (
         <span ref={tagRef} className={cx('kb-itag', `kb-tone-${tagTone || 'yellow'}`)}>

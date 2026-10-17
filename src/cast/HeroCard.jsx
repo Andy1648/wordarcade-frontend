@@ -34,7 +34,7 @@ export default function HeroCard({ hero, locked = false, on = false, sel = false
     <Tag className={cls} style={{ '--hc-c': hero.color, '--hc-d': hero.dark }} {...btn} data-hero={hero.id}>
       <span className="hc-card">
         <span className="hc-art">
-          <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" draggable="false" />
+          <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
           {hero.elite ? <span ref={shineRef} className="hc-shine" aria-hidden="true" /> : null}
         </span>
         <span className="hc-plate" aria-hidden="true" />
