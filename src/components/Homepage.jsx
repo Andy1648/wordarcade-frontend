@@ -127,6 +127,8 @@ const PHONE_MENU_QUERY = '(max-width: 480px)';
 // CARDS_PER_PAGE cards at the full 3:4 ratio and flips between pages (arrows, swipe, ←/→ keys) with
 // a two-dot indicator. Tall screens (> 700px) and anything ≤ 760px wide keep their layout exactly.
 const PAGED_MENU_QUERY = '(min-width: 761px) and (min-aspect-ratio: 5/4)';
+// the right-column PROFILE layout on the wide paged menu: 'chip' (default) | 'slab' (?menu=slab — for comparing)
+const MENU_VARIANT = (() => { try { return new URLSearchParams(window.location.search).get('menu') === 'slab' ? 'slab' : 'chip'; } catch { return 'chip'; } })();
 const CARDS_PER_PAGE = 3;
 const PAGED_CARD_MAX_W = 560;
 const CARD_PAGES = Math.ceil(GAMES.length / CARDS_PER_PAGE);
@@ -1384,6 +1386,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         data-menu-frame={menuFrame || undefined}
         data-menu-tier={tier}
         data-paged={isPagedMenu ? '' : undefined}
+        data-menu={MENU_VARIANT}
       >
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
         {/* BEAT GLOW: the menu's one ambient pulse (MENU MOTION LAW) — opacity-only, under the content. */}
@@ -1435,7 +1438,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} profile={isPagedMenu ? null : profileNav} settingsSlot={settingsSlot} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} profile={profileNav} settingsSlot={settingsSlot} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
@@ -1454,7 +1457,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
         {/* YOUR MAIN (oct16, Andy "the customizable section … on the right side of the screen (with the empty space there)"):
             the paged desktop's right column, under the icons — a grid cell, lazy (its own chunk, off the first paint). */}
-        {isPagedMenu && <div className="hp-main"><Suspense fallback={null}><ProfileTile heroId={mainId} onOpen={openProfile} /></Suspense></div>}
+        {/* PROFILE ≥ 1200 (oct17 night, Andy "still dont like the menu … the profile thing there (also off center)"): a CORNER CHIP
+            under the icons sharing their right edge (Brawl Stars / Clash Royale); ?menu=slab = the framed right-column slab
+            instead (research: claude notes menu-profile-layout-research.md). Under 1200 the face sits in the icon cluster. */}
+        {isPagedMenu && <div className={`hp-main is-${MENU_VARIANT}`}><Suspense fallback={null}><ProfileTile heroId={mainId} onOpen={openProfile} variant={MENU_VARIANT} level={xpProgress.level} /></Suspense></div>}
 
         {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
