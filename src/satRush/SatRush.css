@@ -3063,3 +3063,122 @@ body:has(.sr-app) .wpm-hud {
   .sr-brief-head { align-items: flex-start; text-align: left; padding-right: 76px; }
   .sr-brief-title { font-size: min(var(--fs-h2), 6vw); }
 }
+
+/* =====================================================================================================
+   FINITE RUNS (oct17): CASE SETUP, the HUD's case progress + hot streak, the SECOND LOOK tag, and the
+   results' CASE FILE. Same paper / ink / double-rule language; nothing here loops.
+   ===================================================================================================== */
+.sr-setup { gap: 14px; }
+.sr-setup-sub {
+  margin-top: -8px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.sr-setup-row { width: 100%; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.sr-setup-label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.sr-setup-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sr-setup-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 6px;
+  background: var(--tile);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.sr-setup-opt:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+/* the chosen option is INKED (paper on ink) — reads by tone, not colour */
+.sr-setup-opt.sel { background: var(--ink); color: var(--paper); }
+.sr-setup-opt-main { font-family: var(--font-head); font-size: var(--fs-body); letter-spacing: 0.02em; }
+.sr-setup-opt-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  text-align: center;
+}
+.sr-setup-known {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sr-setup .sr-btn { width: 100%; }
+.sr-setup-exits { display: flex; gap: 10px; justify-content: center; }
+@media (max-width: 400px) {
+  .sr-setup-opts { gap: 6px; }
+  .sr-setup-opt-sub { font-size: 14px; letter-spacing: 0; }
+}
+
+/* HUD: a running streak (3+) inks its cell — a held state, not an animation */
+.sr-hcell-streak.hot { background: var(--ink); color: var(--paper); }
+.sr-hcell-streak.hot .sr-hlabel,
+.sr-hcell-streak.hot .sr-hval { color: var(--paper); }
+
+/* the case id names a SECOND LOOK (a shaky clear brought back) */
+.sr-case-return {
+  white-space: nowrap;
+  padding: 0 5px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* RESULTS — the case file */
+.sr-casefile { text-align: left; }
+.sr-casefile-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; }
+.sr-casefile-row { padding: 8px 0; border-bottom: 2px solid var(--ink); }
+.sr-casefile-row:last-child { border-bottom: none; }
+.sr-casefile-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sr-casefile-word { font-family: var(--font-head); font-size: var(--fs-body); letter-spacing: 0.02em; margin-right: auto; }
+.sr-casefile-mastery,
+.sr-casefile-out {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sr-casefile-mastery { opacity: 0.7; }
+.sr-casefile-mastery.known { opacity: 1; }
+.sr-casefile-out { padding: 0 6px; border: 2px solid var(--ink); }
+.sr-casefile-out.clean { background: var(--ink); color: var(--paper); }
+.sr-casefile-out.escaped { color: var(--redink, #c8321e); border-color: var(--redink, #c8321e); }
+.sr-casefile-def { margin: 6px 0 0; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); line-height: 1.4; }
+.sr-casefile-ex {
+  margin: 4px 0 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  opacity: 0.85;
+}
+/* PHONES: three difficulty cards side by side clipped "STANDARD" at 360. They stack as full-width rows
+   instead — name left, what it means right. */
+@media (max-width: 520px) {
+  .sr-setup-row.stack .sr-setup-opts { grid-template-columns: 1fr; gap: 8px; }
+  .sr-setup-row.stack .sr-setup-opt {
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: 44px;
+    padding: 6px 12px;
+    gap: 10px;
+  }
+  .sr-setup-row.stack .sr-setup-opt-sub { text-align: right; }
+}

@@ -70,6 +70,14 @@ export const DEFAULT_CONFIG = {
   // such reveal zeroes heat, and the word's Nth spam reveal is a miss (a life, a revenant). One
   // reveal per word forgives a real typo run; a pure spammer is out of lives in a few words.
   spamRevealMiss: 2,
+  // THE DROPOUT SCHEDULE (oct17). A word leaves the run only once it is captured CLEAN. A miss
+  // already comes back as a revenant; with requeueShaky a clear that leaned on the spell-along
+  // (revealed >= shakyRevealMin letters) comes back too — as a SECOND LOOK, no life lost, no
+  // revenant bonus — at most maxRequeues times per word. Off by default (the endless tests and the
+  // dev scenes keep the old behaviour); finite runs turn it on.
+  requeueShaky: false,
+  shakyRevealMin: 2,
+  maxRequeues: 2,
 };
 
 export const REVEAL_META = 'meta';
@@ -193,8 +201,17 @@ export function createSatRushEngine({
   config = {},
   recent = new Set(),
   briefed = [],
+  queue = null,
 } = {}) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
+  // FINITE RUN (oct17): `queue` is the run's own ordered word list (runSpec.buildRunQueue, or the
+  // briefed deck). It replaces the endless tier curve: the run serves the queue, brings misses and
+  // shaky clears back, and COMPLETES when the queue and every pending return are settled. null =
+  // the old endless draw (kept for the tests and the dev scenes).
+  const finite = Array.isArray(queue);
+  const runQueue = finite ? queue.filter((r) => r && r.word) : [];
+  const runTotal = finite ? runQueue.length : 0;
+  const briefedSet = new Set(briefed);
 
   const pool = shuffle(words, rng);
   const used = new Set(); // word strings already served as fresh
@@ -205,7 +222,7 @@ export function createSatRushEngine({
   // injected RNG, and mark them used so the normal draw never re-serves them.
   const wordMap = new Map(words.map((r) => [r.word, r]));
   const briefedQueue = [];
-  for (const w of shuffle([...new Set(briefed)], rng)) {
+  for (const w of finite ? [] : shuffle([...new Set(briefed)], rng)) {
     const row = wordMap.get(w);
     if (row && !used.has(row.word)) {
       used.add(row.word);
@@ -230,7 +247,33 @@ export function createSatRushEngine({
     current: null, // the live word presentation, or null
     wrongKeystrokes: 0, // for the current word (drives the reveal cadence)
     spamReveals: 0, // letters of the current word revealed BY WRONG KEYS (pay nothing)
+    complete: false, // a finite run whose every word is settled (vs. out of lives)
+    settled: 0, // distinct words done for good (a clear that brings no second look)
   };
+  // THE CASE FILE: one entry per distinct word, in first-served order — what the end screen lists.
+  // { word, pos, gloss, context, tier, attempts, misses, captured, clean, bestStage }
+  const caseLog = [];
+  const caseByWord = new Map();
+  function caseEntry(row) {
+    let e = caseByWord.get(row.word);
+    if (!e) {
+      e = {
+        word: row.word,
+        pos: row.pos,
+        gloss: row.gloss,
+        context: row.context,
+        tier: row.tier,
+        attempts: 0,
+        misses: 0,
+        captured: false,
+        clean: false,
+        bestStage: null,
+      };
+      caseByWord.set(row.word, e);
+      caseLog.push(e);
+    }
+    return e;
+  }
 
   // Draw an unused fresh word of the requested tier. Preference order:
   //   1. target tier, not recently served  (the normal case)
@@ -282,7 +325,11 @@ export function createSatRushEngine({
     return best;
   }
 
-  function buildPresentation(row, tier, { isRevenant, isDeepCut, missCount = 0, isBriefed = false }) {
+  function buildPresentation(
+    row,
+    tier,
+    { isRevenant, isDeepCut, missCount = 0, isBriefed = false, isReturn = false, requeues = 0 }
+  ) {
     const length = row.word.length;
     return {
       row,
@@ -303,6 +350,8 @@ export function createSatRushEngine({
       isRevenant,
       isDeepCut,
       isBriefed,
+      isReturn, // a SECOND LOOK: a shaky clear brought back (dropout schedule) — no bonus, no life
+      requeues, // how many times this word has been brought back after a shaky clear
       missCount,
       stage: isRevenant ? cfg.revenantEntryStage : 0,
       resolved: false,
@@ -311,10 +360,69 @@ export function createSatRushEngine({
 
   /** Advance to the next slot and present a word. Returns the presentation, or
    *  null if the game is over or the pool is exhausted. */
+  function presentRevenant(rev, isDeepCutSlot) {
+    const isReturn = rev.kind === 'review';
+    return buildPresentation(rev.row, rev.tier, {
+      isRevenant: !isReturn,
+      isReturn,
+      isDeepCut: isDeepCutSlot,
+      missCount: rev.missCount,
+      requeues: rev.requeues || 0,
+      isBriefed: briefedSet.has(rev.row.word),
+    });
+  }
+
+  function serve(present, n) {
+    state.wordNumber = n;
+    state.wrongKeystrokes = 0;
+    state.spamReveals = 0;
+    state.current = present;
+    caseEntry(present.row).attempts += 1;
+    return present;
+  }
+
+  // FINITE: a due return first; else the next queued word; else (queue dry) the earliest pending
+  // return regardless of its due slot; else the run is COMPLETE.
+  function nextFinite(n, isDeepCutSlot) {
+    let dueIdx = -1;
+    for (let i = 0; i < revenants.length; i++) {
+      const r = revenants[i];
+      if (r.dueWordNumber <= n && (dueIdx === -1 || r.dueWordNumber < revenants[dueIdx].dueWordNumber)) {
+        dueIdx = i;
+      }
+    }
+    if (dueIdx === -1 && !runQueue.length && revenants.length) {
+      dueIdx = 0;
+      for (let i = 1; i < revenants.length; i++) {
+        if (revenants[i].dueWordNumber < revenants[dueIdx].dueWordNumber) dueIdx = i;
+      }
+    }
+    if (dueIdx !== -1) {
+      const rev = revenants.splice(dueIdx, 1)[0];
+      return serve(presentRevenant(rev, isDeepCutSlot), n);
+    }
+    if (runQueue.length) {
+      const row = runQueue.shift();
+      return serve(
+        buildPresentation(row, row.tier, {
+          isRevenant: false,
+          isDeepCut: isDeepCutSlot,
+          isBriefed: briefedSet.has(row.word),
+        }),
+        n
+      );
+    }
+    state.complete = true;
+    state.gameOver = true;
+    state.current = null;
+    return null;
+  }
+
   function nextWord() {
     if (state.gameOver) return null;
     const n = state.wordNumber + 1;
     const isDeepCutSlot = n % cfg.deepCutEvery === 0;
+    if (finite) return nextFinite(n, isDeepCutSlot);
 
     // Briefed words are served FIRST (already shuffled), ahead of the tier curve
     // and any revenant — retrieval right after the study screen is the whole
@@ -327,11 +435,7 @@ export function createSatRushEngine({
         isDeepCut: isDeepCutSlot,
         isBriefed: true,
       });
-      state.wordNumber = n;
-      state.wrongKeystrokes = 0;
-      state.spamReveals = 0;
-      state.current = present;
-      return present;
+      return serve(present, n);
     }
 
     // A due revenant takes priority over a fresh draw for this slot.
@@ -369,11 +473,7 @@ export function createSatRushEngine({
       });
     }
 
-    state.wordNumber = n;
-    state.wrongKeystrokes = 0;
-    state.spamReveals = 0;
-    state.current = present;
-    return present;
+    return serve(present, n);
   }
 
   /** Move to the next reveal stage (clamped at the final stage). */
@@ -475,6 +575,27 @@ export function createSatRushEngine({
     state.bestStreak = Math.max(state.bestStreak, state.currentStreak);
     state.anteStages.push(stage);
     state.clearedWords.push({ word: cw.word, tier: cw.tier, length: cw.length });
+    // The case file + the dropout schedule: a shaky clear (leaned on the spell-along) comes back
+    // as a SECOND LOOK a few words later, at most maxRequeues times; a clean clear settles the word.
+    const entry = caseEntry(cw.row);
+    entry.captured = true;
+    entry.bestStage = entry.bestStage == null ? stage : Math.min(entry.bestStage, stage);
+    const shaky = revealed >= cfg.shakyRevealMin;
+    if (!shaky) entry.clean = true;
+    let requeued = false;
+    if (cfg.requeueShaky && shaky && (cw.requeues || 0) < cfg.maxRequeues) {
+      revenants.push({
+        row: cw.row,
+        tier: cw.tier,
+        dueWordNumber: state.wordNumber + cfg.revenantOffset,
+        missCount: cw.missCount,
+        requeues: (cw.requeues || 0) + 1,
+        kind: 'review',
+      });
+      requeued = true;
+    } else {
+      state.settled += 1;
+    }
     state.runLog.push({
       ok: true,
       stage,
@@ -503,6 +624,7 @@ export function createSatRushEngine({
       },
       heat: state.heat,
       silverTongue: state.silverTongue,
+      requeued, // true = a SECOND LOOK is coming (the clear leaned on the spell-along)
     };
   }
 
@@ -549,6 +671,7 @@ export function createSatRushEngine({
     state.missed += 1;
     state.currentStreak = 0;
     state.runLog.push({ ok: false, revenant: cw.isRevenant, deepCut: cw.isDeepCut });
+    caseEntry(cw.row).misses += 1;
 
     const dueWordNumber = state.wordNumber + cfg.revenantOffset;
     revenants.push({
@@ -556,6 +679,7 @@ export function createSatRushEngine({
       tier: cw.tier, // revenants keep their own tier
       dueWordNumber,
       missCount: cw.missCount + 1,
+      requeues: cw.requeues || 0,
     });
 
     if (state.lives <= 0) state.gameOver = true;
@@ -597,6 +721,11 @@ export function createSatRushEngine({
       avgAnte, // mean stage at clear; lower means answered earlier
       hardestWord: hardest,
       runLog: state.runLog.slice(),
+      // FINITE runs: did the case file close (every word settled) or did the lives run out first?
+      finite,
+      complete: state.complete,
+      runTotal,
+      caseLog: caseLog.map((e) => ({ ...e })),
     };
   }
 
@@ -615,6 +744,12 @@ export function createSatRushEngine({
       current: state.current,
       pendingRevenants: revenants.length,
       wrongKeystrokes: state.wrongKeystrokes,
+      finite,
+      complete: state.complete,
+      runTotal,
+      // words still to come: the queue + every pending return (the current word not included)
+      runRemaining: finite ? runQueue.length + revenants.length : null,
+      settled: state.settled,
     };
   }
 

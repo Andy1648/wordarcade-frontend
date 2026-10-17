@@ -12,7 +12,8 @@ import { readRecentWords, pushRecentWord } from './recentWords';
 import * as lexicon from './lexicon';
 import { pickBriefing } from './briefing';
 import { suspectsStanding } from './suspects';
-import WORDS from '../data/satRush/words.json';
+import { loadPack } from './packWords';
+import { normalizeSpec, bandWords, buildRunQueue, LENGTHS } from './runSpec';
 import { track } from '../lib/analytics';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import { addWords } from '../wordCount';
@@ -29,9 +30,22 @@ import * as juice from './juice';
 import { formatNum, formatMultExact } from '../format';
 import { noteLetters } from '../progress/letterXp.js';
 
-const POS_LABEL = { adj: 'adjective', n: 'noun', v: 'verb', adv: 'adverb' };
-// the poster's case id on a phone: dictionary short forms (noun / verb are already short)
-const POS_SHORT = { adj: 'adj.', n: 'noun', v: 'verb', adv: 'adv.' };
+// The pack this mode plays (packs.js). FRENCH RUSH will pass its own id through the RunSpec.
+const PACK = loadPack('sat');
+const WORDS = PACK.words;
+// FINITE runs (oct17) use the DROPOUT schedule: a miss or a shaky clear comes back this many words
+// later (the endless default, 6, is longer than half a 10-word case file).
+const FINITE_RETURN_GAP = 3;
+// STREAK MILESTONES (Kahoot's lesson: the streak COUNT motivates more than its bonus): the capture
+// stamp names the streak at these counts, then every 5 after the last.
+const STREAK_MILESTONES = [3, 5, 10];
+function isStreakMilestone(n) {
+  return STREAK_MILESTONES.includes(n) || (n > 10 && n % 5 === 0);
+}
+
+// part-of-speech labels come from the pack (full, and the phone case id's dictionary short form)
+const POS_LABEL = PACK.posLabels;
+const POS_SHORT = PACK.posShort;
 const CLEAR_PAUSE_MS = 850;
 // THE MISS TEACHES, SO IT HAS TO BE READABLE. The re-encode card carries four things — the
 // word, the sentence with the answer filled in, the definition, and a root cousin. 1800ms was
@@ -65,7 +79,13 @@ export function useSatRushGame() {
 
   const engineRef = useRef(null);
   const inputRef = useRef(null);
-  const phaseRef = useRef('start'); // 'start' | 'mode' | 'briefing' | 'playing' | 'over'
+  const phaseRef = useRef('start'); // 'start' | 'mode' | 'setup' | 'briefing' | 'playing' | 'over'
+  // The current run's RunSpec (runSpec.js): { pack, mode, difficulty, length, category }. Set at
+  // CASE SETUP (or from the remembered prefs on a deep link); a replay of misses keeps it.
+  const specRef = useRef(normalizeSpec({}));
+  // A REPLAY of the last run's unsettled words: their rows, played as the run's queue. null = a
+  // normal run built from the spec.
+  const replayRef = useRef(null);
   // The mode of the CURRENT run: 'briefing' (study screen + spell-along net) or
   // 'lineup' (suspect lineup, no spell-along). Chosen at mode-select and fixed for
   // the run; it drives the engine config, the final-stage endgame, and every event.
@@ -203,6 +223,8 @@ export function useSatRushGame() {
     // Entry juice (real play only — dev scenes set state without calling this).
     if (cur.isRevenant) juice.revenantEnter();
     else if (cur.isDeepCut) juice.deepCutEnter();
+    // A SECOND LOOK (a shaky clear brought back) says so — it is not a new word.
+    if (cur.isReturn) msgRef.current = { text: 'second look — you leaned on the letters last time', kind: 'near' };
     force();
   }, [trackRunEnd, trackSR]);
 
@@ -261,10 +283,12 @@ export function useSatRushGame() {
       // The clear SFX (tone 'capture'): SILVER TONGUE entry gets its own; otherwise
       // "CAPTURED!!" (the fugitive is caught).
       stampSeq.current += 1;
+      const streakNow = eng.getState().currentStreak;
+      const milestone = !silverJustOn && isStreakMilestone(streakNow);
       stampRef.current = {
-        text: silverJustOn ? 'SILVER TONGUE!' : 'CAPTURED!!',
+        text: silverJustOn ? 'SILVER TONGUE!' : milestone ? `STREAK ×${streakNow}!` : 'CAPTURED!!',
         tone: 'capture',
-        kind: silverJustOn ? 'silver' : 'got',
+        kind: silverJustOn ? 'silver' : milestone ? 'streak' : 'got',
         id: stampSeq.current,
       };
       // Clear juice: the SILVER TONGUE crack is its own big moment; otherwise a
@@ -281,8 +305,9 @@ export function useSatRushGame() {
         msgRef.current = { text: 'SILVER TONGUE — multipliers doubled', kind: 'good' };
       } else {
         const bonus = r.breakdown.deepCutBonus ? ' · DEEP CUT BONUS' : '';
+        const back = r.requeued ? ' · back for a second look' : '';
         msgRef.current = {
-          text: `+${formatNum(r.gained)} · ${formatMultExact(r.breakdown.stageMultiplier)}× ante${bonus}`,
+          text: `+${formatNum(r.gained)} · ${formatMultExact(r.breakdown.stageMultiplier)}× ante${bonus}${back}`,
           kind: 'good',
         };
       }
@@ -324,7 +349,7 @@ export function useSatRushGame() {
     if (r.gameOver) juice.death();
     else if (brokeSilver) juice.silverBreak();
     else juice.miss();
-    msgRef.current = { text: `the fugitive was ${answer.toUpperCase()} — it'll be back`, kind: 'bad' };
+    msgRef.current = { text: `the fugitive was ${(answer || word).toUpperCase()} — it'll be back`, kind: 'bad' };
     force();
     clearTimeout(pauseTimer.current);
     pauseTimer.current = setTimeout(() => {
@@ -571,20 +596,24 @@ export function useSatRushGame() {
   }, [persistLexicon]);
 
   // ---- public actions ----
-  const freshEngine = useCallback((briefed = [], mode = 'briefing') => {
+  const freshEngine = useCallback((briefed = [], mode = 'briefing', queue = null) => {
     clearTimers();
     const { stageMs, spellMs, lineupScale, deepEvery, revGap, climb } = cfgRef.current;
+    const finite = Array.isArray(queue);
     engineRef.current = createSatRushEngine({
       words: WORDS,
       recent: readRecentWords(), // cross-run memory: deprioritize recently-served words
       briefed, // THE BRIEFING's words, served first this run (briefing mode only)
+      queue, // FINITE run: the run's own words (null = the endless dev draw)
       config: {
+        requeueShaky: finite, // the dropout schedule: shaky clears come back too
+        ...(finite ? { revenantOffset: Math.min(revGap, FINITE_RETURN_GAP) } : {}),
         mode, // 'briefing' (spell-along net) | 'lineup' (suspect lineup, no spell-along)
         stageIntervalMs: stageMs,
         spellAlongMs: spellMs,
         lineupStageScale: lineupScale, // LINEUP stage-cadence multiplier (mode-agnostic in the engine)
         deepCutEvery: deepEvery,
-        revenantOffset: revGap,
+        ...(finite ? {} : { revenantOffset: revGap }),
         tierEvery: climb,
       },
     });
@@ -610,7 +639,28 @@ export function useSatRushGame() {
         trackSR('briefing_word_dwell_ms', { ms, words, perWord: words ? Math.round(ms / words) : ms });
       }
       dwellStartRef.current = null;
-      freshEngine(briefed, mode);
+      // THE RUN'S WORDS. A replay plays the last run's unsettled words; BRIEFING hunts exactly the
+      // studied deck (shuffled, so the hunt is not the study order); LINEUP builds a case file from
+      // the spec + the learning memory (shaky words come back, unseen words lead).
+      let queue;
+      if (replayRef.current) {
+        queue = replayRef.current.slice();
+      } else if (mode === 'briefing' && briefingRef.current) {
+        queue = shuffleRows(briefingRef.current.words);
+      } else {
+        const lex = lexRef.current;
+        queue = buildRunQueue({
+          spec: specRef.current,
+          words: WORDS,
+          lex,
+          session: lex.session || 0,
+          recent: readRecentWords(),
+          rng: Math.random,
+          deepCutEvery: cfgRef.current.deepEvery,
+        }).rows;
+      }
+      replayRef.current = null;
+      freshEngine(briefed, mode, queue);
       phaseRef.current = 'playing';
       beginWord();
     },
@@ -625,51 +675,132 @@ export function useSatRushGame() {
     lex.session = (lex.session || 0) + 1; // one bump per run start (session-counter time)
     reEncodeRef.current = null;
     briefingRef.current = null;
+    replayRef.current = null;
     phaseRef.current = 'mode';
     force();
   }, []);
 
-  // From the mode picker. Remember the choice (so it preselects next time). BRIEFING
-  // computes + shows the MANDATORY study screen; LINEUP drops straight into the run
-  // (the suspect lineup is served per word by the engine). The mode choice IS the
-  // skip now — a decision the player owns, not a reflexive button.
+  // From the mode picker (or the menu dialog). Remember the choice (so it preselects next time),
+  // then CASE SETUP (difficulty + length); BRIEFING then shows the MANDATORY study screen, LINEUP
+  // drops straight into the run.
+  // Deal THE BRIEFING for the current spec (its length = how many words to study) and show it.
+  const openBriefing = useCallback(() => {
+    const lex = lexRef.current;
+    const spec = specRef.current;
+    if (replayRef.current) {
+      // REPLAY: re-study exactly the words that got away (no new words, no family regrouping).
+      const rows = replayRef.current;
+      briefingRef.current = { words: rows, familyMorpheme: null, familyCount: 0, reviewCount: rows.length, reviewWords: new Set(rows.map((r) => r.word)), isReplay: true };
+      dwellStartRef.current = typeof performance !== 'undefined' ? performance.now() : null;
+      phaseRef.current = 'briefing';
+      force();
+      return;
+    }
+    // Exclude the last 3 decks so the briefing refreshes every time (never
+    // re-deals a word from the recent window); then append THIS deck and keep only
+    // the newest 3. lastBriefed is an array of decks (word-string arrays).
+    const recentDecks = Array.isArray(lex.lastBriefed) ? lex.lastBriefed : [];
+    briefingRef.current = pickBriefing({
+      state: lex,
+      session: lex.session,
+      words: bandWords(WORDS, spec.difficulty, spec.category),
+      rng: Math.random,
+      count: spec.length,
+      exclude: recentDecks.flat(),
+    });
+    const dealtDeck = briefingRef.current.words.map((r) => r.word);
+    lex.lastBriefed = [...recentDecks, dealtDeck].slice(-3);
+    persistLexicon();
+    trackSR('briefing_shown', {
+      familyMorpheme: briefingRef.current.familyMorpheme,
+      reviewCount: briefingRef.current.reviewCount,
+      words: dealtDeck.length,
+      difficulty: spec.difficulty,
+    });
+    dwellStartRef.current = typeof performance !== 'undefined' ? performance.now() : null;
+    phaseRef.current = 'briefing';
+    force();
+  }, [persistLexicon, trackSR]);
+
+  // The remembered CASE SETUP choices, per mode: { difficulty, lineup: length, briefing: length }.
+  const setupPrefs = () => {
+    const p = lexRef.current.setup;
+    return p && typeof p === 'object' ? p : {};
+  };
+
+  // CASE SETUP → go. Remembers the choice, then BRIEFING deals the study deck, LINEUP starts.
+  const confirmSetup = useCallback(
+    ({ difficulty, length } = {}) => {
+      juice.unlockAudio();
+      const mode = modeRef.current;
+      const spec = normalizeSpec({ pack: PACK.id, mode, difficulty, length });
+      specRef.current = spec;
+      const lex = lexRef.current;
+      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length };
+      persistLexicon();
+      trackSR('setup_confirmed', { difficulty: spec.difficulty, length: spec.length });
+      if (mode === 'lineup') {
+        briefingRef.current = null;
+        startRun('lineup');
+      } else {
+        openBriefing();
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [openBriefing, persistLexicon, startRun, trackSR]
+  );
+
   const chooseMode = useCallback(
-    (mode) => {
+    (mode, { skipSetup = false } = {}) => {
       juice.unlockAudio();
       const lex = lexRef.current;
       lex.mode = mode;
       persistLexicon();
       modeRef.current = mode;
+      replayRef.current = null;
       trackSR('mode_selected');
-      if (mode === 'lineup') {
-        briefingRef.current = null;
-        startRun('lineup');
+      // CASE SETUP: difficulty + how many words. A cold deep link skips it (remembered or default
+      // choices) so a stranger still lands on a playable board.
+      if (!skipSetup) {
+        phaseRef.current = 'setup';
+        force();
         return;
       }
-      // Exclude the last 3 decks so the briefing refreshes every time (never
-      // re-deals a word from the recent window); then append THIS deck and keep only
-      // the newest 3. lastBriefed is an array of decks (word-string arrays).
-      const recentDecks = Array.isArray(lex.lastBriefed) ? lex.lastBriefed : [];
-      briefingRef.current = pickBriefing({
-        state: lex,
-        session: lex.session,
-        words: WORDS,
-        rng: Math.random,
-        exclude: recentDecks.flat(),
-      });
-      const dealtDeck = briefingRef.current.words.map((r) => r.word);
-      lex.lastBriefed = [...recentDecks, dealtDeck].slice(-3);
-      persistLexicon();
-      trackSR('briefing_shown', {
-        familyMorpheme: briefingRef.current.familyMorpheme,
-        reviewCount: briefingRef.current.reviewCount,
-      });
-      dwellStartRef.current = typeof performance !== 'undefined' ? performance.now() : null;
-      phaseRef.current = 'briefing';
-      force();
+      const prefs = setupPrefs();
+      confirmSetup({ difficulty: prefs.difficulty, length: prefs[mode] });
     },
-    [persistLexicon, startRun, trackSR]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [confirmSetup, persistLexicon, trackSR]
   );
+
+  // From the results: play again on ONLY the words that did not settle clean last run (missed, or
+  // captured only by leaning on the letters). Same mode + spec; BRIEFING re-studies them first.
+  const replayMisses = useCallback(() => {
+    const eng = engineRef.current;
+    const log = eng ? eng.results().caseLog || [] : [];
+    const byWord = new Map(WORDS.map((r) => [r.word, r]));
+    const rows = log.filter((c) => !c.clean || c.misses > 0).map((c) => byWord.get(c.word)).filter(Boolean);
+    if (!rows.length) return;
+    const lex = lexRef.current;
+    lex.session = (lex.session || 0) + 1;
+    reEncodeRef.current = null;
+    replayRef.current = rows;
+    trackSR('replay_misses', { words: rows.length });
+    if (modeRef.current === 'lineup') {
+      briefingRef.current = null;
+      startRun('lineup');
+    } else {
+      openBriefing();
+    }
+  }, [openBriefing, startRun, trackSR]);
+
+
+  // CASE SETUP's back chip: return to the mode picker (no session bump — no run started).
+  const backToModes = useCallback(() => {
+    replayRef.current = null;
+    phaseRef.current = 'mode';
+    force();
+  }, []);
 
   // From the briefing screen: begin the (briefing-mode) run. No skip path exists.
   const beginRunFromBriefing = useCallback(() => startRun('briefing'), [startRun]);
@@ -819,6 +950,8 @@ export function useSatRushGame() {
     mode: modeRef.current, // the current run's mode (drives the lineup UI / spell block)
     lastMode: lexRef.current.mode, // remembered choice, for the picker's preselect
     lastCleared: lastClearedRef.current, // {word,id} — RARITY scoring + pop
+    spec: specRef.current,
+    setupPrefs: lexRef.current.setup || null,
   });
 
   return {
@@ -826,6 +959,9 @@ export function useSatRushGame() {
     typeKey,
     startGame,
     chooseMode,
+    confirmSetup,
+    replayMisses,
+    backToModes,
     startRun: beginRunFromBriefing,
     abandonRun,
     setStageMs,
@@ -834,6 +970,31 @@ export function useSatRushGame() {
     scene,
     debugRevealTwo,
   };
+}
+
+// Pure: a shuffled copy of a row list (the briefing deck → the hunt order).
+function shuffleRows(rows, rng = Math.random) {
+  const a = rows.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Pure: the end screen's CASE FILE — each distinct word of the run with how it went this run
+// (captured clean / leaned on the letters / got away) and where it now stands in the learning
+// memory (lexicon box: KNOWN at box >= 3, LEARNING once seen, NEW otherwise).
+function buildCaseFile(results, lex) {
+  const log = Array.isArray(results.caseLog) ? results.caseLog : [];
+  return log.map((c) => {
+    const rec = lex && lex.records ? lex.records[c.word] : null;
+    const mastery = lexicon.isMastered(lex, c.word) ? 'known' : rec && rec.seen > 0 ? 'learning' : 'new';
+    // clean = caught without help first time; recaptured = got away, caught on its return;
+    // shaky = only ever caught leaning on the letters; escaped = never caught
+    const outcome = !c.captured ? 'escaped' : c.misses > 0 ? 'recaptured' : c.clean ? 'clean' : 'shaky';
+    return { word: c.word, pos: POS_LABEL[c.pos] || c.pos, gloss: c.gloss, context: c.context, outcome, mastery, misses: c.misses };
+  });
 }
 
 // Pure: the data for the re-encode teaching beat — the sentence (the UI fills the
@@ -863,7 +1024,7 @@ function buildBriefingView(briefing, lex) {
         ? row.root.cousins.filter((c) => lexicon.hasSeen(lex, c))
         : [],
   }));
-  return { familyMorpheme: briefing.familyMorpheme, familyCount: briefing.familyCount, reviewCount: briefing.reviewCount, cards };
+  return { familyMorpheme: briefing.familyMorpheme, familyCount: briefing.familyCount, reviewCount: briefing.reviewCount, isReplay: !!briefing.isReplay, cards };
 }
 
 // Pure: assemble everything the components render from the engine/input state.
@@ -882,9 +1043,26 @@ function buildView(state, cur, eng, input, extra) {
     // RARITY: the last cleared word + its monotonic id (aligned with `cleared`), for scoring/pop.
     lastClearedWord: extra.lastCleared ? extra.lastCleared.word : '',
     clearId: extra.lastCleared ? extra.lastCleared.id : 0,
+    spec: extra.spec, // the run's RunSpec (CASE SETUP / results)
+    setupPrefs: extra.setupPrefs, // remembered CASE SETUP choices (preselect)
+    knownCount: lexicon.masteredCount(extra.lex), // words at the mastery box (CASE SETUP line)
+    packSize: WORDS.length,
+    lengths: LENGTHS,
     // The share of that clear's wins/XP it earned (1 unless letters were revealed by wrong keys).
     lastClearedPaid: extra.lastCleared && Number.isFinite(extra.lastCleared.paid) ? extra.lastCleared.paid : 1,
   };
+  // Results live outside the per-word view: a finite run that COMPLETES has no current word. Built
+  // only once the run is over (a keystroke re-renders this view; the results never change mid-word).
+  if (eng && extra.phase === 'over') {
+    const r = eng.results();
+    base.results = {
+      ...r,
+      mastered: lexicon.masteredCount(extra.lex),
+      keepMissing: lexicon.mostMissed(extra.lex, 6),
+      caseFile: buildCaseFile(r, extra.lex),
+      spec: extra.spec,
+    };
+  }
   if (!state || !cur || !eng) return { ...base, hasWord: false };
 
   // The drain-bar animation must match the ACTUAL stage timer, so it carries the
@@ -955,10 +1133,9 @@ function buildView(state, cur, eng, input, extra) {
     // as the number that makes the mode legibly a study tool, and the persistent
     // WORDS YOU KEEP MISSING list (top sticky misses) so the end screen can point
     // the player straight at what to study next.
-    results: {
-      ...eng.results(),
-      mastered: lexicon.masteredCount(extra.lex),
-      keepMissing: lexicon.mostMissed(extra.lex, 6),
-    },
+    isReturn: !!cur.isReturn, // a SECOND LOOK (shaky clear brought back)
+    // FINITE run progress for the HUD: words settled / the run's length.
+    runTotal: state.runTotal || 0,
+    settled: state.settled || 0,
   };
 }

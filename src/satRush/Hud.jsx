@@ -19,20 +19,25 @@ const scoreText = (s) => {
   return n < 10000 ? String(n).padStart(6, '0') : formatNum(n);
 };
 
-export default function Hud({ score, streak, wordNumber, lives, maxLives, heat, heatCap, onExit }) {
+export default function Hud({ score, streak, wordNumber, settled = 0, runTotal = 0, lives, maxLives, heat, heatCap, onExit }) {
   return (
     <div className="sr-hud">
       <div className="sr-hcell">
         <span className="sr-hlabel">score</span>
         <b className="sr-hval">{scoreText(score)}</b>
       </div>
-      <div className="sr-hcell">
+      {/* the STREAK reads louder once it is a streak (3+): the cell inverts to ink — a static state,
+          not a loop; the capture stamp names the milestones */}
+      <div className={`sr-hcell sr-hcell-streak${streak >= 3 ? ' hot' : ''}`}>
         <span className="sr-hlabel">streak</span>
         <b className="sr-hval">{String(streak).padStart(2, '0')}</b>
       </div>
+      {/* a FINITE run shows the case file's progress: words settled / words in the case */}
       <div className="sr-hcell">
-        <span className="sr-hlabel">word</span>
-        <b className="sr-hval">#{String(wordNumber).padStart(2, '0')}</b>
+        <span className="sr-hlabel">{runTotal > 0 ? 'case' : 'word'}</span>
+        <b className="sr-hval">
+          {runTotal > 0 ? `${settled}/${runTotal}` : `#${String(wordNumber).padStart(2, '0')}`}
+        </b>
       </div>
       <div className="sr-hcell">
         <span className="sr-hlabel">lives</span>

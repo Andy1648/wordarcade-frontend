@@ -47,6 +47,7 @@ import WordCard from './WordCard';
 import SatRushResults from './SatRushResults';
 import Briefing from './BriefingScreen';
 import ModeSelect from './ModeSelect';
+import CaseSetup from './CaseSetup';
 import DevTuner from './DevTuner';
 import SatKeyInput from './SatKeyInput';
 import { LevelUpChip } from '../components/FeelLadder';
@@ -82,7 +83,9 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
     if (view.phase !== 'start') return;
     autoStartedRef.current = true;
     game.startGame();
-    game.chooseMode(pick);
+    // the menu dialog's pick goes to CASE SETUP; a cold deep link skips it (remembered/default
+    // choices) so a stranger still lands on a playable board
+    game.chooseMode(pick, { skipSetup: !startMode && !!autoStart });
     // game is a stable hook object; this fires once, guarded by the ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart, startMode, view.phase]);
@@ -251,6 +254,8 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
               score={view.score}
               streak={view.streak}
               wordNumber={view.wordNumber}
+              settled={view.settled}
+              runTotal={view.runTotal}
               lives={view.lives}
               maxLives={view.maxLives}
               heat={view.heat}
@@ -275,6 +280,17 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
       {view.phase === 'mode' && (
         <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={onExit} />
       )}
+      {view.phase === 'setup' && (
+        <CaseSetup
+          mode={view.mode}
+          prefs={view.setupPrefs}
+          knownCount={view.knownCount}
+          packSize={view.packSize}
+          onStart={game.confirmSetup}
+          onBack={game.backToModes}
+          onExit={onExit}
+        />
+      )}
       {view.phase === 'briefing' && <Briefing briefing={view.briefing} onStart={game.startRun} onExit={onExit} />}
       {view.phase === 'over' && (
         <SatRushResults
@@ -283,6 +299,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
           winsBonusLines={winsBonusLines}
           gemsSince={gemsSince}
           onAgain={game.startGame}
+          onReplay={game.replayMisses}
           onExit={onExit}
           offerMenu={offerMenu}
         />
@@ -350,7 +367,7 @@ function StartScreen({ onPlay, onExit }) {
             <b>{formatRate(rate)}</b> WINS / WORD
             <span className="sr-cover-mult"> · POWER ×{formatMultExact(power)}</span>
           </span>
-          <span className="sr-cover-round">3 LIVES · ENDLESS RUN</span>
+          <span className="sr-cover-round">3 LIVES · 5–30 WORDS A CASE</span>
         </div>
 
         <button type="button" className="sr-btn" onClick={onPlay}>

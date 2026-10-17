@@ -233,6 +233,7 @@ export default function WordCard({ view }) {
             <span className="sr-case-short">{view.posShort}</span>
           </span>
           <span className="sr-case-tier">tier {view.tier}</span>
+          {view.isReturn && <span className="sr-case-return">second look</span>}
         </div>
         {/* Revenant = an ESCAPED overprint: a double-ruled stamp across the masthead at a slight
             tilt, held for the whole word. */}
