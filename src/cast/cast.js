@@ -107,6 +107,66 @@ export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, tr
  *  and pops) without moving the body. Boxes are % of the 512 pose square: x/y/w = the sprite's top-left + width; `o`
  *  = its transform-origin (the point it grows from — the lips). Poses without an entry render the flat castSrc image. */
 export const CAST_LAYERS = {
+  // RIOT keeps the can in hand (it's held, so it stays painted in); the SPRAY puff bursts from its nozzle (116,135)
+  // HEX: the book floats beside her (pages open at ~(415,235)) — its magic puffs, runes and sparkles play on a timer
+  hex: {
+    hero: {
+      act: 'magic',
+      sprites: [
+        { src: '/cast/props/spark-big.webp', x: 80, y: 26, w: 12 },
+        { src: '/cast/props/spark-sm.webp', x: 70.5, y: 33.5, w: 7 },
+        { src: '/cast/props/rune-zig.webp', x: 77, y: 38.5, w: 8 },
+        { src: '/cast/props/rune-moon.webp', x: 72.7, y: 37.5, w: 9 },
+        { src: '/cast/props/magic-puff.webp', x: 73, y: 37.5, w: 16 },
+      ],
+    },
+  },
+  hype: { hero: { act: 'shout', sprites: [
+    { src: '/cast/props/shout-arcs.webp', x: 78, y: 36, w: 13, o: '0% 50%' },
+    { src: '/cast/props/confetti.webp', x: 19, y: -2, w: 20 },
+  ] } },
+  brawl: { hero: { act: 'jab', sprites: [
+    { src: '/cast/props/impact.webp', x: 70, y: 25.5, w: 20 },
+    { src: '/cast/props/sweat.webp', x: 31, y: 20, w: 4.5 },
+  ] } },
+  'riot-elite': { hero: { act: 'rock', sprites: [
+    { src: '/cast/props/note-double.webp', x: 20, y: 48, w: 15 },
+    { src: '/cast/props/note.webp', x: 38, y: 44, w: 11 },
+    { src: '/cast/props/bolt.webp', x: 83, y: 24, w: 9 },
+  ] } },
+  'hype-elite': { hero: { act: 'mvp', sprites: [
+    { src: '/cast/props/shout-arcs.webp', x: 1, y: 0, w: 13, o: '100% 50%' },
+    { src: '/cast/props/confetti.webp', x: 52, y: -3, w: 22 },
+    { src: '/cast/props/confetti.webp', x: 30, y: 2, w: 18 },
+  ] } },
+  'brawl-elite': { hero: { act: 'champ', sprites: [
+    { src: '/cast/props/flash.webp', x: 5, y: 13, w: 19 },
+    { src: '/cast/props/flash.webp', x: 74, y: 9, w: 18 },
+    { src: '/cast/props/flash.webp', x: 78, y: 55, w: 17 },
+  ] } },
+  'hex-elite': { hero: { act: 'arcane', sprites: [
+    { src: '/cast/props/spark-big.webp', x: 6.8, y: 8.2, w: 10 },
+    { src: '/cast/props/spark-sm.webp', x: 1, y: 20, w: 6 },
+    { src: '/cast/props/rune-zig.webp', x: 82, y: 36, w: 8 },
+    { src: '/cast/props/rune-moon.webp', x: 76, y: 34, w: 9 },
+    { src: '/cast/props/magic-puff.webp', x: 75, y: 37, w: 15 },
+  ] } },
+  // GLITCH.EXE: three bands of its own art (a static clip-path) tear sideways
+  'glitch-elite': { hero: { act: 'glitch', sprites: [
+    { src: '/cast/glitch-elite-hero.webp', x: 0, y: 0, w: 100, clip: 'inset(18% 0 70% 0)' },
+    { src: '/cast/glitch-elite-hero.webp', x: 0, y: 0, w: 100, clip: 'inset(46% 0 44% 0)' },
+    { src: '/cast/glitch-elite-hero.webp', x: 0, y: 0, w: 100, clip: 'inset(70% 0 21% 0)' },
+  ] } },
+  riot: {
+    hero: {
+      act: 'spray',
+      sprites: [
+        { src: '/cast/props/spray-puff.webp', x: -7.3, y: 11.5, w: 30, o: '100% 54.5%' },
+        { src: '/cast/props/spray-puff-sm.webp', x: -15, y: 6, w: 14, o: '100% 60%' },
+        { src: '/cast/props/spray-drop.webp', x: 19, y: 24.5, w: 3.6 },
+      ],
+    },
+  },
   glitch: {
     hero: {
       base: '/cast/glitch-hero-base.webp',
