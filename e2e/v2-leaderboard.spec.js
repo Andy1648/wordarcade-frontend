@@ -126,7 +126,7 @@ test('▲▼ from the last look; the look is remembered for next time', async ({
   const anims = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.lb2'))
     .map((a) => ({ inf: a.effect.getTiming().iterations === Infinity, running: a.playState === 'running',
-      idle: !!a.effect.target.closest('.lb2-pod-name, .lb2-buddy, .lb2-glint, .lb2-crown') })));
+      idle: !!a.effect.target.closest('.lb2-pod-name, .lb2-buddy, .lb2-glint') })));
   expect(anims.filter((a) => a.inf).length, 'nothing infinite on the board').toBe(0);
   expect(anims.filter((a) => a.running && !a.idle).length, 'no still-running animation at rest but the top-3 idle beat').toBe(0);
 });

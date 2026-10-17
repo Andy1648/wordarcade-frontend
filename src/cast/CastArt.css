@@ -1,0 +1,6 @@
+/* CastArt — the layered pose: the body fills the box, props sit at their cast.js anchor (% of the pose square). The
+   caller's class sizes the box (and carries the drop-shadow, so body + props cast ONE shadow). */
+.cast-layered { position: relative; display: block; }
+.cast-layered .cast-body { display: block; width: 100%; height: 100%; object-fit: contain; }
+.cast-gum { position: absolute; height: auto; pointer-events: none; }
+.cast-gum-b { transform: scale(0.42); }
