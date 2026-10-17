@@ -18,8 +18,6 @@ import { CARD_RAR, cardTier } from './markCard/palette.js';
 import { rollMarkById } from '../progress/markRollsCore.js';
 import { rankPlate } from '../leaderboard/s2Board.js';
 import { fetchShowcase, saveBio, myBio } from '../leaderboard/showcase.js';
-import { titleText, myTitles, wornTitle, setTitlePick } from '../leaderboard/titles.js';
-import { pushShowcaseNow } from '../leaderboard/client.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
 
@@ -172,36 +170,11 @@ function Tile({ icon, value, label, tone, children }) {
 }
 
 /** 050 TITLES: your card lists every title — the earned ones are tappable (wear it), the rest show what earns them. */
-function TitlePicker({ worn, onPick }) {
-  const list = myTitles();
-  const have = list.filter((x) => x.earned).length;
-  return (
-    <div className="pc-titles" data-testid="profile-titles">
-      <span className="pc-titles-k">TITLES · {have}/{list.length}</span>
-      <div className="pc-titles-list">
-        {list.map((x) => (
-          <button
-            key={x.id}
-            type="button"
-            className={`pc-ttl${x.earned ? '' : ' is-locked'}${x.id === worn ? ' is-on' : ''}`}
-            disabled={!x.earned}
-            onClick={() => onPick(x.id)}
-            title={x.how}
-          >
-            <span className="pc-ttl-t">{x.earned ? x.t : '???'}</span>
-            <span className="pc-ttl-h">{x.id === worn ? 'WEARING' : x.how}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /** @param row a board row ({ id, username, rank, rebirths, level, stars }) · @param onClose */
 export default function ProfileCard({ row, mine = false, onClose }) {
   const [show, setShow] = useState(undefined); // undefined = loading, null = none
   const [gear, setGear] = useState(null); // the gear whose sheet is open
-  const [worn, setWorn] = useState(() => (mine ? wornTitle() : null)); // 050: your own title (instant, before the DB has it)
   const cardRef = useRef(null);
   const closeRef = useRef(null);
   useEffect(() => {
@@ -234,15 +207,9 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <span className="pc-name">{row.username}</span>
           <KitRankPlate rank={plate.i} fit shine={false} className="pc-plate" />
         </div>
-        {(mine ? titleText(worn) : titleText(s.title)) ? (
-          <div className="pc-title-line" data-testid="profile-title">{mine ? titleText(worn) : titleText(s.title)}</div>
-        ) : null}
         <div className="pc-sub">
           <span className="pc-sub-c"><KitIcon name="rebirth" size={26} shadow={1} extras={false} /> R{formatNum(Number(row.rebirths) || 0)}</span>
           <span className="pc-sub-c"><KitIcon name="levels" size={26} shadow={1} extras={false} /> LV {formatNum(Number(row.level) || 1)}</span>
-          {has(s.best_chain) && Number(s.best_chain) > 0 ? (
-            <span className="pc-sub-c is-chain" data-testid="profile-chain"><img src="/ach/chain.svg" alt="" aria-hidden="true" /> CHAIN {formatNum(Number(s.best_chain))}</span>
-          ) : null}
         </div>
         {loading && !mine ? null : <Bio text={typeof s.bio === 'string' ? s.bio : mine ? myBio() : ''} mine={mine} />}
         <div className="pc-gears" data-testid="profile-gears">
@@ -258,7 +225,6 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           </Tile>
         </div>
         {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
-        {mine ? <TitlePicker worn={worn} onPick={(id) => { setTitlePick(id); setWorn(id); pushShowcaseNow(); }} /> : null}
       </div>
       {gear ? (
         // a layer of this scrim (GearSheet's .mx-sheet-layer is absolute) — a tap inside never closes the profile
@@ -279,5 +245,5 @@ export default function ProfileCard({ row, mine = false, onClose }) {
   );
 }
 
-// the PROFILE popup (oct17) reuses your own description editor + title picker — the same ones the board card shows
-export { Bio, TitlePicker };
+// the PROFILE popup (oct17) reuses your own description editor — the same one the board card shows (titles removed oct17: Andy "no need for titles … we already have enough cosmetics")
+export { Bio };

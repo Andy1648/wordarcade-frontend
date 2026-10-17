@@ -13,10 +13,9 @@ import FitText from '../kit/FitText.jsx';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js';
 import { kitPlay } from '../kit/motion.js';
-import { Bio, TitlePicker } from '../ProfileCard.jsx';
-import { myBio } from '../../leaderboard/showcase.js';
-import { titleText, wornTitle, setTitlePick } from '../../leaderboard/titles.js';
-import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client.js';
+import { Bio } from '../ProfileCard.jsx';
+import { myBio, myShowcase } from '../../leaderboard/showcase.js';
+import { getMyProfile, myStats } from '../../leaderboard/client.js';
 import { readCounters } from '../../progress/v3/store.js';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
@@ -27,7 +26,7 @@ const POP = [{ transform: 'scale(.9) translateY(12px)', opacity: 0 }, { transfor
 function Stat({ icon, glyph, tone, value, label }) {
   return (
     <div className="pf-stat" style={{ '--pf-t': tone }}>
-      {glyph ? <img className="pf-stat-g" src={`/ach/${glyph}.svg`} alt="" aria-hidden="true" /> : <KitIcon name={icon} size={30} shadow={2} extras={false} />}
+      {glyph ? <img className="pf-stat-g" src={`/ach/${glyph}.svg`} alt="" aria-hidden="true" /> : <KitIcon name={icon} size={36} shadow={2} extras={false} />}
       <FitText className="pf-stat-v">{value}</FitText>
       <span className="pf-stat-k">{label}</span>
     </div>
@@ -39,13 +38,13 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
   const [view, setView] = useState('profile'); // 'profile' | 'pick'
   const [cheer, setCheer] = useState(0);
-  const [worn, setWorn] = useState(wornTitle);
   const cardRef = useRef(null);
   const h = heroById(id) || CAST[0];
   const me = getMyProfile();
   const st = myStats();
   const c = readCounters();
   const play = readPlaySec();
+  const show = myShowcase(); // the same numbers the leaderboard card shows others (gears found)
 
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
@@ -88,19 +87,17 @@ export default function ProfilePopup({ onClose, onMainChange }) {
             <div className="pf-right">
               <div className="pf-id">
                 <FitText className="pf-name">{me ? me.username : 'NO NAME YET'}</FitText>
-                {titleText(worn) ? <span className="pf-worn">{titleText(worn)}</span> : null}
                 {!me ? <span className="pf-hint">CLAIM A NAME ON THE LEADERBOARD</span> : null}
               </div>
               <div className="pf-stats">
                 <Stat icon="clock" tone="#2EFFE0" value={formatPlayTime(play)} label="TIME PLAYED" />
                 <Stat glyph="key" tone="#FFE94A" value={formatNum(st.lifetimeWords || c.words || 0)} label="WORDS TYPED" />
-                <Stat glyph="cup" tone="#FF4FA3" value={formatNum(c.mp)} label="ONLINE WINS" />
-                <Stat glyph="bot" tone="#FF6B3D" value={formatNum(c.bots)} label="BOTS BEATEN" />
-                <Stat glyph="chain" tone="#B04BFF" value={formatNum(c.chain)} label="BEST CHAIN" />
-                <Stat icon="levels" tone="#c9b8ff" value={`LV ${formatNum(st.level)} · R${formatNum(st.rebirths)}`} label="LEVEL" />
+                <Stat glyph="cup" tone="#FF4FA3" value={formatNum((c.mp || 0) + (c.bots || 0))} label="GAMES WON" />
+                <Stat icon="levels" tone="#B04BFF" value={formatNum(st.level)} label="LEVEL" />
+                <Stat icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
+                <Stat icon="index" tone="#c9b8ff" value={show.gears_total ? `${formatNum(show.gears_found)}/${formatNum(show.gears_total)}` : '0'} label="GEARS FOUND" />
               </div>
               {me ? <Bio text={myBio()} mine /> : null}
-              {me ? <TitlePicker worn={worn} onPick={(t) => { setTitlePick(t); setWorn(t); pushShowcaseNow(); }} /> : null}
             </div>
           </div>
         )}

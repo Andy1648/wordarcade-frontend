@@ -1,16 +1,16 @@
 /* HeroPicker — two sections of HeroCards; the hold-to-buy bar sticks to the scroll container's foot. */
 .hp2-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.hp2-sec { display: block; font: 700 var(--fs-k14, 14px) 'Space Mono', monospace; letter-spacing: .14em; color: #c9b8e8; }
+.hp2-sec { display: block; font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .14em; color: #c9b8e8; }
 .hp2-sec.is-elite { margin: 22px 0 10px; color: #FFC83D; }
 .hp2-gems {
   display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 4px 12px;
   font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #fff; background: #0d0618; border: 3px solid #000; border-radius: 8px;
 }
 .hp2-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.hp2-tag { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; color: #c9b8e8; text-align: center; min-height: 2.4em; line-height: 1.2; }
+.hp2-tag { font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; color: #c9b8e8; text-align: center; min-height: 2.4em; line-height: 1.2; }
 .hp2-act {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 6px;
-  font: 400 var(--fs-k14, 14px) 'Bungee', sans-serif; color: #000; background: var(--hc-c); border: 3px solid #000; border-radius: 6px;
+  font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #000; background: var(--hc-c); border: 3px solid #000; border-radius: 6px;
 }
 .hp2-act.is-on { background: #FFE94A; }
 .hp2-act.is-price { color: #fff; background: #3a2160; }
