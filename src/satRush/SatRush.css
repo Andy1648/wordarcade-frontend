@@ -2895,7 +2895,7 @@ body:has(.sr-app) .wpm-hud {
   height: 180px;
 }
 .sr-card .sr-masthead .sr-wanted {
-  font-size: clamp(22px, min(4.6vh, 6.4vw), 34px);
+  font-size: min(var(--fs-h2), max(var(--fs-panel), 4.6vh));
   padding: 3px clamp(10px, 1.6vw, 18px) 5px;
 }
 /* the case id: right-hand side of the masthead, two short lines max, never hidden */
@@ -2976,8 +2976,8 @@ body:has(.sr-app) .wpm-hud {
 @media (max-width: 520px) {
   .sr-case-long { display: none; }
   .sr-case-short { display: inline; }
-  .sr-card .sr-masthead .sr-wanted { font-size: clamp(18px, 6.2vw, 26px); }
-  .sr-card.deep .sr-masthead .sr-wanted { font-size: clamp(17px, 5.2vw, 22px); }
+  .sr-card .sr-masthead .sr-wanted { font-size: min(var(--fs-h2), max(var(--fs-panel), 6.2vw)); }
+  .sr-card.deep .sr-masthead .sr-wanted { font-size: max(var(--fs-label), min(var(--fs-panel), 5.2vw)); }
   .sr-card .sr-masthead .sr-caseid { letter-spacing: 0.04em; }
   .sr-card .sr-masthead .sr-escaped { font-size: var(--fs-label); }
   /* the spell-along bar repeated the REWARD footer's own drain (both run the same grace window and
