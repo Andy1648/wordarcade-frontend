@@ -155,6 +155,49 @@ html[data-view='game'] .screen-flash {
   scrollbar-gutter: stable both-edges;
 }
 
+/* ============================================================= */
+/* ====================  HOUSE SCROLLBARS  ===================== */
+/* ============================================================= */
+/* Andy oct16: "anywhere where there's a scroll bar, instead of the one that Google generates, have a colored one and
+   more simplistic one". ONE rule for every scroller (the page and every overflow:auto/scroll box): a flat pill thumb in
+   the theme's ink (pink by default; each menu theme recolours it via --theme-ink), no arrow buttons, no gradient, on a
+   transparent lane. A panel that wants its own colours sets ONLY the vars (--sb-thumb / --sb-thumb-hover / --sb-track)
+   — never scrollbar-width / scrollbar-color: since Chrome 121 either standard property on an element makes Chrome
+   IGNORE the ::-webkit-scrollbar rules below for it (that is why the old per-panel "thin" bars never matched). A
+   scroller that hides its bar (scrollbar-width: none + ::-webkit-scrollbar { display: none }) still does.
+   POINTER DEVICES ONLY: a touch phone's native bar is an overlay that takes no layout room; any ::-webkit-scrollbar
+   style turns it into a classic bar that EATS width (a 320px phone would lose 20px+ to gutters). */
+:root {
+  --sb-thumb: var(--theme-ink, #FF4FA3);
+  --sb-thumb-hover: var(--theme-xp-fill, #2EFFE0);
+  --sb-track: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  @supports selector(::-webkit-scrollbar) {
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    /* the PAGE keeps the classic bar's 15px lane: the app frame's both-edges gutter (above) is sized off it, and every
+       layout was measured with 15px gutters — a narrower lane would shift every screen sideways */
+    .app-scroll::-webkit-scrollbar { width: 15px; }
+    ::-webkit-scrollbar-track { background: var(--sb-track); }
+    ::-webkit-scrollbar-thumb {
+      min-height: 40px;
+      background-color: var(--sb-thumb);
+      background-clip: padding-box; /* the transparent border insets the pill inside its lane */
+      border: 2px solid transparent;
+      border-radius: 8px;
+    }
+    .app-scroll::-webkit-scrollbar-thumb { border-width: 4px; } /* the same 7px pill in the page's wider lane */
+    ::-webkit-scrollbar-thumb:hover,
+    ::-webkit-scrollbar-thumb:active { background-color: var(--sb-thumb-hover); }
+    ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    ::-webkit-scrollbar-corner { background: transparent; }
+  }
+  /* Firefox has no ::-webkit-scrollbar: the standard properties, same colours (thin; no shape control there) */
+  @supports not selector(::-webkit-scrollbar) {
+    * { scrollbar-width: thin; scrollbar-color: var(--sb-thumb) var(--sb-track); }
+  }
+}
+
 .app-shake.shake-light { animation: shake-light 100ms ease-in-out; }
 .app-shake.shake-medium { animation: shake-medium 200ms ease-in-out; }
 .app-shake.shake-heavy { animation: shake-heavy 300ms ease-in-out; }

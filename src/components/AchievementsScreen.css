@@ -29,12 +29,9 @@
 
 .ach-body {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
-  scrollbar-width: thin; scrollbar-color: #ff4fa3 #2a1f3d;
+  --sb-thumb: #ff4fa3; --sb-track: #2a1f3d; /* house scrollbar (index.css), in this panel's colours */
   padding: 14px 18px 8px;
 }
-.ach-body::-webkit-scrollbar { width: 8px; }
-.ach-body::-webkit-scrollbar-track { background: #2a1f3d; border-radius: 8px; }
-.ach-body::-webkit-scrollbar-thumb { background: #ff4fa3; border-radius: 8px; }
 
 .ach-progress { text-align: center; font-family: 'Bungee', cursive;
   text-transform: uppercase;

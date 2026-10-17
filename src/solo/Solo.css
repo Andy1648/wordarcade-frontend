@@ -1097,7 +1097,7 @@
   letter-spacing: 0.15em;
 }
 
-/* ----- FUSE deck: the three lives as burning fuse cords + the big letters strip ------ */
+/* ----- FUSE deck: the life (one since oct16) as a burning fuse cord + the big letters strip ------ */
 .solo-fusedeck {
   display: flex;
   flex-direction: column;
@@ -1114,7 +1114,9 @@
   max-width: calc(560px * var(--solo-k, 1));
 }
 .solo-cord {
-  flex: 1 1 0;
+  /* sized as one of THREE (the deck's height was laid out round three cords sharing the row): with one life the
+     lone cord keeps that size instead of stretching 2x wider — and so 2x taller — out of the panel */
+  flex: 0 1 calc((100% - 2 * 16px) / 3);
   min-width: 0;
   max-width: calc(200px * var(--solo-k, 1));
   height: auto;

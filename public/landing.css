@@ -4,7 +4,7 @@
    content; they are NOT part of the React bundle. Style mirrors the app:
    flat colors only, thick colored outlines, hard black offset shadows,
    Bungee display / Space Mono body, 8px radius, dark alley background.
-   Each page sets its accent via CSS vars on <body>:
+   Each page sets its accent via CSS vars on <html> (so the page scrollbar, which styles off the root, sees them too):
      --acc      the game's base color
      --acc-line a darker shade of the same hue (colored outlines, never black)
      --acc-ink  text color that reads on top of --acc            */
@@ -19,6 +19,24 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* House scrollbar (Andy oct16 — the app's index.css rule, here in the page's own accent): a flat pill thumb, no arrow
+   buttons, on a transparent lane. Pointer devices only (a phone's native overlay bar takes no width). Firefox gets the
+   standard thin bar in the same colours. Never put scrollbar-width / scrollbar-color on an element here: Chrome then
+   ignores these ::-webkit-scrollbar rules for it. */
+@media (hover: hover) and (pointer: fine) {
+  @supports selector(::-webkit-scrollbar) {
+    ::-webkit-scrollbar { width: 12px; height: 12px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { min-height: 40px; background-color: var(--acc, #FF4FA3); background-clip: padding-box; border: 3px solid transparent; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: var(--acc-line, #B8186E); }
+    ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    ::-webkit-scrollbar-corner { background: transparent; }
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    html { scrollbar-width: thin; scrollbar-color: var(--acc, #FF4FA3) transparent; }
+  }
+}
 
 body {
   background: #0d0618;

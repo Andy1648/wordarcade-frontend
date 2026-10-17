@@ -742,8 +742,8 @@
   max-height: calc(470px * var(--lb2-k));
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #FFE94A #0d0618;
+  --sb-thumb: #FFE94A; /* the house scrollbar (index.css), board yellow */
+  --sb-track: #0d0618;
 }
 .lb2-scroll .lb2-row.is-me { margin-left: 0; margin-right: 0; } /* the lifted row stays inside the scroll box */
 /* PHONE: the list takes exactly the room left under the podium (the stage is a 100%-tall flex column whose 68px foot
