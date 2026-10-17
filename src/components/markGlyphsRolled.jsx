@@ -16,25 +16,21 @@ const INK = '#0d0618';
  * glyph. Its ink outline + highlights are in the art, so it fills the whole 100 box (it overhangs the cog's face, like
  * the kit glyphs do). */
 const ART = (name) => <image href={`/gear/${name}.webp`} x="6" y="6" width="88" height="88" />; // inside the cog ring (Andy oct11: the painted gear sat over the cog)
-/** FILLER (Andy oct12 "make some fillers for the new gears so it at least makes sense"): the gears renamed to everyday
- * objects (PENCIL, AA BATTERY …) show a simple vector sticker of THAT object (public/gear/fill/<name>.svg) until the
- * painted ChatGPT art replaces it (then swap FILL → ART). Same box as ART. */
-const FILL = (name) => <image href={`/gear/fill/${name}.svg`} x="6" y="6" width="88" height="88" />;
 
 export const ROLLED_GLYPHS = {
   // ---- the 27 ROLLABLE marks, kit construction ----
-  'mk-detonator': FILL('matchstick'), // oct12 filler sticker (public/gear/fill/matchstick.svg) until the painted art lands
-  'mk-cyclone': FILL('piggybank'), // oct12 filler sticker (public/gear/fill/piggybank.svg) until the painted art lands
-  'mk-scholar': FILL('pencil'), // oct12 filler sticker (public/gear/fill/pencil.svg) until the painted art lands
-  'mk-ouroboros': FILL('stickynote'), // oct12 filler sticker (public/gear/fill/stickynote.svg) until the painted art lands
-  'mk-tinder': FILL('battery'), // oct12 filler sticker (public/gear/fill/battery.svg) until the painted art lands
-  'mk-slipstream': FILL('sock'), // oct12 filler sticker (public/gear/fill/sock.svg) until the painted art lands
-  'mk-smith': FILL('coffeemug'), // oct12 filler sticker (public/gear/fill/coffeemug.svg) until the painted art lands
-  'mk-phoenix': FILL('stapler'), // oct12 filler sticker (public/gear/fill/stapler.svg) until the painted art lands
-  'mk-metronome': FILL('eggtimer'), // oct12 filler sticker (public/gear/fill/eggtimer.svg) until the painted art lands
-  'mk-pyro': FILL('cashregister'), // oct12 filler sticker (public/gear/fill/cashregister.svg) until the painted art lands
-  'mk-nova': FILL('boombox'), // oct12 filler sticker (public/gear/fill/boombox.svg) until the painted art lands
-  'mk-golem': FILL('cartridge'), // oct12 filler sticker (public/gear/fill/cartridge.svg) until the painted art lands
+  'mk-detonator': ART('matchstick'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/matchstick.svg filler)
+  'mk-cyclone': ART('piggybank'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/piggybank.svg filler)
+  'mk-scholar': ART('pencil'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/pencil.svg filler)
+  'mk-ouroboros': ART('stickynote'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/stickynote.svg filler)
+  'mk-tinder': ART('battery'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/battery.svg filler)
+  'mk-slipstream': ART('luckysock'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/sock.svg filler)
+  'mk-smith': ART('coffeemug'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/coffeemug.svg filler)
+  'mk-phoenix': ART('stapler'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/stapler.svg filler)
+  'mk-metronome': ART('eggtimer'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/eggtimer.svg filler)
+  'mk-pyro': ART('cashregister'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/cashregister.svg filler)
+  'mk-nova': ART('boombox'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/boombox.svg filler)
+  'mk-golem': ART('cartridge'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/cartridge.svg filler)
   'mk-leviathan': ART('leviathan'),
   'mk-eclipse': ART('eclipse'),
   'mk-singularity': ART('singularity'),
@@ -42,13 +38,13 @@ export const ROLLED_GLYPHS = {
   'mk-origin': ART('origin'),
   // ---- GEAR POOL v2 (Andy oct9): the 10 new gears, same kit construction (base + ONE shade plane, ink outline, ONE
   // glint upper-left, ONE asymmetric detail). Placeholder-grade: flagged for a real art pass in the PR. ----
-  'mk-hotwire': FILL('sneaker'), // oct12 filler sticker (public/gear/fill/sneaker.svg) until the painted art lands
-  'mk-grapple': FILL('paperclip'), // oct12 filler sticker (public/gear/fill/paperclip.svg) until the painted art lands
-  'mk-sparkplug': FILL('usbstick'), // oct12 filler sticker (public/gear/fill/usbstick.svg) until the painted art lands
-  'mk-brainstorm': FILL('buzzer'), // oct12 filler sticker (public/gear/fill/buzzer.svg) until the painted art lands
+  'mk-hotwire': ART('sneaker'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/sneaker.svg filler)
+  'mk-grapple': ART('paperclip'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/paperclip.svg filler)
+  'mk-sparkplug': ART('usbstick'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/usbstick.svg filler)
+  'mk-brainstorm': ART('quizbuzzer'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/buzzer.svg filler)
   'mk-flashpoint': ART('flashpoint'), // Andy oct11: painted PNG (public/gear/flashpoint.webp)
   'mk-voltage': ART('voltage'), // Andy oct11: painted PNG (public/gear/voltage.webp)
-  'mk-talisman': FILL('eightball'), // oct12 filler sticker (public/gear/fill/eightball.svg) until the painted art lands
+  'mk-talisman': ART('magic8ball'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/eightball.svg filler)
   'mk-headmaster': ART('headmaster'), // Andy oct11: painted PNG (public/gear/headmaster.webp)
   'mk-thunderclap': ART('thunderclap'), // Andy oct11: painted PNG (public/gear/thunderclap.webp)
   'mk-jackpot': ART('jackpot'), // Andy oct11: painted PNG (public/gear/jackpot.webp)
