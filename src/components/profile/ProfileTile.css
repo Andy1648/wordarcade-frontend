@@ -1,13 +1,40 @@
+/* ===== chip (default): one thin identity strip — face, name, LV · PROFILE — the icon cluster's width + right edge ===== */
+.pchip {
+  display: flex; align-items: center; gap: max(8px, calc(10 * var(--u, 1px))); width: 100%; min-height: calc(var(--hp-tr, 58px) + 8px);
+  padding: max(5px, calc(6 * var(--u, 1px))) max(10px, calc(12 * var(--u, 1px))) max(5px, calc(6 * var(--u, 1px))) max(5px, calc(6 * var(--u, 1px)));
+  background: #1a0b2e; border: 4px solid var(--pt-d); border-radius: 8px; box-shadow: 6px 6px 0 #000;
+  color: #fff; text-align: left; cursor: pointer; font: inherit; transition: transform 120ms;
+}
+.pchip:focus-visible { outline: 3px solid #FFE94A; outline-offset: 3px; }
+@media (hover: hover) { .pchip:hover { transform: translate(-2px, -2px); } }
+.pchip:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
+.pchip-face {
+  position: relative; flex: none; width: var(--hp-tr, 58px); height: var(--hp-tr, 58px); overflow: hidden;
+  background: var(--pt-c); border: 3px solid #000; border-radius: 6px;
+}
+.pchip-face img { position: absolute; left: 50%; top: -10%; width: 210%; height: auto; translate: -50% 0; }
+.pchip-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.pchip-name {
+  font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; line-height: 1.05; color: #fff;
+  -webkit-text-stroke: 4px #000; paint-order: stroke fill;
+}
+.pchip-sub { font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; letter-spacing: 0.08em; color: var(--pt-c); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .pchip { transition: none; } }
+
+/* ===== slab (?menu=slab): the left rail's twin — PROFILE strip, the card sized by the height, name, VIEW PROFILE ===== */
 .pt {
-  display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(6 * var(--u, 1px))); width: 100%; padding: 0 4px;
-  background: none; border: 0; cursor: pointer; color: inherit; font: inherit; border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; gap: max(6px, calc(8 * var(--u, 1px))); width: 100%; height: 100%;
+  padding: max(10px, calc(12 * var(--u, 1px))); box-sizing: border-box;
+  background: #1a0b2e; border: 4px solid var(--pt-d); border-radius: 8px; box-shadow: 6px 6px 0 #000;
+  cursor: pointer; color: inherit; font: inherit;
 }
 .pt:focus-visible { outline: 3px solid #FFE94A; outline-offset: 4px; }
 .pt-k {
-  font: 700 var(--fs-k14, 14px) 'Space Mono', monospace; letter-spacing: 0.14em; color: #c9b8e8;
-  padding: 2px 10px; background: #0d0618; border: 2px solid var(--pt-d); border-radius: 8px;
+  align-self: stretch; text-align: center; font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; letter-spacing: 0.14em; color: #c9b8e8;
+  padding: 2px 10px; background: #0d0618; border: 2px solid var(--pt-d); border-radius: 6px;
 }
-.pt-card { display: block; width: min(78%, 220px); transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1); }
+.pt-card { display: block; flex: 1 1 0; min-height: 0; aspect-ratio: 731 / 1045; max-width: 100%; transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1); }
+.pt-card .hc, .pt-card .hc-card { height: 100%; width: auto; }
 @media (hover: hover) { .pt:hover .pt-card { transform: translateY(-4px); } }
 .pt-name {
   width: 100%; text-align: center; font: 400 var(--fs-k24, 24px) 'Bungee', sans-serif; line-height: 1; color: #fff;
@@ -16,7 +43,7 @@
 .pt-go {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px;
   font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #000; background: var(--pt-c);
-  border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000;
+  border: 3px solid var(--pt-d); border-radius: 8px; box-shadow: 4px 4px 0 #000;
 }
 .pt:active .pt-go { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
 @media (prefers-reduced-motion: reduce) { .pt-card { transition: none; } }

@@ -888,11 +888,34 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   .homepage-stage[data-paged] .hp-main {
     display: block;
     grid-column: 3;
-    grid-row: 2 / 4;
-    align-self: start;
-    justify-self: stretch;
     position: relative;
     z-index: 1;
-    margin-top: max(10px, calc(14 * var(--u)));
   }
+  /* CHIP (default, oct17 night): the icon cluster's width + right edge, its top on the panel's top line */
+  .homepage-stage[data-paged] .hp-main.is-chip {
+    grid-row: 2;
+    align-self: start;
+    justify-self: stretch;
+    margin-top: calc(-10 * var(--u));
+  }
+  /* the four icons fit the right column (they overflowed it by ~38px and the column's contents never shared an edge —
+     the "off center" Andy saw): icons, the chip / slab and the column now share both edges */
+  .homepage-stage[data-paged] .hp-icons {
+    justify-self: stretch;
+    justify-content: space-between;
+    --hp-tr: min(max(46px, calc(58 * var(--u))), calc((var(--hp-nav-w) - 42 * var(--u)) / 4));
+  }
+  /* SLAB (?menu=slab): the left rail's twin — framed from the panel's top line to its bottom; the boost timers move
+     into the CREDITS cluster so nothing shares the column */
+  .homepage-stage[data-paged] .hp-main.is-slab {
+    grid-row: 2 / 4;
+    align-self: stretch;
+    justify-self: stretch;
+    margin: calc(-10 * var(--u)) 0 max(10px, calc(14 * var(--u)));
+    min-height: 0;
+  }
+  .homepage-stage[data-paged][data-menu='slab'] .hp-dock--grid { display: none; }
+  .homepage-stage[data-paged][data-menu='slab'] .hp-dock--extras { display: flex; justify-content: flex-end; }
+  /* the column / chip owns PROFILE here — the icon cluster keeps its four */
+  .homepage-stage[data-paged] .hp-icons .is-profile { display: none; }
 }
