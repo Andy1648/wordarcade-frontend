@@ -28,6 +28,9 @@ import { WordPayout } from './PayoutBreakdown';
 // for the first words of every round and said nothing about the multipliers the player had built.
 import MatchWinBanner, { hasHumanRival } from './MatchWinBanner';
 import WordLanding, { hasLanding } from './WordLanding';
+import { useUnlistedReveal } from '../unlisted/useUnlistedReveal.js';
+// THE UNLISTED stamp: lazy — it loads when a find fires (the hook above is the only part in this chunk)
+const UnlistedStamp = lazyWithReload(() => import('../unlisted/UnlistedStamp.jsx'), 'UnlistedStamp');
 import {
   burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE, punch,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
@@ -1969,6 +1972,8 @@ export default function GameScreen({
   // clutch flag) can never mount a word's effect late. Clutch is read the same way the result effect
   // reads it (the clock snapshot taken at OUR submit), because that effect runs after this render.
   const wbLanding = lastLanding && !gameOver ? lastLanding : null;
+  // THE UNLISTED reveal (a found gear): it takes the reaction slot for its ~3.4 s life — the landing and the hype wait.
+  const ulReveal = useUnlistedReveal();
   const wbSlot = useLatched(wbLanding ? wbLanding.key : null, () =>
     wordSlot(
       wbLanding,
@@ -3694,12 +3699,13 @@ export default function GameScreen({
                   1280x720 board has, and the hype ended up painted through the used-word strip.
                   THE LIGHT SLOT (juice/effectSlot.js): CLUTCH > LUCKY > RARE > TIER-UP > HYPE —
                   the winner plays, every loser is said as a small tag under the word. */}
-              {hypeKey > 0 && !hitlag && !gameOver && wbSlot.showHype
+              {ulReveal && <Suspense fallback={null}><UnlistedStamp rv={ulReveal} reduced={goReduce} /></Suspense>}
+              {hypeKey > 0 && !hitlag && !gameOver && wbSlot.showHype && !ulReveal
                 && <HypePopup key={hypeKey} tier={heatTier(streak.count + 1)} />}
               {wbLanding && wbSlot.main === 'lucky' && (
                 <LuckyBurst key={`lucky-${wbLanding.key}`} mult={wbSlot.luckyMult} />
               )}
-              {wbLanding && wbSlot.showLanding && (
+              {wbLanding && wbSlot.showLanding && !ulReveal && (
                 <WordLanding
                   key={wbLanding.key}
                   word={wbLanding.word}
@@ -4498,6 +4504,7 @@ function CategoryBlitzScreen({
   // The light slot for the answer that just landed (no clutch slot in Blitz: its near-miss stays
   // the ClutchCallout by the field).
   const cbLanding = lastLanding && !gameOver ? lastLanding : null;
+  const ulReveal = useUnlistedReveal(); // THE UNLISTED reveal — see the Word Bomb note
   const cbSlot = useLatched(cbLanding ? cbLanding.key : null, () => wordSlot(cbLanding, false));
   // The HITS badge yields to a rare word's landing for its 1.5s (wl-land), then comes back.
   const cbComboHostRef = useRef(null);
@@ -4979,12 +4986,13 @@ function CategoryBlitzScreen({
             {/* ONE REACTION SLOT — see the Word Bomb note. */}
             <div className="wb-react" ref={cbReactRef} aria-hidden="true">
               {/* ONE reaction per word — see the Word Bomb note (and its LIGHT SLOT). */}
-              {hypeKey > 0 && !gameOver && cbSlot.showHype
+              {ulReveal && <Suspense fallback={null}><UnlistedStamp rv={ulReveal} reduced={goReduce} /></Suspense>}
+              {hypeKey > 0 && !gameOver && cbSlot.showHype && !ulReveal
                 && <HypePopup key={hypeKey} tier={heatTier(streak.count)} />}
               {cbLanding && cbSlot.main === 'lucky' && (
                 <LuckyBurst key={`lucky-${cbLanding.key}`} mult={cbSlot.luckyMult} />
               )}
-              {cbLanding && cbSlot.showLanding && (
+              {cbLanding && cbSlot.showLanding && !ulReveal && (
                 <WordLanding
                   key={cbLanding.key}
                   word={cbLanding.word}

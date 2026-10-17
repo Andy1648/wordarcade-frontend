@@ -45,6 +45,7 @@ export const RAINBOW_STOPS = Object.freeze(['#FF4FA3', '#FF6B3D', '#FFE94A', '#2
 /** Any tier id → a RARITY key. PERMANENT reads as LEGENDARY (rarest by how you get it); unknown → COMMON. */
 export function rarityKey(tier) {
   if (tier === 'permanent') return 'legendary';
+  if (tier === 'unlisted') return 'secret'; // THE UNLISTED (found, never rolled) ranks with SECRET
   return Object.prototype.hasOwnProperty.call(RARITY, tier) ? tier : 'common';
 }
 /** 0 (COMMON) … 5 (SECRET). */

@@ -12,6 +12,7 @@ import {
   indexRewardWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
 } from './markRolls.js';
 import { rollsPerRoll } from './markPerks.js';
+import { unlistedEntry as unlistedById, UNLISTED_KEY } from '../unlisted/unlistedIds.js';
 import { isBoostActive } from './boost.js';
 // PROGRESSION v3 (SEASON2, default OFF): ROLL EPIC+ / FILL INDEX achievement counters, and the R2 AUTO ROLL unlock.
 import { SEASON2, V3 } from './season.js'; // V3.store / V3.unlocks: installed lazily (season.js)
@@ -35,6 +36,10 @@ export function wearMark(id, earned = []) {
   if (id == null) return equipMark(null, earned);
   const r = rollMarkById(id);
   if (r && !r.legacy) return equipRolled(id) ? id : wornMarkId();
+  if (unlistedById(id)) { // THE UNLISTED: an owned one is worn straight onto taw.mark (wornMarkId accepts it)
+    try { if (JSON.parse(localStorage.getItem(UNLISTED_KEY) || '{}').owned?.[id]) localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
+    return wornMarkId();
+  }
   return equipMark(id, earned);
 }
 

@@ -20,6 +20,8 @@ import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client
 import { readCounters } from '../../progress/v3/store.js';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
+import UnlistedShelf from '../../unlisted/UnlistedShelf.jsx';
+import { unlistedIndex } from '../../unlisted/unlisted.js';
 import './ProfilePopup.css';
 
 const POP = [{ transform: 'scale(.9) translateY(12px)', opacity: 0 }, { transform: 'scale(1.02)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }];
@@ -46,6 +48,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const st = myStats();
   const c = readCounters();
   const play = readPlaySec();
+  const [unl] = useState(() => unlistedIndex()); // THE UNLISTED: your finds + serials (read once)
 
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
@@ -99,6 +102,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                 <Stat glyph="chain" tone="#B04BFF" value={formatNum(c.chain)} label="BEST CHAIN" />
                 <Stat icon="levels" tone="#c9b8ff" value={`LV ${formatNum(st.level)} · R${formatNum(st.rebirths)}`} label="LEVEL" />
               </div>
+              <UnlistedShelf tiles={unl.tiles.filter((t) => t.owned)} label={unl.label} />
               {me ? <Bio text={myBio()} mine /> : null}
               {me ? <TitlePicker worn={worn} onPick={(t) => { setTitlePick(t); setWorn(t); pushShowcaseNow(); }} /> : null}
             </div>
