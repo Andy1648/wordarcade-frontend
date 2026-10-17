@@ -55,6 +55,10 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   const sweepRef = useRef(null);
   const curRef = useRef(null);
   const ghostRef = useRef(null);
+  const critRef = useRef(null); // the crit's own orange piece of the gain
+  const critArm = useRef(0); // a crit event just fired (ms stamp) — the next gain is a crit
+  const critT = useRef(0);
+  const lastGhost = useRef(frac > 0 ? Math.min(1, frac) : 0); // where the ghost stood before this gain
   const plateRef = useRef(null);
   // the one-level wrap beat: { phase: 'idle' | 'fill' | 'hold', next: { l, f }, t }
   const wrap = useRef({ phase: 'idle', next: null, t: 0 });
@@ -161,6 +165,20 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     // the GHOST jumps now (a level ahead = full); the real fill follows on the glide below
     const ghost = ghostRef.current;
     if (ghost && lvInside) ghost.style.transform = `scaleX(${tl > p.level ? 1 : tf})`;
+    const seg = critRef.current;
+    if (seg && lvInside) {
+      const from = lastGhost.current;
+      if (critArm.current && Date.now() - critArm.current < 400 && tl === p.level && tf > from) {
+        seg.style.transform = `translateX(${(from * 100).toFixed(3)}%) scaleX(${(tf - from).toFixed(4)})`;
+        seg.style.opacity = '1';
+        clearTimeout(critT.current);
+        critT.current = setTimeout(() => { seg.style.opacity = '0'; }, CRIT_TINT_MS);
+      } else if (tl > p.level) {
+        seg.style.opacity = '0'; // a new level: the old piece is gone with the old bar
+      }
+      critArm.current = 0;
+    }
+    lastGhost.current = tf;
     const w = wrap.current;
     if (lvInside && w.phase !== 'idle') {
       // mid-wrap: queue the newest target; the hold carries on to it
@@ -199,18 +217,14 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     };
   }, []);
 
+  // CRIT SEGMENT (Andy oct17: "i dont want the entire additive bar to turn orange … include both"): a crit only paints
+  // ITS OWN gain — an orange piece from where the ghost was to where it jumps — so earlier normal gains keep the pale
+  // ghost beside it. The event lands first (same keystroke handler); the gain effect below places the piece.
   useEffect(() => {
     if (!lvInside) return undefined;
-    let t = 0;
-    const onCrit = () => {
-      const root = rootRef.current;
-      if (!root) return;
-      root.setAttribute('data-crit', '');
-      clearTimeout(t);
-      t = setTimeout(() => root.removeAttribute('data-crit'), CRIT_TINT_MS);
-    };
+    const onCrit = () => { critArm.current = Date.now(); };
     window.addEventListener(CRIT_EVENT, onCrit);
-    return () => { clearTimeout(t); window.removeEventListener(CRIT_EVENT, onCrit); };
+    return () => { clearTimeout(critT.current); window.removeEventListener(CRIT_EVENT, onCrit); };
   }, [lvInside]);
 
   const lvText = (
@@ -239,6 +253,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
           <div className="kx-track" aria-hidden="true">
             {lvInside && <div ref={ghostRef} className="kx-ghost" />}
+            {lvInside && <div ref={critRef} className="kx-crit" aria-hidden="true" />}
             <div ref={fillRef} className="kx-fill">
               <div className="kx-fill-hi" />
             </div>

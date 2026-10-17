@@ -11,7 +11,6 @@ import { wordWinsBase, perWordRateNow } from '../progress/wins.js';
 import { getKeyTier } from '../progress/xp.js';
 import { mark2Id, readClaimed, readCounters } from '../progress/v3/store.js';
 import { readRecords } from '../progress/records.js';
-import { wornTitle } from './titles.js';
 
 const SENT_KEY = 'taw.s2.showcase2'; // the JSON last sent, so an unchanged showcase is never re-sent. '2' (042, oct13): every browser re-sends ONCE so a card an old audit blanked comes back
 // 046 PROFILE FLEX: a send counts as STORED only when the DB answers v >= 46 (it knows the badge / word columns). Before
@@ -32,7 +31,7 @@ export function myShowcase() {
     gears_total: c.total,
     power: num(getKeyTier()),
     ...flex(),
-    title: wornTitle(), // 050: the picked leaderboard TITLE (titles.js) — older functions just ignore the key
+    title: null, // 050's TITLE slot — titles were removed (Andy oct17); null clears any title already stored
   };
 }
 

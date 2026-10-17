@@ -373,7 +373,7 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
 // 046 PROFILE FLEX (Andy oct14 "ways profiles can be shown off (not avatars)"): the best CHAIN and a BADGE ROW (top claimed
 // achievement tiers); 051 (oct15): the player's DESCRIPTION where the signature word was. A pre-046 row has none → absent.
 for (const vp of [{ width: 1366, height: 657 }, { width: 1920, height: 1080 }, { width: 360, height: 640 }]) {
-  test(`@${vp.width}x${vp.height}: the profile card shows the description, best chain and badges — nothing clips, the card fits`, async ({ page }) => {
+  test(`@${vp.width}x${vp.height}: the profile card shows the description and badges (no best chain) — nothing clips, the card fits`, async ({ page }) => {
     const SHOW = {
       b: {
         gear1: 'mk-kraken', gear2: 'mk-hydra', base_wins: 190, wins_per_word: 5130, gears_found: 9, gears_total: 27, power: 6,
@@ -392,7 +392,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 1920, height: 1080 }, {
     await expect(pc.getByTestId('profile-bio')).toContainText('bring snacks pls');
     await expect(pc.locator('.pc-sig')).toHaveCount(0); // the signature word is gone (Andy oct15)
     await expect(pc.getByTestId('profile-bio-edit')).toHaveCount(0); // someone else's card: read only
-    await expect(pc.getByTestId('profile-chain')).toHaveText(/CHAIN 23/);
+    await expect(pc.getByTestId('profile-chain')).toHaveCount(0); // best CHAIN removed (Andy oct17 "why that specific game mode?")
     await expect(pc.locator('.pc-badge')).toHaveCount(8);
     await expect(pc.locator('.pc-badge-roman')).toHaveText(['MAX', 'III', 'II', 'IV', 'I', 'II', 'MAX', 'MAX']);
     await page.waitForTimeout(400); // the card's pop

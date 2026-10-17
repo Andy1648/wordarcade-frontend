@@ -6,7 +6,7 @@
   background: #1a0b2e; border: 5px solid var(--pf-d); border-radius: 8px; box-shadow: 10px 10px 0 #000;
 }
 .pf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.pf-title { font: 400 var(--fs-k28, 28px) 'Bungee', sans-serif; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.pf-title { font: 400 var(--fs-k32, 32px) 'Bungee', sans-serif; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pf-x, .pf-back {
   min-width: 44px; height: 44px; padding: 0 12px; cursor: pointer; font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #fff;
   background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
@@ -20,27 +20,26 @@
   width: 100%; text-align: center; font: 400 var(--fs-k30, 30px) 'Bungee', sans-serif; line-height: 1; color: var(--pf-c);
   -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
 }
-.pf-hero-tag { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; letter-spacing: .1em; color: #c9b8e8; text-align: center; }
+.pf-hero-tag { font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .1em; color: #c9b8e8; text-align: center; }
 .pf-change {
-  min-height: 44px; padding: 0 18px; margin-top: 4px; cursor: pointer;
-  font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #000; background: var(--pf-c);
+  min-height: 48px; padding: 0 20px; margin-top: 4px; cursor: pointer;
+  font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #000; background: var(--pf-c);
   border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; transition: transform 120ms;
 }
 .pf-change:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
 .pf-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .pf-id { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.pf-name { font: 400 var(--fs-k30, 30px) 'Bungee', sans-serif; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
-.pf-worn { font: 700 var(--fs-k14, 14px) 'Space Mono', monospace; letter-spacing: .12em; color: #FFC83D; }
-.pf-hint { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; color: #c9b8e8; }
+.pf-name { font: 400 var(--fs-k34, 34px) 'Bungee', sans-serif; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.pf-hint { font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; color: #c9b8e8; }
 .pf-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .pf-stat {
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center;
   padding: 8px 10px; background: #24123d; border: 3px solid var(--pf-t); border-radius: 8px; box-shadow: 4px 4px 0 #000; min-width: 0;
 }
 .pf-stat > :first-child { grid-row: 1 / span 2; }
-.pf-stat-g { width: 30px; height: 30px; }
-.pf-stat-v { font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; line-height: 1.1; color: #fff; }
-.pf-stat-k { font: 700 var(--fs-k13, 13px) 'Space Mono', monospace; letter-spacing: .06em; color: var(--pf-t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-stat-g { width: 36px; height: 36px; }
+.pf-stat-v { font: 400 var(--fs-k26, 26px) 'Bungee', sans-serif; line-height: 1.1; color: #fff; }
+.pf-stat-k { font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; letter-spacing: .06em; color: var(--pf-t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 760px) {
   .pf-body { grid-template-columns: minmax(0, 1fr); }
   .pf-left .hs { max-width: 240px; }
@@ -49,3 +48,7 @@
   .pf-stat-k { grid-column: 1 / -1; white-space: normal; }
   .pf-title { font-size: var(--fs-k22); }
 }
+/* the description slab inside the profile: bigger type than the board card (Andy: "text starts out too small") */
+.pf .pc-bio .pc-bio-k { font-size: var(--fs-k16); }
+.pf .pc-bio .pc-bio-t { font-size: var(--fs-k20); }
+.pf .pc-bio .pc-bio-t.is-empty { font-size: var(--fs-k18); }
