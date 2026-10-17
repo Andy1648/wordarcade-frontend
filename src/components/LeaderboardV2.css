@@ -178,16 +178,6 @@
 .lb2-col--2 { left: calc(20px * var(--pk)); width: calc(210px * var(--pk)); }
 .lb2-col--1 { left: calc(236px * var(--pk)); width: calc(214px * var(--pk)); }
 .lb2-col--3 { left: calc(456px * var(--pk)); width: calc(210px * var(--pk)); }
-.lb2-crown {
-  width: calc(64px * var(--pk));
-  height: calc(56px * var(--pk));
-  margin-bottom: calc(-6px * var(--pk)); /* the art is taller than the old 50px crown: it sinks onto the plate, the layout keeps its height */
-  object-fit: contain;
-  filter: drop-shadow(3px 3px 0 #000);
-  overflow: visible;
-  transform-origin: 50% 90%;
-  transform: rotate(-7deg);
-}
 .lb2-who {
   display: flex;
   flex-direction: column;
@@ -836,7 +826,7 @@
 /* ===== THE PODIUM AS LAYERS (art run oct16 — Andy: the old podium "DEFINITELY does not work"; names go WITH the
    characters on a ribbon, NOT on the blocks). Every visual is a painted asset in public/stage/ (+ the cast HERO in
    public/cast/); CSS only places and moves them. Back → front inside a column: #1's sunburst → the medal emblem →
-   the cast member → #1's crown → the name ribbon → the stats line → the painted block (rank numeral on its laurel).
+   the cast member → the name ribbon → the stats line → the painted block (rank numeral on its laurel).
    All sizes are stage px × --pk (1 on the 1366 stage, 0.46 on a phone). ===== */
 .lb2-col { justify-content: flex-end; }
 .lb2-who { width: 100%; }
@@ -868,13 +858,6 @@
 .lb2-col--3 .lb2-buddy-wrap { transform: scaleX(-1); }
 .lb2-col.is-open .lb2-buddy { opacity: .16; filter: none; }
 .lb2-col.is-open .lb2-emblem { opacity: .35; }
-.lb2-stand .lb2-crown {
-  position: absolute; z-index: 3; left: 50%; top: calc(-30px * var(--pk));
-  width: calc(78px * var(--pk)); height: calc(60px * var(--pk));
-  margin: 0 0 0 calc(-30px * var(--pk));
-  transform-origin: 50% 100%; transform: rotate(-7deg);
-  filter: none;
-}
 /* the NAME RIBBON — the painted banner of the player's cast colour, the name riding its flat centre band */
 .lb2-banner {
   position: relative; z-index: 3; display: block;
@@ -989,6 +972,3 @@
 .lb2--narrow .lb2-who > .lb2-pod-name .lb2-you { display: none; }
 .lb2--narrow .lb2-stand { margin-bottom: 2px; } /* the old ribbon tucked under the feet; the plain name must not */
 .lb2--narrow .lb2-col--1 .lb2-stand { margin-top: 14px; }
-/* #1's crown SITS on the head (it floated ~30px above it once the emblem behind was gone) */
-.lb2-stand .lb2-crown { top: calc(4px * var(--pk)); }
-.lb2--narrow .lb2-stand .lb2-crown { top: 0; width: 38px; height: 30px; margin-left: -15px; }

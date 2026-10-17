@@ -41,7 +41,7 @@ import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
-import { CAST, castFor, CAST_BEATS, castBeatFrames, castCrownFrames } from '../cast/cast.js';
+import { CAST, castFor, CAST_BEATS, castBeatFrames } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -93,9 +93,6 @@ async function loadWeek() {
 // characters on a ribbon, not on the blocks). Back to front: #1's sunburst → the medal EMBLEM → the player's CAST
 // member (HERO pose) → their name RIBBON → the painted BLOCK (the rank numeral sits on its laurel) → fx. All painted
 // assets in public/stage/ (Gemini / ChatGPT, cut by scripts/split-sheet.py + cutout-art.py); CSS only moves them.
-function Crown({ crownRef }) {
-  return <img ref={crownRef} className="lb2-crown" src="/stage/crown.webp" width="74" height="70" alt="" aria-hidden="true" draggable="false" />;
-}
 
 // WEEKLY TOP 10 (Andy oct12, migration 034): THIS WEEK's top-10 places show the gems the place pays when the week ends
 function Prize({ rank, pod = false }) {
@@ -180,7 +177,7 @@ const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)'
 // Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
 const IDLE_REST_MS = 260; // the pause between one idle beat and the next
 // PER-CHARACTER IDLE: each cast member's squash-and-stretch breath (cast.js CAST_BEATS — shared with the menu showcase);
-// #1's crown rides the stretch (castCrownFrames).
+// (oct17: #1's crown removed — Andy: it "doesn't match well at all" with the painted cast.)
 const CONFETTI_N = 18;
 const CONFETTI_ART = 16; // public/stage/fx/confetti-0 … 15.webp (painted pieces, one sheet)
 // a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
@@ -203,13 +200,6 @@ const DROP = [
   { transform: 'translateY(0) scale(1.2, .78)', opacity: 1, offset: 0.68 },
   { transform: 'translateY(-4%) scale(.95, 1.06)', opacity: 1, offset: 0.84 },
   { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
-];
-const CROWN_DROP = [
-  { transform: 'translateY(-50%) rotate(-40deg)', opacity: 0 },
-  { transform: 'translateY(-42%) rotate(-34deg)', opacity: 1, offset: 0.1 },
-  { transform: 'translateY(0) rotate(-7deg)', opacity: 1, offset: 0.62, easing: 'ease-out' },
-  { transform: 'translateY(-12%) rotate(-12deg)', opacity: 1, offset: 0.82 },
-  { transform: 'translateY(0) rotate(-7deg)', opacity: 1 },
 ];
 function confettiFrames(c, k) {
   return [
@@ -319,7 +309,6 @@ const nearestBand = (rank) => (rank > 50 ? 50 : rank > 25 ? 25 : 10);
 export default function LeaderboardV2({ onBack }) {
   useMomentHold(true); // no queued moment starts under the board
   const rootRef = useRef(null);
-  const crownRef = useRef(null);
   const scrollRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -438,7 +427,6 @@ export default function LeaderboardV2({ onBack }) {
       kitPlay(q('.lb2-place'), POPN, { ...bf, duration: 340, delay: land - 40, easing: 'cubic-bezier(.2,1.4,.4,1)' });
       kitPlay(q('.lb2-buddy'), DROP, { ...bf, duration: 620, delay: land + 160, easing: 'ease-in' });
       kitPlay(q('.lb2-pod-name'), POPN, { ...bf, duration: 300, delay: land + 640, easing: 'cubic-bezier(.2,1.4,.4,1)' });
-      if (place === 1) kitPlay(crownRef.current, CROWN_DROP, { ...bf, duration: 520, delay: land + 860, easing: 'ease-in' });
       const k = place === 1 ? 1.15 : 0.9;
       const cAt = land + (place === 1 ? 880 : 760);
       col.querySelectorAll('.lb2-cf').forEach((el, i) => kitPlay(el, confettiFrames(CONFETTI[i], k), { ...bf, duration: 860 + (i % 4) * 60, delay: cAt + (i % 5) * 20, easing: 'cubic-bezier(.15,.7,.4,1)' }));
@@ -496,7 +484,6 @@ export default function LeaderboardV2({ onBack }) {
         const beat = (col && CAST_BEATS[col.dataset.cast]) || CAST_BEATS.hype;
         if (col && col.dataset.id && document.visibilityState !== 'hidden') {
           kitPlay(col.querySelector('.lb2-buddy'), castBeatFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
-          if (place === 1 && crownRef.current) kitPlay(crownRef.current, castCrownFrames(beat), { duration: beat.ms, easing: 'ease-in-out' });
         }
         timers[k] = setTimeout(loop, beat.ms + IDLE_REST_MS + k * 90);
       };
@@ -567,12 +554,11 @@ export default function LeaderboardV2({ onBack }) {
                 {p ? <PodiumFx party={place === 1 || mine} /> : null}
                 <div className="lb2-who">
                   {/* SIMPLE (Andy oct16: the emblem + ribbon read as poorly cut AI slop, "quality but with simplicity"): the
-                      cast member alone (#1 crowned), the name in plain type under it, then the plate + numbers */}
+                      cast member alone (no crown — oct17), the name in plain type under it, then the plate + numbers */}
                   <span className="lb2-stand" aria-hidden="true">
                     <span className="lb2-buddy-wrap">
                       <CastArt className="lb2-buddy" id={who.id} live={!!p} />
                     </span>
-                    {place === 1 && <Crown crownRef={crownRef} />}
                   </span>
                   <span className="lb2-pod-name">
                     {mine && <span className="lb2-you">YOU</span>}

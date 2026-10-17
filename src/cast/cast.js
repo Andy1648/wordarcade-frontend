@@ -59,8 +59,6 @@ export const CAST_BEATS = {
   hex: { ms: 1700, k: [[0, 1, 1], [0.5, 0.98, 1.04], [1, 1, 1]] }, // slow, smug breath
 };
 export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
-/** A crown riding the head follows the stretch (its y in crown-heights ≈ the head's travel). */
-export const castCrownFrames = (b) => b.k.map(([offset, , sy]) => ({ offset, transform: `translateY(${((1 - sy) * 350).toFixed(1)}%) rotate(-7deg)` }));
 /** LAYERED PROPS (oct16 pilot — GLITCH's gum; handoff "props as separate pieces"): a pose can be painted PROP-LESS
  *  (`base`) with each prop its own sprite, placed at a per-pose anchor so it can animate on its own (the gum inflates
  *  and pops) without moving the body. Boxes are % of the 512 pose square: x/y/w = the sprite's top-left + width; `o`
