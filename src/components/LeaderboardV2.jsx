@@ -23,6 +23,8 @@ import {
   boardCaps,
   fetchBoard,
   fetchView,
+  fetchBoardCount,
+  topPercent,
   getMyProfile,
   submitStats,
   setLastRank,
@@ -328,10 +330,10 @@ export default function LeaderboardV2({ onBack }) {
   const loadAll = useCallback(async () => {
     try {
       await submitStats();
-      const b = await fetchBoard();
+      const [b, total] = await Promise.all([fetchBoard(), fetchBoardCount()]);
       const moves = boardMoves([...b.rows, ...(b.me ? [b.me] : [])], readSeen().all);
       writeSeen('all', boardSnapshot(b.rows, b.me));
-      setAll({ ...b, loaded: true, error: false, moves });
+      setAll({ ...b, total, loaded: true, error: false, moves });
       // reading the board is reading the news (as the live board): clear the badge, keep this rank as the baseline
       const mine = getMyProfile();
       const meNow = mine && (b.rows.find((r) => r.id === mine.id) || b.me);
@@ -614,6 +616,8 @@ export default function LeaderboardV2({ onBack }) {
                     {/* YOUR distance to the NEAREST band rides beside your name when a rival owns the line below */}
                     {mine && rival && r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     {wk ? <Prize rank={r.rank} /> : null}
+                    {/* TOP n% (Andy oct17): where YOU sit among every player on the all-time board, beside your name */}
+                    {mine && !wk && topPercent(r.rank, data.total) ? <span className="lb2-pct" data-testid="lb2-pct">TOP {topPercent(r.rank, data.total)}%</span> : null}
                   </span>
                   {mine && (rival || r.rank > 10) ? (
                     <span className={`lb2-chase${rival ? ' has-rival' : ''}`}>

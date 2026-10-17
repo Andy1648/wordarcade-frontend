@@ -124,7 +124,7 @@
    stroke, the house hard offset shadow. */
 .menu-xp-pop.is-crit .menu-xp-pop-letter {
   font-size: var(--fs-h1);
-  color: #ffe94a;
+  color: #FF6B3D; /* Andy oct17: the crit KEY wears CRIT ORANGE (the bar's crit gain matches), not just a bigger yellow */
   -webkit-text-stroke: 5px #000;
   text-shadow: 5px 5px 0 #000;
 }
