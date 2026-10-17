@@ -67,5 +67,5 @@
   margin: 16px -18px -18px; padding: 12px 18px 16px; background: #1a0b2e; border-top: 4px solid #000;
 }
 .mpp-buy-t { font: 400 var(--fs-k22, 22px) 'Bungee', sans-serif; color: #FFC83D; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
-@media (max-width: 760px) { .mpp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mpp-title { font-size: var(--fs-k20, 20px); } }
+@media (max-width: 760px) { .mpp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mpp-title { font-size: var(--fs-k20); } }
 @media (prefers-reduced-motion: reduce) { .mpp-card { animation: none; } .mp-change { transition: none; } }

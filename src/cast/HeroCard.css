@@ -26,7 +26,7 @@
   font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; line-height: 1; color: #fff; white-space: nowrap;
   -webkit-text-stroke: 4px #000; paint-order: stroke fill;
 }
-.hc.is-elite .hc-name { left: 19%; width: 62%; top: 79.3%; height: 9.7%; font-size: var(--fs-k14, 14px); -webkit-text-stroke-width: 3px; }
+.hc.is-elite .hc-name { left: 19%; width: 62%; top: 79.3%; height: 9.7%; font-size: var(--fs-k14); -webkit-text-stroke-width: 3px; }
 .hc.is-on { transform: translateY(-6px); }
 .hc.is-sel .hc-card, .hc.is-on .hc-card { outline: 3px solid #FFE94A; outline-offset: 3px; border-radius: 10px; }
 @media (hover: hover) { .hc:not(.is-on):hover { transform: translateY(-4px); } }
