@@ -14,7 +14,7 @@ const cx = (...a) => a.filter(Boolean).join(' ');
 /**
  * 02 ICON tile. `tag` = rank sticker text (#4); `dot` = a count (or true) for a real to-do.
  */
-export function KitIconButton({ icon, tone = 'yellow', rot = 0, tag, tagTone, dot, ariaLabel, onClick, className, ...rest }) {
+export function KitIconButton({ icon, art, tone = 'yellow', rot = 0, tag, tagTone, dot, ariaLabel, onClick, className, ...rest }) {
   const dotRef = useRef(null);
   const tagRef = useRef(null);
   const hasDot = dot != null && dot !== false && dot !== 0;
@@ -44,7 +44,7 @@ export function KitIconButton({ icon, tone = 'yellow', rot = 0, tag, tagTone, do
       <span className="kb-lip" aria-hidden="true" />
       <span className="kb-iface">
         <span className="kb-ibar" aria-hidden="true" />
-        <KitIcon name={icon} size={44} shadow={2} extras={false} />
+        {art ? <span className="kb-art" aria-hidden="true"><img src={art} alt="" draggable="false" /></span> : <KitIcon name={icon} size={44} shadow={2} extras={false} />}
       </span>
       {tag != null && (
         <span ref={tagRef} className={cx('kb-itag', `kb-tone-${tagTone || 'yellow'}`)}>

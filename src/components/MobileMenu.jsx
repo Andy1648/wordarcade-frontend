@@ -154,6 +154,7 @@ export default function MobileMenu({
   ach,
   achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy (lazy S2Trophy) in the tile's place
   news = null, // { onClick } — the UPDATE LOG tile (re-opens the patch notes)
+  profile = null, // { onClick, art } — PROFILE (oct17): your hero's face, opens the profile popup
   railItems,
   onHookPlay = null,
   hookPlayLabel = null,
@@ -180,7 +181,7 @@ export default function MobileMenu({
           WORD
         </h1>
         <div className="hp-m-topr">
-          <MenuIcons board={board} ach={ach} achSlot={achSlot} news={news} settingsSlot={<AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />} navigating={navigating} />
+          <MenuIcons board={board} ach={ach} achSlot={achSlot} news={news} profile={profile} settingsSlot={<AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />} navigating={navigating} />
         </div>
       </div>
 

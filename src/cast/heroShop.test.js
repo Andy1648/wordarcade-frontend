@@ -26,7 +26,7 @@ test('five ELITEs, one per member, same colour + beat, painted HERO', () => {
 
 test('locked: not owned, cannot be your main', () => withStorage({ 'taw.main': 'hex-elite' }, () => {
   assert.equal(ownsHero('hex-elite'), false);
-  assert.equal(ownsHero('hex'), true);
+  assert.equal(ownsHero('riot'), true);
   assert.equal(readMain(), 'riot');
 }));
 
@@ -44,4 +44,24 @@ test('buy: gems paid once, owned, equipped; buying again is free', () => withSto
   assert.equal(castFor('me', true).name, 'ROCKSTAR RIOT');
   assert.deepEqual(buyHero('riot-elite'), { ok: true });
   assert.equal(G.getGems(), 10);
+}));
+
+test('intermediate crew: HEX + GLITCH cost gems, RIOT / HYPE / BRAWL stay free', () => withStorage({ 'taw.s2.heroes.gf': '1' }, () => {
+  assert.equal(ownsHero('riot') && ownsHero('hype') && ownsHero('brawl'), true);
+  assert.equal(ownsHero('hex'), false);
+  assert.equal(ownsHero('glitch'), false);
+}));
+
+test('grandfathered: already playing HEX when it became priced → it is yours (once)', () => withStorage({ 'taw.main': 'hex' }, (map) => {
+  assert.equal(readMain(), 'hex');
+  assert.equal(ownsHero('hex'), true);
+  assert.equal(map.get('taw.s2.heroes.gf'), '1');
+  map.set('taw.main', 'glitch'); // a later hand-edit gets nothing
+  assert.equal(readMain(), 'riot');
+}));
+
+test('buying a priced crew member: 750 gems, owned, equipped', () => withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(800) }, () => {
+  assert.deepEqual(buyHero('glitch'), { ok: true });
+  assert.equal(G.getGems(), 50);
+  assert.equal(readMain(), 'glitch');
 }));

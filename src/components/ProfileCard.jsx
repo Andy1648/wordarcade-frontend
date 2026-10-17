@@ -278,3 +278,6 @@ export default function ProfileCard({ row, mine = false, onClose }) {
     </div>
   );
 }
+
+// the PROFILE popup (oct17) reuses your own description editor + title picker — the same ones the board card shows
+export { Bio, TitlePicker };

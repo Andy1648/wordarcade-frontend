@@ -33,9 +33,22 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, profile = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
+      {/* PROFILE (oct17): your hero's face — joins this cluster (no orphan fixed UI); the paged desktop has the column tile */}
+      {profile && (
+        <KitIconButton
+          art={profile.art}
+          tone="cyan"
+          className="hp-ico is-profile"
+          data-nav="profile"
+          disabled={navigating}
+          onClick={profile.onClick}
+          ariaLabel="Open your profile"
+          title="Profile"
+        />
+      )}
       {board && (
         <KitIconButton
           icon="leaderboard"

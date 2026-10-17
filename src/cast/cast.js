@@ -19,17 +19,26 @@ export const ELITE = [
   { id: 'brawl-elite', base: 'brawl', name: 'CHAMP BRAWL', tag: 'UNDISPUTED. UNBOTHERED.' },
   { id: 'hex-elite', base: 'hex', name: 'ARCHMAGE HEX', tag: 'KNOWS EVERYTHING NOW' },
 ].map((e) => ({ ...CAST.find((c) => c.id === e.base), ...e, elite: true, price: ELITE_PRICE }));
+// INTERMEDIATE (Andy oct17: "picking 1 or 2 of the 5 to cost gems as well"): two of the crew cost gems — HEX (the
+// mystic) and GLITCH (the layered-props showcase); RIOT / HYPE / BRAWL stay free. Anyone already playing one keeps it
+// (grandfathered once, readMain).
+export const HERO_PRICE = { hex: 750, glitch: 750 };
+for (const c of CAST) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
 export const ALL_HEROES = [...CAST, ...ELITE];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 // owned ELITE ids — a season-2 progress key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
 export const HEROES_KEY = 'taw.s2.heroes';
-export function ownedElite() {
+/** The bought heroes (ELITEs + priced crew), validated. */
+export function ownedHeroes() {
   try {
     const v = JSON.parse(localStorage.getItem(HEROES_KEY) || '[]');
-    return Array.isArray(v) ? v.filter((id) => ELITE.some((e) => e.id === id)) : [];
+    return Array.isArray(v) ? v.filter((id) => ALL_HEROES.some((h) => h.id === id && h.price)) : [];
   } catch { return []; }
 }
-export const ownsHero = (id) => CAST.some((c) => c.id === id) || ownedElite().includes(id);
+export const ownsHero = (id) => {
+  const h = ALL_HEROES.find((x) => x.id === id);
+  return !!h && (!h.price || ownedHeroes().includes(id));
+};
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
 const PAINTED = new Set([
   'riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 'hex-hero',
@@ -45,8 +54,18 @@ export function castSrc(id, pose = 'hero') {
   return PAINTED.has(`${c.id}-hero`) ? `/cast/${c.id}-hero.webp` : `/wb/player-${c.seat}.webp`;
 }
 const KEY = 'taw.main';
+const GRANDFATHER_KEY = 'taw.s2.heroes.gf';
 export function readMain() {
-  try { const v = localStorage.getItem(KEY); return v && heroById(v) && ownsHero(v) ? v : 'riot'; } catch { return 'riot'; }
+  try {
+    const v = localStorage.getItem(KEY);
+    if (!v || !heroById(v)) return 'riot';
+    if (HERO_PRICE[v] && !ownsHero(v) && !localStorage.getItem(GRANDFATHER_KEY)) {
+      // already playing a crew member that became priced (oct17) → it's yours; checked once per save
+      localStorage.setItem(HEROES_KEY, JSON.stringify([...ownedHeroes(), v]));
+    }
+    if (!localStorage.getItem(GRANDFATHER_KEY)) localStorage.setItem(GRANDFATHER_KEY, '1');
+    return ownsHero(v) ? v : 'riot';
+  } catch { return 'riot'; }
 }
 export function writeMain(id) {
   try { localStorage.setItem(KEY, id); } catch { /* blocked storage */ }
@@ -96,3 +115,19 @@ export const CAST_LAYERS = {
   },
 };
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
+/** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
+ *  move — RIOT head-bangs, GLITCH stays bored then skips a frame, HYPE double-hops, BRAWL bobs and weaves, HEX floats.
+ *  Still squash-and-stretch from the feet plus small TRANSLATIONS (never a rotation). The podium keeps the quiet
+ *  CAST_BEATS breath at half strength; cards stay still (their props / shine carry the life). Keys: [offset, scaleX,
+ *  scaleY, x%, y%]. An ELITE plays its member's move. */
+export const CAST_IDLE = {
+  riot: { ms: 900, rest: 900, k: [[0, 1, 1, 0, 0], [0.16, 1.08, 0.9, 0, 0], [0.34, 0.95, 1.07, 0, -4], [0.5, 1.07, 0.92, 0, 0], [0.68, 0.97, 1.04, 0, -2], [0.84, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
+  glitch: { ms: 1700, rest: 2200, k: [[0, 1, 1, 0, 0], [0.55, 1.02, 0.98, 0, 0], [0.6, 1.02, 0.98, -3, 0], [0.63, 1.02, 0.98, 2.5, 0], [0.66, 1, 1, -1, 0], [0.69, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
+  hype: { ms: 1150, rest: 700, k: [[0, 1, 1, 0, 0], [0.12, 1.1, 0.88, 0, 0], [0.27, 0.92, 1.1, 0, -9], [0.41, 1.09, 0.89, 0, 0], [0.55, 0.94, 1.07, 0, -6], [0.69, 1.06, 0.94, 0, 0], [0.84, 0.99, 1.02, 0, 0], [1, 1, 1, 0, 0]] },
+  brawl: { ms: 1100, rest: 500, k: [[0, 1, 1, 0, 0], [0.22, 1.04, 0.95, -3, 1], [0.45, 1, 1, 0, 0], [0.68, 1.04, 0.95, 3, 1], [0.9, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
+  hex: { ms: 2400, rest: 600, k: [[0, 1, 1, 0, 0], [0.4, 0.98, 1.03, 0, -5], [0.7, 0.99, 1.02, 0, -4], [1, 1, 1, 0, 0]] },
+};
+for (const e of ELITE) CAST_IDLE[e.id] = CAST_IDLE[e.base];
+export const castIdleFrames = (b) => b.k.map(([offset, sx, sy, x, y]) => ({ offset, transform: `translate(${x}%, ${y}%) scale(${sx}, ${sy})` }));
+/** The podium's quieter breath: a CAST_BEATS beat at `amp` strength (1 = full). */
+export const castBreathFrames = (b, amp = 0.5) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${(1 + (sx - 1) * amp).toFixed(4)}, ${(1 + (sy - 1) * amp).toFixed(4)})` }));

@@ -3,6 +3,7 @@
 // flushed to storage every 30 s, on hide and on unmount: no per-frame work, one tiny write at most every 30 s.
 // Stored as whole seconds at taw.s2.playsec (a season-2 progress key, so the save backup / cloud save carry it).
 import { useEffect } from 'react';
+import { formatNum } from '../format';
 
 export const PLAY_KEY = 'taw.s2.playsec';
 const FLUSH_MS = 30_000;
@@ -21,7 +22,7 @@ export function formatPlayTime(sec) {
   const s = Math.max(0, Math.floor(sec));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
-  if (h > 0) return `${h.toLocaleString('en-US')}h ${m}m`;
+  if (h > 0) return `${formatNum(h)}h ${m}m`;
   if (m > 0) return `${m}m`;
   return `${s}s`;
 }
