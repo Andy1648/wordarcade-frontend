@@ -6,13 +6,7 @@
 // so the five word-secrets (and their Stats-board 5/5) stay exactly as they were.
 //
 // Pure: feed it keys, ask it at the boundary. No storage — the gear's own store (unlisted.js) is what makes it once.
-
-// Every word here has three or more separate double-letter pairs.
-export const TRIPLE_DOUBLE_WORDS = new Set([
-  'bookkeeper', 'bookkeepers', 'bookkeeping', 'committee', 'committees', 'addressee', 'addressees',
-  'successfully', 'unsuccessfully', 'sleeplessness', 'needlessness', 'heedlessness', 'cheerlessness',
-  'possessiveness', 'tennessee', 'mississippi',
-].filter((w) => doublePairs(w) >= 3));
+// EAGER (the game's key listener): only the tracker + the pair count. The real-word list is tripleDouble.js (lazy).
 
 /** How many separate double-letter pairs a word has ("bookkeeper" → 3; "aaa" → 1). */
 export function doublePairs(word) {
@@ -23,11 +17,6 @@ export function doublePairs(word) {
   }
   return n;
 }
-export function isTripleDouble(word) {
-  const w = String(word || '').toLowerCase();
-  return TRIPLE_DOUBLE_WORDS.has(w) && doublePairs(w) >= 3;
-}
-
 const MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'AltGraph', 'Fn', 'OS', 'Dead', 'Unidentified']);
 
 /**

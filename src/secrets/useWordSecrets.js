@@ -21,7 +21,6 @@ import { grantWins } from '../progress/wins';
 import { rebirthMult, getRebirths, loadProgress } from '../progress/xp';
 import { winLevelMult } from '../progress/wins';
 import { secretFound as evSecretFound } from '../lib/events.js';
-import { gearIdForSecret, TRIPLE_DOUBLE_ID } from '../unlisted/unlistedIds.js';
 import { createWordTracker, doublePairs } from '../unlisted/seasonSecret.js';
 
 const IDLE_MS = 700; // typing pause that closes the current word (palindrome boundary)
@@ -61,8 +60,12 @@ export function secretPayout(base, { rebirths = getRebirths(), level = loadProgr
  * THE UNLISTED GRANT + REVEAL — lazy (unlisted/reveal.js loads on the find, never on the menu's first paint). It grants
  * the gear once, fires the stamp and claims the serial. Resolves the grant or null.
  */
+const TRIPLE_DOUBLE_ID = 'mk-ul-tripledouble'; // unlisted/unlistedIds.js (a literal here keeps that module off this path)
 export function revealUnlisted(gearId, word) {
   return import('../unlisted/reveal.js').then((m) => m.revealUnlisted(gearId, word)).catch(() => null);
+}
+function revealForSecret(secretId, word) {
+  return import('../unlisted/reveal.js').then((m) => m.revealForSecret(secretId, word)).catch(() => null);
 }
 // the SEASON gear: a cheap pre-check here (3+ double pairs); reveal.js confirms it is a real word
 const maybeTripleDouble = (w) => !!w && w.length >= 8 && doublePairs(w) >= 3;
@@ -119,8 +122,7 @@ export function useWordSecrets({ active = true } = {}) {
     try { evSecretFound(found.id); } catch { /* analytics only */ }
     // THE UNLISTED (oct17): the find is now also a GEAR you keep. The wins above still pay; the gear is the part that
     // lasts. The stamp lands on the word you typed (UnlistedStamp in the game's reaction slot, via the reveal bus).
-    const gearId = gearIdForSecret(found.id);
-    if (gearId) revealUnlisted(gearId, raw.detail || wordRef.current.last());
+    revealForSecret(found.id, raw.detail || wordRef.current.last());
     setHit(found);
     return found;
   }, []);

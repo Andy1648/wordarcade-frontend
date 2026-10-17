@@ -8,7 +8,8 @@ import {
   pendingSerialIds, grantForPastSecrets, bootUnlisted, gearForSecret, wearUnlisted, ownsUnlisted, normalizeUnlisted,
   SECRETS_FOUND_KEY,
 } from './unlisted.js';
-import { isTripleDouble, doublePairs, createWordTracker, TRIPLE_DOUBLE_WORDS } from './seasonSecret.js';
+import { doublePairs, createWordTracker } from './seasonSecret.js';
+import { isTripleDouble, TRIPLE_DOUBLE_WORDS } from './tripleDouble.js';
 import { emitReveal, subscribeReveal, patchRevealSerial, peekReveal, clearReveal } from './revealBus.js';
 import { claimSerial } from './serial.js';
 import { SECRETS } from '../secrets/secrets.js';

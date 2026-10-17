@@ -9,8 +9,36 @@
 // reveal fires (the hook that listens, useUnlistedReveal.js, is the only part in the game chunk).
 import { useEffect } from 'react';
 import { unlistedArt, formatSerial } from './unlisted.js';
-import { unlistedSting } from '../juice/audio.js';
+import { juiceSynth } from '../juice/audio.js';
+import { JUICE } from '../juice/config';
 import './UnlistedStamp.css';
+
+/**
+ * THE UNLISTED STING: a sound no tier has — the rubber-stamp THUD (a low square drop + a short dark noise slap), then a
+ * minor-sixth pair as two slightly DETUNED square voices (off-register, like the print). Never a rising arpeggio (that
+ * is the rarity ladder's shape). Web Audio synthesis only; silent when muted.
+ */
+export function unlistedSting() {
+  const { getCtx, tone, noise, soundAllowed } = juiceSynth;
+  if (!soundAllowed()) return;
+  const c = getCtx();
+  if (!c) return;
+  try {
+    const now = c.currentTime;
+    tone(c, { freq: 110, type: 'square', start: now, dur: 0.12, peak: JUICE.MIX.accept });
+    tone(c, { freq: 55, type: 'triangle', start: now, dur: 0.22, peak: JUICE.MIX.accept });
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 900;
+    noise(c, { start: now, dur: 0.06, peak: JUICE.MIX.accept * 0.8, filter: lp });
+    for (const [f, at, dur] of [[659.3, 0.16, 0.22], [1046.5, 0.3, 0.5]]) {
+      tone(c, { freq: f, type: 'square', start: now + at, dur, peak: JUICE.MIX.sparkle * 0.7 });
+      tone(c, { freq: f * 1.012, type: 'square', start: now + at + 0.012, dur, peak: JUICE.MIX.sparkle * 0.5 });
+    }
+  } catch {
+    /* never let audio throw */
+  }
+}
 
 /** @param {{ rv: object|null, reduced?: boolean }} p — `rv` from useUnlistedReveal (the caller owns the one subscription). */
 export default function UnlistedStamp({ rv, reduced = false }) {
