@@ -12,6 +12,15 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct17 UNHINGED round 2 (Andy: noun answers only, darker, fewer misses), each example verified ON its list
+  "Things in a horror movie basement": "Chains",
+  "Things that are probably cursed": "Ouija board",
+  "Things you'd find in Area 51": "Flying saucer",
+  "Things you don't want to find in your bed": "Spider",
+  "Things you shouldn't bring to a funeral": "Balloons",
+  "Worst things to find in your food": "Hair",
+  "Worst things to get stuck in an elevator with": "Skunk",
+  "Worst things to hit with your car": "Mailbox",
   // oct16 UNHINGED pack (Andy "go for funnier ... dark humor"), each example verified ON its list
   "Excuses for not doing your homework": "Dog ate it",
   "Lies adults tell kids": "Tooth fairy",
