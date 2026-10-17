@@ -130,6 +130,17 @@ const ACTS = {
     [2, 650, [{ transform: 'translate(0, 0) scale(.5)', opacity: 0 }, { transform: 'translate(0, -60%) scale(1)', opacity: 1, offset: 0.3 }, { transform: 'translate(12%, -260%) scale(.9)', opacity: 0 }], { duration: 1600, easing: 'cubic-bezier(.2,.7,.4,1)' }],
     [3, 950, [{ transform: 'translate(0, 0) scale(.5)', opacity: 0 }, { transform: 'translate(-10%, -50%) scale(1)', opacity: 1, offset: 0.3 }, { transform: 'translate(-30%, -230%) scale(.9)', opacity: 0 }], { duration: 1600, easing: 'cubic-bezier(.2,.7,.4,1)' }],
   ],
+  // DUD: a slow snore — each Z swells in near the cap and drifts up and right, small to big, then fades
+  snore: [
+    [0, 0, [{ transform: 'translate(-30%, 40%) scale(.3)', opacity: 0 }, { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(20%, -40%) scale(1)', opacity: 0 }], { duration: 1400, easing: 'ease-out' }],
+    [1, 500, [{ transform: 'translate(-30%, 40%) scale(.3)', opacity: 0 }, { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(20%, -40%) scale(1)', opacity: 0 }], { duration: 1400, easing: 'ease-out' }],
+    [2, 1000, [{ transform: 'translate(-30%, 40%) scale(.3)', opacity: 0 }, { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(20%, -40%) scale(1)', opacity: 0 }], { duration: 1500, easing: 'ease-out' }],
+  ],
+  // LEXI: the idea lands — the bulb pops up off the fingertip and wobbles lit; a dictionary page flutters out and away
+  eureka: [
+    [0, 0, [{ transform: 'translateY(30%) scale(0)', opacity: 0 }, { transform: 'translateY(0) scale(1.15)', opacity: 1, offset: 0.2 }, { transform: 'scale(.95)', opacity: 1, offset: 0.32 }, { transform: 'scale(1.04)', opacity: 1, offset: 0.44 }, { transform: 'scale(1)', opacity: 1, offset: 0.8 }, { transform: 'translateY(-15%) scale(.9)', opacity: 0 }], { duration: 1500, easing: 'ease-out' }],
+    [1, 300, [{ transform: 'translate(40%, 30%) rotate(10deg) scale(.5)', opacity: 0 }, { transform: 'translate(0, 0) rotate(-8deg) scale(1)', opacity: 1, offset: 0.25 }, { transform: 'translate(-60%, -90%) rotate(14deg) scale(1)', opacity: 1, offset: 0.6 }, { transform: 'translate(-110%, -200%) rotate(-10deg) scale(.9)', opacity: 0 }], { duration: 1600, easing: 'cubic-bezier(.3,.6,.5,1)' }],
+  ],
   // GLITCH.EXE: it corrupts — bands of its own painted art tear sideways for a few frames (steps, not a smooth slide)
   glitch: [
     [0, 0, [{ transform: 'translateX(-6%)', opacity: 1 }, { transform: 'translateX(5%)', opacity: 1, offset: 0.35 }, { transform: 'translateX(-2%)', opacity: 1, offset: 0.7 }, { transform: 'translateX(0)', opacity: 0 }], { duration: 300, easing: 'steps(4)' }],

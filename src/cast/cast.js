@@ -9,6 +9,13 @@ export const CAST = [
   { id: 'brawl', name: 'BRAWL', tag: 'NEVER STAYS DOWN', color: '#FF6B3D', dark: '#B83D15', seat: 'orange' },
   { id: 'hex', name: 'HEX', tag: 'KNOWS SOMETHING', color: '#B04BFF', dark: '#5E0F9E', seat: 'purple' },
 ];
+// NEW FACES (oct17 night, Andy: "more heroes - normal or rarer"): cast members of their own — no seat colour (the five
+// above stay the in-game palette, so castFor / castByColor never hand them out), each with its own tier. DUD is earned
+// free at LEVEL 35 (300 gems skips the wait), LEXI is 750 gems.
+export const NEW_CREW = [
+  { id: 'dud', name: 'DUD', tag: 'FUSE ALWAYS OUT', color: '#B8F632', dark: '#6E9A12' },
+  { id: 'lexi', name: 'LEXI', tag: "ACTUALLY, IT'S A WORD", color: '#3BA4F9', dark: '#1B5FA8' },
+];
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
 // of each member (ChatGPT, the HERO as the reference), bought once with gems and kept. Same colour / seat / idle beat as
 // its base member; only the HERO pose is painted (castSrc falls every other pose back to it).
@@ -26,8 +33,9 @@ export const ELITE = [
 // oct17 (Andy "we'll def need some more free tiers" … "sure (the 1 rebirth) … 750 is a lot for 1 rebirth"): the two
 // priced crew members are EARNED for free — GLITCH at your first rebirth, HEX at level 20 — and the gem price is only a
 // shortcut to skip the wait (300). The card shows the requirement over the art (lock + REBIRTH 1 / LEVEL 20).
-export const HERO_PRICE = { hex: 300, glitch: 300 };
-export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' } };
+export const HERO_PRICE = { hex: 300, glitch: 300, dud: 300, lexi: 750 };
+export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
+  dud: { lv: 35, label: 'LEVEL 35', icon: 'levels' } };
 /** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. */
 export function heroEarned(id) {
   const u = HERO_UNLOCK[id];
@@ -38,8 +46,8 @@ export function heroEarned(id) {
   } catch { /* a broken store reads as not yet */ }
   return false;
 }
-for (const c of CAST) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
-export const ALL_HEROES = [...CAST, ...ELITE];
+for (const c of [...CAST, ...NEW_CREW]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
+export const ALL_HEROES = [...CAST, ...NEW_CREW, ...ELITE];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 // owned ELITE ids — a season-2 progress key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
 export const HEROES_KEY = 'taw.s2.heroes';
@@ -63,6 +71,8 @@ const PAINTED = new Set([
   // ELITE WIN / KO (oct17, ChatGPT with each ELITE HERO attached — one 2-pose sheet per member)
   'riot-elite-win', 'riot-elite-ko', 'glitch-elite-win', 'glitch-elite-ko', 'hype-elite-win', 'hype-elite-ko', 'brawl-elite-win', 'brawl-elite-ko',
   'hex-elite-win', 'hex-elite-ko',
+  // NEW FACES (oct17 night, ChatGPT with RIOT's HERO attached as the style reference)
+  'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero',
 ]);
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
@@ -117,6 +127,8 @@ export const CAST_BEATS = {
   hype: { ms: 700, k: [[0, 1, 1], [0.25, 1.09, 0.9], [0.55, 0.93, 1.09], [0.8, 1.03, 0.97], [1, 1, 1]] }, // hyper
   brawl: { ms: 900, k: [[0, 1, 1], [0.3, 1.06, 0.93], [0.6, 0.96, 1.06], [0.85, 1.02, 0.98], [1, 1, 1]] }, // on its toes
   hex: { ms: 1700, k: [[0, 1, 1], [0.5, 0.98, 1.04], [1, 1, 1]] }, // slow, smug breath
+  dud: { ms: 2600, k: [[0, 1, 1], [0.45, 0.97, 1.04], [0.8, 1.04, 0.96], [1, 1, 1]] }, // one deep, sleepy breath
+  lexi: { ms: 1000, k: [[0, 1, 1], [0.35, 0.96, 1.05], [0.65, 1.02, 0.98], [1, 1, 1]] }, // a prim little rise
 };
 for (const e of ELITE) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE keeps its member's tempo
 export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
@@ -185,6 +197,17 @@ export const CAST_LAYERS = {
       ],
     },
   },
+  // DUD snores: three Z's drift up off the nightcap, small to big
+  dud: { hero: { act: 'snore', sprites: [
+    { src: '/cast/props/sleep-z.webp', x: 75, y: 17, w: 10 },
+    { src: '/cast/props/sleep-z.webp', x: 80, y: 5, w: 12.5 },
+    { src: '/cast/props/sleep-z.webp', x: 85, y: -8, w: 14.5 },
+  ] } },
+  // LEXI: "well, ACTUALLY" — a lightbulb pops over the raised finger, a page flutters out of the dictionary
+  lexi: { hero: { act: 'eureka', sprites: [
+    { src: '/cast/props/bulb.webp', x: 70, y: 6, w: 22, o: '50% 100%' },
+    { src: '/cast/props/page.webp', x: 2, y: 33, w: 16 },
+  ] } },
   glitch: {
     hero: {
       base: '/cast/glitch-hero-base.webp',
@@ -204,6 +227,10 @@ export const CAST_IDLE = {
   hype: { ms: 1670, rest: 350, k: [[0, 1, 1, 0, 0], [0.12, 1.1, 0.88, 0, 0], [0.27, 0.92, 1.1, 0, -9], [0.41, 1.09, 0.89, 0, 0], [0.55, 0.94, 1.07, 0, -6], [0.69, 1.06, 0.94, 0, 0], [0.84, 0.99, 1.02, 0, 0], [1, 1, 1, 0, 0]] },
   brawl: { ms: 1600, rest: 350, k: [[0, 1, 1, 0, 0], [0.22, 1.04, 0.95, -3, 1], [0.45, 1, 1, 0, 0], [0.68, 1.04, 0.95, 3, 1], [0.9, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
   hex: { ms: 3480, rest: 350, k: [[0, 1, 1, 0, 0], [0.4, 0.98, 1.03, 0, -5], [0.7, 0.99, 1.02, 0, -4], [1, 1, 1, 0, 0]] },
+  // DUD nods off — a slow sag forward and down, then a snap awake (the jolt), and it settles back
+  dud: { ms: 3600, rest: 350, k: [[0, 1, 1, 0, 0], [0.5, 1.05, 0.94, 1.5, 3], [0.62, 1.06, 0.93, 2, 4], [0.66, 0.94, 1.08, 0, -4], [0.76, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
+  // LEXI clears its throat — up on its toes ("well, ACTUALLY"), two short prim nods
+  lexi: { ms: 1900, rest: 350, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
 };
 for (const e of ELITE) CAST_IDLE[e.id] = CAST_IDLE[e.base];
 export const castIdleFrames = (b) => b.k.map(([offset, sx, sy, x, y]) => ({ offset, transform: `translate(${x}%, ${y}%) scale(${sx}, ${sy})` }));
