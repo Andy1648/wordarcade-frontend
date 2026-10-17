@@ -2,6 +2,15 @@
 // ideas in for themes or fun categories"). DISPLAY-ONLY: shown on the category box, never sent or scored. Keys are the
 // EXACT category strings the server broadcasts (backend blitzLists.json); a missing key just shows no sticker.
 export const CATEGORY_EMOJI = {
+  // oct17 UNHINGED round 2 (Andy: noun answers only, darker, fewer misses)
+  "Things in a horror movie basement": "🕯️",
+  "Things that are probably cursed": "🔮",
+  "Things you'd find in Area 51": "👽",
+  "Things you don't want to find in your bed": "🛏️",
+  "Things you shouldn't bring to a funeral": "⚰️",
+  "Worst things to find in your food": "🪳",
+  "Worst things to get stuck in an elevator with": "🛗",
+  "Worst things to hit with your car": "🚗",
   // oct16 UNHINGED pack (Andy "go for funnier ... dark humor")
   "Excuses for not doing your homework": "🐶",
   "Lies adults tell kids": "🎅",
