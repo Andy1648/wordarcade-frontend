@@ -20,10 +20,9 @@ test('five ELITEs, one per member, same colour + beat, painted HERO', () => {
     assert.ok(e.elite && e.price === ELITE_PRICE && e.color && e.seat);
     assert.equal(CAST_BEATS[e.id], CAST_BEATS[e.base]);
     assert.equal(castSrc(e.id, 'hero'), `/cast/${e.id}-hero.webp`);
-    // oct17: 4 ELITEs have painted WIN/KO; ARCHMAGE HEX's are owed — an unpainted pose falls back to the ELITE hero, never the base outfit
-    const painted = e.id !== 'hex-elite';
-    assert.equal(castSrc(e.id, 'win'), painted ? `/cast/${e.id}-win.webp` : `/cast/${e.id}-hero.webp`);
-    assert.equal(castSrc(e.id, 'ko'), painted ? `/cast/${e.id}-ko.webp` : `/cast/${e.id}-hero.webp`);
+    // oct17: every ELITE has its own painted WIN + KO (never the base outfit)
+    assert.equal(castSrc(e.id, 'win'), `/cast/${e.id}-win.webp`);
+    assert.equal(castSrc(e.id, 'ko'), `/cast/${e.id}-ko.webp`);
   }
 });
 
