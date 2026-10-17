@@ -3108,7 +3108,7 @@ body:has(.sr-app) .wpm-hud {
 .sr-setup-opt-main { font-family: var(--font-head); font-size: var(--fs-body); letter-spacing: 0.02em; }
 .sr-setup-opt-sub {
   font-family: 'Space Mono', monospace;
-  font-size: 14px;
+  font-size: var(--fs-label); /* 14px on SAT pages (the label floor) */
   letter-spacing: 0.02em;
   text-transform: uppercase;
   opacity: 0.8;
@@ -3124,7 +3124,7 @@ body:has(.sr-app) .wpm-hud {
 .sr-setup-exits { display: flex; gap: 10px; justify-content: center; }
 @media (max-width: 400px) {
   .sr-setup-opts { gap: 6px; }
-  .sr-setup-opt-sub { font-size: 14px; letter-spacing: 0; }
+  .sr-setup-opt-sub { letter-spacing: 0; }
 }
 
 /* HUD: a running streak (3+) inks its cell — a held state, not an animation */

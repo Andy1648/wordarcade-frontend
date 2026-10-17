@@ -19,7 +19,7 @@ const scoreText = (s) => {
   return n < 10000 ? String(n).padStart(6, '0') : formatNum(n);
 };
 
-export default function Hud({ score, streak, wordNumber, settled = 0, runTotal = 0, lives, maxLives, heat, heatCap, onExit }) {
+export default function Hud({ score, streak, wordNumber, settled = 0, caseSize = 0, lives, maxLives, heat, heatCap, onExit }) {
   return (
     <div className="sr-hud">
       <div className="sr-hcell">
@@ -34,9 +34,9 @@ export default function Hud({ score, streak, wordNumber, settled = 0, runTotal =
       </div>
       {/* a FINITE run shows the case file's progress: words settled / words in the case */}
       <div className="sr-hcell">
-        <span className="sr-hlabel">{runTotal > 0 ? 'case' : 'word'}</span>
+        <span className="sr-hlabel">{caseSize > 0 ? 'case' : 'word'}</span>
         <b className="sr-hval">
-          {runTotal > 0 ? `${settled}/${runTotal}` : `#${String(wordNumber).padStart(2, '0')}`}
+          {caseSize > 0 ? `${settled}/${caseSize}` : `#${String(wordNumber).padStart(2, '0')}`}
         </b>
       </div>
       <div className="sr-hcell">
