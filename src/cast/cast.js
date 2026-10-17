@@ -45,6 +45,8 @@ const PAINTED = new Set([
   // WIN / KO (oct16, ChatGPT with each HERO attached as the reference — one 2-pose sheet per member, split + cut)
   'riot-win', 'riot-ko', 'glitch-win', 'glitch-ko', 'hype-win', 'hype-ko', 'brawl-win', 'brawl-ko', 'hex-win', 'hex-ko',
   'riot-elite-hero', 'glitch-elite-hero', 'hype-elite-hero', 'brawl-elite-hero', 'hex-elite-hero',
+  // ELITE WIN / KO (oct17, ChatGPT with each ELITE HERO attached — one 2-pose sheet per member); ARCHMAGE HEX's still owed
+  'riot-elite-win', 'riot-elite-ko', 'glitch-elite-win', 'glitch-elite-ko', 'hype-elite-win', 'hype-elite-ko', 'brawl-elite-win', 'brawl-elite-ko',
 ]);
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
@@ -181,11 +183,11 @@ export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS
  *  CAST_BEATS breath at half strength; cards stay still (their props / shine carry the life). Keys: [offset, scaleX,
  *  scaleY, x%, y%]. An ELITE plays its member's move. */
 export const CAST_IDLE = {
-  riot: { ms: 900, rest: 900, k: [[0, 1, 1, 0, 0], [0.16, 1.08, 0.9, 0, 0], [0.34, 0.95, 1.07, 0, -4], [0.5, 1.07, 0.92, 0, 0], [0.68, 0.97, 1.04, 0, -2], [0.84, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
-  glitch: { ms: 1700, rest: 2200, k: [[0, 1, 1, 0, 0], [0.55, 1.02, 0.98, 0, 0], [0.6, 1.02, 0.98, -3, 0], [0.63, 1.02, 0.98, 2.5, 0], [0.66, 1, 1, -1, 0], [0.69, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
-  hype: { ms: 1150, rest: 700, k: [[0, 1, 1, 0, 0], [0.12, 1.1, 0.88, 0, 0], [0.27, 0.92, 1.1, 0, -9], [0.41, 1.09, 0.89, 0, 0], [0.55, 0.94, 1.07, 0, -6], [0.69, 1.06, 0.94, 0, 0], [0.84, 0.99, 1.02, 0, 0], [1, 1, 1, 0, 0]] },
-  brawl: { ms: 1100, rest: 500, k: [[0, 1, 1, 0, 0], [0.22, 1.04, 0.95, -3, 1], [0.45, 1, 1, 0, 0], [0.68, 1.04, 0.95, 3, 1], [0.9, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
-  hex: { ms: 2400, rest: 600, k: [[0, 1, 1, 0, 0], [0.4, 0.98, 1.03, 0, -5], [0.7, 0.99, 1.02, 0, -4], [1, 1, 1, 0, 0]] },
+  riot: { ms: 1300, rest: 350, k: [[0, 1, 1, 0, 0], [0.16, 1.08, 0.9, 0, 0], [0.34, 0.95, 1.07, 0, -4], [0.5, 1.07, 0.92, 0, 0], [0.68, 0.97, 1.04, 0, -2], [0.84, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
+  glitch: { ms: 2460, rest: 350, k: [[0, 1, 1, 0, 0], [0.55, 1.02, 0.98, 0, 0], [0.6, 1.02, 0.98, -3, 0], [0.63, 1.02, 0.98, 2.5, 0], [0.66, 1, 1, -1, 0], [0.69, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
+  hype: { ms: 1670, rest: 350, k: [[0, 1, 1, 0, 0], [0.12, 1.1, 0.88, 0, 0], [0.27, 0.92, 1.1, 0, -9], [0.41, 1.09, 0.89, 0, 0], [0.55, 0.94, 1.07, 0, -6], [0.69, 1.06, 0.94, 0, 0], [0.84, 0.99, 1.02, 0, 0], [1, 1, 1, 0, 0]] },
+  brawl: { ms: 1600, rest: 350, k: [[0, 1, 1, 0, 0], [0.22, 1.04, 0.95, -3, 1], [0.45, 1, 1, 0, 0], [0.68, 1.04, 0.95, 3, 1], [0.9, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
+  hex: { ms: 3480, rest: 350, k: [[0, 1, 1, 0, 0], [0.4, 0.98, 1.03, 0, -5], [0.7, 0.99, 1.02, 0, -4], [1, 1, 1, 0, 0]] },
 };
 for (const e of ELITE) CAST_IDLE[e.id] = CAST_IDLE[e.base];
 export const castIdleFrames = (b) => b.k.map(([offset, sx, sy, x, y]) => ({ offset, transform: `translate(${x}%, ${y}%) scale(${sx}, ${sy})` }));

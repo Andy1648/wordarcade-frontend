@@ -28,9 +28,9 @@ const SPLAT = [
   { transform: 'scale(.12)', opacity: 0 },
 ];
 const REGROW = [{ transform: 'scale(0)', opacity: 0 }, { transform: `scale(${REST * 1.1})`, opacity: 1, offset: 0.7 }, { transform: `scale(${REST})`, opacity: 1 }];
-const T_INFLATE = 1300;
-const T_HOLD = 420;
-const T_SPLAT = 900;
+const T_INFLATE = 1900; // oct17 Andy: "slower … so the animations are easily seen"
+const T_HOLD = 650;
+const T_SPLAT = 1250;
 
 function Gum({ box, live }) {
   const bRef = useRef(null);
@@ -53,10 +53,10 @@ function Gum({ box, live }) {
         at(T_INFLATE + T_HOLD + T_SPLAT - 120, () => {
           // the held burst must go explicitly (kitPlay forgets a FINISHED animation, so it would outlive the regrow)
           if (burst) { burst.cancel(); burst = null; }
-          kitPlay(b, REGROW, { duration: 380, easing: 'cubic-bezier(.2,1.3,.4,1)' });
+          kitPlay(b, REGROW, { duration: 520, easing: 'cubic-bezier(.2,1.3,.4,1)' });
         });
       }
-      at(T_INFLATE + T_HOLD + T_SPLAT + 4200 + Math.random() * 3600, cycle);
+      at(T_INFLATE + T_HOLD + T_SPLAT + 1600 + Math.random() * 1400, cycle); // oct17: a shorter gap between bubbles
     };
     at(1800 + Math.random() * 2400, cycle);
     return () => { timers.forEach(clearTimeout); if (burst) burst.cancel(); };
@@ -139,6 +139,9 @@ const ACTS = {
   ],
 };
 
+const ACT_SLOW = 1.6; // oct17 Andy: "make the animations slower (and have less gap between) so the animations are easily seen and appreciated"
+const actLength = (steps) => Math.max(...steps.map(([, d, , o]) => (d + o.duration) * ACT_SLOW));
+
 function Act({ act, sprites, live }) {
   const refs = useRef([]);
   useEffect(() => {
@@ -146,11 +149,11 @@ function Act({ act, sprites, live }) {
     const timers = [];
     const cycle = () => {
       if (document.visibilityState !== 'hidden') {
-        for (const [i, delay, frames, opts] of ACTS[act]) timers.push(setTimeout(() => kitPlay(refs.current[i], frames, opts), delay));
+        for (const [i, delay, frames, opts] of ACTS[act]) timers.push(setTimeout(() => kitPlay(refs.current[i], frames, { ...opts, duration: opts.duration * ACT_SLOW }), delay * ACT_SLOW));
       }
-      timers.push(setTimeout(cycle, 5200 + Math.random() * 3800));
+      timers.push(setTimeout(cycle, actLength(ACTS[act]) + 1400 + Math.random() * 1400));
     };
-    timers.push(setTimeout(cycle, 1500 + Math.random() * 2500));
+    timers.push(setTimeout(cycle, 900 + Math.random() * 1200));
     return () => timers.forEach(clearTimeout);
   }, [act, live]);
   return sprites.map((sp, i) => (
