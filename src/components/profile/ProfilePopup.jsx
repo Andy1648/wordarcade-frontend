@@ -15,7 +15,7 @@ import '../kit/kitIconData.js';
 import { kitPlay } from '../kit/motion.js';
 import { Bio } from '../ProfileCard.jsx';
 import { myBio, myShowcase } from '../../leaderboard/showcase.js';
-import { getMyProfile, myStats } from '../../leaderboard/client.js';
+import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client.js';
 import { readCounters } from '../../progress/v3/store.js';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
@@ -60,6 +60,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const equip = (next) => {
     writeMain(next);
     setId(next);
+    pushShowcaseNow(); // 053: everyone's board shows your new hero
     setView('profile');
     if (onMainChange) onMainChange(next);
   };
