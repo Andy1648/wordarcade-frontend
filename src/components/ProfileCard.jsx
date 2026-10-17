@@ -17,7 +17,9 @@ import { kitPlay } from './kit/motion.js';
 import { CARD_RAR, cardTier } from './markCard/palette.js';
 import { rollMarkById } from '../progress/markRollsCore.js';
 import { rankPlate } from '../leaderboard/s2Board.js';
-import { fetchShowcase, saveBio, myBio } from '../leaderboard/showcase.js';
+import { fetchShowcase, saveBio, myBio, fetchUnlistedFinds } from '../leaderboard/showcase.js';
+import { unlistedById, unlistedArt } from '../unlisted/unlisted.js';
+import UnlistedShelf, { tilesFromFinds } from '../unlisted/UnlistedShelf.jsx';
 import { titleText, myTitles, wornTitle, setTitlePick } from '../leaderboard/titles.js';
 import { pushShowcaseNow } from '../leaderboard/client.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
@@ -130,6 +132,18 @@ function BadgeRow({ badges }) {
 
 function Gear({ id, slot, known, onOpen }) {
   const m = id ? rollMarkById(id) : null;
+  const u = !m && id ? unlistedById(id) : null;
+  if (u) {
+    // THE UNLISTED worn as the MAIN: the negative-print plate (no tap — its serial is on the shelf below)
+    return (
+      <div className="pc-gear is-unlisted" data-slot={slot} data-tier="unlisted" data-testid={`profile-gear-${slot}`}
+        style={{ '--pc-line': CARD_RAR.unlisted.line, '--pc-edge': CARD_RAR.unlisted.edge, '--pc-fill': CARD_RAR.unlisted.fill }}>
+        <img className="pc-gear-art pc-gear-img" src={unlistedArt(u)} alt="" width="72" height="72" />
+        <span className="pc-gear-name">{u.name}</span>
+        <span className="pc-gear-tier">UNLISTED</span>
+      </div>
+    );
+  }
   if (!m) {
     // unknown (no showcase sent yet) → "?"; known and nothing worn there → an empty slot
     return (
@@ -202,11 +216,13 @@ export default function ProfileCard({ row, mine = false, onClose }) {
   const [show, setShow] = useState(undefined); // undefined = loading, null = none
   const [gear, setGear] = useState(null); // the gear whose sheet is open
   const [worn, setWorn] = useState(() => (mine ? wornTitle() : null)); // 050: your own title (instant, before the DB has it)
+  const [finds, setFinds] = useState([]); // 052 THE UNLISTED: what the server recorded for this player
   const cardRef = useRef(null);
   const closeRef = useRef(null);
   useEffect(() => {
     let live = true;
     fetchShowcase(row.id).then((s) => { if (live) setShow(s || null); });
+    fetchUnlistedFinds(row.id).then((f) => { if (live) setFinds(f); });
     return () => { live = false; };
   }, [row.id]);
   useEffect(() => {
@@ -258,6 +274,7 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           </Tile>
         </div>
         {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
+        <UnlistedShelf tiles={tilesFromFinds(finds)} />
         {mine ? <TitlePicker worn={worn} onPick={(id) => { setTitlePick(id); setWorn(id); pushShowcaseNow(); }} /> : null}
       </div>
       {gear ? (

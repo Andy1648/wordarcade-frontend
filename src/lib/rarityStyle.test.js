@@ -18,7 +18,7 @@ const HEX = /^#[0-9a-f]{6}$/i;
 
 test('six tiers in order (COMMON + the five gear tiers), each with a full look', () => {
   // GEAR POOL v2: gears start at RARE; COMMON stays here as the LEVEL / KEY / REBIRTH ramp's first step (LV 1, T0)
-  assert.deepEqual(RARITY_ORDER, ['common', ...ROLL_TIER_ORDER.filter((t) => t !== 'permanent')]);
+  assert.deepEqual(RARITY_ORDER, ['common', ...ROLL_TIER_ORDER.filter((t) => t !== 'permanent' && t !== 'unlisted')]); // neither is rolled
   for (const t of RARITY_ORDER) {
     const s = RARITY[t];
     for (const k of ['fill', 'hi', 'line', 'ink', 'text', 'glowColour']) assert.match(s[k], HEX, `${t}.${k}`);

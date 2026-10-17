@@ -1,0 +1,119 @@
+/* UnlistedStamp.css — the UNLISTED reveal, in flow inside `.wb-react` (GameScreen.css owns the slot's geometry).
+   EVERY animation is a finite one-shot on transform/opacity (CLAUDE.md animation budget): the word lands, the ink stamp
+   SLAMS (scale 2.4 → 1, a hard stop, no float), the word jolts once under it, the gear pops in beside, the whole thing
+   leaves. will-change rides only this transient node's life (it unmounts after ~3.4 s). Hard shadows are static. */
+.uls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  animation: uls-life 3400ms linear forwards;
+}
+.uls-word {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  padding: 8px 14px;
+  background: #000;
+  border: 3px solid #F2ECDD;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #2EFFE0, 7px 7px 0 #000;
+  animation: uls-jolt 3400ms linear forwards;
+}
+.uls-word-text {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #F2ECDD;
+}
+.uls-ink {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(140px, 104%);
+  height: auto;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  opacity: 0;
+  animation: uls-slam 3400ms linear forwards;
+}
+.uls-gear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  animation: uls-gear 3400ms linear forwards;
+}
+.uls-art { width: 64px; height: 64px; object-fit: contain; }
+.uls-plate { display: inline-flex; flex-direction: column; gap: 2px; }
+.uls-name {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-body);
+  line-height: 1;
+  color: #F2ECDD;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.uls-serial {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: #2EFFE0;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+
+/* the whole reveal: in fast, held, out fast */
+@keyframes uls-life {
+  0% { opacity: 0; transform: translateY(10px) scale(0.92); }
+  6% { opacity: 1; transform: translateY(0) scale(1); }
+  90% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+}
+/* the stamp: hangs big and faint, then SLAMS at ~250 ms (a hard stop — snappy, never floaty) */
+@keyframes uls-slam {
+  0%, 4% { opacity: 0; transform: translate(-50%, -50%) rotate(-16deg) scale(2.4); }
+  7.5% { opacity: 1; transform: translate(-50%, -50%) rotate(-7deg) scale(0.94); }
+  9.5% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1.03); }
+  11%, 100% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); }
+}
+/* the word takes the hit: one downward jolt on impact */
+@keyframes uls-jolt {
+  0%, 7% { transform: translateY(0) rotate(0); }
+  8% { transform: translateY(5px) rotate(-1.5deg); }
+  10.5% { transform: translateY(-2px) rotate(0.5deg); }
+  13%, 100% { transform: translateY(0) rotate(-1deg); }
+}
+/* the gear lands after the stamp */
+@keyframes uls-gear {
+  0%, 14% { opacity: 0; transform: translateX(-14px) scale(0.6) rotate(-10deg); }
+  19% { opacity: 1; transform: translateX(0) scale(1.12) rotate(4deg); }
+  22%, 100% { opacity: 1; transform: translateX(0) scale(1) rotate(0); }
+}
+
+/* REDUCED MOTION: the same frames, no slam — the stamp and gear simply appear */
+.uls.is-reduced, .uls.is-reduced .uls-word { animation: uls-fade 3400ms linear forwards; }
+.uls.is-reduced .uls-ink { animation: none; opacity: 1; }
+.uls.is-reduced .uls-gear { animation: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .uls, .uls .uls-word { animation: uls-fade 3400ms linear forwards; }
+  .uls .uls-ink { animation: none; opacity: 1; }
+  .uls .uls-gear { animation: none; opacity: 1; }
+}
+@keyframes uls-fade { 0% { opacity: 0; } 8%, 90% { opacity: 1; } 100% { opacity: 0; } }
+
+/* narrow screens: the reaction slot is a column left of the ring (GameScreen.css) — keep it inside */
+@media (max-width: 700px) {
+  .uls { gap: 6px; }
+  .uls-word { padding: 6px 10px; }
+  .uls-word-text { font-size: var(--fs-panel); }
+  .uls-art { width: 44px; height: 44px; }
+  .uls-name, .uls-serial { font-size: var(--fs-label); -webkit-text-stroke-width: 3px; }
+}

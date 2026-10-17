@@ -1,0 +1,106 @@
+/* UnlistedCard.css — THE UNLISTED card: a NEGATIVE PRINT. Black stock, paper-cream ink, and a cyan plate printed a
+   few px off-register (a STATIC hard offset shadow — never a glow, never animated). It must read as a different
+   CLASS of thing from the rarity ladder (no rainbow, no tier colour, no aura), not a brighter rung.
+   Nothing loops. The one motion is a finite hover flare on transform only. */
+.ulc {
+  --ulc-ink: #F2ECDD;
+  --ulc-ink-edge: #8f8a7c;
+  --ulc-plate: #2EFFE0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 8px;
+  background: #000;
+  border: 3px solid var(--ulc-ink);
+  border-radius: 8px;
+  /* the off-register cyan plate, then the house hard black shadow under it */
+  box-shadow: 4px 4px 0 var(--ulc-plate), 7px 7px 0 #000;
+  color: var(--ulc-ink);
+  font-family: 'Space Mono', monospace;
+  transition: transform 220ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.ulc.is-masked {
+  border-style: dashed;
+  border-color: var(--ulc-ink-edge);
+  box-shadow: 4px 4px 0 #0f5e55, 7px 7px 0 #000;
+}
+@media (hover: hover) {
+  .ulc.is-owned:hover { transform: rotate(-2deg) scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ulc { transition: none; }
+  .ulc.is-owned:hover { transform: none; }
+}
+
+.ulc-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  background: #0b0b0b;
+  border: 2px solid #1d1d1d;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ulc-art { width: 92%; height: 92%; object-fit: contain; }
+.ulc-mask { width: 96%; height: auto; opacity: 0.42; transform: rotate(-8deg); }
+.ulc-season {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: #FF4FA3;
+  border: 2px solid #b02a6f;
+  color: #000;
+}
+
+.ulc-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  min-width: 0;
+}
+.ulc-name {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-body);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  color: var(--ulc-ink);
+  overflow-wrap: anywhere;
+}
+.ulc-serial {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: var(--ulc-plate);
+}
+.ulc-riddle {
+  font-size: var(--fs-label);
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #cfc8b6;
+}
+
+/* HERO — the detail sheet / profile popup size */
+.ulc--hero { width: min(240px, 70vw); padding: 12px; gap: 10px; }
+.ulc--hero .ulc-name { font-family: 'Bungee', sans-serif; font-weight: 400; text-transform: uppercase; font-size: var(--fs-panel); }
+.ulc--hero .ulc-serial { font-size: var(--fs-body); }
+
+/* CHIP — a profile shelf entry: the sticker, the name, the serial under it */
+.ulc--chip { width: 112px; padding: 5px; gap: 4px; box-shadow: 3px 3px 0 var(--ulc-plate), 5px 5px 0 #000; }
+.ulc--chip .ulc-name { font-size: var(--fs-label); letter-spacing: 0; overflow-wrap: normal; white-space: nowrap; }
+.ulc-serial--chip { text-align: center; }

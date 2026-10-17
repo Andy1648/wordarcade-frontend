@@ -69,6 +69,7 @@ export const PROGRESS_KEYS = [
   // "YOUR LEVELS BECAME +N REBIRTHS" notice — all progress, none of it device state
   'taw.markRolls',
   'taw.permanentMarks',
+  'taw.unlisted', // THE UNLISTED (oct17): found gears + their serials (src/unlisted/unlisted.js)
   'taw.winsCarry',
   'taw.overdrive',
   'taw.rrnotice',

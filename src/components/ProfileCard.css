@@ -83,6 +83,9 @@
 .pc-gear.is-tap:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
 .pc-gear.is-empty { background: #0d0618; border: 4px dashed #4a3a6a; box-shadow: none; }
 .pc-gear-art { display: block; }
+/* THE UNLISTED worn: the negative print — cream ink on black, the off-register cyan plate (static) */
+.pc-gear.is-unlisted { border: 4px solid var(--pc-line); box-shadow: 4px 4px 0 #2EFFE0, 7px 7px 0 #000; }
+.pc-gear-img { width: 72px; height: 72px; object-fit: contain; }
 .pc-gear-hole { width: 72px; height: 72px; border-radius: 50%; border: 4px dashed #4a3a6a; box-sizing: border-box; display: grid; place-items: center; font-size: var(--fs-k38); color: #c9b8e8; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
 .pc-gear-name {
   max-width: 100%;
