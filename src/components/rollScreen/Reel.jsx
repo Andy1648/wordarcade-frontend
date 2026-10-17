@@ -241,6 +241,29 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     cbs.current.onDone && cbs.current.onDone();
   }
 
+  // ---- THE BAND'S REACH (Andy oct17 "an imaginary line … that cut off the animation"): the band's overlay layers reach
+  // to the panel's own frame (the purple border is the only edge), not a fixed 48px — a band-sized TELL / FLASH drew a
+  // hard line across the cards' glow, and a 48px fade ran over the frame and the top bar. --rs-up = band → top frame
+  // (the fades + shades use it both ways), --rs-down = band → bottom frame (the transient TELL / FLASH fill the panel).
+  // Measured on mount and when the panel resizes only (never per frame).
+  useLayoutEffect(() => {
+    const win = nodes.current.win;
+    const stage = win && win.closest('.rs-stage');
+    if (!stage) return undefined;
+    const measure = () => {
+      const w = win.getBoundingClientRect();
+      const s = stage.getBoundingClientRect();
+      const top = s.top + stage.clientTop;
+      win.style.setProperty('--rs-up', `${Math.max(0, Math.round(w.top - top))}px`);
+      win.style.setProperty('--rs-down', `${Math.max(0, Math.round(top + stage.clientHeight - w.bottom))}px`);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(stage);
+    return () => ro.disconnect();
+  }, []);
+
   // ---- PLAY a spin (layout effect: the first frame is the frame the tap paints) ----
   useLayoutEffect(() => {
     if (!spin || !spin.seq) return undefined;
@@ -579,7 +602,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     <div className="rs-shake" ref={reg('shake')} data-tier={spin ? tier : undefined}>
       <div className="rs-reel" aria-hidden="true" data-testid="roll-reel">
         <div className="rs-light" ref={reg('light')} style={{ '--rs-tier': lineOf(tier) }}><div className="rs-rays-ink" /></div>
-        <div className="rs-win">
+        <div className="rs-win" ref={reg('win')}>
           <div className="rs-track" ref={reg('track')} style={{ transform: reelTransform(LAND_AT) }}>
             {CELLS.map((i) => {
               const id = strip ? strip[i] : null;

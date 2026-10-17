@@ -12,6 +12,8 @@ import {
   FUSE_TIERS,
   createFragmentBag,
   createFuseEngine,
+  FUSE_START_LIVES,
+  FUSE_MAX_LIVES,
 } from './fuse.js';
 import { mulberry32 } from './shared.js';
 
@@ -279,4 +281,24 @@ test('BA1: steering prefers a fragment that CONTAINS a dark letter when one exis
   const zFrags = new Set(Object.values(eng.fragmentsLeadingTo('z')).flat().filter((f) => f.includes('z')));
   assert.ok(zFrags.size > 0, 'some fragment contains z');
   for (let i = 0; i < zFrags.size; i++) assert.ok(eng.serve().fragment.includes('z'), `serve ${i} skipped an unserved z fragment`);
+});
+
+// Andy oct16: FUSE is ONE life — the first burnt-out fuse ends the run, and a full a–z strip
+// (which still triggers FRENZY) never grants a life back.
+test('one life: start on 1, the first expire ends the run, a full strip grants no life', () => {
+  assert.equal(FUSE_START_LIVES, 1);
+  assert.equal(FUSE_MAX_LIVES, 1);
+  const pools = { e: ['a'], m: ['a'], h: ['a'], b: ['a'] };
+  const accept = new Set(['abcdefghijklm', 'anopqrstuvwxyz']);
+  const eng = createFuseEngine({ accept, pools, rng: () => 0 });
+  eng.start();
+  assert.equal(eng.state.lives, 1);
+  eng.submit('abcdefghijklm');
+  const r = eng.submit('anopqrstuvwxyz');
+  assert.equal(r.stripCleared, true);
+  assert.equal(r.lifeGained, false);
+  assert.equal(eng.state.lives, 1);
+  const e = eng.expire();
+  assert.equal(e.ended, true);
+  assert.equal(eng.state.alive, false);
 });

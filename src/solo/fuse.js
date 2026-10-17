@@ -1,7 +1,7 @@
 // fuse.js — FUSE solo mode, pure engine (NO timers, NO DOM, NO React).
 //
-// RULES. A fragment appears; type any ACCEPT word CONTAINING it. No repeats. TWO lives,
-// capped at 3. The fuse (time to answer) shrinks as you solve more words, is stretched a
+// RULES. A fragment appears; type any ACCEPT word CONTAINING it. No repeats. ONE life
+// (Andy oct16: "one life instead of three") — the first fuse that burns out ends the run. The fuse (time to answer) shrinks as you solve more words, is stretched a
 // little for harder fragment tiers, and is DOCKED after a short word so shortest-word play
 // can't defeat the fitted curve. Every constant here was fitted against the real dictionary
 // and adversarially attacked — do not "improve" one.
@@ -36,8 +36,10 @@ export function selectTier(w, rng = Math.random) {
   return FUSE_TIERS[rng() < x - i ? Math.min(i + 1, 3) : i];
 }
 
-export const FUSE_START_LIVES = 2;
-export const FUSE_MAX_LIVES = 3;
+// Andy oct16: ONE life, no regain (was 2 to start, up to 3 via a full strip). A full a–z strip
+// still clears and triggers FUSE FRENZY; it just can't grant a life past the cap of 1.
+export const FUSE_START_LIVES = 1;
+export const FUSE_MAX_LIVES = 1;
 
 // LAST-LETTERS STEERING (STEP 20 / Andy oct2). Players stalled on the last 3 strip letters because
 // a random fragment rarely leads to a q/x/z/j word. From STEER_FROM lit letters on, STEER_P of the
@@ -233,8 +235,8 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
     return null;
   }
 
-  // Light every distinct letter of a solved word; a full a-z strip grants +1 life (cap 3)
-  // and resets the strip. Returns whether the strip cleared this time.
+  // Light every distinct letter of a solved word; a full a-z strip resets the strip (and would
+  // grant +1 life below FUSE_MAX_LIVES — never, at the current cap of 1). Returns whether the strip cleared this time.
   function lightLetters(word) {
     for (const ch of word) if (ch >= 'a' && ch <= 'z') state.lettersUsed.add(ch);
     if (state.lettersUsed.size >= 26) {

@@ -163,23 +163,12 @@
      past the content's clip edge (dialog-quality item 4 — the rotated chip corner was ~4px
      over the top, the title ~4px over the sides). */
   padding: 7px 8px 8px;
-  scrollbar-width: thin;
-  scrollbar-color: #ff4fa3 #2a1f3d;
+  --sb-thumb: #ff4fa3; /* the house scrollbar (index.css) */
+  --sb-track: #2a1f3d;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
-}
-.mode-dialog-content::-webkit-scrollbar {
-  width: 8px;
-}
-.mode-dialog-content::-webkit-scrollbar-track {
-  background: #2a1f3d;
-  border-radius: 8px;
-}
-.mode-dialog-content::-webkit-scrollbar-thumb {
-  background: #ff4fa3;
-  border-radius: 8px;
 }
 
 /* Stencil chip top-left, tilted like a sticker. */

@@ -37,6 +37,7 @@ import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
 import MarkCard from './markCard/MarkCard';
 import GearSheet from './GearSheet';
 import GearFx from './GearFx';
+import { useIndexGlowScale } from './indexGlow';
 import { GLOW_TIERS } from './markCard/idleSheen.js';
 import { CARD_RAR } from './markCard/palette.js';
 import { tierLabel } from './markCard/cardModel.js';
@@ -86,6 +87,7 @@ export default function MarksIndex({
   const [worn, setWorn] = useState(equippedId);
   useEffect(() => { setWorn(equippedId); }, [equippedId]);
   const [sel, setSel] = useState(null);
+  const glowScale = useIndexGlowScale();
   const closeRef = useRef(null);
   const selRef = useRef(sel);
   selRef.current = sel;
@@ -161,7 +163,7 @@ export default function MarksIndex({
                   data-earned={e.kind === 'perm' ? '' : undefined}
                   onClick={() => setSel(e.id)}
                 >
-                  {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={0.9} /> : null}
+                  {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={glowScale} /> : null}
                   <MarkCard
                     id={e.id} kind={e.kind} tier={e.tier} name={e.name} locked={!have} state={view} rank={rankOf(e.id)}
                     shiny={shiny} parts={TILE_PARTS}

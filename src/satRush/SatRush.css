@@ -27,6 +27,9 @@
   --paper: #f0ead9; /* cream paper */
   --tile: #f0ead9; /* slot / inset fill = paper; ink linework carries every edge */
   --ink: #111;
+  /* the house scrollbar (index.css) inked: ink on paper (flips with SILVER TONGUE, which swaps --ink) */
+  --sb-thumb: var(--ink);
+  --sb-thumb-hover: var(--redink, #C8321E);
   /* the page sits on a drawn DESK/BOARD, not raw black: the ink gutter carries a faint
      paper screentone (two-hue, the manga tone principle — paper dots at a low coverage on
      ink), which reads as a toned surface AND lets the page's hard offset shadow register
@@ -2859,6 +2862,6 @@ body:has(.sr-app) .wpm-hud {
    Start button stay put and only the card LIST scrolls, inside the paper. */
 .sr-brief-screen { overflow: hidden; align-items: center; }
 .sr-brief-page { max-height: calc(100dvh - 2 * clamp(12px, 2.5vh, 32px)); box-sizing: border-box; min-height: 0; }
-.sr-brief-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 4px 6px 4px; scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }
+.sr-brief-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 4px 6px 4px; }
 .sr-brief-head, .sr-brief-actions { flex: none; }
 .sr-brief-page > .sr-brief-exit { position: absolute; width: auto; }
