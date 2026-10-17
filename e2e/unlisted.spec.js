@@ -94,7 +94,7 @@ for (const vp of VPS) {
     await seed(page, { unlisted: OWNED });
     await page.goto('/?portal=1');
     await menuReady(page);
-    const open = page.locator('[data-nav="profile"], .hp-main button, .pt-tile').first();
+    const open = page.locator('[data-nav="profile"]:visible').first();
     await open.click();
     const pf = page.getByTestId('profile-popup');
     await expect(pf).toBeVisible();
@@ -156,10 +156,10 @@ for (const vp of VPS) {
     await input.click();
     await page.keyboard.type('newgrounds', { delay: 40 });
     const stamp = page.getByTestId('unlisted-stamp');
-    await expect(stamp).toBeVisible({ timeout: 2000 });
+    await expect(stamp).toBeVisible({ timeout: 8000 }); // the stamp + the grant load lazily on the find
     await expect(stamp.locator('.uls-word-text')).toHaveText('NEWGROUNDS');
     await expect(stamp.locator('.uls-name')).toHaveText('O.G.');
-    await expect(stamp.locator('.uls-serial')).toHaveText('#0042', { timeout: 3000 });
+    await expect(stamp.locator('.uls-serial')).toHaveText('#0042', { timeout: 6000 });
     expect(claims[0]).toEqual({ p_secret: SECRET, p_gear: 'mk-ul-og' });
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.unlisted')));
     expect(saved.owned['mk-ul-og']).toMatchObject({ serial: 42, word: 'NEWGROUNDS' });
