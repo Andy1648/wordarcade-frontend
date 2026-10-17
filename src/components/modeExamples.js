@@ -22,8 +22,8 @@ export const MODE_ROUND_LENGTH = {
   // C2: 3 rounds of a flat 30s (backend categoryBlitzLogic TOTAL_ROUNDS / ROUND_TIME_SECONDS) — it said ~60 SECONDS.
   'category-blitz': '3 ROUNDS · 30s EACH',
   chain: 'SURVIVAL · 1 LIFE',
-  // H6: FUSE starts on 2 lives (fuse.js FUSE_START_LIVES) and can earn back up to 3 (FUSE_MAX_LIVES).
-  fuse: 'SURVIVAL · 2 LIVES (UP TO 3)',
+  // Andy oct16: FUSE is ONE life (fuse.js FUSE_START_LIVES = FUSE_MAX_LIVES = 1), no regain.
+  fuse: 'SURVIVAL · 1 LIFE',
   'word-race': 'FIRST TO 25 · 1:00 CAP',
   'sat-rush': 'SURVIVAL',
 };

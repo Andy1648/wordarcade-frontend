@@ -31,3 +31,9 @@
 .hc.is-sel .hc-card, .hc.is-on .hc-card { outline: 3px solid #FFE94A; outline-offset: 3px; border-radius: 10px; }
 @media (hover: hover) { .hc:not(.is-on):hover { transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .hc { transition: none; } }
+.hc-req {
+  position: absolute; left: 50%; bottom: 6%; z-index: 2; translate: -50% 0; display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px 3px 4px; white-space: nowrap; background: #0d0618; border: 3px solid #FFE94A; border-radius: 6px; box-shadow: 3px 3px 0 #000;
+  font: 400 var(--fs-k15) 'Bungee', sans-serif; color: #FFE94A;
+}
+.hc.has-req .hc-hero { filter: grayscale(.7) brightness(.55); }

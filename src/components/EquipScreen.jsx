@@ -17,6 +17,7 @@ import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
 import MarkCard from './markCard/MarkCard';
 import GearSheet from './GearSheet';
 import GearFx from './GearFx';
+import { useIndexGlowScale } from './indexGlow';
 import { GLOW_TIERS } from './markCard/idleSheen.js';
 import { tierLabel } from './markCard/cardModel.js';
 import { buildEntries, ownsGear } from './gearEntries.js';
@@ -51,6 +52,7 @@ export default function EquipScreen({ slot = 1, mainId = null, equippedId = null
   const { view, owned } = snap;
   const [worn, setWorn] = useState(equippedId);
   const [sel, setSel] = useState(null);
+  const glowScale = useIndexGlowScale();
   // the equipped one PINNED first
   const list = useMemo(() => {
     const on = owned.find((e) => e.id === worn);
@@ -111,7 +113,7 @@ export default function EquipScreen({ slot = 1, mainId = null, equippedId = null
                   data-tier={e.tier}
                   onClick={() => setSel(e.id)}
                 >
-                  {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={0.9} /> : null}
+                  {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={glowScale} /> : null}
                   <MarkCard
                     id={e.id} kind={e.kind} tier={e.tier} name={e.name} state={view} rank={rankOf(e.id)}
                     shiny={shiny} parts={TILE_PARTS}

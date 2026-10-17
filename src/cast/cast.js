@@ -1,3 +1,4 @@
+import { getRebirths, storedLevel } from '../progress/xp.js';
 // cast.js — THE CAST (Andy oct16 "spend like 25 images … those avatars by themselves are SO plain"): five bomb buddies,
 // one per player colour, each with its own look and attitude, in HERO / WIN / KO poses (art run P0, art-run/ART-RUN.md).
 // Until a pose is painted it falls back to the existing seat bomb buddy of the same colour (public/wb/player-*.webp).
@@ -22,7 +23,21 @@ export const ELITE = [
 // INTERMEDIATE (Andy oct17: "picking 1 or 2 of the 5 to cost gems as well"): two of the crew cost gems — HEX (the
 // mystic) and GLITCH (the layered-props showcase); RIOT / HYPE / BRAWL stay free. Anyone already playing one keeps it
 // (grandfathered once, readMain).
-export const HERO_PRICE = { hex: 750, glitch: 750 };
+// oct17 (Andy "we'll def need some more free tiers" … "sure (the 1 rebirth) … 750 is a lot for 1 rebirth"): the two
+// priced crew members are EARNED for free — GLITCH at your first rebirth, HEX at level 20 — and the gem price is only a
+// shortcut to skip the wait (300). The card shows the requirement over the art (lock + REBIRTH 1 / LEVEL 20).
+export const HERO_PRICE = { hex: 300, glitch: 300 };
+export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' } };
+/** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. */
+export function heroEarned(id) {
+  const u = HERO_UNLOCK[id];
+  if (!u) return false;
+  try {
+    if (u.reb != null && (getRebirths() || 0) >= u.reb) return true;
+    if (u.lv != null && (storedLevel() || 1) >= u.lv) return true;
+  } catch { /* a broken store reads as not yet */ }
+  return false;
+}
 for (const c of CAST) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
 export const ALL_HEROES = [...CAST, ...ELITE];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
@@ -37,7 +52,7 @@ export function ownedHeroes() {
 }
 export const ownsHero = (id) => {
   const h = ALL_HEROES.find((x) => x.id === id);
-  return !!h && (!h.price || ownedHeroes().includes(id));
+  return !!h && (!h.price || heroEarned(id) || ownedHeroes().includes(id));
 };
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
 const PAINTED = new Set([
@@ -45,6 +60,9 @@ const PAINTED = new Set([
   // WIN / KO (oct16, ChatGPT with each HERO attached as the reference — one 2-pose sheet per member, split + cut)
   'riot-win', 'riot-ko', 'glitch-win', 'glitch-ko', 'hype-win', 'hype-ko', 'brawl-win', 'brawl-ko', 'hex-win', 'hex-ko',
   'riot-elite-hero', 'glitch-elite-hero', 'hype-elite-hero', 'brawl-elite-hero', 'hex-elite-hero',
+  // ELITE WIN / KO (oct17, ChatGPT with each ELITE HERO attached — one 2-pose sheet per member)
+  'riot-elite-win', 'riot-elite-ko', 'glitch-elite-win', 'glitch-elite-ko', 'hype-elite-win', 'hype-elite-ko', 'brawl-elite-win', 'brawl-elite-ko',
+  'hex-elite-win', 'hex-elite-ko',
 ]);
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
@@ -181,11 +199,11 @@ export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS
  *  CAST_BEATS breath at half strength; cards stay still (their props / shine carry the life). Keys: [offset, scaleX,
  *  scaleY, x%, y%]. An ELITE plays its member's move. */
 export const CAST_IDLE = {
-  riot: { ms: 900, rest: 900, k: [[0, 1, 1, 0, 0], [0.16, 1.08, 0.9, 0, 0], [0.34, 0.95, 1.07, 0, -4], [0.5, 1.07, 0.92, 0, 0], [0.68, 0.97, 1.04, 0, -2], [0.84, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
-  glitch: { ms: 1700, rest: 2200, k: [[0, 1, 1, 0, 0], [0.55, 1.02, 0.98, 0, 0], [0.6, 1.02, 0.98, -3, 0], [0.63, 1.02, 0.98, 2.5, 0], [0.66, 1, 1, -1, 0], [0.69, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
-  hype: { ms: 1150, rest: 700, k: [[0, 1, 1, 0, 0], [0.12, 1.1, 0.88, 0, 0], [0.27, 0.92, 1.1, 0, -9], [0.41, 1.09, 0.89, 0, 0], [0.55, 0.94, 1.07, 0, -6], [0.69, 1.06, 0.94, 0, 0], [0.84, 0.99, 1.02, 0, 0], [1, 1, 1, 0, 0]] },
-  brawl: { ms: 1100, rest: 500, k: [[0, 1, 1, 0, 0], [0.22, 1.04, 0.95, -3, 1], [0.45, 1, 1, 0, 0], [0.68, 1.04, 0.95, 3, 1], [0.9, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
-  hex: { ms: 2400, rest: 600, k: [[0, 1, 1, 0, 0], [0.4, 0.98, 1.03, 0, -5], [0.7, 0.99, 1.02, 0, -4], [1, 1, 1, 0, 0]] },
+  riot: { ms: 1300, rest: 350, k: [[0, 1, 1, 0, 0], [0.16, 1.08, 0.9, 0, 0], [0.34, 0.95, 1.07, 0, -4], [0.5, 1.07, 0.92, 0, 0], [0.68, 0.97, 1.04, 0, -2], [0.84, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
+  glitch: { ms: 2460, rest: 350, k: [[0, 1, 1, 0, 0], [0.55, 1.02, 0.98, 0, 0], [0.6, 1.02, 0.98, -3, 0], [0.63, 1.02, 0.98, 2.5, 0], [0.66, 1, 1, -1, 0], [0.69, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
+  hype: { ms: 1670, rest: 350, k: [[0, 1, 1, 0, 0], [0.12, 1.1, 0.88, 0, 0], [0.27, 0.92, 1.1, 0, -9], [0.41, 1.09, 0.89, 0, 0], [0.55, 0.94, 1.07, 0, -6], [0.69, 1.06, 0.94, 0, 0], [0.84, 0.99, 1.02, 0, 0], [1, 1, 1, 0, 0]] },
+  brawl: { ms: 1600, rest: 350, k: [[0, 1, 1, 0, 0], [0.22, 1.04, 0.95, -3, 1], [0.45, 1, 1, 0, 0], [0.68, 1.04, 0.95, 3, 1], [0.9, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
+  hex: { ms: 3480, rest: 350, k: [[0, 1, 1, 0, 0], [0.4, 0.98, 1.03, 0, -5], [0.7, 0.99, 1.02, 0, -4], [1, 1, 1, 0, 0]] },
 };
 for (const e of ELITE) CAST_IDLE[e.id] = CAST_IDLE[e.base];
 export const castIdleFrames = (b) => b.k.map(([offset, sx, sy, x, y]) => ({ offset, transform: `translate(${x}%, ${y}%) scale(${sx}, ${sy})` }));

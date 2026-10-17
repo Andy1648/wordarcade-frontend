@@ -12,6 +12,8 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct17 NOT categories (any real noun scores — blitzNot.js), each example verified ON its list
+  "Things you shouldn't flush down the toilet": "Dead goldfish",
   // oct17 UNHINGED round 2 (Andy: noun answers only, darker, fewer misses), each example verified ON its list
   "Things in a horror movie basement": "Chains",
   "Things that are probably cursed": "Ouija board",

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="--acc:#FFE94A; --acc-line:#A8860B; --acc-ink:#000;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -35,7 +35,7 @@
       "@type": "VideoGame",
       "name": "Fuse",
       "url": "https://typeaword.com/fuse/",
-      "description": "A single-player word game played against a burning fuse. A short letter fragment appears and you type any dictionary word that contains it, anywhere inside the word. No word may be repeated in a run. You start with two lives and can hold up to three: using every letter of the alphabet across the words you solve lights the full strip and earns one back. The fuse shortens as you solve more words, from about twelve and a half seconds down toward a three-and-a-half second floor, harder fragments are given slightly more time, and solving with a very short word docks the length of the next fuse.",
+      "description": "A single-player word game played against a burning fuse. A short letter fragment appears and you type any dictionary word that contains it, anywhere inside the word. No word may be repeated in a run, and you have one life: the first fuse that burns out ends the run. Using every letter of the alphabet across the words you solve lights the full strip and sets off a Frenzy bonus. The fuse shortens as you solve more words, from about twelve and a half seconds down toward a three-and-a-half second floor, harder fragments are given slightly more time, and solving with a very short word docks the length of the next fuse.",
       "genre": "Word game",
       "playMode": "SinglePlayer",
       "gamePlatform": "Web browser",
@@ -47,7 +47,7 @@
     }
     </script>
   </head>
-  <body style="--acc:#FFE94A; --acc-line:#A8860B; --acc-ink:#000;">
+  <body>
     <div class="lp-wrap">
       <header class="lp-header">
         <a class="lp-wordmark" href="/">TYPE A WORD</a>
@@ -67,7 +67,7 @@
           <h2>What is Fuse?</h2>
           <p>Fuse gives you a short run of letters &mdash; something like <em>ORT</em> or <em>NCH</em> &mdash; and one instruction: <strong>type a real word that contains it</strong>. Not starting with it, not ending with it. Anywhere inside. <em>ORT</em> is happily answered by SHORT, or REPORT, or IMPORTANT. The fragment is the easy half; the burning fuse underneath it is the other half.</p>
           <p>Every word you solve makes the next fuse a little shorter. You begin with about twelve and a half seconds and the curve tightens toward a three-and-a-half second floor, so a long run turns into pure recall speed. The fragments get harder too: they climb through four tiers as you go, from comfortable to genuinely awkward, and the nastier ones are handed a little extra time to compensate.</p>
-          <p>There is one more thing the game is quietly tracking. <strong>Every distinct letter you use gets lit</strong>, across all the words you have solved. Light the whole alphabet and the strip clears and gives you a life back. You start with two lives and can hold three, so a run that reaches deliberately for a J, a Q or an X is buying itself a real cushion.</p>
+          <p>There is one more thing the game is quietly tracking. <strong>Every distinct letter you use gets lit</strong>, across all the words you have solved. Light the whole alphabet and the strip clears and sets off a <strong>Frenzy</strong>, a timed bonus multiplier. You only get one life, so a run that reaches deliberately for a J, a Q or an X is chasing the payoff while it still has the time to.</p>
         </section>
 
         <section class="lp-section">
@@ -76,21 +76,21 @@
             <li>A <strong>letter fragment</strong> appears and the fuse begins to burn.</li>
             <li>Type any dictionary word that <strong>contains those letters in order, anywhere inside it</strong>.</li>
             <li>Solve it and you get a new fragment, on a slightly shorter fuse than the last.</li>
-            <li>No word may be reused in a run. Let a fuse burn out and it costs you a life.</li>
-            <li>Lose all your lives and the run ends. Light all twenty-six letters along the way and you earn one back.</li>
+            <li>No word may be reused in a run. Let a fuse burn out and the run is over.</li>
+            <li>Light all twenty-six letters along the way and you set off a Frenzy.</li>
           </ol>
         </section>
 
         <section class="lp-section">
           <h2>Rules</h2>
           <ul>
-            <li><strong>Two lives to start, three at most.</strong> Unlike Chain, Fuse gives you room to be wrong &mdash; but not much.</li>
+            <li><strong>One life.</strong> Like Chain, Fuse has no room to be wrong: the first fuse that burns out ends the run.</li>
             <li><strong>The fragment can sit anywhere in the word.</strong> Start, middle or end, as long as the letters appear together and in order.</li>
             <li><strong>No repeats</strong>, and the word has to be in the dictionary.</li>
             <li><strong>The fuse shortens as you solve.</strong> About twelve and a half seconds at the start, tightening toward a three-and-a-half second floor.</li>
             <li><strong>Harder fragments get a little more time.</strong> Fragments come in four difficulty tiers and the brutal ones are stretched by up to about a third, so a horrible chunk is not simply a death sentence.</li>
             <li><strong>Short words cost you.</strong> This is the rule people miss: answering with a three-letter word docks the <em>next</em> fuse to eighty per cent, a four-letter word to ninety-two, and five letters or more leaves it alone. Spamming the shortest legal answer does not save time &mdash; it spends it.</li>
-            <li><strong>The alphabet strip.</strong> Every distinct letter in every word you solve gets lit. Complete all twenty-six and you gain a life and the strip resets.</li>
+            <li><strong>The alphabet strip.</strong> Every distinct letter in every word you solve gets lit. Complete all twenty-six and you set off a Frenzy and the strip resets.</li>
           </ul>
         </section>
 
@@ -98,7 +98,7 @@
           <h2>Tips</h2>
           <ul>
             <li><strong>Reach for five letters or more.</strong> A short word feels fast and then quietly shortens your next fuse. Anything five letters and up is free.</li>
-            <li><strong>Hunt the rare letters early.</strong> J, Q, X and Z are the ones that stall an alphabet strip. Slipping them in while the fuse is still long is how you bank a spare life before the clock gets mean.</li>
+            <li><strong>Hunt the rare letters early.</strong> J, Q, X and Z are the ones that stall an alphabet strip. Slipping them in while the fuse is still long is how you reach a Frenzy before the clock gets mean.</li>
             <li><strong>Try common word-middles first.</strong> Most fragments are hiding inside a suffix or a stem you already know &mdash; -ATION, -MENT, -TION. Say the fragment aloud and the word usually arrives.</li>
             <li><strong>Prefixes are an easy escape.</strong> If a fragment looks impossible, try bolting RE-, UN-, IN- or MIS- onto a word that nearly works.</li>
           </ul>
@@ -110,8 +110,8 @@
           <p>Yes &mdash; completely free, in the browser, no account needed. Open it and play.</p>
           <h3>Does the fragment have to be at the start of the word?</h3>
           <p>No. It can sit anywhere inside, as long as the letters are together and in order. That is the whole difference between Fuse and a normal starts-with word game.</p>
-          <h3>How do I get a life back?</h3>
-          <p>Use every letter of the alphabet across the words you solve. Completing the strip grants a life, up to a maximum of three, and starts the strip again.</p>
+          <h3>How many lives do I get?</h3>
+          <p>One. The first fuse that burns out ends the run, so every fragment counts. Using every letter of the alphabet across the words you solve sets off a Frenzy bonus and starts the strip again.</p>
           <h3>Why do short words feel like they make it harder?</h3>
           <p>Because they do. A three or four letter answer docks the length of your next fuse. It is deliberate &mdash; it stops a run being carried by the same tiny word every turn.</p>
           <h3>Can I play Fuse on my phone?</h3>

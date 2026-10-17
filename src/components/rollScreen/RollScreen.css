@@ -194,9 +194,10 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   position: absolute;
   z-index: 2;
   /* oct15 afternoon (Andy "the cover is not covering the cards"): the band clips sideways only, so cards + auras poke
-     above / below it — the fades reach that far too */
-  top: calc(-1 * var(--rs-spill, 48px));
-  bottom: calc(-1 * var(--rs-spill, 48px));
+     above / below it — the fades reach that far too. oct17: --rs-up (band → the panel's top frame, measured in Reel.jsx)
+     both ways — far enough for every glow, never past the frame onto the top bar, never down over the FOUND row */
+  top: calc(-1 * var(--rs-up, 0px));
+  bottom: calc(-1 * var(--rs-up, 0px));
   width: min(360px, 28%);
   pointer-events: none;
 }
@@ -214,7 +215,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cell.is-blank { width: var(--cw); height: calc(var(--cw) * 1.6667); background: #1a0b2e; border: 5px solid #000; border-radius: 10px; box-sizing: border-box; }
 /* the two SHADES (Reel.jsx): band-coloured plates left / right of the landing slot; their opacity (one animation each)
    fades the other cards — 22% during the slowdown, 35% once landed */
-.rs-shade { position: absolute; z-index: 1; top: calc(-1 * var(--rs-spill, 48px)); bottom: calc(-1 * var(--rs-spill, 48px)); background: #08030f; opacity: 0; pointer-events: none; }
+.rs-shade { position: absolute; z-index: 1; top: calc(-1 * var(--rs-up, 0px)); bottom: calc(-1 * var(--rs-up, 0px)); background: #08030f; opacity: 0; pointer-events: none; }
 .rs-shade.is-l { left: 0; right: calc(50% + var(--cw) / 2 + 6px); }
 .rs-shade.is-r { left: calc(50% + var(--cw) / 2 + 6px); right: 0; }
 /* the pointer: a yellow bar (a rectangle) between two triangles (inline SVG) */
@@ -223,10 +224,10 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-ptr-tri { position: absolute; left: 0; display: block; }
 .rs-ptr-tri.is-top { top: -2px; }
 .rs-ptr-tri.is-bot { bottom: -2px; }
-/* THE TELL (R4): a flat tier-colour plate over the band (a rectangle) whose opacity pulses in the last cells of an
+/* THE TELL (R4): a flat tier-colour plate over the band's whole panel (a rectangle, frame to frame) whose opacity pulses in the last cells of an
    EPIC+ spin, and a second pointer in the tier colour that fades in over the yellow one — the colour says WHICH
    rarity before the card is shown. Both rest at opacity 0; Reel.jsx animates them (finite, opacity only). */
-.rs-tell { position: absolute; z-index: 2; inset: 0; background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
+.rs-tell { position: absolute; z-index: 2; inset: calc(-1 * var(--rs-up, 0px)) 0 calc(-1 * var(--rs-down, 0px)); background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
 .rs-ptr-tell { position: absolute; inset: 0; opacity: 0; }
 .rs-ptr-bar.is-tell { background: currentColor; }
 /* the rarity light: the ray fan asset as a tinted mask BEHIND the band, opacity/transform only (EPIC+) */
@@ -434,7 +435,9 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn.is-locked .rs-auto-k { color: #c79bff; }
 
 /* ---- the RARE flash (over the band) and the EPIC+ rarity WASH (over the screen): flat colour, opacity one-shots ---- */
-.rs-flash { position: absolute; inset: 0; z-index: 2; background: #fff; opacity: 0; pointer-events: none; }
+/* the FLASH and the TELL span the whole panel inside its frame (--rs-up / --rs-down): a band-sized plate drew a hard line
+   through the cards' glow above and below the band */
+.rs-flash { position: absolute; inset: calc(-1 * var(--rs-up, 0px)) 0 calc(-1 * var(--rs-down, 0px)); z-index: 2; background: #fff; opacity: 0; pointer-events: none; }
 .rs-wash { position: absolute; inset: 0; z-index: 2; background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
 .rs-ptr { transform-origin: 50% 0; }
 
@@ -716,6 +719,11 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-opts:has(.rs-auto-btn.is-on) { flex-wrap: wrap; }
   .rs-opts { gap: 6px; }
   .rs-auto-btn { padding: 0 8px; }
+}
+/* THE REVEAL ON A PHONE (Andy oct17 "the gear animations dont fully show on roll screen"): the full-size reveal — banner,
+   odds, a 200px card, the stats plate, TAP TO CONTINUE — is ~890px tall, so on a 390x844 phone the plate ran off the
+   bottom of the screen. Every phone up to 960 tall gets the compact reveal (it was only ≤700 tall). */
+@media (max-width: 480px) and (max-height: 960px) {
   .rs-cut, .rs-cut.is-full { --mc-w: 162px; --mc-s: 0.9; }
   .rv-body { gap: 8px; }
   .rv-stats { gap: 4px; }
@@ -725,6 +733,22 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rv-main-kind { font-size: var(--fs-k24); }
   .rv-extra-num { font-size: var(--fs-k24); }
   .rv-extra-kind { font-size: var(--fs-k18); }
+}
+/* SHORT phones (360x640): even the compact reveal measured 818px tall in a 640 screen — the plate's last lines and TAP TO
+   CONTINUE were off the bottom. A smaller card (the plate below it repeats every stat) and tighter plate type. */
+@media (max-width: 480px) and (max-height: 700px) {
+  .rs-cut, .rs-cut.is-full { --mc-w: 108px; --mc-s: 0.6; }
+  .rs-cut-shake { gap: 6px; padding: 10px 12px; }
+  .rv-stats.is-glow, .rv-stats.is-plated { padding: 6px 12px 8px; }
+  .rv-main-num { font-size: var(--fs-k34); }
+  .rv-main-num.is-l { font-size: var(--fs-k30); }
+  .rv-main-kind { font-size: var(--fs-k20); }
+  .rv-extras { gap: 0; margin-top: 2px; }
+  .rv-extra-num { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
+  .rv-extra-kind { font-size: var(--fs-k15); }
+  .rv-perk { padding: 4px 10px 5px; }
+  .rv-perk-kick { font-size: var(--fs-k13); }
+  .rv-perk-line { font-size: var(--fs-k15); }
 }
 
 /* the in-game REDUCE MOTION toggle (RollScreen adds .is-reduced) — the same as the OS setting below */

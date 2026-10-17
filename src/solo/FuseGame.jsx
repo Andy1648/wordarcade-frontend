@@ -3,7 +3,7 @@
 // live in fuse.js; this file is glue + presentation.
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import '../frenzy/MechanicScale.css';
-import { createFuseEngine } from './fuse.js';
+import { createFuseEngine, FUSE_MAX_LIVES } from './fuse.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { exampleContaining } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
@@ -304,21 +304,21 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
         <b>{formatNum(s.wordsSolved)}</b>
         <span>WORDS · BEST {formatNum(g.best)}</span>
       </div>
-      <div className="solo-lives" aria-label={`${s.lives} lives`}>
+      <div className="solo-lives" aria-label={`${s.lives} ${s.lives === 1 ? 'life' : 'lives'}`}>
         {'♥'.repeat(s.lives)}
-        <span style={{ opacity: 0.3 }}>{'♡'.repeat(Math.max(0, 3 - s.lives))}</span>
+        <span style={{ opacity: 0.3 }}>{'♡'.repeat(Math.max(0, FUSE_MAX_LIVES - s.lives))}</span>
       </div>
     </>
   );
 
-  // LOWER DECK (fill): FUSE's own elements at the size they deserve — the three lives drawn
-  // as burning fuse cords (lit = a fuse still going, charred = spent), and the letters-used
-  // strip as a real band. JOB 8: the "N/26 LETTERS USED" label is GONE — the lit tiles ARE
+  // LOWER DECK (fill): FUSE's own elements at the size they deserve — the life (ONE since Andy
+  // oct16; one cord per FUSE_MAX_LIVES) drawn as a burning fuse cord (lit = a fuse still going,
+  // charred = spent), and the letters-used strip as a real band. JOB 8: the "N/26 LETTERS USED" label is GONE — the lit tiles ARE
   // the count, and a caption under a thing that already says it is chrome, not information.
   const fuseDeck = (
     <div className="solo-fusedeck" aria-hidden="true">
       <div className="solo-cords">
-        {[0, 1, 2].map((i) => (
+        {Array.from({ length: FUSE_MAX_LIVES }, (_, i) => (
           <FuseCord key={i} lit={i < s.lives} />
         ))}
       </div>

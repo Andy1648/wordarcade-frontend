@@ -155,7 +155,7 @@ async function measure(page) {
   });
 }
 
-// FUSE's core mechanic is lighting every letter for a life, so all 26 alphabet tiles MUST be
+// FUSE's core mechanic is lighting every letter for FRENZY, so all 26 alphabet tiles MUST be
 // visible and countable — a grid once clipped the 13th tile in each row (m / z vanished). Checked
 // down to 390x844 (phone portrait), where the strip is a single column of its own.
 test.describe('FUSE alphabet strip shows all 26 tiles', () => {
