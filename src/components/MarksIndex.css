@@ -23,7 +23,7 @@
   padding: 28px var(--mx-pad-x) 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 22px;
+  gap: 0; /* the head → grid space is the grid's own top padding (AURA ROOM) */
   /* R2 oct8 #5: the card at its drawn size (180×260) — every name is ≥ 18px rendered (the long-name step is 18.5),
      the ×N dupe tag 16, the stat kind 15; the panel widens to 1366 so six still sit in a row on a laptop */
   --mc-w: 180px;
@@ -106,10 +106,11 @@
    padding box, so its padding IS the room an edge card's GearFx glow has. The biggest glow is MYTHIC/SECRET at
    --gfx-out 42 × 0.9 = 38px, and on hover the aura box swells ×1.2 (GearFx.css): +10% of a 256×376 box = 26px sideways,
    38px up/down. So the grid bleeds out to the panel's own edges (no extra clip line inside the panel) and pads
-   --mx-room-x / --mx-room-y — enough for the hovered mythic. The panel's head→grid gap is folded into that padding. */
+   --mx-room-x / --mx-room-y — enough for the hovered mythic. The panel's head→grid gap is 0: the gap sits OUTSIDE the
+   scroller (it gives a glow no room), so the grid's own top padding is the whole space under the head. */
 .mx-grid {
-  --mx-room-x: 64px;
-  --mx-room-y: 76px;
+  --mx-room-x: 68px;
+  --mx-room-y: 80px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(var(--mc-w) + 12px), 1fr));
   row-gap: 32px;
@@ -118,10 +119,14 @@
   align-content: start;
   min-height: 0;
   overflow-y: auto;
+  /* never a SIDEWAYS scroll: a SECRET / MYTHIC mote drifting a px past the edge made the grid scrollable sideways and
+     flashed a horizontal scrollbar under the cards. overflow-y:auto already clips sideways here (at the edge the AURA
+     ROOM keeps clear) — this only stops the scrollbar */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   isolation: isolate; /* the owned EPIC+ tiles' GearFx glows sit behind EVERY card (a neighbour's glow never paints over a card) */
   margin: 0 calc(-1 * var(--mx-pad-x));
-  padding: calc(var(--mx-room-y) - 22px) var(--mx-room-x) var(--mx-room-y);
+  padding: var(--mx-room-y) var(--mx-room-x);
 }
 .mx-cell { position: relative; display: grid; justify-items: center; align-content: start; gap: 8px; }
 .mx-tile {
@@ -161,8 +166,8 @@
   .mx-tiers { width: 100%; }
 }
 @media (max-height: 640px) {
-  .mx-panel { padding-top: 14px; gap: 12px; }
-  .mx-grid { row-gap: 20px; padding-top: calc(var(--mx-room-y) - 12px); }
+  .mx-panel { padding-top: 14px; }
+  .mx-grid { row-gap: 20px; }
   .mx-title { font-size: var(--fs-h2); }
   .mx-count { font-size: var(--fs-panel); }
   .mx-back { min-height: 48px; }
@@ -170,7 +175,8 @@
 }
 /* phones: two cards a row */
 @media (max-width: 560px) {
-  /* two cards a row at 390 (176 + 8 + 176 = 360 ≤ 366): the long-name step renders 18.1px */
+  /* two cards a row at 390: 164 + 8 + 164 = 336, which leaves 27px each side for the glow (indexGlow.js scales the
+     aura to 0.5 here, so MYTHIC's is 21px — it fits even when a desktop window's 10px scrollbar lane takes 5px a side) */
   .mx-panel { --mx-pad-x: 12px; padding: 12px var(--mx-pad-x) 0; gap: 12px; --mc-w: 164px; --mc-s: 0.9111; }
   .mx-head { gap: 10px; }
   .mx-back { min-height: 44px; padding: 0 12px; font-size: var(--fs-k20); border-width: 3px; box-shadow: 4px 4px 0 #000; }
@@ -182,9 +188,12 @@
   .mx-tierchip-num { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   /* fixed columns, centred: the slack goes to the two outer edges (where the glow needs it), not inside the cells */
   .mx-grid { grid-template-columns: repeat(2, var(--mc-w)); justify-content: center; column-gap: 8px; row-gap: 20px; padding: 26px 0 32px; }
+  /* the room beside two phone-width cards fits the glow at rest, not GearFx's ×1.2 hover swell (a narrow desktop
+     window has hover) — so the glow holds still here */
+  .mx-panel .mx-grid .mx-tile:hover > .gfx { transform: none; }
 }
 @media (max-width: 375px) {
-  .mx-panel { --mc-w: 152px; --mc-s: 0.8444; } /* 360 wide: 152 + 8 + 152 = 312 → 24px each side for a 23px glow */
+  .mx-panel { --mc-w: 152px; --mc-s: 0.8444; } /* 360 wide: 152 + 8 + 152 = 312 → 24px each side (19 beside a desktop scrollbar lane) for an 18px glow */
 }
 @media (max-width: 340px) {
   .mx-panel { --mc-w: 148px; --mc-s: 0.8222; } /* 320 wide: 8px each side — indexGlow.js shrinks the aura to fit */
