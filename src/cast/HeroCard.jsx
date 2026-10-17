@@ -9,12 +9,14 @@ import { useEffect, useRef } from 'react';
 import { castSrc } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
 import FitText from '../components/kit/FitText.jsx';
+import KitIcon from '../components/kit/KitIcon.jsx';
+import '../components/kit/kitIconData.js';
 import './HeroCard.css';
 
 const SHINE = [{ transform: 'translateX(-130%) skewX(-18deg)', opacity: 0 }, { transform: 'translateX(-60%) skewX(-18deg)', opacity: 1, offset: 0.15 }, { transform: 'translateX(330%) skewX(-18deg)', opacity: 1, offset: 0.85 }, { transform: 'translateX(400%) skewX(-18deg)', opacity: 0 }];
 
 /** `delay` staggers the elite shine so a row of cards never flashes in lockstep. */
-export default function HeroCard({ hero, locked = false, on = false, sel = false, delay = 0, onClick, children }) {
+export default function HeroCard({ hero, locked = false, req = null, on = false, sel = false, delay = 0, onClick, children }) {
   const shineRef = useRef(null);
   useEffect(() => {
     if (!hero.elite) return undefined;
@@ -26,7 +28,7 @@ export default function HeroCard({ hero, locked = false, on = false, sel = false
     t = setTimeout(loop, 700 + delay);
     return () => clearTimeout(t);
   }, [hero.elite, delay]);
-  const cls = `hc${hero.elite ? ' is-elite' : ''}${locked ? ' is-locked' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
+  const cls = `hc${hero.elite ? ' is-elite' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
   // a card can sit inside a bigger button (the menu's PROFILE tile) — then it is a plain span, not a nested button
   const Tag = onClick ? 'button' : 'span';
   const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };
@@ -36,6 +38,8 @@ export default function HeroCard({ hero, locked = false, on = false, sel = false
         <span className="hc-art">
           <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
           {hero.elite ? <span ref={shineRef} className="hc-shine" aria-hidden="true" /> : null}
+          {/* an EARNABLE hero not earned yet: the requirement rides the art (lock + REBIRTH 1 / LEVEL 20) */}
+          {req ? <span className="hc-req"><KitIcon name="lock" size={22} shadow={1} extras={false} /><KitIcon name={req.icon} size={22} shadow={1} extras={false} /><span>{req.label}</span></span> : null}
         </span>
         <span className="hc-plate" aria-hidden="true" />
         <img className="hc-frame" src={hero.elite ? '/cards/frame-elite.webp' : '/cards/frame.webp'} alt="" aria-hidden="true" draggable="false" />

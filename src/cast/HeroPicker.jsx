@@ -2,7 +2,7 @@
 // ELITE row (2,500 gems each, silhouettes until bought). Tap an owned card → equip; tap a priced one → the HOLD TO BUY
 // bar (KitHoldButton) → bought + equipped. Reusable anywhere a hero is picked (the profile today, the lobby later).
 import { useEffect, useState } from 'react';
-import { CAST, ELITE, heroById, ownsHero } from './cast.js';
+import { CAST, ELITE, HERO_UNLOCK, heroById, ownsHero } from './cast.js';
 import { buyHero } from './heroShop.js';
 import HeroCard from './HeroCard.jsx';
 import { KitHoldButton, KitIcon } from '../components/kit/index.js';
@@ -13,7 +13,7 @@ import './HeroPicker.css';
 
 function Act({ h, current }) {
   if (ownsHero(h.id)) return <span className={`hp2-act${h.id === current ? ' is-on' : ''}`}>{h.id === current ? 'EQUIPPED' : 'EQUIP'}</span>;
-  return <span className="hp2-act is-price"><KitIcon name="gems" size={18} shadow={2} extras={false} />{formatNum(h.price)}</span>;
+  return <span className="hp2-act is-price">{HERO_UNLOCK[h.id] ? 'SKIP · ' : ''}<KitIcon name="gems" size={18} shadow={2} extras={false} />{formatNum(h.price)}</span>;
 }
 
 /** @param current the equipped id · @param onEquip(id) an owned hero was picked · @param onBought(id) a purchase landed */
@@ -40,7 +40,7 @@ export default function HeroPicker({ current, onEquip, onBought }) {
       </div>
       <div className="hp2-grid">
         {CAST.map((x) => (
-          <HeroCard key={x.id} hero={x} on={x.id === current} sel={x.id === buying} onClick={() => pick(x)}>
+          <HeroCard key={x.id} hero={x} req={!ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null} on={x.id === current} sel={x.id === buying} onClick={() => pick(x)}>
             <span className="hp2-tag">{x.tag}</span>
             <Act h={x} current={current} />
           </HeroCard>
