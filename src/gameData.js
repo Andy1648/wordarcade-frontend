@@ -47,7 +47,7 @@ const BASE_GAMES = [
     // same size as its neighbours. Nothing else reads cardName; id/routes/SEO are untouched.
     // Andy oct14 "category blitz only says blitz on game card": the card shows the full CATEGORY / BLITZ again (the
     // card's name fit shrinks the longer word to fit, like any long name)
-    description: 'NAME AS MANY AS YOU CAN. IF IT’S ON THE LIST, IT SCORES.',
+    description: 'EVERY CATEGORY HAS ITS TOP ANSWERS. HIT ONE, IT SCORES.',
     baseColor: '#3DA8FF',
     iconBg: '#fff',
     badgeText: 'SOLO/MULTI', // no spaces — matches Word Bomb's badge and fits the pill (fix/qa-sweep §3)
