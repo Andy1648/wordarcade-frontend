@@ -7,8 +7,8 @@ import PlayerDot from './PlayerDot';
 import ComboMeter from './ComboMeter';
 import SprayReveal from './SprayReveal';
 import { resolvePlayerColor } from '../playerColors';
-import { castByColor, castSrc, readMain } from '../cast/cast.js';
-import CastArt from '../cast/CastArt.jsx';
+import { castByColor, castSrc, readMain, heroById } from '../cast/cast.js';
+import CastArt, { rarityOf } from '../cast/CastArt.jsx';
 import { MORE_MODES } from '../gameData';
 import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
@@ -1536,6 +1536,7 @@ export default function GameScreen({
   // YOUR seat shows YOUR equipped hero (oct18, Andy: cosmetics should show "in game as well so people get the full
   // addictive use"): read once per game; the other seats keep the cast member of their colour.
   const myHero = useMemo(() => readMain(), []);
+  const myTier = useMemo(() => rarityOf(heroById(myHero)).tier, [myHero]); // gold / elite / legend → its painted seat ring
   usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
   const draftStoreRef = useRef(null);
   if (!draftStoreRef.current) draftStoreRef.current = createDraftStore();
@@ -3461,6 +3462,7 @@ export default function GameScreen({
                   {/* oct16 art run: the painted CAST member of this seat's colour (RIOT pink · GLITCH cyan · HYPE yellow ·
                       BRAWL orange · HEX purple); falls back to the bomb buddy until its HERO is painted */}
                   {/* oct18: YOUR seat is your equipped hero, its prop streams + rarity aura playing live on your turn */}
+                  {isMe && myTier ? <img className="wb-seat-char wb-seat-ring" src={`/cast/rings/seat-ring-${myTier}.webp`} alt="" aria-hidden="true" draggable="false" /> : null}
                   {isMe
                     ? <CastArt className="wb-seat-char" id={myHero} live={isCurrent && !eliminated} />
                     : <img className="wb-seat-char" src={castSrc(castByColor(pc.color).id, 'hero')} alt="" aria-hidden="true" draggable="false" />}

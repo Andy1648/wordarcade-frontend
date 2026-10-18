@@ -6932,6 +6932,9 @@ html[data-beat='true'] .wb-belly {
 }
 /* your own seat draws your equipped hero through CastArt (a layered span): keep it placed like the plain image */
 .wb-seat-char.cast-layered { position: absolute; }
+/* a rare hero's painted tier RING (GOLD / ELITE / LEGEND — public/cast/rings, oct18) sits behind your hero, sized and
+   placed by the same .wb-seat-char box (so it hops with it on your turn); its crown / crystal / wisps poke above */
+.wb-seat-ring { z-index: -2; }
 .wb-seat .game-player-card.current .wb-seat-char {
   opacity: 1;
   animation: wb-char-hop 380ms cubic-bezier(0.2, 1.4, 0.4, 1) 1;

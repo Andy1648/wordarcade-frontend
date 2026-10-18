@@ -81,7 +81,7 @@ function Gum({ box, live }) {
 // Still the house motion law: finite WAAPI one-shots (kitPlay) re-armed on finish — nothing infinite — transform +
 // opacity only, will-change only while a clone plays, pooled nodes (no node per cycle), the loop sleeps in a hidden tab,
 // reduce motion = nothing plays. RARITY scales the pool (more overlapping clones = denser, richer motion): crew x1,
-// GOLD x1.35, ELITE x1.5, LEGEND x2, and GOLD / ELITE also get a twinkle of glints around the body (AURA).
+// GOLD x1.35, ELITE x1.5, LEGEND x2, and every rare tier also wears an AURA (gold glints / ghost trails, below).
 // A stream: { i: sprite, n: clones at x1, ms: one clone's life, f: keyframes, e?: easing, at?: first-start offset ms }.
 const UP = (x, y, s0 = 0.5, s1 = 1) => [
   { transform: `translate(0, 0) scale(${s0})`, opacity: 0 },
@@ -188,16 +188,36 @@ const STREAMS = {
     { i: 2, n: 1, ms: 2600, at: 1900, e: 'linear', f: [{ transform: 'translateX(-4%)', opacity: 1 }, { transform: 'translateX(3%)', opacity: 1, offset: 0.05 }, { transform: 'translateX(0)', opacity: 0, offset: 0.1 }, { transform: 'translateX(0)', opacity: 0 }] },
   ],
 };
-// AURA: the GOLD / ELITE twinkle — glints pop at fixed spots around the body one after another, never all at once
-const AURA_SPOTS = [[14, 30], [74, 20], [70, 62], [22, 66], [48, 8]];
-const AURA = { src: '/cast/props/spark-sm.webp', w: 7, ms: 1700 };
-/** How much richer a hero's motion is: its pool multiplier and whether it gets the glint aura. */
+// AURA: what a rare tier wears around the body, always moving, one piece after another (never all at once) — GOLD
+// twinkles gold glints and glint clusters, ELITE gold glints, LEGEND trails ghost-smoke comets rising past it. The art is
+// painted (public/cast/props, oct18 round 2); the spots are % of the pose square.
+const TRAIL = [ // the comet's head is painted bottom-left: turned half round it leads up-right, rising past the body
+  { transform: 'translate(0, 0) rotate(180deg) scale(.6)', opacity: 0 },
+  { transform: 'translate(10%, -25%) rotate(180deg) scale(1)', opacity: 0.95, offset: 0.25 },
+  { transform: 'translate(35%, -90%) rotate(180deg) scale(1)', opacity: 0.8, offset: 0.7 },
+  { transform: 'translate(55%, -140%) rotate(180deg) scale(.85)', opacity: 0 },
+];
+const AURAS = {
+  gold: { ms: 1600, f: TWINKLE, e: 'ease-in-out', at: [
+    ['/cast/props/glint-gold.webp', 12, 28, 9], ['/cast/props/glint-gold-cluster.webp', 72, 16, 12], ['/cast/props/glint-gold.webp', 72, 60, 8],
+    ['/cast/props/glint-gold-cluster.webp', 16, 64, 11], ['/cast/props/glint-gold.webp', 46, 4, 8],
+  ] },
+  elite: { ms: 1700, f: TWINKLE, e: 'ease-in-out', at: [
+    ['/cast/props/glint-gold.webp', 12, 30, 8], ['/cast/props/glint-gold.webp', 76, 18, 9], ['/cast/props/glint-gold.webp', 72, 62, 7],
+    ['/cast/props/glint-gold.webp', 20, 66, 8], ['/cast/props/glint-gold.webp', 48, 6, 7],
+  ] },
+  legend: { ms: 2600, f: TRAIL, e: 'cubic-bezier(.3,.5,.5,1)', at: [
+    ['/cast/props/ghost-trail.webp', 4, 58, 16], ['/cast/props/ghost-trail.webp', 70, 64, 14], ['/cast/props/ghost-trail.webp', 10, 30, 12],
+  ] },
+};
+/** How much richer a hero's motion is: its pool multiplier, and its tier ('gold' | 'elite' | 'legend' | null) — the
+ *  tier picks the AURA here and the seat ring in game (GameScreen). */
 export function rarityOf(h) {
-  if (!h) return { k: 1, aura: false };
-  if (h.legend) return { k: 2, aura: false };
-  if (h.elite) return { k: 1.5, aura: true };
-  if (h.gold) return { k: 1.35, aura: true };
-  return { k: 1, aura: false };
+  if (!h) return { k: 1, tier: null };
+  if (h.legend) return { k: 2, tier: 'legend' };
+  if (h.elite) return { k: 1.5, tier: 'elite' };
+  if (h.gold) return { k: 1.35, tier: 'gold' };
+  return { k: 1, tier: null };
 }
 
 /** Run one pooled clone: play, and on finish play again — each a finite one-shot. Returns its stop. */
@@ -242,17 +262,19 @@ function Streams({ act, sprites, rarity, live }) {
   });
 }
 
-function Aura({ live }) {
+function Aura({ tier, live }) {
   const refs = useRef([]);
+  const A = AURAS[tier];
   useEffect(() => {
-    if (!live) return undefined;
+    if (!live || !A) return undefined;
     const alive = { on: true };
     const els = refs.current;
-    const stops = AURA_SPOTS.map((_, k) => loopClone(els[k], TWINKLE, AURA.ms, 'ease-in-out', 200 + (k * AURA.ms) / AURA_SPOTS.length, alive));
+    const stops = A.at.map((_, k) => loopClone(els[k], A.f, A.ms, A.e, 200 + (k * A.ms) / A.at.length, alive));
     return () => { alive.on = false; stops.forEach((f) => f()); stopAll(els); };
-  }, [live]);
-  return AURA_SPOTS.map(([x, y], k) => (
-    <img key={k} ref={(el) => { refs.current[k] = el; }} className="cast-fx" src={AURA.src} alt="" draggable="false" style={{ left: `${x}%`, top: `${y}%`, width: `${AURA.w}%` }} />
+  }, [live, tier]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!A) return null;
+  return A.at.map(([src, x, y, w], k) => (
+    <img key={k} ref={(el) => { refs.current[k] = el; }} className="cast-fx" src={src} alt="" draggable="false" style={{ left: `${x}%`, top: `${y}%`, width: `${w}%` }} />
   ));
 }
 
@@ -267,7 +289,7 @@ function Slot({ sp }) {
 /** `live` = run the prop streams (the big showcase / podium / in-game seat); false = the static resting look (thumbnails). */
 export default function CastArt({ id, pose = 'hero', className = '', artRef, alt = '', live = true, ...rest }) {
   const rarity = rarityOf(heroById(id));
-  const L = castLayers(id, pose) || (rarity.aura ? {} : null);
+  const L = castLayers(id, pose) || (rarity.tier ? {} : null);
   if (!L) return <img ref={artRef} className={className} src={castSrc(id, pose)} width="512" height="512" alt={alt} draggable="false" {...rest} />;
   const slots = flagDefaultOn('props') ? L.slots || [] : [];
   return (
@@ -277,7 +299,7 @@ export default function CastArt({ id, pose = 'hero', className = '', artRef, alt
       {slots.filter((sp) => !sp.under).map((sp) => <Slot key={sp.slot} sp={sp} />)}
       {L.gum ? <Gum box={L.gum} live={live} /> : null}
       {L.act ? <Streams act={L.act} sprites={L.sprites} rarity={rarity} live={live} /> : null}
-      {rarity.aura ? <Aura live={live} /> : null}
+      {rarity.tier ? <Aura tier={rarity.tier} live={live} /> : null}
     </span>
   );
 }
