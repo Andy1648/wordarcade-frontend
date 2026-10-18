@@ -29,6 +29,6 @@
   .hp2-bar { flex-wrap: wrap; }
   .hp2-coll { flex: 1 1 100%; order: 2; }
   .hp2-gems { order: 1; margin-left: auto; }
-  .hp2-coll-k { font-size: var(--fs-k16, 16px); }
-  .hp2-tag { font-size: var(--fs-k16, 16px); }
+  .hp2-coll-k { font-size: var(--fs-k16); }
+  .hp2-tag { font-size: var(--fs-k16); }
 }
