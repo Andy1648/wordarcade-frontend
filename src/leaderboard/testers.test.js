@@ -9,14 +9,20 @@ const DIR = join(process.cwd(), 'supabase', 'migrations');
 const sql = readFileSync(join(DIR, '032_testers_and_flags.sql'), 'utf8').replace(/\r\n/g, '\n');
 const has = (text) => assert.ok(sql.includes(text), `032 is missing: ${text}`);
 
-test('032 is the newest lb_submit3 and keeps the season-1 branch + 029 write', () => {
+test('the newest lb_submit3 (054, the 032 body without a flag for a refused lower write) keeps the season-1 branch, 029 write + testers', () => {
   const files = readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort();
   const last = files.filter((f) => readFileSync(join(DIR, f), 'utf8').includes('create or replace function public.lb_submit3(')).pop();
-  assert.equal(last, '032_testers_and_flags.sql');
-  has("if p_econ is distinct from 12 then raise exception 'old_client'; end if;");
-  has('perform private.lb_board_write_rr(');
-  has('perform private.lb_board_write_s2(p_secret,');
-  has('grant execute on function public.lb_submit3(text, integer, integer, bigint, bigint, numeric, integer) to anon, authenticated;');
+  assert.equal(last, '054_no_lower_board_writes.sql');
+  const newest = readFileSync(join(DIR, last), 'utf8').replace(/\r\n/g, '\n');
+  for (const text of [
+    "if p_econ is distinct from 12 then raise exception 'old_client'; end if;",
+    'perform private.lb_board_write_rr(',
+    'perform private.lb_board_write_s2(p_secret,',
+    'if old.is_tester then',
+    "perform private.cheat_flag(pid, 'rejected', sent);",
+    "perform private.cheat_flag(pid, 'clamped', sent);",
+    'grant execute on function public.lb_submit3(text, integer, integer, bigint, bigint, numeric, integer) to anon, authenticated;',
+  ]) assert.ok(newest.includes(text), `${last} is missing: ${text}`);
 });
 
 test('032 testers: server column, millie seeded, cap-free write is private', () => {
