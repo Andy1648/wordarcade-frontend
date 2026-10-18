@@ -1,0 +1,6590 @@
+[
+ {
+  "word": "famille",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "family",
+  "context": "Ma ___ habite à Lyon.",
+  "contextEn": "My family lives in Lyon.",
+  "root": {
+   "morpheme": "famille",
+   "meaning": "family",
+   "cousins": [
+    "familial",
+    "familier"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "ami",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "friend",
+  "context": "Paul est mon meilleur ___.",
+  "contextEn": "Paul is my best friend.",
+  "root": {
+   "morpheme": "ami",
+   "meaning": "friend",
+   "cousins": [
+    "amitié",
+    "amical",
+    "amie"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "frère",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "brother",
+  "context": "Mon ___ a douze ans.",
+  "contextEn": "My brother is twelve years old.",
+  "root": {
+   "morpheme": "frat-",
+   "meaning": "brother",
+   "cousins": [
+    "fraternel",
+    "fraternité"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "sœur",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "sister",
+  "context": "Ma ___ aime danser.",
+  "contextEn": "My sister likes to dance.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "mère",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "mother",
+  "context": "Ma ___ est médecin.",
+  "contextEn": "My mother is a doctor.",
+  "root": {
+   "morpheme": "mater-",
+   "meaning": "mother",
+   "cousins": [
+    "maternel",
+    "maternité"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "père",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "father",
+  "context": "Mon ___ prépare le dîner.",
+  "contextEn": "My father makes dinner.",
+  "root": {
+   "morpheme": "pater-",
+   "meaning": "father",
+   "cousins": [
+    "paternel",
+    "paternité"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "enfant",
+  "pos": "n",
+  "gender": "mf",
+  "tier": 1,
+  "gloss": "child",
+  "context": "Cet ___ joue dans le parc.",
+  "contextEn": "This child is playing in the park.",
+  "root": {
+   "morpheme": "enfant",
+   "meaning": "child",
+   "cousins": [
+    "enfance",
+    "enfantin"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "fête",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "party, celebration",
+  "context": "La ___ commence à huit heures.",
+  "contextEn": "The party starts at eight o'clock.",
+  "root": {
+   "morpheme": "fêter",
+   "meaning": "to celebrate",
+   "cousins": [
+    "festival",
+    "festif"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "voisin",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "neighbor",
+  "context": "Mon ___ a un gros chien.",
+  "contextEn": "My neighbor has a big dog.",
+  "root": {
+   "morpheme": "voisin",
+   "meaning": "neighbor",
+   "cousins": [
+    "voisine",
+    "voisinage"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "école",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "school",
+  "context": "Je vais à l'___ en bus.",
+  "contextEn": "I go to school by bus.",
+  "root": {
+   "morpheme": "école",
+   "meaning": "school",
+   "cousins": [
+    "écolier",
+    "scolaire"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "mariage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "marriage, wedding",
+  "context": "Le ___ de ma cousine est en juin.",
+  "contextEn": "My cousin's wedding is in June.",
+  "root": {
+   "morpheme": "marier",
+   "meaning": "to marry",
+   "cousins": [
+    "mari",
+    "marié"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "cousin",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "cousin",
+  "context": "Mon ___ habite au Canada.",
+  "contextEn": "My cousin lives in Canada.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "anniversaire",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "birthday, anniversary",
+  "context": "Demain, c'est mon ___ !",
+  "contextEn": "Tomorrow is my birthday!",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "cadeau",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "gift, present",
+  "context": "J'ai acheté un ___ pour ma mère.",
+  "contextEn": "I bought a gift for my mother.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "naissance",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "birth",
+  "context": "La ___ du bébé est une grande joie.",
+  "contextEn": "The baby's birth is a great joy.",
+  "root": {
+   "morpheme": "naître",
+   "meaning": "to be born",
+   "cousins": [
+    "né",
+    "renaissance"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "amitié",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "friendship",
+  "context": "Notre ___ est très forte.",
+  "contextEn": "Our friendship is very strong.",
+  "root": {
+   "morpheme": "ami",
+   "meaning": "friend",
+   "cousins": [
+    "amical",
+    "amie"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "amour",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "love",
+  "context": "Roméo et Juliette, c'est une histoire d'___.",
+  "contextEn": "Romeo and Juliet is a love story.",
+  "root": {
+   "morpheme": "aimer",
+   "meaning": "to love",
+   "cousins": [
+    "amoureux",
+    "aimable"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "célébrer",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to celebrate",
+  "context": "Nous allons ___ Noël en famille.",
+  "contextEn": "We are going to celebrate Christmas as a family.",
+  "root": {
+   "morpheme": "célèbre",
+   "meaning": "famous",
+   "cousins": [
+    "célébration",
+    "célébrité"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "marier",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to get married (se marier)",
+  "context": "Ils vont se ___ en été.",
+  "contextEn": "They are going to get married in the summer.",
+  "root": {
+   "morpheme": "mari",
+   "meaning": "husband",
+   "cousins": [
+    "mariage",
+    "marié"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "mari",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "husband",
+  "context": "Son ___ travaille à Paris.",
+  "contextEn": "Her husband works in Paris.",
+  "root": {
+   "morpheme": "marier",
+   "meaning": "to marry",
+   "cousins": [
+    "mariage",
+    "marié"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "femme",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "wife, woman",
+  "context": "Il offre des fleurs à sa ___.",
+  "contextEn": "He gives flowers to his wife.",
+  "root": {
+   "morpheme": "fémin-",
+   "meaning": "woman",
+   "cousins": [
+    "féminin",
+    "féminisme"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "mairie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "town hall",
+  "context": "On se marie à la ___.",
+  "contextEn": "People get married at the town hall.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "quartier",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "neighborhood",
+  "context": "Mon ___ est calme et sympa.",
+  "contextEn": "My neighborhood is quiet and nice.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "communauté",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "community",
+  "context": "Notre ___ aide les familles.",
+  "contextEn": "Our community helps families.",
+  "root": {
+   "morpheme": "commun",
+   "meaning": "common, shared",
+   "cousins": [
+    "communautaire",
+    "communal"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "partager",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to share",
+  "context": "Je veux ___ mon repas avec toi.",
+  "contextEn": "I want to share my meal with you.",
+  "root": {
+   "morpheme": "part",
+   "meaning": "portion, share",
+   "cousins": [
+    "partage",
+    "répartir"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "aider",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to help",
+  "context": "Il faut ___ les personnes âgées.",
+  "contextEn": "We must help elderly people.",
+  "root": {
+   "morpheme": "aide",
+   "meaning": "help",
+   "cousins": [
+    "entraide",
+    "aidant"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "tradition",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "tradition",
+  "context": "C'est une ___ de ma famille.",
+  "contextEn": "It's a tradition in my family.",
+  "root": {
+   "morpheme": "tradition",
+   "meaning": "tradition",
+   "cousins": [
+    "traditionnel",
+    "traditionnellement"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "bénévole",
+  "pos": "n",
+  "gender": "mf",
+  "tier": 3,
+  "gloss": "volunteer",
+  "context": "Ma sœur est ___ à l'hôpital.",
+  "contextEn": "My sister is a volunteer at the hospital.",
+  "root": {
+   "morpheme": "bénévole",
+   "meaning": "volunteer",
+   "cousins": [
+    "bénévolat",
+    "bénévolement"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "fiancé",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "fiancé",
+  "context": "Elle présente son ___ à ses parents.",
+  "contextEn": "She introduces her fiancé to her parents.",
+  "root": {
+   "morpheme": "fiancer",
+   "meaning": "to get engaged",
+   "cousins": [
+    "fiançailles",
+    "fiancée"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "divorce",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "divorce",
+  "context": "Le ___ de mes parents a été difficile.",
+  "contextEn": "My parents' divorce was hard.",
+  "root": {
+   "morpheme": "divorcer",
+   "meaning": "to divorce",
+   "cousins": [
+    "divorcé",
+    "divorcée"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "coutume",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "custom",
+  "context": "C'est une ___ très ancienne au Sénégal.",
+  "contextEn": "It's a very old custom in Senegal.",
+  "root": {
+   "morpheme": "coutume",
+   "meaning": "custom",
+   "cousins": [
+    "coutumier",
+    "accoutumé"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "cérémonie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "ceremony",
+  "context": "La ___ a lieu à la mairie.",
+  "contextEn": "The ceremony takes place at the town hall.",
+  "root": {
+   "morpheme": "cérémonie",
+   "meaning": "ceremony",
+   "cousins": [
+    "cérémonial",
+    "cérémonieux"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "citoyen",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "citizen",
+  "context": "Un bon ___ vote aux élections.",
+  "contextEn": "A good citizen votes in elections.",
+  "root": {
+   "morpheme": "cité",
+   "meaning": "city",
+   "cousins": [
+    "citoyenne",
+    "citoyenneté"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "voter",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to vote",
+  "context": "À dix-huit ans, on peut ___.",
+  "contextEn": "At eighteen, you can vote.",
+  "root": {
+   "morpheme": "vote",
+   "meaning": "vote, vow",
+   "cousins": [
+    "votant",
+    "vœu"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "élever",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to raise (children)",
+  "context": "Ils veulent ___ leurs enfants à la campagne.",
+  "contextEn": "They want to raise their kids in the country.",
+  "root": {
+   "morpheme": "lever",
+   "meaning": "to lift",
+   "cousins": [
+    "élève",
+    "élevage"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "confiance",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "trust, confidence",
+  "context": "J'ai ___ en ma meilleure amie.",
+  "contextEn": "I trust my best friend.",
+  "root": {
+   "morpheme": "confier",
+   "meaning": "to entrust",
+   "cousins": [
+    "confiant",
+    "méfiance"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "soutenir",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to support",
+  "context": "Mes amis vont me ___.",
+  "contextEn": "My friends are going to support me.",
+  "root": {
+   "morpheme": "tenir",
+   "meaning": "to hold",
+   "cousins": [
+    "soutien",
+    "appartenir"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "réseau",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "network",
+  "context": "Elle a un grand ___ d'amis en ligne.",
+  "contextEn": "She has a big network of friends online.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "respecter",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to respect",
+  "context": "Il faut ___ ses grands-parents.",
+  "contextEn": "You must respect your grandparents.",
+  "root": {
+   "morpheme": "respect",
+   "meaning": "respect",
+   "cousins": [
+    "respectueux",
+    "respectable"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "génération",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "generation",
+  "context": "Chaque ___ a ses valeurs.",
+  "contextEn": "Each generation has its values.",
+  "root": {
+   "morpheme": "générer",
+   "meaning": "to generate",
+   "cousins": [
+    "générationnel",
+    "intergénérationnel"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "jumeau",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "twin",
+  "context": "Mon ___ et moi avons le même anniversaire.",
+  "contextEn": "My twin and I have the same birthday.",
+  "root": {
+   "morpheme": "jumeau",
+   "meaning": "twin",
+   "cousins": [
+    "jumelle",
+    "jumeler"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "adolescent",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "teenager",
+  "context": "Cet ___ passe beaucoup de temps sur son téléphone.",
+  "contextEn": "This teenager spends a lot of time on his phone.",
+  "root": {
+   "morpheme": "adolescence",
+   "meaning": "adolescence",
+   "cousins": [
+    "ado",
+    "adolescente"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "foyer",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "household, home",
+  "context": "Il y a quatre personnes dans notre ___.",
+  "contextEn": "There are four people in our household.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "monoparental",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "single-parent",
+  "context": "Mon ami vit dans un foyer ___ avec sa mère.",
+  "contextEn": "My friend lives in a single-parent home with his mom.",
+  "root": {
+   "morpheme": "parent",
+   "meaning": "parent",
+   "cousins": [
+    "parental",
+    "parenté"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "recomposé",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "blended (family)",
+  "context": "Dans un foyer ___, on a parfois des demi-frères.",
+  "contextEn": "In a blended household, you sometimes have half-brothers.",
+  "root": {
+   "morpheme": "composer",
+   "meaning": "to put together",
+   "cousins": [
+    "recomposer",
+    "composé"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "héritage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "heritage, inheritance",
+  "context": "Notre langue est un ___ important.",
+  "contextEn": "Our language is an important heritage.",
+  "root": {
+   "morpheme": "hériter",
+   "meaning": "to inherit",
+   "cousins": [
+    "héritier",
+    "hérédité"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "entraide",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "mutual aid",
+  "context": "L'___ est très importante dans mon village.",
+  "contextEn": "Mutual aid is very important in my village.",
+  "root": {
+   "morpheme": "aider",
+   "meaning": "to help",
+   "cousins": [
+    "aide",
+    "entraider"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "bénévolat",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "volunteering",
+  "context": "Je fais du ___ le samedi.",
+  "contextEn": "I do volunteer work on Saturdays.",
+  "root": {
+   "morpheme": "bénévole",
+   "meaning": "volunteer",
+   "cousins": [
+    "bénévolement",
+    "volonté"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "engagement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "commitment, involvement",
+  "context": "Son ___ dans la communauté est admirable.",
+  "contextEn": "Her involvement in the community is admirable.",
+  "root": {
+   "morpheme": "engager",
+   "meaning": "to commit, to hire",
+   "cousins": [
+    "engagé",
+    "engageant"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "appartenance",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "belonging",
+  "context": "Le club donne un sentiment d'___.",
+  "contextEn": "The club gives a sense of belonging.",
+  "root": {
+   "morpheme": "appartenir",
+   "meaning": "to belong",
+   "cousins": [
+    "tenir",
+    "appartenant"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "baptême",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "baptism, christening",
+  "context": "Le ___ de mon neveu est dimanche.",
+  "contextEn": "My nephew's baptism is on Sunday.",
+  "root": {
+   "morpheme": "baptiser",
+   "meaning": "to baptize",
+   "cousins": [
+    "baptismal",
+    "baptiste"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "parrain",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "godfather, sponsor",
+  "context": "Mon ___ m'offre toujours un livre.",
+  "contextEn": "My godfather always gives me a book.",
+  "root": {
+   "morpheme": "parrainer",
+   "meaning": "to sponsor",
+   "cousins": [
+    "parrainage",
+    "marraine"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "solidarité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "solidarity, mutual support",
+  "context": "La ___ aide les familles en difficulté.",
+  "contextEn": "Solidarity helps families in need.",
+  "root": {
+   "morpheme": "solidaire",
+   "meaning": "supportive, united",
+   "cousins": [
+    "solide",
+    "solidairement"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "bienveillant",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "kind, caring",
+  "context": "Mon grand-père est un homme ___.",
+  "contextEn": "My grandfather is a kind man.",
+  "root": {
+   "morpheme": "bien",
+   "meaning": "well, good",
+   "cousins": [
+    "bienveillance",
+    "malveillant",
+    "bienfait"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "laïcité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "secularism",
+  "context": "En France, la ___ sépare l'État et la religion.",
+  "contextEn": "In France, secularism separates state and religion.",
+  "root": {
+   "morpheme": "laïque",
+   "meaning": "secular",
+   "cousins": [
+    "laïc",
+    "laïciser"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "cohésion",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "cohesion, unity",
+  "context": "Les fêtes de quartier renforcent la ___ sociale.",
+  "contextEn": "Neighborhood parties strengthen social cohesion.",
+  "root": {
+   "morpheme": "cohérent",
+   "meaning": "coherent",
+   "cousins": [
+    "cohérence",
+    "adhésion"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "citoyenneté",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "citizenship",
+  "context": "L'école enseigne la ___ aux élèves.",
+  "contextEn": "School teaches citizenship to students.",
+  "root": {
+   "morpheme": "citoyen",
+   "meaning": "citizen",
+   "cousins": [
+    "cité",
+    "citoyenne"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "concubinage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "living together unmarried",
+  "context": "Beaucoup de couples vivent en ___ avant le mariage.",
+  "contextEn": "Many couples live together before marriage.",
+  "root": null,
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "deuil",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "mourning, grief",
+  "context": "La famille est en ___ après la mort du grand-père.",
+  "contextEn": "The family is in mourning after the grandfather's death.",
+  "root": {
+   "morpheme": "deuil",
+   "meaning": "mourning",
+   "cousins": [
+    "endeuiller",
+    "endeuillé"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "épanouissement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "personal growth, fulfillment",
+  "context": "Le sport aide à l'___ des jeunes.",
+  "contextEn": "Sports help young people grow and thrive.",
+  "root": {
+   "morpheme": "épanouir",
+   "meaning": "to blossom",
+   "cousins": [
+    "épanoui",
+    "épanouissant"
+   ]
+  },
+  "alts": [],
+  "category": "familles"
+ },
+ {
+  "word": "langue",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "language, tongue",
+  "context": "Je parle une ___ à la maison et une autre à l'école.",
+  "contextEn": "I speak one language at home and another at school.",
+  "root": {
+   "morpheme": "langue",
+   "meaning": "tongue, language",
+   "cousins": [
+    "langage",
+    "linguistique"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "pays",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "country",
+  "context": "Mon ___ d'origine est le Maroc.",
+  "contextEn": "My home country is Morocco.",
+  "root": {
+   "morpheme": "pays",
+   "meaning": "country, land",
+   "cousins": [
+    "paysage",
+    "paysan"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "culture",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "culture",
+  "context": "La ___ de mes grands-parents est importante pour moi.",
+  "contextEn": "My grandparents' culture is important to me.",
+  "root": {
+   "morpheme": "culture",
+   "meaning": "growing, culture",
+   "cousins": [
+    "culturel",
+    "cultiver"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "fier",
+  "pos": "adj",
+  "gender": null,
+  "tier": 1,
+  "gloss": "proud",
+  "context": "Je suis ___ de mes origines.",
+  "contextEn": "I am proud of my roots.",
+  "root": {
+   "morpheme": "fier",
+   "meaning": "proud",
+   "cousins": [
+    "fierté",
+    "fièrement"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "nom",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "name, last name",
+  "context": "Mon ___ de famille vient d'Italie.",
+  "contextEn": "My last name comes from Italy.",
+  "root": {
+   "morpheme": "nom",
+   "meaning": "name",
+   "cousins": [
+    "nommer",
+    "prénom",
+    "surnom"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "drapeau",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "flag",
+  "context": "Le ___ français est bleu, blanc et rouge.",
+  "contextEn": "The French flag is blue, white and red.",
+  "root": {
+   "morpheme": "drap",
+   "meaning": "cloth, sheet",
+   "cousins": [
+    "draper",
+    "draperie"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "héros",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "hero",
+  "context": "Pour moi, mon grand-père est un vrai ___.",
+  "contextEn": "For me, my grandfather is a true hero.",
+  "root": {
+   "morpheme": "héros",
+   "meaning": "hero",
+   "cousins": [
+    "héroïne",
+    "héroïque",
+    "héroïsme"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "religion",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "religion",
+  "context": "La ___ fait partie de son identité.",
+  "contextEn": "Religion is part of her identity.",
+  "root": {
+   "morpheme": "religion",
+   "meaning": "religion",
+   "cousins": [
+    "religieux",
+    "religieusement"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "accent",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "accent",
+  "context": "Elle parle français avec un ___ québécois.",
+  "contextEn": "She speaks French with a Quebec accent.",
+  "root": {
+   "morpheme": "accent",
+   "meaning": "stress, accent",
+   "cousins": [
+    "accentuer",
+    "accentuation"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "parler",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to speak",
+  "context": "Je veux ___ la langue de mes ancêtres.",
+  "contextEn": "I want to speak the language of my ancestors.",
+  "root": {
+   "morpheme": "parl",
+   "meaning": "speak",
+   "cousins": [
+    "parole",
+    "parlement"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "origine",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "origin, background",
+  "context": "Mon père est d'___ haïtienne.",
+  "contextEn": "My father is of Haitian origin.",
+  "root": {
+   "morpheme": "origine",
+   "meaning": "beginning, source",
+   "cousins": [
+    "originaire",
+    "original",
+    "originel"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "identité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "identity",
+  "context": "Mon ___ est un mélange de deux cultures.",
+  "contextEn": "My identity is a mix of two cultures.",
+  "root": {
+   "morpheme": "ident",
+   "meaning": "same",
+   "cousins": [
+    "identifier",
+    "identique"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "étranger",
+  "pos": "adj",
+  "gender": null,
+  "tier": 2,
+  "gloss": "foreign, like an outsider",
+  "context": "Au début, je me sentais ___ dans ma nouvelle école.",
+  "contextEn": "At first, I felt like an outsider in my new school.",
+  "root": {
+   "morpheme": "étrange",
+   "meaning": "strange, foreign",
+   "cousins": [
+    "étrange",
+    "étrangeté"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "valeur",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "value",
+  "context": "Le respect est une ___ importante chez nous.",
+  "contextEn": "Respect is an important value in our home.",
+  "root": {
+   "morpheme": "val",
+   "meaning": "be worth",
+   "cousins": [
+    "valoir",
+    "valable",
+    "valoriser"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "croyance",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "belief",
+  "context": "Cette ___ vient de notre religion.",
+  "contextEn": "This belief comes from our religion.",
+  "root": {
+   "morpheme": "croire",
+   "meaning": "to believe",
+   "cousins": [
+    "croyant",
+    "incroyable"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "respect",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "respect",
+  "context": "Il faut avoir du ___ pour les autres cultures.",
+  "contextEn": "You must have respect for other cultures.",
+  "root": {
+   "morpheme": "respect",
+   "meaning": "regard",
+   "cousins": [
+    "respecter",
+    "respectueux"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "liberté",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "freedom, liberty",
+  "context": "La ___ d'expression est une valeur française.",
+  "contextEn": "Freedom of speech is a French value.",
+  "root": {
+   "morpheme": "libre",
+   "meaning": "free",
+   "cousins": [
+    "libre",
+    "libérer"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "égalité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "equality",
+  "context": "Nous voulons l'___ entre les hommes et les femmes.",
+  "contextEn": "We want equality between men and women.",
+  "root": {
+   "morpheme": "égal",
+   "meaning": "equal",
+   "cousins": [
+    "égal",
+    "également",
+    "inégalité"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "immigré",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "immigrant",
+  "context": "Mon voisin est un ___ venu du Vietnam.",
+  "contextEn": "My neighbor is an immigrant who came from Vietnam.",
+  "root": {
+   "morpheme": "migr",
+   "meaning": "move, migrate",
+   "cousins": [
+    "immigrer",
+    "émigrer",
+    "migrant"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "bilingue",
+  "pos": "adj",
+  "gender": null,
+  "tier": 2,
+  "gloss": "bilingual",
+  "context": "Mon cousin est ___ : il parle anglais et espagnol.",
+  "contextEn": "My cousin is bilingual: he speaks English and Spanish.",
+  "root": {
+   "morpheme": "lingu",
+   "meaning": "tongue, language",
+   "cousins": [
+    "linguistique",
+    "trilingue",
+    "multilingue"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "appartenir",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to belong",
+  "context": "Je veux ___ à un groupe d'amis.",
+  "contextEn": "I want to belong to a group of friends.",
+  "root": {
+   "morpheme": "tenir",
+   "meaning": "to hold",
+   "cousins": [
+    "appartenance",
+    "retenir",
+    "obtenir"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "patrie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "homeland",
+  "context": "La France est la ___ de mon grand-père.",
+  "contextEn": "France is my grandfather's homeland.",
+  "root": {
+   "morpheme": "patr",
+   "meaning": "father",
+   "cousins": [
+    "patriote",
+    "compatriote"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "accueillir",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to welcome",
+  "context": "Notre ville va ___ des familles de réfugiés.",
+  "contextEn": "Our town is going to welcome refugee families.",
+  "root": {
+   "morpheme": "cueillir",
+   "meaning": "to gather",
+   "cousins": [
+    "accueil",
+    "accueillant"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "personnalité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "personality",
+  "context": "Elle a une ___ très forte.",
+  "contextEn": "She has a very strong personality.",
+  "root": {
+   "morpheme": "personne",
+   "meaning": "person",
+   "cousins": [
+    "personnel",
+    "personnage"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "intégration",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "integration, fitting in",
+  "context": "L'___ des nouveaux élèves prend du temps.",
+  "contextEn": "Helping new students fit in takes time.",
+  "root": {
+   "morpheme": "intègre",
+   "meaning": "whole",
+   "cousins": [
+    "intégrer",
+    "intègre"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "immigration",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "immigration",
+  "context": "L'___ change le visage du pays.",
+  "contextEn": "Immigration is changing the face of the country.",
+  "root": {
+   "morpheme": "migr",
+   "meaning": "move, migrate",
+   "cousins": [
+    "immigrer",
+    "émigration",
+    "migrant"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "patrimoine",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "heritage (cultural)",
+  "context": "Cette église fait partie du ___ national.",
+  "contextEn": "This church is part of the national heritage.",
+  "root": {
+   "morpheme": "patr",
+   "meaning": "father",
+   "cousins": [
+    "patrimonial",
+    "patrie"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "diversité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "diversity",
+  "context": "J'aime la ___ culturelle de mon lycée.",
+  "contextEn": "I love the cultural diversity of my high school.",
+  "root": {
+   "morpheme": "divers",
+   "meaning": "various",
+   "cousins": [
+    "divers",
+    "diversifier"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "préjugé",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "prejudice, bias",
+  "context": "Il a un ___ contre les gens de la campagne.",
+  "contextEn": "He has a prejudice against people from the countryside.",
+  "root": {
+   "morpheme": "juger",
+   "meaning": "to judge",
+   "cousins": [
+    "jugement",
+    "préjuger"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "stéréotype",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "stereotype",
+  "context": "Ce film montre un ___ sur les Français.",
+  "contextEn": "This movie shows a stereotype about French people.",
+  "root": {
+   "morpheme": "type",
+   "meaning": "model, kind",
+   "cousins": [
+    "stéréotypé",
+    "typique"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "racisme",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "racism",
+  "context": "Le ___ existe encore dans notre société.",
+  "contextEn": "Racism still exists in our society.",
+  "root": {
+   "morpheme": "race",
+   "meaning": "race",
+   "cousins": [
+    "raciste",
+    "racial"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "tolérance",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "tolerance",
+  "context": "La ___ est nécessaire pour vivre ensemble.",
+  "contextEn": "Tolerance is necessary to live together.",
+  "root": {
+   "morpheme": "tolérer",
+   "meaning": "to tolerate",
+   "cousins": [
+    "tolérant",
+    "intolérance"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "nationalité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "nationality",
+  "context": "J'ai la double ___ : française et américaine.",
+  "contextEn": "I have dual nationality: French and American.",
+  "root": {
+   "morpheme": "nation",
+   "meaning": "nation",
+   "cousins": [
+    "national",
+    "nationalisme"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "adapter",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to adapt (s'adapter)",
+  "context": "Il est difficile de s'___ à un nouveau pays.",
+  "contextEn": "It is hard to adapt to a new country.",
+  "root": {
+   "morpheme": "apte",
+   "meaning": "fit, suited",
+   "cousins": [
+    "adaptation",
+    "adaptable"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "minorité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "minority",
+  "context": "Ils font partie d'une ___ religieuse.",
+  "contextEn": "They are part of a religious minority.",
+  "root": {
+   "morpheme": "mineur",
+   "meaning": "smaller",
+   "cousins": [
+    "mineur",
+    "minoritaire"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "patriotisme",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "patriotism",
+  "context": "Le 14 juillet, on voit beaucoup de ___ en France.",
+  "contextEn": "On July 14th, you see a lot of patriotism in France.",
+  "root": {
+   "morpheme": "patr",
+   "meaning": "father(land)",
+   "cousins": [
+    "patrie",
+    "patriote"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "réfugié",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "refugee",
+  "context": "Ce ___ a quitté son pays à cause de la guerre.",
+  "contextEn": "This refugee left his country because of the war.",
+  "root": {
+   "morpheme": "refuge",
+   "meaning": "shelter",
+   "cousins": [
+    "refuge",
+    "réfugier"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "genre",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "gender; kind, type",
+  "context": "Ton ___ ne doit pas limiter tes choix.",
+  "contextEn": "Your gender should not limit your choices.",
+  "root": null,
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "assimilation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "assimilation",
+  "context": "L'___ force parfois les immigrés à oublier leur langue.",
+  "contextEn": "Assimilation sometimes forces immigrants to forget their language.",
+  "root": {
+   "morpheme": "simil",
+   "meaning": "alike",
+   "cousins": [
+    "assimiler",
+    "similaire"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "exclusion",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "exclusion, being left out",
+  "context": "Beaucoup de jeunes souffrent d'___ à l'école.",
+  "contextEn": "Many young people suffer from exclusion at school.",
+  "root": {
+   "morpheme": "clure",
+   "meaning": "to close",
+   "cousins": [
+    "exclure",
+    "inclusion"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "discrimination",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "discrimination",
+  "context": "La ___ au travail est illégale.",
+  "contextEn": "Discrimination at work is illegal.",
+  "root": {
+   "morpheme": "discriminer",
+   "meaning": "to distinguish",
+   "cousins": [
+    "discriminer",
+    "discriminatoire"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "multiculturel",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "multicultural",
+  "context": "Le Canada est un pays ___.",
+  "contextEn": "Canada is a multicultural country.",
+  "root": {
+   "morpheme": "culture",
+   "meaning": "culture",
+   "cousins": [
+    "culturel",
+    "multiculturalisme"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "francophone",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "French-speaking",
+  "context": "Le Sénégal est un pays ___.",
+  "contextEn": "Senegal is a French-speaking country.",
+  "root": {
+   "morpheme": "phone",
+   "meaning": "voice, sound",
+   "cousins": [
+    "francophonie",
+    "anglophone",
+    "téléphone"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "dialecte",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "dialect",
+  "context": "Ma grand-mère parle un ___ de sa région.",
+  "contextEn": "My grandmother speaks a dialect from her region.",
+  "root": {
+   "morpheme": "dialecte",
+   "meaning": "way of speaking",
+   "cousins": [
+    "dialectal",
+    "dialogue"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "aliénation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "alienation, feeling estranged",
+  "context": "Loin de chez lui, il ressent une grande ___.",
+  "contextEn": "Far from home, he feels a deep alienation.",
+  "root": {
+   "morpheme": "alién",
+   "meaning": "other, foreign",
+   "cousins": [
+    "aliéner",
+    "aliéné"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "revendiquer",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to claim, to demand",
+  "context": "Les jeunes veulent ___ leurs droits.",
+  "contextEn": "Young people want to demand their rights.",
+  "root": {
+   "morpheme": "revendiquer",
+   "meaning": "to claim back",
+   "cousins": [
+    "revendication",
+    "revendicatif"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "épanouir",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to thrive, flourish (s'épanouir)",
+  "context": "Je veux m'___ dans mon travail.",
+  "contextEn": "I want to thrive in my job.",
+  "root": {
+   "morpheme": "épanouir",
+   "meaning": "to bloom",
+   "cousins": [
+    "épanouissement",
+    "épanoui"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "colonisation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "colonization",
+  "context": "La ___ a imposé le français en Afrique.",
+  "contextEn": "Colonization imposed French in Africa.",
+  "root": {
+   "morpheme": "colon",
+   "meaning": "settler",
+   "cousins": [
+    "colonie",
+    "coloniser",
+    "colonial"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "métissage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "mixing of cultures or races",
+  "context": "Le ___ des cultures crée une nouvelle identité.",
+  "contextEn": "The mixing of cultures creates a new identity.",
+  "root": {
+   "morpheme": "métis",
+   "meaning": "mixed",
+   "cousins": [
+    "métis",
+    "métisser"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "déracinement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "uprooting, displacement",
+  "context": "Pour les réfugiés, le ___ est très douloureux.",
+  "contextEn": "For refugees, being uprooted is very painful.",
+  "root": {
+   "morpheme": "racine",
+   "meaning": "root",
+   "cousins": [
+    "racine",
+    "déraciner",
+    "enraciné"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "francophonie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "French-speaking world",
+  "context": "La ___ réunit des pays sur cinq continents.",
+  "contextEn": "The French-speaking world unites countries on five continents.",
+  "root": {
+   "morpheme": "phone",
+   "meaning": "voice, sound",
+   "cousins": [
+    "francophone",
+    "anglophone"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "marginaliser",
+  "pos": "v",
+  "gender": null,
+  "tier": 5,
+  "gloss": "to marginalize, push aside",
+  "context": "Il ne faut pas ___ les nouveaux arrivants.",
+  "contextEn": "We must not push newcomers to the margins.",
+  "root": {
+   "morpheme": "marge",
+   "meaning": "edge, margin",
+   "cousins": [
+    "marge",
+    "marginal",
+    "marginalisation"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "émancipation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "emancipation, liberation",
+  "context": "L'___ des femmes a changé la société.",
+  "contextEn": "The emancipation of women changed society.",
+  "root": {
+   "morpheme": "émanciper",
+   "meaning": "to set free",
+   "cousins": [
+    "émanciper",
+    "émancipé"
+   ]
+  },
+  "alts": [],
+  "category": "identites"
+ },
+ {
+  "word": "musique",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "music",
+  "context": "J'écoute de la ___ classique le soir.",
+  "contextEn": "I listen to classical music in the evening.",
+  "root": {
+   "morpheme": "musique",
+   "meaning": "music",
+   "cousins": [
+    "musicien",
+    "musical"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "danse",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "dance",
+  "context": "Ma sœur prend des cours de ___ le mercredi.",
+  "contextEn": "My sister takes dance classes on Wednesday.",
+  "root": {
+   "morpheme": "danser",
+   "meaning": "to dance",
+   "cousins": [
+    "danseur",
+    "danseuse"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "chanson",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "song",
+  "context": "Cette ___ de Stromae passe souvent à la radio.",
+  "contextEn": "This Stromae song is often on the radio.",
+  "root": {
+   "morpheme": "chanter",
+   "meaning": "to sing",
+   "cousins": [
+    "chanteur",
+    "chant"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "peinture",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "painting",
+  "context": "Cette ___ de Monet est au musée d'Orsay.",
+  "contextEn": "This Monet painting is at the Orsay museum.",
+  "root": {
+   "morpheme": "peindre",
+   "meaning": "to paint",
+   "cousins": [
+    "peintre",
+    "peint"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "musée",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "museum",
+  "context": "Le Louvre est un ___ très célèbre à Paris.",
+  "contextEn": "The Louvre is a very famous museum in Paris.",
+  "root": null,
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "film",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "movie, film",
+  "context": "On va voir un ___ français au cinéma.",
+  "contextEn": "We're going to see a French movie at the theater.",
+  "root": {
+   "morpheme": "film",
+   "meaning": "film",
+   "cousins": [
+    "filmer",
+    "filmographie"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "livre",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "book",
+  "context": "J'ai lu un ___ de Victor Hugo cet été.",
+  "contextEn": "I read a book by Victor Hugo this summer.",
+  "root": {
+   "morpheme": "livre",
+   "meaning": "book",
+   "cousins": [
+    "livret",
+    "librairie"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "beau",
+  "pos": "adj",
+  "gender": null,
+  "tier": 1,
+  "gloss": "beautiful, handsome",
+  "context": "Ce château est très ___.",
+  "contextEn": "This castle is very beautiful.",
+  "root": {
+   "morpheme": "beauté",
+   "meaning": "beauty",
+   "cousins": [
+    "belle",
+    "embellir"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "dessiner",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to draw",
+  "context": "Mon frère aime ___ des bandes dessinées.",
+  "contextEn": "My brother likes to draw comics.",
+  "root": {
+   "morpheme": "dessin",
+   "meaning": "drawing",
+   "cousins": [
+    "dessinateur",
+    "dessiné"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "chanter",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to sing",
+  "context": "Elle va ___ à la fête de l'école.",
+  "contextEn": "She is going to sing at the school party.",
+  "root": {
+   "morpheme": "chant",
+   "meaning": "singing",
+   "cousins": [
+    "chanteur",
+    "chanson"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "couleur",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "color",
+  "context": "Le rouge est ma ___ préférée.",
+  "contextEn": "Red is my favorite color.",
+  "root": {
+   "morpheme": "colorer",
+   "meaning": "to color",
+   "cousins": [
+    "coloré",
+    "coloriage"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "théâtre",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "theater",
+  "context": "Nous allons au ___ pour voir une pièce de Molière.",
+  "contextEn": "We are going to the theater to see a Molière play.",
+  "root": {
+   "morpheme": "théâtre",
+   "meaning": "theater",
+   "cousins": [
+    "théâtral",
+    "théâtralement"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "artiste",
+  "pos": "n",
+  "gender": "mf",
+  "tier": 2,
+  "gloss": "artist",
+  "context": "Cet ___ peint des fresques dans la rue.",
+  "contextEn": "This artist paints murals in the street.",
+  "root": {
+   "morpheme": "art",
+   "meaning": "art",
+   "cousins": [
+    "artistique",
+    "artisan"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "tableau",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "painting, picture",
+  "context": "Ce ___ de Van Gogh coûte très cher.",
+  "contextEn": "This Van Gogh painting is very expensive.",
+  "root": null,
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "poème",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "poem",
+  "context": "J'ai écrit un ___ pour ma mère.",
+  "contextEn": "I wrote a poem for my mother.",
+  "root": {
+   "morpheme": "poésie",
+   "meaning": "poetry",
+   "cousins": [
+    "poète",
+    "poétique"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "roman",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "novel",
+  "context": "Ce ___ raconte l'histoire d'une famille pauvre.",
+  "contextEn": "This novel tells the story of a poor family.",
+  "root": {
+   "morpheme": "roman",
+   "meaning": "novel",
+   "cousins": [
+    "romancier",
+    "romanesque"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "mode",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "fashion",
+  "context": "Paris est la capitale de la ___.",
+  "contextEn": "Paris is the capital of fashion.",
+  "root": {
+   "morpheme": "mode",
+   "meaning": "fashion",
+   "cousins": [
+    "démodé",
+    "modiste"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "vêtement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "piece of clothing",
+  "context": "Ce ___ est fait en coton bio.",
+  "contextEn": "This piece of clothing is made of organic cotton.",
+  "root": {
+   "morpheme": "vêtir",
+   "meaning": "to dress",
+   "cousins": [
+    "vêtu",
+    "revêtir"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "concert",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "concert",
+  "context": "Ils ont vu un ___ de jazz à Montréal.",
+  "contextEn": "They saw a jazz concert in Montreal.",
+  "root": null,
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "sculpture",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "sculpture",
+  "context": "Cette ___ en marbre est très ancienne.",
+  "contextEn": "This marble sculpture is very old.",
+  "root": {
+   "morpheme": "sculpter",
+   "meaning": "to sculpt",
+   "cousins": [
+    "sculpteur",
+    "sculpté"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "écrivain",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "writer",
+  "context": "Victor Hugo est un ___ français très célèbre.",
+  "contextEn": "Victor Hugo is a very famous French writer.",
+  "root": {
+   "morpheme": "écrire",
+   "meaning": "to write",
+   "cousins": [
+    "écriture",
+    "écrit"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "spectacle",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "show, performance",
+  "context": "Le ___ de danse commence à vingt heures.",
+  "contextEn": "The dance show starts at 8 p.m.",
+  "root": {
+   "morpheme": "spectacle",
+   "meaning": "show",
+   "cousins": [
+    "spectateur",
+    "spectaculaire"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "maquillage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "makeup",
+  "context": "Elle ne porte pas de ___ à l'école.",
+  "contextEn": "She doesn't wear makeup at school.",
+  "root": {
+   "morpheme": "maquiller",
+   "meaning": "to put on makeup",
+   "cousins": [
+    "maquilleur",
+    "maquillé"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "photographie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "photography, photo",
+  "context": "J'aime la ___ en noir et blanc.",
+  "contextEn": "I like black-and-white photography.",
+  "root": {
+   "morpheme": "photo",
+   "meaning": "photo",
+   "cousins": [
+    "photographe",
+    "photographier"
+   ]
+  },
+  "alts": [
+   "photo"
+  ],
+  "category": "esthetique"
+ },
+ {
+  "word": "beauté",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "beauty",
+  "context": "Pour moi, la ___ vient de l'intérieur.",
+  "contextEn": "For me, beauty comes from within.",
+  "root": {
+   "morpheme": "beau",
+   "meaning": "beautiful",
+   "cousins": [
+    "belle",
+    "embellir"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "peindre",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to paint",
+  "context": "Je vais ___ ma chambre en bleu.",
+  "contextEn": "I'm going to paint my room blue.",
+  "root": {
+   "morpheme": "peinture",
+   "meaning": "painting",
+   "cousins": [
+    "peintre",
+    "peint"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "exposition",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "exhibit, exhibition",
+  "context": "Il y a une ___ de photos au musée.",
+  "contextEn": "There is a photo exhibit at the museum.",
+  "root": {
+   "morpheme": "exposer",
+   "meaning": "to exhibit",
+   "cousins": [
+    "exposant",
+    "exposé"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "architecture",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "architecture",
+  "context": "L'___ de cette ville mélange l'ancien et le moderne.",
+  "contextEn": "This city's architecture mixes old and modern.",
+  "root": {
+   "morpheme": "architecte",
+   "meaning": "architect",
+   "cousins": [
+    "architectural"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "bâtiment",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "building",
+  "context": "Ce ___ moderne est tout en verre.",
+  "contextEn": "This modern building is all glass.",
+  "root": {
+   "morpheme": "bâtir",
+   "meaning": "to build",
+   "cousins": [
+    "bâtisse",
+    "bâtisseur"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "monument",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "monument",
+  "context": "L'Arc de Triomphe est un ___ de Paris.",
+  "contextEn": "The Arc de Triomphe is a Paris monument.",
+  "root": {
+   "morpheme": "monument",
+   "meaning": "monument",
+   "cousins": [
+    "monumental"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "poésie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "poetry",
+  "context": "Baudelaire a changé la ___ française.",
+  "contextEn": "Baudelaire changed French poetry.",
+  "root": {
+   "morpheme": "poème",
+   "meaning": "poem",
+   "cousins": [
+    "poète",
+    "poétique"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "créativité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "creativity",
+  "context": "Ce professeur encourage la ___ des élèves.",
+  "contextEn": "This teacher encourages students' creativity.",
+  "root": {
+   "morpheme": "créer",
+   "meaning": "to create",
+   "cousins": [
+    "créatif",
+    "création"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "auteur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "author",
+  "context": "L'___ de ce livre habite à Dakar.",
+  "contextEn": "The author of this book lives in Dakar.",
+  "root": {
+   "morpheme": "auteur",
+   "meaning": "author",
+   "cousins": [
+    "autrice",
+    "autoriser"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "costume",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "costume; suit",
+  "context": "L'acteur porte un ___ du dix-septième siècle.",
+  "contextEn": "The actor wears a 17th-century costume.",
+  "root": {
+   "morpheme": "costume",
+   "meaning": "costume",
+   "cousins": [
+    "costumier",
+    "costumé"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "styliste",
+  "pos": "n",
+  "gender": "mf",
+  "tier": 3,
+  "gloss": "fashion designer",
+  "context": "Coco Chanel était une ___ très célèbre.",
+  "contextEn": "Coco Chanel was a very famous fashion designer.",
+  "root": {
+   "morpheme": "style",
+   "meaning": "style",
+   "cousins": [
+    "stylé",
+    "stylisme"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "œuvre",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "work (of art)",
+  "context": "La Joconde est une ___ de Léonard de Vinci.",
+  "contextEn": "The Mona Lisa is a work by Leonardo da Vinci.",
+  "root": {
+   "morpheme": "œuvrer",
+   "meaning": "to work",
+   "cousins": [
+    "ouvrage",
+    "ouvrier"
+   ]
+  },
+  "alts": [
+   "oeuvre"
+  ],
+  "category": "esthetique"
+ },
+ {
+  "word": "sculpteur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "sculptor",
+  "context": "Rodin est le ___ du Penseur.",
+  "contextEn": "Rodin is the sculptor of The Thinker.",
+  "root": {
+   "morpheme": "sculpter",
+   "meaning": "to sculpt",
+   "cousins": [
+    "sculpture",
+    "sculpté"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "apparence",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "appearance, looks",
+  "context": "Il ne faut pas juger les gens sur leur ___.",
+  "contextEn": "You shouldn't judge people by their looks.",
+  "root": {
+   "morpheme": "apparaître",
+   "meaning": "to appear",
+   "cousins": [
+    "apparition",
+    "apparent"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "élégant",
+  "pos": "adj",
+  "gender": null,
+  "tier": 3,
+  "gloss": "elegant, stylish",
+  "context": "Il porte un costume très ___.",
+  "contextEn": "He's wearing a very elegant suit.",
+  "root": {
+   "morpheme": "élégance",
+   "meaning": "elegance",
+   "cousins": [
+    "élégamment"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "créer",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to create",
+  "context": "Les élèves vont ___ une affiche pour le festival.",
+  "contextEn": "The students are going to create a poster for the festival.",
+  "root": {
+   "morpheme": "création",
+   "meaning": "creation",
+   "cousins": [
+    "créateur",
+    "créatif"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "mannequin",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "fashion model",
+  "context": "Le ___ marche sur le podium.",
+  "contextEn": "The model walks on the runway.",
+  "root": null,
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "esthétique",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "aesthetics, look",
+  "context": "L'___ de ce téléphone est simple et moderne.",
+  "contextEn": "This phone's look is simple and modern.",
+  "root": {
+   "morpheme": "esthétique",
+   "meaning": "aesthetics",
+   "cousins": [
+    "esthète",
+    "esthéticienne"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "cathédrale",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "cathedral",
+  "context": "La ___ Notre-Dame a brûlé en 2019.",
+  "contextEn": "Notre-Dame cathedral burned in 2019.",
+  "root": null,
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "chorégraphie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "choreography",
+  "context": "La ___ de ce ballet est très difficile.",
+  "contextEn": "This ballet's choreography is very hard.",
+  "root": {
+   "morpheme": "chorégraphe",
+   "meaning": "choreographer",
+   "cousins": [
+    "chorégraphier"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "inspiration",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "inspiration",
+  "context": "La nature est une source d'___ pour les peintres.",
+  "contextEn": "Nature is a source of inspiration for painters.",
+  "root": {
+   "morpheme": "inspirer",
+   "meaning": "to inspire",
+   "cousins": [
+    "inspiré",
+    "inspirant"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "défilé",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "fashion show, parade",
+  "context": "Le ___ de mode a lieu pendant la Fashion Week.",
+  "contextEn": "The fashion show takes place during Fashion Week.",
+  "root": {
+   "morpheme": "défiler",
+   "meaning": "to march, parade",
+   "cousins": [
+    "file"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "interpréter",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to perform, play (a role)",
+  "context": "Cette actrice va ___ le rôle de Marie Curie.",
+  "contextEn": "This actress is going to play Marie Curie.",
+  "root": {
+   "morpheme": "interprète",
+   "meaning": "performer, interpreter",
+   "cousins": [
+    "interprétation"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "mélodie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "melody, tune",
+  "context": "Je n'oublie jamais la ___ de cette chanson.",
+  "contextEn": "I never forget the melody of this song.",
+  "root": {
+   "morpheme": "mélodie",
+   "meaning": "melody",
+   "cousins": [
+    "mélodieux",
+    "mélodique"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "paysage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "landscape",
+  "context": "Cézanne a peint ce ___ en Provence.",
+  "contextEn": "Cézanne painted this landscape in Provence.",
+  "root": {
+   "morpheme": "pays",
+   "meaning": "country, land",
+   "cousins": [
+    "paysagiste",
+    "paysan"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "personnage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "character (in a story)",
+  "context": "Le ___ principal du roman est une jeune fille.",
+  "contextEn": "The novel's main character is a young girl.",
+  "root": {
+   "morpheme": "personne",
+   "meaning": "person",
+   "cousins": [
+    "personnel",
+    "personnalité"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "vitrail",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "stained-glass window",
+  "context": "Le soleil traverse le ___ coloré de l'église.",
+  "contextEn": "The sun shines through the church's colored stained glass.",
+  "root": {
+   "morpheme": "vitre",
+   "meaning": "window pane",
+   "cousins": [
+    "vitrier",
+    "vitrage"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "harmonieux",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "harmonious, balanced",
+  "context": "Ce jardin a un style ___ et calme.",
+  "contextEn": "This garden has a harmonious, calm style.",
+  "root": {
+   "morpheme": "harmonie",
+   "meaning": "harmony",
+   "cousins": [
+    "harmoniser",
+    "harmonieusement"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "symboliser",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to symbolize",
+  "context": "La colombe peut ___ la paix.",
+  "contextEn": "The dove can symbolize peace.",
+  "root": {
+   "morpheme": "symbole",
+   "meaning": "symbol",
+   "cousins": [
+    "symbolique",
+    "symbolisme"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "mécène",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "patron of the arts",
+  "context": "Un riche ___ a payé la restauration du château.",
+  "contextEn": "A rich arts patron paid to restore the castle.",
+  "root": {
+   "morpheme": "mécène",
+   "meaning": "patron",
+   "cousins": [
+    "mécénat"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "éphémère",
+  "pos": "adj",
+  "gender": null,
+  "tier": 5,
+  "gloss": "short-lived, temporary",
+  "context": "Ce festival d'art est un événement ___.",
+  "contextEn": "This art festival is a short-lived event.",
+  "root": null,
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "rayonnement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "influence, prestige",
+  "context": "Les musées participent au ___ culturel de la France.",
+  "contextEn": "Museums add to France's cultural influence.",
+  "root": {
+   "morpheme": "rayonner",
+   "meaning": "to shine, radiate",
+   "cousins": [
+    "rayon"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "canon",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "standard (of beauty)",
+  "context": "Chaque époque a son propre ___ de beauté.",
+  "contextEn": "Every era has its own standard of beauty.",
+  "root": null,
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "subjectif",
+  "pos": "adj",
+  "gender": null,
+  "tier": 5,
+  "gloss": "subjective, personal",
+  "context": "Le goût est un jugement très ___.",
+  "contextEn": "Taste is a very personal judgment.",
+  "root": {
+   "morpheme": "sujet",
+   "meaning": "subject",
+   "cousins": [
+    "subjectivité"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "sublime",
+  "pos": "adj",
+  "gender": null,
+  "tier": 5,
+  "gloss": "sublime, stunning",
+  "context": "Le coucher de soleil sur la mer est ___.",
+  "contextEn": "The sunset over the sea is stunning.",
+  "root": {
+   "morpheme": "sublimer",
+   "meaning": "to make sublime",
+   "cousins": [
+    "sublimation"
+   ]
+  },
+  "alts": [],
+  "category": "esthetique"
+ },
+ {
+  "word": "ordinateur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "computer",
+  "context": "Mon ___ est trop lent pour ce jeu.",
+  "contextEn": "My computer is too slow for this game.",
+  "root": {
+   "morpheme": "ordonner",
+   "meaning": "to arrange",
+   "cousins": [
+    "ordre",
+    "ordonnance"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "téléphone",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "phone",
+  "context": "J'oublie toujours mon ___ à la maison.",
+  "contextEn": "I always forget my phone at home.",
+  "root": {
+   "morpheme": "téléphoner",
+   "meaning": "to call",
+   "cousins": [
+    "téléphonique",
+    "téléphoniste"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "écran",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "screen",
+  "context": "Je regarde mon ___ toute la journée.",
+  "contextEn": "I look at my screen all day.",
+  "root": null,
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "médecin",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "doctor",
+  "context": "Je suis malade, je vais chez le ___.",
+  "contextEn": "I am sick, I am going to the doctor's.",
+  "root": {
+   "morpheme": "médecine",
+   "meaning": "medicine",
+   "cousins": [
+    "médical",
+    "médicament"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "santé",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "health",
+  "context": "Le sport est bon pour la ___.",
+  "contextEn": "Sports are good for your health.",
+  "root": {
+   "morpheme": "sain",
+   "meaning": "healthy",
+   "cousins": [
+    "sanitaire",
+    "assainir"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "science",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "science",
+  "context": "J'aime la ___ et les maths.",
+  "contextEn": "I like science and math.",
+  "root": {
+   "morpheme": "science",
+   "meaning": "knowledge",
+   "cousins": [
+    "scientifique",
+    "conscience"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "clavier",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "keyboard",
+  "context": "Les touches de mon ___ sont sales.",
+  "contextEn": "The keys on my keyboard are dirty.",
+  "root": {
+   "morpheme": "clé",
+   "meaning": "key",
+   "cousins": [
+    "clef",
+    "clavecin"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "message",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "message, text",
+  "context": "Je t'envoie un ___ ce soir.",
+  "contextEn": "I'll send you a message tonight.",
+  "root": {
+   "morpheme": "mettre",
+   "meaning": "to put, to send",
+   "cousins": [
+    "mission",
+    "messager"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "hôpital",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "hospital",
+  "context": "Mon grand-père est à l'___ depuis lundi.",
+  "contextEn": "My grandfather has been in the hospital since Monday.",
+  "root": {
+   "morpheme": "hôte",
+   "meaning": "host, guest",
+   "cousins": [
+    "hospitalier",
+    "hospitalité"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "malade",
+  "pos": "adj",
+  "gender": null,
+  "tier": 1,
+  "gloss": "sick, ill",
+  "context": "Je suis ___ aujourd'hui, je reste au lit.",
+  "contextEn": "I am sick today, I'm staying in bed.",
+  "root": {
+   "morpheme": "mal",
+   "meaning": "bad, ill",
+   "cousins": [
+    "maladie",
+    "maladif"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "envoyer",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to send",
+  "context": "Je vais ___ une photo à ma mère.",
+  "contextEn": "I am going to send a photo to my mom.",
+  "root": {
+   "morpheme": "voie",
+   "meaning": "way, road",
+   "cousins": [
+    "voyage",
+    "envoi"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "utiliser",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to use",
+  "context": "Tu peux ___ mon ordinateur pour tes devoirs.",
+  "contextEn": "You can use my computer for your homework.",
+  "root": {
+   "morpheme": "utile",
+   "meaning": "useful",
+   "cousins": [
+    "utilité",
+    "utilisateur"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "portable",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "cell phone; laptop",
+  "context": "Mon ___ n'a plus de batterie.",
+  "contextEn": "My cell phone is out of battery.",
+  "root": {
+   "morpheme": "porter",
+   "meaning": "to carry",
+   "cousins": [
+    "transporter",
+    "apporter"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "logiciel",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "software, program",
+  "context": "Ce ___ aide les élèves à écrire.",
+  "contextEn": "This software helps students write.",
+  "root": {
+   "morpheme": "logique",
+   "meaning": "logic",
+   "cousins": [
+    "logicien",
+    "logiquement"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "télécharger",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to download",
+  "context": "Je vais ___ cette application ce soir.",
+  "contextEn": "I am going to download this app tonight.",
+  "root": {
+   "morpheme": "charger",
+   "meaning": "to load",
+   "cousins": [
+    "charge",
+    "chargeur"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "chercheur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "researcher, scientist",
+  "context": "Le ___ travaille dans un laboratoire.",
+  "contextEn": "The researcher works in a lab.",
+  "root": {
+   "morpheme": "chercher",
+   "meaning": "to look for",
+   "cousins": [
+    "recherche",
+    "chercheuse"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "recherche",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "research",
+  "context": "Elle fait de la ___ sur le cancer.",
+  "contextEn": "She does research on cancer.",
+  "root": {
+   "morpheme": "chercher",
+   "meaning": "to look for",
+   "cousins": [
+    "chercheur",
+    "rechercher"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "médicament",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "medicine, drug",
+  "context": "Prends ce ___ deux fois par jour.",
+  "contextEn": "Take this medicine twice a day.",
+  "root": {
+   "morpheme": "médecin",
+   "meaning": "doctor",
+   "cousins": [
+    "médecine",
+    "médical"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "maladie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "illness, disease",
+  "context": "Le diabète est une ___ grave.",
+  "contextEn": "Diabetes is a serious disease.",
+  "root": {
+   "morpheme": "mal",
+   "meaning": "bad, ill",
+   "cousins": [
+    "malade",
+    "maladif"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "inventer",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to invent",
+  "context": "Il veut ___ une machine pour aider les gens.",
+  "contextEn": "He wants to invent a machine to help people.",
+  "root": {
+   "morpheme": "invention",
+   "meaning": "something newly created",
+   "cousins": [
+    "inventeur",
+    "inventif"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "découverte",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "discovery",
+  "context": "Cette ___ a changé la médecine.",
+  "contextEn": "This discovery changed medicine.",
+  "root": {
+   "morpheme": "couvrir",
+   "meaning": "to cover",
+   "cousins": [
+    "découvrir",
+    "couverture"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "robot",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "robot",
+  "context": "Le ___ nettoie la maison tout seul.",
+  "contextEn": "The robot cleans the house all by itself.",
+  "root": null,
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "batterie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "battery",
+  "context": "La ___ de mon portable est vide.",
+  "contextEn": "My phone's battery is dead.",
+  "root": null,
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "appareil",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "device, machine",
+  "context": "Cet ___ mesure la température.",
+  "contextEn": "This device measures the temperature.",
+  "root": null,
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "connecter",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to connect",
+  "context": "Je dois ___ mon ordinateur au wifi.",
+  "contextEn": "I have to connect my computer to the wifi.",
+  "root": {
+   "morpheme": "connexion",
+   "meaning": "link, connection",
+   "cousins": [
+    "déconnecter",
+    "connecté"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "vaccin",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "vaccine",
+  "context": "Le ___ protège contre la grippe.",
+  "contextEn": "The vaccine protects against the flu.",
+  "root": {
+   "morpheme": "vache",
+   "meaning": "cow (from cowpox)",
+   "cousins": [
+    "vacciner",
+    "vaccination"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "progrès",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "progress",
+  "context": "La médecine a fait beaucoup de ___.",
+  "contextEn": "Medicine has made a lot of progress.",
+  "root": {
+   "morpheme": "progresser",
+   "meaning": "to move forward",
+   "cousins": [
+    "progression",
+    "progressif"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "innovation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "innovation",
+  "context": "Cette ___ va aider les malades.",
+  "contextEn": "This innovation is going to help sick people.",
+  "root": {
+   "morpheme": "nouveau",
+   "meaning": "new",
+   "cousins": [
+    "innover",
+    "rénover"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "numérique",
+  "pos": "adj",
+  "gender": null,
+  "tier": 3,
+  "gloss": "digital",
+  "context": "Nous vivons dans un monde ___.",
+  "contextEn": "We live in a digital world.",
+  "root": {
+   "morpheme": "numéro",
+   "meaning": "number",
+   "cousins": [
+    "nombre",
+    "numéroter"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "dépendance",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "addiction, dependence",
+  "context": "Sa ___ au téléphone est un vrai problème.",
+  "contextEn": "His phone addiction is a real problem.",
+  "root": {
+   "morpheme": "dépendre",
+   "meaning": "to depend",
+   "cousins": [
+    "indépendant",
+    "dépendant"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "donnée",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "piece of data",
+  "context": "Chaque ___ personnelle doit être protégée.",
+  "contextEn": "Every piece of personal data must be protected.",
+  "root": {
+   "morpheme": "donner",
+   "meaning": "to give",
+   "cousins": [
+    "don",
+    "donateur"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "piratage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "hacking, piracy",
+  "context": "Le ___ de comptes est un crime.",
+  "contextEn": "Hacking into accounts is a crime.",
+  "root": {
+   "morpheme": "pirate",
+   "meaning": "pirate, hacker",
+   "cousins": [
+    "pirater",
+    "piraterie"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "guérir",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to cure, to heal",
+  "context": "Les médecins veulent ___ cette maladie.",
+  "contextEn": "Doctors want to cure this disease.",
+  "root": {
+   "morpheme": "guérison",
+   "meaning": "recovery, cure",
+   "cousins": [
+    "guérisseur",
+    "inguérissable"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "soigner",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to treat, to care for",
+  "context": "L'infirmière va ___ le patient.",
+  "contextEn": "The nurse is going to treat the patient.",
+  "root": {
+   "morpheme": "soin",
+   "meaning": "care",
+   "cousins": [
+    "soigneux",
+    "soignant"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "traitement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "treatment",
+  "context": "Ce nouveau ___ marche très bien.",
+  "contextEn": "This new treatment works very well.",
+  "root": {
+   "morpheme": "traiter",
+   "meaning": "to treat",
+   "cousins": [
+    "maltraiter",
+    "traité"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "laboratoire",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "laboratory, lab",
+  "context": "Les élèves font une expérience au ___.",
+  "contextEn": "The students do an experiment in the lab.",
+  "root": {
+   "morpheme": "labeur",
+   "meaning": "hard work",
+   "cousins": [
+    "laborieux",
+    "élaborer"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "expérience",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "experiment; experience",
+  "context": "Nous faisons une ___ en cours de chimie.",
+  "contextEn": "We are doing an experiment in chemistry class.",
+  "root": {
+   "morpheme": "expérimenter",
+   "meaning": "to test, to try out",
+   "cousins": [
+    "expert",
+    "expérimental"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "améliorer",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to improve",
+  "context": "La technologie peut ___ notre vie.",
+  "contextEn": "Technology can improve our life.",
+  "root": {
+   "morpheme": "meilleur",
+   "meaning": "better",
+   "cousins": [
+    "amélioration",
+    "mieux"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "communiquer",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to communicate",
+  "context": "Les réseaux sociaux nous aident à ___ vite.",
+  "contextEn": "Social media helps us communicate quickly.",
+  "root": {
+   "morpheme": "commun",
+   "meaning": "common, shared",
+   "cousins": [
+    "communication",
+    "communauté"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "abonné",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "follower, subscriber",
+  "context": "Chaque nouvel ___ reçoit un cadeau.",
+  "contextEn": "Every new follower gets a gift.",
+  "root": {
+   "morpheme": "abonner",
+   "meaning": "to subscribe",
+   "cousins": [
+    "abonnement",
+    "désabonner"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "publier",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to post, to publish",
+  "context": "Je vais ___ une photo sur mon profil.",
+  "contextEn": "I am going to post a photo on my profile.",
+  "root": {
+   "morpheme": "public",
+   "meaning": "public",
+   "cousins": [
+    "publication",
+    "publicité"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "inégalité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "inequality",
+  "context": "L'___ d'accès à internet touche les zones rurales.",
+  "contextEn": "Unequal internet access affects rural areas.",
+  "root": {
+   "morpheme": "égal",
+   "meaning": "equal",
+   "cousins": [
+    "égalité",
+    "égaliser"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "surveillance",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "surveillance, monitoring",
+  "context": "La ___ en ligne inquiète beaucoup de gens.",
+  "contextEn": "Online surveillance worries a lot of people.",
+  "root": {
+   "morpheme": "veiller",
+   "meaning": "to watch over",
+   "cousins": [
+    "surveiller",
+    "veilleur"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "nuisible",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "harmful",
+  "context": "L'usage excessif des écrans est ___ à la santé.",
+  "contextEn": "Too much screen use is harmful to your health.",
+  "root": {
+   "morpheme": "nuire",
+   "meaning": "to harm",
+   "cousins": [
+    "nuisance",
+    "nuisant"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "éthique",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "ethics",
+  "context": "Le clonage pose une question d'___.",
+  "contextEn": "Cloning raises a question of ethics.",
+  "root": null,
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "clonage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "cloning",
+  "context": "Le ___ des animaux est interdit dans certains pays.",
+  "contextEn": "Animal cloning is banned in some countries.",
+  "root": {
+   "morpheme": "clone",
+   "meaning": "clone, copy",
+   "cousins": [
+    "cloner"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "génétique",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "genetic",
+  "context": "Cette maladie est ___ : elle vient des parents.",
+  "contextEn": "This disease is genetic: it comes from the parents.",
+  "root": {
+   "morpheme": "gène",
+   "meaning": "gene",
+   "cousins": [
+    "génome",
+    "généticien"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "dépistage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "screening, testing",
+  "context": "Le ___ précoce sauve des vies.",
+  "contextEn": "Early screening saves lives.",
+  "root": {
+   "morpheme": "piste",
+   "meaning": "trail, track",
+   "cousins": [
+    "dépister",
+    "pister"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "harcèlement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "harassment, bullying",
+  "context": "Le ___ en ligne est un grave problème.",
+  "contextEn": "Online bullying is a serious problem.",
+  "root": {
+   "morpheme": "harceler",
+   "meaning": "to harass",
+   "cousins": [
+    "harceleur"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "fiable",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "reliable, trustworthy",
+  "context": "Ce site n'est pas ___, vérifie l'information.",
+  "contextEn": "This site isn't reliable, check the information.",
+  "root": {
+   "morpheme": "fier",
+   "meaning": "to trust (se fier)",
+   "cousins": [
+    "fiabilité",
+    "confiance"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "bouleverser",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to turn upside down",
+  "context": "L'intelligence artificielle va ___ le monde du travail.",
+  "contextEn": "Artificial intelligence is going to turn the work world upside down.",
+  "root": {
+   "morpheme": "verser",
+   "meaning": "to pour, to tip",
+   "cousins": [
+    "renverser",
+    "verser"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "durable",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "sustainable, lasting",
+  "context": "Il faut un développement ___ pour la planète.",
+  "contextEn": "We need sustainable development for the planet.",
+  "root": {
+   "morpheme": "durer",
+   "meaning": "to last",
+   "cousins": [
+    "durée",
+    "durabilité"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "greffe",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "transplant",
+  "context": "Mon oncle a reçu une ___ de cœur.",
+  "contextEn": "My uncle received a heart transplant.",
+  "root": {
+   "morpheme": "greffer",
+   "meaning": "to graft, to transplant",
+   "cousins": [
+    "greffon"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "empreinte",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "footprint, trace",
+  "context": "Notre ___ numérique reste en ligne pour toujours.",
+  "contextEn": "Our digital footprint stays online forever.",
+  "root": {
+   "morpheme": "imprimer",
+   "meaning": "to print, to press",
+   "cousins": [
+    "imprimante",
+    "impression"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "désinformation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "misinformation, fake news",
+  "context": "La ___ circule vite sur les réseaux sociaux.",
+  "contextEn": "Misinformation spreads fast on social media.",
+  "root": {
+   "morpheme": "informer",
+   "meaning": "to inform",
+   "cousins": [
+    "information",
+    "informatique"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "enjeu",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "stake, key issue",
+  "context": "La santé publique est un ___ majeur.",
+  "contextEn": "Public health is a major issue.",
+  "root": {
+   "morpheme": "jeu",
+   "meaning": "game, play",
+   "cousins": [
+    "jouer",
+    "joueur"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "néfaste",
+  "pos": "adj",
+  "gender": null,
+  "tier": 5,
+  "gloss": "harmful, damaging",
+  "context": "Ce produit a un effet ___ sur la peau.",
+  "contextEn": "This product has a harmful effect on the skin.",
+  "root": null,
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "essor",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "rise, boom",
+  "context": "L'___ des réseaux sociaux a changé la société.",
+  "contextEn": "The rise of social media changed society.",
+  "root": null,
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "brevet",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "patent",
+  "context": "L'inventeur a déposé un ___ pour sa machine.",
+  "contextEn": "The inventor filed a patent for his machine.",
+  "root": {
+   "morpheme": "bref",
+   "meaning": "short (official letter)",
+   "cousins": [
+    "breveter",
+    "brièvement"
+   ]
+  },
+  "alts": [],
+  "category": "sciences"
+ },
+ {
+  "word": "voyager",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to travel",
+  "context": "Cet été, je vais ___ en Belgique avec mes amis.",
+  "contextEn": "This summer, I'm going to travel to Belgium with my friends.",
+  "root": {
+   "morpheme": "voyage",
+   "meaning": "trip",
+   "cousins": [
+    "voyageur",
+    "voyage"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "travail",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "work, job",
+  "context": "Mon père part au ___ à huit heures.",
+  "contextEn": "My father leaves for work at eight o'clock.",
+  "root": {
+   "morpheme": "travailler",
+   "meaning": "to work",
+   "cousins": [
+    "travailleur",
+    "travailler"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "manger",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to eat",
+  "context": "Ce soir, nous allons ___ une pizza au restaurant.",
+  "contextEn": "Tonight, we are going to eat a pizza at the restaurant.",
+  "root": {
+   "morpheme": "manger",
+   "meaning": "to eat",
+   "cousins": [
+    "mangeur",
+    "mangeable"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "acheter",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to buy",
+  "context": "Je veux ___ un nouveau sac au magasin.",
+  "contextEn": "I want to buy a new bag at the store.",
+  "root": {
+   "morpheme": "achat",
+   "meaning": "purchase",
+   "cousins": [
+    "achat",
+    "acheteur"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "plage",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "beach",
+  "context": "En vacances, on nage et on joue sur la ___.",
+  "contextEn": "On vacation, we swim and play on the beach.",
+  "root": null,
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "maison",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "house, home",
+  "context": "Notre ___ a trois chambres et un petit jardin.",
+  "contextEn": "Our house has three bedrooms and a small garden.",
+  "root": {
+   "morpheme": "maison",
+   "meaning": "house",
+   "cousins": [
+    "maisonnette",
+    "maisonnée"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "magasin",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "store, shop",
+  "context": "Ce ___ vend des vêtements pour les jeunes.",
+  "contextEn": "This store sells clothes for young people.",
+  "root": {
+   "morpheme": "magasin",
+   "meaning": "store",
+   "cousins": [
+    "magasiner",
+    "magasinier"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "train",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "train",
+  "context": "Nous prenons le ___ pour aller de Paris à Lyon.",
+  "contextEn": "We take the train to go from Paris to Lyon.",
+  "root": {
+   "morpheme": "traîner",
+   "meaning": "to pull, drag",
+   "cousins": [
+    "traîner",
+    "entraîner"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "jouer",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to play",
+  "context": "Le samedi, j'aime ___ au foot avec mes copains.",
+  "contextEn": "On Saturdays, I like to play soccer with my buddies.",
+  "root": {
+   "morpheme": "jeu",
+   "meaning": "game",
+   "cousins": [
+    "jeu",
+    "joueur",
+    "jouet"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "nager",
+  "pos": "v",
+  "gender": null,
+  "tier": 1,
+  "gloss": "to swim",
+  "context": "Il fait chaud, on va ___ à la piscine.",
+  "contextEn": "It's hot, we're going to swim at the pool.",
+  "root": {
+   "morpheme": "nage",
+   "meaning": "swimming",
+   "cousins": [
+    "nageur",
+    "nageoire"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "hôtel",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "hotel",
+  "context": "Nous avons réservé une chambre dans un ___ près de la mer.",
+  "contextEn": "We booked a room in a hotel near the sea.",
+  "root": {
+   "morpheme": "hôte",
+   "meaning": "host",
+   "cousins": [
+    "hôtelier",
+    "hôtellerie"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "billet",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "ticket",
+  "context": "J'ai acheté un ___ de train pour Marseille.",
+  "contextEn": "I bought a train ticket for Marseille.",
+  "root": {
+   "morpheme": "billet",
+   "meaning": "ticket, note",
+   "cousins": [
+    "billetterie"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "valise",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "suitcase",
+  "context": "Avant le voyage, je fais ma ___.",
+  "contextEn": "Before the trip, I pack my suitcase.",
+  "root": null,
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "métier",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "trade, profession",
+  "context": "Plus tard, je veux faire un ___ utile, comme infirmier.",
+  "contextEn": "Later, I want to have a useful profession, like being a nurse.",
+  "root": null,
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "marché",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "market",
+  "context": "Le dimanche, on achète des fruits au ___.",
+  "contextEn": "On Sundays, we buy fruit at the market.",
+  "root": {
+   "morpheme": "marchand",
+   "meaning": "merchant",
+   "cousins": [
+    "marchand",
+    "marchandise",
+    "marchander"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "appartement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "apartment",
+  "context": "Elle habite dans un petit ___ en ville.",
+  "contextEn": "She lives in a small apartment in the city.",
+  "root": null,
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "lycée",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "high school",
+  "context": "Mon frère a quinze ans, il entre au ___ en septembre.",
+  "contextEn": "My brother is fifteen, he starts high school in September.",
+  "root": {
+   "morpheme": "lycée",
+   "meaning": "high school",
+   "cousins": [
+    "lycéen",
+    "lycéenne"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "étudier",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to study",
+  "context": "Ce soir, je dois ___ pour mon examen de maths.",
+  "contextEn": "Tonight, I have to study for my math exam.",
+  "root": {
+   "morpheme": "étude",
+   "meaning": "study",
+   "cousins": [
+    "étudiant",
+    "étude"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "loisir",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "hobby, leisure activity",
+  "context": "La lecture est mon ___ préféré.",
+  "contextEn": "Reading is my favorite hobby.",
+  "root": null,
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "équipe",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "team",
+  "context": "Notre ___ de basket a gagné le match hier.",
+  "contextEn": "Our basketball team won the game yesterday.",
+  "root": {
+   "morpheme": "équiper",
+   "meaning": "to equip",
+   "cousins": [
+    "équipier",
+    "équipement"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "cher",
+  "pos": "adj",
+  "gender": null,
+  "tier": 2,
+  "gloss": "expensive",
+  "context": "Je n'achète pas ce manteau, il est trop ___.",
+  "contextEn": "I'm not buying this coat, it's too expensive.",
+  "root": {
+   "morpheme": "cher",
+   "meaning": "dear, costly",
+   "cousins": [
+    "cherté",
+    "enchérir"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "repas",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "meal",
+  "context": "En France, le ___ du midi est souvent long.",
+  "contextEn": "In France, the midday meal is often long.",
+  "root": null,
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "louer",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to rent",
+  "context": "Pour les vacances, on va ___ une maison à la montagne.",
+  "contextEn": "For vacation, we're going to rent a house in the mountains.",
+  "root": {
+   "morpheme": "loyer",
+   "meaning": "rent",
+   "cousins": [
+    "loyer",
+    "location",
+    "locataire"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "patron",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "boss",
+  "context": "Mon ___ m'a donné un jour de congé.",
+  "contextEn": "My boss gave me a day off.",
+  "root": {
+   "morpheme": "patron",
+   "meaning": "boss",
+   "cousins": [
+    "patronne",
+    "patronat"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "publicité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "advertising, an ad",
+  "context": "Cette ___ à la télé veut nous vendre des chips.",
+  "contextEn": "This ad on TV wants to sell us chips.",
+  "root": {
+   "morpheme": "public",
+   "meaning": "public",
+   "cousins": [
+    "publicitaire",
+    "public"
+   ]
+  },
+  "alts": [
+   "pub"
+  ],
+  "category": "vie"
+ },
+ {
+  "word": "diplôme",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "diploma, degree",
+  "context": "Après quatre ans, elle a obtenu son ___ universitaire.",
+  "contextEn": "After four years, she got her university degree.",
+  "root": {
+   "morpheme": "diplôme",
+   "meaning": "diploma",
+   "cousins": [
+    "diplômé",
+    "diplômer"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "entretien",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "job interview",
+  "context": "Demain, j'ai un ___ pour un travail d'été.",
+  "contextEn": "Tomorrow, I have an interview for a summer job.",
+  "root": {
+   "morpheme": "entretenir",
+   "meaning": "to maintain, talk with",
+   "cousins": [
+    "entretenir",
+    "tenir"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "salaire",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "salary, pay",
+  "context": "Ce travail est fatigant, mais le ___ est bon.",
+  "contextEn": "This job is tiring, but the pay is good.",
+  "root": {
+   "morpheme": "salaire",
+   "meaning": "pay",
+   "cousins": [
+    "salarié",
+    "salariat"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "logement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "housing, place to live",
+  "context": "À Paris, trouver un ___ pas cher est difficile.",
+  "contextEn": "In Paris, finding cheap housing is hard.",
+  "root": {
+   "morpheme": "loger",
+   "meaning": "to house, lodge",
+   "cousins": [
+    "loger",
+    "logis"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "voyageur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "traveler",
+  "context": "Chaque ___ doit montrer son passeport à l'aéroport.",
+  "contextEn": "Each traveler must show his passport at the airport.",
+  "root": {
+   "morpheme": "voyage",
+   "meaning": "trip",
+   "cousins": [
+    "voyager",
+    "voyage"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "déménager",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to move (house)",
+  "context": "Nous allons ___ à Montréal l'année prochaine.",
+  "contextEn": "We are going to move to Montreal next year.",
+  "root": {
+   "morpheme": "ménage",
+   "meaning": "household",
+   "cousins": [
+    "déménagement",
+    "emménager"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "consommateur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "consumer",
+  "context": "La publicité essaie de convaincre le ___.",
+  "contextEn": "Advertising tries to convince the consumer.",
+  "root": {
+   "morpheme": "consommer",
+   "meaning": "to consume",
+   "cousins": [
+    "consommer",
+    "consommation"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "réduction",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "discount",
+  "context": "Avec ma carte d'étudiant, j'ai une ___ au cinéma.",
+  "contextEn": "With my student card, I get a discount at the movies.",
+  "root": {
+   "morpheme": "réduire",
+   "meaning": "to reduce",
+   "cousins": [
+    "réduire",
+    "réduit"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "randonnée",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "hike",
+  "context": "Dimanche, nous avons fait une ___ dans les Alpes.",
+  "contextEn": "On Sunday, we went on a hike in the Alps.",
+  "root": {
+   "morpheme": "randonner",
+   "meaning": "to hike",
+   "cousins": [
+    "randonneur",
+    "randonner"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "marque",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "brand",
+  "context": "Les ados veulent souvent porter une ___ célèbre.",
+  "contextEn": "Teens often want to wear a famous brand.",
+  "root": {
+   "morpheme": "marquer",
+   "meaning": "to mark",
+   "cousins": [
+    "marquer",
+    "remarquer"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "embaucher",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to hire",
+  "context": "Le café va ___ deux serveurs pour l'été.",
+  "contextEn": "The café is going to hire two waiters for the summer.",
+  "root": {
+   "morpheme": "embauche",
+   "meaning": "hiring",
+   "cousins": [
+    "embauche",
+    "débaucher"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "baccalauréat",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "French high-school exit exam",
+  "context": "En France, les élèves passent le ___ à dix-huit ans.",
+  "contextEn": "In France, students take the baccalaureate exam at eighteen.",
+  "root": {
+   "morpheme": "bachelier",
+   "meaning": "bac graduate",
+   "cousins": [
+    "bachelier",
+    "bac"
+   ]
+  },
+  "alts": [
+   "bac"
+  ],
+  "category": "vie"
+ },
+ {
+  "word": "chômage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "unemployment",
+  "context": "Il a perdu son travail, il est au ___ depuis mars.",
+  "contextEn": "He lost his job, he has been unemployed since March.",
+  "root": {
+   "morpheme": "chômer",
+   "meaning": "to be idle",
+   "cousins": [
+    "chômeur",
+    "chômer"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "locataire",
+  "pos": "n",
+  "gender": "mf",
+  "tier": 4,
+  "gloss": "tenant, renter",
+  "context": "Le ___ paie le loyer chaque mois au propriétaire.",
+  "contextEn": "The tenant pays the rent every month to the owner.",
+  "root": {
+   "morpheme": "louer",
+   "meaning": "to rent",
+   "cousins": [
+    "location",
+    "louer",
+    "loyer"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "loyer",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "rent",
+  "context": "Le ___ de cet appartement est de huit cents euros.",
+  "contextEn": "The rent for this apartment is eight hundred euros.",
+  "root": {
+   "morpheme": "louer",
+   "meaning": "to rent",
+   "cousins": [
+    "louer",
+    "locataire"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "stage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "internship",
+  "context": "Cet été, je fais un ___ dans un hôpital.",
+  "contextEn": "This summer, I'm doing an internship in a hospital.",
+  "root": {
+   "morpheme": "stage",
+   "meaning": "internship",
+   "cousins": [
+    "stagiaire"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "apprentissage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "learning; apprenticeship",
+  "context": "L'___ d'une langue demande du temps.",
+  "contextEn": "Learning a language takes time.",
+  "root": {
+   "morpheme": "apprendre",
+   "meaning": "to learn",
+   "cousins": [
+    "apprendre",
+    "apprenti"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "tourisme",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "tourism",
+  "context": "Le ___ apporte beaucoup d'argent à la ville de Nice.",
+  "contextEn": "Tourism brings a lot of money to the city of Nice.",
+  "root": {
+   "morpheme": "tour",
+   "meaning": "tour, trip",
+   "cousins": [
+    "touriste",
+    "touristique"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "dépaysement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "change of scenery; culture shock",
+  "context": "Au Sénégal, j'ai ressenti un grand ___.",
+  "contextEn": "In Senegal, I felt a real culture shock.",
+  "root": {
+   "morpheme": "pays",
+   "meaning": "country",
+   "cousins": [
+    "pays",
+    "dépaysé",
+    "paysage"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "consommation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "consumption",
+  "context": "Notre ___ de viande a baissé cette année.",
+  "contextEn": "Our meat consumption went down this year.",
+  "root": {
+   "morpheme": "consommer",
+   "meaning": "to consume",
+   "cousins": [
+    "consommer",
+    "consommateur"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "slogan",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "slogan",
+  "context": "Ce ___ publicitaire est court et facile à retenir.",
+  "contextEn": "This advertising slogan is short and easy to remember.",
+  "root": null,
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "gaspillage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "waste, wastefulness",
+  "context": "À la cantine, on lutte contre le ___ de nourriture.",
+  "contextEn": "At the cafeteria, we fight against food waste.",
+  "root": {
+   "morpheme": "gaspiller",
+   "meaning": "to waste",
+   "cousins": [
+    "gaspiller",
+    "gaspilleur"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "colocation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "shared apartment, roommates",
+  "context": "Les étudiants vivent souvent en ___ pour payer moins.",
+  "contextEn": "Students often share an apartment to pay less.",
+  "root": {
+   "morpheme": "location",
+   "meaning": "renting",
+   "cousins": [
+    "colocataire",
+    "location",
+    "louer"
+   ]
+  },
+  "alts": [
+   "coloc"
+  ],
+  "category": "vie"
+ },
+ {
+  "word": "entraîneur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "coach, trainer",
+  "context": "L'___ de l'équipe crie pendant tout le match.",
+  "contextEn": "The team's coach yells during the whole game.",
+  "root": {
+   "morpheme": "entraîner",
+   "meaning": "to train",
+   "cousins": [
+    "entraîner",
+    "entraînement"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "reconversion",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "career change",
+  "context": "À quarante ans, elle a fait une ___ : elle est devenue chef.",
+  "contextEn": "At forty, she made a career change: she became a chef.",
+  "root": {
+   "morpheme": "convertir",
+   "meaning": "to convert",
+   "cousins": [
+    "conversion",
+    "reconvertir"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "consumérisme",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "consumerism",
+  "context": "Acheter sans arrêt, c'est le ___.",
+  "contextEn": "Buying nonstop is consumerism.",
+  "root": {
+   "morpheme": "consommer",
+   "meaning": "to consume",
+   "cousins": [
+    "consommateur",
+    "consommation"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "bizutage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 5,
+  "gloss": "hazing",
+  "context": "Le ___ des nouveaux étudiants est interdit en France.",
+  "contextEn": "Hazing new students is banned in France.",
+  "root": {
+   "morpheme": "bizut",
+   "meaning": "freshman",
+   "cousins": [
+    "bizut",
+    "bizuter"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "gastronomie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "fine cooking, cuisine",
+  "context": "La ___ française est célèbre dans le monde entier.",
+  "contextEn": "French cuisine is famous all over the world.",
+  "root": {
+   "morpheme": "gastronome",
+   "meaning": "food lover",
+   "cousins": [
+    "gastronome",
+    "gastronomique"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "majorité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "legal adulthood (age 18)",
+  "context": "En France, on atteint la ___ à dix-huit ans.",
+  "contextEn": "In France, you reach legal adulthood at eighteen.",
+  "root": {
+   "morpheme": "majeur",
+   "meaning": "of age",
+   "cousins": [
+    "majeur",
+    "mineur"
+   ]
+  },
+  "alts": [],
+  "category": "vie"
+ },
+ {
+  "word": "pollution",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "pollution",
+  "context": "La ___ de l'air est un grand problème à Paris.",
+  "contextEn": "Air pollution is a big problem in Paris.",
+  "root": {
+   "morpheme": "polluer",
+   "meaning": "to pollute",
+   "cousins": [
+    "pollueur",
+    "polluant"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "pauvre",
+  "pos": "adj",
+  "gender": null,
+  "tier": 1,
+  "gloss": "poor",
+  "context": "Ce pays ___ a besoin d'aide.",
+  "contextEn": "This poor country needs help.",
+  "root": {
+   "morpheme": "pauvre",
+   "meaning": "poor",
+   "cousins": [
+    "pauvreté",
+    "appauvrir"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "guerre",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "war",
+  "context": "Beaucoup de familles quittent leur pays à cause de la ___.",
+  "contextEn": "Many families leave their country because of the war.",
+  "root": {
+   "morpheme": "guerre",
+   "meaning": "war",
+   "cousins": [
+    "guerrier",
+    "aguerrir"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "paix",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "peace",
+  "context": "Tout le monde veut vivre en ___.",
+  "contextEn": "Everyone wants to live in peace.",
+  "root": {
+   "morpheme": "paix",
+   "meaning": "peace",
+   "cousins": [
+    "paisible",
+    "apaiser"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "eau",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "water",
+  "context": "Dans ce village, l'___ potable est rare.",
+  "contextEn": "In this village, drinking water is rare.",
+  "root": null,
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "argent",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "money",
+  "context": "Ils n'ont pas assez d'___ pour manger.",
+  "contextEn": "They don't have enough money to eat.",
+  "root": {
+   "morpheme": "argent",
+   "meaning": "money; silver",
+   "cousins": [
+    "argenté",
+    "argenterie"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "faim",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "hunger",
+  "context": "Des millions d'enfants ont ___ chaque jour.",
+  "contextEn": "Millions of children are hungry every day.",
+  "root": {
+   "morpheme": "faim",
+   "meaning": "hunger",
+   "cousins": [
+    "affamé",
+    "famine"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "planète",
+  "pos": "n",
+  "gender": "f",
+  "tier": 1,
+  "gloss": "planet",
+  "context": "Il faut protéger notre ___.",
+  "contextEn": "We must protect our planet.",
+  "root": {
+   "morpheme": "planète",
+   "meaning": "planet",
+   "cousins": [
+    "planétaire",
+    "planétarium"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "environnement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "environment",
+  "context": "Le plastique est mauvais pour l'___.",
+  "contextEn": "Plastic is bad for the environment.",
+  "root": {
+   "morpheme": "environner",
+   "meaning": "to surround",
+   "cousins": [
+    "environs",
+    "environnemental"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "déchet",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "waste, trash",
+  "context": "Ne jette pas ce ___ dans la rivière !",
+  "contextEn": "Don't throw that trash in the river!",
+  "root": {
+   "morpheme": "déchoir",
+   "meaning": "to decline, fall",
+   "cousins": [
+    "déchetterie",
+    "déchéance"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "recycler",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to recycle",
+  "context": "À l'école, on va ___ le papier et les bouteilles.",
+  "contextEn": "At school, we are going to recycle paper and bottles.",
+  "root": {
+   "morpheme": "cycle",
+   "meaning": "cycle",
+   "cousins": [
+    "recyclage",
+    "recyclable"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "pauvreté",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "poverty",
+  "context": "La ___ touche beaucoup d'enfants dans le monde.",
+  "contextEn": "Poverty affects many children in the world.",
+  "root": {
+   "morpheme": "pauvre",
+   "meaning": "poor",
+   "cousins": [
+    "appauvrir",
+    "appauvrissement"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "protéger",
+  "pos": "v",
+  "gender": null,
+  "tier": 2,
+  "gloss": "to protect",
+  "context": "Nous devons ___ les animaux et les forêts.",
+  "contextEn": "We must protect animals and forests.",
+  "root": {
+   "morpheme": "protection",
+   "meaning": "protection",
+   "cousins": [
+    "protecteur",
+    "protégé"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "sécheresse",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "drought",
+  "context": "Il n'a pas plu depuis trois mois : c'est la ___.",
+  "contextEn": "It hasn't rained in three months: it's a drought.",
+  "root": {
+   "morpheme": "sec",
+   "meaning": "dry",
+   "cousins": [
+    "sécher",
+    "séchoir"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "droit",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "right (legal)",
+  "context": "L'éducation est un ___ pour tous les enfants.",
+  "contextEn": "Education is a right for all children.",
+  "root": {
+   "morpheme": "droit",
+   "meaning": "right; law",
+   "cousins": [
+    "droiture",
+    "droitier"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "nourriture",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "food",
+  "context": "Ces familles n'ont pas assez de ___.",
+  "contextEn": "These families don't have enough food.",
+  "root": {
+   "morpheme": "nourrir",
+   "meaning": "to feed",
+   "cousins": [
+    "nourrissant",
+    "nourrisson"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "climat",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "climate",
+  "context": "Le ___ change vite à cause de la pollution.",
+  "contextEn": "The climate is changing fast because of pollution.",
+  "root": {
+   "morpheme": "climat",
+   "meaning": "climate",
+   "cousins": [
+    "climatique",
+    "climatiseur"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "frontière",
+  "pos": "n",
+  "gender": "f",
+  "tier": 2,
+  "gloss": "border",
+  "context": "Les migrants attendent à la ___ entre les deux pays.",
+  "contextEn": "The migrants are waiting at the border between the two countries.",
+  "root": {
+   "morpheme": "front",
+   "meaning": "front",
+   "cousins": [
+    "frontalier",
+    "affronter"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "réchauffement",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "warming",
+  "context": "Le ___ climatique fait fondre la glace.",
+  "contextEn": "Global warming is melting the ice.",
+  "root": {
+   "morpheme": "chaud",
+   "meaning": "hot",
+   "cousins": [
+    "réchauffer",
+    "chauffage"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "inondation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "flood",
+  "context": "Après l'___, la ville est restée sous l'eau.",
+  "contextEn": "After the flood, the town stayed under water.",
+  "root": {
+   "morpheme": "inonder",
+   "meaning": "to flood",
+   "cousins": [
+    "inondé",
+    "onde"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "obésité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "obesity",
+  "context": "Trop de sucre peut causer l'___ chez les jeunes.",
+  "contextEn": "Too much sugar can cause obesity in young people.",
+  "root": {
+   "morpheme": "obèse",
+   "meaning": "obese",
+   "cousins": [
+    "obèse"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "biologique",
+  "pos": "adj",
+  "gender": null,
+  "tier": 3,
+  "gloss": "organic",
+  "context": "J'achète du lait ___ au marché.",
+  "contextEn": "I buy organic milk at the market.",
+  "root": {
+   "morpheme": "bio",
+   "meaning": "life; organic",
+   "cousins": [
+    "biologie",
+    "bio"
+   ]
+  },
+  "alts": [
+   "bio"
+  ],
+  "category": "defis"
+ },
+ {
+  "word": "conflit",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "conflict",
+  "context": "Ce ___ dure depuis dix ans.",
+  "contextEn": "This conflict has lasted for ten years.",
+  "root": {
+   "morpheme": "conflit",
+   "meaning": "conflict",
+   "cousins": [
+    "conflictuel"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "chômeur",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "unemployed person",
+  "context": "Le ___ cherche un emploi tous les jours.",
+  "contextEn": "The unemployed man looks for a job every day.",
+  "root": {
+   "morpheme": "chômer",
+   "meaning": "to be out of work",
+   "cousins": [
+    "chômage",
+    "chômeuse"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "lutter",
+  "pos": "v",
+  "gender": null,
+  "tier": 3,
+  "gloss": "to fight, struggle",
+  "context": "Il faut ___ contre le racisme.",
+  "contextEn": "We must fight against racism.",
+  "root": {
+   "morpheme": "lutte",
+   "meaning": "fight, struggle",
+   "cousins": [
+    "lutteur",
+    "lutte"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "épidémie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "epidemic, outbreak",
+  "context": "L'___ de grippe a fermé les écoles.",
+  "contextEn": "The flu outbreak closed the schools.",
+  "root": {
+   "morpheme": "épidémie",
+   "meaning": "epidemic",
+   "cousins": [
+    "épidémique",
+    "pandémie"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "pénurie",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "shortage",
+  "context": "Il y a une ___ d'eau dans le sud du pays.",
+  "contextEn": "There is a water shortage in the south of the country.",
+  "root": null,
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "malnutrition",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "malnutrition",
+  "context": "La ___ rend les enfants faibles et malades.",
+  "contextEn": "Malnutrition makes children weak and sick.",
+  "root": {
+   "morpheme": "nutrition",
+   "meaning": "nutrition",
+   "cousins": [
+    "nutritif",
+    "nutritionniste"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "sensibiliser",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to raise awareness",
+  "context": "Notre club veut ___ les élèves au recyclage.",
+  "contextEn": "Our club wants to raise students' awareness about recycling.",
+  "root": {
+   "morpheme": "sensible",
+   "meaning": "sensitive",
+   "cousins": [
+    "sensibilisation",
+    "sensibilité"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "humanitaire",
+  "pos": "adj",
+  "gender": null,
+  "tier": 4,
+  "gloss": "humanitarian",
+  "context": "Elle travaille pour un projet ___ en Haïti.",
+  "contextEn": "She works for a humanitarian project in Haiti.",
+  "root": {
+   "morpheme": "humain",
+   "meaning": "human",
+   "cousins": [
+    "humanité",
+    "humanisme"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "manifestation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "protest, demonstration",
+  "context": "Les jeunes ont fait une ___ pour le climat.",
+  "contextEn": "Young people held a protest for the climate.",
+  "root": {
+   "morpheme": "manifester",
+   "meaning": "to protest; to show",
+   "cousins": [
+    "manifestant",
+    "manif"
+   ]
+  },
+  "alts": [
+   "manif"
+  ],
+  "category": "defis"
+ },
+ {
+  "word": "précarité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "insecurity, instability",
+  "context": "Sans emploi stable, ils vivent dans la ___.",
+  "contextEn": "Without a steady job, they live in insecurity.",
+  "root": {
+   "morpheme": "précaire",
+   "meaning": "precarious",
+   "cousins": [
+    "précaire",
+    "précairement"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "asile",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "asylum",
+  "context": "Il a demandé l'___ politique en France.",
+  "contextEn": "He asked for political asylum in France.",
+  "root": null,
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "déforestation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "deforestation",
+  "context": "La ___ détruit la maison de beaucoup d'animaux.",
+  "contextEn": "Deforestation destroys the home of many animals.",
+  "root": {
+   "morpheme": "forêt",
+   "meaning": "forest",
+   "cousins": [
+    "forestier",
+    "déforester"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "émission",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "emission (gas)",
+  "context": "Cette voiture électrique n'a aucune ___ de CO2.",
+  "contextEn": "This electric car has no CO2 emissions.",
+  "root": {
+   "morpheme": "émettre",
+   "meaning": "to emit",
+   "cousins": [
+    "émetteur",
+    "émis"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "mondialisation",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "globalization",
+  "context": "La ___ change l'économie de tous les pays.",
+  "contextEn": "Globalization is changing the economy of every country.",
+  "root": {
+   "morpheme": "monde",
+   "meaning": "world",
+   "cousins": [
+    "mondial",
+    "mondialement"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "biodiversité",
+  "pos": "n",
+  "gender": "f",
+  "tier": 5,
+  "gloss": "biodiversity",
+  "context": "La pollution menace la ___ des océans.",
+  "contextEn": "Pollution threatens ocean biodiversity.",
+  "root": {
+   "morpheme": "divers",
+   "meaning": "diverse",
+   "cousins": [
+    "diversité",
+    "diversifier"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "éradiquer",
+  "pos": "v",
+  "gender": null,
+  "tier": 5,
+  "gloss": "to wipe out, eradicate",
+  "context": "L'ONU veut ___ la faim d'ici 2030.",
+  "contextEn": "The UN wants to wipe out hunger by 2030.",
+  "root": {
+   "morpheme": "racine",
+   "meaning": "root",
+   "cousins": [
+    "éradication",
+    "enraciner"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "démuni",
+  "pos": "adj",
+  "gender": null,
+  "tier": 5,
+  "gloss": "destitute, needy",
+  "context": "Ce vieil homme ___ dort dans la rue.",
+  "contextEn": "This destitute old man sleeps in the street.",
+  "root": {
+   "morpheme": "munir",
+   "meaning": "to provide, equip",
+   "cousins": [
+    "munitions",
+    "munir"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "insalubre",
+  "pos": "adj",
+  "gender": null,
+  "tier": 5,
+  "gloss": "unhealthy, unsanitary",
+  "context": "Ce logement ___ est dangereux pour les enfants.",
+  "contextEn": "This unsanitary housing is dangerous for children.",
+  "root": {
+   "morpheme": "salubre",
+   "meaning": "healthy, clean",
+   "cousins": [
+    "salubrité",
+    "insalubrité"
+   ]
+  },
+  "alts": [],
+  "category": "defis"
+ },
+ {
+  "word": "mais",
+  "pos": "conj",
+  "gender": null,
+  "tier": 1,
+  "gloss": "but",
+  "context": "J'aime le cinéma, ___ je n'aime pas les films d'horreur.",
+  "contextEn": "I like the movies, but I don't like horror films.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "donc",
+  "pos": "conj",
+  "gender": null,
+  "tier": 1,
+  "gloss": "so, therefore",
+  "context": "Il pleut, ___ nous restons à la maison.",
+  "contextEn": "It's raining, so we are staying home.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "ensuite",
+  "pos": "adv",
+  "gender": null,
+  "tier": 1,
+  "gloss": "next, then",
+  "context": "D'abord, je mange. ___, je fais mes devoirs.",
+  "contextEn": "First, I eat. Next, I do my homework.",
+  "root": {
+   "morpheme": "suite",
+   "meaning": "what follows",
+   "cousins": [
+    "suivre",
+    "suivant",
+    "suite"
+   ]
+  },
+  "alts": [
+   "puis"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "enfin",
+  "pos": "adv",
+  "gender": null,
+  "tier": 1,
+  "gloss": "finally, at last",
+  "context": "___, je pense que l'école doit commencer plus tard.",
+  "contextEn": "Finally, I think school should start later.",
+  "root": {
+   "morpheme": "fin",
+   "meaning": "end",
+   "cousins": [
+    "fin",
+    "finir",
+    "final"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "aussi",
+  "pos": "adv",
+  "gender": null,
+  "tier": 1,
+  "gloss": "also, too",
+  "context": "Le sport est bon pour le corps. Il est ___ bon pour l'esprit.",
+  "contextEn": "Sports are good for the body. They are also good for the mind.",
+  "root": null,
+  "alts": [
+   "également"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "avis",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "opinion",
+  "context": "À mon ___, les jeunes passent trop de temps en ligne.",
+  "contextEn": "In my opinion, young people spend too much time online.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "article",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "article (in a newspaper)",
+  "context": "Selon l'___ du journal, le recyclage augmente.",
+  "contextEn": "According to the newspaper article, recycling is going up.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "argument",
+  "pos": "n",
+  "gender": "m",
+  "tier": 1,
+  "gloss": "argument, reason (in a debate)",
+  "context": "Mon premier ___ est simple : le sport aide à se concentrer.",
+  "contextEn": "My first argument is simple: sports help you focus.",
+  "root": {
+   "morpheme": "argu",
+   "meaning": "to prove, to show",
+   "cousins": [
+    "argumenter",
+    "argumentation"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "cependant",
+  "pos": "adv",
+  "gender": null,
+  "tier": 2,
+  "gloss": "however",
+  "context": "Le film est long. ___, il est très drôle.",
+  "contextEn": "The movie is long. However, it is very funny.",
+  "root": null,
+  "alts": [
+   "toutefois",
+   "pourtant",
+   "néanmoins"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "pourtant",
+  "pos": "adv",
+  "gender": null,
+  "tier": 2,
+  "gloss": "yet, and yet",
+  "context": "Il a beaucoup étudié, et ___ il a raté l'examen.",
+  "contextEn": "He studied a lot, and yet he failed the exam.",
+  "root": null,
+  "alts": [
+   "cependant"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "ainsi",
+  "pos": "adv",
+  "gender": null,
+  "tier": 2,
+  "gloss": "thus, in this way",
+  "context": "On peut prendre le bus. ___, on pollue moins.",
+  "contextEn": "We can take the bus. In this way, we pollute less.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "selon",
+  "pos": "prep",
+  "gender": null,
+  "tier": 2,
+  "gloss": "according to",
+  "context": "___ le texte, la moitié des élèves lisent chaque jour.",
+  "contextEn": "According to the text, half of the students read every day.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "puisque",
+  "pos": "conj",
+  "gender": null,
+  "tier": 2,
+  "gloss": "since (because)",
+  "context": "___ tu es malade, tu dois rester au lit.",
+  "contextEn": "Since you are sick, you must stay in bed.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "lorsque",
+  "pos": "conj",
+  "gender": null,
+  "tier": 2,
+  "gloss": "when (formal)",
+  "context": "___ j'étais petit, j'habitais à Lyon.",
+  "contextEn": "When I was little, I lived in Lyon.",
+  "root": null,
+  "alts": [
+   "quand"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "également",
+  "pos": "adv",
+  "gender": null,
+  "tier": 2,
+  "gloss": "also, as well",
+  "context": "Les parents doivent ___ donner leur avis.",
+  "contextEn": "Parents must also give their opinion.",
+  "root": {
+   "morpheme": "égal",
+   "meaning": "equal",
+   "cousins": [
+    "égal",
+    "égalité"
+   ]
+  },
+  "alts": [
+   "aussi"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "sondage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 2,
+  "gloss": "poll, survey",
+  "context": "Un ___ montre que les ados aiment la musique pop.",
+  "contextEn": "A poll shows that teens like pop music.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "néanmoins",
+  "pos": "adv",
+  "gender": null,
+  "tier": 3,
+  "gloss": "nevertheless",
+  "context": "Le voyage coûte cher. ___, c'est une bonne expérience.",
+  "contextEn": "The trip is expensive. Nevertheless, it is a good experience.",
+  "root": null,
+  "alts": [
+   "cependant",
+   "toutefois"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "toutefois",
+  "pos": "adv",
+  "gender": null,
+  "tier": 3,
+  "gloss": "however, still",
+  "context": "Les réseaux sociaux sont utiles. ___, il faut faire attention.",
+  "contextEn": "Social media is useful. However, you must be careful.",
+  "root": null,
+  "alts": [
+   "cependant",
+   "néanmoins"
+  ],
+  "category": "connecteurs"
+ },
+ {
+  "word": "malgré",
+  "pos": "prep",
+  "gender": null,
+  "tier": 3,
+  "gloss": "despite, in spite of",
+  "context": "Nous sommes sortis ___ la pluie.",
+  "contextEn": "We went out despite the rain.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "grâce",
+  "pos": "prep",
+  "gender": null,
+  "tier": 3,
+  "gloss": "thanks to (grâce à)",
+  "context": "J'ai progressé ___ à mon professeur.",
+  "contextEn": "I improved thanks to my teacher.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "afin",
+  "pos": "prep",
+  "gender": null,
+  "tier": 3,
+  "gloss": "in order to (afin de)",
+  "context": "Je travaille le soir ___ de payer mes études.",
+  "contextEn": "I work in the evening in order to pay for my studies.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "tandis",
+  "pos": "conj",
+  "gender": null,
+  "tier": 3,
+  "gloss": "while, whereas (tandis que)",
+  "context": "En France, on dîne tard, ___ qu'aux États-Unis on dîne tôt.",
+  "contextEn": "In France people eat dinner late, whereas in the US they eat early.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "autrefois",
+  "pos": "adv",
+  "gender": null,
+  "tier": 3,
+  "gloss": "in the past, long ago",
+  "context": "___, les gens écrivaient des lettres à la main.",
+  "contextEn": "In the past, people wrote letters by hand.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "actuellement",
+  "pos": "adv",
+  "gender": null,
+  "tier": 3,
+  "gloss": "currently, right now (not \"actually\")",
+  "context": "___, beaucoup de jeunes cherchent du travail.",
+  "contextEn": "Currently, many young people are looking for work.",
+  "root": {
+   "morpheme": "actuel",
+   "meaning": "current, present",
+   "cousins": [
+    "actuel",
+    "actualité"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "notamment",
+  "pos": "adv",
+  "gender": null,
+  "tier": 3,
+  "gloss": "notably, especially",
+  "context": "J'aime les sports, ___ le foot et le tennis.",
+  "contextEn": "I like sports, especially soccer and tennis.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "étude",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "study, research",
+  "context": "Une ___ récente montre que le sommeil aide la mémoire.",
+  "contextEn": "A recent study shows that sleep helps memory.",
+  "root": {
+   "morpheme": "étud",
+   "meaning": "study",
+   "cousins": [
+    "étudier",
+    "étudiant"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "source",
+  "pos": "n",
+  "gender": "f",
+  "tier": 3,
+  "gloss": "source (of information)",
+  "context": "D'après la deuxième ___, le vélo est populaire à Paris.",
+  "contextEn": "According to the second source, biking is popular in Paris.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "graphique",
+  "pos": "n",
+  "gender": "m",
+  "tier": 3,
+  "gloss": "graph, chart",
+  "context": "Le ___ montre que les ventes de livres baissent.",
+  "contextEn": "The graph shows that book sales are going down.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "désormais",
+  "pos": "adv",
+  "gender": null,
+  "tier": 4,
+  "gloss": "from now on",
+  "context": "___, je vais recycler toutes mes bouteilles.",
+  "contextEn": "From now on, I am going to recycle all my bottles.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "davantage",
+  "pos": "adv",
+  "gender": null,
+  "tier": 4,
+  "gloss": "more, even more",
+  "context": "Les élèves doivent lire ___ pour réussir.",
+  "contextEn": "Students must read more to succeed.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "certes",
+  "pos": "adv",
+  "gender": null,
+  "tier": 4,
+  "gloss": "admittedly, of course",
+  "context": "___, la voiture est pratique, mais elle pollue.",
+  "contextEn": "Admittedly, the car is practical, but it pollutes.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "souligner",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to stress, to point out",
+  "context": "L'auteur veut ___ l'importance de la famille.",
+  "contextEn": "The author wants to stress the importance of family.",
+  "root": {
+   "morpheme": "ligne",
+   "meaning": "line (to underline)",
+   "cousins": [
+    "ligne",
+    "aligner"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "affirmer",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to state, to claim firmly",
+  "context": "Le ministre ose ___ que tout va bien.",
+  "contextEn": "The minister dares to state that everything is fine.",
+  "root": {
+   "morpheme": "ferme",
+   "meaning": "firm",
+   "cousins": [
+    "ferme",
+    "confirmer",
+    "affirmation"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "constater",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to notice, to observe",
+  "context": "On peut ___ que les prix augmentent chaque année.",
+  "contextEn": "We can observe that prices go up every year.",
+  "root": {
+   "morpheme": "constat",
+   "meaning": "an observed fact",
+   "cousins": [
+    "constat",
+    "constatation"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "conclure",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to conclude",
+  "context": "Pour ___, je crois que l'uniforme est une bonne idée.",
+  "contextEn": "To conclude, I believe uniforms are a good idea.",
+  "root": {
+   "morpheme": "clu",
+   "meaning": "close, shut",
+   "cousins": [
+    "conclusion",
+    "inclure",
+    "exclure"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "convaincre",
+  "pos": "v",
+  "gender": null,
+  "tier": 4,
+  "gloss": "to convince",
+  "context": "Je veux ___ mes parents d'adopter un chien.",
+  "contextEn": "I want to convince my parents to adopt a dog.",
+  "root": {
+   "morpheme": "vaincre",
+   "meaning": "to defeat, win",
+   "cousins": [
+    "vaincre",
+    "convaincant",
+    "victoire"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "statistique",
+  "pos": "n",
+  "gender": "f",
+  "tier": 4,
+  "gloss": "statistic",
+  "context": "Cette ___ est surprenante : un ado sur deux ne dort pas assez.",
+  "contextEn": "This statistic is surprising: one teen in two doesn't sleep enough.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "pourcentage",
+  "pos": "n",
+  "gender": "m",
+  "tier": 4,
+  "gloss": "percentage",
+  "context": "Le ___ d'élèves qui font du sport est de 60 %.",
+  "contextEn": "The percentage of students who play sports is 60%.",
+  "root": {
+   "morpheme": "cent",
+   "meaning": "hundred",
+   "cousins": [
+    "cent",
+    "centaine",
+    "centime"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "quoique",
+  "pos": "conj",
+  "gender": null,
+  "tier": 5,
+  "gloss": "although, even though",
+  "context": "Il sort, ___ il soit fatigué.",
+  "contextEn": "He goes out, although he is tired.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "prétendre",
+  "pos": "v",
+  "gender": null,
+  "tier": 5,
+  "gloss": "to claim (often falsely)",
+  "context": "Certains osent ___ que les jeux vidéo rendent violent.",
+  "contextEn": "Some people dare to claim that video games make you violent.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "voire",
+  "pos": "adv",
+  "gender": null,
+  "tier": 5,
+  "gloss": "or even, indeed",
+  "context": "Ce projet prendra des mois, ___ des années.",
+  "contextEn": "This project will take months, or even years.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "parallèlement",
+  "pos": "adv",
+  "gender": null,
+  "tier": 5,
+  "gloss": "in parallel, at the same time",
+  "context": "Les prix montent. ___, les salaires restent les mêmes.",
+  "contextEn": "Prices are going up. At the same time, wages stay the same.",
+  "root": {
+   "morpheme": "parallèle",
+   "meaning": "parallel",
+   "cousins": [
+    "parallèle",
+    "parallélisme"
+   ]
+  },
+  "alts": [],
+  "category": "connecteurs"
+ },
+ {
+  "word": "réfuter",
+  "pos": "v",
+  "gender": null,
+  "tier": 5,
+  "gloss": "to refute, to prove wrong",
+  "context": "Je vais ___ cet argument avec des faits.",
+  "contextEn": "I am going to refute this argument with facts.",
+  "root": null,
+  "alts": [],
+  "category": "connecteurs"
+ }
+]

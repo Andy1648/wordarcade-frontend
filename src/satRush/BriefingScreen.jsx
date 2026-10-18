@@ -27,7 +27,7 @@ function FilledSentence({ context, word }) {
 }
 
 function BriefCard({ card }) {
-  const { word, pos, context, gloss, root, isReview, knownCousins } = card;
+  const { word, pos, context, contextEn, gloss, root, isReview, knownCousins } = card;
   const known = new Set(knownCousins);
   return (
     <li className={`sr-brief-card${isReview ? ' review' : ''}`}>
@@ -49,6 +49,8 @@ function BriefCard({ card }) {
       {/* then the word in use — the example sentence, QUOTED, filled in and highlighted (oct17, Andy:
           the example is the quotation, the definition is plain) */}
       <FilledSentence context={context} word={word} />
+      {/* FRENCH RUSH: what the example says, in English */}
+      {contextEn && <p className="sr-brief-en">{contextEn}</p>}
 
       {root && (
         <div className="sr-brief-root">

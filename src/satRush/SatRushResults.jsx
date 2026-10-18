@@ -56,13 +56,16 @@ function CaseFileRow({ c }) {
               {after}”
             </p>
           )}
+          {c.contextEn && <p className="sr-casefile-en">{c.contextEn}</p>}
         </>
       )}
     </li>
   );
 }
 
-export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0 }) {
+export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, economy = true }) {
+  // economy=false (FRENCH RUSH, a standalone study link): no wins / gems / rebirth / cross-mode offers —
+  // just the result, the case file and the way to go again.
   // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
   // the page leads with what every other mode's run-over card leads with — how many you got (here:
   // CAPTURED) and the WINS it paid — and the mode's own numbers (score, avg ante, streak, mastered)
@@ -171,23 +174,23 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         </div>
 
         {/* WINS EARNED — the same second number every mode's run-over card has. */}
-        <div className="sr-winsline" aria-label={`${fmt(finalAnte)} wins earned`}>
+        {economy && <div className="sr-winsline" aria-label={`${fmt(finalAnte)} wins earned`}>
           {finalAnte > 0 ? <><b>+{fmt(ante)}</b> wins earned</> : <>no wins earned — capture 3 to start the bounty</>}
-        </div>
-        {bonusLines.map((l) => (
+        </div>}
+        {economy && bonusLines.map((l) => (
           <div className="sr-winsline" key={l.id} data-wins-line={l.label} data-wins-amount={l.amount}>
             <b>+{formatNum(l.amount)}</b> {l.label}
           </div>
         ))}
         {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
-        <GemsEarnedLine since={gemsSince} print className="sr-gemsline" />
+        {economy && <GemsEarnedLine since={gemsSince} print className="sr-gemsline" />}
 
         {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
             at 1280x551 / 1366x625 they were below the fold under the study panels). */}
         <div className="sr-results-actions in">
           {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
               onExit; the menu runs the rebirth + ceremony. */}
-          <RebirthReadyButton onGo={onExit} className="is-sat" />
+          {economy && <RebirthReadyButton onGo={onExit} className="is-sat" />}
           {/* REPLAY MISSES: the words that did not settle clean, again (BRIEFING re-studies them) */}
           {finite && unsettled > 0 && onReplay && (
             <button type="button" className="sr-btn" onClick={onReplay}>
@@ -210,9 +213,9 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
               mode is still locked.
               NOT shown to a deep-link visitor: they have seen no modes at all, so "try FUSE next"
               is a narrower, stranger offer than "here are the other four". They get the offer. */}
-          <ClaimPrompt />
-          <NearMiss mode="sat-rush" onPlay={onAgain} look="print" />
-          {offerMenu ? null : <TryModeRow current="sat-rush" />}
+          {economy && <ClaimPrompt />}
+          {economy && <NearMiss mode="sat-rush" onPlay={onAgain} look="print" />}
+          {offerMenu || !economy ? null : <TryModeRow current="sat-rush" />}
         </div>
 
         {/* The mode's own numbers, one ruled line (was three boxed panels + a strip). */}
@@ -284,7 +287,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             "Run it back" stays the primary action above it. Set as a CASE FILE cross-reference so it
             belongs to this page's language (paper, ink, red rule) rather than the neon house look —
             the same offer CHAIN and FUSE make, spoken in SAT RUSH's voice. */}
-        {offerMenu ? (
+        {offerMenu && economy ? (
           <div className={`sr-offer${revealed ? ' in' : ''}`}>
             <p className="sr-offer-line">{`${MORE_MODES} MORE CASES ON FILE.`}</p>
             <button type="button" className="sr-btn sr-offer-btn" onClick={onExit}>
