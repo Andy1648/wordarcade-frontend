@@ -57,6 +57,11 @@ export function tierLabel(tier, kind = 'roll') {
  * ("including stats"): no stat value anywhere — the hero slot says the ODDS ("1 IN 90") and the pip row a "?" per
  * hidden extra stat. A locked card's model carries no stat numbers at all, so no screen can print one.
  */
+/** The tiers whose odds a card never prints (the index tease): SECRET (rolled, odds kept off the card) + UNLISTED (none). */
+export const ODDS_HIDDEN_TIERS = new Set(['secret', 'unlisted']);
+export const MASKED_ODDS = '???';
+export const hideOdds = (tier) => ODDS_HIDDEN_TIERS.has(tier);
+
 export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, state = null }) {
   // EARNED gears (Andy oct8): they sit WITH the normal rarities — drawn as the LEGENDARY they pay (MAIN ×3), not a
   // tier of their own; a locked one says ACHIEVEMENT where a rolled card says its odds
@@ -72,9 +77,12 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
     extras, // how many extra stats the gear has (a pip each on an owned tile; a locked tile shows none)
     tier: t,
     rarityName: kind === 'perm' ? tierLabel('legendary') : tierLabel(t, kind),
-    odds: kind === 'roll' ? `1 IN ${formatNum(oneInX(id))}` : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '',
-    oddsNum: kind === 'roll' ? formatNum(oneInX(id)) : '', // a LOCKED rollable tile's hero: "1 IN" small + this big
+    // THE UNLISTED (oct17): SECRET's odds are never shown on a card — "???" is more desirable than a scary number (the roll
+    // screen's odds table still discloses every rolled tier). UNLISTED has no odds at all (never rolled).
+    odds: kind === 'unlisted' ? '' : kind === 'roll' ? (hideOdds(t) ? MASKED_ODDS : `1 IN ${formatNum(oneInX(id))}`) : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '',
+    oddsNum: kind === 'roll' ? (hideOdds(t) ? MASKED_ODDS : formatNum(oneInX(id))) : '', // a LOCKED rollable tile's hero: "1 IN" small + this big
     earned: kind === 'perm',
+    unlisted: kind === 'unlisted', // THE UNLISTED: found, never rolled — a locked one says FIND IT where a rolled card says its odds
     locked,
     name, // gear card v4 (Andy oct11 "show the design for all the cards"): a locked card shows its art + name; only its numbers stay hidden
     statNum: num,

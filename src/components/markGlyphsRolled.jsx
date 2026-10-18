@@ -49,6 +49,13 @@ export const ROLLED_GLYPHS = {
   'mk-thunderclap': ART('thunderclap'), // Andy oct11: painted PNG (public/gear/thunderclap.webp)
   'mk-jackpot': ART('jackpot'), // Andy oct11: painted PNG (public/gear/jackpot.webp)
   'mk-hydra': ART('hydra'), // Andy oct11: the painted PNG (public/gear/hydra.webp, background cut out)
+  // ---- THE UNLISTED (oct17): found, never rolled — painted stickers in public/gear/unlisted/ ----
+  'mk-ul-og': ART('unlisted/og'),
+  'mk-ul-wishbone': ART('unlisted/wishbone'),
+  'mk-ul-typewriter': ART('unlisted/typewriter'),
+  'mk-ul-mirror': ART('unlisted/mirror'),
+  'mk-ul-midas': ART('unlisted/midas'),
+  'mk-ul-tripledouble': ART('unlisted/tripledouble'),
   // ---- the 6 PERMANENT marks (finished by markGlyphFinish.jsx) ----
   'mk-ironhand': (
     <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round">

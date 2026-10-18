@@ -21,6 +21,7 @@ import { grantWins } from '../progress/wins';
 import { rebirthMult, getRebirths, loadProgress } from '../progress/xp';
 import { winLevelMult } from '../progress/wins';
 import { secretFound as evSecretFound } from '../lib/events.js';
+import { createWordTracker, doublePairs } from '../unlisted/seasonSecret.js';
 
 const IDLE_MS = 700; // typing pause that closes the current word (palindrome boundary)
 
@@ -56,6 +57,20 @@ export function secretPayout(base, { rebirths = getRebirths(), level = loadProgr
 }
 
 /**
+ * THE UNLISTED GRANT + REVEAL — lazy (unlisted/reveal.js loads on the find, never on the menu's first paint). It grants
+ * the gear once, fires the stamp and claims the serial. Resolves the grant or null.
+ */
+const TRIPLE_DOUBLE_ID = 'mk-ul-tripledouble'; // unlisted/unlistedIds.js (a literal here keeps that module off this path)
+export function revealUnlisted(gearId, word) {
+  return import('../unlisted/reveal.js').then((m) => m.revealUnlisted(gearId, word)).catch(() => null);
+}
+function revealForSecret(secretId, word) {
+  return import('../unlisted/reveal.js').then((m) => m.revealForSecret(secretId, word)).catch(() => null);
+}
+// the SEASON gear: a cheap pre-check here (3+ double pairs); reveal.js confirms it is a real word
+const maybeTripleDouble = (w) => !!w && w.length >= 8 && doublePairs(w) >= 3;
+
+/**
  * @param {boolean} active  only listen while a GAME is the live screen.
  * Returns { hit, notePop, clear } — `hit` is the most recent find
  * ({ id, stamp, wins, blurb, detail, found, total }, `wins` already scaled) for the caller to
@@ -66,6 +81,18 @@ export function useWordSecrets({ active = true } = {}) {
   const [hit, setHit] = useState(null);
   const detRef = useRef(null);
   const idleRef = useRef(0);
+  // THE WORD YOU TYPED (for the UNLISTED stamp): letters since the last boundary, and the last word a boundary closed.
+  // The secrets with no word of their own (11:11, the typing streak, the golden word) stamp this one.
+  const wordRef = useRef(null);
+  if (wordRef.current === null) {
+    const tracker = createWordTracker();
+    let lastClosed = null;
+    wordRef.current = {
+      onKey: (k) => { const w = tracker.onKey(k); if (w) lastClosed = w; return w; },
+      onIdle: () => tracker.onIdle(),
+      last: () => tracker.current() || lastClosed,
+    };
+  }
 
   if (detRef.current === null) {
     detRef.current = createSecretDetector({ storage: safeStorage(), rng: rarePopRng });
@@ -93,6 +120,9 @@ export function useWordSecrets({ active = true } = {}) {
       /* storage blocked — the find still shows, just not banked */
     }
     try { evSecretFound(found.id); } catch { /* analytics only */ }
+    // THE UNLISTED (oct17): the find is now also a GEAR you keep. The wins above still pay; the gear is the part that
+    // lasts. The stamp lands on the word you typed (UnlistedStamp in the game's reaction slot, via the reveal bus).
+    revealForSecret(found.id, raw.detail || wordRef.current.last());
     setHit(found);
     return found;
   }, []);
@@ -100,11 +130,19 @@ export function useWordSecrets({ active = true } = {}) {
   useEffect(() => {
     if (!active) return undefined;
     const det = detRef.current;
+    const words = wordRef.current;
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return; // ignore shortcuts
+      const closed = words.onKey(e.key);
       grant(det.onKey(e.key));
+      // the SEASON gear (TRIPLE DOUBLE) is judged at the same word boundary as the palindrome
+      if (maybeTripleDouble(closed)) revealUnlisted(TRIPLE_DOUBLE_ID, closed);
       clearTimeout(idleRef.current);
-      idleRef.current = setTimeout(() => grant(det.onIdle()), IDLE_MS);
+      idleRef.current = setTimeout(() => {
+        grant(det.onIdle());
+        const w = words.onIdle();
+        if (maybeTripleDouble(w)) revealUnlisted(TRIPLE_DOUBLE_ID, w);
+      }, IDLE_MS);
     };
     window.addEventListener('keydown', onKey);
     return () => {

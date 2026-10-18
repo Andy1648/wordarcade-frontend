@@ -46,6 +46,8 @@ export const KIT_DRAWN = new Set([
   'mk-metronome', 'mk-hotwire', 'mk-grapple', 'mk-sparkplug', 'mk-pyro', 'mk-nova', 'mk-golem', 'mk-brainstorm',
   'mk-flashpoint', 'mk-voltage', 'mk-talisman', 'mk-leviathan', 'mk-eclipse', 'mk-headmaster', 'mk-thunderclap', 'mk-jackpot',
   'mk-singularity', 'mk-kraken', 'mk-hydra', 'mk-origin',
+  // THE UNLISTED: painted art carries its own ink + highlights (no extra finish)
+  'mk-ul-og', 'mk-ul-wishbone', 'mk-ul-typewriter', 'mk-ul-mirror', 'mk-ul-midas', 'mk-ul-tripledouble',
 ]);
 /** Which glyph ids are finished — a body here, or kit-drawn (the unit test checks every mark id is covered). */
 export const FINISHED_IDS = [...Object.keys(BODIES), ...KIT_DRAWN];

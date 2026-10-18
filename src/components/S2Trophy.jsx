@@ -15,6 +15,7 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { readyCountV3 } from '../progress/v3/achievements.js';
 import { ACH_CHANGE } from '../progress/v3/store.js';
 import { lazyWithReload } from '../lib/chunkReload';
+import { OPEN_ACH_EVENT } from '../lib/openAchievement.js';
 
 const readyNow = () => {
   try {
@@ -29,6 +30,18 @@ const AchievementsV3 = lazyWithReload(() => import('./AchievementsV3.jsx'), 'Ach
 
 export default function S2Trophy({ variant = 'desk', disabled = false }) {
   const [open, setOpen] = useState(false);
+  const [focusId, setFocusId] = useState(null); // a gear sheet's "SEE ACHIEVEMENT": open on that ladder
+  useEffect(() => {
+    if (disabled) return undefined;
+    const onOpen = (e) => {
+      if (e.defaultPrevented) return; // the other menu tree already opened it
+      e.preventDefault();
+      setFocusId((e.detail && e.detail.id) || null);
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_ACH_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_ACH_EVENT, onOpen);
+  }, [disabled]);
   const [ready, setReady] = useState(readyNow);
   useMomentHold(open); // no queued menu moment starts under the screen
   useEffect(() => {
@@ -47,13 +60,13 @@ export default function S2Trophy({ variant = 'desk', disabled = false }) {
         data-nav="achievements"
         disabled={disabled}
         dot={ready || undefined}
-        onClick={() => setOpen(true)}
+        onClick={() => { setFocusId(null); setOpen(true); }}
         ariaLabel={ready ? 'Open achievements — a reward is ready to claim' : 'Open achievements'}
         title="Achievements"
       />
       {open && (
         <Suspense fallback={null}>
-          <AchievementsV3 onClose={() => setOpen(false)} />
+          <AchievementsV3 focusId={focusId} onClose={() => setOpen(false)} />
         </Suspense>
       )}
       {V3.Notify && <V3.Notify check />}

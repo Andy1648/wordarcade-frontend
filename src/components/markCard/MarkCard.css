@@ -67,6 +67,9 @@
    white, bigger, ink-stroked — SECRET's sits on the rainbow */
 .mc:is(.is-legendary, .is-mythic, .is-secret) .mc-head { color: #fff; font-size: calc(var(--mc-u) * 20); }
 .mc.is-secret .mc-head { letter-spacing: 0.12em; }
+/* THE UNLISTED (an all-black card): white type on the charcoal plates, spaced like SECRET */
+.mc.is-unlisted .mc-head { color: #fff; letter-spacing: 0.12em; }
+.mc.is-unlisted .mc-hero, .mc.is-unlisted .mc-sub { color: #e8e8e8; }
 
 /* the art: the cog + glyph (MarkBadge) over the frame's rosette, the EPIC+ glow behind it */
 .mc-art { position: absolute; top: var(--mc-y-art); left: calc(90px - var(--mc-art) / 2); width: var(--mc-art); height: var(--mc-art); }

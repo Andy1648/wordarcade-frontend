@@ -19,6 +19,8 @@ import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client
 import { readCounters } from '../../progress/v3/store.js';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
+import UnlistedShelf from '../../unlisted/UnlistedShelf.jsx';
+import { unlistedIndex } from '../../unlisted/unlisted.js';
 import './ProfilePopup.css';
 
 const POP = [{ transform: 'scale(.9) translateY(12px)', opacity: 0 }, { transform: 'scale(1.02)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }];
@@ -45,6 +47,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const c = readCounters();
   const play = readPlaySec();
   const show = myShowcase(); // the same numbers the leaderboard card shows others (gears found)
+  const [unl] = useState(() => unlistedIndex()); // THE UNLISTED: your finds + serials (read once)
 
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
@@ -98,6 +101,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                 <Stat icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
                 <Stat icon="index" tone="#c9b8ff" value={show.gears_total ? `${formatNum(show.gears_found)}/${formatNum(show.gears_total)}` : '0'} label="GEARS FOUND" />
               </div>
+              <UnlistedShelf tiles={unl.tiles.filter((t) => t.owned)} />
               {me ? <Bio text={myBio()} mine /> : null}
             </div>
           </div>
