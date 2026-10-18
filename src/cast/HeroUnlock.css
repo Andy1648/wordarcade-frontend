@@ -44,9 +44,9 @@
   .hu { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; justify-items: center; gap: 8px; padding: 16px; }
   .hu-stage { justify-self: center; width: min(300px, 76vw); }
   .hu-text { align-items: center; text-align: center; gap: 10px; }
-  .hu-title { font-size: var(--fs-k30, 30px); }
-  .hu-name { font-size: var(--fs-k44, 44px); -webkit-text-stroke-width: 5px; text-shadow: 4px 4px 0 #000; }
-  .hu-tag { font-size: var(--fs-k18, 18px); }
+  .hu-title { font-size: var(--fs-k30); }
+  .hu-name { font-size: var(--fs-k44); -webkit-text-stroke-width: 5px; text-shadow: 4px 4px 0 #000; }
+  .hu-tag { font-size: var(--fs-k18); }
   .hu-btns { justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .hu-btn { transition: none; } }
