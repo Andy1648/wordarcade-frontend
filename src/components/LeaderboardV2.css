@@ -707,20 +707,15 @@
 @media (prefers-reduced-motion: reduce) { .lb2-row.is-peek, .lb2-col.is-peek .lb2-buddy-wrap { transition: none; } }
 .lb2-row.is-peek:active { translate: 2px 2px; }
 
-/* ---- TOP 3 CELEBRATION (Andy oct12) — arrival one-shots only (LeaderboardV2.jsx RING / RAYS / SLAM / POPN / confetti).
+/* ---- TOP 3 CELEBRATION (Andy oct12) — arrival one-shots only (LeaderboardV2.jsx RING / RAYS / SLAM / POPN; the confetti was removed oct18).
    Every fx node rests INVISIBLE (opacity 0); its WAAPI one-shot plays it and lets it go. Art = existing assets: the
    burst ring (/fx/burst-ring.svg, a mask tinted the medal colour — a flat fill) and the painted win burst. ---- */
 .lb2-col { isolation: isolate; }
 .lb2-who { position: relative; z-index: 1; }
-.lb2-fx { position: absolute; left: 50%; top: calc(40px * var(--pk)); width: 0; height: 0; z-index: 0; pointer-events: none; }
-.lb2-col--1 .lb2-fx { top: calc(70px * var(--pk)); }
-.lb2-confetti { position: absolute; left: 0; top: 0; }
 /* medal-coloured numbers: #1 is already gold; #2 silver, #3 bronze */
 .lb2-col--2 .lb2-pod-r { color: #E6E1F5; }
 .lb2-col--3 .lb2-pod-r { color: #FF8A4D; }
-.lb2--narrow .lb2-fx { top: 26px; }
 .lb2--narrow .lb2-podium { overflow-x: clip; } /* the burst never opens a sideways scroll on a phone */
-@media (prefers-reduced-motion: reduce) { .lb2-fx { display: none; } }
 
 /* ---- WEEKLY TOP 10 PRIZES (Andy oct12, migration 034) — THIS WEEK only: a gem chip on every top-10 place ---- */
 .lb2-prize {
@@ -912,11 +907,6 @@
 .lb2-col--1 .lb2-place { left: 49%; top: 46%; width: auto; font-size: calc(var(--fs-k76) * var(--pk)); color: #FFE94A; }
 .lb2-col--2 .lb2-place { left: 47%; top: 50%; width: auto; }
 .lb2-col--3 .lb2-place { left: 52%; top: 55%; width: auto; font-size: calc(var(--fs-k44) * var(--pk)); }
-/* confetti: the painted pieces, resting invisible at #1's stand; the one-shot throws them */
-.lb2-cf { position: absolute; left: calc(-14px * var(--pk)); top: calc(-14px * var(--pk)); width: calc(28px * var(--pk)); height: calc(28px * var(--pk)); opacity: 0; pointer-events: none; }
-.lb2--narrow .lb2-cf { width: 16px; height: 16px; left: -8px; top: -8px; }
-.lb2-fx { top: calc(90px * var(--pk)); z-index: 4; }
-.lb2-col--1 .lb2-fx { top: calc(110px * var(--pk)); }
 /* PHONE podium (--pk 0.46, each column a third of the screen): the characters keep a readable size of their own, the
    ribbon spans the column, the stats line drops the rank plate (it is on the profile card) so nothing clips */
 .lb2--narrow .lb2-stand { width: 92px; height: 92px; margin-bottom: -14px; }
