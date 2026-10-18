@@ -163,6 +163,23 @@ const STREAMS = {
     { i: 2, n: 1, ms: 2600, at: 700, f: UP(12, -260, 0.5, 1) },
     { i: 3, n: 1, ms: 2600, at: 2000, f: UP(-30, -230, 0.5, 1) },
   ],
+  // SHH: the "..." bubble is almost always up — it swells from its tail, hangs, shrinks back unsaid, and swells again
+  mime: [
+    { i: 0, n: 1, ms: 2400, e: 'ease-in-out', f: [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 1, offset: 0.14 }, { transform: 'scale(1)', opacity: 1, offset: 0.24 }, { transform: 'scale(1.04)', opacity: 1, offset: 0.55 }, { transform: 'scale(1)', opacity: 1, offset: 0.85 }, { transform: 'scale(0)', opacity: 0 }] },
+  ],
+  // SIZZLE: the flame never stops flickering, sauce keeps spitting up and arcing down, steam keeps rising
+  sear: [
+    { i: 0, n: 2, ms: 1000, e: 'ease-in-out', f: [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1.25, 1.35)', opacity: 1, offset: 0.25 }, { transform: 'scale(.95, 1.1)', opacity: 1, offset: 0.5 }, { transform: 'scale(1.15, 1.25)', opacity: 1, offset: 0.7 }, { transform: 'scale(.8)', opacity: 0 }] },
+    { i: 1, n: 1, ms: 1100, at: 200, e: 'cubic-bezier(.3,0,.7,1)', f: [{ transform: 'translate(0, 0) scale(.6)', opacity: 0 }, { transform: 'translate(-60%, -160%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(-140%, 220%) scale(.9)', opacity: 0 }] },
+    { i: 2, n: 1, ms: 1150, at: 750, e: 'cubic-bezier(.3,0,.7,1)', f: [{ transform: 'translate(0, 0) scale(.6)', opacity: 0 }, { transform: 'translate(40%, -200%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(90%, 240%) scale(.9)', opacity: 0 }] },
+    { i: 3, n: 2, ms: 1700, at: 400, f: UP(10, -130, 0.5, 1.25) },
+  ],
+  // MECHA: the exhaust roars without a break, the antenna keeps sparking, the bolt crackles off the gauntlet
+  boost: [
+    { i: 0, n: 2, ms: 1000, e: 'ease-in-out', f: [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1.2, 1.5)', opacity: 1, offset: 0.2 }, { transform: 'scale(1, 1.15)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.25, 1.6)', opacity: 1, offset: 0.7 }, { transform: 'scale(.7)', opacity: 0 }] },
+    { i: 1, n: 1, ms: 1100, at: 450, f: TWINKLE },
+    { i: 2, n: 1, ms: 900, at: 650, e: 'linear', f: [{ transform: 'scale(.5)', opacity: 0 }, { transform: 'scale(1.2)', opacity: 1, offset: 0.15 }, { transform: 'scale(1)', opacity: 0.3, offset: 0.35 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.3)', opacity: 0 }] },
+  ],
   // GLITCH.EXE: it corrupts — bands of its own art tear sideways in short stepped bursts (a glitch should read glitchy,
   // so this one stays bursty on purpose): a tear somewhere every ~1.3 s
   glitch: [
