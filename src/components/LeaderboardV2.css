@@ -37,7 +37,14 @@
 /* ---- header ---- */
 /* YOU · <name> · CHANGE — the door back to the claim form (CHANGE NAME + RECOVERY CODE live there). Sits with MENU
    on the left so the centred title stays clear. */
-.lb2-left { position: relative; z-index: 1; display: flex; align-items: center; gap: calc(12px * var(--lb2-k)); min-width: 0; }
+/* the cluster never reaches the centred title (Andy oct18 "the leaderboard info is overlapping": a long name + CHANGE ran
+   into the L of LEADERBOARD at 1366): it stops ~half the title's width (231px × k) + a 27px gutter short of the centre,
+   and the NAME gives way (ellipsis) — YOU and CHANGE never do */
+.lb2-left { position: relative; z-index: 1; display: flex; align-items: center; gap: calc(12px * var(--lb2-k)); min-width: 0; max-width: calc(50% - 258px * var(--lb2-k)); }
+.lb2-left > .lb2-back { flex: none; }
+.lb2-left > .lb2-me-btn { min-width: 0; flex: 0 1 auto; }
+.lb2-me-k, .lb2-me-a { flex: none; }
+.lb2-me-v { min-width: 0; flex: 0 1 auto; }
 .lb2-me-btn {
   position: relative;
   z-index: 1;
@@ -683,7 +690,7 @@
 .lb2 .lb2-col .lb2-pod-name-t { font-size: min(max(var(--fs-k14), calc(var(--fs-k18) * var(--pk))), max(13px, calc(92cqw / var(--nl, 8)))); }
 .lb2 .lb2-col--1 .lb2-pod-name-t { font-size: min(max(var(--fs-k14), calc(var(--fs-k20) * var(--pk))), max(13px, calc(92cqw / var(--nl, 8)))); }
 /* a phone's podium column is ~85px: a long name WRAPS to a second line rather than being cut */
-.lb2--narrow .lb2-col .lb2-pod-name-t { white-space: normal; word-break: break-all; text-wrap: balance; text-overflow: clip; line-height: 1.05; text-align: center; }
+.lb2--narrow .lb2-col .lb2-pod-name-t { line-height: 1.05; text-align: center; } /* oct18: no mid-word wrap — see the end of the file */
 
 /* 031 LEADERBOARD PROFILES: every name opens its card (ProfileCard.jsx) — a pointer + a press, no hover motion at rest */
 .lb2 .is-peek { cursor: pointer; }
@@ -978,3 +985,9 @@
 .lb2--narrow .lb2-who > .lb2-pod-name .lb2-you { display: none; }
 .lb2--narrow .lb2-stand { margin-bottom: 2px; } /* the old ribbon tucked under the feet; the plain name must not */
 .lb2--narrow .lb2-col--1 .lb2-stand { margin-top: 14px; }
+
+/* oct18 (Andy "the leaderboard info is overlapping"): a phone's podium name never breaks mid-word (BETTERT / HANANDY read
+   as two names). Too long for the ~115px column at its 13px floor → it ends in an ellipsis; a tap opens the profile card
+   with the full name. The side padding keeps the ink stroke inside the clip. */
+.lb2--narrow .lb2-who > .lb2-pod-name { min-width: 0; }
+.lb2--narrow .lb2-who > .lb2-pod-name .lb2-pod-name-t { white-space: nowrap; word-break: normal; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 3px; }
