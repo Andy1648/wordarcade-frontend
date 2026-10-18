@@ -1,26 +1,34 @@
-/* HeroPicker — two sections of HeroCards; the hold-to-buy bar sticks to the scroll container's foot. */
-.hp2-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.hp2-sec { display: block; font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .14em; color: #c9b8e8; }
+/* HeroPicker — the COLLECTION meter, then the rows of HeroCards (4 to a row; oct18 Andy: "larger proportions (text is
+   so tiny)"). A card opens HeroPreview (its own CSS). */
+.hp2-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.hp2-coll { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.hp2-coll-k { font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.hp2-coll-bar { position: relative; height: 22px; overflow: hidden; background: #0d0618; border: 3px solid #000; border-radius: 6px; box-shadow: 3px 3px 0 #000; }
+.hp2-coll-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: #FFE94A; }
+.hp2-coll-n { font: 400 var(--fs-k22, 22px) 'Bungee', sans-serif; color: #fff; }
+.hp2-sec { display: block; margin-bottom: 10px; font: 400 var(--fs-k22, 22px) 'Bungee', sans-serif; letter-spacing: .06em; color: #c9b8e8; }
 .hp2-tier { display: contents; }
-.hp2-sec.is-gold { margin: 22px 0 10px; color: #F2B705; }
-.hp2-sec.is-legend { margin: 22px 0 10px; color: #7CFFE0; }
-.hp2-sec.is-elite { margin: 22px 0 10px; color: #FFC83D; }
+.hp2-sec.is-gold { margin: 26px 0 10px; color: #F2B705; }
+.hp2-sec.is-legend { margin: 26px 0 10px; color: #7CFFE0; }
+.hp2-sec.is-elite { margin: 26px 0 10px; color: #FFC83D; }
 .hp2-gems {
   display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 4px 12px;
-  font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #fff; background: #0d0618; border: 3px solid #000; border-radius: 8px;
+  font: 400 var(--fs-k22, 22px) 'Bungee', sans-serif; color: #fff; background: #0d0618; border: 3px solid #000; border-radius: 8px;
 }
-.hp2-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.hp2-tag { font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; color: #c9b8e8; text-align: center; min-height: 2.4em; line-height: 1.2; }
+.hp2-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.hp2-tag { font: 700 var(--fs-k18, 18px) 'Space Mono', monospace; color: #c9b8e8; text-align: center; min-height: 2.4em; line-height: 1.2; }
 .hp2-act {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 6px;
-  font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #000; background: var(--hc-c); border: 3px solid #000; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 8px;
+  font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; color: #000; background: var(--hc-c); border: 3px solid #000; border-radius: 6px;
 }
 .hp2-act.is-on { background: #FFE94A; }
 .hp2-act.is-price { color: #fff; background: #3a2160; }
 .hp2-act.is-earn { color: #F2B705; background: #2a1a08; }
-.hp2-buy {
-  position: sticky; bottom: -18px; z-index: 2; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px;
-  margin: 16px -18px -18px; padding: 12px 18px 16px; background: #1a0b2e; border-top: 4px solid #000;
+@media (max-width: 760px) {
+  .hp2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .hp2-bar { flex-wrap: wrap; }
+  .hp2-coll { flex: 1 1 100%; order: 2; }
+  .hp2-gems { order: 1; margin-left: auto; }
+  .hp2-coll-k { font-size: var(--fs-k16); }
+  .hp2-tag { font-size: var(--fs-k16); }
 }
-.hp2-buy-t { font: 400 var(--fs-k22, 22px) 'Bungee', sans-serif; color: #FFC83D; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
-@media (max-width: 760px) { .hp2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
