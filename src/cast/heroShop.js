@@ -14,7 +14,7 @@ export function buyHero(id) {
   if (!owned.includes(id)) {
     if (!spendGems(e.price)) return { ok: false, reason: 'unaffordable' };
     try { localStorage.setItem(HEROES_KEY, JSON.stringify([...owned, id])); } catch { /* blocked storage */ }
-    itemPurchased(id, e.elite ? 'elite' : 'hero');
+    itemPurchased(id, e.elite ? 'elite' : e.legend ? 'legend' : 'hero');
   }
   writeMain(id);
   return { ok: true };

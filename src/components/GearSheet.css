@@ -150,3 +150,5 @@
   .mx-sheet { animation: none; }
   .mx-set { transition: none; }
 }
+/* an EARNED gear's "SEE ACHIEVEMENT" (Andy oct17: the gear takes you to its achievement) */
+.mx-go-ach { margin-top: 12px; min-height: 48px; min-width: 0; font-size: var(--fs-k18); }

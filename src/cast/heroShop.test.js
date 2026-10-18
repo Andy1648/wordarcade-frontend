@@ -76,3 +76,15 @@ test('earned free: GLITCH at the first rebirth, HEX at level 20 (no gems)', () =
   assert.equal(ownsHero('glitch'), true, 'a rebirth earns GLITCH');
   assert.equal(heroEarned('hex'), false);
 }));
+
+test('NEW FACES + LEGEND: painted, priced, never handed out as another player\'s seat member', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
+  for (const id of ['dud', 'lexi', 'boo']) {
+    for (const pose of ['hero', 'win', 'ko']) assert.equal(castSrc(id, pose), `/cast/${id}-${pose}.webp`);
+    assert.equal(ownsHero(id), false);
+    assert.ok(CAST_BEATS[id]);
+  }
+  for (let i = 0; i < 200; i++) assert.ok(!['dud', 'lexi', 'boo'].includes(castFor(`p${i}`).id));
+  map.set(REBIRTH_KEY_FOR_TEST, '5');
+  assert.equal(ownsHero('boo'), true, 'REBIRTH 5 earns BOO');
+  assert.equal(ownsHero('lexi'), false, 'LEXI is gems only');
+}));

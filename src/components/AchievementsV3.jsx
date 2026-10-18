@@ -18,6 +18,9 @@ import { createPortal } from 'react-dom';
 import './AchievementsV3.css';
 import { KitBackButton, KitButton, KitGhostButton, KitPill, KitStampCard, KitFlyLayer, KitIcon } from './kit/index.js';
 import { achievementsV3, claimAchievementV3, tierCountsV3, ROMAN } from '../progress/v3/achievements';
+import { gearOfLadder } from '../progress/ladderGears.js';
+import { permanentMarkById } from '../progress/markRollsCore.js';
+import { earnedArt } from './earnedArt.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { formatNum } from '../format';
 
@@ -57,6 +60,19 @@ function Bar({ pct, ready, maxed }) {
   );
 }
 
+/** The ladder's LAST tier earns a gear (progress/ladderGears.js): "100% → [art] IRONHAND", or GEAR EARNED once maxed. */
+function LadderGear({ id, maxed }) {
+  const gid = gearOfLadder(id);
+  const g = gid ? permanentMarkById(gid) : null;
+  if (!g) return null;
+  return (
+    <div className={`av3-gear${maxed ? ' is-owned' : ''}`} data-gear={g.id}>
+      <img className="av3-gear-art" src={earnedArt(g.id)} alt="" width="48" height="48" />
+      <span className="av3-gear-text"><b>{maxed ? 'EARNED' : 'MAX IT →'}</b> {g.name}</span>
+    </div>
+  );
+}
+
 /** Big screens: the 1366×657 stage (the mockup's own size) scales up to fit — measured on mount / resize only. */
 function useStageScale(ref) {
   useEffect(() => {
@@ -71,7 +87,7 @@ function useStageScale(ref) {
   }, [ref]);
 }
 
-export default function AchievementsV3({ onClose }) {
+export default function AchievementsV3({ onClose, focusId = null }) {
   const [rows, setRows] = useState(() => achievementsV3());
   const [counts, setCounts] = useState(() => tierCountsV3());
   const [gems, setGems] = useState(() => getGems());
@@ -128,10 +144,12 @@ export default function AchievementsV3({ onClose }) {
   const stampId = stamp ? stamp.id : null;
   const sorted = sortRows(rows, stampId);
   const ready = rows.filter((r) => r.ready && r.id !== stampId);
-  const hero = (stampId && rows.find((r) => r.id === stampId)) || ready[0] || sorted.find((r) => !r.maxed) || sorted[0];
+  // a gear sheet's "SEE ACHIEVEMENT" opens on that ladder (focusId) until the player claims something else
+  const focusRow = focusId && !stampId ? rows.find((r) => r.id === focusId) : null;
+  const hero = (stampId && rows.find((r) => r.id === stampId)) || focusRow || ready[0] || sorted.find((r) => !r.maxed) || sorted[0];
   const heroStamped = !!hero && hero.id === stampId;
   const heroReady = !!hero && hero.ready && !heroStamped;
-  const nameOf = (r) => (r.tagNum ? `${r.name} ${formatNum(r.need)}` : r.name);
+  const nameOf = (r) => r.name; // Andy oct17: the name alone says what it's for (1–2 words); the numbers sit beside it
   const shownGems = Math.max(0, gems - inFlight);
 
   // PORTALED to <body> (like ModeDialog / LockedPreviewDialog): the trophy lives inside the menu's nav cluster, and a
@@ -159,6 +177,7 @@ export default function AchievementsV3({ onClose }) {
               <section className={`av3-hero${heroReady ? ' is-ready' : ''}${heroStamped ? ' is-stamped' : ''}`} style={{ '--tc': TC[Math.min(hero.tier, hero.tiers - 1)] }} aria-label="Next achievement" data-hero={hero.id}>
                 <div className="av3-hero-top">
                   <span className={`av3-hero-label${heroReady || heroStamped ? ' is-ready' : ''}`}>{heroStamped ? 'NICE' : heroReady ? 'READY' : 'ALMOST'}</span>
+                  <LadderGear id={hero.id} maxed={hero.maxed} />
                   <span className={`av3-ready-n${ready.length ? ' is-on' : ''}`} aria-label={`${ready.length} ready`}>
                     {formatNum(ready.length)}
                   </span>
@@ -166,7 +185,6 @@ export default function AchievementsV3({ onClose }) {
                 <div className="av3-hero-main">
                   <Badge r={hero} size="big" />
                   <div className="av3-hero-name">{nameOf(hero)}</div>
-                  {hero.what ? <div className="av3-what">{hero.what}</div> : null}
                   <div className="av3-hero-nums">
                     <span className={`av3-have${hero.ready ? ' is-ready' : ''}`}>{formatNum(hero.have)}</span>
                     <span className="av3-need">/ {formatNum(hero.need)}</span>
@@ -218,7 +236,7 @@ export default function AchievementsV3({ onClose }) {
                 const stamping = r.id === stampId;
                 const isReady = r.ready && !stamping;
                 return (
-                  <li key={r.id} className={`av3-cell${isReady ? ' is-ready' : ''}${r.maxed ? ' is-max' : ''}`} style={{ '--tc': TC[t], '--i': i }} data-ach={r.id}>
+                  <li key={r.id} className={`av3-cell${isReady ? ' is-ready' : ''}${r.maxed ? ' is-max' : ''}${r.id === focusId ? ' is-focus' : ''}`} style={{ '--tc': TC[t], '--i': i }} data-ach={r.id}>
                     <KitStampCard
                       stamped={stamping || r.maxed}
                       kind={stamping ? 'claimed' : 'max'}
@@ -236,6 +254,7 @@ export default function AchievementsV3({ onClose }) {
                         )}
                       </div>
                       <div className="av3-tile-body">
+                        <div className="av3-tile-name">{nameOf(r)}</div>
                         <div className="av3-tile-row">
                           <Badge r={r} size="small" />
                           <div className="av3-tile-nums">
@@ -243,8 +262,6 @@ export default function AchievementsV3({ onClose }) {
                             <span className="av3-need">/ {formatNum(r.need)}</span>
                           </div>
                         </div>
-                        <div className="av3-tile-name">{nameOf(r)}</div>
-                        {r.what ? <div className="av3-what">{r.what}</div> : null}
                         <Bar pct={r.pct} ready={r.ready} maxed={r.maxed} />
                         <div className="av3-tile-foot">
                           {isReady ? (

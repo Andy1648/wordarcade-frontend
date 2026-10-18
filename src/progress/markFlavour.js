@@ -46,7 +46,7 @@ export const MARK_FLAVOUR = Object.freeze({
   'mk-curator': 'FILES EVERY WORD BY HAND.',
   'mk-legend': 'THEY TELL STORIES ABOUT YOU.',
   'mk-ritual': 'SAME TIME. EVERY DAY.',
-  'mk-linguist': 'SPEAKS FLUENT DICTIONARY.',
+  'mk-linguist': 'THE HOUSE ALWAYS LOSES.',
   'mk-eternal': 'NEVER LOGGED OFF. NOT ONCE.',
   'mk-grandmaster': 'THE BOARD BOWS FIRST.',
   'mk-omega': 'THE LAST MARK. THE WHOLE SET.',

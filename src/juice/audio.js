@@ -386,3 +386,7 @@ export function rarityCue(band) {
     /* never let audio throw */
   }
 }
+
+// THE UNLISTED (oct17): the lazy stamp chunk builds its own sting from these (unlisted/UnlistedStamp.jsx), so the sting's
+// notes never ride the menu's first load. Same context, same master limiter, same mute check.
+export const juiceSynth = { getCtx, tone, noise, soundAllowed };

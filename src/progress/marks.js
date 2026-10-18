@@ -73,7 +73,7 @@ export const MARKS = [
     // MARK ROLLS (Andy oct3, decision 4): LINGUIST is a PERMANENT mark (sec-dict) and permanents pay MAIN ×4
     // — the LEGENDARY bonus. Was RARE ×2.5. Its flavour perk is unchanged.
     tier: 'legendary',
-    name: 'LINGUIST',
+    name: 'HIGH ROLLER', // Andy oct17: the ROLL EPIC+ ladder's gear now (was LINGUIST — id + owners unchanged)
     icon: '📖',
     from: 'sec-dict',
     blurb: '12% chance a word counts one RARITY TIER higher.',

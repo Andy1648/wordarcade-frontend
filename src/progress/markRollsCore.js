@@ -37,13 +37,18 @@ const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints 
 // PROGRESSION v3 (SEASON2, default OFF): the R5 unlock "2nd MARK slot" — a second worn mark (v3/store mark2Id)
 // whose +N% WINS / +N% XP stat multiplies too. MINIMAL MODEL ONLY (phase 3): its flat BASE / LUCK / OVERDRIVE stats
 // do not apply, and the slot's UI is the visual PR's. OFF = only the one worn mark, exactly as before.
-import { V3 } from './season.js'; // V3.m = the 2nd MARK slot (v3/hooks.js mark2Factor), installed in season 2 only
+import { V3 } from './season.js';
+// THE UNLISTED (oct17): the found-never-rolled tier. A LEAF (imports nothing), so no cycle. Its gears are never in the
+// roll pool, the INDEX % or any odds table; a worn one pays the PERMANENT main (LEGENDARY ×3 on wins AND XP).
+import { unlistedEntry as unlistedById, ownsUnlistedId as ownsUnlisted, UNLISTED_TIER } from '../unlisted/unlistedIds.js';
+// SEASON 2 EARNED gears (Andy oct17): each belongs to one achievement ladder and is owned once that ladder is MAXED (a leaf).
+import { ladderOfGear, ownsLadderGear } from './ladderGears.js'; // V3.m = the 2nd MARK slot (v3/hooks.js mark2Factor), installed in season 2 only
 
 export const ROLL_STATE_KEY = MARK_ROLLS_STORE_KEY; // 'taw.markRolls'
 export const ROLL_STATE_VERSION = 4; // v4 = gear card v4: ★ pips FROZEN per mark (`p`), a dupe pays gems (DUPE_GEMS)
 
 // ---------------------------------------------------------------------------------------- tiers
-export const ROLL_TIER_ORDER = ['rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent'];
+export const ROLL_TIER_ORDER = ['rare', 'epic', 'legendary', 'mythic', 'secret', 'permanent', UNLISTED_TIER];
 export const ROLLABLE_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 /** The FLOOR tier: it takes whatever the rarer tiers leave, and LUCK never scales it (luck removes it). */
 export const FLOOR_TIER = 'rare';
@@ -60,7 +65,7 @@ export function tierRank(tier) {
 // MAIN bonus (the part above ×1) at ★0. PERMANENT (the hard-achievement marks) pays the LEGENDARY MAIN on wins
 // AND XP. Read at call time, not import time: marks.js → claims.js → wins.js → this module is a cycle.
 export function mainBonus(tier) {
-  const t = tier === 'permanent' ? 'legendary' : tier;
+  const t = tier === 'permanent' || tier === UNLISTED_TIER ? 'legendary' : tier;
   return (MARK_TIERS[t] || { bonus: 0 }).bonus;
 }
 
@@ -199,19 +204,22 @@ export function yourOneInX(id, luckValue = 1) {
 
 // ---------------------------------------------------------------------------------- permanents
 // One PERMANENT mark per KEPT achievement. The four that already exist keep their id, art and owners; six are
-// new. `from` is the achievement id. MAIN = LEGENDARY (×3) on wins AND XP (they are not rolled, so no stat).
+// new. `from` is the season-1 achievement id. MAIN = LEGENDARY (×3) on wins AND XP (they are not rolled, so no stat).
+// SEASON 2 (Andy oct17 "100% done for an achievement"): `ach` = the achievement LADDER (v3/achievements.js) whose last
+// tier earns it (progress/ladderGears.js). RITUALIST has no ladder → retired (owners keep it, like BLAZE). LINGUIST is
+// the ROLL EPIC+ gear now, renamed HIGH ROLLER (its id + owners unchanged).
 export const PERMANENT_MARKS = [
   { id: 'mk-ironhand', name: 'IRONHAND', from: 'vol-10k' },
   { id: 'mk-marathon', name: 'MARATHON', from: 'vol-50k' },
   { id: 'mk-blaze', name: 'BLAZE', from: 'wpm-100', retired: true }, // Andy oct8: the 100 WPM task is gone; owners keep BLAZE
   { id: 'mk-curator', name: 'ARCHIVIST', from: 'dist-2500', legacy: true }, // H6/M8: the achievement is CURATOR
   { id: 'mk-legend', name: 'LEGEND', from: 'lv-300', legacy: true },
-  { id: 'mk-ritual', name: 'RITUALIST', from: 'streak-30' },
-  { id: 'mk-linguist', name: 'LINGUIST', from: 'sec-dict', legacy: true },
+  { id: 'mk-ritual', name: 'RITUALIST', from: 'streak-30', retired: true }, // Andy oct17: no season-2 ladder; owners keep it
+  { id: 'mk-linguist', name: 'HIGH ROLLER', from: 'sec-dict', legacy: true },
   { id: 'mk-eternal', name: 'ETERNAL', from: 'sec-eternal', legacy: true },
   { id: 'mk-grandmaster', name: 'GRANDMASTER', from: 'sec-truemaster' },
   { id: 'mk-omega', name: 'OMEGA', from: 'sec-completionist' },
-].map((m) => ({ ...m, tier: 'permanent' }));
+].map((m) => ({ ...m, tier: 'permanent', ach: (ladderOfGear(m.id) || {}).ladder || null }));
 const PERM_BY_ID = new Map(PERMANENT_MARKS.map((m) => [m.id, m]));
 export function permanentMarkById(id) {
   return PERM_BY_ID.get(id) || null;
@@ -489,7 +497,7 @@ export function indexMult(state) {
 }
 
 function tierOfAny(id) {
-  const r = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id);
+  const r = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id) || unlistedById(id);
   if (r) return r.tier;
   const l = MARKS.find((m) => m.id === id);
   return l ? l.tier : null;
@@ -640,8 +648,18 @@ export function wornMarkId() {
   }
   if (!raw) return null;
   if (MARKS.some((m) => m.id === raw)) return raw;
+  if (unlistedById(raw)) return ownsUnlisted(raw) ? raw : null;
+  if (PERM_BY_ID.has(raw)) return ownsLadderGear(raw) || ownsPermStored(raw) ? raw : null; // an EARNED gear (a maxed ladder)
   const s = loadRollState();
   return s && s.marks[raw] && ROLL_BY_ID.has(raw) ? raw : null;
+}
+function ownsPermStored(id) {
+  try {
+    const a = JSON.parse(localStorage.getItem('taw.permanentMarks') || '[]');
+    return Array.isArray(a) && a.includes(id);
+  } catch {
+    return false;
+  }
 }
 /**
  * A display entry for ANY mark id ({ id, name, tier, blurb }) — the marks.js entry for a legacy id,
@@ -650,7 +668,7 @@ export function wornMarkId() {
 export function markEntry(id) {
   const l = MARKS.find((m) => m.id === id);
   if (l) return l;
-  const r = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id);
+  const r = ROLL_BY_ID.get(id) || PERM_BY_ID.get(id) || unlistedById(id);
   return r ? { id: r.id, name: r.name, tier: r.tier === 'permanent' ? 'legendary' : r.tier, blurb: mainTag(r.id) } : null;
 }
 
@@ -766,7 +784,7 @@ export const SUBSTAT_LINES = 4;
  */
 export function substatsOf(id, state) {
   const r = ROLL_BY_ID.get(id);
-  const tier = r ? r.tier : PERM_BY_ID.has(id) ? 'legendary' : null;
+  const tier = r ? r.tier : PERM_BY_ID.has(id) || unlistedById(id) ? 'legendary' : null;
   if (!tier) return [];
   let k = 1;
   if (r) {
@@ -807,7 +825,7 @@ const NO_CRIT = Object.freeze({ rate: 0, power: 0 });
 export function critTierOf(id) {
   const r = ROLL_BY_ID.get(id);
   if (r) return CRIT_BY_TIER[r.tier] || NO_CRIT;
-  return PERM_BY_ID.has(id) ? CRIT_BY_TIER.legendary : null;
+  return PERM_BY_ID.has(id) || unlistedById(id) ? CRIT_BY_TIER.legendary : null;
 }
 /**
  * ONE gear's EXTRA crit stats as they pay right now: { rate, power } = its tier's row × ★ pips × SHINY (a PERMANENT:

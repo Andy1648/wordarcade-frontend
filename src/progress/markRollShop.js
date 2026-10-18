@@ -6,12 +6,13 @@
 import { grantWins } from './wins.js';
 import { getGems, spendGems, ROLL_PRICE_GEMS } from './gems.js';
 import { grantGems } from './gemsCore.js';
-import { getEquippedMark, equipMark } from './marks.js';
+import { getEquippedMark, equipMark, markById } from './marks.js';
 import {
   ensureRollState, loadRollState, saveRollState, rollAndSave, refWordWins,
-  indexRewardWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
+  indexRewardWins, rollMarkById, permanentMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
 } from './markRolls.js';
 import { rollsPerRoll } from './markPerks.js';
+import { unlistedEntry as unlistedById, UNLISTED_KEY } from '../unlisted/unlistedIds.js';
 import { isBoostActive } from './boost.js';
 // PROGRESSION v3 (SEASON2, default OFF): ROLL EPIC+ / FILL INDEX achievement counters, and the R2 AUTO ROLL unlock.
 import { SEASON2, V3 } from './season.js'; // V3.store / V3.unlocks: installed lazily (season.js)
@@ -35,6 +36,14 @@ export function wearMark(id, earned = []) {
   if (id == null) return equipMark(null, earned);
   const r = rollMarkById(id);
   if (r && !r.legacy) return equipRolled(id) ? id : wornMarkId();
+  if (permanentMarkById(id) && !markById(id)) { // a SEASON-2 EARNED gear (a maxed ladder): worn straight onto taw.mark
+    try { localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
+    return wornMarkId(); // wornMarkId only reads it back when the save owns it
+  }
+  if (unlistedById(id)) { // THE UNLISTED: an owned one is worn straight onto taw.mark (wornMarkId accepts it)
+    try { if (JSON.parse(localStorage.getItem(UNLISTED_KEY) || '{}').owned?.[id]) localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
+    return wornMarkId();
+  }
   return equipMark(id, earned);
 }
 

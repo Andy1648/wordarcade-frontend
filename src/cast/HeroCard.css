@@ -8,12 +8,15 @@
 .hc:focus-visible { outline: 3px solid #FFE94A; outline-offset: 4px; }
 .hc-card { position: relative; display: block; width: 100%; aspect-ratio: 731 / 1045; filter: drop-shadow(4px 4px 0 #000); }
 .hc.is-elite .hc-card { aspect-ratio: 852 / 1161; }
+.hc.is-legend .hc-card { aspect-ratio: 1073 / 1465; }
 .hc-frame { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
 .hc-art, .hc-plate { position: absolute; z-index: 1; display: block; }
 .hc-art { left: 9%; top: 6.5%; width: 82%; height: 61%; overflow: hidden; background: var(--hc-d); }
 .hc-plate { left: 9%; top: 71%; width: 82%; height: 18.5%; background: var(--hc-c); }
 .hc.is-elite .hc-art { left: 14%; top: 10.7%; width: 72%; height: 64%; }
 .hc.is-elite .hc-plate { left: 15.7%; top: 79%; width: 68.5%; height: 10.3%; }
+.hc.is-legend .hc-art { left: 14.6%; top: 10.8%; width: 70.4%; height: 63.3%; }
+.hc.is-legend .hc-plate { left: 15.8%; top: 79.3%; width: 67.9%; height: 9.6%; }
 .hc-hero { position: absolute; left: 50%; bottom: -2%; width: 104%; height: auto; translate: -50% 0; filter: drop-shadow(3px 3px 0 #000); }
 .hc.is-locked .hc-hero { filter: brightness(0); opacity: .9; }
 .hc-shine {
@@ -26,6 +29,7 @@
   font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; line-height: 1; color: #fff; white-space: nowrap;
   -webkit-text-stroke: 4px #000; paint-order: stroke fill;
 }
+.hc.is-legend .hc-name { left: 19%; width: 62%; top: 79.7%; height: 8.8%; font-size: var(--fs-k17); -webkit-text-stroke-width: 3px; }
 .hc.is-elite .hc-name { left: 19%; width: 62%; top: 79.3%; height: 9.7%; font-size: var(--fs-k17); -webkit-text-stroke-width: 3px; }
 .hc.is-on { transform: translateY(-6px); }
 .hc.is-sel .hc-card, .hc.is-on .hc-card { outline: 3px solid #FFE94A; outline-offset: 3px; border-radius: 10px; }
@@ -37,3 +41,7 @@
   font: 400 var(--fs-k15) 'Bungee', sans-serif; color: #FFE94A;
 }
 .hc.has-req .hc-hero { filter: grayscale(.7) brightness(.55); }
+/* the LEGEND art window is narrower than the crew's: its requirement chip drops the second (rebirth) icon and the side
+   padding so "REBIRTH 5" never clips — the lock + words still say it all */
+.hc.is-legend .hc-req { padding: 3px 6px 3px 3px; gap: 3px; }
+.hc.is-legend .hc-req .kit-icon:nth-of-type(2) { display: none; }

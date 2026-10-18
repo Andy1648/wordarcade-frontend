@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROLL_MARKS, PERMANENT_MARKS, oneInX, mainTag } from '../../progress/markRolls.js';
 import { MARKS } from '../../progress/marks.js';
-import { cardModel, splitTag, pipNext, tilePips, pipsLabel, perkLines } from './cardModel.js';
+import { cardModel, splitTag, pipNext, tilePips, pipsLabel, perkLines, hideOdds, MASKED_ODDS } from './cardModel.js';
 import { CARD_RAR } from './palette.js';
 import { pipPlateW } from './frameLayout.js';
 import { formatNum } from '../../format.js';
@@ -30,7 +30,8 @@ test('every mark id has a glyph and a finish body (shade + highlight)', () => {
 test('every rollable mark: real odds, its stat numbers-first, ★ pips', () => {
   for (const m of ROLL_MARKS) {
     const c = cardModel({ id: m.id, tier: m.tier, name: m.name, state: null });
-    assert.equal(c.odds, `1 IN ${formatNum(oneInX(m.id))}`); // the real per-mark odds, through formatNum
+    // the real per-mark odds, through formatNum — except SECRET, whose card shows "???" (THE UNLISTED, oct17)
+    assert.equal(c.odds, hideOdds(m.tier) ? MASKED_ODDS : `1 IN ${formatNum(oneInX(m.id))}`);
     assert.match(c.statNum, /^(?:[+×][\d.,]+(?:s|%|×)?|EVERY [\d,]+(?:ST|ND|RD|TH))$/, `${m.id} stat number`);
     assert.ok(c.statKind.length > 0, `${m.id} stat kind`);
     assert.equal(`${c.statNum} ${c.statKind}`, mainTag(m.id, null));
@@ -48,7 +49,7 @@ test('locked shows its DESIGN (Andy oct11) but hides its numbers: the odds as th
     assert.ok(c.subs.length === 4 && c.subs.every((x) => x === '?' || x === '—'), `${m.id}: substats hidden as "?"`);
     assert.ok(!c.subs.some((x) => /\d/.test(x)), `${m.id}: no substat number`);
     assert.equal(c.pips, null);
-    assert.equal(c.odds, `1 IN ${c.oddsNum}`);
+    assert.equal(c.odds, hideOdds(m.tier) ? MASKED_ODDS : `1 IN ${c.oddsNum}`);
     assert.equal(c.statNum, '', `${m.id}: no stat number`);
     assert.equal(c.statKind, '', `${m.id}: no stat kind`);
     assert.equal(c.crit, null, `${m.id}: no crit values`);

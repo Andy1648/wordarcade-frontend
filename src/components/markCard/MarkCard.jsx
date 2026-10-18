@@ -35,7 +35,7 @@ import ShinyBadge from '../rollScreen/ShinyBadge';
 import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
-import { cardModel } from './cardModel.js';
+import { cardModel, MASKED_ODDS } from './cardModel.js';
 import { shineNow, shineHost, shineSrc } from './cardShine.js';
 import { useReduceMotion } from '../../lib/useReduceMotion';
 import './MarkCard.css';
@@ -87,17 +87,19 @@ function MarkCard({
         {c.statKind ? <span className="mc-kind">{c.statKind}</span> : null}
       </div>
     );
-  } else if (c.earned) {
+  } else if (c.earned || c.unlisted) {
     hero = (
       <div className="mc-hero is-locked is-ach">
         <Lock />
-        <span className={cls('mc-kind', parts.odds)}>ACHIEVEMENT</span>
+        <span className={cls('mc-kind', parts.odds)}>{c.unlisted ? 'FIND IT' : 'ACHIEVEMENT'}</span>
       </div>
     );
   } else {
     hero = (
       <div className="mc-hero is-locked">
-        <span className={cls('mc-num mc-odds', parts.odds)}><span className="mc-pre">1 IN</span> {c.oddsNum}</span>
+        {c.oddsNum === MASKED_ODDS
+          ? <span className={cls('mc-num mc-odds is-masked', parts.odds)}>{MASKED_ODDS}</span>
+          : <span className={cls('mc-num mc-odds', parts.odds)}><span className="mc-pre">1 IN</span> {c.oddsNum}</span>}
       </div>
     );
   }
