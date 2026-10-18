@@ -33,10 +33,15 @@ export const MARK_FLAVOUR = Object.freeze({
   'mk-headmaster': 'GRADES ON A CURVE. YOURS.',
   'mk-thunderclap': 'YOU HEAR THE CRIT FIRST.',
   'mk-jackpot': 'RIGGED. IN YOUR FAVOUR.',
+  'mk-monsoon': "IT DOESN'T RAIN. IT SPELLS.",
+  'mk-inferno': 'LIGHTS EVERY FUSE IT SEES.',
+  'mk-mainframe': 'RUNNING HOT. RUNNING FASTER.',
+  'mk-shamrock': 'THREE LEAVES. ALL THE LUCK.',
   // ---- MYTHIC ----
   'mk-singularity': 'ALL WORDS FALL TOWARD IT.',
   'mk-kraken': 'PULLS THE ALPHABET UNDER.',
   'mk-hydra': 'CUT ONE FUSE. TWO MORE LIGHT.',
+  'mk-chronos': 'TIME BENDS. WORDS DRIP.',
   // ---- SECRET ----
   'mk-origin': 'BEFORE THE FIRST WORD, THIS.',
   // ---- PERMANENT ----

@@ -46,6 +46,7 @@ export const KIT_DRAWN = new Set([
   'mk-metronome', 'mk-hotwire', 'mk-grapple', 'mk-sparkplug', 'mk-pyro', 'mk-nova', 'mk-golem', 'mk-brainstorm',
   'mk-flashpoint', 'mk-voltage', 'mk-talisman', 'mk-leviathan', 'mk-eclipse', 'mk-headmaster', 'mk-thunderclap', 'mk-jackpot',
   'mk-singularity', 'mk-kraken', 'mk-hydra', 'mk-origin',
+  'mk-monsoon', 'mk-inferno', 'mk-mainframe', 'mk-shamrock', 'mk-chronos',
   // THE UNLISTED: painted art carries its own ink + highlights (no extra finish)
   'mk-ul-og', 'mk-ul-wishbone', 'mk-ul-typewriter', 'mk-ul-mirror', 'mk-ul-midas', 'mk-ul-tripledouble',
 ]);

@@ -98,7 +98,9 @@ test('LIVE: BASE × every chip = TOTAL (exact AND as printed) = the payout = 10 
         assert.equal(by.ascend, undefined, `${tag}: no STARS chip with the flag off`);
         const lm = liveMark(mark, key);
         assert.ok(Math.abs(by.mark - lm.wins) < 1e-9, `${tag}: MARK ×${lm.wins} (was ${by.mark})`);
-        relClose(c.chips.reduce((p, x) => p * x.mult, c.base), c.total, 0.05 / Math.max(1, c.total) + 1e-12, `${tag} exact`);
+        // the payout's grid is a tenth of a win, and roundWordXp rounds at 12 significant digits first (a double rounding at
+        // rebirth-10 sizes), so exact vs TOTAL can differ by up to one tenth, not half of one
+        relClose(c.chips.reduce((p, x) => p * x.mult, c.base), c.total, 0.1 / Math.max(1, c.total) + 1e-12, `${tag} exact`);
         const shown = c.chips.reduce((p, x) => p * shownNum(boardMult(x.mult)), shownNum(formatRate(c.base)));
         relClose(shown, c.total, 0.002 + 0.05 / c.total, `${tag} printed chips vs TOTAL`); // + the payout's tenth-of-a-win grid
         relClose(shownNum(formatRate(c.total)), shown, 0.006, `${tag} as printed`);

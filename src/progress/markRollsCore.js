@@ -146,16 +146,23 @@ const RAW_POOL = [
   { id: 'mk-flashpoint', name: 'JUMPER CABLES', tier: 'epic', mode: 'fuse', stat: 'fuseWinsPct' },
   { id: 'mk-voltage', name: 'TESLA COIL', tier: 'epic', mode: null, stat: 'critPower' },
   { id: 'mk-talisman', name: 'MAGIC 8-BALL', tier: 'epic', mode: null, stat: 'luckPct' },
-  // ---- LEGENDARY (4) + perk ----
+  // ---- LEGENDARY (9) + perk ----
   { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct' },
   { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct' },
   { id: 'mk-headmaster', name: 'HEADMASTER', tier: 'legendary', mode: 'satRush', stat: 'satWinsPct' },
   { id: 'mk-thunderclap', name: 'THUNDERCLAP', tier: 'legendary', mode: null, stat: 'critPower' },
   { id: 'mk-jackpot', name: 'JACKPOT', tier: 'legendary', mode: null, stat: 'gemsPct' }, // gear card v4 (Andy oct11): +200% GEMS
-  // ---- MYTHIC (3) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
+  // oct18 (Andy "rarer ones like more legendaries"): four more, each on a stat that had no LEGENDARY yet. The tier's
+  // 1 IN 100 is unchanged, so each LEGENDARY is now 1 IN 900 (server mirror: 055_more_legendaries.sql)
+  { id: 'mk-monsoon', name: 'MONSOON', tier: 'legendary', mode: 'blitz', stat: 'blitzWinsPct' },
+  { id: 'mk-inferno', name: 'INFERNO', tier: 'legendary', mode: 'fuse', stat: 'fuseWinsPct' },
+  { id: 'mk-mainframe', name: 'MAINFRAME', tier: 'legendary', mode: null, stat: 'critRatePct' },
+  { id: 'mk-shamrock', name: 'SHAMROCK', tier: 'legendary', mode: null, stat: 'luckPct' },
+  // ---- MYTHIC (4) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
   { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins' },
   { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp' },
   { id: 'mk-hydra', name: 'HYDRA', tier: 'mythic', mode: 'wordBomb', stat: 'wbWinsPct' },
+  { id: 'mk-chronos', name: 'CHRONOS', tier: 'mythic', mode: null, stat: 'xpPct' }, // oct18: bends time — every letter's XP
   // ---- SECRET (1) + game-changing perks ----
   { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null, stat: 'winsPct' },
 ];
