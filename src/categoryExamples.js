@@ -21,8 +21,11 @@ export const CATEGORY_EXAMPLES = {
   "Things you don't want to find in your bed": "Spider",
   "Things you shouldn't bring to a funeral": "Balloons",
   "Worst things to find in your food": "Hair",
+  "Things you don't want to find in your food": "Hair",
   "Worst things to get stuck in an elevator with": "Skunk",
+  "Things you don't want to get stuck in an elevator with": "Skunk",
   "Worst things to hit with your car": "Mailbox",
+  "Things to hit with your car": "Mailbox",
   // oct16 UNHINGED pack (Andy "go for funnier ... dark humor"), each example verified ON its list
   "Excuses for not doing your homework": "Dog ate it",
   "Lies adults tell kids": "Tooth fairy",
@@ -47,7 +50,9 @@ export const CATEGORY_EXAMPLES = {
   "Things your parents say will rot your brain": "Video games",
   "Ways to end up in the ER": "Trampoline",
   "Worst gifts to get": "Socks",
+  "Gifts nobody wants": "Socks",
   "Worst places to fall asleep": "Class",
+  "Places you shouldn't fall asleep": "Class",
   // oct15 afternoon batches V / W / X (each verified ON its list)
   "Things your mom tells you to do": "Clean your room",
   "Things in a dad's toolbox": "Hammer",

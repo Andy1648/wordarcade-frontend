@@ -11,8 +11,11 @@ export const CATEGORY_EMOJI = {
   "Things you don't want to find in your bed": "🛏️",
   "Things you shouldn't bring to a funeral": "⚰️",
   "Worst things to find in your food": "🪳",
+  "Things you don't want to find in your food": "🪳",
   "Worst things to get stuck in an elevator with": "🛗",
+  "Things you don't want to get stuck in an elevator with": "🛗",
   "Worst things to hit with your car": "🚗",
+  "Things to hit with your car": "🚗",
   // oct16 UNHINGED pack (Andy "go for funnier ... dark humor")
   "Excuses for not doing your homework": "🐶",
   "Lies adults tell kids": "🎅",
@@ -37,7 +40,9 @@ export const CATEGORY_EMOJI = {
   "Things your parents say will rot your brain": "🧠",
   "Ways to end up in the ER": "🚑",
   "Worst gifts to get": "🎁",
+  "Gifts nobody wants": "🎁",
   "Worst places to fall asleep": "😴",
+  "Places you shouldn't fall asleep": "😴",
   // oct15 afternoon batches V / W / X
   "Things your mom tells you to do": "🧹",
   "Things in a dad's toolbox": "🔨",
