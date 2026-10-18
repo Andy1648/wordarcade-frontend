@@ -4,6 +4,21 @@
 export const CATEGORY_EMOJI = {
   // oct17 NOT categories (any real noun scores — blitzNot.js)
   "Things you shouldn't flush down the toilet": "🚽",
+  // oct18 NOT batch 2 (Andy: "more of them" — any real noun scores, blitzNot.js)
+  "Things you shouldn't put in a washing machine": "🧺",
+  "Things you shouldn't bring on a plane": "✈️",
+  "Things you shouldn't feed a dog": "🐶",
+  "Things you shouldn't put in a fish tank": "🐠",
+  "Things you shouldn't wear to a job interview": "👔",
+  "Things you shouldn't bring to the beach": "🏖️",
+  "Things you shouldn't put on a pizza": "🍕",
+  "Things you don't want to step on barefoot": "🦶",
+  "Things you shouldn't bring to a sleepover": "🛌",
+  "Things you shouldn't put in your pocket": "👖",
+  "Things you don't want to find in your shoe": "👟",
+  "Things you shouldn't bring on a first date": "💐",
+  "Things you shouldn't pet": "🦔",
+  "Things you shouldn't put in a blender": "🫙",
   // oct17 UNHINGED round 2 (Andy: noun answers only, darker, fewer misses)
   "Things in a horror movie basement": "🕯️",
   "Things that are probably cursed": "🔮",
