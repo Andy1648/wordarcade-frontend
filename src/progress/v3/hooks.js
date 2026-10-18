@@ -17,6 +17,7 @@ import {
 } from './econ.js';
 import { needV3, creditXpV3 } from './curve.js';
 import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter, S2_PREFIX } from './store.js';
+import { bumpHeroWin } from '../../cast/heroWins.js';
 import { featureOpen } from './unlocks.js';
 import { hardestBot } from '../botDiff.js';
 import { liveRankV3 } from './ranks.js';
@@ -167,6 +168,7 @@ export const countingResult = (livePay) => (o = {}) => {
   if (o.iWon && !p.repeat && list.length) {
     const self = new Set(o.selfIds || []);
     bumpCounter(list.some((r) => r && !r.isBot && !self.has(r.id)) ? 'mp' : 'bots');
+    bumpHeroWin(); // GOLD variants: 100 wins with a hero (bots + online), counted for the equipped hero
   }
   return p;
 };

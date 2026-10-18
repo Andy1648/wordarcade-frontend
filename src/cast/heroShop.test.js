@@ -88,3 +88,31 @@ test('NEW FACES + LEGEND: painted, priced, never handed out as another player\'s
   assert.equal(ownsHero('boo'), true, 'REBIRTH 5 earns BOO');
   assert.equal(ownsHero('lexi'), false, 'LEXI is gems only');
 }));
+
+test('GOLD: earned with 100 wins on its member (bots + online), never sold; a win counts for the equipped hero', async () => {
+  const { GOLD, GOLD_WINS, goldProgress } = await import('./cast.js');
+  const { bumpHeroWin, HERO_WINS_KEY, heroWins } = await import('./heroWins.js');
+  withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(99999) }, (map) => {
+    assert.equal(GOLD.length, 5);
+    assert.equal(GOLD_WINS, 100);
+    for (const g of GOLD) {
+      assert.ok(g.gold && !g.price && g.seat && CAST_BEATS[g.id]);
+      assert.equal(castSrc(g.id, 'hero'), `/cast/${g.id}-hero.webp`);
+      assert.equal(castSrc(g.id, 'win'), `/cast/${g.base}-win.webp`, 'WIN falls back to the member, not the gold HERO');
+    }
+    map.set(HERO_WINS_KEY, JSON.stringify({ riot: 99 }));
+    assert.equal(ownsHero('riot-gold'), false);
+    assert.deepEqual(buyHero('riot-gold'), { ok: false, reason: 'locked' }, 'GOLD is never for sale');
+    assert.equal(G.getGems(), 99999);
+    map.set('taw.main', 'riot-elite'); // an ELITE's wins count toward its member
+    bumpHeroWin();
+    assert.equal(heroWins('riot'), 100);
+    assert.deepEqual(goldProgress('riot-gold'), { have: 100, need: 100, done: true });
+    assert.equal(ownsHero('riot-gold'), true);
+    assert.deepEqual(buyHero('riot-gold'), { ok: true });
+    assert.equal(readMain(), 'riot-gold');
+    bumpHeroWin(); // equipped GOLD → still RIOT's count
+    assert.equal(heroWins('riot'), 101);
+    assert.equal(ownsHero('hex-gold'), false);
+  });
+});
