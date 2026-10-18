@@ -6,9 +6,13 @@
 // the title picker. Lazy (its own chunk); the card pops in once, nothing loops.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { heroById, readMain, writeMain, CAST } from '../../cast/cast.js';
+import { heroById, readMain, writeMain, CAST, castSrc } from '../../cast/cast.js';
 import HeroShowcase from '../../cast/HeroShowcase.jsx';
 import HeroPicker from '../../cast/HeroPicker.jsx';
+import HeroUnlock from '../../cast/HeroUnlock.jsx';
+import { unseenHeroes } from '../../cast/heroSeen.js';
+import { rarityOf } from '../../cast/CastArt.jsx';
+import { nextHeroGoal } from '../../cast/HeroPreview.jsx';
 import FitText from '../kit/FitText.jsx';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js';
@@ -39,26 +43,35 @@ function Stat({ icon, glyph, tone, value, label }) {
 export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
   const [view, setView] = useState('profile'); // 'profile' | 'pick'
+  const [peekId, setPeekId] = useState(null); // the picker opens on this hero's preview (the NEXT HERO goal)
   const [cheer, setCheer] = useState(0);
+  // NEW HERO! (oct18): heroes earned by playing since the last look reveal on open (rarest last); a purchase reveals too
+  const [reveal, setReveal] = useState(() => {
+    const ids = unseenHeroes();
+    const rank = { gold: 1, elite: 2, legend: 3 };
+    ids.sort((a, b) => (rank[rarityOf(heroById(a)).tier] || 0) - (rank[rarityOf(heroById(b)).tier] || 0));
+    return ids.length ? { ids, equipped: null } : null;
+  });
   const cardRef = useRef(null);
   const h = heroById(id) || CAST[0];
   const me = getMyProfile();
   const st = myStats();
   const c = readCounters();
   const play = readPlaySec();
-  const show = myShowcase(); // the same numbers the leaderboard card shows others (gears found)
+  const show = myShowcase();
+  const goal = nextHeroGoal(); // the closest earnable hero you don't own (a goal to chase) // the same numbers the leaderboard card shows others (gears found)
   const [unl] = useState(() => unlistedIndex()); // THE UNLISTED: your finds + serials (read once)
 
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key !== 'Escape') return;
+      if (e.key !== 'Escape' || reveal) return; // the reveal owns Escape while it is up
       e.stopPropagation();
       if (view === 'pick') setView('profile'); else onClose();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [view, onClose]);
+  }, [view, onClose, reveal]);
 
   const equip = (next) => {
     writeMain(next);
@@ -67,7 +80,8 @@ export default function ProfilePopup({ onClose, onMainChange }) {
     setView('profile');
     if (onMainChange) onMainChange(next);
   };
-  const bought = (next) => { equip(next); setTimeout(() => setCheer((n) => n + 1), 480); };
+  const bought = (next) => { equip(next); setReveal({ ids: [next], equipped: next }); };
+  const revealDone = () => { const was = reveal; setReveal(null); if (was && was.equipped) setTimeout(() => setCheer((n) => n + 1), 200); };
 
   return createPortal(
     <div className="pf-scrim" role="presentation" onClick={onClose}>
@@ -79,14 +93,26 @@ export default function ProfilePopup({ onClose, onMainChange }) {
           <button type="button" className="pf-x" onClick={onClose} aria-label="Close profile">✕</button>
         </div>
         {view === 'pick' ? (
-          <HeroPicker current={id} onEquip={equip} onBought={bought} />
+          <HeroPicker current={id} onEquip={equip} onBought={bought} peekId={peekId} />
         ) : (
           <div className="pf-body">
             <div className="pf-left">
               <HeroShowcase id={h.id} cheer={cheer} />
               <FitText className="pf-hero fit-center">{h.name}</FitText>
               <span className="pf-hero-tag">{h.elite ? `ELITE · ${h.tag}` : h.legend ? `LEGEND · ${h.tag}` : h.gold ? `GOLD · ${h.tag}` : h.tag}</span>
-              <button type="button" className="pf-change" onClick={() => setView('pick')}>CHANGE HERO</button>
+              <button type="button" className="pf-change" onClick={() => { setPeekId(null); setView('pick'); }}>CHANGE HERO</button>
+              {goal ? (
+                <button type="button" className="pf-goal" style={{ '--pg-c': goal.h.color }} onClick={() => { setPeekId(goal.h.id); setView('pick'); }}
+                  aria-label={`Next hero: ${goal.h.name}, ${goal.p.label} ${goal.p.have} of ${goal.p.need}`}>
+                  <img className="pf-goal-face" src={castSrc(goal.h.id, 'hero')} alt="" aria-hidden="true" draggable="false" />
+                  <span className="pf-goal-text">
+                    <span className="pf-goal-k">NEXT HERO</span>
+                    <span className="pf-goal-n">{goal.h.name}</span>
+                    <span className="pf-goal-bar"><span className="pf-goal-fill" style={{ transform: `scaleX(${goal.f})` }} /></span>
+                    <span className="pf-goal-p">{goal.p.label} {formatNum(goal.p.have)}/{formatNum(goal.p.need)}</span>
+                  </span>
+                </button>
+              ) : null}
             </div>
             <div className="pf-right">
               <div className="pf-id">
@@ -107,6 +133,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
           </div>
         )}
       </div>
+      {reveal ? <HeroUnlock ids={reveal.ids} equipped={reveal.equipped} onEquip={(next) => { equip(next); setReveal((r) => (r ? { ...r, equipped: next } : r)); }} onClose={revealDone} /> : null}
     </div>,
     document.body,
   );

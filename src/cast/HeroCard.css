@@ -26,11 +26,11 @@
 .hc-name {
   position: absolute; z-index: 3; left: 13%; width: 74%; top: 73.5%; height: 13%;
   display: flex; align-items: center; justify-content: center;
-  font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; line-height: 1; color: #fff; white-space: nowrap;
-  -webkit-text-stroke: 4px #000; paint-order: stroke fill;
+  font: 400 var(--fs-k26, 26px) 'Bungee', sans-serif; line-height: 1; color: #fff; white-space: nowrap;
+  -webkit-text-stroke: 5px #000; paint-order: stroke fill;
 }
-.hc.is-legend .hc-name { left: 19%; width: 62%; top: 79.7%; height: 8.8%; font-size: var(--fs-k17); -webkit-text-stroke-width: 3px; }
-.hc.is-elite .hc-name, .hc.is-gold .hc-name { left: 19%; width: 62%; top: 79.3%; height: 9.7%; font-size: var(--fs-k17); -webkit-text-stroke-width: 3px; }
+.hc.is-legend .hc-name { left: 19%; width: 62%; top: 79.7%; height: 8.8%; font-size: var(--fs-k22); -webkit-text-stroke-width: 4px; }
+.hc.is-elite .hc-name, .hc.is-gold .hc-name { left: 19%; width: 62%; top: 79.3%; height: 9.7%; font-size: var(--fs-k22); -webkit-text-stroke-width: 4px; }
 .hc.is-on { transform: translateY(-6px); }
 .hc.is-sel .hc-card, .hc.is-on .hc-card { outline: 3px solid #FFE94A; outline-offset: 3px; border-radius: 10px; }
 @media (hover: hover) { .hc:not(.is-on):hover { transform: translateY(-4px); } }
@@ -38,7 +38,7 @@
 .hc-req {
   position: absolute; left: 50%; bottom: 6%; z-index: 2; translate: -50% 0; display: inline-flex; align-items: center; gap: 4px;
   padding: 3px 8px 3px 4px; white-space: nowrap; background: #0d0618; border: 3px solid #FFE94A; border-radius: 6px; box-shadow: 3px 3px 0 #000;
-  font: 400 var(--fs-k15) 'Bungee', sans-serif; color: #FFE94A;
+  font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #FFE94A;
 }
 .hc.has-req .hc-hero { filter: grayscale(.7) brightness(.55); }
 /* the LEGEND art window is narrower than the crew's: its requirement chip drops the second (rebirth) icon and the side
@@ -48,3 +48,9 @@
 /* GOLD's wins-to-go chip (trophy + "37/100") sits in the elite-size window: drop the lock so it never clips */
 .hc.is-gold .hc-req { padding: 3px 6px 3px 3px; gap: 3px; }
 .hc.is-gold .hc-req .kit-icon:nth-of-type(1) { display: none; }
+/* phone cards are ~150px wide: the requirement chip keeps its k15 type and drops the second icon so it never clips */
+@media (max-width: 760px) {
+  .hc-req { font-size: var(--fs-k15); padding: 3px 6px 3px 3px; gap: 3px; }
+  .hc-req .kit-icon:nth-of-type(2) { display: none; }
+  .hc-name { font-size: var(--fs-k22); -webkit-text-stroke-width: 4px; }
+}

@@ -47,3 +47,5 @@
 }
 .pt:active .pt-go { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
 @media (prefers-reduced-motion: reduce) { .pt-card { transition: none; } }
+/* a hero earned since your last look: the chip says so (its reveal plays when the profile opens) */
+.pchip-sub.is-new, .pt-go.is-new { color: #FFE94A; }
