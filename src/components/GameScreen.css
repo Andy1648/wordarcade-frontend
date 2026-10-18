@@ -3034,6 +3034,13 @@
 
 /* TOP-N rebrand (oct17): the label reads "TOP 115" over the category box — the number is the hook, so it gets
    the graffiti yellow + black stroke the old solo YOUR BEST banner had. Static: no idle motion. */
+/* The pack tag and the TOP clause each wrap as one unit, so a phone breaks the line between them, never inside
+   "FAMILY-FRIENDLY". */
+.cb-category-label .cb-pack-tag,
+.cb-category-label .cb-topline {
+  white-space: nowrap;
+}
+
 .cb-category-label .cb-topn {
   color: #FFE94A;
   -webkit-text-stroke: 1px #000;
