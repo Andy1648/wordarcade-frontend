@@ -171,24 +171,16 @@ const SLIDE = [{ transform: 'translateX(40px)', opacity: 0 }, { transform: 'tran
 const FILL = [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }];
 const BOB = [{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 // TOP 3 CELEBRATION (Andy oct12 "make the people feel good for being top 3"): one-shots on arrival, motion only on
-// existing art — a medal-tinted burst ring behind each place, the painted win burst behind #1, pooled confetti from #1
-// (and from YOUR place when you are top 3), the name slams in, the place number pops. Nothing loops.
+// existing art — a medal-tinted burst ring behind each place, the painted win burst behind #1, the name slams in, the
+// place number pops. Nothing loops. (oct18 Andy: the confetti throw "looks horrendous" — removed.)
 const POPN = [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.22)', opacity: 1, offset: 0.55 }, { transform: 'scale(1)', opacity: 1 }];
 // TOP 3 IDLE (Andy oct12 "at least give some idle animation for the top 3"): ONE setTimeout chain for the podium — every
 // IDLE_EVERY_MS the next place (#1 → #2 → #3) plays one finite beat: its character moves (BEATS), a sparkle glints.
 // Hidden tab skipped; reduced motion never starts it (kitPlay is a no-op then too). No CSS loop, nothing infinite.
 // PER-CHARACTER IDLE: each cast member's squash-and-stretch breath (cast.js CAST_BEATS — shared with the menu showcase);
 // (oct17: #1's crown removed — Andy: it "doesn't match well at all" with the painted cast.)
-const CONFETTI_N = 18;
-const CONFETTI_ART = 16; // public/stage/fx/confetti-0 … 15.webp (painted pieces, one sheet)
-// a fixed plan per piece (no Math.random at render): an up-and-out launch, a fall, a spin
-const CONFETTI = Array.from({ length: CONFETTI_N }, (_, i) => {
-  const a = (-90 + ((i * 47) % 150) - 75) * (Math.PI / 180); // −165° … −15°: upward fan
-  const r = 90 + ((i * 37) % 80);
-  return { dx: Math.cos(a) * r, dy: Math.sin(a) * r, fall: 120 + ((i * 29) % 90), spin: (i % 2 ? 1 : -1) * (240 + ((i * 53) % 300)), art: (i * 7) % CONFETTI_ART };
-});
 // THE ENTRANCE (art run oct16), one sequenced one-shot per column: the blocks rise 2 → 1 → 3, each emblem spins in
-// on its block, the character drops and squash-lands, the ribbon unrolls, the crown drops onto #1, confetti. Every
+// on its block, the character drops and squash-lands, the ribbon unrolls. Every
 // effect is transform / opacity and ends before 2.5 s (the e2e asserts nothing but the idle beat runs at 2.6 s); the
 // drops start only a short way up (-18%) so no frame ever leaves the screen — #1 stands near the top on a short
 // window, and CI's slower runner measured it mid-drop at -38% above the viewport (the e2e measures mid-entrance too).
@@ -202,24 +194,6 @@ const DROP = [
   { transform: 'translateY(-4%) scale(.95, 1.06)', opacity: 1, offset: 0.84 },
   { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
 ];
-function confettiFrames(c, k) {
-  return [
-    { transform: 'translate(0, 0) rotate(0deg) scale(.6)', opacity: 1 },
-    { transform: `translate(${c.dx * k}px, ${c.dy * k}px) rotate(${c.spin * 0.5}deg) scale(1)`, opacity: 1, offset: 0.4 },
-    { transform: `translate(${c.dx * 1.25 * k}px, ${(c.dy + c.fall) * k}px) rotate(${c.spin}deg) scale(.9)`, opacity: 0 },
-  ];
-}
-function PodiumFx({ party }) {
-  return (
-    <span className="lb2-fx" aria-hidden="true">
-      {party && (
-        <span className="lb2-confetti">
-          {CONFETTI.map((c, i) => <img key={i} className="lb2-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}
-        </span>
-      )}
-    </span>
-  );
-}
 const SINK = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 const pulse = (base) => [{ transform: `${base} scale(1)` }, { transform: `${base} scale(1.018)`, offset: 0.5 }, { transform: `${base} scale(1)` }];
 
@@ -443,9 +417,6 @@ export default function LeaderboardV2({ onBack }) {
       kitPlay(q('.lb2-place'), POPN, { ...bf, duration: 340, delay: land - 40, easing: 'cubic-bezier(.2,1.4,.4,1)' });
       kitPlay(q('.lb2-buddy'), DROP, { ...bf, duration: 620, delay: land + 160, easing: 'ease-in' });
       kitPlay(q('.lb2-pod-name'), POPN, { ...bf, duration: 300, delay: land + 640, easing: 'cubic-bezier(.2,1.4,.4,1)' });
-      const k = place === 1 ? 1.15 : 0.9;
-      const cAt = land + (place === 1 ? 880 : 760);
-      col.querySelectorAll('.lb2-cf').forEach((el, i) => kitPlay(el, confettiFrames(CONFETTI[i], k), { ...bf, duration: 860 + (i % 4) * 60, delay: cAt + (i % 5) * 20, easing: 'cubic-bezier(.15,.7,.4,1)' }));
     });
     root.querySelectorAll('.lb2-mv.is-up .lb2-mv-ico').forEach((el) => kitPlay(el, BOB, { duration: 900, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-mv.is-down .lb2-mv-ico').forEach((el) => kitPlay(el, SINK, { duration: 1300, delay: 400, easing: 'ease-in-out' }));
@@ -567,7 +538,6 @@ export default function LeaderboardV2({ onBack }) {
             const name = p ? p.username : 'YOUR NAME HERE?';
             return (
               <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
-                {p ? <PodiumFx party={place === 1 || mine} /> : null}
                 <div className="lb2-who">
                   {/* SIMPLE (Andy oct16: the emblem + ribbon read as poorly cut AI slop, "quality but with simplicity"): the
                       cast member alone (no crown — oct17), the name in plain type under it, then the plate + numbers */}
