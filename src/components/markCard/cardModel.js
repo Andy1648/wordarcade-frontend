@@ -79,9 +79,10 @@ export function cardModel({ id, kind = 'roll', tier, name = '', locked = false, 
     rarityName: kind === 'perm' ? tierLabel('legendary') : tierLabel(t, kind),
     // THE UNLISTED (oct17): SECRET's odds are never shown on a card — "???" is more desirable than a scary number (the roll
     // screen's odds table still discloses every rolled tier). UNLISTED has no odds at all (never rolled).
-    odds: kind === 'roll' ? (hideOdds(t) ? MASKED_ODDS : `1 IN ${formatNum(oneInX(id))}`) : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '',
+    odds: kind === 'unlisted' ? '' : kind === 'roll' ? (hideOdds(t) ? MASKED_ODDS : `1 IN ${formatNum(oneInX(id))}`) : kind === 'perm' ? (locked ? 'ACHIEVEMENT' : 'EARNED') : '',
     oddsNum: kind === 'roll' ? (hideOdds(t) ? MASKED_ODDS : formatNum(oneInX(id))) : '', // a LOCKED rollable tile's hero: "1 IN" small + this big
     earned: kind === 'perm',
+    unlisted: kind === 'unlisted', // THE UNLISTED: found, never rolled — a locked one says FIND IT where a rolled card says its odds
     locked,
     name, // gear card v4 (Andy oct11 "show the design for all the cards"): a locked card shows its art + name; only its numbers stay hidden
     statNum: num,

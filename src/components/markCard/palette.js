@@ -13,9 +13,9 @@ export const CARD_RAR = {
   mythic: { line: '#FF3D7F', edge: '#a8164e', fill: '#4a0a22', inner: '#a8164e' },
   secret: { line: '#FFFFFF', edge: '#8c8c9c', fill: '#050208', inner: '#1c1c22' },
   permanent: { line: '#2EFFE0', edge: '#128f7e', fill: '#06302b', inner: '#0f8f7e' },
-  // THE UNLISTED (found, never rolled): a NEGATIVE PRINT — paper-cream ink on a pure black card. The off-register cyan
-  // plate is a static hard offset (unlisted/UnlistedCard.css), never a glow. Reads as a different CLASS, not a brighter tier.
-  unlisted: { line: '#F2ECDD', edge: '#8f8a7c', fill: '#000000', inner: '#141414' },
+  // THE UNLISTED (found, never rolled — Andy oct17 "a different rarity with just black"): an ALL-BLACK card, charcoal
+  // plates, white type. No rainbow, no tier colour — it reads as its own class, not a brighter rung.
+  unlisted: { line: '#262626', edge: '#000000', fill: '#000000', inner: '#0d0d0d' },
 };
 export const RAINBOW_TEETH = ['#FF3D7F', '#FFC23D', '#2EFFE0', '#3D8BFF', '#B04BFF'];
 /** A locked card: the face and the inner disc go near-black; the cog keeps its tier colour. */

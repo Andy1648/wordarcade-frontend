@@ -16,6 +16,8 @@ import TierBanner from './markCard/TierBanner.jsx';
 import { CARD_RAR } from './markCard/palette.js';
 import { cardModel, pipNext, pipsLabel, perkLines, tierLabel } from './markCard/cardModel.js';
 import { formatNum } from '../format';
+import { loadUnlisted, formatSerial } from '../unlisted/unlisted.js';
+import { openAchievement } from '../lib/openAchievement.js';
 import GearFx from './GearFx';
 import { GLOW_TIERS } from './markCard/idleSheen.js';
 import './GearSheet.css';
@@ -72,6 +74,13 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, pe
               <span className="mx-main-num">{c.statNum}</span>
               {c.statKind ? <span className="mx-main-kind">{c.statKind}</span> : null}
             </div>
+          ) : e.kind === 'unlisted' ? (
+            // THE UNLISTED (Andy oct17 "the description can be shown if they click it"): how to find it, nothing else
+            <div className="mx-main is-locked is-word" data-testid="mark-main">
+              <span className="mx-main-kick">LOCKED</span>
+              <span className="mx-main-num">HOW TO FIND</span>
+              {howTo ? <span className="mx-main-kind mx-howto">{howTo}</span> : null}
+            </div>
           ) : rolled ? (
             <div className="mx-main is-locked" data-testid="mark-main">
               <span className="mx-main-kick">LOCKED</span>
@@ -83,6 +92,10 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, pe
               <span className="mx-main-kick">LOCKED</span>
               <span className="mx-main-num">ACHIEVEMENT</span>
               {howTo ? <span className="mx-main-kind mx-howto">{howTo}</span> : null}
+              {e.ach && !peek ? (
+                // Andy oct17: a gear that needs an achievement takes you to it
+                <button type="button" className="mx-set mx-go-ach" data-testid="gear-go-ach" onClick={() => openAchievement(e.ach)}>SEE ACHIEVEMENT</button>
+              ) : null}
             </div>
           )}
           {c.critLines.length ? (
@@ -118,6 +131,7 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, pe
               ) : null}
             </div>
           ) : null}
+          {e.kind === 'unlisted' && have && !peek ? <UnlistedFacts id={e.id} /> : null}
           {rolled && have && !peek ? (
             <div className="mx-sheet-facts">
               <span data-testid="mark-owned">OWNED ×{formatNum(info.owned)}</span>
@@ -133,6 +147,18 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, pe
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** An owned UNLISTED gear's facts: its FINDER serial (server-given; "#····" until it answers) and the word that found it. */
+function UnlistedFacts({ id }) {
+  const e = loadUnlisted().owned[id];
+  if (!e) return null;
+  return (
+    <div className="mx-sheet-facts">
+      <span data-testid="unlisted-serial">FINDER {formatSerial(e.serial)}</span>
+      {e.word ? <span>FOUND WITH {e.word}</span> : null}
     </div>
   );
 }

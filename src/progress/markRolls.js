@@ -25,6 +25,7 @@
 // boot, for wins.js / letterXp.js and the menu chip). Everything else here loads with the MARKS panel. This
 // module re-exports the core, so `import … from './markRolls.js'` still sees everything.
 import { MARKS, MARKS_OWNED_KEY, MARKS_EQUIPPED_KEY } from './marks.js';
+import { ladderOwnedGears } from './ladderGears.js'; // SEASON 2 EARNED gears (a maxed achievement ladder)
 import { gameKey, WORD_LEN_REF } from './wins.js';
 import { xpPerWord } from './xp.js';
 import {
@@ -417,6 +418,7 @@ export function permanentOwnedIds() {
   const owned = new Set(legacyOwnedIds());
   const extra = readJson('taw.permanentMarks');
   if (Array.isArray(extra)) for (const id of extra) owned.add(id);
+  for (const id of ladderOwnedGears()) owned.add(id); // SEASON 2: a maxed achievement ladder's gear (ladderGears.js)
   return PERMANENT_MARKS.filter((m) => owned.has(m.id)).map((m) => m.id);
 }
 

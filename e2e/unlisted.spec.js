@@ -40,52 +40,81 @@ async function openIndex(page) {
 }
 
 for (const vp of VPS) {
-  test(`@${vp.tag} INDEX: UNLISTED is "?/?" + riddles; SECRET shows no odds`, async ({ page }) => {
+  test(`@${vp.tag} INDEX: UNLISTED gears are black cards in the grid (no strip); tap one for HOW TO FIND; SECRET shows no odds`, async ({ page }) => {
     await page.setViewportSize({ width: vp.w, height: vp.h });
     await installBackendMock(page);
     await seed(page);
     await page.goto('/?portal=1');
     await menuReady(page);
     await openIndex(page);
-    const strip = page.getByTestId('unlisted-strip');
-    await strip.scrollIntoViewIfNeeded();
-    await expect(page.getByTestId('unlisted-count')).toHaveText('?/?');
-    await expect(strip.locator('.ulc.is-masked')).toHaveCount(6);
-    await expect(strip.locator('.ulc-art')).toHaveCount(0); // no art leaks
-    await expect(strip).not.toContainText(/1 IN|%/); // no odds, anywhere in the tier
-    await expect(strip.locator('.ulc-riddle').first()).not.toBeEmpty();
+    const tiles = page.locator('.mx-tile[data-tier="unlisted"]');
+    await expect(tiles).toHaveCount(6);
+    await expect(page.getByTestId('unlisted-strip')).toHaveCount(0); // Andy oct17: no separate ?/? screen
+    const og = page.locator('.mx-tile[data-mark="mk-ul-og"]');
+    await og.scrollIntoViewIfNeeded();
+    await expect(og).toHaveClass(/is-locked/);
+    await expect(og).toContainText('FIND IT');
+    await expect(og).not.toContainText(/1 IN/);
     // ORIGIN (SECRET, rolled): its locked card says "???" — never "1 IN 15K"
     const origin = page.locator('.mx-tile[data-mark="mk-origin"]');
     await expect(origin.locator('.mc-odds')).toHaveText('???');
-    await expect(origin).not.toHaveAttribute('aria-label', /1 IN/);
     await page.waitForTimeout(400);
-    await shot(page, `index-masked-${vp.tag}`);
+    await shot(page, `index-unlisted-${vp.tag}`);
+    await og.click();
+    const sheet = page.locator('.mx-sheet');
+    await expect(sheet.getByTestId('mark-main')).toContainText('HOW TO FIND');
+    await expect(sheet.getByTestId('mark-main')).toContainText('SAY THE NAME OF THE PLACE THAT RAISED US');
+    await expect(sheet.getByTestId('gear-equip')).toHaveCount(0);
+    await page.waitForTimeout(400);
+    await shot(page, `sheet-locked-${vp.tag}`);
   });
 
-  test(`@${vp.tag} INDEX + SHEET: found gears show their serial; EQUIP wears one`, async ({ page }) => {
+  test(`@${vp.tag} INDEX + SHEET: a found UNLISTED gear shows its serial; EQUIP wears it`, async ({ page }) => {
     await page.setViewportSize({ width: vp.w, height: vp.h });
     await installBackendMock(page);
     await seed(page, { unlisted: OWNED });
     await page.goto('/?portal=1');
     await menuReady(page);
     await openIndex(page);
-    const strip = page.getByTestId('unlisted-strip');
-    await strip.scrollIntoViewIfNeeded();
-    await expect(page.getByTestId('unlisted-count')).toHaveText('2/6');
-    await expect(strip.locator('.ulc.is-owned')).toHaveCount(2);
-    await expect(strip.locator('.ulc.is-owned .ulc-serial').first()).toHaveText('#0042');
-    await page.waitForTimeout(400);
-    await shot(page, `index-found-${vp.tag}`);
-    await strip.locator('.ul-strip-btn', { hasText: 'O.G.' }).click();
-    const sheet = page.locator('.ul-sheet');
-    await expect(sheet).toBeVisible();
+    const og = page.locator('.mx-tile[data-mark="mk-ul-og"]');
+    await og.scrollIntoViewIfNeeded();
+    await expect(og).not.toHaveClass(/is-locked/);
+    await expect(page.locator('.mx-tile[data-tier="unlisted"]:not(.is-locked)')).toHaveCount(2);
+    await og.click();
+    const sheet = page.locator('.mx-sheet');
     await expect(sheet.getByTestId('unlisted-serial')).toHaveText('FINDER #0042');
     await expect(sheet.getByTestId('mark-main')).toContainText('WINS + XP');
     await page.waitForTimeout(400);
-    await shot(page, `sheet-${vp.tag}`);
+    await shot(page, `sheet-found-${vp.tag}`);
     await sheet.getByTestId('gear-equip').click();
     await expect.poll(() => page.evaluate(() => localStorage.getItem('taw.mark'))).toBe('mk-ul-og');
     await expect(sheet.getByTestId('gear-equip')).toHaveText('UNEQUIP');
+  });
+
+  test(`@${vp.tag} EARNED gear → SEE ACHIEVEMENT opens its ladder; achievement names are 1–2 words`, async ({ page }) => {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await installBackendMock(page);
+    await seed(page, { extra: { 'taw.season2.off': '0', 'taw.s2.rebirths': '5', 'taw.s2.xp': JSON.stringify({ lv: 40, f: 0.1, rc: 5, v: 10 }), 'taw.s2.ach': JSON.stringify({ type: 2 }), 'taw.s2.count': JSON.stringify({ words: 3200 }) } });
+    await page.goto('/?portal=1&season2=1');
+    await page.locator('.hp-nav.is-gears:visible').first().waitFor();
+    await openIndex(page);
+    const iron = page.locator('.mx-tile[data-mark="mk-ironhand"]');
+    await iron.scrollIntoViewIfNeeded();
+    await expect(iron.locator('image[href="/gear/earned/ironhand.webp"]')).toHaveCount(1); // painted, not code-drawn
+    await iron.click();
+    const sheet = page.locator('.mx-sheet');
+    await expect(sheet.getByTestId('mark-main')).toContainText('MAX TYPE WORDS');
+    await page.waitForTimeout(300);
+    await shot(page, `sheet-earned-${vp.tag}`);
+    await sheet.getByTestId('gear-go-ach').click();
+    const ach = page.locator('.av3-overlay');
+    await expect(ach).toBeVisible();
+    await expect(page.locator('.mx-panel')).toHaveCount(0); // the gear layer closed under it
+    await expect(ach.locator('[data-hero="type"]')).toBeVisible();
+    await expect(ach.locator('.av3-gear[data-gear="mk-ironhand"]')).toContainText('IRONHAND');
+    for (const n of await ach.locator('.av3-tile-name').allInnerTexts()) expect(n.trim().split(/\s+/).length).toBeLessThanOrEqual(2);
+    await page.waitForTimeout(500);
+    await shot(page, `achievements-${vp.tag}`);
   });
 
   test(`@${vp.tag} PROFILE popup: the UNLISTED shelf with serials`, async ({ page }) => {

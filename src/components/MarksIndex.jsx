@@ -27,6 +27,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markProgress, markById } from '../progress/marks';
 import { ACHIEVEMENTS } from '../progress/achievements';
+import { ACHIEVEMENTS_V3 } from '../progress/v3/achievements';
+// SEASON 2 EARNED gears: "MAX <LADDER>" — the ladder's 1–2 word name (Andy oct17), and the sheet links to it
+const LADDER_NAME = Object.fromEntries(ACHIEVEMENTS_V3.map((a) => [a.id, a.name]));
 import {
   ROLL_MARKS, ROLLABLE_TIERS, viewState, oneInX, collection, permanentOwnedIds, completedTiers, loadRollState, clearRollNote,
 } from '../progress/markRolls';
@@ -43,7 +46,7 @@ import { CARD_RAR } from './markCard/palette.js';
 import { tierLabel, hideOdds } from './markCard/cardModel.js';
 import { formatNum } from '../format';
 import FitText from './kit/FitText.jsx';
-import UnlistedStrip from '../unlisted/UnlistedStrip.jsx';
+import { bootUnlisted, pendingSerialIds } from '../unlisted/unlisted.js';
 import './MarksIndex.css';
 
 registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
@@ -74,6 +77,7 @@ export default function MarksIndex({
   idsRef.current = unlockedIds;
   // storage is read ONCE, on mount — a re-render (a balance write behind) never moves a tile or a counter
   const [snap] = useState(() => {
+    try { bootUnlisted(); } catch { /* THE UNLISTED back-fill (a secret found before the tier existed) is best-effort */ }
     const ids = idsRef.current;
     const st = loadRollState();
     return { unlocked: new Set(ids), view: viewState(ids), permOwned: new Set(permanentOwnedIds()), note: (st && st.note) || null };
@@ -81,6 +85,10 @@ export default function MarksIndex({
   const { unlocked, view, permOwned, note } = snap;
   // GEAR POOL v2: the COMMON refund is said ONCE — this visit shows it, the store forgets it
   useEffect(() => { if (note) clearRollNote(); }, [note]);
+  // THE UNLISTED: a find still waiting on its server serial asks again here (lazy — only when one is pending)
+  useEffect(() => {
+    if (pendingSerialIds().length) import('../unlisted/serial.js').then((m) => m.retryPendingSerials()).catch(() => {});
+  }, []);
   const entries = useMemo(() => buildEntries(unlocked), [unlocked]);
   const ctx = { view, unlocked, permOwned };
   const ownsId = (id, kind) => ownsGear({ id, kind }, ctx);
@@ -174,10 +182,6 @@ export default function MarksIndex({
               </div>
             );
           })}
-          {/* THE UNLISTED (oct17): the found-never-rolled tier, last — riddles, never odds */}
-          <div className="mx-cell mx-cell--unlisted" role="listitem">
-            <UnlistedStrip worn={worn} onWear={set} />
-          </div>
         </div>
       </div>
       {selE ? (
@@ -187,7 +191,7 @@ export default function MarksIndex({
           have={owns(selE)}
           on={worn === selE.id}
           view={view}
-          howTo={selE.kind === 'perm' ? ACH_HINT[selE.from] || achievementNames[selE.from] || selE.from : ''}
+          howTo={selE.kind === 'perm' ? (selE.ach ? `MAX ${LADDER_NAME[selE.ach] || selE.ach}` : ACH_HINT[selE.from] || achievementNames[selE.from] || selE.from) : selE.kind === 'unlisted' ? selE.riddle : ''}
           onSet={set}
           onClose={() => setSel(null)}
         />

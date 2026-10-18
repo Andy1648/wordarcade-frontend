@@ -6,6 +6,7 @@
 // shape here is vector art; CSS only moves it — the cog spins ONCE on a reveal / hover (MarkCard.css), never loops.
 //
 // Kept small on purpose: this file rides the menu's index chunk (the worn-mark chip). Payload ratchet.
+import { earnedArt } from './earnedArt.js';
 import { memo, useEffect, useId, useState } from 'react';
 import { CARD_RAR, RAINBOW_TEETH, LOCKED, cardTier } from './markCard/palette.js';
 import './MarkBadge.css';
@@ -125,7 +126,10 @@ function MarkBadge({ mark, rank = 1, locked = false, silhouette = false, size = 
     loadExtraGlyphs().then(() => { if (live) redraw((n) => n + 1); });
     return () => { live = false; };
   }, [want]);
-  const glyph = dead ? LOCK : GLYPHS[mark.id] || EXTRA[mark.id] || null;
+  // the EARNED gears are painted now (Andy oct17 "the other legendaries with achievements need to do better"): the
+  // sticker in place of the code-drawn glyph, the same box the rolled gears' painted art uses (no finish layer)
+  const paintedSrc = !dead && mark ? earnedArt(mark.id) : null;
+  const glyph = dead ? LOCK : paintedSrc ? <image href={paintedSrc} x="6" y="6" width="88" height="88" /> : GLYPHS[mark.id] || EXTRA[mark.id] || null;
   return (
     <svg
       className={`mark-badge${dead ? ' is-locked' : ''}${silhouette ? ' is-sil' : ''} ${className}`}
@@ -141,7 +145,7 @@ function MarkBadge({ mark, rank = 1, locked = false, silhouette = false, size = 
         <g className="mb-glyph" style={SHADOW}>
           <g className={silhouette ? 'mx-sil' : undefined} transform="translate(60 60) scale(1.32) translate(-50 -50)">
             {glyph}
-            {!dead && !silhouette && FINISH ? FINISH(mark.id, uid) : null}
+            {!dead && !silhouette && FINISH && !paintedSrc ? FINISH(mark.id, uid) : null}
           </g>
         </g>
       ) : null}

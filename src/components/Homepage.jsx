@@ -268,6 +268,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // and after an equip — the earned-achievement set only changes on a grant, which re-renders the
   // menu anyway.
   const [showMarks, setShowMarks] = useState(false);
+  // a gear sheet's "SEE ACHIEVEMENT" (lib/openAchievement.js): the gear layer closes so the ACHIEVEMENTS screen is on top
+  useEffect(() => {
+    const close = () => setShowMarks(false);
+    window.addEventListener('taw:open-achievement', close);
+    return () => window.removeEventListener('taw:open-achievement', close);
+  }, []);
   // REWARDS (Andy oct2): non-game rewards wait here until claimed; the button + its count only
   // exist while something is pending (the badge IS the notification).
   const claims = useClaims();

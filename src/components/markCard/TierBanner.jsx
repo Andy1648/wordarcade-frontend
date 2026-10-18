@@ -22,7 +22,7 @@ const NS = { vectorEffect: 'non-scaling-stroke' };
 function TierBanner({ tier, kind = 'roll', size = 'md', className = '' }) {
   const t = cardTier(kind === 'perm' ? 'legendary' : tier);
   const pal = CARD_RAR[t];
-  const rank = { rare: 0, epic: 1, legendary: 2, mythic: 3, secret: 4 }[t] ?? 0;
+  const rank = { rare: 0, epic: 1, legendary: 2, mythic: 3, secret: 4, unlisted: 2 }[t] ?? 0;
   const label = tierLabel(tier, kind);
   const clip = `tb${useId().replace(/:/g, '')}`;
   return (

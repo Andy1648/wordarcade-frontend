@@ -87,11 +87,11 @@ function MarkCard({
         {c.statKind ? <span className="mc-kind">{c.statKind}</span> : null}
       </div>
     );
-  } else if (c.earned) {
+  } else if (c.earned || c.unlisted) {
     hero = (
       <div className="mc-hero is-locked is-ach">
         <Lock />
-        <span className={cls('mc-kind', parts.odds)}>ACHIEVEMENT</span>
+        <span className={cls('mc-kind', parts.odds)}>{c.unlisted ? 'FIND IT' : 'ACHIEVEMENT'}</span>
       </div>
     );
   } else {

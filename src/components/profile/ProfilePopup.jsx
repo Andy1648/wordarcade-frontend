@@ -101,7 +101,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                 <Stat icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
                 <Stat icon="index" tone="#c9b8ff" value={show.gears_total ? `${formatNum(show.gears_found)}/${formatNum(show.gears_total)}` : '0'} label="GEARS FOUND" />
               </div>
-              <UnlistedShelf tiles={unl.tiles.filter((t) => t.owned)} label={unl.label} />
+              <UnlistedShelf tiles={unl.tiles.filter((t) => t.owned)} />
               {me ? <Bio text={myBio()} mine /> : null}
             </div>
           </div>

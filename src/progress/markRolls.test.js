@@ -358,7 +358,9 @@ test('achievements: the keep/cut plan covers EVERY catalog achievement; each kee
   for (const a of ACHIEVEMENTS) assert.ok(ACHIEVEMENT_PLAN[a.id] === 'keep' || ACHIEVEMENT_PLAN[a.id] === 'cut', `${a.id} needs keep/cut`);
   assert.equal(Object.keys(ACHIEVEMENT_PLAN).length, ACHIEVEMENTS.length);
   // a RETIRED permanent (BLAZE, Andy oct8) keeps its owners but no achievement awards it any more
-  assert.deepEqual([...KEPT_ACHIEVEMENTS].sort(), PERMANENT_MARKS.filter((m) => !m.retired).map((m) => m.from).sort());
+  // RITUALIST (Andy oct17) retired with no season-2 ladder: its season-1 achievement stays KEPT (the catalog is unchanged)
+  const retiredFrom = new Set(PERMANENT_MARKS.filter((m) => m.retired).map((m) => m.from));
+  assert.deepEqual([...KEPT_ACHIEVEMENTS].filter((id) => !retiredFrom.has(id)).sort(), PERMANENT_MARKS.filter((m) => !m.retired).map((m) => m.from).sort());
 });
 
 test('carry-over: every existing mark is rollable, permanent or retired — none vanishes, none drops a tier', () => {

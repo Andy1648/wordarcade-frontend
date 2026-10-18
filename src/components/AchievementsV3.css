@@ -277,10 +277,11 @@
 .av3-have.is-ready { color: var(--k-cyan); }
 .av3-need { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k17); color: var(--k-dim); }
 .av3-tile-name {
-  margin-top: 8px;
+  margin: 0 0 8px;
   font-family: var(--k-display);
   text-transform: uppercase;
-  font-size: var(--fs-k14);
+  font-size: var(--fs-k22); /* Andy oct17: the NAME leads — 1–2 words you read first, bigger than the count */
+  line-height: 1;
   color: var(--k-white);
   -webkit-text-stroke: var(--k-stroke-s) var(--k-ink);
   paint-order: stroke fill;
@@ -414,4 +415,20 @@
   .av3-title { font-size: var(--fs-k34); } /* the shaded title gave way so the GEMS pill stops running off the right edge at 1024 */
   /* a long name / explanation WRAPS to a second line (the tile has the room above its foot) instead of "WIN MULTIPLA…" */
   .av3-tile-name, .av3-what { white-space: normal; text-overflow: clip; overflow: visible; }
+}
+
+/* the LAST tier's gear (progress/ladderGears.js): "MAX IT → IRONHAND" in the hero's top row (no extra height); EARNED once maxed */
+.av3-gear { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; margin-right: 10px; padding: 2px 8px 2px 2px; background: #24123d; border: 3px solid #FFC23D; border-radius: 8px; box-shadow: 3px 3px 0 #000; min-width: 0; }
+.av3-gear-art { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.av3-gear-text { font: 700 var(--fs-k13) 'Space Mono', monospace; letter-spacing: .04em; color: #fff; white-space: nowrap; }
+.av3-gear-text b { color: #FFC23D; }
+.av3-gear.is-owned { border-color: #2EFFE0; }
+.av3-gear.is-owned .av3-gear-text b { color: #2EFFE0; }
+/* opened from a gear sheet ("SEE ACHIEVEMENT"): that ladder's tile wears a static gold ring */
+.av3-cell.is-focus .av3-tile { outline: 4px solid #FFC23D; outline-offset: 3px; }
+/* phone: the hero's top row is narrow — the chip keeps the art + gear name, drops "MAX IT →" */
+@media (max-width: 520px) {
+  .av3-gear { margin-right: 6px; overflow: hidden; }
+  .av3-gear-text { overflow: hidden; text-overflow: ellipsis; }
+  .av3-gear-text b { display: none; }
 }

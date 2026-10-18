@@ -6,10 +6,10 @@
 import { grantWins } from './wins.js';
 import { getGems, spendGems, ROLL_PRICE_GEMS } from './gems.js';
 import { grantGems } from './gemsCore.js';
-import { getEquippedMark, equipMark } from './marks.js';
+import { getEquippedMark, equipMark, markById } from './marks.js';
 import {
   ensureRollState, loadRollState, saveRollState, rollAndSave, refWordWins,
-  indexRewardWins, rollMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
+  indexRewardWins, rollMarkById, permanentMarkById, equipRolled, equipDecision, wornMarkId, mainMultOf, wornMainOf, tierRank,
 } from './markRolls.js';
 import { rollsPerRoll } from './markPerks.js';
 import { unlistedEntry as unlistedById, UNLISTED_KEY } from '../unlisted/unlistedIds.js';
@@ -36,6 +36,10 @@ export function wearMark(id, earned = []) {
   if (id == null) return equipMark(null, earned);
   const r = rollMarkById(id);
   if (r && !r.legacy) return equipRolled(id) ? id : wornMarkId();
+  if (permanentMarkById(id) && !markById(id)) { // a SEASON-2 EARNED gear (a maxed ladder): worn straight onto taw.mark
+    try { localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
+    return wornMarkId(); // wornMarkId only reads it back when the save owns it
+  }
   if (unlistedById(id)) { // THE UNLISTED: an owned one is worn straight onto taw.mark (wornMarkId accepts it)
     try { if (JSON.parse(localStorage.getItem(UNLISTED_KEY) || '{}').owned?.[id]) localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
     return wornMarkId();
