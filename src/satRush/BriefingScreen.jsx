@@ -3,7 +3,7 @@
 // CALM: no timer, no countdown, no drain bar, no pressure. It's the one screen in
 // SAT RUSH that isn't rushing anyone.
 //
-// Each of the (up to) five cards reads WORD → DEFINITION → filled example SENTENCE:
+// Each card (5, 10 or 15 — CASE SETUP's choice) reads WORD → DEFINITION → filled example SENTENCE:
 // the definition sits directly under the word so the meaning lands first, then the
 // example sentence (the word filled in and highlighted) shows it in use. The root
 // and its cousins come next (cousins the player has already met wear a "you know
@@ -78,7 +78,7 @@ function BriefCard({ card }) {
 
 export default function Briefing({ briefing, onStart, onExit }) {
   if (!briefing) return null;
-  const { familyMorpheme, familyCount, cards } = briefing;
+  const { familyMorpheme, familyCount, cards, isReplay } = briefing;
   // Spell the count so the header matches how many words actually share the root (was a
   // hardcoded "TWO" even when three-plus shared it). Falls back to the digit past five.
   const COUNT_WORD = { 2: 'TWO', 3: 'THREE', 4: 'FOUR', 5: 'FIVE' };
@@ -98,12 +98,14 @@ export default function Briefing({ briefing, onStart, onExit }) {
           <div className="sr-brief-title sr-print" data-v={'THE BRIEFING'}>
             THE&nbsp;BRIEFING
           </div>
-          {familyMorpheme ? (
+          {isReplay ? (
+            <div className="sr-brief-family">The ones that got away — study them again</div>
+          ) : familyMorpheme ? (
             <div className="sr-brief-family">
               {familyCountWord} SHARE A ROOT — <b>{familyMorpheme}</b>
             </div>
           ) : (
-            <div className="sr-brief-family">Five words to know before the run</div>
+            <div className="sr-brief-family">{cards.length} words to know before the run</div>
           )}
         </div>
 

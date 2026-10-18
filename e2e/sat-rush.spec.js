@@ -12,7 +12,7 @@
 // the intro straight to the menu.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { modeEntry } from './support/menu.js';
+import { modeEntry, satSetupGo } from './support/menu.js';
 
 // The text of an element with its blank / filled word removed, whitespace
 // collapsed — so a briefing card sentence (word filled in) and the in-game
@@ -30,6 +30,7 @@ async function pickMode(page, mode) {
   await expect(page.getByRole('dialog')).toBeVisible();
   const name = mode === 'lineup' ? /LINEUP/ : /BRIEFING/;
   await page.getByRole('button', { name }).click();
+  await satSetupGo(page); // CASE SETUP (finite runs): go with the preselected choices
 }
 
 test.describe('SAT Rush', () => {
@@ -113,14 +114,16 @@ test.describe('SAT Rush', () => {
     await expect(page.locator('.sr-winsline')).toContainText('wins earned');
     await expect(page.locator('.sr-resline')).toContainText('avg ante');
     await expect(page.locator('.sr-resline')).toContainText('mastered');
-    const runItBack = page.getByRole('button', { name: 'Run it back' });
+    // a finite run (oct17) lists every word it served in the CASE FILE
+    await expect(page.locator('.sr-casefile-row').first()).toBeVisible();
+    const runItBack = page.getByRole('button', { name: 'New case' });
     await expect(runItBack).toBeVisible();
 
-    // Run it back returns to the MODE PICKER (always shown, preselected to the last
+    // New case returns to the MODE PICKER (always shown, preselected to the last
     // choice), not straight into a run.
     await runItBack.click();
     await expect(page.locator('.sr-modeselect')).toBeVisible();
-    await page.getByRole('button', { name: /BRIEFING/ }).click();
+    await page.getByRole('button', { name: /BRIEFING/ }).click(); await satSetupGo(page);
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await page.getByRole('button', { name: 'Start the run' }).click();
     await expect(page.locator('.sr-slots')).toBeVisible();
@@ -210,5 +213,22 @@ test.describe('SAT Rush', () => {
     await expect(page.locator('.sr-brief-page')).toBeVisible();
     await page.getByRole('button', { name: 'Start the run' }).click();
     await expect(page.locator('.sr-slots')).toBeVisible();
+  });
+
+  test('CASE SETUP: the run is finite — difficulty + length are chosen, and the HUD counts the case', async ({ page }) => {
+    await installBackendMock(page);
+    await page.goto('/?satRush=1&portal=1');
+    await modeEntry(page, 'sat-rush').click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: /LINEUP/ }).click();
+    await expect(page.locator('.sr-setup')).toBeVisible();
+    await page.getByRole('radio', { name: /HARD/ }).click();
+    await page.getByRole('radio', { name: /^20$/ }).click();
+    await expect(page.getByRole('radio', { name: /HARD/ })).toHaveAttribute('aria-checked', 'true');
+    await page.getByRole('button', { name: /Open the case/ }).click();
+    await expect(page.locator('.sr-hud')).toContainText('0/20');
+    // tier 3+ only on HARD
+    const tier = Number((await page.locator('.sr-case-tier').innerText()).replace(/\D/g, ''));
+    expect(tier).toBeGreaterThanOrEqual(3);
   });
 });

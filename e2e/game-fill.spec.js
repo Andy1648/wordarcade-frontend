@@ -23,7 +23,7 @@
 // so SAT is gated on .sr-app. This gate covers all five, plus the FUSE 26-tile strip.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, modeEntry, revealMode } from './support/menu.js';
+import { menuReady, modeEntry, revealMode, satSetupGo } from './support/menu.js';
 
 const ME = 'e2e-player';
 async function enterMpGame(page, gameType) {
@@ -52,7 +52,7 @@ async function enterSat(page) {
   await menuReady(page);
   await page.waitForTimeout(300);
   await modeEntry(page, 'sat-rush').click({ force: true });
-  await page.getByRole('button', { name: /BRIEFING/ }).click();
+  await page.getByRole('button', { name: /BRIEFING/ }).click(); await satSetupGo(page);
   await page.locator('.sr-brief-page').waitFor({ state: 'visible', timeout: 6000 });
   await page.getByRole('button', { name: 'Start the run' }).click();
   await page.locator('.sr-slots').waitFor({ state: 'visible', timeout: 8000 });
