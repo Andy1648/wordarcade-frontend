@@ -78,12 +78,12 @@ test('earned free: GLITCH at the first rebirth, HEX at level 20 (no gems)', () =
 }));
 
 test('NEW FACES + LEGEND: painted, priced, never handed out as another player\'s seat member', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
-  for (const id of ['dud', 'lexi', 'boo']) {
+  for (const id of ['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha']) {
     for (const pose of ['hero', 'win', 'ko']) assert.equal(castSrc(id, pose), `/cast/${id}-${pose}.webp`);
     assert.equal(ownsHero(id), false);
     assert.ok(CAST_BEATS[id]);
   }
-  for (let i = 0; i < 200; i++) assert.ok(!['dud', 'lexi', 'boo'].includes(castFor(`p${i}`).id));
+  for (let i = 0; i < 200; i++) assert.ok(!['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha'].includes(castFor(`p${i}`).id));
   map.set(REBIRTH_KEY_FOR_TEST, '5');
   assert.equal(ownsHero('boo'), true, 'REBIRTH 5 earns BOO');
   assert.equal(ownsHero('lexi'), false, 'LEXI is gems only');
@@ -116,3 +116,14 @@ test('GOLD: earned with 100 wins on its member (bots + online), never sold; a wi
     assert.equal(ownsHero('hex-gold'), false);
   });
 });
+
+test('SHH is earned at 50 online wins (the ACHIEVEMENTS mp counter); MECHA at REBIRTH 10', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
+  map.set('taw.s2.count', JSON.stringify({ mp: 49 }));
+  assert.equal(ownsHero('shh'), false);
+  map.set('taw.s2.count', JSON.stringify({ mp: 50 }));
+  assert.equal(ownsHero('shh'), true);
+  map.set(REBIRTH_KEY_FOR_TEST, '9');
+  assert.equal(ownsHero('mecha'), false);
+  map.set(REBIRTH_KEY_FOR_TEST, '10');
+  assert.equal(ownsHero('mecha'), true);
+}));

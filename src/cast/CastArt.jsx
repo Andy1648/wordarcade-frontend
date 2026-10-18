@@ -149,6 +149,23 @@ const ACTS = {
     [2, 150, [{ transform: 'translate(0, 60%) scale(.4)', opacity: 0 }, { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0.3 }, { transform: 'translate(40%, -160%) scale(.5)', opacity: 0 }], { duration: 1100, easing: 'ease-out' }],
     [3, 600, [{ transform: 'translate(0, 60%) scale(.4)', opacity: 0 }, { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0.3 }, { transform: 'translate(-30%, -170%) scale(.5)', opacity: 0 }], { duration: 1100, easing: 'ease-out' }],
   ],
+  // SHH: the bubble swells from its tail, holds (nothing in it but "..."), and shrinks back unsaid
+  mime: [
+    [0, 0, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 1, offset: 0.18 }, { transform: 'scale(1)', opacity: 1, offset: 0.28 }, { transform: 'scale(1)', opacity: 1, offset: 0.8 }, { transform: 'scale(0)', opacity: 0 }], { duration: 1700, easing: 'ease-out' }],
+  ],
+  // SIZZLE: the flame flares tall, two sauce drops spit up and arc down, a steam puff rises
+  sear: [
+    [0, 0, [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1.25, 1.35)', opacity: 1, offset: 0.25 }, { transform: 'scale(.95, 1.1)', opacity: 1, offset: 0.5 }, { transform: 'scale(1.15, 1.25)', opacity: 1, offset: 0.7 }, { transform: 'scale(.8)', opacity: 0 }], { duration: 900, easing: 'ease-in-out' }],
+    [1, 200, [{ transform: 'translate(0, 0) scale(.6)', opacity: 0 }, { transform: 'translate(-60%, -160%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(-140%, 220%) scale(.9)', opacity: 0 }], { duration: 900, easing: 'cubic-bezier(.3,0,.7,1)' }],
+    [2, 330, [{ transform: 'translate(0, 0) scale(.6)', opacity: 0 }, { transform: 'translate(40%, -200%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(90%, 240%) scale(.9)', opacity: 0 }], { duration: 950, easing: 'cubic-bezier(.3,0,.7,1)' }],
+    [3, 500, [{ transform: 'translate(0, 0) scale(.5)', opacity: 0 }, { transform: 'translate(0, -40%) scale(1)', opacity: 0.9, offset: 0.35 }, { transform: 'translate(10%, -130%) scale(1.25)', opacity: 0 }], { duration: 1300, easing: 'ease-out' }],
+  ],
+  // MECHA: the exhaust roars (a tall flare, twice), the antenna sparks, a bolt arcs off the gauntlet
+  boost: [
+    [0, 0, [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1.2, 1.5)', opacity: 1, offset: 0.2 }, { transform: 'scale(1, 1.15)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.25, 1.6)', opacity: 1, offset: 0.7 }, { transform: 'scale(.7)', opacity: 0 }], { duration: 1000, easing: 'ease-in-out' }],
+    [1, 450, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.3)', opacity: 1, offset: 0.25 }, { transform: 'scale(1)', opacity: 1, offset: 0.5 }, { transform: 'scale(0)', opacity: 0 }], { duration: 700, easing: 'ease-out' }],
+    [2, 650, [{ transform: 'scale(.5)', opacity: 0 }, { transform: 'scale(1.2)', opacity: 1, offset: 0.2 }, { transform: 'scale(1)', opacity: 0.2, offset: 0.4 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 600, easing: 'linear' }],
+  ],
   // GLITCH.EXE: it corrupts — bands of its own painted art tear sideways for a few frames (steps, not a smooth slide)
   glitch: [
     [0, 0, [{ transform: 'translateX(-6%)', opacity: 1 }, { transform: 'translateX(5%)', opacity: 1, offset: 0.35 }, { transform: 'translateX(-2%)', opacity: 1, offset: 0.7 }, { transform: 'translateX(0)', opacity: 0 }], { duration: 300, easing: 'steps(4)' }],
