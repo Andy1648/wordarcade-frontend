@@ -48,6 +48,12 @@ export const ROLLED_GLYPHS = {
   'mk-headmaster': ART('headmaster'), // Andy oct11: painted PNG (public/gear/headmaster.webp)
   'mk-thunderclap': ART('thunderclap'), // Andy oct11: painted PNG (public/gear/thunderclap.webp)
   'mk-jackpot': ART('jackpot'), // Andy oct11: painted PNG (public/gear/jackpot.webp)
+  // oct18: the new LEGENDARIES + CHRONOS (ChatGPT, the painted gear set attached as the style reference)
+  'mk-monsoon': ART('monsoon'),
+  'mk-inferno': ART('inferno'),
+  'mk-mainframe': ART('mainframe'),
+  'mk-shamrock': ART('shamrock'),
+  'mk-chronos': ART('chronos'),
   'mk-hydra': ART('hydra'), // Andy oct11: the painted PNG (public/gear/hydra.webp, background cut out)
   // ---- THE UNLISTED (oct17): found, never rolled — painted stickers in public/gear/unlisted/ ----
   'mk-ul-og': ART('unlisted/og'),

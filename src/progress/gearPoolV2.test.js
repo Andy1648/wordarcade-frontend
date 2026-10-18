@@ -52,8 +52,8 @@ function printed(text) {
   return n;
 }
 
-test('the pool: 28 gears (JACKPOT joined), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
-  assert.equal(ROLL_MARKS.length, 28);
+test('the pool: 33 gears (JACKPOT joined; oct18 +5), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
+  assert.equal(ROLL_MARKS.length, 33);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
   for (const id of [...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]) assert.ok(!ROLL_MARKS.some((m) => m.id === id), id);
   const keys = ROLL_MARKS.map((m) => `${m.stat.kind}:${m.stat.value}`);
@@ -280,10 +280,12 @@ test('migrateRollSave: commons deleted + refunded once, a worn COMMON unequipped
   });
 });
 
-test('ACHIEVEMENTS: FILL INDEX no longer counts a retired COMMON (its top tier, 28, is now every gear)', async () => {
+test('ACHIEVEMENTS: FILL INDEX no longer counts a retired COMMON (its top tier stays 28 — oct18 grew the pool past it, claims keep)', async () => {
   const { achRows, ACHIEVEMENTS_V3 } = await import('./v3/achievements.js');
   const counters = { marks: ['mk-bomber', 'mk-wick', 'mk-student', 'mk-smith', 'mk-nova'] };
   const row = achRows(counters, {}).find((r) => r.id === 'index');
   assert.equal(row.have, 2, 'only SMITH and NOVA count');
-  assert.equal(ACHIEVEMENTS_V3.find((a) => a.id === 'index').T.at(-1), ROLL_MARKS.length);
+  const top = ACHIEVEMENTS_V3.find((a) => a.id === 'index').T.at(-1);
+  assert.equal(top, 28);
+  assert.ok(top <= ROLL_MARKS.length, 'the top tier is always reachable');
 });
