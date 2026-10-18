@@ -16,11 +16,16 @@ export const CAST = [
 export const NEW_CREW = [
   { id: 'dud', name: 'DUD', tag: 'FUSE ALWAYS OUT', color: '#B8F632', dark: '#6E9A12' },
   { id: 'lexi', name: 'LEXI', tag: "ACTUALLY, IT'S A WORD", color: '#3BA4F9', dark: '#1B5FA8' },
+  // oct18 wave 2: SHH (the mime: never says a word, in a word game) is earned at 50 online wins; SIZZLE is 750 gems
+  { id: 'shh', name: 'SHH', tag: 'SAYS NOTHING. WINS ANYWAY.', color: '#F2F2F5', dark: '#6E6E86' },
+  { id: 'sizzle', name: 'SIZZLE', tag: 'TOO HOT TO HANDLE', color: '#D7263D', dark: '#7E0F20' },
 ];
 // LEGEND (oct17 night): the rarest tier — a cast member nobody else has, in its own painted LEGEND frame. BOO (the ghost
 // of a bomb that already went off) is earned free at REBIRTH 5, or 5,000 gems skips the wait.
 export const LEGEND = [
   { id: 'boo', name: 'BOO', tag: 'ALREADY WENT OFF', color: '#14B8A6', dark: '#0B5F57', legend: true },
+  // oct18: MECHA, the chrome robot bomb: REBIRTH 10, or 5,000 gems skips the wait
+  { id: 'mecha', name: 'MECHA', tag: 'BUILT DIFFERENT', color: '#9FB1C7', dark: '#3E4C63', legend: true },
 ];
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
 // of each member (ChatGPT, the HERO as the reference), bought once with gems and kept. Same colour / seat / idle beat as
@@ -56,9 +61,15 @@ export const goldProgress = (id) => {
 // oct17 (Andy "we'll def need some more free tiers" … "sure (the 1 rebirth) … 750 is a lot for 1 rebirth"): the two
 // priced crew members are EARNED for free — GLITCH at your first rebirth, HEX at level 20 — and the gem price is only a
 // shortcut to skip the wait (300). The card shows the requirement over the art (lock + REBIRTH 1 / LEVEL 20).
-export const HERO_PRICE = { hex: 300, glitch: 300, dud: 300, lexi: 750, boo: 5000 };
+export const HERO_PRICE = { hex: 300, glitch: 300, dud: 300, lexi: 750, boo: 5000, shh: 300, sizzle: 750, mecha: 5000 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
-  dud: { lv: 35, label: 'LEVEL 35', icon: 'levels' }, boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth' } };
+  dud: { lv: 35, label: 'LEVEL 35', icon: 'levels' }, boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth' },
+  shh: { mp: 50, label: '50 WINS', icon: 'achievements' }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth' } };
+// online wins (the ACHIEVEMENTS counter `mp`, progress/v3/store.js taw.s2.count) read straight from storage, which keeps
+// the cast data free of the progress store import
+const onlineWins = () => {
+  try { const o = JSON.parse(localStorage.getItem('taw.s2.count') || '{}'); return Math.max(0, Math.floor(Number(o && o.mp) || 0)); } catch { return 0; }
+};
 /** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. */
 export function heroEarned(id) {
   const u = HERO_UNLOCK[id];
@@ -66,6 +77,7 @@ export function heroEarned(id) {
   try {
     if (u.reb != null && (getRebirths() || 0) >= u.reb) return true;
     if (u.lv != null && (storedLevel() || 1) >= u.lv) return true;
+    if (u.mp != null && onlineWins() >= u.mp) return true;
   } catch { /* a broken store reads as not yet */ }
   return false;
 }
@@ -97,6 +109,7 @@ const PAINTED = new Set([
   'hex-elite-win', 'hex-elite-ko',
   // NEW FACES (oct17 night, ChatGPT with RIOT's HERO attached as the style reference)
   'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero', 'lexi-win', 'lexi-ko', 'boo-hero', 'boo-win', 'boo-ko',
+  'shh-hero', 'shh-win', 'shh-ko', 'sizzle-hero', 'sizzle-win', 'sizzle-ko', 'mecha-hero', 'mecha-win', 'mecha-ko',
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
@@ -157,6 +170,9 @@ export const CAST_BEATS = {
   dud: { ms: 2600, k: [[0, 1, 1], [0.45, 0.97, 1.04], [0.8, 1.04, 0.96], [1, 1, 1]] }, // one deep, sleepy breath
   lexi: { ms: 1000, k: [[0, 1, 1], [0.35, 0.96, 1.05], [0.65, 1.02, 0.98], [1, 1, 1]] }, // a prim little rise
   boo: { ms: 2200, k: [[0, 1, 1], [0.5, 0.97, 1.04], [1, 1, 1]] }, // a ghost's slow swell (it has no feet to bounce on)
+  shh: { ms: 1400, k: [[0, 1, 1], [0.4, 1.02, 0.98], [0.75, 0.99, 1.02], [1, 1, 1]] }, // a hushed, careful breath
+  sizzle: { ms: 640, k: [[0, 1, 1], [0.25, 1.06, 0.94], [0.5, 0.96, 1.05], [0.75, 1.03, 0.97], [1, 1, 1]] }, // hot and jumpy
+  mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
 };
 for (const e of [...ELITE, ...GOLD]) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE / GOLD keeps its member's tempo
 export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
@@ -254,6 +270,23 @@ export const CAST_LAYERS = {
     { src: '/cast/props/ghost-ember.webp', x: 71, y: 0, w: 7 },
     { src: '/cast/props/ghost-ember.webp', x: 62, y: 5, w: 5.5 },
   ] } },
+  // SHH: a "..." bubble pops out beside the raised palm; it has something to say and doesn't say it
+  shh: { hero: { act: 'mime', sprites: [
+    { src: '/cast/props/mime-bubble.webp', x: 68, y: 3, w: 27, o: '0% 100%' },
+  ] } },
+  // SIZZLE: the fuse flares, hot sauce spits from the bottle, steam lifts off its head
+  sizzle: { hero: { act: 'sear', sprites: [
+    { src: '/cast/props/flame.webp', x: 74, y: 1, w: 22, o: '50% 100%' },
+    { src: '/cast/props/sauce-drop.webp', x: 13, y: 11, w: 7 },
+    { src: '/cast/props/sauce-drop.webp', x: 19, y: 9, w: 6 },
+    { src: '/cast/props/steam.webp', x: 30, y: 18, w: 14 },
+  ] } },
+  // MECHA: the exhaust roars, a spark cracks off the antenna, a bolt arcs off the gauntlet
+  mecha: { hero: { act: 'boost', sprites: [
+    { src: '/cast/props/flame.webp', x: 34, y: -6, w: 20, o: '50% 100%' },
+    { src: '/cast/props/spark-big.webp', x: 65, y: 4, w: 10 },
+    { src: '/cast/props/bolt.webp', x: 8, y: 22, w: 9 },
+  ] } },
   glitch: {
     hero: {
       base: '/cast/glitch-hero-base.webp',
@@ -288,6 +321,12 @@ export const CAST_IDLE = {
   // LEXI clears its throat — up on its toes ("well, ACTUALLY"), two short prim nods
   // BOO hovers, then JUMP-SCARES: shrinks back and down, lunges big at you, and drifts back to its hover
   boo: { ms: 3000, rest: 200, k: [[0, 1, 1, 0, 0], [0.3, 1, 1, 0, -5], [0.55, 1, 1, 0, 0], [0.66, 0.9, 0.9, 0, 3], [0.72, 1.14, 1.14, 0, -3], [0.8, 1.1, 1.1, 0, -3], [1, 1, 1, 0, 0]] },
+  // SHH mimes the invisible wall: slides one way, stops dead (palm on the glass), then the other way
+  shh: { ms: 2600, rest: 350, k: [[0, 1, 1, 0, 0], [0.2, 1, 1, -3, 0], [0.24, 1.03, 0.97, -3, 0], [0.45, 1, 1, -3, 0], [0.65, 1, 1, 3, 0], [0.69, 1.03, 0.97, 3, 0], [0.88, 1, 1, 3, 0], [1, 1, 1, 0, 0]] },
+  // SIZZLE can't stand still: a quick hot shiver, then a hop off the burner
+  sizzle: { ms: 1500, rest: 350, k: [[0, 1, 1, 0, 0], [0.08, 1, 1, -1.5, 0], [0.16, 1, 1, 1.5, 0], [0.24, 1, 1, -1.5, 0], [0.32, 1, 1, 0, 0], [0.45, 1.08, 0.9, 0, 0], [0.6, 0.94, 1.08, 0, -7], [0.78, 1.05, 0.95, 0, 0], [1, 1, 1, 0, 0]] },
+  // MECHA powers up: the hydraulics squat, the jets lift it, it hangs, then lands heavy
+  mecha: { ms: 2600, rest: 300, k: [[0, 1, 1, 0, 0], [0.18, 1.06, 0.93, 0, 1], [0.38, 0.97, 1.04, 0, -6], [0.62, 0.97, 1.04, 0, -6], [0.78, 1.08, 0.92, 0, 1], [0.9, 0.99, 1.01, 0, 0], [1, 1, 1, 0, 0]] },
   lexi: { ms: 1900, rest: 350, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
 };
 for (const e of [...ELITE, ...GOLD]) CAST_IDLE[e.id] = CAST_IDLE[e.base];
