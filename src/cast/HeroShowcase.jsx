@@ -43,7 +43,7 @@ export default function HeroShowcase({ id, cheer = 0, className = '' }) {
     const loop = () => {
       const b = CAST_IDLE[h.id] || CAST_IDLE.hype;
       if (!busy.current && document.visibilityState !== 'hidden') kitPlay(artRef.current, castIdleFrames(b), { duration: b.ms, easing: 'ease-in-out' });
-      timer = setTimeout(loop, b.ms + b.rest + Math.random() * 300);
+      timer = setTimeout(loop, b.ms + b.rest); // oct18 Andy: "a lot more continous" — each move flows straight into the next (rest 0)
     };
     timer = setTimeout(loop, 700);
     return () => clearTimeout(timer);

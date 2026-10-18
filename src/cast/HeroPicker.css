@@ -1,7 +1,7 @@
 /* HeroPicker — two sections of HeroCards; the hold-to-buy bar sticks to the scroll container's foot. */
 .hp2-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .hp2-sec { display: block; font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .14em; color: #c9b8e8; }
-.hp2-sec.is-new { margin: 22px 0 10px; }
+.hp2-tier { display: contents; }
 .hp2-sec.is-gold { margin: 22px 0 10px; color: #F2B705; }
 .hp2-sec.is-legend { margin: 22px 0 10px; color: #7CFFE0; }
 .hp2-sec.is-elite { margin: 22px 0 10px; color: #FFC83D; }
