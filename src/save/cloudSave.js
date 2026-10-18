@@ -80,13 +80,17 @@ export function progressScoreFromKeys(keys, { asConverted = false } = {}) {
   const SUB = 10n ** 12n;
   const lvKey = BigInt(Math.min(Math.floor(lv), 1e12 - 1));
   const letters = BigInt(Math.min(Math.floor(num(get('taw.letters'))), 1e12 - 1));
-  return BigInt(rb) * SUB * SUB + lvKey * SUB + letters;
+  // SEASON 2 (Andy oct17): ★ STARS (taw.s2.stars, lb_ascend) outrank rebirths, as on the board; 0 in season 1, so
+  // every season-1 score is unchanged.
+  const stars = BigInt(Math.floor(num(get(STARS_S2_KEY))));
+  return stars * SUB * SUB * SUB + BigInt(rb) * SUB * SUB + lvKey * SUB + letters;
 }
+const STARS_S2_KEY = 'taw.s2.stars'; // v3/store.js STARS_KEY (not imported: the v3 chunk stays off the menu path)
 export function localScore(storage, opts) {
   const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
   if (!s) return 0n;
   const keys = {};
-  for (const k of ['taw.xp', 'taw.xpv10', 'taw.econ', 'taw.rebirths', 'taw.letters']) {
+  for (const k of ['taw.xp', 'taw.xpv10', 'taw.econ', 'taw.rebirths', 'taw.letters', STARS_S2_KEY]) {
     try {
       const v = s.getItem(k);
       if (v != null) keys[k] = v;

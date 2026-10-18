@@ -12,7 +12,8 @@
 //   * after that: rebirths never rise on a submit (lb_rebirth only), stars are never written (lb_ascend only); the
 //     level is free up to 15 + 18·R + F_LV_HEADROOM, or the stored level + F_LEVELS_PER_SEC a second since the last
 //     accepted write (banking F_LEVEL_BANK_SECS) — whichever is higher; clamped, never rejected; ≤ the int column;
-//   * words / letters rate-checked as 011/013/015 (too fast → rejected); a lower number is a RESET (017).
+//   * words / letters rate-checked as 011/013/015 (too fast → rejected); a lower number was a RESET (017) until 054,
+//     which REFUSES it (a second device behind the shared row wiped the account's board row — Andy oct17).
 export const F_ECON = 13;
 export const F_GATE_BASE = 15; // the rebirth gate: LV 15 + 18·R
 export const F_GATE_STEP = 18;
@@ -35,10 +36,18 @@ export function finalLevelRoom(rebirths) {
   return Math.min(F_LV_MAX, F_GATE_BASE + F_GATE_STEP * int(rebirths, 0, 0) + F_LV_HEADROOM);
 }
 
+/** 054's lower-write test (= 029's old is_reset): rebirths, words or letters down, or the level down at the same R. */
+export function isLowerWrite(old, sub) {
+  const rb = int(sub.rebirths, 0, 0);
+  const oRb = int(old.rebirths, 0, 0);
+  return rb < oRb || int(sub.words, 0, 0) < int(old.lifetime_words, 0, 0) || int(sub.letters, 0, 0) < int(old.lifetime_letters, 0, 0)
+    || (int(sub.level, 1, 1) < int(old.level, 1, 1) && rb === oRb);
+}
+
 /**
- * private.lb_board_write_s2 (029), modelled. `old` = the stored row ({ level, rebirths, lifetime_words,
+ * private.lb_board_write_s2 (029 → 039 → 054), modelled. `old` = the stored row ({ level, rebirths, lifetime_words,
  * lifetime_letters, submitted_at (ms|null), econ }); `sub` = { level, rebirths, words, letters }; `now` ms.
- * Returns { action: 'throttled'|'rejected'|'first'|'reset'|'increase', row?, weekDelta } (decideSubmitS2's shape).
+ * Returns { action: 'throttled'|'rejected'|'first'|'refused'|'increase', row?, weekDelta } ('refused' = 054's lower write) (decideSubmitS2's shape).
  */
 export function decideSubmitFinal(old, sub, now) {
   if (old.submitted_at != null && old.submitted_at >= now - THROTTLE_MS) return { action: 'throttled', weekDelta: 0 };
@@ -58,20 +67,13 @@ export function decideSubmitFinal(old, sub, now) {
   const oLv = int(old.level, 1, 1);
   const oW = int(old.lifetime_words, 0, 0);
   const oL = int(old.lifetime_letters, 0, 0);
-  const isReset = rb < oRb || w < oW || l < oL || (lv < oLv && rb === oRb);
-  if (!isReset) {
-    if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
-    if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
-  }
+  // 054 (Andy oct17, the second-device reset): a LOWER write is REFUSED, never a reset — resets go through
+  // lb_self_reset / lb_reset_ack, which zero the row themselves.
+  if (isLowerWrite(old, sub)) return { action: 'refused', weekDelta: 0 };
+  if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
+  if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
   rb = Math.min(rb, oRb); // a submit never raises rebirths (lb_rebirth only)
-  const base = isReset ? 1 : oLv;
-  const lvCap = Math.min(F_LV_MAX, Math.max(finalLevelRoom(rb), base + maxRise));
-  if (isReset) {
-    lv = Math.min(lv, Math.max(oLv, lvCap));
-    w = Math.min(w, oW + Math.floor(WORDS_PER_SEC * secs));
-    l = Math.min(l, oL + Math.floor(LETTERS_PER_SEC * secs));
-    return { action: 'reset', row: write(lv, rb, w, l), weekDelta: 0 };
-  }
+  const lvCap = Math.min(F_LV_MAX, Math.max(finalLevelRoom(rb), oLv + maxRise));
   lv = Math.min(lv, lvCap);
   return { action: 'increase', row: write(lv, rb, w, l), weekDelta: Math.max(0, w - oW) };
 }

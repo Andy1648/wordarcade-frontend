@@ -55,11 +55,11 @@ test('then: rebirths never rise on a submit; the level is free up to the room or
   assert.equal('stars' in up.row, false, 'a submit never writes stars');
 });
 
-test('throttle, rate checks and RESET as 017 / 022', () => {
+test('throttle, rate checks; a LOWER write is REFUSED (054 — was a RESET in 017 / 022)', () => {
   assert.equal(decideSubmitFinal(row({ submitted_at: T0 - 2000 }), sub(), T0).action, 'throttled');
   assert.equal(decideSubmitFinal(row({ submitted_at: T0 - 10_000 }), sub({ words: 999 }), T0).action, 'rejected');
-  const reset = decideSubmitFinal(row({ level: 300, rebirths: 5, lifetime_words: 900 }), sub({ level: 1, rebirths: 0, words: 0 }), T0);
-  assert.deepEqual([reset.action, reset.row.level, reset.row.rebirths], ['reset', 1, 0]);
+  const lower = decideSubmitFinal(row({ level: 300, rebirths: 5, lifetime_words: 900 }), sub({ level: 1, rebirths: 0, words: 0 }), T0);
+  assert.deepEqual([lower.action, lower.row], ['refused', undefined]);
 });
 
 test('029 SQL mirrors finalRules.js + rebirthRules.js season 2: constants, order, gate → LV1, ascend off, grants; lb_caps untouched', () => {

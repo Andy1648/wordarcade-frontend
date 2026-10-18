@@ -12,7 +12,8 @@
 import { getRebirths, storedLevel } from '../progress/xp.js';
 // PROGRESSION v3 (SEASON2, default OFF; 022_season2_board.sql): the season-2 client submits econ 13 ONLY when lb_caps
 // says season2 (never season-2 numbers onto the season-1 board), reads public.leaderboard_s2 (★ → R → level), and
-// skips the cloud save (it backs up the season-1 keys; season 2's is phase 4). lb_rebirth / lb_ascend name season 2
+// backs the save up once the season-2 reset has run (Andy oct17: a second device with the same name started fresh — the
+// cloud save was off in season 2 — and its LV 1 push reset the shared board row). lb_rebirth / lb_ascend name season 2
 // in the lazy serverRebirth.js.
 import { SEASON2, V3 } from '../progress/season.js';
 import { GAME_WORD_MODES, masteryWords } from '../progress/mastery.js';
@@ -166,7 +167,7 @@ export function boardCaps() {
       // econ: the p_econ to send (cloudSave econRpcArg) — 12 once 018_rebirth_rush.sql runs, 10 with only 016/017
       // (the version-gated lb_submit3 / lb_save2 / lb_load2 exist), 0 = neither (old RPCs)
       // boardEcon: 017_board_reality.sql — the board views carry `econ` (which economy a row last submitted on)
-      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: !SEASON2 && !!(c && c.cloud), weekly: !!(c && c.weekly), econ: SEASON2 ? +(c && c.econ2) || 0 : econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ), season2Reset: SEASON2 && !!(c && c.season2_reset) }))
+      .then((c) => ({ letters: !!(c && c.letters), cjk: !!(c && c.cjk), cloud: SEASON2 ? !!(c && c.cloud && c.season2_reset) : !!(c && c.cloud), weekly: !!(c && c.weekly), econ: SEASON2 ? +(c && c.econ2) || 0 : econRpcArg(c && c.econ), boardEcon: !!(c && c.board_econ), season2Reset: SEASON2 && !!(c && c.season2_reset) }))
       .catch(() => ({ letters: false, cjk: false, cloud: false, weekly: false, econ: 0, boardEcon: false }));
   }
   return capsPromise;
@@ -199,6 +200,7 @@ export async function claimName(username) {
 }
 
 let lastSubmit = 0;
+let boardChecked = false; // SEASON2: this page load's save is not behind its own board row (submitStats)
 // 021: what the last push carried and whether the DB's 5 s throttle would have taken it — so the server-checked
 // rebirth pushes fresh stats only when they changed, and waits out the throttle instead of being silently dropped.
 // pushMeta.last = { at, level, rebirths, words, likely } — read (and marked stale) by the lazy serverRebirth.js
@@ -224,6 +226,16 @@ export async function submitStats(force = false, { internal = false } = {}) {
   if (!force && now - lastSubmit < SUBMIT_EVERY_MS) return false;
   lastSubmit = now;
   const s = myStats();
+  // SECOND DEVICE (Andy oct17): the name is a device secret every device that holds it shares, so a browser whose save
+  // is BEHIND the board row (a fresh device, a wiped one with no cloud copy yet) must not push — the server took a lower
+  // push as a RESET and the account looked wiped everywhere. Checked once a page load (boardGuard.js is lazy — off the
+  // menu's first load); a failed read skips this push.
+  if (SEASON2 && !boardChecked) {
+    let ok = false;
+    try { ok = await (await import('./boardGuard.js')).pushAllowed({ base: BASE, headers: headers(), view: BOARD_VIEW, id: (getMyProfile() || {}).id, local: s }); } catch { ok = false; }
+    if (!ok) return false;
+    boardChecked = true;
+  }
   try {
     const caps = await boardCaps();
     // v3 (SEASON2): caps.econ is lb_caps.econ2 = 13 once 022 runs (the season-2 board); before that it is 0 and the
@@ -280,11 +292,13 @@ export async function submitStats(force = false, { internal = false } = {}) {
  * and report { restored: true } (the caller reloads). Also re-learns the profile after a wipe.
  */
 export async function restoreFromCloud({ restore = true } = {}) {
-  if (!LEADERBOARD_ENABLED) return { restored: false }; // (v3: caps.cloud is off in season 2 — its save is local, phase 4)
+  if (!LEADERBOARD_ENABLED) return { restored: false }; // (v3: caps.cloud waits for lb_caps.season2_reset — 023's lb_load2 takes econ 13)
   const secret = peekSecret();
   if (!secret) return { restored: false };
   const caps = await boardCaps();
   if (!caps.cloud) return { restored: false };
+  // SEASON 2: the reset's boot wipe settles first — a restore imported before it would be wiped right back
+  if (SEASON2 && V3.boot && !(await V3.boot.catch(() => true))) return { restored: false };
   const r = await restoreIfAhead({ rpc, secret, restore, econ: caps.econ });
   if (r.id && r.username && !getMyProfile()) saveMyProfile({ id: r.id, username: r.username });
   if (r.resetAll) return obeyDevReset(secret);

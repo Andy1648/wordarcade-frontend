@@ -161,3 +161,18 @@ test('shouldRestore scores an unconverted blob AS CONVERTED (rebirthRushConvert 
     progressScoreFromKeys({ 'taw.xp': v10(300, 0), 'taw.econ': '12' }),
   );
 });
+
+test('season 2: ★ outranks rebirths in the score, and a fresh second device restores the account save (Andy oct17)', () => {
+  const s = (st, rb, lv) => progressScoreFromKeys({ 'taw.s2.stars': String(st), 'taw.rebirths': String(rb), 'taw.xp': xp(lv), 'taw.econ': '13' });
+  assert.ok(s(1, 0, 1) > s(0, 99, 9999));
+  assert.ok(s(2, 0, 1) > s(1, 50, 300));
+  assert.equal(progressScoreFromKeys({ 'taw.rebirths': '3', 'taw.xp': xp(10) }), s(0, 3, 10), 'no ★ = the season-1 score, unchanged');
+  // device A's season-2 save (the mapped keys export as taw.xp / taw.rebirths, the s2-only ones raw)
+  const a = new Map(Object.entries({ 'taw.econ': '13', 'taw.xp': xp(40), 'taw.rebirths': '6', 'taw.s2.stars': '1', 'taw.s2.wins': '900' }));
+  const cloud = exportSave({ getItem: (k) => (a.has(k) ? a.get(k) : null), key: (i) => [...a.keys()][i] ?? null, get length() { return a.size; } });
+  // device B: just through the season-2 boot wipe — econ 13, nothing played
+  withStorage({ 'taw.econ': '13' }, (m) => assert.equal(shouldRestore(cloud, { getItem: (k) => m.get(k) ?? null }).restore, true));
+  // a device with more rebirths but fewer ★ is still behind
+  withStorage({ 'taw.econ': '13', 'taw.xp': xp(10), 'taw.rebirths': '9' }, (m) => assert.equal(shouldRestore(cloud, { getItem: (k) => m.get(k) ?? null }).restore, true));
+  withStorage({ 'taw.econ': '13', 'taw.s2.stars': '2' }, (m) => assert.equal(shouldRestore(cloud, { getItem: (k) => m.get(k) ?? null }).restore, false));
+});
