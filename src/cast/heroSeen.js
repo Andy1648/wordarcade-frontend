@@ -32,3 +32,10 @@ export function markHeroesSeen(ids) {
   for (const id of ids || []) if (id && !s.has(id)) { s.add(id); changed = true; }
   if (changed) write([...s]);
 }
+/** Read-only twin of unseenHeroes for a render path (the menu chip's NEW HERO! badge): never seeds or writes. */
+export function peekUnseen() {
+  const seen = read();
+  if (!seen) return [];
+  const s = new Set(seen);
+  return ownedIds().filter((id) => !s.has(id));
+}

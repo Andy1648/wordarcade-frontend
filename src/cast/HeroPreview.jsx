@@ -7,7 +7,7 @@
 // Motion: finite WAAPI one-shots re-armed on timers (nothing infinite), transform / opacity only, hidden tab skipped,
 // reduce motion = still poses (kitPlay is a no-op).
 import { useEffect, useRef, useState } from 'react';
-import { CAST_IDLE, castIdleFrames, HERO_UNLOCK, ownsHero, goldProgress, hasPose } from './cast.js';
+import { CAST_IDLE, castIdleFrames, HERO_UNLOCK, ownsHero, goldProgress, hasPose, ALL_HEROES } from './cast.js';
 import { rarityOf } from './CastArt.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
@@ -45,6 +45,19 @@ export function unlockProgress(h) {
     if (u.mp != null) return { have: Math.min(onlineWins(), u.mp), need: u.mp, label: 'ONLINE WINS' };
   } catch { /* a broken store reads as zero */ }
   return null;
+}
+
+/** NEXT HERO (the profile's goal): the not-yet-owned earnable hero this save is CLOSEST to (highest have / need), or null. */
+export function nextHeroGoal() {
+  let best = null;
+  for (const h of ALL_HEROES) {
+    if (ownsHero(h.id)) continue;
+    const p = unlockProgress(h);
+    if (!p || p.need <= 0) continue;
+    const f = p.have / p.need;
+    if (!best || f > best.f) best = { h, p, f };
+  }
+  return best;
 }
 
 /** The big stage: pedestal + the hero, alive, cycling its poses (a tapped tab holds that pose). */

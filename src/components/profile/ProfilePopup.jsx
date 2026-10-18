@@ -6,12 +6,13 @@
 // the title picker. Lazy (its own chunk); the card pops in once, nothing loops.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { heroById, readMain, writeMain, CAST } from '../../cast/cast.js';
+import { heroById, readMain, writeMain, CAST, castSrc } from '../../cast/cast.js';
 import HeroShowcase from '../../cast/HeroShowcase.jsx';
 import HeroPicker from '../../cast/HeroPicker.jsx';
 import HeroUnlock from '../../cast/HeroUnlock.jsx';
 import { unseenHeroes } from '../../cast/heroSeen.js';
 import { rarityOf } from '../../cast/CastArt.jsx';
+import { nextHeroGoal } from '../../cast/HeroPreview.jsx';
 import FitText from '../kit/FitText.jsx';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js';
@@ -42,6 +43,7 @@ function Stat({ icon, glyph, tone, value, label }) {
 export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
   const [view, setView] = useState('profile'); // 'profile' | 'pick'
+  const [peekId, setPeekId] = useState(null); // the picker opens on this hero's preview (the NEXT HERO goal)
   const [cheer, setCheer] = useState(0);
   // NEW HERO! (oct18): heroes earned by playing since the last look reveal on open (rarest last); a purchase reveals too
   const [reveal, setReveal] = useState(() => {
@@ -56,7 +58,8 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const st = myStats();
   const c = readCounters();
   const play = readPlaySec();
-  const show = myShowcase(); // the same numbers the leaderboard card shows others (gears found)
+  const show = myShowcase();
+  const goal = nextHeroGoal(); // the closest earnable hero you don't own (a goal to chase) // the same numbers the leaderboard card shows others (gears found)
   const [unl] = useState(() => unlistedIndex()); // THE UNLISTED: your finds + serials (read once)
 
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
@@ -90,14 +93,26 @@ export default function ProfilePopup({ onClose, onMainChange }) {
           <button type="button" className="pf-x" onClick={onClose} aria-label="Close profile">✕</button>
         </div>
         {view === 'pick' ? (
-          <HeroPicker current={id} onEquip={equip} onBought={bought} />
+          <HeroPicker current={id} onEquip={equip} onBought={bought} peekId={peekId} />
         ) : (
           <div className="pf-body">
             <div className="pf-left">
               <HeroShowcase id={h.id} cheer={cheer} />
               <FitText className="pf-hero fit-center">{h.name}</FitText>
               <span className="pf-hero-tag">{h.elite ? `ELITE · ${h.tag}` : h.legend ? `LEGEND · ${h.tag}` : h.gold ? `GOLD · ${h.tag}` : h.tag}</span>
-              <button type="button" className="pf-change" onClick={() => setView('pick')}>CHANGE HERO</button>
+              <button type="button" className="pf-change" onClick={() => { setPeekId(null); setView('pick'); }}>CHANGE HERO</button>
+              {goal ? (
+                <button type="button" className="pf-goal" style={{ '--pg-c': goal.h.color }} onClick={() => { setPeekId(goal.h.id); setView('pick'); }}
+                  aria-label={`Next hero: ${goal.h.name}, ${goal.p.label} ${goal.p.have} of ${goal.p.need}`}>
+                  <img className="pf-goal-face" src={castSrc(goal.h.id, 'hero')} alt="" aria-hidden="true" draggable="false" />
+                  <span className="pf-goal-text">
+                    <span className="pf-goal-k">NEXT HERO</span>
+                    <span className="pf-goal-n">{goal.h.name}</span>
+                    <span className="pf-goal-bar"><span className="pf-goal-fill" style={{ transform: `scaleX(${goal.f})` }} /></span>
+                    <span className="pf-goal-p">{goal.p.label} {formatNum(goal.p.have)}/{formatNum(goal.p.need)}</span>
+                  </span>
+                </button>
+              ) : null}
             </div>
             <div className="pf-right">
               <div className="pf-id">

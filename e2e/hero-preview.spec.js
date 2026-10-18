@@ -117,3 +117,31 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await expect(hu).toHaveCount(0);
   });
 }
+
+test('NEXT HERO goal: the profile shows the closest earnable hero; tapping it opens that hero\'s preview', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await installBackendMock(page);
+  // level 15 → HEX (LEVEL 20) is the closest (15/20) ahead of DUD (15/35)
+  const s = { ...seed(0), 'taw.s2.xp': JSON.stringify({ lv: 15, f: 0, rc: 0, v: 10 }) };
+  await page.addInitScript((s) => { if (sessionStorage.getItem('hg.seeded')) return; sessionStorage.setItem('hg.seeded', '1'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, s);
+  await page.goto('/?portal=1&season2=1');
+  await menuReady(page);
+  await page.locator('[data-nav="profile"]:visible').first().click();
+  const goal = page.locator('.pf-goal');
+  await expect(goal.locator('.pf-goal-n')).toHaveText('HEX');
+  await expect(goal.locator('.pf-goal-p')).toHaveText('LEVEL 15/20');
+  await shot(page, 'cb-9-profile-goal');
+  await goal.click();
+  await expect(page.getByTestId('hero-preview')).toHaveAttribute('data-hero', 'hex');
+});
+
+test('menu chip says NEW HERO! while an earned hero waits to be revealed', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await installBackendMock(page);
+  const s = { ...seed(0), 'taw.s2.rebirths': '1', 'taw.s2.heroes.seen': JSON.stringify(['riot', 'hype', 'brawl']) };
+  await page.addInitScript((s) => { if (sessionStorage.getItem('hc.seeded')) return; sessionStorage.setItem('hc.seeded', '1'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, s);
+  await page.goto('/?portal=1&season2=1');
+  await menuReady(page);
+  await expect(page.locator('.pchip-sub')).toHaveText('NEW HERO!');
+  await shot(page, 'cb-10-menu-new-hero');
+});
