@@ -85,7 +85,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
             <div className="pf-left">
               <HeroShowcase id={h.id} cheer={cheer} />
               <FitText className="pf-hero fit-center">{h.name}</FitText>
-              <span className="pf-hero-tag">{h.elite ? `ELITE · ${h.tag}` : h.legend ? `LEGEND · ${h.tag}` : h.tag}</span>
+              <span className="pf-hero-tag">{h.elite ? `ELITE · ${h.tag}` : h.legend ? `LEGEND · ${h.tag}` : h.gold ? `GOLD · ${h.tag}` : h.tag}</span>
               <button type="button" className="pf-change" onClick={() => setView('pick')}>CHANGE HERO</button>
             </div>
             <div className="pf-right">

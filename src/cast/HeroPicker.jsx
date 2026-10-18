@@ -1,8 +1,8 @@
 // HeroPicker.jsx — CHOOSE YOUR MAIN as collectible cards (oct17): THE CREW (three free, HEX + GLITCH for gems) and the
-// NEW FACES (DUD earned at LEVEL 35, LEXI for gems), LEGEND (BOO: REBIRTH 5 or 5,000 gems), the ELITE row (2,500 gems each, silhouettes until bought). Tap an owned card → equip; tap a priced one → the HOLD TO BUY
+// NEW FACES (DUD earned at LEVEL 35, LEXI for gems), GOLD (100 wins with the member — earned only), LEGEND (BOO: REBIRTH 5 or 5,000 gems), the ELITE row (2,500 gems each, silhouettes until bought). Tap an owned card → equip; tap a priced one → the HOLD TO BUY
 // bar (KitHoldButton) → bought + equipped. Reusable anywhere a hero is picked (the profile today, the lobby later).
 import { useEffect, useState } from 'react';
-import { CAST, NEW_CREW, LEGEND, ELITE, HERO_UNLOCK, heroById, ownsHero } from './cast.js';
+import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, goldProgress } from './cast.js';
 import { buyHero } from './heroShop.js';
 import HeroCard from './HeroCard.jsx';
 import { KitHoldButton, KitIcon } from '../components/kit/index.js';
@@ -12,6 +12,10 @@ import { sndPurchase } from '../audio/gameSounds';
 import './HeroPicker.css';
 
 function Act({ h, current }) {
+  if (h.gold && !ownsHero(h.id)) {
+    const p = goldProgress(h.id);
+    return <span className="hp2-act is-earn">{p.need - p.have} WINS TO GO</span>;
+  }
   if (ownsHero(h.id)) return <span className={`hp2-act${h.id === current ? ' is-on' : ''}`}>{h.id === current ? 'EQUIPPED' : 'EQUIP'}</span>;
   return <span className="hp2-act is-price">{HERO_UNLOCK[h.id] ? 'SKIP · ' : ''}<KitIcon name="gems" size={18} shadow={2} extras={false} />{formatNum(h.price)}</span>;
 }
@@ -21,7 +25,8 @@ export default function HeroPicker({ current, onEquip, onBought }) {
   const [buying, setBuying] = useState(null);
   const [gems, setGems] = useState(getGems);
   useEffect(() => subscribeGems((v) => setGems(typeof v === 'number' ? v : getGems())), []);
-  const pick = (h) => (ownsHero(h.id) ? onEquip(h.id) : setBuying(h.id === buying ? null : h.id));
+  // a GOLD not earned yet does nothing (it's never for sale — its card already shows the wins to go)
+  const pick = (h) => (ownsHero(h.id) ? onEquip(h.id) : h.gold ? null : setBuying(h.id === buying ? null : h.id));
   const buy = () => {
     const r = buyHero(buying);
     if (!r.ok) return;
@@ -54,6 +59,18 @@ export default function HeroPicker({ current, onEquip, onBought }) {
             <Act h={x} current={current} />
           </HeroCard>
         ))}
+      </div>
+      <span className="hp2-sec is-gold">GOLD · EARNED, NEVER SOLD · {GOLD.filter((x) => ownsHero(x.id)).length}/{GOLD.length}</span>
+      <div className="hp2-grid">
+        {GOLD.map((x, k) => {
+          const p = goldProgress(x.id);
+          return (
+            <HeroCard key={x.id} hero={x} req={p.done ? null : { icon: 'achievements', label: `${p.have}/${p.need}` }} on={x.id === current} delay={k * 520} onClick={() => pick(x)}>
+              <span className="hp2-tag">{x.tag}</span>
+              <Act h={x} current={current} />
+            </HeroCard>
+          );
+        })}
       </div>
       <span className="hp2-sec is-legend">LEGEND · {LEGEND.filter((x) => ownsHero(x.id)).length}/{LEGEND.length} OWNED</span>
       <div className="hp2-grid">
