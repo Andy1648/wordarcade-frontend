@@ -13,6 +13,7 @@ import * as lexicon from './lexicon';
 import { pickBriefing } from './briefing';
 import { suspectsStanding } from './suspects';
 import { loadPack } from './packWords';
+import { getPack, posLabelOf, playRoot } from './packs';
 import { normalizeSpec, bandWords, buildRunQueue, LENGTHS } from './runSpec';
 import { track } from '../lib/analytics';
 import { wpmKeyStroke } from '../progress/wpmLive';
@@ -31,8 +32,9 @@ import { formatNum, formatMultExact } from '../format';
 import { noteLetters } from '../progress/letterXp.js';
 
 // The pack this mode plays (packs.js). FRENCH RUSH will pass its own id through the RunSpec.
-const PACK = loadPack('sat');
-const WORDS = PACK.words;
+// The SAT pack is the default; FRENCH RUSH passes { packId: 'fr' } (its words are attached by its
+// own lazy entry before it mounts). loadPack('sat') here is what bundles the SAT words.
+loadPack('sat');
 // FINITE runs (oct17) use the DROPOUT schedule: a miss or a shaky clear comes back this many words
 // later (the endless default, 6, is longer than half a 10-word case file).
 const FINITE_RETURN_GAP = 3;
@@ -44,8 +46,7 @@ function isStreakMilestone(n) {
 }
 
 // part-of-speech labels come from the pack (full, and the phone case id's dictionary short form)
-const POS_LABEL = PACK.posLabels;
-const POS_SHORT = PACK.posShort;
+
 const CLEAR_PAUSE_MS = 850;
 // THE MISS TEACHES, SO IT HAS TO BE READABLE. The re-encode card carries four things — the
 // word, the sentence with the answer filled in, the definition, and a root cousin. 1800ms was
@@ -74,7 +75,11 @@ function safeStorage() {
   }
 }
 
-export function useSatRushGame() {
+export function useSatRushGame({ packId = 'sat' } = {}) {
+  // THE PACK this hook plays (packs.js): its words, its memory keys, its clue order, its accents.
+  const packRef = useRef(null);
+  if (packRef.current === null) packRef.current = getPack(packId);
+  // (read through packRef.current inside callbacks: the pack is fixed for the hook's lifetime)
   const [, force] = useReducer((x) => x + 1, 0);
 
   const engineRef = useRef(null);
@@ -97,7 +102,7 @@ export function useSatRushGame() {
   const storageRef = useRef(null);
   if (storageRef.current === null) storageRef.current = safeStorage();
   const lexRef = useRef(null);
-  if (lexRef.current === null) lexRef.current = lexicon.load(storageRef.current);
+  if (lexRef.current === null) lexRef.current = lexicon.load(storageRef.current, packRef.current.storageKey);
   const briefingRef = useRef(null); // the current run's { words, familyMorpheme, reviewCount, reviewWords }
   const briefedSetRef = useRef(new Set()); // word strings briefed this run (for wasBriefed analytics)
   const dwellStartRef = useRef(null); // performance.now() when the briefing screen opened
@@ -142,7 +147,7 @@ export function useSatRushGame() {
   // Persist the learning memory (fire-and-forget, guarded). Called after each
   // recorded outcome and on unmount, so a mid-run exit is never lost.
   const persistLexicon = useCallback(() => {
-    lexicon.save(storageRef.current, lexRef.current);
+    lexicon.save(storageRef.current, lexRef.current, packRef.current.storageKey);
   }, []);
 
   // Fire-and-forget analytics. Every SAT RUSH event carries `game:'sat-rush'` (the
@@ -151,7 +156,7 @@ export function useSatRushGame() {
   // 7-day return, briefing vs lineup. `word_resolved`'s `stage`/`suspectsStanding`
   // answer whether players are actually anteing (answering early).
   const trackSR = useCallback((event, props = {}) => {
-    track(event, { game: 'sat-rush', mode: modeRef.current, ...props });
+    track(event, { game: packRef.current.id === 'sat' ? 'sat-rush' : 'french-rush', mode: modeRef.current, ...props });
   }, []);
 
   const trackRunEnd = useCallback(() => {
@@ -178,7 +183,7 @@ export function useSatRushGame() {
     }
     // Remember every FRESHLY drawn word (not revenant re-entries) so future runs
     // deprioritize it. Persisted immediately, so a mid-run quit still counts.
-    if (!cur.isRevenant) pushRecentWord(cur.word);
+    if (!cur.isRevenant) pushRecentWord(cur.word, packRef.current.recentKey);
     trackSR('word_served', {
       tier: cur.tier,
       isDeepCut: cur.isDeepCut,
@@ -211,7 +216,7 @@ export function useSatRushGame() {
         );
       }
     }
-    inputRef.current = createSlotInput({ target: cur.word });
+    inputRef.current = createSlotInput({ target: cur.word, accentFold: packRef.current.accentFold });
     pendingRef.current = 'idle';
     msgRef.current = null;
     reEncodeRef.current = null; // a fresh word clears the previous re-encode beat
@@ -250,7 +255,7 @@ export function useSatRushGame() {
       if (!r) return;
       // What this clear actually earned (fix/sat-spam): letters revealed by wrong keys pay nothing.
       lastClearedRef.current = { ...lastClearedRef.current, paid: r.paidFraction };
-      // Lifetime WORDS TYPED: a cleared word is the local player's own accepted
+      // Lifetime packRef.current.words TYPED: a cleared word is the local player's own accepted
       // word (SAT Rush is solo). Same spot the word_resolved analytic fires below.
       addWords('sat-rush');
       // Learning memory: a clear promotes the word's Leitner box.
@@ -529,11 +534,12 @@ export function useSatRushGame() {
         force();
         return;
       }
-      if (!/^[a-zA-Z]$/.test(e.key)) return;
+      if (!/^\p{L}$/u.test(e.key)) return;
       e.preventDefault();
       wpmKeyStroke(); // WPM (§2): a letter keystroke opens this word's active-typing span
 
       const res = input.typeLetter(e.key);
+      if (res.reason === 'ignored') return; // the e of a typed-out œ (accent folding) — no-op
       if (res.accepted) {
         noteLetters(1, 'sat-rush'); // v11: an accepted LETTER fills the bar (batched, rate-capped)
         if (res.complete) resolveClear();
@@ -601,12 +607,13 @@ export function useSatRushGame() {
     const { stageMs, spellMs, lineupScale, deepEvery, revGap, climb } = cfgRef.current;
     const finite = Array.isArray(queue);
     engineRef.current = createSatRushEngine({
-      words: WORDS,
-      recent: readRecentWords(), // cross-run memory: deprioritize recently-served words
+      words: packRef.current.words,
+      recent: readRecentWords(packRef.current.recentKey), // cross-run memory: deprioritize recently-served words
       briefed, // THE BRIEFING's words, served first this run (briefing mode only)
       queue, // FINITE run: the run's own words (null = the endless dev draw)
       config: {
         requeueShaky: finite, // the dropout schedule: shaky clears come back too
+        meaningFirst: !!packRef.current.meaningFirst, // FRENCH RUSH leads with the English meaning
         ...(finite ? { revenantOffset: Math.min(revGap, FINITE_RETURN_GAP) } : {}),
         mode, // 'briefing' (spell-along net) | 'lineup' (suspect lineup, no spell-along)
         stageIntervalMs: stageMs,
@@ -639,7 +646,7 @@ export function useSatRushGame() {
         trackSR('briefing_word_dwell_ms', { ms, words, perWord: words ? Math.round(ms / words) : ms });
       }
       dwellStartRef.current = null;
-      // THE RUN'S WORDS. A replay plays the last run's unsettled words; BRIEFING hunts exactly the
+      // THE RUN'S packRef.current.words. A replay plays the last run's unsettled words; BRIEFING hunts exactly the
       // studied deck (shuffled, so the hunt is not the study order); LINEUP builds a case file from
       // the spec + the learning memory (shaky words come back, unseen words lead).
       let queue;
@@ -651,10 +658,10 @@ export function useSatRushGame() {
         const lex = lexRef.current;
         queue = buildRunQueue({
           spec: specRef.current,
-          words: WORDS,
+          words: packRef.current.words,
           lex,
           session: lex.session || 0,
-          recent: readRecentWords(),
+          recent: readRecentWords(packRef.current.recentKey),
           rng: Math.random,
           deepCutEvery: cfgRef.current.deepEvery,
         }).rows;
@@ -703,7 +710,7 @@ export function useSatRushGame() {
     briefingRef.current = pickBriefing({
       state: lex,
       session: lex.session,
-      words: bandWords(WORDS, spec.difficulty, spec.category),
+      words: bandWords(packRef.current.words, spec.difficulty, spec.category),
       rng: Math.random,
       count: spec.length,
       exclude: recentDecks.flat(),
@@ -730,13 +737,13 @@ export function useSatRushGame() {
 
   // CASE SETUP → go. Remembers the choice, then BRIEFING deals the study deck, LINEUP starts.
   const confirmSetup = useCallback(
-    ({ difficulty, length } = {}) => {
+    ({ difficulty, length, category = null } = {}) => {
       juice.unlockAudio();
       const mode = modeRef.current;
-      const spec = normalizeSpec({ pack: PACK.id, mode, difficulty, length });
+      const spec = normalizeSpec({ pack: packRef.current.id, mode, difficulty, length, category });
       specRef.current = spec;
       const lex = lexRef.current;
-      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length };
+      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length, category: spec.category };
       persistLexicon();
       trackSR('setup_confirmed', { difficulty: spec.difficulty, length: spec.length });
       if (mode === 'lineup') {
@@ -767,7 +774,7 @@ export function useSatRushGame() {
         return;
       }
       const prefs = setupPrefs();
-      confirmSetup({ difficulty: prefs.difficulty, length: prefs[mode] });
+      confirmSetup({ difficulty: prefs.difficulty, length: prefs[mode], category: prefs.category || null });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [confirmSetup, persistLexicon, trackSR]
@@ -778,7 +785,7 @@ export function useSatRushGame() {
   const replayMisses = useCallback(() => {
     const eng = engineRef.current;
     const log = eng ? eng.results().caseLog || [] : [];
-    const byWord = new Map(WORDS.map((r) => [r.word, r]));
+    const byWord = new Map(packRef.current.words.map((r) => [r.word, r]));
     const rows = log.filter((c) => !c.clean || c.misses > 0).map((c) => byWord.get(c.word)).filter(Boolean);
     if (!rows.length) return;
     const lex = lexRef.current;
@@ -877,7 +884,7 @@ export function useSatRushGame() {
 
       const present = () => {
         const c = eng.getState().current;
-        inputRef.current = createSlotInput({ target: c.word });
+        inputRef.current = createSlotInput({ target: c.word, accentFold: packRef.current.accentFold });
         pendingRef.current = 'idle';
         msgRef.current = null;
         prevSilverRef.current = eng.getState().silverTongue;
@@ -952,6 +959,7 @@ export function useSatRushGame() {
     lastCleared: lastClearedRef.current, // {word,id} — RARITY scoring + pop
     spec: specRef.current,
     setupPrefs: lexRef.current.setup || null,
+    pack: packRef.current,
   });
 
   return {
@@ -985,7 +993,7 @@ function shuffleRows(rows, rng = Math.random) {
 // Pure: the end screen's CASE FILE — each distinct word of the run with how it went this run
 // (captured clean / leaned on the letters / got away) and where it now stands in the learning
 // memory (lexicon box: KNOWN at box >= 3, LEARNING once seen, NEW otherwise).
-function buildCaseFile(results, lex) {
+function buildCaseFile(results, lex, pack) {
   const log = Array.isArray(results.caseLog) ? results.caseLog : [];
   return log.map((c) => {
     const rec = lex && lex.records ? lex.records[c.word] : null;
@@ -993,7 +1001,7 @@ function buildCaseFile(results, lex) {
     // clean = caught without help first time; recaptured = got away, caught on its return;
     // shaky = only ever caught leaning on the letters; escaped = never caught
     const outcome = !c.captured ? 'escaped' : c.misses > 0 ? 'recaptured' : c.clean ? 'clean' : 'shaky';
-    return { word: c.word, pos: POS_LABEL[c.pos] || c.pos, gloss: c.gloss, context: c.context, outcome, mastery, misses: c.misses };
+    return { word: c.word, pos: posLabelOf(pack, c), gloss: c.gloss, context: c.context, contextEn: c.contextEn || null, outcome, mastery, misses: c.misses };
   });
 }
 
@@ -1003,17 +1011,18 @@ function buildCaseFile(results, lex) {
 // miss or a heavy-reveal clear.
 function buildReEncode(cw, kind) {
   const cousin = cw.root && Array.isArray(cw.root.cousins) && cw.root.cousins.length ? cw.root.cousins[0] : null;
-  return { word: cw.word, context: cw.context, gloss: cw.gloss, root: cw.root, cousin, kind };
+  return { word: cw.word, context: cw.context, contextEn: cw.contextEn || null, gloss: cw.gloss, root: cw.root, cousin, kind };
 }
 
 // Pure: build the per-card data THE BRIEFING renders — the filled sentence is the
 // encode step, so it's front and centre; cousins the player has already met get a
 // "you know this one" tick (the transfer moment made visible).
-function buildBriefingView(briefing, lex) {
+function buildBriefingView(briefing, lex, pack) {
   if (!briefing) return null;
   const cards = briefing.words.map((row) => ({
     word: row.word,
-    pos: POS_LABEL[row.pos] || row.pos,
+    pos: posLabelOf(pack, row),
+    contextEn: row.contextEn || null,
     length: row.word.length,
     context: row.context,
     gloss: row.gloss,
@@ -1037,7 +1046,7 @@ function buildView(state, cur, eng, input, extra) {
     cfg: extra.cfg,
     stamp: extra.stamp,
     reEncode: extra.reEncode,
-    briefing: buildBriefingView(extra.briefing, extra.lex),
+    briefing: buildBriefingView(extra.briefing, extra.lex, extra.pack),
     mode: extra.mode, // 'briefing' | 'lineup' — the current run's mode
     lastMode: extra.lastMode, // remembered choice, for the picker's preselect
     // RARITY: the last cleared word + its monotonic id (aligned with `cleared`), for scoring/pop.
@@ -1046,7 +1055,8 @@ function buildView(state, cur, eng, input, extra) {
     spec: extra.spec, // the run's RunSpec (CASE SETUP / results)
     setupPrefs: extra.setupPrefs, // remembered CASE SETUP choices (preselect)
     knownCount: lexicon.masteredCount(extra.lex), // words at the mastery box (CASE SETUP line)
-    packSize: WORDS.length,
+    packSize: extra.pack.words.length,
+    pack: extra.pack,
     lengths: LENGTHS,
     // The share of that clear's wins/XP it earned (1 unless letters were revealed by wrong keys).
     lastClearedPaid: extra.lastCleared && Number.isFinite(extra.lastCleared.paid) ? extra.lastCleared.paid : 1,
@@ -1059,7 +1069,7 @@ function buildView(state, cur, eng, input, extra) {
       ...r,
       mastered: lexicon.masteredCount(extra.lex),
       keepMissing: lexicon.mostMissed(extra.lex, 6),
-      caseFile: buildCaseFile(r, extra.lex),
+      caseFile: buildCaseFile(r, extra.lex, extra.pack),
       spec: extra.spec,
     };
   }
@@ -1106,14 +1116,14 @@ function buildView(state, cur, eng, input, extra) {
     atFinal,
     interval,
     graceMs: extra.graceMs, // full spell-along window (fixed at final-stage entry)
-    meta: `${POS_LABEL[cur.pos] || cur.pos} · ${cur.length} letters · tier ${cur.tier}`,
-    pos: POS_LABEL[cur.pos] || cur.pos,
-    posShort: POS_SHORT[cur.pos] || cur.pos,
+    meta: `${posLabelOf(extra.pack, cur)} · ${cur.length} letters · tier ${cur.tier}`,
+    pos: posLabelOf(extra.pack, cur),
+    posShort: posLabelOf(extra.pack, cur, true),
     tier: cur.tier,
     reveals: cur.reveals.map((r) => ({ type: r.type, stage: r.stage, visible: r.stage <= cur.stage })),
     context: cur.context,
     gloss: cur.gloss,
-    root: cur.root,
+    root: playRoot(cur.root, cur.word), // never prints the answer (see playRoot)
     wordLength: cur.length,
     slots: input ? input.getSlots() : [],
     // LINEUP mode: the suspect lineup for the current word, each marked eliminated

@@ -24,7 +24,7 @@ import AnteMeter from './AnteMeter';
 // briefing), the definition, and ONE cousin from the root if there is one. Held
 // for the between-word pause, or dismissed early by any key (handled in the hook).
 function ReEncode({ data }) {
-  const { word, context, gloss, cousin, kind } = data;
+  const { word, context, contextEn, gloss, cousin, kind } = data;
   const [before, after] = context.split(/_+/);
   return (
     <div className={`sr-reencode ${kind}`} role="status">
@@ -37,6 +37,8 @@ function ReEncode({ data }) {
         <mark className="sr-brief-fill">{word}</mark>
         {after}”
       </p>
+      {/* FRENCH RUSH: the example's English, so a struggling student can read what it said */}
+      {contextEn && <p className="sr-reencode-en">{contextEn}</p>}
       {cousin && (
         <p className="sr-reencode-cousin">
           same root as <b>{cousin}</b>
@@ -98,6 +100,10 @@ function Blank({ length }) {
 // stays hidden (opacity) until its stage, exactly like before. A root-null
 // fugitive has no KNOWN ALIASES row at all.
 function FieldRow({ type, visible, view }) {
+  const F = (view.pack && view.pack.ui && view.pack.ui.fields) || {};
+  const rootFull = F.root || 'Known aliases';
+  const rootShort = F.rootShort || 'aliases';
+  const rootLead = rootFull.slice(0, rootFull.length - rootShort.length); // "Known " / "Word "
   // sr-field--<type>: the fit blocks in SatRush.css set DESCRIPTION / KNOWN ALIASES inline with their
   // label chip (R3 oct8) — the clue (LAST SEEN) keeps its chip above.
   const cls = `sr-field sr-field--${type} sr-reveal${visible ? ' in' : ''}`;
@@ -105,7 +111,7 @@ function FieldRow({ type, visible, view }) {
     const [before, after] = view.context.split(/_+/);
     return (
       <div className={cls}>
-        <span className="sr-fieldlabel" aria-hidden="true">Last seen</span>
+        <span className="sr-fieldlabel" aria-hidden="true">{F.sentence || 'Last seen'}</span>
         <div className="sr-fieldbody sr-sentence">
           “{before}
           <Blank length={view.wordLength} />
@@ -117,7 +123,7 @@ function FieldRow({ type, visible, view }) {
   if (type === 'gloss') {
     return (
       <div className={cls}>
-        <span className="sr-fieldlabel" aria-hidden="true">Description</span>
+        <span className="sr-fieldlabel" aria-hidden="true">{F.gloss || 'Description'}</span>
         <div className="sr-fieldbody sr-gloss">{visible ? view.gloss : ''}</div>
       </div>
     );
@@ -127,12 +133,18 @@ function FieldRow({ type, visible, view }) {
     return (
       <div className={cls}>
         <span className="sr-fieldlabel" aria-hidden="true">
-          <span className="sr-known">Known </span>aliases
+          <span className="sr-known">{rootLead}</span>
+          {rootShort}
         </span>
         <div className="sr-fieldbody sr-root">
           {visible ? (
             <>
-              <b>{view.root.morpheme}</b> — {view.root.meaning}{' '}
+              {view.root.morpheme ? (
+                <>
+                  <b>{view.root.morpheme}</b> —{' '}
+                </>
+              ) : null}
+              {view.root.meaning}{' '}
               <span className="cz">
                 {view.root.cousins.map((c) => (
                   <span key={c} className="cz-i">
@@ -155,6 +167,8 @@ function FieldRow({ type, visible, view }) {
 export default function WordCard({ view }) {
   const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode, mode, suspects } = view;
   const isLineup = mode === 'lineup';
+  // the poster's words come from the pack (WANTED / RECHERCHÉ); SAT is the default
+  const UI = (view.pack && view.pack.ui) || { wanted: 'WANTED', mostWanted: 'MOST WANTED' };
 
   // Reveals to render as fields (meta is the case id; firstLetter lives in slots).
   const rows = view.reveals.filter((r) => ['sentence', 'gloss', 'root'].includes(r.type));
@@ -221,8 +235,8 @@ export default function WordCard({ view }) {
           ONE row, so the clue + definition get the height back. */}
       <div className="sr-masthead">
         <div className="sr-wanted-wrap">
-          <div className="sr-wanted sr-print" data-v={deepCut ? 'MOST WANTED' : 'WANTED'}>
-            {deepCut ? 'MOST WANTED' : 'WANTED'}
+          <div className="sr-wanted sr-print" data-v={deepCut ? UI.mostWanted : UI.wanted}>
+            {deepCut ? UI.mostWanted : UI.wanted}
           </div>
         </div>
         {/* Case id: part of speech · tier. The letter count is the slot row itself, so the case id

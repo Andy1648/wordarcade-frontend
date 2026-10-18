@@ -13,9 +13,9 @@ const RECENT_KEY = 'wa_satrush_recent';
 // protected ~7 runs — which is why LINEUP still repeated. 250 covers ~20 runs.
 const RECENT_CAP = 250;
 
-function readList() {
+function readList(key = RECENT_KEY) {
   try {
-    const raw = localStorage.getItem(RECENT_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const arr = JSON.parse(raw);
     return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
@@ -25,8 +25,8 @@ function readList() {
 }
 
 /** The recently-served words as a Set (for O(1) membership in the engine). */
-export function readRecentWords() {
-  return new Set(readList());
+export function readRecentWords(key = RECENT_KEY) {
+  return new Set(readList(key));
 }
 
 /**
@@ -34,13 +34,13 @@ export function readRecentWords() {
  * so a mid-run quit still counts. Silent when the word is falsy or storage is
  * unavailable.
  */
-export function pushRecentWord(word) {
+export function pushRecentWord(word, key = RECENT_KEY) {
   if (typeof word !== 'string' || !word) return;
   try {
-    const list = readList();
+    const list = readList(key);
     list.push(word);
     const trimmed = list.length > RECENT_CAP ? list.slice(list.length - RECENT_CAP) : list;
-    localStorage.setItem(RECENT_KEY, JSON.stringify(trimmed));
+    localStorage.setItem(key, JSON.stringify(trimmed));
   } catch {
     /* storage unavailable — nothing to remember, no harm done */
   }

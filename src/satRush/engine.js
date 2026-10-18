@@ -70,6 +70,8 @@ export const DEFAULT_CONFIG = {
   // such reveal zeroes heat, and the word's Nth spam reveal is a miss (a life, a revenant). One
   // reveal per word forgives a real typo run; a pure spammer is out of lives in a few words.
   spamRevealMiss: 2,
+  // clue order: false = sentence first (SAT), true = meaning first (FRENCH RUSH)
+  meaningFirst: false,
   // THE DROPOUT SCHEDULE (oct17). A word leaves the run only once it is captured CLEAN. A miss
   // already comes back as a revenant; with requeueShaky a clear that leaned on the spell-along
   // (revealed >= shakyRevealMin letters) comes back too — as a SECOND LOOK, no life lost, no
@@ -145,12 +147,20 @@ export function lineupWindowMs(baseMs, len = 0) {
  * root entry entirely (no aliases row). Every word follows the same schedule —
  * there is no tier-dependent ordering.
  */
-export function revealSchedule(hasRoot = true) {
-  const entries = [
-    { type: REVEAL_META, stage: REVEAL_STAGE[REVEAL_META] },
-    { type: REVEAL_SENTENCE, stage: REVEAL_STAGE[REVEAL_SENTENCE] },
-    { type: REVEAL_GLOSS, stage: REVEAL_STAGE[REVEAL_GLOSS] },
-  ];
+export function revealSchedule(hasRoot = true, meaningFirst = false) {
+  // MEANING FIRST (FRENCH RUSH): the definition is the opening clue and the example sentence the
+  // second — a struggling student is asked "what's the French for this?", then shown it in use.
+  const entries = meaningFirst
+    ? [
+        { type: REVEAL_META, stage: 0 },
+        { type: REVEAL_GLOSS, stage: 0 },
+        { type: REVEAL_SENTENCE, stage: 1 },
+      ]
+    : [
+        { type: REVEAL_META, stage: REVEAL_STAGE[REVEAL_META] },
+        { type: REVEAL_SENTENCE, stage: REVEAL_STAGE[REVEAL_SENTENCE] },
+        { type: REVEAL_GLOSS, stage: REVEAL_STAGE[REVEAL_GLOSS] },
+      ];
   if (hasRoot) entries.push({ type: REVEAL_ROOT, stage: REVEAL_STAGE[REVEAL_ROOT] });
   entries.push({ type: REVEAL_FIRST_LETTER, stage: REVEAL_STAGE[REVEAL_FIRST_LETTER] });
   return entries;
@@ -262,6 +272,8 @@ export function createSatRushEngine({
         pos: row.pos,
         gloss: row.gloss,
         context: row.context,
+        contextEn: row.contextEn || null,
+        gender: row.gender || null,
         tier: row.tier,
         attempts: 0,
         misses: 0,
@@ -342,7 +354,9 @@ export function createSatRushEngine({
       root: row.root, // may be null
       alts: row.alts || [],
       firstLetter: row.word[0],
-      reveals: revealSchedule(row.root != null),
+      reveals: revealSchedule(row.root != null, cfg.meaningFirst),
+      gender: row.gender || null,
+      contextEn: row.contextEn || null,
       // LINEUP mode only: the suspect lineup for this word (answer + distractors),
       // narrowing with the stage. Pure — generated from the same word pool with the
       // injected RNG. null in briefing mode. Attached to every word (revenants too).

@@ -18,11 +18,24 @@
 // The engine decides WHEN letters are revealed (stage-4 first letter, every 3rd
 // wrong keystroke); this module just applies a reveal to the slots.
 
+// ACCENT FOLDING (FRENCH RUSH): the typed key is compared to the target letter with its accent
+// stripped, so `e` fills é/è/ê/ë and `c` fills ç; œ and æ take their first letter (`o`, `a`), and
+// the `e` a player naturally types next (`coeur`) is swallowed, not punished. The SLOT always shows
+// the target's real letter — the accent is what the player sees, and learns.
+export function foldLetter(ch) {
+  const c = String(ch).toLowerCase();
+  if (c === 'œ') return 'o';
+  if (c === 'æ') return 'a';
+  return c.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+const LIGATURE_TAIL = { œ: 'e', æ: 'e' };
+
 /**
  * @param {object} opts
  * @param {string} opts.target  the word to reach (the only word that can be typed)
+ * @param {boolean} [opts.accentFold]  accept an unaccented key for an accented letter
  */
-export function createSlotInput({ target } = {}) {
+export function createSlotInput({ target, accentFold = false } = {}) {
   const word = String(target).toLowerCase();
   const length = word.length;
 
@@ -48,12 +61,18 @@ export function createSlotInput({ target } = {}) {
   function typeLetter(raw) {
     const letter = String(raw).toLowerCase();
     if (isComplete()) return result({ accepted: false, reason: 'complete' });
-    if (!/^[a-z]$/.test(letter)) return result({ accepted: false, reason: 'invalid' });
-    if (word[typed.length] !== letter) {
+    if (!/^\p{L}$/u.test(letter)) return result({ accepted: false, reason: 'invalid' });
+    const want = word[typed.length];
+    const ok = accentFold ? foldLetter(want) === foldLetter(letter) : want === letter;
+    if (!ok) {
+      // `coeur` for cœur: the e after a ligature is the player spelling œ out — swallow it.
+      if (accentFold && typed.length && LIGATURE_TAIL[word[typed.length - 1]] === letter) {
+        return result({ accepted: false, reason: 'ignored' });
+      }
       // Not the target's next letter — reject, do not advance.
       return result({ accepted: false, reason: 'reject' });
     }
-    typed += letter;
+    typed += want; // the slot shows the TARGET letter (accent and all), never the folded key
     return result({ accepted: true, reason: isComplete() ? 'complete' : 'accept' });
   }
 

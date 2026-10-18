@@ -91,9 +91,9 @@ function isValid(blob) {
  * → a fresh empty state, never a throw. Missing optional fields are backfilled so
  * callers can assume the full shape.
  */
-export function load(storage) {
+export function load(storage, key = KEY) {
   try {
-    const raw = storage && storage.getItem ? storage.getItem(KEY) : null;
+    const raw = storage && storage.getItem ? storage.getItem(key) : null;
     if (!raw) return freshState();
     const blob = JSON.parse(raw);
     if (!isValid(blob)) return freshState();
@@ -111,10 +111,10 @@ export function load(storage) {
 }
 
 /** Persist state to an injected storage ({ setItem }). Silent on any failure. */
-export function save(storage, state) {
+export function save(storage, state, key = KEY) {
   try {
     if (!storage || !storage.setItem) return;
-    storage.setItem(KEY, JSON.stringify(state));
+    storage.setItem(key, JSON.stringify(state));
   } catch {
     /* storage unavailable / quota — nothing to persist, no harm done */
   }
