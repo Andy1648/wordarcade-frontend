@@ -14,6 +14,21 @@
 export const CATEGORY_EXAMPLES = {
   // oct17 NOT categories (any real noun scores — blitzNot.js), each example verified ON its list
   "Things you shouldn't flush down the toilet": "Dead goldfish",
+  // oct18 NOT batch 2 (Andy: "more of them" — any real noun scores, blitzNot.js), each example verified ON its list
+  "Things you shouldn't put in a washing machine": "Phone",
+  "Things you shouldn't bring on a plane": "Chainsaw",
+  "Things you shouldn't feed a dog": "Chocolate",
+  "Things you shouldn't put in a fish tank": "Cat",
+  "Things you shouldn't wear to a job interview": "Clown costume",
+  "Things you shouldn't bring to the beach": "Snowboard",
+  "Things you shouldn't put on a pizza": "Gummy bears",
+  "Things you don't want to step on barefoot": "Lego",
+  "Things you shouldn't bring to a sleepover": "Tuba",
+  "Things you shouldn't put in your pocket": "Soup",
+  "Things you don't want to find in your shoe": "Scorpion",
+  "Things you shouldn't bring on a first date": "Your mom",
+  "Things you shouldn't pet": "Porcupine",
+  "Things you shouldn't put in a blender": "Fork",
   // oct17 UNHINGED round 2 (Andy: noun answers only, darker, fewer misses), each example verified ON its list
   "Things in a horror movie basement": "Chains",
   "Things that are probably cursed": "Ouija board",
