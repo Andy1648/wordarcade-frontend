@@ -1,6 +1,7 @@
-// HeroPicker.jsx — CHOOSE YOUR MAIN as collectible cards (oct17): THE CREW (three free, HEX + GLITCH for gems) and the
-// NEW FACES (DUD earned at LEVEL 35, LEXI for gems), GOLD (100 wins with the member — earned only), LEGEND (BOO: REBIRTH 5 or 5,000 gems), the ELITE row (2,500 gems each, silhouettes until bought). Tap an owned card → equip; tap a priced one → the HOLD TO BUY
-// bar (KitHoldButton) → bought + equipped. Reusable anywhere a hero is picked (the profile today, the lobby later).
+// HeroPicker.jsx — CHOOSE YOUR MAIN as collectible cards: THE CREW (free / earnable / gem-priced members, incl. DUD +
+// LEXI), then the rarer rows by rarity — GOLD (earned with 100 wins), ELITE (2,500 gems, silhouettes until bought),
+// LEGEND (BOO). Tap an owned card → equip; tap a priced one → the HOLD TO BUY bar (KitHoldButton) → bought + equipped;
+// an unearned GOLD does nothing (never for sale). Reusable anywhere a hero is picked (the profile today, the lobby later).
 import { useEffect, useState } from 'react';
 import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, goldProgress } from './cast.js';
 import { buyHero } from './heroShop.js';
@@ -36,7 +37,17 @@ export default function HeroPicker({ current, onEquip, onBought }) {
     onBought(id);
   };
   const want = buying ? heroById(buying) : null;
-  const owned = ELITE.filter((x) => ownsHero(x.id)).length;
+  /** One card: GOLD shows its wins-to-go, an earnable crew member its requirement, a priced ELITE its silhouette. */
+  const card = (x, k = 0) => {
+    const gp = x.gold ? goldProgress(x.id) : null;
+    const req = gp ? (gp.done ? null : { icon: 'achievements', label: `${gp.have}/${gp.need}` }) : !ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null;
+    return (
+      <HeroCard key={x.id} hero={x} req={req} locked={!!x.elite && !ownsHero(x.id)} on={x.id === current} sel={x.id === buying} delay={k * 520} onClick={() => pick(x)}>
+        <span className="hp2-tag">{x.tag}</span>
+        <Act h={x} current={current} />
+      </HeroCard>
+    );
+  };
   return (
     <div className="hp2">
       <div className="hp2-bar">
@@ -44,52 +55,16 @@ export default function HeroPicker({ current, onEquip, onBought }) {
         <span className="hp2-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span>
       </div>
       <div className="hp2-grid">
-        {CAST.map((x) => (
-          <HeroCard key={x.id} hero={x} req={!ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null} on={x.id === current} sel={x.id === buying} onClick={() => pick(x)}>
-            <span className="hp2-tag">{x.tag}</span>
-            <Act h={x} current={current} />
-          </HeroCard>
-        ))}
+        {[...CAST, ...NEW_CREW].map((x) => card(x))}
       </div>
-      <span className="hp2-sec is-new">NEW FACES</span>
-      <div className="hp2-grid">
-        {NEW_CREW.map((x) => (
-          <HeroCard key={x.id} hero={x} req={!ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null} on={x.id === current} sel={x.id === buying} onClick={() => pick(x)}>
-            <span className="hp2-tag">{x.tag}</span>
-            <Act h={x} current={current} />
-          </HeroCard>
-        ))}
-      </div>
-      <span className="hp2-sec is-gold">GOLD · EARNED, NEVER SOLD · {GOLD.filter((x) => ownsHero(x.id)).length}/{GOLD.length}</span>
-      <div className="hp2-grid">
-        {GOLD.map((x, k) => {
-          const p = goldProgress(x.id);
-          return (
-            <HeroCard key={x.id} hero={x} req={p.done ? null : { icon: 'achievements', label: `${p.have}/${p.need}` }} on={x.id === current} delay={k * 520} onClick={() => pick(x)}>
-              <span className="hp2-tag">{x.tag}</span>
-              <Act h={x} current={current} />
-            </HeroCard>
-          );
-        })}
-      </div>
-      <span className="hp2-sec is-legend">LEGEND · {LEGEND.filter((x) => ownsHero(x.id)).length}/{LEGEND.length} OWNED</span>
-      <div className="hp2-grid">
-        {LEGEND.map((x) => (
-          <HeroCard key={x.id} hero={x} req={!ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null} on={x.id === current} sel={x.id === buying} delay={260} onClick={() => pick(x)}>
-            <span className="hp2-tag">{x.tag}</span>
-            <Act h={x} current={current} />
-          </HeroCard>
-        ))}
-      </div>
-      <span className="hp2-sec is-elite">ELITE · {owned}/{ELITE.length} OWNED</span>
-      <div className="hp2-grid">
-        {ELITE.map((x, k) => (
-          <HeroCard key={x.id} hero={x} locked={!ownsHero(x.id)} on={x.id === current} sel={x.id === buying} delay={k * 520} onClick={() => pick(x)}>
-            <span className="hp2-tag">{x.tag}</span>
-            <Act h={x} current={current} />
-          </HeroCard>
-        ))}
-      </div>
+      {/* rarer rows, rarest last; the frames + chips explain themselves (Andy oct18: "no need for new faces or earned
+          never sold") so a row is only its tier name and how many you hold */}
+      {[['is-gold', 'GOLD', GOLD], ['is-elite', 'ELITE', ELITE], ['is-legend', 'LEGEND', LEGEND]].map(([cls, name, list]) => (
+        <div key={name} className="hp2-tier">
+          <span className={`hp2-sec ${cls}`}>{name} · {list.filter((x) => ownsHero(x.id)).length}/{list.length}</span>
+          <div className="hp2-grid">{list.map((x, k) => card(x, k))}</div>
+        </div>
+      ))}
       {want ? (
         <div className="hp2-buy">
           <span className="hp2-buy-t">{want.name}</span>
