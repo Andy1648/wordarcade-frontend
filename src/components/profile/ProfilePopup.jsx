@@ -9,6 +9,9 @@ import { createPortal } from 'react-dom';
 import { heroById, readMain, writeMain, CAST } from '../../cast/cast.js';
 import HeroShowcase from '../../cast/HeroShowcase.jsx';
 import HeroPicker from '../../cast/HeroPicker.jsx';
+import HeroUnlock from '../../cast/HeroUnlock.jsx';
+import { unseenHeroes } from '../../cast/heroSeen.js';
+import { rarityOf } from '../../cast/CastArt.jsx';
 import FitText from '../kit/FitText.jsx';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js';
@@ -40,6 +43,13 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
   const [view, setView] = useState('profile'); // 'profile' | 'pick'
   const [cheer, setCheer] = useState(0);
+  // NEW HERO! (oct18): heroes earned by playing since the last look reveal on open (rarest last); a purchase reveals too
+  const [reveal, setReveal] = useState(() => {
+    const ids = unseenHeroes();
+    const rank = { gold: 1, elite: 2, legend: 3 };
+    ids.sort((a, b) => (rank[rarityOf(heroById(a)).tier] || 0) - (rank[rarityOf(heroById(b)).tier] || 0));
+    return ids.length ? { ids, equipped: null } : null;
+  });
   const cardRef = useRef(null);
   const h = heroById(id) || CAST[0];
   const me = getMyProfile();
@@ -52,13 +62,13 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key !== 'Escape') return;
+      if (e.key !== 'Escape' || reveal) return; // the reveal owns Escape while it is up
       e.stopPropagation();
       if (view === 'pick') setView('profile'); else onClose();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [view, onClose]);
+  }, [view, onClose, reveal]);
 
   const equip = (next) => {
     writeMain(next);
@@ -67,7 +77,8 @@ export default function ProfilePopup({ onClose, onMainChange }) {
     setView('profile');
     if (onMainChange) onMainChange(next);
   };
-  const bought = (next) => { equip(next); setTimeout(() => setCheer((n) => n + 1), 480); };
+  const bought = (next) => { equip(next); setReveal({ ids: [next], equipped: next }); };
+  const revealDone = () => { const was = reveal; setReveal(null); if (was && was.equipped) setTimeout(() => setCheer((n) => n + 1), 200); };
 
   return createPortal(
     <div className="pf-scrim" role="presentation" onClick={onClose}>
@@ -107,6 +118,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
           </div>
         )}
       </div>
+      {reveal ? <HeroUnlock ids={reveal.ids} equipped={reveal.equipped} onEquip={(next) => { equip(next); setReveal((r) => (r ? { ...r, equipped: next } : r)); }} onClose={revealDone} /> : null}
     </div>,
     document.body,
   );

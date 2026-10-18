@@ -73,7 +73,47 @@ test('hero preview: HOLD TO BUY buys + equips the hero and returns to the profil
   const box = await hold.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down(); await page.waitForTimeout(1400); await page.mouse.up();
+  // NEW HERO! — the purchase plays the reveal (already equipped: LET'S GO)
+  const hu = page.getByTestId('hero-unlock');
+  await expect(hu).toHaveAttribute('data-hero', 'lexi');
+  await page.waitForTimeout(2200);
+  await shot(page, 'cb-6-unlock-bought');
+  await hu.getByRole('button', { name: "LET'S GO" }).click();
+  await expect(hu).toHaveCount(0);
   await expect(page.locator('.pf-change')).toBeVisible();
   await expect(page.locator('.pf-hero')).toHaveText('LEXI');
   expect(await page.evaluate(() => localStorage.getItem('taw.main'))).toBe('lexi');
 });
+
+for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width: 390, height: 844 }]]) {
+  test(`hero unlock ${vn}: a hero earned since the last look reveals on opening the profile, rarest last; once only`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await installBackendMock(page);
+    // a save that has seen only the free crew, then earned GLITCH (rebirth 1) and BOO (rebirth 5)
+    const s = { ...seed(0), 'taw.s2.rebirths': '5', 'taw.s2.heroes.seen': JSON.stringify(['riot', 'hype', 'brawl']) };
+    await page.addInitScript((s) => { if (sessionStorage.getItem('hu.seeded')) return; sessionStorage.setItem('hu.seeded', '1'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, s);
+    await page.goto('/?portal=1&season2=1');
+    await menuReady(page);
+    await page.locator('[data-nav="profile"]:visible').first().click();
+    const hu = page.getByTestId('hero-unlock');
+    await expect(hu).toBeVisible();
+    await expect(hu).toContainText('1 / 2');
+    const first = await hu.getAttribute('data-hero');
+    expect(first).toBe('glitch');
+    await page.waitForTimeout(2200);
+    await shot(page, `${vn}-7-unlock-earned`);
+    await hu.getByRole('button', { name: 'NEXT' }).click();
+    await expect(hu).toHaveAttribute('data-hero', 'boo');
+    await expect(hu.locator('.hu-title')).toHaveText('LEGEND!');
+    await page.waitForTimeout(2200);
+    await shot(page, `${vn}-8-unlock-legend`);
+    await hu.getByRole('button', { name: 'EQUIP NOW' }).click();
+    await expect(hu).toHaveCount(0);
+    await expect(page.locator('.pf-hero')).toHaveText('BOO');
+    // once only: reopening the profile shows no reveal
+    await page.locator('.pf-x').click();
+    await page.locator('[data-nav="profile"]:visible').first().click();
+    await expect(page.locator('.pf-change')).toBeVisible();
+    await expect(hu).toHaveCount(0);
+  });
+}
