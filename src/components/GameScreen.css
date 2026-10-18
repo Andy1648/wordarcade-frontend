@@ -5524,12 +5524,18 @@ html[data-beat='true'] .cb-category-display {
   /* the row's own width (the combo box's, below) — the whole word shrinks into it, every letter the SAME size
      (Andy oct15 "make the text the same size") */
   --wbl-room: clamp(240px, calc(100vw - 260px), 620px);
+  /* the prompt's letter-spacing, in px (it does not scale with the font, so it is taken off the room first) */
+  --wbl-ls: 4px;
   display: inline-flex;
   align-items: baseline;
   justify-content: center;
   max-width: 100%;
   white-space: nowrap;
-  font-size: min(1em, max(var(--fs-micro), calc(var(--wbl-room) / (var(--wbl-n, 3) * 0.82))));
+  /* FIT TO THE WORD'S REAL WIDTH (Andy oct17 "part of the word overlaps with the timer"). The old size assumed
+     0.82em per letter; Bungee's W/M are wider than that, so WOMENSWRESTLINGSHOWDOWN ran 44px past this row into the
+     TIME plaque. --wbl-em is the word's summed advance in the font actually drawn (wordEm.js: measured once per font, a table lookup per keystroke). The
+     room is taken at 92% so the prompt's 1.06 throb and the 4px text-stroke stay off the clock too. */
+  font-size: min(1em, max(var(--fs-micro), calc((var(--wbl-room) * 0.92 - var(--wbl-n, 3) * var(--wbl-ls)) / var(--wbl-em, 2.1))));
 }
 .wbl-side { color: #2EFFE0; }
 .wbl-combo { display: inline-block; }
@@ -5550,6 +5556,9 @@ html[data-beat='true'] .cb-category-display {
   /* phones: the clock already sits on its own row, so the word gets the full width */
   .game-stage--wb .game-combo-box { width: 100%; }
   .wbl { --wbl-room: calc(100vw - 64px); }
+}
+@media (max-width: 600px) {
+  .wbl { --wbl-ls: 2px; } /* the phone .game-combo letter-spacing */
 }
 /* ---- THE HEADER runs as ONE SHORT row on the board. It is chrome: the title, the
    sound toggle and LEAVE, on one line, sized down from the app-wide steps. It is taken
@@ -6746,6 +6755,9 @@ html[data-beat='true'] .wb-belly {
     border-width: 6px;
     box-shadow: 7px 7px 0 #000;
   }
+  /* that inline padding comes out of the fixed-width box, so the live word's room shrinks by it (it ran 15px into the
+     clock here otherwise — wb-text-overlap "long typed word" @ 2560x1440) */
+  .wbl { --wbl-room: calc(clamp(240px, calc(100vw - 260px), 620px) - 112px * var(--wb-k, 1)); }
   /* the bigger label's line box touched the fragment's cap height (213x2px, wb-text-overlap) */
   .game-stage--wb .game-combo-label {
     margin-bottom: calc(8px * var(--wb-k, 1));
