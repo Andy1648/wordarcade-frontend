@@ -52,3 +52,18 @@
 .pf .pc-bio .pc-bio-k { font-size: var(--fs-k16); }
 .pf .pc-bio .pc-bio-t { font-size: var(--fs-k20); }
 .pf .pc-bio .pc-bio-t.is-empty { font-size: var(--fs-k18); }
+/* NEXT HERO (oct18): the closest earnable hero — its face, name, a bar to the requirement; tap = its preview */
+.pf-goal {
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 12px; width: min(360px, 100%); margin-top: 6px; padding: 8px 12px;
+  cursor: pointer; text-align: left; color: #fff; background: #24123d; border: 3px solid var(--pg-c); border-radius: 8px; box-shadow: 4px 4px 0 #000; transition: transform 120ms;
+}
+.pf-goal:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.pf-goal:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+.pf-goal-face { width: 64px; height: 64px; object-fit: contain; filter: brightness(.25) drop-shadow(2px 2px 0 #000); }
+.pf-goal-text { display: grid; gap: 4px; min-width: 0; }
+.pf-goal-k { font: 700 var(--fs-k14, 14px) 'Space Mono', monospace; letter-spacing: .16em; color: var(--pg-c); }
+.pf-goal-n { font: 400 var(--fs-k22, 22px) 'Bungee', sans-serif; line-height: 1; color: #fff; }
+.pf-goal-bar { position: relative; height: 14px; overflow: hidden; background: #0d0618; border: 2px solid #000; border-radius: 4px; }
+.pf-goal-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: var(--pg-c); }
+.pf-goal-p { font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; color: #c9b8e8; }
+@media (prefers-reduced-motion: reduce) { .pf-goal { transition: none; } }

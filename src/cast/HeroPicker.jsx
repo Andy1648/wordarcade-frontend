@@ -29,8 +29,9 @@ function Act({ h, current }) {
 const ROWS = [['is-gold', 'GOLD', GOLD], ['is-elite', 'ELITE', ELITE], ['is-legend', 'LEGEND', LEGEND]];
 const ROSTER = [...CAST, ...NEW_CREW, ...GOLD, ...ELITE, ...LEGEND]; // the preview's ‹ › order = the grid's order
 
-export default function HeroPicker({ current, onEquip, onBought }) {
-  const [peek, setPeek] = useState(null); // the hero being previewed (null = the grid)
+/** @param peekId open straight onto this hero's preview (the profile's NEXT HERO goal) */
+export default function HeroPicker({ current, onEquip, onBought, peekId = null }) {
+  const [peek, setPeek] = useState(peekId); // the hero being previewed (null = the grid)
   const [gems, setGems] = useState(getGems);
   useEffect(() => subscribeGems((v) => setGems(typeof v === 'number' ? v : getGems())), []);
   const buy = (id) => {

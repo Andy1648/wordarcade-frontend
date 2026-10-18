@@ -10,6 +10,7 @@ import { heroById, readMain, castSrc, CAST } from '../../cast/cast.js';
 import HeroCard from '../../cast/HeroCard.jsx';
 import FitText from '../kit/FitText.jsx';
 import { getMyProfile } from '../../leaderboard/client.js';
+import { peekUnseen } from '../../cast/heroSeen.js';
 import { formatNum } from '../../format';
 import './ProfileTile.css';
 
@@ -17,13 +18,14 @@ export default function ProfileTile({ heroId, onOpen, variant = 'chip', level = 
   const h = heroById(heroId || readMain()) || CAST[0];
   const me = getMyProfile();
   const style = { '--pt-c': h.color, '--pt-d': h.dark };
+  const fresh = peekUnseen().length; // heroes earned since your last look — their reveal waits in the profile (oct18)
   if (variant === 'chip') {
     return (
       <button type="button" className="pchip" onClick={onOpen} data-nav="profile" aria-label="Open your profile" style={style}>
         <span className="pchip-face" aria-hidden="true"><img src={castSrc(h.id, 'hero')} alt="" aria-hidden="true" draggable="false" /></span>
         <span className="pchip-text">
           <FitText className="pchip-name">{me ? me.username : 'YOU'}</FitText>
-          <span className="pchip-sub">LV {formatNum(level)} · PROFILE</span>
+          {fresh ? <span className="pchip-sub is-new">NEW HERO!</span> : <span className="pchip-sub">LV {formatNum(level)} · PROFILE</span>}
         </span>
       </button>
     );
@@ -33,7 +35,7 @@ export default function ProfileTile({ heroId, onOpen, variant = 'chip', level = 
       <span className="pt-k">PROFILE</span>
       <span className="pt-card"><HeroCard hero={h} /></span>
       <FitText className="pt-name fit-center">{me ? me.username : 'YOU'}</FitText>
-      <span className="pt-go">VIEW PROFILE</span>
+      <span className={`pt-go${fresh ? ' is-new' : ''}`}>{fresh ? 'NEW HERO!' : 'VIEW PROFILE'}</span>
     </button>
   );
 }
