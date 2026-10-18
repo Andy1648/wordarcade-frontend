@@ -157,3 +157,44 @@ for (const n of [2, 4, 8]) {
     });
   }
 }
+
+// LONG WORD vs THE CLOCK (Andy oct17: "part of the word overlaps with the timer in word bomb"). The live prompt shrinks
+// the typed word into a fixed row beside the TIME plaque. It used to size that word at a flat 0.82em per letter, and
+// W/M run wider (1.04em in the gate's fallback face, 0.85em in Bungee), so a W-heavy word ran ~44px into the plaque on
+// every desktop window and off the right edge on phones. Words are typed, not pushed: the prompt's letters, the draft
+// store and the CSS fit are all exercised. Every letter of the prompt must clear the plaque's FRAME (not just its
+// text — the bug drew letters over the border) and stay inside the viewport.
+const LONG_WORDS = ['WOMENSWRESTLINGSHOWDOWN', 'WINDOWSTRAWMANSHOWDOWN']; // fragment absent (appended) / present
+for (const vp of [...VIEWPORTS, { width: 360, height: 640 }]) {
+  test(`WB long typed word @ ${vp.width}x${vp.height}: clears the TIME plaque and the screen edge`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await enterTurn(page, 2);
+    for (const word of LONG_WORDS) {
+      const input = page.locator('.game-input');
+      await input.fill('');
+      await input.click({ force: true });
+      await page.keyboard.type(word, { delay: 10 });
+      await page.waitForTimeout(500); // the last keystrike pop / fragment hit settle
+      const m = await page.evaluate(() => {
+        const t = document.querySelector('.wb-timer').getBoundingClientRect();
+        const hits = [];
+        let outside = 0;
+        for (const g of document.querySelectorAll('.wbl .g')) {
+          const r = g.getBoundingClientRect();
+          if (!r.width) continue;
+          const ox = Math.min(r.right, t.right) - Math.max(r.left, t.left);
+          const oy = Math.min(r.bottom, t.bottom) - Math.max(r.top, t.top);
+          if (ox > 1 && oy > 1) hits.push(`${g.textContent} ${Math.round(ox)}x${Math.round(oy)}`);
+          if (r.left < -1 || r.right > innerWidth + 1) outside += 1;
+        }
+        const w = document.querySelector('.wbl').getBoundingClientRect();
+        return { letters: document.querySelectorAll('.wbl .g').length, wbl: [Math.round(w.left), Math.round(w.right)], timer: [Math.round(t.left), Math.round(t.right)], hits, outside };
+      });
+      // eslint-disable-next-line no-console
+      console.log(`[wb-long-word ${vp.width}x${vp.height} ${word}] ${JSON.stringify(m)}`);
+      expect(m.letters, 'the typed word is drawn in the prompt').toBeGreaterThanOrEqual(word.length);
+      expect(m.hits, `prompt letters drawn over the TIME plaque: ${JSON.stringify(m)}`).toEqual([]);
+      expect(m.outside, `prompt letters past the screen edge: ${JSON.stringify(m)}`).toBe(0);
+    }
+  });
+}
