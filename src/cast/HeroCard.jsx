@@ -4,7 +4,8 @@
 // hero's colour sit BEHIND the frame's cut-out windows (flat fills only; every shape is the painted frame).
 // ELITE is noticeably better: the gold frame, a premium redesign, an ELITE ribbon chip and a SHINE that sweeps the art
 // window on a timer (finite one-shots via kitPlay — transform/opacity only, will-change only while it plays).
-// A LOCKED elite shows the hero as a black silhouette.
+// A LOCKED elite shows the hero as a black silhouette. LEGEND (BOO) is rarer still: its own painted spectral frame
+// (frame-legend.webp, ChatGPT from the elite frame as the layout reference) and the same shine.
 import { useEffect, useRef } from 'react';
 import { castSrc } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
@@ -18,8 +19,9 @@ const SHINE = [{ transform: 'translateX(-130%) skewX(-18deg)', opacity: 0 }, { t
 /** `delay` staggers the elite shine so a row of cards never flashes in lockstep. */
 export default function HeroCard({ hero, locked = false, req = null, on = false, sel = false, delay = 0, onClick, children }) {
   const shineRef = useRef(null);
+  const rare = !!(hero.elite || hero.legend);
   useEffect(() => {
-    if (!hero.elite) return undefined;
+    if (!rare) return undefined;
     let t = 0;
     const loop = () => {
       if (document.visibilityState !== 'hidden') kitPlay(shineRef.current, SHINE, { duration: 900, easing: 'cubic-bezier(.4,0,.2,1)' });
@@ -27,22 +29,22 @@ export default function HeroCard({ hero, locked = false, req = null, on = false,
     };
     t = setTimeout(loop, 700 + delay);
     return () => clearTimeout(t);
-  }, [hero.elite, delay]);
-  const cls = `hc${hero.elite ? ' is-elite' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
+  }, [rare, delay]);
+  const cls = `hc${hero.elite ? ' is-elite' : ''}${hero.legend ? ' is-legend' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
   // a card can sit inside a bigger button (the menu's PROFILE tile) — then it is a plain span, not a nested button
   const Tag = onClick ? 'button' : 'span';
-  const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };
+  const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : hero.legend ? ', legend' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };
   return (
     <Tag className={cls} style={{ '--hc-c': hero.color, '--hc-d': hero.dark }} {...btn} data-hero={hero.id}>
       <span className="hc-card">
         <span className="hc-art">
           <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
-          {hero.elite ? <span ref={shineRef} className="hc-shine" aria-hidden="true" /> : null}
+          {rare ? <span ref={shineRef} className="hc-shine" aria-hidden="true" /> : null}
           {/* an EARNABLE hero not earned yet: the requirement rides the art (lock + REBIRTH 1 / LEVEL 20) */}
           {req ? <span className="hc-req"><KitIcon name="lock" size={22} shadow={1} extras={false} /><KitIcon name={req.icon} size={22} shadow={1} extras={false} /><span>{req.label}</span></span> : null}
         </span>
         <span className="hc-plate" aria-hidden="true" />
-        <img className="hc-frame" src={hero.elite ? '/cards/frame-elite.webp' : '/cards/frame.webp'} alt="" aria-hidden="true" draggable="false" />
+        <img className="hc-frame" src={hero.legend ? '/cards/frame-legend.webp' : hero.elite ? '/cards/frame-elite.webp' : '/cards/frame.webp'} alt="" aria-hidden="true" draggable="false" />
         <FitText className="hc-name fit-center">{hero.name}</FitText>
       </span>
       {children}

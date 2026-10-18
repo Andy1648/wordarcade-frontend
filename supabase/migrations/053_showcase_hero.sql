@@ -1,6 +1,7 @@
 -- 053_showcase_hero.sql - LEADERBOARD HEROES (Andy oct17: "make sure the heros shown on the leaderboard correspond to
 -- what the user actually equips"). The equipped hero rides the showcase like the gears do:
---   hero   the cast id: ^(riot|glitch|hype|brawl|hex)(-elite)?$  (anything else stores null -> the board falls back to
+--   hero   a cast id, shape-checked ^[a-z]{2,12}(-elite|-gold)?$ so new heroes need no migration (the client's heroById
+--          is the authority; anything else stores null -> the board falls back to
 --          the id-hashed member, as before)
 -- Same function as 050 otherwise; it now answers v = 53. Safe to re-run. ASCII only. (052 is THE UNLISTED; independent.)
 
@@ -47,7 +48,7 @@ begin
   -- 050 TITLES: an id from the client's fixed list (titles.js), never free text
   ti := lower(p_show->>'title'); if ti is not null and ti !~ '^[a-z0-9-]{1,24}$' then ti := null; end if;
   -- 053 HERO: the equipped cast member (a fixed client list: riot / glitch / hype / brawl / hex, + '-elite'), never free text
-  he := lower(p_show->>'hero'); if he is not null and he !~ '^(riot|glitch|hype|brawl|hex)(-elite)?$' then he := null; end if;
+  he := lower(p_show->>'hero'); if he is not null and he !~ '^[a-z]{2,12}(-elite|-gold)?$' then he := null; end if;
   insert into public.profile_showcase as s (profile_id, gear1, gear2, base_wins, wins_per_word, gears_found, gears_total, power, badges, sig_word, sig_band, best_chain, title, hero, updated_at)
   values (pid, g1, g2, bw, wpw, gf, gt, pw, bd, sw, sb, bc, ti, he, now())
   on conflict (profile_id) do update set
