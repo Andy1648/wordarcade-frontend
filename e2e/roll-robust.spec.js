@@ -265,7 +265,7 @@ test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, cha
   expect(after.owned).toHaveLength(1);
   await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
-  await expect(page.getByTestId('roll-index')).toContainText('1/28'); // GEAR POOL v2: 27 gears + JACKPOT (gear card v4)
+  await expect(page.getByTestId('roll-index')).toContainText('1/33'); // GEAR POOL v2: 27 gears + JACKPOT (gear card v4) + 5 oct18 (4 LEGENDARY + CHRONOS)
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', '90');
 });
 

@@ -112,7 +112,8 @@ test('FINAL v2: BASE × every chip = TOTAL (exact AND as printed) = the payout =
         const idx = indexMult(loadRollState());
         assert.ok(Math.abs(by.mark - fm.wins) < 1e-9, `${tag}: MARK is FINAL's tier ×${fm.wins} (was ${by.mark})`);
         // 2. exact
-        relClose(c.chips.reduce((p, k) => p * k.mult, c.base), c.total, 0.05 / Math.max(1, c.total) + 1e-12, `${tag} exact`);
+        // one tenth (the payout grid, after roundWordXp's 12-significant-digit pass), not half of one — see the LIVE audit
+        relClose(c.chips.reduce((p, k) => p * k.mult, c.base), c.total, 0.1 / Math.max(1, c.total) + 1e-12, `${tag} exact`);
         // 1. as printed (base and result through formatStatRate — StatsV2's — chips through boardMult)
         const shown = c.chips.reduce((p, k) => p * shownNum(boardMult(k.mult)), shownNum(formatStatRate(c.base)));
         relClose(shown, c.total, sfx(c) + 0.05 / c.total, `${tag} printed chips vs TOTAL`); // + the payout's tenth-of-a-win grid // chips print to 3 decimals (<×10) / 2 (<×10,000)

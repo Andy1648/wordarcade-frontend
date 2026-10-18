@@ -40,9 +40,16 @@ export const MARK_PERKS = {
   'mk-headmaster': ['odLong'], // LEGENDARY (GEAR POOL v2)
   'mk-thunderclap': ['critKey10'], // LEGENDARY (GEAR POOL v2)
   'mk-jackpot': ['dropTwice'], // LEGENDARY (gear card v4)
+  // oct18: the four new LEGENDARIES and CHRONOS reuse the existing perks that fit their theme (a perk is on/off, so
+  // wearing two gears with the same perk never stacks it)
+  'mk-monsoon': ['winner2'], // LEGENDARY — CHAMPION (Blitz is won on the winner bonus)
+  'mk-inferno': ['odLong'], // LEGENDARY — AFTERBURN
+  'mk-mainframe': ['critKey10'], // LEGENDARY — DRUMROLL
+  'mk-shamrock': ['dropTwice'], // LEGENDARY — LUCKY DROP
   'mk-singularity': ['doubleRoll', 'freeOd'], // MYTHIC
   'mk-kraken': ['overdrive15', 'freeOd'], // MYTHIC
   'mk-hydra': ['freeOd'], // MYTHIC (GEAR POOL v2)
+  'mk-chronos': ['overdrive15', 'freeOd'], // MYTHIC (oct18) — OVERCLOCK + FREE OVERDRIVE
   'mk-origin': ['frenzyAll', 'keyKeep3', 'freeOd'], // SECRET — the game-changers
 };
 
