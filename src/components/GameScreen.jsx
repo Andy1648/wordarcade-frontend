@@ -4866,7 +4866,8 @@ function CategoryBlitzScreen({
     // A pack the picker doesn't offer (mythology, history ...) shows its id; no pack (older server) shows no label.
     const packId = typeof categoryRound?.pack === 'string' ? categoryRound.pack : '';
     const packMeta = packId ? packs.find((p) => p.id === packId) : null;
-    const roundPack = packId ? (packMeta ? `${packMeta.emoji} ${packMeta.label}` : packId.toUpperCase()) : '';
+    // Label only, no pack emoji: the category's own emoji sticker sits right under it, two emojis read as clutter.
+    const roundPack = packId ? (packMeta ? packMeta.label : packId.toUpperCase()) : '';
     // Who can reroll the category: the solo player, or the host in multiplayer.
     const canReroll = isSolo || isHost;
     const rerollsLeft = categoryRerolls ?? 0;
@@ -4943,7 +4944,8 @@ function CategoryBlitzScreen({
 
           <div className="cb-category-label">
             {roundPack && <><span className="cb-pack-tag">{roundPack} ·</span>{' '}</>}
-            <span className="cb-topline">TOP <span className="cb-topn">{topN}</span>{categoryRound?.openList ? ' FAMILY-FRIENDLY ANSWERS' : ''}</span>
+            <span className="cb-topline">TOP <span className="cb-topn">{topN}</span></span>
+            {categoryRound?.openList && <>{' '}<span className="cb-topline">FAMILY-FRIENDLY ANSWERS</span></>}
           </div>
           <div className="cb-category-display">
             {/* Sprays the category name on each new round/reroll (re-keyed by the
