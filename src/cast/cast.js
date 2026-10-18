@@ -1,4 +1,5 @@
 import { getRebirths, storedLevel } from '../progress/xp.js';
+import { heroWins } from './heroWins.js';
 // cast.js — THE CAST (Andy oct16 "spend like 25 images … those avatars by themselves are SO plain"): five bomb buddies,
 // one per player colour, each with its own look and attitude, in HERO / WIN / KO poses (art run P0, art-run/ART-RUN.md).
 // Until a pose is painted it falls back to the existing seat bomb buddy of the same colour (public/wb/player-*.webp).
@@ -32,6 +33,23 @@ export const ELITE = [
   { id: 'brawl-elite', base: 'brawl', name: 'CHAMP BRAWL', tag: 'UNDISPUTED. UNBOTHERED.' },
   { id: 'hex-elite', base: 'hex', name: 'ARCHMAGE HEX', tag: 'KNOWS EVERYTHING NOW' },
 ].map((e) => ({ ...CAST.find((c) => c.id === e.base), ...e, elite: true, price: ELITE_PRICE }));
+// GOLD (oct18, Andy: "earned GOLD variants (free, ~100 wins with a hero)" — "like shinies", never sold): each crew
+// member repainted in polished gold metal (ChatGPT, the HERO attached, same pose, the accessories keep their colours).
+// EARNED ONLY: 100 wins (bots + online) with that member equipped (heroWins.js). Same colour / seat / beats / idle as its
+// member; only the HERO pose is painted — WIN / KO fall back to the member's own painted poses (castSrc).
+export const GOLD_WINS = 100;
+export const GOLD = [
+  { id: 'riot-gold', base: 'riot', name: 'GOLD RIOT', tag: 'PUNK. BUT SOLID GOLD.' },
+  { id: 'glitch-gold', base: 'glitch', name: 'GOLD GLITCH', tag: 'STILL NOT IMPRESSED' },
+  { id: 'hype-gold', base: 'hype', name: 'GOLD HYPE', tag: 'GOLD-MEDAL LOUD' },
+  { id: 'brawl-gold', base: 'brawl', name: 'GOLD BRAWL', tag: 'HEAVYWEIGHT. LITERALLY.' },
+  { id: 'hex-gold', base: 'hex', name: 'GOLD HEX', tag: 'TURNED ITSELF TO GOLD' },
+].map((g) => ({ ...CAST.find((c) => c.id === g.base), ...g, gold: true, price: undefined }));
+/** A GOLD hero's progress: { have, need, done }. */
+export const goldProgress = (id) => {
+  const have = heroWins(id);
+  return { have: Math.min(have, GOLD_WINS), need: GOLD_WINS, done: have >= GOLD_WINS };
+};
 // INTERMEDIATE (Andy oct17: "picking 1 or 2 of the 5 to cost gems as well"): two of the crew cost gems — HEX (the
 // mystic) and GLITCH (the layered-props showcase); RIOT / HYPE / BRAWL stay free. Anyone already playing one keeps it
 // (grandfathered once, readMain).
@@ -52,7 +70,7 @@ export function heroEarned(id) {
   return false;
 }
 for (const c of [...CAST, ...NEW_CREW, ...LEGEND]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
-export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...ELITE];
+export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...ELITE, ...GOLD];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 // owned ELITE ids — a season-2 progress key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
 export const HEROES_KEY = 'taw.s2.heroes';
@@ -65,6 +83,7 @@ export function ownedHeroes() {
 }
 export const ownsHero = (id) => {
   const h = ALL_HEROES.find((x) => x.id === id);
+  if (h && h.gold) return goldProgress(id).done; // GOLD is earned with wins only, never bought
   return !!h && (!h.price || heroEarned(id) || ownedHeroes().includes(id));
 };
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
@@ -78,11 +97,14 @@ const PAINTED = new Set([
   'hex-elite-win', 'hex-elite-ko',
   // NEW FACES (oct17 night, ChatGPT with RIOT's HERO attached as the style reference)
   'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero', 'lexi-win', 'lexi-ko', 'boo-hero', 'boo-win', 'boo-ko',
+  // GOLD (oct18, HERO only)
+  'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
 /** The image for a cast member's pose ('hero' | 'win' | 'ko'). */
 export function castSrc(id, pose = 'hero') {
   const c = heroById(id) || CAST[0];
   if (PAINTED.has(`${c.id}-${pose}`)) return `/cast/${c.id}-${pose}.webp`;
+  if (c.gold) return castSrc(c.base, pose); // GOLD paints the HERO only: WIN / KO are the member's own poses
   // a pose not painted yet → the HERO (the caller may tip it over for a K.O.), then the seat bomb buddy
   return PAINTED.has(`${c.id}-hero`) ? `/cast/${c.id}-hero.webp` : `/wb/player-${c.seat}.webp`;
 }
@@ -136,17 +158,25 @@ export const CAST_BEATS = {
   lexi: { ms: 1000, k: [[0, 1, 1], [0.35, 0.96, 1.05], [0.65, 1.02, 0.98], [1, 1, 1]] }, // a prim little rise
   boo: { ms: 2200, k: [[0, 1, 1], [0.5, 0.97, 1.04], [1, 1, 1]] }, // a ghost's slow swell (it has no feet to bounce on)
 };
-for (const e of ELITE) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE keeps its member's tempo
+for (const e of [...ELITE, ...GOLD]) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE / GOLD keeps its member's tempo
 export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
+/** PROP SLOTS (oct17 night, the layered-props plan step 2): RIOT / HYPE / BRAWL / HEX are painted PROP-LESS (`base`,
+ *  ChatGPT with the HERO attached: same pose, the prop removed) and their signature prop rides on top as a `slots` sprite
+ *  — the can, the foam finger, the gloves, the spellbook — so a slot can later take a different prop. HYPE / BRAWL / HEX
+ *  props were cut as the pixel difference between the painted HERO and its registered base (exact fit); RIOT's base
+ *  holds an empty fist and its can is its own sprite drawn UNDER the body so the fingers wrap it. `?props=0` shows the
+ *  bare bodies. Boxes are % of the 512 pose square like every other sprite. */
 /** LAYERED PROPS (oct16 pilot — GLITCH's gum; handoff "props as separate pieces"): a pose can be painted PROP-LESS
  *  (`base`) with each prop its own sprite, placed at a per-pose anchor so it can animate on its own (the gum inflates
  *  and pops) without moving the body. Boxes are % of the 512 pose square: x/y/w = the sprite's top-left + width; `o`
  *  = its transform-origin (the point it grows from — the lips). Poses without an entry render the flat castSrc image. */
 export const CAST_LAYERS = {
-  // RIOT keeps the can in hand (it's held, so it stays painted in); the SPRAY puff bursts from its nozzle (116,135)
+  // RIOT's SPRAY puff bursts from the can's nozzle (~21%, 30% since the can became a slot under the empty fist)
   // HEX: the book floats beside her (pages open at ~(415,235)) — its magic puffs, runes and sparkles play on a timer
   hex: {
     hero: {
+      base: '/cast/hex-hero-base.webp',
+      slots: [{ slot: 'hand', src: '/cast/props/spellbook.webp', x: 63.67, y: 41.02, w: 29.88 }],
       act: 'magic',
       sprites: [
         { src: '/cast/props/spark-big.webp', x: 80, y: 26, w: 12 },
@@ -157,11 +187,11 @@ export const CAST_LAYERS = {
       ],
     },
   },
-  hype: { hero: { act: 'shout', sprites: [
+  hype: { hero: { base: '/cast/hype-hero-base.webp', slots: [{ slot: 'hand', src: '/cast/props/foam-finger.webp', x: 11.33, y: 3.12, w: 28.52 }], act: 'shout', sprites: [
     { src: '/cast/props/shout-arcs.webp', x: 78, y: 36, w: 13, o: '0% 50%' },
     { src: '/cast/props/confetti.webp', x: 19, y: -2, w: 20 },
   ] } },
-  brawl: { hero: { act: 'jab', sprites: [
+  brawl: { hero: { base: '/cast/brawl-hero-base.webp', slots: [{ slot: 'hands', src: '/cast/props/gloves.webp', x: 12.3, y: 28.91, w: 75.39 }], act: 'jab', sprites: [
     { src: '/cast/props/impact.webp', x: 70, y: 25.5, w: 20 },
     { src: '/cast/props/sweat.webp', x: 31, y: 20, w: 4.5 },
   ] } },
@@ -195,11 +225,14 @@ export const CAST_LAYERS = {
   ] } },
   riot: {
     hero: {
+      base: '/cast/riot-hero-base.webp',
+      // the can sits BEHIND the empty fist (under the body), so the fingers wrap it
+      slots: [{ slot: 'hand', src: '/cast/props/spray-can.webp', x: 3, y: 28, w: 36, under: true }],
       act: 'spray',
       sprites: [
-        { src: '/cast/props/spray-puff.webp', x: -7.3, y: 11.5, w: 30, o: '100% 54.5%' },
-        { src: '/cast/props/spray-puff-sm.webp', x: -15, y: 6, w: 14, o: '100% 60%' },
-        { src: '/cast/props/spray-drop.webp', x: 19, y: 24.5, w: 3.6 },
+        { src: '/cast/props/spray-puff.webp', x: -8.9, y: 15.1, w: 30, o: '100% 54.5%' },
+        { src: '/cast/props/spray-puff-sm.webp', x: -16.6, y: 9.6, w: 14, o: '100% 60%' },
+        { src: '/cast/props/spray-drop.webp', x: 17.4, y: 28.1, w: 3.6 },
       ],
     },
   },
@@ -228,6 +261,16 @@ export const CAST_LAYERS = {
     },
   },
 };
+// GOLD poses have their props painted in (one flat image), so they take the member's prop ACT only — no prop-less base,
+// no slots. RIOT's spray rides the can where the painted HERO holds it (its pre-slot nozzle, ~(116,135)); GLITCH's gum
+// is part of the gold paint, so GOLD GLITCH stays flat.
+const goldAct = (base, sprites) => ({ hero: { act: CAST_LAYERS[base].hero.act, sprites: sprites || CAST_LAYERS[base].hero.sprites } });
+CAST_LAYERS['riot-gold'] = goldAct('riot', [
+  { src: '/cast/props/spray-puff.webp', x: -7.3, y: 11.5, w: 30, o: '100% 54.5%' },
+  { src: '/cast/props/spray-puff-sm.webp', x: -15, y: 6, w: 14, o: '100% 60%' },
+  { src: '/cast/props/spray-drop.webp', x: 19, y: 24.5, w: 3.6 },
+]);
+for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
  *  move — RIOT head-bangs, GLITCH stays bored then skips a frame, HYPE double-hops, BRAWL bobs and weaves, HEX floats.
@@ -247,7 +290,7 @@ export const CAST_IDLE = {
   boo: { ms: 3000, rest: 200, k: [[0, 1, 1, 0, 0], [0.3, 1, 1, 0, -5], [0.55, 1, 1, 0, 0], [0.66, 0.9, 0.9, 0, 3], [0.72, 1.14, 1.14, 0, -3], [0.8, 1.1, 1.1, 0, -3], [1, 1, 1, 0, 0]] },
   lexi: { ms: 1900, rest: 350, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
 };
-for (const e of ELITE) CAST_IDLE[e.id] = CAST_IDLE[e.base];
+for (const e of [...ELITE, ...GOLD]) CAST_IDLE[e.id] = CAST_IDLE[e.base];
 export const castIdleFrames = (b) => b.k.map(([offset, sx, sy, x, y]) => ({ offset, transform: `translate(${x}%, ${y}%) scale(${sx}, ${sy})` }));
 /** The podium's quieter breath: a CAST_BEATS beat at `amp` strength (1 = full). */
 export const castBreathFrames = (b, amp = 0.5) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${(1 + (sx - 1) * amp).toFixed(4)}, ${(1 + (sy - 1) * amp).toFixed(4)})` }));

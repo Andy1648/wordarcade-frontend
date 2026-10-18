@@ -11,7 +11,7 @@
 import { useRef, useEffect } from 'react';
 
 const MODES = [
-  { id: 'briefing', title: 'BRIEFING', line: 'study five words, then hunt them' },
+  { id: 'briefing', title: 'BRIEFING', line: 'study the words, then hunt them' },
   { id: 'lineup', title: 'LINEUP', line: "no help, but you'll see the suspects" },
 ];
 

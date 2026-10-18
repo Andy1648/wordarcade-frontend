@@ -30,12 +30,47 @@ function frameOf(e) {
   return { glyph, kind, label: parts.join(', ') };
 }
 
-export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onExit, offerMenu = false, gemsSince = 0 }) {
+// THE CASE FILE (oct17): every word of the finite run, how it went, and where it now stands in the
+// learning memory. A word that did not settle clean shows its definition (plain) and its example
+// (quoted, the answer filled in) — the corrective feedback is the point of the list.
+const OUTCOME = { clean: 'CAPTURED', recaptured: 'RECAPTURED', shaky: 'BARELY', escaped: 'ESCAPED' };
+const MASTERY = { known: 'known', learning: 'learning', new: 'new' };
+
+function CaseFileRow({ c }) {
+  const open = c.outcome !== 'clean';
+  const [before, after] = String(c.context || '').split(/_+/);
+  return (
+    <li className={`sr-casefile-row ${c.outcome}`}>
+      <div className="sr-casefile-top">
+        <b className="sr-casefile-word">{c.word}</b>
+        <span className={`sr-casefile-mastery ${c.mastery}`}>{MASTERY[c.mastery]}</span>
+        <span className={`sr-casefile-out ${c.outcome}`}>{OUTCOME[c.outcome]}</span>
+      </div>
+      {open && (
+        <>
+          <p className="sr-casefile-def">{c.gloss}</p>
+          {after !== undefined && (
+            <p className="sr-casefile-ex">
+              “{before}
+              <mark className="sr-brief-fill">{c.word}</mark>
+              {after}”
+            </p>
+          )}
+        </>
+      )}
+    </li>
+  );
+}
+
+export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0 }) {
   // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
   // the page leads with what every other mode's run-over card leads with — how many you got (here:
   // CAPTURED) and the WINS it paid — and the mode's own numbers (score, avg ante, streak, mastered)
   // move to one ruled line under them. These two are what count up.
-  const finalScore = results.cleared || 0;
+  const finalScore =
+    results.finite && Array.isArray(results.caseFile)
+      ? results.caseFile.filter((c) => c.outcome !== 'escaped').length
+      : results.cleared || 0;
   const finalAnte = winsEarned || 0;
   // H6/H15: bonuses credited during the run (mastery / collection milestones), itemised under the
   // wins line so the card adds up to what the balance moved by.
@@ -106,13 +141,18 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
   const avgAnte = results.avgAnte ? `${Number(results.avgAnte).toFixed(1)}×` : '—';
   const fmt = (n) => formatNum(Number(n) || 0); // the one app-wide number format (E2)
   const hardest = results.hardestWord ? results.hardestWord.word.toUpperCase() : null;
+  const caseFile = Array.isArray(results.caseFile) ? results.caseFile : [];
+  const finite = !!results.finite && results.runTotal > 0;
+  const unsettled = caseFile.filter((c) => c.outcome !== 'clean').length;
+  // captured = distinct words caught this run (a finite run counts words, not attempts)
+  const capturedWords = caseFile.filter((c) => c.outcome !== 'escaped').length;
 
 
   return (
     <div className="sr-screen sr-results">
       <div className="sr-respage">
         {/* entry stamp, bounty voice: the run is over — the case is closed. */}
-        <div className="sr-dead">CASE CLOSED</div>
+        <div className="sr-dead">{finite && !results.complete ? 'OUT OF LIVES' : 'CASE CLOSED'}</div>
 
         {/* THE ONE BIG THING: how many you captured (and how many got away). */}
         <div className="sr-panel sr-hero">
@@ -121,8 +161,11 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
               {fmt(score)}
             </div>
             <div className="sr-capt-side">
-              <span className="sr-capt-label">captured</span>
-              <span className="sr-capt-away">{fmt(results.missed || 0)} got away</span>
+              <span className="sr-capt-label">{finite ? `of ${results.runTotal} captured` : 'captured'}</span>
+              <span className="sr-capt-away">
+                {finite ? `${fmt(caseFile.length - capturedWords)} got away` : `${fmt(results.missed || 0)} got away`}
+                {finite && results.runTotal > caseFile.length ? ` · ${fmt(results.runTotal - caseFile.length)} never reached` : ''}
+              </span>
             </div>
           </div>
         </div>
@@ -145,8 +188,14 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
           {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
               onExit; the menu runs the rebirth + ceremony. */}
           <RebirthReadyButton onGo={onExit} className="is-sat" />
-          <button type="button" className="sr-btn" onClick={onAgain}>
-            Run it back
+          {/* REPLAY MISSES: the words that did not settle clean, again (BRIEFING re-studies them) */}
+          {finite && unsettled > 0 && onReplay && (
+            <button type="button" className="sr-btn" onClick={onReplay}>
+              Replay the {unsettled} that got away
+            </button>
+          )}
+          <button type="button" className={`sr-btn${finite && unsettled > 0 && onReplay ? ' sr-btn-ghost' : ''}`} onClick={onAgain}>
+            {finite ? 'New case' : 'Run it back'}
           </button>
           {/* A deep-link visitor has never seen the menu, so their way on is the OFFER below —
               the whole grid — and the generic Menu button beside it would be a second control
@@ -173,6 +222,18 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
           <span>best streak <b>{results.bestStreak || 0}</b></span>
           <span>mastered <b>{results.mastered || 0}</b></span>
         </div>
+
+        {/* THE CASE FILE — every word of the run (a list, so it may scroll inside its own panel) */}
+        {caseFile.length > 0 && (
+          <div className={`sr-panel sr-casefile${revealed ? ' in' : ''}`}>
+            <span className="sr-panel-label">case file</span>
+            <ul className="sr-casefile-list">
+              {caseFile.map((c) => (
+                <CaseFileRow key={c.word} c={c} />
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* runLog film-strip: one small ruled frame per word, in order. */}
         {results.runLog.length > 0 && (

@@ -5,7 +5,8 @@
 // ELITE is noticeably better: the gold frame, a premium redesign, an ELITE ribbon chip and a SHINE that sweeps the art
 // window on a timer (finite one-shots via kitPlay — transform/opacity only, will-change only while it plays).
 // A LOCKED elite shows the hero as a black silhouette. LEGEND (BOO) is rarer still: its own painted spectral frame
-// (frame-legend.webp, ChatGPT from the elite frame as the layout reference) and the same shine.
+// (frame-legend.webp, ChatGPT from the elite frame as the layout reference) and the same shine. GOLD (earned with 100
+// wins) wears the gold trophy frame + shine too — it IS gold — and shows its wins-to-go on the art until earned.
 import { useEffect, useRef } from 'react';
 import { castSrc } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
@@ -19,7 +20,7 @@ const SHINE = [{ transform: 'translateX(-130%) skewX(-18deg)', opacity: 0 }, { t
 /** `delay` staggers the elite shine so a row of cards never flashes in lockstep. */
 export default function HeroCard({ hero, locked = false, req = null, on = false, sel = false, delay = 0, onClick, children }) {
   const shineRef = useRef(null);
-  const rare = !!(hero.elite || hero.legend);
+  const rare = !!(hero.elite || hero.legend || hero.gold);
   useEffect(() => {
     if (!rare) return undefined;
     let t = 0;
@@ -30,10 +31,10 @@ export default function HeroCard({ hero, locked = false, req = null, on = false,
     t = setTimeout(loop, 700 + delay);
     return () => clearTimeout(t);
   }, [rare, delay]);
-  const cls = `hc${hero.elite ? ' is-elite' : ''}${hero.legend ? ' is-legend' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
+  const cls = `hc${hero.elite ? ' is-elite' : ''}${hero.gold ? ' is-gold' : ''}${hero.legend ? ' is-legend' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
   // a card can sit inside a bigger button (the menu's PROFILE tile) — then it is a plain span, not a nested button
   const Tag = onClick ? 'button' : 'span';
-  const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : hero.legend ? ', legend' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };
+  const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : hero.legend ? ', legend' : hero.gold ? ', gold' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };
   return (
     <Tag className={cls} style={{ '--hc-c': hero.color, '--hc-d': hero.dark }} {...btn} data-hero={hero.id}>
       <span className="hc-card">
@@ -44,7 +45,7 @@ export default function HeroCard({ hero, locked = false, req = null, on = false,
           {req ? <span className="hc-req"><KitIcon name="lock" size={22} shadow={1} extras={false} /><KitIcon name={req.icon} size={22} shadow={1} extras={false} /><span>{req.label}</span></span> : null}
         </span>
         <span className="hc-plate" aria-hidden="true" />
-        <img className="hc-frame" src={hero.legend ? '/cards/frame-legend.webp' : hero.elite ? '/cards/frame-elite.webp' : '/cards/frame.webp'} alt="" aria-hidden="true" draggable="false" />
+        <img className="hc-frame" src={hero.legend ? '/cards/frame-legend.webp' : hero.elite || hero.gold ? '/cards/frame-elite.webp' : '/cards/frame.webp'} alt="" aria-hidden="true" draggable="false" />
         <FitText className="hc-name fit-center">{hero.name}</FitText>
       </span>
       {children}

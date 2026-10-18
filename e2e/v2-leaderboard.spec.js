@@ -269,7 +269,11 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
     const { lb } = await boot(page, { me: { rebirths: 0, level: 12 }, named: false, vp });
     await expect(page.locator('.lb-overlay')).toHaveCount(0); // the old live screen never opens
     const box = lb.locator('.lb2-rename.is-claim');
-    await expect(box, 'the claim box is open on arrival').toBeVisible();
+    // Andy oct18: the box no longer opens on arrival (it covered the podium) — the YOU · NO NAME · CLAIM chip opens it
+    await expect(lb.locator('.lb2-me-btn.is-claim')).toContainText('CLAIM');
+    await expect(box, 'the claim box stays closed on arrival').toHaveCount(0);
+    await lb.locator('.lb2-me-btn.is-claim').click();
+    await expect(box).toBeVisible();
     await expect(box.locator('.lb2-rename-l')).toHaveText('CLAIM YOUR NAME');
     await expect(box.locator('.lb2-rename-msg')).toHaveText('NO SIGN-IN. JUST A NAME.');
     await expect(lb.locator('.lb2-me-btn.is-claim')).toContainText('CLAIM');

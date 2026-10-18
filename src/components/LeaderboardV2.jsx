@@ -317,8 +317,9 @@ export default function LeaderboardV2({ onBack }) {
   const [profile, setProfile] = useState(() => getMyProfile());
   // CHANGE NAME lives ON this board (Andy oct8: "why does changing name show the old leaderboard? there shouldn't be
   // 2 separate leaderboards") — an inline name box under YOU, not a hop to the season-1 screen.
-  // no name yet → the box is open on arrival, as the claim prompt (Andy oct9: everyone sees this board)
-  const [renaming, setRenaming] = useState(() => !getMyProfile());
+  // no name yet → the YOU · NO NAME · CLAIM chip is the prompt; the box opens only when tapped (Andy oct18: the box
+  // opening on arrival dropped over the podium heroes — "don't auto-open the CLAIM box; the chip is enough")
+  const [renaming, setRenaming] = useState(false);
   const [caps, setCaps] = useState({ weekly: false });
   const [tab, setTab] = useState('all');
   const [peek, setPeek] = useState(null); // the row whose profile card is open

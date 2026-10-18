@@ -41,7 +41,7 @@ export const WRAP_FILL_MS = 180;
 // CRIT (Andy oct17 "make the … additive bar like an orange increment"): a crit key fires this; the bar paints its
 // GHOST (the segment that jumps ahead of the fill = the gain) crit orange until the fill has caught up
 export const CRIT_EVENT = 'taw:xp-crit';
-const CRIT_TINT_MS = 1100;
+const CRIT_TINT_MS = 1300; // how long the orange piece holds on top of the fill before its fade
 export const WRAP_HOLD_MS = 0;
 // the plate's content rests counter-skewed (skewX 12deg — KitXpBar.css), so the pop keeps the skew in every frame
 const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
@@ -168,9 +168,10 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     const seg = critRef.current;
     let critSnap = false; // Andy oct17: on a crit the real fill "instantly follows up to the orange part"
     if (seg && lvInside) {
-      const from = lastGhost.current;
+      const from = Math.min(1, Math.max(0, lastGhost.current));
       if (critArm.current && Date.now() - critArm.current < 400 && tl === p.level && tf > from) {
-        seg.style.transform = `translateX(${(from * 100).toFixed(3)}%) scaleX(${(tf - from).toFixed(4)})`;
+        // clamped to the track: the piece starts at the old ghost and ends exactly at the new one, never past the end
+        seg.style.transform = `translateX(${(from * 100).toFixed(3)}%) scaleX(${(Math.min(1, tf) - from).toFixed(4)})`;
         seg.style.opacity = '1';
         clearTimeout(critT.current);
         critT.current = setTimeout(() => { seg.style.opacity = '0'; }, CRIT_TINT_MS);
@@ -255,10 +256,11 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
           <div className="kx-track" aria-hidden="true">
             {lvInside && <div ref={ghostRef} className="kx-ghost" />}
-            {lvInside && <div ref={critRef} className="kx-crit" aria-hidden="true" />}
             <div ref={fillRef} className="kx-fill">
               <div className="kx-fill-hi" />
             </div>
+            {/* ABOVE the fill (Andy oct18: "keep it visible inside the bar … not hidden under the yellow"), then it fades */}
+            {lvInside && <div ref={critRef} className="kx-crit" aria-hidden="true" />}
             <div ref={sweepRef} className="kx-sweep" />
           </div>
           {lvInside && lvNode}

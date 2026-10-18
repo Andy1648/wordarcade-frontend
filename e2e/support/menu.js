@@ -187,3 +187,14 @@ export async function openStats(page) {
   if (which === 'claims') await page.locator('.claims-to-stats').click();
   await page.locator('.stats-panel').waitFor({ state: 'visible' });
 }
+
+/**
+ * SAT RUSH CASE SETUP (oct17, finite runs): picking BRIEFING / LINEUP in the SAT dialog now opens
+ * CASE SETUP (difficulty + how many words) before the briefing / the run. Press its go button with
+ * the preselected choices (STANDARD; 5 words to study / a 10-word case on a fresh profile).
+ */
+export async function satSetupGo(page) {
+  const go = page.locator('.sr-setup .sr-btn');
+  await go.waitFor({ state: 'visible', timeout: 10000 });
+  await go.click();
+}

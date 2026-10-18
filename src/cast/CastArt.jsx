@@ -8,6 +8,7 @@
 import { useEffect, useRef } from 'react';
 import { castSrc, castLayers } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
+import { flagDefaultOn } from '../lib/featureFlags.js';
 import './CastArt.css';
 
 const REST = 0.42; // the resting bubble (also the .cast-gum-b CSS scale)
@@ -180,13 +181,24 @@ function Act({ act, sprites, live }) {
   ));
 }
 
+// `?props=0` (or storage taw.flag.props = '0'): the bare prop-less bodies, every slot empty — the shared flag helper
+// remembers the query as the page loaded (the app tidies the address bar before this lazy chunk runs)
+
+function Slot({ sp }) {
+  return <img className={`cast-slot${sp.under ? ' is-under' : ''}`} src={sp.src} alt="" draggable="false" data-slot={sp.slot}
+    style={{ left: `${sp.x}%`, top: `${sp.y}%`, width: `${sp.w}%` }} />;
+}
+
 /** `live` = run the prop one-shots (the big showcase / podium); false = the static resting look (small thumbnails). */
 export default function CastArt({ id, pose = 'hero', className = '', artRef, alt = '', live = true, ...rest }) {
   const L = castLayers(id, pose);
   if (!L) return <img ref={artRef} className={className} src={castSrc(id, pose)} width="512" height="512" alt={alt} draggable="false" {...rest} />;
+  const slots = flagDefaultOn('props') ? L.slots || [] : [];
   return (
     <span ref={artRef} className={`${className} cast-layered`} role={alt ? 'img' : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : 'true'} {...rest}>
+      {slots.filter((sp) => sp.under).map((sp) => <Slot key={sp.slot} sp={sp} />)}
       <img className="cast-body" src={L.base || castSrc(id, pose)} width="512" height="512" alt="" draggable="false" />
+      {slots.filter((sp) => !sp.under).map((sp) => <Slot key={sp.slot} sp={sp} />)}
       {L.gum ? <Gum box={L.gum} live={live} /> : null}
       {L.act ? <Act act={L.act} sprites={L.sprites} live={live} /> : null}
     </span>

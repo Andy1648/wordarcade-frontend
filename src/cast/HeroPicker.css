@@ -2,6 +2,7 @@
 .hp2-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .hp2-sec { display: block; font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .14em; color: #c9b8e8; }
 .hp2-sec.is-new { margin: 22px 0 10px; }
+.hp2-sec.is-gold { margin: 22px 0 10px; color: #F2B705; }
 .hp2-sec.is-legend { margin: 22px 0 10px; color: #7CFFE0; }
 .hp2-sec.is-elite { margin: 22px 0 10px; color: #FFC83D; }
 .hp2-gems {
@@ -16,6 +17,7 @@
 }
 .hp2-act.is-on { background: #FFE94A; }
 .hp2-act.is-price { color: #fff; background: #3a2160; }
+.hp2-act.is-earn { color: #F2B705; background: #2a1a08; }
 .hp2-buy {
   position: sticky; bottom: -18px; z-index: 2; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px;
   margin: 16px -18px -18px; padding: 12px 18px 16px; background: #1a0b2e; border-top: 4px solid #000;

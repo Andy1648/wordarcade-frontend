@@ -13,6 +13,7 @@ import { soloHeadlineScore } from '../soloScore';
 import { exampleFor } from '../categoryExamples';
 import { emojiFor } from '../data/categoryEmoji';
 import { splitTyped } from './wbTyped/splitTyped';
+import { wordEm, advancesFor, clearAdvances, BUNGEE_ADV } from './wbTyped/wordEm';
 import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
@@ -1425,14 +1426,34 @@ function ComboLive({ combo, store, mine, other }) {
   useEffect(() => {
     prevLenRef.current = len;
   }, [len]);
+  // The prompt font's real letter widths, measured ONCE on mount and again when a webfont lands (wordEm.js) — never
+  // per keystroke. They size the word to fit beside the clock.
+  const wblRef = useRef(null);
+  const [adv, setAdv] = useState(BUNGEE_ADV);
+  useEffect(() => {
+    const el = wblRef.current;
+    if (!el) return undefined;
+    const family = getComputedStyle(el).fontFamily;
+    setAdv(advancesFor(family));
+    const fonts = typeof document !== 'undefined' ? document.fonts : null;
+    if (!fonts || !fonts.addEventListener) return undefined;
+    const onLoaded = () => {
+      clearAdvances();
+      setAdv(advancesFor(family));
+    };
+    fonts.addEventListener('loadingdone', onLoaded);
+    return () => fonts.removeEventListener('loadingdone', onLoaded);
+  }, []);
   const last = len - 1;
   const cls = (base, i) => (i === last && grew ? `${base} keystrike` : base);
   const key = (i) => (i === last && grew ? `k${len}` : i);
   const c = combo.toUpperCase();
   return (
     <span
+      ref={wblRef}
       className={`wbl${len ? ' is-typing' : ''}${hit ? ' is-hit' : ''}`}
-      style={{ '--wbl-n': pre.length + c.length + post.length }}
+      // --wbl-em: the word's real width in the prompt font, so CSS can fit it beside the clock (wordEm.js)
+      style={{ '--wbl-n': pre.length + c.length + post.length, '--wbl-em': wordEm(pre + c + post, adv).toFixed(3) }}
     >
       <span className="wbl-side wbl-pre">
         {pre.split('').map((ch, i) => <span key={key(i)} className={cls('g', i)}>{ch}</span>)}
