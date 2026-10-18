@@ -23,7 +23,6 @@ import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localSc
 import { exportSave } from '../save/saveBackup.js';
 import { queueClaim } from '../progress/claims.js';
 import { flagOn, flagDefaultOn } from '../lib/featureFlags.js';
-import { behindBoard } from './boardGuard.js';
 import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
@@ -202,22 +201,6 @@ export async function claimName(username) {
 
 let lastSubmit = 0;
 let boardChecked = false; // SEASON2: this page load's save is not behind its own board row (submitStats)
-/** ★ on this browser (season 2; 0 before the v3 install). */
-function localStars() {
-  try { return (V3.store && V3.store.getStarsV3 && V3.store.getStarsV3()) || 0; } catch { return 0; }
-}
-/** My own season-2 board row: the row, null (none yet), or undefined (the read failed). */
-async function fetchOwnBoardRow() {
-  const mine = getMyProfile();
-  if (!mine || !mine.id) return null;
-  try {
-    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=id,level,rebirths,lifetime_words,lifetime_letters,stars&id=eq.${encodeURIComponent(mine.id)}`, { headers: headers() });
-    if (!r.ok) return undefined;
-    return (await r.json())[0] || null;
-  } catch {
-    return undefined;
-  }
-}
 // 021: what the last push carried and whether the DB's 5 s throttle would have taken it — so the server-checked
 // rebirth pushes fresh stats only when they changed, and waits out the throttle instead of being silently dropped.
 // pushMeta.last = { at, level, rebirths, words, likely } — read (and marked stale) by the lazy serverRebirth.js
@@ -245,11 +228,12 @@ export async function submitStats(force = false, { internal = false } = {}) {
   const s = myStats();
   // SECOND DEVICE (Andy oct17): the name is a device secret every device that holds it shares, so a browser whose save
   // is BEHIND the board row (a fresh device, a wiped one with no cloud copy yet) must not push — the server took a lower
-  // push as a RESET and the account looked wiped everywhere. Checked once a page load; a failed read skips this push.
+  // push as a RESET and the account looked wiped everywhere. Checked once a page load (boardGuard.js is lazy — off the
+  // menu's first load); a failed read skips this push.
   if (SEASON2 && !boardChecked) {
-    const row = await fetchOwnBoardRow();
-    if (row === undefined) return false;
-    if (row && behindBoard({ ...s, stars: localStars() }, row)) return false;
+    let ok = false;
+    try { ok = await (await import('./boardGuard.js')).pushAllowed({ base: BASE, headers: headers(), view: BOARD_VIEW, id: (getMyProfile() || {}).id, local: s }); } catch { ok = false; }
+    if (!ok) return false;
     boardChecked = true;
   }
   try {
