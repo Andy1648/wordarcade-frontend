@@ -59,6 +59,7 @@ import Spotlight from './Spotlight';
 import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboarding';
 import { difficultyLabel } from '../difficulty';
 import { formatNum, formatMult } from '../format';
+import packs from '../data/packs';
 import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
@@ -122,11 +123,14 @@ const REJECTION_MESSAGES = {
   // accept (the client can't know the dictionary). Phrased as the server overruling. (JOB C Path B.)
   not_a_word: 'NOT IN OUR WORD LIST',
   not_in_category: "DOESN'T FIT THE CATEGORY",
-  // STEP 9 (list-only Blitz): the server's only reject for a well-formed answer.
-  not_on_list: 'NOT ON THE LIST',
+  // STEP 9 (list-only Blitz): the server's only reject for a well-formed answer. TOP-N rebrand (oct17): the list is
+  // the category's top answers, so a miss isn't "wrong" — it just isn't one of them.
+  not_on_list: 'NOT A TOP ANSWER',
   // NOT categories ("Things you shouldn't microwave"): the answer fits the POSITIVE prompt. The server sends the
   // list's own line ("YOU CAN MICROWAVE THAT 🙄") as result.message; this is only the fallback.
   safe_item: "THAT ONE'S TOTALLY FINE 🙄",
+  // TOP ∞ lists are billed FAMILY-FRIENDLY ANSWERS (Andy oct17): a slur / swear riding on a real noun misses with this.
+  family_friendly: 'FAMILY-FRIENDLY ANSWERS ONLY 😇',
 };
 
 // Category Blitz length: the host picks 3 / 5 / 10 (set_rounds) and round_start /
@@ -4859,9 +4863,20 @@ function CategoryBlitzScreen({
     const lowTime = !showCountdown && timerSeconds <= 5;
     const veryLowTime = !showCountdown && timerSeconds < 3;
     const others = roomPlayers.filter((p) => p.id !== myId);
-    // Solo: the overall best total to beat (across a full 3-round game), shown
-    // up top as a live target.
-    const soloBest = isSolo ? loadPersonalBest(SOLO_PB_KEY) : null;
+    // TOP-N (Andy oct17 "switch 'name as many as you can' to TOP blank answers"): a category's list IS its top
+    // answers, so the header reads "TOP 115" over PIZZA TOPPINGS. round_start carries `topN` (the list's size) and
+    // `openList` (a NOT list, where any real noun scores = "TOP ∞ FAMILY-FRIENDLY ANSWERS" — Andy's label, so a blocked
+    // word's miss reads as fair); an older server sends neither → "TOP ANSWERS".
+    // (The solo YOUR BEST banner that sat above this is gone — Andy: "no need for 'your best' in category blitz".)
+    const topN = categoryRound?.openList
+      ? '∞'
+      : Number.isFinite(categoryRound?.topN) && categoryRound.topN > 0 ? formatNum(categoryRound.topN) : 'ANSWERS';
+    // Andy oct17 "label category too": round_start's `pack` id names the category's pack ("🎬 MOVIES") in front of TOP N.
+    // A pack the picker doesn't offer (mythology, history ...) shows its id; no pack (older server) shows no label.
+    const packId = typeof categoryRound?.pack === 'string' ? categoryRound.pack : '';
+    const packMeta = packId ? packs.find((p) => p.id === packId) : null;
+    // Label only, no pack emoji: the category's own emoji sticker sits right under it, two emojis read as clutter.
+    const roundPack = packId ? (packMeta ? packMeta.label : packId.toUpperCase()) : '';
     // Who can reroll the category: the solo player, or the host in multiplayer.
     const canReroll = isSolo || isHost;
     const rerollsLeft = categoryRerolls ?? 0;
@@ -4925,13 +4940,6 @@ function CategoryBlitzScreen({
             </div>
           </div>
 
-          {/* Solo: the overall best total to beat, an immediate target. */}
-          {isSolo && (
-            <div className="solo-best-banner">
-              {soloBest != null ? `YOUR BEST: ${formatNum(soloBest)}` : 'NO RECORD YET'}
-            </div>
-          )}
-
           {/* Non-host notice when the host rerolls the category on everyone. */}
           {rerollNotice && (
             <div className="cb-reroll-notice">HOST REROLLED — NEW CATEGORY</div>
@@ -4943,7 +4951,11 @@ function CategoryBlitzScreen({
           <div className="cb-round">
             <div className="cb-round-main">
 
-          <div className="cb-category-label">NAME AS MANY AS YOU CAN</div>
+          <div className="cb-category-label">
+            {roundPack && <><span className="cb-pack-tag">{roundPack} ·</span>{' '}</>}
+            <span className="cb-topline">TOP <span className="cb-topn">{topN}</span></span>
+            {categoryRound?.openList && <>{' '}<span className="cb-topline">FAMILY-FRIENDLY ANSWERS</span></>}
+          </div>
           <div className="cb-category-display">
             {/* Sprays the category name on each new round/reroll (re-keyed by the
                 category text so the reveal replays). The box itself appears

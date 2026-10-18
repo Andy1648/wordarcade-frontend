@@ -14,6 +14,21 @@
 export const CATEGORY_EXAMPLES = {
   // oct17 NOT categories (any real noun scores — blitzNot.js), each example verified ON its list
   "Things you shouldn't flush down the toilet": "Dead goldfish",
+  // oct18 NOT batch 2 (Andy: "more of them" — any real noun scores, blitzNot.js), each example verified ON its list
+  "Things you shouldn't put in a washing machine": "Phone",
+  "Things you shouldn't bring on a plane": "Chainsaw",
+  "Things you shouldn't feed a dog": "Chocolate",
+  "Things you shouldn't put in a fish tank": "Cat",
+  "Things you shouldn't wear to a job interview": "Clown costume",
+  "Things you shouldn't bring to the beach": "Snowboard",
+  "Things you shouldn't put on a pizza": "Gummy bears",
+  "Things you don't want to step on barefoot": "Lego",
+  "Things you shouldn't bring to a sleepover": "Tuba",
+  "Things you shouldn't put in your pocket": "Soup",
+  "Things you don't want to find in your shoe": "Scorpion",
+  "Things you shouldn't bring on a first date": "Your mom",
+  "Things you shouldn't pet": "Porcupine",
+  "Things you shouldn't put in a blender": "Fork",
   // oct17 UNHINGED round 2 (Andy: noun answers only, darker, fewer misses), each example verified ON its list
   "Things in a horror movie basement": "Chains",
   "Things that are probably cursed": "Ouija board",
@@ -21,8 +36,11 @@ export const CATEGORY_EXAMPLES = {
   "Things you don't want to find in your bed": "Spider",
   "Things you shouldn't bring to a funeral": "Balloons",
   "Worst things to find in your food": "Hair",
+  "Things you don't want to find in your food": "Hair",
   "Worst things to get stuck in an elevator with": "Skunk",
+  "Things you don't want to get stuck in an elevator with": "Skunk",
   "Worst things to hit with your car": "Mailbox",
+  "Things to hit with your car": "Mailbox",
   // oct16 UNHINGED pack (Andy "go for funnier ... dark humor"), each example verified ON its list
   "Excuses for not doing your homework": "Dog ate it",
   "Lies adults tell kids": "Tooth fairy",
@@ -47,7 +65,9 @@ export const CATEGORY_EXAMPLES = {
   "Things your parents say will rot your brain": "Video games",
   "Ways to end up in the ER": "Trampoline",
   "Worst gifts to get": "Socks",
+  "Gifts nobody wants": "Socks",
   "Worst places to fall asleep": "Class",
+  "Places you shouldn't fall asleep": "Class",
   // oct15 afternoon batches V / W / X (each verified ON its list)
   "Things your mom tells you to do": "Clean your room",
   "Things in a dad's toolbox": "Hammer",

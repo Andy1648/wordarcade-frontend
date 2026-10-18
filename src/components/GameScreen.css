@@ -3032,6 +3032,34 @@
   margin-bottom: 8px;
 }
 
+/* TOP-N rebrand (oct17): the label reads "TOP 115" over the category box — the number is the hook, so it gets
+   the graffiti yellow + black stroke the old solo YOUR BEST banner had. Static: no idle motion. */
+/* STICKER ZONE (proportions pass): the emoji sticker (left) and the mascot (right) perch on the box's top edge and
+   poke ~55% of their height above it — measured 18px on phones, 28px at 768, 34-39px from 900px up (the mascot is
+   1.35x there). The label used to sit 0-6px above the box, so a TOP-N label collided with one or both stickers at
+   every width <= 390 and at 1024. The label now clears that zone: its bottom margin IS the poke + 4px, so label,
+   stickers and box stack instead of overlapping, at any label length. */
+.cb-round { --cb-sticker-poke: 20px; }
+@media (min-width: 600px) { .cb-round { --cb-sticker-poke: 30px; } }
+@media (min-width: 900px) { .cb-round { --cb-sticker-poke: 44px; } }
+.cb-round .cb-category-label,
+.game-stage--blitz .cb-round .cb-category-label {
+  margin-bottom: calc(var(--cb-sticker-poke) + 4px);
+}
+
+/* The pack tag and the TOP clause each wrap as one unit, so a phone breaks the line between them, never inside
+   "FAMILY-FRIENDLY". */
+.cb-category-label .cb-pack-tag,
+.cb-category-label .cb-topline {
+  white-space: nowrap;
+}
+
+.cb-category-label .cb-topn {
+  color: #FFE94A;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+}
+
 .cb-category-display {
   position: relative; /* anchors the mascot perched on the box edge */
   font-family: 'Bungee', cursive;
@@ -4586,23 +4614,6 @@ html[data-beat='true'] .cb-category-display {
 /* ============================================================= */
 /* =================  SOLO CATEGORY BLITZ  ==================== */
 /* ============================================================= */
-
-/* The personal-best target shown above the game area during a solo round:
-   small Bungee, graffiti yellow, an immediate number to beat. */
-.solo-best-banner {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
-  font-family: 'Space Mono', monospace;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-size: var(--fs-label);
-  color: #FFE94A;
-  -webkit-text-stroke: 1px #000;
-  paint-order: stroke fill;
-  text-align: center;
-  letter-spacing: 1px;
-  margin: -6px 0 14px;
-  transform: rotate(-1deg);
-}
 
 /* Solo results reuse the dark game-over panel; just give it room to breathe. */
 .solo-results-card {

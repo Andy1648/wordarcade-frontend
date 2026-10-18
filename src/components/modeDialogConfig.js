@@ -17,7 +17,7 @@ export const MODES = {
   blitz: {
     accent: '#3DA8FF', bg: ['#052a4a', '#03101f'], anim: 'streaks',
     chip: 'SOLO/MULTI', t1: 'CATEGORY', t2: 'BLITZ',
-    liner: 'IF IT’S ON THE LIST, IT SCORES.',
+    liner: 'NAME THE TOP ANSWERS. 30 SECONDS.',
     // Andy oct10: CREATE ROOM + JOIN, the same two buttons as every room mode.
     create: 'CREATE ROOM',
   },
