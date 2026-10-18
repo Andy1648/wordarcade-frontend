@@ -138,15 +138,23 @@ export const CAST_BEATS = {
 };
 for (const e of ELITE) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE keeps its member's tempo
 export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
+/** PROP SLOTS (oct17 night, the layered-props plan step 2): RIOT / HYPE / BRAWL / HEX are painted PROP-LESS (`base`,
+ *  ChatGPT with the HERO attached: same pose, the prop removed) and their signature prop rides on top as a `slots` sprite
+ *  — the can, the foam finger, the gloves, the spellbook — so a slot can later take a different prop. HYPE / BRAWL / HEX
+ *  props were cut as the pixel difference between the painted HERO and its registered base (exact fit); RIOT's base
+ *  holds an empty fist and its can is its own sprite drawn UNDER the body so the fingers wrap it. `?props=0` shows the
+ *  bare bodies. Boxes are % of the 512 pose square like every other sprite. */
 /** LAYERED PROPS (oct16 pilot — GLITCH's gum; handoff "props as separate pieces"): a pose can be painted PROP-LESS
  *  (`base`) with each prop its own sprite, placed at a per-pose anchor so it can animate on its own (the gum inflates
  *  and pops) without moving the body. Boxes are % of the 512 pose square: x/y/w = the sprite's top-left + width; `o`
  *  = its transform-origin (the point it grows from — the lips). Poses without an entry render the flat castSrc image. */
 export const CAST_LAYERS = {
-  // RIOT keeps the can in hand (it's held, so it stays painted in); the SPRAY puff bursts from its nozzle (116,135)
+  // RIOT's SPRAY puff bursts from the can's nozzle (~21%, 30% since the can became a slot under the empty fist)
   // HEX: the book floats beside her (pages open at ~(415,235)) — its magic puffs, runes and sparkles play on a timer
   hex: {
     hero: {
+      base: '/cast/hex-hero-base.webp',
+      slots: [{ slot: 'hand', src: '/cast/props/spellbook.webp', x: 63.67, y: 41.02, w: 29.88 }],
       act: 'magic',
       sprites: [
         { src: '/cast/props/spark-big.webp', x: 80, y: 26, w: 12 },
@@ -157,11 +165,11 @@ export const CAST_LAYERS = {
       ],
     },
   },
-  hype: { hero: { act: 'shout', sprites: [
+  hype: { hero: { base: '/cast/hype-hero-base.webp', slots: [{ slot: 'hand', src: '/cast/props/foam-finger.webp', x: 11.33, y: 3.12, w: 28.52 }], act: 'shout', sprites: [
     { src: '/cast/props/shout-arcs.webp', x: 78, y: 36, w: 13, o: '0% 50%' },
     { src: '/cast/props/confetti.webp', x: 19, y: -2, w: 20 },
   ] } },
-  brawl: { hero: { act: 'jab', sprites: [
+  brawl: { hero: { base: '/cast/brawl-hero-base.webp', slots: [{ slot: 'hands', src: '/cast/props/gloves.webp', x: 12.3, y: 28.91, w: 75.39 }], act: 'jab', sprites: [
     { src: '/cast/props/impact.webp', x: 70, y: 25.5, w: 20 },
     { src: '/cast/props/sweat.webp', x: 31, y: 20, w: 4.5 },
   ] } },
@@ -195,11 +203,14 @@ export const CAST_LAYERS = {
   ] } },
   riot: {
     hero: {
+      base: '/cast/riot-hero-base.webp',
+      // the can sits BEHIND the empty fist (under the body), so the fingers wrap it
+      slots: [{ slot: 'hand', src: '/cast/props/spray-can.webp', x: 3, y: 28, w: 36, under: true }],
       act: 'spray',
       sprites: [
-        { src: '/cast/props/spray-puff.webp', x: -7.3, y: 11.5, w: 30, o: '100% 54.5%' },
-        { src: '/cast/props/spray-puff-sm.webp', x: -15, y: 6, w: 14, o: '100% 60%' },
-        { src: '/cast/props/spray-drop.webp', x: 19, y: 24.5, w: 3.6 },
+        { src: '/cast/props/spray-puff.webp', x: -8.9, y: 15.1, w: 30, o: '100% 54.5%' },
+        { src: '/cast/props/spray-puff-sm.webp', x: -16.6, y: 9.6, w: 14, o: '100% 60%' },
+        { src: '/cast/props/spray-drop.webp', x: 17.4, y: 28.1, w: 3.6 },
       ],
     },
   },
