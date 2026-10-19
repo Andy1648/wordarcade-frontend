@@ -1,10 +1,9 @@
-// HeroPicker.jsx — CHOOSE YOUR MAIN as collectible cards: THE CREW (free / earnable / gem-priced members, incl. DUD +
-// LEXI), then the rarer rows by rarity — GOLD (earned with 100 wins), ELITE (2,500 gems, silhouettes until bought),
-// LEGEND (BOO). Tap an owned card → equip; tap a priced one → the HOLD TO BUY bar (KitHoldButton) → bought + equipped;
-// an unearned GOLD does nothing (never for sale). Reusable anywhere a hero is picked (the profile today, the lobby later).
-// oct18 HERO PREVIEW (Andy "card previews … better hero menu presentation … larger proportions"): every card opens
-// HeroPreview — the hero big, alive, cycling its poses, with how you get it and the one button that does it (EQUIP /
-// HOLD TO BUY); ‹ › flip through the roster. A COLLECTION meter heads the grid, and the cards are 4 to a row.
+// HeroPicker.jsx — CHOOSE YOUR MAIN. oct18 (Andy: "merge the basic and gold and elite versions into one card … no need
+// to separate them individually … a tag underneath to show the progress"): ONE card per member — the crew, then the
+// LEGENDs. A card shows the variant you wear (or your best owned one); under it one status pill (EQUIPPED / the
+// requirement / the price) and the member's VARIANT chips (GOLD fills with its wins, ELITE shows owned or locked).
+// Tapping a card opens HeroPreview on that variant, where the variant tabs (RIOT / GOLD / ELITE) preview the ones you
+// don't own — with their requirement or gem price and the one button that gets them. ‹ › flip members.
 import { useEffect, useState } from 'react';
 import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, goldProgress } from './cast.js';
 import { buyHero } from './heroShop.js';
@@ -16,22 +15,51 @@ import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
 import './HeroPicker.css';
 
-function Act({ h, current }) {
-  if (h.gold && !ownsHero(h.id)) {
-    const p = goldProgress(h.id);
-    return <span className="hp2-act is-earn">{p.need - p.have} WINS TO GO</span>;
-  }
-  if (ownsHero(h.id)) return <span className={`hp2-act${h.id === current ? ' is-on' : ''}`}>{h.id === current ? 'EQUIPPED' : 'EQUIP'}</span>;
-  return <span className="hp2-act is-price">{HERO_UNLOCK[h.id] ? 'SKIP · ' : ''}<KitIcon name="gems" size={18} shadow={2} extras={false} />{formatNum(h.price)}</span>;
+const MEMBERS = [...CAST, ...NEW_CREW, ...LEGEND]; // one card each, the grid's (and ‹ ›'s) order
+const ALL = [...MEMBERS, ...GOLD, ...ELITE];
+/** A member's variants, base first: [base, GOLD?, ELITE?]. */
+export const variantsOf = (m) => [m, GOLD.find((g) => g.base === m.id), ELITE.find((e) => e.base === m.id)].filter(Boolean);
+const memberOf = (id) => { const h = heroById(id); return h ? heroById(h.base || h.id) || h : null; };
+/** Which variant a member's card shows: the one you wear, else your best owned (ELITE > GOLD > base), else the base. */
+function shownVariant(m, current) {
+  const vs = variantsOf(m);
+  const worn = vs.find((v) => v.id === current);
+  if (worn) return worn;
+  for (const v of [...vs].reverse()) if (ownsHero(v.id)) return v;
+  return m;
 }
 
-/** @param current the equipped id · @param onEquip(id) an owned hero was picked · @param onBought(id) a purchase landed */
-const ROWS = [['is-gold', 'GOLD', GOLD], ['is-elite', 'ELITE', ELITE], ['is-legend', 'LEGEND', LEGEND]];
-const ROSTER = [...CAST, ...NEW_CREW, ...GOLD, ...ELITE, ...LEGEND]; // the preview's ‹ › order = the grid's order
+function Status({ m, current }) {
+  const vs = variantsOf(m);
+  if (vs.some((v) => v.id === current)) return <span className="hp2-act is-on">EQUIPPED</span>;
+  if (ownsHero(m.id)) return null; // owned, not worn: the card itself is the button
+  const u = HERO_UNLOCK[m.id];
+  if (u) return <span className="hp2-act is-req"><KitIcon name={u.icon} size={20} shadow={1} extras={false} />{u.label}</span>;
+  return <span className="hp2-act is-price"><KitIcon name="gems" size={20} shadow={2} extras={false} />{formatNum(m.price)}</span>;
+}
 
-/** @param peekId open straight onto this hero's preview (the profile's NEXT HERO goal) */
+function Variants({ m }) {
+  const vs = variantsOf(m).slice(1);
+  if (!vs.length) return null;
+  return (
+    <span className="hp2-vars">
+      {vs.map((v) => {
+        const own = ownsHero(v.id);
+        const gp = v.gold && !own ? goldProgress(v.id) : null;
+        return (
+          <span key={v.id} className={`hp2-var is-${v.gold ? 'gold' : 'elite'}${own ? ' is-own' : ''}`}>
+            {gp ? <span className="hp2-var-fill" style={{ transform: `scaleX(${gp.have / gp.need})` }} /> : null}
+            <span className="hp2-var-t">{v.gold ? (own ? 'GOLD' : `GOLD ${gp.have}/${gp.need}`) : 'ELITE'}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/** @param current the equipped id · @param onEquip(id) · @param onBought(id) · @param peekId open straight onto this hero's preview */
 export default function HeroPicker({ current, onEquip, onBought, peekId = null }) {
-  const [peek, setPeek] = useState(peekId); // the hero being previewed (null = the grid)
+  const [peek, setPeek] = useState(peekId); // the variant being previewed (null = the grid)
   const [gems, setGems] = useState(getGems);
   useEffect(() => subscribeGems((v) => setGems(typeof v === 'number' ? v : getGems())), []);
   const buy = (id) => {
@@ -41,47 +69,36 @@ export default function HeroPicker({ current, onEquip, onBought, peekId = null }
     onBought(id);
   };
   const step = (d) => setPeek((cur) => {
-    const i = ROSTER.findIndex((x) => x.id === cur);
-    return ROSTER[(i + d + ROSTER.length) % ROSTER.length].id;
+    const i = MEMBERS.findIndex((x) => x.id === (memberOf(cur) || {}).id);
+    return shownVariant(MEMBERS[(i + d + MEMBERS.length) % MEMBERS.length], current).id;
   });
   if (peek) {
     const h = heroById(peek);
-    if (h) return <HeroPreview h={h} current={current} gems={gems} onEquip={onEquip} onBuy={buy} onStep={step} onClose={() => setPeek(null)} />;
+    const m = h && memberOf(peek);
+    if (h && m) return <HeroPreview h={h} variants={variantsOf(m)} onVariant={setPeek} current={current} gems={gems} onEquip={onEquip} onBuy={buy} onStep={step} onClose={() => setPeek(null)} />;
   }
-  const have = ROSTER.filter((x) => ownsHero(x.id)).length;
-  /** One card: GOLD shows its wins-to-go, an earnable crew member its requirement, a priced ELITE its silhouette. */
-  const card = (x, k = 0) => {
-    const gp = x.gold ? goldProgress(x.id) : null;
-    const req = gp ? (gp.done ? null : { icon: 'achievements', label: `${gp.have}/${gp.need}` }) : !ownsHero(x.id) ? HERO_UNLOCK[x.id] || null : null;
-    return (
-      <HeroCard key={x.id} hero={x} req={req} locked={!!x.elite && !ownsHero(x.id)} on={x.id === current} delay={k * 520} onClick={() => setPeek(x.id)}>
-        <span className="hp2-tag">{x.tag}</span>
-        <Act h={x} current={current} />
-      </HeroCard>
-    );
-  };
+  const have = ALL.filter((x) => ownsHero(x.id)).length;
   return (
     <div className="hp2">
       <div className="hp2-bar">
         <span className="hp2-coll">
           <span className="hp2-coll-k">COLLECTION</span>
-          <span className="hp2-coll-bar"><span className="hp2-coll-fill" style={{ transform: `scaleX(${have / ROSTER.length})` }} /></span>
-          <span className="hp2-coll-n">{have}/{ROSTER.length}</span>
+          <span className="hp2-coll-bar"><span className="hp2-coll-fill" style={{ transform: `scaleX(${have / ALL.length})` }} /></span>
+          <span className="hp2-coll-n">{have}/{ALL.length}</span>
         </span>
-        <span className="hp2-gems"><KitIcon name="gems" size={24} shadow={2} extras={false} />{formatNum(gems)}</span>
+        <span className="hp2-gems"><KitIcon name="gems" size={26} shadow={2} extras={false} />{formatNum(gems)}</span>
       </div>
-      <span className="hp2-sec">THE CREW</span>
       <div className="hp2-grid">
-        {[...CAST, ...NEW_CREW].map((x) => card(x))}
+        {MEMBERS.map((m, k) => {
+          const v = shownVariant(m, current);
+          return (
+            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} on={variantsOf(m).some((x) => x.id === current)} delay={k * 520} onClick={() => setPeek(v.id)}>
+              <Status m={m} current={current} />
+              <Variants m={m} />
+            </HeroCard>
+          );
+        })}
       </div>
-      {/* rarer rows, rarest last; the frames + chips explain themselves (Andy oct18: "no need for new faces or earned
-          never sold") so a row is only its tier name and how many you hold */}
-      {ROWS.map(([cls, name, list]) => (
-        <div key={name} className="hp2-tier">
-          <span className={`hp2-sec ${cls}`}>{name} · {list.filter((x) => ownsHero(x.id)).length}/{list.length}</span>
-          <div className="hp2-grid">{list.map((x, k) => card(x, k))}</div>
-        </div>
-      ))}
     </div>
   );
 }

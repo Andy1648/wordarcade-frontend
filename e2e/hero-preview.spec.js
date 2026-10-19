@@ -44,18 +44,21 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await shot(page, `${vn}-3-preview-win`);
     // a locked ELITE is shown for real in the preview (the card is a silhouette) with its price
     await pv.getByRole('button', { name: '‹ ALL HEROES' }).click();
-    await page.locator('.hc[data-hero="hex-elite"]').click();
+    // one card per member (oct18): HEX's card → its ELITE tab previews ARCHMAGE HEX
+    await expect(page.locator('.hc[data-hero="hex-elite"]')).toHaveCount(0);
+    await page.locator('.hc[data-hero="hex"]').click();
+    await pv.getByRole('tab', { name: /ELITE/ }).click();
     await expect(pv).toHaveAttribute('data-hero', 'hex-elite');
     await expect(pv.locator('.hpv-tier')).toHaveText('ELITE');
     await expect(pv.locator('.hpv-art, .hpv-art img').first()).toBeVisible();
     await expect(pv).toContainText('NOT ENOUGH GEMS');
     await page.waitForTimeout(700);
     await shot(page, `${vn}-4-preview-elite-locked`);
-    // ‹ › step through the roster (wraps)
+    // ‹ › step through the members (wraps)
     await pv.getByRole('button', { name: 'Next hero' }).click();
-    await expect(pv).not.toHaveAttribute('data-hero', 'hex-elite');
+    await expect(pv).not.toHaveAttribute('data-hero', /^hex/);
     await pv.getByRole('button', { name: 'Previous hero' }).click();
-    await expect(pv).toHaveAttribute('data-hero', 'hex-elite');
+    await expect(pv).toHaveAttribute('data-hero', 'hex');
     // an earnable crew member shows its progress bar to the requirement
     await pv.getByRole('button', { name: '‹ ALL HEROES' }).click();
     await page.locator('.hc[data-hero="mecha"]').click();

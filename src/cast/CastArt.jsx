@@ -174,11 +174,11 @@ const STREAMS = {
     { i: 2, n: 1, ms: 1150, at: 750, e: 'cubic-bezier(.3,0,.7,1)', f: [{ transform: 'translate(0, 0) scale(.6)', opacity: 0 }, { transform: 'translate(40%, -200%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(90%, 240%) scale(.9)', opacity: 0 }] },
     { i: 3, n: 2, ms: 1700, at: 400, f: UP(10, -130, 0.5, 1.25) },
   ],
-  // MECHA: the exhaust roars without a break, the antenna keeps sparking, the bolt crackles off the gauntlet
+  // MECHA (oct18 Andy: "mecha has some shit animation"): a machine runs steady — the exhaust flame flickers in place
+  // (small, quick, from its base; no flapping), and the antenna tip blinks now and then. The off-theme bolt is gone.
   boost: [
-    { i: 0, n: 2, ms: 1000, e: 'ease-in-out', f: [{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1.2, 1.5)', opacity: 1, offset: 0.2 }, { transform: 'scale(1, 1.15)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.25, 1.6)', opacity: 1, offset: 0.7 }, { transform: 'scale(.7)', opacity: 0 }] },
-    { i: 1, n: 1, ms: 1100, at: 450, f: TWINKLE },
-    { i: 2, n: 1, ms: 900, at: 650, e: 'linear', f: [{ transform: 'scale(.5)', opacity: 0 }, { transform: 'scale(1.2)', opacity: 1, offset: 0.15 }, { transform: 'scale(1)', opacity: 0.3, offset: 0.35 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.3)', opacity: 0 }] },
+    { i: 0, n: 1, ms: 520, e: 'linear', f: [{ transform: 'scale(1, 1)', opacity: 1 }, { transform: 'scale(.94, 1.1)', opacity: 1, offset: 0.25 }, { transform: 'scale(1.05, .92)', opacity: 1, offset: 0.5 }, { transform: 'scale(.97, 1.06)', opacity: 1, offset: 0.75 }, { transform: 'scale(1, 1)', opacity: 1 }] },
+    { i: 1, n: 1, ms: 2400, at: 600, f: [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.08 }, { transform: 'scale(0)', opacity: 0, offset: 0.2 }, { transform: 'scale(0)', opacity: 0 }] },
   ],
   // GLITCH.EXE: it corrupts — bands of its own art tear sideways in short stepped bursts (a glitch should read glitchy,
   // so this one stays bursty on purpose): a tear somewhere every ~1.3 s
