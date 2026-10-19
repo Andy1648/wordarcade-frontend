@@ -180,10 +180,6 @@ window.addEventListener('resize', applyAppScale);
 /* global __KIT_GALLERY__ */
 if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   import('./components/kit/gallery/boot.jsx')
-} else if (location.search.includes('juicelab=1') && !/(^|\.)typeaword\.com$/.test(location.hostname)) {
-  // PREVIEW-ONLY JUICE LAB (feat/reward-juice prototypes): fire each reward moment on demand. Never on typeaword.com;
-  // removed before the prototypes ship.
-  import('./juice/lab/boot.jsx')
 } else {
   // FRENCH RUSH (oct18) is a standalone study link, not an arcade mode: /french-rush mounts its own
   // root (a lazy chunk with the French words) in place of the arcade. Nothing else changes for '/'.
