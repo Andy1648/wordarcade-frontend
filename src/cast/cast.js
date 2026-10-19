@@ -324,6 +324,14 @@ export const CAST_FRAMES = {
   boo: { n: 4, seq: [[1, 420], [0, 160], [1, 420], [2, 850], [3, 1050]], rest: 1800 },
   // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
   mecha: { n: 4, seq: [[1, 750], [0, 180], [2, 720], [3, 1150]], rest: 1800 },
+  // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
+  dud: { n: 4, seq: [[1, 900], [2, 650], [3, 1200]], rest: 2400 },
+  // LEXI: finger raised → pushes the glasses up, *glint* → book open, lecturing → hugs the book, smug
+  lexi: { n: 4, seq: [[1, 600], [2, 1000], [3, 1000]], rest: 2000 },
+  // SHH: finger to lips → the invisible wall → the invisible rope → a smug bow
+  shh: { n: 4, seq: [[1, 800], [2, 380], [0, 120], [2, 380], [3, 1100]], rest: 2000 },
+  // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
+  sizzle: { n: 4, seq: [[1, 650], [2, 900], [3, 1100]], rest: 1900 },
 };
 export const castFrames = (id, pose = 'hero') => (pose === 'hero' && CAST_FRAMES[id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
