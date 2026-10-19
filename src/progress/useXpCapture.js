@@ -23,6 +23,7 @@ import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
 import { equippedPopColors } from '../theme/themes';
+import { getEquipped, EQUIP_CHANGE } from './shop';
 import { sndLevelUp } from '../audio/gameSounds';
 import { formatNum } from '../format.js';
 import { flagOn } from '../lib/featureFlags.js';
@@ -92,6 +93,25 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // the menu session — equipping a theme remounts this hook via the shop round-trip, like
     // rebirth/key-power do), falling back to the built-in tiers if the catalog is unavailable.
     const popColors = equippedPopColors() || TIER_COLORS;
+    // THE LOOK (Andy oct19 "the looks dont seem to do anything"): the equipped POP STYLE dresses every +N gain pop
+    // (popLooks.js). The look data is LAZY: fetched on the first key / tap (a gesture — never the first paint), and only
+    // while a paid look is worn; the equipped id is read here and again only on an equip (EQUIP_CHANGE), never per key.
+    let look = null;
+    let lookMod = null;
+    let lookLoading = false;
+    let styled = getEquipped().popStyle !== 'classic';
+    const readLook = () => { look = lookMod && styled ? lookMod.popLookOf(getEquipped().popStyle) : null; };
+    const wantLook = () => {
+      if (!styled || lookMod || lookLoading) return;
+      lookLoading = true;
+      import('./popLooks.js').then((m) => { lookMod = m; readLook(); }, () => { lookLoading = false; });
+    };
+    const onEquip = () => {
+      styled = getEquipped().popStyle !== 'classic';
+      readLook();
+      wantLook();
+    };
+    window.addEventListener(EQUIP_CHANGE, onEquip);
     // ONE letter limiter for the menu AND every game input (letterXp.js — 12 letters a second, shared).
     // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
@@ -164,16 +184,16 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
           evLevelUp(res.level);
           refreshSessionProps({ level: res.level });
         } else if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
-        if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y);
+        if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y, look);
         else if (hit.crit && fx.critPop) {
           fx.critPop(opts.letter, `CRIT +${formatNum(hit.gain)}`, TIER_SCALES[tier]);
           // the XP bar paints this gain's ghost segment CRIT ORANGE (Andy oct17) — one event, the bar toggles an attribute
           try { window.dispatchEvent(new Event(CRIT_EVENT)); } catch { /* no window */ }
         }
-        else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier);
+        else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier, look);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —
         // T4's per-accepted-word edge glow lives in-game). Gold at KEY TIER T5+.
-        if (crossed && tier > 0) fx.edgePulse(feelTier >= 5 ? '#FFD54A' : popColors[tier]);
+        if (crossed && tier > 0) fx.edgePulse(look ? look.shards[0] : feelTier >= 5 ? '#FFD54A' : popColors[tier]);
       }
       if (creditRef.current) creditRef.current();
     };
@@ -194,6 +214,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     };
 
     const onKey = (e) => {
+      wantLook(); // the LOOK's data, on the first gesture (a no-op once loaded / while CLASSIC)
       if (blockedRef.current && blockedRef.current()) return;
       // Menu self-test word buffer: accumulate letters, finalize on a word boundary. Runs
       // regardless of the anti-mash limiter below (which only gates the XP credit).
@@ -216,6 +237,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // an interactive target (button/link/card/dialog) or a >10px drag credits nothing.
     const pending = new Map(); // pointerId → { x, y, moved, ignore }
     const onDown = (e) => {
+      wantLook(); // the LOOK's data, on the first gesture (a no-op once loaded / while CLASSIC)
       const t = e.target;
       // A LOCKED (level-gated) card credits XP exactly like empty space — being locked must
       // not feel dead. Every other interactive target (buttons, links, UNLOCKED cards, open
@@ -255,6 +277,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       window.removeEventListener('pointermove', onMove, true);
       window.removeEventListener('pointerup', onUp, true);
       window.removeEventListener('pointercancel', onCancel, true);
+      window.removeEventListener(EQUIP_CHANGE, onEquip);
     };
   }, [active, fxRef]);
 
