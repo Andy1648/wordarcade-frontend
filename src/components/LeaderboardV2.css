@@ -947,12 +947,17 @@
 }
 .lb2-band-tag b { color: #a8164e; }
 .lb2--narrow .lb2-band-tag { display: none; }
-/* TOP n% (Andy oct17): YOUR standing among every player, at the end of your name line — just before REBIRTHS */
+/* TOP n% (Andy oct17): YOUR standing among every player — in the PLAYER column head (Andy oct19: inside your row it ran
+   over REBIRTHS). Its own grid cell, so it can never reach the numbers. */
 .lb2-pct {
-  flex: none; margin-left: auto; padding: 0 7px; border: 2px solid #000; border-radius: 6px; background: #3a2160;
-  font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(13px, calc(var(--fs-k14) * var(--lb2-k))); line-height: 1.35;
-  color: #FFE94A; white-space: nowrap;
-} /* the phone row is too tight for name + tag + R; it keeps the rival line */
+  display: inline-block; margin-left: 8px; padding: 0 7px; border: 2px solid #000; border-radius: 6px; background: #FFE94A;
+  font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(14px, calc(var(--fs-k14) * var(--lb2-k))); line-height: 1.3;
+  color: #000; white-space: nowrap; text-transform: uppercase; letter-spacing: 0; vertical-align: bottom;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box;
+}
+.lb2-cols-who { min-width: 0; overflow: hidden; }
+.lb2--narrow .lb2-cols-pl.has-pct { display: none; } /* a phone's PLAYER cell holds the pill OR the word, not both */
+.lb2--narrow .lb2-pct { margin-left: 0; }
 
 /* ===== SIMPLE PODIUM (Andy oct16: "quality but with simplicity" — the medal emblems + name ribbons read as poorly-cut
    AI slop; the characters stay). Character → NAME in plain Bungee type → plate → numbers → painted block. ===== */

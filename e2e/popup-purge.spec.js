@@ -156,7 +156,7 @@ const OPENER_WORD = {
 };
 const E_WORDS = ['estate', 'elite', 'escape', 'expense', 'example', 'everyone'];
 
-test('SEASON2: played words (a WINS gain + the TYPE WORDS I unlock) → the menu shows no stamp / toast / claim; ACHIEVEMENTS claims', async ({ page }) => {
+test('SEASON2: played words (a WINS gain + the TYPE WORDS I unlock) → the menu shows no stamp / claim, an edge READY TO CLAIM toast per tier; ACHIEVEMENTS claims', async ({ page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 720 });
   // 96 season words: five CHAIN links make TYPE WORDS I (100) ready, and pass CHAIN's 3-word "start earning" gate
@@ -186,6 +186,13 @@ test('SEASON2: played words (a WINS gain + the TYPE WORDS I unlock) → the menu
   await page.evaluate((b) => { Object.assign(window.__purge, { base: new Set(b), hits: [], dialogs: [], claims: [], armed: true, skip: '.solo-root' }); }, menuBase);
   await page.locator('.solo-exit').click();
   await menuReady(page);
+  // ACHIEVEMENT POP-UPS (Andy oct19 "I want pop-ups for the achievements"): each tier the run made claimable (TYPE WORDS I
+  // + WORD CHAIN I — five links) is said ONCE as a RIGHT-edge toast — it pays nothing and claims nothing (the claim below
+  // still pays the 40)
+  const toast = page.locator('.ket-card');
+  await expect(toast).toHaveCount(2, { timeout: 3000 });
+  await expect(toast.filter({ hasText: 'TYPE WORDS' })).toContainText('READY TO CLAIM');
+  await expect(toast.filter({ hasText: 'WORD CHAIN' })).toContainText('READY TO CLAIM');
   await page.waitForTimeout(2500);
   expect((await verdict(page)).hits, 'nothing large appears in the middle of the menu').toEqual([]);
   const v = await verdict(page);

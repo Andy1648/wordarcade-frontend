@@ -424,6 +424,16 @@
 .av3-gear-text b { color: #FFC23D; }
 .av3-gear.is-owned { border-color: #2EFFE0; }
 .av3-gear.is-owned .av3-gear-text b { color: #2EFFE0; }
+/* Andy oct19 "overlapping with the MAX IT and GRANDMASTER symbol with the zero": on one line "MAX IT → GRANDMASTER" was
+   wider than the gap between ALMOST and the ready count, so the chip ran into both. Now the label and the count never
+   shrink, the chip stacks its two words (half the width) and only the gear name may ellipsise, as a last resort. */
+.av3-hero-top { gap: 8px; }
+.av3-hero-top .av3-gear-art { width: 30px; height: 30px; }
+.av3-hero-label, .av3-ready-n { flex: none; }
+.av3-gear { flex: 0 1 auto; margin-right: 0; overflow: hidden; gap: 4px; padding-right: 6px; }
+.av3-gear-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; font-size: max(13px, var(--fs-k13)); }
+.av3-gear-text b { font-size: max(12px, calc(var(--fs-k13) * .9)); }
+.av3-gear-name { font-size: var(--fs-k15); letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; } /* GRANDMASTER / HIGH ROLLER fit a 1280×551 hero whole */
 /* opened from a gear sheet ("SEE ACHIEVEMENT"): that ladder's tile wears a static gold ring */
 .av3-cell.is-focus .av3-tile { outline: 4px solid #FFC23D; outline-offset: 3px; }
 /* phone: the hero's top row is narrow — the chip keeps the art + gear name, drops "MAX IT →" */

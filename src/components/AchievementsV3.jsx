@@ -68,7 +68,7 @@ function LadderGear({ id, maxed }) {
   return (
     <div className={`av3-gear${maxed ? ' is-owned' : ''}`} data-gear={g.id}>
       <img className="av3-gear-art" src={earnedArt(g.id)} alt="" width="48" height="48" />
-      <span className="av3-gear-text"><b>{maxed ? 'EARNED' : 'MAX IT →'}</b> {g.name}</span>
+      <span className="av3-gear-text"><b>{maxed ? 'EARNED' : 'MAX IT →'}</b> <span className="av3-gear-name">{g.name}</span></span>
     </div>
   );
 }

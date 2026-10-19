@@ -96,6 +96,7 @@ function DailyChestCard({ now, onOpen }) {
       className={`sp2-card sp2-chest${claimed ? ' is-claimed' : ' is-ready'}`}
       style={{ '--sp2-line': '#FFE94A', '--sp2-fill': '#3a2a08' }}
       onClick={onOpen}
+      badge={!claimed ? <span className="sp2-dot" aria-hidden="true" /> : null}
       ariaLabel={claimed ? `Daily chest opened — next in ${D.formatCountdown(D.msToReset(now))}` : 'Daily chest — free, once a day. Open it'}
     >
       <span className="sp2-card-in" data-stock="daily-chest" data-testid="daily-chest-card">
@@ -111,7 +112,6 @@ function DailyChestCard({ now, onOpen }) {
         <span className="sp2-what">ONCE A DAY</span>
         <span className="sp2-price">{claimed ? D.formatCountdown(D.msToReset(now)) : 'FREE'}</span>
       </span>
-      {!claimed ? <span className="sp2-dot" aria-hidden="true" /> : null}
     </KitStampCard>
   );
 }

@@ -69,7 +69,7 @@ export default function S2Trophy({ variant = 'desk', disabled = false }) {
           <AchievementsV3 focusId={focusId} onClose={() => setOpen(false)} />
         </Suspense>
       )}
-      {V3.Notify && <V3.Notify check />}
+      {V3.Notify && <V3.Notify check={!disabled} quiet={open} />}
     </>
   );
 }
