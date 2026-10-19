@@ -1,7 +1,7 @@
 // crit.js — CRITICAL KEYS (Andy oct8): "when a user gets lucky typing a key it shows a cooler key animation and gives
 // crit-power × the normal amount, occurring at crit-rate probability". PURE — no storage, no DOM; the rng is injectable.
 //
-// The STATS live on the gears (markRollsCore CRIT_BY_TIER / critStatsOf / critTotals — RATE from 0%, POWER from ×2).
+// The STATS live on the gears (markRollsCore per-gear substats / critStatsOf / critTotals — RATE from 0%, POWER from ×2).
 // This module is the ROLL:
 //   rollCrit(rate, rng)          one key: true with probability `rate` (0 → never, ≥ 1 → always)
 //   critKey(perKey, crit, rng)   one key's XP: perKey, or perKey × POWER on a crit → { gain, crit }

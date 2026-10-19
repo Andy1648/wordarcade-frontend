@@ -69,10 +69,11 @@ test('the tile pip row: a dot per extra stat, ✦ per perk, ★ per dupe pip (in
   const eclipse = ROLL_MARKS.find((m) => m.id === 'mk-eclipse');
   const st = { v: 2, marks: { 'mk-eclipse': { n: 999 } } };
   const c = cardModel({ id: eclipse.id, tier: eclipse.tier, name: eclipse.name, state: st });
-  assert.deepEqual(tilePips(c).map((p) => p.k), ['stat', 'stat', 'perk', 'star', 'star', 'star', 'star', 'star']);
-  assert.equal(pipsLabel(c), '2 EXTRA STATS · 1 PERK · ★5');
-  const rare = ROLL_MARKS.find((m) => m.tier === 'rare');
-  assert.deepEqual(tilePips(cardModel({ id: rare.id, tier: 'rare', name: rare.name, state: null })).map((p) => p.k), ['stat'], 'RARE (the floor): its +2% CRIT RATE');
+  // GEAR VARIETY (oct18): a dot per CRIT line the gear's OWN substats carry — ECLIPSE has CRIT POWER, no CRIT RATE
+  assert.deepEqual(tilePips(c).map((p) => p.k), ['stat', 'perk', 'star', 'star', 'star', 'star', 'star']);
+  assert.equal(pipsLabel(c), '1 EXTRA STAT · 1 PERK · ★5');
+  const rare = ROLL_MARKS.find((m) => m.id === 'mk-detonator');
+  assert.deepEqual(tilePips(cardModel({ id: rare.id, tier: 'rare', name: rare.name, state: null })).map((p) => p.k), ['stat', 'stat'], 'MATCHSTICK: +3% CRIT RATE · +25% CRIT POWER');
   // the most any card carries fits the pip plate (frameLayout.pipPlateW caps at 9)
   for (const m of ROLL_MARKS) {
     const n = tilePips(cardModel({ id: m.id, tier: m.tier, name: m.name, state: { v: 2, marks: { [m.id]: { n: 9999 } } } })).length;

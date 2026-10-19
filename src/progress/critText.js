@@ -3,6 +3,7 @@
 // the screens that print them (STATS, ROLL, INDEX).
 import { formatNum, formatRate, formatMultExact } from '../format.js';
 import { critAvgGain, critOneIn } from './crit.js';
+import { substatText } from './markRollsCore.js';
 
 const rate01 = (r) => (Number.isFinite(r) && r > 0 ? Math.min(1, r) : 0);
 const powerOf = (p) => (Number.isFinite(p) && p > 0 ? p : 1);
@@ -23,6 +24,12 @@ export const critPowerText = (power) => `×${formatMultExact(powerOf(power))}`;
 export function substatParts(subs) {
   const KIND = { critRatePct: 'CRIT RATE', critPower: 'CRIT POWER', baseWins: 'BASE WINS', gemsPct: 'GEMS', luckPct: 'ROLL LUCK' };
   return (subs || []).map((x, i) => {
+    // GEAR VARIETY (oct18): +BASE XP / +s OVERDRIVE lines read exactly as the card prints them (season 2's BASE XP ÷ 10)
+    if (x.kind === 'baseXp' || x.kind === 'overdriveSec') {
+      const t = substatText(x);
+      const sp = t.indexOf(' ');
+      return { id: `${x.kind}-${i}`, num: t.slice(0, sp), kind: t.slice(sp + 1) };
+    }
     const num = x.kind === 'critRatePct' ? `+${pct(x.value / 100)}`
       : x.kind === 'critPower' ? `+${pct(x.value)}`
       : x.kind === 'gemsPct' || x.kind === 'luckPct' ? `+${pct(x.value / 100)}`

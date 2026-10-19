@@ -1,6 +1,6 @@
 // patchNotesData.js — THE PATCH NOTES (Andy oct11): what the popup says, as data. One release at a time: bump
 // PATCH_ID and the popup shows once more to every returning player. Every number here is what actually pays
-// (DUPE_GEMS, SUBSTATS_BY_TIER, JACKPOT's gemsPct — markRollsCore.js); the gift (PATCH_GIFT_ROLLS × the live roll price) is credited by grantGems on COLLECT.
+// (DUPE_GEMS, the per-gear substats, JACKPOT's gemsPct — markRollsCore.js); the gift (PATCH_GIFT_ROLLS × the live roll price) is credited by grantGems on COLLECT.
 export { PATCH_ID } from './patchSeen.js';
 export const PATCH_LABEL = 'REBIRTH ROAD';
 /** The gift, in ROLLS: the gems are rolls × the live roll price (ROLL_PRICE_GEMS is swapped to 75 in season 2), so

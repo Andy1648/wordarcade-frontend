@@ -80,8 +80,11 @@ function finalMark(mark, mode = null) {
   if (m.stat.kind === 'xpPct') out.xp = f;
   if (m.stat.kind === 'baseWins') out.winsBase = 2 * (f - 1) * 10; // sized on BASE 10, ×2 (Andy oct11 BASE_WINS_SCALE)
   if (m.stat.kind === 'baseXp') out.xpBase = (f - 1) * 10;
-  // gear card v4: the tier's substat rows add BASE WINS on top of the MAIN (★0 here — the seeds own one copy)
-  for (const x of substatsOf(mark, null)) if (x.kind === 'baseWins') out.winsBase += x.value;
+  // gear card v4: the gear's substat rows add BASE WINS / BASE XP on top of the MAIN (★0 here — the seeds own one copy)
+  for (const x of substatsOf(mark, null)) {
+    if (x.kind === 'baseWins') out.winsBase += x.value;
+    if (x.kind === 'baseXp') out.xpBase += x.value;
+  }
   return out;
 }
 /** A printed number back to a value: "×1,024" → 1024, "67.6K" → 67,600 (formatNum's named suffixes). */

@@ -21,9 +21,12 @@ function mem(init = {}) {
 const T = Date.UTC(2026, 9, 17, 12);
 
 // ------------------------------------------------------------------------------------------- catalog
-test('six gears: one per word-secret + one season gear; ids pass the showcase id rule', () => {
+test('six gears: three word-secrets, two feats of their own, one season gear; ids pass the showcase id rule', () => {
   assert.equal(UNLISTED_GEARS.length, 6);
-  for (const sid of Object.keys(SECRETS)) assert.ok(gearForSecret(sid), `secret ${sid} grants a gear`);
+  for (const sid of ['newgrounds', 'palindrome', 'midas']) assert.ok(gearForSecret(sid), `secret ${sid} grants a gear`);
+  // oct18 (Andy "typewriter and wishbone gear are WAY too easy to get"): their word-secrets still pay, never the gear
+  for (const sid of ['typewriter', 'wish']) assert.equal(gearForSecret(sid), null, `secret ${sid} no longer grants a gear`);
+  assert.ok(Object.keys(SECRETS).includes('typewriter') && Object.keys(SECRETS).includes('wish'), 'the secrets themselves stay');
   assert.equal(UNLISTED_GEARS.filter((g) => g.season != null).length, 1);
   for (const g of UNLISTED_GEARS) {
     assert.match(g.id, /^mk-[a-z0-9-]{1,24}$/, 'lb_showcase_set keeps only ^mk-[a-z0-9-]{1,24}$');
@@ -67,7 +70,7 @@ test('grant survives blocked storage (no throw)', () => {
 });
 
 test('back-fill: secrets found before the tier existed grant their gear once; the season gear is never back-filled', () => {
-  const s = mem({ [SECRETS_FOUND_KEY]: JSON.stringify({ found: ['newgrounds', 'palindrome', 'tripledouble', 'nope'] }) });
+  const s = mem({ [SECRETS_FOUND_KEY]: JSON.stringify({ found: ['newgrounds', 'palindrome', 'tripledouble', 'typewriter', 'wish', 'nope'] }) });
   assert.deepEqual(bootUnlisted({ storage: s, now: T }).sort(), ['mk-ul-mirror', 'mk-ul-og']);
   assert.deepEqual(bootUnlisted({ storage: s, now: T }), [], 'idempotent');
   assert.deepEqual(grantForPastSecrets(['tripledouble'], { storage: s }), []);
@@ -206,12 +209,15 @@ test('reveal bus: subscribers get the reveal; the serial patches it in place (sa
 });
 
 // ------------------------------------------------------------------------------------------- the gear system
-test('never rolled: no UNLISTED gear in the roll pool; a worn one pays the PERMANENT main (×3), below ORIGIN', async () => {
+test('never rolled: no UNLISTED gear in the roll pool; a worn one is LEGENDARY-sized (one main), below ORIGIN', async () => {
   const core = await import('../progress/markRollsCore.js');
   for (const g of UNLISTED_GEARS) {
     assert.equal(core.rollMarkById(g.id), null, `${g.id} is not rollable`);
     assert.equal(core.oneInX(g.id), null, `${g.id} has no odds`);
-    assert.equal(core.mainMultOf(g.id, null), 3);
+    assert.equal(core.mainMultOf(g.id, null), 3, 'ranks as a LEGENDARY');
+    const st = core.statOf(g.id, null);
+    assert.equal(st.value, core.statBaseValue(st.kind, 'legendary'), `${g.id}: ONE main at the LEGENDARY value`);
+    assert.ok(!(core.markWinsMult({ markId: g.id, state: null }) > 1 && core.markXpMult({ markId: g.id, state: null }) > 1), `${g.id} never pays WINS and XP both`);
     assert.ok(core.mainMultOf(g.id, null) < core.mainMultOf('mk-origin', null));
     assert.equal(core.markEntry(g.id).tier, 'unlisted');
   }
@@ -226,4 +232,42 @@ test('the index card never prints SECRET odds', async () => {
   assert.equal(c.oddsNum, MASKED_ODDS);
   const m = cardModel({ id: 'mk-hydra', kind: 'roll', tier: 'mythic', name: 'HYDRA', locked: true });
   assert.match(m.odds, /^1 IN /, 'the rolled tiers below SECRET keep their published odds');
+});
+
+// ------------------------------------------------------------------------------------------- the two feats (oct18)
+test('TYPEWRITER: fifty ACCEPTED words in a row; any Backspace starts over; fires once at the target', async () => {
+  const { createTypewriterRun, TYPEWRITER_WORDS } = await import('./gearFinds.js');
+  assert.equal(TYPEWRITER_WORDS, 50);
+  const run = createTypewriterRun();
+  for (let i = 1; i < 49; i += 1) assert.equal(run.onWord(), false);
+  run.onKey('a');
+  run.onKey('Shift');
+  assert.equal(run.count(), 48, 'letters and modifiers never break the run');
+  run.onKey('Backspace');
+  assert.equal(run.count(), 0, 'one take-back and the run is over');
+  let hits = 0;
+  for (let i = 0; i < 60; i += 1) if (run.onWord()) hits += 1;
+  assert.equal(hits, 1, 'fires exactly once, at 50');
+  run.reset();
+  assert.equal(run.count(), 0);
+  // the OLD find (150 keys, no 1.5 s gap — a held key auto-repeats) no longer grants anything: keys alone never count
+  const held = createTypewriterRun();
+  for (let i = 0; i < 1000; i += 1) held.onKey('e');
+  assert.equal(held.count(), 0);
+});
+
+test('WISHBONE: an accepted word at 11:11 AM AND at 11:11 PM, the same local day', async () => {
+  const { noteWishWord, WISH_KEY } = await import('./gearFinds.js');
+  const at = (d, h, m) => new Date(2026, 9, d, h, m, 30).getTime();
+  const s = mem();
+  assert.equal(noteWishWord(at(18, 23, 11), s), false, 'PM alone is half a wish');
+  assert.equal(noteWishWord(at(18, 11, 12), s), false, '11:12 is not 11:11');
+  assert.equal(s.getItem(WISH_KEY), null);
+  assert.equal(noteWishWord(at(18, 11, 11), s), false, 'the morning half is remembered…');
+  assert.ok(s.getItem(WISH_KEY));
+  assert.equal(noteWishWord(at(19, 23, 11), s), false, '…for THAT day only');
+  assert.equal(noteWishWord(at(18, 23, 11), s), true, 'AM + PM, same day = the find');
+  const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
+  assert.equal(noteWishWord(at(18, 11, 11), bad), false, 'blocked storage never throws');
+  assert.equal(noteWishWord(at(18, 23, 11), null), false);
 });

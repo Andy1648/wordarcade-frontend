@@ -106,13 +106,13 @@ test('the lines are Andy\'s: wins = REBIRTH · MARK · BOOST; XP = KEY · REBIRT
 test('+N BASE stats land in BASE (before every multiplier), not in a line', () => {
   withStorage(save({ mark: 'mk-singularity', rc: 1 }), () => {
     const b = statBoard();
-    assert.equal(b.wins.base, 220); // 10 + MYTHIC +180 (Andy oct11 ×2) + its substat +30 (gear card v4)
+    assert.equal(b.wins.base, 190); // 10 + MYTHIC +180 (Andy oct11 ×2); its own substats carry no BASE WINS (GEAR VARIETY)
     assert.equal(b.xp.base, 10);
   });
   withStorage(save({ mark: 'mk-kraken' }), () => {
     const b = statBoard();
     assert.equal(b.xp.base, 100);
-    assert.equal(b.wins.base, 40); // KRAKEN's MYTHIC substat +30 BASE WINS
+    assert.equal(b.wins.base, 40); // KRAKEN's own substat +30 BASE WINS
   });
 });
 
