@@ -91,6 +91,11 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // A REPLAY of the last run's unsettled words: their rows, played as the run's queue. null = a
   // normal run built from the spec.
   const replayRef = useRef(null);
+  // PACE (FRENCH RUSH, Andy oct19: "REALLY slow things down - have user click to continue"):
+  // 'self' = no clock at all — a clue only appears when the player asks (HINT), and every word ends on
+  // a review card that waits for CONTINUE; 'timed' = the clue clock (the SAT game).
+  const paceRef = useRef('timed');
+  const selfPaced = () => paceRef.current === 'self';
   // The mode of the CURRENT run: 'briefing' (study screen + spell-along net) or
   // 'lineup' (suspect lineup, no spell-along). Chosen at mode-select and fixed for
   // the run; it drives the engine config, the final-stage endgame, and every event.
@@ -128,13 +133,16 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // without restarting; the structural knobs apply on next game. deepEvery/climb
   // mirror the engine's deepCutEvery/tierEvery defaults so the tuner starts in
   // sync with the shipped values.
+  // A pack may carry its own TIMED cadence (FRENCH RUSH is far slower than SAT — Andy: "timer goes too
+  // quickly"); SAT keeps the shipped defaults (and the ?stage= / tuner overrides).
+  const packTiming = (packRef.current && packRef.current.timing) || null;
   const cfgRef = useRef({
-    stageMs: SAT_RUSH_STAGE_MS,
-    spellMs: DEFAULT_CONFIG.spellAlongMs,
+    stageMs: packTiming ? packTiming.stageMs : SAT_RUSH_STAGE_MS,
+    spellMs: packTiming ? packTiming.spellMs : DEFAULT_CONFIG.spellAlongMs,
     // LINEUP-only stage-cadence multiplier (seeds from the ?lineupx= escape hatch,
     // live-tunable). Applied to the stage delay in lineup runs only — never to the
     // last-call window, never in briefing.
-    lineupScale: SAT_RUSH_LINEUP_SCALE,
+    lineupScale: packTiming ? packTiming.lineupScale : SAT_RUSH_LINEUP_SCALE,
     deepEvery: DEFAULT_CONFIG.deepCutEvery,
     revGap: DEFAULT_CONFIG.revenantOffset,
     climb: DEFAULT_CONFIG.tierEvery,
@@ -282,6 +290,9 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       // word gets a proper second look instead of vanishing.
       if (revealed >= HEAVY_REVEAL_MIN && cw) {
         reEncodeRef.current = buildReEncode(cw, 'weak');
+      } else if (selfPaced() && cw) {
+        // self-paced: every word ends on its review card (meaning, example, translation, 🔊)
+        reEncodeRef.current = buildReEncode(cw, 'got');
       }
       pendingRef.current = 'clear';
       const silverJustOn = r.silverTongue && !prevSilverRef.current;
@@ -290,8 +301,13 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       stampSeq.current += 1;
       const streakNow = eng.getState().currentStreak;
       const milestone = !silverJustOn && isStreakMilestone(streakNow);
+      const ST = (packRef.current.ui && packRef.current.ui.stamps) || {};
       stampRef.current = {
-        text: silverJustOn ? 'SILVER TONGUE!' : milestone ? `STREAK ×${streakNow}!` : 'CAPTURED!!',
+        text: silverJustOn
+          ? 'SILVER TONGUE!'
+          : milestone
+            ? `${ST.streak || 'STREAK ×'}${streakNow}!`
+            : ST.got || 'CAPTURED!!',
         tone: 'capture',
         kind: silverJustOn ? 'silver' : milestone ? 'streak' : 'got',
         id: stampSeq.current,
@@ -311,14 +327,18 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       } else {
         const bonus = r.breakdown.deepCutBonus ? ' · DEEP CUT BONUS' : '';
         const back = r.requeued ? ' · back for a second look' : '';
-        msgRef.current = {
-          text: `+${formatNum(r.gained)} · ${formatMultExact(r.breakdown.stageMultiplier)}× ante${bonus}${back}`,
-          kind: 'good',
-        };
+        // a pack without the bounty theme (FRENCH RUSH) keeps the poster quiet: the review card says it
+        msgRef.current = packRef.current.ui && packRef.current.ui.stamps
+          ? null
+          : {
+              text: `+${formatNum(r.gained)} · ${formatMultExact(r.breakdown.stageMultiplier)}× ante${bonus}${back}`,
+              kind: 'good',
+            };
       }
       prevSilverRef.current = r.silverTongue;
       force();
       clearTimeout(pauseTimer.current);
+      if (selfPaced()) return; // waits for CONTINUE (button / Enter / Space)
       const pause = reEncodeRef.current ? HEAVY_CLEAR_PAUSE_MS : CLEAR_PAUSE_MS;
       pauseTimer.current = setTimeout(beginWord, pause);
     },
@@ -348,15 +368,19 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     // The miss stamp = the fugitive got away (drives the page-tear too, via
     // kind === 'miss').
     stampSeq.current += 1;
-    stampRef.current = { text: 'ESCAPED?!', tone: 'escape', kind: 'miss', id: stampSeq.current };
+    const STM = (packRef.current.ui && packRef.current.ui.stamps) || {};
+    stampRef.current = { text: STM.miss || 'ESCAPED?!', tone: 'escape', kind: 'miss', id: stampSeq.current };
     // Death dominates; otherwise a chrome-shatter if this miss broke SILVER
     // TONGUE, else a plain KO miss.
     if (r.gameOver) juice.death();
     else if (brokeSilver) juice.silverBreak();
     else juice.miss();
-    msgRef.current = { text: `the fugitive was ${(answer || word).toUpperCase()} — it'll be back`, kind: 'bad' };
+    msgRef.current = STM.miss
+      ? null
+      : { text: `the fugitive was ${(answer || word).toUpperCase()} — it'll be back`, kind: 'bad' };
     force();
     clearTimeout(pauseTimer.current);
+    if (selfPaced()) return; // waits for CONTINUE
     pauseTimer.current = setTimeout(() => {
       if (r.gameOver) {
         phaseRef.current = 'over';
@@ -378,6 +402,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   useEffect(() => {
     clearTimeout(stageTimer.current);
     if (phase !== 'playing' || pending !== 'idle' || SAT_RUSH_FREEZE) return;
+    if (selfPaced()) return; // no clue clock: HINT advances the clues
     const eng = engineRef.current;
     const c = eng.getState().current;
     if (!c || c.resolved) return;
@@ -487,6 +512,53 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     return () => clearTimeout(stageTimer.current);
   }, [phase, pending, stageForEffect, wordForEffect, doMiss, resolveClear]);
 
+  // ---- player-paced actions (HINT / SKIP / CONTINUE buttons; Enter + Escape on a keyboard) ----
+  // CONTINUE: leave the review card for the next word (or the results, after the last miss).
+  const continueRun = useCallback(() => {
+    if (pendingRef.current === 'idle') return;
+    clearTimeout(pauseTimer.current);
+    if (pendingRef.current === 'miss' && engineRef.current.getState().gameOver) {
+      reEncodeRef.current = null;
+      phaseRef.current = 'over';
+      force();
+    } else {
+      beginWord();
+    }
+  }, [beginWord]);
+  // HINT: the next clue stage; at the last stage, the next letter (which can finish the word). It costs
+  // what waiting costs on the clock — the multiplier drops a stage, a revealed letter makes it shaky.
+  const hint = useCallback(() => {
+    if (phaseRef.current !== 'playing' || pendingRef.current !== 'idle') return;
+    const eng = engineRef.current;
+    const input = inputRef.current;
+    const c = eng && eng.getState().current;
+    if (!c || c.resolved || !input) return;
+    const lastStage = eng.config.stageMultipliers.length - 1;
+    if (c.stage < lastStage) {
+      clearTimeout(stageTimer.current);
+      eng.advanceStage();
+      const now = eng.getState().current;
+      juice.multiplierDrop(now.stage, lastStage);
+      if (now.stage >= lastStage && modeRef.current !== 'lineup' && input.getState().revealed === 0) {
+        input.revealNextLetter(); // the free first letter, as on the clock
+      }
+      force();
+      return;
+    }
+    const rev = input.revealNextLetter();
+    if (rev.complete) resolveClear();
+    else force();
+  }, [resolveClear]);
+  // SKIP: give up on this word — see the answer now (a miss: it comes back later in the run).
+  const skip = useCallback(() => {
+    if (phaseRef.current !== 'playing' || pendingRef.current !== 'idle') return;
+    doMiss();
+  }, [doMiss]);
+  const continueRef = useRef(continueRun);
+  continueRef.current = continueRun;
+  const hintRef = useRef(hint);
+  hintRef.current = hint;
+
   // ---- keyboard ----
   //
   // TWO SOURCES, ONE PATH. A physical keyboard arrives as a window `keydown`; a TOUCH device has
@@ -507,16 +579,12 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       juice.unlockAudio(); // a real key/tap is a valid gesture to start the audio context
       if (pendingRef.current !== 'idle') {
         // A re-encode teaching beat (miss / heavy clear) is showing: any key skips
-        // it so fast players aren't held on the second look they don't need.
+        // it so fast players aren't held on the second look they don't need. Self-paced, only
+        // Enter / Space continue — a stray letter from the word just typed never skips the card.
         if (reEncodeRef.current) {
-          clearTimeout(pauseTimer.current);
-          if (pendingRef.current === 'miss' && engineRef.current.getState().gameOver) {
-            reEncodeRef.current = null;
-            phaseRef.current = 'over';
-            force();
-          } else {
-            beginWord();
-          }
+          if (selfPaced() && e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          continueRef.current();
         }
         return;
       }
@@ -527,6 +595,13 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
 
       if (e.key === 'Escape') {
         doMiss();
+        return;
+      }
+      // Enter = HINT (the next clue, or the next letter) — the keyboard twin of the HINT button. Only
+      // where there IS a hint button (FRENCH RUSH); in SAT a habitual Enter must not cost a stage.
+      if (e.key === 'Enter' && packRef.current.id !== 'sat') {
+        e.preventDefault();
+        hintRef.current();
         return;
       }
       if (e.key === 'Backspace') {
@@ -614,6 +689,10 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       config: {
         requeueShaky: finite, // the dropout schedule: shaky clears come back too
         meaningFirst: !!packRef.current.meaningFirst, // FRENCH RUSH leads with the English meaning
+        // self-paced: nobody "dies" — a run ends when its words are done; a word that gets away twice
+        // stops coming back (it is listed in the results, with its meaning, to study)
+        ...(paceRef.current === 'self' ? { lives: 999, maxMissReturns: 2 } : {}),
+        playRoot: packRef.current.playRoot !== false, // FRENCH RUSH keeps word families for the review
         ...(finite ? { revenantOffset: Math.min(revGap, FINITE_RETURN_GAP) } : {}),
         mode, // 'briefing' (spell-along net) | 'lineup' (suspect lineup, no spell-along)
         stageIntervalMs: stageMs,
@@ -710,7 +789,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     briefingRef.current = pickBriefing({
       state: lex,
       session: lex.session,
-      words: bandWords(packRef.current.words, spec.difficulty, spec.category),
+      words: bandWords(packRef.current.words, spec.difficulty, spec.category, spec.pack),
       rng: Math.random,
       count: spec.length,
       exclude: recentDecks.flat(),
@@ -735,15 +814,33 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     return p && typeof p === 'object' ? p : {};
   };
 
+  // TEACHER LINK (FRENCH RUSH ?mode=&level=&n=&theme=&pace=): preselect CASE SETUP with that set.
+  const applyPreset = useCallback(({ mode, difficulty, length, category, pace } = {}) => {
+    const lex = lexRef.current;
+    const m = mode === 'briefing' ? 'briefing' : 'lineup';
+    lex.setup = { ...setupPrefs(), difficulty, [m]: Number(length) || undefined, category: category || null, pace };
+    lex.mode = m;
+    persistLexicon();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistLexicon]);
+
+  // Where a word stands in the learning memory (WORD BANK): 'known' | 'learning' | 'new'.
+  const masteryOf = useCallback((word) => {
+    const lex = lexRef.current;
+    if (lexicon.isMastered(lex, word)) return 'known';
+    return lexicon.hasSeen(lex, word) ? 'learning' : 'new';
+  }, []);
+
   // CASE SETUP → go. Remembers the choice, then BRIEFING deals the study deck, LINEUP starts.
   const confirmSetup = useCallback(
-    ({ difficulty, length, category = null } = {}) => {
+    ({ difficulty, length, category = null, pace = null } = {}) => {
       juice.unlockAudio();
       const mode = modeRef.current;
-      const spec = normalizeSpec({ pack: packRef.current.id, mode, difficulty, length, category });
+      const spec = normalizeSpec({ pack: packRef.current.id, mode, difficulty, length, category, pace: pace || packRef.current.defaultPace });
       specRef.current = spec;
+      paceRef.current = spec.pace;
       const lex = lexRef.current;
-      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length, category: spec.category };
+      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length, category: spec.category, pace: spec.pace };
       persistLexicon();
       trackSR('setup_confirmed', { difficulty: spec.difficulty, length: spec.length });
       if (mode === 'lineup') {
@@ -774,7 +871,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         return;
       }
       const prefs = setupPrefs();
-      confirmSetup({ difficulty: prefs.difficulty, length: prefs[mode], category: prefs.category || null });
+      confirmSetup({ difficulty: prefs.difficulty, length: prefs[mode], category: prefs.category || null, pace: prefs.pace || null });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [confirmSetup, persistLexicon, trackSR]
@@ -801,6 +898,18 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     }
   }, [openBriefing, startRun, trackSR]);
 
+
+  // The pack's own HOME (FRENCH RUSH's exits — Andy: "switch exit … to the actual menu"): stop any
+  // run and show the cover.
+  const backToStart = useCallback(() => {
+    clearTimers();
+    pendingRef.current = 'idle';
+    reEncodeRef.current = null;
+    replayRef.current = null;
+    phaseRef.current = 'start';
+    force();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // CASE SETUP's back chip: return to the mode picker (no session bump — no run started).
   const backToModes = useCallback(() => {
@@ -960,6 +1069,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     spec: specRef.current,
     setupPrefs: lexRef.current.setup || null,
     pack: packRef.current,
+    pace: paceRef.current,
   });
 
   return {
@@ -970,6 +1080,12 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     confirmSetup,
     replayMisses,
     backToModes,
+    hint,
+    skip,
+    continueRun,
+    backToStart,
+    applyPreset,
+    masteryOf,
     startRun: beginRunFromBriefing,
     abandonRun,
     setStageMs,
@@ -1001,7 +1117,7 @@ function buildCaseFile(results, lex, pack) {
     // clean = caught without help first time; recaptured = got away, caught on its return;
     // shaky = only ever caught leaning on the letters; escaped = never caught
     const outcome = !c.captured ? 'escaped' : c.misses > 0 ? 'recaptured' : c.clean ? 'clean' : 'shaky';
-    return { word: c.word, pos: posLabelOf(pack, c), gloss: c.gloss, context: c.context, contextEn: c.contextEn || null, outcome, mastery, misses: c.misses };
+    return { word: c.word, pos: posLabelOf(pack, c), rawPos: c.pos, gender: c.gender || null, gloss: c.gloss, context: c.context, contextEn: c.contextEn || null, outcome, mastery, misses: c.misses };
   });
 }
 
@@ -1011,7 +1127,7 @@ function buildCaseFile(results, lex, pack) {
 // miss or a heavy-reveal clear.
 function buildReEncode(cw, kind) {
   const cousin = cw.root && Array.isArray(cw.root.cousins) && cw.root.cousins.length ? cw.root.cousins[0] : null;
-  return { word: cw.word, context: cw.context, contextEn: cw.contextEn || null, gloss: cw.gloss, root: cw.root, cousin, kind };
+  return { word: cw.word, pos: cw.pos, gender: cw.gender || null, context: cw.context, contextEn: cw.contextEn || null, gloss: cw.gloss, root: cw.root, cousin, kind };
 }
 
 // Pure: build the per-card data THE BRIEFING renders — the filled sentence is the
@@ -1022,6 +1138,8 @@ function buildBriefingView(briefing, lex, pack) {
   const cards = briefing.words.map((row) => ({
     word: row.word,
     pos: posLabelOf(pack, row),
+    rawPos: row.pos,
+    gender: row.gender || null,
     contextEn: row.contextEn || null,
     length: row.word.length,
     context: row.context,
@@ -1053,6 +1171,7 @@ function buildView(state, cur, eng, input, extra) {
     lastClearedWord: extra.lastCleared ? extra.lastCleared.word : '',
     clearId: extra.lastCleared ? extra.lastCleared.id : 0,
     spec: extra.spec, // the run's RunSpec (CASE SETUP / results)
+    pace: extra.pace, // 'self' (no clock: HINT / CONTINUE) | 'timed'
     setupPrefs: extra.setupPrefs, // remembered CASE SETUP choices (preselect)
     knownCount: lexicon.masteredCount(extra.lex), // words at the mastery box (CASE SETUP line)
     packSize: extra.pack.words.length,
@@ -1144,6 +1263,8 @@ function buildView(state, cur, eng, input, extra) {
     // WORDS YOU KEEP MISSING list (top sticky misses) so the end screen can point
     // the player straight at what to study next.
     isReturn: !!cur.isReturn, // a SECOND LOOK (shaky clear brought back)
+    // the word's theme (packs with categories — FRENCH RUSH prints it where SAT prints WANTED)
+    theme: ((extra.pack.categories || []).find((c) => c.id === (cur.row && cur.row.category)) || {}).label || null,
     // FINITE run progress for the HUD: words settled / the run's length.
     runTotal: state.runTotal || 0,
     settled: state.settled || 0,

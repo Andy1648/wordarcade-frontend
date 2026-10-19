@@ -26,10 +26,27 @@ export const DIFFICULTIES = {
 };
 export const DIFFICULTY_ORDER = ['easy', 'standard', 'hard'];
 
+// FRENCH RUSH levels (oct19, Andy: "do a better job with the level difficulty … ensure this is priority
+// for AP exam"). A word's `tier` is how hard it is for an English speaker to LEARN — real frequency
+// (OpenSubtitles fr top-50k rank) blended with a teacher rating, one step easier for a true cognate —
+// and its `ap` is how much the AP exam leans on it (1 must-know, 2 common, 3 extra). The levels cut on
+// BOTH: BASICS is must-know AND easy, EXAM CORE is everything the exam uses a lot, SCORE 5 is the
+// harder tail.
+export const FR_DIFFICULTIES = {
+  easy: { id: 'easy', label: 'BASICS', line: 'must-know', tiers: [1, 2], apMax: 1 },
+  standard: { id: 'standard', label: 'EXAM CORE', line: 'most on the AP', tiers: [1, 4], apMax: 2 },
+  hard: { id: 'hard', label: 'SCORE 5', line: 'harder + rarer', tiers: [3, 5], apMax: 3 },
+};
+
+/** The level table for a pack (FRENCH RUSH has its own; everything else uses the SAT one). */
+export function difficultiesFor(pack) {
+  return pack === 'fr' ? FR_DIFFICULTIES : DIFFICULTIES;
+}
+
 // LINEUP: how many words the case file holds. BRIEFING: how many words you study (and then hunt).
 export const LENGTHS = { lineup: [10, 20, 30], briefing: [5, 10, 15] };
 
-export const DEFAULT_SPEC = { pack: 'sat', mode: 'lineup', difficulty: 'standard', length: 10, category: null };
+export const DEFAULT_SPEC = { pack: 'sat', mode: 'lineup', difficulty: 'standard', length: 10, category: null, pace: 'timed' };
 
 // At most this share of a run is words the player has been shaky on before (the rest is new ground).
 export const REVIEW_SHARE = 0.3;
@@ -43,14 +60,23 @@ export function normalizeSpec(spec = {}) {
   const length = lengths.includes(Number(s.length)) ? Number(s.length) : lengths[0];
   const pack = typeof s.pack === 'string' && s.pack ? s.pack : DEFAULT_SPEC.pack;
   const category = typeof s.category === 'string' && s.category ? s.category : null;
-  return { pack, mode, difficulty, length, category };
+  // pace: 'self' (no clock — HINT + CONTINUE) | 'timed' (the clue clock)
+  const pace = s.pace === 'self' ? 'self' : 'timed';
+  return { pack, mode, difficulty, length, category, pace };
 }
 
 /** The pack's rows inside the difficulty's tier band (and the category, when the spec names one). */
-export function bandWords(words, difficulty, category = null) {
-  const [lo, hi] = (DIFFICULTIES[difficulty] || DIFFICULTIES.standard).tiers;
+export function bandWords(words, difficulty, category = null, pack = 'sat') {
+  const table = difficultiesFor(pack);
+  const d = table[difficulty] || table.standard;
+  const [lo, hi] = d.tiers;
+  const apMax = d.apMax || 9;
   return words.filter(
-    (r) => r.tier >= lo && r.tier <= hi && (!category || r.category === category)
+    (r) =>
+      r.tier >= lo &&
+      r.tier <= hi &&
+      (r.ap == null || r.ap <= apMax) &&
+      (!category || r.category === category)
   );
 }
 
@@ -59,8 +85,9 @@ export function bandWords(words, difficulty, category = null) {
  * its high tier (a 1-word run sits at the low end). Every `deepCutEvery`-th slot (1-based) targets
  * the top of the band — the engine dresses those slots as deep cuts.
  */
-export function tierTargets(length, difficulty, deepCutEvery = 0) {
-  const [lo, hi] = (DIFFICULTIES[difficulty] || DIFFICULTIES.standard).tiers;
+export function tierTargets(length, difficulty, deepCutEvery = 0, pack = 'sat') {
+  const table = difficultiesFor(pack);
+  const [lo, hi] = (table[difficulty] || table.standard).tiers;
   const out = [];
   for (let i = 0; i < length; i++) {
     const t = length > 1 ? lo + Math.round(((hi - lo) * i) / (length - 1)) : lo;
@@ -96,7 +123,7 @@ export function buildRunQueue({
   deepCutEvery = 0,
 } = {}) {
   const s = normalizeSpec(spec);
-  const band = bandWords(words, s.difficulty, s.category);
+  const band = bandWords(words, s.difficulty, s.category, s.pack);
   const recentSet = recent instanceof Set ? recent : new Set(recent);
   const state = lex && lex.records ? lex : { records: {} };
   const used = new Set();
@@ -126,7 +153,7 @@ export function buildRunQueue({
     if (recentSet.has(r.word)) return 2;
     return hasSeen(state, r.word) ? 1 : 0;
   };
-  const targets = tierTargets(s.length, s.difficulty, deepCutEvery);
+  const targets = tierTargets(s.length, s.difficulty, deepCutEvery, s.pack);
   const slots = new Array(s.length).fill(null);
 
   // Review words go to evenly spread slots (never the first: the run opens on new ground).
@@ -147,7 +174,8 @@ export function buildRunQueue({
     let bestKey = Infinity;
     for (const r of pool) {
       if (used.has(r.word)) continue;
-      const key = rank(r) * 100 + Math.abs(r.tier - targets[i]) * 2 + (r.tier > targets[i] ? 1 : 0);
+      // AP priority (FRENCH RUSH): a must-know word wins a tie over a nice-to-have one
+      const key = rank(r) * 100 + Math.abs(r.tier - targets[i]) * 4 + (r.tier > targets[i] ? 2 : 0) + ((r.ap || 1) - 1);
       if (key < bestKey) {
         best = r;
         bestKey = key;

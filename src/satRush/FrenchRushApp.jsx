@@ -12,5 +12,5 @@ export default function FrenchRushApp() {
   useEffect(() => {
     document.title = 'French Rush — AP French vocab | Type A Word';
   }, []);
-  return <FrenchRushGame onExit={() => window.location.assign('/')} />;
+  return <FrenchRushGame />;
 }

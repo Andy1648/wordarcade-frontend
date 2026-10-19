@@ -58,15 +58,48 @@ export const PACKS = {
       { id: 'vie', label: 'Contemporary life' },
       { id: 'defis', label: 'Global challenges' },
       { id: 'connecteurs', label: 'Essay connectors' },
+      { id: 'examen', label: 'Exam & email words' },
     ],
     storageKey: 'wa_frenchrush_lexicon',
     recentKey: 'wa_frenchrush_recent',
     meaningFirst: true,
     accentFold: true,
+    // the run is the student's: no clock by default (HINT for the next clue, CONTINUE after every word);
+    // the TIMED pace is slow — a stage is 7s (×1.4 with choices) and the letters print every 1.8s
+    defaultPace: 'self',
+    timing: { stageMs: 7000, lineupScale: 1.4, spellMs: 1800 },
+    // the word family is a study aid, shown on the review card — not one more line mid-word
+    playRoot: false,
+    // plain words, no bounty-poster theme (Andy oct19: "the 'recherche' is SO STUPID")
     ui: {
-      wanted: 'RECHERCHÉ',
-      mostWanted: 'TRÈS RECHERCHÉ',
+      wanted: null, // no banner — the masthead is the theme + part of speech
+      mostWanted: null,
       fields: { sentence: 'En français', gloss: 'Meaning', root: 'Word family', rootShort: 'family' },
+      hud: { heat: false },
+      reward: { caption: false },
+      stamps: { got: 'BRAVO !', miss: 'RATÉ', streak: 'SÉRIE ×' },
+      review: { got: 'BRAVO !', weak: 'GOT IT — WITH HINTS', miss: 'THE ANSWER' },
+      lineup: { label: 'Choices', standing: 'left', cleared: 'NON' },
+      modeHead: 'HOW DO YOU WANT TO PRACTICE?',
+      modes: {
+        briefing: { title: 'STUDY FIRST', line: 'learn the words, then type them' },
+        lineup: { title: 'QUIZ', line: 'type it — a few choices help you' },
+      },
+      setupSub: 'set up your practice',
+      pace: 'self', // CASE SETUP offers a pace row, preselected to no timer
+      briefingTitle: 'STUDY',
+      startLabel: 'Start',
+      results: {
+        done: 'TERMINÉ !',
+        out: 'OUT OF LIVES',
+        captured: 'correct',
+        away: 'missed',
+        file: 'your words',
+        outcomes: { clean: 'GOT IT', recaptured: '2ND TRY', shaky: 'WITH HINTS', escaped: 'MISSED' },
+        again: 'Practice again',
+        replay: (n) => `Practice the ${n} I missed`,
+        menu: 'French Rush home',
+      },
     },
   },
 };
