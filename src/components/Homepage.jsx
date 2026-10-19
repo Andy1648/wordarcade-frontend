@@ -1373,14 +1373,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       <span className="hp-rankplate-n">{shownRankName(rankTitle(xpProgress.level))}</span>
     </button>
   ) : null;
+  // JUICE P1: the bar's right end shows the next reward — the next level, or REBIRTH when that level opens the gate
+  const barLevel = barLive ? xpProgress.level : barFrom.level;
+  const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, rebirth: barLevel + 1 >= rebirthGate, r: rebirths + 1 } : null), [barLevel, rebirthGate, rebirths]);
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
-      level={barLive ? xpProgress.level : barFrom.level}
+      level={barLevel}
       frac={barLive ? xpProgress.frac : barFrom.frac}
       need={barLive ? xpProgress.cost : needAt(barFrom.level)}
       lvInside={SEASON2}
       lead={rankPlate}
+      goal={xpGoal}
     />
   );
 
