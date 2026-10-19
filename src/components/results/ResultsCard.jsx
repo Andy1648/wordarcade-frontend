@@ -2,7 +2,7 @@
 // "one big placement, tally counts up line by line, the multiplier chain shown once, PLAY AGAIN big. Every win credited
 // must appear as its own line (no unexplained wins). Replaces the old 'where your wins came from' breakdown."
 //
-//   HERO      the placement, huge (#1 / #3/6), a WIN · TOP 3 · KO'D stamp, the trophy / medal / skull (SVG art), the best
+//   HERO      the placement, huge (#1 / #3/6), a WIN stamp on #1 (none on a loss), the trophy / medal / skull (SVG art), the best
 //             word; on a loss the PAUSE-TO-LEARN hold (a word that would have worked) sits under it.
 //   TALLY     WORDS · LETTERS → +XP (LV bar, "LV +N") → WINS: BASE × ×M = +N with the chain chips → one line per bonus
 //             (WINNER BONUS ×1.5, SECRET FIND, …) → +GEMS → TOTAL WINS. Lines reveal in turn and count up.
@@ -74,20 +74,6 @@ const DIZZY = [{ transform: 'scale(0) rotate(-120deg)', opacity: 0 }, { transfor
 // ART PIPELINE (Andy oct13): the trophy + XP hex are ChatGPT art cut by scripts/cutout-art.py (public/results/).
 function Trophy() {
   return <img src="/results/trophy.webp" alt="" aria-hidden="true" draggable="false" />;
-}
-function Medal({ place }) {
-  return (
-    <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-      <path d="M30 4 L52 52 L38 58 L14 10 Z" fill="#FF3D7F" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M90 4 L68 52 L82 58 L106 10 Z" fill="#B04BFF" stroke="#000" strokeWidth="5" strokeLinejoin="round" />
-      <path d="M24 12 L36 38" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".7" />
-      <circle cx="60" cy="80" r="34" fill="#D88BFF" stroke="#000" strokeWidth="5" />
-      <path d="M60 46 A34 34 0 0 1 94 80 A34 34 0 0 1 60 114 Z" fill="#B04BFF" opacity=".55" />
-      <circle cx="60" cy="80" r="23" fill="#B04BFF" stroke="#000" strokeWidth="4" />
-      <text x="60" y="93" textAnchor="middle" fontFamily="Bungee, sans-serif" fontSize="34" fill="#fff" stroke="#000" strokeWidth="5" paintOrder="stroke">{place}</text>
-      <path d="M36 70 A26 26 0 0 1 50 54" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" />
-    </svg>
-  );
 }
 function Skull() {
   return (
@@ -305,7 +291,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
   const meRowId = (table.find((r) => r.me) || {}).id;
   // you play as your MAIN (menu picker); everyone else shows the cast member of their seat colour
   const myCast = meRowId != null ? castFor(meRowId, true) : null;
-  const pose = iWon ? 'win' : stamp.tone === 'top' ? 'hero' : 'ko';
+  const pose = iWon ? 'win' : 'ko';
   const rowCast = (p) => (p.me ? myCast || castFor(p.id, true) : castByColor(resolvePlayerColor(playerColors, p.id).color));
   return (
     <div ref={root} className={`game-over-card rs2${narrow ? ' rs2--narrow' : ''}${learn ? ' has-learn' : ''} ${iWon ? 'go-card-win' : 'go-card-loss'}`} data-place={place} data-outcome={iWon ? 'win' : 'loss'} data-stamp={stamp.tone}>
@@ -327,15 +313,15 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       {/* ===== HERO: the placement ===== */}
       <section className={`rs2-hero rs2-hero--${stamp.tone}`} role="heading" aria-level={2} aria-label={heroLabel}>
         <div className="rs2-hero-plate" aria-hidden="true" />
-        {myCast && pose !== 'hero' ? <div className={`rs2-impact is-${pose}`} aria-hidden="true" /> : null}
+        {myCast ? <div className={`rs2-impact is-${pose}`} aria-hidden="true" /> : null}
         <div className="rs2-hero-in" aria-hidden="true">
           {myCast ? (
-            // YOUR CHARACTER is the placement art (art run oct16, Andy: WIN pose + confetti · top 3 = HERO on its medal
-            // emblem · K.O. pose + dizzy stars). Until a WIN / KO pose is painted the HERO stands in (tipped over on a K.O.).
+            // YOUR CHARACTER is the placement art (art run oct16, Andy: WIN pose + confetti · K.O. pose + dizzy stars; the
+            // top-3 HERO-on-a-medal tier went with the TOP 3 stamp, oct19). Until a WIN / KO pose is painted the HERO stands
+            // in (tipped over on a K.O.).
             <div className={`rs2-icon rs2-char rs2-char--${pose}`} data-rv="drop" data-at="150" data-cast={myCast.id}>
-              {pose !== 'hero' ? <img className="rs2-impact-burst" src={pose === 'win' ? '/fx/burst-win.webp' : '/fx/burst-ko.webp'} width="256" height="256" alt="" draggable="false" /> : null}
-              {pose === 'hero' ? <img className="rs2-char-emblem" src={`/stage/emblem-${Math.min(3, Math.max(1, place))}.webp`} width="256" height="256" alt="" draggable="false" /> : null}
-              <img className={`rs2-char-img${pose !== 'hero' && !hasPose(myCast.id, pose) ? ` is-stand-in is-${pose}` : ''}`} src={castSrc(myCast.id, pose)} width="512" height="512" alt="" draggable="false" />
+              <img className="rs2-impact-burst" src={pose === 'win' ? '/fx/burst-win.webp' : '/fx/burst-ko.webp'} width="256" height="256" alt="" draggable="false" />
+              <img className={`rs2-char-img${!hasPose(myCast.id, pose) ? ` is-stand-in is-${pose}` : ''}`} src={castSrc(myCast.id, pose)} width="512" height="512" alt="" draggable="false" />
               {pose === 'win' ? (
                 <span className="rs2-char-fx">{CHAR_CONFETTI.map((c, i) => <img key={i} className="rs2-char-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
               ) : null}
@@ -344,15 +330,17 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
               ) : null}
             </div>
           ) : (
-            <div className="rs2-icon" data-rv="drop" data-at="150">{iWon ? <Trophy /> : stamp.tone === 'top' ? <Medal place={place} /> : <Skull />}</div>
+            <div className="rs2-icon" data-rv="drop" data-at="150">{iWon ? <Trophy /> : <Skull />}</div>
           )}
           <div className="rs2-place" data-rv="slam" data-at="0">
             <span className="rs2-place-n">#{formatNum(place)}</span>
             {place > 1 ? <span className="rs2-place-of">/{formatNum(of)}</span> : null}
           </div>
-          <div className={`rs2-stamp rs2-stamp--${stamp.tone}${iWon ? ' game-over-title win' : ''}`} data-rv="stamp" data-at="500">
-            <span>{stamp.text}</span>
-          </div>
+          {stamp.text ? (
+            <div className={`rs2-stamp rs2-stamp--${stamp.tone}${iWon ? ' game-over-title win' : ''}`} data-rv="stamp" data-at="500">
+              <span>{stamp.text}</span>
+            </div>
+          ) : null}
           {me.best ? (
             <div className="rs2-best" data-rv="best" data-at={tEnd + 160}>
               <span className="rs2-best-k">BEST<br />WORD</span>

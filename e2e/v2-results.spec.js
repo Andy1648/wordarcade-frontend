@@ -7,7 +7,8 @@
 //   * WIN: #1 + WIN stamp; the tally reveals in order and COUNTS UP (the total reads +0 early, its real value at the
 //     end); the chain chips sit on the WORDS line, once; WINNER BONUS is its own line; TOTAL = Σ lines = taw.wins Δ;
 //     "WHERE YOUR WINS CAME FROM" is gone; PLAY AGAIN is the biggest button and restarts (rematch);
-//   * LOSS: placement by elimination (#3 → TOP 3, #4 → KO'D), the PAUSE-TO-LEARN word, the K.O. line named;
+//   * LOSS: placement by elimination (#3, #4), NO stamp (the TOP 3 / KO'D stamps sat on the /N — Andy oct19), the
+//     PAUSE-TO-LEARN word, the K.O. line named; at #2 of 2 nothing is drawn over the /2;
 //   * REDUCE MOTION: every line is final on the first frame; nothing animates;
 //   * the four sizes: no card scroll, no text < 13 px, PLAY AGAIN on screen, nothing loops.
 import { test, expect } from '@playwright/test';
@@ -114,19 +115,65 @@ test('WIN: #1 + WIN, line-by-line count-up, chain once, every credited win its o
   await mock.waitForSent('rematch');
 });
 
-for (const [place, stamp] of [[3, 'TOP 3'], [4, "KO'D"]]) {
-  test(`LOSS #${place}: placement by elimination, ${stamp}, the PAUSE-TO-LEARN word, the K.O. line`, async ({ page }) => {
+for (const place of [3, 4]) {
+  test(`LOSS #${place}: placement by elimination, no stamp, the PAUSE-TO-LEARN word, the K.O. line`, async ({ page }) => {
     test.setTimeout(90_000);
     await play(page, { outcome: 'loss', place });
     const card = page.locator('.rs2');
     await expect(card).toHaveAttribute('data-place', String(place));
     await expect(card.locator('.rs2-place-n')).toHaveText(`#${place}`);
     await expect(card.locator('.rs2-place-of')).toHaveText('/6');
-    await expect(card.locator('.rs2-stamp')).toHaveText(stamp);
+    await expect(card.locator('.rs2-stamp')).toHaveCount(0);
     await expect(card.locator('.rs2-hero')).toHaveAttribute('aria-label', /Knocked out\. RIVAL WINS/);
     await expect(card.locator('.missed-hold-word')).toBeVisible();
     await expect(card.locator(`.rs2-prow.is-me`)).toHaveAttribute('data-place', String(place));
     await expect(card.locator('[data-wins-line="WINNER BONUS"]')).toHaveCount(0);
+  });
+}
+
+// #2 OF 2 (Andy oct19: "no need for the top three on the finished screen for Word Bomb ... it doesn't logically make sense
+// if there are only two players and it's overlapping with two out of two"). The old TOP 3 stamp sat across the "/2".
+for (const vp of [{ width: 1366, height: 768 }, { width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+  test(`LOSS #2 of 2 @${vp.width}x${vp.height}: no TOP 3 (no stamp at all), nothing drawn over the /2`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize(vp);
+    const mock = await installBackendMock(page);
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.continue());
+    await page.addInitScript(() => {
+      for (const k of ['taw.seenMenu', 'taw.seenMenuSpotlight', 'taw.seenGameSpotlight']) localStorage.setItem(k, '1');
+    });
+    await page.goto('/?portal=1');
+    await menuReady(page);
+    const players = [{ id: ME, name: 'YOU', lives: 3, isHost: true }, { id: 'p2', name: 'RIVAL', lives: 3 }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players, combo: 'str', timerSeconds: 22, maxLives: 3, round: 1, usedWords: [] } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'word_result', payload: { accepted: true, word: 'STRAND', playerId: ME } });
+    await page.waitForTimeout(120);
+    const out = players.map((p) => ({ ...p, lives: p.id === ME ? 0 : p.lives }));
+    mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: 'p2', players: out, combo: 'ing', timerSeconds: 22, usedWords: [] } });
+    await page.waitForTimeout(120);
+    mock.pushToClient({ type: 'game_over', payload: { winnerId: 'p2' } });
+    const card = page.locator('.game-over-overlay .rs2');
+    await card.waitFor();
+    await expect(card).toHaveAttribute('data-place', '2');
+    await expect(card.locator('.rs2-place-of')).toHaveText('/2');
+    await expect(card.locator('.rs2-stamp')).toHaveCount(0);
+    await expect(card).not.toContainText('TOP 3');
+    await page.waitForTimeout(1200); // the hero's one-shot reveals land
+    const hits = await page.evaluate(() => {
+      const b = document.querySelector('.rs2-place-of').getBoundingClientRect();
+      return [...document.querySelectorAll('.rs2-hero-in > *:not(.rs2-place):not(.rs2-icon)')].map((el) => {
+        const a = el.getBoundingClientRect();
+        const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        return a.width && ox > 1 && oy > 1 ? `${el.className} ${Math.round(ox)}x${Math.round(oy)}` : null;
+      }).filter(Boolean);
+    });
+    expect(hits, 'something is drawn over the /2').toEqual([]);
   });
 }
 

@@ -89,9 +89,12 @@ export function tallyLines({ wordsWins = 0, bonusLines = [], ledger = null } = {
   return { lines, total: lines.reduce((a, l) => a + l.amount, 0) };
 }
 
-/** The hero stamp for a placement: WIN (#1), TOP 3, or KO'D. */
+/** The hero stamp for a placement: WIN on #1, and NO stamp on a loss (text ''; the tone still colours the hero).
+ *  Andy oct19: "no need for the top three on the finished screen for Word Bomb ... it doesn't logically make sense if
+ *  there are only two players and it's overlapping with two out of two". The stamp slams across the placement, which
+ *  only works on #1 (no "/N" beside it): on a loss TOP 3 / KO'D sat over the "/N" and hid the BEST WORD line. The loss
+ *  already reads from the K.O. pose + dizzy stars and the "<WINNER> WINS" line. */
 export function stampFor(place, iWon) {
   if (iWon || place === 1) return { text: 'WIN', tone: 'win' };
-  if (place > 0 && place <= 3) return { text: 'TOP 3', tone: 'top' };
-  return { text: "KO'D", tone: 'ko' };
+  return { text: '', tone: 'ko' };
 }

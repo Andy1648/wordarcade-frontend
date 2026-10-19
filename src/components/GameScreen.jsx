@@ -872,7 +872,7 @@ const BOMB_MASCOT_SRC = {
  * Word Bomb's centerpiece: the MASCOT is the bomb. The mascot PNG (chosen by the
  * `pose` prop - idle, panic under 30%, or a brief celebrate/taunt flash) renders
  * inside the SVG where the cartoon bomb body used to be, while the fuse still
- * burns down over its head and the live seconds count over its belly. The
+ * burns down over its head (the seconds live in the TIME plaque, not on the belly). The
  * calm/warning/critical tension tiers drive the same wobble / shake / scale /
  * vignette as before - they now move the mascot image instead of an SVG bomb.
  */
@@ -883,7 +883,6 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
     : Math.max(0, Math.min(1, timerSeconds / (maxTimer || 1)));
 
   const tension = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
-  const critical = tension === 'critical';
 
   // Fuse uses pathLength="100", so the offset is just the burnt-away percent;
   // the flame sits at the matching point along the curve.
@@ -896,15 +895,10 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
   // time, orange as it tightens, red when it is nearly out.
   const fuseColor = tension === 'calm' ? '#FFE94A' : tension === 'warning' ? '#FF6B3D' : '#FF4B4B';
 
-  // NUMERIC READOUT: only in the last 5 seconds. The fuse already carries the proportion
-  // for the whole turn, so a number on screen the entire time is noise that competes with
-  // the fragment. 5s is the natural threshold - the server resets to a 5s minimum turn
-  // after a valid word, so under 5s is exactly "this could end now".
-  const showSeconds = !showCountdown && timerSeconds <= 5;
-  const numFill = tension === 'warning' ? '#FF5C5C' : '#fff';
-  const numStroke = critical ? '#FF5C5C' : '#000';
-  const numStrokeWidth = critical ? 4 : 3;
-  const numSize = tension === 'calm' ? 26 : tension === 'warning' ? 30 : 34;
+  // NO NUMBER ON THE BOMB (Andy oct19: "the timer for word bomb is overlapping with the rules ... on the type word
+  // icon in the center"). The last-5-seconds readout sat on the belly at y=116, exactly where the fragment plate
+  // (.wb-belly) is printed, so the digit peeked out around STR. The TIME plaque above the ring carries the number
+  // for the whole turn now; the fuse and the ring around the mascot still read the proportion.
 
   const src = BOMB_MASCOT_SRC[pose] || BOMB_MASCOT_SRC.idle;
 
@@ -975,30 +969,6 @@ function BombVisual({ timerSeconds, maxTimer, showCountdown, pose }) {
             />
 
             {/* (The mascot <image> above is the bomb body now - no SVG body/face.) */}
-
-            {/* ---- Live seconds, sitting over the mascot's belly. Only present in the
-                 final 5 seconds (see showSeconds). Re-keyed on the second so the CSS
-                 one-shot hard pulse (a discrete scale STEP, never a smooth throb)
-                 replays on each tick. ---- */}
-            {showSeconds && (
-            <text
-              key={timerSeconds}
-              className="bomb-num-tick"
-              x="80"
-              y="116"
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontFamily="'Bungee', cursive"
-              fontSize={numSize}
-              fill={numFill}
-              stroke={numStroke}
-              strokeWidth={numStrokeWidth}
-              paintOrder="stroke"
-              style={{ transition: 'font-size 0.4s ease, fill 0.4s linear, stroke 0.4s linear' }}
-            >
-              {timerSeconds}
-            </text>
-            )}
 
             {/* ---- Flame + sparks, glued to the burning tip. The position group
                  eases its translate over 1s so it tracks the smooth fuse. ---- */}
