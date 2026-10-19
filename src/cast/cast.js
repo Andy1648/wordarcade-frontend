@@ -312,6 +312,12 @@ for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
 export const CAST_FRAMES = {
   // RIOT: shake the can (twice), spray, blow the nozzle like a smoking gun
   riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 },
+  // GLITCH: bored chew → the bubble grows → huge → POP, gum all over its face, still unimpressed
+  glitch: { n: 4, seq: [[1, 380], [2, 520], [3, 1300]], rest: 2200 },
+  // HYPE: wind up → finger to the sky YELLING → wave it to the crowd (twice) → points right at you, wink
+  hype: { n: 4, seq: [[1, 280], [2, 300], [1, 280], [2, 300], [3, 1000]], rest: 1800 },
+  // BRAWL: guard up → jab jab → big uppercut → gloves bumped, cocky wink
+  brawl: { n: 4, seq: [[1, 150], [0, 130], [1, 150], [0, 160], [2, 650], [0, 180], [3, 950]], rest: 1700 },
 };
 export const castFrames = (id, pose = 'hero') => (pose === 'hero' && CAST_FRAMES[id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
