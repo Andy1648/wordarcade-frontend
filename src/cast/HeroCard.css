@@ -37,21 +37,16 @@
 @media (prefers-reduced-motion: reduce) { .hc { transition: none; } }
 .hc-req {
   position: absolute; left: 50%; bottom: 6%; z-index: 2; translate: -50% 0; display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 8px 3px 4px; white-space: nowrap; background: #0d0618; border: 3px solid #FFE94A; border-radius: 6px; box-shadow: 3px 3px 0 #000;
+  max-width: 94%; padding: 3px 8px 3px 4px; white-space: nowrap; background: #0d0618; border: 3px solid #FFE94A; border-radius: 6px; box-shadow: 3px 3px 0 #000;
   font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #FFE94A;
 }
+.hc-req .kit-icon { flex: none; }
+.hc-req-t { flex: 0 1 auto; min-width: 0; }
+/* a LEGEND short of its rebirth: the lock, white on a pink outline, so it reads LOCKED rather than as a goal */
+.hc-req.is-lock { color: #fff; border-color: #FF4FA3; }
 .hc.has-req .hc-hero { filter: grayscale(.7) brightness(.55); }
-/* the LEGEND art window is narrower than the crew's: its requirement chip drops the second (rebirth) icon and the side
-   padding so "REBIRTH 5" never clips — the lock + words still say it all */
-.hc.is-legend .hc-req { padding: 3px 6px 3px 3px; gap: 3px; }
-.hc.is-legend .hc-req .kit-icon:nth-of-type(2) { display: none; }
-/* GOLD's wins-to-go chip (trophy + "37/100") sits in the elite-size window: drop the lock so it never clips */
-.hc.is-gold .hc-req { padding: 3px 6px 3px 3px; gap: 3px; }
-.hc.is-gold .hc-req .kit-icon:nth-of-type(1) { display: none; }
-/* phone cards are ~150px wide: the requirement chip keeps its k15 type and drops the second icon so it never clips */
 @media (max-width: 760px) {
   .hc-req { font-size: var(--fs-k15); padding: 3px 6px 3px 3px; gap: 3px; }
-  .hc-req .kit-icon:nth-of-type(2) { display: none; }
   .hc-name { font-size: var(--fs-k22); -webkit-text-stroke-width: 4px; }
 }
 /* not owned yet (one-card picker): the hero greyed back; the status pill under the card says how to get it */

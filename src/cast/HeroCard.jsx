@@ -42,8 +42,9 @@ export default function HeroCard({ hero, locked = false, req = null, dim = false
         <span className="hc-art">
           <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
           {rare ? <span ref={shineRef} className="hc-shine" aria-hidden="true" /> : null}
-          {/* an EARNABLE hero not earned yet: the requirement rides the art (lock + REBIRTH 1 / LEVEL 20) */}
-          {req ? <span className="hc-req"><KitIcon name="lock" size={22} shadow={1} extras={false} /><KitIcon name={req.icon} size={22} shadow={1} extras={false} /><span>{req.label}</span></span> : null}
+          {/* an EARNABLE hero not earned yet: the requirement rides the art (60 WINS / LEVEL 20); a LEGEND still short of
+              its rebirth wears the lock (oct19) — one icon, and the words shrink to the window rather than clip */}
+          {req ? <span className={`hc-req${req.lock ? ' is-lock' : ''}`}><KitIcon name={req.lock ? 'lock' : req.icon} size={22} shadow={1} extras={false} /><FitText className="hc-req-t">{req.label}</FitText></span> : null}
         </span>
         <span className="hc-plate" aria-hidden="true" />
         <img className="hc-frame" src={hero.legend ? '/cards/frame-legend.webp' : hero.elite || hero.gold ? '/cards/frame-elite.webp' : '/cards/frame.webp'} alt="" aria-hidden="true" draggable="false" />
