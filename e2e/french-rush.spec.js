@@ -84,3 +84,15 @@ test('the arcade never downloads French Rush', async ({ page }) => {
   await page.waitForLoadState('networkidle');
   expect(french).toEqual([]);
 });
+
+test('STUDY FIRST only teaches words you cannot guess from English', async ({ page }) => {
+  await installBackendMock(page);
+  await page.goto('/french-rush?mode=briefing&level=standard&n=10&pace=self');
+  await page.getByRole('button', { name: /Study the words/ }).click();
+  await expect(page.locator('.sr-brief-card')).toHaveCount(10);
+  const studied = (await page.locator('.sr-brief-word').allInnerTexts()).map((t) =>
+    t.replace('🔊', '').trim().replace(/^(le\/la |le |la |l')/, '')
+  );
+  const byWord = new Map(WORDS.map((r) => [r.word, r]));
+  for (const w of studied) expect(byWord.get(w) && byWord.get(w).guessable, `${w} is guessable`).toBe(false);
+});

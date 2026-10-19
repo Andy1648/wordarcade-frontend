@@ -25,7 +25,7 @@ import { speakFr, canSpeak, withArticle } from './speak';
 // briefing), the definition, and ONE cousin from the root if there is one. Held
 // for the between-word pause, or dismissed early by any key (handled in the hook).
 function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
-  const { word, pos, gender, context, contextEn, gloss, cousin, kind } = data;
+  const { word, pos, gender, falseFriend, context, contextEn, gloss, cousin, kind } = data;
   const [before, after] = context.split(/_+/);
   const review = (ui && ui.review) || {};
   const tag = review[kind] || (kind === 'miss' ? 'IT WAS' : kind === 'got' ? 'CAPTURED' : 'BARELY — REMEMBER IT');
@@ -54,6 +54,7 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
       </div>
       {/* oct17 (Andy): the DEFINITION is plain text; the EXAMPLE is the quote. */}
       <p className="sr-reencode-def">{gloss}</p>
+      {falseFriend && <p className="sr-reencode-ff">false friend — it doesn&apos;t mean what it looks like</p>}
       <p className="sr-reencode-sentence">
         “{before}
         <mark className="sr-brief-fill">{word}</mark>

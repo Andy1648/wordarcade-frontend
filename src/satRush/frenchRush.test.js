@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSlotInput, foldLetter } from './input.js';
 import { getPack, posLabelOf, playRoot } from './packs.js';
-import { buildRunQueue, bandWords } from './runSpec.js';
+import { buildRunQueue, bandWords, studyPool, normalizeSpec } from './runSpec.js';
+import { freshState, markStudied, hasStudied, load, save } from './lexicon.js';
 import { createSatRushEngine } from './engine.js';
 
 const WORDS = JSON.parse(readFileSync(new URL('../data/frenchRush/words.json', import.meta.url), 'utf8'));
@@ -93,4 +94,31 @@ test('levels follow the AP: BASICS is must-know only, SCORE 5 is the harder tail
   // a BASICS case leads with must-know words even when the band is mixed
   const { rows } = buildRunQueue({ spec: { pack: 'fr', mode: 'lineup', difficulty: 'standard', length: 10 }, words: WORDS });
   assert.ok(rows.filter((r) => r.ap === 1).length >= 6, 'a STANDARD case is mostly must-know words');
+});
+
+test('STUDY FIRST deals only words you cannot guess from English (the quiz keeps them all)', () => {
+  const pack = { ...PACK, words: WORDS };
+  for (const category of CATS) {
+    for (const difficulty of ['easy', 'standard', 'hard']) {
+      const spec = normalizeSpec({ pack: 'fr', mode: 'briefing', difficulty, length: 15, category });
+      const pool = studyPool(pack, spec, freshState());
+      assert.ok(pool.every((r) => !r.guessable), `${category}/${difficulty}: a guessable word in the study pool`);
+      assert.ok(pool.length >= 15, `${category}/${difficulty}: only ${pool.length} study words`);
+    }
+  }
+  assert.ok(bandWords(WORDS, 'standard', null, 'fr').some((r) => r.guessable), 'the quiz still has cognates');
+  assert.ok(WORDS.filter((r) => r.falseFriend).every((r) => !r.guessable), 'a false friend is never guessable');
+});
+
+test('studied words are remembered (and the setup choices survive a reload)', () => {
+  const st = freshState();
+  markStudied(st, ['voisin', 'ménage']);
+  st.setup = { difficulty: 'easy', pace: 'self', skipStudied: true };
+  const mem = new Map();
+  const storage = { getItem: (k) => mem.get(k) || null, setItem: (k, v) => mem.set(k, v) };
+  save(storage, st, 'k');
+  const back = load(storage, 'k');
+  assert.ok(hasStudied(back, 'voisin'));
+  assert.ok(!hasStudied(back, 'famille'));
+  assert.deepEqual(back.setup, st.setup);
 });
