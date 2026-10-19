@@ -102,6 +102,7 @@
 }
 .kb-idot {
   position: absolute;
+  z-index: 4; /* Andy oct19: above the face, the tag and any neighbour */
   top: -12px;
   right: -12px;
   width: 28px;
@@ -182,6 +183,7 @@
   background: var(--k-hot);
   border: var(--k-ink-m) solid var(--k-ink);
   pointer-events: none;
+  z-index: 4; /* Andy oct19: a dot always paints above its card (and a neighbour's), never under it */
 }
 
 /* ---- REDUCE MOTION: every state change lands instantly. ---- */

@@ -396,6 +396,9 @@ export default function LeaderboardV2({ onBack }) {
   const wk = tab === 'week';
   const hR = wk ? (gains ? '+REBIRTHS' : 'REBIRTHS') : 'REBIRTHS';
   const hL = wk ? (gains ? '+LEVELS' : 'WORDS') : 'LEVELS';
+  // TOP n% (Andy oct17) rides the PLAYER column head, not YOUR row (Andy oct19: in the row it sat on your REBIRTHS — the
+  // name line has no width to spare at any size, and on a phone the chase line is already cut)
+  const myPct = !wk && meRow ? topPercent(meRow.rank, data.total) : null;
 
 
   // ARRIVAL: the podium rises, the list + panels slide in, the bars fill, the crown wobbles once, ▲ / ▼ bob once and
@@ -547,7 +550,7 @@ export default function LeaderboardV2({ onBack }) {
         </div>
 
         <div className="lb2-cols" aria-hidden="true">
-          <span>#</span><span>PLAYER{wk ? <span className="lb2-cols-prize"> · TOP 10 WIN GEMS</span> : null}</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>
+          <span>#</span><span className="lb2-cols-who"><span className={myPct ? 'lb2-cols-pl has-pct' : 'lb2-cols-pl'}>PLAYER</span>{wk ? <span className="lb2-cols-prize"> · TOP 10 WIN GEMS</span> : myPct ? <span className="lb2-pct" data-testid="lb2-pct">YOU: TOP {myPct}%</span> : null}</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>
         </div>
         <div className="lb2-list lb2-slide"><div className="lb2-scroll" ref={scrollRef}>
           {!data.loaded && <p className="lb2-note">LOADING THE BOARD…</p>}
@@ -581,8 +584,6 @@ export default function LeaderboardV2({ onBack }) {
                     {/* YOUR distance to the NEAREST band rides beside your name when a rival owns the line below */}
                     {mine && rival && r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     {wk ? <Prize rank={r.rank} /> : null}
-                    {/* TOP n% (Andy oct17): where YOU sit among every player on the all-time board, beside your name */}
-                    {mine && !wk && topPercent(r.rank, data.total) ? <span className="lb2-pct" data-testid="lb2-pct">TOP {topPercent(r.rank, data.total)}%</span> : null}
                   </span>
                   {mine && (rival || r.rank > 10) ? (
                     <span className={`lb2-chase${rival ? ' has-rival' : ''}`}>

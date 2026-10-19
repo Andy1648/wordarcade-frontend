@@ -99,9 +99,10 @@ export function KitStamp({ kind = 'claimed', angle, playKey = 0, onSlam }) {
 
 /**
  * A card that can be stamped. `at` places the stamp ({left, top} — % or px strings).
- * The card jolts when the stamp lands; `dim` (default: not for NEW!) fades the card to 50%.
+ * The card jolts when the stamp lands; `dim` (default: not for NEW!) fades the card to 50%. `badge` (a corner dot) is
+ * drawn outside the clipped card face.
  */
-export function KitStampCard({ stamped = false, kind = 'claimed', angle, at, dim, playKey = 0, className, style, children, onClick, ariaLabel }) {
+export function KitStampCard({ stamped = false, kind = 'claimed', angle, at, dim, playKey = 0, className, style, children, badge = null, onClick, ariaLabel }) {
   const cardRef = useRef(null);
   const dimmed = stamped && (typeof dim === 'boolean' ? dim : kind !== 'new');
   const pos = at || (kind === 'new' ? { right: '30px', top: '30px' } : { left: '50%', top: '56%' });
@@ -111,6 +112,8 @@ export function KitStampCard({ stamped = false, kind = 'claimed', angle, at, dim
       <div ref={cardRef} className="kstc-card">
         <div className={`kstc-body${dimmed ? ' is-dim' : ''}`}>{children}</div>
       </div>
+      {/* `badge` (a notification dot): OUTSIDE .kstc-card, whose overflow:hidden clipped a corner dot to a sliver (Andy oct19) */}
+      {badge}
       {stamped && (
         <div className="kstc-anchor" style={pos}>
           <KitStamp kind={kind} angle={angle} playKey={playKey} onSlam={() => fx(cardRef.current, FX.jolt)} />

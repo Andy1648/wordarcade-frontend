@@ -357,6 +357,9 @@ html[data-beat='true'] .homepage-logo {
   background: #FF3D7F;
   border: 3px solid #000;
   pointer-events: none;
+  /* Andy oct19 "the notification dot is behind the card": the gear slot's plate (z 1), art/text (z 1) and sheen (z 2)
+     are positioned layers that painted OVER a z:auto dot — every dot sits above its own card's layers */
+  z-index: 4;
 }
 @media (hover: hover) {
   .hp-chip:hover { transform: translate(-2px, -2px); }

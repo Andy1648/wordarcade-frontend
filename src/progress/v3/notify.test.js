@@ -123,3 +123,30 @@ test('the RANK banner names come from the v3 ladder (16 ranks, R0 … ★20)', (
   assert.equal(RK.RANKS_V3[0].name, 'INKLING');
   assert.equal(RK.RANKS_V3[15].name, 'ENDGAME');
 });
+
+test('ACHIEVEMENT POP-UPS (Andy oct19): a tier that becomes claimable is said ONCE; the first look is silent; quiet notes it', async () => {
+  reset();
+  const A = await import('./achievements.js');
+  const store = globalThis.localStorage;
+  const rows = (c, claimed = {}) => A.achRows({ words: 0, bots: 0, mp: 0, reb: 0, epic: 0, chain: 0, power: 0, marks: [], ...c }, claimed);
+  // a save that already has a ready tier: noted silently, never a burst on the first look
+  assert.deepEqual(N.checkAchNews({ rows: rows({ words: 150 }), store }), []);
+  assert.deepEqual(N.checkAchNews({ rows: rows({ words: 150 }), store }), [], 'and not on the next look either');
+  // BEAT BOTS I becomes ready → one toast, then never again
+  const t = N.checkAchNews({ rows: rows({ words: 150, bots: 10 }), store });
+  assert.deepEqual(t.map((x) => [x.head, x.code, x.label, x.icon]), [['READY TO CLAIM', 'I', 'BEAT BOTS', 'achievements']]);
+  assert.deepEqual(N.checkAchNews({ rows: rows({ words: 150, bots: 10 }), store }), []);
+  // claimed I, then II reached → II is news
+  assert.deepEqual(N.checkAchNews({ rows: rows({ bots: 50 }, { bots: 1 }), store }).map((x) => x.code), ['II']);
+  // quiet (the ACHIEVEMENTS screen is open): noted, not said — and not said later either
+  assert.deepEqual(N.checkAchNews({ rows: rows({ bots: 250 }, { bots: 2 }), store, quiet: true }), []);
+  assert.deepEqual(N.checkAchNews({ rows: rows({ bots: 250 }, { bots: 2 }), store }), []);
+  // nothing pays: the pure half has no side effects beyond its own key
+  assert.deepEqual(N.achNews(rows({ bots: 10 }), { bots: 1 }), []);
+  assert.equal(N.achNews(rows({ bots: 10 }), {}).length, 1);
+});
+
+test('checkAchNews survives blocked storage (silent, never throws)', () => {
+  const broken = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
+  assert.deepEqual(N.checkAchNews({ rows: [{ id: 'bots', name: 'BEAT BOTS', ready: true, tier: 0 }], store: broken }), []);
+});

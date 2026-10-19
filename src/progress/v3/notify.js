@@ -15,9 +15,11 @@
 import { RANKS_V3, rankIndexV3 } from './ranks.js';
 import { UNLOCKS, unlocked } from './unlocks.js';
 import { S2_PREFIX, s2Rebirths, getStarsV3, bestRankIndex } from './store.js';
+import { achievementsV3, ROMAN } from './achievements.js';
 
 export const RANK_SHOWN_KEY = `${S2_PREFIX}rankShown`; // the rank index the player has SEEN announced
 export const UNLOCKS_SHOWN_KEY = `${S2_PREFIX}unlocksShown`; // the unlock ids already toasted
+export const ACH_SHOWN_KEY = `${S2_PREFIX}achShown`; // { ladder id: the highest tier (1-based) already toasted READY }
 
 // Toast look per rebirth unlock (KitLevelUp UNLOCKS: tile colour; icon from the kit's 21).
 export const UNLOCK_TOAST = {
@@ -86,6 +88,37 @@ export function checkNews(o = {}) {
   write(st, RANK_SHOWN_KEY, Math.max(now, Number(seen) || 0));
   write(st, UNLOCKS_SHOWN_KEY, [...(Array.isArray(shown) ? shown : []), ...fresh.map((u) => u.id)]);
   return { rank, unlocks: first ? [] : fresh };
+}
+
+// ---- ACHIEVEMENT POP-UPS (Andy oct19 "I want pop-ups for the achievements") -----------------------------------------
+// A tier that has just become CLAIMABLE is said once as a RIGHT-edge toast — "READY TO CLAIM [II] · BEAT BOTS". It
+// announces only: nothing pays and nothing is claimed here (the ACHIEVEMENTS screen is still the only claim place).
+// The first look at a save notes what is already ready, silently — an old save never gets a burst of toasts.
+export const ACH_TOAST = { head: 'READY TO CLAIM', tile: '#FFC23D', icon: 'achievements' };
+
+/** PURE: the toasts for tiers ready in `rows` (achRows) beyond what `shown` ({ id: tier }) has said. */
+export function achNews(rows, shown) {
+  const said = shown && typeof shown === 'object' ? shown : {};
+  return (rows || [])
+    .filter((r) => r.ready && (Number(said[r.id]) || 0) < r.tier + 1)
+    .map((r) => ({ ...ACH_TOAST, id: `ach-${r.id}-${r.tier + 1}`, ach: r.id, tier: r.tier + 1, code: ROMAN[r.tier] || String(r.tier + 1), label: r.name }));
+}
+
+/**
+ * The achievement toasts due now, and mark them said. `quiet` (the ACHIEVEMENTS screen is open — the player is looking
+ * at it) marks them said without returning them.
+ * @param {{ rows?: object[], store?: Storage, quiet?: boolean }} [o]
+ */
+export function checkAchNews(o = {}) {
+  const st = o.store !== undefined ? o.store : memStore();
+  const rows = o.rows || achievementsV3();
+  const shown = readJson(st, ACH_SHOWN_KEY, null);
+  const fresh = achNews(rows, shown);
+  if (!fresh.length && shown != null) return [];
+  const next = { ...(shown && typeof shown === 'object' ? shown : {}) };
+  for (const t of fresh) next[t.ach] = Math.max(Number(next[t.ach]) || 0, t.tier);
+  write(st, ACH_SHOWN_KEY, next);
+  return shown == null || o.quiet ? [] : fresh;
 }
 
 // ---- the menu fx (MenuXpFx) in season 2 ----------------------------------------------------------------------------
