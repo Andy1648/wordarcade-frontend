@@ -34,7 +34,7 @@ export function gearIdForSecret(secretId) {
 /** Owns this UNLISTED gear? (reads the store; guarded) */
 export function ownsUnlistedId(id, storage) {
   try {
-    const s = storage || (typeof window !== 'undefined' ? window.localStorage : null);
+    const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
     const raw = s && s.getItem ? s.getItem(UNLISTED_KEY) : null;
     const blob = raw ? JSON.parse(raw) : null;
     return !!(BY_ID.has(id) && blob && blob.owned && typeof blob.owned === 'object' && blob.owned[id]);

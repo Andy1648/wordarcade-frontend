@@ -353,3 +353,25 @@ test('the eager modules carry v3 values as literals (v3/econ.js is lazy) — eve
   }
   assert.ok(Number.isFinite(E.rebirthMult(1e6)));
 });
+
+test('2ND GEAR takes an owned UNLISTED gear (Andy oct19 "i cant equip as 2nd gear"), never an unowned one', async () => {
+  reset();
+  const H = await import('./hooks.js');
+  X.saveRebirths(5); // R5 opens the 2nd slot
+  localStorage.setItem('taw.unlisted', JSON.stringify({ owned: { 'mk-ul-midas': { at: 1, serial: null, word: null } } }));
+  assert.equal(H.equipMark2('mk-ul-og'), false, 'not owned');
+  assert.equal(ST3.mark2Id(), null);
+  assert.equal(H.equipMark2('mk-ul-midas'), true);
+  assert.equal(ST3.mark2Id(), 'mk-ul-midas');
+  // it pays through the same door as a rolled 2nd gear: MIDAS's BASE WINS main (the season's LEGENDARY size) + its subs
+  assert.equal(H.mark2For(null, null), 'mk-ul-midas');
+  const main = MR.statOf('mk-ul-midas', null);
+  assert.equal(main.kind, 'baseWins');
+  assert.equal(main.value, MR.statBaseValue('baseWins', 'legendary'));
+  const subW = MR.substatsOf('mk-ul-midas', null).filter((x) => x.kind === 'baseWins').reduce((a, x) => a + x.value, 0);
+  near(MR.markBaseWins(), main.value + subW);
+  // the slot never doubles the worn MAIN
+  assert.equal(H.mark2For(null, 'mk-ul-midas'), null);
+  X.saveRebirths(4);
+  assert.equal(H.mark2For(null, null), null, 'below R5 the slot is shut');
+});
