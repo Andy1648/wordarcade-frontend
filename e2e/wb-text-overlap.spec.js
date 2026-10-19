@@ -36,6 +36,10 @@ const VIEWPORTS = [
 ];
 
 async function enterTurn(page, n) {
+  await enterTurnMock(page, n);
+}
+
+async function enterTurnMock(page, n = 2) {
   const mock = await installBackendMock(page);
   // Menu seen, but NOT the game spotlight: the first-game coach mark is part of what is gated.
   await page.addInitScript(() => {
@@ -59,6 +63,7 @@ async function enterTurn(page, n) {
   await page.waitForTimeout(4700); // the 3-2-1-GO! countdown clears, then the coach mark lands
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(300);
+  return mock;
 }
 
 function textOverlaps() {
@@ -195,6 +200,33 @@ for (const vp of [...VIEWPORTS, { width: 360, height: 640 }]) {
       expect(m.letters, 'the typed word is drawn in the prompt').toBeGreaterThanOrEqual(word.length);
       expect(m.hits, `prompt letters drawn over the TIME plaque: ${JSON.stringify(m)}`).toEqual([]);
       expect(m.outside, `prompt letters past the screen edge: ${JSON.stringify(m)}`).toBe(0);
+    }
+  });
+}
+
+// THE BOMB'S BELLY IN THE LAST 5 SECONDS (Andy oct19: "the timer for word bomb is overlapping with the rules ... on the
+// type word icon in the center"). BombVisual printed the seconds on the mascot's belly at timerSeconds <= 5, exactly
+// where the fragment plate (.wb-belly) sits, so the digit peeked out around the fragment. The TIME plaque is the
+// readout; the belly carries the fragment and nothing else, on every tick down to 1.
+for (const vp of [{ width: 1366, height: 768 }, { width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+  test(`WB bomb belly @ ${vp.width}x${vp.height}: last 5 seconds print nothing over the fragment`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    const mock = await enterTurnMock(page);
+    for (const s of [5, 3, 1]) {
+      mock.pushToClient({ type: 'timer_tick', payload: { secondsRemaining: s } });
+      await page.waitForTimeout(250);
+      const m = await page.evaluate(() => {
+        const belly = document.querySelector('.wb-belly').getBoundingClientRect();
+        const svgText = [...document.querySelectorAll('.wb-ring svg text')].filter((t) => {
+          const r = t.getBoundingClientRect();
+          const ox = Math.min(r.right, belly.right) - Math.max(r.left, belly.left);
+          const oy = Math.min(r.bottom, belly.bottom) - Math.max(r.top, belly.top);
+          return r.width > 0 && ox > 1 && oy > 1;
+        }).map((t) => t.textContent);
+        return { plaque: document.querySelector('.wb-timer-value').textContent.trim(), svgText };
+      });
+      expect(m.plaque, 'the TIME plaque carries the seconds').toBe(String(s));
+      expect(m.svgText, `text drawn over the bomb-belly fragment at ${s}s`).toEqual([]);
     }
   });
 }

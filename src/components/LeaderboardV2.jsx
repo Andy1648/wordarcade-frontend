@@ -43,7 +43,7 @@ import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
-import { CAST, castFor, heroById, CAST_BEATS, castBreathFrames } from '../cast/cast.js';
+import { CAST, castFor, heroById } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -457,27 +457,7 @@ export default function LeaderboardV2({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown]);
 
-  // TOP 3 IDLE (Andy oct16 "add idle animations for the heros (like bouncing or rotating)"): EACH podium character keeps
-  // moving in its own way — its BEATS one-shot, re-armed by its own timer after a short rest, staggered so the three
-  // never move in lockstep. Only the character (+ #1's crown riding it) moves; the name / plate / numbers / block stay
-  // still. Finite WAAPI one-shots on a timer — nothing infinite; hidden tab skipped; reduced motion: kitPlay no-ops.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root || !data.loaded) return undefined;
-    const timers = [];
-    [1, 2, 3].forEach((place, k) => {
-      const loop = () => {
-        const col = root.querySelector(`.lb2-col--${place}`);
-        const beat = (col && CAST_BEATS[col.dataset.cast]) || CAST_BEATS.hype;
-        if (col && col.dataset.id && document.visibilityState !== 'hidden') {
-          kitPlay(col.querySelector('.lb2-buddy'), castBreathFrames(beat, 0.5), { duration: beat.ms * 1.6, easing: 'ease-in-out' });
-        }
-        timers[k] = setTimeout(loop, beat.ms * 1.6 + 700 + Math.random() * 900); // oct17: a quiet, irregular breath — the showcase owns the big signature moves
-      };
-      timers[k] = setTimeout(loop, 2400 + k * 420); // after the entrance lands
-    });
-    return () => timers.forEach(clearTimeout);
-  }, [shown, data.loaded]);
+  // (TOP 3 IDLE breath removed oct18 — Andy: the bounce idle is "horrendous (and unsmooth)"; the podium heroes stand still)
 
   const tabs = [
     { key: 'all', label: 'ALL TIME', sub: '★ → R → LV' },

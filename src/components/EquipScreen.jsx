@@ -34,8 +34,8 @@ const rankOf = (id) => (markById(id) ? markProgress(id).rank : 1);
 // a full-screen layer: the menu beneath never reacts to the pointer (as the INDEX / ROLL screens)
 const stopPointer = (e) => e.stopPropagation();
 
-// slot 2 (Andy oct10 "gear 2", season 2 R5): the same locker for the 2ND GEAR — rolled gears only (the slot holds a
-// rolled gear, v3/hooks equipMark2), never the one worn in slot 1 (`mainId`); EQUIP / UNEQUIP writes the 2nd slot.
+// slot 2 (Andy oct10 "gear 2", season 2 R5): the same locker for the 2ND GEAR — rolled + UNLISTED gears (the slot holds a
+// rolled or found gear, v3/hooks equipMark2 — never an EARNED one), never the one worn in slot 1 (`mainId`); EQUIP / UNEQUIP writes the 2nd slot.
 export default function EquipScreen({ slot = 1, mainId = null, equippedId = null, unlockedIds = [], earned = [], onEquip, onClose }) {
   const idsRef = useRef(unlockedIds);
   const [snap] = useState(() => {

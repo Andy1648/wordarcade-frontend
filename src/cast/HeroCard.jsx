@@ -18,7 +18,8 @@ import './HeroCard.css';
 const SHINE = [{ transform: 'translateX(-130%) skewX(-18deg)', opacity: 0 }, { transform: 'translateX(-60%) skewX(-18deg)', opacity: 1, offset: 0.15 }, { transform: 'translateX(330%) skewX(-18deg)', opacity: 1, offset: 0.85 }, { transform: 'translateX(400%) skewX(-18deg)', opacity: 0 }];
 
 /** `delay` staggers the elite shine so a row of cards never flashes in lockstep. */
-export default function HeroCard({ hero, locked = false, req = null, on = false, sel = false, delay = 0, onClick, children }) {
+/** `dim` = not owned yet (oct18 one-card picker): the hero shows, greyed, with no chip over the art. */
+export default function HeroCard({ hero, locked = false, req = null, dim = false, on = false, sel = false, delay = 0, onClick, children }) {
   const shineRef = useRef(null);
   const rare = !!(hero.elite || hero.legend || hero.gold);
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function HeroCard({ hero, locked = false, req = null, on = false,
     t = setTimeout(loop, 700 + delay);
     return () => clearTimeout(t);
   }, [rare, delay]);
-  const cls = `hc${hero.elite ? ' is-elite' : ''}${hero.gold ? ' is-gold' : ''}${hero.legend ? ' is-legend' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
+  const cls = `hc${hero.elite ? ' is-elite' : ''}${hero.gold ? ' is-gold' : ''}${hero.legend ? ' is-legend' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${dim ? ' is-dim' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
   // a card can sit inside a bigger button (the menu's PROFILE tile) — then it is a plain span, not a nested button
   const Tag = onClick ? 'button' : 'span';
   const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : hero.legend ? ', legend' : hero.gold ? ', gold' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };

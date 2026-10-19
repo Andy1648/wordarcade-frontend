@@ -153,12 +153,20 @@ for (const vp of VPS) {
     await expect(pc).toBeVisible();
     await expect(pc.locator('.pc-gear[data-slot="1"]')).toHaveAttribute('data-tier', 'unlisted');
     await expect(pc.locator('.pc-gear[data-slot="1"] .pc-gear-name')).toHaveText('MIRROR');
-    const shelf = pc.getByTestId('unlisted-shelf');
-    await expect(shelf).toContainText('2 FOUND'); // the unknown id is dropped
-    await expect(shelf.locator('.ulc-serial')).toHaveText(['#0118', '#0003']);
-    await shelf.scrollIntoViewIfNeeded();
+    // oct19 (Andy "no need to show how many unlisted you've found"): no shelf, no count on the board card
+    await expect(pc.getByTestId('unlisted-shelf')).toHaveCount(0);
+    await expect(pc.locator('.ulc-serial')).toHaveCount(0); // (GEARS FOUND — the rolled INDEX — stays)
     await page.waitForTimeout(500);
     await shot(page, `leaderboard-card-${vp.tag}`);
+    // …and the worn UNLISTED is a card you can open, like any gear (Andy oct19 "they dont have clickable card")
+    await pc.getByTestId('profile-gear-1').click();
+    const sheet = page.locator('.mx-sheet');
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByTestId('mark-main')).toContainText('WINS IN CHAIN');
+    await expect(sheet.getByTestId('unlisted-serial')).toHaveText('FINDER #0003'); // THIS player's serial, from the server
+    await expect(sheet.getByTestId('gear-equip')).toHaveCount(0); // someone else's gear: no EQUIP
+    await page.waitForTimeout(400);
+    await shot(page, `leaderboard-sheet-${vp.tag}`);
   });
 
   test(`@${vp.tag} THE FIND: typing NEWGROUNDS in Word Bomb stamps the word, grants the gear, claims serial #0042`, async ({ page }) => {

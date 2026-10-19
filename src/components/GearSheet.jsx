@@ -32,8 +32,9 @@ const lineOf = (e) => (CARD_RAR[e.tier] || CARD_RAR.rare).line;
  * e: { id, name, tier, kind: 'roll' | 'perm' | 'retired' } · have: owned · on: equipped · view: the roll state
  * (viewState) · howTo: a locked EARNED gear's task · onSet(id | null): EQUIP / UNEQUIP (omit → no button; a locked
  * gear never shows one) · peek: someone ELSE's gear (the leaderboard profile) — the gear at ★0, no owned / dupes lines.
+ * serial: with peek, that player's FINDER # for an UNLISTED gear (server-given), or null.
  */
-export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, peek = false }) {
+export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, peek = false, serial = null }) {
   const closeRef = useRef(null);
   useEffect(() => { closeRef.current?.focus(); }, [e.id]);
   const rolled = e.kind === 'roll';
@@ -132,6 +133,9 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, pe
             </div>
           ) : null}
           {e.kind === 'unlisted' && have && !peek ? <UnlistedFacts id={e.id} /> : null}
+          {e.kind === 'unlisted' && peek && serial != null ? (
+            <div className="mx-sheet-facts"><span data-testid="unlisted-serial">FINDER {formatSerial(serial)}</span></div>
+          ) : null}
           {rolled && have && !peek ? (
             <div className="mx-sheet-facts">
               <span data-testid="mark-owned">OWNED ×{formatNum(info.owned)}</span>

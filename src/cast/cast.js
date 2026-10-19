@@ -286,7 +286,6 @@ export const CAST_LAYERS = {
   mecha: { hero: { act: 'boost', sprites: [
     { src: '/cast/props/flame.webp', x: 34, y: -6, w: 20, o: '50% 100%' },
     { src: '/cast/props/spark-big.webp', x: 65, y: 4, w: 10 },
-    { src: '/cast/props/bolt.webp', x: 8, y: 22, w: 9 },
   ] } },
   glitch: {
     hero: {
