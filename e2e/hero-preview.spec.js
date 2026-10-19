@@ -121,21 +121,20 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
   });
 }
 
-test('NEXT HERO goal: the profile shows the closest earnable hero; tapping it opens that hero\'s preview', async ({ page }) => {
+test('YOUR HEROES (oct19, replaces NEXT HERO): the profile shows the heroes you own; tapping one wears it', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await installBackendMock(page);
-  // level 15 → HEX (LEVEL 20) is the closest (15/20) ahead of DUD (15/35)
-  const s = { ...seed(0), 'taw.s2.xp': JSON.stringify({ lv: 15, f: 0, rc: 0, v: 10 }) };
-  await page.addInitScript((s) => { if (sessionStorage.getItem('hg.seeded')) return; sessionStorage.setItem('hg.seeded', '1'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, s);
+  await page.addInitScript((s) => { if (sessionStorage.getItem('hg.seeded')) return; sessionStorage.setItem('hg.seeded', '1'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, seed(0));
   await page.goto('/?portal=1&season2=1');
   await menuReady(page);
   await page.locator('[data-nav="profile"]:visible').first().click();
-  const goal = page.locator('.pf-goal');
-  await expect(goal.locator('.pf-goal-n')).toHaveText('HEX');
-  await expect(goal.locator('.pf-goal-p')).toHaveText('LEVEL 15/20');
-  await shot(page, 'cb-9-profile-goal');
-  await goal.click();
-  await expect(page.getByTestId('hero-preview')).toHaveAttribute('data-hero', 'hex');
+  await expect(page.locator('.pf-goal')).toHaveCount(0); // no "next hero" nag
+  const crew = page.getByRole('region', { name: 'Your heroes' });
+  await expect(crew.getByRole('button', { name: 'RIOT, equipped' })).toHaveAttribute('aria-pressed', 'true');
+  await crew.getByRole('button', { name: 'Equip HYPE' }).click();
+  await expect(page.locator('.pf-hero')).toHaveText('HYPE');
+  expect(await page.evaluate(() => localStorage.getItem('taw.main'))).toBe('hype');
+  await shot(page, 'cb-9-profile-crew');
 });
 
 test('menu chip says NEW HERO! while an earned hero waits to be revealed', async ({ page }) => {
