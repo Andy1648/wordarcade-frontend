@@ -356,7 +356,10 @@
     padding: clamp(10px, 2.4vh, 30px) clamp(12px, 2vw, 26px);
     margin-bottom: clamp(6px, 1vh, 12px);
   }
-  .game-stage--blitz .cb-round .cb-category-label { margin-bottom: clamp(4px, 0.8vh, 10px); }
+  .game-stage--blitz .cb-round .cb-category-label {
+    margin-bottom: clamp(4px, 0.8vh, 10px);
+    font-size: min(var(--fs-h2), 4.2vh); /* height guard for the bigger directions line (oct18) */
+  }
   .game-stage--blitz .cb-round .cb-category-example { margin: 0 0 clamp(6px, 1vh, 14px); }
   .game-stage--blitz .game-header { margin-bottom: clamp(2px, 0.8vh, 10px); }
 }
@@ -3058,6 +3061,33 @@
   color: #FFE94A;
   -webkit-text-stroke: 1px #000;
   paint-order: stroke fill;
+}
+
+/* DIRECTIONS UP (Andy oct18 "make the directions for the top blank MUCH bigger"): "TOP 115" / "TOP ∞ FAMILY-FRIENDLY
+   ANSWERS" is the rule of the round, so it reads as a headline (Bungee at --fs-h2, white + black stroke) instead of
+   a 16px lavender kicker; the number is the yellow. The pack tag stays the quiet part, in Space Mono (Bungee never
+   goes below --fs-panel — typeScale.test.js). */
+.cb-category-label,
+.cb-round .cb-category-label {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: var(--fs-h2);
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+  color: #fff;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+.cb-category-label .cb-topn {
+  -webkit-text-stroke: 2px #000;
+}
+.cb-category-label .cb-pack-tag {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #C9B8E8;
+  -webkit-text-stroke: 0;
 }
 
 .cb-category-display {
