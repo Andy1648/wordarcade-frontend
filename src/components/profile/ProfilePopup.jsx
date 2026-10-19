@@ -23,7 +23,6 @@ import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client
 import { readCounters } from '../../progress/v3/store.js';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
-import UnlistedShelf from '../../unlisted/UnlistedShelf.jsx';
 import { unlistedIndex } from '../../unlisted/unlisted.js';
 import './ProfilePopup.css';
 
@@ -60,7 +59,9 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const play = readPlaySec();
   const show = myShowcase();
   const goal = nextHeroGoal(); // the closest earnable hero you don't own (a goal to chase) // the same numbers the leaderboard card shows others (gears found)
-  const [unl] = useState(() => unlistedIndex()); // THE UNLISTED: your finds + serials (read once)
+  // THE UNLISTED: still read once on open — it runs the back-fill (unlisted.js) — but nothing here shows it: no shelf,
+  // no found-count on your profile (Andy oct19 "i still see how many unlisted ive found in profile - i dont want that")
+  useState(() => unlistedIndex());
 
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
@@ -127,7 +128,6 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                 <Stat icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
                 <Stat icon="index" tone="#c9b8ff" value={show.gears_total ? `${formatNum(show.gears_found)}/${formatNum(show.gears_total)}` : '0'} label="GEARS FOUND" />
               </div>
-              <UnlistedShelf tiles={unl.tiles.filter((t) => t.owned)} />
               {me ? <Bio text={myBio()} mine /> : null}
             </div>
           </div>
