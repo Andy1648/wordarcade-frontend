@@ -12,19 +12,19 @@ export const CAST = [
 ];
 // NEW FACES (oct17 night, Andy: "more heroes - normal or rarer"): cast members of their own — no seat colour (the five
 // above stay the in-game palette, so castFor / castByColor never hand them out), each with its own tier. DUD is earned
-// free at LEVEL 35 (300 gems skips the wait), LEXI is 750 gems.
+// earned with WINS or bought with gems (oct19, HERO_PRICE / HERO_UNLOCK below).
 export const NEW_CREW = [
   { id: 'dud', name: 'DUD', tag: 'FUSE ALWAYS OUT', color: '#B8F632', dark: '#6E9A12' },
   { id: 'lexi', name: 'LEXI', tag: "ACTUALLY, IT'S A WORD", color: '#3BA4F9', dark: '#1B5FA8' },
-  // oct18 wave 2: SHH (the mime: never says a word, in a word game) is earned at 50 online wins; SIZZLE is 750 gems
+  // oct18 wave 2: SHH (the mime: never says a word, in a word game) and SIZZLE
   { id: 'shh', name: 'SHH', tag: 'SAYS NOTHING. WINS ANYWAY.', color: '#F2F2F5', dark: '#6E6E86' },
   { id: 'sizzle', name: 'SIZZLE', tag: 'TOO HOT TO HANDLE', color: '#D7263D', dark: '#7E0F20' },
 ];
 // LEGEND (oct17 night): the rarest tier — a cast member nobody else has, in its own painted LEGEND frame. BOO (the ghost
-// of a bomb that already went off) is earned free at REBIRTH 5, or 5,000 gems skips the wait.
+// of a bomb that already went off) needs REBIRTH 5 and then gems (oct19, HERO_PRICE / HERO_UNLOCK below).
 export const LEGEND = [
   { id: 'boo', name: 'BOO', tag: 'ALREADY WENT OFF', color: '#14B8A6', dark: '#0B5F57', legend: true },
-  // oct18: MECHA, the chrome robot bomb: REBIRTH 10, or 5,000 gems skips the wait
+  // oct18: MECHA, the chrome robot bomb: REBIRTH 10, then gems
   { id: 'mecha', name: 'MECHA', tag: 'BUILT DIFFERENT', color: '#9FB1C7', dark: '#3E4C63', legend: true },
 ];
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
@@ -61,25 +61,59 @@ export const goldProgress = (id) => {
 // oct17 (Andy "we'll def need some more free tiers" … "sure (the 1 rebirth) … 750 is a lot for 1 rebirth"): the two
 // priced crew members are EARNED for free — GLITCH at your first rebirth, HEX at level 20 — and the gem price is only a
 // shortcut to skip the wait (300). The card shows the requirement over the art (lock + REBIRTH 1 / LEVEL 20).
-export const HERO_PRICE = { hex: 300, glitch: 300, dud: 300, lexi: 750, boo: 5000, shh: 300, sizzle: 750, mecha: 5000 };
+// oct19 (Andy: "i want dud to cost more gems then lexi and sizzle … all legends to cost gems (more) AND a rebirth
+// requirement … dud, lexi, shh, and sizzle can be win requirements but purchasable with diamonds"):
+// · DUD / LEXI / SHH / SIZZLE are EARNED free at a WINS count (bots + online, the ACHIEVEMENTS counters) — or gems skip
+//   the wait. DUD is the dearest of the four.
+// · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
+// Heroes are looks only: none of this changes how a game plays or pays.
+export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, dud: 1000, boo: 7500, mecha: 10000 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
-  dud: { lv: 35, label: 'LEVEL 35', icon: 'levels' }, boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth' },
-  shh: { mp: 50, label: '50 WINS', icon: 'achievements' }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth' } };
-// online wins (the ACHIEVEMENTS counter `mp`, progress/v3/store.js taw.s2.count) read straight from storage, which keeps
-// the cast data free of the progress store import
-const onlineWins = () => {
-  try { const o = JSON.parse(localStorage.getItem('taw.s2.count') || '{}'); return Math.max(0, Math.floor(Number(o && o.mp) || 0)); } catch { return 0; }
+  shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
+  sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
+  boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true } };
+// the ACHIEVEMENTS counters (progress/v3/store.js taw.s2.count) read straight from storage, which keeps the cast data
+// free of the progress store import (`mp` = online wins, `bots` = wins against bots)
+const counts = () => {
+  try { const o = JSON.parse(localStorage.getItem('taw.s2.count') || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; }
 };
-/** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. */
+const n0 = (v) => Math.max(0, Math.floor(Number(v) || 0));
+/** Every win (bots + online) — the WINS requirement's count. */
+export const totalWins = () => { const o = counts(); return n0(o.mp) + n0(o.bots); };
+/** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. A LEGEND's rebirth is a gate, never
+ *  an earn — it is always bought. */
 export function heroEarned(id) {
   const u = HERO_UNLOCK[id];
-  if (!u) return false;
+  if (!u || u.gate) return false;
   try {
     if (u.reb != null && (getRebirths() || 0) >= u.reb) return true;
     if (u.lv != null && (storedLevel() || 1) >= u.lv) return true;
-    if (u.mp != null && onlineWins() >= u.mp) return true;
+    if (u.wins != null && totalWins() >= u.wins) return true;
   } catch { /* a broken store reads as not yet */ }
   return false;
+}
+/** Can this hero be bought yet? Only a LEGEND has a gate (its rebirth); everything else can always be bought. */
+export function heroGateMet(id) {
+  const u = HERO_UNLOCK[id];
+  if (!u || !u.gate) return true;
+  try { return (getRebirths() || 0) >= u.reb; } catch { return false; }
+}
+// GRANDFATHERED (oct19, once per save): the old rules handed out BOO at REBIRTH 5, MECHA at REBIRTH 10, DUD at LEVEL 35
+// for free (SHH's old 50 online wins already meets its new 40 WINS). Anyone who already met one keeps that hero —
+// nobody loses a hero they had.
+const RULES_GF_KEY = 'taw.s2.heroes.gf2';
+function grandfatherOct19() {
+  try {
+    if (localStorage.getItem(RULES_GF_KEY)) return;
+    localStorage.setItem(RULES_GF_KEY, '1');
+    const reb = getRebirths() || 0;
+    const keep = [reb >= 5 && 'boo', reb >= 10 && 'mecha', (storedLevel() || 1) >= 35 && 'dud'].filter(Boolean);
+    if (!keep.length) return;
+    let v = [];
+    try { v = JSON.parse(localStorage.getItem(HEROES_KEY) || '[]'); } catch { /* corrupt: start over */ }
+    if (!Array.isArray(v)) v = [];
+    localStorage.setItem(HEROES_KEY, JSON.stringify([...new Set([...v, ...keep])]));
+  } catch { /* blocked storage */ }
 }
 for (const c of [...CAST, ...NEW_CREW, ...LEGEND]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
 export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...ELITE, ...GOLD];
@@ -88,6 +122,7 @@ export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 export const HEROES_KEY = 'taw.s2.heroes';
 /** The bought heroes (ELITEs + priced crew), validated. */
 export function ownedHeroes() {
+  grandfatherOct19();
   try {
     const v = JSON.parse(localStorage.getItem(HEROES_KEY) || '[]');
     return Array.isArray(v) ? v.filter((id) => ALL_HEROES.some((h) => h.id === id && h.price)) : [];
@@ -282,10 +317,19 @@ export const CAST_LAYERS = {
     { src: '/cast/props/sauce-drop.webp', x: 19, y: 9, w: 6 },
     { src: '/cast/props/steam.webp', x: 30, y: 18, w: 14 },
   ] } },
-  // MECHA: the exhaust roars, a spark cracks off the antenna, a bolt arcs off the gauntlet
+  // MECHA (oct19, Andy: "mecha - it just doesn't really fit … QUALITY"): a machine, idling — the fuse burns steady over
+  // its painted flame, both boot thrusters flicker sideways out of their nozzles and cough exhaust, the antenna beacon
+  // double-blinks, a glint scans across the visor. Anchors are measured off mecha-hero.webp (fuse tip ~(212,86), jets
+  // ~(131,408) / (410,412), bulb ~(348,64)); a flame's `o` is its base, so it flickers out of the nozzle, never off it.
   mecha: { hero: { act: 'boost', sprites: [
-    { src: '/cast/props/flame.webp', x: 34, y: -6, w: 20, o: '50% 100%' },
-    { src: '/cast/props/spark-big.webp', x: 65, y: 4, w: 10 },
+    { src: '/cast/props/flame.webp', x: 33.4, y: 1.8, w: 16, o: '50% 94%' },
+    { src: '/cast/props/flame.webp', x: 20, y: 69.1, w: 11, o: '50% 94%' },
+    { src: '/cast/props/flame.webp', x: 74.5, y: 70, w: 11, o: '50% 94%' },
+    { src: '/cast/props/steam.webp', x: 12.1, y: 74.6, w: 7 },
+    { src: '/cast/props/steam.webp', x: 86.7, y: 75.6, w: 7 },
+    { src: '/cast/props/spark-sm.webp', x: 64.9, y: 9.5, w: 6 },
+    { src: '/cast/props/spark-sm.webp', x: 46.5, y: 31.5, w: 5 },
+    { src: '/cast/props/spark-sm.webp', x: 62.9, y: 32.2, w: 5 },
   ] } },
   glitch: {
     hero: {

@@ -24,14 +24,18 @@
 .hp2-act.is-on { background: #FFE94A; }
 .hp2-act.is-price { color: #fff; background: #3a2160; }
 .hp2-act.is-req { color: #FFE94A; background: #0d0618; }
-/* the member's variant chips under its card (oct18 one-card picker): GOLD fills with its wins, ELITE lights when owned */
+/* the member's variant chips under its card (oct18 one-card picker): GOLD fills with its wins, ELITE lights when owned.
+   oct19 (Andy: "the gold 0/100 doesnt fit in the frame"): GOLD takes the wider share of the row (it carries the count)
+   and its words shrink to the chip (FitText) instead of running out of it */
 .hp2-vars { display: flex; gap: 6px; justify-content: center; }
+.hp2-var.is-gold { flex: 1.7 1 0; }
+.hp2-var.is-elite { flex: 1 1 0; }
 .hp2-var {
   position: relative; flex: 1; min-width: 0; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 6px;
   font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #8d7bb0; background: #160a28; border: 3px solid #000; border-radius: 6px;
 }
 .hp2-var-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: rgba(242, 183, 5, .35); }
-.hp2-var-t { position: relative; white-space: nowrap; }
+.hp2-var-t { position: relative; width: 100%; }
 .hp2-var.is-gold.is-own { color: #000; background: #F2B705; }
 .hp2-var.is-elite.is-own { color: #000; background: #FFC83D; }
 .hp2-var.is-gold:not(.is-own) { color: #F2B705; }
@@ -43,4 +47,7 @@
   .hp2-gems { order: 1; margin-left: auto; }
   .hp2-coll-k { font-size: var(--fs-k16); }
   .hp2-tag { font-size: var(--fs-k16); }
+  /* a phone card is ~150px: the GOLD count gets a full row of its own so it stays big */
+  .hp2-vars { flex-direction: column; }
+  .hp2-var.is-gold, .hp2-var.is-elite { flex: none; }
 }
