@@ -521,3 +521,38 @@
 @media (max-height: 700px), (max-width: 480px) {
   .mode-dialog-choice-line { display: none; }
 }
+
+/* ===== PACK PICKER PREVIEW (Andy oct19 "ass proportion (so tiny)" on a Chromebook; only behind ?ppx) ===== */
+@media (min-width: 900px) and (min-height: 600px) {
+  /* PX1 — WIDER, 3 COLUMNS: same stack, the panel and every tile scale up so all 11 packs show without scrolling */
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz { width: min(92vw, 980px); }
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz .ppp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz .ppp-window-scroll { padding: 12px; }
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz .mode-dialog-lower { gap: 6px; }
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz .ppp-pill { padding: clamp(8px, 1.3vh, 16px) 14px; }
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz .ppp-pill-label { font-size: clamp(17px, 1.45vw, 22px); }
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz .ppp-pill-emoji { font-size: clamp(20px, 1.7vw, 26px); }
+  html[data-ppx='1'] .mode-dialog-shell.is-blitz .mode-dialog-liner { max-width: none; }
+
+  /* PX2 — TWO PANELS: the mode's name, rules, rounds and buttons on the left; the packs get the whole right side */
+  html[data-ppx='2'] .mode-dialog-shell.is-blitz { width: min(94vw, 1100px); }
+  html[data-ppx='2'] .mode-dialog-lower--blitz {
+    position: relative; display: grid; align-content: stretch; column-gap: clamp(20px, 2.6vw, 36px); row-gap: 12px;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.25fr);
+    grid-template-rows: auto auto 1fr auto auto;
+    grid-template-areas: 'title sub' 'liner win' 'gap win' 'rounds win' 'count win' 'act win';
+  }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-picker { display: contents; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .mode-dialog-title { grid-area: title; white-space: normal; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .mode-dialog-liner { grid-area: liner; max-width: none; font-size: clamp(16px, 1.3vw, 20px); }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-subline { grid-area: sub; align-self: end; margin: 0; padding: 0 120px 0 0; text-align: left; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-selall { grid-area: sub; position: static; justify-self: end; align-self: end; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-window { grid-area: win; margin: 0; min-height: 0; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-rounds { grid-area: rounds; justify-content: flex-start; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-count { grid-area: count; text-align: left; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .mode-dialog-actions { grid-area: act; flex-direction: column; margin: 0; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-pill { padding: clamp(10px, 1.7vh, 16px) 14px; }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-pill-label { font-size: clamp(17px, 1.45vw, 22px); }
+  html[data-ppx='2'] .mode-dialog-lower--blitz .ppp-pill-emoji { font-size: clamp(20px, 1.7vw, 26px); }
+}

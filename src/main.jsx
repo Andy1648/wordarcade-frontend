@@ -5,6 +5,13 @@ import './routerBoot'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+// PREVIEW FLAG (Andy oct19 pack-picker options, NOT shipped): ?ppx=1|2 → html[data-ppx], kept for the tab.
+try {
+  const q = new URLSearchParams(window.location.search).get('ppx')
+  if (q) sessionStorage.setItem('taw.ppx', q)
+  const v = sessionStorage.getItem('taw.ppx')
+  if (v) document.documentElement.dataset.ppx = v
+} catch { /* storage blocked */ }
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
 const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
 import './index.css'
