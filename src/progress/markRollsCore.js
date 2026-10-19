@@ -119,6 +119,32 @@ export function scaleStat(kind, value, k = 1) {
 }
 const CRIT_RATE_CAP_PCT = 50; // = CRIT_RATE_CAP × 100 (below; a test keeps them equal)
 
+// ------------------------------------------------------------------------------------ substats
+// GEAR VARIETY (Andy oct18 "why do so many cards have the same stats? (leviathan and eclipse, the unlisted ones…)"). The
+// substats used to be ONE row per TIER, so every LEGENDARY printed the same four lines and every EARNED / UNLISTED gear
+// printed the LEGENDARY's. Now each gear carries its OWN mix (`subs`, written on its pool row — deterministic by id, no
+// save field, no migration), balanced by a per-tier BUDGET: SUBSTAT_REF is what ONE standard line of each kind is worth
+// at a tier, and a gear's lines sum to SUBSTAT_BUDGET such lines (gearVariety.test.js holds every gear to ±10%), so a
+// tier's power is what it was — only its shape differs. The old tier rows are the REF's crit / BASE WINS / LUCK / GEMS
+// columns, unchanged. Codes: C +% CRIT RATE · P +× CRIT POWER · W +BASE WINS · L +% ROLL LUCK · G +% GEMS ·
+// X +BASE XP · O +s OVERDRIVE. A line never repeats its gear's MAIN kind.
+const SUB_CODES = { C: 'critRatePct', P: 'critPower', W: 'baseWins', L: 'luckPct', G: 'gemsPct', X: 'baseXp', O: 'overdriveSec' };
+export const SUBSTAT_REF = Object.freeze({
+  critRatePct: { rare: 3, epic: 6, legendary: 9, mythic: 14, secret: 20 },
+  critPower: { rare: 0.25, epic: 0.5, legendary: 1, mythic: 2, secret: 3 },
+  baseWins: { rare: 2, epic: 4, legendary: 10, mythic: 30, secret: 80 },
+  luckPct: { rare: 5, epic: 10, legendary: 15, mythic: 25, secret: 40 },
+  gemsPct: { rare: 5, epic: 10, legendary: 15, mythic: 25, secret: 50 },
+  baseXp: { rare: 1, epic: 2, legendary: 5, mythic: 15, secret: 40 },
+  overdriveSec: { rare: 15, epic: 30, legendary: 60, mythic: 120, secret: 240 },
+});
+/** Lines of SUBSTAT_REF a tier's substats add up to (the old per-tier row's line count). */
+export const SUBSTAT_BUDGET = Object.freeze({ rare: 2, epic: 3, legendary: 4, mythic: 4, secret: 4 });
+/** 'C9 P1 W10' → [{ kind, value }] (frozen). '' / undefined → []. */
+export function parseSubs(code) {
+  return Object.freeze(String(code || '').split(' ').filter(Boolean).map((t) => Object.freeze({ kind: SUB_CODES[t[0]], value: Number(t.slice(1)) })));
+}
+
 // ---------------------------------------------------------------------------------------- pool
 // mode = payout key (wins.js PAYOUT_MODES) or null for ALL-MODE. For a <mode>WinsPct gear the mode IS the stat (it
 // pays only there); for the rest it is flavour. `legacy` = the id already exists in marks.js (its owners keep it and
@@ -126,45 +152,45 @@ const CRIT_RATE_CAP_PCT = 50; // = CRIT_RATE_CAP × 100 (below; a test keeps the
 // gear's (kind, ★0 value) is unique across the pool (markRolls.test.js).
 const RAW_POOL = [
   // ---- RARE (12): the floor ----
-  { id: 'mk-detonator', name: 'MATCHSTICK', tier: 'rare', mode: 'wordBomb', stat: 'wbWinsPct' },
-  { id: 'mk-cyclone', name: 'PIGGY BANK', tier: 'rare', mode: 'blitz', stat: 'baseWins' },
-  { id: 'mk-scholar', name: 'PENCIL', tier: 'rare', mode: 'satRush', legacy: true, stat: 'xpPct' },
-  { id: 'mk-ouroboros', name: 'STICKY NOTE', tier: 'rare', mode: 'chain', stat: 'baseXp' },
-  { id: 'mk-tinder', name: 'AA BATTERY', tier: 'rare', mode: 'fuse', stat: 'overdriveSec' },
-  { id: 'mk-slipstream', name: 'LUCKY SOCK', tier: 'rare', mode: 'wordRace', stat: 'luckPct' },
-  { id: 'mk-smith', name: 'COFFEE MUG', tier: 'rare', modes: ['satRush', 'chain'], legacy: true, stat: 'winsPct' },
-  { id: 'mk-phoenix', name: 'STAPLER', tier: 'rare', mode: null, legacy: true, stat: 'critRatePct' },
-  { id: 'mk-metronome', name: 'EGG TIMER', tier: 'rare', mode: null, legacy: true, stat: 'critEvery' },
-  { id: 'mk-hotwire', name: 'SNEAKER', tier: 'rare', mode: 'wordRace', stat: 'raceWinsPct' },
-  { id: 'mk-grapple', name: 'PAPERCLIP', tier: 'rare', mode: 'chain', stat: 'chainWinsPct' },
-  { id: 'mk-sparkplug', name: 'USB STICK', tier: 'rare', mode: null, stat: 'critPower' },
+  { id: 'mk-detonator', name: 'MATCHSTICK', tier: 'rare', mode: 'wordBomb', stat: 'wbWinsPct', subs: 'C3 P.25' },
+  { id: 'mk-cyclone', name: 'PIGGY BANK', tier: 'rare', mode: 'blitz', stat: 'baseWins', subs: 'L5 G5' },
+  { id: 'mk-scholar', name: 'PENCIL', tier: 'rare', mode: 'satRush', legacy: true, stat: 'xpPct', subs: 'C1.5 X1.5' },
+  { id: 'mk-ouroboros', name: 'STICKY NOTE', tier: 'rare', mode: 'chain', stat: 'baseXp', subs: 'W2 O15' },
+  { id: 'mk-tinder', name: 'AA BATTERY', tier: 'rare', mode: 'fuse', stat: 'overdriveSec', subs: 'P.25 X1' },
+  { id: 'mk-slipstream', name: 'LUCKY SOCK', tier: 'rare', mode: 'wordRace', stat: 'luckPct', subs: 'C3 G5' },
+  { id: 'mk-smith', name: 'COFFEE MUG', tier: 'rare', modes: ['satRush', 'chain'], legacy: true, stat: 'winsPct', subs: 'X1 O15' },
+  { id: 'mk-phoenix', name: 'STAPLER', tier: 'rare', mode: null, legacy: true, stat: 'critRatePct', subs: 'P.25 W2' },
+  { id: 'mk-metronome', name: 'EGG TIMER', tier: 'rare', mode: null, legacy: true, stat: 'critEvery', subs: 'C3 O15' },
+  { id: 'mk-hotwire', name: 'SNEAKER', tier: 'rare', mode: 'wordRace', stat: 'raceWinsPct', subs: 'W2 L5' },
+  { id: 'mk-grapple', name: 'PAPERCLIP', tier: 'rare', mode: 'chain', stat: 'chainWinsPct', subs: 'X1 G5' },
+  { id: 'mk-sparkplug', name: 'USB STICK', tier: 'rare', mode: null, stat: 'critPower', subs: 'C4.5 X.5' },
   // ---- EPIC (7) ----
-  { id: 'mk-pyro', name: 'CASH REGISTER', tier: 'epic', mode: 'fuse', legacy: true, stat: 'baseWins' },
-  { id: 'mk-nova', name: 'BOOMBOX', tier: 'epic', mode: null, legacy: true, stat: 'winsPct' },
-  { id: 'mk-golem', name: 'GAME CARTRIDGE', tier: 'epic', mode: null, stat: 'baseXp' },
-  { id: 'mk-brainstorm', name: 'QUIZ BUZZER', tier: 'epic', mode: 'blitz', stat: 'blitzWinsPct' },
-  { id: 'mk-flashpoint', name: 'JUMPER CABLES', tier: 'epic', mode: 'fuse', stat: 'fuseWinsPct' },
-  { id: 'mk-voltage', name: 'TESLA COIL', tier: 'epic', mode: null, stat: 'critPower' },
-  { id: 'mk-talisman', name: 'MAGIC 8-BALL', tier: 'epic', mode: null, stat: 'luckPct' },
+  { id: 'mk-pyro', name: 'CASH REGISTER', tier: 'epic', mode: 'fuse', legacy: true, stat: 'baseWins', subs: 'C6 L10 G10' },
+  { id: 'mk-nova', name: 'BOOMBOX', tier: 'epic', mode: null, legacy: true, stat: 'winsPct', subs: 'C6 P1' },
+  { id: 'mk-golem', name: 'GAME CARTRIDGE', tier: 'epic', mode: null, stat: 'baseXp', subs: 'C6 W4 O30' },
+  { id: 'mk-brainstorm', name: 'QUIZ BUZZER', tier: 'epic', mode: 'blitz', stat: 'blitzWinsPct', subs: 'C9 X3' },
+  { id: 'mk-flashpoint', name: 'JUMPER CABLES', tier: 'epic', mode: 'fuse', stat: 'fuseWinsPct', subs: 'P.5 O60' },
+  { id: 'mk-voltage', name: 'TESLA COIL', tier: 'epic', mode: null, stat: 'critPower', subs: 'C12 W4' },
+  { id: 'mk-talisman', name: 'MAGIC 8-BALL', tier: 'epic', mode: null, stat: 'luckPct', subs: 'C3 W4 G15' },
   // ---- LEGENDARY (9) + perk ----
-  { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct' },
-  { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct' },
-  { id: 'mk-headmaster', name: 'HEADMASTER', tier: 'legendary', mode: 'satRush', stat: 'satWinsPct' },
-  { id: 'mk-thunderclap', name: 'THUNDERCLAP', tier: 'legendary', mode: null, stat: 'critPower' },
-  { id: 'mk-jackpot', name: 'JACKPOT', tier: 'legendary', mode: null, stat: 'gemsPct' }, // gear card v4 (Andy oct11): +200% GEMS
+  { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct', subs: 'C9 X10 L15' },
+  { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct', subs: 'P1 W20 G15' },
+  { id: 'mk-headmaster', name: 'HEADMASTER', tier: 'legendary', mode: 'satRush', stat: 'satWinsPct', subs: 'C13.5 W15 X5' },
+  { id: 'mk-thunderclap', name: 'THUNDERCLAP', tier: 'legendary', mode: null, stat: 'critPower', subs: 'C18 O120' },
+  { id: 'mk-jackpot', name: 'JACKPOT', tier: 'legendary', mode: null, stat: 'gemsPct', subs: 'C9 W10 L30' }, // gear card v4 (Andy oct11): +200% GEMS
   // oct18 (Andy "rarer ones like more legendaries"): four more, each on a stat that had no LEGENDARY yet. The tier's
   // 1 IN 100 is unchanged, so each LEGENDARY is now 1 IN 900 (server mirror: 055_more_legendaries.sql)
-  { id: 'mk-monsoon', name: 'MONSOON', tier: 'legendary', mode: 'blitz', stat: 'blitzWinsPct' },
-  { id: 'mk-inferno', name: 'INFERNO', tier: 'legendary', mode: 'fuse', stat: 'fuseWinsPct' },
-  { id: 'mk-mainframe', name: 'MAINFRAME', tier: 'legendary', mode: null, stat: 'critRatePct' },
-  { id: 'mk-shamrock', name: 'SHAMROCK', tier: 'legendary', mode: null, stat: 'luckPct' },
+  { id: 'mk-monsoon', name: 'MONSOON', tier: 'legendary', mode: 'blitz', stat: 'blitzWinsPct', subs: 'P1.5 L15 O90' },
+  { id: 'mk-inferno', name: 'INFERNO', tier: 'legendary', mode: 'fuse', stat: 'fuseWinsPct', subs: 'P2 W10 O60' },
+  { id: 'mk-mainframe', name: 'MAINFRAME', tier: 'legendary', mode: null, stat: 'critRatePct', subs: 'P1 X10 G15' },
+  { id: 'mk-shamrock', name: 'SHAMROCK', tier: 'legendary', mode: null, stat: 'luckPct', subs: 'C13.5 G30 X2.5' },
   // ---- MYTHIC (4) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
-  { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins' },
-  { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp' },
-  { id: 'mk-hydra', name: 'HYDRA', tier: 'mythic', mode: 'wordBomb', stat: 'wbWinsPct' },
-  { id: 'mk-chronos', name: 'CHRONOS', tier: 'mythic', mode: null, stat: 'xpPct' }, // oct18: bends time — every letter's XP
+  { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins', subs: 'C14 P4 G25' },
+  { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp', subs: 'C14 W30 L50' },
+  { id: 'mk-hydra', name: 'HYDRA', tier: 'mythic', mode: 'wordBomb', stat: 'wbWinsPct', subs: 'C21 P3 W30' },
+  { id: 'mk-chronos', name: 'CHRONOS', tier: 'mythic', mode: null, stat: 'xpPct', subs: 'X15 G25 O240' }, // oct18: bends time — every letter's XP
   // ---- SECRET (1) + game-changing perks ----
-  { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null, stat: 'winsPct' },
+  { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null, stat: 'winsPct', subs: 'C20 P3 W80 G50' },
 ];
 // GEAR POOL v2: the 12 COMMON gears that were removed (each owned copy refunds COMMON_REFUND_GEMS — migrateRollSave),
 // and the three marks.js-only COMMONS (the retired ALL-MODE marks) that went with them.
@@ -189,6 +215,7 @@ function buildPool() {
     legacy: !!m.legacy,
     perks: MARK_PERKS[m.id] || [],
     stat: Object.freeze({ kind: m.stat, value: statBaseValue(m.stat, m.tier) }), // ★0, not shiny
+    subs: parseSubs(m.subs), // this gear's OWN substat lines (GEAR VARIETY — see SUBSTAT_REF)
   }));
 }
 export const ROLL_MARKS = buildPool();
@@ -216,17 +243,17 @@ export function yourOneInX(id, luckValue = 1) {
 // tier earns it (progress/ladderGears.js). RITUALIST has no ladder → retired (owners keep it, like BLAZE). LINGUIST is
 // the ROLL EPIC+ gear now, renamed HIGH ROLLER (its id + owners unchanged).
 export const PERMANENT_MARKS = [
-  { id: 'mk-ironhand', name: 'IRONHAND', from: 'vol-10k' },
-  { id: 'mk-marathon', name: 'MARATHON', from: 'vol-50k' },
-  { id: 'mk-blaze', name: 'BLAZE', from: 'wpm-100', retired: true }, // Andy oct8: the 100 WPM task is gone; owners keep BLAZE
-  { id: 'mk-curator', name: 'ARCHIVIST', from: 'dist-2500', legacy: true }, // H6/M8: the achievement is CURATOR
-  { id: 'mk-legend', name: 'LEGEND', from: 'lv-300', legacy: true },
-  { id: 'mk-ritual', name: 'RITUALIST', from: 'streak-30', retired: true }, // Andy oct17: no season-2 ladder; owners keep it
-  { id: 'mk-linguist', name: 'HIGH ROLLER', from: 'sec-dict', legacy: true },
-  { id: 'mk-eternal', name: 'ETERNAL', from: 'sec-eternal', legacy: true },
-  { id: 'mk-grandmaster', name: 'GRANDMASTER', from: 'sec-truemaster' },
-  { id: 'mk-omega', name: 'OMEGA', from: 'sec-completionist' },
-].map((m) => ({ ...m, tier: 'permanent', ach: (ladderOfGear(m.id) || {}).ladder || null }));
+  { id: 'mk-ironhand', name: 'IRONHAND', from: 'vol-10k', subs: 'C9 P2 W10' },
+  { id: 'mk-marathon', name: 'MARATHON', from: 'vol-50k', subs: 'X5 L15 O120' },
+  { id: 'mk-blaze', name: 'BLAZE', from: 'wpm-100', retired: true, subs: 'C18 P1 O60' }, // Andy oct8: the 100 WPM task is gone; owners keep BLAZE
+  { id: 'mk-curator', name: 'ARCHIVIST', from: 'dist-2500', legacy: true, subs: 'C9 X10 G15' }, // H6/M8: the achievement is CURATOR
+  { id: 'mk-legend', name: 'LEGEND', from: 'lv-300', legacy: true, subs: 'C9 P1 W20' },
+  { id: 'mk-ritual', name: 'RITUALIST', from: 'streak-30', retired: true, subs: 'W10 L30 O60' }, // Andy oct17: no season-2 ladder; owners keep it
+  { id: 'mk-linguist', name: 'HIGH ROLLER', from: 'sec-dict', legacy: true, subs: 'C9 L30 G15' },
+  { id: 'mk-eternal', name: 'ETERNAL', from: 'sec-eternal', legacy: true, subs: 'P1 G15 O120' },
+  { id: 'mk-grandmaster', name: 'GRANDMASTER', from: 'sec-truemaster', subs: 'C13.5 P1.5 W10' },
+  { id: 'mk-omega', name: 'OMEGA', from: 'sec-completionist', subs: 'W15 X7.5 G15' },
+].map((m) => ({ ...m, tier: 'permanent', subs: parseSubs(m.subs), ach: (ladderOfGear(m.id) || {}).ladder || null }));
 const PERM_BY_ID = new Map(PERMANENT_MARKS.map((m) => [m.id, m]));
 export function permanentMarkById(id) {
   return PERM_BY_ID.get(id) || null;
@@ -511,13 +538,18 @@ function tierOfAny(id) {
 }
 const resolve = (state) => (state === undefined ? loadRollState() : state);
 /**
- * A mark's STAT as it pays right now: { kind, value } = its ★0 value × the pips (or the pre-v2 floor) × SHINY.
- * null for an id with no stat (a PERMANENT or a retired mark — those pay their tier MAIN on wins AND XP).
+ * A mark's STAT as it pays right now: { kind, value } = its ★0 value × the pips (or the pre-v2 floor) × SHINY. An
+ * UNLISTED gear: its ONE main at the LEGENDARY value. null for an id with no stat (a PERMANENT or a retired mark —
+ * those pay their tier MAIN on wins AND XP).
  * `state` = the roll state its pips are read from (omit → the stored one; null → ★0).
  */
 export function statOf(id, state) {
   const m = ROLL_BY_ID.get(id);
-  if (!m) return null;
+  if (!m) {
+    // an UNLISTED gear: ONE main at the LEGENDARY value (read at call time — season 2 re-sizes TIER_PCT), no pips
+    const u = unlistedById(id);
+    return u && u.stat ? { kind: u.stat, value: statBaseValue(u.stat, 'legendary') } : null;
+  }
   const s = resolve(state);
   const k = s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
   return { kind: m.stat.kind, value: scaleStat(m.stat.kind, m.stat.value, k) };
@@ -576,9 +608,9 @@ export function mainMultOf(id, state) {
   const k = ROLL_BY_ID.has(id) && s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
   return 1 + mainBonus(tier) * k;
 }
-/** ONE tag for a mark: its stat line (a rolled mark), or "×N WINS + XP" (a PERMANENT / retired mark pays both). */
+/** ONE tag for a mark: its stat line (a rolled / UNLISTED mark), or "×N WINS + XP" (a PERMANENT / retired mark pays both). */
 export function mainTag(id, state) {
-  if (ROLL_BY_ID.has(id)) return statLine(id, state);
+  if (ROLL_BY_ID.has(id) || unlistedById(id)) return statLine(id, state);
   return `+${formatRate((mainMultOf(id, state) - 1) * 100)}% WINS + XP`;
 }
 /** The perk line(s) of a mark ("LETTERS COUNT ×2"), or '' when it has none. */
@@ -759,51 +791,43 @@ export function markMult(opts = {}) {
 
 // ------------------------------------------------------------------------------------------ CRIT
 // CRIT (Andy oct8: "add crit power and crit rate to gears — gears can have more than 1 value"). A gear keeps its ONE
-// MAIN stat and, from RARE up, carries EXTRA crit stats by tier — deterministic per gear (no save field, no migration),
-// scaled by the SAME ★ pips × SHINY factor statOf uses. EARNED (permanent) gears carry the LEGENDARY crit, as they pay
-// the LEGENDARY MAIN. A crit is a MENU KEY that pays × CRIT POWER (progress/crit.js rolls it, useXpCapture applies it).
-//   RARE +3% RATE · EPIC +6%, +0.5× POWER · LEGENDARY +9%, +1× · MYTHIC +14%, +2× · SECRET +20%, +3×
-//   (GEAR OP, Andy oct9 "a bit more OP": was RARE +2% · EPIC +4%, +0.25× · LEGENDARY +6%, +0.5× · MYTHIC +9%, +1× · SECRET +12%, +1.5×)
-// Totals SUM over the worn gears (the MAIN + the season-2 2nd slot): RATE = min(50%, Σ rate) from a BASE of 0,
-// POWER = ×2 + Σ power. `rate` is a fraction (0.06 = 6%); `power` is the part ADDED to the base ×2.
-export const CRIT_BY_TIER = Object.freeze({
-  rare: Object.freeze({ rate: 0.03, power: 0 }),
-  epic: Object.freeze({ rate: 0.06, power: 0.5 }),
-  legendary: Object.freeze({ rate: 0.09, power: 1 }),
-  mythic: Object.freeze({ rate: 0.14, power: 2 }),
-  secret: Object.freeze({ rate: 0.2, power: 3 }),
-});
-// SUBSTATS (gear card v4, Andy oct11: "add more substats to the gears (like genshin) … one main line on top and
-// substats below"; "make the stats/substats do more for the win base"). Deterministic by TIER (no save field, no
-// migration), scaled by the SAME ★ pips × SHINY factor as the MAIN and the crit rows. The crit rows above (CRIT_BY_TIER)
-// are the first substat lines; these are the rest. A card has 4 substat lines — the unused ones print a dash.
-export const SUBSTATS_BY_TIER = Object.freeze({
-  rare: Object.freeze([{ kind: 'baseWins', value: 2 }]),
-  epic: Object.freeze([{ kind: 'baseWins', value: 4 }]),
-  legendary: Object.freeze([{ kind: 'baseWins', value: 10 }, { kind: 'luckPct', value: 15 }]),
-  mythic: Object.freeze([{ kind: 'baseWins', value: 30 }, { kind: 'gemsPct', value: 25 }]),
-  secret: Object.freeze([{ kind: 'baseWins', value: 80 }, { kind: 'gemsPct', value: 50 }]),
-});
+// MAIN stat and carries EXTRA stats — its SUBSTATS (gear card v4, Andy oct11 "like genshin … one main line on top and
+// substats below"). GEAR VARIETY (oct18): the lines are the gear's OWN (`subs` on its pool / EARNED / UNLISTED row,
+// SUBSTAT_REF above), not its tier's, so no two cards print the same block. Deterministic per gear (no save field, no
+// migration), scaled by the SAME ★ pips × SHINY factor statOf uses (EARNED / UNLISTED gears have no pips). The C / P
+// lines are the CRIT ones: a crit is a MENU KEY that pays × CRIT POWER (progress/crit.js rolls it, useXpCapture
+// applies it). Totals SUM over the worn gears (the MAIN + the season-2 2nd slot): RATE = min(50%, Σ rate) from a BASE
+// of 1%, POWER = ×2 + Σ power. `rate` is a fraction (0.06 = 6%); `power` is the part ADDED to the base ×2.
 export const SUBSTAT_LINES = 4;
+/** A gear's raw substat rows (★0) + whether pips scale them, or null for an unknown / retired id. */
+function subsRow(id) {
+  const r = ROLL_BY_ID.get(id);
+  if (r) return { rows: r.subs, rolled: true };
+  const p = PERM_BY_ID.get(id);
+  if (p) return { rows: p.subs, rolled: false };
+  const u = unlistedById(id); // an UNLISTED row carries its code string (the unlistedIds.js leaf parses nothing)
+  if (!u) return null;
+  if (!ulSubs.has(id)) ulSubs.set(id, parseSubs(u.subs));
+  return { rows: ulSubs.get(id), rolled: false };
+}
+const ulSubs = new Map();
+function subsK(id, rolled, state) {
+  if (!rolled) return 1;
+  const s = resolve(state);
+  return s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
+}
 /**
- * ONE gear's substat lines as they pay right now, crit first: [{ kind, value }] — CRIT RATE (%), CRIT POWER (×), then
- * its tier's SUBSTATS_BY_TIER rows; × ★ pips × SHINY. [] for an unknown / retired id (a PERMANENT reads LEGENDARY).
+ * ONE gear's substat lines as they pay right now: [{ kind, value }] — its own rows (crit first, as written) × ★ pips ×
+ * SHINY. [] for an unknown / retired id.
  */
 export function substatsOf(id, state) {
-  const r = ROLL_BY_ID.get(id);
-  const tier = r ? r.tier : PERM_BY_ID.has(id) || unlistedById(id) ? 'legendary' : null;
-  if (!tier) return [];
-  let k = 1;
-  if (r) {
-    const s = resolve(state);
-    k = s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
-  }
-  const c = CRIT_BY_TIER[tier] || NO_CRIT;
-  const out = [];
-  if (c.rate) out.push({ kind: 'critRatePct', value: Math.min(c.rate * 100 * k, CRIT_RATE_CAP_PCT) });
-  if (c.power) out.push({ kind: 'critPower', value: c.power * k });
-  for (const row of SUBSTATS_BY_TIER[tier] || []) out.push({ kind: row.kind, value: row.value * k });
-  return out.slice(0, SUBSTAT_LINES);
+  const g = id ? subsRow(id) : null;
+  if (!g) return [];
+  const k = subsK(id, g.rolled, state);
+  return g.rows.slice(0, SUBSTAT_LINES).map((x) => ({
+    kind: x.kind,
+    value: x.kind === 'critRatePct' ? Math.min(x.value * k, CRIT_RATE_CAP_PCT) : x.value * k,
+  }));
 }
 /** Σ of one gear's NON-crit substats of `kind` (the crit rows pay through critTotals, never here). */
 function substatSum(id, s, kind) {
@@ -812,7 +836,7 @@ function substatSum(id, s, kind) {
   for (const x of substatsOf(id, s)) if (x.kind === kind) v += x.value;
   return v;
 }
-/** A substat line as the card prints it: "+9% CRIT RATE", "+1× CRIT POWER", "+10 BASE WINS", "+25% GEMS", "+15% LUCK". */
+/** A substat line as the card prints it: "+9% CRIT RATE", "+100% CRIT POWER", "+10 BASE WINS", "+25% GEMS", "+15% ROLL LUCK". */
 export function substatText(x) {
   if (!x) return '';
   switch (x.kind) {
@@ -827,26 +851,22 @@ export function substatText(x) {
 export const CRIT_BASE_RATE = 0.01; // Andy oct9: "people should have a 1% crit chance to start" (×2 power) — gear adds on top
 export const CRIT_BASE_POWER = 2;
 export const CRIT_RATE_CAP = 0.5;
-const NO_CRIT = Object.freeze({ rate: 0, power: 0 });
-/** The crit tier row a gear id reads (a PERMANENT reads LEGENDARY), or null for an id with no crit (a retired mark). */
-export function critTierOf(id) {
-  const r = ROLL_BY_ID.get(id);
-  if (r) return CRIT_BY_TIER[r.tier] || NO_CRIT;
-  return PERM_BY_ID.has(id) || unlistedById(id) ? CRIT_BY_TIER.legendary : null;
-}
 /**
- * ONE gear's EXTRA crit stats as they pay right now: { rate, power } = its tier's row × ★ pips × SHINY (a PERMANENT:
- * the LEGENDARY row, no pips). { 0, 0 } for an unknown or retired id. `state` as statOf.
+ * ONE gear's EXTRA crit stats as they pay right now: { rate, power } = its CRIT RATE / CRIT POWER substat lines × ★ pips
+ * × SHINY (rate uncapped here — critTotals caps the sum). { 0, 0 } for an unknown or retired id. `state` as statOf.
  */
 export function critStatsOf(id, state) {
-  const row = id ? critTierOf(id) : null;
-  if (!row || (!row.rate && !row.power)) return { rate: 0, power: 0 };
-  let k = 1;
-  if (ROLL_BY_ID.has(id)) {
-    const s = resolve(state);
-    k = s ? pipMult(markLevel(s, id)) * shinyMult(id, s) : 1;
+  const g = id ? subsRow(id) : null;
+  if (!g) return { rate: 0, power: 0 };
+  let rate = 0;
+  let power = 0;
+  for (const x of g.rows) {
+    if (x.kind === 'critRatePct') rate += x.value / 100;
+    if (x.kind === 'critPower') power += x.value;
   }
-  return { rate: row.rate * k, power: row.power * k };
+  if (!rate && !power) return { rate: 0, power: 0 };
+  const k = subsK(id, g.rolled, state);
+  return { rate: rate * k, power: power * k };
 }
 /**
  * The worn gears' CRIT, summed: { rate (capped 50%), power (×2 + Σ), rawRate (uncapped Σ), every, ids }. `markId`

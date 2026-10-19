@@ -35,9 +35,9 @@ test('+N BASE WINS/WORD reaches the payout: BASE 10 → 10 + N before every mult
   const bare = withStorage({ [ROLL_STATE_KEY]: owning('mk-singularity') }, () => perWordRateNow({ mode: 'wordBomb' }));
   withStorage({ [ROLL_STATE_KEY]: owning('mk-singularity'), [MARKS_EQUIPPED_KEY]: 'mk-singularity' }, () => {
     const r = perWordRateNow({ mode: 'wordBomb' });
-    assert.ok(Math.abs(r.rate / bare.rate - 22) < 0.15, 'MYTHIC +180 BASE + substat +30: 10 → 220 (whole-XP grid)');
-    near(r.factors.baseWins, 210);
-    near(wordWinsBase({}), 220, 'the receipt BASE row carries the +210');
+    assert.ok(Math.abs(r.rate / bare.rate - 19) < 0.15, 'MYTHIC +180 BASE (its substats are crit + gems): 10 → 190 (whole-XP grid)');
+    near(r.factors.baseWins, 180);
+    near(wordWinsBase({}), 190, 'the receipt BASE row carries the +180');
     assert.equal(Math.round(r.base * r.factors.bonus * 10) / 10, r.rate, 'base × the multipliers = the rate (to the tenth)');
   });
   // pure: xpPerWord's addend
@@ -49,7 +49,7 @@ test('+N% WINS reaches the payout as a multiplier (and never the roll price)', (
   withStorage({ [ROLL_STATE_KEY]: owning('mk-eclipse'), [MARKS_EQUIPPED_KEY]: 'mk-eclipse' }, () => {
     const r = perWordRateNow({ mode: 'wordBomb' });
     near(r.factors.bonus, 3 * (1 + 0.005 * (100 / ROLL_MARKS.length)));
-    near(r.factors.baseWins, 10, 'its LEGENDARY substat +10 BASE WINS (gear card v4)');
+    near(r.factors.baseWins, 20, 'its OWN substat +20 BASE WINS (GEAR VARIETY oct18)');
   });
 });
 

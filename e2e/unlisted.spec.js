@@ -83,7 +83,7 @@ for (const vp of VPS) {
     await og.click();
     const sheet = page.locator('.mx-sheet');
     await expect(sheet.getByTestId('unlisted-serial')).toHaveText('FINDER #0042');
-    await expect(sheet.getByTestId('mark-main')).toContainText('WINS + XP');
+    await expect(sheet.getByTestId('mark-main')).toContainText('WINS IN WORD BOMB'); // oct18: ONE LEGENDARY-sized main, never WINS + XP
     await page.waitForTimeout(400);
     await shot(page, `sheet-found-${vp.tag}`);
     await sheet.getByTestId('gear-equip').click();

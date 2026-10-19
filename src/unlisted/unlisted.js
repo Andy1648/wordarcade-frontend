@@ -10,8 +10,9 @@
 //   1. NO RANDOMNESS YOU CAN PAY INTO. The MIDAS gear rides the existing 1-in-750 golden word, which is free play,
 //      never gems. Nothing here reads or spends a currency.
 //   2. NO ODDS, ANYWHERE. A tile is a riddle, never "1 IN X". `unlistedIndex` has no odds field to leak.
-//   3. NOT STRONGER THAN ORIGIN. A worn UNLISTED pays the PERMANENT main (the LEGENDARY ×3 on wins AND XP, like the
-//      achievement gears) — a trophy you can wear, never the reason a number is large.
+//   3. NOT STRONGER THAN A LEGENDARY (Andy oct18 "they essentially better legendaries"). A worn UNLISTED pays ONE main
+//      stat at the LEGENDARY value + a LEGENDARY substat budget (unlistedIds.js ROWS) — never ×3 on wins AND XP like
+//      the achievement gears. A trophy you can wear, never the reason a number is large.
 //   4. THE SERIAL IS THE BRAG. "#0042" is your discovery rank for that gear, handed out by the server in the order the
 //      finds arrive (supabase 052_unlisted.sql). Until the server answers it reads "#····" — never a made-up number.
 //
@@ -23,19 +24,20 @@ export { UNLISTED_KEY, UNLISTED_TIER };
 /** The season this build is in. A season gear is findable only while its season is the current one. */
 export const CURRENT_SEASON = 2;
 
-// `secret` = the secrets.js id whose detection grants it (null = granted by its own detector, `season` gear).
+// `secret` = the secrets.js id whose detection grants it (null = granted by its own detector: the `season` gear, and
+// TYPEWRITER / WISHBONE — gearFinds.js, oct18: the word-secret was far too easy, so the gear needs a harder feat).
 // `riddle` = the ONE line the index shows while it is unfound. Cryptic on purpose: it says what to do, never how.
 export const UNLISTED_GEARS = Object.freeze([
   { id: 'mk-ul-og', secret: 'newgrounds', name: 'O.G.', art: 'og', riddle: 'SAY THE NAME OF THE PLACE THAT RAISED US' },
-  { id: 'mk-ul-wishbone', secret: 'wish', name: 'WISHBONE', art: 'wishbone', riddle: 'PLAY WHEN THE CLOCK SEES DOUBLE, TWICE' },
-  { id: 'mk-ul-typewriter', secret: 'typewriter', name: 'TYPEWRITER', art: 'typewriter', riddle: 'NEVER LIFT YOUR FINGERS' },
+  { id: 'mk-ul-wishbone', secret: null, name: 'WISHBONE', art: 'wishbone', riddle: 'WHEN THE CLOCK SEES DOUBLE · AM + PM, ONE DAY' },
+  { id: 'mk-ul-typewriter', secret: null, name: 'TYPEWRITER', art: 'typewriter', riddle: 'FIFTY WORDS IN A ROW · NO TAKE-BACKS' },
   { id: 'mk-ul-mirror', secret: 'palindrome', name: 'MIRROR', art: 'mirror', riddle: 'IT READS THE SAME BOTH WAYS' },
   { id: 'mk-ul-midas', secret: 'midas', name: 'MIDAS', art: 'midas', riddle: 'SOMETIMES A WORD TURNS TO GOLD' },
   { id: 'mk-ul-tripledouble', secret: 'tripledouble', name: 'TRIPLE DOUBLE', art: 'tripledouble', season: 2, riddle: 'ONE WORD, THREE PAIRS · THIS SEASON ONLY' },
 ].map((g) => Object.freeze({ season: null, ...g, tier: UNLISTED_TIER })));
 
 const BY_ID = new Map(UNLISTED_GEARS.map((g) => [g.id, g]));
-const BY_SECRET = new Map(UNLISTED_GEARS.map((g) => [g.secret, g]));
+const BY_SECRET = new Map(UNLISTED_GEARS.filter((g) => g.secret).map((g) => [g.secret, g]));
 
 export function unlistedById(id) {
   return BY_ID.get(id) || null;

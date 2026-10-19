@@ -224,7 +224,9 @@ export function gearSplit(text) {
   return i < 0 ? { big: s, unit: '' } : { big: s.slice(0, i), unit: s.slice(i + 1) };
 }
 
-/** LUCK is off the menu's first-paint icon set (kitIconsCore): load the full set only when a worn gear needs it. */
+/** LUCK / LEVELS / OVERDRIVE are off the menu's first-paint icon set (kitIconsCore): load the full set only when a worn
+ *  gear's substats need one. */
+const LAZY_ICONS = new Set(['luck', 'levels', 'overdrive']);
 function useKitIconFor(need) {
   const [ok, setOk] = useState(false);
   useEffect(() => {
@@ -260,7 +262,8 @@ function useGearShowcase(slotRef, tier, enabled) {
 export function subChip(x) {
   const t = substatText(x);
   const n = t.split(' ')[0].replace(/^\+/, ''); // every substat ADDS — the chip drops the '+' to fit two a row
-  const icon = x.kind === 'baseWins' ? 'wins' : x.kind === 'gemsPct' ? 'gems' : x.kind === 'luckPct' ? 'luck' : 'crit';
+  const icon = x.kind === 'baseWins' ? 'wins' : x.kind === 'gemsPct' ? 'gems' : x.kind === 'luckPct' ? 'luck'
+    : x.kind === 'baseXp' ? 'levels' : x.kind === 'overdriveSec' ? 'overdrive' : 'crit';
   // both crit chips share the burst icon and both read as a % (Andy oct12) — a small key tells RATE from PWR
   const key = x.kind === 'critRatePct' ? 'RATE' : x.kind === 'critPower' ? 'PWR' : '';
   return { n, icon, key, label: t };
@@ -274,7 +277,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
   // GEAR CARD v4 (Andy oct11 "no need to have 'your gear' … include stat and substats … like the cards but
   // horizontal"): the substat lines, as the card prints them, short ("+9% CRIT", "+10 BASE")
   const subs = mark ? substatsOf(mark.id).map(subChip) : [];
-  const luck = useKitIconFor(subs.some((c) => c.icon === 'luck'));
+  const luck = useKitIconFor(subs.some((c) => LAZY_ICONS.has(c.icon)));
   const reduced = useReduceMotion();
   const sheen = !!mark && IDLE_SHEEN_TIERS.has(tier);
   const slotRef = useRef(null);
@@ -321,7 +324,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
               {subs.map((c, i) => (
                 <span key={i} className={`hp-gear-subline is-${c.icon}`} title={c.label} aria-label={c.label}>
                   {c.icon === 'crit' ? <img className="hp-gear-subico" src="/fx/crit-burst.svg" alt="" draggable="false" />
-                    : c.icon !== 'luck' || luck ? <KitIcon name={c.icon} size={18} shadow={1} extras={false} className="hp-gear-subico" /> : <span className="hp-gear-subico" />}
+                    : !LAZY_ICONS.has(c.icon) || luck ? <KitIcon name={c.icon} size={18} shadow={1} extras={false} className="hp-gear-subico" /> : <span className="hp-gear-subico" />}
                   {c.n}
                   {c.key ? <span className="hp-gear-subkey">{c.key}</span> : null}
                 </span>

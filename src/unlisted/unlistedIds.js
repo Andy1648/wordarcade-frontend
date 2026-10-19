@@ -4,21 +4,26 @@
 // (payload ratchet, e2e/payload-budget.spec.js). A LEAF: imports nothing.
 export const UNLISTED_KEY = 'taw.unlisted';
 export const UNLISTED_TIER = 'unlisted';
-// [id, name, the secrets.js id that grants it]
+// [id, name, the secrets.js id that grants it (null = its own detector, secrets/gearFinds.js), its ONE MAIN stat kind,
+//  its substats]. GEAR VARIETY (Andy oct18 "they essentially better legendaries"): an UNLISTED is a LEGENDARY-sized gear
+// — ONE main stat at the LEGENDARY value + a LEGENDARY substat budget (markRollsCore SUBSTAT_REF) — never ×3 on wins
+// AND XP like an EARNED gear. A trophy you wear, never the reason a number is large.
 const ROWS = [
-  ['mk-ul-og', 'O.G.', 'newgrounds'],
-  ['mk-ul-wishbone', 'WISHBONE', 'wish'],
-  ['mk-ul-typewriter', 'TYPEWRITER', 'typewriter'],
-  ['mk-ul-mirror', 'MIRROR', 'palindrome'],
-  ['mk-ul-midas', 'MIDAS', 'midas'],
-  ['mk-ul-tripledouble', 'TRIPLE DOUBLE', 'tripledouble'],
+  ['mk-ul-og', 'O.G.', 'newgrounds', 'wbWinsPct', 'C9 X5 L15 O60'],
+  ['mk-ul-wishbone', 'WISHBONE', null, 'overdriveSec', 'C4.5 L30 G22.5'],
+  ['mk-ul-typewriter', 'TYPEWRITER', null, 'baseXp', 'C18 P1 W10'],
+  ['mk-ul-mirror', 'MIRROR', 'palindrome', 'chainWinsPct', 'P1.5 W15 L15'],
+  ['mk-ul-midas', 'MIDAS', 'midas', 'baseWins', 'P1 L15 G30'],
+  ['mk-ul-tripledouble', 'TRIPLE DOUBLE', 'tripledouble', 'raceWinsPct', 'C13.5 X5 O90'],
 ];
-const BY_ID = new Map(ROWS.map(([id, name]) => [id, Object.freeze({ id, name, tier: UNLISTED_TIER })]));
-const BY_SECRET = new Map(ROWS.map(([id, , sid]) => [sid, id]));
+const BY_ID = new Map(ROWS.map(([id, name, , stat, subs]) => [id, Object.freeze({ id, name, tier: UNLISTED_TIER, stat, subs })]));
+const BY_SECRET = new Map(ROWS.filter((r) => r[2]).map(([id, , sid]) => [sid, id]));
 export const UNLISTED_IDS = ROWS.map((r) => r[0]);
 export const TRIPLE_DOUBLE_ID = 'mk-ul-tripledouble';
+export const WISHBONE_ID = 'mk-ul-wishbone';
+export const TYPEWRITER_ID = 'mk-ul-typewriter';
 
-/** { id, name, tier } for an UNLISTED id, else null. */
+/** { id, name, tier, stat, subs } for an UNLISTED id, else null. */
 export function unlistedEntry(id) {
   return BY_ID.get(id) || null;
 }

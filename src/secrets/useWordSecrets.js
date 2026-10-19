@@ -22,6 +22,7 @@ import { rebirthMult, getRebirths, loadProgress } from '../progress/xp';
 import { winLevelMult } from '../progress/wins';
 import { secretFound as evSecretFound } from '../lib/events.js';
 import { createWordTracker, doublePairs } from '../unlisted/seasonSecret.js';
+import { createTypewriterRun, noteWishWord } from '../unlisted/gearFinds.js';
 
 const IDLE_MS = 700; // typing pause that closes the current word (palindrome boundary)
 
@@ -61,6 +62,9 @@ export function secretPayout(base, { rebirths = getRebirths(), level = loadProgr
  * the gear once, fires the stamp and claims the serial. Resolves the grant or null.
  */
 const TRIPLE_DOUBLE_ID = 'mk-ul-tripledouble'; // unlisted/unlistedIds.js (a literal here keeps that module off this path)
+// the two UNLISTED finds that are their own feat, not a word-secret (unlisted/gearFinds.js — Andy oct18 "WAY too easy")
+const TYPEWRITER_ID = 'mk-ul-typewriter';
+const WISHBONE_ID = 'mk-ul-wishbone';
 export function revealUnlisted(gearId, word) {
   return import('../unlisted/reveal.js').then((m) => m.revealUnlisted(gearId, word)).catch(() => null);
 }
@@ -97,6 +101,8 @@ export function useWordSecrets({ active = true } = {}) {
   if (detRef.current === null) {
     detRef.current = createSecretDetector({ storage: safeStorage(), rng: rarePopRng });
   }
+  const typeRef = useRef(null);
+  if (typeRef.current === null) typeRef.current = createTypewriterRun();
 
   const grant = useCallback((raw) => {
     if (!raw) return null;
@@ -131,8 +137,10 @@ export function useWordSecrets({ active = true } = {}) {
     if (!active) return undefined;
     const det = detRef.current;
     const words = wordRef.current;
+    typeRef.current.reset(); // a TYPEWRITER run lives inside one stretch of play
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return; // ignore shortcuts
+      typeRef.current.onKey(e.key);
       const closed = words.onKey(e.key);
       grant(det.onKey(e.key));
       // the SEASON gear (TRIPLE DOUBLE) is judged at the same word boundary as the palindrome
@@ -153,7 +161,12 @@ export function useWordSecrets({ active = true } = {}) {
 
   useEffect(() => () => clearTimeout(idleRef.current), []);
 
-  const notePop = useCallback(() => grant(detRef.current.onPop()), [grant]);
+  // once per ACCEPTED word: the golden-word secret, and the two UNLISTED feats that count accepted words
+  const notePop = useCallback(() => {
+    if (typeRef.current.onWord()) revealUnlisted(TYPEWRITER_ID, wordRef.current.last());
+    if (noteWishWord(Date.now(), safeStorage())) revealUnlisted(WISHBONE_ID, wordRef.current.last());
+    return grant(detRef.current.onPop());
+  }, [grant]);
   const clear = useCallback(() => setHit(null), []);
 
   return { hit, notePop, clear };
