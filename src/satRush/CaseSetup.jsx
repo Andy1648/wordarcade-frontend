@@ -4,12 +4,12 @@
 // paper page as PICK YOUR BEAT. The last choices are preselected, so a returning player's setup is
 // one press. Both rows are radio groups (arrow keys move, Enter starts).
 import { useState, useRef, useEffect } from 'react';
-import { DIFFICULTIES, DIFFICULTY_ORDER, LENGTHS, normalizeSpec } from './runSpec';
+import { DIFFICULTY_ORDER, LENGTHS, normalizeSpec, difficultiesFor } from './runSpec';
 
-function Choice({ label, options, value, onPick, render, stack = false, grid = false }) {
+function Choice({ label, options, value, onPick, render, stack = false, grid = false, duo = false }) {
   const id = `sr-setup-${label.replace(/\s+/g, '-')}`;
   return (
-    <div className={`sr-setup-row${stack ? ' stack' : ''}${grid ? ' grid' : ''}`}>
+    <div className={`sr-setup-row${stack ? ' stack' : ''}${grid ? ' grid' : ''}${duo ? ' duo' : ''}`}>
       <div className="sr-setup-label" id={id}>
         {label}
       </div>
@@ -34,7 +34,9 @@ function Choice({ label, options, value, onPick, render, stack = false, grid = f
   );
 }
 
-export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 0, packSize = 0, categories = [], onStart, onBack, onExit }) {
+export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 0, packSize = 0, categories = [], pack = 'sat', ui = null, onStart, onBack, onExit }) {
+  const DIFFICULTIES = difficultiesFor(pack);
+  const U = ui || {};
   const p = prefs || {};
   const initial = normalizeSpec({ mode, difficulty: p.difficulty, length: p[mode] });
   const [difficulty, setDifficulty] = useState(initial.difficulty);
@@ -43,6 +45,26 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
   const catIds = categories.map((c) => c.id);
   const [category, setCategory] = useState(catIds.includes(p.category) ? p.category : 'all');
   const catLabel = (id) => (id === 'all' ? 'All themes' : (categories.find((c) => c.id === id) || {}).label || id);
+  // PACE (packs with a default pace — FRENCH RUSH): 'self' (no clock) | 'timed'
+  const hasPace = !!U.pace;
+  const [pace, setPace] = useState(p.pace === 'timed' || p.pace === 'self' ? p.pace : U.pace || 'timed');
+  const [copied, setCopied] = useState(false);
+  // TEACHER LINK: this exact set as a URL — a class opens it and lands here with it preselected
+  function copyLink() {
+    try {
+      const q = new URLSearchParams({ mode, level: difficulty, n: String(length), pace });
+      if (category !== 'all') q.set('theme', category);
+      const url = `${window.location.origin}${window.location.pathname}?${q.toString()}`;
+      const done = () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done);
+      else done();
+    } catch {
+      /* no clipboard — nothing to do */
+    }
+  }
   const goRef = useRef(null);
   useEffect(() => {
     if (goRef.current) goRef.current.focus();
@@ -52,10 +74,15 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
   return (
     <div className="sr-screen">
       <div className="sr-modeselect sr-setup">
-        <div className="sr-modeselect-head sr-print" data-v={isBrief ? 'BRIEFING' : 'LINEUP'}>
-          {isBrief ? 'BRIEFING' : 'LINEUP'}
-        </div>
-        <div className="sr-setup-sub">case setup</div>
+        {(() => {
+          const title = (U.modes && U.modes[mode] && U.modes[mode].title) || (isBrief ? 'BRIEFING' : 'LINEUP');
+          return (
+            <div className="sr-modeselect-head sr-print" data-v={title}>
+              {title}
+            </div>
+          );
+        })()}
+        <div className="sr-setup-sub">{U.setupSub || 'case setup'}</div>
 
         {/* With a THEME row (FRENCH RUSH) the page splits into two columns on a wide screen —
             themes left, difficulty / length / go right — so it never needs a scrollbar. */}
@@ -97,8 +124,23 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
                 </>
               )}
             />
+            {hasPace && (
+              <Choice
+                label="pace"
+                duo
+                options={['self', 'timed']}
+                value={pace}
+                onPick={setPace}
+                render={(v) => (
+                  <>
+                    <span className="sr-setup-opt-main">{v === 'self' ? 'MY PACE' : 'TIMED'}</span>
+                    <span className="sr-setup-opt-sub">{v === 'self' ? 'no timer' : 'on the clock'}</span>
+                  </>
+                )}
+              />
+            )}
             <Choice
-              label={isBrief ? 'words to study' : 'words in the case'}
+              label={isBrief ? 'words to study' : U.setupSub ? 'how many words' : 'words in the case'}
               options={LENGTHS[mode]}
               value={length}
               onPick={setLength}
@@ -111,18 +153,24 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
               </div>
             )}
 
-            <button type="button" ref={goRef} className="sr-btn" onClick={() => onStart({ difficulty, length, category: category === 'all' ? null : category })}>
-              {isBrief ? 'Study the words' : 'Open the case'}
+            <button type="button" ref={goRef} className="sr-btn" onClick={() => onStart({ difficulty, length, category: category === 'all' ? null : category, pace: hasPace ? pace : null })}>
+              {U.startLabel ? (isBrief ? 'Study the words' : U.startLabel) : isBrief ? 'Study the words' : 'Open the case'}
             </button>
+
           </div>
         </div>
         <div className="sr-setup-exits">
-          {onBack && (
-            <button type="button" className="sr-exit-chip" onClick={onBack}>
-              <span aria-hidden="true">←</span> MODES
+          {hasPace && (
+            <button type="button" className="sr-linkbtn" onClick={copyLink}>
+              {copied ? 'Link copied — send it to your class' : 'Teacher? Copy a link to this set'}
             </button>
           )}
-          {onExit && (
+          {onBack && (
+            <button type="button" className="sr-exit-chip" onClick={onBack}>
+              <span aria-hidden="true">←</span> {U.setupSub ? 'BACK' : 'MODES'}
+            </button>
+          )}
+          {onExit && !U.setupSub && (
             <button type="button" className="sr-exit-chip" onClick={onExit} aria-label="Exit to menu">
               MENU
             </button>

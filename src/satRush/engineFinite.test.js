@@ -123,3 +123,20 @@ test('endless mode (no queue) is unchanged: no completion, requeueShaky off by d
   assert.equal(e.getState().finite, false);
   assert.equal(e.getState().runRemaining, null);
 });
+
+test('maxMissReturns: a word that got away that many times stops coming back (self-paced runs)', () => {
+  const e = createSatRushEngine({
+    words: QUEUE,
+    queue: [row('only')],
+    rng: IDENTITY_RNG,
+    config: { revenantOffset: 1, lives: 999, maxMissReturns: 2 },
+  });
+  e.nextWord(); e.miss(); // 1st miss → back
+  assert.equal(e.nextWord().word, 'only');
+  e.miss(); // 2nd miss → back
+  assert.equal(e.nextWord().word, 'only');
+  e.miss(); // 3rd miss → settled as missed
+  assert.equal(e.nextWord(), null);
+  assert.equal(e.getState().complete, true);
+  assert.equal(e.results().caseLog[0].misses, 3);
+});

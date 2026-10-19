@@ -24,16 +24,17 @@ test('every French row is typeable, blanked once, glossed, translated, and in a 
     assert.ok(CATS.includes(r.category), `${r.word}: theme ${r.category}`);
     assert.ok([1, 2, 3, 4, 5].includes(r.tier), `${r.word}: tier`);
     if (r.pos === 'n') assert.ok(['m', 'f', 'mf'].includes(r.gender), `${r.word}: noun gender`);
+    assert.ok([1, 2, 3].includes(r.ap), `${r.word}: AP priority`);
   }
 });
 
 test('every theme can deal a full 10-word case at every difficulty', () => {
   for (const category of CATS) {
     for (const difficulty of ['easy', 'standard', 'hard']) {
-      const band = bandWords(WORDS, difficulty, category);
-      const { rows } = buildRunQueue({ spec: { mode: 'lineup', difficulty, length: 10, category }, words: WORDS });
+      const band = bandWords(WORDS, difficulty, category, 'fr');
+      const { rows } = buildRunQueue({ spec: { pack: 'fr', mode: 'lineup', difficulty, length: 10, category }, words: WORDS });
       assert.equal(rows.length, Math.min(10, band.length), `${category}/${difficulty}`);
-      assert.ok(band.length >= 5, `${category}/${difficulty} has only ${band.length} words`);
+      assert.ok(band.length >= 10, `${category}/${difficulty} has only ${band.length} words`);
     }
   }
 });
@@ -80,4 +81,16 @@ test('the poster never prints the answer inside its word family', () => {
     const text = [shown.morpheme || '', ...shown.cousins].join(' ').toLowerCase();
     assert.ok(!text.split(/\s+/).includes(r.word), `${r.word} printed in its own family`);
   }
+});
+
+test('levels follow the AP: BASICS is must-know only, SCORE 5 is the harder tail', () => {
+  const basics = bandWords(WORDS, 'easy', null, 'fr');
+  assert.ok(basics.every((r) => r.ap === 1 && r.tier <= 2));
+  const core = bandWords(WORDS, 'standard', null, 'fr');
+  assert.ok(core.every((r) => r.ap <= 2));
+  const hard = bandWords(WORDS, 'hard', null, 'fr');
+  assert.ok(hard.every((r) => r.tier >= 3));
+  // a BASICS case leads with must-know words even when the band is mixed
+  const { rows } = buildRunQueue({ spec: { pack: 'fr', mode: 'lineup', difficulty: 'standard', length: 10 }, words: WORDS });
+  assert.ok(rows.filter((r) => r.ap === 1).length >= 6, 'a STANDARD case is mostly must-know words');
 });
