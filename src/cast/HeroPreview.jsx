@@ -72,7 +72,7 @@ function Stage({ h, pose, onTap }) {
 export default function HeroPreview({ h, variants = null, onVariant = null, current, gems, onEquip, onBuy, onStep, onClose }) {
   const [poseIx, setPoseIx] = useState(0);
   const [held, setHeld] = useState(false); // a tapped tab stops the auto-cycle
-  const poses = POSES.filter(([p]) => p === 'hero' || hasPose(h.id, p) || hasPose(h.base || '', p));
+  const poses = POSES.filter(([p]) => p === 'hero' || hasPose(h.id, p)); // only the poses this exact hero has painted
   const [pose, , hold] = poses[poseIx % poses.length];
   useEffect(() => { setPoseIx(0); setHeld(false); }, [h.id]);
   useEffect(() => {

@@ -117,7 +117,8 @@ const PAINTED = new Set([
 export function castSrc(id, pose = 'hero') {
   const c = heroById(id) || CAST[0];
   if (PAINTED.has(`${c.id}-${pose}`)) return `/cast/${c.id}-${pose}.webp`;
-  if (c.gold) return castSrc(c.base, pose); // GOLD paints the HERO only: WIN / KO are the member's own poses
+  // (oct19 Andy: "all the gold versions have the basic versions of win and k.o." — a GOLD no longer borrows its member's
+  // WIN / KO; until its own are painted it shows its gold HERO, below — the caller may tip it over for a K.O.)
   // a pose not painted yet → the HERO (the caller may tip it over for a K.O.), then the seat bomb buddy
   return PAINTED.has(`${c.id}-hero`) ? `/cast/${c.id}-hero.webp` : `/wb/player-${c.seat}.webp`;
 }

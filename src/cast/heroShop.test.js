@@ -98,7 +98,7 @@ test('GOLD: earned with 100 wins on its member (bots + online), never sold; a wi
     for (const g of GOLD) {
       assert.ok(g.gold && !g.price && g.seat && CAST_BEATS[g.id]);
       assert.equal(castSrc(g.id, 'hero'), `/cast/${g.id}-hero.webp`);
-      assert.equal(castSrc(g.id, 'win'), `/cast/${g.base}-win.webp`, 'WIN falls back to the member, not the gold HERO');
+      assert.equal(castSrc(g.id, 'win'), `/cast/${g.id}-hero.webp`, 'oct19: a GOLD never borrows the member WIN — its own gold HERO until painted');
     }
     map.set(HERO_WINS_KEY, JSON.stringify({ riot: 99 }));
     assert.equal(ownsHero('riot-gold'), false);
