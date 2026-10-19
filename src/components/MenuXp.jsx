@@ -367,7 +367,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       if (!el || !anim) continue;
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
-      el.style.background = colour;
+      el.style.background = Array.isArray(colour) ? colour[k % colour.length] : colour; // a LOOK throws its own colours
       el.style.willChange = 'transform, opacity'; // promote for the airborne window only
       const ang = (k / count) * Math.PI * 2 + Math.random() * 0.8;
       const dist = (18 + Math.random() * 16) * reach;
@@ -410,8 +410,26 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // P7 POPUP PURGE (SEASON2 only): V3.fx (v3/notify.js wrapFx, the lazy v3 chunk) swaps every CENTRE card on this
   // handle (LEVEL N, NEW FRAME, REBIRTH, +N WINS, the wins hint, mark/automation) for an edge toast or nothing.
   // Flag OFF: V3.fx is never installed, the handle is exactly as before.
+  // THE LOOK (popLooks.js, Andy oct19): the equipped POP STYLE dresses a +N gain pop — fill (cycled pop to pop), its
+  // coloured outline and hard offset shadow (static styles on the pooled node, set per spawn — no animated property).
+  // null (CLASSIC, a word-rarity band pop) clears back to the CSS dress. Returns the fill used.
+  const lookNextRef = useRef(0);
+  function dressPop(node, look, colour, hardShadow) {
+    if (!look) {
+      node.style.color = colour;
+      node.style.webkitTextStroke = '';
+      node.style.textShadow = hardShadow ? '2px 2px 0 #000' : '';
+      return colour;
+    }
+    const fill = look.fill[lookNextRef.current++ % look.fill.length];
+    node.style.color = fill;
+    node.style.webkitTextStroke = `3px ${look.stroke}`;
+    node.style.textShadow = `3px 3px 0 ${look.shadow}`;
+    return fill;
+  }
+
   useImperativeHandle(ref, () => (V3.fx || Object)({
-    letterPop(letter, plusText, scale = 1, colour = '#2EFFE0', feelTier = 0) {
+    letterPop(letter, plusText, scale = 1, colour = '#2EFFE0', feelTier = 0, look = null) {
       const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return; // not measured yet, or no pool
@@ -433,15 +451,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[0].textContent = '';
       // a band-only pop (useXpCapture: a menu WORD's rarity band, no +N) still shows its band word
       el.children[1].textContent = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
-      el.children[1].style.color = tierColour;
-      el.children[1].style.textShadow = feelTier >= 3 ? '2px 2px 0 #000' : '';
+      const lk = plusText ? look : null; // a word-rarity band pop keeps its band colour
+      dressPop(el.children[1], lk, tierColour, feelTier >= 3);
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
       // is richer wins, so neither purchase nor progress is ever invisible.
       const tfx = tierRef.current;
-      const shardN = Math.max(feelTier >= 2 ? SHARD_PER_POP : 0, tfx.shards);
-      if (shardN > 0 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, tierColour, shardN, 1 + tfx.tier * 0.12);
+      const shardN = Math.min(6, Math.max(feelTier >= 2 ? SHARD_PER_POP : 0, tfx.shards, lk ? lk.n : 0));
+      if (shardN > 0 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, lk ? lk.shards : tierColour, shardN, 1 + tfx.tier * 0.12);
       // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
       // small random rotation + scale multiplier on top so no two pops read identical.
       const rot = Math.random() * 20 - 10; // [-10°, +10°]
@@ -501,6 +519,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].textContent = critText;
       el.children[1].style.color = '';
       el.children[1].style.textShadow = '';
+      el.children[1].style.webkitTextStroke = ''; // a LOOK's outline never rides into the crit dress
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       const still = prefersReducedMotion();
@@ -538,7 +557,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     // Tap pop: no letter — the "+N" ALONE, at the letter's size (via .is-tap CSS), in the
     // tier colour, spawned AT the tap client coords (converted to layer-local), still kept
     // out of the XP bar's box.
-    tapPop(plusText, scale = 1, colour = '#2EFFE0', clientX = 0, clientY = 0) {
+    tapPop(plusText, scale = 1, colour = '#2EFFE0', clientX = 0, clientY = 0, look = null) {
       const anims = popAnimsRef.current;
       if (!anims.length) return;
       const lr = layerRectRef.current;
@@ -557,7 +576,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.classList.remove('is-crit');
       el.classList.add('is-tap'); // hides the letter span, upsizes the "+N" (CSS)
       el.children[1].textContent = plusText;
-      el.children[1].style.color = colour; // tier colour for the tap
+      dressPop(el.children[1], look, colour, false); // tier colour for the tap, or the equipped LOOK
+      if (look && !prefersReducedMotion()) spawnShards(x, y, look.shards, Math.min(6, look.n));
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       const rot = Math.random() * 20 - 10; // [-10°, +10°]

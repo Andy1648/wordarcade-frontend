@@ -110,11 +110,19 @@ export function getEquipped() {
   }
   return { popStyle, soundPack };
 }
+/** Fired on window when the equipped look / sound changes — the menu re-reads its LOOK (popLooks.js). */
+export const EQUIP_CHANGE = 'taw:equip-change';
 export function saveEquipped(eq) {
   try {
     localStorage.setItem(EQUIPPED_KEY, JSON.stringify(eq));
   } catch {
     /* storage blocked */
+  }
+  // the menu's pops re-dress on an equip (popLooks.js — the LOOK is read once per menu session, and again on this)
+  try {
+    window.dispatchEvent(new Event(EQUIP_CHANGE));
+  } catch {
+    /* no window (node) */
   }
 }
 

@@ -72,7 +72,7 @@ export default function ShopV2Looks({ tab, gems, onNote }) {
   }
   return (
     <div className="sp2-looks">
-      <h3 className="sp2-looks-h">POP STYLES <span>— HOW YOUR LETTERS BURST WHEN YOU TYPE</span></h3>
+      <h3 className="sp2-looks-h">POP STYLES <span>— THE COLOUR + BURST OF YOUR +XP POPS ON THE MENU · LOOKS ONLY</span></h3>
       <div className="sp2-looks-grid">
         {POP_STYLES.map((it) => <LookCard key={it.id} it={it} type="popStyle" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} />)}
       </div>
