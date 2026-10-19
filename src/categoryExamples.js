@@ -12,6 +12,20 @@
 // any category without an entry simply shows no hint. Same school-appropriate
 // content standard as the categories.
 export const CATEGORY_EXAMPLES = {
+  // oct19 NOT batch 3 (Andy "need more of these genius ones"), each example verified ON its list
+  "Things you shouldn't lick": "Frozen flagpole",
+  "Things you shouldn't put in a pool": "Toaster",
+  "Things you shouldn't sit on": "Birthday cake",
+  "Things you shouldn't throw at a wedding": "Divorce papers",
+  "Things you shouldn't bring to school": "Live raccoon",
+  "Things you shouldn't give a toddler": "Chainsaw",
+  "Things you shouldn't keep in the fridge": "Live penguin",
+  "Things you shouldn't name your baby": "Wifi",
+  "Things you shouldn't plug into the wall": "Pickle",
+  "Things you shouldn't put in a mailbox": "Live raccoon",
+  "Things you shouldn't put in a toaster": "Fork",
+  "Things you shouldn't put in the dishwasher": "Grandma's dentures",
+  "Things you shouldn't put in your mouth": "Desk gum",
   // oct17 NOT categories (any real noun scores — blitzNot.js), each example verified ON its list
   "Things you shouldn't flush down the toilet": "Dead goldfish",
   // oct18 NOT batch 2 (Andy: "more of them" — any real noun scores, blitzNot.js), each example verified ON its list

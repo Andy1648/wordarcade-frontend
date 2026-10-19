@@ -2,6 +2,20 @@
 // ideas in for themes or fun categories"). DISPLAY-ONLY: shown on the category box, never sent or scored. Keys are the
 // EXACT category strings the server broadcasts (backend blitzLists.json); a missing key just shows no sticker.
 export const CATEGORY_EMOJI = {
+  // oct19 NOT batch 3 (Andy "need more of these genius ones")
+  "Things you shouldn't lick": "👅",
+  "Things you shouldn't put in a pool": "🏊",
+  "Things you shouldn't sit on": "🪑",
+  "Things you shouldn't throw at a wedding": "💒",
+  "Things you shouldn't bring to school": "🎒",
+  "Things you shouldn't give a toddler": "👶",
+  "Things you shouldn't keep in the fridge": "🧊",
+  "Things you shouldn't name your baby": "🍼",
+  "Things you shouldn't plug into the wall": "🔌",
+  "Things you shouldn't put in a mailbox": "📬",
+  "Things you shouldn't put in a toaster": "🍞",
+  "Things you shouldn't put in the dishwasher": "🍽️",
+  "Things you shouldn't put in your mouth": "👄",
   // oct17 NOT categories (any real noun scores — blitzNot.js)
   "Things you shouldn't flush down the toilet": "🚽",
   // oct18 NOT batch 2 (Andy: "more of them" — any real noun scores, blitzNot.js)
