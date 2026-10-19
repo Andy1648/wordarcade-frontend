@@ -5,9 +5,10 @@
 // Tapping a card opens HeroPreview on that variant, where the variant tabs (RIOT / GOLD / ELITE) preview the ones you
 // don't own — with their requirement or gem price and the one button that gets them. ‹ › flip members.
 import { useEffect, useState } from 'react';
-import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, goldProgress } from './cast.js';
+import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, heroGateMet, goldProgress } from './cast.js';
 import { buyHero } from './heroShop.js';
 import HeroCard from './HeroCard.jsx';
+import FitText from '../components/kit/FitText.jsx';
 import { KitIcon } from '../components/kit/index.js';
 import HeroPreview from './HeroPreview.jsx';
 import { getGems, subscribeGems } from '../progress/gemsCore';
@@ -29,13 +30,21 @@ function shownVariant(m, current) {
   return m;
 }
 
+/** oct19 (Andy: "write the win requirement on the icon and the place used for win requirement can be shown gem
+ *  requirement"): the requirement rides the card art (cardReq), and the pill under the card is always the gem price. */
 function Status({ m, current }) {
   const vs = variantsOf(m);
   if (vs.some((v) => v.id === current)) return <span className="hp2-act is-on">EQUIPPED</span>;
   if (ownsHero(m.id)) return null; // owned, not worn: the card itself is the button
-  const u = HERO_UNLOCK[m.id];
-  if (u) return <span className="hp2-act is-req"><KitIcon name={u.icon} size={20} shadow={1} extras={false} />{u.label}</span>;
   return <span className="hp2-act is-price"><KitIcon name="gems" size={20} shadow={2} extras={false} />{formatNum(m.price)}</span>;
+}
+/** The requirement printed on a card's art: the earn (60 WINS / LEVEL 20 / REBIRTH 1) of a crew member you don't own
+ *  yet, or a LEGEND's rebirth gate with the lock until you reach it (then only its price stands between you and it). */
+function cardReq(m) {
+  const u = HERO_UNLOCK[m.id];
+  if (!u || ownsHero(m.id)) return null;
+  if (u.gate) return heroGateMet(m.id) ? null : { lock: true, label: u.label };
+  return { icon: u.icon, label: u.label };
 }
 
 function Variants({ m }) {
@@ -49,7 +58,7 @@ function Variants({ m }) {
         return (
           <span key={v.id} className={`hp2-var is-${v.gold ? 'gold' : 'elite'}${own ? ' is-own' : ''}`}>
             {gp ? <span className="hp2-var-fill" style={{ transform: `scaleX(${gp.have / gp.need})` }} /> : null}
-            <span className="hp2-var-t">{v.gold ? (own ? 'GOLD' : `GOLD ${gp.have}/${gp.need}`) : 'ELITE'}</span>
+            <FitText className="hp2-var-t fit-center">{v.gold ? (own ? 'GOLD' : `GOLD ${gp.have}/${gp.need}`) : 'ELITE'}</FitText>
           </span>
         );
       })}
@@ -92,7 +101,7 @@ export default function HeroPicker({ current, onEquip, onBought, peekId = null }
         {MEMBERS.map((m, k) => {
           const v = shownVariant(m, current);
           return (
-            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} on={variantsOf(m).some((x) => x.id === current)} delay={k * 520} onClick={() => setPeek(v.id)}>
+            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} req={v === m ? cardReq(m) : null} on={variantsOf(m).some((x) => x.id === current)} delay={k * 520} onClick={() => setPeek(v.id)}>
               <Status m={m} current={current} />
               <Variants m={m} />
             </HeroCard>

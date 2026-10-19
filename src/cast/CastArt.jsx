@@ -94,6 +94,23 @@ const TWINKLE = [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform
 const ARC = (dx, m = 1) => [{ transform: `translate(0, 0) scale(${0.5 * m}, .5)`, opacity: 0 }, { transform: `translate(${dx * 0.3}%, 0) scale(${m}, 1)`, opacity: 1, offset: 0.3 }, { transform: `translate(${dx}%, 0) scale(${1.15 * m}, 1.15)`, opacity: 0 }];
 const RAIN = [{ transform: 'translateY(20%) scale(.3)', opacity: 0 }, { transform: 'translateY(-30%) scale(1.1)', opacity: 1, offset: 0.25 }, { transform: 'translateY(30%) scale(1)', opacity: 0.9, offset: 0.65 }, { transform: 'translateY(90%) scale(1)', opacity: 0 }];
 const EASE_OUT = 'cubic-bezier(.25,.6,.35,1)';
+// a flame churning out of its base (`rot` turns it to point out of a nozzle); first frame = last frame, opaque throughout
+const FLICKER = (rot, k = 1) => [
+  { transform: `rotate(${rot}deg) scale(${k}, ${k})`, opacity: 1 },
+  { transform: `rotate(${rot}deg) scale(${0.9 * k}, ${1.18 * k})`, opacity: 1, offset: 0.22 },
+  { transform: `rotate(${rot}deg) scale(${1.06 * k}, ${0.86 * k})`, opacity: 1, offset: 0.48 },
+  { transform: `rotate(${rot}deg) scale(${0.95 * k}, ${1.1 * k})`, opacity: 1, offset: 0.74 },
+  { transform: `rotate(${rot}deg) scale(${k}, ${k})`, opacity: 1 },
+];
+// a puff of exhaust leaving a nozzle (`dir` -1 = out to the left, 1 = right), swelling and thinning as it rises
+const EXHAUST = (dir) => [
+  { transform: 'translate(0, 0) scale(.3)', opacity: 0 },
+  { transform: `translate(${dir * 40}%, -15%) scale(.75)`, opacity: 0.85, offset: 0.18 },
+  { transform: `translate(${dir * 120}%, -60%) scale(1.15)`, opacity: 0.5, offset: 0.6 },
+  { transform: `translate(${dir * 170}%, -110%) scale(1.4)`, opacity: 0 },
+];
+// a quick glint (most of its life it rests unseen, so the scan reads as a blink across the visor, not a sparkle)
+const GLINT = [{ transform: 'scale(0) rotate(0deg)', opacity: 0 }, { transform: 'scale(1.25) rotate(45deg)', opacity: 1, offset: 0.06 }, { transform: 'scale(0) rotate(90deg)', opacity: 0, offset: 0.16 }, { transform: 'scale(0) rotate(90deg)', opacity: 0 }];
 const STREAMS = {
   // RIOT: the can never stops — three puffs always in flight off the nozzle, a small puff and paint drips between
   spray: [
@@ -174,11 +191,20 @@ const STREAMS = {
     { i: 2, n: 1, ms: 1150, at: 750, e: 'cubic-bezier(.3,0,.7,1)', f: [{ transform: 'translate(0, 0) scale(.6)', opacity: 0 }, { transform: 'translate(40%, -200%) scale(1)', opacity: 1, offset: 0.35 }, { transform: 'translate(90%, 240%) scale(.9)', opacity: 0 }] },
     { i: 3, n: 2, ms: 1700, at: 400, f: UP(10, -130, 0.5, 1.25) },
   ],
-  // MECHA (oct18 Andy: "mecha has some shit animation"): a machine runs steady — the exhaust flame flickers in place
-  // (small, quick, from its base; no flapping), and the antenna tip blinks now and then. The off-theme bolt is gone.
+  // MECHA (oct19, Andy: "mecha - it just doesn't really fit … QUALITY. (but ensure smoothness and theme)"): an engine
+  // idling, not a campfire. Each flame is two pooled clones of one opaque flicker, half a cycle apart, whose first and
+  // last frames match — so the flame never fades or pops, it just churns. The thrusters flicker SIDEWAYS (the rotation
+  // rides every keyframe) and cough exhaust that drifts off and up; the beacon double-blinks; a glint scans the visor
+  // left eye → right eye.
   boost: [
-    { i: 0, n: 1, ms: 520, e: 'linear', f: [{ transform: 'scale(1, 1)', opacity: 1 }, { transform: 'scale(.94, 1.1)', opacity: 1, offset: 0.25 }, { transform: 'scale(1.05, .92)', opacity: 1, offset: 0.5 }, { transform: 'scale(.97, 1.06)', opacity: 1, offset: 0.75 }, { transform: 'scale(1, 1)', opacity: 1 }] },
-    { i: 1, n: 1, ms: 2400, at: 600, f: [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.08 }, { transform: 'scale(0)', opacity: 0, offset: 0.2 }, { transform: 'scale(0)', opacity: 0 }] },
+    { i: 0, n: 2, ms: 520, e: 'ease-in-out', f: FLICKER(-14, 1.05) },
+    { i: 1, n: 2, ms: 360, e: 'ease-in-out', f: FLICKER(-90, 1) },
+    { i: 2, n: 2, ms: 380, at: 90, e: 'ease-in-out', f: FLICKER(90, 1) },
+    { i: 3, n: 1, ms: 1500, f: EXHAUST(-1) },
+    { i: 4, n: 1, ms: 1500, at: 700, f: EXHAUST(1) },
+    { i: 5, n: 0.5, ms: 2400, at: 500, e: 'linear', f: [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.05 }, { transform: 'scale(.3)', opacity: 0, offset: 0.12 }, { transform: 'scale(1.15)', opacity: 1, offset: 0.19 }, { transform: 'scale(0)', opacity: 0, offset: 0.3 }, { transform: 'scale(0)', opacity: 0 }] },
+    { i: 6, n: 0.5, ms: 3600, at: 1400, e: 'ease-out', f: GLINT },
+    { i: 7, n: 0.5, ms: 3600, at: 1680, e: 'ease-out', f: GLINT },
   ],
   // GLITCH.EXE: it corrupts — bands of its own art tear sideways in short stepped bursts (a glitch should read glitchy,
   // so this one stays bursty on purpose): a tear somewhere every ~1.3 s
@@ -197,6 +223,10 @@ const TRAIL = [ // the comet's head is painted bottom-left: turned half round it
   { transform: 'translate(35%, -90%) rotate(180deg) scale(1)', opacity: 0.8, offset: 0.7 },
   { transform: 'translate(55%, -140%) rotate(180deg) scale(.85)', opacity: 0 },
 ];
+const CRACKLE = [
+  { transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.04 }, { transform: 'scale(.9)', opacity: 0.2, offset: 0.08 },
+  { transform: 'scale(1.05)', opacity: 1, offset: 0.12 }, { transform: 'scale(1)', opacity: 0, offset: 0.2 }, { transform: 'scale(1)', opacity: 0 },
+];
 const AURAS = {
   gold: { ms: 1600, f: TWINKLE, e: 'ease-in-out', at: [
     ['/cast/props/glint-gold.webp', 12, 28, 9], ['/cast/props/glint-gold-cluster.webp', 72, 16, 12], ['/cast/props/glint-gold.webp', 72, 60, 8],
@@ -205,6 +235,11 @@ const AURAS = {
   elite: { ms: 1700, f: TWINKLE, e: 'ease-in-out', at: [
     ['/cast/props/glint-gold.webp', 12, 30, 8], ['/cast/props/glint-gold.webp', 76, 18, 9], ['/cast/props/glint-gold.webp', 72, 62, 7],
     ['/cast/props/glint-gold.webp', 20, 66, 8], ['/cast/props/glint-gold.webp', 48, 6, 7],
+  ] },
+  // MECHA's own LEGEND aura (oct19): ghost smoke is BOO's — a machine crackles. A bolt arcs off a joint now and then,
+  // flickering on-off like a short circuit, one joint after another.
+  mecha: { ms: 2100, f: CRACKLE, e: 'linear', at: [
+    ['/cast/props/bolt.webp', 5, 30, 6], ['/cast/props/bolt.webp', 88, 50, 6], ['/cast/props/bolt.webp', 25, 56, 5],
   ] },
   legend: { ms: 2600, f: TRAIL, e: 'cubic-bezier(.3,.5,.5,1)', at: [
     ['/cast/props/ghost-trail.webp', 4, 58, 16], ['/cast/props/ghost-trail.webp', 70, 64, 14], ['/cast/props/ghost-trail.webp', 10, 30, 12],
@@ -262,16 +297,16 @@ function Streams({ act, sprites, rarity, live }) {
   });
 }
 
-function Aura({ tier, live }) {
+function Aura({ tier, hero, live }) {
   const refs = useRef([]);
-  const A = AURAS[tier];
+  const A = AURAS[hero] || AURAS[tier]; // a hero can wear its own aura (MECHA) instead of its tier's
   useEffect(() => {
     if (!live || !A) return undefined;
     const alive = { on: true };
     const els = refs.current;
     const stops = A.at.map((_, k) => loopClone(els[k], A.f, A.ms, A.e, 200 + (k * A.ms) / A.at.length, alive));
     return () => { alive.on = false; stops.forEach((f) => f()); stopAll(els); };
-  }, [live, tier]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [live, tier, hero]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!A) return null;
   return A.at.map(([src, x, y, w], k) => (
     <img key={k} ref={(el) => { refs.current[k] = el; }} className="cast-fx" src={src} alt="" draggable="false" style={{ left: `${x}%`, top: `${y}%`, width: `${w}%` }} />
@@ -299,7 +334,7 @@ export default function CastArt({ id, pose = 'hero', className = '', artRef, alt
       {slots.filter((sp) => !sp.under).map((sp) => <Slot key={sp.slot} sp={sp} />)}
       {L.gum ? <Gum box={L.gum} live={live} /> : null}
       {L.act ? <Streams act={L.act} sprites={L.sprites} rarity={rarity} live={live} /> : null}
-      {rarity.tier ? <Aura tier={rarity.tier} live={live} /> : null}
+      {rarity.tier ? <Aura tier={rarity.tier} hero={id} live={live} /> : null}
     </span>
   );
 }
