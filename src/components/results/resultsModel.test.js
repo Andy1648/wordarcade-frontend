@@ -54,10 +54,9 @@ test('every credited win is ONE line; the total is exactly their sum; the ledger
   assert.equal(lines[2].mult, null);
 });
 
-test('stamp: WIN / TOP 3 / KO\'D', () => {
+test('stamp: WIN on #1, no stamp on a loss (Andy oct19: TOP 3 sat on the /2 at #2 of 2)', () => {
   assert.equal(stampFor(1, true).text, 'WIN');
-  assert.equal(stampFor(3, false).text, 'TOP 3');
-  assert.equal(stampFor(4, false).text, "KO'D");
+  for (const place of [2, 3, 4, 8]) assert.deepEqual(stampFor(place, false), { text: '', tone: 'ko' });
 });
 
 test('SEASON 2 (FINAL): the REBIRTH row splits into REBIRTH ×2^R and ★ ×(1 + ★)', () => {

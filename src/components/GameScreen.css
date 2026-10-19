@@ -1872,21 +1872,6 @@
   100% { opacity: 0; transform: translateY(-12px) scale(0.3); }
 }
 
-/* FINAL-5-SECONDS READOUT. One-shot HARD pulse per tick - a discrete scale STEP
-   that snaps back, not a smooth throb - re-keyed on the second in the JSX so it
-   replays each time the number changes. This replaced an `infinite` 400ms pulse:
-   the ring's one continuous animation is the fuse, and only the fuse. */
-.bomb-num-tick {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: bomb-num-tick 160ms steps(2, end) 1;
-}
-
-@keyframes bomb-num-tick {
-  0% { transform: scale(1.28); }
-  100% { transform: scale(1); }
-}
-
 /* ============================================================= */
 /* ===============  WORD BOMB - EXPLOSION (timeout)  =========== */
 /* ============================================================= */
@@ -5854,9 +5839,6 @@ html[data-beat='true'] .cb-category-display {
   .bomb-ring-fill,
   .bomb-flame-pos {
     transition: none !important;
-  }
-  .bomb-num-tick {
-    animation: none !important;
   }
 }
 
