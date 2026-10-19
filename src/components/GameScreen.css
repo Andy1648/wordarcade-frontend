@@ -2989,25 +2989,14 @@
 .cb-round .cb-my-answers {
   margin-bottom: clamp(14px, 2vw, 22px);
 }
-.cb-round .cb-answers-list {
-  max-height: min(46vh, 360px); /* was a cramped 110px; only scroll when huge */
-  align-content: flex-start;
-}
-@media (min-width: 900px) {
-  .cb-round .cb-answers-list {
-    max-height: min(58vh, 560px); /* the rail has real vertical room on desktop */
-  }
-}
+/* (the list's height + no-scroll fit live in the YOUR ANSWERS block at the end of this file — Andy oct19) */
 .cb-round-side .cb-section-label {
   font-size: var(--fs-label) /* was --fs-micro: these are words (fix/min-text-sweep) */; /* a touch more presence so the rail has its own hierarchy */
 }
 /* Accepted-answer chips read larger so the running list is legible at a glance
    (base is a cramped 11px). Static clamp(); CB-live-round-scoped so the results
    screen's chips are unchanged. Padding grows a touch to match. */
-.cb-round .cb-answer-chip {
-  font-size: var(--fs-body);
-  padding: 4px 9px;
-}
+
 
 .cb-category-label {
   font-family: 'Space Mono', monospace;
@@ -7025,7 +7014,6 @@ html[data-beat='true'] .wb-belly {
 /* ===== CB PROPORTIONS (Andy oct15 night "make proportions bigger everywhere … space isnt used adequately") =====
    Desktop: the right rail was a tiny label over ~600px of empty panel. It becomes a framed card with a BIG running
    count, larger chips and player rows; the board stands taller so the round fills the screen. Phones keep their stack. */
-.cb-my-count { display: none; }
 @media (min-width: 900px) {
   .cb-round-side {
     align-self: stretch;
@@ -7036,24 +7024,8 @@ html[data-beat='true'] .wb-belly {
     box-shadow: 5px 5px 0 #000;
   }
   .cb-round-side .cb-section-label { font-size: var(--fs-body); }
-  .cb-my-count {
-    display: block;
-    font-family: 'Bungee', cursive;
-    text-transform: uppercase;
-    font-size: var(--fs-h1);
-    line-height: 0.9;
-    color: #2EFFE0;
-    -webkit-text-stroke: 4px #000;
-    paint-order: stroke fill;
-    text-shadow: 4px 4px 0 #000;
-    margin: 2px 0 12px;
-    transform-origin: left bottom;
-    animation: cb-count-pop 260ms cubic-bezier(0.2, 1.6, 0.4, 1) 1;
-  }
   /* oct15 afternoon (Andy "on category blitz the words overflow"): chips back to label size so 20+ answers fit; the
      list is the one thing that may scroll, INSIDE the card, never the page */
-  .cb-round .cb-answer-chip { font-size: var(--fs-label); padding: 4px 9px; max-width: 100%; overflow-wrap: anywhere; }
-  .cb-round .cb-answers-list { max-height: max(64px, calc(100dvh - 520px)); overflow-y: auto; overscroll-behavior: contain; }
   .cb-round .cb-progress-row { padding: 8px 12px; }
   /* oct15 afternoon: --fs-panel cut names to "BETTE…" — body size fits a 16-char name beside its count */
   .cb-round .cb-progress-name, .cb-round .cb-progress-count { font-size: var(--fs-body); }
@@ -7063,7 +7035,6 @@ html[data-beat='true'] .wb-belly {
   .cb-round .cb-category-display { padding-block: clamp(30px, 4vh, 56px); }
 }
 @keyframes cb-count-pop { from { transform: scale(1.35); } to { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .cb-my-count { animation: none; } }
 @media (min-width: 900px) {
   /* a long name ellipsises instead of running into its count */
   .cb-round .cb-progress-name { min-width: 0; flex: 1 1 auto; }
@@ -7074,7 +7045,6 @@ html[data-beat='true'] .wb-belly {
 /* oct15 afternoon (Andy "no one should ever scroll unless actually a list"): on a phone the answers list scrolls
    inside its own box instead of pushing the page longer */
 @media (max-width: 899px) {
-  .cb-round .cb-answers-list { max-height: 17dvh; overflow-y: auto; overscroll-behavior: contain; }
 }
 @media (min-width: 900px) {
   /* "0 ANSWERS" at label size so "BETTERTHANANDY" keeps its whole name beside it */
@@ -7118,4 +7088,75 @@ html[data-beat='true'] .wb-belly {
 @media (min-width: 1000px) and (max-height: 1249px) {
   .wb-ring { --wb-seat-w: min(calc(var(--wb-size) * 0.16), calc(var(--wb-size) * 2.5 / var(--n, 4))); --wb-char-up: calc(var(--wb-seat-h) * 0.43); }
   .wb-seat-char { width: 150%; }
+}
+
+/* ===== YOUR ANSWERS + HEADER, PACKAGE A (Andy oct19, picked from the options page) =====
+   One count (8/115) top right; big chips, newest first (flex `order`, set inline) and in yellow; the sound control beside
+   the title. NO SCROLLBAR (Andy oct19 "I DONT WANT SCROLL BARS"): the list takes the rail's leftover height and, when
+   the chips outgrow it, GameScreen steps them down a size (data-fit 1..3) instead of scrolling. */
+.cb-title-row { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.cb-category-label .cb-topword { font-size: 0.72em; }
+.cb-round .cb-my-answers { display: flex; flex-direction: column; min-height: 0; }
+.cb-answers-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cb-answers-head .cb-section-label { margin: 0; }
+.cb-answers-count {
+  font-family: 'Bungee', cursive; line-height: 1; font-size: clamp(30px, 3.2vw, 54px);
+  color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
+  transform-origin: right bottom; animation: cb-count-pop 260ms cubic-bezier(0.2, 1.6, 0.4, 1) 1;
+}
+.cb-answers-of { font-size: 0.46em; color: #FFE94A; -webkit-text-stroke: 2px #000; margin-left: 3px; }
+.cb-round .cb-answers-list {
+  max-height: none; overflow: hidden; gap: 8px; padding: 2px 6px 6px 2px; align-content: flex-start;
+}
+.cb-round .cb-answer-chip {
+  font-size: clamp(16px, 1.25vw, 20px); letter-spacing: 0.04em; padding: 4px 10px; border-width: 3px; border-radius: 6px;
+  box-shadow: 3px 3px 0 #000; max-width: 100%; overflow-wrap: anywhere; transform: none;
+}
+.cb-round .cb-answers-list .cb-answer-chip:last-child { background: #FFE94A; border-color: #B39F1A; }
+/* shrink steps, smallest last; each also tightens the gaps */
+.cb-round .cb-answers-list[data-fit='1'] { gap: 6px; }
+.cb-round .cb-answers-list[data-fit='1'] .cb-answer-chip { font-size: clamp(14px, 1.05vw, 17px); padding: 3px 8px; }
+.cb-round .cb-answers-list[data-fit='2'] { gap: 5px; }
+.cb-round .cb-answers-list[data-fit='2'] .cb-answer-chip { font-size: 13px; padding: 2px 6px; box-shadow: 2px 2px 0 #000; border-width: 2px; }
+/* last step: if even the smallest chips overflow (a phone at 30+ answers), the list swipes with NO visible scrollbar;
+   the newest answers are on top, so what you just typed never leaves the screen */
+.cb-round .cb-answers-list[data-fit='3'] { gap: 4px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.cb-round .cb-answers-list[data-fit='3']::-webkit-scrollbar { display: none; }
+.cb-round .cb-answers-list[data-fit='3'] .cb-answer-chip { font-size: 12px; padding: 1px 5px; box-shadow: 2px 2px 0 #000; border-width: 2px; letter-spacing: 0.02em; }
+/* desktop: the rail is a column the main side sizes, so the list fills whatever the players block leaves */
+@media (min-width: 900px) {
+  /* the rail never sizes the row: height 0 + min-height 100% = exactly the main column's height (it used to grow with a
+     full lobby + a long list and run off a 768px screen) */
+  .cb-round .cb-round-side { height: 0; min-height: 100%; box-sizing: border-box; }
+  .cb-round .cb-my-answers { flex: 1 1 auto; margin-bottom: 12px; }
+  .cb-round .cb-answers-list { flex: 1 1 auto; min-height: 64px; }
+  .cb-round .cb-progress { flex: none; }
+  /* 5+ rivals: two to a row, so a full lobby leaves the answers room */
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) > .cb-section-label { grid-column: 1 / -1; }
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) { gap: 4px 6px; }
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) > .cb-section-label { margin-bottom: 2px; }
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-row { padding: 2px 8px; margin: 0; box-shadow: 2px 2px 0 #000; }
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-name,
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-count { font-size: 15px; }
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-unit { display: none; }
+}
+/* phone: the board stacks, so the list gets a fixed slice (as before) and the same shrink steps fill it */
+@media (max-width: 899px) {
+  .cb-round .cb-answers-list { max-height: 22dvh; }
+}
+@media (max-width: 480px) {
+  /* the title keeps line 1 alone; the sound control opens the controls row on the LEFT, ROUND + LEAVE stay right, so the
+     fixed WINS pill (top-right) can never cover it */
+  .cb-title-row { display: contents; }
+  .cb-title-row > .game-title { flex: 0 0 100%; }
+  .cb-title-row > .audio-ctrl { order: 1; }
+  .game-stage--blitz .cb-title-row ~ .game-header-right { order: 2; width: auto; flex: 1 1 auto; }
+  .cb-answers-head { margin-bottom: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .cb-answers-count { animation: none; } }
+/* the round fills the laptop screen instead of floating with ~130px empty above and below (1366x768): the answers rail
+   is the part that needs the height. Top clearance for the fixed WINS pill stays (the board still starts below it). */
+@media (min-width: 900px) and (min-height: 600px) {
+  .game-stage--blitz .cb-round { min-height: calc(100dvh - 270px); }
 }
