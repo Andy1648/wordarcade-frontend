@@ -70,6 +70,7 @@ function Variants({ m }) {
 export default function HeroPicker({ current, onEquip, onBought, peekId = null }) {
   const [peek, setPeek] = useState(peekId); // the variant being previewed (null = the grid)
   const [gems, setGems] = useState(getGems);
+  const [hot, setHot] = useState(null); // the card under the pointer / focus plays its flipbook (the equipped one always does)
   useEffect(() => subscribeGems((v) => setGems(typeof v === 'number' ? v : getGems())), []);
   const buy = (id) => {
     const r = buyHero(id);
@@ -97,11 +98,12 @@ export default function HeroPicker({ current, onEquip, onBought, peekId = null }
         </span>
         <span className="hp2-gems"><KitIcon name="gems" size={26} shadow={2} extras={false} />{formatNum(gems)}</span>
       </div>
-      <div className="hp2-grid">
+      <div className="hp2-grid" onPointerOver={(e) => { const c = e.target.closest && e.target.closest('[data-hero]'); setHot(c ? c.getAttribute('data-hero') : null); }}
+        onPointerLeave={() => setHot(null)} onFocus={(e) => { const c = e.target.closest && e.target.closest('[data-hero]'); if (c) setHot(c.getAttribute('data-hero')); }}>
         {MEMBERS.map((m, k) => {
           const v = shownVariant(m, current);
           return (
-            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} req={v === m ? cardReq(m) : null} on={variantsOf(m).some((x) => x.id === current)} delay={k * 520} onClick={() => setPeek(v.id)}>
+            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} req={v === m ? cardReq(m) : null} on={variantsOf(m).some((x) => x.id === current)} live={hot === v.id || v.id === current} delay={k * 520} onClick={() => setPeek(v.id)}>
               <Status m={m} current={current} />
               <Variants m={m} />
             </HeroCard>

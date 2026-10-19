@@ -76,14 +76,31 @@
   .hpv-back { padding: 0 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .hpv-cta, .hpv-back, .hpv-arrow { transition: none; } }
-/* the member's version tabs (oct18 one-card picker): RIOT / GOLD / ELITE — a lock on the ones you don't own yet */
-.hpv-vars { display: inline-flex; gap: 8px; flex-wrap: wrap; }
-.hpv-var {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; cursor: pointer;
-  font: 400 var(--fs-k20) 'Bungee', sans-serif; color: #c9b8e8; background: #24123d; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+/* VERSIONS (oct19): painted thumbnails under the call to action - NOT tabs. Each is a little stage in its tier's colours
+   (CLASSIC = the member's own, GOLD = gold, ELITE = royal purple + gold), the art is the button; the one on show lifts
+   and keeps full colour, the others sit back desaturated (a static filter, never animated). */
+.hpv-vers { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 8px; padding-top: 12px; border-top: 3px dashed #3a2160; }
+.hpv-vers-k { font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; letter-spacing: .14em; color: #c9b8e8; }
+.hpv-vers-row { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+.hpv-ver {
+  --hv-bg: var(--hpv-d); --hv-ol: #000; --hv-lab: var(--hpv-c);
+  position: relative; display: flex; flex-direction: column; align-items: stretch; width: 104px; padding: 0; cursor: pointer;
+  background: #0d0618; border: 4px solid var(--hv-ol); border-radius: 10px 10px 8px 8px; box-shadow: 4px 4px 0 #000; overflow: hidden;
+  transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1);
 }
-.hpv-var.is-on.is-base { color: #000; background: var(--hpv-c); }
-.hpv-var.is-on.is-gold { color: #000; background: #F2B705; }
-.hpv-var.is-on.is-elite { color: #000; background: #FFC83D; }
-.hpv-var:focus-visible { outline: 3px solid #FFE94A; outline-offset: 3px; }
-@media (max-width: 760px) { .hpv-top { flex-wrap: wrap; } .hpv-vars { order: 3; width: 100%; } .hpv-var { flex: 1; justify-content: center; } }
+.hpv-ver.is-gold { --hv-bg: #8a6400; --hv-ol: #F2B705; --hv-lab: #FFD54A; }
+.hpv-ver.is-elite { --hv-bg: #2a0f4a; --hv-ol: #FFC83D; --hv-lab: #FFC83D; }
+.hpv-ver-art { position: relative; display: block; aspect-ratio: 1; background: var(--hv-bg); }
+.hpv-ver-art img { position: absolute; left: 4%; top: 4%; width: 92%; height: 96%; object-fit: contain; filter: drop-shadow(2px 2px 0 #000); }
+.hpv-ver-n { padding: 4px 0 5px; font: 400 var(--fs-k15, 15px) 'Bungee', sans-serif; letter-spacing: .06em; color: var(--hv-lab); text-align: center; background: #0d0618; border-top: 3px solid var(--hv-ol); }
+.hpv-ver:not(.is-on) .hpv-ver-art img { filter: grayscale(.55) brightness(.7) drop-shadow(2px 2px 0 #000); }
+.hpv-ver.is-locked .hpv-ver-art img { filter: grayscale(.8) brightness(.45) drop-shadow(2px 2px 0 #000); }
+.hpv-ver.is-on { transform: translateY(-5px); outline: 4px solid #FFE94A; outline-offset: 2px; }
+.hpv-ver.is-on .hpv-ver-art img { filter: drop-shadow(2px 2px 0 #000); }
+.hpv-ver-lock { position: absolute; right: 4px; top: 4px; display: grid; place-items: center; width: 30px; height: 30px; background: #0d0618; border: 2px solid var(--hv-ol); border-radius: 50%; }
+.hpv-ver-bar { position: relative; display: block; margin: 0 6px 6px; height: 8px; overflow: hidden; background: #0d0618; border: 2px solid #000; border-radius: 3px; }
+.hpv-ver-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: #F2B705; }
+.hpv-ver:focus-visible { outline: 3px solid #FFE94A; outline-offset: 3px; }
+@media (hover: hover) { .hpv-ver:not(.is-on):hover { transform: translateY(-3px); } .hpv-ver:not(.is-on):hover .hpv-ver-art img { filter: drop-shadow(2px 2px 0 #000); } }
+@media (max-width: 760px) { .hpv-vers { align-items: center; } .hpv-vers-row { justify-content: center; } .hpv-ver { width: 88px; } }
+@media (prefers-reduced-motion: reduce) { .hpv-ver { transition: none; } }
