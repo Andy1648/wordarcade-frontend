@@ -127,6 +127,11 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // The full spell-along drain window (ms), fixed at final-stage entry so the
   // AnteMeter's drain bar spans the whole endgame without restarting per reveal.
   const graceMsRef = useRef(0);
+  // CLASS ROOM (FRENCH RUSH, src/satRush/class/): the teacher's console drives the run. Set by
+  // startClassRun: { onSettle(outcome, hints) } — every word's end is reported, and CONTINUE belongs
+  // to the teacher (classAdvance), never to the student. null = a normal solo run.
+  const classRef = useRef(null);
+  const hintsRef = useRef(0); // HINTs used on the current word (CLASS ROOM's clean / hinted split)
 
   // Dev-tunable settings. Stage/spell intervals seed from the config defaults (the
   // stage interval also honours the ?stage= override) and can be changed live
@@ -225,6 +230,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       }
     }
     inputRef.current = createSlotInput({ target: cur.word, accentFold: packRef.current.accentFold });
+    hintsRef.current = 0;
     pendingRef.current = 'idle';
     msgRef.current = null;
     reEncodeRef.current = null; // a fresh word clears the previous re-encode beat
@@ -338,6 +344,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       prevSilverRef.current = r.silverTongue;
       force();
       clearTimeout(pauseTimer.current);
+      if (classRef.current) classRef.current.onSettle(hintsRef.current ? 'hinted' : 'clean', hintsRef.current);
       if (selfPaced()) return; // waits for CONTINUE (button / Enter / Space)
       const pause = reEncodeRef.current ? HEAVY_CLEAR_PAUSE_MS : CLEAR_PAUSE_MS;
       pauseTimer.current = setTimeout(beginWord, pause);
@@ -380,6 +387,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       : { text: `the fugitive was ${(answer || word).toUpperCase()} — it'll be back`, kind: 'bad' };
     force();
     clearTimeout(pauseTimer.current);
+    if (classRef.current) classRef.current.onSettle('miss', hintsRef.current);
     if (selfPaced()) return; // waits for CONTINUE
     pauseTimer.current = setTimeout(() => {
       if (r.gameOver) {
@@ -514,7 +522,9 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
 
   // ---- player-paced actions (HINT / SKIP / CONTINUE buttons; Enter + Escape on a keyboard) ----
   // CONTINUE: leave the review card for the next word (or the results, after the last miss).
-  const continueRun = useCallback(() => {
+  const continueRun = useCallback((opts) => {
+    // CLASS ROOM: the teacher advances everyone (classAdvance) — the student's CONTINUE does nothing
+    if (classRef.current && !(opts && opts.fromClass === true)) return;
     if (pendingRef.current === 'idle') return;
     clearTimeout(pauseTimer.current);
     if (pendingRef.current === 'miss' && engineRef.current.getState().gameOver) {
@@ -535,6 +545,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     if (!c || c.resolved || !input) return;
     const lastStage = eng.config.stageMultipliers.length - 1;
     if (c.stage < lastStage) {
+      hintsRef.current += 1;
       clearTimeout(stageTimer.current);
       eng.advanceStage();
       const now = eng.getState().current;
@@ -545,6 +556,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       force();
       return;
     }
+    hintsRef.current += 1;
     const rev = input.revealNextLetter();
     if (rev.complete) resolveClear();
     else force();
@@ -677,7 +689,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   }, [persistLexicon]);
 
   // ---- public actions ----
-  const freshEngine = useCallback((briefed = [], mode = 'briefing', queue = null) => {
+  const freshEngine = useCallback((briefed = [], mode = 'briefing', queue = null, extra = null) => {
     clearTimers();
     const { stageMs, spellMs, lineupScale, deepEvery, revGap, climb } = cfgRef.current;
     const finite = Array.isArray(queue);
@@ -701,9 +713,44 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         deepCutEvery: deepEvery,
         ...(finite ? {} : { revenantOffset: revGap }),
         tierEvery: climb,
+        ...(extra || {}),
       },
     });
     prevSilverRef.current = false;
+  }, []);
+
+  // ---- CLASS ROOM (src/satRush/class/) ----
+  // Play the teacher's words, in the teacher's order, from `startAt` (a student who rejoins mid-class
+  // picks up at the class's current word). Nothing comes back later in the run — the whole class is
+  // on the same word — so the dropout schedule is off, and the student's pace is the teacher's.
+  const startClassRun = useCallback(({ rows, mode = 'lineup', startAt = 0, onSettle }) => {
+    classRef.current = { onSettle: typeof onSettle === 'function' ? onSettle : () => {} };
+    paceRef.current = 'self';
+    modeRef.current = mode === 'briefing' ? 'briefing' : 'lineup';
+    replayRef.current = null;
+    briefingRef.current = null;
+    briefedSetRef.current = new Set();
+    reEncodeRef.current = null;
+    freshEngine([], modeRef.current, rows.slice(Math.max(0, startAt)), { requeueShaky: false, maxMissReturns: 0 });
+    phaseRef.current = 'playing';
+    trackSR('class_run_start', { words: rows.length, startAt });
+    beginWord();
+  }, [beginWord, freshEngine, trackSR]);
+  // The teacher revealed the word: a student still working on it sees its review card (a miss).
+  const classReveal = useCallback(() => {
+    if (!classRef.current || phaseRef.current !== 'playing' || pendingRef.current !== 'idle') return;
+    doMiss();
+  }, [doMiss]);
+  // The teacher pressed NEXT: close this word if it is still open, then serve the next one (or the
+  // results, after the last word).
+  const classAdvance = useCallback(() => {
+    if (!classRef.current || phaseRef.current !== 'playing') return;
+    if (pendingRef.current === 'idle') doMiss();
+    continueRun({ fromClass: true });
+  }, [doMiss, continueRun]);
+  // Leaving the class: the hook goes back to solo rules.
+  const endClassRun = useCallback(() => {
+    classRef.current = null;
   }, []);
 
   // Start the actual run in the given mode. BRIEFING serves the studied words first
@@ -924,6 +971,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // run and show the cover.
   const backToStart = useCallback(() => {
     clearTimers();
+    classRef.current = null;
     pendingRef.current = 'idle';
     reEncodeRef.current = null;
     replayRef.current = null;
@@ -1104,6 +1152,10 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     hint,
     skip,
     continueRun,
+    startClassRun,
+    classReveal,
+    classAdvance,
+    endClassRun,
     backToStart,
     applyPreset,
     masteryOf,

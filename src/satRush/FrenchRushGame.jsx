@@ -13,6 +13,10 @@
 // back to this cover, never to the arcade. A teacher can hand out a set as a link
 // (?mode=&level=&n=&theme=&pace=) — it opens CASE SETUP with that set preselected.
 //
+// CLASS ROOM (oct19, Andy: "can you do a create/join room for this?"): a teacher opens a class with a
+// code, students join it (or open ?class=CODE), everyone plays the same words and the teacher moves
+// everyone on. See class/ClassRoom.jsx; a reload mid-class goes straight back in.
+//
 // NOT PART OF THE ARCADE ECONOMY: nothing here banks wins, XP, gems, records or leaderboard rows. Its
 // learning memory lives under its own storage keys.
 import { useEffect, useRef, useState } from 'react';
@@ -27,9 +31,11 @@ import ModeSelect from './ModeSelect';
 import CaseSetup from './CaseSetup';
 import SatKeyInput from './SatKeyInput';
 import WordBank from './WordBank';
+import ClassFlow from './class/ClassRoom';
+import { hasClassSeat } from './class/useClassRoom';
 
 // The cover: what this is in one line, the mechanic in one worked example, and the two ways in.
-function Cover({ onPlay, onBank, wordCount }) {
+function Cover({ onPlay, onBank, onClass, wordCount }) {
   return (
     <div className="sr-screen">
       <div className="sr-cover fr-cover">
@@ -52,6 +58,9 @@ function Cover({ onPlay, onBank, wordCount }) {
 
         <button type="button" className="sr-btn" onClick={onPlay}>
           Play
+        </button>
+        <button type="button" className="sr-btn sr-btn-ghost" onClick={onClass}>
+          Class room
         </button>
         <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
           Word bank
@@ -81,11 +90,28 @@ function readPreset() {
   }
 }
 
+// ?class=CODE — a class's join link
+function readClassCode() {
+  try {
+    const c = new URLSearchParams(window.location.search).get('class');
+    return c ? c.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function FrenchRushGame() {
   const game = useSatRushGame({ packId: 'fr' });
   const { view } = game;
   const appRef = useRef(null);
   const [bank, setBank] = useState(false);
+  // CLASS ROOM: open = the class flow is mounted (and owns the socket). Opens on its own for a join
+  // link, or when this tab already holds a class seat (a reload mid-class).
+  const [classCode] = useState(readClassCode);
+  const [classOpen, setClassOpen] = useState(() => !!classCode || hasClassSeat());
+  const [classState, setClassState] = useState({ playing: false, hostAway: false, offline: false });
+  const classLeaveRef = useRef(null);
+  const inClassRun = classOpen && classState.playing;
   const ui = (view.pack && view.pack.ui) || null;
 
   useEffect(() => {
@@ -99,7 +125,7 @@ export default function FrenchRushGame() {
     if (presetDone.current) return;
     presetDone.current = true;
     const preset = readPreset();
-    if (!preset) return;
+    if (!preset || classOpen) return;
     game.applyPreset(preset);
     game.startGame();
     game.chooseMode(preset.mode);
@@ -110,6 +136,16 @@ export default function FrenchRushGame() {
   const home = () => {
     setBank(false);
     game.backToStart();
+  };
+  const closeClass = () => {
+    setClassOpen(false);
+    setClassState({ playing: false, hostAway: false, offline: false });
+    home();
+  };
+  // in a class run, HOME (and the results exits) leave the class
+  const leaveClassRun = () => {
+    if (classLeaveRef.current) classLeaveRef.current();
+    else closeClass();
   };
 
   if (bank) {
@@ -127,12 +163,12 @@ export default function FrenchRushGame() {
   }
 
   return (
-    <div className={`sr-app fr-app${view.silver ? ' silver' : ''}`} ref={appRef}>
+    <div className={`sr-app fr-app${view.silver ? ' silver' : ''}${inClassRun ? ' fr-class-on' : ''}`} ref={appRef}>
       {view.hasWord && view.stamp && view.stamp.kind === 'miss' && (
         <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
       )}
       <div className="sr-stage">
-        {view.hasWord && view.phase === 'playing' && (
+        {view.hasWord && view.phase === 'playing' && (!classOpen || inClassRun) && (
           <>
             <Hud
               score={view.score}
@@ -147,23 +183,40 @@ export default function FrenchRushGame() {
               showHeat={false}
               exitLabel="HOME"
               caseLabel="words"
-              onExit={home}
+              onExit={inClassRun ? leaveClassRun : home}
             />
             <div className="sr-body">
               <WordCard view={view} onHint={game.hint} onSkip={game.skip} onContinue={game.continueRun} />
+              {inClassRun && (classState.offline || classState.hostAway || view.pending !== 'idle') && (
+                <div className={`fr-class-line${classState.offline || classState.hostAway ? ' alert' : ''}`} role="status">
+                  {classState.offline ? 'reconnecting…' : classState.hostAway ? 'teacher reconnecting…' : 'waiting for the teacher…'}
+                </div>
+              )}
               <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />
             </div>
           </>
         )}
       </div>
 
-      {view.phase === 'start' && (
-        <Cover onPlay={game.startGame} onBank={() => setBank(true)} wordCount={view.packSize} />
+      {classOpen && (
+        <ClassFlow
+          game={game}
+          words={(view.pack && view.pack.words) || []}
+          categories={(view.pack && view.pack.categories) || []}
+          entry={classCode ? 'join' : 'choose'}
+          initialCode={classCode}
+          onExit={closeClass}
+          onStudentState={setClassState}
+          leaveRef={classLeaveRef}
+        />
       )}
-      {view.phase === 'mode' && (
+      {!classOpen && view.phase === 'start' && (
+        <Cover onPlay={game.startGame} onBank={() => setBank(true)} onClass={() => setClassOpen(true)} wordCount={view.packSize} />
+      )}
+      {!classOpen && view.phase === 'mode' && (
         <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={home} ui={ui} />
       )}
-      {view.phase === 'setup' && (
+      {!classOpen && view.phase === 'setup' && (
         <CaseSetup
           mode={view.mode}
           prefs={view.setupPrefs}
@@ -177,17 +230,17 @@ export default function FrenchRushGame() {
           onExit={home}
         />
       )}
-      {view.phase === 'briefing' && (
+      {!classOpen && view.phase === 'briefing' && (
         <Briefing briefing={view.briefing} onStart={game.startRun} onExit={home} ui={ui} />
       )}
-      {view.phase === 'over' && (
+      {view.phase === 'over' && (!classOpen || inClassRun) && (
         <SatRushResults
           results={view.results}
           economy={false}
           ui={ui}
-          onAgain={game.startGame}
-          onReplay={game.replayMisses}
-          onExit={home}
+          onAgain={inClassRun ? leaveClassRun : game.startGame}
+          onReplay={inClassRun ? null : game.replayMisses}
+          onExit={inClassRun ? leaveClassRun : home}
         />
       )}
     </div>
