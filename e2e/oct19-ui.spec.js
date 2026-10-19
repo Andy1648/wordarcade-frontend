@@ -90,12 +90,17 @@ for (const [w, h] of SIZES) {
     await boot(page, { level: 400, rebirths: 6 }, { 'taw.s2.gems': JSON.stringify({ bal: 5000 }) });
     await navControl(page, 'stats').waitFor({ state: 'visible' });
     await expect(page.locator('.hp-chip-dot').first()).toBeVisible();
-    const menu = await dotsOnTop(page, '.hp-chip-dot, .kb-rdot, .kb-idot');
-    expect(menu.length).toBeGreaterThanOrEqual(3);
-    expect(menu.filter((d) => !d.onTop), JSON.stringify(menu)).toEqual([]);
+    // polled: the menu's arrival / dot-nudge motion can move a dot off its centre for a frame (CI caught one at 697ms);
+    // a STACKING bug never clears, a transient does
+    let menu = [];
+    await expect.poll(async () => {
+      menu = await dotsOnTop(page, '.hp-chip-dot, .kb-rdot, .kb-idot');
+      return menu.length >= 3 && menu.every((d) => d.onTop);
+    }, { timeout: 5000, message: 'every menu dot on top' }).toBe(true);
     await navControl(page, 'shop').click();
     await page.getByTestId('daily-chest-card').waitFor({ state: 'visible' });
-    const shop = await dotsOnTop(page, '.sp2-dot');
+    let shop = [];
+    await expect.poll(async () => { shop = await dotsOnTop(page, '.sp2-dot'); return shop.length === 1 && shop[0].onTop; }, { timeout: 5000 }).toBe(true);
     expect(shop.length).toBe(1);
     expect(shop[0].onTop, `the daily chest dot is not clipped under its card ${JSON.stringify(shop)}`).toBe(true);
   });
