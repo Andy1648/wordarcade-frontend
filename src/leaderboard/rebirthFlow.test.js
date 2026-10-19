@@ -1,7 +1,7 @@
 // The client half of the server-checked rebirth (rebirthFlow.js) against the JS model of the server (rebirthRules.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeRebirthFlow, newRequestId, isNotDeployed, rebirthRefusalText, PENDING_REBIRTH_KEY } from './rebirthFlow.js';
+import { makeRebirthFlow, newRequestId, isNotDeployed, rebirthRefusalText, grantTarget, PENDING_REBIRTH_KEY } from './rebirthFlow.js';
 import { makeRebirthServer, serverGate } from './rebirthRules.js';
 
 const T0 = Date.UTC(2026, 9, 5, 18, 0, 0);
@@ -59,10 +59,28 @@ test('SERVER: ok → applied locally on the SERVER count, pending id cleared', a
   assert.deepEqual([r.ok, r.mode, r.rc], [true, 'server', 1]);
   assert.deepEqual([h.st.rebirths, h.st.level, h.srv.db.row.rebirths], [1, 1, 1]);
   assert.equal(h.store.has(PENDING_REBIRTH_KEY), false);
-  // local AHEAD of the board (an old local-only rebirth): local lands on the server's count, not local + 1
-  const a = harness({ local: { level: 200, rebirths: 7 }, stored: { level: 200, rebirths: 4 } });
+  // local BEHIND the board (another device rebirthed): local catches up to the server's count
+  const b = harness({ local: { level: 200, rebirths: 2 }, stored: { level: 200, rebirths: 4 } });
+  const rb = await b.flow.performRebirth();
+  assert.deepEqual([rb.ok, rb.rc, b.st.rebirths], [true, 5, 5]);
+});
+
+test('a grant NEVER lowers local rebirths: a stale-low board row (BETTERTHANANDY oct19) → local + 1', async () => {
+  // the row was knocked to R0 by the pre-054 "lower push = reset" bug; this device holds the real R26 save
+  const a = harness({ local: { level: 600, rebirths: 26 }, stored: { level: 600, rebirths: 0 } });
   const ra = await a.flow.performRebirth();
-  assert.deepEqual([ra.ok, ra.rc, a.st.rebirths], [true, 5, 5]);
+  assert.equal(ra.ok, true);
+  assert.equal(a.st.rebirths, 27, 'R26 → R27, never R1');
+  assert.equal(ra.rc, 27, 'the screen shows the local count, not the row\'s');
+  assert.equal(a.srv.db.row.rebirths, 1, 'the row is the server\'s business (Andy heals it by SQL)');
+});
+
+test('grantTarget = max(server, local + 1)', () => {
+  assert.equal(grantTarget(1, 26), 27);
+  assert.equal(grantTarget(5, 2), 5);
+  assert.equal(grantTarget(5, 4), 5);
+  assert.equal(grantTarget(NaN, 3), 4);
+  assert.equal(grantTarget(undefined, 0), 1);
 });
 
 test('SINGLE-FLIGHT: a double click while pending does nothing extra → one request, one rebirth', async () => {
