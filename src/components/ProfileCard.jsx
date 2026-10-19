@@ -19,7 +19,6 @@ import { rollMarkById } from '../progress/markRollsCore.js';
 import { rankPlate } from '../leaderboard/s2Board.js';
 import { fetchShowcase, saveBio, myBio, fetchUnlistedFinds } from '../leaderboard/showcase.js';
 import { unlistedById, unlistedArt } from '../unlisted/unlisted.js';
-import UnlistedShelf, { tilesFromFinds } from '../unlisted/UnlistedShelf.jsx';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
 
@@ -128,18 +127,33 @@ function BadgeRow({ badges }) {
   );
 }
 
+/** This player's server serial for one UNLISTED gear (052 unlisted_finds), or null. */
+function serialOf(finds, id) {
+  const f = (finds || []).find((x) => x && x.gear_id === id);
+  return f ? f.serial : null;
+}
+
 function Gear({ id, slot, known, onOpen }) {
   const m = id ? rollMarkById(id) : null;
   const u = !m && id ? unlistedById(id) : null;
   if (u) {
-    // THE UNLISTED worn as the MAIN: the negative-print plate (no tap — its serial is on the shelf below)
+    // THE UNLISTED worn in either slot: the negative-print plate — a tap opens its card like any gear (Andy oct19 "they
+    // dont have clickable card on leaderboard")
     return (
-      <div className="pc-gear is-unlisted" data-slot={slot} data-tier="unlisted" data-testid={`profile-gear-${slot}`}
-        style={{ '--pc-line': CARD_RAR.unlisted.line, '--pc-edge': CARD_RAR.unlisted.edge, '--pc-fill': CARD_RAR.unlisted.fill }}>
+      <button
+        type="button"
+        className="pc-gear is-tap is-unlisted"
+        data-slot={slot}
+        data-tier="unlisted"
+        data-testid={`profile-gear-${slot}`}
+        aria-label={`${u.name} — see the gear`}
+        style={{ '--pc-line': CARD_RAR.unlisted.line, '--pc-edge': CARD_RAR.unlisted.edge, '--pc-fill': CARD_RAR.unlisted.fill }}
+        onClick={() => onOpen({ id: u.id, name: u.name, tier: 'unlisted', kind: 'unlisted' })}
+      >
         <img className="pc-gear-art pc-gear-img" src={unlistedArt(u)} alt="" width="72" height="72" />
         <span className="pc-gear-name">{u.name}</span>
         <span className="pc-gear-tier">UNLISTED</span>
-      </div>
+      </button>
     );
   }
   if (!m) {
@@ -163,7 +177,7 @@ function Gear({ id, slot, known, onOpen }) {
       data-testid={`profile-gear-${slot}`}
       aria-label={`${m.name} — see the gear`}
       style={{ '--pc-line': pal.line, '--pc-edge': pal.edge, '--pc-fill': pal.fill }}
-      onClick={() => onOpen(m)}
+      onClick={() => onOpen({ id: m.id, name: m.name, tier: m.tier, kind: 'roll' })}
     >
       <MarkBadge mark={{ id: m.id, tier: m.tier }} size={72} className="pc-gear-art" />
       <span className="pc-gear-name">{m.name}</span>
@@ -189,7 +203,7 @@ function Tile({ icon, value, label, tone, children }) {
 export default function ProfileCard({ row, mine = false, onClose }) {
   const [show, setShow] = useState(undefined); // undefined = loading, null = none
   const [gear, setGear] = useState(null); // the gear whose sheet is open
-  const [finds, setFinds] = useState([]); // 052 THE UNLISTED: what the server recorded for this player
+  const [finds, setFinds] = useState([]); // 052 THE UNLISTED: this player's server serials (the worn one's FINDER # on its card)
   const cardRef = useRef(null);
   const closeRef = useRef(null);
   useEffect(() => {
@@ -241,7 +255,7 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           </Tile>
         </div>
         {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
-        <UnlistedShelf tiles={tilesFromFinds(finds)} />
+        {/* no UNLISTED shelf / found-count here (Andy oct19 "no need to show how many unlisted you've found") */}
       </div>
       {gear ? (
         // a layer of this scrim (GearSheet's .mx-sheet-layer is absolute) — a tap inside never closes the profile
@@ -249,10 +263,11 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <Suspense fallback={null}>
             <GearSheet
               key={gear.id}
-              e={{ id: gear.id, name: gear.name, tier: gear.tier, kind: 'roll' }}
+              e={gear}
               have
               view={null}
               peek
+              serial={gear.kind === 'unlisted' ? serialOf(finds, gear.id) : null}
               onClose={() => setGear(null)}
             />
           </Suspense>

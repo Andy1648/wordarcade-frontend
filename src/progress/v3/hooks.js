@@ -19,6 +19,7 @@ import { needV3, creditXpV3 } from './curve.js';
 import { getStarsV3, saveStarsV3, mark2Id, saveMark2Id, bumpCounter, maxCounter, S2_PREFIX } from './store.js';
 import { bumpHeroWin } from '../../cast/heroWins.js';
 import { featureOpen } from './unlocks.js';
+import { unlistedEntry, ownsUnlistedId } from '../../unlisted/unlistedIds.js'; // a leaf
 import { hardestBot } from '../botDiff.js';
 import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
@@ -272,10 +273,17 @@ export const boostSwap = (liveMult, liveStart) => ({
 });
 
 // ---- the R5 unlock: a 2nd MARK slot (+N% WINS / +N% XP only — minimal model) -----------------------------------
+/** Can this gear sit in the 2nd slot? An OWNED rolled gear, or an OWNED UNLISTED one (Andy oct19 "the unlisted gears
+ *  i have i cant equip as 2nd gear") — it has a stat of its own now, so it pays through the same door. */
+function owns2(id, s) {
+  if (!id) return false;
+  if (s && s.marks && s.marks[id]) return true;
+  return !!unlistedEntry(id) && ownsUnlistedId(id);
+}
 export function mark2Factor(kind, opts, s, wornId) {
   if (opts.markId !== undefined || !featureOpen('mark2')) return 1;
   const id2 = mark2Id();
-  if (!id2 || id2 === wornId || !(s && s.marks && s.marks[id2])) return 1;
+  if (!id2 || id2 === wornId || !owns2(id2, s)) return 1;
   const st2 = statOf(id2, s);
   const m = st2 ? (statHits(st2, kind, opts) ? 1 + st2.value / 100 : 1) : mainMultOf(id2, s); // a one-mode WINS gear pays in its mode
   return m > 0 ? m : 1;
@@ -285,14 +293,13 @@ export function mark2Factor(kind, opts, s, wornId) {
 export function mark2For(s, wornId) {
   if (!featureOpen('mark2')) return null;
   const id2 = mark2Id();
-  return id2 && id2 !== wornId && s && s.marks && s.marks[id2] ? id2 : null;
+  return id2 && id2 !== wornId && owns2(id2, s) ? id2 : null;
 }
-/** Wear `id` in the 2nd MARK slot (R5+, an owned rolled mark, not the worn one; null empties it). */
+/** Wear `id` in the 2nd MARK slot (R5+, an owned rolled or UNLISTED gear, not the worn one; null empties it). */
 export function equipMark2(id) {
   if (!featureOpen('mark2')) return false;
   if (id == null) return saveMark2Id(null);
-  const s = loadRollState();
-  return !!(s && s.marks && s.marks[id]) && id !== wornMarkId() && saveMark2Id(id);
+  return owns2(id, loadRollState()) && id !== wornMarkId() && saveMark2Id(id);
 }
 
 // ---- the SERVER-FLAG hook (for later) ---------------------------------------------------------------------------
