@@ -4,22 +4,13 @@
 // painted asset; motion is finite WAAPI one-shots re-armed on a timer (nothing infinite; transform / opacity only;
 // hidden tab skipped; reduce motion = still).
 import { useEffect, useRef, useState } from 'react';
-import { heroById, CAST, CAST_IDLE, castIdleFrames } from './cast.js';
+import { heroById, CAST } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
 import CastArt from './CastArt.jsx';
 import './HeroShowcase.css';
 
-const LAND = [
-  { transform: 'translateY(-40%) scale(.9, 1.1)', opacity: 0 },
-  { transform: 'translateY(3%) scale(1.14, .84)', opacity: 1, offset: 0.6 },
-  { transform: 'translateY(-3%) scale(.96, 1.05)', offset: 0.8 },
-  { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
-];
-const CHEER = [
-  { transform: 'translateY(0) scale(1.12, .86)' },
-  { transform: 'translateY(-10%) scale(.92, 1.1)', offset: 0.45 },
-  { transform: 'translateY(0) scale(1, 1)' },
-];
+const LAND = [{ opacity: 0 }, { opacity: 1 }]; // oct18: a fade, no squash
+const CHEER = [{ opacity: 0 }, { opacity: 1 }];
 const WIN_HOLD_MS = 1300;
 
 /** `cheer` (a number) bumps from outside to play the WIN pose (a purchase landing). */
@@ -33,27 +24,19 @@ export default function HeroShowcase({ id, cheer = 0, className = '' }) {
   useEffect(() => {
     if (first.current) { first.current = false; return undefined; }
     busy.current = true;
-    kitPlay(artRef.current, LAND, { duration: 420, easing: 'cubic-bezier(.2,1,.3,1)' });
+    kitPlay(artRef.current, LAND, { duration: 220, easing: 'ease-out' });
     const t = setTimeout(() => { busy.current = false; }, 440);
     return () => clearTimeout(t);
   }, [id]);
 
-  useEffect(() => {
-    let timer = 0;
-    const loop = () => {
-      const b = CAST_IDLE[h.id] || CAST_IDLE.hype;
-      if (!busy.current && document.visibilityState !== 'hidden') kitPlay(artRef.current, castIdleFrames(b), { duration: b.ms, easing: 'ease-in-out' });
-      timer = setTimeout(loop, b.ms + b.rest); // oct18 Andy: "a lot more continous" — each move flows straight into the next (rest 0)
-    };
-    timer = setTimeout(loop, 700);
-    return () => clearTimeout(timer);
-  }, [h.id]);
+  // oct18 Andy: the body bounce idle is "horrendous (and unsmooth)" — removed; the hero stands still and its prop
+  // streams (CastArt) carry the life.
 
   useEffect(() => { if (cheer) setCheering(true); }, [cheer]);
   useEffect(() => {
     if (!cheering) return undefined;
     busy.current = true;
-    kitPlay(artRef.current, CHEER, { duration: 360, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+    kitPlay(artRef.current, CHEER, { duration: 200, easing: 'ease-out' });
     const t = setTimeout(() => { setCheering(false); busy.current = false; }, WIN_HOLD_MS);
     return () => clearTimeout(t);
   }, [cheering]);

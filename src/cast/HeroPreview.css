@@ -43,23 +43,19 @@
   width: 100%; font: 400 var(--fs-k60, 60px) 'Bungee', sans-serif; line-height: 1; color: var(--hpv-c);
   -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000;
 }
-.hpv-tag { font: 700 var(--fs-k22, 22px) 'Space Mono', monospace; letter-spacing: .06em; color: #fff; line-height: 1.25; }
-.hpv-move { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; background: #24123d; border: 3px solid var(--hpv-t); border-radius: 8px; box-shadow: 4px 4px 0 #000; }
-.hpv-move-k { font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; letter-spacing: .14em; color: var(--hpv-t); }
-.hpv-move-v { font: 400 var(--fs-k24, 24px) 'Bungee', sans-serif; color: #fff; }
+.hpv-tag { font: 700 var(--fs-k26, 26px) 'Space Mono', monospace; letter-spacing: .06em; color: #fff; line-height: 1.25; }
 .hpv-get { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 100%; margin-top: 6px; }
 .hpv-cta {
-  min-height: 60px; padding: 0 26px; cursor: pointer; font: 400 var(--fs-k26, 26px) 'Bungee', sans-serif; color: #000; background: var(--hpv-c);
+  min-height: 68px; padding: 0 30px; cursor: pointer; font: 400 var(--fs-k30, 30px) 'Bungee', sans-serif; color: #000; background: var(--hpv-c);
   border: 4px solid #000; border-radius: 8px; box-shadow: 5px 5px 0 #000; transition: transform 120ms;
 }
 .hpv-cta:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 #000; }
 .hpv-cta.is-on { display: inline-flex; align-items: center; cursor: default; background: #FFE94A; }
 .hpv-prog { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; width: 100%; align-items: center; }
-.hpv-prog-k { grid-column: 1 / -1; font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .12em; color: #c9b8e8; }
-.hpv-prog-bar { position: relative; height: 26px; overflow: hidden; background: #0d0618; border: 3px solid #000; border-radius: 6px; }
+.hpv-prog-k { grid-column: 1 / -1; font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; letter-spacing: .12em; color: #c9b8e8; }
+.hpv-prog-bar { position: relative; height: 32px; overflow: hidden; background: #0d0618; border: 3px solid #000; border-radius: 6px; }
 .hpv-prog-fill { position: absolute; inset: 0; transform-origin: 0 50%; background: var(--hpv-t); }
-.hpv-prog-n { font: 400 var(--fs-k24, 24px) 'Bungee', sans-serif; color: #fff; white-space: nowrap; }
-.hpv-note { font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .1em; color: var(--hpv-t); }
+.hpv-prog-n { font: 400 var(--fs-k32, 32px) 'Bungee', sans-serif; color: #fff; white-space: nowrap; }
 .hpv-buy { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .hpv-gems { display: inline-flex; align-items: center; gap: 6px; font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #fff; }
 
@@ -73,3 +69,14 @@
   .hpv-back { padding: 0 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .hpv-cta, .hpv-back, .hpv-arrow { transition: none; } }
+/* the member's version tabs (oct18 one-card picker): RIOT / GOLD / ELITE — a lock on the ones you don't own yet */
+.hpv-vars { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.hpv-var {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; cursor: pointer;
+  font: 400 var(--fs-k20) 'Bungee', sans-serif; color: #c9b8e8; background: #24123d; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+}
+.hpv-var.is-on.is-base { color: #000; background: var(--hpv-c); }
+.hpv-var.is-on.is-gold { color: #000; background: #F2B705; }
+.hpv-var.is-on.is-elite { color: #000; background: #FFC83D; }
+.hpv-var:focus-visible { outline: 3px solid #FFE94A; outline-offset: 3px; }
+@media (max-width: 760px) { .hpv-top { flex-wrap: wrap; } .hpv-vars { order: 3; width: 100%; } .hpv-var { flex: 1; justify-content: center; } }

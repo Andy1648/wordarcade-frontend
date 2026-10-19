@@ -7,7 +7,7 @@
 // Motion: finite WAAPI one-shots re-armed on timers (nothing infinite), transform / opacity only, hidden tab skipped,
 // reduce motion = still poses (kitPlay is a no-op).
 import { useEffect, useRef, useState } from 'react';
-import { CAST_IDLE, castIdleFrames, HERO_UNLOCK, ownsHero, goldProgress, hasPose, ALL_HEROES } from './cast.js';
+import { HERO_UNLOCK, ownsHero, goldProgress, hasPose, ALL_HEROES } from './cast.js';
 import { rarityOf } from './CastArt.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
@@ -17,19 +17,9 @@ import { getRebirths, storedLevel } from '../progress/xp.js';
 import { formatNum } from '../format';
 import './HeroPreview.css';
 
-// what each prop act is called on the preview ("SIGNATURE MOVE")
-const MOVE = {
-  spray: 'TAGS THE WALL', gum: 'BUBBLE POP', shout: 'HYPES THE ROOM', jab: 'THE ONE-TWO', magic: 'SPELLBOOK',
-  rock: 'POWER CHORD', mvp: 'MEGAPHONE', champ: 'PRESS FLASH', arcane: 'ARCANE STAFF', glitch: 'CORRUPTED',
-  snore: 'POWER NAP', eureka: 'WELL, ACTUALLY', haunt: 'HAUNTS YOU', mime: 'SILENT TREATMENT', sear: 'TOO HOT', boost: 'AFTERBURNER',
-};
 const TIER_NAME = { gold: 'GOLD', elite: 'ELITE', legend: 'LEGEND' };
 const POSES = [['hero', 'HERO', 4200], ['win', 'WIN', 2400], ['ko', 'K.O.', 2400]];
-const SWAP = [
-  { transform: 'translateY(-14%) scale(.92, 1.08)', opacity: 0 },
-  { transform: 'translateY(2%) scale(1.1, .9)', opacity: 1, offset: 0.55 },
-  { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
-];
+const SWAP = [{ opacity: 0 }, { opacity: 1 }]; // oct18: pose swaps fade (no squash bounce)
 
 function onlineWins() {
   try { const o = JSON.parse(localStorage.getItem('taw.s2.count') || '{}'); return Math.max(0, Math.floor(Number(o && o.mp) || 0)); } catch { return 0; }
@@ -60,21 +50,10 @@ export function nextHeroGoal() {
   return best;
 }
 
-/** The big stage: pedestal + the hero, alive, cycling its poses (a tapped tab holds that pose). */
+/** The big stage: pedestal + the hero (still; its prop streams move), cycling its poses (a tapped tab holds that pose). */
 function Stage({ h, pose, onTap }) {
   const artRef = useRef(null);
-  useEffect(() => { kitPlay(artRef.current, SWAP, { duration: 380, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, [h.id, pose]);
-  useEffect(() => {
-    if (pose !== 'hero') return undefined;
-    let t = 0;
-    const loop = () => {
-      const b = CAST_IDLE[h.id] || CAST_IDLE.hype;
-      if (document.visibilityState !== 'hidden') kitPlay(artRef.current, castIdleFrames(b), { duration: b.ms, easing: 'ease-in-out' });
-      t = setTimeout(loop, b.ms + (b.rest || 0));
-    };
-    t = setTimeout(loop, 420);
-    return () => clearTimeout(t);
-  }, [h.id, pose]);
+  useEffect(() => { kitPlay(artRef.current, SWAP, { duration: 220, easing: 'ease-out' }); }, [h.id, pose]);
   return (
     <button type="button" className="hpv-stage" onClick={onTap} aria-label={`${h.name}, ${pose} pose — tap for the next pose`}>
       <span className="hpv-floor" aria-hidden="true" />
@@ -90,7 +69,7 @@ function Stage({ h, pose, onTap }) {
  * @param h the hero · @param current the equipped id · @param gems your balance
  * @param onEquip(id) · @param onBuy(id) → { ok } · @param onStep(-1|+1) flip to the neighbour · @param onClose back to the grid
  */
-export default function HeroPreview({ h, current, gems, onEquip, onBuy, onStep, onClose }) {
+export default function HeroPreview({ h, variants = null, onVariant = null, current, gems, onEquip, onBuy, onStep, onClose }) {
   const [poseIx, setPoseIx] = useState(0);
   const [held, setHeld] = useState(false); // a tapped tab stops the auto-cycle
   const poses = POSES.filter(([p]) => p === 'hero' || hasPose(h.id, p) || hasPose(h.base || '', p));
@@ -114,11 +93,22 @@ export default function HeroPreview({ h, current, gems, onEquip, onBuy, onStep, 
   const tier = r.tier || 'crew';
   const owned = ownsHero(h.id);
   const prog = owned ? null : unlockProgress(h);
-  const move = MOVE[moveOf(h)] || null;
+  const vs = variants && variants.length > 1 ? variants : null; // oct18 one-card picker: a member's RIOT / GOLD / ELITE tabs
   return (
     <div className={`hpv is-${tier}`} style={{ '--hpv-c': h.color, '--hpv-d': h.dark }} data-testid="hero-preview" data-hero={h.id}>
       <div className="hpv-top">
         <button type="button" className="hpv-back" onClick={onClose}>‹ ALL HEROES</button>
+        {vs ? (
+          <span className="hpv-vars" role="tablist" aria-label="Versions">
+            {vs.map((v) => (
+              <button key={v.id} type="button" role="tab" aria-selected={v.id === h.id} className={`hpv-var is-${v.gold ? 'gold' : v.elite ? 'elite' : 'base'}${v.id === h.id ? ' is-on' : ''}`}
+                onClick={() => onVariant && onVariant(v.id)}>
+                {!ownsHero(v.id) ? <KitIcon name="lock" size={18} shadow={1} extras={false} /> : null}
+                {v.gold ? 'GOLD' : v.elite ? 'ELITE' : v.name}
+              </button>
+            ))}
+          </span>
+        ) : null}
         <span className="hpv-nav">
           <button type="button" className="hpv-arrow" onClick={() => onStep(-1)} aria-label="Previous hero">‹</button>
           <button type="button" className="hpv-arrow" onClick={() => onStep(1)} aria-label="Next hero">›</button>
@@ -135,12 +125,9 @@ export default function HeroPreview({ h, current, gems, onEquip, onBuy, onStep, 
           </div>
         </div>
         <div className="hpv-right">
-          <span className={`hpv-tier is-${tier}`}>{TIER_NAME[r.tier] || 'THE CREW'}</span>
+          {r.tier ? <span className={`hpv-tier is-${tier}`}>{TIER_NAME[r.tier]}</span> : null}
           <FitText className="hpv-name">{h.name}</FitText>
           <span className="hpv-tag">{h.tag}</span>
-          {move ? (
-            <span className="hpv-move"><span className="hpv-move-k">SIGNATURE MOVE</span><span className="hpv-move-v">{move}</span></span>
-          ) : null}
           <div className="hpv-get">
             {owned ? (
               h.id === current
@@ -155,12 +142,9 @@ export default function HeroPreview({ h, current, gems, onEquip, onBuy, onStep, 
                     <span className="hpv-prog-n">{formatNum(prog.have)} / {formatNum(prog.need)}</span>
                   </div>
                 ) : null}
-                {h.gold ? (
-                  <span className="hpv-note">EARNED ONLY. NEVER SOLD.</span>
-                ) : h.price ? (
+                {h.price && !h.gold ? (
                   <div className="hpv-buy">
-                    {prog ? <span className="hpv-note">OR SKIP THE WAIT</span> : null}
-                    <KitHoldButton tone="gold" width={300} labelSize={24} label={gems >= h.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
+                    <KitHoldButton tone="gold" width={300} labelSize={28} label={gems >= h.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
                       sub={gems >= h.price ? `${formatNum(h.price)} GEMS` : `NEED ${formatNum(h.price - gems)} MORE`}
                       disabled={gems < h.price} confirmText="UNLOCKED!" onConfirm={() => onBuy(h.id)}
                       ariaLabel={`Hold to buy ${h.name} for ${formatNum(h.price)} gems`} />
@@ -174,14 +158,4 @@ export default function HeroPreview({ h, current, gems, onEquip, onBuy, onStep, 
       </div>
     </div>
   );
-}
-
-/** The prop act a hero plays (GOLD / ELITE fall back to their member's). */
-function moveOf(h) {
-  const byId = {
-    riot: 'spray', glitch: 'gum', hype: 'shout', brawl: 'jab', hex: 'magic', dud: 'snore', lexi: 'eureka', boo: 'haunt',
-    shh: 'mime', sizzle: 'sear', mecha: 'boost', 'riot-elite': 'rock', 'hype-elite': 'mvp', 'brawl-elite': 'champ',
-    'hex-elite': 'arcane', 'glitch-elite': 'glitch',
-  };
-  return byId[h.id] || byId[h.base] || null;
 }

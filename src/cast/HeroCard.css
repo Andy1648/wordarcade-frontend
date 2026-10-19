@@ -54,3 +54,5 @@
   .hc-req .kit-icon:nth-of-type(2) { display: none; }
   .hc-name { font-size: var(--fs-k22); -webkit-text-stroke-width: 4px; }
 }
+/* not owned yet (one-card picker): the hero greyed back; the status pill under the card says how to get it */
+.hc.is-dim .hc-hero { filter: grayscale(.75) brightness(.6) drop-shadow(3px 3px 0 #000); }
