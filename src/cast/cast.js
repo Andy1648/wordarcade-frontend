@@ -304,6 +304,16 @@ CAST_LAYERS['riot-gold'] = goldAct('riot', [
   { src: '/cast/props/spray-drop.webp', x: 19, y: 24.5, w: 3.6 },
 ]);
 for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
+/** PAINTED FRAME ANIMATION (oct19, Andy: "more quality and diverse animations (that prob also arent css generated so you
+ *  can use chatgpt or gemini)"): a hero can have a hand-drawn FLIPBOOK — ChatGPT frames of the same character on one
+ *  sheet, cut + registered on the feet (public/cast/anim/<id>-<n>.webp) — that CastArt flips through like a Flash
+ *  timeline (hard frame swaps, no tweening). `seq` = [frame, ms] steps from the resting frame 0 back to it; `rest` = the
+ *  hold on frame 0 before the next play. While a hero has frames its painted HERO + prop streams are replaced by them. */
+export const CAST_FRAMES = {
+  // RIOT: shake the can (twice), spray, blow the nozzle like a smoking gun
+  riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 },
+};
+export const castFrames = (id, pose = 'hero') => (pose === 'hero' && CAST_FRAMES[id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
  *  move — RIOT head-bangs, GLITCH stays bored then skips a frame, HYPE double-hops, BRAWL bobs and weaves, HEX floats.

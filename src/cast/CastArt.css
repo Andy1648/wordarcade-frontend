@@ -7,3 +7,6 @@
 .cast-fx { position: absolute; height: auto; opacity: 0; pointer-events: none; }
 .cast-slot { position: absolute; height: auto; pointer-events: none; }
 .cast-slot.is-under { z-index: -1; }
+/* FLIPBOOK: the painted frames stacked on one box; frame 0 rests visible, the rest wait at 0 for their steps */
+.cast-flip .cast-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; pointer-events: none; }
+.cast-flip .cast-frame.is-rest { position: relative; display: block; opacity: 1; }
