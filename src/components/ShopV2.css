@@ -632,3 +632,13 @@
 @media (max-width: 999px) { .sp2-look-art { width: 80px; height: 80px; } }
 .sp2-look.is-legend.is-locked .sp2-look-art { opacity: 1; } /* the rarest stays in full colour — it is the thing to chase */
 .sp2-look.has-art .sp2-look-act { margin-top: auto; } /* price buttons line up across a row */
+
+/* Andy oct19 "the costs of upgrades in shop are getting overlapped by the lower boundaries of the cards": on a short row
+   (a 768/551 laptop, a 2-line name like EVERYTHING BOOST) the card's stack outgrew the card and pushed the price over the
+   bottom border. The ART gives way now (object-fit keeps its shape), never the price; and the phone row is back to the
+   224px the OVERDRIVE card needs (a later rule had set 214). e2e/shop-price-fit.spec.js holds it. */
+.sp2-card-in > .sp2-art,
+.sp2-card-in > .sp2-ico,
+.sp2-card-in > .sp2-chest-art { flex: 0 1 auto; min-height: 28px; }
+.sp2-chest-art img { object-fit: contain; }
+@media (max-width: 999px) { .sp2-grid { grid-auto-rows: 224px; } }
