@@ -7137,3 +7137,81 @@ html[data-beat='true'] .wb-belly {
   .wb-ring { --wb-seat-w: min(calc(var(--wb-size) * 0.16), calc(var(--wb-size) * 2.5 / var(--n, 4))); --wb-char-up: calc(var(--wb-seat-h) * 0.43); }
   .wb-seat-char { width: 150%; }
 }
+
+/* ===== BLITZ UI PREVIEW (Andy oct19 options; only rendered behind ?cbtop / ?cbsnd / ?cbans — see readCbUi) ===== */
+.cbx-title-row { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.cb-category-label .cbx-topword { font-size: 0.72em; }
+.cbx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cbx-label {
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: #FF4FA3; font-size: clamp(16px, 1.25vw, 20px);
+}
+.cbx-count {
+  font-family: 'Bungee', cursive; line-height: 1; font-size: clamp(30px, 3.2vw, 54px);
+  color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
+  transform-origin: right bottom; animation: cb-count-pop 260ms cubic-bezier(0.2, 1.6, 0.4, 1) 1;
+}
+.cbx-count-of { font-size: 0.46em; color: #FFE94A; -webkit-text-stroke: 2px #000; margin-left: 3px; }
+.cbx-chips, .cbx-sheet { overflow-y: auto; overscroll-behavior: contain; padding: 2px 6px 6px 2px; align-content: flex-start; }
+@media (min-width: 900px) { .cbx-chips, .cbx-sheet { max-height: max(80px, calc(100dvh - 500px)); } }
+@media (max-width: 899px) { .cbx-chips, .cbx-sheet { max-height: 22dvh; } }
+/* A1 BIG CHIPS: the newest answer leads, in yellow */
+.cbx-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cbx-chip {
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  font-size: clamp(16px, 1.25vw, 20px); color: #000; background: #2EFFE0; border: 3px solid #1A9985;
+  border-radius: 6px; padding: 4px 10px; box-shadow: 3px 3px 0 #000; max-width: 100%; overflow-wrap: anywhere;
+  animation: chip-slide-in 300ms ease-out 1;
+}
+.cbx-box--chips .cbx-chip:first-child { background: #FFE94A; border-color: #B39F1A; }
+/* A2 SCORE SHEET: numbered rows, two columns, newest row on top and lit */
+.cbx-sheet { list-style: none; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.cbx-row {
+  display: flex; align-items: center; gap: 8px; min-width: 0; background: #1a0b2e; border: 3px solid #3d1d66;
+  border-radius: 6px; padding: 4px 8px; animation: chip-slide-in 300ms ease-out 1;
+}
+.cbx-row-n {
+  font-family: 'Bungee', cursive; color: #FFE94A; -webkit-text-stroke: 1.5px #000; paint-order: stroke fill;
+  font-size: clamp(16px, 1.1vw, 20px); min-width: 1.5em; text-align: right;
+}
+.cbx-row-word {
+  font-family: 'Space Mono', monospace; font-weight: 700; color: #fff; letter-spacing: 0.03em;
+  font-size: clamp(16px, 1.15vw, 19px); min-width: 0; overflow-wrap: anywhere; line-height: 1.15;
+}
+.cbx-row.is-new { background: #2EFFE0; border-color: #1A9985; box-shadow: 3px 3px 0 #000; }
+.cbx-row.is-new .cbx-row-word { color: #000; }
+/* A3 JUST IN: the latest answer as a big card, the rest as small chips under it */
+.cbx-latest {
+  display: flex; flex-direction: column; gap: 2px; background: #2EFFE0; border: 4px solid #1A9985; border-radius: 8px;
+  box-shadow: 4px 4px 0 #000; padding: 8px 12px; margin-bottom: 10px; transform-origin: left center;
+  animation: cbx-latest-in 260ms cubic-bezier(0.2, 1.6, 0.4, 1) 1;
+}
+.cbx-latest-tag { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 0.12em; color: #0d0618; font-size: clamp(13px, 0.95vw, 15px); }
+.cbx-latest-word {
+  font-family: 'Bungee', cursive; font-size: clamp(26px, 2.4vw, 40px); line-height: 1.05; color: #fff;
+  -webkit-text-stroke: 3px #000; paint-order: stroke fill; overflow-wrap: anywhere;
+}
+.cbx-chips--small { gap: 6px; }
+.cbx-chips--small .cbx-chip { font-size: clamp(14px, 1vw, 16px); padding: 2px 8px; box-shadow: 2px 2px 0 #000; }
+@keyframes cbx-latest-in { from { transform: scale(1.12) rotate(-2deg); } to { transform: none; } }
+/* S2: the sound button closes the rail */
+.cbx-sound-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .cbx-count, .cbx-chip, .cbx-row, .cbx-latest { animation: none; } }
+/* phone fit (preview): the gear goes BEFORE the title so the fixed WINS pill (top-right) can never cover it, and the
+   boxes take no more height than today's 17dvh list */
+@media (max-width: 480px) {
+  /* phone: the gear opens the controls row on the LEFT, ROUND + LEAVE stay right; the title keeps line 1 alone */
+  .cbx-title-row { display: contents; }
+  .cbx-title-row > .game-title { flex: 0 0 100%; }
+  .cbx-title-row > .audio-ctrl { order: 1; }
+  .game-stage--blitz .cbx-title-row ~ .game-header-right { order: 2; width: auto; flex: 1 1 auto; }
+  .cbx-head { margin-bottom: 6px; }
+  .cbx-sound-row { padding-top: 6px; }
+}
+@media (max-width: 899px) {
+  .cbx-chips, .cbx-sheet { max-height: 15dvh; }
+  .cbx-latest { padding: 4px 10px; margin-bottom: 6px; }
+  .cbx-latest-word { font-size: 24px; }
+  .cbx-chips--small { max-height: 9dvh; }
+}
+@media (min-width: 900px) { .cbx-chips--small { max-height: max(60px, calc(100dvh - 610px)); } }

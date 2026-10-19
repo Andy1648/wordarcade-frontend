@@ -4354,6 +4354,18 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
  *   - BETWEEN ROUNDS (roundResults set, no active round): everyone's answers
  *     revealed with per-round and cumulative scores, plus a 5s countdown note.
  */
+// PREVIEW FLAGS (Andy oct19 Blitz UI options, NOT shipped): ?cbtop=1|2|3 (headline wording), ?cbsnd=1|2 (where the
+// sound button sits), ?cbans=1|2|3 (YOUR ANSWERS box). No flag = today's screen, byte-identical.
+function readCbUi() {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    let w = window.__CB_UI || {};
+    try { w = { ...JSON.parse(sessionStorage.getItem('taw.cbui') || '{}'), ...w }; } catch { /* storage blocked */ }
+    return { top: q.get('cbtop') || w.top || '', snd: q.get('cbsnd') || w.snd || '', ans: q.get('cbans') || w.ans || '' };
+  } catch {
+    return { top: '', snd: '', ans: '' };
+  }
+}
 function CategoryBlitzScreen({
   audioSlot = null, // the header's sound control — see GameScreen's own prop note
   myId,
@@ -4884,6 +4896,15 @@ function CategoryBlitzScreen({
     // after the first ~5s the button locks for the rest of the round. The server
     // is authoritative - this just mirrors it so the button looks right.
     const withinRerollWindow = !showCountdown && timerSeconds > maxTimer - 5;
+    const cbUi = readCbUi();
+    const hasTopN = !categoryRound?.openList && topN !== 'ANSWERS';
+    // newest first in the preview boxes, so the answer you just typed is always on screen (the phone box scrolls)
+    const answersNewest = myAnswers.map((a, i) => ({ a, n: i + 1 })).reverse();
+    const answersCount = (
+      <span className="cbx-count" key={`c${myAnswers.length}`}>
+        {myAnswers.length}{hasTopN && <span className="cbx-count-of">/{topN}</span>}
+      </span>
+    );
 
     return (
       <div className="game-wrap">
@@ -4920,9 +4941,18 @@ function CategoryBlitzScreen({
               band ON the answer now, and a second announcement in the middle of the screen is the
               same event told twice, further from the thing it is about. */}
           <div className="game-header">
-            <div className="game-title">
-              <SprayReveal>CATEGORY BLITZ</SprayReveal>
-            </div>
+            {cbUi.snd === '1' ? (
+              <div className="cbx-title-row">
+                <div className="game-title">
+                  <SprayReveal>CATEGORY BLITZ</SprayReveal>
+                </div>
+                {audioSlot}
+              </div>
+            ) : (
+              <div className="game-title">
+                <SprayReveal>CATEGORY BLITZ</SprayReveal>
+              </div>
+            )}
             <div className="game-header-right">
               <div className="game-meta">
                 {isSolo ? (
@@ -4933,7 +4963,7 @@ function CategoryBlitzScreen({
                   </span>
                 )}
               </div>
-              {audioSlot}
+              {!cbUi.snd && audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -4953,7 +4983,16 @@ function CategoryBlitzScreen({
 
           <div className="cb-category-label">
             {roundPack && <><span className="cb-pack-tag">{roundPack} ·</span>{' '}</>}
-            <span className="cb-topline">TOP <span className="cb-topn">{topN}</span></span>
+            {(!cbUi.top || !hasTopN) && <span className="cb-topline">TOP <span className="cb-topn">{topN}</span></span>}
+            {cbUi.top === '1' && hasTopN && (
+              <span className="cb-topline">TOP <span className="cb-topn">{topN}</span> <span className="cbx-topword">ANSWERS</span></span>
+            )}
+            {cbUi.top === '2' && hasTopN && (
+              <span className="cb-topline"><span className="cbx-topword">NAME THE</span> TOP <span className="cb-topn">{topN}</span></span>
+            )}
+            {cbUi.top === '3' && hasTopN && (
+              <span className="cb-topline"><span className="cb-topn">{topN}</span> <span className="cbx-topword">ANSWERS ON THE BOARD</span></span>
+            )}
             {categoryRound?.openList && <>{' '}<span className="cb-topline">FAMILY-FRIENDLY ANSWERS</span></>}
           </div>
           <div className="cb-category-display">
@@ -5138,6 +5177,57 @@ function CategoryBlitzScreen({
             {/* ---- Side rail: live state (your answers + opponents) ---- */}
             <div className="cb-round-side">
 
+          {cbUi.ans === '1' && (
+            <div className="cb-my-answers cbx-box cbx-box--chips">
+              <div className="cbx-head"><span className="cbx-label">YOUR ANSWERS</span>{answersCount}</div>
+              <div className="cbx-chips" translate="no">
+                {myAnswers.length === 0 ? (
+                  <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
+                ) : answersNewest.map(({ a, n }) => (
+                  <span key={`${a}-${n}`} className="cbx-chip">{a.toUpperCase()}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {cbUi.ans === '2' && (
+            <div className="cb-my-answers cbx-box cbx-box--sheet">
+              <div className="cbx-head"><span className="cbx-label">YOUR ANSWERS</span>{answersCount}</div>
+              {myAnswers.length === 0 ? (
+                <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
+              ) : (
+                <ol className="cbx-sheet" translate="no">
+                  {answersNewest.map(({ a, n }) => (
+                    <li key={`${a}-${n}`} className={`cbx-row${n === myAnswers.length ? ' is-new' : ''}`}>
+                      <span className="cbx-row-n">{n}</span>
+                      <span className="cbx-row-word">{a.toUpperCase()}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
+          {cbUi.ans === '3' && (
+            <div className="cb-my-answers cbx-box cbx-box--hero">
+              <div className="cbx-head"><span className="cbx-label">YOUR ANSWERS</span>{answersCount}</div>
+              {myAnswers.length === 0 ? (
+                <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
+              ) : (
+                <>
+                  <div className="cbx-latest" key={`l${myAnswers.length}`} translate="no">
+                    <span className="cbx-latest-tag">JUST IN</span>
+                    <span className="cbx-latest-word">{myAnswers[myAnswers.length - 1].toUpperCase()}</span>
+                  </div>
+                  <div className="cbx-chips cbx-chips--small" translate="no">
+                    {answersNewest.slice(1).map(({ a, n }) => (
+                      <span key={`${a}-${n}`} className="cbx-chip">{a.toUpperCase()}</span>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {!cbUi.ans && (
           <div className="cb-my-answers">
             <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
             {/* the round's running total, BIG (oct15 night proportions pass: the rail was a tiny label over empty space) */}
@@ -5154,6 +5244,7 @@ function CategoryBlitzScreen({
               )}
             </div>
           </div>
+          )}
 
           {/* Opponents' live progress - hidden in solo (there are none). */}
           {!isSolo && (
@@ -5186,6 +5277,7 @@ function CategoryBlitzScreen({
               )}
             </div>
           )}
+          {cbUi.snd === '2' && <div className="cbx-sound-row"><span className="cbx-label">SOUND</span>{audioSlot}</div>}
 
             </div>
           </div>

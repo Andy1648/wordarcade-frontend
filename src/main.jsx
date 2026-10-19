@@ -5,6 +5,13 @@ import './routerBoot'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+// Blitz UI preview flags (Andy oct19, NOT shipped): the router rewrites the URL before the lazy GameScreen loads, so
+// ?cbtop / ?cbsnd / ?cbans are kept for the tab here (read back by GameScreen's readCbUi).
+try {
+  const q = new URLSearchParams(window.location.search)
+  const v = { top: q.get('cbtop') || '', snd: q.get('cbsnd') || '', ans: q.get('cbans') || '' }
+  if (v.top || v.snd || v.ans) sessionStorage.setItem('taw.cbui', JSON.stringify(v))
+} catch { /* storage blocked */ }
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
 const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
 import './index.css'
