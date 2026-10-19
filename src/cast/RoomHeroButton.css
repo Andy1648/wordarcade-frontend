@@ -1,0 +1,23 @@
+/* RoomHeroButton — your hero's face in your own seat chip (a button), and the picker popup it opens. */
+.rh-btn {
+  flex: none; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; margin: 0; cursor: pointer; overflow: hidden;
+  background: #24123d; border: 3px solid #000; border-radius: 50%; box-shadow: 3px 3px 0 #000; transition: transform 120ms;
+}
+.rh-btn img { width: 100%; height: 100%; object-fit: contain; transform: scale(1.45); transform-origin: 50% 46%; pointer-events: none; }
+.rh-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.rh-btn:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+@media (hover: hover) { .rh-btn:hover { transform: scale(1.06); } }
+.rh-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .84); }
+.rh-pop {
+  position: relative; width: min(980px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 18px 18px 18px;
+  background: #1a0b2e; border: 5px solid #5E0F9E; border-radius: 8px; box-shadow: 10px 10px 0 #000;
+}
+.rh-x {
+  position: sticky; top: 0; float: right; z-index: 3; min-width: 44px; height: 44px; margin: 0 0 8px 8px; cursor: pointer;
+  font: 400 var(--fs-k16) 'Bungee', sans-serif; color: #fff; background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+}
+@media (prefers-reduced-motion: reduce) { .rh-btn { transition: none; } }
+/* in the v2 lobby the seat chip is a vertical column: the face sits OVER its right end (absolute) so the chip's size —
+   and the lobby's fit-zoom — never changes; the name keeps clear of it */
+.room-wrap[data-skin="v2"] .room-player-chip:has(.rh-btn) { padding-right: 58px; }
+.room-wrap[data-skin="v2"] .room-player-chip .rh-btn { position: absolute; right: 6px; top: 50%; translate: 0 -50%; width: 44px; height: 44px; }
