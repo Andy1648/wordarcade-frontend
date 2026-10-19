@@ -12,6 +12,7 @@ import { track } from '../lib/analytics';
 import { DIFFICULTIES, difficultyDesc, difficultyReadout } from '../difficulty';
 import { SEASON2, V3 } from '../progress/season';
 import KitIcon from './kit/KitIcon.jsx';
+import RoomHeroButton from '../cast/RoomHeroButton.jsx';
 import './RoomScreen.css';
 import './kit/tokens.css';
 
@@ -351,7 +352,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   className="room-player-chip"
                   style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
-                  <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
+                  {/* oct18: YOUR seat shows your hero as a button — tap to change it (local; other seats keep their dot) */}
+                  {SEASON2 && player.id === myId ? <RoomHeroButton /> : <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />}
                   {player.id === myId && onRename ? (
                     <RenameName name={player.name} onRename={onRename} />
                   ) : (
