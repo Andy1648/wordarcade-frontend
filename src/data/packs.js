@@ -12,7 +12,7 @@
 const packs = [
   // oct16 (Andy "go for funnier ... even PG 18 — 'things that break easily — relationships' is funny af"): UNHINGED = the
   // dark-humor lists (red flags, excuses, things that are dead now, suspicious 3am buys ...), first so it is seen
-  { id: 'unhinged',   label: 'UNHINGED',   emoji: '💀', color: '#9A1AFF', rot: -2,   sticker: null,   count: 29 },
+  { id: 'unhinged',   label: 'UNHINGED',   emoji: '💀', color: '#9A1AFF', rot: -2,   sticker: null,   count: 55 },
   { id: 'movies',     label: 'MOVIES',     emoji: '🎬', color: '#ff4fa3', rot: -3,   sticker: 'star', count: 22 },
   { id: 'gaming',     label: 'GAMING',     emoji: '🎮', color: '#2EFFE0', rot: 2.5,  sticker: null,   count: 8 },
   { id: 'sports',     label: 'SPORTS',     emoji: '⚽', color: '#3DFF77', rot: -2.5, sticker: 'dots', count: 4 },
