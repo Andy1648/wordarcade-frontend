@@ -10,14 +10,21 @@
 -- NOT A MIGRATION. Run it in the Supabase SQL editor, ONE STEP AT A TIME (the editor shows only the last result).
 -- Claude never runs it. Safe to re-run: every write only RAISES a number and does nothing if it's already high enough.
 --
--- ORDER: ship the client fix FIRST (or at the same time). Healing the row before it is live is fine, but a device still
--- on the old bundle with a stale-low local save would land on the row's answer again on its next rebirth.
+-- OCT 20 UPDATE: it happened AGAIN ("he rebirthed at rebirth 22 and it brought him back down"), because #440 was not
+-- merged yet and this file had not been run. So the target now has a HARD MINIMUM of R23 (the R22 he had + the rebirth he
+-- just did), and MANUAL_FLOOR defaults to his original 26. The log peak and the cloud save win if either is higher.
+-- Andy's call: the player earned about 20 rebirths on the knocked-down save between oct19 and oct20 (R2 → R22). If you
+-- want to credit those ON TOP of the 26, set MANUAL_FLOOR to 26 + (22 − 2) + 1 = 47. STEP 1c lists every grant, so you
+-- can count them.
+--
+-- ORDER: merge #440 FIRST (or at the same time). Healing the row before it is live is fine, but a device still on the
+-- old bundle would drop back to the row's answer on its next rebirth again. That is exactly what happened on oct20.
 
 -- =====================================================================================================================
 -- STEP 1 (read only): the row, the cloud save, and the rebirth log. Check these before STEP 2.
 -- =====================================================================================================================
 
--- 1a. the board row (expect rebirths about 2, the player says about 26)
+-- 1a. the board row (expect a low count: the stale row + the grants since; the player had R22 locally on oct20, 26 on oct19)
 select id, username, level, rebirths, stars, lifetime_words, wins_per_word, econ, submitted_at, updated_at
   from public.profiles
  where upper(username) = 'BETTERTHANANDY';
@@ -58,7 +65,8 @@ select p.rebirths as row_rebirths,
 -- =====================================================================================================================
 do $$
 declare
-  MANUAL_FLOOR constant integer := 26;   -- <-- set from STEP 1 (0 = evidence only)
+  MANUAL_FLOOR constant integer := 26;   -- <-- his original R26 (47 = also credit the ~20 earned oct19→20; see header)
+  HARD_MIN constant integer := 23;       -- oct20: the R22 he had + the rebirth that dropped him. Never go below this.
   pid uuid; n integer; row_rb integer; log_peak integer; cloud_rb integer; target integer;
   c private.cloud_saves; j jsonb; new_blob text;
 begin
@@ -75,8 +83,8 @@ begin
     cloud_rb := coalesce((j -> 'keys' ->> 'taw.rebirths')::int, 0);
   end if;
 
-  target := greatest(coalesce(row_rb, 0), coalesce(log_peak, 0), coalesce(cloud_rb, 0), MANUAL_FLOOR);
-  raise notice 'row % / log peak % / cloud % / floor % -> target %', row_rb, log_peak, cloud_rb, MANUAL_FLOOR, target;
+  target := greatest(coalesce(row_rb, 0), coalesce(log_peak, 0), coalesce(cloud_rb, 0), MANUAL_FLOOR, HARD_MIN);
+  raise notice 'row % / log peak % / cloud % / floor % / min % -> target %', row_rb, log_peak, cloud_rb, MANUAL_FLOOR, HARD_MIN, target;
 
   -- the board row: rebirths up to the target (level / words untouched; the next push sends the device's real level)
   update public.profiles set rebirths = target, updated_at = now() where id = pid and rebirths < target;

@@ -75,6 +75,17 @@ test('a grant NEVER lowers local rebirths: a stale-low board row (BETTERTHANANDY
   assert.equal(a.srv.db.row.rebirths, 1, 'the row is the server\'s business (Andy heals it by SQL)');
 });
 
+test('a grant settled AFTER a reload (lost response) never lowers either: R22 local, stale row R3 → R23', async () => {
+  // BETTERTHANANDY oct20: rebirthed at R22 and fell to the row's count again (#440 not live yet)
+  const a = harness({ local: { level: 600, rebirths: 22 }, stored: { level: 600, rebirths: 3 } });
+  a.lostResponse = true;
+  const r1 = await a.flow.performRebirth();
+  assert.equal(r1.ok, false);
+  assert.equal(a.st.rebirths, 22, 'nothing applied while the answer is lost');
+  assert.equal(await a.flow.settlePending(), true);
+  assert.equal(a.st.rebirths, 23, 'the replayed grant lands on local + 1, not the row\'s 4');
+});
+
 test('grantTarget = max(server, local + 1)', () => {
   assert.equal(grantTarget(1, 26), 27);
   assert.equal(grantTarget(5, 2), 5);
