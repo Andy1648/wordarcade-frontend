@@ -6,12 +6,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { DIFFICULTY_ORDER, LENGTHS, normalizeSpec, difficultiesFor } from './runSpec';
 
-function Choice({ label, options, value, onPick, render, stack = false, grid = false, duo = false }) {
+const isBriefPreview = (mode) => mode === 'briefing';
+
+function Choice({ label, options, value, onPick, render, stack = false, grid = false, duo = false, aside = null }) {
   const id = `sr-setup-${label.replace(/\s+/g, '-')}`;
   return (
     <div className={`sr-setup-row${stack ? ' stack' : ''}${grid ? ' grid' : ''}${duo ? ' duo' : ''}`}>
-      <div className="sr-setup-label" id={id}>
-        {label}
+      <div className="sr-setup-labelrow">
+        <div className="sr-setup-label" id={id}>
+          {label}
+        </div>
+        {aside}
       </div>
       <div className="sr-setup-opts" role="radiogroup" aria-labelledby={id}>
         {options.map((o) => {
@@ -49,6 +54,9 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
   const hasPace = !!U.pace;
   const [pace, setPace] = useState(p.pace === 'timed' || p.pace === 'self' ? p.pace : U.pace || 'timed');
   const [copied, setCopied] = useState(false);
+  // STUDY FIRST (FRENCH RUSH): leave out words already studied — on unless the player turned it off
+  const [skipStudied, setSkipStudied] = useState(p.skipStudied !== false);
+  const offerSkip = hasPace && isBriefPreview(mode);
   // TEACHER LINK: this exact set as a URL — a class opens it and lands here with it preselected
   function copyLink() {
     try {
@@ -145,6 +153,14 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
               value={length}
               onPick={setLength}
               render={(n) => <span className="sr-setup-opt-main">{n}</span>}
+              aside={
+                offerSkip ? (
+                  <label className="sr-setup-check">
+                    <input type="checkbox" checked={skipStudied} onChange={(e) => setSkipStudied(e.target.checked)} />
+                    <span>skip ones I&apos;ve studied</span>
+                  </label>
+                ) : null
+              }
             />
 
             {packSize > 0 && (
@@ -153,7 +169,13 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
               </div>
             )}
 
-            <button type="button" ref={goRef} className="sr-btn" onClick={() => onStart({ difficulty, length, category: category === 'all' ? null : category, pace: hasPace ? pace : null })}>
+            <button type="button" ref={goRef} className="sr-btn" onClick={() => onStart({
+                  difficulty,
+                  length,
+                  category: category === 'all' ? null : category,
+                  pace: hasPace ? pace : null,
+                  skipStudied: offerSkip ? skipStudied : null,
+                })}>
               {U.startLabel ? (isBrief ? 'Study the words' : U.startLabel) : isBrief ? 'Study the words' : 'Open the case'}
             </button>
 

@@ -46,7 +46,7 @@ export function difficultiesFor(pack) {
 // LINEUP: how many words the case file holds. BRIEFING: how many words you study (and then hunt).
 export const LENGTHS = { lineup: [10, 20, 30], briefing: [5, 10, 15] };
 
-export const DEFAULT_SPEC = { pack: 'sat', mode: 'lineup', difficulty: 'standard', length: 10, category: null, pace: 'timed' };
+export const DEFAULT_SPEC = { pack: 'sat', mode: 'lineup', difficulty: 'standard', length: 10, category: null, pace: 'timed', skipStudied: false };
 
 // At most this share of a run is words the player has been shaky on before (the rest is new ground).
 export const REVIEW_SHARE = 0.3;
@@ -62,7 +62,9 @@ export function normalizeSpec(spec = {}) {
   const category = typeof s.category === 'string' && s.category ? s.category : null;
   // pace: 'self' (no clock — HINT + CONTINUE) | 'timed' (the clue clock)
   const pace = s.pace === 'self' ? 'self' : 'timed';
-  return { pack, mode, difficulty, length, category, pace };
+  // skipStudied: a study deck leaves out words already studied (FRENCH RUSH's default)
+  const skipStudied = s.skipStudied === true;
+  return { pack, mode, difficulty, length, category, pace, skipStudied };
 }
 
 /** The pack's rows inside the difficulty's tier band (and the category, when the spec names one). */
@@ -188,4 +190,22 @@ export function buildRunQueue({
   }
 
   return { rows: slots.filter(Boolean), reviewWords };
+}
+
+// Pure: the pool a STUDY screen deals from. FRENCH RUSH (oct19, Andy: "target vocab words that the
+// french versions dont sound like the english versions … this can strictly be the study first") studies
+// only words an English speaker could NOT guess (`guessable: false` — not cognates, plus the false
+// friends); the QUIZ keeps the whole bank. When a theme + level runs short of such words the pool widens
+// to the theme's other levels (still non-guessable) before it ever falls back to guessable ones.
+export function studyPool(pack, spec, lex) {
+  const band = bandWords(pack.words, spec.difficulty, spec.category, spec.pack);
+  if (!pack.studyNonGuessable) return band;
+  const need = spec.length;
+  const studiedSet = spec.skipStudied && lex && lex.studied ? lex.studied : {};
+  const fresh = (rows) => rows.filter((r) => !studiedSet[r.word]).length;
+  const hard = band.filter((r) => !r.guessable);
+  if (fresh(hard) >= need) return hard;
+  const wide = pack.words.filter((r) => !r.guessable && (!spec.category || r.category === spec.category));
+  if (fresh(wide) >= need || wide.length >= need) return wide;
+  return band;
 }

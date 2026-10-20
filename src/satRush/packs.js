@@ -67,6 +67,8 @@ export const PACKS = {
     // the run is the student's: no clock by default (HINT for the next clue, CONTINUE after every word);
     // the TIMED pace is slow — a stage is 7s (×1.4 with choices) and the letters print every 1.8s
     defaultPace: 'self',
+    // STUDY FIRST deals only words an English speaker could not guess (`guessable: false`)
+    studyNonGuessable: true,
     timing: { stageMs: 7000, lineupScale: 1.4, spellMs: 1800 },
     // the word family is a study aid, shown on the review card — not one more line mid-word
     playRoot: false,
@@ -82,8 +84,8 @@ export const PACKS = {
       lineup: { label: 'Choices', standing: 'left', cleared: 'NON' },
       modeHead: 'HOW DO YOU WANT TO PRACTICE?',
       modes: {
-        briefing: { title: 'STUDY FIRST', line: 'learn the words, then type them' },
-        lineup: { title: 'QUIZ', line: 'type it — a few choices help you' },
+        briefing: { title: 'STUDY FIRST', line: "learn the words you can't guess from English" },
+        lineup: { title: 'QUIZ', line: 'every word — a few choices help you' },
       },
       setupSub: 'set up your practice',
       pace: 'self', // CASE SETUP offers a pace row, preselected to no timer

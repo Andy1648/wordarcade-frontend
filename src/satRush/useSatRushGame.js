@@ -14,7 +14,7 @@ import { pickBriefing } from './briefing';
 import { suspectsStanding } from './suspects';
 import { loadPack } from './packWords';
 import { getPack, posLabelOf, playRoot } from './packs';
-import { normalizeSpec, bandWords, buildRunQueue, LENGTHS } from './runSpec';
+import { normalizeSpec, buildRunQueue, LENGTHS, studyPool } from './runSpec';
 import { track } from '../lib/analytics';
 import { wpmKeyStroke } from '../progress/wpmLive';
 import { addWords } from '../wordCount';
@@ -263,7 +263,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       if (!r) return;
       // What this clear actually earned (fix/sat-spam): letters revealed by wrong keys pay nothing.
       lastClearedRef.current = { ...lastClearedRef.current, paid: r.paidFraction };
-      // Lifetime packRef.current.words TYPED: a cleared word is the local player's own accepted
+      // Lifetime WORDS TYPED: a cleared word is the local player's own accepted
       // word (SAT Rush is solo). Same spot the word_resolved analytic fires below.
       addWords('sat-rush');
       // Learning memory: a clear promotes the word's Leitner box.
@@ -718,6 +718,11 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
           ? briefingRef.current.words.map((r) => r.word)
           : [];
       briefedSetRef.current = new Set(briefed);
+      // the words on a study screen the player just went through count as STUDIED (not a replay's)
+      if (mode === 'briefing' && briefed.length && !replayRef.current) {
+        lexicon.markStudied(lexRef.current, briefed);
+        persistLexicon();
+      }
       trackSR('mode_start');
       if (mode === 'briefing' && dwellStartRef.current != null && typeof performance !== 'undefined') {
         const ms = Math.round(performance.now() - dwellStartRef.current);
@@ -725,7 +730,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         trackSR('briefing_word_dwell_ms', { ms, words, perWord: words ? Math.round(ms / words) : ms });
       }
       dwellStartRef.current = null;
-      // THE RUN'S packRef.current.words. A replay plays the last run's unsettled words; BRIEFING hunts exactly the
+      // THE RUN'S WORDS. A replay plays the last run's unsettled words; BRIEFING hunts exactly the
       // studied deck (shuffled, so the hunt is not the study order); LINEUP builds a case file from
       // the spec + the learning memory (shaky words come back, unseen words lead).
       let queue;
@@ -750,7 +755,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       phaseRef.current = 'playing';
       beginWord();
     },
-    [beginWord, freshEngine, trackSR]
+    [beginWord, freshEngine, persistLexicon, trackSR]
   );
 
   // Cover Play / results Run-it-back: bump the session counter once, then open the
@@ -789,10 +794,15 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     briefingRef.current = pickBriefing({
       state: lex,
       session: lex.session,
-      words: bandWords(packRef.current.words, spec.difficulty, spec.category, spec.pack),
+      words: studyPool(packRef.current, spec, lex),
       rng: Math.random,
       count: spec.length,
-      exclude: recentDecks.flat(),
+      // "skip words I've studied" (FRENCH RUSH, on by default): studied words sit out like the recent
+      // decks — pickBriefing backfills from them only if the pool runs short
+      exclude: [
+        ...recentDecks.flat(),
+        ...(spec.skipStudied ? Object.keys(lex.studied || {}) : []),
+      ],
     });
     const dealtDeck = briefingRef.current.words.map((r) => r.word);
     lex.lastBriefed = [...recentDecks, dealtDeck].slice(-3);
@@ -825,6 +835,9 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   }, [persistLexicon]);
 
   // Where a word stands in the learning memory (WORD BANK): 'known' | 'learning' | 'new'.
+  // Has the player studied this word on a study screen? (WORD BANK's studied filter)
+  const studiedOf = useCallback((word) => lexicon.hasStudied(lexRef.current, word), []);
+
   const masteryOf = useCallback((word) => {
     const lex = lexRef.current;
     if (lexicon.isMastered(lex, word)) return 'known';
@@ -833,14 +846,22 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
 
   // CASE SETUP → go. Remembers the choice, then BRIEFING deals the study deck, LINEUP starts.
   const confirmSetup = useCallback(
-    ({ difficulty, length, category = null, pace = null } = {}) => {
+    ({ difficulty, length, category = null, pace = null, skipStudied = null } = {}) => {
       juice.unlockAudio();
       const mode = modeRef.current;
-      const spec = normalizeSpec({ pack: packRef.current.id, mode, difficulty, length, category, pace: pace || packRef.current.defaultPace });
+      const spec = normalizeSpec({
+        pack: packRef.current.id,
+        mode,
+        difficulty,
+        length,
+        category,
+        pace: pace || packRef.current.defaultPace,
+        skipStudied: skipStudied == null ? !!packRef.current.studyNonGuessable : skipStudied,
+      });
       specRef.current = spec;
       paceRef.current = spec.pace;
       const lex = lexRef.current;
-      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length, category: spec.category, pace: spec.pace };
+      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length, category: spec.category, pace: spec.pace, skipStudied: spec.skipStudied };
       persistLexicon();
       trackSR('setup_confirmed', { difficulty: spec.difficulty, length: spec.length });
       if (mode === 'lineup') {
@@ -871,7 +892,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         return;
       }
       const prefs = setupPrefs();
-      confirmSetup({ difficulty: prefs.difficulty, length: prefs[mode], category: prefs.category || null, pace: prefs.pace || null });
+      confirmSetup({ difficulty: prefs.difficulty, length: prefs[mode], category: prefs.category || null, pace: prefs.pace || null, skipStudied: prefs.skipStudied == null ? null : prefs.skipStudied });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [confirmSetup, persistLexicon, trackSR]
@@ -1086,6 +1107,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     backToStart,
     applyPreset,
     masteryOf,
+    studiedOf,
     startRun: beginRunFromBriefing,
     abandonRun,
     setStageMs,
@@ -1127,7 +1149,7 @@ function buildCaseFile(results, lex, pack) {
 // miss or a heavy-reveal clear.
 function buildReEncode(cw, kind) {
   const cousin = cw.root && Array.isArray(cw.root.cousins) && cw.root.cousins.length ? cw.root.cousins[0] : null;
-  return { word: cw.word, pos: cw.pos, gender: cw.gender || null, context: cw.context, contextEn: cw.contextEn || null, gloss: cw.gloss, root: cw.root, cousin, kind };
+  return { word: cw.word, pos: cw.pos, gender: cw.gender || null, falseFriend: !!(cw.row && cw.row.falseFriend), context: cw.context, contextEn: cw.contextEn || null, gloss: cw.gloss, root: cw.root, cousin, kind };
 }
 
 // Pure: build the per-card data THE BRIEFING renders — the filled sentence is the

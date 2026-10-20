@@ -19,7 +19,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 236,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "ami",
@@ -42,7 +43,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 273,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "frère",
@@ -64,7 +66,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 325,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "sœur",
@@ -79,7 +82,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 783,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "mère",
@@ -101,7 +105,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 176,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "père",
@@ -123,7 +128,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 146,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "enfant",
@@ -145,7 +151,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 376,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "fête",
@@ -167,7 +174,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 491,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "voisin",
@@ -189,7 +197,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2939,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "école",
@@ -211,7 +220,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 437,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "mariage",
@@ -233,7 +243,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 479,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "cousin",
@@ -248,7 +259,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1961,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "anniversaire",
@@ -263,7 +275,9 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 796,
-  "cognate": true
+  "cognate": true,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "cadeau",
@@ -278,7 +292,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 859,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "naissance",
@@ -300,7 +315,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1872,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "amitié",
@@ -322,7 +338,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 2256,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "amour",
@@ -344,7 +361,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 299,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "célébrer",
@@ -366,7 +384,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 5268,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "marier",
@@ -388,7 +407,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1263,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "mari",
@@ -410,7 +430,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 407,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "femme",
@@ -432,7 +453,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 160,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "mairie",
@@ -447,7 +469,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 5949,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "quartier",
@@ -462,7 +485,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1285,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "communauté",
@@ -484,7 +508,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2659,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "partager",
@@ -506,7 +531,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1785,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "aider",
@@ -528,7 +554,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 216,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "tradition",
@@ -550,7 +577,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3854,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "bénévole",
@@ -572,7 +600,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 14124,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "fiancé",
@@ -594,7 +623,8 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 3070,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "divorce",
@@ -616,7 +646,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2210,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "coutume",
@@ -638,7 +669,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 9557,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "cérémonie",
@@ -660,7 +692,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2674,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "citoyen",
@@ -682,7 +715,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 5104,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "voter",
@@ -704,7 +738,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 4255,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "élever",
@@ -726,7 +761,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3492,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "confiance",
@@ -748,7 +784,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 433,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "soutenir",
@@ -770,7 +807,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 3680,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "réseau",
@@ -785,7 +823,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 2451,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "respecter",
@@ -807,7 +846,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3351,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "génération",
@@ -829,7 +869,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 4110,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "jumeau",
@@ -851,7 +892,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 11464,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "adolescent",
@@ -873,7 +915,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 9552,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "foyer",
@@ -888,7 +931,9 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 2542,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "monoparental",
@@ -910,7 +955,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "recomposé",
@@ -932,7 +978,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "héritage",
@@ -954,7 +1001,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 4091,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "entraide",
@@ -976,7 +1024,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 24823,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "bénévolat",
@@ -998,7 +1047,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 15563,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "engagement",
@@ -1020,7 +1070,9 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 4441,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "appartenance",
@@ -1042,7 +1094,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 29200,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "baptême",
@@ -1064,7 +1117,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 10516,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "parrain",
@@ -1086,7 +1140,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 6093,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "solidarité",
@@ -1108,7 +1163,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 14309,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "bienveillant",
@@ -1131,7 +1187,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 20520,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "laïcité",
@@ -1153,7 +1210,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "cohésion",
@@ -1175,7 +1233,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 34140,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "citoyenneté",
@@ -1197,7 +1256,8 @@
   "tier": 5,
   "ap": 2,
   "freqRank": 26091,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "concubinage",
@@ -1212,7 +1272,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "deuil",
@@ -1234,7 +1295,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 4480,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "épanouissement",
@@ -1256,7 +1318,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 43450,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "langue",
@@ -1278,7 +1341,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1557,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "pays",
@@ -1300,7 +1364,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 494,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "culture",
@@ -1322,7 +1387,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3554,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "fier",
@@ -1344,7 +1410,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1321,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "nom",
@@ -1367,7 +1434,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 204,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "drapeau",
@@ -1389,7 +1457,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 4004,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "héros",
@@ -1412,7 +1481,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1122,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "religion",
@@ -1434,7 +1504,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3847,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "accent",
@@ -1456,7 +1527,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3888,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "parler",
@@ -1478,7 +1550,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 143,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "origine",
@@ -1501,7 +1574,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2735,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "identité",
@@ -1523,7 +1597,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1663,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "étranger",
@@ -1545,7 +1620,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1878,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "valeur",
@@ -1568,7 +1644,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1773,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "croyance",
@@ -1590,7 +1667,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 12535,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "respect",
@@ -1612,7 +1690,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1337,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "liberté",
@@ -1634,7 +1713,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1197,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "égalité",
@@ -1657,7 +1737,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 6589,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "immigré",
@@ -1680,7 +1761,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 25533,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "bilingue",
@@ -1703,7 +1785,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 41273,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "appartenir",
@@ -1726,7 +1809,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 12218,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "patrie",
@@ -1748,7 +1832,8 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 6344,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "accueillir",
@@ -1770,7 +1855,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3983,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "personnalité",
@@ -1792,7 +1878,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3890,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "intégration",
@@ -1814,7 +1901,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 16761,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "immigration",
@@ -1837,7 +1925,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 7585,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "patrimoine",
@@ -1859,7 +1948,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 16589,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "diversité",
@@ -1881,7 +1971,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 19370,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "préjugé",
@@ -1903,7 +1994,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 30863,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "stéréotype",
@@ -1925,7 +2017,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 29988,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "racisme",
@@ -1947,7 +2040,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 14308,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "tolérance",
@@ -1969,7 +2063,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 12461,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "nationalité",
@@ -1991,7 +2086,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 17961,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "adapter",
@@ -2013,7 +2109,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 7409,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "minorité",
@@ -2035,7 +2132,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 16526,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "patriotisme",
@@ -2057,7 +2155,8 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 18910,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "réfugié",
@@ -2079,7 +2178,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 18597,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "genre",
@@ -2094,7 +2194,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 320,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "assimilation",
@@ -2116,7 +2218,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 46025,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "exclusion",
@@ -2138,7 +2241,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 23009,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "discrimination",
@@ -2160,7 +2264,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 14431,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "multiculturel",
@@ -2182,7 +2287,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": null,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "francophone",
@@ -2205,7 +2311,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "dialecte",
@@ -2227,7 +2334,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 23558,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "aliénation",
@@ -2249,7 +2357,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 34463,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "revendiquer",
@@ -2271,7 +2380,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 26152,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "épanouir",
@@ -2293,7 +2403,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 24268,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "colonisation",
@@ -2316,7 +2427,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 36203,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "métissage",
@@ -2338,7 +2450,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "déracinement",
@@ -2361,7 +2474,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "francophonie",
@@ -2383,7 +2497,8 @@
   "tier": 5,
   "ap": 1,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "marginaliser",
@@ -2406,7 +2521,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": null,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "émancipation",
@@ -2428,7 +2544,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 27779,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "musique",
@@ -2450,7 +2567,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 614,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "danse",
@@ -2472,7 +2590,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1172,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "chanson",
@@ -2494,7 +2613,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1007,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "peinture",
@@ -2516,7 +2636,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 2519,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "musée",
@@ -2531,7 +2652,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3182,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "film",
@@ -2553,7 +2675,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 529,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "livre",
@@ -2575,7 +2698,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 668,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "beau",
@@ -2597,7 +2721,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 427,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "dessiner",
@@ -2619,7 +2744,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 6633,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "chanter",
@@ -2641,7 +2767,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1394,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "couleur",
@@ -2663,7 +2790,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1563,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "théâtre",
@@ -2685,7 +2813,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 2185,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "artiste",
@@ -2707,7 +2836,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2363,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "tableau",
@@ -2722,7 +2852,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2231,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "poème",
@@ -2744,7 +2876,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 5110,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "roman",
@@ -2766,7 +2899,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2824,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "mode",
@@ -2788,7 +2923,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1797,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "vêtement",
@@ -2810,7 +2947,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 12347,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "concert",
@@ -2825,7 +2963,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 2294,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "sculpture",
@@ -2847,7 +2986,8 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 12387,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "écrivain",
@@ -2869,7 +3009,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 4092,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "spectacle",
@@ -2891,7 +3032,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1324,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "maquillage",
@@ -2913,7 +3056,8 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 4687,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "photographie",
@@ -2937,7 +3081,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 7334,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "beauté",
@@ -2959,7 +3104,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1460,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "peindre",
@@ -2981,7 +3127,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 5188,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "exposition",
@@ -3003,7 +3150,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 4967,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "architecture",
@@ -3024,7 +3173,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 11214,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "bâtiment",
@@ -3046,7 +3196,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 1890,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "monument",
@@ -3067,7 +3218,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 11874,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "poésie",
@@ -3089,7 +3241,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 5488,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "créativité",
@@ -3111,7 +3264,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 14518,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "auteur",
@@ -3133,7 +3287,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 3627,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "costume",
@@ -3155,7 +3310,9 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 1625,
-  "cognate": true
+  "cognate": true,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "styliste",
@@ -3177,7 +3334,9 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 17537,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "œuvre",
@@ -3201,7 +3360,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 3094,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "sculpteur",
@@ -3223,7 +3383,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 22943,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "apparence",
@@ -3245,7 +3406,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 4367,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "élégant",
@@ -3266,7 +3428,8 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 7569,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "créer",
@@ -3288,7 +3451,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 1835,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "mannequin",
@@ -3303,7 +3467,9 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 5076,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "esthétique",
@@ -3325,7 +3491,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 10919,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "cathédrale",
@@ -3340,7 +3507,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 13193,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "chorégraphie",
@@ -3361,7 +3529,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 18451,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "inspiration",
@@ -3383,7 +3552,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 5648,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "défilé",
@@ -3404,7 +3574,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 6151,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "interpréter",
@@ -3425,7 +3596,9 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 11725,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "mélodie",
@@ -3447,7 +3620,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 9575,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "paysage",
@@ -3469,7 +3643,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 8071,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "personnage",
@@ -3491,7 +3666,9 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 2793,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "vitrail",
@@ -3513,7 +3690,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 36048,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "harmonieux",
@@ -3535,7 +3713,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 38200,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "symboliser",
@@ -3557,7 +3736,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": null,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "mécène",
@@ -3578,7 +3758,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 28894,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "éphémère",
@@ -3593,7 +3774,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 22068,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "rayonnement",
@@ -3614,7 +3796,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 23777,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "canon",
@@ -3629,7 +3812,9 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 2350,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "subjectif",
@@ -3650,7 +3835,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 35858,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "sublime",
@@ -3671,7 +3857,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 8022,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "ordinateur",
@@ -3693,7 +3880,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1354,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "téléphone",
@@ -3715,7 +3903,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 448,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "écran",
@@ -3730,7 +3919,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2750,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "médecin",
@@ -3752,7 +3942,9 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 828,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "santé",
@@ -3774,7 +3966,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 992,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "science",
@@ -3796,7 +3989,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2461,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "clavier",
@@ -3818,7 +4012,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 12026,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "message",
@@ -3840,7 +4035,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 671,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "hôpital",
@@ -3862,7 +4058,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 622,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "malade",
@@ -3884,7 +4081,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 638,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "envoyer",
@@ -3906,7 +4104,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 885,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "utiliser",
@@ -3928,7 +4127,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 775,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "portable",
@@ -3950,7 +4150,9 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1370,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "logiciel",
@@ -3972,7 +4174,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7393,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "télécharger",
@@ -3994,7 +4197,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 14957,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "chercheur",
@@ -4016,7 +4220,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 13761,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "recherche",
@@ -4038,7 +4243,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 909,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "médicament",
@@ -4060,7 +4266,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 4538,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "maladie",
@@ -4082,7 +4289,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1513,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "inventer",
@@ -4104,7 +4312,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 5842,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "découverte",
@@ -4126,7 +4335,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3929,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "robot",
@@ -4141,7 +4351,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3660,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "batterie",
@@ -4156,7 +4367,8 @@
   "tier": 1,
   "ap": 3,
   "freqRank": 4087,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "appareil",
@@ -4171,7 +4383,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1693,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "connecter",
@@ -4193,7 +4406,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 10153,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "vaccin",
@@ -4215,7 +4429,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 7836,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "progrès",
@@ -4237,7 +4452,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3369,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "innovation",
@@ -4259,7 +4475,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 25029,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "numérique",
@@ -4281,7 +4498,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 10577,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "dépendance",
@@ -4303,7 +4521,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 11410,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "donnée",
@@ -4325,7 +4544,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3320,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "piratage",
@@ -4347,7 +4567,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 14369,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "guérir",
@@ -4369,7 +4590,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3329,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "soigner",
@@ -4391,7 +4613,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3003,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "traitement",
@@ -4413,7 +4636,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 1952,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "laboratoire",
@@ -4435,7 +4659,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 3679,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "expérience",
@@ -4457,7 +4682,9 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1198,
-  "cognate": true
+  "cognate": true,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "améliorer",
@@ -4479,7 +4706,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 3868,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "communiquer",
@@ -4501,7 +4729,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 4871,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "abonné",
@@ -4523,7 +4752,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 27145,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "publier",
@@ -4545,7 +4775,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7077,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "inégalité",
@@ -4567,7 +4798,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "surveillance",
@@ -4589,7 +4821,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2023,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "nuisible",
@@ -4611,7 +4844,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 30317,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "éthique",
@@ -4626,7 +4860,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 6758,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "clonage",
@@ -4647,7 +4882,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 24613,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "génétique",
@@ -4669,7 +4905,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 5533,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "dépistage",
@@ -4691,7 +4928,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 20614,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "harcèlement",
@@ -4712,7 +4950,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 6570,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "fiable",
@@ -4734,7 +4973,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 6236,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "bouleverser",
@@ -4756,7 +4996,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 20201,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "durable",
@@ -4778,7 +5019,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": 15381,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "greffe",
@@ -4799,7 +5041,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 8531,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "empreinte",
@@ -4821,7 +5064,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 3787,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "désinformation",
@@ -4843,7 +5087,8 @@
   "tier": 5,
   "ap": 2,
   "freqRank": 41497,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "enjeu",
@@ -4865,7 +5110,8 @@
   "tier": 5,
   "ap": 2,
   "freqRank": 12191,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "néfaste",
@@ -4880,7 +5126,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 25351,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "essor",
@@ -4895,7 +5142,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 25563,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "brevet",
@@ -4917,7 +5165,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 14001,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "voyager",
@@ -4939,7 +5188,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3040,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "travail",
@@ -4961,7 +5211,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 242,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "manger",
@@ -4983,7 +5234,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 460,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "acheter",
@@ -5005,7 +5257,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 733,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "plage",
@@ -5020,7 +5273,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1784,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "maison",
@@ -5042,7 +5296,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 189,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "magasin",
@@ -5064,7 +5319,9 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1262,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "train",
@@ -5086,7 +5343,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 360,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "jouer",
@@ -5109,7 +5367,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 423,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "nager",
@@ -5131,7 +5390,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3430,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "hôtel",
@@ -5153,7 +5413,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 808,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "billet",
@@ -5174,7 +5435,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2463,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "valise",
@@ -5189,7 +5451,8 @@
   "tier": 2,
   "ap": 3,
   "freqRank": 3140,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "métier",
@@ -5204,7 +5467,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 2020,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "marché",
@@ -5227,7 +5491,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 633,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "appartement",
@@ -5242,7 +5507,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1056,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "lycée",
@@ -5264,7 +5530,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1186,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "étudier",
@@ -5286,7 +5553,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 2492,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "loisir",
@@ -5301,7 +5569,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 16689,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "équipe",
@@ -5323,7 +5592,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 457,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "cher",
@@ -5345,7 +5615,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 727,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "repas",
@@ -5360,7 +5631,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1423,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "louer",
@@ -5383,7 +5655,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 4603,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "patron",
@@ -5405,7 +5678,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 753,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "publicité",
@@ -5429,7 +5704,9 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 4347,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "diplôme",
@@ -5451,7 +5728,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 3696,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "entretien",
@@ -5473,7 +5751,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 2871,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "salaire",
@@ -5495,7 +5774,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 2811,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "logement",
@@ -5517,7 +5797,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 7984,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "voyageur",
@@ -5539,7 +5820,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 9548,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "déménager",
@@ -5561,7 +5843,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 4212,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "consommateur",
@@ -5583,7 +5866,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 23817,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "réduction",
@@ -5605,7 +5889,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 8384,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "randonnée",
@@ -5627,7 +5912,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 12943,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "marque",
@@ -5649,7 +5935,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 1883,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "embaucher",
@@ -5671,7 +5958,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 9039,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "baccalauréat",
@@ -5695,7 +5983,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "chômage",
@@ -5717,7 +6006,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": 6738,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "locataire",
@@ -5740,7 +6030,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 10813,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "loyer",
@@ -5762,7 +6053,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3385,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "stage",
@@ -5783,7 +6075,9 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 7333,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "apprentissage",
@@ -5805,7 +6099,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 12061,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "tourisme",
@@ -5827,7 +6122,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 12995,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "dépaysement",
@@ -5850,7 +6146,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "consommation",
@@ -5872,7 +6169,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 10501,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "slogan",
@@ -5887,7 +6185,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 11030,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "gaspillage",
@@ -5909,7 +6208,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 15615,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "colocation",
@@ -5934,7 +6234,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 40726,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "entraîneur",
@@ -5956,7 +6257,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 4898,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "reconversion",
@@ -5978,7 +6280,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "consumérisme",
@@ -6000,7 +6303,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": null,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "bizutage",
@@ -6022,7 +6326,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 22876,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "gastronomie",
@@ -6044,7 +6349,8 @@
   "tier": 5,
   "ap": 2,
   "freqRank": 39526,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "majorité",
@@ -6066,7 +6372,9 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 5650,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "pollution",
@@ -6088,7 +6396,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 15053,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "pauvre",
@@ -6110,7 +6419,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 691,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "guerre",
@@ -6132,7 +6442,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 463,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "paix",
@@ -6154,7 +6465,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 792,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "eau",
@@ -6169,7 +6481,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 398,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "argent",
@@ -6191,7 +6504,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 205,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "faim",
@@ -6213,7 +6527,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 832,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "planète",
@@ -6235,7 +6550,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1286,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "environnement",
@@ -6257,7 +6573,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 4051,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "déchet",
@@ -6279,7 +6596,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 16757,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "recycler",
@@ -6301,7 +6619,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 24937,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "pauvreté",
@@ -6323,7 +6642,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 8713,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "protéger",
@@ -6345,7 +6665,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 774,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "sécheresse",
@@ -6367,7 +6688,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 16669,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "droit",
@@ -6389,7 +6711,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 395,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "nourriture",
@@ -6411,7 +6734,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1183,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "climat",
@@ -6433,7 +6757,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 8677,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "frontière",
@@ -6455,7 +6780,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2666,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "réchauffement",
@@ -6477,7 +6803,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 13274,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "inondation",
@@ -6499,7 +6826,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 15638,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "obésité",
@@ -6520,7 +6848,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 26510,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "biologique",
@@ -6544,7 +6873,9 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 5666,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "conflit",
@@ -6565,7 +6896,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 4554,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "chômeur",
@@ -6587,7 +6919,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 26135,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "lutter",
@@ -6609,7 +6942,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 5472,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "épidémie",
@@ -6631,7 +6965,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7660,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "pénurie",
@@ -6646,7 +6981,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 19615,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "malnutrition",
@@ -6668,7 +7004,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 33362,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "sensibiliser",
@@ -6690,7 +7027,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "humanitaire",
@@ -6712,7 +7050,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 16025,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "manifestation",
@@ -6736,7 +7075,9 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 9689,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "précarité",
@@ -6758,7 +7099,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "asile",
@@ -6773,7 +7115,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 4602,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "déforestation",
@@ -6795,7 +7138,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": null,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "émission",
@@ -6817,7 +7161,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1908,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "mondialisation",
@@ -6839,7 +7184,8 @@
   "tier": 5,
   "ap": 1,
   "freqRank": 47435,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "biodiversité",
@@ -6861,7 +7207,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": null,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "éradiquer",
@@ -6883,7 +7230,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 17800,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "démuni",
@@ -6905,7 +7253,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": 45576,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "insalubre",
@@ -6927,7 +7276,8 @@
   "tier": 5,
   "ap": 3,
   "freqRank": null,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "mais",
@@ -6942,7 +7292,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 32,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "donc",
@@ -6957,7 +7308,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 134,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "ensuite",
@@ -6982,7 +7334,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 547,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "enfin",
@@ -7005,7 +7358,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 389,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "aussi",
@@ -7022,7 +7376,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 100,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "avis",
@@ -7037,7 +7392,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 620,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "article",
@@ -7052,7 +7408,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1778,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "argument",
@@ -7074,7 +7431,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 8016,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "cependant",
@@ -7093,7 +7451,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 2359,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "pourtant",
@@ -7110,7 +7469,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 983,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "ainsi",
@@ -7125,7 +7485,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 505,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "selon",
@@ -7140,7 +7501,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 899,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "puisque",
@@ -7155,7 +7517,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1499,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "lorsque",
@@ -7172,7 +7535,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1289,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "également",
@@ -7196,7 +7560,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1765,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "sondage",
@@ -7211,7 +7576,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 14037,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "néanmoins",
@@ -7229,7 +7595,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 7248,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "toutefois",
@@ -7247,7 +7614,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 8358,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "malgré",
@@ -7262,7 +7630,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 1692,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "grâce",
@@ -7277,7 +7646,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 739,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "afin",
@@ -7292,7 +7662,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1580,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "tandis",
@@ -7307,7 +7678,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 3779,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "autrefois",
@@ -7322,7 +7694,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3738,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "actuellement",
@@ -7344,7 +7717,9 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 3742,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "notamment",
@@ -7359,7 +7734,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 13493,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "étude",
@@ -7381,7 +7757,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 3740,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "source",
@@ -7396,7 +7773,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1833,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "graphique",
@@ -7411,7 +7789,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 17535,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "désormais",
@@ -7426,7 +7805,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 1962,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "davantage",
@@ -7441,7 +7821,9 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 2905,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "certes",
@@ -7456,7 +7838,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 5485,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "souligner",
@@ -7478,7 +7861,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 18170,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "affirmer",
@@ -7501,7 +7885,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 9888,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "constater",
@@ -7523,7 +7908,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 13056,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "conclure",
@@ -7546,7 +7932,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 6110,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "convaincre",
@@ -7569,7 +7956,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 1904,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "statistique",
@@ -7584,7 +7972,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 24321,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "pourcentage",
@@ -7607,7 +7996,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 10737,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "quoique",
@@ -7622,7 +8012,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 4044,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "prétendre",
@@ -7637,7 +8028,9 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 5220,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "voire",
@@ -7652,7 +8045,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 6269,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "parallèlement",
@@ -7674,7 +8068,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 48698,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "réfuter",
@@ -7689,7 +8084,8 @@
   "tier": 4,
   "ap": 3,
   "freqRank": 25789,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "consigne",
@@ -7704,7 +8100,9 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 15944,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "lire",
@@ -7726,7 +8124,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 911,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "écouter",
@@ -7741,7 +8140,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 980,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "répondre",
@@ -7763,7 +8163,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1140,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "comparer",
@@ -7785,7 +8186,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 6699,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "expliquer",
@@ -7806,7 +8208,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 860,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "décrire",
@@ -7828,7 +8231,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 4673,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "résumer",
@@ -7849,7 +8253,9 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 12716,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "extrait",
@@ -7871,7 +8277,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 8691,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "enregistrement",
@@ -7893,7 +8300,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 3453,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "auditif",
@@ -7915,7 +8323,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": 32349,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "question",
@@ -7937,7 +8346,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 311,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "réponse",
@@ -7958,7 +8368,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 876,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "sujet",
@@ -7973,7 +8384,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 571,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "exemple",
@@ -7994,7 +8406,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1109,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "opinion",
@@ -8009,7 +8422,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2522,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "madame",
@@ -8031,7 +8445,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 446,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "monsieur",
@@ -8046,7 +8461,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 198,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "cordialement",
@@ -8068,7 +8484,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 26057,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "remercier",
@@ -8090,7 +8507,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1530,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "demander",
@@ -8111,7 +8529,9 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 424,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "renseignement",
@@ -8133,7 +8553,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 8112,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "candidature",
@@ -8154,7 +8575,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 9454,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "disponible",
@@ -8176,7 +8598,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3940,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "poser",
@@ -8198,7 +8621,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 921,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "joindre",
@@ -8220,7 +8644,9 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 1940,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "penser",
@@ -8241,7 +8667,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 516,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "croire",
@@ -8263,7 +8690,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 410,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "trouver",
@@ -8285,7 +8713,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 233,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "préférer",
@@ -8307,7 +8736,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 20711,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "souhaiter",
@@ -8329,7 +8759,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 6446,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "espérer",
@@ -8351,7 +8782,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3899,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "désolé",
@@ -8372,7 +8804,9 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 184,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "volontiers",
@@ -8394,7 +8828,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 5229,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "courriel",
@@ -8415,7 +8850,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": 23733,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "destinataire",
@@ -8437,7 +8873,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 28744,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "essai",
@@ -8458,7 +8895,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3006,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "citer",
@@ -8479,7 +8917,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 8970,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "comparaison",
@@ -8501,7 +8940,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 10197,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "présentation",
@@ -8523,7 +8963,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 5877,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "conversation",
@@ -8544,7 +8985,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1427,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "épreuve",
@@ -8566,7 +9008,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3018,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "choisir",
@@ -8587,7 +9030,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1341,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "indiquer",
@@ -8609,7 +9053,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 8456,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "thème",
@@ -8630,7 +9075,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 5470,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "justifier",
@@ -8652,7 +9098,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 6812,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "salutation",
@@ -8674,7 +9121,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 40168,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "informer",
@@ -8695,7 +9143,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 4278,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "attente",
@@ -8716,7 +9165,9 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 2430,
-  "cognate": true
+  "cognate": true,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "objet",
@@ -8737,7 +9188,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2393,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "grandir",
@@ -8759,7 +9211,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3902,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "transmettre",
@@ -8781,7 +9234,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 6094,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "entendre",
@@ -8796,7 +9250,9 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 537,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "disputer",
@@ -8817,7 +9273,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 5381,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "aîné",
@@ -8832,7 +9289,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 6522,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "éducation",
@@ -8854,7 +9312,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3169,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "enseignant",
@@ -8876,7 +9335,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 11223,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "parent",
@@ -8898,7 +9358,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3727,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "relation",
@@ -8920,7 +9381,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1003,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "lien",
@@ -8942,7 +9404,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1629,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "couple",
@@ -8957,7 +9420,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 1471,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "célibataire",
@@ -8978,7 +9442,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2838,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "scolaire",
@@ -9000,7 +9466,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 6472,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "civique",
@@ -9022,7 +9489,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 22308,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "devoir",
@@ -9037,7 +9505,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 563,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "élection",
@@ -9059,7 +9528,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 5517,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "proche",
@@ -9081,7 +9551,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1267,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "confier",
@@ -9103,7 +9574,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 5116,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "internaute",
@@ -9125,7 +9597,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": null,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "solitude",
@@ -9147,7 +9620,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 5072,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "soutien",
@@ -9169,7 +9643,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 2326,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "fêter",
@@ -9191,7 +9666,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3298,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "intégrer",
@@ -9213,7 +9689,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 7237,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "accepter",
@@ -9235,7 +9712,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1412,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "fierté",
@@ -9257,7 +9735,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3811,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "ethnique",
@@ -9279,7 +9758,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 22680,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "accueil",
@@ -9301,7 +9781,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3501,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "égal",
@@ -9323,7 +9804,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3092,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "modèle",
@@ -9345,7 +9827,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2285,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "courage",
@@ -9367,7 +9850,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1459,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "admirer",
@@ -9389,7 +9873,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 9254,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "sexisme",
@@ -9411,7 +9896,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 42273,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "féministe",
@@ -9433,7 +9919,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 18926,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "foi",
@@ -9448,7 +9935,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1615,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "maternel",
@@ -9470,7 +9958,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 14232,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "créole",
@@ -9485,7 +9974,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 36276,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "rejeter",
@@ -9507,7 +9997,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 8924,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "sentir",
@@ -9529,7 +10020,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 989,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "différence",
@@ -9551,7 +10043,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1474,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "émigrer",
@@ -9573,7 +10066,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 41120,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "ancêtre",
@@ -9588,7 +10082,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 16028,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "estime",
@@ -9609,7 +10104,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 4763,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "juger",
@@ -9631,7 +10127,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3147,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "artistique",
@@ -9653,7 +10150,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 6247,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "créatif",
@@ -9675,7 +10173,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 10918,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "exprimer",
@@ -9696,7 +10195,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3846,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "inspirer",
@@ -9717,7 +10217,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 11862,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "peintre",
@@ -9738,7 +10239,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 7089,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "musicien",
@@ -9759,7 +10261,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 7406,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "dessin",
@@ -9780,7 +10283,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3916,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "architecte",
@@ -9801,7 +10305,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7896,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "château",
@@ -9816,7 +10321,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2328,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "galerie",
@@ -9831,7 +10337,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 5620,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "orchestre",
@@ -9846,7 +10353,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 5523,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "tendance",
@@ -9867,7 +10375,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 4083,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "laid",
@@ -9888,7 +10397,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 8247,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "représenter",
@@ -9910,7 +10420,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 6582,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "apprécier",
@@ -9932,7 +10443,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3626,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "préserver",
@@ -9954,7 +10466,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 6910,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "goût",
@@ -9975,7 +10488,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1600,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "talent",
@@ -9996,7 +10510,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 2117,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "célèbre",
@@ -10017,7 +10532,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2067,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "rénover",
@@ -10039,7 +10555,8 @@
   "tier": 3,
   "ap": 3,
   "freqRank": 22417,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "émouvant",
@@ -10060,7 +10577,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 13609,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "technologie",
@@ -10081,7 +10599,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2803,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "technologique",
@@ -10102,7 +10621,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 18331,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "scientifique",
@@ -10123,7 +10643,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2471,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "informatique",
@@ -10145,7 +10666,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 5190,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "développer",
@@ -10166,7 +10688,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 5828,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "découvrir",
@@ -10188,7 +10711,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1343,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "faciliter",
@@ -10210,7 +10734,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 10224,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "remplacer",
@@ -10232,7 +10757,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2687,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "accès",
@@ -10253,7 +10779,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1480,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "outil",
@@ -10274,7 +10801,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7778,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "avantage",
@@ -10296,7 +10824,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3025,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "inconvénient",
@@ -10317,7 +10846,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 12876,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "risque",
@@ -10338,7 +10868,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 850,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "efficace",
@@ -10360,7 +10891,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3694,
-  "cognate": true
+  "cognate": true,
+  "guessable": false
  },
  {
   "word": "dangereux",
@@ -10381,7 +10913,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 941,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "virtuel",
@@ -10402,7 +10935,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 15863,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "utilisateur",
@@ -10424,7 +10958,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 19169,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "invention",
@@ -10445,7 +10980,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 6980,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "médical",
@@ -10467,7 +11003,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 3062,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "chirurgie",
@@ -10488,7 +11025,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 3222,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "guérison",
@@ -10509,7 +11047,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 7181,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "sécurité",
@@ -10531,7 +11070,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 467,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "menacer",
@@ -10552,7 +11092,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 6870,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "réduire",
@@ -10573,7 +11114,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 4577,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "gaspiller",
@@ -10594,7 +11136,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 9997,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "polluer",
@@ -10616,7 +11159,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 39705,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "détruire",
@@ -10637,7 +11181,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1340,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "disparaître",
@@ -10658,7 +11203,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2395,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "sauver",
@@ -10679,7 +11225,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 621,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "empêcher",
@@ -10698,7 +11245,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1188,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "combattre",
@@ -10719,7 +11267,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 2600,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "augmenter",
@@ -10738,7 +11287,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 4954,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "diminuer",
@@ -10757,7 +11307,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 14367,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "nourrir",
@@ -10778,7 +11329,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2807,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "fuir",
@@ -10799,7 +11351,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 2030,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "énergie",
@@ -10820,7 +11373,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1358,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "espèce",
@@ -10835,7 +11389,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 887,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "catastrophe",
@@ -10854,7 +11409,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 5218,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "menace",
@@ -10875,7 +11431,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1691,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "crise",
@@ -10890,7 +11447,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1496,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "renouvelable",
@@ -10911,7 +11469,8 @@
   "tier": 4,
   "ap": 1,
   "freqRank": 48255,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "sain",
@@ -10932,7 +11491,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 3789,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "potable",
@@ -10947,7 +11507,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 16848,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "victime",
@@ -10962,7 +11523,8 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 815,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "fondre",
@@ -10981,7 +11543,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 6804,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "richesse",
@@ -11002,7 +11565,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7889,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "manquer",
@@ -11021,7 +11585,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1895,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "emploi",
@@ -11043,7 +11608,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2128,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  },
  {
   "word": "réussir",
@@ -11062,7 +11628,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 2649,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "échouer",
@@ -11081,7 +11648,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7418,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "postuler",
@@ -11096,7 +11664,8 @@
   "tier": 4,
   "ap": 2,
   "freqRank": 20210,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "retraite",
@@ -11115,7 +11684,9 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 1873,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "entreprise",
@@ -11136,7 +11707,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1626,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "dépenser",
@@ -11155,7 +11727,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 5179,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "économiser",
@@ -11176,7 +11749,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7886,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "gratuit",
@@ -11197,7 +11771,9 @@
   "tier": 1,
   "ap": 2,
   "freqRank": 3730,
-  "cognate": false
+  "cognate": false,
+  "guessable": false,
+  "falseFriend": true
  },
  {
   "word": "achat",
@@ -11218,7 +11794,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 7315,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "enseigner",
@@ -11239,7 +11816,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 4686,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "apprendre",
@@ -11260,7 +11838,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 748,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "carrière",
@@ -11275,7 +11854,8 @@
   "tier": 2,
   "ap": 1,
   "freqRank": 1448,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "entraîner",
@@ -11296,7 +11876,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 3263,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "vacances",
@@ -11311,7 +11892,8 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1339,
-  "cognate": false
+  "cognate": false,
+  "guessable": true
  },
  {
   "word": "séjour",
@@ -11330,7 +11912,8 @@
   "tier": 2,
   "ap": 2,
   "freqRank": 4329,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "équilibré",
@@ -11351,7 +11934,8 @@
   "tier": 3,
   "ap": 1,
   "freqRank": 16927,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "emménager",
@@ -11372,7 +11956,8 @@
   "tier": 3,
   "ap": 2,
   "freqRank": 6176,
-  "cognate": false
+  "cognate": false,
+  "guessable": false
  },
  {
   "word": "université",
@@ -11391,6 +11976,7 @@
   "tier": 1,
   "ap": 1,
   "freqRank": 1453,
-  "cognate": true
+  "cognate": true,
+  "guessable": true
  }
 ]

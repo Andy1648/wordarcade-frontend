@@ -119,6 +119,7 @@ export default function FrenchRushGame() {
           words={(view.pack && view.pack.words) || []}
           categories={(view.pack && view.pack.categories) || []}
           masteryOf={game.masteryOf}
+          studiedOf={game.studiedOf}
           onBack={() => setBank(false)}
         />
       </div>
