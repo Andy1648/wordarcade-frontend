@@ -377,7 +377,8 @@ export const CAST_FRAMES = {
   // 6 frames: reading → looks up, a first star → fingers wiggle stars → the book FLARES → snaps shut → 'shh'
   hex: { n: 6, seq: [[1, 360], [2, 520], [3, 820], [4, 360], [5, 1100]], rest: 1900 },
   // BOO: sneaky grin → peeks through its fingers (twice) → arms wide, the big spook → doubled over laughing
-  boo: { n: 4, seq: [[1, 420], [0, 160], [1, 420], [2, 850], [3, 1050]], rest: 1800 },
+  // 6 frames: sneaky grin → hands rise → peeks through its fingers → hands drop → the big SPOOK → doubled over laughing
+  boo: { n: 6, seq: [[1, 300], [2, 620], [3, 220], [4, 800], [5, 1000]], rest: 1800 },
   // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
   mecha: { n: 4, seq: [[1, 750], [0, 180], [2, 720], [3, 1150]], rest: 1800 },
   // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
