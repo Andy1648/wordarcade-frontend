@@ -591,7 +591,7 @@ function StudentDone({ snap, onLeave }) {
 }
 
 /** FrenchRushGame mounts this for the whole class flow. `game` is the French Rush hook object. */
-export default function ClassFlow({ game, words, categories, entry, initialCode, onExit, onStudentState, leaveRef }) {
+export default function ClassFlow({ game, words, categories, entry, initialCode, onExit, onStudentState, leaveRef, standbyRef }) {
   const cr = useClassRoom();
   const { snap, status } = cr;
   const [stage, setStage] = useState(entry || 'choose'); // 'choose' | 'setup' | 'join'
@@ -673,6 +673,16 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
     onExit();
   };
   if (leaveRef) leaveRef.current = leave; // FrenchRushGame's HOME / results exits leave the class too
+  // "Back to the class" on a student's results: close the results but KEEP the seat — the class
+  // screen shows the score and the next set (class_restart) drops them straight back in.
+  const [, bump] = useState(0);
+  const standby = () => {
+    gameRef.current.endClassRun();
+    gameRef.current.backToStart();
+    runRef.current = { started: false, index: -1, round: runRef.current.round };
+    bump((n) => n + 1);
+  };
+  if (standbyRef) standbyRef.current = standby;
 
   if (cr.closed) {
     return <Page title="CLASS ROOM" sub={CLOSED_COPY[cr.closed] || 'The class is over.'} onBack={leave} backLabel="HOME" />;
