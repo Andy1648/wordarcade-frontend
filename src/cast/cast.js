@@ -417,6 +417,9 @@ registerWinFrames('brawl', WIN_SEQ6);
 registerWinFrames('hex', WIN_SEQ6);
 registerWinFrames('sizzle', WIN_SEQ6);
 registerWinFrames('boo', WIN_SEQ6);
+registerWinFrames('mecha', WIN_SEQ6);
+registerWinFrames('dud', WIN_SEQ6);
+registerWinFrames('lexi', WIN_SEQ6);
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
