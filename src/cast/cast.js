@@ -387,9 +387,11 @@ export const CAST_FRAMES = {
   // 6 frames: finger up → to the glasses → push up, *glint* → book swung open → taps the page, lecturing → hugs it, smug
   lexi: { n: 6, seq: [[1, 260], [2, 620], [3, 420], [4, 780], [5, 1000]], rest: 1900 },
   // SHH: finger to lips → the invisible wall → the invisible rope → a smug bow
-  shh: { n: 4, seq: [[1, 800], [2, 380], [0, 120], [2, 380], [3, 1100]], rest: 2000 },
+  // 6 frames: finger to lips → palms up → the invisible WALL → slides along it → the invisible rope → a smug bow
+  shh: { n: 6, seq: [[1, 260], [2, 620], [3, 520], [4, 620], [5, 1000]], rest: 1900 },
   // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
-  sizzle: { n: 4, seq: [[1, 650], [2, 900], [3, 1100]], rest: 1900 },
+  // 6 frames: thumbs up → tips the bottle → a big swig → cheeks puff, eyes water → breathes FIRE, hat flies → sweating, grinning
+  sizzle: { n: 6, seq: [[1, 260], [2, 520], [3, 460], [4, 800], [5, 1000]], rest: 1800 },
   // 6-FRAME loops (oct19, Andy: "we can add in more frames bc currently its a bit too choppy"): a 3x2 wide sheet = six
   // full-res frames, each a small step from the last, so the beats flow instead of jumping
   // QUILL recites: breath in → unrolls the scroll → arm swept wide → quill flourish → rolls it up, a smug little bow
