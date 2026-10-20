@@ -588,3 +588,30 @@
   .wr-input { min-height: 64px; font-size: var(--fs-panel); }
   .wr-earn { font-size: var(--fs-panel); }
 }
+
+/* ===== RESULTS NEVER SCROLL (Andy oct19: "i dont want any scroll screens on any end screen") =====
+   Once the race is over the standings card says who finished where, so the lanes above it are a
+   repeat at EVERY size (they were already dropped on short screens) — with 8 racers they were a
+   634px block over the results. The standings go two columns where there is width, and pack on a
+   phone. */
+.wr-root[data-race-status='over'] .wr-lanes {
+  display: none;
+}
+@media (min-width: 700px) {
+  .wr-over .wr-standings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--wr-rows, 4), auto);
+    grid-auto-flow: column;
+    gap: 6px 10px;
+  }
+}
+@media (max-width: 699px) {
+  .wr-over { gap: 8px; }
+  .wr-over .wr-standings li { padding: 3px 10px; }
+  .wr-over .wr-over-actions { gap: 8px; }
+  .wr-over .wr-over-actions .wr-btn { flex: 1 1 0; min-width: 0; }
+}
+@media (max-height: 700px) {
+  .wr-over-hero .mascot-container { display: none; }
+}

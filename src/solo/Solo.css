@@ -752,7 +752,8 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  --death-gap: 16px;
+  gap: var(--death-gap);
   text-align: center;
 }
 .solo-death-mascot {
@@ -765,7 +766,7 @@
 @media (max-height: 560px) {
   .solo-deathcard {
     padding: 16px;
-    gap: 10px;
+    --death-gap: 10px;
   }
   .solo-deathcard h2 {
     font-size: var(--fs-panel);
@@ -1550,8 +1551,97 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   position: relative;
   container-type: inline-size;
 }
-.solo-deathcard > .solo-exit {
+.solo-death-main > .solo-exit {
   align-self: flex-start;
+}
+
+/* THE CARD'S TWO COLUMNS (Andy: "fuse end screen requires scrolling — i had 4 clutches"). MAIN is
+   what happened, SIDE is what it paid + what now. Stacked they read exactly like the old single
+   column; the card's own gap is reused between and inside them. */
+.solo-death-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--death-gap);
+  min-width: 0;
+}
+/* The title sizes to ITS column (9cqi), not the whole two-column card. */
+.solo-death-main {
+  container-type: inline-size;
+}
+/* A long gloss must never be the row that pushes the card off-screen. */
+.solo-deathcard .missed-hold-gloss {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+/* WIDE (laptop / desktop / tablet): side by side. The stacked card ran ~930px before any bonus
+   row, so every 768-tall laptop scrolled; in two columns the taller one is ~500px. */
+@media (min-width: 760px) {
+  .solo-deathcard {
+    flex-direction: row;
+    align-items: center;
+    max-width: calc(840px * var(--solo-k, 1));
+  }
+  .solo-death-col {
+    flex: 1 1 0;
+  }
+  .solo-death-side {
+    align-self: stretch;
+    justify-content: center;
+    padding-left: 24px;
+    border-left: 3px solid #000;
+  }
+}
+/* PHONE: one column, packed. The scrim's 24px inset and the card's 24px padding were ~100px of
+   a 640px screen; the exit shares the mascot's row (they sit at opposite ends, never overlap). */
+@media (max-width: 759px) {
+  .solo-over {
+    padding: 12px;
+  }
+  .solo-deathcard {
+    padding: 16px;
+    --death-gap: 10px;
+  }
+  .solo-deathcard .wins-earned {
+    margin: 0;
+  }
+  /* Bungee's caps + 3px stroke reach above a 1.0 line box: a hair of air off the last row. */
+  .solo-deathcard .wins-earned-line + .wins-earned-num {
+    margin-top: 4px;
+  }
+}
+/* Only while the mascot is shown (it steps out at ≤ 720 tall): otherwise the title would rise
+   into the exit's row. */
+@media (max-width: 759px) and (min-height: 721px) {
+  .solo-death-main > .solo-exit {
+    margin-bottom: calc(-52px - var(--death-gap));
+  }
+}
+/* PHONE, SHORT (≤ 760 tall): the lines that only repeat something already on the card step out.
+   FUSE's "the last fragment was X" is the missed-word panel's own "A WORD CONTAINING X"; the
+   no-definition footnote is decoration. The scrim still scrolls as the last-resort guarantee. */
+@media (max-width: 759px) and (max-height: 760px) {
+  .solo-root[data-mode='fuse'] .solo-death-main:has(.missed-hold) .solo-death-killed,
+  .solo-deathcard .missed-hold-nogloss {
+    display: none;
+  }
+  .solo-deathcard {
+    --death-gap: 8px;
+  }
+  /* CHAIN's last links: one per row was five rows; inline they wrap to two. */
+  .solo-deathcard .solo-death-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 14px;
+    row-gap: 2px;
+  }
+  .solo-deathcard .missed-hold {
+    padding: 8px 10px;
+    gap: 2px;
+  }
 }
 
 /* SHORT LAPTOP (fine-tune oct2, loop B): at 1280x551 the second letter row (n–z) was cut by the

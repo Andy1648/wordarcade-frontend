@@ -373,11 +373,18 @@ export default function SoloShell({
       {phase === 'over' ? (
         <div className="solo-over">
           <div className="solo-deathcard">
+            {/* TWO COLUMNS (Andy: "fuse end screen requires scrolling"). The card stacked eleven
+                rows and ran ~930px tall before a single CLUTCH line, so every desktop run scrolled.
+                MAIN = what happened (result + the word you missed); SIDE = what it paid + what now.
+                Side by side from 760px wide; on a phone both columns stack exactly as before. */}
+            <div className="solo-death-col solo-death-main">
             <SoloExit onExit={onExit} />
             {/* Mascot reaction, like Blitz / Word Bomb game-over (fix/gameover-pass) — gives the
                 solo death card a face + a first read above the copy. */}
             <Mascot pose="panic" emote="slump" size={104} className="solo-death-mascot" />
             {over.card}
+            </div>
+            <div className="solo-death-col solo-death-side">
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
             {/* The lines prop (Batch G): bonus credits earned during THIS run — a collection milestone
                 is the reachable one — so the card names them instead of the total quietly
@@ -424,6 +431,7 @@ export default function SoloShell({
             ) : over.bare ? null : (
               over.tryRow
             )}
+            </div>
           </div>
         </div>
       ) : null}

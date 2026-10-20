@@ -7119,3 +7119,87 @@ html[data-beat='true'] .wb-belly {
   .wb-ring { --wb-seat-w: min(calc(var(--wb-size) * 0.16), calc(var(--wb-size) * 2.5 / var(--n, 4))); --wb-char-up: calc(var(--wb-seat-h) * 0.43); }
   .wb-seat-char { width: 150%; }
 }
+
+/* ===== CATEGORY BLITZ GAME-OVER — NEVER SCROLLS (Andy oct19: "no scroll screens on any end
+   screen") ===================================================================================
+   The card is .game-over-card + .cb-go-card, wrapped in the .go-col-* / .go-foot columns the
+   shared grid above places. Blitz has no breakdown column, so it stays TWO columns at every
+   width >= 900px — verdict + money (+ the summary tiles under them) | the scoreboard — and the
+   exits run across the bottom. A full 8-seat scoreboard is ~370px of rows; next to the verdict
+   the card is as tall as the taller of the two, not their sum. */
+@media (min-width: 900px) {
+  .game-over-card.cb-go-card {
+    max-width: 960px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'main side'
+      'mid  side'
+      'foot foot';
+    row-gap: 10px;
+  }
+  .cb-go-card .go-col-mid .cb-stats-summary { margin-bottom: 0; }
+  .cb-go-card .cb-scoreboard { gap: 6px; margin-bottom: 0; }
+  .cb-go-card .cb-score-row { padding: 6px 10px; }
+  .cb-go-card .go-foot { margin-top: 4px; }
+}
+/* Short laptops: the verdict column carries mascot + title + missed word + wins + tiles; the
+   tiles are the scoreboard's own numbers (yours, the top, the head count), so they step out
+   first, then the mascot shrinks. */
+@media (min-width: 900px) and (max-height: 820px) {
+  .cb-go-card .go-col-mid { display: none; }
+  .cb-go-card .game-over-mascot .mascot-img { height: clamp(56px, 10vh, 96px); }
+  .cb-go-card .cb-score-row { padding: 4px 10px; }
+  .cb-go-card .cb-scoreboard { gap: 4px; }
+}
+@media (min-width: 900px) and (max-height: 600px) {
+  .cb-go-card .game-over-mascot { display: none; }
+  .cb-go-card .game-over-title { margin-bottom: 4px; }
+  .cb-go-card .missed-hold-nogloss { display: none; }
+  .cb-go-card .missed-hold { padding: 6px 10px; gap: 2px; }
+  .cb-go-card .wins-earned { margin: 2px 0; }
+}
+/* PHONE: one stack. The summary tiles repeat the scoreboard right under them, so they go; the
+   scoreboard rows pack; the mascot shrinks; the overlay and card give back their insets. */
+@media (max-width: 899px) {
+  .game-over-overlay:has(> .cb-go-card) { padding: 10px; }
+  .game-over-card.cb-go-card { padding: 14px 14px; max-height: calc(100dvh - 20px); }
+  .cb-go-card .cb-stats-summary { display: none; }
+  .cb-go-card .game-over-mascot .mascot-img { height: clamp(48px, 8vh, 84px); }
+  .cb-go-card .game-over-title { margin-bottom: 4px; }
+  .cb-go-card .missed-hold { padding: 6px 10px; gap: 2px; margin-bottom: 6px; }
+  .cb-go-card .missed-hold-nogloss { display: none; }
+  .cb-go-card .wins-earned { margin: 2px 0 4px; }
+  .cb-go-card .cb-scoreboard { gap: 4px; margin-bottom: 10px; }
+  .cb-go-card .cb-score-row { padding: 3px 10px; }
+  .cb-go-card .game-over-actions { gap: 8px; }
+}
+@media (max-width: 899px) and (max-height: 700px) {
+  .cb-go-card .game-over-mascot { display: none; }
+}
+
+/* ===== SOLO BLITZ RESULTS — NEVER SCROLLS ==================================================
+   Three full-width stacked buttons were ~190px of a 640px phone. PLAY AGAIN keeps the whole
+   row (the primary); NEW GAME MODE + LEAVE share the next one. Any other row in the actions
+   (REBIRTH READY, the deep-link offer) still spans both columns. */
+.solo-results-card .game-over-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+.solo-results-card .game-over-actions > * { grid-column: 1 / -1; margin: 0; }
+.solo-results-card .game-over-actions > .solo-change-cat-btn,
+.solo-results-card .game-over-actions > .game-over-leave { grid-column: auto; }
+.solo-results-card .game-over-actions > .solo-change-cat-btn { font-size: var(--fs-body); padding: 10px 4px; }
+.solo-results-card .game-over-actions > .game-over-leave { padding: 10px 4px; }
+.solo-results-card .solo-rounds-list { margin-bottom: 12px; }
+@media (max-height: 760px) {
+  .game-over-overlay:has(> .solo-results-card) { padding: 10px; }
+  .game-over-card.solo-results-card { padding: 14px; max-height: calc(100dvh - 20px); }
+  .solo-results-card .game-over-mascot { display: none; }
+  .solo-results-card .solo-score-value { margin-bottom: 4px; }
+  .solo-results-card .solo-category { margin-bottom: 8px; }
+  .solo-results-card .solo-away { margin-bottom: 4px; }
+  .solo-results-card .solo-rounds-list { gap: 4px; margin-bottom: 10px; }
+  .solo-results-card .solo-round-row { padding: 4px 10px; }
+  .solo-results-card .solo-play-again-btn { padding: 10px 0; }
+}

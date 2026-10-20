@@ -3533,3 +3533,181 @@ body:has(.sr-app) .wpm-hud {
   .fr-app .sr-setup { gap: 4px; }
   .fr-app .sr-setup-col { gap: 5px; }
 }
+
+/* ===== RESULTS PAGE — NEVER SCROLLS (Andy oct19: "i dont want any scroll screens on any end
+   screen") ===================================================================================
+   The page stacked hero, wins, exits, the stat line, a case file of up to 30 expanded words, the
+   film strip, the hardest clear and the study list — ~1550px, three screens of a 551px laptop.
+   Now: the case file is a PAGED grid of chips + one detail panel (SatRushResults CaseFile), the
+   cross-run study list is capped at 5, and from 900px the page is two columns. */
+.sr-res-col { display: contents; }
+
+.sr-casefile-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+.sr-casefile-chip {
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  padding: 4px 8px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.sr-casefile-chip-word {
+  font-family: var(--font-head);
+  font-size: var(--fs-body);
+  letter-spacing: 0.02em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sr-casefile-chip-out {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sr-casefile-chip.escaped { color: var(--redink, #c8321e); border-color: var(--redink, #c8321e); }
+.sr-casefile-chip.is-picked { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.sr-casefile-chip:active { transform: translate(1px, 1px); }
+
+/* The pager sits on the label's line (right end), not a row of its own. */
+.sr-casefile { position: relative; }
+.sr-casefile-pager {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sr-casefile-turn {
+  width: 44px;
+  height: 32px;
+  font-family: var(--font-head);
+  font-size: var(--fs-body);
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.sr-casefile-turn:disabled { opacity: 0.35; cursor: default; }
+.sr-casefile-pageno {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+}
+/* The one opened word: its definition + example, clamped so a long gloss can never grow the page. */
+.sr-casefile .sr-casefile-list { margin-top: 8px; border-top: 2px solid var(--ink); }
+.sr-casefile .sr-casefile-row { padding: 6px 0 0; border-bottom: none; }
+.sr-casefile .sr-casefile-def,
+.sr-casefile .sr-casefile-ex,
+.sr-casefile .sr-casefile-en {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .sr-respage.has-casefile {
+    width: min(1120px, 94vw);
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    column-gap: 28px;
+    align-items: center;
+  }
+  .sr-respage.has-casefile > .sr-res-col {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    min-width: 0;
+  }
+  .sr-respage.has-casefile .sr-res-side { text-align: left; }
+}
+
+/* SHORT SCREENS (laptops <= 820 tall, every phone): tighten the page; the run's film strip (the same
+   words as the case file, as marks) and the hardest-clear panel step out — the case file carries
+   every word. */
+@media (max-height: 820px), (max-width: 899px) {
+  .sr-results { padding-block: 10px; }
+  .sr-respage { gap: 8px; padding: 18px 16px; }
+  .sr-respage.has-casefile .sr-filmstrip,
+  .sr-respage.has-casefile .sr-hardestpanel { display: none; }
+  .sr-results-actions { gap: 8px; margin-top: 0; }
+  .sr-results-actions .sr-btn { padding: 10px 16px; }
+}
+@media (max-height: 600px) and (min-width: 900px) {
+  .sr-dead { font-size: var(--fs-h2); }
+  .sr-respage.has-casefile .sr-keepmissing { display: none; }
+}
+/* THE EXITS: the solid (primary) button keeps a whole row; the ghost ones (New case beside a
+   Replay, Copy, Menu) share the next. Every other row in the block still spans it. */
+.sr-results-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.sr-results-actions > * { flex: 1 1 100%; }
+.sr-results-actions > .sr-btn.sr-btn-ghost { flex: 1 1 0; min-width: 0; padding-inline: 8px; }
+/* PHONE: the study list steps out (this run's case file is the study surface here), and the stamp
+   drops a size. */
+@media (max-width: 899px) {
+  .sr-respage.has-casefile .sr-keepmissing { display: none; }
+  .sr-dead { font-size: var(--fs-h2); }
+}
+@media (max-width: 899px) and (max-height: 760px) {
+  .sr-casefile-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sr-casefile .sr-casefile-ex,
+  .sr-casefile .sr-casefile-en { display: none; }
+}
+/* SHORT LAPTOP (<= 600 tall): the result column packs (hero plate, gaps, the try row). */
+@media (min-width: 900px) and (max-height: 600px) {
+  .sr-respage.has-casefile > .sr-res-col { gap: 8px; }
+  .sr-respage .sr-hero { padding: 8px 14px; }
+  .sr-respage .sr-capt-value { font-size: var(--fs-h1); }
+  .sr-results .try-mode-row { margin-top: 0; }
+  .sr-results .try-mode-btn { padding-block: 6px; }
+}
+/* PHONE: the hero plate, the stat line and the panels pack; the rhythm tightens. */
+@media (max-width: 899px) {
+  .sr-respage { gap: 6px; padding: 12px 12px; }
+  .sr-respage .sr-hero { padding: 8px 12px; }
+  .sr-respage .sr-capt-value { font-size: var(--fs-h1); }
+  .sr-respage .sr-resline { padding: 4px 0; font-size: 14px; gap: 2px 10px; }
+  .sr-respage .sr-resline b { font-size: 14px; }
+  .sr-respage .sr-casefile { padding: 8px 10px; }
+  .sr-results .try-mode-row { margin-top: 0; }
+  .sr-results .try-mode-btn { padding-block: 6px; }
+  .sr-results-actions { gap: 6px; }
+  .sr-results { padding-block: 6px; }
+}
+/* SHORT PHONE: the opened word drops its header line — the picked chip above already says the word
+   and how it went — and keeps its definition. */
+@media (max-width: 899px) and (max-height: 760px) {
+  .sr-casefile .sr-casefile-top { display: none; }
+  .sr-casefile .sr-casefile-row { padding-top: 4px; }
+  .sr-casefile .sr-casefile-def { margin-top: 0; }
+  .sr-casefile .sr-casefile-list { margin-top: 6px; }
+  .sr-casefile-chips { margin-top: 4px; }
+  .sr-results-actions .sr-btn { padding-block: 7px; }
+  .sr-respage .sr-hero { padding-block: 6px; }
+}
+/* The play stage stays mounted under the (opaque, full-screen) results page. Nobody can see or reach
+   it, but its lineup kept a live inner scroller underneath — hide the covered stage outright. */
+.sr-stage:has(~ .sr-results) { visibility: hidden; }

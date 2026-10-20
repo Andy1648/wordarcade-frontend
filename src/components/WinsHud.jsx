@@ -10,6 +10,7 @@ import { formatNum } from '../format';
 import { useCountUp } from '../hooks/useCountUp';
 import { minWordsFor } from '../progress/wins';
 import LiveWpm from './LiveWpm';
+import { groupBonusLines } from './winsGroup.js';
 
 // showWpm: the live typing-speed readout only rides along in modes where it MEANS something —
 // the continuous-typing modes (SAT Rush, CHAIN, FUSE) + the menu. Word Bomb and Category Blitz are
@@ -66,9 +67,15 @@ export function WinsHudPill({ amount = 0, words = 0, showWpm = true }) {
  * The data-wins-* attributes are the gate's handle (e2e/no-hidden-wins.spec.js sums them and
  * asserts the sum equals the delta in taw.wins). They are on the rendered rows on purpose: a gate
  * that reads component state could pass while the player sees nothing.
+ *
+ * ONE ROW PER KIND, NOT PER CREDIT (Andy: "fuse end screen requires scrolling — i had 4 clutches").
+ * A repeatable bonus (FUSE's CLUTCH!) credits once per occurrence, and one row each grew the death
+ * card past the viewport. Same-label credits merge into one row with a ×N count and their summed
+ * amount, and past BONUS_ROWS distinct kinds the tail folds into one OTHER BONUSES row — still
+ * named, still summed, so the gate's sum-of-rows invariant holds and the card height is bounded.
  */
 export function WinsEarnedTotal({ amount, lines = [] }) {
-  const bonus = lines.filter((l) => l && l.kind === 'bonus' && l.amount > 0);
+  const bonus = groupBonusLines(lines);
   const words = Number.isFinite(amount) && amount > 0 ? amount : 0;
   const total = words + bonus.reduce((a, l) => a + l.amount, 0);
   if (total <= 0) return null;
@@ -82,7 +89,7 @@ export function WinsEarnedTotal({ amount, lines = [] }) {
       )}
       {bonus.map((l) => (
         <div className="wins-earned-line" key={l.id} data-wins-line={l.label} data-wins-amount={l.amount}>
-          <span className="wins-earned-line-label">{l.label}</span>
+          <span className="wins-earned-line-label">{l.count > 1 ? `${l.label} ×${l.count}` : l.label}</span>
           <span className="wins-earned-line-amt">+{formatNum(l.amount)}</span>
         </div>
       ))}
