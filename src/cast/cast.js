@@ -433,6 +433,10 @@ registerWinFrames('boo', WIN_SEQ6);
 registerWinFrames('mecha', WIN_SEQ6);
 registerWinFrames('dud', WIN_SEQ6);
 registerWinFrames('lexi', WIN_SEQ6);
+registerWinFrames('shh', WIN_SEQ6);
+registerWinFrames('jinx', WIN_SEQ6);
+// QUILL's sheet lost two frames to cleanup (a feather cut out, a collar pocket) — four clean beats: heart → verse → quill high → the smug nod
+registerWinFrames('quill', { n: 4, seq: [[1, 520], [2, 620], [3, 900]], rest: 700 });
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
