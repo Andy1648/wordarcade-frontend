@@ -3,7 +3,7 @@
 // fixed element. In the last 10 s it pulses red: a FINITE animation (10 iterations of 1 s), never an
 // infinite loop.
 //
-// Rebirth Rush: OVERDRIVE (overdrive.js, random ×10 XP & wins for 5 min) rides the SAME slot, as a bigger
+// Rebirth Rush: OVERDRIVE (overdrive.js — gear / shop / drop / code, never random since oct20) rides the SAME slot, as a bigger
 // pink "OVERDRIVE ×10 · 4:59" pill in front of the boost pill — every surface that shows a boost shows it
 // with no new fixed UI. The boost pill names the CODE boost alone (codeBoostMult), so the two never
 // double-count (boostMult() now folds OVERDRIVE in).
