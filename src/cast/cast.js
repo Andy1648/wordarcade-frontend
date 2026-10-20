@@ -412,6 +412,9 @@ registerWinFrames('riot', WIN_SEQ);
 // 6-frame WIN sheets (3x2): small steps, so the party flows
 const WIN_SEQ6 = { n: 6, seq: [[1, 260], [2, 420], [3, 420], [4, 520], [5, 900]], rest: 600 };
 registerWinFrames('glitch', WIN_SEQ6);
+registerWinFrames('hype', WIN_SEQ6);
+registerWinFrames('brawl', WIN_SEQ6);
+registerWinFrames('hex', WIN_SEQ6);
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
