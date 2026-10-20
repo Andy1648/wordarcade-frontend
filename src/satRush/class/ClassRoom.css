@@ -22,7 +22,7 @@
 .fr-class-code {
   align-self: center;
   font-family: var(--font-head);
-  font-size: clamp(36px, 10vw, 80px);
+  font-size: min(calc(var(--fs-h1) * 1.25), 13vw);
   line-height: 1;
   letter-spacing: 0.08em;
   max-width: 100%;
@@ -40,7 +40,7 @@
 .fr-class-status {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-body);
   text-align: center;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -50,7 +50,7 @@
 }
 .fr-class-hi {
   font-family: var(--font-head);
-  font-size: clamp(32px, 9vw, 56px);
+  font-size: var(--fs-h1);
   text-align: center;
   line-height: 1;
 }
@@ -73,7 +73,7 @@
   background: var(--paper);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .fr-class-roster li.away {
   opacity: 0.5;
@@ -87,7 +87,7 @@
   border: 0;
   background: transparent;
   color: var(--ink);
-  font-size: 16px;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 .fr-class-names {
@@ -103,23 +103,23 @@
 }
 .fr-class-gloss {
   font-family: var(--font-head);
-  font-size: clamp(28px, 6vw, 48px);
+  font-size: var(--fs-h2);
   line-height: 1.1;
 }
 .fr-class-answer {
   font-family: var(--font-head);
-  font-size: clamp(32px, 7vw, 56px);
+  font-size: var(--fs-h1);
   line-height: 1.05;
   color: var(--redink, #c8321e);
 }
 .fr-class-context {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--fs-body);
   line-height: 1.4;
 }
 .fr-class-context.en {
   opacity: 0.75;
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 
 .fr-class-tally {
@@ -129,16 +129,16 @@
   box-shadow: 4px 4px 0 var(--ink);
   background: var(--paper);
   font-family: 'Space Mono', monospace;
-  font-size: 18px;
+  font-size: var(--fs-body);
   text-align: center;
 }
 .fr-class-tally b {
   font-family: var(--font-head);
-  font-size: 26px;
+  font-size: var(--fs-panel);
 }
 .fr-class-who {
   font-family: 'Space Mono', monospace;
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.4;
 }
 .fr-class-who p {
@@ -149,7 +149,7 @@
   width: 100%;
   border-collapse: collapse;
   font-family: 'Space Mono', monospace;
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 .fr-class-summary th,
 .fr-class-summary td {
@@ -163,7 +163,7 @@
   font-weight: 700;
 }
 .fr-class-summary th {
-  font-size: 13px;
+  font-size: var(--fs-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -193,7 +193,7 @@
   padding: 6px 10px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: var(--ink);
   background: var(--tile);
   border: 3px solid var(--ink);
@@ -207,7 +207,7 @@
 .fr-class-error {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-body);
   color: var(--redink, #c8321e);
 }
 
@@ -225,7 +225,7 @@
   box-shadow: 4px 4px 0 var(--ink);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-body);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

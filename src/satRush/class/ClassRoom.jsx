@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useClassRoom } from './useClassRoom';
 import { bandWords, difficultiesFor, DIFFICULTY_ORDER } from '../runSpec';
 import { withArticle } from '../speak';
+import { formatNum } from '../../format';
 import './ClassRoom.css';
 
 const LENGTHS = [10, 20, 30];
@@ -208,7 +209,7 @@ function HostConsole({ snap, tally, host, onLeave, offline }) {
       }
     };
     return (
-      <Page title="CLASS ROOM" sub={`${snap.total} words · go to typeaword.com/french-rush · JOIN A CLASS`} onBack={endClass} backLabel="END CLASS" note={offline ? 'reconnecting…' : null}>
+      <Page title="CLASS ROOM" sub={`${formatNum(snap.total)} words · go to typeaword.com/french-rush · JOIN A CLASS`} onBack={endClass} backLabel="END CLASS" note={offline ? 'reconnecting…' : null}>
         <div className="fr-class-code" aria-label={`class code ${snap.code}`}>
           {snap.code}
         </div>
@@ -256,7 +257,7 @@ function HostConsole({ snap, tally, host, onLeave, offline }) {
   const last = snap.index + 1 >= snap.total;
   const who = t && t.who;
   return (
-    <Page title={`WORD ${snap.index + 1} / ${snap.total}`} onBack={endClass} backLabel="END CLASS" note={offline ? 'reconnecting…' : null}>
+    <Page title={`WORD ${snap.index + 1} / ${formatNum(snap.total)}`} onBack={endClass} backLabel="END CLASS" note={offline ? 'reconnecting…' : null}>
       {row && (
         <div className="sr-panel fr-class-clue">
           <div className="sr-panel-label">{word ? 'the clue' : 'the answer'}</div>
@@ -274,7 +275,7 @@ function HostConsole({ snap, tally, host, onLeave, offline }) {
         <div className="fr-class-tally" role="status">
           {word ? (
             <span>
-              <b>{t.answered}</b> / {t.total} answered{t.away ? ` · ${t.away} away` : ''}
+              <b>{t.answered}</b> / {formatNum(t.total)} answered{t.away ? ` · ${t.away} away` : ''}
             </span>
           ) : (
             <span>
@@ -364,7 +365,7 @@ function StudentWait({ snap, onLeave }) {
     <Page title="YOU'RE IN" sub={`class ${snap.code}`} onBack={onLeave} backLabel="LEAVE">
       <div className="fr-class-hi">{snap.name}</div>
       <div className="fr-class-count">{snap.hostAway ? 'the teacher is reconnecting…' : 'waiting for the teacher to start'}</div>
-      <div className="fr-class-count">{snap.total} words</div>
+      <div className="fr-class-count">{formatNum(snap.total)} words</div>
     </Page>
   );
 }
@@ -375,7 +376,7 @@ function StudentDone({ snap, onLeave }) {
   return (
     <Page title="CLASS DONE" onBack={onLeave} backLabel="HOME">
       <div className="fr-class-hi">
-        {got} / {snap.total}
+        {got} / {formatNum(snap.total)}
       </div>
       <div className="fr-class-count">words you got</div>
     </Page>
