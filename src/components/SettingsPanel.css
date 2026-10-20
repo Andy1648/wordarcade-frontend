@@ -99,13 +99,15 @@
   .sp-sheet .sp {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-auto-flow: row dense;
+    /* a 5th, flexible row soaks up a tall right column (the reset confirm), so the four switches stay evenly spaced */
+    grid-template-rows: auto auto auto auto 1fr;
     align-items: start;
     column-gap: 14px;
     width: min(1040px, calc(100vw - 72px));
   }
   .sp-sheet .sp > .sp-row { grid-column: 1; }
-  .sp-sheet .sp > .sp-save { grid-column: 2; grid-row: span 2; }
+  .sp-sheet .sp > .sp-save { grid-column: 2; grid-row: 1 / 3; }
+  .sp-sheet .sp > .sp-save.sp-reset { grid-row: 3 / 6; }
 }
 
 /* the SHEET (season 2's sound-control popover): portalled to <body>, hung from the top-right edge, above every layer */
