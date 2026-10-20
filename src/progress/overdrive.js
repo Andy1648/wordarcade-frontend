@@ -1,5 +1,9 @@
-// overdrive.js — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush", Andy oct3 20:08): a random ×10 on XP AND wins
-// for 5 minutes, about every 30–60 minutes of PLAY. It is a BOOST source (boost.js boostMult multiplies it in),
+// overdrive.js — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush", Andy oct3 20:08): ×5 on XP AND wins for 5 minutes.
+//
+// NO MORE RANDOM OVERDRIVE (Andy oct20: "i dont want it to randomly appear tho (if its part of gear fine but its
+// uncalled for)"). An OVERDRIVE now only ever starts from something the player chose: the OVERCLOCK gear perk (the
+// play clock below — every 15 min of play while worn), FREE OVERDRIVE (MYTHIC+ gear), the shop, the daily drop or a
+// code. Without OVERCLOCK the play clock still counts (capped at the trigger) but never fires on its own. It is a BOOST source (boost.js boostMult multiplies it in),
 // so every readout that already names BOOST — the receipt, the HUD rate, XP per letter — shows it with no
 // second code path.
 //
@@ -113,6 +117,12 @@ export function notePlay(ms, now = Date.now(), rng) {
     return false;
   }
   st.playMs += add;
+  // no OVERCLOCK worn → the play clock never starts an OVERDRIVE by itself (it waits, capped, at the trigger)
+  if (!overdrivePerkMinutes()) {
+    st.playMs = Math.min(st.playMs, st.nextMs);
+    write(st);
+    return false;
+  }
   if (st.playMs < st.nextMs) {
     write(st);
     return false;
