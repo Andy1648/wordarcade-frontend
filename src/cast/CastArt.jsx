@@ -350,7 +350,7 @@ function Flipbook({ id, F, live }) {
   // frame 0 is ALWAYS the same node (a card that turns live under the pointer must not swap the element being clicked);
   // the other frames mount only while live
   return Array.from({ length: live ? F.n : 1 }, (_, k) => (
-    <img key={k} ref={(el) => { refs.current[k] = el; }} className={`cast-frame${k === 0 ? ' is-rest' : ''}`} src={`/cast/anim/${id}-${k}.webp`} width="512" height="512" alt="" draggable="false" />
+    <img key={k} ref={(el) => { refs.current[k] = el; }} className={`cast-frame${k === 0 ? ' is-rest' : ''}`} src={`/cast/anim/${F.file}-${k}.webp`} width="512" height="512" alt="" draggable="false" />
   ));
 }
 

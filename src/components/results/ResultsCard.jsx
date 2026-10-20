@@ -26,7 +26,8 @@ import { tallyLines, chainOf, stampFor } from './resultsModel.js';
 import '../kit/tokens.css';
 import './ResultsCard.css';
 import { resolvePlayerColor } from '../../playerColors';
-import { castFor, castByColor, castSrc, hasPose } from '../../cast/cast.js';
+import { castFor, castByColor, castSrc, hasPose, castFrames } from '../../cast/cast.js';
+import CastArt from '../../cast/CastArt.jsx';
 
 const mx = (m) => `×${formatMultExact(m)}`;
 const CHIP_TONES = ['#D88BFF', '#FFC23D', '#2EFFE0', '#FF3D7F', '#FFE94A', '#B04BFF'];
@@ -321,7 +322,10 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             // in (tipped over on a K.O.).
             <div className={`rs2-icon rs2-char rs2-char--${pose}`} data-rv="drop" data-at="150" data-cast={myCast.id}>
               <img className="rs2-impact-burst" src={pose === 'win' ? '/fx/burst-win.webp' : '/fx/burst-ko.webp'} width="256" height="256" alt="" draggable="false" />
-              <img className={`rs2-char-img${!hasPose(myCast.id, pose) ? ` is-stand-in is-${pose}` : ''}`} src={castSrc(myCast.id, pose)} width="512" height="512" alt="" draggable="false" />
+              {castFrames(myCast.id, pose)
+                // a painted victory FLIPBOOK where one exists (oct19) — the still otherwise
+                ? <CastArt className="rs2-char-img" id={myCast.id} pose={pose} />
+                : <img className={`rs2-char-img${!hasPose(myCast.id, pose) ? ` is-stand-in is-${pose}` : ''}`} src={castSrc(myCast.id, pose)} width="512" height="512" alt="" draggable="false" />}
               {pose === 'win' ? (
                 <span className="rs2-char-fx">{CHAR_CONFETTI.map((c, i) => <img key={i} className="rs2-char-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
               ) : null}
