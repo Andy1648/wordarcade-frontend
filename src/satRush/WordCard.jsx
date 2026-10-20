@@ -14,10 +14,10 @@
 // (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
 // state still carries a text label. The root .sr-card class is load-bearing (juice
 // centres bursts on it and the wrong-key shake keys off .sr-card.shake).
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
-import { speakFr, canSpeak, withArticle } from './speak';
+import { speakFr, canSpeak, withArticle, autoSpeakOn } from './speak';
 
 // The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
 // flow flashed the word for half a second; this teaches instead — the SENTENCE
@@ -31,8 +31,11 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
   const tag = review[kind] || (kind === 'miss' ? 'IT WAS' : kind === 'got' ? 'CAPTURED' : 'BARELY — REMEMBER IT');
   // FRENCH RUSH: the word is said aloud as the card lands (once per card), and can be replayed
   const said = useRef(false);
+  // the English of the example stays folded away (Andy oct20: "too overcrowded") — one tap shows it
+  const [showEn, setShowEn] = useState(false);
   useEffect(() => {
-    if (speak && !said.current) {
+    // auto-say can be switched off (a CLASS ROOM teacher's choice); the 🔊 button always works
+    if (speak && !said.current && autoSpeakOn()) {
       said.current = true;
       speakFr(word);
     }
@@ -60,8 +63,15 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
         <mark className="sr-brief-fill">{word}</mark>
         {after}”
       </p>
-      {/* FRENCH RUSH: the example's English, so a struggling student can read what it said */}
-      {contextEn && <p className="sr-reencode-en">{contextEn}</p>}
+      {/* FRENCH RUSH: the example's English, on request (a struggling student can still read it) */}
+      {contextEn &&
+        (showEn ? (
+          <p className="sr-reencode-en">{contextEn}</p>
+        ) : (
+          <button type="button" className="sr-linkbtn sr-reencode-entoggle" onClick={() => setShowEn(true)}>
+            in English
+          </button>
+        ))}
       {cousin && (
         <p className="sr-reencode-cousin">
           same root as <b>{cousin}</b>

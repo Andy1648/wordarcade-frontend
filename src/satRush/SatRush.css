@@ -3451,7 +3451,7 @@ body:has(.sr-app) .wpm-hud {
 }
 /* phones: the teacher link is a desktop thing — a class shares it from a laptop */
 @media (max-width: 520px) {
-  .fr-app .sr-linkbtn { display: none; }
+  .fr-app .sr-setup-exits .sr-linkbtn { display: none; } /* only CASE SETUP's copy-a-link */
 }
 @media (max-height: 700px) {
   .fr-app .sr-setup { padding-block: 10px; gap: 6px; }
