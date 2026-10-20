@@ -176,7 +176,11 @@
 
 /* SHORT SCREENS (046: the flex sections made a 360×640 card 73px too tall): tighter gaps, smaller gear art, slimmer tiles — and the card scrolls inside itself as the last resort, never off-screen */
 @media (max-height: 720px) {
-  .pc { gap: 6px; padding-top: 12px; padding-bottom: 12px; overflow-y: auto; }
+  .pc { gap: 6px; padding-top: 12px; padding-bottom: 12px; overflow-y: auto; overflow-x: hidden; }
+  /* a scrolling card clips what hangs off it, so the ✕ comes INSIDE the corner (oct20 UI audit: at 1280x720 it was cut in
+     half and the card scrolled 18px sideways) */
+  .pc-x { top: 6px; right: 6px; width: 44px; height: 44px; }
+  .pc-head { padding-right: 52px; }
   .pc-gear { gap: 2px; padding: 6px 6px 5px; }
   .pc-gear-art, .pc-gear-hole { width: 48px; height: 48px; }
   .pc-gear-hole { font-size: var(--fs-k24); }
