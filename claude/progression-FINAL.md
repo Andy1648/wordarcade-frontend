@@ -30,6 +30,16 @@ Bots: the same game play as before, plus menu typing between games: casual 20 ke
 | menu-only masher (500 keys/min) | 8.2 min | 3.45 h | — | R3 | 13.2 min | — | — | R2 |
 SPAMMER ends level with the median (R5 LV87). 59,000 spam calls granted 0 rebirths. No game step ever moved the bar (a
 new HARD CHECK). HARD CHECK: PASS.
+
+**Oct 20 — NO RANDOM OVERDRIVE** (Andy: "no need for random overdrive - just get rid of it"; he chose the slower pace
+over a compensating boost). OVERDRIVE now starts only from gear (OVERCLOCK / FREE OVERDRIVE), the shop, the daily drop
+or a code. The CI sim targets (claude/econ-oct2/final-sim.mjs FINAL) were re-baselined to the measured run:
+| bot | R1 | R3 | R5 | @10 h |
+|---|---|---|---|---|
+| casual | 60 min | 6.70 h | — | R3 |
+| **median** | **21.5 min** | **2.53 h** | **— (past 10 h)** | **R4** |
+| fast | 9.3 min | 62.8 min | 4.61 h | R8 |
+HARD CHECK: PASS.
 - **Fast vs median spreads out:** fast types 2.5× the median's menu keys, and keys are now the only XP. So fast ÷ median
   pace is ×2.30 at R1 and ×2.38 at R5, and the sim's pace limit went from ×2 to **×2.5**.
 - **Mashing reaches R1 first:** the 500 keys/min masher gets to R1 in 8.2 min, before the median (21.5). After that, games
