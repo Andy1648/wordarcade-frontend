@@ -391,7 +391,18 @@ export const CAST_FRAMES = {
 };
 // GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
 for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = CAST_FRAMES[b];
-export const castFrames = (id, pose = 'hero') => (pose === 'hero' && CAST_FRAMES[id]) || null;
+/** WIN flipbooks (oct19, Andy: "theres so much hero stuff we can improve on"): the victory pose acts out a short
+ *  celebration on the results screen, the preview's WIN tab and the NEW HERO reveal. Frames are
+ *  public/cast/anim/<id>-win-<n>.webp, registered on the pose's lowest point (the WIN poses are mid-jump). */
+export const CAST_WIN_FRAMES = {};
+// each spec carries its file prefix; built ONCE here so a component's effect deps stay stable across re-renders
+const FRAME_SPECS = { hero: {}, win: {} };
+for (const [id, F] of Object.entries(CAST_FRAMES)) FRAME_SPECS.hero[id] = { ...F, file: id };
+export function registerWinFrames(id, F) { CAST_WIN_FRAMES[id] = F; FRAME_SPECS.win[id] = { ...F, file: `${id}-win` }; }
+// a WIN celebration runs tighter than an idle: short holds, a short rest — it's a party
+const WIN_SEQ = { n: 4, seq: [[1, 480], [2, 520], [3, 900]], rest: 700 };
+registerWinFrames('riot', WIN_SEQ);
+export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
  *  move — RIOT head-bangs, GLITCH stays bored then skips a frame, HYPE double-hops, BRAWL bobs and weaves, HEX floats.
