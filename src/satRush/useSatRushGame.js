@@ -4,6 +4,7 @@
 // the engine, every slot/alt decision from input.js. Timing constants that ARE
 // rules (deep-cut interval scale, grace length) are read from engine.config; the
 // only thing this hook decides is the base stage interval (dev-tunable).
+import { noteAcceptedWord } from '../unlisted/acceptedWords.js';
 import { useReducer, useRef, useEffect, useCallback } from 'react';
 import { createSatRushEngine, DEFAULT_CONFIG, effectiveStageIntervalMs, lineupWindowMs } from './engine';
 import { createSlotInput } from './input';
@@ -79,6 +80,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // THE PACK this hook plays (packs.js): its words, its memory keys, its clue order, its accents.
   const packRef = useRef(null);
   if (packRef.current === null) packRef.current = getPack(packId);
+  const ulModeRef = useRef(packId === 'fr' ? 'french' : 'sat'); // THE UNLISTED: which mode a find came from
   // (read through packRef.current inside callbacks: the pack is fixed for the hook's lifetime)
   const [, force] = useReducer((x) => x + 1, 0);
 
@@ -269,6 +271,8 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       if (!r) return;
       // What this clear actually earned (fix/sat-spam): letters revealed by wrong keys pay nothing.
       lastClearedRef.current = { ...lastClearedRef.current, paid: r.paidFraction };
+      // THE UNLISTED (oct20): a word YOU spelled (at most the free first letter shown) is an accepted word, any mode.
+      if (revealed <= 1) noteAcceptedWord(word, { mode: ulModeRef.current });
       // Lifetime WORDS TYPED: a cleared word is the local player's own accepted
       // word (SAT Rush is solo). Same spot the word_resolved analytic fires below.
       addWords('sat-rush');

@@ -10,6 +10,7 @@
 //                        loses a life, dead only at 0 lives). Serves the next fuse itself.
 //   getScore(engine)   → the run's score for the personal best
 //   rejectCtx(engine)  → { letter, fragment } to fill a reject message
+import { noteAcceptedWord } from '../unlisted/acceptedWords.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RED_ZONE_MS, rejectMessage, restartArmMs, getPB, setPB, submitSoloWord } from './shared.js';
 import { roundStarted as evRoundStarted, roundCompleted as evRoundCompleted } from '../lib/events.js';
@@ -50,6 +51,8 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   // Optional "a word was accepted" hook, fired PER accepted word (see onSubmit). CHAIN/FUSE pass
   // progress/streak.touchStreak so playing either mode counts toward the daily streak — they never
   // route through wordCount.addWords. Kept in a ref so onSubmit's identity doesn't depend on it.
+  const ulModeRef = useRef(mode); // THE UNLISTED: which mode a find came from
+  ulModeRef.current = mode;
   const onAcceptRef = useRef(onAccept);
   onAcceptRef.current = onAccept;
   const firstRunFiredRef = useRef(false);
@@ -184,6 +187,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     // submitSoloWord fires onAccept (streak touch) exactly once on an accepted word, mid-run.
     const r = submitSoloWord(engineRef.current, word, onAcceptRef.current);
     if (r.ok) {
+      noteAcceptedWord(word, { mode: ulModeRef.current }); // THE UNLISTED: an accepted word, in any mode (oct20)
       // Record how much of the clock was left when this word landed (share-card glyph).
       const budget = turnBudgetRef.current || 1;
       const leftMs = budget - (now() - turnStartRef.current);
