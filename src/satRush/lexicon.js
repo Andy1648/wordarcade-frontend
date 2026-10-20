@@ -73,6 +73,25 @@ function normalizeLastBriefed(v) {
   return decks.slice(-3);
 }
 
+function normalizeStudied(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
+  const out = {};
+  for (const [w, n] of Object.entries(v)) if (typeof w === 'string' && Number.isFinite(n) && n > 0) out[w] = n;
+  return out;
+}
+
+/** Record that these words were on a study screen the player went through. */
+export function markStudied(state, words) {
+  if (!state) return;
+  if (!state.studied || typeof state.studied !== 'object') state.studied = {};
+  for (const w of words || []) if (typeof w === 'string' && w) state.studied[w] = (state.studied[w] || 0) + 1;
+}
+
+/** Has the player studied this word on a study screen before? */
+export function hasStudied(state, word) {
+  return !!(state && state.studied && state.studied[word]);
+}
+
 // True only for a blob that is safe to trust as-is. Anything else → fresh state,
 // so an old/corrupt/partial value can never crash the mode or poison selection.
 function isValid(blob) {
@@ -104,6 +123,12 @@ export function load(storage, key = KEY) {
       // Migrate lastBriefed to the last-3-decks shape (old flat string[] → one deck).
       lastBriefed: normalizeLastBriefed(blob.lastBriefed),
       records: blob.records,
+      // CASE SETUP's remembered choices — were dropped here on every reload until oct19, so the
+      // preselection only ever lasted one visit
+      setup: blob.setup && typeof blob.setup === 'object' ? blob.setup : undefined,
+      // words the player has STUDIED on a study screen (word → times), for "skip words I've studied"
+      // and the WORD BANK's studied filter
+      studied: normalizeStudied(blob.studied),
     };
   } catch {
     return freshState(); // storage unavailable / bad JSON — remember nothing

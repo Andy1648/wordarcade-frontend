@@ -25,13 +25,14 @@ export { UNLISTED_KEY, UNLISTED_TIER };
 export const CURRENT_SEASON = 2;
 
 // `secret` = the secrets.js id whose detection grants it (null = granted by its own detector: the `season` gear, and
-// TYPEWRITER / WISHBONE — gearFinds.js, oct18: the word-secret was far too easy, so the gear needs a harder feat).
+// TYPEWRITER / WISHBONE / MIRROR — gearFinds.js, oct18 + oct19: the word-secret was far too easy, so the gear needs
+// a harder feat, judged on an ACCEPTED word).
 // `riddle` = the ONE line the index shows while it is unfound. Cryptic on purpose: it says what to do, never how.
 export const UNLISTED_GEARS = Object.freeze([
   { id: 'mk-ul-og', secret: 'newgrounds', name: 'O.G.', art: 'og', riddle: 'SAY THE NAME OF THE PLACE THAT RAISED US' },
   { id: 'mk-ul-wishbone', secret: null, name: 'WISHBONE', art: 'wishbone', riddle: 'WHEN THE CLOCK SEES DOUBLE · AM + PM, ONE DAY' },
-  { id: 'mk-ul-typewriter', secret: null, name: 'TYPEWRITER', art: 'typewriter', riddle: 'FIFTY WORDS IN A ROW · NO TAKE-BACKS' },
-  { id: 'mk-ul-mirror', secret: 'palindrome', name: 'MIRROR', art: 'mirror', riddle: 'IT READS THE SAME BOTH WAYS' },
+  { id: 'mk-ul-typewriter', secret: null, name: 'TYPEWRITER', art: 'typewriter', riddle: 'FORTY LONG WORDS IN A ROW · NO TAKE-BACKS' },
+  { id: 'mk-ul-mirror', secret: null, name: 'MIRROR', art: 'mirror', riddle: 'SEVEN LETTERS THE GAME TAKES BOTH WAYS' },
   { id: 'mk-ul-midas', secret: 'midas', name: 'MIDAS', art: 'midas', riddle: 'SOMETIMES A WORD TURNS TO GOLD' },
   { id: 'mk-ul-tripledouble', secret: 'tripledouble', name: 'TRIPLE DOUBLE', art: 'tripledouble', season: 2, riddle: 'ONE WORD, THREE PAIRS · THIS SEASON ONLY' },
 ].map((g) => Object.freeze({ season: null, ...g, tier: UNLISTED_TIER })));

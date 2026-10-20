@@ -1,9 +1,10 @@
-// node --test — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush"): ×5 (Andy oct11; was ×10) on XP and wins for 5 minutes, triggered by
-// 30–60 minutes of PLAY (typing time, idle gaps capped). It is a BOOST source: boostMult = code boost × OVERDRIVE,
+// node --test — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush"): ×5 (Andy oct11; was ×10) on XP and wins for 5 minutes. Since oct20
+// it never starts at random: only the OVERCLOCK gear's play clock (15 min), FREE OVERDRIVE gear, the shop, drops and codes. It is a BOOST source: boostMult = code boost × OVERDRIVE,
 // and XP per letter = 10 × KEY × 5^R × MARK × BOOST.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { notePlay, overdriveMult, overdriveRemaining, isOverdriveActive, OVERDRIVE_KEY } from './overdrive.js';
+import { notePlay, overdriveMult, overdriveRemaining, OVERDRIVE_KEY } from './overdrive.js';
+import { MARK_ROLLS_STORE_KEY, MARK_WORN_KEY } from './markPerks.js';
 import { boostMult, codeBoostMult, startBoost } from './boost.js';
 import { letterXpNow, creditLetterXp, resetLetterXp } from './letterXp.js';
 import { perWordWins } from './wins.js';
@@ -37,47 +38,40 @@ function playFor(minutes, rng, start = T0) {
   return null;
 }
 
-test('OVERDRIVE never triggers before 30 minutes of play (earliest roll)', () => {
-  withStorage({}, () => {
-    assert.equal(playFor(29.9, () => 0), null, '359 gaps = 29:55 of play');
-    assert.equal(overdriveMult(T0 + 30 * MIN), 1);
-    assert.equal(notePlay(4999, T0 + 30 * MIN, () => 0), false, 'one ms short of 30:00');
-    assert.equal(notePlay(1, T0 + 30 * MIN + 1, () => 0), true, 'starts at exactly 30:00 of play');
-    assert.equal(overdriveMult(T0 + 30 * MIN + 1), 5);
-  });
+// a save that owns and WEARS a gear (markPerks reads the worn MAIN + the rolls store)
+const wear = (id) => ({
+  [MARK_ROLLS_STORE_KEY]: JSON.stringify({ v: 1, marks: { [id]: { n: 1 } } }),
+  [MARK_WORN_KEY]: id,
 });
 
-test('OVERDRIVE always triggers by 60 minutes of play (latest roll), and in [30, 60] for any roll', () => {
-  withStorage({}, () => {
-    const r = playFor(61, () => 1);
-    assert.ok(r, 'triggered');
-    assert.equal(r.at, 60);
-  });
-  for (const x of [0, 0.01, 0.25, 0.5, 0.77, 0.999, 1]) {
-    withStorage({}, () => {
-      const r = playFor(61, () => x);
-      assert.ok(r && r.at >= 30 && r.at <= 60, `roll ${x}: ${r && r.at}`);
-    });
-  }
-  // the default (Math.random) roll lands in the same window
-  for (let k = 0; k < 20; k++) {
-    withStorage({}, () => {
-      const r = playFor(61);
-      assert.ok(r && r.at >= 30 && r.at <= 60, `random roll: ${r && r.at}`);
+test('NO RANDOM OVERDRIVE (Andy oct20): without OVERCLOCK, play never starts one — however long', () => {
+  for (const x of [0, 0.5, 1]) {
+    withStorage({}, (map) => {
+      assert.equal(playFor(180, () => x), null, `roll ${x}: 3 hours of play, no OVERDRIVE`);
+      assert.equal(overdriveMult(T0 + 180 * MIN), 1);
+      const st = JSON.parse(map.get(OVERDRIVE_KEY));
+      assert.ok(st.playMs <= st.nextMs, 'the clock waits, capped at its trigger');
     });
   }
 });
 
-test('OVERDRIVE is ×5 (Andy oct11) for exactly 5 wall-clock minutes, then off', () => {
-  withStorage({}, () => {
-    const r = playFor(31, () => 0);
-    assert.ok(r);
-    assert.equal(isOverdriveActive(r.now), true);
+test('the OVERCLOCK gear (KRAKEN) still starts OVERDRIVE on its 15-minute play clock', () => {
+  withStorage(wear('mk-kraken'), () => {
+    const r = playFor(16, () => 0);
+    assert.ok(r, 'an OVERDRIVE started');
+    assert.ok(r.at <= 15, `by 15 min of play (at ${r.at})`);
     assert.equal(overdriveMult(r.now), 5);
-    assert.equal(overdriveRemaining(r.now), 5 * MIN);
-    assert.equal(overdriveMult(r.now + 5 * MIN - 1), 5);
-    assert.equal(overdriveMult(r.now + 5 * MIN), 1);
-    assert.equal(overdriveRemaining(r.now + 6 * MIN), 0);
+  });
+});
+
+test('OVERCLOCK: the play-clock OVERDRIVE is ×5 for its full length, and play during it does not count', () => {
+  withStorage({ ...wear('mk-kraken'), [OVERDRIVE_KEY]: JSON.stringify({ playMs: 15 * MIN - 5000, nextMs: 15 * MIN, until: 0, freeMs: 0 }) }, (map) => {
+    assert.equal(notePlay(5000, T0, () => 0), true, 'reaches 15:00 → starts');
+    assert.equal(overdriveMult(T0), 5);
+    assert.ok(overdriveRemaining(T0) >= 5 * MIN, 'at least the 5 base minutes');
+    assert.equal(JSON.parse(map.get(OVERDRIVE_KEY)).playMs, 0, 'the clock restarts');
+    for (let i = 1; i <= 50; i++) notePlay(5000, T0 + i * 5000, () => 0);
+    assert.equal(JSON.parse(map.get(OVERDRIVE_KEY)).playMs, 0, 'play inside the window does not count');
   });
 });
 
@@ -90,19 +84,6 @@ test('idle gaps are capped (5 s a gap): a long idle tab never counts as play', (
     // garbage counts nothing
     for (const bad of [0, -5, NaN, Infinity, undefined]) assert.equal(notePlay(bad, T0, () => 0), false);
     assert.equal(JSON.parse(map.get(OVERDRIVE_KEY)).playMs, 101 * 5000);
-  });
-});
-
-test('play DURING an OVERDRIVE does not count toward the next; the clock restarts from zero', () => {
-  withStorage({}, (map) => {
-    const r = playFor(31, () => 0);
-    assert.ok(r);
-    assert.equal(JSON.parse(map.get(OVERDRIVE_KEY)).playMs, 0);
-    for (let i = 1; i <= 50; i++) notePlay(5000, r.now + i * 5000, () => 0); // 4m10s inside the window
-    assert.equal(JSON.parse(map.get(OVERDRIVE_KEY)).playMs, 0);
-    // after it ends, the next one is again ≥ 30 min of play away
-    const next = playFor(29.9, () => 0, r.now + 5 * MIN);
-    assert.equal(next, null);
   });
 });
 

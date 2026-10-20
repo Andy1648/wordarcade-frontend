@@ -19,6 +19,9 @@ export const NEW_CREW = [
   // oct18 wave 2: SHH (the mime: never says a word, in a word game) and SIZZLE
   { id: 'shh', name: 'SHH', tag: 'SAYS NOTHING. WINS ANYWAY.', color: '#F2F2F5', dark: '#6E6E86' },
   { id: 'sizzle', name: 'SIZZLE', tag: 'TOO HOT TO HANDLE', color: '#D7263D', dark: '#7E0F20' },
+  // oct19 wave 3 (Andy: "not to mention making new heros"): QUILL (the dramatic poet) and JINX (the unlucky black cat)
+  { id: 'quill', name: 'QUILL', tag: 'SPEAKS ONLY IN VERSE', color: '#8B4DFF', dark: '#3A1580' },
+  { id: 'jinx', name: 'JINX', tag: 'NINE LIVES. ZERO LUCK.', color: '#A8F03C', dark: '#1E1A2B' },
 ];
 // LEGEND (oct17 night): the rarest tier — a cast member nobody else has, in its own painted LEGEND frame. BOO (the ghost
 // of a bomb that already went off) needs REBIRTH 5 and then gems (oct19, HERO_PRICE / HERO_UNLOCK below).
@@ -67,10 +70,11 @@ export const goldProgress = (id) => {
 //   the wait. DUD is the dearest of the four.
 // · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
 // Heroes are looks only: none of this changes how a game plays or pays.
-export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, dud: 1000, boo: 7500, mecha: 10000 };
+export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, boo: 7500, mecha: 10000 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
   shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
   sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
+  quill: { wins: 80, label: '80 WINS', icon: 'wins' }, jinx: { wins: 130, label: '130 WINS', icon: 'wins' }, // unlucky 13
   boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true } };
 // the ACHIEVEMENTS counters (progress/v3/store.js taw.s2.count) read straight from storage, which keeps the cast data
 // free of the progress store import (`mp` = online wins, `bots` = wins against bots)
@@ -145,6 +149,7 @@ const PAINTED = new Set([
   // NEW FACES (oct17 night, ChatGPT with RIOT's HERO attached as the style reference)
   'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero', 'lexi-win', 'lexi-ko', 'boo-hero', 'boo-win', 'boo-ko',
   'shh-hero', 'shh-win', 'shh-ko', 'sizzle-hero', 'sizzle-win', 'sizzle-ko', 'mecha-hero', 'mecha-win', 'mecha-ko',
+  'quill-hero', 'quill-win', 'quill-ko', 'jinx-hero', 'jinx-win', 'jinx-ko',
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
@@ -208,6 +213,8 @@ export const CAST_BEATS = {
   boo: { ms: 2200, k: [[0, 1, 1], [0.5, 0.97, 1.04], [1, 1, 1]] }, // a ghost's slow swell (it has no feet to bounce on)
   shh: { ms: 1400, k: [[0, 1, 1], [0.4, 1.02, 0.98], [0.75, 0.99, 1.02], [1, 1, 1]] }, // a hushed, careful breath
   sizzle: { ms: 640, k: [[0, 1, 1], [0.25, 1.06, 0.94], [0.5, 0.96, 1.05], [0.75, 1.03, 0.97], [1, 1, 1]] }, // hot and jumpy
+  quill: { ms: 1300, k: [[0, 1, 1], [0.4, 0.97, 1.04], [0.75, 1.02, 0.98], [1, 1, 1]] }, // a theatrical inhale
+  jinx: { ms: 900, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.6, 0.97, 1.03], [1, 1, 1]] }, // a cat's twitchy settle
   mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
 };
 for (const e of [...ELITE, ...GOLD]) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE / GOLD keeps its member's tempo
@@ -348,6 +355,85 @@ CAST_LAYERS['riot-gold'] = goldAct('riot', [
   { src: '/cast/props/spray-drop.webp', x: 19, y: 24.5, w: 3.6 },
 ]);
 for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
+/** PAINTED FRAME ANIMATION (oct19, Andy: "more quality and diverse animations (that prob also arent css generated so you
+ *  can use chatgpt or gemini)"): a hero can have a hand-drawn FLIPBOOK — ChatGPT frames of the same character on one
+ *  sheet, cut + registered on the feet (public/cast/anim/<id>-<n>.webp) — that CastArt flips through like a Flash
+ *  timeline (hard frame swaps, no tweening). `seq` = [frame, ms] steps from the resting frame 0 back to it; `rest` = the
+ *  hold on frame 0 before the next play. While a hero has frames its painted HERO + prop streams are replaced by them. */
+export const CAST_FRAMES = {
+  // RIOT: shake the can (twice), spray, blow the nozzle like a smoking gun
+  // 6 frames (oct19, Andy: "a bit too choppy"): cocks the can → shakes it (twice) → aims, a first puff → full spray → blows the nozzle
+  riot: { n: 6, seq: [[1, 140], [2, 150], [1, 120], [2, 160], [3, 300], [4, 760], [5, 980]], rest: 1500 },
+  // GLITCH: bored chew → the bubble grows → huge → POP, gum all over its face, still unimpressed
+  // 6 frames: chew → the bubble grows (fist → head → HUGE) → POP → gum peeled half off, deadpan
+  glitch: { n: 6, seq: [[1, 300], [2, 320], [3, 520], [4, 380], [5, 1200]], rest: 2000 },
+  // HYPE: wind up → finger to the sky YELLING → wave it to the crowd (twice) → points right at you, wink
+  // 6 frames: finger up → YELL → swings it across, tongue out → back down → points right at you, wink
+  hype: { n: 6, seq: [[1, 160], [2, 520], [3, 340], [4, 260], [5, 900]], rest: 1600 },
+  // BRAWL: guard up → jab jab → big uppercut → gloves bumped, cocky wink
+  // 6 frames: guard → jab half → jab full (twice) → winds low → UPPERCUT → gloves bumped, wink
+  brawl: { n: 6, seq: [[1, 90], [2, 160], [1, 90], [0, 140], [1, 90], [2, 160], [3, 260], [4, 700], [5, 950]], rest: 1600 },
+  // HEX: reading → looks up, fingers wiggling stars → the book FLARES, eyes glowing → snaps it shut, 'shh'
+  // 6 frames: reading → looks up, a first star → fingers wiggle stars → the book FLARES → snaps shut → 'shh'
+  hex: { n: 6, seq: [[1, 360], [2, 520], [3, 820], [4, 360], [5, 1100]], rest: 1900 },
+  // BOO: sneaky grin → peeks through its fingers (twice) → arms wide, the big spook → doubled over laughing
+  boo: { n: 4, seq: [[1, 420], [0, 160], [1, 420], [2, 850], [3, 1050]], rest: 1800 },
+  // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
+  mecha: { n: 4, seq: [[1, 750], [0, 180], [2, 720], [3, 1150]], rest: 1800 },
+  // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
+  dud: { n: 4, seq: [[1, 900], [2, 650], [3, 1200]], rest: 2400 },
+  // LEXI: finger raised → pushes the glasses up, *glint* → book open, lecturing → hugs the book, smug
+  lexi: { n: 4, seq: [[1, 600], [2, 1000], [3, 1000]], rest: 2000 },
+  // SHH: finger to lips → the invisible wall → the invisible rope → a smug bow
+  shh: { n: 4, seq: [[1, 800], [2, 380], [0, 120], [2, 380], [3, 1100]], rest: 2000 },
+  // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
+  sizzle: { n: 4, seq: [[1, 650], [2, 900], [3, 1100]], rest: 1900 },
+  // 6-FRAME loops (oct19, Andy: "we can add in more frames bc currently its a bit too choppy"): a 3x2 wide sheet = six
+  // full-res frames, each a small step from the last, so the beats flow instead of jumping
+  // QUILL recites: breath in → unrolls the scroll → arm swept wide → quill flourish → rolls it up, a smug little bow
+  quill: { n: 6, seq: [[1, 220], [2, 260], [3, 520], [4, 420], [5, 460]], rest: 1700 },
+  // JINX: admires the mirror shard → it CRACKS → fur puffs, tail bottle-brushed, HISS → licks a paw, over it → smug
+  jinx: { n: 6, seq: [[1, 420], [2, 260], [3, 700], [4, 520], [5, 420]], rest: 1600 },
+  // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
+  // flipbooks replace the prop streams too
+  // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
+  'hype-elite': { n: 4, seq: [[1, 700], [2, 1000], [3, 1100]], rest: 1800 },
+  // ROCKSTAR RIOT: horns up → strums (twice), notes fly → windmill + headbang, sparks off the guitar → rock-god pose
+  'riot-elite': { n: 4, seq: [[1, 220], [0, 120], [1, 220], [2, 900], [3, 1100]], rest: 1700 },
+  // CHAMP BRAWL: guard → jab → hoists the BELT, camera flashes → kisses the glove at you
+  'brawl-elite': { n: 4, seq: [[1, 160], [0, 140], [1, 160], [2, 1100], [3, 1000]], rest: 1700 },
+  // GLITCH.EXE: bored hologram → types, code floats up → the whole body GLITCHES (sliced + pixels) → arms crossed, smug
+  'glitch-elite': { n: 4, seq: [[1, 700], [2, 160], [1, 120], [2, 420], [3, 1200]], rest: 2000 },
+  // ARCHMAGE HEX: leans on the staff → crystal flares → a swirl of runes + stars bursts out → calm, smug
+  'hex-elite': { n: 4, seq: [[1, 650], [2, 1050], [3, 1150]], rest: 2000 },
+};
+// GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
+// (a member re-painted at 6 frames keeps a 4-frame GOLD: GOLD_SEQ4 holds the 4-frame beat it was painted to)
+const GOLD_SEQ4 = { hex: { n: 4, seq: [[1, 650], [2, 900], [3, 1150]], rest: 2000 }, brawl: { n: 4, seq: [[1, 150], [0, 130], [1, 150], [0, 160], [2, 650], [0, 180], [3, 950]], rest: 1700 }, glitch: { n: 4, seq: [[1, 380], [2, 520], [3, 1300]], rest: 2200 }, hype: { n: 4, seq: [[1, 280], [2, 300], [1, 280], [2, 300], [3, 1000]], rest: 1800 }, riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 } };
+for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = GOLD_SEQ4[b] || CAST_FRAMES[b];
+/** WIN flipbooks (oct19, Andy: "theres so much hero stuff we can improve on"): the victory pose acts out a short
+ *  celebration on the results screen, the preview's WIN tab and the NEW HERO reveal. Frames are
+ *  public/cast/anim/<id>-win-<n>.webp, registered on the pose's lowest point (the WIN poses are mid-jump). */
+export const CAST_WIN_FRAMES = {};
+// each spec carries its file prefix; built ONCE here so a component's effect deps stay stable across re-renders
+const FRAME_SPECS = { hero: {}, win: {} };
+for (const [id, F] of Object.entries(CAST_FRAMES)) FRAME_SPECS.hero[id] = { ...F, file: id };
+export function registerWinFrames(id, F) { CAST_WIN_FRAMES[id] = F; FRAME_SPECS.win[id] = { ...F, file: `${id}-win` }; }
+// a WIN celebration runs tighter than an idle: short holds, a short rest — it's a party
+const WIN_SEQ = { n: 4, seq: [[1, 480], [2, 520], [3, 900]], rest: 700 };
+registerWinFrames('riot', WIN_SEQ);
+// 6-frame WIN sheets (3x2): small steps, so the party flows
+const WIN_SEQ6 = { n: 6, seq: [[1, 260], [2, 420], [3, 420], [4, 520], [5, 900]], rest: 600 };
+registerWinFrames('glitch', WIN_SEQ6);
+registerWinFrames('hype', WIN_SEQ6);
+registerWinFrames('brawl', WIN_SEQ6);
+registerWinFrames('hex', WIN_SEQ6);
+registerWinFrames('sizzle', WIN_SEQ6);
+registerWinFrames('boo', WIN_SEQ6);
+registerWinFrames('mecha', WIN_SEQ6);
+registerWinFrames('dud', WIN_SEQ6);
+registerWinFrames('lexi', WIN_SEQ6);
+export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
  *  move — RIOT head-bangs, GLITCH stays bored then skips a frame, HYPE double-hops, BRAWL bobs and weaves, HEX floats.
@@ -371,6 +457,8 @@ export const CAST_IDLE = {
   sizzle: { ms: 1500, rest: 0, k: [[0, 1, 1, 0, 0], [0.08, 1, 1, -1.5, 0], [0.16, 1, 1, 1.5, 0], [0.24, 1, 1, -1.5, 0], [0.32, 1, 1, 0, 0], [0.45, 1.08, 0.9, 0, 0], [0.6, 0.94, 1.08, 0, -7], [0.78, 1.05, 0.95, 0, 0], [1, 1, 1, 0, 0]] },
   // MECHA powers up: the hydraulics squat, the jets lift it, it hangs, then lands heavy
   mecha: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.18, 1.06, 0.93, 0, 1], [0.38, 0.97, 1.04, 0, -6], [0.62, 0.97, 1.04, 0, -6], [0.78, 1.08, 0.92, 0, 1], [0.9, 0.99, 1.01, 0, 0], [1, 1, 1, 0, 0]] },
+  quill: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.3, 0.97, 1.04, 0, -3], [0.6, 1, 1, 0, -3], [0.8, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
+  jinx: { ms: 2000, rest: 0, k: [[0, 1, 1, 0, 0], [0.2, 1.04, 0.95, 0, 1], [0.35, 0.96, 1.05, 0, -4], [0.5, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
   lexi: { ms: 1900, rest: 0, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
 };
 for (const e of [...ELITE, ...GOLD]) CAST_IDLE[e.id] = CAST_IDLE[e.base];

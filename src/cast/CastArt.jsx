@@ -6,7 +6,7 @@
 // by a timer (nothing infinite), transform + opacity only, will-change only while playing (kitPlay), hidden tab skipped,
 // reduce-motion = the resting small bubble.
 import { useEffect, useRef } from 'react';
-import { castSrc, castLayers, heroById } from './cast.js';
+import { castSrc, castLayers, castFrames, heroById } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
 import { flagDefaultOn } from '../lib/featureFlags.js';
 import './CastArt.css';
@@ -322,8 +322,49 @@ function Slot({ sp }) {
 }
 
 /** `live` = run the prop streams (the big showcase / podium / in-game seat); false = the static resting look (thumbnails). */
-export default function CastArt({ id, pose = 'hero', className = '', artRef, alt = '', live = true, ...rest }) {
+/** FLIPBOOK (cast.js CAST_FRAMES): the frames stacked, frame 0 resting visible. One play = each frame layer gets ONE
+ *  finite opacity animation whose keyframes switch it on/off at its steps (step easing — hard swaps like a Flash
+ *  timeline, nothing tweened); a timer re-arms the play after `rest`. Opacity only, nothing infinite, hidden tab
+ *  skipped, reduce motion = frame 0 (kitPlay no-ops). */
+function Flipbook({ id, F, live }) {
+  const refs = useRef([]);
+  useEffect(() => {
+    if (!live) return undefined;
+    const total = F.seq.reduce((t, [, ms]) => t + ms, 0);
+    let t = 0;
+    const play = () => {
+      if (document.visibilityState !== 'hidden') {
+        for (let k = 0; k < F.n; k++) {
+          const frames = [];
+          let at = 0;
+          for (const [f, ms] of F.seq) { frames.push({ offset: at / total, opacity: f === k ? 1 : 0, easing: 'step-end' }); at += ms; }
+          frames.push({ offset: 1, opacity: k === 0 ? 1 : 0 });
+          kitPlay(refs.current[k], frames, { duration: total, easing: 'linear' });
+        }
+      }
+      t = setTimeout(play, total + F.rest);
+    };
+    t = setTimeout(play, 600 + Math.random() * 900);
+    return () => clearTimeout(t);
+  }, [id, F, live]);
+  // frame 0 is ALWAYS the same node (a card that turns live under the pointer must not swap the element being clicked);
+  // the other frames mount only while live
+  return Array.from({ length: live ? F.n : 1 }, (_, k) => (
+    <img key={k} ref={(el) => { refs.current[k] = el; }} className={`cast-frame${k === 0 ? ' is-rest' : ''}`} src={`/cast/anim/${F.file}-${k}.webp`} width="512" height="512" alt="" draggable="false" />
+  ));
+}
+
+/** `keepFrames`: render the flipbook's resting frame even while not live (a picker card that goes live on hover keeps its node). */
+export default function CastArt({ id, pose = 'hero', className = '', artRef, alt = '', live = true, keepFrames = false, ...rest }) {
   const rarity = rarityOf(heroById(id));
+  const F = live || keepFrames ? castFrames(id, pose) : null;
+  if (F) {
+    return (
+      <span ref={artRef} className={`${className} cast-layered cast-flip`} role={alt ? 'img' : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : 'true'} {...rest}>
+        <Flipbook id={id} F={F} live={live} />
+      </span>
+    );
+  }
   const L = castLayers(id, pose) || (rarity.tier ? {} : null);
   if (!L) return <img ref={artRef} className={className} src={castSrc(id, pose)} width="512" height="512" alt={alt} draggable="false" {...rest} />;
   const slots = flagDefaultOn('props') ? L.slots || [] : [];

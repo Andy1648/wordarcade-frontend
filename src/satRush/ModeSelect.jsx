@@ -15,7 +15,11 @@ const MODES = [
   { id: 'lineup', title: 'LINEUP', line: "no help, but you'll see the suspects" },
 ];
 
-export default function ModeSelect({ lastMode = 'briefing', onChoose, onExit }) {
+export default function ModeSelect({ lastMode = 'briefing', onChoose, onExit, ui = null }) {
+  // a pack may name its modes in its own words (FRENCH RUSH: STUDY FIRST / QUIZ)
+  const U = ui || {};
+  const modes = MODES.map((m) => ({ ...m, ...((U.modes && U.modes[m.id]) || {}) }));
+  const head = U.modeHead || 'PICK YOUR BEAT';
   const selRef = useRef(null);
 
   // Preselect: focus the last-chosen card so Enter repeats it.
@@ -26,12 +30,12 @@ export default function ModeSelect({ lastMode = 'briefing', onChoose, onExit }) 
   return (
     <div className="sr-screen">
       <div className="sr-modeselect">
-        <div className="sr-modeselect-head sr-print" data-v={'PICK YOUR BEAT'}>
-          PICK&nbsp;YOUR&nbsp;BEAT
+        <div className={`sr-modeselect-head sr-print${U.modeHead ? ' long' : ''}`} data-v={head}>
+          {head}
         </div>
 
         <div className="sr-modecards">
-          {MODES.map((m) => (
+          {modes.map((m) => (
             <button
               key={m.id}
               type="button"

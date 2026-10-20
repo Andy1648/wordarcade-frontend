@@ -12,7 +12,7 @@ const ROWS = [
   ['mk-ul-og', 'O.G.', 'newgrounds', 'wbWinsPct', 'C9 X5 L15 O60'],
   ['mk-ul-wishbone', 'WISHBONE', null, 'overdriveSec', 'C4.5 L30 G22.5'],
   ['mk-ul-typewriter', 'TYPEWRITER', null, 'baseXp', 'C18 P1 W10'],
-  ['mk-ul-mirror', 'MIRROR', 'palindrome', 'chainWinsPct', 'P1.5 W15 L15'],
+  ['mk-ul-mirror', 'MIRROR', null, 'chainWinsPct', 'P1.5 W15 L15'],
   ['mk-ul-midas', 'MIDAS', 'midas', 'baseWins', 'P1 L15 G30'],
   ['mk-ul-tripledouble', 'TRIPLE DOUBLE', 'tripledouble', 'raceWinsPct', 'C13.5 X5 O90'],
 ];
