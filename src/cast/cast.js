@@ -355,7 +355,8 @@ for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
  *  hold on frame 0 before the next play. While a hero has frames its painted HERO + prop streams are replaced by them. */
 export const CAST_FRAMES = {
   // RIOT: shake the can (twice), spray, blow the nozzle like a smoking gun
-  riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 },
+  // 6 frames (oct19, Andy: "a bit too choppy"): cocks the can → shakes it (twice) → aims, a first puff → full spray → blows the nozzle
+  riot: { n: 6, seq: [[1, 140], [2, 150], [1, 120], [2, 160], [3, 300], [4, 760], [5, 980]], rest: 1500 },
   // GLITCH: bored chew → the bubble grows → huge → POP, gum all over its face, still unimpressed
   glitch: { n: 4, seq: [[1, 380], [2, 520], [3, 1300]], rest: 2200 },
   // HYPE: wind up → finger to the sky YELLING → wave it to the crowd (twice) → points right at you, wink
@@ -390,7 +391,9 @@ export const CAST_FRAMES = {
   'hex-elite': { n: 4, seq: [[1, 650], [2, 1050], [3, 1150]], rest: 2000 },
 };
 // GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
-for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = CAST_FRAMES[b];
+// (a member re-painted at 6 frames keeps a 4-frame GOLD: GOLD_SEQ4 holds the 4-frame beat it was painted to)
+const GOLD_SEQ4 = { riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 } };
+for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = GOLD_SEQ4[b] || CAST_FRAMES[b];
 /** WIN flipbooks (oct19, Andy: "theres so much hero stuff we can improve on"): the victory pose acts out a short
  *  celebration on the results screen, the preview's WIN tab and the NEW HERO reveal. Frames are
  *  public/cast/anim/<id>-win-<n>.webp, registered on the pose's lowest point (the WIN poses are mid-jump). */
