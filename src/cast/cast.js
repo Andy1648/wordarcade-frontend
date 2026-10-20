@@ -383,6 +383,12 @@ export const CAST_FRAMES = {
   shh: { n: 4, seq: [[1, 800], [2, 380], [0, 120], [2, 380], [3, 1100]], rest: 2000 },
   // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
   sizzle: { n: 4, seq: [[1, 650], [2, 900], [3, 1100]], rest: 1900 },
+  // 6-FRAME loops (oct19, Andy: "we can add in more frames bc currently its a bit too choppy"): a 3x2 wide sheet = six
+  // full-res frames, each a small step from the last, so the beats flow instead of jumping
+  // QUILL recites: breath in → unrolls the scroll → arm swept wide → quill flourish → rolls it up, a smug little bow
+  quill: { n: 6, seq: [[1, 220], [2, 260], [3, 520], [4, 420], [5, 460]], rest: 1700 },
+  // JINX: admires the mirror shard → it CRACKS → fur puffs, tail bottle-brushed, HISS → licks a paw, over it → smug
+  jinx: { n: 6, seq: [[1, 420], [2, 260], [3, 700], [4, 520], [5, 420]], rest: 1600 },
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
