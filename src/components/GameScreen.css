@@ -7095,34 +7095,34 @@ html[data-beat='true'] .wb-belly {
    the title. NO SCROLLBAR (Andy oct19 "I DONT WANT SCROLL BARS"): the list takes the rail's leftover height and, when
    the chips outgrow it, GameScreen steps them down a size (data-fit 1..3) instead of scrolling. */
 .cb-title-row { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.cb-category-label .cb-topword { font-size: 0.72em; }
+.cb-category-label .cb-topword { font-size: calc(var(--fs-unit) * 1.6); }
 .cb-round .cb-my-answers { display: flex; flex-direction: column; min-height: 0; }
 .cb-answers-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .cb-answers-head .cb-section-label { margin: 0; }
 .cb-answers-count {
-  font-family: 'Bungee', cursive; line-height: 1; font-size: clamp(30px, 3.2vw, 54px);
+  font-family: 'Bungee', cursive; text-transform: uppercase; line-height: 1; font-size: var(--fs-h1);
   color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
   transform-origin: right bottom; animation: cb-count-pop 260ms cubic-bezier(0.2, 1.6, 0.4, 1) 1;
 }
-.cb-answers-of { font-size: 0.46em; color: #FFE94A; -webkit-text-stroke: 2px #000; margin-left: 3px; }
+.cb-answers-of { font-size: var(--fs-unit); color: #FFE94A; -webkit-text-stroke: 2px #000; margin-left: 3px; }
 .cb-round .cb-answers-list {
   max-height: none; overflow: hidden; gap: 8px; padding: 2px 6px 6px 2px; align-content: flex-start;
 }
 .cb-round .cb-answer-chip {
-  font-size: clamp(16px, 1.25vw, 20px); letter-spacing: 0.04em; padding: 4px 10px; border-width: 3px; border-radius: 6px;
+  font-size: calc(var(--fs-body) * 1.1); letter-spacing: 0.04em; padding: 4px 10px; border-width: 3px; border-radius: 6px;
   box-shadow: 3px 3px 0 #000; max-width: 100%; overflow-wrap: anywhere; transform: none;
 }
 .cb-round .cb-answers-list .cb-answer-chip:last-child { background: #FFE94A; border-color: #B39F1A; }
 /* shrink steps, smallest last; each also tightens the gaps */
 .cb-round .cb-answers-list[data-fit='1'] { gap: 6px; }
-.cb-round .cb-answers-list[data-fit='1'] .cb-answer-chip { font-size: clamp(14px, 1.05vw, 17px); padding: 3px 8px; }
+.cb-round .cb-answers-list[data-fit='1'] .cb-answer-chip { font-size: var(--fs-body); padding: 3px 8px; }
 .cb-round .cb-answers-list[data-fit='2'] { gap: 5px; }
-.cb-round .cb-answers-list[data-fit='2'] .cb-answer-chip { font-size: 13px; padding: 2px 6px; box-shadow: 2px 2px 0 #000; border-width: 2px; }
+.cb-round .cb-answers-list[data-fit='2'] .cb-answer-chip { font-size: var(--fs-label); padding: 2px 6px; box-shadow: 2px 2px 0 #000; border-width: 2px; }
 /* last step: if even the smallest chips overflow (a phone at 30+ answers), the list swipes with NO visible scrollbar;
    the newest answers are on top, so what you just typed never leaves the screen */
 .cb-round .cb-answers-list[data-fit='3'] { gap: 4px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
 .cb-round .cb-answers-list[data-fit='3']::-webkit-scrollbar { display: none; }
-.cb-round .cb-answers-list[data-fit='3'] .cb-answer-chip { font-size: 12px; padding: 1px 5px; box-shadow: 2px 2px 0 #000; border-width: 2px; letter-spacing: 0.02em; }
+.cb-round .cb-answers-list[data-fit='3'] .cb-answer-chip { font-size: calc(var(--fs-label) * 0.92); padding: 1px 5px; box-shadow: 2px 2px 0 #000; border-width: 2px; letter-spacing: 0.02em; }
 /* desktop: the rail is a column the main side sizes, so the list fills whatever the players block leaves */
 @media (min-width: 900px) {
   /* the rail never sizes the row: height 0 + min-height 100% = exactly the main column's height (it used to grow with a
@@ -7138,7 +7138,7 @@ html[data-beat='true'] .wb-belly {
   .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) > .cb-section-label { margin-bottom: 2px; }
   .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-row { padding: 2px 8px; margin: 0; box-shadow: 2px 2px 0 #000; }
   .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-name,
-  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-count { font-size: 15px; }
+  .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-count { font-size: calc(var(--fs-label) * 1.15); }
   .cb-round .cb-progress:has(> .cb-progress-row:nth-of-type(5)) .cb-progress-unit { display: none; }
 }
 /* phone: the board stacks, so the list gets a fixed slice (as before) and the same shrink steps fill it */
