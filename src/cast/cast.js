@@ -355,15 +355,20 @@ for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
  *  hold on frame 0 before the next play. While a hero has frames its painted HERO + prop streams are replaced by them. */
 export const CAST_FRAMES = {
   // RIOT: shake the can (twice), spray, blow the nozzle like a smoking gun
-  riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 },
+  // 6 frames (oct19, Andy: "a bit too choppy"): cocks the can → shakes it (twice) → aims, a first puff → full spray → blows the nozzle
+  riot: { n: 6, seq: [[1, 140], [2, 150], [1, 120], [2, 160], [3, 300], [4, 760], [5, 980]], rest: 1500 },
   // GLITCH: bored chew → the bubble grows → huge → POP, gum all over its face, still unimpressed
-  glitch: { n: 4, seq: [[1, 380], [2, 520], [3, 1300]], rest: 2200 },
+  // 6 frames: chew → the bubble grows (fist → head → HUGE) → POP → gum peeled half off, deadpan
+  glitch: { n: 6, seq: [[1, 300], [2, 320], [3, 520], [4, 380], [5, 1200]], rest: 2000 },
   // HYPE: wind up → finger to the sky YELLING → wave it to the crowd (twice) → points right at you, wink
-  hype: { n: 4, seq: [[1, 280], [2, 300], [1, 280], [2, 300], [3, 1000]], rest: 1800 },
+  // 6 frames: finger up → YELL → swings it across, tongue out → back down → points right at you, wink
+  hype: { n: 6, seq: [[1, 160], [2, 520], [3, 340], [4, 260], [5, 900]], rest: 1600 },
   // BRAWL: guard up → jab jab → big uppercut → gloves bumped, cocky wink
-  brawl: { n: 4, seq: [[1, 150], [0, 130], [1, 150], [0, 160], [2, 650], [0, 180], [3, 950]], rest: 1700 },
+  // 6 frames: guard → jab half → jab full (twice) → winds low → UPPERCUT → gloves bumped, wink
+  brawl: { n: 6, seq: [[1, 90], [2, 160], [1, 90], [0, 140], [1, 90], [2, 160], [3, 260], [4, 700], [5, 950]], rest: 1600 },
   // HEX: reading → looks up, fingers wiggling stars → the book FLARES, eyes glowing → snaps it shut, 'shh'
-  hex: { n: 4, seq: [[1, 650], [2, 900], [3, 1150]], rest: 2000 },
+  // 6 frames: reading → looks up, a first star → fingers wiggle stars → the book FLARES → snaps shut → 'shh'
+  hex: { n: 6, seq: [[1, 360], [2, 520], [3, 820], [4, 360], [5, 1100]], rest: 1900 },
   // BOO: sneaky grin → peeks through its fingers (twice) → arms wide, the big spook → doubled over laughing
   boo: { n: 4, seq: [[1, 420], [0, 160], [1, 420], [2, 850], [3, 1050]], rest: 1800 },
   // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
@@ -390,8 +395,32 @@ export const CAST_FRAMES = {
   'hex-elite': { n: 4, seq: [[1, 650], [2, 1050], [3, 1150]], rest: 2000 },
 };
 // GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
-for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = CAST_FRAMES[b];
-export const castFrames = (id, pose = 'hero') => (pose === 'hero' && CAST_FRAMES[id]) || null;
+// (a member re-painted at 6 frames keeps a 4-frame GOLD: GOLD_SEQ4 holds the 4-frame beat it was painted to)
+const GOLD_SEQ4 = { hex: { n: 4, seq: [[1, 650], [2, 900], [3, 1150]], rest: 2000 }, brawl: { n: 4, seq: [[1, 150], [0, 130], [1, 150], [0, 160], [2, 650], [0, 180], [3, 950]], rest: 1700 }, glitch: { n: 4, seq: [[1, 380], [2, 520], [3, 1300]], rest: 2200 }, hype: { n: 4, seq: [[1, 280], [2, 300], [1, 280], [2, 300], [3, 1000]], rest: 1800 }, riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 } };
+for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = GOLD_SEQ4[b] || CAST_FRAMES[b];
+/** WIN flipbooks (oct19, Andy: "theres so much hero stuff we can improve on"): the victory pose acts out a short
+ *  celebration on the results screen, the preview's WIN tab and the NEW HERO reveal. Frames are
+ *  public/cast/anim/<id>-win-<n>.webp, registered on the pose's lowest point (the WIN poses are mid-jump). */
+export const CAST_WIN_FRAMES = {};
+// each spec carries its file prefix; built ONCE here so a component's effect deps stay stable across re-renders
+const FRAME_SPECS = { hero: {}, win: {} };
+for (const [id, F] of Object.entries(CAST_FRAMES)) FRAME_SPECS.hero[id] = { ...F, file: id };
+export function registerWinFrames(id, F) { CAST_WIN_FRAMES[id] = F; FRAME_SPECS.win[id] = { ...F, file: `${id}-win` }; }
+// a WIN celebration runs tighter than an idle: short holds, a short rest — it's a party
+const WIN_SEQ = { n: 4, seq: [[1, 480], [2, 520], [3, 900]], rest: 700 };
+registerWinFrames('riot', WIN_SEQ);
+// 6-frame WIN sheets (3x2): small steps, so the party flows
+const WIN_SEQ6 = { n: 6, seq: [[1, 260], [2, 420], [3, 420], [4, 520], [5, 900]], rest: 600 };
+registerWinFrames('glitch', WIN_SEQ6);
+registerWinFrames('hype', WIN_SEQ6);
+registerWinFrames('brawl', WIN_SEQ6);
+registerWinFrames('hex', WIN_SEQ6);
+registerWinFrames('sizzle', WIN_SEQ6);
+registerWinFrames('boo', WIN_SEQ6);
+registerWinFrames('mecha', WIN_SEQ6);
+registerWinFrames('dud', WIN_SEQ6);
+registerWinFrames('lexi', WIN_SEQ6);
+export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
  *  move — RIOT head-bangs, GLITCH stays bored then skips a frame, HYPE double-hops, BRAWL bobs and weaves, HEX floats.
