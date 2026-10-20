@@ -440,7 +440,8 @@ export default function WordRaceScreen({
               )}
             </div>
           </div>
-          <ol className="wr-standings">
+          {/* --wr-rows: two columns from 700px fill top-to-bottom (1-4 | 5-8), so places read down. */}
+          <ol className="wr-standings" style={{ '--wr-rows': Math.ceil(standings.length / 2) }}>
             {standings.map((s) => (
               <li key={s.id} className={s.id === myId ? 'is-me' : ''} data-standing-id={s.id}>
                 <span className="wr-st-place">{ordinal(s.place)}</span>

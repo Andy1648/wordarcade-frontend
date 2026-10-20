@@ -4702,7 +4702,13 @@ function CategoryBlitzScreen({
               <WinnerPopup pay={winnerPay} />
             </Suspense>
           )}
-          <div className="game-over-card">
+          <div className="game-over-card cb-go-card" data-players={scores.length}>
+            {/* COLUMNS (Andy: "no scroll screens on any end screen"). This card shares .game-over-card
+                with Word Bomb, whose >=900px grid places .go-col-main / .go-col-mid / .go-col-side /
+                .go-foot. Without those wrappers every child here was auto-placed into that grid —
+                empty tiles, the try row cut off, and a scrollbar at every size. Below 900px the
+                columns are display:contents, so the phone stack keeps its DOM order. */}
+            <div className="go-col go-col-main">
             {/* The mascot's emotional reaction, large and centred above the title. */}
             <Mascot
               pose={iWon ? 'celebrate' : 'panic'}
@@ -4733,6 +4739,8 @@ function CategoryBlitzScreen({
               <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
               <GemsEarnedLine since={gemsSince} />
             </div>
+            </div>
+            <div className="go-col go-col-mid">
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (
@@ -4757,6 +4765,8 @@ function CategoryBlitzScreen({
               </div>
             </div>
             )}
+            </div>
+            <div className="go-col go-col-side">
             <div className="cb-scoreboard">
               {scores.map((s, i) => {
                 const pc = resolvePlayerColor(playerColors, s.id);
@@ -4783,6 +4793,8 @@ function CategoryBlitzScreen({
                 );
               })}
             </div>
+            </div>
+            <div className="go-foot">
             <div className="game-over-actions">
               <RebirthReadyButton onGo={onLeave} className="is-compact" />
               {/* mp-audit MEDIUM #3: rematch is no longer host-only. Once the game is
@@ -4816,6 +4828,7 @@ function CategoryBlitzScreen({
             <ClaimPrompt />
             <NearMiss mode="category-blitz" onPlay={onRematch} disabled={rematchPending} />
             <TryModeRow current="category-blitz" />
+            </div>
           </div>
         </div>
       </div>

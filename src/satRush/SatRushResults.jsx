@@ -10,6 +10,7 @@ import { createCountUp } from '../juice/countUp';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
 import TryModeRow from '../share/TryModeRow.jsx';
+import { groupBonusLines } from '../components/winsGroup.js';
 import ClaimPrompt from '../leaderboard/ClaimPrompt.jsx';
 import NearMiss from '../components/NearMiss.jsx';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
@@ -37,8 +38,9 @@ function frameOf(e) {
 const OUTCOME = { clean: 'CAPTURED', recaptured: 'RECAPTURED', shaky: 'BARELY', escaped: 'ESCAPED' };
 const MASTERY = { known: 'known', learning: 'learning', new: 'new' };
 
-function CaseFileRow({ c, outcomes, speak }) {
-  const open = c.outcome !== 'clean';
+function CaseFileRow({ c, outcomes, speak, detail = false }) {
+  // In the paged case file the picked word always opens — a clean one too (what it means is the point).
+  const open = detail || c.outcome !== 'clean';
   const [before, after] = String(c.context || '').split(/_+/);
   return (
     <li className={`sr-casefile-row ${c.outcome}`}>
@@ -71,6 +73,69 @@ function CaseFileRow({ c, outcomes, speak }) {
   );
 }
 
+// THE CASE FILE, PAGED (Andy oct19: "i dont want any scroll screens on any end screen"). A run is up
+// to 30 words and every one that did not settle clean opened its definition + example in place, so the
+// list was a scroll of its own inside a page that scrolled too. Now: the words are a grid of chips (the
+// outcome on each), a page at a time, and ONE detail panel under them — the full row (definition,
+// example, say-it) for the chip you pick, opened on the first miss. Same corrective feedback, one word
+// at a time, and the page never grows with the run. The page size is fixed per screen class, read
+// once (matchMedia — no layout read), so a resize mid-results only changes how many chips a page holds
+// on the next visit.
+function casePageSize() {
+  if (typeof window === 'undefined' || !window.matchMedia) return 12;
+  const mq = (q) => window.matchMedia(q).matches;
+  if (mq('(max-width: 899px)')) return mq('(max-height: 760px)') ? 4 : 6;
+  return mq('(max-height: 600px)') ? 8 : 12;
+}
+
+function CaseFile({ caseFile, revealed, label, outcomes, speak }) {
+  const [size] = useState(casePageSize);
+  const firstMiss = Math.max(0, caseFile.findIndex((c) => c.outcome !== 'clean'));
+  const [sel, setSel] = useState(firstMiss);
+  const [page, setPage] = useState(Math.floor(firstMiss / size));
+  const pages = Math.max(1, Math.ceil(caseFile.length / size));
+  const start = page * size;
+  const shown = caseFile.slice(start, start + size);
+  const picked = caseFile[sel] || caseFile[0];
+  const turn = (d) => {
+    const next = Math.min(pages - 1, Math.max(0, page + d));
+    setPage(next);
+    setSel(next * size);
+  };
+  return (
+    <div className={`sr-panel sr-casefile${revealed ? ' in' : ''}`}>
+      <span className="sr-panel-label">{label}</span>
+      <div className="sr-casefile-chips" role="list">
+        {shown.map((c, i) => (
+          <button
+            key={c.word}
+            type="button"
+            role="listitem"
+            className={`sr-casefile-chip ${c.outcome}${start + i === sel ? ' is-picked' : ''}`}
+            aria-pressed={start + i === sel}
+            onClick={() => setSel(start + i)}
+          >
+            <span className="sr-casefile-chip-word">{c.word}</span>
+            <span className="sr-casefile-chip-out">{(outcomes || OUTCOME)[c.outcome]}</span>
+          </button>
+        ))}
+      </div>
+      {pages > 1 && (
+        <div className="sr-casefile-pager">
+          <button type="button" className="sr-casefile-turn" onClick={() => turn(-1)} disabled={page === 0} aria-label="previous words">‹</button>
+          <span className="sr-casefile-pageno">{`${page + 1} / ${pages}`}</span>
+          <button type="button" className="sr-casefile-turn" onClick={() => turn(1)} disabled={page >= pages - 1} aria-label="more words">›</button>
+        </div>
+      )}
+      {picked && (
+        <ul className="sr-casefile-list">
+          <CaseFileRow key={picked.word} c={picked} outcomes={outcomes} speak={speak} detail />
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, economy = true, ui = null }) {
   // a pack's own words for this page (FRENCH RUSH: TERMINÉ / correct / missed / your words …)
   const RU = (ui && ui.results) || null;
@@ -89,7 +154,8 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
   const finalAnte = winsEarned || 0;
   // H6/H15: bonuses credited during the run (mastery / collection milestones), itemised under the
   // wins line so the card adds up to what the balance moved by.
-  const bonusLines = (winsBonusLines || []).filter((l) => l && l.kind === 'bonus' && l.amount > 0);
+  // One row per bonus KIND (×N), capped — see components/winsGroup.js.
+  const bonusLines = groupBonusLines(winsBonusLines || []);
   const [score, setScore] = useState(0);
   const [ante, setAnte] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -165,7 +231,10 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
 
   return (
     <div className="sr-screen sr-results">
-      <div className="sr-respage">
+      <div className={`sr-respage${caseFile.length > 0 ? ' has-casefile' : ''}`}>
+        {/* TWO COLUMNS from 900px: the result + exits | the case file + study panels. Below it both
+            columns are display:contents — the phone page keeps its single DOM-ordered stack. */}
+        <div className="sr-res-col sr-res-main">
         {/* entry stamp, bounty voice: the run is over — the case is closed. */}
         <div className="sr-dead">
           {finite && !results.complete ? (RU ? RU.out : 'OUT OF LIVES') : RU ? RU.done : 'CASE CLOSED'}
@@ -197,7 +266,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         </div>}
         {economy && bonusLines.map((l) => (
           <div className="sr-winsline" key={l.id} data-wins-line={l.label} data-wins-amount={l.amount}>
-            <b>+{formatNum(l.amount)}</b> {l.label}
+            <b>+{formatNum(l.amount)}</b> {l.count > 1 ? `${l.label} ×${l.count}` : l.label}
           </div>
         ))}
         {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
@@ -273,17 +342,18 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
           <span>best streak <b>{results.bestStreak || 0}</b></span>
           <span>mastered <b>{results.mastered || 0}</b></span>
         </div>}
+        </div>
 
-        {/* THE CASE FILE — every word of the run (a list, so it may scroll inside its own panel) */}
+        <div className="sr-res-col sr-res-side">
+        {/* THE CASE FILE — every word of the run, paged (never a scroll) */}
         {caseFile.length > 0 && (
-          <div className={`sr-panel sr-casefile${revealed ? ' in' : ''}`}>
-            <span className="sr-panel-label">{RU ? RU.file : 'case file'}</span>
-            <ul className="sr-casefile-list">
-              {caseFile.map((c) => (
-                <CaseFileRow key={c.word} c={c} outcomes={RU && RU.outcomes} speak={speak} />
-              ))}
-            </ul>
-          </div>
+          <CaseFile
+            caseFile={caseFile}
+            revealed={revealed}
+            label={RU ? RU.file : 'case file'}
+            outcomes={RU && RU.outcomes}
+            speak={speak}
+          />
         )}
 
         {/* runLog film-strip: one small ruled frame per word, in order. */}
@@ -314,7 +384,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
           <div className={`sr-panel sr-keepmissing${revealed ? ' in' : ''}`}>
             <span className="sr-panel-label">words you keep missing</span>
             <ul className="sr-missing-list">
-              {results.keepMissing.map((m) => (
+              {results.keepMissing.slice(0, 5).map((m) => (
                 <li key={m.w} className="sr-missing-row">
                   <b className="sr-missing-word">{m.w}</b>
                   <span className="sr-missing-tally">missed {m.missed}×</span>
@@ -343,6 +413,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             </button>
           </div>
         ) : null}
+        </div>
       </div>
     </div>
   );

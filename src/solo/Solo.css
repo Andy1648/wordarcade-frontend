@@ -1630,6 +1630,14 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   .solo-deathcard {
     --death-gap: 8px;
   }
+  /* CHAIN's last links: one per row was five rows; inline they wrap to two. */
+  .solo-deathcard .solo-death-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 14px;
+    row-gap: 2px;
+  }
   .solo-deathcard .missed-hold {
     padding: 8px 10px;
     gap: 2px;
