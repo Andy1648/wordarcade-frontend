@@ -5,7 +5,8 @@
 //      in half by the card's own scroll box;
 //   3. YOUR PROFILE never scrolls sideways on a phone — FitText's scaled name left its unscaled width behind (94px);
 //   4. PATCH NOTES at 1280x551: no note row runs under the CLOSE button, and the gem wallet never covers the panel;
-//   5. the fixed corner cog is not drawn over the full-screen panels (UPGRADES / STATS / LEADERBOARD / CREDITS).
+//   5. the fixed corner cog is not drawn over the full-screen panels (UPGRADES / STATS / LEADERBOARD / CREDITS);
+//   6. STATS fits a phone — its ALL TIME row ran 24px past a 390x844 screen (a 360-wide phone still scrolls: ~800px of stats).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
@@ -123,6 +124,24 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
       await expect(page.locator('.audio-ctrl:not(.audio-ctrl--inline)').filter({ visible: true }), `${nav}: no stray cog`).toHaveCount(0);
       await page.locator(`${root} [aria-label="Back to menu"]`).first().click();
       await page.locator(isPhoneMenu(page) ? '.hp-m-title' : '.homepage-logo').first().waitFor({ state: 'visible' });
+    }
+  });
+}
+
+for (const [w, h] of [[390, 844], [412, 915]]) {
+  test(`STATS fits a phone without scrolling at ${w}x${h} (both tabs)`, async ({ page }) => {
+    await boot(page, w, h);
+    await navControl(page, 'stats').click();
+    const st = page.locator('.st2');
+    await st.waitFor({ state: 'visible' });
+    for (const tab of ['wins', 'xp']) {
+      await st.locator(`.st2-tab[data-tab="${tab}"]`).click();
+      await page.waitForTimeout(700);
+      const m = await st.evaluate((el) => ({ sy: el.scrollHeight - el.clientHeight, sx: el.scrollWidth - el.clientWidth }));
+      expect(m.sy, `${tab}: no vertical scroll`).toBeLessThanOrEqual(0);
+      expect(m.sx, `${tab}: no sideways scroll`).toBeLessThanOrEqual(0);
+      const life = await box(st.locator('.st2-life'));
+      expect(life.b, `${tab}: the ALL TIME grid is on screen`).toBeLessThanOrEqual(h);
     }
   });
 }
