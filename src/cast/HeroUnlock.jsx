@@ -94,7 +94,7 @@ export default function HeroUnlock({ ids, equipped = null, onEquip, onClose }) {
         <img ref={reg('burst')} className="hu-burst" src="/fx/burst-win.webp" alt="" aria-hidden="true" draggable="false" />
         <div ref={reg('rattle')} className="hu-cardbox">
           <img ref={reg('back')} className="hu-back" src="/fx/card-back.svg" alt="" aria-hidden="true" draggable="false" />
-          <div ref={reg('face')} className="hu-face"><HeroCard hero={h} /></div>
+          <div ref={reg('face')} className="hu-face"><HeroCard hero={h} live /></div>
         </div>
         <div ref={reg('hero')} className="hu-hero" aria-hidden="true"><CastArt className="hu-art" id={h.id} pose="win" /></div>
       </div>

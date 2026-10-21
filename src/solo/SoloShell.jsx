@@ -8,6 +8,7 @@
 // only motion is EVENT-driven (reject sill, lucky burst, travel FX) or BEAT-driven (the
 // one-shot pops in Solo.css, fired by html[data-beat] from useBeatSync).
 import BestPass from '../juice/BestPass.jsx';
+import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
 import { useEffect, useRef, useState } from 'react';
 import '../components/wall-system.css'; // .solo-root adopts .wall-surface (token overrides in Solo.css)
 import './Solo.css';
@@ -297,6 +298,7 @@ export default function SoloShell({
       <div className="solo-secondary">
       {phase === 'playing' ? (
         <form className="solo-inputwrap" onSubmit={submit} data-wrap={wrapLong ? '1' : undefined}>
+          <UnlistedSlot />
           <input
             ref={inputRef}
             className="solo-input"

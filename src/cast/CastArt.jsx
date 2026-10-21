@@ -347,14 +347,17 @@ function Flipbook({ id, F, live }) {
     t = setTimeout(play, 600 + Math.random() * 900);
     return () => clearTimeout(t);
   }, [id, F, live]);
-  return Array.from({ length: F.n }, (_, k) => (
-    <img key={k} ref={(el) => { refs.current[k] = el; }} className={`cast-frame${k === 0 ? ' is-rest' : ''}`} src={`/cast/anim/${id}-${k}.webp`} width="512" height="512" alt="" draggable="false" />
+  // frame 0 is ALWAYS the same node (a card that turns live under the pointer must not swap the element being clicked);
+  // the other frames mount only while live
+  return Array.from({ length: live ? F.n : 1 }, (_, k) => (
+    <img key={k} ref={(el) => { refs.current[k] = el; }} className={`cast-frame${k === 0 ? ' is-rest' : ''}`} src={`/cast/anim/${F.file}-${k}.webp`} width="512" height="512" alt="" draggable="false" />
   ));
 }
 
-export default function CastArt({ id, pose = 'hero', className = '', artRef, alt = '', live = true, ...rest }) {
+/** `keepFrames`: render the flipbook's resting frame even while not live (a picker card that goes live on hover keeps its node). */
+export default function CastArt({ id, pose = 'hero', className = '', artRef, alt = '', live = true, keepFrames = false, ...rest }) {
   const rarity = rarityOf(heroById(id));
-  const F = live ? castFrames(id, pose) : null;
+  const F = live || keepFrames ? castFrames(id, pose) : null;
   if (F) {
     return (
       <span ref={artRef} className={`${className} cast-layered cast-flip`} role={alt ? 'img' : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : 'true'} {...rest}>

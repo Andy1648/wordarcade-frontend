@@ -9,7 +9,6 @@ import {
   SECRETS_FOUND_KEY,
 } from './unlisted.js';
 import { doublePairs, createWordTracker } from './seasonSecret.js';
-import { isTripleDouble, TRIPLE_DOUBLE_WORDS } from './tripleDouble.js';
 import { emitReveal, subscribeReveal, patchRevealSerial, peekReveal, clearReveal } from './revealBus.js';
 import { claimSerial } from './serial.js';
 import { SECRETS } from '../secrets/secrets.js';
@@ -21,12 +20,11 @@ function mem(init = {}) {
 const T = Date.UTC(2026, 9, 17, 12);
 
 // ------------------------------------------------------------------------------------------- catalog
-test('six gears: three word-secrets, two feats of their own, one season gear; ids pass the showcase id rule', () => {
+test('six gears, all found by ACCEPTED words (no word-secret grants one), one season gear; ids pass the showcase rule', () => {
   assert.equal(UNLISTED_GEARS.length, 6);
-  for (const sid of ['newgrounds', 'palindrome', 'midas']) assert.ok(gearForSecret(sid), `secret ${sid} grants a gear`);
-  // oct18 (Andy "typewriter and wishbone gear are WAY too easy to get"): their word-secrets still pay, never the gear
-  for (const sid of ['typewriter', 'wish']) assert.equal(gearForSecret(sid), null, `secret ${sid} no longer grants a gear`);
-  assert.ok(Object.keys(SECRETS).includes('typewriter') && Object.keys(SECRETS).includes('wish'), 'the secrets themselves stay');
+  // oct20 (Andy "make accepted words count (not just randomly typing)"): the secrets still pay their Wins, never a gear
+  for (const sid of Object.keys(SECRETS)) assert.equal(gearForSecret(sid), null, `secret ${sid} grants no gear`);
+  for (const g of UNLISTED_GEARS) assert.equal(g.secret, null, g.id);
   assert.equal(UNLISTED_GEARS.filter((g) => g.season != null).length, 1);
   for (const g of UNLISTED_GEARS) {
     assert.match(g.id, /^mk-[a-z0-9-]{1,24}$/, 'lb_showcase_set keeps only ^mk-[a-z0-9-]{1,24}$');
@@ -69,9 +67,9 @@ test('grant survives blocked storage (no throw)', () => {
   assert.doesNotThrow(() => grantUnlisted('mk-ul-og', { storage: bad }));
 });
 
-test('back-fill: secrets found before the tier existed grant their gear once; the season gear is never back-filled', () => {
+test('back-fill: retired — an old typed secret never grants a gear (oct20: accepted words only)', () => {
   const s = mem({ [SECRETS_FOUND_KEY]: JSON.stringify({ found: ['newgrounds', 'palindrome', 'tripledouble', 'typewriter', 'wish', 'nope'] }) });
-  assert.deepEqual(bootUnlisted({ storage: s, now: T }).sort(), ['mk-ul-mirror', 'mk-ul-og']);
+  assert.deepEqual(bootUnlisted({ storage: s, now: T }), [], 'no gear is back-filled from an old (typed, not accepted) secret');
   assert.deepEqual(bootUnlisted({ storage: s, now: T }), [], 'idempotent');
   assert.deepEqual(grantForPastSecrets(['tripledouble'], { storage: s }), []);
   assert.deepEqual(bootUnlisted({ storage: mem() }), []);
@@ -168,14 +166,12 @@ test('normalize repairs junk', () => {
 });
 
 // ------------------------------------------------------------------------------------------- season detector
-test('TRIPLE DOUBLE: three separate double pairs, real words only', () => {
+test('TRIPLE DOUBLE: three separate double pairs (the game dictionary is the real-word check now)', () => {
   assert.equal(doublePairs('bookkeeper'), 3);
+  assert.equal(doublePairs('committee'), 3);
+  assert.equal(doublePairs('keenness'), 3);
+  assert.equal(doublePairs('coffee'), 2);
   assert.equal(doublePairs('aaa'), 1);
-  assert.ok(isTripleDouble('BOOKKEEPER'));
-  assert.ok(isTripleDouble('committee'));
-  assert.ok(!isTripleDouble('coffee'), 'two pairs is not enough');
-  assert.ok(!isTripleDouble('aabbcc'), 'gibberish is not a find');
-  for (const w of TRIPLE_DOUBLE_WORDS) assert.ok(doublePairs(w) >= 3, w);
 });
 
 test('word tracker: a boundary closes the word; backspace edits; modifiers ignored', () => {
@@ -235,25 +231,37 @@ test('the index card never prints SECRET odds', async () => {
 });
 
 // ------------------------------------------------------------------------------------------- the two feats (oct18)
-test('TYPEWRITER: fifty ACCEPTED words in a row; any Backspace starts over; fires once at the target', async () => {
-  const { createTypewriterRun, TYPEWRITER_WORDS } = await import('./gearFinds.js');
-  assert.equal(TYPEWRITER_WORDS, 50);
+test('TYPEWRITER: forty ACCEPTED words of 6+ letters in a row; a short word or ANY deletion starts over', async () => {
+  const { createTypewriterRun, TYPEWRITER_WORDS, TYPEWRITER_MIN_LEN } = await import('./gearFinds.js');
+  assert.equal(TYPEWRITER_WORDS, 40);
+  assert.equal(TYPEWRITER_MIN_LEN, 6);
   const run = createTypewriterRun();
-  for (let i = 1; i < 49; i += 1) assert.equal(run.onWord(), false);
+  for (let i = 1; i < 39; i += 1) assert.equal(run.onWord('planet'), false);
   run.onKey('a');
   run.onKey('Shift');
-  assert.equal(run.count(), 48, 'letters and modifiers never break the run');
-  run.onKey('Backspace');
+  run.onKey('Unidentified'); // a phone key — never a take-back on its own…
+  assert.equal(run.count(), 38, 'letters and modifiers never break the run');
+  run.onDelete(); // …but the input reporting a deletion is (phones DO send InputEvent "deleteContentBackward")
   assert.equal(run.count(), 0, 'one take-back and the run is over');
+  for (let i = 0; i < 20; i += 1) run.onWord('planet');
+  run.onKey('Backspace');
+  assert.equal(run.count(), 0, 'the Backspace key too');
+  for (let i = 0; i < 20; i += 1) run.onWord('planet');
+  assert.equal(run.onWord('cat'), false);
+  assert.equal(run.count(), 0, 'a short word breaks the run');
+  assert.equal(run.onWord(''), false, 'an unknown word never counts');
   let hits = 0;
-  for (let i = 0; i < 60; i += 1) if (run.onWord()) hits += 1;
-  assert.equal(hits, 1, 'fires exactly once, at 50');
+  for (let i = 0; i < 60; i += 1) if (run.onWord('planets')) hits += 1;
+  assert.equal(hits, 1, 'fires exactly once, at 40');
   run.reset();
   assert.equal(run.count(), 0);
-  // the OLD find (150 keys, no 1.5 s gap — a held key auto-repeats) no longer grants anything: keys alone never count
-  const held = createTypewriterRun();
-  for (let i = 0; i < 1000; i += 1) held.onKey('e');
-  assert.equal(held.count(), 0);
+});
+
+test('MIRROR: an ACCEPTED palindrome of 7+ letters — LEVEL / RADAR no longer do it', async () => {
+  const { isMirrorWord, MIRROR_MIN_LEN } = await import('./gearFinds.js');
+  assert.equal(MIRROR_MIN_LEN, 7);
+  for (const w of ['racecar', 'ROTATOR', 'reviver', 'deified', 'repaper']) assert.ok(isMirrorWord(w), w);
+  for (const w of ['level', 'radar', 'kayak', 'redder', 'aaaaaaa', 'abababa'.slice(0, 6), 'race car', 'racecars', '']) assert.ok(!isMirrorWord(w), w);
 });
 
 test('WISHBONE: an accepted word at 11:11 AM AND at 11:11 PM, the same local day', async () => {

@@ -14,24 +14,48 @@
 // (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
 // state still carries a text label. The root .sr-card class is load-bearing (juice
 // centres bursts on it and the wrong-key shake keys off .sr-card.shake).
+import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
 import { useEffect, useRef } from 'react';
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
+import { speakFr, canSpeak, withArticle } from './speak';
 
 // The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
 // flow flashed the word for half a second; this teaches instead — the SENTENCE
 // with the answer filled in and highlighted (the same encode step as the
 // briefing), the definition, and ONE cousin from the root if there is one. Held
 // for the between-word pause, or dismissed early by any key (handled in the hook).
-function ReEncode({ data }) {
-  const { word, context, contextEn, gloss, cousin, kind } = data;
+function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
+  const { word, pos, gender, falseFriend, context, contextEn, gloss, cousin, kind } = data;
   const [before, after] = context.split(/_+/);
+  const review = (ui && ui.review) || {};
+  const tag = review[kind] || (kind === 'miss' ? 'IT WAS' : kind === 'got' ? 'CAPTURED' : 'BARELY — REMEMBER IT');
+  // FRENCH RUSH: the word is said aloud as the card lands (once per card), and can be replayed
+  const said = useRef(false);
+  useEffect(() => {
+    if (speak && !said.current) {
+      said.current = true;
+      speakFr(word);
+    }
+  }, [speak, word]);
+  const contRef = useRef(null);
+  useEffect(() => {
+    if (selfPaced && contRef.current) contRef.current.focus({ preventScroll: true });
+  }, [selfPaced]);
   return (
     <div className={`sr-reencode ${kind}`} role="status">
-      <div className="sr-reencode-tag">{kind === 'miss' ? 'IT WAS' : 'BARELY — REMEMBER IT'}</div>
-      <div className="sr-reencode-word">{word}</div>
+      <div className="sr-reencode-tag">{tag}</div>
+      <div className="sr-reencode-word">
+        {speak ? withArticle(word, pos, gender) : word}
+        {speak && canSpeak() && (
+          <button type="button" className="sr-say" onClick={() => speakFr(word)} aria-label={`say ${word}`}>
+            🔊
+          </button>
+        )}
+      </div>
       {/* oct17 (Andy): the DEFINITION is plain text; the EXAMPLE is the quote. */}
       <p className="sr-reencode-def">{gloss}</p>
+      {falseFriend && <p className="sr-reencode-ff">false friend — it doesn&apos;t mean what it looks like</p>}
       <p className="sr-reencode-sentence">
         “{before}
         <mark className="sr-brief-fill">{word}</mark>
@@ -44,7 +68,13 @@ function ReEncode({ data }) {
           same root as <b>{cousin}</b>
         </p>
       )}
-      <div className="sr-reencode-hint" aria-hidden="true">press any key</div>
+      {selfPaced ? (
+        <button type="button" ref={contRef} className="sr-btn sr-continue" onClick={onContinue}>
+          Continue <span className="sr-kbd" aria-hidden="true">⏎</span>
+        </button>
+      ) : (
+        <div className="sr-reencode-hint" aria-hidden="true">press any key</div>
+      )}
     </div>
   );
 }
@@ -57,15 +87,16 @@ function ReEncode({ data }) {
 // suspects still standing. Eliminated suspects are crossed out IN PLACE with a
 // CLEARED alibi treatment (a strikethrough + stamp; positions never move). No copy
 // explains any of this — the narrowing does.
-function SuspectLineup({ suspects }) {
+function SuspectLineup({ suspects, ui }) {
   const { lineup, standing, count } = suspects;
+  const L = (ui && ui.lineup) || {};
   const cols = count >= 6 ? 3 : 2; // 6 → 3×2, 4 → 2×2, 2 → 2×1
   return (
     <div className="sr-lineup">
       <div className="sr-lineup-head">
-        <span className="sr-lineup-label" aria-hidden="true">Suspects</span>
-        <span className="sr-lineup-count" aria-label={`${standing} suspects still standing`}>
-          {standing} STANDING
+        <span className="sr-lineup-label" aria-hidden="true">{L.label || 'Suspects'}</span>
+        <span className="sr-lineup-count" aria-label={`${standing} ${L.label ? 'choices left' : 'suspects still standing'}`}>
+          {standing} {(L.standing || 'standing').toUpperCase()}
         </span>
       </div>
       <ul className="sr-lineup-grid" style={{ '--cols': cols }}>
@@ -77,7 +108,7 @@ function SuspectLineup({ suspects }) {
           >
             <span className="sr-suspect-word">{s.word.toUpperCase()}</span>
             {s.eliminated && (
-              <span className="sr-suspect-alibi" aria-hidden="true">CLEARED</span>
+              <span className="sr-suspect-alibi" aria-hidden="true">{L.cleared || 'CLEARED'}</span>
             )}
           </li>
         ))}
@@ -164,7 +195,7 @@ function FieldRow({ type, visible, view }) {
   return null;
 }
 
-export default function WordCard({ view }) {
+export default function WordCard({ view, onHint, onSkip, onContinue }) {
   const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode, mode, suspects } = view;
   const isLineup = mode === 'lineup';
   // the poster's words come from the pack (WANTED / RECHERCHÉ); SAT is the default
@@ -221,7 +252,8 @@ export default function WordCard({ view }) {
       {/* The SFX BURST (clear / miss only). It's a child of the UNCLIPPED outer card
           so it overflows/breaks past the panel edge, rotated, with a heavy ink
           outline + offset fill. Re-keyed per event so the PUNCH-in replays. */}
-      {stamp && (
+      {/* (a pack whose review card says it — FRENCH RUSH's BRAVO / THE ANSWER — skips the SFX burst) */}
+      {stamp && !(reEncode && UI.stamps) && (
         <div className={`sr-stamp ${stamp.tone}`} key={`stamp-${stamp.id}`} aria-label={stamp.text}>
           {stamp.text}
         </div>
@@ -233,12 +265,17 @@ export default function WordCard({ view }) {
       {/* MASTHEAD (oct17, Andy: "you spend so much space on WANTED and part of speech that there's a
           whole scroll bar when it gets to the definition"): the WANTED banner and the case id share
           ONE row, so the clue + definition get the height back. */}
-      <div className="sr-masthead">
-        <div className="sr-wanted-wrap">
-          <div className="sr-wanted sr-print" data-v={deepCut ? UI.mostWanted : UI.wanted}>
-            {deepCut ? UI.mostWanted : UI.wanted}
+      <div className={`sr-masthead${UI.wanted ? '' : ' plain'}`}>
+        {UI.wanted ? (
+          <div className="sr-wanted-wrap">
+            <div className="sr-wanted sr-print" data-v={deepCut ? UI.mostWanted : UI.wanted}>
+              {deepCut ? UI.mostWanted : UI.wanted}
+            </div>
           </div>
-        </div>
+        ) : (
+          // no banner (FRENCH RUSH): the masthead is just which theme this word is from
+          view.theme && <div className="sr-case-theme">{view.theme}</div>
+        )}
         {/* Case id: part of speech · tier. The letter count is the slot row itself, so the case id
             no longer repeats it. */}
         <div className="sr-caseid" aria-label={view.meta}>
@@ -246,7 +283,7 @@ export default function WordCard({ view }) {
             <span className="sr-case-long">{view.pos}</span>
             <span className="sr-case-short">{view.posShort}</span>
           </span>
-          <span className="sr-case-tier">tier {view.tier}</span>
+          {UI.wanted && <span className="sr-case-tier">tier {view.tier}</span>}
           {view.isReturn && <span className="sr-case-return">second look</span>}
         </div>
         {/* Revenant = an ESCAPED overprint: a double-ruled stamp across the masthead at a slight
@@ -268,6 +305,7 @@ export default function WordCard({ view }) {
 
       {/* Mugshot slots, centred. */}
       <div className="sr-slotwrap">
+        <UnlistedSlot />
         {/* wrong key: a tiny "TCH!" tick near the typing row (re-keyed per reject) */}
         {fx.badKey ? (
           <span className="sr-tch" key={`tch-${fx.badKey}`} aria-hidden="true">
@@ -279,11 +317,24 @@ export default function WordCard({ view }) {
 
       {/* LINEUP mode: the suspect lineup, narrowing with the ante. Replaces the
           spell-along block (lineup has no spell-along — the lineup is the aid). */}
-      {isLineup && suspects && <SuspectLineup suspects={suspects} />}
+      {isLineup && suspects && <SuspectLineup suspects={suspects} ui={UI} />}
+
+      {/* HINT / SKIP (FRENCH RUSH): the player drives the clues — no clock needed. Enter = hint,
+          Escape = skip on a keyboard; on a phone these are the only way (no Escape key). */}
+      {onHint && (
+        <div className="sr-actions">
+          <button type="button" className="sr-act" onClick={onHint} disabled={view.pending !== 'idle'}>
+            Hint <span className="sr-kbd" aria-hidden="true">⏎</span>
+          </button>
+          <button type="button" className="sr-act ghost" onClick={onSkip} disabled={view.pending !== 'idle'}>
+            Show answer <span className="sr-kbd" aria-hidden="true">esc</span>
+          </button>
+        </div>
+      )}
 
       {/* Spell-along endgame (BRIEFING mode only): the fugitive's mugshot prints
-          itself out for scraps. */}
-      {!isLineup && atFinal && (
+          itself out for scraps. Never in a self-paced run (no clock). */}
+      {!isLineup && atFinal && view.pace !== 'self' && UI.wanted && (
         <div className="sr-spell">
           <div className="sr-spell-head">
             <span className="sr-spell-label">MUGSHOT PRINTING…</span>
@@ -301,8 +352,9 @@ export default function WordCard({ view }) {
         </div>
       )}
 
-      {/* REWARD footer — the bounty is the ante (replaces the old separate row). */}
-      <AnteMeter
+      {/* REWARD footer — the bounty is the ante (replaces the old separate row). A pack without the
+          bounty theme shows it only on the clock (timed pace), with no caption box. */}
+      {(UI.wanted || view.pace !== 'self') && <AnteMeter
         multiplier={view.multiplier}
         stage={view.stage}
         maxStage={view.maxStage}
@@ -312,14 +364,23 @@ export default function WordCard({ view }) {
         atFinal={view.atFinal}
         running={view.pending === 'idle'}
         lineup={isLineup}
-      />
+        caption={!!UI.wanted}
+      />}
 
       <div className={`sr-msg${msg ? ` ${msg.kind}` : ''}`}>{msg ? msg.text : ''}</div>
       </div>
       {/* /.sr-cardframe */}
 
       {/* The re-encode teaching beat sits over the poster during the pause. */}
-      {reEncode && <ReEncode data={reEncode} />}
+      {reEncode && (
+        <ReEncode
+          data={reEncode}
+          ui={UI}
+          speak={!!(view.pack && view.pack.lang === 'fr')}
+          selfPaced={view.pace === 'self'}
+          onContinue={onContinue}
+        />
+      )}
     </div>
   );
 }

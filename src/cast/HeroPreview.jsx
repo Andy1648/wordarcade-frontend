@@ -7,7 +7,7 @@
 // Motion: finite WAAPI one-shots re-armed on timers (nothing infinite), transform / opacity only, hidden tab skipped,
 // reduce motion = still poses (kitPlay is a no-op).
 import { useEffect, useRef, useState } from 'react';
-import { HERO_UNLOCK, ownsHero, heroGateMet, goldProgress, hasPose, totalWins, ALL_HEROES } from './cast.js';
+import { HERO_UNLOCK, ownsHero, heroGateMet, goldProgress, hasPose, totalWins, castSrc } from './cast.js';
 import { rarityOf } from './CastArt.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
@@ -35,17 +35,34 @@ export function unlockProgress(h) {
   return null;
 }
 
-/** NEXT HERO (the profile's goal): the not-yet-owned earnable hero this save is CLOSEST to (highest have / need), or null. */
-export function nextHeroGoal() {
-  let best = null;
-  for (const h of ALL_HEROES) {
-    if (ownsHero(h.id)) continue;
-    const p = unlockProgress(h);
-    if (!p || p.need <= 0 || p.have >= p.need) continue; // met (a LEGEND's gate): only its price is left
-    const f = p.have / p.need;
-    if (!best || f > best.f) best = { h, p, f };
-  }
-  return best;
+/** VERSIONS (oct19, Andy: the HERO / WIN / K.O. preview "makes the options to click glitch, gold, and elite obsolete -
+ *  put those buttons under the equip ... and make it not look exactly same design"): the member's versions as little
+ *  painted THUMBNAILS under the call to action - the art itself is the button (the pattern every skin picker uses), the
+ *  one on show lifted + full colour, the rest knocked back; a lock on the ones you don't own, GOLD's wins bar. */
+function Versions({ vs, cur, onPick }) {
+  return (
+    <div className="hpv-vers">
+      <span className="hpv-vers-k">VERSIONS</span>
+      <div className="hpv-vers-row" role="tablist" aria-label="Versions">
+        {vs.map((v) => {
+          const own = ownsHero(v.id);
+          const kind = v.gold ? 'gold' : v.elite ? 'elite' : 'base';
+          const gp = v.gold && !own ? goldProgress(v.id) : null;
+          return (
+            <button key={v.id} type="button" role="tab" aria-selected={v.id === cur} className={`hpv-ver is-${kind}${v.id === cur ? ' is-on' : ''}${own ? '' : ' is-locked'}`}
+              onClick={() => onPick(v.id)} aria-label={`${kind === 'base' ? 'CLASSIC' : kind.toUpperCase()} · ${v.name}${own ? '' : ', locked'}`}>
+              <span className="hpv-ver-art">
+                <img src={castSrc(v.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
+                {!own ? <span className="hpv-ver-lock"><KitIcon name="lock" size={20} shadow={1} extras={false} /></span> : null}
+              </span>
+              <span className="hpv-ver-n">{kind === 'base' ? 'CLASSIC' : kind.toUpperCase()}</span>
+              {gp ? <span className="hpv-ver-bar" aria-hidden="true"><span className="hpv-ver-fill" style={{ transform: `scaleX(${Math.min(1, gp.have / gp.need)})` }} /></span> : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 /** The big stage: pedestal + the hero (still; its prop streams move), cycling its poses (a tapped tab holds that pose). */
@@ -96,17 +113,6 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
     <div className={`hpv is-${tier}`} style={{ '--hpv-c': h.color, '--hpv-d': h.dark }} data-testid="hero-preview" data-hero={h.id}>
       <div className="hpv-top">
         <button type="button" className="hpv-back" onClick={onClose}>‹ ALL HEROES</button>
-        {vs ? (
-          <span className="hpv-vars" role="tablist" aria-label="Versions">
-            {vs.map((v) => (
-              <button key={v.id} type="button" role="tab" aria-selected={v.id === h.id} className={`hpv-var is-${v.gold ? 'gold' : v.elite ? 'elite' : 'base'}${v.id === h.id ? ' is-on' : ''}`}
-                onClick={() => onVariant && onVariant(v.id)}>
-                {!ownsHero(v.id) ? <KitIcon name="lock" size={18} shadow={1} extras={false} /> : null}
-                {v.gold ? 'GOLD' : v.elite ? 'ELITE' : v.name}
-              </button>
-            ))}
-          </span>
-        ) : null}
         <span className="hpv-nav">
           <button type="button" className="hpv-arrow" onClick={() => onStep(-1)} aria-label="Previous hero">‹</button>
           <button type="button" className="hpv-arrow" onClick={() => onStep(1)} aria-label="Next hero">›</button>
@@ -150,7 +156,7 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
                   </div>
                 ) : h.price && !h.gold ? (
                   <div className="hpv-buy">
-                    <KitHoldButton tone="gold" width={300} labelSize={28} label={gems >= h.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
+                    <KitHoldButton tone="gold" width={300} labelSize={gems >= h.price ? 30 : 24} label={gems >= h.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
                       sub={gems >= h.price ? `${formatNum(h.price)} GEMS` : `NEED ${formatNum(h.price - gems)} MORE`}
                       disabled={gems < h.price} confirmText="UNLOCKED!" onConfirm={() => onBuy(h.id)}
                       ariaLabel={`Hold to buy ${h.name} for ${formatNum(h.price)} gems`} />
@@ -160,6 +166,7 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
               </>
             )}
           </div>
+          {vs ? <Versions vs={vs} cur={h.id} onPick={(id) => onVariant && onVariant(id)} /> : null}
         </div>
       </div>
     </div>
