@@ -524,9 +524,12 @@
 
 /* ===== PICK YOUR PACKS, TWO PANELS (Andy oct19: on a Chromebook the dialog was "ass proportion (so tiny)") =====
    A 660px dialog on a 1366x768 screen showed 6 of 11 packs in a ~230px scroll window. On a laptop it now spans the
-   screen: the mode's name, rules, rounds, count and buttons on the left; the packs get the whole right side, two columns
-   of big tiles — all 11 fit without scrolling from 1024x768 up. Phones and narrow windows keep the single stack. */
-@media (min-width: 900px) and (min-height: 600px) {
+   screen: the mode's name, rules, rounds, count and buttons on the left; the packs get the whole right side, four
+   stickers across — all 11 fit without scrolling. Phones and narrow windows keep the single stack.
+   min-height 480, not 600 (Andy oct21 "two lines of categories ... then a scroll bar"): a Chromebook's BROWSER viewport is
+   its screen minus ~110px of tabs + omnibox, and the default 125% scaling makes a 1366x768 one 1093x526 — under 600 it fell
+   back to the 660px stack and showed one cropped row of packs. Below 600 tall the dialog takes the whole viewport. */
+@media (min-width: 900px) and (min-height: 480px) {
   .mode-dialog-shell.is-blitz { width: min(94vw, max(1100px, 56vw)); } /* 1100 on a laptop; grows with the 2560 type scale */
   .mode-dialog-lower--blitz {
     position: relative; display: grid; align-content: stretch; column-gap: clamp(20px, 2.6vw, 36px); row-gap: 12px;
@@ -547,8 +550,13 @@
   .mode-dialog-lower--blitz .mode-dialog-actions { grid-area: act; flex-direction: column; margin: 0; }
   /* four stickers across, three rows: the sticker height follows the viewport so all 11 fit from 720 tall up */
   .mode-dialog-lower--blitz .ppp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(6px, 1.4vh, 14px) 12px; }
-  .mode-dialog-lower--blitz .ppp-pill { --sticker-h: clamp(64px, 12.5vh, 150px); }
+  .mode-dialog-lower--blitz .ppp-pill { --sticker-h: clamp(56px, 10.5vh, 150px); }
   .mode-dialog-lower--blitz .ppp-pill-label { font-size: calc(var(--fs-body) * 1.1); }
+}
+@media (min-width: 900px) and (min-height: 480px) and (max-height: 599px) {
+  .mode-dialog-shell.is-blitz { height: calc(100vh - 16px); max-height: calc(100vh - 16px); width: calc(100vw - 16px); }
+  .mode-dialog-lower--blitz .ppp-pill { --sticker-h: clamp(48px, 11vh, 66px); padding-block: 2px; }
+  .mode-dialog-lower--blitz .ppp-pill-label { font-size: var(--fs-body); }
 }
 /* a tall screen scales the type up (1920x1080, 2560x1440), so the two panels get the height to go with it — the 760px cap
    left the left column 8px short and put a scrollbar on the dialog body */
