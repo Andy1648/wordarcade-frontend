@@ -117,3 +117,12 @@
    panel's popover to it. */
 .audio-ctrl--kit { position: relative; display: block; flex: 0 0 auto; }
 .audio-ctrl--kit .audio-muted-mark { right: -6px; bottom: 2px; pointer-events: none; }
+
+/* NO ORPHAN FIXED UI (oct20 UI audit): the full-screen panels the menu opens — UPGRADES / REBIRTH (the shop view), STATS,
+   LEADERBOARD, CREDITS — lay their content out to the screen's corners, and the fixed corner cog landed ON it: the last
+   boost card's corner at 1366x768, the list rows / BEST STREAK / the unlock track on a phone. Each of those panels has
+   its own ← MENU, and SETTINGS is the menu's top-right tile, one tap back; so the stray cog is not drawn there. */
+html[data-view='shop'] .audio-ctrl:not(.audio-ctrl--inline),
+html[data-view='stats'] .audio-ctrl:not(.audio-ctrl--inline),
+html[data-view='leaderboard'] .audio-ctrl:not(.audio-ctrl--inline),
+html[data-view='credits'] .audio-ctrl:not(.audio-ctrl--inline) { display: none; }
