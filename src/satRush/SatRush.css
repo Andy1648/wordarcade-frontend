@@ -3453,7 +3453,7 @@ body:has(.sr-app) .wpm-hud {
 }
 /* phones: the teacher link is a desktop thing — a class shares it from a laptop */
 @media (max-width: 520px) {
-  .fr-app .sr-linkbtn { display: none; }
+  .fr-app .sr-setup-exits .sr-linkbtn { display: none; } /* only CASE SETUP's copy-a-link */
 }
 @media (max-height: 700px) {
   .fr-app .sr-setup { padding-block: 10px; gap: 6px; }
@@ -3534,4 +3534,78 @@ body:has(.sr-app) .wpm-hud {
 @media (max-width: 520px) and (max-height: 700px) {
   .fr-app .sr-setup { gap: 4px; }
   .fr-app .sr-setup-col { gap: 5px; }
+}
+
+/* =====================================================================
+   FRENCH RUSH on a laptop / CHROMEBOOK (oct20, Andy: "make sure things scale well on chromebook").
+   School Chromebooks give the page ~1093-1536 x 515-750 px. A single 560-620px column wastes the
+   width and pushes things below the fold, so on a wide, short screen the study cards and the results
+   use two columns, and the cover tightens up.
+   ===================================================================== */
+@media (max-height: 720px) {
+  .fr-cover { gap: 10px; }
+  .fr-cover .sr-btn { padding-block: 10px; }
+  .fr-cover .sr-cover-example { padding-block: 8px; }
+}
+@media (max-height: 560px) {
+  .fr-app .sr-setup .sr-setup-opt-sub { display: none; }
+  .fr-app .sr-setup-sub { display: none; }
+}
+@media (min-width: 1000px) {
+  /* THE STUDY SCREEN: two columns of word cards */
+  .fr-app .sr-brief-page { width: min(1120px, 94vw); }
+  .fr-app .sr-brief-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 12px 16px;
+  }
+  /* RESULTS: the result + the actions on the left, the word list on the right (scrolls in its panel) */
+  .fr-app .sr-respage {
+    width: min(1120px, 94vw);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    column-gap: 28px;
+    /* no row gap: the word list spans many implicit rows, and a gap between every one of them
+       would add blank height to the page — the left column spaces itself with margins instead */
+    row-gap: 0;
+    align-items: start;
+  }
+  .fr-app .sr-respage > * { grid-column: 1; margin-bottom: 12px; }
+  .fr-app .sr-respage > .sr-casefile { margin-bottom: 0; }
+  .fr-app .sr-respage > .sr-casefile {
+    grid-column: 2;
+    grid-row: 1 / span 12;
+    /* viewport − the overlay's block padding − the page's own padding + border (≤ 2×44 + 8) */
+    max-height: calc(100dvh - 2 * clamp(16px, 3vh, 40px) - 100px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+@media (min-width: 1000px) {
+  /* the left column has to fit a Chromebook: the main action full width, the rest two-up, and the
+     "keep missing" list scrolls inside a capped panel */
+  .fr-app .sr-respage .sr-results-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .fr-app .sr-respage .sr-results-actions > :first-child { grid-column: 1 / -1; }
+  .fr-app .sr-respage .sr-results-actions > .sr-btn { width: 100%; min-height: 44px; padding: 10px 12px; }
+  .fr-app .sr-respage > .sr-keepmissing {
+    max-height: clamp(96px, 24vh, 260px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+@media (min-width: 1000px) and (max-height: 700px) {
+  .fr-app .sr-respage { padding-block: 20px; }
+  .fr-app .sr-respage .sr-dead { font-size: var(--fs-h2); }
+}
+@media (min-width: 1000px) and (max-height: 620px) {
+  .fr-app .sr-respage .sr-dead { font-size: var(--fs-panel); }
+  .fr-app .sr-respage .sr-hero { padding-block: 8px; }
+  .fr-app .sr-respage .sr-capt-value { font-size: var(--fs-h1); }
+  .fr-app .sr-respage > .sr-keepmissing { max-height: clamp(80px, 18vh, 160px); }
+  .fr-app .sr-respage > * { margin-bottom: 8px; }
 }

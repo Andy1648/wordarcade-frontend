@@ -425,6 +425,8 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
       comboBreaks={g.combo.breaks}
       comboStreak={g.combo.streak}
       luckyKey={g.luckyKey}
+      bestBefore={g.bestBefore}
+      bestPassKey={g.bestPassKey}
       slotMain={chainSlot.main}
       slotTags={chainSlot.labels}
       slotKey={s.k}

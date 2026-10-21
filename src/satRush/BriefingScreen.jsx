@@ -14,6 +14,7 @@
 // so the framing is "here's one root and its family," not "here are five words".
 
 import { speakFr, canSpeak, withArticle } from './speak';
+import EnglishLine from './EnglishLine';
 
 // The sentence with the blank filled by the answer and highlighted. The blank in
 // the data is a run of underscores; everything around it is kept verbatim.
@@ -58,8 +59,8 @@ function BriefCard({ card, speak }) {
       {/* then the word in use — the example sentence, QUOTED, filled in and highlighted (oct17, Andy:
           the example is the quotation, the definition is plain) */}
       <FilledSentence context={context} word={word} />
-      {/* FRENCH RUSH: what the example says, in English */}
-      {contextEn && <p className="sr-brief-en">{contextEn}</p>}
+      {/* FRENCH RUSH: what the example says, in English — folded behind one tap (Andy oct20) */}
+      <EnglishLine text={contextEn} className="sr-brief-en" />
 
       {root && (
         <div className="sr-brief-root">

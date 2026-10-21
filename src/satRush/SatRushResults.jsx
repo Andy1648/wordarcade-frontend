@@ -6,6 +6,7 @@
 // working untouched; only its container is styled to sit on the page.
 import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../format';
+import EnglishLine from './EnglishLine';
 import { createCountUp } from '../juice/countUp';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
@@ -65,7 +66,7 @@ function CaseFileRow({ c, outcomes, speak }) {
               {after}”
             </p>
           )}
-          {c.contextEn && <p className="sr-casefile-en">{c.contextEn}</p>}
+          <EnglishLine text={c.contextEn} className="sr-casefile-en" />
         </>
       )}
     </li>

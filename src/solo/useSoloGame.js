@@ -97,6 +97,11 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
   const [reason, setReason] = useState('');
   const [restartArmed, setRestartArmed] = useState(false);
   const [best, setBest] = useState(() => getPB(pbKey));
+  // JUICE P3 (BEST CHASE): the PB this run is chasing (frozen at run start — `best` moves at run end), and a key that
+  // bumps ONCE the run passes it (a finite NEW BEST moment). A first-ever run (PB 0) has nothing to chase.
+  const bestBeforeRef = useRef(best);
+  const bestPassKeyRef = useRef(0);
+  const bestPassedRef = useRef(false);
   // STEP 56: ms left on the clock when the last accepted word landed (FUSE's CLUTCH reads it).
   const lastLeftMsRef = useRef(null);
 
@@ -195,6 +200,11 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       lastLeftMsRef.current = armedRef.current ? Math.max(0, leftMs) : null;
       tierLogRef.current.push(tierForClockLeft(left));
       comboRef.current = comboAccept(comboRef.current); // grow the wins combo
+      const runScore = adapter.getScore(engineRef.current);
+      if (!bestPassedRef.current && bestBeforeRef.current > 0 && runScore > bestBeforeRef.current) {
+        bestPassedRef.current = true;
+        bestPassKeyRef.current += 1;
+      }
       sndWordAccepted(comboRef.current.streak); // Job 11: accept chime, pitch climbs with the combo
       // LUCKY check — AFTER acceptance only (never telegraphed). Record THIS word's factor
       // (×5 on a 1/40 hit, else ×1) for the per-word banking fold; on a hit, bank 5× the mode's
@@ -236,6 +246,8 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     luckyOracleRef.current = makeLuckyOracle(randomSeed());
     luckyLastMultRef.current = 1;
     luckyCountRef.current = 0;
+    bestBeforeRef.current = getPB(pbKey); // the new run chases the PB as it stands now
+    bestPassedRef.current = false;
     armedRef.current = false;
     turnBudgetRef.current = adapter.budgetMs(engineRef.current);
     setArmed(false);
@@ -246,7 +258,7 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     setPhase('playing');
     onRunStartRef.current?.(); // count this new run (covers both button and Enter)
     evRoundStarted(mode); // analytics: a solo restart began a new round
-  }, [createEngine, adapter]);
+  }, [createEngine, adapter, pbKey]);
 
   // Enter restarts from the death card, but only once armed (guards the tutorial).
   useEffect(() => {
@@ -291,5 +303,8 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
     // per-word banking weight, plus `luckyKey` (the run's hit count) that re-fires the gold burst.
     luckyMult: luckyLastMultRef.current,
     luckyKey: luckyCountRef.current,
+    // BEST CHASE (live): the PB this run chases, and the once-per-run NEW BEST key (0 = not passed yet).
+    bestBefore: bestBeforeRef.current,
+    bestPassKey: bestPassKeyRef.current,
   };
 }
