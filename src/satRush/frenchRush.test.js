@@ -122,3 +122,12 @@ test('studied words are remembered (and the setup choices survive a reload)', ()
   assert.ok(!hasStudied(back, 'famille'));
   assert.deepEqual(back.setup, st.setup);
 });
+
+test('no two words share a meaning — the English clue alone always names ONE French word', () => {
+  const seen = new Map();
+  for (const r of WORDS) {
+    const g = r.gloss.toLowerCase().trim();
+    assert.ok(!seen.has(g), `"${r.gloss}" is the meaning of both ${seen.get(g)} and ${r.word}`);
+    seen.set(g, r.word);
+  }
+});

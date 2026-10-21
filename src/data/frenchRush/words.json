@@ -368,7 +368,7 @@
   "word": "célébrer",
   "pos": "v",
   "gender": null,
-  "gloss": "to celebrate",
+  "gloss": "to celebrate (a holiday, an event)",
   "context": "Nous allons ___ Noël en famille.",
   "contextEn": "We are going to celebrate Christmas as a family.",
   "root": {
@@ -7383,7 +7383,7 @@
   "word": "avis",
   "pos": "n",
   "gender": "m",
-  "gloss": "opinion",
+  "gloss": "view, opinion (in my view…)",
   "context": "À mon ___, les jeunes passent trop de temps en ligne.",
   "contextEn": "In my opinion, young people spend too much time online.",
   "root": null,
@@ -8413,7 +8413,7 @@
   "word": "opinion",
   "pos": "n",
   "gender": "f",
-  "gloss": "opinion",
+  "gloss": "opinion (an opinion on a topic)",
   "context": "Donnez votre ___ : êtes-vous pour ou contre ?",
   "contextEn": "Give your opinion: are you for or against?",
   "root": null,
@@ -8514,7 +8514,7 @@
   "word": "demander",
   "pos": "v",
   "gender": null,
-  "gloss": "to ask (for)",
+  "gloss": "to ask (for something)",
   "context": "Je vous écris pour ___ plus de détails sur le stage.",
   "contextEn": "I am writing to ask for more details about the internship.",
   "root": {
@@ -9450,7 +9450,7 @@
   "word": "scolaire",
   "pos": "adj",
   "gender": null,
-  "gloss": "school (related)",
+  "gloss": "school-related (adj.)",
   "context": "L'année ___ commence en septembre en France.",
   "contextEn": "The school year starts in September in France.",
   "root": {
@@ -9650,7 +9650,7 @@
   "word": "fêter",
   "pos": "v",
   "gender": null,
-  "gloss": "to celebrate",
+  "gloss": "to celebrate (a birthday, a party)",
   "context": "Nous allons ___ l'anniversaire de ma mère samedi.",
   "contextEn": "We are going to celebrate my mother's birthday on Saturday.",
   "root": {
