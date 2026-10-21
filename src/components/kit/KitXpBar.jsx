@@ -45,8 +45,8 @@ export const WRAP_HOLD_MS = 0;
 const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
 const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
 
-// JUICE P1 (goal-gradient): `goal` = { lv, rebirth, r } puts the NEXT reward on a plate at the bar's RIGHT end — the next
-// level's number, or the painted REBIRTH icon when the next level is the rebirth gate. In the last NEAR_FRAC of a level
+// JUICE P1 (goal-gradient): `goal` = { lv } puts the NEXT reward on a plate at the bar's RIGHT end — the next
+// level's number (Andy oct21: never the REBIRTH icon — it sat off-centre on the plate). In the last NEAR_FRAC of a level
 // the plate turns yellow (a static class, not a loop) and every gain BUMPS it (one finite 280 ms play) — the "almost
 // there" pull. A level wrap SLAMS the new number in.
 export const NEAR_FRAC = 0.9;
@@ -226,19 +226,10 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   );
   const near = goal && (frac > 0 ? frac : 0) >= NEAR_FRAC;
   const goalNode = goal ? (
-    <div className={`kx-goal${goal.rebirth ? ' is-rebirth' : ''}`} data-testid="xp-goal" aria-hidden="true">
+    <div className="kx-goal" data-testid="xp-goal" aria-hidden="true">
       <span ref={goalRef} className="kx-goal-in">
-        {goal.rebirth ? (
-          <>
-            <img className="kx-goal-icon" src="/icons/rebirth.webp" width="64" height="64" alt="" draggable="false" />
-            {goal.r != null && <span className="kx-goal-r">R{formatNum(goal.r)}</span>}
-          </>
-        ) : (
-          <>
-            <span className="kx-lv-k">LV</span>
-            <span className="kx-goal-n">{formatNum(goal.lv)}</span>
-          </>
-        )}
+        <span className="kx-lv-k">LV</span>
+        <span className="kx-goal-n">{formatNum(goal.lv)}</span>
       </span>
     </div>
   ) : null;
