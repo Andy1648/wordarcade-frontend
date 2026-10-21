@@ -7,6 +7,8 @@
 // stay within transform/opacity-only animation). There is no idle animation anywhere — the
 // only motion is EVENT-driven (reject sill, lucky burst, travel FX) or BEAT-driven (the
 // one-shot pops in Solo.css, fired by html[data-beat] from useBeatSync).
+import BestPass from '../juice/BestPass.jsx';
+import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
 import { useEffect, useRef, useState } from 'react';
 import '../components/wall-system.css'; // .solo-root adopts .wall-surface (token overrides in Solo.css)
 import './Solo.css';
@@ -106,6 +108,9 @@ export default function SoloShell({
   winsTally = 0, // live "+N WINS" pill amount (0 until the 3-word gate)
   winsWords = 0, // my accepted-word count, so the pill can show the pre-gate "3 WORDS TO EARN"
   luckyKey = 0, // bumps on each lucky word → re-fires the finite gold burst
+  // JUICE P3 (BEST CHASE): the PB this run chases (0 = a first run, nothing to chase) and the once-per-run NEW BEST key
+  bestBefore = 0,
+  bestPassKey = 0,
   // ESCALATION LADDER (juice/ladder.js) — the live combo streak drives the tier slam + edge frame;
   // the per-word LIGHT SLOT decision (juice/effectSlot.js) is made by the mode, which knows what a
   // clutch / lucky / rare word is: `slotMain` is the winning effect, `slotTags` the outranked ones
@@ -293,6 +298,7 @@ export default function SoloShell({
       <div className="solo-secondary">
       {phase === 'playing' ? (
         <form className="solo-inputwrap" onSubmit={submit} data-wrap={wrapLong ? '1' : undefined}>
+          <UnlistedSlot />
           <input
             ref={inputRef}
             className="solo-input"
@@ -392,6 +398,12 @@ export default function SoloShell({
               <div className="solo-scoreline">
                 <span>SCORE {formatNum(over.score)}</span>
                 <span>BEST {formatNum(over.best)}</span>
+                {/* the NEAR MISS: a run that ends within a quarter of the PB says exactly how close it came */}
+                {bestBefore > 0 && over.score > bestBefore ? (
+                  <span className="solo-pbline is-new" data-testid="solo-pbline">NEW BEST · +{formatNum(over.score - bestBefore)}</span>
+                ) : bestBefore > 0 && over.score >= bestBefore * 0.75 ? (
+                  <span className="solo-pbline is-near" data-testid="solo-pbline">{over.score === bestBefore ? 'TIED YOUR BEST' : `JUST ${formatNum(bestBefore - over.score)} SHORT OF YOUR BEST`}</span>
+                ) : null}
               </div>
             )}
             {/* REBIRTH READY → ×5 FOREVER (Andy oct3): the gate reached mid-run makes THIS the first
@@ -446,6 +458,13 @@ export default function SoloShell({
           <div className="solo-lv">
             <LevelUpChip />
           </div>
+        </div>
+      )}
+
+      {/* BEST CHASE: the run just passed your PB — the painted trophy drops in the corner, once per run */}
+      {phase === 'playing' && bestPassKey > 0 && (
+        <div className="solo-bestpass">
+          <BestPass key={bestPassKey} sub={`OLD ${formatNum(bestBefore)}`} />
         </div>
       )}
 

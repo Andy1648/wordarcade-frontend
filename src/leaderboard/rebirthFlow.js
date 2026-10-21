@@ -42,6 +42,19 @@ export function newRequestId() {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
+/**
+ * Where local lands after a GRANTED server rebirth / ascension: the server's new count, but never below local + 1.
+ * A grant must never LOWER local progress (BETTERTHANANDY oct19): a board row left at R0 by the pre-054 "lower push =
+ * reset" bug can't climb back (a submit never raises rebirths), so lb_rebirth answered 1 and landing on it took a R26
+ * save to R1. The row stays the server's business; the save only ever goes up.
+ */
+export function grantTarget(server, local) {
+  const s = Number(server);
+  const l = Number(local);
+  const next = (Number.isFinite(l) && l > 0 ? Math.floor(l) : 0) + 1;
+  return Number.isFinite(s) && s > next ? Math.floor(s) : next;
+}
+
 /** The RPC isn't deployed (PostgREST PGRST202 / a 404): the client keeps the local rebirth. */
 export function isNotDeployed(err) {
   const m = String((err && (err.code || err.message)) || '');
@@ -124,7 +137,7 @@ export function makeRebirthFlow(d) {
   function applyServer(res, key) {
     const p = res.pending;
     let out;
-    if (!p || d.localRebirths() === p.from) out = { ...d.applyLocal(Number(res.rebirths)), applied: true };
+    if (!p || d.localRebirths() === p.from) out = { ...d.applyLocal(grantTarget(res.rebirths, d.localRebirths())), applied: true };
     else out = { rc: d.localRebirths(), stars: 0, applied: false }; // already applied by an earlier settle
     clearPending(key); // AFTER the apply: dying in between re-sends the id, and the `from` check skips a 2nd apply
     return out;
@@ -148,7 +161,8 @@ export function makeRebirthFlow(d) {
       if (res.reason === 'not_ready') return localRebirth();
       if (res.ok) {
         const a = applyServer(res, PENDING_REBIRTH_KEY);
-        return { ok: true, mode: 'server', rc: Number(res.rebirths), stars: a.stars, applied: a.applied, replay: !!res.replay };
+        // rc = the LOCAL count it landed on (grantTarget), never a stale-low row's answer
+        return { ok: true, mode: 'server', rc: Number(a.rc), stars: a.stars, applied: a.applied, replay: !!res.replay };
       }
       const { pending: _p, ...rest } = res;
       void _p;

@@ -381,9 +381,11 @@ export const CAST_FRAMES = {
   // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
   mecha: { n: 4, seq: [[1, 750], [0, 180], [2, 720], [3, 1150]], rest: 1800 },
   // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
-  dud: { n: 4, seq: [[1, 900], [2, 650], [3, 1200]], rest: 2400 },
+  // 6 frames: asleep → head droops, bubble swells → POP, jolts awake → giant yawn → snuggles back down
+  dud: { n: 6, seq: [[1, 520], [2, 800], [3, 520], [4, 720], [5, 600]], rest: 2200 },
   // LEXI: finger raised → pushes the glasses up, *glint* → book open, lecturing → hugs the book, smug
-  lexi: { n: 4, seq: [[1, 600], [2, 1000], [3, 1000]], rest: 2000 },
+  // 6 frames: finger up → to the glasses → push up, *glint* → book swung open → taps the page, lecturing → hugs it, smug
+  lexi: { n: 6, seq: [[1, 260], [2, 620], [3, 420], [4, 780], [5, 1000]], rest: 1900 },
   // SHH: finger to lips → the invisible wall → the invisible rope → a smug bow
   shh: { n: 4, seq: [[1, 800], [2, 380], [0, 120], [2, 380], [3, 1100]], rest: 2000 },
   // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
@@ -433,6 +435,10 @@ registerWinFrames('boo', WIN_SEQ6);
 registerWinFrames('mecha', WIN_SEQ6);
 registerWinFrames('dud', WIN_SEQ6);
 registerWinFrames('lexi', WIN_SEQ6);
+registerWinFrames('shh', WIN_SEQ6);
+registerWinFrames('jinx', WIN_SEQ6);
+// QUILL's sheet lost two frames to cleanup (a feather cut out, a collar pocket) — four clean beats: heart → verse → quill high → the smug nod
+registerWinFrames('quill', { n: 4, seq: [[1, 520], [2, 620], [3, 900]], rest: 700 });
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own

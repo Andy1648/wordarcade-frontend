@@ -4416,6 +4416,42 @@ function CategoryBlitzScreen({
   // Personal combo/streak (Category Blitz) - CLIENT-SIDE HYPE ONLY. CB answer
   // results are sent only to the submitter (opponents see counts, not words), so
   // lastWordResult here is always OURS - no turn gating needed. Resets each round.
+  // YOUR ANSWERS NEVER SCROLLS (Andy oct19 "I DONT WANT SCROLL BARS … the answers can just shrink"): the list takes the
+  // rail's leftover height, and when the chips outgrow it they step down a size (data-fit 0→3) instead of scrolling.
+  // Runs only when an answer lands, the rival count changes or the window resizes, never per keystroke.
+  const cbAnswersRef = useRef(null);
+  const cbAnswerCount = myAnswers.length;
+  const cbRivalCount = (roomPlayers || []).length;
+  useLayoutEffect(() => {
+    const el = cbAnswersRef.current;
+    if (!el) return undefined;
+    const fit = () => {
+      let d = 0;
+      el.dataset.fit = '0';
+      while (d < 3 && el.scrollHeight > el.clientHeight + 1) el.dataset.fit = String(++d);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [cbAnswerCount, cbRivalCount, categoryRound?.round]);
+  // THE BREAK BETWEEN ROUNDS counts down what the SERVER waits (Andy oct19: it now scales with the room, 4 s + 1 s per
+  // player, max 10 s): round_end carries nextInMs; an older server sends none, which is the old flat 5 s. A 4 Hz clock only
+  // while the results are up.
+  // The FIRST frame of the results reads the server's number too (a live 3-player test caught a one-frame "5 SECONDS"
+  // before the clock's first tick replaced it with 7): breakShown falls back to nextInMs, not to a flat 5.
+  const breakTotalMs = roundResults && Number.isFinite(roundResults.nextInMs) && roundResults.nextInMs > 0 ? roundResults.nextInMs : 5000;
+  const [breakLeft, setBreakLeft] = useState(null);
+  const breakShown = breakLeft ?? Math.ceil(breakTotalMs / 1000);
+  useEffect(() => {
+    if (!roundResults) { setBreakLeft(null); return undefined; }
+    const ms = breakTotalMs;
+    const end = Date.now() + ms;
+    const tick = () => setBreakLeft(Math.max(0, Math.ceil((end - Date.now()) / 1000)));
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [roundResults, breakTotalMs]);
+
   const streak = useCombo();
   // Near-miss / clutch callout: snapshot the EXISTING round-timer value at submit
   // (cbSubmitTimerRef) and surface how close a late accepted answer was.
@@ -4854,6 +4890,8 @@ function CategoryBlitzScreen({
     // after the first ~5s the button locks for the rest of the round. The server
     // is authoritative - this just mirrors it so the button looks right.
     const withinRerollWindow = !showCountdown && timerSeconds > maxTimer - 5;
+    // Package A (Andy oct19): "TOP 115 ANSWERS"; YOUR ANSWERS counts once as 8/115 and lists the newest answer first.
+    const hasTopN = !categoryRound?.openList && topN !== 'ANSWERS';
 
     return (
       <div className="game-wrap">
@@ -4890,8 +4928,14 @@ function CategoryBlitzScreen({
               band ON the answer now, and a second announcement in the middle of the screen is the
               same event told twice, further from the thing it is about. */}
           <div className="game-header">
-            <div className="game-title">
-              <SprayReveal>CATEGORY BLITZ</SprayReveal>
+            {/* The sound control sits beside the title, not beside LEAVE (Andy oct19 "putting music right next to it is
+                not a good idea"): on a phone it opens the controls row on the left, clear of LEAVE, the TOP N line and the
+                fixed WINS pill. Still the header cluster, never a fixed orphan. */}
+            <div className="cb-title-row">
+              <div className="game-title">
+                <SprayReveal>CATEGORY BLITZ</SprayReveal>
+              </div>
+              {audioSlot}
             </div>
             <div className="game-header-right">
               <div className="game-meta">
@@ -4903,7 +4947,6 @@ function CategoryBlitzScreen({
                   </span>
                 )}
               </div>
-              {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -4923,7 +4966,9 @@ function CategoryBlitzScreen({
 
           <div className="cb-category-label">
             {roundPack && <><span className="cb-pack-tag">{roundPack} ·</span>{' '}</>}
-            <span className="cb-topline">TOP <span className="cb-topn">{topN}</span></span>
+            <span className="cb-topline">
+              TOP <span className="cb-topn">{topN}</span>{hasTopN && <> <span className="cb-topword">ANSWERS</span></>}
+            </span>
             {categoryRound?.openList && <>{' '}<span className="cb-topline">FAMILY-FRIENDLY ANSWERS</span></>}
           </div>
           <div className="cb-category-display">
@@ -5109,15 +5154,21 @@ function CategoryBlitzScreen({
             <div className="cb-round-side">
 
           <div className="cb-my-answers">
-            <div className="cb-section-label">YOUR ANSWERS ({myAnswers.length})</div>
-            {/* the round's running total, BIG (oct15 night proportions pass: the rail was a tiny label over empty space) */}
-            <div className="cb-my-count" aria-hidden="true" key={`n${myAnswers.length}`}>{myAnswers.length}</div>
-            <div className="cb-answers-list" translate="no">
+            <div className="cb-answers-head">
+              <span className="cb-section-label">YOUR ANSWERS</span>
+              {/* the round's running total, ONCE (it used to read "(8)" and a big 8): found / the list's size */}
+              <span className="cb-answers-count" key={`n${myAnswers.length}`}>
+                {myAnswers.length}{hasTopN && <span className="cb-answers-of">/{topN}</span>}
+              </span>
+            </div>
+            {/* Newest FIRST, so the answer you just typed is always on screen. Keys stay with each answer, so only the
+                new chip animates in. */}
+            <div className="cb-answers-list" translate="no" ref={cbAnswersRef}>
               {myAnswers.length === 0 ? (
                 <span className="game-used-empty">GO! TYPE ANYTHING THAT FITS</span>
               ) : (
                 myAnswers.map((answer, i) => (
-                  <span key={`${answer}-${i}`} className="cb-answer-chip">
+                  <span key={`${answer}-${i}`} className="cb-answer-chip" style={{ order: myAnswers.length - i }}>
                     {answer.toUpperCase()}
                   </span>
                 ))
@@ -5236,9 +5287,8 @@ function CategoryBlitzScreen({
           </div>
 
           <div className="cb-next-round">
-            {roundResults.round >= (roundResults.totalRounds || TOTAL_CATEGORY_ROUNDS)
-              ? 'FINAL SCORES IN 5 SECONDS...'
-              : 'NEXT ROUND IN 5 SECONDS...'}
+            {roundResults.round >= (roundResults.totalRounds || TOTAL_CATEGORY_ROUNDS) ? 'FINAL SCORES' : 'NEXT ROUND'}
+            {' IN '}<span translate="no">{breakShown}</span>{breakShown === 1 ? ' SECOND...' : ' SECONDS...'}
           </div>
         </div>
       </div>
