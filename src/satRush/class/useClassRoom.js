@@ -190,6 +190,8 @@ export function useClassRoom() {
     next: useCallback(() => send('class_next', {}), [send]),
     end: useCallback(() => send('class_end', {}), [send]),
     kick: useCallback((studentId) => send('class_kick', { studentId }), [send]),
+    // a new set in the same class (replay the missed words, or a fresh set): students keep their seats
+    restart: useCallback(({ set, rows }) => send('class_restart', { set, rows }), [send]),
   };
 
   const result = useCallback((index, outcome, hints) => send('class_result', { index, outcome, hints }), [send]);
