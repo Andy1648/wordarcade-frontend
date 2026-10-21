@@ -545,10 +545,10 @@
   .mode-dialog-lower--blitz .ppp-rounds { grid-area: rounds; justify-content: flex-start; }
   .mode-dialog-lower--blitz .ppp-count { grid-area: count; text-align: left; }
   .mode-dialog-lower--blitz .mode-dialog-actions { grid-area: act; flex-direction: column; margin: 0; }
-  .mode-dialog-lower--blitz .ppp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .mode-dialog-lower--blitz .ppp-pill { padding: clamp(10px, 1.7vh, 16px) 14px; }
-  .mode-dialog-lower--blitz .ppp-pill-label { font-size: calc(var(--fs-body) * 1.15); }
-  .mode-dialog-lower--blitz .ppp-pill-emoji { font-size: calc(var(--fs-body) * 1.35); }
+  /* four stickers across, three rows: the sticker height follows the viewport so all 11 fit from 720 tall up */
+  .mode-dialog-lower--blitz .ppp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(6px, 1.4vh, 14px) 12px; }
+  .mode-dialog-lower--blitz .ppp-pill { --sticker-h: clamp(64px, 12.5vh, 150px); }
+  .mode-dialog-lower--blitz .ppp-pill-label { font-size: calc(var(--fs-body) * 1.1); }
 }
 /* a tall screen scales the type up (1920x1080, 2560x1440), so the two panels get the height to go with it — the 760px cap
    left the left column 8px short and put a scrollbar on the dialog body */
