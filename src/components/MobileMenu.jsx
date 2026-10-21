@@ -154,6 +154,7 @@ export default function MobileMenu({
   ach,
   achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy (lazy S2Trophy) in the tile's place
   news = null, // { onClick } — the UPDATE LOG tile (re-opens the patch notes)
+  daily = null, // the DAILY tile (contracts/DailyTile) — joins the rail under its four tiles
   profile = null, // { onClick, art } — PROFILE (oct17): your hero's face, opens the profile popup
   railItems,
   onHookPlay = null,
@@ -313,6 +314,7 @@ export default function MobileMenu({
         gems={gems}
         navigating={navigating}
         className="hp-m-rail"
+        daily={daily}
         extra={
           <button type="button" className={`hp-m-credits${navigating ? ' is-disabled' : ''}`} onClick={onCredits} disabled={navigating}>
             CREDITS

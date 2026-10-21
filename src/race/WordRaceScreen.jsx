@@ -39,6 +39,7 @@ import './WordRace.css';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
+import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { payGameResult } from '../progress/gems';
 import { grantGems } from '../progress/gemsCore';
 import { V3 } from '../progress/season';
@@ -464,6 +465,7 @@ export default function WordRaceScreen({
           </p>
           {/* GEMS earned this race — always its own line, never hidden (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
+          <ContractDoneLine since={gemsSince} />
           <div className="wr-over-actions">
             {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
                 the race's EXISTING onLeave (the room leave path); the menu runs the rebirth + ceremony. */}

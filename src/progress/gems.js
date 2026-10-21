@@ -17,6 +17,7 @@
 //
 // PAYLOAD SPLIT: the eager half (balance, the one grant door, drops, LEVEL UP, REBIRTH) is gemsCore.js — the index
 // chunk imports only that. This module re-exports it and adds what only the lazy game screens need.
+import { contractEvent } from './contracts/bus.js';
 import { loadGemState, saveGemState, grantGems, tellBalance, gemsLedgerSince, resetGemsLedgerCore, BOT_WIN, PER_PLAYER_BEATEN, STREAK_PER_WIN } from './gemsCore.js';
 
 const int = (x) => (Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0);
@@ -91,6 +92,7 @@ export function payGameResult({ key, iWon, rivals, selfIds, mode } = {}) {
     paidGames.add(key);
   }
   const list = rivals || [];
+  contractEvent('game', { mode, won: !!iWon, rivals: list.length }); // DAILY CONTRACTS: once per finished game
   if (!list.length) return { lines: [], total: 0, streak: loadGemState().streak }; // a game alone is not a win or a loss
   const s0 = loadGemState();
   const p = gameResultPayout({ iWon, rivals: list, selfIds, streak: s0.streak });

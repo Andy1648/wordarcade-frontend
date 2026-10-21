@@ -1,0 +1,258 @@
+/* contracts.css — DAILY CONTRACTS: the live toasts, the CONTRACTS sheet and the end-card line. Flat fills, coloured
+   outlines (a darker shade of the fill), hard black offset shadows, Bungee + stroke. Nothing loops: every motion is a
+   finite WAAPI one-shot (transform / opacity) started from JS. The menu tile's own rules live in Homepage.css. */
+
+/* ---- the toasts: the house edge toast's spot (KitEdgeToast.css — right edge, below the corner cluster) ---- */
+.cxt-host {
+  position: fixed;
+  top: max(250px, 34vh);
+  right: 0;
+  z-index: 9001;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.cxt { position: absolute; right: 0; }
+.cxt-card {
+  display: flex;
+  align-items: stretch;
+  height: 70px;
+  box-sizing: border-box;
+  background: var(--k-panel);
+  border: var(--k-ink-l) solid var(--k-ink);
+  border-right: 0;
+  border-left: 8px solid #FFE94A;
+  box-shadow: calc(var(--k-sh-l) * -1) var(--k-sh-l) 0 var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(120%); /* rests off-screen; the slide brings it in */
+}
+.cxt-tile {
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFE94A;
+  border-right: var(--k-ink-m) solid var(--k-ink);
+}
+.cxt-art { display: flex; }
+.cxt-art img { display: block; width: 48px; height: 48px; object-fit: contain; }
+.cxt-text { padding: 0 22px 0 16px; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.cxt-head { display: flex; align-items: center; gap: 8px; font-size: var(--fs-k13); color: var(--k-dim); }
+.cxt-code { display: inline-block; padding: 0 5px; background: var(--k-ink); color: #FFE94A; }
+.cxt-label {
+  font-size: var(--fs-k24);
+  line-height: 1;
+  color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
+  paint-order: stroke fill;
+}
+.cxt[data-kind='done'] .cxt-card, .cxt[data-kind='sweep'] .cxt-card { border-left-color: #2EFFE0; }
+.cxt[data-kind='done'] .cxt-tile, .cxt[data-kind='sweep'] .cxt-tile { background: #2EFFE0; }
+.cxt[data-kind='done'] .cxt-code, .cxt[data-kind='sweep'] .cxt-code { color: #2EFFE0; }
+/* STREAK KEPT: bigger, orange, the flame breaks out of its tile */
+.cxt.is-kept .cxt-card { height: 84px; border-left-color: #FF6B3D; }
+.cxt.is-kept .cxt-tile { width: 78px; background: #FF6B3D; }
+.cxt.is-kept .cxt-art img { width: 64px; height: 64px; margin-top: -14px; }
+.cxt.is-kept .cxt-code { color: #FF6B3D; font-size: var(--fs-k20); }
+.cxt.is-kept .cxt-label { font-size: var(--fs-k30); color: #FFE94A; }
+@media (max-width: 480px) {
+  .cxt-host { top: 64px; }
+  .cxt-label { font-size: var(--fs-k20); }
+}
+
+/* ---- the CONTRACTS sheet (a modal: scrim + panel; opened from the rail's DAILY tile) ---- */
+.cx-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: rgba(13, 6, 24, 0.82);
+}
+.cx-sheet {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 18px 18px 16px;
+  background: #1a0b2e;
+  border: 5px solid #6a1aa8;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+}
+.cx-head { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+.cx-head img { width: 54px; height: 54px; transform: rotate(-8deg); }
+.cx-title {
+  flex: 1 1 auto;
+  margin: 0;
+  font: 400 30px/1 'Bungee', cursive;
+  color: #FFE94A;
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+}
+.cx-x {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  font: 400 22px/1 'Bungee', cursive;
+  color: #fff;
+  background: #2a1647;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.cx-x:active { transform: translate(3px, 3px); box-shadow: none; }
+
+/* the streak strip: the painted flame + the count */
+.cx-streak {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 6px 12px 6px 6px;
+  background: #2a1206;
+  border: 4px solid #a8401c;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.cx-streak img { width: 44px; height: 44px; }
+.cx-streak.is-cold img { opacity: 0.4; }
+.cx-streak-n {
+  font: 400 34px/1 'Bungee', cursive;
+  color: #FF6B3D;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.cx-streak-k { display: flex; flex-direction: column; font: 400 16px/1.1 'Bungee', cursive; color: #fff; }
+.cx-streak-k small { font: 700 13px/1.2 'Space Mono', monospace; color: #e8b49a; text-transform: uppercase; }
+
+.cx-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.cx-row {
+  --c: #2EFFE0;
+  --cl: #12a99a;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'tag pay' 'text text' 'bar act';
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 12px 12px;
+  background: #12071f;
+  border: 4px solid var(--cl);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+}
+.cx-row[data-mode='wb'] { --c: #2EFFE0; --cl: #12a99a; }
+.cx-row[data-mode='blitz'] { --c: #FF6B3D; --cl: #a8401c; }
+.cx-row[data-mode='sat'] { --c: #FFE94A; --cl: #a89a1c; }
+.cx-row[data-mode='chain'] { --c: #B04BFF; --cl: #6a1aa8; }
+.cx-row[data-mode='fuse'] { --c: #9A1AFF; --cl: #5a0a99; }
+.cx-row[data-mode='race'] { --c: #FF4FA3; --cl: #b0186a; }
+.cx-row[data-mode='any'] { --c: #C9B8E8; --cl: #6f5f8f; }
+.cx-tag {
+  grid-area: tag;
+  justify-self: start;
+  padding: 3px 8px 2px;
+  font: 400 14px/1 'Bungee', cursive;
+  color: #000;
+  background: var(--c);
+  border: 3px solid var(--cl);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.cx-tier { margin-left: 6px; color: #000; opacity: 0.55; }
+.cx-pay { grid-area: pay; display: flex; align-items: center; gap: 4px; font: 400 20px/1 'Bungee', cursive; color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.cx-text { grid-area: text; margin: 0; font: 700 17px/1.3 'Space Mono', monospace; color: #fff; }
+.cx-bar-wrap { grid-area: bar; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cx-bar {
+  position: relative;
+  flex: 1 1 auto;
+  height: 16px;
+  overflow: hidden;
+  background: #2a1647;
+  border: 3px solid #000;
+  border-radius: 6px;
+}
+.cx-fill { position: absolute; inset: 0; background: var(--c); transform-origin: 0 50%; }
+.cx-num { flex: 0 0 auto; font: 400 16px/1 'Bungee', cursive; color: #fff; }
+.cx-act { grid-area: act; display: flex; gap: 8px; }
+.cx-btn {
+  min-width: 64px;
+  min-height: 44px;
+  padding: 0 12px;
+  font: 400 16px/1 'Bungee', cursive;
+  color: #000;
+  background: var(--c);
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.cx-btn:active { transform: translate(3px, 3px); box-shadow: none; }
+.cx-btn.is-swap { background: #2a1647; color: #fff; }
+.cx-btn:disabled { opacity: 0.4; cursor: default; }
+.cx-row.is-done { border-color: #1d6b2f; background: #0f1d14; }
+.cx-row.is-done .cx-text { color: #9fd9ae; text-decoration: line-through; text-decoration-thickness: 2px; }
+.cx-row.is-done .cx-fill { background: #3ddc6b; }
+.cx-stamp {
+  grid-area: act;
+  justify-self: end;
+  padding: 4px 10px 2px;
+  font: 400 20px/1 'Bungee', cursive;
+  color: #3ddc6b;
+  border: 4px solid #3ddc6b;
+  border-radius: 6px;
+  transform: rotate(-8deg);
+}
+
+.cx-sweep {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  font: 400 17px/1.1 'Bungee', cursive;
+  color: #fff;
+  background: #12071f;
+  border: 4px dashed #6a1aa8;
+  border-radius: 8px;
+}
+.cx-sweep b { display: flex; align-items: center; gap: 4px; color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; font-weight: 400; font-size: var(--fs-k20); }
+.cx-sweep.is-done { border-style: solid; border-color: #1d6b2f; }
+.cx-foot { margin: 12px 0 0; font: 700 14px/1.2 'Space Mono', monospace; color: #b8a8d8; text-align: center; text-transform: uppercase; }
+.cx-foot b { color: #fff; font-weight: 700; }
+@media (max-width: 480px) {
+  .cx-scrim { padding: 10px; align-items: flex-start; }
+  .cx-sheet { padding: 14px 12px 12px; }
+  .cx-title { font-size: var(--fs-k24); -webkit-text-stroke-width: 4px; }
+  .cx-head img { width: 44px; height: 44px; }
+  .cx-text { font-size: var(--fs-k16); }
+}
+
+/* ---- the end card's line: "CONTRACT DONE +N" (ResultsCard / solo + race ends) ---- */
+.cx-endline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  font: 400 16px/1 'Bungee', cursive;
+  color: #FFE94A;
+  background: #12071f;
+  border: 3px solid #a89a1c;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  text-transform: uppercase;
+}
+.cx-endline img { width: 30px; height: 30px; }
+.cx-endline b { display: inline-flex; align-items: center; gap: 3px; color: #2EFFE0; font-weight: 400; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }

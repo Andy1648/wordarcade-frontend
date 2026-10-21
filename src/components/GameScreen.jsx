@@ -67,6 +67,7 @@ import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 import { noteTypedLetters } from '../progress/letterXp';
 import { GemPop, GemsEarnedLine, useGemsRound } from './gems/Gems';
+import ContractDoneLine from './contracts/ContractDoneLine.jsx';
 import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
@@ -4232,6 +4233,7 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           </div>
           {/* GEMS earned this run — always its own line (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
+          <ContractDoneLine since={gemsSince} />
 
           {/* (Daily STREAK line removed — the daily-streak feature is gone; the day #
               above is enough. This reclaims the vertical space it used.) */}
@@ -4764,6 +4766,7 @@ function CategoryBlitzScreen({
             <div className="go-earned-row">
               <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
               <GemsEarnedLine since={gemsSince} />
+              <ContractDoneLine since={gemsSince} />
             </div>
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}

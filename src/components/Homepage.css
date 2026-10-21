@@ -928,3 +928,62 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   /* the column / chip owns PROFILE here — the icon cluster keeps its four */
   .homepage-stage[data-paged] .hp-icons .is-profile { display: none; }
 }
+
+/* ---- DAILY CONTRACTS tile (contracts/DailyTile.jsx): the streak FLAME CHIP + today's three contracts, full width under
+   the four rail tiles — it joins the rail (NO ORPHAN FIXED UI). Static at rest; the flame pops once on a finish. ---- */
+.hp-daily {
+  grid-column: 1 / -1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  height: var(--hp-nav-h);
+  padding: 0 calc(16 * var(--u)) 0 calc(6 * var(--u));
+  background: #2a1206;
+  border: var(--b4) solid #a8401c;
+  border-radius: 8px;
+  box-shadow: var(--b5) var(--b5) 0 #000;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.hp-daily:hover { transform: translate(-1px, -2px); }
+.hp-daily:active { transform: translate(var(--b5), var(--b5)); box-shadow: none; }
+.hp-daily:disabled { opacity: 0.5; pointer-events: none; }
+.hp-daily-flame { position: relative; flex: 0 0 auto; display: block; width: calc(var(--hp-nav-h) - 8px); height: calc(var(--hp-nav-h) - 8px); }
+.hp-daily-flame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.hp-daily-flame.is-cold img { opacity: 0.4; }
+.hp-daily-n {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  font: 400 var(--fs-hprail)/1 'Bungee', cursive;
+  color: #fff;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.hp-daily-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: calc(6 * var(--u)); }
+.hp-daily-k { font: 400 var(--fs-hpval)/1 'Bungee', cursive; color: #FF6B3D; letter-spacing: 0.5px; white-space: nowrap; }
+.hp-daily-row { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+.hp-daily-pips { display: flex; gap: 6px; }
+.hp-daily-pips i { display: block; width: calc(26 * var(--u)); min-width: 18px; height: 12px; background: #12071f; border: 3px solid #000; border-radius: 4px; }
+.hp-daily-pips i.is-done { background: #FFE94A; }
+.hp-daily-count {
+  flex: 0 0 auto;
+  font: 400 var(--fs-hpval)/1 'Bungee', cursive;
+  color: #FFE94A;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.hp-daily.is-swept { border-color: #1d6b2f; background: #0f1d14; }
+.hp-daily.is-swept .hp-daily-count { color: #3ddc6b; }
+.hp-m-rail .hp-daily { flex: 0 0 100%; height: 56px; padding: 0 14px 0 6px; gap: 10px; }
+.hp-m-rail .hp-daily-flame { width: 48px; height: 48px; }
+.hp-m-rail .hp-daily-pips i { width: 26px; }
+.hp-m-rail .hp-daily-n { font-size: var(--fs-k20); }
+.hp-m-rail .hp-daily-k { font-size: var(--fs-k15); }
+.hp-m-rail .hp-daily-count { font-size: var(--fs-k18); }
+@media (prefers-reduced-motion: reduce) { .hp-daily, .hp-daily:hover { transition: none; transform: none; } }

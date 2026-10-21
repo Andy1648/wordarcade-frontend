@@ -29,6 +29,7 @@ import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
+import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { usePlayClock } from '../progress/playClock.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
@@ -393,6 +394,7 @@ export default function SoloShell({
             <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />
             {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
             <GemsEarnedLine since={gemsSince} />
+            <ContractDoneLine since={gemsSince} />
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">

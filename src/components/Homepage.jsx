@@ -112,6 +112,7 @@ import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
 import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
+import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -1352,6 +1353,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
+  const dailyTile = <DailyTile onPlay={handleOpenDialog} navigating={navigating} />;
   const gearSlot = markShown && isPagedMenu ? (
     <>
       <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
@@ -1432,11 +1434,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             markChip={markChip}
             wins={wins}
             gems={markShown ? gems : null}
+            daily={dailyTile}
           />
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} foot={gearSlot} />
+        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} daily={dailyTile} foot={gearSlot} />
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">

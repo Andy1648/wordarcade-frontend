@@ -263,7 +263,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       // RARITY (word-value): remember the word just cleared + a monotonic id so the banking
       // effect can score it and the pop can announce its tier. Set BEFORE submitCorrect bumps
       // state.cleared, so the next render's view carries the matching cleared word.
-      lastClearedRef.current = { word, id: lastClearedRef.current.id + 1 };
+      lastClearedRef.current = { word, id: lastClearedRef.current.id + 1, stage: cw ? cw.stage : null };
       // How many letters were revealed at completion — gates the heat bump in the
       // engine, and tells PostHog whether players ante early or ride the spell-along.
       const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
@@ -1265,6 +1265,7 @@ function buildView(state, cur, eng, input, extra) {
     // RARITY: the last cleared word + its monotonic id (aligned with `cleared`), for scoring/pop.
     lastClearedWord: extra.lastCleared ? extra.lastCleared.word : '',
     clearId: extra.lastCleared ? extra.lastCleared.id : 0,
+    lastClearedStage: extra.lastCleared && Number.isFinite(extra.lastCleared.stage) ? extra.lastCleared.stage : null, // DAILY CONTRACTS (5x = stage 0)
     spec: extra.spec, // the run's RunSpec (CASE SETUP / results)
     pace: extra.pace, // 'self' (no clock: HINT / CONTINUE) | 'timed'
     setupPrefs: extra.setupPrefs, // remembered CASE SETUP choices (preselect)

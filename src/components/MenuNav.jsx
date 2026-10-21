@@ -115,6 +115,7 @@ function sayGate(g) {
  *               `value` = the live line under the label; `locked` = its gate ("R2" / "LV10") while it is closed.
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)
+ * @param daily  the DAILY tile (contracts/DailyTile — streak flame + contracts), full width under the four tiles
  */
 // THE DOT NUDGE (MENU MOTION LAW, Andy oct9 "the 4 icons in the menu … at least some animation"): a rail tile with an
 // actionable dot nudges its icon ONCE every NUDGE_EVERY_MS — one shared setTimeout for the whole rail (never a CSS loop,
@@ -163,7 +164,7 @@ function useDotNudge(rootRef, enabled) {
   }, [rootRef, enabled]);
 }
 
-export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, foot = null }) {
+export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, daily = null, foot = null }) {
   const navRef = useRef(null);
   const reduced = useReduceMotion();
   useDotNudge(navRef, !reduced);
@@ -199,6 +200,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
           />
         );
       })}
+      {daily}
       {foot}
     </nav>
   );

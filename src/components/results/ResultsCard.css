@@ -427,3 +427,4 @@
 .rs2-impact.is-ko { background: #FF3D7F; }
 .rs2-char .rs2-impact-burst { position: absolute; z-index: 0; left: -22%; top: -22%; width: 144%; height: 144%; object-fit: contain; opacity: 0; filter: none; pointer-events: none; }
 .rs2-hero-in { z-index: 2; } /* the character + #N stay ON TOP of the impact flash (the classic impact frame) */
+.rs2-contract { align-self: flex-start; }

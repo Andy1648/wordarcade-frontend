@@ -25,6 +25,7 @@ import { bankWordWins, bankWeight, awardWordXp, perWordRateNow, subscribeWins } 
 import { cappedWordMult, modePower } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
+import { contractEvent } from '../progress/contracts/bus.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { satRarityMult } from '../progress/rarity';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
@@ -164,6 +165,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
       ) * (Number.isFinite(view.lastClearedPaid) ? view.lastClearedPaid : 1);
       satWeightRef.current += bankWeight(wWeight, view.lastClearedWord || '') + Math.max(0, delta - 1); // + LETTER FORGE
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight, word: view.lastClearedWord || '' });
+      if (view.lastClearedStage != null) contractEvent('sat', { stage: view.lastClearedStage }); // DAILY CONTRACTS: the capture's clue stage
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
       wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
       noteWord(view.lastClearedWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
