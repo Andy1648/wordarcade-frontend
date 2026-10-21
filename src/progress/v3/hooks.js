@@ -111,7 +111,8 @@ export function ascend(target = null) {
   const rb = getRebirths();
   const before = getStarsV3();
   if (target == null && !canAscend(rb, before)) return { ok: false, stars: before, added: 0 };
-  const after = Number.isFinite(target) && target >= 0 ? Math.floor(target) : before + starsForAscend(rb, before);
+  // a granted ascension never LOWERS ★ (a stale-low board row's answer — rebirthFlow.grantTarget, BETTERTHANANDY oct19)
+  const after = Number.isFinite(target) && target >= 0 ? Math.max(Math.floor(target), before + 1) : before + starsForAscend(rb, before);
   saveStarsV3(after);
   saveRebirths(0);
   saveKeyTier(0); // POWER resets on ascension (it is kept through rebirths)
