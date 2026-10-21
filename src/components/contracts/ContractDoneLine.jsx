@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { gemsLedgerSince, subscribeGemLedger } from '../../progress/gemsCore.js';
 import { GemIcon } from '../gems/GemChip.jsx';
 import { formatNum } from '../../format';
-import './contracts.css';
+import './contractLine.css';
 
 const paid = (since) => gemsLedgerSince(since).filter((e) => e.reason === 'contract');
 

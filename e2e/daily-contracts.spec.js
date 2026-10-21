@@ -51,11 +51,11 @@ for (const vp of [{ width: 1366, height: 768, tag: 'desktop' }, { width: 390, he
     await expect(sheet).toBeVisible();
     await expect(sheet.locator('.cx-row')).toHaveCount(3);
     await expect(sheet.locator('.cx-row.is-done')).toHaveCount(1);
+    await page.waitForTimeout(500); // past the one-shot pop
     for (const b of await sheet.locator('button').all()) {
       const r = await b.boundingBox();
       expect(r.height).toBeGreaterThanOrEqual(44);
     }
-    await page.waitForTimeout(500);
     await page.screenshot({ path: `${SHOTS}/${vp.tag}-sheet.png` });
     // ONE SWAP a day: the middle task changes, then every SWAP is gone
     const before = await sheet.locator('.cx-row').nth(1).getAttribute('data-contract');
@@ -81,7 +81,10 @@ test('a Word Bomb round ticks the contracts from its own events: STREAK KEPT toa
   mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players } });
   await page.waitForTimeout(80);
   mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
-  await page.waitForTimeout(4200); // past the 3-2-1 (words only land once the round runs)
+  // words only land once the round runs: past the 3-2-1 (the round's gem mark is taken when the round mounts)
+  await page.locator('.countdown-overlay').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+  await page.locator('.countdown-overlay').waitFor({ state: 'detached', timeout: 15000 });
+  await page.waitForTimeout(400);
   let k = 0;
   let shot = false;
   for (let round = 0; round < 3; round += 1) {

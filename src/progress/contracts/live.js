@@ -15,15 +15,9 @@ import { rarityOf } from '../rarityIndex.js';
 import { GAMES } from '../../gameData.js';
 import { isModeLocked } from '../modeAccess.js';
 
-export const CONTRACTS_KEY = 'taw.contracts';
-/** Fired on window after every write — the menu's DAILY tile and the sheet re-read on it. */
-export const CONTRACTS_CHANGE = 'taw:contracts-change';
+import { CONTRACTS_KEY, CONTRACTS_CHANGE, dayKey } from './bus.js';
 
-/** The LOCAL calendar day ('YYYY-MM-DD'). */
-export function dayKey(now = Date.now()) {
-  const d = new Date(now);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+export { CONTRACTS_KEY, CONTRACTS_CHANGE, dayKey };
 /** ms to the next local midnight. */
 export function msToReset(now = Date.now()) {
   const m = new Date(now);
