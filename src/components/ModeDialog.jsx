@@ -1,5 +1,5 @@
 // ModeDialog.jsx
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './ModeDialog.css';
 import ModeDialogBackground from './ModeDialogBackground';
@@ -9,6 +9,7 @@ import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import ModeExample from './ModeExample';
 import { reduceMotion } from '../lib/reduceMotion';
+import { RoadStrip, RoadView } from './masteryRoad/MasteryRoad.jsx';
 
 
 // Open/close feel (fix/dialog-quality item 2): ONE transform+opacity transition on ONE element
@@ -52,6 +53,10 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   const shellRef = useRef(null);
   const scrimRef = useRef(null);
   const closingRef = useRef(false);
+  // MASTERY ROAD: the road replaces the dialog's lower half; ◂ or Escape comes back to the dialog
+  const [road, setRoad] = useState(false);
+  const roadRef = useRef(false);
+  roadRef.current = road;
 
   const modeKey = MODE_KEY[game.id] || 'bomb';
   const mode = MODES[modeKey];
@@ -103,7 +108,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   // an Escape pressed the instant the dialog appears (CI's mode-dialog flake; a quick player) was lost.
   useLayoutEffect(() => {
     function onKey(e) {
-      if (e.key === 'Escape') handleClose();
+      if (e.key !== 'Escape') return;
+      if (roadRef.current) { setRoad(false); return; }
+      handleClose();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -179,6 +186,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
             {mode.chip}
           </div>
 
+          {road ? <RoadView mode={game.id} onBack={() => setRoad(false)} /> : (
           <div className={`mode-dialog-lower${modeKey === 'blitz' ? ' mode-dialog-lower--blitz' : ''}`}>
             <div className="mode-dialog-title">
               {isSolo ? (
@@ -195,7 +203,9 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            {/* No MASTERY line (Andy oct10: "no one has cared abt it"). */}
+            {/* MASTERY ROAD (oct21): the old mastery line went because "no one has cared abt it" (Andy oct10) — a level
+                alone pays nothing you can see. The strip shows the next REWARD and the words to it; tap → the road. */}
+            <RoadStrip mode={game.id} onOpen={() => setRoad(true)} />
             {/* Real worked example (item 2): the actual mechanic shown, plus the per-word wins
                 rate and typical round length. Replaces the old prose "HOW IT WORKS" blurb. */}
             <ModeExample mode={game.id} accent={accent} />
@@ -276,6 +286,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>

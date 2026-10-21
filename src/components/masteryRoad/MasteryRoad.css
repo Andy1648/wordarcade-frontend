@@ -1,0 +1,254 @@
+/* MasteryRoad.css — MODE MASTERY ROADS. House look: flat fills, coloured outlines (a darker shade of the fill), hard
+   black offset shadows, Bungee display + Space Mono body. --mr-c = the mode colour. Motion: transform/opacity only,
+   finite (rows rise once on open; the claim pop is a WAAPI one-shot in MasteryRoad.jsx). Nothing loops at rest. */
+
+.mr-art { display: block; object-fit: contain; flex: 0 0 auto; }
+
+/* ---------- the bar (a rectangle; scaleX fill) ---------- */
+.mr-bar {
+  display: block;
+  height: 10px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  background: #0d0618;
+  overflow: hidden;
+}
+.mr-bar--big { height: 14px; }
+.mr-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--mr-c);
+  transform-origin: left center;
+}
+
+/* ---------- RoadStrip (the mode dialog row) ---------- */
+.mr-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 60px;
+  padding: 6px 10px 6px 8px;
+  border: 3px solid var(--mr-c);
+  border-radius: 8px;
+  background: #1a0b2e;
+  box-shadow: 4px 4px 0 #000;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mr-strip:hover { transform: translate(-1px, -1px); }
+.mr-strip:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.mr-strip-lv, .mr-head-lv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 58px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--mr-c);
+  color: #000;
+  line-height: 1;
+}
+.mr-strip-lv small, .mr-head-lv small { font-size: var(--fs-micro); letter-spacing: 0.08em; }
+.mr-strip-lv b, .mr-head-lv b { font-family: 'Bungee', cursive; font-size: var(--fs-panel); font-weight: 400; text-transform: uppercase; }
+.mr-strip-mid { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.mr-strip-k { font-size: var(--fs-label); letter-spacing: 0.04em; text-transform: uppercase; color: #fff; }
+.mr-strip-go { font-size: var(--fs-label); letter-spacing: 0.04em; color: #cdbdf0; text-transform: uppercase; }
+.mr-strip-chev { font-size: var(--fs-body); color: var(--mr-c); flex: 0 0 auto; }
+.mr-dot {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #FF3D7F;
+  border: 2px solid #000;
+}
+
+/* ---------- RoadView (in place of the dialog's lower half) ---------- */
+.mr-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  height: min(72vh, 600px);
+  min-height: 0;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+}
+.mr-head { display: flex; align-items: center; gap: 10px; }
+.mr-back {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border: 3px solid #5E0F9E;
+  border-radius: 8px;
+  background: #9A1AFF;
+  box-shadow: 3px 3px 0 #000;
+  color: #fff;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+.mr-back:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.mr-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: 'Bungee', cursive;
+  font-size: var(--fs-panel);
+  text-transform: uppercase;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 1.5px #000;
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 #000;
+  transform: skewX(-5deg);
+}
+.mr-title b { color: var(--mr-c); font-weight: 400; }
+
+.mr-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 3px solid var(--mr-c);
+  border-radius: 8px;
+  background: #0d0618;
+  box-shadow: 4px 4px 0 #000;
+}
+.mr-next-txt { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
+.mr-next-txt small { font-size: var(--fs-label); letter-spacing: 0.08em; color: #cdbdf0; }
+.mr-next-txt b { font-family: 'Bungee', cursive; font-weight: 400; font-size: var(--fs-panel); text-transform: uppercase; line-height: 1; color: #FFE94A; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+.mr-next-go { font-size: var(--fs-label); letter-spacing: 0.04em; }
+.mr-next-go.is-said { color: #FFE94A; }
+.mr-next.is-done b { color: var(--mr-c); }
+
+.mr-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 2px 6px 8px 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  scrollbar-color: var(--mr-c) #0d0618;
+}
+.mr-node {
+  display: grid;
+  grid-template-columns: 44px 14px 64px 1fr auto;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 76px;
+  padding: 4px 4px 4px 0;
+  animation: mr-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes mr-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.mr-node-lv { font-size: var(--fs-body); text-align: right; color: #cdbdf0; }
+/* the rail: a rectangle per row, filled up to where you are */
+.mr-node-rail { position: relative; align-self: stretch; display: flex; justify-content: center; }
+.mr-node-rail::before { content: ''; width: 6px; background: #3a2160; }
+.mr-node.is-claimed .mr-node-rail::before, .mr-node.is-ready .mr-node-rail::before { background: var(--mr-c); }
+.mr-node-pip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  background: #3a2160;
+}
+.mr-node.is-claimed .mr-node-pip, .mr-node.is-ready .mr-node-pip { background: var(--mr-c); }
+.mr-node-art { display: block; width: 64px; height: 64px; }
+.mr-node.is-locked .mr-node-art { opacity: 0.45; }
+.mr-node-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mr-node-txt b { font-size: var(--fs-body); line-height: 1.1; text-transform: uppercase; }
+.mr-node-txt small { font-size: var(--fs-label); letter-spacing: 0.04em; color: #cdbdf0; }
+.mr-node.is-locked .mr-node-txt b { color: #cdbdf0; }
+.mr-node-act { display: flex; justify-content: flex-end; min-width: 92px; }
+.mr-togo { display: flex; flex-direction: column; align-items: flex-end; font-size: var(--fs-micro); line-height: 1.15; color: #cdbdf0; text-align: right; }
+.mr-togo b { font-size: var(--fs-body); color: #fff; }
+.mr-got {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid #000;
+  background: var(--mr-c);
+  color: #000;
+  font-size: var(--fs-body);
+}
+.mr-claim {
+  min-width: 92px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 3px solid #B0A015;
+  border-radius: 8px;
+  background: #FFE94A;
+  box-shadow: 3px 3px 0 #000;
+  color: #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.mr-claim:hover { transform: translate(-1px, -1px); }
+.mr-claim:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.mr-node.is-ready { background: #241040; border-radius: 8px; }
+
+/* ---------- MasteryUpLine (end cards) ---------- */
+.mr-up {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 6px 10px;
+  border: 3px solid var(--mr-c);
+  border-radius: 8px;
+  background: #1a0b2e;
+  box-shadow: 3px 3px 0 #000;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  animation: mr-rise 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mr-up-k { padding: 2px 7px; border-radius: 6px; background: var(--mr-c); color: #000; font-size: var(--fs-label); letter-spacing: 0.08em; }
+.mr-up-lv b { font-family: 'Bungee', cursive; font-weight: 400; font-size: var(--fs-panel); text-transform: uppercase; color: var(--mr-c); }
+.mr-up-next { display: inline-flex; align-items: center; gap: 6px; color: #cdbdf0; }
+.mr-up-next.is-ready { color: #FFE94A; }
+
+@media (max-width: 480px) {
+  .mr-node { grid-template-columns: 30px 10px 48px minmax(0, 1fr) auto; column-gap: 7px; min-height: 66px; }
+  .mr-node-art, .mr-node-art .mr-art { width: 48px; height: 48px; }
+  .mr-node-act { min-width: 0; }
+  .mr-claim { min-width: 0; padding: 0 10px; }
+  .mr-node-lv { font-size: var(--fs-label); }
+  .mr-strip-art { width: 44px; height: 44px; }
+  .mr-next { padding: 8px 10px; gap: 10px; }
+  .mr-next-art { width: 60px; height: 60px; }
+  .mr-head-lv { min-width: 50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mr-node, .mr-up { animation: none; }
+  .mr-strip, .mr-claim { transition: none; }
+}
+
+/* end-card placements: one row, centred, never a new block of its own when nothing crossed */
+.rs2-mastery:empty { display: none; }
+.rs2-mastery .mr-up, .solo-mastery-up, .go-mastery-up, .sr-mastery-up { justify-content: center; margin: 6px auto 0; width: fit-content; max-width: 100%; }

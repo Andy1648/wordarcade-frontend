@@ -124,7 +124,7 @@ function N({ to, at, ms = T.count, prefix = '', className = '' }) {
  * @param {React.ReactNode} p.actions the exits row (PLAY AGAIN / MENU / offer)
  * @param {React.ReactNode} p.extras  rebirth-ready, claim prompt, near miss, try-a-mode
  */
-export default function ResultsCard({ cardRef, split = null, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null, playerColors = null }) {
+export default function ResultsCard({ cardRef, split = null, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, masteryLine = null, table = [], learn = null, actions = null, extras = null, playerColors = null }) {
   const local = useRef(null);
   const root = cardRef || local;
   // ONE drawing (the mockup's 1366×657 sheet) scaled by --rs-k to the window; a phone gets its own stack.
@@ -400,6 +400,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             {l.note ? <span className="rs2-line-note">{l.note}</span> : null}
           </div>
         ))}
+        {masteryLine ? <div className="rs2-mastery" data-rv="rise" data-at={tGems}>{masteryLine}</div> : null}
         <div className="rs2-sum">
           <div className="rs2-gems" data-rv="rise" data-at={tGems}>
             <GemsEarnedLine since={gemsSince} className="rs2-gems-line" />

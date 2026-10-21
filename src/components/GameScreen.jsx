@@ -19,6 +19,7 @@ import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
 import ResultsCard from './results/ResultsCard.jsx';
+import { MasteryUpLine, useMasteryGameMark } from './masteryRoad/MasteryRoad.jsx';
 import { placementOrder, xpBetween } from './results/resultsModel.js';
 import { SEASON2, V3 } from '../progress/season';
 import { progressOf, loadProgress, need as levelNeed, getRebirths } from '../progress/xp';
@@ -2692,6 +2693,7 @@ export default function GameScreen({
   // who I beat), and ONE payout when the game is over (gems.payGameResult dedupes by game key). Nothing here feeds
   // back into the game, the view or the socket. Hooks above the early returns (the React #310 trap noted above).
   const gemsSince = useGemsRound(gameNonce);
+  const masterySince = useMasteryGameMark('word-bomb', gameNonce); // MASTERY UP on the results card
   const gemElimRef = useRef([]);
   useEffect(() => { gemElimRef.current = []; }, [gameNonce]);
   // RESULTS (P9b): the level bar where this game STARTED (per gameNonce), so the results card can say the XP the game
@@ -3972,6 +3974,7 @@ export default function GameScreen({
                 wordsWins={winsEarnedTotal}
                 bonusLines={winsBonusLines}
                 gemsSince={gemsSince}
+                masteryLine={<MasteryUpLine mode="word-bomb" since={masterySince} />}
                 table={table}
                 playerColors={playerColors}
                 learn={!iWon && missedWord ? (
@@ -4379,6 +4382,7 @@ function CategoryBlitzScreen({
   // mount is "this game". At game over the final scores rank everyone: a rival scoring below me is beaten. READ-ONLY;
   // paid once (gems.payGameResult dedupes by key). A solo / daily run has no rivals and pays nothing here.
   const gemsSince = useGemsRound();
+  const masterySince = useMasteryGameMark('category-blitz', 0); // this screen remounts per game: the mount mark is "this game"
   const [gemGameKey] = useState(() => `cb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`); // one per mount = one per game
   useEffect(() => {
     if (!gameOver) return;
@@ -4769,6 +4773,7 @@ function CategoryBlitzScreen({
               <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
               <GemsEarnedLine since={gemsSince} />
             </div>
+            <MasteryUpLine mode="category-blitz" since={masterySince} className="go-mastery-up" />
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (

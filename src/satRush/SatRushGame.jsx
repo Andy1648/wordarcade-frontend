@@ -52,6 +52,7 @@ import DevTuner from './DevTuner';
 import SatKeyInput from './SatKeyInput';
 import { LevelUpChip } from '../components/FeelLadder';
 import { GemPop, useGemsRunMark } from '../components/gems/Gems';
+import { useMasteryRunMark } from '../components/masteryRoad/MasteryRoad.jsx';
 import { usePlayClock } from '../progress/playClock.js';
 
 export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false, startMode = null }) {
@@ -117,6 +118,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
   }), []);
   // GEMS: this run's ledger mark (taken as each run starts playing) — the results page's "+N gems" line
   const gemsSince = useGemsRunMark(view.phase === 'playing');
+  const masterySince = useMasteryRunMark('sat-rush', view.phase === 'playing');
   const satPrevPhaseRef = useRef(view.phase);
   useEffect(() => {
     if (view.phase === 'playing' && satPrevPhaseRef.current !== 'playing') setWinsBonusLines([]);
@@ -298,6 +300,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
           winsEarned={winsEarned}
           winsBonusLines={winsBonusLines}
           gemsSince={gemsSince}
+          masterySince={masterySince}
           onAgain={game.startGame}
           onReplay={game.replayMisses}
           onExit={onExit}
