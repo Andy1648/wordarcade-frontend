@@ -1373,9 +1373,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       <span className="hp-rankplate-n">{shownRankName(rankTitle(xpProgress.level))}</span>
     </button>
   ) : null;
-  // JUICE P1: the bar's right end shows the next reward — the next level, or REBIRTH when that level opens the gate
+  // JUICE P1: the bar's right end shows the next reward — the next level (never the REBIRTH icon — Andy oct21)
   const barLevel = barLive ? xpProgress.level : barFrom.level;
-  const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, rebirth: barLevel + 1 >= rebirthGate, r: rebirths + 1 } : null), [barLevel, rebirthGate, rebirths]);
+  const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1 } : null), [barLevel]);
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
