@@ -629,7 +629,13 @@ function StudentWait({ snap, onLeave }) {
   return (
     <Page title="YOU'RE IN" sub={`class ${snap.code}`} onBack={onLeave} backLabel="LEAVE">
       <div className="fr-class-hi">{snap.name}</div>
-      <div className="fr-class-count">{snap.hostAway ? 'the teacher is reconnecting…' : snap.round > 1 ? 'next set coming up' : 'waiting for the teacher to start'}</div>
+      <div className="fr-class-count">{snap.hostAway
+          ? 'the teacher is reconnecting…'
+          : snap.phase === 'review'
+            ? 'you join in at the next word'
+            : snap.round > 1
+              ? 'next set coming up'
+              : 'waiting for the teacher to start'}</div>
       <div className="fr-class-count">
         {formatNum(snap.total)} words · {formatNum(snap.studentCount)} in the class
       </div>
@@ -684,6 +690,9 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
     if (snap.phase === 'lobby') return;
     if (!run.started) {
       if (snap.phase === 'done') return; // came back after the end: StudentDone shows the score
+      // Joined (or reloaded) while a word's answer is up: that word is over, and starting the run on
+      // it would score it a MISS on this student's own results. Wait for the next word.
+      if (snap.phase === 'review') return;
       setAutoSpeak(!snap.set || snap.set.voice === 'phones'); // the teacher chose where the voice is
       g.startClassRun({
         rows: snap.rows,
