@@ -97,10 +97,14 @@ const H = 60;
 // v4 "SIMPLE" (Andy Oct 7 23:20): XP from MENU keys only (full rate), games pay wins only. Gate 18 + 20R → 15 + 18R (the
 // floor Andy allowed) to bring the median's first rebirth from 31.8 min back into 18–25; POWER cost unchanged. Every row
 // is the v4 sim table (regression guards); the median's R1 is also held to 18–25 min below.
+// oct20 NO RANDOM OVERDRIVE (Andy: "i dont want it to randomly appear", then "no need for random overdrive - just get
+// rid of it" — he chose the slower pace over a compensating boost): the random ×5 for 5 min every 30–60 min of play is
+// gone, so the later rebirths are re-baselined to the measured run — casual R3 5.81 → 6.70 h, median R3 137.3 → 151.8
+// min and R5 8.91 h → past 10 h (R4 at 10 h), fast R5 3.75 → 4.61 h. R1 is unchanged for every bot.
 const FINAL = {
-  casual: { R1: 60, R3: 5.81 * H, R5: null, END: 3 },
-  median: { R1: 21.5, R3: 137.3, R5: 8.91 * H, END: 5 }, // R1 held at 18–25 min (Andy 22:31 / 23:20)
-  fast: { R1: 9.3, R3: 62.8, R5: 3.75 * H, END: 8 }, // END 6 → 8 (Andy oct13): the R5 JACKPOT ×15 speeds R6+ on purpose
+  casual: { R1: 60, R3: 6.7 * H, R5: null, END: 3 },
+  median: { R1: 21.5, R3: 151.8, R5: null, END: 4 }, // R1 held at 18–25 min (Andy 22:31 / 23:20)
+  fast: { R1: 9.3, R3: 62.8, R5: 4.61 * H, END: 8 }, // END 6 → 8 (Andy oct13): the R5 JACKPOT ×15 speeds R6+ on purpose
   // 035 (Andy oct12, SKUF): a rebirth needs 25 GAME words since the last one — the 0-game menu masher never rebirths
   menu: { R1: null, R3: null, R5: null, END: 0 },
 };

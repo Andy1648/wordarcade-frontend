@@ -63,7 +63,7 @@ for (const vp of VPS) {
     await og.click();
     const sheet = page.locator('.mx-sheet');
     await expect(sheet.getByTestId('mark-main')).toContainText('HOW TO FIND');
-    await expect(sheet.getByTestId('mark-main')).toContainText('SAY THE NAME OF THE PLACE THAT RAISED US');
+    await expect(sheet.getByTestId('mark-main')).toContainText('NAME THE FLASH SITE THAT RAISED US');
     await expect(sheet.getByTestId('gear-equip')).toHaveCount(0);
     await page.waitForTimeout(400);
     await shot(page, `sheet-locked-${vp.tag}`);
@@ -169,7 +169,7 @@ for (const vp of VPS) {
     await shot(page, `leaderboard-sheet-${vp.tag}`);
   });
 
-  test(`@${vp.tag} THE FIND: typing NEWGROUNDS in Word Bomb stamps the word, grants the gear, claims serial #0042`, async ({ page }) => {
+  test(`@${vp.tag} THE FIND: NEWGROUNDS ACCEPTED in Word Bomb stamps the word, grants the gear, claims serial #0042 (typing alone finds nothing)`, async ({ page }) => {
     await page.setViewportSize({ width: vp.w, height: vp.h });
     const mock = await installBackendMock(page);
     await seed(page, { extra: { 'taw.lb.secret': SECRET, 'taw.lb.profile': JSON.stringify({ id: 'me', username: 'NOBUFF' }) } });
@@ -193,6 +193,11 @@ for (const vp of VPS) {
     await input.click();
     await page.keyboard.type('newgrounds', { delay: 40 });
     const stamp = page.getByTestId('unlisted-stamp');
+    // oct20 (Andy "make accepted words count (not just randomly typing)"): typed but not yet accepted → nothing
+    await page.waitForTimeout(900);
+    await expect(stamp).toHaveCount(0);
+    await page.keyboard.press('Enter');
+    mock.pushToClient({ type: 'word_result', payload: { playerId: ME, word: 'newgrounds', valid: true, accepted: true } });
     await expect(stamp).toBeVisible({ timeout: 8000 }); // the stamp + the grant load lazily on the find
     await expect(stamp.locator('.uls-word-text')).toHaveText('NEWGROUNDS');
     await expect(stamp.locator('.uls-name')).toHaveText('O.G.');
@@ -203,9 +208,9 @@ for (const vp of VPS) {
     await page.waitForTimeout(450); // past the slam
     await shot(page, `stamp-${vp.tag}`);
     await expect(stamp).toHaveCount(0, { timeout: 5000 }); // one-shot: it leaves on its own
-    // a second NEWGROUNDS is not a second find
-    await page.keyboard.type(' newgrounds', { delay: 30 });
-    await page.waitForTimeout(400);
+    // a second accepted NEWGROUNDS is not a second find
+    mock.pushToClient({ type: 'word_result', payload: { playerId: ME, word: 'newgrounds', valid: true, accepted: true } });
+    await page.waitForTimeout(800);
     await expect(stamp).toHaveCount(0);
     expect(claims.length).toBe(1);
   });

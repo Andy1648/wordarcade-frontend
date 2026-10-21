@@ -156,7 +156,7 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
                   </div>
                 ) : h.price && !h.gold ? (
                   <div className="hpv-buy">
-                    <KitHoldButton tone="gold" width={300} labelSize={28} label={gems >= h.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
+                    <KitHoldButton tone="gold" width={300} labelSize={gems >= h.price ? 30 : 24} label={gems >= h.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
                       sub={gems >= h.price ? `${formatNum(h.price)} GEMS` : `NEED ${formatNum(h.price - gems)} MORE`}
                       disabled={gems < h.price} confirmText="UNLOCKED!" onConfirm={() => onBuy(h.id)}
                       ariaLabel={`Hold to buy ${h.name} for ${formatNum(h.price)} gems`} />

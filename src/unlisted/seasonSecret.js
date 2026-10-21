@@ -6,7 +6,8 @@
 // so the five word-secrets (and their Stats-board 5/5) stay exactly as they were.
 //
 // Pure: feed it keys, ask it at the boundary. No storage — the gear's own store (unlisted.js) is what makes it once.
-// EAGER (the game's key listener): only the tracker + the pair count. The real-word list is tripleDouble.js (lazy).
+// EAGER: the tracker + the pair count. (oct20: the find itself is an ACCEPTED word — acceptedWords.js — so the game's own
+// dictionary is the real-word check; the old curated list is gone.)
 
 /** How many separate double-letter pairs a word has ("bookkeeper" → 3; "aaa" → 1). */
 export function doublePairs(word) {

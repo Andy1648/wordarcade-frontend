@@ -14,6 +14,7 @@
 // (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
 // state still carries a text label. The root .sr-card class is load-bearing (juice
 // centres bursts on it and the wrong-key shake keys off .sr-card.shake).
+import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
 import { useEffect, useRef } from 'react';
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
@@ -306,6 +307,7 @@ export default function WordCard({ view, onHint, onSkip, onContinue }) {
 
       {/* Mugshot slots, centred. */}
       <div className="sr-slotwrap">
+        <UnlistedSlot />
         {/* wrong key: a tiny "TCH!" tick near the typing row (re-keyed per reject) */}
         {fx.badKey ? (
           <span className="sr-tch" key={`tch-${fx.badKey}`} aria-hidden="true">
