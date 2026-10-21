@@ -21,6 +21,7 @@
 // Feature-detected: until supabase/migrations/006_cloud_save.sql is applied, lb_caps() reports no
 // `cloud` and every call here is a no-op.
 import { exportSave, importSave, parseSave } from './saveBackup.js';
+import { packBlob, unpackBlob, fitsCloud, noteBackupFail, clearBackupFail } from './cloudCodec.js';
 import { resolveXpState } from '../progress/xp.js';
 import { rebirthRushConvert, ECON_VERSION } from '../progress/econMigrate.js';
 
@@ -158,11 +159,24 @@ export async function backupNow({ rpc, secret, force = false, storage, econ = fa
   try {
     const last = Number(s && s.getItem(LAST_BACKUP_KEY)) || 0;
     if (!force && Date.now() - last < BACKUP_EVERY_MS) return false;
-    const blob = exportSave();
+    // B2 (oct21 audit): gzip-pack the cloud copy (cloudCodec.js). A blob still over the server's 64 KB cap is never sent
+    // (the server would refuse it) — the reason is recorded instead of the old silent failure.
+    const blob = await packBlob(exportSave());
+    if (s) s.setItem(LAST_BACKUP_KEY, String(Date.now()));
+    if (!fitsCloud(blob)) {
+      noteBackupFail(s, 'too_big', blob && blob.length);
+      return false;
+    }
     const body = { p_secret: secret, p_blob: blob, p_score: localScore(s).toString() };
     const pe = econArg(econ);
-    const r = pe ? await rpc('lb_save2', { ...body, p_econ: pe }) : await rpc('lb_save', body);
-    if (s) s.setItem(LAST_BACKUP_KEY, String(Date.now()));
+    let r;
+    try {
+      r = pe ? await rpc('lb_save2', { ...body, p_econ: pe }) : await rpc('lb_save', body);
+    } catch (e) {
+      noteBackupFail(s, (e && e.message) || 'refused', blob.length);
+      return false;
+    }
+    if (r && r.saved) clearBackupFail(s);
     return !!(r && r.saved);
   } catch {
     return false;
@@ -183,9 +197,11 @@ export async function restoreIfAhead({ rpc, secret, storage, restore = true, eco
     if (r && r.reset_all === true) return { restored: false, resetAll: true, username: r.username, id: r.id };
     if (!restore) return { restored: false, username: r && r.username, id: r && r.id, reason: 'check-only' };
     if (!r || !r.blob) return { restored: false, username: r && r.username, id: r && r.id };
-    const d = shouldRestore(r.blob, storage);
+    const blob = await unpackBlob(r.blob); // a gzip-packed cloud copy (cloudCodec.js) → a plain save code
+    if (!blob) return { restored: false, username: r.username, id: r.id, reason: 'unreadable' };
+    const d = shouldRestore(blob, storage);
     if (!d.restore) return { restored: false, username: r.username, id: r.id, reason: d.reason };
-    const res = importSave(r.blob);
+    const res = importSave(blob);
     return { restored: !!res.ok, username: r.username, id: r.id };
   } catch {
     return { restored: false };
