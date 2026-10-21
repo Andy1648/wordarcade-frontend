@@ -67,6 +67,7 @@ import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 import { noteTypedLetters } from '../progress/letterXp';
 import { GemPop, GemsEarnedLine, useGemsRound } from './gems/Gems';
+import { XpEarnedLine, useGameXpRound } from './xp/XpEarned';
 import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
@@ -4149,7 +4150,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   return { stage, displayScore, popping, fastForward };
 }
 
-function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false, gemsSince = 0 }) {
+function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false, gemsSince = 0, xpSince = 0 }) {
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
@@ -4230,6 +4231,8 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           <div className="solo-category">
             {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'CATEGORY BLITZ · 3 ROUNDS'}
           </div>
+          {/* GAME XP this run (oct21) — hidden when none */}
+          <XpEarnedLine since={xpSince} />
           {/* GEMS earned this run — always its own line (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
 
@@ -4379,6 +4382,7 @@ function CategoryBlitzScreen({
   // mount is "this game". At game over the final scores rank everyone: a rival scoring below me is beaten. READ-ONLY;
   // paid once (gems.payGameResult dedupes by key). A solo / daily run has no rivals and pays nothing here.
   const gemsSince = useGemsRound();
+  const xpSince = useGameXpRound(); // GAME XP (oct21): this screen remounts per game, so the mount mark is "this game"
   const [gemGameKey] = useState(() => `cb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`); // one per mount = one per game
   useEffect(() => {
     if (!gameOver) return;
@@ -4708,6 +4712,7 @@ function CategoryBlitzScreen({
         onLeave={onLeave}
         actionPending={rematchPending}
         gemsSince={gemsSince}
+        xpSince={xpSince}
       />
     );
   }
@@ -4763,7 +4768,11 @@ function CategoryBlitzScreen({
             {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
             <div className="go-earned-row">
               <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
-              <GemsEarnedLine since={gemsSince} />
+              {/* GAME XP (oct21) stacks over GEMS in one column beside the wins, so the row never gets taller */}
+              <div className="go-earned-side">
+                <XpEarnedLine since={xpSince} />
+                <GemsEarnedLine since={gemsSince} />
+              </div>
             </div>
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}

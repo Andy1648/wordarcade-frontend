@@ -29,6 +29,15 @@ import { notePlay } from './overdrive.js';
 // letters still count (no rate cap) and still feed OVERDRIVE's play clock, but nothing here credits the bar — the
 // level moves from MENU keys only (useXpCapture → xpPerInput). OFF = unchanged.
 import { SEASON2 } from './season.js';
+import { noteGameXp } from './gameXp.js';
+
+// GAME XP (Andy oct21: "fine with games giving xp … start noticeably less than spamming keys on main menu … we can
+// afford under but not over"). Season 2 now pays an ACCEPTED game word GAME_WORD_XP_SHARE menu keys per letter: the
+// SAME XP-per-key stack the menu pays (POWER × REBIRTH × gear × boost × FRENZY — letterXpNow), with NO mode multiplier
+// (a FUSE ×6 on XP would out-earn the menu). Typed letters and rejected words still pay nothing. A 5-letter word =
+// 1 menu key. Season-2 sim (final-sim.mjs, 10 h): games are 12–21 % of all XP across the bots (capped at 35 % by its
+// HARD CHECK); first rebirths come 9–18 % sooner (0.4 was 16–29 % — too much: "we can afford under but not over").
+export const GAME_WORD_XP_SHARE = 0.2;
 
 // The worn MAIN mark's XP boost by tier (base finish) — the SAME bonus wins get (MARKS via ROLLS: one MARK).
 // Read LAZILY (enumerable getters): wins.js imports this module, and marks.js → claims.js → wins.js → here is a
@@ -68,20 +77,21 @@ export function lettersAdded(prev, next) {
  * The flush below and the loop sim both call this. Returns creditXp's result plus { xp }.
  */
 let lastCreditAt = 0;
-export function creditLetterXp(letters, { mode, perLetter } = {}) {
+export function creditLetterXp(letters, { mode, perLetter, gameWord = false } = {}) {
   const n = Number.isFinite(letters) && letters > 0 ? Math.floor(letters) : 0;
   if (!n) return null;
   // OVERDRIVE's clock: the time since the previous credit is PLAY (capped per gap in overdrive.js)
   const now = Date.now();
   if (lastCreditAt) notePlay(now - lastCreditAt, now);
   lastCreditAt = now;
-  if (SEASON2) return null; // season 2 (v4): games pay wins only — a game letter never moves the level bar
+  if (SEASON2 && !gameWord) return null; // season 2: a TYPED game letter never moves the bar — only an accepted word
   const per = Number.isFinite(perLetter) && perLetter > 0 ? perLetter : letterXpNow();
   const xp = roundWordXp(n * per);
   const before = loadProgress();
   const res = creditXp(before, xp);
   saveProgress(res.state);
   if (res.leveledUp && mode && mode !== 'menu') emitMidGameLevelUp(res.level, mode, before.level);
+  if (mode && mode !== 'menu') noteGameXp(xp, Math.max(0, (res.level || 0) - (before.level || 0)));
   return { ...res, xp };
 }
 
@@ -155,7 +165,9 @@ export function flushLetterXp() {
 export function creditAcceptedWordLetters(length, mode) {
   try {
     const n = Number.isFinite(length) && length > 0 ? Math.floor(length) : 0;
-    if (SEASON2 || !n || !mode || mode === 'menu') return null; // season 2: game words pay wins only (0 XP)
+    if (!n || !mode || mode === 'menu') return null;
+    // season 2: the word's letters × GAME_WORD_XP_SHARE menu keys (nothing was paid while typing)
+    if (SEASON2) return creditLetterXp(n, { mode, perLetter: letterXpNow() * GAME_WORD_XP_SHARE, gameWord: true });
     return creditLetterXp(n, { mode, perLetter: letterXpNow() * (1 - MENU_LETTER_SHARE) });
   } catch {
     return null;
