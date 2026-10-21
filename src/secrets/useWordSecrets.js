@@ -21,8 +21,8 @@ import { grantWins } from '../progress/wins';
 import { rebirthMult, getRebirths, loadProgress } from '../progress/xp';
 import { winLevelMult } from '../progress/wins';
 import { secretFound as evSecretFound } from '../lib/events.js';
-import { createWordTracker, doublePairs } from '../unlisted/seasonSecret.js';
-import { createTypewriterRun, noteWishWord, isMirrorWord } from '../unlisted/gearFinds.js';
+import { createWordTracker } from '../unlisted/seasonSecret.js';
+import { noteAcceptedWord } from '../unlisted/acceptedWords.js';
 
 const IDLE_MS = 700; // typing pause that closes the current word (palindrome boundary)
 
@@ -58,25 +58,6 @@ export function secretPayout(base, { rebirths = getRebirths(), level = loadProgr
 }
 
 /**
- * THE UNLISTED GRANT + REVEAL — lazy (unlisted/reveal.js loads on the find, never on the menu's first paint). It grants
- * the gear once, fires the stamp and claims the serial. Resolves the grant or null.
- */
-const TRIPLE_DOUBLE_ID = 'mk-ul-tripledouble'; // unlisted/unlistedIds.js (a literal here keeps that module off this path)
-// the UNLISTED finds judged on an ACCEPTED word, not a word-secret (unlisted/gearFinds.js — Andy oct18/oct19 "WAY too
-// easy")
-const TYPEWRITER_ID = 'mk-ul-typewriter';
-const WISHBONE_ID = 'mk-ul-wishbone';
-const MIRROR_ID = 'mk-ul-mirror';
-export function revealUnlisted(gearId, word) {
-  return import('../unlisted/reveal.js').then((m) => m.revealUnlisted(gearId, word)).catch(() => null);
-}
-function revealForSecret(secretId, word) {
-  return import('../unlisted/reveal.js').then((m) => m.revealForSecret(secretId, word)).catch(() => null);
-}
-// the SEASON gear: a cheap pre-check here (3+ double pairs); reveal.js confirms it is a real word
-const maybeTripleDouble = (w) => !!w && w.length >= 8 && doublePairs(w) >= 3;
-
-/**
  * @param {boolean} active  only listen while a GAME is the live screen.
  * Returns { hit, notePop, clear } — `hit` is the most recent find
  * ({ id, stamp, wins, blurb, detail, found, total }, `wins` already scaled) for the caller to
@@ -103,10 +84,9 @@ export function useWordSecrets({ active = true } = {}) {
   if (detRef.current === null) {
     detRef.current = createSecretDetector({ storage: safeStorage(), rng: rarePopRng });
   }
-  const typeRef = useRef(null);
-  if (typeRef.current === null) typeRef.current = createTypewriterRun();
-  // the word in the box you typed it in (its last non-empty value): what an ACCEPTED word was. Read from the input's own
-  // events, so a phone keyboard (keys "Unidentified") is judged the same as a desktop one.
+  // the word in the box you typed it in (its last non-empty value): what an ACCEPTED word was, for THE UNLISTED (the
+  // caller's notePop() carries no word). Read from the input's own events, so a phone keyboard ("Unidentified" keys)
+  // is judged the same as a desktop one.
   const typedRef = useRef('');
 
   const grant = useCallback((raw) => {
@@ -131,9 +111,7 @@ export function useWordSecrets({ active = true } = {}) {
       /* storage blocked — the find still shows, just not banked */
     }
     try { evSecretFound(found.id); } catch { /* analytics only */ }
-    // THE UNLISTED (oct17): the find is now also a GEAR you keep. The wins above still pay; the gear is the part that
-    // lasts. The stamp lands on the word you typed (UnlistedStamp in the game's reaction slot, via the reveal bus).
-    revealForSecret(found.id, raw.detail || wordRef.current.last());
+    // (THE UNLISTED gears are no longer granted by a secret — oct20, only ACCEPTED words find them: unlisted/acceptedWords.js)
     setHit(found);
     return found;
   }, []);
@@ -142,10 +120,8 @@ export function useWordSecrets({ active = true } = {}) {
     if (!active) return undefined;
     const det = detRef.current;
     const words = wordRef.current;
-    typeRef.current.reset(); // a TYPEWRITER run lives inside one stretch of play
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return; // ignore shortcuts
-      typeRef.current.onKey(e.key);
       words.onKey(e.key);
       grant(det.onKey(e.key));
       clearTimeout(idleRef.current);
@@ -154,11 +130,10 @@ export function useWordSecrets({ active = true } = {}) {
         words.onIdle();
       }, IDLE_MS);
     };
-    // the input's own events: a deletion of any kind is a take-back (TYPEWRITER), and its value is the word you typed
+    // the input's own events: its value is the word you typed (a deletion is judged by acceptedWords.js)
     const onInput = (e) => {
       const t = e.target;
       if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA')) return;
-      if (typeof e.inputType === 'string' && e.inputType.startsWith('delete')) typeRef.current.onDelete();
       const v = String(t.value || '').trim();
       if (v) typedRef.current = v;
     };
@@ -173,14 +148,11 @@ export function useWordSecrets({ active = true } = {}) {
 
   useEffect(() => () => clearTimeout(idleRef.current), []);
 
-  // once per ACCEPTED word: the golden-word secret, and the UNLISTED finds judged on the word the game took
+  // once per ACCEPTED word (Word Bomb / Blitz): the golden-word secret, and THE UNLISTED door (every mode calls it)
   const notePop = useCallback(() => {
     const word = (typedRef.current || wordRef.current.last() || '').toLowerCase();
     typedRef.current = '';
-    if (typeRef.current.onWord(word)) revealUnlisted(TYPEWRITER_ID, word);
-    if (isMirrorWord(word)) revealUnlisted(MIRROR_ID, word);
-    if (maybeTripleDouble(word)) revealUnlisted(TRIPLE_DOUBLE_ID, word);
-    if (noteWishWord(Date.now(), safeStorage())) revealUnlisted(WISHBONE_ID, word || wordRef.current.last());
+    noteAcceptedWord(word, { mode: 'game' });
     return grant(detRef.current.onPop());
   }, [grant]);
   const clear = useCallback(() => setHit(null), []);
