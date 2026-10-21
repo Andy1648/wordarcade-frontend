@@ -4434,6 +4434,20 @@ function CategoryBlitzScreen({
     window.addEventListener('resize', fit);
     return () => window.removeEventListener('resize', fit);
   }, [cbAnswerCount, cbRivalCount, categoryRound?.round]);
+  // THE BREAK BETWEEN ROUNDS counts down what the SERVER waits (Andy oct19: it now scales with the room, 4 s + 1 s per
+  // player, max 10 s): round_end carries nextInMs; an older server sends none, which is the old flat 5 s. A 4 Hz clock only
+  // while the results are up.
+  const [breakLeft, setBreakLeft] = useState(null);
+  useEffect(() => {
+    if (!roundResults) { setBreakLeft(null); return undefined; }
+    const ms = Number.isFinite(roundResults.nextInMs) && roundResults.nextInMs > 0 ? roundResults.nextInMs : 5000;
+    const end = Date.now() + ms;
+    const tick = () => setBreakLeft(Math.max(0, Math.ceil((end - Date.now()) / 1000)));
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [roundResults]);
+
   const streak = useCombo();
   // Near-miss / clutch callout: snapshot the EXISTING round-timer value at submit
   // (cbSubmitTimerRef) and surface how close a late accepted answer was.
@@ -5269,9 +5283,8 @@ function CategoryBlitzScreen({
           </div>
 
           <div className="cb-next-round">
-            {roundResults.round >= (roundResults.totalRounds || TOTAL_CATEGORY_ROUNDS)
-              ? 'FINAL SCORES IN 5 SECONDS...'
-              : 'NEXT ROUND IN 5 SECONDS...'}
+            {roundResults.round >= (roundResults.totalRounds || TOTAL_CATEGORY_ROUNDS) ? 'FINAL SCORES' : 'NEXT ROUND'}
+            {' IN '}<span translate="no">{breakLeft ?? 5}</span>{breakLeft === 1 ? ' SECOND...' : ' SECONDS...'}
           </div>
         </div>
       </div>
