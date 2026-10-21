@@ -20,6 +20,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 export { KitIconButton, KitRailButton } from './KitNavButton.jsx';
 import { createHoldConfirm, HOLD_MS, HOLD_SHAKE_AT_MS } from './holdConfirm.js';
 import { FX, fx, kitStop } from './motion.js';
+import { labelClass } from './labelSize.js';
 import './motionMore.js';
 import './tokens.css';
 import './KitButton.css';
@@ -61,7 +62,6 @@ function Face({ children, extraGlint = true, hatch = false }) {
   );
 }
 
-const LABEL_FS = { 24: 'kb-fs24', 30: 'kb-fs30', 34: 'kb-fs34', 38: 'kb-fs38' };
 
 /**
  * @param {object} p
@@ -119,7 +119,7 @@ export const KitButton = /* @__PURE__ */ forwardRef(function KitButton(
         <Face hatch={disabled}>
           {drainMs ? <span ref={drainRef} key={drainKey} className="kb-drain" /> : null}
           <span className="kb-label">
-            <span className={cx('kb-main', LABEL_FS[labelSize] || 'kb-fs38')}>{label}</span>
+            <span className={cx('kb-main', labelClass(labelSize, 38))}>{label}</span>
             {disabled && lockText ? <LockChip text={lockText} hot={denyHot} /> : sub != null ? <span className="kb-sub">{sub}</span> : null}
           </span>
         </Face>
@@ -235,7 +235,7 @@ export const KitHoldButton = /* @__PURE__ */ forwardRef(function KitHoldButton(
           {!disabled && <span className="kb-tick kb-tick--50" />}
           {!disabled && <span className="kb-tick kb-tick--75" />}
           <span className="kb-label">
-            <span className={cx('kb-main', LABEL_FS[labelSize] || 'kb-fs30')}>{held ? holdingLabel : label}</span>
+            <span className={cx('kb-main', labelClass(labelSize, 30))}>{held ? holdingLabel : label}</span>
             {sub != null && <span className="kb-sub">{sub}</span>}
           </span>
           <span ref={flashRef} className="kb-flash" />
