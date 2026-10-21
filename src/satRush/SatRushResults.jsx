@@ -16,7 +16,7 @@ import NearMiss from '../components/NearMiss.jsx';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 import { GemsEarnedLine } from '../components/gems/Gems';
-import { MasteryUpLine } from '../components/masteryRoad/MasteryRoad.jsx';
+import { MasteryUpLine } from '../components/masteryRoad/MasteryUp.jsx';
 import { speakFr, canSpeak, withArticle } from './speak';
 
 const C = JUICE.CELEBRATION;

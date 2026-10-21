@@ -29,7 +29,7 @@ import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
-import { MasteryUpLine, useMasteryRunMark } from '../components/masteryRoad/MasteryRoad.jsx';
+import { MasteryUpLine, useMasteryRunMark } from '../components/masteryRoad/MasteryUp.jsx';
 import { usePlayClock } from '../progress/playClock.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate

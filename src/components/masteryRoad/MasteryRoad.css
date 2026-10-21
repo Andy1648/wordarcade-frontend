@@ -208,30 +208,6 @@
 .mr-claim:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 .mr-node.is-ready { background: #241040; border-radius: 8px; }
 
-/* ---------- MasteryUpLine (end cards) ---------- */
-.mr-up {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  padding: 6px 10px;
-  border: 3px solid var(--mr-c);
-  border-radius: 8px;
-  background: #1a0b2e;
-  box-shadow: 3px 3px 0 #000;
-  color: #fff;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-label);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  animation: mr-rise 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.mr-up-k { padding: 2px 7px; border-radius: 6px; background: var(--mr-c); color: #000; font-size: var(--fs-label); letter-spacing: 0.08em; }
-.mr-up-lv b { font-family: 'Bungee', cursive; font-weight: 400; font-size: var(--fs-panel); text-transform: uppercase; color: var(--mr-c); }
-.mr-up-next { display: inline-flex; align-items: center; gap: 6px; color: #cdbdf0; }
-.mr-up-next.is-ready { color: #FFE94A; }
-
 @media (max-width: 480px) {
   .mr-node { grid-template-columns: 30px 10px 48px minmax(0, 1fr) auto; column-gap: 7px; min-height: 66px; }
   .mr-node-art, .mr-node-art .mr-art { width: 48px; height: 48px; }
@@ -245,10 +221,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mr-node, .mr-up { animation: none; }
+  .mr-node { animation: none; }
   .mr-strip, .mr-claim { transition: none; }
 }
 
-/* end-card placements: one row, centred, never a new block of its own when nothing crossed */
-.rs2-mastery:empty { display: none; }
-.rs2-mastery .mr-up, .solo-mastery-up, .go-mastery-up, .sr-mastery-up { justify-content: center; margin: 6px auto 0; width: fit-content; max-width: 100%; }

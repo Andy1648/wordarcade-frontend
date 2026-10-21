@@ -19,7 +19,7 @@ import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
 import ResultsCard from './results/ResultsCard.jsx';
-import { MasteryUpLine, useMasteryGameMark } from './masteryRoad/MasteryRoad.jsx';
+import { MasteryUpLine, useMasteryGameMark } from './masteryRoad/MasteryUp.jsx';
 import { placementOrder, xpBetween } from './results/resultsModel.js';
 import { SEASON2, V3 } from '../progress/season';
 import { progressOf, loadProgress, need as levelNeed, getRebirths } from '../progress/xp';

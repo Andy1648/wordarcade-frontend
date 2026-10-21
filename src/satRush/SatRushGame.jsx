@@ -52,7 +52,7 @@ import DevTuner from './DevTuner';
 import SatKeyInput from './SatKeyInput';
 import { LevelUpChip } from '../components/FeelLadder';
 import { GemPop, useGemsRunMark } from '../components/gems/Gems';
-import { useMasteryRunMark } from '../components/masteryRoad/MasteryRoad.jsx';
+import { useMasteryRunMark } from '../components/masteryRoad/MasteryUp.jsx';
 import { usePlayClock } from '../progress/playClock.js';
 
 export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false, autoStart = false, startMode = null }) {

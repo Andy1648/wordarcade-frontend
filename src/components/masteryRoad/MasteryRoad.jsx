@@ -2,17 +2,18 @@
 // orphan fixed UI):
 //   RoadStrip      — one row in the MODE DIALOG: mastery level, a bar to the next reward, the reward's art. Opens:
 //   RoadView       — the road itself, in place of the dialog's lower half: the NEXT reward big, then every node.
-//   MasteryUpLine  — one END-CARD line when a game crossed a mastery level: the new level + the next reward / CLAIM.
+// (The END-CARD line, MasteryUpLine, lives in MasteryUp.jsx: the game chunks import that, so this file and its CSS stay
+// inside the mode dialog's own chunk — a shared chunk made the dialog wait on one more request.)
 // Art is painted (public/) only. Motion is finite transform/opacity: rows rise once on open, a claim pops its art.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { roadStatus, claimRoadNode, masteryMark, ROAD_MODES } from '../../progress/masteryRoad.js';
+import { roadStatus, claimRoadNode, ROAD_MODES } from '../../progress/masteryRoad.js';
 import { formatNum } from '../../format';
 import { reduceMotion } from '../../lib/reduceMotion';
 import './MasteryRoad.css';
 
 const words = (n) => `${formatNum(n)} ${n === 1 ? 'WORD' : 'WORDS'}`;
 
-function Art({ reward, size, className = '' }) {
+export function Art({ reward, size, className = '' }) {
   return <img className={`mr-art mr-art--${reward.kind} ${className}`} src={reward.art} width={size} height={size} alt="" aria-hidden="true" draggable="false" />;
 }
 
@@ -116,48 +117,6 @@ export function RoadView({ mode, onBack }) {
           <Node key={n.i} n={n} idx={idx} color={m.color} onClaim={onClaim} rowRef={n === focus ? focusRef : undefined} />
         ))}
       </ol>
-    </div>
-  );
-}
-
-/** The mastery level when a game / run started: re-marked on every not-playing → playing flip (a solo run, a race). */
-export function useMasteryRunMark(mode, playing) {
-  const [since, setSince] = useState(() => masteryMark(mode));
-  const was = useRef(!!playing);
-  useEffect(() => {
-    if (playing && !was.current) setSince(masteryMark(mode));
-    was.current = !!playing;
-  }, [playing, mode]);
-  return since;
-}
-/** The mastery level when a game started: re-marked whenever `resetKey` changes (a multiplayer game nonce). */
-export function useMasteryGameMark(mode, resetKey) {
-  const [since, setSince] = useState(() => masteryMark(mode));
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) { first.current = false; return; }
-    setSince(masteryMark(mode));
-  }, [resetKey, mode]);
-  return since;
-}
-
-/** END CARD: "MASTERY UP" when this game crossed a mastery level — null otherwise (nothing to say, no row). */
-export function MasteryUpLine({ mode, since, className = '' }) {
-  const s = roadStatus(mode);
-  if (!s || !(since > 0) || s.level <= since) return null;
-  const m = ROAD_MODES[mode];
-  const ready = s.nodes.find((n) => n.state === 'ready');
-  const show = ready || s.next;
-  return (
-    <div className={`mr-up ${className}`} style={{ '--mr-c': m.color }} data-testid="mastery-up" data-level={s.level}>
-      <span className="mr-up-k">MASTERY UP</span>
-      <span className="mr-up-lv">{m.name} <b>{formatNum(s.level)}</b></span>
-      {show ? (
-        <span className={`mr-up-next${ready ? ' is-ready' : ''}`}>
-          <Art reward={show.reward} size={36} />
-          {ready ? <span><b>{show.reward.name}</b> READY</span> : <span>{show.reward.name} · {words(show.toGo)}</span>}
-        </span>
-      ) : null}
     </div>
   );
 }
