@@ -13,6 +13,18 @@ function pickVoice() {
   }
 }
 
+// AUTO-SAY: the review card reads its word aloud as it lands. A CLASS ROOM teacher can switch that
+// off for the students' phones (thirty phones talking at once) — the 🔊 button still works.
+let autoSpeak = true;
+/** Turn the review card's automatic read-aloud on / off (the 🔊 button is unaffected). */
+export function setAutoSpeak(on) {
+  autoSpeak = !!on;
+}
+/** Is the automatic read-aloud on? */
+export function autoSpeakOn() {
+  return autoSpeak;
+}
+
 /** True when this browser can read text aloud at all. */
 export function canSpeak() {
   return typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';

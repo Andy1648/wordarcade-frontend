@@ -605,6 +605,26 @@
 .st2--narrow .st2-life-v { font-size: var(--fs-k26); -webkit-text-stroke: 4px #000; }
 .st2--narrow .st2-life-l { font-size: var(--fs-k14); padding: 0 5px; max-width: calc(100% - 8px); box-sizing: border-box; white-space: normal; text-align: center; line-height: 1.15; }
 
+/* SHORT PHONES (oct20 UI audit): the stacked layout ran past the screen — 24px at 390x844 (the ALL TIME row cut), and
+   at 360x640 the whole ALL TIME grid and half of CRIT sat below the fold. The bands give back height in two steps: a
+   390x844 phone fits outright; a 360x640 one still scrolls (its content is ~800px), by about half as much. */
+@media (max-height: 900px) {
+  .st2--narrow .st2-stage { gap: 10px; }
+  .st2--narrow .st2-chip { min-height: 78px; }
+  .st2--narrow .st2-hero { padding-top: 18px; gap: 6px; }
+  .st2--narrow .st2-box { height: 96px; }
+}
+@media (max-height: 760px) {
+  .st2--narrow .st2-stage { gap: 8px; padding-top: 8px; padding-bottom: 10px; }
+  .st2--narrow .st2-hero { padding-top: 20px; gap: 6px; }
+  .st2--narrow .st2-box { height: 84px; }
+  .st2--narrow .st2-total { font-size: calc(var(--fs-k100) * 0.66 * min(1, 5 / var(--len))); }
+  .st2--narrow .st2-result-v { font-size: calc(var(--fs-k100) * 0.44 * min(1, 6 / var(--len))); }
+  .st2--narrow .st2-chip { min-height: 62px; padding: 6px 8px; }
+  .st2--narrow .st2-life-k,
+  .st2--narrow .st2-life-cell { min-height: 50px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .st2-rail-fill,
   .st2-chip,

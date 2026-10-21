@@ -103,6 +103,25 @@
      bottom of the scrolling overlay, like the phone layout */
   .pn-foot { position: sticky; bottom: 0; padding: 6px 0 2px; background: #1a0b2e; z-index: 2; }
 }
+/* oct20 UI audit — 1280x551 (a Chromebook with the browser bar): the rows wrapped to two lines and ran under the sticky
+   COLLECT. One line per row at this height, so the whole sheet fits and nothing slides under the button. */
+@media (min-width: 760px) and (max-height: 600px) {
+  .pn-head { flex-direction: row; gap: 14px; margin-top: 0; }
+  .pn-title { font-size: var(--fs-k32); }
+  .pn-line { font-size: var(--fs-k16); line-height: 1.15; }
+  .pn-num { font-size: var(--fs-k20); }
+  .pn-item, .pn-gift { min-height: 44px; }
+  .pn-gift-num { font-size: var(--fs-k24); }
+  .pn-cards { height: 220px; }
+}
+/* the gem wallet (the COLLECT flight's target) sits top-left of the screen: where the centred panel would reach under it,
+   the panel centres in the space to the wallet's right instead (oct20: it covered the panel's corner at 1280 / 1366) */
+@media (min-width: 1200px) and (max-width: 1499px) {
+  .pn { padding-left: 276px; }
+}
+@media (min-width: 760px) and (max-width: 1199px) and (min-height: 700px) {
+  .pn { padding-top: 112px; }
+}
 @media (max-width: 759px) {
   .pn { padding-top: 112px; }
   /* the button never falls below the fold: it sticks to the bottom of the scrolling sheet */
