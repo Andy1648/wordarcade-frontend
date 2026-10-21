@@ -24,7 +24,6 @@ import { MenuIcons, MenuRail } from './MenuNav';
 import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
 import { formatNum } from '../format';
-import WordHook from './WordHook';
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
 import { modePower } from '../progress/xp';
 import { frenzyShort, formatFrenzy } from '../progress/frenzy';
@@ -139,7 +138,6 @@ const isModified = (e) => e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.
  * @param lockedIds  ids of the modes that are level-gated for this player right now
  * @param board / ach / railItems  the v2 chrome (MenuNav.jsx) — built once in Homepage for both trees
  * @param xpBar / markChip  the level bar and the worn mark (Homepage)
- * @param onHookPlay  first-timers only: starts solo Word Bomb from the TYPE A WORD hook; null hides it
  */
 export default function MobileMenu({
   games,
@@ -156,8 +154,6 @@ export default function MobileMenu({
   news = null, // { onClick } — the UPDATE LOG tile (re-opens the patch notes)
   profile = null, // { onClick, art } — PROFILE (oct17): your hero's face, opens the profile popup
   railItems,
-  onHookPlay = null,
-  hookPlayLabel = null,
   xpBar = null,
   markChip = null,
   wins = 0,
@@ -198,10 +194,8 @@ export default function MobileMenu({
              podium button included. On the phone it sits here under the LV strip; the mode rows flex shorter. */}
       {claimSlot}
 
-      {/* 1b. FIRST VISIT ONLY: "TYPE A WORD 👇" + an input. The search visitors who land here
-             from the "type a word" trend get exactly that, then one tap into solo Word Bomb.
-             In flow (not fixed), so the mode rows below simply flex a little shorter. */}
-      {onHookPlay && <WordHook onPlay={onHookPlay} playLabel={hookPlayLabel} navigating={navigating} />}
+      {/* 1b. (oct21, Andy: "no one's really gonna be typing. I should just be tapping … I don't want a text box") the
+             first-visit TYPE A WORD input is gone: a phone menu is taps only. */}
 
       {/* 2. The three mode rows. They flex-grow to share whatever height is left, so the
              screen always fills exactly one viewport with no scroll at any phone height. */}
