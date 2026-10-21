@@ -21,7 +21,8 @@ import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION_V10, econRpcArg } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
-import { packBlob } from '../save/cloudCodec.js';
+// lazy: keeps the gzip codec out of the initial bundle (payload ratchet)
+const packBlob = async (code) => (await import('../save/cloudCodec.js')).packBlob(code);
 import { queueClaim } from '../progress/claims.js';
 import { flagOn, flagDefaultOn } from '../lib/featureFlags.js';
 import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';

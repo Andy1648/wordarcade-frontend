@@ -21,7 +21,8 @@
 // Feature-detected: until supabase/migrations/006_cloud_save.sql is applied, lb_caps() reports no
 // `cloud` and every call here is a no-op.
 import { exportSave, importSave, parseSave } from './saveBackup.js';
-import { packBlob, unpackBlob, fitsCloud, noteBackupFail, clearBackupFail } from './cloudCodec.js';
+// cloudCodec is loaded on first backup/restore, never in the initial bundle (payload ratchet).
+const codec = () => import('./cloudCodec.js');
 import { resolveXpState } from '../progress/xp.js';
 import { rebirthRushConvert, ECON_VERSION } from '../progress/econMigrate.js';
 
@@ -161,6 +162,7 @@ export async function backupNow({ rpc, secret, force = false, storage, econ = fa
     if (!force && Date.now() - last < BACKUP_EVERY_MS) return false;
     // B2 (oct21 audit): gzip-pack the cloud copy (cloudCodec.js). A blob still over the server's 64 KB cap is never sent
     // (the server would refuse it) — the reason is recorded instead of the old silent failure.
+    const { packBlob, fitsCloud, noteBackupFail, clearBackupFail } = await codec();
     const blob = await packBlob(exportSave());
     if (s) s.setItem(LAST_BACKUP_KEY, String(Date.now()));
     if (!fitsCloud(blob)) {
@@ -197,6 +199,7 @@ export async function restoreIfAhead({ rpc, secret, storage, restore = true, eco
     if (r && r.reset_all === true) return { restored: false, resetAll: true, username: r.username, id: r.id };
     if (!restore) return { restored: false, username: r && r.username, id: r && r.id, reason: 'check-only' };
     if (!r || !r.blob) return { restored: false, username: r && r.username, id: r && r.id };
+    const { unpackBlob } = await codec();
     const blob = await unpackBlob(r.blob); // a gzip-packed cloud copy (cloudCodec.js) → a plain save code
     if (!blob) return { restored: false, username: r.username, id: r.id, reason: 'unreadable' };
     const d = shouldRestore(blob, storage);
