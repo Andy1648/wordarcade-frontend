@@ -1,0 +1,53 @@
+/* BestPass — JUICE P3. The parent places .bp (absolute); the art is painted, the plate is a flat slab. */
+.bp {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 200px;
+  height: 230px;
+  margin-left: -100px;
+  pointer-events: none;
+  z-index: 40;
+}
+.bp-burst,
+.bp-trophy {
+  position: absolute;
+  left: 50%;
+  display: block;
+  object-fit: contain;
+  opacity: 0;
+}
+.bp-burst { top: 0; width: 200px; height: 200px; margin-left: -100px; }
+.bp-trophy { top: 30px; width: 130px; height: 130px; margin-left: -65px; transform-origin: 50% 100%; }
+.bp-plate {
+  position: absolute;
+  left: 50%;
+  top: 158px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 16px 8px;
+  background: #ffe94a;
+  border: 4px solid #a8901a;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-50%) rotate(-3deg);
+}
+.bp-label {
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #ff4fa3;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+.bp-sub { margin-top: 2px; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); color: #0d0618; }
+@media (prefers-reduced-motion: reduce) {
+  .bp-burst, .bp-trophy, .bp-plate { opacity: 1; }
+}
+@media (max-width: 480px) {
+  .bp { transform: scale(0.8); transform-origin: 50% 0; }
+}

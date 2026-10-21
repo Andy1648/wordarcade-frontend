@@ -10,6 +10,8 @@
 // reject nudges the input. NO infinite animation: the mascot's idle breathe is switched off inside
 // .wr-root (WordRace.css). Under reduced motion nothing moves and every fact is still on screen as
 // text: the lane counts (7/12), the countdown number, the reject reason, the placings.
+import { noteAcceptedWord } from '../unlisted/acceptedWords.js';
+import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import Mascot from '../components/Mascot';
@@ -134,6 +136,7 @@ export default function WordRaceScreen({
     // ENTIRE WORDS clear the box the moment the word is typed (sendWord), so a late accept must not
     // wipe the NEXT word already being typed.
     if (result.accepted) {
+      if (!result.local) noteAcceptedWord(result.word, { mode: 'race' }); // THE UNLISTED (oct20): any mode
       if (!wordsMode) setText('');
     } else setShakeSeq((n) => n + 1);
     // Only a NEW result should act — resultSeq is the event counter.
@@ -384,6 +387,7 @@ export default function WordRaceScreen({
           </div>
 
           <form className={`wr-form${shakeSeq ? ` wr-shake-${shakeSeq % 2}` : ''}`} onSubmit={submit}>
+            <UnlistedSlot />
             <input
               ref={inputRef}
               className="wr-input"

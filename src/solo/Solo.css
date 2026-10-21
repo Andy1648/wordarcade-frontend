@@ -1672,3 +1672,24 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   .solo-fuse-track { gap: 0; }
   .solo-strip-count { font-size: max(18px, var(--fs-body)); }
 }
+
+/* JUICE P3 (BEST CHASE) — the near-miss / new-best line takes its own row under SCORE · BEST */
+.solo-scoreline { flex-wrap: wrap; row-gap: 8px; }
+.solo-pbline {
+  flex: 1 0 100%;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+}
+.solo-pbline.is-new { background: #ff4fa3; color: #fff; }
+.solo-pbline.is-near { background: #ffe94a; color: #0d0618; }
+/* the NEW BEST moment sits in the mascot's corner (desktop) / over the top bar (phone) — never over the letter or input */
+.solo-bestpass { position: absolute; right: 40px; bottom: 16px; width: 200px; height: 230px; pointer-events: none; z-index: 62; }
+@media (max-width: 700px) {
+  .solo-bestpass { right: auto; bottom: auto; left: 50%; top: 8px; margin-left: -100px; }
+}

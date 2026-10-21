@@ -93,9 +93,9 @@
   .sp-bars { height: 44px; }
 }
 
-/* WIDE + SHORT (oct20 UI audit: the sheet scrolled 47px at 1280x720 and 156px at 1280x551): a Chromebook has the
+/* WIDE + SHORT (oct20 UI audit: the sheet scrolled 47px at 1280x720 and 156px at 1280x551; with its reset confirm open it ran 4px past 1366x768 in CI fonts): a Chromebook has the
    width the sheet doesn't use, so the switches take the left column and SAVE / RESET the right one — no scrollbar. */
-@media (min-width: 900px) and (max-height: 740px) {
+@media (min-width: 900px) and (max-height: 800px) {
   .sp-sheet .sp {
     display: grid;
     grid-template-columns: 1fr 1fr;

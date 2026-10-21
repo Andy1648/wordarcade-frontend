@@ -284,6 +284,6 @@
   :root .stats-panel { max-width: 680px; }
   :root .stats-secrets { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
   :root .mode-dialog-shell { width: min(90vw, 1060px); max-height: min(94vh, 1060px); }
-  :root .mode-dialog-shell.is-blitz { width: min(94vw, 1060px); height: min(94vh, 1060px); }
+  :root .mode-dialog-shell.is-blitz { width: min(94vw, 1500px); height: min(94vh, 1240px); max-height: min(94vh, 1240px); } /* two panels (oct19) */
   :root .lp-panel { width: min(780px, 92vw); }
 }
