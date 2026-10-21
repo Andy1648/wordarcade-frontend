@@ -1368,8 +1368,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
   };
   const rankPlate = SEASON2 ? (
-    <button type="button" className="menu-xp-rank hp-rankplate" onClick={() => setShowRanks(true)} disabled={navigating} aria-label="Rank — see all ranks" data-testid="rank-plate">
-      <span className="hp-rankplate-k">RANK</span>
+    <button type="button" className="menu-xp-rank hp-rankplate" onClick={() => setShowRanks(true)} disabled={navigating} aria-label="Title — see all titles" data-testid="rank-plate">
+      <span className="hp-rankplate-k">TITLE</span>
       <span className="hp-rankplate-n">{shownRankName(rankTitle(xpProgress.level))}</span>
     </button>
   ) : null;
