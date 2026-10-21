@@ -19,6 +19,7 @@
 //      that's a design project of its own.
 // So: playable + laid out on mobile, but input is desktop-keyboard only for now.
 // ────────────────────────────────────────────────────────────────────────────
+import { useGameXpRunMark } from '../components/xp/XpEarned';
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { bankWordWins, bankWeight, awardWordXp, perWordRateNow, subscribeWins } from '../progress/wins';
@@ -117,6 +118,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
   }), []);
   // GEMS: this run's ledger mark (taken as each run starts playing) — the results page's "+N gems" line
   const gemsSince = useGemsRunMark(view.phase === 'playing');
+  const xpSince = useGameXpRunMark(view.phase === 'playing'); // GAME XP (oct21): this run's words
   const satPrevPhaseRef = useRef(view.phase);
   useEffect(() => {
     if (view.phase === 'playing' && satPrevPhaseRef.current !== 'playing') setWinsBonusLines([]);
@@ -298,6 +300,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
           winsEarned={winsEarned}
           winsBonusLines={winsBonusLines}
           gemsSince={gemsSince}
+          xpSince={xpSince}
           onAgain={game.startGame}
           onReplay={game.replayMisses}
           onExit={onExit}
