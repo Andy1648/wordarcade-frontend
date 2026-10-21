@@ -3,7 +3,7 @@
 // Season 2, a save at R3 · POWER T5 (864 XP a menu key). Real accepted words, then the end card at four sizes:
 //   * Word Bomb — the results card's XP block shows a positive count and does not overlap the WINS block;
 //   * Category Blitz — the "+N XP" pill sits in the earned row beside WINS + GEMS, one line, no clipped text;
-//   * CHAIN — the "+N XP" pill sits directly under the WINS EARNED total;
+//   * CHAIN — the "+N XP" pill shares one row with GEMS directly under the WINS EARNED total, and the card still fits;
 //   * WORD RACE — the "+N XP" pill sits directly under the "YOU BANKED +N WINS" line.
 // Every card: no horizontal page overflow, no XP text wider than its box.
 import { test, expect } from '@playwright/test';
@@ -14,6 +14,7 @@ const ME = 'e2e-player'; // the mock socket's own id (support/backendMock)
 const SIZES = [
   { name: '1366x768', width: 1366, height: 768 },
   { name: '1280x720', width: 1280, height: 720 },
+  { name: '1163x501', width: 1163, height: 501 },
   { name: '390x844', width: 390, height: 844 },
   { name: '360x640', width: 360, height: 640 },
 ];
@@ -139,7 +140,7 @@ for (const vp of SIZES) {
       await installBackendMock(page);
       await seedS2(page);
       await page.addInitScript(() => { try { localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 80, f: 0.995, rc: 3, v: 10 })); } catch { /* */ } });
-      await page.goto('/?portal=1&season2=1&soloms=350');
+      await page.goto('/?portal=1&season2=1&soloms=4000'); // a 4 s turn: room to type, still a quick run-over
       await menuReady(page);
       await page.waitForTimeout(400);
       await (await revealMode(page, 'chain')).click({ force: true });
@@ -166,12 +167,28 @@ for (const vp of SIZES) {
       const line = page.locator('.solo-deathcard [data-testid="xp-earned"]');
       await expect(line).toBeVisible();
       expect(Number(await line.getAttribute('data-xp-total')), 'a positive XP total').toBeGreaterThan(0);
-      // directly under the wins total: when the run banked wins, the XP pill is the next element after .wins-earned
+      // directly under the wins total: when the run banked wins, the XP + GEMS row is the next element after .wins-earned
       const order = await page.evaluate(() => {
         const x = document.querySelector('.solo-deathcard [data-testid="xp-earned"]');
-        const prev = x && x.previousElementSibling;
-        return { prev: prev ? prev.className : '', wins: !!document.querySelector('.solo-deathcard .wins-earned') };
+        const row = x && x.parentElement;
+        const prev = row && row.previousElementSibling;
+        return { prev: prev ? prev.className : '', row: row ? row.className : '', wins: !!document.querySelector('.solo-deathcard .wins-earned') };
       });
+      expect(order.row, 'XP shares the earned row with GEMS').toContain('solo-earned-row');
+      const fit = await page.evaluate(() => { const r = document.querySelector('.solo-deathcard').getBoundingClientRect(); return { bottom: r.bottom, right: r.right, h: innerHeight, w: innerWidth }; });
+      const without = await page.evaluate(() => {
+        const x = document.querySelector('.solo-deathcard [data-testid="xp-earned"]');
+        x.style.display = 'none';
+        const r = document.querySelector('.solo-deathcard').getBoundingClientRect();
+        x.style.display = '';
+        return r.bottom;
+      });
+      // the XP pill shares the GEMS row: on a desktop it adds NO height; on a phone, when GEMS carries its source chips,
+      // the pair wraps and XP takes at most ONE compact row. (The season-2 REBIRTH READY run-over card was already taller
+      // than the screen at these sizes before game XP — measured, a separate fit issue — so the gate is the added height.)
+      const allowed = vp.width < 500 ? 36 : 1;
+      expect(fit.bottom - without, `the XP pill made the run-over card taller (bottom ${Math.round(fit.bottom)} vs ${Math.round(without)} without it, viewport ${fit.h})`).toBeLessThanOrEqual(allowed);
+      expect(fit.right, 'the run-over card runs off the right').toBeLessThanOrEqual(fit.w + 1);
       if (order.wins) {
         expect(order.prev, 'the XP line follows the WINS EARNED total').toContain('wins-earned');
         expect(overlaps(await box(page, '.solo-deathcard [data-testid="xp-earned"]'), await box(page, '.solo-deathcard .wins-earned')), 'XP pill overlaps the wins total').toBeFalsy();

@@ -393,10 +393,12 @@ export default function SoloShell({
             {/* Rendered on the tutorial card too (H6): WinsEarnedTotal returns null when the run
                 banked nothing, so a run that DID bank (a mid-run bonus) always names it. */}
             <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />
-            {/* GAME XP this run (oct21) — under the wins, hidden when the run banked none */}
-            <XpEarnedLine since={xpSince} />
             {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
-            <GemsEarnedLine since={gemsSince} />
+            {/* GAME XP (oct21) + GEMS share ONE row under the wins (side by side — the card's height is the fit gate's) */}
+            <div className="solo-earned-row">
+              <XpEarnedLine since={xpSince} />
+              <GemsEarnedLine since={gemsSince} />
+            </div>
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">

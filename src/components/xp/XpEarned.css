@@ -49,3 +49,10 @@
 /* SAT RUSH's printed page: the wins line's ink voice (SatRush.css .sr-winsline), its own class */
 .xp-earned-print { text-align: center; }
 .xp-earned-print b { margin-right: 6px; }
+/* CHAIN / FUSE run-over card: XP and GEMS side by side on ONE row — the compact chip form the Blitz card uses (thin
+   rule, 16px icon), so the two still share a line at 360px and the XP never adds a row to the card */
+.solo-earned-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 8px; margin-top: 6px; }
+.solo-earned-row > .xp-earned,
+.solo-earned-row > .gems-earned { margin: 0; padding: 3px 8px; gap: 6px; border-width: 2px; box-shadow: 2px 2px 0 #000; }
+.solo-earned-row > .xp-earned .xp-earned-hex,
+.solo-earned-row > .gems-earned .gem-icon { width: 16px; height: 16px; }

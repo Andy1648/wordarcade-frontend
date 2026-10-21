@@ -91,7 +91,8 @@ export function creditLetterXp(letters, { mode, perLetter, gameWord = false } = 
   const res = creditXp(before, xp);
   saveProgress(res.state);
   if (res.leveledUp && mode && mode !== 'menu') emitMidGameLevelUp(res.level, mode, before.level);
-  if (mode && mode !== 'menu') noteGameXp(xp, Math.max(0, (res.level || 0) - (before.level || 0)));
+  // the end-card "+N XP" ledger: season 2's accepted words only (season 1 keeps its own results XP block, unchanged)
+  if (SEASON2 && gameWord && mode && mode !== 'menu') noteGameXp(xp, Math.max(0, (res.level || 0) - (before.level || 0)));
   return { ...res, xp };
 }
 
