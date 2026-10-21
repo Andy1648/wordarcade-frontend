@@ -83,11 +83,11 @@ export default function RankLadder({ onClose }) {
     <div className="rl" role="dialog" aria-modal="true" aria-labelledby="rl-title" data-testid="rank-ladder" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="rl-panel">
         <button type="button" className="rl-x" aria-label="Close" onClick={onClose} ref={closeRef}>✕</button>
-        <h2 id="rl-title" className="rl-title">ALL RANKS</h2>
-        <p className="rl-sub">REBIRTH TO CLIMB · TAP A RANK YOU'VE REACHED TO WEAR IT</p>
+        <h2 id="rl-title" className="rl-title">ALL TITLES</h2>
+        <p className="rl-sub">REBIRTH TO CLIMB · TAP A TITLE YOU'VE REACHED TO WEAR IT</p>
         {next ? (
           <div className="rl-next" data-testid="rank-next">
-            <span className="rl-next-k">NEXT RANK</span>
+            <span className="rl-next-k">NEXT TITLE</span>
             <span className="rl-next-plate"><KitRankPlate rank={next.req} w={210} shine /></span>
             <span className="rl-next-quip">{QUIP[next.name]}</span>
             <span className="rl-next-bar"><span style={{ transform: `scaleX(${pctTo(next, RANKS_V3[you])})` }} /></span>
