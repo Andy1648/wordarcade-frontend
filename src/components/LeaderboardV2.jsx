@@ -45,6 +45,7 @@ import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
 import { CAST, castFor, heroById } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
+import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import { lazyWithReload } from '../lib/chunkReload';
 
@@ -477,14 +478,14 @@ export default function LeaderboardV2({ onBack }) {
             {profile && (
               <button type="button" className="lb2-me-btn" onClick={() => setRenaming((v) => !v)} aria-expanded={renaming} aria-label={`Your name is ${profile.username}. Change name`}>
                 <span className="lb2-me-k">YOU</span>
-                <span className="lb2-me-v" style={{ '--nl': nameEms(profile.username) }}>{profile.username}</span>
+                <FitText className="lb2-me-v" min={0.5}>{profile.username}</FitText>
                 <span className="lb2-me-a">CHANGE</span>
               </button>
             )}
             {!profile && (
               <button type="button" className="lb2-me-btn is-claim" onClick={() => setRenaming((v) => !v)} aria-expanded={renaming} aria-label="You have no name on the board yet. Claim a name">
                 <span className="lb2-me-k">YOU</span>
-                <span className="lb2-me-v" style={{ '--nl': nameEms('NO NAME') }}>NO NAME</span>
+                <FitText className="lb2-me-v" min={0.5}>NO NAME</FitText>
                 <span className="lb2-me-a">CLAIM</span>
               </button>
             )}
@@ -531,7 +532,7 @@ export default function LeaderboardV2({ onBack }) {
                   </span>
                   <span className="lb2-pod-name">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <span className="lb2-pod-name-t" style={{ '--nl': nameEms(name) }}>{name}</span>
+                    <FitText className="lb2-pod-name-t" min={0.5} style={{ '--nl': nameEms(name) }}>{name}</FitText>
                   </span>
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-stats">
@@ -579,7 +580,7 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-who-cell">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <span className="lb2-name" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
+                    <FitText className="lb2-name" min={0.5} style={{ '--nl': nameEms(r.username) }}>{r.username}</FitText>
                     {isRival && <span className="lb2-rival">RIVAL</span>}
                     {/* YOUR distance to the NEAREST band rides beside your name when a rival owns the line below */}
                     {mine && rival && r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}

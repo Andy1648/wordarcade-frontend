@@ -30,6 +30,7 @@ import { ComboShatter } from '../components/ComboMeter';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
 import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
+import { XpEarnedLine, useGameXpRunMark } from '../components/xp/XpEarned';
 import { usePlayClock } from '../progress/playClock.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
@@ -157,6 +158,7 @@ export default function SoloShell({
   const wrapLong = input.length > capacity;
   // GEMS: the ledger mark for this run (taken each time a run starts playing) — the death card's "+N GEMS" line.
   const gemsSince = useGemsRunMark(phase === 'playing');
+  const xpSince = useGameXpRunMark(phase === 'playing'); // GAME XP (oct21): this run's words, under the wins
 
   // Keep focus on the field while playing so typing always lands (the field is never
   // cleared on reject, so focus + caret position are the player's evidence).
@@ -393,7 +395,11 @@ export default function SoloShell({
                 banked nothing, so a run that DID bank (a mid-run bonus) always names it. */}
             <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />
             {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
-            <GemsEarnedLine since={gemsSince} />
+            {/* GAME XP (oct21) + GEMS share ONE row under the wins (side by side — the card's height is the fit gate's) */}
+            <div className="solo-earned-row">
+              <XpEarnedLine since={xpSince} />
+              <GemsEarnedLine since={gemsSince} />
+            </div>
             <ContractDoneLine since={gemsSince} />
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (

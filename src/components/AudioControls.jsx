@@ -66,7 +66,7 @@ export default function AudioControls({
           onPointerEnter={warm}
           onFocus={warm}
           title="Settings"
-          ariaLabel="Settings — sound, music, rank plate, save progress"
+          ariaLabel="Settings — sound, music, save progress"
           aria-expanded={open}
         />
         {allOff ? <span className="audio-muted-mark" aria-hidden="true">✕</span> : null}
@@ -85,7 +85,7 @@ export default function AudioControls({
         onPointerEnter={warm}
         onFocus={warm}
         title="Settings"
-        aria-label="Settings — sound, music, rank plate, save progress"
+        aria-label="Settings — sound, music, save progress"
         aria-expanded={open}
       >
         {/* SETTINGS (Andy oct8: "maybe have a settings icon"): a cog — the panel holds sound + music + motion +

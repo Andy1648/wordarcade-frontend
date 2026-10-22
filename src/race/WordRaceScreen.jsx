@@ -40,6 +40,7 @@ import { noteTypedLetters } from '../progress/letterXp.js';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
 import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
+import { XpEarnedLine, useGameXpRunMark } from '../components/xp/XpEarned';
 import { payGameResult } from '../progress/gems';
 import { grantGems } from '../progress/gemsCore';
 import { V3 } from '../progress/season';
@@ -207,6 +208,7 @@ export default function WordRaceScreen({
   // GEMS (Andy oct5): this race's ledger mark (taken as each race goes live) and ONE payout at race over — the
   // standings rank everyone, a racer placed below me is beaten. READ-ONLY on the race (gems.payGameResult dedupes).
   const gemsSince = useGemsRunMark(live);
+  const xpSince = useGameXpRunMark(live); // GAME XP (oct21): this race's words
   const speedPaid = useRef(new Set());
   useEffect(() => {
     if (!over) return;
@@ -463,6 +465,8 @@ export default function WordRaceScreen({
               ? <>YOU BANKED +{formatNum(earned?.wins || 0)} WINS</>
               : <>NO WINS THIS RACE — {minWordsFor()} WORDS START THE BANK</>}
           </p>
+          {/* GAME XP this race (oct21) — under the wins, hidden when none */}
+          <XpEarnedLine since={xpSince} />
           {/* GEMS earned this race — always its own line, never hidden (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
           <ContractDoneLine since={gemsSince} />

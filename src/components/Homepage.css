@@ -276,8 +276,6 @@ html[data-beat='true'] .homepage-logo {
 .menu-xp-cluster .kx.is-goal { --kx-goalw: max(56px, calc(84 * var(--u))); }
 .menu-xp-cluster .kx-goal .kx-goal-n { font-size: var(--fs-hplvin); }
 .menu-xp-cluster .kx-goal .kx-lv-k { font-size: var(--fs-hplvk); }
-.menu-xp-cluster .kx.is-goal .kx-goal-icon { width: calc(var(--hp-xp-h) - 6px); height: calc(var(--hp-xp-h) - 6px); }
-.menu-xp-cluster .kx-goal .kx-goal-r { font-size: var(--fs-hplvk); }
 .hp-rankplate {
   flex: none;
   display: flex;

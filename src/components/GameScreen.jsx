@@ -68,6 +68,7 @@ import './GameScreen.css';
 import { noteTypedLetters } from '../progress/letterXp';
 import { GemPop, GemsEarnedLine, useGemsRound } from './gems/Gems';
 import ContractDoneLine from './contracts/ContractDoneLine.jsx';
+import { XpEarnedLine, useGameXpRound } from './xp/XpEarned';
 import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
@@ -4150,7 +4151,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   return { stage, displayScore, popping, fastForward };
 }
 
-function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false, gemsSince = 0 }) {
+function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false, gemsSince = 0, xpSince = 0 }) {
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
@@ -4231,6 +4232,8 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           <div className="solo-category">
             {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'CATEGORY BLITZ · 3 ROUNDS'}
           </div>
+          {/* GAME XP this run (oct21) — hidden when none */}
+          <XpEarnedLine since={xpSince} />
           {/* GEMS earned this run — always its own line (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
           <ContractDoneLine since={gemsSince} />
@@ -4381,6 +4384,7 @@ function CategoryBlitzScreen({
   // mount is "this game". At game over the final scores rank everyone: a rival scoring below me is beaten. READ-ONLY;
   // paid once (gems.payGameResult dedupes by key). A solo / daily run has no rivals and pays nothing here.
   const gemsSince = useGemsRound();
+  const xpSince = useGameXpRound(); // GAME XP (oct21): this screen remounts per game, so the mount mark is "this game"
   const [gemGameKey] = useState(() => `cb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`); // one per mount = one per game
   useEffect(() => {
     if (!gameOver) return;
@@ -4439,16 +4443,20 @@ function CategoryBlitzScreen({
   // THE BREAK BETWEEN ROUNDS counts down what the SERVER waits (Andy oct19: it now scales with the room, 4 s + 1 s per
   // player, max 10 s): round_end carries nextInMs; an older server sends none, which is the old flat 5 s. A 4 Hz clock only
   // while the results are up.
+  // The FIRST frame of the results reads the server's number too (a live 3-player test caught a one-frame "5 SECONDS"
+  // before the clock's first tick replaced it with 7): breakShown falls back to nextInMs, not to a flat 5.
+  const breakTotalMs = roundResults && Number.isFinite(roundResults.nextInMs) && roundResults.nextInMs > 0 ? roundResults.nextInMs : 5000;
   const [breakLeft, setBreakLeft] = useState(null);
+  const breakShown = breakLeft ?? Math.ceil(breakTotalMs / 1000);
   useEffect(() => {
     if (!roundResults) { setBreakLeft(null); return undefined; }
-    const ms = Number.isFinite(roundResults.nextInMs) && roundResults.nextInMs > 0 ? roundResults.nextInMs : 5000;
+    const ms = breakTotalMs;
     const end = Date.now() + ms;
     const tick = () => setBreakLeft(Math.max(0, Math.ceil((end - Date.now()) / 1000)));
     tick();
     const id = window.setInterval(tick, 250);
     return () => window.clearInterval(id);
-  }, [roundResults]);
+  }, [roundResults, breakTotalMs]);
 
   const streak = useCombo();
   // Near-miss / clutch callout: snapshot the EXISTING round-timer value at submit
@@ -4710,6 +4718,7 @@ function CategoryBlitzScreen({
         onLeave={onLeave}
         actionPending={rematchPending}
         gemsSince={gemsSince}
+        xpSince={xpSince}
       />
     );
   }
@@ -4765,7 +4774,11 @@ function CategoryBlitzScreen({
             {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
             <div className="go-earned-row">
               <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
-              <GemsEarnedLine since={gemsSince} />
+              {/* GAME XP (oct21) stacks over GEMS in one column beside the wins, so the row never gets taller */}
+              <div className="go-earned-side">
+                <XpEarnedLine since={xpSince} />
+                <GemsEarnedLine since={gemsSince} />
+              </div>
               <ContractDoneLine since={gemsSince} />
             </div>
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
@@ -5287,7 +5300,7 @@ function CategoryBlitzScreen({
 
           <div className="cb-next-round">
             {roundResults.round >= (roundResults.totalRounds || TOTAL_CATEGORY_ROUNDS) ? 'FINAL SCORES' : 'NEXT ROUND'}
-            {' IN '}<span translate="no">{breakLeft ?? 5}</span>{breakLeft === 1 ? ' SECOND...' : ' SECONDS...'}
+            {' IN '}<span translate="no">{breakShown}</span>{breakShown === 1 ? ' SECOND...' : ' SECONDS...'}
           </div>
         </div>
       </div>

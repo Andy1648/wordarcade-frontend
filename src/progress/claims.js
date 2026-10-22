@@ -56,7 +56,7 @@ export const CLAIM_KINDS = {
   achievement: 'ACHIEVEMENT',
   collection: 'COLLECTION',
   welcome: 'WELCOME BACK',
-  rank: 'RANK UP',
+  rank: 'NEW TITLE',
   mark: 'NEW MARK',
   layer: 'NEW SYSTEM',
   code: 'CODE',
