@@ -78,7 +78,7 @@
 /* The pack name under its sticker: white mono with a black stroke + hard shadow (below the
    28px display floor, so mono, not Bungee). One line; the column is sized so the longest fits. */
 .ppp-pill-label { max-width: 100%; font-family: 'Space Mono', monospace; text-transform: uppercase; font-weight: 700;
-  letter-spacing: 0; font-size: 16px /* the tappable-text floor, fixed so WORDPLAY fits its 80px column */; line-height: 1.05;
+  letter-spacing: 0; font-size: var(--fs-k16) /* the tappable-text floor, fixed so WORDPLAY fits its 80px column */; line-height: 1.05;
   color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000;
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
