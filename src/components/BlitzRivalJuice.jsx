@@ -3,7 +3,7 @@
 //
 // PURELY COSMETIC (Tier 2): it reads state GameScreen already has — the roster, the per-rival answer counts the server
 // broadcasts (player_progress), my own answers, and round_end's revealed answers — and changes nothing about scoring, the
-// WebSocket or the round. Behind ?cbjuice=1 while it is a preview.
+// WebSocket or the round. On by default; ?cbjuice=0 turns it off.
 //
 //   RaceStrip   live race: every player (me included) on one ladder, sorted by answers, a fill bar against the leader,
 //               the painted CROWN on whoever leads, a "+1" pop on a rival's row the moment they score, a FLAME on anyone
@@ -23,13 +23,15 @@ const FLAME = '/fx/blitz-flame.webp';
 const STAMP = '/fx/blitz-stamp.webp';
 const BANNER = '/fx/blitz-banner.webp';
 
+// ON by default (Andy oct21: "Love the category Blitz addictive juice thing … I'm fine with banners and stuff").
+// ?cbjuice=0 (kept for the tab) is the off switch, so a regression can be ruled in or out in one reload.
 export function juiceOn() {
   try {
     const q = new URLSearchParams(window.location.search).get('cbjuice');
     if (q) sessionStorage.setItem('taw.cbjuice', q);
-    return sessionStorage.getItem('taw.cbjuice') === '1' || window.__CB_JUICE === true;
+    return sessionStorage.getItem('taw.cbjuice') !== '0' && window.__CB_JUICE !== false;
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -93,7 +95,7 @@ function useHeat(rows, roundKey) {
   return hot;
 }
 
-function RaceRow({ row, me, top, hot, color }) {
+function RaceRow({ row, slot, hidden, me, top, hot, color }) {
   const popRef = useRef(null);
   const prev = useRef(row.count);
   useEffect(() => {
@@ -108,7 +110,7 @@ function RaceRow({ row, me, top, hot, color }) {
   }, [row.count]);
   const frac = top > 0 ? row.count / top : 0;
   return (
-    <li className={`rj-row${me ? ' is-me' : ''}${row.leads ? ' is-lead' : ''}`} style={{ '--rank': row.rank, '--pc': color }}>
+    <li className={`rj-row${me ? ' is-me' : ''}${row.leads ? ' is-lead' : ''}${hidden ? ' is-out' : ''}`} style={{ '--slot': slot, '--pc': color }} aria-hidden={hidden || undefined}>
       <span className="rj-rank">{row.rank + 1}</span>
       <span className="rj-name" translate="no">{me ? 'YOU' : row.name}</span>
       <span className="rj-track" aria-hidden="true"><span className="rj-fill" style={{ transform: `scaleX(${frac})` }} /></span>
@@ -120,15 +122,32 @@ function RaceRow({ row, me, top, hot, color }) {
   );
 }
 
+// A full lobby shows a WINDOW of the race, not all of it (it would squeeze YOUR ANSWERS into a scroll): the top three, you,
+// and whoever is right ahead of / behind you — at most 5 rows, each keeping its TRUE rank number, so the gap reads.
+const RACE_WINDOW = 5;
+function raceWindow(rows, myId) {
+  if (rows.length <= RACE_WINDOW) return new Set(rows.map((r) => r.id));
+  const me = rows.findIndex((r) => r.id === myId);
+  const keep = new Set([0, 1, 2]);
+  if (me >= 0) [me, me - 1, me + 1].forEach((i) => { if (i >= 0 && i < rows.length) keep.add(i); });
+  for (let i = 3; keep.size < RACE_WINDOW && i < rows.length; i += 1) keep.add(i);
+  return new Set([...keep].sort((x, y) => x - y).slice(0, RACE_WINDOW).map((i) => rows[i].id));
+}
+
 export function RaceStrip({ race, myId, colorOf, roundKey }) {
   const hot = useHeat(race.rows, roundKey);
+  const shown = raceWindow(race.rows, myId);
+  const slots = {};
+  race.rows.filter((r) => shown.has(r.id)).forEach((r, i) => { slots[r.id] = i; });
+  const n = Object.keys(slots).length;
   return (
     <div className="rj-race">
       <div className="cb-section-label">THE RACE</div>
-      <ol className="rj-list" style={{ '--n': race.rows.length }}>
-        {/* rendered in ROSTER order (stable DOM); each row's place comes from --rank, so a pass slides, never re-mounts */}
-        {[...race.rows].sort((a, b) => a.seat - b.seat).map((r) => (
-          <RaceRow key={r.id} row={r} me={r.id === myId} top={race.top} hot={!!hot[r.id]} color={colorOf(r.id)} />
+      <ol className={`rj-list${race.rows.length >= 5 ? ' is-full' : ''}`} style={{ '--n': n }}>
+        {/* rendered in ROSTER order (stable DOM); each row's place comes from --slot, so a pass slides, never re-mounts */}
+        {[...race.rows].sort((x, y) => x.seat - y.seat).map((r) => (
+          <RaceRow key={r.id} row={r} slot={slots[r.id] ?? n - 1} hidden={!shown.has(r.id)} me={r.id === myId}
+            top={race.top} hot={!!hot[r.id]} color={colorOf(r.id)} />
         ))}
       </ol>
     </div>
