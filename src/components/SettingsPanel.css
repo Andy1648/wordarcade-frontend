@@ -193,3 +193,31 @@
 .sp-restore { display: flex; gap: 8px; }
 .sp-restore .sp-input { flex: 1 1 auto; min-width: 0; }
 .sp-msg { margin: 0; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); color: #FFE94A; }
+
+/* PHONES, NO SCROLL (Andy oct21 "I don't want [scrolls] for basically anything"): the sheet ran 15px past a 390x844 phone
+   (107px with the reset confirm open) and ~200px past 360x640. CLOSE stops costing a row of its own — it sits in the SOUND
+   row's empty top-right corner — and on a short phone, or while the reset confirm is open, the one-line descriptions
+   fold away (every label still says what it is). */
+@media (max-width: 480px) {
+  .sp-sheet { padding: 8px; gap: 6px; }
+  .sp-sheet .sp { gap: 6px; }
+  .sp-sheet .sp-close { position: absolute; top: 14px; right: 16px; z-index: 1; }
+  .sp-sheet .sp > .sp-row:first-child .sp-text { padding-right: 100px; }
+}
+@media (max-width: 480px) and (max-height: 760px) {
+  .sp-sheet .sp-sub { display: none; }
+  .sp-sheet .sp-row { min-height: 52px; }
+}
+@media (max-width: 480px) {
+  .sp-sheet:has(.sp-reset-confirm) .sp-sub { display: none; }
+}
+/* the smallest phones: while RESET ACCOUNT asks "are you sure", SAVE PROGRESS steps aside so the question + its two
+   buttons fit (CANCEL brings it back) */
+@media (max-width: 480px) and (max-height: 700px) {
+  .sp-sheet:has(.sp-reset-confirm) .sp-save:not(.sp-reset) { display: none; }
+}
+/* 360-wide phones: MUTE + ten 17px bars ran past the SOUND row's left edge — the bars give back the width */
+@media (max-width: 380px) {
+  .sp-row--wide .sp-bar { width: 13px; }
+  .sp-row--wide .sp-bars { gap: 2px; }
+}
