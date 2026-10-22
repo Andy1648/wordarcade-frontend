@@ -46,6 +46,7 @@ import { grantGems } from '../progress/gemsCore';
 import { V3 } from '../progress/season';
 import { otherSeatIds } from '../progress/seats';
 import { minWordsFor } from '../progress/wins';
+import { usePlayClock } from '../progress/playClock.js';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -86,6 +87,7 @@ export default function WordRaceScreen({
   onRematch,
   onLeave,
 }) {
+  usePlayClock(); // TIME PLAYED on the profile (Andy oct21: race time was never counted)
   const [text, setText] = useState('');
   const [shakeSeq, setShakeSeq] = useState(0);
   const inputRef = useRef(null);

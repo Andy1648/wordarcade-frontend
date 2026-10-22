@@ -10,6 +10,7 @@ import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned 
 import { getWins } from '../wins.js';
 import { loadGemState, saveGemState, tellBalance, grantGems } from '../gemsCore.js';
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue, statHits } from '../markRollsCore.js';
+import { noteRebirthPerks } from '../markPerks.js'; // FIREBIRD's AFTERPARTY on the season-2 rebirth door
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
   rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, LEVEL_UP, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
@@ -97,6 +98,7 @@ export const starsSwap = {
     const rc = doRebirth(); // R + 1 (and the run's peak into records); LV1
     bumpCounter('reb'); // ACHIEVEMENTS: REBIRTH (every climb)
     gemsSwap.d(rc); // GEMS: 25 × the new R (Andy oct11 — levels no longer pay)
+    noteRebirthPerks(); // FIREBIRD's AFTERPARTY (GEAR EXPANSION oct21)
     return { rc, stars: 0 };
   },
   e: () => ({ keys: 0, forges: 0 }), // runAutomation: no AUTO-KEY / AUTO-FORGE (R2 unlocks AUTO ROLL)

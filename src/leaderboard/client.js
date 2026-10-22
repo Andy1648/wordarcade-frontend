@@ -9,7 +9,7 @@
 // stores only its SHA-256 and every write goes through a SECURITY DEFINER function that checks it
 // (supabase/migrations/001_leaderboard.sql). Lose the secret (clear storage) and the name stays on
 // the board, owned by nobody — exactly what a guest handle should do.
-import { getRebirths, storedLevel } from '../progress/xp.js';
+import { getRebirths, saveRebirths, storedLevel } from '../progress/xp.js';
 // PROGRESSION v3 (SEASON2, default OFF; 022_season2_board.sql): the season-2 client submits econ 13 ONLY when lb_caps
 // says season2 (never season-2 numbers onto the season-1 board), reads public.leaderboard_s2 (★ → R → level), and
 // backs the save up once the season-2 reset has run (Andy oct17: a second device with the same name started fresh — the
@@ -227,16 +227,18 @@ export async function submitStats(force = false, { internal = false } = {}) {
   const now = Date.now();
   if (!force && now - lastSubmit < SUBMIT_EVERY_MS) return false;
   lastSubmit = now;
-  const s = myStats();
+  let s = myStats();
   // SECOND DEVICE (Andy oct17): the name is a device secret every device that holds it shares, so a browser whose save
   // is BEHIND the board row (a fresh device, a wiped one with no cloud copy yet) must not push — the server took a lower
   // push as a RESET and the account looked wiped everywhere. Checked once a page load (boardGuard.js is lazy — off the
   // menu's first load); a failed read skips this push.
   if (SEASON2 && !boardChecked) {
     let ok = false;
-    try { ok = await (await import('./boardGuard.js')).pushAllowed({ base: BASE, headers: headers(), view: BOARD_VIEW, id: (getMyProfile() || {}).id, local: s }); } catch { ok = false; }
+    // B3: a row AHEAD on rebirths is adopted (saveRebirths), then the push re-reads the numbers it sends
+    try { ok = await (await import('./boardGuard.js')).pushAllowed({ base: BASE, headers: headers(), view: BOARD_VIEW, id: (getMyProfile() || {}).id, local: s, adopt: (n) => saveRebirths(n) }); } catch { ok = false; }
     if (!ok) return false;
     boardChecked = true;
+    s = myStats();
   }
   try {
     const caps = await boardCaps();

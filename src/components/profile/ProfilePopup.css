@@ -6,9 +6,9 @@
   background: #1a0b2e; border: 5px solid var(--pf-d); border-radius: 8px; box-shadow: 10px 10px 0 #000;
 }
 .pf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.pf-title { font: 400 var(--fs-k32, 32px) 'Bungee', sans-serif; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.pf-title { font: 400 var(--fs-k32) 'Bungee', sans-serif; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pf-x, .pf-back {
-  min-width: 44px; height: 44px; padding: 0 12px; cursor: pointer; font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #fff;
+  min-width: 44px; height: 44px; padding: 0 12px; cursor: pointer; font: 400 var(--fs-k16) 'Bungee', sans-serif; color: #fff;
   background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
 }
 .pf-x { margin-left: auto; }
@@ -17,20 +17,20 @@
 .pf-left { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .pf-left .hs { max-width: 400px; }
 .pf-hero {
-  width: 100%; text-align: center; font: 400 var(--fs-k30, 30px) 'Bungee', sans-serif; line-height: 1; color: var(--pf-c);
+  width: 100%; text-align: center; font: 400 var(--fs-k30) 'Bungee', sans-serif; line-height: 1; color: var(--pf-c);
   -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
 }
-.pf-hero-tag { font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; letter-spacing: .1em; color: #c9b8e8; text-align: center; }
+.pf-hero-tag { font: 700 var(--fs-k16) 'Space Mono', monospace; letter-spacing: .1em; color: #c9b8e8; text-align: center; }
 .pf-change {
   min-height: 48px; padding: 0 20px; margin-top: 4px; cursor: pointer;
-  font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; color: #000; background: var(--pf-c);
+  font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #000; background: var(--pf-c);
   border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; transition: transform 120ms;
 }
 .pf-change:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
 .pf-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .pf-id { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.pf-name { font: 400 var(--fs-k44, 44px) 'Bungee', sans-serif; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
-.pf-hint { font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; color: #c9b8e8; }
+.pf-name { font: 400 var(--fs-k44) 'Bungee', sans-serif; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.pf-hint { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #c9b8e8; }
 .pf-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .pf-stat {
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center;
@@ -39,8 +39,8 @@
 .pf-stat > :first-child { grid-row: 1; }
 .pf-stat .pf-stat-k { grid-column: 1 / -1; margin-top: 4px; }
 .pf-stat-g { width: 44px; height: 44px; }
-.pf-stat-v { font: 400 var(--fs-k32, 32px) 'Bungee', sans-serif; line-height: 1.1; color: #fff; }
-.pf-stat-k { font: 700 var(--fs-k15, 15px) 'Space Mono', monospace; letter-spacing: .06em; color: var(--pf-t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-stat-v { font: 400 var(--fs-k32) 'Bungee', sans-serif; line-height: 1.1; color: #fff; }
+.pf-stat-k { font: 700 var(--fs-k15) 'Space Mono', monospace; letter-spacing: .06em; color: var(--pf-t); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 760px) {
   .pf-body { grid-template-columns: minmax(0, 1fr); }
   .pf-left .hs { max-width: 240px; }
@@ -57,8 +57,8 @@
    change hero button"): the heroes you own as painted faces; tap one to wear it on the spot, the worn one lifted */
 .pf-crew { display: flex; flex-direction: column; gap: 8px; }
 .pf-crew-head { display: flex; align-items: baseline; gap: 10px; }
-.pf-crew-k { font: 400 var(--fs-k18, 18px) 'Bungee', sans-serif; letter-spacing: .1em; color: #fff; }
-.pf-crew-n { font: 700 var(--fs-k16, 16px) 'Space Mono', monospace; color: #c9b8e8; }
+.pf-crew-k { font: 400 var(--fs-k18) 'Bungee', sans-serif; letter-spacing: .1em; color: #fff; }
+.pf-crew-n { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #c9b8e8; }
 .pf-crew-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .pf-crew-face {
   position: relative; width: 64px; height: 64px; padding: 0; cursor: pointer; overflow: hidden;
@@ -85,3 +85,36 @@
 .pf-titlerow-plate { display: flex; min-width: 0; }
 .pf-titlerow-go { margin-left: auto; font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #FFE94A; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .pf-titlerow, .pf-titlerow:hover { transition: none; transform: none; } }
+
+/* SHORT DESKTOP (Andy oct21 "Why do I need to scroll on my profile screen? I'm on a laptop … not … on a Chromebook"):
+   a laptop's browser leaves ~650-730px. The card never scrolls there — the stage, stats and faces tighten to fit a
+   full account (name + bio + every hero). e2e/profile-fit.spec.js holds 1536x730 → 1280x600. */
+@media (min-width: 761px) and (max-height: 900px) {
+  .pf { padding: 14px 18px; }
+  .pf-head { margin-bottom: 6px; }
+  .pf-title { font-size: var(--fs-k26); }
+  .pf-body { gap: 18px; }
+  .pf-left .hs { max-width: min(400px, calc(100dvh - 300px)); }
+  .pf-right { gap: 10px; }
+  .pf-name { font-size: var(--fs-k34); }
+  .pf-stats { gap: 8px; }
+  .pf-stat { min-height: 0; padding: 6px 10px; box-shadow: 3px 3px 0 #000; }
+  .pf-stat-g { width: 32px; height: 32px; }
+  .pf-stat-v { font-size: var(--fs-k26); }
+  .pf-stat-k { font-size: var(--fs-k13); margin-top: 2px; }
+  .pf-crew { gap: 6px; }
+  .pf-crew-row { gap: 8px; }
+  .pf-crew-face { width: 48px; height: 48px; }
+  .pf-titlerow { min-height: 44px; padding: 2px 10px; }
+  .pf-titlerow-plate .krp { transform: scale(.85); transform-origin: left center; }
+}
+@media (min-width: 761px) and (max-height: 680px) {
+  .pf-left .hs { max-width: min(360px, calc(100dvh - 290px)); }
+  .pf-crew-face { width: 44px; height: 44px; }
+  .pf-stat-v { font-size: var(--fs-k22); }
+  .pf-right { gap: 8px; }
+  .pf-name { font-size: var(--fs-k30); -webkit-text-stroke-width: 4px; }
+  .pf-stat { padding: 4px 10px; }
+  .pf .pc-bio { padding-top: 6px; padding-bottom: 6px; }
+  .pf .pc-bio .pc-bio-t { font-size: var(--fs-k18); }
+}

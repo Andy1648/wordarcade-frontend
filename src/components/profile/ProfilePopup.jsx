@@ -22,7 +22,6 @@ import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client
 import { readCounters } from '../../progress/v3/store.js';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
-import UnlistedShelf from '../../unlisted/UnlistedShelf.jsx';
 import { unlistedIndex } from '../../unlisted/unlisted.js';
 import { KitRankPlate } from '../kit/KitRankPlate.jsx';
 import { RANKS_V3, liveRankV3 } from '../../progress/v3/ranks.js';
@@ -75,7 +74,9 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const play = readPlaySec();
   const show = myShowcase();
   const mine = ALL_HEROES.filter((x) => ownsHero(x.id)); // YOUR HEROES: what you've got (oct19: no 'next hero' nag)
-  const [unl] = useState(() => unlistedIndex()); // THE UNLISTED: your finds + serials (read once)
+  // THE UNLISTED: still read once on open — it runs the back-fill (unlisted.js) — but nothing here shows it: no shelf,
+  // no found-count on your profile (Andy oct19 "i still see how many unlisted ive found in profile - i dont want that")
+  useState(() => unlistedIndex());
 
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
@@ -147,7 +148,6 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                   ))}
                 </div>
               </section>
-              <UnlistedShelf tiles={unl.tiles.filter((t) => t.owned)} />
               {me ? <Bio text={myBio()} mine /> : null}
             </div>
           </div>

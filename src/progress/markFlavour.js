@@ -42,6 +42,22 @@ export const MARK_FLAVOUR = Object.freeze({
   'mk-kraken': 'PULLS THE ALPHABET UNDER.',
   'mk-hydra': 'CUT ONE FUSE. TWO MORE LIGHT.',
   'mk-chronos': 'TIME BENDS. WORDS DRIP.',
+  // ---- GEAR EXPANSION (oct21) ----
+  'mk-highlighter': 'MARKS THE ANSWER BEFORE YOU DO.',
+  'mk-flashcards': 'FRONT: WORD. BACK: WINS.',
+  'mk-firecracker': 'SHORT FUSE. LOUD FINISH.',
+  'mk-gumball': 'ONE COIN. ALL GEMS.',
+  'mk-lavalamp': 'GLOWS BRIGHTER AFTER DARK.',
+  'mk-alarmclock': 'THE EARLY WORD GETS THE XP.',
+  'mk-fortune': 'YOUR NEXT WORD IS A BIG ONE.',
+  'mk-hoarder': 'STEALS ONE OF EVERYTHING.',
+  'mk-domino': 'ONE FALLS. THEY ALL FALL.',
+  'mk-longshot': 'SEES THE LONG WORD COMING.',
+  'mk-hothand': 'NEVER MISSES. NEVER COOLS.',
+  'mk-arcadestick': 'INSERT WORD. CONTINUE.',
+  'mk-firebird': 'EVERY END IS A HEAD START.',
+  'mk-trident': 'THREE PRONGS. THREE TIMES.',
+  'mk-paradox': 'TWO GEARS. ONE SOUL.',
   // ---- SECRET ----
   'mk-origin': 'BEFORE THE FIRST WORD, THIS.',
   // ---- PERMANENT ----

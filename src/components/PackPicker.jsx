@@ -5,18 +5,18 @@
 // owns the selection. This widget embeds INSIDE the Blitz ModeDialog, which owns
 // the surrounding panel/scrim chrome.
 //
-// LOOK — flat blocky tiles on Blitz blue, on the locked house style: flat fill,
-// 3px black outline, 10px radius, hard offset shadow, alternating ±1.1° tilt that
-// straightens on hover. Colour is STATE, not identity: ON = #3DA8FF, OFF =
-// #152744. The per-pack color/rot/sticker fields in packs.js are IGNORED here —
-// only id / label / emoji / count are used. No SVG-filter ink, no stickers.
+// LOOK — Andy oct21 ("too AI generated" → picked direction A, STICKER SLAP): every pack is its own
+// painted die-cut sticker (public/blitz-packs/<id>.webp, one Gemini set), slapped onto the navy board
+// at the pack's hand-set `rot` from packs.js. No tile box, no emoji: the art's silhouette IS the tile.
+// ON = full colour at its tilt; OFF = peeled (dimmed, flattened, shrunk). A black check disc marks ON
+// so state never rides on opacity alone.
 //
 // MOTION — minimal: ONE select-pop on toggle, a press squash (:active), a hover
-// lift, and a shared 500ms beat that pulses SELECTED tiles only, rippled across
-// the grid by each tile's --i. No idle bob, no per-item motion signature.
+// lift that straightens the sticker, and a shared 500ms beat that pulses SELECTED
+// tiles only, rippled across the grid by each tile's --i. No idle bob, nothing loops.
 //
 // Props:
-//   packs     : array of { id, label, emoji, count }
+//   packs     : array of { id, label, rot, count } — art is /blitz-packs/<id>.webp
 //   selected  : Set | array of selected pack ids
 //   onToggle  : (id) => void — parent flips selection
 //   onSetAll  : (all: boolean) => void — SELECT ALL / CLEAR
@@ -99,18 +99,18 @@ export default function PackPicker({ packs, selected, onToggle, onSetAll, rounds
                   <button
                     type="button"
                     className={`ppp-pill${on ? ' is-on' : ''}`}
-                    style={{ '--tilt': `${i % 2 === 0 ? -1.1 : 1.1}deg` }}
+                    style={{ '--tilt': `${p.rot || 0}deg` }}
                     onClick={() => { addPop(p.id); onToggle(p.id); }}
                     aria-pressed={on}
                     aria-label={p.label}
                   >
-                    <span className="ppp-pill-emoji" aria-hidden="true">{p.emoji}</span>
+                    <img className="ppp-sticker" src={`/blitz-packs/${p.id}.webp`} alt="" draggable="false" decoding="async" />
                     <span className="ppp-pill-label">{p.label}</span>
                     <span className="ppp-pill-count" aria-hidden="true">{p.count}</span>
                     {on && (
                       <span className="ppp-check" aria-hidden="true">
                         <svg viewBox="0 0 24 24">
-                          <path d="M5 13 L10 18 L19 6" fill="none" stroke="#3DA8FF"
+                          <path d="M5 13 L10 18 L19 6" fill="none" stroke="#2EFFE0"
                             strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </span>

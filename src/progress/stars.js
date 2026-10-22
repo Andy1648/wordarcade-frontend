@@ -22,6 +22,7 @@
 import { rebirthThreshold, loadProgress, saveProgress, getRebirths, doRebirth } from './xp.js';
 import { queueClaim } from './claims.js';
 import { noteRebirth } from './gemsCore.js';
+import { noteRebirthPerks } from './markPerks.js';
 // PROGRESSION v3 (SEASON2, default OFF): a rebirth pays +7 × R gems (no ★, no layer claims); ★ come ONLY from
 // ASCENSION at R10 (ascendWithStars); star perks and AUTO-KEY are not part of v3. OFF = unchanged.
 
@@ -160,6 +161,7 @@ export function rebirthWithStars() {
   const rc = doRebirth();
   if (stars > 0) addStars(stars);
   noteRebirth(rc); // GEMS: +REBIRTH, every rebirth (this is the one rebirth door)
+  noteRebirthPerks(); // FIREBIRD's AFTERPARTY
   const start = headStartLevel(rc);
   if (start > 1) saveProgress({ level: start, intoLevel: 0 });
   if (rc === LAYER_STARS_AT) {
