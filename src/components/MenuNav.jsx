@@ -256,6 +256,43 @@ function useGearShowcase(slotRef, tier, enabled) {
   }, [slotRef, tier, enabled]);
 }
 
+/**
+ * TWO GEARS ALWAYS FIT (Andy oct21 "the second gear is still getting pushed off the screen just a bit … on this gear").
+ * How tall the two full slots are depends on the GEARS worn — a stat whose unit wraps ("WINS IN WORD BOMB") plus four
+ * substat lines — so the oct12 screen-size breakpoints missed combos (two mythics at 1280x720 ran 6px off the screen, at
+ * 1366x768 onto the frame). The 2nd slot measures instead: when its bottom would pass the frame, the rail is marked
+ * TIGHT and both slots fold their substat lines away (the GEAR SHEET still lists every one). Measured on mount, when a
+ * worn gear changes, when the webfont lands and when the stage resizes — never per frame. Hysteresis: once tight it
+ * only re-tries the full slots after the stage grows, so it never flips back and forth.
+ */
+const FRAME_PAD = 18; // the menu frame's drawn border, which a slot must clear
+function useGearRailFit(slotRef, active, key) {
+  useEffect(() => {
+    const el = slotRef.current;
+    const rail = el && el.closest('.hp-rail');
+    const stage = el && el.closest('.homepage-stage');
+    if (!active || !rail || !stage) return undefined;
+    let tightAt = 0;
+    let live = true;
+    const fits = () => el.getBoundingClientRect().bottom <= Math.min(stage.getBoundingClientRect().bottom, window.innerHeight) - FRAME_PAD;
+    const check = () => {
+      if (!live) return;
+      const h = stage.getBoundingClientRect().height;
+      if (rail.hasAttribute('data-gear-tight')) {
+        if (h <= tightAt + 1) return;
+        rail.removeAttribute('data-gear-tight'); // the stage grew: try the full slots again
+      }
+      if (!fits()) { rail.setAttribute('data-gear-tight', ''); tightAt = h; }
+    };
+    rail.removeAttribute('data-gear-tight'); // a new gear: measure it full
+    check();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(check);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
+    if (ro) { ro.observe(stage); ro.observe(rail); } // the rail grows when the OTHER slot's gear changes
+    return () => { live = false; if (ro) ro.disconnect(); rail.removeAttribute('data-gear-tight'); };
+  }, [slotRef, active, key]);
+}
+
 /** "+9% CRIT RATE" → "+9% CRIT", "+1× CRIT POWER" → "+1× CRIT PWR", "+10 BASE WINS" → "+10 BASE WINS" (the slot's width). */
 /** A substat as a menu CHIP (GEAR CARD v4): the number ("14%", "2×", "30") beside its icon — the slot is too narrow
  * for the card's words, so the ICON says what it boosts and the full line rides the chip's label (and the sheet). */
@@ -282,6 +319,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
   const sheen = !!mark && IDLE_SHEEN_TIERS.has(tier);
   const slotRef = useRef(null);
   useGearShowcase(slotRef, mark && GLOW_TIERS.has(tier) ? tier : null, !reduced);
+  useGearRailFit(slotRef, two, mark ? mark.id : '');
   return (
     <button
       ref={slotRef}
