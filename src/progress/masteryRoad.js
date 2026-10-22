@@ -12,7 +12,7 @@
 //
 // PURE + localStorage-backed (a taw.s2.* key, so the save backup / cloud save carry it), every access guarded.
 import { masteryState, masteryWordsToReach, masteryWords, MASTERY_MODES } from './mastery.js';
-import { grantGems, ROLL_PRICE_GEMS } from './gemsCore.js';
+import { grantGems } from './gemsCore.js';
 import { HEROES_KEY, ownsHero, heroById } from '../cast/cast.js';
 
 export const ROAD_KEY = 'taw.s2.road';
@@ -54,6 +54,8 @@ export const ROAD_SHAPE = [
 ];
 // the hero node when that hero is already yours (bought / earned by WINS): a chest instead, never nothing
 export const HERO_OWNED_GEMS = 15;
+// a ROLL TICKET pays one season-2 roll's price in gems, flat (Andy oct21: "keep 75 gems for each roll") — no server roll path
+export const TICKET_GEMS = 75;
 
 const TIER = ['', 'BRONZE', 'SILVER', 'GOLD'];
 const BADGE_ART = ['', '/stage/emblem-3.webp', '/stage/emblem-2.webp', '/stage/emblem-1.webp'];
@@ -67,7 +69,7 @@ export function rewardInfo(mode, shape) {
     case 'chest':
       return { kind: 'chest', name: 'GEM CHEST', sub: `${shape.gems} GEMS`, art: '/shop/chest.webp', gems: shape.gems };
     case 'ticket':
-      return { kind: 'ticket', name: 'ROLL TICKET', sub: '1 FREE ROLL', art: '/icons/gears.webp', gems: ROLL_PRICE_GEMS };
+      return { kind: 'ticket', name: 'ROLL TICKET', sub: '75 GEMS = 1 ROLL', art: '/icons/gears.webp', gems: TICKET_GEMS };
     case 'hero': {
       const h = heroById(m.hero);
       return { kind: 'hero', name: h ? h.name : 'HERO', sub: 'NEW HERO', art: `/cast/${m.hero}-hero.webp`, heroId: m.hero };
@@ -155,9 +157,4 @@ export function claimRoadNode(mode, i) {
     }
   }
   return { ok: true, reward, gems };
-}
-
-/** The mark taken when a game starts: the mode's mastery level then (MasteryUpLine compares against it). */
-export function masteryMark(mode) {
-  return ROAD_LEVELS[mode] ? masteryState(mode).level : 0;
 }

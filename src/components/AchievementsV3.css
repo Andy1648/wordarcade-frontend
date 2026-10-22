@@ -442,3 +442,24 @@
   .av3-gear-text { overflow: hidden; text-overflow: ellipsis; }
   .av3-gear-text b { display: none; }
 }
+
+/* ---- MASTERY tab (oct21): the slab tabs take the title's place; the h2 stays for screen readers ---- */
+.av3-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
+.av3-tabs { position: relative; display: flex; justify-content: center; min-width: 0; }
+.av3-slab { width: 520px; }
+.av3-tab-dot {
+  position: absolute;
+  top: -6px;
+  left: calc(50% + 248px);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--k-hot);
+  border: 3px solid var(--k-ink);
+  pointer-events: none;
+}
+.av3-body--mastery { display: flex; flex-direction: column; }
+@media (max-width: 999px) {
+  .av3-slab { width: 100%; }
+  .av3-tab-dot { left: auto; right: -4px; }
+}

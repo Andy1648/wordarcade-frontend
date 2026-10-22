@@ -1,0 +1,184 @@
+/* MasteryPanel.css — the MASTERY tab of ACHIEVEMENTS (MasteryPanel.jsx). The v2 kit's look (kit/tokens.css): flat
+   fills, black ink, hard offset shadows, square corners. --mp-c = the mode's colour. Sized for the 1366×657 achievements
+   stage — the road's 12 nodes sit in ONE row, nothing scrolls; ≤ 999px stacks (the screen scrolls like its grid does).
+   Motion: the nodes rise once per mode pick (finite), the claim pop is a WAAPI one-shot. Nothing loops at rest. */
+.mp {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 6px;
+  color: var(--k-white);
+  font-family: var(--k-mono);
+  font-weight: 700;
+}
+.mp-art { display: block; object-fit: contain; }
+
+/* ---- the five modes ---- */
+.mp-modes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; flex: 0 0 auto; }
+.mp-mode {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 64px;
+  padding: 8px 12px 10px;
+  border: var(--k-ink-m) solid var(--k-ink);
+  background: var(--k-panel);
+  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
+  color: var(--k-dim);
+  font-family: var(--k-mono);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mp-mode:hover { transform: translate(-1px, -2px); }
+.mp-mode:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--k-ink); }
+.mp-mode.is-on { background: var(--mp-c); color: var(--k-ink); }
+.mp-mode-name { font-size: var(--fs-k16); letter-spacing: 0.04em; text-transform: uppercase; }
+.mp-mode-lv { justify-self: end; white-space: nowrap; }
+.mp-mode-lv small { font-size: var(--fs-k13); letter-spacing: 0.06em; }
+.mp-mode-lv b { font-family: var(--k-display); font-weight: 400; font-size: var(--fs-k22); text-transform: uppercase; }
+.mp-mode-bar { grid-column: 1 / -1; display: block; height: 8px; background: var(--k-well); border: var(--k-ink-xs) solid var(--k-ink); overflow: hidden; }
+.mp-mode-bar i { display: block; height: 100%; background: var(--mp-c); transform-origin: left center; }
+.mp-mode.is-on .mp-mode-bar i { background: var(--k-white); }
+.mp-dot {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--k-hot);
+  border: 3px solid var(--k-ink);
+}
+
+/* ---- NEXT ---- */
+.mp-next {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 0 0 auto;
+  min-height: 124px;
+  padding: 10px 18px;
+  background: var(--k-panel-deep);
+  border: var(--k-ink-m) solid var(--k-ink);
+  border-left: 10px solid var(--mp-c);
+  box-shadow: var(--k-sh-m) var(--k-sh-m) 0 var(--k-ink);
+}
+.mp-next-art { width: 96px; height: 96px; flex: 0 0 auto; }
+.mp-next-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.mp-next-txt small { font-size: var(--fs-k14); letter-spacing: 0.08em; color: var(--k-dim); text-transform: uppercase; }
+.mp-next-txt b {
+  font-family: var(--k-display);
+  font-weight: 400;
+  font-size: var(--fs-k34);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--k-yellow);
+  -webkit-text-stroke: var(--k-stroke-s) var(--k-ink);
+  paint-order: stroke fill;
+}
+.mp-bar { display: block; max-width: 640px; height: 14px; background: var(--k-well); border: var(--k-ink-xs) solid var(--k-ink); overflow: hidden; }
+.mp-bar i { display: block; height: 100%; background: var(--mp-c); transform-origin: left center; }
+.mp-next-go { font-size: var(--fs-k15); letter-spacing: 0.04em; text-transform: uppercase; }
+.mp-next-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 110px; }
+.mp-side-k { font-size: var(--fs-k14); letter-spacing: 0.08em; color: var(--k-dim); }
+.mp-next-side b { font-family: var(--k-display); font-weight: 400; font-size: var(--fs-k38); text-transform: uppercase; color: var(--mp-c); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
+
+/* ---- the road: 12 nodes, one row ---- */
+.mp-road {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 8px;
+}
+.mp-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 4px 8px;
+  background: var(--k-panel);
+  border: var(--k-ink-s) solid var(--k-ink);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  text-align: center;
+  animation: mp-rise 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i) * 30ms);
+}
+@keyframes mp-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* the level band: the road's TRACK — filled with the mode colour up to where you are */
+.mp-node-lv {
+  align-self: stretch;
+  margin: 0 -4px 4px;
+  padding: 4px 0;
+  background: var(--k-rule);
+  color: var(--k-dim);
+  font-size: var(--fs-k16);
+  letter-spacing: 0.04em;
+}
+.mp-node.is-ready .mp-node-lv, .mp-node.is-claimed .mp-node-lv { background: var(--mp-c); color: var(--k-ink); }
+.mp-node-art { display: block; width: 64px; height: 64px; }
+.mp-node.is-locked .mp-node-art { opacity: 0.45; }
+.mp-node-name { font-size: var(--fs-k14); line-height: 1.15; text-transform: uppercase; min-height: 2.3em; display: flex; align-items: center; }
+.mp-node.is-locked .mp-node-name { color: var(--k-dim); }
+.mp-node-sub { font-size: var(--fs-k13); color: var(--k-dim); text-transform: uppercase; line-height: 1.15; }
+.mp-node-act { margin-top: auto; display: flex; align-items: center; justify-content: center; min-height: 44px; align-self: stretch; }
+.mp-node.is-ready { background: var(--k-plum); border-color: var(--k-yellow); }
+.mp-claim {
+  width: 100%;
+  min-height: 44px;
+  border: var(--k-ink-s) solid var(--k-ink);
+  background: var(--k-yellow);
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  color: var(--k-ink);
+  font-family: var(--k-mono);
+  font-weight: 700;
+  font-size: var(--fs-k16);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.mp-claim:hover { transform: translate(-1px, -1px); }
+.mp-claim:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--k-ink); }
+.mp-got {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: var(--k-ink-s) solid var(--k-ink);
+  background: var(--mp-c);
+  color: var(--k-ink);
+  font-size: var(--fs-k16);
+}
+.mp-got.is-said { padding: 0 6px; border-radius: 0; font-size: var(--fs-k13); line-height: 1.1; }
+.mp-togo { display: flex; flex-direction: column; font-size: var(--fs-k13); color: var(--k-dim); line-height: 1.15; }
+.mp-togo b { font-size: var(--fs-k16); color: var(--k-white); }
+
+/* tablets / narrow laptops + phones: the screen stacks and scrolls (like the achievements grid); the road wraps */
+@media (max-width: 999px) {
+  .mp-modes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mp-road { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mp-next-txt b { font-size: var(--fs-k26); }
+}
+@media (max-width: 520px) {
+  .mp-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .mp-road { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mp-next { gap: 12px; padding: 10px 12px; }
+  .mp-next-art { width: 64px; height: 64px; }
+  .mp-next-side { display: none; }
+  .mp-next-txt b { font-size: var(--fs-k22); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-node { animation: none; }
+  .mp-mode, .mp-claim { transition: none; }
+}

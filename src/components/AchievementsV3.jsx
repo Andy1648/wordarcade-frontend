@@ -16,7 +16,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './AchievementsV3.css';
-import { KitBackButton, KitButton, KitGhostButton, KitPill, KitStampCard, KitFlyLayer, KitIcon } from './kit/index.js';
+import { KitBackButton, KitButton, KitGhostButton, KitPill, KitStampCard, KitFlyLayer, KitIcon, KitSlabTabs } from './kit/index.js';
+import MasteryPanel from './masteryRoad/MasteryPanel.jsx';
+import { allRoads } from '../progress/masteryRoad.js';
 import { achievementsV3, claimAchievementV3, tierCountsV3, ROMAN } from '../progress/v3/achievements';
 import { gearOfLadder } from '../progress/ladderGears.js';
 import { permanentMarkById } from '../progress/markRollsCore.js';
@@ -93,6 +95,13 @@ export default function AchievementsV3({ onClose, focusId = null }) {
   const [gems, setGems] = useState(() => getGems());
   const [inFlight, setInFlight] = useState(0); // gems paid but still flying: the pill shows them as they land
   const [stamp, setStamp] = useState(null); // { id, key, next }
+  // MASTERY (oct21, Andy: the mode mastery roads live "in the achievements page" — never on the menu): tab 1. It opens
+  // on MASTERY when only a road reward is waiting, so a ready road is never one hidden tap away.
+  const [tab, setTab] = useState(() => {
+    if (focusId) return 0;
+    try { return achievementsV3().some((r) => r.ready) ? 0 : allRoads().some((r) => r.ready) ? 1 : 0; } catch { return 0; }
+  });
+  const roadReady = (() => { try { return allRoads().reduce((t, r) => t + r.ready, 0); } catch { return 0; } })();
   const ref = useRef(null);
   const pillRef = useRef(null);
   const flyRef = useRef(null);
@@ -120,6 +129,18 @@ export default function AchievementsV3({ onClose, focusId = null }) {
   }, [stamp]);
 
   // CLAIM: one tier, paid once. `e` = the click (its point is where the gems burst from).
+  // the gems a road claim paid fly from its button to the pill, exactly like an achievement's
+  const flyGems = (amount, e) => {
+    let from = null;
+    if (e && e.clientX) from = { x: e.clientX, y: e.clientY };
+    else if (e && e.currentTarget) {
+      const b = e.currentTarget.getBoundingClientRect(); // a keyboard claim: one read, in the handler
+      from = { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+    }
+    setInFlight((n) => n + amount);
+    flyRef.current?.fly({ from, amounts: splitReward(amount), onLand: (a) => setInFlight((n) => Math.max(0, n - a)) });
+  };
+
   const claim = (id, e) => {
     if (stampingRef.current === id) return; // the tile is still being stamped
     const res = claimAchievementV3(id);
@@ -161,7 +182,11 @@ export default function AchievementsV3({ onClose, focusId = null }) {
         <div className="av3-screen">
           <header className="av3-head">
             <KitBackButton label="MENU" ariaLabel="Back to menu" onClick={onClose} className="av3-back" />
-            <h2 className="av3-title">ACHIEVEMENTS</h2>
+            <h2 className="av3-sr">{tab ? 'MASTERY' : 'ACHIEVEMENTS'}</h2>
+            <div className="av3-title av3-tabs">
+              <KitSlabTabs options={['ACHIEVEMENTS', 'MASTERY']} value={tab} onChange={setTab} label="Achievements or mastery" idBase="av3-tab" className="av3-slab" />
+              {roadReady > 0 && tab === 0 ? <span className="av3-tab-dot" aria-label={`${roadReady} mastery rewards ready`} /> : null}
+            </div>
             <div className="av3-tiers" aria-label={`${counts.done} of ${counts.all} tiers`}>
               <b>{formatNum(counts.done)}</b>
               <span>/{formatNum(counts.all)}</span>
@@ -172,6 +197,9 @@ export default function AchievementsV3({ onClose, focusId = null }) {
             </div>
           </header>
 
+          {tab === 1 ? (
+            <div className="av3-body av3-body--mastery"><MasteryPanel onPaid={flyGems} /></div>
+          ) : (
           <div className="av3-body">
             {hero && (
               <section className={`av3-hero${heroReady ? ' is-ready' : ''}${heroStamped ? ' is-stamped' : ''}`} style={{ '--tc': TC[Math.min(hero.tier, hero.tiers - 1)] }} aria-label="Next achievement" data-hero={hero.id}>
@@ -291,6 +319,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
               })}
             </ul>
           </div>
+          )}
         </div>
       </div>
       <KitFlyLayer ref={flyRef} target={() => pillRef.current && pillRef.current.iconEl()} icon="gems" />

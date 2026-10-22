@@ -2,7 +2,7 @@
 // a locked node never pays, the hero node hands out the hero (or a chest when it's already yours). Pure, node --test.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ROAD_LEVELS, ROAD_SHAPE, ROAD_MODES, roadStatus, claimRoadNode, masteryMark, HERO_OWNED_GEMS } from './masteryRoad.js';
+import { ROAD_LEVELS, ROAD_SHAPE, ROAD_MODES, roadStatus, claimRoadNode, allRoads, HERO_OWNED_GEMS } from './masteryRoad.js';
 import { masteryWordsToReach, MASTERY_KEY, MASTERY_MODES } from './mastery.js';
 import { HEROES_KEY } from '../cast/cast.js';
 import { RATE } from '../../claude/mastery-road/cadence.mjs';
@@ -94,10 +94,12 @@ test('the hero node hands out the mode hero — or a chest when it is already yo
   });
 });
 
-test('masteryMark: the level now, 0 for a mode without a road; blocked storage never throws', () => {
+test('allRoads: one road per mastery mode, none for WORD RACE; blocked storage never throws', () => {
   withStorage(atLevel('sat-rush', 4), () => {
-    assert.equal(masteryMark('sat-rush'), 4);
-    assert.equal(masteryMark('word-race'), 0);
+    const all = allRoads();
+    assert.deepEqual(all.map((r) => r.mode).sort(), [...MASTERY_MODES].sort());
+    assert.equal(all.find((r) => r.mode === 'sat-rush').level, 4);
+    assert.equal(roadStatus('word-race'), null);
   });
   const saved = globalThis.localStorage;
   globalThis.localStorage = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } };
