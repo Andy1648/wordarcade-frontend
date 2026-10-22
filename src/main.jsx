@@ -9,7 +9,7 @@ import App from './App.jsx'
 try {
   const q = new URLSearchParams(window.location.search).get('cbjuice')
   if (q) sessionStorage.setItem('taw.cbjuice', q)
-  const sc = new URLSearchParams(window.location.search).get('cbshow') // break-showcase preview flag
+  const sc = new URLSearchParams(window.location.search).get('cbshow') // break-showcase off switch (?cbshow=0)
   if (sc) sessionStorage.setItem('taw.cbshow', sc)
 } catch { /* storage blocked */ }
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it

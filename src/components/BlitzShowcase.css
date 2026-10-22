@@ -148,6 +148,8 @@
   .sc-award img { grid-row: auto; width: 26px; height: 26px; }
   .sc-award-title { font-size: calc(var(--fs-label) * 0.75); letter-spacing: 0.02em; }
   .sc-award-who { font-size: calc(var(--fs-label) * 0.85); }
+  /* the missed answers keep to two lines here; a third ran under the break bar (4 players, 390x844) */
+  .sc-missed .cb-missed-answers { max-height: 62px; overflow: hidden; }
   /* the moments sit three across, compact (they were stacking three tall) */
   .sc-moments { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
   .sc-moment { flex-direction: column; align-items: flex-start; gap: 2px; padding: 4px 6px; }

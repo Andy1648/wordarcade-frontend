@@ -4486,7 +4486,7 @@ function CategoryBlitzScreen({
   // ?cbjuice=1): the live race, the overtake banner and the round-end reveal. Cosmetic: reads the roster, the broadcast
   // per-rival counts, my answers and round_end only.
   const juice = juiceOn();
-  // THE BREAK AS A SHOWCASE (Andy oct21, preview behind ?cbshow=1): every round_end this game, for the game-over awards.
+  // THE BREAK AS A SHOWCASE (Andy oct21/22, on by default; ?cbshow=0 = off): every round_end this game, for the awards.
   const showcase = showcaseOn();
   const roundHistoryRef = useRef([]);
   useEffect(() => {

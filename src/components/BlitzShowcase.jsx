@@ -3,7 +3,7 @@
 // doesn't mean overcrowding, but we definitely need to fill in stuff."), plus the game-over AWARDS row.
 //
 // Cosmetic (Tier 2): everything here is derived from round_end (everyone's answers + round scores) and the running
-// totals the client already keeps. Behind ?cbshow=1 while it is a preview.
+// totals the client already keeps. On by default; ?cbshow=0 turns it off.
 //
 //   MOMENTS   up to 3 painted callouts that slam in after the reveal: who TOOK THE LEAD, MOST UNIQUE, who THINK ALIKE
 //             (the pair that shared the most answers), the BIG CLIMB in the standings.
@@ -12,6 +12,7 @@
 //   BREAK BAR the time left to read, draining (one transform animation the length of the break).
 //   AWARDS    game over: MVP, MOST UNIQUE, THINK ALIKE, BIG COMEBACK across the whole game.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { formatNum } from '../format';
 import './BlitzShowcase.css';
 
 const ART = {
@@ -22,13 +23,15 @@ const ART = {
   medal: '/fx/blitz-medal.webp',
 };
 
+// ON by default (Andy oct22: "S1 — 8s + 1.5s per player, max 18s. Ship it with the showcase"). ?cbshow=0 turns it off
+// for the tab, so a regression can be ruled in or out in one reload.
 export function showcaseOn() {
   try {
     const q = new URLSearchParams(window.location.search).get('cbshow');
     if (q) sessionStorage.setItem('taw.cbshow', q);
-    return sessionStorage.getItem('taw.cbshow') === '1' || window.__CB_SHOW === true;
+    return sessionStorage.getItem('taw.cbshow') !== '0' && window.__CB_SHOW !== false;
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -229,7 +232,7 @@ export function ShowcaseBoard({ results, totals, myId, colorOf, sound, PlayerDot
                 <span className="sc-round">
                   +<CountUp to={r.roundScore} delay={delay} onLand={() => { try { sound.combo(order[r.id] + 1); } catch { /* */ } }} />
                 </span>
-                <span className="sc-total">{r.total}<span className="sc-total-l"> TOTAL</span></span>
+                <span className="sc-total">{formatNum(r.total)}<span className="sc-total-l"> TOTAL</span></span>
                 {!solo && r.unique.size > 0 && (
                   <span className="sc-uniq" style={{ '--d': `${delay + 260}ms` }}>
                     <img src={ART.stamp} alt="" aria-hidden="true" />
