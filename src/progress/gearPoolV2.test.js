@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  substatsOf, markGemsPct,
+  substatsOf, markGemsPct, markLongWinsPct, markGameXpPct,
   ROLL_MARKS, statOf, statText, mainTag, markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec,
   indexMult, critTotals, critStatsOf, CRIT_BASE_RATE, CRIT_BASE_POWER, CRIT_RATE_CAP, MODE_WINS_KINDS, modeOfKind,
   freshState, normalize, roll, rollTable, PITY, ROLL_STATE_KEY, ROLL_STATE_VERSION, commonRefund, migrateRollSave,
@@ -52,8 +52,8 @@ function printed(text) {
   return n;
 }
 
-test('the pool: 33 gears (JACKPOT joined; oct18 +5), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
-  assert.equal(ROLL_MARKS.length, 33);
+test('the pool: 48 gears (JACKPOT joined; oct18 +5; oct21 +15), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
+  assert.equal(ROLL_MARKS.length, 48);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
   for (const id of [...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]) assert.ok(!ROLL_MARKS.some((m) => m.id === id), id);
   const keys = ROLL_MARKS.map((m) => `${m.stat.kind}:${m.stat.value}`);
@@ -98,6 +98,11 @@ test('every gear PRINTS what it PAYS — at ★0, ★ pips and SHINY, read throu
         case 'critRatePct': near(crit.rawRate, CRIT_BASE_RATE + sub.rate + shown / 100, tag); break;
         case 'critPower': near(crit.power, CRIT_BASE_POWER + sub.power + shown, tag); break;
         case 'critEvery': assert.equal(crit.every, shown, tag); break;
+        // GEAR EXPANSION (oct21): the conditional mains pay through their own readers (wins.js / letterXp.js), never
+        // as a flat WINS / XP multiplier; HOT HAND pays WINS only on a win streak (none in these states)
+        case 'longWinsPct': near(markLongWinsPct(opts), st.value, tag); break;
+        case 'gameXpPct': near(markGameXpPct(opts), st.value, tag); break;
+        case 'streakWinsPct': near(markWinsMult(opts) / ix, 1, `${tag} off a streak`); break;
         default: {
           const mode = modeOfKind(st.kind);
           assert.ok(mode, `${tag}: unknown kind`);

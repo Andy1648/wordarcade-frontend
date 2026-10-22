@@ -229,6 +229,11 @@ test('GEAR POOL v2: every gear prints exactly what it pays (season 2 values, ★
       else if (k === 'critRatePct') near(MR.critTotals().rawRate, 0.01 + MR.critStatsOf(m.id, s).rate + v / 100);
       else if (k === 'critPower') near(MR.critTotals().power, 2 + MR.critStatsOf(m.id, s).power + v);
       else if (k === 'critEvery') assert.equal(MR.critTotals().every, v, tag);
+      // GEAR EXPANSION (oct21): the conditional mains (6+ letter words / a win streak / game-word XP) pay through their own
+      // readers; HOT HAND pays WINS only on a streak (none here)
+      else if (k === 'longWinsPct') near(1 + MR.markLongWinsPct() / 100, v);
+      else if (k === 'gameXpPct') near(1 + MR.markGameXpPct() / 100, v);
+      else if (k === 'streakWinsPct') near(MR.markWinsMult() / ix, 1);
       else {
         const mode = MR.modeOfKind(k);
         near(MR.markWinsMult({ mode }) / ix, v);
