@@ -17,7 +17,23 @@
   font: 400 var(--fs-k16) 'Bungee', sans-serif; color: #fff; background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
 }
 @media (prefers-reduced-motion: reduce) { .rh-btn { transition: none; } }
-/* in the v2 lobby the seat chip is a vertical column: the face sits OVER its right end (absolute) so the chip's size —
-   and the lobby's fit-zoom — never changes; the name keeps clear of it */
-.room-wrap[data-skin="v2"] .room-player-chip:has(.rh-btn) { padding-right: 58px; }
-.room-wrap[data-skin="v2"] .room-player-chip .rh-btn { position: absolute; right: 6px; top: 50%; translate: 0 -50%; width: 44px; height: 44px; }
+
+/* HEROES ARE THE FEATURE (Andy oct21: "i want the hero sizes to be bigger (they need to be more of a feature)"): in the
+   season-2 lobby your hero stands FULL-BODY at the right of your seat, taller than the chip so it steps out over the
+   top edge — not a face in a 48px coin. Static pose (a hard offset shadow, no blur); hover / press feedback only. */
+.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { min-height: 96px; padding-right: 104px; }
+.room-wrap[data-skin="v2"] .room-player-chip > .rh-btn {
+  position: absolute; right: 4px; bottom: 2px; width: 96px; height: 124px;
+  background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; z-index: 1;
+}
+.room-wrap[data-skin="v2"] .room-player-chip > .rh-btn img {
+  transform: none; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(3px 3px 0 #000);
+}
+.room-wrap[data-skin="v2"] .room-player-chip > .rh-btn:active { transform: translate(2px, 2px); }
+.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) .room-you-badge { right: 104px; }
+/* a narrow seat (phones): the hero stands ON TOP of the name, stepping up over the chip's top edge, never over the text */
+@media (max-width: 600px) {
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-right: 12px; padding-top: 0; justify-content: flex-start; }
+  .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn { position: relative; right: auto; bottom: auto; align-self: center; width: 84px; height: 92px; margin-top: -22px; margin-bottom: 8px; }
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) .room-you-badge { right: -6px; }
+}

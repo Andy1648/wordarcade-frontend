@@ -7,7 +7,6 @@ import LayeredWord from './LayeredWord';
 import useFitZoom from '../hooks/useFitZoom';
 import PlayerDot from './PlayerDot';
 import { resolvePlayerColor } from '../playerColors';
-import { inviteLink } from '../share/links.js';
 import { track } from '../lib/analytics';
 import { DIFFICULTIES, difficultyDesc, difficultyReadout } from '../difficulty';
 import { SEASON2, V3 } from '../progress/season';
@@ -159,19 +158,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   }, [room]);
   useEffect(() => () => clearTimeout(joinPopTimerRef.current), []);
 
-  // ---- Invite link (the frictionless join loop) ----
-  // COPY writes the ?join=CODE deep link to the clipboard (with a brief ✓
-  // confirmation); SHARE opens the native sheet where the platform has one
-  // (mobile). Both are room-code-pure — no game state touched. These hooks MUST
-  // sit ABOVE the `if (!room) return null` guard so they run on every render
-  // (Rules of Hooks) — they were previously declared after it, which called
-  // useState/useRef/useEffect conditionally and could desync React's hook state.
-  const [inviteCopied, setInviteCopied] = useState(false);
-  const inviteCopiedTimerRef = useRef(null);
-  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
-  useEffect(() => () => clearTimeout(inviteCopiedTimerRef.current), []);
-  // R3 oct8: the CODE itself is copyable — tap the tiles, get the five letters (the invite button
-  // copies the LINK; a friend on a call wants the code). Same brief ✓ beat, its own timer.
+  // (Andy oct21: no COPY INVITE LINK / SHARE row — the code tiles copy the code; heroes get the room instead.)
+  // R3 oct8: the CODE itself is copyable — tap the tiles, get the five letters (a friend on a call wants the code). Same brief ✓ beat, its own timer.
   const [codeCopied, setCodeCopied] = useState(false);
   const codeCopiedTimerRef = useRef(null);
   useEffect(() => () => clearTimeout(codeCopiedTimerRef.current), []);
@@ -223,22 +211,6 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
     onLeave();
   }
 
-  async function handleCopyInvite() {
-    sound.click();
-    const link = inviteLink(room.code);
-    try {
-      await navigator.clipboard.writeText(link);
-      setInviteCopied(true);
-      clearTimeout(inviteCopiedTimerRef.current);
-      inviteCopiedTimerRef.current = setTimeout(() => setInviteCopied(false), 1600);
-      track('invite_link_copied', { method: 'copy' });
-    } catch {
-      // Clipboard blocked (permissions / http): fall back to the native sheet
-      // if there is one; otherwise select-able prompt is overkill — just no-op.
-      if (canNativeShare) handleShareInvite();
-    }
-  }
-
   async function handleCopyCode() {
     sound.click();
     try {
@@ -248,21 +220,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
       codeCopiedTimerRef.current = setTimeout(() => setCodeCopied(false), 1400);
       track('room_code_copied');
     } catch {
-      /* clipboard blocked: the invite button's path still works */
-    }
-  }
-
-  async function handleShareInvite() {
-    sound.click();
-    try {
-      await navigator.share({
-        title: 'TYPE A WORD',
-        text: `join my room — type fast. die slow. code ${room.code}`,
-        url: inviteLink(room.code),
-      });
-      track('invite_link_copied', { method: 'native' });
-    } catch {
-      /* user cancelled the sheet — nothing to do */
+      /* clipboard blocked: nothing to do */
     }
   }
 
@@ -282,7 +240,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             ← LEAVE
           </button>
         </div>
-        {/* TWO COLUMNS ON A LANDSCAPE DESKTOP (fix/join-screens-scale): SHARE (code, invite, roster)
+        {/* TWO COLUMNS ON A LANDSCAPE DESKTOP (fix/join-screens-scale): SHARE (code, roster)
             on the left, SETUP (bot / mode / difficulty / start) on the right. One stacked column was
             ~820px tall at design size, so on a 625px laptop the only way to fit it was to shrink the
             whole screen to 0.6 — and at 8 players START went off the bottom. On phones and portrait
@@ -317,22 +275,6 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
             <LayeredWord className="room-code-face" text={room.code} accent="#ffe94a" />
           )}
         </div>
-        {/* CLUTTER PASS: no "SHARE THIS CODE" — the COPY INVITE LINK / SHARE buttons under it say it. */}
-
-        {/* One-tap invite: copies (or natively shares, where supported) a
-            ?join=CODE deep link that drops a friend STRAIGHT into this room —
-            no name prompt, no code typing. */}
-        <div className="room-invite-row">
-          <button className="room-invite-btn" onClick={handleCopyInvite}>
-            {inviteCopied ? '✓ LINK COPIED' : '⧉ COPY INVITE LINK'}
-          </button>
-          {canNativeShare && (
-            <button className="room-invite-btn room-invite-share" onClick={handleShareInvite}>
-              📣 SHARE
-            </button>
-          )}
-        </div>
-
         {SEASON2 && isHost ? <div className="room-you-host">YOU ARE HOST</div> : null}
         <div className="room-players-label">{SEASON2 ? <>PLAYERS <b>{room.players.length}/{SEATS}</b></> : `PLAYERS (${room.players.length})`}</div>
         <div className="room-players-list">
