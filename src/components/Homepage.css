@@ -982,12 +982,6 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 }
 .hp-daily.is-swept { border-color: #1d6b2f; background: #0f1d14; }
 .hp-daily.is-swept .hp-daily-count { color: #3ddc6b; }
-.hp-m-rail .hp-daily { flex: 0 0 100%; height: 56px; padding: 0 14px 0 6px; gap: 10px; }
-.hp-m-rail .hp-daily-flame { width: 48px; height: 48px; }
-.hp-m-rail .hp-daily-pips i { width: 26px; }
-.hp-m-rail .hp-daily-n { font-size: var(--fs-k20); }
-.hp-m-rail .hp-daily-k { font-size: var(--fs-k15); }
-.hp-m-rail .hp-daily-count { font-size: var(--fs-k18); }
 @media (prefers-reduced-motion: reduce) { .hp-daily, .hp-daily:hover { transition: none; transform: none; } }
 /* PROFILE PLATE (oct21): the XP bar's lead plate — your hero's face + PROFILE + the title you wear */
 .hp-profplate { flex-direction: row; align-items: center; gap: calc(10 * var(--u)); padding-left: calc(6 * var(--u)); }

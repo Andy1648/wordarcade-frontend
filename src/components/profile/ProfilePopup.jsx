@@ -106,6 +106,13 @@ export default function ProfilePopup({ onClose, onMainChange }) {
         <div className="pf-head">
           {view === 'pick' ? <button type="button" className="pf-back" onClick={() => setView('profile')}>← BACK</button> : null}
           <span className="pf-title">{view === 'pick' ? 'CHOOSE YOUR MAIN' : 'PROFILE'}</span>
+          {/* TITLE (oct21): your worn title rides the header (no height — the card never scrolls on a laptop); tap → ALL TITLES */}
+          {view === 'profile' ? (
+            <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
+              <span className="pf-titlerow-plate"><KitRankPlate rank={title.req} w={100} /></span>
+              <span className="pf-titlerow-go">ALL TITLES ▸</span>
+            </button>
+          ) : null}
           <button type="button" className="pf-x" onClick={onClose} aria-label="Close profile">✕</button>
         </div>
         {view === 'pick' ? (
@@ -123,11 +130,6 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                 <FitText className="pf-name">{me ? me.username : 'NO NAME YET'}</FitText>
                 {!me ? <span className="pf-hint">CLAIM A NAME ON THE LEADERBOARD</span> : null}
               </div>
-              <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
-                <span className="pf-titlerow-k">TITLE</span>
-                <span className="pf-titlerow-plate"><KitRankPlate rank={title.req} w={170} /></span>
-                <span className="pf-titlerow-go">ALL TITLES ▸</span>
-              </button>
               <div className="pf-stats">
                 <Stat icon="clock" tone="#2EFFE0" value={formatPlayTime(play)} label="TIME PLAYED" />
                 <Stat glyph="key" tone="#FFE94A" value={formatNum(st.lifetimeWords || c.words || 0)} label="WORDS TYPED" />
