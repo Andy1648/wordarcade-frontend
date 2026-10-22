@@ -130,28 +130,49 @@ export function ShowcaseBoard({ results, totals, myId, colorOf, sound, PlayerDot
   // Measured once per round and per resize (clip === null means "measure now"), never per frame or keystroke.
   const gridRef = useRef(null);
   const [clip, setClip] = useState(null);
-  useEffect(() => { setClip(null); }, [results]);
   useEffect(() => {
-    const onResize = () => setClip(null);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    setClip(null);
+    // and once more after the reveal lands (scores counting 0 → 12 change the header's width)
+    const t = window.setTimeout(() => setClip(null), Math.min(4000, (results.playerResults || []).length * 520 + 900));
+    return () => window.clearTimeout(t);
+  }, [results]);
+  useEffect(() => {
+    const again = () => setClip(null);
+    window.addEventListener('resize', again);
+    // the chips' web font can land after the first measure (it did, by 3px, at 1366x650): measure once more then
+    let live = true;
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (live) again(); });
+    return () => { live = false; window.removeEventListener('resize', again); };
   }, []);
   useLayoutEffect(() => {
     const g = gridRef.current;
-    if (!g || clip !== null) return;
-    g.dataset.fit = '0';
+    if (!g) return;
     const boxes = () => [...g.querySelectorAll('.sc-chips')];
-    const over = () => boxes().some((c) => c.scrollHeight > c.clientHeight + 1);
-    for (let d = 1; d <= 3 && over(); d += 1) g.dataset.fit = String(d);
-    const next = {};
-    for (const box of boxes()) {
-      if (box.scrollHeight <= box.clientHeight + 1) continue;
-      const chips = [...box.children];
-      const fits = chips.filter((c) => c.offsetTop + c.offsetHeight <= box.clientHeight + 1).length;
-      next[box.dataset.id] = chips.length - Math.max(0, fits - 1); // leave a slot for the "+N" chip
+    const isOver = (c) => c.scrollHeight > c.clientHeight + 1;
+    if (clip === null) {
+      g.dataset.fit = '0';
+      for (let d = 1; d <= 3 && boxes().some(isOver); d += 1) g.dataset.fit = String(d);
+      const next = {};
+      for (const box of boxes()) {
+        if (!isOver(box)) continue;
+        const chips = [...box.children];
+        // positions relative to the chip BOX (offsetTop is relative to the card, which also holds the header)
+        const fits = chips.filter((c) => c.offsetTop - box.offsetTop + c.offsetHeight <= box.clientHeight + 1).length;
+        next[box.dataset.id] = chips.length - Math.max(0, fits - 1); // leave a slot for the "+N" chip
+      }
+      setClip(next);
+      return;
     }
-    setClip(next);
-  }, [clip]);
+    // the fold was an estimate: a "+N" chip that itself wrapped gets one more answer folded in (bounded, once a round)
+    const more = {};
+    for (const box of boxes()) {
+      if (!isOver(box)) continue;
+      const id = box.dataset.id;
+      const row = rows.find((r) => r.id === id);
+      if (row && (clip[id] || 0) < row.answers.length) more[id] = (clip[id] || 0) + 1;
+    }
+    if (Object.keys(more).length) setClip({ ...clip, ...more });
+  }, [clip, rows]);
 
   // the break bar drains over the whole break: one finite transform animation
   const barRef = useRef(null);
