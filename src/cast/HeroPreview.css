@@ -104,3 +104,15 @@
 @media (hover: hover) { .hpv-ver:not(.is-on):hover { transform: translateY(-3px); } .hpv-ver:not(.is-on):hover .hpv-ver-art img { filter: drop-shadow(2px 2px 0 #000); } }
 @media (max-width: 760px) { .hpv-vers { align-items: center; } .hpv-vers-row { justify-content: center; } .hpv-ver { width: 88px; } }
 @media (prefers-reduced-motion: reduce) { .hpv-ver { transition: none; } }
+
+/* NO SCROLL ON A LAPTOP (Andy oct21 "I don't want [scrolls] for basically anything"): the stage was a square sized by the
+   column's WIDTH, so on a short laptop (1366x657, 1280x600) the POSE tabs fell 41–98px under the fold and the panel
+   scrolled. Its width is now also capped by the screen's HEIGHT, leaving room for the header rows + the pose tabs. */
+@media (min-width: 761px) {
+  .hpv-stage { width: min(100%, calc((100dvh - 262px) / 0.92)); }
+}
+@media (min-width: 761px) and (max-height: 620px) {
+  .hpv { gap: 8px; }
+  .hpv-name { font-size: var(--fs-k44); }
+  .hpv-tag { font-size: var(--fs-k18); }
+}
