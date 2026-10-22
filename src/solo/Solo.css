@@ -1550,7 +1550,7 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   position: relative;
   container-type: inline-size;
 }
-.solo-deathcard > .solo-exit {
+.solo-death-story > .solo-exit {
   align-self: flex-start;
 }
 
@@ -1692,4 +1692,82 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 .solo-bestpass { position: absolute; right: 40px; bottom: 16px; width: 200px; height: 230px; pointer-events: none; z-index: 62; }
 @media (max-width: 700px) {
   .solo-bestpass { right: auto; bottom: auto; left: 50%; top: 8px; margin-left: -100px; }
+}
+
+/* ===== SEASON 2 FIT (oct21) — the run-over card fits the screen, no scroll =====================
+   At the season-2 rebirth gate the card carries REBIRTH READY, the missed-word hold, the links,
+   WINS EARNED and the XP + GEMS row, and stacked it ran to 1086px on 1366x768 and 982 on 390x844
+   (e2e/solo-s2-fit.spec.js). Nothing is hidden that the player can't read elsewhere on the card:
+   the hold drops its "A WORD STARTING WITH X" line (the killed line right above says the same) and
+   the no-gloss filler; the links run inline; RESTART shares a row with TRY <MODE>; and on a desktop
+   the two halves sit side by side. */
+.solo-deathcard { --dc-gap: 16px; gap: var(--dc-gap); }
+.solo-death-story,
+.solo-death-reward {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dc-gap);
+  min-width: 0;
+}
+/* the title sizes to ITS half, not the whole card (9cqi of a two-column card overran the column) */
+.solo-death-story { container-type: inline-size; }
+/* the mascot shares the way-out row: the pill sits left, the face centred (it clears the pill's
+   ~96px at every width the mascot shows at) — the row cost 68px on its own */
+.solo-death-story > .solo-exit + .solo-death-mascot { margin-top: calc(-52px - var(--dc-gap)); }
+.solo-deathcard .solo-death-links {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 14px;
+}
+.solo-deathcard .missed-hold { gap: 2px; padding: 8px 12px; }
+.solo-deathcard .missed-hold-prompt,
+.solo-deathcard .missed-hold-nogloss { display: none; }
+.solo-deathcard .wins-earned { margin: 0; }
+.solo-deathcard .solo-earned-row { margin-top: 0; }
+.solo-death-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+}
+.solo-death-actions > .solo-restart { flex: 1 1 auto; padding: 0 14px; }
+.solo-death-actions > .try-mode-row { order: 1; margin: 0; flex: 0 0 auto; }
+.solo-death-actions > .try-mode-row .try-mode-btn { height: 100%; }
+/* the claim / near-miss rows and the deep-link offer keep full lines of their own, under the pair */
+.solo-death-actions > :not(.solo-restart):not(.try-mode-row) { order: 2; flex: 1 1 100%; }
+/* a phone has no Enter key to name */
+@media (hover: none) and (pointer: coarse) {
+  .solo-restart-key { display: none; }
+}
+
+/* PHONE / NARROW: one column, tighter rhythm, a thinner scrim margin */
+@media (max-width: 819px) {
+  .solo-over { padding: 12px; }
+  .solo-deathcard { --dc-gap: 10px; padding: 16px; }
+}
+/* DESKTOP: the story and the reward side by side */
+@media (min-width: 820px) {
+  :root .solo-deathcard {
+    max-width: calc(820px * var(--solo-k, 1));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 28px;
+    --dc-gap: 14px;
+  }
+}
+@media (min-width: 820px) and (max-height: 560px) {
+  :root .solo-deathcard { --dc-gap: 10px; }
+}
+/* desktop: the way out pins to the card's top-left, the story centres in the room under it */
+@media (min-width: 820px) {
+  .solo-death-story { align-self: stretch; }
+  .solo-death-story > .solo-exit { margin-bottom: auto; }
+  .solo-death-story > .solo-exit + .solo-death-mascot { margin-top: 0; }
+  .solo-death-story > :last-child { margin-bottom: auto; }
+}
+/* a short phone (360x640): the rhythm closes one more step */
+@media (max-width: 819px) and (max-height: 700px) {
+  .solo-deathcard { --dc-gap: 8px; }
 }
