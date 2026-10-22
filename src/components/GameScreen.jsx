@@ -61,6 +61,7 @@ import { difficultyLabel } from '../difficulty';
 import { formatNum, formatMult } from '../format';
 import packs from '../data/packs';
 import { juiceOn, useRace, RaceStrip, useOvertake, OvertakeBanner, RevealBoard } from './BlitzRivalJuice';
+import { showcaseOn, ShowcaseBoard, analyseGame, AwardsRow } from './BlitzShowcase';
 import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
@@ -4478,6 +4479,15 @@ function CategoryBlitzScreen({
   // ?cbjuice=1): the live race, the overtake banner and the round-end reveal. Cosmetic: reads the roster, the broadcast
   // per-rival counts, my answers and round_end only.
   const juice = juiceOn();
+  // THE BREAK AS A SHOWCASE (Andy oct21, preview behind ?cbshow=1): every round_end this game, for the game-over awards.
+  const showcase = showcaseOn();
+  const roundHistoryRef = useRef([]);
+  useEffect(() => {
+    if (!roundResults) return;
+    const h = roundHistoryRef.current;
+    if (roundResults.round === 1) roundHistoryRef.current = [roundResults];
+    else if (!h.some((r) => r.round === roundResults.round)) h.push(roundResults);
+  }, [roundResults]);
   const cbStageRef = useRef(null);
   const race = useRace({ roomPlayers, myId, myCount: myAnswers.length, playerProgress: playerProgress || {} });
   const overtake = useOvertake(juice ? race : { rows: [], top: 0 }, myId, categoryRound?.round, sound, cbStageRef);
@@ -4826,6 +4836,7 @@ function CategoryBlitzScreen({
               </div>
             </div>
             )}
+            {showcase && <AwardsRow awards={analyseGame(roundHistoryRef.current, scores)} />}
             <div className="cb-scoreboard">
               {scores.map((s, i) => {
                 const pc = resolvePlayerColor(playerColors, s.id);
@@ -5282,11 +5293,15 @@ function CategoryBlitzScreen({
               </SprayReveal>
             </div>
 
-            {juice && (
+            {showcase && (
+              <ShowcaseBoard results={roundResults} totals={categoryTotals} myId={myId} sound={sound} PlayerDot={PlayerDot}
+                colorOf={(id) => resolvePlayerColor(playerColors, id)} breakMs={breakTotalMs} MissedAnswers={MissedAnswers} />
+            )}
+            {juice && !showcase && (
               <RevealBoard results={roundResults} myId={myId} colorOf={(id) => resolvePlayerColor(playerColors, id)}
                 totals={categoryTotals} sound={sound} PlayerDot={PlayerDot} formatNum={formatNum} />
             )}
-            {!juice && (roundResults.playerResults || []).map((pr) => {
+            {!juice && !showcase && (roundResults.playerResults || []).map((pr) => {
               const pc = resolvePlayerColor(playerColors, pr.id);
               return (
               <div
@@ -5322,7 +5337,7 @@ function CategoryBlitzScreen({
               );
             })}
 
-            {(roundResults.sampleAnswers || []).length > 0 && (
+            {!showcase && (roundResults.sampleAnswers || []).length > 0 && (
               <MissedAnswers key={roundResults.round} answers={roundResults.sampleAnswers} />
             )}
           </div>
