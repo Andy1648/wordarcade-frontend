@@ -121,7 +121,7 @@
 
 /* ===== GAME-OVER AWARDS: one compact strip; the YOUR/TOP/PLAYERS row it replaces said the scoreboard twice ===== */
 .game-over-card:has(.sc-awards) .cb-stats-summary { display: none; }
-.sc-awards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; width: 100%; margin: 2px 0 6px; }
+.sc-awards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; width: 100%; margin: 2px 0 6px; align-content: start; align-self: start; }
 .sc-award {
   display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 6px; align-items: center;
   padding: 5px 8px 5px 5px; text-align: left;
