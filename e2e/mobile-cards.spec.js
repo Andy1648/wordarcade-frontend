@@ -42,7 +42,7 @@ const VIEWPORTS = [
 ];
 
 for (const { w, h } of VIEWPORTS) {
-  test(`${w}x${h}: every mode row reachable with no scroll, foot pinned, 44px targets`, async ({ page }) => {
+  test(`${w}x${h}: every mode row in view with no scroll, the rail reachable, 44px targets`, async ({ page }) => {
     expect(w, 'this spec is about the phone menu').toBeLessThanOrEqual(PHONE_MENU_MAX);
     await page.setViewportSize({ width: w, height: h });
     await installBackendMock(page);
@@ -113,15 +113,27 @@ for (const { w, h } of VIEWPORTS) {
       expect(r.rows[id].h, `${id} row height @ ${w}x${h}`).toBeGreaterThanOrEqual(44);
     }
 
+    // TAP-FIRST, ROOM TO BREATHE (Andy oct21 "maybe we can introduce more of the scroll"): the mode rows keep a 64px tap
+    // target, so on the shortest phones the menu SCROLLS to its rail instead of crushing them. The rail and every other
+    // destination must still be REACHABLE: in view at rest, or once the menu is scrolled to its end.
+    const reach = await page.evaluate(() => {
+      const m = document.querySelector('.hp-m');
+      m.scrollTop = m.scrollHeight;
+      const vh = innerHeight;
+      const ok = (el) => { if (!el) return false; const b = el.getBoundingClientRect(); return b.top >= -0.5 && b.bottom <= vh + 0.5; };
+      const out = { foot: ok(document.querySelector('.hp-m-rail')), shop: ok(document.querySelector('[data-nav="shop"]')), stats: ok(document.querySelector('[data-nav="stats"]')), credits: ok(document.querySelector('.hp-m-credits')), chain: ok(document.querySelector('.hp-m-solo-btn--chain')), fuse: ok(document.querySelector('.hp-m-solo-btn--fuse')) };
+      m.scrollTop = 0;
+      return out;
+    });
     expect(r.foot, 'the foot row is rendered').not.toBeNull();
-    expect(r.foot.inside, `foot row pushed out of view @ ${w}x${h} (${r.foot.box})`).toBe(true);
+    expect(r.foot.inside || reach.foot, `foot row unreachable @ ${w}x${h} (${r.foot.box})`).toBe(true);
     // v2 menu: JOIN ROOM left the menu (the mode dialogs' JOIN WITH CODE — see menu.spec / support/menu.js joinControl)
     expect(r.join, 'no JOIN ROOM on the v2 menu').toBeNull();
 
     // Every other destination: rendered, fully in view, and a real 44x44 target.
     for (const [name, b] of Object.entries(r.others)) {
       expect(b, `${name} control rendered @ ${w}x${h}`).not.toBeNull();
-      expect(b.inside, `${name} pushed out of view @ ${w}x${h} (${b.box})`).toBe(true);
+      expect(b.inside || reach[name] === true, `${name} unreachable @ ${w}x${h} (${b.box})`).toBe(true);
       expect(Math.min(b.w, b.h), `${name} tap target @ ${w}x${h}`).toBeGreaterThanOrEqual(44);
     }
 

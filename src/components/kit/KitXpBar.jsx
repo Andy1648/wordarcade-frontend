@@ -45,7 +45,13 @@ export const WRAP_HOLD_MS = 0;
 const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
 const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
 
-export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null }) {
+// JUICE P1 (goal-gradient): `goal` = { lv } puts the NEXT reward on a plate at the bar's RIGHT end — the next
+// level's number (Andy oct21: never the REBIRTH icon — it sat off-centre on the plate). In the last NEAR_FRAC of a level
+// the plate turns yellow (a static class, not a loop) and every gain BUMPS it (one finite 280 ms play) — the "almost
+// there" pull. A level wrap SLAMS the new number in.
+export const NEAR_FRAC = 0.9;
+
+export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null }) {
   const rootRef = useRef(null);
   const lvRef = useRef(null);
   const gainRef = useRef(null);
@@ -54,6 +60,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   const curRef = useRef(null);
   const ghostRef = useRef(null);
   const plateRef = useRef(null);
+  const goalRef = useRef(null);
   // the one-level wrap beat: { phase: 'idle' | 'fill' | 'hold', next: { l, f }, t }
   const wrap = useRef({ phase: 'idle', next: null, t: 0 });
   const needRef = useRef(need);
@@ -98,6 +105,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         }
         if (l > prev) {
           sweep();
+          if (goalRef.current) fx(goalRef.current, FX.slamSmall);
           const g = gain.current;
           clearTimeout(g.t);
           g.n += l - prev;
@@ -179,6 +187,8 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     climbN.current = tl > p.level ? tl - p.level + gain.current.n : 0;
     if (root && climbing) root.dataset.state = 'climb';
     if (climbing) promote(true);
+    // the "almost there" pull: a gain inside the last stretch of a level bumps the goal plate (once per gain)
+    if (climbing && tl === p.level && tf >= NEAR_FRAC && goalRef.current) fx(goalRef.current, FX.barBump);
     p.to(level, frac);
   }, [level, frac, lvInside]);
 
@@ -214,8 +224,17 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   ) : (
     <div className="kx-lv">{lvText}</div>
   );
+  const near = goal && (frac > 0 ? frac : 0) >= NEAR_FRAC;
+  const goalNode = goal ? (
+    <div className="kx-goal" data-testid="xp-goal" aria-hidden="true">
+      <span ref={goalRef} className="kx-goal-in">
+        <span className="kx-lv-k">LV</span>
+        <span className="kx-goal-n">{formatNum(goal.lv)}</span>
+      </span>
+    </div>
+  ) : null;
   return (
-    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
+    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
       {lvInside ? lead : lvNode}
       <div className="kx-barwrap">
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
@@ -231,6 +250,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
             <div ref={sweepRef} className="kx-sweep" />
           </div>
           {lvInside && lvNode}
+          {goalNode}
           <div className="kx-read" aria-hidden="true">
             <span ref={curRef} className="kx-read-n">
               {initial.cur}

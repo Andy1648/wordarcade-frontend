@@ -21,6 +21,8 @@ import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
 import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION_V10, econRpcArg } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
+// lazy: keeps the gzip codec out of the initial bundle (payload ratchet)
+const packBlob = async (code) => (await import('../save/cloudCodec.js')).packBlob(code);
 import { queueClaim } from '../progress/claims.js';
 import { flagOn, flagDefaultOn } from '../lib/featureFlags.js';
 import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
@@ -318,7 +320,7 @@ export async function obeyDevReset(secret = peekSecret()) {
   wipeProgressKeys(localStorage, [SECRET_KEY, PROFILE_KEY]);
   let acked = false;
   try {
-    const r = await rpc('lb_reset_ack', { p_secret: secret, p_blob: exportSave(), p_score: localScore().toString() });
+    const r = await rpc('lb_reset_ack', { p_secret: secret, p_blob: await packBlob(exportSave()), p_score: localScore().toString() });
     acked = !!(r && r.reset);
   } catch {
     acked = false;
@@ -344,7 +346,7 @@ export async function selfReset() {
   let server = false;
   if (secret && LEADERBOARD_ENABLED && getMyProfile()) {
     try {
-      const r = await rpc('lb_self_reset', { p_secret: secret, p_blob: exportSave(), p_score: localScore().toString() });
+      const r = await rpc('lb_self_reset', { p_secret: secret, p_blob: await packBlob(exportSave()), p_score: localScore().toString() });
       server = !!(r && r.reset);
     } catch {
       server = false;

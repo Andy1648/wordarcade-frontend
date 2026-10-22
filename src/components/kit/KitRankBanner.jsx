@@ -61,7 +61,7 @@ function Banner({ b }) {
   return (
     <div ref={slab} className="krb" style={{ '--krb-c': c }} data-rank={b.to.name}>
       <div className="krb-head">
-        <span>{b.head || 'RANK UP'}</span>
+        <span>{b.head || 'NEW TITLE'}</span>
         <span className="krb-code">{b.to.code || b.to.req}</span>
       </div>
       <div className="krb-row">
@@ -86,7 +86,7 @@ export function KitRankBannerHost({ store = rankBanners, contained = false }) {
       {live.map((b) => (
         <Banner key={b.id} b={b} />
       ))}
-      {live.length ? <span className="krb-sr">{`${live[live.length - 1].head || 'Rank up'}: ${live[live.length - 1].to.name}`}</span> : null}
+      {live.length ? <span className="krb-sr">{`${live[live.length - 1].head || 'New title'}: ${live[live.length - 1].to.name}`}</span> : null}
     </div>
   );
   if (contained || typeof document === 'undefined') return host;

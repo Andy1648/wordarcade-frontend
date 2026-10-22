@@ -111,6 +111,7 @@ export default function FrenchRushGame() {
   const [classOpen, setClassOpen] = useState(() => !!classCode || hasClassSeat());
   const [classState, setClassState] = useState({ playing: false, hostAway: false, offline: false });
   const classLeaveRef = useRef(null);
+  const classStandbyRef = useRef(null); // a student's results → back to the class screen, seat kept
   const inClassRun = classOpen && classState.playing;
   const ui = (view.pack && view.pack.ui) || null;
 
@@ -208,6 +209,7 @@ export default function FrenchRushGame() {
           onExit={closeClass}
           onStudentState={setClassState}
           leaveRef={classLeaveRef}
+          standbyRef={classStandbyRef}
         />
       )}
       {!classOpen && view.phase === 'start' && (
@@ -237,8 +239,8 @@ export default function FrenchRushGame() {
         <SatRushResults
           results={view.results}
           economy={false}
-          ui={ui}
-          onAgain={inClassRun ? leaveClassRun : game.startGame}
+          ui={inClassRun && ui && ui.results ? { ...ui, results: { ...ui.results, again: 'Back to the class', menu: 'Leave the class' } } : ui}
+          onAgain={inClassRun ? () => (classStandbyRef.current ? classStandbyRef.current() : leaveClassRun()) : game.startGame}
           onReplay={inClassRun ? null : game.replayMisses}
           onExit={inClassRun ? leaveClassRun : home}
         />

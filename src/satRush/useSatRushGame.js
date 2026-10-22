@@ -282,6 +282,9 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         stage: r.breakdown.stage,
         revealedCount: revealed,
       });
+      // A word you GOT counts as studied the moment you get it — saved now, so leaving mid-run (or
+      // mid-class) never loses it (Andy oct20). A miss stays "learning": it comes back for review.
+      lexicon.markStudied(lexRef.current, [word]);
       persistLexicon();
       const rec = lexRef.current.records[word];
       trackSR('word_resolved', {
@@ -690,6 +693,20 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   useEffect(() => () => {
     clearTimers();
     persistLexicon();
+  }, [persistLexicon]);
+  // …and when the page goes away without unmounting (a closed tab, a Chromebook lid, a phone that
+  // switches apps): pagehide / hidden are the last reliable moments to write.
+  useEffect(() => {
+    const flush = () => persistLexicon();
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [persistLexicon]);
 
   // ---- public actions ----
