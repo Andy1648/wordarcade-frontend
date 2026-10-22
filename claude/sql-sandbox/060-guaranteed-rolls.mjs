@@ -1,6 +1,6 @@
 // claude/sql-sandbox/060-guaranteed-rolls.mjs — runs 060_guaranteed_rolls.sql on a THROWAWAY in-memory Postgres (PGlite, WASM)
 // against a stub of the tables it touches, then plays it adversarially (41 checks). Never touches Supabase.
-// RUN (from any empty folder):  npm i @electric-sql/pglite@0.3.0 && node <repo>/claude/sql-sandbox/060-guaranteed-rolls.mjs <repo>
+// RUN: in an empty scratch folder, npm i @electric-sql/pglite@0.3.0, copy this file there, then: node 060-guaranteed-rolls.mjs <repo path>
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
