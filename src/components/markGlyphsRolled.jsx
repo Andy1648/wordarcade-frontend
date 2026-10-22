@@ -55,6 +55,22 @@ export const ROLLED_GLYPHS = {
   'mk-shamrock': ART('shamrock'),
   'mk-chronos': ART('chronos'),
   'mk-hydra': ART('hydra'), // Andy oct11: the painted PNG (public/gear/hydra.webp, background cut out)
+  // GEAR EXPANSION (oct21): 15 new gears, painted in ONE ChatGPT chat with the painted set attached as the style ref
+  'mk-highlighter': ART('highlighter'),
+  'mk-flashcards': ART('flashcards'),
+  'mk-firecracker': ART('firecracker'),
+  'mk-gumball': ART('gumball'),
+  'mk-lavalamp': ART('lavalamp'),
+  'mk-alarmclock': ART('alarmclock'),
+  'mk-fortune': ART('fortunecookie'),
+  'mk-hoarder': ART('magpie'),
+  'mk-domino': ART('domino'),
+  'mk-longshot': ART('longshot'),
+  'mk-hothand': ART('hothand'),
+  'mk-arcadestick': ART('arcadestick'),
+  'mk-firebird': ART('firebird'),
+  'mk-trident': ART('trident'),
+  'mk-paradox': ART('paradox'),
   // ---- THE UNLISTED (oct17): found, never rolled — painted stickers in public/gear/unlisted/ ----
   'mk-ul-og': ART('unlisted/og'),
   'mk-ul-wishbone': ART('unlisted/wishbone'),

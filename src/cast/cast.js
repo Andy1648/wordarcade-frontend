@@ -394,9 +394,10 @@ export const CAST_FRAMES = {
   // BOO: sneaky grin → peeks through its fingers (twice) → arms wide, the big spook → doubled over laughing
   // 6 frames: sneaky grin → hands rise → peeks through its fingers → hands drop → the big SPOOK → doubled over laughing
   boo: { n: 6, seq: [[1, 300], [2, 620], [3, 220], [4, 800], [5, 1000]], rest: 1800 },
-  // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
-  // 5 frames (the rocket-punch frame ran off its cell, so it was cut): ready → red scan line, antenna pinging → winds up → the punch lands, a spark at the joint → steam vents, thumbs up ^ ^
-  mecha: { n: 5, seq: [[1, 760], [0, 160], [2, 380], [3, 520], [4, 1100]], rest: 1800 },
+  // MECHA (oct21 repaint, Andy "what happened to its cool shooting arms?" — the old frame 3 carried a clipped fist from the
+  // next cell): ready → the arm-cannon whirs → ROCKET PUNCH (the fist flies, flame trail, inside its cell) → flies back →
+  // re-docks with a spark + shoulder steam → thumbs up ^ ^
+  mecha: { n: 6, seq: [[1, 380], [2, 460], [3, 300], [4, 560], [5, 1000]], rest: 1800 },
   // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
   // 6 frames: asleep → head droops, bubble swells → POP, jolts awake → giant yawn → snuggles back down
   dud: { n: 6, seq: [[1, 520], [2, 800], [3, 520], [4, 720], [5, 600]], rest: 2200 },

@@ -32,10 +32,11 @@ export function critKey(perKey, { rate = 0, power = 2 } = {}, rng = Math.random)
  * (GEAR POOL v2 — METRONOME's EVERY 4TH KEY CRITS, THUNDERCLAP's DRUMROLL every 10th); any other key rolls as critKey.
  * `every` 0 / absent = no guaranteed crits. { gain, crit, forced }.
  */
-export function critKeyAt(seq, perKey, crit = {}, rng = Math.random) {
+export function critKeyAt(seq, perKey, crit = {}, rng = Math.random, comboLeft = 0) {
   const every = Number.isFinite(crit.every) && crit.every >= 1 ? Math.floor(crit.every) : 0;
   const n = Number.isFinite(seq) ? Math.floor(seq) : 0;
-  if (every && n > 0 && n % every === 0) {
+  // DOMINO's COMBO (GEAR EXPANSION oct21): the keys a crit dragged along are guaranteed crits too
+  if ((every && n > 0 && n % every === 0) || comboLeft > 0) {
     const base = Number.isFinite(perKey) && perKey > 0 ? perKey : 0;
     return { gain: base * powerOf(crit.power), crit: true, forced: true };
   }

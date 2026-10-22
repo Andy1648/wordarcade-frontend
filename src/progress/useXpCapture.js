@@ -34,6 +34,7 @@ import { critKeyAt } from './crit.js';
 // EVERY Nth KEY CRITS (GEAR POOL v2): the menu KEY count the guaranteed crit counts on — module-wide, so leaving the
 // menu and coming back never resets the count toward the next guaranteed crit.
 let critKeySeq = 0;
+let comboLeft = 0; // DOMINO's COMBO: guaranteed crits still owed by the last crit
 
 // Streak tier → pop scale (transform only) and colour. Index 0..3 (tiers at 10/25/50).
 export const TIER_SCALES = [1.0, 1.15, 1.3, 1.45];
@@ -161,7 +162,8 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       // CRIT: a KEY (never a tap) rolls its own crit — that key pays menuGain × POWER, everything else menuGain
       if (!isTap) armCrit();
       if (!isTap) critKeySeq += 1;
-      const hit = isTap ? { gain: menuGain, crit: false } : critKeyAt(critKeySeq, menuGain, crit);
+      const hit = isTap ? { gain: menuGain, crit: false } : critKeyAt(critKeySeq, menuGain, crit, Math.random, comboLeft);
+      if (!isTap && crit.combo) comboLeft = comboLeft > 0 ? comboLeft - 1 : hit.crit ? crit.combo : 0;
       // creates/resumes the AudioContext inside this gesture; a crit clacks an octave up (+5 pentatonic steps)
       playClack(st.count - 1 + (hit.crit ? 5 : 0));
       xpRef.current = fresher(); // never credit onto a stale cache (a few-byte storage read, no layout)

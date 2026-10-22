@@ -8,7 +8,7 @@ import { substatParts } from '../../progress/critText.js';
 import { PERKS } from '../../progress/markPerks.js';
 import { formatNum } from '../../format.js';
 
-const PERK_TIERS = new Set(['legendary', 'mythic', 'secret']);
+const PERK_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret']); // EPIC: the GEAR EXPANSION perks (oct21)
 /** EPIC and up (and PERMANENT) earn the glow and the cog spin. */
 export const HI_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret', 'permanent']);
 
@@ -34,7 +34,7 @@ export function perkLines(id) {
   const m = rollMarkById(id);
   return m ? m.perks.map((p) => (PERKS[p] ? PERKS[p].line : p)) : [];
 }
-/** How many perks the card shows (LEGENDARY+ only, as perkText). */
+/** How many perks the card shows (EPIC+ only, as perkText). */
 export function perkCount(id) {
   const m = rollMarkById(id);
   return m && m.perks.length && PERK_TIERS.has(m.tier) ? m.perks.length : 0;
