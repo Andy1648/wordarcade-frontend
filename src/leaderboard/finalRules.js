@@ -36,12 +36,12 @@ export function finalLevelRoom(rebirths) {
   return Math.min(F_LV_MAX, F_GATE_BASE + F_GATE_STEP * int(rebirths, 0, 0) + F_LV_HEADROOM);
 }
 
-/** 054's lower-write test (= 029's old is_reset): rebirths, words or letters down, or the level down at the same R. */
+/** 057's lower-write test: rebirths down, or the level down at the same R (054 also counted words / letters down — those
+ *  are now MERGED instead: the row keeps its higher count and the rest of the write lands; see 057 for the deadlock). */
 export function isLowerWrite(old, sub) {
   const rb = int(sub.rebirths, 0, 0);
   const oRb = int(old.rebirths, 0, 0);
-  return rb < oRb || int(sub.words, 0, 0) < int(old.lifetime_words, 0, 0) || int(sub.letters, 0, 0) < int(old.lifetime_letters, 0, 0)
-    || (int(sub.level, 1, 1) < int(old.level, 1, 1) && rb === oRb);
+  return rb < oRb || (int(sub.level, 1, 1) < int(old.level, 1, 1) && rb === oRb);
 }
 
 /**
@@ -70,6 +70,9 @@ export function decideSubmitFinal(old, sub, now) {
   // 054 (Andy oct17, the second-device reset): a LOWER write is REFUSED, never a reset — resets go through
   // lb_self_reset / lb_reset_ack, which zero the row themselves.
   if (isLowerWrite(old, sub)) return { action: 'refused', weekDelta: 0 };
+  // 057: lifetime words / letters below the row are merged, never a refusal of the whole write
+  w = Math.max(w, oW);
+  l = Math.max(l, oL);
   if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
   if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
   rb = Math.min(rb, oRb); // a submit never raises rebirths (lb_rebirth only)

@@ -17,10 +17,12 @@ import { navControl } from './support/menu.js';
 
 const SECRET = 'c7'.repeat(24);
 
-async function boot(page, { reduce = false, extra = null } = {}) {
+async function boot(page, { reduce = false, extra = null, rowOver = null } = {}) {
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
-  const row = { id: 'me-st', username: 'Statter', level: 420, rebirths: 5, stars: 1, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 13 };
+  const row = { id: 'me-st', username: 'Statter', level: 420, rebirths: 5, stars: 1, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 13, ...rowOver };
+  // the board row is the SERVER's copy of this player: since B3 (057) a device behind its row on rebirths at equal ★
+  // ADOPTS the row's count, so a deeper / shallower save seeds a matching row (rowOver), never a contradicting one
   const shared = { rows: [row], secrets: new Map([[SECRET, row.id]]), saves: new Map() };
   await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, rebirth: { delayMs: 0 }, season2: true });
   await page.addInitScript(({ secret, id, reduce, extra }) => {
@@ -114,7 +116,7 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
       'taw.markRolls': JSON.stringify({ v: 2, starter: true, marks: { 'mk-eclipse': { n: 1 } } }),
       'taw.mark': 'mk-eclipse',
     };
-    const st = await boot(page, { reduce: true, extra });
+    const st = await boot(page, { reduce: true, extra, rowOver: { level: 120, rebirths: 3 } });
     for (const tab of ['wins', 'xp']) {
       await st.locator(`.st2-tab[data-tab="${tab}"]`).click();
       await expect(st.locator(`.st2-tab[data-tab="${tab}"]`)).toHaveAttribute('aria-selected', 'true');
