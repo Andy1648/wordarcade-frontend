@@ -177,35 +177,44 @@
 @keyframes cx3Deal { 0% { transform: translateY(40px) rotate(0deg) scale(.92); opacity: 0; } 100% { transform: translateY(0) rotate(var(--tilt, 0deg)) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .cx3-streak, .cx3-cell { animation: none; } }
 
-/* phones (< 700px): unscaled and stacked — the streak becomes one block, the cards a column */
 @media (max-width: 699px) {
-  .cx3-overlay { align-items: flex-start; overflow-y: auto; }
-  .cx3-scale { width: 100%; height: auto; }
-  .cx3-screen { width: 100%; height: auto; transform: none; padding: 10px max(12px, env(safe-area-inset-left, 0px)) 24px; }
-  .cx3-card.kstc, .cx3-card .kstc-card, .cx3-card .kstc-body { height: auto; }
-  .cx3-card .kstc-card { position: relative; } /* the kit card is absolute inset 0 — on a phone it sizes to its content */
-  .cx3-card .kstc-anchor { transform: scale(1.1); }
+  /* NO SCROLL on phones either (Andy oct21 "I don't want [scrolls] for basically anything"): one fixed-height column —
+     the header, a one-row streak strip, and the three cards sharing what is left (390×844 and 360×640 both fit) */
+  .cx3-overlay { align-items: stretch; height: 100%; height: 100dvh; }
+  .cx3-scale { width: 100%; height: 100%; }
+  .cx3-screen { width: 100%; height: 100%; transform: none; padding: 8px max(10px, env(safe-area-inset-left, 0px)) max(10px, env(safe-area-inset-bottom, 0px)); }
+  .cx3-head { min-height: 0; gap: 6px; }
+  .cx3-back { flex: none; transform: scale(.62); transform-origin: left center; margin: -12px -66px -12px 0; }
+  .cx3-title { flex: 1 1 auto; text-align: right; font-size: var(--fs-k22); }
+  .cx3-title-daily, .cx3-count, .cx3-gems { display: none; }
+  .cx3-body-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+  .cx3-streak { flex: none; flex-direction: row; align-items: center; gap: 8px; padding: 4px 10px 4px 6px; border-top-width: 6px; box-shadow: 5px 5px 0 var(--k-ink); }
+  .cx3-streak-k, .cx3-streak-rule, .cx3-reset { display: none; }
+  .cx3-flame { flex: none; width: 52px; height: 52px; margin: 0; }
+  .cx3-flame-n { font-size: var(--fs-k26); right: -10px; bottom: -2px; text-shadow: 3px 3px 0 var(--k-ink); -webkit-text-stroke-width: var(--k-stroke-l); }
+  .cx3-streak-days { margin: 0 0 0 6px; font-size: var(--fs-k14); -webkit-text-stroke-width: var(--k-stroke-s); line-height: 1.05; width: 4.4em; }
+  .cx3-sweep { flex: 1 1 auto; margin: 0; min-height: 44px; padding: 4px 8px; gap: 8px; transform: none; box-shadow: 3px 3px 0 var(--k-ink); }
+  .cx3-sweep-pips i { width: 18px; height: 8px; }
+  .cx3-sweep-k { font-size: var(--fs-k14); }
+  .cx3-sweep-pay { font-size: var(--fs-k20); -webkit-text-stroke-width: var(--k-stroke-s); }
+  .cx3-hand { flex: 1 1 auto; display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 0 6px 6px 0; }
   .cx3-cell { --tilt: 0deg; }
-  .cx3-head { min-height: 0; flex-wrap: wrap; gap: 8px 10px; }
-  .cx3-back { transform: scale(.75); transform-origin: left center; margin-right: -30px; }
-  .cx3-title { order: 3; flex: 1 0 100%; text-align: left; font-size: var(--fs-k30); }
-  .cx3-count { display: none; } /* each card says its own count; the gems pill takes the corner */
-  .cx3-gems { margin-left: auto; transform: scale(.8); transform-origin: right center; }
-  .cx3-body-grid { display: flex; flex-direction: column; gap: 18px; }
-  .cx3-streak { display: grid; grid-template-columns: auto 1fr; grid-template-areas: 'flame k' 'flame days' 'flame rule' 'sweep sweep' 'reset reset'; column-gap: 12px; align-items: center; padding: 10px 14px 14px; }
-  .cx3-streak-k { grid-area: k; font-size: var(--fs-k20); }
-  .cx3-flame { grid-area: flame; width: 96px; height: 96px; margin: 0; }
-  .cx3-flame-n { font-size: var(--fs-k44); }
-  .cx3-streak-days { grid-area: days; font-size: var(--fs-k20); margin: 0; }
-  .cx3-streak-rule { grid-area: rule; font-size: var(--fs-k14); }
-  .cx3-sweep { grid-area: sweep; margin-top: 12px; }
-  .cx3-reset { grid-area: reset; justify-self: center; }
-  .cx3-hand { display: flex; flex-direction: column; gap: 18px; padding: 0 6px 6px 0; }
-  .cx3-body { display: grid; grid-template-columns: 92px 1fr; grid-template-areas: 'art task' 'art nums' 'bar bar' 'foot foot'; column-gap: 12px; align-items: center; }
-  .cx3-art { grid-area: art; width: 92px; height: 92px; }
-  .cx3-task { grid-area: task; margin: 0; min-height: 0; text-align: left; font-size: var(--fs-k17); }
+  .cx3-card .kstc-card { box-shadow: 5px 5px 0 var(--k-ink); }
+  .cx3-card .kstc-anchor { transform: scale(1.05); left: 76% !important; top: 62% !important; } /* clear of the task text */
+  .cx3-strip { height: 28px; padding: 0 10px; font-size: var(--fs-k16); }
+  .cx3-strip-pay { font-size: var(--fs-k17); }
+  .cx3-body { display: grid; grid-template-columns: 54px auto minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; grid-template-areas: 'art task task' 'art nums bar' 'foot foot foot'; gap: 4px 10px; align-items: center; padding: 6px 10px 8px; }
+  .cx3-art { grid-area: art; width: 54px; height: 54px; align-self: start; }
+  .cx3-plate { box-shadow: inset 0 0 0 3px var(--c), 3px 3px 0 var(--k-ink); border-width: var(--k-ink-s); }
+  .cx3-tier { right: -8px; bottom: -6px; font-size: var(--fs-k13); line-height: 18px; padding: 0 5px; }
+  .cx3-task { grid-area: task; margin: 0; min-height: 0; text-align: left; font-size: var(--fs-k15); line-height: 1.15; -webkit-text-stroke-width: 2px; }
   .cx3-nums { grid-area: nums; margin: 0; }
-  .cx3-have { font-size: var(--fs-k30); }
-  .cx3-bar { grid-area: bar; }
-  .cx3-foot { grid-area: foot; min-height: 0; }
+  .cx3-have { font-size: var(--fs-k24); -webkit-text-stroke-width: var(--k-stroke-s); }
+  .cx3-need { font-size: var(--fs-k15); }
+  .cx3-bar { grid-area: bar; margin: 0; height: 14px; border-width: var(--k-ink-s); }
+  .cx3-foot { grid-area: foot; margin: 2px 0 0; padding: 0; width: 100%; min-height: 0; flex-direction: row; align-items: center; justify-content: flex-end; gap: 10px; }
+  .cx3-foot .kb--ghost { height: 46px; } /* the kit ghost is 64px tall — slimmer here so three cards fit a 640px phone */
+  .cx3-anygame { margin-right: auto; }
+  .cx3-paid { font-size: var(--fs-k15); white-space: nowrap; justify-content: flex-end; min-height: 44px; }
+  .cx3-anygame { font-size: var(--fs-k13); }
 }

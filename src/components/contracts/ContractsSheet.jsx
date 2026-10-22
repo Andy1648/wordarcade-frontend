@@ -8,7 +8,8 @@
 //     (game · pay), the game's own painted art on a tilted plate, the task, have / need, the bar, GO ▸ and the one
 //     SWAP of the day. A finished card takes the kit DONE stamp.
 // Reads contracts/live.js; re-reads on CONTRACTS_CHANGE. Motion: the cards rise once on open (finite CSS), a swapped
-// card flips once (WAAPI); nothing loops at rest. Phones (< 700px) stack it unscaled.
+// card flips once (WAAPI); nothing loops at rest. Phones (< 700px) stack it unscaled into one fixed-height column —
+// no scroll anywhere (Andy oct21).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { today, reroll, msToReset, CONTRACTS_CHANGE } from '../../progress/contracts/live.js';
@@ -18,6 +19,7 @@ import { getGems, subscribeGems } from '../../progress/gemsCore.js';
 import { KitBackButton, KitButton, KitGhostButton, KitPill, KitStampCard, KitIcon } from '../kit/index.js';
 import { kitPlay } from '../kit/motion.js';
 import { formatNum } from '../../format';
+import useMediaQuery from '../../lib/useMediaQuery';
 import '../kit/tokens.css';
 import './contracts.css';
 
@@ -55,7 +57,7 @@ function useStageScale(ref) {
   }, [ref]);
 }
 
-function Card({ id, i, s, onPlay, onSwap, swapKey }) {
+function Card({ id, i, s, onPlay, onSwap, swapKey, phone }) {
   const c = BY_ID[id];
   const cardRef = useRef(null);
   useEffect(() => {
@@ -89,7 +91,9 @@ function Card({ id, i, s, onPlay, onSwap, swapKey }) {
               <span className="cx3-paid"><KitIcon name="gems" size={22} shadow={1} extras={false} />+{formatNum(TIER_GEMS[c.tier])} PAID</span>
             ) : (
               <>
-                {game && onPlay ? (
+                {game && onPlay && phone ? (
+                  <KitGhostButton tone={TONE[c.mode]} className="cx3-go" label="GO ▸" ariaLabel={`Play ${MODE_NAME[c.mode]}`} onClick={(e) => onPlay(game, e.currentTarget)} />
+                ) : game && onPlay ? (
                   <KitButton tone={TONE[c.mode]} className="cx3-go" label="GO ▸" labelSize={26} width={128} ariaLabel={`Play ${MODE_NAME[c.mode]}`} onClick={(e) => onPlay(game, e.currentTarget)} />
                 ) : (
                   <span className="cx3-anygame">ANY GAME</span>
@@ -115,6 +119,7 @@ export default function ContractsSheet({ onClose, onPlay }) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   useStageScale(ref);
+  const phone = useMediaQuery('(max-width: 699px)'); // phones get the slim GO (the tall kit plate would not fit three cards)
   useEffect(() => subscribeGems(setGems), []);
   useEffect(() => {
     const on = () => setS(today());
@@ -137,7 +142,7 @@ export default function ContractsSheet({ onClose, onPlay }) {
         <div className="cx3-screen">
           <header className="cx3-head">
             <KitBackButton label="MENU" ariaLabel="Back to menu" onClick={onClose} className="cx3-back" />
-            <h2 className="cx3-title">DAILY CONTRACTS</h2>
+            <h2 className="cx3-title"><span className="cx3-title-daily">DAILY </span>CONTRACTS</h2>
             <div className="cx3-count" aria-label={`${n} of ${s.picks.length} done today`}><b>{n}</b><span>/{s.picks.length}</span><small>TODAY</small></div>
             <div className="cx3-gems"><KitPill kind="gems" value={gems} ariaLabel={`${formatNum(gems)} gems`} /></div>
           </header>
@@ -165,7 +170,7 @@ export default function ContractsSheet({ onClose, onPlay }) {
               {s.picks.map((id, i) => (
                 <Card key={id} id={id} i={i} s={s} onPlay={onPlay}
                   onSwap={!s.rerolled && !s.done.includes(id) ? () => swap(i) : null}
-                  swapKey={swapped.slot === i ? swapped.key : 0} />
+                  swapKey={swapped.slot === i ? swapped.key : 0} phone={phone} />
               ))}
             </ol>
           </div>

@@ -28,13 +28,14 @@ async function seed(page, { picks = null, done = [], prog = {}, streak = 5, leve
 }
 
 // laptop 1366×768 + 1536×864, Chromebook 1366×650 (Andy oct21 "I don't like how you need to scroll there"), a narrow
-// desktop, a phone. Every width ≥ 700 shows the whole contracts screen with NO scroll.
+// desktop and two phones. EVERY size shows the whole contracts screen with NO scroll (Andy oct21: no scrolls anywhere).
 const VPS = [
   { width: 1366, height: 768, tag: 'desktop' },
   { width: 1536, height: 864, tag: 'laptop' },
   { width: 1366, height: 650, tag: 'chromebook' },
   { width: 1024, height: 768, tag: 'narrow' },
   { width: 390, height: 844, tag: 'phone' },
+  { width: 360, height: 640, tag: 'phone-small' },
 ];
 for (const vp of VPS) {
   test(`${vp.tag}: the DAILY tile joins the rail; the sheet deals 3 with 44px controls and one SWAP`, async ({ page }) => {
@@ -63,7 +64,7 @@ for (const vp of VPS) {
     await expect(sheet.locator('.cx-row')).toHaveCount(3);
     await expect(sheet.locator('.cx-row.is-done')).toHaveCount(1);
     await page.waitForTimeout(900); // past the one-shot deal
-    if (vp.width >= 700) {
+    {
       // NO SCROLL: the overlay never scrolls and every card (with its GO / SWAP) is fully on screen
       const fit = await page.evaluate(() => {
         const o = document.querySelector('[data-testid="contracts-sheet"]');
@@ -74,6 +75,9 @@ for (const vp of VPS) {
       expect(fit.docScroll).toBeLessThanOrEqual(0);
       expect(fit.maxBottom, 'every card is on screen').toBeLessThanOrEqual(fit.h);
       expect(fit.maxRight).toBeLessThanOrEqual(fit.w);
+      // and every card's GO / SWAP is on screen too
+      const lastBtn = await page.evaluate(() => Math.max(...[...document.querySelectorAll('[data-testid="contracts-sheet"] .cx-row button')].map((b) => b.getBoundingClientRect().bottom)));
+      expect(lastBtn).toBeLessThanOrEqual(fit.h);
     }
     for (const b of await sheet.locator('button').all()) {
       const r = await b.boundingBox();
