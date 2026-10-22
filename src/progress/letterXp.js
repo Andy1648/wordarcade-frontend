@@ -19,7 +19,7 @@
 //     (creditAcceptedWordLetters, called from wins.js awardWordXp — the one per-accepted-word path every mode
 //     takes): BASE 10 XP / LETTER is what the LETTERS OF YOUR WORDS pay.
 import { createRateLimiter, creditXp, loadProgress, saveProgress, levelXpPerLetter, getKeyTier, getRebirths, roundWordXp, MENU_LETTER_SHARE, setLetterBaseAdd } from './xp.js';
-import { markXpMult, markBaseXp } from './markRollsCore.js';
+import { markXpMult, markBaseXp, markGameXpPct } from './markRollsCore.js';
 import { MARK_TIERS } from './marks.js';
 import { letterPerkMult } from './markPerks.js';
 import { emitMidGameLevelUp } from './levelUpSignal.js';
@@ -168,7 +168,8 @@ export function creditAcceptedWordLetters(length, mode) {
     const n = Number.isFinite(length) && length > 0 ? Math.floor(length) : 0;
     if (!n || !mode || mode === 'menu') return null;
     // season 2: the word's letters × GAME_WORD_XP_SHARE menu keys (nothing was paid while typing)
-    if (SEASON2) return creditLetterXp(n, { mode, perLetter: letterXpNow() * GAME_WORD_XP_SHARE, gameWord: true });
+    // ARCADE STICK (GEAR EXPANSION oct21): +N% XP on game words — the only XP gear that pays for PLAYING
+    if (SEASON2) return creditLetterXp(n, { mode, perLetter: letterXpNow() * GAME_WORD_XP_SHARE * (1 + markGameXpPct() / 100), gameWord: true });
     return creditLetterXp(n, { mode, perLetter: letterXpNow() * (1 - MENU_LETTER_SHARE) });
   } catch {
     return null;
