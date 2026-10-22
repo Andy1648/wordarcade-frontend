@@ -153,3 +153,41 @@ test('a Word Bomb round ticks the contracts from its own events: STREAK KEPT toa
   // the card never scrolls with the extra line
   expect(await page.locator('.rs2').evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
 });
+
+// STREAK CALENDAR (preview, Andy oct21): DAY 4 is today's tile once you've played a word; the tile is the CLAIM button;
+// one claim a day; the screen still never scrolls.
+for (const vp of [{ width: 1366, height: 650, tag: 'chromebook' }, { width: 360, height: 640, tag: 'phone-small' }]) {
+  test(`${vp.tag}: the streak calendar claims today's step once, no scroll`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await installBackendMock(page);
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.continue());
+    await seed(page, { picks: ['wb-words', 'sat-first', 'ch-run20'] });
+    await page.addInitScript(() => {
+      if (sessionStorage.getItem('cal.seeded')) return;
+      sessionStorage.setItem('cal.seeded', '1');
+      const d = new Date();
+      const dayIdx = Math.floor((Date.now() - d.getTimezoneOffset() * 60000) / 86400000);
+      localStorage.setItem('taw.streak', JSON.stringify({ count: 9, lastDay: dayIdx, freezes: 1 })); // played today
+      localStorage.setItem('taw.calendar', JSON.stringify({ v: 1, pos: 3, last: dayIdx - 1, week: 2 })); // DAY 1-3 done
+    });
+    await page.goto('/?portal=1&season2=1');
+    await menuReady(page);
+    await page.locator('[data-nav="contracts"]:visible').click();
+    const cal = page.getByTestId('streak-calendar');
+    await expect(cal).toBeVisible();
+    await expect(cal.locator('.cal-day.is-got')).toHaveCount(3);
+    const day4 = cal.getByRole('button', { name: /claim day 4/i });
+    await expect(day4).toBeVisible();
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: `${SHOTS}/${vp.tag}-calendar.png` });
+    const gems0 = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.gems') || '{}').bal || 0);
+    await day4.click();
+    await expect(cal.locator('.cal-day.is-got')).toHaveCount(4);
+    await expect(cal.getByRole('button', { name: /claim day/i })).toHaveCount(0);
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.gems') || '{}').bal || 0)).toBe(gems0 + 75);
+    const o = page.getByTestId('contracts-sheet');
+    expect(await o.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
+    const bottom = await page.evaluate(() => Math.max(...[...document.querySelectorAll('[data-testid="contracts-sheet"] button')].map((b) => b.getBoundingClientRect().bottom)));
+    expect(bottom).toBeLessThanOrEqual(vp.height);
+  });
+}

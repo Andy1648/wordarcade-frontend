@@ -8,7 +8,7 @@
 //     (game · pay), the game's own painted art on a tilted plate, the task, have / need, the bar, GO ▸ and the one
 //     SWAP of the day. A finished card takes the kit DONE stamp.
 // Reads contracts/live.js; re-reads on CONTRACTS_CHANGE. Motion: the cards rise once on open (finite CSS), a swapped
-// card flips once (WAAPI); nothing loops at rest. Phones (< 700px) stack it unscaled into one fixed-height column —
+// card flips once (WAAPI); nothing loops at rest. Under 1000px it stacks unscaled into one fixed-height column —
 // no scroll anywhere (Andy oct21).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -16,10 +16,10 @@ import { today, reroll, msToReset, CONTRACTS_CHANGE } from '../../progress/contr
 import { BY_ID, TIER_GEMS, SWEEP_GEMS, MODE_NAME, MODE_GAME, progressOf, allDone } from '../../progress/contracts/pool.js';
 import { getStreak } from '../../progress/streak.js';
 import { getGems, subscribeGems } from '../../progress/gemsCore.js';
-import { KitBackButton, KitButton, KitGhostButton, KitPill, KitStampCard, KitIcon } from '../kit/index.js';
+import { KitBackButton, KitGhostButton, KitPill, KitStampCard, KitIcon } from '../kit/index.js';
 import { kitPlay } from '../kit/motion.js';
 import { formatNum } from '../../format';
-import useMediaQuery from '../../lib/useMediaQuery';
+import StreakCalendar from './StreakCalendar.jsx';
 import '../kit/tokens.css';
 import './contracts.css';
 
@@ -48,7 +48,7 @@ function useStageScale(ref) {
   useEffect(() => {
     const set = () => {
       const w = window.innerWidth;
-      const k = w >= 700 ? Math.min(w / 1366, window.innerHeight / 657) : 1;
+      const k = w >= 1000 ? Math.min(w / 1366, window.innerHeight / 657) : 1;
       if (ref.current) ref.current.style.setProperty('--cx-k', Math.min(1.25, k).toFixed(4));
     };
     set();
@@ -57,7 +57,7 @@ function useStageScale(ref) {
   }, [ref]);
 }
 
-function Card({ id, i, s, onPlay, onSwap, swapKey, phone }) {
+function Card({ id, i, s, onPlay, onSwap, swapKey }) {
   const c = BY_ID[id];
   const cardRef = useRef(null);
   useEffect(() => {
@@ -91,10 +91,8 @@ function Card({ id, i, s, onPlay, onSwap, swapKey, phone }) {
               <span className="cx3-paid"><KitIcon name="gems" size={22} shadow={1} extras={false} />+{formatNum(TIER_GEMS[c.tier])} PAID</span>
             ) : (
               <>
-                {game && onPlay && phone ? (
+                {game && onPlay ? (
                   <KitGhostButton tone={TONE[c.mode]} className="cx3-go" label="GO ▸" ariaLabel={`Play ${MODE_NAME[c.mode]}`} onClick={(e) => onPlay(game, e.currentTarget)} />
-                ) : game && onPlay ? (
-                  <KitButton tone={TONE[c.mode]} className="cx3-go" label="GO ▸" labelSize={26} width={128} ariaLabel={`Play ${MODE_NAME[c.mode]}`} onClick={(e) => onPlay(game, e.currentTarget)} />
                 ) : (
                   <span className="cx3-anygame">ANY GAME</span>
                 )}
@@ -119,7 +117,6 @@ export default function ContractsSheet({ onClose, onPlay }) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   useStageScale(ref);
-  const phone = useMediaQuery('(max-width: 699px)'); // phones get the slim GO (the tall kit plate would not fit three cards)
   useEffect(() => subscribeGems(setGems), []);
   useEffect(() => {
     const on = () => setS(today());
@@ -148,31 +145,25 @@ export default function ContractsSheet({ onClose, onPlay }) {
           </header>
 
           <div className="cx3-body-grid">
-            <section className={`cx3-streak${streak > 0 ? '' : ' is-cold'}`} aria-label={`${streak} day streak`}>
-              <span className="cx3-streak-k">STREAK</span>
-              <div className="cx3-flame">
-                <img src="/cast/props/flame.webp" alt="" aria-hidden="true" draggable="false" />
-                <b className="cx3-flame-n">{formatNum(streak)}</b>
-              </div>
-              <span className="cx3-streak-days">{streak === 1 ? 'DAY' : 'DAYS'} IN A ROW</span>
-              <span className="cx3-streak-rule">ONE WORD A DAY KEEPS IT</span>
-              <div className={`cx3-sweep${swept ? ' is-done' : ''}`}>
-                <span className="cx3-sweep-pips" aria-hidden="true">
-                  {s.picks.map((id) => <i key={id} className={s.done.includes(id) ? 'is-done' : ''} />)}
-                </span>
-                <span className="cx3-sweep-k">{swept ? 'ALL 3 PAID' : 'ALL 3 DONE'}</span>
-                <span className="cx3-sweep-pay"><KitIcon name="gems" size={26} shadow={2} extras={false} />+{formatNum(SWEEP_GEMS)}</span>
-              </div>
-              <span className="cx3-reset">NEW CONTRACTS IN <b>{countdown(left)}</b></span>
-            </section>
+            {/* STREAK CALENDAR (preview, Andy oct21): the week's seven rewards, the LEGENDARY roll on day 7 */}
+            <StreakCalendar streak={streak} />
 
             <ol className="cx3-hand">
               {s.picks.map((id, i) => (
                 <Card key={id} id={id} i={i} s={s} onPlay={onPlay}
                   onSwap={!s.rerolled && !s.done.includes(id) ? () => swap(i) : null}
-                  swapKey={swapped.slot === i ? swapped.key : 0} phone={phone} />
+                  swapKey={swapped.slot === i ? swapped.key : 0} />
               ))}
             </ol>
+
+            <aside className={`cx3-sweep${swept ? ' is-done' : ''}`} aria-label="Finish all three">
+              <span className="cx3-sweep-pips" aria-hidden="true">
+                {s.picks.map((id) => <i key={id} className={s.done.includes(id) ? 'is-done' : ''} />)}
+              </span>
+              <span className="cx3-sweep-k">{swept ? 'ALL 3 PAID' : 'FINISH ALL 3'}</span>
+              <span className="cx3-sweep-pay"><KitIcon name="gems" size={30} shadow={2} extras={false} />+{formatNum(SWEEP_GEMS)}</span>
+              <span className="cx3-reset">NEW IN <b>{countdown(left)}</b></span>
+            </aside>
           </div>
         </div>
       </div>

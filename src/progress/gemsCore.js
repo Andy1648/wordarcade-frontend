@@ -28,7 +28,7 @@ export let ROLL_PRICE_GEMS = 10;
 export const GEMS_KEY = 'taw.gems'; // (v3: taw.s2.gems — mapped at the storage layer, v3/install.js)
 
 // The reasons a gem can be granted (the ledger's `reason`; the sim's "by source").
-export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement', 'daily', 'refund', 'code', 'speed', 'dupe', 'weekly', 'contract']; // 'code' = a GEMS redeem code (Andy oct10, migration 030); 'speed' = WORD RACE speed gems (Andy oct10); v3 ACHIEVEMENTS pay gems; 'daily' = the DAILY FREE DROP; 'refund' = GEAR POOL v2's retired COMMON gears (15 a copy); 'weekly' = the WEEKLY TOP 10 prize (migration 034); 'contract' = a DAILY CONTRACT (contracts/live.js)
+export const GEM_REASONS = ['drop', 'bot', 'placement', 'streak', 'level', 'rebirth', 'start', 'achievement', 'daily', 'refund', 'code', 'speed', 'dupe', 'weekly', 'contract', 'calendar']; // 'code' = a GEMS redeem code (Andy oct10, migration 030); 'speed' = WORD RACE speed gems (Andy oct10); v3 ACHIEVEMENTS pay gems; 'daily' = the DAILY FREE DROP; 'refund' = GEAR POOL v2's retired COMMON gears (15 a copy); 'weekly' = the WEEKLY TOP 10 prize (migration 034); 'contract' = a DAILY CONTRACT (contracts/live.js); 'calendar' = the STREAK CALENDAR (contracts/calendar.js)
 
 // ------------------------------------------------------------------------------------ state
 // taw.gems = { v: 1, bal, peak (highest level that has paid LEVEL_UP), streak (game wins in a row), mig (the
