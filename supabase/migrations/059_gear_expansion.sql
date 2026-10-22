@@ -1,4 +1,4 @@
--- 058_gear_expansion.sql - FIFTEEN NEW GEARS (Andy oct21 "more really cool gear ... we need to make more"). The server picks
+-- 059_gear_expansion.sql - FIFTEEN NEW GEARS (Andy oct21 "more really cool gear ... we need to make more"). The server picks
 -- every roll (036), so its pool must match the game's (src/progress/markRollsCore.js; serverRolls.test.js pins THIS file
 -- now). The TIER odds do not move - each tier's chance is split over more gears:
 --   RARE 16 (the remainder)   EPIC stays 1 in 60 (12 gears x 1/720)   LEGENDARY stays 1 in 100 (12 x 1/1,200)
