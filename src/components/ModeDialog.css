@@ -521,37 +521,3 @@
 @media (max-height: 700px), (max-width: 480px) {
   .mode-dialog-choice-line { display: none; }
 }
-
-/* ===== PICK YOUR PACKS, TWO PANELS (Andy oct19: on a Chromebook the dialog was "ass proportion (so tiny)") =====
-   A 660px dialog on a 1366x768 screen showed 6 of 11 packs in a ~230px scroll window. On a laptop it now spans the
-   screen: the mode's name, rules, rounds, count and buttons on the left; the packs get the whole right side, two columns
-   of big tiles — all 11 fit without scrolling from 1024x768 up. Phones and narrow windows keep the single stack. */
-@media (min-width: 900px) and (min-height: 600px) {
-  .mode-dialog-shell.is-blitz { width: min(94vw, max(1100px, 56vw)); } /* 1100 on a laptop; grows with the 2560 type scale */
-  .mode-dialog-lower--blitz {
-    position: relative; display: grid; align-content: stretch; column-gap: clamp(20px, 2.6vw, 36px); row-gap: 12px;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.25fr);
-    grid-template-rows: auto auto 1fr auto auto auto;
-    grid-template-areas: 'title sub' 'liner win' 'gap win' 'rounds win' 'count win' 'act win';
-  }
-  .mode-dialog-lower--blitz .ppp-picker { display: contents; }
-  .mode-dialog-lower--blitz .mode-dialog-title { grid-area: title; white-space: normal; }
-  .mode-dialog-content:has(.mode-dialog-lower--blitz) .mode-dialog-title { white-space: normal; }
-  .mode-dialog-lower--blitz .mode-dialog-liner { grid-area: liner; max-width: none; font-size: calc(var(--fs-body) * 1.1); }
-  .mode-dialog-lower--blitz .ppp-subline { grid-area: sub; align-self: end; margin: 0; padding: 0 120px 0 0; text-align: left; }
-  .mode-dialog-lower--blitz .ppp-selall { grid-area: sub; position: static; justify-self: end; align-self: end; }
-  .mode-dialog-lower--blitz .ppp-window { grid-area: win; margin: 0; min-height: 0; }
-  .mode-dialog-shell.is-blitz .mode-dialog-lower--blitz .ppp-window-scroll { min-height: 0; }
-  .mode-dialog-lower--blitz .ppp-rounds { grid-area: rounds; justify-content: flex-start; }
-  .mode-dialog-lower--blitz .ppp-count { grid-area: count; text-align: left; }
-  .mode-dialog-lower--blitz .mode-dialog-actions { grid-area: act; flex-direction: column; margin: 0; }
-  .mode-dialog-lower--blitz .ppp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .mode-dialog-lower--blitz .ppp-pill { padding: clamp(10px, 1.7vh, 16px) 14px; }
-  .mode-dialog-lower--blitz .ppp-pill-label { font-size: calc(var(--fs-body) * 1.15); }
-  .mode-dialog-lower--blitz .ppp-pill-emoji { font-size: calc(var(--fs-body) * 1.35); }
-}
-/* a tall screen scales the type up (1920x1080, 2560x1440), so the two panels get the height to go with it — the 760px cap
-   left the left column 8px short and put a scrollbar on the dialog body */
-@media (min-width: 900px) and (min-height: 900px) {
-  .mode-dialog-shell.is-blitz { height: min(92vh, 980px); max-height: min(92vh, 980px); }
-}

@@ -57,7 +57,6 @@
 
 /* the invite button + YOU ARE HOST line up under the LEFT-aligned code tiles (they were centred in the
    column, a loose block floating off the code's left edge) */
-.room-wrap[data-skin="v2"] .room-invite-row { justify-content: flex-start; }
 .room-wrap[data-skin="v2"] .room-you-host { text-align: left; }
 .room-you-host {
   margin: 6px 0 2px;
