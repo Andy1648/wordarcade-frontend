@@ -60,6 +60,7 @@ import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboard
 import { difficultyLabel } from '../difficulty';
 import { formatNum, formatMult } from '../format';
 import packs from '../data/packs';
+import { juiceOn, useRace, RaceStrip, useOvertake, OvertakeBanner, RevealBoard } from './BlitzRivalJuice';
 import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
@@ -4457,6 +4458,13 @@ function CategoryBlitzScreen({
   }, [roundResults, breakTotalMs]);
 
   const streak = useCombo();
+  // RIVAL JUICE (Andy oct21 "more visual stimulation - that addictive feel … playing with others"; preview behind
+  // ?cbjuice=1): the live race, the overtake banner and the round-end reveal. Cosmetic: reads the roster, the broadcast
+  // per-rival counts, my answers and round_end only.
+  const juice = juiceOn();
+  const cbStageRef = useRef(null);
+  const race = useRace({ roomPlayers, myId, myCount: myAnswers.length, playerProgress: playerProgress || {} });
+  const overtake = useOvertake(juice ? race : { rows: [], top: 0 }, myId, categoryRound?.round, sound, cbStageRef);
   // Near-miss / clutch callout: snapshot the EXISTING round-timer value at submit
   // (cbSubmitTimerRef) and surface how close a late accepted answer was.
   const cbSubmitTimerRef = useRef(0);
@@ -4927,7 +4935,8 @@ function CategoryBlitzScreen({
             }}
           />
         )}
-        <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`} data-heat={heatTier(streak.count)}>
+        <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`} data-heat={heatTier(streak.count)} ref={cbStageRef}>
+          {juice && !isSolo && <OvertakeBanner banner={overtake} />}
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
               on every re-render amid the conditional siblings (see the Word Bomb
               note above). */}
@@ -5185,8 +5194,11 @@ function CategoryBlitzScreen({
             </div>
           </div>
 
+          {juice && !isSolo && (
+            <RaceStrip race={race} myId={myId} roundKey={categoryRound?.round} colorOf={(id) => resolvePlayerColor(playerColors, id).color} />
+          )}
           {/* Opponents' live progress - hidden in solo (there are none). */}
-          {!isSolo && (
+          {!isSolo && !juice && (
             <div className="cb-progress">
               <div className="cb-section-label">OTHER PLAYERS</div>
               {others.length === 0 ? (
@@ -5254,7 +5266,11 @@ function CategoryBlitzScreen({
               </SprayReveal>
             </div>
 
-            {(roundResults.playerResults || []).map((pr) => {
+            {juice && (
+              <RevealBoard results={roundResults} myId={myId} colorOf={(id) => resolvePlayerColor(playerColors, id)}
+                totals={categoryTotals} sound={sound} PlayerDot={PlayerDot} formatNum={formatNum} />
+            )}
+            {!juice && (roundResults.playerResults || []).map((pr) => {
               const pc = resolvePlayerColor(playerColors, pr.id);
               return (
               <div
