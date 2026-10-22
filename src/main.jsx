@@ -5,6 +5,11 @@ import './routerBoot'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+// Blitz rival-juice off switch (?cbjuice=0, oct21): the router rewrites the URL before the lazy GameScreen loads, so keep it for the tab.
+try {
+  const q = new URLSearchParams(window.location.search).get('cbjuice')
+  if (q) sessionStorage.setItem('taw.cbjuice', q)
+} catch { /* storage blocked */ }
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
 const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
 import './index.css'
