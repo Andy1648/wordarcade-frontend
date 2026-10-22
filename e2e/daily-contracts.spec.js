@@ -27,7 +27,7 @@ async function seed(page, { picks = null, done = [], prog = {}, streak = 5, leve
   }, { picks, done, prog, streak, level });
 }
 
-for (const vp of [{ width: 1366, height: 768, tag: 'desktop' }, { width: 390, height: 844, tag: 'phone' }]) {
+for (const vp of [{ width: 1366, height: 768, tag: 'desktop' }, { width: 1024, height: 768, tag: 'narrow' }, { width: 390, height: 844, tag: 'phone' }]) {
   test(`${vp.tag}: the DAILY tile joins the rail; the sheet deals 3 with 44px controls and one SWAP`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
@@ -35,10 +35,12 @@ for (const vp of [{ width: 1366, height: 768, tag: 'desktop' }, { width: 390, he
     await seed(page, { picks: ['any-double', 'sat-first', 'ch-run20'], done: ['any-double'], prog: { 'any-double': 3, 'ch-run20': 7 } });
     await page.goto('/?portal=1&season2=1');
     await menuReady(page);
-    const tile = page.locator('[data-nav="contracts"]');
+    const tile = page.locator('[data-nav="contracts"]:visible');
     await expect(tile).toBeVisible();
-    // NO ORPHAN FIXED UI: it is a child of the rail cluster and not fixed itself
-    expect(await tile.evaluate((el) => !!el.closest('nav.hp-rail') && getComputedStyle(el).position !== 'fixed')).toBe(true);
+    // NO ORPHAN FIXED UI: it sits where PROFILE was — the right column (paged desktop) or the icon cluster — never fixed
+    expect(await tile.evaluate((el) => !!el.closest('.hp-main, .hp-icons') && getComputedStyle(el).position !== 'fixed')).toBe(true);
+    // the XP bar's lead plate is the PROFILE plate now
+    await expect(page.getByTestId('profile-plate')).toBeVisible();
     await expect(tile).toContainText('1/3');
     const box = await tile.boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(44);

@@ -923,8 +923,8 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   }
   .homepage-stage[data-paged][data-menu='slab'] .hp-dock--grid { display: none; }
   .homepage-stage[data-paged][data-menu='slab'] .hp-dock--extras { display: flex; justify-content: flex-end; }
-  /* the column / chip owns PROFILE here — the icon cluster keeps its four */
-  .homepage-stage[data-paged] .hp-icons .is-profile { display: none; }
+  /* the column's chip owns the DAILIES here — the icon cluster keeps its four */
+  .homepage-stage[data-paged] .hp-icons .is-daily { display: none; }
 }
 
 /* ---- DAILY CONTRACTS tile (contracts/DailyTile.jsx): the streak FLAME CHIP + today's three contracts, full width under
@@ -985,3 +985,10 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 .hp-m-rail .hp-daily-k { font-size: var(--fs-k15); }
 .hp-m-rail .hp-daily-count { font-size: var(--fs-k18); }
 @media (prefers-reduced-motion: reduce) { .hp-daily, .hp-daily:hover { transition: none; transform: none; } }
+/* PROFILE PLATE (oct21): the XP bar's lead plate — your hero's face + PROFILE + the title you wear */
+.hp-profplate { flex-direction: row; align-items: center; gap: calc(10 * var(--u)); padding-left: calc(6 * var(--u)); }
+.hp-profplate-face { flex: none; width: calc(46 * var(--u)); height: calc(46 * var(--u)); min-width: 32px; min-height: 32px; object-fit: cover; border: 3px solid #000; border-radius: 6px; background: #2a1647; }
+.hp-profplate-t { display: flex; flex-direction: column; align-items: flex-start; gap: calc(2 * var(--u)); min-width: 0; }
+/* the right column's DAILY chip sits where the profile chip was: the icon cluster's width, its own height */
+.homepage-stage[data-paged] .hp-main .hp-daily { height: max(56px, calc(70 * var(--u))); }
+.hp-profplate .hp-rankplate-k.is-new { color: #FFE94A; }

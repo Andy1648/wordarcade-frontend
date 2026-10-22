@@ -144,6 +144,6 @@ test('menu chip says NEW HERO! while an earned hero waits to be revealed', async
   await page.addInitScript((s) => { if (sessionStorage.getItem('hc.seeded')) return; sessionStorage.setItem('hc.seeded', '1'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, s);
   await page.goto('/?portal=1&season2=1');
   await menuReady(page);
-  await expect(page.locator('.pchip-sub')).toHaveText('NEW HERO!');
+  await expect(page.locator('.hp-profplate .hp-rankplate-k')).toHaveText('NEW HERO!'); // oct21: the profile is the XP bar's plate
   await shot(page, 'cb-10-menu-new-hero');
 });

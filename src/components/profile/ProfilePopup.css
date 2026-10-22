@@ -72,3 +72,16 @@
 .pf-crew-face:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
 @media (hover: hover) { .pf-crew-face:not(.is-on):hover { transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .pf-crew-face { transition: none; } }
+/* TITLE (oct21 — the menu's title plate became the PROFILE plate): your worn title, tap → ALL TITLES */
+.pf-titlerow {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 12px; box-sizing: border-box;
+  background: #12071f; border: 4px solid #a89a1c; border-radius: 8px; box-shadow: 4px 4px 0 #000; color: #fff; cursor: pointer;
+  transition: transform 120ms;
+}
+.pf-titlerow:hover { transform: translate(-1px, -2px); }
+.pf-titlerow:active { transform: translate(4px, 4px); box-shadow: none; }
+.pf-titlerow:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; }
+.pf-titlerow-k { font: 700 var(--fs-k14, 14px) 'Space Mono', monospace; letter-spacing: .12em; color: #c9b8e8; }
+.pf-titlerow-plate { display: flex; min-width: 0; }
+.pf-titlerow-go { margin-left: auto; font: 400 var(--fs-k16, 16px) 'Bungee', sans-serif; color: #FFE94A; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .pf-titlerow, .pf-titlerow:hover { transition: none; transform: none; } }
