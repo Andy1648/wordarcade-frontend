@@ -37,3 +37,12 @@
   .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn { position: relative; right: auto; bottom: auto; align-self: center; width: 84px; height: 92px; margin-top: -22px; margin-bottom: 8px; }
   .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) .room-you-badge { right: -6px; }
 }
+/* another player's hero (SeatHero): the same full-body stand, not a button */
+.rh-btn.is-static { cursor: default; pointer-events: none; }
+/* a SHORT desktop (Chromebook-height): every seat now carries a hero, so the stands shrink a size to keep the lobby's
+   fit-zoom at 1 (no text under the 13px floor at 1280x551) */
+@media (min-width: 601px) and (max-height: 700px) {
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { min-height: 70px; padding-right: 82px; }
+  .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn { width: 76px; height: 96px; }
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) .room-you-badge { right: 82px; }
+}

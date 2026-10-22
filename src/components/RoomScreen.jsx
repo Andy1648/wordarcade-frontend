@@ -11,7 +11,8 @@ import { track } from '../lib/analytics';
 import { DIFFICULTIES, difficultyDesc, difficultyReadout } from '../difficulty';
 import { SEASON2, V3 } from '../progress/season';
 import KitIcon from './kit/KitIcon.jsx';
-import RoomHeroButton from '../cast/RoomHeroButton.jsx';
+import RoomHeroButton, { SeatHero } from '../cast/RoomHeroButton.jsx';
+import { castByColor, readMain } from '../cast/cast.js';
 import './RoomScreen.css';
 import './kit/tokens.css';
 
@@ -126,7 +127,7 @@ function RenameName({ name, onRename }) {
   );
 }
 
-export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, startPending, diffPending, botPending, onLeave, onSetGameType, onSetDifficulty, onStartGame, onAddBot, onRemoveBot, onRename }) {
+export default function RoomScreen({ room, myId, playerColors = {}, preselectedGame, serverError, startPending, diffPending, botPending, onLeave, onSetGameType, onSetDifficulty, onStartGame, onAddBot, onRemoveBot, onRename, onSetHero }) {
   // Start / difficulty / bot are one-shot, server-acked actions: their guards
   // (disable-on-click + recover-on-ack/error) live in App via useOneShotAction
   // and arrive here as the *Pending booleans, so a repeated identical error can
@@ -163,6 +164,22 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   const [codeCopied, setCodeCopied] = useState(false);
   const codeCopiedTimerRef = useRef(null);
   useEffect(() => () => clearTimeout(codeCopiedTimerRef.current), []);
+
+  // HEROES IN EVERY SEAT (oct21): tell the room your equipped hero once it holds a roster entry for you, and again
+  // whenever you pick another (RoomHeroButton onPicked). Sent only when the room's copy differs from what we last sent,
+  // so a room_update storm never re-sends. Cosmetic: no game state. Above the guard: Rules of Hooks.
+  const [myHeroId, setMyHeroId] = useState(() => readMain());
+  const sentHeroRef = useRef(null);
+  const myRoomHero = room ? (room.players.find((p) => p.id === myId) || {}).hero : undefined;
+  const inRoom = !!(room && room.players.some((p) => p.id === myId));
+  const roomCode = room ? room.code : null;
+  useEffect(() => {
+    if (!SEASON2 || !onSetHero || !inRoom || !myHeroId) return;
+    const key = `${roomCode}:${myHeroId}`; // per room: a new room always hears your hero
+    if (myRoomHero === myHeroId || sentHeroRef.current === key) return;
+    sentHeroRef.current = key;
+    onSetHero(myHeroId);
+  }, [inRoom, roomCode, myRoomHero, myHeroId, onSetHero]);
 
   // Scale the lobby to the viewport (see hooks/useFitZoom.js). Above the guard: Rules of Hooks.
   const boxRef = useRef(null);
@@ -294,8 +311,11 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   className="room-player-chip"
                   style={{ '--pc': pc.color, '--pc-dark': pc.dark }}
                 >
-                  {/* oct18: YOUR seat shows your hero as a button — tap to change it (local; other seats keep their dot) */}
-                  {SEASON2 && player.id === myId ? <RoomHeroButton /> : <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />}
+                  {/* oct18: YOUR seat shows your hero as a button — tap to change it */}
+                  {/* oct21 HEROES IN EVERY SEAT: everyone else's seat shows THEIR hero (room_update), else their seat-colour hero */}
+                  {SEASON2 && player.id === myId ? <RoomHeroButton onPicked={setMyHeroId} />
+                    : SEASON2 ? <SeatHero id={player.hero || castByColor(pc.color).id} />
+                    : <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />}
                   {player.id === myId && onRename ? (
                     <RenameName name={player.name} onRename={onRename} />
                   ) : (
