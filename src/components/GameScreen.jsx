@@ -4440,7 +4440,7 @@ function CategoryBlitzScreen({
   // lastWordResult here is always OURS - no turn gating needed. Resets each round.
   // YOUR ANSWERS NEVER SCROLLS (Andy oct19 "I DONT WANT SCROLL BARS … the answers can just shrink"): the list takes the
   // rail's leftover height, and when the chips outgrow it they step down a size (data-fit 0→3) instead of scrolling.
-  // Runs only when an answer lands, the rival count changes or the window resizes, never per keystroke.
+  // Runs only when an answer lands, the rival count changes or the list's box resizes, never per keystroke.
   const cbAnswersRef = useRef(null);
   const cbAnswerCount = myAnswers.length;
   const cbRivalCount = (roomPlayers || []).length;
@@ -4453,8 +4453,15 @@ function CategoryBlitzScreen({
       while (d < 3 && el.scrollHeight > el.clientHeight + 1) el.dataset.fit = String(++d);
     };
     fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
+    // re-fit when the LIST's own box changes (a window resize, the race strip above it filling in, the header's web
+    // font swapping in late — CI measured before its fonts loaded and kept an overflowing tier) and once fonts are ready.
+    // The chips' size never changes the list's box (it is a flex slot), so this cannot loop.
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(fit); ro.observe(el); }
+    else window.addEventListener('resize', fit);
+    let live = true;
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (live) fit(); });
+    return () => { live = false; if (ro) ro.disconnect(); else window.removeEventListener('resize', fit); };
   }, [cbAnswerCount, cbRivalCount, categoryRound?.round]);
   // THE BREAK BETWEEN ROUNDS counts down what the SERVER waits (Andy oct19: it now scales with the room, 4 s + 1 s per
   // player, max 10 s): round_end carries nextInMs; an older server sends none, which is the old flat 5 s. A 4 Hz clock only

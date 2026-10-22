@@ -52,7 +52,9 @@
 }
 
 /* a full lobby (5+): shorter rows so the answers keep their room, and the shrink-to-fit list never has to scroll */
-.rj-list.is-full { --rh: 26px; --rg: 4px; }
+.rj-list.is-full { --rh: 22px; --rg: 3px; margin-top: 3px; }
+.rj-list.is-full .rj-row { padding: 0 8px 0 6px; }
+.rj-list.is-full .rj-track { height: 7px; }
 .rj-list.is-full .rj-row { border-width: 2px; box-shadow: none; }
 .rj-list.is-full .rj-crown { width: 24px; top: -12px; }
 .rj-list.is-full .rj-flame { width: 20px; top: -10px; }
