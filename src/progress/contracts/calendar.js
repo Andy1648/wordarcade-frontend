@@ -7,9 +7,11 @@
 //              guaranteed LEGENDARY+ ROLL. After DAY 7 the next week starts at DAY 1 (the week count goes up).
 //   MISSED     ONE missed day HOLDS your place (life happens — the streak's freeze has the same grace); TWO or more
 //              missed days in a row send the track back to DAY 1. Nothing already claimed is ever taken back.
-//   PAY        gems through gemsCore.grantGems (reason 'calendar'). The two ROLL days have no grant path yet:
-//              PREVIEW pays their gem worth (DAY 4 = 75, one roll; DAY 7 = 300) until the server's guaranteed
-//              LEGENDARY roll lands (draft migration 060_streak_legendary_roll.sql — not applied, Tier 1).
+//   PAY        gems through gemsCore.grantGems (reason 'calendar'). The two ROLL days are SERVER tickets
+//              (feat/guaranteed-rolls, 060_guaranteed_rolls.sql): every claim calls lb_streak_checkin (serverTickets.js
+//              streakCheckin(localDayIndex)) — the server mirrors this track, checks real play, and mints a RARE+ ticket
+//              on DAY 4 and a LEGENDARY+ ticket on DAY 7, spent on the ROLL screen; those two days then pay NO gems.
+//              PREVIEW (until that branch lands): DAY 4 / DAY 7 pay their gem worth (75 / 300).
 //
 // PURE core (calendarView / claimStep) over an injected state + day index; the storage half sits under it.
 import { grantGems } from '../gemsCore.js';
@@ -25,7 +27,7 @@ export const DAYS = [
   { day: 4, kind: 'roll', gems: ROLL_GEMS }, // PREVIEW: paid as one roll's gems
   { day: 5, kind: 'gems', gems: 100 },
   { day: 6, kind: 'gems', gems: 125 },
-  { day: 7, kind: 'legendary', gems: 300 }, // PREVIEW: paid as gems until migration 060's guaranteed LEGENDARY+ roll
+  { day: 7, kind: 'legendary', gems: 300 }, // PREVIEW: paid as gems until 060_guaranteed_rolls' LEGENDARY+ ticket
 ];
 
 export function fresh() {
