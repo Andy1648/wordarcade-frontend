@@ -26,7 +26,7 @@ const SWAP = [{ opacity: 0 }, { opacity: 1 }]; // oct18: pose swaps fade (no squ
 export function unlockProgress(h) {
   if (h.gold) { const p = goldProgress(h.id); return { have: p.have, need: p.need, label: `WINS WITH ${h.name.replace(/^GOLD /, '')}` }; }
   const u = HERO_UNLOCK[h.id];
-  if (!u) return null;
+  if (!u || u.until != null) return null; // LIMITED: a sale window, not progress
   try {
     if (u.reb != null) return { have: Math.min(getRebirths() || 0, u.reb), need: u.reb, label: u.gate ? 'REBIRTHS TO UNLOCK' : 'REBIRTHS', gate: !!u.gate };
     if (u.lv != null) return { have: Math.min(storedLevel() || 1, u.lv), need: u.lv, label: 'LEVEL' };
@@ -151,7 +151,7 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
                 {prog && !prog.gate ? <span className="hpv-or">OR SKIP THE WAIT</span> : null}
                 {h.price && !h.gold && !heroGateMet(h.id) ? (
                   <div className="hpv-buy">
-                    <span className="hpv-locked"><KitIcon name="lock" size={26} shadow={1} extras={false} />{HERO_UNLOCK[h.id].label}, THEN {formatNum(h.price)} GEMS</span>
+                    <span className="hpv-locked"><KitIcon name="lock" size={26} shadow={1} extras={false} />{HERO_UNLOCK[h.id].until != null ? 'GONE FOREVER · OCTOBER 2026 ONLY' : `${HERO_UNLOCK[h.id].label}, THEN ${formatNum(h.price)} GEMS`}</span>
                     <span className="hpv-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span>
                   </div>
                 ) : h.price && !h.gold ? (

@@ -191,8 +191,13 @@ test.describe('menu XP', () => {
           }
         }
       }
-      // PV10: taw.xp stores the FRACTION into the level; the XP number comes from the app's probe.
-      const prog = window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 };
+      // PV10: taw.xp stores the FRACTION into the level; the XP number comes from the app's probe. On a loaded CI runner
+      // the last credits can still be landing when the burst ends (the pops are already up), so give the credit up to
+      // 3 s to show before reading it — the assertion below still requires XP to have been credited.
+      const probe = () => (window.__tawXp ? window.__tawXp() : { level: 1, intoLevel: 0 });
+      const credited = (p) => p && (Number(p.level) > Number((before && before.level) || 1) || Math.round(Number(p.intoLevel) || 0) > Math.round(Number(before && before.intoLevel) || 0));
+      for (let t = 0; t < 60 && !credited(probe()); t++) await sleep(50);
+      const prog = probe();
       // DIAGNOSTICS for the rare CI run where the burst credits nothing (2 runs on oct11, never locally): what had focus
       // and which overlay was up — so a failure names its cause instead of only "0"
       const ae = document.activeElement;
