@@ -1512,6 +1512,13 @@ export default function GameScreen({
   // addictive use"): read once per game; the other seats keep the cast member of their colour.
   const myHero = useMemo(() => readMain(), []);
   const myTier = useMemo(() => rarityOf(heroById(myHero)).tier, [myHero]); // gold / elite / legend → its painted seat ring
+  // HEROES IN EVERY SEAT (oct21): each other player's equipped hero from the room roster (backend set_hero); an id this
+  // client doesn't know (or none yet) falls back to the seat-colour cast member below.
+  const seatHeroes = useMemo(() => {
+    const m = new Map();
+    for (const p of roomPlayers || []) if (p && p.hero && heroById(p.hero)) m.set(p.id, p.hero);
+    return m;
+  }, [roomPlayers]);
   usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
   const draftStoreRef = useRef(null);
   if (!draftStoreRef.current) draftStoreRef.current = createDraftStore();
@@ -3437,10 +3444,19 @@ export default function GameScreen({
                   {/* oct16 art run: the painted CAST member of this seat's colour (RIOT pink · GLITCH cyan · HYPE yellow ·
                       BRAWL orange · HEX purple); falls back to the bomb buddy until its HERO is painted */}
                   {/* oct18: YOUR seat is your equipped hero, its prop streams + rarity aura playing live on your turn */}
-                  {isMe && myTier ? <img className="wb-seat-char wb-seat-ring" src={`/cast/rings/seat-ring-${myTier}.webp`} alt="" aria-hidden="true" draggable="false" /> : null}
-                  {isMe
-                    ? <CastArt className="wb-seat-char" id={myHero} live={isCurrent && !eliminated} />
-                    : <img className="wb-seat-char" src={castSrc(castByColor(pc.color).id, 'hero')} alt="" aria-hidden="true" draggable="false" />}
+                  {(() => {
+                    // oct21: every seat is its player's real hero (+ its rarity ring); yours is read locally
+                    const sh = isMe ? myHero : seatHeroes.get(player.id);
+                    const tier = isMe ? myTier : sh ? rarityOf(heroById(sh)).tier : null;
+                    return (
+                      <>
+                        {tier ? <img className="wb-seat-char wb-seat-ring" src={`/cast/rings/seat-ring-${tier}.webp`} alt="" aria-hidden="true" draggable="false" /> : null}
+                        {sh
+                          ? <CastArt className="wb-seat-char" id={sh} live={isCurrent && !eliminated} />
+                          : <img className="wb-seat-char" src={castSrc(castByColor(pc.color).id, 'hero')} alt="" aria-hidden="true" draggable="false" />}
+                      </>
+                    );
+                  })()}
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                     <span className="game-player-name-text" translate="no">{player.name}</span>

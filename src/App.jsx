@@ -397,6 +397,11 @@ function App() {
     setPlayerName(name);
     send('set_name', { name });
   }
+  // HEROES IN EVERY SEAT (oct21): tell the room which hero you have equipped (backend set_hero → room_update.players[].hero).
+  // Cosmetic only — the lobby calls it once per room and on a hero change.
+  function handleSetHero(hero) {
+    if (typeof hero === 'string' && hero) send('set_hero', { hero });
+  }
   // Per-player session colours, derived from the room roster's join order and
   // keyed by stable player id. Built once per roster change and passed to every
   // screen so a player wears the same colour in the room, the player bar, the
@@ -2665,6 +2670,7 @@ function App() {
         onAddBot={handleAddBot}
         onRemoveBot={handleRemoveBot}
         onRename={handleRenameSelf}
+        onSetHero={handleSetHero}
       />
     );
   } else if (view === 'lobby') {
