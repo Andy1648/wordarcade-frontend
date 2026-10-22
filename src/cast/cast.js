@@ -29,7 +29,12 @@ export const LEGEND = [
   { id: 'boo', name: 'BOO', tag: 'ALREADY WENT OFF', color: '#14B8A6', dark: '#0B5F57', legend: true },
   // oct18: MECHA, the chrome robot bomb: REBIRTH 10, then gems
   { id: 'mecha', name: 'MECHA', tag: 'BUILT DIFFERENT', color: '#9FB1C7', dark: '#3E4C63', legend: true },
+  // LIMITED (oct21, the hero research: "nothing is limited — every hero is always for sale"): HOLLOW, the jack-o'-lantern
+  // bomb, is sold for gems in OCTOBER 2026 ONLY (HOLLOW_UNTIL) and never again. Whoever bought it keeps it forever.
+  { id: 'hollow', name: 'HOLLOW', tag: 'OCTOBER ONLY. NEVER AGAIN.', color: '#FF7A1A', dark: '#8A3A00', legend: true, limited: true },
 ];
+/** HOLLOW's sale ends at the start of Nov 1 2026, US Pacific (07:00 UTC). */
+export const HOLLOW_UNTIL = Date.UTC(2026, 10, 1, 7, 0, 0);
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
 // of each member (ChatGPT, the HERO as the reference), bought once with gems and kept. Same colour / seat / idle beat as
 // its base member; only the HERO pose is painted (castSrc falls every other pose back to it).
@@ -70,12 +75,14 @@ export const goldProgress = (id) => {
 //   the wait. DUD is the dearest of the four.
 // · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
 // Heroes are looks only: none of this changes how a game plays or pays.
-export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, boo: 7500, mecha: 10000 };
+export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, hollow: 1500, boo: 7500, mecha: 10000 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
   shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
   sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
   quill: { wins: 80, label: '80 WINS', icon: 'wins' }, jinx: { wins: 130, label: '130 WINS', icon: 'wins' }, // unlucky 13
-  boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true } };
+  boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
+  // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
+  hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true } };
 // the ACHIEVEMENTS counters (progress/v3/store.js taw.s2.count) read straight from storage, which keeps the cast data
 // free of the progress store import (`mp` = online wins, `bots` = wins against bots)
 const counts = () => {
@@ -96,10 +103,17 @@ export function heroEarned(id) {
   } catch { /* a broken store reads as not yet */ }
   return false;
 }
-/** Can this hero be bought yet? Only a LEGEND has a gate (its rebirth); everything else can always be bought. */
-export function heroGateMet(id) {
+/** Can this hero be bought yet? Only a LEGEND has a gate (its rebirth, or a LIMITED one's sale window); everything else can always be bought. */
+/** A LIMITED hero still on sale: whole days left (1+), else null (not limited, or the sale is over). */
+export function limitedDaysLeft(id, now = Date.now()) {
+  const u = HERO_UNLOCK[id];
+  if (!u || u.until == null || now >= u.until) return null;
+  return Math.max(1, Math.ceil((u.until - now) / 86400000));
+}
+export function heroGateMet(id, now = Date.now()) {
   const u = HERO_UNLOCK[id];
   if (!u || !u.gate) return true;
+  if (u.until != null) return now < u.until; // LIMITED: on sale until the date, never after
   try { return (getRebirths() || 0) >= u.reb; } catch { return false; }
 }
 // GRANDFATHERED (oct19, once per save): the old rules handed out BOO at REBIRTH 5, MECHA at REBIRTH 10, DUD at LEVEL 35
@@ -150,6 +164,7 @@ const PAINTED = new Set([
   'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero', 'lexi-win', 'lexi-ko', 'boo-hero', 'boo-win', 'boo-ko',
   'shh-hero', 'shh-win', 'shh-ko', 'sizzle-hero', 'sizzle-win', 'sizzle-ko', 'mecha-hero', 'mecha-win', 'mecha-ko',
   'quill-hero', 'quill-win', 'quill-ko', 'jinx-hero', 'jinx-win', 'jinx-ko',
+  'hollow-hero', 'hollow-win', 'hollow-ko', // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
