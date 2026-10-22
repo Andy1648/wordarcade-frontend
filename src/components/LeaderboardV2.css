@@ -1013,3 +1013,46 @@
 .lb2:not(.lb2--narrow) .lb2-me-k { grid-area: k; font-size: var(--fs-k13); line-height: 1; }
 .lb2:not(.lb2--narrow) .lb2-me-a { grid-area: a; font-size: var(--fs-k13); line-height: 1; }
 .lb2:not(.lb2--narrow) .lb2-me-v { grid-area: v; min-width: 0; font-size: var(--fs-k18); }
+
+/* ---- NAME PRESTIGE (Andy oct21 "make people feel even better for being top"; nameTier.js + RankSeal) ----
+   Top 50 rows: the rank number becomes its painted numbered seal (gold #4–10, cyan #11–25, violet #26–50).
+   Top 10 names print gold. The podium names wear their shield (crown / silver / bronze); #1's name is set in
+   Bungee Shade (a distinct SILHOUETTE, not just a colour) and #2 / #3 take the silver / bronze ink.
+   Static at rest — the stamps and the NEW-TIER slam are kitPlay one-shots in LeaderboardV2.jsx. */
+.lb2-rk.has-seal { background: none; padding: 0; min-width: 0; height: auto; overflow: visible; }
+.lb2-row.is-me .lb2-rk.has-seal { background: none; padding: 0; }
+.lb2 .lb2-seal { --seal-k: calc(1.12 * var(--lb2-k)); }
+.lb2-row.is-me .lb2-seal { --seal-k: calc(1.4 * var(--lb2-k)); }
+.lb2--narrow .lb2 .lb2-seal, .lb2--narrow .lb2-seal { --seal-k: 0.8; }
+.lb2--narrow .lb2-row.is-me .lb2-seal { --seal-k: 0.98; }
+.lb2-row[data-tier='gold']:not(.is-me) .lb2-name { color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+
+.lb2 .lb2-pod-seal { --seal-k: calc(0.95 * var(--pk, 1)); }
+.lb2 .lb2-col--1 .lb2-pod-seal { --seal-k: calc(1.15 * var(--pk, 1)); }
+.lb2--narrow .lb2-pod-seal { --seal-k: 0.7; }
+.lb2--narrow .lb2-col--1 .lb2-pod-seal { --seal-k: 0.8; }
+.lb2-col[data-tier='crown'] .lb2-pod-name-t { font-family: var(--k-shade); color: #FFE94A; }
+.lb2-col[data-tier='silver'] .lb2-pod-name-t { color: #DCE1F0; }
+.lb2-col[data-tier='bronze'] .lb2-pod-name-t { color: #FF9A5C; }
+.lb2-col.is-me .lb2-pod-name-t { color: #000; }
+
+.lb2-new-tier {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  font-family: var(--k-display); text-transform: uppercase;
+  font-size: var(--fs-k13);
+  line-height: 1.1;
+  white-space: nowrap;
+  color: #000;
+  background: #2EFFE0;
+  border: 3px solid #0a8f7e;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-3deg);
+}
+.lb2-new-tier.is-pod { align-self: center; margin-top: 4px; }
+.lb2-row .lb2-new-tier { padding: 0 6px; border-width: 2px; box-shadow: 2px 2px 0 #000; transform: rotate(-2deg); }
+/* phone podium: the block already prints the place and every pixel of the column is the name's — no seal there, and
+   #1 keeps Bungee (Bungee Shade's inline shading muddies below ~20px) */
+.lb2--narrow .lb2-pod-seal { display: none; }
+.lb2--narrow .lb2-col[data-tier='crown'] .lb2-pod-name-t { font-family: var(--k-display); }

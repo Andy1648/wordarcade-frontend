@@ -1,0 +1,38 @@
+/* RankSeal — size with --seal-k (unitless; 1 = a 40px seal); the number is laid out for 40px and scaled with it
+   (transform, so the type scale keeps bare tokens). Static at rest — no loops. */
+.rseal {
+  --seal-k: 1;
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(40px * var(--seal-k));
+  height: calc(40px * var(--seal-k));
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+.rseal-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.rseal-n {
+  position: relative;
+  font-family: var(--k-display, 'Bungee', cursive); text-transform: uppercase;
+  font-weight: 400;
+  font-size: var(--fs-k20);
+  color: #fff;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #000;
+  transform: scale(var(--seal-k));
+}
+.rseal[data-digits='2'] .rseal-n { font-size: var(--fs-k16); }
+.rseal[data-digits='3'] .rseal-n { font-size: var(--fs-k13); }
+/* the number sits on each art's blank panel (the crown pushes #1's panel down; the shields' panels sit high) */
+.rseal[data-tier='crown'] .rseal-n { top: calc(5px * var(--seal-k)); }
+.rseal[data-tier='silver'] .rseal-n,
+.rseal[data-tier='bronze'] .rseal-n { top: calc(-2px * var(--seal-k)); }
