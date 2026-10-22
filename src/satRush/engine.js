@@ -72,6 +72,11 @@ export const DEFAULT_CONFIG = {
   spamRevealMiss: 2,
   // clue order: false = sentence first (SAT), true = meaning first (FRENCH RUSH)
   meaningFirst: false,
+  // a missed word returns as a revenant at most this many times (then it stays missed) — self-paced
+  // FRENCH RUSH runs have no lives, so this is what ends a word nobody knows
+  maxMissReturns: Infinity,
+  // print the word family as a mid-word clue (FRENCH RUSH shows it on the review card instead)
+  playRoot: true,
   // THE DROPOUT SCHEDULE (oct17). A word leaves the run only once it is captured CLEAN. A miss
   // already comes back as a revenant; with requeueShaky a clear that leaned on the spell-along
   // (revealed >= shakyRevealMin letters) comes back too — as a SECOND LOOK, no life lost, no
@@ -354,7 +359,7 @@ export function createSatRushEngine({
       root: row.root, // may be null
       alts: row.alts || [],
       firstLetter: row.word[0],
-      reveals: revealSchedule(row.root != null, cfg.meaningFirst),
+      reveals: revealSchedule(row.root != null && cfg.playRoot, cfg.meaningFirst),
       gender: row.gender || null,
       contextEn: row.contextEn || null,
       // LINEUP mode only: the suspect lineup for this word (answer + distractors),
@@ -688,7 +693,9 @@ export function createSatRushEngine({
     caseEntry(cw.row).misses += 1;
 
     const dueWordNumber = state.wordNumber + cfg.revenantOffset;
-    revenants.push({
+    const returns = cw.missCount + 1 <= cfg.maxMissReturns;
+    if (!returns) state.settled += 1;
+    if (returns) revenants.push({
       row: cw.row,
       tier: cw.tier, // revenants keep their own tier
       dueWordNumber,

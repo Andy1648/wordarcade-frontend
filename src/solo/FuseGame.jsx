@@ -430,6 +430,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
       comboBreaks={g.combo.breaks}
       comboStreak={g.combo.streak}
       luckyKey={g.luckyKey}
+      bestBefore={g.bestBefore}
+      bestPassKey={g.bestPassKey}
       slotMain={fuseSlot.main}
       slotTags={fuseSlot.labels}
       slotKey={s.wordsSolved}

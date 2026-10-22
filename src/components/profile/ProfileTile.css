@@ -12,7 +12,8 @@
   position: relative; flex: none; width: var(--hp-tr, 58px); height: var(--hp-tr, 58px); overflow: hidden;
   background: var(--pt-c); border: 3px solid #000; border-radius: 6px;
 }
-.pchip-face img { position: absolute; left: 50%; top: -10%; width: 210%; height: auto; translate: -50% 0; }
+/* oct19 (Andy: "more zoomed out so more of the hero can be seen"): the whole hero, a hair cropped, not just its face */
+.pchip-face img { position: absolute; left: 50%; top: -6%; width: 116%; height: auto; translate: -50% 0; }
 .pchip-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
 .pchip-name {
   font: 400 var(--fs-k20, 20px) 'Bungee', sans-serif; line-height: 1.05; color: #fff;

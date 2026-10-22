@@ -8,7 +8,8 @@
 // (frame-legend.webp, ChatGPT from the elite frame as the layout reference) and the same shine. GOLD (earned with 100
 // wins) wears the gold trophy frame + shine too — it IS gold — and shows its wins-to-go on the art until earned.
 import { useEffect, useRef } from 'react';
-import { castSrc } from './cast.js';
+import { castSrc, castFrames } from './cast.js';
+import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
 import FitText from '../components/kit/FitText.jsx';
 import KitIcon from '../components/kit/KitIcon.jsx';
@@ -19,7 +20,9 @@ const SHINE = [{ transform: 'translateX(-130%) skewX(-18deg)', opacity: 0 }, { t
 
 /** `delay` staggers the elite shine so a row of cards never flashes in lockstep. */
 /** `dim` = not owned yet (oct18 one-card picker): the hero shows, greyed, with no chip over the art. */
-export default function HeroCard({ hero, locked = false, req = null, dim = false, on = false, sel = false, delay = 0, onClick, children }) {
+/** `live` (oct19, Andy: "maybe we can include animations there" - the character select): the card plays the hero's painted
+ *  FLIPBOOK in its art window instead of the still (the picker makes the equipped + the hovered card live). */
+export default function HeroCard({ hero, locked = false, req = null, dim = false, on = false, sel = false, live = false, delay = 0, onClick, children }) {
   const shineRef = useRef(null);
   const rare = !!(hero.elite || hero.legend || hero.gold);
   useEffect(() => {
@@ -40,10 +43,13 @@ export default function HeroCard({ hero, locked = false, req = null, dim = false
     <Tag className={cls} style={{ '--hc-c': hero.color, '--hc-d': hero.dark }} {...btn} data-hero={hero.id}>
       <span className="hc-card">
         <span className="hc-art">
-          <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
+          {!locked && castFrames(hero.id)
+            ? <CastArt className="hc-hero" id={hero.id} live={live} keepFrames />
+            : <img className="hc-hero" src={castSrc(hero.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />}
           {rare ? <span ref={shineRef} className="hc-shine" aria-hidden="true" /> : null}
-          {/* an EARNABLE hero not earned yet: the requirement rides the art (lock + REBIRTH 1 / LEVEL 20) */}
-          {req ? <span className="hc-req"><KitIcon name="lock" size={22} shadow={1} extras={false} /><KitIcon name={req.icon} size={22} shadow={1} extras={false} /><span>{req.label}</span></span> : null}
+          {/* an EARNABLE hero not earned yet: the requirement rides the art (60 WINS / LEVEL 20); a LEGEND still short of
+              its rebirth wears the lock (oct19) — one icon, and the words shrink to the window rather than clip */}
+          {req ? <span className={`hc-req${req.lock ? ' is-lock' : ''}`}><KitIcon name={req.lock ? 'lock' : req.icon} size={22} shadow={1} extras={false} /><FitText className="hc-req-t">{req.label}</FitText></span> : null}
         </span>
         <span className="hc-plate" aria-hidden="true" />
         <img className="hc-frame" src={hero.legend ? '/cards/frame-legend.webp' : hero.elite || hero.gold ? '/cards/frame-elite.webp' : '/cards/frame.webp'} alt="" aria-hidden="true" draggable="false" />

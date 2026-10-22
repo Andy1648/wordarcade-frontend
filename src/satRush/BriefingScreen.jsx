@@ -13,6 +13,9 @@
 // If the run is built around a root family, the screen is headed by that morpheme
 // so the framing is "here's one root and its family," not "here are five words".
 
+import { speakFr, canSpeak, withArticle } from './speak';
+import EnglishLine from './EnglishLine';
+
 // The sentence with the blank filled by the answer and highlighted. The blank in
 // the data is a run of underscores; everything around it is kept verbatim.
 function FilledSentence({ context, word }) {
@@ -26,8 +29,8 @@ function FilledSentence({ context, word }) {
   );
 }
 
-function BriefCard({ card }) {
-  const { word, pos, context, contextEn, gloss, root, isReview, knownCousins } = card;
+function BriefCard({ card, speak }) {
+  const { word, pos, rawPos, gender, context, contextEn, gloss, root, isReview, knownCousins } = card;
   const known = new Set(knownCousins);
   return (
     <li className={`sr-brief-card${isReview ? ' review' : ''}`}>
@@ -37,7 +40,14 @@ function BriefCard({ card }) {
         </div>
       )}
       <div className="sr-brief-wordrow">
-        <span className="sr-brief-word">{word}</span>
+        <span className="sr-brief-word">
+          {speak ? withArticle(word, rawPos, gender) : word}
+          {speak && canSpeak() && (
+            <button type="button" className="sr-say" onClick={() => speakFr(word)} aria-label={`say ${word}`}>
+              🔊
+            </button>
+          )}
+        </span>
         <span className="sr-brief-meta">
           {pos}
         </span>
@@ -49,8 +59,8 @@ function BriefCard({ card }) {
       {/* then the word in use — the example sentence, QUOTED, filled in and highlighted (oct17, Andy:
           the example is the quotation, the definition is plain) */}
       <FilledSentence context={context} word={word} />
-      {/* FRENCH RUSH: what the example says, in English */}
-      {contextEn && <p className="sr-brief-en">{contextEn}</p>}
+      {/* FRENCH RUSH: what the example says, in English — folded behind one tap (Andy oct20) */}
+      <EnglishLine text={contextEn} className="sr-brief-en" />
 
       {root && (
         <div className="sr-brief-root">
@@ -78,7 +88,8 @@ function BriefCard({ card }) {
   );
 }
 
-export default function Briefing({ briefing, onStart, onExit }) {
+export default function Briefing({ briefing, onStart, onExit, ui = null }) {
+  const title = (ui && ui.briefingTitle) || 'THE BRIEFING';
   if (!briefing) return null;
   const { familyMorpheme, familyCount, cards, isReplay } = briefing;
   // Spell the count so the header matches how many words actually share the root (was a
@@ -97,8 +108,8 @@ export default function Briefing({ briefing, onStart, onExit }) {
           </button>
         )}
         <div className="sr-brief-head">
-          <div className="sr-brief-title sr-print" data-v={'THE BRIEFING'}>
-            THE&nbsp;BRIEFING
+          <div className="sr-brief-title sr-print" data-v={title}>
+            {title}
           </div>
           {isReplay ? (
             <div className="sr-brief-family">The ones that got away — study them again</div>
@@ -113,7 +124,7 @@ export default function Briefing({ briefing, onStart, onExit }) {
 
         <ul className="sr-brief-list">
           {cards.map((card) => (
-            <BriefCard key={card.word} card={card} />
+            <BriefCard key={card.word} card={card} speak={!!(ui && ui.stamps)} />
           ))}
         </ul>
 

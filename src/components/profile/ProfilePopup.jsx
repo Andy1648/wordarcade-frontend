@@ -6,13 +6,12 @@
 // the title picker. Lazy (its own chunk); the card pops in once, nothing loops.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { heroById, readMain, writeMain, CAST, castSrc } from '../../cast/cast.js';
+import { heroById, readMain, writeMain, CAST, castSrc, ALL_HEROES, ownsHero } from '../../cast/cast.js';
 import HeroShowcase from '../../cast/HeroShowcase.jsx';
 import HeroPicker from '../../cast/HeroPicker.jsx';
 import HeroUnlock from '../../cast/HeroUnlock.jsx';
 import { unseenHeroes } from '../../cast/heroSeen.js';
 import { rarityOf } from '../../cast/CastArt.jsx';
-import { nextHeroGoal } from '../../cast/HeroPreview.jsx';
 import FitText from '../kit/FitText.jsx';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js';
@@ -31,7 +30,7 @@ const POP = [{ transform: 'scale(.9) translateY(12px)', opacity: 0 }, { transfor
 function Stat({ icon, glyph, tone, value, label }) {
   return (
     <div className="pf-stat" style={{ '--pf-t': tone }}>
-      {glyph ? <img className="pf-stat-g" src={`/ach/${glyph}.svg`} alt="" aria-hidden="true" /> : <KitIcon name={icon} size={36} shadow={2} extras={false} />}
+      {glyph ? <img className="pf-stat-g" src={`/ach/${glyph}.svg`} alt="" aria-hidden="true" /> : <KitIcon name={icon} size={44} shadow={2} extras={false} />}
       <FitText className="pf-stat-v">{value}</FitText>
       <span className="pf-stat-k">{label}</span>
     </div>
@@ -42,7 +41,7 @@ function Stat({ icon, glyph, tone, value, label }) {
 export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
   const [view, setView] = useState('profile'); // 'profile' | 'pick'
-  const [peekId, setPeekId] = useState(null); // the picker opens on this hero's preview (the NEXT HERO goal)
+  const [peekId, setPeekId] = useState(null); // the picker can open straight onto one hero's preview
   const [cheer, setCheer] = useState(0);
   // NEW HERO! (oct18): heroes earned by playing since the last look reveal on open (rarest last); a purchase reveals too
   const [reveal, setReveal] = useState(() => {
@@ -58,7 +57,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const c = readCounters();
   const play = readPlaySec();
   const show = myShowcase();
-  const goal = nextHeroGoal(); // the closest earnable hero you don't own (a goal to chase) // the same numbers the leaderboard card shows others (gears found)
+  const mine = ALL_HEROES.filter((x) => ownsHero(x.id)); // YOUR HEROES: what you've got (oct19: no 'next hero' nag)
   // THE UNLISTED: still read once on open — it runs the back-fill (unlisted.js) — but nothing here shows it: no shelf,
   // no found-count on your profile (Andy oct19 "i still see how many unlisted ive found in profile - i dont want that")
   useState(() => unlistedIndex());
@@ -102,18 +101,6 @@ export default function ProfilePopup({ onClose, onMainChange }) {
               <FitText className="pf-hero fit-center">{h.name}</FitText>
               <span className="pf-hero-tag">{h.elite ? `ELITE · ${h.tag}` : h.legend ? `LEGEND · ${h.tag}` : h.gold ? `GOLD · ${h.tag}` : h.tag}</span>
               <button type="button" className="pf-change" onClick={() => { setPeekId(null); setView('pick'); }}>CHANGE HERO</button>
-              {goal ? (
-                <button type="button" className="pf-goal" style={{ '--pg-c': goal.h.color }} onClick={() => { setPeekId(goal.h.id); setView('pick'); }}
-                  aria-label={`Next hero: ${goal.h.name}, ${goal.p.label} ${goal.p.have} of ${goal.p.need}`}>
-                  <img className="pf-goal-face" src={castSrc(goal.h.id, 'hero')} alt="" aria-hidden="true" draggable="false" />
-                  <span className="pf-goal-text">
-                    <span className="pf-goal-k">NEXT HERO</span>
-                    <span className="pf-goal-n">{goal.h.name}</span>
-                    <span className="pf-goal-bar"><span className="pf-goal-fill" style={{ transform: `scaleX(${goal.f})` }} /></span>
-                    <span className="pf-goal-p">{goal.p.label} {formatNum(goal.p.have)}/{formatNum(goal.p.need)}</span>
-                  </span>
-                </button>
-              ) : null}
             </div>
             <div className="pf-right">
               <div className="pf-id">
@@ -128,6 +115,18 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                 <Stat icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
                 <Stat icon="index" tone="#c9b8ff" value={show.gears_total ? `${formatNum(show.gears_found)}/${formatNum(show.gears_total)}` : '0'} label="GEARS FOUND" />
               </div>
+              <section className="pf-crew" aria-label="Your heroes">
+                <header className="pf-crew-head"><span className="pf-crew-k">YOUR HEROES</span><span className="pf-crew-n">{mine.length}/{ALL_HEROES.length}</span></header>
+                <div className="pf-crew-row">
+                  {mine.map((x) => (
+                    <button key={x.id} type="button" className={`pf-crew-face${x.id === h.id ? ' is-on' : ''}${x.gold ? ' is-gold' : x.elite ? ' is-elite' : x.legend ? ' is-legend' : ''}`}
+                      style={{ '--cf-d': x.dark || h.dark }} onClick={() => { if (x.id !== h.id) equip(x.id); }}
+                      aria-label={x.id === h.id ? `${x.name}, equipped` : `Equip ${x.name}`} aria-pressed={x.id === h.id}>
+                      <img src={castSrc(x.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
+                    </button>
+                  ))}
+                </div>
+              </section>
               {me ? <Bio text={myBio()} mine /> : null}
             </div>
           </div>

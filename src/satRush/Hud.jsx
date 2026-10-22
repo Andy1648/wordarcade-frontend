@@ -19,7 +19,8 @@ const scoreText = (s) => {
   return n < 10000 ? String(n).padStart(6, '0') : formatNum(n);
 };
 
-export default function Hud({ score, streak, wordNumber, settled = 0, caseSize = 0, lives, maxLives, heat, heatCap, onExit }) {
+export default function Hud({ score, streak, wordNumber, settled = 0, caseSize = 0, lives, maxLives, heat, heatCap, onExit, showHeat = true, exitLabel = 'MENU', caseLabel = 'case' }) {
+  // a self-paced run has no lives to lose (maxLives is a placeholder 999) — the cell goes
   return (
     <div className="sr-hud">
       <div className="sr-hcell">
@@ -34,12 +35,12 @@ export default function Hud({ score, streak, wordNumber, settled = 0, caseSize =
       </div>
       {/* a FINITE run shows the case file's progress: words settled / words in the case */}
       <div className="sr-hcell">
-        <span className="sr-hlabel">{caseSize > 0 ? 'case' : 'word'}</span>
+        <span className="sr-hlabel">{caseSize > 0 ? caseLabel : 'word'}</span>
         <b className="sr-hval">
           {caseSize > 0 ? `${settled}/${caseSize}` : `#${String(wordNumber).padStart(2, '0')}`}
         </b>
       </div>
-      <div className="sr-hcell">
+      {maxLives <= 9 && <div className="sr-hcell">
         <span className="sr-hlabel">lives</span>
         <div className="sr-lives" aria-label={`${lives} of ${maxLives} lives left`}>
           {Array.from({ length: maxLives }, (_, i) => (
@@ -48,20 +49,20 @@ export default function Hud({ score, streak, wordNumber, settled = 0, caseSize =
             </span>
           ))}
         </div>
-      </div>
-      <div className="sr-hcell">
+      </div>}
+      {showHeat && <div className="sr-hcell">
         <span className="sr-hlabel">heat</span>
         <div className="sr-heat" aria-label={`heat ${heat} of ${heatCap}`}>
           {Array.from({ length: heatCap }, (_, i) => (
             <span key={i} className={`sr-heatblock${i < heat ? ' on' : ''}`} />
           ))}
         </div>
-      </div>
+      </div>}
       {onExit && (
         <button type="button" className="sr-hud-exit" onClick={onExit} aria-label="Exit to menu">
           {/* Counter-skewed like the .sr-hcell contents — .sr-hud is skewX(-6deg). */}
           <span className="sr-hud-exit-inner">
-            <span aria-hidden="true">←</span> MENU
+            <span aria-hidden="true">←</span> {exitLabel}
           </span>
         </button>
       )}

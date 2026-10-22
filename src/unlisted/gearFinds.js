@@ -1,25 +1,36 @@
-// gearFinds.js — the two UNLISTED finds that are NOT a word-secret any more: TYPEWRITER and WISHBONE.
-//
-// WHY (Andy oct18: "typewriter and wishbone gear are WAY too easy to get"). They used to ride the word-secrets
-// (secrets/secrets.js): TYPEWRITER was 150 keys with no 1.5 s gap (a held key auto-repeats, so a few seconds of
-// holding one down did it) and WISHBONE was ANY key pressed during 11:11 — both land on their own in an ordinary
-// session. The secrets themselves (their stamp + Wins + the Stats board's 5/5) are unchanged; only the GEAR now needs
-// the harder feat, judged here:
-//   TYPEWRITER — 50 ACCEPTED words in a row in a game without ever pressing Backspace (a typewriter cannot take a
-//                letter back). A Backspace, or leaving the game, starts the run over.
-//   WISHBONE   — an ACCEPTED word at 11:11 AM AND one at 11:11 PM, on the SAME local day (the clock seeing double,
-//                twice). The morning half is remembered for that day only.
-// Pure: the clock and storage are injected. EAGER (the game's key listener): kept tiny — the grant itself is lazy.
+// gearFinds.js — the PURE pieces of the UNLISTED finds (acceptedWords.js is the door that runs them on every word a mode
+// ACCEPTED): the TYPEWRITER run, the MIRROR test and the WISHBONE clock. History: oct18/oct19 these moved off loose
+// keystrokes onto accepted words and got harder (Andy "WAY too easy"); oct20 every mode reports accepted words, so a
+// TYPEWRITER run is "in a row" across whatever you are playing — it ends on a deletion, a short word, or a gap of
+// TYPEWRITER_IDLE_MS with no word (you walked away), instead of "leaving the game screen".
+// Pure: the clock and storage are injected.
 
-export const TYPEWRITER_WORDS = 50;
-/** A run of accepted words with no Backspace: { onKey(key), onWord() → true once the run reaches `target`, reset() }. */
-export function createTypewriterRun(target = TYPEWRITER_WORDS) {
+export const TYPEWRITER_WORDS = 40;
+export const TYPEWRITER_MIN_LEN = 6;
+export const TYPEWRITER_IDLE_MS = 3 * 60 * 1000;
+/**
+ * A run of accepted long words with no take-back: { onKey(key), onDelete(), onWord(word, now) → true once the run
+ * reaches `target`, reset(), count() }. A word shorter than `minLen` (or none), or one landing more than `idleMs` after
+ * the last, starts the run over (that word counts as the new first when it is long enough).
+ */
+export function createTypewriterRun(target = TYPEWRITER_WORDS, minLen = TYPEWRITER_MIN_LEN, idleMs = TYPEWRITER_IDLE_MS) {
   let n = 0;
+  let last = 0;
   return {
     onKey(key) {
       if (key === 'Backspace' || key === 'Delete') n = 0;
     },
-    onWord() {
+    onDelete() {
+      n = 0;
+    },
+    onWord(word, now = Date.now()) {
+      const w = String(word || '').trim();
+      if (n > 0 && now - last > idleMs) n = 0;
+      last = now;
+      if (w.length < minLen) {
+        n = 0;
+        return false;
+      }
       n += 1;
       return n === target;
     },
@@ -28,6 +39,14 @@ export function createTypewriterRun(target = TYPEWRITER_WORDS) {
     },
     count: () => n,
   };
+}
+
+export const MIRROR_MIN_LEN = 7;
+/** MIRROR: a 7+ letter palindrome of three or more different letters ("aaaaaaa" is not a word). */
+export function isMirrorWord(word) {
+  const w = String(word || '').trim().toLowerCase();
+  if (w.length < MIRROR_MIN_LEN || !/^[a-z]+$/.test(w)) return false;
+  return w === w.split('').reverse().join('') && new Set(w).size >= 3;
 }
 
 export const WISH_KEY = 'taw.ulwish'; // { d: 'YYYY-MM-DD', am: bool } — the morning 11:11 half, kept for that day

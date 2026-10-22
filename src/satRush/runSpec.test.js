@@ -104,3 +104,9 @@ test('packs: the SAT words fill a 30-word hard run; unknown ids fall back', () =
   const { rows } = buildRunQueue({ spec: { mode: 'lineup', difficulty: 'hard', length: 30 }, words: SAT_WORDS });
   assert.equal(rows.length, 30);
 });
+
+test('pace: only "self" is self-paced; anything else is the clock', () => {
+  assert.equal(normalizeSpec({ pace: 'self' }).pace, 'self');
+  assert.equal(normalizeSpec({ pace: 'nope' }).pace, 'timed');
+  assert.equal(normalizeSpec({}).pace, 'timed');
+});

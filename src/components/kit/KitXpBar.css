@@ -124,3 +124,41 @@
   .kx-bar { height: 36px; }
   .kx-read-n { font-size: var(--fs-k20); }
 }
+
+/* JUICE P1 — the GOAL plate (goal-gradient): the next reward rides the bar's RIGHT end, the mirror of the LV plate.
+   The track and the readout stop short of it. NEAR (the last 10 % of a level) is a static recolour, never a loop. */
+.kx.is-goal { --kx-goalw: 74px; }
+.kx.is-goal .kx-track { right: var(--kx-goalw); }
+.kx.is-goal .kx-read { right: calc(var(--kx-goalw) + 14px); }
+.kx-goal {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--kx-goalw);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--k-panel);
+  border-left: var(--k-ink-m) solid var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+.kx-goal-in { display: flex; align-items: baseline; gap: 4px; transform: skewX(12deg); }
+.kx-goal .kx-lv-k { margin-right: 0; font-size: var(--fs-k14); color: var(--k-dim); -webkit-text-stroke: 0; }
+.kx-goal-n { font-size: var(--fs-k26); color: var(--k-dim); }
+/* NEAR: the next level lights up — yellow plate, ink numeral (Andy: no glow, no gradient) */
+.kx.is-near .kx-goal { background: var(--k-yellow); }
+.kx.is-near .kx-goal .kx-lv-k,
+.kx.is-near .kx-goal-n { color: var(--k-ink); }
+
+@media (max-width: 600px) {
+  .kx.is-goal { --kx-goalw: 52px; }
+  .kx.is-goal .kx-read { right: calc(var(--kx-goalw) + 8px); }
+  .kx-goal .kx-lv-k { display: none; }
+  .kx-goal-n { font-size: var(--fs-k20); }
+  .kx.is-goal .kx-read-u { display: none; }
+}

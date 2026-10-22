@@ -3,11 +3,11 @@
 // WHY. "People have been begging me for secret gear" (Andy oct17). The one SECRET gear (ORIGIN) is a 1-in-15,000 roll,
 // which is a long grind, not a secret. A Pokémon secret rare is numbered PAST the set total (223/197) — its identity is
 // "not on the list". So this tier is not on the list: it has no odds, it is not in the roll pool, nothing in the shop
-// sells it, and the index shows it only as riddles. Each gear is one of the five word-secrets the game already hides
-// (secrets/secrets.js), plus one per season that never comes back.
+// sells it, and the index shows it only as riddles. Each gear is found by a word some mode ACCEPTED (acceptedWords.js —
+// oct20: never by loose typing, in any mode), plus one per season that never comes back.
 //
 // THE RULES (load-bearing — the players include minors):
-//   1. NO RANDOMNESS YOU CAN PAY INTO. The MIDAS gear rides the existing 1-in-750 golden word, which is free play,
+//   1. NO RANDOMNESS YOU CAN PAY INTO. The MIDAS gear is a 1-in-750 accepted word (acceptedWords.js), which is free play,
 //      never gems. Nothing here reads or spends a currency.
 //   2. NO ODDS, ANYWHERE. A tile is a riddle, never "1 IN X". `unlistedIndex` has no odds field to leak.
 //   3. NOT STRONGER THAN A LEGENDARY (Andy oct18 "they essentially better legendaries"). A worn UNLISTED pays ONE main
@@ -24,16 +24,16 @@ export { UNLISTED_KEY, UNLISTED_TIER };
 /** The season this build is in. A season gear is findable only while its season is the current one. */
 export const CURRENT_SEASON = 2;
 
-// `secret` = the secrets.js id whose detection grants it (null = granted by its own detector: the `season` gear, and
-// TYPEWRITER / WISHBONE — gearFinds.js, oct18: the word-secret was far too easy, so the gear needs a harder feat).
-// `riddle` = the ONE line the index shows while it is unfound. Cryptic on purpose: it says what to do, never how.
+// `secret` = null for every gear (oct20, Andy "make accepted words count (not just randomly typing)"): no word-secret
+// grants a gear any more — EVERY find is a word some mode ACCEPTED, judged in acceptedWords.js, in any mode.
+// `riddle` = the ONE line the index shows while it is unfound: plain enough to work out (Andy oct20 "make it make sense").
 export const UNLISTED_GEARS = Object.freeze([
-  { id: 'mk-ul-og', secret: 'newgrounds', name: 'O.G.', art: 'og', riddle: 'SAY THE NAME OF THE PLACE THAT RAISED US' },
-  { id: 'mk-ul-wishbone', secret: null, name: 'WISHBONE', art: 'wishbone', riddle: 'WHEN THE CLOCK SEES DOUBLE · AM + PM, ONE DAY' },
-  { id: 'mk-ul-typewriter', secret: null, name: 'TYPEWRITER', art: 'typewriter', riddle: 'FIFTY WORDS IN A ROW · NO TAKE-BACKS' },
-  { id: 'mk-ul-mirror', secret: 'palindrome', name: 'MIRROR', art: 'mirror', riddle: 'IT READS THE SAME BOTH WAYS' },
-  { id: 'mk-ul-midas', secret: 'midas', name: 'MIDAS', art: 'midas', riddle: 'SOMETIMES A WORD TURNS TO GOLD' },
-  { id: 'mk-ul-tripledouble', secret: 'tripledouble', name: 'TRIPLE DOUBLE', art: 'tripledouble', season: 2, riddle: 'ONE WORD, THREE PAIRS · THIS SEASON ONLY' },
+  { id: 'mk-ul-og', secret: null, name: 'O.G.', art: 'og', riddle: 'NAME THE FLASH SITE THAT RAISED US' },
+  { id: 'mk-ul-wishbone', secret: null, name: 'WISHBONE', art: 'wishbone', riddle: 'MAKE A WISH AT 11:11 · MORNING AND NIGHT' },
+  { id: 'mk-ul-typewriter', secret: null, name: 'TYPEWRITER', art: 'typewriter', riddle: '40 WORDS OF 6+ LETTERS · NEVER DELETE' },
+  { id: 'mk-ul-mirror', secret: null, name: 'MIRROR', art: 'mirror', riddle: 'A 7+ LETTER WORD THAT READS BOTH WAYS' },
+  { id: 'mk-ul-midas', secret: null, name: 'MIDAS', art: 'midas', riddle: 'SOMETIMES A WORD TURNS TO GOLD' },
+  { id: 'mk-ul-tripledouble', secret: null, name: 'TRIPLE DOUBLE', art: 'tripledouble', season: 2, riddle: 'ONE WORD, THREE DOUBLE LETTERS · THIS SEASON' },
 ].map((g) => Object.freeze({ season: null, ...g, tier: UNLISTED_TIER })));
 
 const BY_ID = new Map(UNLISTED_GEARS.map((g) => [g.id, g]));

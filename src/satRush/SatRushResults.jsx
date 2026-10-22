@@ -6,6 +6,7 @@
 // working untouched; only its container is styled to sit on the page.
 import { useEffect, useRef, useState } from 'react';
 import { formatNum } from '../format';
+import EnglishLine from './EnglishLine';
 import { createCountUp } from '../juice/countUp';
 import { JUICE, prefersReducedMotion } from '../juice';
 import * as juice from './juice';
@@ -15,6 +16,8 @@ import NearMiss from '../components/NearMiss.jsx';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 import { GemsEarnedLine } from '../components/gems/Gems';
+import { XpEarnedLine } from '../components/xp/XpEarned';
+import { speakFr, canSpeak, withArticle } from './speak';
 
 const C = JUICE.CELEBRATION;
 
@@ -36,15 +39,22 @@ function frameOf(e) {
 const OUTCOME = { clean: 'CAPTURED', recaptured: 'RECAPTURED', shaky: 'BARELY', escaped: 'ESCAPED' };
 const MASTERY = { known: 'known', learning: 'learning', new: 'new' };
 
-function CaseFileRow({ c }) {
+function CaseFileRow({ c, outcomes, speak }) {
   const open = c.outcome !== 'clean';
   const [before, after] = String(c.context || '').split(/_+/);
   return (
     <li className={`sr-casefile-row ${c.outcome}`}>
       <div className="sr-casefile-top">
-        <b className="sr-casefile-word">{c.word}</b>
+        <b className="sr-casefile-word">
+          {speak ? withArticle(c.word, c.rawPos, c.gender) : c.word}
+          {speak && canSpeak() && (
+            <button type="button" className="sr-say" onClick={() => speakFr(c.word)} aria-label={`say ${c.word}`}>
+              🔊
+            </button>
+          )}
+        </b>
         <span className={`sr-casefile-mastery ${c.mastery}`}>{MASTERY[c.mastery]}</span>
-        <span className={`sr-casefile-out ${c.outcome}`}>{OUTCOME[c.outcome]}</span>
+        <span className={`sr-casefile-out ${c.outcome}`}>{(outcomes || OUTCOME)[c.outcome]}</span>
       </div>
       {open && (
         <>
@@ -56,14 +66,18 @@ function CaseFileRow({ c }) {
               {after}”
             </p>
           )}
-          {c.contextEn && <p className="sr-casefile-en">{c.contextEn}</p>}
+          <EnglishLine text={c.contextEn} className="sr-casefile-en" />
         </>
       )}
     </li>
   );
 }
 
-export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, economy = true }) {
+export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, xpSince = 0, economy = true, ui = null }) {
+  // a pack's own words for this page (FRENCH RUSH: TERMINÉ / correct / missed / your words …)
+  const RU = (ui && ui.results) || null;
+  const speak = !!(ui && ui.stamps); // FRENCH RUSH reads words aloud (its pack has its own stamps)
+  const [copied, setCopied] = useState(false);
   // economy=false (FRENCH RUSH, a standalone study link): no wins / gems / rebirth / cross-mode offers —
   // just the result, the case file and the way to go again.
   // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
@@ -155,7 +169,9 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
     <div className="sr-screen sr-results">
       <div className="sr-respage">
         {/* entry stamp, bounty voice: the run is over — the case is closed. */}
-        <div className="sr-dead">{finite && !results.complete ? 'OUT OF LIVES' : 'CASE CLOSED'}</div>
+        <div className="sr-dead">
+          {finite && !results.complete ? (RU ? RU.out : 'OUT OF LIVES') : RU ? RU.done : 'CASE CLOSED'}
+        </div>
 
         {/* THE ONE BIG THING: how many you captured (and how many got away). */}
         <div className="sr-panel sr-hero">
@@ -164,9 +180,13 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
               {fmt(score)}
             </div>
             <div className="sr-capt-side">
-              <span className="sr-capt-label">{finite ? `of ${results.runTotal} captured` : 'captured'}</span>
+              <span className="sr-capt-label">
+                {finite ? `of ${results.runTotal} ${RU ? RU.captured : 'captured'}` : 'captured'}
+              </span>
               <span className="sr-capt-away">
-                {finite ? `${fmt(caseFile.length - capturedWords)} got away` : `${fmt(results.missed || 0)} got away`}
+                {finite
+                  ? `${fmt(caseFile.length - capturedWords)} ${RU ? RU.away : 'got away'}`
+                  : `${fmt(results.missed || 0)} got away`}
                 {finite && results.runTotal > caseFile.length ? ` · ${fmt(results.runTotal - caseFile.length)} never reached` : ''}
               </span>
             </div>
@@ -182,6 +202,8 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             <b>+{formatNum(l.amount)}</b> {l.label}
           </div>
         ))}
+        {/* GAME XP this run (oct21) — under the wins, in the page's ink voice; hidden when none */}
+        {economy && <XpEarnedLine since={xpSince} print className="sr-xpline" />}
         {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
         {economy && <GemsEarnedLine since={gemsSince} print className="sr-gemsline" />}
 
@@ -194,18 +216,47 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
           {/* REPLAY MISSES: the words that did not settle clean, again (BRIEFING re-studies them) */}
           {finite && unsettled > 0 && onReplay && (
             <button type="button" className="sr-btn" onClick={onReplay}>
-              Replay the {unsettled} that got away
+              {RU ? RU.replay(unsettled) : `Replay the ${unsettled} that got away`}
             </button>
           )}
           <button type="button" className={`sr-btn${finite && unsettled > 0 && onReplay ? ' sr-btn-ghost' : ''}`} onClick={onAgain}>
-            {finite ? 'New case' : 'Run it back'}
+            {RU ? RU.again : finite ? 'New case' : 'Run it back'}
           </button>
+          {/* COPY RESULTS (FRENCH RUSH): a plain-text summary to paste to a teacher */}
+          {RU && caseFile.length > 0 && (
+            <button
+              type="button"
+              className="sr-btn sr-btn-ghost"
+              onClick={() => {
+                const sp = results.spec || {};
+                const missed = caseFile.filter((c) => c.outcome !== 'clean').map((c) => c.word);
+                const text = [
+                  `French Rush — ${capturedWords}/${results.runTotal} correct`,
+                  sp.category ? `Theme: ${sp.category}` : 'Theme: all',
+                  `Level: ${sp.difficulty || '—'} · ${sp.pace === 'self' ? 'my pace' : 'timed'}`,
+                  missed.length ? `To review: ${missed.join(', ')}` : 'No words to review',
+                ].join('\n');
+                const done = () => {
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 2200);
+                };
+                try {
+                  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+                  else done();
+                } catch {
+                  done();
+                }
+              }}
+            >
+              {copied ? 'Copied!' : 'Copy my results'}
+            </button>
+          )}
           {/* A deep-link visitor has never seen the menu, so their way on is the OFFER below —
               the whole grid — and the generic Menu button beside it would be a second control
               doing the same thing. Everyone else gets the normal Menu button. */}
           {offerMenu ? null : (
             <button type="button" className="sr-btn sr-btn-ghost" onClick={onExit}>
-              Menu
+              {RU ? RU.menu : 'Menu'}
             </button>
           )}
           {/* SECOND ROW (feat/solo-endgame): a DIFFERENT unlocked mode — the one played least —
@@ -219,27 +270,28 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         </div>
 
         {/* The mode's own numbers, one ruled line (was three boxed panels + a strip). */}
-        <div className="sr-resline in">
+        {/* FRENCH RUSH keeps its page to the result + the words: no ante / mastery stat line */}
+        {!RU && <div className="sr-resline in">
           <span>score <b>{fmt(results.score)}</b></span>
           <span>avg ante <b>{avgAnte}</b></span>
           <span>best streak <b>{results.bestStreak || 0}</b></span>
           <span>mastered <b>{results.mastered || 0}</b></span>
-        </div>
+        </div>}
 
         {/* THE CASE FILE — every word of the run (a list, so it may scroll inside its own panel) */}
         {caseFile.length > 0 && (
           <div className={`sr-panel sr-casefile${revealed ? ' in' : ''}`}>
-            <span className="sr-panel-label">case file</span>
+            <span className="sr-panel-label">{RU ? RU.file : 'case file'}</span>
             <ul className="sr-casefile-list">
               {caseFile.map((c) => (
-                <CaseFileRow key={c.word} c={c} />
+                <CaseFileRow key={c.word} c={c} outcomes={RU && RU.outcomes} speak={speak} />
               ))}
             </ul>
           </div>
         )}
 
         {/* runLog film-strip: one small ruled frame per word, in order. */}
-        {results.runLog.length > 0 && (
+        {!RU && results.runLog.length > 0 && (
           <div className={`sr-filmstrip${revealed ? ' in' : ''}`} aria-label="run timeline">
             {results.runLog.map((e, i) => {
               const f = frameOf(e);
@@ -253,7 +305,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         )}
 
         {/* hardest word — its own panel, sitting on the one halftone patch. */}
-        {hardest && (
+        {!RU && hardest && (
           <div className={`sr-panel sr-hardestpanel${revealed ? ' in' : ''}`}>
             <span className="sr-panel-label">hardest clear</span>
             <b className="sr-hardest-word">{hardest}</b>

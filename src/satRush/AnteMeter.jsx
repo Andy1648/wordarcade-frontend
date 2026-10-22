@@ -16,6 +16,7 @@ export default function AnteMeter({
   atFinal,
   running,
   lineup = false,
+  caption = true,
 }) {
   const litPips = maxStage + 1 - stage; // more lit = more reward still on offer
   // Re-key the drain on each stage so it restarts cleanly. The multiplier node is
@@ -29,7 +30,7 @@ export default function AnteMeter({
         {mult}
       </div>
       <div className="sr-anteright">
-        <div className={`sr-antebox${atFinal ? ' final' : ''}`}>
+        {caption && <div className={`sr-antebox${atFinal ? ' final' : ''}`}>
           {atFinal ? (
             <>
               {/* LINEUP has no mugshot printing — the note reads for the narrowed
@@ -43,7 +44,7 @@ export default function AnteMeter({
               <span className="sr-accent">SCORE</span> — CAPTURE NOW FOR MORE
             </>
           )}
-        </div>
+        </div>}
         <div className="sr-pips" aria-hidden="true">
           {Array.from({ length: maxStage + 1 }, (_, i) => (
             <div key={i} className={`sr-pip${i < litPips ? ' on' : ''}`} />

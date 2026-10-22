@@ -137,7 +137,7 @@ export default function PatchNotes({ onClose }) {
           <span className="pn-rolls">{already ? 'COLLECTED ✓' : `= ${rolls} FREE ${rolls === 1 ? 'ROLL' : 'ROLLS'}`}</span>
         </div>
         <div className="pn-foot">
-          <KitButton ref={btnRef} tone={phase === 'done' ? 'yellow' : 'cyan'} label={label} labelSize={32} width={280} disabled={phase === 'flying'} onClick={onCollect} data-testid="patch-notes-collect" />
+          <KitButton ref={btnRef} tone={phase === 'done' ? 'yellow' : 'cyan'} label={label} labelSize={30} width={280} disabled={phase === 'flying'} onClick={onCollect} data-testid="patch-notes-collect" />
         </div>
         </div>
       </div>

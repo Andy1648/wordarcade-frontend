@@ -75,6 +75,7 @@ const WINS = await imp('progress/wins.js');
 const SHOP = await imp('progress/shop.js');
 const STARS = await imp('progress/stars.js');
 const LX = await imp('progress/letterXp.js');
+const GXP = await imp('progress/gameXp.js'); // oct21 GAME XP: the ledger of XP accepted game words credited
 const LUCK = await imp('progress/luck.js');
 const ECON = await imp('progress/v3/econ.js');
 const STORE = await imp('progress/v3/store.js');
@@ -97,10 +98,20 @@ const H = 60;
 // v4 "SIMPLE" (Andy Oct 7 23:20): XP from MENU keys only (full rate), games pay wins only. Gate 18 + 20R → 15 + 18R (the
 // floor Andy allowed) to bring the median's first rebirth from 31.8 min back into 18–25; POWER cost unchanged. Every row
 // is the v4 sim table (regression guards); the median's R1 is also held to 18–25 min below.
+// oct20 NO RANDOM OVERDRIVE (Andy: "i dont want it to randomly appear", then "no need for random overdrive - just get
+// rid of it" — he chose the slower pace over a compensating boost): the random ×5 for 5 min every 30–60 min of play is
+// gone, so the later rebirths are re-baselined to the measured run — casual R3 5.81 → 6.70 h, median R3 137.3 → 151.8
+// min and R5 8.91 h → past 10 h (R4 at 10 h), fast R5 3.75 → 4.61 h. R1 is unchanged for every bot.
+// oct21 GAME XP (Andy: "fine with games giving xp … start noticeably less than spamming keys … we can afford under but
+// not over"): an ACCEPTED game word now pays GAME_WORD_XP_SHARE (0.2) menu keys a letter — 1 key for a 5-letter word.
+// Re-baselined to the measured run at 0.2 (0.4 put casual R1 −29 %, 0.25 −21 %): casual R1 60 → 49.5 min, R3 6.70 →
+// 5.83 h; median R1 21.5 → 19.0 min (still inside the 18–25 hold), R3 151.8 → 131.2 min, R5 9.49 h (R5 at 10 h);
+// fast R1 9.3 → 8.5 min, R3 62.8 → 56.8 min, R5 4.61 → 4.15 h. The game share of all XP is held under
+// GAME_XP_MAX_SHARE below, so a later change cannot quietly turn games into the main XP source.
 const FINAL = {
-  casual: { R1: 60, R3: 5.81 * H, R5: null, END: 3 },
-  median: { R1: 21.5, R3: 137.3, R5: 8.91 * H, END: 5 }, // R1 held at 18–25 min (Andy 22:31 / 23:20)
-  fast: { R1: 9.3, R3: 62.8, R5: 3.75 * H, END: 8 }, // END 6 → 8 (Andy oct13): the R5 JACKPOT ×15 speeds R6+ on purpose
+  casual: { R1: 49.5, R3: 5.83 * H, R5: null, END: 3 },
+  median: { R1: 19.0, R3: 131.2, R5: 9.49 * H, END: 5 }, // R1 held at 18–25 min (Andy 22:31 / 23:20)
+  fast: { R1: 8.5, R3: 56.8, R5: 4.15 * H, END: 8 }, // END 6 → 8 (Andy oct13): the R5 JACKPOT ×15 speeds R6+ on purpose
   // 035 (Andy oct12, SKUF): a rebirth needs 25 GAME words since the last one — the 0-game menu masher never rebirths
   menu: { R1: null, R3: null, R5: null, END: 0 },
 };
@@ -217,7 +228,8 @@ async function simulate(bot, hours = HOURS) {
   const spam = { calls: 0, ok: 0, replaysSent: 0 };
   let lastSpam = 0;
   const totalMin = hours * 60;
-  let gameXp = 0; // v4: XP the GAME share moved the bar by — must stay 0
+  let gameXpSteps = 0; // steps where the typed-letter credit alone moved the bar — must stay 0 (only accepted words pay)
+  const gxMark = GXP.gameXpMark();
   while (minute < totalMin) {
     // ---- the game share of this step: words bank wins; typed letters pay 0 XP (v4)
     const xpBefore = XP.loadProgress();
@@ -236,10 +248,12 @@ async function simulate(bot, hours = HOURS) {
     letterCarry += bot.lpm * bot.game * DT;
     const typed = Math.floor(letterCarry);
     letterCarry -= typed;
-    if (typed) LX.creditLetterXp(typed, { mode: SIM_MODE }); // v4: 0 XP (OVERDRIVE's play clock only)
+    const xpWords = XP.loadProgress();
+    if (typed) LX.creditLetterXp(typed, { mode: SIM_MODE }); // typed letters: 0 XP (OVERDRIVE's play clock only)
     letters += typed;
     const xpAfter = XP.loadProgress();
-    if (xpAfter.level !== xpBefore.level || xpAfter.intoLevel !== xpBefore.intoLevel) gameXp += 1;
+    if (xpAfter.level !== xpWords.level || xpAfter.intoLevel !== xpWords.intoLevel) gameXpSteps += 1;
+    void xpBefore;
     // ---- the menu share: ANY key at the full rate (xpPerInput), no cap, between games
     menuCarry += bot.mkpm * DT;
     const keys = Math.floor(menuCarry);
@@ -278,7 +292,7 @@ async function simulate(bot, hours = HOURS) {
     bot: bot.id, hours,
     times: { R1: first.R1 ?? null, R3: first.R3 ?? null, R5: first.R5 ?? null, R6: first.R6 ?? null, R7: first.R7 ?? null },
     final: { level: lv(), rebirths: XP.getRebirths(), stars: STORE.getStarsV3(), power: XP.getKeyTier(), wins: WINS.getWins() },
-    all: first, words, letters, menuXp, gameXp,
+    all: first, words, letters, menuXp, gameXp: GXP.gameXpSince(gxMark).xp, gameXpSteps,
     server: { calls: srv.calls, grants: srv.grants, ascends: srv.ascends, replays: srv.replays, refusals: srv.refusals, violations: srv.violations.slice(0, 10), violationCount: srv.violations.length, stored: { rebirths: srv.row.rebirths, stars: srv.row.stars, level: srv.row.level } },
     spam: bot.spam ? spam : null,
   };
@@ -355,7 +369,15 @@ if (med && fast) {
 // v3.1 HOLD (Andy Oct 7 22:31): the median's first rebirth stays 18–25 min, whatever the ±20% band above allows
 if (med && !(med.times.R1 >= MEDIAN_R1_MIN && med.times.R1 <= MEDIAN_R1_MAX)) misses.push(`median R1 ${fmt(med.times.R1)} is outside the ${MEDIAN_R1_MIN}–${MEDIAN_R1_MAX} min hold`);
 if (sp && med && (sp.final.rebirths !== med.final.rebirths || sp.final.level !== med.final.level)) misses.push(`SPAMMER ended R${sp.final.rebirths} LV${sp.final.level} vs the median's R${med.final.rebirths} LV${med.final.level}`);
-for (const r of results) if (r.gameXp) misses.push(`${r.bot}: the GAME share moved the level bar in ${r.gameXp} steps (v4: games pay wins only)`);
+// oct21 GAME XP: typed letters still pay nothing, and games stay the SMALLER XP source for every bot that plays them
+const GAME_XP_MAX_SHARE = 0.35;
+for (const r of results) {
+  if (r.gameXpSteps) misses.push(`${r.bot}: TYPED game letters moved the level bar in ${r.gameXpSteps} steps (only accepted words pay)`);
+  const all = (r.gameXp || 0) + (r.menuXp || 0);
+  const share = all > 0 ? (r.gameXp || 0) / all : 0;
+  console.log(`  ${r.bot}: game XP share ${(share * 100).toFixed(1)}% of all XP`);
+  if (share > GAME_XP_MAX_SHARE) misses.push(`${r.bot}: games paid ${(share * 100).toFixed(1)}% of all XP (cap ${GAME_XP_MAX_SHARE * 100}%)`);
+}
 const stars = results.reduce((a, r) => a + r.final.stars + r.server.stored.stars, 0);
 if (stars) misses.push(`${stars} ★ granted — ascension is hidden in FINAL v3`);
 const violations = results.reduce((a, r) => a + r.server.violationCount, 0);
