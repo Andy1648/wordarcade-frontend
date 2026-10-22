@@ -377,9 +377,11 @@ export const CAST_FRAMES = {
   // 6 frames: reading → looks up, a first star → fingers wiggle stars → the book FLARES → snaps shut → 'shh'
   hex: { n: 6, seq: [[1, 360], [2, 520], [3, 820], [4, 360], [5, 1100]], rest: 1900 },
   // BOO: sneaky grin → peeks through its fingers (twice) → arms wide, the big spook → doubled over laughing
-  boo: { n: 4, seq: [[1, 420], [0, 160], [1, 420], [2, 850], [3, 1050]], rest: 1800 },
+  // 6 frames: sneaky grin → hands rise → peeks through its fingers → hands drop → the big SPOOK → doubled over laughing
+  boo: { n: 6, seq: [[1, 300], [2, 620], [3, 220], [4, 800], [5, 1000]], rest: 1800 },
   // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
-  mecha: { n: 4, seq: [[1, 750], [0, 180], [2, 720], [3, 1150]], rest: 1800 },
+  // 5 frames (the rocket-punch frame ran off its cell, so it was cut): ready → red scan line, antenna pinging → winds up → the punch lands, a spark at the joint → steam vents, thumbs up ^ ^
+  mecha: { n: 5, seq: [[1, 760], [0, 160], [2, 380], [3, 520], [4, 1100]], rest: 1800 },
   // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
   // 6 frames: asleep → head droops, bubble swells → POP, jolts awake → giant yawn → snuggles back down
   dud: { n: 6, seq: [[1, 520], [2, 800], [3, 520], [4, 720], [5, 600]], rest: 2200 },
@@ -387,9 +389,11 @@ export const CAST_FRAMES = {
   // 6 frames: finger up → to the glasses → push up, *glint* → book swung open → taps the page, lecturing → hugs it, smug
   lexi: { n: 6, seq: [[1, 260], [2, 620], [3, 420], [4, 780], [5, 1000]], rest: 1900 },
   // SHH: finger to lips → the invisible wall → the invisible rope → a smug bow
-  shh: { n: 4, seq: [[1, 800], [2, 380], [0, 120], [2, 380], [3, 1100]], rest: 2000 },
+  // 6 frames: finger to lips → palms up → the invisible WALL → slides along it → the invisible rope → a smug bow
+  shh: { n: 6, seq: [[1, 260], [2, 620], [3, 520], [4, 620], [5, 1000]], rest: 1900 },
   // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
-  sizzle: { n: 4, seq: [[1, 650], [2, 900], [3, 1100]], rest: 1900 },
+  // 6 frames: thumbs up → tips the bottle → a big swig → cheeks puff, eyes water → breathes FIRE, hat flies → sweating, grinning
+  sizzle: { n: 6, seq: [[1, 260], [2, 520], [3, 460], [4, 800], [5, 1000]], rest: 1800 },
   // 6-FRAME loops (oct19, Andy: "we can add in more frames bc currently its a bit too choppy"): a 3x2 wide sheet = six
   // full-res frames, each a small step from the last, so the beats flow instead of jumping
   // QUILL recites: breath in → unrolls the scroll → arm swept wide → quill flourish → rolls it up, a smug little bow
