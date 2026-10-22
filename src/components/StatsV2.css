@@ -605,6 +605,18 @@
 .st2--narrow .st2-life-v { font-size: var(--fs-k26); -webkit-text-stroke: 4px #000; }
 .st2--narrow .st2-life-l { font-size: var(--fs-k14); padding: 0 5px; max-width: calc(100% - 8px); box-sizing: border-box; white-space: normal; text-align: center; line-height: 1.15; }
 
+/* SHORT PHONES (oct20 UI audit): the stacked layout ran past the screen — 24px at 390x844 (the ALL TIME row cut). A
+   390x844 phone fits with the band below; shorter phones (≤ 760px) get the COMPACT layout at the end of this file. The
+   panels never shrink below their content (they used to squash and overlap): a phone shorter still scrolls. */
+.st2--narrow { overflow-y: auto; }
+.st2--narrow .st2-stage > * { flex-shrink: 0; }
+@media (max-height: 900px) {
+  .st2--narrow .st2-stage { gap: 10px; }
+  .st2--narrow .st2-chip { min-height: 78px; }
+  .st2--narrow .st2-hero { padding-top: 18px; gap: 6px; }
+  .st2--narrow .st2-box { height: 96px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .st2-rail-fill,
   .st2-chip,
@@ -794,4 +806,60 @@
 @keyframes st2-enter-rise { 0% { translate: 0 18px; opacity: 0; } 100% { translate: 0 0; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .st2-title, .st2-hero, .st2-chain, .st2-crit, .st2-life { animation: none; }
+}
+
+/* ---- COMPACT PHONE (oct20 UI audit: 360x640 hid the whole ALL TIME grid — ~800px of stats on a 640px screen). At
+   ≤ 760px tall the stacked layout packs down: 44px header rows; the hero becomes ONE row (TOTAL box left, the result
+   stacked beside it); the chain runs 3-up then a 2-up row of side-by-side chips; CRIT is one slim row; ALL TIME keeps
+   its 3x2 grid in 44px cells. Text stays ≥ 13px, every tap target ≥ 44px. */
+@media (max-height: 760px) {
+  /* the panels grow with the screen (vh) and spread the rest: a 740px phone is not 100px of empty floor */
+  .st2--narrow .st2-stage { gap: 8px; padding-top: 8px; padding-bottom: 12px; justify-content: space-between; }
+  .st2--narrow .st2-head { row-gap: 6px; }
+  .st2--narrow .st2-back,
+  .st2--narrow .st2-tab { height: 44px; }
+  .st2--narrow .st2-title { font-size: calc(var(--fs-k100) * 0.34); }
+
+  .st2--narrow .st2-hero { flex-direction: row; align-items: center; justify-content: center; gap: 14px; padding: 24px 0 18px; }
+  .st2--narrow .st2-totalwrap { flex: none; }
+  .st2--narrow .st2-total-k { font-size: var(--fs-k16); top: -22px; }
+  .st2--narrow .st2-box { height: clamp(68px, 12.5vh, 96px); min-width: 132px; padding: 0 12px; box-shadow: 6px 6px 0 #000; }
+  .st2--narrow .st2-total { font-size: calc(var(--fs-k38) * 1.15 * min(1, 5 / var(--len))); }
+  /* the tick hangs off the box's lower corner: on top it covered TOTAL on a box this narrow */
+  .st2--narrow .st2-tick { top: auto; bottom: -20px; right: -14px; height: 30px; padding: 0 8px; border-left-width: 6px; }
+  .st2--narrow .st2-tick-name { font-size: var(--fs-k13); }
+  .st2--narrow .st2-tick-v { font-size: var(--fs-k16); -webkit-text-stroke: 3px #000; }
+  .st2--narrow .st2-result { flex: 0 1 auto; min-width: 0; flex-direction: column; align-items: flex-start; gap: 4px; flex-wrap: nowrap; }
+  .st2--narrow .st2-result-v { font-size: calc(var(--fs-k38) * min(1, 6 / var(--len))); -webkit-text-stroke: 5px #000; text-shadow: 3px 3px 0 #000; }
+  .st2--narrow .st2-result-sub { gap: 2px; }
+  .st2--narrow .st2-unit { font-size: var(--fs-k16); }
+  .st2--narrow .st2-basex { font-size: var(--fs-k14); white-space: normal; }
+
+  .st2--narrow .st2-chain { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .st2--narrow .st2-cell { grid-column: span 2; }
+  .st2--narrow .st2-cell:nth-child(n + 5) { grid-column: span 3; }
+  .st2--narrow .st2-chip { min-height: clamp(0px, 12vh, 92px); padding: 4px 8px 6px; border-top-width: 6px; }
+  .st2--narrow .st2-cell:nth-child(n + 5) .st2-chip { min-height: 48px; }
+  .st2--narrow .st2-chip-v,
+  .st2--narrow .st2-chain.is-compact .st2-chip-v { margin: 0 0 2px; font-size: calc(var(--fs-k26) * min(1, 4 / var(--vlen, 4))); }
+  .st2--narrow .st2-chip-name { font-size: var(--fs-k13); }
+  .st2--narrow .st2-chip-tag { font-size: var(--fs-k16); }
+  /* the 2-up row: figure left, name + tag beside it */
+  .st2--narrow .st2-cell:nth-child(n + 5) .st2-chip { flex-direction: row; align-items: center; gap: 8px; }
+  .st2--narrow .st2-cell:nth-child(n + 5) .st2-chip-v { flex: none; margin: 0; }
+  .st2--narrow .st2-cell:nth-child(n + 5) .st2-chip-top { flex: 1 1 0; min-width: 0; margin-top: 0; }
+
+  .st2--narrow .st2-crit { row-gap: 0; padding: 4px 10px 4px 0; border-left-width: 6px; }
+  .st2--narrow .st2-crit-burst { width: 36px; height: 36px; }
+  .st2--narrow .st2-crit-head { font-size: var(--fs-k18); }
+  .st2--narrow .st2-crit-sub { font-size: var(--fs-k16); gap: 2px 12px; }
+  .st2--narrow .st2-crit-fig b { font-size: var(--fs-k18); -webkit-text-stroke: 3px #000; }
+  .st2--narrow .st2-crit-fig i { font-size: var(--fs-k13); }
+
+  .st2--narrow .st2-life-k,
+  .st2--narrow .st2-life-cell { min-height: clamp(44px, 8vh, 60px); padding: 3px 0; gap: 2px; }
+  .st2--narrow .st2-life-k { flex-flow: row wrap; align-content: center; column-gap: 6px; font-size: var(--fs-k16); }
+  .st2--narrow .st2-life-more { margin-top: 2px; font-size: var(--fs-k13); line-height: 1.2; }
+  .st2--narrow .st2-life-v { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; }
+  .st2--narrow .st2-life-l { font-size: var(--fs-k13); }
 }

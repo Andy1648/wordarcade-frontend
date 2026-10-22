@@ -14,10 +14,12 @@
 // (class on .sr-app); clear/miss = an SFX burst that breaks past the edge. Every
 // state still carries a text label. The root .sr-card class is load-bearing (juice
 // centres bursts on it and the wrong-key shake keys off .sr-card.shake).
+import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
 import { useEffect, useRef } from 'react';
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
-import { speakFr, canSpeak, withArticle } from './speak';
+import { speakFr, canSpeak, withArticle, autoSpeakOn } from './speak';
+import EnglishLine from './EnglishLine';
 
 // The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
 // flow flashed the word for half a second; this teaches instead — the SENTENCE
@@ -32,7 +34,8 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
   // FRENCH RUSH: the word is said aloud as the card lands (once per card), and can be replayed
   const said = useRef(false);
   useEffect(() => {
-    if (speak && !said.current) {
+    // auto-say can be switched off (a CLASS ROOM teacher's choice); the 🔊 button always works
+    if (speak && !said.current && autoSpeakOn()) {
       said.current = true;
       speakFr(word);
     }
@@ -60,8 +63,8 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
         <mark className="sr-brief-fill">{word}</mark>
         {after}”
       </p>
-      {/* FRENCH RUSH: the example's English, so a struggling student can read what it said */}
-      {contextEn && <p className="sr-reencode-en">{contextEn}</p>}
+      {/* FRENCH RUSH: the example's English, on request (a struggling student can still read it) */}
+      <EnglishLine text={contextEn} className="sr-reencode-en" />
       {cousin && (
         <p className="sr-reencode-cousin">
           same root as <b>{cousin}</b>
@@ -304,6 +307,7 @@ export default function WordCard({ view, onHint, onSkip, onContinue }) {
 
       {/* Mugshot slots, centred. */}
       <div className="sr-slotwrap">
+        <UnlistedSlot />
         {/* wrong key: a tiny "TCH!" tick near the typing row (re-keyed per reject) */}
         {fx.badKey ? (
           <span className="sr-tch" key={`tch-${fx.badKey}`} aria-hidden="true">

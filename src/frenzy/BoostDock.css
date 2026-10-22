@@ -99,3 +99,22 @@
 }
 @media (max-width: 760px) { .boost-dock { display: none; } }
 @media (prefers-reduced-motion: reduce) { .bd-tile, .bd-tile.is-ending, .bd-tile.is-bumped { animation: none; } .bd-fill { transition: none; } }
+
+/* ===== BOOST TIMERS NEVER COVER THE PROFILE CHIP (Andy oct19 "the boosters are overlapping on right side of screen") =====
+   The dock lived in rows 2-3 of the right column and grew UPWARD with every running boost, so at 6 boosts its top tile
+   covered the profile chip (1366x768, 1280x800, 1280x720) and long names clipped ("OVERDR…"). It now owns ONLY the cards
+   row, under the chip, and the tiles go compact: a 34px badge, the full name, ×N + what on one line, the clock beside. */
+@media (min-width: 1200px) {
+  .homepage-stage[data-paged] .hp-dock--grid { grid-row: 3; align-self: end; }
+  .hp-dock .boost-dock { gap: 6px; }
+  .hp-dock .bd-tile { grid-template-columns: 34px minmax(0, 1fr) auto; column-gap: 8px; row-gap: 0; padding: 5px 10px 10px 5px; }
+  .hp-dock .bd-badge { width: 34px; height: 34px; border-width: 2px; }
+  .hp-dock .bd-badge svg { width: 22px; height: 22px; }
+  .hp-dock .bd-name { font-size: calc(var(--fs-label) * 1.15); }
+  .hp-dock .bd-what { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-label); }
+  .hp-dock .bd-clock { font-size: calc(var(--fs-body) * 1.05); }
+  .hp-dock .bd-bar { height: 5px; }
+  .hp-dock .bd-tile.bd-hero { padding-bottom: 11px; }
+  .hp-dock .bd-hero .bd-clock { font-size: calc(var(--fs-body) * 1.15); }
+  .hp-dock .bd-hero .bd-bar { height: 6px; }
+}

@@ -72,3 +72,33 @@
   /* "OVERDRIVE" is 9 letters: one step down so the slab never runs past a 360px screen */
   .frenzy-burst.is-overdrive .frenzy-slab-title { font-size: var(--fs-h1); }
 }
+
+/* JUICE P2 — the hero POWER-UP: the painted burst opens behind, the painted WIN pose stands on the slab (its feet
+   tucked behind the slab's top edge). Both rest hidden; FrenzyBurst.jsx plays them once. */
+.frenzy-hero-burst {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  width: min(62vmin, 480px);
+  height: min(62vmin, 480px);
+  object-fit: contain;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+}
+.frenzy-hero {
+  position: absolute;
+  left: 50%;
+  /* the slab's centre sits at 54% from the bottom; the feet tuck ~20px behind its top edge */
+  bottom: calc(54% + 45px);
+  height: min(38vh, 380px);
+  width: auto;
+  object-fit: contain;
+  transform-origin: 50% 100%;
+  opacity: 0;
+  transform: translate(-50%, 0);
+}
+.frenzy-slab { z-index: 1; }
+@media (max-width: 480px) {
+  .frenzy-hero { bottom: calc(54% + 30px); height: min(58vmin, 38vh); }
+  .frenzy-hero-burst { top: 29%; width: 84vmin; height: 84vmin; }
+}

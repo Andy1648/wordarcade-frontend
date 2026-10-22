@@ -1,0 +1,12 @@
+/* UnlistedSlot.css — the stamp's anchor in the modes without a reaction slot: centred just ABOVE its host (the input /
+   typing row, position:relative), absolute so it never moves the layout. No animation here — UnlistedStamp owns its
+   one-shot frames. */
+.uls-slot {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  z-index: 6;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}

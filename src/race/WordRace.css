@@ -345,6 +345,7 @@
 }
 
 .wr-form {
+  position: relative; /* anchors the UNLISTED stamp (UnlistedSlot) */
   display: flex;
   gap: 8px;
   width: min(520px, 100%);

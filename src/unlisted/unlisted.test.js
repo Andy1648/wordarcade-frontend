@@ -9,7 +9,6 @@ import {
   SECRETS_FOUND_KEY,
 } from './unlisted.js';
 import { doublePairs, createWordTracker } from './seasonSecret.js';
-import { isTripleDouble, TRIPLE_DOUBLE_WORDS } from './tripleDouble.js';
 import { emitReveal, subscribeReveal, patchRevealSerial, peekReveal, clearReveal } from './revealBus.js';
 import { claimSerial } from './serial.js';
 import { SECRETS } from '../secrets/secrets.js';
@@ -21,12 +20,11 @@ function mem(init = {}) {
 const T = Date.UTC(2026, 9, 17, 12);
 
 // ------------------------------------------------------------------------------------------- catalog
-test('six gears: two word-secrets, three ACCEPTED-word feats, one season gear; ids pass the showcase id rule', () => {
+test('six gears, all found by ACCEPTED words (no word-secret grants one), one season gear; ids pass the showcase rule', () => {
   assert.equal(UNLISTED_GEARS.length, 6);
-  for (const sid of ['newgrounds', 'midas']) assert.ok(gearForSecret(sid), `secret ${sid} grants a gear`);
-  // oct18 + oct19 (Andy "WAY too easy … typewriter and mirror"): their word-secrets still pay, never the gear
-  for (const sid of ['typewriter', 'wish', 'palindrome']) assert.equal(gearForSecret(sid), null, `secret ${sid} no longer grants a gear`);
-  for (const sid of ['typewriter', 'wish', 'palindrome']) assert.ok(Object.keys(SECRETS).includes(sid), `the ${sid} secret itself stays`);
+  // oct20 (Andy "make accepted words count (not just randomly typing)"): the secrets still pay their Wins, never a gear
+  for (const sid of Object.keys(SECRETS)) assert.equal(gearForSecret(sid), null, `secret ${sid} grants no gear`);
+  for (const g of UNLISTED_GEARS) assert.equal(g.secret, null, g.id);
   assert.equal(UNLISTED_GEARS.filter((g) => g.season != null).length, 1);
   for (const g of UNLISTED_GEARS) {
     assert.match(g.id, /^mk-[a-z0-9-]{1,24}$/, 'lb_showcase_set keeps only ^mk-[a-z0-9-]{1,24}$');
@@ -69,9 +67,9 @@ test('grant survives blocked storage (no throw)', () => {
   assert.doesNotThrow(() => grantUnlisted('mk-ul-og', { storage: bad }));
 });
 
-test('back-fill: secrets found before the tier existed grant their gear once; the season gear is never back-filled', () => {
+test('back-fill: retired — an old typed secret never grants a gear (oct20: accepted words only)', () => {
   const s = mem({ [SECRETS_FOUND_KEY]: JSON.stringify({ found: ['newgrounds', 'palindrome', 'tripledouble', 'typewriter', 'wish', 'nope'] }) });
-  assert.deepEqual(bootUnlisted({ storage: s, now: T }).sort(), ['mk-ul-og'], 'MIRROR / TYPEWRITER / WISHBONE are never back-filled from an old secret');
+  assert.deepEqual(bootUnlisted({ storage: s, now: T }), [], 'no gear is back-filled from an old (typed, not accepted) secret');
   assert.deepEqual(bootUnlisted({ storage: s, now: T }), [], 'idempotent');
   assert.deepEqual(grantForPastSecrets(['tripledouble'], { storage: s }), []);
   assert.deepEqual(bootUnlisted({ storage: mem() }), []);
@@ -168,14 +166,12 @@ test('normalize repairs junk', () => {
 });
 
 // ------------------------------------------------------------------------------------------- season detector
-test('TRIPLE DOUBLE: three separate double pairs, real words only', () => {
+test('TRIPLE DOUBLE: three separate double pairs (the game dictionary is the real-word check now)', () => {
   assert.equal(doublePairs('bookkeeper'), 3);
+  assert.equal(doublePairs('committee'), 3);
+  assert.equal(doublePairs('keenness'), 3);
+  assert.equal(doublePairs('coffee'), 2);
   assert.equal(doublePairs('aaa'), 1);
-  assert.ok(isTripleDouble('BOOKKEEPER'));
-  assert.ok(isTripleDouble('committee'));
-  assert.ok(!isTripleDouble('coffee'), 'two pairs is not enough');
-  assert.ok(!isTripleDouble('aabbcc'), 'gibberish is not a find');
-  for (const w of TRIPLE_DOUBLE_WORDS) assert.ok(doublePairs(w) >= 3, w);
 });
 
 test('word tracker: a boundary closes the word; backspace edits; modifiers ignored', () => {

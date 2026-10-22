@@ -1,0 +1,58 @@
+/* XpEarned.css — the end-card "+N XP" line: the gems line's shape (Gems.css .gems-earned) in the XP bar's yellow, with
+   a darker-yellow outline (house rule: coloured outlines, hard black offset). Flat; nothing animates. */
+.xp-earned {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  row-gap: 4px;
+  margin: 6px auto 0;
+  padding: 6px 12px;
+  width: fit-content;
+  max-width: 100%;
+  background: #1a0b2e;
+  border: 3px solid #a8901a;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: #ffe94a;
+  font-size: var(--fs-body);
+  line-height: 1;
+  white-space: nowrap;
+}
+.xp-earned-hex { display: block; width: 22px; height: 22px; object-fit: contain; flex: none; }
+.xp-earned-label { font-size: var(--fs-label); letter-spacing: 0.06em; }
+/* the level chip: only when the game crossed a level */
+.xp-earned-lv {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+  color: #0d0618;
+  background: #ffe94a;
+  border: 2px solid #a8901a;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+/* compact form in the Blitz game-over card's earned row: XP stacks over GEMS in one column beside the wins
+   (.go-earned-side), so adding XP never makes the row taller than the wins block */
+.go-earned-side { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.go-earned-row .xp-earned {
+  margin: 0;
+  padding: 0 8px;
+  gap: 6px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 #000;
+}
+.go-earned-row .xp-earned .xp-earned-hex { width: 16px; height: 16px; }
+/* SAT RUSH's printed page: the wins line's ink voice (SatRush.css .sr-winsline), its own class */
+.xp-earned-print { text-align: center; }
+.xp-earned-print b { margin-right: 6px; }
+/* CHAIN / FUSE run-over card: XP and GEMS side by side on ONE row — the compact chip form the Blitz card uses (thin
+   rule, 16px icon), so the two still share a line at 360px and the XP never adds a row to the card */
+.solo-earned-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 8px; margin-top: 6px; }
+.solo-earned-row > .xp-earned,
+.solo-earned-row > .gems-earned { margin: 0; padding: 3px 8px; gap: 6px; border-width: 2px; box-shadow: 2px 2px 0 #000; }
+.solo-earned-row > .xp-earned .xp-earned-hex,
+.solo-earned-row > .gems-earned .gem-icon { width: 16px; height: 16px; }

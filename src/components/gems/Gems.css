@@ -75,11 +75,11 @@
   margin: 0;
 }
 .go-earned-row > .wins-earned { margin: 4px 0 6px; }
-.go-earned-row > .gems-earned {
+.go-earned-row .gems-earned {
   margin: 0;
   padding: 0 8px;
   gap: 6px;
   border-width: 2px;
   box-shadow: 2px 2px 0 #000;
 }
-.go-earned-row > .gems-earned .gem-icon { width: 16px; height: 16px; }
+.go-earned-row .gems-earned .gem-icon { width: 16px; height: 16px; }
