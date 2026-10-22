@@ -116,7 +116,9 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(card(page).locator('.rs-card-stat')).toHaveText(/^(?:[+×][\d.,]+(?:s|%|×)?|EVERY \S+) [A-Z]/);
   // finite: once landed nothing animates, nothing loops, will-change is off
   await page.waitForTimeout(3600);
-  expect(await rollUiAnims(page)).toBe(0);
+  // a loaded CI runner can still be finishing the last one-shot at 3.6 s — it must SETTLE to zero (the infinite check below
+  // is what proves nothing loops), so give it up to 4 s more
+  await expect.poll(() => rollUiAnims(page), { timeout: 4000 }).toBe(0);
   const infinite = await page.evaluate(() => document.getAnimations().filter((a) => {
     const t = a.effect && a.effect.getTiming && a.effect.getTiming();
     // GEAR TURN (Andy oct11): the cog's turn + the glyph's bob are the one sanctioned rest loop on a gear

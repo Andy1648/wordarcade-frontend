@@ -5,7 +5,7 @@
 // Tapping a card opens HeroPreview on that variant, where the variant tabs (RIOT / GOLD / ELITE) preview the ones you
 // don't own — with their requirement or gem price and the one button that gets them. ‹ › flip members.
 import { useEffect, useState } from 'react';
-import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, heroGateMet, goldProgress } from './cast.js';
+import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, heroGateMet, goldProgress, limitedDaysLeft } from './cast.js';
 import { buyHero } from './heroShop.js';
 import HeroCard from './HeroCard.jsx';
 import FitText from '../components/kit/FitText.jsx';
@@ -16,7 +16,9 @@ import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
 import './HeroPicker.css';
 
-const MEMBERS = [...CAST, ...NEW_CREW, ...LEGEND]; // one card each, the grid's (and ‹ ›'s) order
+// one card each, the grid's (and ‹ ›'s) order — a LIMITED hero still on sale leads the grid (its clock is the point)
+const ON_SALE = LEGEND.filter((h) => h.limited && limitedDaysLeft(h.id));
+const MEMBERS = [...ON_SALE, ...CAST, ...NEW_CREW, ...LEGEND.filter((h) => !ON_SALE.includes(h))];
 const ALL = [...MEMBERS, ...GOLD, ...ELITE];
 /** A member's variants, base first: [base, GOLD?, ELITE?]. */
 export const variantsOf = (m) => [m, GOLD.find((g) => g.base === m.id), ELITE.find((e) => e.base === m.id)].filter(Boolean);
@@ -43,6 +45,8 @@ function Status({ m, current }) {
 function cardReq(m) {
   const u = HERO_UNLOCK[m.id];
   if (!u || ownsHero(m.id)) return null;
+  // LIMITED (HOLLOW): the clock while it's on sale, then gone for good
+  if (u.until != null) { const d = limitedDaysLeft(m.id); return d ? { icon: 'clock', label: `ENDS IN ${d}D` } : { lock: true, label: 'GONE FOREVER' }; }
   if (u.gate) return heroGateMet(m.id) ? null : { lock: true, label: u.label };
   return { icon: u.icon, label: u.label };
 }
