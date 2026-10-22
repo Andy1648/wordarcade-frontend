@@ -29,7 +29,7 @@
   flex: 1 1 auto; min-height: 96px; max-height: 226px; overflow-y: auto; overflow-x: hidden;
   background: #0a1424; border: 3px solid #000; border-radius: 12px;
   box-shadow: 4px 4px 0 #000, inset 0 4px 14px rgba(0, 0, 0, 0.62);
-  padding: 16px;
+  padding: 10px 8px;
   --sb-thumb: #274063; --sb-thumb-hover: #365a86; /* the house scrollbar (index.css) in the pack window's blue */
 }
 .ppp-window-scroll::-webkit-scrollbar-track { margin: 8px 0; } /* clear of the window's rounded corners */
@@ -41,7 +41,7 @@
    columns and lets the ellipsized labels shrink. */
 /* auto-fill + minmax(128px,1fr): 3 columns on wide dialogs, 2 on a phone — so pill
    labels always have room instead of collapsing to 0 and clipping (fix/qa-sweep §7). */
-.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 112px), 1fr)); /* 112: a sticker + its one-line name (WORDPLAY/HOLIDAYS is the longest at 16px mono) — three across on a phone */ gap: 10px 8px; width: 100%; }
+.ppp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 80px), 1fr)); /* 80: a small sticker + its one-line 16px name (WORDPLAY is the longest, ~77px). Six across in the 660px dialog (two rows hold all 11, no scroll), three on a phone. Andy oct21: the dialog stays the same card as every other mode; the stickers shrink to fit it, not the other way round. */ gap: 6px 4px; width: 100%; }
 
 /* ============================ MOTION KEYFRAMES ============================ */
 /* ONE select-pop — a ~180ms overshoot on toggle. */
@@ -58,9 +58,9 @@
    hard drop shadow (filter is never animated; only transform/opacity transition).
    :active presses it flat into the board. */
 .ppp-pill {
-  --sticker-h: 74px;
+  --sticker-h: clamp(38px, 7.6vh, 66px); /* follows the viewport height so two rows fit from a 1093x526 Chromebook up */
   position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%;
-  min-height: var(--tap-min); padding: 6px 4px 4px; cursor: pointer; text-align: center;
+  min-height: var(--tap-min); padding: 4px 2px 2px; cursor: pointer; text-align: center;
   background: none; border: 0; border-radius: 8px; color: inherit;
   transform: rotate(var(--tilt, 0deg));
   transition: transform 0.2s cubic-bezier(0.34, 1.6, 0.5, 1), opacity 0.14s linear;
@@ -78,18 +78,18 @@
 /* The pack name under its sticker: white mono with a black stroke + hard shadow (below the
    28px display floor, so mono, not Bungee). One line; the column is sized so the longest fits. */
 .ppp-pill-label { max-width: 100%; font-family: 'Space Mono', monospace; text-transform: uppercase; font-weight: 700;
-  letter-spacing: 0.02em; font-size: var(--fs-body) /* floor: tappable text is never below 16px */; line-height: 1.05;
+  letter-spacing: 0; font-size: 16px /* the tappable-text floor, fixed so WORDPLAY fits its 80px column */; line-height: 1.05;
   color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000;
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 /* Per-pack category count — a yellow price-tag chip stuck on the sticker's top-right. */
 .ppp-pill-count { position: absolute; top: 0; right: 4px; font-family: 'Space Mono', monospace; letter-spacing: 0.04em;
-  font-weight: 700; font-size: var(--fs-label); line-height: 1; padding: 3px 5px; border-radius: 5px;
+  font-weight: 700; font-size: var(--fs-label); line-height: 1; padding: 2px 4px; border-radius: 5px;
   color: #000; background: #FFE94A; border: 2px solid #000; box-shadow: 2px 2px 0 #000; transform: rotate(6deg); }
 
 /* ON marker — a black disc with a cyan check, on the sticker's top-left. */
-.ppp-check { position: absolute; top: 0; left: 4px; width: 24px; height: 24px; background: #000; border: 2px solid #2EFFE0; border-radius: 50%; display: grid; place-items: center; pointer-events: none; }
-.ppp-check svg { width: 15px; height: 15px; display: block; }
+.ppp-check { position: absolute; top: 0; left: 2px; width: 20px; height: 20px; background: #000; border: 2px solid #2EFFE0; border-radius: 50%; display: grid; place-items: center; pointer-events: none; }
+.ppp-check svg { width: 13px; height: 13px; display: block; }
 
 /* ============================ FOOTER COUNT ============================ */
 .ppp-count { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-body); letter-spacing: 0.1em; color: #c8d6ec; margin-bottom: 4px; text-align: center; min-height: 1.2em; }
@@ -139,3 +139,24 @@
 .ppp-round:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #000; }
 .ppp-round.is-on { background: #3DA8FF; color: #000; }
 @media (prefers-reduced-motion: reduce) { .ppp-round { transition: none; } }
+
+/* ============================ SHORT LAPTOPS (Chromebooks) ============================ */
+/* A 1366x768 Chromebook's browser viewport is ~1366x657, or 1093x526 at the default 125% scaling. The card keeps
+   its normal size (Andy oct21: the same card as every other mode), so the picker gives back height instead:
+   ROUNDS and the pack count share one row, and the rules line stays on one line. Two sticker rows then fit. */
+@media (min-width: 481px) and (max-height: 700px) {
+  .ppp-picker { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto minmax(0, 1fr) auto; }
+  .ppp-subline, .ppp-window { grid-column: 1 / -1; }
+  .ppp-subline { margin: 0 0 6px; }
+  .ppp-window { margin-bottom: 8px; }
+  .ppp-rounds { margin: 0; justify-content: flex-start; }
+  .ppp-count { margin: 0; align-self: center; text-align: right; }
+  .mode-dialog-content:has(.ppp-picker) .mode-dialog-liner { max-width: none; }
+}
+/* ...and at 125% scaling (1093x526) the SOLO/MULTI chip steps out and the stickers drop to 32px, so the second row
+   still fits inside the normal card. */
+@media (min-width: 481px) and (max-height: 600px) {
+  .mode-dialog-content:has(.ppp-picker) .mode-dialog-chip { display: none; }
+  .ppp-pill { --sticker-h: 32px; padding-top: 2px; }
+  .ppp-grid { row-gap: 2px; }
+}
