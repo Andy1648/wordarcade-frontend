@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menu v3</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Bungee+Shade&amp;family=Bungee+Inline&amp;family=Space+Mono:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Mono',monospace;color:#fff;background:#0d0618}
+@keyframes v3Pop{0%{transform:translate(-50%,0) scale(.6);opacity:1}18%{transform:translate(-50%,-30%) scale(1.15);opacity:1}100%{transform:translate(-50%,-190%) scale(1);opacity:0}}
+@keyframes v3BumpA{0%{transform:scale(1,1)}30%{transform:scale(1.012,1.14)}100%{transform:scale(1,1)}}
+@keyframes v3BumpB{0%{transform:scale(1,1)}30%{transform:scale(1.012,1.14)}100%{transform:scale(1,1)}}
+@keyframes v3Lv{0%{transform:scale(1)}35%{transform:scale(1.3) rotate(-4deg)}100%{transform:scale(1)}}
+@keyframes v3Lv2{0%{transform:scale(1)}35%{transform:scale(1.3) rotate(-4deg)}100%{transform:scale(1)}}
+@keyframes v3Spin{to{transform:rotate(360deg)}}
+@keyframes v3Dot{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes v3Sheen{0%{transform:translateX(-140%) skewX(-20deg)}60%,100%{transform:translateX(900%) skewX(-20deg)}}
+.v3-pop{position:absolute;bottom:100%;animation:v3Pop .85s cubic-bezier(.2,.8,.3,1) forwards;pointer-events:none;white-space:nowrap;font-family:'Bungee',sans-serif;-webkit-text-stroke:5px #000;paint-order:stroke fill}
+.v3-bumpA{animation:v3BumpA .22s cubic-bezier(.2,1.4,.4,1)}
+.v3-bumpB{animation:v3BumpB .22s cubic-bezier(.2,1.4,.4,1)}
+.v3-lv{display:inline-block;animation:v3Lv .4s cubic-bezier(.2,1.4,.4,1)}
+.v3-lv.v3-lv2{animation-name:v3Lv2}
+.v3-spin{animation:v3Spin 14s linear infinite;transform-origin:60px 60px}
+.v3-dot{animation:v3Dot 1.2s ease-in-out infinite}
+.v3-sheen{position:absolute;top:0;bottom:0;width:10%;background:rgba(255,255,255,.35);animation:v3Sheen 3.2s ease-in-out infinite;pointer-events:none}
+.v3-out{-webkit-text-stroke:4px #000;paint-order:stroke fill}
+.v3-btn{transition:transform .07s, box-shadow .07s;cursor:pointer}
+.v3-btn:hover{transform:translate(-2px,-3px)}
+.v3-btn:active,.v3-btn.v3-down{transform:translate(5px,5px) !important;box-shadow:0 0 0 #000 !important}
+.v3-off{opacity:.3;pointer-events:none}
+button{font:inherit;color:inherit;padding:0;margin:0}
+</style>
+</helmet>
+<div style="width: {{L.W}}px; height: {{L.H}}px; position: relative; overflow: hidden; background: #0d0618">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-28deg, transparent 0 {{L.st1}}px, rgba(92,15,163,.10) {{L.st1}}px {{L.st2}}px); pointer-events: none"></div>
+
+<!-- demo toggles: top-left corner -->
+<div data-box="toggle" style="position: absolute; left: {{L.pad}}px; top: 4px; height: 22px; display: flex; gap: 6px; align-items: center; z-index: 5">
+<sc-for list="{{toggles}}" as="g" hint-placeholder-count="4">
+<button onClick="{{g.pick}}" style="height: 22px; padding: 0 8px; background: {{g.bg}}; border: 2px solid #000; font-family: 'Bungee', sans-serif; font-size: 13px; line-height: 1; color: {{g.c}}; cursor: pointer">{{g.label}}</button>
+</sc-for>
+</div>
+
+<!-- ================= LEFT RAIL ================= -->
+<div style="position: absolute; left: {{L.pad}}px; top: {{L.railY}}px; width: {{L.railW}}px; height: {{L.railH}}px; display: flex; flex-direction: column; gap: {{L.gapR}}px">
+
+<!-- currencies -->
+<div style="flex: none; display: flex; gap: {{L.gapR}}px; height: {{L.pillH}}px">
+<sc-for list="{{pills}}" as="p" hint-placeholder-count="2">
+<div data-box="{{p.key}}" class="{{p.bump}}" style="position: relative; flex: 1; min-width: 0; box-sizing: border-box; display: flex; align-items: center; gap: {{L.u8}}px; padding: 0 {{L.u12}}px 0 {{L.u8}}px; background: #1a0b2e; border: {{L.b4}}px solid #000; border-bottom: {{L.b8}}px solid {{p.edge}}; box-shadow: {{L.b5}}px {{L.b5}}px 0 #000">
+<svg viewBox="0 0 100 100" width="{{L.pillIco}}" height="{{L.pillIco}}" aria-hidden="true" style="flex: none; overflow: visible; filter: drop-shadow(2px 2px 0 #000)"><g stroke="#0d0618" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{p.coin}}" hint-placeholder-val="{{ true }}"><g transform="rotate(-12 50 50)"><circle cx="50" cy="50" r="42" fill="#FFE94A"></circle><path d="M50 92 A42 42 0 0 0 92 50 L80 50 A30 30 0 0 1 50 80 Z" fill="#F2A900" stroke="none"></path><circle cx="50" cy="50" r="42" fill="none"></circle><circle cx="50" cy="50" r="29" fill="none" stroke-width="5"></circle><path d="M36 38 L64 38 M50 38 L50 66" stroke-width="10"></path><path d="M17 44 C18 32 26 21 38 16" stroke="#fff" stroke-width="7" fill="none"></path></g></sc-if>
+<sc-if value="{{p.gem}}" hint-placeholder-val="{{ false }}"><g transform="rotate(9 50 50)"><path d="M28 12 L72 12 L92 38 L50 92 L8 38 Z" fill="#2EFFE0" stroke="none"></path><path d="M62 38 L92 38 L50 92 Z" fill="#12A99A" stroke="none"></path><path d="M72 12 L92 38 L62 38 Z" fill="#12A99A" stroke="none"></path><path d="M28 12 L72 12 L92 38 L50 92 L8 38 Z" fill="none"></path><path d="M8 38 L92 38 M28 12 L38 38 L50 12 L62 38 L72 12 M38 38 L50 92 L62 38" stroke-width="5" fill="none"></path><path d="M26 22 L18 33" stroke="#fff" stroke-width="7" fill="none"></path></g></sc-if>
+</g></svg>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1">
+<span class="v3-out" style="font-family: 'Bungee', sans-serif; font-size: {{L.fPill}}px; color: #fff">{{p.value}}</span>
+<span style="margin-top: 3px; font-family: 'Bungee', sans-serif; font-size: {{L.fCap}}px; color: {{p.edge}}; letter-spacing: .06em">{{p.label}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+
+<!-- 2x2 tiles -->
+<div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; grid-auto-flow: column; gap: {{L.gapR}}px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+<button data-box="{{t.key}}" class="v3-btn {{t.down}}" onClick="{{t.press}}" aria-label="{{t.label}}" style="position: relative; min-width: 0; min-height: 0; box-sizing: border-box; text-align: left; border: {{L.b5}}px solid #000; box-shadow: {{L.b6}}px {{L.b6}}px 0 #000; background: {{t.face}}; overflow: visible; display: block">
+
+<!-- ===== A: dark tile, colour spine, icon chip, label, value ===== -->
+<sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: {{L.spine}}px; background: {{t.accent}}; border-bottom: 3px solid #000"></div>
+<div style="position: absolute; inset: 0; padding: {{L.tPadTop}}px {{L.u12}}px {{L.u10}}px {{L.u12}}px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between">
+<div style="display: flex; align-items: flex-start; justify-content: space-between">
+<div style="width: {{L.chip}}px; height: {{L.chip}}px; box-sizing: border-box; background: {{t.chipBg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; display: flex; align-items: center; justify-content: center; transform: rotate(-4deg)">
+<svg viewBox="0 0 100 100" width="{{L.chipIco}}" height="{{L.chipIco}}" aria-hidden="true" style="overflow: visible; filter: drop-shadow(2px 2px 0 #000)">
+<g stroke="#0d0618" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{t.i.up}}" hint-placeholder-val="{{ false }}"><path d="M12 80 L50 56 L88 80 L88 96 L50 72 L12 96 Z" fill="#FF3D7F"></path><path d="M12 52 L50 28 L88 52 L88 68 L50 44 L12 68 Z" fill="#FF3D7F"></path><path d="M12 24 L50 0 L88 24 L88 40 L50 16 L12 40 Z" fill="#FFE94A"></path><path d="M22 24 L46 9" stroke="#fff" stroke-width="5" fill="none"></path></sc-if>
+<sc-if value="{{t.i.dice}}" hint-placeholder-val="{{ false }}"><path d="M12 34 L30 16 L84 16 L66 34 Z" fill="#2EFFE0"></path><path d="M12 34 L66 34 L66 88 L12 88 Z" fill="#2EFFE0"></path><path d="M66 34 L84 16 L84 70 L66 88 Z" fill="#12A99A"></path><circle cx="25" cy="47" r="6" fill="#0d0618" stroke-width="2"></circle><circle cx="39" cy="61" r="6" fill="#0d0618" stroke-width="2"></circle><circle cx="53" cy="75" r="6" fill="#0d0618" stroke-width="2"></circle><ellipse cx="48" cy="25" rx="8" ry="4.5" fill="#0d0618" stroke-width="2"></ellipse></sc-if>
+<sc-if value="{{t.i.book}}" hint-placeholder-val="{{ false }}"><rect x="12" y="14" width="66" height="80" rx="5" fill="#FF3D7F"></rect><path d="M62 14 L73 14 Q78 14 78 19 L78 89 Q78 94 73 94 L62 94 Z" fill="#C2185B" stroke="none"></path><rect x="12" y="14" width="66" height="80" rx="5" fill="none"></rect><path d="M24 14 L24 94" stroke-width="5"></path><circle cx="48" cy="52" r="16" fill="#fff"></circle><path d="M48 41 L57 52 L48 63 L39 52 Z" fill="#B04BFF" stroke-width="5"></path><path d="M86 22 L92 24 L92 90 L86 92 Z" fill="#fff"></path></sc-if>
+<sc-if value="{{t.i.loop}}" hint-placeholder-val="{{ false }}"><path d="M60.3 23.8 A30 30 0 1 1 21.8 41.7" stroke="#0d0618" stroke-width="28" fill="none"></path><path d="M60.3 23.8 A30 30 0 1 1 21.8 41.7" stroke="#D88BFF" stroke-width="15" fill="none"></path><path d="M38.7 47.9 L4.9 35.5 L29.3 17 Z" fill="#D88BFF"></path><circle cx="50" cy="52" r="9" fill="#FFE94A" stroke-width="5"></circle></sc-if>
+<sc-if value="{{t.i.lock}}" hint-placeholder-val="{{ false }}"><path d="M30 46 L30 30 C30 8 70 8 70 30 L70 46" stroke="#0d0618" stroke-width="20" fill="none"></path><path d="M30 46 L30 30 C30 8 70 8 70 30 L70 46" stroke="#A9B4C8" stroke-width="8" fill="none"></path><rect x="14" y="42" width="72" height="54" rx="6" fill="#A9B4C8"></rect><path d="M60 42 L80 42 Q86 42 86 48 L86 90 Q86 96 80 96 L60 96 Z" fill="#6E7891" stroke="none"></path><rect x="14" y="42" width="72" height="54" rx="6" fill="none"></rect><circle cx="50" cy="64" r="8" fill="#0d0618"></circle><path d="M50 66 L50 82" stroke-width="9"></path></sc-if>
+</g></svg>
+</div>
+<sc-if value="{{t.dot}}" hint-placeholder-val="{{ false }}"><span class="v3-dot" style="width: {{L.dotS}}px; height: {{L.dotS}}px; border-radius: 50%; background: #FF3D7F; border: 4px solid #000; box-sizing: border-box"></span></sc-if>
+</div>
+<div style="display: flex; flex-direction: column; gap: {{L.u4}}px">
+<span class="v3-out" style="font-family: 'Bungee', sans-serif; font-size: {{L.fLabel}}px; line-height: 1; color: {{t.labelC}}; white-space: nowrap">{{t.label}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fVal}}px; line-height: 1.05; color: {{t.valC}}; white-space: nowrap">{{t.value}}</span>
+<sc-if value="{{t.sub}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Space Mono', monospace; font-size: {{L.fSub}}px; line-height: 1.1; color: {{t.subC}}; white-space: nowrap">{{t.sub}}</span></sc-if>
+<sc-if value="{{t.bar}}" hint-placeholder-val="{{ false }}"><span style="position: relative; display: block; height: {{L.mini}}px; margin-top: 2px; background: #08030f; border: 3px solid #000"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{t.barPct}}%; background: {{t.accent}}; box-shadow: inset 0 -4px 0 rgba(0,0,0,.28)"></span></span></sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- ===== B: bright slab, label band, value first ===== -->
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; top: 0; height: {{L.bandH}}px; box-sizing: border-box; padding: 0 {{L.u10}}px; background: #0d0618; display: flex; align-items: center; border-bottom: 4px solid #000">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fLabel}}px; line-height: 1; color: {{t.bandC}}; white-space: nowrap">{{t.label}}</span>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: {{L.bandH}}px; bottom: 0; box-sizing: border-box; padding: {{L.u8}}px {{L.u10}}px {{L.u10}}px {{L.u10}}px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden">
+<svg viewBox="0 0 100 100" width="{{L.bigIco}}" height="{{L.bigIco}}" aria-hidden="true" style="position: absolute; right: {{L.u6}}px; top: {{L.u6}}px; overflow: visible; transform: rotate(8deg); filter: drop-shadow(3px 3px 0 #000)">
+<g stroke="#0d0618" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{t.i.up}}" hint-placeholder-val="{{ false }}"><path d="M12 80 L50 56 L88 80 L88 96 L50 72 L12 96 Z" fill="#FF3D7F"></path><path d="M12 52 L50 28 L88 52 L88 68 L50 44 L12 68 Z" fill="#FF3D7F"></path><path d="M12 24 L50 0 L88 24 L88 40 L50 16 L12 40 Z" fill="#fff"></path></sc-if>
+<sc-if value="{{t.i.dice}}" hint-placeholder-val="{{ false }}"><path d="M12 34 L30 16 L84 16 L66 34 Z" fill="#fff"></path><path d="M12 34 L66 34 L66 88 L12 88 Z" fill="#fff"></path><path d="M66 34 L84 16 L84 70 L66 88 Z" fill="#cfc6e0"></path><circle cx="25" cy="47" r="6" fill="#0d0618" stroke-width="2"></circle><circle cx="39" cy="61" r="6" fill="#0d0618" stroke-width="2"></circle><circle cx="53" cy="75" r="6" fill="#0d0618" stroke-width="2"></circle><ellipse cx="48" cy="25" rx="8" ry="4.5" fill="#0d0618" stroke-width="2"></ellipse></sc-if>
+<sc-if value="{{t.i.book}}" hint-placeholder-val="{{ false }}"><rect x="12" y="14" width="66" height="80" rx="5" fill="#fff"></rect><path d="M24 14 L24 94" stroke-width="5"></path><circle cx="48" cy="52" r="16" fill="#FF3D7F"></circle><path d="M48 41 L57 52 L48 63 L39 52 Z" fill="#FFE94A" stroke-width="5"></path></sc-if>
+<sc-if value="{{t.i.loop}}" hint-placeholder-val="{{ false }}"><path d="M60.3 23.8 A30 30 0 1 1 21.8 41.7" stroke="#0d0618" stroke-width="28" fill="none"></path><path d="M60.3 23.8 A30 30 0 1 1 21.8 41.7" stroke="#fff" stroke-width="15" fill="none"></path><path d="M38.7 47.9 L4.9 35.5 L29.3 17 Z" fill="#fff"></path></sc-if>
+<sc-if value="{{t.i.lock}}" hint-placeholder-val="{{ false }}"><path d="M30 46 L30 30 C30 8 70 8 70 30 L70 46" stroke="#0d0618" stroke-width="20" fill="none"></path><path d="M30 46 L30 30 C30 8 70 8 70 30 L70 46" stroke="#A9B4C8" stroke-width="8" fill="none"></path><rect x="14" y="42" width="72" height="54" rx="6" fill="#A9B4C8"></rect><rect x="14" y="42" width="72" height="54" rx="6" fill="none"></rect><circle cx="50" cy="64" r="8" fill="#0d0618"></circle><path d="M50 66 L50 82" stroke-width="9"></path></sc-if>
+</g></svg>
+<span style="position: relative; display: flex; align-items: baseline; gap: {{L.u6}}px; white-space: nowrap; line-height: 1"><sc-if value="{{t.pre}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Bungee', sans-serif; font-size: {{L.fSubB}}px; color: {{t.smallC}}">{{t.pre}}</span></sc-if><span style="font-family: 'Bungee', sans-serif; font-size: {{L.fBig}}px; color: {{t.bigC}}; -webkit-text-stroke: {{t.bigStroke}}; paint-order: stroke fill">{{t.big}}</span><span style="font-family: 'Bungee', sans-serif; font-size: {{L.fSubB}}px; color: {{t.smallC}}">{{t.unit}}</span></span>
+<span style="position: relative; margin-top: {{L.u4}}px; font-family: 'Bungee', sans-serif; font-size: {{L.fSubB}}px; line-height: 1.1; color: {{t.smallC}}; white-space: nowrap">{{t.small}}</span>
+<sc-if value="{{t.bar}}" hint-placeholder-val="{{ false }}"><span style="position: relative; display: block; height: {{L.mini}}px; margin-top: {{L.u4}}px; background: #08030f; border: 3px solid #000"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{t.barPct}}%; background: {{t.accent}}"></span></span></sc-if>
+</div>
+<sc-if value="{{t.dot}}" hint-placeholder-val="{{ false }}"><span class="v3-dot" style="position: absolute; top: -{{L.u14}}px; right: -{{L.u14}}px; width: {{L.dotS}}px; height: {{L.dotS}}px; border-radius: 50%; background: #FF3D7F; border: 4px solid #000; box-sizing: border-box"></span></sc-if>
+</sc-if>
+</button>
+</sc-for>
+</div>
+
+<!-- equipped gear -->
+<button data-box="gear" class="v3-btn {{gear.down}}" onClick="{{gear.press}}" style="position: relative; flex: none; height: {{L.gearH}}px; box-sizing: border-box; display: flex; align-items: center; gap: {{L.u12}}px; padding: 0 {{L.u12}}px 0 {{L.u8}}px; background: {{gear.face}}; border: {{L.b5}}px solid #000; border-bottom: {{L.b8}}px solid {{gear.edge}}; box-shadow: {{L.b6}}px {{L.b6}}px 0 #000; text-align: left">
+<svg viewBox="0 0 120 120" width="{{L.ring}}" height="{{L.ring}}" aria-hidden="true" style="flex: none; overflow: visible; filter: drop-shadow(3px 3px 0 #000)">
+<g class="{{gear.spin}}">
+<g stroke="#000" stroke-width="4" stroke-linejoin="round" fill="{{gear.ringC}}">
+<rect x="50" y="2" width="20" height="22" rx="2"></rect><rect x="50" y="2" width="20" height="22" rx="2" transform="rotate(45 60 60)"></rect><rect x="50" y="2" width="20" height="22" rx="2" transform="rotate(90 60 60)"></rect><rect x="50" y="2" width="20" height="22" rx="2" transform="rotate(135 60 60)"></rect><rect x="50" y="2" width="20" height="22" rx="2" transform="rotate(180 60 60)"></rect><rect x="50" y="2" width="20" height="22" rx="2" transform="rotate(225 60 60)"></rect><rect x="50" y="2" width="20" height="22" rx="2" transform="rotate(270 60 60)"></rect><rect x="50" y="2" width="20" height="22" rx="2" transform="rotate(315 60 60)"></rect>
+</g>
+<circle cx="60" cy="60" r="44" fill="{{gear.ringC}}" stroke="#000" stroke-width="6" stroke-dasharray="{{gear.dash}}"></circle>
+</g>
+<circle cx="60" cy="60" r="33" fill="{{gear.inner}}" stroke="#000" stroke-width="5"></circle>
+<sc-if value="{{gear.has}}" hint-placeholder-val="{{ true }}"><g transform="translate(32 30) scale(0.58) rotate(-8 50 50)" stroke="#0d0618" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"><path d="M60 6 L24 56 L46 56 L36 94 L78 38 L56 38 Z" fill="#FFE94A"></path><path d="M56 38 L78 38 L36 94 L44 60 Z" fill="#F2A900" stroke="none"></path><path d="M60 6 L24 56 L46 56 L36 94 L78 38 L56 38 Z" fill="none"></path><path d="M53 17 L35 44" stroke="#fff" stroke-width="6" fill="none"></path></g></sc-if>
+<sc-if value="{{gear.none}}" hint-placeholder-val="{{ false }}"><text x="60" y="76" text-anchor="middle" font-family="Bungee, sans-serif" font-size="46" fill="#5d4a78" stroke="#000" stroke-width="3" paint-order="stroke">?</text></sc-if>
+</svg>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: {{L.u4}}px; line-height: 1">
+<sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fCap}}px; color: {{gear.edge}}; letter-spacing: .06em">{{gear.cap}}</span>
+<span class="v3-out" style="font-family: 'Bungee', sans-serif; font-size: {{L.fGear}}px; color: #fff; white-space: nowrap">{{gear.name}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fVal}}px; color: {{gear.multC}}; white-space: nowrap">{{gear.mult}}</span>
+</sc-if>
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+<span class="v3-out" style="font-family: 'Bungee', sans-serif; font-size: {{L.fGearB}}px; color: {{gear.multC}}; white-space: nowrap">{{gear.multB}}</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fSubB}}px; color: #fff; white-space: nowrap">{{gear.nameB}}</span>
+</sc-if>
+</div>
+<sc-if value="{{gear.dot}}" hint-placeholder-val="{{ false }}"><span class="v3-dot" style="position: absolute; top: -{{L.u10}}px; right: -{{L.u10}}px; width: {{L.dotS}}px; height: {{L.dotS}}px; border-radius: 50%; background: #FF3D7F; border: 4px solid #000; box-sizing: border-box"></span></sc-if>
+</button>
+</div>
+
+<!-- ================= TOP CENTRE ================= -->
+<div data-box="logo" style="position: absolute; left: {{L.logoX}}px; top: {{L.logoY}}px; display: grid; font-size: {{L.fLogo}}px; line-height: 1; letter-spacing: .02em; transform: translateX(-50%); white-space: nowrap">
+<span style="grid-area: 1/1; font-family: 'Bungee', sans-serif; color: #2EFFE0">TYPE A WORD</span>
+<span style="grid-area: 1/1; font-family: 'Bungee Inline', 'Bungee', sans-serif; color: rgba(255,255,255,.55)">TYPE A WORD</span>
+<span style="grid-area: 1/1; font-family: 'Bungee Shade', 'Bungee', sans-serif; color: #000; letter-spacing: -.08em">TYPE A WORD</span>
+</div>
+
+<!-- top-right buttons -->
+<div style="position: absolute; right: {{L.pad}}px; top: {{L.trY}}px; display: flex; gap: {{L.trGap}}px">
+<sc-for list="{{tr}}" as="r" hint-placeholder-count="3">
+<div data-box="{{r.key}}" style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: {{L.trS}}px">
+<button class="v3-btn {{r.down}}" onClick="{{r.press}}" aria-label="{{r.label}}" style="position: relative; width: {{L.trS}}px; height: {{L.trS}}px; background: #1a0b2e; border: {{L.b4}}px solid #000; border-bottom: {{L.b6}}px solid {{r.edge}}; box-shadow: {{L.b5}}px {{L.b5}}px 0 #000; display: flex; align-items: center; justify-content: center; box-sizing: border-box">
+<svg viewBox="0 0 40 40" width="{{L.trIco}}" height="{{L.trIco}}" aria-hidden="true" style="overflow: visible; filter: drop-shadow(2px 2px 0 #000)"><g stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+<sc-if value="{{r.i.podium}}" hint-placeholder-val="{{ false }}"><rect x="14" y="8" width="12" height="28" fill="#fff"></rect><rect x="3" y="18" width="11" height="18" fill="#fff"></rect><rect x="26" y="23" width="11" height="13" fill="#fff"></rect><path d="M20 13 L20 22" stroke-width="3"></path></sc-if>
+<sc-if value="{{r.i.bars}}" hint-placeholder-val="{{ false }}"><rect x="4" y="22" width="8" height="14" fill="#fff"></rect><rect x="16" y="13" width="8" height="23" fill="#fff"></rect><rect x="28" y="5" width="8" height="31" fill="#2EFFE0"></rect></sc-if>
+<sc-if value="{{r.i.trophy}}" hint-placeholder-val="{{ false }}"><path d="M11 5 L29 5 L28 17 C27 23 23 26 20 26 C17 26 13 23 12 17 Z" fill="#FFE94A"></path><path d="M20 26 L20 31 M13 35 L27 35 L25 31 L15 31 Z" fill="#FFE94A"></path><path d="M11 8 C4 8 4 17 12 18 M29 8 C36 8 36 17 28 18" fill="none"></path><path d="M16 9 L16 16" stroke="#fff" stroke-width="2.5"></path></sc-if>
+</g></svg>
+</button>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fCap}}px; line-height: 1; color: #c9b8e8; white-space: nowrap">{{r.label}}</span>
+</div>
+</sc-for>
+</div>
+
+<!-- XP BAR -->
+<div data-box="xpbar" style="position: absolute; left: {{L.barX}}px; top: {{L.barY}}px; width: {{L.barW}}px; height: {{L.barH}}px">
+<div class="{{bumpCls}}" style="position: absolute; inset: 0; display: flex; transform-origin: 50% 50%">
+
+<sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+<div style="flex: none; height: 100%; box-sizing: border-box; padding: 0 {{L.u12}}px; display: flex; align-items: center; gap: {{L.u6}}px; background: #FFE94A; border: {{L.b5}}px solid #000; border-right: 0; box-shadow: inset 0 -{{L.u8}}px 0 #F2A900">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fLvS}}px; line-height: 1; color: #000">LV</span>
+<span class="{{lvCls}}" style="font-family: 'Bungee', sans-serif; font-size: {{L.fLv}}px; line-height: 1; color: #000">{{lvText}}</span>
+</div>
+<div style="flex: none; height: 100%; box-sizing: border-box; padding: 0 {{L.u14}}px 0 {{L.u10}}px; display: flex; align-items: center; background: #B04BFF; border: {{L.b5}}px solid #000; clip-path: polygon(0 0, 100% 0, calc(100% - {{L.u12}}px) 100%, 0 100%); margin-right: -{{L.u12}}px; position: relative; z-index: 1; box-shadow: inset 0 -{{L.u6}}px 0 #7A1FC4">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fRank}}px; line-height: 1; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill">{{rank}}</span>
+</div>
+</sc-if>
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+<div style="flex: none; width: {{L.badgeW}}px; height: 100%"></div>
+</sc-if>
+
+<div style="position: relative; flex: 1; min-width: 0; height: 100%; box-sizing: border-box; background: #08030f; border: {{L.b5}}px solid #000; box-shadow: {{L.b6}}px {{L.b6}}px 0 #000">
+<div style="position: absolute; inset: 0; overflow: hidden">
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{ghostPct}}%; background: #fff7c2; opacity: .55; transition: {{ghostTrans}}"></div>
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{fillPct}}%; background: #FFE94A; transition: {{fillTrans}}; overflow: hidden; border-right: {{fillEdge}}px solid #000; box-sizing: border-box">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 34%; background: #F2A900"></div>
+<div style="position: absolute; left: 0; right: 0; top: 14%; height: 13%; background: rgba(255,255,255,.6)"></div>
+<div class="v3-sheen"></div>
+</div>
+</div>
+<div style="position: absolute; right: {{L.u12}}px; top: 50%; transform: translateY(-50%); font-family: 'Bungee', sans-serif; font-size: {{L.fXp}}px; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; white-space: nowrap">{{xpText}}<span style="font-size: {{L.fXpS}}px; color: #FFE94A"> XP</span></div>
+<div style="position: absolute; left: 0; right: 0; top: 0; height: 0">
+<sc-for list="{{pops}}" as="p" hint-placeholder-count="0">
+<div class="v3-pop" style="left: {{p.x}}%; font-size: {{p.fs}}px; color: {{p.c}}">{{p.text}}</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+<div class="{{bumpCls}}" style="position: absolute; left: 0; top: -{{L.badgeOver}}px; width: {{L.badgeW}}px; height: {{L.badgeH}}px; z-index: 2; display: flex; flex-direction: column">
+<div style="flex: 1; box-sizing: border-box; background: #FFE94A; border: {{L.b5}}px solid #000; box-shadow: {{L.b6}}px {{L.b6}}px 0 #000, inset 0 -{{L.u8}}px 0 #F2A900; display: flex; align-items: center; justify-content: center; gap: {{L.u6}}px">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fLvS}}px; line-height: 1; color: #000">LV</span>
+<span class="{{lvCls}}" style="font-family: 'Bungee', sans-serif; font-size: {{L.fLvB}}px; line-height: 1; color: #000">{{lvText}}</span>
+</div>
+<div style="flex: none; height: {{L.rankH}}px; margin: -{{L.b5}}px {{L.u8}}px 0 {{L.u8}}px; box-sizing: border-box; background: #B04BFF; border: {{L.b4}}px solid #000; box-shadow: {{L.b4}}px {{L.b4}}px 0 #000; display: flex; align-items: center; justify-content: center">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fRank}}px; line-height: 1; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill">{{rank}}</span>
+</div>
+</div>
+</sc-if>
+</div>
+
+<!-- rate line -->
+<div data-box="rate" style="position: absolute; left: {{L.rateX}}px; top: {{L.rateY}}px; transform: translateX(-50%); display: flex; align-items: baseline; gap: {{L.u10}}px; white-space: nowrap; line-height: 1">
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fRateW}}px; color: #c9b8e8">MENU</span>
+<span class="v3-out" style="font-family: 'Bungee', sans-serif; font-size: {{L.fRateN}}px; color: #FFE94A">+2</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fRateW}}px; color: #fff">XP / KEY</span>
+<span style="display: inline-block; width: {{L.u8}}px; height: {{L.u8}}px; min-width: 6px; min-height: 6px; background: #5d4a78; transform: rotate(45deg) translateY(-3px); margin: 0 {{L.u6}}px"></span>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fRateW}}px; color: #c9b8e8">GAMES</span>
+<span class="v3-out" style="font-family: 'Bungee', sans-serif; font-size: {{L.fRateN}}px; color: #2EFFE0">+10</span>
+<span style="font-family: 'Bungee', sans-serif; font-size: {{L.fRateW}}px; color: #fff">XP / LETTER</span>
+</div>
+
+<!-- ================= GAME CARDS ================= -->
+<button class="v3-btn v3-arrow {{prevCls}}" onClick="{{prev}}" aria-label="Previous games" style="position: absolute; left: {{L.arrLX}}px; top: {{L.arrY}}px; width: {{L.arrW}}px; height: {{L.arrH}}px; background: #1a0b2e; border: {{L.b5}}px solid #000; box-shadow: {{L.b5}}px {{L.b5}}px 0 #000; display: flex; align-items: center; justify-content: center">
+<svg viewBox="0 0 40 40" width="{{L.arrIco}}" height="{{L.arrIco}}" aria-hidden="true"><path d="M26 6 L10 20 L26 34" fill="none" stroke="#000" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"></path><path d="M26 6 L10 20 L26 34" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path></svg>
+</button>
+<button class="v3-btn v3-arrow {{nextCls}}" onClick="{{next}}" aria-label="More games" style="position: absolute; left: {{L.arrRX}}px; top: {{L.arrY}}px; width: {{L.arrW}}px; height: {{L.arrH}}px; background: #1a0b2e; border: {{L.b5}}px solid #000; box-shadow: {{L.b5}}px {{L.b5}}px 0 #000; display: flex; align-items: center; justify-content: center">
+<svg viewBox="0 0 40 40" width="{{L.arrIco}}" height="{{L.arrIco}}" aria-hidden="true"><path d="M14 6 L30 20 L14 34" fill="none" stroke="#000" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"></path><path d="M14 6 L30 20 L14 34" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path></svg>
+</button>
+<sc-if value="{{L.showDots}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: {{L.dotsX}}px; top: {{L.dotsY}}px; transform: translate(-50%, -50%); display: flex; gap: {{L.u12}}px">
+<sc-for list="{{pageDots}}" as="d" hint-placeholder-count="3">
+<button onClick="{{d.go}}" aria-label="Page" style="width: {{d.s}}px; height: {{d.s}}px; background: {{d.bg}}; border: 3px solid #000; box-shadow: 3px 3px 0 #000; transform: rotate(45deg); cursor: pointer"></button>
+</sc-for>
+</div>
+</sc-if>
+<div data-box="cards" style="position: absolute; left: {{L.stripX}}px; top: {{L.cardY}}px; width: {{L.stripW}}px; height: {{L.cardH}}px; overflow: hidden; padding: 0 {{L.u10}}px {{L.u10}}px 0; margin: 0 -{{L.u10}}px -{{L.u10}}px 0">
+<div style="display: flex; gap: {{L.cardGap}}px; height: {{L.cardH}}px; transform: translateX(-{{shift}}px); transition: transform .35s cubic-bezier(.2,.9,.3,1)">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="6">
+<button class="v3-btn {{c.down}}" onClick="{{c.press}}" style="position: relative; flex: none; width: {{L.cardW}}px; height: {{L.cardH}}px; box-sizing: border-box; background: {{c.bg}}; border: {{L.b5}}px solid #000; box-shadow: {{L.b6}}px {{L.b6}}px 0 #000; overflow: hidden; text-align: left">
+<div style="position: absolute; inset: 0; background-image: repeating-linear-gradient(-35deg, transparent 0 {{L.u14}}px, rgba(0,0,0,.07) {{L.u14}}px {{L.u18}}px)"></div>
+<div style="position: absolute; left: {{L.u14}}px; right: {{L.u14}}px; top: {{L.u14}}px; font-family: 'Bungee', sans-serif; font-size: {{L.fCard}}px; line-height: .95; color: {{c.fg}}; white-space: pre-line; -webkit-text-stroke: {{c.stroke}}; paint-order: stroke fill">{{c.name}}</div>
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: {{L.cardFoot}}px; box-sizing: border-box; padding: 0 {{L.u14}}px; background: #0d0618; border-top: {{L.b4}}px solid #000; display: flex; align-items: center; gap: {{L.u6}}px; font-family: 'Bungee', sans-serif; line-height: 1">
+<span style="font-size: {{L.fCardN}}px; color: #FFE94A">22</span><span style="font-size: {{L.fCardW}}px; color: #c9b8e8">/ WORD</span>
+</div>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"w":{"editor":null},"h":{"editor":null},"$preview":{"width":1366,"height":657}}'>
+var DEMO_V = 'A';
+var DEMO_S = 'mid';
+function fmt(x) {
+  var S = [['T', 1e12], ['B', 1e9], ['M', 1e6], ['K', 1e3]];
+  for (var i = 0; i < S.length; i++) if (x >= S[i][1]) { var v = x / S[i][1]; var t = v >= 100 ? v.toFixed(0) : v.toFixed(1); return t.replace(/\.0$/, '') + S[i][0]; }
+  return String(Math.floor(x));
+}
+function need(L) { var v = 100 * Math.pow(1.36, L); var p = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / p) * p; }
+function rankOf(L) { return L < 20 ? 'KEYMASH' : L < 40 ? 'TYPO' : L < 70 ? 'CLACKER' : 'HOTKEY'; }
+var RAR = { COMMON: '#A9B4C8', RARE: '#3D8BFF', EPIC: '#B04BFF', LEGENDARY: '#FFC23D', MYTHIC: '#FF3D7F', LONGINUS: '#FFFFFF' };
+var STATES = {
+  mid: { lv: 12, xp: 3700, wins: 1240, gems: 240, rolls: 27, idx: 3, gear: { name: 'VOLT FANG', rar: 'EPIC', mult: 1.5 } },
+  fresh: { lv: 1, xp: 0, wins: 0, gems: 0, rolls: 0, idx: 0, gear: null }
+};
+var MODES = [
+  { name: 'WORD\nBOMB', bg: '#FF6B3D', fg: '#fff' }, { name: 'BLITZ', bg: '#3D8BFF', fg: '#fff' },
+  { name: 'SAT\nRUSH', bg: '#F2EEE4', fg: '#0d0618' }, { name: 'RACE', bg: '#FF3D7F', fg: '#fff' },
+  { name: 'CHAIN', bg: '#2EFFE0', fg: '#0d0618' }, { name: 'FUSE', bg: '#B04BFF', fg: '#fff' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var s = STATES[DEMO_S];
+    this.state = { v: DEMO_V, sk: DEMO_S, lv: s.lv, xp: s.xp, ghost: s.xp, full: false, snap: false, pops: [], n: 0, flip: false, lvFlip: 0, page: 0, down: '' };
+    this.timers = [];
+    var self = this;
+    this.onKey = function (e) {
+      if (!e || e.ctrlKey || e.metaKey || e.altKey || !e.key || e.key.length !== 1) return;
+      if (e.key === ' ' && e.preventDefault) e.preventDefault();
+      self.gain(2);
+    };
+  }
+  componentDidMount() { window.addEventListener('keydown', this.onKey); }
+  componentWillUnmount() { window.removeEventListener('keydown', this.onKey); this.timers.forEach(clearTimeout); }
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); }
+  gain(n) {
+    var self = this, st = this.state;
+    var xp = st.xp + n, lv = st.lv, ups = 0;
+    while (xp >= need(lv)) { xp -= need(lv); lv++; ups++; }
+    var id = st.n + 1;
+    var x = ups ? 100 : Math.min(100, xp / need(lv) * 100);
+    var pop = ups ? { id: id, text: 'LV ' + lv + '!', x: Math.min(88, Math.max(12, x)), c: '#FFE94A', big: true } : { id: id, text: '+' + n, x: Math.min(97, Math.max(3, x)), c: '#2EFFE0', big: false };
+    var pops = st.pops.concat([pop]).slice(-6);
+    if (ups) {
+      this.setState({ full: true, pops: pops, n: id, flip: !st.flip });
+      this.later(function () { self.setState({ full: false, snap: true, lv: lv, xp: xp, ghost: xp, lvFlip: self.state.lvFlip + 1 }); self.later(function () { self.setState({ snap: false }); }, 50); }, 420);
+    } else {
+      this.setState({ xp: xp, ghost: xp, pops: pops, n: id, flip: !st.flip });
+    }
+    this.later(function () { self.setState({ pops: self.state.pops.filter(function (p) { return p.id !== id; }) }); }, 850);
+  }
+  press(key) { var self = this; this.setState({ down: key }); this.later(function () { if (self.state.down === key) self.setState({ down: '' }); }, 170); }
+  renderVals() {
+    var self = this, st = this.state, S = STATES[st.sk];
+    var W = Number(this.props.w) || 1366, H = Number(this.props.h) || 657;
+    var k = Math.max(0.84, Math.min(1.5, Math.min(W / 1366, H / 657)));
+    var z = function (n, mn) { return Math.max(mn || 0, Math.round(n * k)); };
+    var isA = st.v === 'A', isB = !isA;
+
+    // ---------- layout ----------
+    var L = { W: W, H: H };
+    L.pad = z(20, 14); L.st1 = z(46); L.st2 = z(50);
+    L.u4 = z(4, 3); L.u6 = z(6, 5); L.u8 = z(8, 6); L.u10 = z(10, 8); L.u12 = z(12, 10); L.u14 = z(14, 12); L.u18 = z(18, 15);
+    L.b4 = z(4, 4); L.b5 = z(5, 4); L.b6 = z(6, 5); L.b8 = z(8, 7);
+    L.fCap = z(15, 14);
+    var togH = 26;
+    L.railY = togH + 4; L.railH = H - L.railY - L.pad - L.b6;
+    var kr = Math.min(k, 1.22); var zr = function (n, mn) { return Math.max(mn || 0, Math.round(n * kr)); };
+    var tileW = Math.round(Math.max(160, 176 * kr));
+    L.gapR = z(12, 10); L.railW = tileW * 2 + L.gapR;
+    L.pillH = zr(58, 50); L.pillIco = zr(40, 32); L.fPill = zr(28, 22);
+    L.gearH = zr(100, 82); L.ring = L.gearH - z(16, 14);
+    L.fGear = zr(24, 22); L.fGearB = zr(34, 28);
+    L.spine = z(10, 8); L.tPadTop = L.spine + z(10, 8);
+    L.dotS = z(26, 24);
+    L.fLabel = zr(25, 22); L.fVal = zr(20, 18); L.fSub = zr(17, 16); L.mini = zr(14, 12);
+    L.bandH = zr(42, 36); L.fBig = zr(40, 32); L.fSubB = zr(18, 16);
+
+    var tileH = Math.floor((L.railH - L.pillH - L.gearH - 2 * L.gapR - L.gapR) / 2);
+    var stackH = L.fLabel + L.fVal * 1.05 + L.fSub * 1.1 + L.mini + 2 * L.u4 + 8;
+    L.chip = Math.round(Math.max(40, Math.min(tileW * 0.66, tileH - L.tPadTop - L.u10 - stackH - L.u8)));
+    L.chipIco = Math.round(L.chip * 0.74);
+    L.bigIco = Math.round(Math.max(48, Math.min(tileW * 0.46, tileH - L.bandH - L.fBig - L.fSubB - L.mini - 34)));
+    // centre column
+    var colX0 = L.pad + L.railW + z(30, 20), colX1 = W - L.pad, colW = colX1 - colX0, colC = Math.round((colX0 + colX1) / 2);
+    var kt = Math.max(k, Math.min(1.6, H / 657 * 0.94)); var zt = function (n, mn) { return Math.max(mn || 0, Math.round(n * kt)); };
+    L.fLogo = zt(50, 38); L.logoY = L.pad - 2;
+    L.barH = isA ? zt(46, 42) : zt(50, 44);
+    L.badgeW = zt(150, 128); L.badgeOver = zt(10, 8); L.rankH = zt(30, 26);
+    L.badgeH = L.barH + L.badgeOver * 2 + L.rankH - 4;
+    L.barY = L.pad + L.fLogo + z(14, 10) + (isB ? L.badgeOver : 0);
+    var bandBottom = L.barY + L.barH;
+    // top-right buttons span logo + bar height, the bar stops before them so +XP pops never cross them
+    L.trGap = z(16, 12);
+    L.trS = Math.min(zt(68, 56), bandBottom - L.pad - 4 - L.fCap); L.trIco = Math.round(L.trS * 0.62);
+    L.trY = bandBottom - (L.trS + 4 + L.fCap);
+    var iconsLeft = W - L.pad - (3 * L.trS + 2 * L.trGap);
+    var topX1 = iconsLeft - z(26, 18), topC = Math.round((colX0 + topX1) / 2);
+    L.barX = colX0; L.barW = topX1 - colX0;
+    L.logoX = topC;
+    L.fLv = zt(34, 30); L.fLvB = zt(40, 34); L.fLvS = zt(18, 16); L.fRank = zt(18, 16); L.fXp = zt(24, 20); L.fXpS = zt(18, 16);
+    var rateTop = L.barY + L.barH + (isB ? L.badgeH - L.barH - L.badgeOver - 6 : z(12, 8));
+    L.rateY = rateTop; L.rateX = topC; L.fRateN = zt(28, 24); L.fRateW = zt(18, 16);
+    if (isB) { L.rateX = topC + Math.round(L.badgeW / 2); }
+    // cards
+    var cardsTop = rateTop + L.fRateN + z(18, 12);
+    var availH = H - L.pad - L.b6 - cardsTop;
+    var n = W >= 1600 ? 4 : 3;
+    L.arrW = z(48, 40); var arrGap = z(14, 10);
+    L.cardGap = z(22, 16);
+    // tall screens: arrows + page dots go in a row under the cards, cards take the full column width
+    var rowH = z(56, 48), rowGap = z(16, 12);
+    var cwFull = Math.floor((colW - L.b6 - (n - 1) * L.cardGap) / n);
+    var chFull = Math.min(availH - rowH - rowGap, Math.round(cwFull / 0.5));
+    var below = chFull >= cwFull / 0.6;
+    var cw, ch;
+    if (below) { cw = cwFull; ch = chFull; }
+    else {
+      var stripMax = colW - 2 * (L.arrW + arrGap);
+      cw = Math.floor((stripMax - (n - 1) * L.cardGap) / n);
+      cw = Math.min(cw, Math.floor(availH * 0.78));
+      ch = Math.min(availH, Math.round(cw / 0.52));
+    }
+    L.cardW = cw; L.cardH = ch;
+    L.stripW = n * cw + (n - 1) * L.cardGap; L.stripX = colC - Math.round(L.stripW / 2);
+    var blockH = below ? ch + rowGap + rowH : ch;
+    L.cardY = cardsTop + Math.round((availH - blockH) / 2);
+    L.arrIco = Math.round(L.arrW * 0.6);
+    if (below) {
+      L.arrH = rowH; L.arrW = Math.round(rowH * 1.3); L.arrIco = Math.round(rowH * 0.5); L.arrY = L.cardY + ch + rowGap;
+      L.arrLX = colC - Math.round(L.stripW / 2) + Math.round(L.stripW / 2) - L.arrW - z(110, 90); L.arrRX = colC + z(110, 90);
+    } else {
+      L.arrH = z(96, 72); L.arrY = L.cardY + Math.round((ch - L.arrH) / 2);
+      L.arrLX = L.stripX - arrGap - L.arrW; L.arrRX = L.stripX + L.stripW + arrGap;
+    }
+    L.showDots = below; L.dotsY = L.arrY + Math.round(rowH / 2); L.dotsX = colC; L.pdS = z(16, 12);
+    L.fCard = Math.max(26, Math.round(cw * 0.15)); L.cardFoot = Math.max(44, Math.round(ch * 0.13)); L.fCardN = Math.max(22, Math.round(cw * 0.1)); L.fCardW = Math.max(16, Math.round(cw * 0.062));
+
+    // ---------- data ----------
+    var lv = st.lv, nd = need(lv);
+    var fillPct = st.full ? 100 : st.xp / nd * 100;
+    var gearSt = S.gear;
+    var pity = 50 - (S.rolls % 50);
+    var fresh = st.sk === 'fresh';
+    var rebReady = lv >= 15;
+    var dn = function (key) { return st.down === key ? 'v3-down' : ''; };
+    var tiles = [
+      { key: 'up', label: 'UPGRADES', accent: '#FFE94A', locked: fresh, i: 'up', value: 'NEXT ×2', sub: '300 WINS', big: '×2', pre: 'NEXT', small: '300 WINS', lockText: 'WIN 1 GAME', dot: S.wins >= 300 },
+      { key: 'roll', label: 'ROLL', accent: '#2EFFE0', locked: fresh, i: 'dice', value: '75 GEMS', sub: 'EPIC IN ' + pity, big: '75', unit: 'GEMS', small: 'EPIC IN ' + pity, lockText: 'GET 75 GEMS', dot: S.gems >= 75 },
+      { key: 'idx', label: 'INDEX', accent: '#FF3D7F', locked: false, i: 'book', value: S.idx + ' / 29', sub: 'GEARS FOUND', big: S.idx + '/29', small: 'GEARS FOUND', dot: false },
+      { key: 'reb', label: 'REBIRTH', accent: '#B04BFF', locked: !rebReady, i: 'loop', value: rebReady ? 'READY · R1' : 'LV 15', sub: rebReady ? '×3 XP & WINS' : '', big: rebReady ? 'R1' : 'LV 15', unit: rebReady ? 'READY' : '', small: rebReady ? '×3 XP & WINS' : lv + ' / 15', lockText: 'LV 15', bar: !rebReady, barPct: Math.min(100, lv / 15 * 100).toFixed(0), dot: rebReady }
+    ].map(function (t) {
+      var ic = {}; ic[t.locked ? 'lock' : t.i] = true;
+      var o = {
+        key: t.key, label: t.label, accent: t.accent, i: ic, dot: !t.locked && t.dot, bar: !!t.bar, barPct: t.barPct || 0,
+        down: dn(t.key), press: function () { self.press(t.key); }
+      };
+      if (isA) {
+        o.face = t.locked ? '#140a22' : '#1a0b2e';
+        o.chipBg = t.locked ? '#2a1a40' : '#2a0e4a';
+        o.labelC = t.locked ? '#c9b8e8' : '#fff';
+        o.value = t.locked ? (t.key === 'reb' ? 'UNLOCK LV 15' : t.lockText) : t.value;
+        o.valC = t.locked ? '#FFE94A' : t.accent;
+        o.sub = t.locked ? '' : t.sub; o.subC = t.locked ? '#8f7fb0' : '#c9b8e8';
+        if (t.key === 'reb' && t.locked) o.sub = lv + ' / 15';
+        if (t.key === 'up' && !t.locked) { o.sub = '300 WINS'; }
+      } else {
+        o.face = t.locked ? '#241638' : t.accent;
+        o.bandC = t.locked ? '#c9b8e8' : t.accent;
+        o.big = t.locked ? (t.key === 'reb' ? 'LV 15' : t.key === 'up' ? '1 WIN' : '75') : t.big; o.unit = t.locked ? (t.key === 'roll' ? 'GEMS' : '') : (t.unit || ''); o.pre = t.locked ? '' : (t.pre || '');
+        o.small = t.locked ? (t.key === 'reb' ? 'UNLOCK · ' + lv + '/15' : 'TO UNLOCK') : t.small;
+        o.bigC = t.locked ? '#FFE94A' : '#0d0618';
+        o.bigStroke = t.locked ? '5px #000' : '0';
+        o.smallC = t.locked ? '#c9b8e8' : '#0d0618';
+      }
+      return o;
+    });
+    var gc = gearSt ? RAR[gearSt.rar] : '#5d4a78';
+    var gear = {
+      has: !!gearSt, none: !gearSt, dot: !gearSt,
+      face: gearSt ? '#1a0b2e' : '#140a22', edge: gearSt ? gc : '#2EFFE0', ringC: gearSt ? gc : '#2a1a40', inner: gearSt ? '#2a0e4a' : '#0d0618',
+      dash: gearSt ? 'none' : '10 8', spin: gearSt && ['EPIC', 'LEGENDARY', 'MYTHIC', 'LONGINUS'].indexOf(gearSt.rar) >= 0 ? 'v3-spin' : '',
+      cap: gearSt ? gearSt.rar + ' GEAR' : 'GEAR SLOT', name: gearSt ? gearSt.name : 'NO GEAR', mult: gearSt ? '×' + gearSt.mult + ' WINS' : 'ROLL ONE', multC: gearSt ? gc : '#2EFFE0',
+      multB: gearSt ? '×' + gearSt.mult + ' WINS' : 'NO GEAR', nameB: gearSt ? gearSt.name + ' · ' + gearSt.rar : 'ROLL ONE · 75 GEMS',
+      down: dn('gear'), press: function () { self.press('gear'); }
+    };
+    if (!gearSt && isB) gear.multC = '#fff';
+    var maxPage = MODES.length - n;
+    var page = Math.min(st.page, maxPage);
+    return {
+      L: L, isA: isA, isB: isB,
+      toggles: [
+        { label: 'A', on: isA, pick: function () { self.setState({ v: 'A' }); } },
+        { label: 'B', on: isB, pick: function () { self.setState({ v: 'B' }); } },
+        { label: 'LV 12', on: !fresh, pick: function () { var s = STATES.mid; self.setState({ sk: 'mid', lv: s.lv, xp: s.xp, ghost: s.xp }); } },
+        { label: 'NEW', on: fresh, pick: function () { var s = STATES.fresh; self.setState({ sk: 'fresh', lv: s.lv, xp: s.xp, ghost: s.xp }); } }
+      ].map(function (g) { g.bg = g.on ? '#FFE94A' : '#1a0b2e'; g.c = g.on ? '#000' : '#8f7fb0'; return g; }),
+      pills: [
+        { key: 'wins', label: 'WINS', value: fmt(S.wins), edge: '#FFC23D', coin: true, gem: false, bump: '' },
+        { key: 'gems', label: 'GEMS', value: fmt(S.gems), edge: '#2EFFE0', coin: false, gem: true, bump: '' }
+      ],
+      tiles: tiles, gear: gear,
+      tr: [
+        { key: 'lb', label: 'RANKS', edge: '#FFE94A', i: { podium: true } },
+        { key: 'st', label: 'STATS', edge: '#2EFFE0', i: { bars: true } },
+        { key: 'ach', label: 'AWARDS', edge: '#FF3D7F', i: { trophy: true } }
+      ].map(function (r) { r.down = dn(r.key); r.press = function () { self.press(r.key); }; return r; }),
+      lvText: fmt(lv), rank: rankOf(lv), lvCls: st.lvFlip ? (st.lvFlip % 2 ? 'v3-lv' : 'v3-lv v3-lv2') : '',
+      bumpCls: st.n ? (st.flip ? 'v3-bumpA' : 'v3-bumpB') : '',
+      xpText: fmt(st.xp) + ' / ' + fmt(nd),
+      fillPct: fillPct.toFixed(2), ghostPct: (st.full ? 100 : st.ghost / nd * 100).toFixed(2),
+      fillEdge: fillPct > 0.5 ? 3 : 0,
+      fillTrans: st.snap ? 'none' : 'width .55s cubic-bezier(.25,.8,.3,1) .16s',
+      ghostTrans: st.snap ? 'none' : 'width .08s linear',
+      pops: st.pops.map(function (p) { return { text: p.text, x: p.x, c: p.c, fs: p.big ? z(34, 30) : z(28, 24) }; }),
+      cards: MODES.map(function (m, i) { return { name: m.name, bg: m.bg, fg: m.fg, stroke: m.fg === '#fff' ? '6px #000' : '0', down: dn('c' + i), press: function () { self.press('c' + i); } }; }),
+      shift: page * (L.cardW + L.cardGap),
+      pageDots: Array.apply(null, Array(maxPage + 1)).map(function (_, i) { return { s: L.pdS, bg: i === page ? '#FFE94A' : '#2a1a40', go: function () { self.setState({ page: i }); } }; }),
+      prevCls: page <= 0 ? 'v3-off' : '', nextCls: page >= maxPage ? 'v3-off' : '',
+      prev: function () { self.setState({ page: Math.max(0, page - 1) }); },
+      next: function () { self.setState({ page: Math.min(maxPage, page + 1) }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
