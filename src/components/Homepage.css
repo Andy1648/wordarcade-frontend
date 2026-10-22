@@ -863,6 +863,10 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   .hp-rail:has(.hp-gear--2) .hp-gear-subs { display: none; }
   .hp-rail:has(.hp-gear--2) .hp-gear-cog { width: calc(var(--hp-tile-ico) * 1.35); height: calc(var(--hp-tile-ico) * 1.35); }
 }
+/* oct21: the same fold whenever the 2nd slot MEASURES past the frame (MenuNav useGearRailFit) — the size of two slots
+   depends on the gears worn, which no breakpoint can know */
+.hp-rail[data-gear-tight] .hp-gear-subs { display: none; }
+.hp-rail[data-gear-tight] .hp-gear-cog { width: calc(var(--hp-tile-ico) * 1.35); height: calc(var(--hp-tile-ico) * 1.35); }
 /* ---- 2ND GEAR (Andy oct10: "another … gear equipment below the current one", season 2 R5) ----
    The compact slot under YOUR GEAR: the same frame rules (tier border + hard shadow), one row — badge, number, unit.
    LOCKED (below R5): the padlock + REBIRTH 5 in a dimmed frame. Static at rest (the showcase stays slot 1's). */
