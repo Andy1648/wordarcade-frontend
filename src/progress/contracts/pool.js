@@ -9,7 +9,7 @@
 //                already on the board. Once a day.
 //   THE EVENTS   every task is checked from an event the game already emits (contracts/bus.js — see EVENTS below);
 //                nothing new is measured.
-//   PAY          gems only, small (T1 10 · T2 15 · T3 25, + SWEEP 25 for all three — a day's best is 75, one roll).
+//   PAY          gems only (T1 20 · T2 30 · T3 50, + SWEEP 50 for all three — a day's best is 150, two rolls).
 //                Never wins or XP multipliers. Well under 036's gem budget (DAILY_MAX 3150 a day).
 //
 // EVENTS (contracts/bus.js contractEvent — the hook each is fired from):
@@ -20,8 +20,8 @@
 //   combo  { n }                            records.noteCombo — the WORD BOMB / BLITZ answer combo
 //   lucky  {}                               records.noteLucky — a LUCKY-WORD hit (WB, BLITZ, CHAIN, FUSE)
 
-export const TIER_GEMS = { 1: 10, 2: 15, 3: 25 };
-export const SWEEP_GEMS = 25;
+export const TIER_GEMS = { 1: 20, 2: 30, 3: 50 }; // Andy oct21: doubled ("I can make more than like 50 gems in one word race session")
+export const SWEEP_GEMS = 50;
 export const MODES = ['wb', 'blitz', 'sat', 'chain', 'fuse', 'race'];
 /** The menu's game id for each contract mode (gameData.js) — the sheet's GO opens that mode's dialog. */
 export const MODE_GAME = { wb: 'word-bomb', blitz: 'category-blitz', sat: 'sat-rush', chain: 'chain', fuse: 'fuse', race: 'word-race' };

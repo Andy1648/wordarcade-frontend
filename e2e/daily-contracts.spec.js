@@ -1,7 +1,7 @@
 // e2e/daily-contracts.spec.js — DAILY CONTRACTS (prototype): the DAILY tile JOINS the rail (never its own fixed spot),
 // the sheet deals three tasks with 44px controls and one SWAP, and a real Word Bomb round on the backend mock ticks the
 // contracts from the game's own events: a 9-letter word finishes "7+ letters" (the first of the day → STREAK KEPT), the
-// win finishes "Win a game", and the K.O. card says "2 CONTRACTS DONE +40". Screenshots land in test-results/contracts.
+// win finishes "Win a game", and the K.O. card says "2 CONTRACTS DONE +80". Screenshots land in test-results/contracts.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -27,7 +27,16 @@ async function seed(page, { picks = null, done = [], prog = {}, streak = 5, leve
   }, { picks, done, prog, streak, level });
 }
 
-for (const vp of [{ width: 1366, height: 768, tag: 'desktop' }, { width: 1024, height: 768, tag: 'narrow' }, { width: 390, height: 844, tag: 'phone' }]) {
+// laptop 1366×768 + 1536×864, Chromebook 1366×650 (Andy oct21 "I don't like how you need to scroll there"), a narrow
+// desktop, a phone. Every width ≥ 700 shows the whole contracts screen with NO scroll.
+const VPS = [
+  { width: 1366, height: 768, tag: 'desktop' },
+  { width: 1536, height: 864, tag: 'laptop' },
+  { width: 1366, height: 650, tag: 'chromebook' },
+  { width: 1024, height: 768, tag: 'narrow' },
+  { width: 390, height: 844, tag: 'phone' },
+];
+for (const vp of VPS) {
   test(`${vp.tag}: the DAILY tile joins the rail; the sheet deals 3 with 44px controls and one SWAP`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
@@ -53,7 +62,19 @@ for (const vp of [{ width: 1366, height: 768, tag: 'desktop' }, { width: 1024, h
     await expect(sheet).toBeVisible();
     await expect(sheet.locator('.cx-row')).toHaveCount(3);
     await expect(sheet.locator('.cx-row.is-done')).toHaveCount(1);
-    await page.waitForTimeout(500); // past the one-shot pop
+    await page.waitForTimeout(900); // past the one-shot deal
+    if (vp.width >= 700) {
+      // NO SCROLL: the overlay never scrolls and every card (with its GO / SWAP) is fully on screen
+      const fit = await page.evaluate(() => {
+        const o = document.querySelector('[data-testid="contracts-sheet"]');
+        const cards = [...o.querySelectorAll('.cx-row')].map((c) => c.getBoundingClientRect());
+        return { scroll: o.scrollHeight - o.clientHeight, docScroll: document.documentElement.scrollHeight - innerHeight, maxBottom: Math.max(...cards.map((r) => r.bottom)), maxRight: Math.max(...cards.map((r) => r.right)), h: innerHeight, w: innerWidth };
+      });
+      expect(fit.scroll, 'the contracts screen does not scroll').toBeLessThanOrEqual(0);
+      expect(fit.docScroll).toBeLessThanOrEqual(0);
+      expect(fit.maxBottom, 'every card is on screen').toBeLessThanOrEqual(fit.h);
+      expect(fit.maxRight).toBeLessThanOrEqual(fit.w);
+    }
     for (const b of await sheet.locator('button').all()) {
       const r = await b.boundingBox();
       expect(r.height).toBeGreaterThanOrEqual(44);
@@ -120,7 +141,7 @@ test('a Word Bomb round ticks the contracts from its own events: STREAK KEPT toa
   await page.locator('.game-over-overlay .rs2').waitFor();
   const line = page.getByTestId('contract-done');
   await expect(line).toContainText('2 CONTRACTS DONE');
-  await expect(line).toHaveAttribute('data-contract-gems', '40');
+  await expect(line).toHaveAttribute('data-contract-gems', '80');
   await page.waitForTimeout(4500);
   await page.screenshot({ path: `${SHOTS}/desktop-results.png` });
   const st = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.contracts')));
