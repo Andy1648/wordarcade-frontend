@@ -204,16 +204,19 @@ export function roll(rng, state, ctx = {}) {
   const wasShiny = isShiny(pick.id, s0);
   const before = markLevel(s0, pick.id);
   const s = { ...s0, marks: { ...s0.marks }, milestones: [...s0.milestones], done: [...(s0.done || [])] };
-  s.rolls = s0.rolls + 1;
+  // 060 GUARANTEED ROLL (a server ticket): outside the gacha — the roll count (×2 LUCK cadence) and the pity counters
+  // stay exactly where they were, as on the server (lb_ticket_roll never moves s2_rolls / s2_since_*)
+  const ticket = !!ctx.ticket;
+  s.rolls = ticket ? s0.rolls : s0.rolls + 1;
   const prev = s0.marks[pick.id] || {};
   const entry = { ...prev, n: before.copies + 1 };
   if (shiny || wasShiny) entry.shiny = true;
-  if (before.copies === 0 && !entry.first) entry.first = s.rolls;
+  if (before.copies === 0 && !entry.first) entry.first = Math.max(1, s.rolls);
   s.marks[pick.id] = entry;
   const after = markLevel(s, pick.id);
   const tr = tierRank(pick.tier);
-  s.sinceEpic = tr >= tierRank('epic') ? 0 : s0.sinceEpic + 1;
-  s.sinceLegendary = tr >= tierRank('legendary') ? 0 : num(s0.sinceLegendary) + 1;
+  s.sinceEpic = ticket ? s0.sinceEpic : tr >= tierRank('epic') ? 0 : s0.sinceEpic + 1;
+  s.sinceLegendary = ticket ? num(s0.sinceLegendary) : tr >= tierRank('legendary') ? 0 : num(s0.sinceLegendary) + 1;
   if (tr >= tierRank('epic')) s.everEpic = true;
   const had = new Set(s0.milestones);
   const reached = milestonesReached(s).filter((id) => !had.has(id));
@@ -243,8 +246,9 @@ export function roll(rng, state, ctx = {}) {
       have: after.have,
       need: after.need,
       firstRoll: entry.first || null,
-      pityHit: forced,
-      bonusRoll: bonus,
+      pityHit: ticket ? null : forced,
+      bonusRoll: ticket ? false : bonus,
+      ticket: ticket ? ctx.ticket : null,
       luck: L,
       milestones: reached,
       shiny,

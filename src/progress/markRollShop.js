@@ -98,6 +98,29 @@ export function buyMarkRoll({ level = 1, rng = Math.random, picks = null } = {})
   return { ...res, state: all[all.length - 1].state, spent: cost.gems, free: cost.free, decision, fromMain, toMain, lump, extra, dupeGemsPaid: dupeGems };
 }
 
+/**
+ * 060 GUARANTEED ROLL: land a server TICKET's pick ({ mark, shiny }, lb_ticket_roll) — FREE (no gems), no pity / roll
+ * count change, every INDEX reward and dupe refund as a normal roll. `floor` = the ticket's tier ('legendary').
+ * Returns the same shape as buyMarkRoll (+ `ticket`), or null without a valid pick.
+ */
+export function buyTicketRoll({ pick, floor } = {}) {
+  if (!pick || !rollMarkById(pick.mark)) return null;
+  ensureRollState();
+  const res = rollAndSave(Math.random, { boost: isBoostActive(), pickId: pick.mark, shiny: !!pick.shiny, ticket: floor || true });
+  if (SEASON2) {
+    V3.store.noteMarkSeen(res.markId);
+    if (tierRank(res.tier) >= tierRank('epic')) V3.store.bumpCounter('epic');
+  }
+  const lump = indexRewardWins(res, refWordWins());
+  if (lump > 0) grantWins(lump, 'MARKS INDEX', { detail: 'index' });
+  if (res.dupeGems > 0) grantGems(res.dupeGems, 'dupe', { detail: res.markId });
+  const worn = currentMain();
+  return {
+    ...res, spent: 0, free: true, decision: equipDecision(res.markId, worn.id, worn.main),
+    fromMain: worn.id ? worn.main : wornMainOf(null), toMain: mainMultOf(res.markId), lump, extra: [], dupeGemsPaid: res.dupeGems || 0,
+  };
+}
+
 /** The tiers AUTO ROLL can stop on ("until [tier] or better"). GEAR POOL v2: no RARE — RARE is the floor, every roll. */
 export const AUTO_ROLL_TIERS = ['epic', 'legendary', 'mythic', 'secret'];
 const AUTO_ROLL_CAP = 100000; // a hard stop so no loop can run away (the gems run out long before)
