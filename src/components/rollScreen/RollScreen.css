@@ -433,6 +433,26 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-auto-btn.is-on .rs-auto-k,
 .rs-auto-btn.is-on .rs-auto-v { color: #fff; }
 .rs-auto-btn.is-locked .rs-auto-k { color: #c79bff; }
+/* 060 GUARANTEED ROLL: USE <TIER>+ TICKET — joins AUTO in the options cluster, the ticket's tier colour as its plate
+   (flat fill, darker outline of the same hue, the hard black offset like AUTO). Only drawn for a server-listed ticket. */
+.rs-ticket-btn {
+  min-height: 72px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Bungee', sans-serif; font-size: var(--fs-k24); text-transform: uppercase; white-space: nowrap; color: #fff;
+  background: var(--tk, #FFC23D); border: 5px solid var(--tk-edge, #a87400); border-radius: 0; box-shadow: 6px 6px 0 #000;
+  cursor: pointer; transform: rotate(1deg); transition: transform 120ms;
+}
+.rs-ticket-btn.is-rare { --tk: #3D8BFF; --tk-edge: #1d4fa8; }
+.rs-ticket-btn.is-epic { --tk: #B04BFF; --tk-edge: #6a1aa8; }
+.rs-ticket-btn.is-legendary { --tk: #FFC23D; --tk-edge: #a87400; }
+.rs-ticket-btn.is-mythic { --tk: #FF3D7F; --tk-edge: #a8164e; }
+.rs-ticket-btn:hover { transform: rotate(1deg) translate(-2px, -2px); }
+.rs-ticket-btn:active { transform: rotate(1deg) translate(6px, 6px); box-shadow: 0 0 0 #000; }
+.rs-ticket-btn:disabled { cursor: progress; }
+.rs-ticket-k, .rs-ticket-v, .rs-ticket-w, .rs-ticket-n { line-height: 1; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.rs-ticket-k { color: #FFE94A; }
+.rs-ticket-n { color: #2EFFE0; }
+.rs-overlay.is-reduced .rs-ticket-btn { transition: none; }
+.rs-chip.is-ticket { background: #FFE94A; font-family: 'Bungee', sans-serif; text-transform: uppercase; transform: rotate(-3deg); }
 
 /* ---- the RARE flash (over the band) and the EPIC+ rarity WASH (over the screen): flat colour, opacity one-shots ---- */
 /* the FLASH and the TELL span the whole panel inside its frame (--rs-up / --rs-down): a band-sized plate drew a hard line
@@ -698,6 +718,12 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-pity { grid-row: 2; width: 100%; }
   .rs-opts { grid-row: 3; justify-self: stretch; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
   .rs-auto-btn { flex: 1 1 100%; } /* the ONE auto control (Andy oct11): AUTO fills the row */
+  .rs-opts:has(.rs-ticket-btn) .rs-auto-btn { flex: 0 1 auto; }
+  /* phones: TIER+ on top, TICKET ×N under it (one line clipped at 360 wide); USE goes — the plate is the verb */
+  .rs-ticket-btn { flex: 1 1 0; min-width: 0; flex-wrap: wrap; justify-content: center; align-content: center; min-height: 48px; padding: 3px 8px; gap: 2px 6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
+  .rs-ticket-k { display: none; }
+  .rs-ticket-v { flex: 0 0 100%; text-align: center; }
+  .rs-ticket-v, .rs-ticket-w, .rs-ticket-n { font-size: var(--fs-k16); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   .rs-cut { --mc-w: 180px; --mc-s: 1; }
   .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
 }
