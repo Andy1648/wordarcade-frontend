@@ -280,7 +280,7 @@ export function checkRankClaims() {
   for (const r of RANKS) {
     if (r.min > floor && r.min <= band.min) {
       const amount = Math.round(RANK_UP_WORDS * perWordWins({ mode: 'wordBomb' }));
-      const c = queueClaim({ id: `rank-${r.name}-r${rc}`, kind: 'rank', label: `RANK UP — ${r.name}`, amount, detail: r.name });
+      const c = queueClaim({ id: `rank-${r.name}-r${rc}`, kind: 'rank', label: `NEW TITLE — ${r.name}`, amount, detail: r.name });
       if (c) queued.push(c);
     }
   }

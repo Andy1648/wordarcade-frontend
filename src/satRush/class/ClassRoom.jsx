@@ -13,8 +13,10 @@
 // every screen is ONE frame — a head, a body, and a foot that holds the actions. The frame never
 // scrolls and the actions are always on screen; the body's lists (roster, names, summary) get denser
 // as the class grows and only as a last resort scroll inside their own box.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useClassRoom } from './useClassRoom';
+import { qrPath } from './qr';
+import { classReport } from './classReport';
 import { bandWords, difficultiesFor, DIFFICULTY_ORDER } from '../runSpec';
 import { withArticle, speakFr, canSpeak, setAutoSpeak } from '../speak';
 import { formatNum } from '../../format';
@@ -201,6 +203,68 @@ function joinHost() {
   }
 }
 
+// Clipboard with a fallback for a browser that blocks the async API (an old Chromebook build, an
+// http:// school proxy): a hidden textarea + execCommand. Resolves true when the text was copied.
+function copyText(text) {
+  const legacy = () => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(
+        () => true,
+        () => legacy(),
+      );
+    }
+  } catch {
+    /* fall through */
+  }
+  return Promise.resolve(legacy());
+}
+
+// A label that says "Copied" for 2 s after a copy (or "Couldn't copy").
+function useCopied() {
+  const [state, setState] = useState(null); // null | 'ok' | 'fail'
+  const timer = useRef(0);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const run = (text) =>
+    copyText(text).then((ok) => {
+      setState(ok ? 'ok' : 'fail');
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setState(null), 2000);
+    });
+  return [state, run];
+}
+
+// The join link as a QR code — generated here (qr.js), never fetched. Dark on a fixed white tile so
+// it scans whatever the page colours are.
+function JoinQr({ url }) {
+  const qr = useMemo(() => qrPath(url), [url]);
+  if (!qr) return null;
+  return (
+    <figure className="fr-class-qr">
+      <svg viewBox={`0 0 ${qr.size} ${qr.size}`} role="img" aria-label="QR code: scan to join the class" shapeRendering="crispEdges">
+        <rect width={qr.size} height={qr.size} fill="#fff" />
+        <path d={qr.d} fill="#111" />
+      </svg>
+      <figcaption>scan to join</figcaption>
+    </figure>
+  );
+}
+
 function Chips({ names, onKick, tone = '', empty = '—', size = 0 }) {
   if (!names.length) return <div className="fr-class-none">{empty}</div>;
   const kick = (p) => {
@@ -295,10 +359,10 @@ function useConsoleKeys(primary, toggleNames) {
 }
 
 // ---- TEACHER: the console ----
-function HostConsole({ snap, tally, host, onLeave, offline, onNewSet }) {
+function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories = [] }) {
   const [showNames, setShowNames] = useState(false);
   const [showGot, setShowGot] = useState(false); // "got it" names stay folded: who struggled is what matters
-  const [copied, setCopied] = useState(false);
+  const [copied, copy] = useCopied();
   const roster = snap.roster || [];
   const row = snap.rows && snap.rows[snap.index];
   const t = tally || snap.tally;
@@ -326,17 +390,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet }) {
   useConsoleKeys(primary, () => setShowNames((v) => !v));
 
   if (snap.phase === 'lobby') {
-    const copy = () => {
-      const done = () => {
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 2000);
-      };
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(joinUrl(snap.code)).then(done, done);
-      } catch {
-        /* no clipboard */
-      }
-    };
+    const url = joinUrl(snap.code);
     return (
       <Page
         title={snap.round > 1 ? 'NEXT SET' : 'CLASS ROOM'}
@@ -356,11 +410,14 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet }) {
             <div className="fr-class-joinat">
               join at <b>{joinHost()}</b>
             </div>
-            <div className="fr-class-code" aria-label={`class code ${snap.code}`}>
-              {snap.code}
+            <div className="fr-class-joinrow">
+              <JoinQr url={url} />
+              <div className="fr-class-code" aria-label={`class code ${snap.code}`}>
+                {snap.code}
+              </div>
             </div>
-            <button type="button" className="sr-linkbtn" onClick={copy}>
-              {copied ? 'Link copied' : 'Copy the join link'}
+            <button type="button" className="sr-linkbtn" onClick={() => copy(url)}>
+              {copied === 'ok' ? 'Link copied' : copied === 'fail' ? "Couldn't copy — use the code" : 'Copy the join link'}
             </button>
           </div>
           <div className="fr-class-people">
@@ -407,6 +464,9 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet }) {
             )}
             <button type="button" className={`sr-btn${missedRows.length ? ' sr-btn-ghost' : ''}`} onClick={onNewSet}>
               New set
+            </button>
+            <button type="button" className="sr-exit-chip fr-class-report" onClick={() => copy(classReport({ snap, categories, modes: MODES }))}>
+              {copied === 'ok' ? 'Report copied' : copied === 'fail' ? "Couldn't copy" : 'Copy class report'}
             </button>
           </>
         }
@@ -569,7 +629,13 @@ function StudentWait({ snap, onLeave }) {
   return (
     <Page title="YOU'RE IN" sub={`class ${snap.code}`} onBack={onLeave} backLabel="LEAVE">
       <div className="fr-class-hi">{snap.name}</div>
-      <div className="fr-class-count">{snap.hostAway ? 'the teacher is reconnecting…' : snap.round > 1 ? 'next set coming up' : 'waiting for the teacher to start'}</div>
+      <div className="fr-class-count">{snap.hostAway
+          ? 'the teacher is reconnecting…'
+          : snap.phase === 'review'
+            ? 'you join in at the next word'
+            : snap.round > 1
+              ? 'next set coming up'
+              : 'waiting for the teacher to start'}</div>
       <div className="fr-class-count">
         {formatNum(snap.total)} words · {formatNum(snap.studentCount)} in the class
       </div>
@@ -624,6 +690,9 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
     if (snap.phase === 'lobby') return;
     if (!run.started) {
       if (snap.phase === 'done') return; // came back after the end: StudentDone shows the score
+      // Joined (or reloaded) while a word's answer is up: that word is over, and starting the run on
+      // it would score it a MISS on this student's own results. Wait for the next word.
+      if (snap.phase === 'review') return;
       setAutoSpeak(!snap.set || snap.set.voice === 'phones'); // the teacher chose where the voice is
       g.startClassRun({
         rows: snap.rows,
@@ -704,7 +773,7 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
         />
       );
     }
-    return <HostConsole snap={snap} tally={cr.tally} host={cr.host} onLeave={leave} offline={offline} onNewSet={() => setNewSet(true)} />;
+    return <HostConsole snap={snap} tally={cr.tally} host={cr.host} onLeave={leave} offline={offline} onNewSet={() => setNewSet(true)} categories={categories} />;
   }
 
   if (snap && snap.role === 'student') {

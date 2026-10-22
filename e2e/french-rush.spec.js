@@ -36,6 +36,7 @@ test('French Rush: self-paced — no clock, accent-free typing, a review card th
 
   const gloss = (await page.locator('.sr-gloss').innerText()).trim();
   const row = WORDS.find((r) => r.category === 'familles' && r.gloss === gloss);
+  // (meanings are unique — frenchRush.test.js guards it — so the gloss names exactly one word)
   expect(row, `a Families word with the meaning "${gloss}"`).toBeTruthy();
   await page.keyboard.type(fold(row.word));
 
