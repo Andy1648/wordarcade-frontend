@@ -172,6 +172,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const isPhoneMenu = useMediaQuery(PHONE_MENU_QUERY);
   // Short-wide desktop (Chromebook / 125%-scaled laptop): the card row pages, 3 full-ratio cards a page.
   const isPagedMenu = useMediaQuery(PAGED_MENU_QUERY) && !isPhoneMenu;
+  // the paged desktop's right column (≥ 1200px, Homepage.css .hp-main) carries the DAILY chip; the icon cluster's
+  // flame is only RENDERED where that column isn't — a CSS-hidden twin kept its dot in the DOM under nothing (oct19-ui)
+  const hasMainColumn = useMediaQuery('(min-width: 1200px)') && isPagedMenu;
   const [cardPage, setCardPage] = useState(0);
   // The phone menu's TYPE A WORD hook (WordHook.jsx) is for visitors who have never started a
   // game. Read once per mount: starting a round navigates away, so it is gone on the way back.
@@ -1465,7 +1468,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} daily={dailyIcon} settingsSlot={settingsSlot} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} daily={hasMainColumn ? null : dailyIcon} settingsSlot={settingsSlot} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
