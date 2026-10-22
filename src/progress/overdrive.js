@@ -13,7 +13,7 @@
 // next trigger is rolled from zero. Persisted at taw.overdrive { playMs, nextMs, until }. PURE + guarded store:
 // blocked storage → no OVERDRIVE, never throws.
 import { announceTimers } from './boost.js';
-import { overdrivePerkMinutes, freeOverdriveOn, overdriveLengthMult, FREE_OD_SEC, FREE_OD_EVERY_MIN } from './markPerks.js';
+import { overdrivePerkMinutes, freeOverdriveOn, overdriveLengthMult, FREE_OD_SEC, FREE_OD_EVERY_MIN, setAfterpartyStarter } from './markPerks.js';
 import { markOverdriveSec } from './markRollsCore.js';
 import { V3 } from './season.js'; // V3.unlocks: the R10 OVERDRIVE ×2 LONG unlock (season 2 only — installed lazily)
 // SEASON 2 (PROGRESSION FINAL v2): OVERDRIVE is IN the formulas (× OVERDRIVE on XP and wins) — the same rule as
@@ -89,6 +89,21 @@ export function isOverdriveActive(now = Date.now()) {
 export function overdriveMult(now = Date.now()) {
   return isOverdriveActive(now) ? OVERDRIVE_MULT : 1;
 }
+
+/**
+ * Start (or extend) an OVERDRIVE of `ms` now — FIREBIRD's AFTERPARTY on a rebirth. A running one gets `ms` added on
+ * top of what is left. Returns true when it wrote. Guarded.
+ */
+export function startOverdriveFor(ms, now = Date.now()) {
+  const add = Number.isFinite(ms) && ms > 0 ? ms : 0;
+  if (!add) return false;
+  const st = read() || { playMs: 0, nextMs: null, until: 0, freeMs: 0 };
+  st.until = Math.max(st.until || 0, now) + add;
+  write(st);
+  announceTimers();
+  return true;
+}
+setAfterpartyStarter((ms) => startOverdriveFor(ms));
 
 /**
  * Count `ms` of typing toward the next OVERDRIVE. Returns true when this call STARTED one. Play during an

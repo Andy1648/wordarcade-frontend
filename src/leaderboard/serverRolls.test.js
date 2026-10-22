@@ -10,11 +10,11 @@ import { ROLL_PRICE } from '../progress/v3/econ.js';
 
 const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '036_server_rolls.sql'), 'utf8').replace(/\r\n/g, '\n');
 const has = (s) => assert.ok(sql.includes(s), `036 is missing: ${s}`);
-// 055_more_legendaries.sql re-seeds the pool (Andy oct18: 5 new gears, same tier odds; 048 / 044 before it): the LATEST pool must be the game's pool
-const pool = readFileSync(join(process.cwd(), 'supabase', 'migrations', '055_more_legendaries.sql'), 'utf8').replace(/\r\n/g, '\n');
+// 059_gear_expansion.sql re-seeds the pool (Andy oct21: 15 new gears, same tier odds; 055 / 048 / 044 before it): the LATEST pool must be the game's pool
+const pool = readFileSync(join(process.cwd(), 'supabase', 'migrations', '059_gear_expansion.sql'), 'utf8').replace(/\r\n/g, '\n');
 
-test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order (055 re-seeds 036)', () => {
-  ROLL_MARKS.forEach((m, i) => assert.ok(pool.includes(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`), `055 is missing ${m.id}`));
+test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order (059 re-seeds 036)', () => {
+  ROLL_MARKS.forEach((m, i) => assert.ok(pool.includes(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`), `059 is missing ${m.id}`));
   const rows = pool.match(/\('mk-[a-z0-9-]+', '[a-z]+', [\d.]+, \d+\)/g) || [];
   assert.equal(rows.length, ROLL_MARKS.length, 'no extra gear on the server');
 });
