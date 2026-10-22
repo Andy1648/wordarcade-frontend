@@ -33,6 +33,7 @@ import SatKeyInput from './SatKeyInput';
 import WordBank from './WordBank';
 import ClassFlow from './class/ClassRoom';
 import { hasClassSeat } from './class/useClassRoom';
+import { usePlayClock } from '../progress/playClock.js';
 
 // The cover: what this is in one line, the mechanic in one worked example, and the two ways in.
 function Cover({ onPlay, onBank, onClass, wordCount }) {
@@ -101,6 +102,7 @@ function readClassCode() {
 }
 
 export default function FrenchRushGame() {
+  usePlayClock(); // TIME PLAYED on the profile (Andy oct21: French Rush time was never counted)
   const game = useSatRushGame({ packId: 'fr' });
   const { view } = game;
   const appRef = useRef(null);
