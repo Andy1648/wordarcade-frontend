@@ -381,11 +381,17 @@ export default function SoloShell({
       {phase === 'over' ? (
         <div className="solo-over">
           <div className="solo-deathcard">
+            {/* TWO HALVES (s2 fit, oct21): the STORY (way out, face, result, links, the missed word) and
+                the REWARD (wins, XP + gems, score, REBIRTH READY, RESTART). Stacked on a phone; side by
+                side on a desktop, where the season-2 gate card stacked ran ~320px past a 768 screen. */}
+            <div className="solo-death-story">
             <SoloExit onExit={onExit} />
             {/* Mascot reaction, like Blitz / Word Bomb game-over (fix/gameover-pass) — gives the
                 solo death card a face + a first read above the copy. */}
             <Mascot pose="panic" emote="slump" size={104} className="solo-death-mascot" />
             {over.card}
+            </div>
+            <div className="solo-death-reward">
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
             {/* The lines prop (Batch G): bonus credits earned during THIS run — a collection milestone
                 is the reachable one — so the card names them instead of the total quietly
@@ -416,12 +422,16 @@ export default function SoloShell({
                 action — above RESTART. One tap arms the rebirth and leaves through onExit; the menu
                 runs the rebirth + ceremony. Shown on the tutorial card too — never miss the gate. */}
             <RebirthReadyButton onGo={onExit} className="solo-rr-ready" />
+            {/* RESTART + the TRY <MODE> ghost share one row when they fit (s2 fit); the claim / near-miss
+                rows the tryRow may carry take full lines under it. */}
+            <div className="solo-death-actions">
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
               onClick={over.restart}
             >
-              {`${over.restartLabel || 'RESTART'}${over.restartArmed ? ' · ENTER' : ''}`}
+              {over.restartLabel || 'RESTART'}
+              {over.restartArmed ? <span className="solo-restart-key"> · ENTER</span> : null}
             </button>
             {/* SECOND ROW — one of two, never both, because they answer the same question
                 ("what now?") for different people.
@@ -442,6 +452,8 @@ export default function SoloShell({
             ) : over.bare ? null : (
               over.tryRow
             )}
+            </div>{/* .solo-death-actions */}
+            </div>{/* .solo-death-reward */}
           </div>
         </div>
       ) : null}
