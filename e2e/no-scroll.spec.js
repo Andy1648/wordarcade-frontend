@@ -75,7 +75,9 @@ const SCREENS = {
   profile: async (p) => { await nav(p, 'profile').click(); await p.locator('.pf-change').waitFor(); },
   'hero picker': async (p) => { await nav(p, 'profile').click(); await p.locator('.pf-change').click(); await p.locator('.hc').first().waitFor(); },
   'hero preview': async (p) => { await nav(p, 'profile').click(); await p.locator('.pf-change').click(); await p.locator('.hc[data-hero="hype"]').click(); await p.locator('.hpv').waitFor(); },
-  'title ladder': async (p) => { await p.getByTestId('rank-plate').first().click(); await p.getByTestId('rank-ladder').waitFor(); },
+  // oct22 (#483): the XP bar's plate is the PROFILE plate; the ladder opens from the profile's TITLE
+  'title ladder': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-title').click(); await p.getByTestId('rank-ladder').waitFor(); },
+  'daily contracts': async (p) => { await nav(p, 'contracts').click(); await p.getByTestId('contracts-sheet').waitFor(); },
   upgrades: async (p) => { await navControl(p, 'shop').click(); await p.locator('.sp2').waitFor(); },
   'gears roll': async (p) => { await navControl(p, 'gears').click(); await p.locator('.rs-overlay').waitFor(); },
   'gear index': async (p) => { await navControl(p, 'gears').click(); await p.getByTestId('roll-index').click(); await p.locator('.mx-panel').waitFor(); },

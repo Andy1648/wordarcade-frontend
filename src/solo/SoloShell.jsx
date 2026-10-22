@@ -29,6 +29,7 @@ import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
+import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { XpEarnedLine, useGameXpRunMark } from '../components/xp/XpEarned';
 import { usePlayClock } from '../progress/playClock.js';
 
@@ -405,6 +406,7 @@ export default function SoloShell({
               <XpEarnedLine since={xpSince} />
               <GemsEarnedLine since={gemsSince} />
             </div>
+            <ContractDoneLine since={gemsSince} />
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">

@@ -235,7 +235,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   ) : null;
   return (
     <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
-      {lvInside ? lead : lvNode}
+      {lvInside ? lead : <>{lead}{lvNode}</>}
       <div className="kx-barwrap">
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
           <span className="kx-gain-t" />

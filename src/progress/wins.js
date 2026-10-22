@@ -30,6 +30,7 @@ import { addLetters } from './letters.js';
 import { rebirthKeyKeep, wordPerkMult } from './markPerks.js';
 import { creditAcceptedWordLetters } from './letterXp.js';
 import { dropGemsForWord } from './gemsCore.js';
+import { contractEvent } from './contracts/bus.js';
 // PROGRESSION v3 (SEASON2, default OFF): the season's own balance keys (mapped at the storage layer, v3/install.js), the (1 + ★) row on the
 // receipt and the ACHIEVEMENTS counters. OFF = every key, number and call exactly as before.
 
@@ -585,6 +586,7 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
   const prevN = iCount(prevWords);
   const nowN = iCount(nowWords);
+  if (nowN > prevN) contractEvent('run', { mode, n: nowN }); // DAILY CONTRACTS: the round's running count (a CHAIN's length)
   // REBIRTH RUSH: the FROZEN formula pays every word at BASE 10 × length/5 × MODE × 5^R × MARK × BOOST.
   // WORD BOMB + BLITZ (Andy oct5, feat/wb-bonus-boost): the per-word WEIGHT (rarity × combo × lucky, capped at
   // PER_WORD_MULT_CAP — xp.cappedWordMult) is a BOOST factor again, so for those two modes the banked unit is
@@ -668,6 +670,8 @@ export function awardWordXp(opts = {}) {
   // GEMS: this is the one door every mode's accepted word passes, so the word DROP rolls here (game words only —
   // menu typing never drops). `gems` is what dropped (0 most words); the GemPop on the word hears the grant.
   const gems = dropGemsForWord({ mode });
+  // DAILY CONTRACTS: every mode's accepted word (contracts/pool.js 'word'); a no-op in node
+  if (mode !== 'menu') contractEvent('word', { mode, word: opts.word, len: opts.wordLength, gems });
   return { state, level: state.level, leveledUp: false, gain, mastery, mark, gems };
 }
 

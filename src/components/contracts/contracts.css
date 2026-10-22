@@ -1,0 +1,220 @@
+/* contracts.css — DAILY CONTRACTS: the live toasts, the CONTRACTS sheet and the end-card line. Flat fills, coloured
+   outlines (a darker shade of the fill), hard black offset shadows, Bungee + stroke. Nothing loops: every motion is a
+   finite WAAPI one-shot (transform / opacity) started from JS. The menu tile's own rules live in Homepage.css. */
+
+/* ---- the toasts: the house edge toast's spot (KitEdgeToast.css — right edge, below the corner cluster) ---- */
+.cxt-host {
+  position: fixed;
+  top: max(250px, 34vh);
+  right: 0;
+  z-index: 9001;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.cxt { position: absolute; right: 0; }
+.cxt-card {
+  display: flex;
+  align-items: stretch;
+  height: 70px;
+  box-sizing: border-box;
+  background: var(--k-panel);
+  border: var(--k-ink-l) solid var(--k-ink);
+  border-right: 0;
+  border-left: 8px solid #FFE94A;
+  box-shadow: calc(var(--k-sh-l) * -1) var(--k-sh-l) 0 var(--k-ink);
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(120%); /* rests off-screen; the slide brings it in */
+}
+.cxt-tile {
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFE94A;
+  border-right: var(--k-ink-m) solid var(--k-ink);
+}
+.cxt-art { display: flex; }
+.cxt-art img { display: block; width: 48px; height: 48px; object-fit: contain; }
+.cxt-text { padding: 0 22px 0 16px; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.cxt-head { display: flex; align-items: center; gap: 8px; font-size: var(--fs-k13); color: var(--k-dim); }
+.cxt-code { display: inline-block; padding: 0 5px; background: var(--k-ink); color: #FFE94A; }
+.cxt-label {
+  font-size: var(--fs-k24);
+  line-height: 1;
+  color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
+  paint-order: stroke fill;
+}
+.cxt[data-kind='done'] .cxt-card, .cxt[data-kind='sweep'] .cxt-card { border-left-color: #2EFFE0; }
+.cxt[data-kind='done'] .cxt-tile, .cxt[data-kind='sweep'] .cxt-tile { background: #2EFFE0; }
+.cxt[data-kind='done'] .cxt-code, .cxt[data-kind='sweep'] .cxt-code { color: #2EFFE0; }
+/* STREAK KEPT: bigger, orange, the flame breaks out of its tile */
+.cxt.is-kept .cxt-card { height: 84px; border-left-color: #FF6B3D; }
+.cxt.is-kept .cxt-tile { width: 78px; background: #FF6B3D; }
+.cxt.is-kept .cxt-art img { width: 64px; height: 64px; margin-top: -14px; }
+.cxt.is-kept .cxt-code { color: #FF6B3D; font-size: var(--fs-k20); }
+.cxt.is-kept .cxt-label { font-size: var(--fs-k30); color: #FFE94A; }
+@media (max-width: 480px) {
+  .cxt-host { top: 64px; }
+  .cxt-label { font-size: var(--fs-k20); }
+}
+
+/* ---- the CONTRACTS screen (round 2, Andy oct21 "look so AI generated … need to scroll"): the house full screen —
+   ACHIEVEMENTS' stage (1366×657, scaled to the window, so a laptop / Chromebook never scrolls), the kit's back button,
+   Bungee Shade title, KitPill, KitStampCard cards. Flat fills, coloured strips, black ink, hard offset shadows. ---- */
+.cx3-overlay {
+  position: fixed; inset: 0; z-index: 60; outline: none; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--k-bg); color: var(--k-white); font-family: var(--k-mono);
+  --cx-k: 1;
+}
+.cx3-stripes { position: absolute; inset: 0; pointer-events: none; background-image: repeating-linear-gradient(-28deg, transparent 0 46px, rgba(255, 107, 61, .07) 46px 50px); }
+.cx3-scale { position: relative; flex: none; width: calc(1366px * var(--cx-k)); height: calc(657px * var(--cx-k)); }
+/* the stage is drawn at 1366×657 and scaled from its corner; the wrapper above takes the SCALED size, so the overlay
+   never has a scroll box larger than the window (a Chromebook's 650px scrolled 4px with a 657px layout box) */
+.cx3-screen { box-sizing: border-box; width: 1366px; height: 657px; padding: 16px 30px 24px; display: flex; flex-direction: column; transform: scale(var(--cx-k)); transform-origin: 0 0; }
+
+.cx3-head { display: flex; align-items: center; gap: 20px; min-height: 90px; flex: 0 0 auto; }
+.cx3-title { flex: 1; margin: 0; text-align: center; font-family: var(--k-shade); font-weight: 400; font-size: var(--fs-k44); line-height: 1; color: var(--k-orange); white-space: nowrap; }
+.cx3-count {
+  min-height: 54px; padding: 0 16px; box-sizing: border-box; display: flex; align-items: center; gap: 6px;
+  background: var(--k-panel-deep); border: var(--k-ink-m) solid var(--k-ink); box-shadow: var(--k-sh-m) var(--k-sh-m) 0 var(--k-ink);
+  font-family: var(--k-display); color: var(--k-dim);
+}
+.cx3-count b { font-weight: 400; font-size: var(--fs-k24); color: var(--k-yellow); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
+.cx3-count span { font-size: var(--fs-k18); }
+.cx3-count small { font-size: var(--fs-k14); margin-left: 4px; }
+.cx3-gems { flex: 0 0 auto; }
+
+.cx3-body-grid { flex: 1 1 auto; min-height: 0; margin-top: 8px; display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 34px; }
+
+/* the STREAK panel: the painted flame is the hero */
+.cx3-streak {
+  position: relative; min-height: 0; box-sizing: border-box; padding: 12px 22px 18px;
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--k-panel); border: var(--k-ink-xl) solid var(--k-ink); border-top: 12px solid var(--k-orange);
+  box-shadow: 9px 9px 0 var(--k-ink);
+  animation: cx3Rise .42s cubic-bezier(.2, 1.2, .4, 1) both 1;
+}
+.cx3-streak-k { align-self: flex-start; font-family: var(--k-display); font-size: var(--fs-k26); color: var(--k-orange); }
+.cx3-flame { position: relative; width: 190px; height: 190px; margin-top: -4px; }
+.cx3-flame img { width: 100%; height: 100%; object-fit: contain; transform: rotate(-4deg); }
+.cx3-streak.is-cold .cx3-flame img { opacity: .4; }
+.cx3-flame-n {
+  position: absolute; right: -8px; bottom: 2px; font-family: var(--k-display); font-weight: 400; font-size: var(--fs-k76); line-height: 1;
+  color: var(--k-white); -webkit-text-stroke: var(--k-stroke-xl) var(--k-ink); paint-order: stroke fill; text-shadow: 5px 5px 0 var(--k-ink);
+  transform: rotate(-6deg);
+}
+.cx3-streak-days { margin-top: 4px; font-family: var(--k-display); font-size: var(--fs-k28); color: var(--k-white); -webkit-text-stroke: var(--k-stroke-l) var(--k-ink); paint-order: stroke fill; }
+.cx3-streak-rule { margin-top: 2px; font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k15); letter-spacing: .06em; color: var(--k-dim); }
+.cx3-sweep {
+  margin-top: auto; width: 100%; box-sizing: border-box; min-height: 70px; padding: 8px 14px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+  background: var(--k-panel-deep); border: var(--k-ink-l) solid var(--k-ink); box-shadow: var(--k-sh-l) var(--k-sh-l) 0 var(--k-ink);
+  transform: rotate(-1.5deg);
+}
+.cx3-sweep.is-done { background: #0e2b29; }
+.cx3-sweep-pips { display: flex; flex-direction: column; gap: 4px; }
+.cx3-sweep-pips i { display: block; width: 26px; height: 12px; background: var(--k-rule); border: var(--k-ink-s) solid var(--k-ink); transform: skewX(-20deg); }
+.cx3-sweep-pips i.is-done { background: var(--k-yellow); }
+.cx3-sweep-k { font-family: var(--k-display); font-size: var(--fs-k18); color: var(--k-white); white-space: nowrap; }
+.cx3-sweep-pay { display: inline-flex; align-items: center; gap: 6px; font-family: var(--k-display); font-size: var(--fs-k28); color: var(--k-cyan); -webkit-text-stroke: var(--k-stroke-l) var(--k-ink); paint-order: stroke fill; }
+.cx3-reset { margin-top: 14px; font-family: var(--k-display); font-size: var(--fs-k15); color: var(--k-dim); }
+.cx3-reset b { font-weight: 400; color: var(--k-yellow); }
+
+/* the HAND: three contract cards, dealt */
+.cx3-hand { list-style: none; margin: 0; padding: 4px 8px 8px 4px; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; }
+.cx3-cell {
+  --c: var(--k-cyan);
+  min-width: 0; min-height: 0; transform: rotate(var(--tilt, 0deg));
+  animation: cx3Deal .44s cubic-bezier(.2, 1.2, .4, 1) both 1; animation-delay: calc(80ms + var(--i, 0) * 90ms);
+}
+.cx3-cell[data-mode='blitz'] { --c: var(--k-hot); }
+.cx3-cell[data-mode='sat'] { --c: var(--k-yellow); }
+.cx3-cell[data-mode='chain'] { --c: var(--k-purple); }
+.cx3-cell[data-mode='fuse'] { --c: var(--k-lilac); }
+.cx3-cell[data-mode='race'] { --c: var(--k-pink); }
+.cx3-cell[data-mode='any'] { --c: var(--k-orange); }
+.cx3-card.kstc { width: 100%; height: 100%; }
+.cx3-card .kstc-card { box-shadow: 8px 8px 0 var(--k-ink); }
+.cx3-card .kstc-body { display: flex; flex-direction: column; height: 100%; }
+.cx3-strip {
+  height: 40px; flex: 0 0 auto; box-sizing: border-box; padding: 0 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--c); border-bottom: var(--k-ink-m) solid var(--k-ink);
+  font-family: var(--k-display); font-size: var(--fs-k20); color: var(--k-ink);
+}
+.cx3-strip-pay { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-k22); }
+.cx3-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; padding: 12px 16px 16px; }
+.cx3-art { position: relative; width: 132px; height: 132px; flex: none; }
+.cx3-plate { position: absolute; inset: 8%; background: var(--k-panel-deep); border: var(--k-ink-l) solid var(--k-ink); box-shadow: inset 0 0 0 5px var(--c), 6px 6px 0 var(--k-ink); transform: rotate(-6deg); }
+.cx3-art img { position: absolute; left: 50%; top: 50%; width: 88%; height: 88%; object-fit: contain; transform: translate(-50%, -52%) rotate(4deg); }
+.cx3-tier { position: absolute; right: -14px; bottom: -2px; padding: 0 8px; background: var(--k-ink); color: var(--c); font-family: var(--k-display); font-size: var(--fs-k15); line-height: 26px; }
+.cx3-task {
+  margin: 12px 0 0; width: 100%; min-height: 3.6em; text-align: center;
+  font-family: var(--k-display); font-size: var(--fs-k20); line-height: 1.2; color: var(--k-white);
+  -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; text-wrap: balance;
+}
+.cx3-nums { margin-top: 6px; display: flex; align-items: baseline; gap: 6px; }
+.cx3-have { font-family: var(--k-display); font-size: var(--fs-k44); line-height: 1; color: var(--c); -webkit-text-stroke: var(--k-stroke-l) var(--k-ink); paint-order: stroke fill; }
+.cx3-need { font-family: var(--k-display); font-size: var(--fs-k22); color: var(--k-dim); }
+.cx3-bar { position: relative; width: 100%; margin-top: 8px; height: 22px; flex: 0 0 auto; box-sizing: border-box; overflow: hidden; background: var(--k-well); border: var(--k-ink-m) solid var(--k-ink); }
+.cx3-bar-fill { position: absolute; inset: 0; background: var(--c); transform-origin: left center; }
+.cx3-foot { margin-top: auto; padding-top: 12px; width: 100%; min-height: 64px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.cx3-anygame { font-family: var(--k-display); font-size: var(--fs-k16); color: var(--k-dim); align-self: center; }
+.cx3-swap { min-height: 46px; }
+.cx3-paid { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--k-display); font-size: var(--fs-k22); color: var(--k-cyan); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
+.cx3-cell.is-done .cx3-strip { background: var(--k-cyan); }
+.cx3-cell.is-done .cx3-bar-fill { background: var(--k-cyan); }
+/* the DONE stamp slams over the art at 1.5× the kit size, so the task under it stays readable */
+.cx3-card .kstc-anchor { transform: scale(1.5); }
+
+@keyframes cx3Rise { 0% { transform: translateY(26px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+@keyframes cx3Deal { 0% { transform: translateY(40px) rotate(0deg) scale(.92); opacity: 0; } 100% { transform: translateY(0) rotate(var(--tilt, 0deg)) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cx3-streak, .cx3-cell { animation: none; } }
+
+@media (max-width: 699px) {
+  /* NO SCROLL on phones either (Andy oct21 "I don't want [scrolls] for basically anything"): one fixed-height column —
+     the header, a one-row streak strip, and the three cards sharing what is left (390×844 and 360×640 both fit) */
+  .cx3-overlay { align-items: stretch; height: 100%; height: 100dvh; }
+  .cx3-scale { width: 100%; height: 100%; }
+  .cx3-screen { width: 100%; height: 100%; transform: none; padding: 8px max(10px, env(safe-area-inset-left, 0px)) max(10px, env(safe-area-inset-bottom, 0px)); }
+  .cx3-head { min-height: 0; gap: 6px; }
+  .cx3-back { flex: none; transform: scale(.62); transform-origin: left center; margin: -12px -66px -12px 0; }
+  .cx3-title { flex: 1 1 auto; text-align: right; font-size: var(--fs-k22); }
+  .cx3-title-daily, .cx3-count, .cx3-gems { display: none; }
+  .cx3-body-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+  .cx3-streak { flex: none; flex-direction: row; align-items: center; gap: 8px; padding: 4px 10px 4px 6px; border-top-width: 6px; box-shadow: 5px 5px 0 var(--k-ink); }
+  .cx3-streak-k, .cx3-streak-rule, .cx3-reset { display: none; }
+  .cx3-flame { flex: none; width: 52px; height: 52px; margin: 0; }
+  .cx3-flame-n { font-size: var(--fs-k26); right: -10px; bottom: -2px; text-shadow: 3px 3px 0 var(--k-ink); -webkit-text-stroke-width: var(--k-stroke-l); }
+  .cx3-streak-days { margin: 0 0 0 6px; font-size: var(--fs-k14); -webkit-text-stroke-width: var(--k-stroke-s); line-height: 1.05; width: 4.4em; }
+  .cx3-sweep { flex: 1 1 auto; margin: 0; min-height: 44px; padding: 4px 8px; gap: 8px; transform: none; box-shadow: 3px 3px 0 var(--k-ink); }
+  .cx3-sweep-pips i { width: 18px; height: 8px; }
+  .cx3-sweep-k { font-size: var(--fs-k14); }
+  .cx3-sweep-pay { font-size: var(--fs-k20); -webkit-text-stroke-width: var(--k-stroke-s); }
+  .cx3-hand { flex: 1 1 auto; display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 0 6px 6px 0; }
+  .cx3-cell { --tilt: 0deg; }
+  .cx3-card .kstc-card { box-shadow: 5px 5px 0 var(--k-ink); }
+  .cx3-card .kstc-anchor { transform: scale(1.05); left: 76% !important; top: 62% !important; } /* clear of the task text */
+  .cx3-strip { height: 28px; padding: 0 10px; font-size: var(--fs-k16); }
+  .cx3-strip-pay { font-size: var(--fs-k17); }
+  .cx3-body { display: grid; grid-template-columns: 54px auto minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; grid-template-areas: 'art task task' 'art nums bar' 'foot foot foot'; gap: 4px 10px; align-items: center; padding: 6px 10px 8px; }
+  .cx3-art { grid-area: art; width: 54px; height: 54px; align-self: start; }
+  .cx3-plate { box-shadow: inset 0 0 0 3px var(--c), 3px 3px 0 var(--k-ink); border-width: var(--k-ink-s); }
+  .cx3-tier { right: -8px; bottom: -6px; font-size: var(--fs-k13); line-height: 18px; padding: 0 5px; }
+  .cx3-task { grid-area: task; margin: 0; min-height: 0; text-align: left; font-size: var(--fs-k15); line-height: 1.15; -webkit-text-stroke-width: 2px; }
+  .cx3-nums { grid-area: nums; margin: 0; }
+  .cx3-have { font-size: var(--fs-k24); -webkit-text-stroke-width: var(--k-stroke-s); }
+  .cx3-need { font-size: var(--fs-k15); }
+  .cx3-bar { grid-area: bar; margin: 0; height: 14px; border-width: var(--k-ink-s); }
+  .cx3-foot { grid-area: foot; margin: 2px 0 0; padding: 0; width: 100%; min-height: 0; flex-direction: row; align-items: center; justify-content: flex-end; gap: 10px; }
+  .cx3-foot .kb--ghost { height: 46px; } /* the kit ghost is 64px tall — slimmer here so three cards fit a 640px phone */
+  .cx3-anygame { margin-right: auto; }
+  .cx3-paid { font-size: var(--fs-k15); white-space: nowrap; justify-content: flex-end; min-height: 44px; }
+  .cx3-anygame { font-size: var(--fs-k13); }
+}

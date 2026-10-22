@@ -368,6 +368,8 @@
   .hp-m-xp .kx.is-lvin .kx-read-s,
   .hp-m-xp .kx.is-lvin .kx-read-u { font-size: var(--fs-k14); }
   .hp-m-xp .hp-rankplate { padding: 4px 8px 5px; gap: 1px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
+  .hp-m-xp .hp-profplate { gap: 5px; padding-left: 4px; padding-right: 6px; }
+  .hp-m-xp .hp-profplate-face { width: 26px; height: 26px; min-width: 0; min-height: 0; border-width: 2px; }
   .hp-m-xp .hp-rankplate-k { font-size: var(--fs-k14); letter-spacing: 0.06em; }
   .hp-m-xp .hp-rankplate-n { font-size: var(--fs-k18); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   .hp-m-xp .kx-read-n { font-size: var(--fs-k14); }
