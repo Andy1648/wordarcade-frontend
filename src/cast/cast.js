@@ -381,7 +381,10 @@ export const CAST_FRAMES = {
   boo: { n: 6, seq: [[1, 300], [2, 620], [3, 220], [4, 800], [5, 1000]], rest: 1800 },
   // MECHA: ready → red scan line, antenna pinging → ROCKET PUNCH → steam vents, thumbs up ^ ^
   // 5 frames (the rocket-punch frame ran off its cell, so it was cut): ready → red scan line, antenna pinging → winds up → the punch lands, a spark at the joint → steam vents, thumbs up ^ ^
-  mecha: { n: 5, seq: [[1, 760], [0, 160], [2, 380], [3, 520], [4, 1100]], rest: 1800 },
+  // OFF (Andy oct21 "part of mecha is being cut off … what happened to its cool shooting arms?"): the 5 frames were
+  // painted smaller than mecha-hero.webp, lost its big raised arm, and frame 3 carried a clipped fist from the next cell.
+  // MECHA idles on its hero art + CAST_LAYERS (fuse, visor glint, jets) until a repaint keeps the shooting arms in frame.
+  // mecha: { n: 5, seq: [[1, 760], [0, 160], [2, 380], [3, 520], [4, 1100]], rest: 1800 },
   // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
   // 6 frames: asleep → head droops, bubble swells → POP, jolts awake → giant yawn → snuggles back down
   dud: { n: 6, seq: [[1, 520], [2, 800], [3, 520], [4, 720], [5, 600]], rest: 2200 },
