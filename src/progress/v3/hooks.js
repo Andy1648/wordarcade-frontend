@@ -10,6 +10,7 @@ import { POP_STYLES, SOUND_PACKS, getOwned, saveOwned, equip, itemById, isOwned 
 import { getWins } from '../wins.js';
 import { loadGemState, saveGemState, tellBalance, grantGems } from '../gemsCore.js';
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue, statHits } from '../markRollsCore.js';
+import { noteRebirthPerks } from '../markPerks.js'; // FIREBIRD's AFTERPARTY on the season-2 rebirth door
 import {
   cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
   rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, LEVEL_UP, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
@@ -23,6 +24,7 @@ import { unlistedEntry, ownsUnlistedId } from '../../unlisted/unlistedIds.js'; /
 import { hardestBot } from '../botDiff.js';
 import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
+import { takeLevelChests } from './levelChest.js'; // LEVEL CHESTS: every 5th level of a climb (Andy oct22)
 import { frenzyXpMult } from '../frenzy.js'; // FUSE FRENZY = ×5 XP per key for 5 min in season 2 (Andy oct8)
 
 export const LV_GEMS_KEY = `${S2_PREFIX}lvgems`; // { r, peak }: the climb whose levels have paid LEVEL_UP gems (Andy oct10)
@@ -97,6 +99,7 @@ export const starsSwap = {
     const rc = doRebirth(); // R + 1 (and the run's peak into records); LV1
     bumpCounter('reb'); // ACHIEVEMENTS: REBIRTH (every climb)
     gemsSwap.d(rc); // GEMS: 25 × the new R (Andy oct11 — levels no longer pay)
+    noteRebirthPerks(); // FIREBIRD's AFTERPARTY (GEAR EXPANSION oct21)
     return { rc, stars: 0 };
   },
   e: () => ({ keys: 0, forges: 0 }), // runAutomation: no AUTO-KEY / AUTO-FORGE (R2 unlocks AUTO ROLL)
@@ -141,8 +144,10 @@ export const gemsSwap = {
     if (!st || st.r !== rc) { save({ r: rc, peak: L }); return 0; } // a new climb: record, never back-pay
     if (L <= st.peak) return 0;
     const n = L - st.peak;
+    const chest = takeLevelChests(st.peak, L); // oct22: a small gem chest on each 5th level reached (daily-capped)
     save({ r: rc, peak: L });
-    return LEVEL_UP > 0 ? grantGems(n * LEVEL_UP, 'level', { detail: `lv-${L}` }) : 0;
+    const gems = (LEVEL_UP > 0 ? n * LEVEL_UP : 0) + chest;
+    return gems > 0 ? grantGems(gems, 'level', { detail: `lv-${L}` }) : 0;
   },
   c: ROLL_PRICE, // ROLL_PRICE_GEMS: 75
   // noteRebirth: rebirthGems(rc) — 25 × R (Andy oct11); rebirthWithStars (xpSwap above) calls it

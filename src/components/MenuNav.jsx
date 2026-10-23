@@ -33,22 +33,12 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, profile = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, daily = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
-      {/* PROFILE (oct17): your hero's face — joins this cluster (no orphan fixed UI); the paged desktop has the column tile */}
-      {profile && (
-        <KitIconButton
-          art={profile.art}
-          tone="cyan"
-          className="hp-ico is-profile"
-          data-nav="profile"
-          disabled={navigating}
-          onClick={profile.onClick}
-          ariaLabel="Open your profile"
-          title="Profile"
-        />
-      )}
+      {/* DAILY CONTRACTS (oct21): the flame + today's count — joins this cluster where PROFILE was (the profile is the XP
+          bar's lead plate now); the paged desktop shows the right-column chip instead */}
+      {daily}
       {board && (
         <KitIconButton
           icon="leaderboard"
@@ -115,6 +105,7 @@ function sayGate(g) {
  *               `value` = the live line under the label; `locked` = its gate ("R2" / "LV10") while it is closed.
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)
+ * @param daily  the DAILY tile (contracts/DailyTile — streak flame + contracts), full width under the four tiles
  */
 // THE DOT NUDGE (MENU MOTION LAW, Andy oct9 "the 4 icons in the menu … at least some animation"): a rail tile with an
 // actionable dot nudges its icon ONCE every NUDGE_EVERY_MS — one shared setTimeout for the whole rail (never a CSS loop,
@@ -163,7 +154,7 @@ function useDotNudge(rootRef, enabled) {
   }, [rootRef, enabled]);
 }
 
-export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, foot = null }) {
+export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, daily = null, foot = null }) {
   const navRef = useRef(null);
   const reduced = useReduceMotion();
   useDotNudge(navRef, !reduced);
@@ -199,6 +190,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
           />
         );
       })}
+      {daily}
       {foot}
     </nav>
   );
@@ -256,6 +248,43 @@ function useGearShowcase(slotRef, tier, enabled) {
   }, [slotRef, tier, enabled]);
 }
 
+/**
+ * TWO GEARS ALWAYS FIT (Andy oct21 "the second gear is still getting pushed off the screen just a bit … on this gear").
+ * How tall the two full slots are depends on the GEARS worn — a stat whose unit wraps ("WINS IN WORD BOMB") plus four
+ * substat lines — so the oct12 screen-size breakpoints missed combos (two mythics at 1280x720 ran 6px off the screen, at
+ * 1366x768 onto the frame). The 2nd slot measures instead: when its bottom would pass the frame, the rail is marked
+ * TIGHT and both slots fold their substat lines away (the GEAR SHEET still lists every one). Measured on mount, when a
+ * worn gear changes, when the webfont lands and when the stage resizes — never per frame. Hysteresis: once tight it
+ * only re-tries the full slots after the stage grows, so it never flips back and forth.
+ */
+const FRAME_PAD = 18; // the menu frame's drawn border, which a slot must clear
+function useGearRailFit(slotRef, active, key) {
+  useEffect(() => {
+    const el = slotRef.current;
+    const rail = el && el.closest('.hp-rail');
+    const stage = el && el.closest('.homepage-stage');
+    if (!active || !rail || !stage) return undefined;
+    let tightAt = 0;
+    let live = true;
+    const fits = () => el.getBoundingClientRect().bottom <= Math.min(stage.getBoundingClientRect().bottom, window.innerHeight) - FRAME_PAD;
+    const check = () => {
+      if (!live) return;
+      const h = stage.getBoundingClientRect().height;
+      if (rail.hasAttribute('data-gear-tight')) {
+        if (h <= tightAt + 1) return;
+        rail.removeAttribute('data-gear-tight'); // the stage grew: try the full slots again
+      }
+      if (!fits()) { rail.setAttribute('data-gear-tight', ''); tightAt = h; }
+    };
+    rail.removeAttribute('data-gear-tight'); // a new gear: measure it full
+    check();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(check);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
+    if (ro) { ro.observe(stage); ro.observe(rail); } // the rail grows when the OTHER slot's gear changes
+    return () => { live = false; if (ro) ro.disconnect(); rail.removeAttribute('data-gear-tight'); };
+  }, [slotRef, active, key]);
+}
+
 /** "+9% CRIT RATE" → "+9% CRIT", "+1× CRIT POWER" → "+1× CRIT PWR", "+10 BASE WINS" → "+10 BASE WINS" (the slot's width). */
 /** A substat as a menu CHIP (GEAR CARD v4): the number ("14%", "2×", "30") beside its icon — the slot is too narrow
  * for the card's words, so the ICON says what it boosts and the full line rides the chip's label (and the sheet). */
@@ -282,6 +311,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
   const sheen = !!mark && IDLE_SHEEN_TIERS.has(tier);
   const slotRef = useRef(null);
   useGearShowcase(slotRef, mark && GLOW_TIERS.has(tier) ? tier : null, !reduced);
+  useGearRailFit(slotRef, two, mark ? mark.id : '');
   return (
     <button
       ref={slotRef}

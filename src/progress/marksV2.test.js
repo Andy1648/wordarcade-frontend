@@ -69,19 +69,19 @@ test('+N s OVERDRIVE lengthens the next OVERDRIVE', () => {
   withStorage({ [ROLL_STATE_KEY]: owning('mk-tinder'), [MARKS_EQUIPPED_KEY]: 'mk-tinder' }, () => assert.equal(overdriveLengthMs(), 375000));
 });
 
-test('pity ladder (GEAR POOL v2, Genshin): EPIC+ in 10 AND LEGENDARY+ in 50 — always shown, both forced on time', () => {
-  assert.equal(PITY.legendary.hard, 50);
-  assert.equal(LEGENDARY_PITY_HARD, 50);
-  assert.deepEqual(pityLadder(freshState()), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 50 }]);
-  assert.deepEqual(pityLadder(null), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 50 }]);
-  const s = { ...freshState(), everEpic: true, rolls: 1000, sinceEpic: 3, sinceLegendary: 49 };
+test('pity ladder (GEAR POOL v2, Genshin): EPIC+ in 10 AND LEGENDARY+ in 60 — always shown, both forced on time', () => {
+  assert.equal(PITY.legendary.hard, 60);
+  assert.equal(LEGENDARY_PITY_HARD, 60);
+  assert.deepEqual(pityLadder(freshState()), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 60 }]);
+  assert.deepEqual(pityLadder(null), [{ tier: 'epic', left: 10 }, { tier: 'legendary', left: 60 }]);
+  const s = { ...freshState(), everEpic: true, rolls: 1000, sinceEpic: 3, sinceLegendary: 59 };
   assert.equal(pityLeft(s).legendary, 1);
   const out = roll(() => 0.999, s);
   assert.equal(out.result.pityHit, 'legendary');
   assert.ok(['legendary', 'mythic', 'secret'].includes(out.result.tier));
   assert.equal(out.state.sinceLegendary, 0);
   assert.equal(out.state.sinceEpic, 0);
-  // the worst draw every time (a RARE, or an EPIC on the 10th): a LEGENDARY+ at least every 50
+  // the worst draw every time (a RARE, or an EPIC on the 10th): a LEGENDARY+ at least every 60
   let st = freshState();
   let last = 0;
   let maxGap = 0;
@@ -93,7 +93,7 @@ test('pity ladder (GEAR POOL v2, Genshin): EPIC+ in 10 AND LEGENDARY+ in 50 — 
       last = i;
     }
   }
-  assert.ok(last > 0 && maxGap === 50, `gap ${maxGap}`);
+  assert.ok(last > 0 && maxGap === 60, `gap ${maxGap}`);
 });
 
 test('skip reveals below [tier]: default EPIC, stored in taw.markRolls; a first-time mark is never skipped', () => {

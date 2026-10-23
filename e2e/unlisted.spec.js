@@ -63,7 +63,7 @@ for (const vp of VPS) {
     await og.click();
     const sheet = page.locator('.mx-sheet');
     await expect(sheet.getByTestId('mark-main')).toContainText('HOW TO FIND');
-    await expect(sheet.getByTestId('mark-main')).toContainText('NAME THE FLASH SITE THAT RAISED US');
+    await expect(sheet.getByTestId('mark-main')).toContainText('THE FLASH PORTAL WHOSE GROUNDS WERE ALWAYS NEW');
     await expect(sheet.getByTestId('gear-equip')).toHaveCount(0);
     await page.waitForTimeout(400);
     await shot(page, `sheet-locked-${vp.tag}`);
@@ -117,7 +117,7 @@ for (const vp of VPS) {
     await shot(page, `achievements-${vp.tag}`);
   });
 
-  test(`@${vp.tag} PROFILE popup: the UNLISTED shelf with serials`, async ({ page }) => {
+  test(`@${vp.tag} PROFILE popup: no UNLISTED shelf / found-count`, async ({ page }) => {
     await page.setViewportSize({ width: vp.w, height: vp.h });
     await installBackendMock(page);
     await seed(page, { unlisted: OWNED });
@@ -127,10 +127,10 @@ for (const vp of VPS) {
     await open.click();
     const pf = page.getByTestId('profile-popup');
     await expect(pf).toBeVisible();
-    const shelf = pf.getByTestId('unlisted-shelf');
-    await shelf.scrollIntoViewIfNeeded();
-    await expect(shelf).toContainText('2 FOUND');
-    await expect(shelf.locator('.ulc-serial')).toHaveText(['#0042', '#0007']);
+    // oct19 (Andy "i still see how many unlisted ive found in profile - i dont want that"): owned UNLISTED, no shelf, no count
+    await expect(pf.getByTestId('unlisted-shelf')).toHaveCount(0);
+    await expect(pf).not.toContainText(/FOUND(?<!GEARS FOUND)/);
+    await expect(pf.locator('.ulc-serial')).toHaveCount(0);
     await page.waitForTimeout(500);
     await shot(page, `profile-${vp.tag}`);
   });

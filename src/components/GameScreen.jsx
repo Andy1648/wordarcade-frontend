@@ -60,6 +60,8 @@ import { hasSeenGameSpotlight, markGameSpotlightSeen } from '../progress/onboard
 import { difficultyLabel } from '../difficulty';
 import { formatNum, formatMult } from '../format';
 import packs from '../data/packs';
+import { juiceOn, useRace, RaceStrip, useOvertake, OvertakeBanner, RevealBoard } from './BlitzRivalJuice';
+import { showcaseOn, ShowcaseBoard, analyseGame, AwardsRow } from './BlitzShowcase';
 import { comboMultiplier } from '../progress/combo';
 import { useCountUp } from '../hooks/useCountUp';
 import { createCountUp } from '../juice/countUp';
@@ -67,6 +69,8 @@ import { setDanger, stopDanger } from '../audio/gameSounds';
 import './GameScreen.css';
 import { noteTypedLetters } from '../progress/letterXp';
 import { GemPop, GemsEarnedLine, useGemsRound } from './gems/Gems';
+import ContractDoneLine from './contracts/ContractDoneLine.jsx';
+import { XpEarnedLine, useGameXpRound } from './xp/XpEarned';
 import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
@@ -1511,6 +1515,13 @@ export default function GameScreen({
   // addictive use"): read once per game; the other seats keep the cast member of their colour.
   const myHero = useMemo(() => readMain(), []);
   const myTier = useMemo(() => rarityOf(heroById(myHero)).tier, [myHero]); // gold / elite / legend → its painted seat ring
+  // HEROES IN EVERY SEAT (oct21): each other player's equipped hero from the room roster (backend set_hero); an id this
+  // client doesn't know (or none yet) falls back to the seat-colour cast member below.
+  const seatHeroes = useMemo(() => {
+    const m = new Map();
+    for (const p of roomPlayers || []) if (p && p.hero && heroById(p.hero)) m.set(p.id, p.hero);
+    return m;
+  }, [roomPlayers]);
   usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
   const draftStoreRef = useRef(null);
   if (!draftStoreRef.current) draftStoreRef.current = createDraftStore();
@@ -3436,10 +3447,19 @@ export default function GameScreen({
                   {/* oct16 art run: the painted CAST member of this seat's colour (RIOT pink · GLITCH cyan · HYPE yellow ·
                       BRAWL orange · HEX purple); falls back to the bomb buddy until its HERO is painted */}
                   {/* oct18: YOUR seat is your equipped hero, its prop streams + rarity aura playing live on your turn */}
-                  {isMe && myTier ? <img className="wb-seat-char wb-seat-ring" src={`/cast/rings/seat-ring-${myTier}.webp`} alt="" aria-hidden="true" draggable="false" /> : null}
-                  {isMe
-                    ? <CastArt className="wb-seat-char" id={myHero} live={isCurrent && !eliminated} />
-                    : <img className="wb-seat-char" src={castSrc(castByColor(pc.color).id, 'hero')} alt="" aria-hidden="true" draggable="false" />}
+                  {(() => {
+                    // oct21: every seat is its player's real hero (+ its rarity ring); yours is read locally
+                    const sh = isMe ? myHero : seatHeroes.get(player.id);
+                    const tier = isMe ? myTier : sh ? rarityOf(heroById(sh)).tier : null;
+                    return (
+                      <>
+                        {tier ? <img className="wb-seat-char wb-seat-ring" src={`/cast/rings/seat-ring-${tier}.webp`} alt="" aria-hidden="true" draggable="false" /> : null}
+                        {sh
+                          ? <CastArt className="wb-seat-char" id={sh} live={isCurrent && !eliminated} />
+                          : <img className="wb-seat-char" src={castSrc(castByColor(pc.color).id, 'hero')} alt="" aria-hidden="true" draggable="false" />}
+                      </>
+                    );
+                  })()}
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
                     <span className="game-player-name-text" translate="no">{player.name}</span>
@@ -4149,7 +4169,7 @@ function useScoreCelebration(score, isRecord, cardRef, statLineCount) {
   return { stage, displayScore, popping, fastForward };
 }
 
-function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false, gemsSince = 0 }) {
+function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGameMode, onLeave, actionPending, audioSlot = null, offerMenu = false, gemsSince = 0, xpSince = 0 }) {
   // For a Daily run, the authoritative headline is the score App already derived
   // and persisted (daily.score = the round-sum, breakdown-matching). It equals
   // the `score` prop in the normal case; preferring it makes the Daily headline
@@ -4230,8 +4250,11 @@ function SoloResultsScreen({ score, rounds, daily = null, onPlayAgain, onNewGame
           <div className="solo-category">
             {daily ? `⚡ DAILY CHALLENGE #${daily.dayNumber}` : 'CATEGORY BLITZ · 3 ROUNDS'}
           </div>
+          {/* GAME XP this run (oct21) — hidden when none */}
+          <XpEarnedLine since={xpSince} />
           {/* GEMS earned this run — always its own line (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
+          <ContractDoneLine since={gemsSince} />
 
           {/* (Daily STREAK line removed — the daily-streak feature is gone; the day #
               above is enough. This reclaims the vertical space it used.) */}
@@ -4379,6 +4402,7 @@ function CategoryBlitzScreen({
   // mount is "this game". At game over the final scores rank everyone: a rival scoring below me is beaten. READ-ONLY;
   // paid once (gems.payGameResult dedupes by key). A solo / daily run has no rivals and pays nothing here.
   const gemsSince = useGemsRound();
+  const xpSince = useGameXpRound(); // GAME XP (oct21): this screen remounts per game, so the mount mark is "this game"
   const [gemGameKey] = useState(() => `cb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`); // one per mount = one per game
   useEffect(() => {
     if (!gameOver) return;
@@ -4418,7 +4442,7 @@ function CategoryBlitzScreen({
   // lastWordResult here is always OURS - no turn gating needed. Resets each round.
   // YOUR ANSWERS NEVER SCROLLS (Andy oct19 "I DONT WANT SCROLL BARS … the answers can just shrink"): the list takes the
   // rail's leftover height, and when the chips outgrow it they step down a size (data-fit 0→3) instead of scrolling.
-  // Runs only when an answer lands, the rival count changes or the window resizes, never per keystroke.
+  // Runs only when an answer lands, the rival count changes or the list's box resizes, never per keystroke.
   const cbAnswersRef = useRef(null);
   const cbAnswerCount = myAnswers.length;
   const cbRivalCount = (roomPlayers || []).length;
@@ -4431,8 +4455,15 @@ function CategoryBlitzScreen({
       while (d < 3 && el.scrollHeight > el.clientHeight + 1) el.dataset.fit = String(++d);
     };
     fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
+    // re-fit when the LIST's own box changes (a window resize, the race strip above it filling in, the header's web
+    // font swapping in late — CI measured before its fonts loaded and kept an overflowing tier) and once fonts are ready.
+    // The chips' size never changes the list's box (it is a flex slot), so this cannot loop.
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(fit); ro.observe(el); }
+    else window.addEventListener('resize', fit);
+    let live = true;
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (live) fit(); });
+    return () => { live = false; if (ro) ro.disconnect(); else window.removeEventListener('resize', fit); };
   }, [cbAnswerCount, cbRivalCount, categoryRound?.round]);
   // THE BREAK BETWEEN ROUNDS counts down what the SERVER waits (Andy oct19: it now scales with the room, 4 s + 1 s per
   // player, max 10 s): round_end carries nextInMs; an older server sends none, which is the old flat 5 s. A 4 Hz clock only
@@ -4453,6 +4484,22 @@ function CategoryBlitzScreen({
   }, [roundResults, breakTotalMs]);
 
   const streak = useCombo();
+  // RIVAL JUICE (Andy oct21 "more visual stimulation - that addictive feel … playing with others"; preview behind
+  // ?cbjuice=1): the live race, the overtake banner and the round-end reveal. Cosmetic: reads the roster, the broadcast
+  // per-rival counts, my answers and round_end only.
+  const juice = juiceOn();
+  // THE BREAK AS A SHOWCASE (Andy oct21/22, on by default; ?cbshow=0 = off): every round_end this game, for the awards.
+  const showcase = showcaseOn();
+  const roundHistoryRef = useRef([]);
+  useEffect(() => {
+    if (!roundResults) return;
+    const h = roundHistoryRef.current;
+    if (roundResults.round === 1) roundHistoryRef.current = [roundResults];
+    else if (!h.some((r) => r.round === roundResults.round)) h.push(roundResults);
+  }, [roundResults]);
+  const cbStageRef = useRef(null);
+  const race = useRace({ roomPlayers, myId, myCount: myAnswers.length, playerProgress: playerProgress || {} });
+  const overtake = useOvertake(juice ? race : { rows: [], top: 0 }, myId, categoryRound?.round, sound, cbStageRef);
   // Near-miss / clutch callout: snapshot the EXISTING round-timer value at submit
   // (cbSubmitTimerRef) and surface how close a late accepted answer was.
   const cbSubmitTimerRef = useRef(0);
@@ -4712,6 +4759,7 @@ function CategoryBlitzScreen({
         onLeave={onLeave}
         actionPending={rematchPending}
         gemsSince={gemsSince}
+        xpSince={xpSince}
       />
     );
   }
@@ -4767,7 +4815,12 @@ function CategoryBlitzScreen({
             {/* GEMS earned this game — never hidden (Andy oct5); on the SAME row as the wins line so the card still fits */}
             <div className="go-earned-row">
               <WinsEarnedTotal amount={winsEarnedTotal} lines={winsBonusLines} />
-              <GemsEarnedLine since={gemsSince} />
+              {/* GAME XP (oct21) stacks over GEMS in one column beside the wins, so the row never gets taller */}
+              <div className="go-earned-side">
+                <XpEarnedLine since={xpSince} />
+                <GemsEarnedLine since={gemsSince} />
+              </div>
+              <ContractDoneLine since={gemsSince} />
             </div>
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
@@ -4793,6 +4846,7 @@ function CategoryBlitzScreen({
               </div>
             </div>
             )}
+            {showcase && <AwardsRow awards={analyseGame(roundHistoryRef.current, scores)} />}
             <div className="cb-scoreboard">
               {scores.map((s, i) => {
                 const pc = resolvePlayerColor(playerColors, s.id);
@@ -4918,7 +4972,8 @@ function CategoryBlitzScreen({
             }}
           />
         )}
-        <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`} data-heat={heatTier(streak.count)}>
+        <div className={`game-stage game-stage--blitz${shake ? ' game-shake' : ''}`} data-heat={heatTier(streak.count)} ref={cbStageRef}>
+          {juice && !isSolo && <OvertakeBanner banner={overtake} />}
           {/* Stable wrapper so the keyed hype popup mounts once per accept, not
               on every re-render amid the conditional siblings (see the Word Bomb
               note above). */}
@@ -5176,8 +5231,11 @@ function CategoryBlitzScreen({
             </div>
           </div>
 
+          {juice && !isSolo && (
+            <RaceStrip race={race} myId={myId} roundKey={categoryRound?.round} colorOf={(id) => resolvePlayerColor(playerColors, id).color} />
+          )}
           {/* Opponents' live progress - hidden in solo (there are none). */}
-          {!isSolo && (
+          {!isSolo && !juice && (
             <div className="cb-progress">
               <div className="cb-section-label">OTHER PLAYERS</div>
               {others.length === 0 ? (
@@ -5245,7 +5303,15 @@ function CategoryBlitzScreen({
               </SprayReveal>
             </div>
 
-            {(roundResults.playerResults || []).map((pr) => {
+            {showcase && (
+              <ShowcaseBoard results={roundResults} totals={categoryTotals} myId={myId} sound={sound} PlayerDot={PlayerDot}
+                colorOf={(id) => resolvePlayerColor(playerColors, id)} breakMs={breakTotalMs} MissedAnswers={MissedAnswers} />
+            )}
+            {juice && !showcase && (
+              <RevealBoard results={roundResults} myId={myId} colorOf={(id) => resolvePlayerColor(playerColors, id)}
+                totals={categoryTotals} sound={sound} PlayerDot={PlayerDot} formatNum={formatNum} />
+            )}
+            {!juice && !showcase && (roundResults.playerResults || []).map((pr) => {
               const pc = resolvePlayerColor(playerColors, pr.id);
               return (
               <div
@@ -5281,7 +5347,7 @@ function CategoryBlitzScreen({
               );
             })}
 
-            {(roundResults.sampleAnswers || []).length > 0 && (
+            {!showcase && (roundResults.sampleAnswers || []).length > 0 && (
               <MissedAnswers key={roundResults.round} answers={roundResults.sampleAnswers} />
             )}
           </div>

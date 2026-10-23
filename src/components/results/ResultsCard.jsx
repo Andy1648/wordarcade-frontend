@@ -22,6 +22,7 @@ import { getWins, minWordsFor } from '../../progress/wins';
 import { kitPlay } from '../kit/motion.js';
 import { reduceMotion } from '../../lib/reduceMotion';
 import { GemIcon, GemsEarnedLine, useGems } from '../gems/Gems';
+import ContractDoneLine from '../contracts/ContractDoneLine.jsx';
 import { tallyLines, chainOf, stampFor } from './resultsModel.js';
 import '../kit/tokens.css';
 import './ResultsCard.css';
@@ -400,6 +401,8 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             {l.note ? <span className="rs2-line-note">{l.note}</span> : null}
           </div>
         ))}
+        {/* DAILY CONTRACTS: "CONTRACT DONE +N" under the WINS lines — only when one finished this round (its gems are in GEMS) */}
+        <ContractDoneLine since={gemsSince} className="rs2-contract" />
         <div className="rs2-sum">
           <div className="rs2-gems" data-rv="rise" data-at={tGems}>
             <GemsEarnedLine since={gemsSince} className="rs2-gems-line" />

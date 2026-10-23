@@ -26,14 +26,15 @@ export const CURRENT_SEASON = 2;
 
 // `secret` = null for every gear (oct20, Andy "make accepted words count (not just randomly typing)"): no word-secret
 // grants a gear any more — EVERY find is a word some mode ACCEPTED, judged in acceptedWords.js, in any mode.
-// `riddle` = the ONE line the index shows while it is unfound: plain enough to work out (Andy oct20 "make it make sense").
+// `riddle` = the ONE line the index shows while it is unfound: plain enough to work out (Andy oct20 "make it make sense"),
+// a little more riddle than instruction (Andy oct22 "make the unlisted riddles slightly more riddly").
 export const UNLISTED_GEARS = Object.freeze([
-  { id: 'mk-ul-og', secret: null, name: 'O.G.', art: 'og', riddle: 'NAME THE FLASH SITE THAT RAISED US' },
-  { id: 'mk-ul-wishbone', secret: null, name: 'WISHBONE', art: 'wishbone', riddle: 'MAKE A WISH AT 11:11 · MORNING AND NIGHT' },
-  { id: 'mk-ul-typewriter', secret: null, name: 'TYPEWRITER', art: 'typewriter', riddle: '40 WORDS OF 6+ LETTERS · NEVER DELETE' },
-  { id: 'mk-ul-mirror', secret: null, name: 'MIRROR', art: 'mirror', riddle: 'A 7+ LETTER WORD THAT READS BOTH WAYS' },
-  { id: 'mk-ul-midas', secret: null, name: 'MIDAS', art: 'midas', riddle: 'SOMETIMES A WORD TURNS TO GOLD' },
-  { id: 'mk-ul-tripledouble', secret: null, name: 'TRIPLE DOUBLE', art: 'tripledouble', season: 2, riddle: 'ONE WORD, THREE DOUBLE LETTERS · THIS SEASON' },
+  { id: 'mk-ul-og', secret: null, name: 'O.G.', art: 'og', riddle: 'THE FLASH PORTAL WHOSE GROUNDS WERE ALWAYS NEW' },
+  { id: 'mk-ul-wishbone', secret: null, name: 'WISHBONE', art: 'wishbone', riddle: 'WHEN THE CLOCK SHOWS FOUR ONES · WISH TWICE' },
+  { id: 'mk-ul-typewriter', secret: null, name: 'TYPEWRITER', art: 'typewriter', riddle: 'FORTY WORDS OF SIX OR MORE · INK CAN’T BE ERASED' },
+  { id: 'mk-ul-mirror', secret: null, name: 'MIRROR', art: 'mirror', riddle: 'SEVEN+ LETTERS THAT LEAVE THE SAME WAY THEY CAME' },
+  { id: 'mk-ul-midas', secret: null, name: 'MIDAS', art: 'midas', riddle: 'A KING’S TOUCH FALLS ON ONE WORD IN MANY' },
+  { id: 'mk-ul-tripledouble', secret: null, name: 'TRIPLE DOUBLE', art: 'tripledouble', season: 2, riddle: 'ONE WORD · THREE SETS OF TWINS · THIS SEASON' },
 ].map((g) => Object.freeze({ season: null, ...g, tier: UNLISTED_TIER })));
 
 const BY_ID = new Map(UNLISTED_GEARS.map((g) => [g.id, g]));

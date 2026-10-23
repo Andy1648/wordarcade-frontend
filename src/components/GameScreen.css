@@ -7106,7 +7106,7 @@ html[data-beat='true'] .wb-belly {
 }
 .cb-answers-of { font-size: var(--fs-unit); color: #FFE94A; -webkit-text-stroke: 2px #000; margin-left: 3px; }
 .cb-round .cb-answers-list {
-  max-height: none; overflow: hidden; gap: 8px; padding: 2px 6px 6px 2px; align-content: flex-start;
+  max-height: none; overflow: hidden; gap: 8px; padding: 2px 6px 2px 2px; /* 2px bottom: the 6px used to read as a 2px "overflow" at 1280x720 */ align-content: flex-start;
 }
 .cb-round .cb-answer-chip {
   font-size: calc(var(--fs-body) * 1.1); letter-spacing: 0.04em; padding: 4px 10px; border-width: 3px; border-radius: 6px;

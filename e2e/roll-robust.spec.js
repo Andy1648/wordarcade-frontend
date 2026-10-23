@@ -265,7 +265,7 @@ test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, cha
   expect(after.owned).toHaveLength(1);
   await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
-  await expect(page.getByTestId('roll-index')).toContainText('1/33'); // GEAR POOL v2: 27 gears + JACKPOT (gear card v4) + 5 oct18 (4 LEGENDARY + CHRONOS)
+  await expect(page.getByTestId('roll-index')).toContainText('1/48'); // GEAR POOL v2: 27 gears + JACKPOT (gear card v4) + 5 oct18 (4 LEGENDARY + CHRONOS) + 15 oct21 GEAR EXPANSION
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', '90');
 });
 
@@ -337,6 +337,9 @@ for (const [w, h] of [[390, 844], [360, 640]]) {
     };
     await holdRoll(page);
     await expect(result(page)).toHaveCount(1, { timeout: SPUN });
+    await keepReveal(page);
+    // DOUBLE ROLLS spin twice (oct22): the "+EXTRA" chip is on the LAST spin's line — wait for it, then tap that reveal
+    await expect(page.locator('[data-testid="mark-roll-extra"]')).toHaveCount(1, { timeout: SPUN * 2 });
     await keepReveal(page);
     await page.waitForTimeout(700);
     await expect(page.locator('[data-testid="mark-roll-extra"]')).toHaveCount(1); // the double roll's "+EXTRA" chip

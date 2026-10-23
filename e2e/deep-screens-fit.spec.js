@@ -6,7 +6,8 @@
 //   3. YOUR PROFILE never scrolls sideways on a phone — FitText's scaled name left its unscaled width behind (94px);
 //   4. PATCH NOTES at 1280x551: no note row runs under the CLOSE button, and the gem wallet never covers the panel;
 //   5. the fixed corner cog is not drawn over the full-screen panels (UPGRADES / STATS / LEADERBOARD / CREDITS);
-//   6. STATS fits a phone — its ALL TIME row ran 24px past a 390x844 screen (a 360-wide phone still scrolls: ~800px of stats).
+//   6. STATS fits a phone — its ALL TIME row ran 24px past a 390x844 screen, and at 360x640 the whole ALL TIME grid sat
+//      below the fold (~800px of stats); short phones (≤ 760px) now get the compact layout and fit.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
@@ -128,7 +129,7 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
   });
 }
 
-for (const [w, h] of [[390, 844], [412, 915]]) {
+for (const [w, h] of [[390, 844], [412, 915], [360, 740], [375, 667], [360, 640]]) {
   test(`STATS fits a phone without scrolling at ${w}x${h} (both tabs)`, async ({ page }) => {
     await boot(page, w, h);
     await navControl(page, 'stats').click();
@@ -137,6 +138,7 @@ for (const [w, h] of [[390, 844], [412, 915]]) {
     for (const tab of ['wins', 'xp']) {
       await st.locator(`.st2-tab[data-tab="${tab}"]`).click();
       await page.waitForTimeout(700);
+      await page.evaluate(() => document.fonts.ready); // measure the real Bungee widths, not the fallback's
       const m = await st.evaluate((el) => ({ sy: el.scrollHeight - el.clientHeight, sx: el.scrollWidth - el.clientWidth }));
       expect(m.sy, `${tab}: no vertical scroll`).toBeLessThanOrEqual(0);
       expect(m.sx, `${tab}: no sideways scroll`).toBeLessThanOrEqual(0);

@@ -91,12 +91,12 @@ test('SETTINGS (trimmed, Andy oct9; oct14 BEAT SYNC in, RANK PLATE out to the ra
   const panel = page.locator('.sp');
   await expect(panel).toBeVisible();
   await expect(panel.locator('.sp-label')).toHaveText(['SOUND', 'MUSIC', 'REDUCE MOTION', 'BEAT SYNC', 'SAVE PROGRESS', 'RESET ACCOUNT']);
-  // BEAT SYNC (Andy oct14): its own switch, stored, separate from REDUCE MOTION
+  // BEAT SYNC (Andy oct14): its own switch, stored, separate from REDUCE MOTION — OFF by default since oct22
   const bs = panel.getByRole('switch', { name: 'Beat sync' });
-  await expect(bs).toHaveAttribute('aria-checked', 'true');
-  await bs.click();
   await expect(bs).toHaveAttribute('aria-checked', 'false');
-  expect(await page.evaluate(() => localStorage.getItem('taw.beatSync'))).toBe('0');
+  await bs.click();
+  await expect(bs).toHaveAttribute('aria-checked', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('taw.beatSync'))).toBe('1');
   await bs.click();
   await expect(panel.getByRole('radio', { name: '1,200,000' })).toHaveCount(0);
   await expect(panel.getByRole('switch', { name: 'Keyboard sounds' })).toHaveCount(0);

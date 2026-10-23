@@ -167,6 +167,44 @@
   color: var(--ink);
   user-select: all;
 }
+/* the code with its QR beside it: the QR is sized off the screen HEIGHT (a projector gets a big one
+   the back row can scan; a Chromebook a smaller one) and shrinks again once the names are open */
+.fr-class-joinrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 22px;
+  max-width: 100%;
+}
+.fr-class-qr {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+.fr-class-qr svg {
+  display: block;
+  width: clamp(104px, 28vh, 320px);
+  height: auto;
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.fr-class-qr figcaption {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.fr-class-lobby.names .fr-class-qr svg {
+  width: clamp(72px, 13vh, 150px);
+}
+.fr-class-lobby.names .fr-class-qr figcaption {
+  display: none;
+}
 .fr-class-people {
   display: flex;
   flex-direction: column;
@@ -605,6 +643,15 @@ button.fr-class-chip:focus-visible .fr-class-chip-x {
   .fr-class-joined b {
     font-size: var(--fs-panel);
   }
+  .fr-class-qr svg {
+    width: clamp(88px, 24vh, 130px);
+    border-width: 2px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  /* names open on a short screen: the roster needs the room — the code and the link still join */
+  .fr-class-lobby.names .fr-class-qr {
+    display: none;
+  }
   .fr-class-legend b {
     font-size: var(--fs-body);
   }
@@ -633,6 +680,9 @@ button.fr-class-chip:focus-visible .fr-class-chip-x {
   }
   .fr-class-code {
     font-size: calc(var(--fs-hero) * 1.1);
+  }
+  .fr-class-qr svg {
+    width: clamp(160px, 34vh, 380px);
   }
   .fr-class-gloss {
     font-size: var(--fs-h1);

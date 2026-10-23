@@ -45,13 +45,15 @@ export const WRAP_HOLD_MS = 0;
 const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
 const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
 
-// JUICE P1 (goal-gradient): `goal` = { lv, rebirth, r } puts the NEXT reward on a plate at the bar's RIGHT end — the next
-// level's number, or the painted REBIRTH icon when the next level is the rebirth gate. In the last NEAR_FRAC of a level
+// JUICE P1 (goal-gradient): `goal` = { lv, chest } puts the NEXT reward on a plate at the bar's RIGHT end — the next
+// level's number (Andy oct21: never the REBIRTH icon — it sat off-centre on the plate). In the last NEAR_FRAC of a level
 // the plate turns yellow (a static class, not a loop) and every gain BUMPS it (one finite 280 ms play) — the "almost
 // there" pull. A level wrap SLAMS the new number in.
 export const NEAR_FRAC = 0.9;
 
-export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null }) {
+// NEAR MISS (Andy oct22, the goal-gradient pull): `nearText` = { k: '38 KEYS', to: 'TO LV 8' } replaces the readout in the last NEAR_FRAC of
+// a level — an honest countdown in keys, the unit the menu actually pays in. Static swap + one finite pop-in, nothing loops.
+export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null, nearText = null }) {
   const rootRef = useRef(null);
   const lvRef = useRef(null);
   const gainRef = useRef(null);
@@ -226,26 +228,20 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   );
   const near = goal && (frac > 0 ? frac : 0) >= NEAR_FRAC;
   const goalNode = goal ? (
-    <div className={`kx-goal${goal.rebirth ? ' is-rebirth' : ''}`} data-testid="xp-goal" aria-hidden="true">
+    <div className="kx-goal" data-testid="xp-goal" aria-hidden="true">
       <span ref={goalRef} className="kx-goal-in">
-        {goal.rebirth ? (
-          <>
-            <img className="kx-goal-icon" src="/icons/rebirth.webp" width="64" height="64" alt="" draggable="false" />
-            {goal.r != null && <span className="kx-goal-r">R{formatNum(goal.r)}</span>}
-          </>
-        ) : (
-          <>
-            <span className="kx-lv-k">LV</span>
-            <span className="kx-goal-n">{formatNum(goal.lv)}</span>
-          </>
-        )}
+        <span className="kx-lv-k">LV</span>
+        <span className="kx-goal-n">{formatNum(goal.lv)}</span>
       </span>
     </div>
   ) : null;
   return (
-    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
-      {lvInside ? lead : lvNode}
+    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${near && nearText ? ' has-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
+      {lvInside ? lead : <>{lead}{lvNode}</>}
       <div className="kx-barwrap">
+        {/* LEVEL CHEST (oct22): the painted gem + what the next level pays, pinned over the goal plate's corner (outside the
+            bar, which clips) — the LV number stays centred */}
+        {goal && goal.chest > 0 ? (<span className="kx-goal-chest" data-testid="xp-goal-chest"><img src="/icons/gems.webp" width="64" height="64" alt="" draggable="false" />+{formatNum(goal.chest)}</span>) : null}
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
           <span className="kx-gain-t" />
         </span>
@@ -268,6 +264,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
             <span className="kx-read-n">{formatNum(need)}</span>
             <span className="kx-read-u">{unit}</span>
           </div>
+          {near && nearText ? <div className="kx-near" aria-hidden="true">{nearText.k}<span className="kx-near-to">{nearText.to}</span></div> : null}
         </div>
       </div>
     </div>

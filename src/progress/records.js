@@ -14,6 +14,7 @@
 // The record fields split into what NEEDED new tracking (here) and what is READ from existing
 // storage by the grid (best/avg WPM → wpm.js, current streak → streak.js, rebirths → xp.js).
 import { rarityOf } from './rarityIndex.js';
+import { contractEvent } from './contracts/bus.js';
 
 export const RECORDS_KEY = 'taw.records';
 export const SEEN_KEY = 'taw.records.seen';
@@ -139,6 +140,7 @@ export function noteWord(word, rarity) {
 // FINDS: this is a CHANCE record, that is a VOCABULARY record. Guarded — safe on the accept path.
 export function noteLucky() {
   try {
+    contractEvent('lucky'); // DAILY CONTRACTS
     const rec = readRaw();
     rec.lucky += 1;
     write(rec);
@@ -151,6 +153,7 @@ export function noteLucky() {
 export function noteCombo(n) {
   try {
     const c = Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+    if (c > 0) contractEvent('combo', { n: c }); // DAILY CONTRACTS
     const rec = readRaw();
     if (c > rec.longestCombo) {
       rec.longestCombo = c;

@@ -19,7 +19,7 @@ import {
 } from './xp.js';
 import { forgeMultForWord, forgeAvgMult, forgeBuys } from './forge.js';
 import { addMarkWord } from './marks.js';
-import { markMult, markWinsMult, markBaseWins } from './markRollsCore.js'; // THE MARK STATS (wins here; XP in letterXp.js)
+import { markMult, markWinsMult, markBaseWins, markLongWinsPct, LONG_WORD_LETTERS } from './markRollsCore.js'; // THE MARK STATS (wins here; XP in letterXp.js)
 import { addMasteryWord, masteryXpMult, isMasteryMilestone, MASTERY_MILESTONE_WORDS } from './mastery.js';
 import { getStreakMult } from './streak.js';
 import { frenzyMult } from './frenzy.js';
@@ -27,9 +27,10 @@ import { boostMult } from './boost.js';
 import { starPowerMult } from './stars.js';
 import { setRateBoost, setRebirthKeyKeep } from './xp.js';
 import { addLetters } from './letters.js';
-import { rebirthKeyKeep } from './markPerks.js';
+import { rebirthKeyKeep, wordPerkMult } from './markPerks.js';
 import { creditAcceptedWordLetters } from './letterXp.js';
 import { dropGemsForWord } from './gemsCore.js';
+import { contractEvent } from './contracts/bus.js';
 // PROGRESSION v3 (SEASON2, default OFF): the season's own balance keys (mapped at the storage layer, v3/install.js), the (1 + ★) row on the
 // receipt and the ACHIEVEMENTS counters. OFF = every key, number and call exactly as before.
 
@@ -317,6 +318,9 @@ export function bankWeight(weight, word) {
 /** One word's XP, with the whole stack resolved. The number wins are derived from. */
 export function perWordXp(opts = {}) {
   const f = perWordFactors(opts);
+  // LONGSHOT (GEAR EXPANSION oct21): +N% WINS on a REAL word of LONG_WORD_LETTERS+ letters — only when the caller names
+  // the word's length (a card's reference rate never does, so it stays the base)
+  const long = Number.isFinite(opts.wordLength) && opts.wordLength >= LONG_WORD_LETTERS ? 1 + markLongWinsPct({ markId: opts.markId }) / 100 : 1;
   return xpPerWord({
     mode: gameKey(opts.mode),
     keyTier: opts.keyTier,
@@ -325,7 +329,7 @@ export function perWordXp(opts = {}) {
     weight: opts.weight,
     streakMult: f.streak,
     difficultyMult: f.difficulty,
-    bonusMult: f.bonus * f.frenzy * f.boost * f.forge,
+    bonusMult: f.bonus * f.frenzy * f.boost * f.forge * long,
     baseWinsAdd: f.baseWins,
   });
 }
@@ -582,6 +586,7 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   const iCount = (x) => (Number.isFinite(x) ? Math.floor(x) : 0);
   const prevN = iCount(prevWords);
   const nowN = iCount(nowWords);
+  if (nowN > prevN) contractEvent('run', { mode, n: nowN }); // DAILY CONTRACTS: the round's running count (a CHAIN's length)
   // REBIRTH RUSH: the FROZEN formula pays every word at BASE 10 × length/5 × MODE × 5^R × MARK × BOOST.
   // WORD BOMB + BLITZ (Andy oct5, feat/wb-bonus-boost): the per-word WEIGHT (rarity × combo × lucky, capped at
   // PER_WORD_MULT_CAP — xp.cappedWordMult) is a BOOST factor again, so for those two modes the banked unit is
@@ -609,7 +614,11 @@ export function bankWordWins({ mode, difficulty, prevWords, nowWords, prevWeight
   // LETTER FORGE is NOT applied here: it is word-specific, so it rides each word's WEIGHT
   // (bankWeight below), the way rarity does — the gate-crossing word then releases words 1-3 each
   // at their OWN forge rather than all at this word's.
-  const xpOwed = roundWordXp(deltaWeight * perWordXp({ mode, difficulty, rebirthCount, wordLength })) + getWinsCarry();
+  // GEAR EXPANSION perks (oct21 — TRIPLE THREAT, FORTUNE, BIG WORDS, NIGHT OWL): counted per RELEASED word (the
+  // gate-crossing call releases words 1…nowN at once)
+  const released = prevN < gate ? nowN : nowN - prevN;
+  const perk = wordPerkMult({ released, nowWords: nowN, wordLength });
+  const xpOwed = roundWordXp(deltaWeight * perWordXp({ mode, difficulty, rebirthCount, wordLength }) * perk) + getWinsCarry();
   const granted = Math.floor(xpOwed / 10);
   saveWinsCarry(xpOwed - granted * 10);
   // Through the ONE door, like every other credit — so the per-word money and the bonus money are
@@ -661,6 +670,8 @@ export function awardWordXp(opts = {}) {
   // GEMS: this is the one door every mode's accepted word passes, so the word DROP rolls here (game words only —
   // menu typing never drops). `gems` is what dropped (0 most words); the GemPop on the word hears the grant.
   const gems = dropGemsForWord({ mode });
+  // DAILY CONTRACTS: every mode's accepted word (contracts/pool.js 'word'); a no-op in node
+  if (mode !== 'menu') contractEvent('word', { mode, word: opts.word, len: opts.wordLength, gems });
   return { state, level: state.level, leveledUp: false, gain, mastery, mark, gems };
 }
 

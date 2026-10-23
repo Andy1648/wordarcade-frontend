@@ -30,8 +30,8 @@
 // (×5) as a floor (`k`), so no mark ever got weaker. The INDEX (% collected) keeps its small bonus (+0.5% per %,
 // on wins AND XP).
 import { MARKS, MARK_TIERS, MARKS_EQUIPPED_KEY, MARKS_OWNED_KEY } from './marks.js';
-import { grantGems, setGemsPctHook } from './gemsCore.js'; // a leaf: the COMMON refund goes through the one gem door
-import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY, CRIT_PERK_EVERY, REMOVED_COMMON_IDS, RETIRED_COMMON_IDS, hasMarkPerk } from './markPerks.js';
+import { grantGems, setGemsPctHook, loadGemState } from './gemsCore.js'; // a leaf: the COMMON refund goes through the one gem door
+import { MARK_PERKS, PERKS, MARK_ROLLS_STORE_KEY, CRIT_PERK_EVERY, REMOVED_COMMON_IDS, RETIRED_COMMON_IDS, hasMarkPerk, hoardMult, comboKeys } from './markPerks.js';
 import { formatNum, formatRate, formatMultExact } from '../format.js';
 const xMult = (m) => `×${formatMultExact(m)}`; // exact: a ×1.05 never prints as ×1.1
 // PROGRESSION v3 (SEASON2, default OFF): the R5 unlock "2nd MARK slot" — a second worn mark (v3/store mark2Id)
@@ -53,7 +53,7 @@ export const ROLLABLE_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 /** The FLOOR tier: it takes whatever the rarer tiers leave, and LUCK never scales it (luck removes it). */
 export const FLOOR_TIER = 'rare';
 /** The rarer tiers' "1 IN X" (Andy's table). RARE (the floor) is the remainder — see the header. */
-export const TIER_ODDS = { epic: 60, legendary: 100, mythic: 2000, secret: 15000 }; // Andy oct14 (2) "make rates even more friendly for rarer gear": LEGENDARY 150 → 100, MYTHIC 4,000 → 2,000, SECRET 40,000 → 15,000 (server mirror: 048_rarer_friendlier.sql). Before: oct14 "easier — noticeable, nothing crazy" was 100 / 250 / 10,000 / 100,000 (LEGENDARY 1,000 → 250 oct8). Server mirror: 044_easier_rolls.sql
+export const TIER_ODDS = { epic: 60, legendary: 130, mythic: 2000, secret: 15000 }; // Andy oct22 "make legendary a bit harder to get": LEGENDARY 100 → 130 (+ hard pity 50 → 60, below) — server mirror: 063_legendary_harder.sql. // Andy oct14 (2) "make rates even more friendly for rarer gear": LEGENDARY 150 → 100, MYTHIC 4,000 → 2,000, SECRET 40,000 → 15,000 (server mirror: 048_rarer_friendlier.sql). Before: oct14 "easier — noticeable, nothing crazy" was 100 / 250 / 10,000 / 100,000 (LEGENDARY 1,000 → 250 oct8). Server mirror: 044_easier_rolls.sql
 /** The tier's equivalent multiplier ("strength") at ★0. Mirrors marks.js MARK_TIERS (1 + bonus). */
 export const TIER_MAIN = { rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
 /** The same, as the stat's percent (the part above ×1) — kept exact (1.1 − 1 is not 0.1 in floats). */
@@ -82,6 +82,9 @@ export const MODE_NAMES = Object.freeze({ wordBomb: 'WORD BOMB', blitz: 'BLITZ',
 export const STAT_KINDS = [
   'winsPct', 'xpPct', 'baseWins', 'baseXp', 'luckPct', 'overdriveSec', ...Object.values(MODE_WINS_KINDS),
   'critRatePct', 'critPower', 'critEvery', 'gemsPct',
+  // GEAR EXPANSION (oct21): every LEGENDARY main slot was taken (rolled + UNLISTED), so the new LEGENDARIES pay on a
+  // CONDITION instead — sized up because they pay only part of the time (like a one-mode WINS stat)
+  'longWinsPct', 'streakWinsPct', 'gameXpPct',
 ];
 export const BASE_WINS_PER_WORD = 10; // "BASE 10" wins on a 5-letter word (xp.js WINS_BASIS_PER_LETTER × 5 ÷ 10)
 export const BASE_XP_PER_LETTER = 10; // xp.js LEVEL_XP_PER_LETTER
@@ -93,6 +96,13 @@ export const CRIT_POWER_PER_PCT = 1 / 25; // +1× CRIT POWER per 25% of tier (RA
 // table, not TIER_PCT (season 2's GEAR OP resize must not shrink it). It multiplies the gems a player EARNS by playing
 // (gemsCore EARNED_GEM_REASONS — drops, bots, placements, streaks, speed, level-ups), never codes / refunds / rewards.
 export const GEMS_PCT_BY_TIER = Object.freeze({ rare: 25, epic: 50, legendary: 200, mythic: 400, secret: 800 });
+// GEAR EXPANSION (oct21): the conditional mains. +N% WINS on a word of LONG_WORD_LETTERS+ letters (≈ a third of words),
+// +N% WINS while on a WIN STREAK (rooms + bots: gems.js streak ≥ 1), +N% XP from accepted GAME words (games are ~15% of
+// all XP, gameXp.js), each the tier's percent × its scale.
+export const LONG_WORD_LETTERS = 6;
+export const LONG_WINS_SCALE = 2;
+export const STREAK_WINS_SCALE = 1.5;
+export const GAME_XP_SCALE = 2;
 export const CRIT_EVERY_BASIS = 100; // EVERY Nth KEY: N = 100 ÷ tier % (RARE: every 4th key — ×2 on 1 key in 4 = +25%)
 /** A stat's ★0 value for a tier: the tier's percent on what it touches. */
 export function statBaseValue(kind, tier) {
@@ -104,6 +114,9 @@ export function statBaseValue(kind, tier) {
   if (kind === 'critPower') return p * CRIT_POWER_PER_PCT;
   if (kind === 'critEvery') return p > 0 ? Math.max(1, Math.round(CRIT_EVERY_BASIS / p)) : 0;
   if (kind === 'gemsPct') return GEMS_PCT_BY_TIER[tier] || 0;
+  if (kind === 'longWinsPct') return LONG_WINS_SCALE * p;
+  if (kind === 'streakWinsPct') return STREAK_WINS_SCALE * p;
+  if (kind === 'gameXpPct') return GAME_XP_SCALE * p;
   return p;
 }
 /**
@@ -164,6 +177,11 @@ const RAW_POOL = [
   { id: 'mk-hotwire', name: 'SNEAKER', tier: 'rare', mode: 'wordRace', stat: 'raceWinsPct', subs: 'W2 L5' },
   { id: 'mk-grapple', name: 'PAPERCLIP', tier: 'rare', mode: 'chain', stat: 'chainWinsPct', subs: 'X1 G5' },
   { id: 'mk-sparkplug', name: 'USB STICK', tier: 'rare', mode: null, stat: 'critPower', subs: 'C4.5 X.5' },
+  // GEAR EXPANSION (Andy oct21 "more really cool gear"): the four RARE stats nobody had yet
+  { id: 'mk-highlighter', name: 'HIGHLIGHTER', tier: 'rare', mode: 'blitz', stat: 'blitzWinsPct', subs: 'L5 O15' },
+  { id: 'mk-flashcards', name: 'FLASHCARDS', tier: 'rare', mode: 'satRush', stat: 'satWinsPct', subs: 'X1.5 L2.5' },
+  { id: 'mk-firecracker', name: 'FIRECRACKER', tier: 'rare', mode: 'fuse', stat: 'fuseWinsPct', subs: 'C3 W2' },
+  { id: 'mk-gumball', name: 'GUMBALL MACHINE', tier: 'rare', mode: null, stat: 'gemsPct', subs: 'L7.5 X.5' },
   // ---- EPIC (7) ----
   { id: 'mk-pyro', name: 'CASH REGISTER', tier: 'epic', mode: 'fuse', legacy: true, stat: 'baseWins', subs: 'C6 L10 G10' },
   { id: 'mk-nova', name: 'BOOMBOX', tier: 'epic', mode: null, legacy: true, stat: 'winsPct', subs: 'C6 P1' },
@@ -172,6 +190,12 @@ const RAW_POOL = [
   { id: 'mk-flashpoint', name: 'JUMPER CABLES', tier: 'epic', mode: 'fuse', stat: 'fuseWinsPct', subs: 'P.5 O60' },
   { id: 'mk-voltage', name: 'TESLA COIL', tier: 'epic', mode: null, stat: 'critPower', subs: 'C12 W4' },
   { id: 'mk-talisman', name: 'MAGIC 8-BALL', tier: 'epic', mode: null, stat: 'luckPct', subs: 'C3 W4 G15' },
+  // GEAR EXPANSION (oct21): five EPICS, each with a PERK (markPerks.js) — the first EPICS that have one
+  { id: 'mk-lavalamp', name: 'LAVA LAMP', tier: 'epic', mode: 'chain', stat: 'chainWinsPct', subs: 'P.5 L10 X2' },
+  { id: 'mk-alarmclock', name: 'ALARM CLOCK', tier: 'epic', mode: null, stat: 'overdriveSec', subs: 'C6 X4' },
+  { id: 'mk-fortune', name: 'FORTUNE COOKIE', tier: 'epic', mode: 'satRush', stat: 'satWinsPct', subs: 'L20 G10' },
+  { id: 'mk-hoarder', name: 'MAGPIE', tier: 'epic', mode: null, stat: 'gemsPct', subs: 'L15 W4 X1' },
+  { id: 'mk-domino', name: 'DOMINO', tier: 'epic', mode: 'wordBomb', stat: 'wbWinsPct', subs: 'C9 P.75' },
   // ---- LEGENDARY (9) + perk ----
   { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct', subs: 'C9 X10 L15' },
   { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct', subs: 'P1 W20 G15' },
@@ -184,13 +208,21 @@ const RAW_POOL = [
   { id: 'mk-inferno', name: 'INFERNO', tier: 'legendary', mode: 'fuse', stat: 'fuseWinsPct', subs: 'P2 W10 O60' },
   { id: 'mk-mainframe', name: 'MAINFRAME', tier: 'legendary', mode: null, stat: 'critRatePct', subs: 'P1 X10 G15' },
   { id: 'mk-shamrock', name: 'SHAMROCK', tier: 'legendary', mode: null, stat: 'luckPct', subs: 'C13.5 G30 X2.5' },
+  // GEAR EXPANSION (oct21): three LEGENDARIES on the new conditional mains (LONG_WORD_LETTERS+ words / a win streak /
+  // game words) — the tier's 1 IN 100 is unchanged, so each LEGENDARY is now 1 IN 1,200
+  { id: 'mk-longshot', name: 'LONGSHOT', tier: 'legendary', mode: null, stat: 'longWinsPct', subs: 'C13.5 P1 L22.5' },
+  { id: 'mk-hothand', name: 'HOT HAND', tier: 'legendary', mode: null, stat: 'streakWinsPct', subs: 'P2.5 W15' },
+  { id: 'mk-arcadestick', name: 'ARCADE STICK', tier: 'legendary', mode: null, stat: 'gameXpPct', subs: 'C18 L15 G15' },
   // ---- MYTHIC (4) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
   { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins', subs: 'C14 P4 G25' },
   { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp', subs: 'C14 W30 L50' },
   { id: 'mk-hydra', name: 'HYDRA', tier: 'mythic', mode: 'wordBomb', stat: 'wbWinsPct', subs: 'C21 P3 W30' },
   { id: 'mk-chronos', name: 'CHRONOS', tier: 'mythic', mode: null, stat: 'xpPct', subs: 'X15 G25 O240' }, // oct18: bends time — every letter's XP
+  { id: 'mk-firebird', name: 'FIREBIRD', tier: 'mythic', mode: null, stat: 'winsPct', subs: 'P3 L25 O180' }, // oct21: AFTERPARTY
+  { id: 'mk-trident', name: 'TRIDENT', tier: 'mythic', mode: 'blitz', stat: 'blitzWinsPct', subs: 'C21 W30 G37.5' }, // oct21: TRIPLE THREAT
   // ---- SECRET (1) + game-changing perks ----
   { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null, stat: 'winsPct', subs: 'C20 P3 W80 G50' },
+  { id: 'mk-paradox', name: 'PARADOX', tier: 'secret', mode: null, stat: 'gemsPct', subs: 'C30 L60 O240' }, // oct21: TWIN SOULS
 ];
 // GEAR POOL v2: the 12 COMMON gears that were removed (each owned copy refunds COMMON_REFUND_GEMS — migrateRollSave),
 // and the three marks.js-only COMMONS (the retired ALL-MODE marks) that went with them.
@@ -309,7 +341,7 @@ export const DEFAULT_SKIP_BELOW = 'epic';
 // Was EPIC+ 50 (soft from 40, first by 10) / LEGENDARY+ 125. markRolls.PITY reads these; here because normalize
 // clamps the stored counters to them.
 export const EPIC_PITY_HARD = 10;
-export const LEGENDARY_PITY_HARD = 50;
+export const LEGENDARY_PITY_HARD = 60; // Andy oct22 (063): was 50 — at 1 IN 100 the pity handed out ~half of all LEGENDARIES, so the odds alone barely moved
 
 // --------------------------------------------------------------------------------------- state
 export function freshState() {
@@ -524,10 +556,10 @@ export function collection(state) {
   const pct = (k) => (k / total) * 100;
   return { total, base, gold, rainbow, pct: pct(base), goldPct: pct(gold), rainbowPct: pct(rainbow) };
 }
-/** The INDEX's permanent bonus: 1 + 0.5% per % collected (×1 on a save that has never rolled). */
+/** The INDEX's permanent bonus: 1 + 0.5% per % collected (×1 on a save that has never rolled); MAGPIE's HOARD ×3 it. */
 export function indexMult(state) {
   if (!state) return 1;
-  return 1 + INDEX_BONUS_PER_PCT * collection(state).pct;
+  return 1 + INDEX_BONUS_PER_PCT * collection(state).pct * hoardMult();
 }
 
 function tierOfAny(id) {
@@ -587,6 +619,9 @@ export function statText(stat) {
     case 'critPower': return `+${formatRate(v * 100)}% CRIT POWER`;
     case 'critEvery': return v <= 1 ? 'EVERY KEY CRITS' : `EVERY ${ordinal(v)} KEY CRITS`;
     case 'gemsPct': return `+${formatRate(v)}% GEMS`;
+    case 'longWinsPct': return `${x(v)} WINS ON ${LONG_WORD_LETTERS}+ LETTER WORDS`;
+    case 'streakWinsPct': return `${x(v)} WINS ON A WIN STREAK`;
+    case 'gameXpPct': return `${x(v)} XP FROM GAME WORDS`;
     default: {
       const mode = MODE_OF_KIND[stat.kind];
       return mode ? `${x(v)} WINS IN ${MODE_NAMES[mode]}` : '';
@@ -627,7 +662,7 @@ export function perkTag(state, id) {
   return p ? `WEAR: ${p}` : mainTag(id, state);
 }
 
-const PERK_TIERS = new Set(['legendary', 'mythic', 'secret']);
+const PERK_TIERS = new Set(['epic', 'legendary', 'mythic', 'secret']); // EPIC: the GEAR EXPANSION perks (oct21)
 /**
  * The COMPACT mark line (Andy oct5) — the roll result, the MAIN chip and the INDEX cards all print this: the named stat,
  * then "PERK: …" on a LEGENDARY+ mark that has one, then "★N" once it has pips. "×1.5 WINS · PERK: LETTERS COUNT ×2 · ★2".
@@ -732,7 +767,16 @@ function guard(fn, fallback) {
 export function statHits(stat, kind, opts = {}) {
   if (!stat) return false;
   if (stat.kind === kind) return true;
+  // HOT HAND: +N% WINS while the save is on a win streak (gems.js counts wins in a row in rooms + bot games)
+  if (kind === 'winsPct' && stat.kind === 'streakWinsPct') return onWinStreak();
   return kind === 'winsPct' && !!opts.mode && stat.kind === MODE_WINS_KINDS[opts.mode];
+}
+function onWinStreak() {
+  try {
+    return loadGemState().streak > 0;
+  } catch {
+    return false;
+  }
 }
 function pctMult(kind, opts) {
   const { s, id, stat } = worn(opts);
@@ -777,6 +821,14 @@ export function markGemsPct(opts = {}) {
   return flat('gemsPct', opts);
 }
 setGemsPctHook(() => markGemsPct(), () => hasMarkPerk('dropTwice'));
+/** LONGSHOT: +N% WINS on a word of LONG_WORD_LETTERS+ letters (wins.js perWordXp applies it to that word). */
+export function markLongWinsPct(opts = {}) {
+  return flat('longWinsPct', opts);
+}
+/** ARCADE STICK: +N% XP on an accepted GAME word (letterXp.js). */
+export function markGameXpPct(opts = {}) {
+  return flat('gameXpPct', opts);
+}
 /** + seconds of OVERDRIVE. */
 export function markOverdriveSec(opts = {}) {
   return flat('overdriveSec', opts);
@@ -899,7 +951,9 @@ export function critTotals({ markId, mark2Id, state } = {}) {
     if (id && (MARK_PERKS[id] || []).includes('critKey10') && s && s.marks && s.marks[id]) every = every ? Math.min(every, CRIT_PERK_EVERY) : CRIT_PERK_EVERY;
     const r = Number.isFinite(rate) && rate > 0 ? rate : 0;
     const p = Number.isFinite(power) && power > 0 ? power : 0;
-    return { rate: Math.min(CRIT_RATE_CAP, r), power: CRIT_BASE_POWER + p, rawRate: r, every, ids };
+    // DOMINO's COMBO: a crit drags the next `combo` keys with it (useXpCapture keeps the count; absent = none)
+    const combo = markId === undefined ? comboKeys() : 0;
+    return { rate: Math.min(CRIT_RATE_CAP, r), power: CRIT_BASE_POWER + p, rawRate: r, every, ids, ...(combo ? { combo } : {}) };
   } catch {
     return { rate: CRIT_BASE_RATE, power: CRIT_BASE_POWER, rawRate: CRIT_BASE_RATE, every: 0, ids: [] };
   }

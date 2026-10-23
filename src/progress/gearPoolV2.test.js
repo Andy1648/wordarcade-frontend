@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  substatsOf, markGemsPct,
+  substatsOf, markGemsPct, markLongWinsPct, markGameXpPct,
   ROLL_MARKS, statOf, statText, mainTag, markWinsMult, markXpMult, markBaseWins, markBaseXp, markLuck, markOverdriveSec,
   indexMult, critTotals, critStatsOf, CRIT_BASE_RATE, CRIT_BASE_POWER, CRIT_RATE_CAP, MODE_WINS_KINDS, modeOfKind,
   freshState, normalize, roll, rollTable, PITY, ROLL_STATE_KEY, ROLL_STATE_VERSION, commonRefund, migrateRollSave,
@@ -52,8 +52,8 @@ function printed(text) {
   return n;
 }
 
-test('the pool: 33 gears (JACKPOT joined; oct18 +5), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
-  assert.equal(ROLL_MARKS.length, 33);
+test('the pool: 48 gears (JACKPOT joined; oct18 +5; oct21 +15), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
+  assert.equal(ROLL_MARKS.length, 48);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
   for (const id of [...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]) assert.ok(!ROLL_MARKS.some((m) => m.id === id), id);
   const keys = ROLL_MARKS.map((m) => `${m.stat.kind}:${m.stat.value}`);
@@ -98,6 +98,11 @@ test('every gear PRINTS what it PAYS — at ★0, ★ pips and SHINY, read throu
         case 'critRatePct': near(crit.rawRate, CRIT_BASE_RATE + sub.rate + shown / 100, tag); break;
         case 'critPower': near(crit.power, CRIT_BASE_POWER + sub.power + shown, tag); break;
         case 'critEvery': assert.equal(crit.every, shown, tag); break;
+        // GEAR EXPANSION (oct21): the conditional mains pay through their own readers (wins.js / letterXp.js), never
+        // as a flat WINS / XP multiplier; HOT HAND pays WINS only on a win streak (none in these states)
+        case 'longWinsPct': near(markLongWinsPct(opts), st.value, tag); break;
+        case 'gameXpPct': near(markGameXpPct(opts), st.value, tag); break;
+        case 'streakWinsPct': near(markWinsMult(opts) / ix, 1, `${tag} off a streak`); break;
         default: {
           const mode = modeOfKind(st.kind);
           assert.ok(mode, `${tag}: unknown kind`);
@@ -188,9 +193,9 @@ test('AFTERBURN (HEADMASTER): an OVERDRIVE runs ×2 as long, only while worn', (
   withStorage({ [ROLL_STATE_KEY]: JSON.stringify(own('mk-headmaster')), [MARKS_EQUIPPED_KEY]: 'mk-headmaster' }, () => assert.equal(overdriveLengthMs(), 600000));
 });
 
-test('PITY (Genshin): EPIC+ every ≤ 10, LEGENDARY+ every ≤ 50, over 100k seeded rolls; the 10th roll never inflates LEGENDARY+', () => {
+test('PITY (Genshin): EPIC+ every ≤ 10, LEGENDARY+ every ≤ 60, over 100k seeded rolls; the 10th roll never inflates LEGENDARY+', () => {
   assert.equal(PITY.epic.hard, 10);
-  assert.equal(PITY.legendary.hard, 50);
+  assert.equal(PITY.legendary.hard, 60); // Andy oct22 (063): was 50
   const rng = mulberry32(2026);
   let s = freshState();
   let lastE = 0;
@@ -205,7 +210,7 @@ test('PITY (Genshin): EPIC+ every ≤ 10, LEGENDARY+ every ≤ 50, over 100k see
     if (r >= tierRank('legendary')) { gapL = Math.max(gapL, i - lastL); lastL = i; }
   }
   assert.ok(gapE <= 10, `EPIC+ gap ${gapE}`);
-  assert.ok(gapL <= 50, `LEGENDARY+ gap ${gapL}`);
+  assert.ok(gapL <= 60, `LEGENDARY+ gap ${gapL}`);
   // the 10th-roll table: LEGENDARY+ keep their normal chance, EPIC takes the rest, nothing below EPIC
   const base = rollTable({ ...freshState(), rolls: 1 });
   const forced = rollTable({ ...freshState(), rolls: 1, sinceEpic: 9 });
@@ -220,8 +225,8 @@ test('PITY (Genshin): EPIC+ every ≤ 10, LEGENDARY+ every ≤ 50, over 100k see
 test('PITY IS A PROMISE: an old drought carries over, capped one short of the new guarantee', () => {
   const s = normalize({ v: 2, rolls: 300, everEpic: true, sinceEpic: 37, sinceLegendary: 110, marks: {} });
   assert.equal(s.sinceEpic, 9);
-  assert.equal(s.sinceLegendary, 49);
-  assert.equal(rollTable(s).forced, 'legendary', 'past the new 50 → the next roll is the guarantee');
+  assert.equal(s.sinceLegendary, 59);
+  assert.equal(rollTable(s).forced, 'legendary', 'past the new 60 → the next roll is the guarantee');
   const t = normalize({ v: 2, rolls: 30, everEpic: true, sinceEpic: 4, sinceLegendary: 20, marks: {} });
   assert.deepEqual([t.sinceEpic, t.sinceLegendary], [4, 20], 'inside the new window → unchanged');
 });
@@ -252,7 +257,7 @@ test('migrateRollSave: commons deleted + refunded once, a worn COMMON unequipped
     assert.deepEqual(Object.keys(s.marks).sort(), ['mk-nova', 'mk-smith'], 'only the commons left');
     assert.equal(s.marks['mk-nova'].shiny, true, 'the rest untouched');
     assert.equal(s.rolls, 80);
-    assert.deepEqual([s.sinceEpic, s.sinceLegendary], [9, 49], 'droughts carried, capped');
+    assert.deepEqual([s.sinceEpic, s.sinceLegendary], [9, 59], 'droughts carried, capped');
     assert.equal(s.skipBelow, 'epic', 'a "< COMMON" skip reads as the default');
     assert.deepEqual(s.note, { commons: 7, gems: 105 });
     assert.deepEqual(JSON.parse(map.get(MARKS_OWNED_KEY)), ['mk-pyro']);

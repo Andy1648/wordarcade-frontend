@@ -39,11 +39,14 @@ import './WordRace.css';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
+import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
+import { XpEarnedLine, useGameXpRunMark } from '../components/xp/XpEarned';
 import { payGameResult } from '../progress/gems';
 import { grantGems } from '../progress/gemsCore';
 import { V3 } from '../progress/season';
 import { otherSeatIds } from '../progress/seats';
 import { minWordsFor } from '../progress/wins';
+import { usePlayClock } from '../progress/playClock.js';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -84,6 +87,7 @@ export default function WordRaceScreen({
   onRematch,
   onLeave,
 }) {
+  usePlayClock(); // TIME PLAYED on the profile (Andy oct21: race time was never counted)
   const [text, setText] = useState('');
   const [shakeSeq, setShakeSeq] = useState(0);
   const inputRef = useRef(null);
@@ -206,6 +210,7 @@ export default function WordRaceScreen({
   // GEMS (Andy oct5): this race's ledger mark (taken as each race goes live) and ONE payout at race over — the
   // standings rank everyone, a racer placed below me is beaten. READ-ONLY on the race (gems.payGameResult dedupes).
   const gemsSince = useGemsRunMark(live);
+  const xpSince = useGameXpRunMark(live); // GAME XP (oct21): this race's words
   const speedPaid = useRef(new Set());
   useEffect(() => {
     if (!over) return;
@@ -462,8 +467,11 @@ export default function WordRaceScreen({
               ? <>YOU BANKED +{formatNum(earned?.wins || 0)} WINS</>
               : <>NO WINS THIS RACE — {minWordsFor()} WORDS START THE BANK</>}
           </p>
+          {/* GAME XP this race (oct21) — under the wins, hidden when none */}
+          <XpEarnedLine since={xpSince} />
           {/* GEMS earned this race — always its own line, never hidden (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
+          <ContractDoneLine since={gemsSince} />
           <div className="wr-over-actions">
             {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
                 the race's EXISTING onLeave (the room leave path); the menu runs the rebirth + ceremony. */}

@@ -19,12 +19,14 @@
 //      that's a design project of its own.
 // So: playable + laid out on mobile, but input is desktop-keyboard only for now.
 // ────────────────────────────────────────────────────────────────────────────
+import { useGameXpRunMark } from '../components/xp/XpEarned';
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import { bankWordWins, bankWeight, awardWordXp, perWordRateNow, subscribeWins } from '../progress/wins';
 import { cappedWordMult, modePower } from '../progress/xp';
 import { recordAcceptedWord } from '../progress/collection';
 import { noteWord } from '../progress/records';
+import { contractEvent } from '../progress/contracts/bus.js';
 import { loadRarityIndex, rarityOf } from '../progress/rarityIndex';
 import { satRarityMult } from '../progress/rarity';
 import { freshCombo, comboAccept, comboBreak } from '../progress/combo';
@@ -117,6 +119,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
   }), []);
   // GEMS: this run's ledger mark (taken as each run starts playing) — the results page's "+N gems" line
   const gemsSince = useGemsRunMark(view.phase === 'playing');
+  const xpSince = useGameXpRunMark(view.phase === 'playing'); // GAME XP (oct21): this run's words
   const satPrevPhaseRef = useRef(view.phase);
   useEffect(() => {
     if (view.phase === 'playing' && satPrevPhaseRef.current !== 'playing') setWinsBonusLines([]);
@@ -164,6 +167,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
       ) * (Number.isFinite(view.lastClearedPaid) ? view.lastClearedPaid : 1);
       satWeightRef.current += bankWeight(wWeight, view.lastClearedWord || '') + Math.max(0, delta - 1); // + LETTER FORGE
       awardWordXp({ mode: 'sat-rush', wordLength: (view.lastClearedWord || '').length, weight: wWeight, word: view.lastClearedWord || '' });
+      if (view.lastClearedStage != null) contractEvent('sat', { stage: view.lastClearedStage }); // DAILY CONTRACTS: the capture's clue stage
       recordAcceptedWord(view.lastClearedWord, { mode: 'sat-rush', band: rw.band }); // Collection (Job 3)
       wpmAddWord(view.lastClearedWord); // WPM: count the cleared word's chars
       noteWord(view.lastClearedWord, rw); // permanent record: distinct / obscure / rarest-ever (guarded)
@@ -298,6 +302,7 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
           winsEarned={winsEarned}
           winsBonusLines={winsBonusLines}
           gemsSince={gemsSince}
+          xpSince={xpSince}
           onAgain={game.startGame}
           onReplay={game.replayMisses}
           onExit={onExit}

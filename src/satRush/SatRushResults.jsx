@@ -16,6 +16,8 @@ import NearMiss from '../components/NearMiss.jsx';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 import { GemsEarnedLine } from '../components/gems/Gems';
+import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
+import { XpEarnedLine } from '../components/xp/XpEarned';
 import { speakFr, canSpeak, withArticle } from './speak';
 
 const C = JUICE.CELEBRATION;
@@ -72,7 +74,7 @@ function CaseFileRow({ c, outcomes, speak }) {
   );
 }
 
-export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, economy = true, ui = null }) {
+export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, xpSince = 0, economy = true, ui = null }) {
   // a pack's own words for this page (FRENCH RUSH: TERMINÉ / correct / missed / your words …)
   const RU = (ui && ui.results) || null;
   const speak = !!(ui && ui.stamps); // FRENCH RUSH reads words aloud (its pack has its own stamps)
@@ -201,8 +203,11 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             <b>+{formatNum(l.amount)}</b> {l.label}
           </div>
         ))}
+        {/* GAME XP this run (oct21) — under the wins, in the page's ink voice; hidden when none */}
+        {economy && <XpEarnedLine since={xpSince} print className="sr-xpline" />}
         {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
         {economy && <GemsEarnedLine since={gemsSince} print className="sr-gemsline" />}
+        {economy && <ContractDoneLine since={gemsSince} />}
 
         {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
             at 1280x551 / 1366x625 they were below the fold under the study panels). */}

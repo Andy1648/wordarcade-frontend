@@ -10,11 +10,11 @@ import { ROLL_PRICE } from '../progress/v3/econ.js';
 
 const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '036_server_rolls.sql'), 'utf8').replace(/\r\n/g, '\n');
 const has = (s) => assert.ok(sql.includes(s), `036 is missing: ${s}`);
-// 055_more_legendaries.sql re-seeds the pool (Andy oct18: 5 new gears, same tier odds; 048 / 044 before it): the LATEST pool must be the game's pool
-const pool = readFileSync(join(process.cwd(), 'supabase', 'migrations', '055_more_legendaries.sql'), 'utf8').replace(/\r\n/g, '\n');
+// 063_legendary_harder.sql re-seeds the pool (Andy oct22: LEGENDARY 1 IN 130 + pity 60; 059 / 055 / 048 / 044 before it): the LATEST pool must be the game's pool
+const pool = readFileSync(join(process.cwd(), 'supabase', 'migrations', '063_legendary_harder.sql'), 'utf8').replace(/\r\n/g, '\n');
 
-test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order (055 re-seeds 036)', () => {
-  ROLL_MARKS.forEach((m, i) => assert.ok(pool.includes(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`), `055 is missing ${m.id}`));
+test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order (063 re-seeds 036)', () => {
+  ROLL_MARKS.forEach((m, i) => assert.ok(pool.includes(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`), `063 is missing ${m.id}`));
   const rows = pool.match(/\('mk-[a-z0-9-]+', '[a-z]+', [\d.]+, \d+\)/g) || [];
   assert.equal(rows.length, ROLL_MARKS.length, 'no extra gear on the server');
 });
@@ -23,7 +23,8 @@ test('the server constants are the game constants (price, shiny, bonus roll, pit
   has(`ROLL_PRICE constant integer := ${ROLL_PRICE};`);
   has(`SHINY constant double precision := ${SHINY_CHANCE};`);
   has(`BONUS_EVERY constant integer := ${BONUS_ROLL_EVERY};`);
-  has(`EPIC_PITY constant integer := ${PITY.epic.hard}; LEG_PITY constant integer := ${PITY.legendary.hard};`);
+  // the pity constants live in pick_gear, which 063 redefines (LEG_PITY 60)
+  assert.ok(pool.includes(`EPIC_PITY constant integer := ${PITY.epic.hard}; LEG_PITY constant integer := ${PITY.legendary.hard};`), '063 pick_gear pity');
   for (const [t, g] of Object.entries(DUPE_GEMS)) has(`when '${t}' then ${g}`);
   has('LUCK_CAP constant double precision := 15;');
   has('WRITE-ONLY: Claude never runs migrations');

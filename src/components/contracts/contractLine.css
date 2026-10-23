@@ -1,0 +1,17 @@
+/* contractLine.css — the end card's "CONTRACT DONE +N" line only (ContractDoneLine). Its own file: the line rides the
+   idle-prefetched game chunks, the sheet + toast styles (contracts.css) stay in their lazy chunks. */
+.cx-endline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  font: 400 16px/1 'Bungee', cursive;
+  color: #FFE94A;
+  background: #12071f;
+  border: 3px solid #a89a1c;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  text-transform: uppercase;
+}
+.cx-endline img { width: 30px; height: 30px; }
+.cx-endline b { display: inline-flex; align-items: center; gap: 3px; color: #2EFFE0; font-weight: 400; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }

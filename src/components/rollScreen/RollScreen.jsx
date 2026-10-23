@@ -33,7 +33,10 @@ import {
   markEntry, viewState, pityLadder, rollTable, ensureRollState, permanentOwnedCount, mainTag, collection, getSkipBelow,
   PITY, ROLL_MARKS, substatsOf,
 } from '../../progress/markRolls';
-import { buyMarkRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
+import { buyMarkRoll, buyTicketRoll, nextRollCost, applyRollEquip } from '../../progress/markRollShop';
+// 060 GUARANTEED ROLLS: tickets the SERVER mints and owns — only ever drawn from what lb_tickets just returned
+import { listTickets, rollTicket, claimTicket, noteLanded } from '../../leaderboard/serverTickets';
+import { bestTicket, countOf, ticketLabel, ticketTable } from '../../progress/rollTickets';
 import { luck as rollLuck } from '../../progress/markRolls';
 import { rollsPerRoll } from '../../progress/markPerks';
 // 036 SERVER-CHECKED ROLLS: a named season-2 player's roll is picked by the server (asked at the HOLD start)
@@ -87,6 +90,8 @@ function ResultLine({ result, view, pop = true }) {
     >
       <span className="rs-res-name">{m ? m.name : ''}</span>
       {result.newMark ? <span className="rs-chip is-new">NEW</span> : null}
+      {result.rollOf && result.rollOf[0] < result.rollOf[1] ? <span className="rs-chip is-double" data-testid="mark-roll-double">ROLL {result.rollOf[0]}/{result.rollOf[1]}</span> : null}
+      {result.ticket ? <span className="rs-chip is-ticket" data-testid="mark-roll-ticket">{ticketLabel(result.ticket)} TICKET</span> : null}
       <span className="rs-card-stat">
         <span className="rs-res-num">{num}</span>
         {kind ? ' ' : null}
@@ -151,10 +156,20 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const btn = useRef(null);
   const closeRef = useRef(null);
   const pending = useRef(null); // the paid roll whose reel has not landed yet
+  // DOUBLE ROLLS (Andy oct22 "roll twice should roll twice"): a roll that paid out two gears (SINGULARITY's perk, a
+  // double server pick) spins the reel ONCE PER GEAR — the lesser first, the rarest last (it is `pending`, the one that
+  // commits: equip, AUTO stop, ticker). `queue` = the parts still to spin; `partProbs` = that roll's live odds (strip).
+  const queue = useRef([]);
+  const partProbs = useRef(null);
   const auto = useRef({ on: false, until: null, timer: null });
   const live = useRef({});
 
   useEffect(() => subscribeGems(setGems), []);
+  // 060: my tickets, from the server only (never cached — a ticket the server didn't list is never drawn)
+  const [tickets, setTickets] = useState([]);
+  const [ticketBusy, setTicketBusy] = useState(false);
+  const refreshTickets = () => listTickets().then((l) => { if (live.current.mounted) setTickets(l); });
+  useEffect(() => { live.current.mounted = true; refreshTickets(); return () => { live.current.mounted = false; }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // this screen covers the whole menu: hold the menu's music-beat pops (each one restyled the whole document), and
   // mark <html> so the covered menu / wall / particles skip rendering entirely (RollScreen.css: content-visibility) —
   // a wins count-up or a parallax drift under an opaque screen was relayout + repaint every frame for nothing
@@ -208,6 +223,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     const p = pending.current;
     if (!p || p !== res) return;
     pending.current = null;
+    queue.current = []; // a roll that lands (or is flushed) ends its chain
     setShown(res);
     setFresh(true);
     setLanded((n) => n + 1);
@@ -258,18 +274,61 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (seq) claimServerRoll(seq); // the release commits the server's pick (retried later if this fails)
     setNeed(0);
     sndPurchase();
+    const parts = [...(res.extra || []).filter(Boolean), res];
+    if (parts.length > 1) parts.forEach((x, i) => { x.rollOf = [i + 1, parts.length]; });
+    const first = parts[0];
     // the hit that stops AUTO always gets the full reveal
-    const mode = revealMode(res, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
-    const strip = drawShowcaseStrip(table.probs, Math.random, { resultId: res.markId, marks: ROLL_MARKS });
+    const mode = revealMode(first, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
+    const strip = drawShowcaseStrip(table.probs, Math.random, { resultId: first.markId, marks: ROLL_MARKS });
     const rest = restOffset();
     pending.current = res;
     setShown(null);
-    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: res, strip, mode, rest }));
+    queue.current = parts.slice(1);
+    partProbs.current = table.probs;
+    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: first, strip, mode, rest }));
     return res;
   };
   live.current.doRoll = doRoll;
 
-  const onLand = (res) => commit(res);
+  // 060 USE TICKET: the server picks (lb_ticket_roll — the floor is ITS row's tier, the browser sends only the id), the
+  // reel lands on it with the full reveal, the landing claims it (lb_ticket_claim). Free: no gems, no pity change.
+  const spendTicket = async () => {
+    if (ticketBusy) return;
+    if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return; }
+    const t = bestTicket(tickets);
+    if (!t) return;
+    stopAuto();
+    setTicketBusy(true);
+    const pick = t.pick || (await rollTicket(t));
+    if (!live.current.mounted) return;
+    if (!pick) { setTicketBusy(false); sndWordRejected(); refreshTickets(); return; }
+    if (pending.current) commit(pending.current);
+    const res = buyTicketRoll({ pick, floor: t.tier });
+    setTicketBusy(false);
+    if (!res) { refreshTickets(); return; }
+    noteLanded(t.id); // in this save now: a lost claim is retried, never replayed
+    setTickets((l) => l.filter((x) => x.id !== t.id));
+    claimTicket(t.id).then(() => refreshTickets());
+    sndPurchase();
+    const strip = drawShowcaseStrip(ticketTable(t.tier), Math.random, { resultId: res.markId, marks: ROLL_MARKS });
+    pending.current = res;
+    setShown(null);
+    setSpin((sp) => ({ seq: (sp ? sp.seq : 0) + 1, result: res, strip, mode: reduced ? 'none' : 'full', rest: restOffset() }));
+  };
+  const offer = bestTicket(tickets);
+
+  // a DOUBLE ROLL's first part lands: its line shows ("ROLL 1/2"), nothing commits until the last part lands
+  const onLand = (res) => {
+    if (res && res !== pending.current && res.rollOf) { setShown(res); setFresh(true); return; }
+    commit(res);
+  };
+  const spinNextPart = () => {
+    const nxt = queue.current.shift();
+    const mode = revealMode(nxt, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
+    const strip = drawShowcaseStrip(partProbs.current, Math.random, { resultId: nxt.markId, marks: ROLL_MARKS });
+    setShown(null);
+    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: nxt, strip, mode, rest: restOffset() }));
+  };
   // RE-ARM (R4 step 7, the one thing the prod critique found missing): after a roll is kept, nothing pulled the thumb
   // back — the slab just went quiet. Now the ROLL slab gives ONE bump (transform, 320 ms) + a two-note "ready" blip
   // a beat after the reveal closes, the way Clash's chest slot and Pet Sim's egg re-light. Never under AUTO.
@@ -286,6 +345,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     setTimeout(sndRollReady, 180);
   };
   const onDone = () => {
+    if (pending.current && queue.current.length) { spinNextPart(); return; } // the DOUBLE ROLL's next spin
     if (!auto.current.on) { rearm(); return; }
     auto.current.timer = setTimeout(() => {
       auto.current.timer = null;
@@ -509,6 +569,22 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
               {!autoOpen ? ` · R${(V3.unlocks && V3.unlocks.unlockAt('autoRoll')) || 1}` : target ? ` → ${tierName(target)}+` : ': OFF'}
             </span>
           </button>
+          {offer ? (
+            <button
+              type="button"
+              className={`rs-ticket-btn is-${offer.tier}`}
+              onClick={spendTicket}
+              disabled={ticketBusy || rolling}
+              data-testid="roll-ticket"
+              data-tier={offer.tier}
+              aria-label={`Use a ${ticketLabel(offer.tier)} ticket — a guaranteed ${tierName(offer.tier)} or better`}
+            >
+              <span className="rs-ticket-k">USE</span>{' '}
+              <span className="rs-ticket-v">{ticketLabel(offer.tier)}</span>{' '}
+              <span className="rs-ticket-w">TICKET</span>{' '}
+              {countOf(tickets, offer.tier) > 1 ? <span className="rs-ticket-n">×{formatNum(countOf(tickets, offer.tier))}</span> : null}
+            </button>
+          ) : null}
         </div>
       </div>
 

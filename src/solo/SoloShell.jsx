@@ -29,7 +29,10 @@ import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
 import { ComboShatter } from '../components/ComboMeter';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
+import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
+import { XpEarnedLine, useGameXpRunMark } from '../components/xp/XpEarned';
 import { usePlayClock } from '../progress/playClock.js';
+import useFitCard from '../hooks/useFitCard.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
 // tile elsewhere on the card. Progress is driven by React state every frame (not a CSS
@@ -128,6 +131,8 @@ export default function SoloShell({
   offerMenu = false,
 }) {
   usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
+  const deathCardRef = useRef(null);
+  useFitCard(deathCardRef, phase === 'over'); // oct22: the run-over card never runs off a short phone
   const inputRef = useRef(null);
 
   // LONG WORDS WRAP (fix/famous-long-words). The input shrinks its type to fit a long word on one
@@ -156,6 +161,7 @@ export default function SoloShell({
   const wrapLong = input.length > capacity;
   // GEMS: the ledger mark for this run (taken each time a run starts playing) — the death card's "+N GEMS" line.
   const gemsSince = useGemsRunMark(phase === 'playing');
+  const xpSince = useGameXpRunMark(phase === 'playing'); // GAME XP (oct21): this run's words, under the wins
 
   // Keep focus on the field while playing so typing always lands (the field is never
   // cleared on reject, so focus + caret position are the player's evidence).
@@ -378,12 +384,18 @@ export default function SoloShell({
 
       {phase === 'over' ? (
         <div className="solo-over">
-          <div className="solo-deathcard">
+          <div className="solo-deathcard" ref={deathCardRef}>
+            {/* TWO HALVES (s2 fit, oct21): the STORY (way out, face, result, links, the missed word) and
+                the REWARD (wins, XP + gems, score, REBIRTH READY, RESTART). Stacked on a phone; side by
+                side on a desktop, where the season-2 gate card stacked ran ~320px past a 768 screen. */}
+            <div className="solo-death-story">
             <SoloExit onExit={onExit} />
             {/* Mascot reaction, like Blitz / Word Bomb game-over (fix/gameover-pass) — gives the
                 solo death card a face + a first read above the copy. */}
             <Mascot pose="panic" emote="slump" size={104} className="solo-death-mascot" />
             {over.card}
+            </div>
+            <div className="solo-death-reward">
             {/* Run's total wins earned, large (item 2) — shared component with every mode. */}
             {/* The lines prop (Batch G): bonus credits earned during THIS run — a collection milestone
                 is the reachable one — so the card names them instead of the total quietly
@@ -392,7 +404,13 @@ export default function SoloShell({
                 banked nothing, so a run that DID bank (a mid-run bonus) always names it. */}
             <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />
             {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
-            <GemsEarnedLine since={gemsSince} />
+            {/* GAME XP (oct21) + GEMS share ONE row under the wins (side by side — the card's height is the fit gate's) */}
+            <div className="solo-earned-row">
+              <XpEarnedLine since={xpSince} />
+              <GemsEarnedLine since={gemsSince} />
+              {/* oct22: the CONTRACT DONE chip rides the same compact row (its own line ran a 360x640 card off-screen) */}
+              <ContractDoneLine since={gemsSince} />
+            </div>
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
@@ -410,12 +428,16 @@ export default function SoloShell({
                 action — above RESTART. One tap arms the rebirth and leaves through onExit; the menu
                 runs the rebirth + ceremony. Shown on the tutorial card too — never miss the gate. */}
             <RebirthReadyButton onGo={onExit} className="solo-rr-ready" />
+            {/* RESTART + the TRY <MODE> ghost share one row when they fit (s2 fit); the claim / near-miss
+                rows the tryRow may carry take full lines under it. */}
+            <div className="solo-death-actions">
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
               onClick={over.restart}
             >
-              {`${over.restartLabel || 'RESTART'}${over.restartArmed ? ' · ENTER' : ''}`}
+              {over.restartLabel || 'RESTART'}
+              {over.restartArmed ? <span className="solo-restart-key"> · ENTER</span> : null}
             </button>
             {/* SECOND ROW — one of two, never both, because they answer the same question
                 ("what now?") for different people.
@@ -436,6 +458,8 @@ export default function SoloShell({
             ) : over.bare ? null : (
               over.tryRow
             )}
+            </div>{/* .solo-death-actions */}
+            </div>{/* .solo-death-reward */}
           </div>
         </div>
       ) : null}

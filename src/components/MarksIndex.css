@@ -201,3 +201,7 @@
 @media (prefers-reduced-motion: reduce) {
   .mx-tile, .mx-back { transition: none; }
 }
+
+/* NO SIDEWAYS SCROLL (oct21 no-scroll sweep): at 360x640 a tile's glow/shadow reached 3px past the grid, so the INDEX
+   swiped sideways as well as down. It scrolls DOWN only (a real list). */
+.mx-grid { overflow-x: hidden; }
