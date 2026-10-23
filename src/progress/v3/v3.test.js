@@ -204,7 +204,7 @@ test('AUTO REBIRTH: a toggle that opens at R2 (refused below); no 2nd boost slot
   assert.equal(BO.codeBoostMult(now + 1000), 3);
 });
 
-test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.5 · EPIC ×2.5 · LEGENDARY ×5 · MYTHIC ×15 · SECRET ×40 (GEAR OP 2); pity EPIC+ 10, LEGENDARY+ 50', async () => {
+test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.5 · EPIC ×2.5 · LEGENDARY ×5 · MYTHIC ×15 · SECRET ×40 (GEAR OP 2); pity EPIC+ 10, LEGENDARY+ 60', async () => {
   const M = await import('../marks.js');
   const MRC = await import('../markRollsCore.js');
   const want = { rare: 1.5, epic: 2.5, legendary: 5, mythic: 15, secret: 40 };
@@ -213,10 +213,10 @@ test('MARKS (FINAL, GEAR POOL v2 — no COMMON, GEAR OP): RARE ×1.5 · EPIC ×2
     near(MRC.TIER_MAIN[t], m);
     assert.equal(MRC.TIER_PCT[t], Math.round((m - 1) * 100));
   }
-  assert.deepEqual(MRC.TIER_ODDS, { epic: 60, legendary: 100, mythic: 2000, secret: 15000 }); // RARE = the remainder; Andy oct14 (2) friendlier rare gear
+  assert.deepEqual(MRC.TIER_ODDS, { epic: 60, legendary: 130, mythic: 2000, secret: 15000 }); // Andy oct22 (063) // RARE = the remainder; Andy oct14 (2) friendlier rare gear
   assert.equal(M.MARK_TIERS.common, undefined);
   assert.equal(MR.PITY.epic.hard, 10);
-  assert.equal(MR.PITY.legendary.hard, 50);
+  assert.equal(MR.PITY.legendary.hard, 60);
   assert.equal(G.ROLL_PRICE_GEMS, 75);
 });
 
@@ -309,11 +309,13 @@ test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TA
   X.saveProgress({ level: 1, frac: 0 });
   const g0 = G.getGems();
   X.saveProgress({ level: 5, frac: 0 });
-  assert.equal(G.getGems() - g0, 0, 'LV1 → LV5: no gems (Andy oct11 "dont give gems for leveling up")');
+  // levels still pay nothing per level (Andy oct11) — but every 5th level of a climb now pays a small LEVEL CHEST (oct22,
+  // v3/levelChest.js: 10 gems, daily-capped), so LV1 → LV5 is exactly one chest
+  assert.equal(G.getGems() - g0, 10, 'LV1 → LV5: one 10-gem chest, nothing per level');
   X.saveRebirths(1);
   X.saveProgress({ level: 1, frac: 0 });
   X.saveProgress({ level: 3, frac: 0 });
-  assert.equal(G.getGems() - g0, 0, 'a new climb pays nothing either');
+  assert.equal(G.getGems() - g0, 10, 'a new climb below LV 5 adds nothing');
   assert.equal(G.dropGemsForWord({ mode: 'menu', rng: () => 0 }), 0, 'menu typing gives no gems');
 });
 

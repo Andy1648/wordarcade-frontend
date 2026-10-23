@@ -126,7 +126,7 @@ test('the cap constants are the game constants (pips, shiny, milestones, boost, 
 });
 
 test('MIN_POOL is the smallest pool any migration ever seeded (a milestone paid on it stays paid)', () => {
-  const sizes = ['036_server_rolls.sql', '044_easier_rolls.sql', '048_rarer_friendlier.sql', '055_more_legendaries.sql', '059_gear_expansion.sql']
+  const sizes = ['036_server_rolls.sql', '044_easier_rolls.sql', '048_rarer_friendlier.sql', '055_more_legendaries.sql', '059_gear_expansion.sql', '063_legendary_harder.sql']
     .map((f) => (read(f).match(/\('mk-[a-z0-9-]+', '[a-z]+', [\d.]+, \d+\)/g) || []).length);
   assert.ok(sizes.every((n) => n > 0));
   assert.equal(K.MIN_POOL, Math.min(...sizes));

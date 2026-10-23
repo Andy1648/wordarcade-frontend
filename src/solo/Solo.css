@@ -1769,5 +1769,9 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 }
 /* a short phone (360x640): the rhythm closes one more step */
 @media (max-width: 819px) and (max-height: 700px) {
-  .solo-deathcard { --dc-gap: 8px; }
+  /* oct22: a run that ends with a 3rd word row, a gem chip that wraps or a CONTRACT DONE chip ran the 360x640 card 11–31px
+     off the bottom (e2e/solo-s2-fit, flaky on main) — the short phone gets ~36px of real slack: tighter rhythm + margins */
+  .solo-over { padding: 8px; }
+  .solo-deathcard { --dc-gap: 6px; padding: 12px; }
+  .solo-deathcard .missed-hold { padding: 6px 10px; }
 }

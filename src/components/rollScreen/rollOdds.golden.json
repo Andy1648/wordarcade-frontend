@@ -3,22 +3,22 @@
     "fresh": {
       "forced": null,
       "probs": {
-        "mk-detonator": 0.060797916667,
-        "mk-cyclone": 0.060797916667,
-        "mk-scholar": 0.060797916667,
-        "mk-ouroboros": 0.060797916667,
-        "mk-tinder": 0.060797916667,
-        "mk-slipstream": 0.060797916667,
-        "mk-smith": 0.060797916667,
-        "mk-phoenix": 0.060797916667,
-        "mk-metronome": 0.060797916667,
-        "mk-hotwire": 0.060797916667,
-        "mk-grapple": 0.060797916667,
-        "mk-sparkplug": 0.060797916667,
-        "mk-highlighter": 0.060797916667,
-        "mk-flashcards": 0.060797916667,
-        "mk-firecracker": 0.060797916667,
-        "mk-gumball": 0.060797916667,
+        "mk-detonator": 0.060942147436,
+        "mk-cyclone": 0.060942147436,
+        "mk-scholar": 0.060942147436,
+        "mk-ouroboros": 0.060942147436,
+        "mk-tinder": 0.060942147436,
+        "mk-slipstream": 0.060942147436,
+        "mk-smith": 0.060942147436,
+        "mk-phoenix": 0.060942147436,
+        "mk-metronome": 0.060942147436,
+        "mk-hotwire": 0.060942147436,
+        "mk-grapple": 0.060942147436,
+        "mk-sparkplug": 0.060942147436,
+        "mk-highlighter": 0.060942147436,
+        "mk-flashcards": 0.060942147436,
+        "mk-firecracker": 0.060942147436,
+        "mk-gumball": 0.060942147436,
         "mk-pyro": 0.001388888889,
         "mk-nova": 0.001388888889,
         "mk-golem": 0.001388888889,
@@ -31,18 +31,18 @@
         "mk-fortune": 0.001388888889,
         "mk-hoarder": 0.001388888889,
         "mk-domino": 0.001388888889,
-        "mk-leviathan": 0.000833333333,
-        "mk-eclipse": 0.000833333333,
-        "mk-headmaster": 0.000833333333,
-        "mk-thunderclap": 0.000833333333,
-        "mk-jackpot": 0.000833333333,
-        "mk-monsoon": 0.000833333333,
-        "mk-inferno": 0.000833333333,
-        "mk-mainframe": 0.000833333333,
-        "mk-shamrock": 0.000833333333,
-        "mk-longshot": 0.000833333333,
-        "mk-hothand": 0.000833333333,
-        "mk-arcadestick": 0.000833333333,
+        "mk-leviathan": 0.000641025641,
+        "mk-eclipse": 0.000641025641,
+        "mk-headmaster": 0.000641025641,
+        "mk-thunderclap": 0.000641025641,
+        "mk-jackpot": 0.000641025641,
+        "mk-monsoon": 0.000641025641,
+        "mk-inferno": 0.000641025641,
+        "mk-mainframe": 0.000641025641,
+        "mk-shamrock": 0.000641025641,
+        "mk-longshot": 0.000641025641,
+        "mk-hothand": 0.000641025641,
+        "mk-arcadestick": 0.000641025641,
         "mk-singularity": 0.000083333333,
         "mk-kraken": 0.000083333333,
         "mk-hydra": 0.000083333333,
@@ -72,30 +72,30 @@
         "mk-flashcards": 0,
         "mk-firecracker": 0,
         "mk-gumball": 0,
-        "mk-pyro": 0.082452777778,
-        "mk-nova": 0.082452777778,
-        "mk-golem": 0.082452777778,
-        "mk-brainstorm": 0.082452777778,
-        "mk-flashpoint": 0.082452777778,
-        "mk-voltage": 0.082452777778,
-        "mk-talisman": 0.082452777778,
-        "mk-lavalamp": 0.082452777778,
-        "mk-alarmclock": 0.082452777778,
-        "mk-fortune": 0.082452777778,
-        "mk-hoarder": 0.082452777778,
-        "mk-domino": 0.082452777778,
-        "mk-leviathan": 0.000833333333,
-        "mk-eclipse": 0.000833333333,
-        "mk-headmaster": 0.000833333333,
-        "mk-thunderclap": 0.000833333333,
-        "mk-jackpot": 0.000833333333,
-        "mk-monsoon": 0.000833333333,
-        "mk-inferno": 0.000833333333,
-        "mk-mainframe": 0.000833333333,
-        "mk-shamrock": 0.000833333333,
-        "mk-longshot": 0.000833333333,
-        "mk-hothand": 0.000833333333,
-        "mk-arcadestick": 0.000833333333,
+        "mk-pyro": 0.08264508547,
+        "mk-nova": 0.08264508547,
+        "mk-golem": 0.08264508547,
+        "mk-brainstorm": 0.08264508547,
+        "mk-flashpoint": 0.08264508547,
+        "mk-voltage": 0.08264508547,
+        "mk-talisman": 0.08264508547,
+        "mk-lavalamp": 0.08264508547,
+        "mk-alarmclock": 0.08264508547,
+        "mk-fortune": 0.08264508547,
+        "mk-hoarder": 0.08264508547,
+        "mk-domino": 0.08264508547,
+        "mk-leviathan": 0.000641025641,
+        "mk-eclipse": 0.000641025641,
+        "mk-headmaster": 0.000641025641,
+        "mk-thunderclap": 0.000641025641,
+        "mk-jackpot": 0.000641025641,
+        "mk-monsoon": 0.000641025641,
+        "mk-inferno": 0.000641025641,
+        "mk-mainframe": 0.000641025641,
+        "mk-shamrock": 0.000641025641,
+        "mk-longshot": 0.000641025641,
+        "mk-hothand": 0.000641025641,
+        "mk-arcadestick": 0.000641025641,
         "mk-singularity": 0.000083333333,
         "mk-kraken": 0.000083333333,
         "mk-hydra": 0.000083333333,
@@ -107,56 +107,56 @@
       }
     },
     "pityLeg": {
-      "forced": "legendary",
+      "forced": null,
       "probs": {
-        "mk-detonator": 0,
-        "mk-cyclone": 0,
-        "mk-scholar": 0,
-        "mk-ouroboros": 0,
-        "mk-tinder": 0,
-        "mk-slipstream": 0,
-        "mk-smith": 0,
-        "mk-phoenix": 0,
-        "mk-metronome": 0,
-        "mk-hotwire": 0,
-        "mk-grapple": 0,
-        "mk-sparkplug": 0,
-        "mk-highlighter": 0,
-        "mk-flashcards": 0,
-        "mk-firecracker": 0,
-        "mk-gumball": 0,
-        "mk-pyro": 0,
-        "mk-nova": 0,
-        "mk-golem": 0,
-        "mk-brainstorm": 0,
-        "mk-flashpoint": 0,
-        "mk-voltage": 0,
-        "mk-talisman": 0,
-        "mk-lavalamp": 0,
-        "mk-alarmclock": 0,
-        "mk-fortune": 0,
-        "mk-hoarder": 0,
-        "mk-domino": 0,
-        "mk-leviathan": 0.078864353312,
-        "mk-eclipse": 0.078864353312,
-        "mk-headmaster": 0.078864353312,
-        "mk-thunderclap": 0.078864353312,
-        "mk-jackpot": 0.078864353312,
-        "mk-monsoon": 0.078864353312,
-        "mk-inferno": 0.078864353312,
-        "mk-mainframe": 0.078864353312,
-        "mk-shamrock": 0.078864353312,
-        "mk-longshot": 0.078864353312,
-        "mk-hothand": 0.078864353312,
-        "mk-arcadestick": 0.078864353312,
-        "mk-singularity": 0.007886435331,
-        "mk-kraken": 0.007886435331,
-        "mk-hydra": 0.007886435331,
-        "mk-chronos": 0.007886435331,
-        "mk-firebird": 0.007886435331,
-        "mk-trident": 0.007886435331,
-        "mk-origin": 0.003154574132,
-        "mk-paradox": 0.003154574132
+        "mk-detonator": 0.060942147436,
+        "mk-cyclone": 0.060942147436,
+        "mk-scholar": 0.060942147436,
+        "mk-ouroboros": 0.060942147436,
+        "mk-tinder": 0.060942147436,
+        "mk-slipstream": 0.060942147436,
+        "mk-smith": 0.060942147436,
+        "mk-phoenix": 0.060942147436,
+        "mk-metronome": 0.060942147436,
+        "mk-hotwire": 0.060942147436,
+        "mk-grapple": 0.060942147436,
+        "mk-sparkplug": 0.060942147436,
+        "mk-highlighter": 0.060942147436,
+        "mk-flashcards": 0.060942147436,
+        "mk-firecracker": 0.060942147436,
+        "mk-gumball": 0.060942147436,
+        "mk-pyro": 0.001388888889,
+        "mk-nova": 0.001388888889,
+        "mk-golem": 0.001388888889,
+        "mk-brainstorm": 0.001388888889,
+        "mk-flashpoint": 0.001388888889,
+        "mk-voltage": 0.001388888889,
+        "mk-talisman": 0.001388888889,
+        "mk-lavalamp": 0.001388888889,
+        "mk-alarmclock": 0.001388888889,
+        "mk-fortune": 0.001388888889,
+        "mk-hoarder": 0.001388888889,
+        "mk-domino": 0.001388888889,
+        "mk-leviathan": 0.000641025641,
+        "mk-eclipse": 0.000641025641,
+        "mk-headmaster": 0.000641025641,
+        "mk-thunderclap": 0.000641025641,
+        "mk-jackpot": 0.000641025641,
+        "mk-monsoon": 0.000641025641,
+        "mk-inferno": 0.000641025641,
+        "mk-mainframe": 0.000641025641,
+        "mk-shamrock": 0.000641025641,
+        "mk-longshot": 0.000641025641,
+        "mk-hothand": 0.000641025641,
+        "mk-arcadestick": 0.000641025641,
+        "mk-singularity": 0.000083333333,
+        "mk-kraken": 0.000083333333,
+        "mk-hydra": 0.000083333333,
+        "mk-chronos": 0.000083333333,
+        "mk-firebird": 0.000083333333,
+        "mk-trident": 0.000083333333,
+        "mk-origin": 0.000033333333,
+        "mk-paradox": 0.000033333333
       }
     }
   },
@@ -202,7 +202,7 @@
       0
     ],
     [
-      "mk-hoarder",
+      "mk-alarmclock",
       null,
       0
     ],
@@ -357,7 +357,7 @@
       0
     ],
     [
-      "mk-highlighter",
+      "mk-sparkplug",
       null,
       0
     ],
@@ -367,7 +367,7 @@
       0
     ],
     [
-      "mk-highlighter",
+      "mk-sparkplug",
       null,
       0
     ],
@@ -392,7 +392,7 @@
       0
     ],
     [
-      "mk-domino",
+      "mk-fortune",
       null,
       0
     ],
@@ -407,8 +407,8 @@
       0
     ],
     [
-      "mk-arcadestick",
-      "legendary",
+      "mk-gumball",
+      null,
       0
     ],
     [
@@ -437,13 +437,13 @@
       0
     ],
     [
-      "mk-gumball",
+      "mk-firecracker",
       null,
       0
     ],
     [
-      "mk-hotwire",
-      null,
+      "mk-lavalamp",
+      "epic",
       0
     ],
     [
@@ -457,8 +457,8 @@
       0
     ],
     [
-      "mk-lavalamp",
-      "epic",
+      "mk-mainframe",
+      "legendary",
       0
     ],
     [
@@ -522,7 +522,7 @@
       0
     ],
     [
-      "mk-flashpoint",
+      "mk-brainstorm",
       null,
       0
     ],
@@ -657,8 +657,8 @@
       0
     ],
     [
-      "mk-monsoon",
-      "legendary",
+      "mk-smith",
+      null,
       0
     ],
     [
@@ -672,8 +672,8 @@
       0
     ],
     [
-      "mk-detonator",
-      null,
+      "mk-pyro",
+      "epic",
       0
     ],
     [
@@ -707,8 +707,8 @@
       0
     ],
     [
-      "mk-flashpoint",
-      "epic",
+      "mk-smith",
+      null,
       0
     ],
     [
@@ -722,12 +722,12 @@
       0
     ],
     [
-      "mk-smith",
-      null,
+      "mk-flashpoint",
+      "epic",
       0
     ],
     [
-      "mk-flashpoint",
+      "mk-golem",
       null,
       0
     ],
@@ -757,8 +757,8 @@
       0
     ],
     [
-      "mk-hotwire",
-      null,
+      "mk-mainframe",
+      "legendary",
       0
     ],
     [
@@ -777,8 +777,8 @@
       0
     ],
     [
-      "mk-brainstorm",
-      "epic",
+      "mk-slipstream",
+      null,
       0
     ],
     [
@@ -807,8 +807,8 @@
       0
     ],
     [
-      "mk-firecracker",
-      null,
+      "mk-hoarder",
+      "epic",
       0
     ],
     [
@@ -827,8 +827,8 @@
       0
     ],
     [
-      "mk-talisman",
-      "epic",
+      "mk-metronome",
+      null,
       0
     ],
     [
@@ -857,8 +857,8 @@
       0
     ],
     [
-      "mk-gumball",
-      null,
+      "mk-domino",
+      "epic",
       0
     ],
     [
@@ -877,8 +877,8 @@
       0
     ],
     [
-      "mk-golem",
-      "epic",
+      "mk-ouroboros",
+      null,
       0
     ],
     [
@@ -907,12 +907,12 @@
       0
     ],
     [
-      "mk-jackpot",
-      "legendary",
+      "mk-flashpoint",
+      "epic",
       0
     ],
     [
-      "mk-phoenix",
+      "mk-smith",
       null,
       0
     ],
@@ -922,12 +922,12 @@
       0
     ],
     [
-      "mk-gumball",
+      "mk-firecracker",
       null,
       0
     ],
     [
-      "mk-alarmclock",
+      "mk-talisman",
       null,
       0
     ],
@@ -962,7 +962,7 @@
       0
     ],
     [
-      "mk-inferno",
+      "mk-monsoon",
       null,
       0
     ],
@@ -992,7 +992,7 @@
       0
     ],
     [
-      "mk-voltage",
+      "mk-brainstorm",
       null,
       0
     ],
@@ -1212,8 +1212,8 @@
       0
     ],
     [
-      "mk-mainframe",
-      "legendary",
+      "mk-hotwire",
+      null,
       0
     ],
     [
@@ -1242,8 +1242,8 @@
       0
     ],
     [
-      "mk-grapple",
-      null,
+      "mk-lavalamp",
+      "epic",
       0
     ],
     [
@@ -1262,8 +1262,8 @@
       1
     ],
     [
-      "mk-domino",
-      "epic",
+      "mk-arcadestick",
+      "legendary",
       0
     ],
     [
@@ -1462,8 +1462,8 @@
       0
     ],
     [
-      "mk-headmaster",
-      "legendary",
+      "mk-golem",
+      "epic",
       0
     ],
     [
@@ -1552,7 +1552,7 @@
       0
     ],
     [
-      "mk-smith",
+      "mk-slipstream",
       null,
       0
     ],
@@ -1562,8 +1562,8 @@
       0
     ],
     [
-      "mk-nova",
-      "epic",
+      "mk-eclipse",
+      "legendary",
       0
     ],
     [
@@ -1607,7 +1607,7 @@
       0
     ],
     [
-      "mk-highlighter",
+      "mk-sparkplug",
       null,
       0
     ],

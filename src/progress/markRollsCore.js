@@ -53,7 +53,7 @@ export const ROLLABLE_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 /** The FLOOR tier: it takes whatever the rarer tiers leave, and LUCK never scales it (luck removes it). */
 export const FLOOR_TIER = 'rare';
 /** The rarer tiers' "1 IN X" (Andy's table). RARE (the floor) is the remainder — see the header. */
-export const TIER_ODDS = { epic: 60, legendary: 100, mythic: 2000, secret: 15000 }; // Andy oct14 (2) "make rates even more friendly for rarer gear": LEGENDARY 150 → 100, MYTHIC 4,000 → 2,000, SECRET 40,000 → 15,000 (server mirror: 048_rarer_friendlier.sql). Before: oct14 "easier — noticeable, nothing crazy" was 100 / 250 / 10,000 / 100,000 (LEGENDARY 1,000 → 250 oct8). Server mirror: 044_easier_rolls.sql
+export const TIER_ODDS = { epic: 60, legendary: 130, mythic: 2000, secret: 15000 }; // Andy oct22 "make legendary a bit harder to get": LEGENDARY 100 → 130 (+ hard pity 50 → 60, below) — server mirror: 063_legendary_harder.sql. // Andy oct14 (2) "make rates even more friendly for rarer gear": LEGENDARY 150 → 100, MYTHIC 4,000 → 2,000, SECRET 40,000 → 15,000 (server mirror: 048_rarer_friendlier.sql). Before: oct14 "easier — noticeable, nothing crazy" was 100 / 250 / 10,000 / 100,000 (LEGENDARY 1,000 → 250 oct8). Server mirror: 044_easier_rolls.sql
 /** The tier's equivalent multiplier ("strength") at ★0. Mirrors marks.js MARK_TIERS (1 + bonus). */
 export const TIER_MAIN = { rare: 1.25, epic: 1.5, legendary: 3, mythic: 10, secret: 25 };
 /** The same, as the stat's percent (the part above ×1) — kept exact (1.1 − 1 is not 0.1 in floats). */
@@ -341,7 +341,7 @@ export const DEFAULT_SKIP_BELOW = 'epic';
 // Was EPIC+ 50 (soft from 40, first by 10) / LEGENDARY+ 125. markRolls.PITY reads these; here because normalize
 // clamps the stored counters to them.
 export const EPIC_PITY_HARD = 10;
-export const LEGENDARY_PITY_HARD = 50;
+export const LEGENDARY_PITY_HARD = 60; // Andy oct22 (063): was 50 — at 1 IN 100 the pity handed out ~half of all LEGENDARIES, so the odds alone barely moved
 
 // --------------------------------------------------------------------------------------- state
 export function freshState() {
