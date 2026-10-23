@@ -359,6 +359,12 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
   await expect(sheet).toBeVisible();
   await expect(sheet.getByTestId('mark-main')).toBeVisible();
   await expect(sheet.getByTestId('mark-owned')).toHaveCount(0);
+  // Andy oct22: a gear YOU don't own opens LOCKED — the rarity + what's hidden as a count, never its numbers
+  await expect(sheet).toHaveClass(/is-locked/);
+  await expect(sheet.getByTestId('mark-main')).toContainText('LOCKED');
+  await expect(sheet.getByTestId('mark-perk')).toHaveCount(0);
+  await expect(sheet.getByTestId('mark-crit')).toHaveCount(0);
+  await expect(sheet.getByTestId('mark-flavour')).toHaveCount(0);
   await sheet.locator('.mx-sheet-close').click();
   await expect(sheet).toHaveCount(0);
   await expect(pc).toBeVisible(); // closing the sheet keeps the profile
@@ -415,6 +421,27 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 1920, height: 1080 }, {
     if (process.env.LB_SHOT_DIR) await page.screenshot({ path: `${process.env.LB_SHOT_DIR}/profile-flex-${vp.width}x${vp.height}.png` });
   });
 }
+
+// Andy oct22: a gear the VIEWER owns still opens with its numbers on someone else's card
+test('tap their gear you OWN: the sheet shows its stats (not locked)', async ({ page }) => {
+  const SHOW = { b: { gear1: 'mk-kraken', gear2: null, base_wins: 190, wins_per_word: 5130, gears_found: 9, gears_total: 27, power: 6 } };
+  await page.addInitScript(() => {
+    try { localStorage.setItem('taw.markRolls', JSON.stringify({ v: 4, rolls: 9, sinceEpic: 0, sinceLegendary: 0, everEpic: true, starter: true, marks: { 'mk-kraken': { n: 1 } }, milestones: [] })); } catch { /* */ }
+  });
+  const { lb } = await boot(page, { me: { rebirths: 0, level: 60 } });
+  await page.route('**/rest/v1/profile_showcase*', (route) => {
+    const id = decodeURIComponent((route.request().url().match(/profile_id=eq\.([^&]+)/) || [])[1] || '');
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SHOW[id] ? [SHOW[id]] : []) });
+  });
+  await lb.locator('.lb2-col--2').click(); // BRAVO
+  await page.getByTestId('profile-gear-1').click();
+  const sheet = page.locator('.mx-sheet[data-mark="mk-kraken"]');
+  await expect(sheet).toBeVisible();
+  await expect(sheet).not.toHaveClass(/is-locked/);
+  await expect(sheet.getByTestId('mark-main')).not.toContainText('LOCKED');
+  await expect(sheet.getByTestId('mark-owned')).toHaveCount(0); // still someone else's copy: no owned / dupes lines
+  await expect(sheet.getByTestId('gear-equip')).toHaveCount(0);
+});
 
 // 051 PROFILE DESCRIPTION: your own card edits it. A dirty one is refused on the spot (never sent); a clean one saves.
 test('your own profile card: write a description — a dirty one is refused before it is sent, a clean one saves', async ({ page }) => {
