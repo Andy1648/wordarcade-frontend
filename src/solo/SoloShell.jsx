@@ -32,6 +32,7 @@ import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems'
 import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { XpEarnedLine, useGameXpRunMark } from '../components/xp/XpEarned';
 import { usePlayClock } from '../progress/playClock.js';
+import useFitCard from '../hooks/useFitCard.js';
 
 // THE HERO RING. The countdown and the letter are ONE object, not a ring plus a separate
 // tile elsewhere on the card. Progress is driven by React state every frame (not a CSS
@@ -130,6 +131,8 @@ export default function SoloShell({
   offerMenu = false,
 }) {
   usePlayClock(); // TIME PLAYED on the profile (visible time on a game screen only)
+  const deathCardRef = useRef(null);
+  useFitCard(deathCardRef, phase === 'over'); // oct22: the run-over card never runs off a short phone
   const inputRef = useRef(null);
 
   // LONG WORDS WRAP (fix/famous-long-words). The input shrinks its type to fit a long word on one
@@ -381,7 +384,7 @@ export default function SoloShell({
 
       {phase === 'over' ? (
         <div className="solo-over">
-          <div className="solo-deathcard">
+          <div className="solo-deathcard" ref={deathCardRef}>
             {/* TWO HALVES (s2 fit, oct21): the STORY (way out, face, result, links, the missed word) and
                 the REWARD (wins, XP + gems, score, REBIRTH READY, RESTART). Stacked on a phone; side by
                 side on a desktop, where the season-2 gate card stacked ran ~320px past a 768 screen. */}
@@ -405,8 +408,9 @@ export default function SoloShell({
             <div className="solo-earned-row">
               <XpEarnedLine since={xpSince} />
               <GemsEarnedLine since={gemsSince} />
+              {/* oct22: the CONTRACT DONE chip rides the same compact row (its own line ran a 360x640 card off-screen) */}
+              <ContractDoneLine since={gemsSince} />
             </div>
-            <ContractDoneLine since={gemsSince} />
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
