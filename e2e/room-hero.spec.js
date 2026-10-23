@@ -6,6 +6,7 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
+import { PATCH_ID } from '../src/components/patchNotes/patchSeen.js';
 
 const ME = 'e2e-player';
 const PLAYERS = [{ id: ME, name: 'ANDY', isHost: true }, { id: 'p2', name: 'KEYSMASH' }];
@@ -16,11 +17,11 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
   test(`room hero ${vn}: your seat's hero face opens the picker; picking equips it`, async ({ page }) => {
     await page.setViewportSize(vp);
     const mock = await installBackendMock(page);
-    await page.addInitScript(() => {
+    await page.addInitScript((patchId) => {
       if (sessionStorage.getItem('rh.seeded')) return;
       sessionStorage.setItem('rh.seeded', '1');
-      for (const [k, v] of Object.entries({ 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.seen.patch': '2026-10-13', 'taw.main': 'riot', 'taw.s2.heroes.gf': '1' })) localStorage.setItem(k, v);
-    });
+      for (const [k, v] of Object.entries({ 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.seen.patch': patchId, 'taw.main': 'riot', 'taw.s2.heroes.gf': '1' })) localStorage.setItem(k, v);
+    }, PATCH_ID);
     await page.goto('/?portal=1&season2=1');
     await menuReady(page);
     const sent = [];
