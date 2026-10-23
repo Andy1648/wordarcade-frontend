@@ -102,5 +102,5 @@ test('SEASON2 numbers: menu bar + per-letter, UPGRADES, REBIRTH and ROLL print F
   const leg = Number(/LEGENDARY\+ IN\s*([\d,]+)/.exec(pity)[1].replace(/,/g, ''));
   expect(epic).toBeGreaterThan(0);
   expect(epic).toBeLessThanOrEqual(10);
-  expect(leg).toBe(50);
+  expect(leg).toBe(60); // LEGENDARY+ hard pity 60 (Andy oct22, 063)
 });

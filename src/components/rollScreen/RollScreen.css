@@ -453,6 +453,22 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-ticket-n { color: #2EFFE0; }
 .rs-overlay.is-reduced .rs-ticket-btn { transition: none; }
 .rs-chip.is-ticket { background: #FFE94A; font-family: 'Bungee', sans-serif; text-transform: uppercase; transform: rotate(-3deg); }
+/* DOUBLE ROLLS (oct22): which of the two spins this is — a yellow plate on every reveal, a flat cyan chip on the FIRST spin's
+   line only (the last spin's line already carries the "+EXTRA" chip, and a phone line has no room for both) — static */
+.rs-chip.is-double { background: #2EFFE0; font-family: 'Bungee', sans-serif; text-transform: uppercase; transform: rotate(2deg); }
+.rs-cut-double {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k16);
+  color: #000;
+  background: #FFE94A;
+  border: 3px solid #B39A00;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  padding: 4px 12px;
+  transform: rotate(-2deg);
+  white-space: nowrap;
+}
 
 /* ---- the RARE flash (over the band) and the EPIC+ rarity WASH (over the screen): flat colour, opacity one-shots ---- */
 /* the FLASH and the TELL span the whole panel inside its frame (--rs-up / --rs-down): a band-sized plate drew a hard line

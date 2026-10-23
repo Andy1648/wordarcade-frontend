@@ -22,6 +22,7 @@ const SHOTS = process.env.GAME_XP_SHOTS || '';
 
 async function seedS2(page) {
   await page.addInitScript(() => {
+    window.__TAW_NO_CONTRACTS = true; // today's random contracts must not add a CONTRACT DONE line to the measured card
     if (sessionStorage.getItem('gx.seeded')) return;
     sessionStorage.setItem('gx.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');

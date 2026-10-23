@@ -79,7 +79,7 @@ test('USE LEGENDARY+ TICKET: the server\'s pick lands with the full reveal, free
   expect(st.rolls).toBe(40);
   expect(st.sinceEpic).toBe(3);
   expect(st.sinceLegendary).toBe(20); // pity untouched
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 30');
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 40'); // 60 − 20 (hard pity 60, oct22)
   await expect(btn).toHaveCount(0); // spent: the server no longer lists it
 });
 

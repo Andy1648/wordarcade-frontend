@@ -27,6 +27,7 @@ for (const vp of SIZES) {
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await installBackendMock(page);
     await page.addInitScript(() => {
+      window.__TAW_NO_CONTRACTS = true; // today's random contracts must not add a CONTRACT DONE line to the measured card
       if (sessionStorage.getItem('sf.seeded')) return;
       sessionStorage.setItem('sf.seeded', '1');
       localStorage.setItem('taw.seenMenu', '1');
