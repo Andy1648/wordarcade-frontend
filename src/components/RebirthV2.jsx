@@ -216,11 +216,8 @@ export default function RebirthV2({ onBack }) {
   const trackF = reached === 0 ? 0 : Math.min(1, (reached - 1 + partial) / slots);
 
   const needWords = levelReady && wordsShort > 0; // 035: the level is there, the game words are not
-  // 035 as a QUEST (Andy oct13 "like a quest requirement"): once the level is there, the bar tracks the game words
-  const gateF = needWords ? Math.max(0, Math.min(1, (WORDS_PER_REBIRTH - wordsShort) / WORDS_PER_REBIRTH))
-    : gate > 0 ? Math.max(0, Math.min(1, level / gate)) : 1;
   const holdLabel = busy ? 'REBIRTHING…' : ready ? 'HOLD TO REBIRTH' : needWords ? 'PLAY A GAME' : 'NEED LEVELS';
-  const holdSub = ready ? `LV ${formatNum(level)} → 1` : needWords ? `${formatNum(wordsShort)} MORE ${wordsShort === 1 ? 'WORD' : 'WORDS'}` : `LV ${formatNum(level)} / ${formatNum(gate)}`;
+  const holdSub = ready ? `LV ${formatNum(level)} → 1` : needWords ? `${formatNum(wordsShort)} MORE ${wordsShort === 1 ? 'WORD' : 'WORDS'}` : `GATE LV ${formatNum(gate)}`; // the gate line says how many to go
 
   return (
     <div className="rb2" role="dialog" aria-modal="true" aria-label="Rebirth" tabIndex={-1} ref={rootRef}>
@@ -298,11 +295,9 @@ export default function RebirthV2({ onBack }) {
               />
             )}
           </div>
+          {/* Andy oct22 "5 bars … and then 0/5 again": the gate says what it is ONCE — the button's sub carries the count */}
           <div className="rb2-gate" aria-hidden={ready ? 'true' : undefined}>
-            <div className="rb2-gate-bar">
-              <div className="rb2-gate-fill" style={{ transform: `scaleX(${gateF.toFixed(3)})` }} />
-            </div>
-            <span className="rb2-gate-txt">{ready ? `GATE LV ${formatNum(gate)} — READY` : needWords ? `QUEST: PLAY ${formatNum(WORDS_PER_REBIRTH)} WORDS IN A GAME · ${formatNum(WORDS_PER_REBIRTH - wordsShort)}/${formatNum(WORDS_PER_REBIRTH)}` : `${formatNum(gate - level)} LEVELS TO GO`}</span>
+            <span className="rb2-gate-txt">{ready ? `GATE LV ${formatNum(gate)} — READY` : needWords ? `QUEST: PLAY ${formatNum(WORDS_PER_REBIRTH)} WORDS IN A GAME` : `${formatNum(gate - level)} LEVELS TO GO`}</span>
           </div>
           <div className="rb2-cost" data-testid="rb2-cost">BACK TO LV 1 · KEY KEPT</div>
           {autoOpen && (

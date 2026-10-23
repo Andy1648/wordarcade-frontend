@@ -29,7 +29,6 @@ const ALLOW = [
 const ALLOW_PHONE = [
   ['.hp-m', 'the phone menu column (64px tap rows)'],
   ['.pf', 'the profile / hero preview page'],
-  ['.av3-overlay', 'achievements: every ladder'],
   ['.sp2', 'the UPGRADES page'],
   ['.pn', 'the patch notes'],
   ['.rb2', 'rebirth on the smallest phone'],

@@ -103,21 +103,6 @@
 .rb2-arrow { flex: 0 0 auto; }
 .rb2-actions { display: flex; gap: 22px; margin-top: 8px; }
 .rb2-gate { display: flex; align-items: center; gap: 12px; width: 420px; max-width: 100%; }
-.rb2-gate-bar {
-  position: relative;
-  flex: 1 1 auto;
-  height: 14px;
-  background: var(--k-well);
-  border: var(--k-ink-m) solid var(--k-ink);
-  overflow: hidden;
-}
-.rb2-gate-fill {
-  position: absolute;
-  inset: 0;
-  background: var(--k-purple);
-  transform-origin: 0 50%;
-  transition: transform .35s var(--k-e-fill);
-}
 .rb2-gate-txt { flex: 0 0 auto; font-size: var(--fs-k18); color: var(--k-dim); white-space: nowrap; }
 .rb2-msg { min-height: 22px; font-size: var(--fs-k16); color: var(--k-yellow); text-align: center; }
 .rb2-cost { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k18); color: var(--k-white); text-align: center; }
