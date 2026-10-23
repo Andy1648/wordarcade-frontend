@@ -405,8 +405,9 @@ export default function SoloShell({
             <div className="solo-earned-row">
               <XpEarnedLine since={xpSince} />
               <GemsEarnedLine since={gemsSince} />
+              {/* oct22: the CONTRACT DONE chip rides the same compact row (its own line ran a 360x640 card off-screen) */}
+              <ContractDoneLine since={gemsSince} />
             </div>
-            <ContractDoneLine since={gemsSince} />
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
