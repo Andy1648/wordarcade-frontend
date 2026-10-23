@@ -10,6 +10,8 @@
 // half-wipe progress; and it writes through a strict allowlist (PROGRESS_KEYS), so an import can never
 // touch a device key or any key not on the list — even if the blob claims to contain one.
 
+import { SEASON2 } from '../progress/season.js';
+
 // The 28 progression keys a backup carries. (The 5 excluded device/UX keys: taw.seenWinsHint,
 // taw.sfxEvents, taw.clack, taw.audioVolume, taw.musicMuted — never exported, never imported.)
 export const PROGRESS_KEYS = [
@@ -75,6 +77,14 @@ export const PROGRESS_KEYS = [
   'taw.rrnotice',
   // GEMS: the roll currency (balance, the LEVEL_UP high-water mark, the win streak, the starting-grant stamp)
   'taw.gems',
+  // SAVE CODE FIX (oct22): progress a code silently left behind — the hero you play as, today's DAILY CONTRACTS (so a
+  // claimed contract can't be claimed again on the new device), the one-time WORD SENSE refund stamp (without it the
+  // refund pays out a second time), the UNLISTED 11:11 wish, and a live boost window
+  'taw.main',
+  'taw.contracts',
+  'taw.wordsenseRefunded',
+  'taw.ulwish',
+  'taw.boost',
 ];
 // PV10 must-fix 4: migration keys that must NOT survive from THIS browser when a restored blob lacks them.
 // Without the blob's own econ stamp the v10 migration has to re-run on the restored (older) save after the
@@ -169,56 +179,74 @@ export function exportSave(storage = defaultStorage()) {
   return utf8ToB64(JSON.stringify({ format: FORMAT, v: 1, keys }));
 }
 
-// Parse + validate a save code WITHOUT writing anything. Returns { ok, keys } or { ok:false, error }.
-// `error` is a short player-readable sentence. Only PROGRESS_KEYS with string values survive.
-export function parseSave(text) {
-  const trimmed = String(text == null ? '' : text).trim();
-  if (!trimmed) return { ok: false, error: 'Paste a save code first.' };
-  let json;
-  try {
-    json = b64ToUtf8(trimmed);
-  } catch {
-    return { ok: false, error: "That doesn't look like a Type a Word save code." };
-  }
-  let obj;
-  try {
-    obj = JSON.parse(json);
-  } catch {
-    return { ok: false, error: 'That save code is corrupted (not readable). Nothing was changed.' };
-  }
-  if (!obj || obj.format !== FORMAT || typeof obj.keys !== 'object' || obj.keys === null) {
-    return { ok: false, error: "That isn't a Type a Word save code. Nothing was changed." };
-  }
+const SEASON2_ECON = 13; // leaderboard/season2Rules.js (not imported: this file is on the first-load path)
+// Short reasons; saveCode.js (SETTINGS, lazy) turns each into a plain-English sentence.
+const ERR = {
+  notOurs: "That isn't a Type a Word save code. Nothing was changed.",
+  damaged: 'That save code is corrupted (not readable). Nothing was changed.',
+  noProgress: 'That save code has no progress to restore. Nothing was changed.',
+  season1: "That's a season 1 code: season 2 started fresh. Nothing was changed.",
+};
+const fail = (reason) => ({ ok: false, reason, error: ERR[reason] });
+/**
+ * Validate a decoded save object WITHOUT writing anything → { ok, keys } | { ok:false, reason, error }. Only
+ * allowlisted keys with string values survive. In SEASON 2 a code from before the season (taw.econ < 13, or none) is
+ * refused: loading it stamped the old econ and the season-2 boot then wiped the whole save (oct21 audit B4).
+ */
+export function parseSaveObject(obj, { season2 = SEASON2 } = {}) {
+  if (!obj || obj.format !== FORMAT || typeof obj.keys !== 'object' || obj.keys === null) return fail('notOurs');
   // Strict allowlist: only known progress keys, only string values. Device keys / unknown keys /
   // non-string values are dropped here — they can never reach storage.
   const keys = {};
   for (const k of Object.keys(obj.keys)) {
     if (!isProgressKey(k)) continue; // the allowlist (+ the season-2 prefix)
     const v = obj.keys[k];
-    if (typeof v !== 'string') {
-      return { ok: false, error: 'That save code is corrupted (bad field). Nothing was changed.' };
-    }
+    if (typeof v !== 'string') return fail('damaged');
     keys[k] = v;
   }
-  if (Object.keys(keys).length === 0) {
-    return { ok: false, error: 'That save code has no progress to restore. Nothing was changed.' };
-  }
+  if (Object.keys(keys).length === 0) return fail('noProgress');
+  const econ = keys['taw.econ'];
+  if (season2 && !(econ != null && Number(econ) >= SEASON2_ECON)) return fail('season1');
   return { ok: true, keys };
 }
 
-// Restore from a save code. Validates fully first (parseSave), then writes ONLY the allowlisted
-// progress keys. On any validation failure it writes nothing and returns the readable error, so a
-// corrupt code never wipes or partially clobbers existing progress. Device keys are never touched.
-export function importSave(text, storage = defaultStorage()) {
-  const parsed = parseSave(text);
-  if (!parsed.ok) return parsed;
-  for (const [k, v] of Object.entries(parsed.keys)) {
+// Parse + validate a PLAIN (v1) save code WITHOUT writing anything. Returns { ok, keys } or { ok:false, error }.
+// (Any code a player pastes — the compact TAW2 code, a mangled paste — goes through saveCode.js parseAnySave.)
+export function parseSave(text, opts) {
+  const trimmed = String(text == null ? '' : text).replace(/\s+/g, '');
+  if (!trimmed) return fail('notOurs');
+  let obj;
+  try {
+    obj = JSON.parse(b64ToUtf8(trimmed));
+  } catch {
+    return fail(trimmed.startsWith('eyJ') ? 'damaged' : 'notOurs');
+  }
+  return parseSaveObject(obj, opts);
+}
+
+// The save as it was just before the last restore (a pasted code, or the cloud bringing a save back) — so a wrong
+// paste can be undone (SETTINGS → UNDO LAST RESTORE), and support can see what was replaced. Device-only: never
+// exported (not a progress key).
+export const PRE_RESTORE_KEY = 'taw.preRestore';
+
+/** Write already-validated keys (parseSave / parseSaveObject) — after snapshotting the save they replace.
+ *  `source`: 'code' (a pasted save code — SETTINGS offers UNDO for it) or 'restore' (the cloud; no UNDO: the cloud
+ *  would only bring the higher save back on the next load). */
+export function writeSaveKeys(keys, storage = defaultStorage(), { snapshot = true, source = 'restore' } = {}) {
+  if (snapshot) {
+    try {
+      storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ at: Date.now(), src: source, code: exportSave(storage) }));
+    } catch {
+      /* quota: the restore still goes ahead */
+    }
+  }
+  for (const [k, v] of Object.entries(keys)) {
     storage.setItem(k, v);
   }
   // PV10: the blob's econ stamp is written above when it has one; when it has none (a pre-STEP-52 or
   // pre-v10 blob) the LOCAL stamp, shadow and gate are removed so the migration re-runs on reload.
   for (const k of REMOVE_IF_ABSENT) {
-    if (!Object.prototype.hasOwnProperty.call(parsed.keys, k) && typeof storage.removeItem === 'function') {
+    if (!Object.prototype.hasOwnProperty.call(keys, k) && typeof storage.removeItem === 'function') {
       try {
         storage.removeItem(k);
       } catch {
@@ -226,5 +254,14 @@ export function importSave(text, storage = defaultStorage()) {
       }
     }
   }
-  return { ok: true, imported: Object.keys(parsed.keys).length };
+  return { ok: true, imported: Object.keys(keys).length };
+}
+
+// Restore from a plain save code. Validates fully first (parseSave), then writes ONLY the allowlisted
+// progress keys. On any validation failure it writes nothing and returns the readable error, so a
+// corrupt code never wipes or partially clobbers existing progress. Device keys are never touched.
+export function importSave(text, storage = defaultStorage(), opts) {
+  const parsed = parseSave(text, opts);
+  if (!parsed.ok) return parsed;
+  return writeSaveKeys(parsed.keys, storage, opts);
 }

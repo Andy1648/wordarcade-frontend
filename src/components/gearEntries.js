@@ -2,7 +2,7 @@
 // everything, owned and locked) and the EQUIP screen (EquipScreen.jsx — owned only). Pure reads of the roll state the
 // caller snapshotted (viewState) + the owned legacy / EARNED ids; no storage of its own.
 import { markById } from '../progress/marks';
-import { ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, markLevel, rollMarkById } from '../progress/markRolls';
+import { ROLL_MARKS, PERMANENT_MARKS, RETIRED_MARK_IDS, markLevel, rollMarkById, viewState, permanentOwnedIds } from '../progress/markRolls';
 import { UNLISTED_GEARS, isFindable, unlistedById } from '../unlisted/unlisted.js';
 import { ownsUnlistedId } from '../unlisted/unlistedIds.js';
 
@@ -50,4 +50,16 @@ export function gearEntry(id) {
   if (u) return { id, name: u.name, tier: 'unlisted', kind: 'unlisted', riddle: u.riddle, season: u.season };
   const m = markById(id);
   return m ? { id, name: m.name, tier: m.tier, kind: 'retired' } : null;
+}
+
+/** Does THIS save own `e`? — the INDEX's own test (ownsGear) against a fresh snapshot of the roll state, for a sheet
+ *  opened from somewhere that has no snapshot of its own (someone else's leaderboard profile, PeekGearSheet). */
+export function viewerOwnsGear(e) {
+  if (!e || !e.id) return false;
+  try {
+    const permOwned = new Set(permanentOwnedIds());
+    return ownsGear(e, { view: viewState(), unlocked: permOwned, permOwned });
+  } catch {
+    return false; // unreadable save → locked, never a leak
+  }
 }
