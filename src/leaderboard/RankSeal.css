@@ -1,7 +1,9 @@
-/* RankSeal — size with --seal-k (unitless; 1 = a 40px seal); the number is laid out for 40px and scaled with it
-   (transform, so the type scale keeps bare tokens). Static at rest — no loops. */
+/* RankSeal — size with --seal-k (unitless; 1 = a 40px badge); the number is laid out for 40px and scaled with it
+   (transform, so the type scale keeps bare tokens). Static at rest — the only motion here is #1's ONE shine sweep. */
 .rseal {
   --seal-k: 1;
+  --nx: 0px; /* where each art's blank panel sits, from the box centre (40px units) */
+  --ny: 0px;
   position: relative;
   flex: 0 0 auto;
   width: calc(40px * var(--seal-k));
@@ -11,28 +13,58 @@
   line-height: 1;
   vertical-align: middle;
 }
-.rseal-art {
+.rseal-art,
+.rseal-shine {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
   pointer-events: none;
 }
+.rseal-art { object-fit: contain; }
 .rseal-n {
   position: relative;
+  left: calc(var(--nx) * var(--seal-k));
+  top: calc(var(--ny) * var(--seal-k));
   font-family: var(--k-display, 'Bungee', cursive); text-transform: uppercase;
   font-weight: 400;
-  font-size: var(--fs-k20);
+  font-size: var(--fs-k18);
   color: #fff;
   -webkit-text-stroke: 4px #000;
   paint-order: stroke fill;
   text-shadow: 2px 2px 0 #000;
-  transform: scale(var(--seal-k));
+  transform: scale(var(--num-k, var(--seal-k)));
 }
-.rseal[data-digits='2'] .rseal-n { font-size: var(--fs-k16); }
+.rseal[data-digits='2'] .rseal-n { font-size: var(--fs-k15); }
 .rseal[data-digits='3'] .rseal-n { font-size: var(--fs-k13); }
-/* the number sits on each art's blank panel (the crown pushes #1's panel down; the shields' panels sit high) */
-.rseal[data-tier='crown'] .rseal-n { top: calc(5px * var(--seal-k)); }
-.rseal[data-tier='silver'] .rseal-n,
-.rseal[data-tier='bronze'] .rseal-n { top: calc(-2px * var(--seal-k)); }
+.rseal[data-tier='splat'] { --ny: -3px; }
+.rseal[data-tier='flame'] { --ny: 3.5px; }
+.rseal[data-tier='crown'] { --ny: 1px; }
+
+/* #1 is the one-of-one: the art runs a touch past its box, and on appear ONE white glint sweeps across it (masked to
+   the art, so it never lights the row). Finite, transform/opacity only; reduced motion skips it. */
+.rseal[data-tier='crown'] .rseal-art,
+.rseal[data-tier='crown'] .rseal-shine { transform: scale(1.14); }
+.rseal-shine {
+  overflow: hidden;
+  -webkit-mask: url('/lb/seal-crown.webp') center / contain no-repeat;
+  mask: url('/lb/seal-crown.webp') center / contain no-repeat;
+}
+.rseal-shine > i {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 28%;
+  background: #fff;
+  opacity: 0;
+  transform: translateX(-150%) skewX(-20deg);
+  animation: rseal-shine 640ms cubic-bezier(.4, 0, .2, 1) var(--shine-at, 1100ms) 1 both;
+}
+@keyframes rseal-shine {
+  0% { opacity: 0.85; transform: translateX(-150%) skewX(-20deg); }
+  100% { opacity: 0.85; transform: translateX(480%) skewX(-20deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rseal-shine { display: none; }
+}
