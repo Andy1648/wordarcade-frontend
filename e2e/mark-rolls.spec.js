@@ -161,7 +161,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await cut.click();
   await expect(cut).not.toHaveClass(/is-on/, { timeout: 2000 });
   await expect(card(page)).toHaveCount(1);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 50'); // GEAR POOL v2: the hard pity is 50 (Genshin-style; was 125)
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 60'); // the hard pity is 60 (Andy oct22, 063; GEAR POOL v2 50, was 125)
 });
 
 test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
