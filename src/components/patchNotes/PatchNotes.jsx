@@ -13,11 +13,11 @@ import MarkCard from '../markCard/MarkCard.jsx';
 import GearFx from '../GearFx.jsx';
 import { grantGems, getGems, ROLL_PRICE_GEMS } from '../../progress/gemsCore.js';
 import { formatNum } from '../../format.js';
-import { PATCH_ITEMS, PATCH_CARDS, PATCH_GIFT_ROLLS, PATCH_LABEL, PATCH_ID } from './patchNotesData.js';
+import { PATCH_ITEMS, PATCH_CARDS, PATCH_STRIP, PATCH_GIFT_ROLLS, PATCH_LABEL, PATCH_ID } from './patchNotesData.js';
 import { markPatchSeen, patchSeen } from './patchSeen.js';
 import './PatchNotes.css';
 
-const TAG_TONE = { NEW: 'cyan', BUFF: 'yellow', GIFT: 'pink' };
+const TAG_TONE = { NEW: 'cyan', BUFF: 'yellow', TWEAK: 'orange', GIFT: 'pink' };
 
 export default function PatchNotes({ onClose }) {
   // idle → flying (gems in the air; the button is dead) → done
@@ -107,13 +107,24 @@ export default function PatchNotes({ onClose }) {
           <span className="pn-ver pn-rise" style={{ '--pn-d': '0ms' }}>UPDATE · {PATCH_LABEL}</span>
           <h1 id="pn-title" className="pn-title pn-slam">PATCH NOTES</h1>
         </header>
-        <div className="pn-cards" aria-hidden="true">
-          {PATCH_CARDS.map((c, i) => (
-            <div key={c.id} className={`pn-card pn-card-${i}`}>
-              <GearFx tier={c.tier} scale={0.8} />
-              <MarkCard id={c.id} tier={c.tier} name={c.name} w={132} />
+        <div className="pn-show" aria-hidden="true">
+          <div className="pn-cards">
+            {PATCH_CARDS.map((c, i) => (
+              <div key={c.id} className={`pn-card pn-card-${i}`}>
+                <GearFx tier={c.tier} scale={0.8} />
+                <MarkCard id={c.id} tier={c.tier} name={c.name} w={132} />
+              </div>
+            ))}
+          </div>
+          {PATCH_STRIP && PATCH_STRIP.length ? (
+            // the rest of the new gears, their painted art in a row — each pops in once after the fan (a finite one-shot)
+            <div className="pn-strip" data-testid="patch-notes-strip">
+              {PATCH_STRIP.map((g, i) => (
+                <img key={g.id} className="pn-strip-g" src={g.src} alt="" width="34" height="34" decoding="async"
+                  data-gear={g.id} style={{ '--pn-d': `${320 + i * 30}ms` }} />
+              ))}
             </div>
-          ))}
+          ) : null}
         </div>
         <div className="pn-body">
         <ul className="pn-list">
