@@ -72,17 +72,19 @@ for (const [w, h] of SIZES) {
     for (const row of await lb.locator('.lb2-row .lb2-r').all()) expect(apart(p, await box(row))).toBe(true);
   });
 
-  test(`${w}x${h}: the achievements hero row (ALMOST · MAX IT → GRANDMASTER · 0) never overlaps`, async ({ page }) => {
+  // oct22: the hero row's MAX IT → GEAR chip + ready count went (Andy "overloaded with numbers") — the hero's gear now
+  // rings in the LEGENDARIES shelf, and the hero's label / badge / name / count never overlap
+  test(`${w}x${h}: the achievements hero (ALMOST · badge · name · count) never overlaps; its gear rings in LEGENDARIES`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await boot(page, { level: 400, rebirths: 12 }, { 'taw.s2.count': JSON.stringify({ bots: 9 }) });
     await page.locator(isPhoneMenu(page) ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();
-    const top = page.locator('.av3-hero-top');
-    await expect(top.locator('.av3-gear')).toHaveAttribute('data-gear', 'mk-grandmaster');
-    const [label, gear, n] = await Promise.all([box(top.locator('.av3-hero-label')), box(top.locator('.av3-gear')), box(top.locator('.av3-ready-n'))]);
-    expect(apart(label, gear), 'ALMOST vs the gear chip').toBe(true);
-    expect(apart(gear, n), 'the gear chip vs the ready count').toBe(true);
-    // the name is whole wherever the row has room (a laptop); a phone may ellipsise it, never overlap
-    if (w >= 1280) expect(await top.locator('.av3-gear-name').evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
+    const hero = page.locator('.av3-hero');
+    await expect(hero.locator('.av3-hero-label')).toHaveText('ALMOST');
+    await expect(page.locator('.av3-lg-item.is-hero')).toHaveAttribute('data-gear', 'mk-grandmaster');
+    const [label, badge, name, nums] = await Promise.all(['.av3-hero-label', '.av3-hero-badge', '.av3-hero-name', '.av3-hero-nums'].map((s) => box(hero.locator(s))));
+    expect(apart(label, badge), 'ALMOST vs the badge').toBe(true);
+    expect(apart(badge, name), 'the badge vs the name').toBe(true);
+    expect(apart(name, nums), 'the name vs the count').toBe(true);
   });
 
   test(`${w}x${h}: every notification dot paints above its card (2ND GEAR, ROLL, UPGRADES, daily chest)`, async ({ page }) => {

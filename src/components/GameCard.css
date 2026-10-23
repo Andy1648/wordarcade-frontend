@@ -925,9 +925,13 @@ html[data-beat='true'] .game-card.featured {
 .game-card-gems .is-dim { opacity: 0.25; }
 /* SAT RUSH: the badge sits top-right like every other card (Andy oct11); the masthead's title row leaves it room */
 .game-card-magnet[data-game='sat-rush'] .game-card-gems { padding: 3px 4px; }
-.game-card-magnet[data-game='sat-rush'] .game-card-mh-row { padding-right: 30cqw; box-sizing: border-box; }
-.game-card-magnet[data-game='sat-rush'] .game-card-name { font-size: clamp(14px, 10.5cqw, 28px); white-space: nowrap; }
-.game-card-magnet[data-game='sat-rush'] .game-card-gems .kit-icon { width: 18px; height: 18px; }
+/* Andy oct22 "a bit of overlapping on card": a flat 30cqw reserve was narrower than the 3-gem badge on a 1280 column
+   (~200px card), so SAT RUSH ran under it. The reserve is now the badge's own width (3 gems + its padding/border +
+   its corner inset), the gems scale down with the card, and the name sizes to what's left. */
+.game-card-magnet[data-game='sat-rush'] { --sr-gem: clamp(13px, 7cqw, 18px); }
+.game-card-magnet[data-game='sat-rush'] .game-card-mh-row { padding-right: calc(3 * var(--sr-gem) + 30px); box-sizing: border-box; }
+.game-card-magnet[data-game='sat-rush'] .game-card-name { font-size: clamp(14px, 9.6cqw, 28px); white-space: nowrap; }
+.game-card-magnet[data-game='sat-rush'] .game-card-gems .kit-icon { width: var(--sr-gem); height: var(--sr-gem); }
 .game-card-foot .game-card-payout { display: flex; flex-wrap: nowrap; justify-content: center; }
 
 /* Andy oct14 "category blitz only says blitz on game card": the card says CATEGORY / BLITZ again. CATEGORY is 8 letters

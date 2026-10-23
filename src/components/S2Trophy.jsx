@@ -13,13 +13,14 @@ import { KitIconButton } from './kit/KitNavButton.jsx';
 import { V3 } from '../progress/season';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { readyCountV3 } from '../progress/v3/achievements.js';
+import { allRoads } from '../progress/masteryRoad.js';
 import { ACH_CHANGE } from '../progress/v3/store.js';
 import { lazyWithReload } from '../lib/chunkReload';
 import { OPEN_ACH_EVENT } from '../lib/openAchievement.js';
 
 const readyNow = () => {
   try {
-    return readyCountV3() > 0;
+    return readyCountV3() > 0 || allRoads().some((r) => r.ready > 0); // a MASTERY road reward lives in the same screen
   } catch {
     return false;
   }

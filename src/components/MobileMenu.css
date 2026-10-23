@@ -351,7 +351,7 @@
   .hp-m-top .hp-icons .kb--icon { width: 46px; height: 54px; }
   .hp-m-top .hp-icons .kb-iface { width: 46px; height: 46px; }
   .hp-m-top .hp-icons .kb-iface .kit-icon { width: 30px; height: 30px; }
-  .hp-m-top .hp-icons .kb-itag { left: -12px; }
+  .hp-m-top .hp-icons .kb-itag { left: -12px; bottom: 0; } /* oct22: at -8px the tilted 0/3 sticker sat on the PROFILE card below */
   .hp-m-xp { flex: 0 0 auto; }
   .hp-m-xp .kx { flex-wrap: nowrap; gap: 10px; padding-top: 0; }
   .hp-m-xp .kx-lv { min-width: 0; }
@@ -367,6 +367,14 @@
   .hp-m-xp .kx.is-lvin .kx-read-n,
   .hp-m-xp .kx.is-lvin .kx-read-s,
   .hp-m-xp .kx.is-lvin .kx-read-u { font-size: var(--fs-k14); }
+  /* oct22: on a 360px phone the XP bar is ~118px between the profile and the next-LV plate, and "0 / 100" ran onto
+     the LV plate. A slimmer plate + a tighter readout keep the two apart. */
+  @media (max-width: 379px) {
+    .hp-m-xp .kx.is-lvin { --kx-plate: 50px; }
+    .hp-m-xp .kx.is-lvin .kx-lvplate-in { gap: 3px; }
+    .hp-m-xp .kx-read { right: 6px; }
+    .hp-m-xp .kx-read-s { margin: 0 3px; }
+  }
   .hp-m-xp .hp-rankplate { padding: 4px 8px 5px; gap: 1px; border-width: 3px; box-shadow: 3px 3px 0 #000; }
   .hp-m-xp .hp-profplate { gap: 5px; padding-left: 4px; padding-right: 6px; }
   .hp-m-xp .hp-profplate-face { width: 26px; height: 26px; min-width: 0; min-height: 0; border-width: 2px; }

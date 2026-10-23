@@ -167,6 +167,9 @@
    by then, so the line is INK on the fill; one finite pop-in (transform / opacity), nothing at rest. The XP readout stays in
    the DOM (the climb writes to it). Phones keep just "38 KEYS" — the plate beside it already says which level. */
 .kx.has-near .kx-read { opacity: 0; }
+/* Andy oct22 "5 bars … and then 0/5 again": the bar IS the read-out — no "n / m XP" over it at rest. The figure stays in
+   the DOM (the climb writes it, tests read it); the NEAR countdown is the only number the bar ever shows. */
+.kx-read { display: none; }
 .kx-near {
   position: absolute; right: 18px; top: 0; bottom: 0; display: flex; align-items: center; white-space: nowrap;
   font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); color: var(--k-ink);

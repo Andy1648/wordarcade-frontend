@@ -29,7 +29,8 @@
 //   • top and bottom gaps in the 8-16px phone-gutter band and within 4px of each other,
 //   • the vertical gutter to MATCH the side gutter (±1px) — stricter than the desktop check,
 //     it catches a lopsided edit to either axis,
-//   • no scroll in EITHER axis (the phone menu is one screen by design).
+//   • no PAGE scroll in either axis; a short phone's own column may scroll (Andy oct21), and its bottom gutter
+//     is then read with the column scrolled to its end.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, PHONE_MENU_MAX } from './support/menu.js';
@@ -63,14 +64,25 @@ for (const { w, h } of VIEWPORTS) {
         let bottom = -Infinity;
         let left = Infinity;
         let right = -Infinity;
+        // A SHORT phone's column may scroll (Andy oct21: "64px rows + scroll beats cramming"; the DAILY BLITZ row
+        // made 360x640 one of them). The gutters are then read at each END of the scroll: top at scrollTop 0,
+        // bottom with the column scrolled to its end. The PAGE itself still never scrolls (vOverflow below).
+        const scrolls = m.scrollHeight > m.clientHeight + 1;
+        m.scrollTop = 0;
         for (const el of m.children) {
           const rr = el.getBoundingClientRect();
           if (rr.height <= 0 || rr.width <= 0) continue;
           top = Math.min(top, rr.top);
-          bottom = Math.max(bottom, rr.bottom);
           left = Math.min(left, rr.left);
           right = Math.max(right, rr.right);
         }
+        if (scrolls) m.scrollTop = m.scrollHeight;
+        for (const el of m.children) {
+          const rr = el.getBoundingClientRect();
+          if (rr.height <= 0 || rr.width <= 0) continue;
+          bottom = Math.max(bottom, rr.bottom);
+        }
+        m.scrollTop = 0;
         const de = document.documentElement;
         return {
           stage: { top: sb.top, bottom: sb.bottom, left: sb.left, right: sb.right, border: parseFloat(cs.borderTopWidth) },

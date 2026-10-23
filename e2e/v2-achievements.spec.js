@@ -46,8 +46,7 @@ test('a tile CLAIM pays the tier gems ONCE — stamped CLAIMED, the gems fly int
   // TYPE WORDS I (100) and ROLL EPIC+ I (3) are ready; the rest are in progress
   const ach = await boot(page, { count: { words: 150, bots: 6, epic: 3, mp: 1, chain: 2, reb: 1, power: 1, marks: ['a'] } });
   await expect(ach.locator('.av3-cell')).toHaveCount(8);
-  await expect(ach.locator('.av3-tiers')).toContainText('0/38');
-  await expect(ach.locator('.av3-ready-n')).toHaveText('2');
+  await expect(ach.locator('.av3-cell.is-ready')).toHaveCount(2);
   const type = ach.locator('[data-ach="type"]');
   await expect(type.locator('.av3-strip')).toContainText('READY!');
   await expect(type.locator('.av3-strip')).toContainText('40');
@@ -60,21 +59,21 @@ test('a tile CLAIM pays the tier gems ONCE — stamped CLAIMED, the gems fly int
   expect(st.ach).toEqual({ type: 1 });
   // the pill lands on the new balance once the gems have flown in
   await expect(ach.locator('.av3-gems .kp-num')).toHaveText('140', { timeout: 5000 });
-  // after the stamp the tile shows tier II (1,000) — not claimable
-  await expect(type.locator('.av3-strip')).toContainText('TIER II');
+  // after the stamp the tile shows tier II (its badge's roman) with its bar — not claimable
+  await expect(type.locator('.av3-badge-roman')).toHaveText('II', { timeout: 5000 });
   await expect(type.locator('.av3-claim')).toHaveCount(0);
-  await expect(ach.locator('.av3-tiers')).toContainText('1/38');
+  await expect(type.locator('.av3-bar')).toHaveCount(1);
   st = await s2(page);
   expect(st.gems).toBe(140);
 });
 
-test('the HERO panel: READY + the big CLAIM pays and moves the ladder; then ALMOST with the % bar', async ({ page }) => {
+test('the HERO panel: READY + the big CLAIM pays and moves the ladder; then ALMOST with its count', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   const ach = await boot(page, { count: { epic: 3, words: 60 } });
   const hero = ach.locator('.av3-hero');
   await expect(hero).toHaveAttribute('data-hero', 'roll');
   await expect(hero.locator('.av3-hero-label')).toHaveText('READY');
-  await expect(hero.locator('.av3-step')).toHaveCount(5);
+  await expect(hero.locator('.av3-step, .av3-bar')).toHaveCount(0); // one read-out: the count (Andy oct22)
   await hero.locator('.av3-claim--big .kb').click();
   await expect.poll(async () => (await s2(page)).gems).toBe(140);
   expect((await s2(page)).ach).toEqual({ roll: 1 });
@@ -82,8 +81,8 @@ test('the HERO panel: READY + the big CLAIM pays and moves the ladder; then ALMO
   // after the stamp: nothing ready → the closest one (TYPE WORDS 60 / 100) is the hero, ALMOST, with its bar
   await expect(hero.locator('.av3-hero-label')).toHaveText('ALMOST', { timeout: 5000 });
   await expect(hero).toHaveAttribute('data-hero', 'type');
-  await expect(hero.locator('.av3-hero-pct')).toContainText('60%');
-  await expect(ach.locator('.av3-ready-n')).toHaveText('0');
+  await expect(hero.locator('.av3-have')).toHaveText('60');
+  await expect(ach.locator('.av3-cell.is-ready')).toHaveCount(0);
 });
 
 test('phone 390×844: the same screen, a claim pays, no horizontal overflow', async ({ page }) => {

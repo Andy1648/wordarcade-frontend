@@ -47,6 +47,8 @@ import { CAST, castFor, heroById } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
+import RankSeal from '../leaderboard/RankSeal.jsx';
+import { nameTier, enteredTier } from '../leaderboard/nameTier.js';
 import { lazyWithReload } from '../lib/chunkReload';
 
 const fmt = (n) => formatNum(Number(n) || 0);
@@ -195,6 +197,23 @@ const DROP = [
   { transform: 'translateY(-4%) scale(.95, 1.06)', opacity: 1, offset: 0.84 },
   { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
 ];
+// NAME PRESTIGE (Andy oct21 "make people feel even better for being top"): every top-50 name wears a painted NUMBERED
+// seal (nameTier.js). On arrival each seal STAMPS down once (rows stagger top-down); the climb INTO a better tier since
+// your last look gets the big slam + a NEW · TOP 10 tag on your own row. One-shots on existing nodes; nothing loops.
+const STAMP = [
+  { transform: 'scale(1.9) rotate(-14deg)', opacity: 0 },
+  { transform: 'scale(.86) rotate(3deg)', opacity: 1, offset: 0.6 },
+  { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.82 },
+  { transform: 'scale(1) rotate(0)', opacity: 1 },
+];
+const SLAM = [
+  { transform: 'scale(1)', opacity: 1 },
+  { transform: 'scale(3.2) rotate(-18deg)', opacity: 0, offset: 0.01 },
+  { transform: 'scale(.78) rotate(6deg)', opacity: 1, offset: 0.45 },
+  { transform: 'scale(1.18) rotate(-3deg)', opacity: 1, offset: 0.7 },
+  { transform: 'scale(1) rotate(0)', opacity: 1 },
+];
+const TAG_IN = [{ transform: 'translateX(-14px) scale(.4)', opacity: 0 }, { transform: 'translateX(0) scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'translateX(0) scale(1)', opacity: 1 }];
 const SINK = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 const pulse = (base) => [{ transform: `${base} scale(1)` }, { transform: `${base} scale(1.018)`, offset: 0.5 }, { transform: `${base} scale(1)` }];
 
@@ -400,6 +419,9 @@ export default function LeaderboardV2({ onBack }) {
   // TOP n% (Andy oct17) rides the PLAYER column head, not YOUR row (Andy oct19: in the row it sat on your REBIRTHS — the
   // name line has no width to spare at any size, and on a phone the chase line is already cut)
   const myPct = !wk && meRow ? topPercent(meRow.rank, data.total) : null;
+  // THE CLIMB INTO A TIER since your last look on this tab (a first look is not a climb)
+  const myMove = meRow ? Number(data.moves[meRow.id] || 0) : 0;
+  const newTier = meRow && myMove > 0 ? enteredTier(Number(meRow.rank) + myMove, meRow.rank) : null;
 
 
   // ARRIVAL: the podium rises, the list + panels slide in, the bars fill, the crown wobbles once, ▲ / ▼ bob once and
@@ -426,6 +448,17 @@ export default function LeaderboardV2({ onBack }) {
     root.querySelectorAll('.lb2-mv.is-down .lb2-mv-ico').forEach((el) => kitPlay(el, SINK, { duration: 1300, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-row.is-me').forEach((el) => kitPlay(el, pulse('rotate(-1deg)'), { duration: 750, iterations: 2, delay: 500, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-col.is-me .lb2-who').forEach((el) => kitPlay(el, pulse(''), { duration: 750, iterations: 2, delay: 600, easing: 'ease-in-out' }));
+    root.querySelectorAll('.lb2-row .lb2-seal').forEach((el, i) => kitPlay(el, STAMP, { duration: 300, delay: 380 + Math.min(i, 9) * 55, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
+    root.querySelectorAll('.lb2-col').forEach((col) => {
+      const land = (BLOCK_AT[Number(col.dataset.place) || 0] || 0) + 420;
+      kitPlay(col.querySelector('.lb2-pod-seal'), STAMP, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
+    });
+    if (newTier) {
+      const mySeal = root.querySelector('.lb2-row.is-me .lb2-seal, .lb2-col.is-me .lb2-pod-seal');
+      const at = 1700 + 120 * Math.min(myMove, 8);
+      kitPlay(mySeal, SLAM, { duration: 620, delay: at, easing: 'cubic-bezier(.25,1.2,.4,1)', fill: 'backwards' });
+      kitPlay(root.querySelector('.lb2-new-tier'), TAG_IN, { duration: 320, delay: at + 300, easing: 'cubic-bezier(.2,1.4,.4,1)', fill: 'backwards' });
+    }
     // TOP 20: open the scroll list on YOUR row (one layout read when the data lands — never per frame)
     const sc = scrollRef.current;
     const meEl = sc && sc.querySelector('.lb2-row.is-me');
@@ -521,7 +554,7 @@ export default function LeaderboardV2({ onBack }) {
             const who = podCast[place - 1];
             const name = p ? p.username : 'YOUR NAME HERE?';
             return (
-              <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
+              <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-tier={p ? nameTier(place).key : undefined} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
                 <div className="lb2-who">
                   {/* SIMPLE (Andy oct16: the emblem + ribbon read as poorly cut AI slop, "quality but with simplicity"): the
                       cast member alone (no crown — oct17), the name in plain type under it, then the plate + numbers */}
@@ -531,9 +564,11 @@ export default function LeaderboardV2({ onBack }) {
                     </span>
                   </span>
                   <span className="lb2-pod-name">
+                    {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : null}
                     {mine && <span className="lb2-you">YOU</span>}
                     <FitText className="lb2-pod-name-t" min={0.5} style={{ '--nl': nameEms(name) }}>{name}</FitText>
                   </span>
+                  {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : null}
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-stats">
                     <span className="lb2-pod-r">{n ? n.r : '—'}</span>
@@ -570,13 +605,14 @@ export default function LeaderboardV2({ onBack }) {
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
             // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
             const band = rankBand(r.rank);
+            const tier = nameTier(r.rank);
             const prevBand = k > 0 ? rankBand(list[k - 1].rank) : null;
             const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
             return (
               <Fragment key={r.id}>
               {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span>{sep}</span></div>}
-              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
-                <span className="lb2-rk">{fmt(r.rank)}</span>
+              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
+                <span className={`lb2-rk${tier ? ' has-seal' : ''}`}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
                 <span className="lb2-who-cell">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
@@ -586,7 +622,9 @@ export default function LeaderboardV2({ onBack }) {
                     {mine && rival && r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
-                  {mine && (rival || r.rank > 10) ? (
+                  {/* the visit you climbed INTO a tier, that news owns the second line (the chase is back next look) */}
+                  {mine && newTier ? <span className="lb2-chase"><span className="lb2-new-tier">NEW · {newTier.label}</span></span> : null}
+                  {mine && !newTier && (rival || r.rank > 10) ? (
                     <span className={`lb2-chase${rival ? ' has-rival' : ''}`}>
                       {rival ? <>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</> : null}
                       {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a

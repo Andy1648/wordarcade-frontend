@@ -11,7 +11,7 @@
 //                 Word Bomb's server and CHAIN / FUSE take it; Blitz when the category fits).
 //   MIRROR        a 7+ letter palindrome (ROTATOR, REVIVER, DEIFIED, RACECAR …).
 //   TRIPLE DOUBLE a word with three separate double letters (BOOKKEEPER, COMMITTEE, KEENNESS …) — this season only.
-//   TYPEWRITER    40 words in a row, every one 6+ letters, without deleting a single letter (a typewriter cannot take
+//   TYPEWRITER    50 words in a row, every one 5+ letters (oct22; was 40 of 6+), without deleting a single letter (a typewriter cannot take
 //                 one back). A shorter word, any deletion, or 3 minutes without a word starts it over.
 //   WISHBONE      a word at 11:11 AM AND one at 11:11 PM on the same day (make a wish, twice).
 //   MIDAS         sometimes a word turns to gold: 1 accepted word in 750, any mode (luck — never bought).

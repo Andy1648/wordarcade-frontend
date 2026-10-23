@@ -21,9 +21,12 @@ import { fetchShowcase, saveBio, myBio, fetchUnlistedFinds } from '../leaderboar
 import { unlistedById, unlistedArt } from '../unlisted/unlisted.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
+import RankSeal from '../leaderboard/RankSeal.jsx';
+import { nameTier } from '../leaderboard/nameTier.js';
 
-// a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small
-const GearSheet = lazy(() => import('./GearSheet.jsx'));
+// a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small.
+// Someone else's gear that YOU don't own opens LOCKED (Andy oct22: no stats from other people's profiles) — PeekGearSheet.
+const PeekGearSheet = lazy(() => import('./PeekGearSheet.jsx'));
 
 const POP = [{ transform: 'scale(.86) rotate(-2deg)', opacity: 0 }, { transform: 'scale(1.03) rotate(1deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 const has = (v) => v != null && Number.isFinite(Number(v));
@@ -148,7 +151,7 @@ function Gear({ id, slot, known, onOpen }) {
         data-testid={`profile-gear-${slot}`}
         aria-label={`${u.name} — see the gear`}
         style={{ '--pc-line': CARD_RAR.unlisted.line, '--pc-edge': CARD_RAR.unlisted.edge, '--pc-fill': CARD_RAR.unlisted.fill }}
-        onClick={() => onOpen({ id: u.id, name: u.name, tier: 'unlisted', kind: 'unlisted' })}
+        onClick={() => onOpen({ id: u.id, name: u.name, tier: 'unlisted', kind: 'unlisted', riddle: u.riddle })}
       >
         <img className="pc-gear-art pc-gear-img" src={unlistedArt(u)} alt="" width="72" height="72" />
         <span className="pc-gear-name">{u.name}</span>
@@ -233,7 +236,8 @@ export default function ProfileCard({ row, mine = false, onClose }) {
       >
         <button ref={closeRef} type="button" className="pc-x" onClick={onClose} aria-label="Close profile">✕</button>
         <div className="pc-head">
-          <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>
+          {/* a top-50 player's card wears the same painted numbered seal as their board row (nameTier.js) */}
+          {nameTier(row.rank) ? <RankSeal rank={row.rank} className="pc-seal" /> : <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>}
           <span className="pc-name">{row.username}</span>
           <KitRankPlate rank={plate.i} fit shine={false} className="pc-plate" />
         </div>
@@ -250,9 +254,8 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <Tile icon="wins" tone="#FFE94A" value={has(s.base_wins) ? formatNum(Number(s.base_wins)) : UNKNOWN} label="BASE / WORD" />
           <Tile icon="boost" tone="#FF6B3D" value={has(s.wins_per_word) ? formatNum(Number(s.wins_per_word)) : UNKNOWN} label="WINS / WORD" />
           <Tile icon="power" tone="#2EFFE0" value={has(s.power) ? `T${formatNum(Number(s.power))}` : UNKNOWN} label="POWER" />
-          <Tile icon="index" tone="#FF4FA3" value={found != null ? `${formatNum(Number(s.gears_found))}/${formatNum(Number(s.gears_total))}` : UNKNOWN} label="GEARS FOUND">
-            <span className="pc-bar" aria-hidden="true"><span className="pc-bar-fill" style={{ transform: `scaleX(${found != null ? Math.min(1, found) : 0})` }} /></span>
-          </Tile>
+          <Tile icon="index" tone="#FF4FA3" value={found != null ? `${formatNum(Number(s.gears_found))}/${formatNum(Number(s.gears_total))}` : UNKNOWN} label="GEARS FOUND" />
+          {/* Andy oct22: one read-out a stat — the count, no bar beside it */}
         </div>
         {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
         {/* no UNLISTED shelf / found-count here (Andy oct19 "no need to show how many unlisted you've found") */}
@@ -261,12 +264,10 @@ export default function ProfileCard({ row, mine = false, onClose }) {
         // a layer of this scrim (GearSheet's .mx-sheet-layer is absolute) — a tap inside never closes the profile
         <div role="presentation" onClick={(e) => e.stopPropagation()}>
           <Suspense fallback={null}>
-            <GearSheet
+            <PeekGearSheet
               key={gear.id}
               e={gear}
-              have
-              view={null}
-              peek
+              mine={mine}
               serial={gear.kind === 'unlisted' ? serialOf(finds, gear.id) : null}
               onClose={() => setGear(null)}
             />

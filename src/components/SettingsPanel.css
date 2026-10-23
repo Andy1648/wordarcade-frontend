@@ -175,7 +175,7 @@
 .sp-btn--ghost { background: #12071f; color: #2EFFE0; border-color: #2EFFE0; }
 /* RESET ACCOUNT (Andy oct11): the danger tone — flat red fill, darker red outline */
 .sp-btn--danger { background: #FF5C5C; color: #0d0618; border-color: #b02a2a; }
-.sp-reset-confirm { display: flex; flex-direction: column; gap: 8px; }
+.sp-reset-confirm, .sp-load-confirm { display: flex; flex-direction: column; gap: 8px; }
 .sp-reset-warn { color: #FF8A8A; }
 .sp-code, .sp-input {
   width: 100%;
@@ -209,12 +209,18 @@
   .sp-sheet .sp-row { min-height: 52px; }
 }
 @media (max-width: 480px) {
-  .sp-sheet:has(.sp-reset-confirm) .sp-sub { display: none; }
+  .sp-sheet:has(.sp-reset-confirm) .sp-sub, .sp-sheet:has(.sp-load-confirm) .sp-sub { display: none; }
 }
 /* the smallest phones: while RESET ACCOUNT asks "are you sure", SAVE PROGRESS steps aside so the question + its two
    buttons fit (CANCEL brings it back) */
 @media (max-width: 480px) and (max-height: 700px) {
   .sp-sheet:has(.sp-reset-confirm) .sp-save:not(.sp-reset) { display: none; }
+}
+/* phones: once COPY has put the code on screen (or a pasted code asks "load it?") RESET ACCOUNT steps aside and the
+   descriptions fold, so the code, its message and the paste box fit; closing the sheet brings it back */
+@media (max-width: 480px) {
+  .sp-sheet:has(.sp-code) .sp-reset, .sp-sheet:has(.sp-load-confirm) .sp-reset { display: none; }
+  .sp-sheet:has(.sp-code) .sp-sub { display: none; }
 }
 /* 360-wide phones: MUTE + ten 17px bars ran past the SOUND row's left edge — the bars give back the width */
 @media (max-width: 380px) {

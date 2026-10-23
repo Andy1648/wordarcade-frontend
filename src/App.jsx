@@ -33,6 +33,7 @@ const LeaderboardScreen = lazyWithReload(() => import('./components/LeaderboardS
 const ShopScreen = lazyWithReload(() => import('./components/ShopScreen'), 'ShopScreen');
 // SAT RUSH (solo, flag-gated). Lazy like the other off-first-paint screens.
 const SatRushGame = lazyWithReload(() => import('./satRush/SatRushGame'), 'SatRushGame');
+const DailyBlitzGame = lazyWithReload(() => import('./dailyBlitz/DailyBlitzGame'), 'DailyBlitzGame');
 // CHAIN / FUSE (solo word modes, flag-gated). Lazy — the 357KB word chunk they pull
 // must never touch the menu's first paint.
 const ChainGame = lazyWithReload(() => import('./solo/ChainGame'), 'ChainGame');
@@ -72,6 +73,7 @@ import { useOverlays } from './hooks/useOverlays';
 import { useRoom } from './hooks/useRoom';
 import { useProgressionEvents } from './hooks/useProgressionEvents';
 import { canonicalPathForView, MENU_PATHS, hasStickyQuery, viewIntentFromPath } from './router';
+import { DAILY_BLITZ_LAUNCH, DAILY_BLITZ_VIEW } from './dailyBlitz/launch.js';
 import { useMusicPlayer } from './hooks/useMusicPlayer';
 import { useBeatSync } from './hooks/useBeatSync';
 import { useSoundEffects } from './hooks/useSoundEffects';
@@ -262,6 +264,7 @@ const SKIP_INTRO =
   LAUNCH_INTENT.daily ||
   LAUNCH_INTENT.satrush ||
   LAUNCH_INTENT.race ||
+  DAILY_BLITZ_LAUNCH || // /daily (DAILY BLITZ share links)
   !!VS_BOT_LAUNCH || // /word-bomb/play, /category-blitz/play
   SOLO_LAUNCH.chain ||
   SOLO_LAUNCH.fuse ||
@@ -284,6 +287,7 @@ const INITIAL_VIEW = (() => {
   if (SOLO_LAUNCH.chain) return CHAIN_VIEW;
   if (SOLO_LAUNCH.fuse) return FUSE_VIEW;
   if (LAUNCH_INTENT.satrush) return SAT_RUSH_VIEW;
+  if (DAILY_BLITZ_LAUNCH) return DAILY_BLITZ_VIEW;
   return 'home';
 })();
 
@@ -999,6 +1003,7 @@ function App() {
       else if (intent === 'sat-rush') goToSatRush();
       else if (intent === 'chain') goToChain();
       else if (intent === 'fuse') goToFuse();
+      else if (intent === DAILY_BLITZ_VIEW) setView(DAILY_BLITZ_VIEW);
       // null intent (/room/*, etc.): leave the app as-is.
     };
     window.addEventListener('popstate', onPop);
@@ -2731,6 +2736,17 @@ function App() {
         startMode={satStartModeRef.current}
       />
     );
+  } else if (view === DAILY_BLITZ_VIEW) {
+    // DAILY BLITZ (dailyBlitz/): the once-a-day rare-answer game. Solo, client-side, no room/WebSocket.
+    screen = (
+      <Suspense fallback={<OverlaySkeleton title="DAILY BLITZ" />}>
+        {/* hosts the sound control in its own top bar (the fixed corner one sat on GO / COPY on a phone) */}
+        <DailyBlitzGame
+          onExit={goHome}
+          audioSlot={<AudioControls variant="inline" accent="#3DA8FF" musicMuted={music.isMuted} onToggleMusic={music.toggleMute} />}
+        />
+      </Suspense>
+    );
   } else if (view === CHAIN_VIEW && SOLO_MODES_ENABLED) {
     // Flag-gated solo mode, reachable via ?chain=1 (no menu card yet).
     screen = <ChainGame onExit={goHome} offerMenu={soloOfferRef.current} />;
@@ -2766,6 +2782,7 @@ function App() {
         onSatRush={(m) => { satStartModeRef.current = m === 'briefing' || m === 'lineup' ? m : null; goToSatRush(); }}
         onChain={goToChain}
         onFuse={goToFuse}
+        onDailyBlitz={() => setView(DAILY_BLITZ_VIEW)}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
@@ -3014,7 +3031,7 @@ function App() {
               in their header clusters, and the three header-less ones (the "STARTING GAME..."
               placeholder, the multiplayer scoreboard, the solo results card) in a dock anchored to
               the board wrapper. e2e/sound-control.spec.js counts them — never zero, never two. */}
-          {!isHomeMenu && view !== 'game' && (
+          {!isHomeMenu && view !== 'game' && view !== DAILY_BLITZ_VIEW && (
             <AudioControls
               accent={SCREEN_ACCENT[view] || '#2EFFE0'}
               musicMuted={music.isMuted}

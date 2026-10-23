@@ -85,7 +85,7 @@ function Card({ id, i, s, onPlay, onSwap, swapKey, phone }) {
             <span className="cx3-have">{formatNum(p)}</span>
             <span className="cx3-need">/ {formatNum(c.target)}</span>
           </div>
-          <div className="cx3-bar" aria-hidden="true"><div className="cx3-bar-fill" style={{ transform: `scaleX(${(p / c.target).toFixed(3)})` }} /></div>
+          {/* Andy oct22 "5 bars … and then 0/5 again": the have / need count is the ONE read-out — no bar under it */}
           <div className="cx3-foot">
             {done ? (
               <span className="cx3-paid"><KitIcon name="gems" size={22} shadow={1} extras={false} />+{formatNum(TIER_GEMS[c.tier])} PAID</span>
