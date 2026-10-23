@@ -45,7 +45,7 @@ export const WRAP_HOLD_MS = 0;
 const PLATE_POP = [{ transform: 'skewX(12deg) scale(1)' }, { transform: 'skewX(12deg) scale(1.28) rotate(-3deg)', offset: 0.45 }, { transform: 'skewX(12deg) scale(1)' }];
 const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, { transform: 'translateY(4px) skewX(-10deg)', opacity: 1, offset: 0.6 }, { transform: 'translateY(0) skewX(-10deg)', opacity: 1 }];
 
-// JUICE P1 (goal-gradient): `goal` = { lv } puts the NEXT reward on a plate at the bar's RIGHT end — the next
+// JUICE P1 (goal-gradient): `goal` = { lv, chest } puts the NEXT reward on a plate at the bar's RIGHT end — the next
 // level's number (Andy oct21: never the REBIRTH icon — it sat off-centre on the plate). In the last NEAR_FRAC of a level
 // the plate turns yellow (a static class, not a loop) and every gain BUMPS it (one finite 280 ms play) — the "almost
 // there" pull. A level wrap SLAMS the new number in.
@@ -239,6 +239,9 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${near && nearText ? ' has-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
       {lvInside ? lead : <>{lead}{lvNode}</>}
       <div className="kx-barwrap">
+        {/* LEVEL CHEST (oct22): the painted gem + what the next level pays, pinned over the goal plate's corner (outside the
+            bar, which clips) — the LV number stays centred */}
+        {goal && goal.chest > 0 ? (<span className="kx-goal-chest" data-testid="xp-goal-chest"><img src="/icons/gems.webp" width="64" height="64" alt="" draggable="false" />+{formatNum(goal.chest)}</span>) : null}
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
           <span className="kx-gain-t" />
         </span>

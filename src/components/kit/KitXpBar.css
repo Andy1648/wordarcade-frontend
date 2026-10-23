@@ -181,3 +181,13 @@
   .kx-near-to { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .kx-near { animation: none; } }
+
+/* LEVEL CHEST (oct22): a small gem badge pinned over the goal plate's top-right corner when the next level pays a chest —
+   the painted gem + "+10", ink on cyan, a hard offset shadow; static (the plate's own bump / slam carry the motion). */
+.kx-goal-chest {
+  position: absolute; top: -22px; right: -12px; z-index: 3; display: inline-flex; align-items: center; gap: 2px;
+  padding: 1px 7px 1px 3px; font-family: var(--k-display); font-size: var(--fs-k14); color: var(--k-ink);
+  background: #2EFFE0; border: 2px solid #0d0618; border-radius: 8px; box-shadow: 2px 2px 0 #000; transform: rotate(6deg);
+  white-space: nowrap; pointer-events: none;
+}
+.kx-goal-chest img { width: 20px; height: 20px; object-fit: contain; }
