@@ -48,7 +48,7 @@ test('the 15 new gears are in the pool, painted, each with its own line; the tie
     if (['epic', 'legendary', 'mythic', 'secret'].includes(m.tier)) assert.ok(perkLine(id), `${id} prints its perk`);
   }
   assert.equal(oneInX('mk-domino'), 720);
-  assert.equal(oneInX('mk-longshot'), 1200);
+  assert.equal(oneInX('mk-longshot'), 1560); // oct22: LEGENDARY 1 IN 130
   assert.equal(oneInX('mk-trident'), 12000);
   assert.equal(oneInX('mk-paradox'), 30000);
   assert.equal(MARK2_STORE_KEY, MARK2_KEY, 'TWIN SOULS reads the real 2nd-slot key');

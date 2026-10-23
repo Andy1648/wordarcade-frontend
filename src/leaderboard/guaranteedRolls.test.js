@@ -137,8 +137,8 @@ test('client: ticketTable = the SQL pick odds (game tier odds at luck x1, floor 
     assert.ok(Math.abs(tot - 1) < 1e-9);
   }
   const leg = ticketTierOdds('legendary');
-  assert.ok(Math.abs(leg.legendary - 0.01 / (0.01 + 0.0005 + 1 / 15000)) < 1e-9, 'LEGENDARY ~94.7%');
-  assert.ok(leg.legendary > 0.94 && leg.legendary < 0.95);
+  assert.ok(Math.abs(leg.legendary - (1 / 130) / (1 / 130 + 0.0005 + 1 / 15000)) < 1e-9, 'LEGENDARY ~93.1% (oct22: 1 IN 130)');
+  assert.ok(leg.legendary > 0.93 && leg.legendary < 0.94);
 });
 
 test('client: a ticket roll lands the pick and leaves the roll count + pity alone', () => {
