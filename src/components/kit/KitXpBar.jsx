@@ -51,7 +51,9 @@ const CHIP_IN = [{ transform: 'translateY(-30px) skewX(-10deg)', opacity: 0 }, {
 // there" pull. A level wrap SLAMS the new number in.
 export const NEAR_FRAC = 0.9;
 
-export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null }) {
+// NEAR MISS (Andy oct22, the goal-gradient pull): `nearText` = { k: '38 KEYS', to: 'TO LV 8' } replaces the readout in the last NEAR_FRAC of
+// a level — an honest countdown in keys, the unit the menu actually pays in. Static swap + one finite pop-in, nothing loops.
+export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null, nearText = null }) {
   const rootRef = useRef(null);
   const lvRef = useRef(null);
   const gainRef = useRef(null);
@@ -234,7 +236,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     </div>
   ) : null;
   return (
-    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
+    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${near && nearText ? ' has-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
       {lvInside ? lead : <>{lead}{lvNode}</>}
       <div className="kx-barwrap">
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
@@ -259,6 +261,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
             <span className="kx-read-n">{formatNum(need)}</span>
             <span className="kx-read-u">{unit}</span>
           </div>
+          {near && nearText ? <div className="kx-near" aria-hidden="true">{nearText.k}<span className="kx-near-to">{nearText.to}</span></div> : null}
         </div>
       </div>
     </div>

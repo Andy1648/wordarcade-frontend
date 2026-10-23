@@ -162,3 +162,22 @@
   .kx-goal-n { font-size: var(--fs-k20); }
   .kx.is-goal .kx-read-u { display: none; }
 }
+
+/* NEAR MISS (Andy oct22): in the last stretch of a level the readout becomes "38 KEYS TO LV 8" — the bar is nearly full (yellow)
+   by then, so the line is INK on the fill; one finite pop-in (transform / opacity), nothing at rest. The XP readout stays in
+   the DOM (the climb writes to it). Phones keep just "38 KEYS" — the plate beside it already says which level. */
+.kx.has-near .kx-read { opacity: 0; }
+.kx-near {
+  position: absolute; right: 18px; top: 0; bottom: 0; display: flex; align-items: center; white-space: nowrap;
+  font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); color: var(--k-ink);
+  transform: skewX(12deg); animation: kx-near-in 260ms cubic-bezier(.2, 1.4, .4, 1) both;
+}
+.kx.is-goal .kx-near { right: calc(var(--kx-goalw) + 24px); }
+.kx-near-to { margin-left: .4em; }
+@keyframes kx-near-in { from { opacity: 0; transform: skewX(12deg) translateY(6px) scale(.9); } to { opacity: 1; transform: skewX(12deg); } }
+@media (max-width: 600px) {
+  .kx.is-goal .kx-near { right: calc(var(--kx-goalw) + 14px); }
+  .kx-near { font-size: var(--fs-k16); }
+  .kx-near-to { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .kx-near { animation: none; } }
