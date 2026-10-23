@@ -21,6 +21,8 @@ import { fetchShowcase, saveBio, myBio, fetchUnlistedFinds } from '../leaderboar
 import { unlistedById, unlistedArt } from '../unlisted/unlisted.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
+import RankSeal from '../leaderboard/RankSeal.jsx';
+import { nameTier } from '../leaderboard/nameTier.js';
 
 // a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small.
 // Someone else's gear that YOU don't own opens LOCKED (Andy oct22: no stats from other people's profiles) — PeekGearSheet.
@@ -234,7 +236,8 @@ export default function ProfileCard({ row, mine = false, onClose }) {
       >
         <button ref={closeRef} type="button" className="pc-x" onClick={onClose} aria-label="Close profile">✕</button>
         <div className="pc-head">
-          <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>
+          {/* a top-50 player's card wears the same painted numbered seal as their board row (nameTier.js) */}
+          {nameTier(row.rank) ? <RankSeal rank={row.rank} className="pc-seal" /> : <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>}
           <span className="pc-name">{row.username}</span>
           <KitRankPlate rank={plate.i} fit shine={false} className="pc-plate" />
         </div>
